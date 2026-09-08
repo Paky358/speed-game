@@ -974,6 +974,15 @@ img{ max-width:100%; }
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 8,
+    data: "9 settembre 2026",
+    titolo: "Si vota anche con un telefono solo",
+    descrizione: [
+      "Anche giocando su un unico telefono, dopo che uno sceglie il punto il telefono passa agli altri per votare 👍/👎.",
+      "Chi vota giusto guadagna 50 punti, chi sbaglia ne perde 50 — come nella modalità online."
+    ]
+  },
+  {
     v: 7,
     data: "9 settembre 2026",
     titolo: "Tantissimi nuovi avvenimenti",
@@ -1331,12 +1340,13 @@ window.SG_NOVITA = [
     if (attivi(stato) === 0 || stato.mazzo.length === 0) return fineTel(t, stato);
     saltaFiniti(stato);
     stato.carta = stato.mazzo.pop();
+    stato.giocatori.forEach(function (x) { delete x._voto; });
     var el = t.el, g = stato.giocatori[stato.turno % stato.giocatori.length];
     g._me = true;
     var s = t.schermata({ titolo: g.nome, sotto: "Dove va? Hai " + TEMPO + " secondi", icona: "📜",
       indietro: function () { if (window.confirm("Uscire dalla partita?")) t.esci(); } });
     s._contenuto.appendChild(nodoTop(el, stato.giocatori, g.nome));
-    var bar = barraTimer(el, TEMPO * 1000, TEMPO * 1000, function () { risolviTel(t, stato, null, bar); });
+    var bar = barraTimer(el, TEMPO * 1000, TEMPO * 1000, function () { risolviTel(t, stato, null); });
     stato._stop = function () { if (bar._stop) bar._stop(); };
     s._contenuto.appendChild(bar);
     s._contenuto.appendChild(nodoCartaMano(el, stato.carta, "Dove va?"));
@@ -1349,33 +1359,79 @@ window.SG_NOVITA = [
     FX.turno();
   }
   function gapTel(t, stato, i, bar) {
-    return t.el("button", { class: "tl-gap", html: "⤵ &nbsp;metti qui", onclick: function () { risolviTel(t, stato, i, bar); } });
+    return t.el("button", { class: "tl-gap", html: "⤵ &nbsp;metti qui", onclick: function () { scegliTel(t, stato, i, bar); } });
   }
-  function risolviTel(t, stato, gap, bar) {
+  // Il giocatore ha scelto il punto: se ci sono altri, passano a votare; poi si risolve.
+  function scegliTel(t, stato, gap, bar) {
     if (bar && bar._stop) bar._stop();
-    if (stato._risolto) return; stato._risolto = true;
+    var idx = stato.turno % stato.giocatori.length;
+    var votanti = stato.giocatori.filter(function (_, i) { return i !== idx; });
+    if (votanti.length === 0) return risolviTel(t, stato, gap);
+    votaTel(t, stato, gap, votanti, 0);
+  }
+  function votaTel(t, stato, gap, votanti, j) {
+    if (j >= votanti.length) return risolviTel(t, stato, gap);
+    var v = votanti[j];
+    t.passaA(v.nome, function () { schermoVotoTel(t, stato, gap, votanti, j); });
+  }
+  function schermoVotoTel(t, stato, gap, votanti, j) {
+    var el = t.el, v = votanti[j], carta = stato.carta;
+    var s = t.schermata({ icona: "🗳️", titolo: v.nome + ", sei d'accordo?", sotto: "Dove ha messo la carta è giusto?" });
+    s._contenuto.appendChild(nodoTop(el, stato.giocatori, ""));
+    s._contenuto.appendChild(nodoCartaMano(el, carta, "È giusto qui?"));
+    var linea = el("div", { class: "tl-linea" });
+    stato.linea.forEach(function (ev, i) {
+      if (i === gap) linea.appendChild(nodoEvento(el, { anno: 0, titolo: carta.titolo, fatto: carta.fatto }, true));
+      linea.appendChild(nodoEvento(el, ev));
+    });
+    if (gap >= stato.linea.length) linea.appendChild(nodoEvento(el, { anno: 0, titolo: carta.titolo, fatto: carta.fatto }, true));
+    s._contenuto.appendChild(linea);
+    s._piede.appendChild(el("div", { class: "tl-vota" }, [
+      el("button", { class: "btn btn-verde", text: "👍 D'accordo", onclick: function () { FX.voto(); v._voto = true; votaTel(t, stato, gap, votanti, j + 1); } }),
+      el("button", { class: "btn btn-rosso", text: "👎 No", onclick: function () { FX.voto(); v._voto = false; votaTel(t, stato, gap, votanti, j + 1); } })
+    ]));
+    t.mostra(s);
+    setTimeout(function () { var e = document.querySelector(".tl-tent"); if (e && e.scrollIntoView) e.scrollIntoView({ block: "center", behavior: "smooth" }); }, 60);
+  }
+  function risolviTel(t, stato, gap) {
     var carta = stato.carta, g = stato.giocatori[stato.turno % stato.giocatori.length];
     var ok = gap != null && gapGiusto(stato.linea, gap, carta.anno);
+    // punti ai votanti (±50) a seconda se hanno indovinato o no
+    var votiEsito = [];
+    stato.giocatori.forEach(function (x) {
+      if (x === g || x._voto == null) return;
+      var giusto = (x._voto === ok);
+      x.punti += giusto ? VOTO : -VOTO;
+      votiEsito.push({ nome: x.nome, d: x._voto, giusto: giusto, delta: giusto ? VOTO : -VOTO });
+      delete x._voto;
+    });
     if (ok) { stato.linea.push(carta); ordina(stato.linea); g.punti += PUNTI; }
     else { g.punti -= PUNTI; }
     g.restano -= 1;
-    var appenaFinito = g.restano === 0;
-    stato._risolto = false;
-    esitoTel(t, stato, ok, appenaFinito, gap == null);
+    esitoTel(t, stato, ok, g.restano === 0, gap == null, votiEsito);
   }
-  function esitoTel(t, stato, ok, appenaFinito, scaduto) {
+  function esitoTel(t, stato, ok, appenaFinito, scaduto, votiEsito) {
     var el = t.el, carta = stato.carta, g = stato.giocatori[stato.turno % stato.giocatori.length];
     ok ? FX.giusto() : FX.sbagliato();
     var s = t.schermata({});
     s._contenuto.appendChild(nodoTop(el, stato.giocatori, ""));
-    s._contenuto.appendChild(el("div", { class: "tl-esito" }, [
+    var box = el("div", { class: "tl-esito" }, [
       el("div", { class: "faccia", text: ok ? "✅" : "❌" }),
       el("div", { class: "verdetto " + (ok ? "giusto" : "sbagliato"), text: scaduto ? "Tempo scaduto!" : (ok ? "Esatto!" : "Sbagliato") }),
       ok ? el("div", { class: "annone", text: annoTesto(carta.anno) }) : el("div", { class: "titoletto tenue", text: "La data resta un mistero…" }),
       el("div", { class: "titoletto", text: carta.titolo }),
-      el("div", { class: "delta " + (ok ? "su" : "giu"), text: (ok ? "+" : "−") + PUNTI + " punti" }),
+      el("div", { class: "delta " + (ok ? "su" : "giu"), text: (ok ? "+" : "−") + PUNTI + " a " + g.nome }),
       appenaFinito ? el("div", { class: "tl-finito", text: "🎉 " + g.nome + " ha finito le sue carte!" }) : null
-    ]));
+    ]);
+    if (votiEsito && votiEsito.length) {
+      var ul = el("ul", { class: "tl-voti" });
+      votiEsito.forEach(function (vt) { ul.appendChild(el("li", {}, [
+        el("span", { text: (vt.d ? "👍 " : "👎 ") + vt.nome }),
+        el("span", { class: "d", text: (vt.delta > 0 ? "+" : "−") + Math.abs(vt.delta), style: "color:" + (vt.giusto ? "var(--verde)" : "var(--rosso)") })
+      ])); });
+      box.appendChild(ul);
+    }
+    s._contenuto.appendChild(box);
     var finita = attivi(stato) === 0 || stato.mazzo.length === 0;
     if (finita) { s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏆 Vedi la classifica", onclick: function () { fineTel(t, stato); } })); return t.mostra(s); }
     stato.turno += 1; saltaFiniti(stato);

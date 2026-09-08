@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 8,
+    data: "9 settembre 2026",
+    titolo: "Si vota anche con un telefono solo",
+    descrizione: [
+      "Anche giocando su un unico telefono, dopo che uno sceglie il punto il telefono passa agli altri per votare 👍/👎.",
+      "Chi vota giusto guadagna 50 punti, chi sbaglia ne perde 50 — come nella modalità online."
+    ]
+  },
+  {
     v: 7,
     data: "9 settembre 2026",
     titolo: "Tantissimi nuovi avvenimenti",
