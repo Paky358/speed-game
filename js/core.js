@@ -94,6 +94,7 @@
 
   function schermataHome() {
     var s = schermata({ titolo: "Speed Game", sotto: "Scegli un gioco e passa il telefono" });
+    s.className += " home";
     var griglia = el("div", { class: "griglia-giochi" });
 
     giochi.forEach(function (g) {
