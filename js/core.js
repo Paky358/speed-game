@@ -13,6 +13,25 @@
 
   var giochi = [];            // giochi registrati
   var app;                    // contenitore radice (#app)
+  var linkParams = {};        // impostazioni arrivate da un link condiviso
+
+  // Legge le impostazioni scritte nel link (dopo il #), es.:
+  //   #gioco=timeline&cat=storia,calcio&carte=5
+  function leggiParametriLink() {
+    var out = {};
+    var h = (location.hash || "").replace(/^#/, "");
+    if (!h) return out;
+    h.split("&").forEach(function (p) {
+      var i = p.indexOf("=");
+      if (i < 0) return;
+      var k = decodeURIComponent(p.slice(0, i));
+      var v = decodeURIComponent(p.slice(i + 1));
+      out[k] = v;
+    });
+    if (out.cat) out.cat = out.cat.split(",").filter(Boolean);
+    if (out.carte) out.carte = parseInt(out.carte, 10);
+    return out;
+  }
 
   // ------- piccoli aiuti per costruire l'interfaccia -------
   function el(tag, attrs, figli) {
@@ -100,6 +119,45 @@
     ]));
 
     s._contenuto.appendChild(griglia);
+
+    // Tasto "Novità" (con pallino rosso se c'è qualcosa di non ancora visto)
+    var novita = window.SG_NOVITA || [];
+    if (novita.length) {
+      var btn = el("button", { class: "btn btn-fantasma", onclick: schermataNovita });
+      btn.appendChild(el("span", { text: "🆕 Novità" }));
+      if (!novitaTutteViste()) btn.appendChild(el("span", { class: "pallino" }));
+      s._piede.appendChild(btn);
+    }
+
+    mostra(s);
+  }
+
+  // ---- Novità (il diario di cosa viene aggiunto) ----
+  var CHIAVE_NOVITA = "sg_novita_vista";
+  function ultimaVersioneNovita() {
+    var n = window.SG_NOVITA || [];
+    return n.length ? n[0].v : 0;
+  }
+  function novitaTutteViste() {
+    try { return Number(localStorage.getItem(CHIAVE_NOVITA)) >= ultimaVersioneNovita(); }
+    catch (e) { return false; }
+  }
+  function segnaNovitaViste() {
+    try { localStorage.setItem(CHIAVE_NOVITA, String(ultimaVersioneNovita())); } catch (e) {}
+  }
+  function schermataNovita() {
+    var s = schermata({ icona: "🆕", titolo: "Novità", sotto: "Cosa è stato aggiunto", indietro: schermataHome });
+    (window.SG_NOVITA || []).forEach(function (n) {
+      var punti = el("ul", { class: "novita-punti" });
+      (n.descrizione || []).forEach(function (r) { punti.appendChild(el("li", { text: r })); });
+      s._contenuto.appendChild(el("div", { class: "novita-card" }, [
+        el("div", { class: "novita-data", text: n.data }),
+        el("h2", { class: "novita-titolo", text: n.titolo }),
+        punti
+      ]));
+    });
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Ho capito", onclick: schermataHome }));
+    segnaNovitaViste(); // aperto = visto
     mostra(s);
   }
 
@@ -273,7 +331,26 @@
     registra: function (gioco) { giochi.push(gioco); },
     avviaApp: function () {
       app = document.getElementById("app");
-      schermataHome();
+      linkParams = leggiParametriLink();
+      // Se il link indica un gioco, si apre già sulla scelta dei giocatori
+      var g = linkParams.gioco && giochi.filter(function (x) { return x.id === linkParams.gioco; })[0];
+      if (g) schermataGiocatori(g);
+      else schermataHome();
+    },
+    // impostazioni arrivate da un link (le legge il gioco per i valori di partenza)
+    parametriLink: function () { return linkParams; },
+    // costruisce un link condivisibile con le impostazioni scelte dall'host
+    creaLink: function (params) {
+      var base = location.origin + location.pathname;
+      var pezzi = [];
+      for (var k in params) {
+        var v = params[k];
+        if (v == null || v === "") continue;
+        if (Array.isArray(v)) v = v.join(",");
+        // chiavi e valori qui sono già sicuri (lettere, numeri, virgole): niente codifica illeggibile
+        pezzi.push(k + "=" + v);
+      }
+      return base + (pezzi.length ? "#" + pezzi.join("&") : "");
     },
     // esposti perché comodi anche fuori
     _util: { el: el, svuota: svuota, mischia: mischia }

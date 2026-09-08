@@ -134,6 +134,34 @@ body{
 .classifica li.vincitore{ background:linear-gradient(135deg,var(--accento),var(--accento-scuro)); color:#241f00; }
 .classifica li.vincitore .punti{ color:#3a3000; }
 
+/* ---- Novità (diario aggiornamenti) ---- */
+.pallino{ width:10px; height:10px; border-radius:50%; background:var(--rosso);
+  display:inline-block; margin-left:2px; box-shadow:0 0 0 3px rgba(255,93,108,.25); }
+.novita-card{ background:var(--carta); border-radius:var(--raggio); padding:16px;
+  box-shadow:var(--ombra); margin-bottom:14px; }
+.novita-data{ font-size:.8rem; font-weight:700; color:var(--accento);
+  text-transform:uppercase; letter-spacing:.04em; }
+.novita-titolo{ margin:4px 0 10px; font-size:1.2rem; }
+.novita-punti{ margin:0; padding-left:1.1em; }
+.novita-punti li{ margin-bottom:7px; line-height:1.4; color:var(--testo); }
+
+/* ---- Categorie (scelta dell'host) ---- */
+.cat-griglia{ display:flex; flex-wrap:wrap; gap:10px; }
+.cat-chip{ display:flex; align-items:center; gap:8px; font-family:inherit; font-size:1rem;
+  font-weight:700; cursor:pointer; padding:12px 14px; min-height:var(--tocco);
+  border-radius:14px; background:var(--carta); color:var(--testo-tenue);
+  border:2px solid transparent; transition:all .12s ease; }
+.cat-chip .ci{ font-size:1.2rem; }
+.cat-chip .spunta{ opacity:0; font-weight:900; color:var(--verde); }
+.cat-chip.attiva{ color:var(--testo); border-color:var(--accento); background:var(--carta-2); }
+.cat-chip.attiva .spunta{ opacity:1; }
+
+/* ---- Campo del link da condividere ---- */
+.link-campo{ width:100%; font-family:inherit; font-size:.95rem; margin-top:10px;
+  padding:12px 14px; border-radius:14px; border:2px solid var(--accento);
+  background:var(--carta); color:var(--testo); min-height:var(--tocco); }
+.link-avviso{ margin-top:8px; font-size:.9rem; color:var(--testo-tenue); line-height:1.4; }
+
 /* ---- Utility ---- */
 .centro{ text-align:center; }
 .tenue{ color:var(--testo-tenue); }

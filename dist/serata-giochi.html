@@ -1,0 +1,1045 @@
+<title>Serata Giochi</title>
+<style>
+/* =========================================================
+   Serata Giochi — aspetto comune a TUTTI i giochi.
+   Colori, caratteri e bottoni stanno qui, una volta sola.
+   ========================================================= */
+
+:root{
+  --sfondo:      #141326;
+  --sfondo-2:    #1e1c3a;
+  --carta:       #272451;
+  --carta-2:     #322e63;
+  --testo:       #f3f1ff;
+  --testo-tenue: #b3aede;
+  --accento:     #ffca3a;
+  --accento-scuro:#e0a90a;
+  --verde:       #37d47e;
+  --rosso:       #ff5d6c;
+  --ombra:       0 6px 18px rgba(0,0,0,.35);
+  --raggio:      18px;
+  --tocco:       52px; /* altezza minima comoda per un dito */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+}
+
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html,body{ margin:0; padding:0; }
+
+body{
+  font-family:var(--font);
+  background:var(--sfondo);
+  color:var(--testo);
+  min-height:100vh;
+  min-height:100dvh;
+  -webkit-font-smoothing:antialiased;
+}
+
+#app{
+  max-width:560px;
+  margin:0 auto;
+  min-height:100vh;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ---- Schermata: intestazione + contenuto scorrevole + piede ---- */
+.schermata{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  min-height:100vh;
+  min-height:100dvh;
+  padding:
+    calc(16px + env(safe-area-inset-top))
+    16px
+    calc(16px + env(safe-area-inset-bottom));
+  animation:entra .25s ease;
+}
+@keyframes entra{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+
+.testa{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.testa h1{ font-size:1.35rem; margin:0; line-height:1.1; }
+.testa .sotto{ color:var(--testo-tenue); font-size:.95rem; margin:2px 0 0; }
+.contenuto{ flex:1; }
+.piede{ margin-top:14px; display:flex; flex-direction:column; gap:10px; }
+
+/* ---- Bottoni (uguali ovunque) ---- */
+.btn{
+  appearance:none; border:0; cursor:pointer;
+  font-family:inherit; font-size:1.05rem; font-weight:700;
+  min-height:var(--tocco); padding:14px 18px;
+  border-radius:var(--raggio);
+  background:var(--carta-2); color:var(--testo);
+  box-shadow:var(--ombra);
+  transition:transform .06s ease, filter .15s ease;
+  width:100%;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+}
+.btn:active{ transform:scale(.97); }
+.btn-primario{ background:var(--accento); color:#241f00; }
+.btn-verde{ background:var(--verde); color:#04321c; }
+.btn-rosso{ background:var(--rosso); color:#3a0009; }
+.btn-fantasma{ background:transparent; box-shadow:none; color:var(--testo-tenue); font-weight:600; }
+.btn:disabled{ opacity:.45; }
+.btn-piccolo{ font-size:.95rem; min-height:44px; padding:10px 14px; width:auto; }
+
+/* ---- Home: elenco dei giochi ---- */
+.griglia-giochi{ display:grid; grid-template-columns:1fr; gap:14px; }
+.tessera{
+  display:flex; align-items:center; gap:16px; text-align:left;
+  background:var(--carta); border-radius:var(--raggio);
+  padding:16px; box-shadow:var(--ombra); cursor:pointer; border:0; color:inherit;
+  width:100%; transition:transform .06s ease;
+}
+.tessera:active{ transform:scale(.98); }
+.tessera .icona{ font-size:2.4rem; line-height:1; }
+.tessera .info h2{ margin:0 0 3px; font-size:1.15rem; }
+.tessera .info p{ margin:0; color:var(--testo-tenue); font-size:.92rem; }
+.tessera .info .meta{ margin-top:6px; font-size:.8rem; color:var(--accento); font-weight:700; }
+.tessera.presto{ opacity:.5; cursor:default; }
+
+/* ---- Setup giocatori ---- */
+.giocatore-riga{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+.giocatore-riga input{
+  flex:1; font-family:inherit; font-size:1.05rem;
+  padding:12px 14px; border-radius:14px; border:2px solid transparent;
+  background:var(--carta); color:var(--testo); min-height:var(--tocco);
+}
+.giocatore-riga input:focus{ outline:none; border-color:var(--accento); }
+.togli{ background:var(--carta); color:var(--rosso); border:0; border-radius:14px;
+  width:var(--tocco); height:var(--tocco); font-size:1.4rem; cursor:pointer; flex:0 0 auto; }
+
+.stepper{ display:flex; align-items:center; gap:14px; background:var(--carta);
+  border-radius:14px; padding:8px 14px; }
+.stepper button{ width:44px; height:44px; border-radius:12px; border:0; cursor:pointer;
+  background:var(--carta-2); color:var(--testo); font-size:1.4rem; font-weight:800; }
+.stepper .valore{ font-size:1.3rem; font-weight:800; min-width:2ch; text-align:center; }
+
+.etichetta{ font-size:.9rem; color:var(--testo-tenue); font-weight:700;
+  text-transform:uppercase; letter-spacing:.04em; margin:18px 0 8px; }
+
+/* ---- Passaggio del telefono ---- */
+.passa{ text-align:center; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; flex:1; gap:8px; }
+.passa .grande{ font-size:1.7rem; font-weight:800; }
+.passa .emoji{ font-size:4rem; }
+
+/* ---- Tabellone finale ---- */
+.classifica{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+.classifica li{ display:flex; align-items:center; gap:14px; background:var(--carta);
+  border-radius:var(--raggio); padding:14px 16px; box-shadow:var(--ombra); }
+.classifica .pos{ font-size:1.5rem; font-weight:800; width:1.6em; text-align:center; }
+.classifica .nome{ flex:1; font-size:1.1rem; font-weight:700; }
+.classifica .punti{ color:var(--testo-tenue); font-weight:700; }
+.classifica li.vincitore{ background:linear-gradient(135deg,var(--accento),var(--accento-scuro)); color:#241f00; }
+.classifica li.vincitore .punti{ color:#3a3000; }
+
+/* ---- Novità (diario aggiornamenti) ---- */
+.pallino{ width:10px; height:10px; border-radius:50%; background:var(--rosso);
+  display:inline-block; margin-left:2px; box-shadow:0 0 0 3px rgba(255,93,108,.25); }
+.novita-card{ background:var(--carta); border-radius:var(--raggio); padding:16px;
+  box-shadow:var(--ombra); margin-bottom:14px; }
+.novita-data{ font-size:.8rem; font-weight:700; color:var(--accento);
+  text-transform:uppercase; letter-spacing:.04em; }
+.novita-titolo{ margin:4px 0 10px; font-size:1.2rem; }
+.novita-punti{ margin:0; padding-left:1.1em; }
+.novita-punti li{ margin-bottom:7px; line-height:1.4; color:var(--testo); }
+
+/* ---- Categorie (scelta dell'host) ---- */
+.cat-griglia{ display:flex; flex-wrap:wrap; gap:10px; }
+.cat-chip{ display:flex; align-items:center; gap:8px; font-family:inherit; font-size:1rem;
+  font-weight:700; cursor:pointer; padding:12px 14px; min-height:var(--tocco);
+  border-radius:14px; background:var(--carta); color:var(--testo-tenue);
+  border:2px solid transparent; transition:all .12s ease; }
+.cat-chip .ci{ font-size:1.2rem; }
+.cat-chip .spunta{ opacity:0; font-weight:900; color:var(--verde); }
+.cat-chip.attiva{ color:var(--testo); border-color:var(--accento); background:var(--carta-2); }
+.cat-chip.attiva .spunta{ opacity:1; }
+
+/* ---- Campo del link da condividere ---- */
+.link-campo{ width:100%; font-family:inherit; font-size:.95rem; margin-top:10px;
+  padding:12px 14px; border-radius:14px; border:2px solid var(--accento);
+  background:var(--carta); color:var(--testo); min-height:var(--tocco); }
+.link-avviso{ margin-top:8px; font-size:.9rem; color:var(--testo-tenue); line-height:1.4; }
+
+/* ---- Utility ---- */
+.centro{ text-align:center; }
+.tenue{ color:var(--testo-tenue); }
+.spazio{ height:10px; }
+</style>
+<div id="app"></div>
+<script>
+/* =========================================================
+   MOTORE COMUNE — "SG"
+   Tutto ciò che ogni gioco condivide sta qui, scritto una
+   volta sola: le schermate comuni (home, giocatori, regole,
+   tabellone finale), la lista dei giocatori, il passaggio
+   del telefono e il giro di partita (comincia / fine / rigioca).
+
+   Un gioco si "innesta" chiamando SG.registra({...}).
+   Vedi docs/COME-SI-AGGIUNGE-UN-GIOCO.md
+   ========================================================= */
+(function () {
+  "use strict";
+
+  var giochi = [];            // giochi registrati
+  var app;                    // contenitore radice (#app)
+  var linkParams = {};        // impostazioni arrivate da un link condiviso
+
+  // Legge le impostazioni scritte nel link (dopo il #), es.:
+  //   #gioco=timeline&cat=storia,calcio&carte=5
+  function leggiParametriLink() {
+    var out = {};
+    var h = (location.hash || "").replace(/^#/, "");
+    if (!h) return out;
+    h.split("&").forEach(function (p) {
+      var i = p.indexOf("=");
+      if (i < 0) return;
+      var k = decodeURIComponent(p.slice(0, i));
+      var v = decodeURIComponent(p.slice(i + 1));
+      out[k] = v;
+    });
+    if (out.cat) out.cat = out.cat.split(",").filter(Boolean);
+    if (out.carte) out.carte = parseInt(out.carte, 10);
+    return out;
+  }
+
+  // ------- piccoli aiuti per costruire l'interfaccia -------
+  function el(tag, attrs, figli) {
+    var e = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === "class") e.className = attrs[k];
+      else if (k === "html") e.innerHTML = attrs[k];
+      else if (k === "text") e.textContent = attrs[k];
+      else if (k.slice(0, 2) === "on") e.addEventListener(k.slice(2), attrs[k]);
+      else e.setAttribute(k, attrs[k]);
+    }
+    if (figli) figli.forEach(function (f) {
+      if (f == null) return;
+      e.appendChild(typeof f === "string" ? document.createTextNode(f) : f);
+    });
+    return e;
+  }
+  function svuota(n){ while (n.firstChild) n.removeChild(n.firstChild); }
+  function mischia(a){ // Fisher-Yates
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  // Costruisce lo scheletro di una schermata: testa + contenuto + piede
+  function schermata(opts) {
+    opts = opts || {};
+    var testa = el("div", { class: "testa" });
+    if (opts.indietro) {
+      testa.appendChild(el("button", {
+        class: "btn btn-fantasma btn-piccolo", text: "‹", "aria-label": "Indietro",
+        onclick: opts.indietro
+      }));
+    }
+    var titoli = el("div");
+    if (opts.icona) testa.insertBefore(el("span", { text: opts.icona, style: "font-size:1.8rem" }), null);
+    if (opts.titolo) titoli.appendChild(el("h1", { text: opts.titolo }));
+    if (opts.sotto) titoli.appendChild(el("p", { class: "sotto", text: opts.sotto }));
+    testa.appendChild(titoli);
+
+    var contenuto = el("div", { class: "contenuto" });
+    var piede = el("div", { class: "piede" });
+    var s = el("div", { class: "schermata" }, [testa, contenuto, piede]);
+    s._contenuto = contenuto; s._piede = piede;
+    return s;
+  }
+
+  function mostra(schermo) {
+    svuota(app);
+    app.appendChild(schermo);
+    window.scrollTo(0, 0);
+  }
+
+  // =========================================================
+  //  SCHERMATE COMUNI
+  // =========================================================
+
+  function schermataHome() {
+    var s = schermata({ titolo: "Serata Giochi", sotto: "Scegli un gioco e passa il telefono" });
+    var griglia = el("div", { class: "griglia-giochi" });
+
+    giochi.forEach(function (g) {
+      griglia.appendChild(el("button", {
+        class: "tessera", onclick: function () { schermataGiocatori(g); }
+      }, [
+        el("span", { class: "icona", text: g.icona || "🎲" }),
+        el("div", { class: "info" }, [
+          el("h2", { text: g.nome }),
+          el("p", { text: g.descrizione || "" }),
+          el("div", { class: "meta", text: rangeGiocatori(g) })
+        ])
+      ]));
+    });
+
+    // Segnaposto: fa capire che ne arriveranno altri (senza prometterli)
+    griglia.appendChild(el("div", { class: "tessera presto" }, [
+      el("span", { class: "icona", text: "➕" }),
+      el("div", { class: "info" }, [
+        el("h2", { text: "Altri giochi in arrivo" }),
+        el("p", { text: "Uno alla volta, fatto bene." })
+      ])
+    ]));
+
+    s._contenuto.appendChild(griglia);
+
+    // Tasto "Novità" (con pallino rosso se c'è qualcosa di non ancora visto)
+    var novita = window.SG_NOVITA || [];
+    if (novita.length) {
+      var btn = el("button", { class: "btn btn-fantasma", onclick: schermataNovita });
+      btn.appendChild(el("span", { text: "🆕 Novità" }));
+      if (!novitaTutteViste()) btn.appendChild(el("span", { class: "pallino" }));
+      s._piede.appendChild(btn);
+    }
+
+    mostra(s);
+  }
+
+  // ---- Novità (il diario di cosa viene aggiunto) ----
+  var CHIAVE_NOVITA = "sg_novita_vista";
+  function ultimaVersioneNovita() {
+    var n = window.SG_NOVITA || [];
+    return n.length ? n[0].v : 0;
+  }
+  function novitaTutteViste() {
+    try { return Number(localStorage.getItem(CHIAVE_NOVITA)) >= ultimaVersioneNovita(); }
+    catch (e) { return false; }
+  }
+  function segnaNovitaViste() {
+    try { localStorage.setItem(CHIAVE_NOVITA, String(ultimaVersioneNovita())); } catch (e) {}
+  }
+  function schermataNovita() {
+    var s = schermata({ icona: "🆕", titolo: "Novità", sotto: "Cosa è stato aggiunto", indietro: schermataHome });
+    (window.SG_NOVITA || []).forEach(function (n) {
+      var punti = el("ul", { class: "novita-punti" });
+      (n.descrizione || []).forEach(function (r) { punti.appendChild(el("li", { text: r })); });
+      s._contenuto.appendChild(el("div", { class: "novita-card" }, [
+        el("div", { class: "novita-data", text: n.data }),
+        el("h2", { class: "novita-titolo", text: n.titolo }),
+        punti
+      ]));
+    });
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Ho capito", onclick: schermataHome }));
+    segnaNovitaViste(); // aperto = visto
+    mostra(s);
+  }
+
+  function rangeGiocatori(g) {
+    var min = g.giocatoriMin || 2, max = g.giocatoriMax || 8;
+    return "👥 " + (min === max ? min : min + "–" + max) + " giocatori";
+  }
+
+  // ---- Scelta dei giocatori ----
+  function schermataGiocatori(g) {
+    var min = g.giocatoriMin || 2;
+    var max = g.giocatoriMax || 8;
+    var nomi = ["", ""]; // due righe di partenza
+    while (nomi.length < min) nomi.push("");
+
+    var s = schermata({
+      icona: g.icona, titolo: g.nome, sotto: "Chi gioca?",
+      indietro: schermataHome
+    });
+
+    var lista = el("div");
+    function ridisegna() {
+      svuota(lista);
+      nomi.forEach(function (n, i) {
+        var input = el("input", {
+          type: "text", value: n, placeholder: "Giocatore " + (i + 1),
+          maxlength: "16",
+          oninput: function (ev) { nomi[i] = ev.target.value; }
+        });
+        var riga = el("div", { class: "giocatore-riga" }, [input]);
+        if (nomi.length > min) {
+          riga.appendChild(el("button", {
+            class: "togli", text: "×", "aria-label": "Togli",
+            onclick: function () { nomi.splice(i, 1); ridisegna(); }
+          }));
+        }
+        lista.appendChild(riga);
+      });
+    }
+    ridisegna();
+
+    var aggiungi = el("button", {
+      class: "btn btn-fantasma", html: "＋ Aggiungi giocatore",
+      onclick: function () {
+        if (nomi.length >= max) return;
+        nomi.push(""); ridisegna();
+        if (nomi.length >= max) aggiungi.disabled = true;
+      }
+    });
+
+    s._contenuto.appendChild(lista);
+    s._contenuto.appendChild(aggiungi);
+
+    // Impostazioni specifiche del gioco (facoltative)
+    var impostazioni = {};
+    if (typeof g.impostazioni === "function") {
+      var box = el("div");
+      g.impostazioni(box, impostazioni, { el: el });
+      s._contenuto.appendChild(box);
+    }
+
+    s._piede.appendChild(el("button", {
+      class: "btn btn-fantasma", text: "Come si gioca",
+      onclick: function () { schermataRegole(g, function () { schermataGiocatori(g); }); }
+    }));
+    s._piede.appendChild(el("button", {
+      class: "btn btn-primario", text: "Comincia ▶",
+      onclick: function () {
+        var puliti = nomi.map(function (n, i) {
+          return (n || "").trim() || ("Giocatore " + (i + 1));
+        });
+        if (puliti.length < min) return;
+        avviaPartita(g, puliti, impostazioni);
+      }
+    }));
+
+    mostra(s);
+  }
+
+  // ---- Regole ----
+  function schermataRegole(g, indietro) {
+    var s = schermata({ icona: g.icona, titolo: "Come si gioca", sotto: g.nome, indietro: indietro });
+    var righe = g.regole || ["(regole non ancora scritte)"];
+    var box = el("div");
+    righe.forEach(function (r) {
+      box.appendChild(el("p", { class: "", html: r, style: "font-size:1.05rem; line-height:1.5; margin:0 0 14px" }));
+    });
+    s._contenuto.appendChild(box);
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Ho capito", onclick: indietro }));
+    mostra(s);
+  }
+
+  // ---- Passaggio del telefono (interstiziale tra un turno e l'altro) ----
+  function passaIlTelefono(nomeProssimo, quando) {
+    var s = schermata({});
+    var box = el("div", { class: "passa" }, [
+      el("div", { class: "emoji", text: "🤝" }),
+      el("p", { class: "tenue", text: "Passa il telefono a" }),
+      el("div", { class: "grande", text: nomeProssimo })
+    ]);
+    s._contenuto.appendChild(box);
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Sono " + nomeProssimo + " ▶", onclick: quando }));
+    mostra(s);
+  }
+
+  // ---- Tabellone finale (uguale per tutti i giochi) ----
+  // classifica: array ordinato dal 1° all'ultimo, ognuno { nome, punti (facolt.) }
+  function schermataFine(g, classifica, giocatori, impostazioni) {
+    var s = schermata({ icona: "🏆", titolo: "Fine partita", sotto: g.nome });
+    var ol = el("ol", { class: "classifica" });
+    var medaglie = ["🥇", "🥈", "🥉"];
+    classifica.forEach(function (r, i) {
+      ol.appendChild(el("li", { class: i === 0 ? "vincitore" : "" }, [
+        el("span", { class: "pos", text: medaglie[i] || (i + 1) + "°" }),
+        el("span", { class: "nome", text: r.nome }),
+        r.punti != null ? el("span", { class: "punti", text: r.punti }) : null
+      ]));
+    });
+    s._contenuto.appendChild(ol);
+
+    s._piede.appendChild(el("button", {
+      class: "btn btn-primario", text: "↻ Rigioca",
+      onclick: function () { avviaPartita(g, giocatori, impostazioni); }
+    }));
+    s._piede.appendChild(el("button", {
+      class: "btn btn-fantasma", text: "🏠 Torna ai giochi",
+      onclick: schermataHome
+    }));
+    mostra(s);
+  }
+
+  // =========================================================
+  //  GIRO DI PARTITA
+  //  Consegna al gioco un "tavolo" con tutto ciò che gli serve,
+  //  senza fargli sapere come sono fatte le schermate comuni.
+  // =========================================================
+  function avviaPartita(g, giocatori, impostazioni) {
+    var contenitore = el("div");
+    var schermo = el("div");
+    schermo.appendChild(contenitore);
+
+    var tavolo = {
+      giocatori: giocatori.slice(),
+      impostazioni: impostazioni || {},
+      radice: contenitore,
+
+      // aiuti riusabili (così i giochi non reinventano le stesse cose)
+      el: el,
+      svuota: svuota,
+      mischia: mischia,
+      schermata: schermata,
+      mostra: function (s) { mostra(s); },
+
+      // passaggio del telefono, poi esegue "quando"
+      passaA: function (nome, quando) { passaIlTelefono(nome, quando); },
+
+      // il gioco chiama questa quando è finito
+      fine: function (classifica) { schermataFine(g, classifica, giocatori, impostazioni); },
+
+      // uscite comuni
+      esci: schermataHome
+    };
+
+    g.avvia(tavolo);
+  }
+
+  // =========================================================
+  //  API PUBBLICA
+  // =========================================================
+  window.SG = {
+    registra: function (gioco) { giochi.push(gioco); },
+    avviaApp: function () {
+      app = document.getElementById("app");
+      linkParams = leggiParametriLink();
+      // Se il link indica un gioco, si apre già sulla scelta dei giocatori
+      var g = linkParams.gioco && giochi.filter(function (x) { return x.id === linkParams.gioco; })[0];
+      if (g) schermataGiocatori(g);
+      else schermataHome();
+    },
+    // impostazioni arrivate da un link (le legge il gioco per i valori di partenza)
+    parametriLink: function () { return linkParams; },
+    // costruisce un link condivisibile con le impostazioni scelte dall'host
+    creaLink: function (params) {
+      var base = location.origin + location.pathname;
+      var pezzi = [];
+      for (var k in params) {
+        var v = params[k];
+        if (v == null || v === "") continue;
+        if (Array.isArray(v)) v = v.join(",");
+        // chiavi e valori qui sono già sicuri (lettere, numeri, virgole): niente codifica illeggibile
+        pezzi.push(k + "=" + v);
+      }
+      return base + (pezzi.length ? "#" + pezzi.join("&") : "");
+    },
+    // esposti perché comodi anche fuori
+    _util: { el: el, svuota: svuota, mischia: mischia }
+  };
+})();
+
+/* Categoria: Calcio — avvenimenti per "La linea del tempo".
+   Le date sono verificate. Aggiungerne altre non richiede di toccare il gioco. */
+(window.SG_CATEGORIE = window.SG_CATEGORIE || []).push({
+  id: "calcio",
+  nome: "Calcio",
+  icona: "⚽",
+  eventi: [
+    { anno: 1930, titolo: "Si gioca il primo Mondiale di calcio della storia", fatto: "In Uruguay va in scena la prima Coppa del Mondo: la vincono i padroni di casa battendo l'Argentina in finale." },
+    { anno: 1934, titolo: "L'Italia vince il suo primo Mondiale", fatto: "Gli azzurri di Vittorio Pozzo trionfano in casa battendo la Cecoslovacchia nella finale di Roma." },
+    { anno: 1938, titolo: "L'Italia si conferma campione del mondo", fatto: "In Francia gli azzurri di Pozzo battono l'Ungheria e vincono il loro secondo Mondiale consecutivo." },
+    { anno: 1950, titolo: "Il Maracanazo sconvolge il Brasile in casa sua", fatto: "Nella finale di fatto al Maracanà l'Uruguay batte a sorpresa il Brasile padrone di casa e si laurea campione del mondo." },
+    { anno: 1966, titolo: "L'Italia viene clamorosamente eliminata dalla Corea del Nord", fatto: "Ai Mondiali in Inghilterra gli azzurri perdono a sorpresa contro una squadra asiatica debuttante e vengono accolti in patria a lanci di pomodori." },
+    { anno: 1970, titolo: "Italia e Germania Ovest giocano la partita del secolo", fatto: "Nella semifinale mondiale in Messico l'Italia vince 4-3 dopo i tempi supplementari in una gara ricca di ribaltamenti." },
+    { anno: 1982, titolo: "L'Italia conquista il suo terzo Mondiale", fatto: "In Spagna gli azzurri battono in finale la Germania Ovest, con capitan Zoff che solleva la coppa a quarant'anni suonati." },
+    { anno: 1985, titolo: "Una tragedia funesta colpisce una finale di Coppa dei Campioni", fatto: "Allo stadio Heysel di Bruxelles il crollo di un muraglione durante gli scontri tra tifoserie causa decine di morti prima della gara tra Juventus e Liverpool." },
+    { anno: 1986, titolo: "Maradona segna il gol della 'Mano de Dios'", fatto: "Nei quarti di finale mondiali contro l'Inghilterra il fuoriclasse argentino segna di mano senza che l'arbitro se ne accorga." },
+    { anno: 1990, titolo: "L'Italia ospita il Mondiale delle 'notti magiche'", fatto: "Gli azzurri di Vicini chiudono il torneo di casa al terzo posto, trascinati dai gol di Salvatore Schillaci." },
+    { anno: 1994, titolo: "Il rigore di Baggio in finale di Coppa del Mondo finisce alto", fatto: "Negli Stati Uniti l'errore dagli undici metri del Divin Codino consegna il titolo mondiale al Brasile." },
+    { anno: 2000, titolo: "La Francia beffa l'Italia con un golden gol in finale europea", fatto: "A Rotterdam i transalpini ribaltano il vantaggio azzurro e vincono il titolo continentale ai tempi supplementari." },
+    { anno: 2004, titolo: "La Grecia firma la sorpresa più grande nella storia degli Europei", fatto: "Con una squadra data per sfavorita i greci battono in finale i padroni di casa del Portogallo e vincono il titolo continentale." },
+    { anno: 2006, titolo: "L'Italia si laurea per la quarta volta campione del mondo", fatto: "In Germania gli azzurri battono ai rigori la Francia in una finale ricordata anche per la testata di Zidane a Materazzi." },
+    { anno: 2012, titolo: "La Spagna umilia l'Italia nella finale degli Europei", fatto: "A Kiev le furie rosse travolgono gli azzurri con il punteggio più ampio mai visto in una finale continentale." },
+    { anno: 2021, titolo: "L'Italia torna sul tetto d'Europa dopo oltre mezzo secolo", fatto: "A Wembley gli azzurri di Mancini battono l'Inghilterra ai rigori e riconquistano il titolo continentale." }
+  ]
+});
+
+/* Categoria: Cinema — avvenimenti per "La linea del tempo".
+   Le date sono verificate (anno di uscita). Aggiungerne altre non richiede di toccare il gioco. */
+(window.SG_CATEGORIE = window.SG_CATEGORIE || []).push({
+  id: "cinema",
+  nome: "Cinema",
+  icona: "🎬",
+  eventi: [
+    { anno: 1939, titolo: "Esce nelle sale il kolossal 'Via col vento'", fatto: "L'epico melodramma ambientato durante la Guerra di secessione americana diventa uno dei film più celebri di sempre." },
+    { anno: 1942, titolo: "Debutta al cinema 'Casablanca'", fatto: "La storia d'amore tra Rick e Ilsa, ambientata nel Marocco della Seconda guerra mondiale, diventa un classico intramontabile." },
+    { anno: 1954, titolo: "Federico Fellini presenta 'La strada'", fatto: "Il film con Giulietta Masina e Anthony Quinn vince il Leone d'argento a Venezia e in seguito l'Oscar come miglior film straniero." },
+    { anno: 1960, titolo: "Federico Fellini porta nelle sale 'La dolce vita'", fatto: "Il ritratto della Roma mondana, con Marcello Mastroianni e la celebre scena nella Fontana di Trevi, vince la Palma d'oro a Cannes." },
+    { anno: 1972, titolo: "Esce al cinema 'Il Padrino'", fatto: "La saga della famiglia Corleone diretta da Francis Ford Coppola diventa una pietra miliare del cinema mondiale." },
+    { anno: 1975, titolo: "'Lo squalo' terrorizza gli spettatori nelle sale", fatto: "Il thriller diretto da Steven Spielberg su un grande squalo bianco inaugura l'era dei blockbuster estivi." },
+    { anno: 1977, titolo: "Debutta al cinema il primo capitolo di 'Guerre stellari'", fatto: "Il film di George Lucas dà inizio a una delle saghe fantascientifiche più amate di sempre." },
+    { anno: 1982, titolo: "Steven Spielberg porta nelle sale 'E.T. l'extra-terrestre'", fatto: "La storia dell'amicizia tra un bambino e un alieno smarrito sulla Terra commuove il pubblico di tutto il mondo." },
+    { anno: 1988, titolo: "Giuseppe Tornatore presenta 'Nuovo Cinema Paradiso'", fatto: "Il film sul legame tra un ragazzo e il proiezionista del suo paese vincerà l'Oscar come miglior film straniero." },
+    { anno: 1994, titolo: "Esce nelle sale 'Il Re Leone'", fatto: "Il classico d'animazione Disney sulle vicende del cucciolo di leone Simba diventa uno dei più amati di sempre." },
+    { anno: 1997, titolo: "'Titanic' conquista il pubblico di tutto il mondo", fatto: "Il kolossal di James Cameron sull'affondamento del transatlantico diventa uno dei film di maggior incasso della storia." },
+    { anno: 1997, titolo: "Roberto Benigni presenta 'La vita è bella'", fatto: "Il film sulla deportazione di un padre e un figlio in un campo di concentramento vincerà tre premi Oscar." },
+    { anno: 1999, titolo: "Debutta nelle sale 'Matrix'", fatto: "Il film di fantascienza con Keanu Reeves rivoluziona gli effetti speciali e il modo di raccontare la realtà virtuale al cinema." },
+    { anno: 2001, titolo: "Esce il primo capitolo de 'Il Signore degli Anelli'", fatto: "'La Compagnia dell'Anello', diretto da Peter Jackson, porta sul grande schermo il mondo fantasy di Tolkien." },
+    { anno: 2009, titolo: "'Avatar' arriva nelle sale di tutto il mondo", fatto: "Il film di James Cameron ambientato sul pianeta Pandora diventa il più visto della storia grazie anche alle tecniche in 3D." }
+  ]
+});
+
+/* Categoria: Invenzioni e scoperte — avvenimenti per "La linea del tempo".
+   ⚠️ Controllare sempre le date. Aggiungerne altre NON richiede di toccare il gioco. */
+(window.SG_CATEGORIE = window.SG_CATEGORIE || []).push({
+  id: "invenzioni",
+  nome: "Invenzioni e scoperte",
+  icona: "💡",
+  eventi: [
+    { anno: 1455, titolo: "Gutenberg stampa la sua Bibbia", fatto: "Con i caratteri mobili i libri smettono di essere copiati a mano uno a uno." },
+    { anno: 1543, titolo: "Copernico pubblica la teoria eliocentrica", fatto: "Sostiene che è la Terra a girare attorno al Sole, e non il contrario." },
+    { anno: 1783, titolo: "Primo volo umano in mongolfiera", fatto: "I fratelli Montgolfier alzano in aria un pallone: 120 anni prima dell'aereo." },
+    { anno: 1843, titolo: "Viene brevettato il fax", fatto: "Sorpresa: la macchina per inviare immagini a distanza è più vecchia del telefono." },
+    { anno: 1859, titolo: "Darwin pubblica 'L'origine delle specie'", fatto: "La teoria dell'evoluzione cambia per sempre il modo di vedere la vita." },
+    { anno: 1863, titolo: "Apre la prima metropolitana del mondo", fatto: "A Londra i treni cominciano a correre sottoterra, ancora a vapore." },
+    { anno: 1876, titolo: "Bell brevetta il telefono", fatto: "Da questo momento la voce può viaggiare lungo un filo, a chilometri di distanza." },
+    { anno: 1879, titolo: "Edison mette a punto la lampadina", fatto: "La luce elettrica pratica comincia a sostituire candele e lampade a gas." },
+    { anno: 1885, titolo: "Pasteur prova il vaccino contro la rabbia", fatto: "Salva un bambino morso da un cane rabbioso: nasce l'era dei vaccini moderni." },
+    { anno: 1886, titolo: "Viene inventata la Coca-Cola", fatto: "Nasce ad Atlanta come sciroppo venduto in farmacia." },
+    { anno: 1889, titolo: "Viene fondata la Nintendo", fatto: "Sorpresa: nasce come azienda di carte da gioco, decenni prima dei videogiochi." },
+    { anno: 1895, titolo: "I fratelli Lumière proiettano il primo film", fatto: "A Parigi il pubblico vede muoversi le immagini: nasce il cinema." },
+    { anno: 1901, titolo: "Marconi lancia un segnale radio oltre l'Atlantico", fatto: "Un segnale attraversa l'oceano senza fili: nasce la radio a distanza." },
+    { anno: 1903, titolo: "Il primo volo dei fratelli Wright", fatto: "Un aeroplano si stacca da terra per pochi secondi: comincia l'aviazione." },
+    { anno: 1928, titolo: "Fleming scopre la penicillina", fatto: "Una muffa dimenticata su una piastra apre la strada agli antibiotici." },
+    { anno: 1936, titolo: "Iniziano le trasmissioni televisive regolari", fatto: "La BBC di Londra manda in onda i primi programmi della storia." },
+    { anno: 1953, titolo: "Viene scoperta la struttura del DNA", fatto: "La 'doppia elica' svela come si trasmettono i caratteri ereditari." },
+    { anno: 1954, titolo: "Iniziano le trasmissioni della TV italiana", fatto: "La RAI accende i televisori nelle case: comincia una nuova abitudine." },
+    { anno: 1971, titolo: "Viene inviata la prima email", fatto: "Sorpresa: la posta elettronica esiste da prima dei computer di casa." },
+    { anno: 1973, titolo: "La prima telefonata da un cellulare", fatto: "Un ingegnere chiama dalla strada con un 'mattone' pesante oltre un chilo." },
+    { anno: 1991, titolo: "Nasce il primo sito web", fatto: "Al CERN va online la prima pagina: è l'inizio del World Wide Web." },
+    { anno: 1996, titolo: "Nasce Dolly, la prima pecora clonata", fatto: "È il primo mammifero clonato da una cellula adulta." },
+    { anno: 1998, titolo: "Nasce Google", fatto: "Due studenti fondano il motore di ricerca in un garage in California." },
+    { anno: 2001, titolo: "Nasce Wikipedia", fatto: "L'enciclopedia scritta da tutti mette il sapere a portata di clic." },
+    { anno: 2004, titolo: "Nasce Facebook", fatto: "Parte da un'università americana e in pochi anni conquista il pianeta." },
+    { anno: 2005, titolo: "Nasce YouTube", fatto: "Chiunque può caricare un video: cambia per sempre il modo di guardare." },
+    { anno: 2007, titolo: "Viene presentato il primo iPhone", fatto: "Steve Jobs mostra un telefono senza tasti: comincia l'era degli smartphone." },
+    { anno: 2010, titolo: "Nasce Instagram", fatto: "Un'app di sole foto quadrate diventa in poco tempo un fenomeno mondiale." }
+  ]
+});
+
+/* Categoria: Rap italiano — avvenimenti per "La linea del tempo".
+   Le date sono verificate. Aggiungerne altre non richiede di toccare il gioco. */
+(window.SG_CATEGORIE = window.SG_CATEGORIE || []).push({
+  id: "rap",
+  nome: "Rap italiano",
+  icona: "🎤",
+  eventi: [
+    { anno: 1993, titolo: "Gli Articolo 31 pubblicano il loro primo album", fatto: "Esce 'Strade di città', disco d'esordio del duo milanese tra i pionieri dell'hip hop italiano." },
+    { anno: 1994, titolo: "Esce l'album che cambia il corso del rap italiano", fatto: "I Sangue Misto pubblicano 'SxM', unico disco del gruppo bolognese e pietra miliare del genere in Italia." },
+    { anno: 1996, titolo: "Neffa lancia il suo album d'esordio con la sua crew", fatto: "Esce 'Neffa & i Messaggeri della Dopa', trainato dal singolo 'Aspettando il sole'." },
+    { anno: 1997, titolo: "Frankie hi-nrg mc pubblica il suo disco più famoso", fatto: "Con 'La morte dei miracoli' e il singolo 'Quelli che benpensano' l'artista torinese raggiunge il successo nazionale." },
+    { anno: 1999, titolo: "'Supercafone' diventa il tormentone rap dell'estate", fatto: "Piotta porta il dialetto romano nella musica hip hop con un singolo che conquista le radio italiane." },
+    { anno: 2003, titolo: "Caparezza si fa conoscere al grande pubblico", fatto: "Con l'album 'Verità supposte' e brani come 'Fuori dal tunnel' il rapper pugliese ottiene il primo grande successo." },
+    { anno: 2006, titolo: "Fabri Fibra apre il rap italiano al mainstream", fatto: "L'album 'Tradimento', il suo primo con una major, porta l'hip hop italiano a un pubblico molto più ampio." },
+    { anno: 2008, titolo: "Marracash pubblica il suo album d'esordio", fatto: "Il disco omonimo, con la hit 'Badabum Cha Cha', lancia la carriera solista del rapper siciliano." },
+    { anno: 2012, titolo: "Emis Killa debutta con un album da disco di platino", fatto: "'L'erba cattiva' segna l'esordio discografico del rapper lombardo con collaborazioni tra i big del genere." },
+    { anno: 2015, titolo: "Sfera Ebbasta pubblica il mixtape che apre l'era della trap italiana", fatto: "Esce 'XDVR', realizzato con il producer Charlie Charles e diventato un punto di svolta per il genere in Italia." },
+    { anno: 2017, titolo: "J-Ax e Fedez pubblicano il loro album in coppia", fatto: "'Comunisti col Rolex' diventa uno dei dischi italiani più venduti dell'anno, trainato da singoli di grande successo." },
+    { anno: 2018, titolo: "Ghali conquista le classifiche con un nuovo singolo", fatto: "'Cara Italia' diventa uno dei brani italiani più ascoltati e discussi dell'anno." },
+    { anno: 2019, titolo: "Un cantante cresciuto nella scena urban vince il Festival di Sanremo", fatto: "Mahmood trionfa con il brano 'Soldi', portando sonorità rap e trap sul palco dell'Ariston." },
+    { anno: 2022, titolo: "Due voci della scena urban vincono insieme il Festival di Sanremo", fatto: "Mahmood e Blanco si aggiudicano la vittoria con il brano 'Brividi'." }
+  ]
+});
+
+/* Categoria: Storia — avvenimenti per "La linea del tempo".
+   ⚠️ Controllare sempre le date. Aggiungerne altre NON richiede di toccare il gioco.
+   anno: negativo = avanti Cristo (es. -753). titolo: la frase SENZA la data. */
+(window.SG_CATEGORIE = window.SG_CATEGORIE || []).push({
+  id: "storia",
+  nome: "Storia",
+  icona: "📜",
+  eventi: [
+    { anno: -2560, titolo: "Costruzione della Grande Piramide di Giza", fatto: "In Egitto viene innalzata la piramide del faraone Cheope, alta oltre 140 metri." },
+    { anno: -776, titolo: "Si tengono le prime Olimpiadi antiche", fatto: "A Olimpia, in Grecia, nascono i giochi in onore di Zeus." },
+    { anno: -753, titolo: "Fondazione leggendaria di Roma", fatto: "Secondo la tradizione, Romolo traccia i confini della città sul colle Palatino." },
+    { anno: -44, titolo: "Giulio Cesare viene assassinato", fatto: "Alle Idi di marzo, in Senato, un gruppo di congiurati lo pugnala a morte." },
+    { anno: 79, titolo: "Il Vesuvio seppellisce Pompei", fatto: "Un'eruzione improvvisa ricopre di cenere le città romane ai piedi del vulcano." },
+    { anno: 476, titolo: "Cade l'Impero romano d'Occidente", fatto: "L'ultimo imperatore, Romolo Augustolo, viene deposto: finisce un'epoca." },
+    { anno: 1066, titolo: "Battaglia di Hastings", fatto: "Guglielmo il Conquistatore sconfigge gli inglesi e diventa re d'Inghilterra." },
+    { anno: 1088, titolo: "Nasce l'Università di Bologna", fatto: "È considerata la più antica università del mondo occidentale ancora attiva." },
+    { anno: 1096, titolo: "Iniziano le lezioni all'Università di Oxford", fatto: "Si insegnava a Oxford già prima che nascesse l'impero azteco." },
+    { anno: 1215, titolo: "Viene firmata la Magna Carta", fatto: "In Inghilterra il re accetta per la prima volta dei limiti al proprio potere." },
+    { anno: 1271, titolo: "Marco Polo parte per la Cina", fatto: "Il mercante veneziano inizia il viaggio che racconterà ne 'Il Milione'." },
+    { anno: 1325, titolo: "Fondazione di Tenochtitlán, capitale azteca", fatto: "Sorge su un'isola in mezzo a un lago, dove oggi c'è Città del Messico." },
+    { anno: 1347, titolo: "La peste nera arriva in Europa", fatto: "In pochi anni l'epidemia uccide circa un terzo della popolazione europea." },
+    { anno: 1492, titolo: "Cristoforo Colombo arriva in America", fatto: "Partito per le Indie, sbarca su un'isola dei Caraibi cambiando la storia." },
+    { anno: 1498, titolo: "Vasco da Gama raggiunge l'India via mare", fatto: "Aggira l'Africa e apre la rotta oceanica verso le spezie dell'Oriente." },
+    { anno: 1508, titolo: "Michelangelo inizia la volta della Cappella Sistina", fatto: "Ci lavorerà quattro anni, quasi sempre a testa in su su un'impalcatura." },
+    { anno: 1519, titolo: "Magellano parte per il giro del mondo", fatto: "La spedizione tornerà tre anni dopo: la prima a circumnavigare il pianeta." },
+    { anno: 1564, titolo: "Nasce Galileo Galilei", fatto: "Il padre della scienza moderna nasce a Pisa lo stesso anno di Shakespeare." },
+    { anno: 1633, titolo: "Galileo è processato dalla Chiesa", fatto: "Viene costretto ad abiurare le sue idee sul moto della Terra." },
+    { anno: 1666, titolo: "Il grande incendio di Londra", fatto: "Per quattro giorni le fiamme divorano gran parte della città di legno." },
+    { anno: 1776, titolo: "Dichiarazione d'indipendenza americana", fatto: "Le tredici colonie si staccano dall'Inghilterra e nascono gli Stati Uniti." },
+    { anno: 1789, titolo: "Rivoluzione francese e presa della Bastiglia", fatto: "Il popolo di Parigi assalta la prigione simbolo del potere del re." },
+    { anno: 1804, titolo: "Napoleone si incorona imperatore", fatto: "A Parigi si mette la corona da solo, davanti al Papa." },
+    { anno: 1815, titolo: "Battaglia di Waterloo", fatto: "La sconfitta finale di Napoleone segna la fine della sua avventura." },
+    { anno: 1848, titolo: "Le rivoluzioni del 1848 in Europa", fatto: "Un'ondata di rivolte per libertà e costituzioni attraversa quasi tutto il continente." },
+    { anno: 1861, titolo: "Nasce il Regno d'Italia", fatto: "Con l'unificazione, per la prima volta l'Italia diventa un solo Stato." },
+    { anno: 1865, titolo: "Abraham Lincoln viene assassinato", fatto: "Il presidente USA è ucciso a teatro, pochi giorni dopo la fine della guerra civile." },
+    { anno: 1869, titolo: "Apre il Canale di Suez", fatto: "Il taglio tra Mediterraneo e Mar Rosso accorcia enormemente le rotte navali." },
+    { anno: 1889, titolo: "Viene inaugurata la Torre Eiffel", fatto: "Doveva essere temporanea; molti parigini la trovavano orribile." },
+    { anno: 1893, titolo: "La Nuova Zelanda dà il voto alle donne", fatto: "È il primo Paese al mondo a riconoscerlo, molto prima di quasi tutti gli altri." },
+    { anno: 1896, titolo: "Prime Olimpiadi moderne, ad Atene", fatto: "Dopo quasi 1500 anni i giochi olimpici tornano a vivere." },
+    { anno: 1911, titolo: "Amundsen raggiunge il Polo Sud", fatto: "L'esploratore norvegese è il primo a piantare la bandiera sul punto più a sud." },
+    { anno: 1912, titolo: "Affonda il Titanic", fatto: "La nave 'inaffondabile' urta un iceberg nel suo primo viaggio." },
+    { anno: 1914, titolo: "Inizia la Prima guerra mondiale", fatto: "Un attentato a Sarajevo accende un conflitto che coinvolge il mondo intero." },
+    { anno: 1917, titolo: "La Rivoluzione russa", fatto: "Cade lo zar e i bolscevichi prendono il potere: nascerà l'Unione Sovietica." },
+    { anno: 1918, titolo: "Finisce la Prima guerra mondiale", fatto: "L'armistizio dell'11 novembre mette fine a quattro anni di trincee." },
+    { anno: 1922, titolo: "La Marcia su Roma", fatto: "Mussolini sale al potere: comincia il ventennio fascista in Italia." },
+    { anno: 1929, titolo: "Il crollo di Wall Street", fatto: "La borsa americana affonda e inizia la Grande Depressione." },
+    { anno: 1939, titolo: "Inizia la Seconda guerra mondiale", fatto: "La Germania invade la Polonia e il conflitto dilaga in Europa." },
+    { anno: 1939, titolo: "Ultima esecuzione pubblica con la ghigliottina", fatto: "Sorpresa: in Francia accade ancora nel Novecento, non nei secoli lontani." },
+    { anno: 1945, titolo: "Finisce la Seconda guerra mondiale", fatto: "Dopo le bombe atomiche su Hiroshima e Nagasaki, il conflitto ha termine." },
+    { anno: 1946, titolo: "Nasce la Repubblica Italiana", fatto: "Con un referendum gli italiani scelgono la repubblica al posto della monarchia." },
+    { anno: 1948, titolo: "Entra in vigore la Costituzione italiana", fatto: "Il primo gennaio prende forma la legge fondamentale del nuovo Stato." },
+    { anno: 1948, titolo: "Viene assassinato il Mahatma Gandhi", fatto: "Il leader della non violenza indiana è ucciso pochi mesi dopo l'indipendenza." },
+    { anno: 1949, titolo: "Nasce la NATO", fatto: "L'alleanza militare tra Stati Uniti ed Europa occidentale prende vita." },
+    { anno: 1953, titolo: "L'uomo conquista l'Everest", fatto: "Hillary e Tenzing sono i primi a toccare la vetta più alta della Terra." },
+    { anno: 1957, titolo: "Lo Sputnik, primo satellite nello spazio", fatto: "L'URSS lancia in orbita una sfera che 'bippa': inizia la corsa allo spazio." },
+    { anno: 1957, titolo: "I Trattati di Roma fondano l'Europa unita", fatto: "Sei Paesi firmano l'accordo da cui nascerà l'Unione Europea." },
+    { anno: 1961, titolo: "Gagarin è il primo uomo nello spazio", fatto: "Il cosmonauta sovietico compie un giro completo attorno alla Terra." },
+    { anno: 1961, titolo: "Viene costruito il Muro di Berlino", fatto: "Da un giorno all'altro un muro divide in due la città e le famiglie." },
+    { anno: 1963, titolo: "Viene assassinato il presidente Kennedy", fatto: "JFK è ucciso a Dallas mentre sfila in auto tra la folla." },
+    { anno: 1966, titolo: "L'alluvione di Firenze", fatto: "L'Arno straripa e sommerge la città: accorrono volontari da tutto il mondo." },
+    { anno: 1969, titolo: "L'uomo mette piede sulla Luna", fatto: "Con l'Apollo 11, Armstrong fa 'un piccolo passo' seguito da mezzo mondo in TV." },
+    { anno: 1986, titolo: "Il disastro di Chernobyl", fatto: "Un reattore nucleare esplode in Ucraina spargendo radiazioni sull'Europa." },
+    { anno: 1989, titolo: "Cade il Muro di Berlino", fatto: "La folla abbatte il muro: è la fine simbolica della Guerra fredda." },
+    { anno: 1991, titolo: "Si dissolve l'Unione Sovietica", fatto: "L'URSS si scioglie in tanti Stati indipendenti dopo settant'anni." },
+    { anno: 1994, titolo: "Mandela diventa presidente del Sudafrica", fatto: "Dopo 27 anni di carcere guida il Paese alla fine dell'apartheid." },
+    { anno: 2001, titolo: "L'attentato alle Torri Gemelle", fatto: "L'11 settembre due aerei colpiscono New York davanti agli occhi del mondo." },
+    { anno: 2002, titolo: "L'euro entra nelle tasche degli italiani", fatto: "La lira va in pensione: arrivano le prime monete e banconote in euro." },
+    { anno: 2020, titolo: "L'OMS dichiara la pandemia di Covid", fatto: "Il mondo si ferma: mascherine, distanze e lockdown entrano nella vita di tutti." }
+  ]
+});
+
+/* =========================================================
+   NOVITÀ — il diario di cosa viene aggiunto all'app.
+   La voce più recente va IN CIMA.
+   Ogni voce:
+     v          -> un numero di versione (serve solo a capire l'ordine)
+     data       -> quando (testo libero)
+     titolo     -> il titolo della novità
+     descrizione-> elenco di righe: cosa cambia per chi gioca
+   ========================================================= */
+window.SG_NOVITA = [
+  {
+    v: 3,
+    data: "8 settembre 2026",
+    titolo: "Categorie da scegliere e link per gli amici",
+    descrizione: [
+      "Nella linea del tempo ora scegli le categorie: Storia, Invenzioni e scoperte, Calcio, Rap italiano e Cinema.",
+      "Le attivi tutte insieme, oppure solo quelle che vuoi.",
+      "Chi organizza decide categorie e numero di carte, poi crea un link con tutto già impostato da mandare agli amici.",
+      "Aggiunti tanti nuovi avvenimenti verificati su calcio, rap italiano e cinema."
+    ]
+  },
+  {
+    v: 2,
+    data: "8 settembre 2026",
+    titolo: "Arriva il tasto Novità",
+    descrizione: [
+      "Da adesso c'è questo elenco: ogni volta che aggiungiamo qualcosa, lo trovi qui.",
+      "Un pallino rosso sul tasto ti avvisa quando c'è una novità che non hai ancora visto."
+    ]
+  },
+  {
+    v: 1,
+    data: "8 settembre 2026",
+    titolo: "Primo gioco: La linea del tempo",
+    descrizione: [
+      "Metti gli avvenimenti nell'ordine giusto sulla linea del tempo: più si riempie, più diventa difficile.",
+      "Da 1 a 8 giocatori, con un solo telefono che passa di mano in mano.",
+      "Circa 90 avvenimenti veri, ognuno con una riga che racconta cosa è successo.",
+      "Vittoria a chi finisce le carte per primo, con podio e medaglie."
+    ]
+  }
+];
+
+/* =========================================================
+   GIOCO — La linea del tempo
+   Innesto nel motore comune (SG). Sa fare tre cose:
+   comincia, gioca un turno, dice chi ha vinto.
+
+   Un solo telefono che gira di mano in mano.
+   ========================================================= */
+(function () {
+  "use strict";
+
+  // --- Aspetto specifico di questo gioco (il resto è comune) ---
+  var stile = document.createElement("style");
+  stile.textContent = [
+    ".tl-carta-mano{background:linear-gradient(135deg,var(--accento),var(--accento-scuro));",
+      "color:#241f00;border-radius:var(--raggio);padding:16px 18px;box-shadow:var(--ombra);",
+      "text-align:center;margin-bottom:6px;}",
+    ".tl-carta-mano .occhiello{font-size:.8rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;opacity:.75;}",
+    ".tl-carta-mano .titolo{font-size:1.35rem;font-weight:800;line-height:1.2;margin-top:4px;}",
+    ".tl-restano{font-size:.85rem;color:var(--testo-tenue);text-align:center;margin:0 0 4px;}",
+    ".tl-linea{display:flex;flex-direction:column;gap:0;}",
+    ".tl-evento{background:var(--carta);border-radius:14px;padding:12px 14px;display:flex;",
+      "align-items:center;gap:14px;box-shadow:var(--ombra);}",
+    ".tl-evento .anno{font-size:1.5rem;font-weight:800;color:var(--accento);min-width:2.6em;text-align:right;}",
+    ".tl-evento .et{font-size:1rem;line-height:1.25;}",
+    ".tl-gap{width:100%;min-height:46px;margin:8px 0;border:2px dashed var(--carta-2);",
+      "background:transparent;color:var(--testo-tenue);border-radius:12px;font-family:inherit;",
+      "font-weight:700;font-size:.95rem;cursor:pointer;transition:all .12s ease;}",
+    ".tl-gap:active,.tl-gap:hover{border-color:var(--accento);color:var(--accento);}",
+    ".tl-esito{text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px;}",
+    ".tl-esito .faccia{font-size:4rem;}",
+    ".tl-esito .verdetto{font-size:1.6rem;font-weight:800;}",
+    ".tl-esito .giusto{color:var(--verde);} .tl-esito .sbagliato{color:var(--rosso);}",
+    ".tl-esito .annone{font-size:2.4rem;font-weight:800;color:var(--accento);}",
+    ".tl-esito .titoletto{font-size:1.2rem;font-weight:700;}",
+    ".tl-esito .fatto{color:var(--testo-tenue);line-height:1.5;max-width:34ch;margin:6px auto 0;}"
+  ].join("");
+  document.head.appendChild(stile);
+
+  var gioco = {
+    id: "timeline",
+    nome: "La linea del tempo",
+    icona: "📜",
+    descrizione: "Metti gli avvenimenti nell'ordine giusto. Più la linea si riempie, più diventa difficile.",
+    giocatoriMin: 1,
+    giocatoriMax: 8,
+
+    regole: [
+      "In mezzo al tavolo c'è una <b>linea del tempo</b>: all'inizio ha una sola carta con la sua data.",
+      "Al tuo turno esce un avvenimento <b>senza data</b>. Devi decidere <b>dove va</b>: prima, dopo, o tra due carte già presenti.",
+      "Poi si scopre l'anno. Se hai <b>indovinato</b> il punto, la carta entra nella linea e ti manca una carta in meno. Se hai <b>sbagliato</b>, la carta si scarta.",
+      "<b>Vince</b> chi per primo piazza tutte le sue carte. Più la linea cresce, più gli spazi si stringono!",
+      "Un solo telefono: si passa di mano in mano a ogni turno."
+    ],
+
+    // Impostazioni dell'host: categorie attive, carte a testa, link per gli amici
+    impostazioni: function (box, dove, aiuti) {
+      var el = aiuti.el;
+      var categorie = window.SG_CATEGORIE || [];
+      var link = SG.parametriLink();
+
+      // --- Categorie (l'host sceglie quali avvenimenti entrano in gioco) ---
+      var idValidi = categorie.map(function (c) { return c.id; });
+      var diPartenza = (link.cat && link.cat.filter(function (id) { return idValidi.indexOf(id) >= 0; })) || null;
+      dove.categorie = (diPartenza && diPartenza.length) ? diPartenza.slice() : idValidi.slice();
+
+      box.appendChild(el("div", { class: "etichetta", text: "Categorie in gioco" }));
+      var griglia = el("div", { class: "cat-griglia" });
+      categorie.forEach(function (c) {
+        var attiva = dove.categorie.indexOf(c.id) >= 0;
+        var chip = el("button", {
+          class: "cat-chip" + (attiva ? " attiva" : ""),
+          onclick: function () {
+            var i = dove.categorie.indexOf(c.id);
+            if (i >= 0) dove.categorie.splice(i, 1); else dove.categorie.push(c.id);
+            chip.className = "cat-chip" + (dove.categorie.indexOf(c.id) >= 0 ? " attiva" : "");
+          }
+        }, [
+          el("span", { class: "ci", text: c.icona || "🎲" }),
+          el("span", { text: c.nome }),
+          el("span", { class: "spunta", text: "✓" })
+        ]);
+        griglia.appendChild(chip);
+      });
+      box.appendChild(griglia);
+
+      // --- Carte a testa ---
+      dove.carte = link.carte ? Math.max(3, Math.min(8, link.carte)) : 5;
+      box.appendChild(el("div", { class: "etichetta", text: "Carte da piazzare a testa" }));
+      var valore = el("span", { class: "valore", text: dove.carte });
+      function agg(d) { dove.carte = Math.max(3, Math.min(8, dove.carte + d)); valore.textContent = dove.carte; }
+      box.appendChild(el("div", { class: "stepper" }, [
+        el("button", { text: "−", "aria-label": "meno", onclick: function () { agg(-1); } }),
+        valore,
+        el("button", { text: "+", "aria-label": "più", onclick: function () { agg(1); } })
+      ]));
+
+      // --- Link da mandare agli amici (con le impostazioni già dentro) ---
+      box.appendChild(el("div", { class: "etichetta", text: "Da mandare agli amici" }));
+      var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", hidden: "hidden" });
+      var avviso = el("div", { class: "link-avviso", hidden: "hidden" });
+      var bottone = el("button", { class: "btn btn-fantasma", html: "🔗 Crea il link con queste impostazioni",
+        onclick: function () {
+          if (!dove.categorie.length) { avviso.hidden = false; avviso.textContent = "Scegli almeno una categoria."; return; }
+          var url = SG.creaLink({ gioco: "timeline", cat: dove.categorie, carte: dove.carte });
+          campo.value = url; campo.hidden = false; campo.focus(); campo.select();
+          try { navigator.clipboard.writeText(url); } catch (e) {}
+          avviso.hidden = false; avviso.textContent = "Link pronto! Se non si è copiato da solo, tienilo premuto e copialo.";
+        }
+      });
+      box.appendChild(bottone);
+      box.appendChild(campo);
+      box.appendChild(avviso);
+    },
+
+    // --- Partenza ---
+    avvia: function (t) {
+      // Pesca gli avvenimenti solo dalle categorie scelte dall'host
+      var categorie = window.SG_CATEGORIE || [];
+      var scelte = (t.impostazioni && t.impostazioni.categorie) || null;
+      var attive = categorie.filter(function (c) { return !scelte || scelte.indexOf(c.id) >= 0; });
+      if (!attive.length) attive = categorie; // sicurezza: se nessuna, usale tutte
+      var DATI = [];
+      attive.forEach(function (c) { (c.eventi || []).forEach(function (e) { DATI.push(e); }); });
+
+      var mazzo = t.mischia(DATI);
+      var carteAtesta = (t.impostazioni && t.impostazioni.carte) || 5;
+
+      var stato = {
+        mazzo: mazzo,
+        linea: [ mazzo.pop() ],                 // carta di partenza, già scoperta
+        turno: 0,
+        giocatori: t.giocatori.map(function (nome) {
+          return { nome: nome, restano: carteAtesta };
+        }),
+        carta: null
+      };
+      ordina(stato.linea);
+
+      // primo turno: se un solo giocatore, niente passaggio del telefono
+      if (stato.giocatori.length === 1) iniziaTurno(t, stato);
+      else t.passaA(stato.giocatori[0].nome, function () { iniziaTurno(t, stato); });
+    }
+  };
+
+  function ordina(linea) { linea.sort(function (a, b) { return a.anno - b.anno; }); }
+
+  function giocatoreDiTurno(stato) {
+    return stato.giocatori[stato.turno % stato.giocatori.length];
+  }
+
+  // --- Un turno: pesca una carta e chiedi dove va ---
+  function iniziaTurno(t, stato) {
+    if (stato.mazzo.length === 0) return finePerMazzo(t, stato);
+    stato.carta = stato.mazzo.pop();
+    disegnaPiazzamento(t, stato);
+  }
+
+  function disegnaPiazzamento(t, stato) {
+    var el = t.el;
+    var g = giocatoreDiTurno(stato);
+    var s = t.schermata({
+      titolo: g.nome,
+      sotto: "Tocca lo spazio giusto della linea",
+      icona: "📜",
+      indietro: function () { if (confermaUscita()) t.esci(); }
+    });
+
+    s._contenuto.appendChild(el("p", { class: "tl-restano",
+      text: "Ti restano " + g.restano + (g.restano === 1 ? " carta" : " carte") }));
+
+    s._contenuto.appendChild(el("div", { class: "tl-carta-mano" }, [
+      el("div", { class: "occhiello", text: "Dove va?" }),
+      el("div", { class: "titolo", text: stato.carta.titolo })
+    ]));
+
+    var linea = el("div", { class: "tl-linea" });
+    // gap prima del primo, poi carta+gap per ognuno
+    linea.appendChild(bottoneGap(t, stato, 0));
+    stato.linea.forEach(function (ev, i) {
+      linea.appendChild(el("div", { class: "tl-evento" }, [
+        el("span", { class: "anno", text: annoTesto(ev.anno) }),
+        el("span", { class: "et", text: ev.titolo })
+      ]));
+      linea.appendChild(bottoneGap(t, stato, i + 1));
+    });
+    s._contenuto.appendChild(linea);
+    t.mostra(s);
+  }
+
+  function bottoneGap(t, stato, indice) {
+    return t.el("button", {
+      class: "tl-gap", html: "⤵ &nbsp;metti qui",
+      onclick: function () { risolvi(t, stato, indice); }
+    });
+  }
+
+  // --- Si scopre l'anno e si dà l'esito ---
+  function risolvi(t, stato, gap) {
+    var carta = stato.carta;
+    var linea = stato.linea;
+    var g = giocatoreDiTurno(stato);
+    var Y = carta.anno;
+
+    // gap corretto se resta ordinato (indulgente con gli anni uguali)
+    var okSinistra = (gap === 0) || (linea[gap - 1].anno <= Y);
+    var okDestra   = (gap === linea.length) || (Y <= linea[gap].anno);
+    var giusto = okSinistra && okDestra;
+
+    if (giusto) {
+      linea.push(carta); ordina(linea);
+      g.restano -= 1;
+    }
+    // se sbagliato: la carta si scarta (restano invariato: si "ripesca" al turno dopo)
+
+    disegnaEsito(t, stato, giusto);
+  }
+
+  function disegnaEsito(t, stato, giusto) {
+    var el = t.el;
+    var carta = stato.carta;
+    var g = giocatoreDiTurno(stato);
+    var vinto = g.restano === 0;
+
+    var s = t.schermata({});
+    s._contenuto.appendChild(el("div", { class: "tl-esito" }, [
+      el("div", { class: "faccia", text: giusto ? "✅" : "❌" }),
+      el("div", { class: "verdetto " + (giusto ? "giusto" : "sbagliato"),
+        text: giusto ? "Esatto!" : "Non ci siamo" }),
+      el("div", { class: "annone", text: annoTesto(carta.anno) }),
+      el("div", { class: "titoletto", text: carta.titolo }),
+      carta.fatto ? el("div", { class: "fatto", text: carta.fatto }) : null
+    ]));
+
+    if (vinto) {
+      s._piede.appendChild(el("button", {
+        class: "btn btn-verde", text: "🏆 " + g.nome + " ha finito le carte!",
+        onclick: function () { fineVittoria(t, stato); }
+      }));
+      t.mostra(s);
+      return;
+    }
+
+    // prossimo giocatore
+    stato.turno += 1;
+    var prossimo = giocatoreDiTurno(stato).nome;
+    var soloUno = stato.giocatori.length === 1;
+    s._piede.appendChild(el("button", {
+      class: "btn btn-primario",
+      text: soloUno ? "Continua ▶" : "Passa a " + prossimo + " ▶",
+      onclick: function () {
+        if (soloUno) iniziaTurno(t, stato);
+        else t.passaA(prossimo, function () { iniziaTurno(t, stato); });
+      }
+    }));
+    t.mostra(s);
+  }
+
+  // --- Fine ---
+  function classificaDa(stato) {
+    return stato.giocatori.slice().sort(function (a, b) {
+      return a.restano - b.restano;
+    }).map(function (g) {
+      return { nome: g.nome, punti: g.restano === 0 ? "finito!" : g.restano + " da piazzare" };
+    });
+  }
+
+  function fineVittoria(t, stato) { t.fine(classificaDa(stato)); }
+
+  function finePerMazzo(t, stato) {
+    // finite le carte del mazzo: vince chi ne ha piazzate di più (meno restano)
+    t.fine(classificaDa(stato));
+  }
+
+  function confermaUscita() {
+    return window.confirm("Uscire dalla partita in corso?");
+  }
+
+  function annoTesto(a) {
+    return a < 0 ? Math.abs(a) + " a.C." : String(a);
+  }
+
+  SG.registra(gioco);
+})();
+
+SG.avviaApp();
+</script>

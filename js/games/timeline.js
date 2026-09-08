@@ -52,26 +52,76 @@
       "Un solo telefono: si passa di mano in mano a ogni turno."
     ],
 
-    // Impostazione extra: quante carte a testa
+    // Impostazioni dell'host: categorie attive, carte a testa, link per gli amici
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
-      dove.carte = 5; // valore di partenza
+      var categorie = window.SG_CATEGORIE || [];
+      var link = SG.parametriLink();
+
+      // --- Categorie (l'host sceglie quali avvenimenti entrano in gioco) ---
+      var idValidi = categorie.map(function (c) { return c.id; });
+      var diPartenza = (link.cat && link.cat.filter(function (id) { return idValidi.indexOf(id) >= 0; })) || null;
+      dove.categorie = (diPartenza && diPartenza.length) ? diPartenza.slice() : idValidi.slice();
+
+      box.appendChild(el("div", { class: "etichetta", text: "Categorie in gioco" }));
+      var griglia = el("div", { class: "cat-griglia" });
+      categorie.forEach(function (c) {
+        var attiva = dove.categorie.indexOf(c.id) >= 0;
+        var chip = el("button", {
+          class: "cat-chip" + (attiva ? " attiva" : ""),
+          onclick: function () {
+            var i = dove.categorie.indexOf(c.id);
+            if (i >= 0) dove.categorie.splice(i, 1); else dove.categorie.push(c.id);
+            chip.className = "cat-chip" + (dove.categorie.indexOf(c.id) >= 0 ? " attiva" : "");
+          }
+        }, [
+          el("span", { class: "ci", text: c.icona || "🎲" }),
+          el("span", { text: c.nome }),
+          el("span", { class: "spunta", text: "✓" })
+        ]);
+        griglia.appendChild(chip);
+      });
+      box.appendChild(griglia);
+
+      // --- Carte a testa ---
+      dove.carte = link.carte ? Math.max(3, Math.min(8, link.carte)) : 5;
       box.appendChild(el("div", { class: "etichetta", text: "Carte da piazzare a testa" }));
       var valore = el("span", { class: "valore", text: dove.carte });
-      function agg(d) {
-        dove.carte = Math.max(3, Math.min(8, dove.carte + d));
-        valore.textContent = dove.carte;
-      }
+      function agg(d) { dove.carte = Math.max(3, Math.min(8, dove.carte + d)); valore.textContent = dove.carte; }
       box.appendChild(el("div", { class: "stepper" }, [
         el("button", { text: "−", "aria-label": "meno", onclick: function () { agg(-1); } }),
         valore,
         el("button", { text: "+", "aria-label": "più", onclick: function () { agg(1); } })
       ]));
+
+      // --- Link da mandare agli amici (con le impostazioni già dentro) ---
+      box.appendChild(el("div", { class: "etichetta", text: "Da mandare agli amici" }));
+      var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", hidden: "hidden" });
+      var avviso = el("div", { class: "link-avviso", hidden: "hidden" });
+      var bottone = el("button", { class: "btn btn-fantasma", html: "🔗 Crea il link con queste impostazioni",
+        onclick: function () {
+          if (!dove.categorie.length) { avviso.hidden = false; avviso.textContent = "Scegli almeno una categoria."; return; }
+          var url = SG.creaLink({ gioco: "timeline", cat: dove.categorie, carte: dove.carte });
+          campo.value = url; campo.hidden = false; campo.focus(); campo.select();
+          try { navigator.clipboard.writeText(url); } catch (e) {}
+          avviso.hidden = false; avviso.textContent = "Link pronto! Se non si è copiato da solo, tienilo premuto e copialo.";
+        }
+      });
+      box.appendChild(bottone);
+      box.appendChild(campo);
+      box.appendChild(avviso);
     },
 
     // --- Partenza ---
     avvia: function (t) {
-      var DATI = window.TIMELINE_EVENTI || [];
+      // Pesca gli avvenimenti solo dalle categorie scelte dall'host
+      var categorie = window.SG_CATEGORIE || [];
+      var scelte = (t.impostazioni && t.impostazioni.categorie) || null;
+      var attive = categorie.filter(function (c) { return !scelte || scelte.indexOf(c.id) >= 0; });
+      if (!attive.length) attive = categorie; // sicurezza: se nessuna, usale tutte
+      var DATI = [];
+      attive.forEach(function (c) { (c.eventi || []).forEach(function (e) { DATI.push(e); }); });
+
       var mazzo = t.mischia(DATI);
       var carteAtesta = (t.impostazioni && t.impostazioni.carte) || 5;
 
