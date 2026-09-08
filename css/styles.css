@@ -232,18 +232,22 @@ img{ max-width:100%; }
 
 .etichetta{ margin-top:22px; }
 
-/* ---- Home: hero centrato che riempie lo schermo ---- */
-.home .testa{ display:block; text-align:center; margin:0 0 8px; }
-.home .testa::before{ content:"🎉"; display:block; font-size:3.2rem; line-height:1; margin-bottom:10px;
+/* ---- Home: tutto in alto, scritte grandi, spazio libero solo in fondo ---- */
+.home .testa{ display:block; text-align:center; margin:4px 0 18px; }
+.home .testa::before{ content:"🎉"; display:block; font-size:3rem; line-height:1; margin-bottom:8px;
   filter:drop-shadow(0 6px 16px rgba(0,0,0,.4)); }
-.home .testa h1{ font-size:2.6rem; line-height:1.02; letter-spacing:-.02em;
+.home .testa h1{ font-size:2.9rem; line-height:1.02; letter-spacing:-.02em;
   background:linear-gradient(135deg,#ffe58a,var(--accento) 55%,#ff9d3a);
   -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
-.home .testa .sotto{ font-size:1.05rem; margin-top:8px; }
-.home .contenuto{ display:flex; flex-direction:column; justify-content:center; gap:16px; padding:8px 0; }
+.home .testa .sotto{ font-size:1.15rem; margin-top:8px; }
+/* NON centrare in verticale: stack dall'alto, così niente buco tra titolo e giochi */
+.home .contenuto{ flex:0 0 auto; display:flex; flex-direction:column; gap:14px; }
 .home .griglia-giochi{ gap:14px; }
-.home .tessera{ padding:18px 16px; }
-.home .tessera .icona{ width:64px; height:64px; font-size:2.3rem; }
-.home .tessera .info h2{ font-size:1.25rem; }
-/* piede della home: bottoni un po' più discreti e centrati */
-.home .piede{ margin-top:18px; }
+.home .tessera{ padding:20px 18px; }
+.home .tessera .icona{ width:70px; height:70px; font-size:2.5rem; }
+.home .tessera .info h2{ font-size:1.45rem; }
+.home .tessera .info p{ font-size:1.08rem; line-height:1.35; }
+.home .tessera .info .meta{ font-size:.98rem; margin-top:8px; }
+.home .tessera:not(.presto)::after{ font-size:2.2rem; }
+/* i bottoni in fondo seguono subito i giochi, non spinti in fondo allo schermo */
+.home .piede{ margin-top:16px; }
