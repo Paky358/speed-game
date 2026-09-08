@@ -4,6 +4,16 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 8 settembre 2026 — Sfida a punti, voti, timer e nuova grafica
+- **Timer di 30 secondi** a turno (se scade, conta come sbagliata).
+- **Punteggi**: giusta +100, sbagliata −100. Se sbagli **la data resta segreta** e
+  la carta **non** entra nella linea (ma viene consumata comunque).
+- **Voto degli altri (online)**: quando un giocatore sceglie, agli altri lo schermo
+  mostra il punto scelto e votano 👍/👎. Chi vota giusto +50, chi sbaglia −50.
+- **Classifica sempre visibile** in alto durante il gioco + **classifica finale
+  animata**.
+- **Suoni e vibrazione** in base al contesto; **grafica più moderna**.
+
 ## 8 settembre 2026 — Partita più bella e più chiara
 - **La partita finisce solo quando TUTTI hanno finito le carte** (non più al primo
   che le esaurisce). Chi finisce è "a posto", gli altri continuano; vince chi ha

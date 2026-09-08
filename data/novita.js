@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 6,
+    data: "8 settembre 2026",
+    titolo: "Sfida a punti, voti e grafica nuova",
+    descrizione: [
+      "Ogni turno ha 30 secondi di tempo.",
+      "Risposta giusta +100 punti, sbagliata −100. Se sbagli la data resta segreta e la carta non entra nella linea (ma la carta si consuma lo stesso).",
+      "Online: quando scegli, gli altri votano se sono d'accordo — chi vota giusto prende 50 punti, chi sbaglia ne perde 50.",
+      "Classifica sempre in alto e classifica finale animata. Aggiunti suoni, vibrazione e una grafica più moderna."
+    ]
+  },
+  {
     v: 5,
     data: "8 settembre 2026",
     titolo: "Partita più bella: nessuno resta indietro",
