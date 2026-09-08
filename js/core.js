@@ -120,6 +120,17 @@
 
     s._contenuto.appendChild(griglia);
 
+    // Tasto "Entra in una stanza" (per chi ha ricevuto un codice a voce)
+    s._piede.appendChild(el("button", {
+      class: "btn btn-fantasma", html: "🔗 Entra in una stanza (con un codice)",
+      onclick: function () {
+        var c = window.prompt("Scrivi il codice della stanza:");
+        if (!c) return;
+        c = c.trim().toUpperCase();
+        if (c) { location.hash = "gioco=timeline&stanza=" + encodeURIComponent(c); location.reload(); }
+      }
+    }));
+
     // Tasto "Novità" (con pallino rosso se c'è qualcosa di non ancora visto)
     var novita = window.SG_NOVITA || [];
     if (novita.length) {
@@ -302,6 +313,7 @@
     var tavolo = {
       giocatori: giocatori.slice(),
       impostazioni: impostazioni || {},
+      linkParams: linkParams,
       radice: contenitore,
 
       // aiuti riusabili (così i giochi non reinventano le stesse cose)
@@ -332,9 +344,10 @@
     avviaApp: function () {
       app = document.getElementById("app");
       linkParams = leggiParametriLink();
-      // Se il link indica un gioco, si apre già sulla scelta dei giocatori
       var g = linkParams.gioco && giochi.filter(function (x) { return x.id === linkParams.gioco; })[0];
-      if (g) schermataGiocatori(g);
+      // Con un codice stanza si entra come OSPITE; altrimenti si apre la preparazione
+      if (g && linkParams.stanza) avviaPartita(g, [], {});
+      else if (g) schermataGiocatori(g);
       else schermataHome();
     },
     // impostazioni arrivate da un link (le legge il gioco per i valori di partenza)

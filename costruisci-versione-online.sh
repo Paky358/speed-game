@@ -16,8 +16,11 @@ OUT=dist/serata-giochi.html
   cat css/styles.css
   echo '</style>'
   echo '<div id="app"></div>'
+  echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>'
   echo '<script>'
   cat js/core.js
+  echo ''
+  cat js/net.js
   echo ''
   for f in data/eventi-*.js; do [ -e "$f" ] && { cat "$f"; echo ''; }; done
   [ -e data/novita.js ] && { cat data/novita.js; echo ''; }

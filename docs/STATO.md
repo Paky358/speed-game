@@ -17,14 +17,21 @@ installare niente. Si passa il telefono di mano in mano.
   - "Rigioca" e "Torna ai giochi".
 - Provato davvero su schermo da telefono, una partita intera, più volte.
 
-## Categorie e link per gli amici
+## Due modi di giocare (li sceglie l'host all'inizio)
+- **Un telefono solo**: si passa di mano in mano. Funziona sempre, ovunque.
+- **Ognuno dal suo telefono**: l'host apre una **stanza** con un codice; gli amici
+  entrano dal link o digitando il codice. I turni si aggiornano da soli su tutti i
+  telefoni. Tutto è gestito dall'host (crea, sincronizza, decide i turni): una sola
+  copia vera della partita, niente telefoni fuori sincrono. Nessun account, nessun
+  server (collegamento diretto tra browser). **Funziona solo dal sito pubblicato**:
+  vedi `docs/METTERE-ONLINE.md`.
+
+## Categorie e link
 - La linea del tempo è divisa in **5 categorie**: Storia, Invenzioni e scoperte,
-  Calcio, Rap italiano, Cinema. Chi organizza sceglie quali attivare (tutte o solo
-  alcune) e quante carte a testa, **prima** di iniziare.
-- Un tasto crea un **link già impostato** da mandare agli amici: chi lo apre parte
-  con quelle stesse categorie e impostazioni. (Per ora si gioca comunque passandosi
-  un telefono; il "tutti insieme dal proprio telefono" è una scelta ancora aperta.)
-- C'è anche un tasto **Novità** in home con il diario degli aggiornamenti.
+  Calcio, Rap italiano, Cinema. L'host sceglie quali attivare (tutte o solo alcune)
+  e quante carte a testa, **prima** di iniziare.
+- Un tasto crea un **link già impostato** con le categorie scelte.
+- Tasto **Novità** in home con il diario degli aggiornamenti.
 
 ## Il contenuto della linea del tempo
 Circa 130 avvenimenti veri e verificati, in italiano, divisi per categoria: famosi,
@@ -33,13 +40,13 @@ di dati a parte (`data/eventi-*.js`): aggiungerne altri **non** richiede di tocc
 il gioco.
 
 ## Cosa manca / prossimi passi possibili
-1. **Scelta da chiarire:** quando gli amici aprono il link, si gioca ancora
-   passandosi un telefono (funziona già), oppure vogliamo che ognuno giochi dal
-   proprio telefono nello stesso momento? La seconda strada richiede molto più
-   lavoro (un "cervello" comune online) e va decisa prima di costruirla.
-2. **Farlo provare a un gruppo vero** e sistemare quello che non torna.
-3. **Ancora più avvenimenti** e magari altre categorie: lavoro lungo ma semplice,
+1. **Pubblicare online il file** `dist/serata-giochi.html` (vedi
+   `docs/METTERE-ONLINE.md`) e **provarlo con un gruppo vero**, ognuno dal proprio
+   telefono, per vedere come regge il collegamento nella vita reale.
+2. **Ancora più avvenimenti** e magari altre categorie: lavoro lungo ma semplice,
    affidabile a un aiuto (Sonnet) un po' alla volta.
+3. Eventuali rifiniture all'online emerse dalla prova (es. cosa succede se cade la
+   connessione dell'host).
 4. Solo dopo: pensare al **secondo gioco**. Le idee sono in `IDEE.md`.
 
 ## Come si apre

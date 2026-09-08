@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 4,
+    data: "8 settembre 2026",
+    titolo: "Si gioca anche ognuno dal proprio telefono",
+    descrizione: [
+      "Chi organizza sceglie all'inizio: «un telefono solo» (si passa di mano) oppure «ognuno dal suo telefono».",
+      "Online l'host apre una stanza con un codice; gli amici entrano aprendo il link o digitando il codice.",
+      "I turni si aggiornano da soli su tutti i telefoni: gioca chi tocca, gli altri guardano dal vivo.",
+      "Funziona quando il gioco è aperto dal sito pubblicato online."
+    ]
+  },
+  {
     v: 3,
     data: "8 settembre 2026",
     titolo: "Categorie da scegliere e link per gli amici",

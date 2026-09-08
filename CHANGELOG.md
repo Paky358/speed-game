@@ -4,6 +4,17 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 8 settembre 2026 — Si gioca anche "ognuno dal proprio telefono"
+- Chi organizza sceglie all'inizio la modalità: **un telefono solo** (si passa di
+  mano) oppure **ognuno dal suo telefono**.
+- Nella modalità online l'host apre una **stanza** con un codice; gli amici entrano
+  aprendo il link o digitando il codice. Nessun account, nessun server da gestire
+  (collegamento diretto tra browser tramite PeerJS).
+- Tutto è **gestito dall'host** (crea, sincronizza, decide i turni): un'unica copia
+  vera della partita, così i telefoni non possono mai andare fuori sincrono.
+- Funziona quando il gioco è aperto dal **sito pubblicato** (non da un file locale
+  né dall'anteprima): vedi `docs/METTERE-ONLINE.md`.
+
 ## 8 settembre 2026 — Categorie e link per gli amici
 - La linea del tempo ora è divisa in **categorie**: Storia, Invenzioni e scoperte,
   Calcio, Rap italiano, Cinema. Si attivano tutte insieme o solo alcune.
