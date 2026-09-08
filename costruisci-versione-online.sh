@@ -8,10 +8,10 @@
 set -e
 cd "$(dirname "$0")"
 mkdir -p dist
-OUT=dist/serata-giochi.html
+OUT=dist/speed-game.html
 
 {
-  echo '<title>Serata Giochi</title>'
+  echo '<title>Speed Game</title>'
   echo '<style>'
   cat css/styles.css
   echo '</style>'

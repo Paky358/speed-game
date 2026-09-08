@@ -93,7 +93,7 @@
   // =========================================================
 
   function schermataHome() {
-    var s = schermata({ titolo: "Serata Giochi", sotto: "Scegli un gioco e passa il telefono" });
+    var s = schermata({ titolo: "Speed Game", sotto: "Scegli un gioco e passa il telefono" });
     var griglia = el("div", { class: "griglia-giochi" });
 
     giochi.forEach(function (g) {
