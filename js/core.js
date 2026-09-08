@@ -93,8 +93,13 @@
   // =========================================================
 
   function schermataHome() {
-    var s = schermata({ titolo: "Speed Game", sotto: "Scegli un gioco e passa il telefono" });
+    var s = schermata({});
     s.className += " home";
+    s._contenuto.appendChild(el("div", { class: "home-hero" }, [
+      el("div", { class: "home-logo", text: "🎉" }),
+      el("h1", { class: "home-titolo", text: "Speed Game" }),
+      el("p", { class: "home-sotto", text: "Scegli un gioco e passa il telefono" })
+    ]));
     var griglia = el("div", { class: "griglia-giochi" });
 
     giochi.forEach(function (g) {
