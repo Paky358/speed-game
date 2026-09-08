@@ -8,7 +8,7 @@
 set -e
 cd "$(dirname "$0")"
 mkdir -p dist
-OUT=dist/speed-game.html
+OUT=dist/index.html
 
 {
   echo '<title>Speed Game</title>'
