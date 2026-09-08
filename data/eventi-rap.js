@@ -18,6 +18,11 @@
     { anno: 2017, titolo: "J-Ax e Fedez pubblicano il loro album in coppia", fatto: "'Comunisti col Rolex' diventa uno dei dischi italiani più venduti dell'anno, trainato da singoli di grande successo." },
     { anno: 2018, titolo: "Ghali conquista le classifiche con un nuovo singolo", fatto: "'Cara Italia' diventa uno dei brani italiani più ascoltati e discussi dell'anno." },
     { anno: 2019, titolo: "Un cantante cresciuto nella scena urban vince il Festival di Sanremo", fatto: "Mahmood trionfa con il brano 'Soldi', portando sonorità rap e trap sul palco dell'Ariston." },
-    { anno: 2022, titolo: "Due voci della scena urban vincono insieme il Festival di Sanremo", fatto: "Mahmood e Blanco si aggiudicano la vittoria con il brano 'Brividi'." }
+    { anno: 2022, titolo: "Due voci della scena urban vincono insieme il Festival di Sanremo", fatto: "Mahmood e Blanco si aggiudicano la vittoria con il brano 'Brividi'." },
+    { anno: 1992, titolo: "Gli Assalti Frontali pubblicano 'Terra di nessuno'", fatto: "Esordio del gruppo hip hop romano nato nell'ambiente dei centri sociali." },
+    { anno: 1999, titolo: "Le Sacre Scuole pubblicano il loro unico album", fatto: "Esce '3 MC's al cubo', disco del trio milanese da cui nasceranno poi i Club Dogo." },
+    { anno: 2003, titolo: "I Club Dogo pubblicano 'Mi Fist'", fatto: "L'album d'esordio del gruppo diventa un manifesto dello street rap milanese." },
+    { anno: 2011, titolo: "Guè Pequeno pubblica il suo primo disco da solista", fatto: "Esce 'Il ragazzo d'oro', primo album fuori dai Club Dogo." },
+    { anno: 2019, titolo: "Marracash pubblica l'album 'Persona'", fatto: "Concept album sulle diverse facce dell'artista, acclamato da critica e pubblico." }
   ]
 });

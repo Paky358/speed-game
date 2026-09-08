@@ -20,6 +20,22 @@
     { anno: 2004, titolo: "La Grecia firma la sorpresa più grande nella storia degli Europei", fatto: "Con una squadra data per sfavorita i greci battono in finale i padroni di casa del Portogallo e vincono il titolo continentale." },
     { anno: 2006, titolo: "L'Italia si laurea per la quarta volta campione del mondo", fatto: "In Germania gli azzurri battono ai rigori la Francia in una finale ricordata anche per la testata di Zidane a Materazzi." },
     { anno: 2012, titolo: "La Spagna umilia l'Italia nella finale degli Europei", fatto: "A Kiev le furie rosse travolgono gli azzurri con il punteggio più ampio mai visto in una finale continentale." },
-    { anno: 2021, titolo: "L'Italia torna sul tetto d'Europa dopo oltre mezzo secolo", fatto: "A Wembley gli azzurri di Mancini battono l'Inghilterra ai rigori e riconquistano il titolo continentale." }
+    { anno: 2021, titolo: "L'Italia torna sul tetto d'Europa dopo oltre mezzo secolo", fatto: "A Wembley gli azzurri di Mancini battono l'Inghilterra ai rigori e riconquistano il titolo continentale." },
+    { anno: 1898, titolo: "Si disputa il primo campionato italiano di calcio", fatto: "Il torneo si gioca in un solo giorno e lo vince una squadra di Genova." },
+    { anno: 1949, titolo: "La tragedia di Superga colpisce il Grande Torino", fatto: "L'aereo che riporta la squadra da Lisbona si schianta contro la collina di Superga." },
+    { anno: 1954, titolo: "Il 'Miracolo di Berna' incorona la Germania Ovest", fatto: "I tedeschi battono a sorpresa in finale l'Ungheria, favorita e imbattuta da anni." },
+    { anno: 1958, titolo: "Un giovanissimo Pelé trionfa al suo primo Mondiale", fatto: "A soli diciassette anni trascina il Brasile alla vittoria in Svezia." },
+    { anno: 1966, titolo: "L'Inghilterra vince il suo unico Mondiale", fatto: "Batte in finale la Germania Ovest in casa propria, tra le polemiche per un gol dubbio." },
+    { anno: 1968, titolo: "L'Italia vince il suo primo Europeo", fatto: "Gli azzurri si laureano campioni continentali giocando in casa." },
+    { anno: 1974, titolo: "L'Olanda del calcio totale perde la finale mondiale", fatto: "Gli olandesi rivoluzionano il gioco ma vengono battuti in finale dalla Germania Ovest." },
+    { anno: 1988, titolo: "L'Olanda vince il suo unico Europeo", fatto: "Van Basten sigilla la finale con una straordinaria semirovesciata al volo." },
+    { anno: 1992, titolo: "La Danimarca vince l'Europeo a sorpresa", fatto: "Ripescata all'ultimo momento, conquista il titolo continentale contro ogni pronostico." },
+    { anno: 1998, titolo: "La Francia vince il Mondiale giocato in casa", fatto: "Zidane segna due gol di testa nella finale contro il Brasile." },
+    { anno: 1999, titolo: "Il Manchester United ribalta la finale di Champions League", fatto: "Due gol nel recupero contro il Bayern Monaco completano una clamorosa rimonta." },
+    { anno: 2010, titolo: "L'Inter conquista il Triplete", fatto: "Vince campionato, coppa nazionale e Champions League nella stessa stagione." },
+    { anno: 2014, titolo: "Il Brasile subisce un'umiliante disfatta in semifinale mondiale", fatto: "Ospitando il torneo in casa, i verdeoro perdono 7-1 contro la Germania." },
+    { anno: 2016, titolo: "Il Leicester vince a sorpresa la Premier League", fatto: "Una squadra data per la salvezza conquista il titolo inglese contro ogni pronostico." },
+    { anno: 2018, titolo: "La Francia vince il Mondiale in Russia", fatto: "Trascinata da un giovanissimo Mbappé, batte in finale la Croazia." },
+    { anno: 2022, titolo: "L'Argentina di Messi vince il Mondiale in Qatar", fatto: "Solleva la coppa dopo una finale spettacolare decisa ai rigori contro la Francia." }
   ]
 });

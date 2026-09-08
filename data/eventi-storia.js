@@ -65,6 +65,13 @@
     { anno: 1994, titolo: "Mandela diventa presidente del Sudafrica", fatto: "Dopo 27 anni di carcere guida il Paese alla fine dell'apartheid." },
     { anno: 2001, titolo: "L'attentato alle Torri Gemelle", fatto: "L'11 settembre due aerei colpiscono New York davanti agli occhi del mondo." },
     { anno: 2002, titolo: "L'euro entra nelle tasche degli italiani", fatto: "La lira va in pensione: arrivano le prime monete e banconote in euro." },
-    { anno: 2020, titolo: "L'OMS dichiara la pandemia di Covid", fatto: "Il mondo si ferma: mascherine, distanze e lockdown entrano nella vita di tutti." }
+    { anno: 2020, titolo: "L'OMS dichiara la pandemia di Covid", fatto: "Il mondo si ferma: mascherine, distanze e lockdown entrano nella vita di tutti." },
+    { anno: 800, titolo: "Carlo Magno viene incoronato imperatore", fatto: "Il Papa incorona il re dei Franchi imperatore dei Romani, a Roma." },
+    { anno: 1453, titolo: "Costantinopoli cade sotto gli Ottomani", fatto: "L'esercito turco conquista la capitale bizantina, segnando la fine dell'Impero romano d'Oriente." },
+    { anno: 1517, titolo: "Lutero affigge le sue tesi a Wittenberg", fatto: "Un monaco tedesco contesta la vendita delle indulgenze: nasce la Riforma protestante." },
+    { anno: 1582, titolo: "Entra in vigore il calendario gregoriano", fatto: "Il Papa corregge lo sfasamento accumulato dal vecchio calendario giuliano." },
+    { anno: 1978, titolo: "Le Brigate Rosse rapiscono Aldo Moro", fatto: "Lo statista viene sequestrato e la sua scorta uccisa in un agguato a Roma." },
+    { anno: 1992, titolo: "La strage di Capaci uccide Giovanni Falcone", fatto: "Un'autobomba di Cosa Nostra uccide il giudice, la moglie e gli agenti della scorta." },
+    { anno: 2008, titolo: "Fallisce la banca Lehman Brothers", fatto: "Il crollo dell'istituto finanziario americano innesca una grave crisi economica globale." }
   ]
 });

@@ -58,3 +58,6 @@ contenuto di quel tasto vive in `data/novita.js`._
 - Circa 90 avvenimenti veri e verificati, ognuno con una riga che racconta il fatto.
 - Ossatura comune (home, giocatori, punteggio, tabellone finale con medaglie,
   Rigioca / Torna ai giochi).
+
+## 9 settembre 2026 — Tantissimi nuovi avvenimenti
+- Aggiunti 70 avvenimenti nuovi e verificati (storia, invenzioni, calcio, rap italiano, cinema): ora sono circa 200 in tutto.

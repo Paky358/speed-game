@@ -32,6 +32,26 @@
     { anno: 2004, titolo: "Nasce Facebook", fatto: "Parte da un'università americana e in pochi anni conquista il pianeta." },
     { anno: 2005, titolo: "Nasce YouTube", fatto: "Chiunque può caricare un video: cambia per sempre il modo di guardare." },
     { anno: 2007, titolo: "Viene presentato il primo iPhone", fatto: "Steve Jobs mostra un telefono senza tasti: comincia l'era degli smartphone." },
-    { anno: 2010, titolo: "Nasce Instagram", fatto: "Un'app di sole foto quadrate diventa in poco tempo un fenomeno mondiale." }
+    { anno: 2010, titolo: "Nasce Instagram", fatto: "Un'app di sole foto quadrate diventa in poco tempo un fenomeno mondiale." },
+    { anno: 1609, titolo: "Galileo punta il cannocchiale verso il cielo", fatto: "Perfeziona lo strumento ottico e lo usa per osservare la volta celeste." },
+    { anno: 1687, titolo: "Newton pubblica i 'Principia'", fatto: "Formula le leggi della dinamica e la teoria della gravitazione universale." },
+    { anno: 1769, titolo: "Watt brevetta la sua macchina a vapore", fatto: "Un motore molto più efficiente spinge in avanti la rivoluzione industriale." },
+    { anno: 1796, titolo: "Jenner sperimenta il primo vaccino", fatto: "Immunizza un bambino contro il vaiolo usando materiale prelevato da una mucca infetta." },
+    { anno: 1800, titolo: "Volta presenta la pila elettrica", fatto: "Il primo generatore in grado di produrre una corrente elettrica continua." },
+    { anno: 1826, titolo: "Niépce scatta la prima fotografia della storia", fatto: "Fissa un'immagine permanente su una lastra dopo ore di esposizione." },
+    { anno: 1837, titolo: "Viene brevettato il telegrafo elettrico", fatto: "Un sistema per inviare messaggi a distanza tramite impulsi elettrici e un codice." },
+    { anno: 1869, titolo: "Mendeleev crea la tavola periodica degli elementi", fatto: "Ordina gli elementi chimici per peso atomico prevedendo quelli non ancora scoperti." },
+    { anno: 1885, titolo: "Benz costruisce la prima automobile a motore", fatto: "Un triciclo a motore a scoppio, alimentato a combustibile liquido." },
+    { anno: 1895, titolo: "Röntgen scopre i raggi X", fatto: "Una radiazione capace di attraversare i tessuti molli e mostrare le ossa." },
+    { anno: 1898, titolo: "I coniugi Curie scoprono nuovi elementi radioattivi", fatto: "Isolano il polonio e il radio studiando le emissioni di un minerale di uranio." },
+    { anno: 1905, titolo: "Einstein pubblica la teoria della relatività ristretta", fatto: "Rivoluziona i concetti di spazio e tempo assoluti della fisica classica." },
+    { anno: 1938, titolo: "Viene scoperta la fissione nucleare", fatto: "Si riesce a dividere il nucleo di un atomo di uranio liberando energia." },
+    { anno: 1947, titolo: "Viene inventato il transistor", fatto: "Un dispositivo a semiconduttore che sostituirà le ingombranti valvole termoioniche." },
+    { anno: 1960, titolo: "Viene costruito il primo laser funzionante", fatto: "Un dispositivo a rubino emette per la prima volta un fascio di luce coerente." },
+    { anno: 1967, titolo: "Viene eseguito il primo trapianto di cuore umano", fatto: "Un chirurgo sudafricano trasferisce l'organo da un donatore a un ricevente." },
+    { anno: 1983, titolo: "ARPANET adotta il protocollo TCP/IP", fatto: "Getta le basi tecniche della rete che diventerà l'internet moderna." },
+    { anno: 2004, titolo: "Viene isolato il grafene", fatto: "Un singolo strato di atomi di carbonio viene separato con del nastro adesivo." },
+    { anno: 2012, titolo: "Viene scoperto il bosone di Higgs", fatto: "Rilevata la particella che spiega come le altre acquisiscono massa." },
+    { anno: 2022, titolo: "Un esperimento di fusione nucleare produce energia netta", fatto: "Per la prima volta una reazione controllata genera più energia di quella immessa." }
   ]
 });

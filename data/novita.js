@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 7,
+    data: "9 settembre 2026",
+    titolo: "Tantissimi nuovi avvenimenti",
+    descrizione: [
+      "Aggiunti 70 nuovi avvenimenti verificati: ora sono circa 200 in tutto.",
+      "Più roba per Storia, Invenzioni, Calcio, Rap italiano e Cinema: le partite sono sempre diverse."
+    ]
+  },
+  {
     v: 6,
     data: "8 settembre 2026",
     titolo: "Sfida a punti, voti e grafica nuova",
