@@ -186,28 +186,48 @@ body{
 .spazio{ height:10px; }
 
 /* =========================================================
-   Ritocchi grafici — un aspetto più curato, senza cambiare
-   la struttura. (Le regole qui sotto rifiniscono quelle sopra.)
+   Ritocchi grafici + ottimizzazione mobile
+   (Le regole qui sotto rifiniscono quelle sopra.)
    ========================================================= */
-body{ background:radial-gradient(1100px 620px at 50% -8%, var(--sfondo-2), var(--sfondo)) no-repeat, var(--sfondo); }
+:root{ --raggio:20px; --ombra:0 8px 24px rgba(0,0,0,.28); }
 
-/* Titoli un filo più decisi */
-.testa h1{ font-size:1.5rem; font-weight:800; letter-spacing:-.01em; }
+html{ -webkit-text-size-adjust:100%; }
+body{ overflow-x:hidden;
+  background:radial-gradient(1200px 680px at 50% -10%, #2a2650, var(--sfondo)) no-repeat, var(--sfondo); }
+#app{ max-width:600px; }
+.schermata{ padding-left:max(16px, env(safe-area-inset-left)); padding-right:max(16px, env(safe-area-inset-right)); }
+img{ max-width:100%; }
 
-/* Bottone principale con un tocco di profondità */
-.btn-primario{ background:linear-gradient(135deg, var(--accento), var(--accento-scuro)); color:#241f00; }
-.btn-verde{ background:linear-gradient(135deg, #48e08c, #22b866); }
-.btn{ transition:transform .06s ease, filter .15s ease, box-shadow .15s ease; }
-@media (hover:hover){ .btn:hover{ filter:brightness(1.05); } .tessera:hover{ transform:translateY(-2px); } }
+/* Intestazione: titolo deciso, con un filo di gradiente sul primo (home) */
+.testa h1{ font-size:1.55rem; font-weight:900; letter-spacing:-.02em; }
+.testa .sotto{ font-size:1rem; }
 
-/* Tessere della home: freccia a destra + rilievo */
-.tessera{ position:relative; align-items:center; }
-.tessera:not(.presto)::after{ content:"›"; margin-left:auto; padding-left:8px;
-  font-size:2rem; line-height:1; color:var(--testo-tenue); opacity:.55; }
+/* Bottoni: più morbidi, con profondità */
+.btn{ border-radius:16px; transition:transform .06s ease, filter .15s ease, box-shadow .15s ease; }
+.btn-primario{ background:linear-gradient(135deg, #ffd75a, var(--accento-scuro)); color:#241f00;
+  box-shadow:0 8px 22px rgba(224,169,10,.38); }
+.btn-verde{ background:linear-gradient(135deg, #4fe895, #1faf60); color:#04321c; box-shadow:0 8px 22px rgba(31,175,96,.32); }
+.btn-rosso{ background:linear-gradient(135deg, #ff7a86, #e83c4c); color:#fff; box-shadow:0 8px 22px rgba(232,60,76,.32); }
+.btn:active{ transform:scale(.97); }
+@media (hover:hover){ .btn:hover{ filter:brightness(1.06); } .tessera:hover{ transform:translateY(-2px); } }
+
+/* Home: icona in un riquadro, freccia a destra */
+.tessera{ position:relative; align-items:center; padding:14px; border:1px solid rgba(255,255,255,.05); }
 .tessera .info{ flex:1; min-width:0; }
+.tessera .info h2{ font-size:1.2rem; font-weight:800; }
+.tessera .icona{ width:58px; height:58px; display:flex; align-items:center; justify-content:center;
+  border-radius:16px; background:linear-gradient(150deg, var(--carta-2), #201d44); font-size:2.1rem; flex:0 0 auto;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06); }
+.tessera:not(.presto)::after{ content:"›"; margin-left:auto; padding-left:8px;
+  font-size:2rem; line-height:1; color:var(--accento); opacity:.7; }
 
-/* Vincitore in classifica: leggero bagliore dorato */
-.classifica li.vincitore{ box-shadow:0 0 0 2px rgba(255,202,58,.55), var(--ombra); }
+/* Campi e stepper più morbidi */
+.giocatore-riga input, .link-campo{ border-radius:16px; }
+.giocatore-riga input{ font-size:1.05rem; }
+.stepper{ border-radius:16px; }
 
-/* Sezioni un po' più ariose */
-.etichetta{ margin-top:20px; }
+/* Vincitore in classifica: bagliore dorato */
+.classifica li.vincitore{ box-shadow:0 0 0 2px rgba(255,202,58,.6), var(--ombra); }
+.classifica .nome{ font-weight:800; }
+
+.etichetta{ margin-top:22px; }
