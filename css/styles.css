@@ -1,0 +1,140 @@
+/* =========================================================
+   Serata Giochi — aspetto comune a TUTTI i giochi.
+   Colori, caratteri e bottoni stanno qui, una volta sola.
+   ========================================================= */
+
+:root{
+  --sfondo:      #141326;
+  --sfondo-2:    #1e1c3a;
+  --carta:       #272451;
+  --carta-2:     #322e63;
+  --testo:       #f3f1ff;
+  --testo-tenue: #b3aede;
+  --accento:     #ffca3a;
+  --accento-scuro:#e0a90a;
+  --verde:       #37d47e;
+  --rosso:       #ff5d6c;
+  --ombra:       0 6px 18px rgba(0,0,0,.35);
+  --raggio:      18px;
+  --tocco:       52px; /* altezza minima comoda per un dito */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+}
+
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html,body{ margin:0; padding:0; }
+
+body{
+  font-family:var(--font);
+  background:var(--sfondo);
+  color:var(--testo);
+  min-height:100vh;
+  min-height:100dvh;
+  -webkit-font-smoothing:antialiased;
+}
+
+#app{
+  max-width:560px;
+  margin:0 auto;
+  min-height:100vh;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ---- Schermata: intestazione + contenuto scorrevole + piede ---- */
+.schermata{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  min-height:100vh;
+  min-height:100dvh;
+  padding:
+    calc(16px + env(safe-area-inset-top))
+    16px
+    calc(16px + env(safe-area-inset-bottom));
+  animation:entra .25s ease;
+}
+@keyframes entra{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+
+.testa{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.testa h1{ font-size:1.35rem; margin:0; line-height:1.1; }
+.testa .sotto{ color:var(--testo-tenue); font-size:.95rem; margin:2px 0 0; }
+.contenuto{ flex:1; }
+.piede{ margin-top:14px; display:flex; flex-direction:column; gap:10px; }
+
+/* ---- Bottoni (uguali ovunque) ---- */
+.btn{
+  appearance:none; border:0; cursor:pointer;
+  font-family:inherit; font-size:1.05rem; font-weight:700;
+  min-height:var(--tocco); padding:14px 18px;
+  border-radius:var(--raggio);
+  background:var(--carta-2); color:var(--testo);
+  box-shadow:var(--ombra);
+  transition:transform .06s ease, filter .15s ease;
+  width:100%;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+}
+.btn:active{ transform:scale(.97); }
+.btn-primario{ background:var(--accento); color:#241f00; }
+.btn-verde{ background:var(--verde); color:#04321c; }
+.btn-rosso{ background:var(--rosso); color:#3a0009; }
+.btn-fantasma{ background:transparent; box-shadow:none; color:var(--testo-tenue); font-weight:600; }
+.btn:disabled{ opacity:.45; }
+.btn-piccolo{ font-size:.95rem; min-height:44px; padding:10px 14px; width:auto; }
+
+/* ---- Home: elenco dei giochi ---- */
+.griglia-giochi{ display:grid; grid-template-columns:1fr; gap:14px; }
+.tessera{
+  display:flex; align-items:center; gap:16px; text-align:left;
+  background:var(--carta); border-radius:var(--raggio);
+  padding:16px; box-shadow:var(--ombra); cursor:pointer; border:0; color:inherit;
+  width:100%; transition:transform .06s ease;
+}
+.tessera:active{ transform:scale(.98); }
+.tessera .icona{ font-size:2.4rem; line-height:1; }
+.tessera .info h2{ margin:0 0 3px; font-size:1.15rem; }
+.tessera .info p{ margin:0; color:var(--testo-tenue); font-size:.92rem; }
+.tessera .info .meta{ margin-top:6px; font-size:.8rem; color:var(--accento); font-weight:700; }
+.tessera.presto{ opacity:.5; cursor:default; }
+
+/* ---- Setup giocatori ---- */
+.giocatore-riga{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+.giocatore-riga input{
+  flex:1; font-family:inherit; font-size:1.05rem;
+  padding:12px 14px; border-radius:14px; border:2px solid transparent;
+  background:var(--carta); color:var(--testo); min-height:var(--tocco);
+}
+.giocatore-riga input:focus{ outline:none; border-color:var(--accento); }
+.togli{ background:var(--carta); color:var(--rosso); border:0; border-radius:14px;
+  width:var(--tocco); height:var(--tocco); font-size:1.4rem; cursor:pointer; flex:0 0 auto; }
+
+.stepper{ display:flex; align-items:center; gap:14px; background:var(--carta);
+  border-radius:14px; padding:8px 14px; }
+.stepper button{ width:44px; height:44px; border-radius:12px; border:0; cursor:pointer;
+  background:var(--carta-2); color:var(--testo); font-size:1.4rem; font-weight:800; }
+.stepper .valore{ font-size:1.3rem; font-weight:800; min-width:2ch; text-align:center; }
+
+.etichetta{ font-size:.9rem; color:var(--testo-tenue); font-weight:700;
+  text-transform:uppercase; letter-spacing:.04em; margin:18px 0 8px; }
+
+/* ---- Passaggio del telefono ---- */
+.passa{ text-align:center; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; flex:1; gap:8px; }
+.passa .grande{ font-size:1.7rem; font-weight:800; }
+.passa .emoji{ font-size:4rem; }
+
+/* ---- Tabellone finale ---- */
+.classifica{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+.classifica li{ display:flex; align-items:center; gap:14px; background:var(--carta);
+  border-radius:var(--raggio); padding:14px 16px; box-shadow:var(--ombra); }
+.classifica .pos{ font-size:1.5rem; font-weight:800; width:1.6em; text-align:center; }
+.classifica .nome{ flex:1; font-size:1.1rem; font-weight:700; }
+.classifica .punti{ color:var(--testo-tenue); font-weight:700; }
+.classifica li.vincitore{ background:linear-gradient(135deg,var(--accento),var(--accento-scuro)); color:#241f00; }
+.classifica li.vincitore .punti{ color:#3a3000; }
+
+/* ---- Utility ---- */
+.centro{ text-align:center; }
+.tenue{ color:var(--testo-tenue); }
+.spazio{ height:10px; }

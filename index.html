@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#141326">
+  <title>Serata Giochi</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="app"><!-- le schermate vengono disegnate qui --></div>
+
+  <!-- Motore comune (schermate, giocatori, punteggio, giro di partita) -->
+  <script src="js/core.js"></script>
+
+  <!-- Dati dei giochi -->
+  <script src="data/timeline-eventi.js"></script>
+
+  <!-- Giochi (ognuno si "innesta" da solo nel motore) -->
+  <script src="js/games/timeline.js"></script>
+
+  <!-- Avvio -->
+  <script>SG.avviaApp();</script>
+</body>
+</html>
