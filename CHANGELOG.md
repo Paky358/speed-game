@@ -4,6 +4,15 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 8 settembre 2026 — Partita più bella e più chiara
+- **La partita finisce solo quando TUTTI hanno finito le carte** (non più al primo
+  che le esaurisce). Chi finisce è "a posto", gli altri continuano; vince chi ha
+  finito per primo. Nessun limite di tempo.
+- Chi ha finito le sue carte viene **saltato** nei turni successivi.
+- **Descrizioni sempre visibili**: si vedono già mentre scegli dove mettere la carta
+  (non più solo dopo) e restano scritte sotto ogni evento della linea del tempo.
+- **Ritocco grafico** generale (sfondo, bottoni, tessere, tabellone).
+
 ## 8 settembre 2026 — Si gioca anche "ognuno dal proprio telefono"
 - Chi organizza sceglie all'inizio la modalità: **un telefono solo** (si passa di
   mano) oppure **ognuno dal suo telefono**.

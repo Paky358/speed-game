@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 5,
+    data: "8 settembre 2026",
+    titolo: "Partita più bella: nessuno resta indietro",
+    descrizione: [
+      "La partita ora finisce solo quando TUTTI hanno finito le loro carte, non più al primo che le esaurisce.",
+      "Vince chi finisce per primo, ma tutti arrivano in fondo.",
+      "Le descrizioni degli avvenimenti si vedono già mentre scegli dove mettere la carta, e restano sempre visibili sulla linea del tempo.",
+      "Grafica generale più curata."
+    ]
+  },
+  {
     v: 4,
     data: "8 settembre 2026",
     titolo: "Si gioca anche ognuno dal proprio telefono",

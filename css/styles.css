@@ -184,3 +184,30 @@ body{
 .centro{ text-align:center; }
 .tenue{ color:var(--testo-tenue); }
 .spazio{ height:10px; }
+
+/* =========================================================
+   Ritocchi grafici — un aspetto più curato, senza cambiare
+   la struttura. (Le regole qui sotto rifiniscono quelle sopra.)
+   ========================================================= */
+body{ background:radial-gradient(1100px 620px at 50% -8%, var(--sfondo-2), var(--sfondo)) no-repeat, var(--sfondo); }
+
+/* Titoli un filo più decisi */
+.testa h1{ font-size:1.5rem; font-weight:800; letter-spacing:-.01em; }
+
+/* Bottone principale con un tocco di profondità */
+.btn-primario{ background:linear-gradient(135deg, var(--accento), var(--accento-scuro)); color:#241f00; }
+.btn-verde{ background:linear-gradient(135deg, #48e08c, #22b866); }
+.btn{ transition:transform .06s ease, filter .15s ease, box-shadow .15s ease; }
+@media (hover:hover){ .btn:hover{ filter:brightness(1.05); } .tessera:hover{ transform:translateY(-2px); } }
+
+/* Tessere della home: freccia a destra + rilievo */
+.tessera{ position:relative; align-items:center; }
+.tessera:not(.presto)::after{ content:"›"; margin-left:auto; padding-left:8px;
+  font-size:2rem; line-height:1; color:var(--testo-tenue); opacity:.55; }
+.tessera .info{ flex:1; min-width:0; }
+
+/* Vincitore in classifica: leggero bagliore dorato */
+.classifica li.vincitore{ box-shadow:0 0 0 2px rgba(255,202,58,.55), var(--ombra); }
+
+/* Sezioni un po' più ariose */
+.etichetta{ margin-top:20px; }

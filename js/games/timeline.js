@@ -16,23 +16,26 @@
       "text-align:center;margin-bottom:6px;}",
     ".tl-carta-mano .occhiello{font-size:.8rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;opacity:.75;}",
     ".tl-carta-mano .titolo{font-size:1.35rem;font-weight:800;line-height:1.2;margin-top:4px;}",
-    ".tl-restano{font-size:.85rem;color:var(--testo-tenue);text-align:center;margin:0 0 4px;}",
+    ".tl-carta-mano .desc{font-size:.95rem;line-height:1.4;margin-top:8px;color:#3a3000;}",
+    ".tl-restano{font-size:.9rem;color:var(--testo-tenue);text-align:center;font-weight:700;margin:0 0 8px;}",
     ".tl-linea{display:flex;flex-direction:column;gap:0;}",
     ".tl-evento{background:var(--carta);border-radius:14px;padding:12px 14px;display:flex;",
-      "align-items:center;gap:14px;box-shadow:var(--ombra);}",
-    ".tl-evento .anno{font-size:1.5rem;font-weight:800;color:var(--accento);min-width:2.6em;text-align:right;}",
-    ".tl-evento .et{font-size:1rem;line-height:1.25;}",
-    ".tl-gap{width:100%;min-height:46px;margin:8px 0;border:2px dashed var(--carta-2);",
-      "background:transparent;color:var(--testo-tenue);border-radius:12px;font-family:inherit;",
-      "font-weight:700;font-size:.95rem;cursor:pointer;transition:all .12s ease;}",
-    ".tl-gap:active,.tl-gap:hover{border-color:var(--accento);color:var(--accento);}",
+      "align-items:flex-start;gap:14px;box-shadow:var(--ombra);}",
+    ".tl-evento .anno{font-size:1.5rem;font-weight:800;color:var(--accento);min-width:2.8em;text-align:right;flex:0 0 auto;}",
+    ".tl-evento .et-col{flex:1;min-width:0;}",
+    ".tl-evento .et{font-size:1.02rem;font-weight:700;line-height:1.25;}",
+    ".tl-evento .et-desc{font-size:.85rem;color:var(--testo-tenue);line-height:1.35;margin-top:3px;}",
+    ".tl-gap{width:100%;min-height:48px;margin:10px 0;border:2px dashed var(--carta-2);",
+      "background:rgba(255,255,255,.02);color:var(--testo-tenue);border-radius:12px;font-family:inherit;",
+      "font-weight:800;font-size:.95rem;cursor:pointer;transition:all .12s ease;}",
+    ".tl-gap:active,.tl-gap:hover{border-style:solid;border-color:var(--accento);color:var(--accento);background:rgba(255,202,58,.12);}",
     ".tl-esito{text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px;}",
     ".tl-esito .faccia{font-size:4rem;}",
     ".tl-esito .verdetto{font-size:1.6rem;font-weight:800;}",
     ".tl-esito .giusto{color:var(--verde);} .tl-esito .sbagliato{color:var(--rosso);}",
-    ".tl-esito .annone{font-size:2.4rem;font-weight:800;color:var(--accento);}",
+    ".tl-esito .annone{font-size:2.6rem;font-weight:900;color:var(--accento);}",
     ".tl-esito .titoletto{font-size:1.2rem;font-weight:700;}",
-    ".tl-esito .fatto{color:var(--testo-tenue);line-height:1.5;max-width:34ch;margin:6px auto 0;}"
+    ".tl-finito{margin-top:10px;font-size:1.05rem;font-weight:800;color:var(--verde);}"
   ].join("");
   document.head.appendChild(stile);
 
@@ -156,6 +159,7 @@
         mazzo: mazzo,
         linea: [ mazzo.pop() ],                 // carta di partenza, già scoperta
         turno: 0,
+        ordineFine: [],                         // nomi in ordine di chi finisce prima
         giocatori: t.giocatori.map(function (nome) {
           return { nome: nome, restano: carteAtesta };
         }),
@@ -191,10 +195,20 @@
   function giocatoreDiTurno(stato) {
     return stato.giocatori[stato.turno % stato.giocatori.length];
   }
+  // quanti giocatori hanno ancora carte da piazzare
+  function attiviRestano(stato) {
+    var n = 0; stato.giocatori.forEach(function (g) { if (g.restano > 0) n++; }); return n;
+  }
+  // sposta il turno fino a un giocatore che ha ancora carte (salta chi ha finito)
+  function assicuraAttivo(stato) {
+    var giri = 0, n = stato.giocatori.length;
+    while (n && stato.giocatori[stato.turno % n].restano === 0 && giri < n) { stato.turno++; giri++; }
+  }
 
   // --- Un turno: pesca una carta e chiedi dove va ---
   function iniziaTurno(t, stato) {
-    if (stato.mazzo.length === 0) return finePerMazzo(t, stato);
+    if (attiviRestano(stato) === 0 || stato.mazzo.length === 0) return finePartita(t, stato);
+    assicuraAttivo(stato);
     stato.carta = stato.mazzo.pop();
     disegnaPiazzamento(t, stato);
   }
@@ -212,19 +226,13 @@
     s._contenuto.appendChild(el("p", { class: "tl-restano",
       text: "Ti restano " + g.restano + (g.restano === 1 ? " carta" : " carte") }));
 
-    s._contenuto.appendChild(el("div", { class: "tl-carta-mano" }, [
-      el("div", { class: "occhiello", text: "Dove va?" }),
-      el("div", { class: "titolo", text: stato.carta.titolo })
-    ]));
+    s._contenuto.appendChild(nodoCartaMano(el, stato.carta, "Dove va?"));
 
     var linea = el("div", { class: "tl-linea" });
     // gap prima del primo, poi carta+gap per ognuno
     linea.appendChild(bottoneGap(t, stato, 0));
     stato.linea.forEach(function (ev, i) {
-      linea.appendChild(el("div", { class: "tl-evento" }, [
-        el("span", { class: "anno", text: annoTesto(ev.anno) }),
-        el("span", { class: "et", text: ev.titolo })
-      ]));
+      linea.appendChild(nodoEvento(el, ev));
       linea.appendChild(bottoneGap(t, stato, i + 1));
     });
     s._contenuto.appendChild(linea);
@@ -250,20 +258,21 @@
     var okDestra   = (gap === linea.length) || (Y <= linea[gap].anno);
     var giusto = okSinistra && okDestra;
 
+    var appenaFinito = false;
     if (giusto) {
       linea.push(carta); ordina(linea);
       g.restano -= 1;
+      if (g.restano === 0) { stato.ordineFine.push(g.nome); appenaFinito = true; }
     }
     // se sbagliato: la carta si scarta (restano invariato: si "ripesca" al turno dopo)
 
-    disegnaEsito(t, stato, giusto);
+    disegnaEsito(t, stato, giusto, appenaFinito);
   }
 
-  function disegnaEsito(t, stato, giusto) {
+  function disegnaEsito(t, stato, giusto, appenaFinito) {
     var el = t.el;
     var carta = stato.carta;
     var g = giocatoreDiTurno(stato);
-    var vinto = g.restano === 0;
 
     var s = t.schermata({});
     s._contenuto.appendChild(el("div", { class: "tl-esito" }, [
@@ -272,20 +281,22 @@
         text: giusto ? "Esatto!" : "Non ci siamo" }),
       el("div", { class: "annone", text: annoTesto(carta.anno) }),
       el("div", { class: "titoletto", text: carta.titolo }),
-      carta.fatto ? el("div", { class: "fatto", text: carta.fatto }) : null
+      appenaFinito ? el("div", { class: "tl-finito", text: "🎉 " + g.nome + " ha finito le sue carte!" }) : null
     ]));
 
-    if (vinto) {
+    // La partita finisce SOLO quando tutti hanno finito le carte (o si esaurisce il mazzo)
+    var finita = attiviRestano(stato) === 0 || stato.mazzo.length === 0;
+    if (finita) {
       s._piede.appendChild(el("button", {
-        class: "btn btn-verde", text: "🏆 " + g.nome + " ha finito le carte!",
-        onclick: function () { fineVittoria(t, stato); }
+        class: "btn btn-primario", text: "🏆 Vedi la classifica",
+        onclick: function () { finePartita(t, stato); }
       }));
       t.mostra(s);
       return;
     }
 
-    // prossimo giocatore
-    stato.turno += 1;
+    // passa al prossimo giocatore che ha ancora carte
+    stato.turno += 1; assicuraAttivo(stato);
     var prossimo = giocatoreDiTurno(stato).nome;
     var soloUno = stato.giocatori.length === 1;
     s._piede.appendChild(el("button", {
@@ -299,21 +310,16 @@
     t.mostra(s);
   }
 
-  // --- Fine ---
+  // --- Fine: classifica per ordine di chi ha finito prima ---
   function classificaDa(stato) {
-    return stato.giocatori.slice().sort(function (a, b) {
-      return a.restano - b.restano;
-    }).map(function (g) {
-      return { nome: g.nome, punti: g.restano === 0 ? "finito!" : g.restano + " da piazzare" };
-    });
+    var fatti = (stato.ordineFine || []).map(function (nome) { return { nome: nome, punti: "finito!" }; });
+    var restanti = stato.giocatori.filter(function (g) { return g.restano > 0; })
+      .sort(function (a, b) { return a.restano - b.restano; })
+      .map(function (g) { return { nome: g.nome, punti: g.restano + (g.restano === 1 ? " carta rimasta" : " carte rimaste") }; });
+    return fatti.concat(restanti);
   }
 
-  function fineVittoria(t, stato) { t.fine(classificaDa(stato)); }
-
-  function finePerMazzo(t, stato) {
-    // finite le carte del mazzo: vince chi ne ha piazzate di più (meno restano)
-    t.fine(classificaDa(stato));
-  }
+  function finePartita(t, stato) { t.fine(classificaDa(stato)); }
 
   function confermaUscita() {
     return window.confirm("Uscire dalla partita in corso?");
@@ -321,6 +327,24 @@
 
   function annoTesto(a) {
     return a < 0 ? Math.abs(a) + " a.C." : String(a);
+  }
+
+  // Componenti riusabili (valgono per "un telefono" e per l'online)
+  function nodoCartaMano(el, carta, occhiello) {
+    return el("div", { class: "tl-carta-mano" }, [
+      el("div", { class: "occhiello", text: occhiello }),
+      el("div", { class: "titolo", text: carta.titolo }),
+      carta.fatto ? el("div", { class: "desc", text: carta.fatto }) : null
+    ]);
+  }
+  function nodoEvento(el, ev) {
+    return el("div", { class: "tl-evento" }, [
+      el("span", { class: "anno", text: annoTesto(ev.anno) }),
+      el("div", { class: "et-col" }, [
+        el("div", { class: "et", text: ev.titolo }),
+        ev.fatto ? el("div", { class: "et-desc", text: ev.fatto }) : null
+      ])
+    ]);
   }
 
   // =========================================================
@@ -346,8 +370,8 @@
       giocatori: g.map(function (x) { return { id: x.id, nome: x.nome, restano: x.restano }; }),
       turnoId: g.length ? g[idx].id : null,
       turnoNome: g.length ? g[idx].nome : "",
-      linea: stato.linea.map(function (e) { return { anno: e.anno, titolo: e.titolo }; }),
-      carta: stato.carta ? { titolo: stato.carta.titolo } : null,
+      linea: stato.linea.map(function (e) { return { anno: e.anno, titolo: e.titolo, fatto: e.fatto || "" }; }),
+      carta: stato.carta ? { titolo: stato.carta.titolo, fatto: stato.carta.fatto || "" } : null,
       esito: stato.esito || null,
       classifica: stato.classifica || null
     };
@@ -361,7 +385,7 @@
     var stato = {
       mazzo: mischiaArr(pescaDati(t.impostazioni)), linea: [], turno: 0, carta: null,
       esito: null, classifica: null, fase: "lobby", iniziata: false, carte: carte,
-      codice: "…", vittoria: null,
+      codice: "…", ordineFine: [],
       giocatori: [{ id: "host", nome: hostNome, restano: carte }]
     };
 
@@ -373,6 +397,7 @@
         stato.giocatori.splice(i, 1);
         if (stato.turno >= stato.giocatori.length && stato.giocatori.length) stato.turno = stato.turno % stato.giocatori.length;
         if (stato.iniziata && stato.giocatori.length === 0) { rete.chiudi(); return t.esci(); }
+        if (stato.iniziata && stato.fase !== "fine" && attiviRestano(stato) === 0) return finisci();
         broadcastEdisegna();
       },
       onMsg: function (id, msg) {
@@ -403,9 +428,9 @@
       if (!g || g.id !== playerId) return;
       var carta = stato.carta, linea = stato.linea, Y = carta.anno;
       var ok = ((gap === 0) || (linea[gap - 1].anno <= Y)) && ((gap === linea.length) || (Y <= linea[gap].anno));
-      if (ok) { linea.push(carta); ordina(linea); g.restano -= 1; }
-      stato.esito = { giusto: ok, anno: carta.anno, titolo: carta.titolo, fatto: carta.fatto || "", nome: g.nome };
-      stato.vittoria = (ok && g.restano === 0) ? g.id : null;
+      var appenaFinito = false;
+      if (ok) { linea.push(carta); ordina(linea); g.restano -= 1; if (g.restano === 0) { stato.ordineFine.push(g.nome); appenaFinito = true; } }
+      stato.esito = { giusto: ok, anno: carta.anno, titolo: carta.titolo, fatto: carta.fatto || "", nome: g.nome, finito: appenaFinito };
       stato.fase = "esito";
       broadcastEdisegna();
     }
@@ -413,16 +438,19 @@
       if (stato.fase !== "esito") return;
       var g = stato.giocatori[stato.turno % stato.giocatori.length];
       if (!g || g.id !== playerId) return; // solo chi ha appena giocato fa avanzare
-      if (stato.vittoria) return finisci();
-      stato.turno += 1;
-      if (stato.mazzo.length === 0) return finisci();
+      // finisce SOLO quando tutti hanno finito le carte (o si esaurisce il mazzo)
+      if (attiviRestano(stato) === 0 || stato.mazzo.length === 0) return finisci();
+      stato.turno += 1; assicuraAttivo(stato);
       stato.carta = stato.mazzo.pop(); stato.esito = null; stato.fase = "turno";
       broadcastEdisegna();
     }
     function finisci() {
       stato.fase = "fine";
-      stato.classifica = stato.giocatori.slice().sort(function (a, b) { return a.restano - b.restano; })
-        .map(function (g) { return { nome: g.nome, punti: g.restano === 0 ? "finito!" : g.restano + " da piazzare" }; });
+      var fatti = stato.ordineFine.map(function (nome) { return { nome: nome, punti: "finito!" }; });
+      var restanti = stato.giocatori.filter(function (x) { return x.restano > 0; })
+        .sort(function (a, b) { return a.restano - b.restano; })
+        .map(function (x) { return { nome: x.nome, punti: x.restano + (x.restano === 1 ? " carta rimasta" : " carte rimaste") }; });
+      stato.classifica = fatti.concat(restanti);
       broadcastEdisegna();
     }
 
@@ -505,17 +533,12 @@
       text: io ? ("Ti restano " + io.restano + (io.restano === 1 ? " carta" : " carte")) : "Stai guardando la partita" }));
 
     if (vm.fase === "turno") {
-      s._contenuto.appendChild(el("div", { class: "tl-carta-mano" }, [
-        el("div", { class: "occhiello", text: mioTurno ? "Dove va?" : ("Sta giocando " + vm.turnoNome) }),
-        el("div", { class: "titolo", text: vm.carta ? vm.carta.titolo : "" })
-      ]));
+      s._contenuto.appendChild(nodoCartaMano(el, vm.carta || { titolo: "" },
+        mioTurno ? "Dove va?" : ("Sta giocando " + vm.turnoNome)));
       var linea = el("div", { class: "tl-linea" });
       if (mioTurno) linea.appendChild(gapBtn(el, cb, 0));
       vm.linea.forEach(function (ev, i) {
-        linea.appendChild(el("div", { class: "tl-evento" }, [
-          el("span", { class: "anno", text: annoTesto(ev.anno) }),
-          el("span", { class: "et", text: ev.titolo })
-        ]));
+        linea.appendChild(nodoEvento(el, ev));
         if (mioTurno) linea.appendChild(gapBtn(el, cb, i + 1));
         else linea.appendChild(el("div", { style: "height:8px" }));
       });
@@ -529,7 +552,7 @@
           text: (es.nome ? es.nome + ": " : "") + (es.giusto ? "esatto!" : "sbagliato") }),
         el("div", { class: "annone", text: annoTesto(es.anno) }),
         el("div", { class: "titoletto", text: es.titolo }),
-        es.fatto ? el("div", { class: "fatto", text: es.fatto }) : null
+        es.finito ? el("div", { class: "tl-finito", text: "🎉 " + es.nome + " ha finito le sue carte!" }) : null
       ]));
       if (mioTurno) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: cb.onAvanti }));
       else s._piede.appendChild(el("p", { class: "link-avviso centro", text: "In attesa di " + vm.turnoNome + "…" }));
