@@ -1358,6 +1358,7 @@ window.SG_NOVITA = [
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       input.style.borderColor = "var(--accento)";
       var msg = el("div", { class: "link-avviso" });
+      S.msg = msg;
       s._contenuto.appendChild(input);
       s._contenuto.appendChild(msg);
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
@@ -1369,7 +1370,13 @@ window.SG_NOVITA = [
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
-        onAperto: function (mioId) { S.myId = mioId; S.rete.invia({ t: "join", nome: S.nome }); },
+        onAperto: function (mioId) {
+          S.myId = mioId; S.rete.invia({ t: "join", nome: S.nome });
+          // se dopo qualche secondo non arriva niente, forse il codice è sbagliato
+          setTimeout(function () {
+            if (!S.vm && S.msg) S.msg.textContent = "Non trovo la partita. Controlla il codice, o aspetta che l'host apra la stanza…";
+          }, 8000);
+        },
         onMsg: function (m) { if (m && m.t === "vm") { S.vm = m.vm; disegna(); } },
         onChiuso: function () { schermaErrore("Collegamento perso. L'host potrebbe aver chiuso la partita."); },
         onErrore: function (e) { schermaErrore(codiceErrore(e)); }
@@ -1491,10 +1498,8 @@ window.SG_NOVITA = [
 
   function codiceErrore(e) {
     var ty = e && e.type;
-    if (ty === "peer-unavailable") return "Stanza non trovata. Controlla il codice: forse l'host non l'ha ancora aperta.";
-    if (ty === "no-peerjs") return "Il collegamento tra telefoni non è disponibile qui.";
-    if (ty === "network" || ty === "server-error" || ty === "socket-error") return "Problema di rete. Riprova tra poco.";
-    return "Non riesco a collegarmi. Riprova.";
+    if (ty === "no-mqtt") return "Il collegamento tra telefoni non è disponibile qui.";
+    return "Problema di collegamento. Controlla la connessione e riprova.";
   }
 
   SG.registra(gioco);
