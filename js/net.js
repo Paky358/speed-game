@@ -1,83 +1,98 @@
 /* =========================================================
    COLLEGAMENTO TRA TELEFONI — "SGNet"
    Fa parlare i telefoni tra loro per la modalità
-   "ognuno dal suo telefono", senza server né account:
-   usa PeerJS (collegamento diretto tra browser).
+   "ognuno dal suo telefono", senza server né account.
+
+   I messaggi passano da un "ufficio postale" pubblico e
+   gratuito (un broker MQTT): ogni telefono si collega a
+   quello, quindi funziona su qualsiasi rete (niente
+   collegamento diretto che sul cellulare spesso fallisce).
 
    Un telefono "ospita" la stanza (è il cervello della
-   partita); gli altri "entrano" con il codice della stanza.
-   Se PeerJS non è disponibile (o il collegamento è bloccato),
-   SGNet.disponibile() è false e il gioco resta comunque
-   giocabile con un telefono solo.
+   partita); gli altri "entrano" con il codice.
    ========================================================= */
 (function () {
   "use strict";
 
-  // Prefisso per non confondersi con altre app sullo stesso servizio pubblico
-  var PREFISso = "seratagiochi-v1-";
-  var ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // niente lettere/numeri ambigui
+  var BROKER = "wss://broker.hivemq.com:8884/mqtt";
+  var BASE = "seratagiochi/v1/";
+  var ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // niente caratteri ambigui
 
   function codiceACaso(n) {
     var s = "";
     for (var i = 0; i < (n || 4); i++) s += ALFABETO[Math.floor(Math.random() * ALFABETO.length)];
     return s;
   }
+  function topics(codice) {
+    codice = String(codice).toUpperCase();
+    return { stato: BASE + codice + "/stato", azioni: BASE + codice + "/azioni" };
+  }
 
   window.SGNet = {
-    disponibile: function () { return typeof Peer !== "undefined"; },
+    disponibile: function () { return typeof mqtt !== "undefined"; },
 
-    // L'host apre una stanza. cb: { onCodice, onArrivo(id), onAddio(id), onMsg(id,msg), onErrore(e) }
+    // L'host apre una stanza. cb: { onCodice, onArrivo, onAddio(id), onMsg(id,msg), onErrore(e) }
     ospita: function (cb) {
-      if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-peerjs" }); return null; }
-      var conns = {};
-      var peer, tentativi = 0;
-
-      function prova() {
-        var codice = codiceACaso(4);
-        peer = new Peer(PREFISso + codice, { debug: 1 });
-        peer.on("open", function () { cb.onCodice && cb.onCodice(codice); });
-        peer.on("connection", function (conn) {
-          conn.on("open", function () {
-            conns[conn.peer] = conn;
-            cb.onArrivo && cb.onArrivo(conn.peer);
-            conn.on("data", function (d) { cb.onMsg && cb.onMsg(conn.peer, d); });
-            conn.on("close", function () { delete conns[conn.peer]; cb.onAddio && cb.onAddio(conn.peer); });
-          });
-        });
-        peer.on("error", function (e) {
-          if (e && e.type === "unavailable-id" && tentativi < 5) { tentativi++; try { peer.destroy(); } catch (x) {} prova(); return; }
-          cb.onErrore && cb.onErrore(e);
-        });
-      }
-      prova();
+      if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
+      var codice = codiceACaso(4);
+      var T = topics(codice);
+      var client = mqtt.connect(BROKER, {
+        clean: true, reconnectPeriod: 2000,
+        // Se l'host sparisce all'improvviso, avvisa gli altri
+        will: { topic: T.stato, payload: JSON.stringify({ t: "__hostgone" }), retain: false }
+      });
+      client.on("connect", function () {
+        client.subscribe(T.azioni, function () { cb.onCodice && cb.onCodice(codice); });
+      });
+      client.on("message", function (_t, payload) {
+        var m; try { m = JSON.parse(payload.toString()); } catch (e) { return; }
+        if (!m) return;
+        if (m.data && m.data.t === "__leave") { cb.onAddio && cb.onAddio(m.from); return; }
+        cb.onMsg && cb.onMsg(m.from, m.data);
+      });
+      client.on("error", function (e) { cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message }); });
 
       return {
-        invia: function (msg) { for (var k in conns) { try { conns[k].send(msg); } catch (e) {} } },
-        inviaA: function (id, msg) { if (conns[id]) { try { conns[id].send(msg); } catch (e) {} } },
-        chiudi: function () { try { peer.destroy(); } catch (e) {} }
+        // la partita (vm) viene mandata a tutti e "trattenuta" (retain) così
+        // chi entra dopo riceve subito lo stato attuale
+        invia: function (msg) { try { if (client.connected) client.publish(T.stato, JSON.stringify(msg), { retain: true }); } catch (e) {} },
+        inviaA: function (id, msg) { this.invia(msg); },
+        chiudi: function () {
+          try {
+            client.publish(T.stato, JSON.stringify({ t: "__hostgone" }), { retain: false });
+            client.publish(T.stato, "", { retain: true }); // pulisce lo stato trattenuto
+            client.end();
+          } catch (e) {}
+        }
       };
     },
 
-    // Un ospite entra nella stanza. cb: { onAperto, onMsg(msg), onChiuso, onErrore(e) }
+    // Un ospite entra con il codice. cb: { onAperto(id), onMsg(msg), onChiuso, onErrore(e) }
     entra: function (codice, cb) {
-      if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-peerjs" }); return null; }
-      var peer = new Peer(undefined, { debug: 1 });
-      var conn, mioId;
-      peer.on("open", function (id) {
-        mioId = id;
-        conn = peer.connect(PREFISso + codice.toUpperCase(), { reliable: true });
-        conn.on("open", function () {
-          cb.onAperto && cb.onAperto(mioId); // passa il PROPRIO id all'ospite
-          conn.on("data", function (d) { cb.onMsg && cb.onMsg(d); });
-          conn.on("close", function () { cb.onChiuso && cb.onChiuso(); });
-        });
-        conn.on("error", function (e) { cb.onErrore && cb.onErrore(e); });
+      if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
+      var myId = "g" + Math.random().toString(36).slice(2, 9);
+      var T = topics(codice);
+      var client = mqtt.connect(BROKER, {
+        clean: true, reconnectPeriod: 2000,
+        will: { topic: T.azioni, payload: JSON.stringify({ from: myId, data: { t: "__leave" } }), retain: false }
       });
-      peer.on("error", function (e) { cb.onErrore && cb.onErrore(e); });
+      var aperto = false;
+      client.on("connect", function () {
+        client.subscribe(T.stato, function () { if (!aperto) { aperto = true; cb.onAperto && cb.onAperto(myId); } });
+      });
+      client.on("message", function (_t, payload) {
+        var m; try { m = JSON.parse(payload.toString()); } catch (e) { return; }
+        if (!m || m === "") return;
+        if (m.t === "__hostgone") { cb.onChiuso && cb.onChiuso(); return; }
+        cb.onMsg && cb.onMsg(m);
+      });
+      client.on("error", function (e) { cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message }); });
 
       return {
-        invia: function (msg) { try { conn && conn.send(msg); } catch (e) {} },
-        chiudi: function () { try { peer.destroy(); } catch (e) {} }
+        invia: function (msg) { try { if (client.connected) client.publish(T.azioni, JSON.stringify({ from: myId, data: msg }), { retain: false }); } catch (e) {} },
+        chiudi: function () {
+          try { client.publish(T.azioni, JSON.stringify({ from: myId, data: { t: "__leave" } }), { retain: false }); client.end(); } catch (e) {}
+        }
       };
     }
   };

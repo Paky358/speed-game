@@ -16,7 +16,7 @@ OUT=dist/serata-giochi.html
   cat css/styles.css
   echo '</style>'
   echo '<div id="app"></div>'
-  echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>'
+  echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>'
   echo '<script>'
   cat js/core.js
   echo ''

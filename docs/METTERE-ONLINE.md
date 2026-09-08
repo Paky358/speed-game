@@ -30,9 +30,9 @@ un sito che lo mostri a chiunque abbia il link.
 ## Da sapere
 - **Il telefono dell'host è il "cervello" della partita**: se l'host chiude la
   pagina, la partita finisce per tutti. È normale — è l'host che conduce.
-- Il collegamento tra telefoni usa un servizio pubblico gratuito: quasi sempre
-  funziona subito; se una volta non si collega, riprovate a rientrare con lo stesso
-  codice.
+- Il collegamento passa da un "ufficio postale" pubblico e gratuito, quindi
+  funziona su qualsiasi rete (anche da cellulare). È un servizio condiviso da
+  tanti: se una rara volta fosse lento, riprovate a rientrare con lo stesso codice.
 - La modalità **"un telefono solo"** funziona sempre, anche senza tutto questo.
 
 ## Quando aggiorno il gioco
