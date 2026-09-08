@@ -242,10 +242,11 @@ img{ max-width:100%; }
   background:linear-gradient(135deg,#ffe58a,var(--accento) 55%,#ff9d3a);
   -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
 .home .testa .sotto{ font-size:1.15rem; margin-top:8px; }
-/* NON centrare in verticale: stack dall'alto, così niente buco tra titolo e giochi */
-.home .contenuto{ flex:0 0 auto; display:flex; flex-direction:column; gap:14px; }
-.home .griglia-giochi{ gap:14px; }
-.home .tessera{ padding:20px 18px; }
+/* I giochi RIEMPIONO lo spazio: le tessere crescono per occupare tutta
+   l'altezza disponibile. Con tanti giochi raggiungono il minimo e si scorre. */
+.home .contenuto{ flex:1 1 auto; display:flex; flex-direction:column; }
+.home .griglia-giochi{ flex:1 1 auto; display:flex; flex-direction:column; gap:14px; }
+.home .tessera{ flex:1 1 auto; min-height:110px; padding:20px 18px; }
 .home .tessera .icona{ width:70px; height:70px; font-size:2.5rem; }
 .home .tessera .info h2{ font-size:1.45rem; }
 .home .tessera .info p{ font-size:1.08rem; line-height:1.35; }
