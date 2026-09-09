@@ -98,14 +98,27 @@
 
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
 
-  // Prende N carte dal round mescolando le fasce a giro (A, B, C, A, B, C...)
-  // così sul tavolo c'è sempre un buon assortimento.
+  // Prende N carte dal round tenendo RARI i pezzi migliori:
+  // circa un terzo di fascia A, un terzo di C e il resto B.
+  // Con 4 giocatori esce 1 carta A, 2 B e 1 C: mai quattro pezzi top.
   function carteDelRound(r, n) {
     var pool = { A: mischia(r.A || []), B: mischia(r.B || []), C: mischia(r.C || []) };
-    var ordine = ["A", "B", "C"], scelte = [], giro = 0;
-    while (scelte.length < n && giro < 30) {
-      var t = ordine[giro % 3];
-      if (pool[t].length) scelte.push({ nome: pool[t][0].nome, emoji: pool[t][0].emoji, tier: t }), pool[t].shift();
+    var quota = { A: Math.max(1, Math.floor(n / 3)), C: Math.max(1, Math.floor(n / 3)) };
+    quota.B = n - quota.A - quota.C;
+    if (quota.B < 0) { quota.B = 0; quota.A = Math.min(quota.A, n); quota.C = n - quota.A; }
+
+    var scelte = [];
+    ["A", "B", "C"].forEach(function (t) {
+      for (var i = 0; i < quota[t] && pool[t].length; i++) {
+        var c = pool[t].shift();
+        scelte.push({ nome: c.nome, emoji: c.emoji, tier: t });
+      }
+    });
+    // se una fascia è finita, si completa con le altre (prima B, poi C, poi A)
+    var giro = 0;
+    while (scelte.length < n && giro < 60) {
+      var t2 = ["B", "C", "A"][giro % 3];
+      if (pool[t2].length) { var c2 = pool[t2].shift(); scelte.push({ nome: c2.nome, emoji: c2.emoji, tier: t2 }); }
       giro++;
     }
     return mischia(scelte);
