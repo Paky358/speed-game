@@ -21,7 +21,7 @@ prossimo da questa lista.
   - Esempi: Ristorante Stellato / Pizzeria di fiducia / Autogrill · Abito su misura / Camicia e jeans /
     Tuta acetata · Viaggi / Serie TV / Il tuo Ex · Bacio sotto la pioggia / Passeggiata / Scappa dal bagno
   - Voto: 5 stelle = matrimonio, 1 stella = ti blocca su WhatsApp
-- 🦸 **Crea il tuo Supereroe (di serie B)**
+- 🦸 **Supereroi**
   - Round: Il Superpotere · Il Costume · Il Gadget · Il Punto Debole
   - Esempi: Invisibilità / Sputare fuoco (ma poco) / Riconoscere i font · Armatura nanotech /
     Calzamaglia / Sacco dell'immondizia · Scudo indistruttibile / Rampino / Spatola per fritti ·
