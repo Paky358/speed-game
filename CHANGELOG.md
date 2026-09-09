@@ -4,6 +4,17 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 9 settembre 2026 — L'Asta online e il tema "Il Colpo del Secolo"
+- **L'Asta si gioca anche a distanza**: chi organizza sceglie all'inizio fra *Un
+  telefono solo* e *Ognuno dal suo telefono*. Nel secondo caso l'app apre una
+  **stanza con codice** e un link da mandare agli amici.
+- Online ognuno **rilancia dal proprio telefono**, vede offerta e crediti in tempo
+  reale, sceglie la sua carta quando tocca a lui e **vota in segreto** i kit degli
+  altri (mai il proprio). Tutto è tenuto insieme da chi ha aperto la stanza.
+- **Nuovo tema: 💰 Il Colpo del Secolo** — 184 carte in quattro round: La Mente 🧠,
+  I Muscoli 💪, La Fuga 🚗, Il Nascondiglio 🏝️.
+- I temi dell'Asta diventano quattro: Zombie, Pizza, Panino, Rapina.
+
 ## 8 settembre 2026 — Sfida a punti, voti, timer e nuova grafica
 - **Timer di 30 secondi** a turno (se scade, conta come sbagliata).
 - **Punteggi**: giusta +100, sbagliata −100. Se sbagli **la data resta segreta** e

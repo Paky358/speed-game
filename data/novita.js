@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 14,
+    data: "9 settembre 2026",
+    titolo: "L'Asta si gioca ognuno dal suo telefono 🔗 + tema Rapina 💰",
+    descrizione: [
+      "L'Asta ora si può giocare in due modi: con UN TELEFONO SOLO appoggiato al tavolo, oppure OGNUNO DAL SUO TELEFONO.",
+      "Chi organizza sceglie il modo prima di iniziare: se sceglie online, l'app crea una stanza con un codice e un link da mandare agli amici.",
+      "Ognuno rilancia dal proprio telefono, vede la sua offerta e i suoi crediti, e alla fine vota le squadre degli altri in segreto (non puoi votare te stesso).",
+      "Nuovo tema: IL COLPO DEL SECOLO 💰 — quattro round per mettere su la rapina perfetta: La Mente, I Muscoli, La Fuga, Il Nascondiglio. 184 carte nuove.",
+      "I temi dell'Asta sono ora quattro: Zombie, Pizza, Panino e Rapina."
+    ]
+  },
+  {
     v: 13,
     data: "9 settembre 2026",
     titolo: "Profilo e La Sala 👤 🎉",
