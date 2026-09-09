@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 9,
+    data: "9 settembre 2026",
+    titolo: "Oltre 800 avvenimenti e fino a 10 giocatori",
+    descrizione: [
+      "Aggiunte 600 carte nuove: ora sono più di 800 in tutto, con tante più cose per ogni categoria.",
+      "Storia 174, Invenzioni e scoperte 169, Rap italiano 156, Cinema 153, Calcio 152.",
+      "Si può giocare fino a 10 giocatori (prima erano 8), anche nelle stanze online."
+    ]
+  },
+  {
     v: 8,
     data: "9 settembre 2026",
     titolo: "Si vota anche con un telefono solo",

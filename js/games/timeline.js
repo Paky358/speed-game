@@ -10,6 +10,7 @@
   var PUNTI = 100;     // per una risposta giusta/sbagliata
   var VOTO = 50;       // per chi vota giusto/sbagliato
   var TEMPO = 30;      // secondi per turno / per votare
+  var MAX_GIOCATORI = 10;
 
   // --- Aspetto (stile moderno, specifico del gioco) ---
   var stile = document.createElement("style");
@@ -178,7 +179,7 @@
     icona: "📜",
     descrizione: "Metti gli avvenimenti nell'ordine giusto e sfida gli amici a punti.",
     giocatoriMin: 1,
-    giocatoriMax: 8,
+    giocatoriMax: MAX_GIOCATORI,
 
     regole: [
       "Al tuo turno esce un avvenimento <b>senza data</b>: hai <b>30 secondi</b> per decidere dove va nella linea del tempo.",
@@ -427,7 +428,11 @@
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") { if (!st.iniziata && indexById(st, id) < 0) st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), restano: st.carte, punti: 0 }); bd(); }
+        if (m.t === "join") {
+          if (!st.iniziata && indexById(st, id) < 0 && st.giocatori.length < MAX_GIOCATORI)
+            st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), restano: st.carte, punti: 0 });
+          bd();
+        }
         else if (m.t === "scelta") { scelta(id, m.gap); }
         else if (m.t === "voto") { voto(id, m.d); }
         else if (m.t === "avanti") { if (st.fase === "esito" && corr().id === id) prossimo(); }

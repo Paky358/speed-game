@@ -61,3 +61,7 @@ contenuto di quel tasto vive in `data/novita.js`._
 
 ## 9 settembre 2026 — Tantissimi nuovi avvenimenti
 - Aggiunti 70 avvenimenti nuovi e verificati (storia, invenzioni, calcio, rap italiano, cinema): ora sono circa 200 in tutto.
+
+## 9 settembre 2026 — Oltre 800 avvenimenti e fino a 10 giocatori
+- Importate 600 carte nuove dal set delle 750 (57 doppioni evidenti + 93 doppioni di significato scartati): totale 804.
+- Massimo giocatori portato da 8 a 10, con limite applicato anche alla stanza online.
