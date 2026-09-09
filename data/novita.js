@@ -11,11 +11,12 @@ window.SG_NOVITA = [
   {
     v: 11,
     data: "9 settembre 2026",
-    titolo: "L'Asta: nuovo tema 🍕 La Pizza Perfetta",
+    titolo: "L'Asta: tre temi da scegliere 🧟 🍕 🍔",
     descrizione: [
-      "Oltre agli zombie ora puoi giocare a costruire la pizza migliore: Impasto, Base, Formaggio e Condimenti.",
-      "Chi organizza sceglie il tema prima di cominciare.",
-      "Dalla bufala e la 'nduja fino all'ananas e alla cenere del forno: qualcuno resterà con una pizza discutibile."
+      "Oltre agli zombie sono arrivati due temi nuovi: La Pizza Perfetta e Il Panino Perfetto.",
+      "Pizza: Impasto, Base, Formaggio e Condimenti. Panino: Pane, Carne, Formaggio & Salse, Extra & Contorno.",
+      "Ogni tema ha 184 carte, quindi le partite restano sempre diverse.",
+      "Chi organizza sceglie il tema prima di cominciare. Dalla bufala e il tartufo fino alla cenere del forno e alla salsa misteriosa: qualcuno resterà con un piatto discutibile."
     ]
   },
   {

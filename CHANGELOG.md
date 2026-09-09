@@ -72,3 +72,8 @@ contenuto di quel tasto vive in `data/novita.js`._
 - Assegnazione automatica a 1 credito quando resta un solo giocatore e una sola carta.
 - Finale con riepilogo dei kit, votazione a stelle (1-5, non il proprio) e podio.
 - Corretto un difetto del motore: gli attributi non impostati disabilitavano i pulsanti.
+
+## 9 settembre 2026 — Asta: tre temi da 184 carte
+- Nuovi temi La Pizza Perfetta e Il Panino Perfetto, oltre a Sopravvivenza Zombie.
+- Tutti e tre ampliati a 184 carte (46 per round: 14 A, 18 B, 14 C), solo ingredienti veri e coerenti col round.
+- Revisione manuale delle fasce: corretti Pollo alla Griglia (da A a B) e Roast Beef (da B ad A).
