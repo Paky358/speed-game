@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 11,
+    data: "9 settembre 2026",
+    titolo: "L'Asta: nuovo tema 🍕 La Pizza Perfetta",
+    descrizione: [
+      "Oltre agli zombie ora puoi giocare a costruire la pizza migliore: Impasto, Base, Formaggio e Condimenti.",
+      "Chi organizza sceglie il tema prima di cominciare.",
+      "Dalla bufala e la 'nduja fino all'ananas e alla cenere del forno: qualcuno resterà con una pizza discutibile."
+    ]
+  },
+  {
     v: 10,
     data: "9 settembre 2026",
     titolo: "Nuovo gioco: L'Asta 🔨",
