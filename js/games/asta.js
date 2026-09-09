@@ -98,11 +98,35 @@
 
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
 
+  // --- memoria delle carte già uscite ---
+  // Ricorda le ultime carte apparse (su questo telefono) e preferisce
+  // quelle mai viste: così due o tre partite di fila non si somigliano.
+  var CHIAVE_VISTI = "sg_asta_visti_";
+  var MEMORIA = 90;
+  function elencoVisti(id) {
+    try { var v = JSON.parse(localStorage.getItem(CHIAVE_VISTI + id) || "[]"); return (v instanceof Array) ? v : []; }
+    catch (e) { return []; }
+  }
+  function segnaVisti(id, nomi) {
+    try {
+      var v = elencoVisti(id).concat(nomi);
+      if (v.length > MEMORIA) v = v.slice(v.length - MEMORIA);
+      localStorage.setItem(CHIAVE_VISTI + id, JSON.stringify(v));
+    } catch (e) {}
+  }
+
   // Prende N carte dal round tenendo RARI i pezzi migliori:
   // circa un terzo di fascia A, un terzo di C e il resto B.
   // Con 4 giocatori esce 1 carta A, 2 B e 1 C: mai quattro pezzi top.
-  function carteDelRound(r, n) {
-    var pool = { A: mischia(r.A || []), B: mischia(r.B || []), C: mischia(r.C || []) };
+  function carteDelRound(r, n, temaId) {
+    var visti = elencoVisti(temaId);
+    // prima le carte mai viste, poi le altre
+    function perFreschezza(lista) {
+      var nuove = [], viste = [];
+      (lista || []).forEach(function (c) { (visti.indexOf(c.nome) < 0 ? nuove : viste).push(c); });
+      return mischia(nuove).concat(mischia(viste));
+    }
+    var pool = { A: perFreschezza(r.A), B: perFreschezza(r.B), C: perFreschezza(r.C) };
     var quota = { A: Math.max(1, Math.floor(n / 3)), C: Math.max(1, Math.floor(n / 3)) };
     quota.B = n - quota.A - quota.C;
     if (quota.B < 0) { quota.B = 0; quota.A = Math.min(quota.A, n); quota.C = n - quota.A; }
@@ -121,6 +145,7 @@
       if (pool[t2].length) { var c2 = pool[t2].shift(); scelte.push({ nome: c2.nome, emoji: c2.emoji, tier: t2 }); }
       giro++;
     }
+    segnaVisti(temaId, scelte.map(function (c) { return c.nome; }));
     return mischia(scelte);
   }
 
@@ -240,7 +265,7 @@
   function iniziaRound(t, st) {
     var el = t.el;
     var r = st.tema.round[st.roundIdx];
-    st.tavolo = carteDelRound(r, st.giocatori.length);
+    st.tavolo = carteDelRound(r, st.giocatori.length, st.tema.id);
     st.senzaCarta = st.giocatori.map(function (_, i) { return i; });
     st.chooserPtr = st.roundIdx; // ruota chi sceglie per primo a ogni round
     FX.round();

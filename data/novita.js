@@ -17,7 +17,8 @@ window.SG_NOVITA = [
       "Quattro round a tema (tema iniziale: Sopravvivenza Zombie). In ogni round ognuno si aggiudica una carta all'asta.",
       "Si parte da 1 credito, si rilancia di 1 e dopo ogni rilancio partono 10 secondi: paga solo chi vince.",
       "Devi tenere almeno 1 credito per ogni round che resta, quindi attento a non svuotare il portafoglio subito.",
-      "Quasi 80 oggetti divisi in tre fasce (A, B, C) ragionate sulla sopravvivenza: i pezzi migliori restano rari, quindi anche in 4 esce una sola carta di fascia A.",
+      "184 oggetti divisi in tre fasce (A, B, C) ragionate sulla sopravvivenza: i pezzi migliori restano rari, quindi anche in 4 esce una sola carta di fascia A.",
+      "Il gioco ricorda le carte già uscite e preferisce quelle mai viste: partite di fila non si somigliano.",
       "Alla fine si vedono i kit di tutti e ognuno vota quelli degli altri da 1 a 5 stelle: vince chi ne raccoglie di più."
     ]
   },
