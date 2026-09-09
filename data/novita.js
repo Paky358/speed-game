@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 13,
+    data: "9 settembre 2026",
+    titolo: "Profilo e La Sala 👤 🎉",
+    descrizione: [
+      "Ora puoi creare il tuo profilo (nome e faccina) e ritrovarlo ogni volta: all'avvio scegli se CREARE un profilo nuovo o ACCEDERE a uno già salvato su questo telefono.",
+      "Nasce La Sala: metti insieme il gruppo una volta sola e resta lì tra una partita e l'altra.",
+      "A fine partita chi organizza decide: Rigioca, Cambia gioco o torna alla Sala per modificare i giocatori. Il gruppo non si perde più.",
+      "I profili restano solo su questo telefono: non servono password."
+    ]
+  },
+  {
     v: 12,
     data: "9 settembre 2026",
     titolo: "Proposte e segnalazioni 💡 🐞",

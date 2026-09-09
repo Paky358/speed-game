@@ -169,7 +169,11 @@
     s._contenuto.appendChild(ol);
     FX.vittoria();
     if (rigioca) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Rigioca", onclick: rigioca }));
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Torna ai giochi", onclick: t.esci }));
+    var azioni = el("div", { class: "home-azioni" });
+    azioni.appendChild(el("button", { class: "azione", text: "🎮 Cambia gioco", onclick: function () { SG.cambiaGioco(); } }));
+    azioni.appendChild(el("button", { class: "azione", text: "👥 La sala", onclick: function () { SG.sala(); } }));
+    azioni.appendChild(el("button", { class: "azione", text: "🏠 Home", onclick: t.esci }));
+    s._piede.appendChild(azioni);
     t.mostra(s);
   }
 

@@ -240,6 +240,36 @@ img{ max-width:100%; }
 .azione:active{ transform:scale(.97); }
 @media (hover:hover){ .azione:hover{ color:var(--testo); background:var(--carta-2); } }
 
+/* ---- Profilo ---- */
+.profilo-chip{ display:inline-flex; align-items:center; gap:8px; margin-top:14px; font-family:inherit;
+  font-size:.98rem; font-weight:700; cursor:pointer; border:0; border-radius:99px; padding:8px 14px;
+  background:var(--carta); color:var(--testo); }
+.profilo-chip .modifica{ font-size:.82rem; color:var(--accento); font-weight:800; }
+.profilo-riga{ display:flex; align-items:center; gap:14px; width:100%; text-align:left; cursor:pointer;
+  border:0; font-family:inherit; background:var(--carta); color:inherit; border-radius:16px;
+  padding:14px; margin-bottom:10px; box-shadow:var(--ombra); }
+.profilo-riga .av{ font-size:2rem; width:48px; height:48px; flex:0 0 auto; display:flex; align-items:center;
+  justify-content:center; border-radius:14px; background:linear-gradient(150deg,var(--carta-2),#201d44); }
+.profilo-riga .nm{ flex:1; font-size:1.15rem; font-weight:800; }
+.profilo-riga .frecc{ font-size:1.8rem; color:var(--accento); opacity:.7; }
+.faccine{ display:flex; flex-wrap:wrap; gap:8px; }
+.faccina{ font-size:1.7rem; line-height:1; cursor:pointer; border:2px solid transparent; border-radius:14px;
+  background:var(--carta); padding:8px 10px; min-width:52px; min-height:52px; }
+.faccina.attiva{ border-color:var(--accento); background:var(--carta-2); }
+
+/* ---- La sala ---- */
+.sala-riga{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+.sala-riga .av{ font-size:1.6rem; width:var(--tocco); height:var(--tocco); flex:0 0 auto; cursor:pointer;
+  border:0; border-radius:14px; background:var(--carta-2); }
+.sala-riga input{ flex:1; font-family:inherit; font-size:1.05rem; padding:12px 14px; border-radius:16px;
+  border:2px solid transparent; background:var(--carta); color:var(--testo); min-height:var(--tocco); }
+.sala-riga input:focus{ outline:none; border-color:var(--accento); }
+.sala-sommario{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; cursor:pointer;
+  border:0; font-family:inherit; background:var(--carta); color:var(--testo-tenue); border-radius:14px;
+  padding:12px 14px; margin-bottom:6px; font-size:.95rem; }
+.sala-sommario .chi{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sala-sommario .modifica{ color:var(--accento); font-weight:800; flex:0 0 auto; }
+
 /* ---- Moduli (proposte / segnalazioni) ---- */
 .modulo-nota{ font-size:1rem; line-height:1.45; color:var(--testo-tenue); margin:0 0 14px; }
 .modulo-testo{ width:100%; font-family:inherit; font-size:1.02rem; line-height:1.4; margin-top:10px;

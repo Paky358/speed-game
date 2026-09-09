@@ -93,27 +93,34 @@
   //  SCHERMATE COMUNI
   // =========================================================
 
+  // una tessera-gioco, usata sia in home sia in "cambia gioco"
+  function tesseraGioco(g, onclick) {
+    return el("button", { class: "tessera", onclick: onclick }, [
+      el("span", { class: "icona", text: g.icona || "🎲" }),
+      el("div", { class: "info" }, [
+        el("h2", { text: g.nome }),
+        el("p", { text: g.descrizione || "" }),
+        el("div", { class: "meta", text: rangeGiocatori(g) })
+      ])
+    ]);
+  }
+
   function schermataHome() {
     var s = schermata({});
     s.className += " home";
+    var io = profiloAttivo();
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
       el("div", { class: "home-logo", text: "🎉" }),
       el("h1", { class: "home-titolo", text: "Speed Game" }),
-      el("p", { class: "home-sotto", text: "Scegli un gioco e passa il telefono" })
+      el("p", { class: "home-sotto", text: "Scegli un gioco e passa il telefono" }),
+      el("button", { class: "profilo-chip", onclick: function () { schermataAccesso(schermataHome); } },
+        io ? [el("span", { text: io.emoji }), el("span", { text: io.nome }), el("span", { class: "modifica", text: "cambia" })]
+           : [el("span", { text: "👤" }), el("span", { text: "Crea il tuo profilo" })])
     ]));
     var griglia = el("div", { class: "griglia-giochi" });
 
     giochi.forEach(function (g) {
-      griglia.appendChild(el("button", {
-        class: "tessera", onclick: function () { schermataGiocatori(g); }
-      }, [
-        el("span", { class: "icona", text: g.icona || "🎲" }),
-        el("div", { class: "info" }, [
-          el("h2", { text: g.nome }),
-          el("p", { text: g.descrizione || "" }),
-          el("div", { class: "meta", text: rangeGiocatori(g) })
-        ])
-      ]));
+      griglia.appendChild(tesseraGioco(g, function () { apriGioco(g); }));
     });
 
     // Segnaposto: fa capire che ne arriveranno altri (senza prometterli)
@@ -262,74 +269,191 @@
   }
 
   // ---- Scelta dei giocatori ----
-  function schermataGiocatori(g) {
-    var min = g.giocatoriMin || 2;
-    var max = g.giocatoriMax || 8;
-    var nomi = ["", ""]; // due righe di partenza
-    while (nomi.length < min) nomi.push("");
+  // =========================================================
+  //  PROFILO  (crea / accedi) — resta su questo telefono
+  // =========================================================
+  var K_PROFILI = "sg_profili", K_ATTIVO = "sg_profilo_attivo";
+  var FACCINE = ["😀","😎","🤠","🥳","🤩","😈","🤖","👻","👽","🐱","🐶","🦊","🐼","🦁","🐸","🐧","🍕","🍔","⚽","🎸","🚀","🌟","🦄","🐢"];
 
-    var s = schermata({
-      icona: g.icona, titolo: g.nome, sotto: "Chi gioca?",
-      indietro: schermataHome
-    });
+  function leggiL(k, def) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? def : v; } catch (e) { return def; } }
+  function scriviL(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function profili() { var p = leggiL(K_PROFILI, []); return (p instanceof Array) ? p : []; }
+  function profiloAttivo() {
+    var id = leggiL(K_ATTIVO, null);
+    return profili().filter(function (p) { return p.id === id; })[0] || null;
+  }
+  function salvaProfilo(p) {
+    var lista = profili().filter(function (x) { return x.id !== p.id; });
+    lista.unshift(p);
+    if (lista.length > 12) lista = lista.slice(0, 12);
+    scriviL(K_PROFILI, lista); scriviL(K_ATTIVO, p.id);
+  }
 
-    var lista = el("div");
-    function ridisegna() {
-      svuota(lista);
-      nomi.forEach(function (n, i) {
-        var input = el("input", {
-          type: "text", value: n, placeholder: "Giocatore " + (i + 1),
-          maxlength: "16",
-          oninput: function (ev) { nomi[i] = ev.target.value; }
-        });
-        var riga = el("div", { class: "giocatore-riga" }, [input]);
-        if (nomi.length > min) {
-          riga.appendChild(el("button", {
-            class: "togli", text: "×", "aria-label": "Togli",
-            onclick: function () { nomi.splice(i, 1); ridisegna(); }
-          }));
-        }
-        lista.appendChild(riga);
+  function schermataAccesso(dopo) {
+    var lista = profili();
+    var s = schermata({ icona: "👤", titolo: "Il tuo profilo", sotto: "Crea il tuo oppure accedi", indietro: schermataHome });
+    s._contenuto.appendChild(el("p", { class: "modulo-nota",
+      text: "Il profilo serve solo a non riscrivere ogni volta nome e faccina. Resta su questo telefono: non c'è nessuna password." }));
+    if (lista.length) {
+      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Profili su questo telefono" }));
+      lista.slice(0, 4).forEach(function (p) {
+        s._contenuto.appendChild(el("button", { class: "profilo-riga", onclick: function () { scriviL(K_ATTIVO, p.id); dopo(); } }, [
+          el("span", { class: "av", text: p.emoji }),
+          el("span", { class: "nm", text: p.nome }),
+          el("span", { class: "frecc", text: "›" })
+        ]));
       });
     }
-    ridisegna();
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "➕ Crea profilo", onclick: function () { schermataCreaProfilo(dopo, null); } }));
+    var bAcc = el("button", { class: "btn btn-fantasma", text: "👤 Accedi con un profilo salvato", onclick: function () { schermataScegliProfilo(dopo); } });
+    if (!lista.length) bAcc.disabled = true;
+    s._piede.appendChild(bAcc);
+    mostra(s);
+  }
 
-    var aggiungi = el("button", {
-      class: "btn btn-fantasma", html: "＋ Aggiungi giocatore",
-      onclick: function () {
-        if (nomi.length >= max) return;
-        nomi.push(""); ridisegna();
-        if (nomi.length >= max) aggiungi.disabled = true;
-      }
+  function schermataScegliProfilo(dopo) {
+    var s = schermata({ icona: "👤", titolo: "Accedi", sotto: "Scegli il tuo profilo", indietro: function () { schermataAccesso(dopo); } });
+    profili().forEach(function (p) {
+      s._contenuto.appendChild(el("button", { class: "profilo-riga", onclick: function () { scriviL(K_ATTIVO, p.id); dopo(); } }, [
+        el("span", { class: "av", text: p.emoji }),
+        el("span", { class: "nm", text: p.nome }),
+        el("span", { class: "frecc", text: "›" })
+      ]));
     });
+    mostra(s);
+  }
 
+  function schermataCreaProfilo(dopo, esistente) {
+    var scelta = { emoji: (esistente && esistente.emoji) || FACCINE[0] };
+    var s = schermata({ icona: "👤", titolo: esistente ? "Modifica profilo" : "Crea profilo",
+      indietro: function () { schermataAccesso(dopo); } });
+    var nome = el("input", { class: "link-campo", type: "text", maxlength: "16",
+      placeholder: "Come ti chiami?", value: (esistente && esistente.nome) || "" });
+    s._contenuto.appendChild(nome);
+    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Scegli la faccina" }));
+    var griglia = el("div", { class: "faccine" });
+    FACCINE.forEach(function (e) {
+      griglia.appendChild(el("button", { class: "faccina" + (e === scelta.emoji ? " attiva" : ""), text: e,
+        onclick: function () {
+          scelta.emoji = e;
+          [].forEach.call(griglia.children, function (c) { c.className = "faccina" + (c.textContent === e ? " attiva" : ""); });
+        } }));
+    });
+    s._contenuto.appendChild(griglia);
+    var avviso = el("div", { class: "link-avviso" });
+    s._contenuto.appendChild(avviso);
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Salva ▶", onclick: function () {
+      var n = (nome.value || "").trim();
+      if (n.length < 2) { avviso.textContent = "Scrivi il tuo nome."; return; }
+      salvaProfilo({ id: (esistente && esistente.id) || ("p" + Date.now() + Math.floor(Math.random() * 999)), nome: n, emoji: scelta.emoji });
+      dopo();
+    }}));
+    mostra(s);
+  }
+
+  // =========================================================
+  //  LA SALA — il gruppo resta tra una partita e l'altra
+  // =========================================================
+  var gruppo = [];                 // [{nome, emoji}]
+  var ultimaPartita = null;        // {gioco, impostazioni}
+
+  function nomiGruppo() { return gruppo.map(function (p, i) { return (p.nome || "").trim() || ("Giocatore " + (i + 1)); }); }
+
+  function schermataSala(g) {
+    var min = g ? (g.giocatoriMin || 2) : 2;
+    var max = g ? (g.giocatoriMax || 10) : 10;
+    if (!gruppo.length) {
+      var io = profiloAttivo();
+      if (io) gruppo.push({ nome: io.nome, emoji: io.emoji });
+    }
+    var s = schermata({ icona: "🎉", titolo: "La sala", sotto: g ? ("Si gioca a " + g.nome) : "Chi partecipa",
+      indietro: schermataHome });
+
+    var conta = el("p", { class: "modulo-nota" });
+    var lista = el("div");
+    var avanti = el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: function () {
+      if (gruppo.length < min) return;
+      if (g) schermataPreGioco(g); else schermataScegliGioco();
+    }});
+
+    function ridisegna() {
+      svuota(lista);
+      gruppo.forEach(function (p, i) {
+        lista.appendChild(el("div", { class: "sala-riga" }, [
+          el("button", { class: "av", text: p.emoji || "🙂", "aria-label": "Cambia faccina",
+            onclick: function () { p.emoji = FACCINE[(FACCINE.indexOf(p.emoji) + 1) % FACCINE.length]; ridisegna(); } }),
+          el("input", { type: "text", value: p.nome, maxlength: "16", placeholder: "Giocatore " + (i + 1),
+            oninput: function (ev) { p.nome = ev.target.value; } }),
+          el("button", { class: "togli", text: "×", "aria-label": "Togli", onclick: function () { gruppo.splice(i, 1); ridisegna(); } })
+        ]));
+      });
+      conta.textContent = gruppo.length + (gruppo.length === 1 ? " partecipante" : " partecipanti")
+        + (gruppo.length < min ? " · ne servono almeno " + min : "");
+      if (gruppo.length < min) avanti.disabled = true; else avanti.removeAttribute("disabled");
+    }
+
+    s._contenuto.appendChild(conta);
     s._contenuto.appendChild(lista);
-    s._contenuto.appendChild(aggiungi);
+    s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "＋ Aggiungi giocatore",
+      onclick: function () { if (gruppo.length < max) { gruppo.push({ nome: "", emoji: FACCINE[gruppo.length % FACCINE.length] }); ridisegna(); } } }));
 
-    // Impostazioni specifiche del gioco (facoltative)
+    // aggiunta rapida dai profili salvati sul telefono
+    var salvati = profili().filter(function (p) {
+      return !gruppo.some(function (x) { return (x.nome || "").toLowerCase() === p.nome.toLowerCase(); });
+    });
+    if (salvati.length) {
+      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Aggiungi al volo" }));
+      var rapidi = el("div", { class: "home-azioni", style: "justify-content:flex-start" });
+      salvati.forEach(function (p) {
+        rapidi.appendChild(el("button", { class: "azione", text: p.emoji + " " + p.nome, onclick: function () {
+          if (gruppo.length < max) { gruppo.push({ nome: p.nome, emoji: p.emoji }); schermataSala(g); }
+        }}));
+      });
+      s._contenuto.appendChild(rapidi);
+    }
+
+    ridisegna();
+    s._piede.appendChild(avanti);
+    mostra(s);
+  }
+
+  function schermataPreGioco(g) {
+    var s = schermata({ icona: g.icona, titolo: g.nome, sotto: "Impostazioni della partita",
+      indietro: function () { schermataSala(g); } });
+    s._contenuto.appendChild(el("button", { class: "sala-sommario", onclick: function () { schermataSala(g); } }, [
+      el("span", { class: "chi", text: "👥 " + nomiGruppo().join(", ") }),
+      el("span", { class: "modifica", text: "modifica" })
+    ]));
     var impostazioni = {};
     if (typeof g.impostazioni === "function") {
       var box = el("div");
       g.impostazioni(box, impostazioni, { el: el });
       s._contenuto.appendChild(box);
     }
-
-    s._piede.appendChild(el("button", {
-      class: "btn btn-fantasma", text: "Come si gioca",
-      onclick: function () { schermataRegole(g, function () { schermataGiocatori(g); }); }
-    }));
-    s._piede.appendChild(el("button", {
-      class: "btn btn-primario", text: "Comincia ▶",
-      onclick: function () {
-        var puliti = nomi.map(function (n, i) {
-          return (n || "").trim() || ("Giocatore " + (i + 1));
-        });
-        if (puliti.length < min) return;
-        avviaPartita(g, puliti, impostazioni);
-      }
-    }));
-
+    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca",
+      onclick: function () { schermataRegole(g, function () { schermataPreGioco(g); }); } }));
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: function () {
+      if (gruppo.length < (g.giocatoriMin || 2)) return schermataSala(g);
+      ultimaPartita = { gioco: g, impostazioni: impostazioni };
+      avviaPartita(g, nomiGruppo(), impostazioni);
+    }}));
     mostra(s);
+  }
+
+  function schermataScegliGioco() {
+    var s = schermata({ icona: "🎮", titolo: "Cambia gioco", sotto: "Stessi partecipanti",
+      indietro: function () { schermataSala(null); } });
+    var griglia = el("div", { class: "griglia-giochi" });
+    giochi.forEach(function (g) { griglia.appendChild(tesseraGioco(g, function () { schermataPreGioco(g); })); });
+    s._contenuto.appendChild(griglia);
+    mostra(s);
+  }
+
+  // porta d'ingresso a un gioco dalla home: profilo → sala → impostazioni
+  function apriGioco(g) {
+    if (!profiloAttivo()) return schermataAccesso(function () { schermataSala(g); });
+    if (gruppo.length >= (g.giocatoriMin || 2)) return schermataPreGioco(g);
+    schermataSala(g);
   }
 
   // ---- Regole ----
@@ -373,14 +497,16 @@
     });
     s._contenuto.appendChild(ol);
 
+    // Dalla fine partita si resta nella stessa sala: rigioca, cambia gioco o modifica il gruppo
     s._piede.appendChild(el("button", {
       class: "btn btn-primario", text: "↻ Rigioca",
       onclick: function () { avviaPartita(g, giocatori, impostazioni); }
     }));
-    s._piede.appendChild(el("button", {
-      class: "btn btn-fantasma", text: "🏠 Torna ai giochi",
-      onclick: schermataHome
-    }));
+    var azioni = el("div", { class: "home-azioni" });
+    azioni.appendChild(el("button", { class: "azione", text: "🎮 Cambia gioco", onclick: schermataScegliGioco }));
+    azioni.appendChild(el("button", { class: "azione", text: "👥 La sala", onclick: function () { schermataSala(g); } }));
+    azioni.appendChild(el("button", { class: "azione", text: "🏠 Home", onclick: schermataHome }));
+    s._piede.appendChild(azioni);
     mostra(s);
   }
 
@@ -431,9 +557,12 @@
       var g = linkParams.gioco && giochi.filter(function (x) { return x.id === linkParams.gioco; })[0];
       // Con un codice stanza si entra come OSPITE; altrimenti si apre la preparazione
       if (g && linkParams.stanza) avviaPartita(g, [], {});
-      else if (g) schermataGiocatori(g);
+      else if (g) apriGioco(g);
       else schermataHome();
     },
+    // la sala: i giochi possono rimandarci dalla loro schermata finale
+    cambiaGioco: function () { schermataScegliGioco(); },
+    sala: function () { schermataSala(null); },
     // impostazioni arrivate da un link (le legge il gioco per i valori di partenza)
     parametriLink: function () { return linkParams; },
     // costruisce un link condivisibile con le impostazioni scelte dall'host

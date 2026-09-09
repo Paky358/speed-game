@@ -77,3 +77,8 @@ contenuto di quel tasto vive in `data/novita.js`._
 - Nuovi temi La Pizza Perfetta e Il Panino Perfetto, oltre a Sopravvivenza Zombie.
 - Tutti e tre ampliati a 184 carte (46 per round: 14 A, 18 B, 14 C), solo ingredienti veri e coerenti col round.
 - Revisione manuale delle fasce: corretti Pollo alla Griglia (da A a B) e Roast Beef (da B ad A).
+
+## 9 settembre 2026 — Profilo e La Sala
+- Profilo con nome e faccina salvato sul telefono; ingresso diviso in Crea profilo / Accedi.
+- La Sala: il gruppo di partecipanti resta tra una partita e l altra.
+- A fine partita: Rigioca, Cambia gioco o torna alla Sala, sempre con gli stessi giocatori.
