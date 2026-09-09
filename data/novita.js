@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 12,
+    data: "9 settembre 2026",
+    titolo: "Proposte e segnalazioni 💡 🐞",
+    descrizione: [
+      "Hai un'idea per un gioco, una carta o una regola? Ora c'è il tasto Proposte: scrivila e arriva a chi gestisce il gioco.",
+      "Se qualcosa non funziona c'è il tasto Bug: racconta cosa è successo e lo sistemiamo.",
+      "I messaggi li legge soltanto chi gestisce il gioco."
+    ]
+  },
+  {
     v: 11,
     data: "9 settembre 2026",
     titolo: "L'Asta: tre temi da scegliere 🧟 🍕 🍔",

@@ -127,6 +127,19 @@
 
     s._contenuto.appendChild(griglia);
 
+    // Riga di tasti piccoli: Novità · Proposte · Bug
+    var azioni = el("div", { class: "home-azioni" });
+    var novita = window.SG_NOVITA || [];
+    if (novita.length) {
+      var bN = el("button", { class: "azione", onclick: schermataNovita });
+      bN.appendChild(el("span", { text: "🆕 Novità" }));
+      if (!novitaTutteViste()) bN.appendChild(el("span", { class: "pallino" }));
+      azioni.appendChild(bN);
+    }
+    azioni.appendChild(el("button", { class: "azione", text: "💡 Proposte", onclick: schermataProposte }));
+    azioni.appendChild(el("button", { class: "azione", text: "🐞 Bug", onclick: schermataBug }));
+    s._piede.appendChild(azioni);
+
     // Tasto "Entra in una stanza" (per chi ha ricevuto un codice a voce)
     s._piede.appendChild(el("button", {
       class: "btn btn-fantasma", html: "🔗 Entra in una stanza (con un codice)",
@@ -137,15 +150,6 @@
         if (c) { location.hash = "gioco=timeline&stanza=" + encodeURIComponent(c); location.reload(); }
       }
     }));
-
-    // Tasto "Novità" (con pallino rosso se c'è qualcosa di non ancora visto)
-    var novita = window.SG_NOVITA || [];
-    if (novita.length) {
-      var btn = el("button", { class: "btn btn-fantasma", onclick: schermataNovita });
-      btn.appendChild(el("span", { text: "🆕 Novità" }));
-      if (!novitaTutteViste()) btn.appendChild(el("span", { class: "pallino" }));
-      s._piede.appendChild(btn);
-    }
 
     mostra(s);
   }
@@ -177,6 +181,79 @@
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Ho capito", onclick: schermataHome }));
     segnaNovitaViste(); // aperto = visto
     mostra(s);
+  }
+
+  // ---- Proposte e segnalazioni ----
+  // I messaggi vengono spediti al sito (moduli di Netlify) e finiscono
+  // nell'area riservata del proprietario: li può leggere solo lui.
+  function inviaModulo(nomeModulo, dati) {
+    var pezzi = ["form-name=" + encodeURIComponent(nomeModulo)];
+    for (var k in dati) pezzi.push(encodeURIComponent(k) + "=" + encodeURIComponent(dati[k] == null ? "" : dati[k]));
+    return fetch("/", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: pezzi.join("&")
+    }).then(function (r) { if (!r.ok) throw new Error("invio non riuscito"); return true; });
+  }
+
+  function schermataModulo(opts) {
+    var s = schermata({ icona: opts.icona, titolo: opts.titolo, sotto: opts.sotto, indietro: schermataHome });
+    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: opts.nota }));
+    var nome = el("input", { class: "link-campo", type: "text", placeholder: "Il tuo nome (facoltativo)", maxlength: "24" });
+    var testo = el("textarea", { class: "modulo-testo", placeholder: opts.placeholder, rows: "6" });
+    var avviso = el("div", { class: "link-avviso" });
+    s._contenuto.appendChild(nome);
+    s._contenuto.appendChild(testo);
+    s._contenuto.appendChild(avviso);
+    var invia = el("button", { class: "btn btn-primario", text: opts.bottone, onclick: function () {
+      var msg = (testo.value || "").trim();
+      if (msg.length < 3) { avviso.textContent = "Scrivi prima il messaggio."; return; }
+      invia.disabled = true; avviso.textContent = "Invio in corso…";
+      var dati = { nome: (nome.value || "").trim() || "Anonimo", messaggio: msg };
+      if (opts.contesto) dati.contesto = opts.contesto();
+      inviaModulo(opts.modulo, dati).then(function () { grazie(opts.grazie); })
+        .catch(function () {
+          invia.disabled = false;
+          avviso.textContent = "Non sono riuscito a inviare (succede se il gioco non è aperto dal sito pubblicato). Copia il testo e mandalo a chi gestisce il gioco.";
+          testo.focus(); testo.select();
+        });
+    }});
+    s._piede.appendChild(invia);
+    mostra(s);
+  }
+
+  function grazie(testo) {
+    var s = schermata({});
+    s._contenuto.appendChild(el("div", { class: "passa" }, [
+      el("div", { class: "emoji", text: "🙏" }),
+      el("div", { class: "grande", text: "Grazie!" }),
+      el("p", { class: "tenue centro", text: testo })
+    ]));
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna ai giochi", onclick: schermataHome }));
+    mostra(s);
+  }
+
+  function schermataProposte() {
+    schermataModulo({
+      modulo: "proposte", icona: "💡", titolo: "Proposte", sotto: "Hai un'idea? Scrivila qui",
+      nota: "Un gioco nuovo, una carta da aggiungere, una regola da cambiare… scrivi pure. La legge soltanto chi gestisce il gioco.",
+      placeholder: "La mia idea è…", bottone: "Invia la proposta",
+      grazie: "La tua proposta è arrivata. Se è buona, la vedrai comparire nel gioco!"
+    });
+  }
+
+  function schermataBug() {
+    schermataModulo({
+      modulo: "bug", icona: "🐞", titolo: "Segnala un problema", sotto: "Qualcosa non funziona?",
+      nota: "Racconta cosa stavi facendo e cosa è andato storto. Più sei preciso, più in fretta lo sistemiamo.",
+      placeholder: "Stavo giocando a… e invece di… è successo…",
+      bottone: "Invia la segnalazione",
+      grazie: "Segnalazione ricevuta: ci aiuta a sistemare il gioco.",
+      contesto: function () {
+        var v = (window.SG_NOVITA && window.SG_NOVITA[0] && window.SG_NOVITA[0].v) || "?";
+        return "versione " + v + " · schermo " + window.innerWidth + "x" + window.innerHeight + " · " + navigator.userAgent;
+      }
+    });
   }
 
   function rangeGiocatori(g) {

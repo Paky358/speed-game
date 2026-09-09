@@ -20,6 +20,9 @@ OUT=dist/index.html
   cat css/styles.css
   echo '</style>'
   echo '<div id="app"></div>'
+  # caselle di posta del sito (Netlify le riconosce alla pubblicazione)
+  echo '<form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>'
+  echo '<form name="bug" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea><input type="text" name="contesto" /></form>'
   echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>'
   echo '<script>'
   cat js/core.js

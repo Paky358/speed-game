@@ -10,6 +10,21 @@
 <body>
   <div id="app"><!-- le schermate vengono disegnate qui --></div>
 
+  <!-- Caselle di posta del sito (Netlify): servono solo perché Netlify le
+       riconosca quando pubblichi. Sono nascoste: l'app invia i messaggi da sola.
+       I messaggi si leggono su Netlify, nella scheda "Forms" del sito. -->
+  <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden>
+    <input type="text" name="bot-field" />
+    <input type="text" name="nome" />
+    <textarea name="messaggio"></textarea>
+  </form>
+  <form name="bug" data-netlify="true" netlify-honeypot="bot-field" hidden>
+    <input type="text" name="bot-field" />
+    <input type="text" name="nome" />
+    <textarea name="messaggio"></textarea>
+    <input type="text" name="contesto" />
+  </form>
+
   <!-- Collegamento tra telefoni (modalità "ognuno dal suo telefono") -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
 

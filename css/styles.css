@@ -232,6 +232,21 @@ img{ max-width:100%; }
 
 .etichetta{ margin-top:22px; }
 
+/* ---- Riga di tasti piccoli in home (Novità · Proposte · Bug) ---- */
+.home-azioni{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.azione{ display:flex; align-items:center; gap:6px; font-family:inherit; font-size:.95rem; font-weight:700;
+  cursor:pointer; border:0; border-radius:14px; padding:12px 14px; min-height:46px;
+  background:var(--carta); color:var(--testo-tenue); transition:all .12s ease; }
+.azione:active{ transform:scale(.97); }
+@media (hover:hover){ .azione:hover{ color:var(--testo); background:var(--carta-2); } }
+
+/* ---- Moduli (proposte / segnalazioni) ---- */
+.modulo-nota{ font-size:1rem; line-height:1.45; color:var(--testo-tenue); margin:0 0 14px; }
+.modulo-testo{ width:100%; font-family:inherit; font-size:1.02rem; line-height:1.4; margin-top:10px;
+  padding:14px; border-radius:16px; border:2px solid var(--carta-2); background:var(--carta);
+  color:var(--testo); resize:vertical; min-height:140px; }
+.modulo-testo:focus{ outline:none; border-color:var(--accento); }
+
 /* ---- Home: logo + titolo + giochi come un gruppo unico centrato ----
    Riquadri COMPATTI (niente boxoni vuoti), testo grande, centrato. */
 .home .testa{ display:none; }
