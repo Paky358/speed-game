@@ -4,6 +4,17 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 9 settembre 2026 — Supereroi e Primo Appuntamento
+- **🦸 Supereroi**: 184 carte in quattro round — Il Superpotere ⚡, Il Costume 🥋,
+  Il Gadget 🔫, Il Punto Debole ☠️. Nel round finale la fascia alta è la debolezza
+  rarissima, la fascia bassa l'imbarazzo quotidiano.
+- **💘 Il Primo Appuntamento**: 184 carte in quattro round — La Location 📍,
+  L'Outfit 👗, L'Argomento 💬, L'Imprevisto 🌧️.
+- Il quarto round dell'appuntamento doveva essere "La Conclusione": è stato
+  cambiato perché il finale non si compra, deve venire fuori dalla combinazione
+  delle carte e poi lo votano gli altri. Regola valida per tutti i temi futuri.
+- I temi dell'Asta diventano sei.
+
 ## 9 settembre 2026 — L'Asta online e il tema "Il Colpo del Secolo"
 - **L'Asta si gioca anche a distanza**: chi organizza sceglie all'inizio fra *Un
   telefono solo* e *Ognuno dal suo telefono*. Nel secondo caso l'app apre una

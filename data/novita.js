@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 15,
+    data: "9 settembre 2026",
+    titolo: "Due temi nuovi per L'Asta 🦸 💘",
+    descrizione: [
+      "SUPEREROI 🦸 — quattro round per costruire il tuo eroe: il superpotere, il costume, il gadget e il punto debole. In fascia alta il controllo dei fulmini, in fondo lo sbadiglio contagioso.",
+      "Nel round del punto debole vale la regola al contrario: la fascia alta è la debolezza rarissima (metalli alieni), quella bassa è l'imbarazzo di tutti i giorni (wifi lento).",
+      "IL PRIMO APPUNTAMENTO 💘 — location, outfit, argomento di conversazione e imprevisto della serata. Dal ristorante stellato al kebabbaro zozzo, dallo smoking alle mutande e canottiera.",
+      "L'ultimo round non è il finale della serata ma l'IMPREVISTO: se sei fortunato inizia a piovere e avete un solo ombrello, se sei sfortunato arriva la polizia. Com'è andata lo decidono gli altri col voto.",
+      "I temi dell'Asta sono adesso sei: Zombie, Pizza, Panino, Rapina, Supereroi e Primo Appuntamento. 184 carte ciascuno."
+    ]
+  },
+  {
     v: 14,
     data: "9 settembre 2026",
     titolo: "L'Asta si gioca ognuno dal suo telefono 🔗 + tema Rapina 💰",
