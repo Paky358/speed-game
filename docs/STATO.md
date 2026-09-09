@@ -39,7 +39,11 @@ sorprendenti e qualche data ravvicinata per far ragionare. Ogni categoria è un 
 di dati a parte (`data/eventi-*.js`): aggiungerne altri **non** richiede di toccare
 il gioco.
 
-## Cosa manca / prossimi passi possibili
+## Prossimo passo
+**Rendere online anche L'Asta**, poi generalizzare la modalità online a tutti i giochi.
+Il piano pronto è in `docs/PROSSIMO-PASSO-ASTA-ONLINE.md`.
+
+## Cosa manca / altri passi possibili
 1. **Pubblicare online il file** `dist/serata-giochi.html` (vedi
    `docs/METTERE-ONLINE.md`) e **provarlo con un gruppo vero**, ognuno dal proprio
    telefono, per vedere come regge il collegamento nella vita reale.
