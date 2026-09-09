@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 10,
+    data: "9 settembre 2026",
+    titolo: "Nuovo gioco: L'Asta 🔨",
+    descrizione: [
+      "Da 2 a 10 giocatori, con un telefono solo appoggiato al tavolo: tutti vedono le carte e ognuno tocca il suo tasto.",
+      "Quattro round a tema (tema iniziale: Sopravvivenza Zombie). In ogni round ognuno si aggiudica una carta all'asta.",
+      "Si parte da 1 credito, si rilancia di 1 e dopo ogni rilancio partono 10 secondi: paga solo chi vince.",
+      "Devi tenere almeno 1 credito per ogni round che resta, quindi attento a non svuotare il portafoglio subito.",
+      "Alla fine si vedono i kit di tutti e ognuno vota quelli degli altri da 1 a 5 stelle: vince chi ne raccoglie di più."
+    ]
+  },
+  {
     v: 9,
     data: "9 settembre 2026",
     titolo: "Oltre 800 avvenimenti e fino a 10 giocatori",

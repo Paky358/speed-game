@@ -6,6 +6,7 @@ prossimo da questa lista.
 
 ## Fatti / in corso
 - ✅ **La linea del tempo** — il primo gioco (fatto).
+- ✅ **L'Asta** — secondo gioco (fatto): asta a round con votazione a stelle.
 
 ## Da valutare
 _(vuoto per ora — scrivi qui le tue idee e le sistemiamo insieme)_

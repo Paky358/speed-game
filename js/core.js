@@ -37,6 +37,7 @@
   function el(tag, attrs, figli) {
     var e = document.createElement(tag);
     if (attrs) for (var k in attrs) {
+      if (attrs[k] == null) continue;           // attributo non impostato: si salta
       if (k === "class") e.className = attrs[k];
       else if (k === "html") e.innerHTML = attrs[k];
       else if (k === "text") e.textContent = attrs[k];

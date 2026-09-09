@@ -26,8 +26,7 @@ OUT=dist/index.html
   echo ''
   cat js/net.js
   echo ''
-  for f in data/eventi-*.js; do [ -e "$f" ] && { cat "$f"; echo ''; }; done
-  [ -e data/novita.js ] && { cat data/novita.js; echo ''; }
+  for f in data/*.js; do [ -e "$f" ] && { cat "$f"; echo ''; }; done
   for f in js/games/*.js; do [ -e "$f" ] && { cat "$f"; echo ''; }; done
   echo 'SG.avviaApp();'
   echo '</script>'

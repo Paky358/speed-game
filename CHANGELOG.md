@@ -65,3 +65,10 @@ contenuto di quel tasto vive in `data/novita.js`._
 ## 9 settembre 2026 — Oltre 800 avvenimenti e fino a 10 giocatori
 - Importate 600 carte nuove dal set delle 750 (57 doppioni evidenti + 93 doppioni di significato scartati): totale 804.
 - Massimo giocatori portato da 8 a 10, con limite applicato anche alla stanza online.
+
+## 9 settembre 2026 — Nuovo gioco: L'Asta
+- Secondo gioco della raccolta: asta a 4 round su tema (Sopravvivenza Zombie), 2-10 giocatori, un telefono sul tavolo.
+- Base 1 credito, rilanci di 1, timer 10s dopo ogni rilancio, paga solo il vincitore, riserva di 1 credito per ogni round futuro.
+- Assegnazione automatica a 1 credito quando resta un solo giocatore e una sola carta.
+- Finale con riepilogo dei kit, votazione a stelle (1-5, non il proprio) e podio.
+- Corretto un difetto del motore: gli attributi non impostati disabilitavano i pulsanti.
