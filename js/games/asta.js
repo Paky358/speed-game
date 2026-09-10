@@ -192,6 +192,7 @@
     descrizione: "Compra all'asta le carte migliori e costruisci il kit che gli altri voteranno.",
     giocatoriMin: 2,
     giocatoriMax: MAX_GIOCATORI,
+    difficolta: 3,   // Difficile — vale di più nel torneo (1 facile, 2 media, 3 difficile)
 
     regole: [
       "Un solo telefono <b>appoggiato al tavolo</b>: tutti vedono le carte e ognuno tocca il proprio tasto.",
@@ -206,6 +207,7 @@
       var el = aiuti.el;
       // --- Come si gioca: un telefono solo oppure ognuno dal suo ---
       dove.modo = "telefono";
+      if (!aiuti.torneo) {
       box.appendChild(el("div", { class: "etichetta", text: "Come si gioca" }));
       var notaOn = el("div", { class: "link-avviso", hidden: "hidden" });
       var bTel, bOnl;
@@ -226,6 +228,7 @@
           el("div", { class: "mt", text: "Ognuno dal suo telefono" }), el("div", { class: "ms", text: "Ognuno rilancia dal proprio" })])]);
       box.appendChild(el("div", { class: "modo-griglia" }, [bTel, bOnl]));
       box.appendChild(notaOn);
+      }
       dove.crediti = 15;
       box.appendChild(el("div", { class: "etichetta", text: "Crediti a testa" }));
       var b15, b20;

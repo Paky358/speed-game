@@ -4,6 +4,17 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 10 settembre 2026 (7) — Modalità Torneo
+- **🏆 Torneo**: dalla home si crea un torneo con un gruppo fisso di giocatori e si
+  giocano più partite di fila (anche a giochi diversi). I punti si sommano e la
+  classifica generale è sempre visibile, con podio finale.
+- **Punteggio bilanciato per difficoltà**: ogni gioco ha un peso (Facile/Media/
+  Difficile). Il vincitore prende 100/200/300 punti; gli altri a scalare fino al
+  10° posto (curva 100·78·62·50·40·32·25·19·14·10 % del primo). Linea del tempo =
+  Media, L'Asta = Difficile.
+- Nel torneo i giochi girano "un telefono solo" (niente codici diversi per ogni
+  gioco): l'online per singola partita resta invariato fuori dal torneo.
+
 ## 10 settembre 2026 (6) — Il tema Il Road Trip
 - **🚗 Il Road Trip**: 184 carte in Il Mezzo, Il Guidatore, La Colonna Sonora,
   L'Imprevisto in Autostrada.

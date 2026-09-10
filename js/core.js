@@ -147,6 +147,12 @@
     azioni.appendChild(el("button", { class: "azione", text: "🐞 Bug", onclick: schermataBug }));
     s._piede.appendChild(azioni);
 
+    // Torneo: più giochi di fila con gli stessi giocatori, punti che si sommano
+    s._piede.appendChild(el("button", {
+      class: "btn btn-primario", html: torneo ? "🏆 Riprendi il torneo" : "🏆 Torneo (più giochi di fila)",
+      onclick: apriTorneo
+    }));
+
     // Tasto "Entra in una stanza" (per chi ha ricevuto un codice a voce)
     s._piede.appendChild(el("button", {
       class: "btn btn-fantasma", html: "🔗 Entra in una stanza (con un codice)",
@@ -359,20 +365,23 @@
 
   function nomiGruppo() { return gruppo.map(function (p, i) { return (p.nome || "").trim() || ("Giocatore " + (i + 1)); }); }
 
-  function schermataSala(g) {
+  function schermataSala(g, opts) {
+    var torn = !!(opts && opts.torneo);
     var min = g ? (g.giocatoriMin || 2) : 2;
     var max = g ? (g.giocatoriMax || 10) : 10;
     if (!gruppo.length) {
       var io = profiloAttivo();
       if (io) gruppo.push({ nome: io.nome, emoji: io.emoji });
     }
-    var s = schermata({ icona: "🎉", titolo: "La sala", sotto: g ? ("Si gioca a " + g.nome) : "Chi partecipa",
+    var s = schermata({ icona: torn ? "🏆" : "🎉", titolo: torn ? "Torneo" : "La sala",
+      sotto: torn ? "Chi partecipa al torneo" : (g ? ("Si gioca a " + g.nome) : "Chi partecipa"),
       indietro: schermataHome });
 
     var conta = el("p", { class: "modulo-nota" });
     var lista = el("div");
-    var avanti = el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: function () {
+    var avanti = el("button", { class: "btn btn-primario", text: torn ? "Comincia il torneo ▶" : "Avanti ▶", onclick: function () {
       if (gruppo.length < min) return;
+      if (torn) return iniziaTorneo();
       if (g) schermataPreGioco(g); else schermataScegliGioco();
     }});
 
@@ -406,7 +415,7 @@
       var rapidi = el("div", { class: "home-azioni", style: "justify-content:flex-start" });
       salvati.forEach(function (p) {
         rapidi.appendChild(el("button", { class: "azione", text: p.emoji + " " + p.nome, onclick: function () {
-          if (gruppo.length < max) { gruppo.push({ nome: p.nome, emoji: p.emoji }); schermataSala(g); }
+          if (gruppo.length < max) { gruppo.push({ nome: p.nome, emoji: p.emoji }); schermataSala(g, opts); }
         }}));
       });
       s._contenuto.appendChild(rapidi);
@@ -417,25 +426,27 @@
     mostra(s);
   }
 
-  function schermataPreGioco(g) {
-    var s = schermata({ icona: g.icona, titolo: g.nome, sotto: "Impostazioni della partita",
-      indietro: function () { schermataSala(g); } });
-    s._contenuto.appendChild(el("button", { class: "sala-sommario", onclick: function () { schermataSala(g); } }, [
+  function schermataPreGioco(g, opts) {
+    var torn = !!(opts && opts.torneo);
+    var s = schermata({ icona: g.icona, titolo: g.nome, sotto: torn ? ("Torneo · " + nomeDifficolta(pesoGioco(g))) : "Impostazioni della partita",
+      indietro: function () { if (torn) schermataTorneoHub(); else schermataSala(g); } });
+    s._contenuto.appendChild(el(torn ? "div" : "button", { class: "sala-sommario",
+      onclick: torn ? null : function () { schermataSala(g); } }, [
       el("span", { class: "chi", text: "👥 " + nomiGruppo().join(", ") }),
-      el("span", { class: "modifica", text: "modifica" })
+      torn ? null : el("span", { class: "modifica", text: "modifica" })
     ]));
     var impostazioni = {};
     if (typeof g.impostazioni === "function") {
       var box = el("div");
-      g.impostazioni(box, impostazioni, { el: el });
+      g.impostazioni(box, impostazioni, { el: el, torneo: torn });
       s._contenuto.appendChild(box);
     }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca",
-      onclick: function () { schermataRegole(g, function () { schermataPreGioco(g); }); } }));
+      onclick: function () { schermataRegole(g, function () { schermataPreGioco(g, opts); }); } }));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: function () {
-      if (gruppo.length < (g.giocatoriMin || 2)) return schermataSala(g);
+      if (gruppo.length < (g.giocatoriMin || 2)) return schermataSala(g, opts);
       ultimaPartita = { gioco: g, impostazioni: impostazioni };
-      avviaPartita(g, nomiGruppo(), impostazioni);
+      avviaPartita(g, nomiGruppo(), impostazioni, opts);
     }}));
     mostra(s);
   }
@@ -511,11 +522,117 @@
   }
 
   // =========================================================
+  //  TORNEO — più partite di fila con gli stessi giocatori.
+  //  Ogni gioco dichiara una "difficolta" (1 facile, 2 media,
+  //  3 difficile): più è difficile, più vale vincerlo. A ogni
+  //  partita si assegnano punti dal 1° al 10° posto.
+  // =========================================================
+  var torneo = null; // { giocatori:[nomi], emoji:{}, punti:{nome:n}, storia:[], n }
+  var CURVA_TORNEO = [100, 78, 62, 50, 40, 32, 25, 19, 14, 10]; // % del 1° posto, per posizione 1..10
+
+  function pesoGioco(g) { var d = g && g.difficolta; return (d === 1 || d === 3) ? d : 2; }
+  function nomeDifficolta(d) { return d === 3 ? "Difficile" : d === 1 ? "Facile" : "Media"; }
+
+  function puntiDaClassifica(g, classifica) {
+    var peso = pesoGioco(g);
+    return classifica.map(function (r, i) {
+      var perc = i < CURVA_TORNEO.length ? CURVA_TORNEO[i] : 6;
+      return { nome: r.nome, punti: Math.round(perc * peso) };
+    });
+  }
+
+  function classificaTorneo() {
+    return torneo.giocatori.map(function (n) { return { nome: n, punti: torneo.punti[n] || 0 }; })
+      .sort(function (a, b) { return b.punti - a.punti; });
+  }
+
+  function podio(cl, evidenziaPrimo) {
+    var ol = el("ol", { class: "classifica" });
+    var medaglie = ["🥇", "🥈", "🥉"];
+    cl.forEach(function (r, i) {
+      ol.appendChild(el("li", { class: (i === 0 && evidenziaPrimo) ? "vincitore" : "" }, [
+        el("span", { class: "pos", text: medaglie[i] || (i + 1) + "°" }),
+        el("span", { class: "nome", text: (torneo && torneo.emoji[r.nome] ? torneo.emoji[r.nome] + " " : "") + r.nome }),
+        el("span", { class: "punti", text: r.punti })
+      ]));
+    });
+    return ol;
+  }
+
+  function apriTorneo() {
+    if (torneo) return schermataTorneoHub();
+    if (!profiloAttivo()) return schermataAccesso(function () { schermataSala(null, { torneo: true }); });
+    schermataSala(null, { torneo: true });
+  }
+
+  function iniziaTorneo() {
+    var nomi = nomiGruppo();
+    torneo = { giocatori: nomi, emoji: {}, punti: {}, storia: [], n: 0 };
+    gruppo.forEach(function (p, i) { torneo.emoji[nomi[i]] = p.emoji || "🙂"; });
+    nomi.forEach(function (n) { torneo.punti[n] = 0; });
+    schermataTorneoHub();
+  }
+
+  function schermataTorneoHub() {
+    var s = schermata({ icona: "🏆", titolo: "Torneo", indietro: schermataHome,
+      sotto: torneo.n === 0 ? "Nessuna partita ancora" : (torneo.n + (torneo.n === 1 ? " partita giocata" : " partite giocate")) });
+    s._contenuto.appendChild(podio(classificaTorneo(), torneo.n > 0));
+    s._piede.appendChild(el("button", { class: "btn btn-primario",
+      text: torneo.n === 0 ? "▶ Gioca la prima partita" : "▶ Gioca un'altra partita", onclick: torneoScegliGioco }));
+    var azioni = el("div", { class: "home-azioni" });
+    if (torneo.n > 0) azioni.appendChild(el("button", { class: "azione", text: "🏁 Chiudi e premia", onclick: schermataTorneoFine }));
+    azioni.appendChild(el("button", { class: "azione", text: "🏠 Home", onclick: schermataHome }));
+    s._piede.appendChild(azioni);
+    mostra(s);
+  }
+
+  function torneoScegliGioco() {
+    var s = schermata({ icona: "🎮", titolo: "Quale gioco?", sotto: "Più è difficile, più punti vale",
+      indietro: schermataTorneoHub });
+    var griglia = el("div", { class: "griglia-giochi" });
+    giochi.forEach(function (g) { griglia.appendChild(tesseraGioco(g, function () { schermataPreGioco(g, { torneo: true }); })); });
+    s._contenuto.appendChild(griglia);
+    mostra(s);
+  }
+
+  function torneoRisultato(g, classifica) {
+    var assegnati = puntiDaClassifica(g, classifica);
+    assegnati.forEach(function (r) { torneo.punti[r.nome] = (torneo.punti[r.nome] || 0) + r.punti; });
+    torneo.n += 1;
+    torneo.storia.push({ gioco: g.nome, assegnati: assegnati });
+
+    var s = schermata({ icona: g.icona, titolo: "Punti di questa partita", sotto: g.nome + " · " + nomeDifficolta(pesoGioco(g)) });
+    var ol = el("ol", { class: "classifica" });
+    var medaglie = ["🥇", "🥈", "🥉"];
+    assegnati.forEach(function (r, i) {
+      ol.appendChild(el("li", { class: i === 0 ? "vincitore" : "" }, [
+        el("span", { class: "pos", text: medaglie[i] || (i + 1) + "°" }),
+        el("span", { class: "nome", text: r.nome }),
+        el("span", { class: "punti", text: "+" + r.punti })
+      ]));
+    });
+    s._contenuto.appendChild(ol);
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏆 Classifica del torneo", onclick: schermataTorneoHub }));
+    mostra(s);
+  }
+
+  function schermataTorneoFine() {
+    var s = schermata({ icona: "🏆", titolo: "Torneo finito!", sotto: torneo.n + (torneo.n === 1 ? " partita" : " partite") });
+    s._contenuto.appendChild(podio(classificaTorneo(), true));
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Nuovo torneo (stessi giocatori)",
+      onclick: function () { torneo.punti = {}; torneo.storia = []; torneo.n = 0; torneo.giocatori.forEach(function (n) { torneo.punti[n] = 0; }); schermataTorneoHub(); } }));
+    var azioni = el("div", { class: "home-azioni" });
+    azioni.appendChild(el("button", { class: "azione", text: "🏠 Home", onclick: function () { torneo = null; schermataHome(); } }));
+    s._piede.appendChild(azioni);
+    mostra(s);
+  }
+
+  // =========================================================
   //  GIRO DI PARTITA
   //  Consegna al gioco un "tavolo" con tutto ciò che gli serve,
   //  senza fargli sapere come sono fatte le schermate comuni.
   // =========================================================
-  function avviaPartita(g, giocatori, impostazioni) {
+  function avviaPartita(g, giocatori, impostazioni, opts) {
     var contenitore = el("div");
     var schermo = el("div");
     schermo.appendChild(contenitore);
@@ -537,7 +654,10 @@
       passaA: function (nome, quando) { passaIlTelefono(nome, quando); },
 
       // il gioco chiama questa quando è finito
-      fine: function (classifica) { schermataFine(g, classifica, giocatori, impostazioni); },
+      fine: function (classifica) {
+        if (opts && opts.torneo && torneo) return torneoRisultato(g, classifica);
+        schermataFine(g, classifica, giocatori, impostazioni);
+      },
 
       // uscite comuni
       esci: schermataHome

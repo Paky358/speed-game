@@ -25,6 +25,16 @@ dal proprio.
   Capodanno · 🎓 La Sessione Universitaria · 🚗 Il Road Trip. Ogni tema ha 184
   carte divise in tre fasce, con anti-ripetizione fra una partita e l'altra.
 
+## Torneo (più giochi di fila)
+Dalla home, tasto **🏆 Torneo**: si sceglie una volta il gruppo e si giocano più
+partite di fila, anche a giochi diversi, con gli stessi giocatori. I punti si
+sommano e la classifica generale è sempre visibile, con podio finale.
+- **Punti bilanciati per difficoltà**: ogni gioco dichiara un peso (1 Facile, 2
+  Media, 3 Difficile). Il vincitore prende 100 × peso (quindi 100/200/300); gli
+  altri a scalare fino al 10° posto. Oggi: Linea del tempo = Media, L'Asta =
+  Difficile (si cambia con una riga per gioco: campo `difficolta`).
+- Nel torneo si gioca **un telefono solo** (niente codici diversi per ogni gioco).
+
 ## Due modi di giocare (li sceglie chi organizza, all'inizio)
 - **Un telefono solo**: si passa di mano in mano. Funziona sempre, ovunque.
 - **Ognuno dal suo telefono**: si apre una **stanza** con un codice (e un link da

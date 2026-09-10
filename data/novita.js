@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 22,
+    data: "10 settembre 2026",
+    titolo: "Modalità Torneo 🏆",
+    descrizione: [
+      "Nuovo tasto TORNEO in home: metti insieme il gruppo una volta sola e giocate più partite di fila, anche a giochi diversi, con gli stessi partecipanti.",
+      "I punti si sommano di partita in partita e la classifica generale è sempre aggiornata: alla fine c'è il podio del torneo.",
+      "I punti vanno dal 1° al 10° posto e sono alti: il vincitore di una partita prende da 100 a 300 punti a seconda di quanto è difficile il gioco. Più il gioco è tosto, più vale vincerlo (L'Asta vale più della Linea del tempo).",
+      "Nel torneo si gioca con un telefono solo, passandolo di mano in mano."
+    ]
+  },
+  {
     v: 21,
     data: "10 settembre 2026",
     titolo: "Nuovo tema per L'Asta: Il Road Trip 🚗",

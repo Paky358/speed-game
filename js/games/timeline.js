@@ -184,6 +184,7 @@
     descrizione: "Metti gli avvenimenti nell'ordine giusto e sfida gli amici a punti.",
     giocatoriMin: 1,
     giocatoriMax: MAX_GIOCATORI,
+    difficolta: 2,   // Media — quanto vale vincerlo nel torneo (1 facile, 2 media, 3 difficile)
 
     regole: [
       "Al tuo turno esce un avvenimento <b>senza data</b>: hai <b>30 secondi</b> per decidere dove va nella linea del tempo.",
@@ -198,6 +199,7 @@
       var link = SG.parametriLink();
 
       dove.modo = "telefono";
+      if (!aiuti.torneo) {
       box.appendChild(el("div", { class: "etichetta", text: "Come si gioca" }));
       var notaOnline = el("div", { class: "link-avviso", hidden: "hidden" });
       var bTel, bOnl;
@@ -218,6 +220,7 @@
           el("div", { class: "mt", text: "Ognuno dal suo telefono" }), el("div", { class: "ms", text: "Con voti e punti" })])]);
       box.appendChild(el("div", { class: "modo-griglia" }, [bTel, bOnl]));
       box.appendChild(notaOnline);
+      }
 
       var idValidi = categorie.map(function (c) { return c.id; });
       var diPartenza = (link.cat && link.cat.filter(function (id) { return idValidi.indexOf(id) >= 0; })) || null;
