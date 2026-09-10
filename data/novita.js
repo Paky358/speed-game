@@ -15,8 +15,8 @@ window.SG_NOVITA = [
     descrizione: [
       "Il classico rivisitato per il telefono: a turno esce una lettera e hai pochi secondi per riempire tutte le categorie con parole che iniziano con quella lettera.",
       "Scegli tu le categorie: quelle classiche (Nome, Città, Animale, Colore, Mestiere…), il set BLACK HUMOR per chi ama ridere di traverso, e puoi aggiungere le TUE categorie personalizzate.",
-      "Ogni casella riempita bene vale 10 punti, con un bonus se le riempi tutte. Alla fine, classifica.",
-      "Si può giocare da soli per allenarsi o in gruppo, e vale anche dentro il Torneo."
+      "Poi si vota tutti insieme: se più della metà approva la parola vale 10 punti, 5 se due hanno scritto la stessa parola, 0 se è bocciata o vuota. Ognuno ha il suo tasto e può cambiare idea cliccando di nuovo.",
+      "Da 2 giocatori in su. Vale anche dentro il Torneo."
     ]
   },
   {

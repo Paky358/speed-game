@@ -10,8 +10,10 @@ contenuto di quel tasto vive in `data/novita.js`._
 - Categorie **scelte dall'host**: classiche (in `data/ncc-categorie.js`), set
   **Black humor**, e **categorie personalizzate** scritte dai giocatori (salvate
   su quel telefono). Tempo per turno e giri a testa regolabili.
-- Punteggio: 10 a casella valida + bonus se piene tutte; classifica finale. Si
-  aggancia da sé al **Torneo** (difficoltà Media).
+- **Punteggio col voto del gruppo**: ogni parola la validano gli altri (👍/👎, si
+  può cambiare idea). Più del 50% di sì = 10 punti, 5 se due scrivono la stessa
+  parola (maiuscole/minuscole indifferenti), 0 se bocciata o vuota. Classifica
+  finale; si aggancia da sé al **Torneo** (difficoltà Media). Da 2 giocatori in su.
 
 ## 10 settembre 2026 (8) — Fix: entrare col codice apriva il gioco sbagliato
 - Chi entrava in una stanza digitando il **codice** veniva sempre mandato nella

@@ -28,8 +28,9 @@ dal proprio.
 - **Gioco 3 — Nomi, Cose e Città** ✍️: a turni, un telefono solo. Esce una lettera
   e si riempiono le categorie con parole che iniziano con quella lettera, entro il
   tempo. Categorie scelte dall'host: classiche, set **Black humor**, e
-  **personalizzate** scritte dai giocatori. 10 punti a casella + bonus se piene
-  tutte; classifica finale. Difficoltà Media nel torneo.
+  **personalizzate** scritte dai giocatori. Poi il gruppo **vota** ogni parola:
+  più del 50% di sì = 10 punti, 5 se doppia, 0 se bocciata o vuota. Da 2
+  giocatori; difficoltà Media nel torneo.
 
 ## Torneo (più giochi di fila)
 Dalla home, tasto **🏆 Torneo**: si sceglie una volta il gruppo e si giocano più
