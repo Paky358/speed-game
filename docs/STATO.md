@@ -1,6 +1,6 @@
 # A che punto siamo
 
-_Aggiornato: 10 settembre 2026 (dieci temi per L'Asta)_
+_Aggiornato: 10 settembre 2026 (undici temi per L'Asta)_
 
 ## In due parole
 È una raccolta di giochi da fare in gruppo, che si apre dal telefono senza
@@ -19,10 +19,10 @@ dal proprio.
   altri, classifica finale. Si gioca su un telefono solo o ognuno dal suo.
 - **Gioco 2 — L'Asta**: 2–10 giocatori, 4 round a tema, crediti, rilanci, timer 10",
   assegnazione automatica dell'ultima carta, votazione a stelle e podio.
-  **Dieci temi**: 🧟 Zombie · 🍕 Pizza · 🍔 Panino · 💰 Colpo del Secolo · 🦸 Supereroi ·
+  **Undici temi**: 🧟 Zombie · 🍕 Pizza · 🍔 Panino · 💰 Colpo del Secolo · 🦸 Supereroi ·
   💘 Primo Appuntamento · 🌳 Giardino Perfetto · 🏝️ Vacanza Perfetta · 🏠 Coinquilino
-  Ideale · ⚽ Squadra da Calcetto (e in arrivo 🏋️ Palestra di Quartiere). Ogni tema
-  ha 184 carte divise in tre fasce, con anti-ripetizione fra una partita e l'altra.
+  Ideale · ⚽ Squadra da Calcetto · 🏋️ Palestra di Quartiere. Ogni tema ha 184 carte
+  divise in tre fasce, con anti-ripetizione fra una partita e l'altra.
 
 ## Due modi di giocare (li sceglie chi organizza, all'inizio)
 - **Un telefono solo**: si passa di mano in mano. Funziona sempre, ovunque.

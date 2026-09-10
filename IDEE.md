@@ -31,11 +31,8 @@ riferimento.
   - Tono di riferimento per tutti i temi futuri: battute iper-specifiche da
     spogliatoio ("il completo fluo da 200€", "il fumatore in debito d'ossigeno"),
     non descrizioni neutre.
-
-### In lavorazione
-- 🔨 🏋️ **La Palestra di Quartiere** — L'Istruttore di Sala 🧑‍🏫 · Il Compagno
+- ✅ 🏋️ **La Palestra di Quartiere** — L'Istruttore di Sala 🧑‍🏫 · Il Compagno
   d'Allenamento 🤝 · L'Attrezzo Libero 🏋️‍♂️ · Lo Spogliatoio 🚿
-  - Stesso tono spogliatoio-comico del Calcetto.
 
 ### Da fare
 - 🍸 **La Serata da Leoni (il sabato sera perfetto)**

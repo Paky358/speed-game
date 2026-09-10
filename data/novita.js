@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 18,
+    data: "10 settembre 2026",
+    titolo: "Nuovo tema per L'Asta: La Palestra di Quartiere 🏋️",
+    descrizione: [
+      "Metti insieme la palestra perfetta (o l'incubo del lunedì): l'istruttore di sala, il compagno d'allenamento, l'attrezzo libero, lo spogliatoio.",
+      "Dal motivatore olimpionico al venditore di integratori abusivo, dallo spotter che ti salva la vita a quello che ti molla il bilanciere sul collo, dalla doccia bollente in solitaria al 70enne nudo che parla di politica.",
+      "I temi dell'Asta sono adesso undici: Zombie, Pizza, Panino, Rapina, Supereroi, Primo Appuntamento, Giardino, Vacanza, Coinquilino, Calcetto, Palestra. 184 carte ciascuno."
+    ]
+  },
+  {
     v: 17,
     data: "10 settembre 2026",
     titolo: "Nuovo tema per L'Asta: La Squadra da Calcetto ⚽",

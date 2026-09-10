@@ -4,6 +4,12 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 10 settembre 2026 (3) — Il tema La Palestra di Quartiere
+- **🏋️ La Palestra di Quartiere**: 184 carte in L'Istruttore di Sala, Il Compagno
+  d'Allenamento, L'Attrezzo Libero, Lo Spogliatoio. Stesso tono da spogliatoio
+  del tema Calcetto.
+- I temi dell'Asta diventano undici.
+
 ## 10 settembre 2026 (2) — Il tema La Squadra da Calcetto
 - **⚽ La Squadra da Calcetto**: 184 carte in Il Portiere, Il Difensore, Il
   Centrocampista, L'Attaccante. Tono da spogliatoio scritto direttamente dal
