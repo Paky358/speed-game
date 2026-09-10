@@ -56,11 +56,11 @@
       if (!pool.length) return niente(t);
       var n = t.giocatori.length;
       var impostore = Math.floor(Math.random() * n);
-      // chi inizia è a caso, ma l'impostore quasi mai apre (posizione più difficile):
-      // se il sorteggio lo pesca, nel 90% dei casi passo la mano a un altro.
-      // Resta una piccola probabilità che tocchi a lui, così non è del tutto escluso.
+      // chi inizia è a caso, ma l'impostore apre di rado (posizione più difficile):
+      // se il sorteggio lo pesca, nel 60% dei casi passo la mano a un altro.
+      // Così tocca a lui circa 1 volta su 10 (con 4 giocatori): raro ma capita.
       var iniziante = Math.floor(Math.random() * n);
-      if (iniziante === impostore && n > 1 && Math.random() < 0.9) {
+      if (iniziante === impostore && n > 1 && Math.random() < 0.6) {
         do { iniziante = Math.floor(Math.random() * n); } while (iniziante === impostore);
       }
       var st = {
