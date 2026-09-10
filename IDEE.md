@@ -42,9 +42,7 @@ successo o il disastro restano sospesi fino al voto.
   d'Allenamento 🤝 · L'Attrezzo Libero 🏋️‍♂️ · Lo Spogliatoio 🚿
 - ✅ 🎆 **Il Capodanno** — L'Organizzatore 📋 · La Location 🏰 · L'Imprevisto a
   Mezzanotte 🕛 · Il Conto 🧾
-
-### In lavorazione
-- 🔨 🎓 **La Sessione Universitaria** — La Preparazione 📚 · L'Esaminatore 👨‍🏫 ·
+- ✅ 🎓 **La Sessione Universitaria** — La Preparazione 📚 · L'Esaminatore 👨‍🏫 ·
   Il Compagno prima di te 🎒 · La Domanda ❓
 
 ### Da fare

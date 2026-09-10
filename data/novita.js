@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 20,
+    data: "10 settembre 2026",
+    titolo: "Nuovo tema per L'Asta: La Sessione Universitaria 🎓",
+    descrizione: [
+      "Affronta l'esame più difficile: la preparazione, l'esaminatore, il compagno prima di te, la domanda.",
+      "Dalla memoria fotografica attivata al programma del 2018 studiato per sbaglio, dal prof empatico al barone spietato, dal compagno che ti fa fare un figurone a quello che vomita sulla cattedra, dall'argomento a piacere alla nota a piè di pagina di pagina 842.",
+      "Primo tema scritto rispettando fin dall'inizio la regola d'oro: nessuna carta anticipa il voto dell'esame, restano tutte ingredienti.",
+      "I temi dell'Asta sono adesso tredici. 184 carte ciascuno."
+    ]
+  },
+  {
     v: 19,
     data: "10 settembre 2026",
     titolo: "Nuovo tema per L'Asta: Il Capodanno 🎆",
