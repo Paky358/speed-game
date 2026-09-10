@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 24,
+    data: "10 settembre 2026",
+    titolo: "Nuovo gioco: Nomi, Cose e Città ✍️",
+    descrizione: [
+      "Il classico rivisitato per il telefono: a turno esce una lettera e hai pochi secondi per riempire tutte le categorie con parole che iniziano con quella lettera.",
+      "Scegli tu le categorie: quelle classiche (Nome, Città, Animale, Colore, Mestiere…), il set BLACK HUMOR per chi ama ridere di traverso, e puoi aggiungere le TUE categorie personalizzate.",
+      "Ogni casella riempita bene vale 10 punti, con un bonus se le riempi tutte. Alla fine, classifica.",
+      "Si può giocare da soli per allenarsi o in gruppo, e vale anche dentro il Torneo."
+    ]
+  },
+  {
     v: 23,
     data: "10 settembre 2026",
     titolo: "Risolto: entrando col codice si finiva nel gioco sbagliato 🔧",

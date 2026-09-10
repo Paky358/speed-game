@@ -4,6 +4,15 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 10 settembre 2026 (9) — Nuovo gioco: Nomi, Cose e Città
+- **✍️ Nomi, Cose e Città**: a turni, un telefono solo. Esce una lettera, parte il
+  tempo, e si riempiono le categorie con parole che iniziano con quella lettera.
+- Categorie **scelte dall'host**: classiche (in `data/ncc-categorie.js`), set
+  **Black humor**, e **categorie personalizzate** scritte dai giocatori (salvate
+  su quel telefono). Tempo per turno e giri a testa regolabili.
+- Punteggio: 10 a casella valida + bonus se piene tutte; classifica finale. Si
+  aggancia da sé al **Torneo** (difficoltà Media).
+
 ## 10 settembre 2026 (8) — Fix: entrare col codice apriva il gioco sbagliato
 - Chi entrava in una stanza digitando il **codice** veniva sempre mandato nella
   Linea del tempo, anche se l'host stava ospitando un altro gioco (es. L'Asta).

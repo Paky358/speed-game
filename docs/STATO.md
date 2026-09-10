@@ -25,6 +25,12 @@ dal proprio.
   Capodanno · 🎓 La Sessione Universitaria · 🚗 Il Road Trip. Ogni tema ha 184
   carte divise in tre fasce, con anti-ripetizione fra una partita e l'altra.
 
+- **Gioco 3 — Nomi, Cose e Città** ✍️: a turni, un telefono solo. Esce una lettera
+  e si riempiono le categorie con parole che iniziano con quella lettera, entro il
+  tempo. Categorie scelte dall'host: classiche, set **Black humor**, e
+  **personalizzate** scritte dai giocatori. 10 punti a casella + bonus se piene
+  tutte; classifica finale. Difficoltà Media nel torneo.
+
 ## Torneo (più giochi di fila)
 Dalla home, tasto **🏆 Torneo**: si sceglie una volta il gruppo e si giocano più
 partite di fila, anche a giochi diversi, con gli stessi giocatori. I punti si
