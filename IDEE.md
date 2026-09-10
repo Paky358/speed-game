@@ -27,12 +27,15 @@ riferimento.
 - ✅ 🌳 **Il Giardino Perfetto** — Il Terreno 🌱 · L'Attrazione 🎡 · Sport e Divertimento 🏓 · L'Infestante 🐛
 - ✅ 🏝️ **La Vacanza Perfetta** — Il Mezzo di Trasporto ✈️ · L'Alloggio 🏨 · Il Compagno di Viaggio 🎒 · L'Attività 📸
 - ✅ 🏠 **Il Coinquilino Ideale** — L'Abitudine Notturna 🌙 · La Specialità in Cucina 🍳 · L'Animale Domestico 🐾 · Il Pagamento dell'Affitto 💶
+- ✅ ⚽ **La Squadra da Calcetto** — Il Portiere 🧤 · Il Difensore 🛡️ · Il Centrocampista 🎯 · L'Attaccante 🥅
+  - Tono di riferimento per tutti i temi futuri: battute iper-specifiche da
+    spogliatoio ("il completo fluo da 200€", "il fumatore in debito d'ossigeno"),
+    non descrizioni neutre.
 
 ### In lavorazione
-- 🔨 ⚽ **La Squadra da Calcetto** — Il Portiere 🧤 · Il Difensore 🛡️ · Il Centrocampista 🎯 · L'Attaccante 🥅
-  - Tono da tenere come riferimento per tutti i temi futuri: battute iper-specifiche
-    da spogliatoio ("il completo fluo da 200€", "il fumatore in debito d'ossigeno"),
-    non descrizioni neutre. Il proprietario l'ha indicato come modello.
+- 🔨 🏋️ **La Palestra di Quartiere** — L'Istruttore di Sala 🧑‍🏫 · Il Compagno
+  d'Allenamento 🤝 · L'Attrezzo Libero 🏋️‍♂️ · Lo Spogliatoio 🚿
+  - Stesso tono spogliatoio-comico del Calcetto.
 
 ### Da fare
 - 🍸 **La Serata da Leoni (il sabato sera perfetto)**

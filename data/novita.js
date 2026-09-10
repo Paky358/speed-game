@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 17,
+    data: "10 settembre 2026",
+    titolo: "Nuovo tema per L'Asta: La Squadra da Calcetto ⚽",
+    descrizione: [
+      "Metti su la squadra per la partitella del giovedì: portiere, difensore, centrocampista, attaccante.",
+      "Il tema più da spogliatoio di tutti: il portiere col completo fluo da 200€, il difensore che fa autogol di tacco, il centrocampista fumatore in debito d'ossigeno, l'attaccante coi due ferri da stiro al posto dei piedi.",
+      "I temi dell'Asta sono adesso dieci: Zombie, Pizza, Panino, Rapina, Supereroi, Primo Appuntamento, Giardino, Vacanza, Coinquilino, Calcetto. 184 carte ciascuno."
+    ]
+  },
+  {
     v: 16,
     data: "10 settembre 2026",
     titolo: "Tre temi nuovi per L'Asta 🌳 🏝️ 🏠",
