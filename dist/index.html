@@ -6927,12 +6927,21 @@ window.SG_NOVITA = [
       var imp = t.impostazioni || {};
       var pool = window.SG_IMPOSTORE || [];
       if (!pool.length) return niente(t);
+      var n = t.giocatori.length;
+      var impostore = Math.floor(Math.random() * n);
+      // chi inizia è a caso, ma l'impostore quasi mai apre (posizione più difficile):
+      // se il sorteggio lo pesca, nel 90% dei casi passo la mano a un altro.
+      // Resta una piccola probabilità che tocchi a lui, così non è del tutto escluso.
+      var iniziante = Math.floor(Math.random() * n);
+      if (iniziante === impostore && n > 1 && Math.random() < 0.9) {
+        do { iniziante = Math.floor(Math.random() * n); } while (iniziante === impostore);
+      }
       var st = {
-        g: t.giocatori.map(function (n) { return { nome: n, punti: 0, voto: null }; }),
+        g: t.giocatori.map(function (nm) { return { nome: nm, punti: 0, voto: null }; }),
         carta: scegli(pool),
-        impostore: Math.floor(Math.random() * t.giocatori.length),
+        impostore: impostore,
         suggerimento: imp.suggerimento !== false,
-        iniziante: Math.floor(Math.random() * t.giocatori.length)
+        iniziante: iniziante
       };
       rivela(t, st, 0);
     }
