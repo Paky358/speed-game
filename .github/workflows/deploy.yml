@@ -1,0 +1,43 @@
+# Pubblica il sito su GitHub Pages, da solo, a ogni modifica.
+# Ricostruisce il file unico (costruisci-versione-online.sh -> dist/)
+# e lo mette online. Nessun Netlify, nessun caricamento a mano.
+name: Pubblica il sito
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch: {}   # permette anche l'avvio manuale dal sito GitHub
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  pubblica:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Prendi il codice
+        uses: actions/checkout@v4
+
+      - name: Costruisci il file unico (dist/index.html)
+        run: bash costruisci-versione-online.sh
+
+      - name: Prepara la cartella da pubblicare
+        run: touch dist/.nojekyll
+
+      - name: Impacchetta per Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Metti online
+        id: deploy
+        uses: actions/deploy-pages@v4
