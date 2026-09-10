@@ -421,7 +421,7 @@
     function corr() { return st.giocatori[st.turno % st.giocatori.length]; }
     function clearTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
 
-    var rete = SGNet.ospita({
+    var rete = SGNet.ospita("timeline", {
       onCodice: function (c) { st.codice = c; bd(); },
       onAddio: function (id) {
         var i = indexById(st, id); if (i < 0) return;

@@ -105,6 +105,35 @@
     ]);
   }
 
+  // Entra in una stanza avendo solo il codice: scopre da solo QUALE gioco
+  // si sta giocando, così apre quello giusto (non sempre la Linea del tempo).
+  function entraConCodice() {
+    var c = window.prompt("Scrivi il codice della stanza:");
+    if (!c) return;
+    c = c.trim().toUpperCase();
+    if (!c) return;
+    if (!(window.SGNet && SGNet.disponibile())) {
+      window.alert("Il collegamento non è disponibile qui. Apre solo dal sito pubblicato online.");
+      return;
+    }
+    var s = schermata({ icona: "🔗", titolo: "Entro nella stanza…", sotto: "Codice " + c });
+    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Cerco la partita in corso… un attimo." }));
+    mostra(s);
+    SGNet.scopriGioco(c, function (gid) {
+      var g = gid && giochi.filter(function (x) { return x.id === gid; })[0];
+      if (!g) {
+        svuota(s._contenuto); svuota(s._piede);
+        s._contenuto.appendChild(el("p", { class: "link-avviso",
+          text: "Non trovo una partita con questo codice. Controlla di averlo scritto giusto, oppure apri il link che ti ha mandato chi organizza." }));
+        s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↩︎ Torna alla home", onclick: schermataHome }));
+        mostra(s);
+        return;
+      }
+      location.hash = "gioco=" + g.id + "&stanza=" + encodeURIComponent(c);
+      location.reload();
+    });
+  }
+
   function schermataHome() {
     var s = schermata({});
     s.className += " home";
@@ -156,12 +185,7 @@
     // Tasto "Entra in una stanza" (per chi ha ricevuto un codice a voce)
     s._piede.appendChild(el("button", {
       class: "btn btn-fantasma", html: "🔗 Entra in una stanza (con un codice)",
-      onclick: function () {
-        var c = window.prompt("Scrivi il codice della stanza:");
-        if (!c) return;
-        c = c.trim().toUpperCase();
-        if (c) { location.hash = "gioco=timeline&stanza=" + encodeURIComponent(c); location.reload(); }
-      }
+      onclick: entraConCodice
     }));
 
     mostra(s);

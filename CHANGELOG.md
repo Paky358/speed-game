@@ -4,6 +4,13 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 10 settembre 2026 (8) — Fix: entrare col codice apriva il gioco sbagliato
+- Chi entrava in una stanza digitando il **codice** veniva sempre mandato nella
+  Linea del tempo, anche se l'host stava ospitando un altro gioco (es. L'Asta).
+- Ora l'host **annuncia quale gioco** è la stanza (topic `.../<CODICE>/meta`,
+  retained) e chi entra col codice lo **scopre** con `SGNet.scopriGioco` e apre
+  quello giusto. Il link condiviso funzionava già.
+
 ## 10 settembre 2026 (7) — Modalità Torneo
 - **🏆 Torneo**: dalla home si crea un torneo con un gruppo fisso di giocatori e si
   giocano più partite di fila (anche a giochi diversi). I punti si sommano e la

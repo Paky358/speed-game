@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 23,
+    data: "10 settembre 2026",
+    titolo: "Risolto: entrando col codice si finiva nel gioco sbagliato 🔧",
+    descrizione: [
+      "Prima, chi entrava in una stanza scrivendo il CODICE finiva sempre nella Linea del tempo, anche se l'host aveva avviato un altro gioco (per esempio L'Asta).",
+      "Ora chi entra col codice viene portato automaticamente nel gioco giusto, quello che sta ospitando chi ha creato la stanza.",
+      "Il link condiviso funzionava già: questa correzione riguarda chi entra digitando il codice a mano."
+    ]
+  },
+  {
     v: 22,
     data: "10 settembre 2026",
     titolo: "Modalità Torneo 🏆",

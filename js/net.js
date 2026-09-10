@@ -32,10 +32,11 @@
     disponibile: function () { return typeof mqtt !== "undefined"; },
 
     // L'host apre una stanza. cb: { onCodice, onArrivo, onAddio(id), onMsg(id,msg), onErrore(e) }
-    ospita: function (cb) {
+    ospita: function (giocoId, cb) {
       if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
       var codice = codiceACaso(4);
       var T = topics(codice);
+      var META = BASE + codice + "/meta";
       var client = mqtt.connect(BROKER, {
         clean: true, reconnectPeriod: 2000,
         // Se l'host sparisce all'improvviso, avvisa gli altri
@@ -43,6 +44,8 @@
       });
       client.on("connect", function () {
         client.subscribe(T.azioni, function () { cb.onCodice && cb.onCodice(codice); });
+        // annuncia QUALE gioco è questa stanza, così chi entra col codice apre quello giusto
+        try { client.publish(META, JSON.stringify({ g: giocoId || "" }), { retain: true }); } catch (e) {}
       });
       client.on("message", function (_t, payload) {
         var m; try { m = JSON.parse(payload.toString()); } catch (e) { return; }
@@ -61,6 +64,7 @@
           try {
             client.publish(T.stato, JSON.stringify({ t: "__hostgone" }), { retain: false });
             client.publish(T.stato, "", { retain: true }); // pulisce lo stato trattenuto
+            client.publish(META, "", { retain: true });    // pulisce l'annuncio del gioco
             client.end();
           } catch (e) {}
         }
@@ -94,6 +98,24 @@
           try { client.publish(T.azioni, JSON.stringify({ from: myId, data: { t: "__leave" } }), { retain: false }); client.end(); } catch (e) {}
         }
       };
+    },
+
+    // Scopre QUALE gioco si sta giocando in una stanza, dal solo codice.
+    // Così chi entra digitando il codice apre il gioco giusto e non un altro.
+    // cb riceve l'id del gioco (stringa) oppure null se non lo trova.
+    scopriGioco: function (codice, cb) {
+      if (!this.disponibile()) { cb(null); return; }
+      var META = BASE + String(codice).toUpperCase() + "/meta";
+      var client = mqtt.connect(BROKER, { clean: true, reconnectPeriod: 0 });
+      var fatto = false;
+      function fine(g) { if (fatto) return; fatto = true; try { client.end(true); } catch (e) {} cb(g || null); }
+      client.on("connect", function () { client.subscribe(META); });
+      client.on("message", function (_t, payload) {
+        var m; try { m = JSON.parse(payload.toString()); } catch (e) {}
+        fine(m && m.g);
+      });
+      client.on("error", function () { fine(null); });
+      setTimeout(function () { fine(null); }, 10000);
     }
   };
 })();

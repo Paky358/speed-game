@@ -414,6 +414,35 @@ img{ max-width:100%; }
     ]);
   }
 
+  // Entra in una stanza avendo solo il codice: scopre da solo QUALE gioco
+  // si sta giocando, così apre quello giusto (non sempre la Linea del tempo).
+  function entraConCodice() {
+    var c = window.prompt("Scrivi il codice della stanza:");
+    if (!c) return;
+    c = c.trim().toUpperCase();
+    if (!c) return;
+    if (!(window.SGNet && SGNet.disponibile())) {
+      window.alert("Il collegamento non è disponibile qui. Apre solo dal sito pubblicato online.");
+      return;
+    }
+    var s = schermata({ icona: "🔗", titolo: "Entro nella stanza…", sotto: "Codice " + c });
+    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Cerco la partita in corso… un attimo." }));
+    mostra(s);
+    SGNet.scopriGioco(c, function (gid) {
+      var g = gid && giochi.filter(function (x) { return x.id === gid; })[0];
+      if (!g) {
+        svuota(s._contenuto); svuota(s._piede);
+        s._contenuto.appendChild(el("p", { class: "link-avviso",
+          text: "Non trovo una partita con questo codice. Controlla di averlo scritto giusto, oppure apri il link che ti ha mandato chi organizza." }));
+        s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↩︎ Torna alla home", onclick: schermataHome }));
+        mostra(s);
+        return;
+      }
+      location.hash = "gioco=" + g.id + "&stanza=" + encodeURIComponent(c);
+      location.reload();
+    });
+  }
+
   function schermataHome() {
     var s = schermata({});
     s.className += " home";
@@ -465,12 +494,7 @@ img{ max-width:100%; }
     // Tasto "Entra in una stanza" (per chi ha ricevuto un codice a voce)
     s._piede.appendChild(el("button", {
       class: "btn btn-fantasma", html: "🔗 Entra in una stanza (con un codice)",
-      onclick: function () {
-        var c = window.prompt("Scrivi il codice della stanza:");
-        if (!c) return;
-        c = c.trim().toUpperCase();
-        if (c) { location.hash = "gioco=timeline&stanza=" + encodeURIComponent(c); location.reload(); }
-      }
+      onclick: entraConCodice
     }));
 
     mostra(s);
@@ -1046,10 +1070,11 @@ img{ max-width:100%; }
     disponibile: function () { return typeof mqtt !== "undefined"; },
 
     // L'host apre una stanza. cb: { onCodice, onArrivo, onAddio(id), onMsg(id,msg), onErrore(e) }
-    ospita: function (cb) {
+    ospita: function (giocoId, cb) {
       if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
       var codice = codiceACaso(4);
       var T = topics(codice);
+      var META = BASE + codice + "/meta";
       var client = mqtt.connect(BROKER, {
         clean: true, reconnectPeriod: 2000,
         // Se l'host sparisce all'improvviso, avvisa gli altri
@@ -1057,6 +1082,8 @@ img{ max-width:100%; }
       });
       client.on("connect", function () {
         client.subscribe(T.azioni, function () { cb.onCodice && cb.onCodice(codice); });
+        // annuncia QUALE gioco è questa stanza, così chi entra col codice apre quello giusto
+        try { client.publish(META, JSON.stringify({ g: giocoId || "" }), { retain: true }); } catch (e) {}
       });
       client.on("message", function (_t, payload) {
         var m; try { m = JSON.parse(payload.toString()); } catch (e) { return; }
@@ -1075,6 +1102,7 @@ img{ max-width:100%; }
           try {
             client.publish(T.stato, JSON.stringify({ t: "__hostgone" }), { retain: false });
             client.publish(T.stato, "", { retain: true }); // pulisce lo stato trattenuto
+            client.publish(META, "", { retain: true });    // pulisce l'annuncio del gioco
             client.end();
           } catch (e) {}
         }
@@ -1108,6 +1136,24 @@ img{ max-width:100%; }
           try { client.publish(T.azioni, JSON.stringify({ from: myId, data: { t: "__leave" } }), { retain: false }); client.end(); } catch (e) {}
         }
       };
+    },
+
+    // Scopre QUALE gioco si sta giocando in una stanza, dal solo codice.
+    // Così chi entra digitando il codice apre il gioco giusto e non un altro.
+    // cb riceve l'id del gioco (stringa) oppure null se non lo trova.
+    scopriGioco: function (codice, cb) {
+      if (!this.disponibile()) { cb(null); return; }
+      var META = BASE + String(codice).toUpperCase() + "/meta";
+      var client = mqtt.connect(BROKER, { clean: true, reconnectPeriod: 0 });
+      var fatto = false;
+      function fine(g) { if (fatto) return; fatto = true; try { client.end(true); } catch (e) {} cb(g || null); }
+      client.on("connect", function () { client.subscribe(META); });
+      client.on("message", function (_t, payload) {
+        var m; try { m = JSON.parse(payload.toString()); } catch (e) {}
+        fine(m && m.g);
+      });
+      client.on("error", function () { fine(null); });
+      setTimeout(function () { fine(null); }, 10000);
     }
   };
 })();
@@ -5275,6 +5321,16 @@ img{ max-width:100%; }
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 23,
+    data: "10 settembre 2026",
+    titolo: "Risolto: entrando col codice si finiva nel gioco sbagliato 🔧",
+    descrizione: [
+      "Prima, chi entrava in una stanza scrivendo il CODICE finiva sempre nella Linea del tempo, anche se l'host aveva avviato un altro gioco (per esempio L'Asta).",
+      "Ora chi entra col codice viene portato automaticamente nel gioco giusto, quello che sta ospitando chi ha creato la stanza.",
+      "Il link condiviso funzionava già: questa correzione riguarda chi entra digitando il codice a mano."
+    ]
+  },
+  {
     v: 22,
     data: "10 settembre 2026",
     titolo: "Modalità Torneo 🏆",
@@ -6091,7 +6147,7 @@ window.SG_NOVITA = [
     };
     function stopTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
 
-    var rete = SGNet.ospita({
+    var rete = SGNet.ospita("asta", {
       onCodice: function (c) { st.codice = c; bd(); },
       onAddio: function (id) {
         if (!perId(st, id)) return;
@@ -6951,7 +7007,7 @@ window.SG_NOVITA = [
     function corr() { return st.giocatori[st.turno % st.giocatori.length]; }
     function clearTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
 
-    var rete = SGNet.ospita({
+    var rete = SGNet.ospita("timeline", {
       onCodice: function (c) { st.codice = c; bd(); },
       onAddio: function (id) {
         var i = indexById(st, id); if (i < 0) return;

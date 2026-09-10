@@ -577,7 +577,7 @@
     };
     function stopTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
 
-    var rete = SGNet.ospita({
+    var rete = SGNet.ospita("asta", {
       onCodice: function (c) { st.codice = c; bd(); },
       onAddio: function (id) {
         if (!perId(st, id)) return;
