@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 25,
+    data: "10 settembre 2026",
+    titolo: "Nuovo gioco: L'Impostore 🕵️",
+    descrizione: [
+      "Tutti ricevono la stessa parola, tranne uno: l'impostore. Il telefono si passa di mano e ognuno guarda il suo ruolo in segreto.",
+      "L'host decide se dare all'impostore un AIUTINO: una parola simile ma diversa (per bleffare meglio) oppure lasciarlo al buio.",
+      "L'app sorteggia chi inizia. A voce, a turno, ognuno dà un indizio legato alla propria parola; poi si vota chi è l'impostore.",
+      "Se lo scoprite, punti a chi l'ha beccato; se la fa franca, punti all'impostore. Vale anche nel Torneo. Da 3 giocatori in su."
+    ]
+  },
+  {
     v: 24,
     data: "10 settembre 2026",
     titolo: "Nuovo gioco: Nomi, Cose e Città ✍️",

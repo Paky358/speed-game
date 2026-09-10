@@ -32,6 +32,13 @@ dal proprio.
   più del 50% di sì = 10 punti, 5 se doppia, 0 se bocciata o vuota. Da 2
   giocatori; difficoltà Media nel torneo.
 
+- **Gioco 4 — L'Impostore** 🕵️: un telefono solo. Tutti hanno la stessa parola
+  tranne l'impostore; il telefono gira e ognuno vede il suo ruolo in segreto.
+  L'host sceglie se dare all'impostore una parola simile ma diversa (coppie in
+  `data/impostore-parole.js`) o lasciarlo al buio. Chi inizia è sorteggiato.
+  Votazione segreta, poi punti (scoperto → a chi l'ha beccato; franca →
+  all'impostore) e classifica. Da 3 giocatori; difficoltà Media nel torneo.
+
 ## Torneo (più giochi di fila)
 Dalla home, tasto **🏆 Torneo**: si sceglie una volta il gruppo e si giocano più
 partite di fila, anche a giochi diversi, con gli stessi giocatori. I punti si

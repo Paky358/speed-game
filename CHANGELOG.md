@@ -4,6 +4,15 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 10 settembre 2026 (10) — Nuovo gioco: L'Impostore
+- **🕵️ L'Impostore**: un telefono solo. Tutti hanno la stessa parola tranne
+  l'impostore; il telefono gira e ognuno vede il suo ruolo in segreto.
+- L'host sceglie l'**aiutino**: all'impostore una parola simile ma diversa
+  (coppie in `data/impostore-parole.js`), oppure al buio. **Chi inizia** è
+  sorteggiato, e l'impostore è sorteggiato tra tutti.
+- Votazione segreta a turni, poi esito e punti: scoperto → a chi l'ha beccato,
+  franca → all'impostore. Classifica finale; si aggancia al Torneo. Da 3 giocatori.
+
 ## 10 settembre 2026 (9) — Nuovo gioco: Nomi, Cose e Città
 - **✍️ Nomi, Cose e Città**: a turni, un telefono solo. Esce una lettera, parte il
   tempo, e si riempiono le categorie con parole che iniziano con quella lettera.
