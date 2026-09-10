@@ -1,6 +1,6 @@
 # A che punto siamo
 
-_Aggiornato: 9 settembre 2026 (L'Asta online + tema Rapina)_
+_Aggiornato: 10 settembre 2026 (nove temi per L'Asta)_
 
 ## In due parole
 È una raccolta di giochi da fare in gruppo, che si apre dal telefono senza
@@ -19,9 +19,10 @@ dal proprio.
   altri, classifica finale. Si gioca su un telefono solo o ognuno dal suo.
 - **Gioco 2 — L'Asta**: 2–10 giocatori, 4 round a tema, crediti, rilanci, timer 10",
   assegnazione automatica dell'ultima carta, votazione a stelle e podio.
-  **Quattro temi**: 🧟 Sopravvivenza Zombie · 🍕 La Pizza Perfetta · 🍔 Il Panino
-  Perfetto · 💰 Il Colpo del Secolo. Ogni tema ha 184 carte divise in tre fasce,
-  con anti-ripetizione fra una partita e l'altra.
+  **Nove temi**: 🧟 Zombie · 🍕 Pizza · 🍔 Panino · 💰 Colpo del Secolo · 🦸 Supereroi ·
+  💘 Primo Appuntamento · 🌳 Giardino Perfetto · 🏝️ Vacanza Perfetta · 🏠 Coinquilino
+  Ideale (e in arrivo ⚽ Squadra da Calcetto). Ogni tema ha 184 carte divise in tre
+  fasce, con anti-ripetizione fra una partita e l'altra.
 
 ## Due modi di giocare (li sceglie chi organizza, all'inizio)
 - **Un telefono solo**: si passa di mano in mano. Funziona sempre, ovunque.
@@ -39,8 +40,7 @@ quasi gratis (piano in `docs/PROSSIMO-PASSO-ASTA-ONLINE.md`).
 1. Provare l'Asta online **con un gruppo vero**, ognuno dal proprio telefono.
 2. Rifiniture all'online che emergeranno dalla prova (es. cosa succede se cade la
    connessione di chi ha aperto la stanza).
-3. Gli altri temi dell'Asta già pensati (Primo Appuntamento, Supereroe, Serata da
-   Leoni) e il terzo gioco: tutto in `IDEE.md`.
+3. Il tema "La Serata da Leoni" e il terzo gioco: tutto in `IDEE.md`.
 
 ## Come si apre
 - Doppio clic su `index.html`: si apre nel browser e si gioca.

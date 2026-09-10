@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 16,
+    data: "10 settembre 2026",
+    titolo: "Tre temi nuovi per L'Asta 🌳 🏝️ 🏠",
+    descrizione: [
+      "IL GIARDINO PERFETTO 🌳 — terreno, attrazione, sport e chi vive in giardino. Dal prato all'inglese al fango scivoloso, dalla piscina olimpionica al campo minato. Nell'ultimo round vince chi si prende gli ospiti più belli (farfalle, lucciole) e perde chi si becca i cinghiali.",
+      "LA VACANZA PERFETTA 🏝️ — il mezzo di trasporto, l'alloggio, il compagno di viaggio, l'attività. Dal jet privato al bagagliaio di una Punto, dalla villa alle Maldive al sacco a pelo in stazione.",
+      "IL COINQUILINO IDEALE 🏠 — l'abitudine notturna, la specialità in cucina, l'animale domestico, come paga l'affitto. Dal coinquilino che pulisce di notte a quello che suona la batteria alle 3, dal gatto coccolone alla puzzola libera per casa.",
+      "I temi dell'Asta sono adesso nove: Zombie, Pizza, Panino, Rapina, Supereroi, Primo Appuntamento, Giardino, Vacanza, Coinquilino. 184 carte ciascuno."
+    ]
+  },
+  {
     v: 15,
     data: "9 settembre 2026",
     titolo: "Due temi nuovi per L'Asta 🦸 💘",

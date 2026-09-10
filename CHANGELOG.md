@@ -4,6 +4,17 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 10 settembre 2026 — Giardino, Vacanza e Coinquilino
+- **🌳 Il Giardino Perfetto**: 184 carte in Il Terreno, L'Attrazione, Sport e
+  Divertimento, L'Infestante. Nell'ultimo round la logica è al contrario di
+  Supereroi: la fascia alta sono gli ospiti belli, la bassa le invasioni.
+- **🏝️ La Vacanza Perfetta**: 184 carte in Il Mezzo di Trasporto, L'Alloggio,
+  Il Compagno di Viaggio, L'Attività.
+- **🏠 Il Coinquilino Ideale**: 184 carte in L'Abitudine Notturna, La Specialità
+  in Cucina, L'Animale Domestico, Il Pagamento dell'Affitto. Tono da spogliatoio
+  più marcato: indicato dal proprietario come il tema più riuscito finora.
+- I temi dell'Asta diventano nove.
+
 ## 9 settembre 2026 — Supereroi e Primo Appuntamento
 - **🦸 Supereroi**: 184 carte in quattro round — Il Superpotere ⚡, Il Costume 🥋,
   Il Gadget 🔫, Il Punto Debole ☠️. Nel round finale la fascia alta è la debolezza
