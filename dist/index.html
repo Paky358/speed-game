@@ -7758,8 +7758,8 @@ window.SG_SIPERO = {
    SQUADRE che si sfidano. Bastano 3 giocatori (giudice + 1 vs 1).
    La sequenza delle fasi è configurabile dall'host:
      - CLASSICA (default): Paradiso (2 Bonus su di sé) → Schianto
-       (2 Malus agli avversari) → Cerotto (1 Bonus per arginare un
-       Malus ricevuto) → Ghigliottina (2 Malus agli avversari).
+       (2 Malus agli avversari) → Rinforzo (un altro Bonus su di sé)
+       → Ghigliottina (2 Malus agli avversari).
      - PERSONALIZZATA: l'host compone le fasi (tipo, quante, bersaglio).
    La mano si ricarica sempre fino a 7 Bonus e 7 Malus.
    I punti sono personali: chi è nella squadra vincente prende +1.
@@ -7772,7 +7772,7 @@ window.SG_SIPERO = {
   var CLASSICA = [
     { tipo: "bonus", n: 2, bers: "se" },
     { tipo: "malus", n: 2, bers: "avv" },
-    { tipo: "bonus", n: 1, bers: "se", cerotto: true },
+    { tipo: "bonus", n: 1, bers: "se" },
     { tipo: "malus", n: 2, bers: "avv" }
   ];
 
@@ -7797,8 +7797,8 @@ window.SG_SIPERO = {
     difficolta: 2,
     regole: [
       "A ogni round uno di voi fa da <b>giudice</b> (a rotazione) e gli altri si dividono in <b>due squadre</b>. Bastano 3 giocatori.",
-      "Nella modalità classica: <b>Paradiso</b> (2 Bonus su di sé), <b>Schianto</b> (2 Malus agli avversari), <b>Cerotto</b> (1 Bonus per arginare un Malus ricevuto), <b>Ghigliottina</b> (2 Malus finali). L'host può anche <b>comporre le fasi a piacere</b>.",
-      "Ogni squadra ha <b>1 minuto</b> per convincere il giudice che il suo scenario, per quanto devastato, è il migliore da vivere.",
+      "Nella modalità classica: <b>Paradiso</b> (2 Bonus su di sé), <b>Schianto</b> (2 Malus agli avversari), <b>Rinforzo</b> (un altro Bonus su di sé), <b>Ghigliottina</b> (2 Malus finali). L'host può anche <b>comporre le fasi a piacere</b>.",
+      "Poi ogni squadra convince a voce il giudice che il suo scenario, per quanto devastato, è il migliore da vivere. Nessun limite di tempo.",
       "Il giudice sceglie la squadra vincente: chi ne fa parte prende un punto. Dopo tutti i round, vince chi ha più punti."
     ],
 
@@ -7945,20 +7945,6 @@ window.SG_SIPERO = {
       scelte.forEach(function (c) { dest.push(c); });
       st.mani[sq][f.tipo] = manoTipo.filter(function (c) { return scelte.indexOf(c) < 0; });
       ricarica(t, st.mani[sq][f.tipo], f.tipo === "bonus" ? st.bonus : st.malus, MAX_MANO);
-      if (f.cerotto && f.tipo === "bonus" && st.scen[sq].malusRic.length) {
-        scegliMalusTarget(t, st, sq, scelte[0]);
-      } else {
-        st.stepIdx += 1; prossimoStep(t, st);
-      }
-    });
-  }
-
-  function scegliMalusTarget(t, st, sqK, bonusCer) {
-    scegliCarte(t, {
-      titolo: st.squadre[sqK].nome + " · Cerotto", sotto: "Su quale Malus incolli il Bonus «" + taglia(bonusCer) + "»?",
-      carte: st.scen[sqK].malusRic.slice(), quante: 1, tipo: "malus"
-    }, function (scelte) {
-      st.scen[sqK].cerotto = { bonus: bonusCer, malus: scelte[0] };
       st.stepIdx += 1; prossimoStep(t, st);
     });
   }
@@ -8001,12 +7987,10 @@ window.SG_SIPERO = {
       var box = el("div", { style: "margin-bottom:14px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05)" });
       box.appendChild(el("div", { class: "etichetta", style: "margin:0 0 6px", text: (k === 0 ? "🟥 " : "🟦 ") + membriTxt(sq) }));
       st.scen[k].bonus.forEach(function (c) {
-        var cer = st.scen[k].cerotto && st.scen[k].cerotto.bonus === c;
-        box.appendChild(el("div", { style: "padding:6px 8px;border-radius:8px;margin-bottom:4px;background:rgba(80,220,120,.14)", html: (cer ? "🩹 " : "✅ ") + c }));
+        box.appendChild(el("div", { style: "padding:6px 8px;border-radius:8px;margin-bottom:4px;background:rgba(80,220,120,.14)", html: "✅ " + c }));
       });
       st.scen[k].malusRic.forEach(function (c) {
-        var arg = st.scen[k].cerotto && st.scen[k].cerotto.malus === c;
-        box.appendChild(el("div", { style: "padding:6px 8px;border-radius:8px;margin-bottom:4px;background:rgba(255,80,80,.14)" + (arg ? ";opacity:.6;text-decoration:line-through" : ""), html: "❌ " + c + (arg ? " <b>(arginato)</b>" : "") }));
+        box.appendChild(el("div", { style: "padding:6px 8px;border-radius:8px;margin-bottom:4px;background:rgba(255,80,80,.14)", html: "❌ " + c }));
       });
       s._contenuto.appendChild(box);
     });
@@ -8017,19 +8001,10 @@ window.SG_SIPERO = {
   function arringa(t, st, k) {
     if (k >= st.squadre.length) return giudizio(t, st);
     var el = t.el;
-    var s = t.schermata({ icona: "🎤", titolo: st.squadre[k].nome + ", convincete il giudice", sotto: "1 minuto" });
-    var wrap = el("div", { class: "as-timer" }); var fill = el("div", { class: "as-timer-fill" });
-    wrap.appendChild(fill); s._contenuto.appendChild(wrap);
-    var num = el("div", { style: "text-align:center;font-size:3rem;font-weight:800;margin:10px 0", text: "60" });
-    s._contenuto.appendChild(num);
-    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Spiegate al giudice perché il vostro scenario, pur devastato, è il migliore da vivere." }));
-    var restano = 60, fatto = false;
-    var timer = setInterval(function () {
-      restano -= 0.1; fill.style.width = Math.max(0, restano / 60) * 100 + "%"; num.textContent = Math.max(0, Math.ceil(restano));
-      if (restano <= 0) finee();
-    }, 100);
-    function finee() { if (fatto) return; fatto = true; clearInterval(timer); arringa(t, st, k + 1); }
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: (k === 0 ? "Tocca all'altra squadra ▶" : "Al giudizio ▶"), onclick: finee }));
+    var s = t.schermata({ icona: "🎤", titolo: st.squadre[k].nome + ", convincete il giudice", sotto: "Prendetevi il tempo che volete" });
+    s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:2.8rem;margin:14px 0", text: (k === 0 ? "🟥" : "🟦") }));
+    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Spiegate a voce al giudice perché il vostro scenario, pur devastato, è il migliore da vivere. Nessuna fretta." }));
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: (k === 0 ? "Tocca all'altra squadra ▶" : "Al giudizio ▶"), onclick: function () { arringa(t, st, k + 1); } }));
     t.mostra(s);
   }
 
