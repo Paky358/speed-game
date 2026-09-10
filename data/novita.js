@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 21,
+    data: "10 settembre 2026",
+    titolo: "Nuovo tema per L'Asta: Il Road Trip 🚗",
+    descrizione: [
+      "Organizza il viaggio in macchina perfetto (o quello da incubo): il mezzo, il guidatore, la colonna sonora, l'imprevisto in autostrada.",
+      "Dalla Tesla ultima generazione alla Fiat Duna del '99, dal pilota di rally mancato a quello a cui hanno appena ritirato la patente, dalla playlist Spotify perfetta a Radio Maria col rosario in loop, dal casello con la sbarra alzata alla gomma bucata in galleria.",
+      "I temi dell'Asta sono adesso quattordici. 184 carte ciascuno."
+    ]
+  },
+  {
     v: 20,
     data: "10 settembre 2026",
     titolo: "Nuovo tema per L'Asta: La Sessione Universitaria 🎓",

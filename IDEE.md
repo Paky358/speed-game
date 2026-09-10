@@ -44,10 +44,8 @@ successo o il disastro restano sospesi fino al voto.
   Mezzanotte 🕛 · Il Conto 🧾
 - ✅ 🎓 **La Sessione Universitaria** — La Preparazione 📚 · L'Esaminatore 👨‍🏫 ·
   Il Compagno prima di te 🎒 · La Domanda ❓
-
-### In lavorazione
-- 🔨 🚗 **Il Road Trip** — Il Mezzo · Il Guidatore · La Colonna Sonora ·
-  L'Imprevisto in Autostrada
+- ✅ 🚗 **Il Road Trip** — Il Mezzo 🚙 · Il Guidatore 🚦 · La Colonna Sonora 🎧 ·
+  L'Imprevisto in Autostrada 🛣️
 
 ### Da fare (obiettivo: arrivare a 20 temi, poi si passa al terzo gioco)
 - 🍸 **La Serata da Leoni (il sabato sera perfetto)**

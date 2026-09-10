@@ -4,6 +4,11 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 10 settembre 2026 (6) — Il tema Il Road Trip
+- **🚗 Il Road Trip**: 184 carte in Il Mezzo, Il Guidatore, La Colonna Sonora,
+  L'Imprevisto in Autostrada.
+- I temi dell'Asta diventano quattordici.
+
 ## 10 settembre 2026 (5) — Il tema La Sessione Universitaria
 - **🎓 La Sessione Universitaria**: 184 carte in La Preparazione, L'Esaminatore,
   Il Compagno prima di te, La Domanda. Primo tema scritto applicando fin
