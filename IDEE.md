@@ -17,7 +17,14 @@ poco. Il finale deve venire fuori dalla combinazione, e poi lo votano gli altri.
 
 Sul tono: il tema **Coinquilino** è il preferito del proprietario finora — battute
 iper-specifiche e situazioni buffe, non descrizioni neutre. Da tenere come
-riferimento.
+riferimento. **I marchi e i nomi reali vanno tenuti quando servono alla battuta**
+(TikTok, Spotify, Gigi D'Alessio, Bignami...): non genericizzare, sono più efficaci.
+
+**Regola d'oro delle carte**: essendo un gioco dove il risultato finale lo votano
+gli altri, **nessuna carta — nemmeno in fascia A — deve dichiarare l'esito della
+storia** ("prendi 30 e lode", "l'appuntamento va benissimo", "vinci la partita").
+Le carte sono solo ingredienti (persone, oggetti, imprevisti, atteggiamenti): il
+successo o il disastro restano sospesi fino al voto.
 
 ### Fatti
 - ✅ 🧟 Sopravvivenza Zombie · 🍕 La Pizza Perfetta · 🍔 Il Panino Perfetto
@@ -33,6 +40,12 @@ riferimento.
     non descrizioni neutre.
 - ✅ 🏋️ **La Palestra di Quartiere** — L'Istruttore di Sala 🧑‍🏫 · Il Compagno
   d'Allenamento 🤝 · L'Attrezzo Libero 🏋️‍♂️ · Lo Spogliatoio 🚿
+- ✅ 🎆 **Il Capodanno** — L'Organizzatore 📋 · La Location 🏰 · L'Imprevisto a
+  Mezzanotte 🕛 · Il Conto 🧾
+
+### In lavorazione
+- 🔨 🎓 **La Sessione Universitaria** — La Preparazione 📚 · L'Esaminatore 👨‍🏫 ·
+  Il Compagno prima di te 🎒 · La Domanda ❓
 
 ### Da fare
 - 🍸 **La Serata da Leoni (il sabato sera perfetto)**

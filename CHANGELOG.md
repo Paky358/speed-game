@@ -4,6 +4,14 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 10 settembre 2026 (4) — Il tema Il Capodanno
+- **🎆 Il Capodanno**: 184 carte in L'Organizzatore, La Location, L'Imprevisto a
+  Mezzanotte, Il Conto.
+- Regola d'oro fissata per tutte le carte future del gioco: nessuna carta, in
+  nessuna fascia, dichiara l'esito della storia — sono solo ingredienti, il
+  risultato lo votano gli altri.
+- I temi dell'Asta diventano dodici.
+
 ## 10 settembre 2026 (3) — Il tema La Palestra di Quartiere
 - **🏋️ La Palestra di Quartiere**: 184 carte in L'Istruttore di Sala, Il Compagno
   d'Allenamento, L'Attrezzo Libero, Lo Spogliatoio. Stesso tono da spogliatoio

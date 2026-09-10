@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 19,
+    data: "10 settembre 2026",
+    titolo: "Nuovo tema per L'Asta: Il Capodanno 🎆",
+    descrizione: [
+      "Metti insieme il Capodanno perfetto (o quello da dimenticare): l'organizzatore, la location, l'imprevisto a mezzanotte, il conto.",
+      "Dall'amico con la villa libera al PR che vi fa entrare nel privé, dalla villa con piscina riscaldata alla sala d'attesa del pronto soccorso, dal bacio di mezzanotte al blackout alle 23:55.",
+      "Con questo tema si è affinata una regola per tutte le carte del gioco: nessuna dice mai come va a finire la storia, sono solo ingredienti — il verdetto lo danno sempre gli altri col voto.",
+      "I temi dell'Asta sono adesso dodici: Zombie, Pizza, Panino, Rapina, Supereroi, Primo Appuntamento, Giardino, Vacanza, Coinquilino, Calcetto, Palestra, Capodanno. 184 carte ciascuno."
+    ]
+  },
+  {
     v: 18,
     data: "10 settembre 2026",
     titolo: "Nuovo tema per L'Asta: La Palestra di Quartiere 🏋️",
