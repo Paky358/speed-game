@@ -4,6 +4,15 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 10 settembre 2026 (11) — Nuovo gioco: Sì... però
+- **🤨 Sì... però**: party game a squadre (stile Superfight). A ogni round uno fa
+  da giudice a rotazione e gli altri si dividono in due squadre; da 3 giocatori.
+- 4 fasi (Paradiso, Schianto, Cerotto impilabile su un Malus, Ghigliottina), poi
+  arringa da 1 minuto e il giudice sceglie. Punti personali; si aggancia al Torneo.
+- L'host può usare la **sequenza classica** o **comporre le fasi** (tipo, quante,
+  bersaglio). Mano sempre ricaricata a 7 Bonus e 7 Malus.
+- Carte in `data/sipero-carte.js` (51 Bonus, 50 Malus di partenza).
+
 ## 10 settembre 2026 (10) — Nuovo gioco: L'Impostore
 - **🕵️ L'Impostore**: un telefono solo. Tutti hanno la stessa parola tranne
   l'impostore; il telefono gira e ognuno vede il suo ruolo in segreto.

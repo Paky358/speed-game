@@ -7,6 +7,15 @@ prossimo da questa lista.
 ## Fatti / in corso
 - ✅ **La linea del tempo** — il primo gioco (fatto).
 - ✅ **L'Asta** — secondo gioco (fatto): asta a round con votazione a stelle.
+- ✅ **Nomi, Cose e Città**, **L'Impostore**, **Sì... però** — altri giochi (fatti).
+
+## Obiettivo grande: online per TUTTI i giochi
+Oggi solo L'Asta e La linea del tempo si giocano "ognuno dal suo telefono".
+La visione del proprietario è che **ogni gioco** abbia l'online, riusando la
+stanza già esistente: si entra una volta dalla home e si passa da un gioco
+all'altro (torneo compreso) senza rimandare codici. Lavoro grosso e a sé:
+va generalizzata la modalità online dentro il motore (`js/core.js` + `js/net.js`),
+poi adattato ogni gioco. Da affrontare come progetto dedicato.
 
 ## Temi per L'Asta
 

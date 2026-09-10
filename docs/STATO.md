@@ -39,6 +39,12 @@ dal proprio.
   Votazione segreta, poi punti (scoperto → a chi l'ha beccato; franca →
   all'impostore) e classifica. Da 3 giocatori; difficoltà Media nel torneo.
 
+- **Gioco 5 — Sì... però** 🤨: party game a squadre (stile Superfight). A ogni round
+  uno fa da giudice a rotazione e gli altri si dividono in due squadre; da 3
+  giocatori. 4 fasi (Paradiso, Schianto, Cerotto impilabile, Ghigliottina), arringa
+  da 1 minuto, il giudice sceglie. L'host può usare la sequenza classica o
+  comporre le fasi. Carte in `data/sipero-carte.js` (51 Bonus, 50 Malus).
+
 ## Torneo (più giochi di fila)
 Dalla home, tasto **🏆 Torneo**: si sceglie una volta il gruppo e si giocano più
 partite di fila, anche a giochi diversi, con gli stessi giocatori. I punti si

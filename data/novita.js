@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 26,
+    data: "10 settembre 2026",
+    titolo: "Nuovo gioco: Sì... però 🤨",
+    descrizione: [
+      "Party game a squadre: a ogni round uno fa da giudice (a rotazione) e gli altri si dividono in due squadre. Bastano 3 giocatori.",
+      "Ogni squadra costruisce lo scenario di vita migliore con carte BONUS e sabota l'avversario con carte MALUS, in 4 fasi: Paradiso, Schianto, Cerotto (un bonus per arginare un malus ricevuto) e Ghigliottina.",
+      "Poi 1 minuto di arringa a testa per convincere il giudice che il proprio scenario, per quanto devastato, è il migliore da vivere.",
+      "L'host può usare la sequenza classica o COMPORRE le proprie fasi (tipo carta, quante, bersaglio). 101 carte di partenza, e se ne possono aggiungere quante si vuole. Vale anche nel Torneo."
+    ]
+  },
+  {
     v: 25,
     data: "10 settembre 2026",
     titolo: "Nuovo gioco: L'Impostore 🕵️",
