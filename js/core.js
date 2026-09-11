@@ -404,7 +404,7 @@
     var conta = el("p", { class: "modulo-nota" });
     var lista = el("div");
     var avanti = el("button", { class: "btn btn-primario", text: torn ? "Comincia il torneo ▶" : "Avanti ▶", onclick: function () {
-      if (gruppo.length < min) return;
+      if (gruppo.length < (torn ? min : 1)) return;
       if (torn) return iniziaTorneo();
       if (g) schermataPreGioco(g); else schermataScegliGioco();
     }});
@@ -422,7 +422,7 @@
       });
       conta.textContent = gruppo.length + (gruppo.length === 1 ? " partecipante" : " partecipanti")
         + (gruppo.length < min ? " · ne servono almeno " + min : "");
-      if (gruppo.length < min) avanti.disabled = true; else avanti.removeAttribute("disabled");
+      if (gruppo.length < (torn ? min : 1)) avanti.disabled = true; else avanti.removeAttribute("disabled");
     }
 
     s._contenuto.appendChild(conta);
@@ -468,7 +468,8 @@
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca",
       onclick: function () { schermataRegole(g, function () { schermataPreGioco(g, opts); }); } }));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: function () {
-      if (gruppo.length < (g.giocatoriMin || 2)) return schermataSala(g, opts);
+      // online: l'host apre la stanza da solo, gli altri entrano via rete → niente vincolo di minimo qui
+      if (!(impostazioni && impostazioni.modo === "online") && gruppo.length < (g.giocatoriMin || 2)) return schermataSala(g, opts);
       ultimaPartita = { gioco: g, impostazioni: impostazioni };
       avviaPartita(g, nomiGruppo(), impostazioni, opts);
     }}));

@@ -713,7 +713,7 @@ img{ max-width:100%; }
     var conta = el("p", { class: "modulo-nota" });
     var lista = el("div");
     var avanti = el("button", { class: "btn btn-primario", text: torn ? "Comincia il torneo ▶" : "Avanti ▶", onclick: function () {
-      if (gruppo.length < min) return;
+      if (gruppo.length < (torn ? min : 1)) return;
       if (torn) return iniziaTorneo();
       if (g) schermataPreGioco(g); else schermataScegliGioco();
     }});
@@ -731,7 +731,7 @@ img{ max-width:100%; }
       });
       conta.textContent = gruppo.length + (gruppo.length === 1 ? " partecipante" : " partecipanti")
         + (gruppo.length < min ? " · ne servono almeno " + min : "");
-      if (gruppo.length < min) avanti.disabled = true; else avanti.removeAttribute("disabled");
+      if (gruppo.length < (torn ? min : 1)) avanti.disabled = true; else avanti.removeAttribute("disabled");
     }
 
     s._contenuto.appendChild(conta);
@@ -777,7 +777,8 @@ img{ max-width:100%; }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca",
       onclick: function () { schermataRegole(g, function () { schermataPreGioco(g, opts); }); } }));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: function () {
-      if (gruppo.length < (g.giocatoriMin || 2)) return schermataSala(g, opts);
+      // online: l'host apre la stanza da solo, gli altri entrano via rete → niente vincolo di minimo qui
+      if (!(impostazioni && impostazioni.modo === "online") && gruppo.length < (g.giocatoriMin || 2)) return schermataSala(g, opts);
       ultimaPartita = { gioco: g, impostazioni: impostazioni };
       avviaPartita(g, nomiGruppo(), impostazioni, opts);
     }}));
@@ -5626,6 +5627,17 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 27,
+    data: "11 settembre 2026",
+    titolo: "Sì... però si gioca ognuno dal suo telefono 🔗",
+    descrizione: [
+      "L'host apre una stanza con un codice; gli amici entrano dal loro telefono. In lobby si sceglie il giudice e si formano le due squadre.",
+      "Ognuno vede sempre il TAVOLO completo (i Bonus e Malus della propria squadra e di quella avversaria) e ha sotto mano le proprie carte, comprese quelle Malus da lanciare.",
+      "Il giudice, alla fine, sceglie lo scenario migliore. A fine partita si torna alla lobby e si possono rifare giudice e squadre.",
+      "Novità anche a un telefono solo: la vecchia fase Cerotto è diventata un semplice altro Bonus (Rinforzo), e non c'è più nessun limite di tempo per scegliere le carte o per l'arringa."
+    ]
+  },
+  {
     v: 26,
     data: "10 settembre 2026",
     titolo: "Nuovo gioco: Sì... però 🤨",
@@ -7804,11 +7816,36 @@ window.SG_SIPERO = {
 
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
+      dove.modo = "telefono";
       dove.modalita = "classica";
       dove.sequenza = [];
       dove.round = 6;
 
-      box.appendChild(el("div", { class: "etichetta", text: "Come si gioca" }));
+      // --- un telefono solo / ognuno dal suo telefono ---
+      if (!aiuti.torneo) {
+        box.appendChild(el("div", { class: "etichetta", text: "Come si gioca" }));
+        var notaOn = el("div", { class: "link-avviso", hidden: "hidden" });
+        var bT, bO;
+        (function () {
+          function scegliModo(m) {
+            dove.modo = m;
+            bT.className = "modo-chip" + (m === "telefono" ? " attiva" : "");
+            bO.className = "modo-chip" + (m === "online" ? " attiva" : "");
+            notaOn.hidden = (m !== "online");
+            notaOn.textContent = (window.SGNet && SGNet.disponibile())
+              ? "Gli altri entrano dai loro telefoni con un codice: in lobby si scelgono il giudice e le squadre."
+              : "Qui il collegamento non è disponibile. Funziona quando il gioco è aperto dal sito pubblicato online.";
+          }
+          bT = el("button", { class: "modo-chip attiva", onclick: function () { scegliModo("telefono"); } }, [
+            el("span", { class: "mi", text: "📱" }), el("div", {}, [el("div", { class: "mt", text: "Un telefono solo" }), el("div", { class: "ms", text: "Si passa di mano" })])]);
+          bO = el("button", { class: "modo-chip", onclick: function () { scegliModo("online"); } }, [
+            el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Ognuno dal suo" }), el("div", { class: "ms", text: "Giudice e squadre in lobby" })])]);
+        })();
+        box.appendChild(el("div", { class: "modo-griglia" }, [bT, bO]));
+        box.appendChild(notaOn);
+      }
+
+      box.appendChild(el("div", { class: "etichetta", text: "Le fasi" }));
       var pannello = el("div", { hidden: "hidden" });
       var bC, bP;
       function scegliMod(m) {
@@ -7874,6 +7911,8 @@ window.SG_SIPERO = {
       if (dati.bonus.length < 2 || dati.malus.length < 2) return niente(t);
       var imp = t.impostazioni || {};
       var seq = (imp.modalita === "custom" && imp.sequenza && imp.sequenza.length) ? imp.sequenza : CLASSICA;
+      if (t.linkParams && t.linkParams.stanza) return ospiteSipero(t, t.linkParams.stanza);
+      if (imp.modo === "online") return hostSipero(t, seq);
       var punti = {}; t.giocatori.forEach(function (n) { punti[n] = 0; });
       var st = {
         giocatori: t.giocatori.slice(), punti: punti,
@@ -8046,6 +8085,305 @@ window.SG_SIPERO = {
       .sort(function (a, b) { return (st.punti[b] || 0) - (st.punti[a] || 0); })
       .map(function (nome) { return { nome: nome, punti: st.punti[nome] || 0 }; });
     t.fine(classifica);
+  }
+
+  // =========================================================
+  //  ONLINE — ognuno dal suo telefono (host-authoritative).
+  //  Giudice e squadre FISSI, scelti in lobby dall'host.
+  //  Il tavolo (i due scenari) è sempre visibile a tutti; la
+  //  propria mano di carte è visibile solo alla propria squadra.
+  // =========================================================
+  function squadreDa(giocatori, assegna) {
+    var sq = [{ membri: [] }, { membri: [] }];
+    giocatori.forEach(function (g) { var a = assegna[g.id]; if (a === 0 || a === 1) sq[a].membri.push({ id: g.id, nome: g.nome }); });
+    return sq;
+  }
+  function giudiceDa(giocatori, assegna) {
+    for (var i = 0; i < giocatori.length; i++) if (assegna[giocatori[i].id] === "g") return giocatori[i];
+    return null;
+  }
+  function squadraDiId(assegna, id) { var a = assegna[id]; return (a === 0 || a === 1) ? a : -1; }
+  function perIdS(st, id) { return st.giocatori.some(function (x) { return x.id === id; }); }
+
+  function vmSipero(st) {
+    var g = giudiceDa(st.giocatori, st.assegna);
+    var vm = {
+      fase: st.fase, codice: st.codice,
+      giocatori: st.giocatori.map(function (x) { return { id: x.id, nome: x.nome }; }),
+      assegna: st.assegna, giudiceId: g ? g.id : null, giudiceNome: g ? g.nome : "",
+      squadre: squadreDa(st.giocatori, st.assegna),
+      scen: st.scen, mani: st.mani || null, vincitore: st.vincitore, step: null
+    };
+    if (st.fase === "gioco" && st.steps && st.stepIdx < st.steps.length) {
+      var s = st.steps[st.stepIdx];
+      vm.step = { sq: s.sq, tipo: s.f.tipo, n: s.f.n, bers: s.f.bers, i: st.stepIdx + 1, tot: st.steps.length };
+    }
+    return vm;
+  }
+
+  function hostSipero(t, seq) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaReteS(t);
+    var st = {
+      fase: "lobby", codice: "…", iniziata: false,
+      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host" }],
+      assegna: {}, seq: seq, vincitore: null,
+      scen: [{ bonus: [], malusRic: [] }, { bonus: [], malusRic: [] }],
+      mani: null, steps: [], stepIdx: 0,
+      bonus: (window.SG_SIPERO || {}).bonus || [], malus: (window.SG_SIPERO || {}).malus || []
+    };
+    var rete = SGNet.ospita("sipero", {
+      onCodice: function (c) { st.codice = c; bd(); },
+      onAddio: function (id) {
+        st.giocatori = st.giocatori.filter(function (x) { return x.id !== id; });
+        delete st.assegna[id];
+        if (st.giocatori.length === 0) { rete.chiudi(); return t.esci(); }
+        bd();
+      },
+      onMsg: function (id, m) {
+        if (!m || !m.t) return;
+        if (m.t === "join") { if (!perIdS(st, id) && st.giocatori.length < 10) st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16) }); bd(); }
+        else if (m.t === "gioca") giocaCarte(id, m.carte);
+        else if (m.t === "giudica") giudica(id, m.sq);
+        else if (m.t === "avanti") avanti(id);
+      },
+      onErrore: function () { senzaReteS(t); }
+    });
+    function invia() { rete.invia({ t: "vm", vm: vmSipero(st) }); }
+    function bd() { invia(); disegna(); }
+
+    function comincia() {
+      if (st.iniziata) return;
+      var sq = squadreDa(st.giocatori, st.assegna), g = giudiceDa(st.giocatori, st.assegna);
+      var tutti = st.giocatori.every(function (x) { var a = st.assegna[x.id]; return a === 0 || a === 1 || a === "g"; });
+      if (!g || !sq[0].membri.length || !sq[1].membri.length || !tutti) return;
+      st.iniziata = true; st.fase = "gioco"; st.vincitore = null;
+      st.scen = [{ bonus: [], malusRic: [] }, { bonus: [], malusRic: [] }];
+      st.mani = [
+        { bonus: ricarica(t, [], st.bonus, MAX_MANO), malus: ricarica(t, [], st.malus, MAX_MANO) },
+        { bonus: ricarica(t, [], st.bonus, MAX_MANO), malus: ricarica(t, [], st.malus, MAX_MANO) }
+      ];
+      st.steps = []; st.seq.forEach(function (f) { st.steps.push({ sq: 0, f: f }); st.steps.push({ sq: 1, f: f }); });
+      st.stepIdx = 0; bd();
+    }
+    function giocaCarte(id, carte) {
+      if (st.fase !== "gioco" || st.stepIdx >= st.steps.length) return;
+      var step = st.steps[st.stepIdx];
+      if (squadraDiId(st.assegna, id) !== step.sq) return;
+      if (!Array.isArray(carte) || carte.length !== step.f.n) return;
+      var mano = st.mani[step.sq][step.f.tipo];
+      for (var i = 0; i < carte.length; i++) if (mano.indexOf(carte[i]) < 0) return;
+      var target = (step.f.bers === "se") ? step.sq : altra(step.sq);
+      var dest = (step.f.tipo === "bonus") ? st.scen[target].bonus : st.scen[target].malusRic;
+      carte.forEach(function (c) { dest.push(c); });
+      st.mani[step.sq][step.f.tipo] = mano.filter(function (c) { return carte.indexOf(c) < 0; });
+      ricarica(t, st.mani[step.sq][step.f.tipo], step.f.tipo === "bonus" ? st.bonus : st.malus, MAX_MANO);
+      st.stepIdx += 1;
+      if (st.stepIdx >= st.steps.length) st.fase = "arringa";
+      bd();
+    }
+    function avanti(id) {
+      var g = giudiceDa(st.giocatori, st.assegna);
+      if (st.fase === "arringa" && (id === "host" || (g && id === g.id))) { st.fase = "giudizio"; bd(); }
+    }
+    function giudica(id, sq) {
+      var g = giudiceDa(st.giocatori, st.assegna);
+      if (st.fase === "giudizio" && g && id === g.id && (sq === 0 || sq === 1)) { st.vincitore = sq; st.fase = "fine"; bd(); }
+    }
+    function nuova() {
+      st.fase = "lobby"; st.iniziata = false; st.vincitore = null;
+      st.scen = [{ bonus: [], malusRic: [] }, { bonus: [], malusRic: [] }];
+      st.mani = null; st.steps = []; st.stepIdx = 0; bd();
+    }
+    var cb = {
+      sonoHost: true, myId: "host",
+      onAssegna: function (pid, val) { if (st.fase === "lobby") { st.assegna[pid] = val; bd(); } },
+      onComincia: comincia,
+      onGioca: function (carte) { giocaCarte("host", carte); },
+      onGiudica: function (sq) { giudica("host", sq); },
+      onAvanti: function () { avanti("host"); },
+      onNuova: nuova,
+      onEsci: function () { rete.chiudi(); t.esci(); }
+    };
+    function disegna() { disegnaSiperoVM(t, vmSipero(st), cb); }
+    disegna();
+  }
+
+  function ospiteSipero(t, codice) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaReteS(t);
+    var el = t.el, S = { myId: null, vm: null, rete: null, nome: "", msg: null };
+    var cb = {
+      sonoHost: false, myId: null,
+      onAssegna: function () {}, onComincia: function () {}, onNuova: function () {},
+      onGioca: function (carte) { S.rete && S.rete.invia({ t: "gioca", carte: carte }); },
+      onGiudica: function (sq) { S.rete && S.rete.invia({ t: "giudica", sq: sq }); },
+      onAvanti: function () { S.rete && S.rete.invia({ t: "avanti" }); },
+      onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); }
+    };
+    function disegna() { if (S.vm) { cb.myId = S.myId; disegnaSiperoVM(t, S.vm, cb); } }
+    schermaNome();
+    function schermaNome() {
+      var s = t.schermata({ icona: "🤨", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
+      var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
+      S.msg = el("div", { class: "link-avviso" });
+      s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+        S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
+      }}));
+      t.mostra(s);
+    }
+    function collega() {
+      S.rete = SGNet.entra(codice, {
+        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome });
+          setTimeout(function () { if (!S.vm && S.msg) S.msg.textContent = "Non trovo la partita. Controlla il codice, o l'host non ha ancora aperto la stanza…"; }, 8000); },
+        onMsg: function (m) { if (m && m.t === "vm") { S.vm = m.vm; disegna(); } },
+        onChiuso: function () { erroreS(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
+        onErrore: function () { erroreS(t, "Problema di collegamento. Controlla la connessione e riprova."); }
+      });
+    }
+  }
+
+  function erroreS(t, txt) {
+    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    s._contenuto.appendChild(t.el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: t.esci }));
+    t.mostra(s);
+  }
+  function senzaReteS(t) {
+    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5",
+      text: "La modalità \"ognuno dal suo telefono\" funziona quando il gioco è aperto dal sito pubblicato online. Da un file locale non è disponibile: intanto usa \"Un telefono solo\"." }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
+    t.mostra(s);
+  }
+
+  // ---- disegno condiviso (host e ospiti) ----
+  function nodoScenari(t, vm, mySq) {
+    var el = t.el, box = el("div");
+    vm.squadre.forEach(function (sq, k) {
+      var mia = (k === mySq);
+      var b = el("div", { style: "margin-bottom:10px;padding:8px 10px;border-radius:12px;background:" + (mia ? "rgba(120,160,255,.16)" : "rgba(255,255,255,.05)") });
+      b.appendChild(el("div", { class: "etichetta", style: "margin:0 0 4px",
+        text: (k === 0 ? "🟥 " : "🟦 ") + "Squadra " + (k + 1) + (sq.membri.length ? " (" + sq.membri.map(function (m) { return m.nome; }).join(", ") + ")" : "") + (mia ? " · tu" : "") }));
+      vm.scen[k].bonus.forEach(function (c) { b.appendChild(el("div", { style: "padding:5px 7px;border-radius:7px;margin-bottom:3px;font-size:.92rem;line-height:1.3;background:rgba(80,220,120,.14)", html: "✅ " + c })); });
+      vm.scen[k].malusRic.forEach(function (c) { b.appendChild(el("div", { style: "padding:5px 7px;border-radius:7px;margin-bottom:3px;font-size:.92rem;line-height:1.3;background:rgba(255,80,80,.14)", html: "❌ " + c })); });
+      if (!vm.scen[k].bonus.length && !vm.scen[k].malusRic.length) b.appendChild(el("div", { class: "tenue", text: "(ancora niente)" }));
+      box.appendChild(b);
+    });
+    return box;
+  }
+  function tuttiAssegnati(vm) { return vm.giocatori.every(function (g) { var a = vm.assegna[g.id]; return a === 0 || a === 1 || a === "g"; }); }
+  function mostraManoConsulta(t, s, mano, escludiTipo) {
+    var el = t.el;
+    ["bonus", "malus"].forEach(function (tp) {
+      if (escludiTipo && tp === escludiTipo) return;
+      if (!mano[tp] || !mano[tp].length) return;
+      s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: tp === "bonus" ? "🟢 Le tue carte Bonus" : "🔴 I tuoi Malus da lanciare" }));
+      mano[tp].forEach(function (c) { s._contenuto.appendChild(el("div", { style: cardStyle(false, tp) + "cursor:default;", html: c })); });
+    });
+  }
+  function scegliOnline(t, s, carte, quante, tipo, onOk) {
+    var el = t.el;
+    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:8px", text: "Scegli " + quante + " " + (tipo === "bonus" ? "Bonus" : "Malus") + (quante === 1 ? " carta" : " carte") }));
+    var sel = [];
+    var conferma = el("button", { class: "btn btn-primario", text: "Gioca ▶", disabled: "disabled",
+      onclick: function () { if (sel.length === quante) onOk(sel.slice()); } });
+    carte.forEach(function (c) {
+      var attiva = false;
+      var b = el("button", { style: cardStyle(false, tipo), html: c });
+      b.addEventListener("click", function () {
+        if (attiva) { attiva = false; sel = sel.filter(function (x) { return x !== c; }); }
+        else { if (sel.length >= quante) return; attiva = true; sel.push(c); }
+        b.setAttribute("style", cardStyle(attiva, tipo));
+        if (sel.length === quante) conferma.removeAttribute("disabled"); else conferma.setAttribute("disabled", "disabled");
+      });
+      s._contenuto.appendChild(b);
+    });
+    s._piede.appendChild(conferma);
+  }
+
+  function disegnaSiperoVM(t, vm, cb) {
+    var el = t.el, myId = cb.myId;
+    var mySq = -1, sonoGiudice = (vm.giudiceId === myId);
+    vm.squadre.forEach(function (sq, k) { if (sq.membri.some(function (m) { return m.id === myId; })) mySq = k; });
+
+    if (vm.fase === "lobby") {
+      var s = t.schermata({ icona: "🤨", titolo: "Sì... però · Lobby", sotto: "Stanza " + (vm.codice || ""),
+        indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
+      s._contenuto.appendChild(el("p", { class: "modulo-nota", text: cb.sonoHost ? "Scegli chi fa il giudice (⚖️) e assegna ognuno a una squadra (🟥/🟦), poi comincia." : "L'host sta formando le squadre…" }));
+      vm.giocatori.forEach(function (g) {
+        var a = vm.assegna[g.id];
+        var ruolo = a === "g" ? "⚖️ Giudice" : a === 0 ? "🟥 Squadra 1" : a === 1 ? "🟦 Squadra 2" : "—";
+        var riga = el("div", { style: "padding:8px 10px;border-radius:10px;margin-bottom:6px;background:rgba(255,255,255,.06)" });
+        riga.appendChild(el("div", { style: "display:flex;justify-content:space-between" }, [
+          el("span", { text: g.nome + (g.id === myId ? " (tu)" : "") }), el("span", { text: ruolo })
+        ]));
+        if (cb.sonoHost) {
+          var row = el("div", { style: "display:flex;gap:6px;margin-top:6px" });
+          [["⚖️", "g"], ["🟥", 0], ["🟦", 1]].forEach(function (o) {
+            row.appendChild(el("button", { class: "btn btn-fantasma", style: "flex:1;padding:8px", text: o[0], onclick: function () { cb.onAssegna(g.id, o[1]); } }));
+          });
+          riga.appendChild(row);
+        }
+        s._contenuto.appendChild(riga);
+      });
+      if (cb.sonoHost) {
+        var ok = vm.giudiceId && vm.squadre[0].membri.length && vm.squadre[1].membri.length && tuttiAssegnati(vm);
+        var b = el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: cb.onComincia });
+        if (!ok) b.setAttribute("disabled", "disabled");
+        s._piede.appendChild(b);
+        if (!ok) s._piede.appendChild(el("p", { class: "modulo-nota", text: "Serve: 1 giudice, almeno 1 per squadra e tutti assegnati." }));
+      } else s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci…" }));
+      return t.mostra(s);
+    }
+
+    if (vm.fase === "fine") {
+      var s = t.schermata({ icona: "🏆", titolo: "Vince la Squadra " + (vm.vincitore + 1) + "!", sotto: "Stanza " + (vm.codice || "") });
+      s._contenuto.appendChild(nodoScenari(t, vm, mySq));
+      if (cb.sonoHost) {
+        s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita (rifai le squadre)", onclick: cb.onNuova }));
+        s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Chiudi", onclick: cb.onEsci }));
+      } else s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa dell'host per un'altra partita…" }));
+      return t.mostra(s);
+    }
+
+    var titolo = vm.fase === "arringa" ? "L'arringa" : vm.fase === "giudizio" ? "Il verdetto" : "In gioco";
+    var s = t.schermata({ icona: "🤨", titolo: titolo, sotto: "Stanza " + (vm.codice || ""),
+      indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+    s._contenuto.appendChild(nodoScenari(t, vm, mySq));
+
+    if (vm.fase === "gioco") {
+      var step = vm.step;
+      var etich = (step.tipo === "bonus" ? "Bonus" : "Malus") + " ×" + step.n + " " + (step.bers === "se" ? "sul proprio scenario" : "agli avversari");
+      s._contenuto.appendChild(el("p", { class: "modulo-nota", text: (step.sq === 0 ? "🟥" : "🟦") + " Tocca alla Squadra " + (step.sq + 1) + " — " + etich + " (fase " + step.i + "/" + step.tot + ")" }));
+      if (sonoGiudice) {
+        s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Sei il giudice: osserva il tavolo, deciderai alla fine." }));
+      } else if (mySq >= 0) {
+        var mano = vm.mani ? vm.mani[mySq] : null;
+        if (step.sq === mySq && mano) {
+          scegliOnline(t, s, mano[step.tipo], step.n, step.tipo, cb.onGioca);
+          mostraManoConsulta(t, s, mano, step.tipo);
+        } else {
+          s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "In attesa che la Squadra " + (step.sq + 1) + " giochi. Intanto guarda le tue carte:" }));
+          if (mano) mostraManoConsulta(t, s, mano, null);
+        }
+      } else {
+        s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "In attesa…" }));
+      }
+    } else if (vm.fase === "arringa") {
+      s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "A voce, ogni squadra convince il giudice che il proprio scenario, per quanto devastato, è il migliore da vivere. Nessuna fretta." }));
+      if (sonoGiudice) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Al verdetto ▶", onclick: cb.onAvanti }));
+      else s._piede.appendChild(el("p", { class: "modulo-nota", text: "Poi il giudice deciderà." }));
+    } else if (vm.fase === "giudizio") {
+      if (sonoGiudice) {
+        s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Quale scenario è il migliore da vivere?" }));
+        var gg = el("div", { style: "display:flex;flex-direction:column;gap:10px" });
+        vm.squadre.forEach(function (sq, k) {
+          gg.appendChild(el("button", { class: "btn btn-fantasma", style: "padding:14px", html: (k === 0 ? "🟥 " : "🟦 ") + "Squadra " + (k + 1), onclick: function () { cb.onGiudica(k); } }));
+        });
+        s._contenuto.appendChild(gg);
+      } else s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Il giudice sta decidendo…" }));
+    }
+    t.mostra(s);
   }
 })();
 

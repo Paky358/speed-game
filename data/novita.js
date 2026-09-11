@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 27,
+    data: "11 settembre 2026",
+    titolo: "Sì... però si gioca ognuno dal suo telefono 🔗",
+    descrizione: [
+      "L'host apre una stanza con un codice; gli amici entrano dal loro telefono. In lobby si sceglie il giudice e si formano le due squadre.",
+      "Ognuno vede sempre il TAVOLO completo (i Bonus e Malus della propria squadra e di quella avversaria) e ha sotto mano le proprie carte, comprese quelle Malus da lanciare.",
+      "Il giudice, alla fine, sceglie lo scenario migliore. A fine partita si torna alla lobby e si possono rifare giudice e squadre.",
+      "Novità anche a un telefono solo: la vecchia fase Cerotto è diventata un semplice altro Bonus (Rinforzo), e non c'è più nessun limite di tempo per scegliere le carte o per l'arringa."
+    ]
+  },
+  {
     v: 26,
     data: "10 settembre 2026",
     titolo: "Nuovo gioco: Sì... però 🤨",

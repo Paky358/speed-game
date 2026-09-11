@@ -4,6 +4,19 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 11 settembre 2026 — Sì... però online + rifiniture
+- **🔗 Sì... però ognuno dal suo telefono**: online host-authoritative (via la
+  stessa stanza MQTT dell'Asta). In lobby l'host sceglie il **giudice** e forma
+  le **due squadre** (fissi per la partita); a fine partita si torna alla lobby
+  per rifarle.
+- Ogni giocatore vede **sempre** il tavolo (scenari di entrambe le squadre) e la
+  **propria mano** (Bonus e Malus da lanciare); la mano è privata alla squadra.
+- Qualsiasi membro di una squadra gioca le carte della fase (host prende la prima
+  valida). Il giudice decide alla fine.
+- A un telefono solo: la fase **Cerotto** è ora un **Rinforzo** (un altro Bonus su
+  di sé), e **niente timer** per scegliere le carte né per l'arringa.
+- Motore: la sala non blocca più l'host che apre una stanza online da solo.
+
 ## 10 settembre 2026 (11) — Nuovo gioco: Sì... però
 - **🤨 Sì... però**: party game a squadre (stile Superfight). A ogni round uno fa
   da giudice a rotazione e gli altri si dividono in due squadre; da 3 giocatori.
