@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 30,
+    data: "11 settembre 2026",
+    titolo: "La Scalinata si gioca anche online, con i bot 🪜🔗",
+    descrizione: [
+      "Ora la Scalinata si può fare \"ognuno dal suo telefono\": apri la stanza, mandi il codice, e i posti liberi li riempiono dei bot. Così giochi anche da solo, in 2 o in 3 (il primo bot si chiama Matt).",
+      "Nella fase di scelta vedi sempre tutti i giocatori: quando uno sceglie, il suo pallino si illumina e il telefono fa un \"bip\", così capisci al volo chi manca ancora.",
+      "Poi i numeri restano un paio di secondi sopra la testa di tutti prima di far salire le pedine: più suspense per leggere se qualcuno ha fatto il tuo stesso numero."
+    ]
+  },
+  {
     v: 29,
     data: "11 settembre 2026",
     titolo: "Sì... però online: prima la stanza, poi le regole 🔗",

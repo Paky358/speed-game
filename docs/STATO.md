@@ -51,11 +51,17 @@ dal proprio.
     la partita); ognuno vede sempre il tavolo e la propria mano; a fine partita si torna
     alla lobby per rifare tutto. È il **primo gioco oltre all'Asta** con l'online completo.
 
-- **Gioco 6 — La Scalinata** 🪜: un telefono solo, **solo in 4**. A ogni round, 4
-  secondi per scegliere in segreto **1, 3 o 5** gradini. Le scelte si scoprono tutte
-  insieme (numero sopra la testa): chi sceglie un numero **già preso da un altro**
-  resta fermo, avanza solo chi ha un numero **unico**. Scala colorata a 4 corsie con
-  pedine animate, traguardo al gradino **15**. Difficoltà Media nel torneo.
+- **Gioco 6 — La Scalinata** 🪜: **in 4**. A ogni round, 4 secondi per scegliere in
+  segreto **1, 3 o 5** gradini. Le scelte si scoprono tutte insieme (numero sopra la
+  testa, poi ~2 secondi di pausa e le pedine salgono): chi sceglie un numero **già
+  preso da un altro** resta fermo, avanza solo chi ha un numero **unico**. Scala
+  colorata a 4 corsie con pedine animate, traguardo al gradino **15**. Difficoltà
+  Media nel torneo.
+  - **Un telefono solo**: si passa di mano, ognuno sceglie in segreto.
+  - **Ognuno dal suo telefono** (online): stanza con codice + link; i posti liberi li
+    riempiono dei **bot** (il primo è **Matt**), così si gioca anche da soli, in 2 o
+    in 3. Nella scelta si vedono tutti: chi sceglie **illumina il pallino** e fa un
+    **bip**. Secondo gioco (con l'Asta e Sì... però) con l'online completo.
 
 ## Torneo (più giochi di fila)
 Dalla home, tasto **🏆 Torneo**: si sceglie una volta il gruppo e si giocano più

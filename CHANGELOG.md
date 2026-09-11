@@ -4,6 +4,17 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 11 settembre 2026 (4) — La Scalinata online (bot, pallini, suono)
+- **Modalità "ognuno dal suo telefono"**: stanza con codice + link (come L'Asta),
+  scelta simultanea sul proprio telefono. Host-authoritative via MQTT.
+- **Bot per fare 4**: i posti liberi si riempiono di bot (il primo è **Matt**, poi
+  Kevin, Cody), così si gioca anche da soli, in 2 o in 3.
+- **Fase di scelta condivisa**: si vedono sempre tutti i giocatori; quando uno
+  sceglie, il suo pallino **si illumina** e parte un **bip** (WebAudio). Countdown 4".
+- **Suspense alla rivelazione** (vale anche a un telefono solo): i numeri restano ~2
+  secondi sopra la testa di tutti prima di far salire le pedine.
+- Rifattorizzato `disegnaScala` per accettare un elenco di giocatori (riuso online/offline).
+
 ## 11 settembre 2026 (3) — Sì... però online: stanza prima, regole dopo
 - **🔗 Codice e link nella lobby**: aprendo la stanza online, la lobby mostra il
   codice grande e un tasto "Copia il link da mandare" (come L'Asta). Prima il
