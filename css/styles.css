@@ -282,8 +282,9 @@ img{ max-width:100%; }
 .home .testa{ display:none; }
 .home .contenuto{ flex:1 1 auto; display:flex; flex-direction:column; justify-content:center; gap:22px; }
 .home-hero{ text-align:center; }
-.home-logo{ font-size:3rem; line-height:1; filter:drop-shadow(0 6px 16px rgba(0,0,0,.4)); }
-.home-titolo{ margin:8px 0 0; font-size:2.6rem; line-height:1.02; letter-spacing:-.02em;
+.home-logo{ line-height:0; margin:0 0 -14px; filter:drop-shadow(0 6px 16px rgba(0,0,0,.4)); }
+.home-logo svg{ display:block; margin:0 auto; }
+.home-titolo{ margin:0; font-size:2.6rem; line-height:1.02; letter-spacing:-.02em;
   background:linear-gradient(135deg,#ffe58a,var(--accento) 55%,#ff9d3a);
   -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
 .home-sotto{ margin:8px 0 0; font-size:1.1rem; color:var(--testo-tenue); }
