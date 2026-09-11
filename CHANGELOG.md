@@ -4,6 +4,13 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 11 settembre 2026 (9) — Logo a fulmini + categorie tue giocate direttamente
+- **Home**: al posto dei coriandoli, un logo SVG di **tre fulmini** (centrale grande, i
+  due laterali che incrociano le punte), gialli con un alone blu leggero.
+- **Patata, categorie personalizzate**: ora si **giocano direttamente** (sono le opzioni
+  offerte al voto), non finiscono diluite nel mazzo; se sono meno di 3 si completa con
+  categorie a caso.
+
 ## 11 settembre 2026 (8) — Patata: categorie tue, classifica finale, +10 categorie
 - **Categorie personalizzate**: nella lobby online l'host può scrivere categorie sue,
   che entrano nel mazzo insieme alle altre (passate al motore come `extraCats`).

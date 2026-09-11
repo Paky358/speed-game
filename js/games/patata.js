@@ -75,8 +75,15 @@
   //  chiamato a ogni cambiamento (per ridisegnare / trasmettere).
   // =========================================================
   function creaMotore(giocatori, onCambio, extraCats) {
-    var pool = (window.SG_PATATA || []).concat(extraCats || []);
-    function pesca(n) { return mischia(pool).slice(0, n); }
+    var deck = (window.SG_PATATA || []);
+    extraCats = extraCats || [];
+    // se l'host ha scritto categorie sue, quelle si giocano direttamente (non finiscono
+    // nel mazzo): riempiamo con categorie casuali solo se sono meno di quante ne servono.
+    function pesca(n) {
+      var out = mischia(extraCats).slice(0, n);
+      if (out.length < n) out = out.concat(mischia(deck.filter(function (c) { return out.indexOf(c) < 0; })).slice(0, n - out.length));
+      return out;
+    }
     var st = {
       fase: "voto", cats: pesca(3), categoria: null,
       players: giocatori.map(function (g) { return { id: g.id, nome: g.nome, colore: g.colore, eliminato: false, voto: null }; }),
@@ -373,7 +380,7 @@
             el("button", { class: "togli", text: "×", onclick: function () { cb.onTogliCat(i); } })
           ]));
         });
-        if ((vm.customCats || []).length) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Le tue categorie entrano nel mazzo insieme alle altre." }));
+        if ((vm.customCats || []).length) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Si giocheranno queste (se sono meno di 3, si completa con categorie a caso)." }));
       }
       if (cb.sonoHost) {
         var ok = vm.players.length >= 2;
