@@ -4,6 +4,19 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 11 settembre 2026 (6) — Nuovo gioco: La Patata Bollente 💣
+- **Nuovo gioco** ispirato a "Bomba a Tempo". Da 2 a 10 giocatori, difficoltà Media.
+- Si **vota fra 3 categorie** (`data/patata-categorie.js`, 27 categorie); si gioca la
+  più votata.
+- **Tempo personale**: ognuno parte da 15s che scende SOLO mentre tiene la bomba
+  (ticchettio che accelera). Ogni round il tempo di partenza cala.
+- **Cerchio**: i giocatori in cerchio (pallino + nome); il detentore tocca chi vuole
+  per passare. Non si può ripassare alla stessa persona finché non si chiude il giro.
+- **Rimanda indietro**: se chi l'ha passata non ha detto la parola, torna a lui col
+  suo tempo. A chi scade il tempo esplode: eliminato, fino all'ultimo.
+- **Un telefono solo** e **online** (ognuno dal suo, codice + link, cerchio condiviso):
+  motore di gioco condiviso fra le due modalità. Verificate entrambe end-to-end.
+
 ## 11 settembre 2026 (5) — Online più solido + Scalinata: scelta senza sfarfallio
 - **Il codice della stanza compare subito** (`net.js`): `onCodice` non aspetta più
   il collegamento al broker — il codice si conosce localmente, quindi si mostra

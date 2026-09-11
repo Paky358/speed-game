@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 32,
+    data: "11 settembre 2026",
+    titolo: "Nuovo gioco: La Patata Bollente 💣",
+    descrizione: [
+      "Si vota fra 3 categorie e si gioca la più votata. Poi parte la bomba: dici a voce una parola della categoria e la lanci a chi vuoi, toccando il suo pallino nel cerchio.",
+      "Ognuno ha un suo tempo (parte da 15 secondi) che scende SOLO mentre tiene la bomba, e la musica accelera. Non puoi ripassare alla stessa persona finché non chiudi il giro.",
+      "Se chi te l'ha data non ha detto la parola, c'è \"Rimanda indietro\": riprende lui col tempo che aveva. A chi scade il tempo, esplode: eliminato. Vince l'ultimo rimasto.",
+      "Si gioca a un telefono solo o, la cosa più bella, ognuno dal suo telefono: tutti in cerchio, ognuno lancia la bomba dal suo telefono."
+    ]
+  },
+  {
     v: 31,
     data: "11 settembre 2026",
     titolo: "Online: la stanza dà subito il codice 🔗✅",
