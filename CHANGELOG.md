@@ -8,8 +8,8 @@ contenuto di quel tasto vive in `data/novita.js`._
 - **Nuovo gioco** ispirato a "Bomba a Tempo". Da 2 a 10 giocatori, difficoltà Media.
 - Si **vota fra 3 categorie** (`data/patata-categorie.js`, 27 categorie); si gioca la
   più votata.
-- **Tempo personale**: ognuno parte da 15s che scende SOLO mentre tiene la bomba
-  (ticchettio che accelera). Ogni round il tempo di partenza cala.
+- **Timer**: riparte a ogni ricezione (ticchettio che accelera); il tetto cala di 2s
+  ogni 4 passaggi: 15, 13, 11, 9, 7, 5 (poi "Rimanda indietro" NON resetta il timer).
 - **Cerchio**: i giocatori in cerchio (pallino + nome); il detentore tocca chi vuole
   per passare. Non si può ripassare alla stessa persona finché non si chiude il giro.
 - **Rimanda indietro**: se chi l'ha passata non ha detto la parola, torna a lui col

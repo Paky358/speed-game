@@ -16,7 +16,9 @@
   "use strict";
 
   var COLORI = ["#ff6b6b", "#4dabf7", "#51cf66", "#ffd43b", "#cc5de8", "#ff922b", "#20c997", "#f783ac", "#a9e34b", "#66d9e8"];
-  function startRound(r) { return Math.max(6000, 15000 - 2500 * r); }
+  // Il timer riparte a ogni "ricezione". Il tetto parte da 15s e cala di 2s
+  // ogni 4 passaggi, fino a un minimo di 5s: 15, 13, 11, 9, 7, 5.
+  function capMs(passaggi) { return Math.max(5000, 15000 - 2000 * Math.floor(passaggi / 4)); }
 
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
   function pescaCategorie(n) { var pool = (window.SG_PATATA || []).slice(); return mischia(pool).slice(0, n); }
@@ -75,8 +77,9 @@
   function creaMotore(giocatori, onCambio) {
     var st = {
       fase: "voto", cats: pescaCategorie(3), categoria: null,
-      players: giocatori.map(function (g) { return { id: g.id, nome: g.nome, colore: g.colore, tempo: 0, eliminato: false, voto: null }; }),
-      holder: null, prev: null, giro: [], round: 0, ts: 0, boom: null, vincitore: null
+      players: giocatori.map(function (g) { return { id: g.id, nome: g.nome, colore: g.colore, eliminato: false, voto: null }; }),
+      holder: null, prev: null, giro: [], round: 0, ts: 0, boom: null, vincitore: null,
+      remaining: 0, cap: 15000, passaggi: 0, remPrima: null
     };
     function pById(id) { for (var i = 0; i < st.players.length; i++) if (st.players[i].id === id) return st.players[i]; return null; }
     function vivi() { return st.players.filter(function (p) { return !p.eliminato; }); }
@@ -85,17 +88,18 @@
     function aggiorna() {
       if (st.fase !== "gioco") return;
       var now = Date.now(), dt = now - st.ts; st.ts = now;
-      var h = holderObj(); if (!h) return;
-      h.tempo -= dt;
-      if (h.tempo <= 0) { h.tempo = 0; esplode(); }
+      if (!holderObj()) return;
+      st.remaining -= dt;
+      if (st.remaining <= 0) { st.remaining = 0; esplode(); }
     }
     var loop = setInterval(aggiorna, 120);
 
     function avviaGioco(cat) {
-      st.categoria = cat; st.round = 0; st.boom = null; st.vincitore = null;
-      st.players.forEach(function (p) { p.eliminato = false; p.tempo = startRound(0); });
+      st.categoria = cat; st.round = 0; st.boom = null; st.vincitore = null; st.passaggi = 0; st.remPrima = null;
+      st.players.forEach(function (p) { p.eliminato = false; });
       var vv = vivi(); st.holder = vv[Math.floor(Math.random() * vv.length)].id;
-      st.prev = null; st.giro = [st.holder]; st.fase = "gioco"; st.ts = Date.now(); onCambio();
+      st.prev = null; st.giro = [st.holder]; st.cap = capMs(0); st.remaining = st.cap;
+      st.fase = "gioco"; st.ts = Date.now(); onCambio();
     }
     function esplode() {
       var h = holderObj(); if (!h) return;
@@ -103,8 +107,10 @@
       setTimeout(function () {
         st.boom = null; var v = vivi();
         if (v.length <= 1) { st.fase = "fine"; st.vincitore = v[0] ? { nome: v[0].nome, colore: v[0].colore } : null; onCambio(); return; }
-        st.round++; v.forEach(function (p) { p.tempo = startRound(st.round); });
+        st.round++;
+        // la bomba passa a uno a caso: riceve -> timer riparte dal tetto attuale
         st.holder = v[Math.floor(Math.random() * v.length)].id; st.prev = null; st.giro = [st.holder];
+        st.cap = capMs(st.passaggi); st.remaining = st.cap; st.remPrima = null;
         st.fase = "gioco"; st.ts = Date.now(); onCambio();
       }, 2600);
     }
@@ -125,6 +131,8 @@
         aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder) return;
         var tgt = pById(targetId); if (!tgt || tgt.eliminato || targetId === st.holder) return;
         if (st.giro.indexOf(targetId) >= 0) return;
+        st.remPrima = st.remaining;             // per l'eventuale "rimanda indietro"
+        st.passaggi++; st.cap = capMs(st.passaggi); st.remaining = st.cap;  // riceve -> timer riparte
         st.prev = st.holder; st.holder = targetId; st.giro.push(targetId);
         if (st.giro.length >= vivi().length) st.giro = [targetId];
         st.ts = Date.now(); onCambio();
@@ -132,27 +140,29 @@
       indietro: function (fromId) {
         aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder || !st.prev) return;
         var p = pById(st.prev); if (!p || p.eliminato) return;
-        var back = st.prev; st.prev = null; st.holder = back; st.ts = Date.now(); onCambio();
+        // il passaggio non valeva: torna a chi l'aveva, col tempo che aveva (NIENTE reset)
+        st.passaggi = Math.max(0, st.passaggi - 1); st.cap = capMs(st.passaggi);
+        if (st.remPrima != null) st.remaining = st.remPrima;
+        var back = st.prev; st.prev = null; st.holder = back; st.giro = [back]; st.ts = Date.now(); onCambio();
       },
       rimuovi: function (id) {
         var p = pById(id); if (!p) return; p.eliminato = true;
         if (st.fase === "gioco" || st.fase === "esplosione") {
           var v = vivi();
           if (v.length <= 1) { st.fase = "fine"; st.vincitore = v[0] ? { nome: v[0].nome, colore: v[0].colore } : null; }
-          else if (st.holder === id) { st.holder = v[Math.floor(Math.random() * v.length)].id; st.prev = null; st.giro = [st.holder]; st.ts = Date.now(); }
+          else if (st.holder === id) { st.holder = v[Math.floor(Math.random() * v.length)].id; st.prev = null; st.giro = [st.holder]; st.cap = capMs(st.passaggi); st.remaining = st.cap; st.ts = Date.now(); }
         }
         onCambio();
       },
-      nuova: function () { st.players.forEach(function (p) { p.eliminato = false; p.tempo = 0; p.voto = null; }); st.cats = pescaCategorie(3); st.fase = "voto"; st.categoria = null; st.boom = null; st.vincitore = null; onCambio(); },
-      remaining: function () { var h = holderObj(); return h ? Math.max(0, h.tempo) : 0; },
+      nuova: function () { st.players.forEach(function (p) { p.eliminato = false; p.voto = null; }); st.cats = pescaCategorie(3); st.fase = "voto"; st.categoria = null; st.boom = null; st.vincitore = null; onCambio(); },
+      remaining: function () { return Math.max(0, st.remaining); },
       distruggi: function () { clearInterval(loop); },
       vm: function () {
-        var h = holderObj();
         return {
           fase: st.fase, categoria: st.categoria, cats: st.cats, round: st.round,
-          players: st.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, tempo: Math.max(0, Math.round(p.tempo)), eliminato: p.eliminato, voto: p.voto }; }),
+          players: st.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, eliminato: p.eliminato, voto: p.voto }; }),
           holder: st.holder, prev: st.prev, giro: st.giro.slice(),
-          holderTempo: h ? Math.max(0, Math.round(h.tempo)) : 0, boom: st.boom, vincitore: st.vincitore
+          remaining: Math.max(0, Math.round(st.remaining)), cap: st.cap, boom: st.boom, vincitore: st.vincitore
         };
       }
     };
@@ -255,7 +265,7 @@
     var el = t.el, S = { myId: null, vm: null, vmTs: 0, rete: null, nome: "", msg: null };
     var cb = {
       locale: false, sonoHost: false, myId: null,
-      getRemaining: function () { if (!S.vm) return 0; return Math.max(0, S.vm.holderTempo - (Date.now() - S.vmTs)); },
+      getRemaining: function () { if (!S.vm) return 0; return Math.max(0, S.vm.remaining - (Date.now() - S.vmTs)); },
       onVota: function (idx) { S.rete && S.rete.invia({ t: "vota", idx: idx }); },
       onPassa: function (id) { S.rete && S.rete.invia({ t: "passa", target: id }); },
       onIndietro: function () { S.rete && S.rete.invia({ t: "indietro" }); },
@@ -388,6 +398,7 @@
     } else {
       s3._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Ha la bomba: " + (holderP ? holderP.nome : "") }));
     }
+    if (!esplo) s3._contenuto.appendChild(el("p", { style: "text-align:center;margin:0 0 4px;font-size:.8rem;opacity:.7", text: "Chi riceve fa ripartire il timer · ora riparte da " + (vm.cap / 1000) + "s" }));
 
     // cerchio
     var BOX = 300, R = 116, cx = BOX / 2, cy = BOX / 2;
@@ -395,10 +406,9 @@
     var n = vm.players.length;
     var centro = el("div", { style: "position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;z-index:1" }, [
       el("div", { style: "font-size:2.4rem" , text: "💣" }),
-      el("div", { class: "sg-count", style: "font-size:1.8rem;font-weight:800;line-height:1", text: (vm.holderTempo / 1000).toFixed(1) })
+      el("div", { class: "sg-count", style: "font-size:1.8rem;font-weight:800;line-height:1", text: (vm.remaining / 1000).toFixed(1) })
     ]);
     cerchio.appendChild(centro);
-    var holderLabel = null;
     vm.players.forEach(function (p, i) {
       var ang = (i / n) * 2 * Math.PI - Math.PI / 2;
       var x = 50 + (R / cx) * 50 * Math.cos(ang), y = 50 + (R / cy) * 50 * Math.sin(ang);
@@ -410,17 +420,15 @@
       var dot = el("div", { class: isHolder && !esplo ? "sg-bomba" : (esplo && vm.boom && vm.boom.id === p.id ? "sg-scoppio" : ""), style: "width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;background:" + p.colore + ";border:2px solid rgba(255,255,255,.85);" + (p.eliminato ? "filter:grayscale(1);opacity:.4" : "") + (passabile ? ";box-shadow:0 0 0 2px rgba(255,255,255,.25)" : ""),
         text: p.eliminato ? "💀" : (esplo && vm.boom && vm.boom.id === p.id ? "💥" : (isHolder ? "💣" : "")) });
       nodo.appendChild(dot);
-      var lab = el("div", { class: "sg-mini", style: "font-size:.62rem;font-weight:700;color:" + (p.eliminato ? "rgba(255,255,255,.3)" : "rgba(255,255,255,.6)"), text: p.eliminato ? "out" : (p.tempo / 1000).toFixed(0) + "s" });
-      if (isHolder) holderLabel = lab;
-      nodo.appendChild(lab);
+      if (p.eliminato) nodo.appendChild(el("div", { style: "font-size:.62rem;font-weight:700;color:rgba(255,255,255,.3)", text: "out" }));
       cerchio.appendChild(nodo);
     });
     s3._contenuto.appendChild(cerchio);
 
-    // pulsante "rimanda indietro"
+    // pulsante "rimanda indietro" (se l'altro non ha detto la parola giusta)
     if (puoi && !esplo && vm.prev) {
       var prevP = null; vm.players.forEach(function (p) { if (p.id === vm.prev) prevP = p; });
-      if (prevP && !prevP.eliminato) s3._contenuto.appendChild(el("button", { class: "btn btn-fantasma", style: "margin-top:6px", text: "↩️ Rimanda indietro a " + prevP.nome, onclick: cb.onIndietro }));
+      if (prevP && !prevP.eliminato) s3._piede.appendChild(el("button", { style: "width:100%;padding:12px;border-radius:12px;border:2px solid #ffa94d;background:rgba(255,169,77,.15);color:#ffd8a8;font-weight:700;cursor:pointer", text: "↩️ Non ha detto la parola? Rimanda a " + prevP.nome, onclick: cb.onIndietro }));
     }
 
     t.mostra(s3);
@@ -432,7 +440,6 @@
         if (!document.body.contains(num)) { stopTimers(); return; }
         var r = Math.max(0, cb.getRemaining());
         num.textContent = (r / 1000).toFixed(1);
-        if (holderLabel) holderLabel.textContent = (r / 1000).toFixed(0) + "s";
       }, 100);
       (function loopSuono() {
         if (!document.body.contains(num)) { tickTimer = null; return; }

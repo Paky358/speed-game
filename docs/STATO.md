@@ -64,11 +64,11 @@ dal proprio.
     **bip**. Secondo gioco (con l'Asta e Sì... però) con l'online completo.
 
 - **Gioco 7 — La Patata Bollente** 💣: da 2 a 10 giocatori. Si vota fra 3 categorie
-  (27 in `data/patata-categorie.js`) e si gioca la più votata. Ognuno ha un suo tempo
-  (parte da 15s) che scende solo mentre tiene la bomba; si dice una parola a voce e si
-  lancia la bomba toccando un altro nel cerchio (non due volte alla stessa persona
-  finché non si chiude il giro). "Rimanda indietro" se l'altro non ha risposto. A chi
-  scade il tempo esplode: eliminato, fino all'ultimo. Difficoltà Media nel torneo.
+  (27 in `data/patata-categorie.js`) e si gioca la più votata. Il timer riparte a ogni
+  ricezione e cala di 2s ogni 4 passaggi (15→5); si dice una parola a voce e si lancia
+  la bomba toccando un altro nel cerchio (non due volte alla stessa persona finché non
+  si chiude il giro). "Rimanda indietro" se l'altro non ha risposto (col suo tempo, senza
+  reset). A chi scade il tempo esplode: eliminato, fino all'ultimo. Difficoltà Media nel torneo.
   - **Un telefono solo**: si passa di mano, si tocca chi riceve.
   - **Ognuno dal suo telefono** (online): stanza con codice + link; tutti in cerchio,
     ognuno lancia la bomba dal suo telefono.
