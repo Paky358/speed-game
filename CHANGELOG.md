@@ -4,6 +4,17 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 11 settembre 2026 (7) — Patata: rifiniture + home "SPeeD GAME"
+- **Puoi sempre ridare la bomba a chi te l'ha appena passata/rimandata** (campo
+  `ultimo`): risolve il caso in cui, dopo "Rimanda indietro", non si poteva ridare
+  la palla a chi l'aveva rimandata.
+- **Più chiaro che si tocca la testa**: istruzione "tocca la testa 👇" e i pallini
+  passabili ora hanno un anello verde che pulsa (più grandi e tappabili).
+- **Tasto d'emergenza** riscritto: "🆘 SOLO se … non ha detto la parola: rimandagliela".
+- **Eliminazione**: la bomba va a caso a un giocatore ancora **non scelto** nel giro
+  (per completarlo), invece di azzerare tutto.
+- Home: il titolo ora è **"SPeeD GAME"**.
+
 ## 11 settembre 2026 (6) — Nuovo gioco: La Patata Bollente 💣
 - **Nuovo gioco** ispirato a "Bomba a Tempo". Da 2 a 10 giocatori, difficoltà Media.
 - Si **vota fra 3 categorie** (`data/patata-categorie.js`, 27 categorie); si gioca la

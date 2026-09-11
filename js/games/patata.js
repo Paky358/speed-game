@@ -78,7 +78,7 @@
     var st = {
       fase: "voto", cats: pescaCategorie(3), categoria: null,
       players: giocatori.map(function (g) { return { id: g.id, nome: g.nome, colore: g.colore, eliminato: false, voto: null }; }),
-      holder: null, prev: null, giro: [], round: 0, ts: 0, boom: null, vincitore: null,
+      holder: null, prev: null, ultimo: null, giro: [], round: 0, ts: 0, boom: null, vincitore: null,
       remaining: 0, cap: 15000, passaggi: 0, remPrima: null
     };
     function pById(id) { for (var i = 0; i < st.players.length; i++) if (st.players[i].id === id) return st.players[i]; return null; }
@@ -98,7 +98,7 @@
       st.categoria = cat; st.round = 0; st.boom = null; st.vincitore = null; st.passaggi = 0; st.remPrima = null;
       st.players.forEach(function (p) { p.eliminato = false; });
       var vv = vivi(); st.holder = vv[Math.floor(Math.random() * vv.length)].id;
-      st.prev = null; st.giro = [st.holder]; st.cap = capMs(0); st.remaining = st.cap;
+      st.prev = null; st.ultimo = null; st.giro = [st.holder]; st.cap = capMs(0); st.remaining = st.cap;
       st.fase = "gioco"; st.ts = Date.now(); onCambio();
     }
     function esplode() {
@@ -108,8 +108,16 @@
         st.boom = null; var v = vivi();
         if (v.length <= 1) { st.fase = "fine"; st.vincitore = v[0] ? { nome: v[0].nome, colore: v[0].colore } : null; onCambio(); return; }
         st.round++;
-        // la bomba passa a uno a caso: riceve -> timer riparte dal tetto attuale
-        st.holder = v[Math.floor(Math.random() * v.length)].id; st.prev = null; st.giro = [st.holder];
+        // togli gli eliminati dal giro, poi dai la bomba a caso a chi NON è ancora
+        // stato scelto in questo giro (così si completa il giro); se hanno già avuto
+        // tutti, si apre un giro nuovo.
+        st.giro = st.giro.filter(function (id) { var p = pById(id); return p && !p.eliminato; });
+        var cand = v.filter(function (p) { return st.giro.indexOf(p.id) < 0; });
+        if (!cand.length) { st.giro = []; cand = v; }
+        var nh = cand[Math.floor(Math.random() * cand.length)];
+        st.holder = nh.id; st.giro.push(nh.id);
+        if (st.giro.length >= v.length) st.giro = [nh.id];
+        st.prev = null; st.ultimo = null;
         st.cap = capMs(st.passaggi); st.remaining = st.cap; st.remPrima = null;
         st.fase = "gioco"; st.ts = Date.now(); onCambio();
       }, 2600);
@@ -133,6 +141,7 @@
         if (st.giro.indexOf(targetId) >= 0) return;
         st.remPrima = st.remaining;             // per l'eventuale "rimanda indietro"
         st.passaggi++; st.cap = capMs(st.passaggi); st.remaining = st.cap;  // riceve -> timer riparte
+        st.ultimo = st.holder;                  // a chi la teneva prima la puoi sempre ridare
         st.prev = st.holder; st.holder = targetId; st.giro.push(targetId);
         if (st.giro.length >= vivi().length) st.giro = [targetId];
         st.ts = Date.now(); onCambio();
@@ -143,6 +152,7 @@
         // il passaggio non valeva: torna a chi l'aveva, col tempo che aveva (NIENTE reset)
         st.passaggi = Math.max(0, st.passaggi - 1); st.cap = capMs(st.passaggi);
         if (st.remPrima != null) st.remaining = st.remPrima;
+        st.ultimo = st.holder;                  // chi ha rimandato indietro: gli si può ridare subito
         var back = st.prev; st.prev = null; st.holder = back; st.giro = [back]; st.ts = Date.now(); onCambio();
       },
       rimuovi: function (id) {
@@ -161,7 +171,7 @@
         return {
           fase: st.fase, categoria: st.categoria, cats: st.cats, round: st.round,
           players: st.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, eliminato: p.eliminato, voto: p.voto }; }),
-          holder: st.holder, prev: st.prev, giro: st.giro.slice(),
+          holder: st.holder, prev: st.prev, ultimo: st.ultimo, giro: st.giro.slice(),
           remaining: Math.max(0, Math.round(st.remaining)), cap: st.cap, boom: st.boom, vincitore: st.vincitore
         };
       }
@@ -194,7 +204,7 @@
   function assicuraStileP() {
     if (document.getElementById("sg-patata-css")) return;
     var s = document.createElement("style"); s.id = "sg-patata-css";
-    s.textContent = "@keyframes sgBomba{0%,100%{box-shadow:0 0 0 3px rgba(255,80,80,.5),0 0 16px 6px rgba(255,80,80,.65)}50%{box-shadow:0 0 0 4px rgba(255,120,60,.9),0 0 26px 12px rgba(255,120,60,.95)}}.sg-bomba{animation:sgBomba .5s ease-in-out infinite}@keyframes sgScoppio{0%{transform:scale(.6);opacity:0}40%{transform:scale(1.25);opacity:1}100%{transform:scale(1);opacity:1}}.sg-scoppio{animation:sgScoppio .5s ease-out}";
+    s.textContent = "@keyframes sgBomba{0%,100%{box-shadow:0 0 0 3px rgba(255,80,80,.5),0 0 16px 6px rgba(255,80,80,.65)}50%{box-shadow:0 0 0 4px rgba(255,120,60,.9),0 0 26px 12px rgba(255,120,60,.95)}}.sg-bomba{animation:sgBomba .5s ease-in-out infinite}@keyframes sgScoppio{0%{transform:scale(.6);opacity:0}40%{transform:scale(1.25);opacity:1}100%{transform:scale(1);opacity:1}}.sg-scoppio{animation:sgScoppio .5s ease-out}@keyframes sgTocca{0%,100%{box-shadow:0 0 0 2px rgba(130,220,170,.55)}50%{box-shadow:0 0 0 5px rgba(130,220,170,.95),0 0 12px 3px rgba(130,220,170,.55)}}.sg-tocca{animation:sgTocca 1.1s ease-in-out infinite;cursor:pointer}";
     document.head.appendChild(s);
   }
 
@@ -394,7 +404,7 @@
     if (esplo && vm.boom) {
       s3._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;font-size:1.1rem;color:#ff8787;font-weight:700", text: "💥 " + vm.boom.nome + " è ESPLOSO! Eliminato." }));
     } else if (puoi) {
-      s3._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: cb.locale ? ("Ha la bomba " + (holderP ? holderP.nome : "") + ": di' la parola e tocca chi la riceve.") : "Tocca a TE! Di' la parola a voce e tocca chi la riceve." }));
+      s3._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", html: cb.locale ? ("Ha la bomba <b>" + (holderP ? holderP.nome : "") + "</b>: di' la parola, poi <b>tocca la testa</b> di chi la riceve 👇") : "Tocca a TE! Di' la parola a voce, poi <b>tocca la testa</b> (il pallino) di chi la riceve 👇" }));
     } else {
       s3._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Ha la bomba: " + (holderP ? holderP.nome : "") }));
     }
@@ -413,11 +423,13 @@
       var ang = (i / n) * 2 * Math.PI - Math.PI / 2;
       var x = 50 + (R / cx) * 50 * Math.cos(ang), y = 50 + (R / cy) * 50 * Math.sin(ang);
       var isHolder = (p.id === vm.holder);
-      var passabile = puoi && !esplo && !p.eliminato && !isHolder && vm.giro.indexOf(p.id) < 0;
-      var nodo = el(passabile ? "button" : "div", { style: "position:absolute;left:" + x + "%;top:" + y + "%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;width:70px;background:none;border:0;padding:0;" + (passabile ? "cursor:pointer" : "cursor:default"),
+      var passabile = puoi && !esplo && !p.eliminato && !isHolder && (vm.giro.indexOf(p.id) < 0 || p.id === vm.ultimo);
+      var nodo = el(passabile ? "button" : "div", { style: "position:absolute;left:" + x + "%;top:" + y + "%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;width:72px;background:none;border:0;padding:4px 0;" + (passabile ? "cursor:pointer" : "cursor:default"),
         onclick: passabile ? function () { cb.onPassa(p.id); } : null });
-      nodo.appendChild(el("div", { style: "font-size:.72rem;font-weight:700;max-width:70px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:" + (p.eliminato ? "rgba(255,255,255,.35)" : p.colore) + (isHolder ? ";text-shadow:0 0 6px rgba(255,120,60,.9)" : ""), text: (p.id === myId ? "▸ " : "") + p.nome }));
-      var dot = el("div", { class: isHolder && !esplo ? "sg-bomba" : (esplo && vm.boom && vm.boom.id === p.id ? "sg-scoppio" : ""), style: "width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;background:" + p.colore + ";border:2px solid rgba(255,255,255,.85);" + (p.eliminato ? "filter:grayscale(1);opacity:.4" : "") + (passabile ? ";box-shadow:0 0 0 2px rgba(255,255,255,.25)" : ""),
+      nodo.appendChild(el("div", { style: "font-size:.72rem;font-weight:700;max-width:72px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:" + (p.eliminato ? "rgba(255,255,255,.35)" : p.colore) + (isHolder ? ";text-shadow:0 0 6px rgba(255,120,60,.9)" : ""), text: (p.id === myId ? "▸ " : "") + p.nome }));
+      var dotCls = (isHolder && !esplo) ? "sg-bomba" : (passabile ? "sg-tocca" : ((esplo && vm.boom && vm.boom.id === p.id) ? "sg-scoppio" : ""));
+      var lato = passabile ? 40 : 34;
+      var dot = el("div", { class: dotCls, style: "width:" + lato + "px;height:" + lato + "px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;background:" + p.colore + ";border:2px solid rgba(255,255,255,.9);" + (p.eliminato ? "filter:grayscale(1);opacity:.4" : ""),
         text: p.eliminato ? "💀" : (esplo && vm.boom && vm.boom.id === p.id ? "💥" : (isHolder ? "💣" : "")) });
       nodo.appendChild(dot);
       if (p.eliminato) nodo.appendChild(el("div", { style: "font-size:.62rem;font-weight:700;color:rgba(255,255,255,.3)", text: "out" }));
@@ -428,7 +440,7 @@
     // pulsante "rimanda indietro" (se l'altro non ha detto la parola giusta)
     if (puoi && !esplo && vm.prev) {
       var prevP = null; vm.players.forEach(function (p) { if (p.id === vm.prev) prevP = p; });
-      if (prevP && !prevP.eliminato) s3._piede.appendChild(el("button", { style: "width:100%;padding:12px;border-radius:12px;border:2px solid #ffa94d;background:rgba(255,169,77,.15);color:#ffd8a8;font-weight:700;cursor:pointer", text: "↩️ Non ha detto la parola? Rimanda a " + prevP.nome, onclick: cb.onIndietro }));
+      if (prevP && !prevP.eliminato) s3._piede.appendChild(el("button", { style: "width:100%;padding:12px;border-radius:12px;border:2px solid #ffa94d;background:rgba(255,169,77,.15);color:#ffd8a8;font-weight:700;cursor:pointer", html: "🆘 SOLO se " + prevP.nome + " non ha detto la parola: <b>rimandagliela</b>", onclick: cb.onIndietro }));
     }
 
     t.mostra(s3);

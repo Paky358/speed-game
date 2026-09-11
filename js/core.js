@@ -140,7 +140,7 @@
     var io = profiloAttivo();
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
       el("div", { class: "home-logo", text: "🎉" }),
-      el("h1", { class: "home-titolo", text: "Speed Game" }),
+      el("h1", { class: "home-titolo", text: "SPeeD GAME" }),
       el("p", { class: "home-sotto", text: "Scegli un gioco e passa il telefono" }),
       el("button", { class: "profilo-chip", onclick: function () { schermataAccesso(schermataHome); } },
         io ? [el("span", { text: io.emoji }), el("span", { text: io.nome }), el("span", { class: "modifica", text: "cambia" })]
