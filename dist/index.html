@@ -290,17 +290,11 @@ img{ max-width:100%; }
 .home-hero{ text-align:center; }
 .home-logo{ line-height:0; margin:0 0 -14px; filter:drop-shadow(0 6px 16px rgba(0,0,0,.4)); }
 .home-logo svg{ display:block; margin:0 auto; }
-.titolo-wrap{ position:relative; display:inline-block; }
-.spark{ position:absolute; width:15px; height:21px; opacity:.9; pointer-events:none;
-  filter:drop-shadow(0 0 3px rgba(90,170,255,.85)) drop-shadow(0 0 1px rgba(200,225,255,.9)); }
-.spark svg{ display:block; width:100%; height:100%; }
-.spark.s1{ top:-12px; left:-14px; transform:rotate(-20deg); }
-.spark.s2{ top:-14px; right:-14px; transform:rotate(20deg) scaleX(-1); }
-.spark.s3{ bottom:-10px; left:-10px; transform:rotate(200deg); }
-.spark.s4{ bottom:-12px; right:-10px; transform:rotate(-200deg) scaleX(-1); }
 .home-titolo{ margin:0; font-size:2.6rem; line-height:1.02; letter-spacing:-.02em;
   background:linear-gradient(135deg,#ffe58a,var(--accento) 55%,#ff9d3a);
-  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;
+  /* leggero alone elettrico blu-bianco attorno a tutto il nome */
+  filter:drop-shadow(0 0 1px rgba(220,235,255,.9)) drop-shadow(0 0 5px rgba(90,170,255,.55)) drop-shadow(0 0 12px rgba(77,171,247,.3)); }
 .home-sotto{ margin:8px 0 0; font-size:1.1rem; color:var(--testo-tenue); }
 .home .griglia-giochi{ display:flex; flex-direction:column; gap:14px; }
 .home .tessera{ padding:16px; }
@@ -452,21 +446,13 @@ img{ max-width:100%; }
     });
   }
 
-  var SCINTILLA = '<svg viewBox="0 0 24 34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M15 1 L7 14 L13 15 L6 33" fill="none" stroke="#eaf4ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
   function schermataHome() {
     var s = schermata({});
     s.className += " home";
     var io = profiloAttivo();
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
       el("div", { class: "home-logo", html: '<svg viewBox="0 0 150 130" width="112" height="97" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgFul" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2a8"/><stop offset=".45" stop-color="#ffd43b"/><stop offset="1" stop-color="#ffb300"/></linearGradient><filter id="sgFulGlow" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#4dabf7" flood-opacity=".5"/><feDropShadow dx="0" dy="0" stdDeviation="1.6" flood-color="#a5d8ff" flood-opacity=".75"/></filter></defs><g fill="url(#sgFul)" stroke="#fff7d6" stroke-width=".7" stroke-linejoin="round" filter="url(#sgFulGlow)"><path d="M7 2v11h3v9l7-12h-4l4-8z" transform="translate(44,50) rotate(32) scale(2.5) translate(-12,-12)"/><path d="M7 2v11h3v9l7-12h-4l4-8z" transform="translate(106,50) rotate(-32) scale(2.5) translate(-12,-12)"/><path d="M7 2v11h3v9l7-12h-4l4-8z" transform="translate(75,62) scale(3.8) translate(-12,-12)"/></g></svg>' }),
-      el("div", { class: "titolo-wrap" }, [
-        el("span", { class: "spark s1", html: SCINTILLA }),
-        el("span", { class: "spark s2", html: SCINTILLA }),
-        el("span", { class: "spark s3", html: SCINTILLA }),
-        el("span", { class: "spark s4", html: SCINTILLA }),
-        el("h1", { class: "home-titolo", text: "SPeeD GAME" })
-      ]),
+      el("h1", { class: "home-titolo", text: "SPeeD GAME" }),
       el("p", { class: "home-sotto", text: "Scegli un gioco e passa il telefono" }),
       el("button", { class: "profilo-chip", onclick: function () { schermataAccesso(schermataHome); } },
         io ? [el("span", { text: io.emoji }), el("span", { text: io.nome }), el("span", { class: "modifica", text: "cambia" })]
