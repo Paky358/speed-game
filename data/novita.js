@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 28,
+    data: "11 settembre 2026",
+    titolo: "Nuovo gioco: La Scalinata 🪜",
+    descrizione: [
+      "Si gioca esattamente in 4. A ogni round hai 4 secondi per scegliere in segreto quanti gradini salire: 1, 3 o 5.",
+      "Le scelte si scoprono tutte insieme, con il numero sopra la testa di ognuno. Il colpo di scena: se due (o più) scelgono lo stesso numero, restano fermi. Avanza solo chi ha scelto un numero che nessun altro ha scelto.",
+      "Le pedine salgono sulla scala colorata verso il traguardo, in cima. Il primo che arriva al gradino 15 vince.",
+      "Un telefono solo: passatevi il telefono, ognuno sceglie di nascosto il suo numero."
+    ]
+  },
+  {
     v: 27,
     data: "11 settembre 2026",
     titolo: "Sì... però si gioca ognuno dal suo telefono 🔗",

@@ -4,6 +4,14 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 11 settembre 2026 (2) — Nuovo gioco: La Scalinata 🪜
+- **Nuovo gioco** ispirato a Wii Party ("Scalinata a sorte"). Solo in **4**.
+- A ogni round, 4 secondi per scegliere in segreto **1, 3 o 5** gradini. Le scelte
+  si scoprono tutte insieme, col numero sopra la testa di ognuno.
+- Regola del colpo di scena: chi sceglie un numero **già scelto da un altro** resta
+  fermo; avanza solo chi ha un numero **unico**. Traguardo al gradino **15**.
+- Scala colorata a 4 corsie con pedine che salgono animate. A un telefono solo.
+
 ## 11 settembre 2026 — Sì... però online + rifiniture
 - **🔗 Sì... però ognuno dal suo telefono**: online host-authoritative (via la
   stessa stanza MQTT dell'Asta). In lobby l'host sceglie il **giudice** e forma

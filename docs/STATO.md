@@ -1,6 +1,6 @@
 # A che punto siamo
 
-_Aggiornato: 10 settembre 2026 (quattordici temi per L'Asta)_
+_Aggiornato: 11 settembre 2026 (nuovo gioco: La Scalinata)_
 
 ## In due parole
 È una raccolta di giochi da fare in gruppo, che si apre dal telefono senza
@@ -49,6 +49,12 @@ dal proprio.
     le due squadre (fissi per la partita); ognuno vede sempre il tavolo e la propria
     mano; a fine partita si torna alla lobby per rifare le squadre. È il **primo gioco
     oltre all'Asta** con l'online completo.
+
+- **Gioco 6 — La Scalinata** 🪜: un telefono solo, **solo in 4**. A ogni round, 4
+  secondi per scegliere in segreto **1, 3 o 5** gradini. Le scelte si scoprono tutte
+  insieme (numero sopra la testa): chi sceglie un numero **già preso da un altro**
+  resta fermo, avanza solo chi ha un numero **unico**. Scala colorata a 4 corsie con
+  pedine animate, traguardo al gradino **15**. Difficoltà Media nel torneo.
 
 ## Torneo (più giochi di fila)
 Dalla home, tasto **🏆 Torneo**: si sceglie una volta il gruppo e si giocano più
