@@ -51,8 +51,18 @@ window.SG_PATATA = [
   "Cose da campeggio",
   "Strumenti da palestra",
   "Hobby",
-  // Corpo
+  // Corpo, scuola, lingua
   "Parti del corpo",
+  "Sport",
+  "Lingue parlate",
+  "Materie scolastiche",
+  "Colori",
+  "Elementi chimici",
+  "Parole straniere usate in Italia",
+  "Modi per salutare",
+  "Oggetti nel frigorifero",
+  "Giochi da tavolo",
+  "Programmi televisivi",
   // Cose che...
   "Cose rotonde",
   "Cose che volano",

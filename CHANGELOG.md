@@ -4,6 +4,16 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 11 settembre 2026 (8) — Patata: categorie tue, classifica finale, +10 categorie
+- **Categorie personalizzate**: nella lobby online l'host può scrivere categorie sue,
+  che entrano nel mazzo insieme alle altre (passate al motore come `extraCats`).
+- **Classifica finale**: a fine partita si vede l'ordine dal vincitore fino al primo
+  esploso (si tiene `eliminati` in ordine; la classifica è `vivi()[0]` + eliminati al
+  contrario).
+- **+10 categorie** (Sport, Colori, Elementi chimici, Lingue parlate, Materie
+  scolastiche, Parole straniere usate in Italia, Modi per salutare, Oggetti nel
+  frigorifero, Giochi da tavolo, Programmi televisivi): ora 69 in tutto.
+
 ## 11 settembre 2026 (7) — Patata: rifiniture + home "SPeeD GAME"
 - **Puoi sempre ridare la bomba a chi te l'ha appena passata/rimandata** (campo
   `ultimo`): risolve il caso in cui, dopo "Rimanda indietro", non si poteva ridare
