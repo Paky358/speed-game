@@ -45,10 +45,11 @@ dal proprio.
   a voce senza timer. L'host può usare la sequenza classica o comporre le fasi.
   Carte in `data/sipero-carte.js` (150 Bonus, 151 Malus).
   - **Un telefono solo**: giudice a rotazione, squadre riformate a ogni round (da 3).
-  - **Ognuno dal suo telefono** (online): in lobby si sceglie il giudice e si formano
-    le due squadre (fissi per la partita); ognuno vede sempre il tavolo e la propria
-    mano; a fine partita si torna alla lobby per rifare le squadre. È il **primo gioco
-    oltre all'Asta** con l'online completo.
+  - **Ognuno dal suo telefono** (online): prima si crea la stanza (in lobby appare il
+    **codice grande** e il tasto **Copia il link da mandare**), poi lì si scelgono le
+    **fasi** (Classica o Personalizzata), il **giudice** e le **due squadre** (fissi per
+    la partita); ognuno vede sempre il tavolo e la propria mano; a fine partita si torna
+    alla lobby per rifare tutto. È il **primo gioco oltre all'Asta** con l'online completo.
 
 - **Gioco 6 — La Scalinata** 🪜: un telefono solo, **solo in 4**. A ogni round, 4
   secondi per scegliere in segreto **1, 3 o 5** gradini. Le scelte si scoprono tutte

@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 29,
+    data: "11 settembre 2026",
+    titolo: "Sì... però online: prima la stanza, poi le regole 🔗",
+    descrizione: [
+      "Scegliendo \"ognuno dal suo telefono\" ora apri subito la stanza: in lobby vedi il CODICE bello grande e un tasto per COPIARE IL LINK da mandare agli amici.",
+      "Le regole (fasi Classica o Personalizzata) si scelgono lì, nella lobby, dopo aver invitato tutti — non più prima.",
+      "Così l'ordine è naturale: prima decidi come giocare e crei la stanza, poi imposti la partita."
+    ]
+  },
+  {
     v: 28,
     data: "11 settembre 2026",
     titolo: "Nuovo gioco: La Scalinata 🪜",

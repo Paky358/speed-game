@@ -56,6 +56,11 @@
       dove.sequenza = [];
       dove.round = 6;
 
+      // Le regole (fasi + round) vivono in un contenitore che si può
+      // nascondere: in modalità online si impostano dopo, nella lobby.
+      var boxRegole = el("div");
+      var notaOnRegole = el("div", { class: "link-avviso", hidden: "hidden" });
+
       // --- un telefono solo / ognuno dal suo telefono ---
       if (!aiuti.torneo) {
         box.appendChild(el("div", { class: "etichetta", text: "Come si gioca" }));
@@ -70,6 +75,9 @@
             notaOn.textContent = (window.SGNet && SGNet.disponibile())
               ? "Gli altri entrano dai loro telefoni con un codice: in lobby si scelgono il giudice e le squadre."
               : "Qui il collegamento non è disponibile. Funziona quando il gioco è aperto dal sito pubblicato online.";
+            // Online: prima si crea la stanza, le regole si mettono in lobby.
+            boxRegole.hidden = (m === "online");
+            notaOnRegole.hidden = (m !== "online");
           }
           bT = el("button", { class: "modo-chip attiva", onclick: function () { scegliModo("telefono"); } }, [
             el("span", { class: "mi", text: "📱" }), el("div", {}, [el("div", { class: "mt", text: "Un telefono solo" }), el("div", { class: "ms", text: "Si passa di mano" })])]);
@@ -78,9 +86,11 @@
         })();
         box.appendChild(el("div", { class: "modo-griglia" }, [bT, bO]));
         box.appendChild(notaOn);
+        notaOnRegole.textContent = "Prima apri la stanza e inviti gli amici col codice. Poi, nella lobby, scegli le fasi (Classica o Personalizzata).";
+        box.appendChild(notaOnRegole);
       }
 
-      box.appendChild(el("div", { class: "etichetta", text: "Le fasi" }));
+      boxRegole.appendChild(el("div", { class: "etichetta", text: "Le fasi" }));
       var pannello = el("div", { hidden: "hidden" });
       var bC, bP;
       function scegliMod(m) {
@@ -93,7 +103,7 @@
         el("span", { class: "mi", text: "📜" }), el("div", {}, [el("div", { class: "mt", text: "Classica" }), el("div", { class: "ms", text: "Le 4 fasi standard" })])]);
       bP = el("button", { class: "modo-chip", onclick: function () { scegliMod("custom"); } }, [
         el("span", { class: "mi", text: "🎛️" }), el("div", {}, [el("div", { class: "mt", text: "Personalizzata" }), el("div", { class: "ms", text: "Fasi a tuo piacere" })])]);
-      box.appendChild(el("div", { class: "modo-griglia" }, [bC, bP]));
+      boxRegole.appendChild(el("div", { class: "modo-griglia" }, [bC, bP]));
 
       var nuovo = { tipo: "bonus", n: 2, bers: "se" };
       pannello.appendChild(el("div", { class: "etichetta", text: "La tua sequenza di fasi" }));
@@ -127,9 +137,9 @@
         dove.sequenza.push({ tipo: nuovo.tipo, n: nuovo.n, bers: nuovo.bers }); ridisegnaFasi();
       } }));
       ridisegnaFasi();
-      box.appendChild(pannello);
+      boxRegole.appendChild(pannello);
 
-      box.appendChild(el("div", { class: "etichetta", text: "Quanti round" }));
+      boxRegole.appendChild(el("div", { class: "etichetta", text: "Quanti round" }));
       var br = {};
       function scegliR(v) { dove.round = v; [4, 6, 8].forEach(function (x) { br[x].className = "modo-chip" + (v === x ? " attiva" : ""); }); }
       var gr = el("div", { class: "modo-griglia" });
@@ -137,8 +147,9 @@
         br[v] = el("button", { class: "modo-chip" + (v === 6 ? " attiva" : ""), onclick: function () { scegliR(v); } }, [el("div", {}, [el("div", { class: "mt", text: v + " round" })])]);
         gr.appendChild(br[v]);
       });
-      box.appendChild(gr);
-      box.appendChild(el("p", { class: "modulo-nota", text: "A ogni round uno fa da giudice (a rotazione) e gli altri si dividono in due squadre. Da 3 giocatori in su." }));
+      boxRegole.appendChild(gr);
+      boxRegole.appendChild(el("p", { class: "modulo-nota", text: "A ogni round uno fa da giudice (a rotazione) e gli altri si dividono in due squadre. Da 3 giocatori in su." }));
+      box.appendChild(boxRegole);
     },
 
     avvia: function (t) {
@@ -347,7 +358,8 @@
       giocatori: st.giocatori.map(function (x) { return { id: x.id, nome: x.nome }; }),
       assegna: st.assegna, giudiceId: g ? g.id : null, giudiceNome: g ? g.nome : "",
       squadre: squadreDa(st.giocatori, st.assegna),
-      scen: st.scen, mani: st.mani || null, vincitore: st.vincitore, step: null
+      scen: st.scen, mani: st.mani || null, vincitore: st.vincitore, step: null,
+      regoleModalita: st.regoleModalita, seqCustom: st.seqCustom
     };
     if (st.fase === "gioco" && st.steps && st.stepIdx < st.steps.length) {
       var s = st.steps[st.stepIdx];
@@ -362,6 +374,7 @@
       fase: "lobby", codice: "…", iniziata: false,
       giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host" }],
       assegna: {}, seq: seq, vincitore: null,
+      regoleModalita: "classica", seqCustom: [],
       scen: [{ bonus: [], malusRic: [] }, { bonus: [], malusRic: [] }],
       mani: null, steps: [], stepIdx: 0,
       bonus: (window.SG_SIPERO || {}).bonus || [], malus: (window.SG_SIPERO || {}).malus || []
@@ -397,9 +410,13 @@
         { bonus: ricarica(t, [], st.bonus, MAX_MANO), malus: ricarica(t, [], st.malus, MAX_MANO) },
         { bonus: ricarica(t, [], st.bonus, MAX_MANO), malus: ricarica(t, [], st.malus, MAX_MANO) }
       ];
-      st.steps = []; st.seq.forEach(function (f) { st.steps.push({ sq: 0, f: f }); st.steps.push({ sq: 1, f: f }); });
+      var seqScelta = (st.regoleModalita === "custom" && st.seqCustom.length) ? st.seqCustom : CLASSICA;
+      st.steps = []; seqScelta.forEach(function (f) { st.steps.push({ sq: 0, f: f }); st.steps.push({ sq: 1, f: f }); });
       st.stepIdx = 0; bd();
     }
+    function regoleMod(m) { if (st.fase === "lobby") { st.regoleModalita = m; disegna(); } }
+    function regoleAdd(f) { if (st.fase === "lobby") { st.seqCustom.push(f); disegna(); } }
+    function regoleDel(i) { if (st.fase === "lobby") { st.seqCustom.splice(i, 1); disegna(); } }
     function giocaCarte(id, carte) {
       if (st.fase !== "gioco" || st.stepIdx >= st.steps.length) return;
       var step = st.steps[st.stepIdx];
@@ -432,6 +449,7 @@
     var cb = {
       sonoHost: true, myId: "host",
       onAssegna: function (pid, val) { if (st.fase === "lobby") { st.assegna[pid] = val; bd(); } },
+      onRegoleMod: regoleMod, onRegoleAdd: regoleAdd, onRegoleDel: regoleDel,
       onComincia: comincia,
       onGioca: function (carte) { giocaCarte("host", carte); },
       onGiudica: function (sq) { giudica("host", sq); },
@@ -449,6 +467,7 @@
     var cb = {
       sonoHost: false, myId: null,
       onAssegna: function () {}, onComincia: function () {}, onNuova: function () {},
+      onRegoleMod: function () {}, onRegoleAdd: function () {}, onRegoleDel: function () {},
       onGioca: function (carte) { S.rete && S.rete.invia({ t: "gioca", carte: carte }); },
       onGiudica: function (sq) { S.rete && S.rete.invia({ t: "giudica", sq: sq }); },
       onAvanti: function () { S.rete && S.rete.invia({ t: "avanti" }); },
@@ -536,14 +555,66 @@
     s._piede.appendChild(conferma);
   }
 
+  // Editor delle fasi dentro la lobby online (solo host): si mettono
+  // le regole DOPO aver creato la stanza e invitato gli amici.
+  function editorFasiLobby(t, s, vm, cb) {
+    var el = t.el;
+    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Le fasi" }));
+    var mod = vm.regoleModalita || "classica";
+    var bC = el("button", { class: "modo-chip" + (mod === "classica" ? " attiva" : ""), onclick: function () { cb.onRegoleMod("classica"); } }, [
+      el("span", { class: "mi", text: "📜" }), el("div", {}, [el("div", { class: "mt", text: "Classica" }), el("div", { class: "ms", text: "Le 4 fasi standard" })])]);
+    var bP = el("button", { class: "modo-chip" + (mod === "custom" ? " attiva" : ""), onclick: function () { cb.onRegoleMod("custom"); } }, [
+      el("span", { class: "mi", text: "🎛️" }), el("div", {}, [el("div", { class: "mt", text: "Personalizzata" }), el("div", { class: "ms", text: "Fasi a tuo piacere" })])]);
+    s._contenuto.appendChild(el("div", { class: "modo-griglia" }, [bC, bP]));
+    if (mod !== "custom") return;
+
+    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin:8px 0 4px", text: "La tua sequenza di fasi" }));
+    var seq = vm.seqCustom || [];
+    if (!seq.length) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Nessuna fase: aggiungine almeno una qui sotto." }));
+    seq.forEach(function (f, i) {
+      s._contenuto.appendChild(el("div", { style: "display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:rgba(255,255,255,.06)" }, [
+        el("span", { text: (i + 1) + ") " + descriviFase(f) }),
+        el("button", { class: "togli", text: "×", onclick: function () { cb.onRegoleDel(i); } })
+      ]));
+    });
+    var nuovo = { tipo: "bonus", n: 2, bers: "se" };
+    function chipRowL(label, valori, get, set) {
+      s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin:6px 0 4px", text: label }));
+      var row = el("div", { class: "modo-griglia" });
+      valori.forEach(function (v) {
+        var b = el("button", { class: "modo-chip" + (get() === v.val ? " attiva" : ""), onclick: function () {
+          set(v.val); [].forEach.call(row.children, function (c, j) { c.className = "modo-chip" + (valori[j].val === v.val ? " attiva" : ""); });
+        } }, [el("div", {}, [el("div", { class: "mt", text: v.txt })])]);
+        row.appendChild(b);
+      });
+      s._contenuto.appendChild(row);
+    }
+    chipRowL("Tipo di carta", [{ val: "bonus", txt: "Bonus" }, { val: "malus", txt: "Malus" }], function () { return nuovo.tipo; }, function (v) { nuovo.tipo = v; });
+    chipRowL("Quante carte", [{ val: 1, txt: "1" }, { val: 2, txt: "2" }, { val: 3, txt: "3" }], function () { return nuovo.n; }, function (v) { nuovo.n = v; });
+    chipRowL("Bersaglio", [{ val: "se", txt: "Su di sé" }, { val: "avv", txt: "Avversari" }], function () { return nuovo.bers; }, function (v) { nuovo.bers = v; });
+    s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", style: "margin-top:8px", text: "＋ Aggiungi questa fase", onclick: function () { cb.onRegoleAdd({ tipo: nuovo.tipo, n: nuovo.n, bers: nuovo.bers }); } }));
+  }
+
   function disegnaSiperoVM(t, vm, cb) {
     var el = t.el, myId = cb.myId;
     var mySq = -1, sonoGiudice = (vm.giudiceId === myId);
     vm.squadre.forEach(function (sq, k) { if (sq.membri.some(function (m) { return m.id === myId; })) mySq = k; });
 
     if (vm.fase === "lobby") {
-      var s = t.schermata({ icona: "🤨", titolo: "Sì... però · Lobby", sotto: "Stanza " + (vm.codice || ""),
+      var s = t.schermata({ icona: "🤨", titolo: "Sì... però · Lobby", sotto: "Ognuno dal suo telefono",
         indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
+      if (cb.sonoHost) {
+        s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
+        s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
+        if (vm.codice && vm.codice !== "…") {
+          var linkS = SG.creaLink({ gioco: "sipero", stanza: vm.codice });
+          var campoS = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: linkS });
+          s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
+            onclick: function () { campoS.focus(); campoS.select(); try { navigator.clipboard.writeText(linkS); } catch (e) {} } }));
+          s._contenuto.appendChild(campoS);
+        }
+        s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Chi c'è e le squadre" }));
+      }
       s._contenuto.appendChild(el("p", { class: "modulo-nota", text: cb.sonoHost ? "Scegli chi fa il giudice (⚖️) e assegna ognuno a una squadra (🟥/🟦), poi comincia." : "L'host sta formando le squadre…" }));
       vm.giocatori.forEach(function (g) {
         var a = vm.assegna[g.id];
@@ -561,6 +632,7 @@
         }
         s._contenuto.appendChild(riga);
       });
+      if (cb.sonoHost) editorFasiLobby(t, s, vm, cb);
       if (cb.sonoHost) {
         var ok = vm.giudiceId && vm.squadre[0].membri.length && vm.squadre[1].membri.length && tuttiAssegnati(vm);
         var b = el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: cb.onComincia });

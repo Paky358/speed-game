@@ -4,6 +4,15 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 11 settembre 2026 (3) — Sì... però online: stanza prima, regole dopo
+- **🔗 Codice e link nella lobby**: aprendo la stanza online, la lobby mostra il
+  codice grande e un tasto "Copia il link da mandare" (come L'Asta). Prima il
+  codice non si vedeva/inviava.
+- **Ordine invertito**: scegliendo "ognuno dal suo telefono", nella schermata
+  iniziale spariscono fasi e round; si sceglie prima il modo (= si crea la stanza),
+  poi le fasi (Classica/Personalizzata) si impostano **nella lobby**.
+- "Un telefono solo" invariato (fasi e round restano nella schermata iniziale).
+
 ## 11 settembre 2026 (2) — Nuovo gioco: La Scalinata 🪜
 - **Nuovo gioco** ispirato a Wii Party ("Scalinata a sorte"). Solo in **4**.
 - A ogni round, 4 secondi per scegliere in segreto **1, 3 o 5** gradini. Le scelte
