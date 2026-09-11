@@ -12,6 +12,7 @@
 
   var TRAGUARDO = 15;
   var SECONDI = 4;
+  var SUSPENSE = 2000; // i numeri restano in testa 2 secondi prima di avanzare
   var SCELTE = [1, 3, 5];
   var COLORI = ["#ff6b6b", "#4dabf7", "#51cf66", "#ffd43b"];
 
@@ -91,7 +92,8 @@
     var el = t.el;
     var s = t.schermata({ icona: "🪜", titolo: "Si scopre!", sotto: "Round " + st.nRound });
     s._contenuto.appendChild(disegnaScala(t, st, scelte, avanza, prev));
-    var leg = el("div", { style: "margin-top:8px" });
+    var leg = el("div", { style: "margin-top:8px;opacity:0;transition:opacity .4s" });
+    setTimeout(function () { leg.style.opacity = "1"; }, SUSPENSE);
     st.g.forEach(function (g, i) {
       leg.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;padding:4px 6px;font-size:.92rem" }, [
         el("span", { style: "width:12px;height:12px;border-radius:50%;background:" + g.colore }),
@@ -102,8 +104,13 @@
     s._contenuto.appendChild(leg);
 
     var finiti = st.g.filter(function (g) { return g.passi >= TRAGUARDO; });
-    if (finiti.length) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Vedi il podio 🏆", onclick: function () { finePartita(t, st); } }));
-    else s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Prossimo round ▶", onclick: function () { introRound(t, st); } }));
+    var avanti = finiti.length
+      ? el("button", { class: "btn btn-primario", text: "Vedi il podio 🏆", onclick: function () { finePartita(t, st); } })
+      : el("button", { class: "btn btn-primario", text: "Prossimo round ▶", onclick: function () { introRound(t, st); } });
+    // il pulsante compare dopo la pausa, a rivelazione completata
+    avanti.setAttribute("style", "opacity:0;pointer-events:none;transition:opacity .4s");
+    setTimeout(function () { avanti.style.opacity = "1"; avanti.style.pointerEvents = "auto"; }, SUSPENSE);
+    s._piede.appendChild(avanti);
     t.mostra(s);
   }
 
@@ -126,18 +133,24 @@
       var pedina = el("div", { style: "position:absolute;left:50%;transform:translateX(-50%);bottom:" + (da / TRAGUARDO) * 100 + "%;transition:bottom .9s cubic-bezier(.2,.75,.3,1);display:flex;flex-direction:column;align-items:center;z-index:2" });
       var badge = null;
       if (scelte) {
-        badge = el("div", { style: "font-size:.95rem;font-weight:800;padding:1px 8px;border-radius:12px;margin-bottom:3px;color:#08210f;background:" + (avanza[i] ? "#69db7c" : "#adb5bd") + ";opacity:0;transition:opacity .5s .3s", text: String(scelte[i]) });
+        // il numero compare subito in un colore neutro (si legge solo la cifra),
+        // poi dopo la pausa si colora: verde se avanza, grigio se resta fermo.
+        badge = el("div", { style: "font-size:.95rem;font-weight:800;padding:1px 8px;border-radius:12px;margin-bottom:3px;color:#0b1020;background:#e9ecef;opacity:0;transition:opacity .3s,background .3s", text: String(scelte[i]) });
         pedina.appendChild(badge);
       }
       pedina.appendChild(el("div", { style: "width:24px;height:24px;border-radius:50%;background:" + g.colore + ";border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 6px rgba(0,0,0,.45)" }));
       col.appendChild(pedina);
       col.appendChild(el("div", { style: "position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:.66rem;font-weight:700;color:" + g.colore + ";text-shadow:0 1px 2px rgba(0,0,0,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px", text: g.nome }));
       area.appendChild(col);
-      // anima salita + comparsa numero
-      if (scelte) setTimeout(function () {
-        pedina.style.bottom = (g.passi / TRAGUARDO) * 100 + "%";
-        if (badge) badge.style.opacity = "1";
-      }, 60);
+      if (scelte) {
+        // 1) subito: mostra il numero in testa (neutro)
+        setTimeout(function () { if (badge) badge.style.opacity = "1"; }, 60);
+        // 2) dopo la pausa: colora il numero e fa salire chi avanza
+        setTimeout(function () {
+          if (badge) badge.style.background = avanza[i] ? "#69db7c" : "#adb5bd";
+          pedina.style.bottom = (g.passi / TRAGUARDO) * 100 + "%";
+        }, SUSPENSE);
+      }
     });
     wrap.appendChild(area);
     return wrap;
