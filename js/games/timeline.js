@@ -423,6 +423,7 @@
 
     var rete = SGNet.ospita("timeline", {
       onCodice: function (c) { st.codice = c; bd(); },
+      onConnesso: function () { st.pronta = true; bd(); },
       onAddio: function (id) {
         var i = indexById(st, id); if (i < 0) return;
         var eraCorr = st.iniziata && corr().id === id;

@@ -20,6 +20,7 @@
   var COLORI = ["#ff6b6b", "#4dabf7", "#51cf66", "#ffd43b"];
   var NOMI_BOT = ["Matt", "Kevin", "Cody"];
   var beepStato = { round: -1, ids: {} };
+  var scenaScelta = null; // schermata di scelta viva, per aggiornarla senza ridisegnare tutto
 
   function coloreScelta(n) { return n === 1 ? "#8ce99a" : n === 3 ? "#ffd43b" : "#ff922b"; }
 
@@ -125,16 +126,6 @@
     var el = t.el;
     var s = t.schermata({ icona: "🪜", titolo: "Si scopre!", sotto: "Round " + st.nRound });
     s._contenuto.appendChild(disegnaScala(t, st.g, scelte, avanza, prev));
-    var leg = el("div", { style: "margin-top:8px;opacity:0;transition:opacity .4s" });
-    setTimeout(function () { leg.style.opacity = "1"; }, SUSPENSE);
-    st.g.forEach(function (g, i) {
-      leg.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;padding:4px 6px;font-size:.92rem" }, [
-        el("span", { style: "width:12px;height:12px;border-radius:50%;background:" + g.colore }),
-        el("span", { style: "flex:1", text: g.nome + " ha scelto " + scelte[i] }),
-        el("span", { style: "font-weight:700;color:" + (avanza[i] ? "#51cf66" : "#ff8787"), text: avanza[i] ? "+" + scelte[i] + " ▲" : "fermo" })
-      ]));
-    });
-    s._contenuto.appendChild(leg);
 
     var finiti = st.g.filter(function (g) { return g.passi >= TRAGUARDO; });
     var avanti = finiti.length
@@ -148,7 +139,9 @@
   }
 
   // ---- la scalinata a 4 corsie ----  (gioc = elenco {nome,colore,passi})
-  function disegnaScala(t, gioc, scelte, avanza, prev) {
+  // outDots (facoltativo): array che viene riempito con i pallini, per poterli
+  // illuminare da fuori senza ridisegnare la scala.
+  function disegnaScala(t, gioc, scelte, avanza, prev, outDots) {
     var el = t.el;
     var wrap = el("div", { style: "position:relative;height:330px;border-radius:16px;background:linear-gradient(180deg,#242c52 0%,#171634 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)" });
     wrap.appendChild(el("div", { style: "position:absolute;top:0;left:0;right:0;height:24px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#ffe066;background:linear-gradient(180deg,rgba(255,224,102,.18),transparent)", text: "🏁 TRAGUARDO" }));
@@ -171,7 +164,9 @@
         badge = el("div", { style: "font-size:.95rem;font-weight:800;padding:1px 8px;border-radius:12px;margin-bottom:3px;color:#0b1020;background:#e9ecef;opacity:0;transition:opacity .3s,background .3s", text: String(scelte[i]) });
         pedina.appendChild(badge);
       }
-      pedina.appendChild(el("div", { style: "width:24px;height:24px;border-radius:50%;background:" + g.colore + ";border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 6px rgba(0,0,0,.45)" }));
+      var dot = el("div", { style: "width:24px;height:24px;border-radius:50%;background:" + g.colore + ";border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 6px rgba(0,0,0,.45)" });
+      if (outDots) outDots[i] = dot;
+      pedina.appendChild(dot);
       col.appendChild(pedina);
       col.appendChild(el("div", { style: "position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:.66rem;font-weight:700;color:" + g.colore + ";text-shadow:0 1px 2px rgba(0,0,0,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px", text: g.nome }));
       area.appendChild(col);
@@ -214,12 +209,17 @@
       o.connect(g); g.connect(ctx.destination); o.start(n); o.stop(n + 0.22);
     } catch (e) {}
   }
+  // fa il "bip" solo per chi ha appena scelto (una volta per giocatore, per round)
+  function beepNuove(vm) {
+    if (beepStato.round !== vm.nRound) { beepStato.round = vm.nRound; beepStato.ids = {}; }
+    vm.posti.forEach(function (p) { if (p.chosen && !beepStato.ids[p.id]) { beepStato.ids[p.id] = true; bipScala(); } });
+  }
 
   function postiPubblici(st) {
     return st.posti.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, passi: p.passi, bot: p.bot, chosen: p.scelta != null }; });
   }
   function vmScala(st) {
-    var vm = { fase: st.fase, codice: st.codice, nRound: st.nRound, traguardo: TRAGUARDO,
+    var vm = { fase: st.fase, codice: st.codice, pronta: st.pronta, nRound: st.nRound, traguardo: TRAGUARDO,
       posti: postiPubblici(st), deadline: st.deadline || 0,
       scelte: null, avanza: null, prev: null, vincitore: st.vincitore };
     if (st.fase === "rivela") { vm.scelte = st.scelte; vm.avanza = st.avanza; vm.prev = st.prev; }
@@ -233,12 +233,13 @@
   function hostScala(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteScala(t);
     var st = {
-      fase: "lobby", codice: "…", nRound: 0, iniziata: false, vincitore: null,
+      fase: "lobby", codice: "…", pronta: false, nRound: 0, iniziata: false, vincitore: null,
       posti: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", colore: COLORI[0], bot: false, passi: 0, scelta: null }],
       deadline: 0, timer: null
     };
     var rete = SGNet.ospita("scalinata", {
       onCodice: function (c) { st.codice = c; bd(); },
+      onConnesso: function () { st.pronta = true; bd(); },
       onAddio: function (id) {
         if (st.fase !== "lobby") return; // a partita iniziata i posti restano
         st.posti = st.posti.filter(function (p) { return p.id !== id; });
@@ -376,6 +377,7 @@
     assicuraStileScala();
     var el = t.el, myId = cb.myId;
     var mio = null; vm.posti.forEach(function (p) { if (p.id === myId) mio = p; });
+    if (vm.fase !== "scelta") scenaScelta = null;
 
     // ---- lobby ----
     if (vm.fase === "lobby") {
@@ -391,6 +393,8 @@
             onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
           s._contenuto.appendChild(campo);
         }
+        s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
+          text: vm.pronta ? "🟢 Stanza pronta — manda il codice agli amici" : "🟡 Sto aprendo la stanza… (attendi il verde)" }));
       }
       s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Chi c'è (" + vm.posti.length + " di 4)" }));
       vm.posti.forEach(function (p) { s._contenuto.appendChild(rigaGiocatoreScala(el, p, p.id === myId)); });
@@ -435,16 +439,6 @@
     if (vm.fase === "rivela") {
       var sr = t.schermata({ icona: "🪜", titolo: "Si scopre!", sotto: "Round " + vm.nRound });
       sr._contenuto.appendChild(disegnaScala(t, gioc, vm.scelte, vm.avanza, vm.prev));
-      var leg = el("div", { style: "margin-top:8px;opacity:0;transition:opacity .4s" });
-      setTimeout(function () { leg.style.opacity = "1"; }, SUSPENSE);
-      vm.posti.forEach(function (p, i) {
-        leg.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;padding:4px 6px;font-size:.92rem" }, [
-          el("span", { style: "width:12px;height:12px;border-radius:50%;background:" + p.colore }),
-          el("span", { style: "flex:1", text: (p.bot ? "🤖 " : "") + p.nome + " ha scelto " + vm.scelte[i] }),
-          el("span", { style: "font-weight:700;color:" + (vm.avanza[i] ? "#51cf66" : "#ff8787"), text: vm.avanza[i] ? "+" + vm.scelte[i] + " ▲" : "fermo" })
-        ]));
-      });
-      sr._contenuto.appendChild(leg);
       if (cb.sonoHost) {
         var finito = vm.posti.some(function (p) { return p.passi >= vm.traguardo; });
         var av = el("button", { class: "btn btn-primario", text: finito ? "Vedi il podio 🏆" : "Prossimo round ▶", onclick: cb.onProssimo });
@@ -456,42 +450,51 @@
     }
 
     // ---- scelta ----
-    if (beepStato.round !== vm.nRound) { beepStato.round = vm.nRound; beepStato.ids = {}; }
-    vm.posti.forEach(function (p) { if (p.chosen && !beepStato.ids[p.id]) { beepStato.ids[p.id] = true; bipScala(); } });
+    // Aggiornamento IN-PLACE: se stiamo già mostrando la scelta di questo round,
+    // non ridisegniamo nulla (niente sfarfallio): illuminiamo solo il pallino di
+    // chi ha appena scelto, facciamo il bip e togliamo i miei tasti se ho scelto.
+    if (scenaScelta && scenaScelta.round === vm.nRound && document.body.contains(scenaScelta.root)) {
+      beepNuove(vm);
+      vm.posti.forEach(function (p, i) { var d = scenaScelta.dots[i]; if (d) d.className = p.chosen ? "sg-scelto" : ""; });
+      if (mio && mio.chosen && scenaScelta.btnWrap && scenaScelta.btnWrap.parentNode) {
+        scenaScelta.btnWrap.parentNode.removeChild(scenaScelta.btnWrap);
+        scenaScelta.btnWrap = null;
+        if (scenaScelta.attesa) scenaScelta.attesa.hidden = false;
+      }
+      return;
+    }
 
+    // costruzione della schermata (una volta per round)
+    beepNuove(vm);
     var s = t.schermata({ icona: "🪜", titolo: "Round " + vm.nRound, sotto: "Verso il gradino " + vm.traguardo,
       indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
-    var timerBox = el("div", { style: "text-align:center;font-size:2.2rem;font-weight:800;margin:2px 0 6px" });
+    var outDots = [];
+    s._contenuto.appendChild(disegnaScala(t, gioc, null, null, null, outDots));
+    vm.posti.forEach(function (p, i) { if (p.chosen && outDots[i]) outDots[i].className = "sg-scelto"; });
+
+    var timerBox = el("div", { style: "text-align:center;font-size:1.9rem;font-weight:800;margin:6px 0 2px" });
     function tick() { timerBox.textContent = Math.max(0, Math.ceil((vm.deadline - Date.now()) / 1000)); }
     tick();
     var itv = setInterval(function () { if (!document.body.contains(timerBox)) return clearInterval(itv); tick(); }, 300);
-    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: (mio && !mio.chosen) ? "Scegli quanti gradini fare. Occhio a non fare lo stesso numero di un altro!" : "Chi ha scelto ha il pallino acceso. Aspetta gli altri…" }));
     s._contenuto.appendChild(timerBox);
 
-    var grid = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:6px 0 4px" });
-    vm.posti.forEach(function (p) {
-      var card = el("div", { style: "flex:1 1 40%;min-width:120px;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.05)" + (p.id === myId ? ";outline:2px solid rgba(120,160,255,.5)" : "") });
-      card.appendChild(el("div", { class: p.chosen ? "sg-scelto" : "", style: "width:22px;height:22px;border-radius:50%;flex:0 0 auto;background:" + p.colore + ";border:2px solid rgba(255,255,255,.85)" }));
-      card.appendChild(el("div", { style: "min-width:0" }, [
-        el("div", { style: "font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis", text: (p.bot ? "🤖 " : "") + p.nome + (p.id === myId ? " (tu)" : "") }),
-        el("div", { style: "font-size:.78rem;color:" + (p.chosen ? "#69db7c" : "rgba(255,255,255,.5)"), text: p.chosen ? "ha scelto ✓" : "sta scegliendo…" })
-      ]));
-      grid.appendChild(card);
-    });
-    s._contenuto.appendChild(grid);
-
+    var attesa = el("p", { class: "modulo-nota", style: "text-align:center", text: "Hai scelto! Il tuo pallino è acceso, aspetta gli altri…", hidden: "hidden" });
+    var btnWrap = null;
     if (mio && !mio.bot && !mio.chosen) {
-      var griglia = el("div", { style: "display:flex;gap:12px;justify-content:center;margin-top:10px" });
+      btnWrap = el("div", { style: "display:flex;gap:12px;justify-content:center;margin-top:2px" });
       SCELTE.forEach(function (n) {
-        griglia.appendChild(el("button", { style: "flex:1;max-width:130px;padding:24px 0;border-radius:18px;border:0;cursor:pointer;color:#08210f;font-weight:800;background:" + coloreScelta(n) + ";box-shadow:0 4px 10px rgba(0,0,0,.3)", onclick: function () { cb.onScegli(n); } }, [
+        btnWrap.appendChild(el("button", { style: "flex:1;max-width:130px;padding:22px 0;border-radius:18px;border:0;cursor:pointer;color:#08210f;font-weight:800;background:" + coloreScelta(n) + ";box-shadow:0 4px 10px rgba(0,0,0,.3)", onclick: function () { cb.onScegli(n); } }, [
           el("div", { style: "font-size:2.4rem;line-height:1", text: String(n) }),
           el("div", { style: "font-size:.8rem;font-weight:700;opacity:.8", text: n === 1 ? "gradino" : "gradini" })
         ]));
       });
-      s._contenuto.appendChild(griglia);
+      s._contenuto.appendChild(btnWrap);
     } else if (mio && mio.chosen) {
-      s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Hai scelto! Aspetta gli altri…" }));
+      attesa.hidden = false;
     }
+    s._contenuto.appendChild(attesa);
+
+    scenaScelta = { round: vm.nRound, root: s._contenuto, dots: outDots, btnWrap: btnWrap, attesa: attesa };
     t.mostra(s);
   }
 

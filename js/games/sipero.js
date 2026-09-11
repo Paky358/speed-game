@@ -381,6 +381,7 @@
     };
     var rete = SGNet.ospita("sipero", {
       onCodice: function (c) { st.codice = c; bd(); },
+      onConnesso: function () { st.pronta = true; bd(); },
       onAddio: function (id) {
         st.giocatori = st.giocatori.filter(function (x) { return x.id !== id; });
         delete st.assegna[id];

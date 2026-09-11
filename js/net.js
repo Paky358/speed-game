@@ -31,19 +31,24 @@
   window.SGNet = {
     disponibile: function () { return typeof mqtt !== "undefined"; },
 
-    // L'host apre una stanza. cb: { onCodice, onArrivo, onAddio(id), onMsg(id,msg), onErrore(e) }
+    // L'host apre una stanza. cb: { onCodice, onConnesso, onAddio(id), onMsg(id,msg), onErrore(e) }
     ospita: function (giocoId, cb) {
       if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
       var codice = codiceACaso(4);
       var T = topics(codice);
       var META = BASE + codice + "/meta";
+      // Il codice si conosce SUBITO (non dipende dal collegamento): mostralo subito,
+      // così la stanza dà sempre il codice anche se la rete è lenta a collegarsi.
+      // (un tick dopo, così chi ci chiama ha già ricevuto l'oggetto "rete")
+      setTimeout(function () { cb.onCodice && cb.onCodice(codice); }, 0);
       var client = mqtt.connect(BROKER, {
         clean: true, reconnectPeriod: 2000,
         // Se l'host sparisce all'improvviso, avvisa gli altri
         will: { topic: T.stato, payload: JSON.stringify({ t: "__hostgone" }), retain: false }
       });
       client.on("connect", function () {
-        client.subscribe(T.azioni, function () { cb.onCodice && cb.onCodice(codice); });
+        // quando è davvero collegato la stanza è "pronta": lo comunichiamo al gioco
+        client.subscribe(T.azioni, function () { cb.onConnesso && cb.onConnesso(); });
         // annuncia QUALE gioco è questa stanza, così chi entra col codice apre quello giusto
         try { client.publish(META, JSON.stringify({ g: giocoId || "" }), { retain: true }); } catch (e) {}
       });

@@ -4,6 +4,21 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 11 settembre 2026 (5) — Online più solido + Scalinata: scelta senza sfarfallio
+- **Il codice della stanza compare subito** (`net.js`): `onCodice` non aspetta più
+  il collegamento al broker — il codice si conosce localmente, quindi si mostra
+  immediatamente (fix del caso "la stanza non dava il codice" su rete lenta). Firato
+  un tick dopo, così `rete` è già assegnata (niente più crash `invia` undefined).
+- **Spia stato stanza**: `onConnesso` (host) → 🟡 "sto aprendo…" / 🟢 "stanza pronta".
+  Aggiunto anche a L'Asta, Sì... però e Linea del tempo (pubblicano lo stato appena
+  collegati).
+- **Scalinata, fase di scelta**: la scalinata resta visibile con i numeri 1/3/5 sotto
+  (via `disegnaScala(..., outDots)`); tolto il pannello a carte.
+- **Niente sfarfallio**: quando arriva una scelta si aggiorna SOLO il pallino (glow) +
+  bip, con update in-place (nessun `t.mostra`, un solo disegno per round).
+- **Rivelazione più pulita**: tolta la legenda "X ha scelto N" (il numero è già sopra
+  la testa), online e a un telefono solo.
+
 ## 11 settembre 2026 (4) — La Scalinata online (bot, pallini, suono)
 - **Modalità "ognuno dal suo telefono"**: stanza con codice + link (come L'Asta),
   scelta simultanea sul proprio telefono. Host-authoritative via MQTT.

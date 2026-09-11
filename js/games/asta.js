@@ -579,6 +579,7 @@
 
     var rete = SGNet.ospita("asta", {
       onCodice: function (c) { st.codice = c; bd(); },
+      onConnesso: function () { st.pronta = true; bd(); },
       onAddio: function (id) {
         if (!perId(st, id)) return;
         st.giocatori = st.giocatori.filter(function (x) { return x.id !== id; });

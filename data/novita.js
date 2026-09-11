@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 31,
+    data: "11 settembre 2026",
+    titolo: "Online: la stanza dà subito il codice 🔗✅",
+    descrizione: [
+      "Ora quando apri una stanza \"ognuno dal suo telefono\" il CODICE compare subito, senza aspettare il collegamento. Prima, se la rete era lenta, poteva restare vuoto: ora non più.",
+      "C'è anche una spia: 🟡 mentre apre la stanza, 🟢 quando è pronta da condividere.",
+      "La Scalinata online, in fase di scelta: la scalinata resta davanti agli occhi e i numeri 1/3/5 sono lì sotto. Quando qualcuno sceglie, si illumina solo il suo pallino (col bip), senza più il fastidioso sfarfallio dello schermo."
+    ]
+  },
+  {
     v: 30,
     data: "11 settembre 2026",
     titolo: "La Scalinata si gioca anche online, con i bot 🪜🔗",
