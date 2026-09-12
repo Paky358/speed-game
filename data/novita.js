@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 35,
+    data: "12 settembre 2026",
+    titolo: "Aspetto più vivace ✨",
+    descrizione: [
+      "Lo sfondo era troppo cupo: ora è un blu più chiaro e vivace (con un leggero sfumato), su tutte le schermate — home, lobby e giochi.",
+      "Testi e carte restano ben leggibili."
+    ]
+  },
+  {
     v: 34,
     data: "12 settembre 2026",
     titolo: "Glow Hockey più fluido: collegamento realtime dedicato ⚡",

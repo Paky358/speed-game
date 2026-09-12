@@ -4,6 +4,11 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 12 settembre 2026 (7) — Aspetto meno cupo (sfondo blu più vivace)
+- Palette alzata verso un **blu più chiaro/vivace** (`--sfondo` #141326→#223066, carte
+  più chiare) con **sfumato** sul body; testo portato a bianco pieno per contrasto. Vale
+  ovunque (home, lobby, giochi) perché tutto usa le variabili colore.
+
 ## 12 settembre 2026 (6) — Glow Hockey: via i teletrasporti del disco (ospite)
 - Rimossa la predizione locale del disco lato ospite: faceva divergere il disco dall'host
   e, alla correzione, causava **teletrasporti**. Ora l'ospite **non simula** il disco:

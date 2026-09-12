@@ -4,12 +4,12 @@
    ========================================================= */
 
 :root{
-  --sfondo:      #141326;
-  --sfondo-2:    #1e1c3a;
-  --carta:       #272451;
-  --carta-2:     #322e63;
-  --testo:       #f3f1ff;
-  --testo-tenue: #b3aede;
+  --sfondo:      #223066;
+  --sfondo-2:    #2c3d80;
+  --carta:       #34479a;
+  --carta-2:     #4055b0;
+  --testo:       #ffffff;
+  --testo-tenue: #cdd6ff;
   --accento:     #ffca3a;
   --accento-scuro:#e0a90a;
   --verde:       #37d47e;
@@ -26,7 +26,8 @@ html,body{ margin:0; padding:0; }
 
 body{
   font-family:var(--font);
-  background:var(--sfondo);
+  background:linear-gradient(165deg,#2b3c82 0%,#1d2a5e 100%);
+  background-attachment:fixed;
   color:var(--testo);
   min-height:100vh;
   min-height:100dvh;
