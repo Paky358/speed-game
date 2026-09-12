@@ -18,8 +18,9 @@
   var MAXV = 2.4;                // velocità massima disco (unità/sec)
   var PADK = 0.7;                // quanto la racchetta spinge il disco
   var VINCI = 7;                 // gol per vincere
-  var HZ = 25;                   // intervallo minimo fra invii (ms) ~40/sec
+  var HZ = 22;                   // intervallo minimo fra invii (ms) ~45/sec
   var HSTEP = 1 / 120;           // passo fisso della fisica (sotto-step): collisioni solide
+  var INTERP = 0.10;             // ritardo di rendering lato ospite (s): disegna nel "passato" e interpola = niente scatti
 
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function inPorta(x) { return x > 0.5 - GOALW / 2 && x < 0.5 + GOALW / 2; }
@@ -245,12 +246,17 @@
   function ospiteHK(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteHK(t);
     var el = t.el;
-    var S = { rete: null, vm: null, tRecv: 0, me: { x: 0.5, y: 0.18 }, oppx: 0.5, oppy: 0.18, rpx: null, rpy: null, fase: "collega", vista: null, C: null, raf: null, ultimoInvio: 0 };
+    var S = { rete: null, vm: null, buf: [], me: { x: 0.5, y: 0.18 }, fase: "collega", vista: null, C: null, raf: null, ultimoInvio: 0 };
     collega();
     function collega() {
       S.rete = SGNet.entra(codice, {
         onAperto: function (id) { S.rete.invia({ t: "join" }); render(); },
-        onMsg: function (m) { if (m && m.t === "g") { S.vm = m; S.tRecv = performance.now(); if (m.fase !== S.fase) { S.fase = m.fase; render(); } } },
+        onMsg: function (m) { if (m && m.t === "g") {
+          S.vm = m; var now = performance.now();
+          S.buf.push({ rt: now, px: m.px, py: m.py, hx: m.hx, hy: m.hy });
+          while (S.buf.length > 2 && S.buf[0].rt < now - 1000) S.buf.shift();
+          if (m.fase !== S.fase) { S.fase = m.fase; render(); }
+        } },
         onChiuso: function () { stop(); erroreHK(t, "Collegamento perso. L'host ha chiuso la partita."); },
         onErrore: function () { stop(); erroreHK(t, "Problema di collegamento. Riprova."); }
       });
@@ -259,15 +265,23 @@
     function loop(now) {
       S.raf = requestAnimationFrame(loop);
       var vm = S.vm; if (!vm || !S.C) return;
-      // estrapola il disco lungo la sua velocità per attenuare il lag…
-      var dtR = Math.min(0.12, (now - S.tRecv) / 1000);
-      var tx = clamp(vm.px + vm.pvx * dtR, RP, 1 - RP), ty = clamp(vm.py + vm.pvy * dtR, RP, ASP - RP);
-      // …e smorza gli scatti quando arriva un pacchetto (easing leggero)
-      if (S.rpx == null) { S.rpx = tx; S.rpy = ty; }
-      S.rpx += (tx - S.rpx) * 0.5; S.rpy += (ty - S.rpy) * 0.5;
-      // racchetta avversaria (host, in alto per l'ospite): insegue morbida
-      S.oppx += (vm.hx - S.oppx) * 0.4; S.oppy += (vm.hy - S.oppy) * 0.4;
-      var o = { fase: vm.fase, px: S.rpx, py: S.rpy, hx: S.oppx, hy: S.oppy, gx: S.me.x, gy: S.me.y, s1: vm.s1, s2: vm.s2 };
+      // INTERPOLAZIONE: disegna disco e racchetta avversaria ~INTERP s nel passato,
+      // interpolando fra i due stati ricevuti attorno a quel momento = movimento liscio.
+      var b = S.buf, px, py, hx, hy;
+      if (b.length === 0) { px = vm.px; py = vm.py; hx = vm.hx; hy = vm.hy; }
+      else {
+        var rt = now - INTERP * 1000;
+        if (rt <= b[0].rt) { px = b[0].px; py = b[0].py; hx = b[0].hx; hy = b[0].hy; }
+        else if (rt >= b[b.length - 1].rt) {
+          var L = b[b.length - 1], over = Math.min(0.05, (rt - L.rt) / 1000);
+          px = clamp(L.px + vm.pvx * over, RP, 1 - RP); py = clamp(L.py + vm.pvy * over, RP, ASP - RP); hx = L.hx; hy = L.hy;
+        } else {
+          var i = b.length - 2; while (i > 0 && b[i].rt > rt) i--;
+          var A = b[i], D = b[i + 1], f = (rt - A.rt) / Math.max(1, D.rt - A.rt);
+          px = A.px + (D.px - A.px) * f; py = A.py + (D.py - A.py) * f; hx = A.hx + (D.hx - A.hx) * f; hy = A.hy + (D.hy - A.hy) * f;
+        }
+      }
+      var o = { fase: vm.fase, px: px, py: py, hx: hx, hy: hy, gx: S.me.x, gy: S.me.y, s1: vm.s1, s2: vm.s2 };
       disegna(S.C.ctx, S.C.cssW, o, true);
       if (now - S.ultimoInvio > HZ) { S.ultimoInvio = now; S.rete.invia({ t: "p", x: S.me.x, y: S.me.y }); }
     }
