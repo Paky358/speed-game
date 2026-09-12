@@ -4,6 +4,15 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 12 settembre 2026 (6) — Glow Hockey: via i teletrasporti del disco (ospite)
+- Rimossa la predizione locale del disco lato ospite: faceva divergere il disco dall'host
+  e, alla correzione, causava **teletrasporti**. Ora l'ospite **non simula** il disco:
+  lo segue dallo stato dell'host, **estrapolato al presente** (poco ritardo) e ci **scivola**
+  verso con easing (~50ms), **senza mai saltarci** durante il gioco (aggancio solo sul
+  ricentro dopo gol). Niente più teletrasporti; movimento liscio.
+- Compromesso onesto: il colpo dell'ospite sul disco torna ad avere il ritardo "fisico"
+  del collegamento (meglio del teletrasporto).
+
 ## 12 settembre 2026 (5) — Glow Hockey: disco liscio lato ospite (zona morta)
 - Riconciliazione del disco senza micro-strattoni: **zona morta** (~4% del campo) sotto
   cui non si corregge la posizione → il disco si muove solo con la fisica locale (liscio);

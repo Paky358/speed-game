@@ -1,9 +1,9 @@
 /* =========================================================
    GIOCO — "Glow Hockey"  (air hockey, ognuno dal suo telefono)
    Online host-autoritativo: l'host calcola la fisica del disco a
-   ~60fps ed è la "fonte di verità"; l'ospite PREDICE il disco in
-   locale (reagisce subito ai suoi colpi) e si riallinea dolcemente
-   con l'host, con zona morta anti-scatto. Coordinate NORMALIZZATE
+   ~60fps ed è la "fonte di verità"; l'ospite NON simula il disco
+   (divergerebbe), ma lo segue estrapolato al presente e scivolando
+   dolcemente (niente teletrasporti). Coordinate NORMALIZZATE
    (indipendenti dallo schermo): campo largo 1, alto ASPETTO.
    NB: grafica volutamente minimale — prima la sostanza.
    ========================================================= */
@@ -101,21 +101,6 @@
     if (st.py < RP) { if (inPorta(st.px)) return onGol(1); st.py = RP; st.pvy = Math.abs(st.pvy) * REST; }
     if (st.py > ASP - RP) { if (inPorta(st.px)) return onGol(2); st.py = ASP - RP; st.pvy = -Math.abs(st.pvy) * REST; }
     var sp = Math.hypot(st.pvx, st.pvy); if (sp > MAXV) { st.pvx *= MAXV / sp; st.pvy *= MAXV / sp; }
-  }
-
-  // passo di fisica LOCALE per l'ospite (predizione): come passo(), ma senza gol
-  // (i gol li decide l'host) — le pareti alte/basse fanno solo rimbalzare.
-  function passoLocale(L, dt) {
-    var prevx = L.px, prevy = L.py;
-    L.px += L.pvx * dt; L.py += L.pvy * dt;
-    var f = Math.exp(-0.45 * dt); L.pvx *= f; L.pvy *= f;
-    collide(L, prevx, prevy, L.gx, L.gy, L._gvx || 0, L._gvy || 0);  // la mia racchetta (istantanea)
-    collide(L, prevx, prevy, L.hx, L.hy, 0, 0);                       // racchetta avversaria
-    if (L.px < RP) { L.px = RP; L.pvx = Math.abs(L.pvx) * REST; }
-    if (L.px > 1 - RP) { L.px = 1 - RP; L.pvx = -Math.abs(L.pvx) * REST; }
-    if (L.py < RP) { L.py = RP; L.pvy = Math.abs(L.pvy) * REST; }
-    if (L.py > ASP - RP) { L.py = ASP - RP; L.pvy = -Math.abs(L.pvy) * REST; }
-    var sp = Math.hypot(L.pvx, L.pvy); if (sp > MAXV) { L.pvx *= MAXV / sp; L.pvy *= MAXV / sp; }
   }
 
   // ---------- disegno (host e ospite) ----------
@@ -274,7 +259,7 @@
     var NET = scegliNet();
     if (!NET) return senzaReteHK(t);
     var el = t.el;
-    var S = { rete: null, vm: null, tRecv: 0, me: { x: 0.5, y: 0.18 }, L: null, pmex: 0.5, pmey: 0.18, lastT: 0, fase: "collega", vista: null, C: null, raf: null, ultimoInvio: 0 };
+    var S = { rete: null, vm: null, tRecv: 0, me: { x: 0.5, y: 0.18 }, L: null, lastT: 0, fase: "collega", vista: null, C: null, raf: null, ultimoInvio: 0 };
     collega();
     function collega() {
       S.rete = NET.entra(codice, {
@@ -289,30 +274,17 @@
       S.raf = requestAnimationFrame(loop);
       var vm = S.vm; if (!vm || !S.C) return;
       var dt = S.lastT ? Math.min(0.05, (now - S.lastT) / 1000) : 0.016; S.lastT = now;
-      if (!S.L) S.L = { px: vm.px, py: vm.py, pvx: vm.pvx, pvy: vm.pvy, hx: vm.hx, hy: vm.hy, gx: S.me.x, gy: S.me.y, _gvx: 0, _gvy: 0 };
+      if (!S.L) S.L = { rpx: vm.px, rpy: vm.py, hx: vm.hx, hy: vm.hy };
       var L = S.L;
       // racchetta avversaria (host): scivola morbida verso l'ultima posizione (anti-scatto)
       var kh = 1 - Math.exp(-dt / 0.07); L.hx += (vm.hx - L.hx) * kh; L.hy += (vm.hy - L.hy) * kh;
-      // la mia racchetta: istantanea + velocità (per la spinta)
-      L._gvx = (S.me.x - S.pmex) / Math.max(0.004, dt); L._gvy = (S.me.y - S.pmey) / Math.max(0.004, dt);
-      S.pmex = S.me.x; S.pmey = S.me.y; L.gx = S.me.x; L.gy = S.me.y;
-      if (vm.fase !== "gioco") {
-        // gol/fine: segui l'host, niente predizione
-        L.px = vm.px; L.py = vm.py; L.pvx = vm.pvx; L.pvy = vm.pvy;
-      } else {
-        // PREDIZIONE: simulo il disco in locale (reagisce subito ai miei colpi)…
-        passoLocale(L, dt);
-        // …e mi riallineo con l'host (autorità) SENZA micro-strattoni:
-        var age = Math.min(0.15, (now - S.tRecv) / 1000);
-        var ax = vm.px + vm.pvx * age, ay = vm.py + vm.pvy * age;
-        // la velocità la allineo sempre: è invisibile e tiene la traiettoria giusta
-        L.pvx += (vm.pvx - L.pvx) * 0.12; L.pvy += (vm.pvy - L.pvy) * 0.12;
-        var err = Math.hypot(ax - L.px, ay - L.py);
-        if (err > 0.30) { L.px = ax; L.py = ay; L.pvx = vm.pvx; L.pvy = vm.pvy; }        // gol/teletrasporto: aggancia
-        else if (err > 0.04) { L.px += (ax - L.px) * 0.15; L.py += (ay - L.py) * 0.15; } // fuori zona morta: correggi piano
-        // entro 0.04 (zona morta): NIENTE correzione di posizione → moto locale liscissimo
-      }
-      var o = { fase: vm.fase, px: L.px, py: L.py, hx: L.hx, hy: L.hy, gx: S.me.x, gy: S.me.y, s1: vm.s1, s2: vm.s2 };
+      // DISCO: NON lo simulo (divergerebbe → teletrasporti). Seguo l'host, estrapolato al
+      // presente (poco ritardo) e ci scivolo verso, senza mai saltarci (niente teletrasporti).
+      var age = Math.min(0.2, (now - S.tRecv) / 1000);
+      var tx = clamp(vm.px + vm.pvx * age, RP, 1 - RP), ty = clamp(vm.py + vm.pvy * age, RP, ASP - RP);
+      if (vm.fase !== "gioco") { L.rpx = tx; L.rpy = ty; }   // gol/attesa: il disco è dove dice l'host (ricentro)
+      else { var kp = 1 - Math.exp(-dt / 0.05); L.rpx += (tx - L.rpx) * kp; L.rpy += (ty - L.rpy) * kp; }
+      var o = { fase: vm.fase, px: L.rpx, py: L.rpy, hx: L.hx, hy: L.hy, gx: S.me.x, gy: S.me.y, s1: vm.s1, s2: vm.s2 };
       disegna(S.C.ctx, S.C.cssW, o, true);
       if (now - S.ultimoInvio > HZ) { S.ultimoInvio = now; S.rete.invia({ t: "p", x: S.me.x, y: S.me.y }); }
     }
