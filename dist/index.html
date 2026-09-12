@@ -8570,7 +8570,7 @@ window.SG_SIPERO = {
     var wrap = el("div", { style: "position:relative;height:330px;border-radius:16px;background:linear-gradient(180deg,#242c52 0%,#171634 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)" });
     wrap.appendChild(el("div", { style: "position:absolute;top:0;left:0;right:0;height:24px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#ffe066;background:linear-gradient(180deg,rgba(255,224,102,.18),transparent)", text: "🏁 TRAGUARDO" }));
     // linee di riferimento ogni 5 gradini
-    var area = el("div", { style: "position:absolute;top:28px;bottom:26px;left:8px;right:8px;display:flex;gap:6px" });
+    var area = el("div", { style: "position:absolute;top:28px;bottom:32px;left:8px;right:8px;display:flex;gap:6px" });
     for (var gr = 5; gr < TRAGUARDO; gr += 5) {
       var y = (gr / TRAGUARDO) * 100;
       area.appendChild(el("div", { style: "position:absolute;left:0;right:0;bottom:" + y + "%;height:1px;background:rgba(255,255,255,.1);pointer-events:none;z-index:1" }));
@@ -8592,7 +8592,6 @@ window.SG_SIPERO = {
       if (outDots) outDots[i] = dot;
       pedina.appendChild(dot);
       col.appendChild(pedina);
-      col.appendChild(el("div", { style: "position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:.66rem;font-weight:700;color:" + g.colore + ";text-shadow:0 1px 2px rgba(0,0,0,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px", text: g.nome }));
       area.appendChild(col);
       if (scelte) {
         // 1) subito: mostra il numero in testa (neutro)
@@ -8605,6 +8604,12 @@ window.SG_SIPERO = {
       }
     });
     wrap.appendChild(area);
+    // i nomi in una fascia sotto le corsie, così il pallino a gradino 0 non li copre
+    var nomi = el("div", { style: "position:absolute;left:8px;right:8px;bottom:7px;display:flex;gap:6px" });
+    gioc.forEach(function (g) {
+      nomi.appendChild(el("div", { style: "flex:1;text-align:center;font-size:.68rem;font-weight:700;color:" + g.colore + ";text-shadow:0 1px 2px rgba(0,0,0,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px", text: g.nome }));
+    });
+    wrap.appendChild(nomi);
     return wrap;
   }
 
