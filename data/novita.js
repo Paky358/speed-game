@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 34,
+    data: "12 settembre 2026",
+    titolo: "Glow Hockey più fluido: collegamento realtime dedicato ⚡",
+    descrizione: [
+      "Il disco lato ospite andava a scatti sul collegamento gratuito condiviso. Ora Glow Hockey usa un collegamento realtime dedicato (a bassa latenza), più veloce e costante.",
+      "Aggiunta anche l'interpolazione con buffer: il movimento è liscio anche se i pacchetti arrivano irregolari.",
+      "Gli altri giochi restano sul collegamento di prima (per loro va benissimo). Se il realtime non è disponibile, l'hockey torna da solo al collegamento normale."
+    ]
+  },
+  {
     v: 33,
     data: "12 settembre 2026",
     titolo: "Nuovo gioco: Glow Hockey 🏒 (online, in due)",

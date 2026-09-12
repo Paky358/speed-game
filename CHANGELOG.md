@@ -4,6 +4,18 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 12 settembre 2026 (2) — Glow Hockey su Ably (realtime a bassa latenza)
+- **Collegamento realtime dedicato (Ably)** per Glow Hockey: nuovo `js/net-ably.js`
+  (`SGNetA`, stessa interfaccia di SGNet — ospita/entra/invia/inviaVeloce) sopra Ably.
+  Molto più veloce e costante del broker MQTT pubblico → niente più scatti del disco.
+- Chiave in `js/ably-key.js` (limitata publish/subscribe/presence, piano gratis). SDK da
+  `cdn.ably.com/lib/ably.min-2.js`. Se Ably/chiave mancano, l'hockey **torna da solo**
+  su MQTT (`scegliNet()`), quindi nessun rischio.
+- **Interpolazione con buffer** lato ospite (~100ms di ritardo di rendering) già introdotta:
+  movimento liscio anche con pacchetti irregolari.
+- Gli altri giochi restano su MQTT (adeguato al loro ritmo turn-based). Verificato
+  end-to-end su Ably (lobby, join, streaming disco/racchette).
+
 ## 12 settembre 2026 — Nuovo gioco: Glow Hockey 🏒 (online, in tempo reale)
 - **Nuovo gioco** air hockey 1v1, solo online (ognuno dal suo telefono). HTML5 Canvas.
 - **Host-autoritativo**: l'host calcola la fisica del disco a ~60fps ed è la fonte di

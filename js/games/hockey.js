@@ -167,12 +167,20 @@
     cv.addEventListener("pointercancel", function () { giu = false; });
   }
 
+  // sceglie il collegamento: Ably (bassa latenza) se c'è, altrimenti MQTT
+  function scegliNet() {
+    if (window.SGNetA && SGNetA.disponibile()) return SGNetA;
+    if (window.SGNet && SGNet.disponibile()) return SGNet;
+    return null;
+  }
+
   // ---------- HOST ----------
   function hostHK(t) {
-    if (!(window.SGNet && SGNet.disponibile())) return senzaReteHK(t);
+    var NET = scegliNet();
+    if (!NET) return senzaReteHK(t);
     var st = statoNuovo();
     var vista = null, C = null, raf = null, ultimoInvio = 0, ultimoT = 0, acc = 0;
-    var rete = SGNet.ospita("hockey", {
+    var rete = NET.ospita("hockey", {
       onCodice: function (c) { st.codice = c; render(); },
       onConnesso: function () { st.pronta = true; render(); },
       onAddio: function (id) { if (id === st.avvId) { st.avvId = null; if (st.fase !== "lobby") { st.fase = "lobby"; stop(); } render(); } },
@@ -244,12 +252,13 @@
 
   // ---------- OSPITE ----------
   function ospiteHK(t, codice) {
-    if (!(window.SGNet && SGNet.disponibile())) return senzaReteHK(t);
+    var NET = scegliNet();
+    if (!NET) return senzaReteHK(t);
     var el = t.el;
     var S = { rete: null, vm: null, buf: [], me: { x: 0.5, y: 0.18 }, fase: "collega", vista: null, C: null, raf: null, ultimoInvio: 0 };
     collega();
     function collega() {
-      S.rete = SGNet.entra(codice, {
+      S.rete = NET.entra(codice, {
         onAperto: function (id) { S.rete.invia({ t: "join" }); render(); },
         onMsg: function (m) { if (m && m.t === "g") {
           S.vm = m; var now = performance.now();

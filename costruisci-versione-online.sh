@@ -24,11 +24,14 @@ OUT=dist/index.html
   echo '<form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>'
   echo '<form name="bug" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea><input type="text" name="contesto" /></form>'
   echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>'
+  echo '<script src="https://cdn.ably.com/lib/ably.min-2.js"></script>'
   echo '<script>'
   cat js/core.js
   echo ''
   cat js/net.js
   echo ''
+  [ -e js/ably-key.js ] && { cat js/ably-key.js; echo ''; }
+  [ -e js/net-ably.js ] && { cat js/net-ably.js; echo ''; }
   for f in data/*.js; do [ -e "$f" ] && { cat "$f"; echo ''; }; done
   for f in js/games/*.js; do [ -e "$f" ] && { cat "$f"; echo ''; }; done
   echo 'SG.avviaApp();'

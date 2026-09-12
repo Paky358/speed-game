@@ -77,9 +77,11 @@ dal proprio.
   telefono). Uno apre la stanza, l'altro entra col codice; si muove la racchetta col
   dito nella propria metà (non oltre la metà campo) e si segna nella porta avversaria,
   primo a 7. Host-autoritativo: la fisica del disco gira sul telefono di chi apre la
-  stanza (fonte di verità a ~60fps) e l'altro estrapola per attenuare il lag — un filo
-  di ritardo lato ospite resta (limite del broker pubblico). Canvas, coordinate
-  normalizzate. Grafica ancora essenziale (da rifinire in stile neon).
+  stanza (fonte di verità a ~60fps) e l'altro interpola con buffer (~100ms) per un
+  movimento liscio. Usa un **collegamento realtime dedicato (Ably)** a bassa latenza
+  (`js/net-ably.js`; chiave in `js/ably-key.js`), con ritorno automatico a MQTT se non
+  disponibile. Canvas, coordinate normalizzate. Grafica ancora essenziale (da rifinire
+  in stile neon).
 
 ## Torneo (più giochi di fila)
 Dalla home, tasto **🏆 Torneo**: si sceglie una volta il gruppo e si giocano più
