@@ -56,7 +56,8 @@
       s1: 0, s2: 0, vincitore: null, golT: 0,
       px: 0.5, py: ASP / 2, pvx: 0, pvy: 0,
       hx: 0.5, hy: ASP - 0.18, hpx: 0.5, hpy: ASP - 0.18,   // racchetta host (basso)
-      gx: 0.5, gy: 0.18, gpx: 0.5, gpy: 0.18 };              // racchetta ospite (alto)
+      gx: 0.5, gy: 0.18, gpx: 0.5, gpy: 0.18,               // racchetta ospite (alto), mostrata
+      gtx: 0.5, gty: 0.18 };                                  // …e il suo "bersaglio" (ultima ricevuta)
   }
   function servi(st, verso) {
     st.px = 0.5; st.py = ASP / 2; var a = (Math.random() - 0.5) * 0.6;
@@ -201,7 +202,7 @@
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") { if (!st.avvId) st.avvId = id; render(); }
-        else if (m.t === "p" && id === st.avvId) { st.gx = clamp(m.x, RPAD, 1 - RPAD); st.gy = clamp(m.y, RPAD, ASP / 2 - RPAD); }
+        else if (m.t === "p" && id === st.avvId) { st.gtx = clamp(m.x, RPAD, 1 - RPAD); st.gty = clamp(m.y, RPAD, ASP / 2 - RPAD); }
       },
       onErrore: function () { senzaReteHK(t); }
     });
@@ -213,6 +214,10 @@
       var dt = ultimoT ? (now - ultimoT) / 1000 : 0.016; ultimoT = now;
       if (dt > 0.1) dt = 0.1;
       if (st.fase === "gol" && now - st.golT > 1200) { st.fase = "gioco"; }
+      // ammorbidisci la racchetta AVVERSARIA: scivola verso l'ultima posizione ricevuta
+      // (niente scatti sul mio schermo, e il colpo sul disco risulta più fluido)
+      var kg = 1 - Math.exp(-dt / 0.09); // smorzamento forte (~90ms), indipendente dal frame-rate
+      st.gx += (st.gtx - st.gx) * kg; st.gy += (st.gty - st.gy) * kg;
       // velocità racchette (una volta per frame), per la spinta sul disco
       var fdt = Math.max(0.004, dt);
       st._hvx = (st.hx - st.hpx) / fdt; st._hvy = (st.hy - st.hpy) / fdt;
@@ -286,8 +291,8 @@
       var dt = S.lastT ? Math.min(0.05, (now - S.lastT) / 1000) : 0.016; S.lastT = now;
       if (!S.L) S.L = { px: vm.px, py: vm.py, pvx: vm.pvx, pvy: vm.pvy, hx: vm.hx, hy: vm.hy, gx: S.me.x, gy: S.me.y, _gvx: 0, _gvy: 0 };
       var L = S.L;
-      // racchetta avversaria (host): insegue veloce
-      L.hx += (vm.hx - L.hx) * 0.5; L.hy += (vm.hy - L.hy) * 0.5;
+      // racchetta avversaria (host): scivola morbida verso l'ultima posizione (anti-scatto)
+      var kh = 1 - Math.exp(-dt / 0.09); L.hx += (vm.hx - L.hx) * kh; L.hy += (vm.hy - L.hy) * kh;
       // la mia racchetta: istantanea + velocità (per la spinta)
       L._gvx = (S.me.x - S.pmex) / Math.max(0.004, dt); L._gvy = (S.me.y - S.pmey) / Math.max(0.004, dt);
       S.pmex = S.me.x; S.pmey = S.me.y; L.gx = S.me.x; L.gy = S.me.y;

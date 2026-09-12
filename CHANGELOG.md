@@ -4,6 +4,12 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 12 settembre 2026 (4) — Glow Hockey: racchetta avversaria fluida (anti-scatto)
+- La **racchetta dell'avversario** ora **scivola** dolcemente verso l'ultima posizione
+  ricevuta invece di saltarci (smorzamento con costante di tempo ~90ms, indipendente dal
+  frame-rate), sia sul lato host che ospite. Toglie gli scatti visibili anche a chi apre
+  la stanza; anche il colpo dell'avversario sul disco risulta più fluido.
+
 ## 12 settembre 2026 (3) — Glow Hockey: predizione lato ospite (colpi istantanei)
 - L'ospite ora **simula il disco in locale** (client-side prediction): quando colpisce,
   la reazione è **immediata**, senza aspettare l'host. Il disco locale si **riallinea
