@@ -88,7 +88,7 @@
       fase: "voto", cats: pesca(3), categoria: null,
       players: giocatori.map(function (g) { return { id: g.id, nome: g.nome, colore: g.colore, eliminato: false, voto: null }; }),
       holder: null, prev: null, ultimo: null, giro: [], round: 0, ts: 0, boom: null, vincitore: null,
-      remaining: 0, cap: 15000, passaggi: 0, remPrima: null, eliminati: []
+      remaining: 0, cap: 15000, passaggi: 0, remPrima: null, giroPrima: [], eliminati: []
     };
     function pById(id) { for (var i = 0; i < st.players.length; i++) if (st.players[i].id === id) return st.players[i]; return null; }
     function vivi() { return st.players.filter(function (p) { return !p.eliminato; }); }
@@ -147,10 +147,11 @@
       passa: function (fromId, targetId) {
         aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder) return;
         var tgt = pById(targetId); if (!tgt || tgt.eliminato || targetId === st.holder) return;
-        if (st.giro.indexOf(targetId) >= 0) return;
+        if (st.giro.indexOf(targetId) >= 0 && targetId !== st.ultimo) return;  // a "l'ultimo" si può sempre ridare
         st.remPrima = st.remaining;             // per l'eventuale "rimanda indietro"
         st.passaggi++; st.cap = capMs(st.passaggi); st.remaining = st.cap;  // riceve -> timer riparte
         st.ultimo = st.holder;                  // a chi la teneva prima la puoi sempre ridare
+        st.giroPrima = st.giro.slice();         // per ripristinarlo con "rimanda indietro"
         st.prev = st.holder; st.holder = targetId; st.giro.push(targetId);
         if (st.giro.length >= vivi().length) st.giro = [targetId];
         st.ts = Date.now(); onCambio();
@@ -162,7 +163,8 @@
         st.passaggi = Math.max(0, st.passaggi - 1); st.cap = capMs(st.passaggi);
         if (st.remPrima != null) st.remaining = st.remPrima;
         st.ultimo = st.holder;                  // chi ha rimandato indietro: gli si può ridare subito
-        var back = st.prev; st.prev = null; st.holder = back; st.giro = [back]; st.ts = Date.now(); onCambio();
+        // NON si resetta il giro: si ripristina com'era prima del passaggio annullato
+        var back = st.prev; st.prev = null; st.holder = back; st.giro = st.giroPrima ? st.giroPrima.slice() : st.giro; st.ts = Date.now(); onCambio();
       },
       rimuovi: function (id) {
         var p = pById(id); if (!p) return; p.eliminato = true; if (st.eliminati.indexOf(id) < 0) st.eliminati.push(id);
