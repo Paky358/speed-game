@@ -81,11 +81,14 @@ dal proprio.
   movimento liscio; se un pacchetto tarda, il disco viene **estrapolato** col suo vettore
   velocità (max 70ms) invece di congelarsi (anti-scatto). La racchetta dell'ospite, sull'host,
   è smorzata solo **~30ms** (prima 70): così i colpi dell'ospite arrivano sul disco e la
-  collisione parte davvero. Usa un **collegamento realtime dedicato (Ably)** a bassa latenza
-  (`js/net-ably.js`; chiave in `js/ably-key.js`), con ritorno automatico a MQTT se non
-  disponibile. Canvas, coordinate normalizzate. Grafica ancora essenziale (da rifinire
-  in stile neon). **Limite noto**: anche su stessa Wi-Fi il traffico passa da Ably (internet)
-  → resta un filo di RTT; per il massimo sulla stessa rete servirebbe un **P2P WebRTC** diretto.
+  collisione parte davvero. **Collegamenti (dal più veloce): P2P diretto → Ably → MQTT.**
+  Il **P2P** (`js/net-p2p.js`, `SGNetP2P`) collega i due telefoni **direttamente** via WebRTC
+  DataChannel (`ordered:true, maxRetransmits:0`): sulla **stessa rete** la latenza crolla a pochi
+  ms. Usa **Ably solo per presentarsi** (offer/answer/ICE) e come **ripiego automatico**: se il
+  canale diretto non si apre (reti diverse, firewall) il gioco resta su Ably, esattamente come
+  prima. STUN pubblici Google, niente TURN. Ably: `js/net-ably.js`, chiave in `js/ably-key.js`.
+  Durante la partita un indicatore mostra "⚡ diretto" o "🌐 via internet" (callback `onCanale`).
+  Canvas, coordinate normalizzate. Grafica ancora essenziale (da rifinire in stile neon).
 
 ## Torneo (più giochi di fila)
 Dalla home, tasto **🏆 Torneo**: si sceglie una volta il gruppo e si giocano più

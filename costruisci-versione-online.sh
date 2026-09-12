@@ -32,6 +32,7 @@ OUT=dist/index.html
   echo ''
   [ -e js/ably-key.js ] && { cat js/ably-key.js; echo ''; }
   [ -e js/net-ably.js ] && { cat js/net-ably.js; echo ''; }
+  [ -e js/net-p2p.js ] && { cat js/net-p2p.js; echo ''; }
   for f in data/*.js; do [ -e "$f" ] && { cat "$f"; echo ''; }; done
   for f in js/games/*.js; do [ -e "$f" ] && { cat "$f"; echo ''; }; done
   echo 'SG.avviaApp();'

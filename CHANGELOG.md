@@ -4,6 +4,20 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (2) — Glow Hockey: modalità "stessa rete" (P2P WebRTC) + fix lobby ospite
+- Nuovo trasporto **`SGNetP2P`** (`js/net-p2p.js`): collegamento **diretto telefono-a-telefono**
+  via **WebRTC DataChannel** (`ordered:true, maxRetransmits:0` → basso ritardo, niente code né
+  scavalcamenti). Segnalazione (offer/answer/ICE) **solo su Ably** (niente MQTT, che trattiene i
+  messaggi); STUN pubblici Google, **niente TURN** (se il diretto non si fa, si resta su Ably).
+- `scegliNet()` in hockey ora preferisce P2P → Ably → MQTT. Stessa interfaccia, il gioco non cambia:
+  se il canale diretto è aperto il gioco viaggia lì, altrimenti passa da Ably (ripiego automatico).
+- **Indicatore live** sotto al campo: "⚡ diretto (stessa rete)" o "🌐 via internet" (callback
+  `onCanale`).
+- **Fix**: l'ospite restava su "Collegamento in corso…" perché l'host in lobby non gli inviava
+  nulla. Ora l'host fa `bcast` sullo `join` e l'ospite mostra "✅ Sei dentro!" già da `onAperto`.
+- Collaudato in locale (due schede, WebRTC loopback): canale "diretto" aperto su entrambi i lati,
+  messaggi host↔ospite scambiati sul canale diretto, zero errori.
+
 ## 13 settembre 2026 — Glow Hockey: colpi ospite più reattivi + disco più liscio
 - **Collisione ospite**: la racchetta avversaria sull'host era smorzata a ~70ms → il colpo
   dell'ospite arrivava sul disco in ritardo e spesso "mancava". Smorzamento ridotto a **~30ms**

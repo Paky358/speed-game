@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 37,
+    data: "13 settembre 2026",
+    titolo: "Glow Hockey: modalità \"stessa rete\" (collegamento diretto) ⚡",
+    descrizione: [
+      "Novità grossa: quando i due telefoni sono sulla stessa rete (o vicini), ora si collegano DIRETTAMENTE tra loro, senza far passare il gioco dal server. La latenza crolla: per chi entra, disco molto più fluido e colpi che finalmente contano.",
+      "Si attiva da sola: apri la stanza e invita come sempre. Durante la partita, sotto al campo, vedi il tipo di collegamento: \"⚡ diretto (stessa rete)\" oppure \"🌐 via internet\". Se il diretto non è possibile (reti diverse, firewall), si gioca lo stesso via internet come prima.",
+      "Corretto anche un difetto: chi veniva invitato restava su \"Collegamento in corso…\" senza vedere di essere entrato. Ora appena entra vede \"✅ Sei dentro! In attesa che l'host cominci\"."
+    ]
+  },
+  {
     v: 36,
     data: "13 settembre 2026",
     titolo: "Glow Hockey: i colpi dell'ospite contano di più 🏒",

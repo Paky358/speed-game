@@ -53,7 +53,7 @@
 
   // ---------- fisica (solo host) ----------
   function statoNuovo() {
-    return { fase: "lobby", codice: "…", pronta: false, avvId: null,
+    return { fase: "lobby", codice: "…", pronta: false, avvId: null, canale: "server",
       s1: 0, s2: 0, vincitore: null, golT: 0,
       px: 0.5, py: ASP / 2, pvx: 0, pvy: 0,
       hx: 0.5, hy: ASP - 0.18, hpx: 0.5, hpy: ASP - 0.18,   // racchetta host (basso)
@@ -168,11 +168,19 @@
     cv.addEventListener("pointercancel", function () { giu = false; });
   }
 
-  // sceglie il collegamento: Ably (bassa latenza) se c'è, altrimenti MQTT
+  // sceglie il collegamento, dal più veloce al più compatibile:
+  //  1) P2P diretto telefono-a-telefono (usa Ably solo per presentarsi, poi va diretto)
+  //  2) Ably (relay a bassa latenza)   3) MQTT (relay condiviso)
   function scegliNet() {
+    if (window.SGNetP2P && SGNetP2P.disponibile()) return SGNetP2P;
     if (window.SGNetA && SGNetA.disponibile()) return SGNetA;
     if (window.SGNet && SGNet.disponibile()) return SGNet;
     return null;
+  }
+  // testo dell'indicatore di collegamento (mostrato durante la partita)
+  function testoCanale(c) {
+    return c === "diretto" ? "⚡ Collegamento diretto (stessa rete) — velocissimo"
+                           : "🌐 Collegamento via internet";
   }
 
   // ---------- HOST ----------
@@ -184,10 +192,11 @@
     var rete = NET.ospita("hockey", {
       onCodice: function (c) { st.codice = c; render(); },
       onConnesso: function () { st.pronta = true; render(); },
+      onCanale: function (tipo) { st.canale = tipo; if (st._badge) st._badge.textContent = testoCanale(tipo); },
       onAddio: function (id) { if (id === st.avvId) { st.avvId = null; if (st.fase !== "lobby") { st.fase = "lobby"; stop(); } render(); } },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") { if (!st.avvId) st.avvId = id; render(); }
+        if (m.t === "join") { if (!st.avvId) st.avvId = id; render(); bcast(true); }
         else if (m.t === "p" && id === st.avvId) { st.gtx = clamp(m.x, RPAD, 1 - RPAD); st.gty = clamp(m.y, RPAD, ASP / 2 - RPAD); }
       },
       onErrore: function () { senzaReteHK(t); }
@@ -248,6 +257,8 @@
       } else {
         var sg = t.schermata({ icona: "🏒", titolo: "Glow Hockey", sotto: "Tu (blu) in basso · segna in alto", indietro: function () { stop(); rete.chiudi(); t.esci(); } });
         C = creaCanvas(t, sg);
+        st._badge = el("div", { class: "modulo-nota", style: "text-align:center;margin-top:6px;font-size:.78rem", text: testoCanale(st.canale) });
+        sg._contenuto.appendChild(st._badge);
         collegaInput(C.cv, C.cssW, false, "basso", function (x, y) { st.hx = x; st.hy = y; });
         t.mostra(sg);
         ultimoT = 0; raf = requestAnimationFrame(loop);
@@ -261,11 +272,12 @@
     var NET = scegliNet();
     if (!NET) return senzaReteHK(t);
     var el = t.el;
-    var S = { rete: null, vm: null, buf: [], me: { x: 0.5, y: 0.18 }, fase: "collega", vista: null, C: null, raf: null, ultimoInvio: 0 };
+    var S = { rete: null, vm: null, buf: [], me: { x: 0.5, y: 0.18 }, fase: "collega", vista: null, C: null, raf: null, ultimoInvio: 0, canale: "server", _badge: null, collegato: false };
     collega();
     function collega() {
       S.rete = NET.entra(codice, {
-        onAperto: function (id) { S.rete.invia({ t: "join" }); render(); },
+        onAperto: function (id) { S.collegato = true; S.rete.invia({ t: "join" }); render(); },
+        onCanale: function (tipo) { S.canale = tipo; if (S._badge) S._badge.textContent = testoCanale(tipo); },
         onMsg: function (m) { if (m && m.t === "g") {
           S.vm = m; var now = performance.now();
           if (m.fase === "gioco") { S.buf.push({ rt: now, px: m.px, py: m.py, pvx: m.pvx, pvy: m.pvy, hx: m.hx, hy: m.hy }); while (S.buf.length > 2 && S.buf[0].rt < now - 1000) S.buf.shift(); }
@@ -314,7 +326,7 @@
       S.vista = tipo; stop();
       if (tipo === "attesa") {
         var s = t.schermata({ icona: "🏒", titolo: "Glow Hockey", sotto: "Stanza " + codice.toUpperCase(), indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
-        s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:20px", text: S.vm ? "In attesa che l'host cominci…" : "Collegamento in corso…" }));
+        s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:20px", text: (S.collegato || S.vm) ? "✅ Sei dentro! In attesa che l'host cominci…" : "Collegamento in corso…" }));
         t.mostra(s);
       } else if (tipo === "fine") {
         var vinto = S.vm && S.vm.vincitore === 2;
@@ -325,6 +337,8 @@
       } else {
         var sg = t.schermata({ icona: "🏒", titolo: "Glow Hockey", sotto: "Tu (rosso) in basso · segna in alto", indietro: function () { stop(); if (S.rete) S.rete.chiudi(); t.esci(); } });
         S.C = creaCanvas(t, sg);
+        S._badge = el("div", { class: "modulo-nota", style: "text-align:center;margin-top:6px;font-size:.78rem", text: testoCanale(S.canale) });
+        sg._contenuto.appendChild(S._badge);
         collegaInput(S.C.cv, S.C.cssW, true, "alto", function (x, y) { S.me.x = x; S.me.y = y; });
         t.mostra(sg);
         S.buf = []; S.raf = requestAnimationFrame(loop);

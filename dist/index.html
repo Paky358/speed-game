@@ -1245,6 +1245,164 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
 })();
 
 /* =========================================================
+   COLLEGAMENTO "SGNetP2P" — diretto telefono-a-telefono (WebRTC)
+   Per la modalità "stessa connessione". I due telefoni si parlano
+   DIRETTAMENTE con un canale dati WebRTC, senza far passare il gioco
+   dal server: sulla stessa rete la latenza crolla a pochi millisecondi.
+   Il server (Ably) serve SOLO per "presentarsi" all'inizio (scambio di
+   offerta/risposta e degli indirizzi di rete, i "candidati" ICE) e come
+   RIPIEGO: finché il canale diretto non è aperto — o se non si apre mai
+   (reti diverse, firewall) — il gioco continua a passare da Ably, come
+   prima. Stessa interfaccia di SGNet/SGNetA, così i giochi non cambiano.
+   Nota: la segnalazione usa SOLO Ably (niente MQTT, che "trattiene" i
+   messaggi e rovinerebbe lo scambio). Senza Ably, disponibile() = false.
+   ========================================================= */
+(function () {
+  "use strict";
+
+  var RTC = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
+  // server STUN pubblici e gratuiti: servono solo a scoprire gli indirizzi di rete.
+  // NIENTE TURN: non vogliamo far rimbalzare il gioco su un server (costo + latenza);
+  // se il diretto non si può fare, si resta su Ably.
+  var ICE = { iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" }
+  ] };
+  // ordinato ma SENZA ritrasmissioni: niente attese (bassa latenza) e niente pacchetti
+  // che si scavalcano (l'ospite li interpola per ordine d'arrivo, non devono sballare).
+  var DC_OPT = { ordered: true, maxRetransmits: 0 };
+
+  function baseNet() { return (window.SGNetA && SGNetA.disponibile()) ? SGNetA : null; }
+
+  // pezzo comune host/ospite: gestisce la peer-connection, il canale dati,
+  // lo scambio dei segnali e lo scambio "diretto vs server".
+  function creaPonte(rete, ruolo, cb, inviaGiocoRelay) {
+    var pc = null, dc = null, diretto = false, avviato = false, chiuso = false, iceRimaste = [];
+
+    function sig(m) { m.p2p = m.p2p || "?"; try { (rete.inviaVeloce || rete.invia).call(rete, m); } catch (e) {} }
+
+    function collegaDC(canale) {
+      dc = canale;
+      dc.onopen = function () { if (chiuso) return; diretto = true; if (cb.onCanale) cb.onCanale("diretto"); };
+      dc.onclose = function () { if (diretto) { diretto = false; if (!chiuso && cb.onCanale) cb.onCanale("server"); } };
+      dc.onmessage = function (ev) { var m; try { m = JSON.parse(ev.data); } catch (e) { return; } if (cb.onMsg) cb.onMsg("peer", m); };
+    }
+
+    function nuovaPC() {
+      pc = new RTC(ICE);
+      pc.onicecandidate = function (e) { if (e.candidate) sig({ p2p: "ice", c: e.candidate }); };
+      pc.ondatachannel = function (e) { collegaDC(e.channel); };
+      pc.oniceconnectionstatechange = function () {
+        var s = pc && pc.iceConnectionState;
+        if (s === "failed") { /* niente diretto: si resta su Ably, gia' cosi' */ }
+      };
+      return pc;
+    }
+
+    // HOST: crea offerta + canale dati appena l'ospite si fa vivo
+    function avviaHost() {
+      if (avviato || chiuso) return; avviato = true;
+      try {
+        nuovaPC();
+        collegaDC(pc.createDataChannel("g", DC_OPT));
+        pc.createOffer().then(function (o) { return pc.setLocalDescription(o); })
+          .then(function () { sig({ p2p: "offer", sdp: pc.localDescription }); })
+          .catch(function () {});
+      } catch (e) {}
+    }
+
+    function segnale(m) {
+      try {
+        if (m.p2p === "offer") {           // lo riceve l'OSPITE
+          if (!pc) nuovaPC();
+          pc.setRemoteDescription(m.sdp)
+            .then(function () { svuotaIce(); return pc.createAnswer(); })
+            .then(function (a) { return pc.setLocalDescription(a); })
+            .then(function () { sig({ p2p: "answer", sdp: pc.localDescription }); })
+            .catch(function () {});
+        } else if (m.p2p === "answer") {   // lo riceve l'HOST
+          if (pc) pc.setRemoteDescription(m.sdp).then(svuotaIce).catch(function () {});
+        } else if (m.p2p === "ice") {
+          if (pc && pc.remoteDescription && pc.remoteDescription.type) pc.addIceCandidate(m.c).catch(function () {});
+          else iceRimaste.push(m.c);       // arrivato prima dell'offerta: lo tengo da parte
+        }
+      } catch (e) {}
+    }
+    function svuotaIce() { for (var i = 0; i < iceRimaste.length; i++) { try { pc.addIceCandidate(iceRimaste[i]).catch(function () {}); } catch (e) {} } iceRimaste = []; }
+
+    function chiudiPonte() { chiuso = true; try { if (dc) dc.close(); } catch (e) {} try { if (pc) pc.close(); } catch (e) {} dc = null; pc = null; diretto = false; }
+
+    return {
+      ruolo: ruolo,
+      avviaHost: avviaHost,
+      segnale: segnale,
+      eSegnale: function (m) { return m && !!m.p2p; },
+      diretto: function () { return diretto && dc && dc.readyState === "open"; },
+      inviaGioco: function (m) { if (this.diretto()) { try { dc.send(JSON.stringify(m)); return; } catch (e) {} } inviaGiocoRelay(m); },
+      chiudi: chiudiPonte
+    };
+  }
+
+  window.SGNetP2P = {
+    disponibile: function () { return !!RTC && !!baseNet(); },
+
+    // HOST. cb: { onCodice, onConnesso, onAddio(id), onMsg(id,msg), onErrore, onCanale("diretto"|"server") }
+    ospita: function (giocoId, cb) {
+      var B = baseNet();
+      if (!RTC || !B) { cb.onErrore && cb.onErrore({ type: "no-p2p" }); return null; }
+      var rete, ponte;
+      rete = B.ospita(giocoId, {
+        onCodice: function (c) { cb.onCodice && cb.onCodice(c); },
+        onConnesso: function () { cb.onConnesso && cb.onConnesso(); },
+        onAddio: function (id) { if (ponte) ponte.chiudi(); cb.onAddio && cb.onAddio(id); },
+        onErrore: function (e) { cb.onErrore && cb.onErrore(e); },
+        onMsg: function (id, m) {
+          if (!m) return;
+          if (ponte.eSegnale(m)) { ponte.segnale(m); return; }
+          ponte.avviaHost();                               // primo messaggio dell'ospite -> tratta il diretto
+          if (!ponte.diretto()) cb.onMsg && cb.onMsg(id, m); // finché non c'e' il diretto, i msg arrivano da Ably
+        }
+      });
+      ponte = creaPonte(rete, "host", {
+        onMsg: function (_id, m) { cb.onMsg && cb.onMsg("guest", m); },   // messaggi che arrivano dal canale diretto
+        onCanale: function (t) { cb.onCanale && cb.onCanale(t); }
+      }, function (m) { rete.invia(m); });
+      return {
+        invia: function (m) { ponte.inviaGioco(m); },
+        inviaVeloce: function (m) { if (ponte.diretto()) ponte.inviaGioco(m); else (rete.inviaVeloce || rete.invia).call(rete, m); },
+        inviaA: function (id, m) { ponte.inviaGioco(m); },
+        chiudi: function () { if (ponte) ponte.chiudi(); try { rete.chiudi(); } catch (e) {} }
+      };
+    },
+
+    // OSPITE. cb: { onAperto(id), onMsg(msg), onChiuso, onErrore, onCanale }
+    entra: function (cod, cb) {
+      var B = baseNet();
+      if (!RTC || !B) { cb.onErrore && cb.onErrore({ type: "no-p2p" }); return null; }
+      var rete, ponte;
+      rete = B.entra(cod, {
+        onAperto: function (id) { cb.onAperto && cb.onAperto(id); },
+        onChiuso: function () { if (ponte) ponte.chiudi(); cb.onChiuso && cb.onChiuso(); },
+        onErrore: function (e) { cb.onErrore && cb.onErrore(e); },
+        onMsg: function (m) {
+          if (!m) return;
+          if (ponte.eSegnale(m)) { ponte.segnale(m); return; }
+          if (!ponte.diretto()) cb.onMsg && cb.onMsg(m);
+        }
+      });
+      ponte = creaPonte(rete, "ospite", {
+        onMsg: function (_id, m) { cb.onMsg && cb.onMsg(m); },
+        onCanale: function (t) { cb.onCanale && cb.onCanale(t); }
+      }, function (m) { rete.invia(m); });
+      return {
+        invia: function (m) { ponte.inviaGioco(m); },
+        chiudi: function () { if (ponte) ponte.chiudi(); try { rete.chiudi(); } catch (e) {} }
+      };
+    }
+  };
+})();
+
+/* =========================================================
    DATI — Tema "Il Primo Appuntamento" per il gioco "L'Asta"
    4 round, carte divise in tre fasce: A (le migliori),
    B (medie), C (scarti).
@@ -5712,6 +5870,16 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 37,
+    data: "13 settembre 2026",
+    titolo: "Glow Hockey: modalità \"stessa rete\" (collegamento diretto) ⚡",
+    descrizione: [
+      "Novità grossa: quando i due telefoni sono sulla stessa rete (o vicini), ora si collegano DIRETTAMENTE tra loro, senza far passare il gioco dal server. La latenza crolla: per chi entra, disco molto più fluido e colpi che finalmente contano.",
+      "Si attiva da sola: apri la stanza e invita come sempre. Durante la partita, sotto al campo, vedi il tipo di collegamento: \"⚡ diretto (stessa rete)\" oppure \"🌐 via internet\". Se il diretto non è possibile (reti diverse, firewall), si gioca lo stesso via internet come prima.",
+      "Corretto anche un difetto: chi veniva invitato restava su \"Collegamento in corso…\" senza vedere di essere entrato. Ora appena entra vede \"✅ Sei dentro! In attesa che l'host cominci\"."
+    ]
+  },
+  {
     v: 36,
     data: "13 settembre 2026",
     titolo: "Glow Hockey: i colpi dell'ospite contano di più 🏒",
@@ -7567,7 +7735,7 @@ window.SG_SIPERO = {
 
   // ---------- fisica (solo host) ----------
   function statoNuovo() {
-    return { fase: "lobby", codice: "…", pronta: false, avvId: null,
+    return { fase: "lobby", codice: "…", pronta: false, avvId: null, canale: "server",
       s1: 0, s2: 0, vincitore: null, golT: 0,
       px: 0.5, py: ASP / 2, pvx: 0, pvy: 0,
       hx: 0.5, hy: ASP - 0.18, hpx: 0.5, hpy: ASP - 0.18,   // racchetta host (basso)
@@ -7682,11 +7850,19 @@ window.SG_SIPERO = {
     cv.addEventListener("pointercancel", function () { giu = false; });
   }
 
-  // sceglie il collegamento: Ably (bassa latenza) se c'è, altrimenti MQTT
+  // sceglie il collegamento, dal più veloce al più compatibile:
+  //  1) P2P diretto telefono-a-telefono (usa Ably solo per presentarsi, poi va diretto)
+  //  2) Ably (relay a bassa latenza)   3) MQTT (relay condiviso)
   function scegliNet() {
+    if (window.SGNetP2P && SGNetP2P.disponibile()) return SGNetP2P;
     if (window.SGNetA && SGNetA.disponibile()) return SGNetA;
     if (window.SGNet && SGNet.disponibile()) return SGNet;
     return null;
+  }
+  // testo dell'indicatore di collegamento (mostrato durante la partita)
+  function testoCanale(c) {
+    return c === "diretto" ? "⚡ Collegamento diretto (stessa rete) — velocissimo"
+                           : "🌐 Collegamento via internet";
   }
 
   // ---------- HOST ----------
@@ -7698,10 +7874,11 @@ window.SG_SIPERO = {
     var rete = NET.ospita("hockey", {
       onCodice: function (c) { st.codice = c; render(); },
       onConnesso: function () { st.pronta = true; render(); },
+      onCanale: function (tipo) { st.canale = tipo; if (st._badge) st._badge.textContent = testoCanale(tipo); },
       onAddio: function (id) { if (id === st.avvId) { st.avvId = null; if (st.fase !== "lobby") { st.fase = "lobby"; stop(); } render(); } },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") { if (!st.avvId) st.avvId = id; render(); }
+        if (m.t === "join") { if (!st.avvId) st.avvId = id; render(); bcast(true); }
         else if (m.t === "p" && id === st.avvId) { st.gtx = clamp(m.x, RPAD, 1 - RPAD); st.gty = clamp(m.y, RPAD, ASP / 2 - RPAD); }
       },
       onErrore: function () { senzaReteHK(t); }
@@ -7762,6 +7939,8 @@ window.SG_SIPERO = {
       } else {
         var sg = t.schermata({ icona: "🏒", titolo: "Glow Hockey", sotto: "Tu (blu) in basso · segna in alto", indietro: function () { stop(); rete.chiudi(); t.esci(); } });
         C = creaCanvas(t, sg);
+        st._badge = el("div", { class: "modulo-nota", style: "text-align:center;margin-top:6px;font-size:.78rem", text: testoCanale(st.canale) });
+        sg._contenuto.appendChild(st._badge);
         collegaInput(C.cv, C.cssW, false, "basso", function (x, y) { st.hx = x; st.hy = y; });
         t.mostra(sg);
         ultimoT = 0; raf = requestAnimationFrame(loop);
@@ -7775,11 +7954,12 @@ window.SG_SIPERO = {
     var NET = scegliNet();
     if (!NET) return senzaReteHK(t);
     var el = t.el;
-    var S = { rete: null, vm: null, buf: [], me: { x: 0.5, y: 0.18 }, fase: "collega", vista: null, C: null, raf: null, ultimoInvio: 0 };
+    var S = { rete: null, vm: null, buf: [], me: { x: 0.5, y: 0.18 }, fase: "collega", vista: null, C: null, raf: null, ultimoInvio: 0, canale: "server", _badge: null, collegato: false };
     collega();
     function collega() {
       S.rete = NET.entra(codice, {
-        onAperto: function (id) { S.rete.invia({ t: "join" }); render(); },
+        onAperto: function (id) { S.collegato = true; S.rete.invia({ t: "join" }); render(); },
+        onCanale: function (tipo) { S.canale = tipo; if (S._badge) S._badge.textContent = testoCanale(tipo); },
         onMsg: function (m) { if (m && m.t === "g") {
           S.vm = m; var now = performance.now();
           if (m.fase === "gioco") { S.buf.push({ rt: now, px: m.px, py: m.py, pvx: m.pvx, pvy: m.pvy, hx: m.hx, hy: m.hy }); while (S.buf.length > 2 && S.buf[0].rt < now - 1000) S.buf.shift(); }
@@ -7828,7 +8008,7 @@ window.SG_SIPERO = {
       S.vista = tipo; stop();
       if (tipo === "attesa") {
         var s = t.schermata({ icona: "🏒", titolo: "Glow Hockey", sotto: "Stanza " + codice.toUpperCase(), indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
-        s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:20px", text: S.vm ? "In attesa che l'host cominci…" : "Collegamento in corso…" }));
+        s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:20px", text: (S.collegato || S.vm) ? "✅ Sei dentro! In attesa che l'host cominci…" : "Collegamento in corso…" }));
         t.mostra(s);
       } else if (tipo === "fine") {
         var vinto = S.vm && S.vm.vincitore === 2;
@@ -7839,6 +8019,8 @@ window.SG_SIPERO = {
       } else {
         var sg = t.schermata({ icona: "🏒", titolo: "Glow Hockey", sotto: "Tu (rosso) in basso · segna in alto", indietro: function () { stop(); if (S.rete) S.rete.chiudi(); t.esci(); } });
         S.C = creaCanvas(t, sg);
+        S._badge = el("div", { class: "modulo-nota", style: "text-align:center;margin-top:6px;font-size:.78rem", text: testoCanale(S.canale) });
+        sg._contenuto.appendChild(S._badge);
         collegaInput(S.C.cv, S.C.cssW, true, "alto", function (x, y) { S.me.x = x; S.me.y = y; });
         t.mostra(sg);
         S.buf = []; S.raf = requestAnimationFrame(loop);
