@@ -28,11 +28,12 @@
       client.connection.on("failed", function (e) { cb.onErrore && cb.onErrore({ type: "ably", message: e && e.reason && e.reason.message }); });
       ch.subscribe("g", function (msg) { cb.onMsg && cb.onMsg((msg && msg.clientId) || "guest", msg.data); });
       ch.presence.subscribe("leave", function (m) { cb.onAddio && cb.onAddio((m && m.clientId) || "guest"); });
+      function pub(ev, m) { try { var p = ch.publish(ev, m); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
       return {
-        invia: function (m) { try { ch.publish("h", m); } catch (e) {} },
-        inviaVeloce: function (m) { try { ch.publish("h", m); } catch (e) {} },
-        inviaA: function (id, m) { this.invia(m); },
-        chiudi: function () { try { ch.publish("h", { t: "__hostgone" }); } catch (e) {} try { client.close(); } catch (e) {} }
+        invia: function (m) { pub("h", m); },
+        inviaVeloce: function (m) { pub("h", m); },
+        inviaA: function (id, m) { pub("h", m); },
+        chiudi: function () { pub("h", { t: "__hostgone" }); try { client.close(); } catch (e) {} }
       };
     },
 
@@ -48,13 +49,14 @@
         cb.onMsg && cb.onMsg(msg.data);
       });
       client.connection.on("connected", function () {
-        try { ch.presence.enter(); } catch (e) {}
+        try { var pe = ch.presence.enter(); if (pe && pe.catch) pe.catch(function () {}); } catch (e) {}
         if (!aperto) { aperto = true; cb.onAperto && cb.onAperto(myId); }
       });
       client.connection.on("failed", function () { cb.onErrore && cb.onErrore({ type: "ably" }); });
       return {
-        invia: function (m) { try { ch.publish("g", m); } catch (e) {} },
-        chiudi: function () { try { ch.presence.leave(); } catch (e) {} try { client.close(); } catch (e) {} }
+        invia: function (m) { try { var p = ch.publish("g", m); if (p && p.catch) p.catch(function () {}); } catch (e) {} },
+        // niente presence.leave() esplicito: chiudendo il client, Ably rileva l'uscita da solo
+        chiudi: function () { try { client.close(); } catch (e) {} }
       };
     }
   };

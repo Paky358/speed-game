@@ -20,7 +20,6 @@
   var VINCI = 7;                 // gol per vincere
   var HZ = 22;                   // intervallo minimo fra invii (ms) ~45/sec
   var HSTEP = 1 / 120;           // passo fisso della fisica (sotto-step): collisioni solide
-  var INTERP = 0.10;             // ritardo di rendering lato ospite (s): disegna nel "passato" e interpola = niente scatti
 
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function inPorta(x) { return x > 0.5 - GOALW / 2 && x < 0.5 + GOALW / 2; }
@@ -101,6 +100,21 @@
     if (st.py < RP) { if (inPorta(st.px)) return onGol(1); st.py = RP; st.pvy = Math.abs(st.pvy) * REST; }
     if (st.py > ASP - RP) { if (inPorta(st.px)) return onGol(2); st.py = ASP - RP; st.pvy = -Math.abs(st.pvy) * REST; }
     var sp = Math.hypot(st.pvx, st.pvy); if (sp > MAXV) { st.pvx *= MAXV / sp; st.pvy *= MAXV / sp; }
+  }
+
+  // passo di fisica LOCALE per l'ospite (predizione): come passo(), ma senza gol
+  // (i gol li decide l'host) — le pareti alte/basse fanno solo rimbalzare.
+  function passoLocale(L, dt) {
+    var prevx = L.px, prevy = L.py;
+    L.px += L.pvx * dt; L.py += L.pvy * dt;
+    var f = Math.exp(-0.45 * dt); L.pvx *= f; L.pvy *= f;
+    collide(L, prevx, prevy, L.gx, L.gy, L._gvx || 0, L._gvy || 0);  // la mia racchetta (istantanea)
+    collide(L, prevx, prevy, L.hx, L.hy, 0, 0);                       // racchetta avversaria
+    if (L.px < RP) { L.px = RP; L.pvx = Math.abs(L.pvx) * REST; }
+    if (L.px > 1 - RP) { L.px = 1 - RP; L.pvx = -Math.abs(L.pvx) * REST; }
+    if (L.py < RP) { L.py = RP; L.pvy = Math.abs(L.pvy) * REST; }
+    if (L.py > ASP - RP) { L.py = ASP - RP; L.pvy = -Math.abs(L.pvy) * REST; }
+    var sp = Math.hypot(L.pvx, L.pvy); if (sp > MAXV) { L.pvx *= MAXV / sp; L.pvy *= MAXV / sp; }
   }
 
   // ---------- disegno (host e ospite) ----------
@@ -255,17 +269,12 @@
     var NET = scegliNet();
     if (!NET) return senzaReteHK(t);
     var el = t.el;
-    var S = { rete: null, vm: null, buf: [], me: { x: 0.5, y: 0.18 }, fase: "collega", vista: null, C: null, raf: null, ultimoInvio: 0 };
+    var S = { rete: null, vm: null, tRecv: 0, me: { x: 0.5, y: 0.18 }, L: null, pmex: 0.5, pmey: 0.18, lastT: 0, fase: "collega", vista: null, C: null, raf: null, ultimoInvio: 0 };
     collega();
     function collega() {
       S.rete = NET.entra(codice, {
         onAperto: function (id) { S.rete.invia({ t: "join" }); render(); },
-        onMsg: function (m) { if (m && m.t === "g") {
-          S.vm = m; var now = performance.now();
-          S.buf.push({ rt: now, px: m.px, py: m.py, hx: m.hx, hy: m.hy });
-          while (S.buf.length > 2 && S.buf[0].rt < now - 1000) S.buf.shift();
-          if (m.fase !== S.fase) { S.fase = m.fase; render(); }
-        } },
+        onMsg: function (m) { if (m && m.t === "g") { S.vm = m; S.tRecv = performance.now(); if (m.fase !== S.fase) { S.fase = m.fase; render(); } } },
         onChiuso: function () { stop(); erroreHK(t, "Collegamento perso. L'host ha chiuso la partita."); },
         onErrore: function () { stop(); erroreHK(t, "Problema di collegamento. Riprova."); }
       });
@@ -274,23 +283,27 @@
     function loop(now) {
       S.raf = requestAnimationFrame(loop);
       var vm = S.vm; if (!vm || !S.C) return;
-      // INTERPOLAZIONE: disegna disco e racchetta avversaria ~INTERP s nel passato,
-      // interpolando fra i due stati ricevuti attorno a quel momento = movimento liscio.
-      var b = S.buf, px, py, hx, hy;
-      if (b.length === 0) { px = vm.px; py = vm.py; hx = vm.hx; hy = vm.hy; }
-      else {
-        var rt = now - INTERP * 1000;
-        if (rt <= b[0].rt) { px = b[0].px; py = b[0].py; hx = b[0].hx; hy = b[0].hy; }
-        else if (rt >= b[b.length - 1].rt) {
-          var L = b[b.length - 1], over = Math.min(0.05, (rt - L.rt) / 1000);
-          px = clamp(L.px + vm.pvx * over, RP, 1 - RP); py = clamp(L.py + vm.pvy * over, RP, ASP - RP); hx = L.hx; hy = L.hy;
-        } else {
-          var i = b.length - 2; while (i > 0 && b[i].rt > rt) i--;
-          var A = b[i], D = b[i + 1], f = (rt - A.rt) / Math.max(1, D.rt - A.rt);
-          px = A.px + (D.px - A.px) * f; py = A.py + (D.py - A.py) * f; hx = A.hx + (D.hx - A.hx) * f; hy = A.hy + (D.hy - A.hy) * f;
-        }
+      var dt = S.lastT ? Math.min(0.05, (now - S.lastT) / 1000) : 0.016; S.lastT = now;
+      if (!S.L) S.L = { px: vm.px, py: vm.py, pvx: vm.pvx, pvy: vm.pvy, hx: vm.hx, hy: vm.hy, gx: S.me.x, gy: S.me.y, _gvx: 0, _gvy: 0 };
+      var L = S.L;
+      // racchetta avversaria (host): insegue veloce
+      L.hx += (vm.hx - L.hx) * 0.5; L.hy += (vm.hy - L.hy) * 0.5;
+      // la mia racchetta: istantanea + velocità (per la spinta)
+      L._gvx = (S.me.x - S.pmex) / Math.max(0.004, dt); L._gvy = (S.me.y - S.pmey) / Math.max(0.004, dt);
+      S.pmex = S.me.x; S.pmey = S.me.y; L.gx = S.me.x; L.gy = S.me.y;
+      if (vm.fase !== "gioco") {
+        // gol/fine: segui l'host, niente predizione
+        L.px = vm.px; L.py = vm.py; L.pvx = vm.pvx; L.pvy = vm.pvy;
+      } else {
+        // PREDIZIONE: simulo il disco in locale (reagisce subito ai miei colpi)…
+        passoLocale(L, dt);
+        // …e riallineo dolcemente con l'host (autorità), estrapolato a "adesso"
+        var age = Math.min(0.2, (now - S.tRecv) / 1000);
+        var ax = vm.px + vm.pvx * age, ay = vm.py + vm.pvy * age;
+        if (Math.hypot(ax - L.px, ay - L.py) > 0.28) { L.px = ax; L.py = ay; L.pvx = vm.pvx; L.pvy = vm.pvy; }
+        else { L.px += (ax - L.px) * 0.10; L.py += (ay - L.py) * 0.10; L.pvx += (vm.pvx - L.pvx) * 0.06; L.pvy += (vm.pvy - L.pvy) * 0.06; }
       }
-      var o = { fase: vm.fase, px: px, py: py, hx: hx, hy: hy, gx: S.me.x, gy: S.me.y, s1: vm.s1, s2: vm.s2 };
+      var o = { fase: vm.fase, px: L.px, py: L.py, hx: L.hx, hy: L.hy, gx: S.me.x, gy: S.me.y, s1: vm.s1, s2: vm.s2 };
       disegna(S.C.ctx, S.C.cssW, o, true);
       if (now - S.ultimoInvio > HZ) { S.ultimoInvio = now; S.rete.invia({ t: "p", x: S.me.x, y: S.me.y }); }
     }
@@ -314,7 +327,7 @@
         S.C = creaCanvas(t, sg);
         collegaInput(S.C.cv, S.C.cssW, true, "alto", function (x, y) { S.me.x = x; S.me.y = y; });
         t.mostra(sg);
-        S.raf = requestAnimationFrame(loop);
+        S.L = null; S.lastT = 0; S.raf = requestAnimationFrame(loop);
       }
     }
   }

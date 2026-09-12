@@ -4,6 +4,17 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 12 settembre 2026 (3) — Glow Hockey: predizione lato ospite (colpi istantanei)
+- L'ospite ora **simula il disco in locale** (client-side prediction): quando colpisce,
+  la reazione è **immediata**, senza aspettare l'host. Il disco locale si **riallinea
+  dolcemente** con lo stato autorevole dell'host (aggancio secco solo se la differenza è
+  grande, es. dopo un gol). Risolve il "molto in ritardo" lato ospite.
+- Tolta l'interpolazione con ritardo di rendering (dava liscio ma in ritardo), sostituita
+  dalla predizione (reattiva).
+- Fisica locale dedicata `passoLocale` (come quella dell'host, ma senza gol: le pareti
+  rimbalzano soltanto). `net-ably.js`: gestite le promise di publish/presence (niente
+  errori in console) e uscita via `client.close()`.
+
 ## 12 settembre 2026 (2) — Glow Hockey su Ably (realtime a bassa latenza)
 - **Collegamento realtime dedicato (Ably)** per Glow Hockey: nuovo `js/net-ably.js`
   (`SGNetA`, stessa interfaccia di SGNet — ospita/entra/invia/inviaVeloce) sopra Ably.
