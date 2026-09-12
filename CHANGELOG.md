@@ -4,6 +4,20 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 12 settembre 2026 — Nuovo gioco: Glow Hockey 🏒 (online, in tempo reale)
+- **Nuovo gioco** air hockey 1v1, solo online (ognuno dal suo telefono). HTML5 Canvas.
+- **Host-autoritativo**: l'host calcola la fisica del disco a ~60fps ed è la fonte di
+  verità; l'ospite manda solo la propria racchetta e **estrapola** il disco (attenua il
+  lag; un po' di ritardo lato ospite resta — è il limite del broker pubblico).
+- **Coordinate normalizzate** (campo 1×1.7) indipendenti dallo schermo; ogni telefono
+  vede la propria racchetta in basso (vista ruotata di 180° per l'ospite).
+- **Fisica**: collisioni circolari disco/racchetta con trasferimento di velocità,
+  rimbalzo pareti, attrito, porte centrali, gol e reset al centro, primo a 7.
+- **Controlli**: pointer/touch, la racchetta non supera la linea di metà campo.
+- `net.js`: aggiunto `inviaVeloce` (invio NON trattenuto) per lo streaming ad alta
+  frequenza, così il broker non viene intasato di messaggi retained.
+- Grafica volutamente essenziale per ora (cerchi/linee): verrà rifinita in stile neon.
+
 ## 11 settembre 2026 (9) — Logo a fulmini + categorie tue giocate direttamente
 - **Home**: al posto dei coriandoli, un logo SVG di **tre fulmini** (centrale grande, i
   due laterali che incrociano le punte), gialli con un alone blu leggero.

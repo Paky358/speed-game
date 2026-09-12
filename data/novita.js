@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 33,
+    data: "12 settembre 2026",
+    titolo: "Nuovo gioco: Glow Hockey 🏒 (online, in due)",
+    descrizione: [
+      "Air hockey ognuno dal suo telefono: uno apre la stanza, l'altro entra col codice. Muovi la racchetta col dito nella tua metà campo e segna nella porta avversaria. Primo a 7 gol vince.",
+      "Il disco è calcolato dal telefono di chi apre la stanza (fonte di verità) e l'altro lo \"insegue\" attenuando il ritardo: onestamente, un filo di lag lato ospite può restare (dipende dalla rete).",
+      "Per ora la grafica è essenziale: prima la sostanza, poi la faccio più bella (stile neon)."
+    ]
+  },
+  {
     v: 32,
     data: "11 settembre 2026",
     titolo: "Nuovo gioco: La Patata Bollente 💣",

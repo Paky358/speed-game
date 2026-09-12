@@ -64,6 +64,8 @@
         // la partita (vm) viene mandata a tutti e "trattenuta" (retain) così
         // chi entra dopo riceve subito lo stato attuale
         invia: function (msg) { try { if (client.connected) client.publish(T.stato, JSON.stringify(msg), { retain: true }); } catch (e) {} },
+        // invio ad alta frequenza (streaming di gioco): NON trattenuto, per non intasare il broker
+        inviaVeloce: function (msg) { try { if (client.connected) client.publish(T.stato, JSON.stringify(msg), { retain: false }); } catch (e) {} },
         inviaA: function (id, msg) { this.invia(msg); },
         chiudi: function () {
           try {
