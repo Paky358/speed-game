@@ -2,8 +2,8 @@
    GIOCO — "Glow Hockey"  (air hockey, ognuno dal suo telefono)
    Online host-autoritativo: l'host calcola la fisica del disco a
    ~60fps ed è la "fonte di verità"; l'ospite NON simula il disco
-   (divergerebbe), ma lo segue estrapolato al presente e scivolando
-   dolcemente (niente teletrasporti). Coordinate NORMALIZZATE
+   (divergerebbe → teletrasporti), ma lo INTERPOLA fra gli ultimi
+   stati ricevuti con un piccolo ritardo (liscio). Coordinate NORM.
    (indipendenti dallo schermo): campo largo 1, alto ASPETTO.
    NB: grafica volutamente minimale — prima la sostanza.
    ========================================================= */
@@ -20,6 +20,7 @@
   var VINCI = 7;                 // gol per vincere
   var HZ = 20;                   // intervallo minimo fra invii (ms) ~50/sec
   var HSTEP = 1 / 120;           // passo fisso della fisica (sotto-step): collisioni solide
+  var DELAY = 0.07;              // ritardo di interpolazione lato ospite (s): disegna tra due stati reali = liscio, niente scatti
 
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function inPorta(x) { return x > 0.5 - GOALW / 2 && x < 0.5 + GOALW / 2; }
@@ -59,9 +60,9 @@
       gx: 0.5, gy: 0.18, gpx: 0.5, gpy: 0.18,               // racchetta ospite (alto), mostrata
       gtx: 0.5, gty: 0.18 };                                  // …e il suo "bersaglio" (ultima ricevuta)
   }
-  function servi(st, verso) {
-    st.px = 0.5; st.py = ASP / 2; var a = (Math.random() - 0.5) * 0.6;
-    st.pvx = a; st.pvy = (verso || (Math.random() < 0.5 ? 1 : -1)) * 0.5;
+  function servi(st) {
+    st.px = 0.5; st.py = ASP / 2;   // esatto centro
+    st.pvx = 0; st.pvy = 0;          // FERMO: parte solo quando qualcuno lo colpisce
   }
   // collisione CONTINUA (swept): controlla tutto il tratto percorso dal disco nel
   // passo, così non attraversa la racchetta anche a velocità alta (hitbox solide).
@@ -259,12 +260,17 @@
     var NET = scegliNet();
     if (!NET) return senzaReteHK(t);
     var el = t.el;
-    var S = { rete: null, vm: null, tRecv: 0, me: { x: 0.5, y: 0.18 }, L: null, lastT: 0, fase: "collega", vista: null, C: null, raf: null, ultimoInvio: 0 };
+    var S = { rete: null, vm: null, buf: [], me: { x: 0.5, y: 0.18 }, fase: "collega", vista: null, C: null, raf: null, ultimoInvio: 0 };
     collega();
     function collega() {
       S.rete = NET.entra(codice, {
         onAperto: function (id) { S.rete.invia({ t: "join" }); render(); },
-        onMsg: function (m) { if (m && m.t === "g") { S.vm = m; S.tRecv = performance.now(); if (m.fase !== S.fase) { S.fase = m.fase; render(); } } },
+        onMsg: function (m) { if (m && m.t === "g") {
+          S.vm = m; var now = performance.now();
+          if (m.fase === "gioco") { S.buf.push({ rt: now, px: m.px, py: m.py, hx: m.hx, hy: m.hy }); while (S.buf.length > 2 && S.buf[0].rt < now - 1000) S.buf.shift(); }
+          else { S.buf.length = 0; }   // gol/attesa: svuota, alla ripresa riparte pulito
+          if (m.fase !== S.fase) { S.fase = m.fase; render(); }
+        } },
         onChiuso: function () { stop(); erroreHK(t, "Collegamento perso. L'host ha chiuso la partita."); },
         onErrore: function () { stop(); erroreHK(t, "Problema di collegamento. Riprova."); }
       });
@@ -273,18 +279,23 @@
     function loop(now) {
       S.raf = requestAnimationFrame(loop);
       var vm = S.vm; if (!vm || !S.C) return;
-      var dt = S.lastT ? Math.min(0.05, (now - S.lastT) / 1000) : 0.016; S.lastT = now;
-      if (!S.L) S.L = { rpx: vm.px, rpy: vm.py, hx: vm.hx, hy: vm.hy };
-      var L = S.L;
-      // racchetta avversaria (host): scivola morbida verso l'ultima posizione (anti-scatto)
-      var kh = 1 - Math.exp(-dt / 0.07); L.hx += (vm.hx - L.hx) * kh; L.hy += (vm.hy - L.hy) * kh;
-      // DISCO: NON lo simulo (divergerebbe → teletrasporti). Seguo l'host, estrapolato al
-      // presente (poco ritardo) e ci scivolo verso, senza mai saltarci (niente teletrasporti).
-      var age = Math.min(0.2, (now - S.tRecv) / 1000);
-      var tx = clamp(vm.px + vm.pvx * age, RP, 1 - RP), ty = clamp(vm.py + vm.pvy * age, RP, ASP - RP);
-      if (vm.fase !== "gioco") { L.rpx = tx; L.rpy = ty; }   // gol/attesa: il disco è dove dice l'host (ricentro)
-      else { var kp = 1 - Math.exp(-dt / 0.05); L.rpx += (tx - L.rpx) * kp; L.rpy += (ty - L.rpy) * kp; }
-      var o = { fase: vm.fase, px: L.rpx, py: L.rpy, hx: L.hx, hy: L.hy, gx: S.me.x, gy: S.me.y, s1: vm.s1, s2: vm.s2 };
+      // INTERPOLAZIONE: disegno disco e racchetta avversaria fra i due stati reali attorno a
+      // "adesso - DELAY". Movimento liscio (niente scatti, niente teletrasporti, niente disco
+      // che si muove da solo), con solo un piccolo ritardo costante.
+      var b = S.buf, px, py, hx, hy;
+      if (vm.fase !== "gioco" || b.length === 0) { px = vm.px; py = vm.py; hx = vm.hx; hy = vm.hy; }
+      else {
+        var rt = now - DELAY * 1000;
+        if (rt <= b[0].rt) { px = b[0].px; py = b[0].py; hx = b[0].hx; hy = b[0].hy; }
+        else if (rt >= b[b.length - 1].rt) { var Z = b[b.length - 1]; px = Z.px; py = Z.py; hx = Z.hx; hy = Z.hy; }
+        else {
+          var i = b.length - 2; while (i > 0 && b[i].rt > rt) i--;
+          var A = b[i], B = b[i + 1], f = (rt - A.rt) / Math.max(1, B.rt - A.rt);
+          px = A.px + (B.px - A.px) * f; py = A.py + (B.py - A.py) * f;
+          hx = A.hx + (B.hx - A.hx) * f; hy = A.hy + (B.hy - A.hy) * f;
+        }
+      }
+      var o = { fase: vm.fase, px: px, py: py, hx: hx, hy: hy, gx: S.me.x, gy: S.me.y, s1: vm.s1, s2: vm.s2 };
       disegna(S.C.ctx, S.C.cssW, o, true);
       if (now - S.ultimoInvio > HZ) { S.ultimoInvio = now; S.rete.invia({ t: "p", x: S.me.x, y: S.me.y }); }
     }
@@ -308,7 +319,7 @@
         S.C = creaCanvas(t, sg);
         collegaInput(S.C.cv, S.C.cssW, true, "alto", function (x, y) { S.me.x = x; S.me.y = y; });
         t.mostra(sg);
-        S.L = null; S.lastT = 0; S.raf = requestAnimationFrame(loop);
+        S.buf = []; S.raf = requestAnimationFrame(loop);
       }
     }
   }
