@@ -5870,6 +5870,16 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 38,
+    data: "13 settembre 2026",
+    titolo: "Glow Hockey: campo intero a schermo + ospite più reattivo 🏒",
+    descrizione: [
+      "Il campo ora entra tutto nello schermo: vedi tutte e due le porte senza dover scorrere. Si adatta da solo alla dimensione del telefono.",
+      "Chi entra col codice ora entra in campo all'istante appena l'host preme Comincia (prima a volte restava fermo sull'attesa).",
+      "Colpi dell'ospite più reattivi sul collegamento diretto: quando siete sulla stessa rete, il ritardo è ridotto al minimo, così le collisioni della sua racchetta col disco funzionano molto meglio."
+    ]
+  },
+  {
     v: 37,
     data: "13 settembre 2026",
     titolo: "Glow Hockey: modalità \"stessa rete\" (collegamento diretto) ⚡",
@@ -7792,13 +7802,37 @@ window.SG_SIPERO = {
     var wrap = el("div", { style: "display:flex;justify-content:center;margin-top:6px" });
     var cv = el("canvas", { style: "touch-action:none;border-radius:14px;background:#0b1020;box-shadow:0 0 0 1px rgba(255,255,255,.08)" });
     wrap.appendChild(cv); s._contenuto.appendChild(wrap);
-    var cssW = Math.min(360, Math.floor((window.innerWidth || 360) - 24));
-    var cssH = Math.round(cssW * ASP);
+    // il campo deve ENTRARE TUTTO nello schermo (tutte e due le porte visibili senza scorrere):
+    // si adatta sia alla larghezza sia all'altezza disponibile, mantenendo le proporzioni (ASP).
+    var vw = window.innerWidth || 360, vh = window.innerHeight || 640;
+    var maxW = Math.min(420, Math.floor(vw - 20));
+    var riserva = 160;                                   // intestazione + indicatore + margini
+    var maxH = Math.max(240, Math.floor(vh - riserva));
+    var cssW, cssH;
+    if (maxW * ASP <= maxH) { cssW = maxW; cssH = Math.round(maxW * ASP); }   // limita la larghezza
+    else { cssH = maxH; cssW = Math.round(maxH / ASP); }                       // limita l'altezza
     var dpr = window.devicePixelRatio || 1;
     cv.style.width = cssW + "px"; cv.style.height = cssH + "px";
     cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
     var ctx = cv.getContext("2d"); ctx.scale(dpr, dpr);
     return { cv: cv, ctx: ctx, cssW: cssW, cssH: cssH };
+  }
+  // dopo che la schermata è a video, MISURA lo spazio davvero rimasto sotto al campo
+  // e lo ridimensiona per farci stare tutto il campo (niente scorrimento). Robusto su ogni telefono.
+  function adattaCanvas(C) {
+    var rect = C.cv.getBoundingClientRect();
+    var disp = (window.innerHeight || 640) - rect.top - 12;      // spazio dall'alto del campo al fondo schermo
+    var maxW = Math.min(420, Math.floor((window.innerWidth || 360) - 20));
+    var maxH = Math.max(200, Math.floor(disp));
+    var cssW, cssH;
+    if (maxW * ASP <= maxH) { cssW = maxW; cssH = Math.round(maxW * ASP); }
+    else { cssH = maxH; cssW = Math.round(maxH / ASP); }
+    if (cssW === C.cssW && cssH === C.cssH) return;
+    var dpr = window.devicePixelRatio || 1;
+    C.cv.style.width = cssW + "px"; C.cv.style.height = cssH + "px";
+    C.cv.width = Math.round(cssW * dpr); C.cv.height = Math.round(cssH * dpr);
+    C.ctx.setTransform(1, 0, 0, 1, 0, 0); C.ctx.scale(dpr, dpr);
+    C.cssW = cssW; C.cssH = cssH;
   }
   function cerchio(ctx, x, y, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill(); }
   function disegna(ctx, cssW, o, flip) {
@@ -7830,12 +7864,14 @@ window.SG_SIPERO = {
   }
 
   // ---------- controllo racchetta (input locale) ----------
-  function collegaInput(cv, cssW, flip, meta, onMove) {
+  function collegaInput(C, flip, meta, onMove) {
     // meta = "basso" (host, metà bassa) o "alto" (ospite, che però vede la sua racchetta in basso grazie al flip)
+    var cv = C.cv;
     function pos(e) {
       var r = cv.getBoundingClientRect();
       var cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
       var cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+      var cssW = C.cssW;   // dimensione aggiornata (dopo adattaCanvas)
       var x, y;
       if (flip) { x = 1 - cx / cssW; y = ASP - cy / cssW; } else { x = cx / cssW; y = cy / cssW; }
       x = clamp(x, RPAD, 1 - RPAD);
@@ -7892,9 +7928,11 @@ window.SG_SIPERO = {
       if (dt > 0.1) dt = 0.1;
       if (st.fase === "gol" && now - st.golT > 1200) { st.fase = "gioco"; }
       // ammorbidisci la racchetta AVVERSARIA: scivola verso l'ultima posizione ricevuta
-      // (toglie i micro-scatti sul mio schermo e gli spintoni anomali sul disco), ma con un
-      // ritardo BREVE (~30ms) così i colpi dell'ospite arrivano davvero sul disco e la collisione parte
-      var kg = 1 - Math.exp(-dt / 0.03); // smorzamento leggero (~30ms), indipendente dal frame-rate
+      // (toglie i micro-scatti sul mio schermo e gli spintoni anomali sul disco). Se il collegamento
+      // è DIRETTO (bassa latenza) uso un ritardo minimo (~12ms) così i colpi dell'ospite arrivano
+      // subito sul disco; su internet un filo di più (~30ms) per calmare la rete irregolare.
+      var tcG = (st.canale === "diretto") ? 0.012 : 0.03;
+      var kg = 1 - Math.exp(-dt / tcG); // indipendente dal frame-rate
       st.gx += (st.gtx - st.gx) * kg; st.gy += (st.gty - st.gy) * kg;
       // velocità racchette (una volta per frame), per la spinta sul disco
       var fdt = Math.max(0.004, dt);
@@ -7908,7 +7946,7 @@ window.SG_SIPERO = {
       if (now - ultimoInvio > HZ) { ultimoInvio = now; bcast(false); }
     }
     function stop() { if (raf) cancelAnimationFrame(raf); raf = null; }
-    function comincia() { if (st.fase === "lobby" && st.avvId) { st.s1 = 0; st.s2 = 0; st.vincitore = null; st.fase = "gioco"; servi(st); render(); } }
+    function comincia() { if (st.fase === "lobby" && st.avvId) { st.s1 = 0; st.s2 = 0; st.vincitore = null; st.fase = "gioco"; servi(st); bcast(true); render(); } }
 
     function render() {
       var tipo = st.fase === "lobby" ? "lobby" : st.fase === "fine" ? "fine" : "gioco";
@@ -7938,11 +7976,12 @@ window.SG_SIPERO = {
         t.mostra(sf);
       } else {
         var sg = t.schermata({ icona: "🏒", titolo: "Glow Hockey", sotto: "Tu (blu) in basso · segna in alto", indietro: function () { stop(); rete.chiudi(); t.esci(); } });
-        C = creaCanvas(t, sg);
-        st._badge = el("div", { class: "modulo-nota", style: "text-align:center;margin-top:6px;font-size:.78rem", text: testoCanale(st.canale) });
+        st._badge = el("div", { class: "modulo-nota", style: "text-align:center;margin:2px 0 4px;font-size:.78rem", text: testoCanale(st.canale) });
         sg._contenuto.appendChild(st._badge);
-        collegaInput(C.cv, C.cssW, false, "basso", function (x, y) { st.hx = x; st.hy = y; });
+        C = creaCanvas(t, sg);
+        collegaInput(C, false, "basso", function (x, y) { st.hx = x; st.hy = y; });
         t.mostra(sg);
+        adattaCanvas(C);
         ultimoT = 0; raf = requestAnimationFrame(loop);
       }
     }
@@ -7980,7 +8019,9 @@ window.SG_SIPERO = {
       var b = S.buf, px, py, hx, hy;
       if (vm.fase !== "gioco" || b.length === 0) { px = vm.px; py = vm.py; hx = vm.hx; hy = vm.hy; }
       else {
-        var rt = now - DELAY * 1000;
+        // cuscinetto piccolo se il collegamento è diretto (poca rete da assorbire), più grande su internet
+        var delayS = (S.canale === "diretto") ? 0.02 : DELAY;
+        var rt = now - delayS * 1000;
         if (rt <= b[0].rt) { px = b[0].px; py = b[0].py; hx = b[0].hx; hy = b[0].hy; }
         else if (rt >= b[b.length - 1].rt) {
           // pacchetto in ritardo/perso: invece di congelare (scatto), faccio proseguire il disco
@@ -8018,11 +8059,12 @@ window.SG_SIPERO = {
         t.mostra(sf);
       } else {
         var sg = t.schermata({ icona: "🏒", titolo: "Glow Hockey", sotto: "Tu (rosso) in basso · segna in alto", indietro: function () { stop(); if (S.rete) S.rete.chiudi(); t.esci(); } });
-        S.C = creaCanvas(t, sg);
-        S._badge = el("div", { class: "modulo-nota", style: "text-align:center;margin-top:6px;font-size:.78rem", text: testoCanale(S.canale) });
+        S._badge = el("div", { class: "modulo-nota", style: "text-align:center;margin:2px 0 4px;font-size:.78rem", text: testoCanale(S.canale) });
         sg._contenuto.appendChild(S._badge);
-        collegaInput(S.C.cv, S.C.cssW, true, "alto", function (x, y) { S.me.x = x; S.me.y = y; });
+        S.C = creaCanvas(t, sg);
+        collegaInput(S.C, true, "alto", function (x, y) { S.me.x = x; S.me.y = y; });
         t.mostra(sg);
+        adattaCanvas(S.C);
         S.buf = []; S.raf = requestAnimationFrame(loop);
       }
     }

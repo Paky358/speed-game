@@ -77,11 +77,15 @@ dal proprio.
   telefono). Uno apre la stanza, l'altro entra col codice; si muove la racchetta col
   dito nella propria metà (non oltre la metà campo) e si segna nella porta avversaria,
   primo a 7. Host-autoritativo: la fisica del disco gira sul telefono di chi apre la
-  stanza (fonte di verità a ~60fps) e l'altro interpola con buffer (~50ms) per un
-  movimento liscio; se un pacchetto tarda, il disco viene **estrapolato** col suo vettore
-  velocità (max 70ms) invece di congelarsi (anti-scatto). La racchetta dell'ospite, sull'host,
-  è smorzata solo **~30ms** (prima 70): così i colpi dell'ospite arrivano sul disco e la
-  collisione parte davvero. **Collegamenti (dal più veloce): P2P diretto → Ably → MQTT.**
+  stanza (fonte di verità a ~60fps) e l'altro interpola con buffer per un movimento liscio;
+  se un pacchetto tarda, il disco viene **estrapolato** col suo vettore velocità (max 70ms)
+  invece di congelarsi (anti-scatto). **Ritardi adattivi al canale**: su collegamento diretto
+  cuscinetto ospite ~20ms e smorzamento racchetta avversaria ~12ms (su internet 50ms/30ms) →
+  su stessa rete i colpi dell'ospite arrivano sul disco quasi subito e la collisione parte.
+  Il **campo si adatta allo schermo** (`adattaCanvas` misura lo spazio reale e mantiene le
+  proporzioni): tutte e due le porte visibili, niente scorrimento. All'avvio l'host fa un invio
+  singolo affidabile dello stato "gioco" (`bcast` in `comincia`) così l'ospite entra in campo
+  all'istante. **Collegamenti (dal più veloce): P2P diretto → Ably → MQTT.**
   Il **P2P** (`js/net-p2p.js`, `SGNetP2P`) collega i due telefoni **direttamente** via WebRTC
   DataChannel (`ordered:true, maxRetransmits:0`): sulla **stessa rete** la latenza crolla a pochi
   ms. Usa **Ably solo per presentarsi** (offer/answer/ICE) e come **ripiego automatico**: se il

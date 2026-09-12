@@ -4,6 +4,23 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (3) — Glow Hockey: campo a schermo + ritardo adattivo + avvio ospite
+- **Campo che entra nello schermo**: `creaCanvas` non impone più `larghezza×ASP` (sforava in
+  altezza → serviva scorrere). Nuova `adattaCanvas(C)` chiamata dopo `mostra`: **misura** lo
+  spazio reale sotto al campo (`getBoundingClientRect().top`) e ridimensiona mantenendo ASP →
+  tutte e due le porte visibili, nessuno scorrimento. `collegaInput(C, …)` legge `C.cssW` live
+  (non più catturato) così l'input resta corretto dopo il ridimensionamento. Indicatore spostato
+  sopra al campo.
+- **Ritardo adattivo al canale** (le collisioni dell'ospite non partivano nemmeno da diretto,
+  perché il ritardo era tarato per internet): ospite `DELAY` 20ms se `diretto` (altrimenti 50ms);
+  host, smorzamento racchetta avversaria `tcG` 12ms se `diretto` (altrimenti 30ms). Su stessa rete
+  il colpo dell'ospite arriva sul disco quasi subito → collisione affidabile.
+- **Avvio ospite immediato**: `comincia()` ora fa `bcast(true)` (invio singolo affidabile dello
+  stato "gioco") prima di partire → l'ospite entra in campo all'istante, senza dipendere dal primo
+  giro del ciclo. Risolve i casi in cui restava su "In attesa che l'host cominci".
+- Collaudato E2E in locale (host + ospite, WebRTC): ospite entra in campo, canale "diretto", campo
+  che entra a schermo (fondo a 719/812, margine 93px), zero errori.
+
 ## 13 settembre 2026 (2) — Glow Hockey: modalità "stessa rete" (P2P WebRTC) + fix lobby ospite
 - Nuovo trasporto **`SGNetP2P`** (`js/net-p2p.js`): collegamento **diretto telefono-a-telefono**
   via **WebRTC DataChannel** (`ordered:true, maxRetransmits:0` → basso ritardo, niente code né

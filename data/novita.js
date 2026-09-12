@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 38,
+    data: "13 settembre 2026",
+    titolo: "Glow Hockey: campo intero a schermo + ospite più reattivo 🏒",
+    descrizione: [
+      "Il campo ora entra tutto nello schermo: vedi tutte e due le porte senza dover scorrere. Si adatta da solo alla dimensione del telefono.",
+      "Chi entra col codice ora entra in campo all'istante appena l'host preme Comincia (prima a volte restava fermo sull'attesa).",
+      "Colpi dell'ospite più reattivi sul collegamento diretto: quando siete sulla stessa rete, il ritardo è ridotto al minimo, così le collisioni della sua racchetta col disco funzionano molto meglio."
+    ]
+  },
+  {
     v: 37,
     data: "13 settembre 2026",
     titolo: "Glow Hockey: modalità \"stessa rete\" (collegamento diretto) ⚡",
