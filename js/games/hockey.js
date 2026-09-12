@@ -18,7 +18,8 @@
   var MAXV = 2.4;                // velocità massima disco (unità/sec)
   var PADK = 0.7;                // quanto la racchetta spinge il disco
   var VINCI = 7;                 // gol per vincere
-  var HZ = 33;                   // intervallo minimo fra invii (ms) ~30/sec
+  var HZ = 25;                   // intervallo minimo fra invii (ms) ~40/sec
+  var HSTEP = 1 / 120;           // passo fisso della fisica (sotto-step): collisioni solide
 
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function inPorta(x) { return x > 0.5 - GOALW / 2 && x < 0.5 + GOALW / 2; }
@@ -61,42 +62,43 @@
     st.px = 0.5; st.py = ASP / 2; var a = (Math.random() - 0.5) * 0.6;
     st.pvx = a; st.pvy = (verso || (Math.random() < 0.5 ? 1 : -1)) * 0.5;
   }
-  function collisione(st, padx, pady, pvx, pvy) {
-    var dx = st.px - padx, dy = st.py - pady, d = Math.hypot(dx, dy), md = RP + RPAD;
-    if (d > 0 && d < md) {
-      var nx = dx / d, ny = dy / d;
-      st.px = padx + nx * md; st.py = pady + ny * md;
-      var vn = st.pvx * nx + st.pvy * ny;
-      if (vn < 0) { st.pvx -= 2 * vn * nx; st.pvy -= 2 * vn * ny; }
-      st.pvx += pvx * PADK; st.pvy += pvy * PADK;
+  // collisione CONTINUA (swept): controlla tutto il tratto percorso dal disco nel
+  // passo, così non attraversa la racchetta anche a velocità alta (hitbox solide).
+  function collide(st, prevx, prevy, padx, pady, pvx, pvy) {
+    var md = RP + RPAD;
+    var dx = st.px - prevx, dy = st.py - prevy;
+    var fx = prevx - padx, fy = prevy - pady;
+    var a = dx * dx + dy * dy, hit = false, cxp = st.px, cyp = st.py;
+    if (a > 1e-9) {
+      var b = 2 * (fx * dx + fy * dy);
+      var c = fx * fx + fy * fy - md * md;
+      var disc = b * b - 4 * a * c;
+      if (disc >= 0) { var tt = (-b - Math.sqrt(disc)) / (2 * a); if (tt >= 0 && tt <= 1) { hit = true; cxp = prevx + dx * tt; cyp = prevy + dy * tt; } }
     }
+    if (!hit) {   // già sovrapposti (es. la racchetta è entrata nel disco): spingi fuori
+      var ex = st.px - padx, ey = st.py - pady, ed = Math.hypot(ex, ey);
+      if (ed > 0 && ed < md) { hit = true; cxp = padx + ex / ed * md; cyp = pady + ey / ed * md; }
+    }
+    if (!hit) return;
+    var nx = (cxp - padx) / md, ny = (cyp - pady) / md;
+    st.px = cxp; st.py = cyp;
+    var vn = st.pvx * nx + st.pvy * ny;
+    if (vn < 0) { st.pvx -= 2 * vn * nx; st.pvy -= 2 * vn * ny; }
+    st.pvx += pvx * PADK; st.pvy += pvy * PADK;
+    var sp = Math.hypot(st.pvx, st.pvy); if (sp > MAXV) { st.pvx *= MAXV / sp; st.pvy *= MAXV / sp; }
   }
+  // un sotto-passo di fisica (dt fisso). Le velocità racchetta arrivano da fuori (st._hvx…)
   function passo(st, dt, onGol) {
     if (st.fase !== "gioco") return;
-    // velocità racchette (per la spinta)
-    var hvx = (st.hx - st.hpx) / dt, hvy = (st.hy - st.hpy) / dt;
-    var gvx = (st.gx - st.gpx) / dt, gvy = (st.gy - st.gpy) / dt;
-    st.hpx = st.hx; st.hpy = st.hy; st.gpx = st.gx; st.gpy = st.gy;
-    // moto + attrito
+    var prevx = st.px, prevy = st.py;
     st.px += st.pvx * dt; st.py += st.pvy * dt;
     var f = Math.exp(-0.45 * dt); st.pvx *= f; st.pvy *= f;
-    // pareti sinistra/destra
+    collide(st, prevx, prevy, st.hx, st.hy, st._hvx || 0, st._hvy || 0);
+    collide(st, prevx, prevy, st.gx, st.gy, st._gvx || 0, st._gvy || 0);
     if (st.px < RP) { st.px = RP; st.pvx = Math.abs(st.pvx) * REST; }
     if (st.px > 1 - RP) { st.px = 1 - RP; st.pvx = -Math.abs(st.pvx) * REST; }
-    // alto (porta ospite): se in porta -> gol host
-    if (st.py < RP) {
-      if (inPorta(st.px)) return onGol(1);
-      st.py = RP; st.pvy = Math.abs(st.pvy) * REST;
-    }
-    // basso (porta host): se in porta -> gol ospite
-    if (st.py > ASP - RP) {
-      if (inPorta(st.px)) return onGol(2);
-      st.py = ASP - RP; st.pvy = -Math.abs(st.pvy) * REST;
-    }
-    // racchette
-    collisione(st, st.hx, st.hy, hvx, hvy);
-    collisione(st, st.gx, st.gy, gvx, gvy);
-    // tetto velocità
+    if (st.py < RP) { if (inPorta(st.px)) return onGol(1); st.py = RP; st.pvy = Math.abs(st.pvy) * REST; }
+    if (st.py > ASP - RP) { if (inPorta(st.px)) return onGol(2); st.py = ASP - RP; st.pvy = -Math.abs(st.pvy) * REST; }
     var sp = Math.hypot(st.pvx, st.pvy); if (sp > MAXV) { st.pvx *= MAXV / sp; st.pvy *= MAXV / sp; }
   }
 
@@ -168,7 +170,7 @@
   function hostHK(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteHK(t);
     var st = statoNuovo();
-    var vista = null, C = null, raf = null, ultimoInvio = 0, ultimoT = 0;
+    var vista = null, C = null, raf = null, ultimoInvio = 0, ultimoT = 0, acc = 0;
     var rete = SGNet.ospita("hockey", {
       onCodice: function (c) { st.codice = c; render(); },
       onConnesso: function () { st.pronta = true; render(); },
@@ -185,9 +187,17 @@
     function gol(chi) { if (chi === 1) st.s1++; else st.s2++; if (st.s1 >= VINCI || st.s2 >= VINCI) { st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2; } else { st.fase = "gol"; st.golT = performance.now(); servi(st, chi === 1 ? -1 : 1); } bcast(true); }
     function loop(now) {
       raf = requestAnimationFrame(loop);
-      var dt = ultimoT ? Math.min(0.05, (now - ultimoT) / 1000) : 0.016; ultimoT = now;
+      var dt = ultimoT ? (now - ultimoT) / 1000 : 0.016; ultimoT = now;
+      if (dt > 0.1) dt = 0.1;
       if (st.fase === "gol" && now - st.golT > 1200) { st.fase = "gioco"; }
-      passo(st, dt, gol);
+      // velocità racchette (una volta per frame), per la spinta sul disco
+      var fdt = Math.max(0.004, dt);
+      st._hvx = (st.hx - st.hpx) / fdt; st._hvy = (st.hy - st.hpy) / fdt;
+      st._gvx = (st.gx - st.gpx) / fdt; st._gvy = (st.gy - st.gpy) / fdt;
+      st.hpx = st.hx; st.hpy = st.hy; st.gpx = st.gx; st.gpy = st.gy;
+      // fisica a passo fisso (sotto-step) per collisioni solide
+      acc += dt; var guard = 0;
+      while (acc >= HSTEP && guard++ < 12) { passo(st, HSTEP, gol); acc -= HSTEP; if (st.fase !== "gioco") { acc = 0; break; } }
       if (C) disegna(C.ctx, C.cssW, st, false);
       if (now - ultimoInvio > HZ) { ultimoInvio = now; bcast(false); }
     }
@@ -235,7 +245,7 @@
   function ospiteHK(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteHK(t);
     var el = t.el;
-    var S = { rete: null, vm: null, tRecv: 0, me: { x: 0.5, y: 0.18 }, oppx: 0.5, oppy: 0.18, fase: "collega", vista: null, C: null, raf: null, ultimoInvio: 0 };
+    var S = { rete: null, vm: null, tRecv: 0, me: { x: 0.5, y: 0.18 }, oppx: 0.5, oppy: 0.18, rpx: null, rpy: null, fase: "collega", vista: null, C: null, raf: null, ultimoInvio: 0 };
     collega();
     function collega() {
       S.rete = SGNet.entra(codice, {
@@ -249,12 +259,15 @@
     function loop(now) {
       S.raf = requestAnimationFrame(loop);
       var vm = S.vm; if (!vm || !S.C) return;
-      // estrapola il disco lungo la sua velocità (max 150ms) per attenuare il lag
-      var dtR = Math.min(0.15, (now - S.tRecv) / 1000);
-      var px = clamp(vm.px + vm.pvx * dtR, RP, 1 - RP), py = clamp(vm.py + vm.pvy * dtR, RP, ASP - RP);
+      // estrapola il disco lungo la sua velocità per attenuare il lag…
+      var dtR = Math.min(0.12, (now - S.tRecv) / 1000);
+      var tx = clamp(vm.px + vm.pvx * dtR, RP, 1 - RP), ty = clamp(vm.py + vm.pvy * dtR, RP, ASP - RP);
+      // …e smorza gli scatti quando arriva un pacchetto (easing leggero)
+      if (S.rpx == null) { S.rpx = tx; S.rpy = ty; }
+      S.rpx += (tx - S.rpx) * 0.5; S.rpy += (ty - S.rpy) * 0.5;
       // racchetta avversaria (host, in alto per l'ospite): insegue morbida
-      S.oppx += (vm.hx - S.oppx) * 0.3; S.oppy += (vm.hy - S.oppy) * 0.3;
-      var o = { fase: vm.fase, px: px, py: py, hx: S.oppx, hy: S.oppy, gx: S.me.x, gy: S.me.y, s1: vm.s1, s2: vm.s2 };
+      S.oppx += (vm.hx - S.oppx) * 0.4; S.oppy += (vm.hy - S.oppy) * 0.4;
+      var o = { fase: vm.fase, px: S.rpx, py: S.rpy, hx: S.oppx, hy: S.oppy, gx: S.me.x, gy: S.me.y, s1: vm.s1, s2: vm.s2 };
       disegna(S.C.ctx, S.C.cssW, o, true);
       if (now - S.ultimoInvio > HZ) { S.ultimoInvio = now; S.rete.invia({ t: "p", x: S.me.x, y: S.me.y }); }
     }
