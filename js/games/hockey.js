@@ -18,9 +18,9 @@
   var MAXV = 2.4;                // velocità massima disco (unità/sec)
   var PADK = 0.7;                // quanto la racchetta spinge il disco
   var VINCI = 7;                 // gol per vincere
-  var HZ = 20;                   // intervallo minimo fra invii (ms) ~50/sec
+  var HZ = 16;                   // intervallo minimo fra invii (ms) ~60/sec (dati più freschi)
   var HSTEP = 1 / 120;           // passo fisso della fisica (sotto-step): collisioni solide
-  var DELAY = 0.07;              // ritardo di interpolazione lato ospite (s): disegna tra due stati reali = liscio, niente scatti
+  var DELAY = 0.05;              // ritardo di interpolazione lato ospite (s): ~50ms, vicino al minimo prima che torni a scattare
 
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function inPorta(x) { return x > 0.5 - GOALW / 2 && x < 0.5 + GOALW / 2; }
