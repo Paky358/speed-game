@@ -4,6 +4,20 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (4) — Nuovo gioco: Tris (3 modalità)
+- Nuovo `js/games/tris.js`. Tre modalità: **contro il bot** (Facile=casuale, Medio=vinci/blocca
+  poi casuale, Impossibile=**minimax** perfetto), **in due sullo stesso telefono** (hotseat),
+  **online** (host=X, ospite=O, host-autoritativo su SGNet, a turni). A ogni rivincita si alterna
+  chi inizia (equità).
+- Telaio riusato: `SG.registra` con `giocatoriMin:1, giocatoriMax:2, difficolta:1`; chip modalità in
+  `impostazioni`; campo condiviso `campoTris` (griglia 3×3 responsive, X blu/O rosso, linea vincente
+  evidenziata); online con `lobbyTris`/`disegnaVM` sullo stesso schema di Scalinata (join → vm → gioco).
+  Nel torneo forza "in due" e assegna i punti via `t.fine`.
+- Collaudato E2E in locale: bot Impossibile (gioca centro/angoli e blocca le minacce), vittoria con
+  linea evidenziata + "Vince", rivincita con inizio alternato; online host↔ospite (mosse sincronizzate
+  nei due sensi, fine e rivincita propagate, ruoli corretti host/ospite), zero errori.
+- `index.html`: aggiunto lo script (il build lo prende già dal glob `js/games/*.js`).
+
 ## 13 settembre 2026 (3) — Glow Hockey: campo a schermo + ritardo adattivo + avvio ospite
 - **Campo che entra nello schermo**: `creaCanvas` non impone più `larghezza×ASP` (sforava in
   altezza → serviva scorrere). Nuova `adattaCanvas(C)` chiamata dopo `mostra`: **misura** lo

@@ -93,6 +93,13 @@ dal proprio.
   prima. STUN pubblici Google, niente TURN. Ably: `js/net-ably.js`, chiave in `js/ably-key.js`.
   Durante la partita un indicatore mostra "⚡ diretto" o "🌐 via internet" (callback `onCanale`).
   Canvas, coordinate normalizzate. Grafica ancora essenziale (da rifinire in stile neon).
+- **Gioco 9 — Tris** ⭕ (`js/games/tris.js`): il filetto 3×3, in **tre modalità**. **Contro il bot**
+  (da solo) con difficoltà Facile (casuale), Medio (vinci/blocca, poi casuale → battibile),
+  Impossibile (**minimax**, non perde mai). **In due sullo stesso telefono** (a turno). **Online**
+  ognuno dal suo telefono (host = X, ospite = O, host-autoritativo su **SGNet**, a turni: uno apre
+  la stanza, l'altro entra col codice). A ogni rivincita si alterna chi inizia. Campo condiviso
+  (`campoTris`): griglia responsive, X blu / O rosso, linea vincente evidenziata. Nel torneo si
+  gioca "in due" e i punti vanno via `t.fine`. `giocatoriMin:1, giocatoriMax:2, difficolta:1`.
 
 ## Torneo (più giochi di fila)
 Dalla home, tasto **🏆 Torneo**: si sceglie una volta il gruppo e si giocano più

@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 39,
+    data: "13 settembre 2026",
+    titolo: "Nuovo gioco: Tris ⭕❌",
+    descrizione: [
+      "Arriva il Tris (il filetto): allinea tre simboli per vincere.",
+      "Tre modi di giocare: da solo contro il bot (con difficoltà Facile, Medio o Impossibile), in due sullo stesso telefono, oppure online ognuno dal suo telefono (uno apre la stanza, l'altro entra col codice).",
+      "A ogni rivincita cambia chi inizia, così è più giusto."
+    ]
+  },
+  {
     v: 38,
     data: "13 settembre 2026",
     titolo: "Glow Hockey: campo intero a schermo + ospite più reattivo 🏒",
