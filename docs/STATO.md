@@ -77,11 +77,15 @@ dal proprio.
   telefono). Uno apre la stanza, l'altro entra col codice; si muove la racchetta col
   dito nella propria metà (non oltre la metà campo) e si segna nella porta avversaria,
   primo a 7. Host-autoritativo: la fisica del disco gira sul telefono di chi apre la
-  stanza (fonte di verità a ~60fps) e l'altro interpola con buffer (~100ms) per un
-  movimento liscio. Usa un **collegamento realtime dedicato (Ably)** a bassa latenza
+  stanza (fonte di verità a ~60fps) e l'altro interpola con buffer (~50ms) per un
+  movimento liscio; se un pacchetto tarda, il disco viene **estrapolato** col suo vettore
+  velocità (max 70ms) invece di congelarsi (anti-scatto). La racchetta dell'ospite, sull'host,
+  è smorzata solo **~30ms** (prima 70): così i colpi dell'ospite arrivano sul disco e la
+  collisione parte davvero. Usa un **collegamento realtime dedicato (Ably)** a bassa latenza
   (`js/net-ably.js`; chiave in `js/ably-key.js`), con ritorno automatico a MQTT se non
   disponibile. Canvas, coordinate normalizzate. Grafica ancora essenziale (da rifinire
-  in stile neon).
+  in stile neon). **Limite noto**: anche su stessa Wi-Fi il traffico passa da Ably (internet)
+  → resta un filo di RTT; per il massimo sulla stessa rete servirebbe un **P2P WebRTC** diretto.
 
 ## Torneo (più giochi di fila)
 Dalla home, tasto **🏆 Torneo**: si sceglie una volta il gruppo e si giocano più

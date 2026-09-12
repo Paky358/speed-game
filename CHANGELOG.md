@@ -4,6 +4,20 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 — Glow Hockey: colpi ospite più reattivi + disco più liscio
+- **Collisione ospite**: la racchetta avversaria sull'host era smorzata a ~70ms → il colpo
+  dell'ospite arrivava sul disco in ritardo e spesso "mancava". Smorzamento ridotto a **~30ms**
+  (tiene comunque calmi micro-scatti e spintoni anomali sul disco): i colpi dell'ospite
+  vengono registrati molto meglio.
+- **Anti-scatto ospite**: quando un pacchetto tarda/si perde, invece di congelare il disco
+  (freeze → salto) ora lo **estrapola** col suo vettore velocità per un breve tratto
+  (max 70ms), poi riprende liscio all'arrivo del dato vero. Nel buffer salvo anche `pvx/pvy`.
+- Invariati: `HZ=16` (~60/sec), `DELAY=50ms`, host-autoritativo, no predizione disco lato
+  ospite (per non reintrodurre i teletrasporti).
+- Limite onesto: su stessa rete il traffico passa comunque da Ably (internet) → resta un
+  filo di RTT. Il salto di qualità per la stessa rete sarebbe un collegamento **P2P WebRTC**
+  diretto (LAN), da valutare come prossimo passo.
+
 ## 12 settembre 2026 (7) — Aspetto meno cupo (sfondo blu più vivace)
 - Palette alzata verso un **blu più chiaro/vivace** (`--sfondo` #141326→#223066, carte
   più chiare) con **sfumato** sul body; testo portato a bianco pieno per contrasto. Vale

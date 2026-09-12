@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 36,
+    data: "13 settembre 2026",
+    titolo: "Glow Hockey: i colpi dell'ospite contano di più 🏒",
+    descrizione: [
+      "Chi entra col codice (l'ospite) a volte colpiva il disco ma \"non succedeva niente\": la sua racchetta arrivava sul disco con troppo ritardo. Ora il ritardo è ridotto al minimo, così i colpi vengono registrati molto meglio.",
+      "Il disco lato ospite va più liscio: se un aggiornamento tarda un attimo, il disco prosegue da solo il suo movimento invece di \"congelarsi e saltare\".",
+      "Nota onesta: se siete sulla stessa rete di casa, i dati passano comunque da internet (dal server del collegamento), quindi un filo di ritardo resta. Se vuoi il massimo sulla stessa rete, si può fare un collegamento diretto telefono-a-telefono: dimmelo."
+    ]
+  },
+  {
     v: 35,
     data: "12 settembre 2026",
     titolo: "Aspetto più vivace ✨",

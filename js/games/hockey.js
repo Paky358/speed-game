@@ -201,8 +201,9 @@
       if (dt > 0.1) dt = 0.1;
       if (st.fase === "gol" && now - st.golT > 1200) { st.fase = "gioco"; }
       // ammorbidisci la racchetta AVVERSARIA: scivola verso l'ultima posizione ricevuta
-      // (niente scatti sul mio schermo, e il colpo sul disco risulta più fluido)
-      var kg = 1 - Math.exp(-dt / 0.07); // smorzamento forte (~90ms), indipendente dal frame-rate
+      // (toglie i micro-scatti sul mio schermo e gli spintoni anomali sul disco), ma con un
+      // ritardo BREVE (~30ms) così i colpi dell'ospite arrivano davvero sul disco e la collisione parte
+      var kg = 1 - Math.exp(-dt / 0.03); // smorzamento leggero (~30ms), indipendente dal frame-rate
       st.gx += (st.gtx - st.gx) * kg; st.gy += (st.gty - st.gy) * kg;
       // velocità racchette (una volta per frame), per la spinta sul disco
       var fdt = Math.max(0.004, dt);
@@ -267,7 +268,7 @@
         onAperto: function (id) { S.rete.invia({ t: "join" }); render(); },
         onMsg: function (m) { if (m && m.t === "g") {
           S.vm = m; var now = performance.now();
-          if (m.fase === "gioco") { S.buf.push({ rt: now, px: m.px, py: m.py, hx: m.hx, hy: m.hy }); while (S.buf.length > 2 && S.buf[0].rt < now - 1000) S.buf.shift(); }
+          if (m.fase === "gioco") { S.buf.push({ rt: now, px: m.px, py: m.py, pvx: m.pvx, pvy: m.pvy, hx: m.hx, hy: m.hy }); while (S.buf.length > 2 && S.buf[0].rt < now - 1000) S.buf.shift(); }
           else { S.buf.length = 0; }   // gol/attesa: svuota, alla ripresa riparte pulito
           if (m.fase !== S.fase) { S.fase = m.fase; render(); }
         } },
@@ -287,7 +288,14 @@
       else {
         var rt = now - DELAY * 1000;
         if (rt <= b[0].rt) { px = b[0].px; py = b[0].py; hx = b[0].hx; hy = b[0].hy; }
-        else if (rt >= b[b.length - 1].rt) { var Z = b[b.length - 1]; px = Z.px; py = Z.py; hx = Z.hx; hy = Z.hy; }
+        else if (rt >= b[b.length - 1].rt) {
+          // pacchetto in ritardo/perso: invece di congelare (scatto), faccio proseguire il disco
+          // col suo movimento per un breve tratto (max 70ms). Appena arriva il dato vero, riparte liscio.
+          var Z = b[b.length - 1], ex = Math.min((rt - Z.rt) / 1000, 0.07);
+          px = clamp(Z.px + (Z.pvx || 0) * ex, RP, 1 - RP);
+          py = clamp(Z.py + (Z.pvy || 0) * ex, RP, ASP - RP);
+          hx = Z.hx; hy = Z.hy;
+        }
         else {
           var i = b.length - 2; while (i > 0 && b[i].rt > rt) i--;
           var A = b[i], B = b[i + 1], f = (rt - A.rt) / Math.max(1, B.rt - A.rt);
