@@ -4,6 +4,14 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 12 settembre 2026 (5) — Glow Hockey: disco liscio lato ospite (zona morta)
+- Riconciliazione del disco senza micro-strattoni: **zona morta** (~4% del campo) sotto
+  cui non si corregge la posizione → il disco si muove solo con la fisica locale (liscio);
+  **velocità sempre allineata** all'host (invisibile, tiene la traiettoria giusta); aggancio
+  secco solo su differenze grosse (gol). Estrapolazione autorità ridotta a 150ms.
+- Invii a **~50/sec** (dati più freschi). Racchetta avversaria: smorzamento 90→70ms
+  (meno ritardo, resta liscia grazie al rate più alto).
+
 ## 12 settembre 2026 (4) — Glow Hockey: racchetta avversaria fluida (anti-scatto)
 - La **racchetta dell'avversario** ora **scivola** dolcemente verso l'ultima posizione
   ricevuta invece di saltarci (smorzamento con costante di tempo ~90ms, indipendente dal

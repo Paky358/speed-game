@@ -7495,9 +7495,9 @@ window.SG_SIPERO = {
 /* =========================================================
    GIOCO — "Glow Hockey"  (air hockey, ognuno dal suo telefono)
    Online host-autoritativo: l'host calcola la fisica del disco a
-   ~60fps ed è la "fonte di verità"; l'ospite manda solo la propria
-   racchetta e disegna il disco estrapolando la traiettoria (per
-   attenuare il lag del collegamento). Coordinate NORMALIZZATE
+   ~60fps ed è la "fonte di verità"; l'ospite PREDICE il disco in
+   locale (reagisce subito ai suoi colpi) e si riallinea dolcemente
+   con l'host, con zona morta anti-scatto. Coordinate NORMALIZZATE
    (indipendenti dallo schermo): campo largo 1, alto ASPETTO.
    NB: grafica volutamente minimale — prima la sostanza.
    ========================================================= */
@@ -7512,7 +7512,7 @@ window.SG_SIPERO = {
   var MAXV = 2.4;                // velocità massima disco (unità/sec)
   var PADK = 0.7;                // quanto la racchetta spinge il disco
   var VINCI = 7;                 // gol per vincere
-  var HZ = 22;                   // intervallo minimo fra invii (ms) ~45/sec
+  var HZ = 20;                   // intervallo minimo fra invii (ms) ~50/sec
   var HSTEP = 1 / 120;           // passo fisso della fisica (sotto-step): collisioni solide
 
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
@@ -7710,7 +7710,7 @@ window.SG_SIPERO = {
       if (st.fase === "gol" && now - st.golT > 1200) { st.fase = "gioco"; }
       // ammorbidisci la racchetta AVVERSARIA: scivola verso l'ultima posizione ricevuta
       // (niente scatti sul mio schermo, e il colpo sul disco risulta più fluido)
-      var kg = 1 - Math.exp(-dt / 0.09); // smorzamento forte (~90ms), indipendente dal frame-rate
+      var kg = 1 - Math.exp(-dt / 0.07); // smorzamento forte (~90ms), indipendente dal frame-rate
       st.gx += (st.gtx - st.gx) * kg; st.gy += (st.gty - st.gy) * kg;
       // velocità racchette (una volta per frame), per la spinta sul disco
       var fdt = Math.max(0.004, dt);
@@ -7786,7 +7786,7 @@ window.SG_SIPERO = {
       if (!S.L) S.L = { px: vm.px, py: vm.py, pvx: vm.pvx, pvy: vm.pvy, hx: vm.hx, hy: vm.hy, gx: S.me.x, gy: S.me.y, _gvx: 0, _gvy: 0 };
       var L = S.L;
       // racchetta avversaria (host): scivola morbida verso l'ultima posizione (anti-scatto)
-      var kh = 1 - Math.exp(-dt / 0.09); L.hx += (vm.hx - L.hx) * kh; L.hy += (vm.hy - L.hy) * kh;
+      var kh = 1 - Math.exp(-dt / 0.07); L.hx += (vm.hx - L.hx) * kh; L.hy += (vm.hy - L.hy) * kh;
       // la mia racchetta: istantanea + velocità (per la spinta)
       L._gvx = (S.me.x - S.pmex) / Math.max(0.004, dt); L._gvy = (S.me.y - S.pmey) / Math.max(0.004, dt);
       S.pmex = S.me.x; S.pmey = S.me.y; L.gx = S.me.x; L.gy = S.me.y;
@@ -7796,11 +7796,15 @@ window.SG_SIPERO = {
       } else {
         // PREDIZIONE: simulo il disco in locale (reagisce subito ai miei colpi)…
         passoLocale(L, dt);
-        // …e riallineo dolcemente con l'host (autorità), estrapolato a "adesso"
-        var age = Math.min(0.2, (now - S.tRecv) / 1000);
+        // …e mi riallineo con l'host (autorità) SENZA micro-strattoni:
+        var age = Math.min(0.15, (now - S.tRecv) / 1000);
         var ax = vm.px + vm.pvx * age, ay = vm.py + vm.pvy * age;
-        if (Math.hypot(ax - L.px, ay - L.py) > 0.28) { L.px = ax; L.py = ay; L.pvx = vm.pvx; L.pvy = vm.pvy; }
-        else { L.px += (ax - L.px) * 0.10; L.py += (ay - L.py) * 0.10; L.pvx += (vm.pvx - L.pvx) * 0.06; L.pvy += (vm.pvy - L.pvy) * 0.06; }
+        // la velocità la allineo sempre: è invisibile e tiene la traiettoria giusta
+        L.pvx += (vm.pvx - L.pvx) * 0.12; L.pvy += (vm.pvy - L.pvy) * 0.12;
+        var err = Math.hypot(ax - L.px, ay - L.py);
+        if (err > 0.30) { L.px = ax; L.py = ay; L.pvx = vm.pvx; L.pvy = vm.pvy; }        // gol/teletrasporto: aggancia
+        else if (err > 0.04) { L.px += (ax - L.px) * 0.15; L.py += (ay - L.py) * 0.15; } // fuori zona morta: correggi piano
+        // entro 0.04 (zona morta): NIENTE correzione di posizione → moto locale liscissimo
       }
       var o = { fase: vm.fase, px: L.px, py: L.py, hx: L.hx, hy: L.hy, gx: S.me.x, gy: S.me.y, s1: vm.s1, s2: vm.s2 };
       disegna(S.C.ctx, S.C.cssW, o, true);
