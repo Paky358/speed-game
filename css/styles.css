@@ -262,7 +262,7 @@ img{ max-width:100%; }
 .sala-riga{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
 .sala-riga .av{ font-size:1.6rem; width:var(--tocco); height:var(--tocco); flex:0 0 auto; cursor:pointer;
   border:0; border-radius:14px; background:var(--carta-2); }
-.sala-riga input{ flex:1; font-family:inherit; font-size:1.05rem; padding:12px 14px; border-radius:16px;
+.sala-riga input{ flex:1; min-width:0; width:0; font-family:inherit; font-size:1.05rem; padding:12px 14px; border-radius:16px;
   border:2px solid transparent; background:var(--carta); color:var(--testo); min-height:var(--tocco); }
 .sala-riga input:focus{ outline:none; border-color:var(--accento); }
 .sala-sommario{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; cursor:pointer;

@@ -268,7 +268,7 @@ img{ max-width:100%; }
 .sala-riga{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
 .sala-riga .av{ font-size:1.6rem; width:var(--tocco); height:var(--tocco); flex:0 0 auto; cursor:pointer;
   border:0; border-radius:14px; background:var(--carta-2); }
-.sala-riga input{ flex:1; font-family:inherit; font-size:1.05rem; padding:12px 14px; border-radius:16px;
+.sala-riga input{ flex:1; min-width:0; width:0; font-family:inherit; font-size:1.05rem; padding:12px 14px; border-radius:16px;
   border:2px solid transparent; background:var(--carta); color:var(--testo); min-height:var(--tocco); }
 .sala-riga input:focus{ outline:none; border-color:var(--accento); }
 .sala-sommario{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; cursor:pointer;
@@ -5888,7 +5888,7 @@ window.SG_NOVITA = [
     data: "13 settembre 2026",
     titolo: "Scopa: carte più chiare e si vede cosa si prende",
     descrizione: [
-      "Semi (monete, coppe, spade, bastoni) disegnati grandi e ben visibili: si capisce al volo che carta è, anche sulle figure (Fante, Cavallo, Re) e a colpo d'occhio.",
+      "Semi ridisegnati più fedeli alle carte vere e ben colorati: coppe come calici dorati con rosso e verde, spade a sciabola, bastoni di legno, monete d'oro — grandi e riconoscibili a colpo d'occhio, anche sulle figure.",
       "Quando tu o l'avversario prendete delle carte, per un attimo si vede la carta giocata e quali carte prende, invece di farle sparire e basta."
     ]
   },
@@ -10338,24 +10338,38 @@ window.SG_SIPERO = {
     defs.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; defs.setAttribute("aria-hidden", "true");
     defs.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><defs>' +
       '<radialGradient id="scgD" cx="40%" cy="34%" r="70%"><stop offset="0" stop-color="#ffe9a3"/><stop offset="1" stop-color="#cf9310"/></radialGradient>' +
-      '<linearGradient id="scgC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2687a"/><stop offset="1" stop-color="#a81f2c"/></linearGradient>' +
-      '<linearGradient id="scgS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#77a9de"/><stop offset="1" stop-color="#215c9c"/></linearGradient>' +
-      '<linearGradient id="scgB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b07c46"/><stop offset="1" stop-color="#6a4020"/></linearGradient>' +
+      '<linearGradient id="scgS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dce7f2"/><stop offset=".55" stop-color="#aebccc"/><stop offset="1" stop-color="#7f95ac"/></linearGradient>' +
+      '<linearGradient id="scgB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c0925a"/><stop offset="1" stop-color="#6a4423"/></linearGradient>' +
       simbolo("D") + simbolo("C") + simbolo("S") + simbolo("B") + '</defs></svg>';
     document.body.appendChild(defs);
   }
-  // simbolo del seme in un box 10x10 (moneta / coppa / spada / bastone)
+  // simbolo del seme in un box 24x24, ispirato alle carte napoletane vere
   function simbolo(s) {
     var g;
-    if (s === "D") g = '<circle cx="5" cy="5" r="4.3" fill="url(#scgD)" stroke="#8a6a1e" stroke-width=".5"/><circle cx="5" cy="5" r="2.6" fill="none" stroke="#8a6a1e" stroke-width=".45"/><path d="M5 3.15l.62 1.26 1.39.2-1.005.98.237 1.385L5 6.36l-1.243.615.237-1.385L2.99 4.61l1.39-.2z" fill="#8a6a1e"/>';
-    else if (s === "C") g = '<path d="M2.15 2.05H7.85V3.15A2.85 2.85 0 0 1 2.15 3.15Z" fill="url(#scgC)" stroke="#7c1620" stroke-width=".3"/><rect x="4.5" y="4.15" width="1" height="2.5" fill="#a81f2c"/><path d="M2.85 7.75Q5 6.55 7.15 7.75Q5 8.25 2.85 7.75Z" fill="#a81f2c"/><circle cx="5" cy="1.65" r=".72" fill="#a81f2c"/>';
-    else if (s === "S") g = '<path d="M5 .9 5.85 6.2 5 7.5 4.15 6.2Z" fill="url(#scgS)" stroke="#1c4c86" stroke-width=".3"/><rect x="2.7" y="6.05" width="4.6" height=".95" rx=".45" fill="#215c9c"/><rect x="4.6" y="6.9" width=".8" height="1.8" fill="#215c9c"/><circle cx="5" cy="8.95" r=".72" fill="#215c9c"/>';
-    else g = '<path d="M4.35 8.9C3.95 6.2 4.15 3.3 5 1.5C5.85 3.3 6.05 6.2 5.65 8.9C5 9.35 5 9.35 4.35 8.9Z" fill="url(#scgB)" stroke="#5a3d20" stroke-width=".4"/>'
-      + '<circle cx="5" cy="1.55" r=".7" fill="url(#scgB)" stroke="#5a3d20" stroke-width=".3"/>'
-      + '<path d="M4.5 3.7 3.35 3.15" stroke="#5a3d20" stroke-width=".5" stroke-linecap="round"/>'
-      + '<path d="M5.55 5 6.75 4.5" stroke="#5a3d20" stroke-width=".5" stroke-linecap="round"/>'
-      + '<path d="M4.5 6.3 3.45 5.95" stroke="#5a3d20" stroke-width=".5" stroke-linecap="round"/>';
-    return '<symbol id="scSeme' + s + '" viewBox="0 0 10 10">' + g + '</symbol>';
+    if (s === "D") // moneta d'oro
+      g = '<circle cx="12" cy="12" r="10.3" fill="url(#scgD)" stroke="#8a6a1e" stroke-width="1.1"/>' +
+        '<circle cx="12" cy="12" r="6.6" fill="none" stroke="#8a6a1e" stroke-width=".9"/>' +
+        '<path d="M12 7.3l1.55 3.14 3.46.5-2.5 2.44.59 3.45L12 18.66l-3.1 1.63.59-3.45-2.5-2.44 3.46-.5z" fill="#8a6a1e"/>';
+    else if (s === "C") // calice dorato con bordo rosso, fascia verde e manici
+      g = '<path d="M6.5 8Q2.6 8.5 4.4 12.6" fill="none" stroke="#cf9310" stroke-width="1.6" stroke-linecap="round"/>' +
+        '<path d="M17.5 8Q21.4 8.5 19.6 12.6" fill="none" stroke="#cf9310" stroke-width="1.6" stroke-linecap="round"/>' +
+        '<path d="M5.4 6H18.6Q18.6 12.3 12 13.7Q5.4 12.3 5.4 6Z" fill="url(#scgD)" stroke="#8a6a1e" stroke-width=".6"/>' +
+        '<rect x="4.7" y="3.9" width="14.6" height="2.7" rx="1.3" fill="#c62828" stroke="#8a1f1f" stroke-width=".3"/>' +
+        '<path d="M6.4 8.8Q12 10.8 17.6 8.8" fill="none" stroke="#2e8b3d" stroke-width="1.6"/>' +
+        '<rect x="10.7" y="13.5" width="2.6" height="4.4" fill="url(#scgD)"/>' +
+        '<path d="M6.8 20.6Q12 17.9 17.2 20.6Q12 22 6.8 20.6Z" fill="url(#scgD)" stroke="#8a6a1e" stroke-width=".4"/>';
+    else if (s === "S") // sciabola curva d'acciaio con elsa dorata
+      g = '<path d="M11.3 18.6Q6.3 12.8 8.7 4.3Q9.2 2.7 10.8 3.2Q9.7 11 13.6 17.8Z" fill="url(#scgS)" stroke="#5f7386" stroke-width=".6"/>' +
+        '<rect x="7.4" y="17.6" width="9.2" height="2.2" rx="1.1" fill="#cf9310" stroke="#8a6a1e" stroke-width=".35"/>' +
+        '<rect x="10.9" y="19.6" width="2.7" height="3.4" rx="1.1" fill="#6a4a2a"/>';
+    else // bastone di legno con nodi
+      g = '<path d="M9.7 21.6Q8.2 13 10.4 4.9Q11 2.9 13 3.7Q14.8 13 14.3 21.6Q12 22.7 9.7 21.6Z" fill="url(#scgB)" stroke="#5a3d20" stroke-width=".6"/>' +
+        '<circle cx="11.7" cy="3.7" r="1.8" fill="url(#scgB)" stroke="#5a3d20" stroke-width=".45"/>' +
+        '<path d="M10.1 8.6 7.5 7.4" stroke="#5a3d20" stroke-width="1.2" stroke-linecap="round"/>' +
+        '<path d="M13.7 11.2 16.4 10.1" stroke="#5a3d20" stroke-width="1.2" stroke-linecap="round"/>' +
+        '<path d="M10.3 13.8 7.9 13.1" stroke="#5a3d20" stroke-width="1.2" stroke-linecap="round"/>' +
+        '<path d="M11.6 6Q11.1 13.5 11.8 20.6" stroke="rgba(255,244,214,.5)" stroke-width=".9" fill="none"/>';
+    return '<symbol id="scSeme' + s + '" viewBox="0 0 24 24">' + g + '</symbol>';
   }
   // posizioni dei "pips" (cx, cy, dimensione) su una carta 100x150, come sulle carte vere
   var PIPS = {

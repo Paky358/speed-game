@@ -4,6 +4,17 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (11) — Scopa: semi fedeli agli originali (multicolore) + fix "×" nella sala
+- **Semi ridisegnati** (`simbolo()`, viewBox 24×24, ispirati alle carte napoletane vere):
+  **coppe** = calice dorato con bordo rosso, fascia verde e manici (non più solo rosso);
+  **spade** = sciabola curva d'acciaio con elsa dorata; **bastoni** = clava di legno con nodi e
+  rametti; **denari** = moneta d'oro con stella. Nuovi gradienti (acciaio, legno) in `assicuraStile`.
+- **Fix sala** (`css/styles.css` `.sala-riga input`): l'input aveva `flex:1` senza `min-width:0`,
+  quindi non si restringeva e spingeva la **×** fuori schermo (serviva scorrere). Aggiunto
+  `min-width:0; width:0` → la × è sempre visibile, niente scroll orizzontale.
+- Collaudato a video: semi colorati e riconoscibili (anche sulle figure); riga sala con × dentro
+  lo schermo (right 359 ≤ 375, nessuno scroll). Nessun errore.
+
 ## 13 settembre 2026 (10) — Scopa: simboli dei semi molto più grandi (leggibilità)
 - Pips ingranditi parecchio (`PIPS`: asso 54, 2→42, 3→36, 4→34, 5→31, 6→30, 7→26; posizioni che
   evitano gli angoli) così i semi "saltano all'occhio". Sulle **figure** (8/9/10) il seme è ora
