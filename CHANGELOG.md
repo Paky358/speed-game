@@ -9,9 +9,10 @@ contenuto di quel tasto vive in `data/novita.js`._
   (con icona+nome); il round in corso ha il contorno giallo (`.as-step.ora`), i fatti la spunta, i prossimi
   restano visibili. `intestazioneRound`/`testaRound` la usano (scelta/asta/round), più la schermata d'inizio
   round. La vm online espone `rounds` (elenco `{nome,icona}`).
-- **L'Asta — "ancora in palio"**: `dettaglioPalio(el, carte, nomeCorrente)` = pannello a scomparsa `<details>`
-  che elenca le carte ancora da aggiudicare nel round (quella all'asta marcata "· all'asta ora"), aggiunto in
-  `disegnaAsta` (locale) e nella fase `asta` online (usa `vm.tavolo`).
+- **L'Asta — "ancora in palio"**: `dettaglioPalio(el, carte, nomeCorrente)` = elenco SEMPRE visibile (un div,
+  non più `<details>`: così non parte chiuso e non si richiude a ogni offerta quando la schermata si ridisegna)
+  con le carte ancora da aggiudicare nel round (quella all'asta marcata "· all'asta ora"), in `disegnaAsta`
+  (locale) e nella fase `asta` online (usa `vm.tavolo`).
 - **La Patata Bollente — ritorno vincolato**: dopo un "Rimanda indietro" chi riprende la bomba può ridarla
   SOLO a chi gliel'ha rimandata. Nuovo `st.soloDare` (impostato in `indietro`, consumato in `passa`, azzerato
   in avvio/esplosione/rimozione), guardato in `passa` e nel render (`passabile`), esposto in `vm.soloDare`

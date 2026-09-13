@@ -5889,7 +5889,7 @@ window.SG_NOVITA = [
     titolo: "Asta più chiara + regola della bomba",
     descrizione: [
       "L'Asta: ora vedi tutti e 4 i round (le cose che si metteranno all'asta) con i loro nomi — quello in corso ha il contorno giallo, quelli fatti la spunta, i prossimi si vedono comunque.",
-      "L'Asta: mentre si fa l'asta di una carta puoi toccare “Ancora in palio” per vedere quali altre cose restano da aggiudicare in quel round.",
+      "L'Asta: mentre si fa l'asta di una carta trovi sempre in vista l'elenco “Ancora in palio” con le altre cose ancora da aggiudicare in quel round.",
       "La Patata Bollente: quando ti rimandano indietro la bomba (col tasto giallo), ora puoi ridarla SOLO a chi te l'ha rimandata (prima potevi darla a chiunque)."
     ]
   },
@@ -6880,10 +6880,8 @@ window.SG_SIPERO = {
       "box-shadow:0 0 0 1px var(--accento) inset,0 4px 14px rgba(224,169,10,.25);}",
     ".as-step.ora .sn{color:var(--accento);}",
     // pannello \"ancora in palio\" durante l'asta di una carta
-    ".as-palio{background:var(--carta);border-radius:14px;margin:2px 0 12px;padding:0 12px;overflow:hidden;}",
-    ".as-palio>summary{list-style:none;cursor:pointer;padding:11px 0;font-weight:800;color:var(--testo);",
-      "display:flex;align-items:center;gap:8px;}",
-    ".as-palio>summary::-webkit-details-marker{display:none;}",
+    ".as-palio{background:var(--carta);border-radius:14px;margin:2px 0 12px;padding:2px 12px 8px;}",
+    ".as-palio .ph{padding:10px 0 2px;font-weight:800;color:var(--testo);display:flex;align-items:center;gap:8px;font-size:.95rem;}",
     ".as-palio .pr{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid rgba(255,255,255,.08);font-size:.95rem;}",
     ".as-palio .pr .em{font-size:1.25rem;width:32px;text-align:center;flex:0 0 auto;}",
     ".as-palio .pr .nm{flex:1;min-width:0;}",
@@ -7010,24 +7008,23 @@ window.SG_SIPERO = {
     return box;
   }
 
-  // pannello a scomparsa con le carte ancora in palio nel round (quella in corso è evidenziata)
+  // elenco SEMPRE VISIBILE delle carte ancora in palio nel round (quella in corso è evidenziata)
   function dettaglioPalio(el, cards, nomeCorrente) {
     if (!cards || !cards.length) return null;
-    var d = el("details", { class: "as-palio" });
-    d.appendChild(el("summary", {}, [
+    var box = el("div", { class: "as-palio" });
+    box.appendChild(el("div", { class: "ph" }, [
       el("span", { text: "🎁" }),
-      el("span", { style: "flex:1", text: "Ancora in palio in questo round (" + cards.length + ")" }),
-      el("span", { style: "opacity:.6;font-size:.82rem;font-weight:700", text: "tocca" })
+      el("span", { style: "flex:1", text: "Ancora in palio in questo round (" + cards.length + ")" })
     ]));
     cards.forEach(function (c) {
       var ora = (c.nome === nomeCorrente);
-      d.appendChild(el("div", { class: "pr" + (ora ? " ora-c" : "") }, [
+      box.appendChild(el("div", { class: "pr" + (ora ? " ora-c" : "") }, [
         el("span", { class: "em", text: c.emoji }),
         el("span", { class: "nm", text: c.nome + (ora ? " · all'asta ora" : "") }),
         el("span", { class: "tier tier-" + c.tier, text: c.tier })
       ]));
     });
-    return d;
+    return box;
   }
 
   function intestazioneRound(el, st) {
