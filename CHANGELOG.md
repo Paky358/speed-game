@@ -4,6 +4,21 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (8) — Scopa: carte ridisegnate + presa con un tocco + tavolo centrato
+- **Carte** rifatte molto più simili alle napoletane: semi in SVG condivisi (`<symbol>` + gradienti
+  in `simbolo()`, monete/coppe/spade/bastoni), **pips contati** nelle posizioni classiche (`PIPS`,
+  asso grande, 1–7), figure per Fante/Cavallo/Re (💂/🐎/👑) in cornice, valore + seme negli angoli
+  (in alto-sx e in basso-dx ruotato). `cartaSVG()` disegna l'intera carta; `.sc-carta` ora è solo
+  contenitore (bordo/ombra/outline). Dorso rosso a pois.
+- **Presa con un tocco**: `tapMano` gioca subito — presa automatica se c'è **una sola** presa
+  possibile (anche combinazione), scarto automatico se non prende; si sceglie **solo** quando ci
+  sono **più prese** possibili (allora si toccano le carte verdi). Tolto il tasto "Metti giù".
+- **Layout**: tavolo centrato verticalmente (flex:1) tra avversario (in alto) e la propria mano
+  (in basso), carte più grandi (tavolo 66px, mano 88px), per sfruttare tutto lo schermo.
+- Collaudato: nuove carte a video (pips, figure, monete), presa singola/combinazione con un tocco,
+  scelta quando più prese, sincronizzazione invariata. (I log `navigator.vibrate` in test sono solo
+  perché i click automatici non sono tocchi reali; sul telefono funziona.)
+
 ## 13 settembre 2026 (7) — Nuovo gioco: Scopa (carte napoletane, repliche SVG)
 - Nuovo `js/games/scopa.js`. Carte napoletane **disegnate da noi in SVG** (nessun copyright):
   4 semi (denari/coppe/spade/bastoni) con glifo proprio, valore colorato per seme, emoji figura

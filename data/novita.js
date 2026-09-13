@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 43,
+    data: "13 settembre 2026",
+    titolo: "Scopa: carte più belle e presa con un tocco 🃏",
+    descrizione: [
+      "Le carte ora somigliano molto di più a quelle vere: i semi disegnati per bene (monete, coppe, spade, bastoni) e le pedine contate come sulle carte napoletane, con le figure per Fante, Cavallo e Re.",
+      "Per prendere basta un tocco: tocchi la tua carta e prende da sola. Devi scegliere solo se ci sono più prese possibili.",
+      "Le carte del tavolo ora sono al centro, per sfruttare tutto lo schermo."
+    ]
+  },
+  {
     v: 42,
     data: "13 settembre 2026",
     titolo: "Nuovo gioco: Scopa 🃏 (carte napoletane)",
