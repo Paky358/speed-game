@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 46,
+    data: "13 settembre 2026",
+    titolo: "Nuovo gioco: Scopone 🃏 (classico e scientifico)",
+    descrizione: [
+      "Arriva lo Scopone, in quattro a squadre: tu e il Compagno contro due Rivali (contro il computer).",
+      "Due varianti: Scientifico (10 carte a testa, tavolo vuoto) e Classico (9 carte + 4 sul tavolo).",
+      "Stesse carte napoletane vere e stesse animazioni della Scopa. Punti a squadra: Carte, Denari, Settebello, Primiera e le Scope. Partita a 11."
+    ]
+  },
+  {
     v: 45,
     data: "13 settembre 2026",
     titolo: "Scopa con le carte napoletane VERE 🃏",

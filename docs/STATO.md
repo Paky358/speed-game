@@ -122,7 +122,15 @@ dal proprio.
   `primiera`). Due modalità: **bot** (Facile/Medio/Difficile) e **online** su **SGNet**. Online a
   **mani coperte**: l'host invia all'ospite solo `vistaDa(st,"B")` (le carte dell'host non vengono
   mai trasmesse), disegnando la propria vista a parte. UI `renderScopa`/`renderFine`, suono/vibrazione
-  alla presa. `giocatoriMin:1, giocatoriMax:2, difficolta:3`.
+  alla presa. `giocatoriMin:1, giocatoriMax:2, difficolta:3`. Espone `window.SGCarte` (carte + logica di
+  presa) riusato dallo Scopone.
+- **Gioco 12 — Scopone** 🃏 (`js/games/scopone.js`): a **4, in due squadre** (tu seat0 + Compagno seat2
+  vs Rivali seat1/3), **contro 3 bot**. Varianti **scientifico** (10 a testa, tavolo vuoto) e **classico**
+  (9 + 4 sul tavolo). Carte tutte subito (no pesca); presa come Scopa; a fine mano il tavolo all'ultima
+  squadra che ha preso. Punteggio **a squadra** (`contaScopone`): Carte/Denari/Settebello/Primiera + Scope,
+  partita a **11**, inizio che ruota. Riusa `window.SGCarte` (stesse immagini `carte/*.jpg`, stessa presa
+  con un tocco e stesse animazioni della Scopa). UI a 4 (in alto Rivale1·Compagno·Rivale2, tavolo, tua
+  mano in basso). Solo **vs bot** per ora (online a 4 = lavoro futuro). `giocatoriMin/Max:1, difficolta:3`.
 
 ## Torneo (più giochi di fila)
 Dalla home, tasto **🏆 Torneo**: si sceglie una volta il gruppo e si giocano più

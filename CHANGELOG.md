@@ -4,6 +4,22 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (14) — Nuovo gioco: Scopone (classico e scientifico, a squadre, vs bot)
+- Nuovo `js/games/scopone.js`: 4 giocatori in 2 squadre (tu seat0 + Compagno seat2 vs Rivali seat1/3),
+  **contro 3 bot**. Varianti: **scientifico** (10 carte a testa, tavolo vuoto) e **classico** (9 + 4 sul
+  tavolo). Carte date tutte subito (no pesca); regole di presa come Scopa (singolo forzato/somme), scopa,
+  a fine mano il tavolo va all'ultima squadra che ha preso. **Punteggio a squadra** (`contaScopone`):
+  Carte/Denari/Settebello/Primiera + Scope; partita a 11; inizio che ruota ogni mano.
+- **Riuso**: `scopa.js` ora espone `window.SGCarte` (creaMazzo, catture, primiera, cartaEl, dorsoEl,
+  assicuraStile, validaSet, prefisso) → Scopone usa le **stesse immagini** (`carte/*.jpg`), la stessa
+  presa con un tocco (auto se 1 presa, scelta se più) e le **stesse animazioni** (`.sc-lascia`/`scGioca`,
+  presa vola verso chi prende; `.sc-cade` per lo scarto).
+- UI a 4: in alto Rivale1 · Compagno · Rivale2 (dorsi + nomi), tavolo al centro, la tua mano in basso.
+  Solo **vs bot** per ora (l'online a 4 è un lavoro a parte). `giocatoriMin/Max:1, difficolta:3`.
+- Collaudato: distribuzione (scientifico 10/0 · 30 dorsi; classico 9/4 · 27 dorsi = 40), giro dei 4 con
+  prese, mano intera fino al punteggio a squadre (Carte 13–27, Denari 4–6, Settebello, Primiera 65–81,
+  Scope 0–5 → 0–9; somma 40 carte). Zero errori dal gioco.
+
 ## 13 settembre 2026 (13) — Scopa: animazione presa fluida (il tavolo non sparisce più)
 - Prima, durante la presa, l'area tavolo veniva **sostituita** dalla pila che volava → le carte non
   prese sparivano e riapparivano. Ora il tavolo **resta**: si ridisegna `presa.tavoloPrima` (il tavolo

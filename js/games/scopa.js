@@ -644,4 +644,11 @@
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
   }
+
+  // aiuti condivisi (usati anche dallo Scopone): carte e logica di presa
+  window.SGCarte = {
+    creaMazzo: creaMazzo, catture: catture, primiera: primiera, trova: trova,
+    cartaEl: cartaEl, dorsoEl: dorsoEl, assicuraStile: assicuraStile,
+    validaSet: validaSet, prefisso: prefisso, PRIM: PRIM
+  };
 })();
