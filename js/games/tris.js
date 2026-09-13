@@ -27,7 +27,7 @@
 
   // suono: un pennarello che scrive veloce (raffica di rumore filtrato con qualche "tratto")
   function suonoPenna() {
-    try { if (navigator.vibrate) navigator.vibrate(10); } catch (e) {}
+    try { if (navigator.vibrate) navigator.vibrate(18); } catch (e) {}
     var ctx = SG.audioCtx && SG.audioCtx(); if (!ctx) return;
     try {
       var t = ctx.currentTime, dur = 0.2;
