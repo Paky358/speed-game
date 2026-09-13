@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 42,
+    data: "13 settembre 2026",
+    titolo: "Nuovo gioco: Scopa 🃏 (carte napoletane)",
+    descrizione: [
+      "Arriva la Scopa con le carte napoletane, disegnate apposta per l'app (denari, coppe, spade, bastoni).",
+      "Prendi le carte del tavolo, fai scopa quando lo svuoti, e a fine smazzata si contano i punti veri: Carte, Denari, Settebello, Primiera e le Scope. Partita a 11.",
+      "Due modi: da solo contro il bot (Facile / Medio / Difficile) oppure online, ognuno dal suo telefono col codice (ognuno vede solo le proprie carte).",
+      "Piccolo suono e vibrazione quando prendi le carte."
+    ]
+  },
+  {
     v: 41,
     data: "13 settembre 2026",
     titolo: "Tris e Drop 4 con i suoni 🔊",

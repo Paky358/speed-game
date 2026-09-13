@@ -4,6 +4,28 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (7) — Nuovo gioco: Scopa (carte napoletane, repliche SVG)
+- Nuovo `js/games/scopa.js`. Carte napoletane **disegnate da noi in SVG** (nessun copyright):
+  4 semi (denari/coppe/spade/bastoni) con glifo proprio, valore colorato per seme, emoji figura
+  (👤/🐎/👑) per Fante/Cavallo/Re. Mazzo 40.
+- Regole complete: presa per valore uguale (singolo **forzato** se esiste, niente somme), altrimenti
+  presa per somma (combinazioni multiple a scelta), **scopa** a tavolo svuotato (tranne ultima carta),
+  fine mazzo con carte al'ultimo che ha preso. Punteggio smazzata: **Carte, Denari, Settebello (7 di
+  denari), Primiera, Scope**. Partita a **11**, smazzate con inizio alternato.
+- Due modalità: **contro il bot** (Facile casuale / Medio greedy vinci-blocca / Difficile con
+  euristica + evita di regalare scope) e **online** su SGNet. Online a **mani coperte senza leak**:
+  l'host manda all'ospite solo la vista dell'ospite (`vistaDa(st,"B")`), e disegna la propria a parte —
+  le carte dell'host non transitano mai verso l'ospite.
+- UI condivisa (`renderScopa`/`renderFine`): tavolo, mano toccabile, selezione carta → tocco delle
+  carte verdi da prendere (combinazioni con selezione progressiva), "Metti giù" se non prende;
+  riepilogo punti a fine smazzata; suono/vibrazione alla presa (più marcati sulla scopa).
+- `index.html`: aggiunto lo script (build dal glob).
+- Collaudato E2E in locale: logica pura (prese forzate/combo, primiera, conteggio), smazzata intera
+  simulata (40 carte, tavolo svuotato), UI vs bot (presa singola, scarto, combo gestite, il gioco
+  ignora i tocchi non validi), fine smazzata con punteggio corretto (es. 27/13 carte, 7/3 denari,
+  settebello, primiera 84/69 → 4–0) e "Continua" che ridistribuisce; online host↔ospite con mani
+  coperte e sincronizzazione nei due sensi. Zero errori dal gioco.
+
 ## 13 settembre 2026 (6) — Tris e Drop 4: suoni + vibrazione leggera
 - Motore audio condiviso in core: `SG.audioCtx()` — un solo AudioContext per l'app, creato/ripreso
   al primo gesto (autoplay policy). Riscaldato anche nei tap "Entra" (ospite online).

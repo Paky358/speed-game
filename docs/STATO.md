@@ -108,6 +108,16 @@ dal proprio.
   telefono**, **online** (host = Giallo, ospite = Bianco, host-autoritativo su **SGNet**, a turni).
   Rivincita alterna chi inizia. Campo condiviso `campoDrop`. Nel torneo gioca "in due" e i punti
   vanno via `t.fine`. `giocatoriMin:1, giocatoriMax:2, difficolta:2`.
+- **Gioco 11 — Scopa** 🃏 (`js/games/scopa.js`): carte napoletane in **due** (mazzo 40). Carte
+  **disegnate da noi in SVG** (`semeSVG`, nessun copyright): valore colorato per seme + glifo
+  (moneta/coppa/spada/bastone) + emoji figura (👤/🐎/👑). Regole complete: presa per valore
+  (singolo forzato, altrimenti somme/combinazioni a scelta), **scopa** a tavolo vuoto (non l'ultima),
+  carte finali all'ultimo che ha preso; punti smazzata **Carte/Denari/Settebello/Primiera/Scope**,
+  partita a **11**, inizio alternato. Motore puro testabile (`creaMotore`, `catture`, `contaPunti`,
+  `primiera`). Due modalità: **bot** (Facile/Medio/Difficile) e **online** su **SGNet**. Online a
+  **mani coperte**: l'host invia all'ospite solo `vistaDa(st,"B")` (le carte dell'host non vengono
+  mai trasmesse), disegnando la propria vista a parte. UI `renderScopa`/`renderFine`, suono/vibrazione
+  alla presa. `giocatoriMin:1, giocatoriMax:2, difficolta:3`.
 
 ## Torneo (più giochi di fila)
 Dalla home, tasto **🏆 Torneo**: si sceglie una volta il gruppo e si giocano più
