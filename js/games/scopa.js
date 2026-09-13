@@ -100,13 +100,14 @@
       if (opts.length) {
         // DEVE prendere: valida il set scelto (o prendi il primo se non specificato/valido)
         var set = presaIds && validaSet(opts, presaIds) ? presaIds : opts[0];
+        var tavoloPrima = st.tavolo.slice(); // il tavolo com'era, per l'animazione (resta fermo, volano via solo le prese)
         var presi = set.map(function (id) { return trova(st.tavolo, id); }).filter(Boolean);
         st.tavolo = st.tavolo.filter(function (c) { return set.indexOf(c.id) < 0; });
         st.prese[pk] = st.prese[pk].concat(presi, [carta]);
         st.ultimaPresa = pk; ev.presa = true;
         var ultimissima = (st.mazzo.length === 0 && st.mani.A.length === 0 && st.mani.B.length === 0);
         if (st.tavolo.length === 0 && !ultimissima) { st.scope[pk]++; ev.scopa = true; }
-        st.presa = { chi: pk, carta: carta, presi: presi, scopa: ev.scopa }; // per mostrare cosa è stato preso
+        st.presa = { chi: pk, carta: carta, presi: presi, scopa: ev.scopa, tavoloPrima: tavoloPrima, presiIds: set };
       } else {
         st.tavolo.push(carta); st.messaGiu = carta.id; // niente presa: la carta si posa sul tavolo (animata)
       }
@@ -203,12 +204,14 @@
       // la carta scartata si posa sul tavolo
       "@keyframes scCade{0%{transform:translateY(-130px) scale(1.08);opacity:0}60%{opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}",
       ".sc-cade{animation:scCade .34s ease-out}",
-      // la presa: la mia carta sopra le carte prese, poi volano via verso chi prende
-      ".sc-vola{display:flex;justify-content:center;align-items:center}",
-      "@keyframes scVsu{0%,25%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-200px) scale(.4);opacity:0}}",
-      "@keyframes scVgiu{0%,25%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(200px) scale(.4);opacity:0}}",
-      ".sc-vola-su{animation:scVsu .85s ease-in forwards}",
-      ".sc-vola-giu{animation:scVgiu .85s ease-in forwards}"
+      // la presa: le carte prese volano via DALLA LORO POSIZIONE verso chi prende (il resto resta fermo)
+      "@keyframes scLasciaSu{0%,35%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-210px) scale(.4);opacity:0}}",
+      "@keyframes scLasciaGiu{0%,35%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(210px) scale(.4);opacity:0}}",
+      ".sc-lascia-su{animation:scLasciaSu .95s ease-in forwards;position:relative;z-index:4}",
+      ".sc-lascia-giu{animation:scLasciaGiu .95s ease-in forwards;position:relative;z-index:4}",
+      // la carta giocata: arriva dalla mano, si posa al centro, poi vola via con le prese
+      "@keyframes scGiocaGiu{0%{transform:translateY(150px) scale(.92);opacity:0}16%{opacity:1}30%,38%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(215px) scale(.4);opacity:0}}",
+      "@keyframes scGiocaSu{0%{transform:translateY(-150px) scale(.92);opacity:0}16%{opacity:1}30%,38%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-215px) scale(.4);opacity:0}}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -251,11 +254,20 @@
     var capIds = {}; opts.forEach(function (set) { set.forEach(function (id) { capIds[id] = true; }); });
     var areaTavolo = el("div", { style: "flex:1;display:flex;align-items:center;justify-content:center;padding:8px 0" });
     if (vm.presa) {
-      // la carta giocata SOPRA le carte prese, poi volano via verso chi le prende
-      var pila = el("div", { class: "sc-vola sc-vola-" + (vm.presa.mio ? "giu" : "su") });
-      vm.presa.presi.forEach(function (c, i) { var e = cartaEl(el, c, 64); if (i) e.style.marginLeft = "-34px"; pila.appendChild(e); });
-      var gioc = cartaEl(el, vm.presa.carta, 64); if (vm.presa.presi.length) gioc.style.marginLeft = "-34px"; gioc.style.transform = "translateY(-8px)"; pila.appendChild(gioc);
-      areaTavolo.appendChild(pila);
+      // il tavolo RESTA fermo: rimostro il tavolo com'era e faccio volare via SOLO le carte prese
+      var dir = vm.presa.mio ? "giu" : "su";
+      areaTavolo.style.position = "relative";
+      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:center" });
+      (vm.presa.tavoloPrima || vm.tavolo).forEach(function (c) {
+        var cel = cartaEl(el, c, 70);
+        if (vm.presa.presiIds && vm.presa.presiIds.indexOf(c.id) >= 0) cel.classList.add("sc-lascia-" + dir);
+        tw0.appendChild(cel);
+      });
+      areaTavolo.appendChild(tw0);
+      // la mia carta: appare al centro (appena giocata) e vola via con le prese
+      var gioc = cartaEl(el, vm.presa.carta, 70);
+      gioc.style.cssText += ";position:absolute;left:50%;top:50%;margin-left:-35px;margin-top:-58px;z-index:6;animation:scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
+      areaTavolo.appendChild(gioc);
     } else {
       var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:center" });
       if (!vm.tavolo.length) tw.appendChild(el("div", { class: "tenue", text: "tavolo vuoto" }));
@@ -361,7 +373,7 @@
       if (!vm || vm.turno !== vm.io || vm.fase !== "gioco") C.sel = { carta: null, presa: [] };
       if (C._pend) { clearTimeout(C._pend); C._pend = null; }
       if (vm && vm.presa) {                              // arriva una presa: mostra l'animazione (durata minima garantita)
-        C._presaFino = Date.now() + 950;
+        C._presaFino = Date.now() + 1050;
         C.vm = vm; C.disegna(); return;
       }
       if (vm && C.vm && C.vm.presa && Date.now() < C._presaFino) {   // il "pulisci" è arrivato troppo presto:
@@ -386,7 +398,7 @@
       settebelloIo: !!trova(st.prese[io], "D7"), settebelloOpp: !!trova(st.prese[opp], "D7"),
       punti: { io: st.punti[io], opp: st.punti[opp] },
       ultimoRound: st.ultimoRound, messaGiu: st.messaGiu,
-      presa: st.presa ? { mio: st.presa.chi === io, carta: st.presa.carta, presi: st.presa.presi, scopa: st.presa.scopa } : null,
+      presa: st.presa ? { mio: st.presa.chi === io, carta: st.presa.carta, presi: st.presa.presi, scopa: st.presa.scopa, tavoloPrima: st.presa.tavoloPrima, presiIds: st.presa.presiIds } : null,
       vincitoreIo: st.fase === "fine" ? (st.punti[io] > st.punti[opp]) : false
     };
   }
@@ -476,7 +488,7 @@
     function continua(ev) {
       // se ha preso, mostra per un attimo cosa è stato preso, poi prosegue
       if (ev.presa && M.st.fase === "gioco") {
-        setTimeout(function () { M.st.presa = null; aggiorna(); seTuraBot(); }, ev.scopa ? 1650 : 1050);
+        setTimeout(function () { M.st.presa = null; aggiorna(); seTuraBot(); }, ev.scopa ? 1800 : 1200);
       } else { M.st.presa = null; seTuraBot(); }
     }
     function mossaUmano(id, presa) {
@@ -519,7 +531,7 @@
       suonoPresa(ev.scopa);
       bcast(); // mostra la presa (se c'è) su entrambi i telefoni
       if (ev.presa && M.st.fase === "gioco") {
-        setTimeout(function () { M.st.presa = null; bcast(); }, ev.scopa ? 1650 : 1050);
+        setTimeout(function () { M.st.presa = null; bcast(); }, ev.scopa ? 1800 : 1200);
       } else { M.st.presa = null; }
     }
     rete = SGNet.ospita("scopa", {

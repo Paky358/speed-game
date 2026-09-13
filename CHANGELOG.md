@@ -4,6 +4,14 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (13) — Scopa: animazione presa fluida (il tavolo non sparisce più)
+- Prima, durante la presa, l'area tavolo veniva **sostituita** dalla pila che volava → le carte non
+  prese sparivano e riapparivano. Ora il tavolo **resta**: si ridisegna `presa.tavoloPrima` (il tavolo
+  com'era) e volano via **solo** le carte prese (dalla loro posizione, `.sc-lascia-su/giu`); le altre
+  restano ferme. La carta giocata **arriva dalla mano**, si posa al centro e vola via con le prese
+  (`scGioca`). Stato `presa` ora porta `tavoloPrima` + `presiIds`. Durate ~0,95s, timer presa 1,2s
+  (1,8s scopa), durata minima client 1,05s.
+
 ## 13 settembre 2026 (12) — Scopa: carte napoletane VERE (immagini di pubblico dominio) + animazioni presa/scarto
 - **Carte reali**: sostituiti i disegni SVG con le immagini del mazzo napoletano **di pubblico dominio**
   (Wikimedia Commons, autore Trocche100 — rilasciate PD "uso libero senza condizioni"). 40 file scaricati
