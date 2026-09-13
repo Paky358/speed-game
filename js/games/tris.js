@@ -25,6 +25,28 @@
   }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
 
+  // suono: un pennarello che scrive veloce (raffica di rumore filtrato con qualche "tratto")
+  function suonoPenna() {
+    try { if (navigator.vibrate) navigator.vibrate(10); } catch (e) {}
+    var ctx = SG.audioCtx && SG.audioCtx(); if (!ctx) return;
+    try {
+      var t = ctx.currentTime, dur = 0.2;
+      var buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
+      var d = buf.getChannelData(0);
+      for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      var src = ctx.createBufferSource(); src.buffer = buf;
+      var hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 900;
+      var bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1950; bp.Q.value = 0.9;
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0, t);
+      // envelope "a tratti": qualche picco rapido = scarabocchio veloce
+      var seq = [[0.012, 0.30], [0.05, 0.12], [0.085, 0.28], [0.12, 0.10], [0.155, 0.22], [0.2, 0]];
+      seq.forEach(function (s) { g.gain.linearRampToValueAtTime(s[1], t + s[0]); });
+      src.connect(hp); hp.connect(bp); bp.connect(g); g.connect(ctx.destination);
+      src.start(t); src.stop(t + dur + 0.02);
+    } catch (e) {}
+  }
+
   // ---- bot ----
   function vinceCon(b, s) { for (var i = 0; i < 9; i++) { if (b[i]) continue; b[i] = s; var w = vincitore(b); b[i] = null; if (w && w.s === s) return i; } return -1; }
   function minimax(b, me, turno, prof) {
@@ -192,7 +214,7 @@
     }
     function gioca(i) {
       if (st.fine || st.board[i]) return;
-      st.board[i] = st.turno;
+      st.board[i] = st.turno; suonoPenna();
       var w = vincitore(st.board);
       if (w) st.fine = { vincitore: w.s, linea: w.linea };
       else if (pieno(st.board)) st.fine = { vincitore: null, linea: null };
@@ -246,7 +268,7 @@
     function bd() { rete.invia({ t: "vm", vm: vm() }); disegna(); }
     function applica(i) {
       if (st.fase !== "gioco" || st.fine || st.board[i] != null) return;
-      st.board[i] = st.turno;
+      st.board[i] = st.turno; suonoPenna();
       var w = vincitore(st.board);
       if (w) { st.fine = { vincitore: w.s, linea: w.linea }; st.fase = "fine"; }
       else if (pieno(st.board)) { st.fine = { vincitore: null, linea: null }; st.fase = "fine"; }
@@ -272,7 +294,7 @@
 
   function ospiteTris(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var el = t.el, S = { myId: null, vm: null, rete: null, nome: "", msg: null };
+    var el = t.el, S = { myId: null, vm: null, rete: null, nome: "", msg: null, lastCount: 0 };
     var cb = {
       sonoHost: false, mio: "O",
       onCella: function (i) { S.rete && S.rete.invia({ t: "mossa", i: i }); },
@@ -287,6 +309,7 @@
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+        try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
         S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
       } }));
       t.mostra(s);
@@ -295,7 +318,12 @@
       S.rete = SGNet.entra(codice, {
         onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome });
           setTimeout(function () { if (!S.vm && S.msg) S.msg.textContent = "Non trovo la partita: controlla il codice, o l'host non ha ancora aperto la stanza…"; }, 8000); },
-        onMsg: function (m) { if (m && m.t === "vm") { S.vm = m.vm; disegna(); } },
+        onMsg: function (m) { if (m && m.t === "vm") {
+          var n = 0; if (m.vm && m.vm.board) for (var i = 0; i < m.vm.board.length; i++) if (m.vm.board[i]) n++;
+          if (n > S.lastCount && m.vm.fase !== "lobby") suonoPenna();
+          S.lastCount = n;
+          S.vm = m.vm; disegna();
+        } },
         onChiuso: function () { errore(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
         onErrore: function () { errore(t, "Problema di collegamento. Controlla la connessione e riprova."); }
       });

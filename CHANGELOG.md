@@ -4,6 +4,18 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (6) — Tris e Drop 4: suoni + vibrazione leggera
+- Motore audio condiviso in core: `SG.audioCtx()` — un solo AudioContext per l'app, creato/ripreso
+  al primo gesto (autoplay policy). Riscaldato anche nei tap "Entra" (ospite online).
+- **Tris**: `suonoPenna()` — raffica di rumore filtrato (highpass+bandpass) con envelope "a tratti"
+  = pennarello che scrive veloce. Scatta a ogni pedina (locale in `gioca`, online host in `applica`,
+  ospite quando il conteggio pedine cresce). Vibrazione ~10ms.
+- **Drop 4**: `suonoDrop()` — "tock" (oscillatore triangolare che scende) + click di contatto
+  (rumore highpass) + assestamento; `suonoDropAtterra()` lo ritarda ~210ms per sincronizzarlo con
+  la fine dell'animazione di caduta. Stessi punti d'innesco. Vibrazione ~22ms.
+- Sintesi via Web Audio (niente file audio). Su iOS la `navigator.vibrate` è ignorata (innocuo).
+  Collaudato: WebAudio "running", oscillatori/buffer eseguiti senza eccezioni, mosse invariate.
+
 ## 13 settembre 2026 (5) — Nuovo gioco: Drop 4 (quattro in fila, 3 modalità)
 - Nuovo `js/games/drop4.js`. Griglia 7×6, gravità (la pedina cade nel primo posto libero),
   Giallo (inizia) vs Bianco, struttura grigia; animazione di caduta (`@keyframes sgDropCade`).

@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 41,
+    data: "13 settembre 2026",
+    titolo: "Tris e Drop 4 con i suoni 🔊",
+    descrizione: [
+      "Nel Tris, quando metti X o O senti il rumore di un pennarello che scrive veloce.",
+      "In Drop 4, quando la pedina cade senti un bel \"tock\" soddisfacente al momento dell'incastro.",
+      "Aggiunta anche una vibrazione leggera (dove il telefono la supporta). Se il telefono è in silenzioso, i suoni non partono: è normale."
+    ]
+  },
+  {
     v: 40,
     data: "13 settembre 2026",
     titolo: "Nuovo gioco: Drop 4 🟡",

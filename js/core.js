@@ -694,8 +694,22 @@
   // =========================================================
   //  API PUBBLICA
   // =========================================================
+  // motore audio condiviso: un solo AudioContext per tutta l'app, creato/ripreso
+  // al primo tocco (i browser bloccano l'audio finché non c'è un gesto dell'utente).
+  var _ac = null;
+  function audioCtx() {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!_ac) _ac = new AC();
+      if (_ac.state === "suspended") { try { _ac.resume(); } catch (e) {} }
+      return _ac;
+    } catch (e) { return null; }
+  }
+
   window.SG = {
     registra: function (gioco) { giochi.push(gioco); },
+    audioCtx: audioCtx,
     avviaApp: function () {
       app = document.getElementById("app");
       linkParams = leggiParametriLink();
