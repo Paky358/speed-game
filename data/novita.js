@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 45,
+    data: "13 settembre 2026",
+    titolo: "Scopa con le carte napoletane VERE 🃏",
+    descrizione: [
+      "Ora la Scopa usa le carte napoletane vere (un mazzo di pubblico dominio): denari, coppe, spade e bastoni disegnati come si deve, con Fante, Cavallo e Re. Si riconoscono al volo.",
+      "Nuove animazioni: quando prendi, la tua carta si mette sopra quelle prese e volano via verso di te; quando non prendi, la carta si posa sul tavolo. Niente più riquadro col risultato.",
+      "Corretto anche un fastidio: nella sala il tasto per togliere un giocatore ora si vede senza dover scorrere."
+    ]
+  },
+  {
     v: 44,
     data: "13 settembre 2026",
     titolo: "Scopa: carte più chiare e si vede cosa si prende",

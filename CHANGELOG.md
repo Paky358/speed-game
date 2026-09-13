@@ -4,6 +4,22 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (12) — Scopa: carte napoletane VERE (immagini di pubblico dominio) + animazioni presa/scarto
+- **Carte reali**: sostituiti i disegni SVG con le immagini del mazzo napoletano **di pubblico dominio**
+  (Wikimedia Commons, autore Trocche100 — rilasciate PD "uso libero senza condizioni"). 40 file scaricati
+  a piena risoluzione, **ridimensionati a 280px** con PowerShell/.NET (`carte/<id>.jpg`, ~1,1MB totali).
+  `cartaEl` ora rende un `<img src="carte/<id>.jpg">`; rimossi `simbolo()/PIPS/cartaSVG` (disegni SVG).
+- **Nessun marchio**: le uniche 3 carte con il nome del produttore ("DAL NEGRO / MADE IN ITALY" — Asso di
+  denari, 4 di denari, 4 di coppe) sono state **ritoccate** (coperture) per togliere ogni scritta/logo.
+- **Animazioni** (al posto del riquadro-risultato): su **presa** la carta giocata si sovrappone alle carte
+  prese e volano verso chi prende (`.sc-vola-su/giu`); su **scarto** la carta si posa sul tavolo
+  (`.sc-cade`). Stato `messaGiu` per la carta scartata; `presa` guida la pila che vola; durata minima
+  lato client per non tagliare l'animazione online.
+- **Build**: `costruisci-versione-online.sh` copia `carte/` in `dist/carte/` per la pubblicazione.
+- **8 = Fante** (come le carte vere; la Donna non esiste nel mazzo napoletano).
+- Collaudato: immagini reali a video, presa (pila di 2 carte "sc-vola-giu"), scarto ("sc-cade"),
+  nessun marchio residuo; zero errori dal gioco.
+
 ## 13 settembre 2026 (11) — Scopa: semi fedeli agli originali (multicolore) + fix "×" nella sala
 - **Semi ridisegnati** (`simbolo()`, viewBox 24×24, ispirati alle carte napoletane vere):
   **coppe** = calice dorato con bordo rosso, fascia verde e manici (non più solo rosso);

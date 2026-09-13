@@ -108,12 +108,14 @@ dal proprio.
   telefono**, **online** (host = Giallo, ospite = Bianco, host-autoritativo su **SGNet**, a turni).
   Rivincita alterna chi inizia. Campo condiviso `campoDrop`. Nel torneo gioca "in due" e i punti
   vanno via `t.fine`. `giocatoriMin:1, giocatoriMax:2, difficolta:2`.
-- **Gioco 11 — Scopa** 🃏 (`js/games/scopa.js`): carte napoletane in **due** (mazzo 40). Carte
-  **disegnate da noi in SVG** (`simbolo()` con `<symbol>`+gradienti, nessun copyright): semi
-  moneta/coppa/spada/bastone con **pips contati** (`PIPS`, asso grande, 1–7), figure Fante/Cavallo/Re
-  (💂/🐎/👑) in cornice, valore+seme negli angoli. **Presa con un tocco** (`tapMano`): automatica se
-  una sola presa possibile (anche combinazione), scarto automatico se non prende, scelta solo con
-  più prese. Tavolo centrato (flex). Regole complete: presa per valore
+- **Gioco 11 — Scopa** 🃏 (`js/games/scopa.js`): carte napoletane in **due** (mazzo 40). Carte =
+  **immagini vere del mazzo napoletano di pubblico dominio** (Wikimedia Commons, autore *Trocche100*,
+  rilasciate PD), in `carte/<id>.jpg` (~280px, ~1,1MB totali; il build le copia in `dist/carte/`).
+  `cartaEl` rende un `<img>`. Le 3 carte col nome del produttore (Asso e 4 di denari, 4 di coppe) sono
+  state **ritoccate** per togliere ogni marchio. **Presa con un tocco** (`tapMano`): automatica se una
+  sola presa possibile (anche combinazione), scarto automatico se non prende, scelta solo con più prese.
+  **Animazioni**: la presa vola verso chi prende (`.sc-vola`), lo scarto si posa (`.sc-cade`) — niente
+  riquadro-risultato. Tavolo centrato (flex). Regole complete: presa per valore
   (singolo forzato, altrimenti somme/combinazioni a scelta), **scopa** a tavolo vuoto (non l'ultima),
   carte finali all'ultimo che ha preso; punti smazzata **Carte/Denari/Settebello/Primiera/Scope**,
   partita a **11**, inizio alternato. Motore puro testabile (`creaMotore`, `catture`, `contaPunti`,

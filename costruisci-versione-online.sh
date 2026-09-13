@@ -39,4 +39,7 @@ OUT=dist/index.html
   echo '</script>'
 } > "$OUT"
 
+# Copia le immagini delle carte (mazzo napoletano) nella cartella pubblicata
+if [ -d carte ]; then rm -rf dist/carte && cp -r carte dist/carte; fi
+
 echo "Creato $OUT"

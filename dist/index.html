@@ -5884,6 +5884,16 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 45,
+    data: "13 settembre 2026",
+    titolo: "Scopa con le carte napoletane VERE 🃏",
+    descrizione: [
+      "Ora la Scopa usa le carte napoletane vere (un mazzo di pubblico dominio): denari, coppe, spade e bastoni disegnati come si deve, con Fante, Cavallo e Re. Si riconoscono al volo.",
+      "Nuove animazioni: quando prendi, la tua carta si mette sopra quelle prese e volano via verso di te; quando non prendi, la carta si posa sul tavolo. Niente più riquadro col risultato.",
+      "Corretto anche un fastidio: nella sala il tasto per togliere un giocatore ora si vede senza dover scorrere."
+    ]
+  },
+  {
     v: 44,
     data: "13 settembre 2026",
     titolo: "Scopa: carte più chiare e si vede cosa si prende",
@@ -10204,7 +10214,7 @@ window.SG_SIPERO = {
       mazzo: [], tavolo: [], mani: { A: [], B: [] }, prese: { A: [], B: [] },
       scope: { A: 0, B: 0 }, turno: "A", ultimaPresa: null,
       fase: "gioco", primo: "A", punti: { A: 0, B: 0 }, nomi: nomi,
-      ultimoRound: null, presa: null
+      ultimoRound: null, presa: null, messaGiu: null
     };
     function nuovoRound() {
       st.mazzo = creaMazzo(mischia);
@@ -10212,7 +10222,7 @@ window.SG_SIPERO = {
       st.mani.A = st.mazzo.splice(0, 3);
       st.mani.B = st.mazzo.splice(0, 3);
       st.prese.A = []; st.prese.B = []; st.scope.A = 0; st.scope.B = 0;
-      st.ultimaPresa = null; st.turno = st.primo; st.fase = "gioco"; st.presa = null;
+      st.ultimaPresa = null; st.turno = st.primo; st.fase = "gioco"; st.presa = null; st.messaGiu = null;
     }
     function distribuisci() { // 3 a testa quando le mani sono vuote e il mazzo ha carte
       st.mani.A = st.mazzo.splice(0, 3);
@@ -10225,7 +10235,7 @@ window.SG_SIPERO = {
       if (!carta) return { errore: true };
       var opts = catture(carta.v, st.tavolo);
       var ev = { presa: false, scopa: false, chi: pk };
-      st.presa = null;
+      st.presa = null; st.messaGiu = null;
       // togli la carta dalla mano
       st.mani[pk] = st.mani[pk].filter(function (c) { return c.id !== cartaId; });
       if (opts.length) {
@@ -10239,7 +10249,7 @@ window.SG_SIPERO = {
         if (st.tavolo.length === 0 && !ultimissima) { st.scope[pk]++; ev.scopa = true; }
         st.presa = { chi: pk, carta: carta, presi: presi, scopa: ev.scopa }; // per mostrare cosa è stato preso
       } else {
-        st.tavolo.push(carta); // niente presa: la carta resta sul tavolo (già visibile)
+        st.tavolo.push(carta); st.messaGiu = carta.id; // niente presa: la carta si posa sul tavolo (animata)
       }
       st.turno = altro(pk);
       // fine mano? (mani vuote)
@@ -10318,89 +10328,37 @@ window.SG_SIPERO = {
     return best;
   }
 
-  // ---------- carte (SVG nostro) ----------
+  // ---------- carte (immagini vere: mazzo napoletano di pubblico dominio, Wikimedia Commons) ----------
+  var ASP_CARTA = 1.653; // proporzioni delle immagini (altezza/larghezza)
   function assicuraStile() {
     if (document.getElementById("sg-scopa-css")) return;
     var st = document.createElement("style");
     st.id = "sg-scopa-css";
     st.textContent = [
-      ".sc-carta{position:relative;display:inline-block;border-radius:9px;box-shadow:0 2px 6px rgba(0,0,0,.45);line-height:0}",
-      ".sc-carta svg{display:block;border-radius:9px}",
+      ".sc-carta{position:relative;display:inline-block;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.45);line-height:0}",
+      ".sc-carta img{display:block;border-radius:8px;-webkit-user-drag:none;user-select:none}",
       ".sc-carta.sel{outline:3px solid #ffd43b;outline-offset:2px;transform:translateY(-10px)}",
       ".sc-carta.cap{outline:3px solid #69db7c;outline-offset:2px;cursor:pointer}",
       ".sc-carta.presel{outline:3px solid #4dabf7;outline-offset:2px}",
-      ".sc-dorso{border-radius:9px;box-shadow:0 2px 6px rgba(0,0,0,.45);background:#b3161d;background-image:radial-gradient(circle at 3px 3px,rgba(255,235,180,.35) 1.1px,transparent 1.6px);background-size:8px 8px;border:2px solid #f2e2be;box-sizing:border-box;display:inline-block}",
-      "@keyframes scScopaFlash{0%{opacity:0;transform:scale(.6)}30%{opacity:1;transform:scale(1.05)}80%{opacity:1}100%{opacity:0}}",
-      ".sc-flash{animation:scScopaFlash 1.2s ease-out forwards}"
+      ".sc-dorso{border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.45);background:#b3161d;background-image:radial-gradient(circle at 3px 3px,rgba(255,235,180,.35) 1.1px,transparent 1.6px);background-size:8px 8px;border:2px solid #f2e2be;box-sizing:border-box;display:inline-block}",
+      // la carta scartata si posa sul tavolo
+      "@keyframes scCade{0%{transform:translateY(-130px) scale(1.08);opacity:0}60%{opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}",
+      ".sc-cade{animation:scCade .34s ease-out}",
+      // la presa: la mia carta sopra le carte prese, poi volano via verso chi prende
+      ".sc-vola{display:flex;justify-content:center;align-items:center}",
+      "@keyframes scVsu{0%,25%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-200px) scale(.4);opacity:0}}",
+      "@keyframes scVgiu{0%,25%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(200px) scale(.4);opacity:0}}",
+      ".sc-vola-su{animation:scVsu .85s ease-in forwards}",
+      ".sc-vola-giu{animation:scVgiu .85s ease-in forwards}"
     ].join("");
     document.head.appendChild(st);
-    var defs = document.createElement("div");
-    defs.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; defs.setAttribute("aria-hidden", "true");
-    defs.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><defs>' +
-      '<radialGradient id="scgD" cx="40%" cy="34%" r="70%"><stop offset="0" stop-color="#ffe9a3"/><stop offset="1" stop-color="#cf9310"/></radialGradient>' +
-      '<linearGradient id="scgS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dce7f2"/><stop offset=".55" stop-color="#aebccc"/><stop offset="1" stop-color="#7f95ac"/></linearGradient>' +
-      '<linearGradient id="scgB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c0925a"/><stop offset="1" stop-color="#6a4423"/></linearGradient>' +
-      simbolo("D") + simbolo("C") + simbolo("S") + simbolo("B") + '</defs></svg>';
-    document.body.appendChild(defs);
-  }
-  // simbolo del seme in un box 24x24, ispirato alle carte napoletane vere
-  function simbolo(s) {
-    var g;
-    if (s === "D") // moneta d'oro
-      g = '<circle cx="12" cy="12" r="10.3" fill="url(#scgD)" stroke="#8a6a1e" stroke-width="1.1"/>' +
-        '<circle cx="12" cy="12" r="6.6" fill="none" stroke="#8a6a1e" stroke-width=".9"/>' +
-        '<path d="M12 7.3l1.55 3.14 3.46.5-2.5 2.44.59 3.45L12 18.66l-3.1 1.63.59-3.45-2.5-2.44 3.46-.5z" fill="#8a6a1e"/>';
-    else if (s === "C") // calice dorato con bordo rosso, fascia verde e manici
-      g = '<path d="M6.5 8Q2.6 8.5 4.4 12.6" fill="none" stroke="#cf9310" stroke-width="1.6" stroke-linecap="round"/>' +
-        '<path d="M17.5 8Q21.4 8.5 19.6 12.6" fill="none" stroke="#cf9310" stroke-width="1.6" stroke-linecap="round"/>' +
-        '<path d="M5.4 6H18.6Q18.6 12.3 12 13.7Q5.4 12.3 5.4 6Z" fill="url(#scgD)" stroke="#8a6a1e" stroke-width=".6"/>' +
-        '<rect x="4.7" y="3.9" width="14.6" height="2.7" rx="1.3" fill="#c62828" stroke="#8a1f1f" stroke-width=".3"/>' +
-        '<path d="M6.4 8.8Q12 10.8 17.6 8.8" fill="none" stroke="#2e8b3d" stroke-width="1.6"/>' +
-        '<rect x="10.7" y="13.5" width="2.6" height="4.4" fill="url(#scgD)"/>' +
-        '<path d="M6.8 20.6Q12 17.9 17.2 20.6Q12 22 6.8 20.6Z" fill="url(#scgD)" stroke="#8a6a1e" stroke-width=".4"/>';
-    else if (s === "S") // sciabola curva d'acciaio con elsa dorata
-      g = '<path d="M11.3 18.6Q6.3 12.8 8.7 4.3Q9.2 2.7 10.8 3.2Q9.7 11 13.6 17.8Z" fill="url(#scgS)" stroke="#5f7386" stroke-width=".6"/>' +
-        '<rect x="7.4" y="17.6" width="9.2" height="2.2" rx="1.1" fill="#cf9310" stroke="#8a6a1e" stroke-width=".35"/>' +
-        '<rect x="10.9" y="19.6" width="2.7" height="3.4" rx="1.1" fill="#6a4a2a"/>';
-    else // bastone di legno con nodi
-      g = '<path d="M9.7 21.6Q8.2 13 10.4 4.9Q11 2.9 13 3.7Q14.8 13 14.3 21.6Q12 22.7 9.7 21.6Z" fill="url(#scgB)" stroke="#5a3d20" stroke-width=".6"/>' +
-        '<circle cx="11.7" cy="3.7" r="1.8" fill="url(#scgB)" stroke="#5a3d20" stroke-width=".45"/>' +
-        '<path d="M10.1 8.6 7.5 7.4" stroke="#5a3d20" stroke-width="1.2" stroke-linecap="round"/>' +
-        '<path d="M13.7 11.2 16.4 10.1" stroke="#5a3d20" stroke-width="1.2" stroke-linecap="round"/>' +
-        '<path d="M10.3 13.8 7.9 13.1" stroke="#5a3d20" stroke-width="1.2" stroke-linecap="round"/>' +
-        '<path d="M11.6 6Q11.1 13.5 11.8 20.6" stroke="rgba(255,244,214,.5)" stroke-width=".9" fill="none"/>';
-    return '<symbol id="scSeme' + s + '" viewBox="0 0 24 24">' + g + '</symbol>';
-  }
-  // posizioni dei "pips" (cx, cy, dimensione) su una carta 100x150, come sulle carte vere
-  var PIPS = {
-    1: [[50, 76, 54]],
-    2: [[50, 50, 42], [50, 102, 42]],
-    3: [[50, 40, 36], [50, 76, 36], [50, 112, 36]],
-    4: [[34, 52, 34], [66, 52, 34], [34, 100, 34], [66, 100, 34]],
-    5: [[34, 50, 31], [66, 50, 31], [50, 76, 33], [34, 102, 31], [66, 102, 31]],
-    6: [[34, 48, 30], [66, 48, 30], [34, 76, 30], [66, 76, 30], [34, 104, 30], [66, 104, 30]],
-    7: [[34, 45, 26], [66, 45, 26], [50, 61, 26], [34, 77, 26], [66, 77, 26], [34, 108, 26], [66, 108, 26]]
-  };
-  function uso(s, cx, cy, sz) { return '<use href="#scSeme' + s + '" xlink:href="#scSeme' + s + '" x="' + (cx - sz / 2) + '" y="' + (cy - sz / 2) + '" width="' + sz + '" height="' + sz + '"/>'; }
-  function cartaSVG(carta, w) {
-    var h = Math.round(w * 1.5), col = COLORE[carta.s], v = carta.v, s = carta.s, centro = "";
-    if (v >= 8) {
-      centro = '<rect x="20" y="32" width="60" height="86" rx="7" fill="rgba(0,0,0,.03)" stroke="' + col + '" stroke-width="1.4" opacity=".7"/>' +
-        uso(s, 50, 55, 46) +                                                                  // seme MOLTO GRANDE (si capisce al volo)
-        '<text x="50" y="112" font-size="28" text-anchor="middle">' + FIG[v] + '</text>';     // figura (Fante/Cavallo/Re)
-    } else { (PIPS[v] || []).forEach(function (p) { centro += uso(s, p[0], p[1], p[2]); }); }
-    function angolo() { return '<text x="8" y="22" font-size="21" font-weight="800" fill="' + col + '" font-family="Georgia,serif">' + v + '</text>' + uso(s, 13.5, 31, 13); }
-    return '<svg viewBox="0 0 100 150" width="' + w + '" height="' + h + '" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
-      '<rect x="1.2" y="1.2" width="97.6" height="147.6" rx="10" fill="#fbf5e6" stroke="#c8b273" stroke-width="2"/>' +
-      '<rect x="5" y="5" width="90" height="140" rx="7" fill="none" stroke="' + col + '" stroke-width="1" opacity=".4"/>' +
-      centro + angolo() + '<g transform="rotate(180 50 75)">' + angolo() + '</g></svg>';
   }
   function cartaEl(el, carta, w, extra, onclick) {
     var d = el("div", { class: "sc-carta" + (extra ? " " + extra : ""), onclick: onclick || null });
-    d.innerHTML = cartaSVG(carta, w);
+    d.appendChild(el("img", { src: "carte/" + carta.id + ".jpg", width: w, height: Math.round(w * ASP_CARTA), alt: "", draggable: "false" }));
     return d;
   }
-  function dorsoEl(el, w) { var h = Math.round(w * 1.5); return el("div", { class: "sc-dorso", style: "width:" + w + "px;height:" + h + "px" }); }
+  function dorsoEl(el, w) { var h = Math.round(w * ASP_CARTA); return el("div", { class: "sc-dorso", style: "width:" + w + "px;height:" + h + "px" }); }
 
   // ---------- vista (uguale per bot/host/ospite) ----------
   // vm = { fase, io("A"|"B"), turno, nomi, mano:[carte], oppN, tavolo:[carte],
@@ -10423,35 +10381,35 @@ window.SG_SIPERO = {
     ]));
     box.appendChild(el("div", { style: "font-size:.76rem;margin-top:3px", html: "Punti — <b>" + vm.nomi.io + " " + vm.punti.io + "</b> · " + vm.nomi.opp + " " + vm.punti.opp + " (a " + TARGET + ")" }));
 
-    // ---- stato / banner della presa ----
+    // ---- stato (durante la presa il tavolo mostra l'animazione, non un riquadro) ----
     var mioTurno = (vm.turno === vm.io && vm.fase === "gioco" && !vm.presa);
-    if (vm.presa) {
-      var pr = vm.presa;
-      var ban = el("div", { class: pr.scopa ? "sc-flash" : "", style: "margin:6px 0;padding:8px 6px;border-radius:12px;background:rgba(105,219,124,.16);border:1px solid rgba(105,219,124,.55)" });
-      ban.appendChild(el("div", { style: "text-align:center;font-weight:800;margin-bottom:6px;color:" + (pr.scopa ? "#ffd43b" : "#8ce0a0"), text: (pr.mio ? "Prendi tu" : vm.nomi.opp + " prende") + (pr.scopa ? " — SCOPA! 🧹" : "") }));
-      var row = el("div", { style: "display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap" });
-      row.appendChild(cartaEl(el, pr.carta, 42));
-      row.appendChild(el("span", { style: "font-size:1.4rem;font-weight:800;color:#8ce0a0", text: "→" }));
-      pr.presi.forEach(function (c) { row.appendChild(cartaEl(el, c, 42)); });
-      ban.appendChild(row);
-      box.appendChild(ban);
-    } else {
-      box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.1rem;margin:8px 0", text: mioTurno ? "Tocca a te" : "Tocca a " + vm.nomi.opp }));
-    }
+    var statoTxt = vm.presa ? (vm.presa.scopa ? "SCOPA! 🧹" : "") : (mioTurno ? "Tocca a te" : "Tocca a " + vm.nomi.opp);
+    box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.1rem;margin:8px 0;min-height:1.3em;color:" + (vm.presa && vm.presa.scopa ? "#ffd43b" : "inherit"), text: statoTxt }));
 
     // ---- tavolo (centrato, occupa lo spazio) ----
     var cartaSel = C.sel.carta ? trova(vm.mano, C.sel.carta) : null;
     var opts = cartaSel ? catture(cartaSel.v, vm.tavolo) : [];
     var capIds = {}; opts.forEach(function (set) { set.forEach(function (id) { capIds[id] = true; }); });
-    var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:center" });
-    if (!vm.tavolo.length) tw.appendChild(el("div", { class: "tenue", text: "tavolo vuoto" }));
-    vm.tavolo.forEach(function (c) {
-      var extra = "";
-      if (C.sel.presa.indexOf(c.id) >= 0) extra = "presel";
-      else if (mioTurno && cartaSel && capIds[c.id]) extra = "cap";
-      tw.appendChild(cartaEl(el, c, 70, extra, (mioTurno && cartaSel && capIds[c.id]) ? function () { C.tapTavolo(c.id); } : null));
-    });
-    box.appendChild(el("div", { style: "flex:1;display:flex;align-items:center;justify-content:center;padding:8px 0" }, [tw]));
+    var areaTavolo = el("div", { style: "flex:1;display:flex;align-items:center;justify-content:center;padding:8px 0" });
+    if (vm.presa) {
+      // la carta giocata SOPRA le carte prese, poi volano via verso chi le prende
+      var pila = el("div", { class: "sc-vola sc-vola-" + (vm.presa.mio ? "giu" : "su") });
+      vm.presa.presi.forEach(function (c, i) { var e = cartaEl(el, c, 64); if (i) e.style.marginLeft = "-34px"; pila.appendChild(e); });
+      var gioc = cartaEl(el, vm.presa.carta, 64); if (vm.presa.presi.length) gioc.style.marginLeft = "-34px"; gioc.style.transform = "translateY(-8px)"; pila.appendChild(gioc);
+      areaTavolo.appendChild(pila);
+    } else {
+      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:center" });
+      if (!vm.tavolo.length) tw.appendChild(el("div", { class: "tenue", text: "tavolo vuoto" }));
+      vm.tavolo.forEach(function (c) {
+        var cap = mioTurno && cartaSel && capIds[c.id];
+        var extra = (C.sel.presa.indexOf(c.id) >= 0) ? "presel" : (cap ? "cap" : "");
+        var cel = cartaEl(el, c, 70, extra, cap ? function () { C.tapTavolo(c.id); } : null);
+        if (c.id === vm.messaGiu) cel.classList.add("sc-cade"); // appena scartata: si posa sul tavolo
+        tw.appendChild(cel);
+      });
+      areaTavolo.appendChild(tw);
+    }
+    box.appendChild(areaTavolo);
 
     // ---- la mia mano (in basso) ----
     var manoW = el("div", { style: "display:flex;gap:12px;justify-content:center;align-items:flex-end" });
@@ -10543,13 +10501,12 @@ window.SG_SIPERO = {
       // pulisci la selezione se non è più il mio turno
       if (!vm || vm.turno !== vm.io || vm.fase !== "gioco") C.sel = { carta: null, presa: [] };
       if (C._pend) { clearTimeout(C._pend); C._pend = null; }
-      if (vm && vm.presa) {                              // arriva una presa: mostrala (durata minima garantita)
-        C._presaFino = Date.now() + 1300;
+      if (vm && vm.presa) {                              // arriva una presa: mostra l'animazione (durata minima garantita)
+        C._presaFino = Date.now() + 950;
         C.vm = vm; C.disegna(); return;
       }
-      if (vm && C.vm && C.vm.presa && Date.now() < C._presaFino) {   // il "pulisci" è arrivato troppo presto: tieni il banner
-        var tenuto = {}; for (var k in vm) tenuto[k] = vm[k]; tenuto.presa = C.vm.presa;
-        C.vm = tenuto; C.disegna();
+      if (vm && C.vm && C.vm.presa && Date.now() < C._presaFino) {   // il "pulisci" è arrivato troppo presto:
+        // NON ridisegno (l'animazione è in corso): rimando solo l'applicazione del nuovo stato
         C._pend = setTimeout(function () { C._pend = null; C.vm = vm; C.disegna(); }, C._presaFino - Date.now());
         return;
       }
@@ -10569,7 +10526,7 @@ window.SG_SIPERO = {
       scopeIo: st.scope[io], scopeOpp: st.scope[opp],
       settebelloIo: !!trova(st.prese[io], "D7"), settebelloOpp: !!trova(st.prese[opp], "D7"),
       punti: { io: st.punti[io], opp: st.punti[opp] },
-      ultimoRound: st.ultimoRound,
+      ultimoRound: st.ultimoRound, messaGiu: st.messaGiu,
       presa: st.presa ? { mio: st.presa.chi === io, carta: st.presa.carta, presi: st.presa.presi, scopa: st.presa.scopa } : null,
       vincitoreIo: st.fase === "fine" ? (st.punti[io] > st.punti[opp]) : false
     };
@@ -10660,7 +10617,7 @@ window.SG_SIPERO = {
     function continua(ev) {
       // se ha preso, mostra per un attimo cosa è stato preso, poi prosegue
       if (ev.presa && M.st.fase === "gioco") {
-        setTimeout(function () { M.st.presa = null; aggiorna(); seTuraBot(); }, ev.scopa ? 1700 : 1250);
+        setTimeout(function () { M.st.presa = null; aggiorna(); seTuraBot(); }, ev.scopa ? 1650 : 1050);
       } else { M.st.presa = null; seTuraBot(); }
     }
     function mossaUmano(id, presa) {
@@ -10703,7 +10660,7 @@ window.SG_SIPERO = {
       suonoPresa(ev.scopa);
       bcast(); // mostra la presa (se c'è) su entrambi i telefoni
       if (ev.presa && M.st.fase === "gioco") {
-        setTimeout(function () { M.st.presa = null; bcast(); }, ev.scopa ? 1700 : 1250);
+        setTimeout(function () { M.st.presa = null; bcast(); }, ev.scopa ? 1650 : 1050);
       } else { M.st.presa = null; }
     }
     rete = SGNet.ospita("scopa", {
