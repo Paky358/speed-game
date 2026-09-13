@@ -4,6 +4,19 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (9) — Scopa: semi delle figure chiari, bastoni migliori, presa mostrata
+- **Figure (8/9/10)**: ora mostrano un **seme grande** ben visibile sopra la figura (prima il seme
+  era minuscolo e non si capiva) + emoji Fante/Cavallo/Re. **Bastoni** ridisegnati (bastone di legno
+  con nodi/rametti, più riconoscibile).
+- **Presa mostrata**: le carte prese non spariscono e basta. Su una presa lo stato del motore tiene
+  `st.presa = {chi, carta, presi, scopa}`; la vista mostra un **banner** "Prendi tu / X prende" con
+  la carta giocata → le carte prese, per ~1,25s (1,7s sulla scopa), poi prosegue. Vale in locale e
+  online (host manda la presa nella vista, timer sull'host); input bloccato durante il banner.
+  Aggiunta una **durata minima** del banner lato client (`creaClient.setVm`) così si vede sempre
+  anche se la rete comprime i tempi.
+- Collaudato: banner locale ("Prendi tu" + 3 carte), e **online** confermato col registratore
+  (l'ospite ha visto 6 banner distinti di presa, ~1,7s l'uno). Nessun errore dal gioco.
+
 ## 13 settembre 2026 (8) — Scopa: carte ridisegnate + presa con un tocco + tavolo centrato
 - **Carte** rifatte molto più simili alle napoletane: semi in SVG condivisi (`<symbol>` + gradienti
   in `simbolo()`, monete/coppe/spade/bastoni), **pips contati** nelle posizioni classiche (`PIPS`,
