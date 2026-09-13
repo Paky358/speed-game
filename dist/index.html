@@ -265,6 +265,13 @@ img{ max-width:100%; }
   font-size:.98rem; font-weight:700; cursor:pointer; border:0; border-radius:99px; padding:8px 14px;
   background:var(--carta); color:var(--testo); }
 .profilo-chip .modifica{ font-size:.82rem; color:var(--accento); font-weight:800; }
+/* riga in home: nome utente + tasto Novità affianco */
+.home-profilo{ display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:14px; }
+.home-profilo .profilo-chip{ margin-top:0; }
+.home-novita{ display:inline-flex; align-items:center; gap:5px; border:0; cursor:pointer; font-family:inherit;
+  font-weight:800; font-size:.92rem; border-radius:99px; padding:8px 14px; min-height:38px;
+  background:var(--carta); color:var(--testo); }
+.home-novita:active{ transform:scale(.96); }
 .profilo-riga{ display:flex; align-items:center; gap:14px; width:100%; text-align:left; cursor:pointer;
   border:0; font-family:inherit; background:var(--carta); color:inherit; border-radius:16px;
   padding:14px; margin-bottom:10px; box-shadow:var(--ombra); }
@@ -485,13 +492,22 @@ img{ max-width:100%; }
     var s = schermata({});
     s.className += " home";
     var io = profiloAttivo();
+    // riga profilo: il nome utente + il tasto "Novità" affianco
+    var profiloChip = el("button", { class: "profilo-chip", onclick: function () { schermataAccesso(schermataHome); } },
+      io ? [el("span", { text: io.emoji }), el("span", { text: io.nome }), el("span", { class: "modifica", text: "cambia" })]
+         : [el("span", { text: "👤" }), el("span", { text: "Crea il tuo profilo" })]);
+    var rigaProfilo = el("div", { class: "home-profilo" }, [profiloChip]);
+    if ((window.SG_NOVITA || []).length) {
+      var bNov = el("button", { class: "home-novita", onclick: schermataNovita });
+      bNov.appendChild(el("span", { text: "🆕 Novità" }));
+      if (!novitaTutteViste()) bNov.appendChild(el("span", { class: "pallino" }));
+      rigaProfilo.appendChild(bNov);
+    }
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
       el("div", { class: "home-logo", html: '<svg viewBox="0 0 150 130" width="112" height="97" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgFul" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2a8"/><stop offset=".45" stop-color="#ffd43b"/><stop offset="1" stop-color="#ffb300"/></linearGradient><filter id="sgFulGlow" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#4dabf7" flood-opacity=".5"/><feDropShadow dx="0" dy="0" stdDeviation="1.6" flood-color="#a5d8ff" flood-opacity=".75"/></filter></defs><g fill="url(#sgFul)" stroke="#fff7d6" stroke-width=".7" stroke-linejoin="round" filter="url(#sgFulGlow)"><path d="M7 2v11h3v9l7-12h-4l4-8z" transform="translate(44,50) rotate(32) scale(2.5) translate(-12,-12)"/><path d="M7 2v11h3v9l7-12h-4l4-8z" transform="translate(106,50) rotate(-32) scale(2.5) translate(-12,-12)"/><path d="M7 2v11h3v9l7-12h-4l4-8z" transform="translate(75,62) scale(3.8) translate(-12,-12)"/></g></svg>' }),
       el("h1", { class: "home-titolo", text: "SPeeD GAME" }),
       el("p", { class: "home-sotto", text: "Scegli un gioco e passa il telefono" }),
-      el("button", { class: "profilo-chip", onclick: function () { schermataAccesso(schermataHome); } },
-        io ? [el("span", { text: io.emoji }), el("span", { text: io.nome }), el("span", { class: "modifica", text: "cambia" })]
-           : [el("span", { text: "👤" }), el("span", { text: "Crea il tuo profilo" })])
+      rigaProfilo
     ]));
     // Barra delle categorie (sotto il profilo): "Tutti" + i gruppi. Cliccando si filtra
     // solo la griglia (senza rifare la schermata: niente lampeggio, non si torna in cima).
@@ -529,15 +545,8 @@ img{ max-width:100%; }
     s._contenuto.appendChild(barra);
     s._contenuto.appendChild(griglia);
 
-    // Riga di tasti piccoli: Novità · Proposte · Bug
+    // Riga di tasti piccoli: Proposte · Bug (Novità è accanto al nome utente, in alto)
     var azioni = el("div", { class: "home-azioni" });
-    var novita = window.SG_NOVITA || [];
-    if (novita.length) {
-      var bN = el("button", { class: "azione", onclick: schermataNovita });
-      bN.appendChild(el("span", { text: "🆕 Novità" }));
-      if (!novitaTutteViste()) bN.appendChild(el("span", { class: "pallino" }));
-      azioni.appendChild(bN);
-    }
     azioni.appendChild(el("button", { class: "azione", text: "💡 Proposte", onclick: schermataProposte }));
     azioni.appendChild(el("button", { class: "azione", text: "🐞 Bug", onclick: schermataBug }));
     s._piede.appendChild(azioni);

@@ -4,6 +4,12 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (19) — Home: tasto "Novità" accanto al nome utente
+- `js/core.js`: il tasto 🆕 Novità (col pallino se ci sono novità non lette) è spostato dalla riga in fondo
+  a fianco del profilo, in una riga `.home-profilo` (chip profilo + Novità). In fondo restano 💡 Proposte e
+  🐞 Bug. CSS `.home-profilo`/`.home-novita` in `css/styles.css` (nuovo nome per non toccare `.profilo-riga`
+  già usata altrove). Collaudato: Novità accanto al nome, apre il diario; in fondo solo Proposte/Bug.
+
 ## 13 settembre 2026 (18) — Home: filtri per categoria (Tutti/Carte/Sfida in 2/Festa/Minigiochi/Quiz & parole)
 - `js/core.js`: nuova barra `.cat-barra` sotto il profilo con i filtri. `CATEGORIE` (tutti, carte, sfida,
   festa, mini, parole) + mappa `CAT_GIOCO` per id gioco (ogni gioco ha la sua categoria; una categoria senza

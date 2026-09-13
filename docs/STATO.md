@@ -14,7 +14,7 @@ dal proprio.
   e l'altra. A fine partita: Rigioca, Cambia gioco, torna alla Sala.
 - **La home**: sotto il profilo una **barra di categorie** (Tutti · Carte · Sfida in 2 · Festa · Minigiochi ·
   Quiz & parole) che filtra l'elenco dei giochi (definite in `js/core.js`: `CATEGORIE` + `CAT_GIOCO` per id;
-  ogni gioco ha la sua categoria); poi l'elenco dei giochi e i tasti 🆕 Novità, 💡 Proposte, 🐞 Bug e
+  ogni gioco ha la sua categoria); il tasto 🆕 Novità è **accanto al nome utente**; poi l'elenco dei giochi e i tasti 💡 Proposte, 🐞 Bug e
   "Entra in una stanza". "Minigiochi" (Scalinata) è pensata per i giochini stile Wii Party (altri in arrivo:
   corsa ai cavalli, bandierina); la Patata sta in "Quiz & parole" perché si dice una parola della categoria.
 - **Gioco 1 — La linea del tempo**: 5 categorie (Storia, Invenzioni, Calcio, Rap

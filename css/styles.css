@@ -259,6 +259,13 @@ img{ max-width:100%; }
   font-size:.98rem; font-weight:700; cursor:pointer; border:0; border-radius:99px; padding:8px 14px;
   background:var(--carta); color:var(--testo); }
 .profilo-chip .modifica{ font-size:.82rem; color:var(--accento); font-weight:800; }
+/* riga in home: nome utente + tasto Novità affianco */
+.home-profilo{ display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:14px; }
+.home-profilo .profilo-chip{ margin-top:0; }
+.home-novita{ display:inline-flex; align-items:center; gap:5px; border:0; cursor:pointer; font-family:inherit;
+  font-weight:800; font-size:.92rem; border-radius:99px; padding:8px 14px; min-height:38px;
+  background:var(--carta); color:var(--testo); }
+.home-novita:active{ transform:scale(.96); }
 .profilo-riga{ display:flex; align-items:center; gap:14px; width:100%; text-align:left; cursor:pointer;
   border:0; font-family:inherit; background:var(--carta); color:inherit; border-radius:16px;
   padding:14px; margin-bottom:10px; box-shadow:var(--ombra); }
