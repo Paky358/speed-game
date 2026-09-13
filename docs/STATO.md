@@ -15,8 +15,8 @@ dal proprio.
 - **La home**: sotto il profilo una **barra di categorie** (Tutti · Carte · Sfida in 2 · Festa · Minigiochi ·
   Quiz & parole) che filtra l'elenco dei giochi (definite in `js/core.js`: `CATEGORIE` + `CAT_GIOCO` per id;
   ogni gioco ha la sua categoria); poi l'elenco dei giochi e i tasti 🆕 Novità, 💡 Proposte, 🐞 Bug e
-  "Entra in una stanza". "Minigiochi" (Scalinata, Patata) è pensata per i giochini stile Wii Party (altri in
-  arrivo: corsa ai cavalli, bandierina).
+  "Entra in una stanza". "Minigiochi" (Scalinata) è pensata per i giochini stile Wii Party (altri in arrivo:
+  corsa ai cavalli, bandierina); la Patata sta in "Quiz & parole" perché si dice una parola della categoria.
 - **Gioco 1 — La linea del tempo**: 5 categorie (Storia, Invenzioni, Calcio, Rap
   italiano, Cinema), oltre 800 avvenimenti verificati, timer 30", punti, voto degli
   altri, classifica finale. Si gioca su un telefono solo o ognuno dal suo.

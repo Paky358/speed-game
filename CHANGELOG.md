@@ -12,8 +12,9 @@ contenuto di quel tasto vive in `data/novita.js`._
   rifare la schermata né `scrollTo` (coerente con la regola "niente lampeggio"). Il segnaposto "Altri giochi
   in arrivo" appare solo in "Tutti".
 - Raggruppamento: **Carte** (scopa, scopa2v2, scopone) · **Sfida in 2** (tris, drop4, hockey) · **Festa**
-  (asta, impostore, sipero) · **Minigiochi** (scalinata, patata — stile Wii Party, altri in arrivo) ·
-  **Quiz & parole** (timeline, nomicose). CSS `.cat-barra`/`.cat-tab` in `css/styles.css`.
+  (asta, impostore, sipero) · **Minigiochi** (scalinata — stile Wii Party, altri in arrivo) ·
+  **Quiz & parole** (timeline, nomicose, patata: si dice una parola della categoria). CSS
+  `.cat-barra`/`.cat-tab` in `css/styles.css`.
 - Collaudato: 6 chip, filtri corretti per ogni categoria, nessun gioco fuori categoria, schermata invariata
   al cambio filtro (niente lampeggio).
 

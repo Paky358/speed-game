@@ -27,8 +27,8 @@
     scopa: "carte", scopa2v2: "carte", scopone: "carte",
     tris: "sfida", drop4: "sfida", hockey: "sfida",
     asta: "festa", impostore: "festa", sipero: "festa",
-    scalinata: "mini", patata: "mini",
-    timeline: "parole", nomicose: "parole"
+    scalinata: "mini",
+    timeline: "parole", nomicose: "parole", patata: "parole"
   };
   var catAttiva = "tutti";
   function catDi(g) { return CAT_GIOCO[g.id] || null; }

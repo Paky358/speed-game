@@ -14,7 +14,7 @@ window.SG_NOVITA = [
     titolo: "Categorie nella home 🎲",
     descrizione: [
       "Sotto il tuo nome ora ci sono i filtri per categoria: “Tutti” fa vedere tutto, poi puoi scegliere Carte, Sfida in 2, Festa, Minigiochi, Quiz & parole.",
-      "Carte: Scopa, Scopa 2 vs 2, Scopone. Sfida in 2: Glow Hockey, Tris, Drop 4. Festa: L'Asta, L'Impostore, Sì... però. Minigiochi: La Scalinata, La Patata Bollente. Quiz & parole: La linea del tempo, Nomi Cose e Città.",
+      "Carte: Scopa, Scopa 2 vs 2, Scopone. Sfida in 2: Glow Hockey, Tris, Drop 4. Festa: L'Asta, L'Impostore, Sì... però. Minigiochi: La Scalinata. Quiz & parole: La linea del tempo, Nomi Cose e Città, La Patata Bollente.",
       "Toccando una categoria si aggiorna solo l'elenco, senza far saltare la pagina."
     ]
   },
