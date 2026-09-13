@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 48,
+    data: "13 settembre 2026",
+    titolo: "Nuovo gioco: Scopa 2 vs 2 🃏 (a squadre, anche online)",
+    descrizione: [
+      "Arriva la Scopa a squadre, in quattro al tavolo: tu e il tuo compagno (di fronte) contro due avversari. Si gioca a turno alternando le squadre.",
+      "Due modi: contro i bot (tu + 3 bot) oppure online, ognuno dal suo telefono — apri la stanza, manda il codice e i posti che restano liberi li giocano i bot.",
+      "Stesse carte e stesse regole della Scopa (con la pesca), animazioni e schermo fisso come gli altri giochi. Punti a squadra: Carte, Denari, Settebello, Primiera e le Scope. Partita a 11."
+    ]
+  },
+  {
     v: 47,
     data: "13 settembre 2026",
     titolo: "Carte più fluide e schermo fisso 🃏",

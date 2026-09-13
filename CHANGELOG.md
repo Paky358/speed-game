@@ -4,6 +4,30 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (16) — Nuovo gioco: Scopa 2 vs 2 (a squadre, contro i bot o online) + asso di denari ripulito
+- Nuovo `js/games/scopa2.js` (id `scopa2v2`): **4 al tavolo, 2 squadre** (posti 0+2 vs 1+3), turni che
+  alternano le squadre (0→1→2→3). Regole **della Scopa vera** (non Scopone): 3 in mano + 4 sul tavolo, si
+  **pesca** 3 a testa a mani vuote fino a esaurire il mazzo, scopa (tranne l'ultima), a fine mano il tavolo
+  all'ultima squadra che ha preso. Punteggio a squadra (`conta`): Carte/Denari/Settebello/Primiera + Scope,
+  a 11, primo di mano che ruota. Riusa `window.SGCarte` (immagini, `catture`, `primiera`, `validaSet`, render).
+- **Due modalità**: `localeScopa2` (tu = posto 0 + 3 bot; difficoltà scelta) e **online** `hostScopa2`/
+  `ospiteScopa2` (host = posto 0; gli ospiti prendono i posti 1,2,3 in ordine d'arrivo; i posti liberi alla
+  partenza li giocano i **bot**). Host-autoritativo: a ogni ospite mando **solo la sua vista** (`vistaDa(st,seat)`),
+  vede solo le proprie carte. Se un ospite si scollega, il suo posto passa al bot e la partita continua.
+- Vista **relativa al giocatore** (`io` 0..3): in alto gli altri tre nell'ordine di gioco (il compagno al
+  centro col 🤝), colori verde/rosso per la propria squadra/avversari. Online i bot hanno nomi **neutri**
+  ("🤖 Bot N") così nessun ospite viene ingannato (la squadra la dicono colore + 🤝). Stesso schermo-fisso e
+  stessa animazione "carta verso la presa" degli altri giochi (`mont` per il montaggio in posto).
+- `index.html`: aggiunto `scopa2.js` fra `scopa.js` e `scopone.js` (serve `SGCarte`); il bundle lo include
+  già via glob alfabetico (`scopa.js` < `scopa2.js` < `scopone.js`).
+- **Asso di denari ripulito**: ripartito dall'originale di pubblico dominio (Trocche100) e tolte SOLO le
+  scritte del marchio ("MADE IN ITALY", "531", "T. DAL NEGRO TREVISO") preservando aquila e nastro; prima
+  una copertura sbagliata aveva messo un grosso rettangolo giallo. (`carte/D1.jpg` + `dist/carte/D1.jpg`).
+- Collaudato in locale: vs bot (distribuzione 4+3×4, mazzo 24; giro 0→1→2→3; mano intera fino al punteggio
+  a squadre corretto — Carte 27–13=40, Denari 4–6, Settebello, Primiera, punti 2–2; riporto punteggi e
+  rotazione primo di mano). Online con host + 1 ospite (+2 bot): stanza, ingresso in posto, avvio, l'ospite
+  vede la sua mano e **gioca** dal suo telefono, host applica e ritrasmette; zero errori su entrambi.
+
 ## 13 settembre 2026 (15) — Carte che volano sulla presa + schermo fisso (niente lampeggio) + regola bomba
 - **Scopa/Scopone — presa mirata**: la carta giocata non appare più al centro. Dopo il montaggio si misura
   la posizione reale della/e carta/e presa/e (`getBoundingClientRect` rispetto all'area tavolo) e si posiziona

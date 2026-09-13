@@ -1,6 +1,6 @@
 # A che punto siamo
 
-_Aggiornato: 13 settembre 2026 (carte che volano sulla presa, schermo fisso senza lampeggio, regola della bomba)_
+_Aggiornato: 13 settembre 2026 (nuovo gioco: Scopa 2 vs 2 a squadre, anche online; asso di denari ripulito)_
 
 ## In due parole
 È una raccolta di giochi da fare in gruppo, che si apre dal telefono senza
@@ -131,6 +131,13 @@ dal proprio.
   partita a **11**, inizio che ruota. Riusa `window.SGCarte` (stesse immagini `carte/*.jpg`, stessa presa
   con un tocco e stesse animazioni della Scopa). UI a 4 (in alto Rivale1·Compagno·Rivale2, tavolo, tua
   mano in basso). Solo **vs bot** per ora (online a 4 = lavoro futuro). `giocatoriMin/Max:1, difficolta:3`.
+- **Gioco 13 — Scopa 2 vs 2** 🃏 (`js/games/scopa2.js`, id `scopa2v2`): la Scopa **a squadre, 4 al tavolo**
+  (posti 0+2 vs 1+3), turni che alternano le squadre (0→1→2→3). Regole **della Scopa vera** con la **pesca**
+  (3 in mano + 4 sul tavolo, si pesca a mani vuote fino a fine mazzo), scopa, tavolo finale all'ultima
+  squadra che ha preso; punteggio a squadra a **11**, primo di mano che ruota. **Due modi**: contro i bot
+  (tu + 3 bot) e **online** (host = posto 0; gli ospiti prendono i posti 1,2,3; i posti liberi li giocano i
+  bot; host-autoritativo, a ognuno mando solo la sua vista). Riusa `window.SGCarte`. Vista relativa al
+  giocatore (compagno al centro col 🤝, colori squadra); online i bot hanno nomi neutri ("🤖 Bot N").
 
 ### Ritocchi comuni ai giochi (13 set 2026)
 - **Presa mirata (Scopa/Scopone)**: la carta giocata si posa **sopra la carta che prende** (baricentro del
