@@ -100,6 +100,14 @@ dal proprio.
   la stanza, l'altro entra col codice). A ogni rivincita si alterna chi inizia. Campo condiviso
   (`campoTris`): griglia responsive, X blu / O rosso, linea vincente evidenziata. Nel torneo si
   gioca "in due" e i punti vanno via `t.fine`. `giocatoriMin:1, giocatoriMax:2, difficolta:1`.
+- **Gioco 10 — Drop 4** 🟡 (`js/games/drop4.js`): il "quattro in fila" a gravità, griglia 7×6,
+  struttura grigia, Giallo (inizia) vs Bianco, con animazione di caduta. Vince chi allinea 4
+  (orizzontale/verticale/diagonale; 69 quaterne precalcolate in `LINEE4`). Stesse **tre modalità**
+  del Tris: **bot** (Facile casuale, Medio vinci/blocca, Difficile = **minimax alfa-beta prof. 4**
+  con euristica a finestre + apertura al centro per restare reattivo), **in due sullo stesso
+  telefono**, **online** (host = Giallo, ospite = Bianco, host-autoritativo su **SGNet**, a turni).
+  Rivincita alterna chi inizia. Campo condiviso `campoDrop`. Nel torneo gioca "in due" e i punti
+  vanno via `t.fine`. `giocatoriMin:1, giocatoriMax:2, difficolta:2`.
 
 ## Torneo (più giochi di fila)
 Dalla home, tasto **🏆 Torneo**: si sceglie una volta il gruppo e si giocano più

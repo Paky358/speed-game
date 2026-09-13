@@ -4,6 +4,22 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (5) — Nuovo gioco: Drop 4 (quattro in fila, 3 modalità)
+- Nuovo `js/games/drop4.js`. Griglia 7×6, gravità (la pedina cade nel primo posto libero),
+  Giallo (inizia) vs Bianco, struttura grigia; animazione di caduta (`@keyframes sgDropCade`).
+  Le 69 quaterne vincenti precalcolate (`LINEE4`) coprono orizzontali, verticali e diagonali.
+- Tre modalità come il Tris: **bot** (Facile=casuale, Medio=vinci/blocca poi casuale,
+  Difficile=**minimax alfa-beta profondità 4** con euristica a finestre + apertura istantanea al
+  centro per restare reattivo), **in due sullo stesso telefono**, **online** (host=Giallo,
+  ospite=Bianco, host-autoritativo su SGNet, a turni). Rivincita alterna chi inizia. Nel torneo
+  gioca "in due" e assegna i punti via `t.fine`. `giocatoriMin:1, giocatoriMax:2, difficolta:2`.
+- Campo condiviso `campoDrop`: 7 colonne toccabili, buchi scuri, pedine gialle/bianche, quaterna
+  vincente evidenziata in verde.
+- Collaudato E2E in locale: gravità (una mossa = una pedina in fondo), vittoria verticale e
+  orizzontale con linea evidenziata, bot che blocca e vince; online host↔ospite con mosse
+  sincronizzate nei due sensi. Nessun errore dal gioco.
+- `index.html`: aggiunto lo script (il build lo prende dal glob `js/games/*.js`).
+
 ## 13 settembre 2026 (4) — Nuovo gioco: Tris (3 modalità)
 - Nuovo `js/games/tris.js`. Tre modalità: **contro il bot** (Facile=casuale, Medio=vinci/blocca
   poi casuale, Impossibile=**minimax** perfetto), **in due sullo stesso telefono** (hotseat),

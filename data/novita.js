@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 40,
+    data: "13 settembre 2026",
+    titolo: "Nuovo gioco: Drop 4 🟡",
+    descrizione: [
+      "Il classico \"quattro in fila\" a gravità: scegli una colonna, la pedina cade in fondo. Vince chi allinea quattro pedine (in fila, in colonna o in diagonale).",
+      "Giallo contro Bianco, su griglia grigia 7×6. Le pedine cadono con una piccola animazione.",
+      "Tre modi come per il Tris: da solo contro il bot (Facile / Medio / Difficile), in due sullo stesso telefono, oppure online ognuno dal suo telefono col codice."
+    ]
+  },
+  {
     v: 39,
     data: "13 settembre 2026",
     titolo: "Nuovo gioco: Tris ⭕❌",
