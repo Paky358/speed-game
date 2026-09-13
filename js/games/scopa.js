@@ -227,11 +227,11 @@
   //        preseIo, preseOpp, scopeIo, scopeOpp, settebelloIo, settebelloOpp,
   //        punti:{io,opp}, ultimoRound, presa:{mio,carta,presi,scopa}|null, vincitoreIo }
   // C = { vm, sel:{carta,presa}, ridisegna } ; cb = { onMossa(id,presa|null), onAvanti, onEsci, sonoHost, lobby... }
+  var scMount = null; // schermata di gioco già montata: la aggiorniamo senza rifarla ogni volta (niente lampeggio)
+
   function renderScopa(t, C, cb) {
     assicuraStile();
     var el = t.el, vm = C.vm;
-    var s = t.schermata({ icona: "🃏", titolo: "Scopa", sotto: vm.nomi.io + " vs " + vm.nomi.opp,
-      indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
     var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
 
     // ---- avversario (in alto) ----
@@ -253,21 +253,37 @@
     var opts = cartaSel ? catture(cartaSel.v, vm.tavolo) : [];
     var capIds = {}; opts.forEach(function (set) { set.forEach(function (id) { capIds[id] = true; }); });
     var areaTavolo = el("div", { style: "flex:1;display:flex;align-items:center;justify-content:center;padding:8px 0" });
+    var pendingPlace = null;
     if (vm.presa) {
       // il tavolo RESTA fermo: rimostro il tavolo com'era e faccio volare via SOLO le carte prese
       var dir = vm.presa.mio ? "giu" : "su";
       areaTavolo.style.position = "relative";
       var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:center" });
+      var presiEls = [];
       (vm.presa.tavoloPrima || vm.tavolo).forEach(function (c) {
         var cel = cartaEl(el, c, 70);
-        if (vm.presa.presiIds && vm.presa.presiIds.indexOf(c.id) >= 0) cel.classList.add("sc-lascia-" + dir);
+        if (vm.presa.presiIds && vm.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); }
         tw0.appendChild(cel);
       });
       areaTavolo.appendChild(tw0);
-      // la mia carta: appare al centro (appena giocata) e vola via con le prese
+      // la mia carta giocata: parte dalla mano, va SOPRA la/e carta/e che prende, poi vola via con la presa
       var gioc = cartaEl(el, vm.presa.carta, 70);
-      gioc.style.cssText += ";position:absolute;left:50%;top:50%;margin-left:-35px;margin-top:-58px;z-index:6;animation:scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
+      gioc.style.cssText += ";position:absolute;z-index:6;opacity:0";
       areaTavolo.appendChild(gioc);
+      pendingPlace = function () {
+        var a = areaTavolo.getBoundingClientRect();
+        if (presiEls.length) {                       // si posa sulla carta presa (o al centro del gruppo preso)
+          var cx = 0, cy = 0;
+          presiEls.forEach(function (e) { var r = e.getBoundingClientRect(); cx += r.left + r.width / 2; cy += r.top + r.height / 2; });
+          cx /= presiEls.length; cy /= presiEls.length;
+          var g = gioc.getBoundingClientRect();
+          gioc.style.left = (cx - a.left - g.width / 2) + "px";
+          gioc.style.top = (cy - a.top - g.height / 2) + "px";
+        } else {                                      // scopa: tavolo svuotato, si posa al centro
+          gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = "-35px"; gioc.style.marginTop = "-58px";
+        }
+        gioc.style.animation = "scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
+      };
     } else {
       var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:center" });
       if (!vm.tavolo.length) tw.appendChild(el("div", { class: "tenue", text: "tavolo vuoto" }));
@@ -290,17 +306,32 @@
     box.appendChild(manoW);
     box.appendChild(el("div", { class: "tenue", style: "text-align:center;font-size:.78rem;margin-top:6px",
       html: "le tue prese <b>" + vm.preseIo + "</b>" + (vm.settebelloIo ? " · 7💰" : "") + (vm.scopeIo ? " · scope " + vm.scopeIo : "") }));
-    s._contenuto.appendChild(box);
 
     // ---- suggerimento (nel piede) ----
+    var piedeNodi = [];
     if (mioTurno && cartaSel && opts.length >= 2) {
-      s._piede.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: opts[0].length === 1 ? "Più prese possibili: tocca la carta verde che vuoi prendere." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
+      piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: opts[0].length === 1 ? "Più prese possibili: tocca la carta verde che vuoi prendere." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
     } else if (mioTurno) {
-      s._piede.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Tocca una tua carta per giocarla." }));
+      piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Tocca una tua carta per giocarla." }));
     } else if (vm.fase === "gioco") {
-      s._piede.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Aspetta il tuo turno…" }));
+      piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Aspetta il tuo turno…" }));
     }
-    t.mostra(s);
+
+    // ---- montaggio: la prima volta creo la schermata, poi aggiorno SOLO il contenuto (schermo fisso, niente lampeggio) ----
+    if (scMount && scMount.cont && document.body.contains(scMount.box)) {
+      scMount.cont.replaceChild(box, scMount.box);
+      scMount.box = box;
+      scMount.piede.innerHTML = "";
+      piedeNodi.forEach(function (n) { scMount.piede.appendChild(n); });
+    } else {
+      var s = t.schermata({ icona: "🃏", titolo: "Scopa", sotto: vm.nomi.io + " vs " + vm.nomi.opp,
+        indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      s._contenuto.appendChild(box);
+      piedeNodi.forEach(function (n) { s._piede.appendChild(n); });
+      t.mostra(s);
+      scMount = { cont: s._contenuto, box: box, piede: s._piede };
+    }
+    if (pendingPlace) pendingPlace();
   }
 
   // riepilogo di fine smazzata / fine partita

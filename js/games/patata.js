@@ -147,10 +147,10 @@
       passa: function (fromId, targetId) {
         aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder) return;
         var tgt = pById(targetId); if (!tgt || tgt.eliminato || targetId === st.holder) return;
-        if (st.giro.indexOf(targetId) >= 0 && targetId !== st.ultimo) return;  // a "l'ultimo" si può sempre ridare
+        if (st.giro.indexOf(targetId) >= 0) return;  // NON puoi ridarla a chi ha già avuto la bomba: prima finisci il giro
         st.remPrima = st.remaining;             // per l'eventuale "rimanda indietro"
         st.passaggi++; st.cap = capMs(st.passaggi); st.remaining = st.cap;  // riceve -> timer riparte
-        st.ultimo = st.holder;                  // a chi la teneva prima la puoi sempre ridare
+        st.ultimo = st.holder;                  // tenuto solo come info (il ritorno si fa col pulsante "Rimanda indietro")
         st.giroPrima = st.giro.slice();         // per ripristinarlo con "rimanda indietro"
         st.prev = st.holder; st.holder = targetId; st.giro.push(targetId);
         if (st.giro.length >= vivi().length) st.giro = [targetId];
@@ -470,7 +470,7 @@
       var ang = (i / n) * 2 * Math.PI - Math.PI / 2;
       var x = 50 + (R / cx) * 50 * Math.cos(ang), y = 50 + (R / cy) * 50 * Math.sin(ang);
       var isHolder = (p.id === vm.holder);
-      var passabile = puoi && !esplo && !p.eliminato && !isHolder && (vm.giro.indexOf(p.id) < 0 || p.id === vm.ultimo);
+      var passabile = puoi && !esplo && !p.eliminato && !isHolder && vm.giro.indexOf(p.id) < 0;
       var nodo = el(passabile ? "button" : "div", { style: "position:absolute;left:" + x + "%;top:" + y + "%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;width:72px;background:none;border:0;padding:4px 0;" + (passabile ? "cursor:pointer" : "cursor:default"),
         onclick: passabile ? function () { cb.onPassa(p.id); } : null });
       nodo.appendChild(el("div", { style: "font-size:.72rem;font-weight:700;max-width:72px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:" + (p.eliminato ? "rgba(255,255,255,.35)" : p.colore) + (isHolder ? ";text-shadow:0 0 6px rgba(255,120,60,.9)" : ""), text: (p.id === myId ? "▸ " : "") + p.nome }));

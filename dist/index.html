@@ -5884,6 +5884,16 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 47,
+    data: "13 settembre 2026",
+    titolo: "Carte più fluide e schermo fisso 🃏",
+    descrizione: [
+      "Scopa e Scopone: quando prendi, la tua carta ora vola verso la carta che prende (non più al centro a caso), poi spariscono insieme.",
+      "Niente più lampeggio: in Scopa, Scopone, Tris e Forza 4 lo schermo resta fermo a ogni mossa (prima si ridisegnava tutto ogni volta).",
+      "La Patata Bollente: sistemata la regola del passaggio — non puoi ripassare la bomba a chi l'ha già avuta finché non finisce il giro (il ritorno resta possibile solo col tasto “Rimanda indietro”)."
+    ]
+  },
+  {
     v: 46,
     data: "13 settembre 2026",
     titolo: "Nuovo gioco: Scopone 🃏 (classico e scientifico)",
@@ -8002,12 +8012,12 @@ window.SG_SIPERO = {
     if (cb.mio && cb.mio !== vm.turno) return cb.bot ? "🤖 Il bot sta pensando…" : "Tocca a <span style='color:" + c + "'>" + esc(vm.nomi[vm.turno]) + "</span>";
     return "Tocca a <span style='color:" + c + "'>" + esc(vm.nomi[vm.turno]) + "</span>";
   }
+  var drMount = null; // schermata Drop 4 montata: a ogni mossa aggiorniamo solo il contenuto (niente lampeggio)
   function campoDrop(t, vm, cb) {
     assicuraStileDrop();
     var el = t.el;
-    var s = t.schermata({ icona: "🟡", titolo: "Drop 4", sotto: vm.nomi.G + " (gialla) · " + vm.nomi.B + " (bianca)",
-      indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
-    s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.15rem;margin:6px 0 10px;min-height:1.4em", html: statoDrop(vm, cb) }));
+    var box = el("div", {});
+    box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.15rem;margin:6px 0 10px;min-height:1.4em", html: statoDrop(vm, cb) }));
     var board = el("div", { style: "display:flex;gap:6px;width:min(94vw,380px);margin:0 auto;background:" + GRIGLIA + ";padding:8px;border-radius:16px;box-sizing:border-box;box-shadow:0 6px 16px rgba(0,0,0,.35)" });
     function colonna(c) {
       var full = !colonnaLibera(vm.board, c);
@@ -8025,16 +8035,28 @@ window.SG_SIPERO = {
       return col;
     }
     for (var c = 0; c < COLS; c++) board.appendChild(colonna(c));
-    s._contenuto.appendChild(board);
+    box.appendChild(board);
+
+    var piedeNodi = [];
     if (vm.fase === "fine") {
       if (cb.locale || cb.sonoHost) {
-        s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: cb.onRivincita }));
-        s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+        piedeNodi.push(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: cb.onRivincita }));
+        piedeNodi.push(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
       } else {
-        s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa dell'host per la rivincita…" }));
+        piedeNodi.push(el("p", { class: "modulo-nota", text: "In attesa dell'host per la rivincita…" }));
       }
     }
-    t.mostra(s);
+
+    // ---- montaggio: prima volta creo la schermata, poi aggiorno SOLO il contenuto (schermo fisso) ----
+    if (drMount && drMount.cont && document.body.contains(drMount.box)) {
+      drMount.cont.replaceChild(box, drMount.box); drMount.box = box;
+      drMount.piede.innerHTML = ""; piedeNodi.forEach(function (n) { drMount.piede.appendChild(n); });
+    } else {
+      var s = t.schermata({ icona: "🟡", titolo: "Drop 4", sotto: vm.nomi.G + " (gialla) · " + vm.nomi.B + " (bianca)",
+        indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      s._contenuto.appendChild(box); piedeNodi.forEach(function (n) { s._piede.appendChild(n); }); t.mostra(s);
+      drMount = { cont: s._contenuto, box: box, piede: s._piede };
+    }
   }
 
   // =========================================================
@@ -9270,10 +9292,10 @@ window.SG_SIPERO = {
       passa: function (fromId, targetId) {
         aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder) return;
         var tgt = pById(targetId); if (!tgt || tgt.eliminato || targetId === st.holder) return;
-        if (st.giro.indexOf(targetId) >= 0 && targetId !== st.ultimo) return;  // a "l'ultimo" si può sempre ridare
+        if (st.giro.indexOf(targetId) >= 0) return;  // NON puoi ridarla a chi ha già avuto la bomba: prima finisci il giro
         st.remPrima = st.remaining;             // per l'eventuale "rimanda indietro"
         st.passaggi++; st.cap = capMs(st.passaggi); st.remaining = st.cap;  // riceve -> timer riparte
-        st.ultimo = st.holder;                  // a chi la teneva prima la puoi sempre ridare
+        st.ultimo = st.holder;                  // tenuto solo come info (il ritorno si fa col pulsante "Rimanda indietro")
         st.giroPrima = st.giro.slice();         // per ripristinarlo con "rimanda indietro"
         st.prev = st.holder; st.holder = targetId; st.giro.push(targetId);
         if (st.giro.length >= vivi().length) st.giro = [targetId];
@@ -9593,7 +9615,7 @@ window.SG_SIPERO = {
       var ang = (i / n) * 2 * Math.PI - Math.PI / 2;
       var x = 50 + (R / cx) * 50 * Math.cos(ang), y = 50 + (R / cy) * 50 * Math.sin(ang);
       var isHolder = (p.id === vm.holder);
-      var passabile = puoi && !esplo && !p.eliminato && !isHolder && (vm.giro.indexOf(p.id) < 0 || p.id === vm.ultimo);
+      var passabile = puoi && !esplo && !p.eliminato && !isHolder && vm.giro.indexOf(p.id) < 0;
       var nodo = el(passabile ? "button" : "div", { style: "position:absolute;left:" + x + "%;top:" + y + "%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;width:72px;background:none;border:0;padding:4px 0;" + (passabile ? "cursor:pointer" : "cursor:default"),
         onclick: passabile ? function () { cb.onPassa(p.id); } : null });
       nodo.appendChild(el("div", { style: "font-size:.72rem;font-weight:700;max-width:72px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:" + (p.eliminato ? "rgba(255,255,255,.35)" : p.colore) + (isHolder ? ";text-shadow:0 0 6px rgba(255,120,60,.9)" : ""), text: (p.id === myId ? "▸ " : "") + p.nome }));
@@ -10378,11 +10400,11 @@ window.SG_SIPERO = {
   //        preseIo, preseOpp, scopeIo, scopeOpp, settebelloIo, settebelloOpp,
   //        punti:{io,opp}, ultimoRound, presa:{mio,carta,presi,scopa}|null, vincitoreIo }
   // C = { vm, sel:{carta,presa}, ridisegna } ; cb = { onMossa(id,presa|null), onAvanti, onEsci, sonoHost, lobby... }
+  var scMount = null; // schermata di gioco già montata: la aggiorniamo senza rifarla ogni volta (niente lampeggio)
+
   function renderScopa(t, C, cb) {
     assicuraStile();
     var el = t.el, vm = C.vm;
-    var s = t.schermata({ icona: "🃏", titolo: "Scopa", sotto: vm.nomi.io + " vs " + vm.nomi.opp,
-      indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
     var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
 
     // ---- avversario (in alto) ----
@@ -10404,21 +10426,37 @@ window.SG_SIPERO = {
     var opts = cartaSel ? catture(cartaSel.v, vm.tavolo) : [];
     var capIds = {}; opts.forEach(function (set) { set.forEach(function (id) { capIds[id] = true; }); });
     var areaTavolo = el("div", { style: "flex:1;display:flex;align-items:center;justify-content:center;padding:8px 0" });
+    var pendingPlace = null;
     if (vm.presa) {
       // il tavolo RESTA fermo: rimostro il tavolo com'era e faccio volare via SOLO le carte prese
       var dir = vm.presa.mio ? "giu" : "su";
       areaTavolo.style.position = "relative";
       var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:center" });
+      var presiEls = [];
       (vm.presa.tavoloPrima || vm.tavolo).forEach(function (c) {
         var cel = cartaEl(el, c, 70);
-        if (vm.presa.presiIds && vm.presa.presiIds.indexOf(c.id) >= 0) cel.classList.add("sc-lascia-" + dir);
+        if (vm.presa.presiIds && vm.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); }
         tw0.appendChild(cel);
       });
       areaTavolo.appendChild(tw0);
-      // la mia carta: appare al centro (appena giocata) e vola via con le prese
+      // la mia carta giocata: parte dalla mano, va SOPRA la/e carta/e che prende, poi vola via con la presa
       var gioc = cartaEl(el, vm.presa.carta, 70);
-      gioc.style.cssText += ";position:absolute;left:50%;top:50%;margin-left:-35px;margin-top:-58px;z-index:6;animation:scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
+      gioc.style.cssText += ";position:absolute;z-index:6;opacity:0";
       areaTavolo.appendChild(gioc);
+      pendingPlace = function () {
+        var a = areaTavolo.getBoundingClientRect();
+        if (presiEls.length) {                       // si posa sulla carta presa (o al centro del gruppo preso)
+          var cx = 0, cy = 0;
+          presiEls.forEach(function (e) { var r = e.getBoundingClientRect(); cx += r.left + r.width / 2; cy += r.top + r.height / 2; });
+          cx /= presiEls.length; cy /= presiEls.length;
+          var g = gioc.getBoundingClientRect();
+          gioc.style.left = (cx - a.left - g.width / 2) + "px";
+          gioc.style.top = (cy - a.top - g.height / 2) + "px";
+        } else {                                      // scopa: tavolo svuotato, si posa al centro
+          gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = "-35px"; gioc.style.marginTop = "-58px";
+        }
+        gioc.style.animation = "scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
+      };
     } else {
       var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:center" });
       if (!vm.tavolo.length) tw.appendChild(el("div", { class: "tenue", text: "tavolo vuoto" }));
@@ -10441,17 +10479,32 @@ window.SG_SIPERO = {
     box.appendChild(manoW);
     box.appendChild(el("div", { class: "tenue", style: "text-align:center;font-size:.78rem;margin-top:6px",
       html: "le tue prese <b>" + vm.preseIo + "</b>" + (vm.settebelloIo ? " · 7💰" : "") + (vm.scopeIo ? " · scope " + vm.scopeIo : "") }));
-    s._contenuto.appendChild(box);
 
     // ---- suggerimento (nel piede) ----
+    var piedeNodi = [];
     if (mioTurno && cartaSel && opts.length >= 2) {
-      s._piede.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: opts[0].length === 1 ? "Più prese possibili: tocca la carta verde che vuoi prendere." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
+      piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: opts[0].length === 1 ? "Più prese possibili: tocca la carta verde che vuoi prendere." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
     } else if (mioTurno) {
-      s._piede.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Tocca una tua carta per giocarla." }));
+      piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Tocca una tua carta per giocarla." }));
     } else if (vm.fase === "gioco") {
-      s._piede.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Aspetta il tuo turno…" }));
+      piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Aspetta il tuo turno…" }));
     }
-    t.mostra(s);
+
+    // ---- montaggio: la prima volta creo la schermata, poi aggiorno SOLO il contenuto (schermo fisso, niente lampeggio) ----
+    if (scMount && scMount.cont && document.body.contains(scMount.box)) {
+      scMount.cont.replaceChild(box, scMount.box);
+      scMount.box = box;
+      scMount.piede.innerHTML = "";
+      piedeNodi.forEach(function (n) { scMount.piede.appendChild(n); });
+    } else {
+      var s = t.schermata({ icona: "🃏", titolo: "Scopa", sotto: vm.nomi.io + " vs " + vm.nomi.opp,
+        indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      s._contenuto.appendChild(box);
+      piedeNodi.forEach(function (n) { s._piede.appendChild(n); });
+      t.mostra(s);
+      scMount = { cont: s._contenuto, box: box, piede: s._piede };
+    }
+    if (pendingPlace) pendingPlace();
   }
 
   // riepilogo di fine smazzata / fine partita
@@ -11035,11 +11088,11 @@ window.SG_SIPERO = {
   }
 
   // ---------- disegno ----------
+  var spMount = null; // schermata Scopone montata: a ogni mossa aggiorniamo solo il contenuto (niente lampeggio)
+
   function disegna(t, st, sel, cb) {
     var el = t.el;
-    var s = t.schermata({ icona: "🃏", titolo: "Scopone", sotto: (st.variante === "scientifico" ? "Scientifico" : "Classico") + " · tu + Compagno",
-      indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
-    if (st.fase === "fineround" || st.fase === "fine") return fine(t, st, cb, s);
+    if (st.fase === "fineround" || st.fase === "fine") { spMount = null; return fine(t, st, cb); }
     var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
 
     // squadre / punti
@@ -11069,14 +11122,29 @@ window.SG_SIPERO = {
     var opts = cartaSel ? C().catture(cartaSel.v, st.tavolo) : [];
     var capIds = {}; opts.forEach(function (set) { set.forEach(function (id) { capIds[id] = true; }); });
     var area = el("div", { style: "flex:1;display:flex;align-items:center;justify-content:center;padding:6px 0;position:relative" });
+    var pendingPlace = null;
     if (st.presa) {
       var dir = (st.presa.chi === 0) ? "giu" : "su";
       var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-content:center" });
-      (st.presa.tavoloPrima || st.tavolo).forEach(function (c) { var cel = C().cartaEl(el, c, 62); if (st.presa.presiIds.indexOf(c.id) >= 0) cel.classList.add("sc-lascia-" + dir); tw0.appendChild(cel); });
+      var presiEls = [];
+      (st.presa.tavoloPrima || st.tavolo).forEach(function (c) { var cel = C().cartaEl(el, c, 62); if (st.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); } tw0.appendChild(cel); });
       area.appendChild(tw0);
+      // la carta giocata va SOPRA la/e carta/e che prende, poi vola via con la presa
       var gioc = C().cartaEl(el, st.presa.carta, 62);
-      gioc.style.cssText += ";position:absolute;left:50%;top:50%;margin-left:-31px;margin-top:-51px;z-index:6;animation:scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
+      gioc.style.cssText += ";position:absolute;z-index:6;opacity:0";
       area.appendChild(gioc);
+      pendingPlace = function () {
+        var a = area.getBoundingClientRect();
+        if (presiEls.length) {
+          var cx = 0, cy = 0;
+          presiEls.forEach(function (e) { var r = e.getBoundingClientRect(); cx += r.left + r.width / 2; cy += r.top + r.height / 2; });
+          cx /= presiEls.length; cy /= presiEls.length;
+          var g = gioc.getBoundingClientRect();
+          gioc.style.left = (cx - a.left - g.width / 2) + "px";
+          gioc.style.top = (cy - a.top - g.height / 2) + "px";
+        } else { gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = "-31px"; gioc.style.marginTop = "-51px"; }
+        gioc.style.animation = "scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
+      };
     } else {
       var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-content:center" });
       if (!st.tavolo.length) tw.appendChild(el("div", { class: "tenue", text: "tavolo vuoto" }));
@@ -11098,12 +11166,22 @@ window.SG_SIPERO = {
     var mieCarte = st.prese[0].length + st.prese[2].length;
     box.appendChild(el("div", { class: "tenue", style: "text-align:center;font-size:.76rem;margin-top:5px",
       html: "prese squadra: <b>" + mieCarte + "</b>" + (trova(st.prese[0].concat(st.prese[2]), "D7") ? " · 7💰" : "") + ((st.scope[0] + st.scope[2]) ? " · scope " + (st.scope[0] + st.scope[2]) : "") }));
-    s._contenuto.appendChild(box);
+    var piedeNodi = [];
+    if (mioTurno && cartaSel && opts.length >= 2) piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: opts[0].length === 1 ? "Più prese: tocca la carta verde che vuoi." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
+    else if (mioTurno) piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Tocca una tua carta per giocarla." }));
+    else if (st.fase === "gioco") piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Giocano gli altri…" }));
 
-    if (mioTurno && cartaSel && opts.length >= 2) s._piede.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: opts[0].length === 1 ? "Più prese: tocca la carta verde che vuoi." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
-    else if (mioTurno) s._piede.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Tocca una tua carta per giocarla." }));
-    else if (st.fase === "gioco") s._piede.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Giocano gli altri…" }));
-    t.mostra(s);
+    // ---- montaggio: prima volta creo la schermata, poi aggiorno SOLO il contenuto (schermo fisso, niente lampeggio) ----
+    if (spMount && spMount.cont && document.body.contains(spMount.box)) {
+      spMount.cont.replaceChild(box, spMount.box); spMount.box = box;
+      spMount.piede.innerHTML = ""; piedeNodi.forEach(function (n) { spMount.piede.appendChild(n); });
+    } else {
+      var s = t.schermata({ icona: "🃏", titolo: "Scopone", sotto: (st.variante === "scientifico" ? "Scientifico" : "Classico") + " · tu + Compagno",
+        indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      s._contenuto.appendChild(box); piedeNodi.forEach(function (n) { s._piede.appendChild(n); }); t.mostra(s);
+      spMount = { cont: s._contenuto, box: box, piede: s._piede };
+    }
+    if (pendingPlace) pendingPlace();
   }
 
   function fine(t, st, cb, s) {
@@ -12680,12 +12758,11 @@ window.SG_SIPERO = {
       ";font-size:clamp(2.2rem,14vw,3.4rem);font-weight:800;display:flex;align-items:center;justify-content:center;" +
       "cursor:" + (puoi ? "pointer" : "default") + ";-webkit-tap-highlight-color:transparent;transition:background .15s,transform .05s";
   }
+  var trMount = null; // schermata Tris montata: a ogni mossa aggiorniamo solo il contenuto (niente lampeggio)
   function campoTris(t, vm, cb) {
     var el = t.el;
-    var sotto = vm.nomi.X + " (X) · " + vm.nomi.O + " (O)";
-    var s = t.schermata({ icona: "⭕", titolo: "Tris", sotto: sotto,
-      indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
-    s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.2rem;margin:6px 0 12px;min-height:1.4em", html: statoHtml(vm, cb) }));
+    var box = el("div", {});
+    box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.2rem;margin:6px 0 12px;min-height:1.4em", html: statoHtml(vm, cb) }));
     var grid = el("div", { style: "display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(86vw,330px);margin:0 auto" });
     vm.board.forEach(function (v, i) {
       var vinc = !!(vm.fine && vm.fine.linea && vm.fine.linea.indexOf(i) >= 0);
@@ -12693,16 +12770,29 @@ window.SG_SIPERO = {
       grid.appendChild(el("button", { style: cellaStile(v, vinc, puoi), onclick: puoi ? function () { cb.onCella(i); } : null },
         [el("span", { text: v || "" })]));
     });
-    s._contenuto.appendChild(grid);
+    box.appendChild(grid);
+
+    var piedeNodi = [];
     if (vm.fase === "fine") {
       if (cb.locale || cb.sonoHost) {
-        s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: cb.onRivincita }));
-        s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+        piedeNodi.push(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: cb.onRivincita }));
+        piedeNodi.push(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
       } else {
-        s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa dell'host per la rivincita…" }));
+        piedeNodi.push(el("p", { class: "modulo-nota", text: "In attesa dell'host per la rivincita…" }));
       }
     }
-    t.mostra(s);
+
+    // ---- montaggio: prima volta creo la schermata, poi aggiorno SOLO il contenuto (schermo fisso) ----
+    if (trMount && trMount.cont && document.body.contains(trMount.box)) {
+      trMount.cont.replaceChild(box, trMount.box); trMount.box = box;
+      trMount.piede.innerHTML = ""; piedeNodi.forEach(function (n) { trMount.piede.appendChild(n); });
+    } else {
+      var sotto = vm.nomi.X + " (X) · " + vm.nomi.O + " (O)";
+      var s = t.schermata({ icona: "⭕", titolo: "Tris", sotto: sotto,
+        indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      s._contenuto.appendChild(box); piedeNodi.forEach(function (n) { s._piede.appendChild(n); }); t.mostra(s);
+      trMount = { cont: s._contenuto, box: box, piede: s._piede };
+    }
   }
 
   // =========================================================

@@ -216,12 +216,12 @@
     if (cb.mio && cb.mio !== vm.turno) return cb.bot ? "🤖 Il bot sta pensando…" : "Tocca a <span style='color:" + c + "'>" + esc(vm.nomi[vm.turno]) + "</span>";
     return "Tocca a <span style='color:" + c + "'>" + esc(vm.nomi[vm.turno]) + "</span>";
   }
+  var drMount = null; // schermata Drop 4 montata: a ogni mossa aggiorniamo solo il contenuto (niente lampeggio)
   function campoDrop(t, vm, cb) {
     assicuraStileDrop();
     var el = t.el;
-    var s = t.schermata({ icona: "🟡", titolo: "Drop 4", sotto: vm.nomi.G + " (gialla) · " + vm.nomi.B + " (bianca)",
-      indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
-    s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.15rem;margin:6px 0 10px;min-height:1.4em", html: statoDrop(vm, cb) }));
+    var box = el("div", {});
+    box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.15rem;margin:6px 0 10px;min-height:1.4em", html: statoDrop(vm, cb) }));
     var board = el("div", { style: "display:flex;gap:6px;width:min(94vw,380px);margin:0 auto;background:" + GRIGLIA + ";padding:8px;border-radius:16px;box-sizing:border-box;box-shadow:0 6px 16px rgba(0,0,0,.35)" });
     function colonna(c) {
       var full = !colonnaLibera(vm.board, c);
@@ -239,16 +239,28 @@
       return col;
     }
     for (var c = 0; c < COLS; c++) board.appendChild(colonna(c));
-    s._contenuto.appendChild(board);
+    box.appendChild(board);
+
+    var piedeNodi = [];
     if (vm.fase === "fine") {
       if (cb.locale || cb.sonoHost) {
-        s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: cb.onRivincita }));
-        s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+        piedeNodi.push(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: cb.onRivincita }));
+        piedeNodi.push(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
       } else {
-        s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa dell'host per la rivincita…" }));
+        piedeNodi.push(el("p", { class: "modulo-nota", text: "In attesa dell'host per la rivincita…" }));
       }
     }
-    t.mostra(s);
+
+    // ---- montaggio: prima volta creo la schermata, poi aggiorno SOLO il contenuto (schermo fisso) ----
+    if (drMount && drMount.cont && document.body.contains(drMount.box)) {
+      drMount.cont.replaceChild(box, drMount.box); drMount.box = box;
+      drMount.piede.innerHTML = ""; piedeNodi.forEach(function (n) { drMount.piede.appendChild(n); });
+    } else {
+      var s = t.schermata({ icona: "🟡", titolo: "Drop 4", sotto: vm.nomi.G + " (gialla) · " + vm.nomi.B + " (bianca)",
+        indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      s._contenuto.appendChild(box); piedeNodi.forEach(function (n) { s._piede.appendChild(n); }); t.mostra(s);
+      drMount = { cont: s._contenuto, box: box, piede: s._piede };
+    }
   }
 
   // =========================================================

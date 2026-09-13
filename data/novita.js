@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 47,
+    data: "13 settembre 2026",
+    titolo: "Carte più fluide e schermo fisso 🃏",
+    descrizione: [
+      "Scopa e Scopone: quando prendi, la tua carta ora vola verso la carta che prende (non più al centro a caso), poi spariscono insieme.",
+      "Niente più lampeggio: in Scopa, Scopone, Tris e Forza 4 lo schermo resta fermo a ogni mossa (prima si ridisegnava tutto ogni volta).",
+      "La Patata Bollente: sistemata la regola del passaggio — non puoi ripassare la bomba a chi l'ha già avuta finché non finisce il giro (il ritorno resta possibile solo col tasto “Rimanda indietro”)."
+    ]
+  },
+  {
     v: 46,
     data: "13 settembre 2026",
     titolo: "Nuovo gioco: Scopone 🃏 (classico e scientifico)",

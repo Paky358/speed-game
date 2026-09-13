@@ -1,6 +1,6 @@
 # A che punto siamo
 
-_Aggiornato: 11 settembre 2026 (nuovo gioco: La Scalinata)_
+_Aggiornato: 13 settembre 2026 (carte che volano sulla presa, schermo fisso senza lampeggio, regola della bomba)_
 
 ## In due parole
 È una raccolta di giochi da fare in gruppo, che si apre dal telefono senza
@@ -131,6 +131,18 @@ dal proprio.
   partita a **11**, inizio che ruota. Riusa `window.SGCarte` (stesse immagini `carte/*.jpg`, stessa presa
   con un tocco e stesse animazioni della Scopa). UI a 4 (in alto Rivale1·Compagno·Rivale2, tavolo, tua
   mano in basso). Solo **vs bot** per ora (online a 4 = lavoro futuro). `giocatoriMin/Max:1, difficolta:3`.
+
+### Ritocchi comuni ai giochi (13 set 2026)
+- **Presa mirata (Scopa/Scopone)**: la carta giocata si posa **sopra la carta che prende** (baricentro del
+  gruppo, misurato con `getBoundingClientRect` dopo il montaggio), non più al centro. Se svuota il tavolo
+  (scopa) si posa al centro.
+- **Schermo fisso (Scopa/Scopone/Tris/Forza 4)**: niente più lampeggio. La schermata si monta una volta e a
+  ogni mossa si sostituisce **solo** il contenitore di gioco (`replaceChild`) + il piede, senza `t.mostra`
+  né `scrollTo`. Riferimenti: `scMount`/`spMount`/`trMount`/`drMount`; si rifà da capo solo cambiando
+  schermata (`document.body.contains(box)`). Regola generale: **mai** ricostruire tutta la schermata a ogni
+  mossa in nessun gioco.
+- **Patata Bollente**: la bomba non si può ridare a chi l'ha già avuta nel giro (tolta l'eccezione su
+  `st.ultimo` che permetteva il ping-pong infinito); il ritorno resta solo col tasto "Rimanda indietro".
 
 ## Torneo (più giochi di fila)
 Dalla home, tasto **🏆 Torneo**: si sceglie una volta il gruppo e si giocano più

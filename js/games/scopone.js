@@ -229,11 +229,11 @@
   }
 
   // ---------- disegno ----------
+  var spMount = null; // schermata Scopone montata: a ogni mossa aggiorniamo solo il contenuto (niente lampeggio)
+
   function disegna(t, st, sel, cb) {
     var el = t.el;
-    var s = t.schermata({ icona: "🃏", titolo: "Scopone", sotto: (st.variante === "scientifico" ? "Scientifico" : "Classico") + " · tu + Compagno",
-      indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
-    if (st.fase === "fineround" || st.fase === "fine") return fine(t, st, cb, s);
+    if (st.fase === "fineround" || st.fase === "fine") { spMount = null; return fine(t, st, cb); }
     var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
 
     // squadre / punti
@@ -263,14 +263,29 @@
     var opts = cartaSel ? C().catture(cartaSel.v, st.tavolo) : [];
     var capIds = {}; opts.forEach(function (set) { set.forEach(function (id) { capIds[id] = true; }); });
     var area = el("div", { style: "flex:1;display:flex;align-items:center;justify-content:center;padding:6px 0;position:relative" });
+    var pendingPlace = null;
     if (st.presa) {
       var dir = (st.presa.chi === 0) ? "giu" : "su";
       var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-content:center" });
-      (st.presa.tavoloPrima || st.tavolo).forEach(function (c) { var cel = C().cartaEl(el, c, 62); if (st.presa.presiIds.indexOf(c.id) >= 0) cel.classList.add("sc-lascia-" + dir); tw0.appendChild(cel); });
+      var presiEls = [];
+      (st.presa.tavoloPrima || st.tavolo).forEach(function (c) { var cel = C().cartaEl(el, c, 62); if (st.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); } tw0.appendChild(cel); });
       area.appendChild(tw0);
+      // la carta giocata va SOPRA la/e carta/e che prende, poi vola via con la presa
       var gioc = C().cartaEl(el, st.presa.carta, 62);
-      gioc.style.cssText += ";position:absolute;left:50%;top:50%;margin-left:-31px;margin-top:-51px;z-index:6;animation:scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
+      gioc.style.cssText += ";position:absolute;z-index:6;opacity:0";
       area.appendChild(gioc);
+      pendingPlace = function () {
+        var a = area.getBoundingClientRect();
+        if (presiEls.length) {
+          var cx = 0, cy = 0;
+          presiEls.forEach(function (e) { var r = e.getBoundingClientRect(); cx += r.left + r.width / 2; cy += r.top + r.height / 2; });
+          cx /= presiEls.length; cy /= presiEls.length;
+          var g = gioc.getBoundingClientRect();
+          gioc.style.left = (cx - a.left - g.width / 2) + "px";
+          gioc.style.top = (cy - a.top - g.height / 2) + "px";
+        } else { gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = "-31px"; gioc.style.marginTop = "-51px"; }
+        gioc.style.animation = "scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
+      };
     } else {
       var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-content:center" });
       if (!st.tavolo.length) tw.appendChild(el("div", { class: "tenue", text: "tavolo vuoto" }));
@@ -292,12 +307,22 @@
     var mieCarte = st.prese[0].length + st.prese[2].length;
     box.appendChild(el("div", { class: "tenue", style: "text-align:center;font-size:.76rem;margin-top:5px",
       html: "prese squadra: <b>" + mieCarte + "</b>" + (trova(st.prese[0].concat(st.prese[2]), "D7") ? " · 7💰" : "") + ((st.scope[0] + st.scope[2]) ? " · scope " + (st.scope[0] + st.scope[2]) : "") }));
-    s._contenuto.appendChild(box);
+    var piedeNodi = [];
+    if (mioTurno && cartaSel && opts.length >= 2) piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: opts[0].length === 1 ? "Più prese: tocca la carta verde che vuoi." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
+    else if (mioTurno) piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Tocca una tua carta per giocarla." }));
+    else if (st.fase === "gioco") piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Giocano gli altri…" }));
 
-    if (mioTurno && cartaSel && opts.length >= 2) s._piede.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: opts[0].length === 1 ? "Più prese: tocca la carta verde che vuoi." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
-    else if (mioTurno) s._piede.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Tocca una tua carta per giocarla." }));
-    else if (st.fase === "gioco") s._piede.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Giocano gli altri…" }));
-    t.mostra(s);
+    // ---- montaggio: prima volta creo la schermata, poi aggiorno SOLO il contenuto (schermo fisso, niente lampeggio) ----
+    if (spMount && spMount.cont && document.body.contains(spMount.box)) {
+      spMount.cont.replaceChild(box, spMount.box); spMount.box = box;
+      spMount.piede.innerHTML = ""; piedeNodi.forEach(function (n) { spMount.piede.appendChild(n); });
+    } else {
+      var s = t.schermata({ icona: "🃏", titolo: "Scopone", sotto: (st.variante === "scientifico" ? "Scientifico" : "Classico") + " · tu + Compagno",
+        indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      s._contenuto.appendChild(box); piedeNodi.forEach(function (n) { s._piede.appendChild(n); }); t.mostra(s);
+      spMount = { cont: s._contenuto, box: box, piede: s._piede };
+    }
+    if (pendingPlace) pendingPlace();
   }
 
   function fine(t, st, cb, s) {

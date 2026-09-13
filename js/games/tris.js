@@ -169,12 +169,11 @@
       ";font-size:clamp(2.2rem,14vw,3.4rem);font-weight:800;display:flex;align-items:center;justify-content:center;" +
       "cursor:" + (puoi ? "pointer" : "default") + ";-webkit-tap-highlight-color:transparent;transition:background .15s,transform .05s";
   }
+  var trMount = null; // schermata Tris montata: a ogni mossa aggiorniamo solo il contenuto (niente lampeggio)
   function campoTris(t, vm, cb) {
     var el = t.el;
-    var sotto = vm.nomi.X + " (X) · " + vm.nomi.O + " (O)";
-    var s = t.schermata({ icona: "⭕", titolo: "Tris", sotto: sotto,
-      indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
-    s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.2rem;margin:6px 0 12px;min-height:1.4em", html: statoHtml(vm, cb) }));
+    var box = el("div", {});
+    box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.2rem;margin:6px 0 12px;min-height:1.4em", html: statoHtml(vm, cb) }));
     var grid = el("div", { style: "display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(86vw,330px);margin:0 auto" });
     vm.board.forEach(function (v, i) {
       var vinc = !!(vm.fine && vm.fine.linea && vm.fine.linea.indexOf(i) >= 0);
@@ -182,16 +181,29 @@
       grid.appendChild(el("button", { style: cellaStile(v, vinc, puoi), onclick: puoi ? function () { cb.onCella(i); } : null },
         [el("span", { text: v || "" })]));
     });
-    s._contenuto.appendChild(grid);
+    box.appendChild(grid);
+
+    var piedeNodi = [];
     if (vm.fase === "fine") {
       if (cb.locale || cb.sonoHost) {
-        s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: cb.onRivincita }));
-        s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+        piedeNodi.push(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: cb.onRivincita }));
+        piedeNodi.push(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
       } else {
-        s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa dell'host per la rivincita…" }));
+        piedeNodi.push(el("p", { class: "modulo-nota", text: "In attesa dell'host per la rivincita…" }));
       }
     }
-    t.mostra(s);
+
+    // ---- montaggio: prima volta creo la schermata, poi aggiorno SOLO il contenuto (schermo fisso) ----
+    if (trMount && trMount.cont && document.body.contains(trMount.box)) {
+      trMount.cont.replaceChild(box, trMount.box); trMount.box = box;
+      trMount.piede.innerHTML = ""; piedeNodi.forEach(function (n) { trMount.piede.appendChild(n); });
+    } else {
+      var sotto = vm.nomi.X + " (X) · " + vm.nomi.O + " (O)";
+      var s = t.schermata({ icona: "⭕", titolo: "Tris", sotto: sotto,
+        indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      s._contenuto.appendChild(box); piedeNodi.forEach(function (n) { s._piede.appendChild(n); }); t.mostra(s);
+      trMount = { cont: s._contenuto, box: box, piede: s._piede };
+    }
   }
 
   // =========================================================

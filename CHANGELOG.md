@@ -4,6 +4,25 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (15) — Carte che volano sulla presa + schermo fisso (niente lampeggio) + regola bomba
+- **Scopa/Scopone — presa mirata**: la carta giocata non appare più al centro. Dopo il montaggio si misura
+  la posizione reale della/e carta/e presa/e (`getBoundingClientRect` rispetto all'area tavolo) e si posiziona
+  la carta giocata **sopra** di esse (baricentro del gruppo), poi parte l'animazione `scGioca` che la fa
+  arrivare dalla mano e volare via con la presa. Se è **scopa** (tavolo svuotato) si posa al centro.
+- **Niente lampeggio (Scopa, Scopone, Tris, Forza 4)**: prima ogni mossa chiamava `t.mostra(s)` = `svuota(app)`
+  + ricostruzione totale + `scrollTo(0,0)` → sfarfallio e salto in cima. Ora la schermata si monta **una volta
+  sola**; alle mosse successive si sostituisce **solo** il contenitore di gioco (`cont.replaceChild(nuovoBox,
+  vecchioBox)`) e i nodi del piede, senza `t.mostra` né `scrollTo`. Si tiene un riferimento montato e si rifà
+  da capo solo cambiando davvero schermata (`document.body.contains(box)`). Var per gioco: `scMount`/`spMount`/
+  `trMount`/`drMount`.
+- **La Patata Bollente — regola del giro**: tolta l'eccezione "si può sempre ridare a chi te l'ha passata"
+  (`passa` e `passabile` non guardano più `st.ultimo`) che permetteva il ping-pong infinito tra due giocatori.
+  Ora vale la regola scritta: non puoi ripassarla a chi l'ha già avuta nel giro; il ritorno resta solo col
+  tasto **“Rimanda indietro”** (che usa `st.prev`).
+- Collaudato in locale (server + browser): Scopa (mia presa B9→C9: carta giocata ancorata al centro della
+  presa; schermata e titolo invariati dopo la mossa, `scrollTo` mai chiamato), Tris/Forza 4/Scopone
+  (stessa schermata dopo la mossa, `scrollTo` 0, zero errori in console anche con le prese dei bot).
+
 ## 13 settembre 2026 (14) — Nuovo gioco: Scopone (classico e scientifico, a squadre, vs bot)
 - Nuovo `js/games/scopone.js`: 4 giocatori in 2 squadre (tu seat0 + Compagno seat2 vs Rivali seat1/3),
   **contro 3 bot**. Varianti: **scientifico** (10 carte a testa, tavolo vuoto) e **classico** (9 + 4 sul
