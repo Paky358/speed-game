@@ -12,6 +12,26 @@
   "use strict";
 
   var giochi = [];            // giochi registrati
+
+  // Categorie della home. "tutti" mostra tutto; le altre filtrano per tipo di gioco.
+  // Ogni gioco ha la sua categoria in CAT_GIOCO (per id): nessuno resta senza.
+  var CATEGORIE = [
+    { id: "tutti",  nome: "Tutti",         icona: "🎲" },
+    { id: "carte",  nome: "Carte",         icona: "🃏" },
+    { id: "sfida",  nome: "Sfida in 2",    icona: "⚔️" },
+    { id: "festa",  nome: "Festa",         icona: "🎉" },
+    { id: "mini",   nome: "Minigiochi",    icona: "🎮" },
+    { id: "parole", nome: "Quiz & parole", icona: "🧠" }
+  ];
+  var CAT_GIOCO = {
+    scopa: "carte", scopa2v2: "carte", scopone: "carte",
+    tris: "sfida", drop4: "sfida", hockey: "sfida",
+    asta: "festa", impostore: "festa", sipero: "festa",
+    scalinata: "mini", patata: "mini",
+    timeline: "parole", nomicose: "parole"
+  };
+  var catAttiva = "tutti";
+  function catDi(g) { return CAT_GIOCO[g.id] || null; }
   var app;                    // contenitore radice (#app)
   var linkParams = {};        // impostazioni arrivate da un link condiviso
 
@@ -146,21 +166,40 @@
         io ? [el("span", { text: io.emoji }), el("span", { text: io.nome }), el("span", { class: "modifica", text: "cambia" })]
            : [el("span", { text: "👤" }), el("span", { text: "Crea il tuo profilo" })])
     ]));
+    // Barra delle categorie (sotto il profilo): "Tutti" + i gruppi. Cliccando si filtra
+    // solo la griglia (senza rifare la schermata: niente lampeggio, non si torna in cima).
+    var barra = el("div", { class: "cat-barra" });
     var griglia = el("div", { class: "griglia-giochi" });
-
-    giochi.forEach(function (g) {
-      griglia.appendChild(tesseraGioco(g, function () { apriGioco(g); }));
-    });
-
-    // Segnaposto: fa capire che ne arriveranno altri (senza prometterli)
-    griglia.appendChild(el("div", { class: "tessera presto" }, [
+    var presto = el("div", { class: "tessera presto" }, [
       el("span", { class: "icona", text: "➕" }),
       el("div", { class: "info" }, [
         el("h2", { text: "Altri giochi in arrivo" }),
         el("p", { text: "Uno alla volta, fatto bene." })
       ])
-    ]));
+    ]);
+    function riempiGriglia() {
+      griglia.innerHTML = "";
+      giochi.forEach(function (g) {
+        if (catAttiva === "tutti" || catDi(g) === catAttiva) {
+          griglia.appendChild(tesseraGioco(g, function () { apriGioco(g); }));
+        }
+      });
+      if (catAttiva === "tutti") griglia.appendChild(presto); // il segnaposto solo in "Tutti"
+    }
+    CATEGORIE.forEach(function (c) {
+      // salto una categoria (tranne "Tutti") se per ora non ha giochi
+      if (c.id !== "tutti" && !giochi.some(function (g) { return catDi(g) === c.id; })) return;
+      var chip = el("button", { class: "cat-tab" + (c.id === catAttiva ? " attiva" : ""), onclick: function () {
+        catAttiva = c.id;
+        [].forEach.call(barra.children, function (x) { x.className = "cat-tab"; });
+        chip.className = "cat-tab attiva";
+        riempiGriglia();
+      } }, [ el("span", { class: "ci", text: c.icona }), el("span", { text: c.nome }) ]);
+      barra.appendChild(chip);
+    });
+    riempiGriglia();
 
+    s._contenuto.appendChild(barra);
     s._contenuto.appendChild(griglia);
 
     // Riga di tasti piccoli: Novità · Proposte · Bug

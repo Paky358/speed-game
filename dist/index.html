@@ -90,6 +90,19 @@ body{
 .btn:disabled{ opacity:.45; }
 .btn-piccolo{ font-size:.95rem; min-height:44px; padding:10px 14px; width:auto; }
 
+/* ---- Home: barra delle categorie ---- */
+.cat-barra{ display:flex; gap:8px; overflow-x:auto; padding:2px 2px 4px; margin:0 0 14px;
+  -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.cat-barra::-webkit-scrollbar{ display:none; }
+.cat-tab{ flex:0 0 auto; display:flex; align-items:center; gap:6px; border:2px solid transparent;
+  cursor:pointer; font-family:inherit; font-weight:800; font-size:.92rem; border-radius:999px;
+  padding:9px 15px; min-height:42px; background:var(--carta); color:var(--testo);
+  transition:transform .05s ease; }
+.cat-tab:active{ transform:scale(.96); }
+.cat-tab .ci{ font-size:1.05rem; line-height:1; }
+.cat-tab.attiva{ background:linear-gradient(135deg,var(--accento),var(--accento-scuro));
+  color:#241f00; border-color:#fff2a8; }
+
 /* ---- Home: elenco dei giochi ---- */
 .griglia-giochi{ display:grid; grid-template-columns:1fr; gap:14px; }
 .tessera{
@@ -326,6 +339,26 @@ img{ max-width:100%; }
   "use strict";
 
   var giochi = [];            // giochi registrati
+
+  // Categorie della home. "tutti" mostra tutto; le altre filtrano per tipo di gioco.
+  // Ogni gioco ha la sua categoria in CAT_GIOCO (per id): nessuno resta senza.
+  var CATEGORIE = [
+    { id: "tutti",  nome: "Tutti",         icona: "🎲" },
+    { id: "carte",  nome: "Carte",         icona: "🃏" },
+    { id: "sfida",  nome: "Sfida in 2",    icona: "⚔️" },
+    { id: "festa",  nome: "Festa",         icona: "🎉" },
+    { id: "mini",   nome: "Minigiochi",    icona: "🎮" },
+    { id: "parole", nome: "Quiz & parole", icona: "🧠" }
+  ];
+  var CAT_GIOCO = {
+    scopa: "carte", scopa2v2: "carte", scopone: "carte",
+    tris: "sfida", drop4: "sfida", hockey: "sfida",
+    asta: "festa", impostore: "festa", sipero: "festa",
+    scalinata: "mini", patata: "mini",
+    timeline: "parole", nomicose: "parole"
+  };
+  var catAttiva = "tutti";
+  function catDi(g) { return CAT_GIOCO[g.id] || null; }
   var app;                    // contenitore radice (#app)
   var linkParams = {};        // impostazioni arrivate da un link condiviso
 
@@ -460,21 +493,40 @@ img{ max-width:100%; }
         io ? [el("span", { text: io.emoji }), el("span", { text: io.nome }), el("span", { class: "modifica", text: "cambia" })]
            : [el("span", { text: "👤" }), el("span", { text: "Crea il tuo profilo" })])
     ]));
+    // Barra delle categorie (sotto il profilo): "Tutti" + i gruppi. Cliccando si filtra
+    // solo la griglia (senza rifare la schermata: niente lampeggio, non si torna in cima).
+    var barra = el("div", { class: "cat-barra" });
     var griglia = el("div", { class: "griglia-giochi" });
-
-    giochi.forEach(function (g) {
-      griglia.appendChild(tesseraGioco(g, function () { apriGioco(g); }));
-    });
-
-    // Segnaposto: fa capire che ne arriveranno altri (senza prometterli)
-    griglia.appendChild(el("div", { class: "tessera presto" }, [
+    var presto = el("div", { class: "tessera presto" }, [
       el("span", { class: "icona", text: "➕" }),
       el("div", { class: "info" }, [
         el("h2", { text: "Altri giochi in arrivo" }),
         el("p", { text: "Uno alla volta, fatto bene." })
       ])
-    ]));
+    ]);
+    function riempiGriglia() {
+      griglia.innerHTML = "";
+      giochi.forEach(function (g) {
+        if (catAttiva === "tutti" || catDi(g) === catAttiva) {
+          griglia.appendChild(tesseraGioco(g, function () { apriGioco(g); }));
+        }
+      });
+      if (catAttiva === "tutti") griglia.appendChild(presto); // il segnaposto solo in "Tutti"
+    }
+    CATEGORIE.forEach(function (c) {
+      // salto una categoria (tranne "Tutti") se per ora non ha giochi
+      if (c.id !== "tutti" && !giochi.some(function (g) { return catDi(g) === c.id; })) return;
+      var chip = el("button", { class: "cat-tab" + (c.id === catAttiva ? " attiva" : ""), onclick: function () {
+        catAttiva = c.id;
+        [].forEach.call(barra.children, function (x) { x.className = "cat-tab"; });
+        chip.className = "cat-tab attiva";
+        riempiGriglia();
+      } }, [ el("span", { class: "ci", text: c.icona }), el("span", { text: c.nome }) ]);
+      barra.appendChild(chip);
+    });
+    riempiGriglia();
 
+    s._contenuto.appendChild(barra);
     s._contenuto.appendChild(griglia);
 
     // Riga di tasti piccoli: Novità · Proposte · Bug
@@ -5883,6 +5935,16 @@ window.SG_NCC_CATEGORIE = {
      descrizione-> elenco di righe: cosa cambia per chi gioca
    ========================================================= */
 window.SG_NOVITA = [
+  {
+    v: 50,
+    data: "13 settembre 2026",
+    titolo: "Categorie nella home 🎲",
+    descrizione: [
+      "Sotto il tuo nome ora ci sono i filtri per categoria: “Tutti” fa vedere tutto, poi puoi scegliere Carte, Sfida in 2, Festa, Minigiochi, Quiz & parole.",
+      "Carte: Scopa, Scopa 2 vs 2, Scopone. Sfida in 2: Glow Hockey, Tris, Drop 4. Festa: L'Asta, L'Impostore, Sì... però. Minigiochi: La Scalinata, La Patata Bollente. Quiz & parole: La linea del tempo, Nomi Cose e Città.",
+      "Toccando una categoria si aggiorna solo l'elenco, senza far saltare la pagina."
+    ]
+  },
   {
     v: 49,
     data: "13 settembre 2026",

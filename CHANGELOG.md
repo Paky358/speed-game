@@ -4,6 +4,19 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (18) — Home: filtri per categoria (Tutti/Carte/Sfida in 2/Festa/Minigiochi/Quiz & parole)
+- `js/core.js`: nuova barra `.cat-barra` sotto il profilo con i filtri. `CATEGORIE` (tutti, carte, sfida,
+  festa, mini, parole) + mappa `CAT_GIOCO` per id gioco (ogni gioco ha la sua categoria; una categoria senza
+  giochi non compare). "Tutti" è il default (`catAttiva`, ricordata tra una visita e l'altra della home).
+- Cliccando una categoria si **aggiorna solo la griglia** (`riempiGriglia` → `griglia.innerHTML`), senza
+  rifare la schermata né `scrollTo` (coerente con la regola "niente lampeggio"). Il segnaposto "Altri giochi
+  in arrivo" appare solo in "Tutti".
+- Raggruppamento: **Carte** (scopa, scopa2v2, scopone) · **Sfida in 2** (tris, drop4, hockey) · **Festa**
+  (asta, impostore, sipero) · **Minigiochi** (scalinata, patata — stile Wii Party, altri in arrivo) ·
+  **Quiz & parole** (timeline, nomicose). CSS `.cat-barra`/`.cat-tab` in `css/styles.css`.
+- Collaudato: 6 chip, filtri corretti per ogni categoria, nessun gioco fuori categoria, schermata invariata
+  al cambio filtro (niente lampeggio).
+
 ## 13 settembre 2026 (17) — L'Asta: tutti i 4 round visibili + "ancora in palio"; Patata: ritorno solo a chi rimanda
 - **L'Asta — striscia dei 4 round**: `strisciaRound(el, rounds, idx)` mostra tutte e 4 le "cose" del tema
   (con icona+nome); il round in corso ha il contorno giallo (`.as-step.ora`), i fatti la spunta, i prossimi
