@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 49,
+    data: "13 settembre 2026",
+    titolo: "Asta più chiara + regola della bomba",
+    descrizione: [
+      "L'Asta: ora vedi tutti e 4 i round (le cose che si metteranno all'asta) con i loro nomi — quello in corso ha il contorno giallo, quelli fatti la spunta, i prossimi si vedono comunque.",
+      "L'Asta: mentre si fa l'asta di una carta puoi toccare “Ancora in palio” per vedere quali altre cose restano da aggiudicare in quel round.",
+      "La Patata Bollente: quando ti rimandano indietro la bomba (col tasto giallo), ora puoi ridarla SOLO a chi te l'ha rimandata (prima potevi darla a chiunque)."
+    ]
+  },
+  {
     v: 48,
     data: "13 settembre 2026",
     titolo: "Nuovo gioco: Scopa 2 vs 2 🃏 (a squadre, anche online)",

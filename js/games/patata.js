@@ -88,7 +88,7 @@
       fase: "voto", cats: pesca(3), categoria: null,
       players: giocatori.map(function (g) { return { id: g.id, nome: g.nome, colore: g.colore, eliminato: false, voto: null }; }),
       holder: null, prev: null, ultimo: null, giro: [], round: 0, ts: 0, boom: null, vincitore: null,
-      remaining: 0, cap: 15000, passaggi: 0, remPrima: null, giroPrima: [], eliminati: []
+      remaining: 0, cap: 15000, passaggi: 0, remPrima: null, giroPrima: [], eliminati: [], soloDare: null
     };
     function pById(id) { for (var i = 0; i < st.players.length; i++) if (st.players[i].id === id) return st.players[i]; return null; }
     function vivi() { return st.players.filter(function (p) { return !p.eliminato; }); }
@@ -107,7 +107,7 @@
       st.categoria = cat; st.round = 0; st.boom = null; st.vincitore = null; st.passaggi = 0; st.remPrima = null; st.eliminati = [];
       st.players.forEach(function (p) { p.eliminato = false; });
       var vv = vivi(); st.holder = vv[Math.floor(Math.random() * vv.length)].id;
-      st.prev = null; st.ultimo = null; st.giro = [st.holder]; st.cap = capMs(0); st.remaining = st.cap;
+      st.prev = null; st.ultimo = null; st.soloDare = null; st.giro = [st.holder]; st.cap = capMs(0); st.remaining = st.cap;
       st.fase = "gioco"; st.ts = Date.now(); onCambio();
     }
     function esplode() {
@@ -126,7 +126,7 @@
         var nh = cand[Math.floor(Math.random() * cand.length)];
         st.holder = nh.id; st.giro.push(nh.id);
         if (st.giro.length >= v.length) st.giro = [nh.id];
-        st.prev = null; st.ultimo = null;
+        st.prev = null; st.ultimo = null; st.soloDare = null;
         st.cap = capMs(st.passaggi); st.remaining = st.cap; st.remPrima = null;
         st.fase = "gioco"; st.ts = Date.now(); onCambio();
       }, 2600);
@@ -147,7 +147,13 @@
       passa: function (fromId, targetId) {
         aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder) return;
         var tgt = pById(targetId); if (!tgt || tgt.eliminato || targetId === st.holder) return;
-        if (st.giro.indexOf(targetId) >= 0) return;  // NON puoi ridarla a chi ha già avuto la bomba: prima finisci il giro
+        if (st.soloDare != null) { var sd = pById(st.soloDare); if (!sd || sd.eliminato) st.soloDare = null; }
+        if (st.soloDare != null) {
+          if (targetId !== st.soloDare) return;      // dopo "Rimanda indietro": puoi ridarla SOLO a chi te l'ha rimandata
+        } else if (st.giro.indexOf(targetId) >= 0) {
+          return;                                    // regola normale: non a chi ha già avuto la bomba nel giro
+        }
+        st.soloDare = null;                     // vincolo consumato
         st.remPrima = st.remaining;             // per l'eventuale "rimanda indietro"
         st.passaggi++; st.cap = capMs(st.passaggi); st.remaining = st.cap;  // riceve -> timer riparte
         st.ultimo = st.holder;                  // tenuto solo come info (il ritorno si fa col pulsante "Rimanda indietro")
@@ -162,16 +168,18 @@
         // il passaggio non valeva: torna a chi l'aveva, col tempo che aveva (NIENTE reset)
         st.passaggi = Math.max(0, st.passaggi - 1); st.cap = capMs(st.passaggi);
         if (st.remPrima != null) st.remaining = st.remPrima;
-        st.ultimo = st.holder;                  // chi ha rimandato indietro: gli si può ridare subito
+        st.ultimo = st.holder;
+        st.soloDare = st.holder;                 // chi riprende la bomba potrà ridarla SOLO a chi gliel'ha rimandata
         // NON si resetta il giro: si ripristina com'era prima del passaggio annullato
         var back = st.prev; st.prev = null; st.holder = back; st.giro = st.giroPrima ? st.giroPrima.slice() : st.giro; st.ts = Date.now(); onCambio();
       },
       rimuovi: function (id) {
         var p = pById(id); if (!p) return; p.eliminato = true; if (st.eliminati.indexOf(id) < 0) st.eliminati.push(id);
+        if (st.soloDare === id) st.soloDare = null;   // il bersaglio del vincolo non c'è più
         if (st.fase === "gioco" || st.fase === "esplosione") {
           var v = vivi();
           if (v.length <= 1) { st.fase = "fine"; st.vincitore = v[0] ? { nome: v[0].nome, colore: v[0].colore } : null; }
-          else if (st.holder === id) { st.holder = v[Math.floor(Math.random() * v.length)].id; st.prev = null; st.giro = [st.holder]; st.cap = capMs(st.passaggi); st.remaining = st.cap; st.ts = Date.now(); }
+          else if (st.holder === id) { st.holder = v[Math.floor(Math.random() * v.length)].id; st.prev = null; st.soloDare = null; st.giro = [st.holder]; st.cap = capMs(st.passaggi); st.remaining = st.cap; st.ts = Date.now(); }
         }
         onCambio();
       },
@@ -189,6 +197,7 @@
           fase: st.fase, categoria: st.categoria, cats: st.cats, round: st.round,
           players: st.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, eliminato: p.eliminato, voto: p.voto }; }),
           holder: st.holder, prev: st.prev, ultimo: st.ultimo, giro: st.giro.slice(),
+          soloDare: (function () { if (st.soloDare == null) return null; var s = pById(st.soloDare); return (s && !s.eliminato) ? st.soloDare : null; })(),
           remaining: Math.max(0, Math.round(st.remaining)), cap: st.cap, boom: st.boom, vincitore: st.vincitore, classifica: classifica
         };
       }
@@ -450,6 +459,9 @@
     // messaggio in alto
     if (esplo && vm.boom) {
       s3._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;font-size:1.1rem;color:#ff8787;font-weight:700", text: "💥 " + vm.boom.nome + " è ESPLOSO! Eliminato." }));
+    } else if (puoi && vm.soloDare) {
+      var chiRi = null; vm.players.forEach(function (p) { if (p.id === vm.soloDare) chiRi = p; });
+      s3._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;color:#ffd8a8;font-weight:700", html: "Te l'hanno rimandata: di' la parola e <b>ridàlla a " + (chiRi ? chiRi.nome : "chi te l'ha rimandata") + "</b> 👇" }));
     } else if (puoi) {
       s3._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", html: cb.locale ? ("Ha la bomba <b>" + (holderP ? holderP.nome : "") + "</b>: di' la parola, poi <b>tocca la testa</b> di chi la riceve 👇") : "Tocca a TE! Di' la parola a voce, poi <b>tocca la testa</b> (il pallino) di chi la riceve 👇" }));
     } else {
@@ -470,7 +482,7 @@
       var ang = (i / n) * 2 * Math.PI - Math.PI / 2;
       var x = 50 + (R / cx) * 50 * Math.cos(ang), y = 50 + (R / cy) * 50 * Math.sin(ang);
       var isHolder = (p.id === vm.holder);
-      var passabile = puoi && !esplo && !p.eliminato && !isHolder && vm.giro.indexOf(p.id) < 0;
+      var passabile = puoi && !esplo && !p.eliminato && !isHolder && (vm.soloDare != null ? (p.id === vm.soloDare) : vm.giro.indexOf(p.id) < 0);
       var nodo = el(passabile ? "button" : "div", { style: "position:absolute;left:" + x + "%;top:" + y + "%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;width:72px;background:none;border:0;padding:4px 0;" + (passabile ? "cursor:pointer" : "cursor:default"),
         onclick: passabile ? function () { cb.onPassa(p.id); } : null });
       nodo.appendChild(el("div", { style: "font-size:.72rem;font-weight:700;max-width:72px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:" + (p.eliminato ? "rgba(255,255,255,.35)" : p.colore) + (isHolder ? ";text-shadow:0 0 6px rgba(255,120,60,.9)" : ""), text: (p.id === myId ? "▸ " : "") + p.nome }));

@@ -4,6 +4,22 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (17) — L'Asta: tutti i 4 round visibili + "ancora in palio"; Patata: ritorno solo a chi rimanda
+- **L'Asta — striscia dei 4 round**: `strisciaRound(el, rounds, idx)` mostra tutte e 4 le "cose" del tema
+  (con icona+nome); il round in corso ha il contorno giallo (`.as-step.ora`), i fatti la spunta, i prossimi
+  restano visibili. `intestazioneRound`/`testaRound` la usano (scelta/asta/round), più la schermata d'inizio
+  round. La vm online espone `rounds` (elenco `{nome,icona}`).
+- **L'Asta — "ancora in palio"**: `dettaglioPalio(el, carte, nomeCorrente)` = pannello a scomparsa `<details>`
+  che elenca le carte ancora da aggiudicare nel round (quella all'asta marcata "· all'asta ora"), aggiunto in
+  `disegnaAsta` (locale) e nella fase `asta` online (usa `vm.tavolo`).
+- **La Patata Bollente — ritorno vincolato**: dopo un "Rimanda indietro" chi riprende la bomba può ridarla
+  SOLO a chi gliel'ha rimandata. Nuovo `st.soloDare` (impostato in `indietro`, consumato in `passa`, azzerato
+  in avvio/esplosione/rimozione), guardato in `passa` e nel render (`passabile`), esposto in `vm.soloDare`
+  (solo se il bersaglio è vivo); messaggio guida "ridàlla a <nome>".
+- Collaudato in locale: Asta (tema Appuntamento — striscia 📍/👗/💬/🌧️ con "La Location" evidenziata; pannello
+  "Ancora in palio (2)" con la carta corrente marcata) e Patata a 3 (dopo rimanda Gigi→Paky resta passabile
+  solo Gigi). Zero errori.
+
 ## 13 settembre 2026 (16) — Nuovo gioco: Scopa 2 vs 2 (a squadre, contro i bot o online) + asso di denari ripulito
 - Nuovo `js/games/scopa2.js` (id `scopa2v2`): **4 al tavolo, 2 squadre** (posti 0+2 vs 1+3), turni che
   alternano le squadre (0→1→2→3). Regole **della Scopa vera** (non Scopone): 3 in mano + 4 sul tavolo, si

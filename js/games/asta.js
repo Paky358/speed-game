@@ -68,7 +68,27 @@
     ".as-stelle button{border:0;background:transparent;font-size:1.9rem;line-height:1;cursor:pointer;",
       "filter:grayscale(1);opacity:.4;padding:2px;}",
     ".as-stelle button.on{filter:none;opacity:1;}",
-    ".as-msg{text-align:center;color:var(--testo-tenue);font-weight:700;}"
+    ".as-msg{text-align:center;color:var(--testo-tenue);font-weight:700;}",
+    // striscia dei 4 round (tutte le cose che si metteranno all'asta): quella in corso ha il contorno giallo
+    ".as-steps{display:flex;gap:5px;justify-content:center;margin:2px 0 12px;}",
+    ".as-step{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--carta);",
+      "border:2px solid transparent;border-radius:12px;padding:7px 3px 6px;opacity:.6;position:relative;}",
+    ".as-step .si{font-size:1.2rem;line-height:1;}",
+    ".as-step .sn{font-size:.58rem;font-weight:800;line-height:1.12;text-align:center;color:var(--testo);}",
+    ".as-step .sk{position:absolute;top:2px;right:4px;font-size:.62rem;color:var(--verde);font-weight:900;}",
+    ".as-step.fatto{opacity:.5;}",
+    ".as-step.ora{opacity:1;border-color:var(--accento);background:linear-gradient(150deg,var(--carta-2),#2a2550);",
+      "box-shadow:0 0 0 1px var(--accento) inset,0 4px 14px rgba(224,169,10,.25);}",
+    ".as-step.ora .sn{color:var(--accento);}",
+    // pannello \"ancora in palio\" durante l'asta di una carta
+    ".as-palio{background:var(--carta);border-radius:14px;margin:2px 0 12px;padding:0 12px;overflow:hidden;}",
+    ".as-palio>summary{list-style:none;cursor:pointer;padding:11px 0;font-weight:800;color:var(--testo);",
+      "display:flex;align-items:center;gap:8px;}",
+    ".as-palio>summary::-webkit-details-marker{display:none;}",
+    ".as-palio .pr{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid rgba(255,255,255,.08);font-size:.95rem;}",
+    ".as-palio .pr .em{font-size:1.25rem;width:32px;text-align:center;flex:0 0 auto;}",
+    ".as-palio .pr .nm{flex:1;min-width:0;}",
+    ".as-palio .pr.ora-c{color:var(--accento);font-weight:800;}"
   ].join("");
   document.head.appendChild(stile);
 
@@ -177,12 +197,47 @@
     return top;
   }
 
+  // la striscia con TUTTI e 4 i round (le cose che si metteranno all'asta): quello in corso
+  // ha il contorno giallo, quelli già fatti hanno la spunta, i prossimi si vedono comunque.
+  function strisciaRound(el, rounds, idx) {
+    var box = el("div", { class: "as-steps" });
+    (rounds || []).forEach(function (r, i) {
+      box.appendChild(el("div", { class: "as-step" + (i === idx ? " ora" : (i < idx ? " fatto" : "")) }, [
+        (i < idx ? el("span", { class: "sk", text: "✓" }) : null),
+        el("span", { class: "si", text: r.icona || "" }),
+        el("span", { class: "sn", text: r.nome || "" })
+      ]));
+    });
+    return box;
+  }
+
+  // pannello a scomparsa con le carte ancora in palio nel round (quella in corso è evidenziata)
+  function dettaglioPalio(el, cards, nomeCorrente) {
+    if (!cards || !cards.length) return null;
+    var d = el("details", { class: "as-palio" });
+    d.appendChild(el("summary", {}, [
+      el("span", { text: "🎁" }),
+      el("span", { style: "flex:1", text: "Ancora in palio in questo round (" + cards.length + ")" }),
+      el("span", { style: "opacity:.6;font-size:.82rem;font-weight:700", text: "tocca" })
+    ]));
+    cards.forEach(function (c) {
+      var ora = (c.nome === nomeCorrente);
+      d.appendChild(el("div", { class: "pr" + (ora ? " ora-c" : "") }, [
+        el("span", { class: "em", text: c.emoji }),
+        el("span", { class: "nm", text: c.nome + (ora ? " · all'asta ora" : "") }),
+        el("span", { class: "tier tier-" + c.tier, text: c.tier })
+      ]));
+    });
+    return d;
+  }
+
   function intestazioneRound(el, st) {
-    var r = st.tema.round[st.roundIdx];
-    return el("div", { class: "as-round" }, [
-      el("div", { class: "n", text: "Round " + (st.roundIdx + 1) + " di " + TOT_ROUND }),
-      el("div", { class: "t", text: r.icona + " " + r.nome })
-    ]);
+    var wrap = el("div", {});
+    wrap.appendChild(el("div", { class: "as-round", style: "margin:6px 0 4px" }, [
+      el("div", { class: "n", text: "Round " + (st.roundIdx + 1) + " di " + TOT_ROUND })
+    ]));
+    wrap.appendChild(strisciaRound(el, st.tema.round, st.roundIdx));
+    return wrap;
   }
 
   var gioco = {
@@ -307,6 +362,7 @@
       el("p", { class: "as-msg", text: "Sul tavolo " + st.giocatori.length + (st.giocatori.length === 1 ? " carta" : " carte") + ": ognuno se ne aggiudica una." })
     ]);
     s._contenuto.appendChild(box);
+    s._contenuto.appendChild(strisciaRound(el, st.tema.round, st.roundIdx));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Vedi le carte ▶", onclick: function () { prossimaAsta(t, st); } }));
     t.mostra(s);
   }
@@ -395,6 +451,8 @@
 
     s._contenuto.appendChild(el("p", { class: "as-msg", style: "margin-top:10px",
       text: "Allo scadere del tempo la carta va a chi offre di più. Paga solo il vincitore." }));
+    var pal = dettaglioPalio(el, st.tavolo, a.carta.nome);
+    if (pal) s._contenuto.appendChild(pal);
     t.mostra(s);
   }
 
@@ -550,6 +608,7 @@
       fase: st.fase, codice: st.codice,
       temaNome: st.tema.nome, temaIcona: st.tema.icona,
       roundIdx: st.roundIdx, roundNome: r.nome, roundIcona: r.icona, totRound: TOT_ROUND,
+      rounds: (st.tema.round || []).map(function (x) { return { nome: x.nome, icona: x.icona }; }),
       giocatori: st.giocatori.map(function (g) {
         return { id: g.id, nome: g.nome, crediti: g.crediti, haCarta: st.senzaCarta.indexOf(g.id) < 0, kit: g.kit.slice() };
       }),
@@ -807,10 +866,13 @@
     return top;
   }
   function testaRound(el, vm) {
-    return el("div", { class: "as-round" }, [
-      el("div", { class: "n", text: "Round " + (vm.roundIdx + 1) + " di " + vm.totRound }),
-      el("div", { class: "t", text: (vm.roundIcona || "") + " " + (vm.roundNome || "") })
-    ]);
+    var wrap = el("div", {});
+    wrap.appendChild(el("div", { class: "as-round", style: "margin:6px 0 4px" }, [
+      el("div", { class: "n", text: "Round " + (vm.roundIdx + 1) + " di " + vm.totRound })
+    ]));
+    if (vm.rounds && vm.rounds.length) wrap.appendChild(strisciaRound(el, vm.rounds, vm.roundIdx));
+    else wrap.appendChild(el("div", { class: "as-round" }, [ el("div", { class: "t", text: (vm.roundIcona || "") + " " + (vm.roundNome || "") }) ]));
+    return wrap;
   }
   function nodoKitVm(el, g) {
     var box = el("div", { class: "as-kit" });
@@ -893,6 +955,8 @@
         s._contenuto.appendChild(el("p", { class: "as-msg",
           text: !io ? "Stai guardando la partita" : (io.haCarta ? "Hai già la tua carta di questo round" : "Hai passato: aspetti il risultato") }));
       }
+      var pal2 = dettaglioPalio(el, vm.tavolo, a.carta.nome);
+      if (pal2) s._contenuto.appendChild(pal2);
     }
 
     else if (vm.fase === "esito") {

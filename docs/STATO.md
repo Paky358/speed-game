@@ -1,6 +1,6 @@
 # A che punto siamo
 
-_Aggiornato: 13 settembre 2026 (nuovo gioco: Scopa 2 vs 2 a squadre, anche online; asso di denari ripulito)_
+_Aggiornato: 13 settembre 2026 (L'Asta: 4 round visibili + "ancora in palio"; Patata: ritorno vincolato)_
 
 ## In due parole
 È una raccolta di giochi da fare in gruppo, che si apre dal telefono senza
@@ -138,6 +138,13 @@ dal proprio.
   (tu + 3 bot) e **online** (host = posto 0; gli ospiti prendono i posti 1,2,3; i posti liberi li giocano i
   bot; host-autoritativo, a ognuno mando solo la sua vista). Riusa `window.SGCarte`. Vista relativa al
   giocatore (compagno al centro col 🤝, colori squadra); online i bot hanno nomi neutri ("🤖 Bot N").
+
+### Ritocchi a L'Asta e La Patata (13 set 2026)
+- **L'Asta**: si vedono tutti e 4 i round del tema (striscia con icona+nome; quello in corso col contorno
+  giallo, i fatti con la spunta) su tutte le schermate del round; durante l'asta di una carta c'è il pannello
+  a scomparsa "Ancora in palio" con le altre carte del round (quella corrente marcata). Vale in locale e online.
+- **La Patata**: dopo un "Rimanda indietro" chi riprende la bomba può ridarla solo a chi gliela ha rimandata
+  (`st.soloDare`), oltre alla regola del giro già presente.
 
 ### Ritocchi comuni ai giochi (13 set 2026)
 - **Presa mirata (Scopa/Scopone)**: la carta giocata si posa **sopra la carta che prende** (baricentro del
