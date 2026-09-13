@@ -5888,7 +5888,7 @@ window.SG_NOVITA = [
     data: "13 settembre 2026",
     titolo: "Scopa: carte più chiare e si vede cosa si prende",
     descrizione: [
-      "Sulle figure (Fante, Cavallo, Re) ora si vede bene il seme (moneta, coppa, spada o bastone grande) e i bastoni sono disegnati meglio.",
+      "Semi (monete, coppe, spade, bastoni) disegnati grandi e ben visibili: si capisce al volo che carta è, anche sulle figure (Fante, Cavallo, Re) e a colpo d'occhio.",
       "Quando tu o l'avversario prendete delle carte, per un attimo si vede la carta giocata e quali carte prende, invece di farle sparire e basta."
     ]
   },
@@ -10359,23 +10359,23 @@ window.SG_SIPERO = {
   }
   // posizioni dei "pips" (cx, cy, dimensione) su una carta 100x150, come sulle carte vere
   var PIPS = {
-    1: [[50, 75, 42]],
-    2: [[50, 46, 27], [50, 104, 27]],
-    3: [[50, 40, 24], [50, 75, 24], [50, 110, 24]],
-    4: [[36, 48, 24], [64, 48, 24], [36, 102, 24], [64, 102, 24]],
-    5: [[36, 47, 22], [64, 47, 22], [50, 75, 23], [36, 103, 22], [64, 103, 22]],
-    6: [[36, 44, 22], [64, 44, 22], [36, 75, 22], [64, 75, 22], [36, 106, 22], [64, 106, 22]],
-    7: [[36, 42, 20], [64, 42, 20], [50, 58, 20], [36, 75, 20], [64, 75, 20], [36, 108, 20], [64, 108, 20]]
+    1: [[50, 76, 54]],
+    2: [[50, 50, 42], [50, 102, 42]],
+    3: [[50, 40, 36], [50, 76, 36], [50, 112, 36]],
+    4: [[34, 52, 34], [66, 52, 34], [34, 100, 34], [66, 100, 34]],
+    5: [[34, 50, 31], [66, 50, 31], [50, 76, 33], [34, 102, 31], [66, 102, 31]],
+    6: [[34, 48, 30], [66, 48, 30], [34, 76, 30], [66, 76, 30], [34, 104, 30], [66, 104, 30]],
+    7: [[34, 45, 26], [66, 45, 26], [50, 61, 26], [34, 77, 26], [66, 77, 26], [34, 108, 26], [66, 108, 26]]
   };
   function uso(s, cx, cy, sz) { return '<use href="#scSeme' + s + '" xlink:href="#scSeme' + s + '" x="' + (cx - sz / 2) + '" y="' + (cy - sz / 2) + '" width="' + sz + '" height="' + sz + '"/>'; }
   function cartaSVG(carta, w) {
     var h = Math.round(w * 1.5), col = COLORE[carta.s], v = carta.v, s = carta.s, centro = "";
     if (v >= 8) {
-      centro = '<rect x="23" y="34" width="54" height="82" rx="7" fill="rgba(0,0,0,.03)" stroke="' + col + '" stroke-width="1.4" opacity=".7"/>' +
-        uso(s, 50, 56, 28) +                                                                  // seme GRANDE (ben visibile)
-        '<text x="50" y="108" font-size="33" text-anchor="middle">' + FIG[v] + '</text>';     // figura (Fante/Cavallo/Re)
+      centro = '<rect x="20" y="32" width="60" height="86" rx="7" fill="rgba(0,0,0,.03)" stroke="' + col + '" stroke-width="1.4" opacity=".7"/>' +
+        uso(s, 50, 55, 46) +                                                                  // seme MOLTO GRANDE (si capisce al volo)
+        '<text x="50" y="112" font-size="28" text-anchor="middle">' + FIG[v] + '</text>';     // figura (Fante/Cavallo/Re)
     } else { (PIPS[v] || []).forEach(function (p) { centro += uso(s, p[0], p[1], p[2]); }); }
-    function angolo() { return '<text x="8.5" y="20" font-size="18" font-weight="800" fill="' + col + '" font-family="Georgia,serif">' + v + '</text>' + uso(s, 13, 28, 11); }
+    function angolo() { return '<text x="8" y="22" font-size="21" font-weight="800" fill="' + col + '" font-family="Georgia,serif">' + v + '</text>' + uso(s, 13.5, 31, 13); }
     return '<svg viewBox="0 0 100 150" width="' + w + '" height="' + h + '" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
       '<rect x="1.2" y="1.2" width="97.6" height="147.6" rx="10" fill="#fbf5e6" stroke="#c8b273" stroke-width="2"/>' +
       '<rect x="5" y="5" width="90" height="140" rx="7" fill="none" stroke="' + col + '" stroke-width="1" opacity=".4"/>' +
@@ -10435,7 +10435,7 @@ window.SG_SIPERO = {
       var extra = "";
       if (C.sel.presa.indexOf(c.id) >= 0) extra = "presel";
       else if (mioTurno && cartaSel && capIds[c.id]) extra = "cap";
-      tw.appendChild(cartaEl(el, c, 66, extra, (mioTurno && cartaSel && capIds[c.id]) ? function () { C.tapTavolo(c.id); } : null));
+      tw.appendChild(cartaEl(el, c, 70, extra, (mioTurno && cartaSel && capIds[c.id]) ? function () { C.tapTavolo(c.id); } : null));
     });
     box.appendChild(el("div", { style: "flex:1;display:flex;align-items:center;justify-content:center;padding:8px 0" }, [tw]));
 

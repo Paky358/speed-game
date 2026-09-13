@@ -13,7 +13,7 @@ window.SG_NOVITA = [
     data: "13 settembre 2026",
     titolo: "Scopa: carte più chiare e si vede cosa si prende",
     descrizione: [
-      "Sulle figure (Fante, Cavallo, Re) ora si vede bene il seme (moneta, coppa, spada o bastone grande) e i bastoni sono disegnati meglio.",
+      "Semi (monete, coppe, spade, bastoni) disegnati grandi e ben visibili: si capisce al volo che carta è, anche sulle figure (Fante, Cavallo, Re) e a colpo d'occhio.",
       "Quando tu o l'avversario prendete delle carte, per un attimo si vede la carta giocata e quali carte prende, invece di farle sparire e basta."
     ]
   },

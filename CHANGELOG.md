@@ -4,6 +4,12 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 13 settembre 2026 (10) — Scopa: simboli dei semi molto più grandi (leggibilità)
+- Pips ingranditi parecchio (`PIPS`: asso 54, 2→42, 3→36, 4→34, 5→31, 6→30, 7→26; posizioni che
+  evitano gli angoli) così i semi "saltano all'occhio". Sulle **figure** (8/9/10) il seme è ora
+  **dominante** (glifo 46) sopra l'emoji. Valore+seme d'angolo un po' più grandi; carte del tavolo
+  70px. Obiettivo: leggibilità immediata (anche per chi non vede benissimo).
+
 ## 13 settembre 2026 (9) — Scopa: semi delle figure chiari, bastoni migliori, presa mostrata
 - **Figure (8/9/10)**: ora mostrano un **seme grande** ben visibile sopra la figura (prima il seme
   era minuscolo e non si capiva) + emoji Fante/Cavallo/Re. **Bastoni** ridisegnati (bastone di legno
