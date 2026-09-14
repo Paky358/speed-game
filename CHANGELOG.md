@@ -4,6 +4,15 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 14 settembre 2026 (23) — Horto Muso: "foto-finish" zoomato prima della classifica
+- `js/games/horto.js`: nuova `fotoFinish(t, ord, nomi, io, poi)` + wrapper `finale()` (foto-finish → `renderFine`).
+  A fine gara, prima della classifica, i primi arrivati scivolano oltre la linea del traguardo (zoom, il
+  vincitore in evidenza con glow oro) e compare "🏆 <nome> vince!", poi si passa alla classifica (auto dopo
+  ~3,2s o col tasto "Vedi la classifica"). Usa `setTimeout` + transizioni CSS (niente rAF, così va anche a
+  pannello nascosto). Agganciato a tutte e tre le fini: locale, host, ospite (ognuno col proprio `io`).
+- CSS `.ho-ff*` in `assicuraStile`. Collaudato: nessun errore, gioco registrato (l'animazione della gara/finish
+  non parte col pannello browser nascosto → si vede sul telefono).
+
 ## 14 settembre 2026 (22) — La Scalinata: giocabile in 1/2/3 (i posti liberi = bot) anche a un telefono solo
 - `js/games/scalinata.js`: `giocatoriMin` 4 → **1** (`giocatoriMax` resta 4), così la sala non obbliga più a
   essere in 4. Il "un telefono solo" ora **riempie con i bot** fino a 4 (come già l'online): in `avvia` si

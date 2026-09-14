@@ -44,7 +44,22 @@
       ".ho-frusta:active{transform:scale(.98);}",
       ".ho-frusta:disabled{filter:grayscale(.6);opacity:.7;}",
       ".ho-frusta.sfin{background:linear-gradient(135deg,#ff8787,#c92a2a);color:#fff;}",
-      ".ho-info{text-align:center;font-weight:800;min-height:1.4em;margin:2px 0 8px;}"
+      ".ho-info{text-align:center;font-weight:800;min-height:1.4em;margin:2px 0 8px;}",
+      // photo-finish (replay zoomato del traguardo prima della classifica)
+      ".ho-ff{position:relative;height:210px;border-radius:16px;overflow:hidden;margin:8px 0 4px;",
+        "background:radial-gradient(circle at 78% 50%,rgba(255,220,120,.20),rgba(255,255,255,.05));}",
+      ".ho-ff-line{position:absolute;top:0;bottom:0;right:20%;width:8px;z-index:1;opacity:.9;",
+        "background:repeating-linear-gradient(45deg,#fff 0 6px,#111 6px 12px);}",
+      ".ho-ff-row{position:absolute;display:flex;align-items:center;gap:8px;left:-45%;",
+        "transition:left 1.15s cubic-bezier(.2,.7,.3,1);z-index:2;}",
+      ".ho-ff-row.go{left:var(--x);}",
+      ".ho-ff-cav{font-size:2.1rem;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));}",
+      ".ho-ff-row.win .ho-ff-cav{font-size:2.9rem;filter:drop-shadow(0 0 10px rgba(255,202,58,.95));}",
+      ".ho-ff-nome{font-size:.85rem;font-weight:800;color:var(--testo);white-space:nowrap;}",
+      ".ho-ff-row.win .ho-ff-nome{color:var(--accento);font-size:1.05rem;}",
+      ".ho-ff-big{text-align:center;font-size:1.5rem;font-weight:900;min-height:1.6em;margin-top:4px;",
+        "opacity:0;transform:scale(.8);transition:opacity .3s,transform .3s;}",
+      ".ho-ff-big.show{opacity:1;transform:scale(1);color:var(--accento);}"
     ].join("");
     document.head.appendChild(s);
   }
@@ -127,6 +142,31 @@
     resto.sort(function (a, b) { return cav[b].pos - cav[a].pos; });
     return arrivi.concat(resto);
   }
+  // "filmatino" zoomato del traguardo: i primi arrivati scivolano oltre la linea,
+  // il vincitore in evidenza; poi si passa alla classifica.
+  function fotoFinish(t, ord, nomi, io, poi) {
+    var el = t.el, fatto = false, to1 = null, to2 = null;
+    var s = t.schermata({ icona: "📸", titolo: "Foto-finish", sotto: "Chi ha vinto?" });
+    var strip = el("div", { class: "ho-ff" }); strip.appendChild(el("div", { class: "ho-ff-line" }));
+    var top = ord.slice(0, Math.min(4, ord.length)), rows = [];
+    top.forEach(function (idx, p) {
+      var row = el("div", { class: "ho-ff-row" + (p === 0 ? " win" : ""), style: "top:" + (14 + p * 46) + "px;--x:" + (74 - p * 10) + "%" }, [
+        el("span", { class: "ho-ff-cav", text: "🐎" }),
+        el("span", { class: "ho-ff-nome" + (p === 0 ? " win" : ""), text: (p + 1) + "° " + nomi[idx] + (idx === io ? " (tu)" : "") })
+      ]);
+      strip.appendChild(row); rows.push(row);
+    });
+    s._contenuto.appendChild(strip);
+    var big = el("div", { class: "ho-ff-big", text: "📸" }); s._contenuto.appendChild(big);
+    function vai() { if (fatto) return; fatto = true; if (to1) clearTimeout(to1); if (to2) clearTimeout(to2); poi(); }
+    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Vedi la classifica ▶", onclick: vai }));
+    t.mostra(s);
+    setTimeout(function () { rows.forEach(function (r, p) { setTimeout(function () { r.classList.add("go"); }, p * 150); }); }, 60);
+    to1 = setTimeout(function () { big.textContent = "🏆 " + nomi[ord[0]] + (ord[0] === io ? " (tu)" : "") + " vince!"; big.classList.add("show"); traguardoFX(); }, 1300);
+    to2 = setTimeout(vai, 3200);
+  }
+  function finale(t, ord, nomi, io, cb) { fotoFinish(t, ord, nomi, io, function () { renderFine(t, ord, nomi, io, cb); }); }
+
   function renderFine(t, ord, nomi, io, cb) {
     var el = t.el, mioPosto = ord.indexOf(io) + 1, vinto = mioPosto === 1;
     var s = t.schermata({ icona: vinto ? "🏆" : "🏁", titolo: vinto ? "Hai vinto!" : "Arrivato " + mioPosto + "°", sotto: "Horto Muso" });
@@ -175,9 +215,9 @@
       raf = requestAnimationFrame(frame);
     }
     function fine() {
-      stop(); traguardoFX();
+      stop();
       var ord = classificaDa(cav, arrivi);
-      renderFine(t, ord, nomi, 0, { locale: true, onRigioca: function () { corsa(t, nRivali, diff); }, onEsci: t.esci });
+      finale(t, ord, nomi, 0, { locale: true, onRigioca: function () { corsa(t, nRivali, diff); }, onEsci: t.esci });
     }
     disegna(ref, snap(cav, "via", 3, nomi));
     toC = setInterval(function () {
@@ -252,8 +292,8 @@
     function fineCorsa() {
       fase = "fine"; ord = classificaDa(cav, arrivi);
       rete.invia({ t: "fine", ord: ord, nomi: nomi });
-      if (ref) { ref.rimuovi(); ref = null; } traguardoFX();
-      renderFine(t, ord, nomi, 0, { sonoHost: true, onRigioca: function () { inizia(); }, onEsci: function () { chiudi(); t.esci(); } });
+      if (ref) { ref.rimuovi(); ref = null; }
+      finale(t, ord, nomi, 0, { sonoHost: true, onRigioca: function () { inizia(); }, onEsci: function () { chiudi(); t.esci(); } });
     }
     function chiudi() { if (loop) clearInterval(loop); if (toC) clearInterval(toC); if (ref) ref.rimuovi(); if (rete) rete.chiudi(); }
 
@@ -293,8 +333,8 @@
             if (!S.ref || S.fase === "fine") build(m);
             S.fase = m.fase; disegna(S.ref, m);
           } else if (m.t === "fine") {
-            if (S.ref) { S.ref.rimuovi(); S.ref = null; } S.fase = "fine"; traguardoFX();
-            renderFine(t, m.ord, m.nomi, S.mySeat, { sonoHost: false, onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+            if (S.ref) { S.ref.rimuovi(); S.ref = null; } S.fase = "fine";
+            finale(t, m.ord, m.nomi, S.mySeat, { sonoHost: false, onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
           }
         },
         onChiuso: function () { errore(t, "Collegamento perso. L'host potrebbe aver chiuso la corsa."); },
