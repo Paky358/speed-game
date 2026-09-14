@@ -4,6 +4,13 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 14 settembre 2026 (34) — Musica dei giochi di carte molto più alta
+- La musichetta chill di Scopa, Scopa 2vs2 e Scopone si sentiva troppo bassa anche col telefono al massimo.
+- Ho alzato parecchio il volume: volume generale da 0.09 a 0.5, e note più corpose (basso, tappeto, arpeggio).
+- Aggiunto un "limitatore" (compressore) così posso spingere il volume **senza** che gracchi o distorca, e
+  reso il suono un filo più brillante (filtro passa-basso da 1900 a 2600 Hz).
+- Il tasto 🎵/🔇 resta com'era: puoi sempre spegnerla e la scelta viene ricordata.
+
 ## 14 settembre 2026 (33) — Horto Muso fino a 8 cavalli (corsie adattive) + foto-finish/replay compresi
 - `MAXN=8`; impostazioni "Quanti cavalli in gara" (2/4/6/8, default 4) valida per bot e online. Local: tu +
   (N-1) bot; online `hostHorto(t,diff,N)` con posti/seggi dinamici (1..N-1), i liberi = bot fino a N.

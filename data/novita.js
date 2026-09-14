@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 57,
+    data: "14 settembre 2026",
+    titolo: "Musica dei giochi di carte più alta 🔊",
+    descrizione: [
+      "Nella Scopa, Scopa 2vs2 e Scopone la musichetta di sottofondo era troppo bassa: ora si sente molto di più.",
+      "Ho aggiunto una protezione anti-distorsione, così è più forte ma senza gracchiare. Il tasto 🎵/🔇 resta lì per spegnerla."
+    ]
+  },
+  {
     v: 56,
     data: "14 settembre 2026",
     titolo: "Horto Muso fino a 8 cavalli 🐎",

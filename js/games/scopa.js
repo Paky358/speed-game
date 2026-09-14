@@ -37,16 +37,20 @@
     }
     function accordo(t0) {
       var c = CH[step % CH.length]; step++;
-      nota(c.b, t0, DUR, "sine", 0.15);            // basso
-      c.n.forEach(function (f) { nota(f, t0, DUR, "triangle", 0.045); });  // pad
-      for (var i = 0; i < 4; i++) { nota(c.n[i % 3] * (i === 3 ? 2 : 1), t0 + i * (DUR / 4), DUR / 4 * 0.9, "triangle", 0.05); } // arpeggio
+      nota(c.b, t0, DUR, "sine", 0.26);            // basso
+      c.n.forEach(function (f) { nota(f, t0, DUR, "triangle", 0.075); });  // pad
+      for (var i = 0; i < 4; i++) { nota(c.n[i % 3] * (i === 3 ? 2 : 1), t0 + i * (DUR / 4), DUR / 4 * 0.9, "triangle", 0.10); } // arpeggio
     }
     function loop() { if (!ctx) return; while (nextT < ctx.currentTime + 0.6) { accordo(nextT); nextT += DUR; } }
     function startAudio() {
       ctx = SG.audioCtx && SG.audioCtx(); if (!ctx || timer) return;
-      if (!master) { master = ctx.createGain(); filtro = ctx.createBiquadFilter(); filtro.type = "lowpass"; filtro.frequency.value = 1900; master.connect(filtro); filtro.connect(ctx.destination); }
+      if (!master) {
+        master = ctx.createGain(); filtro = ctx.createBiquadFilter(); filtro.type = "lowpass"; filtro.frequency.value = 2600;
+        var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -8; comp.knee.value = 6; comp.ratio.value = 12; comp.attack.value = 0.004; comp.release.value = 0.25;
+        master.connect(filtro); filtro.connect(comp); comp.connect(ctx.destination);   // limitatore: alza il volume senza distorcere
+      }
       master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(0.0001, ctx.currentTime);
-      master.gain.exponentialRampToValueAtTime(0.09, ctx.currentTime + 1.6);
+      master.gain.exponentialRampToValueAtTime(0.5, ctx.currentTime + 1.6);
       nextT = ctx.currentTime + 0.1; step = 0; loop(); timer = setInterval(loop, 250);
     }
     function stopAudio() {
