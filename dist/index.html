@@ -5945,6 +5945,15 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 55,
+    data: "14 settembre 2026",
+    titolo: "L'Asta online: cambia argomento restando insieme 🔨",
+    descrizione: [
+      "Nella sala online ora chi ha aperto la stanza sceglie l'argomento dell'asta (e può cambiarlo lì).",
+      "A fine partita, con “Nuova partita” tornate tutti nella stessa sala per fare l'asta di un altro argomento, senza rientrare col codice."
+    ]
+  },
+  {
     v: 54,
     data: "14 settembre 2026",
     titolo: "Musichetta chill nei giochi di carte 🎵",
@@ -7512,7 +7521,8 @@ window.SG_SIPERO = {
     var sceglie = st.senzaCarta.length ? st.senzaCarta[st.chooserPtr % st.senzaCarta.length] : null;
     return {
       fase: st.fase, codice: st.codice,
-      temaNome: st.tema.nome, temaIcona: st.tema.icona,
+      temaNome: st.tema.nome, temaIcona: st.tema.icona, temaId: st.tema.id,
+      temi: (window.SG_ASTA_TEMI || []).map(function (x) { return { id: x.id, nome: x.nome, icona: x.icona }; }),
       roundIdx: st.roundIdx, roundNome: r.nome, roundIcona: r.icona, totRound: TOT_ROUND,
       rounds: (st.tema.round || []).map(function (x) { return { nome: x.nome, icona: x.icona }; }),
       giocatori: st.giocatori.map(function (g) {
@@ -7685,9 +7695,23 @@ window.SG_SIPERO = {
       st.fase = "fine"; FX.fine(); bd();
     }
 
+    function scegliTema(idx) {  // l'host cambia argomento in lobby
+      if (st.iniziata) return;
+      var temi = window.SG_ASTA_TEMI || [];
+      if (temi[idx]) { st.tema = temi[idx]; bd(); }
+    }
+    function nuovaInLobby() {   // "Nuova partita": tutti tornano in lobby, stessi giocatori
+      stopTo();
+      st.iniziata = false; st.fase = "lobby"; st.roundIdx = 0; st.chooserPtr = 0;
+      st.tavolo = []; st.senzaCarta = []; st.asta = null; st.esito = null; st.classifica = null; st.voti = {}; st.scadenza = null;
+      st.giocatori.forEach(function (g) { g.crediti = st.crediti; g.kit = []; g.stelle = 0; });
+      bd();
+    }
     var cb = {
       myId: "host", sonoHost: true,
       onComincia: comincia,
+      onTema: scegliTema,
+      onNuova: nuovaInLobby,
       onScegli: function (i) { scegli("host", i); },
       onRilancia: function () { rilanciaO("host"); },
       onPassa: function () { passaO("host"); },
@@ -7945,8 +7969,18 @@ window.SG_SIPERO = {
         onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
       s._contenuto.appendChild(campo);
     }
-    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Tema" }));
-    s._contenuto.appendChild(el("p", { class: "as-msg", text: vm.temaIcona + " " + vm.temaNome }));
+    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Argomento dell'asta" }));
+    if (cb.sonoHost && vm.temi && vm.temi.length > 1) {
+      var g = el("div", { class: "cat-griglia" });
+      vm.temi.forEach(function (tm, i) {
+        g.appendChild(el("button", { class: "cat-chip" + (tm.id === vm.temaId ? " attiva" : ""), onclick: function () { cb.onTema(i); } }, [
+          el("span", { class: "ci", text: tm.icona }), el("span", { text: tm.nome }), el("span", { class: "spunta", text: "✓" })
+        ]));
+      });
+      s._contenuto.appendChild(g);
+    } else {
+      s._contenuto.appendChild(el("p", { class: "as-msg", text: vm.temaIcona + " " + vm.temaNome }));
+    }
     s._contenuto.appendChild(el("div", { class: "etichetta", text: "Chi c'è (" + vm.giocatori.length + ")" }));
     var lista = el("div");
     vm.giocatori.forEach(function (g) {
@@ -7979,7 +8013,13 @@ window.SG_SIPERO = {
       ol.appendChild(li);
     });
     s._contenuto.appendChild(ol);
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: cb.onEsci }));
+    if (cb.sonoHost) {
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita (cambia argomento)", onclick: cb.onNuova }));
+      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    } else {
+      s._piede.appendChild(el("p", { class: "as-msg", text: "In attesa dell'host per un'altra partita…" }));
+      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    }
     t.mostra(s);
   }
   SG.registra(gioco);

@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 55,
+    data: "14 settembre 2026",
+    titolo: "L'Asta online: cambia argomento restando insieme 🔨",
+    descrizione: [
+      "Nella sala online ora chi ha aperto la stanza sceglie l'argomento dell'asta (e può cambiarlo lì).",
+      "A fine partita, con “Nuova partita” tornate tutti nella stessa sala per fare l'asta di un altro argomento, senza rientrare col codice."
+    ]
+  },
+  {
     v: 54,
     data: "14 settembre 2026",
     titolo: "Musichetta chill nei giochi di carte 🎵",

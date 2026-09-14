@@ -4,6 +4,14 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 14 settembre 2026 (32) — L'Asta online: stessa lobby, cambia argomento, "Nuova partita" torna in sala
+- Nella **lobby** online l'host ora sceglie l'**argomento** (selettore temi `cat-chip`, evidenzia quello
+  attivo → `cb.onTema(i)` → `scegliTema` cambia `st.tema` e ritrasmette); l'ospite lo vede in chiaro.
+  vm arricchita con `temi` (elenco) e `temaId`.
+- A fine partita l'host ha **"🔄 Nuova partita (cambia argomento)"** (`onNuova` → `nuovaInLobby`): riporta
+  TUTTI alla lobby con gli **stessi giocatori** (crediti/kit/stelle azzerati), dove si può scegliere un nuovo
+  argomento e ricominciare. L'ospite vede "In attesa dell'host…". Entrambi hanno "🏠 Esci".
+
 ## 14 settembre 2026 (31) — Musichetta chill nei giochi di carte (Scopa, Scopa 2 vs 2, Scopone)
 - Nuovo `window.SGMusica` in `js/games/scopa.js` (condiviso): musica di sottofondo **generata** con WebAudio
   (nessun file), pad morbidi + arpeggio lento su Cmaj7·Am7·Fmaj7·G7, master a volume basso (~0.09) con
