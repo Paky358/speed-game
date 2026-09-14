@@ -8853,11 +8853,13 @@ window.SG_SIPERO = {
       // photo-finish (replay zoomato del traguardo prima della classifica)
       ".ho-ff{position:relative;height:210px;border-radius:16px;overflow:hidden;margin:8px 0 4px;",
         "background:radial-gradient(circle at 78% 50%,rgba(255,220,120,.20),rgba(255,255,255,.05));}",
-      ".ho-ff-line{position:absolute;top:0;bottom:0;right:20%;width:8px;z-index:1;opacity:.9;",
+      ".ho-ff-line{position:absolute;top:0;bottom:0;right:16%;width:8px;z-index:1;opacity:.9;",
         "background:repeating-linear-gradient(45deg,#fff 0 6px,#111 6px 12px);}",
-      ".ho-ff-row{position:absolute;display:flex;align-items:center;gap:8px;left:-45%;",
-        "transition:left 1.15s cubic-bezier(.2,.7,.3,1);z-index:2;}",
+      ".ho-ff-row{position:absolute;display:flex;align-items:center;gap:7px;left:-22%;",
+        "transition:left 1.9s cubic-bezier(.25,.6,.3,1);z-index:2;}",
       ".ho-ff-row.go{left:var(--x);}",
+      ".ho-ff-num{width:19px;height:19px;border-radius:50%;font-size:.7rem;font-weight:900;color:#111;",
+        "display:flex;align-items:center;justify-content:center;flex:0 0 auto;}",
       ".ho-ff-cav{font-size:2.1rem;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));}",
       ".ho-ff-row.win .ho-ff-cav{font-size:2.9rem;filter:drop-shadow(0 0 10px rgba(255,202,58,.95));}",
       ".ho-ff-nome{font-size:.85rem;font-weight:800;color:var(--testo);white-space:nowrap;}",
@@ -8949,28 +8951,35 @@ window.SG_SIPERO = {
   }
   // "filmatino" zoomato del traguardo: i primi arrivati scivolano oltre la linea,
   // il vincitore in evidenza; poi si passa alla classifica.
-  function fotoFinish(t, ord, nomi, io, poi) {
+  function fotoFinish(t, ord, nomi, io, foto, poi) {
     var el = t.el, fatto = false, to1 = null, to2 = null;
-    var s = t.schermata({ icona: "📸", titolo: "Foto-finish", sotto: "Chi ha vinto?" });
+    var N = foto.length, vincitore = ord[0];
+    var s = t.schermata({ icona: "📸", titolo: "Foto-finish", sotto: "Chi ha tagliato per primo" });
     var strip = el("div", { class: "ho-ff" }); strip.appendChild(el("div", { class: "ho-ff-line" }));
-    var top = ord.slice(0, Math.min(4, ord.length)), rows = [];
-    top.forEach(function (idx, p) {
-      var row = el("div", { class: "ho-ff-row" + (p === 0 ? " win" : ""), style: "top:" + (14 + p * 46) + "px;--x:" + (74 - p * 10) + "%" }, [
+    var rows = [];
+    for (var k = 0; k < N; k++) {
+      var vinc = (k === vincitore), mio = (k === io);
+      var x = 6 + Math.min(1, foto[k]) * 74;   // distanza VERA all'istante del traguardo (corsia sua)
+      var row = el("div", { class: "ho-ff-row" + (vinc ? " win" : ""), style: "top:" + (12 + k * 46) + "px;--x:" + x.toFixed(1) + "%" }, [
+        el("span", { class: "ho-ff-num", style: "background:" + COLORI[k % 4], text: String(k + 1) }),
         el("span", { class: "ho-ff-cav", text: "🐎" }),
-        el("span", { class: "ho-ff-nome" + (p === 0 ? " win" : ""), text: (p + 1) + "° " + nomi[idx] + (idx === io ? " (tu)" : "") })
+        el("span", { class: "ho-ff-nome" + (vinc ? " win" : ""), text: nomi[k] + (mio ? " (tu)" : "") })
       ]);
       strip.appendChild(row); rows.push(row);
-    });
+    }
     s._contenuto.appendChild(strip);
-    var big = el("div", { class: "ho-ff-big", text: "📸" }); s._contenuto.appendChild(big);
+    var big = el("div", { class: "ho-ff-big", text: "📸 …" }); s._contenuto.appendChild(big);
     function vai() { if (fatto) return; fatto = true; if (to1) clearTimeout(to1); if (to2) clearTimeout(to2); poi(); }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Vedi la classifica ▶", onclick: vai }));
     t.mostra(s);
-    setTimeout(function () { rows.forEach(function (r, p) { setTimeout(function () { r.classList.add("go"); }, p * 150); }); }, 60);
-    to1 = setTimeout(function () { big.textContent = "🏆 " + nomi[ord[0]] + (ord[0] === io ? " (tu)" : "") + " vince!"; big.classList.add("show"); traguardoFX(); }, 1300);
-    to2 = setTimeout(vai, 3200);
+    setTimeout(function () { rows.forEach(function (r) { r.classList.add("go"); }); }, 80);
+    to1 = setTimeout(function () { big.textContent = "🏆 " + nomi[vincitore] + (vincitore === io ? " (tu)" : "") + " vince!"; big.classList.add("show"); traguardoFX(); }, 2100);
+    to2 = setTimeout(vai, 4600);
   }
-  function finale(t, ord, nomi, io, cb) { fotoFinish(t, ord, nomi, io, function () { renderFine(t, ord, nomi, io, cb); }); }
+  function finale(t, ord, nomi, io, foto, cb) {
+    if (!foto || !foto.length) { foto = []; for (var k = 0; k < nomi.length; k++) foto[k] = (ord.indexOf(k) === 0 ? 1 : 0.9); }
+    fotoFinish(t, ord, nomi, io, foto, function () { renderFine(t, ord, nomi, io, cb); });
+  }
 
   function renderFine(t, ord, nomi, io, cb) {
     var el = t.el, mioPosto = ord.indexOf(io) + 1, vinto = mioPosto === 1;
@@ -9002,7 +9011,7 @@ window.SG_SIPERO = {
     var N = Math.min(4, 1 + Math.max(1, nRivali));
     var bp = botParam(diff), nomi = [(t.giocatori && t.giocatori[0]) || "Tu"], cav = [nuovoCav(true, "io")];
     for (var i = 1; i < N; i++) { cav.push(nuovoCav(false)); nomi.push("🤖 " + ["Furia", "Saetta", "Tornado"][i - 1]); }
-    var fase = "via", conto = 3, raf = null, toC = null, ultimo = 0, primoArr = 0, finito = false, arrivi = [];
+    var fase = "via", conto = 3, raf = null, toC = null, ultimo = 0, primoArr = 0, finito = false, arrivi = [], foto = null;
     var ref = costruisci(t, N, nomi, 0, {
       onFrusta: function () { if (fase === "corsa" && frusta(cav[0], performance.now())) frustaFX(); },
       onEsci: function () { stop(); t.esci(); }
@@ -9013,7 +9022,7 @@ window.SG_SIPERO = {
       if (!ultimo) ultimo = ts;
       var dt = Math.min(0.05, (ts - ultimo) / 1000); ultimo = ts; var now = performance.now();
       passoTutti(cav, now, dt, bp.S, bp.I, arrivi);
-      if (arrivi.length && !primoArr) primoArr = now;
+      if (arrivi.length && !primoArr) { primoArr = now; foto = cav.map(function (h) { return Math.min(1, h.pos); }); }
       disegna(ref, snap(cav, "corsa", 0, nomi));
       var tutti = cav.every(function (h) { return h.arr; });
       if (tutti || (cav[0].arr && now - primoArr > 4000)) return fine();
@@ -9022,7 +9031,7 @@ window.SG_SIPERO = {
     function fine() {
       stop();
       var ord = classificaDa(cav, arrivi);
-      finale(t, ord, nomi, 0, { locale: true, onRigioca: function () { corsa(t, nRivali, diff); }, onEsci: t.esci });
+      finale(t, ord, nomi, 0, foto, { locale: true, onRigioca: function () { corsa(t, nRivali, diff); }, onEsci: t.esci });
     }
     disegna(ref, snap(cav, "via", 3, nomi));
     toC = setInterval(function () {
@@ -9041,7 +9050,7 @@ window.SG_SIPERO = {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var bp = botParam(diff), codice = "…", pronta = false;
     var posti = { 1: null, 2: null, 3: null }, nomiU = { 1: null, 2: null, 3: null };
-    var cav = null, nomi = null, ref = null, fase = "lobby", conto = 3, loop = null, toC = null, ultimo = 0, primoArr = 0, arrivi = [], ord = null, rete = null;
+    var cav = null, nomi = null, ref = null, fase = "lobby", conto = 3, loop = null, toC = null, ultimo = 0, primoArr = 0, arrivi = [], ord = null, foto = null, rete = null;
 
     function seatDi(id) { for (var s = 1; s <= 3; s++) if (posti[s] === id) return s; return -1; }
     function postoLibero() { for (var s = 1; s <= 3; s++) if (!posti[s]) return s; return 0; }
@@ -9069,7 +9078,7 @@ window.SG_SIPERO = {
     });
 
     function inizia() {
-      fase = "via"; conto = 3; arrivi = []; primoArr = 0; ord = null;
+      fase = "via"; conto = 3; arrivi = []; primoArr = 0; ord = null; foto = null;
       nomi = [(t.giocatori && t.giocatori[0]) || "Host"]; cav = [nuovoCav(true, "host")];
       for (var s = 1; s <= 3; s++) {
         if (posti[s]) { cav.push(nuovoCav(true, posti[s])); nomi.push(nomiU[s] || ("Amico " + s)); rete.invia({ t: "seat", to: posti[s], seat: s, nomi: null }); }
@@ -9088,7 +9097,7 @@ window.SG_SIPERO = {
     function tick() {
       var now = performance.now(), dt = Math.min(0.1, (now - ultimo) / 1000); ultimo = now;
       passoTutti(cav, now, dt, bp.S, bp.I, arrivi);
-      if (arrivi.length && !primoArr) primoArr = now;
+      if (arrivi.length && !primoArr) { primoArr = now; foto = cav.map(function (h) { return Math.min(1, h.pos); }); }
       bcast();
       var tutti = cav.every(function (h) { return h.arr; });
       if (tutti || (primoArr && now - primoArr > 5000)) { clearInterval(loop); loop = null; fineCorsa(); }
@@ -9096,9 +9105,10 @@ window.SG_SIPERO = {
     function bcast() { var sn = snap(cav, fase, Math.max(0, conto), nomi); rete.inviaVeloce(sn); if (ref) disegna(ref, sn); }
     function fineCorsa() {
       fase = "fine"; ord = classificaDa(cav, arrivi);
-      rete.invia({ t: "fine", ord: ord, nomi: nomi });
+      if (!foto) foto = cav.map(function (h) { return Math.min(1, h.pos); });
+      rete.invia({ t: "fine", ord: ord, nomi: nomi, foto: foto });
       if (ref) { ref.rimuovi(); ref = null; }
-      finale(t, ord, nomi, 0, { sonoHost: true, onRigioca: function () { inizia(); }, onEsci: function () { chiudi(); t.esci(); } });
+      finale(t, ord, nomi, 0, foto, { sonoHost: true, onRigioca: function () { inizia(); }, onEsci: function () { chiudi(); t.esci(); } });
     }
     function chiudi() { if (loop) clearInterval(loop); if (toC) clearInterval(toC); if (ref) ref.rimuovi(); if (rete) rete.chiudi(); }
 
@@ -9139,7 +9149,7 @@ window.SG_SIPERO = {
             S.fase = m.fase; disegna(S.ref, m);
           } else if (m.t === "fine") {
             if (S.ref) { S.ref.rimuovi(); S.ref = null; } S.fase = "fine";
-            finale(t, m.ord, m.nomi, S.mySeat, { sonoHost: false, onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+            finale(t, m.ord, m.nomi, S.mySeat, m.foto, { sonoHost: false, onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
           }
         },
         onChiuso: function () { errore(t, "Collegamento perso. L'host potrebbe aver chiuso la corsa."); },

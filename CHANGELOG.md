@@ -4,6 +4,16 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 14 settembre 2026 (24) — Horto Muso: foto-finish per corsia (non riordina) + più lento
+- Rifatto `fotoFinish`: ora mostra i cavalli **nella loro corsia** (riga = posto: l'host resta in alto anche
+  se arriva 4°) alle **distanze reali** dell'istante in cui il primo taglia (non più righe di classifica).
+  Serve la foto delle posizioni al primo traguardo: catturata in `frame`/`tick` quando scatta `primoArr`
+  (`foto = cav.map(pos)`), passata a `finale`/`fotoFinish`; online inviata nel messaggio `{t:"fine", foto}`.
+- Più **lento e leggibile**: scorrimento corsie 1,9s, nome del vincitore a ~2,1s, avanzo automatico a ~4,6s
+  (o col tasto). Numero di corsia colorato accanto a ogni cavallo; vincitore in evidenza (glow oro).
+- Motivo: prima riordinava i cavalli in righe di classifica (confondeva: l'host "scendeva" di riga) ed era
+  troppo veloce.
+
 ## 14 settembre 2026 (23) — Horto Muso: "foto-finish" zoomato prima della classifica
 - `js/games/horto.js`: nuova `fotoFinish(t, ord, nomi, io, poi)` + wrapper `finale()` (foto-finish → `renderFine`).
   A fine gara, prima della classifica, i primi arrivati scivolano oltre la linea del traguardo (zoom, il
