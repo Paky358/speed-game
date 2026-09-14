@@ -13,6 +13,60 @@
 (function () {
   "use strict";
 
+  // ---------- musichetta chill di sottofondo (generata, niente file) ----------
+  // Condivisa da Scopa, Scopa 2 vs 2 e Scopone. Pad morbidi + arpeggio lento,
+  // volume basso; tasto 🎵/🔇 per accendere/spegnere (scelta ricordata).
+  window.SGMusica = window.SGMusica || (function () {
+    var on = true, giocando = false, ctx = null, master = null, filtro = null, timer = null, nextT = 0, step = 0;
+    try { on = (localStorage.getItem("sg-musica") !== "off"); } catch (e) {}
+    // accordi morbidi (Cmaj7 · Am7 · Fmaj7 · G7): basso + tre note del pad
+    var CH = [
+      { b: 65.41, n: [329.63, 392.00, 493.88] },
+      { b: 110.00, n: [261.63, 329.63, 392.00] },
+      { b: 87.31, n: [220.00, 261.63, 329.63] },
+      { b: 98.00, n: [246.94, 293.66, 349.23] }
+    ];
+    var DUR = 3.8;
+    function nota(freq, t0, dur, tipo, vol) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = tipo; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol, t0 + Math.min(0.9, dur * 0.35));
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + dur + 0.05);
+    }
+    function accordo(t0) {
+      var c = CH[step % CH.length]; step++;
+      nota(c.b, t0, DUR, "sine", 0.15);            // basso
+      c.n.forEach(function (f) { nota(f, t0, DUR, "triangle", 0.045); });  // pad
+      for (var i = 0; i < 4; i++) { nota(c.n[i % 3] * (i === 3 ? 2 : 1), t0 + i * (DUR / 4), DUR / 4 * 0.9, "triangle", 0.05); } // arpeggio
+    }
+    function loop() { if (!ctx) return; while (nextT < ctx.currentTime + 0.6) { accordo(nextT); nextT += DUR; } }
+    function startAudio() {
+      ctx = SG.audioCtx && SG.audioCtx(); if (!ctx || timer) return;
+      if (!master) { master = ctx.createGain(); filtro = ctx.createBiquadFilter(); filtro.type = "lowpass"; filtro.frequency.value = 1900; master.connect(filtro); filtro.connect(ctx.destination); }
+      master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(0.0001, ctx.currentTime);
+      master.gain.exponentialRampToValueAtTime(0.09, ctx.currentTime + 1.6);
+      nextT = ctx.currentTime + 0.1; step = 0; loop(); timer = setInterval(loop, 250);
+    }
+    function stopAudio() {
+      if (timer) { clearInterval(timer); timer = null; }
+      if (ctx && master) { try { master.gain.cancelScheduledValues(ctx.currentTime); var v = master.gain.value || 0.0001; master.gain.setValueAtTime(v, ctx.currentTime); master.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6); } catch (e) {} }
+    }
+    return {
+      avvia: function () { giocando = true; if (on) startAudio(); },
+      ferma: function () { giocando = false; stopAudio(); },
+      attiva: function () { return on; },
+      commuta: function () { on = !on; try { localStorage.setItem("sg-musica", on ? "on" : "off"); } catch (e) {} if (giocando) { if (on) startAudio(); else stopAudio(); } return on; },
+      // pulsante 🎵/🔇 pronto da mettere in una schermata
+      bottone: function (el) {
+        var b = el("button", { class: "sc-musica", title: "Musica di sottofondo", text: on ? "🎵" : "🔇" });
+        b.addEventListener("click", function () { b.textContent = (window.SGMusica.commuta() ? "🎵" : "🔇"); });
+        return b;
+      }
+    };
+  })();
+
   var SEMI = ["D", "C", "S", "B"];                 // Denari, Coppe, Spade, Bastoni
   var SEME_NOME = { D: "Denari", C: "Coppe", S: "Spade", B: "Bastoni" };
   var COLORE = { D: "#e0a11b", C: "#d1495b", S: "#2f6fb0", B: "#2e8b57" };
@@ -201,6 +255,9 @@
       ".sc-carta.cap{outline:3px solid #69db7c;outline-offset:2px;cursor:pointer}",
       ".sc-carta.presel{outline:3px solid #4dabf7;outline-offset:2px}",
       ".sc-dorso{border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.45);background:#b3161d;background-image:radial-gradient(circle at 3px 3px,rgba(255,235,180,.35) 1.1px,transparent 1.6px);background-size:8px 8px;border:2px solid #f2e2be;box-sizing:border-box;display:inline-block}",
+      // tasto musichetta di sottofondo
+      ".sc-musica{border:0;background:rgba(255,255,255,.10);color:inherit;border-radius:999px;width:34px;height:34px;font-size:1rem;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:0}",
+      ".sc-musica:active{transform:scale(.92)}",
       // la carta scartata si posa sul tavolo
       "@keyframes scCade{0%{transform:translateY(-130px) scale(1.08);opacity:0}60%{opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}",
       ".sc-cade{animation:scCade .34s ease-out}",
@@ -231,8 +288,10 @@
 
   function renderScopa(t, C, cb) {
     assicuraStile();
+    if (window.SGMusica) window.SGMusica.avvia();
     var el = t.el, vm = C.vm;
     var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
+    if (window.SGMusica) box.appendChild(el("div", { style: "display:flex;justify-content:flex-end;margin-bottom:2px" }, [window.SGMusica.bottone(el)]));
 
     // ---- avversario (in alto) ----
     var oppMano = el("div", { style: "display:flex;gap:3px" });
@@ -513,7 +572,7 @@
       onMossa: function (id, presa) { mossaUmano(id, presa); },
       onAvanti: function () { M.prossimoRound(); aggiorna(); seTuraBot(); },
       onNuova: function () { M = creaMotore(nomi, t.mischia); aggiorna(); seTuraBot(); },
-      onEsci: t.esci
+      onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); t.esci(); }
     });
     function aggiorna() { C.setVm(vistaDa(M.st, "A")); }
     function continua(ev) {
@@ -549,7 +608,7 @@
       onMossa: function (id, presa) { if (!M) return; var ev = M.gioca("A", id, presa); dopo(ev); },
       onAvanti: function () { if (M) { M.prossimoRound(); bcast(); } },
       onNuova: function () { M = creaMotore(nomi, t.mischia); bcast(); },
-      onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
+      onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
     });
     function lobbyVm() { return { lobby: true, codice: codice, pronta: pronta, avversario: !!avvId, sonoHost: true, io: "A", nomi: nomi }; }
     function aggiornaLobby() { if (M) return; if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, avversario: !!avvId, nomi: { A: nomi.A, B: nomi.B } }); disegnaLobby(); }
@@ -598,7 +657,7 @@
       sonoHost: false,
       onMossa: function (id, presa) { if (S.rete) S.rete.invia({ t: "gioca", carta: id, presa: presa }); },
       onAvanti: function () {}, onNuova: function () {},
-      onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); }
+      onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (S.rete) S.rete.chiudi(); t.esci(); }
     });
     schermaNome();
     function schermaNome() {
@@ -634,12 +693,12 @@
     function mostraLobby(m) {
       if (C.vm) return;
       renderLobby(t, { codice: m.codice, pronta: m.pronta, avversario: m.avversario, nomi: m.nomi, sonoHost: false, io: "B" },
-        { onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+        { onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (S.rete) S.rete.chiudi(); t.esci(); } });
     }
     function mostraAttesa() {   // placeholder finché non arriva la sala dall'host
       if (C.vm) return;
       var s = t.schermata({ icona: "🃏", titolo: "Scopa · Sala", sotto: "Stanza " + codice.toUpperCase(),
-        indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+        indietro: function () { if (window.SGMusica) window.SGMusica.ferma(); if (S.rete) S.rete.chiudi(); t.esci(); } });
       S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegato ✅ — sto entrando nella stanza…" });
       s._contenuto.appendChild(S.msg2);
       t.mostra(s);

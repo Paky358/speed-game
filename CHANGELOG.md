@@ -4,6 +4,16 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 14 settembre 2026 (31) — Musichetta chill nei giochi di carte (Scopa, Scopa 2 vs 2, Scopone)
+- Nuovo `window.SGMusica` in `js/games/scopa.js` (condiviso): musica di sottofondo **generata** con WebAudio
+  (nessun file), pad morbidi + arpeggio lento su Cmaj7·Am7·Fmaj7·G7, master a volume basso (~0.09) con
+  lowpass 1900Hz, loop con scheduler `setInterval`. `avvia`/`ferma`/`commuta`/`attiva`/`bottone`.
+- Tasto 🎵/🔇 (`.sc-musica`) in alto a destra nei tre giochi di carte; la scelta è ricordata
+  (`localStorage "sg-musica"`). Parte al tocco di "Comincia" (gesto → l'AudioContext riprende); si ferma
+  quando si esce dal gioco (aggiunto a tutti gli `onEsci`). Idempotente: `avvia` non riparte se già in play.
+- Collaudato: tasto presente in Scopa, toggle 🎵↔🔇 con preferenza salvata, zero errori (l'audio si sente sul
+  telefono al tocco reale).
+
 ## 14 settembre 2026 (30) — Lobby dell'ospite in TUTTI i giochi online (regola fissa)
 - L'ospite non resta più su "✅ Sei dentro!": ora vede la **sala con i partecipanti** come l'host, in tutti i
   giochi online. Applicato a: **Tris**, **Drop 4** (lista dei 2 giocatori nella lobby già trasmessa via vm),

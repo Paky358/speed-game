@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 54,
+    data: "14 settembre 2026",
+    titolo: "Musichetta chill nei giochi di carte 🎵",
+    descrizione: [
+      "Scopa, Scopa 2 vs 2 e Scopone ora hanno una musica di sottofondo rilassante mentre giochi.",
+      "In alto a destra c'è il tasto 🎵/🔇 per accenderla o spegnerla: la scelta viene ricordata."
+    ]
+  },
+  {
     v: 53,
     data: "14 settembre 2026",
     titolo: "Online: entri e vedi subito la sala 👥",

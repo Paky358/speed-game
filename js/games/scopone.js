@@ -187,7 +187,7 @@
       onTavolo: function (id) { tapTavolo(id); },
       onAvanti: function () { st.primo = (st.primo + 1) % 4; distribuisci(st); sel = { carta: null, presa: [] }; render(); avviaGiro(); },
       onNuova: function () { st = creaStato(variante); st.nomi = { 0: (t.giocatori[0] || "Tu"), 1: NOMI_BOT[1], 2: NOMI_BOT[2], 3: NOMI_BOT[3] }; distribuisci(st); sel = { carta: null, presa: [] }; render(); avviaGiro(); },
-      onEsci: t.esci
+      onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); t.esci(); }
     }); }
 
     function tapMano(id) {
@@ -234,7 +234,9 @@
   function disegna(t, st, sel, cb) {
     var el = t.el;
     if (st.fase === "fineround" || st.fase === "fine") { spMount = null; return fine(t, st, cb); }
+    if (window.SGMusica) window.SGMusica.avvia();
     var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
+    if (window.SGMusica) box.appendChild(el("div", { style: "display:flex;justify-content:flex-end;margin-bottom:2px" }, [window.SGMusica.bottone(el)]));
 
     // squadre / punti
     box.appendChild(el("div", { style: "text-align:center;font-size:.82rem;font-weight:700;margin-bottom:4px",

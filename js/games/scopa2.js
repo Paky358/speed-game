@@ -204,7 +204,9 @@
     C().assicuraStile();
     var el = t.el, vm = Cl.vm;
     if (vm.fase === "fineround" || vm.fase === "fine") { mont = null; return renderFine(t, vm, cb); }
+    if (window.SGMusica) window.SGMusica.avvia();
     var io = vm.io, box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
+    if (window.SGMusica) box.appendChild(el("div", { style: "display:flex;justify-content:flex-end;margin-bottom:2px" }, [window.SGMusica.bottone(el)]));
 
     // punteggio squadre + mazzo
     box.appendChild(el("div", { style: "display:flex;justify-content:space-between;align-items:center;font-size:.82rem;font-weight:700;margin-bottom:2px" }, [
@@ -341,7 +343,7 @@
       onMossa: function (id, presa) { gioco(0, id, presa); },
       onAvanti: function () { prossimaMano(st); aggiorna(); giro(); },
       onNuova: function () { st = creaStato(); st.nomi = { 0: (t.giocatori[0] || "Tu"), 1: NOMI_BOT[1], 2: NOMI_BOT[2], 3: NOMI_BOT[3] }; nuovaMano(st); aggiorna(); giro(); },
-      onEsci: t.esci
+      onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); t.esci(); }
     });
     function aggiorna() { Cl.setVm(vistaDa(st, 0)); }
     function gioco(seat, id, presa) {
@@ -381,7 +383,7 @@
       onMossa: function (id, presa) { if (st) passo(0, id, presa); },
       onAvanti: function () { if (st) { prossimaMano(st); bcast(); giro(); } },
       onNuova: function () { st = creaStato(); nomiPartenza(); nuovaMano(st); bcast(); giro(); },
-      onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
+      onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
     });
 
     // online: i bot hanno nomi NEUTRI ("🤖 Bot N") — la squadra la mostrano il colore e il 🤝,
@@ -453,7 +455,7 @@
       if (st) return;
       renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", seggi: seggiLobby() }, {
         onComincia: function () { st = creaStato(); nomiPartenza(); for (var s = 1; s <= 3; s++) botSeat[s] = !posti[s]; nuovaMano(st); bcast(); giro(); },
-        onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
+        onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
       });
     }
     disegnaLobby();
@@ -465,7 +467,7 @@
     var Cl = creaClient(t, {
       sonoHost: false,
       onMossa: function (id, presa) { if (S.rete) S.rete.invia({ t: "gioca", carta: id, presa: presa }); },
-      onAvanti: function () {}, onNuova: function () {}, onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); }
+      onAvanti: function () {}, onNuova: function () {}, onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (S.rete) S.rete.chiudi(); t.esci(); }
     });
     schermaNome();
     function schermaNome() {
@@ -501,12 +503,12 @@
     function mostraLobby(m) {
       if (Cl.vm) return;
       renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi },
-        { onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+        { onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (S.rete) S.rete.chiudi(); t.esci(); } });
     }
     function mostraAttesa() {   // placeholder finché non arriva la sala dall'host
       if (Cl.vm) return;
       var s = t.schermata({ icona: "🃏", titolo: "Scopa 2 vs 2 · Sala", sotto: "Stanza " + codice.toUpperCase(),
-        indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+        indietro: function () { if (window.SGMusica) window.SGMusica.ferma(); if (S.rete) S.rete.chiudi(); t.esci(); } });
       S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegato ✅ — sto entrando nella stanza…" });
       s._contenuto.appendChild(S.msg2); t.mostra(s);
     }
