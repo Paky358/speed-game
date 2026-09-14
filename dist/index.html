@@ -8851,19 +8851,21 @@ window.SG_SIPERO = {
       ".ho-frusta.sfin{background:linear-gradient(135deg,#ff8787,#c92a2a);color:#fff;}",
       ".ho-info{text-align:center;font-weight:800;min-height:1.4em;margin:2px 0 8px;}",
       // photo-finish (replay zoomato del traguardo prima della classifica)
-      ".ho-ff{position:relative;height:210px;border-radius:16px;overflow:hidden;margin:8px 0 4px;",
-        "background:radial-gradient(circle at 78% 50%,rgba(255,220,120,.20),rgba(255,255,255,.05));}",
-      ".ho-ff-line{position:absolute;top:0;bottom:0;right:16%;width:8px;z-index:1;opacity:.9;",
+      ".ho-ff{position:relative;height:236px;border-radius:16px;overflow:hidden;margin:8px 0 4px;",
+        "background:radial-gradient(circle at 88% 50%,rgba(255,220,120,.22),rgba(255,255,255,.05));}",
+      ".ho-ff-line{position:absolute;top:0;bottom:0;right:6%;width:9px;z-index:1;opacity:.95;",
         "background:repeating-linear-gradient(45deg,#fff 0 6px,#111 6px 12px);}",
-      ".ho-ff-row{position:absolute;display:flex;align-items:center;gap:7px;left:-22%;",
-        "transition:left 1.9s cubic-bezier(.25,.6,.3,1);z-index:2;}",
+      ".ho-ff-row{position:absolute;display:flex;align-items:center;gap:7px;left:-24%;",
+        "transition:left 2.1s cubic-bezier(.3,.55,.35,1);z-index:2;}",
       ".ho-ff-row.go{left:var(--x);}",
-      ".ho-ff-num{width:19px;height:19px;border-radius:50%;font-size:.7rem;font-weight:900;color:#111;",
+      ".ho-ff-num{width:20px;height:20px;border-radius:50%;font-size:.72rem;font-weight:900;color:#111;",
         "display:flex;align-items:center;justify-content:center;flex:0 0 auto;}",
-      ".ho-ff-cav{font-size:2.1rem;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));}",
-      ".ho-ff-row.win .ho-ff-cav{font-size:2.9rem;filter:drop-shadow(0 0 10px rgba(255,202,58,.95));}",
-      ".ho-ff-nome{font-size:.85rem;font-weight:800;color:var(--testo);white-space:nowrap;}",
-      ".ho-ff-row.win .ho-ff-nome{color:var(--accento);font-size:1.05rem;}",
+      ".ho-ff-cav{font-size:2.7rem;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));}",
+      ".ho-ff-row.win .ho-ff-cav{filter:drop-shadow(0 0 13px rgba(255,202,58,1));}",
+      ".ho-ff-nome{font-size:.88rem;font-weight:800;color:var(--testo);white-space:nowrap;}",
+      ".ho-ff-row.win .ho-ff-nome{color:var(--accento);}",
+      ".ho-ff-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:6;transition:opacity .55s ease-out;}",
+      ".ho-ff-flash.on{opacity:.92;transition:opacity .05s;}",
       ".ho-ff-big{text-align:center;font-size:1.5rem;font-weight:900;min-height:1.6em;margin-top:4px;",
         "opacity:0;transform:scale(.8);transition:opacity .3s,transform .3s;}",
       ".ho-ff-big.show{opacity:1;transform:scale(1);color:var(--accento);}"
@@ -8882,6 +8884,21 @@ window.SG_SIPERO = {
     try { [523, 659, 784, 1046].forEach(function (f, i) { var t = c.currentTime + i * 0.1, o = c.createOscillator(), g = c.createGain();
       o.type = "triangle"; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
       o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.2); }); } catch (e) {} }
+  function scattoFoto() {   // "clack" dell'otturatore (due click ravvicinati)
+    try { if (navigator.vibrate) navigator.vibrate(35); } catch (e) {}
+    var c = SG.audioCtx && SG.audioCtx(); if (!c) return;
+    try {
+      function click(at, dur, vol) {
+        var n = Math.floor(c.sampleRate * dur), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
+        for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+        var src = c.createBufferSource(); src.buffer = b;
+        var hp = c.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 1900;
+        var g = c.createGain(); g.gain.value = vol;
+        src.connect(hp); hp.connect(g); g.connect(c.destination); src.start(at); src.stop(at + dur + 0.01);
+      }
+      var t = c.currentTime; click(t, 0.035, 0.55); click(t + 0.075, 0.05, 0.4);
+    } catch (e) {}
+  }
 
   // ---------- fisica pura ----------
   function nuovoCav(umano, id) { return { pos: 0, stam: STAM_MAX, boostU: 0, sfin: false, sfinU: 0, umano: !!umano, id: id || null, nextClick: 0, arr: false }; }
@@ -8952,15 +8969,18 @@ window.SG_SIPERO = {
   // "filmatino" zoomato del traguardo: i primi arrivati scivolano oltre la linea,
   // il vincitore in evidenza; poi si passa alla classifica.
   function fotoFinish(t, ord, nomi, io, foto, poi) {
-    var el = t.el, fatto = false, to1 = null, to2 = null;
+    var el = t.el, fatto = false, tos = [];
     var N = foto.length, vincitore = ord[0];
     var s = t.schermata({ icona: "📸", titolo: "Foto-finish", sotto: "Chi ha tagliato per primo" });
-    var strip = el("div", { class: "ho-ff" }); strip.appendChild(el("div", { class: "ho-ff-line" }));
+    var strip = el("div", { class: "ho-ff" });
+    strip.appendChild(el("div", { class: "ho-ff-line" }));
+    var flash = el("div", { class: "ho-ff-flash" }); strip.appendChild(flash);
     var rows = [];
     for (var k = 0; k < N; k++) {
       var vinc = (k === vincitore), mio = (k === io);
-      var x = 6 + Math.min(1, foto[k]) * 74;   // distanza VERA all'istante del traguardo (corsia sua)
-      var row = el("div", { class: "ho-ff-row" + (vinc ? " win" : ""), style: "top:" + (12 + k * 46) + "px;--x:" + x.toFixed(1) + "%" }, [
+      // ZOOM sul traguardo: si vede solo l'ultimo tratto; il vincitore va sulla linea, gli altri al distacco reale
+      var x = Math.max(4, 90 - (1 - Math.min(1, foto[k])) * 270);
+      var row = el("div", { class: "ho-ff-row" + (vinc ? " win" : ""), style: "top:" + (12 + k * 52) + "px;--x:" + x.toFixed(1) + "%" }, [
         el("span", { class: "ho-ff-num", style: "background:" + COLORI[k % 4], text: String(k + 1) }),
         el("span", { class: "ho-ff-cav", text: "🐎" }),
         el("span", { class: "ho-ff-nome" + (vinc ? " win" : ""), text: nomi[k] + (mio ? " (tu)" : "") })
@@ -8968,13 +8988,18 @@ window.SG_SIPERO = {
       strip.appendChild(row); rows.push(row);
     }
     s._contenuto.appendChild(strip);
-    var big = el("div", { class: "ho-ff-big", text: "📸 …" }); s._contenuto.appendChild(big);
-    function vai() { if (fatto) return; fatto = true; if (to1) clearTimeout(to1); if (to2) clearTimeout(to2); poi(); }
+    var big = el("div", { class: "ho-ff-big" }); s._contenuto.appendChild(big);
+    function vai() { if (fatto) return; fatto = true; tos.forEach(clearTimeout); poi(); }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Vedi la classifica ▶", onclick: vai }));
     t.mostra(s);
-    setTimeout(function () { rows.forEach(function (r) { r.classList.add("go"); }); }, 80);
-    to1 = setTimeout(function () { big.textContent = "🏆 " + nomi[vincitore] + (vincitore === io ? " (tu)" : "") + " vince!"; big.classList.add("show"); traguardoFX(); }, 2100);
-    to2 = setTimeout(vai, 4600);
+    // 1) i cavalli percorrono l'ultimo tratto (lento)
+    tos.push(setTimeout(function () { rows.forEach(function (r) { r.classList.add("go"); }); }, 90));
+    // 2) il primo taglia -> SCATTO + flash; l'immagine resta ferma
+    tos.push(setTimeout(function () { scattoFoto(); flash.classList.add("on"); big.textContent = "📸 clic!"; big.classList.add("show"); setTimeout(function () { flash.classList.remove("on"); }, 70); }, 2250));
+    // 3) fermo immagine per un attimo, poi si capisce chi ha vinto
+    tos.push(setTimeout(function () { big.textContent = "🏆 " + nomi[vincitore] + (vincitore === io ? " (tu)" : "") + " vince!"; traguardoFX(); }, 3800));
+    // 4) alla classifica (o col tasto)
+    tos.push(setTimeout(vai, 6600));
   }
   function finale(t, ord, nomi, io, foto, cb) {
     if (!foto || !foto.length) { foto = []; for (var k = 0; k < nomi.length; k++) foto[k] = (ord.indexOf(k) === 0 ? 1 : 0.9); }

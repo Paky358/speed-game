@@ -4,6 +4,13 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 14 settembre 2026 (25) — Horto Muso: foto-finish più utile (zoom, scatto, flash, fermo immagine)
+- Photo-finish rivisto su richiesta: **più lento** (ultimo tratto in 2,1s; scatto ~2,25s; nome vincitore ~3,8s;
+  classifica ~6,6s o col tasto), **zoom maggiore** sul traguardo (mappa solo l'ultimo ~32% di pista, cavalli
+  più grandi), cavallo del vincitore **NON ingrandito** (solo bagliore oro). Al taglio: **suono di scatto**
+  dell'otturatore (`scattoFoto`, due click filtrati) + **flash** bianco (`.ho-ff-flash`) e l'immagine resta
+  **ferma** un attimo così si legge chi ha vinto. Corsie sempre nell'ordine reale (l'host resta in alto).
+
 ## 14 settembre 2026 (24) — Horto Muso: foto-finish per corsia (non riordina) + più lento
 - Rifatto `fotoFinish`: ora mostra i cavalli **nella loro corsia** (riga = posto: l'host resta in alto anche
   se arriva 4°) alle **distanze reali** dell'istante in cui il primo taglia (non più righe di classifica).
