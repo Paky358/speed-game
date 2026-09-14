@@ -34,7 +34,7 @@
         "white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%;}",
       ".ho-cav{position:absolute;bottom:4px;left:1%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;",
         "transition:left .09s linear;will-change:left;}",
-      ".ho-cav .em{font-size:1.7rem;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5));}",
+      ".ho-cav .em{font-size:1.7rem;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5));transform:scaleX(-1);}",
       ".ho-cav.sfin .em{opacity:.5;}",
       ".ho-stam{width:46px;height:7px;border-radius:4px;background:rgba(0,0,0,.45);overflow:hidden;border:1px solid rgba(255,255,255,.25);}",
       ".ho-stam .fill{height:100%;width:100%;border-radius:4px;transition:width .1s linear;}",
@@ -47,19 +47,19 @@
       ".ho-info{text-align:center;font-weight:800;min-height:1.4em;margin:2px 0 8px;}",
       // photo-finish (replay zoomato del traguardo prima della classifica)
       ".ho-ff{position:relative;height:236px;border-radius:16px;overflow:hidden;margin:8px 0 4px;",
-        "background:radial-gradient(circle at 88% 50%,rgba(255,220,120,.22),rgba(255,255,255,.05));}",
-      ".ho-ff-line{position:absolute;top:0;bottom:0;right:6%;width:9px;z-index:1;opacity:.95;",
+        "background:radial-gradient(circle at 86% 50%,rgba(255,220,120,.22),rgba(255,255,255,.05));}",
+      ".ho-ff-line{position:absolute;top:0;bottom:0;left:86%;width:9px;z-index:1;opacity:.95;",
         "background:repeating-linear-gradient(45deg,#fff 0 6px,#111 6px 12px);}",
-      ".ho-ff-row{position:absolute;display:flex;align-items:center;gap:7px;left:-24%;",
-        "transition:left 2.6s cubic-bezier(.3,.55,.35,1);z-index:2;}",
-      ".ho-ff-row.win{transition-duration:1.8s;z-index:3;}",   // il vincitore tocca la linea PRIMA
-      ".ho-ff-row.go{left:var(--x);}",
+      ".ho-ff-lane{position:absolute;left:0;right:0;height:46px;}",
+      ".ho-ff-label{position:absolute;left:6px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:6px;z-index:2;max-width:52%;}",
       ".ho-ff-num{width:20px;height:20px;border-radius:50%;font-size:.72rem;font-weight:900;color:#111;",
         "display:flex;align-items:center;justify-content:center;flex:0 0 auto;}",
-      ".ho-ff-cav{font-size:2.7rem;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));}",
-      ".ho-ff-row.win .ho-ff-cav{filter:drop-shadow(0 0 13px rgba(255,202,58,1));}",
-      ".ho-ff-nome{font-size:.88rem;font-weight:800;color:var(--testo);white-space:nowrap;}",
-      ".ho-ff-row.win .ho-ff-nome{color:var(--accento);}",
+      ".ho-ff-nome{font-size:.86rem;font-weight:800;color:var(--testo);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
+      ".ho-ff-lane.win .ho-ff-nome{color:var(--accento);}",
+      ".ho-ff-cav{position:absolute;top:50%;left:-15%;transform:translate(-50%,-50%) scaleX(-1);z-index:3;",
+        "font-size:2.7rem;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));",
+        "transition:left 2.6s cubic-bezier(.3,.55,.35,1);will-change:left;}",
+      ".ho-ff-lane.win .ho-ff-cav{transition-duration:1.8s;filter:drop-shadow(0 0 13px rgba(255,202,58,1));}",
       ".ho-ff-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:6;transition:opacity .55s ease-out;}",
       ".ho-ff-flash.on{opacity:.92;transition:opacity .05s;}",
       ".ho-ff-big{text-align:center;font-size:1.5rem;font-weight:900;min-height:1.6em;margin-top:4px;",
@@ -165,43 +165,57 @@
   // "filmatino" zoomato del traguardo: i primi arrivati scivolano oltre la linea,
   // il vincitore in evidenza; poi si passa alla classifica.
   function fotoFinish(t, ord, nomi, io, foto, poi) {
-    var el = t.el, fatto = false, tos = [];
+    var el = t.el, fatto = false, scattato = false, tos = [], rafId = 0;
     var N = foto.length, vincitore = ord[0];
     var s = t.schermata({ icona: "📸", titolo: "Foto-finish", sotto: "Chi ha tagliato per primo" });
     var strip = el("div", { class: "ho-ff" });
-    strip.appendChild(el("div", { class: "ho-ff-line" }));
+    var lineEl = el("div", { class: "ho-ff-line" }); strip.appendChild(lineEl);
     var flash = el("div", { class: "ho-ff-flash" }); strip.appendChild(flash);
-    var rows = [];
+    var cavs = [], targetX = [];
     for (var k = 0; k < N; k++) {
       var vinc = (k === vincitore), mio = (k === io);
-      // ZOOM sul traguardo: si vede solo l'ultimo tratto; il vincitore va sulla linea, gli altri al distacco reale
-      var x = Math.max(4, 90 - (1 - Math.min(1, foto[k])) * 270);
-      var row = el("div", { class: "ho-ff-row" + (vinc ? " win" : ""), style: "top:" + (12 + k * 52) + "px;--x:" + x.toFixed(1) + "%" }, [
-        el("span", { class: "ho-ff-num", style: "background:" + COLORI[k % 4], text: String(k + 1) }),
-        el("span", { class: "ho-ff-cav", text: "🐎" }),
-        el("span", { class: "ho-ff-nome" + (vinc ? " win" : ""), text: nomi[k] + (mio ? " (tu)" : "") })
+      // ZOOM sul traguardo: il vincitore finisce col centro sulla linea (86%), gli altri al distacco reale
+      targetX[k] = Math.max(6, 86 - (1 - Math.min(1, foto[k])) * 300);
+      var lane = el("div", { class: "ho-ff-lane" + (vinc ? " win" : ""), style: "top:" + (10 + k * 54) + "px" }, [
+        el("div", { class: "ho-ff-label" }, [
+          el("span", { class: "ho-ff-num", style: "background:" + COLORI[k % 4], text: String(k + 1) }),
+          el("span", { class: "ho-ff-nome", text: nomi[k] + (mio ? " (tu)" : "") })
+        ])
       ]);
-      strip.appendChild(row); rows.push(row);
+      var cav = el("span", { class: "ho-ff-cav", text: "🐎" });
+      lane.appendChild(cav); strip.appendChild(lane); cavs.push(cav);
     }
     s._contenuto.appendChild(strip);
     var big = el("div", { class: "ho-ff-big" }); s._contenuto.appendChild(big);
-    function vai() { if (fatto) return; fatto = true; tos.forEach(clearTimeout); poi(); }
+    function vai() { if (fatto) return; fatto = true; if (rafId) cancelAnimationFrame(rafId); tos.forEach(clearTimeout); poi(); }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Vedi la classifica ▶", onclick: vai }));
     t.mostra(s);
-    var scattato = false;
-    function scatta() {
-      if (scattato || fatto) return; scattato = true;
-      scattoFoto(); flash.classList.add("on"); big.textContent = "📸 clic!"; big.classList.add("show");
-      setTimeout(function () { flash.classList.remove("on"); }, 70);
-      // fermo immagine un attimo, poi si legge chi ha vinto, poi la classifica
-      tos.push(setTimeout(function () { big.textContent = "🏆 " + nomi[vincitore] + (vincitore === io ? " (tu)" : "") + " vince!"; traguardoFX(); }, 1500));
-      tos.push(setTimeout(vai, 4300));
+    var winCav = cavs[vincitore];
+    // parte la corsa dell'ultimo tratto (transizione CSS: vincitore 1,8s, altri 2,6s)
+    tos.push(setTimeout(function () { for (var k = 0; k < N; k++) cavs[k].style.left = targetX[k] + "%"; controlla(); }, 90));
+    // sicurezza: se rAF non gira (pannello nascosto), scatta a tempo
+    tos.push(setTimeout(function () { if (!scattato) congela(); }, 2600));
+
+    function controlla() {                 // rileva il tocco REALE: anche 1px del cavallo oltre la linea
+      if (scattato || fatto) return;
+      var lr = lineEl.getBoundingClientRect(), hr = winCav.getBoundingClientRect();
+      if (hr.width && hr.right >= lr.left + 1) { congela(); return; }
+      rafId = requestAnimationFrame(controlla);
     }
-    // lo SCATTO parte quando il cavallo vincente tocca la linea (fine della SUA corsa, prima degli altri)
-    var winRow = rows[vincitore];
-    if (winRow) winRow.addEventListener("transitionend", function (e) { if (e.propertyName === "left") scatta(); });
-    tos.push(setTimeout(function () { rows.forEach(function (r) { r.classList.add("go"); }); }, 90));
-    tos.push(setTimeout(scatta, 2200)); // sicurezza se il transitionend non arriva
+    function congela() {                    // FERMA l'immagine dove sono, poi la foto
+      if (scattato || fatto) return; scattato = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      cavs.forEach(function (c) { var L = getComputedStyle(c).left; c.style.transition = "none"; c.style.left = L; });
+      void strip.offsetWidth;
+      scattoFoto(); flash.classList.add("on"); big.textContent = "📸"; big.classList.add("show");
+      setTimeout(function () { flash.classList.remove("on"); }, 70);
+      tos.push(setTimeout(riprendi, 1500)); // fermo immagine ~1,5s
+    }
+    function riprendi() {                   // finisce il replay: tutti alla posizione finale
+      cavs.forEach(function (c, k) { c.style.transition = "left 1s ease-out"; c.style.left = targetX[k] + "%"; });
+      tos.push(setTimeout(function () { big.textContent = "🏆 " + nomi[vincitore] + (vincitore === io ? " (tu)" : "") + " vince!"; traguardoFX(); }, 900));
+      tos.push(setTimeout(vai, 2800));
+    }
   }
   function finale(t, ord, nomi, io, foto, cb) {
     if (!foto || !foto.length) { foto = []; for (var k = 0; k < nomi.length; k++) foto[k] = (ord.indexOf(k) === 0 ? 1 : 0.9); }

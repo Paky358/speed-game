@@ -4,6 +4,16 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 14 settembre 2026 (27) — Horto Muso: cavallo specchiato + scatto al tocco reale (ferma-foto-riprendi)
+- **Cavallo specchiato** (`transform:scaleX(-1)`) in gara (`.ho-cav .em`) e nel foto-finish (`.ho-ff-cav`):
+  ora guarda verso destra, nel senso di corsa.
+- Foto-finish rifatto per il **tocco reale**: ogni cavallo è un elemento a sé (label di corsia fissa a
+  sinistra, cavallo assoluto che scorre). Un loop `requestAnimationFrame` confronta le coordinate vere
+  (`getBoundingClientRect`) del cavallo vincente e della linea: appena il cavallo la tocca (anche 1px) →
+  **congela** tutti i cavalli dove sono, **scatto** + flash, **fermo immagine** ~1,5s, poi **riprende** e
+  finisce il replay (tutti alla posizione finale), quindi la classifica. Fallback a tempo se rAF non gira.
+- Da calibrare a vista sul telefono: posizione esatta della linea (ora a 86%) e punto di riposo del vincitore.
+
 ## 14 settembre 2026 (26) — Horto Muso: lo scatto parte quando il vincitore tocca la linea (non alla fine)
 - Il cavallo vincente ha una corsa **più corta** (`.ho-ff-row.win` transition 1,8s vs 2,6s degli altri): tocca
   la linea **prima**. Lo **scatto** (+flash) parte sul suo `transitionend` del `left` — cioè nell'istante esatto
