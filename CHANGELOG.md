@@ -4,6 +4,12 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 14 settembre 2026 (26) — Horto Muso: lo scatto parte quando il vincitore tocca la linea (non alla fine)
+- Il cavallo vincente ha una corsa **più corta** (`.ho-ff-row.win` transition 1,8s vs 2,6s degli altri): tocca
+  la linea **prima**. Lo **scatto** (+flash) parte sul suo `transitionend` del `left` — cioè nell'istante esatto
+  in cui tocca il traguardo — mentre gli altri stanno ancora arrivando; fallback a tempo se l'evento non arriva.
+  Dopo lo scatto: fermo immagine ~1,5s, poi "🏆 … vince!", poi la classifica.
+
 ## 14 settembre 2026 (25) — Horto Muso: foto-finish più utile (zoom, scatto, flash, fermo immagine)
 - Photo-finish rivisto su richiesta: **più lento** (ultimo tratto in 2,1s; scatto ~2,25s; nome vincitore ~3,8s;
   classifica ~6,6s o col tasto), **zoom maggiore** sul traguardo (mappa solo l'ultimo ~32% di pista, cavalli

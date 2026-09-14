@@ -51,7 +51,8 @@
       ".ho-ff-line{position:absolute;top:0;bottom:0;right:6%;width:9px;z-index:1;opacity:.95;",
         "background:repeating-linear-gradient(45deg,#fff 0 6px,#111 6px 12px);}",
       ".ho-ff-row{position:absolute;display:flex;align-items:center;gap:7px;left:-24%;",
-        "transition:left 2.1s cubic-bezier(.3,.55,.35,1);z-index:2;}",
+        "transition:left 2.6s cubic-bezier(.3,.55,.35,1);z-index:2;}",
+      ".ho-ff-row.win{transition-duration:1.8s;z-index:3;}",   // il vincitore tocca la linea PRIMA
       ".ho-ff-row.go{left:var(--x);}",
       ".ho-ff-num{width:20px;height:20px;border-radius:50%;font-size:.72rem;font-weight:900;color:#111;",
         "display:flex;align-items:center;justify-content:center;flex:0 0 auto;}",
@@ -187,14 +188,20 @@
     function vai() { if (fatto) return; fatto = true; tos.forEach(clearTimeout); poi(); }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Vedi la classifica ▶", onclick: vai }));
     t.mostra(s);
-    // 1) i cavalli percorrono l'ultimo tratto (lento)
+    var scattato = false;
+    function scatta() {
+      if (scattato || fatto) return; scattato = true;
+      scattoFoto(); flash.classList.add("on"); big.textContent = "📸 clic!"; big.classList.add("show");
+      setTimeout(function () { flash.classList.remove("on"); }, 70);
+      // fermo immagine un attimo, poi si legge chi ha vinto, poi la classifica
+      tos.push(setTimeout(function () { big.textContent = "🏆 " + nomi[vincitore] + (vincitore === io ? " (tu)" : "") + " vince!"; traguardoFX(); }, 1500));
+      tos.push(setTimeout(vai, 4300));
+    }
+    // lo SCATTO parte quando il cavallo vincente tocca la linea (fine della SUA corsa, prima degli altri)
+    var winRow = rows[vincitore];
+    if (winRow) winRow.addEventListener("transitionend", function (e) { if (e.propertyName === "left") scatta(); });
     tos.push(setTimeout(function () { rows.forEach(function (r) { r.classList.add("go"); }); }, 90));
-    // 2) il primo taglia -> SCATTO + flash; l'immagine resta ferma
-    tos.push(setTimeout(function () { scattoFoto(); flash.classList.add("on"); big.textContent = "📸 clic!"; big.classList.add("show"); setTimeout(function () { flash.classList.remove("on"); }, 70); }, 2250));
-    // 3) fermo immagine per un attimo, poi si capisce chi ha vinto
-    tos.push(setTimeout(function () { big.textContent = "🏆 " + nomi[vincitore] + (vincitore === io ? " (tu)" : "") + " vince!"; traguardoFX(); }, 3800));
-    // 4) alla classifica (o col tasto)
-    tos.push(setTimeout(vai, 6600));
+    tos.push(setTimeout(scatta, 2200)); // sicurezza se il transitionend non arriva
   }
   function finale(t, ord, nomi, io, foto, cb) {
     if (!foto || !foto.length) { foto = []; for (var k = 0; k < nomi.length; k++) foto[k] = (ord.indexOf(k) === 0 ? 1 : 0.9); }
