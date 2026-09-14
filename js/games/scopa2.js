@@ -417,36 +417,41 @@
     }
 
     rete = SGNet.ospita("scopa2v2", {
-      onCodice: function (c) { codice = c; if (!st) disegnaLobby(); },
-      onConnesso: function () { pronta = true; if (!st) disegnaLobby(); },
+      onCodice: function (c) { codice = c; if (!st) aggiornaLobby(); },
+      onConnesso: function () { pronta = true; if (!st) aggiornaLobby(); },
       onAddio: function (id) {
         var s = seatDi(id);
         if (s > 0) {
           posti[s] = null;
           if (st) { botSeat[s] = true; st.nomi[s] = botNome(s); bcast(); giro(); }   // il suo posto passa al bot
-          else { nomiUmani[s] = null; disegnaLobby(); }
+          else { nomiUmani[s] = null; aggiornaLobby(); }
         }
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
           if (seatDi(id) < 0 && !st) { var s = postoLibero(); if (s > 0) { posti[s] = id; nomiUmani[s] = String(m.nome || "Amico").slice(0, 16); } }
-          disegnaLobby();
-          if (rete) rete.invia({ t: "lobby", to: id, codice: codice });
+          aggiornaLobby();   // trasmette la sala aggiornata a tutti gli ospiti
         } else if (m.t === "gioca" && st) { var sm = seatDi(id); if (sm > 0) passo(sm, m.carta, m.presa); }
       },
       onErrore: function () { senzaRete(t); }
     });
 
     function quanti() { var n = 0; for (var s = 1; s <= 3; s++) if (posti[s]) n++; return n; }
+    function seggiLobby() {
+      return [{ nome: (t.giocatori && t.giocatori[0]) || "Host", id: "host" },
+        posti[1] ? { nome: nomiUmani[1], id: posti[1] } : null,
+        posti[2] ? { nome: nomiUmani[2], id: posti[2] } : null,
+        posti[3] ? { nome: nomiUmani[3], id: posti[3] } : null];
+    }
+    function aggiornaLobby() {
+      if (st) return;
+      if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, seggi: seggiLobby() });
+      disegnaLobby();
+    }
     function disegnaLobby() {
       if (st) return;
-      renderLobbyHost(t, {
-        codice: codice, pronta: pronta,
-        seggi: [ { nome: (t.giocatori && t.giocatori[0]) || "Host", tu: true, team: 0 },
-          { nome: nomiUmani[1], team: 1 }, { nome: nomiUmani[2], team: 0 }, { nome: nomiUmani[3], team: 1 } ],
-        umani: quanti()
-      }, {
+      renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", seggi: seggiLobby() }, {
         onComincia: function () { st = creaStato(); nomiPartenza(); for (var s = 1; s <= 3; s++) botSeat[s] = !posti[s]; nuovaMano(st); bcast(); giro(); },
         onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
       });
@@ -456,7 +461,7 @@
 
   function ospiteScopa2(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var el = t.el, S = { rete: null, nome: "", msg: null, msg2: null };
+    var el = t.el, S = { rete: null, myId: null, nome: "", msg: null, msg2: null };
     var Cl = creaClient(t, {
       sonoHost: false,
       onMossa: function (id, presa) { if (S.rete) S.rete.invia({ t: "gioca", carta: id, presa: presa }); },
@@ -476,12 +481,12 @@
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.rete.invia({ t: "join", nome: S.nome }); mostraAttesa();
+        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome }); mostraAttesa();
           setTimeout(function () { if (!Cl.vm && S.msg2) S.msg2.textContent = "Non trovo la partita: controlla il codice o attendi l'host…"; }, 8000); },
         onMsg: function (m) {
           if (!m) return;
           if (m.t === "vm") { suonoSeNuovaPresa(m.vm); Cl.setVm(m.vm); }
-          else if (m.t === "lobby") { if (!Cl.vm) mostraAttesa(); }
+          else if (m.t === "lobby") { if (!Cl.vm) mostraLobby(m); }
         },
         onChiuso: function () { erroreScopa2(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
         onErrore: function () { erroreScopa2(t, "Problema di collegamento. Riprova."); }
@@ -493,45 +498,57 @@
       if (id && id !== lastPresa) suonoPresa(vm.presa.scopa);
       lastPresa = id;
     }
-    function mostraAttesa() {
+    function mostraLobby(m) {
+      if (Cl.vm) return;
+      renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi },
+        { onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+    }
+    function mostraAttesa() {   // placeholder finché non arriva la sala dall'host
       if (Cl.vm) return;
       var s = t.schermata({ icona: "🃏", titolo: "Scopa 2 vs 2 · Sala", sotto: "Stanza " + codice.toUpperCase(),
         indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
-      S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "✅ Sei dentro! In attesa che l'host cominci…" });
+      S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegato ✅ — sto entrando nella stanza…" });
       s._contenuto.appendChild(S.msg2); t.mostra(s);
     }
   }
 
-  function renderLobbyHost(t, vm, cb) {
+  // sala uguale per host e ospite: mostra le due squadre (relative a chi guarda) con i bot; controlli solo all'host
+  function renderLobby(t, vm, cb) {
     var el = t.el;
-    var s = t.schermata({ icona: "🃏", titolo: "Scopa 2 vs 2 · Lobby", sotto: "Ognuno dal suo telefono",
+    var s = t.schermata({ icona: "🃏", titolo: "Scopa 2 vs 2 · Sala", sotto: "Ognuno dal suo telefono",
       indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
-    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-    s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
-    if (vm.codice && vm.codice !== "…") {
-      var link = SG.creaLink({ gioco: "scopa2v2", stanza: vm.codice });
-      var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-      s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-        onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-      s._contenuto.appendChild(campo);
+    var seggi = vm.seggi || [];
+    var mioSeat = 0; for (var k = 0; k < seggi.length; k++) if (seggi[k] && seggi[k].id === vm.myId) mioSeat = k;
+    if (vm.sonoHost) {
+      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
+      s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
+      if (vm.codice && vm.codice !== "…") {
+        var link = SG.creaLink({ gioco: "scopa2v2", stanza: vm.codice });
+        var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
+        s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
+          onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
+        s._contenuto.appendChild(campo);
+      }
+      s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
+        text: vm.pronta ? "🟢 Stanza pronta — manda il codice" : "🟡 Sto aprendo la stanza…" }));
+    } else {
+      s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:#69db7c;margin-bottom:2px", text: "✅ Sei nella stanza " + (vm.codice || "").toUpperCase() }));
     }
-    s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
-      text: vm.pronta ? "🟢 Stanza pronta — manda il codice" : "🟡 Sto aprendo la stanza…" }));
-    // due squadre: posti 0,2 = Noi (verde) ; 1,3 = Loro (rosso)
     s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Le squadre (i posti vuoti li giocano i bot)" }));
-    function seggio(idx) {
-      var g = vm.seggi[idx], mia = (idx % 2 === 0);
-      var chi = g.tu ? (g.nome + " (tu)") : (g.nome ? g.nome : "🤖 bot");
-      return el("div", { style: "display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:10px;margin-bottom:5px;background:rgba(255,255,255,.06);border-left:4px solid " + (mia ? "#69db7c" : "#ff8787") }, [
+    [0, 1, 2, 3].forEach(function (idx) {
+      var g = seggi[idx], mia = (idx % 2 === mioSeat % 2), mio = g && g.id === vm.myId;
+      var chi = g ? (g.nome + (mio ? " (tu)" : "")) : "🤖 bot";
+      s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:10px;margin-bottom:5px;background:" + (mio ? "rgba(255,202,58,.16)" : "rgba(255,255,255,.06)") + ";border-left:4px solid " + (mia ? "#69db7c" : "#ff8787") }, [
         el("span", { style: "font-size:.7rem;font-weight:700;color:" + (mia ? "#69db7c" : "#ff8787"), text: mia ? "NOI" : "LORO" }),
         el("span", { style: "flex:1", text: chi })
-      ]);
+      ]));
+    });
+    if (vm.sonoHost) {
+      s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Turni: si alternano le squadre. Puoi cominciare quando vuoi (i posti vuoti li fanno i bot)." }));
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: cb.onComincia }));
+    } else {
+      s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci…" }));
     }
-    // mostro nell'ordine dei posti 0,1,2,3
-    [0, 1, 2, 3].forEach(function (i) { s._contenuto.appendChild(seggio(i)); });
-    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Turni: Noi, Loro, il tuo Compagno, l'altro avversario. Puoi cominciare quando vuoi." }));
-    var b = el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: cb.onComincia });
-    s._piede.appendChild(b);
     t.mostra(s);
   }
 

@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 53,
+    data: "14 settembre 2026",
+    titolo: "Online: entri e vedi subito la sala 👥",
+    descrizione: [
+      "Quando entri in una partita online ora vedi la sala con tutti i partecipanti (e i posti liberi riempiti dai bot), proprio come chi ha aperto la stanza — non più solo “sei dentro”.",
+      "Vale per tutti i giochi online. In Horto Muso, dopo lo scatto della foto il replay fa tagliare il traguardo a tutti i cavalli (e si chiude comunque entro pochi secondi)."
+    ]
+  },
+  {
     v: 52,
     data: "14 settembre 2026",
     titolo: "La Scalinata anche in 2 o 3 (con i bot) 🪜",

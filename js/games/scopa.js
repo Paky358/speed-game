@@ -551,7 +551,8 @@
       onNuova: function () { M = creaMotore(nomi, t.mischia); bcast(); },
       onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
     });
-    function lobbyVm() { return { lobby: true, codice: codice, pronta: pronta, avversario: !!avvId, sonoHost: true, nomi: nomi }; }
+    function lobbyVm() { return { lobby: true, codice: codice, pronta: pronta, avversario: !!avvId, sonoHost: true, io: "A", nomi: nomi }; }
+    function aggiornaLobby() { if (M) return; if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, avversario: !!avvId, nomi: { A: nomi.A, B: nomi.B } }); disegnaLobby(); }
     function bcast() {
       // all'ospite mando la SUA vista (vede solo le proprie carte); io disegno la mia
       if (M) { if (rete) rete.invia({ t: "vm", vm: vistaDa(M.st, "B") }); C.setVm(vistaDa(M.st, "A")); }
@@ -566,12 +567,12 @@
       } else { M.st.presa = null; }
     }
     rete = SGNet.ospita("scopa", {
-      onCodice: function (c) { codice = c; if (!M) disegnaLobby(); },
-      onConnesso: function () { pronta = true; if (!M) disegnaLobby(); },
-      onAddio: function (id) { if (id === avvId) { avvId = null; if (M) { M = null; } disegnaLobby(); } },
+      onCodice: function (c) { codice = c; if (!M) aggiornaLobby(); },
+      onConnesso: function () { pronta = true; if (!M) aggiornaLobby(); },
+      onAddio: function (id) { if (id === avvId) { avvId = null; nomi.B = "Avversario"; if (M) { M = null; } aggiornaLobby(); } },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") { if (!avvId) { avvId = id; nomi.B = String(m.nome || "Avversario").slice(0, 16); } if (M) M.st.nomi.B = nomi.B; disegnaLobby(); if (rete) rete.invia({ t: "lobby", codice: codice, avversario: true }); }
+        if (m.t === "join") { if (!avvId) { avvId = id; nomi.B = String(m.nome || "Avversario").slice(0, 16); } if (M) M.st.nomi.B = nomi.B; aggiornaLobby(); }
         else if (m.t === "comincia") { /* solo host comincia */ }
         else if (m.t === "gioca" && M) { if (M.st.turno === "B") dopo(M.gioca("B", m.carta, m.presa)); }
         else if (m.t === "avanti") { /* ignora: avanza l'host */ }
@@ -618,7 +619,7 @@
         onMsg: function (m) {
           if (!m) return;
           if (m.t === "vm") { suonoSeNuovaPresa(m.vm); C.setVm(m.vm); }
-          else if (m.t === "lobby") { if (!C.vm) mostraAttesa(); }
+          else if (m.t === "lobby") { if (!C.vm) mostraLobby(m); }
         },
         onChiuso: function () { erroreScopa(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
         onErrore: function () { erroreScopa(t, "Problema di collegamento. Riprova."); }
@@ -630,35 +631,57 @@
       if (id && id !== lastPresaId) suonoPresa(vm.presa.scopa);
       lastPresaId = id;
     }
-    function mostraAttesa() {
+    function mostraLobby(m) {
+      if (C.vm) return;
+      renderLobby(t, { codice: m.codice, pronta: m.pronta, avversario: m.avversario, nomi: m.nomi, sonoHost: false, io: "B" },
+        { onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+    }
+    function mostraAttesa() {   // placeholder finché non arriva la sala dall'host
       if (C.vm) return;
       var s = t.schermata({ icona: "🃏", titolo: "Scopa · Sala", sotto: "Stanza " + codice.toUpperCase(),
         indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
-      S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "✅ Sei dentro! In attesa che l'host cominci…" });
+      S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegato ✅ — sto entrando nella stanza…" });
       s._contenuto.appendChild(S.msg2);
       t.mostra(s);
     }
   }
 
+  // sala uguale per host e ospite: mostra i due giocatori; codice/Comincia solo all'host
   function renderLobby(t, vm, cb) {
     var el = t.el;
-    var s = t.schermata({ icona: "🃏", titolo: "Scopa · Lobby", sotto: "Ognuno dal suo telefono",
+    var s = t.schermata({ icona: "🃏", titolo: "Scopa · Sala", sotto: "Ognuno dal suo telefono",
       indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
-    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-    s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
-    if (vm.codice && vm.codice !== "…") {
-      var link = SG.creaLink({ gioco: "scopa", stanza: vm.codice });
-      var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-      s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-        onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-      s._contenuto.appendChild(campo);
+    if (vm.sonoHost) {
+      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
+      s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
+      if (vm.codice && vm.codice !== "…") {
+        var link = SG.creaLink({ gioco: "scopa", stanza: vm.codice });
+        var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
+        s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
+          onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
+        s._contenuto.appendChild(campo);
+      }
+      s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
+        text: vm.pronta ? "🟢 Stanza pronta — manda il codice" : "🟡 Sto aprendo la stanza…" }));
+    } else {
+      s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:#69db7c;margin-bottom:2px", text: "✅ Sei nella stanza " + (vm.codice || "").toUpperCase() }));
     }
-    s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
-      text: vm.pronta ? "🟢 Stanza pronta — manda il codice" : "🟡 Sto aprendo la stanza…" }));
-    s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin-top:10px", text: vm.avversario ? "✅ Avversario collegato!" : "In attesa dell'avversario…" }));
-    var b = el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: cb.onComincia });
-    if (!vm.avversario) b.setAttribute("disabled", "disabled");
-    s._piede.appendChild(b);
+    var nomi = vm.nomi || {};
+    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Chi c'è" }));
+    [["A", nomi.A || "Host", "#e0a11b"], ["B", vm.avversario ? (nomi.B || "Avversario") : null, "#d1495b"]].forEach(function (p) {
+      var mio = (p[0] === vm.io);
+      s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:" + (mio ? "rgba(255,202,58,.16)" : "rgba(255,255,255,.06)") + (p[1] ? "" : ";opacity:.55") }, [
+        el("span", { style: "width:16px;height:16px;border-radius:50%;flex:0 0 auto;background:" + p[2] }),
+        el("span", { style: "flex:1;font-weight:700", text: p[1] ? (p[1] + (mio ? " (tu)" : "")) : "In attesa dell'avversario…" })
+      ]));
+    });
+    if (vm.sonoHost) {
+      var b = el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: cb.onComincia });
+      if (!vm.avversario) b.setAttribute("disabled", "disabled");
+      s._piede.appendChild(b);
+    } else {
+      s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci…" }));
+    }
     t.mostra(s);
   }
 

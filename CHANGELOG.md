@@ -4,6 +4,20 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 14 settembre 2026 (30) — Lobby dell'ospite in TUTTI i giochi online (regola fissa)
+- L'ospite non resta più su "✅ Sei dentro!": ora vede la **sala con i partecipanti** come l'host, in tutti i
+  giochi online. Applicato a: **Tris**, **Drop 4** (lista dei 2 giocatori nella lobby già trasmessa via vm),
+  **Scopa** e **Scopa 2 vs 2** (l'host ora trasmette la sala: `aggiornaLobby` → `rete.invia({t:"lobby",…})`;
+  `renderLobby` unica host/ospite, evidenzia il proprio posto, controlli solo all'host; in Scopa 2 vs 2 le
+  squadre NOI/LORO sono relative a chi guarda), **Glow Hockey** (mini-lista Tu/Avversario). Asta, Patata,
+  Scalinata, Sì… però, Timeline mostravano già i giocatori. Regola salvata per i giochi futuri.
+- Collaudato host + ospite: Scopa 2 vs 2 (ospite vede i 4 posti, NOI/LORO relativi, "(tu)"; host coerente).
+
+## 14 settembre 2026 (29) — Horto Muso: dopo lo scatto, tutti tagliano il traguardo (replay, cap 5s)
+- Nel foto-finish, dopo lo scatto il replay **fa tagliare il traguardo a tutti** i cavalli (ognuno riparte
+  dalla sua posizione e va alla linea; più vicino = arriva prima, così l'ordine è rispettato). Se dallo scatto
+  passano più di **5 secondi**, il replay si chiude comunque e si va alla classifica.
+
 ## 14 settembre 2026 (28) — Horto Muso online: l'ospite vede la SALA + tutti vedono il countdown
 - L'host ora **trasmette la lobby** a tutti (`{t:"lobby", codice, pronta, seggi:[{nome,id}|null]}` con
   `rete.invia`/retain, aggiornata su codice/connesso/join/addio). `renderLobby` è unica per host e ospite:

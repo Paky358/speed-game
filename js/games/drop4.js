@@ -419,8 +419,16 @@
       if (!vm.avversario) b.setAttribute("disabled", "disabled");
       s._piede.appendChild(b);
     } else {
-      s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px",
-        text: "✅ Sei dentro! In attesa che l'host cominci…" }));
+      s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:#69db7c;margin:6px 0 2px", text: "✅ Sei nella stanza" }));
+      s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Chi c'è" }));
+      [["G", vm.nomi.G, CG, "gialla"], ["B", vm.nomi.B, CB, "bianca"]].forEach(function (p) {
+        var mio = (p[0] === cb.mio);
+        s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:" + (mio ? "rgba(255,202,58,.18)" : "rgba(255,255,255,.06)") + (mio ? ";border:1px solid var(--accento)" : "") }, [
+          el("span", { style: "width:16px;height:16px;border-radius:50%;flex:0 0 auto;background:" + p[2] }),
+          el("span", { style: "flex:1;font-weight:700", text: p[1] + (mio ? " (tu)" : "") + " (" + p[3] + ")" })
+        ]));
+      });
+      s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci…" }));
     }
     t.mostra(s);
   }

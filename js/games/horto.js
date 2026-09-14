@@ -213,12 +213,19 @@
       void strip.offsetWidth;
       scattoFoto(); flash.classList.add("on"); big.textContent = "📸"; big.classList.add("show");
       setTimeout(function () { flash.classList.remove("on"); }, 70);
-      tos.push(setTimeout(riprendi, 1500)); // fermo immagine ~1,5s
+      tos.push(setTimeout(riprendi, 1200)); // fermo immagine ~1,2s
+      tos.push(setTimeout(vai, 5000));      // dallo scatto: max 5s di replay, poi la classifica
     }
-    function riprendi() {                   // finisce il replay: tutti alla posizione finale
-      cavs.forEach(function (c, k) { c.style.transition = "left 1s ease-out"; c.style.left = targetX[k] + "%"; });
-      tos.push(setTimeout(function () { big.textContent = "🏆 " + nomi[vincitore] + (vincitore === io ? " (tu)" : "") + " vince!"; traguardoFX(); }, 900));
-      tos.push(setTimeout(vai, 2800));
+    function riprendi() {                   // finisce il replay: TUTTI tagliano il traguardo (nell'ordine)
+      var FINISH = 88, sr = strip.getBoundingClientRect();
+      cavs.forEach(function (c) {
+        var hr = c.getBoundingClientRect();
+        var cur = sr.width ? ((hr.left + hr.width / 2) - sr.left) / sr.width * 100 : 80;
+        var dur = Math.min(3.3, Math.max(0.35, (FINISH - cur) * 0.05));  // stessa velocità: tagliano nell'ordine
+        c.style.transition = "left " + dur.toFixed(2) + "s linear";
+        c.style.left = FINISH + "%";
+      });
+      tos.push(setTimeout(function () { big.textContent = "🏆 " + nomi[vincitore] + (vincitore === io ? " (tu)" : "") + " vince!"; traguardoFX(); }, 700));
     }
   }
   function finale(t, ord, nomi, io, foto, cb) {
