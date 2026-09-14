@@ -27,7 +27,7 @@
     scopa: "carte", scopa2v2: "carte", scopone: "carte",
     tris: "sfida", drop4: "sfida", hockey: "sfida",
     asta: "festa", impostore: "festa", sipero: "festa",
-    scalinata: "mini",
+    scalinata: "mini", horto: "mini",
     timeline: "parole", nomicose: "parole", patata: "parole"
   };
   var catAttiva = "tutti";

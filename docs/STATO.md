@@ -1,6 +1,6 @@
 # A che punto siamo
 
-_Aggiornato: 13 settembre 2026 (home con filtri per categoria; L'Asta 4 round + "in palio"; Patata ritorno vincolato)_
+_Aggiornato: 14 settembre 2026 (nuovo minigioco: Horto Muso, corsa di cavalli)_
 
 ## In due parole
 È una raccolta di giochi da fare in gruppo, che si apre dal telefono senza
@@ -15,8 +15,8 @@ dal proprio.
 - **La home**: sotto il profilo una **barra di categorie** (Tutti · Carte · Sfida in 2 · Festa · Minigiochi ·
   Quiz & parole) che filtra l'elenco dei giochi (definite in `js/core.js`: `CATEGORIE` + `CAT_GIOCO` per id;
   ogni gioco ha la sua categoria); il tasto 🆕 Novità è **accanto al nome utente**; poi l'elenco dei giochi e i tasti 💡 Proposte, 🐞 Bug e
-  "Entra in una stanza". "Minigiochi" (Scalinata) è pensata per i giochini stile Wii Party (altri in arrivo:
-  corsa ai cavalli, bandierina); la Patata sta in "Quiz & parole" perché si dice una parola della categoria.
+  "Entra in una stanza". "Minigiochi" (Scalinata, Horto Muso) è pensata per i giochini stile Wii Party (altro in arrivo:
+  la bandierina); la Patata sta in "Quiz & parole" perché si dice una parola della categoria.
 - **Gioco 1 — La linea del tempo**: 5 categorie (Storia, Invenzioni, Calcio, Rap
   italiano, Cinema), oltre 800 avvenimenti verificati, timer 30", punti, voto degli
   altri, classifica finale. Si gioca su un telefono solo o ognuno dal suo.
@@ -141,6 +141,14 @@ dal proprio.
   (tu + 3 bot) e **online** (host = posto 0; gli ospiti prendono i posti 1,2,3; i posti liberi li giocano i
   bot; host-autoritativo, a ognuno mando solo la sua vista). Riusa `window.SGCarte`. Vista relativa al
   giocatore (compagno al centro col 🤝, colori squadra); online i bot hanno nomi neutri ("🤖 Bot N").
+- **Gioco 14 — Horto Muso** 🐎 (`js/games/horto.js`, id `horto`, categoria **Minigiochi**): corsa di cavalli
+  tipo *Derby Dash* a **corsie dritte** (stessa distanza per tutti). Tu (🐎) vs 1–3 bot; impostazioni nº
+  rivali + bravura. Meccaniche: velocità base costante, tasto **FRUSTA** (pointerdown/Spazio) = boost breve;
+  ogni frustata consuma energia (barra sopra il tuo cavallo), si ricarica se non spingi; a 0 = **sfinimento**
+  (3s, rallenta e frusta bloccata). Loop `requestAnimationFrame` (aggiorna solo `left`/barra, niente
+  ricostruzione); countdown 3-2-1-VIA; classifica finale + Rigioca. Solo vs computer, `giocatoriMin/Max:1`.
+  Nota: rAF non gira col pannello browser nascosto → la corsa si collauda sul telefono (costanti validate a
+  parte: base 18s, a ritmo 11s, bot medio ~10s).
 
 ### Ritocchi a L'Asta e La Patata (13 set 2026)
 - **L'Asta**: si vedono tutti e 4 i round del tema (striscia con icona+nome; quello in corso col contorno

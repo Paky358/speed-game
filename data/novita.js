@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 51,
+    data: "14 settembre 2026",
+    titolo: "Nuovo minigioco: Horto Muso 🐎",
+    descrizione: [
+      "Una corsa di cavalli tutta da toccare! Sei tu contro i cavalli del computer (scegli quanti, da 1 a 3).",
+      "Corsie dritte, stessa distanza per tutti. Premi FRUSTA per accelerare, ma ogni frustata consuma energia (la barra sopra il tuo cavallo).",
+      "Se finisci l'energia il cavallo si sfinisce: rallenta e per 3 secondi non puoi frustare. Dosa le frustate e taglia il traguardo per primo! Lo trovi in “Minigiochi”."
+    ]
+  },
+  {
     v: 50,
     data: "13 settembre 2026",
     titolo: "Categorie nella home 🎲",

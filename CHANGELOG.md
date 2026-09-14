@@ -4,6 +4,20 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 14 settembre 2026 (20) — Nuovo minigioco: Horto Muso (corsa di cavalli, tipo Derby Dash)
+- Nuovo `js/games/horto.js` (id `horto`, categoria **Minigiochi** in `CAT_GIOCO`): corsa a **corsie dritte**
+  (niente pista ovale: stessa distanza per tutti). Tu (🐎) contro 1–3 bot; impostazioni: nº rivali + bravura.
+- Meccaniche stile Wii Party: velocità di base costante; tasto **FRUSTA** (pointerdown + tasto Spazio) che dà
+  un boost per `BOOST_MS`; ogni frustata consuma energia (`COST`); l'energia si ricarica se non spingi; a 0
+  → **sfinimento** (`SFIN_MS` 3s: rallenta a `V_SFIN`, frusta bloccata, poi recupera). Barra stamina SOPRA il
+  cavallo del giocatore. Bot con auto-frustata regolata da difficoltà (soglia/intervallo).
+- Loop in `requestAnimationFrame` con `dt` (clamp 0.05) — aggiorna solo `style.left`/larghezza barra (niente
+  ricostruzione a ogni frame). Countdown 3-2-1-VIA; a fine corsa schermata con la classifica (🥇🥈🥉) + Rigioca.
+- `index.html`: aggiunto `horto.js`; bundle rigenerato.
+- Validazione delle costanti con una replica delle formule (rAF non gira col pannello browser nascosto):
+  senza frustare 18.2s, a ritmo 11.0s, bot medio 10.3s, mash ~8/s finisce ma perde (20.5s, con sfinimenti),
+  spam estremo si blocca. Nessun errore in console; la schermata monta 4 corsie + barra + frusta + countdown.
+
 ## 13 settembre 2026 (19) — Home: tasto "Novità" accanto al nome utente
 - `js/core.js`: il tasto 🆕 Novità (col pallino se ci sono novità non lette) è spostato dalla riga in fondo
   a fianco del profilo, in una riga `.home-profilo` (chip profilo + Novità). In fondo restano 💡 Proposte e
