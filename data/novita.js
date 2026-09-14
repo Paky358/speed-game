@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 52,
+    data: "14 settembre 2026",
+    titolo: "La Scalinata anche in 2 o 3 (con i bot) 🪜",
+    descrizione: [
+      "Ora non serve per forza essere in 4: puoi giocare la Scalinata da solo, in 2 o in 3 e i posti liberi li riempiono i bot (Matt, Kevin, Cody).",
+      "Vale sia a un telefono solo sia online. Prima obbligava a mettere 4 persone: sistemato."
+    ]
+  },
+  {
     v: 51,
     data: "14 settembre 2026",
     titolo: "Nuovo minigioco: Horto Muso 🐎",

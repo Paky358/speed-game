@@ -4,6 +4,15 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 14 settembre 2026 (22) — La Scalinata: giocabile in 1/2/3 (i posti liberi = bot) anche a un telefono solo
+- `js/games/scalinata.js`: `giocatoriMin` 4 → **1** (`giocatoriMax` resta 4), così la sala non obbliga più a
+  essere in 4. Il "un telefono solo" ora **riempie con i bot** fino a 4 (come già l'online): in `avvia` si
+  costruisce `g` dai giocatori veri + bot (`NOMI_BOT` Matt/Kevin/Cody, `bot:true`), tolto il blocco
+  `niente()`. In `turno` i bot **scelgono da soli** (skip `passaA`) e si usa `st.g.length`. Regola aggiornata.
+- Nota: la min:4 non era stata cambiata in questa sessione (nessun commit toccava scalinata.js); ripristinato
+  il comportamento promesso dalla descrizione. Collaudato a un telefono solo in 2 (Paky+Gigi+Matt+Kevin): la
+  sala parte con 2, round risolto con le scelte dei bot, zero errori.
+
 ## 14 settembre 2026 (21) — Horto Muso: modalità online (host-autoritativo, in tempo reale)
 - `js/games/horto.js`: aggiunto `hostHorto`/`ospiteHorto` + lobby. L'host = corsia 0, gli ospiti prendono
   1..3 (in ordine d'arrivo), i posti liberi li giocano i **bot**. **Host-autoritativo**: l'host simula tutte

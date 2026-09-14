@@ -5945,6 +5945,15 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 52,
+    data: "14 settembre 2026",
+    titolo: "La Scalinata anche in 2 o 3 (con i bot) 🪜",
+    descrizione: [
+      "Ora non serve per forza essere in 4: puoi giocare la Scalinata da solo, in 2 o in 3 e i posti liberi li riempiono i bot (Matt, Kevin, Cody).",
+      "Vale sia a un telefono solo sia online. Prima obbligava a mettere 4 persone: sistemato."
+    ]
+  },
+  {
     v: 51,
     data: "14 settembre 2026",
     titolo: "Nuovo minigioco: Horto Muso 🐎",
@@ -10286,11 +10295,11 @@ window.SG_SIPERO = {
     nome: "La Scalinata",
     icona: "🪜",
     descrizione: "In quattro sulla scala: scegli 1, 3 o 5. Avanza solo chi sceglie un numero che nessun altro ha scelto. Primo in cima, vince.",
-    giocatoriMin: 4,
+    giocatoriMin: 1,
     giocatoriMax: 4,
     difficolta: 2,
     regole: [
-      "Solo in <b>4</b>. A ogni round hai <b>4 secondi</b> per scegliere in segreto <b>1, 3 o 5</b> gradini.",
+      "Si gioca <b>in 4</b> sulla scala: i posti liberi li riempiono i <b>bot</b>, così puoi giocare anche da solo, in 2 o in 3. A ogni round hai <b>4 secondi</b> per scegliere in segreto <b>1, 3 o 5</b> gradini.",
       "Le scelte si scoprono <b>tutte insieme</b>, sopra la testa di ognuno: se due o più scelgono lo <b>stesso</b> numero, restano <b>fermi</b>.",
       "Avanza solo chi ha scelto un numero <b>che nessun altro ha scelto</b>, di tanti gradini quanti il numero.",
       "Vince il primo che arriva in cima alla scalinata (gradino <b>" + TRAGUARDO + "</b>).",
@@ -10325,8 +10334,10 @@ window.SG_SIPERO = {
       var imp = t.impostazioni || {};
       if (t.linkParams && t.linkParams.stanza) return ospiteScala(t, t.linkParams.stanza);
       if (imp.modo === "online") return hostScala(t);
-      if (t.giocatori.length !== 4) return niente(t);
-      var st = { g: t.giocatori.map(function (n, i) { return { nome: n, colore: COLORI[i], passi: 0 }; }), scelte: [null, null, null, null], nRound: 0 };
+      // un telefono solo: i giocatori veri + i bot per arrivare a 4
+      var g = t.giocatori.slice(0, 4).map(function (n, i) { return { nome: n, colore: COLORI[i], passi: 0, bot: false }; });
+      var b = 0; while (g.length < 4) { g.push({ nome: NOMI_BOT[b] || ("Bot " + (b + 1)), colore: COLORI[g.length], passi: 0, bot: true }); b++; }
+      var st = { g: g, scelte: [null, null, null, null], nRound: 0 };
       introRound(t, st);
     }
   });
@@ -10349,7 +10360,8 @@ window.SG_SIPERO = {
   }
 
   function turno(t, st, i) {
-    if (i >= 4) return rivela(t, st);
+    if (i >= st.g.length) return rivela(t, st);
+    if (st.g[i].bot) { st.scelte[i] = SCELTE[Math.floor(Math.random() * 3)]; return turno(t, st, i + 1); }
     t.passaA(st.g[i].nome, function () { schermataScelta(t, st, i); });
   }
 
