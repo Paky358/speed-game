@@ -4,6 +4,14 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 14 settembre 2026 (33) — Horto Muso fino a 8 cavalli (corsie adattive) + foto-finish/replay compresi
+- `MAXN=8`; impostazioni "Quanti cavalli in gara" (2/4/6/8, default 4) valida per bot e online. Local: tu +
+  (N-1) bot; online `hostHorto(t,diff,N)` con posti/seggi dinamici (1..N-1), i liberi = bot fino a N.
+- **Corsie/righe adattive** (`altezze(N)`): ≤4 → alte come ora; 5-6 più basse; 7-8 compatte (altezza corsia,
+  emoji cavallo, righe del foto-finish e altezza dello strip calcolate da N). 8 colori (`COLORI`), 7 nomi bot.
+- Foto-finish e replay finale funzionano con qualsiasi N (righe = posti, distanze reali, scatto al tocco).
+- Collaudato in locale a 8 (8 corsie, altezza 38px, Paky + 7 bot, zero errori); l'online usa lo stesso schema.
+
 ## 14 settembre 2026 (32) — L'Asta online: stessa lobby, cambia argomento, "Nuova partita" torna in sala
 - Nella **lobby** online l'host ora sceglie l'**argomento** (selettore temi `cat-chip`, evidenzia quello
   attivo → `cb.onTema(i)` → `scegliTema` cambia `st.tema` e ritrasmette); l'ospite lo vede in chiaro.

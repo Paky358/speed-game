@@ -5945,6 +5945,15 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 56,
+    data: "14 settembre 2026",
+    titolo: "Horto Muso fino a 8 cavalli 🐎",
+    descrizione: [
+      "Ora nella corsa dei cavalli puoi scegliere quanti corrono: 2, 4, 6 o 8 (con te). Le corsie si adattano allo schermo.",
+      "Vale contro i bot e online (i posti liberi li riempiono i bot). Foto-finish e replay finale restano per tutti."
+    ]
+  },
+  {
     v: 55,
     data: "14 settembre 2026",
     titolo: "L'Asta online: cambia argomento restando insieme 🔨",
@@ -8895,7 +8904,14 @@ window.SG_SIPERO = {
 (function () {
   "use strict";
 
-  var COLORI = ["#ffd43b", "#ff6b6b", "#4dabf7", "#51cf66"];
+  var COLORI = ["#ffd43b", "#ff6b6b", "#4dabf7", "#51cf66", "#cc5de8", "#ff922b", "#20c997", "#f783ac"];
+  var MAXN = 8;                          // massimo cavalli al via
+  var NOMI_CAV = ["Furia", "Saetta", "Tornado", "Fulmine", "Freccia", "Vento", "Lampo"];
+  function altezze(N) {                  // corsie/righe adattive: più cavalli = più basse
+    if (N <= 4) return { lane: 56, cav: 1.7, ff: 54, ffcav: 2.7 };
+    if (N <= 6) return { lane: 46, cav: 1.45, ff: 44, ffcav: 2.05 };
+    return { lane: 38, cav: 1.2, ff: 34, ffcav: 1.6 };
+  }
   var V_BASE = 0.055, V_BOOST = 0.165, V_SFIN = 0.018;
   var BOOST_MS = 280, COST = 13, REGEN = 16, REGEN_SFIN = 22, SFIN_MS = 3000, STAM_MAX = 100;
   function botParam(diff) { return { S: diff === "facile" ? 42 : diff === "difficile" ? 18 : 28, I: diff === "facile" ? 520 : diff === "difficile" ? 290 : 350 }; }
@@ -9010,15 +9026,16 @@ window.SG_SIPERO = {
     var s = t.schermata({ icona: "🐎", titolo: "Horto Muso", sotto: "Corsa al galoppo",
       indietro: function () { if (window.confirm("Uscire dalla corsa?")) cb.onEsci(); } });
     var info = el("div", { class: "ho-info", text: "Pronti…" }); s._contenuto.appendChild(info);
+    var dim = altezze(N);
     var pista = el("div", { class: "ho-pista" }); var cavEl = [], fillEl = null;
     for (var i = 0; i < N; i++) {
-      var lane = el("div", { class: "ho-lane" + (i === io ? " mia" : "") });
-      lane.appendChild(el("div", { class: "ho-num", style: "background:" + COLORI[i % 4], text: String(i + 1) }));
+      var lane = el("div", { class: "ho-lane" + (i === io ? " mia" : ""), style: "height:" + dim.lane + "px" });
+      lane.appendChild(el("div", { class: "ho-num", style: "background:" + COLORI[i % COLORI.length], text: String(i + 1) }));
       lane.appendChild(el("div", { class: "ho-nome", text: nomi[i] + (i === io ? " (tu)" : "") }));
       lane.appendChild(el("div", { class: "ho-tragu" }));
       var c = el("div", { class: "ho-cav" });
       if (i === io) { var bar = el("div", { class: "ho-stam" }); var f = el("div", { class: "fill", style: "background:#51cf66" }); bar.appendChild(f); c.appendChild(bar); fillEl = f; }
-      c.appendChild(el("span", { class: "em", text: "🐎" }));
+      c.appendChild(el("span", { class: "em", style: "font-size:" + dim.cav + "rem", text: "🐎" }));
       lane.appendChild(c); cavEl[i] = c; pista.appendChild(lane);
     }
     s._contenuto.appendChild(pista);
@@ -9054,8 +9071,9 @@ window.SG_SIPERO = {
   function fotoFinish(t, ord, nomi, io, foto, poi) {
     var el = t.el, fatto = false, scattato = false, tos = [], rafId = 0;
     var N = foto.length, vincitore = ord[0];
+    var dim = altezze(N), rowH = dim.ff;
     var s = t.schermata({ icona: "📸", titolo: "Foto-finish", sotto: "Chi ha tagliato per primo" });
-    var strip = el("div", { class: "ho-ff" });
+    var strip = el("div", { class: "ho-ff", style: "height:" + (10 + N * rowH + 6) + "px" });
     var lineEl = el("div", { class: "ho-ff-line" }); strip.appendChild(lineEl);
     var flash = el("div", { class: "ho-ff-flash" }); strip.appendChild(flash);
     var cavs = [], targetX = [];
@@ -9063,13 +9081,13 @@ window.SG_SIPERO = {
       var vinc = (k === vincitore), mio = (k === io);
       // ZOOM sul traguardo: il vincitore finisce col centro sulla linea (86%), gli altri al distacco reale
       targetX[k] = Math.max(6, 86 - (1 - Math.min(1, foto[k])) * 300);
-      var lane = el("div", { class: "ho-ff-lane" + (vinc ? " win" : ""), style: "top:" + (10 + k * 54) + "px" }, [
+      var lane = el("div", { class: "ho-ff-lane" + (vinc ? " win" : ""), style: "top:" + (10 + k * rowH) + "px;height:" + rowH + "px" }, [
         el("div", { class: "ho-ff-label" }, [
-          el("span", { class: "ho-ff-num", style: "background:" + COLORI[k % 4], text: String(k + 1) }),
+          el("span", { class: "ho-ff-num", style: "background:" + COLORI[k % COLORI.length], text: String(k + 1) }),
           el("span", { class: "ho-ff-nome", text: nomi[k] + (mio ? " (tu)" : "") })
         ])
       ]);
-      var cav = el("span", { class: "ho-ff-cav", text: "🐎" });
+      var cav = el("span", { class: "ho-ff-cav", style: "font-size:" + dim.ffcav + "rem", text: "🐎" });
       lane.appendChild(cav); strip.appendChild(lane); cavs.push(cav);
     }
     s._contenuto.appendChild(strip);
@@ -9143,9 +9161,9 @@ window.SG_SIPERO = {
   //  LOCALE — tu (corsia 0) contro 1–3 bot
   // ========================================================
   function corsa(t, nRivali, diff) {
-    var N = Math.min(4, 1 + Math.max(1, nRivali));
+    var N = Math.min(MAXN, 1 + Math.max(1, nRivali));
     var bp = botParam(diff), nomi = [(t.giocatori && t.giocatori[0]) || "Tu"], cav = [nuovoCav(true, "io")];
-    for (var i = 1; i < N; i++) { cav.push(nuovoCav(false)); nomi.push("🤖 " + ["Furia", "Saetta", "Tornado"][i - 1]); }
+    for (var i = 1; i < N; i++) { cav.push(nuovoCav(false)); nomi.push("🤖 " + (NOMI_CAV[i - 1] || ("Bot " + i))); }
     var fase = "via", conto = 3, raf = null, toC = null, ultimo = 0, primoArr = 0, finito = false, arrivi = [], foto = null;
     var ref = costruisci(t, N, nomi, 0, {
       onFrusta: function () { if (fase === "corsa" && frusta(cav[0], performance.now())) frustaFX(); },
@@ -9181,15 +9199,17 @@ window.SG_SIPERO = {
   //  ONLINE — host = corsia 0; gli ospiti prendono 1..3; i posti
   //  liberi li giocano i bot. Host-autoritativo: simula e trasmette.
   // ========================================================
-  function hostHorto(t, diff) {
+  function hostHorto(t, diff, N) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    N = Math.max(2, Math.min(MAXN, N || 4));
     var bp = botParam(diff), codice = "…", pronta = false;
-    var posti = { 1: null, 2: null, 3: null }, nomiU = { 1: null, 2: null, 3: null };
+    var posti = {}, nomiU = {};
+    for (var _s = 1; _s < N; _s++) { posti[_s] = null; nomiU[_s] = null; }
     var cav = null, nomi = null, ref = null, fase = "lobby", conto = 3, loop = null, toC = null, ultimo = 0, primoArr = 0, arrivi = [], ord = null, foto = null, rete = null;
 
-    function seatDi(id) { for (var s = 1; s <= 3; s++) if (posti[s] === id) return s; return -1; }
-    function postoLibero() { for (var s = 1; s <= 3; s++) if (!posti[s]) return s; return 0; }
-    function quanti() { var n = 0; for (var s = 1; s <= 3; s++) if (posti[s]) n++; return n; }
+    function seatDi(id) { for (var s = 1; s < N; s++) if (posti[s] === id) return s; return -1; }
+    function postoLibero() { for (var s = 1; s < N; s++) if (!posti[s]) return s; return 0; }
+    function quanti() { var n = 0; for (var s = 1; s < N; s++) if (posti[s]) n++; return n; }
 
     rete = SGNet.ospita("horto", {
       onCodice: function (c) { codice = c; aggiornaLobby(); },
@@ -9215,12 +9235,12 @@ window.SG_SIPERO = {
     function inizia() {
       fase = "via"; conto = 3; arrivi = []; primoArr = 0; ord = null; foto = null;
       nomi = [(t.giocatori && t.giocatori[0]) || "Host"]; cav = [nuovoCav(true, "host")];
-      for (var s = 1; s <= 3; s++) {
+      for (var s = 1; s < N; s++) {
         if (posti[s]) { cav.push(nuovoCav(true, posti[s])); nomi.push(nomiU[s] || ("Amico " + s)); rete.invia({ t: "seat", to: posti[s], seat: s }); }
         else { cav.push(nuovoCav(false)); nomi.push(nomeBot(s)); }
       }
-      rete.invia({ t: "via", nomi: nomi, n: 4 });   // ogni telefono costruisce la corsa e fa il proprio countdown
-      ref = costruisci(t, 4, nomi, 0, {
+      rete.invia({ t: "via", nomi: nomi, n: N });   // ogni telefono costruisce la corsa e fa il proprio countdown
+      ref = costruisci(t, N, nomi, 0, {
         onFrusta: function () { if (fase === "corsa" && frusta(cav[0], performance.now())) frustaFX(); },
         onEsci: function () { chiudi(); t.esci(); }
       });
@@ -9249,10 +9269,9 @@ window.SG_SIPERO = {
     function chiudi() { if (loop) clearInterval(loop); if (toC) clearInterval(toC); if (ref) ref.rimuovi(); if (rete) rete.chiudi(); }
 
     function seggi() {
-      return [{ nome: (t.giocatori && t.giocatori[0]) || "Host", id: "host" },
-        posti[1] ? { nome: nomiU[1], id: posti[1] } : null,
-        posti[2] ? { nome: nomiU[2], id: posti[2] } : null,
-        posti[3] ? { nome: nomiU[3], id: posti[3] } : null];
+      var a = [{ nome: (t.giocatori && t.giocatori[0]) || "Host", id: "host" }];
+      for (var s = 1; s < N; s++) a.push(posti[s] ? { nome: nomiU[s], id: posti[s] } : null);
+      return a;
     }
     function aggiornaLobby() {
       if (fase !== "lobby") return;
@@ -9367,7 +9386,7 @@ window.SG_SIPERO = {
       var mio = sg && sg.id && sg.id === vm.myId;
       var testo = sg ? ((i === 0 ? "👑 " : "") + sg.nome + (mio ? " (tu)" : "")) : "🤖 bot";
       s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:" + (mio ? "rgba(255,202,58,.18)" : "rgba(255,255,255,.06)") + (mio ? ";border:1px solid var(--accento)" : "") }, [
-        el("span", { style: "width:16px;height:16px;border-radius:50%;flex:0 0 auto;background:" + COLORI[i % 4] }),
+        el("span", { style: "width:16px;height:16px;border-radius:50%;flex:0 0 auto;background:" + COLORI[i % COLORI.length] }),
         el("span", { style: "flex:1;font-weight:700", text: "🐎 " + testo })
       ]));
     });
@@ -9406,29 +9425,29 @@ window.SG_SIPERO = {
       "Ogni frustata consuma <b>energia</b> (la barra sopra il tuo cavallo). Se non frusti, l'energia si <b>ricarica</b>.",
       "Se l'energia arriva a <b>zero</b> vai in <b>sfinimento</b>: rallenti e per <b>3 secondi</b> non puoi frustare.",
       "Vince il <b>primo</b> che taglia il traguardo. Dosa le frustate!",
-      "Modalità: <b>contro i bot</b> (1–3) oppure <b>online</b> (ognuno dal suo telefono; i posti liberi li giocano i bot)."
+      "Da <b>2 a 8 cavalli</b>: <b>contro i bot</b> oppure <b>online</b> (ognuno dal suo telefono; i posti liberi li giocano i bot)."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
-      dove.modo = "bot"; dove.rivali = 3; dove.difficolta = "medio";
-      var bBot, bOnl, boxRiv, notaOnline;
-      function selM(m) { dove.modo = m; bBot.className = "modo-chip" + (m === "bot" ? " attiva" : ""); bOnl.className = "modo-chip" + (m === "online" ? " attiva" : ""); boxRiv.hidden = (m !== "bot"); notaOnline.hidden = (m !== "online"); }
+      dove.modo = "bot"; dove.cavalli = 4; dove.difficolta = "medio";
+      var bBot, bOnl, notaOnline;
+      function selM(m) { dove.modo = m; bBot.className = "modo-chip" + (m === "bot" ? " attiva" : ""); bOnl.className = "modo-chip" + (m === "online" ? " attiva" : ""); notaOnline.hidden = (m !== "online"); }
       bBot = el("button", { class: "modo-chip attiva", onclick: function () { selM("bot"); } }, [
         el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro i bot" }), el("div", { class: "ms", text: "Da solo" })])]);
       bOnl = el("button", { class: "modo-chip", onclick: function () { selM("online"); } }, [
         el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online" }), el("div", { class: "ms", text: "Ognuno dal suo" })])]);
       box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
       box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
-      boxRiv = el("div", {});
-      boxRiv.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Quanti avversari (bot)" }));
+      box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Quanti cavalli in gara" }));
       var wR = el("div", { style: "display:flex;gap:8px" });
-      [1, 2, 3].forEach(function (n) {
-        var b = el("button", { class: "modo-chip" + (n === 3 ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {
-          dove.rivali = n; [].forEach.call(wR.children, function (c) { c.className = "modo-chip"; c.style.flex = "1"; }); b.className = "modo-chip attiva";
+      [2, 4, 6, 8].forEach(function (n) {
+        var b = el("button", { class: "modo-chip" + (n === 4 ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {
+          dove.cavalli = n; [].forEach.call(wR.children, function (c) { c.className = "modo-chip"; c.style.flex = "1"; }); b.className = "modo-chip attiva";
         } }, [el("div", { class: "mt", text: String(n) })]);
         b.style.flex = "1"; wR.appendChild(b);
       });
-      boxRiv.appendChild(wR); box.appendChild(boxRiv);
+      box.appendChild(wR);
+      box.appendChild(el("p", { class: "modulo-nota", style: "margin-top:6px", text: "Online: i posti liberi li riempiono i bot fino a questo numero." }));
       box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei bot" }));
       var wD = el("div", { style: "display:flex;gap:8px" });
       [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]].forEach(function (d) {
@@ -9447,8 +9466,8 @@ window.SG_SIPERO = {
     avvia: function (t) {
       var imp = t.impostazioni || {};
       if (t.linkParams && t.linkParams.stanza) return ospiteHorto(t, t.linkParams.stanza);
-      if (imp.modo === "online") return hostHorto(t, imp.difficolta || "medio");
-      return corsa(t, imp.rivali || 3, imp.difficolta || "medio");
+      if (imp.modo === "online") return hostHorto(t, imp.difficolta || "medio", imp.cavalli || 4);
+      return corsa(t, (imp.cavalli || 4) - 1, imp.difficolta || "medio");
     }
   });
 })();

@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 56,
+    data: "14 settembre 2026",
+    titolo: "Horto Muso fino a 8 cavalli 🐎",
+    descrizione: [
+      "Ora nella corsa dei cavalli puoi scegliere quanti corrono: 2, 4, 6 o 8 (con te). Le corsie si adattano allo schermo.",
+      "Vale contro i bot e online (i posti liberi li riempiono i bot). Foto-finish e replay finale restano per tutti."
+    ]
+  },
+  {
     v: 55,
     data: "14 settembre 2026",
     titolo: "L'Asta online: cambia argomento restando insieme 🔨",
