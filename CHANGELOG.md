@@ -4,6 +4,17 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 14 settembre 2026 (28) — Horto Muso online: l'ospite vede la SALA + tutti vedono il countdown
+- L'host ora **trasmette la lobby** a tutti (`{t:"lobby", codice, pronta, seggi:[{nome,id}|null]}` con
+  `rete.invia`/retain, aggiornata su codice/connesso/join/addio). `renderLobby` è unica per host e ospite:
+  mostra tutti i posti (bot inclusi), evidenzia il proprio (match per `id`), controlli (codice/Comincia) solo
+  all'host. L'ospite non resta più sullo "sei dentro": vede la stanza e chi c'è, e capisce che sostituisce un bot.
+- **Countdown per tutti**: alla partenza l'host manda `{t:"via", nomi, n}` e **ogni telefono fa il proprio
+  countdown locale** (`setInterval`, 3-2-1-VIA), poi partono le posizioni (`snap` fase "corsa"). Prima gli
+  "snap" del countdown potevano andare persi e l'ospite entrava già in corsa; ora no.
+- Collaudato host + ospite: l'ospite vede la sala (Paky 👑 / Gigi (tu) / 🤖 bot ×2) e, al via, la sequenza
+  registrata 3 → 2 → 1 → VIA! → corsa. Zero errori.
+
 ## 14 settembre 2026 (27) — Horto Muso: cavallo specchiato + scatto al tocco reale (ferma-foto-riprendi)
 - **Cavallo specchiato** (`transform:scaleX(-1)`) in gara (`.ho-cav .em`) e nel foto-finish (`.ho-ff-cav`):
   ora guarda verso destra, nel senso di corsa.

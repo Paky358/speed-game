@@ -116,6 +116,10 @@
     return { t: "snap", fase: fase, conto: conto, N: cav.length, nomi: nomi,
       cav: cav.map(function (h) { return { p: +h.pos.toFixed(4), s: Math.round(h.stam), f: h.sfin ? 1 : 0, a: h.arr ? 1 : 0 }; }) };
   }
+  function snapFermo(nomi, N, conto, fase) {   // cavalli fermi al via (per il countdown locale)
+    var cv = []; for (var k = 0; k < N; k++) cv.push({ p: 0, s: 100, f: 0, a: 0 });
+    return { fase: fase, conto: conto, N: N, nomi: nomi, cav: cv };
+  }
 
   // ---------- schermo condiviso (montato una volta; poi aggiorno solo posizioni/barra) ----------
   function costruisci(t, N, nomi, io, cb) {
@@ -298,19 +302,19 @@
     function quanti() { var n = 0; for (var s = 1; s <= 3; s++) if (posti[s]) n++; return n; }
 
     rete = SGNet.ospita("horto", {
-      onCodice: function (c) { codice = c; if (fase === "lobby") disegnaLobby(); },
-      onConnesso: function () { pronta = true; if (fase === "lobby") disegnaLobby(); },
+      onCodice: function (c) { codice = c; aggiornaLobby(); },
+      onConnesso: function () { pronta = true; aggiornaLobby(); },
       onAddio: function (id) {
         var s = seatDi(id); if (s < 0) return;
         posti[s] = null;
-        if (fase === "lobby") { nomiU[s] = null; disegnaLobby(); }
+        if (fase === "lobby") { nomiU[s] = null; aggiornaLobby(); }
         else if (cav) { cav[s].umano = false; nomi[s] = nomeBot(s); }   // il posto passa al bot
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
           if (fase === "lobby" && seatDi(id) < 0) { var p = postoLibero(); if (p > 0) { posti[p] = id; nomiU[p] = String(m.nome || "Amico").slice(0, 16); } }
-          disegnaLobby(); rete.invia({ t: "lobby", to: id, codice: codice });
+          aggiornaLobby();   // trasmette la lobby aggiornata a TUTTI (host + ospiti)
         } else if (m.t === "frusta" && fase === "corsa") {
           var sm = seatDi(id); if (sm > 0 && cav[sm] && cav[sm].umano) frusta(cav[sm], performance.now());
         }
@@ -322,18 +326,19 @@
       fase = "via"; conto = 3; arrivi = []; primoArr = 0; ord = null; foto = null;
       nomi = [(t.giocatori && t.giocatori[0]) || "Host"]; cav = [nuovoCav(true, "host")];
       for (var s = 1; s <= 3; s++) {
-        if (posti[s]) { cav.push(nuovoCav(true, posti[s])); nomi.push(nomiU[s] || ("Amico " + s)); rete.invia({ t: "seat", to: posti[s], seat: s, nomi: null }); }
+        if (posti[s]) { cav.push(nuovoCav(true, posti[s])); nomi.push(nomiU[s] || ("Amico " + s)); rete.invia({ t: "seat", to: posti[s], seat: s }); }
         else { cav.push(nuovoCav(false)); nomi.push(nomeBot(s)); }
       }
+      rete.invia({ t: "via", nomi: nomi, n: 4 });   // ogni telefono costruisce la corsa e fa il proprio countdown
       ref = costruisci(t, 4, nomi, 0, {
         onFrusta: function () { if (fase === "corsa" && frusta(cav[0], performance.now())) frustaFX(); },
         onEsci: function () { chiudi(); t.esci(); }
       });
-      bcast();
+      conto = 3; disegna(ref, snap(cav, "via", 3, nomi));
       toC = setInterval(function () {
-        conto--; bcast();
+        conto--; disegna(ref, snap(cav, "via", Math.max(0, conto), nomi));
         if (conto < 0) { clearInterval(toC); toC = null; fase = "corsa"; ultimo = performance.now(); loop = setInterval(tick, 66); }
-      }, 700);
+      }, 800);
     }
     function tick() {
       var now = performance.now(), dt = Math.min(0.1, (now - ultimo) / 1000); ultimo = now;
@@ -353,10 +358,20 @@
     }
     function chiudi() { if (loop) clearInterval(loop); if (toC) clearInterval(toC); if (ref) ref.rimuovi(); if (rete) rete.chiudi(); }
 
+    function seggi() {
+      return [{ nome: (t.giocatori && t.giocatori[0]) || "Host", id: "host" },
+        posti[1] ? { nome: nomiU[1], id: posti[1] } : null,
+        posti[2] ? { nome: nomiU[2], id: posti[2] } : null,
+        posti[3] ? { nome: nomiU[3], id: posti[3] } : null];
+    }
+    function aggiornaLobby() {
+      if (fase !== "lobby") return;
+      rete.invia({ t: "lobby", codice: codice, pronta: pronta, seggi: seggi() }); // a tutti gli ospiti
+      disegnaLobby();
+    }
     function disegnaLobby() {
       if (fase !== "lobby") return;
-      renderLobby(t, { codice: codice, pronta: pronta,
-        seggi: [(t.giocatori && t.giocatori[0]) || "Host", nomiU[1], nomiU[2], nomiU[3]], umani: quanti() },
+      renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", seggi: seggi() },
         { onComincia: inizia, onEsci: function () { chiudi(); t.esci(); } });
     }
     disegnaLobby();
@@ -384,11 +399,20 @@
         onMsg: function (m) {
           if (!m || !m.t) return;
           if (m.t === "seat") { if (m.to === S.myId) { S.mySeat = m.seat; if (S.ref && S.ref.io !== m.seat) rebuild(); } }
-          else if (m.t === "lobby") { if (!S.ref) attesa(); }
+          else if (m.t === "lobby") {
+            for (var i = 0; i < (m.seggi || []).length; i++) if (m.seggi[i] && m.seggi[i].id === S.myId) S.mySeat = i;
+            if (!S.ref) mostraLobby(m);   // l'ospite vede la stanza come l'host
+          }
+          else if (m.t === "via") {       // parte la corsa: costruisci e fai il countdown LOCALE (come l'host)
+            S.nomi = m.nomi; S.N = m.n || (m.nomi ? m.nomi.length : 4);
+            build({ nomi: S.nomi, N: S.N }); S.fase = "via"; contoOspite();
+          }
           else if (m.t === "snap") {
+            if (S.contoTimer) { clearInterval(S.contoTimer); S.contoTimer = null; }
             if (!S.ref || S.fase === "fine") build(m);
             S.fase = m.fase; disegna(S.ref, m);
           } else if (m.t === "fine") {
+            if (S.contoTimer) { clearInterval(S.contoTimer); S.contoTimer = null; }
             if (S.ref) { S.ref.rimuovi(); S.ref = null; } S.fase = "fine";
             finale(t, m.ord, m.nomi, S.mySeat, m.foto, { sonoHost: false, onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
           }
@@ -406,40 +430,63 @@
       });
     }
     function rebuild() { if (S.nomi) build({ nomi: S.nomi, N: S.N }); }
-    function attesa() {
+    function contoOspite() {   // countdown locale dell'ospite (3-2-1-VIA), poi arrivano le posizioni
+      if (S.contoTimer) clearInterval(S.contoTimer);
+      var c = 3; disegna(S.ref, snapFermo(S.nomi, S.N, 3, "via"));
+      S.contoTimer = setInterval(function () {
+        if (!S.ref || S.fase !== "via") { clearInterval(S.contoTimer); S.contoTimer = null; return; }
+        c--; disegna(S.ref, snapFermo(S.nomi, S.N, Math.max(0, c), "via"));
+        if (c < 0) { clearInterval(S.contoTimer); S.contoTimer = null; }
+      }, 800);
+    }
+    function mostraLobby(m) {
+      renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi },
+        { onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+    }
+    function attesa() {   // placeholder finché non arriva la lobby dall'host
       if (S.ref) return;
       var s = t.schermata({ icona: "🐎", titolo: "Horto Muso · Sala", sotto: "Stanza " + codice.toUpperCase(),
         indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
-      S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "✅ Sei dentro! In attesa che l'host cominci…" });
+      S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegato ✅ — sto entrando nella stanza…" });
       s._contenuto.appendChild(S.msg2); t.mostra(s);
     }
   }
 
+  // lobby uguale per host e ospite: mostra tutti i posti (bot inclusi), evidenzia il proprio.
   function renderLobby(t, vm, cb) {
     var el = t.el;
-    var s = t.schermata({ icona: "🐎", titolo: "Horto Muso · Lobby", sotto: "Ognuno dal suo telefono",
+    var s = t.schermata({ icona: "🐎", titolo: "Horto Muso · Sala", sotto: "Ognuno dal suo telefono",
       indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
-    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-    s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
-    if (vm.codice && vm.codice !== "…") {
-      var link = SG.creaLink({ gioco: "horto", stanza: vm.codice });
-      var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-      s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-        onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-      s._contenuto.appendChild(campo);
+    if (vm.sonoHost) {
+      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
+      s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
+      if (vm.codice && vm.codice !== "…") {
+        var link = SG.creaLink({ gioco: "horto", stanza: vm.codice });
+        var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
+        s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
+          onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
+        s._contenuto.appendChild(campo);
+      }
+      s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
+        text: vm.pronta ? "🟢 Stanza pronta — manda il codice" : "🟡 Sto aprendo la stanza…" }));
+    } else {
+      s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:#69db7c;margin-bottom:2px", text: "✅ Sei nella stanza " + (vm.codice || "").toUpperCase() }));
     }
-    s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
-      text: vm.pronta ? "🟢 Stanza pronta — manda il codice" : "🟡 Sto aprendo la stanza…" }));
     s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Cavalli (i posti liberi li giocano i bot)" }));
-    ["🐎 " + vm.seggi[0] + " (tu)", vm.seggi[1], vm.seggi[2], vm.seggi[3]].forEach(function (n, i) {
-      s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:rgba(255,255,255,.06)" }, [
+    (vm.seggi || []).forEach(function (sg, i) {
+      var mio = sg && sg.id && sg.id === vm.myId;
+      var testo = sg ? ((i === 0 ? "👑 " : "") + sg.nome + (mio ? " (tu)" : "")) : "🤖 bot";
+      s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:" + (mio ? "rgba(255,202,58,.18)" : "rgba(255,255,255,.06)") + (mio ? ";border:1px solid var(--accento)" : "") }, [
         el("span", { style: "width:16px;height:16px;border-radius:50%;flex:0 0 auto;background:" + COLORI[i % 4] }),
-        el("span", { style: "flex:1", text: i === 0 ? n : (n ? "🐎 " + n : "🤖 bot") })
+        el("span", { style: "flex:1;font-weight:700", text: "🐎 " + testo })
       ]));
     });
-    var b = el("button", { class: "btn btn-primario", text: "Comincia la corsa ▶", onclick: cb.onComincia });
-    s._piede.appendChild(b);
-    s._piede.appendChild(el("p", { class: "modulo-nota", text: "Puoi cominciare quando vuoi: i posti vuoti diventano bot." }));
+    if (vm.sonoHost) {
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Comincia la corsa ▶", onclick: cb.onComincia }));
+      s._piede.appendChild(el("p", { class: "modulo-nota", text: "Puoi cominciare quando vuoi: i posti vuoti diventano bot." }));
+    } else {
+      s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci la corsa…" }));
+    }
     t.mostra(s);
   }
 
