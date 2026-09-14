@@ -15,7 +15,8 @@ window.SG_NOVITA = [
     descrizione: [
       "Una corsa di cavalli tutta da toccare! Sei tu contro i cavalli del computer (scegli quanti, da 1 a 3).",
       "Corsie dritte, stessa distanza per tutti. Premi FRUSTA per accelerare, ma ogni frustata consuma energia (la barra sopra il tuo cavallo).",
-      "Se finisci l'energia il cavallo si sfinisce: rallenta e per 3 secondi non puoi frustare. Dosa le frustate e taglia il traguardo per primo! Lo trovi in “Minigiochi”."
+      "Se finisci l'energia il cavallo si sfinisce: rallenta e per 3 secondi non puoi frustare. Dosa le frustate e taglia il traguardo per primo! Lo trovi in “Minigiochi”.",
+      "Si gioca anche ONLINE: apri una stanza, manda il codice e correte ognuno dal suo telefono (i posti liberi li giocano i bot)."
     ]
   },
   {

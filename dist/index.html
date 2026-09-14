@@ -5951,7 +5951,8 @@ window.SG_NOVITA = [
     descrizione: [
       "Una corsa di cavalli tutta da toccare! Sei tu contro i cavalli del computer (scegli quanti, da 1 a 3).",
       "Corsie dritte, stessa distanza per tutti. Premi FRUSTA per accelerare, ma ogni frustata consuma energia (la barra sopra il tuo cavallo).",
-      "Se finisci l'energia il cavallo si sfinisce: rallenta e per 3 secondi non puoi frustare. Dosa le frustate e taglia il traguardo per primo! Lo trovi in “Minigiochi”."
+      "Se finisci l'energia il cavallo si sfinisce: rallenta e per 3 secondi non puoi frustare. Dosa le frustate e taglia il traguardo per primo! Lo trovi in “Minigiochi”.",
+      "Si gioca anche ONLINE: apri una stanza, manda il codice e correte ognuno dal suo telefono (i posti liberi li giocano i bot)."
     ]
   },
   {
@@ -8794,28 +8795,23 @@ window.SG_SIPERO = {
 
 /* =========================================================
    GIOCO — "Horto Muso" (corsa di cavalli, tipo Derby Dash)
-   Corsie DRITTE (niente pista ovale: stessa distanza per tutti,
-   nessun vantaggio a chi sta all'interno). Ogni cavallo ha la
-   sua riga. Tu (🐎) contro 1–3 cavalli del computer.
-   Meccanica:
-   - i cavalli avanzano sempre a una velocità minima di base;
-   - tasto FRUSTA: ogni click dà un boost di velocità per un istante;
-   - ogni click consuma energia (stamina); se non clicchi si ricarica;
-   - se la stamina arriva a 0 -> SFINIMENTO: il cavallo rallenta e non
-     puoi cliccare per 3 secondi (intanto la barra si ricarica);
-   - vince il primo che taglia il traguardo.
-   Grafica semplice: div + emoji, aggiornata in tempo reale (niente
-   ricostruzione della schermata a ogni frame).
+   Corsie DRITTE (niente pista ovale: stessa distanza per tutti).
+   Meccanica: velocità di base costante; tasto FRUSTA = boost per un
+   istante ma consuma energia; se non frusti si ricarica; a 0 =
+   SFINIMENTO (rallenta e frusta bloccata 3s). Vince il primo al traguardo.
+   Modalità: contro i bot (1–3) oppure ONLINE (host-autoritativo: l'host
+   simula tutto e trasmette le posizioni ~15 volte al secondo; gli ospiti
+   mandano solo le frustate). I posti liberi online li giocano i bot.
+   Grafica semplice (div + emoji), aggiornata senza rifare la schermata.
    ========================================================= */
 (function () {
   "use strict";
 
-  var NOMI_BOT = { 1: "🤖 Furia", 2: "🤖 Saetta", 3: "🤖 Tornado" };
-  var COLORI = ["#ffd43b", "#ff6b6b", "#4dabf7", "#51cf66"]; // giocatore = giallo
-
-  // costanti (posizione 0..1; velocità in frazioni di pista al secondo)
+  var COLORI = ["#ffd43b", "#ff6b6b", "#4dabf7", "#51cf66"];
   var V_BASE = 0.055, V_BOOST = 0.165, V_SFIN = 0.018;
   var BOOST_MS = 280, COST = 13, REGEN = 16, REGEN_SFIN = 22, SFIN_MS = 3000, STAM_MAX = 100;
+  function botParam(diff) { return { S: diff === "facile" ? 42 : diff === "difficile" ? 18 : 28, I: diff === "facile" ? 520 : diff === "difficile" ? 290 : 350 }; }
+  function nomeBot(i) { return "🤖 Bot " + i; }
 
   function assicuraStile() {
     if (document.getElementById("sg-horto-css")) return;
@@ -8832,11 +8828,11 @@ window.SG_SIPERO = {
       ".ho-nome{position:absolute;left:32px;top:8px;font-size:.72rem;font-weight:800;color:var(--testo-tenue);z-index:1;",
         "white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%;}",
       ".ho-cav{position:absolute;bottom:4px;left:1%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;",
-        "transition:left .06s linear;will-change:left;}",
+        "transition:left .09s linear;will-change:left;}",
       ".ho-cav .em{font-size:1.7rem;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5));}",
       ".ho-cav.sfin .em{opacity:.5;}",
       ".ho-stam{width:46px;height:7px;border-radius:4px;background:rgba(0,0,0,.45);overflow:hidden;border:1px solid rgba(255,255,255,.25);}",
-      ".ho-stam .fill{height:100%;width:100%;border-radius:4px;transition:width .08s linear;}",
+      ".ho-stam .fill{height:100%;width:100%;border-radius:4px;transition:width .1s linear;}",
       ".ho-frusta{width:100%;min-height:76px;border:0;border-radius:18px;cursor:pointer;font-family:inherit;font-weight:900;",
         "font-size:1.5rem;color:#241f00;background:linear-gradient(135deg,#ffe58a,var(--accento) 60%,var(--accento-scuro));",
         "box-shadow:0 8px 22px rgba(224,169,10,.35);-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;}",
@@ -8848,180 +8844,315 @@ window.SG_SIPERO = {
     document.head.appendChild(s);
   }
 
-  // suoni/vibrazione leggeri
   function frustaFX() { try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {}
     var c = SG.audioCtx && SG.audioCtx(); if (!c) return;
     try { var t = c.currentTime, o = c.createOscillator(), g = c.createGain();
       o.type = "square"; o.frequency.setValueAtTime(300, t); o.frequency.exponentialRampToValueAtTime(150, t + 0.05);
       g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
-      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.07);
-    } catch (e) {} }
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.07); } catch (e) {} }
   function traguardoFX() { try { if (navigator.vibrate) navigator.vibrate([0, 40, 60, 40]); } catch (e) {}
     var c = SG.audioCtx && SG.audioCtx(); if (!c) return;
     try { [523, 659, 784, 1046].forEach(function (f, i) { var t = c.currentTime + i * 0.1, o = c.createOscillator(), g = c.createGain();
       o.type = "triangle"; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
       o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.2); }); } catch (e) {} }
 
-  function corsa(t, nRivali, diff) {
-    assicuraStile();
-    var el = t.el;
-    var N = Math.min(4, 1 + Math.max(1, nRivali));
-    var nomi = []; nomi[0] = (t.giocatori && t.giocatori[0]) || "Tu";
-    for (var i = 1; i < N; i++) nomi[i] = NOMI_BOT[i];
-    // parametri bot per difficoltà
-    var SOGLIA = diff === "facile" ? 42 : diff === "difficile" ? 18 : 28;
-    var INTER = diff === "facile" ? 520 : diff === "difficile" ? 290 : 350;
+  // ---------- fisica pura ----------
+  function nuovoCav(umano, id) { return { pos: 0, stam: STAM_MAX, boostU: 0, sfin: false, sfinU: 0, umano: !!umano, id: id || null, nextClick: 0, arr: false }; }
+  function frusta(h, now) { if (h.sfin || h.arr) return false; h.stam -= COST; h.boostU = now + BOOST_MS; if (h.stam <= 0) { h.stam = 0; h.sfin = true; h.sfinU = now + SFIN_MS; h.boostU = 0; } return true; }
+  function botPensa(h, now, S, I) { if (h.sfin || h.arr || now < h.nextClick) return; if (h.stam <= S + Math.random() * 8) return; frusta(h, now); h.nextClick = now + I + Math.random() * 120; }
+  function passoTutti(cav, now, dt, S, I, arrivi) {
+    for (var k = 0; k < cav.length; k++) {
+      var h = cav[k]; if (h.arr) continue;
+      if (!h.umano) botPensa(h, now, S, I);
+      if (h.sfin && now >= h.sfinU) h.sfin = false;
+      var v = h.sfin ? V_SFIN : (now < h.boostU ? V_BOOST : V_BASE);
+      h.pos += v * dt;
+      if (h.sfin) h.stam = Math.min(STAM_MAX, h.stam + REGEN_SFIN * dt);
+      else if (now >= h.boostU) h.stam = Math.min(STAM_MAX, h.stam + REGEN * dt);
+      if (h.pos >= 1) { h.pos = 1; h.arr = true; arrivi.push(k); }
+    }
+  }
+  function snap(cav, fase, conto, nomi) {
+    return { t: "snap", fase: fase, conto: conto, N: cav.length, nomi: nomi,
+      cav: cav.map(function (h) { return { p: +h.pos.toFixed(4), s: Math.round(h.stam), f: h.sfin ? 1 : 0, a: h.arr ? 1 : 0 }; }) };
+  }
 
-    var cav = [];
-    for (i = 0; i < N; i++) cav.push({ pos: 0, stam: STAM_MAX, boostU: 0, sfin: false, sfinU: 0, umano: i === 0, nextClick: 0, arr: false });
-
-    var arrivi = [];         // ordine di arrivo (indici)
-    var stato = "via";       // "via" (countdown) | "corsa" | "fine"
-    var partenza = 0, finito = false, raf = null, ultimo = 0;
-
-    // ---- schermata (montata una volta; poi aggiorno solo posizioni/stamina) ----
+  // ---------- schermo condiviso (montato una volta; poi aggiorno solo posizioni/barra) ----------
+  function costruisci(t, N, nomi, io, cb) {
+    assicuraStile(); var el = t.el;
     var s = t.schermata({ icona: "🐎", titolo: "Horto Muso", sotto: "Corsa al galoppo",
-      indietro: function () { if (window.confirm("Uscire dalla corsa?")) { stop(); t.esci(); } } });
-    var info = el("div", { class: "ho-info", text: "Pronti…" });
-    s._contenuto.appendChild(info);
-    var pista = el("div", { class: "ho-pista" });
-    var cavEl = [], fillEl = [];
-    for (i = 0; i < N; i++) {
-      var lane = el("div", { class: "ho-lane" + (i === 0 ? " mia" : "") });
-      lane.appendChild(el("div", { class: "ho-num", style: "background:" + COLORI[i], text: String(i + 1) }));
-      lane.appendChild(el("div", { class: "ho-nome", text: nomi[i] }));
+      indietro: function () { if (window.confirm("Uscire dalla corsa?")) cb.onEsci(); } });
+    var info = el("div", { class: "ho-info", text: "Pronti…" }); s._contenuto.appendChild(info);
+    var pista = el("div", { class: "ho-pista" }); var cavEl = [], fillEl = null;
+    for (var i = 0; i < N; i++) {
+      var lane = el("div", { class: "ho-lane" + (i === io ? " mia" : "") });
+      lane.appendChild(el("div", { class: "ho-num", style: "background:" + COLORI[i % 4], text: String(i + 1) }));
+      lane.appendChild(el("div", { class: "ho-nome", text: nomi[i] + (i === io ? " (tu)" : "") }));
       lane.appendChild(el("div", { class: "ho-tragu" }));
       var c = el("div", { class: "ho-cav" });
-      if (i === 0) { // barra stamina SOPRA il cavallo del giocatore
-        var bar = el("div", { class: "ho-stam" });
-        var fill = el("div", { class: "fill", style: "background:#51cf66" });
-        bar.appendChild(fill); c.appendChild(bar); fillEl[i] = fill;
-      }
+      if (i === io) { var bar = el("div", { class: "ho-stam" }); var f = el("div", { class: "fill", style: "background:#51cf66" }); bar.appendChild(f); c.appendChild(bar); fillEl = f; }
       c.appendChild(el("span", { class: "em", text: "🐎" }));
-      lane.appendChild(c); cavEl[i] = c;
-      pista.appendChild(lane);
+      lane.appendChild(c); cavEl[i] = c; pista.appendChild(lane);
     }
     s._contenuto.appendChild(pista);
-
-    var frusta = el("button", { class: "ho-frusta", text: "🇮 Pronti…", disabled: "disabled" });
-    frusta.addEventListener("pointerdown", function (e) { e.preventDefault(); frustata(); });
-    s._piede.appendChild(frusta);
-    function suTasto(e) { if (e.code === "Space" || e.key === " ") { e.preventDefault(); frustata(); } }
+    var bFr = el("button", { class: "ho-frusta", text: "🚦 Pronti…", disabled: "disabled" });
+    bFr.addEventListener("pointerdown", function (e) { e.preventDefault(); cb.onFrusta(); });
+    s._piede.appendChild(bFr);
+    function suTasto(e) { if (e.code === "Space" || e.key === " ") { e.preventDefault(); cb.onFrusta(); } }
     document.addEventListener("keydown", suTasto);
     t.mostra(s);
-
-    function stop() { finito = true; if (raf) cancelAnimationFrame(raf); raf = null; document.removeEventListener("keydown", suTasto); }
-
-    function frustata() {
-      if (stato !== "corsa") return;
-      var me = cav[0];
-      if (me.sfin || me.arr) return;
-      var now = performance.now();
-      me.stam -= COST; me.boostU = now + BOOST_MS;
-      if (me.stam <= 0) { me.stam = 0; me.sfin = true; me.sfinU = now + SFIN_MS; me.boostU = 0; }
-      frustaFX();
+    return { info: info, cavEl: cavEl, fillEl: fillEl, frusta: bFr, io: io, rimuovi: function () { document.removeEventListener("keydown", suTasto); } };
+  }
+  function disegna(ref, sn) {
+    for (var k = 0; k < sn.N; k++) { var c = sn.cav[k]; if (ref.cavEl[k]) { ref.cavEl[k].style.left = (1 + c.p * 92).toFixed(2) + "%"; ref.cavEl[k].classList.toggle("sfin", !!c.f); } }
+    var me = sn.cav[ref.io] || sn.cav[0], b = ref.frusta;
+    if (ref.fillEl) { ref.fillEl.style.width = me.s + "%"; ref.fillEl.style.background = me.f ? "#ff6b6b" : (me.s > 40 ? "#51cf66" : me.s > 18 ? "#ffd43b" : "#ff922b"); }
+    if (sn.fase === "via") { b.disabled = true; b.className = "ho-frusta"; b.textContent = sn.conto > 0 ? "🚦 " + sn.conto : "VIA! 🏁"; ref.info.textContent = sn.conto > 0 ? String(sn.conto) : "VIA! 🏁"; }
+    else if (sn.fase === "corsa") {
+      if (me.a) { b.disabled = true; b.className = "ho-frusta"; b.textContent = "🏁 Arrivato!"; }
+      else if (me.f) { b.disabled = true; b.className = "ho-frusta sfin"; b.textContent = "😵 SFINITO!"; }
+      else { b.disabled = false; b.className = "ho-frusta"; b.textContent = "🏇 FRUSTA! (" + me.s + "%)"; }
+      var mx = 0; for (k = 0; k < sn.N; k++) if (sn.cav[k].p > mx) mx = sn.cav[k].p;
+      ref.info.textContent = me.p >= mx ? "🥇 Sei in testa!" : "Dai, frusta! 🏇";
     }
+  }
 
-    function botPensa(h, now) {
-      if (h.sfin || h.arr) return;
-      if (now < h.nextClick) return;
-      if (h.stam <= SOGLIA + Math.random() * 8) return;         // risparmia energia
-      h.stam -= COST; h.boostU = now + BOOST_MS;
-      if (h.stam <= 0) { h.stam = 0; h.sfin = true; h.sfinU = now + SFIN_MS; h.boostU = 0; }
-      h.nextClick = now + INTER + Math.random() * 120;
+  function classificaDa(cav, arrivi) {
+    var resto = []; for (var k = 0; k < cav.length; k++) if (arrivi.indexOf(k) < 0) resto.push(k);
+    resto.sort(function (a, b) { return cav[b].pos - cav[a].pos; });
+    return arrivi.concat(resto);
+  }
+  function renderFine(t, ord, nomi, io, cb) {
+    var el = t.el, mioPosto = ord.indexOf(io) + 1, vinto = mioPosto === 1;
+    var s = t.schermata({ icona: vinto ? "🏆" : "🏁", titolo: vinto ? "Hai vinto!" : "Arrivato " + mioPosto + "°", sotto: "Horto Muso" });
+    var med = ["🥇", "🥈", "🥉", "4️⃣"];
+    var box = el("div", { style: "display:flex;flex-direction:column;gap:8px;margin-top:6px" });
+    ord.forEach(function (idx, p) {
+      box.appendChild(el("div", { style: "display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:" + (idx === io ? "rgba(255,202,58,.18)" : "rgba(255,255,255,.05)") + (idx === io ? ";border:1px solid var(--accento)" : "") }, [
+        el("span", { style: "font-size:1.4rem", text: med[p] || (p + 1 + "°") }),
+        el("span", { style: "font-size:1.4rem", text: "🐎" }),
+        el("span", { style: "flex:1;font-weight:800", text: nomi[idx] + (idx === io ? " (tu)" : "") })
+      ]));
+    });
+    s._contenuto.appendChild(box);
+    if (cb.sonoHost || cb.locale) {
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rigioca", onclick: cb.onRigioca }));
+      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    } else {
+      s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa dell'host per un'altra corsa…" }));
+      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     }
+    t.mostra(s);
+  }
 
-    function passo(now, dt) {
-      for (var k = 0; k < N; k++) {
-        var h = cav[k]; if (h.arr) continue;
-        if (!h.umano) botPensa(h, now);
-        // sfinimento finito?
-        if (h.sfin && now >= h.sfinU) h.sfin = false;
-        // velocità
-        var v = h.sfin ? V_SFIN : (now < h.boostU ? V_BOOST : V_BASE);
-        h.pos += v * dt;
-        // energia: si ricarica solo se non sta "spingendo"
-        if (h.sfin) h.stam = Math.min(STAM_MAX, h.stam + REGEN_SFIN * dt);
-        else if (now >= h.boostU) h.stam = Math.min(STAM_MAX, h.stam + REGEN * dt);
-        // arrivo
-        if (h.pos >= 1) { h.pos = 1; h.arr = true; arrivi.push(k); }
-      }
-    }
-
-    function vista() {
-      for (var k = 0; k < N; k++) {
-        var h = cav[k];
-        cavEl[k].style.left = (1 + h.pos * 92).toFixed(2) + "%";
-        cavEl[k].classList.toggle("sfin", h.sfin);
-      }
-      var me = cav[0], f = fillEl[0];
-      f.style.width = me.stam.toFixed(0) + "%";
-      f.style.background = me.sfin ? "#ff6b6b" : (me.stam > 40 ? "#51cf66" : me.stam > 18 ? "#ffd43b" : "#ff922b");
-      if (me.sfin) { frusta.className = "ho-frusta sfin"; frusta.textContent = "😵 SFINITO!"; frusta.disabled = true; }
-      else { frusta.className = "ho-frusta"; frusta.textContent = "🏇 FRUSTA! (" + me.stam.toFixed(0) + "%)"; frusta.disabled = false; }
-    }
-
-    function giro(ts) {
+  // ========================================================
+  //  LOCALE — tu (corsia 0) contro 1–3 bot
+  // ========================================================
+  function corsa(t, nRivali, diff) {
+    var N = Math.min(4, 1 + Math.max(1, nRivali));
+    var bp = botParam(diff), nomi = [(t.giocatori && t.giocatori[0]) || "Tu"], cav = [nuovoCav(true, "io")];
+    for (var i = 1; i < N; i++) { cav.push(nuovoCav(false)); nomi.push("🤖 " + ["Furia", "Saetta", "Tornado"][i - 1]); }
+    var fase = "via", conto = 3, raf = null, toC = null, ultimo = 0, primoArr = 0, finito = false, arrivi = [];
+    var ref = costruisci(t, N, nomi, 0, {
+      onFrusta: function () { if (fase === "corsa" && frusta(cav[0], performance.now())) frustaFX(); },
+      onEsci: function () { stop(); t.esci(); }
+    });
+    function stop() { finito = true; if (raf) cancelAnimationFrame(raf); if (toC) clearInterval(toC); ref.rimuovi(); }
+    function frame(ts) {
       if (finito) return;
       if (!ultimo) ultimo = ts;
-      var dt = Math.min(0.05, (ts - ultimo) / 1000); ultimo = ts;
-      var now = performance.now();
-      if (stato === "corsa") {
-        passo(now, dt);
-        vista();
-        if (cav[0].arr) return fineCorsa();               // finisco quando arrivo IO (vedo il mio piazzamento)
-        var pos = cav[0].pos, primo = Math.max.apply(null, cav.map(function (x) { return x.pos; }));
-        info.textContent = cav[0].pos >= primo ? "🥇 Sei in testa!" : "Dai, frusta! 🏇";
-      }
-      raf = requestAnimationFrame(giro);
+      var dt = Math.min(0.05, (ts - ultimo) / 1000); ultimo = ts; var now = performance.now();
+      passoTutti(cav, now, dt, bp.S, bp.I, arrivi);
+      if (arrivi.length && !primoArr) primoArr = now;
+      disegna(ref, snap(cav, "corsa", 0, nomi));
+      var tutti = cav.every(function (h) { return h.arr; });
+      if (tutti || (cav[0].arr && now - primoArr > 4000)) return fine();
+      raf = requestAnimationFrame(frame);
     }
-
-    function fineCorsa() {
-      stato = "fine"; stop();
-      // classifica: prima gli arrivati (in ordine), poi gli altri per posizione
-      var resto = []; for (var k = 0; k < N; k++) if (arrivi.indexOf(k) < 0) resto.push(k);
-      resto.sort(function (a, b) { return cav[b].pos - cav[a].pos; });
-      var ord = arrivi.concat(resto);
-      var mioPosto = ord.indexOf(0) + 1;
-      traguardoFX();
-      renderFine(t, ord, nomi, mioPosto, {
-        onRigioca: function () { corsa(t, nRivali, diff); },
-        onEsci: t.esci
-      });
+    function fine() {
+      stop(); traguardoFX();
+      var ord = classificaDa(cav, arrivi);
+      renderFine(t, ord, nomi, 0, { locale: true, onRigioca: function () { corsa(t, nRivali, diff); }, onEsci: t.esci });
     }
-
-    // ---- countdown 3-2-1-VIA ----
-    var conto = 3;
-    info.textContent = "3"; frusta.textContent = "🚦 Pronti…";
-    var toC = setInterval(function () {
+    disegna(ref, snap(cav, "via", 3, nomi));
+    toC = setInterval(function () {
       if (finito) { clearInterval(toC); return; }
       conto--;
-      if (conto > 0) { info.textContent = String(conto); }
-      else if (conto === 0) { info.textContent = "VIA! 🏁"; }
-      else {
-        clearInterval(toC);
-        stato = "corsa"; ultimo = 0; partenza = performance.now();
-        vista(); raf = requestAnimationFrame(giro);
-      }
+      disegna(ref, snap(cav, "via", Math.max(0, conto), nomi));
+      if (conto < 0) { clearInterval(toC); toC = null; fase = "corsa"; ultimo = 0; raf = requestAnimationFrame(frame); }
     }, 700);
   }
 
-  function renderFine(t, ord, nomi, mioPosto, cb) {
+  // ========================================================
+  //  ONLINE — host = corsia 0; gli ospiti prendono 1..3; i posti
+  //  liberi li giocano i bot. Host-autoritativo: simula e trasmette.
+  // ========================================================
+  function hostHorto(t, diff) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var bp = botParam(diff), codice = "…", pronta = false;
+    var posti = { 1: null, 2: null, 3: null }, nomiU = { 1: null, 2: null, 3: null };
+    var cav = null, nomi = null, ref = null, fase = "lobby", conto = 3, loop = null, toC = null, ultimo = 0, primoArr = 0, arrivi = [], ord = null, rete = null;
+
+    function seatDi(id) { for (var s = 1; s <= 3; s++) if (posti[s] === id) return s; return -1; }
+    function postoLibero() { for (var s = 1; s <= 3; s++) if (!posti[s]) return s; return 0; }
+    function quanti() { var n = 0; for (var s = 1; s <= 3; s++) if (posti[s]) n++; return n; }
+
+    rete = SGNet.ospita("horto", {
+      onCodice: function (c) { codice = c; if (fase === "lobby") disegnaLobby(); },
+      onConnesso: function () { pronta = true; if (fase === "lobby") disegnaLobby(); },
+      onAddio: function (id) {
+        var s = seatDi(id); if (s < 0) return;
+        posti[s] = null;
+        if (fase === "lobby") { nomiU[s] = null; disegnaLobby(); }
+        else if (cav) { cav[s].umano = false; nomi[s] = nomeBot(s); }   // il posto passa al bot
+      },
+      onMsg: function (id, m) {
+        if (!m || !m.t) return;
+        if (m.t === "join") {
+          if (fase === "lobby" && seatDi(id) < 0) { var p = postoLibero(); if (p > 0) { posti[p] = id; nomiU[p] = String(m.nome || "Amico").slice(0, 16); } }
+          disegnaLobby(); rete.invia({ t: "lobby", to: id, codice: codice });
+        } else if (m.t === "frusta" && fase === "corsa") {
+          var sm = seatDi(id); if (sm > 0 && cav[sm] && cav[sm].umano) frusta(cav[sm], performance.now());
+        }
+      },
+      onErrore: function () { senzaRete(t); }
+    });
+
+    function inizia() {
+      fase = "via"; conto = 3; arrivi = []; primoArr = 0; ord = null;
+      nomi = [(t.giocatori && t.giocatori[0]) || "Host"]; cav = [nuovoCav(true, "host")];
+      for (var s = 1; s <= 3; s++) {
+        if (posti[s]) { cav.push(nuovoCav(true, posti[s])); nomi.push(nomiU[s] || ("Amico " + s)); rete.invia({ t: "seat", to: posti[s], seat: s, nomi: null }); }
+        else { cav.push(nuovoCav(false)); nomi.push(nomeBot(s)); }
+      }
+      ref = costruisci(t, 4, nomi, 0, {
+        onFrusta: function () { if (fase === "corsa" && frusta(cav[0], performance.now())) frustaFX(); },
+        onEsci: function () { chiudi(); t.esci(); }
+      });
+      bcast();
+      toC = setInterval(function () {
+        conto--; bcast();
+        if (conto < 0) { clearInterval(toC); toC = null; fase = "corsa"; ultimo = performance.now(); loop = setInterval(tick, 66); }
+      }, 700);
+    }
+    function tick() {
+      var now = performance.now(), dt = Math.min(0.1, (now - ultimo) / 1000); ultimo = now;
+      passoTutti(cav, now, dt, bp.S, bp.I, arrivi);
+      if (arrivi.length && !primoArr) primoArr = now;
+      bcast();
+      var tutti = cav.every(function (h) { return h.arr; });
+      if (tutti || (primoArr && now - primoArr > 5000)) { clearInterval(loop); loop = null; fineCorsa(); }
+    }
+    function bcast() { var sn = snap(cav, fase, Math.max(0, conto), nomi); rete.inviaVeloce(sn); if (ref) disegna(ref, sn); }
+    function fineCorsa() {
+      fase = "fine"; ord = classificaDa(cav, arrivi);
+      rete.invia({ t: "fine", ord: ord, nomi: nomi });
+      if (ref) { ref.rimuovi(); ref = null; } traguardoFX();
+      renderFine(t, ord, nomi, 0, { sonoHost: true, onRigioca: function () { inizia(); }, onEsci: function () { chiudi(); t.esci(); } });
+    }
+    function chiudi() { if (loop) clearInterval(loop); if (toC) clearInterval(toC); if (ref) ref.rimuovi(); if (rete) rete.chiudi(); }
+
+    function disegnaLobby() {
+      if (fase !== "lobby") return;
+      renderLobby(t, { codice: codice, pronta: pronta,
+        seggi: [(t.giocatori && t.giocatori[0]) || "Host", nomiU[1], nomiU[2], nomiU[3]], umani: quanti() },
+        { onComincia: inizia, onEsci: function () { chiudi(); t.esci(); } });
+    }
+    disegnaLobby();
+  }
+
+  function ospiteHorto(t, codice) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var el = t.el, S = { rete: null, myId: null, nome: "", mySeat: 0, ref: null, fase: null, nomi: null, N: 0, msg: null };
+    schermaNome();
+    function schermaNome() {
+      var s = t.schermata({ icona: "🐎", titolo: "Entra nella corsa", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
+      var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
+      S.msg = el("div", { class: "link-avviso" });
+      s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+        try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
+        S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
+      } }));
+      t.mostra(s);
+    }
+    function collega() {
+      S.rete = SGNet.entra(codice, {
+        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome }); attesa();
+          setTimeout(function () { if (!S.ref && S.fase === null && S.msg2) S.msg2.textContent = "Non trovo la partita: controlla il codice o attendi l'host…"; }, 8000); },
+        onMsg: function (m) {
+          if (!m || !m.t) return;
+          if (m.t === "seat") { if (m.to === S.myId) { S.mySeat = m.seat; if (S.ref && S.ref.io !== m.seat) rebuild(); } }
+          else if (m.t === "lobby") { if (!S.ref) attesa(); }
+          else if (m.t === "snap") {
+            if (!S.ref || S.fase === "fine") build(m);
+            S.fase = m.fase; disegna(S.ref, m);
+          } else if (m.t === "fine") {
+            if (S.ref) { S.ref.rimuovi(); S.ref = null; } S.fase = "fine"; traguardoFX();
+            renderFine(t, m.ord, m.nomi, S.mySeat, { sonoHost: false, onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+          }
+        },
+        onChiuso: function () { errore(t, "Collegamento perso. L'host potrebbe aver chiuso la corsa."); },
+        onErrore: function () { errore(t, "Problema di collegamento. Riprova."); }
+      });
+    }
+    function build(sn) {
+      if (S.ref) S.ref.rimuovi();
+      S.nomi = sn.nomi; S.N = sn.N;
+      S.ref = costruisci(t, sn.N, sn.nomi, S.mySeat || 0, {
+        onFrusta: function () { if (S.fase === "corsa" && S.rete) S.rete.invia({ t: "frusta" }); },
+        onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); }
+      });
+    }
+    function rebuild() { if (S.nomi) build({ nomi: S.nomi, N: S.N }); }
+    function attesa() {
+      if (S.ref) return;
+      var s = t.schermata({ icona: "🐎", titolo: "Horto Muso · Sala", sotto: "Stanza " + codice.toUpperCase(),
+        indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+      S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "✅ Sei dentro! In attesa che l'host cominci…" });
+      s._contenuto.appendChild(S.msg2); t.mostra(s);
+    }
+  }
+
+  function renderLobby(t, vm, cb) {
     var el = t.el;
-    var vinto = mioPosto === 1;
-    var s = t.schermata({ icona: vinto ? "🏆" : "🏁", titolo: vinto ? "Hai vinto!" : "Arrivato " + mioPosto + "°", sotto: "Horto Muso" });
-    var medaglie = ["🥇", "🥈", "🥉", "4️⃣"];
-    var ol = el("div", { style: "display:flex;flex-direction:column;gap:8px;margin-top:6px" });
-    ord.forEach(function (idx, p) {
-      ol.appendChild(el("div", { style: "display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:" + (idx === 0 ? "rgba(255,202,58,.18)" : "rgba(255,255,255,.05)") + (idx === 0 ? ";border:1px solid var(--accento)" : "") }, [
-        el("span", { style: "font-size:1.4rem", text: medaglie[p] || (p + 1 + "°") }),
-        el("span", { style: "font-size:1.4rem", text: "🐎" }),
-        el("span", { style: "flex:1;font-weight:800", text: nomi[idx] + (idx === 0 ? " (tu)" : "") })
+    var s = t.schermata({ icona: "🐎", titolo: "Horto Muso · Lobby", sotto: "Ognuno dal suo telefono",
+      indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
+    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
+    s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
+    if (vm.codice && vm.codice !== "…") {
+      var link = SG.creaLink({ gioco: "horto", stanza: vm.codice });
+      var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
+      s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
+        onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
+      s._contenuto.appendChild(campo);
+    }
+    s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
+      text: vm.pronta ? "🟢 Stanza pronta — manda il codice" : "🟡 Sto aprendo la stanza…" }));
+    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Cavalli (i posti liberi li giocano i bot)" }));
+    ["🐎 " + vm.seggi[0] + " (tu)", vm.seggi[1], vm.seggi[2], vm.seggi[3]].forEach(function (n, i) {
+      s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:rgba(255,255,255,.06)" }, [
+        el("span", { style: "width:16px;height:16px;border-radius:50%;flex:0 0 auto;background:" + COLORI[i % 4] }),
+        el("span", { style: "flex:1", text: i === 0 ? n : (n ? "🐎 " + n : "🤖 bot") })
       ]));
     });
-    s._contenuto.appendChild(ol);
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rigioca", onclick: cb.onRigioca }));
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    var b = el("button", { class: "btn btn-primario", text: "Comincia la corsa ▶", onclick: cb.onComincia });
+    s._piede.appendChild(b);
+    s._piede.appendChild(el("p", { class: "modulo-nota", text: "Puoi cominciare quando vuoi: i posti vuoti diventano bot." }));
+    t.mostra(s);
+  }
+
+  function errore(t, txt) {
+    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    s._contenuto.appendChild(t.el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: t.esci }));
+    t.mostra(s);
+  }
+  function senzaRete(t) {
+    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5",
+      text: "La modalità online funziona quando il gioco è aperto dal sito pubblicato. Da un file locale non è disponibile: intanto corri contro i bot." }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
   }
 
@@ -9029,19 +9160,29 @@ window.SG_SIPERO = {
     id: "horto",
     nome: "Horto Muso",
     icona: "🐎",
-    descrizione: "Corsa di cavalli: frusta per accelerare, ma occhio all'energia! Se ti sfinisci il cavallo si pianta. Batti i cavalli del computer.",
+    descrizione: "Corsa di cavalli: frusta per accelerare, ma occhio all'energia! Contro i bot o online, ognuno dal suo telefono.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 1,
     regole: [
       "Corsie <b>dritte</b>, stessa distanza per tutti: vince davvero il più bravo (niente pista ovale).",
       "I cavalli corrono già da soli a una <b>velocità minima</b>. Tu hai il tasto <b>FRUSTA</b>: ogni click dà una spinta.",
-      "Ogni frustata consuma <b>energia</b> (la barra sopra il tuo cavallo). Se non frusti, l'energia si <b>ricarica</b> da sola.",
-      "Se l'energia arriva a <b>zero</b> vai in <b>sfinimento</b>: il cavallo rallenta e per <b>3 secondi</b> non puoi frustare (intanto recuperi).",
-      "Vince il <b>primo</b> che taglia il traguardo. Dosa le frustate!"
+      "Ogni frustata consuma <b>energia</b> (la barra sopra il tuo cavallo). Se non frusti, l'energia si <b>ricarica</b>.",
+      "Se l'energia arriva a <b>zero</b> vai in <b>sfinimento</b>: rallenti e per <b>3 secondi</b> non puoi frustare.",
+      "Vince il <b>primo</b> che taglia il traguardo. Dosa le frustate!",
+      "Modalità: <b>contro i bot</b> (1–3) oppure <b>online</b> (ognuno dal suo telefono; i posti liberi li giocano i bot)."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
-      dove.rivali = 3; dove.difficolta = "medio";
-      box.appendChild(el("div", { class: "etichetta", text: "Quanti avversari (bot)" }));
+      dove.modo = "bot"; dove.rivali = 3; dove.difficolta = "medio";
+      var bBot, bOnl, boxRiv, notaOnline;
+      function selM(m) { dove.modo = m; bBot.className = "modo-chip" + (m === "bot" ? " attiva" : ""); bOnl.className = "modo-chip" + (m === "online" ? " attiva" : ""); boxRiv.hidden = (m !== "bot"); notaOnline.hidden = (m !== "online"); }
+      bBot = el("button", { class: "modo-chip attiva", onclick: function () { selM("bot"); } }, [
+        el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro i bot" }), el("div", { class: "ms", text: "Da solo" })])]);
+      bOnl = el("button", { class: "modo-chip", onclick: function () { selM("online"); } }, [
+        el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online" }), el("div", { class: "ms", text: "Ognuno dal suo" })])]);
+      box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
+      box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
+      boxRiv = el("div", {});
+      boxRiv.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Quanti avversari (bot)" }));
       var wR = el("div", { style: "display:flex;gap:8px" });
       [1, 2, 3].forEach(function (n) {
         var b = el("button", { class: "modo-chip" + (n === 3 ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {
@@ -9049,7 +9190,7 @@ window.SG_SIPERO = {
         } }, [el("div", { class: "mt", text: String(n) })]);
         b.style.flex = "1"; wR.appendChild(b);
       });
-      box.appendChild(wR);
+      boxRiv.appendChild(wR); box.appendChild(boxRiv);
       box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei bot" }));
       var wD = el("div", { style: "display:flex;gap:8px" });
       [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]].forEach(function (d) {
@@ -9059,11 +9200,17 @@ window.SG_SIPERO = {
         b.style.flex = "1"; wD.appendChild(b);
       });
       box.appendChild(wD);
-      box.appendChild(el("p", { class: "modulo-nota", style: "margin-top:10px", text: "Da solo contro il computer. Tieni premuto il ritmo giusto: frusta, ma non finire l'energia!" }));
+      notaOnline = el("div", { class: "link-avviso", hidden: "hidden" });
+      notaOnline.textContent = (window.SGNet && SGNet.disponibile())
+        ? "Apri una stanza e manda il codice: gli altri corrono dal loro telefono. I posti liberi li giocano i bot."
+        : "Qui il collegamento non è disponibile: funziona quando il gioco è aperto dal sito pubblicato online.";
+      box.appendChild(notaOnline);
     },
     avvia: function (t) {
       var imp = t.impostazioni || {};
-      corsa(t, imp.rivali || 3, imp.difficolta || "medio");
+      if (t.linkParams && t.linkParams.stanza) return ospiteHorto(t, t.linkParams.stanza);
+      if (imp.modo === "online") return hostHorto(t, imp.difficolta || "medio");
+      return corsa(t, imp.rivali || 3, imp.difficolta || "medio");
     }
   });
 })();

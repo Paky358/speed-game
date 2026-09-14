@@ -4,6 +4,19 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 14 settembre 2026 (21) — Horto Muso: modalità online (host-autoritativo, in tempo reale)
+- `js/games/horto.js`: aggiunto `hostHorto`/`ospiteHorto` + lobby. L'host = corsia 0, gli ospiti prendono
+  1..3 (in ordine d'arrivo), i posti liberi li giocano i **bot**. **Host-autoritativo**: l'host simula tutte
+  le corsie (`setInterval` ~66ms) e trasmette lo **snapshot** delle posizioni con `rete.inviaVeloce` (retain
+  off) ~15 volte/s; gli ospiti mandano solo `{t:"frusta"}`. Countdown e `{t:"fine", ord}` con `rete.invia`
+  (retain). Seat comunicato con `{t:"seat", to:id, seat}`; l'ospite filtra per `to` e mostra la SUA barra.
+- Refactor condiviso: `costruisci`/`disegna`/`passoTutti`/`frusta`/`botPensa`/`snap`/`classificaDa`/`renderFine`
+  usati sia dal locale (rAF) sia dall'online (host: sim+broadcast; ospite: render da snapshot). CSS transizione
+  `.ho-cav` alzata a .09s per ammorbidire i ~15Hz di rete.
+- `impostazioni`: modo **Contro i bot** / **Online** (+ nº rivali per il bot, bravura per entrambi).
+- Collaudato in locale (host + 1 ospite): lobby, join, seat corretto (ospite corsia 2 con barra), countdown,
+  corsa simulata dall'host con snapshot all'ospite, traguardo con classifica propagata. Zero errori.
+
 ## 14 settembre 2026 (20) — Nuovo minigioco: Horto Muso (corsa di cavalli, tipo Derby Dash)
 - Nuovo `js/games/horto.js` (id `horto`, categoria **Minigiochi** in `CAT_GIOCO`): corsa a **corsie dritte**
   (niente pista ovale: stessa distanza per tutti). Tu (🐎) contro 1–3 bot; impostazioni: nº rivali + bravura.

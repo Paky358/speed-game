@@ -146,9 +146,12 @@ dal proprio.
   rivali + bravura. Meccaniche: velocità base costante, tasto **FRUSTA** (pointerdown/Spazio) = boost breve;
   ogni frustata consuma energia (barra sopra il tuo cavallo), si ricarica se non spingi; a 0 = **sfinimento**
   (3s, rallenta e frusta bloccata). Loop `requestAnimationFrame` (aggiorna solo `left`/barra, niente
-  ricostruzione); countdown 3-2-1-VIA; classifica finale + Rigioca. Solo vs computer, `giocatoriMin/Max:1`.
-  Nota: rAF non gira col pannello browser nascosto → la corsa si collauda sul telefono (costanti validate a
-  parte: base 18s, a ritmo 11s, bot medio ~10s).
+  ricostruzione); countdown 3-2-1-VIA; classifica finale + Rigioca. **Due modi**: vs bot (rAF) e **online**
+  (`hostHorto`/`ospiteHorto`: host-autoritativo, simula tutto con `setInterval` ~66ms e trasmette gli snapshot
+  delle posizioni con `inviaVeloce` ~15Hz; gli ospiti mandano solo le frustate; i posti liberi = bot).
+  Nota: rAF non gira col pannello browser nascosto → la corsa vs bot si collauda sul telefono (costanti
+  validate a parte: base 18s, a ritmo 11s, bot medio ~10s); l'online (lobby/seat/snapshot/classifica) è stato
+  collaudato host + 1 ospite.
 
 ### Ritocchi a L'Asta e La Patata (13 set 2026)
 - **L'Asta**: si vedono tutti e 4 i round del tema (striscia con icona+nome; quello in corso col contorno
