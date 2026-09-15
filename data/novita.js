@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 59,
+    data: "15 settembre 2026",
+    titolo: "Nuovo gioco: Battaglia Navale 🚢",
+    descrizione: [
+      "La battaglia navale classica! Sistema la tua flotta su una griglia 10×10 e affonda quella dell'avversario, a turni.",
+      "Giochi contro il computer o online con un amico (ognuno vede solo le proprie navi). La trovi nella sezione '1 contro 1'."
+    ]
+  },
+  {
     v: 58,
     data: "15 settembre 2026",
     titolo: "Nuovo tavolo verde nei giochi di carte 🟢",

@@ -4,6 +4,12 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 15 settembre 2026 (36) — Nuovo gioco: Battaglia Navale (nella sezione "1 contro 1")
+- Arriva la **Battaglia Navale** classica. La sezione "Sfida in 2" ora si chiama **"1 contro 1"**.
+- Griglia **10×10** e flotta classica: Portaerei (5), Corazzata (4), Incrociatore (3), Sommergibile (3), Cacciatorpediniere (2).
+- Prima **sistemi le navi** (le giri in orizzontale/verticale o premi "Disponi a caso"), poi **spari a turni**: acqua, colpito, colpito e affondato. Vince chi affonda tutta la flotta.
+- Si gioca **contro il computer** (facile/medio/difficile) o **online** con un amico. Online le tue navi non escono mai dal tuo telefono: nessuno può sbirciare.
+
 ## 15 settembre 2026 (35) — Tavolo verde nuovo per Scopa, Scopa 2vs2 e Scopone
 - Prima le carte a terra si confondevano con quelle in mano e gli avversari stavano tutti ammassati in alto.
 - Ora c'è un vero **tavolo verde**: il **Compagno di fronte** in alto, i **due Rivali ai lati**, le **carte a terra al centro**.

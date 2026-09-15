@@ -18,14 +18,14 @@
   var CATEGORIE = [
     { id: "tutti",  nome: "Tutti",         icona: "🎲" },
     { id: "carte",  nome: "Carte",         icona: "🃏" },
-    { id: "sfida",  nome: "Sfida in 2",    icona: "⚔️" },
+    { id: "sfida",  nome: "1 contro 1",    icona: "⚔️" },
     { id: "festa",  nome: "Festa",         icona: "🎉" },
     { id: "mini",   nome: "Minigiochi",    icona: "🎮" },
     { id: "parole", nome: "Quiz & parole", icona: "🧠" }
   ];
   var CAT_GIOCO = {
     scopa: "carte", scopa2v2: "carte", scopone: "carte",
-    tris: "sfida", drop4: "sfida", hockey: "sfida",
+    tris: "sfida", drop4: "sfida", hockey: "sfida", navale: "sfida",
     asta: "festa", impostore: "festa", sipero: "festa",
     scalinata: "mini", horto: "mini",
     timeline: "parole", nomicose: "parole", patata: "parole"
