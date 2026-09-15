@@ -19,6 +19,7 @@
     { nome: "Cacciatorpediniere", len: 2 }
   ];
   var NTOT = FLOTTA.length;
+  var LET = "ABCDEFGHIJ".split(""); // lettere delle colonne (in alto), i numeri 1-10 per le righe (a sinistra)
 
   // ---------- utilità griglia ----------
   function matrice(v) { var m = []; for (var y = 0; y < N; y++) { m[y] = []; for (var x = 0; x < N; x++) m[y][x] = v; } return m; }
@@ -120,6 +121,15 @@
       ".nav-c.navecolp{background:#e03131;color:#fff}",
       ".nav-c.ok{outline:2px solid #69db7c;outline-offset:-2px}",
       ".nav-c.bad{outline:2px solid #ff6b6b;outline-offset:-2px}",
+      ".nav-c.ante{background:#2f9e57;outline:2px solid #8ce99a;outline-offset:-2px}",
+      ".nav-c.antebad{background:#7a2020;outline:2px solid #ff8787;outline-offset:-2px}",
+      // tabellone con lettere (in alto) e numeri (a sinistra)
+      ".nav-board{display:grid;grid-template-columns:16px repeat(10,1fr);gap:2px;width:min(94vw,342px);margin:0 auto}",
+      ".nav-board.nav-mini{width:min(78vw,272px);grid-template-columns:14px repeat(10,1fr)}",
+      ".nav-lab{display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:rgba(255,255,255,.5)}",
+      // scritta grande tipo \"colpito e affondato\"
+      ".nav-avviso{text-align:center;font-weight:800;font-size:1.02rem;padding:8px 10px;border-radius:12px;margin:2px 0 8px;background:linear-gradient(90deg,#e8590c,#f59f00);color:#fff;box-shadow:0 3px 12px rgba(240,140,0,.45);animation:navPop .28s ease-out}",
+      "@keyframes navPop{0%{transform:scale(.82);opacity:0}100%{transform:scale(1);opacity:1}}",
       ".nav-flotta{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0}",
       ".nav-nave{display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.06);font-size:.78rem}",
       ".nav-nave.fatta{background:rgba(105,219,124,.16);color:#8ce99a}",
@@ -212,21 +222,34 @@
     var turno = "mio";              // mio | attesa (in battaglia)
     var oriz = true;                // orientamento in piazzamento
     var prossima = 0;               // indice nave da piazzare
+    var ante = null;                // anteprima di dove sto per mettere la nave: {x,y} o null
+    var avviso = null, avvisoT = null; // scritta temporanea (es. "colpito e affondato")
     var ioPronto = false, avvPronto = false;
     var canale = null;              // impostato da bot/online
 
-    // ---- piazzamento ----
-    function piazzaAngolo(x, y) {
-      if (prossima >= NTOT) return;
-      var f = FLOTTA[prossima];
-      if (!liberoPer(io.mappa, x, y, f.len, oriz)) { lampeggiaBad(x, y, f.len); return; }
-      poni(io, prossima, f, x, y, oriz); prossima++;
-      suono("colpito"); render();
+    // ---- piazzamento (con ANTEPRIMA: prima proietto dove va la nave, poi confermo) ----
+    function celleAnte() { // celle e validità dell'anteprima corrente (o null)
+      if (ante == null || prossima >= NTOT) return null;
+      var f = FLOTTA[prossima], celle = [], ok = liberoPer(io.mappa, ante.x, ante.y, f.len, oriz), set = {};
+      for (var k = 0; k < f.len; k++) { var cx = ante.x + (oriz ? k : 0), cy = ante.y + (oriz ? 0 : k); if (dentro(cx, cy)) set[cy * N + cx] = true; }
+      return { set: set, ok: ok };
     }
-    function togliUltima() { if (prossima === 0) return; prossima--; var nave = io.navi[prossima]; nave.celle.forEach(function (c) { io.mappa[c.y][c.x] = -1; }); io.navi[prossima] = undefined; io.navi.length = prossima; render(); }
-    function disponiCaso() { var f = flottaCasuale(); io.mappa = f.mappa; io.navi = f.navi; io.sparato = matrice(false); prossima = NTOT; render(); }
-    var badCells = null;
-    function lampeggiaBad(x, y, len) { badCells = []; for (var k = 0; k < len; k++) { var cx = x + (oriz ? k : 0), cy = y + (oriz ? 0 : k); if (dentro(cx, cy)) badCells.push(cy * N + cx); } render(); setTimeout(function () { badCells = null; render(); }, 260); }
+    function toccaCella(x, y) {               // tocco una cella in fase piazzamento
+      if (prossima >= NTOT) return;
+      if (ante && ante.x === x && ante.y === y) { confermaAnte(); return; } // ritocco la stessa cella = conferma
+      ante = { x: x, y: y }; render();        // altrimenti sposto qui l'anteprima
+    }
+    function confermaAnte() {
+      if (ante == null || prossima >= NTOT) return;
+      var f = FLOTTA[prossima];
+      if (!liberoPer(io.mappa, ante.x, ante.y, f.len, oriz)) return; // non ci sta: non faccio nulla
+      poni(io, prossima, f, ante.x, ante.y, oriz); prossima++; ante = null; suono("colpito"); render();
+    }
+    function ruota() { oriz = !oriz; render(); }
+    function togliUltima() { if (prossima === 0) return; prossima--; var nave = io.navi[prossima]; nave.celle.forEach(function (c) { io.mappa[c.y][c.x] = -1; }); io.navi[prossima] = undefined; io.navi.length = prossima; ante = null; render(); }
+    function disponiCaso() { var f = flottaCasuale(); io.mappa = f.mappa; io.navi = f.navi; io.sparato = matrice(false); prossima = NTOT; ante = null; render(); }
+    // scritta temporanea (es. "colpito e affondato")
+    function mostraAvviso(txt) { avviso = txt; clearTimeout(avvisoT); avvisoT = setTimeout(function () { avviso = null; render(); }, 1900); }
 
     function pronto() {
       if (prossima < NTOT) return;
@@ -256,10 +279,12 @@
         if (opt.invia) opt.invia({ t: "esito", x: m.x, y: m.y, e: e.e, celle: e.celle || null, nome: e.nome || null, persa: !!e.persa });
         else if (canale.esitoBot) canale.esitoBot({ x: m.x, y: m.y, e: e.e });
         suono(e.e);
+        if (e.e === "affondato" && !e.persa) mostraAvviso("☠️ Ti hanno affondato: " + e.nome);
         if (e.persa) { fase = "fine"; esitoFine = false; render(); return; }
         turno = "mio"; render();
       } else if (m.t === "esito") {              // esito del MIO colpo
         registraEsito(m);
+        if (m.e === "affondato" && !m.persa) mostraAvviso("💥 Colpito e affondato!" + (m.nome ? " " + m.nome : ""));
         if (m.persa) { fase = "fine"; esitoFine = true; render(); return; }
         turno = "attesa"; render();              // ho sparato, ora tocca all'altro
       }
@@ -281,7 +306,8 @@
       else ricevi(m); // colpo / esito
     }
     function rifaiPiazza() {
-      io = statoVuoto(); attacco = matrice(0); affAvv = 0; prossima = 0; oriz = true;
+      io = statoVuoto(); attacco = matrice(0); affAvv = 0; prossima = 0; oriz = true; ante = null;
+      clearTimeout(avvisoT); avviso = null;
       ioPronto = false; avvPronto = false; esitoFine = null; fase = "piazza"; turno = "mio"; render();
     }
 
@@ -295,16 +321,25 @@
     }
     function cellaMia(x, y, piazzando) {
       var idx = io.mappa[y][x], colp = io.sparato[y][x];
-      var cls = "nav-c ";
-      var txt = "";
+      var cls = "nav-c ", txt = "";
       if (idx >= 0) { cls += colp ? "navecolp" : "nave"; if (colp) txt = "✕"; }
       else { cls += colp ? "acqua" : "mare"; if (colp) txt = "•"; }
-      if (badCells && badCells.indexOf(y * N + x) >= 0) cls += " bad";
+      if (piazzando) { var a = celleAnte(); if (a && a.set[y * N + x]) { cls = "nav-c " + (a.ok ? "ante" : "antebad"); txt = ""; } }
       var puoi = piazzando && prossima < NTOT;
-      return el("div", { class: cls, onclick: puoi ? function () { piazzaAngolo(x, y); } : null, text: txt });
+      return el("div", { class: cls, onclick: puoi ? function () { toccaCella(x, y); } : null, text: txt });
     }
-    function grigliaAttacco() { var g = el("div", { class: "nav-grid" }); for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) g.appendChild(cellaAttacco(x, y)); return g; }
-    function grigliaMia(piazzando) { var g = el("div", { class: "nav-grid" + (piazzando ? "" : " nav-mini") }); for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) g.appendChild(cellaMia(x, y, piazzando)); return g; }
+    function tabellone(celleFn, mini) {
+      var g = el("div", { class: "nav-board" + (mini ? " nav-mini" : "") });
+      g.appendChild(el("div", { class: "nav-lab" }));                                                 // angolo vuoto
+      for (var c = 0; c < N; c++) g.appendChild(el("div", { class: "nav-lab", text: LET[c] }));       // lettere in alto
+      for (var y = 0; y < N; y++) {
+        g.appendChild(el("div", { class: "nav-lab", text: String(y + 1) }));                          // numero a sinistra
+        for (var x = 0; x < N; x++) g.appendChild(celleFn(x, y));
+      }
+      return g;
+    }
+    function grigliaAttacco() { return tabellone(cellaAttacco, false); }
+    function grigliaMia(piazzando) { return tabellone(function (x, y) { return cellaMia(x, y, piazzando); }, !piazzando); }
     function listaFlotta(mostraStato) {
       var w = el("div", { class: "nav-flotta" });
       FLOTTA.forEach(function (f, i) {
@@ -324,20 +359,24 @@
     }
     function renderPiazza() {
       var box = el("div", {});
-      var restano = NTOT - prossima;
+      var a = celleAnte();
       box.appendChild(el("div", { class: "nav-tit", text: prossima < NTOT ? "Sistema le tue navi" : "Flotta pronta!" }));
-      box.appendChild(el("div", { class: "nav-sub", text: prossima < NTOT ? ("Tocca dove mettere: " + FLOTTA[prossima].nome + " (" + FLOTTA[prossima].len + ")") : "Puoi ancora aggiustare, poi premi Pronto." }));
+      var sub;
+      if (prossima >= NTOT) sub = "Puoi ancora aggiustare, poi premi Pronto.";
+      else if (ante && a) sub = a.ok ? ("Anteprima " + FLOTTA[prossima].nome + ": ritocca per confermare, o sposta/ruota.") : "Qui non ci sta: sposta o ruota la nave.";
+      else sub = "Tocca dove mettere la " + FLOTTA[prossima].nome + " (" + FLOTTA[prossima].len + " caselle).";
+      box.appendChild(el("div", { class: "nav-sub", text: sub }));
       box.appendChild(grigliaMia(true));
       box.appendChild(listaFlotta(false));
       var barra = el("div", { style: "display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px" });
-      barra.appendChild(el("button", { class: "btn btn-fantasma", style: "flex:0 1 auto", text: oriz ? "↔️ Orizzontale" : "↕️ Verticale", onclick: function () { oriz = !oriz; render(); } }));
+      barra.appendChild(el("button", { class: "btn btn-fantasma", style: "flex:0 1 auto", text: oriz ? "↔️ Orizzontale" : "↕️ Verticale", onclick: ruota }));
       barra.appendChild(el("button", { class: "btn btn-fantasma", style: "flex:0 1 auto", text: "🎲 A caso", onclick: disponiCaso }));
       if (prossima > 0) barra.appendChild(el("button", { class: "btn btn-fantasma", style: "flex:0 1 auto", text: "↩️ Togli", onclick: togliUltima }));
       box.appendChild(barra);
       var piede = [];
-      var bPronto = el("button", { class: "btn btn-primario", text: "✅ Pronto, si combatte!", onclick: pronto });
-      if (prossima < NTOT) bPronto.setAttribute("disabled", "disabled");
-      piede.push(bPronto);
+      if (prossima >= NTOT) piede.push(el("button", { class: "btn btn-primario", text: "✅ Pronto, si combatte!", onclick: pronto }));
+      else if (ante && a && a.ok) piede.push(el("button", { class: "btn btn-primario", text: "✅ Metti qui", onclick: confermaAnte }));
+      else piede.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Tocca il tabellone per posizionare la nave." }));
       monta("piazza", box, piede);
     }
     function renderAttesa() {
@@ -350,6 +389,7 @@
     }
     function renderBattaglia() {
       var box = el("div", {});
+      if (avviso) box.appendChild(el("div", { class: "nav-avviso", text: avviso }));
       var mieRimaste = io.navi.filter(function (n) { return n && !n.affondata; }).length;
       box.appendChild(el("div", { class: "nav-tit", html: fase === "battaglia" && turno === "mio" ? "🎯 Tocca a te — <b>spara!</b>" : (opt.sonoHost === null ? "🤖 Spara il computer…" : "⏳ Spara " + opt.nomeAvv() + "…") }));
       box.appendChild(el("div", { class: "nav-conta" }, [

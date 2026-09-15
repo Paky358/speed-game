@@ -4,6 +4,12 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 15 settembre 2026 (37) — Battaglia Navale: coordinate, anteprima e "colpito e affondato"
+- Il tabellone ora ha le **lettere (A–J) in alto** e i **numeri (1–10) a sinistra**, come nella battaglia navale vera.
+- Quando sistemi una nave vedi prima l'**anteprima** di dove la stai mettendo: **verde** se ci sta, **rossa** se no. Confermi con **"Metti qui"** (o ritoccando la casella). Niente più navi piazzate al primo tocco per sbaglio.
+- Quando affondi una nave esce la scritta **"💥 Colpito e affondato!"** (e **"☠️ Ti hanno affondato"** quando capita a te).
+- (In arrivo: i **colpi speciali**, che stiamo definendo.)
+
 ## 15 settembre 2026 (36) — Nuovo gioco: Battaglia Navale (nella sezione "1 contro 1")
 - Arriva la **Battaglia Navale** classica. La sezione "Sfida in 2" ora si chiama **"1 contro 1"**.
 - Griglia **10×10** e flotta classica: Portaerei (5), Corazzata (4), Incrociatore (3), Sommergibile (3), Cacciatorpediniere (2).

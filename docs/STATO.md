@@ -153,9 +153,12 @@ dal proprio.
   validate a parte: base 18s, a ritmo 11s, bot medio ~10s); l'online (lobby/seat/snapshot/classifica) è stato
   collaudato host + 1 ospite.
 - **Gioco 15 — Battaglia Navale** 🚢 (`js/games/navale.js`, id `navale`, categoria **1 contro 1**): regole
-  classiche, griglia **10×10**, flotta 5/4/3/3/2. Prima **piazzamento** (in ordine dalla nave più grande,
-  orientamento orizzontale/verticale, tasto **Disponi a caso** e **Togli**), poi **battaglia a turni** (un
-  colpo a testa: acqua/colpito/colpito e affondato). Vince chi affonda tutta la flotta. **Due modi**: vs
+  classiche, griglia **10×10** con **coordinate** (lettere A–J in alto, numeri 1–10 a sinistra: `tabellone()`).
+  Prima **piazzamento** (in ordine dalla nave più grande, orientamento orizzontale/verticale, tasto **Disponi a
+  caso** e **Togli**) con **anteprima**: il tocco proietta la nave (verde se valida / rossa se no), si conferma con
+  **"Metti qui"** o ritoccando (`ante`/`celleAnte`/`confermaAnte`). Poi **battaglia a turni** (un colpo a testa:
+  acqua/colpito/colpito e affondato); a ogni affondamento una scritta **"colpito e affondato"** (`mostraAvviso`).
+  **Colpi speciali**: previsti, in attesa che l'utente li definisca. Vince chi affonda tutta la flotta. **Due modi**: vs
   **computer** (Facile casuale, Medio/Difficile con **caccia** alle celle adiacenti, Difficile anche a parità
   a scacchiera) e **online**. L'online è **peer-to-peer** (non host-autoritativo): ogni telefono tiene la
   propria flotta e non la trasmette mai; in rete viaggiano solo `{t:"colpo",x,y}` e `{t:"esito",...}` — nessuno

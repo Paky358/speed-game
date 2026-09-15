@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 60,
+    data: "15 settembre 2026",
+    titolo: "Battaglia Navale più chiara 🎯",
+    descrizione: [
+      "Il tabellone ora ha le lettere in alto e i numeri a lato. Quando sistemi una nave vedi prima l'anteprima di dove la metti (verde se ci sta, rossa se no) e confermi con 'Metti qui'.",
+      "Quando affondi una nave esce la scritta 'Colpito e affondato!'."
+    ]
+  },
+  {
     v: 59,
     data: "15 settembre 2026",
     titolo: "Nuovo gioco: Battaglia Navale 🚢",
