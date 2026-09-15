@@ -1,6 +1,6 @@
 # A che punto siamo
 
-_Aggiornato: 14 settembre 2026 (nuovo minigioco: Horto Muso, corsa di cavalli)_
+_Aggiornato: 15 settembre 2026 (nuovo gioco: Battaglia Navale; nuovo "tavolo verde" nei giochi di carte)_
 
 ## In due parole
 È una raccolta di giochi da fare in gruppo, che si apre dal telefono senza
@@ -12,7 +12,7 @@ dal proprio.
   salvato sul telefono. Niente password, niente account.
 - **La Sala**: il gruppo si mette insieme una volta sola e resta lì fra una partita
   e l'altra. A fine partita: Rigioca, Cambia gioco, torna alla Sala.
-- **La home**: sotto il profilo una **barra di categorie** (Tutti · Carte · Sfida in 2 · Festa · Minigiochi ·
+- **La home**: sotto il profilo una **barra di categorie** (Tutti · Carte · 1 contro 1 · Festa · Minigiochi ·
   Quiz & parole) che filtra l'elenco dei giochi (definite in `js/core.js`: `CATEGORIE` + `CAT_GIOCO` per id;
   ogni gioco ha la sua categoria); il tasto 🆕 Novità è **accanto al nome utente**; poi l'elenco dei giochi e i tasti 💡 Proposte, 🐞 Bug e
   "Entra in una stanza". "Minigiochi" (Scalinata, Horto Muso) è pensata per i giochini stile Wii Party (altro in arrivo:
@@ -132,8 +132,8 @@ dal proprio.
   (9 + 4 sul tavolo). Carte tutte subito (no pesca); presa come Scopa; a fine mano il tavolo all'ultima
   squadra che ha preso. Punteggio **a squadra** (`contaScopone`): Carte/Denari/Settebello/Primiera + Scope,
   partita a **11**, inizio che ruota. Riusa `window.SGCarte` (stesse immagini `carte/*.jpg`, stessa presa
-  con un tocco e stesse animazioni della Scopa). UI a 4 (in alto Rivale1·Compagno·Rivale2, tavolo, tua
-  mano in basso). Solo **vs bot** per ora (online a 4 = lavoro futuro). `giocatoriMin/Max:1, difficolta:3`.
+  con un tocco e stesse animazioni della Scopa). UI a 4 col nuovo **tavolo verde** (Compagno in alto, Rivali ai
+  lati, tavolo al centro, tua mano sulla mensola in basso). Solo **vs bot** per ora (online a 4 = lavoro futuro). `giocatoriMin/Max:1, difficolta:3`.
 - **Gioco 13 — Scopa 2 vs 2** 🃏 (`js/games/scopa2.js`, id `scopa2v2`): la Scopa **a squadre, 4 al tavolo**
   (posti 0+2 vs 1+3), turni che alternano le squadre (0→1→2→3). Regole **della Scopa vera** con la **pesca**
   (3 in mano + 4 sul tavolo, si pesca a mani vuote fino a fine mazzo), scopa, tavolo finale all'ultima
@@ -152,6 +152,21 @@ dal proprio.
   Nota: rAF non gira col pannello browser nascosto → la corsa vs bot si collauda sul telefono (costanti
   validate a parte: base 18s, a ritmo 11s, bot medio ~10s); l'online (lobby/seat/snapshot/classifica) è stato
   collaudato host + 1 ospite.
+- **Gioco 15 — Battaglia Navale** 🚢 (`js/games/navale.js`, id `navale`, categoria **1 contro 1**): regole
+  classiche, griglia **10×10**, flotta 5/4/3/3/2. Prima **piazzamento** (in ordine dalla nave più grande,
+  orientamento orizzontale/verticale, tasto **Disponi a caso** e **Togli**), poi **battaglia a turni** (un
+  colpo a testa: acqua/colpito/colpito e affondato). Vince chi affonda tutta la flotta. **Due modi**: vs
+  **computer** (Facile casuale, Medio/Difficile con **caccia** alle celle adiacenti, Difficile anche a parità
+  a scacchiera) e **online**. L'online è **peer-to-peer** (non host-autoritativo): ogni telefono tiene la
+  propria flotta e non la trasmette mai; in rete viaggiano solo `{t:"colpo",x,y}` e `{t:"esito",...}` — nessuno
+  può sbirciare. Lobby con codice+link e "Chi c'è" anche per l'ospite. Non usa rAF → collaudato end-to-end vs
+  bot (piazzamento, colpi, affondamenti, vittoria, rivincita, zero errori). `giocatoriMin/Max:1, difficolta:2`.
+
+### Nuovo "tavolo verde" nei giochi di carte (15 set 2026)
+- Scopa, Scopa 2vs2 e Scopone condividono ora un **feltro verde** (aiuti in `window.SGCarte`: `posto`, `manina`
+  + CSS `.sc-feltro`/`.sc-fascia`/`.sc-mensola`): **Compagno/avversario in alto**, i due **Rivali ai lati**
+  (nel 4 giocatori), **carte a terra al centro**, e la **propria mano in basso su una "mensola"** ben staccata
+  dal tavolo. Chi è di turno ha il nome col **bordo dorato**. Risolve la confusione mano/tavolo segnalata.
 
 ### Ritocchi a L'Asta e La Patata (13 set 2026)
 - **L'Asta**: si vedono tutti e 4 i round del tema (striscia con icona+nome; quello in corso col contorno
