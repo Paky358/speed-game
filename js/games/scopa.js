@@ -272,7 +272,25 @@
       ".sc-lascia-giu{animation:scLasciaGiu .95s ease-in forwards;position:relative;z-index:4}",
       // la carta giocata: arriva dalla mano, si posa al centro, poi vola via con le prese
       "@keyframes scGiocaGiu{0%{transform:translateY(150px) scale(.92);opacity:0}16%{opacity:1}30%,38%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(215px) scale(.4);opacity:0}}",
-      "@keyframes scGiocaSu{0%{transform:translateY(-150px) scale(.92);opacity:0}16%{opacity:1}30%,38%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-215px) scale(.4);opacity:0}}"
+      "@keyframes scGiocaSu{0%{transform:translateY(-150px) scale(.92);opacity:0}16%{opacity:1}30%,38%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-215px) scale(.4);opacity:0}}",
+      // ---- tavolo verde (feltro) + posti dei giocatori + mensola della mano: look condiviso da Scopa, Scopa 2vs2 e Scopone ----
+      ".sc-feltro{flex:1;display:flex;flex-direction:column;min-height:0;background:radial-gradient(125% 95% at 50% 15%,#2fa268 0%,#1c7b4d 52%,#135c3a 100%);border:2px solid rgba(0,0,0,.35);border-radius:16px;box-shadow:inset 0 2px 16px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.3);padding:8px 6px}",
+      ".sc-cima{display:flex;justify-content:center;margin-bottom:2px}",
+      ".sc-fascia{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;min-height:0}",
+      ".sc-terra{flex:1;display:flex;align-items:center;justify-content:center;padding:4px 0;position:relative;min-height:0}",
+      ".sc-postobox{display:flex;flex-direction:column;align-items:center;gap:3px}",
+      ".sc-postobox.v{width:74px;flex:0 0 auto}",
+      ".sc-posto{display:flex;align-items:center;gap:5px;background:rgba(0,0,0,.30);border-radius:999px;padding:3px 9px;max-width:100%}",
+      ".sc-nome{font-size:.72rem;font-weight:700;color:#eafff1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:118px}",
+      ".sc-postobox.v .sc-nome{max-width:64px;font-size:.68rem}",
+      ".sc-posto.rosso .sc-nome{color:#ffd9d9}",
+      ".sc-posto.turno{box-shadow:0 0 0 2px #ffd43b,0 0 12px rgba(255,212,59,.55)}",
+      ".sc-num{font-size:.64rem;font-weight:800;color:#fff;background:rgba(0,0,0,.35);border-radius:999px;padding:0 5px;min-width:15px;text-align:center}",
+      ".sc-manina{display:flex}",
+      ".sc-manina.v{flex-direction:column;align-items:center}",
+      ".sc-mensola{background:linear-gradient(#6d4526,#472c17);border-radius:14px 14px 0 0;box-shadow:inset 0 2px 8px rgba(255,255,255,.07),0 -2px 8px rgba(0,0,0,.3);padding:9px 6px 8px;margin:6px -4px 0}",
+      ".sc-mano-riga{display:flex;gap:8px;justify-content:center;align-items:flex-end;flex-wrap:wrap}",
+      ".sc-prese{text-align:center;font-size:.74rem;margin-top:6px;color:rgba(255,255,255,.8)}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -282,6 +300,27 @@
     return d;
   }
   function dorsoEl(el, w) { var h = Math.round(w * ASP_CARTA); return el("div", { class: "sc-dorso", style: "width:" + w + "px;height:" + h + "px" }); }
+  // mazzetto compatto delle carte coperte di un avversario (orizzontale in alto, verticale ai lati)
+  function manina(el, n, vert) {
+    var wrap = el("div", { class: "sc-manina" + (vert ? " v" : "") });
+    var cap = Math.min(n, vert ? 6 : 8), w = vert ? 22 : 20;
+    for (var i = 0; i < cap; i++) {
+      var d = dorsoEl(el, w);
+      if (i > 0) d.style[vert ? "marginTop" : "marginLeft"] = (vert ? -Math.round(w * ASP_CARTA * 0.72) : -Math.round(w * 0.55)) + "px";
+      wrap.appendChild(d);
+    }
+    return wrap;
+  }
+  // etichetta di un giocatore attorno al tavolo: nome + numero carte + mazzetto coperto (turno = bordo dorato)
+  function posto(el, o) {
+    var b = el("div", { class: "sc-postobox" + (o.lato ? " v" : "") });
+    var chip = el("div", { class: "sc-posto" + (o.mia ? "" : " rosso") + (o.turno ? " turno" : "") });
+    chip.appendChild(el("span", { class: "sc-nome", text: o.nome }));
+    if (o.n != null) chip.appendChild(el("span", { class: "sc-num", text: o.n }));
+    b.appendChild(chip);
+    if (o.n > 0) b.appendChild(manina(el, o.n, !!o.lato));
+    return b;
+  }
 
   // ---------- vista (uguale per bot/host/ospite) ----------
   // vm = { fase, io("A"|"B"), turno, nomi, mano:[carte], oppN, tavolo:[carte],
@@ -295,27 +334,22 @@
     if (window.SGMusica) window.SGMusica.avvia();
     var el = t.el, vm = C.vm;
     var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
-    if (window.SGMusica) box.appendChild(el("div", { style: "display:flex;justify-content:flex-end;margin-bottom:2px" }, [window.SGMusica.bottone(el)]));
 
-    // ---- avversario (in alto) ----
-    var oppMano = el("div", { style: "display:flex;gap:3px" });
-    for (var i = 0; i < vm.oppN; i++) oppMano.appendChild(dorsoEl(el, 22));
-    box.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;justify-content:space-between" }, [
-      el("div", { style: "display:flex;align-items:center;gap:8px" }, [ el("div", { style: "font-weight:700", text: vm.nomi.opp }), oppMano ]),
-      el("div", { class: "tenue", style: "font-size:.78rem;text-align:right", html: "prese <b>" + vm.preseOpp + "</b>" + (vm.settebelloOpp ? " · 7💰" : "") + (vm.scopeOpp ? " · scope " + vm.scopeOpp : "") })
-    ]));
-    box.appendChild(el("div", { style: "font-size:.76rem;margin-top:3px", html: "Punti — <b>" + vm.nomi.io + " " + vm.punti.io + "</b> · " + vm.nomi.opp + " " + vm.punti.opp + " (a " + TARGET + ")" }));
-
-    // ---- stato (durante la presa il tavolo mostra l'animazione, non un riquadro) ----
+    // ---- intestazione: punti (a sinistra) + tasto musica (a destra) ----
     var mioTurno = (vm.turno === vm.io && vm.fase === "gioco" && !vm.presa);
-    var statoTxt = vm.presa ? (vm.presa.scopa ? "SCOPA! 🧹" : "") : (mioTurno ? "Tocca a te" : "Tocca a " + vm.nomi.opp);
-    box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.1rem;margin:8px 0;min-height:1.3em;color:" + (vm.presa && vm.presa.scopa ? "#ffd43b" : "inherit"), text: statoTxt }));
+    var head = el("div", { style: "display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px" });
+    head.appendChild(el("div", { style: "font-size:.8rem;font-weight:700", html: "<b>" + vm.nomi.io + " " + vm.punti.io + "</b> — " + vm.nomi.opp + " " + vm.punti.opp + " <span class='tenue' style='font-weight:600'>(a " + TARGET + ")</span>" }));
+    if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
+    box.appendChild(head);
 
-    // ---- tavolo (centrato, occupa lo spazio) ----
+    // ---- tavolo verde: avversario in alto, carte a terra al centro ----
+    var feltro = el("div", { class: "sc-feltro" });
+    feltro.appendChild(el("div", { class: "sc-cima" }, [ posto(el, { nome: vm.nomi.opp, n: vm.oppN, turno: vm.turno !== vm.io && vm.fase === "gioco", mia: false }) ]));
+
     var cartaSel = C.sel.carta ? trova(vm.mano, C.sel.carta) : null;
     var opts = cartaSel ? catture(cartaSel.v, vm.tavolo) : [];
     var capIds = {}; opts.forEach(function (set) { set.forEach(function (id) { capIds[id] = true; }); });
-    var areaTavolo = el("div", { style: "flex:1;display:flex;align-items:center;justify-content:center;padding:8px 0" });
+    var areaTavolo = el("div", { class: "sc-terra" });
     var pendingPlace = null;
     if (vm.presa) {
       // il tavolo RESTA fermo: rimostro il tavolo com'era e faccio volare via SOLO le carte prese
@@ -359,16 +393,22 @@
       });
       areaTavolo.appendChild(tw);
     }
-    box.appendChild(areaTavolo);
+    feltro.appendChild(areaTavolo);
+    box.appendChild(feltro);
 
-    // ---- la mia mano (in basso) ----
-    var manoW = el("div", { style: "display:flex;gap:12px;justify-content:center;align-items:flex-end" });
+    // ---- stato (tocca a te / all'avversario / scopa) ----
+    box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.05rem;margin:6px 0 3px;min-height:1.25em;color:" + (vm.presa && vm.presa.scopa ? "#ffd43b" : "inherit"),
+      text: vm.presa ? (vm.presa.scopa ? "SCOPA! 🧹" : "") : (mioTurno ? "Tocca a te" : "Tocca a " + vm.nomi.opp) }));
+
+    // ---- la mia mano (in basso, sulla mensola di legno) ----
+    var mensola = el("div", { class: "sc-mensola" });
+    var manoW = el("div", { class: "sc-mano-riga" });
     vm.mano.forEach(function (c) {
-      manoW.appendChild(cartaEl(el, c, 88, (C.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { C.tapMano(c.id); } : null));
+      manoW.appendChild(cartaEl(el, c, 84, (C.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { C.tapMano(c.id); } : null));
     });
-    box.appendChild(manoW);
-    box.appendChild(el("div", { class: "tenue", style: "text-align:center;font-size:.78rem;margin-top:6px",
-      html: "le tue prese <b>" + vm.preseIo + "</b>" + (vm.settebelloIo ? " · 7💰" : "") + (vm.scopeIo ? " · scope " + vm.scopeIo : "") }));
+    mensola.appendChild(manoW);
+    mensola.appendChild(el("div", { class: "sc-prese", html: "le tue prese <b>" + vm.preseIo + "</b>" + (vm.settebelloIo ? " · 7💰" : "") + (vm.scopeIo ? " · scope " + vm.scopeIo : "") }));
+    box.appendChild(mensola);
 
     // ---- suggerimento (nel piede) ----
     var piedeNodi = [];
@@ -765,7 +805,7 @@
   // aiuti condivisi (usati anche dallo Scopone): carte e logica di presa
   window.SGCarte = {
     creaMazzo: creaMazzo, catture: catture, primiera: primiera, trova: trova,
-    cartaEl: cartaEl, dorsoEl: dorsoEl, assicuraStile: assicuraStile,
+    cartaEl: cartaEl, dorsoEl: dorsoEl, manina: manina, posto: posto, assicuraStile: assicuraStile,
     validaSet: validaSet, prefisso: prefisso, PRIM: PRIM
   };
 })();

@@ -4,6 +4,12 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 15 settembre 2026 (35) — Tavolo verde nuovo per Scopa, Scopa 2vs2 e Scopone
+- Prima le carte a terra si confondevano con quelle in mano e gli avversari stavano tutti ammassati in alto.
+- Ora c'è un vero **tavolo verde**: il **Compagno di fronte** in alto, i **due Rivali ai lati**, le **carte a terra al centro**.
+- La **tua mano** sta in basso su una "mensola" di legno, ben staccata dal tavolo: si capisce al volo cosa è tuo.
+- Chi è di turno ha il nome con il **bordo dorato**. Stesso identico stile nei tre giochi di carte (aiuti condivisi in `SGCarte`).
+
 ## 14 settembre 2026 (34) — Musica dei giochi di carte molto più alta
 - La musichetta chill di Scopa, Scopa 2vs2 e Scopone si sentiva troppo bassa anche col telefono al massimo.
 - Ho alzato parecchio il volume: volume generale da 0.09 a 0.5, e note più corpose (basso, tappeto, arpeggio).

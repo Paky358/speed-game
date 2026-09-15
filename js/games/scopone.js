@@ -236,35 +236,23 @@
     if (st.fase === "fineround" || st.fase === "fine") { spMount = null; return fine(t, st, cb); }
     if (window.SGMusica) window.SGMusica.avvia();
     var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
-    if (window.SGMusica) box.appendChild(el("div", { style: "display:flex;justify-content:flex-end;margin-bottom:2px" }, [window.SGMusica.bottone(el)]));
 
-    // squadre / punti
-    box.appendChild(el("div", { style: "text-align:center;font-size:.82rem;font-weight:700;margin-bottom:4px",
-      html: "Noi <b style='color:#69db7c'>" + st.punti.noi + "</b> — Loro <b>" + st.punti.loro + "</b> &nbsp;(a " + TARGET + ")" }));
-
-    // gli altri 3 giocatori (Rivale1 · Compagno · Rivale2)
-    var top = el("div", { style: "display:flex;justify-content:space-around;gap:6px;margin-bottom:6px" });
-    [1, 2, 3].forEach(function (seat) {
-      var mio = squadra(seat) === "noi";
-      var col = el("div", { style: "display:flex;flex-direction:column;align-items:center;gap:2px;max-width:33%" });
-      col.appendChild(el("div", { style: "font-size:.72rem;font-weight:700;color:" + (mio ? "#69db7c" : "#ffd0d0") + ";white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px", text: st.nomi[seat] + (st.turno === seat ? " ●" : "") }));
-      var dorsi = el("div", { style: "display:flex;gap:2px" });
-      for (var i = 0; i < st.mani[seat].length; i++) dorsi.appendChild(C().dorsoEl(el, 16));
-      col.appendChild(dorsi);
-      top.appendChild(col);
-    });
-    box.appendChild(top);
-
-    // stato
+    // intestazione: punti squadre (a sinistra) + tasto musica (a destra)
     var mioTurno = (st.turno === 0 && st.fase === "gioco" && !st.presa);
-    box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.05rem;margin:6px 0;min-height:1.3em;color:" + (st.presa && st.presa.scopa ? "#ffd43b" : "inherit"),
-      text: st.presa ? (st.presa.scopa ? "SCOPA! 🧹" : "") : (mioTurno ? "Tocca a te" : "Gioca " + st.nomi[st.turno]) }));
+    var head = el("div", { style: "display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px" });
+    head.appendChild(el("div", { style: "font-size:.82rem;font-weight:700", html: "Noi <b style='color:#69db7c'>" + st.punti.noi + "</b> — Loro <b>" + st.punti.loro + "</b> <span class='tenue' style='font-weight:600'>(a " + TARGET + ")</span>" }));
+    if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
+    box.appendChild(head);
 
-    // tavolo (con animazione presa, come nella Scopa)
+    // tavolo verde: Compagno in alto (di fronte), i due Rivali ai lati, carte a terra al centro
     var cartaSel = sel.carta ? trova(st.mani[0], sel.carta) : null;
     var opts = cartaSel ? C().catture(cartaSel.v, st.tavolo) : [];
     var capIds = {}; opts.forEach(function (set) { set.forEach(function (id) { capIds[id] = true; }); });
-    var area = el("div", { style: "flex:1;display:flex;align-items:center;justify-content:center;padding:6px 0;position:relative" });
+    var feltro = el("div", { class: "sc-feltro" });
+    feltro.appendChild(el("div", { class: "sc-cima" }, [ C().posto(el, { nome: st.nomi[2], n: st.mani[2].length, turno: st.turno === 2, mia: true }) ]));
+    var fascia = el("div", { class: "sc-fascia" });
+    fascia.appendChild(C().posto(el, { nome: st.nomi[1], n: st.mani[1].length, turno: st.turno === 1, mia: false, lato: true }));
+    var area = el("div", { class: "sc-terra" });
     var pendingPlace = null;
     if (st.presa) {
       var dir = (st.presa.chi === 0) ? "giu" : "su";
@@ -300,15 +288,23 @@
       });
       area.appendChild(tw);
     }
-    box.appendChild(area);
+    fascia.appendChild(area);
+    fascia.appendChild(C().posto(el, { nome: st.nomi[3], n: st.mani[3].length, turno: st.turno === 3, mia: false, lato: true }));
+    feltro.appendChild(fascia);
+    box.appendChild(feltro);
 
-    // la tua mano
-    var manoW = el("div", { style: "display:flex;gap:6px;justify-content:center;align-items:flex-end;flex-wrap:wrap" });
-    st.mani[0].forEach(function (c) { manoW.appendChild(C().cartaEl(el, c, 72, (sel.carta === c.id) ? "sel" : "", mioTurno ? function () { cb.onCella(c.id); } : null)); });
-    box.appendChild(manoW);
+    // stato (tocca a te / gioca un altro / scopa)
+    box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1rem;margin:6px 0 3px;min-height:1.2em;color:" + (st.presa && st.presa.scopa ? "#ffd43b" : "inherit"),
+      text: st.presa ? (st.presa.scopa ? "SCOPA! 🧹" : "") : (mioTurno ? "Tocca a te" : "Gioca " + st.nomi[st.turno]) }));
+
+    // la tua mano (sulla mensola di legno, ben staccata dal tavolo)
+    var mensola = el("div", { class: "sc-mensola" });
+    var manoW = el("div", { class: "sc-mano-riga" });
+    st.mani[0].forEach(function (c) { manoW.appendChild(C().cartaEl(el, c, 70, (sel.carta === c.id) ? "sel" : "", mioTurno ? function () { cb.onCella(c.id); } : null)); });
+    mensola.appendChild(manoW);
     var mieCarte = st.prese[0].length + st.prese[2].length;
-    box.appendChild(el("div", { class: "tenue", style: "text-align:center;font-size:.76rem;margin-top:5px",
-      html: "prese squadra: <b>" + mieCarte + "</b>" + (trova(st.prese[0].concat(st.prese[2]), "D7") ? " · 7💰" : "") + ((st.scope[0] + st.scope[2]) ? " · scope " + (st.scope[0] + st.scope[2]) : "") }));
+    mensola.appendChild(el("div", { class: "sc-prese", html: "prese squadra: <b>" + mieCarte + "</b>" + (trova(st.prese[0].concat(st.prese[2]), "D7") ? " · 7💰" : "") + ((st.scope[0] + st.scope[2]) ? " · scope " + (st.scope[0] + st.scope[2]) : "") }));
+    box.appendChild(mensola);
     var piedeNodi = [];
     if (mioTurno && cartaSel && opts.length >= 2) piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: opts[0].length === 1 ? "Più prese: tocca la carta verde che vuoi." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
     else if (mioTurno) piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Tocca una tua carta per giocarla." }));

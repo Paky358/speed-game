@@ -206,36 +206,27 @@
     if (vm.fase === "fineround" || vm.fase === "fine") { mont = null; return renderFine(t, vm, cb); }
     if (window.SGMusica) window.SGMusica.avvia();
     var io = vm.io, box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
-    if (window.SGMusica) box.appendChild(el("div", { style: "display:flex;justify-content:flex-end;margin-bottom:2px" }, [window.SGMusica.bottone(el)]));
 
-    // punteggio squadre + mazzo
-    box.appendChild(el("div", { style: "display:flex;justify-content:space-between;align-items:center;font-size:.82rem;font-weight:700;margin-bottom:2px" }, [
-      el("div", { html: "Noi <b style='color:#69db7c'>" + vm.punti.mia + "</b> — Loro <b>" + vm.punti.altra + "</b> (a " + TARGET + ")" }),
-      el("div", { class: "tenue", style: "font-size:.72rem", text: "mazzo " + vm.mazzoN })
-    ]));
-
-    // gli altri 3: nell'ordine di gioco dopo di me (io+1, io+2=compagno, io+3)
-    var top = el("div", { style: "display:flex;justify-content:space-around;gap:6px;margin-bottom:6px" });
-    [1, 2, 3].forEach(function (d) {
-      var seat = (io + d) % 4, mia = vm.relTeam[seat] === "mia";
-      var col = el("div", { style: "display:flex;flex-direction:column;align-items:center;gap:2px;max-width:33%" });
-      col.appendChild(el("div", { style: "font-size:.72rem;font-weight:700;color:" + (mia ? "#69db7c" : "#ffd0d0") + ";white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px", text: (vm.nomi[seat] || "—") + (d === 2 ? " 🤝" : "") + (vm.turno === seat ? " ●" : "") }));
-      var dorsi = el("div", { style: "display:flex;gap:2px" });
-      for (var i = 0; i < vm.nCarte[seat]; i++) dorsi.appendChild(C().dorsoEl(el, 16));
-      col.appendChild(dorsi); top.appendChild(col);
-    });
-    box.appendChild(top);
-
-    // stato
+    // intestazione: punti squadre (sx) + mazzo + tasto musica (dx)
     var mioTurno = (vm.turno === io && vm.fase === "gioco" && !vm.presa);
-    box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.05rem;margin:6px 0;min-height:1.3em;color:" + (vm.presa && vm.presa.scopa ? "#ffd43b" : "inherit"),
-      text: vm.presa ? (vm.presa.scopa ? "SCOPA! 🧹" : "") : (mioTurno ? "Tocca a te" : "Gioca " + (vm.nomi[vm.turno] || "…")) }));
+    var head = el("div", { style: "display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px" });
+    head.appendChild(el("div", { style: "font-size:.82rem;font-weight:700", html: "Noi <b style='color:#69db7c'>" + vm.punti.mia + "</b> — Loro <b>" + vm.punti.altra + "</b> <span class='tenue' style='font-weight:600'>(a " + TARGET + ")</span>" }));
+    var destra = el("div", { style: "display:flex;align-items:center;gap:8px" });
+    destra.appendChild(el("div", { class: "tenue", style: "font-size:.72rem", text: "mazzo " + vm.mazzoN }));
+    if (window.SGMusica) destra.appendChild(window.SGMusica.bottone(el));
+    head.appendChild(destra);
+    box.appendChild(head);
 
-    // tavolo + animazione presa
+    // tavolo verde: Compagno in alto (di fronte), i due Rivali ai lati, carte a terra al centro
     var cartaSel = Cl.sel.carta ? trova(vm.mano, Cl.sel.carta) : null;
     var opts = cartaSel ? C().catture(cartaSel.v, vm.tavolo) : [];
     var capIds = {}; opts.forEach(function (set) { set.forEach(function (id) { capIds[id] = true; }); });
-    var area = el("div", { style: "flex:1;display:flex;align-items:center;justify-content:center;padding:6px 0;position:relative" });
+    var comp = (io + 2) % 4, latoSx = (io + 1) % 4, latoDx = (io + 3) % 4;
+    var feltro = el("div", { class: "sc-feltro" });
+    feltro.appendChild(el("div", { class: "sc-cima" }, [ C().posto(el, { nome: (vm.nomi[comp] || "—") + " 🤝", n: vm.nCarte[comp], turno: vm.turno === comp, mia: true }) ]));
+    var fascia = el("div", { class: "sc-fascia" });
+    fascia.appendChild(C().posto(el, { nome: vm.nomi[latoSx] || "—", n: vm.nCarte[latoSx], turno: vm.turno === latoSx, mia: false, lato: true }));
+    var area = el("div", { class: "sc-terra" });
     var pendingPlace = null;
     if (vm.presa) {
       var dir = vm.presa.mio ? "giu" : "su";
@@ -270,14 +261,22 @@
       });
       area.appendChild(tw);
     }
-    box.appendChild(area);
+    fascia.appendChild(area);
+    fascia.appendChild(C().posto(el, { nome: vm.nomi[latoDx] || "—", n: vm.nCarte[latoDx], turno: vm.turno === latoDx, mia: false, lato: true }));
+    feltro.appendChild(fascia);
+    box.appendChild(feltro);
 
-    // la tua mano
-    var manoW = el("div", { style: "display:flex;gap:8px;justify-content:center;align-items:flex-end;flex-wrap:wrap" });
-    vm.mano.forEach(function (c) { manoW.appendChild(C().cartaEl(el, c, 76, (Cl.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { Cl.tapMano(c.id); } : null)); });
-    box.appendChild(manoW);
-    box.appendChild(el("div", { class: "tenue", style: "text-align:center;font-size:.76rem;margin-top:5px",
-      html: "prese squadra: <b>" + vm.preseMia + "</b>" + (vm.setteMia ? " · 7💰" : "") + (vm.scopeMia ? " · scope " + vm.scopeMia : "") }));
+    // stato (tocca a te / gioca un altro / scopa)
+    box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1rem;margin:6px 0 3px;min-height:1.2em;color:" + (vm.presa && vm.presa.scopa ? "#ffd43b" : "inherit"),
+      text: vm.presa ? (vm.presa.scopa ? "SCOPA! 🧹" : "") : (mioTurno ? "Tocca a te" : "Gioca " + (vm.nomi[vm.turno] || "…")) }));
+
+    // la tua mano (sulla mensola di legno, ben staccata dal tavolo)
+    var mensola = el("div", { class: "sc-mensola" });
+    var manoW = el("div", { class: "sc-mano-riga" });
+    vm.mano.forEach(function (c) { manoW.appendChild(C().cartaEl(el, c, 70, (Cl.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { Cl.tapMano(c.id); } : null)); });
+    mensola.appendChild(manoW);
+    mensola.appendChild(el("div", { class: "sc-prese", html: "prese squadra: <b>" + vm.preseMia + "</b>" + (vm.setteMia ? " · 7💰" : "") + (vm.scopeMia ? " · scope " + vm.scopeMia : "") }));
+    box.appendChild(mensola);
 
     // piede
     var piedeNodi = [];

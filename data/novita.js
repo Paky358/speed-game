@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 58,
+    data: "15 settembre 2026",
+    titolo: "Nuovo tavolo verde nei giochi di carte 🟢",
+    descrizione: [
+      "Scopa, Scopa 2vs2 e Scopone ora hanno un vero tavolo verde: il compagno di fronte in alto, i rivali ai lati e le carte a terra al centro.",
+      "La tua mano sta in basso su una mensola, staccata dal tavolo: non si confonde più con le carte a terra. Chi è di turno ha il nome col bordo dorato."
+    ]
+  },
+  {
     v: 57,
     data: "14 settembre 2026",
     titolo: "Musica dei giochi di carte più alta 🔊",
