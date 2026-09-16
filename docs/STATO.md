@@ -175,7 +175,9 @@ dal proprio.
   con tasto/tocco. La **collisione** scatta quando la palla attraversa la profondità della trave (banda
   p≥0.9 in avanti) e il personaggio è entro `HITF` dalla `beamXf(aimLock)` e non a mezz'aria. Chi sta
   sulla trave si **muove ◀ ▶** e **SALTA** per schivare. Coordinate **normalizzate** (frazioni) → snapshot
-  indipendenti dallo schermo. **Due modi**: **`locale`** (tu lanci vs 3 bot che saltano da soli) e
+  indipendenti dallo schermo. **Due modi**: **`locale`** (scegli il ruolo: **lanciatore** vs 3 bot, oppure **trave** = tu su un posto,
+  un **bot lanciatore** con IA che fissa la mira dove sei e lancia — la schivi muovendoti/saltando —,
+  sopravvivi fino a `durTrave`) e
   **online host-autoritativo** (`hostPendolo`/`ospitePendolo`): in **lobby ognuno sceglie il ruolo**
   (`renderLobby` con "🎯 Voglio lanciare io"; un solo lanciatore, gli altri sulla trave, posti liberi =
   bot). L'host simula (`passo`) e trasmette snapshot ~20Hz; gli ospiti mandano solo input (`aim/lancia`

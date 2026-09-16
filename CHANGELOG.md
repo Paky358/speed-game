@@ -12,10 +12,13 @@ contenuto di quel tasto vive in `data/novita.js`._
   **LANCIA** (o tocca il campo); il **mirino rosso** mostra dove cadrà. Niente modulazione della
   forza: conta il **tempismo**. Chi centra viene buttato in acqua con **splash**.
 - **Chi sta sulla trave** si muove **◀ ▶** e **SALTA** per schivare quando il mirino punta lui.
-- **Due modi**: **da solo** (tu lanci contro 3 bot) e **online** host-autoritativo. In lobby ognuno
-  **sceglie il ruolo** (uno lancia, gli altri sulla trave; posti liberi = bot). **Sfida a tempo**:
-  vince il lanciatore se li butta giù tutti, altrimenti vince chi resta in piedi. Ospite con
-  interpolazione (movimento liscio come Glow Hockey). Tre livelli di bravura dei bot.
+- **Due modi**: **da solo** (scegli il ruolo: **lanci tu** contro 3 bot, oppure **stai sulla trave**
+  e schivi un **bot che lancia**, sopravvivendo fino allo scadere) e **online** host-autoritativo. In
+  lobby online ognuno **sceglie il ruolo** (uno lancia, gli altri sulla trave; posti liberi = bot).
+  **Sfida a tempo**: vince il lanciatore se li butta giù tutti, altrimenti vince chi resta in piedi.
+  Ospite con interpolazione (movimento liscio come Glow Hockey). Tre livelli di bravura.
+- **Fix**: i pulsanti non si "selezionano" più al tocco sul telefono (niente evidenziazione da
+  copia-incolla): aggiunto `user-select:none` e `touch-action:manipulation` a tutti i tasti.
 - **Horto Muso online**: l'ospite ora vede la corsa **fluida** (interpolazione con buffer e
   piccolo ritardo, come in Glow Hockey), invece di andare a scatti quando i pacchetti arrivano
   irregolari. La scheda del gioco mostra "1–8 giocatori".

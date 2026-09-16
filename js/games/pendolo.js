@@ -12,12 +12,12 @@
 (function () {
   "use strict";
   var TH_BEAM = 1.0, SWING = 2.0, AIMK = 1.5, AIMG = 2.4, NSEAT = 3, HZ = 50;
-  var BEAM_L = 0.14, BEAM_R = 0.86, AIM_SPAN = 0.40, MOVSP = 0.30, BOTSP = 0.22, HITF = 0.075;
+  var BEAM_L = 0.14, BEAM_R = 0.86, AIM_SPAN = 0.40, MOVSP = 0.36, BOTSP = 0.22, HITF = 0.075, JUMP = 0.6;
   var COLSEAT = ["#ff6b6b", "#4dabf7", "#51cf66"];
-  function diffP(d) {
-    return d === "facile"    ? { dodge: 0.032, dur: 40 }
-         : d === "difficile" ? { dodge: 0.110, dur: 30 }
-         :                      { dodge: 0.068, dur: 34 };
+  function diffP(d) {   // dodge: salto dei bot sulla trave · cd/aimErr: IA del lanciatore · durTrave: quanto devi sopravvivere
+    return d === "facile"    ? { dodge: 0.032, dur: 40, durTrave: 18, cdMin: 2.0, cdVar: 1.4, aimErr: 0.16 }
+         : d === "difficile" ? { dodge: 0.110, dur: 30, durTrave: 22, cdMin: 1.1, cdVar: 0.8, aimErr: 0.045 }
+         :                      { dodge: 0.068, dur: 34, durTrave: 20, cdMin: 1.6, cdVar: 1.1, aimErr: 0.10 };
   }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function ballXf(a, p) { return 0.5 + a * AIM_SPAN * (0.45 + 0.55 * (p > 1 ? 1 : p)); }
@@ -40,10 +40,22 @@
     for (var i = 0; i < NSEAT; i++) c.push({ fx: base[i], dir: i % 2 ? -1 : 1, mov: 0, jt: 0, alive: true, human: !!(assign && assign[i]), ctrl: assign ? assign[i] : null });
     return c;
   }
-  function nuovoStato(P, chars) { return { th: 0, swinging: false, tSw: 0, aim: 0, aimLock: 0, aimHold: 0, lanciaFlag: false, chars: chars, time: P.dur, fase: "gioco" }; }
+  function nuovoStato(P, chars, aiLanc) { return { th: 0, swinging: false, tSw: 0, aim: 0, aimLock: 0, aimHold: 0, lanciaFlag: false, chars: chars, time: P.dur, fase: "gioco", aiLanc: !!aiLanc, aiTarget: -1, aiCd: 0.8, aiGoal: 0 }; }
   function pDi(ST) { var p = ST.th / TH_BEAM; return p < 0 ? 0 : p > 1.08 ? 1.08 : p; }
   function passo(ST, dt, P) {
     ST.time -= dt; if (ST.time < 0) ST.time = 0;
+    if (ST.aiLanc) {   // il lanciatore è un bot: prende di mira DOVE SEI ORA (mira fissa), poi lancia:
+      if (!ST.swinging) {                                       // se ti muovi in tempo lo schivi.
+        var tg = ST.chars[ST.aiTarget];
+        if (!tg || !tg.alive) { var al = []; for (var a = 0; a < ST.chars.length; a++) if (ST.chars[a].alive) al.push(a);
+          ST.aiTarget = al.length ? al[(Math.random() * al.length) | 0] : -1; tg = ST.chars[ST.aiTarget];
+          ST.aiGoal = tg ? clamp((tg.fx + (Math.random() * 2 - 1) * P.aimErr - 0.5) / AIM_SPAN, -1, 1) : 0; }   // fissa il punto di mira ORA
+        if (tg) { var want = ST.aiGoal;
+          ST.aimHold = ST.aim < want - 0.02 ? 1 : ST.aim > want + 0.02 ? -1 : 0; ST.aiCd -= dt;
+          if (Math.abs(ST.aim - want) < 0.05 && ST.aiCd <= 0) { ST.lanciaFlag = true; ST.aiCd = P.cdMin + Math.random() * P.cdVar; ST.aiTarget = -1; }
+        } else ST.aimHold = 0;
+      } else ST.aimHold = 0;
+    }
     ST.aim = clamp(ST.aim + ST.aimHold * AIMK * dt, -1, 1);
     var pPrev = pDi(ST);
     if (ST.lanciaFlag && !ST.swinging) { ST.swinging = true; ST.tSw = 0; ST.aimLock = ST.aim; whoosh(); }
@@ -57,11 +69,11 @@
       else { c.fx += c.dir * BOTSP * dt; if (c.fx < BEAM_L) { c.fx = BEAM_L; c.dir = 1; } if (c.fx > BEAM_R) { c.fx = BEAM_R; c.dir = -1; } }
       c.fx = clamp(c.fx, BEAM_L, BEAM_R);
       if (c.jt > 0) c.jt -= dt;
-      if (!c.human && finestra && Math.abs(c.fx - bxf) < 0.16 && c.jt <= 0 && Math.random() < P.dodge) c.jt = 0.55;
+      if (!c.human && finestra && Math.abs(c.fx - bxf) < 0.16 && c.jt <= 0 && Math.random() < P.dodge) c.jt = JUMP;
     }
     if (ST.swinging && ST.tSw < 0.5 && pPrev < 0.9 && p >= 0.9) {
       for (var j = 0; j < ST.chars.length; j++) { var b = ST.chars[j]; if (!b.alive) continue;
-        var aria = b.jt > 0.12 && b.jt < 0.5;
+        var aria = b.jt > JUMP * 0.06 && b.jt < JUMP * 0.97;
         if (!aria && Math.abs(b.fx - bxf) < HITF) { b.alive = false; colpo(); }
       }
     }
@@ -164,7 +176,7 @@
       ctx.fillStyle = "rgba(255,70,70,.22)"; ctx.beginPath(); ctx.arc(mx, my, 6, 0, 7); ctx.fill(); }
     // personaggi sulla trave
     for (var c = 0; c < S.c.length; c++) { var ch = S.c[c]; if (!ch.a) continue;
-      var jy = ch.j > 0 ? -Math.sin((0.55 - ch.j) / 0.55 * Math.PI) * H * 0.09 : 0;
+      var jy = ch.j > 0 ? -Math.sin((JUMP - ch.j) / JUMP * Math.PI) * H * 0.09 : 0;
       botDis(ctx, ch.x * W, beamY + jy, COLSEAT[c], 1, 0);
       if (c === S.ms) { ctx.fillStyle = "#ffd43b"; ctx.font = "bold 12px system-ui"; ctx.textAlign = "center"; ctx.fillText("TU", ch.x * W, beamY + jy - H * 0.075); ctx.textAlign = "left"; }
     }
@@ -211,22 +223,31 @@
   // ========================================================
   //  DA SOLO — tu lanci contro 3 bot
   // ========================================================
-  function locale(t, diff) {
-    var P = diffP(diff), ST = nuovoStato(P, mkChars(null)), raf = null, vivo = true, last = performance.now();
-    var ref = creaScena(t, "lanciatore", {
-      onAim: function (d) { ST.aimHold = d; }, onAimDrag: function (fr) { ST.aim = clamp(ST.aim + fr * AIMG, -1, 1); },
-      onLancia: function () { ST.lanciaFlag = true; }, onMov: function () {}, onSalta: function () {},
-      onEsci: function () { stop(); t.esci(); }
-    });
+  function locale(t, diff, ruolo) {
+    ruolo = ruolo === "trave" ? "trave" : "lanciatore";
+    var P = diffP(diff), raf = null, vivo = true, last = performance.now(), ST, ref, mySeat;
+    if (ruolo === "trave") {   // TU sulla trave (posto 0), un bot lancia, gli altri 2 posti = bot
+      ST = nuovoStato(P, mkChars({ 0: "io", 1: null, 2: null }), true); ST.time = P.durTrave; mySeat = 0;
+      ref = creaScena(t, "trave", { onAim: function () {}, onAimDrag: function () {}, onLancia: function () {},
+        onMov: function (d) { ST.chars[0].mov = d; }, onSalta: function () { if (ST.chars[0].jt <= 0) ST.chars[0].jt = JUMP; },
+        onEsci: function () { stop(); t.esci(); } });
+    } else {                   // TU lanci contro 3 bot
+      ST = nuovoStato(P, mkChars(null), false); mySeat = -1;
+      ref = creaScena(t, "lanciatore", { onAim: function (d) { ST.aimHold = d; }, onAimDrag: function (fr) { ST.aim = clamp(ST.aim + fr * AIMG, -1, 1); },
+        onLancia: function () { ST.lanciaFlag = true; }, onMov: function () {}, onSalta: function () {},
+        onEsci: function () { stop(); t.esci(); } });
+    }
     function stop() { vivo = false; if (raf) cancelAnimationFrame(raf); ref.rimuovi(); }
     function loop(now) { if (!vivo) return; var dt = Math.min(0.05, (now - last) / 1000); last = now;
-      passo(ST, dt, P); var snap = snapDa(ST, -1); render(ref, snap, dt);
-      var nv = ST.chars.filter(function (x) { return x.alive; }).length;
-      if (nv === 0 || ST.time <= 0) return fine(nv === 0);
+      passo(ST, dt, P); render(ref, snapDa(ST, mySeat), dt);
+      if (ruolo === "trave") { if (!ST.chars[0].alive) return fine(false); if (ST.time <= 0) return fine(true); }
+      else { var nv = ST.chars.filter(function (x) { return x.alive; }).length; if (nv === 0 || ST.time <= 0) return fine(nv === 0); }
       raf = requestAnimationFrame(loop); }
     function fine(vinto) { stop();
-      schermataFine(t, "lanciatore", vinto, vinto ? ("Buttati giù tutti e 3 in " + (P.dur - ST.time).toFixed(1) + "s! 💦") : "Tempo scaduto: non li hai buttati giù tutti. Riprova!",
-        { onRigioca: function () { locale(t, diff); }, onEsci: t.esci }); }
+      var testo = ruolo === "trave"
+        ? (vinto ? "Sei rimasto sulla trave fino alla fine! 🏆" : "Ti ha beccato: sei finito in acqua! 💦")
+        : (vinto ? ("Buttati giù tutti e 3 in " + (P.dur - ST.time).toFixed(1) + "s! 💦") : "Tempo scaduto: non li hai buttati giù tutti. Riprova!");
+      schermataFine(t, ruolo, vinto, testo, { onRigioca: function () { locale(t, diff, ruolo); }, onEsci: t.esci }); }
     raf = requestAnimationFrame(loop);
   }
 
@@ -259,7 +280,7 @@
         else if (m.t === "vuoiLanciare") { if (fase === "lobby") { nomi[id] = nomi[id] || "Amico"; claim(id); lobbyAgg(); } }
         else if (fase === "gioco" && ST) {
           if (id === lanc) { if (m.t === "aim") ST.aimHold = m.d || 0; else if (m.t === "lancia") ST.lanciaFlag = true; }
-          else { var s = seatDi(id); if (s >= 0 && ST.chars[s]) { if (m.t === "mov") ST.chars[s].mov = m.d || 0; else if (m.t === "salta") { if (ST.chars[s].jt <= 0) ST.chars[s].jt = 0.55; } } }
+          else { var s = seatDi(id); if (s >= 0 && ST.chars[s]) { if (m.t === "mov") ST.chars[s].mov = m.d || 0; else if (m.t === "salta") { if (ST.chars[s].jt <= 0) ST.chars[s].jt = JUMP; } } }
         }
       },
       onErrore: function () { senzaRete(t); }
@@ -275,7 +296,7 @@
         onAim: function (d) { if (mioRuolo === "lanciatore") ST.aimHold = d; }, onAimDrag: function (fr) { if (mioRuolo === "lanciatore") ST.aim = clamp(ST.aim + fr * AIMG, -1, 1); },
         onLancia: function () { if (mioRuolo === "lanciatore") ST.lanciaFlag = true; },
         onMov: function (d) { if (mioSeat >= 0 && ST.chars[mioSeat]) ST.chars[mioSeat].mov = d; },
-        onSalta: function () { if (mioSeat >= 0 && ST.chars[mioSeat] && ST.chars[mioSeat].jt <= 0) ST.chars[mioSeat].jt = 0.55; },
+        onSalta: function () { if (mioSeat >= 0 && ST.chars[mioSeat] && ST.chars[mioSeat].jt <= 0) ST.chars[mioSeat].jt = JUMP; },
         onEsci: function () { chiudi(); t.esci(); }
       });
       last = performance.now(); loop = requestAnimationFrame(giro);
@@ -449,13 +470,20 @@
       "<b>Online</b>: in sala d'attesa ognuno sceglie se lanciare o stare sulla trave (i posti liberi li giocano i bot)."
     ],
     impostazioni: function (box, dove, aiuti) {
-      var el = aiuti.el; dove.modo = "bot"; dove.difficolta = "medio";
-      var bBot, bOnl, notaOnline;
-      function selM(m) { dove.modo = m; bBot.className = "modo-chip" + (m === "bot" ? " attiva" : ""); bOnl.className = "modo-chip" + (m === "online" ? " attiva" : ""); notaOnline.hidden = (m !== "online"); }
-      bBot = el("button", { class: "modo-chip attiva", onclick: function () { selM("bot"); } }, [el("span", { class: "mi", text: "🎯" }), el("div", {}, [el("div", { class: "mt", text: "Da solo" }), el("div", { class: "ms", text: "Tu lanci vs 3 bot" })])]);
+      var el = aiuti.el; dove.modo = "bot"; dove.difficolta = "medio"; dove.ruolo = "lanciatore";
+      var bBot, bOnl, notaOnline, boxRuolo, bLanc, bTrave;
+      function selM(m) { dove.modo = m; bBot.className = "modo-chip" + (m === "bot" ? " attiva" : ""); bOnl.className = "modo-chip" + (m === "online" ? " attiva" : ""); notaOnline.hidden = (m !== "online"); boxRuolo.hidden = (m !== "bot"); }
+      function selR(r) { dove.ruolo = r; bLanc.className = "modo-chip" + (r === "lanciatore" ? " attiva" : ""); bTrave.className = "modo-chip" + (r === "trave" ? " attiva" : ""); }
+      bBot = el("button", { class: "modo-chip attiva", onclick: function () { selM("bot"); } }, [el("span", { class: "mi", text: "🎯" }), el("div", {}, [el("div", { class: "mt", text: "Da solo" }), el("div", { class: "ms", text: "Contro i bot" })])]);
       bOnl = el("button", { class: "modo-chip", onclick: function () { selM("online"); } }, [el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online" }), el("div", { class: "ms", text: "Ognuno dal suo" })])]);
       box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
       box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
+      boxRuolo = el("div", {});
+      boxRuolo.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Il tuo ruolo (da solo)" }));
+      bLanc = el("button", { class: "modo-chip attiva", onclick: function () { selR("lanciatore"); } }, [el("span", { class: "mi", text: "🎯" }), el("div", {}, [el("div", { class: "mt", text: "Lanci tu" }), el("div", { class: "ms", text: "Butti giù 3 bot" })])]);
+      bTrave = el("button", { class: "modo-chip", onclick: function () { selR("trave"); } }, [el("span", { class: "mi", text: "🏃" }), el("div", {}, [el("div", { class: "mt", text: "Sulla trave" }), el("div", { class: "ms", text: "Schivi il bot che lancia" })])]);
+      boxRuolo.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bLanc, bTrave]));
+      box.appendChild(boxRuolo);
       box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei bot" }));
       var w = el("div", { style: "display:flex;gap:8px" });
       [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]].forEach(function (d) {
@@ -472,7 +500,7 @@
       var imp = t.impostazioni || {};
       if (t.linkParams && t.linkParams.stanza) return ospitePendolo(t, t.linkParams.stanza);
       if (imp.modo === "online") return hostPendolo(t, imp.difficolta || "medio", NSEAT);
-      return locale(t, imp.difficolta || "medio");
+      return locale(t, imp.difficolta || "medio", imp.ruolo || "lanciatore");
     }
   });
 })();

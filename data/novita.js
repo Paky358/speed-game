@@ -15,7 +15,7 @@ window.SG_NOVITA = [
     descrizione: [
       "Sei di spalle davanti a una trave sull'acqua. Il lanciatore mira di lato (◀ ▶ o trascinando) e preme LANCIA: la palla parte con forza sempre uguale e arriva lenta fino alla trave. Il mirino rosso mostra dove cadrà.",
       "Chi sta sulla trave si muove ◀ ▶ e SALTA per schivare quando il mirino punta lui. Vince il lanciatore se li butta giù tutti in tempo, altrimenti vince chi resta in piedi.",
-      "Da solo (tu lanci contro 3 bot) oppure ONLINE: in sala d'attesa ognuno sceglie se lanciare o stare sulla trave (i posti liberi li giocano i bot). Sta nei Minigiochi.",
+      "Da solo puoi scegliere il ruolo: LANCI TU (contro 3 bot) oppure STAI SULLA TRAVE (schivi un bot che lancia e devi sopravvivere). Online invece si sceglie il ruolo in sala d'attesa (i posti liberi = bot). Sta nei Minigiochi.",
       "Inoltre: la corsa di Horto Muso online adesso è più fluida per chi entra come ospite (niente più scatti)."
     ]
   },
