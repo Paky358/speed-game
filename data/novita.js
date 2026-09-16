@@ -17,7 +17,8 @@ window.SG_NOVITA = [
       "Chi sta sulla trave si muove ◀ ▶ e SALTA per schivare quando il mirino punta lui. Vince il lanciatore se li butta giù tutti in tempo, altrimenti vince chi resta in piedi.",
       "Da solo puoi scegliere il ruolo: LANCI TU (contro 3 bot) oppure STAI SULLA TRAVE (schivi un bot che lancia e devi sopravvivere). Online invece si sceglie il ruolo in sala d'attesa (i posti liberi = bot). Sta nei Minigiochi.",
       "La palla ora va oltre la trave e può prenderti anche mentre torna indietro: devi restare attento fino a quando è passata del tutto!",
-      "Il salto ora ha una ricarica (niente salti a raffica) e puoi nascondere il puntino rosso della mira dalle impostazioni.",
+      "Il salto ora ha una ricarica (una volta ogni ~2 secondi: niente salti a raffica, e il tasto si spegne mentre ricarica). Nuova impostazione per far sì che i personaggi non si attraversino (collisioni). Puoi anche nascondere il puntino rosso della mira.",
+      "Nella home le categorie non si scorrono più di lato: ora vanno a capo (3 per riga).",
       "Inoltre: la corsa di Horto Muso online adesso è più fluida per chi entra come ospite (niente più scatti)."
     ]
   },

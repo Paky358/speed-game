@@ -173,8 +173,12 @@ dal proprio.
   la palla **supera** il piano della trave (`PBEAM=1.0`) e **colpisce sia in andata sia in ritorno**
   (attraversamenti `crossOut`/`crossBack` di `PBEAM`); disegnata dietro i personaggi quando `p>1`.
   Niente modulazione della forza, conta il **tempismo**. Il **salto ha una ricarica** (`JCD` dopo
-  l'atterraggio: niente spam; barretta sopra il "TU"). Il **mirino rosso è opzionale**
-  (`vuoiMirino()` da `localStorage "sg-pendolo-mirino"`, toggle nelle impostazioni). Il lanciatore **mira di lato** (◀ ▶, trascino,
+  l'atterraggio: niente spam; barretta sopra il "TU"; il tasto SALTA va `disabled` in ricarica).
+  Impostazione **collisioni** (`ST.collis`): i personaggi non si attraversano (separazione `MINSEP`
+  nel `passo`, i bot rimbalzano). Il **mirino rosso è opzionale** (`vuoiMirino()` da
+  `localStorage "sg-pendolo-mirino"`, toggle nelle impostazioni).
+- **Home**: la barra delle categorie (`.cat-barra`) ora è **flex-wrap** (va a capo, ~3 per riga)
+  invece che a scorrimento orizzontale. Il lanciatore **mira di lato** (◀ ▶, trascino,
   frecce) — la mira si blocca al lancio (`aimLock`) e un **mirino rosso** la mostra sulla trave; **LANCIA**
   con tasto/tocco. La **collisione** scatta quando la palla attraversa la profondità della trave (banda
   p≥0.9 in avanti) e il personaggio è entro `HITF` dalla `beamXf(aimLock)` e non a mezz'aria. Chi sta

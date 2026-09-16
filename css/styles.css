@@ -86,13 +86,11 @@ body{
 .btn-piccolo{ font-size:.95rem; min-height:44px; padding:10px 14px; width:auto; }
 
 /* ---- Home: barra delle categorie ---- */
-.cat-barra{ display:flex; gap:8px; overflow-x:auto; padding:2px 2px 4px; margin:0 0 14px;
-  -webkit-overflow-scrolling:touch; scrollbar-width:none; }
-.cat-barra::-webkit-scrollbar{ display:none; }
-.cat-tab{ flex:0 0 auto; display:flex; align-items:center; gap:6px; border:2px solid transparent;
-  cursor:pointer; font-family:inherit; font-weight:800; font-size:.92rem; border-radius:999px;
-  padding:9px 15px; min-height:42px; background:var(--carta); color:var(--testo);
-  transition:transform .05s ease; }
+.cat-barra{ display:flex; flex-wrap:wrap; gap:8px; padding:2px 2px 4px; margin:0 0 14px; }
+.cat-tab{ flex:0 0 auto; display:flex; align-items:center; gap:5px; border:2px solid transparent;
+  cursor:pointer; font-family:inherit; font-weight:800; font-size:.86rem; border-radius:999px;
+  padding:9px 12px; min-height:42px; background:var(--carta); color:var(--testo);
+  white-space:nowrap; transition:transform .05s ease; }
 .cat-tab:active{ transform:scale(.96); }
 .cat-tab .ci{ font-size:1.05rem; line-height:1; }
 .cat-tab.attiva{ background:linear-gradient(135deg,var(--accento),var(--accento-scuro));

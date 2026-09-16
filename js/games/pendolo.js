@@ -13,7 +13,7 @@
   "use strict";
   var TH_BEAM = 1.0, SWING = 2.0, AIMK = 1.5, AIMG = 2.4, NSEAT = 3, HZ = 50;
   var PEAKD = 1.28, PBEAM = 1.0;   // la palla va OLTRE la trave (picco profondità 1.28); il piano della trave è a p=1.0
-  var BEAM_L = 0.14, BEAM_R = 0.86, AIM_SPAN = 0.40, MOVSP = 0.36, BOTSP = 0.22, HITF = 0.075, JUMP = 0.6, JCD = 0.45;
+  var BEAM_L = 0.14, BEAM_R = 0.86, AIM_SPAN = 0.40, MOVSP = 0.36, BOTSP = 0.22, HITF = 0.075, JUMP = 0.6, JCD = 2.0, MINSEP = 0.11;
   function vuoiMirino() { try { return localStorage.getItem("sg-pendolo-mirino") !== "0"; } catch (e) { return true; } }
   var COLSEAT = ["#ff6b6b", "#4dabf7", "#51cf66"];
   function diffP(d) {   // dodge: salto dei bot sulla trave · cd/aimErr: IA del lanciatore · durTrave: quanto devi sopravvivere
@@ -42,7 +42,7 @@
     for (var i = 0; i < NSEAT; i++) c.push({ fx: base[i], dir: i % 2 ? -1 : 1, mov: 0, jt: 0, jcd: 0, alive: true, human: !!(assign && assign[i]), ctrl: assign ? assign[i] : null });
     return c;
   }
-  function nuovoStato(P, chars, aiLanc) { return { th: 0, swinging: false, tSw: 0, aim: 0, aimLock: 0, aimHold: 0, lanciaFlag: false, chars: chars, time: P.dur, fase: "gioco", aiLanc: !!aiLanc, aiTarget: -1, aiCd: 0.8, aiGoal: 0 }; }
+  function nuovoStato(P, chars, aiLanc) { return { th: 0, swinging: false, tSw: 0, aim: 0, aimLock: 0, aimHold: 0, lanciaFlag: false, chars: chars, time: P.dur, fase: "gioco", aiLanc: !!aiLanc, aiTarget: -1, aiCd: 0.8, aiGoal: 0, collis: false }; }
   function pDi(ST) { var p = ST.th / TH_BEAM; return p < 0 ? 0 : p > 1.4 ? 1.4 : p; }
   function passo(ST, dt, P) {
     ST.time -= dt; if (ST.time < 0) ST.time = 0;
@@ -70,8 +70,18 @@
       if (c.human) c.fx += c.mov * MOVSP * dt;
       else { c.fx += c.dir * BOTSP * dt; if (c.fx < BEAM_L) { c.fx = BEAM_L; c.dir = 1; } if (c.fx > BEAM_R) { c.fx = BEAM_R; c.dir = -1; } }
       c.fx = clamp(c.fx, BEAM_L, BEAM_R);
-      if (c.jt > 0) { c.jt -= dt; if (c.jt <= 0) c.jcd = JCD; } else if (c.jcd > 0) c.jcd -= dt;   // atterrato -> ricarica
-      if (!c.human && finestra && Math.abs(c.fx - bxf) < 0.16 && c.jt <= 0 && c.jcd <= 0 && Math.random() < P.dodge) c.jt = JUMP;
+      if (c.jt > 0) c.jt -= dt; if (c.jcd > 0) c.jcd -= dt;   // jcd = ricarica del salto (una volta ogni JCD secondi)
+      if (!c.human && finestra && Math.abs(c.fx - bxf) < 0.16 && c.jt <= 0 && c.jcd <= 0 && Math.random() < P.dodge) { c.jt = JUMP; c.jcd = JCD; }
+    }
+    if (ST.collis) {   // i personaggi non si attraversano: separali di almeno MINSEP
+      var idx = []; for (var z = 0; z < ST.chars.length; z++) if (ST.chars[z].alive) idx.push(z);
+      idx.sort(function (a, b) { return ST.chars[a].fx - ST.chars[b].fx; });
+      for (var m = 1; m < idx.length; m++) { var A = ST.chars[idx[m - 1]], B = ST.chars[idx[m]], gap = B.fx - A.fx;
+        if (gap < MINSEP) { var push = (MINSEP - gap) / 2;
+          A.fx = clamp(A.fx - push, BEAM_L, BEAM_R); B.fx = clamp(B.fx + push, BEAM_L, BEAM_R);
+          if (!A.human) A.dir = -1; if (!B.human) B.dir = 1;   // i bot rimbalzano al contatto
+        }
+      }
     }
     // colpisce ATTRAVERSANDO il piano della trave (p=PBEAM), sia in andata sia in ritorno
     var crossOut = ST.tSw < 0.5 && pPrev < PBEAM && p >= PBEAM;
@@ -126,7 +136,7 @@
       cv.addEventListener("pointercancel", function () { dX = null; });
     }
     t.mostra(s);
-    var ctx = cv.getContext("2d"), ref = { cv: cv, ctx: ctx, W: 0, H: 0, prevA: [], fallers: [], splashes: [], prevSw: 0, ruolo: ruolo, mirino: vuoiMirino() };
+    var ctx = cv.getContext("2d"), ref = { cv: cv, ctx: ctx, W: 0, H: 0, prevA: [], fallers: [], splashes: [], prevSw: 0, ruolo: ruolo, mirino: vuoiMirino(), bSalta: (ruolo === "trave" ? bSalta : null) };
     function dim() {
       var w = Math.min(460, (window.innerWidth || 360) - 24), rect = cv.getBoundingClientRect();
       var h = clamp((window.innerHeight || 640) - rect.top - 190, 280, 640), dpr = window.devicePixelRatio || 1;
@@ -161,6 +171,7 @@
       if (wasA && !S.c[i].a) { ref.fallers.push({ x: S.c[i].x * W, y: beamY, vy: H * 0.15, col: COLSEAT[i], rot: 0 }); }
       ref.prevA[i] = S.c[i].a; }
     if (S.sw && !ref.prevSw) whoosh(); ref.prevSw = S.sw;
+    if (ref.bSalta && S.ms >= 0 && S.c[S.ms]) { var giu = S.c[S.ms].cd > 0; if (ref.bSalta.disabled !== giu) ref.bSalta.disabled = giu; }   // tasto SALTA spento in ricarica
     // sfondo
     var g = ctx.createLinearGradient(0, 0, 0, waterY); g.addColorStop(0, "#7cd0ef"); g.addColorStop(1, "#cdeefb");
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, waterY);
@@ -240,13 +251,13 @@
   // ========================================================
   //  DA SOLO — tu lanci contro 3 bot
   // ========================================================
-  function locale(t, diff, ruolo) {
+  function locale(t, diff, ruolo, collis) {
     ruolo = ruolo === "trave" ? "trave" : "lanciatore";
     var P = diffP(diff), raf = null, vivo = true, last = performance.now(), ST, ref, mySeat;
     if (ruolo === "trave") {   // TU sulla trave (posto 0), un bot lancia, gli altri 2 posti = bot
       ST = nuovoStato(P, mkChars({ 0: "io", 1: null, 2: null }), true); ST.time = P.durTrave; mySeat = 0;
       ref = creaScena(t, "trave", { onAim: function () {}, onAimDrag: function () {}, onLancia: function () {},
-        onMov: function (d) { ST.chars[0].mov = d; }, onSalta: function () { if (ST.chars[0].jt <= 0 && ST.chars[0].jcd <= 0) ST.chars[0].jt = JUMP; },
+        onMov: function (d) { ST.chars[0].mov = d; }, onSalta: function () { if (ST.chars[0].jt <= 0 && ST.chars[0].jcd <= 0) { ST.chars[0].jt = JUMP; ST.chars[0].jcd = JCD; } },
         onEsci: function () { stop(); t.esci(); } });
     } else {                   // TU lanci contro 3 bot
       ST = nuovoStato(P, mkChars(null), false); mySeat = -1;
@@ -254,6 +265,7 @@
         onLancia: function () { ST.lanciaFlag = true; }, onMov: function () {}, onSalta: function () {},
         onEsci: function () { stop(); t.esci(); } });
     }
+    ST.collis = !!collis;
     function stop() { vivo = false; if (raf) cancelAnimationFrame(raf); ref.rimuovi(); }
     function loop(now) { if (!vivo) return; var dt = Math.min(0.05, (now - last) / 1000); last = now;
       passo(ST, dt, P); render(ref, snapDa(ST, mySeat), dt);
@@ -271,7 +283,7 @@
   // ========================================================
   //  ONLINE — host-autoritativo. In lobby ognuno sceglie il ruolo.
   // ========================================================
-  function hostPendolo(t, diff, N) {
+  function hostPendolo(t, diff, N, collis) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var P = diffP(diff), codice = "…", pronta = false;
     var posti = {}, nomi = { host: (t.giocatori && t.giocatori[0]) || "Host" }, lanc = "host";
@@ -297,14 +309,14 @@
         else if (m.t === "vuoiLanciare") { if (fase === "lobby") { nomi[id] = nomi[id] || "Amico"; claim(id); lobbyAgg(); } }
         else if (fase === "gioco" && ST) {
           if (id === lanc) { if (m.t === "aim") ST.aimHold = m.d || 0; else if (m.t === "lancia") ST.lanciaFlag = true; }
-          else { var s = seatDi(id); if (s >= 0 && ST.chars[s]) { if (m.t === "mov") ST.chars[s].mov = m.d || 0; else if (m.t === "salta") { if (ST.chars[s].jt <= 0 && ST.chars[s].jcd <= 0) ST.chars[s].jt = JUMP; } } }
+          else { var s = seatDi(id); if (s >= 0 && ST.chars[s]) { if (m.t === "mov") ST.chars[s].mov = m.d || 0; else if (m.t === "salta") { if (ST.chars[s].jt <= 0 && ST.chars[s].jcd <= 0) { ST.chars[s].jt = JUMP; ST.chars[s].jcd = JCD; } } } }
         }
       },
       onErrore: function () { senzaRete(t); }
     });
 
     function inizia() {
-      fase = "gioco"; ST = nuovoStato(P, mkChars(posti));
+      fase = "gioco"; ST = nuovoStato(P, mkChars(posti)); ST.collis = !!collis;
       rete.invia({ t: "via", lanc: lanc, seggi: seggi(), nomi: nomi });
       for (var s = 0; s < NSEAT; s++) if (posti[s]) rete.invia({ t: "ruolo", to: posti[s], seat: s });
       if (lanc !== "host") rete.invia({ t: "ruolo", to: lanc, seat: -1 });
@@ -313,7 +325,7 @@
         onAim: function (d) { if (mioRuolo === "lanciatore") ST.aimHold = d; }, onAimDrag: function (fr) { if (mioRuolo === "lanciatore") ST.aim = clamp(ST.aim + fr * AIMG, -1, 1); },
         onLancia: function () { if (mioRuolo === "lanciatore") ST.lanciaFlag = true; },
         onMov: function (d) { if (mioSeat >= 0 && ST.chars[mioSeat]) ST.chars[mioSeat].mov = d; },
-        onSalta: function () { if (mioSeat >= 0 && ST.chars[mioSeat] && ST.chars[mioSeat].jt <= 0 && ST.chars[mioSeat].jcd <= 0) ST.chars[mioSeat].jt = JUMP; },
+        onSalta: function () { if (mioSeat >= 0 && ST.chars[mioSeat] && ST.chars[mioSeat].jt <= 0 && ST.chars[mioSeat].jcd <= 0) { ST.chars[mioSeat].jt = JUMP; ST.chars[mioSeat].jcd = JCD; } },
         onEsci: function () { chiudi(); t.esci(); }
       });
       last = performance.now(); loop = requestAnimationFrame(giro);
@@ -487,7 +499,7 @@
       "<b>Online</b>: in sala d'attesa ognuno sceglie se lanciare o stare sulla trave (i posti liberi li giocano i bot)."
     ],
     impostazioni: function (box, dove, aiuti) {
-      var el = aiuti.el; dove.modo = "bot"; dove.difficolta = "medio"; dove.ruolo = "lanciatore";
+      var el = aiuti.el; dove.modo = "bot"; dove.difficolta = "medio"; dove.ruolo = "lanciatore"; dove.collisioni = false;
       var bBot, bOnl, notaOnline, boxRuolo, bLanc, bTrave;
       function selM(m) { dove.modo = m; bBot.className = "modo-chip" + (m === "bot" ? " attiva" : ""); bOnl.className = "modo-chip" + (m === "online" ? " attiva" : ""); notaOnline.hidden = (m !== "online"); boxRuolo.hidden = (m !== "bot"); }
       function selR(r) { dove.ruolo = r; bLanc.className = "modo-chip" + (r === "lanciatore" ? " attiva" : ""); bTrave.className = "modo-chip" + (r === "trave" ? " attiva" : ""); }
@@ -509,6 +521,13 @@
         b.style.flex = "1"; w.appendChild(b);
       });
       box.appendChild(w);
+      box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Regole" }));
+      var bColl = el("button", { class: "btn btn-fantasma", style: "width:100%" });
+      function aggColl() { bColl.textContent = dove.collisioni ? "🧱 Collisioni tra giocatori: SÌ" : "👻 Collisioni tra giocatori: no"; }
+      aggColl();
+      bColl.addEventListener("click", function () { dove.collisioni = !dove.collisioni; aggColl(); });
+      box.appendChild(bColl);
+      box.appendChild(el("p", { class: "modulo-nota", style: "margin-top:4px", text: "Con le collisioni i personaggi non si attraversano: si spingono e non passano l'uno dentro l'altro." }));
       box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Aiuto visivo" }));
       var mir = vuoiMirino(), bMir = el("button", { class: "btn btn-fantasma", style: "width:100%" });
       function aggMir() { bMir.textContent = mir ? "🎯 Mirino rosso: mostrato" : "🚫 Mirino rosso: nascosto"; }
@@ -522,8 +541,8 @@
     avvia: function (t) {
       var imp = t.impostazioni || {};
       if (t.linkParams && t.linkParams.stanza) return ospitePendolo(t, t.linkParams.stanza);
-      if (imp.modo === "online") return hostPendolo(t, imp.difficolta || "medio", NSEAT);
-      return locale(t, imp.difficolta || "medio", imp.ruolo || "lanciatore");
+      if (imp.modo === "online") return hostPendolo(t, imp.difficolta || "medio", NSEAT, imp.collisioni);
+      return locale(t, imp.difficolta || "medio", imp.ruolo || "lanciatore", imp.collisioni);
     }
   });
 })();
