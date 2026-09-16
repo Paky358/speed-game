@@ -19,6 +19,10 @@ contenuto di quel tasto vive in `data/novita.js`._
   Ospite con interpolazione (movimento liscio come Glow Hockey). Tre livelli di bravura.
 - **Fix**: i pulsanti non si "selezionano" più al tocco sul telefono (niente evidenziazione da
   copia-incolla): aggiunto `user-select:none` e `touch-action:manipulation` a tutti i tasti.
+- **La palla va oltre la trave**: il lancio ora supera il piano della trave (picco profondità 1.28)
+  e colpisce **sia in andata sia in ritorno**, ma solo nell'istante in cui **attraversa la
+  profondità della trave** (dove stanno i giocatori). Chi schiva l'andata deve restare attento anche
+  al ritorno. La palla passa **dietro** i personaggi quando è in fondo (z-order corretto).
 - **Horto Muso online**: l'ospite ora vede la corsa **fluida** (interpolazione con buffer e
   piccolo ritardo, come in Glow Hockey), invece di andare a scatti quando i pacchetti arrivano
   irregolari. La scheda del gioco mostra "1–8 giocatori".

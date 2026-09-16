@@ -12,6 +12,7 @@
 (function () {
   "use strict";
   var TH_BEAM = 1.0, SWING = 2.0, AIMK = 1.5, AIMG = 2.4, NSEAT = 3, HZ = 50;
+  var PEAKD = 1.28, PBEAM = 1.0;   // la palla va OLTRE la trave (picco profondità 1.28); il piano della trave è a p=1.0
   var BEAM_L = 0.14, BEAM_R = 0.86, AIM_SPAN = 0.40, MOVSP = 0.36, BOTSP = 0.22, HITF = 0.075, JUMP = 0.6;
   var COLSEAT = ["#ff6b6b", "#4dabf7", "#51cf66"];
   function diffP(d) {   // dodge: salto dei bot sulla trave · cd/aimErr: IA del lanciatore · durTrave: quanto devi sopravvivere
@@ -41,7 +42,7 @@
     return c;
   }
   function nuovoStato(P, chars, aiLanc) { return { th: 0, swinging: false, tSw: 0, aim: 0, aimLock: 0, aimHold: 0, lanciaFlag: false, chars: chars, time: P.dur, fase: "gioco", aiLanc: !!aiLanc, aiTarget: -1, aiCd: 0.8, aiGoal: 0 }; }
-  function pDi(ST) { var p = ST.th / TH_BEAM; return p < 0 ? 0 : p > 1.08 ? 1.08 : p; }
+  function pDi(ST) { var p = ST.th / TH_BEAM; return p < 0 ? 0 : p > 1.4 ? 1.4 : p; }
   function passo(ST, dt, P) {
     ST.time -= dt; if (ST.time < 0) ST.time = 0;
     if (ST.aiLanc) {   // il lanciatore è un bot: prende di mira DOVE SEI ORA (mira fissa), poi lancia:
@@ -60,10 +61,10 @@
     var pPrev = pDi(ST);
     if (ST.lanciaFlag && !ST.swinging) { ST.swinging = true; ST.tSw = 0; ST.aimLock = ST.aim; whoosh(); }
     ST.lanciaFlag = false;
-    if (ST.swinging) { ST.tSw += dt / SWING; if (ST.tSw >= 1) { ST.swinging = false; ST.tSw = 0; ST.th = 0; } else ST.th = TH_BEAM * Math.sin(ST.tSw * Math.PI); }
+    if (ST.swinging) { ST.tSw += dt / SWING; if (ST.tSw >= 1) { ST.swinging = false; ST.tSw = 0; ST.th = 0; } else ST.th = PEAKD * Math.sin(ST.tSw * Math.PI); }
     else ST.th = 0;
     var p = pDi(ST), bxf = beamXf(ST.aimLock);
-    var finestra = ST.swinging && ST.tSw < 0.5 && p > 0.68 && p < 0.9;
+    var finestra = ST.swinging && ST.tSw < 0.5 && p > 0.68 && p < PBEAM;   // i bot saltano prima dell'andata
     for (var i = 0; i < ST.chars.length; i++) { var c = ST.chars[i]; if (!c.alive) continue;
       if (c.human) c.fx += c.mov * MOVSP * dt;
       else { c.fx += c.dir * BOTSP * dt; if (c.fx < BEAM_L) { c.fx = BEAM_L; c.dir = 1; } if (c.fx > BEAM_R) { c.fx = BEAM_R; c.dir = -1; } }
@@ -71,7 +72,10 @@
       if (c.jt > 0) c.jt -= dt;
       if (!c.human && finestra && Math.abs(c.fx - bxf) < 0.16 && c.jt <= 0 && Math.random() < P.dodge) c.jt = JUMP;
     }
-    if (ST.swinging && ST.tSw < 0.5 && pPrev < 0.9 && p >= 0.9) {
+    // colpisce ATTRAVERSANDO il piano della trave (p=PBEAM), sia in andata sia in ritorno
+    var crossOut = ST.tSw < 0.5 && pPrev < PBEAM && p >= PBEAM;
+    var crossBack = ST.tSw >= 0.5 && pPrev > PBEAM && p <= PBEAM;
+    if (ST.swinging && (crossOut || crossBack)) {
       for (var j = 0; j < ST.chars.length; j++) { var b = ST.chars[j]; if (!b.alive) continue;
         var aria = b.jt > JUMP * 0.06 && b.jt < JUMP * 0.97;
         if (!aria && Math.abs(b.fx - bxf) < HITF) { b.alive = false; colpo(); }
@@ -164,6 +168,16 @@
     ctx.strokeStyle = "rgba(255,255,255,.18)"; ctx.lineWidth = 2;
     for (var k = 0; k < 3; k++) { var yy = waterY + 16 + k * 24; ctx.beginPath();
       for (var x = 0; x <= W; x += 14) ctx.lineTo(x, yy + Math.sin(x * 0.05 + performance.now() * 0.002 + k) * 4); ctx.stroke(); }
+    // geometria palla (calcolata prima: serve per lo z-order e per l'ombra)
+    var p = S.p, bx = ballXf(S.ba, p) * W, by = handsY + (beamY - handsY) * p, r = H * 0.10 * (1 - 0.5 * (p > 1 ? 1 : p)), sc = 1 - Math.min(1, p) * 0.6;
+    function disegnaPalla() {
+      ctx.strokeStyle = "rgba(30,20,10,.6)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, handsY); ctx.lineTo(bx, by); ctx.stroke();
+      var gg = ctx.createRadialGradient(bx - r * 0.3, by - r * 0.3, r * 0.2, bx, by, r); gg.addColorStop(0, "#ff8f6b"); gg.addColorStop(1, "#c0392b");
+      ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(bx, by, r, 0, 7); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.4)"; ctx.beginPath(); ctx.arc(bx - r * 0.3, by - r * 0.3, r * 0.25, 0, 7); ctx.fill();
+    }
+    // ombra sull'acqua (dietro a tutto)
+    ctx.fillStyle = "rgba(0,0,0," + (0.28 * (1 - Math.min(1, p) * 0.6)) + ")"; ctx.beginPath(); ctx.ellipse(bx, waterY + 8, r * 0.9 * sc + 6, r * 0.32 * sc + 3, 0, 0, 7); ctx.fill();
     // trave
     var h = 13, nearW = W * 0.92, farOff = (W - nearW) / 2;
     ctx.fillStyle = "#b5793a"; ctx.beginPath(); ctx.moveTo(farOff, beamY); ctx.lineTo(W - farOff, beamY); ctx.lineTo(W - farOff + 9, beamY + h); ctx.lineTo(farOff - 9, beamY + h); ctx.closePath(); ctx.fill();
@@ -174,24 +188,19 @@
     if (S.f === "gioco") { var mx = beamXf(S.ai) * W, my = beamY + 7; ctx.strokeStyle = "rgba(255,70,70,.9)"; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(mx - 9, my); ctx.lineTo(mx + 9, my); ctx.moveTo(mx, my - 9); ctx.lineTo(mx, my + 9); ctx.stroke();
       ctx.fillStyle = "rgba(255,70,70,.22)"; ctx.beginPath(); ctx.arc(mx, my, 6, 0, 7); ctx.fill(); }
+    if (p > 1.0) disegnaPalla();   // palla OLTRE la trave: disegnala DIETRO i personaggi
     // personaggi sulla trave
     for (var c = 0; c < S.c.length; c++) { var ch = S.c[c]; if (!ch.a) continue;
       var jy = ch.j > 0 ? -Math.sin((JUMP - ch.j) / JUMP * Math.PI) * H * 0.09 : 0;
       botDis(ctx, ch.x * W, beamY + jy, COLSEAT[c], 1, 0);
       if (c === S.ms) { ctx.fillStyle = "#ffd43b"; ctx.font = "bold 12px system-ui"; ctx.textAlign = "center"; ctx.fillText("TU", ch.x * W, beamY + jy - H * 0.075); ctx.textAlign = "left"; }
     }
-    // palla + corda + ombra
-    var p = S.p, bx = ballXf(S.ba, p) * W, by = handsY + (beamY - handsY) * p, r = H * 0.10 * (1 - 0.5 * (p > 1 ? 1 : p)), sc = 1 - Math.min(1, p) * 0.6;
-    ctx.fillStyle = "rgba(0,0,0," + (0.28 * (1 - Math.min(1, p) * 0.6)) + ")"; ctx.beginPath(); ctx.ellipse(bx, waterY + 8, r * 0.9 * sc + 6, r * 0.32 * sc + 3, 0, 0, 7); ctx.fill();
     // fontanelle
     for (var f = ref.fallers.length - 1; f >= 0; f--) { var fa = ref.fallers[f]; fa.vy += H * 1.4 * dt; fa.y += fa.vy * dt; fa.rot += dt * 6;
       if (fa.y >= waterY) { splash(); ref.splashes.push({ x: fa.x, y: waterY, r: 6, a: 1 }); ref.fallers.splice(f, 1); } else botDis(ctx, fa.x, fa.y, fa.col, 0.9, fa.rot); }
     for (var q = ref.splashes.length - 1; q >= 0; q--) { var sp = ref.splashes[q]; sp.r += W * 0.20 * dt; sp.a -= dt * 1.6;
       if (sp.a <= 0) ref.splashes.splice(q, 1); else { ctx.strokeStyle = "rgba(255,255,255," + sp.a + ")"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(sp.x, sp.y, sp.r, 0, 7); ctx.stroke(); } }
-    ctx.strokeStyle = "rgba(30,20,10,.6)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, handsY); ctx.lineTo(bx, by); ctx.stroke();
-    var gg = ctx.createRadialGradient(bx - r * 0.3, by - r * 0.3, r * 0.2, bx, by, r); gg.addColorStop(0, "#ff8f6b"); gg.addColorStop(1, "#c0392b");
-    ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(bx, by, r, 0, 7); ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,.4)"; ctx.beginPath(); ctx.arc(bx - r * 0.3, by - r * 0.3, r * 0.25, 0, 7); ctx.fill();
+    if (p <= 1.0) disegnaPalla();   // palla davanti/alla trave: DAVANTI ai personaggi
     // giocatore di spalle (il lanciatore) al centro
     ctx.fillStyle = "#2b2f3a"; ctx.beginPath(); ctx.ellipse(cx, H + H * 0.02, W * 0.16, H * 0.11, 0, 0, 7); ctx.fill();
     ctx.fillStyle = "#3a4150"; ctx.beginPath(); ctx.arc(cx, H * 0.92, H * 0.05, 0, 7); ctx.fill();

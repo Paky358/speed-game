@@ -169,8 +169,10 @@ dal proprio.
   ispirato a "Palla a pendolo" di Wii Party. Visuale **finto-3D su Canvas 2D** (stessa per tutti):
   giocatore di spalle in basso al centro, **trave** orizzontale a metà schermo con **3 posti**, la palla
   appesa oscilla **in profondità**: per il 3D scala il raggio e disegna l'**ombra sull'acqua**.
-  **Lancio a forza fissa e lento** (swing "scriptato" `th = TH_BEAM*sin(tSw*π)`, durata `SWING=2s`):
-  niente modulazione della forza, conta il **tempismo**. Il lanciatore **mira di lato** (◀ ▶, trascino,
+  **Lancio a forza fissa e lento** (swing "scriptato" `th = PEAKD*sin(tSw*π)`, `PEAKD=1.28`, durata `SWING=2s`):
+  la palla **supera** il piano della trave (`PBEAM=1.0`) e **colpisce sia in andata sia in ritorno**
+  (attraversamenti `crossOut`/`crossBack` di `PBEAM`); disegnata dietro i personaggi quando `p>1`.
+  Niente modulazione della forza, conta il **tempismo**. Il lanciatore **mira di lato** (◀ ▶, trascino,
   frecce) — la mira si blocca al lancio (`aimLock`) e un **mirino rosso** la mostra sulla trave; **LANCIA**
   con tasto/tocco. La **collisione** scatta quando la palla attraversa la profondità della trave (banda
   p≥0.9 in avanti) e il personaggio è entro `HITF` dalla `beamXf(aimLock)` e non a mezz'aria. Chi sta
