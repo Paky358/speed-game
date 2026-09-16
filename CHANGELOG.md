@@ -19,6 +19,10 @@ contenuto di quel tasto vive in `data/novita.js`._
   Ospite con interpolazione (movimento liscio come Glow Hockey). Tre livelli di bravura.
 - **Fix**: i pulsanti non si "selezionano" più al tocco sul telefono (niente evidenziazione da
   copia-incolla): aggiunto `user-select:none` e `touch-action:manipulation` a tutti i tasti.
+- **Il salto ha la ricarica**: dopo l'atterraggio c'è una piccola pausa prima di poter risaltare
+  (niente più salto "a mitraglia"). Una barretta sopra il tuo personaggio mostra la ricarica.
+- **Mirino opzionale**: nelle impostazioni puoi **nascondere il puntino rosso** della mira
+  (la scelta resta salvata sul telefono e vale anche online).
 - **La palla va oltre la trave**: il lancio ora supera il piano della trave (picco profondità 1.28)
   e colpisce **sia in andata sia in ritorno**, ma solo nell'istante in cui **attraversa la
   profondità della trave** (dove stanno i giocatori). Chi schiva l'andata deve restare attento anche

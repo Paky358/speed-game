@@ -5955,6 +5955,7 @@ window.SG_NOVITA = [
       "Chi sta sulla trave si muove ◀ ▶ e SALTA per schivare quando il mirino punta lui. Vince il lanciatore se li butta giù tutti in tempo, altrimenti vince chi resta in piedi.",
       "Da solo puoi scegliere il ruolo: LANCI TU (contro 3 bot) oppure STAI SULLA TRAVE (schivi un bot che lancia e devi sopravvivere). Online invece si sceglie il ruolo in sala d'attesa (i posti liberi = bot). Sta nei Minigiochi.",
       "La palla ora va oltre la trave e può prenderti anche mentre torna indietro: devi restare attento fino a quando è passata del tutto!",
+      "Il salto ora ha una ricarica (niente salti a raffica) e puoi nascondere il puntino rosso della mira dalle impostazioni.",
       "Inoltre: la corsa di Horto Muso online adesso è più fluida per chi entra come ospite (niente più scatti)."
     ]
   },
@@ -11239,7 +11240,8 @@ window.SG_SIPERO = {
   "use strict";
   var TH_BEAM = 1.0, SWING = 2.0, AIMK = 1.5, AIMG = 2.4, NSEAT = 3, HZ = 50;
   var PEAKD = 1.28, PBEAM = 1.0;   // la palla va OLTRE la trave (picco profondità 1.28); il piano della trave è a p=1.0
-  var BEAM_L = 0.14, BEAM_R = 0.86, AIM_SPAN = 0.40, MOVSP = 0.36, BOTSP = 0.22, HITF = 0.075, JUMP = 0.6;
+  var BEAM_L = 0.14, BEAM_R = 0.86, AIM_SPAN = 0.40, MOVSP = 0.36, BOTSP = 0.22, HITF = 0.075, JUMP = 0.6, JCD = 0.45;
+  function vuoiMirino() { try { return localStorage.getItem("sg-pendolo-mirino") !== "0"; } catch (e) { return true; } }
   var COLSEAT = ["#ff6b6b", "#4dabf7", "#51cf66"];
   function diffP(d) {   // dodge: salto dei bot sulla trave · cd/aimErr: IA del lanciatore · durTrave: quanto devi sopravvivere
     return d === "facile"    ? { dodge: 0.032, dur: 40, durTrave: 18, cdMin: 2.0, cdVar: 1.4, aimErr: 0.16 }
@@ -11264,7 +11266,7 @@ window.SG_SIPERO = {
   // ---------- simulazione (locale e host) ----------
   function mkChars(assign) {   // assign[seat] = id (umano) | null (bot)
     var base = [0.28, 0.5, 0.72], c = [];
-    for (var i = 0; i < NSEAT; i++) c.push({ fx: base[i], dir: i % 2 ? -1 : 1, mov: 0, jt: 0, alive: true, human: !!(assign && assign[i]), ctrl: assign ? assign[i] : null });
+    for (var i = 0; i < NSEAT; i++) c.push({ fx: base[i], dir: i % 2 ? -1 : 1, mov: 0, jt: 0, jcd: 0, alive: true, human: !!(assign && assign[i]), ctrl: assign ? assign[i] : null });
     return c;
   }
   function nuovoStato(P, chars, aiLanc) { return { th: 0, swinging: false, tSw: 0, aim: 0, aimLock: 0, aimHold: 0, lanciaFlag: false, chars: chars, time: P.dur, fase: "gioco", aiLanc: !!aiLanc, aiTarget: -1, aiCd: 0.8, aiGoal: 0 }; }
@@ -11295,8 +11297,8 @@ window.SG_SIPERO = {
       if (c.human) c.fx += c.mov * MOVSP * dt;
       else { c.fx += c.dir * BOTSP * dt; if (c.fx < BEAM_L) { c.fx = BEAM_L; c.dir = 1; } if (c.fx > BEAM_R) { c.fx = BEAM_R; c.dir = -1; } }
       c.fx = clamp(c.fx, BEAM_L, BEAM_R);
-      if (c.jt > 0) c.jt -= dt;
-      if (!c.human && finestra && Math.abs(c.fx - bxf) < 0.16 && c.jt <= 0 && Math.random() < P.dodge) c.jt = JUMP;
+      if (c.jt > 0) { c.jt -= dt; if (c.jt <= 0) c.jcd = JCD; } else if (c.jcd > 0) c.jcd -= dt;   // atterrato -> ricarica
+      if (!c.human && finestra && Math.abs(c.fx - bxf) < 0.16 && c.jt <= 0 && c.jcd <= 0 && Math.random() < P.dodge) c.jt = JUMP;
     }
     // colpisce ATTRAVERSANDO il piano della trave (p=PBEAM), sia in andata sia in ritorno
     var crossOut = ST.tSw < 0.5 && pPrev < PBEAM && p >= PBEAM;
@@ -11310,7 +11312,7 @@ window.SG_SIPERO = {
   }
   function snapDa(ST, ms) {
     return { f: ST.fase, tm: ST.time, ai: ST.aim, ba: ST.swinging ? ST.aimLock : ST.aim, p: +pDi(ST).toFixed(4), sw: ST.swinging ? 1 : 0,
-      c: ST.chars.map(function (x) { return { x: +x.fx.toFixed(4), j: +Math.max(0, x.jt).toFixed(3), a: x.alive ? 1 : 0 }; }), ms: (ms == null ? -1 : ms) };
+      c: ST.chars.map(function (x) { return { x: +x.fx.toFixed(4), j: +Math.max(0, x.jt).toFixed(3), cd: +Math.max(0, x.jcd).toFixed(2), a: x.alive ? 1 : 0 }; }), ms: (ms == null ? -1 : ms) };
   }
   function vivi(chars) { var n = 0; for (var i = 0; i < chars.length; i++) if (chars[i].a ? chars[i].a : chars[i].alive) n++; return n; }
 
@@ -11351,7 +11353,7 @@ window.SG_SIPERO = {
       cv.addEventListener("pointercancel", function () { dX = null; });
     }
     t.mostra(s);
-    var ctx = cv.getContext("2d"), ref = { cv: cv, ctx: ctx, W: 0, H: 0, prevA: [], fallers: [], splashes: [], prevSw: 0, ruolo: ruolo };
+    var ctx = cv.getContext("2d"), ref = { cv: cv, ctx: ctx, W: 0, H: 0, prevA: [], fallers: [], splashes: [], prevSw: 0, ruolo: ruolo, mirino: vuoiMirino() };
     function dim() {
       var w = Math.min(460, (window.innerWidth || 360) - 24), rect = cv.getBoundingClientRect();
       var h = clamp((window.innerHeight || 640) - rect.top - 190, 280, 640), dpr = window.devicePixelRatio || 1;
@@ -11410,8 +11412,8 @@ window.SG_SIPERO = {
     ctx.fillStyle = "#8a5522"; ctx.fillRect(farOff - 9, beamY + h, nearW + 18, 4);
     ctx.strokeStyle = "rgba(0,0,0,.25)"; ctx.lineWidth = 7;
     [0.2, 0.8].forEach(function (u) { var px = farOff + nearW * u; ctx.beginPath(); ctx.moveTo(px, beamY + h); ctx.lineTo(px, waterY + 6); ctx.stroke(); });
-    // mirino (dove punta il lancio)
-    if (S.f === "gioco") { var mx = beamXf(S.ai) * W, my = beamY + 7; ctx.strokeStyle = "rgba(255,70,70,.9)"; ctx.lineWidth = 2;
+    // mirino (dove punta il lancio) — si può nascondere dalle impostazioni
+    if (S.f === "gioco" && ref.mirino) { var mx = beamXf(S.ai) * W, my = beamY + 7; ctx.strokeStyle = "rgba(255,70,70,.9)"; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(mx - 9, my); ctx.lineTo(mx + 9, my); ctx.moveTo(mx, my - 9); ctx.lineTo(mx, my + 9); ctx.stroke();
       ctx.fillStyle = "rgba(255,70,70,.22)"; ctx.beginPath(); ctx.arc(mx, my, 6, 0, 7); ctx.fill(); }
     if (p > 1.0) disegnaPalla();   // palla OLTRE la trave: disegnala DIETRO i personaggi
@@ -11419,7 +11421,14 @@ window.SG_SIPERO = {
     for (var c = 0; c < S.c.length; c++) { var ch = S.c[c]; if (!ch.a) continue;
       var jy = ch.j > 0 ? -Math.sin((JUMP - ch.j) / JUMP * Math.PI) * H * 0.09 : 0;
       botDis(ctx, ch.x * W, beamY + jy, COLSEAT[c], 1, 0);
-      if (c === S.ms) { ctx.fillStyle = "#ffd43b"; ctx.font = "bold 12px system-ui"; ctx.textAlign = "center"; ctx.fillText("TU", ch.x * W, beamY + jy - H * 0.075); ctx.textAlign = "left"; }
+      if (c === S.ms) { var mxc = ch.x * W;
+        ctx.fillStyle = "#ffd43b"; ctx.font = "bold 12px system-ui"; ctx.textAlign = "center"; ctx.fillText("TU", mxc, beamY + jy - H * 0.11); ctx.textAlign = "left";
+        if (ch.cd > 0) {   // barretta di ricarica del salto (sopra la testa)
+          var bw = W * 0.075, byy = beamY + jy - H * 0.085, pr = clamp(1 - ch.cd / JCD, 0, 1);
+          ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.fillRect(mxc - bw / 2, byy, bw, 5);
+          ctx.fillStyle = "#ffd43b"; ctx.fillRect(mxc - bw / 2, byy, bw * pr, 5);
+        }
+      }
     }
     // fontanelle
     for (var f = ref.fallers.length - 1; f >= 0; f--) { var fa = ref.fallers[f]; fa.vy += H * 1.4 * dt; fa.y += fa.vy * dt; fa.rot += dt * 6;
@@ -11464,7 +11473,7 @@ window.SG_SIPERO = {
     if (ruolo === "trave") {   // TU sulla trave (posto 0), un bot lancia, gli altri 2 posti = bot
       ST = nuovoStato(P, mkChars({ 0: "io", 1: null, 2: null }), true); ST.time = P.durTrave; mySeat = 0;
       ref = creaScena(t, "trave", { onAim: function () {}, onAimDrag: function () {}, onLancia: function () {},
-        onMov: function (d) { ST.chars[0].mov = d; }, onSalta: function () { if (ST.chars[0].jt <= 0) ST.chars[0].jt = JUMP; },
+        onMov: function (d) { ST.chars[0].mov = d; }, onSalta: function () { if (ST.chars[0].jt <= 0 && ST.chars[0].jcd <= 0) ST.chars[0].jt = JUMP; },
         onEsci: function () { stop(); t.esci(); } });
     } else {                   // TU lanci contro 3 bot
       ST = nuovoStato(P, mkChars(null), false); mySeat = -1;
@@ -11515,7 +11524,7 @@ window.SG_SIPERO = {
         else if (m.t === "vuoiLanciare") { if (fase === "lobby") { nomi[id] = nomi[id] || "Amico"; claim(id); lobbyAgg(); } }
         else if (fase === "gioco" && ST) {
           if (id === lanc) { if (m.t === "aim") ST.aimHold = m.d || 0; else if (m.t === "lancia") ST.lanciaFlag = true; }
-          else { var s = seatDi(id); if (s >= 0 && ST.chars[s]) { if (m.t === "mov") ST.chars[s].mov = m.d || 0; else if (m.t === "salta") { if (ST.chars[s].jt <= 0) ST.chars[s].jt = JUMP; } } }
+          else { var s = seatDi(id); if (s >= 0 && ST.chars[s]) { if (m.t === "mov") ST.chars[s].mov = m.d || 0; else if (m.t === "salta") { if (ST.chars[s].jt <= 0 && ST.chars[s].jcd <= 0) ST.chars[s].jt = JUMP; } } }
         }
       },
       onErrore: function () { senzaRete(t); }
@@ -11531,7 +11540,7 @@ window.SG_SIPERO = {
         onAim: function (d) { if (mioRuolo === "lanciatore") ST.aimHold = d; }, onAimDrag: function (fr) { if (mioRuolo === "lanciatore") ST.aim = clamp(ST.aim + fr * AIMG, -1, 1); },
         onLancia: function () { if (mioRuolo === "lanciatore") ST.lanciaFlag = true; },
         onMov: function (d) { if (mioSeat >= 0 && ST.chars[mioSeat]) ST.chars[mioSeat].mov = d; },
-        onSalta: function () { if (mioSeat >= 0 && ST.chars[mioSeat] && ST.chars[mioSeat].jt <= 0) ST.chars[mioSeat].jt = JUMP; },
+        onSalta: function () { if (mioSeat >= 0 && ST.chars[mioSeat] && ST.chars[mioSeat].jt <= 0 && ST.chars[mioSeat].jcd <= 0) ST.chars[mioSeat].jt = JUMP; },
         onEsci: function () { chiudi(); t.esci(); }
       });
       last = performance.now(); loop = requestAnimationFrame(giro);
@@ -11727,6 +11736,12 @@ window.SG_SIPERO = {
         b.style.flex = "1"; w.appendChild(b);
       });
       box.appendChild(w);
+      box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Aiuto visivo" }));
+      var mir = vuoiMirino(), bMir = el("button", { class: "btn btn-fantasma", style: "width:100%" });
+      function aggMir() { bMir.textContent = mir ? "🎯 Mirino rosso: mostrato" : "🚫 Mirino rosso: nascosto"; }
+      aggMir();
+      bMir.addEventListener("click", function () { mir = !mir; try { localStorage.setItem("sg-pendolo-mirino", mir ? "1" : "0"); } catch (e) {} aggMir(); });
+      box.appendChild(bMir);
       notaOnline = el("div", { class: "link-avviso", hidden: "hidden" });
       notaOnline.textContent = (window.SGNet && SGNet.disponibile()) ? "Apri una stanza e manda il codice: in sala d'attesa scegliete i ruoli." : "Qui il collegamento non è disponibile: funziona dal sito pubblicato online.";
       box.appendChild(notaOnline);
