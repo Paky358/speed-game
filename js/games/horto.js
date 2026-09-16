@@ -396,8 +396,40 @@
 
   function ospiteHorto(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var el = t.el, S = { rete: null, myId: null, nome: "", mySeat: 0, ref: null, fase: null, nomi: null, N: 0, msg: null };
+    var el = t.el, S = { rete: null, myId: null, nome: "", mySeat: 0, ref: null, fase: null, nomi: null, N: 0, msg: null,
+      buf: [], raf: null, lastP: [], delayMs: 120 };   // buffer per interpolare le posizioni (movimento liscio)
     schermaNome();
+
+    // Calcola la vista da disegnare "adesso - delay" interpolando fra gli snapshot ricevuti.
+    // Così, anche se i pacchetti arrivano a intervalli irregolari, il cavallo scorre liscio
+    // invece di fermarsi e scattare. Se un pacchetto tarda, prosegue col suo passo (estrapola).
+    function vistaOra(now) {
+      var b = S.buf, last = b[b.length - 1];
+      var out = { fase: last.fase, conto: last.conto, N: last.N, nomi: last.nomi, cav: [] };
+      var rt = now - S.delayMs, k;
+      if (b.length < 2 || rt <= b[0].rt) {
+        for (k = 0; k < b[0].cav.length; k++) { var c0 = b[0].cav[k]; out.cav[k] = { p: c0.p, s: c0.s, f: c0.f, a: c0.a }; }
+      } else if (rt >= last.rt) {                 // pacchetto in ritardo: prosegui col passo attuale (max 100ms)
+        var P = b[b.length - 2], span = Math.max(1, last.rt - P.rt), ex = Math.min(rt - last.rt, 100);
+        for (k = 0; k < last.cav.length; k++) { var cl = last.cav[k], vp = (cl.p - P.cav[k].p) / span; out.cav[k] = { p: Math.min(1, cl.p + vp * ex), s: cl.s, f: cl.f, a: cl.a }; }
+      } else {                                    // caso normale: interpola fra i due snapshot che circondano rt
+        var i = b.length - 2; while (i > 0 && b[i].rt > rt) i--;
+        var A = b[i], B = b[i + 1], f = (rt - A.rt) / Math.max(1, B.rt - A.rt);
+        for (k = 0; k < B.cav.length; k++) { var cb = B.cav[k]; out.cav[k] = { p: A.cav[k].p + (cb.p - A.cav[k].p) * f, s: cb.s, f: cb.f, a: cb.a }; }
+      }
+      for (k = 0; k < out.cav.length; k++) {      // mai indietro: l'estrapolazione non deve far "rinculare" il cavallo
+        if (S.lastP[k] != null && out.cav[k].p < S.lastP[k]) out.cav[k].p = S.lastP[k];
+        S.lastP[k] = out.cav[k].p;
+      }
+      return out;
+    }
+    function giro(now) {
+      S.raf = requestAnimationFrame(giro);
+      if (!S.ref || !S.buf.length || S.fase === "fine") return;
+      disegna(S.ref, vistaOra(now));
+    }
+    function avviaGiro() { if (!S.raf) S.raf = requestAnimationFrame(giro); }
+    function fermaGiro() { if (S.raf) cancelAnimationFrame(S.raf); S.raf = null; }
     function schermaNome() {
       var s = t.schermata({ icona: "🐎", titolo: "Entra nella corsa", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
@@ -422,20 +454,26 @@
           }
           else if (m.t === "via") {       // parte la corsa: costruisci e fai il countdown LOCALE (come l'host)
             S.nomi = m.nomi; S.N = m.n || (m.nomi ? m.nomi.length : 4);
+            fermaGiro(); S.buf = []; S.lastP = [];   // corsa nuova (anche rivincita): riparto pulito
             build({ nomi: S.nomi, N: S.N }); S.fase = "via"; contoOspite();
           }
           else if (m.t === "snap") {
             if (S.contoTimer) { clearInterval(S.contoTimer); S.contoTimer = null; }
-            if (!S.ref || S.fase === "fine") build(m);
-            S.fase = m.fase; disegna(S.ref, m);
+            if (!S.ref || S.fase === "fine") { build(m); S.buf = []; S.lastP = []; }
+            S.fase = m.fase;
+            var now = performance.now();
+            S.buf.push({ rt: now, fase: m.fase, conto: m.conto, N: m.N, nomi: m.nomi, cav: m.cav });
+            while (S.buf.length > 8 && S.buf[0].rt < now - 1500) S.buf.shift();
+            avviaGiro();
           } else if (m.t === "fine") {
             if (S.contoTimer) { clearInterval(S.contoTimer); S.contoTimer = null; }
+            fermaGiro(); S.buf = [];
             if (S.ref) { S.ref.rimuovi(); S.ref = null; } S.fase = "fine";
             finale(t, m.ord, m.nomi, S.mySeat, m.foto, { sonoHost: false, onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
           }
         },
-        onChiuso: function () { errore(t, "Collegamento perso. L'host potrebbe aver chiuso la corsa."); },
-        onErrore: function () { errore(t, "Problema di collegamento. Riprova."); }
+        onChiuso: function () { fermaGiro(); errore(t, "Collegamento perso. L'host potrebbe aver chiuso la corsa."); },
+        onErrore: function () { fermaGiro(); errore(t, "Problema di collegamento. Riprova."); }
       });
     }
     function build(sn) {
@@ -443,8 +481,11 @@
       S.nomi = sn.nomi; S.N = sn.N;
       S.ref = costruisci(t, sn.N, sn.nomi, S.mySeat || 0, {
         onFrusta: function () { if (S.fase === "corsa" && S.rete) S.rete.invia({ t: "frusta" }); },
-        onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); }
+        onEsci: function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); }
       });
+      // l'ospite guida il movimento a 60fps con l'interpolazione: niente transizione CSS
+      // (si sommerebbe al ritardo e rifarebbe scattare). L'host invece la tiene, per smussare i suoi 15Hz.
+      S.ref.cavEl.forEach(function (c) { c.style.transition = "none"; });
     }
     function rebuild() { if (S.nomi) build({ nomi: S.nomi, N: S.N }); }
     function contoOspite() {   // countdown locale dell'ospite (3-2-1-VIA), poi arrivano le posizioni
@@ -458,7 +499,7 @@
     }
     function mostraLobby(m) {
       renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi },
-        { onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+        { onEsci: function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); } });
     }
     function attesa() {   // placeholder finché non arriva la lobby dall'host
       if (S.ref) return;
@@ -527,6 +568,7 @@
     icona: "🐎",
     descrizione: "Corsa di cavalli: frusta per accelerare, ma occhio all'energia! Contro i bot o online, ognuno dal suo telefono.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 1,
+    etichettaGiocatori: "👥 1–8 giocatori",   // 1 da solo vs bot, fino a 8 online (i cavalli in gara)
     regole: [
       "Corsie <b>dritte</b>, stessa distanza per tutti: vince davvero il più bravo (niente pista ovale).",
       "I cavalli corrono già da soli a una <b>velocità minima</b>. Tu hai il tasto <b>FRUSTA</b>: ogni click dà una spinta.",

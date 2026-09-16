@@ -4,6 +4,18 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 16 settembre 2026 (38) — Nuovo gioco: Palla a Pendolo + Horto Muso online più fluido
+- Arriva **Palla a Pendolo** (nei Minigiochi), ispirato a Wii Party: da solo, un telefono.
+  Visuale finto-3D su Canvas: sei di spalle in basso, la trave sull'acqua con **3 bot** che
+  camminano, la palla appesa oscilla **in profondità** (rimpicciolisce e proietta l'ombra sull'acqua).
+- Colpisci un bot quando la palla arriva alla **profondità della trave**; i bot **saltano** per
+  schivare e, se colpiti, cadono in acqua con **splash**. Vinci se li butti giù tutti e 3 entro il tempo.
+- **Controlli touch**: trascina ↕ col dito sul campo per dare slancio, oppure tieni premuto
+  **TIRA / SPINGI**. Tre livelli di bravura dei bot.
+- **Horto Muso online**: l'ospite ora vede la corsa **fluida** (interpolazione con buffer e
+  piccolo ritardo, come in Glow Hockey), invece di andare a scatti quando i pacchetti arrivano
+  irregolari. La scheda del gioco mostra "1–8 giocatori".
+
 ## 15 settembre 2026 (37) — Battaglia Navale: coordinate, anteprima e "colpito e affondato"
 - Il tabellone ora ha le **lettere (A–J) in alto** e i **numeri (1–10) a sinistra**, come nella battaglia navale vera.
 - Quando sistemi una nave vedi prima l'**anteprima** di dove la stai mettendo: **verde** se ci sta, **rossa** se no. Confermi con **"Metti qui"** (o ritoccando la casella). Niente più navi piazzate al primo tocco per sbaglio.

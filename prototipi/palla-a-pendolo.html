@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,maximum-scale=1">
+<title>Pendulum Panic</title>
+<style>
+  html,body{margin:0;height:100%;width:100%;background:#04121c;overflow:hidden;position:fixed;inset:0;
+    font-family:system-ui,Arial,sans-serif;-webkit-user-select:none;user-select:none;
+    -webkit-tap-highlight-color:transparent;touch-action:none;overscroll-behavior:none;}
+  #c{display:block;width:100vw;height:100vh;touch-action:none;}
+  /* pulsanti pollice, compatti e semitrasparenti negli angoli bassi (non coprono la piscina) */
+  .ctrl{position:fixed;bottom:max(20px,env(safe-area-inset-bottom));width:74px;height:74px;border-radius:50%;
+    border:2px solid rgba(255,255,255,.55);background:rgba(255,255,255,.13);color:#fff;font-weight:800;font-size:.8rem;
+    display:flex;align-items:center;justify-content:center;touch-action:none;backdrop-filter:blur(2px);
+    -webkit-backdrop-filter:blur(2px);z-index:5;transition:background .1s,transform .1s;}
+  .ctrl:active,.ctrl.on{background:rgba(255,225,138,.5);transform:scale(.94);}
+  #bPull{left:16px;} #bPush{right:16px;}
+  #hint{position:fixed;left:0;right:0;top:46px;text-align:center;color:#eaf6ff;font-size:.82rem;opacity:.85;
+    pointer-events:none;z-index:4;text-shadow:0 1px 3px rgba(0,0,0,.5);transition:opacity .6s;}
+  #ov{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:10;
+    color:#fff;text-align:center;background:rgba(4,18,28,.72);}
+  #ov h1{font-size:2.4rem;margin:.2em;text-shadow:0 3px 10px rgba(0,0,0,.6);}
+  #ov p{font-size:1.1rem;opacity:.9;margin:.2em 1.5em 1.2em;line-height:1.4;}
+  #ov button{font:inherit;font-weight:800;font-size:1.2rem;color:#04121c;border:0;border-radius:16px;
+    padding:14px 30px;background:linear-gradient(135deg,#ffe58a,#ffc21e);box-shadow:0 8px 22px rgba(255,194,30,.4);}
+  #ov button:active{transform:scale(.97);}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hint">Trascina ↕ col dito per dare slancio &nbsp;·&nbsp; o usa TIRA / SPINGI</div>
+<div class="ctrl" id="bPull">TIRA ▼</div>
+<div class="ctrl" id="bPush">SPINGI ▲</div>
+<div id="ov"><h1 id="ovT"></h1><p id="ovP"></p><button id="ovB">Rigioca</button></div>
+<script>
+"use strict";
+var cv=document.getElementById("c"),ctx=cv.getContext("2d"),W=0,H=0,DPR=1;
+function resize(){DPR=Math.min(2,window.devicePixelRatio||1);W=cv.clientWidth;H=cv.clientHeight;
+  cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+addEventListener("resize",resize);resize();
+
+// ---- parametri ----
+var K=7,DAMP=0.85,PUSH=10,DRAGG=5.5,TH_BEAM=1.0,DUR=30;
+function beamY(){return H*0.44;} function handsY(){return H*0.9;} function waterY(){return H*0.56;}
+function cx(){return W/2;}
+
+// ---- stato ----
+var th,thv,push,bots,fallers,splashes,time,state,last;
+function nuovoBot(x,dir,dodge,col){return{x:x,dir:dir,sp:W*(0.07+Math.random()*0.05),dodge:dodge,col:col,jt:0,alive:true};}
+function reset(){
+  th=0;thv=0;push=0;fallers=[];splashes=[];time=DUR;state="play";last=performance.now();
+  bots=[nuovoBot(W*0.30,1,0.040,"#ff6b6b"),nuovoBot(W*0.55,-1,0.050,"#4dabf7"),nuovoBot(W*0.72,1,0.062,"#51cf66")];
+  ov.style.display="none";hint.style.opacity=".85";
+  clearTimeout(hint._t);hint._t=setTimeout(function(){hint.style.opacity="0";},4500);
+}
+function pv(){var p=th/TH_BEAM;return p<0?0:p>1.08?1.08:p;}
+
+// ======== CONTROLLI (tutti pointer*, zero ritardo di tocco) ========
+function setPush(d){push=d;}
+// tasti (desktop)
+addEventListener("keydown",function(e){var k=e.key.toLowerCase();
+  if(k==="arrowup"||k==="w"){setPush(1);e.preventDefault();}
+  else if(k==="arrowdown"||k==="s"){setPush(-1);e.preventDefault();}
+  else if(k==="r"&&state!=="play")reset();});
+addEventListener("keyup",function(e){var k=e.key.toLowerCase();
+  if(k==="arrowup"||k==="w"||k==="arrowdown"||k==="s")setPush(0);});
+// drag verticale sul canvas: il movimento del dito dà slancio diretto (su=spingi, giù=tira)
+var dragY=null;
+cv.addEventListener("pointerdown",function(e){dragY=e.clientY;try{cv.setPointerCapture(e.pointerId);}catch(x){}
+  hint.style.opacity="0";});
+cv.addEventListener("pointermove",function(e){if(dragY===null)return;
+  var dy=dragY-e.clientY;dragY=e.clientY;                 // dito verso l'alto => dy>0 => spinta avanti
+  if(state==="play"){thv+=(dy/H)*DRAGG;if(thv>6)thv=6;if(thv<-6)thv=-6;}});
+function fineDrag(){dragY=null;}
+cv.addEventListener("pointerup",fineDrag);cv.addEventListener("pointercancel",fineDrag);
+// pulsanti pollice: tieni premuto per spinta continua
+function bindBtn(elId,dir){var b=document.getElementById(elId);
+  b.addEventListener("pointerdown",function(e){e.preventDefault();setPush(dir);b.classList.add("on");hint.style.opacity="0";});
+  function up(e){if(e)e.preventDefault();setPush(0);b.classList.remove("on");}
+  b.addEventListener("pointerup",up);b.addEventListener("pointerleave",up);b.addEventListener("pointercancel",up);}
+bindBtn("bPush",1);bindBtn("bPull",-1);
+// blocca scroll/zoom/gesture del browser durante il gioco
+["touchstart","touchmove","gesturestart"].forEach(function(ev){
+  document.addEventListener(ev,function(e){e.preventDefault();},{passive:false});});
+
+var ov=document.getElementById("ov"),ovT=document.getElementById("ovT"),ovP=document.getElementById("ovP"),
+    hint=document.getElementById("hint");
+document.getElementById("ovB").addEventListener("pointerup",function(e){e.preventDefault();reset();});
+
+// ---- passo fisico ----
+function step(dt){
+  time-=dt;if(time<0)time=0;
+  var pPrev=pv();
+  thv+=(push*PUSH - K*Math.sin(th) - DAMP*thv)*dt;
+  th+=thv*dt;
+  if(th<-0.45){th=-0.45;thv=0;} if(th>1.4){th=1.4;thv*=-0.3;}
+  var p=pv();
+  var incoming=(thv>0 && p>0.5 && p<0.95);
+  for(var i=0;i<bots.length;i++){var b=bots[i];if(!b.alive)continue;
+    b.x+=b.dir*b.sp*dt;
+    if(b.x<W*0.14){b.x=W*0.14;b.dir=1;} if(b.x>W*0.86){b.x=W*0.86;b.dir=-1;}
+    if(b.jt>0)b.jt-=dt;
+    var vicino=Math.abs(b.x-cx())<W*0.17;
+    if(incoming && vicino && b.jt<=0 && Math.random()<b.dodge)b.jt=0.55;}
+  if(thv>0 && pPrev<0.9 && p>=0.9){                    // la palla attraversa la profondità della trave
+    for(var j=0;j<bots.length;j++){var bb=bots[j];if(!bb.alive)continue;
+      var aria=bb.jt>0.12 && bb.jt<0.5;
+      if(!aria && Math.abs(bb.x-cx())<W*0.12){bb.alive=false;
+        fallers.push({x:bb.x,y:beamY(),vy:H*0.15,col:bb.col,rot:0});}}}
+  var vivi=bots.filter(function(x){return x.alive;}).length;
+  if(vivi===0)fine(true); else if(time<=0)fine(false);
+}
+function particelle(dt){
+  for(var f=fallers.length-1;f>=0;f--){var fa=fallers[f];fa.vy+=H*1.4*dt;fa.y+=fa.vy*dt;fa.rot+=dt*6;
+    if(fa.y>=waterY()){splashes.push({x:fa.x,y:waterY(),r:6,a:1});fallers.splice(f,1);}}
+  for(var s=splashes.length-1;s>=0;s--){var sp=splashes[s];sp.r+=W*0.20*dt;sp.a-=dt*1.6;if(sp.a<=0)splashes.splice(s,1);}
+}
+function fine(vinto){state=vinto?"win":"lose";
+  ovT.textContent=vinto?"🏆 Hai vinto!":"⏱️ Tempo scaduto";
+  ovP.textContent=vinto?("Hai buttato in acqua tutti i bot in "+(DUR-time).toFixed(1)+"s.")
+                       :("Sono rimasti "+bots.filter(function(x){return x.alive;}).length+" bot. Riprova!");
+  ov.style.display="flex";}
+
+// ---- disegno ----
+function bg(){
+  var g=ctx.createLinearGradient(0,0,0,waterY());g.addColorStop(0,"#7cd0ef");g.addColorStop(1,"#cdeefb");
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,waterY());
+  var w=ctx.createLinearGradient(0,waterY(),0,H);w.addColorStop(0,"#1f88c2");w.addColorStop(1,"#0a3f61");
+  ctx.fillStyle=w;ctx.fillRect(0,waterY(),W,H-waterY());
+  ctx.strokeStyle="rgba(255,255,255,.18)";ctx.lineWidth=2;
+  for(var k=0;k<3;k++){var yy=waterY()+18+k*26;ctx.beginPath();
+    for(var x=0;x<=W;x+=14)ctx.lineTo(x,yy+Math.sin(x*0.05+performance.now()*0.002+k)*4);ctx.stroke();}
+}
+function trave(){
+  var by=beamY(),h=14,nearW=W*0.92,farOff=(W-nearW)/2;
+  ctx.fillStyle="#b5793a";ctx.beginPath();
+  ctx.moveTo(farOff,by);ctx.lineTo(W-farOff,by);ctx.lineTo(W-farOff+10,by+h);ctx.lineTo(farOff-10,by+h);ctx.closePath();ctx.fill();
+  ctx.fillStyle="#8a5522";ctx.fillRect(farOff-10,by+h,nearW+20,4);
+  ctx.strokeStyle="rgba(0,0,0,.25)";ctx.lineWidth=8;
+  [0.2,0.8].forEach(function(t){var px=farOff+nearW*t;ctx.beginPath();ctx.moveTo(px,by+h);ctx.lineTo(px,waterY()+6);ctx.stroke();});
+}
+function disegnaBot(x,y,col,sc,rot){
+  ctx.save();ctx.translate(x,y);if(rot)ctx.rotate(rot);ctx.scale(sc,sc);
+  ctx.fillStyle="rgba(0,0,0,.18)";ctx.beginPath();ctx.ellipse(0,4,16,6,0,0,7);ctx.fill();
+  ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(0,-14,15,18,0,0,7);ctx.fill();
+  ctx.fillStyle="#ffe0c2";ctx.beginPath();ctx.arc(0,-34,10,0,7);ctx.fill();
+  ctx.fillStyle="#222";ctx.fillRect(-5,-36,3,3);ctx.fillRect(3,-36,3,3);
+  ctx.restore();
+}
+function draw(){
+  bg();trave();
+  for(var i=0;i<bots.length;i++){var b=bots[i];if(!b.alive)continue;
+    var jy=b.jt>0?-Math.sin((0.55-b.jt)/0.55*Math.PI)*H*0.09:0;
+    disegnaBot(b.x,beamY()+jy,b.col,1,0);}
+  var p=pv(),bx=cx(),by=handsY()+(beamY()-handsY())*p,r=H*0.11*(1-0.5*(p>1?1:p)),sc=1-Math.min(1,p)*0.6;
+  ctx.fillStyle="rgba(0,0,0,"+(0.28*(1-Math.min(1,p)*0.6))+")";
+  ctx.beginPath();ctx.ellipse(bx,waterY()+8,r*0.9*sc+6,r*0.32*sc+3,0,0,7);ctx.fill();
+  for(var f=0;f<fallers.length;f++)disegnaBot(fallers[f].x,fallers[f].y,fallers[f].col,0.9,fallers[f].rot);
+  for(var s=0;s<splashes.length;s++){var sp=splashes[s];ctx.strokeStyle="rgba(255,255,255,"+sp.a+")";ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(sp.x,sp.y,sp.r,0,7);ctx.stroke();}
+  ctx.strokeStyle="rgba(30,20,10,.6)";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(bx,handsY());ctx.lineTo(bx,by);ctx.stroke();
+  var gg=ctx.createRadialGradient(bx-r*0.3,by-r*0.3,r*0.2,bx,by,r);gg.addColorStop(0,"#ff8f6b");gg.addColorStop(1,"#c0392b");
+  ctx.fillStyle=gg;ctx.beginPath();ctx.arc(bx,by,r,0,7);ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.4)";ctx.beginPath();ctx.arc(bx-r*0.3,by-r*0.3,r*0.25,0,7);ctx.fill();
+  ctx.fillStyle="#2b2f3a";ctx.beginPath();ctx.ellipse(bx,H+H*0.02,W*0.16,H*0.11,0,0,7);ctx.fill();
+  ctx.fillStyle="#3a4150";ctx.beginPath();ctx.arc(bx,H*0.9,H*0.05,0,7);ctx.fill();
+  var vivi=bots.filter(function(x){return x.alive;}).length;
+  ctx.fillStyle="#04121c";ctx.globalAlpha=.55;ctx.fillRect(0,0,W,40);ctx.globalAlpha=1;
+  ctx.fillStyle="#fff";ctx.font="bold 20px system-ui";ctx.textBaseline="middle";
+  ctx.textAlign="left";ctx.fillText("⏱️ "+Math.ceil(time)+"s",14,20);
+  ctx.textAlign="right";ctx.fillText("🎯 Bot: "+vivi,W-14,20);ctx.textAlign="left";
+}
+function loop(now){var dt=Math.min(0.05,(now-last)/1000);last=now;
+  if(state==="play")step(dt);particelle(dt);draw();requestAnimationFrame(loop);}
+reset();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

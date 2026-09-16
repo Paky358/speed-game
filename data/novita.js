@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 61,
+    data: "16 settembre 2026",
+    titolo: "Nuovo gioco: Palla a Pendolo 🎯",
+    descrizione: [
+      "Da solo, un telefono: sei di spalle davanti a una trave sull'acqua con 3 bot. Spingi la palla appesa in profondità e buttali giù prima che scada il tempo.",
+      "Su smartphone si gioca trascinando il dito su e giù sul campo (dà slancio alla palla) oppure tenendo premuto TIRA / SPINGI. I bot saltano per schivare: cogli il momento!",
+      "Sta nei Minigiochi, con tre livelli di bravura dei bot.",
+      "Inoltre: la corsa di Horto Muso online adesso è più fluida per chi entra come ospite (niente più scatti)."
+    ]
+  },
+  {
     v: 60,
     data: "15 settembre 2026",
     titolo: "Battaglia Navale più chiara 🎯",

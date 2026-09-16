@@ -27,7 +27,7 @@
     scopa: "carte", scopa2v2: "carte", scopone: "carte",
     tris: "sfida", drop4: "sfida", hockey: "sfida", navale: "sfida",
     asta: "festa", impostore: "festa", sipero: "festa",
-    scalinata: "mini", horto: "mini",
+    scalinata: "mini", horto: "mini", pendolo: "mini",
     timeline: "parole", nomicose: "parole", patata: "parole"
   };
   var catAttiva = "tutti";
@@ -335,6 +335,7 @@
   }
 
   function rangeGiocatori(g) {
+    if (g.etichettaGiocatori) return g.etichettaGiocatori;   // testo su misura (es. Horto: conta i cavalli in gara, non i profili)
     var min = g.giocatoriMin || 2, max = g.giocatoriMax || 8;
     return "👥 " + (min === max ? min : min + "–" + max) + " giocatori";
   }
