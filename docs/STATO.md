@@ -1,6 +1,6 @@
 # A che punto siamo
 
-_Aggiornato: 16 settembre 2026 (nuovo gioco: Palla a Pendolo; Horto Muso online più fluido per gli ospiti)_
+_Aggiornato: 16 settembre 2026 (Palla a Pendolo: lancio a forza fissa, mira di lato e multiplayer online con ruoli in lobby; Horto Muso online più fluido)_
 
 ## In due parole
 È una raccolta di giochi da fare in gruppo, che si apre dal telefono senza
@@ -166,19 +166,24 @@ dal proprio.
   bot (piazzamento, colpi, affondamenti, vittoria, rivincita, zero errori). `giocatoriMin/Max:1, difficolta:2`.
 
 - **Gioco 16 — Palla a Pendolo** 🎯 (`js/games/pendolo.js`, id `pendolo`, categoria **Minigiochi**):
-  ispirato a "Palla a pendolo" di Wii Party. **Da solo, un telefono**. Visuale **finto-3D su Canvas 2D**:
-  giocatore di spalle in basso al centro, **trave** orizzontale a metà schermo con **3 bot** che
-  camminano a destra/sinistra, la palla appesa oscilla **in profondità** (avanti/indietro): per il 3D
-  scala il raggio e disegna l'**ombra sul pelo dell'acqua**. La **collisione** col bot avviene solo
-  quando la palla raggiunge la **profondità della trave** (banda attorno a p≈0.9) muovendosi in avanti,
-  e il bot non è a mezz'aria. I bot **saltano** per schivare quando la palla si avvicina (probabilità per
-  difficoltà); se colpiti **cadono in acqua** con splash e spariscono. **Timer** (26/30/35s per
-  difficile/medio/facile): vinci se li butti giù tutti e 3. **Controlli touch**: `pointerdown/move/up`,
-  **drag verticale** sul canvas (slancio diretto: `thv += dy/H*DRAGG`) oppure pulsanti **TIRA/SPINGI**
-  (spinta continua `push*PUSH`); tasti Su/Giù/W/S su desktop. Pendolo con dinamica (`K`, `DAMP`): si
-  "pompa" a ritmo per arrivare alla trave. Schermata di vittoria/sconfitta con **Rigioca/Esci**. Loop
-  `requestAnimationFrame` (aggiorna solo il canvas). `giocatoriMin/Max:1, difficolta:1`. Esiste anche un
-  prototipo standalone in `prototipi/palla-a-pendolo.html`.
+  ispirato a "Palla a pendolo" di Wii Party. Visuale **finto-3D su Canvas 2D** (stessa per tutti):
+  giocatore di spalle in basso al centro, **trave** orizzontale a metà schermo con **3 posti**, la palla
+  appesa oscilla **in profondità**: per il 3D scala il raggio e disegna l'**ombra sull'acqua**.
+  **Lancio a forza fissa e lento** (swing "scriptato" `th = TH_BEAM*sin(tSw*π)`, durata `SWING=2s`):
+  niente modulazione della forza, conta il **tempismo**. Il lanciatore **mira di lato** (◀ ▶, trascino,
+  frecce) — la mira si blocca al lancio (`aimLock`) e un **mirino rosso** la mostra sulla trave; **LANCIA**
+  con tasto/tocco. La **collisione** scatta quando la palla attraversa la profondità della trave (banda
+  p≥0.9 in avanti) e il personaggio è entro `HITF` dalla `beamXf(aimLock)` e non a mezz'aria. Chi sta
+  sulla trave si **muove ◀ ▶** e **SALTA** per schivare. Coordinate **normalizzate** (frazioni) → snapshot
+  indipendenti dallo schermo. **Due modi**: **`locale`** (tu lanci vs 3 bot che saltano da soli) e
+  **online host-autoritativo** (`hostPendolo`/`ospitePendolo`): in **lobby ognuno sceglie il ruolo**
+  (`renderLobby` con "🎯 Voglio lanciare io"; un solo lanciatore, gli altri sulla trave, posti liberi =
+  bot). L'host simula (`passo`) e trasmette snapshot ~20Hz; gli ospiti mandano solo input (`aim/lancia`
+  o `mov/salta`) e **interpolano** le posizioni (buffer+ritardo, come Glow Hockey). **Sfida a tempo**:
+  vince il lanciatore se li butta giù tutti, altrimenti vince chi resta sulla trave (esiti opposti e per
+  ruolo). Render condiviso da snapshot (`render(ref, S, dt)`); rilevo le morti lato client per
+  fontanella+splash. `giocatoriMin/Max:1, difficolta:1`. Prototipo standalone in
+  `prototipi/palla-a-pendolo.html` (versione da solo).
 
 ### Nuovo "tavolo verde" nei giochi di carte (15 set 2026)
 - Scopa, Scopa 2vs2 e Scopone condividono ora un **feltro verde** (aiuti in `window.SGCarte`: `posto`, `manina`

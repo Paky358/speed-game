@@ -11,11 +11,11 @@ window.SG_NOVITA = [
   {
     v: 61,
     data: "16 settembre 2026",
-    titolo: "Nuovo gioco: Palla a Pendolo 🎯",
+    titolo: "Nuovo gioco: Palla a Pendolo 🎯 (anche online!)",
     descrizione: [
-      "Da solo, un telefono: sei di spalle davanti a una trave sull'acqua con 3 bot. Spingi la palla appesa in profondità e buttali giù prima che scada il tempo.",
-      "Su smartphone si gioca trascinando il dito su e giù sul campo (dà slancio alla palla) oppure tenendo premuto TIRA / SPINGI. I bot saltano per schivare: cogli il momento!",
-      "Sta nei Minigiochi, con tre livelli di bravura dei bot.",
+      "Sei di spalle davanti a una trave sull'acqua. Il lanciatore mira di lato (◀ ▶ o trascinando) e preme LANCIA: la palla parte con forza sempre uguale e arriva lenta fino alla trave. Il mirino rosso mostra dove cadrà.",
+      "Chi sta sulla trave si muove ◀ ▶ e SALTA per schivare quando il mirino punta lui. Vince il lanciatore se li butta giù tutti in tempo, altrimenti vince chi resta in piedi.",
+      "Da solo (tu lanci contro 3 bot) oppure ONLINE: in sala d'attesa ognuno sceglie se lanciare o stare sulla trave (i posti liberi li giocano i bot). Sta nei Minigiochi.",
       "Inoltre: la corsa di Horto Muso online adesso è più fluida per chi entra come ospite (niente più scatti)."
     ]
   },

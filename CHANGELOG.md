@@ -4,14 +4,18 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
-## 16 settembre 2026 (38) — Nuovo gioco: Palla a Pendolo + Horto Muso online più fluido
-- Arriva **Palla a Pendolo** (nei Minigiochi), ispirato a Wii Party: da solo, un telefono.
-  Visuale finto-3D su Canvas: sei di spalle in basso, la trave sull'acqua con **3 bot** che
-  camminano, la palla appesa oscilla **in profondità** (rimpicciolisce e proietta l'ombra sull'acqua).
-- Colpisci un bot quando la palla arriva alla **profondità della trave**; i bot **saltano** per
-  schivare e, se colpiti, cadono in acqua con **splash**. Vinci se li butti giù tutti e 3 entro il tempo.
-- **Controlli touch**: trascina ↕ col dito sul campo per dare slancio, oppure tieni premuto
-  **TIRA / SPINGI**. Tre livelli di bravura dei bot.
+## 16 settembre 2026 (38) — Nuovo gioco: Palla a Pendolo (anche online) + Horto Muso più fluido
+- Arriva **Palla a Pendolo** (nei Minigiochi), ispirato a Wii Party. Visuale finto-3D su Canvas:
+  di spalle in basso, la trave sull'acqua con dei personaggi, la palla appesa oscilla **in profondità**
+  (rimpicciolisce e proietta l'ombra sull'acqua).
+- **Lancio a forza fissa e lento**: il lanciatore **mira di lato** (◀ ▶ o trascinando) e preme
+  **LANCIA** (o tocca il campo); il **mirino rosso** mostra dove cadrà. Niente modulazione della
+  forza: conta il **tempismo**. Chi centra viene buttato in acqua con **splash**.
+- **Chi sta sulla trave** si muove **◀ ▶** e **SALTA** per schivare quando il mirino punta lui.
+- **Due modi**: **da solo** (tu lanci contro 3 bot) e **online** host-autoritativo. In lobby ognuno
+  **sceglie il ruolo** (uno lancia, gli altri sulla trave; posti liberi = bot). **Sfida a tempo**:
+  vince il lanciatore se li butta giù tutti, altrimenti vince chi resta in piedi. Ospite con
+  interpolazione (movimento liscio come Glow Hockey). Tre livelli di bravura dei bot.
 - **Horto Muso online**: l'ospite ora vede la corsa **fluida** (interpolazione con buffer e
   piccolo ritardo, come in Glow Hockey), invece di andare a scatti quando i pacchetti arrivano
   irregolari. La scheda del gioco mostra "1–8 giocatori".
