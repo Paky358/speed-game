@@ -46,16 +46,15 @@
     ".as-rb-D{background:linear-gradient(135deg,#9fe6b4,#3fb56a);}",
     ".as-rb-C{background:linear-gradient(135deg,#9fb4ff,#5468c7);color:#eef1ff;}",
     ".as-rb-A{background:linear-gradient(135deg,#ff9d8a,#e0533a);color:#fff;}",
-    // Fantacalcio: pulsante \"vedi le rose\", avviso ultimo duello, finestra rose
-    ".as-vedirose{display:block;width:100%;margin:2px 0 10px;background:var(--carta-2);color:var(--testo);border:0;border-radius:12px;padding:9px;font-family:inherit;font-weight:800;font-size:.92rem;cursor:pointer;}",
-    ".as-vedirose:active{transform:scale(.98);}",
+    // Fantacalcio: avviso ultimo duello + pannello \"rose finora\" in linea (solo carte prese, per ruolo)
     ".as-duello{background:linear-gradient(135deg,#ffb347,#e0533a);color:#2a1200;font-weight:900;text-align:center;border-radius:12px;padding:10px 12px;margin:2px 0 10px;font-size:.95rem;line-height:1.25;}",
-    ".as-modal-bg{position:fixed;inset:0;background:rgba(6,5,20,.72);z-index:9999;display:flex;align-items:flex-end;justify-content:center;}",
-    ".as-modal{background:var(--carta);width:100%;max-width:600px;max-height:86dvh;border-radius:18px 18px 0 0;display:flex;flex-direction:column;box-shadow:0 -8px 30px rgba(0,0,0,.5);}",
-    ".as-modal-h{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;font-size:1.15rem;font-weight:900;border-bottom:1px solid rgba(255,255,255,.08);}",
-    ".as-modal-x{border:0;background:var(--carta-2);color:var(--testo);width:34px;height:34px;border-radius:50%;font-size:1rem;cursor:pointer;}",
-    ".as-modal-b{overflow-y:auto;padding:12px 14px 22px;}",
-    ".as-slot-vuoto{opacity:.5;}",
+    ".as-rose{margin-top:14px;border-top:1px solid rgba(255,255,255,.1);padding-top:4px;}",
+    ".as-rose-p{background:var(--carta);border-radius:14px;padding:10px 12px;margin-bottom:8px;box-shadow:var(--ombra);}",
+    ".as-rose-nome{font-weight:900;font-size:1rem;margin-bottom:4px;}",
+    ".as-rose-vuota{color:var(--testo-tenue);font-size:.9rem;font-style:italic;}",
+    ".as-rose-riga{display:flex;align-items:center;gap:9px;padding:3px 0;font-size:.95rem;}",
+    ".as-rose-em{font-size:1.2rem;flex:0 0 auto;}",
+    ".as-rose-txt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
     ".as-big{text-align:center;background:linear-gradient(150deg,#fff0c2,var(--accento) 55%,var(--accento-scuro));",
       "color:#2a2400;border-radius:22px;padding:18px;box-shadow:0 10px 30px rgba(224,169,10,.35);margin-bottom:12px;}",
     ".as-big .em{font-size:3rem;line-height:1;}",
@@ -930,13 +929,50 @@
 
   // ---------- DISEGNO CONDIVISO (host e ospiti) ----------
   function barraRimasta(el, rimasti) {
+    // Aggiornata a ogni frame in base al tempo reale: si muove su tutti i
+    // dispositivi (su Android la transition CSS a volte non partiva) e si
+    // ferma da sola quando la schermata cambia (elemento staccato dal DOM).
     var wrap = el("div", { class: "as-timer" });
     var fill = el("div", { class: "as-timer-fill" });
     wrap.appendChild(fill);
-    var frac = Math.max(0, Math.min(1, rimasti / (SECONDI * 1000)));
-    fill.style.width = (frac * 100) + "%";
-    if (rimasti > 0) requestAnimationFrame(function () { fill.style.transition = "width " + rimasti + "ms linear"; fill.style.width = "0%"; });
+    var tot = SECONDI * 1000, fine = Date.now() + Math.max(0, rimasti);
+    fill.style.width = (Math.max(0, Math.min(1, rimasti / tot)) * 100) + "%";
+    function tick() {
+      if (!fill.isConnected) return;
+      var r = fine - Date.now();
+      fill.style.width = (Math.max(0, Math.min(1, r / tot)) * 100) + "%";
+      if (r > 0) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
     return wrap;
+  }
+  // Conserva i voti che sto mettendo finché resto in fase "voto":
+  // così se un altro giocatore conferma (arriva una nuova foto) le mie
+  // stelle non si azzerano. Si ripuliscono solo quando entro nel voto.
+  function ricordaVoti(cb, vm) {
+    if (vm.fase === "voto") { if (!cb._inVoto) { cb._voti = {}; cb._inVoto = true; } }
+    else cb._inVoto = false;
+    cb._voti = cb._voti || {};
+  }
+  // pannello IN LINEA coi kit di tutti (Asta classica): mostrato durante
+  // l'asta e sull'esito, così si vedono le squadre senza aprire altre schermate.
+  function pannelloKit(el, giocatori) {
+    var box = el("div", { class: "as-rose" });
+    box.appendChild(el("div", { class: "etichetta", style: "margin-top:6px", text: "I kit finora" }));
+    (giocatori || []).forEach(function (g) {
+      var card = el("div", { class: "as-rose-p" });
+      card.appendChild(el("div", { class: "as-rose-nome", text: g.nome + " · " + g.crediti + "💰" }));
+      if (!g.kit || !g.kit.length) card.appendChild(el("div", { class: "as-rose-vuota", text: "ancora niente" }));
+      else g.kit.forEach(function (c) {
+        card.appendChild(el("div", { class: "as-rose-riga" }, [
+          el("span", { class: "as-rose-em", text: c.emoji }),
+          el("span", { class: "as-rose-txt", text: c.nome }),
+          el("span", { class: "tier tier-" + c.tier, text: c.tier })
+        ]));
+      });
+      box.appendChild(card);
+    });
+    return box;
   }
   function strisciaOnline(el, vm, myId) {
     var top = el("div", { class: "as-top" });
@@ -972,6 +1008,7 @@
 
   function disegnaAstaVM(t, vm, cb) {
     var el = t.el, myId = cb.myId;
+    ricordaVoti(cb, vm);   // i voti in corso non si azzerano quando un altro conferma
     if (vm.fase === "lobby") return lobbyAsta(t, vm, cb);
     if (vm.fase === "fine") return schermataFineAsta(t, vm, cb);
 
@@ -1040,6 +1077,7 @@
       }
       var pal2 = dettaglioPalio(el, vm.tavolo, a.carta.nome);
       if (pal2) s._contenuto.appendChild(pal2);
+      s._contenuto.appendChild(pannelloKit(el, vm.giocatori));
     }
 
     else if (vm.fase === "esito") {
@@ -1054,6 +1092,7 @@
       s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:1.3rem;font-weight:900;color:var(--accento);margin-top:8px",
         text: "per " + e2.prezzo + " 💰" }));
       if (e2.automatica) s._contenuto.appendChild(el("p", { class: "as-msg", text: "Ultima carta rimasta: assegnata automaticamente." }));
+      s._contenuto.appendChild(pannelloKit(el, vm.giocatori));
       if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: cb.onAvanti }));
       else s._piede.appendChild(el("p", { class: "as-msg", text: "In attesa dell'host…" }));
     }
@@ -1071,9 +1110,9 @@
         s._contenuto.appendChild(el("p", { class: "as-msg", style: "margin-top:20px",
           text: hoVotato ? ("Hai votato. Aspetta gli altri… (" + vm.hannoVotato.length + " su " + vm.giocatori.length + ")") : "Stai guardando la partita" }));
       } else {
-        var voti = {};
+        var voti = cb._voti;
         var conferma = el("button", { class: "btn btn-primario", text: "Conferma i voti", onclick: function () { cb.onVoto(voti); } });
-        conferma.disabled = true;
+        function aggiornaConferma() { conferma.disabled = vm.giocatori.some(function (x) { return x.id !== myId && !voti[x.id]; }); }
         vm.giocatori.forEach(function (g) {
           if (g.id === myId) return;
           var box = nodoKitVm(el, g);
@@ -1083,15 +1122,16 @@
               var b = el("button", { text: "⭐", onclick: function () {
                 voti[g.id] = val;
                 bottoni.forEach(function (bb, k) { bb.className = (k < val) ? "on" : ""; });
-                var mancano = vm.giocatori.filter(function (x) { return x.id !== myId && !voti[x.id]; }).length;
-                if (mancano === 0) conferma.removeAttribute("disabled");
+                aggiornaConferma();
               }});
+              if (voti[g.id] && val <= voti[g.id]) b.className = "on";   // ripristina le stelle già messe
               bottoni.push(b); riga2.appendChild(b);
             })(n);
           }
           box.appendChild(riga2);
           s._contenuto.appendChild(box);
         });
+        aggiornaConferma();
         s._piede.appendChild(conferma);
       }
     }
@@ -1258,46 +1298,29 @@
     ]);
   }
 
-  // scheda-rosa a slot: mostra i posti riempiti E quelli ancora vuoti
-  function nodoRosaSlot(el, g) {
-    var box = el("div", { class: "as-kit" });
-    box.appendChild(el("h3", { text: g.nome + " · " + g.crediti + " 💰 · " + (g.kit ? g.kit.length : 0) + "/5" }));
-    var perRuolo = { P: [], D: [], C: [], A: [] };
-    (g.kit || []).forEach(function (c) { if (perRuolo[c.ruolo]) perRuolo[c.ruolo].push(c); });
-    FANTA_ORD.forEach(function (r) {
-      var ru = FANTA_RUOLI[r] || {};
-      for (var i = 0; i < FANTA_SLOT[r]; i++) {
-        var c = perRuolo[r][i];
-        box.appendChild(el("div", { class: "riga" + (c ? "" : " as-slot-vuoto") }, [
-          el("span", { class: "em", text: ru.emoji }),
-          el("span", { style: "flex:1", text: c ? (c.nome + (c.squadra ? " · " + c.squadra : "")) : ("— " + ru.nome + " libero") }),
-          el("span", { class: "as-rb as-rb-" + r, text: ru.breve })
-        ]));
+  // pannello IN LINEA con le rose di tutti (scorrendo verso il basso):
+  // solo i calciatori PRESI, ordinati per ruolo, col nome di ogni giocatore.
+  function pannelloRose(el, giocatori) {
+    var box = el("div", { class: "as-rose" });
+    box.appendChild(el("div", { class: "etichetta", style: "margin-top:6px", text: "Le rose finora" }));
+    (giocatori || []).forEach(function (g) {
+      var card = el("div", { class: "as-rose-p" });
+      card.appendChild(el("div", { class: "as-rose-nome", text: g.nome + " · " + g.crediti + "💰 · " + (g.kit ? g.kit.length : 0) + "/5" }));
+      if (!g.kit || !g.kit.length) {
+        card.appendChild(el("div", { class: "as-rose-vuota", text: "ancora nessun acquisto" }));
+      } else {
+        ordinaRosa(g.kit).forEach(function (c) {
+          var ru = FANTA_RUOLI[c.ruolo] || {};
+          card.appendChild(el("div", { class: "as-rose-riga" }, [
+            el("span", { class: "as-rose-em", text: ru.emoji }),
+            el("span", { class: "as-rose-txt", text: c.nome + (c.squadra ? " · " + c.squadra : "") }),
+            el("span", { class: "as-rb as-rb-" + c.ruolo, text: ru.breve })
+          ]));
+        });
       }
+      box.appendChild(card);
     });
     return box;
-  }
-
-  // finestra a comparsa con le rose di tutti (tutti vedono tutti)
-  function apriRose(t, giocatori) {
-    var el = t.el;
-    var back = el("div", { class: "as-modal-bg" });
-    function chiudi() { if (back.parentNode) back.parentNode.removeChild(back); }
-    var body = el("div", { class: "as-modal-b" });
-    (giocatori || []).forEach(function (g) { body.appendChild(nodoRosaSlot(el, g)); });
-    var panel = el("div", { class: "as-modal" }, [
-      el("div", { class: "as-modal-h" }, [
-        el("span", { text: "👀 Le rose di tutti" }),
-        el("button", { class: "as-modal-x", text: "✕", onclick: chiudi })
-      ]),
-      body
-    ]);
-    back.appendChild(panel);
-    back.onclick = function (e) { if (e.target === back) chiudi(); };
-    document.body.appendChild(back);
-  }
-  function bottoneRose(el, t, giocatori) {
-    return el("button", { class: "as-vedirose", text: "👀 Vedi le rose di tutti", onclick: function () { apriRose(t, giocatori); } });
   }
 
   // ---------- SINGOLO TELEFONO ----------
@@ -1359,7 +1382,6 @@
     var s = t.schermata({ icona: "⚽", titolo: ru.nome + " all'asta",
       indietro: function () { if (window.confirm("Uscire dalla partita?")) { if (a.bar) a.bar._stop(); t.esci(); } } });
     s._contenuto.appendChild(strisciaFanta(el, st, a.leader));
-    s._contenuto.appendChild(bottoneRose(el, t, st.giocatori));
     s._contenuto.appendChild(cartaGrande(el, a.carta, ru.nome + (a.carta.squadra ? " · " + a.carta.squadra : "")));
     s._contenuto.appendChild(el("div", { class: "as-offerta" }, a.leader === null ? [
       el("div", { class: "v", text: "base " + a.offerta + " 💰" }),
@@ -1403,6 +1425,7 @@
     });
     s._contenuto.appendChild(el("p", { class: "as-msg", style: "margin-top:10px",
       text: "Allo scadere del tempo la carta va a chi offre di più. Se nessuno offre, va in fondo al mazzo." }));
+    s._contenuto.appendChild(pannelloRose(el, st.giocatori));
     t.mostra(s);
   }
 
@@ -1462,7 +1485,7 @@
       tipo === "forzata" ? el("p", { class: "as-msg", text: "Se lo accolla: era l'unico a cui mancava questo ruolo." }) : null,
       el("p", { class: "as-msg", text: "Gli restano " + g.crediti + " 💰 · rosa " + (5 - slotVuoti(g)) + "/5." })
     ]));
-    s._piede.appendChild(bottoneRose(el, t, st.giocatori));
+    s._contenuto.appendChild(pannelloRose(el, st.giocatori));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: function () { prossimaFanta(t, st); } }));
     t.mostra(s);
   }
@@ -1475,7 +1498,7 @@
       cartaGrande(el, carta, ru.nome + (carta.squadra ? " · " + carta.squadra : "")),
       el("p", { class: "as-msg", text: "Torna in fondo al mazzo: prima o poi qualcuno se lo accolla…" })
     ]));
-    s._piede.appendChild(bottoneRose(el, t, st.giocatori));
+    s._contenuto.appendChild(pannelloRose(el, st.giocatori));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: function () { prossimaFanta(t, st); } }));
     t.mostra(s);
   }
@@ -1666,6 +1689,7 @@
 
   function disegnaFantaVM(t, vm, cb) {
     var el = t.el, myId = cb.myId;
+    ricordaVoti(cb, vm);   // i voti in corso non si azzerano quando un altro conferma
     if (vm.fase === "lobby") return lobbyAsta(t, vm, cb);
     if (vm.fase === "fine") return schermataFineAsta(t, vm, cb);
 
@@ -1673,10 +1697,7 @@
       titolo: titoloFaseFanta(vm),
       indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
 
-    if (vm.fase !== "kit" && vm.fase !== "voto") {
-      s._contenuto.appendChild(strisciaFantaVm(el, vm, myId));
-      s._contenuto.appendChild(bottoneRose(el, t, vm.giocatori));
-    }
+    if (vm.fase !== "kit" && vm.fase !== "voto") s._contenuto.appendChild(strisciaFantaVm(el, vm, myId));
 
     if (vm.fase === "asta") {
       var a = vm.asta, ru = FANTA_RUOLI[a.ruolo] || {};
@@ -1710,6 +1731,7 @@
         s._contenuto.appendChild(el("p", { class: "as-msg",
           text: !io ? "Stai guardando la partita" : (pieno ? ("Hai già il " + ru.nome.toLowerCase() + " in rosa") : "Hai passato: aspetti il risultato") }));
       }
+      s._contenuto.appendChild(pannelloRose(el, vm.giocatori));
     }
 
     else if (vm.fase === "esito") {
@@ -1726,6 +1748,7 @@
         s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:1.3rem;font-weight:900;color:var(--accento);margin-top:8px", text: "per " + e2.prezzo + " 💰" }));
         if (e2.tipo === "forzata") s._contenuto.appendChild(el("p", { class: "as-msg", text: "Se lo accolla: era l'unico a cui mancava questo ruolo." }));
       }
+      s._contenuto.appendChild(pannelloRose(el, vm.giocatori));
       if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: cb.onAvanti }));
       else s._piede.appendChild(el("p", { class: "as-msg", text: "In attesa dell'host…" }));
     }
@@ -1743,9 +1766,9 @@
         s._contenuto.appendChild(el("p", { class: "as-msg", style: "margin-top:20px",
           text: hoVotato ? ("Hai votato. Aspetta gli altri… (" + vm.hannoVotato.length + " su " + vm.giocatori.length + ")") : "Stai guardando la partita" }));
       } else {
-        var voti = {};
+        var voti = cb._voti;
         var conferma = el("button", { class: "btn btn-primario", text: "Conferma i voti", onclick: function () { cb.onVoto(voti); } });
-        conferma.disabled = true;
+        function aggiornaConferma() { conferma.disabled = vm.giocatori.some(function (x) { return x.id !== myId && !voti[x.id]; }); }
         vm.giocatori.forEach(function (g) {
           if (g.id === myId) return;
           var box = nodoRosaVm(el, g);
@@ -1755,15 +1778,16 @@
               var b = el("button", { text: "⭐", onclick: function () {
                 voti[g.id] = val;
                 bottoni.forEach(function (bb, k) { bb.className = (k < val) ? "on" : ""; });
-                var mancano = vm.giocatori.filter(function (x) { return x.id !== myId && !voti[x.id]; }).length;
-                if (mancano === 0) conferma.removeAttribute("disabled");
+                aggiornaConferma();
               }});
+              if (voti[g.id] && val <= voti[g.id]) b.className = "on";   // ripristina le stelle già messe
               bottoni.push(b); riga2.appendChild(b);
             })(n);
           }
           box.appendChild(riga2);
           s._contenuto.appendChild(box);
         });
+        aggiornaConferma();
         s._piede.appendChild(conferma);
       }
     }

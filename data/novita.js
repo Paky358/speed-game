@@ -9,6 +9,26 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 67,
+    data: "17 settembre 2026",
+    titolo: "Asta online più comoda + Pendolo più fluido 🔧",
+    descrizione: [
+      "L'Asta online: mentre c'è l'asta puoi vedere in fondo 'I kit finora' con le squadre di tutti (prima non si vedevano durante l'asta).",
+      "Corretto un fastidio: quando una persona confermava i voti, agli altri si azzeravano le stelle già messe. Ora restano.",
+      "La lineetta del tempo ora si muove su tutti i telefoni (su alcuni Android non partiva).",
+      "Palla a Pendolo online: movimento più reattivo per chi gioca dal proprio telefono (il tuo personaggio risponde subito) e aggiornamenti più frequenti."
+    ]
+  },
+  {
+    v: 66,
+    data: "17 settembre 2026",
+    titolo: "Palla a Pendolo online: scegli il tuo ruolo 🎯",
+    descrizione: [
+      "Nella sala d'attesa online l'host può scegliere se lanciare o stare sulla trave: tocca il lanciatore o un posto sulla trave per metterti lì.",
+      "Ti scambi con chi c'era: se era un bot, ora lancia un bot; se era un amico online, cambiate posto. Così puoi giocare sulla trave contro un bot che lancia, anche online."
+    ]
+  },
+  {
     v: 65,
     data: "17 settembre 2026",
     titolo: "Mini asta Fantacalcio ⚽",
@@ -17,7 +37,7 @@ window.SG_NOVITA = [
       "Nel Fantacalcio ognuno ha 20 crediti e deve completare una rosa da 5: 1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante. I calciatori (veri, Serie A) escono uno alla volta dal mazzo.",
       "Chi ha già un ruolo pieno non punta su quel ruolo. Non puoi restare senza crediti: il sistema ti obbliga a tenerne 1 per ogni slot che ti manca.",
       "Se un calciatore non lo vuole nessuno finisce in fondo al mazzo (accollo) e ritorna più avanti. Alla fine si votano le rose a stelle come nell'Asta classica. Funziona anche 'ognuno dal suo telefono'.",
-      "In ogni momento c'è il tasto '👀 Vedi le rose di tutti' per controllare le squadre che stanno costruendo tutti i giocatori. E quando restano in due a contendersi l'ultimo di un ruolo, compare un avviso: chi non se lo aggiudica si accolla l'altro rimasto."
+      "Scorrendo in basso vedi sempre 'Le rose finora' con le squadre di tutti (solo i calciatori presi, ordinati per ruolo). E quando restano in due a contendersi l'ultimo di un ruolo, compare un avviso: chi non se lo aggiudica si accolla l'altro rimasto."
     ]
   },
   {

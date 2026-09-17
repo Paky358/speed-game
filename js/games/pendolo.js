@@ -11,7 +11,7 @@
    ========================================================= */
 (function () {
   "use strict";
-  var TH_BEAM = 1.0, SWING = 2.0, AIMK = 1.5, AIMG = 2.4, NSEAT = 3, HZ = 50;
+  var TH_BEAM = 1.0, SWING = 2.0, AIMK = 1.5, AIMG = 2.4, NSEAT = 3, HZ = 40;   // invii host ~25/s (più fluido per gli ospiti)
   var PEAKD = 1.28, PBEAM = 1.0;   // la palla va OLTRE la trave (picco profondità 1.28); il piano della trave è a p=1.0
   var BEAM_L = 0.14, BEAM_R = 0.86, AIM_SPAN = 0.40, MOVSP = 0.36, BOTSP = 0.22, HITF = 0.075, JUMP = 0.6, JCD = 2.0, MINSEP = 0.11;
   function vuoiMirino() { try { return localStorage.getItem("sg-pendolo-mirino") !== "0"; } catch (e) { return true; } }
@@ -297,11 +297,24 @@
       if (lanc === id) return; var vecchio = lanc, sMio = seatDi(id); if (sMio >= 0) posti[sMio] = null;
       lanc = id; var libero = (sMio >= 0) ? sMio : postoLibero(); if (libero >= 0) posti[libero] = vecchio;
     }
+    // l'host sceglie il proprio ruolo: va nello slot T ("L" = lanciatore, 0..2 = posto sulla trave);
+    // chi c'era (bot o giocatore) prende il vecchio posto dell'host. Cosi ci si scambia con bot o giocatori.
+    function occSlot(T) { return T === "L" ? lanc : posti[T]; }
+    function mettiSlot(T, v) { if (T === "L") lanc = v; else posti[T] = v; }
+    function slotDi(id) { if (lanc === id) return "L"; var s = seatDi(id); return s >= 0 ? s : null; }
+    function hostVaA(T) {
+      var H = slotDi("host"); if (H === T) return;
+      var O = occSlot(T);
+      mettiSlot(T, "host");
+      if (H !== null) mettiSlot(H, O);
+      else if (O && O !== "host") { var lib = postoLibero(); if (lib >= 0) posti[lib] = O; }  // di sicurezza
+    }
 
     rete = SGNet.ospita("pendolo", {
       onCodice: function (c) { codice = c; lobbyAgg(); },
       onConnesso: function () { pronta = true; lobbyAgg(); },
-      onAddio: function (id) { var s = seatDi(id); if (s >= 0) posti[s] = null; if (lanc === id) lanc = "host";
+      onAddio: function (id) { var s = seatDi(id); if (s >= 0) posti[s] = null;
+        if (lanc === id) lanc = (seatDi("host") >= 0) ? null : "host";   // se l'host è sulla trave, lancia un bot
         if (fase === "lobby") { delete nomi[id]; lobbyAgg(); } else if (ST) { var k = seatDi(id); } },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
@@ -316,10 +329,10 @@
     });
 
     function inizia() {
-      fase = "gioco"; ST = nuovoStato(P, mkChars(posti)); ST.collis = !!collis;
+      fase = "gioco"; ST = nuovoStato(P, mkChars(posti), lanc === null); ST.collis = !!collis;
       rete.invia({ t: "via", lanc: lanc, seggi: seggi(), nomi: nomi });
-      for (var s = 0; s < NSEAT; s++) if (posti[s]) rete.invia({ t: "ruolo", to: posti[s], seat: s });
-      if (lanc !== "host") rete.invia({ t: "ruolo", to: lanc, seat: -1 });
+      for (var s = 0; s < NSEAT; s++) if (posti[s] && posti[s] !== "host") rete.invia({ t: "ruolo", to: posti[s], seat: s });
+      if (lanc && lanc !== "host") rete.invia({ t: "ruolo", to: lanc, seat: -1 });
       var mioRuolo = (lanc === "host") ? "lanciatore" : "trave", mioSeat = seatDi("host");
       ref = creaScena(t, mioRuolo, {
         onAim: function (d) { if (mioRuolo === "lanciatore") ST.aimHold = d; }, onAimDrag: function (fr) { if (mioRuolo === "lanciatore") ST.aim = clamp(ST.aim + fr * AIMG, -1, 1); },
@@ -355,13 +368,16 @@
     function lobbyAgg() { if (fase !== "lobby") return; rete.invia({ t: "lobby", codice: codice, pronta: pronta, lanc: lanc, seggi: seggi(), nomi: nomi }); disegnaLobby(); }
     function disegnaLobby() { if (fase !== "lobby") return;
       renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", lanc: lanc, seggi: seggi(), nomi: nomi },
-        { onComincia: inizia, onClaim: function () { claim("host"); lobbyAgg(); }, onEsci: function () { chiudi(); t.esci(); } }); }
+        { onComincia: inizia,
+          onHostLanc: function () { hostVaA("L"); lobbyAgg(); },
+          onHostSeat: function (i) { hostVaA(i); lobbyAgg(); },
+          onEsci: function () { chiudi(); t.esci(); } }); }
     disegnaLobby();
   }
 
   function ospitePendolo(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var el = t.el, S = { rete: null, myId: null, nome: "", ruolo: null, seat: -1, ref: null, fase: null, buf: [], raf: null, lastP: {}, delayMs: 120, lanc: null, seggi: null, msg2: null };
+    var el = t.el, S = { rete: null, myId: null, nome: "", ruolo: null, seat: -1, ref: null, fase: null, buf: [], raf: null, lastP: {}, delayMs: 120, lanc: null, seggi: null, msg2: null, mov: 0, predX: null };
     schermaNome();
     function schermaNome() {
       var s = t.schermata({ icona: "🎯", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
@@ -395,11 +411,12 @@
     function setRuoloDaSeggi(sg) { S.seat = -1; S.ruolo = (S.lanc === S.myId) ? "lanciatore" : "trave";
       if (sg) for (var i = 0; i < sg.length; i++) if (sg[i] && sg[i].id === S.myId) { S.seat = i; S.ruolo = "trave"; } }
     function build() {
+      S.predX = null; S.mov = 0;
       if (S.ref) S.ref.rimuovi();
       S.ref = creaScena(t, S.ruolo || "trave", {
         onAim: function (d) { if (S.ruolo === "lanciatore" && S.rete) S.rete.invia({ t: "aim", d: d }); }, onAimDrag: function () {},
         onLancia: function () { if (S.ruolo === "lanciatore" && S.rete) S.rete.invia({ t: "lancia" }); },
-        onMov: function (d) { if (S.ruolo === "trave" && S.rete) S.rete.invia({ t: "mov", d: d }); },
+        onMov: function (d) { S.mov = d || 0; if (S.ruolo === "trave" && S.rete) S.rete.invia({ t: "mov", d: d }); },
         onSalta: function () { if (S.ruolo === "trave" && S.rete) S.rete.invia({ t: "salta" }); },
         onEsci: function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); }
       });
@@ -417,7 +434,23 @@
       return out;
     }
     function giro(now) { S.raf = requestAnimationFrame(giro); if (!S.ref || !S.buf.length || S.fase === "fine") return;
-      var dt = Math.min(0.05, (now - (S._last || now)) / 1000); S._last = now; render(S.ref, vistaOra(now), dt); }
+      var dt = Math.min(0.05, (now - (S._last || now)) / 1000); S._last = now;
+      var vista = vistaOra(now); prediciMio(vista, dt); render(S.ref, vista, dt); }
+    // Predizione locale del MIO personaggio sulla trave: mi muovo subito col mio
+    // input (niente attesa del giro di rete) e riconcilio piano verso la posizione
+    // autoritativa più fresca dell'host. Salto e cadute restano dell'host.
+    function prediciMio(vista, dt) {
+      if (!(S.ruolo === "trave" && S.seat >= 0) || !vista || !vista.c) return;
+      var c = vista.c[S.seat]; if (!c) return;
+      var newest = S.buf.length ? S.buf[S.buf.length - 1].s : null;
+      var hc = newest && newest.c ? newest.c[S.seat] : null;
+      if (!c.a || !hc || !hc.a) { S.predX = null; return; }   // caduto o dati assenti: nessuna predizione
+      if (S.predX == null) S.predX = hc.x;
+      S.predX += (S.mov || 0) * MOVSP * dt;
+      if (S.predX < BEAM_L) S.predX = BEAM_L; else if (S.predX > BEAM_R) S.predX = BEAM_R;
+      S.predX += (hc.x - S.predX) * Math.min(1, 8 * dt);       // riconciliazione morbida
+      c.x = S.predX;
+    }
     function avviaGiro() { if (!S.raf) { S._last = performance.now(); S.raf = requestAnimationFrame(giro); } }
     function fermaGiro() { if (S.raf) cancelAnimationFrame(S.raf); S.raf = null; }
     function mostraLobby(m) { renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, lanc: m.lanc, seggi: m.seggi, nomi: m.nomi },
@@ -453,22 +486,38 @@
     } else {
       s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:#69db7c;margin-bottom:2px", text: "✅ Sei nella stanza " + (vm.codice || "").toUpperCase() }));
     }
+    // riga di un ruolo (con evidenza se è il mio e, per l'host, tocco per spostarmi lì)
+    function rigaRuolo(sinistra, testo, mio, tap, azione) {
+      var bg = mio ? "rgba(255,202,58,.18)" : "rgba(255,255,255,.06)";
+      var brd = mio ? ";border:1px solid var(--accento)" : "";
+      var cur = tap ? ";cursor:pointer" : "";
+      return el("div", { style: "display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;margin-bottom:6px;background:" + bg + brd + cur, onclick: tap ? azione : null }, [
+        sinistra,
+        el("span", { style: "flex:1;font-weight:800", text: testo }),
+        tap ? el("span", { style: "font-size:.82rem;font-weight:800;color:var(--accento)", text: azione._et || "vai qui ▶" }) : null
+      ]);
+    }
     // lanciatore
-    var lNome = (vm.nomi && vm.nomi[vm.lanc]) || (vm.lanc === "host" ? "Host" : "Amico");
+    var lBot = !vm.lanc;
+    var lNome = lBot ? "🤖 bot" : ((vm.nomi && vm.nomi[vm.lanc]) || (vm.lanc === "host" ? "Host" : "Amico"));
     var ioLanc = vm.lanc === vm.myId;
     s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "🎯 Chi lancia" }));
-    s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;margin-bottom:6px;background:" + (ioLanc ? "rgba(255,202,58,.18)" : "rgba(255,255,255,.06)") + (ioLanc ? ";border:1px solid var(--accento)" : "") }, [
-      el("span", { text: "🎯" }), el("span", { style: "flex:1;font-weight:800", text: lNome + (ioLanc ? " (tu)" : "") })]));
-    if (!ioLanc) s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", style: "margin-bottom:8px", text: "🎯 Voglio lanciare io", onclick: cb.onClaim }));
+    var tapL = (vm.sonoHost && !ioLanc && cb.onHostLanc) ? function () { cb.onHostLanc(); } : null;
+    if (tapL) tapL._et = "lancio io ▶";
+    s._contenuto.appendChild(rigaRuolo(el("span", { text: "🎯" }), lNome + (ioLanc ? " (tu)" : ""), ioLanc, tapL, tapL));
+    if (!vm.sonoHost && !ioLanc) s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", style: "margin-bottom:8px", text: "🎯 Voglio lanciare io", onclick: cb.onClaim }));
     // trave
     s._contenuto.appendChild(el("div", { class: "etichetta", text: "🏃 Sulla trave (posti liberi = bot)" }));
     (vm.seggi || []).forEach(function (sg, i) {
       var mio = sg && sg.id === vm.myId, nome = sg ? ((vm.nomi && vm.nomi[sg.id]) || sg.nome || "Amico") : "🤖 bot";
-      s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:" + (mio ? "rgba(255,202,58,.18)" : "rgba(255,255,255,.06)") + (mio ? ";border:1px solid var(--accento)" : "") }, [
+      var tapS = (vm.sonoHost && !mio && cb.onHostSeat) ? function () { cb.onHostSeat(i); } : null;
+      if (tapS) tapS._et = "siediti ▶";
+      s._contenuto.appendChild(rigaRuolo(
         el("span", { style: "width:16px;height:16px;border-radius:50%;flex:0 0 auto;background:" + COLSEAT[i % COLSEAT.length] }),
-        el("span", { style: "flex:1;font-weight:700", text: nome + (mio ? " (tu)" : "") })]));
+        nome + (mio ? " (tu)" : ""), mio, tapS, tapS));
     });
     if (vm.sonoHost) {
+      s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin-top:4px", text: "Tocca il lanciatore o un posto sulla trave per metterti lì: chi c'era prende il tuo posto (bot o giocatore)." }));
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: cb.onComincia }));
       s._piede.appendChild(el("p", { class: "modulo-nota", text: "Cominci quando vuoi: i posti vuoti sulla trave diventano bot." }));
     } else {

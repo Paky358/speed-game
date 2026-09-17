@@ -4,6 +4,26 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 17 settembre 2026 (44) — Asta online: comodità + fix; Pendolo più fluido
+- **L'Asta online**: durante l'asta e sull'esito, in fondo, c'è **"I kit finora"** con le squadre di
+  tutti (prima i kit non erano visibili durante l'asta).
+- **Fix voti**: i voti a stelle in corso venivano **azzerati** quando un altro giocatore confermava (la
+  nuova "foto" ridisegnava la schermata da zero). Ora le stelle già messe restano (memorizzate finché
+  si è in fase di voto, `ricordaVoti`).
+- **Barra del tempo**: ora è **animata frame-per-frame** dal tempo reale (prima usava una transition CSS
+  che su alcuni Android non partiva); si ferma da sola quando la schermata cambia.
+- **Palla a Pendolo online**: **predizione locale** del proprio personaggio sulla trave (ci si muove
+  subito col proprio input, con riconciliazione morbida verso la posizione dell'host) e frequenza di
+  invio alzata (`HZ` 50→40 ms): meno lag percepito per gli ospiti.
+
+## 17 settembre 2026 (43) — Palla a Pendolo online: l'host sceglie il ruolo
+- Nella **sala d'attesa online**, l'host può scegliere se **lanciare** o stare **sulla trave**: tocca il
+  lanciatore o un posto sulla trave per metterti lì. Chi c'era prende il posto lasciato dall'host —
+  **scambio con un bot** (se lascia il lancio, lancia un bot: `aiLanc`) **o con un giocatore online**.
+- Così, anche online, l'host può giocare sulla trave contro un lanciatore automatico. Il lanciatore-bot
+  è mostrato come "🤖 bot" nella sala. Se il giocatore che stava lanciando esce, il lancio passa a un bot
+  (se l'host è sulla trave) o torna all'host.
+
 ## 17 settembre 2026 (42) — L'Asta: nuova modalità "Mini asta Fantacalcio"
 - **L'Asta** ora ha un selettore **Modalità**: **Temi classici** (l'asta a tema di sempre) oppure
   **Mini asta Fantacalcio**. La scelta è nelle impostazioni; in Fantacalcio spariscono "Crediti" e
@@ -18,10 +38,10 @@ contenuto di quel tasto vive in `data/novita.js`._
   (con una rete di sicurezza che evita blocchi). Alla fine si **votano le rose a stelle** come nell'Asta.
 - Funziona sia **"un telefono solo"** sia **"ognuno dal suo telefono"** (online). Calciatori in
   `data/asta-fanta.js`.
-- **Vedi le rose di tutti**: in ogni schermata (asta ed esito) un tasto apre una finestra con le rose di
-  tutti i giocatori, a slot (mostra anche i posti ancora vuoti). **Avviso ultimo duello**: quando restano
-  in due a contendersi l'ultima carta di un ruolo, compare un avviso che chi non se la aggiudica si
-  accolla l'altra rimasta.
+- **Le rose finora**: in fondo alle schermate di asta ed esito, scorrendo in basso, si vedono le rose di
+  tutti (solo i calciatori **presi**, ordinati per ruolo, col nome di chi li ha). **Avviso ultimo duello**:
+  quando restano in due a contendersi l'ultima carta di un ruolo, compare un avviso che chi non se la
+  aggiudica si accolla l'altra rimasta.
 
 ## 17 settembre 2026 (41) — Mazzo sul tavolo (Scopa e Scopa 2vs2) + fix Palla a Pendolo
 - **Scopa e Scopa 2vs2**: ora c'è il **mazzo visibile sul tavolo** (con quante carte restano). Quando
