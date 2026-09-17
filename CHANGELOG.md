@@ -4,6 +4,13 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 17 settembre 2026 (45) — L'Asta: voti finali con budget di stelle (mezze stelle)
+- Nuove **regole di voto** a fine partita (Asta classica e Fantacalcio, un telefono solo e online):
+  ogni votante ha un **budget di stelle** da distribuire tra gli avversari e deve **spenderlo tutto**.
+- Voti da **0,5 a 5** con **mezze stelle** (stepper − / valore / +), mai 0, non ci si vota da soli.
+- **Budget = 3,5 × (giocatori − 1)**: 3→7, 4→10,5, 5→14, 6→17,5, 7→21, 8→24,5, 9→28, 10→31,5. Con
+  **2 giocatori** il voto è **libero** (0,5–5, nessun budget). La classifica mostra i decimali quando servono.
+
 ## 17 settembre 2026 (44) — Asta online: comodità + fix; Pendolo più fluido
 - **L'Asta online**: durante l'asta e sull'esito, in fondo, c'è **"I kit finora"** con le squadre di
   tutti (prima i kit non erano visibili durante l'asta).

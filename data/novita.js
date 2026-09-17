@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 68,
+    data: "17 settembre 2026",
+    titolo: "Voti a fine Asta con budget di stelle ⭐",
+    descrizione: [
+      "Nuovo modo di votare le squadre a fine Asta: hai un budget di stelle da distribuire tra gli avversari (media 3,5 a testa), e devi spenderlo tutto.",
+      "Si possono dare mezze stelle, da 0,5 a 5 (mai 0), con i tasti − e +. Non ci si vota da soli.",
+      "Budget in base ai giocatori: 3→7, 4→10,5, 5→14, 6→17,5, 7→21, 8→24,5, 9→28, 10→31,5 stelle. In 2 il voto è libero (0,5–5)."
+    ]
+  },
+  {
     v: 67,
     data: "17 settembre 2026",
     titolo: "Asta online più comoda + Pendolo più fluido 🔧",

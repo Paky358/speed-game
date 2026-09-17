@@ -6066,6 +6066,16 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 68,
+    data: "17 settembre 2026",
+    titolo: "Voti a fine Asta con budget di stelle ⭐",
+    descrizione: [
+      "Nuovo modo di votare le squadre a fine Asta: hai un budget di stelle da distribuire tra gli avversari (media 3,5 a testa), e devi spenderlo tutto.",
+      "Si possono dare mezze stelle, da 0,5 a 5 (mai 0), con i tasti − e +. Non ci si vota da soli.",
+      "Budget in base ai giocatori: 3→7, 4→10,5, 5→14, 6→17,5, 7→21, 8→24,5, 9→28, 10→31,5 stelle. In 2 il voto è libero (0,5–5)."
+    ]
+  },
+  {
     v: 67,
     data: "17 settembre 2026",
     titolo: "Asta online più comoda + Pendolo più fluido 🔧",
@@ -7213,6 +7223,13 @@ window.SG_SIPERO = {
     ".as-rose-riga{display:flex;align-items:center;gap:9px;padding:3px 0;font-size:.95rem;}",
     ".as-rose-em{font-size:1.2rem;flex:0 0 auto;}",
     ".as-rose-txt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+    // votazione col budget di stelle (mezze stelle)
+    ".as-budget{position:sticky;top:0;z-index:2;text-align:center;font-weight:900;padding:10px 12px;margin:0 0 10px;border-radius:12px;background:linear-gradient(135deg,#ffe58a,var(--accento) 60%,#ff9d3a);color:#2a2400;font-size:.98rem;line-height:1.25;}",
+    ".as-budget.ok{background:linear-gradient(135deg,#9fe6b4,#3fb56a);color:#04321c;}",
+    ".as-vrow{display:flex;align-items:center;justify-content:center;gap:14px;margin:-2px 0 12px;}",
+    ".as-vbtn{width:46px;height:46px;border-radius:50%;border:0;font-size:1.5rem;font-weight:900;font-family:inherit;cursor:pointer;background:var(--carta-2);color:var(--testo);line-height:1;}",
+    ".as-vbtn:disabled{opacity:.3;}",
+    ".as-vval{min-width:74px;text-align:center;font-size:1.25rem;font-weight:900;color:var(--accento);}",
     ".as-big{text-align:center;background:linear-gradient(150deg,#fff0c2,var(--accento) 55%,var(--accento-scuro));",
       "color:#2a2400;border-radius:22px;padding:18px;box-shadow:0 10px 30px rgba(224,169,10,.35);margin-bottom:12px;}",
     ".as-big .em{font-size:3rem;line-height:1;}",
@@ -7768,33 +7785,18 @@ window.SG_SIPERO = {
   function schermoVoto(t, st, votante) {
     var el = t.el;
     var voti = {};
-    var s = t.schermata({ icona: "⭐", titolo: nomeBreve(st.giocatori[votante].nome) + (st && st.formato === "fanta" ? ", vota le rose" : ", vota i kit"), sotto: "Da 1 a 5 stelle (non la tua)" });
-    var avanti = el("button", { class: "btn btn-primario", text: "Conferma i voti", disabled: "disabled",
+    var budget = budgetVoti(st.giocatori.length);
+    var s = t.schermata({ icona: "⭐", titolo: nomeBreve(st.giocatori[votante].nome) + (st && st.formato === "fanta" ? ", vota le rose" : ", vota i kit"),
+      sotto: budget == null ? "Da 0,5 a 5 ⭐ (non la tua)" : "Distribuisci il tuo budget di stelle" });
+    var avanti = el("button", { class: "btn btn-primario", text: "Conferma i voti",
       onclick: function () {
-        st.giocatori.forEach(function (g, i) { if (voti[i]) g.stelle += voti[i]; });
+        st.giocatori.forEach(function (g, i) { if (i !== votante && voti[i]) g.stelle = mezzo(g.stelle + voti[i]); });
         votazione(t, st, votante + 1);
       } });
-
-    st.giocatori.forEach(function (g, i) {
-      if (i === votante) return;
-      var box = nodoKit(el, g, st);
-      var riga = el("div", { class: "as-stelle" });
-      var bottoni = [];
-      for (var n = 1; n <= 5; n++) {
-        (function (val) {
-          var b = el("button", { text: "⭐", "aria-label": val + " stelle", onclick: function () {
-            voti[i] = val;
-            bottoni.forEach(function (bb, k) { bb.className = (k < val) ? "on" : ""; });
-            var mancano = st.giocatori.filter(function (_, j) { return j !== votante && !voti[j]; }).length;
-            if (mancano === 0) avanti.removeAttribute("disabled");
-          } });
-          bottoni.push(b); riga.appendChild(b);
-        })(n);
-      }
-      box.appendChild(riga);
-      s._contenuto.appendChild(box);
-    });
-
+    var opp = [];
+    st.giocatori.forEach(function (g, i) { if (i !== votante) opp.push({ key: i, nodo: nodoKit(el, g, st) }); });
+    var sez = sezioneVoto(el, opp, budget, voti, function (ok) { avanti.disabled = !ok; });
+    sez.nodi.forEach(function (n) { s._contenuto.appendChild(n); });
     s._piede.appendChild(avanti);
     t.mostra(s);
   }
@@ -7804,7 +7806,7 @@ window.SG_SIPERO = {
   function finePartita(t, st) {
     FX.fine();
     var classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
-      .map(function (g) { return { nome: g.nome, punti: g.stelle + " ⭐" }; });
+      .map(function (g) { return { nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐" }; });
     t.fine(classifica);
   }
 
@@ -7992,11 +7994,11 @@ window.SG_SIPERO = {
         var v = st.voti[chi] || {};
         Object.keys(v).forEach(function (target) {
           var g = perId(st, target);
-          if (g && target !== chi) g.stelle += Math.max(1, Math.min(5, parseInt(v[target], 10) || 0));
+          if (g && target !== chi) { var vv = mezzo(+v[target] || 0); if (vv >= 0.5) g.stelle = mezzo(g.stelle + Math.max(0.5, Math.min(5, vv))); }
         });
       });
       st.classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
-        .map(function (g) { return { nome: g.nome, punti: g.stelle + " ⭐" }; });
+        .map(function (g) { return { nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐" }; });
       st.fase = "fine"; FX.fine(); bd();
     }
 
@@ -8111,6 +8113,48 @@ window.SG_SIPERO = {
     if (vm.fase === "voto") { if (!cb._inVoto) { cb._voti = {}; cb._inVoto = true; } }
     else cb._inVoto = false;
     cb._voti = cb._voti || {};
+  }
+
+  // --- Regole voti a fine partita ---
+  // Media 3,5 ⭐ per avversario. Budget = 3,5 × (giocatori − 1), da spendere
+  // TUTTO. Ogni voto da 0,5 a 5 (mezze stelle, mai 0). Con 2 giocatori è libero.
+  function budgetVoti(n) { return n <= 2 ? null : Math.round(3.5 * (n - 1) * 2) / 2; }
+  function mezzo(x) { return Math.round((x || 0) * 2) / 2; }
+  function fmtMezzi(x) { x = mezzo(x); return (x % 1 === 0) ? String(x) : x.toFixed(1); }
+
+  // Costruisce la sezione di voto (banner budget + per ogni avversario il suo
+  // nodo kit/rosa e uno stepper − valore +). Ritorna { nodi, valido, aggiorna }.
+  // `voti` è l'oggetto persistente chiave→valore (indice o id).
+  function sezioneVoto(el, opp, budget, voti, onChange) {
+    opp.forEach(function (o) { if (!(voti[o.key] >= 0.5)) voti[o.key] = 0.5; });
+    var banner = el("div", { class: "as-budget" });
+    var steppers = [];
+    function somma() { var s = 0; opp.forEach(function (o) { s += voti[o.key] || 0; }); return mezzo(s); }
+    function valido() { return budget == null ? true : somma() === budget; }
+    function aggiorna() {
+      var s = somma(), ok = valido();
+      if (budget == null) banner.textContent = "🎁 Voto libero: da 0,5 a 5 ⭐ a testa";
+      else banner.textContent = "Budget: " + fmtMezzi(s) + " / " + fmtMezzi(budget) + " ⭐ · " + (s === budget ? "tutto speso ✅" : ("restano " + fmtMezzi(budget - s)));
+      banner.className = "as-budget" + (ok ? " ok" : "");
+      steppers.forEach(function (p) {
+        var v = voti[p.key];
+        p.meno.disabled = (v <= 0.5);
+        p.piu.disabled = !(v < 5 && (budget == null || s + 0.5 <= budget));
+        p.val.textContent = fmtMezzi(v) + " ⭐";
+      });
+      if (onChange) onChange(ok);
+    }
+    var nodi = [banner];
+    opp.forEach(function (o) {
+      nodi.push(o.nodo);
+      var val = el("span", { class: "as-vval" });
+      var meno = el("button", { class: "as-vbtn", text: "−", onclick: function () { if (voti[o.key] > 0.5) { voti[o.key] = mezzo(voti[o.key] - 0.5); aggiorna(); } } });
+      var piu = el("button", { class: "as-vbtn", text: "+", onclick: function () { if (voti[o.key] < 5 && (budget == null || somma() + 0.5 <= budget)) { voti[o.key] = mezzo(voti[o.key] + 0.5); aggiorna(); } } });
+      steppers.push({ key: o.key, meno: meno, piu: piu, val: val });
+      nodi.push(el("div", { class: "as-vrow" }, [meno, val, piu]));
+    });
+    aggiorna();
+    return { nodi: nodi, valido: valido, aggiorna: aggiorna };
   }
   // pannello IN LINEA coi kit di tutti (Asta classica): mostrato durante
   // l'asta e sull'esito, così si vedono le squadre senza aprire altre schermate.
@@ -8269,27 +8313,11 @@ window.SG_SIPERO = {
           text: hoVotato ? ("Hai votato. Aspetta gli altri… (" + vm.hannoVotato.length + " su " + vm.giocatori.length + ")") : "Stai guardando la partita" }));
       } else {
         var voti = cb._voti;
-        var conferma = el("button", { class: "btn btn-primario", text: "Conferma i voti", onclick: function () { cb.onVoto(voti); } });
-        function aggiornaConferma() { conferma.disabled = vm.giocatori.some(function (x) { return x.id !== myId && !voti[x.id]; }); }
-        vm.giocatori.forEach(function (g) {
-          if (g.id === myId) return;
-          var box = nodoKitVm(el, g);
-          var riga2 = el("div", { class: "as-stelle" }), bottoni = [];
-          for (var n = 1; n <= 5; n++) {
-            (function (val) {
-              var b = el("button", { text: "⭐", onclick: function () {
-                voti[g.id] = val;
-                bottoni.forEach(function (bb, k) { bb.className = (k < val) ? "on" : ""; });
-                aggiornaConferma();
-              }});
-              if (voti[g.id] && val <= voti[g.id]) b.className = "on";   // ripristina le stelle già messe
-              bottoni.push(b); riga2.appendChild(b);
-            })(n);
-          }
-          box.appendChild(riga2);
-          s._contenuto.appendChild(box);
-        });
-        aggiornaConferma();
+        var conferma = el("button", { class: "btn btn-primario", text: "Conferma i voti", onclick: function () { if (!conferma.disabled) cb.onVoto(voti); } });
+        var opp = [];
+        vm.giocatori.forEach(function (g) { if (g.id !== myId) opp.push({ key: g.id, nodo: nodoKitVm(el, g) }); });
+        var sez = sezioneVoto(el, opp, budgetVoti(vm.giocatori.length), voti, function (ok) { conferma.disabled = !ok; });
+        sez.nodi.forEach(function (n) { s._contenuto.appendChild(n); });
         s._piede.appendChild(conferma);
       }
     }
@@ -8768,11 +8796,11 @@ window.SG_SIPERO = {
         var v = st.voti[chi] || {};
         Object.keys(v).forEach(function (target) {
           var g = perId(st, target);
-          if (g && target !== chi) g.stelle += Math.max(1, Math.min(5, parseInt(v[target], 10) || 0));
+          if (g && target !== chi) { var vv = mezzo(+v[target] || 0); if (vv >= 0.5) g.stelle = mezzo(g.stelle + Math.max(0.5, Math.min(5, vv))); }
         });
       });
       st.classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
-        .map(function (g) { return { nome: g.nome, punti: g.stelle + " ⭐" }; });
+        .map(function (g) { return { nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐" }; });
       st.fase = "fine"; FX.fine(); bd();
     }
     function nuovaInLobby() {
@@ -8925,27 +8953,11 @@ window.SG_SIPERO = {
           text: hoVotato ? ("Hai votato. Aspetta gli altri… (" + vm.hannoVotato.length + " su " + vm.giocatori.length + ")") : "Stai guardando la partita" }));
       } else {
         var voti = cb._voti;
-        var conferma = el("button", { class: "btn btn-primario", text: "Conferma i voti", onclick: function () { cb.onVoto(voti); } });
-        function aggiornaConferma() { conferma.disabled = vm.giocatori.some(function (x) { return x.id !== myId && !voti[x.id]; }); }
-        vm.giocatori.forEach(function (g) {
-          if (g.id === myId) return;
-          var box = nodoRosaVm(el, g);
-          var riga2 = el("div", { class: "as-stelle" }), bottoni = [];
-          for (var n = 1; n <= 5; n++) {
-            (function (val) {
-              var b = el("button", { text: "⭐", onclick: function () {
-                voti[g.id] = val;
-                bottoni.forEach(function (bb, k) { bb.className = (k < val) ? "on" : ""; });
-                aggiornaConferma();
-              }});
-              if (voti[g.id] && val <= voti[g.id]) b.className = "on";   // ripristina le stelle già messe
-              bottoni.push(b); riga2.appendChild(b);
-            })(n);
-          }
-          box.appendChild(riga2);
-          s._contenuto.appendChild(box);
-        });
-        aggiornaConferma();
+        var conferma = el("button", { class: "btn btn-primario", text: "Conferma i voti", onclick: function () { if (!conferma.disabled) cb.onVoto(voti); } });
+        var opp = [];
+        vm.giocatori.forEach(function (g) { if (g.id !== myId) opp.push({ key: g.id, nodo: nodoRosaVm(el, g) }); });
+        var sez = sezioneVoto(el, opp, budgetVoti(vm.giocatori.length), voti, function (ok) { conferma.disabled = !ok; });
+        sez.nodi.forEach(function (n) { s._contenuto.appendChild(n); });
         s._piede.appendChild(conferma);
       }
     }
