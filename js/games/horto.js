@@ -185,8 +185,9 @@
     var cavs = [], targetX = [];
     for (var k = 0; k < N; k++) {
       var vinc = (k === vincitore), mio = (k === io);
-      // ZOOM sul traguardo: il vincitore finisce col centro sulla linea (86%), gli altri al DISTACCO REALE
-      targetX[k] = Math.max(6, 86 - (1 - Math.min(1, foto[k])) * 240);
+      // ZOOM sul traguardo: il vincitore sulla linea (86%); gli altri al distacco reale ma con un
+      // distacco MINIMO garantito (max 78%), così si vede chi ha toccato per primo anche in volata.
+      targetX[k] = vinc ? 86 : Math.max(6, Math.min(78, 86 - (1 - Math.min(1, foto[k])) * 280));
       var lane = el("div", { class: "ho-ff-lane" + (vinc ? " win" : ""), style: "top:" + (10 + k * rowH) + "px;height:" + rowH + "px" }, [
         el("div", { class: "ho-ff-label" }, [
           el("span", { class: "ho-ff-num", style: "background:" + COLORI[k % COLORI.length], text: String(k + 1) }),
