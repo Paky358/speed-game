@@ -62,11 +62,9 @@
       ".ho-ff-num{width:20px;height:20px;border-radius:50%;font-size:.72rem;font-weight:900;color:#111;",
         "display:flex;align-items:center;justify-content:center;flex:0 0 auto;}",
       ".ho-ff-nome{font-size:.86rem;font-weight:800;color:var(--testo);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
-      ".ho-ff-lane.win .ho-ff-nome{color:var(--accento);}",
       ".ho-ff-cav{position:absolute;top:50%;left:-15%;transform:translate(-50%,-50%) scaleX(-1);z-index:3;",
         "font-size:2.7rem;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));",
         "transition:left 2.6s cubic-bezier(.3,.55,.35,1);will-change:left;}",
-      ".ho-ff-lane.win .ho-ff-cav{transition-duration:1.8s;filter:drop-shadow(0 0 13px rgba(255,202,58,1));}",
       ".ho-ff-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:6;transition:opacity .55s ease-out;}",
       ".ho-ff-flash.on{opacity:.92;transition:opacity .05s;}",
       ".ho-ff-big{text-align:center;font-size:1.5rem;font-weight:900;min-height:1.6em;margin-top:4px;",
@@ -203,11 +201,19 @@
     function vai() { if (fatto) return; fatto = true; if (rafId) cancelAnimationFrame(rafId); tos.forEach(clearTimeout); poi(); }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Vedi la classifica ▶", onclick: vai }));
     t.mostra(s);
-    var winCav = cavs[vincitore];
-    // parte la corsa dell'ultimo tratto (transizione CSS: vincitore 1,8s, altri 2,6s)
-    tos.push(setTimeout(function () { for (var k = 0; k < N; k++) cavs[k].style.left = targetX[k] + "%"; controlla(); }, 90));
+    var winCav = cavs[vincitore], pre = Math.max(6, targetX[vincitore] - 12);
+    // FASE 1 (rush): tutti scattano; il vincitore si ferma un po' PRIMA della linea, gli altri al distacco reale
+    tos.push(setTimeout(function () {
+      for (var k = 0; k < N; k++) { cavs[k].style.transition = "left .8s cubic-bezier(.2,.6,.3,1)";
+        cavs[k].style.left = (k === vincitore ? pre : targetX[k]) + "%"; }
+    }, 90));
+    // FASE 2 (slow-motion): il vincitore striscia LENTISSIMO fino al traguardo -> hype, poi lo scatto
+    tos.push(setTimeout(function () {
+      winCav.style.transition = "left 2.8s cubic-bezier(.1,.75,.3,1)";
+      winCav.style.left = targetX[vincitore] + "%"; controlla();
+    }, 1000));
     // sicurezza: se rAF non gira (pannello nascosto), scatta a tempo
-    tos.push(setTimeout(function () { if (!scattato) congela(); }, 2600));
+    tos.push(setTimeout(function () { if (!scattato) congela(); }, 4400));
 
     function controlla() {                 // rileva il tocco REALE: anche 1px del cavallo oltre la linea
       if (scattato || fatto) return;

@@ -195,6 +195,14 @@ dal proprio.
   fontanella+splash. `giocatoriMin/Max:1, difficolta:1`. Prototipo standalone in
   `prototipi/palla-a-pendolo.html` (versione da solo).
 
+### Ritocchi (17 set 2026)
+- **Horto Muso · photo-finish** (`fotoFinish`): tolto il bagliore del vincitore (niente `.win` glow);
+  ora rush veloce iniziale + **slow-motion** del vincitore verso la linea (~2,8s) prima dello scatto.
+- **Giochi di carte · tavolo a dimensione fissa**: le carte usano una larghezza calcolata da
+  `SGCarte.larghezza(maxN, gap, cap)` (dal viewport, non dal numero di carte): tavolo per **9**, mano
+  su **una riga** (Scopone fino a 10). Così feltro (`.sc-feltro`) e mensola (`.sc-mensola`) non
+  cambiano più dimensione col numero di carte.
+
 ### Nuovo "tavolo verde" nei giochi di carte (15 set 2026)
 - Scopa, Scopa 2vs2 e Scopone condividono ora un **feltro verde** (aiuti in `window.SGCarte`: `posto`, `manina`
   + CSS `.sc-feltro`/`.sc-fascia`/`.sc-mensola`): **Compagno/avversario in alto**, i due **Rivali ai lati**

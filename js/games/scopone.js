@@ -235,6 +235,8 @@
     var el = t.el;
     if (st.fase === "fineround" || st.fase === "fine") { spMount = null; return fine(t, st, cb); }
     if (window.SGMusica) window.SGMusica.avvia();
+    var Lc = C().larghezza, ASP = C().ASP_CARTA;
+    var wT = Lc(9, 4, 58), wH = Lc(10, 8, 70);   // tavolo (centro stretto fra i Rivali): 9 · mano: fino a 10 su una riga
     var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
 
     // intestazione: punti squadre (a sinistra) + tasto musica (a destra)
@@ -256,12 +258,12 @@
     var pendingPlace = null;
     if (st.presa) {
       var dir = (st.presa.chi === 0) ? "giu" : "su";
-      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-content:center" });
+      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center" });
       var presiEls = [];
-      (st.presa.tavoloPrima || st.tavolo).forEach(function (c) { var cel = C().cartaEl(el, c, 62); if (st.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); } tw0.appendChild(cel); });
+      (st.presa.tavoloPrima || st.tavolo).forEach(function (c) { var cel = C().cartaEl(el, c, wT); if (st.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); } tw0.appendChild(cel); });
       area.appendChild(tw0);
       // la carta giocata va SOPRA la/e carta/e che prende, poi vola via con la presa
-      var gioc = C().cartaEl(el, st.presa.carta, 62);
+      var gioc = C().cartaEl(el, st.presa.carta, wT);
       gioc.style.cssText += ";position:absolute;z-index:6;opacity:0";
       area.appendChild(gioc);
       pendingPlace = function () {
@@ -273,16 +275,16 @@
           var g = gioc.getBoundingClientRect();
           gioc.style.left = (cx - a.left - g.width / 2) + "px";
           gioc.style.top = (cy - a.top - g.height / 2) + "px";
-        } else { gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = "-31px"; gioc.style.marginTop = "-51px"; }
+        } else { gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = (-wT / 2) + "px"; gioc.style.marginTop = (-Math.round(wT * ASP) / 2) + "px"; }
         gioc.style.animation = "scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
       };
     } else {
-      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-content:center" });
+      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center" });
       if (!st.tavolo.length) tw.appendChild(el("div", { class: "tenue", text: "tavolo vuoto" }));
       st.tavolo.forEach(function (c) {
         var cap = mioTurno && cartaSel && capIds[c.id];
         var extra = (sel.presa.indexOf(c.id) >= 0) ? "presel" : (cap ? "cap" : "");
-        var cel = C().cartaEl(el, c, 64, extra, cap ? function () { cb.onTavolo(c.id); } : null);
+        var cel = C().cartaEl(el, c, wT, extra, cap ? function () { cb.onTavolo(c.id); } : null);
         if (c.id === st.messaGiu) cel.classList.add("sc-cade");
         tw.appendChild(cel);
       });
@@ -300,7 +302,7 @@
     // la tua mano (sulla mensola di legno, ben staccata dal tavolo)
     var mensola = el("div", { class: "sc-mensola" });
     var manoW = el("div", { class: "sc-mano-riga" });
-    st.mani[0].forEach(function (c) { manoW.appendChild(C().cartaEl(el, c, 70, (sel.carta === c.id) ? "sel" : "", mioTurno ? function () { cb.onCella(c.id); } : null)); });
+    st.mani[0].forEach(function (c) { manoW.appendChild(C().cartaEl(el, c, wH, (sel.carta === c.id) ? "sel" : "", mioTurno ? function () { cb.onCella(c.id); } : null)); });
     mensola.appendChild(manoW);
     var mieCarte = st.prese[0].length + st.prese[2].length;
     mensola.appendChild(el("div", { class: "sc-prese", html: "prese squadra: <b>" + mieCarte + "</b>" + (trova(st.prese[0].concat(st.prese[2]), "D7") ? " · 7💰" : "") + ((st.scope[0] + st.scope[2]) ? " · scope " + (st.scope[0] + st.scope[2]) : "") }));

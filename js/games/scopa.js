@@ -248,6 +248,12 @@
 
   // ---------- carte (immagini vere: mazzo napoletano di pubblico dominio, Wikimedia Commons) ----------
   var ASP_CARTA = 1.653; // proporzioni delle immagini (altezza/larghezza)
+  // larghezza carta perché maxN carte stiano SEMPRE su una riga (tavolo/mano a dimensione fissa,
+  // non cambia col numero di carte): si "vede da più lontano" sugli schermi stretti.
+  function larghezza(maxN, gap, cap) {
+    var A = Math.min(window.innerWidth || 375, 600) - 46;
+    return Math.max(26, Math.min(cap || 70, Math.floor((A - (maxN - 1) * gap) / maxN)));
+  }
   function assicuraStile() {
     if (document.getElementById("sg-scopa-css")) return;
     var st = document.createElement("style");
@@ -333,6 +339,7 @@
     assicuraStile();
     if (window.SGMusica) window.SGMusica.avvia();
     var el = t.el, vm = C.vm;
+    var wT = larghezza(9, 4, 70), wH = larghezza(3, 8, 84);   // tavolo: 9 carte fisse · mano: max 3 (Scopa)
     var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
 
     // ---- intestazione: punti (a sinistra) + tasto musica (a destra) ----
@@ -355,16 +362,16 @@
       // il tavolo RESTA fermo: rimostro il tavolo com'era e faccio volare via SOLO le carte prese
       var dir = vm.presa.mio ? "giu" : "su";
       areaTavolo.style.position = "relative";
-      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:center" });
+      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center" });
       var presiEls = [];
       (vm.presa.tavoloPrima || vm.tavolo).forEach(function (c) {
-        var cel = cartaEl(el, c, 70);
+        var cel = cartaEl(el, c, wT);
         if (vm.presa.presiIds && vm.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); }
         tw0.appendChild(cel);
       });
       areaTavolo.appendChild(tw0);
       // la mia carta giocata: parte dalla mano, va SOPRA la/e carta/e che prende, poi vola via con la presa
-      var gioc = cartaEl(el, vm.presa.carta, 70);
+      var gioc = cartaEl(el, vm.presa.carta, wT);
       gioc.style.cssText += ";position:absolute;z-index:6;opacity:0";
       areaTavolo.appendChild(gioc);
       pendingPlace = function () {
@@ -377,17 +384,17 @@
           gioc.style.left = (cx - a.left - g.width / 2) + "px";
           gioc.style.top = (cy - a.top - g.height / 2) + "px";
         } else {                                      // scopa: tavolo svuotato, si posa al centro
-          gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = "-35px"; gioc.style.marginTop = "-58px";
+          gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = (-wT / 2) + "px"; gioc.style.marginTop = (-Math.round(wT * ASP_CARTA) / 2) + "px";
         }
         gioc.style.animation = "scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
       };
     } else {
-      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:center" });
+      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center" });
       if (!vm.tavolo.length) tw.appendChild(el("div", { class: "tenue", text: "tavolo vuoto" }));
       vm.tavolo.forEach(function (c) {
         var cap = mioTurno && cartaSel && capIds[c.id];
         var extra = (C.sel.presa.indexOf(c.id) >= 0) ? "presel" : (cap ? "cap" : "");
-        var cel = cartaEl(el, c, 70, extra, cap ? function () { C.tapTavolo(c.id); } : null);
+        var cel = cartaEl(el, c, wT, extra, cap ? function () { C.tapTavolo(c.id); } : null);
         if (c.id === vm.messaGiu) cel.classList.add("sc-cade"); // appena scartata: si posa sul tavolo
         tw.appendChild(cel);
       });
@@ -404,7 +411,7 @@
     var mensola = el("div", { class: "sc-mensola" });
     var manoW = el("div", { class: "sc-mano-riga" });
     vm.mano.forEach(function (c) {
-      manoW.appendChild(cartaEl(el, c, 84, (C.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { C.tapMano(c.id); } : null));
+      manoW.appendChild(cartaEl(el, c, wH, (C.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { C.tapMano(c.id); } : null));
     });
     mensola.appendChild(manoW);
     mensola.appendChild(el("div", { class: "sc-prese", html: "le tue prese <b>" + vm.preseIo + "</b>" + (vm.settebelloIo ? " · 7💰" : "") + (vm.scopeIo ? " · scope " + vm.scopeIo : "") }));
@@ -806,6 +813,7 @@
   window.SGCarte = {
     creaMazzo: creaMazzo, catture: catture, primiera: primiera, trova: trova,
     cartaEl: cartaEl, dorsoEl: dorsoEl, manina: manina, posto: posto, assicuraStile: assicuraStile,
+    larghezza: larghezza, ASP_CARTA: ASP_CARTA,
     validaSet: validaSet, prefisso: prefisso, PRIM: PRIM
   };
 })();

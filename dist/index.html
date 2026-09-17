@@ -5945,6 +5945,15 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 62,
+    data: "17 settembre 2026",
+    titolo: "Horto Muso al rallentatore + tavoli delle carte più stabili 🐎🃏",
+    descrizione: [
+      "Horto Muso: il cavallo vincente non si illumina più — si capisce dalla foto. E poco prima del traguardo va tutto al rallentatore per creare suspense, poi scatta il photo-finish.",
+      "Giochi di carte: il tavolo verde e la mensola della tua mano non cambiano più dimensione in base a quante carte ci sono. Le carte hanno una misura fissa (ci stanno fino a 9 sul tavolo e tutta la mano su una riga): si vede un po' più 'da lontano' ma resta sempre tutto in ordine."
+    ]
+  },
+  {
     v: 61,
     data: "16 settembre 2026",
     titolo: "Nuovo gioco: Palla a Pendolo 🎯 (anche online!)",
@@ -9004,11 +9013,9 @@ window.SG_SIPERO = {
       ".ho-ff-num{width:20px;height:20px;border-radius:50%;font-size:.72rem;font-weight:900;color:#111;",
         "display:flex;align-items:center;justify-content:center;flex:0 0 auto;}",
       ".ho-ff-nome{font-size:.86rem;font-weight:800;color:var(--testo);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
-      ".ho-ff-lane.win .ho-ff-nome{color:var(--accento);}",
       ".ho-ff-cav{position:absolute;top:50%;left:-15%;transform:translate(-50%,-50%) scaleX(-1);z-index:3;",
         "font-size:2.7rem;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));",
         "transition:left 2.6s cubic-bezier(.3,.55,.35,1);will-change:left;}",
-      ".ho-ff-lane.win .ho-ff-cav{transition-duration:1.8s;filter:drop-shadow(0 0 13px rgba(255,202,58,1));}",
       ".ho-ff-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:6;transition:opacity .55s ease-out;}",
       ".ho-ff-flash.on{opacity:.92;transition:opacity .05s;}",
       ".ho-ff-big{text-align:center;font-size:1.5rem;font-weight:900;min-height:1.6em;margin-top:4px;",
@@ -9145,11 +9152,19 @@ window.SG_SIPERO = {
     function vai() { if (fatto) return; fatto = true; if (rafId) cancelAnimationFrame(rafId); tos.forEach(clearTimeout); poi(); }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Vedi la classifica ▶", onclick: vai }));
     t.mostra(s);
-    var winCav = cavs[vincitore];
-    // parte la corsa dell'ultimo tratto (transizione CSS: vincitore 1,8s, altri 2,6s)
-    tos.push(setTimeout(function () { for (var k = 0; k < N; k++) cavs[k].style.left = targetX[k] + "%"; controlla(); }, 90));
+    var winCav = cavs[vincitore], pre = Math.max(6, targetX[vincitore] - 12);
+    // FASE 1 (rush): tutti scattano; il vincitore si ferma un po' PRIMA della linea, gli altri al distacco reale
+    tos.push(setTimeout(function () {
+      for (var k = 0; k < N; k++) { cavs[k].style.transition = "left .8s cubic-bezier(.2,.6,.3,1)";
+        cavs[k].style.left = (k === vincitore ? pre : targetX[k]) + "%"; }
+    }, 90));
+    // FASE 2 (slow-motion): il vincitore striscia LENTISSIMO fino al traguardo -> hype, poi lo scatto
+    tos.push(setTimeout(function () {
+      winCav.style.transition = "left 2.8s cubic-bezier(.1,.75,.3,1)";
+      winCav.style.left = targetX[vincitore] + "%"; controlla();
+    }, 1000));
     // sicurezza: se rAF non gira (pannello nascosto), scatta a tempo
-    tos.push(setTimeout(function () { if (!scattato) congela(); }, 2600));
+    tos.push(setTimeout(function () { if (!scattato) congela(); }, 4400));
 
     function controlla() {                 // rileva il tocco REALE: anche 1px del cavallo oltre la linea
       if (scattato || fatto) return;
@@ -12539,6 +12554,12 @@ window.SG_SIPERO = {
 
   // ---------- carte (immagini vere: mazzo napoletano di pubblico dominio, Wikimedia Commons) ----------
   var ASP_CARTA = 1.653; // proporzioni delle immagini (altezza/larghezza)
+  // larghezza carta perché maxN carte stiano SEMPRE su una riga (tavolo/mano a dimensione fissa,
+  // non cambia col numero di carte): si "vede da più lontano" sugli schermi stretti.
+  function larghezza(maxN, gap, cap) {
+    var A = Math.min(window.innerWidth || 375, 600) - 46;
+    return Math.max(26, Math.min(cap || 70, Math.floor((A - (maxN - 1) * gap) / maxN)));
+  }
   function assicuraStile() {
     if (document.getElementById("sg-scopa-css")) return;
     var st = document.createElement("style");
@@ -12624,6 +12645,7 @@ window.SG_SIPERO = {
     assicuraStile();
     if (window.SGMusica) window.SGMusica.avvia();
     var el = t.el, vm = C.vm;
+    var wT = larghezza(9, 4, 70), wH = larghezza(3, 8, 84);   // tavolo: 9 carte fisse · mano: max 3 (Scopa)
     var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
 
     // ---- intestazione: punti (a sinistra) + tasto musica (a destra) ----
@@ -12646,16 +12668,16 @@ window.SG_SIPERO = {
       // il tavolo RESTA fermo: rimostro il tavolo com'era e faccio volare via SOLO le carte prese
       var dir = vm.presa.mio ? "giu" : "su";
       areaTavolo.style.position = "relative";
-      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:center" });
+      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center" });
       var presiEls = [];
       (vm.presa.tavoloPrima || vm.tavolo).forEach(function (c) {
-        var cel = cartaEl(el, c, 70);
+        var cel = cartaEl(el, c, wT);
         if (vm.presa.presiIds && vm.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); }
         tw0.appendChild(cel);
       });
       areaTavolo.appendChild(tw0);
       // la mia carta giocata: parte dalla mano, va SOPRA la/e carta/e che prende, poi vola via con la presa
-      var gioc = cartaEl(el, vm.presa.carta, 70);
+      var gioc = cartaEl(el, vm.presa.carta, wT);
       gioc.style.cssText += ";position:absolute;z-index:6;opacity:0";
       areaTavolo.appendChild(gioc);
       pendingPlace = function () {
@@ -12668,17 +12690,17 @@ window.SG_SIPERO = {
           gioc.style.left = (cx - a.left - g.width / 2) + "px";
           gioc.style.top = (cy - a.top - g.height / 2) + "px";
         } else {                                      // scopa: tavolo svuotato, si posa al centro
-          gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = "-35px"; gioc.style.marginTop = "-58px";
+          gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = (-wT / 2) + "px"; gioc.style.marginTop = (-Math.round(wT * ASP_CARTA) / 2) + "px";
         }
         gioc.style.animation = "scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
       };
     } else {
-      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:center" });
+      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center" });
       if (!vm.tavolo.length) tw.appendChild(el("div", { class: "tenue", text: "tavolo vuoto" }));
       vm.tavolo.forEach(function (c) {
         var cap = mioTurno && cartaSel && capIds[c.id];
         var extra = (C.sel.presa.indexOf(c.id) >= 0) ? "presel" : (cap ? "cap" : "");
-        var cel = cartaEl(el, c, 70, extra, cap ? function () { C.tapTavolo(c.id); } : null);
+        var cel = cartaEl(el, c, wT, extra, cap ? function () { C.tapTavolo(c.id); } : null);
         if (c.id === vm.messaGiu) cel.classList.add("sc-cade"); // appena scartata: si posa sul tavolo
         tw.appendChild(cel);
       });
@@ -12695,7 +12717,7 @@ window.SG_SIPERO = {
     var mensola = el("div", { class: "sc-mensola" });
     var manoW = el("div", { class: "sc-mano-riga" });
     vm.mano.forEach(function (c) {
-      manoW.appendChild(cartaEl(el, c, 84, (C.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { C.tapMano(c.id); } : null));
+      manoW.appendChild(cartaEl(el, c, wH, (C.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { C.tapMano(c.id); } : null));
     });
     mensola.appendChild(manoW);
     mensola.appendChild(el("div", { class: "sc-prese", html: "le tue prese <b>" + vm.preseIo + "</b>" + (vm.settebelloIo ? " · 7💰" : "") + (vm.scopeIo ? " · scope " + vm.scopeIo : "") }));
@@ -13097,6 +13119,7 @@ window.SG_SIPERO = {
   window.SGCarte = {
     creaMazzo: creaMazzo, catture: catture, primiera: primiera, trova: trova,
     cartaEl: cartaEl, dorsoEl: dorsoEl, manina: manina, posto: posto, assicuraStile: assicuraStile,
+    larghezza: larghezza, ASP_CARTA: ASP_CARTA,
     validaSet: validaSet, prefisso: prefisso, PRIM: PRIM
   };
 })();
@@ -13308,6 +13331,8 @@ window.SG_SIPERO = {
     var el = t.el, vm = Cl.vm;
     if (vm.fase === "fineround" || vm.fase === "fine") { mont = null; return renderFine(t, vm, cb); }
     if (window.SGMusica) window.SGMusica.avvia();
+    var Lc = C().larghezza, ASP = C().ASP_CARTA;
+    var wT = Lc(9, 4, 58), wH = Lc(3, 8, 84);   // tavolo (centro fra i due Rivali): 9 · mano: max 3
     var io = vm.io, box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
 
     // intestazione: punti squadre (sx) + mazzo + tasto musica (dx)
@@ -13333,11 +13358,11 @@ window.SG_SIPERO = {
     var pendingPlace = null;
     if (vm.presa) {
       var dir = vm.presa.mio ? "giu" : "su";
-      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-content:center" });
+      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center" });
       var presiEls = [];
-      (vm.presa.tavoloPrima || vm.tavolo).forEach(function (c) { var cel = C().cartaEl(el, c, 62); if (vm.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); } tw0.appendChild(cel); });
+      (vm.presa.tavoloPrima || vm.tavolo).forEach(function (c) { var cel = C().cartaEl(el, c, wT); if (vm.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); } tw0.appendChild(cel); });
       area.appendChild(tw0);
-      var gioc = C().cartaEl(el, vm.presa.carta, 62);
+      var gioc = C().cartaEl(el, vm.presa.carta, wT);
       gioc.style.cssText += ";position:absolute;z-index:6;opacity:0";
       area.appendChild(gioc);
       pendingPlace = function () {
@@ -13349,16 +13374,16 @@ window.SG_SIPERO = {
           var g = gioc.getBoundingClientRect();
           gioc.style.left = (cx - a.left - g.width / 2) + "px";
           gioc.style.top = (cy - a.top - g.height / 2) + "px";
-        } else { gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = "-31px"; gioc.style.marginTop = "-51px"; }
+        } else { gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = (-wT / 2) + "px"; gioc.style.marginTop = (-Math.round(wT * ASP) / 2) + "px"; }
         gioc.style.animation = "scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
       };
     } else {
-      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-content:center" });
+      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center" });
       if (!vm.tavolo.length) tw.appendChild(el("div", { class: "tenue", text: "tavolo vuoto" }));
       vm.tavolo.forEach(function (c) {
         var cap = mioTurno && cartaSel && capIds[c.id];
         var extra = (Cl.sel.presa.indexOf(c.id) >= 0) ? "presel" : (cap ? "cap" : "");
-        var cel = C().cartaEl(el, c, 64, extra, cap ? function () { Cl.tapTavolo(c.id); } : null);
+        var cel = C().cartaEl(el, c, wT, extra, cap ? function () { Cl.tapTavolo(c.id); } : null);
         if (c.id === vm.messaGiu) cel.classList.add("sc-cade");
         tw.appendChild(cel);
       });
@@ -13376,7 +13401,7 @@ window.SG_SIPERO = {
     // la tua mano (sulla mensola di legno, ben staccata dal tavolo)
     var mensola = el("div", { class: "sc-mensola" });
     var manoW = el("div", { class: "sc-mano-riga" });
-    vm.mano.forEach(function (c) { manoW.appendChild(C().cartaEl(el, c, 70, (Cl.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { Cl.tapMano(c.id); } : null)); });
+    vm.mano.forEach(function (c) { manoW.appendChild(C().cartaEl(el, c, wH, (Cl.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { Cl.tapMano(c.id); } : null)); });
     mensola.appendChild(manoW);
     mensola.appendChild(el("div", { class: "sc-prese", html: "prese squadra: <b>" + vm.preseMia + "</b>" + (vm.setteMia ? " · 7💰" : "") + (vm.scopeMia ? " · scope " + vm.scopeMia : "") }));
     box.appendChild(mensola);
@@ -13964,6 +13989,8 @@ window.SG_SIPERO = {
     var el = t.el;
     if (st.fase === "fineround" || st.fase === "fine") { spMount = null; return fine(t, st, cb); }
     if (window.SGMusica) window.SGMusica.avvia();
+    var Lc = C().larghezza, ASP = C().ASP_CARTA;
+    var wT = Lc(9, 4, 58), wH = Lc(10, 8, 70);   // tavolo (centro stretto fra i Rivali): 9 · mano: fino a 10 su una riga
     var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
 
     // intestazione: punti squadre (a sinistra) + tasto musica (a destra)
@@ -13985,12 +14012,12 @@ window.SG_SIPERO = {
     var pendingPlace = null;
     if (st.presa) {
       var dir = (st.presa.chi === 0) ? "giu" : "su";
-      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-content:center" });
+      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center" });
       var presiEls = [];
-      (st.presa.tavoloPrima || st.tavolo).forEach(function (c) { var cel = C().cartaEl(el, c, 62); if (st.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); } tw0.appendChild(cel); });
+      (st.presa.tavoloPrima || st.tavolo).forEach(function (c) { var cel = C().cartaEl(el, c, wT); if (st.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); } tw0.appendChild(cel); });
       area.appendChild(tw0);
       // la carta giocata va SOPRA la/e carta/e che prende, poi vola via con la presa
-      var gioc = C().cartaEl(el, st.presa.carta, 62);
+      var gioc = C().cartaEl(el, st.presa.carta, wT);
       gioc.style.cssText += ";position:absolute;z-index:6;opacity:0";
       area.appendChild(gioc);
       pendingPlace = function () {
@@ -14002,16 +14029,16 @@ window.SG_SIPERO = {
           var g = gioc.getBoundingClientRect();
           gioc.style.left = (cx - a.left - g.width / 2) + "px";
           gioc.style.top = (cy - a.top - g.height / 2) + "px";
-        } else { gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = "-31px"; gioc.style.marginTop = "-51px"; }
+        } else { gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = (-wT / 2) + "px"; gioc.style.marginTop = (-Math.round(wT * ASP) / 2) + "px"; }
         gioc.style.animation = "scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
       };
     } else {
-      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-content:center" });
+      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center" });
       if (!st.tavolo.length) tw.appendChild(el("div", { class: "tenue", text: "tavolo vuoto" }));
       st.tavolo.forEach(function (c) {
         var cap = mioTurno && cartaSel && capIds[c.id];
         var extra = (sel.presa.indexOf(c.id) >= 0) ? "presel" : (cap ? "cap" : "");
-        var cel = C().cartaEl(el, c, 64, extra, cap ? function () { cb.onTavolo(c.id); } : null);
+        var cel = C().cartaEl(el, c, wT, extra, cap ? function () { cb.onTavolo(c.id); } : null);
         if (c.id === st.messaGiu) cel.classList.add("sc-cade");
         tw.appendChild(cel);
       });
@@ -14029,7 +14056,7 @@ window.SG_SIPERO = {
     // la tua mano (sulla mensola di legno, ben staccata dal tavolo)
     var mensola = el("div", { class: "sc-mensola" });
     var manoW = el("div", { class: "sc-mano-riga" });
-    st.mani[0].forEach(function (c) { manoW.appendChild(C().cartaEl(el, c, 70, (sel.carta === c.id) ? "sel" : "", mioTurno ? function () { cb.onCella(c.id); } : null)); });
+    st.mani[0].forEach(function (c) { manoW.appendChild(C().cartaEl(el, c, wH, (sel.carta === c.id) ? "sel" : "", mioTurno ? function () { cb.onCella(c.id); } : null)); });
     mensola.appendChild(manoW);
     var mieCarte = st.prese[0].length + st.prese[2].length;
     mensola.appendChild(el("div", { class: "sc-prese", html: "prese squadra: <b>" + mieCarte + "</b>" + (trova(st.prese[0].concat(st.prese[2]), "D7") ? " · 7💰" : "") + ((st.scope[0] + st.scope[2]) ? " · scope " + (st.scope[0] + st.scope[2]) : "") }));

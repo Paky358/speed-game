@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 62,
+    data: "17 settembre 2026",
+    titolo: "Horto Muso al rallentatore + tavoli delle carte più stabili 🐎🃏",
+    descrizione: [
+      "Horto Muso: il cavallo vincente non si illumina più — si capisce dalla foto. E poco prima del traguardo va tutto al rallentatore per creare suspense, poi scatta il photo-finish.",
+      "Giochi di carte: il tavolo verde e la mensola della tua mano non cambiano più dimensione in base a quante carte ci sono. Le carte hanno una misura fissa (ci stanno fino a 9 sul tavolo e tutta la mano su una riga): si vede un po' più 'da lontano' ma resta sempre tutto in ordine."
+    ]
+  },
+  {
     v: 61,
     data: "16 settembre 2026",
     titolo: "Nuovo gioco: Palla a Pendolo 🎯 (anche online!)",

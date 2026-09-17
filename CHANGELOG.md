@@ -4,6 +4,15 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 17 settembre 2026 (39) — Horto Muso: photo-finish al rallentatore + tavoli delle carte a dimensione fissa
+- **Horto Muso**: il cavallo vincente non si illumina più — chi ha vinto si capisce dallo **scatto del
+  photo-finish**. E poco prima del traguardo la scena va in **rallentatore** (il vincitore striscia
+  lentissimo verso la linea) per creare hype, poi scatta la foto.
+- **Giochi di carte (Scopa, Scopa 2vs2, Scopone)**: il **tavolo verde e la mensola non cambiano più
+  dimensione** in base a quante carte ci sono. Le carte hanno una **dimensione fissa** pensata per
+  starci **fino a 9 sul tavolo** e per tenere **tutta la mano su una riga** (nello Scopone anche 10):
+  su schermi stretti si vede "da più lontano", ma lo sfondo resta sempre uguale.
+
 ## 16 settembre 2026 (38) — Nuovo gioco: Palla a Pendolo (anche online) + Horto Muso più fluido
 - Arriva **Palla a Pendolo** (nei Minigiochi), ispirato a Wii Party. Visuale finto-3D su Canvas:
   di spalle in basso, la trave sull'acqua con dei personaggi, la palla appesa oscilla **in profondità**

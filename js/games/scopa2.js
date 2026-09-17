@@ -205,6 +205,8 @@
     var el = t.el, vm = Cl.vm;
     if (vm.fase === "fineround" || vm.fase === "fine") { mont = null; return renderFine(t, vm, cb); }
     if (window.SGMusica) window.SGMusica.avvia();
+    var Lc = C().larghezza, ASP = C().ASP_CARTA;
+    var wT = Lc(9, 4, 58), wH = Lc(3, 8, 84);   // tavolo (centro fra i due Rivali): 9 · mano: max 3
     var io = vm.io, box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
 
     // intestazione: punti squadre (sx) + mazzo + tasto musica (dx)
@@ -230,11 +232,11 @@
     var pendingPlace = null;
     if (vm.presa) {
       var dir = vm.presa.mio ? "giu" : "su";
-      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-content:center" });
+      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center" });
       var presiEls = [];
-      (vm.presa.tavoloPrima || vm.tavolo).forEach(function (c) { var cel = C().cartaEl(el, c, 62); if (vm.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); } tw0.appendChild(cel); });
+      (vm.presa.tavoloPrima || vm.tavolo).forEach(function (c) { var cel = C().cartaEl(el, c, wT); if (vm.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); } tw0.appendChild(cel); });
       area.appendChild(tw0);
-      var gioc = C().cartaEl(el, vm.presa.carta, 62);
+      var gioc = C().cartaEl(el, vm.presa.carta, wT);
       gioc.style.cssText += ";position:absolute;z-index:6;opacity:0";
       area.appendChild(gioc);
       pendingPlace = function () {
@@ -246,16 +248,16 @@
           var g = gioc.getBoundingClientRect();
           gioc.style.left = (cx - a.left - g.width / 2) + "px";
           gioc.style.top = (cy - a.top - g.height / 2) + "px";
-        } else { gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = "-31px"; gioc.style.marginTop = "-51px"; }
+        } else { gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = (-wT / 2) + "px"; gioc.style.marginTop = (-Math.round(wT * ASP) / 2) + "px"; }
         gioc.style.animation = "scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
       };
     } else {
-      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-content:center" });
+      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center" });
       if (!vm.tavolo.length) tw.appendChild(el("div", { class: "tenue", text: "tavolo vuoto" }));
       vm.tavolo.forEach(function (c) {
         var cap = mioTurno && cartaSel && capIds[c.id];
         var extra = (Cl.sel.presa.indexOf(c.id) >= 0) ? "presel" : (cap ? "cap" : "");
-        var cel = C().cartaEl(el, c, 64, extra, cap ? function () { Cl.tapTavolo(c.id); } : null);
+        var cel = C().cartaEl(el, c, wT, extra, cap ? function () { Cl.tapTavolo(c.id); } : null);
         if (c.id === vm.messaGiu) cel.classList.add("sc-cade");
         tw.appendChild(cel);
       });
@@ -273,7 +275,7 @@
     // la tua mano (sulla mensola di legno, ben staccata dal tavolo)
     var mensola = el("div", { class: "sc-mensola" });
     var manoW = el("div", { class: "sc-mano-riga" });
-    vm.mano.forEach(function (c) { manoW.appendChild(C().cartaEl(el, c, 70, (Cl.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { Cl.tapMano(c.id); } : null)); });
+    vm.mano.forEach(function (c) { manoW.appendChild(C().cartaEl(el, c, wH, (Cl.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { Cl.tapMano(c.id); } : null)); });
     mensola.appendChild(manoW);
     mensola.appendChild(el("div", { class: "sc-prese", html: "prese squadra: <b>" + vm.preseMia + "</b>" + (vm.setteMia ? " · 7💰" : "") + (vm.scopeMia ? " · scope " + vm.scopeMia : "") }));
     box.appendChild(mensola);
