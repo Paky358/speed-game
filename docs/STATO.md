@@ -20,13 +20,19 @@ dal proprio.
 - **Gioco 1 — La linea del tempo**: 5 categorie (Storia, Invenzioni, Calcio, Rap
   italiano, Cinema), oltre 800 avvenimenti verificati, timer 30", punti, voto degli
   altri, classifica finale. Si gioca su un telefono solo o ognuno dal suo.
-- **Gioco 2 — L'Asta**: 2–10 giocatori, 4 round a tema, crediti, rilanci, timer 10",
-  assegnazione automatica dell'ultima carta, votazione a stelle e podio.
-  **Quattordici temi**: 🧟 Zombie · 🍕 Pizza · 🍔 Panino · 💰 Colpo del Secolo · 🦸
-  Supereroi · 💘 Primo Appuntamento · 🌳 Giardino Perfetto · 🏝️ Vacanza Perfetta ·
-  🏠 Coinquilino Ideale · ⚽ Squadra da Calcetto · 🏋️ Palestra di Quartiere · 🎆 Il
-  Capodanno · 🎓 La Sessione Universitaria · 🚗 Il Road Trip. Ogni tema ha 184
-  carte divise in tre fasce, con anti-ripetizione fra una partita e l'altra.
+- **Gioco 2 — L'Asta**: 2–10 giocatori. Due **modalità** (selettore nelle impostazioni):
+  - **Temi classici**: 4 round a tema, crediti, rilanci, timer 10", assegnazione automatica
+    dell'ultima carta, votazione a stelle e podio. **Quattordici temi**: 🧟 Zombie · 🍕 Pizza ·
+    🍔 Panino · 💰 Colpo del Secolo · 🦸 Supereroi · 💘 Primo Appuntamento · 🌳 Giardino Perfetto ·
+    🏝️ Vacanza Perfetta · 🏠 Coinquilino Ideale · ⚽ Squadra da Calcetto · 🏋️ Palestra di Quartiere ·
+    🎆 Il Capodanno · 🎓 La Sessione Universitaria · 🚗 Il Road Trip. Ogni tema ha 184 carte divise
+    in tre fasce, con anti-ripetizione fra una partita e l'altra.
+  - **Mini asta Fantacalcio** ⚽: 20 crediti, **rosa da 5** (1 P, 1 D, 2 C, 1 A) con **calciatori
+    reali** (`data/asta-fanta.js`, ~260 nomi Serie A per ruolo/fascia). Mazzo bilanciato (fasce A/B/C
+    solo interne, mai a schermo: si vede Nome · Squadra · Ruolo), carte una alla volta, offerta massima
+    dinamica `crediti − (slot vuoti − 1)`, **accollo** (se nessuno offre torna in fondo al mazzo, con
+    salvaguardia anti-blocco), voto a stelle finale. Anche online.
+  Entrambe le modalità girano su un telefono solo o ognuno dal suo.
 
 - **Gioco 3 — Nomi, Cose e Città** ✍️: a turni, un telefono solo. Esce una lettera
   e si riempiono le categorie con parole che iniziano con quella lettera, entro il

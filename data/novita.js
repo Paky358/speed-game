@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 65,
+    data: "17 settembre 2026",
+    titolo: "Mini asta Fantacalcio ⚽",
+    descrizione: [
+      "Nel gioco L'Asta ora puoi scegliere la Modalità: 'Temi classici' (come prima) oppure la nuova 'Mini asta Fantacalcio'.",
+      "Nel Fantacalcio ognuno ha 20 crediti e deve completare una rosa da 5: 1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante. I calciatori (veri, Serie A) escono uno alla volta dal mazzo.",
+      "Chi ha già un ruolo pieno non punta su quel ruolo. Non puoi restare senza crediti: il sistema ti obbliga a tenerne 1 per ogni slot che ti manca.",
+      "Se un calciatore non lo vuole nessuno finisce in fondo al mazzo (accollo) e ritorna più avanti. Alla fine si votano le rose a stelle come nell'Asta classica. Funziona anche 'ognuno dal suo telefono'.",
+      "In ogni momento c'è il tasto '👀 Vedi le rose di tutti' per controllare le squadre che stanno costruendo tutti i giocatori. E quando restano in due a contendersi l'ultimo di un ruolo, compare un avviso: chi non se lo aggiudica si accolla l'altro rimasto."
+    ]
+  },
+  {
     v: 64,
     data: "17 settembre 2026",
     titolo: "Il mazzo sul tavolo 🂠",

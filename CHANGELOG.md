@@ -4,6 +4,25 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 17 settembre 2026 (42) — L'Asta: nuova modalità "Mini asta Fantacalcio"
+- **L'Asta** ora ha un selettore **Modalità**: **Temi classici** (l'asta a tema di sempre) oppure
+  **Mini asta Fantacalcio**. La scelta è nelle impostazioni; in Fantacalcio spariscono "Crediti" e
+  "Tema" (fissi) e compare una nota di regole.
+- **Fantacalcio**: 20 crediti a testa, **rosa da 5** (1 portiere, 1 difensore, 2 centrocampisti, 1
+  attaccante) con **calciatori reali** (Serie A) divisi per ruolo. Le fasce A/B/C servono solo a
+  costruire un **mazzo bilanciato** (A+B mescolati sopra, C in fondo) e **non si vedono mai** a schermo:
+  si mostra solo Nome · Squadra · Ruolo.
+- Le carte escono **una alla volta** dal mazzo. Chi ha già quel **ruolo pieno non punta**. **Salvaguardia
+  crediti**: l'offerta massima è sempre `crediti − (slot vuoti − 1)`, così nessuno resta senza crediti per
+  chiudere la rosa. **Accollo**: se nessuno offre, il calciatore torna in fondo al mazzo e si ripesca dopo
+  (con una rete di sicurezza che evita blocchi). Alla fine si **votano le rose a stelle** come nell'Asta.
+- Funziona sia **"un telefono solo"** sia **"ognuno dal suo telefono"** (online). Calciatori in
+  `data/asta-fanta.js`.
+- **Vedi le rose di tutti**: in ogni schermata (asta ed esito) un tasto apre una finestra con le rose di
+  tutti i giocatori, a slot (mostra anche i posti ancora vuoti). **Avviso ultimo duello**: quando restano
+  in due a contendersi l'ultima carta di un ruolo, compare un avviso che chi non se la aggiudica si
+  accolla l'altra rimasta.
+
 ## 17 settembre 2026 (41) — Mazzo sul tavolo (Scopa e Scopa 2vs2) + fix Palla a Pendolo
 - **Scopa e Scopa 2vs2**: ora c'è il **mazzo visibile sul tavolo** (con quante carte restano). Quando
   finisci le carte in mano, le nuove **arrivano dal mazzo** con una animazione, invece di comparire dal
