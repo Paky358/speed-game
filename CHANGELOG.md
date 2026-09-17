@@ -4,6 +4,13 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 17 settembre 2026 (41) — Mazzo sul tavolo (Scopa e Scopa 2vs2) + fix Palla a Pendolo
+- **Scopa e Scopa 2vs2**: ora c'è il **mazzo visibile sul tavolo** (con quante carte restano). Quando
+  finisci le carte in mano, le nuove **arrivano dal mazzo** con una animazione, invece di comparire dal
+  nulla. (Lo Scopone distribuisce tutte le carte all'inizio, quindi lì non serve.)
+- **Palla a Pendolo**: il tasto **Rigioca** mantiene ora l'impostazione delle **collisioni** scelta
+  all'inizio (prima si resettava a "no"). Il mirino era già mantenuto.
+
 ## 17 settembre 2026 (40) — Carte più grandi e schermo pieno + photo-finish di Horto corretto
 - **Giochi di carte (Scopa, Scopa 2vs2, Scopone)**: **carte più grandi**, si sfrutta **tutta l'altezza**
   dello schermo (tolta l'intestazione col nome del gioco: si tiene solo la freccia indietro; tolte le

@@ -280,7 +280,15 @@
       "@keyframes scGiocaGiu{0%{transform:translateY(150px) scale(.92);opacity:0}16%{opacity:1}30%,38%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(215px) scale(.4);opacity:0}}",
       "@keyframes scGiocaSu{0%{transform:translateY(-150px) scale(.92);opacity:0}16%{opacity:1}30%,38%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-215px) scale(.4);opacity:0}}",
       // ---- tavolo verde (feltro) + posti dei giocatori + mensola della mano: look condiviso da Scopa, Scopa 2vs2 e Scopone ----
-      ".sc-feltro{flex:1;display:flex;flex-direction:column;min-height:0;background:radial-gradient(125% 95% at 50% 15%,#2fa268 0%,#1c7b4d 52%,#135c3a 100%);border:2px solid rgba(0,0,0,.35);border-radius:16px;box-shadow:inset 0 2px 16px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.3);padding:8px 6px}",
+      ".sc-feltro{position:relative;flex:1;display:flex;flex-direction:column;min-height:0;background:radial-gradient(125% 95% at 50% 15%,#2fa268 0%,#1c7b4d 52%,#135c3a 100%);border:2px solid rgba(0,0,0,.35);border-radius:16px;box-shadow:inset 0 2px 16px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.3);padding:8px 6px}",
+      // mazzo sul tavolo (da cui si distribuisce): pila di dorsi + conteggio, in alto a sinistra
+      ".sc-mazzo{position:absolute;top:8px;left:8px;z-index:2;display:flex;flex-direction:column;align-items:center;gap:3px;filter:drop-shadow(0 2px 5px rgba(0,0,0,.45))}",
+      ".sc-mazzo .conta{font-size:.64rem;font-weight:800;color:#eafff1;background:rgba(0,0,0,.42);border-radius:999px;padding:1px 6px}",
+      ".sc-mazzo.deal{animation:scPulse .5s ease}",
+      "@keyframes scPulse{0%,100%{transform:none}42%{transform:scale(1.14) rotate(-3deg)}}",
+      // le carte appena distribuite arrivano DAL MAZZO (in alto a sinistra) alla mano
+      "@keyframes scDeal{0%{transform:translate(-38%,-220px) scale(.45) rotate(-8deg);opacity:0}45%{opacity:1}100%{transform:none;opacity:1}}",
+      ".sc-deal{animation:scDeal .52s cubic-bezier(.2,.72,.3,1) backwards}",
       ".sc-cima{display:flex;justify-content:center;margin-bottom:2px}",
       ".sc-fascia{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;min-height:0}",
       ".sc-terra{flex:1;display:flex;align-items:center;justify-content:center;padding:4px 0;position:relative;min-height:0}",
@@ -306,6 +314,16 @@
     return d;
   }
   function dorsoEl(el, w) { var h = Math.round(w * ASP_CARTA); return el("div", { class: "sc-dorso", style: "width:" + w + "px;height:" + h + "px" }); }
+  // il MAZZO sul tavolo: pila di dorsi (fino a 3) + quante carte restano
+  function mazzo(el, n, w) {
+    w = w || 26;
+    var wrap = el("div", { class: "sc-mazzo" });
+    var st = Math.min(3, n), pila = el("div", { style: "position:relative;width:" + (w + (st - 1) * 2) + "px;height:" + (Math.round(w * ASP_CARTA) + (st - 1) * 2) + "px" });
+    for (var i = 0; i < st; i++) { var d = dorsoEl(el, w); d.style.position = "absolute"; d.style.left = (i * 2) + "px"; d.style.top = (i * 2) + "px"; pila.appendChild(d); }
+    wrap.appendChild(pila);
+    wrap.appendChild(el("div", { class: "conta", text: String(n) }));
+    return wrap;
+  }
   // mazzetto compatto delle carte coperte di un avversario (orizzontale in alto, verticale ai lati)
   function manina(el, n, vert) {
     var wrap = el("div", { class: "sc-manina" + (vert ? " v" : "") });
@@ -401,6 +419,10 @@
       areaTavolo.appendChild(tw);
     }
     feltro.appendChild(areaTavolo);
+    // il mazzo sul tavolo + rilevo se in questo giro si è distribuito (la mano è aumentata)
+    var prevMano = scMount ? (scMount.prevMano || 0) : 0;
+    var dealing = !vm.presa && vm.fase === "gioco" && vm.mano.length > prevMano;
+    if (vm.mazzoN > 0) { var deckEl = mazzo(el, vm.mazzoN); if (dealing) deckEl.classList.add("deal"); feltro.appendChild(deckEl); }
     box.appendChild(feltro);
 
     // ---- SCOPA! (solo quando succede; di chi è il turno si vede dal nome col bordo dorato) ----
@@ -409,8 +431,12 @@
     // ---- la mia mano (in basso, sulla mensola di legno a dimensione FISSA) ----
     var mensola = el("div", { class: "sc-mensola", style: "min-height:" + (Math.round(wH * ASP_CARTA) + 34) + "px" });
     var manoW = el("div", { class: "sc-mano-riga" });
-    vm.mano.forEach(function (c) {
-      manoW.appendChild(cartaEl(el, c, wH, (C.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { C.tapMano(c.id); } : null));
+    vm.mano.forEach(function (c, i) {
+      var extra = (C.sel.carta === c.id) ? "sel" : "";
+      if (dealing) extra += (extra ? " " : "") + "sc-deal";
+      var cel = cartaEl(el, c, wH, extra, mioTurno ? function () { C.tapMano(c.id); } : null);
+      if (dealing) cel.style.animationDelay = (i * 0.09) + "s";
+      manoW.appendChild(cel);
     });
     mensola.appendChild(manoW);
     mensola.appendChild(el("div", { class: "sc-prese", html: "le tue prese <b>" + vm.preseIo + "</b>" + (vm.settebelloIo ? " · 7💰" : "") + (vm.scopeIo ? " · scope " + vm.scopeIo : "") }));
@@ -435,6 +461,7 @@
       t.mostra(s);
       scMount = { cont: s._contenuto, box: box, piede: s._piede };
     }
+    scMount.prevMano = vm.mano.length;   // per rilevare la prossima distribuzione
     if (pendingPlace) pendingPlace();
   }
 
@@ -527,7 +554,7 @@
     return {
       fase: st.fase, io: io, turno: st.turno,
       nomi: { io: st.nomi[io], opp: st.nomi[opp] },
-      mano: st.mani[io].slice(), oppN: st.mani[opp].length, tavolo: st.tavolo.slice(),
+      mano: st.mani[io].slice(), oppN: st.mani[opp].length, tavolo: st.tavolo.slice(), mazzoN: st.mazzo.length,
       preseIo: st.prese[io].length, preseOpp: st.prese[opp].length,
       scopeIo: st.scope[io], scopeOpp: st.scope[opp],
       settebelloIo: !!trova(st.prese[io], "D7"), settebelloOpp: !!trova(st.prese[opp], "D7"),
@@ -807,7 +834,7 @@
   window.SGCarte = {
     creaMazzo: creaMazzo, catture: catture, primiera: primiera, trova: trova,
     cartaEl: cartaEl, dorsoEl: dorsoEl, manina: manina, posto: posto, assicuraStile: assicuraStile,
-    larghezza: larghezza, ASP_CARTA: ASP_CARTA,
+    mazzo: mazzo, larghezza: larghezza, ASP_CARTA: ASP_CARTA,
     validaSet: validaSet, prefisso: prefisso, PRIM: PRIM
   };
 })();

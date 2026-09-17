@@ -212,12 +212,11 @@
 
     // intestazione: punti squadre (sx) + mazzo + tasto musica (dx)
     var mioTurno = (vm.turno === io && vm.fase === "gioco" && !vm.presa);
+    var prevMano = mont ? (mont.prevMano || 0) : 0;
+    var dealing = !vm.presa && vm.fase === "gioco" && vm.mano.length > prevMano;   // la mano è aumentata: si è distribuito
     var head = el("div", { style: "display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px" });
     head.appendChild(el("div", { style: "font-size:.82rem;font-weight:700", html: "Noi <b style='color:#69db7c'>" + vm.punti.mia + "</b> — Loro <b>" + vm.punti.altra + "</b> <span class='tenue' style='font-weight:600'>(a " + TARGET + ")</span>" }));
-    var destra = el("div", { style: "display:flex;align-items:center;gap:8px" });
-    destra.appendChild(el("div", { class: "tenue", style: "font-size:.72rem", text: "mazzo " + vm.mazzoN }));
-    if (window.SGMusica) destra.appendChild(window.SGMusica.bottone(el));
-    head.appendChild(destra);
+    if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
     box.appendChild(head);
 
     // tavolo verde: Compagno in alto (di fronte), i due Rivali ai lati, carte a terra al centro
@@ -267,6 +266,7 @@
     fascia.appendChild(area);
     fascia.appendChild(C().posto(el, { nome: vm.nomi[latoDx] || "—", n: vm.nCarte[latoDx], turno: vm.turno === latoDx, mia: false, lato: true }));
     feltro.appendChild(fascia);
+    if (vm.mazzoN > 0) { var deckEl = C().mazzo(el, vm.mazzoN); if (dealing) deckEl.classList.add("deal"); feltro.appendChild(deckEl); }
     box.appendChild(feltro);
 
     // stato (tocca a te / gioca un altro / scopa)
@@ -275,7 +275,11 @@
     // la tua mano (sulla mensola di legno, ben staccata dal tavolo)
     var mensola = el("div", { class: "sc-mensola", style: "min-height:" + (Math.round(wH * ASP) + 34) + "px" });
     var manoW = el("div", { class: "sc-mano-riga" });
-    vm.mano.forEach(function (c) { manoW.appendChild(C().cartaEl(el, c, wH, (Cl.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { Cl.tapMano(c.id); } : null)); });
+    vm.mano.forEach(function (c, i) {
+      var extra = (Cl.sel.carta === c.id) ? "sel" : ""; if (dealing) extra += (extra ? " " : "") + "sc-deal";
+      var cel = C().cartaEl(el, c, wH, extra, mioTurno ? function () { Cl.tapMano(c.id); } : null);
+      if (dealing) cel.style.animationDelay = (i * 0.09) + "s"; manoW.appendChild(cel);
+    });
     mensola.appendChild(manoW);
     mensola.appendChild(el("div", { class: "sc-prese", html: "prese squadra: <b>" + vm.preseMia + "</b>" + (vm.setteMia ? " · 7💰" : "") + (vm.scopeMia ? " · scope " + vm.scopeMia : "") }));
     box.appendChild(mensola);
@@ -294,6 +298,7 @@
       s._contenuto.appendChild(box); piedeNodi.forEach(function (n) { s._piede.appendChild(n); }); t.mostra(s);
       mont = { cont: s._contenuto, box: box, piede: s._piede };
     }
+    mont.prevMano = vm.mano.length;
     if (pendingPlace) pendingPlace();
   }
 

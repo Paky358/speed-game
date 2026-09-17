@@ -276,7 +276,7 @@
       var testo = ruolo === "trave"
         ? (vinto ? "Sei rimasto sulla trave fino alla fine! 🏆" : "Ti ha beccato: sei finito in acqua! 💦")
         : (vinto ? ("Buttati giù tutti e 3 in " + (P.dur - ST.time).toFixed(1) + "s! 💦") : "Tempo scaduto: non li hai buttati giù tutti. Riprova!");
-      schermataFine(t, ruolo, vinto, testo, { onRigioca: function () { locale(t, diff, ruolo); }, onEsci: t.esci }); }
+      schermataFine(t, ruolo, vinto, testo, { onRigioca: function () { locale(t, diff, ruolo, collis); }, onEsci: t.esci }); }
     raf = requestAnimationFrame(loop);
   }
 

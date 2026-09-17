@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 64,
+    data: "17 settembre 2026",
+    titolo: "Il mazzo sul tavolo 🂠",
+    descrizione: [
+      "Nella Scopa e nella Scopa 2vs2 ora c'è il mazzo sul tavolo verde (con quante carte restano): quando finisci le carte in mano, le nuove arrivano dal mazzo con una animazione, non spuntano più dal nulla.",
+      "Palla a Pendolo: premendo Rigioca ora l'impostazione delle collisioni resta quella scelta (prima tornava su 'no')."
+    ]
+  },
+  {
     v: 63,
     data: "17 settembre 2026",
     titolo: "Carte più grandi e schermo pieno 🃏",
