@@ -185,8 +185,8 @@
     var cavs = [], targetX = [];
     for (var k = 0; k < N; k++) {
       var vinc = (k === vincitore), mio = (k === io);
-      // ZOOM sul traguardo: il vincitore finisce col centro sulla linea (86%), gli altri al distacco reale
-      targetX[k] = Math.max(6, 86 - (1 - Math.min(1, foto[k])) * 300);
+      // ZOOM sul traguardo: il vincitore finisce col centro sulla linea (86%), gli altri al DISTACCO REALE
+      targetX[k] = Math.max(6, 86 - (1 - Math.min(1, foto[k])) * 240);
       var lane = el("div", { class: "ho-ff-lane" + (vinc ? " win" : ""), style: "top:" + (10 + k * rowH) + "px;height:" + rowH + "px" }, [
         el("div", { class: "ho-ff-label" }, [
           el("span", { class: "ho-ff-num", style: "background:" + COLORI[k % COLORI.length], text: String(k + 1) }),
@@ -202,17 +202,18 @@
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Vedi la classifica ▶", onclick: vai }));
     t.mostra(s);
     var winCav = cavs[vincitore];
-    // Tutti partono INSIEME verso il traguardo, ma il VINCITORE è più veloce e tocca la linea per PRIMO
-    // (gli altri restano indietro). Durate lunghe = replay lento; forte ease-out = l'ultimo tratto rallenta (hype).
+    // Tutti partono affiancati e vanno alla STESSA velocità: il distacco che si vede è quello VERO
+    // (in una gara tirata restano testa a testa e il musetto del vincitore emerge solo sulla linea).
+    // Durata lunga = replay lento; ease-out = l'ultimo tratto rallenta (hype).
     tos.push(setTimeout(function () {
       for (var k = 0; k < N; k++) {
-        cavs[k].style.transition = "left " + (k === vincitore ? 3.2 : 4.6) + "s cubic-bezier(.15,.7,.3,1)";
+        cavs[k].style.transition = "left 4.0s cubic-bezier(.2,.62,.3,1)";
         cavs[k].style.left = targetX[k] + "%";
       }
       controlla();
     }, 90));
     // sicurezza: se rAF non gira (pannello nascosto), scatta quando il vincitore è arrivato alla linea
-    tos.push(setTimeout(function () { if (!scattato) congela(); }, 3300));
+    tos.push(setTimeout(function () { if (!scattato) congela(); }, 4300));
 
     function controlla() {                 // rileva il tocco REALE: anche 1px del cavallo oltre la linea
       if (scattato || fatto) return;

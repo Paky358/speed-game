@@ -11,7 +11,9 @@ contenuto di quel tasto vive in `data/novita.js`._
   Il **tavolo verde e la mensola non cambiano più dimensione**: prima, finendo le carte in mano, la
   mensola si rimpiccioliva e il tavolo si allargava — ora restano fissi.
 - **Horto Muso**: corretto il photo-finish — ora il cavallo vincente è il **primo** a toccare la linea
-  (prima, per un errore, arrivava per ultimo). E il replay è **più lento**.
+  (prima, per un errore, arrivava per ultimo). Replay **più lento** e **più realistico**: i cavalli
+  vanno alla **stessa velocità** (il distacco mostrato è quello vero), quindi in una gara tirata restano
+  testa a testa e il **musetto** del vincitore emerge solo sulla linea.
 
 ## 17 settembre 2026 (39) — Horto Muso: photo-finish al rallentatore + tavoli delle carte a dimensione fissa
 - **Horto Muso**: il cavallo vincente non si illumina più — chi ha vinto si capisce dallo **scatto del
