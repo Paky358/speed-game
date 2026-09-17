@@ -19,7 +19,7 @@
     { nome: "Cacciatorpediniere", len: 2 }
   ];
   var NTOT = FLOTTA.length;
-  var LET = "ABCDEFGHIJ".split(""); // lettere delle colonne (in alto), i numeri 1-10 per le righe (a sinistra)
+  var LET = "ABCDEFGHIJ".split(""); // lettere per le RIGHE (a sinistra); numeri 1-10 per le COLONNE (in alto)
 
   // ---------- utilità griglia ----------
   function matrice(v) { var m = []; for (var y = 0; y < N; y++) { m[y] = []; for (var x = 0; x < N; x++) m[y][x] = v; } return m; }
@@ -110,23 +110,28 @@
     s.textContent = [
       ".nav-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;width:min(94vw,340px);margin:0 auto}",
       ".nav-mini{width:min(72vw,250px)}",
-      ".nav-c{aspect-ratio:1;border-radius:3px;background:#123a54;display:flex;align-items:center;justify-content:center;font-size:.8rem;line-height:1;-webkit-tap-highlight-color:transparent;border:1px solid rgba(255,255,255,.06);box-sizing:border-box}",
-      ".nav-c.mare{background:linear-gradient(160deg,#155172,#0e3a52)}",
-      ".nav-c.sparabile{cursor:pointer;background:linear-gradient(160deg,#1a6390,#0e4a6b)}",
+      ".nav-c{aspect-ratio:1;border-radius:4px;background:#123a54;display:flex;align-items:center;justify-content:center;font-size:.82rem;line-height:1;-webkit-tap-highlight-color:transparent;border:1px solid rgba(255,255,255,.05);box-sizing:border-box}",
+      ".nav-c.mare{background:radial-gradient(120% 120% at 30% 20%,#1b5b7e,#0e3a52)}",
+      ".nav-c.sparabile{cursor:pointer;background:radial-gradient(120% 120% at 30% 20%,#2a7bad,#0f4f73);box-shadow:inset 0 0 0 1px rgba(143,208,255,.28)}",
       ".nav-c.sparabile:active{transform:scale(.9)}",
-      ".nav-c.acqua{background:#0e3a52;color:#8fd0ff}",
-      ".nav-c.colpito{background:#e03131;color:#fff}",
-      ".nav-c.affondato{background:#7a1015;color:#fff}",
-      ".nav-c.nave{background:#8a929e;border-color:#b8c0cc}",
-      ".nav-c.navecolp{background:#e03131;color:#fff}",
+      ".nav-c.acqua{background:#0c3247;color:#8fd0ff}",
+      ".nav-c.colpito{background:radial-gradient(circle at 50% 38%,#ff7a7a,#e03131);color:#fff;font-weight:900}",
+      ".nav-c.affondato{background:#6e0f14;color:#fff;font-weight:900}",
+      // navi come SCAFI: acciaio + estremità arrotondate (prua/poppa); l'ombra colma i 2px tra le celle così lo scafo è continuo
+      ".nav-c.sh{border:0;position:relative;z-index:1;background:linear-gradient(180deg,#c6d0dc,#7a8796 52%,#515b6a);box-shadow:0 0 0 2px #6d7887,inset 0 1px 0 rgba(255,255,255,.45)}",
+      ".nav-c.sh.shx{background:linear-gradient(180deg,#ffa3a3,#e03131);box-shadow:0 0 0 2px #c92a2a,inset 0 1px 0 rgba(255,255,255,.3)}",
+      ".sh-h.sh-a{border-top-left-radius:48%;border-bottom-left-radius:48%}",
+      ".sh-h.sh-b{border-top-right-radius:48%;border-bottom-right-radius:48%}",
+      ".sh-v.sh-a{border-top-left-radius:48%;border-top-right-radius:48%}",
+      ".sh-v.sh-b{border-bottom-left-radius:48%;border-bottom-right-radius:48%}",
       ".nav-c.ok{outline:2px solid #69db7c;outline-offset:-2px}",
       ".nav-c.bad{outline:2px solid #ff6b6b;outline-offset:-2px}",
       ".nav-c.ante{background:#2f9e57;outline:2px solid #8ce99a;outline-offset:-2px}",
       ".nav-c.antebad{background:#7a2020;outline:2px solid #ff8787;outline-offset:-2px}",
       // tabellone con lettere (in alto) e numeri (a sinistra)
-      ".nav-board{display:grid;grid-template-columns:16px repeat(10,1fr);gap:2px;width:min(94vw,342px);margin:0 auto}",
-      ".nav-board.nav-mini{width:min(78vw,272px);grid-template-columns:14px repeat(10,1fr)}",
-      ".nav-lab{display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:rgba(255,255,255,.5)}",
+      ".nav-board{display:grid;grid-template-columns:18px repeat(10,1fr);gap:2px;width:min(94vw,346px);margin:0 auto;padding:6px;box-sizing:border-box;border-radius:12px;background:rgba(4,20,34,.45);box-shadow:inset 0 0 0 1px rgba(143,208,255,.12)}",
+      ".nav-board.nav-mini{width:min(80vw,280px);grid-template-columns:15px repeat(10,1fr)}",
+      ".nav-lab{display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;color:rgba(180,214,240,.72)}",
       // scritta grande tipo \"colpito e affondato\"
       ".nav-avviso{text-align:center;font-weight:800;font-size:1.02rem;padding:8px 10px;border-radius:12px;margin:2px 0 8px;background:linear-gradient(90deg,#e8590c,#f59f00);color:#fff;box-shadow:0 3px 12px rgba(240,140,0,.45);animation:navPop .28s ease-out}",
       "@keyframes navPop{0%{transform:scale(.82);opacity:0}100%{transform:scale(1);opacity:1}}",
@@ -135,7 +140,8 @@
       ".nav-nave.fatta{background:rgba(105,219,124,.16);color:#8ce99a}",
       ".nav-nave.corr{background:rgba(255,212,59,.18);outline:1px solid #ffd43b}",
       ".nav-nave.giu{opacity:.5;text-decoration:line-through}",
-      ".nav-quad{display:inline-block;width:9px;height:9px;border-radius:2px;background:#8a929e}",
+      ".nav-boat{display:inline-block;height:10px;border-radius:5px;background:linear-gradient(180deg,#c6d0dc,#6d7887);box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}",
+      ".nav-boat.giu{background:#e03131}",
       ".nav-tit{text-align:center;font-weight:800;font-size:1rem;margin:4px 0 6px;min-height:1.3em}",
       ".nav-sub{text-align:center;font-size:.74rem;color:rgba(255,255,255,.65);margin:2px 0 8px}",
       ".nav-conta{display:flex;justify-content:center;gap:14px;font-size:.78rem;margin:6px 0}"
@@ -144,7 +150,7 @@
   }
 
   // quadratini che rappresentano la lunghezza di una nave
-  function quadretti(el, len, giu) { var w = el("span", { style: "display:inline-flex;gap:2px" }); for (var i = 0; i < len; i++) w.appendChild(el("span", { class: "nav-quad", style: giu ? "background:#e03131" : "" })); return w; }
+  function quadretti(el, len, giu) { return el("span", { class: "nav-boat" + (giu ? " giu" : ""), style: "width:" + (len * 8 + 2) + "px" }); }
 
   SG.registra({
     id: "navale",
@@ -322,7 +328,14 @@
     function cellaMia(x, y, piazzando) {
       var idx = io.mappa[y][x], colp = io.sparato[y][x];
       var cls = "nav-c ", txt = "";
-      if (idx >= 0) { cls += colp ? "navecolp" : "nave"; if (colp) txt = "✕"; }
+      if (idx >= 0) {
+        var nave = io.navi[idx];
+        var orizN = nave.celle.length > 1 && nave.celle[0].y === nave.celle[1].y;
+        var pos = 0; for (var k = 0; k < nave.celle.length; k++) if (nave.celle[k].x === x && nave.celle[k].y === y) pos = k;
+        var ruolo = pos === 0 ? "a" : (pos === nave.celle.length - 1 ? "b" : "m");
+        cls += "sh " + (orizN ? "sh-h " : "sh-v ") + "sh-" + ruolo + (colp ? " shx" : "");
+        if (colp) txt = "✕";
+      }
       else { cls += colp ? "acqua" : "mare"; if (colp) txt = "•"; }
       if (piazzando) { var a = celleAnte(); if (a && a.set[y * N + x]) { cls = "nav-c " + (a.ok ? "ante" : "antebad"); txt = ""; } }
       var puoi = piazzando && prossima < NTOT;
@@ -331,9 +344,9 @@
     function tabellone(celleFn, mini) {
       var g = el("div", { class: "nav-board" + (mini ? " nav-mini" : "") });
       g.appendChild(el("div", { class: "nav-lab" }));                                                 // angolo vuoto
-      for (var c = 0; c < N; c++) g.appendChild(el("div", { class: "nav-lab", text: LET[c] }));       // lettere in alto
+      for (var c = 0; c < N; c++) g.appendChild(el("div", { class: "nav-lab", text: String(c + 1) })); // numeri in alto (colonne)
       for (var y = 0; y < N; y++) {
-        g.appendChild(el("div", { class: "nav-lab", text: String(y + 1) }));                          // numero a sinistra
+        g.appendChild(el("div", { class: "nav-lab", text: LET[y] }));                                 // lettere a sinistra (righe)
         for (var x = 0; x < N; x++) g.appendChild(celleFn(x, y));
       }
       return g;

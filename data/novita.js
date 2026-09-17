@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 70,
+    data: "18 settembre 2026",
+    titolo: "Battaglia Navale più bella 🚢",
+    descrizione: [
+      "Le navi ora sono dei veri scafi (con prua e poppa arrotondate), non più quadrati grigi.",
+      "Numeri e lettere invertiti sui bordi: numeri in alto (colonne), lettere a sinistra (righe), come la battaglia navale classica.",
+      "Tabellone con cornice, mare più curato e mini-navi nella lista della flotta: tutto più presentabile."
+    ]
+  },
+  {
     v: 69,
     data: "17 settembre 2026",
     titolo: "La Sala online: il gruppo passa da un gioco all'altro 👥",

@@ -4,6 +4,13 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 18 settembre 2026 (47) — Battaglia Navale più presentabile
+- Le navi non sono più quadrati grigi: ora sono **scafi** (gradiente acciaio, estremità arrotondate a
+  prua/poppa, celle che si uniscono in un unico scafo). Vale sia in piazzamento sia su "La tua flotta".
+- **Numeri e lettere invertiti**: numeri 1–10 in alto (colonne), lettere A–J a sinistra (righe).
+- Tabellone con **cornice** e pannello, mare in gradiente radiale, colpi più netti, e **mini-navi** (non
+  più quadratini) nella lista della flotta. Solo grafica: le coordinate e il gioco non cambiano.
+
 ## 17 settembre 2026 (46) — Sala online: il gruppo passa da un gioco all'altro
 - Nuova **"👥 Sala online"** dalla home: l'host crea una sala (codice + link), gli amici entrano una
   volta sola. L'host sceglie i giochi dalla sala: **partono per tutti** e gli amici **entrano in
