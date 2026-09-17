@@ -4,6 +4,15 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 17 settembre 2026 (40) — Carte più grandi e schermo pieno + photo-finish di Horto corretto
+- **Giochi di carte (Scopa, Scopa 2vs2, Scopone)**: **carte più grandi**, si sfrutta **tutta l'altezza**
+  dello schermo (tolta l'intestazione col nome del gioco: si tiene solo la freccia indietro; tolte le
+  scritte "Tocca a te / Giocano gli altri" — di chi è il turno si vede dal **nome col bordo dorato**).
+  Il **tavolo verde e la mensola non cambiano più dimensione**: prima, finendo le carte in mano, la
+  mensola si rimpiccioliva e il tavolo si allargava — ora restano fissi.
+- **Horto Muso**: corretto il photo-finish — ora il cavallo vincente è il **primo** a toccare la linea
+  (prima, per un errore, arrivava per ultimo). E il replay è **più lento**.
+
 ## 17 settembre 2026 (39) — Horto Muso: photo-finish al rallentatore + tavoli delle carte a dimensione fissa
 - **Horto Muso**: il cavallo vincente non si illumina più — chi ha vinto si capisce dallo **scatto del
   photo-finish**. E poco prima del traguardo la scena va in **rallentatore** (il vincitore striscia

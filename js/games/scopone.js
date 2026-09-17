@@ -236,8 +236,9 @@
     if (st.fase === "fineround" || st.fase === "fine") { spMount = null; return fine(t, st, cb); }
     if (window.SGMusica) window.SGMusica.avvia();
     var Lc = C().larghezza, ASP = C().ASP_CARTA;
-    var wT = Lc(9, 4, 58), wH = Lc(10, 8, 70);   // tavolo (centro stretto fra i Rivali): 9 · mano: fino a 10 su una riga
-    var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
+    var centerW = Math.min(window.innerWidth || 375, 600) - 46 - 150;   // il tavolo sta fra i due Rivali laterali
+    var wT = Lc(4, 4, 60, centerW), wH = Lc(10, 5, 56);   // tavolo va a capo nel feltro (fisso) · mano fino a 10 su una riga
+    var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 108px);min-height:calc(100dvh - 108px)" });
 
     // intestazione: punti squadre (a sinistra) + tasto musica (a destra)
     var mioTurno = (st.turno === 0 && st.fase === "gioco" && !st.presa);
@@ -296,11 +297,10 @@
     box.appendChild(feltro);
 
     // stato (tocca a te / gioca un altro / scopa)
-    box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1rem;margin:6px 0 3px;min-height:1.2em;color:" + (st.presa && st.presa.scopa ? "#ffd43b" : "inherit"),
-      text: st.presa ? (st.presa.scopa ? "SCOPA! 🧹" : "") : (mioTurno ? "Tocca a te" : "Gioca " + st.nomi[st.turno]) }));
+    if (st.presa && st.presa.scopa) box.appendChild(el("div", { style: "text-align:center;font-weight:900;font-size:1.1rem;margin:3px 0;color:#ffd43b", text: "SCOPA! 🧹" }));
 
     // la tua mano (sulla mensola di legno, ben staccata dal tavolo)
-    var mensola = el("div", { class: "sc-mensola" });
+    var mensola = el("div", { class: "sc-mensola", style: "min-height:" + (Math.round(wH * ASP) + 34) + "px" });
     var manoW = el("div", { class: "sc-mano-riga" });
     st.mani[0].forEach(function (c) { manoW.appendChild(C().cartaEl(el, c, wH, (sel.carta === c.id) ? "sel" : "", mioTurno ? function () { cb.onCella(c.id); } : null)); });
     mensola.appendChild(manoW);
@@ -308,17 +308,14 @@
     mensola.appendChild(el("div", { class: "sc-prese", html: "prese squadra: <b>" + mieCarte + "</b>" + (trova(st.prese[0].concat(st.prese[2]), "D7") ? " · 7💰" : "") + ((st.scope[0] + st.scope[2]) ? " · scope " + (st.scope[0] + st.scope[2]) : "") }));
     box.appendChild(mensola);
     var piedeNodi = [];
-    if (mioTurno && cartaSel && opts.length >= 2) piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: opts[0].length === 1 ? "Più prese: tocca la carta verde che vuoi." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
-    else if (mioTurno) piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Tocca una tua carta per giocarla." }));
-    else if (st.fase === "gioco") piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Giocano gli altri…" }));
+    if (mioTurno && cartaSel && opts.length >= 2) piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center;margin:0", text: opts[0].length === 1 ? "Tocca la carta verde da prendere." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
 
     // ---- montaggio: prima volta creo la schermata, poi aggiorno SOLO il contenuto (schermo fisso, niente lampeggio) ----
     if (spMount && spMount.cont && document.body.contains(spMount.box)) {
       spMount.cont.replaceChild(box, spMount.box); spMount.box = box;
       spMount.piede.innerHTML = ""; piedeNodi.forEach(function (n) { spMount.piede.appendChild(n); });
     } else {
-      var s = t.schermata({ icona: "🃏", titolo: "Scopone", sotto: (st.variante === "scientifico" ? "Scientifico" : "Classico") + " · tu + Compagno",
-        indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      var s = t.schermata({ indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
       s._contenuto.appendChild(box); piedeNodi.forEach(function (n) { s._piede.appendChild(n); }); t.mostra(s);
       spMount = { cont: s._contenuto, box: box, piede: s._piede };
     }

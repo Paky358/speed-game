@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 63,
+    data: "17 settembre 2026",
+    titolo: "Carte più grandi e schermo pieno 🃏",
+    descrizione: [
+      "Nei giochi di carte le carte sono più grandi e si usa tutta l'altezza dello schermo: tolta l'intestazione col nome del gioco (resta solo la freccia per tornare indietro) e le scritte tipo 'Tocca a te' — di chi è il turno si capisce dal nome col bordo dorato.",
+      "Il tavolo verde e la mensola della tua mano non cambiano più dimensione: prima, quando finivi le carte in mano, il tavolo si allargava. Ora restano fissi.",
+      "Horto Muso: corretto il photo-finish (il cavallo vincente è il primo a toccare la linea) e reso più lento."
+    ]
+  },
+  {
     v: 62,
     data: "17 settembre 2026",
     titolo: "Horto Muso al rallentatore + tavoli delle carte più stabili 🐎🃏",

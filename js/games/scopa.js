@@ -250,8 +250,8 @@
   var ASP_CARTA = 1.653; // proporzioni delle immagini (altezza/larghezza)
   // larghezza carta perché maxN carte stiano SEMPRE su una riga (tavolo/mano a dimensione fissa,
   // non cambia col numero di carte): si "vede da più lontano" sugli schermi stretti.
-  function larghezza(maxN, gap, cap) {
-    var A = Math.min(window.innerWidth || 375, 600) - 46;
+  function larghezza(maxN, gap, cap, availW) {
+    var A = (availW != null ? availW : Math.min(window.innerWidth || 375, 600) - 46);
     return Math.max(26, Math.min(cap || 70, Math.floor((A - (maxN - 1) * gap) / maxN)));
   }
   function assicuraStile() {
@@ -339,8 +339,8 @@
     assicuraStile();
     if (window.SGMusica) window.SGMusica.avvia();
     var el = t.el, vm = C.vm;
-    var wT = larghezza(9, 4, 70), wH = larghezza(3, 8, 84);   // tavolo: 9 carte fisse · mano: max 3 (Scopa)
-    var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
+    var wT = larghezza(6, 5, 82), wH = larghezza(3, 10, 104);   // carte grandi · tavolo va a capo nel feltro (fisso) · mano max 3
+    var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 108px);min-height:calc(100dvh - 108px)" });
 
     // ---- intestazione: punti (a sinistra) + tasto musica (a destra) ----
     var mioTurno = (vm.turno === vm.io && vm.fase === "gioco" && !vm.presa);
@@ -403,12 +403,11 @@
     feltro.appendChild(areaTavolo);
     box.appendChild(feltro);
 
-    // ---- stato (tocca a te / all'avversario / scopa) ----
-    box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.05rem;margin:6px 0 3px;min-height:1.25em;color:" + (vm.presa && vm.presa.scopa ? "#ffd43b" : "inherit"),
-      text: vm.presa ? (vm.presa.scopa ? "SCOPA! 🧹" : "") : (mioTurno ? "Tocca a te" : "Tocca a " + vm.nomi.opp) }));
+    // ---- SCOPA! (solo quando succede; di chi è il turno si vede dal nome col bordo dorato) ----
+    if (vm.presa && vm.presa.scopa) box.appendChild(el("div", { style: "text-align:center;font-weight:900;font-size:1.1rem;margin:3px 0;color:#ffd43b", text: "SCOPA! 🧹" }));
 
-    // ---- la mia mano (in basso, sulla mensola di legno) ----
-    var mensola = el("div", { class: "sc-mensola" });
+    // ---- la mia mano (in basso, sulla mensola di legno a dimensione FISSA) ----
+    var mensola = el("div", { class: "sc-mensola", style: "min-height:" + (Math.round(wH * ASP_CARTA) + 34) + "px" });
     var manoW = el("div", { class: "sc-mano-riga" });
     vm.mano.forEach(function (c) {
       manoW.appendChild(cartaEl(el, c, wH, (C.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { C.tapMano(c.id); } : null));
@@ -419,12 +418,8 @@
 
     // ---- suggerimento (nel piede) ----
     var piedeNodi = [];
-    if (mioTurno && cartaSel && opts.length >= 2) {
-      piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: opts[0].length === 1 ? "Più prese possibili: tocca la carta verde che vuoi prendere." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
-    } else if (mioTurno) {
-      piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Tocca una tua carta per giocarla." }));
-    } else if (vm.fase === "gioco") {
-      piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Aspetta il tuo turno…" }));
+    if (mioTurno && cartaSel && opts.length >= 2) {   // solo l'aiuto per scegliere la presa (utile), niente scritte di turno
+      piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center;margin:0", text: opts[0].length === 1 ? "Tocca la carta verde da prendere." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
     }
 
     // ---- montaggio: la prima volta creo la schermata, poi aggiorno SOLO il contenuto (schermo fisso, niente lampeggio) ----
@@ -434,8 +429,7 @@
       scMount.piede.innerHTML = "";
       piedeNodi.forEach(function (n) { scMount.piede.appendChild(n); });
     } else {
-      var s = t.schermata({ icona: "🃏", titolo: "Scopa", sotto: vm.nomi.io + " vs " + vm.nomi.opp,
-        indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      var s = t.schermata({ indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
       s._contenuto.appendChild(box);
       piedeNodi.forEach(function (n) { s._piede.appendChild(n); });
       t.mostra(s);

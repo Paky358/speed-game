@@ -206,8 +206,9 @@
     if (vm.fase === "fineround" || vm.fase === "fine") { mont = null; return renderFine(t, vm, cb); }
     if (window.SGMusica) window.SGMusica.avvia();
     var Lc = C().larghezza, ASP = C().ASP_CARTA;
-    var wT = Lc(9, 4, 58), wH = Lc(3, 8, 84);   // tavolo (centro fra i due Rivali): 9 · mano: max 3
-    var io = vm.io, box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 155px);min-height:calc(100dvh - 155px)" });
+    var centerW = Math.min(window.innerWidth || 375, 600) - 46 - 150;   // il tavolo sta fra i due Rivali laterali
+    var wT = Lc(4, 4, 60, centerW), wH = Lc(3, 10, 96);   // tavolo va a capo nel feltro (fisso) · mano max 3 (grande)
+    var io = vm.io, box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 108px);min-height:calc(100dvh - 108px)" });
 
     // intestazione: punti squadre (sx) + mazzo + tasto musica (dx)
     var mioTurno = (vm.turno === io && vm.fase === "gioco" && !vm.presa);
@@ -269,11 +270,10 @@
     box.appendChild(feltro);
 
     // stato (tocca a te / gioca un altro / scopa)
-    box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1rem;margin:6px 0 3px;min-height:1.2em;color:" + (vm.presa && vm.presa.scopa ? "#ffd43b" : "inherit"),
-      text: vm.presa ? (vm.presa.scopa ? "SCOPA! 🧹" : "") : (mioTurno ? "Tocca a te" : "Gioca " + (vm.nomi[vm.turno] || "…")) }));
+    if (vm.presa && vm.presa.scopa) box.appendChild(el("div", { style: "text-align:center;font-weight:900;font-size:1.1rem;margin:3px 0;color:#ffd43b", text: "SCOPA! 🧹" }));
 
     // la tua mano (sulla mensola di legno, ben staccata dal tavolo)
-    var mensola = el("div", { class: "sc-mensola" });
+    var mensola = el("div", { class: "sc-mensola", style: "min-height:" + (Math.round(wH * ASP) + 34) + "px" });
     var manoW = el("div", { class: "sc-mano-riga" });
     vm.mano.forEach(function (c) { manoW.appendChild(C().cartaEl(el, c, wH, (Cl.sel.carta === c.id) ? "sel" : "", mioTurno ? function () { Cl.tapMano(c.id); } : null)); });
     mensola.appendChild(manoW);
@@ -282,16 +282,14 @@
 
     // piede
     var piedeNodi = [];
-    if (mioTurno && cartaSel && opts.length >= 2) piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: opts[0].length === 1 ? "Più prese: tocca la carta verde che vuoi." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
-    else if (mioTurno) piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Tocca una tua carta per giocarla." }));
-    else if (vm.fase === "gioco") piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center", text: "Aspetta il tuo turno…" }));
+    if (mioTurno && cartaSel && opts.length >= 2) piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center;margin:0", text: opts[0].length === 1 ? "Tocca la carta verde da prendere." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
 
     // montaggio: prima volta creo la schermata, poi aggiorno SOLO il contenuto (schermo fisso)
     if (mont && mont.cont && document.body.contains(mont.box)) {
       mont.cont.replaceChild(box, mont.box); mont.box = box;
       mont.piede.innerHTML = ""; piedeNodi.forEach(function (n) { mont.piede.appendChild(n); });
     } else {
-      var s = t.schermata({ icona: "🃏", titolo: "Scopa 2 vs 2", sotto: "Tu + Compagno contro due",
+      var s = t.schermata({ titoloNascosto: true,
         indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
       s._contenuto.appendChild(box); piedeNodi.forEach(function (n) { s._piede.appendChild(n); }); t.mostra(s);
       mont = { cont: s._contenuto, box: box, piede: s._piede };

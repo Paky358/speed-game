@@ -201,19 +201,18 @@
     function vai() { if (fatto) return; fatto = true; if (rafId) cancelAnimationFrame(rafId); tos.forEach(clearTimeout); poi(); }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Vedi la classifica ▶", onclick: vai }));
     t.mostra(s);
-    var winCav = cavs[vincitore], pre = Math.max(6, targetX[vincitore] - 12);
-    // FASE 1 (rush): tutti scattano; il vincitore si ferma un po' PRIMA della linea, gli altri al distacco reale
+    var winCav = cavs[vincitore];
+    // Tutti partono INSIEME verso il traguardo, ma il VINCITORE è più veloce e tocca la linea per PRIMO
+    // (gli altri restano indietro). Durate lunghe = replay lento; forte ease-out = l'ultimo tratto rallenta (hype).
     tos.push(setTimeout(function () {
-      for (var k = 0; k < N; k++) { cavs[k].style.transition = "left .8s cubic-bezier(.2,.6,.3,1)";
-        cavs[k].style.left = (k === vincitore ? pre : targetX[k]) + "%"; }
+      for (var k = 0; k < N; k++) {
+        cavs[k].style.transition = "left " + (k === vincitore ? 3.2 : 4.6) + "s cubic-bezier(.15,.7,.3,1)";
+        cavs[k].style.left = targetX[k] + "%";
+      }
+      controlla();
     }, 90));
-    // FASE 2 (slow-motion): il vincitore striscia LENTISSIMO fino al traguardo -> hype, poi lo scatto
-    tos.push(setTimeout(function () {
-      winCav.style.transition = "left 2.8s cubic-bezier(.1,.75,.3,1)";
-      winCav.style.left = targetX[vincitore] + "%"; controlla();
-    }, 1000));
-    // sicurezza: se rAF non gira (pannello nascosto), scatta a tempo
-    tos.push(setTimeout(function () { if (!scattato) congela(); }, 4400));
+    // sicurezza: se rAF non gira (pannello nascosto), scatta quando il vincitore è arrivato alla linea
+    tos.push(setTimeout(function () { if (!scattato) congela(); }, 3300));
 
     function controlla() {                 // rileva il tocco REALE: anche 1px del cavallo oltre la linea
       if (scattato || fatto) return;
@@ -228,19 +227,19 @@
       void strip.offsetWidth;
       scattoFoto(); flash.classList.add("on"); big.textContent = "📸"; big.classList.add("show");
       setTimeout(function () { flash.classList.remove("on"); }, 70);
-      tos.push(setTimeout(riprendi, 1200)); // fermo immagine ~1,2s
-      tos.push(setTimeout(vai, 5000));      // dallo scatto: max 5s di replay, poi la classifica
+      tos.push(setTimeout(riprendi, 1500)); // fermo immagine ~1,5s
+      tos.push(setTimeout(vai, 7000));      // dallo scatto: max 7s di replay lento, poi la classifica
     }
     function riprendi() {                   // finisce il replay: TUTTI tagliano il traguardo (nell'ordine)
       var FINISH = 88, sr = strip.getBoundingClientRect();
       cavs.forEach(function (c) {
         var hr = c.getBoundingClientRect();
         var cur = sr.width ? ((hr.left + hr.width / 2) - sr.left) / sr.width * 100 : 80;
-        var dur = Math.min(3.3, Math.max(0.35, (FINISH - cur) * 0.05));  // stessa velocità: tagliano nell'ordine
+        var dur = Math.min(4.8, Math.max(0.6, (FINISH - cur) * 0.09));  // più lento; stessa velocità: tagliano nell'ordine
         c.style.transition = "left " + dur.toFixed(2) + "s linear";
         c.style.left = FINISH + "%";
       });
-      tos.push(setTimeout(function () { big.textContent = "🏆 " + nomi[vincitore] + (vincitore === io ? " (tu)" : "") + " vince!"; traguardoFX(); }, 700));
+      tos.push(setTimeout(function () { big.textContent = "🏆 " + nomi[vincitore] + (vincitore === io ? " (tu)" : "") + " vince!"; traguardoFX(); }, 900));
     }
   }
   function finale(t, ord, nomi, io, foto, cb) {
