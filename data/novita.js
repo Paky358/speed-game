@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 69,
+    data: "17 settembre 2026",
+    titolo: "La Sala online: il gruppo passa da un gioco all'altro 👥",
+    descrizione: [
+      "Dalla home c'è '👥 Sala online': crei una sala, mandi il codice o il link, e gli amici entrano una volta sola.",
+      "Poi scegli i giochi dalla sala: partono per tutti e gli amici entrano da soli, senza reinserire il codice ogni volta. A fine partita si torna tutti nella stessa sala e scegli un altro gioco.",
+      "Decide sempre l'host quale gioco si fa. Funzionano tutti i giochi 'ognuno dal suo telefono'."
+    ]
+  },
+  {
     v: 68,
     data: "17 settembre 2026",
     titolo: "Voti a fine Asta con budget di stelle ⭐",

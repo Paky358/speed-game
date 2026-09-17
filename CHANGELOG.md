@@ -4,6 +4,17 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 17 settembre 2026 (46) — Sala online: il gruppo passa da un gioco all'altro
+- Nuova **"👥 Sala online"** dalla home: l'host crea una sala (codice + link), gli amici entrano una
+  volta sola. L'host sceglie i giochi dalla sala: **partono per tutti** e gli amici **entrano in
+  automatico** nella lobby online del gioco (senza reinserire il codice). A fine partita **tutti tornano
+  nella stessa sala**. Decide sempre l'host.
+- Tecnica: sala persistente su una connessione a parte (`SGNet.ospita("__sala")`); l'host prepara il
+  codice del gioco (`SGNet.nuovoCodice` + `SGNet._forza`) e lo comunica agli altri, che aprono il gioco
+  come ospiti. Integrato in core (`avviaPartita` con contesto sala, `schermataPreGioco` con `opts.sala`).
+  Offerti solo i giochi con supporto online (`GIOCHI_ONLINE`). Prima versione: all'avvio del gioco
+  l'amico dà ancora un tocco per confermare il nome (schermata di ingresso del singolo gioco).
+
 ## 17 settembre 2026 (45) — L'Asta: voti finali con budget di stelle (mezze stelle)
 - Nuove **regole di voto** a fine partita (Asta classica e Fantacalcio, un telefono solo e online):
   ogni votante ha un **budget di stelle** da distribuire tra gli avversari e deve **spenderlo tutto**.

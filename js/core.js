@@ -32,6 +32,9 @@
   };
   var catAttiva = "tutti";
   function catDi(g) { return CAT_GIOCO[g.id] || null; }
+  // Giochi che hanno la modalità "ognuno dal suo telefono" (usabili nella Sala online).
+  var GIOCHI_ONLINE = { asta: 1, drop4: 1, horto: 1, navale: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1 };
+  function giocoOnline(g) { return !!(g && GIOCHI_ONLINE[g.id]); }
   var app;                    // contenitore radice (#app)
   var linkParams = {};        // impostazioni arrivate da un link condiviso
 
@@ -140,6 +143,7 @@
     s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Cerco la partita in corso… un attimo." }));
     mostra(s);
     SGNet.scopriGioco(c, function (gid) {
+      if (gid === "__sala") return salaOspite(c);   // è una Sala, non un singolo gioco
       var g = gid && giochi.filter(function (x) { return x.id === gid; })[0];
       if (!g) {
         svuota(s._contenuto); svuota(s._piede);
@@ -221,6 +225,12 @@
     s._piede.appendChild(el("button", {
       class: "btn btn-primario", html: torneo ? "🏆 Riprendi il torneo" : "🏆 Torneo (più giochi di fila)",
       onclick: apriTorneo
+    }));
+
+    // Sala online: crea un gruppo che passa da un gioco all'altro (ognuno dal suo telefono)
+    s._piede.appendChild(el("button", {
+      class: "btn btn-fantasma", html: "👥 Sala online (porta il gruppo tra i giochi)",
+      onclick: creaSala
     }));
 
     // Tasto "Entra in una stanza" (per chi ha ricevuto un codice a voce)
@@ -494,22 +504,31 @@
 
   function schermataPreGioco(g, opts) {
     var torn = !!(opts && opts.torneo);
-    var s = schermata({ icona: g.icona, titolo: g.nome, sotto: torn ? ("Torneo · " + nomeDifficolta(pesoGioco(g))) : "Impostazioni della partita",
-      indietro: function () { if (torn) schermataTorneoHub(); else schermataSala(g); } });
-    s._contenuto.appendChild(el(torn ? "div" : "button", { class: "sala-sommario",
-      onclick: torn ? null : function () { schermataSala(g); } }, [
-      el("span", { class: "chi", text: "👥 " + nomiGruppo().join(", ") }),
-      torn ? null : el("span", { class: "modifica", text: "modifica" })
-    ]));
+    var inSala = !!(opts && opts.sala);
+    var s = schermata({ icona: g.icona, titolo: g.nome,
+      sotto: torn ? ("Torneo · " + nomeDifficolta(pesoGioco(g))) : (inSala ? "Sala · impostazioni" : "Impostazioni della partita"),
+      indietro: function () { if (torn) schermataTorneoHub(); else if (inSala) salaScegliGioco(); else schermataSala(g); } });
+    if (inSala) {
+      s._contenuto.appendChild(el("div", { class: "sala-sommario" }, [
+        el("span", { class: "chi", text: "👥 Sala · " + (sala ? sala.membri.length : 1) + " in gioco" }) ]));
+    } else {
+      s._contenuto.appendChild(el(torn ? "div" : "button", { class: "sala-sommario",
+        onclick: torn ? null : function () { schermataSala(g); } }, [
+        el("span", { class: "chi", text: "👥 " + nomiGruppo().join(", ") }),
+        torn ? null : el("span", { class: "modifica", text: "modifica" })
+      ]));
+    }
     var impostazioni = {};
     if (typeof g.impostazioni === "function") {
       var box = el("div");
-      g.impostazioni(box, impostazioni, { el: el, torneo: torn });
+      g.impostazioni(box, impostazioni, { el: el, torneo: torn, sala: inSala });
       s._contenuto.appendChild(box);
     }
+    if (inSala) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "In una sala si gioca sempre online: appena cominci, gli altri entrano da soli." }));
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca",
       onclick: function () { schermataRegole(g, function () { schermataPreGioco(g, opts); }); } }));
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: function () {
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: inSala ? "Comincia per tutti ▶" : "Comincia ▶", onclick: function () {
+      if (inSala) { impostazioni.modo = "online"; return salaLancia(g, impostazioni); }
       // online: l'host apre la stanza da solo, gli altri entrano via rete → niente vincolo di minimo qui
       if (!(impostazioni && impostazioni.modo === "online") && gruppo.length < (g.giocatoriMin || 2)) return schermataSala(g, opts);
       ultimaPartita = { gioco: g, impostazioni: impostazioni };
@@ -524,6 +543,180 @@
     var griglia = el("div", { class: "griglia-giochi" });
     giochi.forEach(function (g) { griglia.appendChild(tesseraGioco(g, function () { schermataPreGioco(g); })); });
     s._contenuto.appendChild(griglia);
+    mostra(s);
+  }
+
+  // =========================================================
+  //  SALA ONLINE — un gruppo fisso che passa da un gioco all'altro.
+  //  L'host crea la sala; gli amici entrano una volta col codice/link.
+  //  L'host sceglie i giochi: partono per tutti (gli altri entrano in
+  //  automatico nella lobby online del gioco) e a fine partita tutti
+  //  tornano nella stessa sala. Solo l'host decide.
+  // =========================================================
+  var sala = null;   // host:  { rete, codice, pronta, membri:[{id,nome,emoji}], gioco, stanza, inGioco }
+  var salaG = null;  // ospite: { rete, codice, myId, nome, emoji, membri, inGioco, _msg }
+
+  function salaSenzaRete(riprova) {
+    var s = schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: schermataHome });
+    s._contenuto.appendChild(el("p", { style: "font-size:1.05rem;line-height:1.5",
+      text: "La Sala online funziona quando il gioco è aperto dal sito pubblicato. Da un file locale non è disponibile." }));
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Ok", onclick: schermataHome }));
+    mostra(s);
+  }
+
+  // ---------- HOST ----------
+  function creaSala() {
+    if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete(creaSala);
+    if (!profiloAttivo()) return schermataAccesso(creaSala);
+    var io = profiloAttivo();
+    sala = { rete: null, codice: "…", pronta: false, membri: [{ id: "host", nome: io.nome, emoji: io.emoji }], gioco: null, stanza: null, inGioco: false };
+    function bcast() { if (sala && sala.rete) sala.rete.invia({ t: "sala", codice: sala.codice, membri: sala.membri, gioco: sala.gioco, stanza: sala.stanza }); }
+    function agg() { bcast(); if (sala && !sala.inGioco) disegnaSalaHost(); }
+    sala._bcast = bcast;
+    sala.rete = SGNet.ospita("__sala", {
+      onCodice: function (c) { sala.codice = c; agg(); },
+      onConnesso: function () { sala.pronta = true; agg(); },
+      onAddio: function (id) { sala.membri = sala.membri.filter(function (m) { return m.id !== id; }); agg(); },
+      onMsg: function (id, m) {
+        if (!m || m.t !== "join") return;
+        if (!sala.membri.some(function (x) { return x.id === id; }))
+          sala.membri.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), emoji: m.emoji || "🙂" });
+        agg();
+      },
+      onErrore: function () { salaSenzaRete(creaSala); }
+    });
+    disegnaSalaHost();
+  }
+
+  function chiudiSala() { try { if (sala && sala.rete) sala.rete.chiudi(); } catch (e) {} sala = null; }
+
+  function disegnaSalaHost() {
+    if (!sala) return;
+    var s = schermata({ icona: "👥", titolo: "La sala", sotto: "Invita gli amici, poi scegli un gioco",
+      indietro: function () { if (window.confirm("Chiudere la sala per tutti?")) { chiudiSala(); schermataHome(); } } });
+    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della sala" }));
+    s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (sala.codice || "…").toUpperCase() }));
+    if (sala.codice && sala.codice !== "…") {
+      var link = SG.creaLink({ sala: sala.codice });
+      var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
+      s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
+        onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
+      s._contenuto.appendChild(campo);
+    }
+    s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (sala.pronta ? "#69db7c" : "#ffd43b"),
+      text: sala.pronta ? "🟢 Sala pronta — manda il codice o il link" : "🟡 Sto aprendo la sala…" }));
+    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Chi c'è (" + sala.membri.length + ")" }));
+    var lista = el("div");
+    sala.membri.forEach(function (m) { lista.appendChild(el("div", { class: "lobby-giocatore", text: (m.emoji || "🙂") + " " + m.nome + (m.id === "host" ? " (tu)" : "") })); });
+    s._contenuto.appendChild(lista);
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🎮 Scegli un gioco", onclick: salaScegliGioco }));
+    s._piede.appendChild(el("p", { class: "modulo-nota", text: "Scegli un gioco quando vuoi: parte per tutti. A fine partita si torna qui." }));
+    mostra(s);
+  }
+
+  function salaScegliGioco() {
+    var s = schermata({ icona: "🎮", titolo: "Scegli un gioco", sotto: "Parte per tutta la sala", indietro: disegnaSalaHost });
+    var griglia = el("div", { class: "griglia-giochi" });
+    giochi.forEach(function (g) { if (giocoOnline(g)) griglia.appendChild(tesseraGioco(g, function () { schermataPreGioco(g, { sala: true }); })); });
+    s._contenuto.appendChild(griglia);
+    mostra(s);
+  }
+
+  function salaLancia(g, impostazioni) {
+    if (!sala) return schermataHome();
+    var C = SGNet.nuovoCodice();
+    SGNet._forza = C;                         // il gioco userà QUESTO codice stanza
+    sala.gioco = g.id; sala.stanza = C; sala.inGioco = true;
+    sala._bcast();                            // dice agli altri quale gioco aprire e con che codice
+    var ctx = {
+      esci: function () { sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala._bcast(); disegnaSalaHost(); },
+      fine: function (g2, classifica) { salaFine(g2, classifica, ctx); }
+    };
+    var vecchio = linkParams; linkParams = {};      // l'host apre da host, non da ospite
+    avviaPartita(g, [sala.membri[0].nome], impostazioni, null, ctx);
+    linkParams = vecchio;
+  }
+
+  function salaFine(g, classifica, ctx) {
+    var s = schermata({ icona: "🏆", titolo: "Fine partita", sotto: g.nome });
+    var ol = el("ol", { class: "classifica" }), med = ["🥇", "🥈", "🥉"];
+    (classifica || []).forEach(function (r, i) {
+      ol.appendChild(el("li", { class: i === 0 ? "vincitore" : "" }, [
+        el("span", { class: "pos", text: med[i] || (i + 1) + "°" }),
+        el("span", { class: "nome", text: r.nome }),
+        r.punti != null ? el("span", { class: "punti", text: r.punti }) : null ]));
+    });
+    s._contenuto.appendChild(ol);
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "👥 Torna alla sala", onclick: ctx.esci }));
+    mostra(s);
+  }
+
+  // ---------- OSPITE ----------
+  function salaOspite(codice) {
+    if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete(function () { salaOspite(codice); });
+    if (!profiloAttivo()) return schermataAccesso(function () { salaOspite(codice); });
+    var io = profiloAttivo();
+    salaG = { rete: null, codice: String(codice).toUpperCase(), myId: null, nome: io.nome, emoji: io.emoji, membri: [], inGioco: null, _msg: null };
+    attendiSala();
+    salaG.rete = SGNet.entra(salaG.codice, {
+      onAperto: function (id) { salaG.myId = id; salaG.rete.invia({ t: "join", nome: salaG.nome, emoji: salaG.emoji });
+        setTimeout(function () { if (salaG && !salaG.membri.length && salaG._msg) salaG._msg.textContent = "Non trovo la sala: controlla il codice o attendi l'host…"; }, 8000); },
+      onMsg: function (m) {
+        if (!salaG || !m || m.t !== "sala") return;
+        salaG.membri = m.membri || [];
+        if (m.gioco && m.stanza) {
+          if (salaG.inGioco !== m.stanza) { salaG.inGioco = m.stanza; salaLanciaOspite(m.gioco, m.stanza); }
+        } else {
+          if (salaG.inGioco !== null) salaG.inGioco = null;
+          disegnaSalaOspite();
+        }
+      },
+      onChiuso: function () { chiudiSalaOspite(); errore(schermataHome, "La sala è stata chiusa dall'host."); },
+      onErrore: function () { chiudiSalaOspite(); errore(schermataHome, "Problema di collegamento con la sala. Riprova."); }
+    });
+  }
+
+  function chiudiSalaOspite() { try { if (salaG && salaG.rete) salaG.rete.chiudi(); } catch (e) {} salaG = null; }
+
+  function attendiSala() {
+    var s = schermata({ icona: "👥", titolo: "Entro nella sala…", sotto: "Codice " + salaG.codice,
+      indietro: function () { chiudiSalaOspite(); schermataHome(); } });
+    salaG._msg = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" });
+    s._contenuto.appendChild(salaG._msg);
+    mostra(s);
+  }
+
+  function disegnaSalaOspite() {
+    if (!salaG) return;
+    var s = schermata({ icona: "👥", titolo: "La sala", sotto: "Aspetta che l'host scelga un gioco",
+      indietro: function () { chiudiSalaOspite(); schermataHome(); } });
+    s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:#69db7c;margin-bottom:6px", text: "✅ Sei nella sala " + salaG.codice }));
+    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Chi c'è (" + salaG.membri.length + ")" }));
+    var lista = el("div");
+    salaG.membri.forEach(function (m) { lista.appendChild(el("div", { class: "lobby-giocatore", text: (m.emoji || "🙂") + " " + m.nome + (m.id === salaG.myId ? " (tu)" : "") })); });
+    s._contenuto.appendChild(lista);
+    salaG._msg = el("p", { class: "modulo-nota", text: "Quando l'host sceglie un gioco, parte da solo sul tuo telefono." });
+    s._contenuto.appendChild(salaG._msg);
+    mostra(s);
+  }
+
+  function salaLanciaOspite(gid, code) {
+    var g = giochi.filter(function (x) { return x.id === gid; })[0];
+    if (!g) { disegnaSalaOspite(); return; }
+    var vecchio = linkParams;
+    linkParams = { gioco: gid, stanza: code };   // il gioco lo legge subito (t.linkParams)
+    var ctx = {
+      esci: function () { if (salaG) salaG.inGioco = null; disegnaSalaOspite(); },
+      fine: function () { if (salaG) salaG.inGioco = null; disegnaSalaOspite(); }
+    };
+    avviaPartita(g, [], {}, null, ctx);
+    linkParams = vecchio;
+  }
+
+  function errore(dopo, txt) {
+    var s = schermata({ icona: "⚠️", titolo: "Ops" });
+    s._contenuto.appendChild(el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: dopo }));
     mostra(s);
   }
 
@@ -699,7 +892,7 @@
   //  Consegna al gioco un "tavolo" con tutto ciò che gli serve,
   //  senza fargli sapere come sono fatte le schermate comuni.
   // =========================================================
-  function avviaPartita(g, giocatori, impostazioni, opts) {
+  function avviaPartita(g, giocatori, impostazioni, opts, salaCtx) {
     var contenitore = el("div");
     var schermo = el("div");
     schermo.appendChild(contenitore);
@@ -722,12 +915,13 @@
 
       // il gioco chiama questa quando è finito
       fine: function (classifica) {
+        if (salaCtx) return salaCtx.fine(g, classifica, giocatori, impostazioni);
         if (opts && opts.torneo && torneo) return torneoRisultato(g, classifica);
         schermataFine(g, classifica, giocatori, impostazioni);
       },
 
       // uscite comuni
-      esci: schermataHome
+      esci: salaCtx ? salaCtx.esci : schermataHome
     };
 
     g.avvia(tavolo);
@@ -755,6 +949,7 @@
     avviaApp: function () {
       app = document.getElementById("app");
       linkParams = leggiParametriLink();
+      if (linkParams.sala) return salaOspite(linkParams.sala);   // link di una Sala online
       var g = linkParams.gioco && giochi.filter(function (x) { return x.id === linkParams.gioco; })[0];
       // Con un codice stanza si entra come OSPITE; altrimenti si apre la preparazione
       if (g && linkParams.stanza) avviaPartita(g, [], {});

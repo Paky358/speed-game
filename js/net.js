@@ -32,9 +32,16 @@
     disponibile: function () { return typeof mqtt !== "undefined"; },
 
     // L'host apre una stanza. cb: { onCodice, onConnesso, onAddio(id), onMsg(id,msg), onErrore(e) }
+    // Genera un codice stanza (usato dalla "sala" per preparare il codice
+    // di un gioco prima ancora di aprirlo).
+    nuovoCodice: function () { return codiceACaso(4); },
+
     ospita: function (giocoId, cb) {
       if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
-      var codice = codiceACaso(4);
+      // La "sala" può imporre il codice della stanza (così lo conosce in anticipo
+      // e lo manda agli altri per farli entrare in automatico).
+      var codice = SGNet._forza || codiceACaso(4);
+      SGNet._forza = null;
       var T = topics(codice);
       var META = BASE + codice + "/meta";
       // Il codice si conosce SUBITO (non dipende dal collegamento): mostralo subito,
