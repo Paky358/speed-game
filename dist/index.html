@@ -7442,6 +7442,8 @@ window.SG_SIPERO = {
     ".as-vbtn{width:46px;height:46px;border-radius:50%;border:0;font-size:1.5rem;font-weight:900;font-family:inherit;cursor:pointer;background:var(--carta-2);color:var(--testo);line-height:1;}",
     ".as-vbtn:disabled{opacity:.3;}",
     ".as-vval{min-width:74px;text-align:center;font-size:1.25rem;font-weight:900;color:var(--accento);}",
+    // barra dei tasti offerta/passa SEMPRE visibile in basso durante l'asta (niente scroll per offrire)
+    ".piede-fisso{position:sticky;bottom:0;z-index:5;margin:14px -16px 0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--sfondo);box-shadow:0 -6px 16px rgba(0,0,0,.4);}",
     ".as-big{text-align:center;background:linear-gradient(150deg,#fff0c2,var(--accento) 55%,var(--accento-scuro));",
       "color:#2a2400;border-radius:22px;padding:18px;box-shadow:0 10px 30px rgba(224,169,10,.35);margin-bottom:12px;}",
     ".as-big .em{font-size:3rem;line-height:1;}",
@@ -8483,6 +8485,7 @@ window.SG_SIPERO = {
         riga.appendChild(bSu);
         if (!guido) riga.appendChild(el("button", { class: "btn btn-rosso", text: "Passa", onclick: cb.onPassa }));
         s._piede.appendChild(riga);
+        s._piede.classList.add("piede-fisso");
         s._contenuto.appendChild(el("p", { class: "as-msg",
           text: guido ? "👑 Stai guidando l'offerta" : ("Hai " + io.crediti + " crediti · puoi arrivare a " + Math.max(0, max)) }));
       } else {
@@ -9123,6 +9126,7 @@ window.SG_SIPERO = {
         riga.appendChild(bSu);
         if (!guido) riga.appendChild(el("button", { class: "btn btn-rosso", text: "Passa", onclick: cb.onPassa }));
         s._piede.appendChild(riga);
+        s._piede.classList.add("piede-fisso");
         s._contenuto.appendChild(el("p", { class: "as-msg",
           text: guido ? "👑 Stai guidando l'offerta" : ("Hai " + io.crediti + " 💰 · puoi arrivare a " + Math.max(0, io.max)) }));
       } else {
