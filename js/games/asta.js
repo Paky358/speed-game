@@ -1457,7 +1457,8 @@
     var prezzo = (a.leader === null) ? a.offerta : a.offerta + 1;
     if (maxFanta(g) < prezzo) return;
     a.offerta = prezzo; a.leader = i; delete a.passati[i];
-    FX.rilancio(); disegnaAstaFanta(t, st);
+    FX.rilancio();
+    if (!verificaFanta(t, st)) disegnaAstaFanta(t, st);   // se sono già tutti passati, chiudo subito
   }
   function passaFanta(t, st, i) {
     var a = st.asta; if (!a || a.leader === i) return;
@@ -1590,7 +1591,8 @@
       var prezzo = (st.asta.leader === null) ? st.asta.offerta : st.asta.offerta + 1;
       if (maxFanta(g) < prezzo) return;
       st.asta.offerta = prezzo; st.asta.leader = id; delete st.asta.passati[id];
-      FX.rilancio(); riparti();
+      FX.rilancio();
+      if (!verifica()) riparti();   // se sono già tutti passati, aggiudico subito (niente attesa dei 10s)
     }
     function passaO(id) {
       if (st.fase !== "asta" || !st.asta || st.asta.leader === id) return;
