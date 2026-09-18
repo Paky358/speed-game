@@ -73,7 +73,7 @@
         { nome: "Spada di Legno Balsa", emoji: "🪵" },
         { nome: "Spazzola per Capelli", emoji: "🪮" },
         { nome: "Cucchiaio da Minestra", emoji: "🥄" },
-        { nome: "Fischietto da Richiamo che Attira Zombie", emoji: "📯" },
+        { nome: "Fischietto da Richiamo che Attira Zombie", emoji: "📣" },
         { nome: "Bacchetta Magica Giocattolo", emoji: "🪄" },
         { nome: "Sciabola Gonfiabile", emoji: "🎈" },
         { nome: "Elastico per Capelli", emoji: "🎀" },

@@ -175,7 +175,7 @@
         { nome: "Quello Fregato Solo dagli Scavetti", emoji: "🥄" },
         { nome: "Quello con le Ginocchiere da Basket", emoji: "🦵" },
         { nome: "Il Bodyguard dell'Amico Scarso", emoji: "💪" },
-        { nome: "Quello che Fa i Cori da Dietro", emoji: "📯" },
+        { nome: "Quello che Fa i Cori da Dietro", emoji: "📣" },
         { nome: "Il Terzino che Sbaglia Sempre Lato", emoji: "🔀" },
         { nome: "Quello che Difende a Intermittenza", emoji: "🤔" },
         { nome: "Il Terzino col Fiatone al Decimo Minuto", emoji: "🥵" },

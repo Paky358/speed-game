@@ -179,7 +179,7 @@
       nome: "Il Pagamento dell'Affitto", icona: "💶",
       A: [
         { nome: "Paga Mesi in Anticipo", emoji: "📅" },
-        { nome: "Non Bada a Spese", emoji: "💡" },
+        { nome: "Non Bada a Spese", emoji: "💸" },
         { nome: "Offre Spesso la Cena", emoji: "🍽️" },
         { nome: "Ha un Fondo Fiduciario", emoji: "🏦" },
         { nome: "Lascia i Contanti sul Tavolo", emoji: "💵" },

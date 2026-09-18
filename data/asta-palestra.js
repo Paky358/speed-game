@@ -44,7 +44,7 @@
         { nome: "Quello che Conta le Ripetizioni ad Alta Voce", emoji: "🔢" },
         { nome: "Il Sostituto che Non Sa il Tuo Nome", emoji: "❓" },
         { nome: "Quello che Fa Sempre la Stessa Battuta", emoji: "🤡" },
-        { nome: "L'Istruttore che Fischia per Tutto", emoji: "📯" },
+        { nome: "L'Istruttore che Fischia per Tutto", emoji: "📣" },
         { nome: "Quello che ti Fa Ripetere l'Esercizio 50 Volte", emoji: "🔂" },
         { nome: "L'Istruttrice Fissata con le Storie sui Social", emoji: "📸" }
       ],
