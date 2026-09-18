@@ -4,6 +4,15 @@ _Cosa è stato aggiunto all'app, dalla più recente. Le stesse novità si vedono
 anche dentro l'app, dal tasto **🆕 Novità** nella schermata iniziale. Il
 contenuto di quel tasto vive in `data/novita.js`._
 
+## 18 settembre 2026 (48) — Asta: carte ridisegnate + più contenuti
+- **Carte più belle**: emoji/icona grande dentro un badge-medaglia (gradiente, luce interna, ombra) e
+  tipografia migliore, sia nella scelta (`.as-carta`) sia nella carta grande d'asta (`.as-big`). Vale per
+  tutti i temi e per il Fantacalcio. (Scelto invece di generare migliaia di immagini per ~2.800 carte.)
+- **La Squadra da Calcetto**: aggiunte ~237 carte nuove (ora ~420 in totale) su Portiere/Difensore/
+  Centrocampista/Attaccante. Saltati i doppioni identici già presenti.
+- **Il Primo Appuntamento**: sostituita "Scappa dalla Finestra del Bagno" (era un finale) con
+  "Mastica a Bocca Aperta".
+
 ## 18 settembre 2026 (47) — Battaglia Navale più presentabile
 - Le navi non sono più quadrati grigi: ora sono **scafi** (gradiente acciaio, estremità arrotondate a
   prua/poppa, celle che si uniscono in un unico scafo). Vale sia in piazzamento sia su "La tua flotta".

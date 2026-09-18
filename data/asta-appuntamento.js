@@ -214,7 +214,7 @@
         { nome: "Si Rovescia il Bicchiere", emoji: "🥤" }
       ],
       C: [
-        { nome: "Scappa dalla Finestra del Bagno", emoji: "🪟" },
+        { nome: "Mastica a Bocca Aperta", emoji: "😖" },
         { nome: "Ti Chiede un Prestito", emoji: "💸" },
         { nome: "Arriva la Polizia", emoji: "🚨" },
         { nome: "Ti Chiama col Nome dell'Ex", emoji: "😳" },

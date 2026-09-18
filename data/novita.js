@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 71,
+    data: "18 settembre 2026",
+    titolo: "Carte dell'Asta più belle + tante carte nuove ⚽",
+    descrizione: [
+      "Nell'Asta le carte sono state ridisegnate: l'icona ora è grande dentro una medaglia con luce e ombra, con testi più curati. Vale per tutti i temi e per il Fantacalcio.",
+      "'La Squadra da Calcetto' è piena di carte nuove (ora oltre 400): portieri, difensori, centrocampisti e attaccanti a raffica, per partite sempre diverse.",
+      "'Il Primo Appuntamento': tolta una carta che era di fatto un finale ('Scappa dalla Finestra del Bagno')."
+    ]
+  },
+  {
     v: 70,
     data: "18 settembre 2026",
     titolo: "Battaglia Navale più bella 🚢",
