@@ -41,12 +41,12 @@
       B: [
         { nome: "Mazza Chiodata", emoji: "🏏" },
         { nome: "Piede di Porco", emoji: "🛠️" },
-        { nome: "Pistola 9mm con Pochi Colpi", emoji: "🔫" },
+        { nome: "Pistola 9mm con Pochi Colpi", emoji: "svg:pistola" },
         { nome: "Motosega Rumorosa con Poco Carburante", emoji: "🪚" },
         { nome: "Estintore Pesante", emoji: "🧯" },
         { nome: "Coltello da Caccia", emoji: "🔪" },
         { nome: "Tirapugni in Ottone", emoji: "🥊" },
-        { nome: "Fucile a Pompa che Fa Troppo Rumore", emoji: "🔫" },
+        { nome: "Fucile a Pompa che Fa Troppo Rumore", emoji: "svg:fucile" },
         { nome: "Pistola Lanciarazzi", emoji: "🚨" },
         { nome: "Chiodatrice da Cantiere", emoji: "📌" },
         { nome: "Fionda Rinforzata", emoji: "🪨" },
@@ -56,10 +56,10 @@
         { nome: "Sciabola da Collezione Non Affilata", emoji: "🗡️" },
         { nome: "Frusta di Cuoio", emoji: "🪢" },
         { nome: "Zappa da Giardino", emoji: "⚒️" },
-        { nome: "Fucile da Caccia a Canna Mozza", emoji: "🔫" },
+        { nome: "Fucile da Caccia a Canna Mozza", emoji: "svg:mozza" },
         { nome: "Tubo di Piombo Arrugginito", emoji: "⚙️" },
         { nome: "Catena di Ferro", emoji: "⛓️" },
-        { nome: "Mitragliatrice Leggera", emoji: "🎆" },
+        { nome: "Mitragliatrice Leggera", emoji: "svg:mitra" },
         { nome: "Calzino Pieno di Sassi", emoji: "🧦" }
       ],
       C: [

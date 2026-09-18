@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 72,
+    data: "18 settembre 2026",
+    titolo: "Asta: fasce a sorpresa + nuova categoria PlayStation 🎮",
+    descrizione: [
+      "Nell'Asta le fasce (A/B/C) ora restano NASCOSTE per tutta la partita: durante l'asta vedi solo un '?' e 'fascia ancora segreta'. Si scoprono solo alla fine, nella nuova schermata 'Fasce svelate!', subito prima della classifica: più tensione, non sai mai quanto vale davvero una carta.",
+      "Nuova categoria: 'Il Party PlayStation' 🎮 — connessione internet, microfono e chat, compagno di squadra, setup e ambiente.",
+      "'Il Coinquilino Ideale' pieno di carte nuove in tutti e quattro i round.",
+      "Le armi da fuoco dell'Asta (pistola, fucile a pompa, canna mozza, mitragliatrice) ora hanno icone disegnate: basta pistole ad acqua giocattolo."
+    ]
+  },
+  {
     v: 71,
     data: "18 settembre 2026",
     titolo: "Carte dell'Asta più belle + tante carte nuove ⚽",

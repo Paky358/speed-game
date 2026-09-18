@@ -454,7 +454,7 @@
         { nome: "Ti Vomita Addosso Dopo il Primo Drink", emoji: "🤮" },
         { nome: "Arriva il Suo Partner Ufficiale Furioso", emoji: "😡" },
         { nome: "Si Rompe un Dente Masticando il Pane", emoji: "🦷" },
-        { nome: "Rapina a Mano Armata nel Ristorante", emoji: "🔫" },
+        { nome: "Rapina a Mano Armata nel Ristorante", emoji: "svg:pistola" },
         { nome: "Ti Cade il Parrucchino nel Piatto", emoji: "🦲" },
         { nome: "Scopri Che è un Sicario Incaricato di Ucciderti", emoji: "🔪" },
         { nome: "Allarme Antincendio con Doccia Schiuma Inclusa", emoji: "🚨" },

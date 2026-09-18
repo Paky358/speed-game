@@ -121,7 +121,7 @@
       ]
     },
     {
-      nome: "Il Gadget", icona: "🔫",
+      nome: "Il Gadget", icona: "⚔️",
       A: [
         { nome: "Scudo Indistruttibile", emoji: "🛡️" },
         { nome: "Spada Laser", emoji: "🗡️" },
@@ -153,7 +153,7 @@
         { nome: "Fionda di Precisione", emoji: "🎯" },
         { nome: "Catena con Gancio", emoji: "⛓️" },
         { nome: "Drone da Ricognizione", emoji: "🛸" },
-        { nome: "Pistola a Pallini", emoji: "🔴" },
+        { nome: "Pistola a Pallini", emoji: "svg:pistola" },
         { nome: "Rete Cattura-Ladri", emoji: "🕸️" },
         { nome: "Frusta da Cowboy", emoji: "🤠" },
         { nome: "Visore a Infrarossi", emoji: "🥽" }

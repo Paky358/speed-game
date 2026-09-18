@@ -41,6 +41,8 @@
     ".tier-A{background:linear-gradient(135deg,#ffe58a,var(--accento-scuro));color:#241f00;}",
     ".tier-B{background:linear-gradient(135deg,#9fb4ff,#5468c7);color:#0d1230;}",
     ".tier-C{background:var(--carta-2);color:var(--testo-tenue);}",
+    ".tier-x{background:var(--carta-2);color:var(--testo-tenue);}",
+    ".as-fascia-x{margin-top:6px;font-weight:900;opacity:.6;font-size:.95rem;}",
     // badge ruolo del Fantacalcio (POR/DIF/CEN/ATT) — niente fasce a schermo
     ".as-rb{flex:0 0 auto;font-size:.68rem;font-weight:900;letter-spacing:.04em;padding:4px 8px;border-radius:8px;color:#0d1230;}",
     ".as-rb-P{background:linear-gradient(135deg,#ffd27a,#e0a90a);}",
@@ -159,6 +161,22 @@
     } catch (e) {}
   }
 
+  // Attributi per l'icona di una carta: se l'emoji è un segnaposto "svg:..."
+  // per cui abbiamo un'icona disegnata (es. armi da fuoco, che come emoji
+  // diventano una pistola giocattolo), usiamo l'SVG; altrimenti l'emoji.
+  function icoAttr(cls, emoji) {
+    var svg = window.SG_ICONE && window.SG_ICONE[emoji];
+    return svg ? { class: cls, html: svg } : { class: cls, text: emoji };
+  }
+
+  // Badge della fascia: durante l'asta resta nascosto ("?"), viene svelato
+  // solo alla fine (nella schermata "Fasce svelate", dopo le votazioni).
+  function cellaTier(el, tier, rivela) {
+    return rivela
+      ? el("span", { class: "tier tier-" + tier, text: tier })
+      : el("span", { class: "tier tier-x", text: "?" });
+  }
+
   // Prende N carte dal round tenendo RARI i pezzi migliori:
   // circa un terzo di fascia A, un terzo di C e il resto B.
   // Con 4 giocatori esce 1 carta A, 2 B e 1 C: mai quattro pezzi top.
@@ -246,9 +264,9 @@
     cards.forEach(function (c) {
       var ora = (c.nome === nomeCorrente);
       box.appendChild(el("div", { class: "pr" + (ora ? " ora-c" : "") }, [
-        el("span", { class: "em", text: c.emoji }),
+        el("span", icoAttr("em", c.emoji)),
         el("span", { class: "nm", text: c.nome + (ora ? " · all'asta ora" : "") }),
-        el("span", { class: "tier tier-" + c.tier, text: c.tier })
+        cellaTier(el, c.tier, false)
       ]));
     });
     return box;
@@ -458,9 +476,9 @@
     var g = el("div", { class: "as-griglia" });
     st.tavolo.forEach(function (c, idx) {
       g.appendChild(el("button", { class: "as-carta", onclick: function () { apriAsta(t, st, chi, idx); } }, [
-        el("span", { class: "em", text: c.emoji }),
+        el("span", icoAttr("em", c.emoji)),
         el("span", { class: "nm", text: c.nome }),
-        el("span", { class: "tier tier-" + c.tier, text: c.tier })
+        cellaTier(el, c.tier, false)
       ]));
     });
     s._contenuto.appendChild(g);
@@ -483,9 +501,9 @@
     s._contenuto.appendChild(intestazioneRound(el, st));
     s._contenuto.appendChild(strisciaCrediti(el, st, a.leader));
     s._contenuto.appendChild(el("div", { class: "as-big" }, [
-      el("div", { class: "em", text: a.carta.emoji }),
+      el("div", icoAttr("em", a.carta.emoji)),
       el("div", { class: "nm", text: a.carta.nome }),
-      el("div", { style: "margin-top:6px;font-weight:900;opacity:.75", text: "Fascia " + a.carta.tier })
+      el("div", { class: "as-fascia-x", text: "Fascia ancora segreta 🤫" })
     ]));
     s._contenuto.appendChild(el("div", { class: "as-offerta" }, [
       el("div", { class: "v", text: a.offerta + " 💰" }),
@@ -563,9 +581,9 @@
       el("div", { style: "font-size:3.4rem;line-height:1", text: "🔨" }),
       el("div", { style: "font-size:1.6rem;font-weight:900", text: st.giocatori[chi].nome + " si aggiudica" }),
       el("div", { class: "as-big", style: "margin-top:6px" }, [
-        el("div", { class: "em", text: carta.emoji }),
+        el("div", icoAttr("em", carta.emoji)),
         el("div", { class: "nm", text: carta.nome }),
-        el("div", { style: "margin-top:6px;font-weight:900;opacity:.75", text: "Fascia " + carta.tier })
+        el("div", { class: "as-fascia-x", text: "Fascia ancora segreta 🤫" })
       ]),
       el("div", { style: "font-size:1.3rem;font-weight:900;color:var(--accento)", text: "per " + prezzo + " 💰" }),
       automatica ? el("p", { class: "as-msg", text: "Ultima carta rimasta: assegnata automaticamente." }) : null,
@@ -593,7 +611,7 @@
     t.mostra(s);
   }
 
-  function nodoKit(el, g, st) {
+  function nodoKit(el, g, st, rivela) {
     var fanta = st && st.formato === "fanta";
     var box = el("div", { class: "as-kit" });
     box.appendChild(el("h3", { text: g.nome + " · " + g.crediti + " 💰 avanzati" }));
@@ -603,9 +621,9 @@
         el("span", { style: "flex:1", text: c.nome + (c.squadra ? " · " + c.squadra : "") }),
         el("span", { class: "as-rb as-rb-" + c.ruolo, text: (FANTA_RUOLI[c.ruolo] || {}).breve })
       ] : [
-        el("span", { class: "em", text: c.emoji }),
+        el("span", icoAttr("em", c.emoji)),
         el("span", { style: "flex:1", text: c.nome }),
-        el("span", { class: "tier tier-" + c.tier, text: c.tier })
+        cellaTier(el, c.tier, rivela)
       ]));
     });
     return box;
@@ -641,6 +659,21 @@
 
   function finePartita(t, st) {
     FX.fine();
+    // Le fasce restano nascoste per tutta la partita: si svelano solo ORA.
+    if (st && st.formato === "fanta") return classificaFinale(t, st);
+    svelaFasce(t, st);
+  }
+
+  function svelaFasce(t, st) {
+    var el = t.el;
+    var s = t.schermata({ icona: "🃏", titolo: "Fasce svelate!", sotto: "Ecco il vero valore delle carte" });
+    st.giocatori.forEach(function (g) { s._contenuto.appendChild(nodoKit(el, g, st, true)); });
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Classifica finale 🏆",
+      onclick: function () { classificaFinale(t, st); } }));
+    t.mostra(s);
+  }
+
+  function classificaFinale(t, st) {
     var classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
       .map(function (g) { return { nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐" }; });
     t.fine(classifica);
@@ -1003,9 +1036,9 @@
       if (!g.kit || !g.kit.length) card.appendChild(el("div", { class: "as-rose-vuota", text: "ancora niente" }));
       else g.kit.forEach(function (c) {
         card.appendChild(el("div", { class: "as-rose-riga" }, [
-          el("span", { class: "as-rose-em", text: c.emoji }),
+          el("span", icoAttr("as-rose-em", c.emoji)),
           el("span", { class: "as-rose-txt", text: c.nome }),
-          el("span", { class: "tier tier-" + c.tier, text: c.tier })
+          cellaTier(el, c.tier, false)
         ]));
       });
       box.appendChild(card);
@@ -1031,14 +1064,14 @@
     else wrap.appendChild(el("div", { class: "as-round" }, [ el("div", { class: "t", text: (vm.roundIcona || "") + " " + (vm.roundNome || "") }) ]));
     return wrap;
   }
-  function nodoKitVm(el, g) {
+  function nodoKitVm(el, g, rivela) {
     var box = el("div", { class: "as-kit" });
     box.appendChild(el("h3", { text: g.nome + " · " + g.crediti + " 💰 avanzati" }));
     g.kit.forEach(function (c) {
       box.appendChild(el("div", { class: "riga" }, [
-        el("span", { class: "em", text: c.emoji }),
+        el("span", icoAttr("em", c.emoji)),
         el("span", { style: "flex:1", text: c.nome }),
-        el("span", { class: "tier tier-" + c.tier, text: c.tier })
+        cellaTier(el, c.tier, rivela)
       ]));
     });
     return box;
@@ -1071,9 +1104,9 @@
       var g1 = el("div", { class: "as-griglia" });
       vm.tavolo.forEach(function (c, idx) {
         var nodo = el("button", { class: "as-carta", onclick: mio ? function () { cb.onScegli(idx); } : null }, [
-          el("span", { class: "em", text: c.emoji }),
+          el("span", icoAttr("em", c.emoji)),
           el("span", { class: "nm", text: c.nome }),
-          el("span", { class: "tier tier-" + c.tier, text: c.tier })
+          cellaTier(el, c.tier, false)
         ]);
         if (!mio) nodo.disabled = true;
         g1.appendChild(nodo);
@@ -1084,9 +1117,9 @@
     else if (vm.fase === "asta") {
       var a = vm.asta;
       s._contenuto.appendChild(el("div", { class: "as-big" }, [
-        el("div", { class: "em", text: a.carta.emoji }),
+        el("div", icoAttr("em", a.carta.emoji)),
         el("div", { class: "nm", text: a.carta.nome }),
-        el("div", { style: "margin-top:6px;font-weight:900;opacity:.75", text: "Fascia " + a.carta.tier })
+        el("div", { class: "as-fascia-x", text: "Fascia ancora segreta 🤫" })
       ]));
       s._contenuto.appendChild(el("div", { class: "as-offerta" }, [
         el("div", { class: "v", text: a.offerta + " 💰" }),
@@ -1124,9 +1157,9 @@
       s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:3rem;line-height:1;margin:6px 0", text: "🔨" }));
       s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:1.4rem;font-weight:900", text: e2.chiNome + " si aggiudica" }));
       s._contenuto.appendChild(el("div", { class: "as-big", style: "margin-top:8px" }, [
-        el("div", { class: "em", text: e2.carta.emoji }),
+        el("div", icoAttr("em", e2.carta.emoji)),
         el("div", { class: "nm", text: e2.carta.nome }),
-        el("div", { style: "margin-top:6px;font-weight:900;opacity:.75", text: "Fascia " + e2.carta.tier })
+        el("div", { class: "as-fascia-x", text: "Fascia ancora segreta 🤫" })
       ]));
       s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:1.3rem;font-weight:900;color:var(--accento);margin-top:8px",
         text: "per " + e2.prezzo + " 💰" }));
@@ -1235,6 +1268,11 @@
       ol.appendChild(li);
     });
     s._contenuto.appendChild(ol);
+    // Fasce svelate: ora che si è votato, si scopre il vero valore delle carte
+    if (vm.formato !== "fanta" && vm.giocatori && vm.giocatori.some(function (g) { return g.kit && g.kit.length; })) {
+      s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:14px", text: "🃏 Fasce svelate" }));
+      vm.giocatori.forEach(function (g) { s._contenuto.appendChild(nodoKitVm(el, g, true)); });
+    }
     if (cb.sonoHost) {
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: vm.formato === "fanta" ? "🔄 Nuova partita" : "🔄 Nuova partita (cambia argomento)", onclick: cb.onNuova }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
