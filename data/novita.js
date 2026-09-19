@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 75,
+    data: "19 settembre 2026",
+    titolo: "Black Jack anche online 🃏🔗",
+    descrizione: [
+      "Il Black Jack ora si gioca anche online, ognuno dal suo telefono: l'host apre il tavolo, manda il codice (o il link) e gli amici entrano da soli.",
+      "L'host fa da banco, ognuno punta e gioca la sua mano dal proprio telefono quando è il suo turno, e tutti vedono il tavolo aggiornarsi in tempo reale.",
+      "Trovi il Black Jack anche nella 'Sala online', per passarci in mezzo agli altri giochi."
+    ]
+  },
+  {
     v: 74,
     data: "19 settembre 2026",
     titolo: "Nuovo gioco: Black Jack 🃏",
