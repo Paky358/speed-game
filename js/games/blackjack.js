@@ -383,7 +383,10 @@
     // puntata
     ".bj-chip{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}",
     ".bj-c{min-width:60px;min-height:56px;border-radius:50%;border:3px solid rgba(255,255,255,.5);font-weight:900;font-size:1rem;cursor:pointer;color:#08130b}",
-    ".bj-punta-val{font-size:2rem;font-weight:900;color:#ffe58a}",
+    ".bj-punta-val{font-size:2.6rem;font-weight:900;color:#ffe58a;line-height:1;margin:2px 0}",
+    ".bj-step{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%;max-width:440px}",
+    ".bj-sbtn{flex:1 1 0;min-width:62px;min-height:50px;border-radius:13px;border:0;background:var(--carta-2,#241f4a);color:#fff;font-weight:900;font-size:1.05rem;font-family:inherit;cursor:pointer}",
+    ".bj-sbtn:active{transform:scale(.95)}",
     // tavolata
     ".bj-tavolata{flex:0 0 auto;display:flex;gap:8px;overflow-x:auto;padding:8px 2px;scrollbar-width:none}",
     ".bj-tavolata::-webkit-scrollbar{display:none}",
@@ -485,12 +488,13 @@
     s._contenuto.appendChild(wrap); t.mostra(s);
     document.body.classList.add("bj-verde");
 
-    var vm = null, anim = { ultima: -1, banco: false }, timerPasso = null, daVolare = [];
+    var vm = null, anim = { ultima: -1, banco: false }, timerPasso = null, daVolare = [], puntSel = null;
     function svuota(n) { while (n.firstChild) n.removeChild(n.firstChild); }
     function mioIdx() { return drv.mioIdx ? drv.mioIdx() : vm.turno; }
 
     function aggiorna(nuovo) {
       var pre = vm; vm = nuovo;
+      if (vm.fase !== "punta") puntSel = null;
       anim = { ultima: -1, banco: false }; daVolare = [];
       applicaDiff(pre, vm);
       if (pre && pre.fase !== "esito" && vm.fase === "esito" && drv.onFineMano) drv.onFineMano(vm);
@@ -620,15 +624,30 @@
     function heroPunta(mio) {
       var g = vm.giocatori[vm.turno];
       if (!mio) { zHero.appendChild(el("div", { class: "bj-hnome", text: g.nome + " sta puntando…" })); return; }
-      zHero.appendChild(el("div", { class: "bj-hnome", text: g.nome + ", punta" }));
+      var minP = vm.puntataMin || 10, maxP = g.fiches;
+      if (puntSel == null) puntSel = Math.min(100, maxP);
+      puntSel = Math.max(minP, Math.min(puntSel, maxP));
+      zHero.appendChild(el("div", { class: "bj-hnome", text: g.nome + ", quanto punti?" }));
       zHero.appendChild(el("div", { class: "bj-hfiches", text: g.fiches + " 🪙 disponibili" }));
-      var chip = el("div", { class: "bj-chip" });
-      (vm.puntateRapide || [10, 25, 50, 100]).forEach(function (val) {
-        var b = el("button", { class: "bj-c", text: "" + val, onclick: function () { if (g.fiches >= val) drv.onPunta(val); } });
-        if (g.fiches < val) b.disabled = true; chip.appendChild(b);
+      var val = el("div", { class: "bj-punta-val", text: puntSel + " 🪙" });
+      zHero.appendChild(val);
+      var bPunta;
+      function agg() {
+        puntSel = Math.max(minP, Math.min(puntSel, maxP));
+        val.textContent = puntSel + " 🪙";
+        if (bPunta) bPunta.textContent = "Punta " + puntSel + " ▶";
+      }
+      function step(d) { return function () { puntSel += d; agg(); vibra(6); }; }
+      var riga = el("div", { class: "bj-step" });
+      [["−100", -100], ["−10", -10], ["+10", 10], ["+100", 100]].forEach(function (x) {
+        riga.appendChild(el("button", { class: "bj-sbtn", text: x[0], onclick: step(x[1]) }));
       });
-      zHero.appendChild(chip);
-      zHero.appendChild(el("button", { class: "bj-btn bj-b-stai", style: "flex:0 0 auto;min-width:180px", text: "Punta tutto (" + g.fiches + ")", onclick: function () { drv.onPunta(g.fiches); } }));
+      zHero.appendChild(riga);
+      var az = el("div", { class: "bj-azioni" });
+      bPunta = el("button", { class: "bj-btn bj-b-carta", text: "Punta " + puntSel + " ▶", onclick: function () { var v = puntSel; puntSel = null; suonoChip(); drv.onPunta(v); } });
+      az.appendChild(bPunta);
+      az.appendChild(el("button", { class: "bj-btn bj-b-stai", text: "Tutto (" + maxP + ")", onclick: function () { puntSel = null; suonoChip(); drv.onPunta(maxP); } }));
+      zHero.appendChild(az);
     }
     function heroAssic(mio) {
       var g = vm.giocatori[vm.turno], costo = Math.floor(g.puntata / 2);

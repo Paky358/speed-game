@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 79,
+    data: "19 settembre 2026",
+    titolo: "Black Jack: punti quanto vuoi 💰",
+    descrizione: [
+      "La puntata ora è libera: parti da 100 e la regoli come vuoi con −100 / −10 / +10 / +100, oppure con un tocco punti Tutto.",
+      "Niente più cifre fisse: metti l'importo esatto che preferisci prima di ricevere le carte."
+    ]
+  },
+  {
     v: 78,
     data: "19 settembre 2026",
     titolo: "Profili con login e fiches che restano 👤",
