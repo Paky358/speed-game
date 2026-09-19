@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 80,
+    data: "19 settembre 2026",
+    titolo: "Black Jack: 300 fiches gratis ogni 6 ore 🎁",
+    descrizione: [
+      "Prima di iniziare una partita puoi ritirare 300 fiches gratis: il regalo torna disponibile ogni 6 ore, così non resti mai davvero a secco.",
+      "Se finisci le fiches non riparti più col gruzzolo pieno: giochi con delle fiches 'di prova' solo per divertirti, mentre le fiches vere le recuperi col bonus.",
+      "Vale per il tuo profilo, quindi il saldo e il bonus ti seguono su ogni telefono."
+    ]
+  },
+  {
     v: 79,
     data: "19 settembre 2026",
     titolo: "Black Jack: punti quanto vuoi 💰",

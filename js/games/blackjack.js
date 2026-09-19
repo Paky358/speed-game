@@ -443,6 +443,33 @@
     return el("div", { class: "cc " + (cls || ""), html: BJ.cartaHTML(c, coperta) });
   }
 
+  function fmtTempo(ms) {
+    var s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    return h > 0 ? (h + "h " + m + "m") : (m > 0 ? (m + "m") : "poco");
+  }
+  // riquadro con saldo fiches + tasto per ritirare il bonus gratis (ogni 6 ore)
+  function riquadroBonus(el) {
+    var box = el("div", { style: "background:var(--carta,#1b1836);border-radius:14px;padding:12px;margin-bottom:12px;text-align:center;box-shadow:var(--ombra,0 6px 16px rgba(0,0,0,.3))" });
+    var p = SGNube.profilo();
+    var saldo = (p && p.fiches && p.fiches.blackjack != null) ? p.fiches.blackjack : 0;
+    var testoSaldo = el("div", { style: "font-size:1.1rem;margin-bottom:8px;color:#ffe58a;font-weight:800", html: "🎰 Hai <b>" + saldo + "</b> fiches" });
+    var b = el("button", { class: "btn btn-primario", style: "margin:0" });
+    function agg() {
+      if (SGNube.puoRitirareBonus()) { b.disabled = false; b.textContent = "🎁 Ritira " + SGNube.bonusImporto + " fiches gratis"; }
+      else { b.disabled = true; b.textContent = "⏳ Prossimo bonus tra " + fmtTempo(SGNube.prossimoBonusMs()); }
+    }
+    b.onclick = function () {
+      b.disabled = true;
+      SGNube.ritiraBonus().then(function (nuovo) {
+        testoSaldo.innerHTML = "🎰 Hai <b>" + nuovo + "</b> fiches  ·  +" + SGNube.bonusImporto + " 🎉";
+        agg();
+      }).catch(function () { agg(); });
+    };
+    agg();
+    box.appendChild(testoSaldo); box.appendChild(b);
+    return box;
+  }
+
   // ---- vista (vm): stessa forma dello stato; serve sia il locale sia
   //      l'online (le carte del Black Jack sono scoperte per tutti). ----
   function cp(c) { return { s: c.s, v: c.v }; }
@@ -727,17 +754,17 @@
     var nomi = (t.giocatori && t.giocatori.length) ? t.giocatori.slice() : ["Giocatore 1"];
     // se c'è un profilo cloud, il primo giocatore usa (e salva) le sue fiches
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
-    var fichesIniz = null;
+    var fichesIniz = null, prova = false;
     if (prof) {
       var f = SGNube.fiches("blackjack");
-      if (f == null || f < BJ.PUNTATA_MIN) f = BJ.FICHES_INIZIALI;   // a zero: si riparte
-      fichesIniz = []; fichesIniz[0] = f;
+      if (f != null && f >= BJ.PUNTATA_MIN) { fichesIniz = [f]; }
+      else { prova = true; fichesIniz = [BJ.FICHES_INIZIALI]; }   // a zero: gioca di prova, non si salva
     }
     var M = BJ.creaMotore(nomi, t.mischia, fichesIniz), st = M.st, tav;
-    function salva() { if (prof) SGNube.salvaFiches("blackjack", st.giocatori[0].fiches); }
+    function salva() { if (prof && !prova) SGNube.salvaFiches("blackjack", st.giocatori[0].fiches); }
     function refresh() { tav.aggiorna(vistaBJ(st)); }
     tav = tavoloBJ(t, {
-      sotto: prof ? ("👤 " + prof.nome + " · fiches salvate") : "Un telefono · Banco CPU",
+      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · ritira il bonus!") : ("👤 " + prof.nome + " · fiches salvate")) : "Un telefono · Banco CPU",
       puoAgire: function () { return true; },
       puoNuova: function () { return true; },
       guida: function () { return true; },
@@ -777,8 +804,8 @@
   function hostBJ(t) {
     if (!(window.SGNet && SGNet.disponibile())) return localeBJ(t);
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
-    var mieFiches = prof ? SGNube.fiches("blackjack") : null;
-    if (prof && (mieFiches == null || mieFiches < BJ.PUNTATA_MIN)) mieFiches = BJ.FICHES_INIZIALI;
+    var provaHost = false, mieFiches = prof ? SGNube.fiches("blackjack") : null;
+    if (prof && (mieFiches == null || mieFiches < BJ.PUNTATA_MIN)) { provaHost = true; mieFiches = BJ.FICHES_INIZIALI; }
     var seats = [{ id: "host", nome: (prof ? prof.nome : (t.giocatori && t.giocatori[0])) || "Host", fiches: mieFiches }];
     var M = null, rete = null, codice = "…", tav = null;
 
@@ -808,7 +835,7 @@
         onPunta: function (v) { if (M.st.turno === 0) { suonoChip(); M.punta(0, v); bcast(); } },
         onMossa: function (m) { if (M.st.turno === 0) { if (m === "stai") suonoStai(); M.azione(m); bcast(); } },
         onAssicura: function (si) { if (M.st.turno === 0) { M.assicura(0, si); bcast(); } },
-        onFineMano: function (vm) { if (prof) SGNube.salvaFiches("blackjack", vm.giocatori[0].fiches); },
+        onFineMano: function (vm) { if (prof && !provaHost) SGNube.salvaFiches("blackjack", vm.giocatori[0].fiches); },
         onNuova: function () { M.nuovaMano(); bcast(); },
         onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
       });
@@ -842,7 +869,8 @@
     if (prof) {   // già loggato col profilo: entra diretto, niente da riscrivere
       S.nome = prof.nome;
       var ff = SGNube.fiches("blackjack");
-      S.fiches = (ff == null || ff < BJ.PUNTATA_MIN) ? BJ.FICHES_INIZIALI : ff;
+      if (ff != null && ff >= BJ.PUNTATA_MIN) { S.fiches = ff; S.prova = false; }
+      else { S.fiches = BJ.FICHES_INIZIALI; S.prova = true; }   // a zero: gioca di prova, non salva
       collega();
     } else schermaNome();
     function schermaNome() {
@@ -868,7 +896,7 @@
         onPunta: function (v) { suonoChip(); if (S.rete) S.rete.invia({ t: "mossa", kind: "punta", val: v }); },
         onMossa: function (m) { if (m === "stai") suonoStai(); if (S.rete) S.rete.invia({ t: "mossa", kind: "azione", mossa: m }); },
         onAssicura: function (si) { if (S.rete) S.rete.invia({ t: "mossa", kind: "assic", si: si }); },
-        onFineMano: function (vm) { if (prof && S.mioSeat >= 0 && vm.giocatori[S.mioSeat]) SGNube.salvaFiches("blackjack", vm.giocatori[S.mioSeat].fiches); },
+        onFineMano: function (vm) { if (prof && !S.prova && S.mioSeat >= 0 && vm.giocatori[S.mioSeat]) SGNube.salvaFiches("blackjack", vm.giocatori[S.mioSeat].fiches); },
         onNuova: function () {},
         onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); }
       });
@@ -917,6 +945,7 @@
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el; dove.modo = "locale";
       if (aiuti.torneo) { dove.modo = "locale"; return; }
+      if (window.SGNube && SGNube.disponibile() && SGNube.profilo()) box.appendChild(riquadroBonus(el));
       var bLoc, bOnl, nota;
       function sel(m) {
         dove.modo = m;
