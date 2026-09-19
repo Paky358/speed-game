@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 77,
+    data: "19 settembre 2026",
+    titolo: "Black Jack: carte che volano dal mazzo, con più calma 🎴",
+    descrizione: [
+      "Ora c'è un mazzo sul tavolo e ogni carta parte da lì e vola fino a te (e a tutti gli altri): niente più carte che spuntano dal nulla.",
+      "La distribuzione è più lenta, una carta alla volta, così hai il tempo di leggerle e di sperare nel numero giusto.",
+      "Quando chiedi carta e sballi (o ti fermi), la carta resta a schermo qualche secondo prima di passare il turno: niente più fretta."
+    ]
+  },
+  {
     v: 76,
     data: "19 settembre 2026",
     titolo: "Black Jack: carte a una a una, più tensione 🂠",

@@ -266,7 +266,12 @@
           if (m.carte[0].v === 1) { m.chiusa = true; nuova.chiusa = true; } // split di assi: una carta sola
         }
       }
-      avanzaTurno(g);
+      return st;   // il turno NON avanza subito: la UI aspetta e poi chiama avanza()
+    }
+    // passa alla mano successiva del giocatore, o al prossimo giocatore, o al banco
+    function avanza() {
+      if (st.fase !== "gioca") return st;
+      var g = st.giocatori[st.turno]; if (g) avanzaTurno(g);
       return st;
     }
     function avanzaTurno(g) {
@@ -322,7 +327,7 @@
 
     return {
       st: st,
-      nuovaMano: nuovaMano, punta: punta, assicura: assicura, azione: azione,
+      nuovaMano: nuovaMano, punta: punta, assicura: assicura, azione: azione, avanza: avanza,
       passoDistribuzione: passoDistribuzione, passoBanco: passoBanco,
       mosseValide: mosseValide, PUNTATE_RAPIDE: PUNTATE_RAPIDE, PUNTATA_MIN: PUNTATA_MIN
     };
@@ -394,10 +399,12 @@
     // tavolo verde da casinò (copre l'area di gioco edge-to-edge)
     ".bj-wrap{background:radial-gradient(130% 80% at 50% 0%,#1a7a49,#0c5230 55%,#083b22);margin:-14px -16px 0;padding:14px 16px calc(14px + env(safe-area-inset-bottom));border-radius:0}",
     "body.bj-verde{background:#083b22}",
-    // animazione di entrata delle carte (pesca / distribuzione)
-    "@keyframes bjIn{from{opacity:0;transform:translateY(-16px) scale(.86) rotate(-4deg)}to{opacity:1;transform:none}}",
-    ".bj-nuova{animation:bjIn .26s cubic-bezier(.2,.9,.3,1.2) both}",
-    ".bj-flip{animation:bjIn .3s ease both}"
+    // il mazzo (sabot) da cui volano le carte, in alto a destra del tavolo
+    ".bj-mazzo{position:absolute;top:2px;right:6px;width:44px;height:62px;z-index:4;pointer-events:none}",
+    ".bj-mazzo .r{position:absolute;top:0;left:0;width:44px}",
+    ".bj-mazzo .r:nth-child(1){transform:translate(5px,5px);opacity:.4}",
+    ".bj-mazzo .r:nth-child(2){transform:translate(2.5px,2.5px);opacity:.7}",
+    ".bj-mazzo .bj-svg{width:100%;height:auto;filter:drop-shadow(0 2px 5px rgba(0,0,0,.55))}"
   ].join("");
 
   function iniettaCSS() {
@@ -468,44 +475,76 @@
     var zBanco = el("div", { class: "bj-banco" }), zHero = el("div", { class: "bj-hero" }),
         zMsg = el("div", { class: "bj-msg" }), zTav = el("div", { class: "bj-tavolata" });
     [zBanco, zHero, zMsg, zTav].forEach(function (z) { wrap.appendChild(z); });
+    var mazzo = el("div", { class: "bj-mazzo" }, [
+      el("div", { class: "r", html: BJ.retroSVG() }),
+      el("div", { class: "r", html: BJ.retroSVG() }),
+      el("div", { class: "r", html: BJ.retroSVG() })
+    ]);
+    wrap.appendChild(mazzo);
     s._contenuto.appendChild(wrap); t.mostra(s);
     document.body.classList.add("bj-verde");
 
-    var vm = null, anim = { distrib: false, ultima: -1, banco: false }, timerPasso = null;
+    var vm = null, anim = { ultima: -1, banco: false }, timerPasso = null, daVolare = [];
     function svuota(n) { while (n.firstChild) n.removeChild(n.firstChild); }
     function mioIdx() { return drv.mioIdx ? drv.mioIdx() : vm.turno; }
 
     function aggiorna(nuovo) {
       var pre = vm; vm = nuovo;
-      anim = { distrib: false, ultima: -1, banco: false };
+      anim = { ultima: -1, banco: false }; daVolare = [];
       applicaDiff(pre, vm);
       disegnaBanco(); disegnaTavolata(); disegnaHero();
+      daVolare.forEach(volaDalMazzo);
       programmaPasso();
     }
-    // durante distribuzione e gioco del banco chi guida il motore (locale/host)
-    // scandisce le carte una alla volta; l'ospite le riceve e basta.
+    // La carta appena distribuita parte dal mazzo e "vola" fino alla sua
+    // posizione finale (tecnica FLIP: la metto dov'è, la sposto sul mazzo, la libero).
+    function volaDalMazzo(cardEl) {
+      var m = mazzo.getBoundingClientRect(), c = cardEl.getBoundingClientRect();
+      if (!c.width || !m.width) return;
+      var dx = (m.left + m.width / 2) - (c.left + c.width / 2);
+      var dy = (m.top + m.height / 2) - (c.top + c.height / 2);
+      var sc = Math.max(0.32, m.width / c.width);
+      cardEl.style.transition = "none";
+      cardEl.style.transformOrigin = "50% 50%";
+      cardEl.style.transform = "translate(" + dx + "px," + dy + "px) scale(" + sc + ")";
+      cardEl.style.opacity = "0.5";
+      cardEl.getBoundingClientRect();   // forza il reflow
+      requestAnimationFrame(function () {
+        cardEl.style.transition = "transform .52s cubic-bezier(.2,.85,.3,1), opacity .3s ease";
+        cardEl.style.transform = "";
+        cardEl.style.opacity = "1";
+      });
+    }
+    function manoChiusaAttiva() {
+      if (!vm || vm.fase !== "gioca") return false;
+      var g = vm.giocatori[vm.turno]; if (!g) return false;
+      var m = g.mani[g.attiva]; return !!(m && m.chiusa);
+    }
+    // Chi guida il motore (locale/host) scandisce i tempi con calma: distribuzione
+    // e banco una carta alla volta, e dopo che una mano si chiude lascia qualche
+    // secondo per vedere la carta prima di passare il turno.
     function programmaPasso() {
       if (timerPasso) { clearTimeout(timerPasso); timerPasso = null; }
       if (!(drv.guida && drv.guida())) return;
-      if (vm.fase === "distrib") timerPasso = setTimeout(function () { drv.onPasso("distrib"); }, 430);
-      else if (vm.fase === "banco") timerPasso = setTimeout(function () { drv.onPasso("banco"); }, 720);
+      if (vm.fase === "distrib") timerPasso = setTimeout(function () { drv.onPasso("distrib"); }, 1050);
+      else if (vm.fase === "banco") timerPasso = setTimeout(function () { drv.onPasso("banco"); }, 1200);
+      else if (manoChiusaAttiva()) {
+        var g = vm.giocatori[vm.turno], m = g.mani[g.attiva], p = BJ.punteggio(m.carte);
+        var pausa = p > 21 ? 1800 : (BJ.eBlackjack(m.carte) ? 1600 : 1200);
+        timerPasso = setTimeout(function () { drv.onPasso("avanza"); }, pausa);
+      }
     }
     function applicaDiff(pre, v) {
-      if (!pre) { if (v.fase !== "punta") anim.distrib = true; return; }
+      if (!pre) return;
       var rivelato = (v.fase === "banco" || v.fase === "esito") && !(pre.fase === "banco" || pre.fase === "esito");
       if (v.banco.length > pre.banco.length || rivelato) anim.banco = true;
       if (v.banco.length > pre.banco.length) suonoCarta();
-      var pre0 = pre.giocatori.reduce(function (a, g) { return a + contaCarte(g); }, 0);
-      var now0 = v.giocatori.reduce(function (a, g) { return a + contaCarte(g); }, 0);
-      if (pre0 === 0 && now0 > 0) { anim.distrib = true; suonoCarta(); }
-      else if (now0 > pre0) {
-        for (var i = 0; i < v.giocatori.length; i++) {
-          if (contaCarte(v.giocatori[i]) > (pre.giocatori[i] ? contaCarte(pre.giocatori[i]) : 0)) {
-            anim.ultima = i;
-            var g = v.giocatori[i], m = g.mani[g.attiva] || g.mani[g.mani.length - 1];
-            suonoCarta(); if (m && BJ.punteggio(m.carte) > 21) setTimeout(suonoSballo, 90);
-            break;
-          }
+      for (var i = 0; i < v.giocatori.length; i++) {
+        if (contaCarte(v.giocatori[i]) > (pre.giocatori[i] ? contaCarte(pre.giocatori[i]) : 0)) {
+          anim.ultima = i;
+          var g = v.giocatori[i], m = g.mani[g.attiva] || g.mani[g.mani.length - 1];
+          suonoCarta(); if (m && BJ.punteggio(m.carte) > 21) setTimeout(suonoSballo, 90);
+          break;
         }
       }
       if (v.fase === "esito" && pre.fase !== "esito") {
@@ -522,8 +561,8 @@
       var mostraTutto = (vm.fase === "banco" || vm.fase === "esito");
       vm.banco.forEach(function (c, i) {
         var coperta = (!mostraTutto && i === 1);
-        var card = cartaEl(el, c, coperta, "cc" + (anim.banco ? " bj-flip" : ""));
-        if (anim.banco) card.style.animationDelay = (i * 0.12) + "s";
+        var card = cartaEl(el, c, coperta, "cc");
+        if (anim.banco && i === vm.banco.length - 1) daVolare.push(card);
         riga.appendChild(card);
       });
       if (!vm.banco.length) riga.appendChild(el("div", { style: "color:rgba(255,255,255,.4);font-size:.85rem", text: "—" }));
@@ -545,7 +584,11 @@
         var mano = g.mani[0], fan = el("div", { class: "bj-fan" });
         if (mano && mano.carte.length) {
           var n = mano.carte.length, spread = Math.min(16, 70 / n);
-          mano.carte.forEach(function (c, i) { var card = cartaEl(el, c, false); card.style.left = (i * spread) + "px"; card.style.zIndex = i; fan.appendChild(card); });
+          mano.carte.forEach(function (c, i) {
+            var card = cartaEl(el, c, false); card.style.left = (i * spread) + "px"; card.style.zIndex = i;
+            if (anim.ultima === idx && i === n - 1) daVolare.push(card);
+            fan.appendChild(card);
+          });
           fan.style.width = ((n - 1) * spread + 36) + "px";
         } else fan.appendChild(el("div", { style: "color:rgba(255,255,255,.35);font-size:.75rem;margin-top:16px", text: g.puntata ? "…" : "in attesa" }));
         seat.appendChild(fan);
@@ -604,9 +647,8 @@
         var cc = el("div", { class: "bj-hcarte" + (g.mani.length > 1 ? " doppia" : "") });
         m.carte.forEach(function (c, ci) {
           var isUlt = (i === g.attiva && ci === m.carte.length - 1);
-          var animare = anim.distrib || (anim.ultima === gi && isUlt);
-          var card = cartaEl(el, c, false, animare ? "bj-nuova" : "");
-          if (anim.distrib) card.style.animationDelay = (ci * 0.1) + "s";
+          var card = cartaEl(el, c, false, "");
+          if (anim.ultima === gi && isUlt) daVolare.push(card);
           cc.appendChild(card);
         });
         mano.appendChild(cc);
@@ -621,6 +663,13 @@
       zHero.appendChild(el("div", { class: "bj-hnome", text: g.nome + (mio ? "" : " sta giocando…") }));
       zHero.appendChild(el("div", { class: "bj-hfiches", text: g.fiches + " 🪙" }));
       heroCarte(g);
+      var ma = g.mani[g.attiva];
+      if (ma && ma.chiusa) {   // mano finita: resta a schermo un attimo prima di passare
+        var pm = BJ.punteggio(ma.carte);
+        zHero.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:" + (pm > 21 ? "#ff9d8a" : "#9fe6b4"),
+          text: pm > 21 ? ("Sballato! " + pm) : (BJ.eBlackjack(ma.carte) ? "Black Jack! 🎉" : "Fermo a " + pm) }));
+        return;
+      }
       if (!mio) return;
       var v = mosseValideVm(vm), az = el("div", { class: "bj-azioni" });
       function b(txt, cls, on, mv) { var x = el("button", { class: "bj-btn " + cls, text: txt, onclick: function () { drv.onMossa(mv); } }); if (!on) x.disabled = true; return x; }
@@ -662,7 +711,7 @@
       puoAgire: function () { return true; },
       puoNuova: function () { return true; },
       guida: function () { return true; },
-      onPasso: function (k) { if (k === "distrib") M.passoDistribuzione(); else M.passoBanco(); refresh(); },
+      onPasso: function (k) { if (k === "distrib") M.passoDistribuzione(); else if (k === "banco") M.passoBanco(); else if (k === "avanza") M.avanza(); refresh(); },
       onPunta: function (v) { suonoChip(); M.punta(st.turno, v); refresh(); },
       onMossa: function (m) { if (m === "stai") suonoStai(); M.azione(m); refresh(); },
       onAssicura: function (si) { M.assicura(st.turno, si); refresh(); },
@@ -721,7 +770,7 @@
         puoAgire: function (vm) { return vm.turno === 0; },
         puoNuova: function () { return true; },
         guida: function () { return true; },
-        onPasso: function (k) { if (k === "distrib") M.passoDistribuzione(); else M.passoBanco(); bcast(); },
+        onPasso: function (k) { if (k === "distrib") M.passoDistribuzione(); else if (k === "banco") M.passoBanco(); else if (k === "avanza") M.avanza(); bcast(); },
         onPunta: function (v) { if (M.st.turno === 0) { suonoChip(); M.punta(0, v); bcast(); } },
         onMossa: function (m) { if (M.st.turno === 0) { if (m === "stai") suonoStai(); M.azione(m); bcast(); } },
         onAssicura: function (si) { if (M.st.turno === 0) { M.assicura(0, si); bcast(); } },
