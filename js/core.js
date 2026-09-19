@@ -943,6 +943,22 @@
     } catch (e) { return null; }
   }
 
+  // Piccola vibrazione (haptic) a ogni tocco di un tasto, per rendere i giochi
+  // più tattili e interattivi. Un solo "tick" leggero, con un freno anti-raffica.
+  // Funziona su Android; su iPhone la Vibration API non esiste e non fa nulla.
+  (function installaVibrazione() {
+    if (!navigator || typeof navigator.vibrate !== "function") return;
+    var ultimo = 0;
+    document.addEventListener("pointerdown", function (e) {
+      var t = e.target && e.target.closest && e.target.closest("button, .btn, [role=button]");
+      if (!t || t.disabled) return;
+      var ora = Date.now();
+      if (ora - ultimo < 40) return;   // niente vibrazioni doppie ravvicinate
+      ultimo = ora;
+      try { navigator.vibrate(10); } catch (err) {}
+    }, true);
+  })();
+
   window.SG = {
     registra: function (gioco) { giochi.push(gioco); },
     audioCtx: audioCtx,

@@ -172,9 +172,9 @@
   // Badge della fascia: durante l'asta resta nascosto ("?"), viene svelato
   // solo alla fine (nella schermata "Fasce svelate", dopo le votazioni).
   function cellaTier(el, tier, rivela) {
-    return rivela
-      ? el("span", { class: "tier tier-" + tier, text: tier })
-      : el("span", { class: "tier tier-x", text: "?" });
+    // Durante l'asta la fascia resta nascosta: niente badge (più spazio al nome).
+    // Si mostra il badge colorato solo alla fine, quando rivela === true.
+    return rivela ? el("span", { class: "tier tier-" + tier, text: tier }) : null;
   }
 
   // Prende N carte dal round tenendo RARI i pezzi migliori:

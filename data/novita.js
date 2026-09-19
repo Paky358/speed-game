@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 73,
+    data: "19 settembre 2026",
+    titolo: "Vibrazione ai tasti + più carte all'Asta 📳",
+    descrizione: [
+      "Ora ogni tasto dà una piccola vibrazione al tocco, in tutti i giochi: l'esperienza è più tattile (funziona sui telefoni Android; su iPhone il tocco resta silenzioso).",
+      "Nell'Asta, durante il gioco, è sparito il punto interrogativo di fianco alle carte: le fasce restano comunque nascoste fino alla schermata finale 'Fasce svelate!', e i nomi delle carte hanno più spazio.",
+      "'Il Giardino Perfetto' e 'La Palestra di Quartiere' sono pieni di carte nuove in tutti i round."
+    ]
+  },
+  {
     v: 72,
     data: "18 settembre 2026",
     titolo: "Asta: fasce a sorpresa + nuova categoria PlayStation 🎮",
