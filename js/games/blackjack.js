@@ -191,21 +191,35 @@
       return st;
     }
 
+    // La distribuzione non è istantanea: si fa a passi (una carta alla volta),
+    // così la UI la mostra col ritmo del vero tavolo.
+    //   Giro 1: una carta scoperta a ogni giocatore, poi una al banco (scoperta).
+    //   Giro 2: una seconda a ogni giocatore, poi la seconda al banco (coperta).
     function distribuisci() {
       var attivi = st.giocatori.filter(function (g) { return g.puntata > 0; });
       attivi.forEach(function (g) { g.mani = [manoVuota(g.puntata)]; g.attiva = 0; });
-      // due giri di carte ai giocatori, due al banco
-      attivi.forEach(function (g) { g.mani[0].carte.push(pescaSabot(st.sabot)); });
-      st.banco.carte.push(pescaSabot(st.sabot));
-      attivi.forEach(function (g) { g.mani[0].carte.push(pescaSabot(st.sabot)); });
-      st.banco.carte.push(pescaSabot(st.sabot));  // seconda carta = coperta finché non tocca al banco
-      // black jack naturali dei giocatori: mano chiusa
-      attivi.forEach(function (g) { if (eBlackjack(g.mani[0].carte)) g.mani[0].chiusa = true; });
-      // se il banco mostra un Asso -> assicurazione
-      if (st.banco.carte[0].v === 1 && attivi.some(function (g) { return g.fiches >= Math.floor(g.puntata / 2); })) {
+      st.fase = "distrib"; st.dGiro = 1; st.dIdx = 0;
+      return st;
+    }
+    function attiviDist() { return st.giocatori.filter(function (g) { return g.puntata > 0; }); }
+    // dà UNA carta al prossimo destinatario del giro (giocatori, poi banco)
+    function passoDistribuzione() {
+      if (st.fase !== "distrib") return st;
+      var att = attiviDist();
+      if (st.dIdx < att.length) att[st.dIdx].mani[0].carte.push(pescaSabot(st.sabot));
+      else st.banco.carte.push(pescaSabot(st.sabot));
+      st.dIdx++;
+      if (st.dIdx > att.length) {                 // finito il giro (tutti + banco)
+        if (st.dGiro === 1) { st.dGiro = 2; st.dIdx = 0; }
+        else fineDistribuzione(att);
+      }
+      return st;
+    }
+    function fineDistribuzione(att) {
+      att.forEach(function (g) { if (eBlackjack(g.mani[0].carte)) g.mani[0].chiusa = true; });
+      if (st.banco.carte[0].v === 1 && att.some(function (g) { return g.fiches >= Math.floor(g.puntata / 2); })) {
         st.fase = "assic"; st.turno = primoDaAssicurare(0);
       } else avviaGioco();
-      return st;
     }
     function primoDaAssicurare(da) {
       for (var i = da; i < st.giocatori.length; i++) { var g = st.giocatori[i]; if (g.puntata > 0 && !eBlackjack(g.mani[0].carte)) return i; }
@@ -275,12 +289,14 @@
       };
     }
 
-    function giocaBanco() {
-      st.fase = "banco";
-      // il banco gioca solo se c'è almeno una mano viva (non sballata e non BJ già risolto)
-      var qualcuno = st.giocatori.some(function (g) { return g.mani.some(function (m) { return punteggio(m.carte) <= 21 && !eBlackjack(m.carte); }); });
-      if (qualcuno) { while (punteggio(st.banco.carte) < 17) st.banco.carte.push(pescaSabot(st.sabot)); }
+    function giocaBanco() { st.fase = "banco"; }   // gira la coperta; poi pesca a passi
+    function bancoVivo() { return st.giocatori.some(function (g) { return g.mani.some(function (m) { return punteggio(m.carte) <= 21 && !eBlackjack(m.carte); }); }); }
+    // un passo del banco: pesca se ha 16 o meno (e c'è qualcuno da battere), altrimenti risolve
+    function passoBanco() {
+      if (st.fase !== "banco") return st;
+      if (bancoVivo() && punteggio(st.banco.carte) < 17) { st.banco.carte.push(pescaSabot(st.sabot)); return st; }
       risolvi();
+      return st;
     }
 
     function risolvi() {
@@ -307,6 +323,7 @@
     return {
       st: st,
       nuovaMano: nuovaMano, punta: punta, assicura: assicura, azione: azione,
+      passoDistribuzione: passoDistribuzione, passoBanco: passoBanco,
       mosseValide: mosseValide, PUNTATE_RAPIDE: PUNTATE_RAPIDE, PUNTATA_MIN: PUNTATA_MIN
     };
   }
@@ -454,7 +471,7 @@
     s._contenuto.appendChild(wrap); t.mostra(s);
     document.body.classList.add("bj-verde");
 
-    var vm = null, anim = { distrib: false, ultima: -1, banco: false };
+    var vm = null, anim = { distrib: false, ultima: -1, banco: false }, timerPasso = null;
     function svuota(n) { while (n.firstChild) n.removeChild(n.firstChild); }
     function mioIdx() { return drv.mioIdx ? drv.mioIdx() : vm.turno; }
 
@@ -463,11 +480,21 @@
       anim = { distrib: false, ultima: -1, banco: false };
       applicaDiff(pre, vm);
       disegnaBanco(); disegnaTavolata(); disegnaHero();
+      programmaPasso();
+    }
+    // durante distribuzione e gioco del banco chi guida il motore (locale/host)
+    // scandisce le carte una alla volta; l'ospite le riceve e basta.
+    function programmaPasso() {
+      if (timerPasso) { clearTimeout(timerPasso); timerPasso = null; }
+      if (!(drv.guida && drv.guida())) return;
+      if (vm.fase === "distrib") timerPasso = setTimeout(function () { drv.onPasso("distrib"); }, 430);
+      else if (vm.fase === "banco") timerPasso = setTimeout(function () { drv.onPasso("banco"); }, 720);
     }
     function applicaDiff(pre, v) {
       if (!pre) { if (v.fase !== "punta") anim.distrib = true; return; }
       var rivelato = (v.fase === "banco" || v.fase === "esito") && !(pre.fase === "banco" || pre.fase === "esito");
       if (v.banco.length > pre.banco.length || rivelato) anim.banco = true;
+      if (v.banco.length > pre.banco.length) suonoCarta();
       var pre0 = pre.giocatori.reduce(function (a, g) { return a + contaCarte(g); }, 0);
       var now0 = v.giocatori.reduce(function (a, g) { return a + contaCarte(g); }, 0);
       if (pre0 === 0 && now0 > 0) { anim.distrib = true; suonoCarta(); }
@@ -534,10 +561,16 @@
     function disegnaHero() {
       svuota(zHero);
       var mio = drv.puoAgire(vm);
+      if (vm.fase === "distrib") return heroInfo("🂠", "Il mazziere distribuisce…");
       if (vm.fase === "punta") return heroPunta(mio);
       if (vm.fase === "assic") return heroAssic(mio);
+      if (vm.fase === "banco") return heroInfo("🎴", "Gioca il banco…");
       if (vm.fase === "gioca") return heroGioca(mio);
       if (vm.fase === "esito") return heroEsito();
+    }
+    function heroInfo(ico, txt) {
+      zHero.appendChild(el("div", { style: "font-size:2.6rem;line-height:1", text: ico }));
+      zHero.appendChild(el("div", { class: "bj-hnome", text: txt }));
     }
     function heroPunta(mio) {
       var g = vm.giocatori[vm.turno];
@@ -628,6 +661,8 @@
       sotto: "Un telefono · Banco CPU",
       puoAgire: function () { return true; },
       puoNuova: function () { return true; },
+      guida: function () { return true; },
+      onPasso: function (k) { if (k === "distrib") M.passoDistribuzione(); else M.passoBanco(); refresh(); },
       onPunta: function (v) { suonoChip(); M.punta(st.turno, v); refresh(); },
       onMossa: function (m) { if (m === "stai") suonoStai(); M.azione(m); refresh(); },
       onAssicura: function (si) { M.assicura(st.turno, si); refresh(); },
@@ -685,6 +720,8 @@
         mioIdx: function () { return 0; },
         puoAgire: function (vm) { return vm.turno === 0; },
         puoNuova: function () { return true; },
+        guida: function () { return true; },
+        onPasso: function (k) { if (k === "distrib") M.passoDistribuzione(); else M.passoBanco(); bcast(); },
         onPunta: function (v) { if (M.st.turno === 0) { suonoChip(); M.punta(0, v); bcast(); } },
         onMossa: function (m) { if (M.st.turno === 0) { if (m === "stai") suonoStai(); M.azione(m); bcast(); } },
         onAssicura: function (si) { if (M.st.turno === 0) { M.assicura(0, si); bcast(); } },
@@ -736,6 +773,8 @@
         mioIdx: function () { return S.mioSeat; },
         puoAgire: function (vm) { return vm.turno === S.mioSeat; },
         puoNuova: function () { return false; },
+        guida: function () { return false; },
+        onPasso: function () {},
         onPunta: function (v) { suonoChip(); if (S.rete) S.rete.invia({ t: "mossa", kind: "punta", val: v }); },
         onMossa: function (m) { if (m === "stai") suonoStai(); if (S.rete) S.rete.invia({ t: "mossa", kind: "azione", mossa: m }); },
         onAssicura: function (si) { if (S.rete) S.rete.invia({ t: "mossa", kind: "assic", si: si }); },

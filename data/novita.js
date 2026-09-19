@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 76,
+    data: "19 settembre 2026",
+    titolo: "Black Jack: carte a una a una, più tensione 🂠",
+    descrizione: [
+      "La distribuzione non è più tutta insieme: il mazziere dà una carta alla volta, prima a ogni giocatore e poi a sé (la seconda coperta), col ritmo del vero tavolo.",
+      "Anche il banco ora si scopre e pesca una carta alla volta: gira la coperta e tira finché ha 16 o meno, si ferma a 17 o più. Molto più bello da guardare, sperando nel numero giusto.",
+      "Vale sia da un telefono solo sia online (tutti vedono le carte comparire allo stesso ritmo)."
+    ]
+  },
+  {
     v: 75,
     data: "19 settembre 2026",
     titolo: "Black Jack anche online 🃏🔗",
