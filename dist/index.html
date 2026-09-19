@@ -330,7 +330,114 @@ img{ max-width:100%; }
 <form name="bug" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea><input type="text" name="contesto" /></form>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
 <script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
+/* =========================================================
+   NUBE — profili e dati in cloud con Firebase.
+   Login con NOME + PASSWORD (l'email vera e' finta: nome@sg.local,
+   cosi' l'utente inserisce solo nome e password).
+   Salva i dati di ogni giocatore (es. le fiches del Black Jack)
+   in modo che si portino avanti tra una partita e l'altra.
+   La apiKey qui e' pubblica per progetto: la sicurezza sta nelle
+   regole del database (impostate nella console Firebase).
+   ========================================================= */
+(function () {
+  "use strict";
+  var CONFIG = {
+    apiKey: "AIzaSyCxCbBMyn8Y_Xjfl2raDwGw-YmfgVeZj4g",
+    authDomain: "speed-game-33c5b.firebaseapp.com",
+    projectId: "speed-game-33c5b",
+    storageBucket: "speed-game-33c5b.firebasestorage.app",
+    messagingSenderId: "768605679598",
+    appId: "1:768605679598:web:11ea341e4f41327755e8ff"
+  };
+  var FICHES_START = 500;
+  var auth = null, db = null, pronto = false, utente = null, profilo = null, ascolta = [];
+
+  function notifica() { ascolta.forEach(function (cb) { try { cb(profilo); } catch (e) {} }); }
+  // dal nome utente ricava un'email interna stabile (non mostrata a nessuno)
+  function emailDa(nome) {
+    var n = String(nome || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    return (n || "amico") + "@sg.local";
+  }
+  function messaggioErrore(e) {
+    var c = e && e.code || "";
+    if (c === "auth/email-already-in-use") return "Esiste gia' un profilo con questo nome.";
+    if (c === "auth/invalid-credential" || c === "auth/wrong-password" || c === "auth/user-not-found") return "Nome o password sbagliati.";
+    if (c === "auth/weak-password") return "La password deve avere almeno 6 caratteri.";
+    if (c === "auth/network-request-failed") return "Nessuna connessione: riprova.";
+    return "Qualcosa e' andato storto, riprova.";
+  }
+
+  function init() {
+    if (typeof firebase === "undefined" || !firebase.initializeApp) return;   // SDK non caricato
+    try {
+      firebase.initializeApp(CONFIG);
+      auth = firebase.auth();
+      db = firebase.firestore();
+      // la sessione resta salvata: riaprendo l'app si e' gia' loggati
+      auth.onAuthStateChanged(function (u) {
+        utente = u || null;
+        if (u) caricaProfilo(u.uid);
+        else { profilo = null; pronto = true; notifica(); }
+      });
+    } catch (e) { auth = null; pronto = true; }
+  }
+  function caricaProfilo(uid) {
+    db.collection("profili").doc(uid).get().then(function (doc) {
+      profilo = doc.exists ? doc.data() : null;
+      pronto = true; notifica();
+    }).catch(function () { pronto = true; notifica(); });
+  }
+
+  window.SGNube = {
+    disponibile: function () { return !!auth; },
+    pronto: function () { return pronto; },
+    utente: function () { return utente; },
+    profilo: function () { return profilo; },
+    fichesStart: FICHES_START,
+    messaggioErrore: messaggioErrore,
+    // chiamato quando lo stato e' pronto e ad ogni cambio (login/logout/dati)
+    onCambio: function (cb) { ascolta.push(cb); if (pronto) cb(profilo); },
+
+    crea: function (nome, pwd, emoji) {
+      if (!auth) return Promise.reject(new Error("offline"));
+      return auth.createUserWithEmailAndPassword(emailDa(nome), pwd).then(function (cred) {
+        var p = {
+          uid: cred.user.uid, nome: String(nome).trim().slice(0, 20), emoji: emoji || "🙂",
+          fiches: { blackjack: FICHES_START }, stat: {}, creato: Date.now()
+        };
+        return db.collection("profili").doc(cred.user.uid).set(p).then(function () { profilo = p; notifica(); return p; });
+      });
+    },
+    accedi: function (nome, pwd) {
+      if (!auth) return Promise.reject(new Error("offline"));
+      return auth.signInWithEmailAndPassword(emailDa(nome), pwd);
+    },
+    esci: function () { return auth ? auth.signOut() : Promise.resolve(); },
+
+    fiches: function (gioco) {
+      return (profilo && profilo.fiches && profilo.fiches[gioco] != null) ? profilo.fiches[gioco] : null;
+    },
+    salvaFiches: function (gioco, n) {
+      if (!auth || !utente || !profilo) return Promise.resolve();
+      profilo.fiches = profilo.fiches || {}; profilo.fiches[gioco] = n;
+      var patch = {}; patch["fiches." + gioco] = n;
+      return db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+    },
+    // incrementa un contatore di statistica (es. mani vinte)
+    incrStat: function (chiave, quanto) {
+      if (!auth || !utente || !profilo) return Promise.resolve();
+      profilo.stat = profilo.stat || {}; profilo.stat[chiave] = (profilo.stat[chiave] || 0) + (quanto || 1);
+      var patch = {}; patch["stat." + chiave] = profilo.stat[chiave];
+      return db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+    }
+  };
+  init();
+})();
+
 /* =========================================================
    MOTORE COMUNE — "SG"
    Tutto ciò che ogni gioco condivide sta qui, scritto una
@@ -694,6 +801,10 @@ img{ max-width:100%; }
   function scriviL(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function profili() { var p = leggiL(K_PROFILI, []); return (p instanceof Array) ? p : []; }
   function profiloAttivo() {
+    if (window.SGNube && SGNube.disponibile()) {
+      var pc = SGNube.profilo();
+      return pc ? { id: pc.uid, nome: pc.nome, emoji: pc.emoji, cloud: true } : null;
+    }
     var id = leggiL(K_ATTIVO, null);
     return profili().filter(function (p) { return p.id === id; })[0] || null;
   }
@@ -704,7 +815,14 @@ img{ max-width:100%; }
     scriviL(K_PROFILI, lista); scriviL(K_ATTIVO, p.id);
   }
 
+  function schermataCaricamento() {
+    var s = schermata({ icona: "⚡", titolo: "SPeeD GAME", sotto: "Un attimo…" });
+    s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Sto caricando il tuo profilo…" }));
+    mostra(s);
+  }
+
   function schermataAccesso(dopo) {
+    if (window.SGNube && SGNube.disponibile()) return schermataAccessoCloud(dopo);
     var lista = profili();
     var s = schermata({ icona: "👤", titolo: "Il tuo profilo", sotto: "Crea il tuo oppure accedi", indietro: schermataHome });
     s._contenuto.appendChild(el("p", { class: "modulo-nota",
@@ -763,6 +881,61 @@ img{ max-width:100%; }
       salvaProfilo({ id: (esistente && esistente.id) || ("p" + Date.now() + Math.floor(Math.random() * 999)), nome: n, emoji: scelta.emoji });
       dopo();
     }}));
+    mostra(s);
+  }
+
+  // ---- profili in cloud (Firebase): nome + password, ti seguono ovunque ----
+  function schermataAccessoCloud(dopo) {
+    var p = SGNube.profilo();
+    if (p) {   // già dentro: mostra il profilo e il tasto esci
+      var sp = schermata({ icona: p.emoji || "👤", titolo: p.nome, sotto: "Il tuo profilo", indietro: schermataHome });
+      var fi = (p.fiches && p.fiches.blackjack != null) ? p.fiches.blackjack : SGNube.fichesStart;
+      sp._contenuto.appendChild(el("div", { class: "etichetta", text: "Black Jack" }));
+      sp._contenuto.appendChild(el("p", { class: "modulo-nota", html: "Hai <b>" + fi + " fiches</b>. Si portano avanti tra una partita e l'altra, su qualsiasi telefono." }));
+      sp._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🚪 Esci dal profilo", onclick: function () { SGNube.esci().then(function () { schermataHome(); }); } }));
+      mostra(sp); return;
+    }
+    var s = schermata({ icona: "👤", titolo: "Il tuo profilo", sotto: "Entra o crea il tuo", indietro: schermataHome });
+    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Entra col tuo profilo: fiches e dati ti seguono su ogni telefono." }));
+    var nome = el("input", { class: "link-campo", type: "text", maxlength: "20", placeholder: "Nome" });
+    var pwd = el("input", { class: "link-campo", type: "password", maxlength: "40", placeholder: "Password", style: "margin-top:8px" });
+    var avviso = el("div", { class: "link-avviso" });
+    s._contenuto.appendChild(nome); s._contenuto.appendChild(pwd); s._contenuto.appendChild(avviso);
+    var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var n = (nome.value || "").trim(), pw = pwd.value || "";
+      if (n.length < 2 || pw.length < 1) { avviso.textContent = "Scrivi nome e password."; return; }
+      bEntra.disabled = true; avviso.textContent = "Un attimo…";
+      SGNube.accedi(n, pw).then(function () { dopo(); }).catch(function (e) { bEntra.disabled = false; avviso.textContent = SGNube.messaggioErrore(e); });
+    } });
+    s._piede.appendChild(bEntra);
+    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "➕ Non ho un profilo, crealo", onclick: function () { schermataCreaCloud(dopo); } }));
+    mostra(s);
+  }
+
+  function schermataCreaCloud(dopo) {
+    var scelta = { emoji: FACCINE[0] };
+    var s = schermata({ icona: "👤", titolo: "Crea profilo", sotto: "Nome, password e faccina", indietro: function () { schermataAccessoCloud(dopo); } });
+    var nome = el("input", { class: "link-campo", type: "text", maxlength: "20", placeholder: "Come ti chiami?" });
+    var pwd = el("input", { class: "link-campo", type: "password", maxlength: "40", placeholder: "Scegli una password (min 6)", style: "margin-top:8px" });
+    s._contenuto.appendChild(nome); s._contenuto.appendChild(pwd);
+    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Scegli la faccina" }));
+    var griglia = el("div", { class: "faccine" });
+    FACCINE.forEach(function (e) {
+      griglia.appendChild(el("button", { class: "faccina" + (e === scelta.emoji ? " attiva" : ""), text: e, onclick: function () {
+        scelta.emoji = e; [].forEach.call(griglia.children, function (c) { c.className = "faccina" + (c.textContent === e ? " attiva" : ""); });
+      } }));
+    });
+    s._contenuto.appendChild(griglia);
+    var avviso = el("div", { class: "link-avviso" });
+    s._contenuto.appendChild(avviso);
+    var bCrea = el("button", { class: "btn btn-primario", text: "Crea profilo ▶", onclick: function () {
+      var n = (nome.value || "").trim(), pw = pwd.value || "";
+      if (n.length < 2) { avviso.textContent = "Scrivi il tuo nome."; return; }
+      if (pw.length < 6) { avviso.textContent = "La password deve avere almeno 6 caratteri."; return; }
+      bCrea.disabled = true; avviso.textContent = "Creo il profilo…";
+      SGNube.crea(n, pw, scelta.emoji).then(function () { dopo(); }).catch(function (e) { bCrea.disabled = false; avviso.textContent = SGNube.messaggioErrore(e); });
+    } });
+    s._piede.appendChild(bCrea);
     mostra(s);
   }
 
@@ -1298,12 +1471,21 @@ img{ max-width:100%; }
     avviaApp: function () {
       app = document.getElementById("app");
       linkParams = leggiParametriLink();
-      if (linkParams.sala) return salaOspite(linkParams.sala);   // link di una Sala online
-      var g = linkParams.gioco && giochi.filter(function (x) { return x.id === linkParams.gioco; })[0];
-      // Con un codice stanza si entra come OSPITE; altrimenti si apre la preparazione
-      if (g && linkParams.stanza) avviaPartita(g, [], {});
-      else if (g) apriGioco(g);
-      else schermataHome();
+      function parti() {
+        if (linkParams.sala) return salaOspite(linkParams.sala);   // link di una Sala online
+        var g = linkParams.gioco && giochi.filter(function (x) { return x.id === linkParams.gioco; })[0];
+        // Con un codice stanza si entra come OSPITE; altrimenti si apre la preparazione
+        if (g && linkParams.stanza) avviaPartita(g, [], {});
+        else if (g) apriGioco(g);
+        else schermataHome();
+      }
+      // col cloud, aspetta che Firebase ripristini la sessione (login automatico)
+      if (window.SGNube && SGNube.disponibile() && !SGNube.pronto()) {
+        schermataCaricamento();
+        var fatto = false;
+        SGNube.onCambio(function () { if (!fatto && SGNube.pronto()) { fatto = true; parti(); } });
+        setTimeout(function () { if (!fatto) { fatto = true; parti(); } }, 6000);   // rete lenta: parti comunque
+      } else parti();
     },
     // la sala: i giochi possono rimandarci dalla loro schermata finale
     cambiaGioco: function () { schermataScegliGioco(); },
@@ -7897,6 +8079,16 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 78,
+    data: "19 settembre 2026",
+    titolo: "Profili con login e fiches che restano 👤",
+    descrizione: [
+      "Ora puoi creare il tuo profilo con nome e password: entri una volta e ti ritrovi già dentro ogni volta che apri l'app, anche da un altro telefono.",
+      "I dati restano salvati sul cloud, non sul singolo telefono. La prima cosa che sfrutta questo: le fiches del Black Jack. Non riparti più sempre dallo stesso gruzzolo, ma con quelle avanzate dalla partita scorsa.",
+      "Vale anche online: ognuno entra col suo profilo (senza riscrivere il nome) e si porta dietro le sue fiches. In arrivo le statistiche."
+    ]
+  },
+  {
     v: 77,
     data: "19 settembre 2026",
     titolo: "Black Jack: carte che volano dal mazzo, con più calma 🎴",
@@ -11089,11 +11281,12 @@ window.SG_SIPERO = {
 
   function manoVuota(puntata) { return { carte: [], puntata: puntata, chiusa: false, raddoppiata: false, esito: null, vincita: 0 }; }
 
-  function creaMotoreBJ(nomi, mischia) {
+  function creaMotoreBJ(nomi, mischia, fichesIniz) {
     var st = {
       sabot: nuovoSabot(mischia),
       giocatori: nomi.map(function (n, i) {
-        return { id: "g" + i, nome: n, fiches: FICHES_INIZIALI, puntata: 0, assicura: 0, mani: [], attiva: 0 };
+        var f = (fichesIniz && fichesIniz[i] != null) ? fichesIniz[i] : FICHES_INIZIALI;
+        return { id: "g" + i, nome: n, fiches: f, puntata: 0, assicura: 0, mani: [], attiva: 0 };
       }),
       banco: { carte: [] },
       fase: "punta",     // punta -> (assic) -> gioca -> banco -> esito
@@ -11430,6 +11623,7 @@ window.SG_SIPERO = {
       var pre = vm; vm = nuovo;
       anim = { ultima: -1, banco: false }; daVolare = [];
       applicaDiff(pre, vm);
+      if (pre && pre.fase !== "esito" && vm.fase === "esito" && drv.onFineMano) drv.onFineMano(vm);
       disegnaBanco(); disegnaTavolata(); disegnaHero();
       daVolare.forEach(volaDalMazzo);
       programmaPasso();
@@ -11642,10 +11836,19 @@ window.SG_SIPERO = {
   // ---------- MODALITÀ "UN TELEFONO SOLO" ----------
   function localeBJ(t) {
     var nomi = (t.giocatori && t.giocatori.length) ? t.giocatori.slice() : ["Giocatore 1"];
-    var M = BJ.creaMotore(nomi, t.mischia), st = M.st, tav;
+    // se c'è un profilo cloud, il primo giocatore usa (e salva) le sue fiches
+    var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
+    var fichesIniz = null;
+    if (prof) {
+      var f = SGNube.fiches("blackjack");
+      if (f == null || f < BJ.PUNTATA_MIN) f = BJ.FICHES_INIZIALI;   // a zero: si riparte
+      fichesIniz = []; fichesIniz[0] = f;
+    }
+    var M = BJ.creaMotore(nomi, t.mischia, fichesIniz), st = M.st, tav;
+    function salva() { if (prof) SGNube.salvaFiches("blackjack", st.giocatori[0].fiches); }
     function refresh() { tav.aggiorna(vistaBJ(st)); }
     tav = tavoloBJ(t, {
-      sotto: "Un telefono · Banco CPU",
+      sotto: prof ? ("👤 " + prof.nome + " · fiches salvate") : "Un telefono · Banco CPU",
       puoAgire: function () { return true; },
       puoNuova: function () { return true; },
       guida: function () { return true; },
@@ -11653,8 +11856,9 @@ window.SG_SIPERO = {
       onPunta: function (v) { suonoChip(); M.punta(st.turno, v); refresh(); },
       onMossa: function (m) { if (m === "stai") suonoStai(); M.azione(m); refresh(); },
       onAssicura: function (si) { M.assicura(st.turno, si); refresh(); },
+      onFineMano: function () { salva(); },
       onNuova: function () { M.nuovaMano(); refresh(); },
-      onEsci: function () { t.esci(); }
+      onEsci: function () { salva(); t.esci(); }
     });
     M.nuovaMano(); refresh();
   }
@@ -11683,7 +11887,10 @@ window.SG_SIPERO = {
 
   function hostBJ(t) {
     if (!(window.SGNet && SGNet.disponibile())) return localeBJ(t);
-    var seats = [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host" }];
+    var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
+    var mieFiches = prof ? SGNube.fiches("blackjack") : null;
+    if (prof && (mieFiches == null || mieFiches < BJ.PUNTATA_MIN)) mieFiches = BJ.FICHES_INIZIALI;
+    var seats = [{ id: "host", nome: (prof ? prof.nome : (t.giocatori && t.giocatori[0])) || "Host", fiches: mieFiches }];
     var M = null, rete = null, codice = "…", tav = null;
 
     function nomiSeat() { return seats.map(function (x) { return x.nome; }); }
@@ -11697,7 +11904,7 @@ window.SG_SIPERO = {
     function lobbyOut() {
       if (rete) rete.invia({ t: "lobby", codice: codice, giocatori: seats.map(function (x) { return { id: x.id, nome: x.nome }; }) });
       renderLobbyBJ(t, { sonoHost: true, codice: codice, giocatori: seats }, {
-        onComincia: function () { M = BJ.creaMotore(nomiSeat(), t.mischia); avviaTavoloHost(); M.nuovaMano(); bcast(); },
+        onComincia: function () { M = BJ.creaMotore(nomiSeat(), t.mischia, seats.map(function (x) { return x.fiches; })); avviaTavoloHost(); M.nuovaMano(); bcast(); },
         onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
       });
     }
@@ -11712,6 +11919,7 @@ window.SG_SIPERO = {
         onPunta: function (v) { if (M.st.turno === 0) { suonoChip(); M.punta(0, v); bcast(); } },
         onMossa: function (m) { if (M.st.turno === 0) { if (m === "stai") suonoStai(); M.azione(m); bcast(); } },
         onAssicura: function (si) { if (M.st.turno === 0) { M.assicura(0, si); bcast(); } },
+        onFineMano: function (vm) { if (prof) SGNube.salvaFiches("blackjack", vm.giocatori[0].fiches); },
         onNuova: function () { M.nuovaMano(); bcast(); },
         onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
       });
@@ -11723,7 +11931,7 @@ window.SG_SIPERO = {
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          if (seatDiId(id) < 0 && !M && seats.length < 10) seats.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16) });
+          if (seatDiId(id) < 0 && !M && seats.length < 10) seats.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), fiches: (typeof m.fiches === "number" ? m.fiches : null) });
           lobbyOut();
         } else if (M && m.t === "mossa") {
           var seat = seatDiId(id); if (seat < 0 || M.st.turno !== seat) return;
@@ -11740,8 +11948,14 @@ window.SG_SIPERO = {
 
   function ospiteBJ(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return localeBJ(t);
-    var el = t.el, S = { rete: null, nome: "", mioSeat: -1, tav: null, giocatori: [] };
-    schermaNome();
+    var el = t.el, prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
+    var S = { rete: null, nome: "", mioSeat: -1, tav: null, giocatori: [], fiches: null };
+    if (prof) {   // già loggato col profilo: entra diretto, niente da riscrivere
+      S.nome = prof.nome;
+      var ff = SGNube.fiches("blackjack");
+      S.fiches = (ff == null || ff < BJ.PUNTATA_MIN) ? BJ.FICHES_INIZIALI : ff;
+      collega();
+    } else schermaNome();
     function schermaNome() {
       var s = t.schermata({ icona: "🃏", titolo: "Entra al tavolo", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
@@ -11765,13 +11979,14 @@ window.SG_SIPERO = {
         onPunta: function (v) { suonoChip(); if (S.rete) S.rete.invia({ t: "mossa", kind: "punta", val: v }); },
         onMossa: function (m) { if (m === "stai") suonoStai(); if (S.rete) S.rete.invia({ t: "mossa", kind: "azione", mossa: m }); },
         onAssicura: function (si) { if (S.rete) S.rete.invia({ t: "mossa", kind: "assic", si: si }); },
+        onFineMano: function (vm) { if (prof && S.mioSeat >= 0 && vm.giocatori[S.mioSeat]) SGNube.salvaFiches("blackjack", vm.giocatori[S.mioSeat].fiches); },
         onNuova: function () {},
         onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); }
       });
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.mioId = id; S.rete.invia({ t: "join", nome: S.nome }); },
+        onAperto: function (id) { S.mioId = id; S.rete.invia({ t: "join", nome: S.nome, fiches: S.fiches }); },
         onMsg: function (m) {
           if (!m) return;
           if (m.t === "lobby") {

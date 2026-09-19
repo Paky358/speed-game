@@ -361,6 +361,10 @@
   function scriviL(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function profili() { var p = leggiL(K_PROFILI, []); return (p instanceof Array) ? p : []; }
   function profiloAttivo() {
+    if (window.SGNube && SGNube.disponibile()) {
+      var pc = SGNube.profilo();
+      return pc ? { id: pc.uid, nome: pc.nome, emoji: pc.emoji, cloud: true } : null;
+    }
     var id = leggiL(K_ATTIVO, null);
     return profili().filter(function (p) { return p.id === id; })[0] || null;
   }
@@ -371,7 +375,14 @@
     scriviL(K_PROFILI, lista); scriviL(K_ATTIVO, p.id);
   }
 
+  function schermataCaricamento() {
+    var s = schermata({ icona: "⚡", titolo: "SPeeD GAME", sotto: "Un attimo…" });
+    s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Sto caricando il tuo profilo…" }));
+    mostra(s);
+  }
+
   function schermataAccesso(dopo) {
+    if (window.SGNube && SGNube.disponibile()) return schermataAccessoCloud(dopo);
     var lista = profili();
     var s = schermata({ icona: "👤", titolo: "Il tuo profilo", sotto: "Crea il tuo oppure accedi", indietro: schermataHome });
     s._contenuto.appendChild(el("p", { class: "modulo-nota",
@@ -430,6 +441,61 @@
       salvaProfilo({ id: (esistente && esistente.id) || ("p" + Date.now() + Math.floor(Math.random() * 999)), nome: n, emoji: scelta.emoji });
       dopo();
     }}));
+    mostra(s);
+  }
+
+  // ---- profili in cloud (Firebase): nome + password, ti seguono ovunque ----
+  function schermataAccessoCloud(dopo) {
+    var p = SGNube.profilo();
+    if (p) {   // già dentro: mostra il profilo e il tasto esci
+      var sp = schermata({ icona: p.emoji || "👤", titolo: p.nome, sotto: "Il tuo profilo", indietro: schermataHome });
+      var fi = (p.fiches && p.fiches.blackjack != null) ? p.fiches.blackjack : SGNube.fichesStart;
+      sp._contenuto.appendChild(el("div", { class: "etichetta", text: "Black Jack" }));
+      sp._contenuto.appendChild(el("p", { class: "modulo-nota", html: "Hai <b>" + fi + " fiches</b>. Si portano avanti tra una partita e l'altra, su qualsiasi telefono." }));
+      sp._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🚪 Esci dal profilo", onclick: function () { SGNube.esci().then(function () { schermataHome(); }); } }));
+      mostra(sp); return;
+    }
+    var s = schermata({ icona: "👤", titolo: "Il tuo profilo", sotto: "Entra o crea il tuo", indietro: schermataHome });
+    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Entra col tuo profilo: fiches e dati ti seguono su ogni telefono." }));
+    var nome = el("input", { class: "link-campo", type: "text", maxlength: "20", placeholder: "Nome" });
+    var pwd = el("input", { class: "link-campo", type: "password", maxlength: "40", placeholder: "Password", style: "margin-top:8px" });
+    var avviso = el("div", { class: "link-avviso" });
+    s._contenuto.appendChild(nome); s._contenuto.appendChild(pwd); s._contenuto.appendChild(avviso);
+    var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var n = (nome.value || "").trim(), pw = pwd.value || "";
+      if (n.length < 2 || pw.length < 1) { avviso.textContent = "Scrivi nome e password."; return; }
+      bEntra.disabled = true; avviso.textContent = "Un attimo…";
+      SGNube.accedi(n, pw).then(function () { dopo(); }).catch(function (e) { bEntra.disabled = false; avviso.textContent = SGNube.messaggioErrore(e); });
+    } });
+    s._piede.appendChild(bEntra);
+    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "➕ Non ho un profilo, crealo", onclick: function () { schermataCreaCloud(dopo); } }));
+    mostra(s);
+  }
+
+  function schermataCreaCloud(dopo) {
+    var scelta = { emoji: FACCINE[0] };
+    var s = schermata({ icona: "👤", titolo: "Crea profilo", sotto: "Nome, password e faccina", indietro: function () { schermataAccessoCloud(dopo); } });
+    var nome = el("input", { class: "link-campo", type: "text", maxlength: "20", placeholder: "Come ti chiami?" });
+    var pwd = el("input", { class: "link-campo", type: "password", maxlength: "40", placeholder: "Scegli una password (min 6)", style: "margin-top:8px" });
+    s._contenuto.appendChild(nome); s._contenuto.appendChild(pwd);
+    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Scegli la faccina" }));
+    var griglia = el("div", { class: "faccine" });
+    FACCINE.forEach(function (e) {
+      griglia.appendChild(el("button", { class: "faccina" + (e === scelta.emoji ? " attiva" : ""), text: e, onclick: function () {
+        scelta.emoji = e; [].forEach.call(griglia.children, function (c) { c.className = "faccina" + (c.textContent === e ? " attiva" : ""); });
+      } }));
+    });
+    s._contenuto.appendChild(griglia);
+    var avviso = el("div", { class: "link-avviso" });
+    s._contenuto.appendChild(avviso);
+    var bCrea = el("button", { class: "btn btn-primario", text: "Crea profilo ▶", onclick: function () {
+      var n = (nome.value || "").trim(), pw = pwd.value || "";
+      if (n.length < 2) { avviso.textContent = "Scrivi il tuo nome."; return; }
+      if (pw.length < 6) { avviso.textContent = "La password deve avere almeno 6 caratteri."; return; }
+      bCrea.disabled = true; avviso.textContent = "Creo il profilo…";
+      SGNube.crea(n, pw, scelta.emoji).then(function () { dopo(); }).catch(function (e) { bCrea.disabled = false; avviso.textContent = SGNube.messaggioErrore(e); });
+    } });
+    s._piede.appendChild(bCrea);
     mostra(s);
   }
 
@@ -965,12 +1031,21 @@
     avviaApp: function () {
       app = document.getElementById("app");
       linkParams = leggiParametriLink();
-      if (linkParams.sala) return salaOspite(linkParams.sala);   // link di una Sala online
-      var g = linkParams.gioco && giochi.filter(function (x) { return x.id === linkParams.gioco; })[0];
-      // Con un codice stanza si entra come OSPITE; altrimenti si apre la preparazione
-      if (g && linkParams.stanza) avviaPartita(g, [], {});
-      else if (g) apriGioco(g);
-      else schermataHome();
+      function parti() {
+        if (linkParams.sala) return salaOspite(linkParams.sala);   // link di una Sala online
+        var g = linkParams.gioco && giochi.filter(function (x) { return x.id === linkParams.gioco; })[0];
+        // Con un codice stanza si entra come OSPITE; altrimenti si apre la preparazione
+        if (g && linkParams.stanza) avviaPartita(g, [], {});
+        else if (g) apriGioco(g);
+        else schermataHome();
+      }
+      // col cloud, aspetta che Firebase ripristini la sessione (login automatico)
+      if (window.SGNube && SGNube.disponibile() && !SGNube.pronto()) {
+        schermataCaricamento();
+        var fatto = false;
+        SGNube.onCambio(function () { if (!fatto && SGNube.pronto()) { fatto = true; parti(); } });
+        setTimeout(function () { if (!fatto) { fatto = true; parti(); } }, 6000);   // rete lenta: parti comunque
+      } else parti();
     },
     // la sala: i giochi possono rimandarci dalla loro schermata finale
     cambiaGioco: function () { schermataScegliGioco(); },

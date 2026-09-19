@@ -25,7 +25,12 @@ OUT=dist/index.html
   echo '<form name="bug" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea><input type="text" name="contesto" /></form>'
   echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>'
   echo '<script src="https://cdn.ably.com/lib/ably.min-2.js"></script>'
+  echo '<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>'
+  echo '<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>'
+  echo '<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>'
   echo '<script>'
+  cat js/nube.js
+  echo ''
   cat js/core.js
   echo ''
   cat js/net.js

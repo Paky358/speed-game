@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 78,
+    data: "19 settembre 2026",
+    titolo: "Profili con login e fiches che restano 👤",
+    descrizione: [
+      "Ora puoi creare il tuo profilo con nome e password: entri una volta e ti ritrovi già dentro ogni volta che apri l'app, anche da un altro telefono.",
+      "I dati restano salvati sul cloud, non sul singolo telefono. La prima cosa che sfrutta questo: le fiches del Black Jack. Non riparti più sempre dallo stesso gruzzolo, ma con quelle avanzate dalla partita scorsa.",
+      "Vale anche online: ognuno entra col suo profilo (senza riscrivere il nome) e si porta dietro le sue fiches. In arrivo le statistiche."
+    ]
+  },
+  {
     v: 77,
     data: "19 settembre 2026",
     titolo: "Black Jack: carte che volano dal mazzo, con più calma 🎴",

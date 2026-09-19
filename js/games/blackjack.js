@@ -151,11 +151,12 @@
 
   function manoVuota(puntata) { return { carte: [], puntata: puntata, chiusa: false, raddoppiata: false, esito: null, vincita: 0 }; }
 
-  function creaMotoreBJ(nomi, mischia) {
+  function creaMotoreBJ(nomi, mischia, fichesIniz) {
     var st = {
       sabot: nuovoSabot(mischia),
       giocatori: nomi.map(function (n, i) {
-        return { id: "g" + i, nome: n, fiches: FICHES_INIZIALI, puntata: 0, assicura: 0, mani: [], attiva: 0 };
+        var f = (fichesIniz && fichesIniz[i] != null) ? fichesIniz[i] : FICHES_INIZIALI;
+        return { id: "g" + i, nome: n, fiches: f, puntata: 0, assicura: 0, mani: [], attiva: 0 };
       }),
       banco: { carte: [] },
       fase: "punta",     // punta -> (assic) -> gioca -> banco -> esito
@@ -492,6 +493,7 @@
       var pre = vm; vm = nuovo;
       anim = { ultima: -1, banco: false }; daVolare = [];
       applicaDiff(pre, vm);
+      if (pre && pre.fase !== "esito" && vm.fase === "esito" && drv.onFineMano) drv.onFineMano(vm);
       disegnaBanco(); disegnaTavolata(); disegnaHero();
       daVolare.forEach(volaDalMazzo);
       programmaPasso();
@@ -704,10 +706,19 @@
   // ---------- MODALITÀ "UN TELEFONO SOLO" ----------
   function localeBJ(t) {
     var nomi = (t.giocatori && t.giocatori.length) ? t.giocatori.slice() : ["Giocatore 1"];
-    var M = BJ.creaMotore(nomi, t.mischia), st = M.st, tav;
+    // se c'è un profilo cloud, il primo giocatore usa (e salva) le sue fiches
+    var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
+    var fichesIniz = null;
+    if (prof) {
+      var f = SGNube.fiches("blackjack");
+      if (f == null || f < BJ.PUNTATA_MIN) f = BJ.FICHES_INIZIALI;   // a zero: si riparte
+      fichesIniz = []; fichesIniz[0] = f;
+    }
+    var M = BJ.creaMotore(nomi, t.mischia, fichesIniz), st = M.st, tav;
+    function salva() { if (prof) SGNube.salvaFiches("blackjack", st.giocatori[0].fiches); }
     function refresh() { tav.aggiorna(vistaBJ(st)); }
     tav = tavoloBJ(t, {
-      sotto: "Un telefono · Banco CPU",
+      sotto: prof ? ("👤 " + prof.nome + " · fiches salvate") : "Un telefono · Banco CPU",
       puoAgire: function () { return true; },
       puoNuova: function () { return true; },
       guida: function () { return true; },
@@ -715,8 +726,9 @@
       onPunta: function (v) { suonoChip(); M.punta(st.turno, v); refresh(); },
       onMossa: function (m) { if (m === "stai") suonoStai(); M.azione(m); refresh(); },
       onAssicura: function (si) { M.assicura(st.turno, si); refresh(); },
+      onFineMano: function () { salva(); },
       onNuova: function () { M.nuovaMano(); refresh(); },
-      onEsci: function () { t.esci(); }
+      onEsci: function () { salva(); t.esci(); }
     });
     M.nuovaMano(); refresh();
   }
@@ -745,7 +757,10 @@
 
   function hostBJ(t) {
     if (!(window.SGNet && SGNet.disponibile())) return localeBJ(t);
-    var seats = [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host" }];
+    var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
+    var mieFiches = prof ? SGNube.fiches("blackjack") : null;
+    if (prof && (mieFiches == null || mieFiches < BJ.PUNTATA_MIN)) mieFiches = BJ.FICHES_INIZIALI;
+    var seats = [{ id: "host", nome: (prof ? prof.nome : (t.giocatori && t.giocatori[0])) || "Host", fiches: mieFiches }];
     var M = null, rete = null, codice = "…", tav = null;
 
     function nomiSeat() { return seats.map(function (x) { return x.nome; }); }
@@ -759,7 +774,7 @@
     function lobbyOut() {
       if (rete) rete.invia({ t: "lobby", codice: codice, giocatori: seats.map(function (x) { return { id: x.id, nome: x.nome }; }) });
       renderLobbyBJ(t, { sonoHost: true, codice: codice, giocatori: seats }, {
-        onComincia: function () { M = BJ.creaMotore(nomiSeat(), t.mischia); avviaTavoloHost(); M.nuovaMano(); bcast(); },
+        onComincia: function () { M = BJ.creaMotore(nomiSeat(), t.mischia, seats.map(function (x) { return x.fiches; })); avviaTavoloHost(); M.nuovaMano(); bcast(); },
         onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
       });
     }
@@ -774,6 +789,7 @@
         onPunta: function (v) { if (M.st.turno === 0) { suonoChip(); M.punta(0, v); bcast(); } },
         onMossa: function (m) { if (M.st.turno === 0) { if (m === "stai") suonoStai(); M.azione(m); bcast(); } },
         onAssicura: function (si) { if (M.st.turno === 0) { M.assicura(0, si); bcast(); } },
+        onFineMano: function (vm) { if (prof) SGNube.salvaFiches("blackjack", vm.giocatori[0].fiches); },
         onNuova: function () { M.nuovaMano(); bcast(); },
         onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
       });
@@ -785,7 +801,7 @@
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          if (seatDiId(id) < 0 && !M && seats.length < 10) seats.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16) });
+          if (seatDiId(id) < 0 && !M && seats.length < 10) seats.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), fiches: (typeof m.fiches === "number" ? m.fiches : null) });
           lobbyOut();
         } else if (M && m.t === "mossa") {
           var seat = seatDiId(id); if (seat < 0 || M.st.turno !== seat) return;
@@ -802,8 +818,14 @@
 
   function ospiteBJ(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return localeBJ(t);
-    var el = t.el, S = { rete: null, nome: "", mioSeat: -1, tav: null, giocatori: [] };
-    schermaNome();
+    var el = t.el, prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
+    var S = { rete: null, nome: "", mioSeat: -1, tav: null, giocatori: [], fiches: null };
+    if (prof) {   // già loggato col profilo: entra diretto, niente da riscrivere
+      S.nome = prof.nome;
+      var ff = SGNube.fiches("blackjack");
+      S.fiches = (ff == null || ff < BJ.PUNTATA_MIN) ? BJ.FICHES_INIZIALI : ff;
+      collega();
+    } else schermaNome();
     function schermaNome() {
       var s = t.schermata({ icona: "🃏", titolo: "Entra al tavolo", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
@@ -827,13 +849,14 @@
         onPunta: function (v) { suonoChip(); if (S.rete) S.rete.invia({ t: "mossa", kind: "punta", val: v }); },
         onMossa: function (m) { if (m === "stai") suonoStai(); if (S.rete) S.rete.invia({ t: "mossa", kind: "azione", mossa: m }); },
         onAssicura: function (si) { if (S.rete) S.rete.invia({ t: "mossa", kind: "assic", si: si }); },
+        onFineMano: function (vm) { if (prof && S.mioSeat >= 0 && vm.giocatori[S.mioSeat]) SGNube.salvaFiches("blackjack", vm.giocatori[S.mioSeat].fiches); },
         onNuova: function () {},
         onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); }
       });
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.mioId = id; S.rete.invia({ t: "join", nome: S.nome }); },
+        onAperto: function (id) { S.mioId = id; S.rete.invia({ t: "join", nome: S.nome, fiches: S.fiches }); },
         onMsg: function (m) {
           if (!m) return;
           if (m.t === "lobby") {
