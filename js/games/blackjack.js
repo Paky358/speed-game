@@ -470,6 +470,22 @@
     return box;
   }
 
+  // a fine mano salva fiches + statistiche del giocatore col profilo (non in prova)
+  function salvaFineMano(g) {
+    if (!g || !(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
+    var mani = 0, vinte = 0, bj = 0, vincMax = 0;
+    g.mani.forEach(function (m) {
+      mani++;
+      if (m.esito === "vince" || m.esito === "blackjack") vinte++;
+      if (m.esito === "blackjack") bj++;
+      var netto = (m.vincita || 0) - m.puntata;
+      if (netto > vincMax) vincMax = netto;
+    });
+    SGNube.salvaProgressi(g.fiches, "blackjack",
+      [["maniGiocate", mani], ["maniVinte", vinte], ["blackjackFatti", bj]],
+      [["recordFiches", g.fiches], ["vincitaMax", vincMax]]);
+  }
+
   // ---- vista (vm): stessa forma dello stato; serve sia il locale sia
   //      l'online (le carte del Black Jack sono scoperte per tutti). ----
   function cp(c) { return { s: c.s, v: c.v }; }
@@ -772,7 +788,7 @@
       onPunta: function (v) { suonoChip(); M.punta(st.turno, v); refresh(); },
       onMossa: function (m) { if (m === "stai") suonoStai(); M.azione(m); refresh(); },
       onAssicura: function (si) { M.assicura(st.turno, si); refresh(); },
-      onFineMano: function () { salva(); },
+      onFineMano: function (v) { if (prof && !prova) salvaFineMano(v.giocatori[0]); },
       onNuova: function () { M.nuovaMano(); refresh(); },
       onEsci: function () { salva(); t.esci(); }
     });
@@ -835,7 +851,7 @@
         onPunta: function (v) { if (M.st.turno === 0) { suonoChip(); M.punta(0, v); bcast(); } },
         onMossa: function (m) { if (M.st.turno === 0) { if (m === "stai") suonoStai(); M.azione(m); bcast(); } },
         onAssicura: function (si) { if (M.st.turno === 0) { M.assicura(0, si); bcast(); } },
-        onFineMano: function (vm) { if (prof && !provaHost) SGNube.salvaFiches("blackjack", vm.giocatori[0].fiches); },
+        onFineMano: function (vm) { if (prof && !provaHost) salvaFineMano(vm.giocatori[0]); },
         onNuova: function () { M.nuovaMano(); bcast(); },
         onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
       });
@@ -896,7 +912,7 @@
         onPunta: function (v) { suonoChip(); if (S.rete) S.rete.invia({ t: "mossa", kind: "punta", val: v }); },
         onMossa: function (m) { if (m === "stai") suonoStai(); if (S.rete) S.rete.invia({ t: "mossa", kind: "azione", mossa: m }); },
         onAssicura: function (si) { if (S.rete) S.rete.invia({ t: "mossa", kind: "assic", si: si }); },
-        onFineMano: function (vm) { if (prof && !S.prova && S.mioSeat >= 0 && vm.giocatori[S.mioSeat]) SGNube.salvaFiches("blackjack", vm.giocatori[S.mioSeat].fiches); },
+        onFineMano: function (vm) { if (prof && !S.prova && S.mioSeat >= 0) salvaFineMano(vm.giocatori[S.mioSeat]); },
         onNuova: function () {},
         onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); }
       });

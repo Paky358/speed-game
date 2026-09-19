@@ -22,6 +22,8 @@
   var auth = null, db = null, pronto = false, utente = null, profilo = null, ascolta = [];
 
   function notifica() { ascolta.forEach(function (cb) { try { cb(profilo); } catch (e) {} }); }
+  function getNested(o, path) { var p = path.split("."); for (var i = 0; i < p.length; i++) { if (o == null) return undefined; o = o[p[i]]; } return o; }
+  function setNested(o, path, v) { var p = path.split("."); for (var i = 0; i < p.length - 1; i++) { if (o[p[i]] == null) o[p[i]] = {}; o = o[p[i]]; } o[p[p.length - 1]] = v; }
   // dal nome utente ricava un'email interna stabile (non mostrata a nessuno)
   function emailDa(nome) {
     var n = String(nome || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -105,11 +107,26 @@
       var patch = { bonusUltimo: profilo.bonusUltimo }; patch["fiches.blackjack"] = nuovo;
       return db.collection("profili").doc(utente.uid).update(patch).then(function () { notifica(); return nuovo; });
     },
-    // incrementa un contatore di statistica (es. mani vinte)
-    incrStat: function (chiave, quanto) {
+    // legge le statistiche di un gioco, es. statGioco("blackjack")
+    statGioco: function (gioco) { return (profilo && profilo.stat && profilo.stat[gioco]) || {}; },
+    // salva in un colpo: fiches del gioco + contatori (incrementi) + record (max)
+    //   incrs / recs = liste di coppie [chiave, valore]
+    salvaProgressi: function (fichesN, gioco, incrs, recs) {
       if (!auth || !utente || !profilo) return Promise.resolve();
-      profilo.stat = profilo.stat || {}; profilo.stat[chiave] = (profilo.stat[chiave] || 0) + (quanto || 1);
-      var patch = {}; patch["stat." + chiave] = profilo.stat[chiave];
+      var FV = firebase.firestore.FieldValue, patch = {};
+      if (fichesN != null) { patch["fiches." + gioco] = fichesN; setNested(profilo, "fiches." + gioco, fichesN); }
+      (incrs || []).forEach(function (kv) {
+        if (!kv[1]) return;
+        var k = "stat." + gioco + "." + kv[0];
+        patch[k] = FV.increment(kv[1]);
+        setNested(profilo, k, (getNested(profilo, k) || 0) + kv[1]);
+      });
+      (recs || []).forEach(function (kv) {
+        var k = "stat." + gioco + "." + kv[0];
+        if (kv[1] > (getNested(profilo, k) || 0)) { patch[k] = kv[1]; setNested(profilo, k, kv[1]); }
+      });
+      var vuoto = true; for (var x in patch) { vuoto = false; break; }
+      if (vuoto) return Promise.resolve();
       return db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
     }
   };

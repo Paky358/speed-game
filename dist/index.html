@@ -358,6 +358,8 @@ img{ max-width:100%; }
   var auth = null, db = null, pronto = false, utente = null, profilo = null, ascolta = [];
 
   function notifica() { ascolta.forEach(function (cb) { try { cb(profilo); } catch (e) {} }); }
+  function getNested(o, path) { var p = path.split("."); for (var i = 0; i < p.length; i++) { if (o == null) return undefined; o = o[p[i]]; } return o; }
+  function setNested(o, path, v) { var p = path.split("."); for (var i = 0; i < p.length - 1; i++) { if (o[p[i]] == null) o[p[i]] = {}; o = o[p[i]]; } o[p[p.length - 1]] = v; }
   // dal nome utente ricava un'email interna stabile (non mostrata a nessuno)
   function emailDa(nome) {
     var n = String(nome || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -441,11 +443,26 @@ img{ max-width:100%; }
       var patch = { bonusUltimo: profilo.bonusUltimo }; patch["fiches.blackjack"] = nuovo;
       return db.collection("profili").doc(utente.uid).update(patch).then(function () { notifica(); return nuovo; });
     },
-    // incrementa un contatore di statistica (es. mani vinte)
-    incrStat: function (chiave, quanto) {
+    // legge le statistiche di un gioco, es. statGioco("blackjack")
+    statGioco: function (gioco) { return (profilo && profilo.stat && profilo.stat[gioco]) || {}; },
+    // salva in un colpo: fiches del gioco + contatori (incrementi) + record (max)
+    //   incrs / recs = liste di coppie [chiave, valore]
+    salvaProgressi: function (fichesN, gioco, incrs, recs) {
       if (!auth || !utente || !profilo) return Promise.resolve();
-      profilo.stat = profilo.stat || {}; profilo.stat[chiave] = (profilo.stat[chiave] || 0) + (quanto || 1);
-      var patch = {}; patch["stat." + chiave] = profilo.stat[chiave];
+      var FV = firebase.firestore.FieldValue, patch = {};
+      if (fichesN != null) { patch["fiches." + gioco] = fichesN; setNested(profilo, "fiches." + gioco, fichesN); }
+      (incrs || []).forEach(function (kv) {
+        if (!kv[1]) return;
+        var k = "stat." + gioco + "." + kv[0];
+        patch[k] = FV.increment(kv[1]);
+        setNested(profilo, k, (getNested(profilo, k) || 0) + kv[1]);
+      });
+      (recs || []).forEach(function (kv) {
+        var k = "stat." + gioco + "." + kv[0];
+        if (kv[1] > (getNested(profilo, k) || 0)) { patch[k] = kv[1]; setNested(profilo, k, kv[1]); }
+      });
+      var vuoto = true; for (var x in patch) { vuoto = false; break; }
+      if (vuoto) return Promise.resolve();
       return db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
     }
   };
@@ -630,7 +647,6 @@ img{ max-width:100%; }
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
       el("div", { class: "home-logo", html: '<svg viewBox="0 0 150 130" width="112" height="97" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgFul" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2a8"/><stop offset=".45" stop-color="#ffd43b"/><stop offset="1" stop-color="#ffb300"/></linearGradient><filter id="sgFulGlow" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#4dabf7" flood-opacity=".5"/><feDropShadow dx="0" dy="0" stdDeviation="1.6" flood-color="#a5d8ff" flood-opacity=".75"/></filter></defs><g fill="url(#sgFul)" stroke="#fff7d6" stroke-width=".7" stroke-linejoin="round" filter="url(#sgFulGlow)"><path d="M7 2v11h3v9l7-12h-4l4-8z" transform="translate(44,50) rotate(32) scale(2.5) translate(-12,-12)"/><path d="M7 2v11h3v9l7-12h-4l4-8z" transform="translate(106,50) rotate(-32) scale(2.5) translate(-12,-12)"/><path d="M7 2v11h3v9l7-12h-4l4-8z" transform="translate(75,62) scale(3.8) translate(-12,-12)"/></g></svg>' }),
       el("h1", { class: "home-titolo", text: "SPeeD GAME" }),
-      el("p", { class: "home-sotto", text: "Scegli un gioco e passa il telefono" }),
       rigaProfilo
     ]));
     // Barra delle categorie (sotto il profilo): "Tutti" + i gruppi. Cliccando si filtra
@@ -901,11 +917,23 @@ img{ max-width:100%; }
   // ---- profili in cloud (Firebase): nome + password, ti seguono ovunque ----
   function schermataAccessoCloud(dopo) {
     var p = SGNube.profilo();
-    if (p) {   // già dentro: mostra il profilo e il tasto esci
+    if (p) {   // già dentro: mostra il profilo, le statistiche e il tasto esci
       var sp = schermata({ icona: p.emoji || "👤", titolo: p.nome, sotto: "Il tuo profilo", indietro: schermataHome });
       var fi = (p.fiches && p.fiches.blackjack != null) ? p.fiches.blackjack : SGNube.fichesStart;
-      sp._contenuto.appendChild(el("div", { class: "etichetta", text: "Black Jack" }));
+      sp._contenuto.appendChild(el("div", { class: "etichetta", text: "🃏 Black Jack" }));
       sp._contenuto.appendChild(el("p", { class: "modulo-nota", html: "Hai <b>" + fi + " fiches</b>. Si portano avanti tra una partita e l'altra, su qualsiasi telefono." }));
+      var st = (p.stat && p.stat.blackjack) || {};
+      var giocate = st.maniGiocate || 0, vinte = st.maniVinte || 0, perc = giocate ? Math.round(vinte / giocate * 100) : 0;
+      var celle = [["Mani giocate", giocate], ["Mani vinte", vinte], ["% vittorie", perc + "%"],
+        ["Black Jack", st.blackjackFatti || 0], ["Record fiches", st.recordFiches || fi], ["Vincita max", st.vincitaMax || 0]];
+      var griglia = el("div", { style: "display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px" });
+      celle.forEach(function (v) {
+        griglia.appendChild(el("div", { style: "background:var(--carta);border-radius:12px;padding:10px 4px;text-align:center;box-shadow:var(--ombra)" }, [
+          el("div", { style: "font-size:1.35rem;font-weight:900;color:#ffe58a;line-height:1.1", text: "" + v[1] }),
+          el("div", { style: "font-size:.7rem;color:var(--testo-tenue);margin-top:3px", text: v[0] })
+        ]));
+      });
+      sp._contenuto.appendChild(griglia);
       sp._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🚪 Esci dal profilo", onclick: function () { SGNube.esci().then(function () { schermataHome(); }); } }));
       mostra(sp); return;
     }
@@ -8093,6 +8121,15 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 81,
+    data: "19 settembre 2026",
+    titolo: "Statistiche nel profilo 📊",
+    descrizione: [
+      "Nel tuo profilo ora trovi le statistiche del Black Jack: mani giocate e vinte, percentuale di vittorie, Black Jack fatti, record di fiches e vincita più alta.",
+      "Si aggiornano da sole a fine partita. In arrivo le statistiche degli altri giochi e le sfide."
+    ]
+  },
+  {
     v: 80,
     data: "19 settembre 2026",
     titolo: "Black Jack: 300 fiches gratis ogni 6 ore 🎁",
@@ -11633,6 +11670,22 @@ window.SG_SIPERO = {
     return box;
   }
 
+  // a fine mano salva fiches + statistiche del giocatore col profilo (non in prova)
+  function salvaFineMano(g) {
+    if (!g || !(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
+    var mani = 0, vinte = 0, bj = 0, vincMax = 0;
+    g.mani.forEach(function (m) {
+      mani++;
+      if (m.esito === "vince" || m.esito === "blackjack") vinte++;
+      if (m.esito === "blackjack") bj++;
+      var netto = (m.vincita || 0) - m.puntata;
+      if (netto > vincMax) vincMax = netto;
+    });
+    SGNube.salvaProgressi(g.fiches, "blackjack",
+      [["maniGiocate", mani], ["maniVinte", vinte], ["blackjackFatti", bj]],
+      [["recordFiches", g.fiches], ["vincitaMax", vincMax]]);
+  }
+
   // ---- vista (vm): stessa forma dello stato; serve sia il locale sia
   //      l'online (le carte del Black Jack sono scoperte per tutti). ----
   function cp(c) { return { s: c.s, v: c.v }; }
@@ -11935,7 +11988,7 @@ window.SG_SIPERO = {
       onPunta: function (v) { suonoChip(); M.punta(st.turno, v); refresh(); },
       onMossa: function (m) { if (m === "stai") suonoStai(); M.azione(m); refresh(); },
       onAssicura: function (si) { M.assicura(st.turno, si); refresh(); },
-      onFineMano: function () { salva(); },
+      onFineMano: function (v) { if (prof && !prova) salvaFineMano(v.giocatori[0]); },
       onNuova: function () { M.nuovaMano(); refresh(); },
       onEsci: function () { salva(); t.esci(); }
     });
@@ -11998,7 +12051,7 @@ window.SG_SIPERO = {
         onPunta: function (v) { if (M.st.turno === 0) { suonoChip(); M.punta(0, v); bcast(); } },
         onMossa: function (m) { if (M.st.turno === 0) { if (m === "stai") suonoStai(); M.azione(m); bcast(); } },
         onAssicura: function (si) { if (M.st.turno === 0) { M.assicura(0, si); bcast(); } },
-        onFineMano: function (vm) { if (prof && !provaHost) SGNube.salvaFiches("blackjack", vm.giocatori[0].fiches); },
+        onFineMano: function (vm) { if (prof && !provaHost) salvaFineMano(vm.giocatori[0]); },
         onNuova: function () { M.nuovaMano(); bcast(); },
         onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
       });
@@ -12059,7 +12112,7 @@ window.SG_SIPERO = {
         onPunta: function (v) { suonoChip(); if (S.rete) S.rete.invia({ t: "mossa", kind: "punta", val: v }); },
         onMossa: function (m) { if (m === "stai") suonoStai(); if (S.rete) S.rete.invia({ t: "mossa", kind: "azione", mossa: m }); },
         onAssicura: function (si) { if (S.rete) S.rete.invia({ t: "mossa", kind: "assic", si: si }); },
-        onFineMano: function (vm) { if (prof && !S.prova && S.mioSeat >= 0 && vm.giocatori[S.mioSeat]) SGNube.salvaFiches("blackjack", vm.giocatori[S.mioSeat].fiches); },
+        onFineMano: function (vm) { if (prof && !S.prova && S.mioSeat >= 0) salvaFineMano(vm.giocatori[S.mioSeat]); },
         onNuova: function () {},
         onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); }
       });

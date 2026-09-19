@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 81,
+    data: "19 settembre 2026",
+    titolo: "Statistiche nel profilo 📊",
+    descrizione: [
+      "Nel tuo profilo ora trovi le statistiche del Black Jack: mani giocate e vinte, percentuale di vittorie, Black Jack fatti, record di fiches e vincita più alta.",
+      "Si aggiornano da sole a fine partita. In arrivo le statistiche degli altri giochi e le sfide."
+    ]
+  },
+  {
     v: 80,
     data: "19 settembre 2026",
     titolo: "Black Jack: 300 fiches gratis ogni 6 ore 🎁",
