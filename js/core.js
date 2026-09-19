@@ -24,7 +24,7 @@
     { id: "parole", nome: "Quiz & parole", icona: "🧠" }
   ];
   var CAT_GIOCO = {
-    scopa: "carte", scopa2v2: "carte", scopone: "carte",
+    scopa: "carte", scopa2v2: "carte", scopone: "carte", blackjack: "carte",
     tris: "sfida", drop4: "sfida", hockey: "sfida", navale: "sfida",
     asta: "festa", impostore: "festa", sipero: "festa",
     scalinata: "mini", horto: "mini", pendolo: "mini",

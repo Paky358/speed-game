@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 74,
+    data: "19 settembre 2026",
+    titolo: "Nuovo gioco: Black Jack 🃏",
+    descrizione: [
+      "Arriva il Black Jack (il 21) contro il banco! Carte francesi disegnate a mano, Sabot da 6 mazzi, fiches da puntare, e tutte le mosse: Carta, Stai, Raddoppia, Dividi e Assicurazione. Da 1 a 10 giocatori.",
+      "Interfaccia da tavolo verde pensata per il telefono: il Banco in alto, il giocatore di turno grande al centro coi tasti comodi, e tutti gli altri in una fila che scorre in basso. Con carte animate, suoni e vibrazione.",
+      "Per ora si gioca con un telefono solo (il banco è la CPU). La modalità online, ognuno dal suo telefono, arriva a breve."
+    ]
+  },
+  {
     v: 73,
     data: "19 settembre 2026",
     titolo: "Vibrazione ai tasti + più carte all'Asta 📳",
