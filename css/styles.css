@@ -318,3 +318,114 @@ img{ max-width:100%; }
 .home .tessera .info .meta{ font-size:.95rem; margin-top:6px; }
 .home .tessera:not(.presto)::after{ font-size:2rem; }
 .home .piede{ margin-top:18px; }
+
+/* =========================================================
+   HOME 3D — restyle ricco e tridimensionale (solo aspetto).
+   Sfondo blu profondo + nido d'ape, logo/titolo metallici,
+   barra profilo in vetro, categorie a tasti fisici, card
+   dei giochi rialzate con illustrazione in alto.
+   ========================================================= */
+
+/* --- Sfondo blu profondo + trama esagonale (nido d'ape) sottile --- */
+body{
+  background:radial-gradient(125% 95% at 50% -12%, #26386f 0%, #16234f 46%, #0c1636 100%) fixed, #0c1636;
+}
+body::before{
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z' fill='%23aac4ff' fill-opacity='0.05'/%3E%3C/svg%3E");
+  background-size:34px 60px;
+}
+
+/* --- Logo + titolo metallico con bagliore energia --- */
+.home-hero{ position:relative; }
+.home-hero::before{
+  content:""; position:absolute; left:50%; top:34%; transform:translate(-50%,-50%);
+  width:88%; max-width:520px; height:150px; z-index:-1; pointer-events:none;
+  background:radial-gradient(ellipse at center, rgba(255,163,44,.30), rgba(255,120,20,0) 68%);
+  filter:blur(8px);
+}
+.home-logo{ line-height:0; margin:0 0 -6px; filter:none; }
+.home-titolo{
+  margin:0; font-size:2.75rem; line-height:1.02; letter-spacing:.005em; font-weight:900;
+  background:linear-gradient(180deg,#fff7cf 0%,#ffdf5f 34%,#f7ad14 62%,#b96c06 100%);
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:transparent;
+  text-shadow:
+    0 1px 0 #b47c1a, 0 2px 0 #a06a12, 0 3px 0 #8a570d,
+    0 4px 7px rgba(0,0,0,.5),
+    0 0 16px rgba(255,158,44,.6), 0 0 34px rgba(255,120,20,.4);
+  filter:drop-shadow(0 0 10px rgba(255,140,30,.35));
+}
+
+/* --- Barra profilo: vetro (glassmorphism) --- */
+.home-profilo{ margin-top:18px; }
+.profilo-chip, .home-novita{
+  background:linear-gradient(180deg, rgba(255,255,255,.17), rgba(255,255,255,.06));
+  -webkit-backdrop-filter:blur(12px) saturate(1.35); backdrop-filter:blur(12px) saturate(1.35);
+  border:1px solid rgba(255,255,255,.24);
+  box-shadow:0 8px 20px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.4);
+  border-radius:99px; padding:10px 16px; min-height:46px; color:#fff;
+}
+.profilo-chip .modifica{ color:#ffd76a; }
+
+/* --- Filtri categorie: tasti fisici 3D (neumorfismo) --- */
+.cat-barra{ gap:9px; margin-bottom:16px; }
+.cat-tab{
+  border:1px solid rgba(255,255,255,.16); border-radius:15px; min-height:46px; padding:10px 14px;
+  color:#eaf0ff; font-weight:800; font-size:.88rem;
+  background:linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.05));
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  box-shadow:0 6px 14px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.28);
+  transition:transform .06s ease, box-shadow .12s ease;
+}
+.cat-tab:active{ transform:translateY(1px) scale(.98);
+  box-shadow:0 3px 7px rgba(0,0,0,.3), inset 0 2px 6px rgba(0,0,0,.28); }
+.cat-tab .ci{ font-size:1.15rem; filter:drop-shadow(0 2px 3px rgba(0,0,0,.4)); }
+.cat-tab.attiva{
+  background:linear-gradient(180deg,#ffe57e,#f4b011);
+  color:#3a2500; border-color:#fff2b0;
+  box-shadow:0 7px 18px rgba(244,176,17,.5),
+    inset 0 2px 5px rgba(255,255,255,.6), inset 0 -3px 7px rgba(150,92,0,.45);
+}
+
+/* --- Card dei giochi: rialzate, impilate, illustrazione in alto --- */
+.home .griglia-giochi{ display:grid; grid-template-columns:repeat(2,1fr); gap:15px; align-items:start; }
+.home .tessera{
+  flex-direction:column; align-items:stretch; gap:0; text-align:left;
+  padding:0; overflow:hidden; border-radius:20px;
+  background:linear-gradient(180deg,#33438f,#212e66);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.14),
+    0 5px 0 #151f47,
+    0 12px 22px rgba(0,0,0,.42),
+    0 22px 34px rgba(0,0,0,.28);
+  transition:transform .08s ease, box-shadow .15s ease;
+}
+.home .tessera:active{ transform:translateY(2px); box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12), 0 3px 0 #151f47, 0 8px 16px rgba(0,0,0,.4); }
+@media (hover:hover){ .home .tessera:hover{ transform:translateY(-3px); box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.16), 0 7px 0 #151f47, 0 16px 28px rgba(0,0,0,.46), 0 26px 40px rgba(0,0,0,.3); } }
+.home .tessera .icona{
+  width:100%; height:118px; margin:0; border-radius:0; flex:0 0 auto;
+  display:flex; align-items:center; justify-content:center; font-size:3.1rem;
+  background:linear-gradient(150deg,#5a6cd0 0%,#3b4a9c 55%,#33418c 100%);
+  box-shadow:inset 0 -10px 20px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.18);
+  filter:drop-shadow(0 3px 3px rgba(0,0,0,.3));
+}
+/* Foto realistica del gioco (se presente): riempie il banner, l'emoji resta sotto come ripiego */
+.tessera .icona{ position:relative; overflow:hidden; }
+.tessera .icona .illustr{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.home .tessera .icona .illustr{ box-shadow:inset 0 -10px 20px rgba(0,0,0,.28); }
+.home .tessera .info{ flex:1; display:flex; flex-direction:column; gap:5px; padding:12px 13px 13px; }
+.home .tessera .info h2{ font-size:1.1rem; font-weight:800; line-height:1.12; }
+.home .tessera .info p{ font-size:.85rem; line-height:1.28; color:var(--testo-tenue);
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.home .tessera .info .meta{ margin-top:auto; padding-top:4px; font-size:.82rem; font-weight:800; color:#ffd76a; }
+.home .tessera:not(.presto)::after{ display:none; }
+.home .tessera.presto{ justify-content:center; align-items:center; min-height:150px; }
+.home .tessera.presto .icona{ height:auto; background:none; box-shadow:none; filter:none; font-size:2.4rem; padding-top:14px; }
+.home .tessera.presto .info{ flex:0; text-align:center; padding-top:0; }
+
+/* --- Piccoli schermi: card a colonna singola se molto stretto --- */
+@media (max-width:340px){ .home .griglia-giochi{ grid-template-columns:1fr; } }

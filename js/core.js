@@ -118,8 +118,14 @@
 
   // una tessera-gioco, usata sia in home sia in "cambia gioco"
   function tesseraGioco(g, onclick) {
+    // L'icona fa da "banner": mostra la foto carte/giochi/<id>.jpg se esiste,
+    // altrimenti resta l'emoji del gioco (l'immagine si toglie da sola se manca).
+    var icona = el("span", { class: "icona" }, [ el("span", { class: "emoji", text: g.icona || "🎲" }) ]);
+    var img = el("img", { class: "illustr", src: "carte/giochi/" + g.id + ".jpg", alt: "", loading: "lazy" });
+    img.onerror = function () { if (img.parentNode) img.parentNode.removeChild(img); };
+    icona.appendChild(img);
     return el("button", { class: "tessera", onclick: onclick }, [
-      el("span", { class: "icona", text: g.icona || "🎲" }),
+      icona,
       el("div", { class: "info" }, [
         el("h2", { text: g.nome }),
         el("p", { text: g.descrizione || "" }),
@@ -174,7 +180,7 @@
       rigaProfilo.appendChild(bNov);
     }
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
-      el("div", { class: "home-logo", html: '<svg viewBox="0 0 150 130" width="112" height="97" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgFul" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2a8"/><stop offset=".45" stop-color="#ffd43b"/><stop offset="1" stop-color="#ffb300"/></linearGradient><filter id="sgFulGlow" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#4dabf7" flood-opacity=".5"/><feDropShadow dx="0" dy="0" stdDeviation="1.6" flood-color="#a5d8ff" flood-opacity=".75"/></filter></defs><g fill="url(#sgFul)" stroke="#fff7d6" stroke-width=".7" stroke-linejoin="round" filter="url(#sgFulGlow)"><path d="M7 2v11h3v9l7-12h-4l4-8z" transform="translate(44,50) rotate(32) scale(2.5) translate(-12,-12)"/><path d="M7 2v11h3v9l7-12h-4l4-8z" transform="translate(106,50) rotate(-32) scale(2.5) translate(-12,-12)"/><path d="M7 2v11h3v9l7-12h-4l4-8z" transform="translate(75,62) scale(3.8) translate(-12,-12)"/></g></svg>' }),
+      el("div", { class: "home-logo", html: '<svg viewBox="0 0 200 118" width="156" height="92" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgBolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6bf"/><stop offset=".42" stop-color="#ffd23b"/><stop offset=".72" stop-color="#f6a70c"/><stop offset="1" stop-color="#c06a08"/></linearGradient><linearGradient id="sgBoltHi" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffdf0" stop-opacity=".95"/><stop offset=".5" stop-color="#ffffff" stop-opacity="0"/></linearGradient><filter id="sgGlow" x="-70%" y="-70%" width="240%" height="240%"><feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#ff9d2e" flood-opacity=".75"/><feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#ff7b16" flood-opacity=".4"/></filter><path id="sgB" d="M13 0 L2 20 L10 20 L7 36 L22 12 L13 12 L17 0 Z"/></defs><g filter="url(#sgGlow)" stroke="#8a5209" stroke-width="1.3" stroke-linejoin="round"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBolt)"/></g><g stroke="none"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBoltHi)"/></g></svg>' }),
       el("h1", { class: "home-titolo", text: "SPeeD GAME" }),
       rigaProfilo
     ]));

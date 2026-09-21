@@ -18,7 +18,7 @@
     appId: "1:768605679598:web:11ea341e4f41327755e8ff"
   };
   var FICHES_START = 500;
-  var BONUS = 300, BONUS_MS = 6 * 3600 * 1000;   // 300 fiches gratis ogni 6 ore
+  var BONUS = 300, BONUS_MS = 2 * 3600 * 1000;   // 300 fiches gratis ogni 2 ore
   var auth = null, db = null, pronto = false, utente = null, profilo = null, ascolta = [];
 
   function notifica() { ascolta.forEach(function (cb) { try { cb(profilo); } catch (e) {} }); }
@@ -95,7 +95,7 @@
       return db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
     },
 
-    // ---- bonus gratuito ogni 6 ore ----
+    // ---- bonus gratuito ogni 2 ore ----
     bonusImporto: BONUS,
     puoRitirareBonus: function () { return !!(profilo && (Date.now() - (profilo.bonusUltimo || 0)) >= BONUS_MS); },
     prossimoBonusMs: function () { return profilo ? Math.max(0, BONUS_MS - (Date.now() - (profilo.bonusUltimo || 0))) : BONUS_MS; },

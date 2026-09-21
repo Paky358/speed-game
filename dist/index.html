@@ -1,7 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#141326">
+<meta name="theme-color" content="#0c1636">
 <title>Speed Game</title>
 <style>
 /* =========================================================
@@ -324,6 +324,117 @@ img{ max-width:100%; }
 .home .tessera .info .meta{ font-size:.95rem; margin-top:6px; }
 .home .tessera:not(.presto)::after{ font-size:2rem; }
 .home .piede{ margin-top:18px; }
+
+/* =========================================================
+   HOME 3D — restyle ricco e tridimensionale (solo aspetto).
+   Sfondo blu profondo + nido d'ape, logo/titolo metallici,
+   barra profilo in vetro, categorie a tasti fisici, card
+   dei giochi rialzate con illustrazione in alto.
+   ========================================================= */
+
+/* --- Sfondo blu profondo + trama esagonale (nido d'ape) sottile --- */
+body{
+  background:radial-gradient(125% 95% at 50% -12%, #26386f 0%, #16234f 46%, #0c1636 100%) fixed, #0c1636;
+}
+body::before{
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z' fill='%23aac4ff' fill-opacity='0.05'/%3E%3C/svg%3E");
+  background-size:34px 60px;
+}
+
+/* --- Logo + titolo metallico con bagliore energia --- */
+.home-hero{ position:relative; }
+.home-hero::before{
+  content:""; position:absolute; left:50%; top:34%; transform:translate(-50%,-50%);
+  width:88%; max-width:520px; height:150px; z-index:-1; pointer-events:none;
+  background:radial-gradient(ellipse at center, rgba(255,163,44,.30), rgba(255,120,20,0) 68%);
+  filter:blur(8px);
+}
+.home-logo{ line-height:0; margin:0 0 -6px; filter:none; }
+.home-titolo{
+  margin:0; font-size:2.75rem; line-height:1.02; letter-spacing:.005em; font-weight:900;
+  background:linear-gradient(180deg,#fff7cf 0%,#ffdf5f 34%,#f7ad14 62%,#b96c06 100%);
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:transparent;
+  text-shadow:
+    0 1px 0 #b47c1a, 0 2px 0 #a06a12, 0 3px 0 #8a570d,
+    0 4px 7px rgba(0,0,0,.5),
+    0 0 16px rgba(255,158,44,.6), 0 0 34px rgba(255,120,20,.4);
+  filter:drop-shadow(0 0 10px rgba(255,140,30,.35));
+}
+
+/* --- Barra profilo: vetro (glassmorphism) --- */
+.home-profilo{ margin-top:18px; }
+.profilo-chip, .home-novita{
+  background:linear-gradient(180deg, rgba(255,255,255,.17), rgba(255,255,255,.06));
+  -webkit-backdrop-filter:blur(12px) saturate(1.35); backdrop-filter:blur(12px) saturate(1.35);
+  border:1px solid rgba(255,255,255,.24);
+  box-shadow:0 8px 20px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.4);
+  border-radius:99px; padding:10px 16px; min-height:46px; color:#fff;
+}
+.profilo-chip .modifica{ color:#ffd76a; }
+
+/* --- Filtri categorie: tasti fisici 3D (neumorfismo) --- */
+.cat-barra{ gap:9px; margin-bottom:16px; }
+.cat-tab{
+  border:1px solid rgba(255,255,255,.16); border-radius:15px; min-height:46px; padding:10px 14px;
+  color:#eaf0ff; font-weight:800; font-size:.88rem;
+  background:linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.05));
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  box-shadow:0 6px 14px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.28);
+  transition:transform .06s ease, box-shadow .12s ease;
+}
+.cat-tab:active{ transform:translateY(1px) scale(.98);
+  box-shadow:0 3px 7px rgba(0,0,0,.3), inset 0 2px 6px rgba(0,0,0,.28); }
+.cat-tab .ci{ font-size:1.15rem; filter:drop-shadow(0 2px 3px rgba(0,0,0,.4)); }
+.cat-tab.attiva{
+  background:linear-gradient(180deg,#ffe57e,#f4b011);
+  color:#3a2500; border-color:#fff2b0;
+  box-shadow:0 7px 18px rgba(244,176,17,.5),
+    inset 0 2px 5px rgba(255,255,255,.6), inset 0 -3px 7px rgba(150,92,0,.45);
+}
+
+/* --- Card dei giochi: rialzate, impilate, illustrazione in alto --- */
+.home .griglia-giochi{ display:grid; grid-template-columns:repeat(2,1fr); gap:15px; align-items:start; }
+.home .tessera{
+  flex-direction:column; align-items:stretch; gap:0; text-align:left;
+  padding:0; overflow:hidden; border-radius:20px;
+  background:linear-gradient(180deg,#33438f,#212e66);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.14),
+    0 5px 0 #151f47,
+    0 12px 22px rgba(0,0,0,.42),
+    0 22px 34px rgba(0,0,0,.28);
+  transition:transform .08s ease, box-shadow .15s ease;
+}
+.home .tessera:active{ transform:translateY(2px); box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12), 0 3px 0 #151f47, 0 8px 16px rgba(0,0,0,.4); }
+@media (hover:hover){ .home .tessera:hover{ transform:translateY(-3px); box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.16), 0 7px 0 #151f47, 0 16px 28px rgba(0,0,0,.46), 0 26px 40px rgba(0,0,0,.3); } }
+.home .tessera .icona{
+  width:100%; height:118px; margin:0; border-radius:0; flex:0 0 auto;
+  display:flex; align-items:center; justify-content:center; font-size:3.1rem;
+  background:linear-gradient(150deg,#5a6cd0 0%,#3b4a9c 55%,#33418c 100%);
+  box-shadow:inset 0 -10px 20px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.18);
+  filter:drop-shadow(0 3px 3px rgba(0,0,0,.3));
+}
+/* Foto realistica del gioco (se presente): riempie il banner, l'emoji resta sotto come ripiego */
+.tessera .icona{ position:relative; overflow:hidden; }
+.tessera .icona .illustr{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.home .tessera .icona .illustr{ box-shadow:inset 0 -10px 20px rgba(0,0,0,.28); }
+.home .tessera .info{ flex:1; display:flex; flex-direction:column; gap:5px; padding:12px 13px 13px; }
+.home .tessera .info h2{ font-size:1.1rem; font-weight:800; line-height:1.12; }
+.home .tessera .info p{ font-size:.85rem; line-height:1.28; color:var(--testo-tenue);
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.home .tessera .info .meta{ margin-top:auto; padding-top:4px; font-size:.82rem; font-weight:800; color:#ffd76a; }
+.home .tessera:not(.presto)::after{ display:none; }
+.home .tessera.presto{ justify-content:center; align-items:center; min-height:150px; }
+.home .tessera.presto .icona{ height:auto; background:none; box-shadow:none; filter:none; font-size:2.4rem; padding-top:14px; }
+.home .tessera.presto .info{ flex:0; text-align:center; padding-top:0; }
+
+/* --- Piccoli schermi: card a colonna singola se molto stretto --- */
+@media (max-width:340px){ .home .griglia-giochi{ grid-template-columns:1fr; } }
 </style>
 <div id="app"></div>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
@@ -354,7 +465,7 @@ img{ max-width:100%; }
     appId: "1:768605679598:web:11ea341e4f41327755e8ff"
   };
   var FICHES_START = 500;
-  var BONUS = 300, BONUS_MS = 6 * 3600 * 1000;   // 300 fiches gratis ogni 6 ore
+  var BONUS = 300, BONUS_MS = 2 * 3600 * 1000;   // 300 fiches gratis ogni 2 ore
   var auth = null, db = null, pronto = false, utente = null, profilo = null, ascolta = [];
 
   function notifica() { ascolta.forEach(function (cb) { try { cb(profilo); } catch (e) {} }); }
@@ -431,7 +542,7 @@ img{ max-width:100%; }
       return db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
     },
 
-    // ---- bonus gratuito ogni 6 ore ----
+    // ---- bonus gratuito ogni 2 ore ----
     bonusImporto: BONUS,
     puoRitirareBonus: function () { return !!(profilo && (Date.now() - (profilo.bonusUltimo || 0)) >= BONUS_MS); },
     prossimoBonusMs: function () { return profilo ? Math.max(0, BONUS_MS - (Date.now() - (profilo.bonusUltimo || 0))) : BONUS_MS; },
@@ -589,8 +700,14 @@ img{ max-width:100%; }
 
   // una tessera-gioco, usata sia in home sia in "cambia gioco"
   function tesseraGioco(g, onclick) {
+    // L'icona fa da "banner": mostra la foto carte/giochi/<id>.jpg se esiste,
+    // altrimenti resta l'emoji del gioco (l'immagine si toglie da sola se manca).
+    var icona = el("span", { class: "icona" }, [ el("span", { class: "emoji", text: g.icona || "🎲" }) ]);
+    var img = el("img", { class: "illustr", src: "carte/giochi/" + g.id + ".jpg", alt: "", loading: "lazy" });
+    img.onerror = function () { if (img.parentNode) img.parentNode.removeChild(img); };
+    icona.appendChild(img);
     return el("button", { class: "tessera", onclick: onclick }, [
-      el("span", { class: "icona", text: g.icona || "🎲" }),
+      icona,
       el("div", { class: "info" }, [
         el("h2", { text: g.nome }),
         el("p", { text: g.descrizione || "" }),
@@ -645,7 +762,7 @@ img{ max-width:100%; }
       rigaProfilo.appendChild(bNov);
     }
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
-      el("div", { class: "home-logo", html: '<svg viewBox="0 0 150 130" width="112" height="97" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgFul" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2a8"/><stop offset=".45" stop-color="#ffd43b"/><stop offset="1" stop-color="#ffb300"/></linearGradient><filter id="sgFulGlow" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#4dabf7" flood-opacity=".5"/><feDropShadow dx="0" dy="0" stdDeviation="1.6" flood-color="#a5d8ff" flood-opacity=".75"/></filter></defs><g fill="url(#sgFul)" stroke="#fff7d6" stroke-width=".7" stroke-linejoin="round" filter="url(#sgFulGlow)"><path d="M7 2v11h3v9l7-12h-4l4-8z" transform="translate(44,50) rotate(32) scale(2.5) translate(-12,-12)"/><path d="M7 2v11h3v9l7-12h-4l4-8z" transform="translate(106,50) rotate(-32) scale(2.5) translate(-12,-12)"/><path d="M7 2v11h3v9l7-12h-4l4-8z" transform="translate(75,62) scale(3.8) translate(-12,-12)"/></g></svg>' }),
+      el("div", { class: "home-logo", html: '<svg viewBox="0 0 200 118" width="156" height="92" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgBolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6bf"/><stop offset=".42" stop-color="#ffd23b"/><stop offset=".72" stop-color="#f6a70c"/><stop offset="1" stop-color="#c06a08"/></linearGradient><linearGradient id="sgBoltHi" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffdf0" stop-opacity=".95"/><stop offset=".5" stop-color="#ffffff" stop-opacity="0"/></linearGradient><filter id="sgGlow" x="-70%" y="-70%" width="240%" height="240%"><feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#ff9d2e" flood-opacity=".75"/><feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#ff7b16" flood-opacity=".4"/></filter><path id="sgB" d="M13 0 L2 20 L10 20 L7 36 L22 12 L13 12 L17 0 Z"/></defs><g filter="url(#sgGlow)" stroke="#8a5209" stroke-width="1.3" stroke-linejoin="round"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBolt)"/></g><g stroke="none"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBoltHi)"/></g></svg>' }),
       el("h1", { class: "home-titolo", text: "SPeeD GAME" }),
       rigaProfilo
     ]));
@@ -8121,6 +8238,15 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 82,
+    data: "21 settembre 2026",
+    titolo: "Black Jack: bonus più frequente e mosse a voce 💬",
+    descrizione: [
+      "Il bonus gratuito ora torna ogni 2 ore (invece di 6): 300 fiches, così puoi rientrare al tavolo più spesso.",
+      "Quando qualcuno chiede carta, passa, raddoppia o divide, sopra il suo riquadro esce una nuvoletta in prima persona (\"Carta!\", \"Passo\", \"Raddoppio!\"): capisci al volo cosa ha fatto ognuno."
+    ]
+  },
+  {
     v: 81,
     data: "19 settembre 2026",
     titolo: "Statistiche nel profilo 📊",
@@ -11368,13 +11494,17 @@ window.SG_SIPERO = {
 
     function inGioco() { return st.giocatori.filter(function (g) { return g.fiches > 0 || g.puntata > 0; }); }
 
+    // annuncio "in prima persona" della mossa di un giocatore: la UI lo mostra
+    // come una nuvoletta sopra il suo riquadro (es. clicca "Stai" -> dice "Passo").
+    function annuncia(seat, testo) { st.annSeq = (st.annSeq || 0) + 1; st.annuncio = { seat: seat, testo: testo, id: st.annSeq }; }
+
     function nuovaMano() {
       if (restaSotto(st.sabot)) { rimescolaSabot(st.sabot); st.rimescolato = true; } else st.rimescolato = false;
       st.banco = { carte: [] };
       st.giocatori.forEach(function (g) { g.puntata = 0; g.assicura = 0; g.mani = []; g.attiva = 0; });
       st.fase = "punta";
       st.turno = primoCheDevePuntare(0);
-      st.msg = "";
+      st.msg = ""; st.annuncio = null;
       return st;
     }
     function primoCheDevePuntare(da) {
@@ -11387,6 +11517,7 @@ window.SG_SIPERO = {
       var g = st.giocatori[idx]; if (!g || st.fase !== "punta") return st;
       importo = Math.max(PUNTATA_MIN, Math.min(importo, g.fiches));
       g.puntata = importo; g.fiches -= importo;
+      annuncia(idx, "Punto " + importo);
       var next = primoCheDevePuntare(idx + 1);
       if (next < 0) distribuisci(); else st.turno = next;
       return st;
@@ -11428,7 +11559,8 @@ window.SG_SIPERO = {
     }
     function assicura(idx, si) {
       var g = st.giocatori[idx]; if (!g || st.fase !== "assic") return st;
-      if (si) { var costo = Math.min(Math.floor(g.puntata / 2), g.fiches); g.assicura = costo; g.fiches -= costo; }
+      if (si) { var costo = Math.min(Math.floor(g.puntata / 2), g.fiches); g.assicura = costo; g.fiches -= costo; annuncia(idx, "Assicuro"); }
+      else annuncia(idx, "Niente");
       var next = primoDaAssicurare(idx + 1);
       if (next < 0) avviaGioco(); else st.turno = next;
       return st;
@@ -11452,10 +11584,10 @@ window.SG_SIPERO = {
       if (st.fase !== "gioca") return st;
       var g = st.giocatori[st.turno]; if (!g) return st;
       var m = g.mani[g.attiva]; if (!m || m.chiusa) return st;
-      if (mossa === "carta") { m.carte.push(pescaSabot(st.sabot)); if (punteggio(m.carte) >= 21) m.chiusa = true; }
-      else if (mossa === "stai") { m.chiusa = true; }
+      if (mossa === "carta") { m.carte.push(pescaSabot(st.sabot)); if (punteggio(m.carte) >= 21) m.chiusa = true; annuncia(st.turno, "Carta!"); }
+      else if (mossa === "stai") { m.chiusa = true; annuncia(st.turno, "Passo"); }
       else if (mossa === "raddoppia") {
-        if (m.carte.length === 2 && g.fiches >= m.puntata) { g.fiches -= m.puntata; m.puntata *= 2; m.raddoppiata = true; m.carte.push(pescaSabot(st.sabot)); m.chiusa = true; }
+        if (m.carte.length === 2 && g.fiches >= m.puntata) { g.fiches -= m.puntata; m.puntata *= 2; m.raddoppiata = true; m.carte.push(pescaSabot(st.sabot)); m.chiusa = true; annuncia(st.turno, "Raddoppio!"); }
       } else if (mossa === "dividi") {
         if (puoDividere(g, m)) {
           g.fiches -= m.puntata;
@@ -11465,6 +11597,7 @@ window.SG_SIPERO = {
           nuova.carte.push(pescaSabot(st.sabot));
           g.mani.splice(g.attiva + 1, 0, nuova);
           if (m.carte[0].v === 1) { m.chiusa = true; nuova.chiusa = true; } // split di assi: una carta sola
+          annuncia(st.turno, "Divido!");
         }
       }
       return st;   // il turno NON avanza subito: la UI aspetta e poi chiama avanza()
@@ -11590,7 +11723,11 @@ window.SG_SIPERO = {
     // tavolata
     ".bj-tavolata{flex:0 0 auto;display:flex;gap:8px;overflow-x:auto;padding:8px 2px;scrollbar-width:none}",
     ".bj-tavolata::-webkit-scrollbar{display:none}",
-    ".bj-seat{flex:0 0 auto;width:104px;background:rgba(0,0,0,.28);border-radius:14px;padding:8px 8px 10px;text-align:center;border:2px solid transparent;transition:opacity .2s}",
+    ".bj-seat{position:relative;flex:0 0 auto;width:104px;background:rgba(0,0,0,.28);border-radius:14px;padding:8px 8px 10px;text-align:center;border:2px solid transparent;transition:opacity .2s}",
+    // nuvoletta con la mossa detta dal giocatore (\"Passo\", \"Carta!\"…)
+    ".bj-bolla{position:absolute;left:50%;top:1px;transform:translateX(-50%);max-width:96px;background:#fff;color:#12233a;font-weight:900;font-size:.82rem;line-height:1.1;padding:5px 10px;border-radius:13px;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.5);z-index:6;pointer-events:none;animation:bjBolla .22s ease}",
+    ".bj-bolla::after{content:'';position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);border:6px solid transparent;border-bottom:0;border-top-color:#fff}",
+    "@keyframes bjBolla{from{opacity:0;transform:translateX(-50%) translateY(6px) scale(.7)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}",
     ".bj-seat.attivo{border-color:#ffd45e;opacity:1}",
     ".bj-seat.spenta{opacity:.42}",
     ".bj-seat .nm{font-size:.82rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
@@ -11647,7 +11784,7 @@ window.SG_SIPERO = {
     var s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
     return h > 0 ? (h + "h " + m + "m") : (m > 0 ? (m + "m") : "poco");
   }
-  // riquadro con saldo fiches + tasto per ritirare il bonus gratis (ogni 6 ore)
+  // riquadro con saldo fiches + tasto per ritirare il bonus gratis (ogni 2 ore)
   function riquadroBonus(el) {
     var box = el("div", { style: "background:var(--carta,#1b1836);border-radius:14px;padding:12px;margin-bottom:12px;text-align:center;box-shadow:var(--ombra,0 6px 16px rgba(0,0,0,.3))" });
     var p = SGNube.profilo();
@@ -11693,6 +11830,7 @@ window.SG_SIPERO = {
   function vistaBJ(st) {
     return {
       fase: st.fase, giro: st.giro, rimescolato: st.rimescolato, turno: st.turno,
+      annuncio: st.annuncio ? { seat: st.annuncio.seat, testo: st.annuncio.testo, id: st.annuncio.id } : null,
       puntateRapide: BJ.PUNTATE_RAPIDE, puntataMin: BJ.PUNTATA_MIN,
       banco: st.banco.carte.map(cp),
       giocatori: st.giocatori.map(function (g) {
@@ -11732,6 +11870,7 @@ window.SG_SIPERO = {
     document.body.classList.add("bj-verde");
 
     var vm = null, anim = { ultima: -1, banco: false }, timerPasso = null, daVolare = [], puntSel = null;
+    var bolla = null, bollaId = -1, bollaTimer = null;   // nuvoletta della mossa
     function svuota(n) { while (n.firstChild) n.removeChild(n.firstChild); }
     function mioIdx() { return drv.mioIdx ? drv.mioIdx() : vm.turno; }
 
@@ -11740,6 +11879,11 @@ window.SG_SIPERO = {
       if (vm.fase !== "punta") puntSel = null;
       anim = { ultima: -1, banco: false }; daVolare = [];
       applicaDiff(pre, vm);
+      if (vm.annuncio && vm.annuncio.id !== bollaId) {   // nuova mossa: mostra la nuvoletta ~2,2s
+        bollaId = vm.annuncio.id; bolla = { seat: vm.annuncio.seat, testo: vm.annuncio.testo };
+        if (bollaTimer) clearTimeout(bollaTimer);
+        bollaTimer = setTimeout(function () { bolla = null; disegnaTavolata(); }, 2200);
+      }
       if (pre && pre.fase !== "esito" && vm.fase === "esito" && drv.onFineMano) drv.onFineMano(vm);
       disegnaBanco(); disegnaTavolata(); disegnaHero();
       daVolare.forEach(volaDalMazzo);
@@ -11845,6 +11989,7 @@ window.SG_SIPERO = {
           var pm = BJ.punteggio(mano.carte), bcls = mano.esito === "vince" || mano.esito === "blackjack" ? "win" : (pm > 21 ? "bust" : "");
           seat.appendChild(el("span", { class: "bj-badge " + bcls, text: vm.fase === "esito" && mano.esito ? etichettaEsito(mano) : BJ.testo(mano.carte) }));
         } else if (g.puntata) seat.appendChild(el("span", { class: "bj-badge", text: g.puntata + "🪙" }));
+        if (bolla && idx === bolla.seat) seat.appendChild(el("div", { class: "bj-bolla", text: bolla.testo }));
         zTav.appendChild(seat);
       });
     }

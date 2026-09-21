@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 82,
+    data: "21 settembre 2026",
+    titolo: "Black Jack: bonus più frequente e mosse a voce 💬",
+    descrizione: [
+      "Il bonus gratuito ora torna ogni 2 ore (invece di 6): 300 fiches, così puoi rientrare al tavolo più spesso.",
+      "Quando qualcuno chiede carta, passa, raddoppia o divide, sopra il suo riquadro esce una nuvoletta in prima persona (\"Carta!\", \"Passo\", \"Raddoppio!\"): capisci al volo cosa ha fatto ognuno."
+    ]
+  },
+  {
     v: 81,
     data: "19 settembre 2026",
     titolo: "Statistiche nel profilo 📊",

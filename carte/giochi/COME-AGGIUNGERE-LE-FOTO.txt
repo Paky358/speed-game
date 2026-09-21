@@ -1,0 +1,32 @@
+COME METTERE LE FOTO DEI GIOCHI NELLA HOME
+==========================================
+
+Ogni gioco mostra in cima alla sua card la foto:  carte/giochi/<nome>.jpg
+Se la foto non c'e', resta l'emoji: quindi puoi aggiungerle una alla volta.
+
+FORMATO CONSIGLIATO
+- File .jpg (oppure .png rinominato .jpg)
+- Formato ORIZZONTALE, circa 800 x 500 px (rapporto ~16:10)
+- Peso leggero: sotto i 200 KB a foto (cosi' il sito resta veloce)
+
+NOME ESATTO DEL FILE PER OGNI GIOCO  (tutto minuscolo, .jpg)
+  timeline.jpg    -> La linea del tempo
+  asta.jpg        -> L'Asta
+  nomicose.jpg    -> Nomi, Cose e Citta'
+  impostore.jpg   -> L'Impostore
+  sipero.jpg      -> Si'... pero'
+  scalinata.jpg   -> La Scalinata
+  horto.jpg       -> Horto Muso (corsa dei cavalli)
+  pendolo.jpg     -> Palla a Pendolo
+  patata.jpg      -> La Patata Bollente
+  hockey.jpg      -> Glow Hockey
+  tris.jpg        -> Tris
+  drop4.jpg       -> Drop 4 (forza quattro)
+  navale.jpg      -> Battaglia Navale
+  scopa.jpg       -> Scopa
+  scopa2v2.jpg    -> Scopa 2 vs 2
+  scopone.jpg     -> Scopone
+  blackjack.jpg   -> Black Jack
+
+Metti i file in questa cartella (carte/giochi/) col nome giusto e basta:
+alla prossima pubblicazione compaiono da soli nelle card.

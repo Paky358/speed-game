@@ -168,13 +168,17 @@
 
     function inGioco() { return st.giocatori.filter(function (g) { return g.fiches > 0 || g.puntata > 0; }); }
 
+    // annuncio "in prima persona" della mossa di un giocatore: la UI lo mostra
+    // come una nuvoletta sopra il suo riquadro (es. clicca "Stai" -> dice "Passo").
+    function annuncia(seat, testo) { st.annSeq = (st.annSeq || 0) + 1; st.annuncio = { seat: seat, testo: testo, id: st.annSeq }; }
+
     function nuovaMano() {
       if (restaSotto(st.sabot)) { rimescolaSabot(st.sabot); st.rimescolato = true; } else st.rimescolato = false;
       st.banco = { carte: [] };
       st.giocatori.forEach(function (g) { g.puntata = 0; g.assicura = 0; g.mani = []; g.attiva = 0; });
       st.fase = "punta";
       st.turno = primoCheDevePuntare(0);
-      st.msg = "";
+      st.msg = ""; st.annuncio = null;
       return st;
     }
     function primoCheDevePuntare(da) {
@@ -187,6 +191,7 @@
       var g = st.giocatori[idx]; if (!g || st.fase !== "punta") return st;
       importo = Math.max(PUNTATA_MIN, Math.min(importo, g.fiches));
       g.puntata = importo; g.fiches -= importo;
+      annuncia(idx, "Punto " + importo);
       var next = primoCheDevePuntare(idx + 1);
       if (next < 0) distribuisci(); else st.turno = next;
       return st;
@@ -228,7 +233,8 @@
     }
     function assicura(idx, si) {
       var g = st.giocatori[idx]; if (!g || st.fase !== "assic") return st;
-      if (si) { var costo = Math.min(Math.floor(g.puntata / 2), g.fiches); g.assicura = costo; g.fiches -= costo; }
+      if (si) { var costo = Math.min(Math.floor(g.puntata / 2), g.fiches); g.assicura = costo; g.fiches -= costo; annuncia(idx, "Assicuro"); }
+      else annuncia(idx, "Niente");
       var next = primoDaAssicurare(idx + 1);
       if (next < 0) avviaGioco(); else st.turno = next;
       return st;
@@ -252,10 +258,10 @@
       if (st.fase !== "gioca") return st;
       var g = st.giocatori[st.turno]; if (!g) return st;
       var m = g.mani[g.attiva]; if (!m || m.chiusa) return st;
-      if (mossa === "carta") { m.carte.push(pescaSabot(st.sabot)); if (punteggio(m.carte) >= 21) m.chiusa = true; }
-      else if (mossa === "stai") { m.chiusa = true; }
+      if (mossa === "carta") { m.carte.push(pescaSabot(st.sabot)); if (punteggio(m.carte) >= 21) m.chiusa = true; annuncia(st.turno, "Carta!"); }
+      else if (mossa === "stai") { m.chiusa = true; annuncia(st.turno, "Passo"); }
       else if (mossa === "raddoppia") {
-        if (m.carte.length === 2 && g.fiches >= m.puntata) { g.fiches -= m.puntata; m.puntata *= 2; m.raddoppiata = true; m.carte.push(pescaSabot(st.sabot)); m.chiusa = true; }
+        if (m.carte.length === 2 && g.fiches >= m.puntata) { g.fiches -= m.puntata; m.puntata *= 2; m.raddoppiata = true; m.carte.push(pescaSabot(st.sabot)); m.chiusa = true; annuncia(st.turno, "Raddoppio!"); }
       } else if (mossa === "dividi") {
         if (puoDividere(g, m)) {
           g.fiches -= m.puntata;
@@ -265,6 +271,7 @@
           nuova.carte.push(pescaSabot(st.sabot));
           g.mani.splice(g.attiva + 1, 0, nuova);
           if (m.carte[0].v === 1) { m.chiusa = true; nuova.chiusa = true; } // split di assi: una carta sola
+          annuncia(st.turno, "Divido!");
         }
       }
       return st;   // il turno NON avanza subito: la UI aspetta e poi chiama avanza()
@@ -390,7 +397,11 @@
     // tavolata
     ".bj-tavolata{flex:0 0 auto;display:flex;gap:8px;overflow-x:auto;padding:8px 2px;scrollbar-width:none}",
     ".bj-tavolata::-webkit-scrollbar{display:none}",
-    ".bj-seat{flex:0 0 auto;width:104px;background:rgba(0,0,0,.28);border-radius:14px;padding:8px 8px 10px;text-align:center;border:2px solid transparent;transition:opacity .2s}",
+    ".bj-seat{position:relative;flex:0 0 auto;width:104px;background:rgba(0,0,0,.28);border-radius:14px;padding:8px 8px 10px;text-align:center;border:2px solid transparent;transition:opacity .2s}",
+    // nuvoletta con la mossa detta dal giocatore (\"Passo\", \"Carta!\"…)
+    ".bj-bolla{position:absolute;left:50%;top:1px;transform:translateX(-50%);max-width:96px;background:#fff;color:#12233a;font-weight:900;font-size:.82rem;line-height:1.1;padding:5px 10px;border-radius:13px;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.5);z-index:6;pointer-events:none;animation:bjBolla .22s ease}",
+    ".bj-bolla::after{content:'';position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);border:6px solid transparent;border-bottom:0;border-top-color:#fff}",
+    "@keyframes bjBolla{from{opacity:0;transform:translateX(-50%) translateY(6px) scale(.7)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}",
     ".bj-seat.attivo{border-color:#ffd45e;opacity:1}",
     ".bj-seat.spenta{opacity:.42}",
     ".bj-seat .nm{font-size:.82rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
@@ -447,7 +458,7 @@
     var s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
     return h > 0 ? (h + "h " + m + "m") : (m > 0 ? (m + "m") : "poco");
   }
-  // riquadro con saldo fiches + tasto per ritirare il bonus gratis (ogni 6 ore)
+  // riquadro con saldo fiches + tasto per ritirare il bonus gratis (ogni 2 ore)
   function riquadroBonus(el) {
     var box = el("div", { style: "background:var(--carta,#1b1836);border-radius:14px;padding:12px;margin-bottom:12px;text-align:center;box-shadow:var(--ombra,0 6px 16px rgba(0,0,0,.3))" });
     var p = SGNube.profilo();
@@ -493,6 +504,7 @@
   function vistaBJ(st) {
     return {
       fase: st.fase, giro: st.giro, rimescolato: st.rimescolato, turno: st.turno,
+      annuncio: st.annuncio ? { seat: st.annuncio.seat, testo: st.annuncio.testo, id: st.annuncio.id } : null,
       puntateRapide: BJ.PUNTATE_RAPIDE, puntataMin: BJ.PUNTATA_MIN,
       banco: st.banco.carte.map(cp),
       giocatori: st.giocatori.map(function (g) {
@@ -532,6 +544,7 @@
     document.body.classList.add("bj-verde");
 
     var vm = null, anim = { ultima: -1, banco: false }, timerPasso = null, daVolare = [], puntSel = null;
+    var bolla = null, bollaId = -1, bollaTimer = null;   // nuvoletta della mossa
     function svuota(n) { while (n.firstChild) n.removeChild(n.firstChild); }
     function mioIdx() { return drv.mioIdx ? drv.mioIdx() : vm.turno; }
 
@@ -540,6 +553,11 @@
       if (vm.fase !== "punta") puntSel = null;
       anim = { ultima: -1, banco: false }; daVolare = [];
       applicaDiff(pre, vm);
+      if (vm.annuncio && vm.annuncio.id !== bollaId) {   // nuova mossa: mostra la nuvoletta ~2,2s
+        bollaId = vm.annuncio.id; bolla = { seat: vm.annuncio.seat, testo: vm.annuncio.testo };
+        if (bollaTimer) clearTimeout(bollaTimer);
+        bollaTimer = setTimeout(function () { bolla = null; disegnaTavolata(); }, 2200);
+      }
       if (pre && pre.fase !== "esito" && vm.fase === "esito" && drv.onFineMano) drv.onFineMano(vm);
       disegnaBanco(); disegnaTavolata(); disegnaHero();
       daVolare.forEach(volaDalMazzo);
@@ -645,6 +663,7 @@
           var pm = BJ.punteggio(mano.carte), bcls = mano.esito === "vince" || mano.esito === "blackjack" ? "win" : (pm > 21 ? "bust" : "");
           seat.appendChild(el("span", { class: "bj-badge " + bcls, text: vm.fase === "esito" && mano.esito ? etichettaEsito(mano) : BJ.testo(mano.carte) }));
         } else if (g.puntata) seat.appendChild(el("span", { class: "bj-badge", text: g.puntata + "🪙" }));
+        if (bolla && idx === bolla.seat) seat.appendChild(el("div", { class: "bj-bolla", text: bolla.testo }));
         zTav.appendChild(seat);
       });
     }

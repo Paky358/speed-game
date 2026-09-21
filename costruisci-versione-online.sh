@@ -14,7 +14,7 @@ OUT=dist/index.html
   echo '<!doctype html>'
   echo '<meta charset="utf-8">'
   echo '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
-  echo '<meta name="theme-color" content="#141326">'
+  echo '<meta name="theme-color" content="#0c1636">'
   echo '<title>Speed Game</title>'
   echo '<style>'
   cat css/styles.css
