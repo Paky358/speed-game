@@ -212,9 +212,10 @@
     var dpr = window.devicePixelRatio || 1;
     cv.style.width = cssW + "px"; cv.style.height = cssH + "px";
     cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
-    // "desynchronized" = meno ritardo fra il dito e lo schermo (Android/Chrome); alpha:false = più veloce
+    // alpha:false = più veloce. NIENTE "desynchronized": su molti telefoni provoca tearing
+    // (l'immagine si spezza e disco/racchette sembrano scomporsi).
     var ctx = null;
-    try { ctx = cv.getContext("2d", { alpha: false, desynchronized: true }); } catch (e) {}
+    try { ctx = cv.getContext("2d", { alpha: false }); } catch (e) {}
     if (!ctx) ctx = cv.getContext("2d");
     ctx.scale(dpr, dpr);
     return { cv: cv, ctx: ctx, cssW: cssW, cssH: cssH };
