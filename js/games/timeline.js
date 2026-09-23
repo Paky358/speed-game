@@ -98,8 +98,52 @@
     var scelte = (imp && imp.categorie) || null;
     var attive = cats.filter(function (c) { return !scelte || scelte.indexOf(c.id) >= 0; });
     if (!attive.length) attive = cats;
-    var d = []; attive.forEach(function (c) { (c.eventi || []).forEach(function (e) { d.push(e); }); });
+    var d = []; attive.forEach(function (c) { (c.eventi || []).forEach(function (e) {
+      var x = {}; for (var k in e) x[k] = e[k]; x._cat = c.id; d.push(x);   // la carta ricorda la sua categoria (trofei)
+    }); });
     return d;
+  }
+  function tutteLeCategorie(imp) {
+    var tot = (window.SG_CATEGORIE || []).length, scelte = imp && imp.categorie;
+    return !scelte || scelte.length >= tot;
+  }
+
+  // ---- Statistiche per i trofei: conta SOLO le giocate di chi ha il profilo attivo ----
+  // Tutto in memoria durante la partita; a fine partita un solo salvataggio sul profilo.
+  function creaTraccia(opz) {
+    if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return null;
+    var s0 = SGNube.statGioco("timeline") || {};
+    var T = { online: !!opz.online, carte: opz.carte || 5, tutteCat: !!opz.tutteCat, piazzate: 0, errori: 0, prima: true,
+      serie: s0.serieOra || 0, serieV: s0.serieVotiOra || 0, inc: {}, salvato: false };   // le serie "di fila" continuano tra le partite
+    T.serieMax = T.serie; T.serieVMax = T.serieV;
+    return T;
+  }
+  function tInc(T, k) { T.inc[k] = (T.inc[k] || 0) + 1; }
+  function tPiazza(T, ok, cat) {         // una mia carta messa nella linea
+    if (!T) return;
+    if (T.prima && !ok) tInc(T, "erroriPrimaCarta");
+    T.prima = false; T.piazzate++;
+    if (ok) { tInc(T, "giusteTot"); if (cat) tInc(T, "giuste_" + cat); T.serie++; if (T.serie > T.serieMax) T.serieMax = T.serie; }
+    else { T.errori++; T.serie = 0; }
+  }
+  function tVoto(T, detto, giusto) {     // un mio voto 👍/👎 sulla carta di un altro
+    if (!T) return;
+    if (giusto) { tInc(T, "votiGiusti"); tInc(T, detto ? "votiSiGiusti" : "votiNoGiusti"); T.serieV++; if (T.serieV > T.serieVMax) T.serieVMax = T.serieV; }
+    else T.serieV = 0;
+  }
+  function tFine(T, classifica, sonoIo, tutteGiocate) {
+    if (!T || T.salvato) return;
+    T.salvato = true;
+    tInc(T, "partite"); if (T.online) tInc(T, "partiteOnline");
+    // vittoria solo se c'era almeno un avversario e si è primi da soli
+    var vinto = classifica.length >= 2 && sonoIo(classifica[0]) && classifica[0].punti > classifica[1].punti;
+    var distacco = vinto ? classifica[0].punti - classifica[1].punti : 0;
+    if (vinto) { tInc(T, "vinte"); if (T.online) tInc(T, "vinteOnline"); if (T.tutteCat) tInc(T, "vinte5cat"); }
+    if (tutteGiocate && T.piazzate > 0 && T.errori === 0) { tInc(T, "perfette"); if (T.carte >= 8) tInc(T, "perfette8"); }
+    var incrs = []; for (var k in T.inc) incrs.push([k, T.inc[k]]);
+    SGNube.salvaProgressi(null, "timeline", incrs,
+      [["serieMax", T.serieMax], ["serieVotiMax", T.serieVMax], ["distaccoMax", distacco]],
+      [["serieOra", T.serie], ["serieVotiOra", T.serieV]]);
   }
   function mischiaArr(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
   function annoTesto(a) { return a < 0 ? Math.abs(a) + " a.C." : String(a); }
@@ -277,6 +321,11 @@
       mazzo: mazzo, linea: [mazzo.pop()], turno: 0, carta: null, _stop: null,
       giocatori: t.giocatori.map(function (n) { return { nome: n, restano: carte, punti: 0 }; })
     };
+    // chi ha il profilo su questo telefono (i trofei contano solo le sue giocate)
+    var prof = window.SGNube && SGNube.disponibile() && SGNube.profilo();
+    stato._io = -1;
+    if (prof) stato.giocatori.forEach(function (g, i) { if (stato._io < 0 && g.nome === prof.nome) stato._io = i; });
+    stato._T = stato._io >= 0 ? creaTraccia({ online: false, carte: carte, tutteCat: tutteLeCategorie(t.impostazioni) }) : null;
     ordina(stato.linea);
     var uno = stato.giocatori.length === 1;
     if (uno) turnoTel(t, stato);
@@ -346,10 +395,12 @@
     var carta = stato.carta, g = stato.giocatori[stato.turno % stato.giocatori.length];
     var ok = gap != null && gapGiusto(stato.linea, gap, carta.anno);
     // punti ai votanti (±50) a seconda se hanno indovinato o no
-    var votiEsito = [];
-    stato.giocatori.forEach(function (x) {
+    var votiEsito = [], gi = stato.turno % stato.giocatori.length;
+    if (gi === stato._io) tPiazza(stato._T, ok, carta._cat);
+    stato.giocatori.forEach(function (x, xi) {
       if (x === g || x._voto == null) return;
       var giusto = (x._voto === ok);
+      if (xi === stato._io) tVoto(stato._T, x._voto, giusto);
       x.punti += giusto ? VOTO : -VOTO;
       votiEsito.push({ nome: x.nome, d: x._voto, giusto: giusto, delta: giusto ? VOTO : -VOTO });
       delete x._voto;
@@ -390,9 +441,13 @@
     t.mostra(s);
   }
   function classificaPunti(giocatori) {
-    return giocatori.slice().sort(function (a, b) { return b.punti - a.punti; }).map(function (g) { return { nome: g.nome, punti: g.punti }; });
+    return giocatori.slice().sort(function (a, b) { return b.punti - a.punti; }).map(function (g) { return { id: g.id, nome: g.nome, punti: g.punti }; });
   }
-  function fineTel(t, stato) { schermataFine(t, classificaPunti(stato.giocatori), function () { partenzaTelefono(t); }); }
+  function fineTel(t, stato) {
+    var cl = classificaPunti(stato.giocatori), io = stato.giocatori[stato._io];
+    if (io) tFine(stato._T, cl, function (r) { return r.nome === io.nome; }, io.restano === 0);
+    schermataFine(t, cl, function () { partenzaTelefono(t); });
+  }
 
   // =========================================================
   //  MODALITÀ ONLINE (host-authoritative, con votazione)
@@ -407,7 +462,8 @@
       turnoId: g.length ? g[idx].id : null, turnoNome: g.length ? g[idx].nome : "",
       linea: st.linea.map(function (e) { return { anno: e.anno, titolo: e.titolo, fatto: e.fatto || "" }; }),
       carta: st.carta ? { titolo: st.carta.titolo, fatto: st.carta.fatto || "" } : null,
-      hannoVotato: Object.keys(st.voti || {}), esito: st.esito || null, classifica: st.classifica || null
+      hannoVotato: Object.keys(st.voti || {}), esito: st.esito || null, classifica: st.classifica || null,
+      carte: st.carte, tutteCat: st.tutteCat   // servono agli ospiti per i trofei
     };
   }
   function hostCrea(t) {
@@ -416,6 +472,7 @@
     var st = {
       mazzo: mischiaArr(pescaDati(t.impostazioni)), linea: [], turno: 0, carta: null, esito: null, classifica: null,
       fase: "lobby", iniziata: false, carte: carte, codice: "…", scelta: null, voti: {}, scadenza: null, _to: null,
+      tutteCat: tutteLeCategorie(t.impostazioni), T: null,
       giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", restano: carte, punti: 0 }]
     };
     function corr() { return st.giocatori[st.turno % st.giocatori.length]; }
@@ -452,7 +509,9 @@
 
     function comincia() {
       if (st.iniziata || st.giocatori.length < 1) return;
-      st.iniziata = true; st.linea = [st.mazzo.pop()]; ordina(st.linea); iniziaTurno();
+      st.iniziata = true; st.linea = [st.mazzo.pop()]; ordina(st.linea);
+      st.T = creaTraccia({ online: true, carte: st.carte, tutteCat: st.tutteCat });
+      iniziaTurno();
     }
     function iniziaTurno() {
       clearTo();
@@ -492,11 +551,13 @@
         if (st.voti[x.id] == null) return; // non ha votato: 0
         var giustoV = (st.voti[x.id] === ok);
         x.punti += giustoV ? VOTO : -VOTO;
-        voti.push({ nome: x.nome, d: st.voti[x.id], giusto: giustoV, delta: giustoV ? VOTO : -VOTO });
+        if (x.id === "host") tVoto(st.T, st.voti[x.id], giustoV);
+        voti.push({ id: x.id, nome: x.nome, d: st.voti[x.id], giusto: giustoV, delta: giustoV ? VOTO : -VOTO });
       });
+      if (g.id === "host") tPiazza(st.T, ok, carta._cat);
       if (ok) { st.linea.push(carta); ordina(st.linea); g.punti += PUNTI; } else { g.punti -= PUNTI; }
       g.restano -= 1;
-      st.esito = { giusto: ok, anno: carta.anno, titolo: carta.titolo, fatto: carta.fatto || "", nome: g.nome,
+      st.esito = { giusto: ok, anno: carta.anno, titolo: carta.titolo, fatto: carta.fatto || "", nome: g.nome, cat: carta._cat,
         delta: ok ? PUNTI : -PUNTI, scaduto: gap === -1, voti: voti, finito: g.restano === 0 };
       st.scelta = null; st.scadenza = null; st.fase = "esito";
       bd();
@@ -508,6 +569,8 @@
     function finisci() {
       clearTo(); st.fase = "fine"; st.scadenza = null;
       st.classifica = classificaPunti(st.giocatori);
+      var io = st.giocatori[indexById(st, "host")];
+      if (io) tFine(st.T, st.classifica, function (r) { return r.id === "host"; }, io.restano === 0);
       bd();
     }
     var cb = { myId: "host", sonoHost: true,
@@ -542,7 +605,7 @@
       S.rete = SGNet.entra(codice, {
         onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome });
           setTimeout(function () { if (!S.vm && S.msg) S.msg.textContent = "Non trovo la partita. Controlla il codice o aspetta che l'host apra la stanza…"; }, 8000); },
-        onMsg: function (m) { if (m && m.t === "vm") { S.vm = m.vm; disegna(); } },
+        onMsg: function (m) { if (m && m.t === "vm") { tracciaOspite(S, m.vm); S.vm = m.vm; disegna(); } },
         onChiuso: function () { schermaErr("Collegamento perso. L'host potrebbe aver chiuso la partita."); },
         onErrore: function (e) { schermaErr(codiceErrore(e)); }
       });
@@ -552,6 +615,21 @@
       s._contenuto.appendChild(el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: t.esci }));
       t.mostra(s);
+    }
+  }
+
+  // L'ospite conta i suoi trofei guardando i cambi di fase che arrivano dall'host
+  function tracciaOspite(S, vm) {
+    var prima = S.vm ? S.vm.fase : null;
+    if (vm.fase !== "lobby" && !S.T && !S.tFatto) { S.tFatto = true; S.T = creaTraccia({ online: true, carte: vm.carte, tutteCat: vm.tutteCat }); }
+    if (!S.T) return;
+    if (vm.fase === "esito" && prima !== "esito" && vm.esito) {
+      if (vm.turnoId === S.myId) tPiazza(S.T, vm.esito.giusto, vm.esito.cat);
+      (vm.esito.voti || []).forEach(function (v) { if (v.id === S.myId) tVoto(S.T, v.d, v.giusto); });
+    }
+    if (vm.fase === "fine" && prima !== "fine") {
+      var io = trovaG(vm, S.myId);
+      tFine(S.T, vm.classifica || [], function (r) { return r.id === S.myId; }, !!io && io.restano === 0);
     }
   }
 

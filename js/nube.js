@@ -109,9 +109,10 @@
     },
     // legge le statistiche di un gioco, es. statGioco("blackjack")
     statGioco: function (gioco) { return (profilo && profilo.stat && profilo.stat[gioco]) || {}; },
-    // salva in un colpo: fiches del gioco + contatori (incrementi) + record (max)
-    //   incrs / recs = liste di coppie [chiave, valore]
-    salvaProgressi: function (fichesN, gioco, incrs, recs) {
+    // salva in un colpo: fiches del gioco + contatori (incrementi) + record (max) + valori da impostare
+    //   incrs / recs / sets = liste di coppie [chiave, valore]
+    //   (sets serve per cose che possono anche scendere, es. la serie di risposte giuste in corso)
+    salvaProgressi: function (fichesN, gioco, incrs, recs, sets) {
       if (!auth || !utente || !profilo) return Promise.resolve();
       var FV = firebase.firestore.FieldValue, patch = {};
       if (fichesN != null) { patch["fiches." + gioco] = fichesN; setNested(profilo, "fiches." + gioco, fichesN); }
@@ -124,6 +125,10 @@
       (recs || []).forEach(function (kv) {
         var k = "stat." + gioco + "." + kv[0];
         if (kv[1] > (getNested(profilo, k) || 0)) { patch[k] = kv[1]; setNested(profilo, k, kv[1]); }
+      });
+      (sets || []).forEach(function (kv) {
+        var k = "stat." + gioco + "." + kv[0];
+        patch[k] = kv[1]; setNested(profilo, k, kv[1]);
       });
       var vuoto = true; for (var x in patch) { vuoto = false; break; }
       if (vuoto) return Promise.resolve();

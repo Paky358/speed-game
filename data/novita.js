@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 87,
+    data: "23 settembre 2026",
+    titolo: "35 trofei per La linea del tempo 📜🏆",
+    descrizione: [
+      "La linea del tempo ha i suoi trofei: carte giuste per ogni categoria, voti azzeccati, partite perfette, serie di fila, vittorie online e molto altro. Prendili tutti per il Platino!",
+      "Le serie 'di fila' continuano anche tra una partita e l'altra. I trofei contano le giocate di chi ha il profilo attivo sul telefono."
+    ]
+  },
+  {
     v: 86,
     data: "23 settembre 2026",
     titolo: "Hockey: ora il computer attacca 🏒🔥",
