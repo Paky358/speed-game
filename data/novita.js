@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 83,
+    data: "23 settembre 2026",
+    titolo: "Sfide e Trofei 🏆",
+    descrizione: [
+      "Nuovo tasto 'Sfide' in home: sblocca trofei giocando, con la barra che mostra quanto ti manca.",
+      "Si parte col Black Jack (es. 'Arriva a 10.000 fiches', 'Fai 10 Black Jack'): i traguardi degli altri giochi arrivano man mano che aggiungiamo le loro statistiche."
+    ]
+  },
+  {
     v: 82,
     data: "21 settembre 2026",
     titolo: "Black Jack: bonus più frequente e mosse a voce 💬",
