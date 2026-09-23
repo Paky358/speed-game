@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 90,
+    data: "23 settembre 2026",
+    titolo: "Glow Hockey al massimo ⚡",
+    descrizione: [
+      "Hitbox precise: anche con una strisciata velocissima la racchetta colpisce il disco (prima a volte ci passava attraverso). I pali della porta sono veri: il disco ci rimbalza contro.",
+      "Disco più veloce e più scorrevole, fisica due volte più precisa, schermo con meno ritardo.",
+      "Dopo un gol tutto si ferma e le racchette tornano al loro posto; niente titolo in alto, il campo è più grande.",
+      "Il computer ora va anche sulla prima palla."
+    ]
+  },
+  {
     v: 89,
     data: "23 settembre 2026",
     titolo: "Glow Hockey: campo nuovo e suoni 🏒🔊",

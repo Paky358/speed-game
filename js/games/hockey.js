@@ -15,16 +15,23 @@
   var RPAD = 0.09;               // raggio racchetta
   var GOALW = 0.44;              // larghezza porta (in x, centrata)
   var REST = 0.94;              // rimbalzo pareti
-  var MAXV = 2.4;                // velocità massima disco (unità/sec)
-  var PADK = 0.7;                // quanto la racchetta spinge il disco
+  var MAXV = 3.2;                // velocità massima disco (unità/sec)
+  var PADK = 0.8;                // quanto la racchetta spinge il disco
+  var ATTRITO = 0.28;            // quanto rallenta il disco da solo (più basso = scivola di più)
   var VINCI = 7;                 // gol per vincere
   var ONLINE_ATTIVO = false;     // online (due telefoni) nascosto per ora: il codice resta, basta rimettere true e il tasto
   var HZ = 16;                   // intervallo minimo fra invii (ms) ~60/sec (dati più freschi)
-  var HSTEP = 1 / 120;           // passo fisso della fisica (sotto-step): collisioni solide
+  var HSTEP = 1 / 240;           // passo fisso della fisica (sotto-step): collisioni solide anche a disco veloce
   var DELAY = 0.05;              // ritardo di interpolazione lato ospite (s): ~50ms, vicino al minimo prima che torni a scattare
 
+  var XL = 0.5 - GOALW / 2, XR = 0.5 + GOALW / 2;   // i due pali della porta (in x)
+  // Il bordo colorato è disegnato FUORI dall'area di gioco: così il disco rimbalza
+  // esattamente contro la riga che vedi, e la luce della porta è esattamente il buco.
+  var BORDO = 0.04;                                 // spessore bordo (frazione della larghezza del canvas)
+  var KH = (1 - 2 * BORDO) * ASP + 2 * BORDO;       // altezza/larghezza del canvas (campo + bordi)
+  function geo(cssW) { var B = cssW * BORDO, F = cssW - 2 * B; return { B: B, F: F, H: F * ASP + 2 * B }; }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
-  function inPorta(x) { return x > 0.5 - GOALW / 2 && x < 0.5 + GOALW / 2; }
+  function inPorta(x) { return x > XL && x < XR; }
 
   // ---------- aspetto del campo: tutto qui, così in futuro si cambiano skin e campi ----------
   // "io" = la racchetta di chi guarda (sempre in basso), "avv" = l'avversario (in alto)
@@ -150,51 +157,70 @@
   }
   function sponda(st, v) { if (Math.abs(v) > 0.25) st.sponde = (st.sponde || 0) + 1; }
   // un sotto-passo di fisica (dt fisso). Le velocità racchetta arrivano da fuori (st._hvx…)
+  // palo della porta: uno spigolo contro cui il disco rimbalza (come nel biliardino)
+  function palo(st, x, y) {
+    var dx = st.px - x, dy = st.py - y, d = Math.hypot(dx, dy);
+    if (d >= RP || d < 1e-9) return;
+    var nx = dx / d, ny = dy / d;
+    st.px = x + nx * RP; st.py = y + ny * RP;
+    var vn = st.pvx * nx + st.pvy * ny;
+    if (vn < 0) { sponda(st, vn); st.pvx -= (1 + REST) * vn * nx; st.pvy -= (1 + REST) * vn * ny; }
+  }
   function passo(st, dt, onGol) {
     if (st.fase !== "gioco") return;
     var prevx = st.px, prevy = st.py;
     st.px += st.pvx * dt; st.py += st.pvy * dt;
-    var f = Math.exp(-0.45 * dt); st.pvx *= f; st.pvy *= f;
+    var f = Math.exp(-ATTRITO * dt); st.pvx *= f; st.pvy *= f;
     collide(st, prevx, prevy, st.hx, st.hy, st._hvx || 0, st._hvy || 0);
     collide(st, prevx, prevy, st.gx, st.gy, st._gvx || 0, st._gvy || 0);
     if (st.px < RP) { sponda(st, st.pvx); st.px = RP; st.pvx = Math.abs(st.pvx) * REST; }
     if (st.px > 1 - RP) { sponda(st, st.pvx); st.px = 1 - RP; st.pvx = -Math.abs(st.pvx) * REST; }
-    if (st.py < RP) { if (inPorta(st.px)) return onGol(1); sponda(st, st.pvy); st.py = RP; st.pvy = Math.abs(st.pvy) * REST; }
-    if (st.py > ASP - RP) { if (inPorta(st.px)) return onGol(2); sponda(st, st.pvy); st.py = ASP - RP; st.pvy = -Math.abs(st.pvy) * REST; }
+    // bordo di fondo: rimbalza, TRANNE nella luce della porta (fra i due pali)
+    var luce = inPorta(st.px);
+    if (st.py < RP && !luce) { sponda(st, st.pvy); st.py = RP; st.pvy = Math.abs(st.pvy) * REST; }
+    if (st.py > ASP - RP && !luce) { sponda(st, st.pvy); st.py = ASP - RP; st.pvy = -Math.abs(st.pvy) * REST; }
+    palo(st, XL, 0); palo(st, XR, 0); palo(st, XL, ASP); palo(st, XR, ASP);
+    // gol: solo quando il centro del disco ha passato la linea di porta
+    if (st.py < 0) return onGol(1);
+    if (st.py > ASP) return onGol(2);
     var sp = Math.hypot(st.pvx, st.pvy); if (sp > MAXV) { st.pvx *= MAXV / sp; st.pvy *= MAXV / sp; }
   }
 
   // ---------- disegno (host e ospite) ----------
   function creaCanvas(t, s) {
     var el = t.el;
-    var wrap = el("div", { style: "display:flex;justify-content:center;margin-top:6px" });
+    var wrap = el("div", { style: "display:flex;justify-content:center;margin-top:0" });
     var cv = el("canvas", { style: "touch-action:none;border-radius:14px;background:" + TEMA.sfondo + ";box-shadow:0 0 0 1px rgba(255,255,255,.08)" });
     wrap.appendChild(cv); s._contenuto.appendChild(wrap);
     // il campo deve ENTRARE TUTTO nello schermo (tutte e due le porte visibili senza scorrere):
     // si adatta sia alla larghezza sia all'altezza disponibile, mantenendo le proporzioni (ASP).
     var vw = window.innerWidth || 360, vh = window.innerHeight || 640;
-    var maxW = Math.min(420, Math.floor(vw - 20));
-    var riserva = 160;                                   // intestazione + indicatore + margini
+    var maxW = Math.min(440, Math.floor(vw - 16));
+    var riserva = 80;                                    // solo il tasto indietro + margini
     var maxH = Math.max(240, Math.floor(vh - riserva));
     var cssW, cssH;
-    if (maxW * ASP <= maxH) { cssW = maxW; cssH = Math.round(maxW * ASP); }   // limita la larghezza
-    else { cssH = maxH; cssW = Math.round(maxH / ASP); }                       // limita l'altezza
+    if (maxW * KH <= maxH) { cssW = maxW; cssH = Math.round(maxW * KH); }     // limita la larghezza
+    else { cssH = maxH; cssW = Math.round(maxH / KH); }                         // limita l'altezza
     var dpr = window.devicePixelRatio || 1;
     cv.style.width = cssW + "px"; cv.style.height = cssH + "px";
     cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
-    var ctx = cv.getContext("2d"); ctx.scale(dpr, dpr);
+    // "desynchronized" = meno ritardo fra il dito e lo schermo (Android/Chrome); alpha:false = più veloce
+    var ctx = null;
+    try { ctx = cv.getContext("2d", { alpha: false, desynchronized: true }); } catch (e) {}
+    if (!ctx) ctx = cv.getContext("2d");
+    ctx.scale(dpr, dpr);
     return { cv: cv, ctx: ctx, cssW: cssW, cssH: cssH };
   }
   // dopo che la schermata è a video, MISURA lo spazio davvero rimasto sotto al campo
   // e lo ridimensiona per farci stare tutto il campo (niente scorrimento). Robusto su ogni telefono.
   function adattaCanvas(C) {
     var rect = C.cv.getBoundingClientRect();
-    var disp = (window.innerHeight || 640) - rect.top - 12;      // spazio dall'alto del campo al fondo schermo
-    var maxW = Math.min(420, Math.floor((window.innerWidth || 360) - 20));
+    var disp = (window.innerHeight || 640) - rect.top - 8;       // spazio dall'alto del campo al fondo schermo
+    var maxW = Math.min(440, Math.floor((window.innerWidth || 360) - 16));
     var maxH = Math.max(200, Math.floor(disp));
     var cssW, cssH;
-    if (maxW * ASP <= maxH) { cssW = maxW; cssH = Math.round(maxW * ASP); }
-    else { cssH = maxH; cssW = Math.round(maxH / ASP); }
+    if (maxW * KH <= maxH) { cssW = maxW; cssH = Math.round(maxW * KH); }
+    else { cssH = maxH; cssW = Math.round(maxH / KH); }
     if (cssW === C.cssW && cssH === C.cssH) return;
     var dpr = window.devicePixelRatio || 1;
     C.cv.style.width = cssW + "px"; C.cv.style.height = cssH + "px";
@@ -203,38 +229,56 @@
     C.cssW = cssW; C.cssH = cssH;
   }
   function cerchio(ctx, x, y, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill(); }
+  // Il campo (sfondo, bordi, linee) non cambia mai: lo disegno UNA volta su un canvas
+  // nascosto e a ogni frame lo copio. Poi sopra solo punteggio, racchette e disco.
+  var campoCache = null;
   function disegna(ctx, cssW, o, flip) {
-    var H = cssW * ASP, W = cssW, T = TEMA;
-    function P(x, y) { return flip ? [(1 - x) * W, (ASP - y) * W] : [x * W, y * W]; }
-    ctx.clearRect(0, 0, W, H);
+    var G = geo(cssW), B = G.B, F = G.F, W = cssW, H = G.H, T = TEMA;
+    var dpr = window.devicePixelRatio || 1;
+    // coordinate di gioco (0..1 x 0..ASP) -> pixel dentro il bordo
+    function P(x, y) { return flip ? [B + (1 - x) * F, B + (ASP - y) * F] : [B + x * F, B + y * F]; }
+    if (!campoCache || campoCache.W !== W || campoCache.dpr !== dpr || campoCache.tema !== T) {
+      var cc = document.createElement("canvas");
+      cc.width = Math.round(W * dpr); cc.height = Math.round(H * dpr);
+      var c2 = cc.getContext("2d"); c2.scale(dpr, dpr);
+      disegnaCampo(c2, W, H, B, F, T);
+      campoCache = { cv: cc, W: W, dpr: dpr, tema: T };
+    }
+    ctx.drawImage(campoCache.cv, 0, 0, W, H);
+    disegnaSopra(ctx, W, H, B, F, T, P, o, flip);
+  }
+  function disegnaCampo(ctx, W, H, B, F, T) {
     ctx.fillStyle = T.sfondo; ctx.fillRect(0, 0, W, H);
-    var lw = Math.max(4, W * 0.035), m = lw / 2, rr = W * 0.07;   // spessore bordo, rientro, raggio angoli
-    var gx0 = (0.5 - GOALW / 2) * W, gx1 = (0.5 + GOALW / 2) * W, gc = lw * 0.9;
+    var m = B / 2, rr = B * 1.3, gc = B * 1.2;              // centro del bordo, raggio angoli, stacco a metà campo
+    var gx0 = B + XL * F, gx1 = B + XR * F;                // pali: esattamente dove sono nella fisica
     // linee: metà campo, cerchio centrale, lunette davanti alle porte
     ctx.strokeStyle = T.linee; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(lw, H / 2); ctx.lineTo(W - lw, H / 2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(W / 2, H / 2, W * 0.16, 0, 6.2832); ctx.stroke();
-    ctx.beginPath(); ctx.arc(W / 2, m, GOALW / 2 * W, 0, Math.PI); ctx.stroke();
-    ctx.beginPath(); ctx.arc(W / 2, H - m, GOALW / 2 * W, Math.PI, 2 * Math.PI); ctx.stroke();
-    // bordi: metà di sopra gialla, di sotto blu. La porta è un BUCO nel bordo (niente colore).
-    ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.lineJoin = "round";
-    function lato(xPorta, yBordo, xLato, yFine, col) {   // da un palo della porta, giro l'angolo, fino a metà campo
+    ctx.beginPath(); ctx.moveTo(B, H / 2); ctx.lineTo(W - B, H / 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W / 2, H / 2, F * 0.16, 0, 6.2832); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W / 2, B, GOALW / 2 * F, 0, Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W / 2, H - B, GOALW / 2 * F, Math.PI, 2 * Math.PI); ctx.stroke();
+    // bordi (fuori dall'area di gioco): sopra gialli, sotto blu. La porta è un BUCO nel bordo.
+    ctx.lineWidth = B; ctx.lineCap = "butt"; ctx.lineJoin = "round";
+    function lato(xPorta, yBordo, xLato, yFine, col) {   // dal palo, giro l'angolo, fino a metà campo
       var dx = xLato < W / 2 ? 1 : -1, dy = yBordo < H / 2 ? 1 : -1;
       ctx.strokeStyle = col; ctx.beginPath();
       ctx.moveTo(xPorta, yBordo); ctx.lineTo(xLato + dx * rr, yBordo);
       ctx.arcTo(xLato, yBordo, xLato, yBordo + dy * rr, rr);
       ctx.lineTo(xLato, yFine); ctx.stroke();
+      cerchio(ctx, xLato, yFine, m, col);              // punta arrotondata verso il centrocampo
     }
     lato(gx0, m, m, H / 2 - gc, T.bordoAlto);         lato(gx1, m, W - m, H / 2 - gc, T.bordoAlto);
     lato(gx0, H - m, m, H / 2 + gc, T.bordoBasso);    lato(gx1, H - m, W - m, H / 2 + gc, T.bordoBasso);
+  }
+  function disegnaSopra(ctx, W, H, B, F, T, P, o, flip) {
     // punteggio sul lato destro, a metà campo: sopra l'avversario, sotto il tuo
     var mio = flip ? o.s2 : o.s1, suo = flip ? o.s1 : o.s2;
-    ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "800 " + Math.round(W * 0.085) + "px system-ui,sans-serif";
-    ctx.fillStyle = T.bordoAlto; ctx.fillText(String(suo), W - W * 0.1, H / 2 - W * 0.09);
-    ctx.fillStyle = T.bordoBasso; ctx.fillText(String(mio), W - W * 0.1, H / 2 + W * 0.09);
+    ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "800 " + Math.round(F * 0.085) + "px system-ui,sans-serif";
+    ctx.fillStyle = T.bordoAlto; ctx.fillText(String(suo), B + F * 0.9, H / 2 - F * 0.09);
+    ctx.fillStyle = T.bordoBasso; ctx.fillText(String(mio), B + F * 0.9, H / 2 + F * 0.09);
     // racchette (anello bianco con centro colorato) + disco
     function racchetta(x, y, c) {
-      var p = P(x, y), R = RPAD * W;
+      var p = P(x, y), R = RPAD * F;
       cerchio(ctx, p[0], p[1], R, c.fuori);
       cerchio(ctx, p[0], p[1], R * 0.84, "#ffffff");
       cerchio(ctx, p[0], p[1], R * 0.52, c.scuro);
@@ -243,10 +287,10 @@
     racchetta(o.hx, o.hy, flip ? T.avv : T.io);   // racchetta dell'host
     racchetta(o.gx, o.gy, flip ? T.io : T.avv);   // racchetta dell'ospite / del computer
     var pk = P(o.px, o.py);
-    cerchio(ctx, pk[0], pk[1], RP * W, T.discoBordo);
-    cerchio(ctx, pk[0], pk[1], RP * W * 0.8, T.disco);
+    cerchio(ctx, pk[0], pk[1], RP * F, T.discoBordo);
+    cerchio(ctx, pk[0], pk[1], RP * F * 0.8, T.disco);
     // scritta gol
-    if (o.fase === "gol") { ctx.fillStyle = "#ffd43b"; ctx.font = "800 " + Math.round(W * 0.11) + "px system-ui,sans-serif"; ctx.fillText("GOL!", W / 2, H / 2); }
+    if (o.fase === "gol") { ctx.fillStyle = "#ffd43b"; ctx.font = "800 " + Math.round(F * 0.11) + "px system-ui,sans-serif"; ctx.fillText("GOL!", W / 2, H / 2); }
   }
 
   // ---------- controllo racchetta (input locale) ----------
@@ -257,9 +301,9 @@
       var r = cv.getBoundingClientRect();
       var cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
       var cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
-      var cssW = C.cssW;   // dimensione aggiornata (dopo adattaCanvas)
-      var x, y;
-      if (flip) { x = 1 - cx / cssW; y = ASP - cy / cssW; } else { x = cx / cssW; y = cy / cssW; }
+      var G = geo(C.cssW);   // dimensione aggiornata (dopo adattaCanvas); il campo inizia dopo il bordo
+      var fx = (cx - G.B) / G.F, fy = (cy - G.B) / G.F, x, y;
+      if (flip) { x = 1 - fx; y = ASP - fy; } else { x = fx; y = fy; }
       x = clamp(x, RPAD, 1 - RPAD);
       if (meta === "basso") y = clamp(y, ASP / 2 + RPAD, ASP - RPAD);
       else y = clamp(y, RPAD, ASP / 2 - RPAD);
@@ -300,9 +344,10 @@
   //  cool   = dopo un tocco si ritira per questo tempo (non schiaccia il disco sul bordo)
   //  dy     = quanto sta avanti rispetto alla porta quando difende
   var DIFF = {
-    facile:    { nome: "Facile",    vel: 0.75, scatto: 1.5, tiro: 2.0, reaz: 0.30, err: 0.20, track: 0.30, prev: 0.50, soglia: 0.5, mira: 0.5, cool: 0.50, dy: 0.22 },
-    medio:     { nome: "Medio",     vel: 0.95, scatto: 1.7, tiro: 2.6, reaz: 0.22, err: 0.12, track: 0.45, prev: 0.80, soglia: 0.7, mira: 0.8, cool: 0.40, dy: 0.21 },
-    difficile: { nome: "Difficile", vel: 1.10, scatto: 1.9, tiro: 3.2, reaz: 0.17, err: 0.08, track: 0.55, prev: 0.95, soglia: 0.9, mira: 1.0, cool: 0.35, dy: 0.20 }
+    // (tarati con la fisica "vera": hitbox interpolate + pali. Tiri che entrano: ~47% / 23% / 12%)
+    facile:    { nome: "Facile",    vel: 0.60, scatto: 1.5, tiro: 2.0, reaz: 0.35, err: 0.55, track: 0.25, prev: 0.0, soglia: 0.5, mira: 0.5, cool: 0.50, dy: 0.22 },
+    medio:     { nome: "Medio",     vel: 0.85, scatto: 1.7, tiro: 2.6, reaz: 0.28, err: 0.40, track: 0.30, prev: 0.3, soglia: 0.7, mira: 0.8, cool: 0.40, dy: 0.21 },
+    difficile: { nome: "Difficile", vel: 1.00, scatto: 1.9, tiro: 3.2, reaz: 0.18, err: 0.30, track: 0.40, prev: 0.6, soglia: 0.9, mira: 1.0, cool: 0.35, dy: 0.20 }
   };
   // dove sarà il disco (in x) quando arriva all'altezza yLinea, contando i rimbalzi sulle sponde
   function prevediX(st, yLinea) {
@@ -327,7 +372,7 @@
     b.piano -= dt;
     if (b.piano <= 0) {                                  // decide solo ogni "tempo di reazione"
       b.piano = D.reaz;
-      var mia = st.py < ASP / 2, modo;
+      var mia = st.py <= ASP / 2 + 0.001, modo;   // anche il disco sulla linea di centro (prima palla) è suo
       if (!raggiungibile || !mia) modo = "difendi";
       else if (st.py < st.gy + md * 0.3) modo = (st.pvy > 0.2 || b.cool > 0) ? "scansa" : "attacca";   // disco alle sue spalle
       else if (b.cool > 0) modo = "difendi";
@@ -364,7 +409,7 @@
       var ax = st.px - st.gx, ay = st.py - st.gy;
       var avanti = ax * vx + ay * vy, lato = Math.abs(ax * vy - ay * vx);
       if (b.colpo && avanti < md * 0.3) b.colpo = false;   // il disco si è spostato: niente colpo storto
-      if (b.colpo || (avanti > md * 0.8 && lato < md * 0.55)) {
+      if (b.colpo || (avanti > md * 0.8 && avanti < md * 2.2 && lato < md * 0.55)) {   // tira solo da vicino
         b.colpo = true; b.tx = st.px + vx * md * 0.6; b.ty = st.py + vy * md * 0.6;      // 3) tiro
       } else if (avanti < md * 0.5 && Math.hypot(ax, ay) < md * 2.2) {
         // 1) è davanti o di fianco al disco: passa DI LATO senza toccarlo (niente autogol)
@@ -391,7 +436,13 @@
   function botHK(t, liv) {
     var D = DIFF[liv] || DIFF.medio;
     var st = statoNuovo(); st.fase = "gioco";
-    var C = null, raf = null, ultimoT = 0, acc = 0, vista = null, salvato = false, memSuoni = {};
+    var C = null, raf = null, ultimoT = 0, acc = 0, dtRacc = 0, vista = null, salvato = false, memSuoni = {};
+    // racchette al loro posto di partenza (a inizio partita e dopo ogni gol)
+    function rimettiRacchette() {
+      st.hx = st.hpx = 0.5; st.hy = st.hpy = ASP - 0.18;
+      st.gx = st.gpx = 0.5; st.gy = st.gpy = 0.18;
+      st._snap = true;   // quando rimetti il dito, la racchetta ti raggiunge senza "sparare" il disco
+    }
     function gol(chi) {
       if (chi === 1) st.s1++; else st.s2++;
       suonoGol(chi === 1);
@@ -399,19 +450,37 @@
         st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2;
         if (!salvato) { salvato = true; salvaHockey(st); }
         render();
-      } else { st.fase = "gol"; st.golT = performance.now(); servi(st, chi === 1 ? -1 : 1); st._bot = null; }   // riparte nella metà di chi ha subito
+      } else {
+        // pausa GOL: tutto fermo, il disco riparte nella metà di chi ha subito
+        st.fase = "gol"; st.golT = performance.now(); servi(st, chi === 1 ? -1 : 1); st._bot = null; rimettiRacchette();
+      }
     }
     function loop(now) {
       raf = requestAnimationFrame(loop);
-      var dt = ultimoT ? (now - ultimoT) / 1000 : 0.016; ultimoT = now; if (dt > 0.1) dt = 0.1;
+      // (se l'app torna dallo sfondo non recupera di colpo mezzo secondo di fisica)
+      var dt = ultimoT ? (now - ultimoT) / 1000 : 1 / 60; ultimoT = now; if (dt > 0.05) dt = 0.05;
       if (st.fase === "gol" && now - st.golT > 1200) st.fase = "gioco";
       if (st.fase === "gioco") botMuovi(st, dt, D);
-      var fdt = Math.max(0.004, dt);
-      st._hvx = (st.hx - st.hpx) / fdt; st._hvy = (st.hy - st.hpy) / fdt;
-      st._gvx = (st.gx - st.gpx) / fdt; st._gvy = (st.gy - st.gpy) / fdt;
-      st.hpx = st.hx; st.hpy = st.hy; st.gpx = st.gx; st.gpy = st.gy;
-      acc += dt; var guard = 0;
-      while (acc >= HSTEP && guard++ < 12) { passo(st, HSTEP, gol); acc -= HSTEP; if (st.fase !== "gioco") { acc = 0; break; } }
+      // posizioni delle racchette a inizio e fine frame + loro velocità (per la spinta sul disco)
+      dtRacc += dt;
+      var h0x = st.hpx, h0y = st.hpy, g0x = st.gpx, g0y = st.gpy, h1x = st.hx, h1y = st.hy, g1x = st.gx, g1y = st.gy;
+      var fdt = Math.max(0.004, dtRacc);
+      st._hvx = (h1x - h0x) / fdt; st._hvy = (h1y - h0y) / fdt;
+      st._gvx = (g1x - g0x) / fdt; st._gvy = (g1y - g0y) / fdt;
+      // fisica a 240 passi al secondo; in ogni passo le racchette sono nel punto giusto del loro
+      // percorso: una strisciata veloce non "salta" più il disco
+      acc += dt;
+      var n = Math.min(Math.floor(acc / HSTEP), 24);
+      for (var k = 1; k <= n; k++) {
+        var f = k / n;
+        st.hx = h0x + (h1x - h0x) * f; st.hy = h0y + (h1y - h0y) * f;
+        st.gx = g0x + (g1x - g0x) * f; st.gy = g0y + (g1y - g0y) * f;
+        passo(st, HSTEP, gol);
+        if (st.fase !== "gioco") break;
+      }
+      acc = st.fase === "gioco" ? acc - n * HSTEP : 0;
+      if (st.fase === "gioco") { st.hx = h1x; st.hy = h1y; st.gx = g1x; st.gy = g1y; }   // (dopo un gol restano rimesse a posto)
+      if (n > 0 || st.fase !== "gioco") { st.hpx = st.hx; st.hpy = st.hy; st.gpx = st.gx; st.gpy = st.gy; dtRacc = 0; }
       suonaEventi(st, memSuoni);
       if (st.fase === "fine") return;   // la schermata è cambiata
       if (C) disegna(C.ctx, C.cssW, st, false);
@@ -426,18 +495,25 @@
         var vinto = st.vincitore === 1;
         var sf = t.schermata({ icona: vinto ? "🏆" : "🤖", titolo: vinto ? "Hai vinto!" : "Ha vinto il computer", sotto: "Glow Hockey · " + D.nome });
         sf._contenuto.appendChild(el("div", { style: "text-align:center;font-size:2rem;font-weight:800;margin:10px 0", text: st.s1 + " — " + st.s2 }));
-        sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { st.s1 = 0; st.s2 = 0; st.vincitore = null; salvato = false; st._bot = null; servi(st); st.fase = "gioco"; vista = null; render(); } }));
+        sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { st.s1 = 0; st.s2 = 0; st.vincitore = null; salvato = false; st._bot = null; servi(st); rimettiRacchette(); st.fase = "gioco"; vista = null; render(); } }));
         sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { stop(); t.esci(); } }));
         t.mostra(sf);
       } else {
-        var sg = t.schermata({ icona: "🏒", titolo: "Glow Hockey", sotto: "Tu (blu) in basso · 🤖 " + D.nome, indietro: function () { stop(); t.esci(); } });
+        // niente titolo: solo il tasto indietro, così il campo prende tutto lo spazio
+        var sg = t.schermata({ sotto: "🤖 " + D.nome, indietro: function () { stop(); t.esci(); } });
+        sg.firstChild.style.marginBottom = "4px";
         C = creaCanvas(t, sg);
-        collegaInput(C, false, "basso", function (x, y) { st.hx = x; st.hy = y; });
+        collegaInput(C, false, "basso", function (x, y) {
+          if (st.fase !== "gioco") { st._snap = true; return; }            // pausa del gol: la racchetta resta ferma
+          if (st._snap) { st._snap = false; st.hpx = x; st.hpy = y; }       // rientro: nessuno scatto che spara il disco
+          st.hx = x; st.hy = y;
+        });
         t.mostra(sg);
         adattaCanvas(C);
         ultimoT = 0; raf = requestAnimationFrame(loop);
       }
     }
+    rimettiRacchette();
     render();
   }
 
