@@ -29,6 +29,14 @@
   // esattamente contro la riga che vedi, e la luce della porta è esattamente il buco.
   var BORDO = 0.04;                                 // spessore bordo (frazione della larghezza del canvas)
   var KH = (1 - 2 * BORDO) * ASP + 2 * BORDO;       // altezza/larghezza del canvas (campo + bordi)
+  // Proporzioni del campo: contro il computer si adattano allo schermo (niente spazio vuoto
+  // sotto). L'online (spento) userebbe 1.7 fisso, uguale per i due telefoni.
+  function impostaASP(a) { ASP = a; KH = (1 - 2 * BORDO) * ASP + 2 * BORDO; campoCache = null; }
+  function aspSchermo() {
+    var vw = window.innerWidth || 360, vh = window.innerHeight || 640;
+    var w = Math.min(440, vw - 16), h = vh - 80;           // 80 = tasto indietro + margini
+    return clamp(((h / w) - 2 * BORDO) / (1 - 2 * BORDO), 1.5, 2.2);
+  }
   function geo(cssW) { var B = cssW * BORDO, F = cssW - 2 * B; return { B: B, F: F, H: F * ASP + 2 * B }; }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function inPorta(x) { return x > XL && x < XR; }
@@ -435,6 +443,7 @@
   }
   function botHK(t, liv) {
     var D = DIFF[liv] || DIFF.medio;
+    impostaASP(aspSchermo());          // il campo riempie lo schermo del telefono
     var st = statoNuovo(); st.fase = "gioco";
     var C = null, raf = null, ultimoT = 0, acc = 0, dtRacc = 0, vista = null, salvato = false, memSuoni = {};
     // racchette al loro posto di partenza (a inizio partita e dopo ogni gol)
@@ -519,6 +528,7 @@
 
   // ---------- HOST ----------
   function hostHK(t) {
+    impostaASP(1.7);                   // online: stesse proporzioni sui due telefoni
     var NET = scegliNet();
     if (!NET) return senzaReteHK(t);
     var st = statoNuovo();
@@ -609,6 +619,7 @@
 
   // ---------- OSPITE ----------
   function ospiteHK(t, codice) {
+    impostaASP(1.7);
     var NET = scegliNet();
     if (!NET) return senzaReteHK(t);
     var el = t.el;
