@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 89,
+    data: "23 settembre 2026",
+    titolo: "Glow Hockey: campo nuovo e suoni 🏒🔊",
+    descrizione: [
+      "Campo rifatto come l'air hockey classico: bordi gialli (avversario) e blu (tu), la porta è un'apertura nel bordo, punteggio a lato del centrocampo.",
+      "Ogni tocco del disco fa rumore (più forte il colpo, più forte il suono), anche sulle sponde, e c'è un jingle quando segni.",
+      "Dopo un gol il disco riparte nella metà di chi l'ha subito.",
+      "Per ora si gioca solo contro il computer: la sfida online tra due telefoni è in pausa."
+    ]
+  },
+  {
     v: 88,
     data: "23 settembre 2026",
     titolo: "Trofeo sbloccato! 🔔",

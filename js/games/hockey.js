@@ -18,6 +18,7 @@
   var MAXV = 2.4;                // velocità massima disco (unità/sec)
   var PADK = 0.7;                // quanto la racchetta spinge il disco
   var VINCI = 7;                 // gol per vincere
+  var ONLINE_ATTIVO = false;     // online (due telefoni) nascosto per ora: il codice resta, basta rimettere true e il tasto
   var HZ = 16;                   // intervallo minimo fra invii (ms) ~60/sec (dati più freschi)
   var HSTEP = 1 / 120;           // passo fisso della fisica (sotto-step): collisioni solide
   var DELAY = 0.05;              // ritardo di interpolazione lato ospite (s): ~50ms, vicino al minimo prima che torni a scattare
@@ -25,35 +26,65 @@
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function inPorta(x) { return x > 0.5 - GOALW / 2 && x < 0.5 + GOALW / 2; }
 
+  // ---------- aspetto del campo: tutto qui, così in futuro si cambiano skin e campi ----------
+  // "io" = la racchetta di chi guarda (sempre in basso), "avv" = l'avversario (in alto)
+  var TEMA = {
+    sfondo: "#05070d", linee: "rgba(255,255,255,.22)",
+    bordoAlto: "#ffd23b", bordoBasso: "#3d8bff",
+    io:  { fuori: "#3d8bff", scuro: "#0f2f6b" },
+    avv: { fuori: "#ffd23b", scuro: "#6b4f00" },
+    disco: "#ffffff", discoBordo: "#b9c3d6"
+  };
+
+  // ---------- suoni: tocco di racchetta, sponda, gol ----------
+  var ultimoSuono = {};
+  function suono(tipo, forza) {
+    var ora = performance.now();
+    if (ultimoSuono[tipo] && ora - ultimoSuono[tipo] < 70) return;   // niente raffiche
+    ultimoSuono[tipo] = ora;
+    var ctx = SG.audioCtx && SG.audioCtx(); if (!ctx) return;
+    try {
+      var t0 = ctx.currentTime, k = Math.min(1, 0.35 + (forza || 0) / 2.4);   // colpo più forte = suono più forte
+      var nota = function (f, t, dur, vol, forma) {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = forma; o.frequency.setValueAtTime(f, t);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + dur + 0.02);
+      };
+      if (tipo === "colpo") { nota(620 + 260 * k, t0, 0.07, 0.3 * k, "triangle"); nota(170, t0, 0.05, 0.18 * k, "sine"); }
+      else if (tipo === "sponda") nota(330, t0, 0.05, 0.12, "triangle");
+      else if (tipo === "gol") [523, 659, 784, 1046].forEach(function (f, i) { nota(f, t0 + i * 0.09, 0.16, 0.22, "triangle"); });
+      else if (tipo === "golSubito") [392, 330, 262].forEach(function (f, i) { nota(f, t0 + i * 0.11, 0.18, 0.2, "sine"); });
+    } catch (e) {}
+  }
+  function vibra(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+  // i tocchi li conta la fisica (st.colpi / st.sponde): chi disegna suona quando i contatori salgono
+  function suonaEventi(s, mem) {
+    if ((s.colpi || 0) > (mem.colpi || 0)) suono("colpo", s.forzaColpo || 1);
+    if ((s.sponde || 0) > (mem.sponde || 0)) suono("sponda");
+    mem.colpi = s.colpi || 0; mem.sponde = s.sponde || 0;
+  }
+  function suonoGol(fatto) { suono(fatto ? "gol" : "golSubito"); vibra(fatto ? [40, 50, 40] : 60); }
+
   SG.registra({
     id: "hockey",
     nome: "Glow Hockey",
     icona: "🏒",
-    descrizione: "Air hockey: sfida il computer (3 difficoltà) o un amico dal suo telefono. Colpisci il disco col dito e segna nella porta avversaria.",
-    giocatoriMin: 1, giocatoriMax: 2, difficolta: 2,
+    descrizione: "Air hockey contro il computer, con 3 difficoltà. Colpisci il disco col dito e segna nella porta avversaria.",
+    giocatoriMin: 1, giocatoriMax: 1, difficolta: 2, etichettaGiocatori: "🤖 Contro il computer",
     regole: [
-      "Da soli si gioca <b>contro il computer</b> (Facile, Medio o Difficile); in due <b>ognuno dal suo telefono</b> (uno apre la stanza, l'altro entra col codice).",
+      "Si gioca <b>contro il computer</b>: scegli Facile, Medio o Difficile.",
       "Muovi la <b>racchetta</b> col dito nella tua metà campo (non puoi passare la linea di centrocampo) e colpisci il <b>disco</b>.",
       "Segna nella porta avversaria. Primo a <b>" + VINCI + "</b> gol vince.",
-      "Contro il computer è tutto sul tuo telefono: nessun ritardo. Online il disco lo calcola chi apre la stanza."
+      "Dopo un gol il disco riparte nella metà di chi l'ha subito."
     ],
+    // L'online (hostHK / ospiteHK più sotto) per ora è SPENTO: il codice resta per riprovarci in futuro.
     impostazioni: function (box, dove, aiuti) {
       dove.modo = "bot"; dove.botLiv = "medio";
-      if (aiuti.torneo) { dove.modo = "bot"; return; }
-      var el = aiuti.el, bBot, bOnl, liv, notaOnl;
-      function selModo(m) {
-        dove.modo = m;
-        bBot.className = "modo-chip" + (m === "bot" ? " attiva" : "");
-        bOnl.className = "modo-chip" + (m === "online" ? " attiva" : "");
-        liv.hidden = (m !== "bot"); notaOnl.hidden = (m !== "online");
-      }
-      bBot = el("button", { class: "modo-chip attiva", onclick: function () { selModo("bot"); } }, [
-        el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro il computer" }), el("div", { class: "ms", text: "Da solo, sul tuo telefono" })])]);
-      bOnl = el("button", { class: "modo-chip", onclick: function () { selModo("online"); } }, [
-        el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online (in due)" }), el("div", { class: "ms", text: "Ognuno dal suo telefono" })])]);
-      box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
-      box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
-      // scelta difficoltà (solo contro il computer)
+      if (aiuti.torneo) return;
+      var el = aiuti.el, liv;
+      // scelta difficoltà
       liv = el("div", {});
       liv.appendChild(el("div", { class: "etichetta", text: "Difficoltà" }));
       var chips = el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr 1fr" });
@@ -65,15 +96,12 @@
       });
       liv.appendChild(chips);
       box.appendChild(liv);
-      notaOnl = el("div", { class: "link-avviso", hidden: "hidden", text: (window.SGNet && SGNet.disponibile())
-        ? "Premi Comincia per aprire la stanza e manda il codice all'avversario."
-        : "L'online serve il sito pubblicato: da un file locale non è disponibile." });
-      box.appendChild(notaOnl);
     },
     avvia: function (t) {
-      if (t.linkParams && t.linkParams.stanza) return ospiteHK(t, t.linkParams.stanza);
+      // online spento: un vecchio link a una stanza apre la partita contro il computer
+      if (ONLINE_ATTIVO && t.linkParams && t.linkParams.stanza) return ospiteHK(t, t.linkParams.stanza);
       var imp = t.impostazioni || {};
-      if (imp.modo === "online") return hostHK(t);
+      if (ONLINE_ATTIVO && imp.modo === "online") return hostHK(t);
       return botHK(t, imp.botLiv || "medio");
     }
   });
@@ -87,9 +115,11 @@
       gx: 0.5, gy: 0.18, gpx: 0.5, gpy: 0.18,               // racchetta ospite (alto), mostrata
       gtx: 0.5, gty: 0.18 };                                  // …e il suo "bersaglio" (ultima ricevuta)
   }
-  function servi(st) {
-    st.px = 0.5; st.py = ASP / 2;   // esatto centro
-    st.pvx = 0; st.pvy = 0;          // FERMO: parte solo quando qualcuno lo colpisce
+  // rimette il disco FERMO (parte solo quando qualcuno lo colpisce).
+  // lato: +1 = nella metà di sotto, -1 = in quella di sopra (chi ha subito il gol), niente = al centro
+  function servi(st, lato) {
+    st.px = 0.5; st.py = lato ? ASP / 2 + lato * 0.2 : ASP / 2;
+    st.pvx = 0; st.pvy = 0;
   }
   // collisione CONTINUA (swept): controlla tutto il tratto percorso dal disco nel
   // passo, così non attraversa la racchetta anche a velocità alta (hitbox solide).
@@ -115,7 +145,10 @@
     if (vn < 0) { st.pvx -= 2 * vn * nx; st.pvy -= 2 * vn * ny; }
     st.pvx += pvx * PADK; st.pvy += pvy * PADK;
     var sp = Math.hypot(st.pvx, st.pvy); if (sp > MAXV) { st.pvx *= MAXV / sp; st.pvy *= MAXV / sp; }
+    // un tocco vero (non la racchetta ferma appoggiata al disco): conta per il suono
+    if (vn < -0.05 || Math.hypot(pvx, pvy) > 0.3) { st.colpi = (st.colpi || 0) + 1; st.forzaColpo = Math.hypot(st.pvx, st.pvy); }
   }
+  function sponda(st, v) { if (Math.abs(v) > 0.25) st.sponde = (st.sponde || 0) + 1; }
   // un sotto-passo di fisica (dt fisso). Le velocità racchetta arrivano da fuori (st._hvx…)
   function passo(st, dt, onGol) {
     if (st.fase !== "gioco") return;
@@ -124,10 +157,10 @@
     var f = Math.exp(-0.45 * dt); st.pvx *= f; st.pvy *= f;
     collide(st, prevx, prevy, st.hx, st.hy, st._hvx || 0, st._hvy || 0);
     collide(st, prevx, prevy, st.gx, st.gy, st._gvx || 0, st._gvy || 0);
-    if (st.px < RP) { st.px = RP; st.pvx = Math.abs(st.pvx) * REST; }
-    if (st.px > 1 - RP) { st.px = 1 - RP; st.pvx = -Math.abs(st.pvx) * REST; }
-    if (st.py < RP) { if (inPorta(st.px)) return onGol(1); st.py = RP; st.pvy = Math.abs(st.pvy) * REST; }
-    if (st.py > ASP - RP) { if (inPorta(st.px)) return onGol(2); st.py = ASP - RP; st.pvy = -Math.abs(st.pvy) * REST; }
+    if (st.px < RP) { sponda(st, st.pvx); st.px = RP; st.pvx = Math.abs(st.pvx) * REST; }
+    if (st.px > 1 - RP) { sponda(st, st.pvx); st.px = 1 - RP; st.pvx = -Math.abs(st.pvx) * REST; }
+    if (st.py < RP) { if (inPorta(st.px)) return onGol(1); sponda(st, st.pvy); st.py = RP; st.pvy = Math.abs(st.pvy) * REST; }
+    if (st.py > ASP - RP) { if (inPorta(st.px)) return onGol(2); sponda(st, st.pvy); st.py = ASP - RP; st.pvy = -Math.abs(st.pvy) * REST; }
     var sp = Math.hypot(st.pvx, st.pvy); if (sp > MAXV) { st.pvx *= MAXV / sp; st.pvy *= MAXV / sp; }
   }
 
@@ -135,7 +168,7 @@
   function creaCanvas(t, s) {
     var el = t.el;
     var wrap = el("div", { style: "display:flex;justify-content:center;margin-top:6px" });
-    var cv = el("canvas", { style: "touch-action:none;border-radius:14px;background:#0b1020;box-shadow:0 0 0 1px rgba(255,255,255,.08)" });
+    var cv = el("canvas", { style: "touch-action:none;border-radius:14px;background:" + TEMA.sfondo + ";box-shadow:0 0 0 1px rgba(255,255,255,.08)" });
     wrap.appendChild(cv); s._contenuto.appendChild(wrap);
     // il campo deve ENTRARE TUTTO nello schermo (tutte e due le porte visibili senza scorrere):
     // si adatta sia alla larghezza sia all'altezza disponibile, mantenendo le proporzioni (ASP).
@@ -171,29 +204,47 @@
   }
   function cerchio(ctx, x, y, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill(); }
   function disegna(ctx, cssW, o, flip) {
-    var H = cssW * ASP, W = cssW;
+    var H = cssW * ASP, W = cssW, T = TEMA;
     function P(x, y) { return flip ? [(1 - x) * W, (ASP - y) * W] : [x * W, y * W]; }
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = "#0b1020"; ctx.fillRect(0, 0, W, H);
-    // linea di metà campo + cerchio
-    ctx.strokeStyle = "rgba(255,255,255,.25)"; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(W / 2, H / 2, W * 0.14, 0, 6.2832); ctx.stroke();
-    // porte
-    var gx0 = (0.5 - GOALW / 2) * W, gx1 = (0.5 + GOALW / 2) * W;
-    ctx.lineWidth = 5; ctx.lineCap = "round";
-    ctx.strokeStyle = flip ? "#4dabf7" : "#ff6b6b"; ctx.beginPath(); ctx.moveTo(gx0, 3); ctx.lineTo(gx1, 3); ctx.stroke();
-    ctx.strokeStyle = flip ? "#ff6b6b" : "#4dabf7"; ctx.beginPath(); ctx.moveTo(gx0, H - 3); ctx.lineTo(gx1, H - 3); ctx.stroke();
-    // punteggi (grandi e tenui, ognuno vicino alla propria porta)
-    ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "700 " + Math.round(W * 0.16) + "px system-ui,sans-serif";
-    var pH = P(0.5, ASP * 0.74), pG = P(0.5, ASP * 0.26);
-    ctx.fillStyle = "rgba(77,171,247,.18)"; ctx.fillText(String(o.s1), pH[0], pH[1]);
-    ctx.fillStyle = "rgba(255,107,107,.18)"; ctx.fillText(String(o.s2), pG[0], pG[1]);
-    // disco + racchette
-    var pk = P(o.px, o.py), hp = P(o.hx, o.hy), gp = P(o.gx, o.gy);
-    cerchio(ctx, hp[0], hp[1], RPAD * W, "#4dabf7");
-    cerchio(ctx, gp[0], gp[1], RPAD * W, "#ff6b6b");
-    cerchio(ctx, pk[0], pk[1], RP * W, "#ffffff");
+    ctx.fillStyle = T.sfondo; ctx.fillRect(0, 0, W, H);
+    var lw = Math.max(4, W * 0.035), m = lw / 2, rr = W * 0.07;   // spessore bordo, rientro, raggio angoli
+    var gx0 = (0.5 - GOALW / 2) * W, gx1 = (0.5 + GOALW / 2) * W, gc = lw * 0.9;
+    // linee: metà campo, cerchio centrale, lunette davanti alle porte
+    ctx.strokeStyle = T.linee; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(lw, H / 2); ctx.lineTo(W - lw, H / 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W / 2, H / 2, W * 0.16, 0, 6.2832); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W / 2, m, GOALW / 2 * W, 0, Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W / 2, H - m, GOALW / 2 * W, Math.PI, 2 * Math.PI); ctx.stroke();
+    // bordi: metà di sopra gialla, di sotto blu. La porta è un BUCO nel bordo (niente colore).
+    ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    function lato(xPorta, yBordo, xLato, yFine, col) {   // da un palo della porta, giro l'angolo, fino a metà campo
+      var dx = xLato < W / 2 ? 1 : -1, dy = yBordo < H / 2 ? 1 : -1;
+      ctx.strokeStyle = col; ctx.beginPath();
+      ctx.moveTo(xPorta, yBordo); ctx.lineTo(xLato + dx * rr, yBordo);
+      ctx.arcTo(xLato, yBordo, xLato, yBordo + dy * rr, rr);
+      ctx.lineTo(xLato, yFine); ctx.stroke();
+    }
+    lato(gx0, m, m, H / 2 - gc, T.bordoAlto);         lato(gx1, m, W - m, H / 2 - gc, T.bordoAlto);
+    lato(gx0, H - m, m, H / 2 + gc, T.bordoBasso);    lato(gx1, H - m, W - m, H / 2 + gc, T.bordoBasso);
+    // punteggio sul lato destro, a metà campo: sopra l'avversario, sotto il tuo
+    var mio = flip ? o.s2 : o.s1, suo = flip ? o.s1 : o.s2;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "800 " + Math.round(W * 0.085) + "px system-ui,sans-serif";
+    ctx.fillStyle = T.bordoAlto; ctx.fillText(String(suo), W - W * 0.1, H / 2 - W * 0.09);
+    ctx.fillStyle = T.bordoBasso; ctx.fillText(String(mio), W - W * 0.1, H / 2 + W * 0.09);
+    // racchette (anello bianco con centro colorato) + disco
+    function racchetta(x, y, c) {
+      var p = P(x, y), R = RPAD * W;
+      cerchio(ctx, p[0], p[1], R, c.fuori);
+      cerchio(ctx, p[0], p[1], R * 0.84, "#ffffff");
+      cerchio(ctx, p[0], p[1], R * 0.52, c.scuro);
+      cerchio(ctx, p[0], p[1], R * 0.24, c.fuori);
+    }
+    racchetta(o.hx, o.hy, flip ? T.avv : T.io);   // racchetta dell'host
+    racchetta(o.gx, o.gy, flip ? T.io : T.avv);   // racchetta dell'ospite / del computer
+    var pk = P(o.px, o.py);
+    cerchio(ctx, pk[0], pk[1], RP * W, T.discoBordo);
+    cerchio(ctx, pk[0], pk[1], RP * W * 0.8, T.disco);
     // scritta gol
     if (o.fase === "gol") { ctx.fillStyle = "#ffd43b"; ctx.font = "800 " + Math.round(W * 0.11) + "px system-ui,sans-serif"; ctx.fillText("GOL!", W / 2, H / 2); }
   }
@@ -340,14 +391,15 @@
   function botHK(t, liv) {
     var D = DIFF[liv] || DIFF.medio;
     var st = statoNuovo(); st.fase = "gioco";
-    var C = null, raf = null, ultimoT = 0, acc = 0, vista = null, salvato = false;
+    var C = null, raf = null, ultimoT = 0, acc = 0, vista = null, salvato = false, memSuoni = {};
     function gol(chi) {
       if (chi === 1) st.s1++; else st.s2++;
+      suonoGol(chi === 1);
       if (st.s1 >= VINCI || st.s2 >= VINCI) {
         st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2;
         if (!salvato) { salvato = true; salvaHockey(st); }
         render();
-      } else { st.fase = "gol"; st.golT = performance.now(); servi(st); }
+      } else { st.fase = "gol"; st.golT = performance.now(); servi(st, chi === 1 ? -1 : 1); st._bot = null; }   // riparte nella metà di chi ha subito
     }
     function loop(now) {
       raf = requestAnimationFrame(loop);
@@ -360,6 +412,7 @@
       st.hpx = st.hx; st.hpy = st.hy; st.gpx = st.gx; st.gpy = st.gy;
       acc += dt; var guard = 0;
       while (acc >= HSTEP && guard++ < 12) { passo(st, HSTEP, gol); acc -= HSTEP; if (st.fase !== "gioco") { acc = 0; break; } }
+      suonaEventi(st, memSuoni);
       if (st.fase === "fine") return;   // la schermata è cambiata
       if (C) disegna(C.ctx, C.cssW, st, false);
     }
@@ -406,9 +459,11 @@
       },
       onErrore: function () { senzaReteHK(t); }
     });
-    function vm() { return { t: "g", fase: st.fase, px: st.px, py: st.py, pvx: st.pvx, pvy: st.pvy, hx: st.hx, hy: st.hy, gx: st.gx, gy: st.gy, s1: st.s1, s2: st.s2, vincitore: st.vincitore, codice: st.codice, pronta: st.pronta }; }
+    function vm() { return { t: "g", fase: st.fase, px: st.px, py: st.py, pvx: st.pvx, pvy: st.pvy, hx: st.hx, hy: st.hy, gx: st.gx, gy: st.gy, s1: st.s1, s2: st.s2, vincitore: st.vincitore, codice: st.codice, pronta: st.pronta,
+      colpi: st.colpi || 0, sponde: st.sponde || 0, forzaColpo: st.forzaColpo || 0 }; }   // contatori: l'ospite suona quando salgono
     function bcast(ret) { if (ret) rete.invia(vm()); else rete.inviaVeloce(vm()); }
-    function gol(chi) { if (chi === 1) st.s1++; else st.s2++; if (st.s1 >= VINCI || st.s2 >= VINCI) { st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2; } else { st.fase = "gol"; st.golT = performance.now(); servi(st, chi === 1 ? -1 : 1); } bcast(true); }
+    var memSuoni = {};
+    function gol(chi) { if (chi === 1) st.s1++; else st.s2++; suonoGol(chi === 1); if (st.s1 >= VINCI || st.s2 >= VINCI) { st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2; } else { st.fase = "gol"; st.golT = performance.now(); servi(st, chi === 1 ? -1 : 1); } bcast(true); }
     function loop(now) {
       raf = requestAnimationFrame(loop);
       var dt = ultimoT ? (now - ultimoT) / 1000 : 0.016; ultimoT = now;
@@ -429,6 +484,7 @@
       // fisica a passo fisso (sotto-step) per collisioni solide
       acc += dt; var guard = 0;
       while (acc >= HSTEP && guard++ < 12) { passo(st, HSTEP, gol); acc -= HSTEP; if (st.fase !== "gioco") { acc = 0; break; } }
+      suonaEventi(st, memSuoni);
       if (C) disegna(C.ctx, C.cssW, st, false);
       if (now - ultimoInvio > HZ) { ultimoInvio = now; bcast(false); }
     }
@@ -487,6 +543,9 @@
         onAperto: function (id) { S.collegato = true; S.rete.invia({ t: "join" }); render(); },
         onCanale: function (tipo) { S.canale = tipo; if (S._badge) S._badge.textContent = testoCanale(tipo); },
         onMsg: function (m) { if (m && m.t === "g") {
+          // suoni: tocchi e sponde dai contatori dell'host; al gol, contento se hai segnato tu (s2)
+          if (S.vm) { if (m.s2 > S.vm.s2) suonoGol(true); else if (m.s1 > S.vm.s1) suonoGol(false); }
+          suonaEventi(m, S.memSuoni || (S.memSuoni = { colpi: m.colpi, sponde: m.sponde }));
           S.vm = m; var now = performance.now();
           if (m.fase === "gioco") { S.buf.push({ rt: now, px: m.px, py: m.py, pvx: m.pvx, pvy: m.pvy, hx: m.hx, hy: m.hy }); while (S.buf.length > 2 && S.buf[0].rt < now - 1000) S.buf.shift(); }
           else { S.buf.length = 0; }   // gol/attesa: svuota, alla ripresa riparte pulito
@@ -540,7 +599,7 @@
         if (dentro) {
           s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:#69db7c;margin-bottom:2px", text: "✅ Sei nella stanza" }));
           s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Chi c'è" }));
-          [["🔴", "Avversario (host)", false], ["🔵", "Tu", true]].forEach(function (p) {
+          [["🟡", "Avversario (host)", false], ["🔵", "Tu", true]].forEach(function (p) {
             s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:" + (p[2] ? "rgba(255,202,58,.16)" : "rgba(255,255,255,.06)") }, [
               el("span", { text: p[0] }), el("span", { style: "flex:1;font-weight:700", text: p[1] })
             ]));
@@ -557,7 +616,7 @@
         sf._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa dell'host per la rivincita…" }));
         t.mostra(sf);
       } else {
-        var sg = t.schermata({ icona: "🏒", titolo: "Glow Hockey", sotto: "Tu (rosso) in basso · segna in alto", indietro: function () { stop(); if (S.rete) S.rete.chiudi(); t.esci(); } });
+        var sg = t.schermata({ icona: "🏒", titolo: "Glow Hockey", sotto: "Tu (blu) in basso · segna in alto", indietro: function () { stop(); if (S.rete) S.rete.chiudi(); t.esci(); } });
         S._badge = el("div", { class: "modulo-nota", style: "text-align:center;margin:2px 0 4px;font-size:.78rem", text: testoCanale(S.canale) });
         sg._contenuto.appendChild(S._badge);
         S.C = creaCanvas(t, sg);
