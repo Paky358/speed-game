@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 86,
+    data: "23 settembre 2026",
+    titolo: "Hockey: ora il computer attacca 🏒🔥",
+    descrizione: [
+      "Il bot va a prendersi il disco nella sua metà campo e tira con decisione, mirando agli angoli della tua porta.",
+      "In difesa prevede dove arriverà il tuo tiro, e se il disco è vicino te lo rispara indietro.",
+      "Non si fa più autogol: se il disco gli passa alle spalle ci gira attorno o si sposta. Facile resta facile, a Difficile preparati a perdere!"
+    ]
+  },
+  {
     v: 85,
     data: "23 settembre 2026",
     titolo: "Hockey: bot più giusto 🏒",
