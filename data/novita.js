@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 85,
+    data: "23 settembre 2026",
+    titolo: "Hockey: bot più giusto 🏒",
+    descrizione: [
+      "Il computer non trema più e non resta incastrato col disco negli angoli.",
+      "Medio e Difficile ora si possono battere: il bot ha un tempo di reazione e lascia scoperti gli angoli della porta. Mira lì!"
+    ]
+  },
+  {
     v: 84,
     data: "23 settembre 2026",
     titolo: "Hockey contro il computer + Trofei da platinare 🏒🏆",

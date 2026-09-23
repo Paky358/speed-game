@@ -8393,6 +8393,15 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 85,
+    data: "23 settembre 2026",
+    titolo: "Hockey: bot più giusto 🏒",
+    descrizione: [
+      "Il computer non trema più e non resta incastrato col disco negli angoli.",
+      "Medio e Difficile ora si possono battere: il bot ha un tempo di reazione e lascia scoperti gli angoli della porta. Mira lì!"
+    ]
+  },
+  {
     v: 84,
     data: "23 settembre 2026",
     titolo: "Hockey contro il computer + Trofei da platinare 🏒🏆",
@@ -13201,29 +13210,54 @@ window.SG_SIPERO = {
   // ---------- CONTRO IL COMPUTER (tutto in locale, nessuna rete) ----------
   // Difficoltà: quanto è veloce la racchetta del bot, quanto è precisa (errore)
   // e quanto mira alla porta (aggressività).
+  //  vel   = velocità massima della racchetta (unità/s)
+  //  reaz  = tempo di reazione: ogni quanto "guarda" il disco e decide la mossa (s)
+  //  err   = imprecisione (scelta UNA volta per azione, non a ogni frame: niente tremolio)
+  //  track = quanto segue il disco in difesa (sotto 1 lascia scoperti gli angoli)
+  //  cool  = dopo un tocco si ritira per questo tempo (non schiaccia il disco sul bordo)
+  //  dy    = quanto sta avanti rispetto alla porta quando difende
   var DIFF = {
-    facile:    { nome: "Facile",    vel: 0.95, err: 0.11, mira: 0.4 },
-    medio:     { nome: "Medio",     vel: 1.55, err: 0.05, mira: 0.9 },
-    difficile: { nome: "Difficile", vel: 2.35, err: 0.015, mira: 1.3 }
+    facile:    { nome: "Facile",    vel: 0.60, reaz: 0.35, err: 0.25, track: 0.10, cool: 0.80, dy: 0.24 },
+    medio:     { nome: "Medio",     vel: 0.85, reaz: 0.25, err: 0.20, track: 0.25, cool: 0.55, dy: 0.22 },
+    difficile: { nome: "Difficile", vel: 1.10, reaz: 0.15, err: 0.13, track: 0.40, cool: 0.40, dy: 0.20 }
   };
-  // muove la racchetta del bot (in alto: gx,gy) verso il suo bersaglio del momento
+  // muove la racchetta del bot (in alto: gx,gy)
   function botMuovi(st, dt, D) {
-    var tx, ty, attacca = st.py < ASP * 0.5;   // il disco è nella metà del bot
-    if (attacca) {
-      tx = st.px + st.pvx * 0.06;              // anticipa un po' il disco
-      ty = st.py - (RP + RPAD) * 0.85;         // mettiti SOPRA il disco per spingerlo giù
-      tx += (0.5 - st.px) * 0.15 * D.mira;     // punta un filo verso il centro (porta avversaria)
-    } else {
-      tx = 0.5 + (st.px - 0.5) * 0.7;          // difendi: davanti alla tua porta, segui la x del disco
-      ty = 0.16;
+    var b = st._bot || (st._bot = { piano: 0, tx: 0.5, ty: 0.2, ex: 0, cool: 0, lento: 0, modo: "" });
+    var md = RP + RPAD;
+    // appena tocca il disco si ritira un attimo: così non lo incastra contro il bordo
+    if (b.cool <= 0 && Math.hypot(st.px - st.gx, st.py - st.gy) < md + 0.004) { b.cool = D.cool; b.piano = 0; }
+    if (b.cool > 0) b.cool -= dt;
+    // troppo attaccato al bordo alto il bot non può mettersi "dietro" il disco
+    var raggiungibile = st.py >= 0.13;
+    // disco fermo contro il bordo alto da un po': scivola fuori verso il centro (cuscino d'aria)
+    b.lento = (!raggiungibile && Math.hypot(st.pvx, st.pvy) < 0.1) ? b.lento + dt : 0;
+    if (b.lento > 1.2) { st.pvx = (0.5 - st.px) * 0.9; st.pvy = 0.55; b.lento = 0; }
+    b.piano -= dt;
+    if (b.piano <= 0) {                                  // decide solo ogni "tempo di reazione"
+      b.piano = D.reaz;
+      var inArrivo = st.pvy < -0.3;                      // tiro che viene verso la sua porta
+      var modo = (b.cool > 0 || inArrivo || !raggiungibile || st.py >= ASP / 2 || st.pvy >= 0.6) ? "difendi" : "attacca";
+      if (modo !== b.modo) { b.modo = modo; b.ex = (Math.random() - 0.5) * D.err; }
+      if (modo === "attacca") {
+        // in due tempi: prima prende la rincorsa DIETRO al disco (sulla linea verso la
+        // porta avversaria), poi ci passa attraverso e tira
+        var vx = 0.5 - st.px, vy = ASP - st.py, vl = Math.hypot(vx, vy) || 1; vx /= vl; vy /= vl;
+        var rx = clamp(st.px - vx * md * 1.7, RPAD, 1 - RPAD), ry = clamp(st.py - vy * md * 1.7, RPAD, ASP / 2 - RPAD);
+        if (Math.hypot(st.gx - rx, st.gy - ry) < 0.05) { b.tx = st.px + vx * md * 0.5; b.ty = st.py + vy * md * 0.5; }
+        else { b.tx = rx; b.ty = ry; }
+      } else if (!raggiungibile) {
+        b.tx = 0.5; b.ty = 0.2;                          // disco sul bordo: si toglie di mezzo
+      } else {
+        b.tx = 0.5 + (st.px - 0.5) * D.track + b.ex;     // difesa davanti alla porta
+        b.ty = D.dy;
+      }
+      b.tx = clamp(b.tx, RPAD, 1 - RPAD); b.ty = clamp(b.ty, RPAD, ASP / 2 - RPAD);
     }
-    tx += (Math.random() - 0.5) * D.err;
-    ty += (Math.random() - 0.5) * D.err * 0.5;
-    tx = clamp(tx, RPAD, 1 - RPAD);
-    ty = clamp(ty, RPAD, ASP / 2 - RPAD);
-    var dx = tx - st.gx, dy = ty - st.gy, dist = Math.hypot(dx, dy), step = D.vel * dt;
-    if (dist > step && dist > 1e-6) { st.gx += dx / dist * step; st.gy += dy / dist * step; }
-    else { st.gx = tx; st.gy = ty; }
+    var dx = b.tx - st.gx, dy = b.ty - st.gy, dist = Math.hypot(dx, dy), step = D.vel * dt;
+    if (dist < 0.003) return;                            // arrivato: sta fermo
+    if (dist > step) { st.gx += dx / dist * step; st.gy += dy / dist * step; }
+    else { st.gx = b.tx; st.gy = b.ty; }
     st.gx = clamp(st.gx, RPAD, 1 - RPAD); st.gy = clamp(st.gy, RPAD, ASP / 2 - RPAD);
   }
   function salvaHockey(st) {
@@ -13269,7 +13303,7 @@ window.SG_SIPERO = {
         var vinto = st.vincitore === 1;
         var sf = t.schermata({ icona: vinto ? "🏆" : "🤖", titolo: vinto ? "Hai vinto!" : "Ha vinto il computer", sotto: "Glow Hockey · " + D.nome });
         sf._contenuto.appendChild(el("div", { style: "text-align:center;font-size:2rem;font-weight:800;margin:10px 0", text: st.s1 + " — " + st.s2 }));
-        sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { st.s1 = 0; st.s2 = 0; st.vincitore = null; salvato = false; servi(st); st.fase = "gioco"; vista = null; render(); } }));
+        sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { st.s1 = 0; st.s2 = 0; st.vincitore = null; salvato = false; st._bot = null; servi(st); st.fase = "gioco"; vista = null; render(); } }));
         sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { stop(); t.esci(); } }));
         t.mostra(sf);
       } else {
