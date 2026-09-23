@@ -471,3 +471,25 @@ body::before{
 .trofeo.fatto{ box-shadow:0 0 0 1px rgba(255,255,255,.18), var(--ombra); }
 .trofeo.tl-oro.fatto{ box-shadow:0 0 0 1px rgba(255,210,90,.5), var(--ombra); }
 .trofeo.tl-diamante.fatto, .trofeo.tl-platino.fatto{ box-shadow:0 0 0 1px rgba(150,225,255,.5), var(--ombra); }
+
+/* --- Avviso "Trofeo sbloccato!" (scende dall'alto per pochi secondi) --- */
+.avviso-trofeo{ position:fixed; left:50%; top:calc(10px + env(safe-area-inset-top)); z-index:9999;
+  transform:translate(-50%,-150%); opacity:0; width:min(92vw,380px);
+  display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:16px; cursor:pointer; color:#fff;
+  background:linear-gradient(180deg, rgba(32,46,98,.95), rgba(14,22,54,.95));
+  border:1px solid rgba(255,255,255,.2); box-shadow:0 12px 30px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.22);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  transition:transform .38s cubic-bezier(.2,.9,.3,1.15), opacity .3s ease; }
+.avviso-trofeo.dentro{ transform:translate(-50%,0); opacity:1; }
+.avviso-trofeo .at-ico{ font-size:1.7rem; width:48px; height:48px; flex:0 0 auto; display:flex; align-items:center;
+  justify-content:center; border-radius:13px; background:linear-gradient(150deg,var(--carta-2),#201d44);
+  box-shadow:0 0 14px rgba(255,210,90,.35); }
+.avviso-trofeo.tl-bronzo   .at-ico{ background:linear-gradient(150deg,#e8a866,#a5602a); }
+.avviso-trofeo.tl-argento  .at-ico{ background:linear-gradient(150deg,#eef3f8,#aab4c0); }
+.avviso-trofeo.tl-oro      .at-ico{ background:linear-gradient(150deg,#ffe58a,#e0a90a); }
+.avviso-trofeo.tl-diamante .at-ico{ background:linear-gradient(150deg,#d6f5ff,#5cc7ec); box-shadow:0 0 16px rgba(120,220,255,.5); }
+.avviso-trofeo.tl-platino  .at-ico{ background:linear-gradient(150deg,#eaf6ff,#9fb8d8); box-shadow:0 0 20px rgba(160,220,255,.7); }
+.avviso-trofeo .at-corpo{ flex:1; min-width:0; }
+.avviso-trofeo .at-su{ font-size:.72rem; font-weight:800; color:#ffd76a; text-transform:uppercase; letter-spacing:.04em; }
+.avviso-trofeo .at-nome{ font-weight:900; font-size:1.02rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.avviso-trofeo .at-gioco{ font-size:.8rem; color:var(--testo-tenue); }

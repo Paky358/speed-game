@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 88,
+    data: "23 settembre 2026",
+    titolo: "Trofeo sbloccato! 🔔",
+    descrizione: [
+      "Quando sblocchi un trofeo compare un avviso in alto per qualche secondo, con un suono e una leggera vibrazione (più speciale per il Platino).",
+      "Il tasto in home ora si chiama 'Trofei'."
+    ]
+  },
+  {
     v: 87,
     data: "23 settembre 2026",
     titolo: "35 trofei per La linea del tempo 📜🏆",

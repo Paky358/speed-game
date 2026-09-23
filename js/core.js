@@ -179,7 +179,7 @@
       if (!novitaTutteViste()) bNov.appendChild(el("span", { class: "pallino" }));
       rigaProfilo.appendChild(bNov);
     }
-    rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: schermataSfide }, [ el("span", { text: "🏆 Sfide" }) ]));
+    rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: schermataSfide }, [ el("span", { text: "🏆 Trofei" }) ]));
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
       el("div", { class: "home-logo", html: '<svg viewBox="0 0 200 118" width="156" height="92" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgBolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6bf"/><stop offset=".42" stop-color="#ffd23b"/><stop offset=".72" stop-color="#f6a70c"/><stop offset="1" stop-color="#c06a08"/></linearGradient><linearGradient id="sgBoltHi" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffdf0" stop-opacity=".95"/><stop offset=".5" stop-color="#ffffff" stop-opacity="0"/></linearGradient><filter id="sgGlow" x="-70%" y="-70%" width="240%" height="240%"><feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#ff9d2e" flood-opacity=".75"/><feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#ff7b16" flood-opacity=".4"/></filter><path id="sgB" d="M13 0 L2 20 L10 20 L7 36 L22 12 L13 12 L17 0 Z"/></defs><g filter="url(#sgGlow)" stroke="#8a5209" stroke-width="1.3" stroke-linejoin="round"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBolt)"/></g><g stroke="none"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBoltHi)"/></g></svg>' }),
       el("h1", { class: "home-titolo", text: "SPeeD GAME" }),
@@ -349,7 +349,7 @@
 
   // schermata principale: l'elenco di TUTTI i giochi, ognuno coi suoi trofei dentro
   function schermataSfide() {
-    var s = schermata({ icona: "🏆", titolo: "Sfide e Trofei", sotto: "Colleziona i trofei di ogni gioco", indietro: schermataHome });
+    var s = schermata({ icona: "🏆", titolo: "Trofei", sotto: "Colleziona i trofei di ogni gioco", indietro: schermataHome });
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     if (!prof) {
       s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ti serve il profilo per registrare i progressi e sbloccare i trofei: i dati ti seguono su ogni telefono." }));
@@ -415,6 +415,76 @@
     }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "‹ Tutti i giochi", onclick: schermataSfide }));
     mostra(s);
+  }
+
+  // ---- Avviso "Trofeo sbloccato!" (pochi secondi, con suono e vibrazione) ----
+  // Ricorda i trofei già presi dal profilo: dopo ogni salvataggio controlla se ne è
+  // arrivato uno nuovo. Al primo caricamento (o cambio profilo) non avvisa di nulla.
+  var trofeiNoti = null, codaTrofei = [], avvisoAttivo = false;
+  function trofeiSbloccati(prof) {
+    var s = {};
+    TROFEI.forEach(function (t) { if (trofeoFatto(prof, t)) s[t.gioco + "|" + t.nome] = t; });
+    giochi.forEach(function (g) { if (platinato(prof, g.id)) s[g.id + "|__platino"] = { gioco: g.id, livello: "platino", icona: "💠", nome: "Platino" }; });
+    return s;
+  }
+  function controllaTrofei() {
+    var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
+    if (!prof) { trofeiNoti = null; return; }
+    var ora = trofeiSbloccati(prof);
+    if (trofeiNoti && trofeiNoti.uid === prof.uid) {
+      for (var k in ora) if (!trofeiNoti.set[k]) codaTrofei.push(ora[k]);
+      // il Platino arriva per ultimo, dopo i trofei che l'hanno fatto scattare
+      codaTrofei.sort(function (a, b) { return (a.livello === "platino") - (b.livello === "platino"); });
+      prossimoAvviso();
+    }
+    trofeiNoti = { uid: prof.uid, set: ora };
+  }
+  function prossimoAvviso() {
+    if (avvisoAttivo || !codaTrofei.length) return;
+    avvisoAttivo = true;
+    var t = codaTrofei.shift(), g = null;
+    giochi.forEach(function (x) { if (x.id === t.gioco) g = x; });
+    var liv = t.livello === "platino" ? "Platino" : (LIVELLI[t.livello] ? LIVELLI[t.livello].nome : "");
+    var fatto = false, timer = null;
+    var box = el("div", { class: "avviso-trofeo tl-" + t.livello, onclick: function () { chiudi(); } }, [
+      el("div", { class: "at-ico", text: t.icona || "🏆" }),
+      el("div", { class: "at-corpo" }, [
+        el("div", { class: "at-su", text: "🏆 Trofeo " + liv + " sbloccato!" }),
+        el("div", { class: "at-nome", text: t.nome }),
+        el("div", { class: "at-gioco", text: g ? g.nome : "" })
+      ])
+    ]);
+    document.body.appendChild(box);   // fuori dalla schermata: resta anche se il gioco cambia pagina
+    requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add("dentro"); }); });
+    suonoTrofeo(t.livello === "platino");
+    try { if (navigator.vibrate) navigator.vibrate(t.livello === "platino" ? [40, 60, 40, 60, 80] : [30, 40, 30]); } catch (e) {}
+    timer = setTimeout(chiudi, 3600);
+    function chiudi() {
+      if (fatto) return; fatto = true; clearTimeout(timer);
+      box.classList.remove("dentro");
+      setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); avvisoAttivo = false; prossimoAvviso(); }, 380);
+    }
+  }
+  function suonoTrofeo(platino) {
+    var ctx = audioCtx(); if (!ctx) return;
+    try {
+      (platino ? [784, 988, 1175, 1568] : [880, 1320]).forEach(function (f, i) {
+        var t0 = ctx.currentTime + i * 0.11, o = ctx.createOscillator(), gn = ctx.createGain();
+        o.type = "sine"; o.frequency.setValueAtTime(f, t0);
+        gn.gain.setValueAtTime(0.0001, t0);
+        gn.gain.exponentialRampToValueAtTime(0.22, t0 + 0.015);
+        gn.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.38);
+        o.connect(gn); gn.connect(ctx.destination); o.start(t0); o.stop(t0 + 0.42);
+      });
+    } catch (e) {}
+  }
+  // controlla dopo ogni salvataggio dei giochi e a ogni cambio del profilo (es. bonus ritirato)
+  if (window.SGNube) {
+    ["salvaProgressi", "salvaFiches"].forEach(function (nome) {
+      var orig = SGNube[nome]; if (!orig) return;
+      SGNube[nome] = function () { var r = orig.apply(SGNube, arguments); controllaTrofei(); return r; };
+    });
+    SGNube.onCambio(controllaTrofei);
   }
 
   // ---- Proposte e segnalazioni ----

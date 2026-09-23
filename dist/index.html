@@ -477,6 +477,28 @@ body::before{
 .trofeo.fatto{ box-shadow:0 0 0 1px rgba(255,255,255,.18), var(--ombra); }
 .trofeo.tl-oro.fatto{ box-shadow:0 0 0 1px rgba(255,210,90,.5), var(--ombra); }
 .trofeo.tl-diamante.fatto, .trofeo.tl-platino.fatto{ box-shadow:0 0 0 1px rgba(150,225,255,.5), var(--ombra); }
+
+/* --- Avviso "Trofeo sbloccato!" (scende dall'alto per pochi secondi) --- */
+.avviso-trofeo{ position:fixed; left:50%; top:calc(10px + env(safe-area-inset-top)); z-index:9999;
+  transform:translate(-50%,-150%); opacity:0; width:min(92vw,380px);
+  display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:16px; cursor:pointer; color:#fff;
+  background:linear-gradient(180deg, rgba(32,46,98,.95), rgba(14,22,54,.95));
+  border:1px solid rgba(255,255,255,.2); box-shadow:0 12px 30px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.22);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  transition:transform .38s cubic-bezier(.2,.9,.3,1.15), opacity .3s ease; }
+.avviso-trofeo.dentro{ transform:translate(-50%,0); opacity:1; }
+.avviso-trofeo .at-ico{ font-size:1.7rem; width:48px; height:48px; flex:0 0 auto; display:flex; align-items:center;
+  justify-content:center; border-radius:13px; background:linear-gradient(150deg,var(--carta-2),#201d44);
+  box-shadow:0 0 14px rgba(255,210,90,.35); }
+.avviso-trofeo.tl-bronzo   .at-ico{ background:linear-gradient(150deg,#e8a866,#a5602a); }
+.avviso-trofeo.tl-argento  .at-ico{ background:linear-gradient(150deg,#eef3f8,#aab4c0); }
+.avviso-trofeo.tl-oro      .at-ico{ background:linear-gradient(150deg,#ffe58a,#e0a90a); }
+.avviso-trofeo.tl-diamante .at-ico{ background:linear-gradient(150deg,#d6f5ff,#5cc7ec); box-shadow:0 0 16px rgba(120,220,255,.5); }
+.avviso-trofeo.tl-platino  .at-ico{ background:linear-gradient(150deg,#eaf6ff,#9fb8d8); box-shadow:0 0 20px rgba(160,220,255,.7); }
+.avviso-trofeo .at-corpo{ flex:1; min-width:0; }
+.avviso-trofeo .at-su{ font-size:.72rem; font-weight:800; color:#ffd76a; text-transform:uppercase; letter-spacing:.04em; }
+.avviso-trofeo .at-nome{ font-weight:900; font-size:1.02rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.avviso-trofeo .at-gioco{ font-size:.8rem; color:var(--testo-tenue); }
 </style>
 <div id="app"></div>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
@@ -808,7 +830,7 @@ body::before{
       if (!novitaTutteViste()) bNov.appendChild(el("span", { class: "pallino" }));
       rigaProfilo.appendChild(bNov);
     }
-    rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: schermataSfide }, [ el("span", { text: "🏆 Sfide" }) ]));
+    rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: schermataSfide }, [ el("span", { text: "🏆 Trofei" }) ]));
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
       el("div", { class: "home-logo", html: '<svg viewBox="0 0 200 118" width="156" height="92" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgBolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6bf"/><stop offset=".42" stop-color="#ffd23b"/><stop offset=".72" stop-color="#f6a70c"/><stop offset="1" stop-color="#c06a08"/></linearGradient><linearGradient id="sgBoltHi" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffdf0" stop-opacity=".95"/><stop offset=".5" stop-color="#ffffff" stop-opacity="0"/></linearGradient><filter id="sgGlow" x="-70%" y="-70%" width="240%" height="240%"><feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#ff9d2e" flood-opacity=".75"/><feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#ff7b16" flood-opacity=".4"/></filter><path id="sgB" d="M13 0 L2 20 L10 20 L7 36 L22 12 L13 12 L17 0 Z"/></defs><g filter="url(#sgGlow)" stroke="#8a5209" stroke-width="1.3" stroke-linejoin="round"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBolt)"/></g><g stroke="none"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBoltHi)"/></g></svg>' }),
       el("h1", { class: "home-titolo", text: "SPeeD GAME" }),
@@ -978,7 +1000,7 @@ body::before{
 
   // schermata principale: l'elenco di TUTTI i giochi, ognuno coi suoi trofei dentro
   function schermataSfide() {
-    var s = schermata({ icona: "🏆", titolo: "Sfide e Trofei", sotto: "Colleziona i trofei di ogni gioco", indietro: schermataHome });
+    var s = schermata({ icona: "🏆", titolo: "Trofei", sotto: "Colleziona i trofei di ogni gioco", indietro: schermataHome });
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     if (!prof) {
       s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ti serve il profilo per registrare i progressi e sbloccare i trofei: i dati ti seguono su ogni telefono." }));
@@ -1044,6 +1066,76 @@ body::before{
     }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "‹ Tutti i giochi", onclick: schermataSfide }));
     mostra(s);
+  }
+
+  // ---- Avviso "Trofeo sbloccato!" (pochi secondi, con suono e vibrazione) ----
+  // Ricorda i trofei già presi dal profilo: dopo ogni salvataggio controlla se ne è
+  // arrivato uno nuovo. Al primo caricamento (o cambio profilo) non avvisa di nulla.
+  var trofeiNoti = null, codaTrofei = [], avvisoAttivo = false;
+  function trofeiSbloccati(prof) {
+    var s = {};
+    TROFEI.forEach(function (t) { if (trofeoFatto(prof, t)) s[t.gioco + "|" + t.nome] = t; });
+    giochi.forEach(function (g) { if (platinato(prof, g.id)) s[g.id + "|__platino"] = { gioco: g.id, livello: "platino", icona: "💠", nome: "Platino" }; });
+    return s;
+  }
+  function controllaTrofei() {
+    var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
+    if (!prof) { trofeiNoti = null; return; }
+    var ora = trofeiSbloccati(prof);
+    if (trofeiNoti && trofeiNoti.uid === prof.uid) {
+      for (var k in ora) if (!trofeiNoti.set[k]) codaTrofei.push(ora[k]);
+      // il Platino arriva per ultimo, dopo i trofei che l'hanno fatto scattare
+      codaTrofei.sort(function (a, b) { return (a.livello === "platino") - (b.livello === "platino"); });
+      prossimoAvviso();
+    }
+    trofeiNoti = { uid: prof.uid, set: ora };
+  }
+  function prossimoAvviso() {
+    if (avvisoAttivo || !codaTrofei.length) return;
+    avvisoAttivo = true;
+    var t = codaTrofei.shift(), g = null;
+    giochi.forEach(function (x) { if (x.id === t.gioco) g = x; });
+    var liv = t.livello === "platino" ? "Platino" : (LIVELLI[t.livello] ? LIVELLI[t.livello].nome : "");
+    var fatto = false, timer = null;
+    var box = el("div", { class: "avviso-trofeo tl-" + t.livello, onclick: function () { chiudi(); } }, [
+      el("div", { class: "at-ico", text: t.icona || "🏆" }),
+      el("div", { class: "at-corpo" }, [
+        el("div", { class: "at-su", text: "🏆 Trofeo " + liv + " sbloccato!" }),
+        el("div", { class: "at-nome", text: t.nome }),
+        el("div", { class: "at-gioco", text: g ? g.nome : "" })
+      ])
+    ]);
+    document.body.appendChild(box);   // fuori dalla schermata: resta anche se il gioco cambia pagina
+    requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add("dentro"); }); });
+    suonoTrofeo(t.livello === "platino");
+    try { if (navigator.vibrate) navigator.vibrate(t.livello === "platino" ? [40, 60, 40, 60, 80] : [30, 40, 30]); } catch (e) {}
+    timer = setTimeout(chiudi, 3600);
+    function chiudi() {
+      if (fatto) return; fatto = true; clearTimeout(timer);
+      box.classList.remove("dentro");
+      setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); avvisoAttivo = false; prossimoAvviso(); }, 380);
+    }
+  }
+  function suonoTrofeo(platino) {
+    var ctx = audioCtx(); if (!ctx) return;
+    try {
+      (platino ? [784, 988, 1175, 1568] : [880, 1320]).forEach(function (f, i) {
+        var t0 = ctx.currentTime + i * 0.11, o = ctx.createOscillator(), gn = ctx.createGain();
+        o.type = "sine"; o.frequency.setValueAtTime(f, t0);
+        gn.gain.setValueAtTime(0.0001, t0);
+        gn.gain.exponentialRampToValueAtTime(0.22, t0 + 0.015);
+        gn.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.38);
+        o.connect(gn); gn.connect(ctx.destination); o.start(t0); o.stop(t0 + 0.42);
+      });
+    } catch (e) {}
+  }
+  // controlla dopo ogni salvataggio dei giochi e a ogni cambio del profilo (es. bonus ritirato)
+  if (window.SGNube) {
+    ["salvaProgressi", "salvaFiches"].forEach(function (nome) {
+      var orig = SGNube[nome]; if (!orig) return;
+      SGNube[nome] = function () { var r = orig.apply(SGNube, arguments); controllaTrofei(); return r; };
+    });
+    SGNube.onCambio(controllaTrofei);
   }
 
   // ---- Proposte e segnalazioni ----
@@ -8434,6 +8526,15 @@ window.SG_NCC_CATEGORIE = {
      descrizione-> elenco di righe: cosa cambia per chi gioca
    ========================================================= */
 window.SG_NOVITA = [
+  {
+    v: 88,
+    data: "23 settembre 2026",
+    titolo: "Trofeo sbloccato! 🔔",
+    descrizione: [
+      "Quando sblocchi un trofeo compare un avviso in alto per qualche secondo, con un suono e una leggera vibrazione (più speciale per il Platino).",
+      "Il tasto in home ora si chiama 'Trofei'."
+    ]
+  },
   {
     v: 87,
     data: "23 settembre 2026",
