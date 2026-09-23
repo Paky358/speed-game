@@ -436,18 +436,30 @@ body::before{
 /* --- Piccoli schermi: card a colonna singola se molto stretto --- */
 @media (max-width:340px){ .home .griglia-giochi{ grid-template-columns:1fr; } }
 
-/* --- Sfide e Trofei --- */
-.sfide-sommario{ text-align:center; font-size:1.1rem; margin-bottom:12px; color:var(--testo);
+/* --- Sfide e Trofei (stile PlayStation) --- */
+.sfide-sommario{ text-align:center; font-size:1.05rem; margin-bottom:12px; color:var(--testo);
   background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05));
   border:1px solid rgba(255,255,255,.16); border-radius:14px; padding:12px;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.25); }
+/* elenco giochi (schermata principale delle sfide) */
+.sfida-gioco{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; cursor:pointer;
+  border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:12px 14px; margin-bottom:10px;
+  font-family:inherit; color:inherit; background:var(--carta); box-shadow:var(--ombra); transition:transform .06s ease; }
+.sfida-gioco:active{ transform:scale(.985); }
+.sfida-gioco.platinato{ background:linear-gradient(135deg, rgba(127,227,255,.16), rgba(120,180,255,.06));
+  border-color:rgba(150,225,255,.5); box-shadow:0 0 0 1px rgba(150,225,255,.3), var(--ombra); }
+.sfida-gioco .sg-ico{ font-size:1.9rem; width:52px; height:52px; flex:0 0 auto; display:flex; align-items:center;
+  justify-content:center; border-radius:14px; background:linear-gradient(150deg,var(--carta-2),#201d44); }
+.sfida-gioco .sg-corpo{ flex:1; min-width:0; }
+.sfida-gioco .sg-nome{ font-weight:800; font-size:1.08rem; }
+.sfida-gioco .sg-sub{ font-size:.85rem; color:var(--testo-tenue); margin-top:2px; }
+.sfida-gioco .sg-frecc{ font-size:1.5rem; color:var(--accento); opacity:.75; flex:0 0 auto; }
+/* singolo trofeo */
 .trofeo{ display:flex; gap:12px; align-items:center; background:var(--carta); border-radius:16px;
   padding:12px 14px; margin-bottom:10px; box-shadow:var(--ombra); border:1px solid rgba(255,255,255,.06); }
-.trofeo.fatto{ background:linear-gradient(135deg, rgba(255,202,58,.18), rgba(224,169,10,.07));
-  border-color:rgba(255,210,90,.5); box-shadow:0 0 0 1px rgba(255,210,90,.3), var(--ombra); }
 .trofeo .tr-ico{ font-size:1.9rem; width:52px; height:52px; flex:0 0 auto; display:flex; align-items:center;
   justify-content:center; border-radius:14px; background:linear-gradient(150deg,var(--carta-2),#201d44); }
-.trofeo.fatto .tr-ico{ background:linear-gradient(150deg,#ffe58a,#e0a90a); }
+.trofeo:not(.fatto) .tr-ico{ filter:grayscale(.5) brightness(.72); }
 .trofeo .tr-corpo{ flex:1; min-width:0; }
 .trofeo .tr-nome{ font-weight:800; font-size:1.02rem; }
 .trofeo .tr-desc{ font-size:.86rem; color:var(--testo-tenue); margin:1px 0 6px; }
@@ -455,6 +467,16 @@ body::before{
 .trofeo .tr-fill{ height:100%; border-radius:5px; background:linear-gradient(90deg,#ffd75a,#e0a90a); transition:width .4s ease; }
 .trofeo.fatto .tr-fill{ background:linear-gradient(90deg,#4fe895,#1faf60); }
 .trofeo .tr-num{ font-size:.76rem; color:var(--testo-tenue); margin-top:3px; text-align:right; font-weight:700; }
+/* colori per livello sull'icona del trofeo */
+.trofeo.tl-bronzo   .tr-ico{ background:linear-gradient(150deg,#e8a866,#a5602a); }
+.trofeo.tl-argento  .tr-ico{ background:linear-gradient(150deg,#eef3f8,#aab4c0); }
+.trofeo.tl-oro      .tr-ico{ background:linear-gradient(150deg,#ffe58a,#e0a90a); }
+.trofeo.tl-diamante .tr-ico{ background:linear-gradient(150deg,#d6f5ff,#5cc7ec); }
+.trofeo.tl-platino  .tr-ico{ background:linear-gradient(150deg,#eaf6ff,#9fb8d8); }
+/* un trofeo sbloccato: cornice colorata del suo livello */
+.trofeo.fatto{ box-shadow:0 0 0 1px rgba(255,255,255,.18), var(--ombra); }
+.trofeo.tl-oro.fatto{ box-shadow:0 0 0 1px rgba(255,210,90,.5), var(--ombra); }
+.trofeo.tl-diamante.fatto, .trofeo.tl-platino.fatto{ box-shadow:0 0 0 1px rgba(150,225,255,.5), var(--ombra); }
 </style>
 <div id="app"></div>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
@@ -879,18 +901,26 @@ body::before{
     mostra(s);
   }
 
-  // ---- Sfide e trofei (traguardi da sbloccare giocando) ----
-  // Ogni trofeo confronta una statistica del profilo con una soglia (meta).
-  // Aggiungere trofei = aggiungere righe qui (niente altro codice da toccare).
+  // ---- Sfide e Trofei (stile PlayStation: bronzo/argento/oro/diamante + platino) ----
+  // Ogni trofeo confronta una statistica del profilo con una soglia (meta) e ha un
+  // livello. Il PLATINO di un gioco si sblocca da solo quando prendi tutti gli altri.
+  // Aggiungere/scrivere trofei = aggiungere righe qui (niente altro codice da toccare).
+  var LIVELLI = {
+    bronzo:   { nome: "Bronzo",   cls: "tl-bronzo" },
+    argento:  { nome: "Argento",  cls: "tl-argento" },
+    oro:      { nome: "Oro",      cls: "tl-oro" },
+    diamante: { nome: "Diamante", cls: "tl-diamante" }
+  };
+  var ORDINE_LIV = ["bronzo", "argento", "oro", "diamante"];
   var TROFEI = [
-    { gioco: "blackjack", icona: "💰", nome: "Gran capitale", desc: "Arriva a 10.000 fiches al Black Jack", stat: "recordFiches", meta: 10000 },
-    { gioco: "blackjack", icona: "🤑", nome: "Gruzzolo", desc: "Arriva a 2.000 fiches", stat: "recordFiches", meta: 2000 },
-    { gioco: "blackjack", icona: "🎲", nome: "Veterano del tavolo", desc: "Gioca 100 mani", stat: "maniGiocate", meta: 100 },
-    { gioco: "blackjack", icona: "🍀", nome: "Mano fortunata", desc: "Vinci 50 mani", stat: "maniVinte", meta: 50 },
-    { gioco: "blackjack", icona: "👑", nome: "Re del 21", desc: "Fai 10 Black Jack", stat: "blackjackFatti", meta: 10 },
-    { gioco: "blackjack", icona: "💥", nome: "Colpo grosso", desc: "Vinci almeno 500 in una sola mano", stat: "vincitaMax", meta: 500 }
+    { gioco: "blackjack", livello: "bronzo",   icona: "🎲", nome: "Prime mani",     desc: "Gioca 10 mani",              stat: "maniGiocate",    meta: 10 },
+    { gioco: "blackjack", livello: "bronzo",   icona: "🤑", nome: "Gruzzolo",       desc: "Arriva a 2.000 fiches",       stat: "recordFiches",   meta: 2000 },
+    { gioco: "blackjack", livello: "argento",  icona: "🍀", nome: "Mano fortunata", desc: "Vinci 25 mani",               stat: "maniVinte",      meta: 25 },
+    { gioco: "blackjack", livello: "argento",  icona: "🎯", nome: "Veterano",       desc: "Gioca 100 mani",              stat: "maniGiocate",    meta: 100 },
+    { gioco: "blackjack", livello: "oro",      icona: "👑", nome: "Re del 21",      desc: "Fai 10 Black Jack",           stat: "blackjackFatti", meta: 10 },
+    { gioco: "blackjack", livello: "oro",      icona: "💥", nome: "Colpo grosso",   desc: "Vinci 500 in una sola mano",  stat: "vincitaMax",     meta: 500 },
+    { gioco: "blackjack", livello: "diamante", icona: "💰", nome: "Gran capitale",  desc: "Arriva a 10.000 fiches",      stat: "recordFiches",   meta: 10000 }
   ];
-  var NOMI_GIOCO_TROFEI = { blackjack: "🃏 Black Jack" };
 
   function valoreStat(prof, gioco, chiave) {
     var st = (window.SGNube && SGNube.statGioco) ? SGNube.statGioco(gioco) : {};
@@ -899,37 +929,78 @@ body::before{
     if (chiave === "recordFiches") { var ora = (prof.fiches && prof.fiches[gioco]) || 0; if (ora > v) v = ora; }
     return v;
   }
+  function trofeiDi(gid) { return TROFEI.filter(function (t) { return t.gioco === gid; }); }
+  function trofeoFatto(prof, t) { return valoreStat(prof, t.gioco, t.stat) >= t.meta; }
+  function contaTrofei(prof, gid) { var l = trofeiDi(gid), n = 0; l.forEach(function (t) { if (trofeoFatto(prof, t)) n++; }); return { fatti: n, tot: l.length }; }
+  function platinato(prof, gid) { var c = contaTrofei(prof, gid); return c.tot > 0 && c.fatti === c.tot; }
+
+  // schermata principale: l'elenco di TUTTI i giochi, ognuno coi suoi trofei dentro
   function schermataSfide() {
-    var s = schermata({ icona: "🏆", titolo: "Sfide e Trofei", sotto: "Sblocca traguardi giocando", indietro: schermataHome });
+    var s = schermata({ icona: "🏆", titolo: "Sfide e Trofei", sotto: "Colleziona i trofei di ogni gioco", indietro: schermataHome });
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     if (!prof) {
       s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ti serve il profilo per registrare i progressi e sbloccare i trofei: i dati ti seguono su ogni telefono." }));
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "👤 Crea / accedi al profilo", onclick: function () { schermataAccesso(schermataSfide); } }));
       mostra(s); return;
     }
-    var fatti = 0;
-    TROFEI.forEach(function (t) { if (valoreStat(prof, t.gioco, t.stat) >= t.meta) fatti++; });
-    s._contenuto.appendChild(el("div", { class: "sfide-sommario", html: "🏆 <b>" + fatti + "</b> / " + TROFEI.length + " trofei sbloccati" }));
-    var giochiConTrofei = [];
-    TROFEI.forEach(function (t) { if (giochiConTrofei.indexOf(t.gioco) < 0) giochiConTrofei.push(t.gioco); });
-    giochiConTrofei.forEach(function (gid) {
-      s._contenuto.appendChild(el("div", { class: "etichetta", text: NOMI_GIOCO_TROFEI[gid] || gid }));
-      TROFEI.filter(function (t) { return t.gioco === gid; }).forEach(function (t) {
-        var val = valoreStat(prof, t.gioco, t.stat), fatto = val >= t.meta;
-        var perc = Math.max(0, Math.min(100, Math.round(val * 100 / t.meta)));
-        s._contenuto.appendChild(el("div", { class: "trofeo" + (fatto ? " fatto" : "") }, [
-          el("div", { class: "tr-ico", text: fatto ? t.icona : "🔒" }),
-          el("div", { class: "tr-corpo" }, [
-            el("div", { class: "tr-nome", text: t.nome + (fatto ? "  ✓" : "") }),
-            el("div", { class: "tr-desc", text: t.desc }),
-            el("div", { class: "tr-barra" }, [ el("div", { class: "tr-fill", style: "width:" + perc + "%" }) ]),
-            el("div", { class: "tr-num", text: Math.min(val, t.meta) + " / " + t.meta })
-          ])
-        ]));
-      });
+    var totFatti = 0, totTrofei = 0, platini = 0;
+    giochi.forEach(function (g) { var c = contaTrofei(prof, g.id); totFatti += c.fatti; totTrofei += c.tot; if (platinato(prof, g.id)) platini++; });
+    s._contenuto.appendChild(el("div", { class: "sfide-sommario", html: "🏆 <b>" + totFatti + "</b>/" + totTrofei + " trofei &nbsp;·&nbsp; 💠 <b>" + platini + "</b> platini" }));
+    giochi.forEach(function (g) {
+      var c = contaTrofei(prof, g.id), plat = platinato(prof, g.id);
+      s._contenuto.appendChild(el("button", { class: "sfida-gioco" + (plat ? " platinato" : ""), onclick: function () { schermataSfideGioco(g.id); } }, [
+        el("span", { class: "sg-ico", text: g.icona || "🎮" }),
+        el("div", { class: "sg-corpo" }, [
+          el("div", { class: "sg-nome", text: g.nome }),
+          el("div", { class: "sg-sub", text: c.tot ? (c.fatti + "/" + c.tot + " trofei" + (plat ? "  ·  💠 Platino!" : "")) : "Trofei in arrivo" })
+        ]),
+        el("span", { class: "sg-frecc", text: plat ? "💠" : "›" })
+      ]));
     });
-    s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin-top:16px", text: "Presto trofei anche per gli altri giochi: si aggiungono man mano che ognuno registra le sue statistiche." }));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: schermataHome }));
+    mostra(s);
+  }
+  // schermata di un singolo gioco: platino in cima + trofei per livello
+  function schermataSfideGioco(gid) {
+    var g = null; giochi.forEach(function (x) { if (x.id === gid) g = x; }); if (!g) g = { nome: gid, icona: "🎮" };
+    var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
+    var s = schermata({ icona: g.icona || "🏆", titolo: g.nome, sotto: "Trofei del gioco", indietro: schermataSfide });
+    if (!prof) { s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Accedi al profilo per vedere i tuoi trofei." })); s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "‹ Tutti i giochi", onclick: schermataSfide })); mostra(s); return; }
+    var lista = trofeiDi(gid), c = contaTrofei(prof, gid);
+    // trofeo Platino (sempre mostrato: è il traguardo del gioco)
+    var plat = c.tot > 0 && c.fatti === c.tot;
+    s._contenuto.appendChild(el("div", { class: "trofeo tl-platino" + (plat ? " fatto" : "") }, [
+      el("div", { class: "tr-ico", text: plat ? "💠" : "🔒" }),
+      el("div", { class: "tr-corpo" }, [
+        el("div", { class: "tr-nome", text: "Platino" + (plat ? "  ✓" : "") }),
+        el("div", { class: "tr-desc", text: "Sblocca tutti i trofei del gioco" }),
+        el("div", { class: "tr-barra" }, [ el("div", { class: "tr-fill", style: "width:" + Math.round(c.fatti * 100 / Math.max(1, c.tot)) + "%" }) ]),
+        el("div", { class: "tr-num", text: c.fatti + " / " + c.tot })
+      ])
+    ]));
+    if (!lista.length) {
+      s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin-top:14px", text: "Le sfide di " + g.nome + " arrivano presto — le definiamo insieme. Intanto le tue partite vengono già registrate." }));
+    } else {
+      ORDINE_LIV.forEach(function (liv) {
+        var gruppo = lista.filter(function (t) { return t.livello === liv; });
+        if (!gruppo.length) return;
+        s._contenuto.appendChild(el("div", { class: "etichetta", text: LIVELLI[liv].nome }));
+        gruppo.forEach(function (t) {
+          var val = valoreStat(prof, t.gioco, t.stat), fatto = val >= t.meta;
+          var perc = Math.max(0, Math.min(100, Math.round(val * 100 / t.meta)));
+          s._contenuto.appendChild(el("div", { class: "trofeo " + LIVELLI[liv].cls + (fatto ? " fatto" : "") }, [
+            el("div", { class: "tr-ico", text: fatto ? t.icona : "🔒" }),
+            el("div", { class: "tr-corpo" }, [
+              el("div", { class: "tr-nome", text: t.nome + (fatto ? "  ✓" : "") }),
+              el("div", { class: "tr-desc", text: t.desc }),
+              el("div", { class: "tr-barra" }, [ el("div", { class: "tr-fill", style: "width:" + perc + "%" }) ]),
+              el("div", { class: "tr-num", text: Math.min(val, t.meta) + " / " + t.meta })
+            ])
+          ]));
+        });
+      });
+    }
+    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "‹ Tutti i giochi", onclick: schermataSfide }));
     mostra(s);
   }
 
@@ -8322,6 +8393,16 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 84,
+    data: "23 settembre 2026",
+    titolo: "Hockey contro il computer + Trofei da platinare 🏒🏆",
+    descrizione: [
+      "Glow Hockey ora si gioca anche da soli contro il computer, con 3 difficoltà (Facile, Medio, Difficile): tutto sul tuo telefono, nessun ritardo.",
+      "Le Sfide diventano stile PlayStation: ogni gioco ha i suoi trofei Bronzo, Argento, Oro e Diamante, e il Platino quando li sblocchi tutti.",
+      "Nella schermata Sfide trovi già tutti i giochi: le sfide di ognuno le aggiungiamo a mano a mano."
+    ]
+  },
+  {
     v: 83,
     data: "23 settembre 2026",
     titolo: "Sfide e Trofei 🏆",
@@ -12910,25 +12991,52 @@ window.SG_SIPERO = {
     id: "hockey",
     nome: "Glow Hockey",
     icona: "🏒",
-    descrizione: "Air hockey in due, ognuno dal suo telefono: colpisci il disco col dito e segna nella porta avversaria.",
-    giocatoriMin: 2, giocatoriMax: 2, difficolta: 2,
+    descrizione: "Air hockey: sfida il computer (3 difficoltà) o un amico dal suo telefono. Colpisci il disco col dito e segna nella porta avversaria.",
+    giocatoriMin: 1, giocatoriMax: 2, difficolta: 2,
     regole: [
-      "Si gioca <b>in due, ognuno dal suo telefono</b>: uno apre la stanza, l'altro entra col codice.",
+      "Da soli si gioca <b>contro il computer</b> (Facile, Medio o Difficile); in due <b>ognuno dal suo telefono</b> (uno apre la stanza, l'altro entra col codice).",
       "Muovi la <b>racchetta</b> col dito nella tua metà campo (non puoi passare la linea di centrocampo) e colpisci il <b>disco</b>.",
       "Segna nella porta avversaria. Primo a <b>" + VINCI + "</b> gol vince.",
-      "Il disco è calcolato dal telefono di chi apre la stanza: sull'altro può esserci un filo di ritardo."
+      "Contro il computer è tutto sul tuo telefono: nessun ritardo. Online il disco lo calcola chi apre la stanza."
     ],
     impostazioni: function (box, dove, aiuti) {
-      dove.modo = "online";
-      if (aiuti.torneo) return;
-      var el = aiuti.el;
-      box.appendChild(el("p", { class: "modulo-nota", text: (window.SGNet && SGNet.disponibile())
-        ? "Si gioca in due, ognuno dal suo telefono. Premi Comincia per aprire la stanza e manda il codice all'avversario."
-        : "Serve il sito pubblicato online: da un file locale il collegamento non è disponibile." }));
+      dove.modo = "bot"; dove.botLiv = "medio";
+      if (aiuti.torneo) { dove.modo = "bot"; return; }
+      var el = aiuti.el, bBot, bOnl, liv, notaOnl;
+      function selModo(m) {
+        dove.modo = m;
+        bBot.className = "modo-chip" + (m === "bot" ? " attiva" : "");
+        bOnl.className = "modo-chip" + (m === "online" ? " attiva" : "");
+        liv.hidden = (m !== "bot"); notaOnl.hidden = (m !== "online");
+      }
+      bBot = el("button", { class: "modo-chip attiva", onclick: function () { selModo("bot"); } }, [
+        el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro il computer" }), el("div", { class: "ms", text: "Da solo, sul tuo telefono" })])]);
+      bOnl = el("button", { class: "modo-chip", onclick: function () { selModo("online"); } }, [
+        el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online (in due)" }), el("div", { class: "ms", text: "Ognuno dal suo telefono" })])]);
+      box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
+      box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
+      // scelta difficoltà (solo contro il computer)
+      liv = el("div", {});
+      liv.appendChild(el("div", { class: "etichetta", text: "Difficoltà" }));
+      var chips = el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr 1fr" });
+      [["facile", "Facile", "🙂"], ["medio", "Medio", "😎"], ["difficile", "Difficile", "🔥"]].forEach(function (x) {
+        var c = el("button", { class: "modo-chip" + (x[0] === dove.botLiv ? " attiva" : ""), style: "flex-direction:column;gap:4px;text-align:center", onclick: function () {
+          dove.botLiv = x[0]; [].forEach.call(chips.children, function (k) { k.className = "modo-chip"; k.style.flexDirection = "column"; }); c.className = "modo-chip attiva";
+        } }, [ el("span", { class: "mi", text: x[2] }), el("div", { class: "mt", text: x[1] }) ]);
+        chips.appendChild(c);
+      });
+      liv.appendChild(chips);
+      box.appendChild(liv);
+      notaOnl = el("div", { class: "link-avviso", hidden: "hidden", text: (window.SGNet && SGNet.disponibile())
+        ? "Premi Comincia per aprire la stanza e manda il codice all'avversario."
+        : "L'online serve il sito pubblicato: da un file locale non è disponibile." });
+      box.appendChild(notaOnl);
     },
     avvia: function (t) {
       if (t.linkParams && t.linkParams.stanza) return ospiteHK(t, t.linkParams.stanza);
-      return hostHK(t);
+      var imp = t.impostazioni || {};
+      if (imp.modo === "online") return hostHK(t);
+      return botHK(t, imp.botLiv || "medio");
     }
   });
 
@@ -13088,6 +13196,92 @@ window.SG_SIPERO = {
   function testoCanale(c) {
     return c === "diretto" ? "⚡ Collegamento diretto (stessa rete) — velocissimo"
                            : "🌐 Collegamento via internet";
+  }
+
+  // ---------- CONTRO IL COMPUTER (tutto in locale, nessuna rete) ----------
+  // Difficoltà: quanto è veloce la racchetta del bot, quanto è precisa (errore)
+  // e quanto mira alla porta (aggressività).
+  var DIFF = {
+    facile:    { nome: "Facile",    vel: 0.95, err: 0.11, mira: 0.4 },
+    medio:     { nome: "Medio",     vel: 1.55, err: 0.05, mira: 0.9 },
+    difficile: { nome: "Difficile", vel: 2.35, err: 0.015, mira: 1.3 }
+  };
+  // muove la racchetta del bot (in alto: gx,gy) verso il suo bersaglio del momento
+  function botMuovi(st, dt, D) {
+    var tx, ty, attacca = st.py < ASP * 0.5;   // il disco è nella metà del bot
+    if (attacca) {
+      tx = st.px + st.pvx * 0.06;              // anticipa un po' il disco
+      ty = st.py - (RP + RPAD) * 0.85;         // mettiti SOPRA il disco per spingerlo giù
+      tx += (0.5 - st.px) * 0.15 * D.mira;     // punta un filo verso il centro (porta avversaria)
+    } else {
+      tx = 0.5 + (st.px - 0.5) * 0.7;          // difendi: davanti alla tua porta, segui la x del disco
+      ty = 0.16;
+    }
+    tx += (Math.random() - 0.5) * D.err;
+    ty += (Math.random() - 0.5) * D.err * 0.5;
+    tx = clamp(tx, RPAD, 1 - RPAD);
+    ty = clamp(ty, RPAD, ASP / 2 - RPAD);
+    var dx = tx - st.gx, dy = ty - st.gy, dist = Math.hypot(dx, dy), step = D.vel * dt;
+    if (dist > step && dist > 1e-6) { st.gx += dx / dist * step; st.gy += dy / dist * step; }
+    else { st.gx = tx; st.gy = ty; }
+    st.gx = clamp(st.gx, RPAD, 1 - RPAD); st.gy = clamp(st.gy, RPAD, ASP / 2 - RPAD);
+  }
+  function salvaHockey(st) {
+    if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
+    var vinto = st.vincitore === 1;
+    SGNube.salvaProgressi(null, "hockey",
+      [["partite", 1], ["vittorie", vinto ? 1 : 0], ["golFatti", st.s1]],
+      [["scartoMax", vinto ? (st.s1 - st.s2) : 0]]);
+  }
+  function botHK(t, liv) {
+    var D = DIFF[liv] || DIFF.medio;
+    var st = statoNuovo(); st.fase = "gioco";
+    var C = null, raf = null, ultimoT = 0, acc = 0, vista = null, salvato = false;
+    function gol(chi) {
+      if (chi === 1) st.s1++; else st.s2++;
+      if (st.s1 >= VINCI || st.s2 >= VINCI) {
+        st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2;
+        if (!salvato) { salvato = true; salvaHockey(st); }
+        render();
+      } else { st.fase = "gol"; st.golT = performance.now(); servi(st); }
+    }
+    function loop(now) {
+      raf = requestAnimationFrame(loop);
+      var dt = ultimoT ? (now - ultimoT) / 1000 : 0.016; ultimoT = now; if (dt > 0.1) dt = 0.1;
+      if (st.fase === "gol" && now - st.golT > 1200) st.fase = "gioco";
+      if (st.fase === "gioco") botMuovi(st, dt, D);
+      var fdt = Math.max(0.004, dt);
+      st._hvx = (st.hx - st.hpx) / fdt; st._hvy = (st.hy - st.hpy) / fdt;
+      st._gvx = (st.gx - st.gpx) / fdt; st._gvy = (st.gy - st.gpy) / fdt;
+      st.hpx = st.hx; st.hpy = st.hy; st.gpx = st.gx; st.gpy = st.gy;
+      acc += dt; var guard = 0;
+      while (acc >= HSTEP && guard++ < 12) { passo(st, HSTEP, gol); acc -= HSTEP; if (st.fase !== "gioco") { acc = 0; break; } }
+      if (st.fase === "fine") return;   // la schermata è cambiata
+      if (C) disegna(C.ctx, C.cssW, st, false);
+    }
+    function stop() { if (raf) cancelAnimationFrame(raf); raf = null; }
+    function render() {
+      var tipo = st.fase === "fine" ? "fine" : "gioco";
+      if (tipo === vista && tipo !== "fine") return;
+      vista = tipo; stop();
+      var el = t.el;
+      if (tipo === "fine") {
+        var vinto = st.vincitore === 1;
+        var sf = t.schermata({ icona: vinto ? "🏆" : "🤖", titolo: vinto ? "Hai vinto!" : "Ha vinto il computer", sotto: "Glow Hockey · " + D.nome });
+        sf._contenuto.appendChild(el("div", { style: "text-align:center;font-size:2rem;font-weight:800;margin:10px 0", text: st.s1 + " — " + st.s2 }));
+        sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { st.s1 = 0; st.s2 = 0; st.vincitore = null; salvato = false; servi(st); st.fase = "gioco"; vista = null; render(); } }));
+        sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { stop(); t.esci(); } }));
+        t.mostra(sf);
+      } else {
+        var sg = t.schermata({ icona: "🏒", titolo: "Glow Hockey", sotto: "Tu (blu) in basso · 🤖 " + D.nome, indietro: function () { stop(); t.esci(); } });
+        C = creaCanvas(t, sg);
+        collegaInput(C, false, "basso", function (x, y) { st.hx = x; st.hy = y; });
+        t.mostra(sg);
+        adattaCanvas(C);
+        ultimoT = 0; raf = requestAnimationFrame(loop);
+      }
+    }
+    render();
   }
 
   // ---------- HOST ----------

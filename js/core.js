@@ -277,18 +277,26 @@
     mostra(s);
   }
 
-  // ---- Sfide e trofei (traguardi da sbloccare giocando) ----
-  // Ogni trofeo confronta una statistica del profilo con una soglia (meta).
-  // Aggiungere trofei = aggiungere righe qui (niente altro codice da toccare).
+  // ---- Sfide e Trofei (stile PlayStation: bronzo/argento/oro/diamante + platino) ----
+  // Ogni trofeo confronta una statistica del profilo con una soglia (meta) e ha un
+  // livello. Il PLATINO di un gioco si sblocca da solo quando prendi tutti gli altri.
+  // Aggiungere/scrivere trofei = aggiungere righe qui (niente altro codice da toccare).
+  var LIVELLI = {
+    bronzo:   { nome: "Bronzo",   cls: "tl-bronzo" },
+    argento:  { nome: "Argento",  cls: "tl-argento" },
+    oro:      { nome: "Oro",      cls: "tl-oro" },
+    diamante: { nome: "Diamante", cls: "tl-diamante" }
+  };
+  var ORDINE_LIV = ["bronzo", "argento", "oro", "diamante"];
   var TROFEI = [
-    { gioco: "blackjack", icona: "💰", nome: "Gran capitale", desc: "Arriva a 10.000 fiches al Black Jack", stat: "recordFiches", meta: 10000 },
-    { gioco: "blackjack", icona: "🤑", nome: "Gruzzolo", desc: "Arriva a 2.000 fiches", stat: "recordFiches", meta: 2000 },
-    { gioco: "blackjack", icona: "🎲", nome: "Veterano del tavolo", desc: "Gioca 100 mani", stat: "maniGiocate", meta: 100 },
-    { gioco: "blackjack", icona: "🍀", nome: "Mano fortunata", desc: "Vinci 50 mani", stat: "maniVinte", meta: 50 },
-    { gioco: "blackjack", icona: "👑", nome: "Re del 21", desc: "Fai 10 Black Jack", stat: "blackjackFatti", meta: 10 },
-    { gioco: "blackjack", icona: "💥", nome: "Colpo grosso", desc: "Vinci almeno 500 in una sola mano", stat: "vincitaMax", meta: 500 }
+    { gioco: "blackjack", livello: "bronzo",   icona: "🎲", nome: "Prime mani",     desc: "Gioca 10 mani",              stat: "maniGiocate",    meta: 10 },
+    { gioco: "blackjack", livello: "bronzo",   icona: "🤑", nome: "Gruzzolo",       desc: "Arriva a 2.000 fiches",       stat: "recordFiches",   meta: 2000 },
+    { gioco: "blackjack", livello: "argento",  icona: "🍀", nome: "Mano fortunata", desc: "Vinci 25 mani",               stat: "maniVinte",      meta: 25 },
+    { gioco: "blackjack", livello: "argento",  icona: "🎯", nome: "Veterano",       desc: "Gioca 100 mani",              stat: "maniGiocate",    meta: 100 },
+    { gioco: "blackjack", livello: "oro",      icona: "👑", nome: "Re del 21",      desc: "Fai 10 Black Jack",           stat: "blackjackFatti", meta: 10 },
+    { gioco: "blackjack", livello: "oro",      icona: "💥", nome: "Colpo grosso",   desc: "Vinci 500 in una sola mano",  stat: "vincitaMax",     meta: 500 },
+    { gioco: "blackjack", livello: "diamante", icona: "💰", nome: "Gran capitale",  desc: "Arriva a 10.000 fiches",      stat: "recordFiches",   meta: 10000 }
   ];
-  var NOMI_GIOCO_TROFEI = { blackjack: "🃏 Black Jack" };
 
   function valoreStat(prof, gioco, chiave) {
     var st = (window.SGNube && SGNube.statGioco) ? SGNube.statGioco(gioco) : {};
@@ -297,37 +305,78 @@
     if (chiave === "recordFiches") { var ora = (prof.fiches && prof.fiches[gioco]) || 0; if (ora > v) v = ora; }
     return v;
   }
+  function trofeiDi(gid) { return TROFEI.filter(function (t) { return t.gioco === gid; }); }
+  function trofeoFatto(prof, t) { return valoreStat(prof, t.gioco, t.stat) >= t.meta; }
+  function contaTrofei(prof, gid) { var l = trofeiDi(gid), n = 0; l.forEach(function (t) { if (trofeoFatto(prof, t)) n++; }); return { fatti: n, tot: l.length }; }
+  function platinato(prof, gid) { var c = contaTrofei(prof, gid); return c.tot > 0 && c.fatti === c.tot; }
+
+  // schermata principale: l'elenco di TUTTI i giochi, ognuno coi suoi trofei dentro
   function schermataSfide() {
-    var s = schermata({ icona: "🏆", titolo: "Sfide e Trofei", sotto: "Sblocca traguardi giocando", indietro: schermataHome });
+    var s = schermata({ icona: "🏆", titolo: "Sfide e Trofei", sotto: "Colleziona i trofei di ogni gioco", indietro: schermataHome });
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     if (!prof) {
       s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ti serve il profilo per registrare i progressi e sbloccare i trofei: i dati ti seguono su ogni telefono." }));
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "👤 Crea / accedi al profilo", onclick: function () { schermataAccesso(schermataSfide); } }));
       mostra(s); return;
     }
-    var fatti = 0;
-    TROFEI.forEach(function (t) { if (valoreStat(prof, t.gioco, t.stat) >= t.meta) fatti++; });
-    s._contenuto.appendChild(el("div", { class: "sfide-sommario", html: "🏆 <b>" + fatti + "</b> / " + TROFEI.length + " trofei sbloccati" }));
-    var giochiConTrofei = [];
-    TROFEI.forEach(function (t) { if (giochiConTrofei.indexOf(t.gioco) < 0) giochiConTrofei.push(t.gioco); });
-    giochiConTrofei.forEach(function (gid) {
-      s._contenuto.appendChild(el("div", { class: "etichetta", text: NOMI_GIOCO_TROFEI[gid] || gid }));
-      TROFEI.filter(function (t) { return t.gioco === gid; }).forEach(function (t) {
-        var val = valoreStat(prof, t.gioco, t.stat), fatto = val >= t.meta;
-        var perc = Math.max(0, Math.min(100, Math.round(val * 100 / t.meta)));
-        s._contenuto.appendChild(el("div", { class: "trofeo" + (fatto ? " fatto" : "") }, [
-          el("div", { class: "tr-ico", text: fatto ? t.icona : "🔒" }),
-          el("div", { class: "tr-corpo" }, [
-            el("div", { class: "tr-nome", text: t.nome + (fatto ? "  ✓" : "") }),
-            el("div", { class: "tr-desc", text: t.desc }),
-            el("div", { class: "tr-barra" }, [ el("div", { class: "tr-fill", style: "width:" + perc + "%" }) ]),
-            el("div", { class: "tr-num", text: Math.min(val, t.meta) + " / " + t.meta })
-          ])
-        ]));
-      });
+    var totFatti = 0, totTrofei = 0, platini = 0;
+    giochi.forEach(function (g) { var c = contaTrofei(prof, g.id); totFatti += c.fatti; totTrofei += c.tot; if (platinato(prof, g.id)) platini++; });
+    s._contenuto.appendChild(el("div", { class: "sfide-sommario", html: "🏆 <b>" + totFatti + "</b>/" + totTrofei + " trofei &nbsp;·&nbsp; 💠 <b>" + platini + "</b> platini" }));
+    giochi.forEach(function (g) {
+      var c = contaTrofei(prof, g.id), plat = platinato(prof, g.id);
+      s._contenuto.appendChild(el("button", { class: "sfida-gioco" + (plat ? " platinato" : ""), onclick: function () { schermataSfideGioco(g.id); } }, [
+        el("span", { class: "sg-ico", text: g.icona || "🎮" }),
+        el("div", { class: "sg-corpo" }, [
+          el("div", { class: "sg-nome", text: g.nome }),
+          el("div", { class: "sg-sub", text: c.tot ? (c.fatti + "/" + c.tot + " trofei" + (plat ? "  ·  💠 Platino!" : "")) : "Trofei in arrivo" })
+        ]),
+        el("span", { class: "sg-frecc", text: plat ? "💠" : "›" })
+      ]));
     });
-    s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin-top:16px", text: "Presto trofei anche per gli altri giochi: si aggiungono man mano che ognuno registra le sue statistiche." }));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: schermataHome }));
+    mostra(s);
+  }
+  // schermata di un singolo gioco: platino in cima + trofei per livello
+  function schermataSfideGioco(gid) {
+    var g = null; giochi.forEach(function (x) { if (x.id === gid) g = x; }); if (!g) g = { nome: gid, icona: "🎮" };
+    var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
+    var s = schermata({ icona: g.icona || "🏆", titolo: g.nome, sotto: "Trofei del gioco", indietro: schermataSfide });
+    if (!prof) { s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Accedi al profilo per vedere i tuoi trofei." })); s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "‹ Tutti i giochi", onclick: schermataSfide })); mostra(s); return; }
+    var lista = trofeiDi(gid), c = contaTrofei(prof, gid);
+    // trofeo Platino (sempre mostrato: è il traguardo del gioco)
+    var plat = c.tot > 0 && c.fatti === c.tot;
+    s._contenuto.appendChild(el("div", { class: "trofeo tl-platino" + (plat ? " fatto" : "") }, [
+      el("div", { class: "tr-ico", text: plat ? "💠" : "🔒" }),
+      el("div", { class: "tr-corpo" }, [
+        el("div", { class: "tr-nome", text: "Platino" + (plat ? "  ✓" : "") }),
+        el("div", { class: "tr-desc", text: "Sblocca tutti i trofei del gioco" }),
+        el("div", { class: "tr-barra" }, [ el("div", { class: "tr-fill", style: "width:" + Math.round(c.fatti * 100 / Math.max(1, c.tot)) + "%" }) ]),
+        el("div", { class: "tr-num", text: c.fatti + " / " + c.tot })
+      ])
+    ]));
+    if (!lista.length) {
+      s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin-top:14px", text: "Le sfide di " + g.nome + " arrivano presto — le definiamo insieme. Intanto le tue partite vengono già registrate." }));
+    } else {
+      ORDINE_LIV.forEach(function (liv) {
+        var gruppo = lista.filter(function (t) { return t.livello === liv; });
+        if (!gruppo.length) return;
+        s._contenuto.appendChild(el("div", { class: "etichetta", text: LIVELLI[liv].nome }));
+        gruppo.forEach(function (t) {
+          var val = valoreStat(prof, t.gioco, t.stat), fatto = val >= t.meta;
+          var perc = Math.max(0, Math.min(100, Math.round(val * 100 / t.meta)));
+          s._contenuto.appendChild(el("div", { class: "trofeo " + LIVELLI[liv].cls + (fatto ? " fatto" : "") }, [
+            el("div", { class: "tr-ico", text: fatto ? t.icona : "🔒" }),
+            el("div", { class: "tr-corpo" }, [
+              el("div", { class: "tr-nome", text: t.nome + (fatto ? "  ✓" : "") }),
+              el("div", { class: "tr-desc", text: t.desc }),
+              el("div", { class: "tr-barra" }, [ el("div", { class: "tr-fill", style: "width:" + perc + "%" }) ]),
+              el("div", { class: "tr-num", text: Math.min(val, t.meta) + " / " + t.meta })
+            ])
+          ]));
+        });
+      });
+    }
+    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "‹ Tutti i giochi", onclick: schermataSfide }));
     mostra(s);
   }
 

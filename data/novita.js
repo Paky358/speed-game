@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 84,
+    data: "23 settembre 2026",
+    titolo: "Hockey contro il computer + Trofei da platinare 🏒🏆",
+    descrizione: [
+      "Glow Hockey ora si gioca anche da soli contro il computer, con 3 difficoltà (Facile, Medio, Difficile): tutto sul tuo telefono, nessun ritardo.",
+      "Le Sfide diventano stile PlayStation: ogni gioco ha i suoi trofei Bronzo, Argento, Oro e Diamante, e il Platino quando li sblocchi tutti.",
+      "Nella schermata Sfide trovi già tutti i giochi: le sfide di ognuno le aggiungiamo a mano a mano."
+    ]
+  },
+  {
     v: 83,
     data: "23 settembre 2026",
     titolo: "Sfide e Trofei 🏆",

@@ -29,25 +29,52 @@
     id: "hockey",
     nome: "Glow Hockey",
     icona: "🏒",
-    descrizione: "Air hockey in due, ognuno dal suo telefono: colpisci il disco col dito e segna nella porta avversaria.",
-    giocatoriMin: 2, giocatoriMax: 2, difficolta: 2,
+    descrizione: "Air hockey: sfida il computer (3 difficoltà) o un amico dal suo telefono. Colpisci il disco col dito e segna nella porta avversaria.",
+    giocatoriMin: 1, giocatoriMax: 2, difficolta: 2,
     regole: [
-      "Si gioca <b>in due, ognuno dal suo telefono</b>: uno apre la stanza, l'altro entra col codice.",
+      "Da soli si gioca <b>contro il computer</b> (Facile, Medio o Difficile); in due <b>ognuno dal suo telefono</b> (uno apre la stanza, l'altro entra col codice).",
       "Muovi la <b>racchetta</b> col dito nella tua metà campo (non puoi passare la linea di centrocampo) e colpisci il <b>disco</b>.",
       "Segna nella porta avversaria. Primo a <b>" + VINCI + "</b> gol vince.",
-      "Il disco è calcolato dal telefono di chi apre la stanza: sull'altro può esserci un filo di ritardo."
+      "Contro il computer è tutto sul tuo telefono: nessun ritardo. Online il disco lo calcola chi apre la stanza."
     ],
     impostazioni: function (box, dove, aiuti) {
-      dove.modo = "online";
-      if (aiuti.torneo) return;
-      var el = aiuti.el;
-      box.appendChild(el("p", { class: "modulo-nota", text: (window.SGNet && SGNet.disponibile())
-        ? "Si gioca in due, ognuno dal suo telefono. Premi Comincia per aprire la stanza e manda il codice all'avversario."
-        : "Serve il sito pubblicato online: da un file locale il collegamento non è disponibile." }));
+      dove.modo = "bot"; dove.botLiv = "medio";
+      if (aiuti.torneo) { dove.modo = "bot"; return; }
+      var el = aiuti.el, bBot, bOnl, liv, notaOnl;
+      function selModo(m) {
+        dove.modo = m;
+        bBot.className = "modo-chip" + (m === "bot" ? " attiva" : "");
+        bOnl.className = "modo-chip" + (m === "online" ? " attiva" : "");
+        liv.hidden = (m !== "bot"); notaOnl.hidden = (m !== "online");
+      }
+      bBot = el("button", { class: "modo-chip attiva", onclick: function () { selModo("bot"); } }, [
+        el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro il computer" }), el("div", { class: "ms", text: "Da solo, sul tuo telefono" })])]);
+      bOnl = el("button", { class: "modo-chip", onclick: function () { selModo("online"); } }, [
+        el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online (in due)" }), el("div", { class: "ms", text: "Ognuno dal suo telefono" })])]);
+      box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
+      box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
+      // scelta difficoltà (solo contro il computer)
+      liv = el("div", {});
+      liv.appendChild(el("div", { class: "etichetta", text: "Difficoltà" }));
+      var chips = el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr 1fr" });
+      [["facile", "Facile", "🙂"], ["medio", "Medio", "😎"], ["difficile", "Difficile", "🔥"]].forEach(function (x) {
+        var c = el("button", { class: "modo-chip" + (x[0] === dove.botLiv ? " attiva" : ""), style: "flex-direction:column;gap:4px;text-align:center", onclick: function () {
+          dove.botLiv = x[0]; [].forEach.call(chips.children, function (k) { k.className = "modo-chip"; k.style.flexDirection = "column"; }); c.className = "modo-chip attiva";
+        } }, [ el("span", { class: "mi", text: x[2] }), el("div", { class: "mt", text: x[1] }) ]);
+        chips.appendChild(c);
+      });
+      liv.appendChild(chips);
+      box.appendChild(liv);
+      notaOnl = el("div", { class: "link-avviso", hidden: "hidden", text: (window.SGNet && SGNet.disponibile())
+        ? "Premi Comincia per aprire la stanza e manda il codice all'avversario."
+        : "L'online serve il sito pubblicato: da un file locale non è disponibile." });
+      box.appendChild(notaOnl);
     },
     avvia: function (t) {
       if (t.linkParams && t.linkParams.stanza) return ospiteHK(t, t.linkParams.stanza);
-      return hostHK(t);
+      var imp = t.impostazioni || {};
+      if (imp.modo === "online") return hostHK(t);
+      return botHK(t, imp.botLiv || "medio");
     }
   });
 
@@ -207,6 +234,92 @@
   function testoCanale(c) {
     return c === "diretto" ? "⚡ Collegamento diretto (stessa rete) — velocissimo"
                            : "🌐 Collegamento via internet";
+  }
+
+  // ---------- CONTRO IL COMPUTER (tutto in locale, nessuna rete) ----------
+  // Difficoltà: quanto è veloce la racchetta del bot, quanto è precisa (errore)
+  // e quanto mira alla porta (aggressività).
+  var DIFF = {
+    facile:    { nome: "Facile",    vel: 0.95, err: 0.11, mira: 0.4 },
+    medio:     { nome: "Medio",     vel: 1.55, err: 0.05, mira: 0.9 },
+    difficile: { nome: "Difficile", vel: 2.35, err: 0.015, mira: 1.3 }
+  };
+  // muove la racchetta del bot (in alto: gx,gy) verso il suo bersaglio del momento
+  function botMuovi(st, dt, D) {
+    var tx, ty, attacca = st.py < ASP * 0.5;   // il disco è nella metà del bot
+    if (attacca) {
+      tx = st.px + st.pvx * 0.06;              // anticipa un po' il disco
+      ty = st.py - (RP + RPAD) * 0.85;         // mettiti SOPRA il disco per spingerlo giù
+      tx += (0.5 - st.px) * 0.15 * D.mira;     // punta un filo verso il centro (porta avversaria)
+    } else {
+      tx = 0.5 + (st.px - 0.5) * 0.7;          // difendi: davanti alla tua porta, segui la x del disco
+      ty = 0.16;
+    }
+    tx += (Math.random() - 0.5) * D.err;
+    ty += (Math.random() - 0.5) * D.err * 0.5;
+    tx = clamp(tx, RPAD, 1 - RPAD);
+    ty = clamp(ty, RPAD, ASP / 2 - RPAD);
+    var dx = tx - st.gx, dy = ty - st.gy, dist = Math.hypot(dx, dy), step = D.vel * dt;
+    if (dist > step && dist > 1e-6) { st.gx += dx / dist * step; st.gy += dy / dist * step; }
+    else { st.gx = tx; st.gy = ty; }
+    st.gx = clamp(st.gx, RPAD, 1 - RPAD); st.gy = clamp(st.gy, RPAD, ASP / 2 - RPAD);
+  }
+  function salvaHockey(st) {
+    if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
+    var vinto = st.vincitore === 1;
+    SGNube.salvaProgressi(null, "hockey",
+      [["partite", 1], ["vittorie", vinto ? 1 : 0], ["golFatti", st.s1]],
+      [["scartoMax", vinto ? (st.s1 - st.s2) : 0]]);
+  }
+  function botHK(t, liv) {
+    var D = DIFF[liv] || DIFF.medio;
+    var st = statoNuovo(); st.fase = "gioco";
+    var C = null, raf = null, ultimoT = 0, acc = 0, vista = null, salvato = false;
+    function gol(chi) {
+      if (chi === 1) st.s1++; else st.s2++;
+      if (st.s1 >= VINCI || st.s2 >= VINCI) {
+        st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2;
+        if (!salvato) { salvato = true; salvaHockey(st); }
+        render();
+      } else { st.fase = "gol"; st.golT = performance.now(); servi(st); }
+    }
+    function loop(now) {
+      raf = requestAnimationFrame(loop);
+      var dt = ultimoT ? (now - ultimoT) / 1000 : 0.016; ultimoT = now; if (dt > 0.1) dt = 0.1;
+      if (st.fase === "gol" && now - st.golT > 1200) st.fase = "gioco";
+      if (st.fase === "gioco") botMuovi(st, dt, D);
+      var fdt = Math.max(0.004, dt);
+      st._hvx = (st.hx - st.hpx) / fdt; st._hvy = (st.hy - st.hpy) / fdt;
+      st._gvx = (st.gx - st.gpx) / fdt; st._gvy = (st.gy - st.gpy) / fdt;
+      st.hpx = st.hx; st.hpy = st.hy; st.gpx = st.gx; st.gpy = st.gy;
+      acc += dt; var guard = 0;
+      while (acc >= HSTEP && guard++ < 12) { passo(st, HSTEP, gol); acc -= HSTEP; if (st.fase !== "gioco") { acc = 0; break; } }
+      if (st.fase === "fine") return;   // la schermata è cambiata
+      if (C) disegna(C.ctx, C.cssW, st, false);
+    }
+    function stop() { if (raf) cancelAnimationFrame(raf); raf = null; }
+    function render() {
+      var tipo = st.fase === "fine" ? "fine" : "gioco";
+      if (tipo === vista && tipo !== "fine") return;
+      vista = tipo; stop();
+      var el = t.el;
+      if (tipo === "fine") {
+        var vinto = st.vincitore === 1;
+        var sf = t.schermata({ icona: vinto ? "🏆" : "🤖", titolo: vinto ? "Hai vinto!" : "Ha vinto il computer", sotto: "Glow Hockey · " + D.nome });
+        sf._contenuto.appendChild(el("div", { style: "text-align:center;font-size:2rem;font-weight:800;margin:10px 0", text: st.s1 + " — " + st.s2 }));
+        sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { st.s1 = 0; st.s2 = 0; st.vincitore = null; salvato = false; servi(st); st.fase = "gioco"; vista = null; render(); } }));
+        sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { stop(); t.esci(); } }));
+        t.mostra(sf);
+      } else {
+        var sg = t.schermata({ icona: "🏒", titolo: "Glow Hockey", sotto: "Tu (blu) in basso · 🤖 " + D.nome, indietro: function () { stop(); t.esci(); } });
+        C = creaCanvas(t, sg);
+        collegaInput(C, false, "basso", function (x, y) { st.hx = x; st.hy = y; });
+        t.mostra(sg);
+        adattaCanvas(C);
+        ultimoT = 0; raf = requestAnimationFrame(loop);
+      }
+    }
+    render();
   }
 
   // ---------- HOST ----------
