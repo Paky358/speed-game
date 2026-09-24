@@ -447,6 +447,24 @@ body::before{
 .sfida-gioco .sg-corpo{ flex:1; min-width:0; }
 .sfida-gioco .sg-nome{ font-weight:800; font-size:1.08rem; }
 .sfida-gioco .sg-sub{ font-size:.85rem; color:var(--testo-tenue); margin-top:2px; }
+.sfida-gioco .sg-pct{ float:right; font-weight:800; color:var(--accento); }
+.sg-barra{ height:7px; border-radius:5px; background:rgba(0,0,0,.28); overflow:hidden; margin-top:6px; }
+.sg-fill{ height:100%; border-radius:5px; background:linear-gradient(90deg,#ffd75a,#e0a90a); transition:width .4s ease; }
+.sfida-gioco.platinato .sg-fill{ background:linear-gradient(90deg,#bff0ff,#5cc7ec); }
+/* riepilogo in cima: totale, percentuale e conteggio per livello */
+.sfide-sommario .sm-testa{ font-size:1.08rem; }
+.sfide-sommario .sm-pct{ margin-left:6px; font-weight:800; color:var(--accento); }
+.sfide-sommario .sm-barra{ height:9px; margin:8px 2px 12px; }
+.sm-livelli{ display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+.sm-liv{ border-radius:12px; padding:6px 2px 5px; background:rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.08); }
+.sm-liv .sm-ico{ font-size:1.35rem; line-height:1.2; }
+.sm-liv .sm-num{ font-size:.9rem; margin-top:2px; white-space:nowrap; }
+.sm-liv .sm-nome{ font-size:.66rem; color:var(--testo-tenue); text-transform:uppercase; letter-spacing:.03em; margin-top:1px; }
+.sm-liv.tl-bronzo{ border-color:rgba(232,168,102,.45); }
+.sm-liv.tl-argento{ border-color:rgba(220,228,238,.45); }
+.sm-liv.tl-oro{ border-color:rgba(255,215,90,.5); }
+.sm-liv.tl-diamante{ border-color:rgba(92,199,236,.5); }
+.sm-liv.tl-platino{ border-color:rgba(159,184,216,.55); }
 .sfida-gioco .sg-frecc{ font-size:1.5rem; color:var(--accento); opacity:.75; flex:0 0 auto; }
 /* singolo trofeo */
 .trofeo{ display:flex; gap:12px; align-items:center; background:var(--carta); border-radius:16px;

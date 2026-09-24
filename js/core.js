@@ -444,16 +444,33 @@
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "👤 Crea / accedi al profilo", onclick: function () { schermataAccesso(schermataSfide); } }));
       mostra(s); return;
     }
-    var totFatti = 0, totTrofei = 0, platini = 0;
-    giochi.forEach(function (g) { var c = contaTrofei(prof, g.id); totFatti += c.fatti; totTrofei += c.tot; if (platinato(prof, g.id)) platini++; });
-    s._contenuto.appendChild(el("div", { class: "sfide-sommario", html: "🏆 <b>" + totFatti + "</b>/" + totTrofei + " trofei &nbsp;·&nbsp; 💠 <b>" + platini + "</b> platini" }));
+    var totFatti = 0, totTrofei = 0, platini = 0, conPlatino = 0, perLiv = {};
+    ["bronzo", "argento", "oro", "diamante"].forEach(function (l) { perLiv[l] = { fatti: 0, tot: 0 }; });
+    TROFEI.forEach(function (t) { var p = perLiv[t.livello]; if (!p) return; p.tot++; if (trofeoFatto(prof, t)) p.fatti++; });
+    giochi.forEach(function (g) { var c = contaTrofei(prof, g.id); totFatti += c.fatti; totTrofei += c.tot; if (c.tot) conPlatino++; if (platinato(prof, g.id)) platini++; });
+    var pctTot = Math.floor(totFatti * 100 / Math.max(1, totTrofei));
+    function cella(cls, ico, nome, f, t) {
+      return el("div", { class: "sm-liv " + cls }, [ el("div", { class: "sm-ico", text: ico }), el("div", { class: "sm-num", html: "<b>" + f + "</b>/" + t }), el("div", { class: "sm-nome", text: nome }) ]);
+    }
+    s._contenuto.appendChild(el("div", { class: "sfide-sommario" }, [
+      el("div", { class: "sm-testa", html: "🏆 <b>" + totFatti + "</b>/" + totTrofei + " trofei <span class='sm-pct'>" + pctTot + "%</span>" }),
+      el("div", { class: "sg-barra sm-barra" }, [ el("div", { class: "sg-fill", style: "width:" + pctTot + "%" }) ]),
+      el("div", { class: "sm-livelli" }, [
+        cella("tl-bronzo", "🥉", "Bronzo", perLiv.bronzo.fatti, perLiv.bronzo.tot),
+        cella("tl-argento", "🥈", "Argento", perLiv.argento.fatti, perLiv.argento.tot),
+        cella("tl-oro", "🥇", "Oro", perLiv.oro.fatti, perLiv.oro.tot),
+        cella("tl-diamante", "💎", "Diamante", perLiv.diamante.fatti, perLiv.diamante.tot),
+        cella("tl-platino", "💠", "Platino", platini, conPlatino)
+      ])
+    ]));
     giochi.forEach(function (g) {
-      var c = contaTrofei(prof, g.id), plat = platinato(prof, g.id);
+      var c = contaTrofei(prof, g.id), plat = platinato(prof, g.id), pct = Math.floor(c.fatti * 100 / Math.max(1, c.tot));
       s._contenuto.appendChild(el("button", { class: "sfida-gioco" + (plat ? " platinato" : ""), onclick: function () { schermataSfideGioco(g.id); } }, [
         el("span", { class: "sg-ico", text: g.icona || "🎮" }),
         el("div", { class: "sg-corpo" }, [
           el("div", { class: "sg-nome", text: g.nome }),
-          el("div", { class: "sg-sub", text: c.tot ? (c.fatti + "/" + c.tot + " trofei" + (plat ? "  ·  💠 Platino!" : "")) : "Trofei in arrivo" })
+          el("div", { class: "sg-sub", html: c.tot ? (c.fatti + "/" + c.tot + " trofei" + (plat ? "  ·  💠 Platino!" : "") + " <span class='sg-pct'>" + pct + "%</span>") : "Trofei in arrivo" }),
+          c.tot ? el("div", { class: "sg-barra" }, [ el("div", { class: "sg-fill", style: "width:" + pct + "%" }) ]) : null
         ]),
         el("span", { class: "sg-frecc", text: plat ? "💠" : "›" })
       ]));

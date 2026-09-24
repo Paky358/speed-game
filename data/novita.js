@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 94,
+    data: "24 settembre 2026",
+    titolo: "Trofei: percentuali e conteggio per livello 📊",
+    descrizione: [
+      "In cima alla schermata Trofei vedi quanti bronzi, argenti, ori, diamanti e platini hai preso su quelli che esistono.",
+      "Una barra con la percentuale di completamento generale, e una per ogni gioco."
+    ]
+  },
+  {
     v: 93,
     data: "24 settembre 2026",
     titolo: "Trofei per Scopa e Scopa 2 vs 2 🃏🏆",
