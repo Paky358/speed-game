@@ -9,11 +9,22 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 104,
+    data: "25 settembre 2026",
+    titolo: "SPeeD GAME diventa un'app 📲 + avatar a volontà",
+    descrizione: [
+      "Installala sul telefono: tocca '📲 Installa l'app' in home. Si apre a schermo pieno, senza la barra dell'indirizzo, con la sua icona.",
+      "35 tagli di capelli divisi in Corti, Medi e Lunghi: afro, dreadlock, trecce, coda alta, mullet, undercut, emo e tanti altri.",
+      "Viso: occhi a mandorla, assonnati e a puntino, nuove sopracciglia, nasi e bocche (linguaccia, dentoni…), segni particolari e trucco con i suoi colori.",
+      "Barbe nuove: lunga, collare, ancora e basettoni. E da oggi si chiama 'avatar'!"
+    ]
+  },
+  {
     v: 103,
     data: "25 settembre 2026",
-    titolo: "Omini più proporzionati 🧍",
+    titolo: "Avatar più proporzionati 🧍",
     descrizione: [
-      "La testa è più piccola del 15%: a figura intera l'omino è più slanciato e i vestiti si vedono meglio.",
+      "La testa è più piccola del 15%: a figura intera l'avatar è più slanciato e i vestiti si vedono meglio.",
       "Nei tondini (home e giochi) la faccia resta grande e ben riconoscibile."
     ]
   },
@@ -30,7 +41,7 @@ window.SG_NOVITA = [
   {
     v: 101,
     data: "24 settembre 2026",
-    titolo: "Omini: nuove proporzioni e pantaloni veri 👖",
+    titolo: "Avatar: nuove proporzioni e pantaloni veri 👖",
     descrizione: [
       "Busto più corto e gambe più lunghe: ora i pantaloni si vedono bene, dai fianchi alle scarpe.",
       "5 tipi di 'sotto': jeans (cuciture, tasche, risvolto), classici con la piega, tuta con le bande, pantaloncini e gonna.",
@@ -41,20 +52,20 @@ window.SG_NOVITA = [
   {
     v: 100,
     data: "24 settembre 2026",
-    titolo: "Omini: ritocchi, colori liberi e il saluto 👋",
+    titolo: "Avatar: ritocchi, colori liberi e il saluto 👋",
     descrizione: [
       "Ritocchi come nei Mii (scheda Viso): grandezza, distanza e altezza degli occhi, altezza delle sopracciglia, grandezza del naso, altezza della bocca.",
       "Colore libero: tocca il tondo 🎨 in fondo ai colori e scegli qualsiasi tinta per capelli, occhi, vestiti, scarpe e accessori.",
       "4 acconciature nuove: ciuffo, codini, chignon e rasato. Ombre più morbide e una luce di bordo che dà più volume.",
-      "Quando apri l'editor e quando salvi, il tuo omino ti saluta!"
+      "Quando apri l'editor e quando salvi, il tuo avatar ti saluta!"
     ]
   },
   {
     v: 99,
     data: "24 settembre 2026",
-    titolo: "Il tuo omino prende vita ✨",
+    titolo: "Il tuo avatar prende vita ✨",
     descrizione: [
-      "Nell'editor l'omino sta su un palco illuminato: respira, sbatte le palpebre e fa un saltello a ogni scelta.",
+      "Nell'editor l'avatar sta su un palco illuminato: respira, sbatte le palpebre e fa un saltello a ogni scelta.",
       "Vestiti nuovi: maglietta, maniche lunghe, felpa col cappuccio, camicia, canotta. Stampe: righe, stella, fulmine, cuore.",
       "Scegli anche il colore delle scarpe e dell'accessorio. Cappellino e berretto ora coprono bene i capelli.",
       "La vibrazione ora arriva solo quando selezioni un tasto, non più quando scorri la pagina."
@@ -63,7 +74,7 @@ window.SG_NOVITA = [
   {
     v: 98,
     data: "24 settembre 2026",
-    titolo: "Omini più belli e più scelte 🎨",
+    titolo: "Avatar più belli e più scelte 🎨",
     descrizione: [
       "Disegno più curato: ciocche nei capelli, occhi con l'iride sfumata, pieghe dei vestiti, scarpe con la suola.",
       "Nuove scelte: forma del viso, guance (nessuna, leggere, rosse o lentiggini), labbra, sopracciglia sottili.",
@@ -74,9 +85,9 @@ window.SG_NOVITA = [
   {
     v: 97,
     data: "24 settembre 2026",
-    titolo: "Il tuo omino! 🧍",
+    titolo: "Il tuo avatar! 🧍",
     descrizione: [
-      "Crea il tuo personaggio stile Mii: tocca il tuo nome in alto e poi 'Crea il tuo omino'.",
+      "Crea il tuo personaggio stile Mii: tocca il tuo nome in alto e poi 'Crea il tuo avatar'.",
       "Scegli uomo o donna, corporatura, pelle, capelli, occhi, bocca, vestiti (anche la gonna) e accessori.",
       "Si salva nel profilo: ti segue su ogni telefono. Presto comparirà nei giochi e alcuni accessori speciali si sbloccheranno coi trofei 👑"
     ]

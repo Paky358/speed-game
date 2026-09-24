@@ -15,7 +15,16 @@ OUT=dist/index.html
   echo '<meta charset="utf-8">'
   echo '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
   echo '<meta name="theme-color" content="#0c1636">'
-  echo '<title>Speed Game</title>'
+  echo '<title>SPeeD GAME</title>'
+  # app installabile: icona sulla Home e niente barra dell'indirizzo
+  echo '<link rel="manifest" href="app/manifest.webmanifest">'
+  echo '<link rel="icon" type="image/png" href="app/icona-192.png">'
+  echo '<link rel="apple-touch-icon" href="app/icona-192.png">'
+  echo '<meta name="apple-mobile-web-app-capable" content="yes">'
+  echo '<meta name="mobile-web-app-capable" content="yes">'
+  echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">'
+  echo '<meta name="apple-mobile-web-app-title" content="SPeeD GAME">'
+  echo '<script>if ("serviceWorker" in navigator) addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });</script>'
   echo '<style>'
   cat css/styles.css
   echo '</style>'
@@ -48,5 +57,8 @@ OUT=dist/index.html
 
 # Copia le immagini delle carte (mazzo napoletano) nella cartella pubblicata
 if [ -d carte ]; then rm -rf dist/carte && cp -r carte dist/carte; fi
+# App installabile: icone, manifest e service worker
+if [ -d app ]; then rm -rf dist/app && cp -r app dist/app; fi
+[ -e sw.js ] && cp sw.js dist/sw.js
 
 echo "Creato $OUT"

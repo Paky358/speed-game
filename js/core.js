@@ -164,6 +164,13 @@
     });
   }
 
+  // il browser ci avvisa quando il sito si può installare come app: teniamo l'avviso per il pulsante in home
+  var promptInstalla = null;
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault(); promptInstalla = e;
+    if (document.querySelector(".home")) schermataHome();   // se sei in home, compare subito il pulsante
+  });
+
   function schermataHome() {
     var s = schermata({});
     s.className += " home";
@@ -181,6 +188,13 @@
       rigaProfilo.appendChild(bNov);
     }
     rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: schermataSfide }, [ el("span", { text: "🏆 Trofei" }) ]));
+    // "Installa l'app": solo dal browser (se è già aperta come app, non serve)
+    var giaApp = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone;
+    var iPhone = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (!giaApp && (promptInstalla || iPhone)) rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: function () {
+      if (promptInstalla) { promptInstalla.prompt(); promptInstalla.userChoice.then(function () { promptInstalla = null; schermataHome(); }); }
+      else alert("Per installarla: tocca il tasto Condividi (il quadrato con la freccia) e poi \"Aggiungi alla schermata Home\".");
+    } }, [ el("span", { text: "📲 Installa l'app" }) ]));
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
       el("div", { class: "home-logo", html: '<svg viewBox="0 0 200 118" width="156" height="92" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgBolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6bf"/><stop offset=".42" stop-color="#ffd23b"/><stop offset=".72" stop-color="#f6a70c"/><stop offset="1" stop-color="#c06a08"/></linearGradient><linearGradient id="sgBoltHi" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffdf0" stop-opacity=".95"/><stop offset=".5" stop-color="#ffffff" stop-opacity="0"/></linearGradient><filter id="sgGlow" x="-70%" y="-70%" width="240%" height="240%"><feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#ff9d2e" flood-opacity=".75"/><feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#ff7b16" flood-opacity=".4"/></filter><path id="sgB" d="M13 0 L2 20 L10 20 L7 36 L22 12 L13 12 L17 0 Z"/></defs><g filter="url(#sgGlow)" stroke="#8a5209" stroke-width="1.3" stroke-linejoin="round"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBolt)"/></g><g stroke="none"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBoltHi)"/></g></svg>' }),
       el("h1", { class: "home-titolo", text: "SPeeD GAME" }),
@@ -826,18 +840,19 @@
     mostra(s);
   }
 
-  // ---- OMINO: il tuo personaggio stile Mii (disegno in js/omino.js) ----
+  // ---- AVATAR: il tuo personaggio stile Mii (disegno in js/omino.js; nel codice resta "omino") ----
   var SEZ_OMINO = [
     { nome: "Corpo",     voci: [["forma", "Forma"], ["corpo", "Corporatura"], ["pelle", "Pelle"]] },
-    { nome: "Viso",      voci: [["viso", "Forma del viso"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"], ["guance", "Guance"]] },
+    { nome: "Viso",      voci: [["viso", "Forma del viso"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
+                               ["guance", "Guance"], ["segno", "Segni particolari"], ["trucco", "Trucco"], ["colTrucco", "Colore trucco"]] },
     { nome: "Capelli",   voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
     { nome: "Vestiti",   voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["scarpe", "Scarpe"]] },
     { nome: "Accessori", voci: [["accessorio", "Accessorio"], ["colAcc", "Colore accessorio"]] }
   ];
-  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1 };
+  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colTrucco: 1 };
   var OMINO_INTERO = { forma: 1, corpo: 1, sotto: 1, capo: 1, stampa: 1 };   // anteprima a figura intera (le altre: solo la testa)
   var ACC_COLORATI = /cappellino|berretto|fascia|cuffie/;          // accessori che hanno un colore da scegliere
-  var OMINO_LIBERO = { colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1 };   // colori dove c'è anche la tavolozza libera
+  var OMINO_LIBERO = { colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colTrucco: 1 };   // colori dove c'è anche la tavolozza libera
   var OMINO_RITOCCHI = [["occG", "Grandezza occhi"], ["occD", "Distanza occhi"], ["occA", "Altezza occhi"],
     ["soprA", "Altezza sopracciglia"], ["nasoG", "Grandezza naso"], ["boccaA", "Altezza bocca"]];
   // piccolo "pop" quando scegli qualcosa nell'editor (la vibrazione la fa già il tocco)
@@ -861,7 +876,7 @@
     if (!io) return schermataAccesso(function () { schermataOmino(dopo); });
     var O = SGOmino, cfg = O.norm(io.omino || O.casuale(io.nome));
     var tab = 0;
-    var s = schermata({ icona: "🧍", titolo: "Il mio omino", sotto: "Crealo come vuoi: ti rappresenta nei giochi", indietro: dopo });
+    var s = schermata({ icona: "🧍", titolo: "Il mio avatar", sotto: "Crealo come vuoi: ti rappresenta nei giochi", indietro: dopo });
     // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre, targa col nome
     var figura = el("div", { class: "om-figura" });
     var palco = el("div", { class: "omino-palco editor" }, [el("div", { class: "om-faro" }), el("div", { class: "om-pedana" }), figura,
@@ -872,7 +887,12 @@
     function unisci(k, v) { var c = {}; for (var x in cfg) c[x] = cfg[x]; c[k] = v; return c; }
     function anteprima(salto) {
       figura.innerHTML = O.svg(cfg, { hd: true });
-      if (salto) { figura.classList.remove("salta"); void figura.offsetWidth; figura.classList.add("salta"); popOmino(); }
+      if (salto) {   // saltello senza ricalcolare la pagina (le anteprime sono tante)
+        var sv = figura.firstChild;
+        if (sv && sv.animate) sv.animate([{ transform: "none" }, { transform: "translateY(-12px) scale(.96,1.05)", offset: 0.3 },
+          { transform: "scale(1.05,.95)", offset: 0.62 }, { transform: "none" }], { duration: 450, easing: "cubic-bezier(.3,1.5,.5,1)" });
+        popOmino();
+      }
     }
     var tSaluto = null;
     function saluta() {   // alza il braccio e fa "ciao"
@@ -884,7 +904,7 @@
       SEZ_OMINO.forEach(function (sz, i) { schede.appendChild(el("button", { class: "cat-tab" + (i === tab ? " attiva" : ""), text: sz.nome, onclick: function () { tab = i; disegnaSchede(); disegnaPannello(); } })); });
     }
     // aggiorna solo i riquadri (niente ricostruzione della schermata: non salta lo scroll)
-    function aggiornaPannello() {
+    function aggiornaPannello(cambiata) {   // cambiata = voce appena scelta: le sue anteprime non cambiano, non si ridisegnano
       [].forEach.call(pannello.querySelectorAll(".om-opz"), function (b) {
         var k = b._k, v = b._v;
         if (b._libero) {   // tavolozza libera: attiva se il colore è uno scelto a mano
@@ -893,24 +913,32 @@
           return;
         }
         b.classList.toggle("attiva", cfg[k] === v);
-        if (b._mini) b._mini.innerHTML = O.svg(unisci(k, v), k === "sotto" ? { gambe: true } : { busto: !OMINO_INTERO[k] });
+        if (b._mini && k !== cambiata) b._mini.innerHTML = O.svg(unisci(k, v), k === "sotto" ? { gambe: true } : { busto: !OMINO_INTERO[k] });
       });
     }
     function scegli(k, v, zitto) {
       if (cfg[k] === v) return;
       if (zitto) { cfg[k] = v; anteprima(false); return; }   // mentre trascini (colore libero, cursori): niente saltelli
-      var rifai = (k === "forma" || k === "accessorio");   // "Sotto" solo per la donna, "Colore accessorio" solo se serve
+      var rifai = (k === "forma" || k === "accessorio" || k === "trucco");   // "Sotto" solo per la donna, "Colore accessorio" solo se serve
       cfg[k] = v; if (k === "forma" && v === "uomo" && cfg.sotto === "gonna") cfg.sotto = "jeans";
-      anteprima(true); if (rifai) disegnaPannello(); else aggiornaPannello();
+      anteprima(true); if (rifai) disegnaPannello(); else aggiornaPannello(k);
     }
     function disegnaPannello() {
       pannello.innerHTML = "";
       SEZ_OMINO[tab].voci.forEach(function (vc) {
         var k = vc[0];
         if (k === "colAcc" && !ACC_COLORATI.test(cfg.accessorio)) return;
-        pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
+        if (k === "colTrucco" && cfg.trucco === "nessuno") return;
+        var gruppi = k === "capelli" ? O.GRUPPI_CAPELLI : null;   // tagli divisi in Corti / Medi / Lunghi
+        if (!gruppi) pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
         var riga = el("div", { class: "om-griglia" + (OMINO_COLORI[k] ? " colori" : "") });
         O.OPZ[k].forEach(function (val, i) {
+          if (gruppi) gruppi.forEach(function (g) {
+            if (g[1] !== i) return;
+            if (riga.children.length) pannello.appendChild(riga);
+            pannello.appendChild(el("div", { class: "etichetta", text: vc[1] + " · " + g[0] }));
+            riga = el("div", { class: "om-griglia" });
+          });
           if (k === "sotto" && val === "gonna" && cfg.forma !== "donna") return;
           var v = OMINO_COLORI[k] ? i : val, b;
           if (OMINO_COLORI[k]) {
@@ -954,7 +982,7 @@
       cfg = O.norm(O.casuale()); anteprima(true); disegnaPannello();
     } }));
     var salvato = false;
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva il mio omino", onclick: function () {
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva il mio avatar", onclick: function () {
       if (salvato) return; salvato = true;
       salvaOminoMio(cfg); saluta(); popOmino();
       setTimeout(dopo, 1000);   // prima ti saluta, poi torna indietro
@@ -971,7 +999,7 @@
       var sp = schermata({ icona: p.emoji || "👤", titolo: p.nome, sotto: "Il tuo profilo", indietro: schermataHome });
       if (window.SGOmino) sp._contenuto.appendChild(el("div", { class: "omino-profilo" }, [
         el("div", { class: "omino-palco" + (p.omino ? "" : " vuoto"), html: SGOmino.svg(p.omino || SGOmino.casuale(p.nome)) }),
-        el("button", { class: "btn " + (p.omino ? "btn-fantasma" : "btn-primario"), text: p.omino ? "✏️ Modifica il tuo omino" : "🧍 Crea il tuo omino",
+        el("button", { class: "btn " + (p.omino ? "btn-fantasma" : "btn-primario"), text: p.omino ? "✏️ Modifica il tuo avatar" : "🧍 Crea il tuo avatar",
           onclick: function () { schermataOmino(function () { schermataAccessoCloud(dopo); }); } })
       ]));
       var fi = (p.fiches && p.fiches.blackjack != null) ? p.fiches.blackjack : SGNube.fichesStart;
