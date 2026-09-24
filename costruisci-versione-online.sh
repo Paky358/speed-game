@@ -17,7 +17,7 @@ OUT=dist/index.html
   echo '<meta name="theme-color" content="#0c1636">'
   echo '<title>SPeeD GAME</title>'
   # app installabile: icona sulla Home e niente barra dell'indirizzo
-  echo '<link rel="manifest" href="app/manifest.webmanifest">'
+  echo '<link rel="manifest" href="app/manifest.webmanifest?v=2">'
   echo '<link rel="icon" type="image/png" href="app/icona-192.png">'
   echo '<link rel="apple-touch-icon" href="app/icona-192.png">'
   echo '<meta name="apple-mobile-web-app-capable" content="yes">'

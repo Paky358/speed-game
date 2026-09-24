@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 105,
+    data: "25 settembre 2026",
+    titolo: "Avatar: vestiti e accessori a volontà 🎩👖",
+    descrizione: [
+      "Accessori a strati, da combinare: in testa, occhiali, orecchini e al collo. Nuovi: cilindro, cowboy, pescatore, basco, cappellino da festa, orecchie da gatto, coroncina di fiori.",
+      "Occhiali quadrati, aviatore e a cuore; orecchini a punto luce, pendenti e piercing; sciarpa, collana, perle, papillon, cravatta e bandana.",
+      "Maglie nuove: polo, dolcevita, giacca, bomber e maglia da calcio. Stampe a pois, quadri, smile, pallone e numero.",
+      "Jeans strappati, cargo e gonna lunga; scarpe: sneakers, stivali, eleganti o sandali.",
+      "Il tasto '📲 Installa l'app' ora si vede sempre in home."
+    ]
+  },
+  {
     v: 104,
     data: "25 settembre 2026",
     titolo: "SPeeD GAME diventa un'app 📲 + avatar a volontà",

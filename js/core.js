@@ -191,9 +191,10 @@
     // "Installa l'app": solo dal browser (se è già aperta come app, non serve)
     var giaApp = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone;
     var iPhone = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    if (!giaApp && (promptInstalla || iPhone)) rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: function () {
+    if (!giaApp) rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: function () {
       if (promptInstalla) { promptInstalla.prompt(); promptInstalla.userChoice.then(function () { promptInstalla = null; schermataHome(); }); }
-      else alert("Per installarla: tocca il tasto Condividi (il quadrato con la freccia) e poi \"Aggiungi alla schermata Home\".");
+      else if (iPhone) alert("Per installarla: tocca il tasto Condividi (il quadrato con la freccia) e poi \"Aggiungi alla schermata Home\".");
+      else alert("Per installarla: tocca i tre puntini ⋮ in alto a destra e scegli \"Installa app\" (oppure \"Aggiungi a schermata Home\").");
     } }, [ el("span", { text: "📲 Installa l'app" }) ]));
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
       el("div", { class: "home-logo", html: '<svg viewBox="0 0 200 118" width="156" height="92" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgBolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6bf"/><stop offset=".42" stop-color="#ffd23b"/><stop offset=".72" stop-color="#f6a70c"/><stop offset="1" stop-color="#c06a08"/></linearGradient><linearGradient id="sgBoltHi" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffdf0" stop-opacity=".95"/><stop offset=".5" stop-color="#ffffff" stop-opacity="0"/></linearGradient><filter id="sgGlow" x="-70%" y="-70%" width="240%" height="240%"><feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#ff9d2e" flood-opacity=".75"/><feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#ff7b16" flood-opacity=".4"/></filter><path id="sgB" d="M13 0 L2 20 L10 20 L7 36 L22 12 L13 12 L17 0 Z"/></defs><g filter="url(#sgGlow)" stroke="#8a5209" stroke-width="1.3" stroke-linejoin="round"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBolt)"/></g><g stroke="none"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBoltHi)"/></g></svg>' }),
@@ -846,13 +847,14 @@
     { nome: "Viso",      voci: [["viso", "Forma del viso"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
                                ["guance", "Guance"], ["segno", "Segni particolari"], ["trucco", "Trucco"], ["colTrucco", "Colore trucco"]] },
     { nome: "Capelli",   voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
-    { nome: "Vestiti",   voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["scarpe", "Scarpe"]] },
-    { nome: "Accessori", voci: [["accessorio", "Accessorio"], ["colAcc", "Colore accessorio"]] }
+    { nome: "Vestiti",   voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]] },
+    { nome: "Accessori", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"]] }
   ];
-  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colTrucco: 1 };
+  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colTrucco: 1, colCollo: 1 };
   var OMINO_INTERO = { forma: 1, corpo: 1, sotto: 1, capo: 1, stampa: 1 };   // anteprima a figura intera (le altre: solo la testa)
-  var ACC_COLORATI = /cappellino|berretto|fascia|cuffie/;          // accessori che hanno un colore da scegliere
-  var OMINO_LIBERO = { colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colTrucco: 1 };   // colori dove c'è anche la tavolozza libera
+  var ACC_COLORATI = /cappellino|berretto|fascia|cuffie|cilindro|cowboy|pescatore|basco|festa|gatto/;   // cappelli con un colore da scegliere
+  var COLLO_COLORATI = /sciarpa|papillon|cravatta|bandana/;
+  var OMINO_LIBERO = { colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colTrucco: 1, colCollo: 1 };   // colori dove c'è anche la tavolozza libera
   var OMINO_RITOCCHI = [["occG", "Grandezza occhi"], ["occD", "Distanza occhi"], ["occA", "Altezza occhi"],
     ["soprA", "Altezza sopracciglia"], ["nasoG", "Grandezza naso"], ["boccaA", "Altezza bocca"]];
   // piccolo "pop" quando scegli qualcosa nell'editor (la vibrazione la fa già il tocco)
@@ -913,21 +915,22 @@
           return;
         }
         b.classList.toggle("attiva", cfg[k] === v);
-        if (b._mini && k !== cambiata) b._mini.innerHTML = O.svg(unisci(k, v), k === "sotto" ? { gambe: true } : { busto: !OMINO_INTERO[k] });
+        if (b._mini && k !== cambiata) b._mini.innerHTML = O.svg(unisci(k, v), /^(sotto|modScarpe)$/.test(k) ? { gambe: true } : { busto: !OMINO_INTERO[k] });
       });
     }
     function scegli(k, v, zitto) {
       if (cfg[k] === v) return;
       if (zitto) { cfg[k] = v; anteprima(false); return; }   // mentre trascini (colore libero, cursori): niente saltelli
-      var rifai = (k === "forma" || k === "accessorio" || k === "trucco");   // "Sotto" solo per la donna, "Colore accessorio" solo se serve
-      cfg[k] = v; if (k === "forma" && v === "uomo" && cfg.sotto === "gonna") cfg.sotto = "jeans";
+      var rifai = /^(forma|cappello|collo|trucco)$/.test(k);   // "Sotto" solo per la donna, "Colore accessorio" solo se serve
+      cfg[k] = v; if (k === "forma" && v === "uomo" && /^gonna/.test(cfg.sotto)) cfg.sotto = "jeans";
       anteprima(true); if (rifai) disegnaPannello(); else aggiornaPannello(k);
     }
     function disegnaPannello() {
       pannello.innerHTML = "";
       SEZ_OMINO[tab].voci.forEach(function (vc) {
         var k = vc[0];
-        if (k === "colAcc" && !ACC_COLORATI.test(cfg.accessorio)) return;
+        if (k === "colAcc" && !ACC_COLORATI.test(cfg.cappello)) return;
+        if (k === "colCollo" && !COLLO_COLORATI.test(cfg.collo)) return;
         if (k === "colTrucco" && cfg.trucco === "nessuno") return;
         var gruppi = k === "capelli" ? O.GRUPPI_CAPELLI : null;   // tagli divisi in Corti / Medi / Lunghi
         if (!gruppi) pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
@@ -939,15 +942,15 @@
             pannello.appendChild(el("div", { class: "etichetta", text: vc[1] + " · " + g[0] }));
             riga = el("div", { class: "om-griglia" });
           });
-          if (k === "sotto" && val === "gonna" && cfg.forma !== "donna") return;
+          if (k === "sotto" && /^gonna/.test(val) && cfg.forma !== "donna") return;
           var v = OMINO_COLORI[k] ? i : val, b;
           if (OMINO_COLORI[k]) {
             b = el("button", { class: "om-opz om-colore", style: "background:" + val, "aria-label": vc[1] + " " + (i + 1), onclick: function () { scegli(k, v); } });
           } else {
-            var bloccato = k === "accessorio" && O.LIBERI.indexOf(val) < 0;
+            var bloccato = !!(O.BLOCCATI[k] && O.BLOCCATI[k].indexOf(val) >= 0);
             var nomeVis = O.NOMI[val] || val;
             b = el("button", { class: "om-opz om-forma" + (bloccato ? " bloccato" : ""), onclick: function () { if (!bloccato) scegli(k, v); } });
-            b._mini = el("div", { class: "om-mini" + (k === "sotto" ? " gambe" : (OMINO_INTERO[k] ? " intero" : "")) });
+            b._mini = el("div", { class: "om-mini" + (/^(sotto|modScarpe)$/.test(k) ? " gambe" : (OMINO_INTERO[k] ? " intero" : "")) });
             b.appendChild(b._mini);
             b.appendChild(el("div", { class: "om-nome", text: bloccato ? "🔒 coi trofei" : nomeVis.charAt(0).toUpperCase() + nomeVis.slice(1) }));
           }
