@@ -15,7 +15,7 @@
   var RPAD = 0.09;               // raggio racchetta
   var GOALW = 0.44;              // larghezza porta (in x, centrata)
   var REST = 0.94;              // rimbalzo pareti
-  var MAXV = 3.2;                // velocità massima disco (unità/sec)
+  var MAXV = 3.4;                // velocità massima disco (unità/sec)
   var PADK = 0.8;                // quanto la racchetta spinge il disco
   var ATTRITO = 0.28;            // quanto rallenta il disco da solo (più basso = scivola di più)
   var VINCI = 7;                 // gol per vincere

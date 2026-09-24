@@ -105,6 +105,10 @@
       var nuovo = ((profilo.fiches && profilo.fiches.blackjack) || 0) + BONUS;
       profilo.fiches = profilo.fiches || {}; profilo.fiches.blackjack = nuovo; profilo.bonusUltimo = Date.now();
       var patch = { bonusUltimo: profilo.bonusUltimo }; patch["fiches.blackjack"] = nuovo;
+      // conta i bonus ritirati (serve per i trofei) e aggiorna il record fiches
+      patch["stat.blackjack.bonusRitirati"] = firebase.firestore.FieldValue.increment(1);
+      setNested(profilo, "stat.blackjack.bonusRitirati", (getNested(profilo, "stat.blackjack.bonusRitirati") || 0) + 1);
+      if (nuovo > (getNested(profilo, "stat.blackjack.recordFiches") || 0)) { patch["stat.blackjack.recordFiches"] = nuovo; setNested(profilo, "stat.blackjack.recordFiches", nuovo); }
       return db.collection("profili").doc(utente.uid).update(patch).then(function () { notifica(); return nuovo; });
     },
     // legge le statistiche di un gioco, es. statGioco("blackjack")

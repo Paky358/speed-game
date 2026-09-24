@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 91,
+    data: "24 settembre 2026",
+    titolo: "28 trofei per il Black Jack 🃏🏆",
+    descrizione: [
+      "Il Black Jack ha i suoi trofei: mani vinte, Black Jack, bonus ritirati, fiches vinte, sballi, pareggi, 21 con tre o più carte, puntate coraggiose e serie di fila. Prendili tutti per il Platino!",
+      "Glow Hockey: disco ancora un pizzico più veloce."
+    ]
+  },
+  {
     v: 90,
     data: "23 settembre 2026",
     titolo: "Glow Hockey al massimo ⚡",

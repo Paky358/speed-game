@@ -481,20 +481,45 @@
     return box;
   }
 
-  // a fine mano salva fiches + statistiche del giocatore col profilo (non in prova)
-  function salvaFineMano(g) {
+  // serie di Black Jack di fila nella sessione al tavolo (si azzera quando si esce)
+  var sessioneBJ = { fila: 0, filaMax: 0 };
+  function nuovaSessioneBJ() { sessioneBJ = { fila: 0, filaMax: 0 }; }
+
+  // a fine mano salva fiches + statistiche (per i trofei) del giocatore col profilo (non in prova)
+  function salvaFineMano(g, vm) {
     if (!g || !(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
-    var mani = 0, vinte = 0, bj = 0, vincMax = 0;
+    var s0 = SGNube.statGioco("blackjack") || {};
+    var sv = s0.serieVinteOra || 0, ss = s0.serieSconfitteOra || 0, svMax = 0, ssMax = 0;   // serie che continuano tra le sessioni
+    var bancoSballa = vm && vm.banco && vm.banco.length ? BJ.punteggio(vm.banco) > 21 : false;
+    var c = { maniGiocate: 0, maniVinte: 0, blackjackFatti: 0, fichesVinteTot: 0, maniSballate: 0, maniPari: 0,
+              vinteSballoBanco: 0, ventunoTre: 0, vinte5carte: 0 };
+    var vincMax = 0, puntataVintaMax = 0;
     g.mani.forEach(function (m) {
-      mani++;
-      if (m.esito === "vince" || m.esito === "blackjack") vinte++;
-      if (m.esito === "blackjack") bj++;
+      var pm = BJ.punteggio(m.carte), vinta = m.esito === "vince" || m.esito === "blackjack";
+      c.maniGiocate++;
+      if (vinta) {
+        c.maniVinte++;
+        if (bancoSballa && pm <= 21) c.vinteSballoBanco++;          // vinta perché il banco ha sballato
+        if (m.carte.length >= 5 && pm <= 21) c.vinte5carte++;          // funambolo: vinta con 5+ carte
+        if (m.puntata > puntataVintaMax) puntataVintaMax = m.puntata;  // puntata più alta mai vinta
+      }
+      if (m.esito === "blackjack") c.blackjackFatti++;
+      if (pm > 21) c.maniSballate++;
+      if (m.esito === "pari") c.maniPari++;
+      if (pm === 21 && m.carte.length >= 3) c.ventunoTre++;            // 21 esatto con 3 o più carte
       var netto = (m.vincita || 0) - m.puntata;
-      if (netto > vincMax) vincMax = netto;
+      if (netto > 0) { c.fichesVinteTot += netto; if (netto > vincMax) vincMax = netto; }
+      // serie di fila: vinte / perse / black jack
+      if (vinta) { sv++; ss = 0; } else if (m.esito === "perde") { ss++; sv = 0; } else { sv = 0; ss = 0; }
+      if (sv > svMax) svMax = sv; if (ss > ssMax) ssMax = ss;
+      if (m.esito === "blackjack") sessioneBJ.fila++; else sessioneBJ.fila = 0;
+      if (sessioneBJ.fila > sessioneBJ.filaMax) sessioneBJ.filaMax = sessioneBJ.fila;
     });
-    SGNube.salvaProgressi(g.fiches, "blackjack",
-      [["maniGiocate", mani], ["maniVinte", vinte], ["blackjackFatti", bj]],
-      [["recordFiches", g.fiches], ["vincitaMax", vincMax]]);
+    var incrs = []; for (var k in c) incrs.push([k, c[k]]);
+    SGNube.salvaProgressi(g.fiches, "blackjack", incrs,
+      [["recordFiches", g.fiches], ["vincitaMax", vincMax], ["puntataVintaMax", puntataVintaMax],
+       ["serieVinteMax", svMax], ["serieSconfitteMax", ssMax], ["serieBJMax", sessioneBJ.filaMax]],
+      [["serieVinteOra", sv], ["serieSconfitteOra", ss]]);
   }
 
   // ---- vista (vm): stessa forma dello stato; serve sia il locale sia
@@ -786,6 +811,7 @@
 
   // ---------- MODALITÀ "UN TELEFONO SOLO" ----------
   function localeBJ(t) {
+    nuovaSessioneBJ();
     var nomi = (t.giocatori && t.giocatori.length) ? t.giocatori.slice() : ["Giocatore 1"];
     // se c'è un profilo cloud, il primo giocatore usa (e salva) le sue fiches
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
@@ -807,7 +833,7 @@
       onPunta: function (v) { suonoChip(); M.punta(st.turno, v); refresh(); },
       onMossa: function (m) { if (m === "stai") suonoStai(); M.azione(m); refresh(); },
       onAssicura: function (si) { M.assicura(st.turno, si); refresh(); },
-      onFineMano: function (v) { if (prof && !prova) salvaFineMano(v.giocatori[0]); },
+      onFineMano: function (v) { if (prof && !prova) salvaFineMano(v.giocatori[0], v); },
       onNuova: function () { M.nuovaMano(); refresh(); },
       onEsci: function () { salva(); t.esci(); }
     });
@@ -837,6 +863,7 @@
   }
 
   function hostBJ(t) {
+    nuovaSessioneBJ();
     if (!(window.SGNet && SGNet.disponibile())) return localeBJ(t);
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     var provaHost = false, mieFiches = prof ? SGNube.fiches("blackjack") : null;
@@ -870,7 +897,7 @@
         onPunta: function (v) { if (M.st.turno === 0) { suonoChip(); M.punta(0, v); bcast(); } },
         onMossa: function (m) { if (M.st.turno === 0) { if (m === "stai") suonoStai(); M.azione(m); bcast(); } },
         onAssicura: function (si) { if (M.st.turno === 0) { M.assicura(0, si); bcast(); } },
-        onFineMano: function (vm) { if (prof && !provaHost) salvaFineMano(vm.giocatori[0]); },
+        onFineMano: function (vm) { if (prof && !provaHost) salvaFineMano(vm.giocatori[0], vm); },
         onNuova: function () { M.nuovaMano(); bcast(); },
         onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
       });
@@ -898,6 +925,7 @@
   }
 
   function ospiteBJ(t, codice) {
+    nuovaSessioneBJ();
     if (!(window.SGNet && SGNet.disponibile())) return localeBJ(t);
     var el = t.el, prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     var S = { rete: null, nome: "", mioSeat: -1, tav: null, giocatori: [], fiches: null };
@@ -931,7 +959,7 @@
         onPunta: function (v) { suonoChip(); if (S.rete) S.rete.invia({ t: "mossa", kind: "punta", val: v }); },
         onMossa: function (m) { if (m === "stai") suonoStai(); if (S.rete) S.rete.invia({ t: "mossa", kind: "azione", mossa: m }); },
         onAssicura: function (si) { if (S.rete) S.rete.invia({ t: "mossa", kind: "assic", si: si }); },
-        onFineMano: function (vm) { if (prof && !S.prova && S.mioSeat >= 0) salvaFineMano(vm.giocatori[S.mioSeat]); },
+        onFineMano: function (vm) { if (prof && !S.prova && S.mioSeat >= 0) salvaFineMano(vm.giocatori[S.mioSeat], vm); },
         onNuova: function () {},
         onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); }
       });
