@@ -8714,6 +8714,16 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 96,
+    data: "24 settembre 2026",
+    titolo: "La Scalinata: i bot ora ragionano 🧠🪜",
+    descrizione: [
+      "Matt, Kevin e Cody si ricordano cosa scegli: se giochi sempre lo stesso numero, uno di loro ti blocca.",
+      "Quando qualcuno è vicino alla cima, provano a fermarlo scegliendo il suo numero.",
+      "Restano un po' imprevedibili: niente trucchi facili, bisogna cambiare strategia."
+    ]
+  },
+  {
     v: 95,
     data: "24 settembre 2026",
     titolo: "Trofei per Glow Hockey, Scopone e La Scalinata 🏒🃏🪜",
@@ -17160,10 +17170,61 @@ window.SG_SIPERO = {
       // un telefono solo: i giocatori veri + i bot per arrivare a 4
       var g = t.giocatori.slice(0, 4).map(function (n, i) { return { nome: n, colore: COLORI[i], passi: 0, bot: false }; });
       var b = 0; while (g.length < 4) { g.push({ nome: NOMI_BOT[b] || ("Bot " + (b + 1)), colore: COLORI[g.length], passi: 0, bot: true }); b++; }
-      var st = { g: g, scelte: [null, null, null, null], nRound: 0, T: nuovaTracciaScala() };
+      var st = { g: g, scelte: [null, null, null, null], nRound: 0, T: nuovaTracciaScala(), storia: [[], [], [], []] };
       introRound(t, st);
     }
   });
+
+  // ---------- bot furbo ----------
+  // storia[k] = scelte passate del giocatore k (anche delle partite prima, nella stessa sessione)
+  // Stima cosa sceglierà ognuno (abitudini recenti + chi è vicino alla cima punta al numero che lo fa arrivare),
+  // poi valuta ogni numero: quanto salgo io se resto da solo + quanto vale bloccare chi lo sceglierebbe.
+  // Un po' di caso resta sempre: un bot prevedibile si batte facile.
+  function stimaScelte(passi, storia, k) {
+    var w = { 1: 0.8, 3: 1.1, 5: 1.6 }, h = storia[k] || [], peso = 1;   // di partenza: il 5 è il più gettonato
+    for (var i = h.length - 1; i >= 0 && i >= h.length - 8; i--) { w[h[i]] += 1.6 * peso; peso *= 0.8; }
+    var manca = TRAGUARDO - passi[k];
+    if (manca <= 5) SCELTE.forEach(function (n) { if (n >= manca) w[n] *= 2.2; });   // chi può arrivare, ci prova
+    var tot = w[1] + w[3] + w[5], p = {};
+    SCELTE.forEach(function (n) { p[n] = 0.85 * w[n] / tot + 0.05; });
+    return p;
+  }
+  // bot[k] = true se il posto k è un bot
+  function sceltaBot(io, passi, storia, bot) {
+    var P = passi.map(function (_, k) { return k === io ? null : stimaScelte(passi, storia, k); });
+    // un umano prevedibile (es. sempre 5): UN solo bot fa da "guardia" e lo blocca, gli altri lo sanno e scelgono altro
+    var bersaglio = -1, nB = 0, pB = 0;
+    passi.forEach(function (_, j) {
+      if (bot[j] || (storia[j] || []).length < 2) return;
+      var p = stimaScelte(passi, storia, j);
+      SCELTE.forEach(function (n) { if (p[n] >= 0.55 && p[n] > pB) { pB = p[n]; nB = n; bersaglio = j; } });
+    });
+    if (bersaglio >= 0) {
+      var guardia = -1;
+      passi.forEach(function (x, k) { if (bot[k] && (guardia < 0 || x < passi[guardia])) guardia = k; });   // il bot più indietro
+      var blocca = Math.min(0.95, pB + 0.2);
+      if (guardia === io) { if (Math.random() < blocca) return nB; }
+      else if (guardia >= 0) { var g = {}; SCELTE.forEach(function (n) { g[n] = n === nB ? blocca : (1 - blocca) / 2; }); P[guardia] = g; }
+    }
+    if (Math.random() < 0.12) return SCELTE[Math.floor(Math.random() * 3)];
+    function valore(k, n) { var g = Math.min(n, TRAGUARDO - passi[k]); return g + (passi[k] + n >= TRAGUARDO ? 12 : 0); }
+    var capo = 0; passi.forEach(function (x, k) { if (k !== io && x > capo) capo = x; });
+    var punti = SCELTE.map(function (n) {
+      var solo = 1; P.forEach(function (p, k) { if (p) solo *= 1 - p[n]; });
+      var v = solo * valore(io, n);
+      P.forEach(function (p, j) {          // bloccare j: vale di più se è in testa e più è vicino alla cima
+        if (!p) return;
+        var altri = 1; P.forEach(function (q, k) { if (q && k !== j) altri *= 1 - q[n]; });
+        var peso = (passi[j] >= capo ? 0.25 : 0.1) + 0.5 * passi[j] / TRAGUARDO;
+        v += p[n] * altri * valore(j, n) * peso;
+      });
+      return v;
+    });
+    var T = 1.1, somma = 0, e = punti.map(function (v) { var x = Math.exp(v / T); somma += x; return x; });
+    var r = Math.random() * somma;
+    for (var i = 0; i < 3; i++) { r -= e[i]; if (r <= 0) return SCELTE[i]; }
+    return SCELTE[2];
+  }
 
   // ---------- trofei: contatori per il profilo (solo il giocatore di questo telefono) ----------
   function nuovaTracciaScala() { return { round: -1, scontri: 0, usato5: false, solo3: true }; }
@@ -17217,7 +17278,10 @@ window.SG_SIPERO = {
 
   function turno(t, st, i) {
     if (i >= st.g.length) return rivela(t, st);
-    if (st.g[i].bot) { st.scelte[i] = SCELTE[Math.floor(Math.random() * 3)]; return turno(t, st, i + 1); }
+    if (st.g[i].bot) {
+      st.scelte[i] = sceltaBot(i, st.g.map(function (g) { return g.passi; }), st.storia, st.g.map(function (g) { return g.bot; }));
+      return turno(t, st, i + 1);
+    }
     t.passaA(st.g[i].nome, function () { schermataScelta(t, st, i); });
   }
 
@@ -17247,6 +17311,7 @@ window.SG_SIPERO = {
     var avanza = st.g.map(function (_, i) { return conta[scelte[i]] === 1; });
     var prev = st.g.map(function (g) { return g.passi; });
     st.g.forEach(function (g, i) { if (avanza[i]) g.passi = Math.min(TRAGUARDO, g.passi + scelte[i]); });
+    scelte.forEach(function (n, i) { st.storia[i].push(n); });   // i bot si ricordano le abitudini di tutti
     tracciaScala(st.T, ioDaNome(st.g.map(function (g) { return g.nome; })), st.nRound, scelte, avanza, prev, st.g.map(function (g) { return g.passi; }));
 
     var el = t.el;
@@ -17405,7 +17470,10 @@ window.SG_SIPERO = {
       st.deadline = Date.now() + SECONDI * 1000;
       bd();
       st.posti.forEach(function (p) {
-        if (p.bot) setTimeout(function () { registraScelta(p.id, SCELTE[Math.floor(Math.random() * 3)]); }, 700 + Math.floor(Math.random() * 2200));
+        if (p.bot) setTimeout(function () {
+          var k = st.posti.indexOf(p); if (k < 0) return;
+          registraScelta(p.id, sceltaBot(k, st.posti.map(function (x) { return x.passi; }), st.posti.map(function (x) { return x.storia || []; }), st.posti.map(function (x) { return x.bot; })));
+        }, 700 + Math.floor(Math.random() * 2200));
       });
       if (st.timer) clearTimeout(st.timer);
       st.timer = setTimeout(chiudiScelte, SECONDI * 1000 + 250);
@@ -17427,6 +17495,7 @@ window.SG_SIPERO = {
       st.avanza = st.posti.map(function (p, i) { return conta[scelte[i]] === 1; });
       st.scelte = scelte;
       st.posti.forEach(function (p, i) { if (st.avanza[i]) p.passi = Math.min(TRAGUARDO, p.passi + scelte[i]); });
+      st.posti.forEach(function (p, i) { (p.storia || (p.storia = [])).push(scelte[i]); });   // abitudini per i bot
       tracciaScala(T, 0, st.nRound, scelte, st.avanza, st.prev, st.posti.map(function (p) { return p.passi; }));   // l'host è sempre il posto 0
       st.fase = "rivela"; bd();
     }

@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 96,
+    data: "24 settembre 2026",
+    titolo: "La Scalinata: i bot ora ragionano 🧠🪜",
+    descrizione: [
+      "Matt, Kevin e Cody si ricordano cosa scegli: se giochi sempre lo stesso numero, uno di loro ti blocca.",
+      "Quando qualcuno è vicino alla cima, provano a fermarlo scegliendo il suo numero.",
+      "Restano un po' imprevedibili: niente trucchi facili, bisogna cambiare strategia."
+    ]
+  },
+  {
     v: 95,
     data: "24 settembre 2026",
     titolo: "Trofei per Glow Hockey, Scopone e La Scalinata 🏒🃏🪜",
