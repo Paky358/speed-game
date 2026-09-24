@@ -95,6 +95,13 @@
       return db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
     },
 
+    // ---- omino personalizzato (stile Mii) ----
+    salvaOmino: function (cfg) {
+      if (!auth || !utente || !profilo) return Promise.resolve();
+      profilo.omino = cfg; notifica();
+      return db.collection("profili").doc(utente.uid).update({ omino: cfg }).catch(function () {});
+    },
+
     // ---- bonus gratuito ogni 2 ore ----
     bonusImporto: BONUS,
     puoRitirareBonus: function () { return !!(profilo && (Date.now() - (profilo.bonusUltimo || 0)) >= BONUS_MS); },

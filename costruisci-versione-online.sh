@@ -31,6 +31,8 @@ OUT=dist/index.html
   echo '<script>'
   cat js/nube.js
   echo ''
+  cat js/omino.js
+  echo ''
   cat js/core.js
   echo ''
   cat js/net.js

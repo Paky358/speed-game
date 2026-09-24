@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 97,
+    data: "24 settembre 2026",
+    titolo: "Il tuo omino! 🧍",
+    descrizione: [
+      "Crea il tuo personaggio stile Mii: tocca il tuo nome in alto e poi 'Crea il tuo omino'.",
+      "Scegli uomo o donna, corporatura, pelle, capelli, occhi, bocca, vestiti (anche la gonna) e accessori.",
+      "Si salva nel profilo: ti segue su ogni telefono. Presto comparirà nei giochi e alcuni accessori speciali si sbloccheranno coi trofei 👑"
+    ]
+  },
+  {
     v: 96,
     data: "24 settembre 2026",
     titolo: "La Scalinata: i bot ora ragionano 🧠🪜",

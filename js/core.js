@@ -170,7 +170,8 @@
     var io = profiloAttivo();
     // riga profilo: il nome utente + il tasto "Novità" affianco
     var profiloChip = el("button", { class: "profilo-chip", onclick: function () { schermataAccesso(schermataHome); } },
-      io ? [el("span", { text: io.emoji }), el("span", { text: io.nome }), el("span", { class: "modifica", text: "cambia" })]
+      io ? [io.omino && window.SGOmino ? el("span", { class: "chip-omino", html: SGOmino.svg(io.omino, { busto: true }) }) : el("span", { text: io.emoji }),
+            el("span", { text: io.nome }), el("span", { class: "modifica", text: "cambia" })]
          : [el("span", { text: "👤" }), el("span", { text: "Crea il tuo profilo" })]);
     var rigaProfilo = el("div", { class: "home-profilo" }, [profiloChip]);
     if ((window.SG_NOVITA || []).length) {
@@ -744,7 +745,7 @@
   function profiloAttivo() {
     if (window.SGNube && SGNube.disponibile()) {
       var pc = SGNube.profilo();
-      return pc ? { id: pc.uid, nome: pc.nome, emoji: pc.emoji, cloud: true } : null;
+      return pc ? { id: pc.uid, nome: pc.nome, emoji: pc.emoji, omino: pc.omino || null, cloud: true } : null;
     }
     var id = leggiL(K_ATTIVO, null);
     return profili().filter(function (p) { return p.id === id; })[0] || null;
@@ -825,11 +826,96 @@
     mostra(s);
   }
 
+  // ---- OMINO: il tuo personaggio stile Mii (disegno in js/omino.js) ----
+  var SEZ_OMINO = [
+    { nome: "Corpo",     voci: [["forma", "Forma"], ["corpo", "Corporatura"], ["pelle", "Pelle"]] },
+    { nome: "Capelli",   voci: [["capelli", "Taglio"], ["colCap", "Colore"]] },
+    { nome: "Viso",      voci: [["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"]] },
+    { nome: "Vestiti",   voci: [["maglia", "Maglietta"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"]] },
+    { nome: "Accessori", voci: [["accessorio", "Accessorio"]] }
+  ];
+  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1 };
+  var OMINO_INTERO = { forma: 1, corpo: 1, sotto: 1 };          // anteprima a figura intera (le altre: solo la testa)
+  var OMINO_NOMI = { sole: "da sole", o: "a O", punta: "a punta" };
+  function salvaOminoMio(cfg) {
+    var io = profiloAttivo(); if (!io) return;
+    if (io.cloud) { SGNube.salvaOmino(cfg); return; }
+    var p = profili().filter(function (x) { return x.id === io.id; })[0];
+    if (p) { p.omino = cfg; salvaProfilo(p); }
+  }
+  function schermataOmino(dopo) {
+    var io = profiloAttivo();
+    if (!io) return schermataAccesso(function () { schermataOmino(dopo); });
+    var O = SGOmino, cfg = {}, base = io.omino || O.casuale(io.nome), k;
+    for (k in O.BASE) cfg[k] = base[k] != null ? base[k] : O.BASE[k];
+    var tab = 0;
+    var s = schermata({ icona: "🧍", titolo: "Il mio omino", sotto: "Crealo come vuoi: ti rappresenta nei giochi", indietro: dopo });
+    var palco = el("div", { class: "omino-palco editor" });
+    var schede = el("div", { class: "omino-schede" });
+    var pannello = el("div", { class: "omino-pannello" });
+    s._contenuto.appendChild(palco); s._contenuto.appendChild(schede); s._contenuto.appendChild(pannello);
+    function unisci(k, v) { var c = {}; for (var x in cfg) c[x] = cfg[x]; c[k] = v; return c; }
+    function anteprima() { palco.innerHTML = O.svg(cfg); }
+    function disegnaSchede() {
+      schede.innerHTML = "";
+      SEZ_OMINO.forEach(function (sz, i) { schede.appendChild(el("button", { class: "cat-tab" + (i === tab ? " attiva" : ""), text: sz.nome, onclick: function () { tab = i; disegnaSchede(); disegnaPannello(); } })); });
+    }
+    // aggiorna solo i riquadri (niente ricostruzione della schermata: non salta lo scroll)
+    function aggiornaPannello() {
+      [].forEach.call(pannello.querySelectorAll(".om-opz"), function (b) {
+        var k = b._k, v = b._v;
+        b.classList.toggle("attiva", cfg[k] === v);
+        if (b._mini) b._mini.innerHTML = O.svg(unisci(k, v), { busto: !OMINO_INTERO[k] });
+      });
+    }
+    function scegli(k, v) {
+      var rifai = (k === "forma");                   // "Sotto" compare solo per la donna
+      cfg[k] = v; if (k === "forma" && v === "uomo") cfg.sotto = "pantaloni";
+      anteprima(); if (rifai) disegnaPannello(); else aggiornaPannello();
+    }
+    function disegnaPannello() {
+      pannello.innerHTML = "";
+      SEZ_OMINO[tab].voci.forEach(function (vc) {
+        var k = vc[0];
+        if (k === "sotto" && cfg.forma !== "donna") return;
+        pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
+        var riga = el("div", { class: "om-griglia" + (OMINO_COLORI[k] ? " colori" : "") });
+        O.OPZ[k].forEach(function (val, i) {
+          var v = OMINO_COLORI[k] ? i : val, b;
+          if (OMINO_COLORI[k]) {
+            b = el("button", { class: "om-opz om-colore", style: "background:" + val, "aria-label": vc[1] + " " + (i + 1), onclick: function () { scegli(k, v); } });
+          } else {
+            var bloccato = k === "accessorio" && O.LIBERI.indexOf(val) < 0;
+            var nomeVis = OMINO_NOMI[val] || val;
+            b = el("button", { class: "om-opz om-forma" + (bloccato ? " bloccato" : ""), onclick: function () { if (!bloccato) scegli(k, v); } });
+            b._mini = el("div", { class: "om-mini" + (OMINO_INTERO[k] ? " intero" : "") });
+            b.appendChild(b._mini);
+            b.appendChild(el("div", { class: "om-nome", text: bloccato ? "🔒 coi trofei" : nomeVis.charAt(0).toUpperCase() + nomeVis.slice(1) }));
+          }
+          b._k = k; b._v = v; riga.appendChild(b);
+        });
+        pannello.appendChild(riga);
+      });
+      aggiornaPannello();
+    }
+    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🎲 A caso", onclick: function () {
+      var r = O.casuale(); for (var x in r) cfg[x] = r[x]; anteprima(); disegnaPannello();
+    } }));
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva il mio omino", onclick: function () { salvaOminoMio(cfg); dopo(); } }));
+    anteprima(); disegnaSchede(); disegnaPannello();
+    mostra(s);
+  }
+
   // ---- profili in cloud (Firebase): nome + password, ti seguono ovunque ----
   function schermataAccessoCloud(dopo) {
     var p = SGNube.profilo();
     if (p) {   // già dentro: mostra il profilo, le statistiche e il tasto esci
       var sp = schermata({ icona: p.emoji || "👤", titolo: p.nome, sotto: "Il tuo profilo", indietro: schermataHome });
+      if (window.SGOmino) sp._contenuto.appendChild(el("div", { class: "omino-profilo" }, [
+        el("div", { class: "omino-palco" + (p.omino ? "" : " vuoto"), html: SGOmino.svg(p.omino || SGOmino.casuale(p.nome)) }),
+        el("button", { class: "btn " + (p.omino ? "btn-fantasma" : "btn-primario"), text: p.omino ? "✏️ Modifica il tuo omino" : "🧍 Crea il tuo omino",
+          onclick: function () { schermataOmino(function () { schermataAccessoCloud(dopo); }); } })
+      ]));
       var fi = (p.fiches && p.fiches.blackjack != null) ? p.fiches.blackjack : SGNube.fichesStart;
       sp._contenuto.appendChild(el("div", { class: "etichetta", text: "🃏 Black Jack" }));
       sp._contenuto.appendChild(el("p", { class: "modulo-nota", html: "Hai <b>" + fi + " fiches</b>. Si portano avanti tra una partita e l'altra, su qualsiasi telefono." }));
