@@ -831,11 +831,22 @@
     { nome: "Corpo",     voci: [["forma", "Forma"], ["corpo", "Corporatura"], ["pelle", "Pelle"]] },
     { nome: "Viso",      voci: [["viso", "Forma del viso"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"], ["guance", "Guance"]] },
     { nome: "Capelli",   voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
-    { nome: "Vestiti",   voci: [["maglia", "Maglietta"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"]] },
-    { nome: "Accessori", voci: [["accessorio", "Accessorio"]] }
+    { nome: "Vestiti",   voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["scarpe", "Scarpe"]] },
+    { nome: "Accessori", voci: [["accessorio", "Accessorio"], ["colAcc", "Colore accessorio"]] }
   ];
-  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1 };
-  var OMINO_INTERO = { forma: 1, corpo: 1, sotto: 1 };          // anteprima a figura intera (le altre: solo la testa)
+  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1 };
+  var OMINO_INTERO = { forma: 1, corpo: 1, sotto: 1, capo: 1, stampa: 1 };   // anteprima a figura intera (le altre: solo la testa)
+  var ACC_COLORATI = /cappellino|berretto|fascia|cuffie/;          // accessori che hanno un colore da scegliere
+  // piccolo "pop" quando scegli qualcosa nell'editor (la vibrazione la fa già il tocco)
+  function popOmino() {
+    var ctx = audioCtx(); if (!ctx) return;
+    try {
+      var t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(520, t); o.frequency.exponentialRampToValueAtTime(980, t + 0.07);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + 0.14);
+    } catch (e) {}
+  }
   function salvaOminoMio(cfg) {
     var io = profiloAttivo(); if (!io) return;
     if (io.cloud) { SGNube.salvaOmino(cfg); return; }
@@ -848,12 +859,18 @@
     var O = SGOmino, cfg = O.norm(io.omino || O.casuale(io.nome));
     var tab = 0;
     var s = schermata({ icona: "🧍", titolo: "Il mio omino", sotto: "Crealo come vuoi: ti rappresenta nei giochi", indietro: dopo });
-    var palco = el("div", { class: "omino-palco editor" });
+    // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre, targa col nome
+    var figura = el("div", { class: "om-figura" });
+    var palco = el("div", { class: "omino-palco editor" }, [el("div", { class: "om-faro" }), el("div", { class: "om-pedana" }), figura,
+      el("div", { class: "om-targa", text: io.nome })]);
     var schede = el("div", { class: "omino-schede" });
     var pannello = el("div", { class: "omino-pannello" });
     s._contenuto.appendChild(palco); s._contenuto.appendChild(schede); s._contenuto.appendChild(pannello);
     function unisci(k, v) { var c = {}; for (var x in cfg) c[x] = cfg[x]; c[k] = v; return c; }
-    function anteprima() { palco.innerHTML = O.svg(cfg); }
+    function anteprima(salto) {
+      figura.innerHTML = O.svg(cfg);
+      if (salto) { figura.classList.remove("salta"); void figura.offsetWidth; figura.classList.add("salta"); popOmino(); }
+    }
     function disegnaSchede() {
       schede.innerHTML = "";
       SEZ_OMINO.forEach(function (sz, i) { schede.appendChild(el("button", { class: "cat-tab" + (i === tab ? " attiva" : ""), text: sz.nome, onclick: function () { tab = i; disegnaSchede(); disegnaPannello(); } })); });
@@ -867,15 +884,17 @@
       });
     }
     function scegli(k, v) {
-      var rifai = (k === "forma");                   // "Sotto" compare solo per la donna
+      if (cfg[k] === v) return;
+      var rifai = (k === "forma" || k === "accessorio");   // "Sotto" solo per la donna, "Colore accessorio" solo se serve
       cfg[k] = v; if (k === "forma" && v === "uomo") cfg.sotto = "pantaloni";
-      anteprima(); if (rifai) disegnaPannello(); else aggiornaPannello();
+      anteprima(true); if (rifai) disegnaPannello(); else aggiornaPannello();
     }
     function disegnaPannello() {
       pannello.innerHTML = "";
       SEZ_OMINO[tab].voci.forEach(function (vc) {
         var k = vc[0];
         if (k === "sotto" && cfg.forma !== "donna") return;
+        if (k === "colAcc" && !ACC_COLORATI.test(cfg.accessorio)) return;
         pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
         var riga = el("div", { class: "om-griglia" + (OMINO_COLORI[k] ? " colori" : "") });
         O.OPZ[k].forEach(function (val, i) {
@@ -897,7 +916,7 @@
       aggiornaPannello();
     }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🎲 A caso", onclick: function () {
-      cfg = O.norm(O.casuale()); anteprima(); disegnaPannello();
+      cfg = O.norm(O.casuale()); anteprima(true); disegnaPannello();
     } }));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva il mio omino", onclick: function () { salvaOminoMio(cfg); dopo(); } }));
     anteprima(); disegnaSchede(); disegnaPannello();
@@ -1495,13 +1514,14 @@
     } catch (e) { return null; }
   }
 
-  // Piccola vibrazione (haptic) a ogni tocco di un tasto, per rendere i giochi
-  // più tattili e interattivi. Un solo "tick" leggero, con un freno anti-raffica.
+  // Piccola vibrazione (haptic) quando SELEZIONI un tasto, per rendere i giochi
+  // più tattili. Si usa "click" e non "pointerdown": così se appoggi il dito su un
+  // tasto solo per scorrere la pagina, non vibra (il click arriva solo col tocco vero).
   // Funziona su Android; su iPhone la Vibration API non esiste e non fa nulla.
   (function installaVibrazione() {
     if (!navigator || typeof navigator.vibrate !== "function") return;
     var ultimo = 0;
-    document.addEventListener("pointerdown", function (e) {
+    document.addEventListener("click", function (e) {
       var t = e.target && e.target.closest && e.target.closest("button, .btn, [role=button]");
       if (!t || t.disabled) return;
       var ora = Date.now();

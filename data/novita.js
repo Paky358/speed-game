@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 99,
+    data: "24 settembre 2026",
+    titolo: "Il tuo omino prende vita ✨",
+    descrizione: [
+      "Nell'editor l'omino sta su un palco illuminato: respira, sbatte le palpebre e fa un saltello a ogni scelta.",
+      "Vestiti nuovi: maglietta, maniche lunghe, felpa col cappuccio, camicia, canotta. Stampe: righe, stella, fulmine, cuore.",
+      "Scegli anche il colore delle scarpe e dell'accessorio. Cappellino e berretto ora coprono bene i capelli.",
+      "La vibrazione ora arriva solo quando selezioni un tasto, non più quando scorri la pagina."
+    ]
+  },
+  {
     v: 98,
     data: "24 settembre 2026",
     titolo: "Omini più belli e più scelte 🎨",

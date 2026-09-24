@@ -523,9 +523,6 @@ body::before{
   border:1px solid rgba(255,255,255,.12); box-shadow:inset 0 1px 0 rgba(255,255,255,.2); }
 .omino-palco svg{ width:100%; height:auto; }
 .omino-palco.vuoto{ opacity:.45; filter:grayscale(.6); }
-.omino-palco.editor{ width:auto; max-width:360px; margin:0 auto 10px; display:flex; justify-content:center;
-  position:sticky; top:0; z-index:3; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); background-color:rgba(12,22,54,.72); }
-.omino-palco.editor svg{ height:190px; width:auto; }
 .omino-schede{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:6px; }
 .omino-schede{ flex-wrap:nowrap; gap:5px; }
 .omino-schede .cat-tab{ padding:6px 9px; font-size:.8rem; min-height:36px; flex:1 1 auto; justify-content:center; }
@@ -544,3 +541,26 @@ body::before{
 .om-opz.attiva .om-nome{ color:#ffd76a; }
 .om-opz.bloccato{ opacity:.5; cursor:default; }
 .om-opz.bloccato .om-mini{ filter:grayscale(1) brightness(.6); }
+/* palco dell'editor: faro, pedana, omino vivo (respira, sbatte le palpebre, salta a ogni scelta) */
+.omino-palco.editor{ position:sticky; top:0; z-index:3; width:auto; max-width:360px; border-radius:22px; height:240px; margin:0 auto 10px; padding:0; overflow:hidden;
+  background:radial-gradient(ellipse 70% 60% at 50% 0%, rgba(140,180,255,.38), transparent 70%), linear-gradient(180deg,#1d3178,#0c173d);
+  border:1px solid rgba(255,255,255,.14); box-shadow:0 10px 24px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+.om-faro{ position:absolute; left:50%; top:-10px; width:230px; height:250px; transform:translateX(-50%); pointer-events:none;
+  background:linear-gradient(180deg, rgba(255,246,205,.3), rgba(255,246,205,0) 88%); clip-path:polygon(40% 0,60% 0,100% 100%,0 100%);
+  animation:omFaro 4s ease-in-out infinite; }
+.om-pedana{ position:absolute; left:50%; bottom:16px; width:200px; height:36px; transform:translateX(-50%); border-radius:50%;
+  background:radial-gradient(ellipse at 50% 42%, rgba(255,214,90,.55), rgba(255,170,40,.18) 55%, transparent 72%);
+  box-shadow:inset 0 0 0 2px rgba(255,214,90,.22); }
+.om-figura{ position:absolute; left:50%; bottom:24px; transform:translateX(-50%); height:198px; }
+.om-figura svg{ height:198px; width:auto; overflow:visible; filter:drop-shadow(0 6px 8px rgba(0,0,0,.35)); }
+.om-figura .om-tutto{ transform-box:fill-box; transform-origin:50% 100%; animation:omRespiro 3.2s ease-in-out infinite; }
+.om-figura .om-occhi{ transform-box:fill-box; transform-origin:50% 50%; animation:omBatti 4.6s infinite; }
+.om-figura.salta svg{ animation:omSalta .45s cubic-bezier(.3,1.5,.5,1); }
+.om-targa{ position:absolute; left:50%; bottom:7px; transform:translateX(-50%); max-width:80%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  font-weight:900; font-size:.74rem; letter-spacing:.07em; text-transform:uppercase; padding:3px 12px; border-radius:999px;
+  background:linear-gradient(180deg,#ffe27a,#e0a90a); color:#3a2a00; box-shadow:0 2px 6px rgba(0,0,0,.4); }
+@keyframes omRespiro{ 0%,100%{ transform:scale(1,1); } 50%{ transform:scale(.994,1.013); } }
+@keyframes omBatti{ 0%,93%,100%{ transform:scaleY(1); } 96%{ transform:scaleY(.1); } }
+@keyframes omSalta{ 0%{ transform:translateY(0) scale(1,1); } 30%{ transform:translateY(-12px) scale(.96,1.05); } 62%{ transform:translateY(0) scale(1.05,.95); } 100%{ transform:none; } }
+@keyframes omFaro{ 0%,100%{ opacity:.8; } 50%{ opacity:1; } }
+@media (prefers-reduced-motion: reduce){ .om-figura .om-tutto, .om-figura .om-occhi, .om-faro, .om-figura.salta svg{ animation:none; } }
