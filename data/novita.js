@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 100,
+    data: "24 settembre 2026",
+    titolo: "Omini: ritocchi, colori liberi e il saluto 👋",
+    descrizione: [
+      "Ritocchi come nei Mii (scheda Viso): grandezza, distanza e altezza degli occhi, altezza delle sopracciglia, grandezza del naso, altezza della bocca.",
+      "Colore libero: tocca il tondo 🎨 in fondo ai colori e scegli qualsiasi tinta per capelli, occhi, vestiti, scarpe e accessori.",
+      "4 acconciature nuove: ciuffo, codini, chignon e rasato. Ombre più morbide e una luce di bordo che dà più volume.",
+      "Quando apri l'editor e quando salvi, il tuo omino ti saluta!"
+    ]
+  },
+  {
     v: 99,
     data: "24 settembre 2026",
     titolo: "Il tuo omino prende vita ✨",

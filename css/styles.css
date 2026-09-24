@@ -564,3 +564,22 @@ body::before{
 @keyframes omSalta{ 0%{ transform:translateY(0) scale(1,1); } 30%{ transform:translateY(-12px) scale(.96,1.05); } 62%{ transform:translateY(0) scale(1.05,.95); } 100%{ transform:none; } }
 @keyframes omFaro{ 0%,100%{ opacity:.8; } 50%{ opacity:1; } }
 @media (prefers-reduced-motion: reduce){ .om-figura .om-tutto, .om-figura .om-occhi, .om-faro, .om-figura.salta svg{ animation:none; } }
+/* tavolozza libera (arcobaleno) */
+.om-libero{ position:relative; overflow:hidden; display:block;
+  background:conic-gradient(#ff4d4d,#ffb84d,#fff04d,#5cff7a,#4dd2ff,#6b5cff,#ff4de1,#ff4d4d); }
+.om-libero::after{ content:"🎨"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:1rem;
+  text-shadow:0 1px 2px rgba(0,0,0,.5); pointer-events:none; }
+.om-libero.attiva{ box-shadow:0 0 0 3px #ffd23b, 0 0 0 6px rgba(255,255,255,.25); }
+.om-libero.attiva::after{ content:"✓"; color:#fff; font-weight:900; }
+.om-libero input{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
+/* ritocchi stile Mii */
+.om-ritocco{ display:grid; grid-template-columns:1fr 1.3fr 26px; align-items:center; gap:10px; padding:7px 10px; margin-bottom:6px;
+  border-radius:12px; background:rgba(255,255,255,.06); }
+.om-rit-nome{ font-size:.84rem; font-weight:700; }
+.om-rit-val{ font-size:.85rem; font-weight:900; color:#ffd76a; text-align:right; }
+.om-cursore{ width:100%; accent-color:#ffd23b; height:26px; }
+/* saluto: il braccio si alza e fa "ciao" */
+.om-figura.saluta .om-b2{ transform-box:fill-box; transform-origin:18% 4%; animation:omSaluta 1s ease-in-out; }
+@keyframes omSaluta{ 0%{ transform:rotate(0); } 22%{ transform:rotate(-145deg); } 38%{ transform:rotate(-118deg); } 54%{ transform:rotate(-145deg); }
+  70%{ transform:rotate(-118deg); } 100%{ transform:rotate(0); } }
+@media (prefers-reduced-motion: reduce){ .om-figura.saluta .om-b2{ animation:none; } }

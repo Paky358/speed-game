@@ -837,6 +837,9 @@
   var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1 };
   var OMINO_INTERO = { forma: 1, corpo: 1, sotto: 1, capo: 1, stampa: 1 };   // anteprima a figura intera (le altre: solo la testa)
   var ACC_COLORATI = /cappellino|berretto|fascia|cuffie/;          // accessori che hanno un colore da scegliere
+  var OMINO_LIBERO = { colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1 };   // colori dove c'è anche la tavolozza libera
+  var OMINO_RITOCCHI = [["occG", "Grandezza occhi"], ["occD", "Distanza occhi"], ["occA", "Altezza occhi"],
+    ["soprA", "Altezza sopracciglia"], ["nasoG", "Grandezza naso"], ["boccaA", "Altezza bocca"]];
   // piccolo "pop" quando scegli qualcosa nell'editor (la vibrazione la fa già il tocco)
   function popOmino() {
     var ctx = audioCtx(); if (!ctx) return;
@@ -868,8 +871,13 @@
     s._contenuto.appendChild(palco); s._contenuto.appendChild(schede); s._contenuto.appendChild(pannello);
     function unisci(k, v) { var c = {}; for (var x in cfg) c[x] = cfg[x]; c[k] = v; return c; }
     function anteprima(salto) {
-      figura.innerHTML = O.svg(cfg);
+      figura.innerHTML = O.svg(cfg, { hd: true });
       if (salto) { figura.classList.remove("salta"); void figura.offsetWidth; figura.classList.add("salta"); popOmino(); }
+    }
+    var tSaluto = null;
+    function saluta() {   // alza il braccio e fa "ciao"
+      clearTimeout(tSaluto); figura.classList.remove("saluta"); void figura.offsetWidth; figura.classList.add("saluta");
+      tSaluto = setTimeout(function () { figura.classList.remove("saluta"); }, 1100);
     }
     function disegnaSchede() {
       schede.innerHTML = "";
@@ -879,12 +887,18 @@
     function aggiornaPannello() {
       [].forEach.call(pannello.querySelectorAll(".om-opz"), function (b) {
         var k = b._k, v = b._v;
+        if (b._libero) {   // tavolozza libera: attiva se il colore è uno scelto a mano
+          var mio = typeof cfg[k] === "string";
+          b.classList.toggle("attiva", mio); b.style.background = mio ? cfg[k] : "";
+          return;
+        }
         b.classList.toggle("attiva", cfg[k] === v);
         if (b._mini) b._mini.innerHTML = O.svg(unisci(k, v), { busto: !OMINO_INTERO[k] });
       });
     }
-    function scegli(k, v) {
+    function scegli(k, v, zitto) {
       if (cfg[k] === v) return;
+      if (zitto) { cfg[k] = v; anteprima(false); return; }   // mentre trascini (colore libero, cursori): niente saltelli
       var rifai = (k === "forma" || k === "accessorio");   // "Sotto" solo per la donna, "Colore accessorio" solo se serve
       cfg[k] = v; if (k === "forma" && v === "uomo") cfg.sotto = "pantaloni";
       anteprima(true); if (rifai) disegnaPannello(); else aggiornaPannello();
@@ -911,16 +925,43 @@
           }
           b._k = k; b._v = v; riga.appendChild(b);
         });
+        if (OMINO_LIBERO[k]) {   // ultimo tondo: tavolozza arcobaleno per un colore qualsiasi
+          var ultimo = typeof cfg[k] === "string" ? cfg[k] : (O.OPZ[k][cfg[k]] || "#ffffff");
+          var inp = el("input", { type: "color", value: ultimo, "aria-label": vc[1] + ": colore libero" });
+          inp.addEventListener("input", function () { scegli(k, inp.value, true); });
+          inp.addEventListener("change", function () { cfg[k] = null; scegli(k, inp.value); });
+          var bl = el("label", { class: "om-opz om-colore om-libero", title: "Colore libero" }, [inp]);
+          bl._k = k; bl._libero = true; riga.appendChild(bl);
+        }
         pannello.appendChild(riga);
       });
+      // ritocchi stile Mii (solo nella scheda Viso): cursori da -2 a +2
+      if (SEZ_OMINO[tab].nome === "Viso") {
+        pannello.appendChild(el("div", { class: "etichetta", text: "Ritocchi" }));
+        OMINO_RITOCCHI.forEach(function (r) {
+          var k = r[0], val = el("span", { class: "om-rit-val" });
+          var cur = el("input", { type: "range", min: "-2", max: "2", step: "1", value: String(cfg[k] || 0), class: "om-cursore", "aria-label": r[1] });
+          function scrivi() { var n = +cur.value; val.textContent = n > 0 ? "+" + n : String(n); }
+          cur.addEventListener("input", function () { scrivi(); scegli(k, +cur.value, true); });
+          cur.addEventListener("change", function () { popOmino(); aggiornaPannello(); });
+          scrivi();
+          pannello.appendChild(el("div", { class: "om-ritocco" }, [el("span", { class: "om-rit-nome", text: r[1] }), cur, val]));
+        });
+      }
       aggiornaPannello();
     }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🎲 A caso", onclick: function () {
       cfg = O.norm(O.casuale()); anteprima(true); disegnaPannello();
     } }));
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva il mio omino", onclick: function () { salvaOminoMio(cfg); dopo(); } }));
+    var salvato = false;
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva il mio omino", onclick: function () {
+      if (salvato) return; salvato = true;
+      salvaOminoMio(cfg); saluta(); popOmino();
+      setTimeout(dopo, 1000);   // prima ti saluta, poi torna indietro
+    } }));
     anteprima(); disegnaSchede(); disegnaPannello();
     mostra(s);
+    setTimeout(saluta, 350);   // appena entri: "ciao!"
   }
 
   // ---- profili in cloud (Firebase): nome + password, ti seguono ovunque ----
