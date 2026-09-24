@@ -506,8 +506,52 @@
   }
 
   // client condiviso: tiene vm + selezione, gestisce i tap, chiama cb.onMossa
+  // ---- statistiche per i trofei: il giocatore di QUESTO telefono (vm.io), se ha il profilo.
+  //      Funziona uguale contro il bot, da host e da ospite: guarda solo lo stato che arriva. ----
+  function tracciaScopa(T, vm) {
+    if (!vm) return;
+    // 1) le mosse: una mia scopa fatta con un denaro, o calando un asso
+    if (vm.presa) {
+      var key = vm.presa.carta.id + ":" + (vm.presa.presiIds || []).join(",");
+      if (key !== T.presaKey) {
+        T.presaKey = key;
+        if (vm.presa.mio && vm.presa.scopa) {
+          var den = vm.presa.carta.s === "D" || (vm.presa.presi || []).some(function (c) { return c.s === "D"; });
+          if (den) T.round.scopeDenari++;
+          if (vm.presa.carta.v === 1) T.round.scopeAsso++;
+        }
+      }
+    } else T.presaKey = null;
+    // 2) fine smazzata (e fine partita)
+    var prima = T.fase; T.fase = vm.fase;
+    if (!(vm.fase === "fineround" || vm.fase === "fine") || prima === vm.fase || !vm.ultimoRound) return;
+    var r = vm.ultimoRound, p = r.p, io = vm.io, opp = altro(io);
+    var tutti4 = p.puntoCarte === io && p.puntoDenari === io && p.settebello === io && p.puntoPrimiera === io;
+    var c = { scope: r.scope[io], settebello: p.settebello === io ? 1 : 0, primiera: p.puntoPrimiera === io ? 1 : 0,
+      denari: p.puntoDenari === io ? 1 : 0, carte: p.puntoCarte === io ? 1 : 0,
+      scopeDenari: T.round.scopeDenari, scopeAsso: T.round.scopeAsso,
+      cappotto: tutti4 ? 1 : 0, sopraMedia: (tutti4 && r.scope[io] >= 1) ? 1 : 0 };
+    if (p.settebello === io) T.match.sette++;
+    if (r.tot[opp] >= 10 && r.tot[io] < 10) T.match.oppA10 = true;   // l'avversario è arrivato a 10 prima di te
+    if (vm.fase === "fine") {
+      c.partite = 1;
+      if (vm.vincitoreIo) {
+        c.vinte = 1;
+        if (T.match.sette === 0) c.vinteSenzaSette = 1;
+        if (r.tot[opp] === 0) c.vinteAZero = 1;
+        if (T.match.oppA10) c.rimonte = 1;
+      }
+      T.match = { sette: 0, oppA10: false };
+    }
+    T.round = { scopeDenari: 0, scopeAsso: 0 };
+    if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
+    var incrs = []; for (var k in c) if (c[k]) incrs.push([k, c[k]]);
+    SGNube.salvaProgressi(null, "scopa", incrs, [["scopeRoundMax", r.scope[io]]]);
+  }
+
   function creaClient(t, cb) {
     var C = { vm: null, sel: { carta: null, presa: [] } };
+    var T = { presaKey: null, fase: null, round: { scopeDenari: 0, scopeAsso: 0 }, match: { sette: 0, oppA10: false } };
     C.tapMano = function (id) {
       var carta = trova(C.vm.mano, id); if (!carta) return;
       var opts = catture(carta.v, C.vm.tavolo);
@@ -531,6 +575,7 @@
     };
     C._presaFino = 0; C._pend = null;
     C.setVm = function (vm) {
+      tracciaScopa(T, vm);   // trofei
       // pulisci la selezione se non è più il mio turno
       if (!vm || vm.turno !== vm.io || vm.fase !== "gioco") C.sel = { carta: null, presa: [] };
       if (C._pend) { clearTimeout(C._pend); C._pend = null; }

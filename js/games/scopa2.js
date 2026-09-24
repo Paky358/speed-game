@@ -164,9 +164,70 @@
     };
   }
 
+  // ---------- statistiche per i trofei: il giocatore di QUESTO telefono (vm.io), se ha il profilo ----------
+  // Dalle prese si sa CHI ha preso: scope personali, settebello tuo, assist al compagno.
+  function nuovaTracciaS2() {
+    return { presaKey: null, giuKey: null, miaGiu: null, fase: null,
+      round: { scopeMie: 0, setteMio: 0, assist: 0 }, match: { scopeMie: 0, scopeComp: 0, setteAvv: 0, scopeSubite: 0, oppA10: false } };
+  }
+  function tracciaS2(T, vm) {
+    if (!vm) return;
+    var io = vm.io, comp = (io + 2) % 4;
+    // la carta che HO messo giù io (senza prendere): se il compagno ci fa scopa è un assist
+    if (vm.messaGiu && vm.messaGiu !== T.giuKey) { T.giuKey = vm.messaGiu; if ((vm.turno + 3) % 4 === io) T.miaGiu = vm.messaGiu; }
+    if (!vm.messaGiu) T.giuKey = null;
+    if (vm.presa) {
+      var pr = vm.presa, key = pr.seat + ":" + pr.carta.id + ":" + (pr.presiIds || []).join(",");
+      if (key !== T.presaKey) {
+        T.presaKey = key;
+        var presi = pr.presiIds || [];
+        if (pr.seat === io) {
+          if (pr.scopa) { T.round.scopeMie++; T.match.scopeMie++; }
+          if (pr.carta.id === "D7" || presi.indexOf("D7") >= 0) T.round.setteMio++;
+        }
+        if (pr.seat === comp && pr.scopa) {
+          T.match.scopeComp++;
+          if (T.miaGiu && presi.indexOf(T.miaGiu) >= 0) T.round.assist++;
+        }
+        if (T.miaGiu && presi.indexOf(T.miaGiu) >= 0) T.miaGiu = null;   // la mia carta ormai è stata presa
+      }
+    } else T.presaKey = null;
+    // fine smazzata / fine partita (ultimoRound è già "relativo": [0] = mia squadra, [1] = altra)
+    var prima = T.fase; T.fase = vm.fase;
+    if (!(vm.fase === "fineround" || vm.fase === "fine") || prima === vm.fase || !vm.ultimoRound) return;
+    var r = vm.ultimoRound;
+    var tutti4 = r.pCarte === "mia" && r.pDen === "mia" && r.sette === "mia" && r.pPrim === "mia";
+    var c = { scopePersonali: T.round.scopeMie, settePersonale: T.round.setteMio, assist: T.round.assist,
+      grandeSlam: tutti4 ? 1 : 0, primDenSquadra: (r.pPrim === "mia" && r.pDen === "mia") ? 1 : 0 };
+    if (r.sette === "altra") T.match.setteAvv++;
+    T.match.scopeSubite += r.scope[1];
+    if (r.tot[1] >= 10 && r.tot[0] < 10) T.match.oppA10 = true;
+    var sets = [], recs = [];
+    if (vm.fase === "fine") {
+      var M = T.match, vinto = vm.vincitoreMio;
+      var s0 = (window.SGNube && SGNube.statGioco && SGNube.statGioco("scopa2v2")) || {}, serie = s0.serieVinteOra || 0;
+      c.partite = 1;
+      if (M.scopeMie >= 2 && M.scopeComp >= 2) c.sincronizzati = 1;
+      if (vinto) {
+        c.vinte = 1; serie++;
+        if (M.setteAvv === 0) c.vinteNoSetteAvv = 1;
+        if (M.scopeSubite === 0) c.vinteNoScopeSubite = 1;
+        if (r.tot[1] === 0) c.vinteAZero = 1;
+        if (M.oppA10) c.rimonte = 1;
+        if (M.scopeMie >= 3 && M.scopeComp === 0) c.trascinatore = 1;
+      } else serie = 0;
+      recs.push(["serieVinteMax", serie]); sets.push(["serieVinteOra", serie]);
+      T.match = { scopeMie: 0, scopeComp: 0, setteAvv: 0, scopeSubite: 0, oppA10: false };
+    }
+    T.round = { scopeMie: 0, setteMio: 0, assist: 0 };
+    if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
+    var incrs = []; for (var k in c) if (c[k]) incrs.push([k, c[k]]);
+    SGNube.salvaProgressi(null, "scopa2v2", incrs, recs, sets);
+  }
+
   // ---------- client (selezione + tap + tenuta minima dell'animazione) ----------
   function creaClient(t, cb) {
-    var Cl = { vm: null, sel: { carta: null, presa: [] } };
+    var Cl = { vm: null, sel: { carta: null, presa: [] } }, T = nuovaTracciaS2();
     Cl.tapMano = function (id) {
       var vm = Cl.vm; if (!vm || vm.turno !== vm.io || vm.fase !== "gioco" || vm.presa) return;
       var carta = trova(vm.mano, id); if (!carta) return;
@@ -186,6 +247,7 @@
     Cl.disegna = function () { if (!Cl.vm) return; disegna(t, Cl, cb); };
     Cl._fino = 0; Cl._pend = null;
     Cl.setVm = function (vm) {
+      tracciaS2(T, vm);   // trofei
       if (!vm || vm.turno !== vm.io || vm.fase !== "gioco") Cl.sel = { carta: null, presa: [] };
       if (Cl._pend) { clearTimeout(Cl._pend); Cl._pend = null; }
       if (vm && vm.presa) { Cl._fino = Date.now() + 1050; Cl.vm = vm; Cl.disegna(); return; }

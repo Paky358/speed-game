@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 93,
+    data: "24 settembre 2026",
+    titolo: "Trofei per Scopa e Scopa 2 vs 2 🃏🏆",
+    descrizione: [
+      "Scopa: 24 trofei, dalle prime scope al Settebello, dalla Primiera al 4+1 'Sopra la Media', fino alla rimonta e alla vittoria a zero.",
+      "Scopa 2 vs 2: 19 trofei di squadra, con le tue scope personali, il Settebello preso da te e gli assist al compagno.",
+      "Contano contro il bot e online, per chi ha il profilo."
+    ]
+  },
+  {
     v: 92,
     data: "24 settembre 2026",
     titolo: "17 trofei per L'Impostore 🕵️🏆",
