@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 98,
+    data: "24 settembre 2026",
+    titolo: "Omini più belli e più scelte 🎨",
+    descrizione: [
+      "Disegno più curato: ciocche nei capelli, occhi con l'iride sfumata, pieghe dei vestiti, scarpe con la suola.",
+      "Nuove scelte: forma del viso, guance (nessuna, leggere, rosse o lentiggini), labbra, sopracciglia sottili.",
+      "Barba e baffi ora stanno sotto 'Capelli' (accenno, corta, folta, pizzetto, baffi, baffoni…) e si possono unire agli accessori.",
+      "Nuovi accessori: berretto con pompon e orecchini."
+    ]
+  },
+  {
     v: 97,
     data: "24 settembre 2026",
     titolo: "Il tuo omino! 🧍",

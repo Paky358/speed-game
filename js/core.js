@@ -829,14 +829,13 @@
   // ---- OMINO: il tuo personaggio stile Mii (disegno in js/omino.js) ----
   var SEZ_OMINO = [
     { nome: "Corpo",     voci: [["forma", "Forma"], ["corpo", "Corporatura"], ["pelle", "Pelle"]] },
-    { nome: "Capelli",   voci: [["capelli", "Taglio"], ["colCap", "Colore"]] },
-    { nome: "Viso",      voci: [["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"]] },
+    { nome: "Viso",      voci: [["viso", "Forma del viso"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"], ["guance", "Guance"]] },
+    { nome: "Capelli",   voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
     { nome: "Vestiti",   voci: [["maglia", "Maglietta"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"]] },
     { nome: "Accessori", voci: [["accessorio", "Accessorio"]] }
   ];
   var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1 };
   var OMINO_INTERO = { forma: 1, corpo: 1, sotto: 1 };          // anteprima a figura intera (le altre: solo la testa)
-  var OMINO_NOMI = { sole: "da sole", o: "a O", punta: "a punta" };
   function salvaOminoMio(cfg) {
     var io = profiloAttivo(); if (!io) return;
     if (io.cloud) { SGNube.salvaOmino(cfg); return; }
@@ -846,8 +845,7 @@
   function schermataOmino(dopo) {
     var io = profiloAttivo();
     if (!io) return schermataAccesso(function () { schermataOmino(dopo); });
-    var O = SGOmino, cfg = {}, base = io.omino || O.casuale(io.nome), k;
-    for (k in O.BASE) cfg[k] = base[k] != null ? base[k] : O.BASE[k];
+    var O = SGOmino, cfg = O.norm(io.omino || O.casuale(io.nome));
     var tab = 0;
     var s = schermata({ icona: "🧍", titolo: "Il mio omino", sotto: "Crealo come vuoi: ti rappresenta nei giochi", indietro: dopo });
     var palco = el("div", { class: "omino-palco editor" });
@@ -886,7 +884,7 @@
             b = el("button", { class: "om-opz om-colore", style: "background:" + val, "aria-label": vc[1] + " " + (i + 1), onclick: function () { scegli(k, v); } });
           } else {
             var bloccato = k === "accessorio" && O.LIBERI.indexOf(val) < 0;
-            var nomeVis = OMINO_NOMI[val] || val;
+            var nomeVis = O.NOMI[val] || val;
             b = el("button", { class: "om-opz om-forma" + (bloccato ? " bloccato" : ""), onclick: function () { if (!bloccato) scegli(k, v); } });
             b._mini = el("div", { class: "om-mini" + (OMINO_INTERO[k] ? " intero" : "") });
             b.appendChild(b._mini);
@@ -899,7 +897,7 @@
       aggiornaPannello();
     }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🎲 A caso", onclick: function () {
-      var r = O.casuale(); for (var x in r) cfg[x] = r[x]; anteprima(); disegnaPannello();
+      cfg = O.norm(O.casuale()); anteprima(); disegnaPannello();
     } }));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva il mio omino", onclick: function () { salvaOminoMio(cfg); dopo(); } }));
     anteprima(); disegnaSchede(); disegnaPannello();
