@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 101,
+    data: "24 settembre 2026",
+    titolo: "Omini: nuove proporzioni e pantaloni veri 👖",
+    descrizione: [
+      "Busto più corto e gambe più lunghe: ora i pantaloni si vedono bene, dai fianchi alle scarpe.",
+      "5 tipi di 'sotto': jeans (cuciture, tasche, risvolto), classici con la piega, tuta con le bande, pantaloncini e gonna.",
+      "Nuovi colori: jeans scuro, jeans chiaro, beige e verde militare. Con la camicia compare la cintura con la fibbia.",
+      "Più dettagli: scarpe con punta e lacci, pieghe al gomito, cuciture sulle spalle, dita delle mani."
+    ]
+  },
+  {
     v: 100,
     data: "24 settembre 2026",
     titolo: "Omini: ritocchi, colori liberi e il saluto 👋",

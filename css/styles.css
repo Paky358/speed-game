@@ -536,6 +536,8 @@ body::before{
 .om-colore.attiva{ box-shadow:0 0 0 3px #ffd23b, inset 0 -4px 8px rgba(0,0,0,.25); }
 .om-mini{ height:64px; display:flex; justify-content:center; }
 .om-mini.intero{ height:84px; }
+.om-mini.gambe{ height:62px; }
+.om-opz{ overflow:hidden; }
 .om-mini svg{ height:100%; width:auto; }
 .om-nome{ font-size:.72rem; font-weight:700; margin-top:2px; color:var(--testo-tenue); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .om-opz.attiva .om-nome{ color:#ffd76a; }

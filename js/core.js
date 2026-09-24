@@ -893,25 +893,25 @@
           return;
         }
         b.classList.toggle("attiva", cfg[k] === v);
-        if (b._mini) b._mini.innerHTML = O.svg(unisci(k, v), { busto: !OMINO_INTERO[k] });
+        if (b._mini) b._mini.innerHTML = O.svg(unisci(k, v), k === "sotto" ? { gambe: true } : { busto: !OMINO_INTERO[k] });
       });
     }
     function scegli(k, v, zitto) {
       if (cfg[k] === v) return;
       if (zitto) { cfg[k] = v; anteprima(false); return; }   // mentre trascini (colore libero, cursori): niente saltelli
       var rifai = (k === "forma" || k === "accessorio");   // "Sotto" solo per la donna, "Colore accessorio" solo se serve
-      cfg[k] = v; if (k === "forma" && v === "uomo") cfg.sotto = "pantaloni";
+      cfg[k] = v; if (k === "forma" && v === "uomo" && cfg.sotto === "gonna") cfg.sotto = "jeans";
       anteprima(true); if (rifai) disegnaPannello(); else aggiornaPannello();
     }
     function disegnaPannello() {
       pannello.innerHTML = "";
       SEZ_OMINO[tab].voci.forEach(function (vc) {
         var k = vc[0];
-        if (k === "sotto" && cfg.forma !== "donna") return;
         if (k === "colAcc" && !ACC_COLORATI.test(cfg.accessorio)) return;
         pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
         var riga = el("div", { class: "om-griglia" + (OMINO_COLORI[k] ? " colori" : "") });
         O.OPZ[k].forEach(function (val, i) {
+          if (k === "sotto" && val === "gonna" && cfg.forma !== "donna") return;
           var v = OMINO_COLORI[k] ? i : val, b;
           if (OMINO_COLORI[k]) {
             b = el("button", { class: "om-opz om-colore", style: "background:" + val, "aria-label": vc[1] + " " + (i + 1), onclick: function () { scegli(k, v); } });
@@ -919,7 +919,7 @@
             var bloccato = k === "accessorio" && O.LIBERI.indexOf(val) < 0;
             var nomeVis = O.NOMI[val] || val;
             b = el("button", { class: "om-opz om-forma" + (bloccato ? " bloccato" : ""), onclick: function () { if (!bloccato) scegli(k, v); } });
-            b._mini = el("div", { class: "om-mini" + (OMINO_INTERO[k] ? " intero" : "") });
+            b._mini = el("div", { class: "om-mini" + (k === "sotto" ? " gambe" : (OMINO_INTERO[k] ? " intero" : "")) });
             b.appendChild(b._mini);
             b.appendChild(el("div", { class: "om-nome", text: bloccato ? "🔒 coi trofei" : nomeVis.charAt(0).toUpperCase() + nomeVis.slice(1) }));
           }
