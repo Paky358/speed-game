@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 102,
+    data: "24 settembre 2026",
+    titolo: "Scopa: il bot Difficile ora è difficile davvero 🧠🃏",
+    descrizione: [
+      "Si ricorda tutte le carte uscite e immagina che carte puoi avere in mano tu.",
+      "Guarda una mossa avanti: evita di lasciarti scope, protegge i 7 e il settebello, punta a denari e primiera quando servono.",
+      "Contro il Medio vince 7 partite su 10 e concede quasi metà delle scope."
+    ]
+  },
+  {
     v: 101,
     data: "24 settembre 2026",
     titolo: "Omini: nuove proporzioni e pantaloni veri 👖",

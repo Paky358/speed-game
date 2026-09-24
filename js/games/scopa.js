@@ -211,7 +211,116 @@
   // ---------- bot ----------
   function importanza(c) { return c.id === "D7" ? 12 : c.s === "D" ? 3 : c.v === 7 ? 2.2 : c.v === 6 ? 1.6 : c.v === 1 ? 1.6 : 1; }
   function valoreTavolo(t) { var s = 0; t.forEach(function (c) { s += importanza(c); }); return s; }
-  function scegliMossaBot(mano, tavolo, diff) {
+  // ---------- bot DIFFICILE: ricorda le carte uscite e guarda una mossa avanti ----------
+  // st = stato del motore, pk = chi gioca. Per ogni mossa: quanto guadagno SUBITO
+  // meno quanto può guadagnare l'avversario col tavolo che gli lascio, pesando
+  // le carte che può avere in mano (solo quelle non ancora uscite).
+  // Scala: 1 punto della partita ≈ 8.
+  function pesoCarta(c, prese) {
+    var nc = prese.length, nd = 0, sette = 0;
+    prese.forEach(function (x) { if (x.s === "D") nd++; if (x.v === 7) sette++; });
+    var w = nc >= 21 ? 0.05 : 0.32;                                   // punto carte (già vinto a 21)
+    if (c.s === "D") w += nd >= 6 ? 0.1 : 0.7;                         // punto denari (già vinto a 6)
+    if (c.id === "D7") w += 8;                                         // settebello = 1 punto
+    if (c.v === 7) w += sette >= 3 ? 0.3 : 1.1;                        // i 7 decidono la primiera
+    else if (c.v === 6) w += 0.55; else if (c.v === 1) w += 0.4; else if (c.v === 5) w += 0.15;
+    return w;
+  }
+  function valorePresa(carta, presi, restano, prese, scopaVale) {
+    var s = pesoCarta(carta, prese);
+    presi.forEach(function (c) { s += pesoCarta(c, prese); });
+    if (restano === 0 && scopaVale) s += 8;
+    return s;
+  }
+  function mossaDifficile(st, pk, mosse) {
+    var av = altro(pk), mano = st.mani[pk], tavolo = st.tavolo;
+    // carte non ancora viste: non sono nella mia mano, sul tavolo o nelle prese (le prese le vedono tutti)
+    var viste = {};
+    mano.concat(tavolo, st.prese.A, st.prese.B).forEach(function (c) { viste[c.id] = 1; });
+    var ignote = creaMazzo().filter(function (c) { return !viste[c.id]; });
+    var perValore = {}; ignote.forEach(function (c) { perValore[c.v] = (perValore[c.v] || 0) + 1; });
+    var U = ignote.length;
+    var hAvv = st.mani[av].length || (st.mazzo.length > 0 ? 3 : 0);   // se ha finito le carte, gliene arrivano 3 nuove
+    function probHa(v) {   // probabilità che l'avversario abbia almeno una carta di valore v
+      var u = perValore[v] || 0; if (!u || !hAvv || U <= 0) return 0;
+      var p = 1; for (var i = 0; i < hAvv; i++) p *= Math.max(0, (U - u - i)) / (U - i);
+      return 1 - p;
+    }
+    var ultimaMia = st.mazzo.length === 0 && mano.length === 1 && st.mani[av].length === 0;
+    if (hAvv && U >= hAvv) return mossaSimulata(st, pk, mosse, ignote, hAvv, ultimaMia);
+    return mosse.map(function (m) {
+      var tav2 = m.cattura ? tavolo.filter(function (c) { return m.set.indexOf(c.id) < 0; }) : tavolo.concat([m.c]);
+      var guadagno = m.cattura ? valorePresa(m.c, m.set.map(function (id) { return trova(tavolo, id); }), tav2.length, st.prese[pk], !ultimaMia) : -0.15 * pesoCarta(m.c, st.prese[pk]);
+      // risposta dell'avversario: per ogni valore, la sua presa migliore; poi media pesata (prende la migliore che ha)
+      var ultimaSua = st.mazzo.length === 0 && mano.length === 1 && st.mani[av].length === 1;
+      var risposte = [];
+      for (var v = 1; v <= 10; v++) {
+        var p = probHa(v); if (!p) continue;
+        var best = 0;
+        catture(v, tav2).forEach(function (set) {
+          var presi = set.map(function (id) { return trova(tav2, id); });
+          var val = valorePresa({ v: v, s: "?", id: "?" }, presi, tav2.length - set.length, st.prese[av], !ultimaSua);
+          if (val > best) best = val;
+        });
+        if (best > 0) risposte.push([best, p]);
+      }
+      risposte.sort(function (a, b) { return b[0] - a[0]; });
+      var perdita = 0, nessunaMigliore = 1;
+      risposte.forEach(function (r) { perdita += r[0] * r[1] * nessunaMigliore; nessunaMigliore *= (1 - r[1]); });
+      return { m: m, s: guadagno - perdita * 0.9 + Math.random() * 0.05 };
+    }).sort(function (a, b) { return b.s - a.s; })[0].m;
+  }
+
+  // Simulazione: immagina K mani possibili dell'avversario (tra le carte non uscite);
+  // per ognuna: la mia mossa -> la sua risposta migliore -> la mia contromossa migliore.
+  function mossaSimulata(st, pk, mosse, ignote, hAvv, ultimaMia) {
+    var av = altro(pk), K = 16, tavolo = st.tavolo, mieP = st.prese[pk], sueP = st.prese[av];
+    function mosseDi(mano, tav) {   // tutte le giocate possibili di una mano: [carta, set presi | null]
+      var r = [];
+      mano.forEach(function (c) { var o = catture(c.v, tav); if (o.length) o.forEach(function (s) { r.push([c, s]); }); else r.push([c, null]); });
+      return r;
+    }
+    function applica(tav, c, set) { return set ? tav.filter(function (x) { return set.indexOf(x.id) < 0; }) : tav.concat([c]); }
+    function guadagno(tav, c, set, prese, scopaVale) {
+      if (!set) return -0.3 * pesoCarta(c, prese);
+      return valorePresa(c, set.map(function (id) { return trova(tav, id); }), tav.length - set.length, prese, scopaVale);
+    }
+    function miglior(mano, tav, prese, scopaVale) {   // presa migliore immediata (0 se nulla di buono)
+      var b = 0; mosseDi(mano, tav).forEach(function (g) { var v = guadagno(tav, g[0], g[1], prese, scopaVale); if (v > b) b = v; }); return b;
+    }
+    // mani avversarie campionate (le stesse per tutte le mie mosse: confronto equo)
+    var campioni = [];
+    for (var k = 0; k < K; k++) {
+      var pool = ignote.slice(), h = [];
+      for (var i = 0; i < hAvv; i++) h.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+      campioni.push(h);
+    }
+    var mioResto = function (m) { return st.mani[pk].filter(function (c) { return c.id !== m.c.id; }); };
+    var best = null, bs = -1e9;
+    mosse.forEach(function (m) {
+      var tav1 = applica(tavolo, m.c, m.cattura ? m.set : null);
+      var g1 = guadagno(tavolo, m.c, m.cattura ? m.set : null, mieP, !ultimaMia);
+      var resto = mioResto(m), tot = 0;
+      campioni.forEach(function (hA) {
+        var ultimaSua = st.mazzo.length === 0 && resto.length === 0 && hA.length === 1;
+        // l'avversario sceglie la risposta migliore per lui (tenendo conto della mia contromossa)
+        var bR = -1e9, g3R = 0, best2 = 0;
+        mosseDi(hA, tav1).forEach(function (g) {
+          var tav2 = applica(tav1, g[0], g[1]);
+          var g2 = guadagno(tav1, g[0], g[1], sueP, !ultimaSua);
+          var g3 = resto.length ? miglior(resto, tav2, mieP, true) : 0;
+          var v = g2 - 0.6 * g3;
+          if (v > bR) { bR = v; g3R = g3; best2 = g2; }
+        });
+        tot += g1 - (bR === -1e9 ? 0 : best2) + 0.7 * g3R;
+      });
+      var s = tot / K + Math.random() * 0.03;
+      if (s > bs) { bs = s; best = m; }
+    });
+    return best;
+  }
+
+  function scegliMossaBot(mano, tavolo, diff, st, pk) {
     var mosse = [];
     mano.forEach(function (c) {
       var opts = catture(c.v, tavolo);
@@ -219,6 +328,7 @@
       else mosse.push({ carta: c.id, presa: null, cattura: false, c: c, set: [] });
     });
     if (diff === "facile") return mosse[Math.floor(Math.random() * mosse.length)];
+    if (diff === "difficile" && st) return mossaDifficile(st, pk, mosse);
     function punteggio(m) {
       var s = 0;
       if (m.cattura) {
@@ -707,7 +817,7 @@
     }
     function mossaBot() {
       if (M.st.fase !== "gioco" || M.st.turno !== "B") return;
-      var m = scegliMossaBot(M.st.mani.B, M.st.tavolo, difficolta);
+      var m = scegliMossaBot(M.st.mani.B, M.st.tavolo, difficolta, M.st, "B");
       var ev = M.gioca("B", m.carta, m.presa);
       suonoPresa(ev.scopa); aggiorna(); continua(ev);
     }
