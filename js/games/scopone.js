@@ -162,6 +162,38 @@
     return best;
   }
 
+  // ---------- trofei: contatori per il profilo (tu = seat 0, squadra "noi") ----------
+  function tracciaScopone(st, seat, ev, primaDellaMossa) {
+    var R = st._T || (st._T = { scope: 0, primoTurno: 0 });
+    if (seat === 0 && ev.scopa) {
+      R.scope++;
+      if (st.variante === "classico" && primaDellaMossa === 9) R.primoTurno++;   // la tua prima carta della smazzata
+    }
+    if (st.fase === "gioco") return;
+    // fine smazzata: punti di squadra
+    var r = st.ultimoRound, c = { scopePersonali: R.scope, scopaPrimoTurno: R.primoTurno };
+    if (r.sette === "noi") c.settebello = 1;
+    if (r.pDen === "noi") c.denari = 1;
+    if (r.pCarte === "noi") c.carte = 1;
+    if (r.pPrim === "noi") c.primiera = 1;
+    if (r.sette === "noi" && r.pDen === "noi" && r.pCarte === "noi" && r.pPrim === "noi") c.grandeSlam = 1;
+    st._T = null;
+    var sets = [], recs = [];
+    if (st.fase === "fine") {
+      var vinto = st.punti.noi > st.punti.loro, sci = st.variante === "scientifico";
+      var s0 = (window.SGNube && SGNube.statGioco && SGNube.statGioco("scopone")) || {}, serie = s0.serieSciOra || 0;
+      c.partite = 1;
+      if (vinto) {
+        c.vinte = 1; c[sci ? "vinteScientifico" : "vinteClassico"] = 1;
+        if (st.punti.loro === 0) c.vinteAZero = 1;
+      }
+      if (sci) { serie = vinto ? serie + 1 : 0; recs.push(["serieSciMax", serie]); sets.push(["serieSciOra", serie]); }
+    }
+    if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
+    var incrs = []; for (var k in c) if (c[k]) incrs.push([k, c[k]]);
+    SGNube.salvaProgressi(null, "scopone", incrs, recs, sets);
+  }
+
   // ---------- suono presa ----------
   function suonoPresa(scopa) {
     try { if (navigator.vibrate) navigator.vibrate(scopa ? [0, 20, 40, 30] : 12); } catch (e) {}
@@ -207,7 +239,9 @@
       render();
     }
     function gioco(seat, id, presa) {
+      var primaDellaMossa = st.mani[0].length;
       var ev = applica(st, seat, id, presa); if (ev.errore) return;
+      tracciaScopone(st, seat, ev, primaDellaMossa);
       suonoPresa(ev.scopa); render(); dopo(ev);
     }
     function dopo(ev) {

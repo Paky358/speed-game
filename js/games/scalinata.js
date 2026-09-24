@@ -71,10 +71,43 @@
       // un telefono solo: i giocatori veri + i bot per arrivare a 4
       var g = t.giocatori.slice(0, 4).map(function (n, i) { return { nome: n, colore: COLORI[i], passi: 0, bot: false }; });
       var b = 0; while (g.length < 4) { g.push({ nome: NOMI_BOT[b] || ("Bot " + (b + 1)), colore: COLORI[g.length], passi: 0, bot: true }); b++; }
-      var st = { g: g, scelte: [null, null, null, null], nRound: 0 };
+      var st = { g: g, scelte: [null, null, null, null], nRound: 0, T: nuovaTracciaScala() };
       introRound(t, st);
     }
   });
+
+  // ---------- trofei: contatori per il profilo (solo il giocatore di questo telefono) ----------
+  function nuovaTracciaScala() { return { round: -1, scontri: 0, usato5: false, solo3: true }; }
+  function ioDaNome(nomi) {
+    var prof = window.SGNube && SGNube.disponibile() && SGNube.profilo(); if (!prof) return -1;
+    return nomi.indexOf(prof.nome);
+  }
+  // chiamata alla rivelazione di ogni round; nRound evita doppi conteggi (l'ospite riceve lo stesso round più volte)
+  function tracciaScala(T, io, nRound, scelte, avanza, prev, passi) {
+    if (!T || io < 0 || !scelte || nRound === T.round) return;
+    T.round = nRound;
+    var n = scelte[io], c = {};
+    if (avanza[io]) { c["mosse" + n] = 1; c.gradini = passi[io] - prev[io]; }
+    else { T.scontri++; c.scontri = 1; if (nRound === 1) c.scontriPrimoTurno = 1; }
+    if (n === 5) T.usato5 = true;
+    if (n !== 3) T.solo3 = false;
+    var top = 0; passi.forEach(function (p, k) { if (p > passi[top]) top = k; });   // come il podio: a pari gradino vince il primo
+    if (passi[top] >= TRAGUARDO) {
+      c.partite = 1;
+      if (top === io) {
+        c.vinte = 1;
+        if (!T.usato5) c.vinteSenza5 = 1;
+        if (T.solo3) c.vinteSolo3 = 1;
+        if (nRound === 3) c.vinteIn3 = 1;
+        if (!T.scontri) c.vinteSenzaScontri = 1;
+        if (avanza.every(function (a, k) { return k === io || !a; })) c.vinteAltriBloccati = 1;
+      }
+      T.scontri = 0; T.usato5 = false; T.solo3 = true;   // pronta per la prossima partita
+    }
+    if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
+    var incrs = []; for (var k in c) if (c[k]) incrs.push([k, c[k]]);
+    SGNube.salvaProgressi(null, "scalinata", incrs, []);
+  }
 
   function niente(t) {
     var s = t.schermata({ icona: "🪜", titolo: "La Scalinata", indietro: t.esci });
@@ -125,6 +158,7 @@
     var avanza = st.g.map(function (_, i) { return conta[scelte[i]] === 1; });
     var prev = st.g.map(function (g) { return g.passi; });
     st.g.forEach(function (g, i) { if (avanza[i]) g.passi = Math.min(TRAGUARDO, g.passi + scelte[i]); });
+    tracciaScala(st.T, ioDaNome(st.g.map(function (g) { return g.nome; })), st.nRound, scelte, avanza, prev, st.g.map(function (g) { return g.passi; }));
 
     var el = t.el;
     var s = t.schermata({ icona: "🪜", titolo: "Si scopre!", sotto: "Round " + st.nRound });
@@ -245,6 +279,7 @@
       posti: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", colore: COLORI[0], bot: false, passi: 0, scelta: null }],
       deadline: 0, timer: null
     };
+    var T = nuovaTracciaScala();
     var rete = SGNet.ospita("scalinata", {
       onCodice: function (c) { st.codice = c; bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
@@ -303,6 +338,7 @@
       st.avanza = st.posti.map(function (p, i) { return conta[scelte[i]] === 1; });
       st.scelte = scelte;
       st.posti.forEach(function (p, i) { if (st.avanza[i]) p.passi = Math.min(TRAGUARDO, p.passi + scelte[i]); });
+      tracciaScala(T, 0, st.nRound, scelte, st.avanza, st.prev, st.posti.map(function (p) { return p.passi; }));   // l'host è sempre il posto 0
       st.fase = "rivela"; bd();
     }
     function prossimo() {
@@ -329,7 +365,7 @@
 
   function ospiteScala(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteScala(t);
-    var el = t.el, S = { myId: null, vm: null, rete: null, nome: "", msg: null };
+    var el = t.el, S = { myId: null, vm: null, rete: null, nome: "", msg: null, T: nuovaTracciaScala() };
     var cb = {
       sonoHost: false, myId: null,
       onScegli: function (n) { S.rete && S.rete.invia({ t: "scegli", n: n }); },
@@ -352,7 +388,15 @@
       S.rete = SGNet.entra(codice, {
         onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome });
           setTimeout(function () { if (!S.vm && S.msg) S.msg.textContent = "Non trovo la partita. Controlla il codice, o l'host non ha ancora aperto la stanza…"; }, 8000); },
-        onMsg: function (m) { if (m && m.t === "vm") { S.vm = m.vm; disegna(); } },
+        onMsg: function (m) {
+          if (!(m && m.t === "vm")) return;
+          S.vm = m.vm;
+          if (m.vm.fase === "rivela") {
+            var io = -1; m.vm.posti.forEach(function (p, k) { if (p.id === S.myId) io = k; });
+            tracciaScala(S.T, io, m.vm.nRound, m.vm.scelte, m.vm.avanza, m.vm.prev, m.vm.posti.map(function (p) { return p.passi; }));
+          }
+          disegna();
+        },
         onChiuso: function () { erroreScala(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
         onErrore: function () { erroreScala(t, "Problema di collegamento. Controlla la connessione e riprova."); }
       });

@@ -435,12 +435,22 @@
     else { st.gx = b.tx; st.gy = b.ty; }
     st.gx = clamp(st.gx, RPAD, 1 - RPAD); st.gy = clamp(st.gy, RPAD, ASP / 2 - RPAD);
   }
-  function salvaHockey(st) {
+  // trofei: contatori per livello del bot (liv = facile/medio/difficile)
+  function salvaHockey(st, liv) {
     if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
-    var vinto = st.vincitore === 1;
-    SGNube.salvaProgressi(null, "hockey",
-      [["partite", 1], ["vittorie", vinto ? 1 : 0], ["golFatti", st.s1]],
-      [["scartoMax", vinto ? (st.s1 - st.s2) : 0]]);
+    var vinto = st.vincitore === 1, zero = vinto && st.s2 === 0;
+    var incrs = [["partite", 1], ["golFatti", st.s1]], sets = [], recs = [["scartoMax", vinto ? (st.s1 - st.s2) : 0]];
+    if (vinto) {
+      incrs.push(["vittorie", 1], ["vinte_" + liv, 1]);
+      if (zero) incrs.push(["cappotti", 1], ["cappotti_" + liv, 1]);
+      if (st.s2 === VINCI - 1) incrs.push(["fotofinish", 1]);
+      if ((st.maxSotto || 0) >= 3) incrs.push(["rimonte", 1]);
+    }
+    if (liv === "difficile") {
+      var s0 = (SGNube.statGioco && SGNube.statGioco("hockey")) || {}, serie = vinto ? (s0.serieDiffOra || 0) + 1 : 0;
+      recs.push(["serieDiffMax", serie]); sets.push(["serieDiffOra", serie]);
+    }
+    SGNube.salvaProgressi(null, "hockey", incrs, recs, sets);
   }
   function botHK(t, liv) {
     var D = DIFF[liv] || DIFF.medio;
@@ -455,10 +465,11 @@
     }
     function gol(chi) {
       if (chi === 1) st.s1++; else st.s2++;
+      st.maxSotto = Math.max(st.maxSotto || 0, st.s2 - st.s1);
       suonoGol(chi === 1);
       if (st.s1 >= VINCI || st.s2 >= VINCI) {
         st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2;
-        if (!salvato) { salvato = true; salvaHockey(st); }
+        if (!salvato) { salvato = true; salvaHockey(st, DIFF[liv] ? liv : "medio"); }
         render();
       } else {
         // pausa GOL: tutto fermo, il disco riparte nella metà di chi ha subito
@@ -505,7 +516,7 @@
         var vinto = st.vincitore === 1;
         var sf = t.schermata({ icona: vinto ? "🏆" : "🤖", titolo: vinto ? "Hai vinto!" : "Ha vinto il computer", sotto: "Glow Hockey · " + D.nome });
         sf._contenuto.appendChild(el("div", { style: "text-align:center;font-size:2rem;font-weight:800;margin:10px 0", text: st.s1 + " — " + st.s2 }));
-        sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { st.s1 = 0; st.s2 = 0; st.vincitore = null; salvato = false; st._bot = null; servi(st); rimettiRacchette(); st.fase = "gioco"; vista = null; render(); } }));
+        sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { st.s1 = 0; st.s2 = 0; st.maxSotto = 0; st.vincitore = null; salvato = false; st._bot = null; servi(st); rimettiRacchette(); st.fase = "gioco"; vista = null; render(); } }));
         sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { stop(); t.esci(); } }));
         t.mostra(sf);
       } else {

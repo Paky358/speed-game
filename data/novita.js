@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 95,
+    data: "24 settembre 2026",
+    titolo: "Trofei per Glow Hockey, Scopone e La Scalinata 🏒🃏🪜",
+    descrizione: [
+      "Glow Hockey: 20 trofei, dal primo gol fino a battere il bot Difficile 7 a 0.",
+      "Scopone: 17 trofei tra Classico e Scientifico, con Settebello, Primiera, scope tue e Cappotto.",
+      "La Scalinata: 17 trofei, dal primo 'Bonk!' fino all'Ascensore Privato (5, 5, 5 senza scontri)."
+    ]
+  },
+  {
     v: 94,
     data: "24 settembre 2026",
     titolo: "Trofei: percentuali e conteggio per livello 📊",

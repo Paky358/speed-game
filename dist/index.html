@@ -1093,7 +1093,67 @@ body::before{
     { gioco: "timeline", livello: "diamante", icona: "🏔️", nome: "Difficoltà Massima",      desc: "Partita perfetta con 8 carte a testa",                stat: "perfette8",      meta: 1 },
     { gioco: "timeline", livello: "diamante", icona: "👁️", nome: "Memoria Eidetica",        desc: "15 carte giuste di fila (vale anche tra più partite)", stat: "serieMax",      meta: 15 },
     { gioco: "timeline", livello: "diamante", icona: "🔮", nome: "Macchina della Verità",   desc: "15 voti azzeccati di fila",                           stat: "serieVotiMax",   meta: 15 },
-    { gioco: "timeline", livello: "diamante", icona: "⏳", nome: "Dio del Tempo",           desc: "30 carte giuste di fila (vale anche tra più partite)", stat: "serieMax",      meta: 30 }
+    { gioco: "timeline", livello: "diamante", icona: "⏳", nome: "Dio del Tempo",           desc: "30 carte giuste di fila (vale anche tra più partite)", stat: "serieMax",      meta: 30 },
+
+    // ---------- Glow Hockey (contro il bot) ----------
+    { gioco: "hockey", livello: "bronzo",   icona: "🏒", nome: "Battesimo del Disco",       desc: "Gioca la tua prima partita",                          stat: "partite",           meta: 1 },
+    { gioco: "hockey", livello: "bronzo",   icona: "🔥", nome: "Dito Caldo",                desc: "Segna il tuo primo gol",                              stat: "golFatti",          meta: 1 },
+    { gioco: "hockey", livello: "bronzo",   icona: "🥇", nome: "La Prima Vittoria",         desc: "Vinci la tua prima partita arrivando a 7",            stat: "vittorie",          meta: 1 },
+    { gioco: "hockey", livello: "bronzo",   icona: "🌡️", nome: "Riscaldamento Completato",  desc: "Batti il bot Facile",                                 stat: "vinte_facile",      meta: 1 },
+    { gioco: "hockey", livello: "bronzo",   icona: "🎯", nome: "Cecchino in Erba",          desc: "Segna 50 gol in totale",                              stat: "golFatti",          meta: 50 },
+    { gioco: "hockey", livello: "bronzo",   icona: "📸", nome: "Fotofinish",                desc: "Vinci una partita 7 a 6",                             stat: "fotofinish",        meta: 1 },
+    { gioco: "hockey", livello: "argento",  icona: "📈", nome: "Salto di Qualità",          desc: "Batti il bot Medio",                                  stat: "vinte_medio",       meta: 1 },
+    { gioco: "hockey", livello: "argento",  icona: "⚡", nome: "Goleador",                  desc: "Segna 200 gol in totale",                             stat: "golFatti",          meta: 200 },
+    { gioco: "hockey", livello: "argento",  icona: "📅", nome: "Pratica Quotidiana",        desc: "Vinci 15 partite",                                    stat: "vittorie",          meta: 15 },
+    { gioco: "hockey", livello: "argento",  icona: "🧱", nome: "Muro di Gomma",             desc: "Batti il bot Medio 10 volte",                         stat: "vinte_medio",       meta: 10 },
+    { gioco: "hockey", livello: "argento",  icona: "🚫", nome: "Porta Inviolata",           desc: "Vinci 7 a 0 (a qualsiasi difficoltà)",                stat: "cappotti",          meta: 1 },
+    { gioco: "hockey", livello: "argento",  icona: "🔄", nome: "Rimonta sul Ghiaccio",      desc: "Vinci dopo essere stato sotto di 3 gol",              stat: "rimonte",           meta: 1 },
+    { gioco: "hockey", livello: "oro",      icona: "🤖", nome: "Ribellione delle Macchine", desc: "Batti il bot Difficile",                              stat: "vinte_difficile",   meta: 1 },
+    { gioco: "hockey", livello: "oro",      icona: "💥", nome: "Dominatore del Disco",      desc: "Segna 500 gol in totale",                             stat: "golFatti",          meta: 500 },
+    { gioco: "hockey", livello: "oro",      icona: "🏅", nome: "Professionista dell'Air Hockey", desc: "Vinci 50 partite",                               stat: "vittorie",          meta: 50 },
+    { gioco: "hockey", livello: "oro",      icona: "🛡️", nome: "Antivirus",                 desc: "Batti il bot Difficile 10 volte",                     stat: "vinte_difficile",   meta: 10 },
+    { gioco: "hockey", livello: "oro",      icona: "🔒", nome: "Saracinesca",               desc: "Batti il bot Medio 7 a 0",                            stat: "cappotti_medio",    meta: 1 },
+    { gioco: "hockey", livello: "diamante", icona: "⚡", nome: "Riflessi Fulminei",         desc: "Batti il bot Difficile 7 a 0",                        stat: "cappotti_difficile", meta: 1 },
+    { gioco: "hockey", livello: "diamante", icona: "🔌", nome: "Cortocircuito Totale",      desc: "Batti il bot Difficile 5 volte di fila (una sconfitta col Difficile azzera)", stat: "serieDiffMax", meta: 5 },
+    { gioco: "hockey", livello: "diamante", icona: "👑", nome: "Leggenda del Tavolo",       desc: "Segna 1.000 gol in totale",                           stat: "golFatti",          meta: 1000 },
+
+    // ---------- Scopone (classico + scientifico, contro il computer) ----------
+    { gioco: "scopone", livello: "bronzo",   icona: "🪑", nome: "Il Tavolo dei Grandi",     desc: "Gioca la tua prima partita",                          stat: "partite",           meta: 1 },
+    { gioco: "scopone", livello: "bronzo",   icona: "📜", nome: "Tradizione",               desc: "Vinci una partita a Scopone Classico",                stat: "vinteClassico",     meta: 1 },
+    { gioco: "scopone", livello: "bronzo",   icona: "🎓", nome: "Calcolo Mentale",          desc: "Vinci una partita a Scopone Scientifico",             stat: "vinteScientifico",  meta: 1 },
+    { gioco: "scopone", livello: "bronzo",   icona: "7️⃣", nome: "Custode del Sette",        desc: "La tua squadra prende il Settebello 5 volte",         stat: "settebello",        meta: 5 },
+    { gioco: "scopone", livello: "bronzo",   icona: "🪙", nome: "L'Oro del Sud",            desc: "La tua squadra vince il punto dei Denari 5 volte",    stat: "denari",            meta: 5 },
+    { gioco: "scopone", livello: "bronzo",   icona: "🤝", nome: "Lavoro di Squadra",        desc: "Vinci 10 partite (le due modalità insieme)",          stat: "vinte",             meta: 10 },
+    { gioco: "scopone", livello: "argento",  icona: "🏛️", nome: "Purista del Classico",     desc: "Vinci 15 partite a Scopone Classico",                 stat: "vinteClassico",     meta: 15 },
+    { gioco: "scopone", livello: "argento",  icona: "🧠", nome: "Memoria di Ferro",         desc: "Vinci 15 partite a Scopone Scientifico",              stat: "vinteScientifico",  meta: 15 },
+    { gioco: "scopone", livello: "argento",  icona: "🃏", nome: "Pigliatutto a Squadre",    desc: "La tua squadra vince il punto delle Carte 25 volte",  stat: "carte",             meta: 25 },
+    { gioco: "scopone", livello: "argento",  icona: "🧮", nome: "Re della Primiera",        desc: "La tua squadra vince la Primiera 25 volte",           stat: "primiera",          meta: 25 },
+    { gioco: "scopone", livello: "argento",  icona: "🧹", nome: "Contributo Personale",     desc: "Fai tu 50 scope",                                     stat: "scopePersonali",    meta: 50 },
+    { gioco: "scopone", livello: "argento",  icona: "🚀", nome: "Partenza a Razzo",         desc: "Classico: fai scopa con la tua prima carta della smazzata", stat: "scopaPrimoTurno", meta: 1 },
+    { gioco: "scopone", livello: "argento",  icona: "🎰", nome: "Grande Slam in Quattro",   desc: "Carte, Denari, Settebello e Primiera alla tua squadra in una smazzata (5 volte)", stat: "grandeSlam", meta: 5 },
+    { gioco: "scopone", livello: "oro",      icona: "🎩", nome: "Signore dello Scopone",    desc: "Vinci 50 partite",                                    stat: "vinte",             meta: 50 },
+    { gioco: "scopone", livello: "oro",      icona: "🤓", nome: "Il Cervellone",            desc: "Vinci 30 partite a Scopone Scientifico",              stat: "vinteScientifico",  meta: 30 },
+    { gioco: "scopone", livello: "diamante", icona: "🐝", nome: "Mente Alveare",            desc: "Vinci 7 partite di fila a Scopone Scientifico",       stat: "serieSciMax",       meta: 7 },
+    { gioco: "scopone", livello: "diamante", icona: "🧥", nome: "Cappotto a Quattro",       desc: "Vinci lasciando gli avversari a 0 punti",             stat: "vinteAZero",        meta: 1 },
+
+    // ---------- La Scalinata ----------
+    { gioco: "scalinata", livello: "bronzo",   icona: "🪜", nome: "Il Primo Gradino",       desc: "Gioca la tua prima partita",                          stat: "partite",           meta: 1 },
+    { gioco: "scalinata", livello: "bronzo",   icona: "🦘", nome: "Salto della Quaglia",    desc: "Avanza di 5 gradini in un colpo",                     stat: "mosse5",            meta: 1 },
+    { gioco: "scalinata", livello: "bronzo",   icona: "💫", nome: "Bonk!",                  desc: "Scontrati con qualcuno che ha scelto il tuo numero",  stat: "scontri",           meta: 1 },
+    { gioco: "scalinata", livello: "bronzo",   icona: "🏁", nome: "Vetta Raggiunta",        desc: "Vinci la tua prima partita",                          stat: "vinte",             meta: 1 },
+    { gioco: "scalinata", livello: "bronzo",   icona: "🤦", nome: "Passo Falso",            desc: "Scontrati già al primo turno",                        stat: "scontriPrimoTurno", meta: 1 },
+    { gioco: "scalinata", livello: "argento",  icona: "🐜", nome: "Passo dopo Passo",       desc: "Avanza di 1 gradino 30 volte",                        stat: "mosse1",            meta: 30 },
+    { gioco: "scalinata", livello: "argento",  icona: "⚖️", nome: "La Via di Mezzo",        desc: "Avanza di 3 gradini 30 volte",                        stat: "mosse3",            meta: 30 },
+    { gioco: "scalinata", livello: "argento",  icona: "🦵", nome: "Falcata Lunga",          desc: "Avanza di 5 gradini 30 volte",                        stat: "mosse5",            meta: 30 },
+    { gioco: "scalinata", livello: "argento",  icona: "🤕", nome: "Teste Dure",             desc: "Scontrati 100 volte in totale",                       stat: "scontri",           meta: 100 },
+    { gioco: "scalinata", livello: "argento",  icona: "🧗", nome: "Scalatore Esperto",      desc: "Vinci 15 partite",                                    stat: "vinte",             meta: 15 },
+    { gioco: "scalinata", livello: "argento",  icona: "🐢", nome: "Chi Va Piano...",        desc: "Vinci senza mai scegliere il 5",                      stat: "vinteSenza5",       meta: 1 },
+    { gioco: "scalinata", livello: "argento",  icona: "3️⃣", nome: "La Costanza Premia",     desc: "Vinci scegliendo solo il 3, dall'inizio alla fine",   stat: "vinteSolo3",        meta: 1 },
+    { gioco: "scalinata", livello: "oro",      icona: "🏔️", nome: "Alpinista",              desc: "Vinci 50 partite",                                    stat: "vinte",             meta: 50 },
+    { gioco: "scalinata", livello: "oro",      icona: "🏃", nome: "Maratona Verticale",     desc: "Sali 750 gradini in totale",                          stat: "gradini",           meta: 750 },
+    { gioco: "scalinata", livello: "oro",      icona: "😈", nome: "Genio del Male",         desc: "Arriva in cima nel turno in cui tutti gli altri si scontrano", stat: "vinteAltriBloccati", meta: 1 },
+    { gioco: "scalinata", livello: "diamante", icona: "🛗", nome: "Ascensore Privato",      desc: "Vinci in 3 turni: 5, 5, 5 senza mai scontrarti",      stat: "vinteIn3",          meta: 1 },
+    { gioco: "scalinata", livello: "diamante", icona: "👻", nome: "Il Fantasma",            desc: "Vinci senza subire nemmeno uno scontro",              stat: "vinteSenzaScontri", meta: 1 }
   ];
 
   function valoreStat(prof, gioco, chiave) {
@@ -8654,6 +8714,16 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 95,
+    data: "24 settembre 2026",
+    titolo: "Trofei per Glow Hockey, Scopone e La Scalinata 🏒🃏🪜",
+    descrizione: [
+      "Glow Hockey: 20 trofei, dal primo gol fino a battere il bot Difficile 7 a 0.",
+      "Scopone: 17 trofei tra Classico e Scientifico, con Settebello, Primiera, scope tue e Cappotto.",
+      "La Scalinata: 17 trofei, dal primo 'Bonk!' fino all'Ascensore Privato (5, 5, 5 senza scontri)."
+    ]
+  },
+  {
     v: 94,
     data: "24 settembre 2026",
     titolo: "Trofei: percentuali e conteggio per livello 📊",
@@ -13782,12 +13852,22 @@ window.SG_SIPERO = {
     else { st.gx = b.tx; st.gy = b.ty; }
     st.gx = clamp(st.gx, RPAD, 1 - RPAD); st.gy = clamp(st.gy, RPAD, ASP / 2 - RPAD);
   }
-  function salvaHockey(st) {
+  // trofei: contatori per livello del bot (liv = facile/medio/difficile)
+  function salvaHockey(st, liv) {
     if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
-    var vinto = st.vincitore === 1;
-    SGNube.salvaProgressi(null, "hockey",
-      [["partite", 1], ["vittorie", vinto ? 1 : 0], ["golFatti", st.s1]],
-      [["scartoMax", vinto ? (st.s1 - st.s2) : 0]]);
+    var vinto = st.vincitore === 1, zero = vinto && st.s2 === 0;
+    var incrs = [["partite", 1], ["golFatti", st.s1]], sets = [], recs = [["scartoMax", vinto ? (st.s1 - st.s2) : 0]];
+    if (vinto) {
+      incrs.push(["vittorie", 1], ["vinte_" + liv, 1]);
+      if (zero) incrs.push(["cappotti", 1], ["cappotti_" + liv, 1]);
+      if (st.s2 === VINCI - 1) incrs.push(["fotofinish", 1]);
+      if ((st.maxSotto || 0) >= 3) incrs.push(["rimonte", 1]);
+    }
+    if (liv === "difficile") {
+      var s0 = (SGNube.statGioco && SGNube.statGioco("hockey")) || {}, serie = vinto ? (s0.serieDiffOra || 0) + 1 : 0;
+      recs.push(["serieDiffMax", serie]); sets.push(["serieDiffOra", serie]);
+    }
+    SGNube.salvaProgressi(null, "hockey", incrs, recs, sets);
   }
   function botHK(t, liv) {
     var D = DIFF[liv] || DIFF.medio;
@@ -13802,10 +13882,11 @@ window.SG_SIPERO = {
     }
     function gol(chi) {
       if (chi === 1) st.s1++; else st.s2++;
+      st.maxSotto = Math.max(st.maxSotto || 0, st.s2 - st.s1);
       suonoGol(chi === 1);
       if (st.s1 >= VINCI || st.s2 >= VINCI) {
         st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2;
-        if (!salvato) { salvato = true; salvaHockey(st); }
+        if (!salvato) { salvato = true; salvaHockey(st, DIFF[liv] ? liv : "medio"); }
         render();
       } else {
         // pausa GOL: tutto fermo, il disco riparte nella metà di chi ha subito
@@ -13852,7 +13933,7 @@ window.SG_SIPERO = {
         var vinto = st.vincitore === 1;
         var sf = t.schermata({ icona: vinto ? "🏆" : "🤖", titolo: vinto ? "Hai vinto!" : "Ha vinto il computer", sotto: "Glow Hockey · " + D.nome });
         sf._contenuto.appendChild(el("div", { style: "text-align:center;font-size:2rem;font-weight:800;margin:10px 0", text: st.s1 + " — " + st.s2 }));
-        sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { st.s1 = 0; st.s2 = 0; st.vincitore = null; salvato = false; st._bot = null; servi(st); rimettiRacchette(); st.fase = "gioco"; vista = null; render(); } }));
+        sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { st.s1 = 0; st.s2 = 0; st.maxSotto = 0; st.vincitore = null; salvato = false; st._bot = null; servi(st); rimettiRacchette(); st.fase = "gioco"; vista = null; render(); } }));
         sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { stop(); t.esci(); } }));
         t.mostra(sf);
       } else {
@@ -17079,10 +17160,43 @@ window.SG_SIPERO = {
       // un telefono solo: i giocatori veri + i bot per arrivare a 4
       var g = t.giocatori.slice(0, 4).map(function (n, i) { return { nome: n, colore: COLORI[i], passi: 0, bot: false }; });
       var b = 0; while (g.length < 4) { g.push({ nome: NOMI_BOT[b] || ("Bot " + (b + 1)), colore: COLORI[g.length], passi: 0, bot: true }); b++; }
-      var st = { g: g, scelte: [null, null, null, null], nRound: 0 };
+      var st = { g: g, scelte: [null, null, null, null], nRound: 0, T: nuovaTracciaScala() };
       introRound(t, st);
     }
   });
+
+  // ---------- trofei: contatori per il profilo (solo il giocatore di questo telefono) ----------
+  function nuovaTracciaScala() { return { round: -1, scontri: 0, usato5: false, solo3: true }; }
+  function ioDaNome(nomi) {
+    var prof = window.SGNube && SGNube.disponibile() && SGNube.profilo(); if (!prof) return -1;
+    return nomi.indexOf(prof.nome);
+  }
+  // chiamata alla rivelazione di ogni round; nRound evita doppi conteggi (l'ospite riceve lo stesso round più volte)
+  function tracciaScala(T, io, nRound, scelte, avanza, prev, passi) {
+    if (!T || io < 0 || !scelte || nRound === T.round) return;
+    T.round = nRound;
+    var n = scelte[io], c = {};
+    if (avanza[io]) { c["mosse" + n] = 1; c.gradini = passi[io] - prev[io]; }
+    else { T.scontri++; c.scontri = 1; if (nRound === 1) c.scontriPrimoTurno = 1; }
+    if (n === 5) T.usato5 = true;
+    if (n !== 3) T.solo3 = false;
+    var top = 0; passi.forEach(function (p, k) { if (p > passi[top]) top = k; });   // come il podio: a pari gradino vince il primo
+    if (passi[top] >= TRAGUARDO) {
+      c.partite = 1;
+      if (top === io) {
+        c.vinte = 1;
+        if (!T.usato5) c.vinteSenza5 = 1;
+        if (T.solo3) c.vinteSolo3 = 1;
+        if (nRound === 3) c.vinteIn3 = 1;
+        if (!T.scontri) c.vinteSenzaScontri = 1;
+        if (avanza.every(function (a, k) { return k === io || !a; })) c.vinteAltriBloccati = 1;
+      }
+      T.scontri = 0; T.usato5 = false; T.solo3 = true;   // pronta per la prossima partita
+    }
+    if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
+    var incrs = []; for (var k in c) if (c[k]) incrs.push([k, c[k]]);
+    SGNube.salvaProgressi(null, "scalinata", incrs, []);
+  }
 
   function niente(t) {
     var s = t.schermata({ icona: "🪜", titolo: "La Scalinata", indietro: t.esci });
@@ -17133,6 +17247,7 @@ window.SG_SIPERO = {
     var avanza = st.g.map(function (_, i) { return conta[scelte[i]] === 1; });
     var prev = st.g.map(function (g) { return g.passi; });
     st.g.forEach(function (g, i) { if (avanza[i]) g.passi = Math.min(TRAGUARDO, g.passi + scelte[i]); });
+    tracciaScala(st.T, ioDaNome(st.g.map(function (g) { return g.nome; })), st.nRound, scelte, avanza, prev, st.g.map(function (g) { return g.passi; }));
 
     var el = t.el;
     var s = t.schermata({ icona: "🪜", titolo: "Si scopre!", sotto: "Round " + st.nRound });
@@ -17253,6 +17368,7 @@ window.SG_SIPERO = {
       posti: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", colore: COLORI[0], bot: false, passi: 0, scelta: null }],
       deadline: 0, timer: null
     };
+    var T = nuovaTracciaScala();
     var rete = SGNet.ospita("scalinata", {
       onCodice: function (c) { st.codice = c; bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
@@ -17311,6 +17427,7 @@ window.SG_SIPERO = {
       st.avanza = st.posti.map(function (p, i) { return conta[scelte[i]] === 1; });
       st.scelte = scelte;
       st.posti.forEach(function (p, i) { if (st.avanza[i]) p.passi = Math.min(TRAGUARDO, p.passi + scelte[i]); });
+      tracciaScala(T, 0, st.nRound, scelte, st.avanza, st.prev, st.posti.map(function (p) { return p.passi; }));   // l'host è sempre il posto 0
       st.fase = "rivela"; bd();
     }
     function prossimo() {
@@ -17337,7 +17454,7 @@ window.SG_SIPERO = {
 
   function ospiteScala(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteScala(t);
-    var el = t.el, S = { myId: null, vm: null, rete: null, nome: "", msg: null };
+    var el = t.el, S = { myId: null, vm: null, rete: null, nome: "", msg: null, T: nuovaTracciaScala() };
     var cb = {
       sonoHost: false, myId: null,
       onScegli: function (n) { S.rete && S.rete.invia({ t: "scegli", n: n }); },
@@ -17360,7 +17477,15 @@ window.SG_SIPERO = {
       S.rete = SGNet.entra(codice, {
         onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome });
           setTimeout(function () { if (!S.vm && S.msg) S.msg.textContent = "Non trovo la partita. Controlla il codice, o l'host non ha ancora aperto la stanza…"; }, 8000); },
-        onMsg: function (m) { if (m && m.t === "vm") { S.vm = m.vm; disegna(); } },
+        onMsg: function (m) {
+          if (!(m && m.t === "vm")) return;
+          S.vm = m.vm;
+          if (m.vm.fase === "rivela") {
+            var io = -1; m.vm.posti.forEach(function (p, k) { if (p.id === S.myId) io = k; });
+            tracciaScala(S.T, io, m.vm.nRound, m.vm.scelte, m.vm.avanza, m.vm.prev, m.vm.posti.map(function (p) { return p.passi; }));
+          }
+          disegna();
+        },
         onChiuso: function () { erroreScala(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
         onErrore: function () { erroreScala(t, "Problema di collegamento. Controlla la connessione e riprova."); }
       });
@@ -19265,6 +19390,38 @@ window.SG_SIPERO = {
     return best;
   }
 
+  // ---------- trofei: contatori per il profilo (tu = seat 0, squadra "noi") ----------
+  function tracciaScopone(st, seat, ev, primaDellaMossa) {
+    var R = st._T || (st._T = { scope: 0, primoTurno: 0 });
+    if (seat === 0 && ev.scopa) {
+      R.scope++;
+      if (st.variante === "classico" && primaDellaMossa === 9) R.primoTurno++;   // la tua prima carta della smazzata
+    }
+    if (st.fase === "gioco") return;
+    // fine smazzata: punti di squadra
+    var r = st.ultimoRound, c = { scopePersonali: R.scope, scopaPrimoTurno: R.primoTurno };
+    if (r.sette === "noi") c.settebello = 1;
+    if (r.pDen === "noi") c.denari = 1;
+    if (r.pCarte === "noi") c.carte = 1;
+    if (r.pPrim === "noi") c.primiera = 1;
+    if (r.sette === "noi" && r.pDen === "noi" && r.pCarte === "noi" && r.pPrim === "noi") c.grandeSlam = 1;
+    st._T = null;
+    var sets = [], recs = [];
+    if (st.fase === "fine") {
+      var vinto = st.punti.noi > st.punti.loro, sci = st.variante === "scientifico";
+      var s0 = (window.SGNube && SGNube.statGioco && SGNube.statGioco("scopone")) || {}, serie = s0.serieSciOra || 0;
+      c.partite = 1;
+      if (vinto) {
+        c.vinte = 1; c[sci ? "vinteScientifico" : "vinteClassico"] = 1;
+        if (st.punti.loro === 0) c.vinteAZero = 1;
+      }
+      if (sci) { serie = vinto ? serie + 1 : 0; recs.push(["serieSciMax", serie]); sets.push(["serieSciOra", serie]); }
+    }
+    if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
+    var incrs = []; for (var k in c) if (c[k]) incrs.push([k, c[k]]);
+    SGNube.salvaProgressi(null, "scopone", incrs, recs, sets);
+  }
+
   // ---------- suono presa ----------
   function suonoPresa(scopa) {
     try { if (navigator.vibrate) navigator.vibrate(scopa ? [0, 20, 40, 30] : 12); } catch (e) {}
@@ -19310,7 +19467,9 @@ window.SG_SIPERO = {
       render();
     }
     function gioco(seat, id, presa) {
+      var primaDellaMossa = st.mani[0].length;
       var ev = applica(st, seat, id, presa); if (ev.errore) return;
+      tracciaScopone(st, seat, ev, primaDellaMossa);
       suonoPresa(ev.scopa); render(); dopo(ev);
     }
     function dopo(ev) {
