@@ -155,6 +155,32 @@
     t.mostra(s);
   }
 
+  // ---- statistiche per i trofei: conta SOLO chi ha il profilo attivo sul telefono ----
+  function salvaTrofei(st, conte, piuVotati, scoperto) {
+    var prof = window.SGNube && SGNube.disponibile() && SGNube.profilo();
+    if (!prof) return;
+    var io = -1;
+    st.g.forEach(function (gg, k) { if (io < 0 && gg.nome === prof.nome) io = k; });
+    if (io < 0) return;
+    var s0 = SGNube.statGioco("impostore") || {}, serie = s0.serieSmascheratiOra || 0;   // la serie continua tra le partite
+    var c = { partite: 1 }, aiuto = st.suggerimento;
+    if (io === st.impostore) {
+      if (aiuto) c.impostoreConAiuto = 1;
+      if (!scoperto) {
+        c.vinteImpostore = 1;
+        if (aiuto) c.vinteImpAiutoOn = 1; else c.vinteImpAiutoOff = 1;
+        if (conte[io] === 0) { c.vinteImp0Voti = 1; if (!aiuto) c.vinteImpPerfette = 1; }   // nessuno ti ha votato
+        if (st.iniziante === io) c.vinteImpApertura = 1;                                      // e aprivi pure il giro
+      }
+    } else {
+      if (st.g[io].voto === st.impostore) { c.smascherati = 1; if (aiuto) c.smascheratiControAiuto = 1; serie++; }
+      else serie = 0;
+      if (piuVotati.length === 1 && piuVotati[0] === io) c.innocenteAccusato = 1;   // il più votato, ma innocente
+    }
+    var incrs = []; for (var k in c) incrs.push([k, c[k]]);
+    SGNube.salvaProgressi(null, "impostore", incrs, [["serieSmascheratiMax", serie]], [["serieSmascheratiOra", serie]]);
+  }
+
   // ---- esito + punti ----
   function esito(t, st) {
     var el = t.el;
@@ -169,6 +195,7 @@
       if (k === st.impostore) { gg.punti += scoperto ? 0 : 3; }
       else if (gg.voto === st.impostore) { gg.punti += 2; }
     });
+    salvaTrofei(st, conte, piuVotati, scoperto);
 
     var s = t.schermata({ icona: scoperto ? "✅" : "🕵️",
       titolo: scoperto ? "Impostore scoperto!" : "L'impostore l'ha fatta franca!" });

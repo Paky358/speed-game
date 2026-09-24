@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 92,
+    data: "24 settembre 2026",
+    titolo: "17 trofei per L'Impostore 🕵️🏆",
+    descrizione: [
+      "Trofei da detective (vota giusto l'impostore, anche 5 volte di fila) e da bugiardo (vinci da impostore, con o senza aiutino, magari senza prendere nemmeno un voto).",
+      "Contano le partite di chi ha il profilo attivo sul telefono."
+    ]
+  },
+  {
     v: 91,
     data: "24 settembre 2026",
     titolo: "28 trofei per il Black Jack 🃏🏆",

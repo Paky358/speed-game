@@ -974,6 +974,25 @@ body::before{
     { gioco: "blackjack", livello: "diamante", icona: "🧘", nome: "Pace dei Sensi",           desc: "Arriva ad avere 100.000 fiches nel profilo",                 stat: "recordFiches",      meta: 100000 },
     { gioco: "blackjack", livello: "diamante", icona: "🤹", nome: "Funambolo",                desc: "Vinci una mano con 5 o più carte senza sballare",            stat: "vinte5carte",       meta: 1 },
 
+    // ---- L'Impostore ----
+    { gioco: "impostore", livello: "bronzo",   icona: "👀", nome: "Battesimo del Sospetto", desc: "Gioca la tua primissima partita",                              stat: "partite",               meta: 1 },
+    { gioco: "impostore", livello: "bronzo",   icona: "🔎", nome: "Principio di Deduzione", desc: "Vota giusto l'impostore per la prima volta",                   stat: "smascherati",           meta: 1 },
+    { gioco: "impostore", livello: "bronzo",   icona: "😐", nome: "Faccia di Bronzo",       desc: "Vinci la tua prima partita da impostore",                      stat: "vinteImpostore",        meta: 1 },
+    { gioco: "impostore", livello: "bronzo",   icona: "🎬", nome: "Aiutino dal Regista",    desc: "Gioca da impostore con l'aiutino acceso (la parola simile)",   stat: "impostoreConAiuto",     meta: 1 },
+    { gioco: "impostore", livello: "bronzo",   icona: "🐑", nome: "Vittima Sacrificale",    desc: "Sii il più votato pur essendo innocente, 3 volte",             stat: "innocenteAccusato",     meta: 3 },
+    { gioco: "impostore", livello: "argento",  icona: "🕵️", nome: "Detective Dilettante",   desc: "Vota giusto l'impostore 15 volte",                             stat: "smascherati",           meta: 15 },
+    { gioco: "impostore", livello: "argento",  icona: "🎭", nome: "Attore Nato",            desc: "Vinci 10 partite da impostore",                                stat: "vinteImpostore",        meta: 10 },
+    { gioco: "impostore", livello: "argento",  icona: "🦠", nome: "Parassita",              desc: "Vinci 5 partite da impostore con l'aiutino acceso",            stat: "vinteImpAiutoOn",       meta: 5 },
+    { gioco: "impostore", livello: "argento",  icona: "⚔️", nome: "Gioco ad Armi Impari",   desc: "Vota giusto l'impostore 10 volte quando lui aveva l'aiutino",  stat: "smascheratiControAiuto", meta: 10 },
+    { gioco: "impostore", livello: "argento",  icona: "🎖️", nome: "Veterano del Sospetto",  desc: "Gioca 25 partite",                                             stat: "partite",               meta: 25 },
+    { gioco: "impostore", livello: "oro",      icona: "🧥", nome: "Investigatore Privato",  desc: "Vota giusto l'impostore 50 volte",                             stat: "smascherati",           meta: 50 },
+    { gioco: "impostore", livello: "oro",      icona: "🐺", nome: "Lupo tra le Pecore",     desc: "Vinci 25 partite da impostore",                                stat: "vinteImpostore",        meta: 25 },
+    { gioco: "impostore", livello: "oro",      icona: "🧠", nome: "Mente Superiore",        desc: "Vinci 10 partite da impostore con l'aiutino spento",           stat: "vinteImpAiutoOff",      meta: 10 },
+    { gioco: "impostore", livello: "oro",      icona: "🧊", nome: "Rompighiaccio",          desc: "Vinci da impostore quando tocca a te aprire il giro",          stat: "vinteImpApertura",      meta: 1 },
+    { gioco: "impostore", livello: "diamante", icona: "🙈", nome: "Fiducia Cieca",          desc: "Vinci da impostore senza ricevere nemmeno un voto",            stat: "vinteImp0Voti",         meta: 1 },
+    { gioco: "impostore", livello: "diamante", icona: "🐕", nome: "Segugio Infallibile",    desc: "Vota giusto l'impostore 5 partite di fila",                    stat: "serieSmascheratiMax",   meta: 5 },
+    { gioco: "impostore", livello: "diamante", icona: "🔮", nome: "Telepatia Pura",         desc: "Vinci da impostore con l'aiutino spento e zero voti contro",   stat: "vinteImpPerfette",      meta: 1 },
+
     // ---- La linea del tempo ----
     { gioco: "timeline", livello: "bronzo",   icona: "📜", nome: "Prima Pagina",            desc: "Gioca la tua prima partita",                          stat: "partite",        meta: 1 },
     { gioco: "timeline", livello: "bronzo",   icona: "📶", nome: "Connessione Stabilita",   desc: "Gioca 1 partita online (ognuno dal suo telefono)",    stat: "partiteOnline",  meta: 1 },
@@ -8553,6 +8572,15 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 92,
+    data: "24 settembre 2026",
+    titolo: "17 trofei per L'Impostore 🕵️🏆",
+    descrizione: [
+      "Trofei da detective (vota giusto l'impostore, anche 5 volte di fila) e da bugiardo (vinci da impostore, con o senza aiutino, magari senza prendere nemmeno un voto).",
+      "Contano le partite di chi ha il profilo attivo sul telefono."
+    ]
+  },
+  {
     v: 91,
     data: "24 settembre 2026",
     titolo: "28 trofei per il Black Jack 🃏🏆",
@@ -14736,6 +14764,32 @@ window.SG_SIPERO = {
     t.mostra(s);
   }
 
+  // ---- statistiche per i trofei: conta SOLO chi ha il profilo attivo sul telefono ----
+  function salvaTrofei(st, conte, piuVotati, scoperto) {
+    var prof = window.SGNube && SGNube.disponibile() && SGNube.profilo();
+    if (!prof) return;
+    var io = -1;
+    st.g.forEach(function (gg, k) { if (io < 0 && gg.nome === prof.nome) io = k; });
+    if (io < 0) return;
+    var s0 = SGNube.statGioco("impostore") || {}, serie = s0.serieSmascheratiOra || 0;   // la serie continua tra le partite
+    var c = { partite: 1 }, aiuto = st.suggerimento;
+    if (io === st.impostore) {
+      if (aiuto) c.impostoreConAiuto = 1;
+      if (!scoperto) {
+        c.vinteImpostore = 1;
+        if (aiuto) c.vinteImpAiutoOn = 1; else c.vinteImpAiutoOff = 1;
+        if (conte[io] === 0) { c.vinteImp0Voti = 1; if (!aiuto) c.vinteImpPerfette = 1; }   // nessuno ti ha votato
+        if (st.iniziante === io) c.vinteImpApertura = 1;                                      // e aprivi pure il giro
+      }
+    } else {
+      if (st.g[io].voto === st.impostore) { c.smascherati = 1; if (aiuto) c.smascheratiControAiuto = 1; serie++; }
+      else serie = 0;
+      if (piuVotati.length === 1 && piuVotati[0] === io) c.innocenteAccusato = 1;   // il più votato, ma innocente
+    }
+    var incrs = []; for (var k in c) incrs.push([k, c[k]]);
+    SGNube.salvaProgressi(null, "impostore", incrs, [["serieSmascheratiMax", serie]], [["serieSmascheratiOra", serie]]);
+  }
+
   // ---- esito + punti ----
   function esito(t, st) {
     var el = t.el;
@@ -14750,6 +14804,7 @@ window.SG_SIPERO = {
       if (k === st.impostore) { gg.punti += scoperto ? 0 : 3; }
       else if (gg.voto === st.impostore) { gg.punti += 2; }
     });
+    salvaTrofei(st, conte, piuVotati, scoperto);
 
     var s = t.schermata({ icona: scoperto ? "✅" : "🕵️",
       titolo: scoperto ? "Impostore scoperto!" : "L'impostore l'ha fatta franca!" });
