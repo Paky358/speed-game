@@ -41,6 +41,7 @@
   // accessori liberi per tutti; gli altri (es. corona) si sbloccheranno coi trofei
   var LIBERI = ["nessuno", "occhiali", "sole", "cappellino", "berretto", "fascia", "cuffie", "orecchini"];
 
+  var SCALA_TESTA = 0.85;   // testa un po' più piccola del Mii classico (scelta dell'utente)
   var uid = 0, PREF = "om" + Math.random().toString(36).slice(2, 6);   // id unici anche se il file viene caricato due volte
   function rgb(h) { h = h.replace("#", ""); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; }
   function hex(c) { return "#" + c.map(function (x) { x = Math.max(0, Math.min(255, Math.round(x))); return (x < 16 ? "0" : "") + x.toString(16); }).join(""); }
@@ -135,6 +136,8 @@
     // ombra morbida a terra
     if (!opts.busto) o.push("<ellipse cx='100' cy='253' rx='52' ry='9' fill='" + u("ter") + "'/>");
     o.push("<g class='om-tutto'>");
+    var kT = opts.scalaTesta || SCALA_TESTA, gT = "<g transform='translate(100,150) scale(" + kT + ") translate(-100,-150)'>";   // grandezza della testa (col collo fermo)
+    o.push(gT);
     if (cappello) o.push("<g clip-path='" + u("sc2") + "'>");   // col cappello, niente capelli che spuntano sopra
 
     // ---------- capelli DIETRO la testa ----------
@@ -162,6 +165,7 @@
         "<ellipse cx='" + X(52) + "' cy='80' rx='6' ry='7' fill='#ff5c93' stroke='#b0144a' stroke-width='1.3'/>", "<circle cx='" + X(50.5) + "' cy='77.5' r='1.8' fill='#fff' opacity='.5'/>");
     });
     if (cappello) o.push("</g>");
+    o.push("</g>");   // fine capelli dietro (scala testa)
 
     // ---------- corpo: corporatura + forma ----------
     var B = { snello: [27, 22, 24, 15, 12], medio: [34, 31, 33, 20, 17], robusto: [40, 46, 44, 25, 21] }[c.corpo] || [34, 31, 33, 20, 17];
@@ -295,6 +299,7 @@
       "<ellipse cx='100' cy='143' rx='22' ry='10' fill='" + u("ao") + "'/>");
 
     // ---------- testa ----------
+    o.push(gT);   // testa, viso, capelli davanti e accessori: tutti nella stessa scala
     [47, 153].forEach(function (ex) {
       var s = ex < 100 ? -1 : 1;
       o.push("<circle cx='" + ex + "' cy='99' r='10' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1.4'/>",
@@ -487,6 +492,8 @@
       "<circle cx='79' cy='48' r='3.5' fill='#1c7ed6'/>", "<circle cx='121' cy='48' r='3.5' fill='#2f9e44'/>",
       "<circle cx='68' cy='22' r='3' fill='" + u("oro") + "'/>", "<circle cx='100' cy='12' r='3.2' fill='" + u("oro") + "'/>", "<circle cx='132' cy='22' r='3' fill='" + u("oro") + "'/>");
 
+    o.push("</g>");   // fine testa
+
     function riccioli(dietro) {
       var i, a, rx2, ry2;
       function boccolo(cx, cy, r) {
@@ -500,7 +507,8 @@
     }
 
     o.push("</g>");   // fine om-tutto
-    var vb = opts.busto ? "14 2 172 176" : (opts.gambe ? "40 150 120 112" : "0 0 200 264");   // gambe: inquadratura sui pantaloni
+    // busto (tondini): inquadratura che segue la grandezza della testa, così la faccia resta grande
+    var vb = opts.busto ? [100 - 86 * kT, 150 - 148 * kT, 172 * kT, 176 * kT].map(function (n) { return n.toFixed(1); }).join(" ") : (opts.gambe ? "40 150 120 112" : "0 0 200 264");   // gambe: inquadratura sui pantaloni
     var px = opts.px ? " width='" + opts.px + "' height='" + Math.round(opts.px * (opts.busto ? 176 / 172 : 1.32)) + "'" : "";
     return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='" + vb + "'" + px + " class='omino'>" + o.join("") + "</svg>";
   }

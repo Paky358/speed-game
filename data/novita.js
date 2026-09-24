@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 103,
+    data: "25 settembre 2026",
+    titolo: "Omini più proporzionati 🧍",
+    descrizione: [
+      "La testa è più piccola del 15%: a figura intera l'omino è più slanciato e i vestiti si vedono meglio.",
+      "Nei tondini (home e giochi) la faccia resta grande e ben riconoscibile."
+    ]
+  },
+  {
     v: 102,
     data: "24 settembre 2026",
     titolo: "Scopa: il bot Difficile ora è difficile davvero 🧠🃏",
