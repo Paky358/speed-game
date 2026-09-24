@@ -599,6 +599,15 @@ body::before{
 @keyframes omSaluta{ 0%{ transform:rotate(0); } 22%{ transform:rotate(-145deg); } 38%{ transform:rotate(-118deg); } 54%{ transform:rotate(-145deg); }
   70%{ transform:rotate(-118deg); } 100%{ transform:rotate(0); } }
 @media (prefers-reduced-motion: reduce){ .om-figura.saluta .om-b2{ animation:none; } }
+
+/* finestra di conferma al centro dello schermo */
+.conferma-sfondo{ position:fixed; inset:0; z-index:9999; background:rgba(8,12,34,.72); display:flex; align-items:center; justify-content:center; padding:16px; animation:entra .18s ease; }
+.conferma-box{ width:100%; max-width:360px; background:linear-gradient(165deg,#3a4ea6,#2a3a80); border-radius:22px; padding:22px 18px 16px; box-shadow:0 18px 50px rgba(0,0,0,.55); text-align:center; }
+.conferma-domanda{ font-size:1.15rem; font-weight:800; line-height:1.3; }
+.conferma-nota{ margin-top:8px; font-size:.92rem; color:#ffd0d5; line-height:1.35; }
+.conferma-tasti{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:18px; }
+.conferma-tasti .btn{ margin:0; }
+.conferma-tasti .btn[disabled]{ opacity:.45; }
 </style>
 <div id="app"></div>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
@@ -1659,6 +1668,26 @@ body::before{
     return e;
   }
   function svuota(n){ while (n.firstChild) n.removeChild(n.firstChild); }
+  // finestra di conferma al centro dello schermo; il tasto "sì" si attiva
+  // dopo un attimo, così i tocchi ripetuti non confermano per sbaglio
+  function chiediConferma(domanda, nota, siTesto, siFn) {
+    if (document.querySelector(".conferma-sfondo")) return;   // già aperta
+    var chiudi = function () { if (sfondo.parentNode) sfondo.parentNode.removeChild(sfondo); };
+    var si = el("button", { class: "btn btn-rosso", text: siTesto || "Sì", disabled: "disabled",
+      onclick: function () { chiudi(); siFn(); } });
+    var sfondo = el("div", { class: "conferma-sfondo", onclick: function (e) { if (e.target === sfondo) chiudi(); } }, [
+      el("div", { class: "conferma-box", role: "dialog" }, [
+        el("div", { class: "conferma-domanda", text: domanda }),
+        nota ? el("div", { class: "conferma-nota", text: nota }) : null,
+        el("div", { class: "conferma-tasti" }, [
+          el("button", { class: "btn btn-primario", text: "Resta", onclick: chiudi }),
+          si
+        ])
+      ])
+    ]);
+    document.body.appendChild(sfondo);
+    setTimeout(function () { si.removeAttribute("disabled"); }, 700);
+  }
   function mischia(a){ // Fisher-Yates
     a = a.slice();
     for (var i = a.length - 1; i > 0; i--) {
@@ -2572,6 +2601,7 @@ body::before{
     var salvato = false;
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva il mio avatar", onclick: function () {
       if (salvato) return; salvato = true;
+      this.textContent = "👋 Salvato!";   // si vede subito che il tocco è arrivato
       salvaOminoMio(cfg); saluta(); popOmino();
       setTimeout(dopo, 1000);   // prima ti saluta, poi torna indietro
     } }));
@@ -2605,7 +2635,11 @@ body::before{
         ]));
       });
       sp._contenuto.appendChild(griglia);
-      sp._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🚪 Esci dal profilo", onclick: function () { SGNube.esci().then(function () { schermataHome(); }); } }));
+      sp._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🚪 Esci dal profilo", onclick: function () {
+        chiediConferma("Sei sicuro di voler uscire dal profilo?", "Se non ricordi la password non potrai più accedere.", "🚪 Esci", function () {
+          SGNube.esci().then(function () { schermataHome(); });
+        });
+      } }));
       mostra(sp); return;
     }
     var s = schermata({ icona: "👤", titolo: "Il tuo profilo", sotto: "Entra o crea il tuo", indietro: schermataHome });
@@ -9801,6 +9835,15 @@ window.SG_NCC_CATEGORIE = {
      descrizione-> elenco di righe: cosa cambia per chi gioca
    ========================================================= */
 window.SG_NOVITA = [
+  {
+    v: 106,
+    data: "25 settembre 2026",
+    titolo: "Niente più uscite per sbaglio 🚪",
+    descrizione: [
+      "Prima di uscire dal profilo ora compare una finestra al centro: 'Sei sicuro?'. Il tasto per uscire si attiva dopo un attimo, così i tocchi ripetuti non ti fanno uscire per errore.",
+      "Quando salvi l'avatar il tasto diventa subito '👋 Salvato!', così sai che il tocco è arrivato."
+    ]
+  },
   {
     v: 105,
     data: "25 settembre 2026",

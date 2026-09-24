@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 106,
+    data: "25 settembre 2026",
+    titolo: "Niente più uscite per sbaglio 🚪",
+    descrizione: [
+      "Prima di uscire dal profilo ora compare una finestra al centro: 'Sei sicuro?'. Il tasto per uscire si attiva dopo un attimo, così i tocchi ripetuti non ti fanno uscire per errore.",
+      "Quando salvi l'avatar il tasto diventa subito '👋 Salvato!', così sai che il tocco è arrivato."
+    ]
+  },
+  {
     v: 105,
     data: "25 settembre 2026",
     titolo: "Avatar: vestiti e accessori a volontà 🎩👖",

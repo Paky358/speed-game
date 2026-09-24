@@ -74,6 +74,26 @@
     return e;
   }
   function svuota(n){ while (n.firstChild) n.removeChild(n.firstChild); }
+  // finestra di conferma al centro dello schermo; il tasto "sì" si attiva
+  // dopo un attimo, così i tocchi ripetuti non confermano per sbaglio
+  function chiediConferma(domanda, nota, siTesto, siFn) {
+    if (document.querySelector(".conferma-sfondo")) return;   // già aperta
+    var chiudi = function () { if (sfondo.parentNode) sfondo.parentNode.removeChild(sfondo); };
+    var si = el("button", { class: "btn btn-rosso", text: siTesto || "Sì", disabled: "disabled",
+      onclick: function () { chiudi(); siFn(); } });
+    var sfondo = el("div", { class: "conferma-sfondo", onclick: function (e) { if (e.target === sfondo) chiudi(); } }, [
+      el("div", { class: "conferma-box", role: "dialog" }, [
+        el("div", { class: "conferma-domanda", text: domanda }),
+        nota ? el("div", { class: "conferma-nota", text: nota }) : null,
+        el("div", { class: "conferma-tasti" }, [
+          el("button", { class: "btn btn-primario", text: "Resta", onclick: chiudi }),
+          si
+        ])
+      ])
+    ]);
+    document.body.appendChild(sfondo);
+    setTimeout(function () { si.removeAttribute("disabled"); }, 700);
+  }
   function mischia(a){ // Fisher-Yates
     a = a.slice();
     for (var i = a.length - 1; i > 0; i--) {
@@ -987,6 +1007,7 @@
     var salvato = false;
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva il mio avatar", onclick: function () {
       if (salvato) return; salvato = true;
+      this.textContent = "👋 Salvato!";   // si vede subito che il tocco è arrivato
       salvaOminoMio(cfg); saluta(); popOmino();
       setTimeout(dopo, 1000);   // prima ti saluta, poi torna indietro
     } }));
@@ -1020,7 +1041,11 @@
         ]));
       });
       sp._contenuto.appendChild(griglia);
-      sp._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🚪 Esci dal profilo", onclick: function () { SGNube.esci().then(function () { schermataHome(); }); } }));
+      sp._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🚪 Esci dal profilo", onclick: function () {
+        chiediConferma("Sei sicuro di voler uscire dal profilo?", "Se non ricordi la password non potrai più accedere.", "🚪 Esci", function () {
+          SGNube.esci().then(function () { schermataHome(); });
+        });
+      } }));
       mostra(sp); return;
     }
     var s = schermata({ icona: "👤", titolo: "Il tuo profilo", sotto: "Entra o crea il tuo", indietro: schermataHome });
