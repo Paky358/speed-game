@@ -1003,16 +1003,24 @@
       if (cfg[k] === v) return;
       if (zitto) { cfg[k] = v; anteprima(false); return; }   // mentre trascini (colore libero, cursori): niente saltelli
       var rifai = /^(forma|cappello|collo)$/.test(k) || (/^(ombretto|eyeliner|rossetto|blush)$/.test(k) && (cfg[k] === "nessuno") !== (v === "nessuno"));   // "Sotto" solo per la donna, i colori solo se servono
-      cfg[k] = v; if (k === "forma" && v === "uomo" && /^gonna/.test(cfg.sotto)) cfg.sotto = "jeans";
+      if (k === "capo" && /^vestito/.test(cfg[k]) !== /^vestito/.test(v)) rifai = true;   // col vestito spariscono le voci "Sotto"
+      cfg[k] = v;
+      if (k === "forma" && v === "uomo") {   // niente capi solo da donna sull'uomo
+        if (O.SOLO_DONNA.test(cfg.sotto)) cfg.sotto = "jeans";
+        if (O.SOLO_DONNA.test(cfg.capo)) cfg.capo = "maglietta";
+        if (O.SOLO_DONNA.test(cfg.modScarpe)) cfg.modScarpe = "sneakers";
+      }
       anteprima(true); if (rifai) disegnaPannello(); else aggiornaPannello(k);
     }
     function disegnaPannello() {
+      var st = pannello.scrollTop;   // ridisegnando non si torna in cima
       pannello.innerHTML = "";
       SEZ_OMINO[tab].voci.forEach(function (vc) {
         var k = vc[0];
         if (k === "colAcc" && !ACC_COLORATI.test(cfg.cappello)) return;
         if (k === "colCollo" && !COLLO_COLORATI.test(cfg.collo)) return;
         if (TRUCCO_COL[k] && cfg[TRUCCO_COL[k]] === "nessuno") return;
+        if ((k === "sotto" || k === "pantaloni") && /^vestito/.test(cfg.capo)) return;   // il vestito copre anche sotto
         var gruppi = k === "capelli" ? O.GRUPPI_CAPELLI : null;   // tagli divisi in Corti / Medi / Lunghi
         if (!gruppi) pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
         var riga = el("div", { class: "om-griglia" + (OMINO_COLORI[k] ? " colori" : "") });
@@ -1023,7 +1031,7 @@
             pannello.appendChild(el("div", { class: "etichetta", text: vc[1] + " · " + g[0] }));
             riga = el("div", { class: "om-griglia" });
           });
-          if (k === "sotto" && /^gonna/.test(val) && cfg.forma !== "donna") return;
+          if (/^(sotto|capo|modScarpe)$/.test(k) && O.SOLO_DONNA.test(val) && cfg.forma !== "donna") return;   // gonne, vestiti, tacchi… solo per la donna
           var v = OMINO_COLORI[k] ? i : val, b;
           if (OMINO_COLORI[k]) {
             b = el("button", { class: "om-opz om-colore", style: "background:" + val, "aria-label": vc[1] + " " + (i + 1), onclick: function () { scegli(k, v); } });
@@ -1061,6 +1069,7 @@
         });
       }
       aggiornaPannello();
+      pannello.scrollTop = st;
     }
     palco.appendChild(el("button", { class: "om-azione caso", text: "🎲", "aria-label": "Personaggio a caso", onclick: function () {
       cfg = O.norm(O.casuale()); anteprima(true); disegnaPannello();

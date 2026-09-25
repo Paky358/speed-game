@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 117,
+    data: "26 settembre 2026",
+    titolo: "Avatar: tanti vestiti e scarpe da donna 👗",
+    descrizione: [
+      "Sopra: crop top (con la pancia scoperta), top a spalline, camicetta con le balze, cardigan aperto, maglione largo.",
+      "Vestiti interi, corto e lungo, col nastro in vita: col vestito le voci \"Sotto\" spariscono, perché copre tutto.",
+      "Sotto: leggings, pantaloni a zampa, shorts di jeans sfilacciati, minigonna, gonna a pieghe, gonna a tubino.",
+      "Scarpe: tacchi, ballerine col fiocchetto, stivaletti, stivali alti fino al ginocchio, zeppe.",
+      "Gli avatar a caso da donna ora usano anche i capi nuovi."
+    ]
+  },
+  {
     v: 116,
     data: "26 settembre 2026",
     titolo: "Avatar: trucco completo, due avatar e ricci nuovi 💄",
