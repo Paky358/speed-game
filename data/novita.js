@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 126,
+    data: "26 settembre 2026",
+    titolo: "La linea del tempo tutta nuova ✨",
+    descrizione: [
+      "Grafica rifatta da capo, a tutto schermo: niente più aspetto \"antico\".",
+      "La linea del tempo è verticale, con gli anni colorati sull'asse e le carte in stile vetro. Ogni categoria ha il suo colore e la sua icona: Storia arancio, Calcio verde, Cinema rosso, Invenzioni blu, Rap viola.",
+      "La carta da piazzare è colorata e luccica. Tocchi il punto dove va (Prima di tutto, Metti qui, Dopo tutto): la carta ci compare dentro e poi confermi con ✅ Mettila qui. Niente più tocchi sbagliati.",
+      "Gli AVATAR: in alto tutti i giocatori con faccia e punti (chi gioca è illuminato), accanto a \"Tocca a…\" c'è chi deve piazzare, nei voti la faccia di chi ha votato, alla fine il podio.",
+      "Il risultato: la carta si GIRA e svela l'anno, l'avatar esulta se hai indovinato (con i coriandoli) o fa la faccia triste se hai sbagliato.",
+      "La carta appena entrata nella linea si illumina al turno dopo. Online ognuno ha il suo avatar e la linea non torna più in cima quando arrivano i voti."
+    ]
+  },
+  {
     v: 125,
     data: "26 settembre 2026",
     titolo: "Horto Muso rifatto: ippodromo, cavalli veri e il tuo avatar in sella 🏇",
