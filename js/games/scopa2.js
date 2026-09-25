@@ -270,7 +270,7 @@
     var Lc = C().larghezza, ASP = C().ASP_CARTA;
     var centerW = Math.min(window.innerWidth || 375, 600) - 46 - 150;   // il tavolo sta fra i due Rivali laterali
     var wT = Lc(4, 4, 60, centerW), wH = Lc(3, 10, 96);   // tavolo va a capo nel feltro (fisso) · mano max 3 (grande)
-    var io = vm.io, box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 108px);min-height:calc(100dvh - 108px)" });
+    var io = vm.io, box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 108px);min-height:calc(var(--alt, 100dvh) - 108px)" });
 
     // intestazione: punti squadre (sx) + mazzo + tasto musica (dx)
     var mioTurno = (vm.turno === io && vm.fase === "gioco" && !vm.presa);

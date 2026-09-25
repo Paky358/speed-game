@@ -524,7 +524,7 @@
     var nT = (vm.presa && vm.presa.tavoloPrima ? vm.presa.tavoloPrima : vm.tavolo).length;
     var perRiga = nT > 8 ? 5 : 4, righe = Math.max(1, Math.ceil(nT / perRiga));
     var wT = Math.min(larghezza(perRiga, 5, 88, (pianoW - 24) * 0.9 - 8), Math.floor((pianoH * 0.66 - (righe - 1) * 6) / righe / ASP_CARTA));
-    var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 108px);min-height:calc(100dvh - 108px)" });
+    var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 108px);min-height:calc(var(--alt, 100dvh) - 108px)" });
 
     // ---- intestazione: punti (a sinistra) + tasto musica (a destra) ----
     var mioTurno = (vm.turno === vm.io && vm.fase === "gioco" && !vm.presa);

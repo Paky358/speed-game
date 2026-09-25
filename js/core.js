@@ -11,6 +11,22 @@
 (function () {
   "use strict";
 
+  // Altezza VERA dello schermo: il browser a volte (es. dopo un "ricarica" con l'app installata)
+  // crede che lo schermo sia più alto di quello che si vede, e i tasti in fondo finiscono fuori.
+  // La misuro io e la rimisuro appena cambia qualcosa.
+  (function altezzaVera() {
+    function misura() {
+      var h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      document.documentElement.style.setProperty("--alt", Math.round(h || window.innerHeight) + "px");
+    }
+    misura();
+    window.addEventListener("resize", misura);
+    window.addEventListener("orientationchange", function () { setTimeout(misura, 250); });
+    window.addEventListener("pageshow", misura);
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", misura);
+    [100, 400, 1000].forEach(function (ms) { setTimeout(misura, ms); });   // dopo il caricamento le barre si assestano
+  })();
+
   var giochi = [];            // giochi registrati
 
   // Categorie della home. "tutti" mostra tutto; le altre filtrano per tipo di gioco.
@@ -864,7 +880,7 @@
   // ---- AVATAR: il tuo personaggio stile Mii (disegno in js/omino.js; nel codice resta "omino") ----
   var SEZ_OMINO = [
     { nome: "Corpo",     voci: [["forma", "Forma"], ["corpo", "Corporatura"], ["pelle", "Pelle"]] },
-    { nome: "Viso",      voci: [["viso", "Forma del viso"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
+    { nome: "Viso",      voci: [["viso", "Forma del viso"], ["orecchie", "Orecchie"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
                                ["guance", "Guance"], ["segno", "Segni particolari"], ["trucco", "Trucco"], ["colTrucco", "Colore trucco"]] },
     { nome: "Capelli",   voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
     { nome: "Vestiti",   voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]] },

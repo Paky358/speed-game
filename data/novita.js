@@ -9,6 +9,20 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 114,
+    data: "26 settembre 2026",
+    titolo: "Avatar: 55 tagli e tante facce nuove 💇",
+    descrizione: [
+      "20 tagli nuovi. Corti: sfumato, spike, banana, treccine, stempiato, chierica, afro alto. Medi: ciuffo di lato, scalati, boccoli, anime, bob con frangia, arruffati. Lunghi: lunghissimi, coda di lato, due chignon, codini bassi, lunghi con frangia, boccoli, riga di lato.",
+      "Viso: tre forme nuove (a cuore, lungo, paffuto) e le orecchie a scelta (piccole, grandi, a punta da elfo).",
+      "Occhi nuovi: occhiolino, ciglia lunghe, felini, tristi, luccicanti, chiusi. Più colori degli occhi.",
+      "Sopracciglia: dritte, unite, fini, arrabbiate, con il taglio. Nasi: puntino, a patata, lungo, dritto.",
+      "Bocche: sorrisetto, risata, triste, da micio, canini, apparecchio, morde il labbro, nervoso. Segni: voglia e stellina.",
+      "Nuovi colori di capelli (platino, rame, verde acqua, magenta, corvino) e di pelle.",
+      "Corretto: dopo aver ricaricato la pagina non si deve più scorrere per trovare i tasti."
+    ]
+  },
+  {
     v: 113,
     data: "26 settembre 2026",
     titolo: "Black Jack: si gioca sul lato lungo 🎰",

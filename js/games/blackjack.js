@@ -666,6 +666,8 @@
     mazzo.style.visibility = "hidden";   // il mazzo non si vede (spazio al tavolo): le carte partono da Matt
     s._contenuto.appendChild(wrap); t.mostra(s);
     document.body.classList.add("bj-verde");
+    // se lo schermo cambia misura (barre del telefono, rotazione) il tavolo si ridisegna sulla misura nuova
+    window.addEventListener("resize", function () { if (vm && document.body.contains(wrap)) disegnaScena(); });
 
     var vm = null, anim = { ultima: -1, banco: false }, timerPasso = null, daVolare = [], puntSel = null;
     var bolla = null, bollaId = -1, bollaTimer = null;   // nuvoletta della mossa

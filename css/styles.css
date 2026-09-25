@@ -31,6 +31,7 @@ body{
   color:var(--testo);
   min-height:100vh;
   min-height:100dvh;
+  min-height:var(--alt, 100dvh);   /* altezza VERA dello schermo, misurata dal telefono (core.js) */
   -webkit-font-smoothing:antialiased;
 }
 
@@ -39,6 +40,7 @@ body{
   margin:0 auto;
   min-height:100vh;
   min-height:100dvh;
+  min-height:var(--alt, 100dvh);   /* altezza VERA dello schermo, misurata dal telefono (core.js) */
   display:flex;
   flex-direction:column;
 }
@@ -50,6 +52,7 @@ body{
   flex:1;
   min-height:100vh;
   min-height:100dvh;
+  min-height:var(--alt, 100dvh);   /* altezza VERA dello schermo, misurata dal telefono (core.js) */
   padding:
     calc(16px + env(safe-area-inset-top))
     16px

@@ -45,6 +45,7 @@ body{
   color:var(--testo);
   min-height:100vh;
   min-height:100dvh;
+  min-height:var(--alt, 100dvh);   /* altezza VERA dello schermo, misurata dal telefono (core.js) */
   -webkit-font-smoothing:antialiased;
 }
 
@@ -53,6 +54,7 @@ body{
   margin:0 auto;
   min-height:100vh;
   min-height:100dvh;
+  min-height:var(--alt, 100dvh);   /* altezza VERA dello schermo, misurata dal telefono (core.js) */
   display:flex;
   flex-direction:column;
 }
@@ -64,6 +66,7 @@ body{
   flex:1;
   min-height:100vh;
   min-height:100dvh;
+  min-height:var(--alt, 100dvh);   /* altezza VERA dello schermo, misurata dal telefono (core.js) */
   padding:
     calc(16px + env(safe-area-inset-top))
     16px
@@ -788,21 +791,25 @@ body::before{
   var OPZ = {
     forma:     ["uomo", "donna"],
     corpo:     ["snello", "medio", "robusto"],
-    pelle:     ["#ffe3cc", "#f7cda8", "#eab48a", "#cf9464", "#a96d43", "#7c4b2c", "#58341f"],
-    viso:      ["tondo", "ovale", "squadrato"],
-    occhi:     ["tondi", "dolci", "grandi", "mandorla", "felici", "furbi", "assonnati", "puntini"],
-    iride:     ["#3b2416", "#6b4423", "#2e6fbf", "#3f8f4f", "#6b6f76"],
-    sopracc:   ["morbide", "decise", "alzate", "sottili", "folte", "arcuate", "preoccupate"],
-    naso:      ["piccolo", "tondo", "punta", "largo", "insu", "aquilino"],
-    bocca:     ["sorriso", "sorrisone", "neutro", "o", "ghigno", "labbra", "linguaccia", "dentoni", "smorfia", "baciotto"],
-    segno:     ["nessuno", "neo", "cicatrice", "cerotto", "occhiaie", "rughe"],
+    pelle:     ["#ffe3cc", "#f7cda8", "#eab48a", "#cf9464", "#a96d43", "#7c4b2c", "#58341f", "#fff1e6", "#3d2314"],
+    viso:      ["tondo", "ovale", "squadrato", "cuore", "lungo", "paffuto"],
+    orecchie:  ["normali", "piccole", "grandi", "punta"],
+    occhi:     ["tondi", "dolci", "grandi", "mandorla", "felici", "furbi", "assonnati", "puntini", "occhiolino", "ciglia", "felini", "tristi", "stelline", "chiusi"],
+    iride:     ["#3b2416", "#6b4423", "#2e6fbf", "#3f8f4f", "#6b6f76", "#a0692b", "#1e9c8f", "#7d4cc0", "#141414"],
+    sopracc:   ["morbide", "decise", "alzate", "sottili", "folte", "arcuate", "preoccupate", "dritte", "unite", "fini", "arrabbiate", "tagliate"],
+    naso:      ["piccolo", "tondo", "punta", "largo", "insu", "aquilino", "puntino", "patata", "lungo", "dritto"],
+    bocca:     ["sorriso", "sorrisone", "neutro", "o", "ghigno", "labbra", "linguaccia", "dentoni", "smorfia", "baciotto", "sorrisetto", "risata", "triste", "micio", "canini", "apparecchio", "mordilabbro", "nervoso"],
+    segno:     ["nessuno", "neo", "cicatrice", "cerotto", "occhiaie", "rughe", "voglia", "stellina"],
     trucco:    ["nessuno", "ombretto", "eyeliner", "rossetto", "completo"],
     colTrucco: ["#b565d8", "#4dabf7", "#ff8787", "#e8590c", "#343a40", "#c2255c", "#51cf66", "#fcc419"],
     guance:    ["no", "leggere", "rosse", "lentiggini"],
     capelli:   ["rasato", "corti", "riga", "spettinati", "ciuffo", "indietro", "undercut", "scodella", "riccicorti", "afrocorto", "pixie", "cresta", "calvo",
+                "sfumato", "spike", "banana", "treccine", "stempiato", "chierica", "afroalto",
                 "frangia", "caschetto", "tendina", "mossi", "surfista", "mullet", "emo", "caschettolungo", "codinobasso",
-                "lunghi", "onde", "coda", "codaalta", "codini", "treccia", "trecce", "mezzacoda", "chignon", "chignonspettinato", "ricci", "afro", "dread"],
-    colCap:    ["#2a1d15", "#4b2f1d", "#7a4a26", "#b5672d", "#e0b85a", "#f3e3a8", "#9aa0a8", "#c0392b", "#2e86de", "#8e44ad", "#ff7eb6"],
+                "ciuffolaterale", "scalati", "boccolimedi", "anime", "bobfrangia", "arruffati",
+                "lunghi", "onde", "coda", "codaalta", "codini", "treccia", "trecce", "mezzacoda", "chignon", "chignonspettinato", "ricci", "afro", "dread",
+                "lunghissimi", "codalaterale", "chignondoppio", "codebasse", "frangialunghi", "boccoli", "rigalato"],
+    colCap:    ["#2a1d15", "#4b2f1d", "#7a4a26", "#b5672d", "#e0b85a", "#f3e3a8", "#9aa0a8", "#c0392b", "#2e86de", "#8e44ad", "#ff7eb6", "#fff8e7", "#e8702a", "#16a085", "#c2185b", "#101010"],
     barba:     ["no", "accenno", "corta", "folta", "barbalunga", "collare", "pizzetto", "ancora", "baffi", "baffipizzetto", "baffoni", "basettoni"],
     capo:      ["maglietta", "lunga", "felpa", "camicia", "canotta", "polo", "dolcevita", "giacca", "bomber", "calcio"],
     maglia:    ["#e03131", "#1c7ed6", "#2f9e44", "#f59f00", "#7048e8", "#e64980", "#15aabf", "#343a40", "#f1f3f5", "#fd7e14"],
@@ -823,7 +830,7 @@ body::before{
                bocca: "sorriso", guance: "no", segno: "nessuno", trucco: "nessuno", colTrucco: 0, capelli: "corti", colCap: 1, barba: "no", capo: "lunga", maglia: 1, stampa: "nessuna",
                sotto: "jeans", pantaloni: 8, scarpe: 0, modScarpe: "sneakers", accessorio: "nessuno", colAcc: null,
                cappello: null, occhiali: null, orecchini: null, collo: "nessuno", colCollo: 0,
-               occG: 0, occD: 0, occA: 0, soprA: 0, nasoG: 0, boccaA: 0 };   // regolazioni fini (da -2 a +2)
+               orecchie: "normali", occG: 0, occD: 0, occA: 0, soprA: 0, nasoG: 0, boccaA: 0 };   // regolazioni fini (da -2 a +2)
   // nomi da mostrare nell'editor (se manca, si usa il valore con la maiuscola)
   var NOMI = { no: "Nessuna", nessuno: "Nessuno", sole: "Da sole", o: "A O", punta: "A punta", baffipizzetto: "Baffi+pizzetto", lunga: "Maniche lunghe", pantaloni: "Classici", pantaloncini: "Corti",
     riga: "Riga di lato", indietro: "Indietro", scodella: "Scodella", riccicorti: "Ricci corti", afrocorto: "Afro corto", tendina: "Riga in mezzo",
@@ -832,11 +839,20 @@ body::before{
     puntini: "A puntino", insu: "All'insù", baciotto: "Bacio", barbalunga: "Lunga", basettoni: "Basettoni", collare: "Collare",
     ancora: "Ancora", completo: "Completo", dolcevita: "Dolcevita", calcio: "Da calcio", strappati: "Strappati", gonnalunga: "Gonna lunga",
     sneakers: "Sneakers", stivali: "Stivali", eleganti: "Eleganti", sandali: "Sandali",
-    festa: "Da festa", gatto: "Orecchie gatto", fiori: "Fiori", punti: "Punto luce", tondi: "Tondi", quadrati: "Quadrati", cuore: "A cuore" };
+    festa: "Da festa", gatto: "Orecchie gatto", fiori: "Fiori", punti: "Punto luce", tondi: "Tondi", quadrati: "Quadrati", cuore: "A cuore",
+    sfumato: "Sfumato", spike: "Spike", banana: "Banana", treccine: "Treccine", stempiato: "Stempiato", chierica: "Chierica", afroalto: "Afro alto",
+    ciuffolaterale: "Ciuffo di lato", scalati: "Scalati", boccolimedi: "Boccoli medi", anime: "Anime", bobfrangia: "Bob con frangia", arruffati: "Arruffati",
+    lunghissimi: "Lunghissimi", codalaterale: "Coda di lato", chignondoppio: "Due chignon", codebasse: "Codini bassi", frangialunghi: "Lunghi con frangia", boccoli: "Boccoli", rigalato: "Lunghi, riga di lato",
+    paffuto: "Paffuto", lungo: "Lungo", normali: "Normali", piccole: "Piccole",
+    occhiolino: "Occhiolino", ciglia: "Ciglia lunghe", felini: "Felini", tristi: "Tristi", stelline: "Luccicanti", chiusi: "Chiusi",
+    dritte: "Dritte", unite: "Unite", fini: "Fini", arrabbiate: "Arrabbiate", tagliate: "Con taglio",
+    puntino: "Puntino", patata: "A patata", dritto: "Dritto",
+    sorrisetto: "Sorrisetto", risata: "Risata", triste: "Triste", micio: "Da micio", canini: "Canini", apparecchio: "Apparecchio", mordilabbro: "Morde il labbro", nervoso: "Nervoso",
+    voglia: "Voglia", stellina: "Stellina" };
   // oggetti che si sbloccano coi trofei (per ora bloccati)
   var BLOCCATI = { cappello: ["corona"] };
   // i tagli divisi per lunghezza: nell'editor sono tre file separate
-  var GRUPPI_CAPELLI = [["Corti", 0, 13], ["Medi", 13, 22], ["Lunghi", 22, 35]];
+  var GRUPPI_CAPELLI = [["Corti", 0, 20], ["Medi", 20, 35], ["Lunghi", 35, 55]];
   // accessori liberi per tutti; gli altri (es. corona) si sbloccheranno coi trofei
   var LIBERI = ["nessuno", "occhiali", "sole", "cappellino", "berretto", "fascia", "cuffie", "orecchini"];
 
@@ -868,7 +884,10 @@ body::before{
   var TESTA = {
     tondo:     "M100,36 C132,36 154,60 154,92 C154,124 130,148 100,148 C70,148 46,124 46,92 C46,60 68,36 100,36 Z",
     ovale:     "M100,34 C131,34 152,58 152,90 C152,124 130,151 100,151 C70,151 48,124 48,90 C48,58 69,34 100,34 Z",
-    squadrato: "M100,36 C136,36 155,56 155,88 C155,118 149,139 126,146 C113,150 87,150 74,146 C51,139 45,118 45,88 C45,56 64,36 100,36 Z"
+    squadrato: "M100,36 C136,36 155,56 155,88 C155,118 149,139 126,146 C113,150 87,150 74,146 C51,139 45,118 45,88 C45,56 64,36 100,36 Z",
+    cuore:     "M100,36 C134,36 156,58 155,88 C154,114 132,138 100,152 C68,138 46,114 45,88 C44,58 66,36 100,36 Z",
+    lungo:     "M100,32 C130,32 150,56 150,90 C150,128 128,155 100,155 C72,155 50,128 50,90 C50,56 70,32 100,32 Z",
+    paffuto:   "M100,38 C137,38 158,60 158,95 C158,129 134,148 100,148 C66,148 42,129 42,95 C42,60 63,38 100,38 Z"
   };
   var FRONTE = {
     corti:      "M45,100 C40,52 70,30 102,30 C134,30 162,50 155,100 C150,80 146,70 136,64 C118,72 90,70 66,64 C56,72 50,84 45,100 Z",
@@ -896,8 +915,24 @@ body::before{
   FRONTE.mossi = FRONTE.treccia = FRONTE.lunghi;
   FRONTE.onde = FRONTE.tendina;
   FRONTE.codinobasso = FRONTE.codaalta = FRONTE.trecce = FRONTE.mezzacoda = FRONTE.chignonspettinato = FRONTE.chignon;
+  // --- altri tagli ---
+  FRONTE.sfumato = "M52,86 C46,46 72,28 102,28 C132,28 156,46 148,86 C142,70 128,60 102,60 C78,60 60,70 52,86 Z";
+  FRONTE.spike = "M45,100 C42,70 50,52 58,44 L50,24 L70,35 L70,12 L88,30 L98,6 L109,30 L126,10 L127,34 L148,24 L141,46 C151,56 158,76 155,100 C150,82 144,72 134,66 C116,74 88,72 66,66 C56,74 50,86 45,100 Z";
+  FRONTE.banana = FRONTE.indietro;
+  FRONTE.treccine = "M47,96 C41,50 70,31 101,31 C132,31 159,50 153,96 C149,76 140,62 124,58 C110,55 90,55 76,58 C60,62 51,76 47,96 Z";
+  FRONTE.stempiato = "M45,100 C40,56 64,34 100,34 C136,34 160,56 155,100 C152,84 146,70 138,62 C131,56 124,52 117,50 Q100,60 83,50 C76,52 69,56 62,62 C54,70 48,84 45,100 Z";
+  FRONTE.afroalto = "M50,82 C44,52 46,16 62,7 Q100,-6 138,7 C154,16 156,52 150,82 C132,66 68,66 50,82 Z";
+  FRONTE.ciuffolaterale = "M45,108 C40,50 70,30 102,30 C134,30 162,50 155,100 C150,84 144,74 134,68 C116,64 96,70 82,82 C72,92 64,104 58,114 C54,112 48,110 45,108 Z";
+  FRONTE.scalati = FRONTE.arruffati = FRONTE.spettinati;
+  FRONTE.boccolimedi = FRONTE.afro;
+  FRONTE.anime = "M40,104 L24,86 L44,78 L28,54 L54,56 L48,28 L72,40 L78,12 L96,32 L110,6 L118,32 L140,14 L140,42 L168,38 L152,60 L178,72 L154,82 L162,104 C154,86 146,76 136,70 L126,84 L118,68 L106,82 L96,66 L84,82 L76,68 L66,84 C56,88 46,96 40,104 Z";
+  FRONTE.bobfrangia = FRONTE.frangialunghi = FRONTE.frangia;
+  FRONTE.lunghissimi = FRONTE.lunghi;
+  FRONTE.codalaterale = FRONTE.chignondoppio = FRONTE.codebasse = FRONTE.chignon;
+  FRONTE.boccoli = FRONTE.tendina;
+  FRONTE.rigalato = FRONTE.riga;
   // capelli ricci: trama a riccioli al posto delle ciocche dritte
-  var RICCI_TRAMA = { afro: 1, afrocorto: 1, riccicorti: 1 };
+  var RICCI_TRAMA = { afro: 1, afrocorto: 1, riccicorti: 1, afroalto: 1, boccolimedi: 1, boccoli: 1 };
   var DIETRO_MEDIO = "M40,92 C38,40 162,40 160,92 L161,130 Q150,138 140,131 L60,131 Q50,138 39,130 Z";
   var BARBA = {
     corta: "M47,100 C49,132 72,154 100,154 C128,154 151,132 153,100 C148,118 136,128 124,130 C116,139 108,141 100,141 C92,141 84,139 76,130 C64,128 52,118 47,100 Z",
@@ -1022,6 +1057,28 @@ body::before{
         "<path d='M" + dx + ",70 Q" + (dx + (dr < 6 ? -6 : 6)) + "," + ((70 + lung) / 2) + " " + (dx + (dr < 6 ? -2 : 2)) + "," + lung + "' stroke='" + H + "' stroke-width='6.5' stroke-linecap='round' fill='none'/>",
         "<path d='M" + dx + ",70 Q" + (dx + (dr < 6 ? -6 : 6)) + "," + ((70 + lung) / 2) + " " + (dx + (dr < 6 ? -2 : 2)) + "," + lung + "' stroke='" + tono(H, -0.35) + "' stroke-width='6.5' stroke-dasharray='1.2 3.2' fill='none'/>");
     }
+    // --- altri tagli: parti dietro la testa ---
+    if (tipo === "bobfrangia") o.push("<path d='M40,92 C40,38 160,38 160,92 L162,142 Q148,152 134,144 L66,144 Q52,152 38,142 Z' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8'/>");
+    if (tipo === "scalati") { massa("M40,92 C38,40 162,40 160,92 L165,130 L155,124 L157,142 L145,132 L141,148 L128,136 L72,136 L59,148 L55,132 L43,142 L45,124 L35,130 Z"); ciocche(["M44,104 Q40,118 46,134", "M156,104 Q160,118 154,134"]); }
+    if (tipo === "arruffati") { massa("M40,92 C38,40 162,40 160,92 L166,138 Q158,148 150,140 Q142,154 132,144 L68,144 Q58,154 50,140 Q42,148 34,138 Z"); ciocche(["M42,104 Q36,122 44,140", "M158,104 Q164,122 156,140"]); }
+    if (tipo === "boccolimedi") massa("M36,92 C30,36 170,36 164,92 C172,112 166,130 170,146 Q150,158 134,148 L66,148 Q50,158 30,146 C34,130 28,112 36,92 Z", true);
+    if (tipo === "anime" || tipo === "ciuffolaterale") { massa(DIETRO_MEDIO); ciocche(["M42,104 Q40,118 44,130", "M158,104 Q160,118 156,130"]); }
+    if (tipo === "lunghissimi") { massa("M40,92 C38,38 162,38 160,92 L172,236 Q100,252 28,236 Z"); ciocche(["M38,104 Q30,170 36,232", "M162,104 Q170,170 164,232", "M46,120 Q42,180 48,230", "M154,120 Q158,180 152,230"]); }
+    if (tipo === "frangialunghi" || tipo === "rigalato") { massa("M40,92 C38,38 162,38 160,92 L168,188 Q100,204 32,188 Z"); ciocche(["M38,104 Q34,150 40,184", "M162,104 Q166,150 160,184"]); }
+    if (tipo === "boccoli") massa("M38,92 C34,36 166,36 162,92 C170,114 160,132 170,150 C178,168 164,184 172,200 Q100,214 28,200 C36,184 22,168 30,150 C40,132 30,114 38,92 Z", true);
+    if (tipo === "chignondoppio") [66, 134].forEach(function (bx) {   // due crocchie in alto ai lati
+      o.push("<circle cx='" + bx + "' cy='36' r='17' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8'/>",
+        "<path d='M" + (bx - 11) + ",34 Q" + bx + ",22 " + (bx + 11) + ",34 M" + (bx - 9) + ",42 Q" + bx + ",32 " + (bx + 9) + ",42' stroke='" + bH + "' stroke-width='1.2' opacity='.4' fill='none'/>",
+        "<path d='M" + (bx - 8) + ",28 Q" + (bx - 1) + ",22 " + (bx + 7) + ",25' stroke='#fff' stroke-width='2.5' opacity='.3' fill='none' stroke-linecap='round'/>");
+    });
+    if (tipo === "codebasse") [1, -1].forEach(function (s) {   // due codini bassi sulle spalle
+      var X = function (v) { return (100 + s * v).toFixed(1); };
+      o.push("<path d='M" + X(48) + ",110 C" + X(66) + ",116 " + X(72) + ",150 " + X(66) + ",178 C" + X(62) + ",190 " + X(50) + ",188 " + X(52) + ",176 C" + X(57) + ",150 " + X(54) + ",130 " + X(42) + ",120 Z' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8'/>",
+        "<path d='M" + X(56) + ",124 Q" + X(66) + ",148 " + X(60) + ",178' stroke='" + bH + "' stroke-width='1.2' opacity='.4' fill='none'/>");
+      elastico(+X(50), 116);
+    });
+    if (tipo === "afroalto") massa("M50,82 C44,52 46,16 62,7 Q100,-6 138,7 C154,16 156,52 150,82 Z", true);
+    if (tipo === "chierica") massa("M44,124 C30,104 30,76 44,58 Q56,50 62,62 L138,62 Q144,50 156,58 C170,76 170,104 156,124 Q150,130 146,122 L54,122 Q50,130 44,124 Z");   // corona di capelli ai lati e dietro (la cima resta pelata)
     if (cappello) o.push("</g>");
     o.push("</g>");   // fine capelli dietro (scala testa)
 
@@ -1246,10 +1303,17 @@ body::before{
 
     // ---------- testa ----------
     o.push(gT);   // testa, viso, capelli davanti e accessori: tutti nella stessa scala
-    [47, 153].forEach(function (ex) {
-      var s = ex < 100 ? -1 : 1;
-      o.push("<circle cx='" + ex + "' cy='99' r='10' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1.4'/>",
-        "<path d='M" + (ex - s * 2) + ",93 Q" + (ex + s * 4) + ",99 " + (ex - s * 1) + ",105' stroke='" + tono(P, -0.3) + "' stroke-width='2' fill='none' stroke-linecap='round'/>");
+    var ore = c.orecchie, dxO = c.viso === "paffuto" ? -4 : (c.viso === "lungo" ? 3 : 0);   // le orecchie seguono la larghezza del viso
+    [47, 153].forEach(function (ex0) {
+      var s = ex0 < 100 ? -1 : 1, ex = ex0 - s * dxO;
+      if (ore === "punta") {   // orecchie a punta, da elfo
+        o.push("<path d='M" + (ex - s * 3) + ",90 Q" + (ex + s * 8) + ",74 " + (ex + s * 17) + ",68 Q" + (ex + s * 13) + ",90 " + (ex + s * 5) + ",106 Q" + (ex - s * 1) + ",110 " + (ex - s * 4) + ",102 Z' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1.4' stroke-linejoin='round'/>",
+          "<path d='M" + (ex + s * 1) + ",94 Q" + (ex + s * 8) + ",82 " + (ex + s * 12) + ",78' stroke='" + tono(P, -0.3) + "' stroke-width='1.8' fill='none' stroke-linecap='round'/>");
+        return;
+      }
+      var rO = ore === "piccole" ? 7.5 : (ore === "grandi" ? 13 : 10), xO = ex + s * (ore === "grandi" ? 3 : (ore === "piccole" ? -1.5 : 0));
+      o.push("<ellipse cx='" + xO + "' cy='99' rx='" + rO + "' ry='" + (rO * (ore === "grandi" ? 1.12 : 1)) + "' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1.4'/>",
+        "<path d='M" + (xO - s * 2) + "," + (99 - rO * 0.6) + " Q" + (xO + s * rO * 0.4) + ",99 " + (xO - s * 1) + "," + (99 + rO * 0.6) + "' stroke='" + tono(P, -0.3) + "' stroke-width='2' fill='none' stroke-linecap='round'/>");
     });
     o.push("<path d='" + testa + "' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1.6'/>");
     // dentro la testa: ombra dei capelli sulla fronte, luce di bordo, lucido della guancia
@@ -1260,7 +1324,7 @@ body::before{
     o.push("<path d='M57,70 Q47,94 55,120' stroke='#fff' stroke-width='3' opacity='.2' fill='none' stroke-linecap='round'/>",
       "<path d='M147,68 Q156,94 147,124' stroke='#bfe0ff' stroke-width='3.5' opacity='.22' fill='none' stroke-linecap='round'/>",   // luce fredda di bordo
       "<ellipse cx='72' cy='104' rx='11' ry='7' fill='" + u("lu") + "' opacity='.35'/>");
-    if (tipo === "calvo" || tipo === "cresta" || tipo === "rasato") o.push("<ellipse cx='78' cy='55' rx='17' ry='9' fill='" + u("lu") + "' opacity='.6' transform='rotate(-25 78 55)'/>");
+    if (tipo === "calvo" || tipo === "cresta" || tipo === "rasato" || tipo === "chierica") o.push("<ellipse cx='78' cy='55' rx='17' ry='9' fill='" + u("lu") + "' opacity='.6' transform='rotate(-25 78 55)'/>");
     if (tipo === "rasato") o.push("<path d='" + FRONTE.corti + "' fill='" + H + "' opacity='.42'/>", "<path d='" + FRONTE.corti + "' fill='" + u("pt") + "' opacity='.75'/>");
     if (opts.hd) o.push("<ellipse cx='100' cy='119' rx='7' ry='2.4' fill='" + tono(P, -0.6) + "' opacity='.28' filter='" + u("sf") + "'/>");   // ombra sotto il naso
     o.push("</g>");
@@ -1282,6 +1346,8 @@ body::before{
       "<path d='M73,79 l4,-1.5 M75,83.5 l4,-1.5 M77,88 l4,-1.5' stroke='" + tono(P, -0.32) + "' stroke-width='1.2' stroke-linecap='round'/>");
     if (c.segno === "cerotto") o.push("<g transform='rotate(-24 131 118)'><rect x='121' y='114.5' width='20' height='7.5' rx='3.5' fill='#f2c9a0' stroke='#cf9f72' stroke-width='.9'/>",
       "<rect x='127.5' y='114.5' width='7' height='7.5' fill='#e8b88a'/>", "<circle cx='129.5' cy='117' r='.5' fill='#b9875a'/>", "<circle cx='132.5' cy='119.5' r='.5' fill='#b9875a'/></g>");
+    if (c.segno === "voglia") o.push("<path d='M129,104 Q134,100 138,104 Q141,108 136,110 Q131,112 128,108 Q126,106 129,104 Z' fill='" + tono(P, -0.28) + "' opacity='.55'/>");
+    if (c.segno === "stellina") o.push("<path d='M70,114 L71.6,118 L75.8,118.2 L72.5,120.8 L73.7,124.8 L70,122.4 L66.3,124.8 L67.5,120.8 L64.2,118.2 L68.4,118 Z' fill='#4dabf7' stroke='#1c6fb8' stroke-width='.7' stroke-linejoin='round'/>");
     if (c.segno === "rughe") o.push("<path d='M84,67 Q100,63 116,67 M88,72 Q100,69 112,72' stroke='" + tono(P, -0.32) + "' stroke-width='1.2' opacity='.55' fill='none' stroke-linecap='round'/>",
       "<path d='M60,103 Q58,107 60,111 M140,103 Q142,107 140,111' stroke='" + tono(P, -0.3) + "' stroke-width='1' opacity='.45' fill='none'/>");
 
@@ -1304,22 +1370,34 @@ body::before{
         o.push("</g>");
         return;
       }
+      // occhi chiusi (anche l'occhio destro dell'occhiolino): una curva rilassata all'ingiù
+      if (c.occhi === "chiusi" || (c.occhi === "occhiolino" && ex === 120)) {
+        o.push("<path d='M" + (ex - 8.5) + ",99 Q" + ex + ",106 " + (ex + 8.5) + ",99' stroke='" + scuro + "' stroke-width='2.8' fill='none' stroke-linecap='round'/>");
+        if (donna) o.push("<path d='M" + (ex + s * 8) + ",100 L" + (ex + s * 11.5) + ",102.5' stroke='" + scuro + "' stroke-width='1.8' stroke-linecap='round'/>");
+        o.push("</g>");
+        return;
+      }
       if (c.occhi === "felici") {
         o.push("<path d='M" + (ex - 8.5) + ",103 Q" + ex + ",92 " + (ex + 8.5) + ",103 Q" + ex + ",96 " + (ex - 8.5) + ",103 Z' fill='" + scuro + "' stroke='" + scuro + "' stroke-width='1.6' stroke-linejoin='round'/>");
         if (donna) o.push("<path d='M" + (ex + s * 8) + ",101 L" + (ex + s * 12) + ",98' stroke='" + scuro + "' stroke-width='2' stroke-linecap='round'/>");
         o.push("</g>");
         return;
       }
-      var big = c.occhi === "grandi", mand = c.occhi === "mandorla", rx = big ? 10 : (mand ? 9.5 : 8), ry = big ? 12 : (mand ? 7 : 10), ri = big ? 7.2 : (mand ? 5.3 : 5.8), cy = 100;
-      if (mand) o.push("<g transform='rotate(" + (s * -9) + " " + ex + " 100)'>");   // angolo esterno all'insù
+      var felino = c.occhi === "felini", big = c.occhi === "grandi" || c.occhi === "ciglia", mand = c.occhi === "mandorla" || felino,
+          rx = big ? 10 : (mand ? 9.5 : 8), ry = big ? 12 : (mand ? 7 : 10), ri = big ? 7.2 : (mand ? 5.3 : 5.8), cy = 100;
+      var giro = mand ? s * -9 : (c.occhi === "tristi" ? s * 12 : 0);   // mandorla: angolo esterno all'insù; tristi: all'ingiù
+      if (giro) o.push("<g transform='rotate(" + giro + " " + ex + " 100)'>");
       o.push("<clipPath id='" + id + "e" + ex + "'><ellipse cx='" + ex + "' cy='" + cy + "' rx='" + rx + "' ry='" + ry + "'/></clipPath>",
         "<ellipse cx='" + ex + "' cy='" + cy + "' rx='" + rx + "' ry='" + ry + "' fill='" + u("sc") + "' stroke='" + tono(P, -0.45) + "' stroke-width='.8'/>",
         "<g clip-path='" + u("e" + ex) + "'>",
         "<circle cx='" + (ex + s * 0.5) + "' cy='" + (cy + 1.5) + "' r='" + ri + "' fill='" + u("i") + "' stroke='" + tono(I, -0.6) + "' stroke-width='.9'/>",
-        "<circle cx='" + (ex + s * 0.5) + "' cy='" + (cy + 1.5) + "' r='" + (ri * 0.48) + "' fill='#0c0c0e'/>",
+        felino ? "<ellipse cx='" + (ex + s * 0.5) + "' cy='" + (cy + 1) + "' rx='" + (ri * 0.2) + "' ry='" + (ri * 0.95) + "' fill='#0c0c0e'/>"   // pupilla a fessura
+               : "<circle cx='" + (ex + s * 0.5) + "' cy='" + (cy + 1.5) + "' r='" + (ri * 0.48) + "' fill='#0c0c0e'/>",
         "<ellipse cx='" + ex + "' cy='" + (cy - ry + 1) + "' rx='" + rx + "' ry='3.5' fill='#000' opacity='.12'/>",
         "</g>",
-        "<circle cx='" + (ex + 2.6) + "' cy='" + (cy - 2.4) + "' r='" + (big ? 2.8 : 2.2) + "' fill='#fff'/>",
+        c.occhi === "stelline"   // luccicanti: il riflesso è una stellina
+          ? "<path d='M" + (ex + 2.6) + "," + (cy - 7.4) + " Q" + (ex + 3.2) + "," + (cy - 3) + " " + (ex + 7.6) + "," + (cy - 2.4) + " Q" + (ex + 3.2) + "," + (cy - 1.8) + " " + (ex + 2.6) + "," + (cy + 2.6) + " Q" + (ex + 2) + "," + (cy - 1.8) + " " + (ex - 2.4) + "," + (cy - 2.4) + " Q" + (ex + 2) + "," + (cy - 3) + " " + (ex + 2.6) + "," + (cy - 7.4) + " Z' fill='#fff'/>"
+          : "<circle cx='" + (ex + 2.6) + "' cy='" + (cy - 2.4) + "' r='" + (big ? 2.8 : 2.2) + "' fill='#fff'/>",
         "<circle cx='" + (ex - 2) + "' cy='" + (cy + 4.5) + "' r='1.1' fill='#fff' opacity='.8'/>",
         "<path d='M" + (ex - rx - 0.6) + "," + (cy + 1) + " Q" + ex + "," + (cy - 2 * ry) + " " + (ex + rx + 0.6) + "," + (cy + 1) + "' stroke='" + scuro + "' stroke-width='" + (c.occhi === "dolci" || eyeliner ? 3.4 : 2.3) + "' fill='none' stroke-linecap='round'/>");
       if (eyeliner) o.push("<path d='M" + (ex + s * (rx + 0.2)) + "," + (cy + 0.5) + " L" + (ex + s * (rx + 6)) + "," + (cy - 4.5) + "' stroke='" + scuro + "' stroke-width='2.6' stroke-linecap='round'/>");   // codina dell'eyeliner
@@ -1329,7 +1407,13 @@ body::before{
       else if (c.occhi === "assonnati") o.push("<path d='M" + (ex - rx - 1) + "," + (cy + 0.5) + " Q" + ex + "," + (cy - 2 * ry) + " " + (ex + rx + 1) + "," + (cy + 0.5) + " L" + (ex + rx + 1) + "," + (cy - 1) + " Q" + ex + "," + (cy + 2.5) + " " + (ex - rx - 1) + "," + (cy - 1) + " Z' fill='" + u("p") + "'/>",
         "<path d='M" + (ex - rx - 1) + "," + (cy - 1) + " Q" + ex + "," + (cy + 2.5) + " " + (ex + rx + 1) + "," + (cy - 1) + "' stroke='" + scuro + "' stroke-width='2.4' fill='none' stroke-linecap='round'/>");
       else o.push("<path d='M" + (ex - rx + 1.5) + "," + (cy + ry - 1.5) + " Q" + ex + "," + (cy + ry + 2.5) + " " + (ex + rx - 1.5) + "," + (cy + ry - 1.5) + "' stroke='" + tono(P, -0.4) + "' stroke-width='1.1' opacity='.45' fill='none' stroke-linecap='round'/>");
-      if (mand) o.push("</g>");
+      if (c.occhi === "ciglia") [0, 1, 2].forEach(function (k) {   // ciglia lunghe sulla palpebra, verso l'esterno
+        var dx = rx - 1.5 - k * 3.2, px = ex + s * dx, py = cy - ry * Math.sqrt(Math.max(0, 1 - (dx / rx) * (dx / rx)));   // punto sul bordo alto dell'occhio
+        o.push("<path d='M" + px.toFixed(1) + "," + py.toFixed(1) + " l" + (s * 4.5) + ",-" + (4.5 - k * 0.6) + "' stroke='" + scuro + "' stroke-width='1.9' stroke-linecap='round'/>");
+      });
+      if (c.occhi === "tristi") o.push("<path d='M" + (ex - rx - 1) + "," + (cy - 3) + " Q" + ex + "," + (cy - ry - 3) + " " + (ex + rx + 1) + "," + (cy - 3) + " L" + (ex + rx + 1) + "," + (cy - ry - 6) + " L" + (ex - rx - 1) + "," + (cy - ry - 6) + " Z' fill='" + u("p") + "'/>",
+        "<path d='M" + (ex - rx - 1) + "," + (cy - 3) + " Q" + ex + "," + (cy - ry - 3) + " " + (ex + rx + 1) + "," + (cy - 3) + "' stroke='" + scuro + "' stroke-width='2.4' fill='none' stroke-linecap='round'/>");   // palpebra un po' calata
+      if (giro) o.push("</g>");
       if (c.segno === "occhiaie") o.push("<path d='M" + (ex - 8) + "," + (cy + ry + 1.5) + " Q" + ex + "," + (cy + ry + 6) + " " + (ex + 8) + "," + (cy + ry + 1.5) + "' stroke='#7a5a8a' stroke-width='2.2' opacity='.35' fill='none' stroke-linecap='round'/>");
       o.push("</g>");
     });
@@ -1345,9 +1429,15 @@ body::before{
       else if (t === "folte") { yE = 84; yI = 83; cyb = 76; sp = 6.8; }
       else if (t === "arcuate") { yE = 87; yI = 84; cyb = 69; sp = 3.4; }
       else if (t === "preoccupate") { yE = 86; yI = 78; cyb = 81; sp = 4.2; }
+      else if (t === "dritte") { yE = 83; yI = 83; cyb = 82.5; sp = 4.8; }
+      else if (t === "unite") { yE = 84; yI = 83.5; cyb = 78; sp = 5.6; int = ex - s * 12; }
+      else if (t === "fini") { yE = 86; yI = 84; cyb = 71; sp = 1.7; }
+      else if (t === "arrabbiate") { yE = 78; yI = 88; cyb = 82; sp = 4.8; }
       else { yE = 85; yI = 83; cyb = 77.5; sp = 4.2; }
       o.push("<path transform='translate(" + (s * dE) + ",0)' d='M" + est + "," + yE + " Q" + ex + "," + cyb + " " + int + "," + yI + " L" + int + "," + (yI + sp) + " Q" + ex + "," + (cyb + sp * 0.85) + " " + est + "," + (yE + sp * 0.35) + " Z' fill='" + colS + "' stroke='" + colS + "' stroke-width='.9' stroke-linejoin='round'/>");
+      if (t === "tagliate" && s < 0) o.push("<path d='M" + (ex - 4 - dE) + ",76 L" + (ex - 6 - dE) + ",90' stroke='" + P + "' stroke-width='2.2' stroke-linecap='round'/>");   // il taglio nel sopracciglio
     });
+    if (c.sopracc === "unite") o.push("<path d='M91,84 Q100,82 109,84 L109,88 Q100,86.5 91,88 Z' fill='" + colS + "' opacity='.85'/>");   // il ponte in mezzo
     o.push("</g>");
     // naso
     var nas = tono(P, -0.36);
@@ -1362,6 +1452,11 @@ body::before{
       "<ellipse cx='97.8' cy='114.6' rx='1.3' ry='1' fill='" + nas + "'/>", "<ellipse cx='102.2' cy='114.6' rx='1.3' ry='1' fill='" + nas + "'/>", "<circle cx='99.5' cy='109.5' r='1.7' fill='#fff' opacity='.45'/>");
     else if (c.naso === "aquilino") o.push("<path d='M99,99 Q104,104 106.5,111 Q108.5,117 100.5,117.5' stroke='" + nas + "' stroke-width='2.3' fill='none' stroke-linecap='round'/>",
       "<ellipse cx='102.5' cy='116' rx='1.4' ry='.9' fill='" + nas + "'/>", "<circle cx='103' cy='108' r='1.6' fill='#fff' opacity='.4'/>");
+    else if (c.naso === "puntino") o.push("<ellipse cx='100' cy='113' rx='2.2' ry='1.7' fill='" + nas + "'/>");
+    else if (c.naso === "patata") o.push("<ellipse cx='100' cy='112' rx='9' ry='7' fill='" + tono(P, -0.08) + "' stroke='" + tono(P, -0.28) + "' stroke-width='.9'/>",
+      "<ellipse cx='96.3' cy='115.5' rx='1.7' ry='1.2' fill='" + nas + "'/>", "<ellipse cx='103.7' cy='115.5' rx='1.7' ry='1.2' fill='" + nas + "'/>", "<ellipse cx='97' cy='109' rx='2.6' ry='1.8' fill='#fff' opacity='.45'/>");
+    else if (c.naso === "lungo") o.push("<path d='M100,97 L102,114 Q102.5,119 96,118' stroke='" + nas + "' stroke-width='2.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/>", "<circle cx='101.5' cy='112' r='1.5' fill='#fff' opacity='.4'/>");
+    else if (c.naso === "dritto") o.push("<path d='M97,99 L96,114 Q100,117.5 104.5,114.5' stroke='" + nas + "' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/>", "<path d='M99,101 L99,110' stroke='#fff' stroke-width='1.6' opacity='.3' stroke-linecap='round'/>");
     else o.push("<path d='M95.5,114 Q100,117.5 104.5,114' stroke='" + nas + "' stroke-width='2.2' fill='none' stroke-linecap='round'/>", "<circle cx='99' cy='110.5' r='1.7' fill='#fff' opacity='.4'/>");
     o.push("</g>");
 
@@ -1403,6 +1498,22 @@ body::before{
     else if (c.bocca === "labbra") o.push("<path d='M86,126 Q92,120.5 100,123.5 Q108,120.5 114,126 Q100,128 86,126 Z' fill='" + (rossetto ? tono(CT, -0.1) : "#c9435a") + "'/>",
       "<path d='M86,126 Q100,128 114,126 Q108,134.5 100,134.5 Q92,134.5 86,126 Z' fill='" + (rossetto ? CT : "#dc5a70") + "'/>",
       "<path d='M86,126 Q100,128 114,126' stroke='#7d1f33' stroke-width='1.1' fill='none'/>", "<ellipse cx='104' cy='130.5' rx='3.4' ry='1.3' fill='#fff' opacity='.45'/>");
+    else if (c.bocca === "sorrisetto") o.push("<path d='M93,126 Q100,131.5 107,126' stroke='" + lab + "' stroke-width='2.6' fill='none' stroke-linecap='round'/>");
+    else if (c.bocca === "risata") o.push("<path d='M82,120 Q100,124 118,120 Q116,147 100,147 Q84,147 82,120 Z' fill='" + dentro + "' stroke='" + lab + "' stroke-width='1.4' stroke-linejoin='round'/>",
+      "<path d='M84.5,121.4 Q100,125 115.5,121.4 L114.5,127 Q100,130 85.5,127 Z' fill='#fff'/>", "<ellipse cx='100' cy='141' rx='9' ry='4.5' fill='#ff6f73'/>",
+      "<path d='M78,117 Q80,121 83,121 M122,117 Q120,121 117,121' stroke='" + lab + "' stroke-width='1.4' fill='none' stroke-linecap='round'/>");
+    else if (c.bocca === "triste") o.push("<path d='M88,132 Q100,121 112,132' stroke='" + lab + "' stroke-width='3' fill='none' stroke-linecap='round'/>");
+    else if (c.bocca === "micio") o.push("<path d='M88,124 Q94,131 100,125 Q106,131 112,124' stroke='" + lab + "' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/>");
+    else if (c.bocca === "canini") o.push("<path d='M86,123 Q100,138 114,123 Q100,131 86,123 Z' fill='" + lab + "' stroke='" + lab + "' stroke-width='1.3' stroke-linejoin='round'/>",
+      "<path d='M90.5,126.3 L92.5,133 L94.5,127.6 Z M109.5,126.3 L107.5,133 L105.5,127.6 Z' fill='#fff' stroke='#c9c9d1' stroke-width='.6' stroke-linejoin='round'/>");
+    else if (c.bocca === "apparecchio") o.push("<path d='M85,122 Q100,125 115,122 Q113,138 100,138 Q87,138 85,122 Z' fill='" + dentro + "' stroke='" + lab + "' stroke-width='1.3' stroke-linejoin='round'/>",
+      "<path d='M87,123.3 Q100,126 113,123.3 L112,130 Q100,132.5 88,130 Z' fill='#fff'/>",
+      "<path d='M88,126.6 Q100,129.4 112,126.6' stroke='#9aa3ad' stroke-width='1.5' fill='none'/>",
+      [91, 96, 100, 104, 109].map(function (bx) { return "<rect x='" + (bx - 1.2) + "' y='125.6' width='2.4' height='2.4' rx='.5' fill='#c7ced6' stroke='#7d8793' stroke-width='.4'/>"; }).join(""));
+    else if (c.bocca === "mordilabbro") o.push("<path d='M88,125 Q100,129 112,125' stroke='" + lab + "' stroke-width='2.6' fill='none' stroke-linecap='round'/>",
+      "<path d='M95.5,126.2 L95.8,130.4 Q100,131.4 104.2,130.4 L104.5,126.2 Q100,127.4 95.5,126.2 Z' fill='#fff' stroke='#b9b9c0' stroke-width='.7'/>",
+      "<path d='M92,131.5 Q100,134 108,131.5' stroke='" + tono(P, -0.3) + "' stroke-width='1.6' fill='none' opacity='.6' stroke-linecap='round'/>");
+    else if (c.bocca === "nervoso") o.push("<path d='M86,128 L90,125 L94,129 L98,125 L102,129 L106,125 L110,129 L114,126' stroke='" + lab + "' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/>");
     else o.push("<path d='M86,123 Q100,138 114,123 Q100,131 86,123 Z' fill='" + lab + "' stroke='" + lab + "' stroke-width='1.3' stroke-linejoin='round'/>",
       "<path d='M84.5,121 Q85.5,123.5 88,123.5 M115.5,121 Q114.5,123.5 112,123.5' stroke='" + lab + "' stroke-width='1.3' fill='none' stroke-linecap='round'/>");
 
@@ -1413,11 +1524,11 @@ body::before{
 
     // ---------- capelli DAVANTI (con ciocche e riflesso lucido) ----------
     if (cappello) o.push("<g clip-path='" + u("sc2") + "'>");   // col cappello: tutto quello che sta sopra la visiera sparisce
-    if (/^(corti|spettinati|frangia|coda|ciuffo|riga|indietro|scodella|riccicorti|mullet|codinobasso)$/.test(tipo)) [1, -1].forEach(function (s) {   // basette
+    if (/^(corti|spettinati|frangia|coda|ciuffo|riga|indietro|scodella|riccicorti|mullet|codinobasso|spike|banana|stempiato|treccine|scalati|arruffati)$/.test(tipo)) [1, -1].forEach(function (s) {   // basette
       var bx = 100 - s * 54;
       o.push("<path d='M" + bx + ",92 Q" + (bx - s * 1) + ",104 " + (bx + s * 3) + ",113 L" + (bx + s * 7) + ",112 Q" + (bx + s * 5) + ",102 " + (bx + s * 6) + ",92 Z' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1' stroke-linejoin='round'/>");
     });
-    if (tipo === "undercut") o.push("<g clip-path='" + u("cv") + "'><path d='" + FRONTE.corti + "' fill='" + H + "' opacity='.35'/><path d='" + FRONTE.corti + "' fill='" + u("pt") + "' opacity='.7'/></g>");   // lati rasati
+    if (tipo === "undercut" || tipo === "sfumato" || tipo === "afroalto") o.push("<g clip-path='" + u("cv") + "'><path d='" + FRONTE.corti + "' fill='" + H + "' opacity='.35'/><path d='" + FRONTE.corti + "' fill='" + u("pt") + "' opacity='.7'/></g>");   // lati rasati
     if (fr) {
       o.push("<path d='" + fr + "' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8' stroke-linejoin='round'/>", "<g clip-path='" + u("hc") + "'>");
       if (RICCI_TRAMA[tipo]) o.push("<path d='" + fr + "' fill='" + u("rc") + "'/>");
@@ -1438,8 +1549,8 @@ body::before{
     if (tipo === "ciuffo") o.push("<path d='M54,72 C46,40 72,10 114,12 C144,14 160,34 155,60 C148,46 136,40 122,42 C104,38 86,46 76,56 C68,60 59,64 54,72 Z' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8' stroke-linejoin='round'/>",
       "<path d='M62,62 C62,38 86,20 116,20 M72,56 C76,36 98,26 124,28 M86,48 C94,36 112,32 134,36' stroke='" + bH + "' stroke-width='1.3' opacity='.4' fill='none'/>",
       "<path d='M70,40 C82,24 104,18 128,22' stroke='#fff' stroke-width='5' opacity='.25' fill='none' stroke-linecap='round'/>");
-    if (/^(codini|chignon|tendina|onde|trecce|mezzacoda|chignonspettinato|codaalta|codinobasso)$/.test(tipo)) o.push("<path d='M100,31 L100,58' stroke='" + bH + "' stroke-width='1.6' opacity='.55'/>");   // riga in mezzo
-    if (tipo === "riga") o.push("<path d='M76,33 Q78,46 82,64' stroke='" + bH + "' stroke-width='1.8' opacity='.6' fill='none'/>", "<path d='M80,36 C100,40 122,48 140,64' stroke='" + tono(H, 0.35) + "' stroke-width='2' opacity='.35' fill='none'/>");
+    if (/^(codini|chignon|tendina|onde|trecce|mezzacoda|chignonspettinato|codaalta|codinobasso|chignondoppio|codebasse|codalaterale|boccoli)$/.test(tipo)) o.push("<path d='M100,31 L100,58' stroke='" + bH + "' stroke-width='1.6' opacity='.55'/>");   // riga in mezzo
+    if (tipo === "riga" || tipo === "rigalato") o.push("<path d='M76,33 Q78,46 82,64' stroke='" + bH + "' stroke-width='1.8' opacity='.6' fill='none'/>", "<path d='M80,36 C100,40 122,48 140,64' stroke='" + tono(H, 0.35) + "' stroke-width='2' opacity='.35' fill='none'/>");
     if (tipo === "riccicorti") for (var rq = 0; rq <= 10; rq++) {   // riccioli piccoli sull'attaccatura
       var aq = Math.PI * (1.06 + 0.88 * rq / 10);
       o.push("<circle cx='" + (100 + 52 * Math.cos(aq)).toFixed(1) + "' cy='" + (88 + 50 * Math.sin(aq)).toFixed(1) + "' r='7.5' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.1'/>",
@@ -1460,6 +1571,20 @@ body::before{
       elastico(100 - s * 47, 194);
       o.push("<path d='M" + (100 - s * 47) + ",198 l-3,9 M" + (100 - s * 47) + ",198 l0,10 M" + (100 - s * 47) + ",198 l3,9' stroke='" + bH + "' stroke-width='2.2' stroke-linecap='round'/>");
     });
+    // --- altri tagli: parti davanti ---
+    if (tipo === "banana") o.push("<path d='M56,68 C46,32 78,4 114,6 C146,8 162,32 154,62 C146,46 132,40 116,42 C96,36 76,46 56,68 Z' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8' stroke-linejoin='round'/>",
+      "<path d='M64,58 C66,34 88,16 118,16 M76,50 C82,32 102,24 128,26 M90,44 C98,32 116,30 138,34' stroke='" + bH + "' stroke-width='1.3' opacity='.4' fill='none'/>",
+      "<path d='M70,34 C84,16 108,10 132,16' stroke='#fff' stroke-width='5' opacity='.25' fill='none' stroke-linecap='round'/>");
+    if (tipo === "treccine") for (var tc = 0; tc < 7; tc++) {   // treccine strette dalla fronte verso la nuca
+      var tx0 = 66 + tc * 11.3, tx1 = 100 + (tx0 - 100) * 0.55;
+      o.push("<path d='M" + tx0.toFixed(1) + ",58 Q" + ((tx0 + tx1) / 2).toFixed(1) + ",40 " + tx1.toFixed(1) + ",30' stroke='" + bH + "' stroke-width='4.2' fill='none' stroke-linecap='round'/>",
+        "<path d='M" + tx0.toFixed(1) + ",58 Q" + ((tx0 + tx1) / 2).toFixed(1) + ",40 " + tx1.toFixed(1) + ",30' stroke='" + tono(H, 0.3) + "' stroke-width='2.4' stroke-dasharray='2 2.2' fill='none'/>");
+    }
+    if (tipo === "codalaterale") {   // coda portata davanti, sulla spalla
+      o.push("<path d='M138,84 C164,94 168,134 158,176 C154,190 142,190 144,176 C152,142 148,108 128,94 Z' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8'/>");
+      ciocche(["M146,100 Q160,130 152,176", "M140,104 Q152,134 148,172"]);
+      elastico(136, 90);
+    }
     if (cappello) o.push("</g>");
 
     // ---------- accessori ----------
@@ -1582,7 +1707,7 @@ body::before{
     var donna = pick([0, 1]) === 1;
     return { forma: donna ? "donna" : "uomo", corpo: uno(OPZ.corpo), sotto: donna && pick([0, 1, 2]) === 0 ? uno(["gonna", "gonnalunga"]) : uno(["jeans", "jeans", "strappati", "cargo", "pantaloni", "tuta", "pantaloncini"]),
       pelle: pick(OPZ.pelle), viso: uno(OPZ.viso), capelli: uno(OPZ.capelli), colCap: pick(OPZ.colCap.slice(0, 7)),
-      occhi: uno(OPZ.occhi), iride: pick(OPZ.iride), sopracc: uno(OPZ.sopracc), naso: uno(OPZ.naso), bocca: uno(OPZ.bocca),
+      occhi: uno(OPZ.occhi), iride: pick(OPZ.iride), orecchie: uno(["normali", "normali", "normali", "piccole", "grandi"]), sopracc: uno(OPZ.sopracc), naso: uno(OPZ.naso), bocca: uno(OPZ.bocca),
       guance: uno(["no", "no", "leggere", "rosse", "lentiggini"]), barba: donna ? "no" : uno(["no", "no", "no", "no", "accenno", "corta", "folta", "barbalunga", "collare", "pizzetto", "ancora", "baffi", "baffipizzetto", "baffoni", "basettoni"]),
       segno: uno(["nessuno", "nessuno", "nessuno", "neo", "cerotto", "occhiaie"]), colTrucco: pick(OPZ.colTrucco),
       trucco: donna ? uno(["nessuno", "nessuno", "ombretto", "eyeliner", "rossetto", "completo"]) : "nessuno",
@@ -1609,6 +1734,22 @@ body::before{
    ========================================================= */
 (function () {
   "use strict";
+
+  // Altezza VERA dello schermo: il browser a volte (es. dopo un "ricarica" con l'app installata)
+  // crede che lo schermo sia più alto di quello che si vede, e i tasti in fondo finiscono fuori.
+  // La misuro io e la rimisuro appena cambia qualcosa.
+  (function altezzaVera() {
+    function misura() {
+      var h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      document.documentElement.style.setProperty("--alt", Math.round(h || window.innerHeight) + "px");
+    }
+    misura();
+    window.addEventListener("resize", misura);
+    window.addEventListener("orientationchange", function () { setTimeout(misura, 250); });
+    window.addEventListener("pageshow", misura);
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", misura);
+    [100, 400, 1000].forEach(function (ms) { setTimeout(misura, ms); });   // dopo il caricamento le barre si assestano
+  })();
 
   var giochi = [];            // giochi registrati
 
@@ -2463,7 +2604,7 @@ body::before{
   // ---- AVATAR: il tuo personaggio stile Mii (disegno in js/omino.js; nel codice resta "omino") ----
   var SEZ_OMINO = [
     { nome: "Corpo",     voci: [["forma", "Forma"], ["corpo", "Corporatura"], ["pelle", "Pelle"]] },
-    { nome: "Viso",      voci: [["viso", "Forma del viso"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
+    { nome: "Viso",      voci: [["viso", "Forma del viso"], ["orecchie", "Orecchie"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
                                ["guance", "Guance"], ["segno", "Segni particolari"], ["trucco", "Trucco"], ["colTrucco", "Colore trucco"]] },
     { nome: "Capelli",   voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
     { nome: "Vestiti",   voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]] },
@@ -9851,6 +9992,20 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 114,
+    data: "26 settembre 2026",
+    titolo: "Avatar: 55 tagli e tante facce nuove 💇",
+    descrizione: [
+      "20 tagli nuovi. Corti: sfumato, spike, banana, treccine, stempiato, chierica, afro alto. Medi: ciuffo di lato, scalati, boccoli, anime, bob con frangia, arruffati. Lunghi: lunghissimi, coda di lato, due chignon, codini bassi, lunghi con frangia, boccoli, riga di lato.",
+      "Viso: tre forme nuove (a cuore, lungo, paffuto) e le orecchie a scelta (piccole, grandi, a punta da elfo).",
+      "Occhi nuovi: occhiolino, ciglia lunghe, felini, tristi, luccicanti, chiusi. Più colori degli occhi.",
+      "Sopracciglia: dritte, unite, fini, arrabbiate, con il taglio. Nasi: puntino, a patata, lungo, dritto.",
+      "Bocche: sorrisetto, risata, triste, da micio, canini, apparecchio, morde il labbro, nervoso. Segni: voglia e stellina.",
+      "Nuovi colori di capelli (platino, rame, verde acqua, magenta, corvino) e di pelle.",
+      "Corretto: dopo aver ricaricato la pagina non si deve più scorrere per trovare i tasti."
+    ]
+  },
+  {
     v: 113,
     data: "26 settembre 2026",
     titolo: "Black Jack: si gioca sul lato lungo 🎰",
@@ -13922,6 +14077,8 @@ window.SG_SIPERO = {
     mazzo.style.visibility = "hidden";   // il mazzo non si vede (spazio al tavolo): le carte partono da Matt
     s._contenuto.appendChild(wrap); t.mostra(s);
     document.body.classList.add("bj-verde");
+    // se lo schermo cambia misura (barre del telefono, rotazione) il tavolo si ridisegna sulla misura nuova
+    window.addEventListener("resize", function () { if (vm && document.body.contains(wrap)) disegnaScena(); });
 
     var vm = null, anim = { ultima: -1, banco: false }, timerPasso = null, daVolare = [], puntSel = null;
     var bolla = null, bollaId = -1, bollaTimer = null;   // nuvoletta della mossa
@@ -19771,7 +19928,7 @@ window.SG_SIPERO = {
     var nT = (vm.presa && vm.presa.tavoloPrima ? vm.presa.tavoloPrima : vm.tavolo).length;
     var perRiga = nT > 8 ? 5 : 4, righe = Math.max(1, Math.ceil(nT / perRiga));
     var wT = Math.min(larghezza(perRiga, 5, 88, (pianoW - 24) * 0.9 - 8), Math.floor((pianoH * 0.66 - (righe - 1) * 6) / righe / ASP_CARTA));
-    var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 108px);min-height:calc(100dvh - 108px)" });
+    var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 108px);min-height:calc(var(--alt, 100dvh) - 108px)" });
 
     // ---- intestazione: punti (a sinistra) + tasto musica (a destra) ----
     var mioTurno = (vm.turno === vm.io && vm.fase === "gioco" && !vm.presa);
@@ -20618,7 +20775,7 @@ window.SG_SIPERO = {
     var Lc = C().larghezza, ASP = C().ASP_CARTA;
     var centerW = Math.min(window.innerWidth || 375, 600) - 46 - 150;   // il tavolo sta fra i due Rivali laterali
     var wT = Lc(4, 4, 60, centerW), wH = Lc(3, 10, 96);   // tavolo va a capo nel feltro (fisso) · mano max 3 (grande)
-    var io = vm.io, box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 108px);min-height:calc(100dvh - 108px)" });
+    var io = vm.io, box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 108px);min-height:calc(var(--alt, 100dvh) - 108px)" });
 
     // intestazione: punti squadre (sx) + mazzo + tasto musica (dx)
     var mioTurno = (vm.turno === io && vm.fase === "gioco" && !vm.presa);
@@ -21313,7 +21470,7 @@ window.SG_SIPERO = {
     var Lc = C().larghezza, ASP = C().ASP_CARTA;
     var centerW = Math.min(window.innerWidth || 375, 600) - 46 - 150;   // il tavolo sta fra i due Rivali laterali
     var wT = Lc(4, 4, 60, centerW), wH = Lc(10, 5, 56);   // tavolo va a capo nel feltro (fisso) · mano fino a 10 su una riga
-    var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 108px);min-height:calc(100dvh - 108px)" });
+    var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 108px);min-height:calc(var(--alt, 100dvh) - 108px)" });
 
     // intestazione: punti squadre (a sinistra) + tasto musica (a destra)
     var mioTurno = (st.turno === 0 && st.fase === "gioco" && !st.presa);
