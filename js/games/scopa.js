@@ -414,7 +414,28 @@
       ".sc-manina.v{flex-direction:column;align-items:center}",
       ".sc-mensola{background:linear-gradient(#6d4526,#472c17);border-radius:14px 14px 0 0;box-shadow:inset 0 2px 8px rgba(255,255,255,.07),0 -2px 8px rgba(0,0,0,.3);padding:9px 6px 8px;margin:6px -4px 0}",
       ".sc-mano-riga{display:flex;gap:8px;justify-content:center;align-items:flex-end;flex-wrap:wrap}",
-      ".sc-prese{text-align:center;font-size:.74rem;margin-top:6px;color:rgba(255,255,255,.8)}"
+      ".sc-prese{text-align:center;font-size:.74rem;margin-top:6px;color:rgba(255,255,255,.8)}",
+      // ---- la stanza: avversario seduto dietro al tavolo in prospettiva (Scopa 1 contro 1) ----
+      ".sc-scena{position:relative;overflow:hidden;border-radius:16px;background:radial-gradient(70% 50% at 50% 0%,rgba(255,214,140,.45),rgba(255,214,140,0) 70%),linear-gradient(#5a3a2a 0%,#3b2519 55%,#24160f 100%);box-shadow:inset 0 0 50px rgba(0,0,0,.55),0 4px 12px rgba(0,0,0,.3)}",
+      ".sc-quadro{position:absolute;top:44px;width:54px;height:40px;border:4px solid #8a5a2b;box-shadow:0 4px 10px rgba(0,0,0,.4);opacity:.75}",
+      ".sc-targa{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:6px;background:rgba(10,18,50,.85);border:2px solid rgba(255,255,255,.18);border-radius:999px;padding:3px 11px;white-space:nowrap;transition:border-color .3s,box-shadow .3s}",
+      ".sc-targa.turno{border-color:#ffd43b;box-shadow:0 0 14px rgba(255,212,59,.6)}",
+      ".sc-targa .sc-nome{font-size:.8rem;max-width:140px}",
+      ".sc-targa-sc{font-size:.72rem;font-weight:800;color:#ffe58a}",
+      ".sc-avv{position:absolute;left:50%;z-index:1}",
+      ".sc-avv-fig svg{display:block;width:100%;height:auto}",
+      ".sc-avv-carte{position:absolute;left:50%;width:0;height:0;z-index:3}",
+      ".sc-avv-carte .sc-dorso{position:absolute;border-radius:5px;transform-origin:50% 120%}",
+      ".sc-fumetto{position:absolute;z-index:5;background:#fff;color:#1d2a5e;font-weight:900;border-radius:14px;padding:5px 10px;font-size:.85rem;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.35);transform-origin:0 100%;animation:scFum .28s cubic-bezier(.3,1.6,.5,1)}",
+      ".sc-fumetto::after{content:'';position:absolute;left:-6px;bottom:6px;border:7px solid transparent;border-right-color:#fff;border-left:0}",
+      ".sc-fumetto.scopa{background:linear-gradient(135deg,#ffe066,#ffb300);color:#3b2400;font-size:1.15rem}",
+      ".sc-fumetto.scopa::after{border-right-color:#ffc21a}",
+      "@keyframes scFum{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}",
+      ".sc-prosp{position:absolute;inset:0;perspective-origin:50% 0%;z-index:2}",
+      ".sc-piano{position:absolute;left:50%;bottom:0;transform-origin:50% 100%;border-radius:34px;background:linear-gradient(#6b3f1f,#4a2a14);padding:12px;box-shadow:0 -5px 0 #82502a inset;transform-style:preserve-3d}",
+      ".sc-panno{position:relative;width:100%;height:100%;border-radius:24px;background:radial-gradient(90% 70% at 50% 30%,#35b273 0%,#1e8452 55%,#135c3a 100%);box-shadow:inset 0 0 26px rgba(0,0,0,.45);transform-style:preserve-3d}",
+      ".sc-terra.sc-t3d{position:absolute;left:5%;right:5%;top:24%;bottom:4%;padding:0;transform-style:preserve-3d}",
+      ".sc-panno .sc-mazzo{top:14px;left:16px}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -456,6 +477,34 @@
     return b;
   }
 
+  // ---------- avatar dell'avversario seduto al tavolo ----------
+  // il bot ha sempre la stessa faccia; online arriva l'avatar vero dell'altro
+  var AVATAR_BOT = { forma: "uomo", corpo: "medio", pelle: 2, capelli: "ciuffo", colCap: 1, barba: "corta", capo: "felpa", maglia: 1,
+    cappello: "cappellino", colAcc: 0, sopracc: "decise", occhi: "furbi", bocca: "ghigno" };
+  var FACCE = {
+    normale: {},
+    pensa: { occhi: "assonnati", sopracc: "alzate", bocca: "neutro" },
+    esulta: { occhi: "felici", sopracc: "alzate", bocca: "sorrisone" },
+    triste: { occhi: "dolci", sopracc: "preoccupate", bocca: "smorfia" }
+  };
+  function mioAvatar(nome) {
+    var p = window.SGNube && SGNube.profilo && SGNube.profilo();
+    if (p && p.omino) return p.omino;
+    return window.SGOmino ? SGOmino.casuale(nome || "io") : null;
+  }
+  function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  var svgCache = {};   // disegni già pronti (un avatar per espressione): non si rifanno a ogni mossa
+  function svgAvatar(cfg, faccia) {
+    var k = JSON.stringify(cfg) + "|" + faccia;
+    if (!svgCache[k]) {
+      var c = {}, x = FACCE[faccia] || {}, n;
+      for (n in cfg) c[n] = cfg[n];
+      for (n in x) c[n] = x[n];
+      svgCache[k] = SGOmino.svg(c);
+    }
+    return svgCache[k];
+  }
+
   // ---------- vista (uguale per bot/host/ospite) ----------
   // vm = { fase, io("A"|"B"), turno, nomi, mano:[carte], oppN, tavolo:[carte],
   //        preseIo, preseOpp, scopeIo, scopeOpp, settebelloIo, settebelloOpp,
@@ -467,7 +516,14 @@
     assicuraStile();
     if (window.SGMusica) window.SGMusica.avvia();
     var el = t.el, vm = C.vm;
-    var wT = larghezza(6, 5, 82), wH = larghezza(3, 10, 104);   // carte grandi · tavolo va a capo nel feltro (fisso) · mano max 3
+    var wH = larghezza(3, 10, 104);   // mano max 3
+    // misure della stanza: altezza fissa (lo schermo non "salta"), il tavolo è un piano inclinato
+    var scW = Math.min(window.innerWidth || 375, 560) - 28;
+    var scH = Math.max(330, Math.min(560, (window.innerHeight || 700) - 108 - 34 - (Math.round(wH * ASP_CARTA) + 44) - 26));
+    var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * 0.7);
+    var nT = (vm.presa && vm.presa.tavoloPrima ? vm.presa.tavoloPrima : vm.tavolo).length;
+    var perRiga = nT > 8 ? 5 : 4, righe = Math.max(1, Math.ceil(nT / perRiga));
+    var wT = Math.min(larghezza(perRiga, 5, 88, (pianoW - 24) * 0.9 - 8), Math.floor((pianoH * 0.66 - (righe - 1) * 6) / righe / ASP_CARTA));
     var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 108px);min-height:calc(100dvh - 108px)" });
 
     // ---- intestazione: punti (a sinistra) + tasto musica (a destra) ----
@@ -477,19 +533,67 @@
     if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
     box.appendChild(head);
 
-    // ---- tavolo verde: avversario in alto, carte a terra al centro ----
-    var feltro = el("div", { class: "sc-feltro" });
-    feltro.appendChild(el("div", { class: "sc-cima" }, [ posto(el, { nome: vm.nomi.opp, n: vm.oppN, turno: vm.turno !== vm.io && vm.fase === "gioco", mia: false }) ]));
+    // ---- la stanza: l'avversario seduto dietro al tavolo verde in prospettiva ----
+    var oppTurno = vm.turno !== vm.io && vm.fase === "gioco";
+    var scena = el("div", { class: "sc-scena", style: "height:" + scH + "px" });
+    scena.appendChild(el("div", { class: "sc-quadro", style: "left:16px;background:linear-gradient(135deg,#3f6b8f,#9cc4d9 60%,#e7d9a8)" }));
+    scena.appendChild(el("div", { class: "sc-quadro", style: "right:16px;background:linear-gradient(135deg,#8f3f5c,#e3a26b 60%,#f2e3b5)" }));
+    scena.appendChild(el("div", { class: "sc-targa" + (oppTurno && !vm.presa ? " turno" : "") }, [
+      el("span", { class: "sc-nome", text: vm.nomi.opp }), el("span", { class: "sc-num", text: vm.oppN }),
+      vm.scopeOpp ? el("span", { class: "sc-targa-sc", text: "🧹 " + vm.scopeOpp }) : null ]));
+    // la faccia cambia con quello che succede
+    var faccia = "normale", fumetto = null;
+    if (vm.presa && vm.presa.scopa) { faccia = vm.presa.mio ? "triste" : "esulta"; if (!vm.presa.mio) fumetto = "🧹 SCOPA!"; }
+    else if (oppTurno && !vm.presa) { faccia = "pensa"; fumetto = "🤔"; }
+    var cfgAvv = (vm.avatar && vm.avatar.opp) || (window.SGOmino ? SGOmino.casuale(vm.nomi.opp) : null);
+    var avv = null, avvFig = null;
+    if (cfgAvv && window.SGOmino) {
+      avv = el("div", { class: "sc-avv" });
+      avvFig = el("div", { class: "sc-avv-fig", html: svgAvatar(cfgAvv, faccia) });
+      avv.appendChild(avvFig);
+      var ventaglio = el("div", { class: "sc-avv-carte" });
+      for (var iv = 0; iv < vm.oppN; iv++) {
+        var d = el("div", { class: "sc-dorso" }), ang = (iv - (vm.oppN - 1) / 2) * 13;
+        d.style.transform = "translateX(" + (ang * 1.1) + "px) rotate(" + ang + "deg)";
+        ventaglio.appendChild(d);
+      }
+      scena.appendChild(ventaglio);
+      if (fumetto) avv.appendChild(el("div", { class: "sc-fumetto" + (faccia === "esulta" ? " scopa" : ""), text: fumetto }));
+      scena.appendChild(avv);
+    }
+    var prosp = el("div", { class: "sc-prosp", style: "perspective:" + Math.max(600, Math.round(scH * 1.15)) + "px" });
+    var piano = el("div", { class: "sc-piano", style: "width:" + pianoW + "px;height:" + pianoH + "px;margin-left:" + (-pianoW / 2) + "px;transform:rotateX(54deg)" });
+    var feltro = el("div", { class: "sc-panno" });
+    piano.appendChild(feltro); prosp.appendChild(piano); scena.appendChild(prosp);
+    // dopo il montaggio: siedo l'avversario in modo che il bordo lontano del tavolo gli arrivi in vita
+    function siediAvversario() {
+      if (!avv) return;
+      var bordo = piano.getBoundingClientRect().top - scena.getBoundingClientRect().top;
+      var w = Math.min(Math.round(scW * 0.46), 190, Math.round((bordo + 6 - 22) / 0.975));
+      w = Math.max(90, w);
+      avv.style.width = w + "px"; avv.style.marginLeft = (-w / 2) + "px";
+      avv.style.top = Math.round(bordo + 6 - w * 0.975) + "px";
+      var cw = Math.round(w * 0.17), ch = Math.round(cw * ASP_CARTA);
+      ventaglio.style.top = Math.round(bordo + 6 - w * 0.975 + w * 0.76) + "px";
+      [].forEach.call(ventaglio.children, function (d) { d.style.width = cw + "px"; d.style.height = ch + "px"; d.style.left = (-cw / 2) + "px"; });
+      var fm = avv.querySelector(".sc-fumetto");
+      if (fm) { fm.style.left = Math.round(w * 0.74) + "px"; fm.style.top = Math.round(w * 0.2) + "px"; }
+      // la scopa dell'avversario: salta dalla gioia (una volta sola per presa)
+      var chiave = vm.presa ? vm.presa.carta.id + ":" + (vm.presa.presiIds || []).join(",") : null;
+      if (faccia === "esulta" && chiave !== scMount.salto && avvFig.animate) {
+        scMount.salto = chiave;
+        avvFig.animate([{ transform: "none" }, { transform: "translateY(-22px)" }, { transform: "none" }, { transform: "translateY(-10px)" }, { transform: "none" }], { duration: 800, easing: "ease-out" });
+      }
+    }
 
     var cartaSel = C.sel.carta ? trova(vm.mano, C.sel.carta) : null;
     var opts = cartaSel ? catture(cartaSel.v, vm.tavolo) : [];
     var capIds = {}; opts.forEach(function (set) { set.forEach(function (id) { capIds[id] = true; }); });
-    var areaTavolo = el("div", { class: "sc-terra" });
+    var areaTavolo = el("div", { class: "sc-terra sc-t3d" });
     var pendingPlace = null;
     if (vm.presa) {
       // il tavolo RESTA fermo: rimostro il tavolo com'era e faccio volare via SOLO le carte prese
       var dir = vm.presa.mio ? "giu" : "su";
-      areaTavolo.style.position = "relative";
       var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center" });
       var presiEls = [];
       (vm.presa.tavoloPrima || vm.tavolo).forEach(function (c) {
@@ -503,14 +607,13 @@
       gioc.style.cssText += ";position:absolute;z-index:6;opacity:0";
       areaTavolo.appendChild(gioc);
       pendingPlace = function () {
-        var a = areaTavolo.getBoundingClientRect();
+        // posizioni misurate SUL tavolo (non sullo schermo): il tavolo è inclinato
         if (presiEls.length) {                       // si posa sulla carta presa (o al centro del gruppo preso)
           var cx = 0, cy = 0;
-          presiEls.forEach(function (e) { var r = e.getBoundingClientRect(); cx += r.left + r.width / 2; cy += r.top + r.height / 2; });
+          presiEls.forEach(function (e) { cx += e.offsetLeft + e.offsetWidth / 2; cy += e.offsetTop + e.offsetHeight / 2; });
           cx /= presiEls.length; cy /= presiEls.length;
-          var g = gioc.getBoundingClientRect();
-          gioc.style.left = (cx - a.left - g.width / 2) + "px";
-          gioc.style.top = (cy - a.top - g.height / 2) + "px";
+          gioc.style.left = (cx - gioc.offsetWidth / 2) + "px";
+          gioc.style.top = (cy - gioc.offsetHeight / 2) + "px";
         } else {                                      // scopa: tavolo svuotato, si posa al centro
           gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = (-wT / 2) + "px"; gioc.style.marginTop = (-Math.round(wT * ASP_CARTA) / 2) + "px";
         }
@@ -533,10 +636,10 @@
     var prevMano = scMount ? (scMount.prevMano || 0) : 0;
     var dealing = !vm.presa && vm.fase === "gioco" && vm.mano.length > prevMano;
     if (vm.mazzoN > 0) { var deckEl = mazzo(el, vm.mazzoN); if (dealing) deckEl.classList.add("deal"); feltro.appendChild(deckEl); }
-    box.appendChild(feltro);
+    box.appendChild(scena);
 
     // ---- SCOPA! (solo quando succede; di chi è il turno si vede dal nome col bordo dorato) ----
-    if (vm.presa && vm.presa.scopa) box.appendChild(el("div", { style: "text-align:center;font-weight:900;font-size:1.1rem;margin:3px 0;color:#ffd43b", text: "SCOPA! 🧹" }));
+    if (vm.presa && vm.presa.scopa && vm.presa.mio) box.appendChild(el("div", { style: "text-align:center;font-weight:900;font-size:1.1rem;margin:3px 0;color:#ffd43b", text: "SCOPA! 🧹" }));
 
     // ---- la mia mano (in basso, sulla mensola di legno a dimensione FISSA) ----
     var mensola = el("div", { class: "sc-mensola", style: "min-height:" + (Math.round(wH * ASP_CARTA) + 34) + "px" });
@@ -572,6 +675,7 @@
       scMount = { cont: s._contenuto, box: box, piede: s._piede };
     }
     scMount.prevMano = vm.mano.length;   // per rilevare la prossima distribuzione
+    siediAvversario();
     if (pendingPlace) pendingPlace();
   }
 
@@ -704,11 +808,11 @@
   }
 
   // costruisce la vista per il giocatore "io" ("A" o "B") dallo stato del motore
-  function vistaDa(st, io) {
+  function vistaDa(st, io, omini) {
     var opp = altro(io);
     return {
       fase: st.fase, io: io, turno: st.turno,
-      nomi: { io: st.nomi[io], opp: st.nomi[opp] },
+      nomi: { io: st.nomi[io], opp: st.nomi[opp] }, avatar: omini ? { opp: omini[opp] || null } : null,
       mano: st.mani[io].slice(), oppN: st.mani[opp].length, tavolo: st.tavolo.slice(), mazzoN: st.mazzo.length,
       preseIo: st.prese[io].length, preseOpp: st.prese[opp].length,
       scopeIo: st.scope[io], scopeOpp: st.scope[opp],
@@ -801,7 +905,8 @@
       onNuova: function () { M = creaMotore(nomi, t.mischia); aggiorna(); seTuraBot(); },
       onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); t.esci(); }
     });
-    function aggiorna() { C.setVm(vistaDa(M.st, "A")); }
+    var omini = { A: mioAvatar(nomi.A), B: AVATAR_BOT };
+    function aggiorna() { C.setVm(vistaDa(M.st, "A", omini)); }
     function continua(ev) {
       // se ha preso, mostra per un attimo cosa è stato preso, poi prosegue
       if (ev.presa && M.st.fase === "gioco") {
@@ -829,7 +934,7 @@
   function hostScopa(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var nomi = { A: (t.giocatori && t.giocatori[0]) || "Host", B: "Avversario" };
-    var M = null, rete = null, avvId = null, pronta = false, codice = "…";
+    var M = null, rete = null, avvId = null, pronta = false, codice = "…", omini = { A: mioAvatar(nomi.A), B: null };
     var C = creaClient(t, {
       sonoHost: true,
       onMossa: function (id, presa) { if (!M) return; var ev = M.gioca("A", id, presa); dopo(ev); },
@@ -841,7 +946,7 @@
     function aggiornaLobby() { if (M) return; if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, avversario: !!avvId, nomi: { A: nomi.A, B: nomi.B } }); disegnaLobby(); }
     function bcast() {
       // all'ospite mando la SUA vista (vede solo le proprie carte); io disegno la mia
-      if (M) { if (rete) rete.invia({ t: "vm", vm: vistaDa(M.st, "B") }); C.setVm(vistaDa(M.st, "A")); }
+      if (M) { if (rete) rete.invia({ t: "vm", vm: vistaDa(M.st, "B", omini) }); C.setVm(vistaDa(M.st, "A", omini)); }
       else disegnaLobby();
     }
     function dopo(ev) {
@@ -858,7 +963,7 @@
       onAddio: function (id) { if (id === avvId) { avvId = null; nomi.B = "Avversario"; if (M) { M = null; } aggiornaLobby(); } },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") { if (!avvId) { avvId = id; nomi.B = String(m.nome || "Avversario").slice(0, 16); } if (M) M.st.nomi.B = nomi.B; aggiornaLobby(); }
+        if (m.t === "join") { if (!avvId) { avvId = id; nomi.B = String(m.nome || "Avversario").slice(0, 16); omini.B = avatarValido(m.omino); } if (M) M.st.nomi.B = nomi.B; aggiornaLobby(); }
         else if (m.t === "comincia") { /* solo host comincia */ }
         else if (m.t === "gioca" && M) { if (M.st.turno === "B") dopo(M.gioca("B", m.carta, m.presa)); }
         else if (m.t === "avanti") { /* ignora: avanza l'host */ }
@@ -900,7 +1005,7 @@
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.entrato = true; S.rete.invia({ t: "join", nome: S.nome }); mostraAttesa();
+        onAperto: function (id) { S.entrato = true; S.rete.invia({ t: "join", nome: S.nome, omino: mioAvatar(S.nome) }); mostraAttesa();
           setTimeout(function () { if (!C.vm && S.msg2) S.msg2.textContent = "Non trovo la partita: controlla il codice o attendi l'host…"; }, 8000); },
         onMsg: function (m) {
           if (!m) return;

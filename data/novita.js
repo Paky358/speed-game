@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 107,
+    data: "25 settembre 2026",
+    titolo: "Scopa: si gioca seduti al tavolo 🃏🧍",
+    descrizione: [
+      "Il tavolo ora si vede in prospettiva, come se fossi seduto davvero: le carte sono posate sul panno verde e il mazzo è sul tavolo.",
+      "Di fronte a te siede l'avversario, con il suo avatar e le carte coperte in mano. Il bot ha sempre la stessa faccia, online vedi l'avatar vero del tuo amico.",
+      "Le espressioni cambiano: quando tocca a lui ci pensa 🤔, se ti fa scopa salta dalla gioia, se la fai tu fa il muso."
+    ]
+  },
+  {
     v: 106,
     data: "25 settembre 2026",
     titolo: "Niente più uscite per sbaglio 🚪",
