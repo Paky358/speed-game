@@ -32,10 +32,11 @@
   // Proporzioni del campo: contro il computer si adattano allo schermo (niente spazio vuoto
   // sotto). L'online (spento) userebbe 1.7 fisso, uguale per i due telefoni.
   function impostaASP(a) { ASP = a; KH = (1 - 2 * BORDO) * ASP + 2 * BORDO; campoCache = null; }
+  // altezza VERA dello schermo (misurata da core.js in --alt): il campo va da bordo a bordo, fino in fondo
+  function altezzaSchermo() { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--alt")) || window.innerHeight || 640; }
   function aspSchermo() {
-    var vw = window.innerWidth || 360, vh = window.innerHeight || 640;
-    var w = Math.min(440, vw - 16), h = vh - 80;           // 80 = tasto indietro + margini
-    return clamp(((h / w) - 2 * BORDO) / (1 - 2 * BORDO), 1.5, 2.2);
+    var w = Math.min(600, window.innerWidth || 360), h = altezzaSchermo();
+    return clamp(((h / w) - 2 * BORDO) / (1 - 2 * BORDO), 1.4, 2.5);
   }
   function geo(cssW) { var B = cssW * BORDO, F = cssW - 2 * B; return { B: B, F: F, H: F * ASP + 2 * B }; }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
@@ -279,15 +280,17 @@
   // ---------- disegno (host e ospite) ----------
   function creaCanvas(t, s) {
     var el = t.el;
-    var wrap = el("div", { style: "display:flex;justify-content:center;margin-top:0" });
-    var cv = el("canvas", { style: "touch-action:none;border-radius:14px;background:" + TEMA.sfondo + ";box-shadow:0 0 0 1px rgba(255,255,255,.08)" });
+    if (!document.getElementById("sg-hockey-css")) { var stc = document.createElement("style"); stc.id = "sg-hockey-css";
+      stc.textContent = ".schermata.hk-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:" + TEMA.sfondo + "}"; document.head.appendChild(stc); }
+    s.classList.add("hk-piena");   // campo a tutto schermo: niente margini, niente bordi arrotondati
+    var wrap = el("div", { style: "display:flex;justify-content:center;margin:0" });
+    var cv = el("canvas", { style: "touch-action:none;display:block;background:" + TEMA.sfondo });
     wrap.appendChild(cv); s._contenuto.appendChild(wrap);
     // il campo deve ENTRARE TUTTO nello schermo (tutte e due le porte visibili senza scorrere):
     // si adatta sia alla larghezza sia all'altezza disponibile, mantenendo le proporzioni (ASP).
-    var vw = window.innerWidth || 360, vh = window.innerHeight || 640;
-    var maxW = Math.min(440, Math.floor(vw - 16));
-    var riserva = 80;                                    // solo il tasto indietro + margini
-    var maxH = Math.max(240, Math.floor(vh - riserva));
+    var vw = window.innerWidth || 360;
+    var maxW = Math.min(600, Math.floor(vw));
+    var maxH = Math.max(240, Math.floor(altezzaSchermo()));
     var cssW, cssH;
     if (maxW * KH <= maxH) { cssW = maxW; cssH = Math.round(maxW * KH); }     // limita la larghezza
     else { cssH = maxH; cssW = Math.round(maxH / KH); }                         // limita l'altezza
@@ -306,8 +309,9 @@
   // e lo ridimensiona per farci stare tutto il campo (niente scorrimento). Robusto su ogni telefono.
   function adattaCanvas(C) {
     var rect = C.cv.getBoundingClientRect();
-    var disp = (window.innerHeight || 640) - rect.top - 8;       // spazio dall'alto del campo al fondo schermo
-    var maxW = Math.min(440, Math.floor((window.innerWidth || 360) - 16));
+    var sch = C.cv.closest(".schermata"), topRel = sch ? rect.top - sch.getBoundingClientRect().top : rect.top;   // (misurato rispetto alla schermata: l'animazione d'entrata non conta)
+    var disp = altezzaSchermo() - Math.max(0, topRel);          // spazio dall'alto del campo al fondo schermo
+    var maxW = Math.min(600, Math.floor(window.innerWidth || 360));
     var maxH = Math.max(200, Math.floor(disp));
     var cssW, cssH;
     if (maxW * KH <= maxH) { cssW = maxW; cssH = Math.round(maxW * KH); }

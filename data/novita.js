@@ -15,6 +15,7 @@ window.SG_NOVITA = [
     descrizione: [
       "Dopo un gol niente più attesa a racchette bloccate: il disco CADE DALL'ALTO. Parte grande con la sua ombra, si rimpicciolisce fino a toccare terra (tump!) e da lì si può colpire. Intanto ti muovi liberamente.",
       "Anche a inizio partita il disco arriva dall'alto.",
+      "Il campo prende TUTTO lo schermo, da bordo a bordo e fino in fondo: niente più spazio vuoto sotto.",
       "I bordi si illuminano nel punto esatto in cui il disco li colpisce.",
       "Musica gasante in stile Geometry Dash: cassa dritta, basso che pompa, arpeggio e melodia. Tasto 🎵/🔇 in alto a destra sul campo."
     ]
