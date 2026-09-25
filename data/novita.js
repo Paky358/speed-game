@@ -9,6 +9,20 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 125,
+    data: "26 settembre 2026",
+    titolo: "Horto Muso rifatto: ippodromo, cavalli veri e il tuo avatar in sella 🏇",
+    descrizione: [
+      "Cavalli disegnati da capo: galoppano davvero (zampe snodate, criniera e coda che ondeggiano), 8 mantelli diversi con stella, lista e calzini bianchi, briglie e gualdrappa col numero.",
+      "In sella c'è il TUO avatar; online quelli dei tuoi amici. I bot sono Matt, Sara, Leo, Nina, Giulia, Toni e Rosa.",
+      "Ippodromo a tutto schermo: cielo, tribuna con la folla che salta, staccionata e prato a strisce.",
+      "Telecamera che segue la corsa come in TV: i cavalli restano grandi mentre scorrono prato, staccionata e cartelli dei metri. Il traguardo arriva solo alla fine.",
+      "Minimappa in alto del percorso a mezzo ovale, con un pallino per ogni cavallo, più la tua posizione e i metri che mancano.",
+      "Si parte dai cancelletti che si aprono al VIA. Polvere dietro gli zoccoli, righe di vento quando frusti e galoppo più veloce; se sei sfinito il cavallo rallenta.",
+      "Photo finish con i cavalli nuovi (si fermano pure le zampe nello scatto) e podio finale con gli avatar."
+    ]
+  },
+  {
     v: 124,
     data: "26 settembre 2026",
     titolo: "Classifica trofei e amici 👥",
