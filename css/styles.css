@@ -736,3 +736,16 @@ button.am-riga:active{ transform:scale(.985); }
 .am-fac-grande{ width:120px; height:120px; border-radius:50%; overflow:hidden; background:rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; }
 .am-fac-grande svg{ width:100%; height:100%; display:block; }
 .am-fac-grande .am-emo{ font-size:4rem; }
+.am-schede{ grid-template-columns:repeat(3,1fr); }
+.am-tab{ position:relative; font-size:.88rem; padding:10px 2px; }
+.am-conta{ position:absolute; top:3px; right:6px; min-width:18px; height:18px; border-radius:9px; padding:0 5px; background:#ff4d5e; color:#fff; font-size:.72rem; line-height:18px; font-weight:900; }
+.am-cerca-box{ margin-bottom:12px; }
+.am-piu{ flex:0 0 auto; width:38px; height:38px; border-radius:50%; border:0; font:inherit; font-weight:900; font-size:1rem; cursor:pointer; color:#1a1a1a; background:var(--accento); box-shadow:var(--ombra); }
+.am-piu.si{ background:#5fd47a; font-size:1.25rem; }
+.am-piu:disabled{ opacity:.5; }
+.am-stato{ flex:0 0 38px; text-align:center; font-size:1.2rem; }
+.am-sep{ text-align:center; color:var(--testo-tenue); font-weight:900; letter-spacing:.2em; }
+.am-nota{ margin:8px 0 0; font-size:.9rem; }
+.am-etich{ margin:6px 0 0; }
+.am-etich:first-child{ margin-top:0; }
+.home-amici{ position:relative; }

@@ -750,6 +750,19 @@ button.am-riga:active{ transform:scale(.985); }
 .am-fac-grande{ width:120px; height:120px; border-radius:50%; overflow:hidden; background:rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; }
 .am-fac-grande svg{ width:100%; height:100%; display:block; }
 .am-fac-grande .am-emo{ font-size:4rem; }
+.am-schede{ grid-template-columns:repeat(3,1fr); }
+.am-tab{ position:relative; font-size:.88rem; padding:10px 2px; }
+.am-conta{ position:absolute; top:3px; right:6px; min-width:18px; height:18px; border-radius:9px; padding:0 5px; background:#ff4d5e; color:#fff; font-size:.72rem; line-height:18px; font-weight:900; }
+.am-cerca-box{ margin-bottom:12px; }
+.am-piu{ flex:0 0 auto; width:38px; height:38px; border-radius:50%; border:0; font:inherit; font-weight:900; font-size:1rem; cursor:pointer; color:#1a1a1a; background:var(--accento); box-shadow:var(--ombra); }
+.am-piu.si{ background:#5fd47a; font-size:1.25rem; }
+.am-piu:disabled{ opacity:.5; }
+.am-stato{ flex:0 0 38px; text-align:center; font-size:1.2rem; }
+.am-sep{ text-align:center; color:var(--testo-tenue); font-weight:900; letter-spacing:.2em; }
+.am-nota{ margin:8px 0 0; font-size:.9rem; }
+.am-etich{ margin:6px 0 0; }
+.am-etich:first-child{ margin-top:0; }
+.home-amici{ position:relative; }
 </style>
 <div id="app"></div>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
@@ -908,13 +921,14 @@ button.am-riga:active{ transform:scale(.985); }
       return db.collection("pubblici").where("chiave", "==", SGNube.chiaveNome(nome)).limit(1).get()
         .then(function (q) { return q.empty ? null : q.docs[0].data(); });
     },
-    aggiungiAmico: function (uid) {
+    // aggiunge/toglie un uid dalla MIA lista amici (solo il mio profilo)
+    mettiAmico: function (uid) {
       if (!auth || !utente || !profilo) return Promise.reject(new Error("offline"));
       var l = profilo.amici || []; if (l.indexOf(uid) < 0) l.push(uid);
       profilo.amici = l;
       return db.collection("profili").doc(utente.uid).update({ amici: firebase.firestore.FieldValue.arrayUnion(uid) });
     },
-    togliAmico: function (uid) {
+    levaAmico: function (uid) {
       if (!auth || !utente || !profilo) return Promise.reject(new Error("offline"));
       profilo.amici = (profilo.amici || []).filter(function (x) { return x !== uid; });
       return db.collection("profili").doc(utente.uid).update({ amici: firebase.firestore.FieldValue.arrayRemove(uid) });
@@ -925,6 +939,68 @@ button.am-riga:active{ transform:scale(.985); }
       return Promise.all((uids || []).map(function (u) {
         return db.collection("pubblici").doc(u).get().then(function (d) { return d.exists ? d.data() : null; });
       })).then(function (l) { return l.filter(Boolean); });
+    },
+    // classifica di TUTTI: chi ha più trofei (i primi n)
+    classificaGenerale: function (n) {
+      if (!auth || !utente) return Promise.reject(new Error("offline"));
+      return db.collection("pubblici").orderBy("trofei", "desc").limit(n || 100).get()
+        .then(function (q) { return q.docs.map(function (d) { return d.data(); }); });
+    },
+
+    // ---- richieste di amicizia ----
+    // Raccolta "richieste", un doc per coppia (id = mittente_destinatario):
+    //   stato "attesa"    -> il destinatario la vede e accetta o rifiuta (rifiuta = cancella)
+    //   stato "accettata" -> il destinatario ha già messo il mittente tra gli amici;
+    //                        il mittente, alla prossima lettura, fa lo stesso e la cancella
+    //   stato "rimosso"   -> chi ha tolto l'amicizia avvisa l'altro, che lo toglie a sua volta
+    // Nessuno scrive mai nel profilo di un altro: ognuno aggiorna solo il suo.
+    richieste: function () {
+      if (!auth || !utente || !profilo) return Promise.reject(new Error("offline"));
+      var me = utente.uid, R = db.collection("richieste"), lavori = [];
+      return Promise.all([R.where("a", "==", me).get(), R.where("da", "==", me).get()]).then(function (qq) {
+        var arrivate = [], inviate = [];
+        qq[0].docs.forEach(function (d) {
+          var r = d.data(); r.id = d.id;
+          if (r.stato === "attesa") arrivate.push(r);
+          else if (r.stato === "rimosso") { lavori.push(SGNube.levaAmico(r.da)); lavori.push(d.ref.delete()); }
+        });
+        qq[1].docs.forEach(function (d) {
+          var r = d.data(); r.id = d.id;
+          if (r.stato === "attesa") inviate.push(r);
+          else if (r.stato === "accettata") { lavori.push(SGNube.mettiAmico(r.a)); lavori.push(d.ref.delete()); }
+        });
+        return Promise.all(lavori.map(function (p) { return p.catch(function () {}); })).then(function () {
+          return { arrivate: arrivate, inviate: inviate };
+        });
+      });
+    },
+    // manda la richiesta a una scheda pubblica (se lui l'aveva già chiesta a me, la accetta)
+    chiediAmicizia: function (sch) {
+      if (!auth || !utente || !profilo) return Promise.reject(new Error("offline"));
+      var me = utente.uid, R = db.collection("richieste");
+      return R.where("a", "==", me).where("da", "==", sch.uid).get().then(function (q) {
+        var sua = q.docs.filter(function (d) { return d.data().stato === "attesa"; })[0];
+        if (sua) { var r = sua.data(); r.id = sua.id; return SGNube.accetta(r).then(function () { return "amici"; }); }
+        return R.doc(me + "_" + sch.uid).set({
+          da: me, a: sch.uid, daNome: profilo.nome, aNome: sch.nome || "",
+          daOmino: profilo.omino || null, daEmoji: profilo.emoji || "🙂", stato: "attesa", t: Date.now()
+        }).then(function () { return "inviata"; });
+      });
+    },
+    accetta: function (r) {
+      return SGNube.mettiAmico(r.da).then(function () {
+        return db.collection("richieste").doc(r.id).update({ stato: "accettata" });
+      });
+    },
+    rifiuta: function (r) { return db.collection("richieste").doc(r.id).delete(); },
+    annulla: function (r) { return db.collection("richieste").doc(r.id).delete(); },
+    // toglie l'amicizia da tutte e due le parti
+    togliAmico: function (uid) {
+      if (!auth || !utente || !profilo) return Promise.reject(new Error("offline"));
+      var me = utente.uid;
+      return SGNube.levaAmico(uid).then(function () {
+        return db.collection("richieste").doc(me + "_" + uid).set({ da: me, a: uid, stato: "rimosso", t: Date.now() });
+      });
     },
 
     // legge le statistiche di un gioco, es. statGioco("blackjack")
@@ -2401,7 +2477,8 @@ button.am-riga:active{ transform:scale(.985); }
       rigaProfilo.appendChild(bNov);
     }
     rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: schermataSfide }, [ el("span", { text: "🏆 Trofei" }) ]));
-    rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: function () { schermataAmici(); } }, [ el("span", { text: "👥 Amici" }) ]));
+    rigaProfilo.appendChild(el("button", { class: "home-novita home-amici", onclick: function () { schermataAmici(); } }, [ el("span", { text: "👥 Classifica" }), cacheRich && cacheRich.arrivate.length ? el("span", { class: "pallino" }) : null ]));
+    setTimeout(function () { aggiornaRichieste(); }, 0);   // richieste di amicizia nuove? pallino sul tasto
     // "Installa l'app": solo dal browser (se è già aperta come app, non serve)
     var giaApp = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone;
     var iPhone = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -2864,110 +2941,211 @@ button.am-riga:active{ transform:scale(.985); }
     if (c === "unavailable" || (e && e.message === "offline")) return "Nessuna connessione: riprova.";
     return "Qualcosa è andato storto, riprova.";
   }
+  // richieste di amicizia (arrivate/inviate): lette all'apertura e ricordate
+  var cacheRich = null, richLette = 0, errRich = null;
+  function aggiornaRichieste(forza) {
+    if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo() && SGNube.richieste)) return Promise.resolve(null);
+    if (!forza && cacheRich && Date.now() - richLette < 30000) return Promise.resolve(cacheRich);
+    richLette = Date.now();
+    return SGNube.richieste().then(function (r) {
+      cacheRich = r;
+      // il pallino sul tasto Amici in home, senza ridisegnare la home
+      var b = document.querySelector(".home-amici");
+      if (b) { var p = b.querySelector(".pallino"); if (r.arrivate.length && !p) b.appendChild(el("span", { class: "pallino" })); if (!r.arrivate.length && p) b.removeChild(p); }
+      return r;
+    }).catch(function (e) { errRich = e; return cacheRich; });
+  }
+  // che rapporto ho con questo giocatore
+  function rapporto(uid) {
+    var prof = SGNube.profilo();
+    if (prof && uid === prof.uid) return "io";
+    if (SGNube.amici().indexOf(uid) >= 0) return "amico";
+    if (cacheRich) {
+      if (cacheRich.arrivate.some(function (r) { return r.da === uid; })) return "arrivata";
+      if (cacheRich.inviate.some(function (r) { return r.a === uid; })) return "inviata";
+    }
+    return "nessuno";
+  }
+  // manda la richiesta (o accetta se lui l'aveva già mandata) e dice com'è andata
+  function chiediA(sch, fatto) {
+    return SGNube.chiediAmicizia(sch).then(function (esito) {
+      return aggiornaRichieste(true).then(function () {
+        if (fatto) fatto(esito === "amici" ? "✅ Tu e " + sch.nome + " ora siete amici!" : "📨 Richiesta mandata a " + sch.nome + ".");
+      });
+    });
+  }
+  function laMiaScheda(prof) {
+    var io = { uid: prof.uid, nome: prof.nome, omino: prof.omino || null, emoji: prof.emoji, io: true, giochi: {} };
+    var set = trofeiSbloccati(prof), liv = { platino: 0, diamante: 0, oro: 0, argento: 0, bronzo: 0 };
+    io.trofei = 0;
+    for (var k in set) { io.trofei++; if (liv[set[k].livello] != null) liv[set[k].livello]++; io.giochi[set[k].gioco] = (io.giochi[set[k].gioco] || 0) + 1; }
+    io.liv = liv;
+    return io;
+  }
+
   function schermataAmici(scheda) {
-    scheda = scheda || "classifica";
+    scheda = scheda || "generale";
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
-    var s = schermata({ icona: "👥", titolo: "Amici", sotto: "I tuoi amici e chi ha più trofei", indietro: schermataHome });
+    var s = schermata({ icona: "👥", titolo: "Classifica e amici", sotto: "Chi ha più trofei", indietro: schermataHome });
     if (!prof) {
-      s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ti serve il profilo per aggiungere amici e confrontare i trofei." }));
+      s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ti serve il profilo per entrare in classifica, aggiungere amici e confrontare i trofei." }));
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "👤 Crea / accedi al profilo", onclick: function () { schermataAccesso(function () { schermataAmici(scheda); }); } }));
       mostra(s); return;
     }
     controllaTrofei();   // la mia scheda pubblica è aggiornata prima di leggere le altre
+    var io = laMiaScheda(prof), tot = totTrofeiTutti();
     var schede = el("div", { class: "am-schede" });
-    [["classifica", "🏆 Classifica"], ["amici", "👥 I miei amici"]].forEach(function (x) {
-      schede.appendChild(el("button", { class: "am-tab" + (x[0] === scheda ? " attiva" : ""), text: x[1], onclick: function () { if (x[0] !== scheda) schermataAmici(x[0]); } }));
+    var tabRich = null;
+    [["generale", "🌍 Generale"], ["amici", "👥 Amici"], ["richieste", "📨 Richieste"]].forEach(function (x) {
+      var b = el("button", { class: "am-tab" + (x[0] === scheda ? " attiva" : ""), onclick: function () { if (x[0] !== scheda) schermataAmici(x[0]); } }, [ el("span", { text: x[1] }) ]);
+      if (x[0] === "richieste") tabRich = b;
+      schede.appendChild(b);
     });
+    function segnaRichieste() {
+      var n = cacheRich ? cacheRich.arrivate.length : 0, p = tabRich.querySelector(".am-conta");
+      if (n && !p) tabRich.appendChild(el("span", { class: "am-conta", text: "" + n }));
+      else if (p) { if (n) p.textContent = "" + n; else tabRich.removeChild(p); }
+    }
+    segnaRichieste();
     s._contenuto.appendChild(schede);
     var corpo = el("div", { class: "am-corpo" });
-    var avviso = el("div", { class: "link-avviso" });
     s._contenuto.appendChild(corpo);
+    function ancoraQui() { return !!s.parentNode; }
+    function carica(testo) { corpo.appendChild(el("p", { class: "modulo-nota am-carica", text: testo })); }
+    function errore(e) { var c = corpo.querySelector(".am-carica"); if (c) c.textContent = erroreAmici(e); else corpo.appendChild(el("p", { class: "link-avviso", text: erroreAmici(e) })); }
 
-    var io = { uid: prof.uid, nome: prof.nome, omino: prof.omino || null, emoji: prof.emoji, io: true };
-    var set = trofeiSbloccati(prof), liv = { platino: 0, diamante: 0, oro: 0, argento: 0, bronzo: 0 };
-    io.trofei = 0; for (var k in set) { io.trofei++; if (liv[set[k].livello] != null) liv[set[k].livello]++; }
-    io.liv = liv;
-
-    function disegna(lista) {
-      svuota(corpo);
-      if (scheda === "classifica") {
-        var tutti = ordinaClassifica([io].concat(lista)), tot = totTrofeiTutti(), pos = 0, prec = null;
-        tutti.forEach(function (x, i) {
-          if (!prec || (x.trofei || 0) !== (prec.trofei || 0)) pos = i + 1;   // a pari trofei, stesso posto
-          prec = x;
-          var medaglia = pos === 1 ? "🥇" : pos === 2 ? "🥈" : pos === 3 ? "🥉" : pos + "°";
-          var l = x.liv || {};
-          var dett = [["💠", l.platino], ["💎", l.diamante], ["🥇", l.oro], ["🥈", l.argento], ["🥉", l.bronzo]]
-            .filter(function (d) { return d[1]; }).map(function (d) { return d[0] + " " + d[1]; }).join("   ");
-          corpo.appendChild(el("button", { class: "am-riga" + (x.io ? " io" : "") + (pos <= 3 ? " podio p" + pos : ""), onclick: function () { schermataTrofeiAmico(x); } }, [
-            el("span", { class: "am-pos", text: medaglia }),
-            faccina(x, "am-fac"),
-            el("div", { class: "am-info" }, [
-              el("div", { class: "am-nome", text: x.nome + (x.io ? " (tu)" : "") }),
-              el("div", { class: "am-dett", text: dett || "Nessun trofeo ancora" })
-            ]),
-            el("div", { class: "am-num" }, [ el("b", { text: "" + (x.trofei || 0) }), el("span", { text: "/" + tot }) ])
-          ]));
-        });
-        if (!lista.length) corpo.appendChild(el("p", { class: "modulo-nota", style: "margin-top:14px", text: "Aggiungi i tuoi amici (scheda \"I miei amici\") per sfidarvi a chi ha più trofei." }));
-      } else {
-        var campo = el("input", { class: "link-campo", type: "text", maxlength: "20", placeholder: "Nome del profilo del tuo amico" });
-        var bAgg = el("button", { class: "btn btn-primario am-agg", text: "➕ Aggiungi" });
-        function aggiungi() {
-          var n = (campo.value || "").trim();
-          if (n.length < 2) { avviso.textContent = "Scrivi il nome del profilo del tuo amico."; return; }
-          if (SGNube.chiaveNome(n) === SGNube.chiaveNome(prof.nome)) { avviso.textContent = "Quello sei tu 😄"; return; }
-          bAgg.disabled = true; avviso.textContent = "Cerco…";
-          SGNube.cercaNome(n).then(function (sch) {
-            if (!sch) { bAgg.disabled = false; avviso.textContent = "Non trovo nessuno con questo nome. Deve aver aperto l'app almeno una volta dopo l'aggiornamento."; return; }
-            if (SGNube.amici().indexOf(sch.uid) >= 0) { bAgg.disabled = false; avviso.textContent = sch.nome + " è già tra i tuoi amici."; return; }
-            return SGNube.aggiungiAmico(sch.uid).then(function () {
-              cacheAmici = (cacheAmici || []).concat([sch]);
-              avviso.textContent = "✅ " + sch.nome + " aggiunto!";
-              campo.value = ""; bAgg.disabled = false;
-              disegna(cacheAmici);
-            });
-          }).catch(function (e) { bAgg.disabled = false; avviso.textContent = erroreAmici(e); });
+    // una riga di classifica; "azione" = il tasto a destra per chiedere/accettare l'amicizia
+    function riga(x, pos, conAzione) {
+      var medaglia = pos === 1 ? "🥇" : pos === 2 ? "🥈" : pos === 3 ? "🥉" : pos ? pos + "°" : "–";
+      var l = x.liv || {};
+      var dett = [["💠", l.platino], ["💎", l.diamante], ["🥇", l.oro], ["🥈", l.argento], ["🥉", l.bronzo]]
+        .filter(function (d) { return d[1]; }).map(function (d) { return d[0] + " " + d[1]; }).join("   ");
+      var rap = rapporto(x.uid), azione = null;
+      if (conAzione) {
+        if (rap === "amico") azione = el("span", { class: "am-stato", text: "👥" });
+        else if (rap === "inviata") azione = el("span", { class: "am-stato", text: "⏳" });
+        else if (rap === "arrivata" || rap === "nessuno") {
+          azione = el("button", { class: "am-piu" + (rap === "arrivata" ? " si" : ""), text: rap === "arrivata" ? "✓" : "➕", "aria-label": "Amicizia con " + x.nome, onclick: function (e) {
+            e.stopPropagation(); azione.disabled = true;
+            chiediA(x, function () { if (ancoraQui()) schermataAmici(scheda); }).catch(function (er) { azione.disabled = false; alert(erroreAmici(er)); });
+          } });
         }
-        bAgg.onclick = aggiungi;
-        campo.addEventListener("keydown", function (e) { if (e.key === "Enter") aggiungi(); });
-        corpo.appendChild(el("div", { class: "am-cerca" }, [campo, bAgg]));
-        corpo.appendChild(avviso);
-        if (!lista.length) corpo.appendChild(el("p", { class: "modulo-nota", style: "margin-top:10px", text: "Non hai ancora amici. Chiedi il nome del loro profilo e scrivilo qui sopra." }));
-        lista.slice().sort(function (a, b) { return String(a.nome).localeCompare(String(b.nome)); }).forEach(function (x) {
+      }
+      return el("button", { class: "am-riga" + (x.io ? " io" : "") + (pos && pos <= 3 ? " podio p" + pos : ""), onclick: function () { schermataTrofeiAmico(x, scheda); } }, [
+        el("span", { class: "am-pos", text: medaglia }),
+        faccina(x, "am-fac"),
+        el("div", { class: "am-info" }, [
+          el("div", { class: "am-nome", text: x.nome + (x.io ? " (tu)" : "") }),
+          el("div", { class: "am-dett", text: dett || "Nessun trofeo ancora" })
+        ]),
+        el("div", { class: "am-num" }, [ el("b", { text: "" + (x.trofei || 0) }), el("span", { text: "/" + tot }) ]),
+        azione
+      ]);
+    }
+    // mette in fila e numera (a pari trofei, stesso posto)
+    function classifica(lista, conAzione) {
+      var pos = 0, prec = null;
+      ordinaClassifica(lista).forEach(function (x, i) {
+        if (!prec || (x.trofei || 0) !== (prec.trofei || 0)) pos = i + 1;
+        prec = x;
+        corpo.appendChild(riga(x, pos, conAzione));
+      });
+    }
+
+    if (scheda === "generale") {
+      carica("Carico la classifica…");
+      Promise.all([SGNube.classificaGenerale(100), aggiornaRichieste()]).then(function (rr) {
+        if (!ancoraQui()) return;
+        svuota(corpo); segnaRichieste();
+        var lista = rr[0].filter(function (x) { return x.uid !== io.uid; }), dentro = rr[0].length > lista.length || rr[0].length < 100;
+        if (dentro) classifica(lista.concat([io]), true);
+        else {   // non sono tra i primi 100: la classifica e poi io in fondo
+          classifica(lista, true);
+          corpo.appendChild(el("div", { class: "am-sep", text: "…" }));
+          corpo.appendChild(riga(io, 0, false));
+        }
+        corpo.appendChild(el("p", { class: "modulo-nota am-nota", text: "Tocca ➕ per chiedere l'amicizia, o un nome per vedere i suoi trofei." }));
+      }).catch(errore);
+    } else if (scheda === "amici") {
+      var campo = el("input", { class: "link-campo", type: "text", maxlength: "20", placeholder: "Cerca un nome…" });
+      var bCerca = el("button", { class: "btn btn-primario am-agg", text: "➕ Chiedi" });
+      var avviso = el("div", { class: "link-avviso" });
+      function cerca() {
+        var n = (campo.value || "").trim();
+        if (n.length < 2) { avviso.textContent = "Scrivi il nome del profilo del tuo amico."; return; }
+        if (SGNube.chiaveNome(n) === SGNube.chiaveNome(prof.nome)) { avviso.textContent = "Quello sei tu 😄"; return; }
+        bCerca.disabled = true; avviso.textContent = "Cerco…";
+        SGNube.cercaNome(n).then(function (sch) {
+          if (!sch) { bCerca.disabled = false; avviso.textContent = "Non trovo nessuno con questo nome. Deve aver aperto l'app almeno una volta dopo l'aggiornamento."; return; }
+          var rap = rapporto(sch.uid);
+          if (rap === "amico") { bCerca.disabled = false; avviso.textContent = sch.nome + " è già tuo amico."; return; }
+          if (rap === "inviata") { bCerca.disabled = false; avviso.textContent = "Hai già mandato la richiesta a " + sch.nome + ": aspetta che accetti."; return; }
+          return chiediA(sch, function (msg) { bCerca.disabled = false; campo.value = ""; avviso.textContent = msg; });
+        }).catch(function (e) { bCerca.disabled = false; avviso.textContent = erroreAmici(e); });
+      }
+      bCerca.onclick = cerca;
+      campo.addEventListener("keydown", function (e) { if (e.key === "Enter") cerca(); });
+      s._contenuto.insertBefore(el("div", { class: "am-cerca-box" }, [ el("div", { class: "am-cerca" }, [campo, bCerca]), avviso ]), corpo);
+      var mieiUid = SGNube.amici();
+      var giaNoti = (cacheAmici || []).filter(function (x) { return mieiUid.indexOf(x.uid) >= 0; });
+      function disegnaAmici(l) {
+        svuota(corpo);
+        classifica(l.concat([io]), false);
+        if (!l.length) corpo.appendChild(el("p", { class: "modulo-nota am-nota", text: "Non hai ancora amici. Cerca il loro nome qui sopra, oppure chiedi l'amicizia dalla classifica Generale." }));
+      }
+      disegnaAmici(giaNoti);
+      aggiornaRichieste().then(function () {   // intanto si sistemano le amicizie accettate/tolte dagli altri
+        segnaRichieste();
+        var uids = SGNube.amici();
+        if (!uids.length) { cacheAmici = []; if (ancoraQui()) disegnaAmici([]); return; }
+        if (!giaNoti.length) carica("Carico gli amici…");
+        return SGNube.schede(uids).then(function (l) { cacheAmici = l; if (ancoraQui()) disegnaAmici(l); });
+      }).catch(errore);
+    } else {
+      carica("Carico le richieste…");
+      aggiornaRichieste(true).then(function (r) {
+        if (!ancoraQui()) return;
+        svuota(corpo); segnaRichieste();
+        if (!r) { errore(errRich || { code: "unavailable" }); return; }
+        function persona(nome, omino, emoji) { return { nome: nome || "?", omino: omino || null, emoji: emoji }; }
+        corpo.appendChild(el("div", { class: "etichetta am-etich", text: "Arrivate a te" }));
+        if (!r.arrivate.length) corpo.appendChild(el("p", { class: "modulo-nota am-nota", text: "Nessuna richiesta nuova." }));
+        r.arrivate.forEach(function (q) {
+          var bSi = el("button", { class: "am-piu si", text: "✓", "aria-label": "Accetta", onclick: function () {
+            bSi.disabled = true;
+            SGNube.accetta(q).then(function () { return aggiornaRichieste(true); }).then(function () { schermataAmici("richieste"); })
+              .catch(function (e) { bSi.disabled = false; alert(erroreAmici(e)); });
+          } });
+          var bNo = el("button", { class: "am-togli", text: "✕", "aria-label": "Rifiuta", onclick: function () {
+            SGNube.rifiuta(q).then(function () { return aggiornaRichieste(true); }).then(function () { schermataAmici("richieste"); }).catch(function () {});
+          } });
           corpo.appendChild(el("div", { class: "am-riga" }, [
-            faccina(x, "am-fac"),
-            el("div", { class: "am-info" }, [
-              el("div", { class: "am-nome", text: x.nome }),
-              el("div", { class: "am-dett", text: "🏆 " + (x.trofei || 0) + " trofei" })
-            ]),
-            el("button", { class: "am-togli", text: "✕", "aria-label": "Togli " + x.nome, onclick: function () {
-              chiediConferma("Togliere " + x.nome + " dagli amici?", "Potrai sempre riaggiungerlo scrivendo il suo nome.", "✕ Togli", function () {
-                SGNube.togliAmico(x.uid).catch(function () {});
-                cacheAmici = (cacheAmici || []).filter(function (y) { return y.uid !== x.uid; });
-                schermataAmici("amici");
-              });
-            } })
+            faccina(persona(q.daNome, q.daOmino, q.daEmoji), "am-fac"),
+            el("div", { class: "am-info" }, [ el("div", { class: "am-nome", text: q.daNome || "?" }), el("div", { class: "am-dett", text: "vuole essere tuo amico" }) ]),
+            bNo, bSi
           ]));
         });
-      }
-    }
-    var mieiUid = SGNube.amici();
-    var giaNoti = (cacheAmici || []).filter(function (x) { return mieiUid.indexOf(x.uid) >= 0; });
-    disegna(giaNoti);
-    if (mieiUid.length) {
-      if (!giaNoti.length) corpo.appendChild(el("p", { class: "modulo-nota am-carica", text: "Carico gli amici…" }));
-      SGNube.schede(mieiUid).then(function (l) {
-        cacheAmici = l;
-        if (s.parentNode) disegna(l);
-      }).catch(function (e) { if (s.parentNode) { var c = corpo.querySelector(".am-carica"); if (c) c.textContent = erroreAmici(e); } });
+        if (r.inviate.length) {
+          corpo.appendChild(el("div", { class: "etichetta am-etich", text: "Mandate da te" }));
+          r.inviate.forEach(function (q) {
+            corpo.appendChild(el("div", { class: "am-riga" }, [
+              el("span", { class: "am-fac" }, [ el("span", { class: "am-emo", text: "⏳" }) ]),
+              el("div", { class: "am-info" }, [ el("div", { class: "am-nome", text: q.aNome || "?" }), el("div", { class: "am-dett", text: "in attesa che accetti" }) ]),
+              el("button", { class: "am-togli", text: "✕", "aria-label": "Annulla", onclick: function () {
+                SGNube.annulla(q).then(function () { return aggiornaRichieste(true); }).then(function () { schermataAmici("richieste"); }).catch(function () {});
+              } })
+            ]));
+          });
+        }
+      });
     }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Torna alla home", onclick: schermataHome }));
     mostra(s);
   }
-  // i trofei di un amico (o tuoi), gioco per gioco
-  function schermataTrofeiAmico(x) {
-    var s = schermata({ titolo: x.nome, sotto: "🏆 " + (x.trofei || 0) + " trofei", indietro: function () { schermataAmici("classifica"); } });
+  // i trofei di un giocatore, gioco per gioco (+ il tasto per l'amicizia)
+  function schermataTrofeiAmico(x, torna) {
+    torna = torna || "generale";
+    var s = schermata({ titolo: x.nome, sotto: "🏆 " + (x.trofei || 0) + " trofei", indietro: function () { schermataAmici(torna); } });
     s._contenuto.appendChild(el("div", { class: "am-grande" }, [ faccina(x, "am-fac-grande") ]));
     var l = x.liv || {};
     function cella(cls, ico, nome, f) {
@@ -2979,13 +3157,12 @@ button.am-riga:active{ transform:scale(.985); }
         cella("tl-oro", "🥇", "Oro", l.oro), cella("tl-diamante", "💎", "Diamante", l.diamante), cella("tl-platino", "💠", "Platino", l.platino)
       ])
     ]));
-    var perGioco = x.giochi;
-    if (x.io) { perGioco = {}; var st = trofeiSbloccati(SGNube.profilo()); for (var k in st) perGioco[st[k].gioco] = (perGioco[st[k].gioco] || 0) + 1; }
+    var perGioco = x.giochi || {};
     // prima i giochi dove ha più trofei
-    giochi.slice().sort(function (a, b) { return ((perGioco && perGioco[b.id]) || 0) - ((perGioco && perGioco[a.id]) || 0); }).forEach(function (g) {
+    giochi.slice().sort(function (a, b) { return (perGioco[b.id] || 0) - (perGioco[a.id] || 0); }).forEach(function (g) {
       var tot = trofeiDi(g.id).length; if (!tot) return;
       tot++;   // + il Platino del gioco
-      var f = (perGioco && perGioco[g.id]) || 0, pct = Math.floor(f * 100 / tot), plat = f >= tot;
+      var f = perGioco[g.id] || 0, pct = Math.floor(f * 100 / tot), plat = f >= tot;
       s._contenuto.appendChild(el("div", { class: "sfida-gioco" + (plat ? " platinato" : "") }, [
         el("span", { class: "sg-ico", text: g.icona || "🎮" }),
         el("div", { class: "sg-corpo" }, [
@@ -2995,7 +3172,26 @@ button.am-riga:active{ transform:scale(.985); }
         ])
       ]));
     });
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "‹ Classifica", onclick: function () { schermataAmici("classifica"); } }));
+    var rap = x.io ? "io" : rapporto(x.uid), avviso = el("div", { class: "link-avviso" });
+    if (rap === "nessuno" || rap === "arrivata") {
+      var b = el("button", { class: "btn btn-primario", text: rap === "arrivata" ? "✅ Accetta l'amicizia" : "➕ Chiedi l'amicizia", onclick: function () {
+        b.disabled = true;
+        chiediA(x, function (msg) { avviso.textContent = msg; b.textContent = msg.charAt(0) === "✅" ? "👥 Siete amici" : "⏳ Richiesta mandata"; })
+          .catch(function (e) { b.disabled = false; avviso.textContent = erroreAmici(e); });
+      } });
+      s._piede.appendChild(avviso); s._piede.appendChild(b);
+    } else if (rap === "inviata") {
+      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "⏳ Richiesta mandata, aspetta che accetti", disabled: "disabled" }));
+    } else if (rap === "amico") {
+      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "✕ Togli dagli amici", onclick: function () {
+        chiediConferma("Togliere " + x.nome + " dagli amici?", "Sparirete dalla lista amici l'uno dell'altro. Potrai sempre richiedere l'amicizia.", "✕ Togli", function () {
+          SGNube.togliAmico(x.uid).catch(function () {});
+          cacheAmici = (cacheAmici || []).filter(function (y) { return y.uid !== x.uid; });
+          schermataAmici("amici");
+        });
+      } }));
+    }
+    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "‹ Indietro", onclick: function () { schermataAmici(torna); } }));
     mostra(s);
   }
   function prossimoAvviso() {
@@ -10667,13 +10863,15 @@ window.SG_NOVITA = [
   {
     v: 124,
     data: "26 settembre 2026",
-    titolo: "Amici e classifica trofei 👥",
+    titolo: "Classifica trofei e amici 👥",
     descrizione: [
-      "Nuovo tasto 👥 Amici in home, accanto a Trofei.",
-      "Aggiungi un amico scrivendo il nome del suo profilo. Lo togli con la ✕.",
-      "Classifica: tu e i tuoi amici in fila, da chi ha più trofei a chi ne ha meno, con 🥇🥈🥉 per il podio e quanti trofei di ogni tipo (💠💎🥇🥈🥉).",
-      "Tocca un nome per vedere i suoi trofei gioco per gioco.",
-      "Per comparire nella lista degli altri, un amico deve aprire l'app aggiornata almeno una volta."
+      "Nuovo tasto 👥 Classifica in home, accanto a Trofei.",
+      "🌍 Generale: TUTTI i giocatori in fila, da chi ha più trofei a chi ne ha meno, con 🥇🥈🥉 per il podio e i trofei di ogni tipo (💠💎🥇🥈🥉).",
+      "Da lì mandi l'amicizia a chiunque col tasto ➕. Se ti è arrivata la sua richiesta, il tasto diventa ✓ e accetti al volo.",
+      "👥 Amici: la classifica solo tra te e i tuoi amici. Puoi anche cercare un nome e chiedergli l'amicizia.",
+      "📨 Richieste: accetta ✓ o rifiuta ✕ quelle arrivate e annulla quelle che hai mandato. Il pallino rosso in home ti avvisa se ne hai di nuove.",
+      "Tocca un nome per vedere i suoi trofei gioco per gioco. Da lì puoi anche chiedere o togliere l'amicizia (se la togli, sparite dalla lista l'uno dell'altro).",
+      "Per comparire in classifica bisogna aprire l'app aggiornata almeno una volta."
     ]
   },
   {

@@ -146,13 +146,14 @@
       return db.collection("pubblici").where("chiave", "==", SGNube.chiaveNome(nome)).limit(1).get()
         .then(function (q) { return q.empty ? null : q.docs[0].data(); });
     },
-    aggiungiAmico: function (uid) {
+    // aggiunge/toglie un uid dalla MIA lista amici (solo il mio profilo)
+    mettiAmico: function (uid) {
       if (!auth || !utente || !profilo) return Promise.reject(new Error("offline"));
       var l = profilo.amici || []; if (l.indexOf(uid) < 0) l.push(uid);
       profilo.amici = l;
       return db.collection("profili").doc(utente.uid).update({ amici: firebase.firestore.FieldValue.arrayUnion(uid) });
     },
-    togliAmico: function (uid) {
+    levaAmico: function (uid) {
       if (!auth || !utente || !profilo) return Promise.reject(new Error("offline"));
       profilo.amici = (profilo.amici || []).filter(function (x) { return x !== uid; });
       return db.collection("profili").doc(utente.uid).update({ amici: firebase.firestore.FieldValue.arrayRemove(uid) });
@@ -163,6 +164,68 @@
       return Promise.all((uids || []).map(function (u) {
         return db.collection("pubblici").doc(u).get().then(function (d) { return d.exists ? d.data() : null; });
       })).then(function (l) { return l.filter(Boolean); });
+    },
+    // classifica di TUTTI: chi ha più trofei (i primi n)
+    classificaGenerale: function (n) {
+      if (!auth || !utente) return Promise.reject(new Error("offline"));
+      return db.collection("pubblici").orderBy("trofei", "desc").limit(n || 100).get()
+        .then(function (q) { return q.docs.map(function (d) { return d.data(); }); });
+    },
+
+    // ---- richieste di amicizia ----
+    // Raccolta "richieste", un doc per coppia (id = mittente_destinatario):
+    //   stato "attesa"    -> il destinatario la vede e accetta o rifiuta (rifiuta = cancella)
+    //   stato "accettata" -> il destinatario ha già messo il mittente tra gli amici;
+    //                        il mittente, alla prossima lettura, fa lo stesso e la cancella
+    //   stato "rimosso"   -> chi ha tolto l'amicizia avvisa l'altro, che lo toglie a sua volta
+    // Nessuno scrive mai nel profilo di un altro: ognuno aggiorna solo il suo.
+    richieste: function () {
+      if (!auth || !utente || !profilo) return Promise.reject(new Error("offline"));
+      var me = utente.uid, R = db.collection("richieste"), lavori = [];
+      return Promise.all([R.where("a", "==", me).get(), R.where("da", "==", me).get()]).then(function (qq) {
+        var arrivate = [], inviate = [];
+        qq[0].docs.forEach(function (d) {
+          var r = d.data(); r.id = d.id;
+          if (r.stato === "attesa") arrivate.push(r);
+          else if (r.stato === "rimosso") { lavori.push(SGNube.levaAmico(r.da)); lavori.push(d.ref.delete()); }
+        });
+        qq[1].docs.forEach(function (d) {
+          var r = d.data(); r.id = d.id;
+          if (r.stato === "attesa") inviate.push(r);
+          else if (r.stato === "accettata") { lavori.push(SGNube.mettiAmico(r.a)); lavori.push(d.ref.delete()); }
+        });
+        return Promise.all(lavori.map(function (p) { return p.catch(function () {}); })).then(function () {
+          return { arrivate: arrivate, inviate: inviate };
+        });
+      });
+    },
+    // manda la richiesta a una scheda pubblica (se lui l'aveva già chiesta a me, la accetta)
+    chiediAmicizia: function (sch) {
+      if (!auth || !utente || !profilo) return Promise.reject(new Error("offline"));
+      var me = utente.uid, R = db.collection("richieste");
+      return R.where("a", "==", me).where("da", "==", sch.uid).get().then(function (q) {
+        var sua = q.docs.filter(function (d) { return d.data().stato === "attesa"; })[0];
+        if (sua) { var r = sua.data(); r.id = sua.id; return SGNube.accetta(r).then(function () { return "amici"; }); }
+        return R.doc(me + "_" + sch.uid).set({
+          da: me, a: sch.uid, daNome: profilo.nome, aNome: sch.nome || "",
+          daOmino: profilo.omino || null, daEmoji: profilo.emoji || "🙂", stato: "attesa", t: Date.now()
+        }).then(function () { return "inviata"; });
+      });
+    },
+    accetta: function (r) {
+      return SGNube.mettiAmico(r.da).then(function () {
+        return db.collection("richieste").doc(r.id).update({ stato: "accettata" });
+      });
+    },
+    rifiuta: function (r) { return db.collection("richieste").doc(r.id).delete(); },
+    annulla: function (r) { return db.collection("richieste").doc(r.id).delete(); },
+    // toglie l'amicizia da tutte e due le parti
+    togliAmico: function (uid) {
+      if (!auth || !utente || !profilo) return Promise.reject(new Error("offline"));
+      var me = utente.uid;
+      return SGNube.levaAmico(uid).then(function () {
+        return db.collection("richieste").doc(me + "_" + uid).set({ da: me, a: uid, stato: "rimosso", t: Date.now() });
+      });
     },
 
     // legge le statistiche di un gioco, es. statGioco("blackjack")

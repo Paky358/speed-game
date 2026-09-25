@@ -11,13 +11,15 @@ window.SG_NOVITA = [
   {
     v: 124,
     data: "26 settembre 2026",
-    titolo: "Amici e classifica trofei 👥",
+    titolo: "Classifica trofei e amici 👥",
     descrizione: [
-      "Nuovo tasto 👥 Amici in home, accanto a Trofei.",
-      "Aggiungi un amico scrivendo il nome del suo profilo. Lo togli con la ✕.",
-      "Classifica: tu e i tuoi amici in fila, da chi ha più trofei a chi ne ha meno, con 🥇🥈🥉 per il podio e quanti trofei di ogni tipo (💠💎🥇🥈🥉).",
-      "Tocca un nome per vedere i suoi trofei gioco per gioco.",
-      "Per comparire nella lista degli altri, un amico deve aprire l'app aggiornata almeno una volta."
+      "Nuovo tasto 👥 Classifica in home, accanto a Trofei.",
+      "🌍 Generale: TUTTI i giocatori in fila, da chi ha più trofei a chi ne ha meno, con 🥇🥈🥉 per il podio e i trofei di ogni tipo (💠💎🥇🥈🥉).",
+      "Da lì mandi l'amicizia a chiunque col tasto ➕. Se ti è arrivata la sua richiesta, il tasto diventa ✓ e accetti al volo.",
+      "👥 Amici: la classifica solo tra te e i tuoi amici. Puoi anche cercare un nome e chiedergli l'amicizia.",
+      "📨 Richieste: accetta ✓ o rifiuta ✕ quelle arrivate e annulla quelle che hai mandato. Il pallino rosso in home ti avvisa se ne hai di nuove.",
+      "Tocca un nome per vedere i suoi trofei gioco per gioco. Da lì puoi anche chiedere o togliere l'amicizia (se la togli, sparite dalla lista l'uno dell'altro).",
+      "Per comparire in classifica bisogna aprire l'app aggiornata almeno una volta."
     ]
   },
   {
