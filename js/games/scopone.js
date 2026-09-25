@@ -280,10 +280,9 @@
     var mioTurno = (st.turno === 0 && st.fase === "gioco" && !st.presa);
     var prevMano = spMount ? (spMount.prevMano || 0) : 0;
     var dealing = !st.presa && st.fase === "gioco" && st.mani[0].length > prevMano;
-    var head = el("div", { style: "display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px;padding-left:40px" });
+    var head = el("div", { class: "sc-testata" });   // punteggio e musica DENTRO la stanza (in alto; a sinistra c'è il tasto indietro)
     head.appendChild(el("div", { style: "font-size:.82rem;font-weight:700", html: "Noi <b style='color:#69db7c'>" + st.punti.noi + "</b> — Loro <b>" + st.punti.loro + "</b> <span class='tenue' style='font-weight:600'>(a " + TARGET + ")</span>" }));
     if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
-    box.appendChild(head);
 
     // la stanza: Rivale 1 a sinistra, il compagno di fronte, Rivale 2 a destra
     function sedia(s) {
@@ -294,6 +293,7 @@
         salta: faccia === "esulta" && st.presa && s === st.presa.chi };
     }
     var R = C().stanza4(el, M, [sedia(1), sedia(2), sedia(3)]);
+    R.scena.appendChild(head);
     var feltro = R.feltro;
 
     var cartaSel = sel.carta ? trova(st.mani[0], sel.carta) : null;
@@ -356,6 +356,7 @@
       spMount.cont.replaceChild(box, spMount.box); spMount.box = box; spMount.piede.innerHTML = "";
     } else {
       var s = t.schermata({ indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      s.classList.add("sc-piena");   // stanza da bordo a bordo
       s._contenuto.appendChild(box); t.mostra(s);
       spMount = { cont: s._contenuto, box: box, piede: s._piede };
     }

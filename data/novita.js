@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 121,
+    data: "26 settembre 2026",
+    titolo: "Scopa, 2 vs 2 e Scopone da bordo a bordo 🟩🟥",
+    descrizione: [
+      "La stanza riempie tutto lo schermo: niente più cornice ai lati, sopra e sotto. La mensola con le tue carte arriva fino in fondo.",
+      "Punteggio, tasto indietro e musica sono dentro la stanza, in alto.",
+      "Squadre a colpo d'occhio: il nome del tuo compagno è verde, quelli degli avversari rossi (il bordo diventa dorato quando tocca a loro)."
+    ]
+  },
+  {
     v: 120,
     data: "26 settembre 2026",
     titolo: "Scopa 2 vs 2 e Scopone con gli avatar 🤝",

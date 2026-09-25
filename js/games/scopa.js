@@ -452,9 +452,20 @@
       ".sc-piano{position:absolute;left:50%;bottom:0;transform-origin:50% 100%;border-radius:34px;background:linear-gradient(#6b3f1f,#4a2a14);padding:12px;box-shadow:0 -5px 0 #82502a inset;transform-style:preserve-3d}",
       ".sc-panno{position:relative;width:100%;height:100%;border-radius:24px;background:radial-gradient(90% 70% at 50% 30%,#35b273 0%,#1e8452 55%,#135c3a 100%);box-shadow:inset 0 0 26px rgba(0,0,0,.45);transform-style:preserve-3d}",
       ".sc-terra.sc-t3d{position:absolute;left:3%;right:3%;top:9%;bottom:4%;padding:0;transform-style:preserve-3d}",
+      ".schermata.sc-piena{padding:env(safe-area-inset-top) 0 0 0}",
+      ".sc-piena .sc-scena{border-radius:0;box-shadow:inset 0 0 50px rgba(0,0,0,.55)}",
+      ".sc-piena .sc-mensola{margin:0;border-radius:0;padding-bottom:calc(8px + env(safe-area-inset-bottom))}",
+      ".sc-testata{position:absolute;left:0;right:0;top:0;z-index:7;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 8px 0 54px;pointer-events:none}",
+      ".sc-testata > *{pointer-events:auto}",
+      ".sc-testata > div:first-child{background:rgba(10,18,50,.72);border:1.5px solid rgba(255,255,255,.15);border-radius:999px;padding:5px 12px;box-shadow:0 3px 8px rgba(0,0,0,.35)}",
+      ".sc-scena .sc-quadro{top:62px}",
+      ".sc-scena .sc-targa{top:56px}",
       ".sc-targa4{position:absolute;transform:translate(-50%,-100%);z-index:4;display:flex;align-items:center;gap:4px;background:rgba(10,18,50,.85);border:2px solid rgba(255,255,255,.18);border-radius:999px;padding:2px 8px;white-space:nowrap;font-weight:800;transition:border-color .2s,box-shadow .2s}",
       ".sc-targa4 .sc-nome{font-size:.7rem;max-width:92px;overflow:hidden;text-overflow:ellipsis}",
-      ".sc-targa4.mia{border-color:rgba(105,219,124,.75)}",
+      ".sc-targa4{background:linear-gradient(180deg,#7a1f2b,#4e0f18);border-color:#ff6b6b}",
+      ".sc-targa4.mia{background:linear-gradient(180deg,#1f7a44,#0f4e2a);border-color:#69db7c}",
+      ".sc-scena .sc-targa{background:linear-gradient(180deg,#7a1f2b,#4e0f18);border-color:#ff6b6b}",
+      ".sc-scena .sc-targa.turno{border-color:#ffd43b;box-shadow:0 0 14px rgba(255,212,59,.6)}",
       ".sc-targa4.turno{border-color:#ffd43b;box-shadow:0 0 12px rgba(255,212,59,.65)}",
       ".sc-aiuto{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:8;max-width:92%;text-align:center;background:rgba(10,18,50,.88);border:1.5px solid #69db7c;color:#fff;font-weight:800;font-size:.85rem;line-height:1.25;padding:6px 12px;border-radius:12px;pointer-events:none}",
       ".sc-panno .sc-mazzo{top:14px;left:16px}"
@@ -536,9 +547,9 @@
     var alt = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--alt")) || window.innerHeight || 700;
     var k = alt + "x" + (window.innerWidth || 0), c = stanzaCorr[gioco];
     if (!c || c.k !== k) c = stanzaCorr[gioco] = { k: k, v: 0, fatto: false };
-    var scW = Math.min(window.innerWidth || 375, 560) - 28;
+    var scW = Math.min(window.innerWidth || 375, 600);   // la stanza va da bordo a bordo
     var manoH = righeMano * Math.round(wH * ASP_CARTA) + (righeMano - 1) * 6;
-    var scH = Math.max(300, Math.min(840, Math.round(alt - 32 - 36 - (manoH + 64) + c.v)));
+    var scH = Math.max(300, Math.min(900, Math.round(alt - (manoH + 52) + c.v)));
     var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * 0.6);
     var tavAw = Math.min((pianoW - 24) * 0.94 - 4, scW - 22), tavAh = (pianoH - 24) * 0.87;
     var wT = Math.max(26, Math.min(110, Math.floor((tavAw - 15) / 4), Math.floor((tavAh - 5) / 2 / ASP_CARTA)));
@@ -582,8 +593,8 @@
   // la stanza: sedie = [sinistra, compagno (di fronte), destra], ognuna { cfg, nome, n, turno, mia, faccia, fumetto }
   function stanza4(el, M, sedie) {
     var scena = el("div", { class: "sc-scena", style: "height:" + M.scH + "px" });
-    scena.appendChild(el("div", { class: "sc-quadro", style: "left:16px;top:18px;background:linear-gradient(135deg,#3f6b8f,#9cc4d9 60%,#e7d9a8)" }));
-    scena.appendChild(el("div", { class: "sc-quadro", style: "right:16px;top:18px;background:linear-gradient(135deg,#8f3f5c,#e3a26b 60%,#f2e3b5)" }));
+    scena.appendChild(el("div", { class: "sc-quadro", style: "left:16px;top:62px;background:linear-gradient(135deg,#3f6b8f,#9cc4d9 60%,#e7d9a8)" }));
+    scena.appendChild(el("div", { class: "sc-quadro", style: "right:16px;top:62px;background:linear-gradient(135deg,#8f3f5c,#e3a26b 60%,#f2e3b5)" }));
     var posti = sedie.map(function (p) {
       var cfg = p.cfg || facciaBot(p.nome);
       var box = el("div", { class: "sc-avv" }), fig = el("div", { class: "sc-avv-fig", html: cfg && window.SGOmino ? svgAvatar(cfg, p.faccia || "normale") : "" });
@@ -662,12 +673,12 @@
     var el = t.el, vm = C.vm;
     var wH = larghezza(3, 10, 104);   // mano max 3
     // misure della stanza: altezza fissa (lo schermo non "salta"), il tavolo è un piano inclinato
-    var scW = Math.min(window.innerWidth || 375, 560) - 28;
+    var scW = Math.min(window.innerWidth || 375, 600);   // la stanza va da bordo a bordo
     // altezza della stanza: TUTTO lo spazio che resta sullo schermo vero (--alt), poi corretta misurando dopo il montaggio
     var alt = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--alt")) || window.innerHeight || 700;
     var chiaveSchermo = alt + "x" + (window.innerWidth || 0);
     if (scCorr.k !== chiaveSchermo) scCorr = { k: chiaveSchermo, v: 0 };
-    var scH = Math.max(300, Math.min(820, Math.round(alt - 32 - 36 - (Math.round(wH * ASP_CARTA) + 64) + scCorr.v)));
+    var scH = Math.max(300, Math.min(900, Math.round(alt - (Math.round(wH * ASP_CARTA) + 52) + scCorr.v)));
     var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * 0.7);
     var nT = (vm.presa && vm.presa.tavoloPrima ? vm.presa.tavoloPrima : vm.tavolo).length;
     // carte in tavola: grandezza FISSA, quella con cui 8 carte stanno comode (4 posti per fila, 2 file).
@@ -709,14 +720,14 @@
 
     // ---- intestazione: punti (a sinistra) + tasto musica (a destra) ----
     var mioTurno = (vm.turno === vm.io && vm.fase === "gioco" && !vm.presa);
-    var head = el("div", { style: "display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px;padding-left:40px" });   // a sinistra c'è il tasto indietro
+    var head = el("div", { class: "sc-testata" });   // punteggio e musica DENTRO la stanza (in alto; a sinistra c'è il tasto indietro)
     head.appendChild(el("div", { style: "font-size:.8rem;font-weight:700", html: "<b>" + vm.nomi.io + " " + vm.punti.io + "</b> — " + vm.nomi.opp + " " + vm.punti.opp + " <span class='tenue' style='font-weight:600'>(a " + TARGET + ")</span>" }));
     if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
-    box.appendChild(head);
 
     // ---- la stanza: l'avversario seduto dietro al tavolo verde in prospettiva ----
     var oppTurno = vm.turno !== vm.io && vm.fase === "gioco";
     var scena = el("div", { class: "sc-scena", style: "height:" + scH + "px" });
+    scena.appendChild(head);
     scena.appendChild(el("div", { class: "sc-quadro", style: "left:16px;background:linear-gradient(135deg,#3f6b8f,#9cc4d9 60%,#e7d9a8)" }));
     scena.appendChild(el("div", { class: "sc-quadro", style: "right:16px;background:linear-gradient(135deg,#8f3f5c,#e3a26b 60%,#f2e3b5)" }));
     scena.appendChild(el("div", { class: "sc-targa" + (oppTurno && !vm.presa ? " turno" : "") }, [
@@ -851,6 +862,7 @@
       piedeNodi.forEach(function (n) { scMount.piede.appendChild(n); });
     } else {
       var s = t.schermata({ indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      s.classList.add("sc-piena");   // stanza da bordo a bordo
       s._contenuto.appendChild(box);
       piedeNodi.forEach(function (n) { s._piede.appendChild(n); });
       t.mostra(s);

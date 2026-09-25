@@ -275,10 +275,9 @@
     var mioTurno = (vm.turno === io && vm.fase === "gioco" && !vm.presa);
     var prevMano = mont ? (mont.prevMano || 0) : 0;
     var dealing = !vm.presa && vm.fase === "gioco" && vm.mano.length > prevMano;   // la mano è aumentata: si è distribuito
-    var head = el("div", { style: "display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px;padding-left:40px" });
+    var head = el("div", { class: "sc-testata" });   // punteggio e musica DENTRO la stanza (in alto; a sinistra c'è il tasto indietro)
     head.appendChild(el("div", { style: "font-size:.82rem;font-weight:700", html: "Noi <b style='color:#69db7c'>" + vm.punti.mia + "</b> — Loro <b>" + vm.punti.altra + "</b> <span class='tenue' style='font-weight:600'>(a " + TARGET + ")</span>" }));
     if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
-    box.appendChild(head);
 
     // la stanza: a sinistra e a destra gli avversari, di fronte il compagno
     var comp = (io + 2) % 4, latoSx = (io + 1) % 4, latoDx = (io + 3) % 4;
@@ -291,6 +290,7 @@
         salta: faccia === "esulta" && s === (vm.presa && vm.presa.seat) };
     }
     var R = C().stanza4(el, M, [sedia(latoSx), sedia(comp), sedia(latoDx)]);
+    R.scena.appendChild(head);
     var feltro = R.feltro;
 
     var cartaSel = Cl.sel.carta ? trova(vm.mano, Cl.sel.carta) : null;
@@ -351,6 +351,7 @@
       mont.cont.replaceChild(box, mont.box); mont.box = box; mont.piede.innerHTML = "";
     } else {
       var s = t.schermata({ indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      s.classList.add("sc-piena");   // stanza da bordo a bordo
       s._contenuto.appendChild(box); t.mostra(s);
       mont = { cont: s._contenuto, box: box, piede: s._piede };
     }
