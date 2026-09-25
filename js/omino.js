@@ -1207,7 +1207,7 @@
       capo: donna ? uno(OPZ.capo) : uno(OPZ.capo.filter(function (v) { return !SOLO_DONNA.test(v); })), maglia: pick(OPZ.maglia), stampa: uno(["nessuna", "nessuna", "nessuna", "righe", "stella", "fulmine", "cuore", "pois", "quadri", "smile", "pallone", "numero"]), modScarpe: donna ? uno(OPZ.modScarpe) : uno(["sneakers", "sneakers", "stivali", "eleganti", "sandali", "stivaletti"]),
       pantaloni: pick(OPZ.pantaloni), scarpe: pick(OPZ.scarpe), colAcc: pick(OPZ.colAcc),
       occG: uno([-1, 0, 0, 1]), occD: uno([-1, 0, 0, 1]), occA: 0, soprA: uno([0, 0, 1]), nasoG: uno([-1, 0, 0, 1]), boccaA: 0,
-      cappello: pick([0, 0, 0, 1]) ? uno(OPZ.cappello.filter(function (v) { return v !== "nessuno" && v !== "corona"; })) : "nessuno", occhiali: pick([0, 0, 0, 1]) ? uno(OPZ.occhiali.slice(1)) : "nessuno",
+      cappello: pick([0, 0, 0, 1]) ? uno(OPZ.cappello.filter(function (v) { return v !== "nessuno" && v !== "corona" && (donna || !/^(fiocco|mollette|cerchietto)$/.test(v)); })) : "nessuno", occhiali: pick([0, 0, 0, 1]) ? uno(OPZ.occhiali.slice(1)) : "nessuno",
       orecchini: donna && pick([0, 1]) ? uno(OPZ.orecchini.slice(1)) : "nessuno", collo: pick([0, 0, 0, 1]) ? uno(OPZ.collo.slice(1)) : "nessuno",
       colCollo: pick(OPZ.colCollo) };
   }

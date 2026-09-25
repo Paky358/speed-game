@@ -13,45 +13,62 @@
 (function () {
   "use strict";
 
-  // ---------- musichetta chill di sottofondo (generata, niente file) ----------
-  // Condivisa da Scopa, Scopa 2 vs 2 e Scopone. Pad morbidi + arpeggio lento,
-  // volume basso; tasto 🎵/🔇 per accendere/spegnere (scelta ricordata).
+  // ---------- musichetta allegra di sottofondo (generata, niente file) ----------
+  // Condivisa da Scopa, Scopa 2 vs 2 e Scopone. Stile osteria: basso "zum-pa", accordi pizzicati
+  // tipo mandolino, melodia che si ripete, cassa e charleston leggeri. Tasto 🎵/🔇 (scelta ricordata).
   window.SGMusica = window.SGMusica || (function () {
-    var on = true, giocando = false, ctx = null, master = null, filtro = null, timer = null, nextT = 0, step = 0;
+    var on = true, giocando = false, ctx = null, master = null, filtro = null, timer = null, nextT = 0, step = 0, rumore = null;
     try { on = (localStorage.getItem("sg-musica") !== "off"); } catch (e) {}
-    // accordi morbidi (Cmaj7 · Am7 · Fmaj7 · G7): basso + tre note del pad
-    var CH = [
-      { b: 65.41, n: [329.63, 392.00, 493.88] },
-      { b: 110.00, n: [261.63, 329.63, 392.00] },
-      { b: 87.31, n: [220.00, 261.63, 329.63] },
-      { b: 98.00, n: [246.94, 293.66, 349.23] }
+    var S = 60 / 128 / 4;   // un sedicesimo a 128 battiti al minuto
+    function hz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+    // giro di accordi Do · La- · Fa · Sol (una battuta ciascuno): basso, accordo, melodia (ottavi, null = pausa)
+    var GIRO = [
+      { b: 36, a: [60, 64, 67], m: [76, 79, 84, 79, 76, null, 74, 76] },
+      { b: 33, a: [57, 60, 64], m: [72, 76, 81, 76, 72, null, 71, 72] },
+      { b: 41, a: [57, 60, 65], m: [69, 72, 77, 72, 69, null, 67, 69] },
+      { b: 43, a: [55, 59, 62], m: [71, 74, 79, 74, 77, null, 76, 74] }
     ];
-    var DUR = 3.8;
-    function nota(freq, t0, dur, tipo, vol) {
+    function nota(freq, t0, dur, tipo, vol, attacco) {
       var o = ctx.createOscillator(), g = ctx.createGain();
       o.type = tipo; o.frequency.value = freq;
       g.gain.setValueAtTime(0.0001, t0);
-      g.gain.exponentialRampToValueAtTime(vol, t0 + Math.min(0.9, dur * 0.35));
+      g.gain.exponentialRampToValueAtTime(vol, t0 + (attacco || 0.006));
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
       o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + dur + 0.05);
     }
-    function accordo(t0) {
-      var c = CH[step % CH.length]; step++;
-      nota(c.b, t0, DUR, "sine", 0.26);            // basso
-      c.n.forEach(function (f) { nota(f, t0, DUR, "triangle", 0.075); });  // pad
-      for (var i = 0; i < 4; i++) { nota(c.n[i % 3] * (i === 3 ? 2 : 1), t0 + i * (DUR / 4), DUR / 4 * 0.9, "triangle", 0.10); } // arpeggio
+    function cassa(t0) {   // colpo di grancassa: sinusoide che scende di tono
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.setValueAtTime(140, t0); o.frequency.exponentialRampToValueAtTime(45, t0 + 0.12);
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.5, t0 + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.16);
+      o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + 0.2);
     }
-    function loop() { if (!ctx) return; while (nextT < ctx.currentTime + 0.6) { accordo(nextT); nextT += DUR; } }
+    function charleston(t0, vol) {   // "tss" corto: rumore filtrato
+      if (!rumore) { rumore = ctx.createBuffer(1, Math.round(ctx.sampleRate * 0.1), ctx.sampleRate); var d = rumore.getChannelData(0); for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+      var s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      s.buffer = rumore; f.type = "highpass"; f.frequency.value = 7000;
+      g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05);
+      s.connect(f); f.connect(g); g.connect(master); s.start(t0); s.stop(t0 + 0.06);
+    }
+    function passo(t0) {
+      var i = step % 16, battuta = Math.floor(step / 16), c = GIRO[battuta % 4], conMelodia = (battuta % 8) >= 4 || battuta >= 8;
+      if (i === 0 || i === 8) cassa(t0);
+      if (i % 2 === 0) charleston(t0, i % 4 === 2 ? 0.07 : 0.035);
+      if (i % 4 === 0) nota(hz(c.b + (i % 8 === 4 ? 7 : 0)), t0, S * 3, "triangle", 0.34);                       // zum
+      if (i % 4 === 2) c.a.forEach(function (m) { nota(hz(m), t0, S * 1.6, "triangle", 0.09); nota(hz(m + 12), t0, S * 0.9, "square", 0.018); });   // pa (pizzicato)
+      if (conMelodia && i % 2 === 0) { var mm = c.m[i / 2]; if (mm) nota(hz(mm), t0, S * 1.8, "square", 0.035, 0.004); }
+      step++;
+    }
+    function loop() { if (!ctx) return; while (nextT < ctx.currentTime + 0.3) { passo(nextT); nextT += S; } }
     function startAudio() {
       ctx = SG.audioCtx && SG.audioCtx(); if (!ctx || timer) return;
       if (!master) {
-        master = ctx.createGain(); filtro = ctx.createBiquadFilter(); filtro.type = "lowpass"; filtro.frequency.value = 2600;
-        var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -8; comp.knee.value = 6; comp.ratio.value = 12; comp.attack.value = 0.004; comp.release.value = 0.25;
-        master.connect(filtro); filtro.connect(comp); comp.connect(ctx.destination);   // limitatore: alza il volume senza distorcere
+        master = ctx.createGain(); filtro = ctx.createBiquadFilter(); filtro.type = "lowpass"; filtro.frequency.value = 5200;
+        var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -10; comp.knee.value = 6; comp.ratio.value = 12; comp.attack.value = 0.004; comp.release.value = 0.2;
+        master.connect(filtro); filtro.connect(comp); comp.connect(ctx.destination);   // limitatore: volume pieno senza distorcere
       }
       master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(0.0001, ctx.currentTime);
-      master.gain.exponentialRampToValueAtTime(0.5, ctx.currentTime + 1.6);
-      nextT = ctx.currentTime + 0.1; step = 0; loop(); timer = setInterval(loop, 250);
+      master.gain.exponentialRampToValueAtTime(0.42, ctx.currentTime + 1.2);
+      nextT = ctx.currentTime + 0.1; step = 0; loop(); timer = setInterval(loop, 100);
     }
     function stopAudio() {
       if (timer) { clearInterval(timer); timer = null; }
@@ -435,6 +452,10 @@
       ".sc-piano{position:absolute;left:50%;bottom:0;transform-origin:50% 100%;border-radius:34px;background:linear-gradient(#6b3f1f,#4a2a14);padding:12px;box-shadow:0 -5px 0 #82502a inset;transform-style:preserve-3d}",
       ".sc-panno{position:relative;width:100%;height:100%;border-radius:24px;background:radial-gradient(90% 70% at 50% 30%,#35b273 0%,#1e8452 55%,#135c3a 100%);box-shadow:inset 0 0 26px rgba(0,0,0,.45);transform-style:preserve-3d}",
       ".sc-terra.sc-t3d{position:absolute;left:3%;right:3%;top:9%;bottom:4%;padding:0;transform-style:preserve-3d}",
+      ".sc-targa4{position:absolute;transform:translate(-50%,-100%);z-index:4;display:flex;align-items:center;gap:4px;background:rgba(10,18,50,.85);border:2px solid rgba(255,255,255,.18);border-radius:999px;padding:2px 8px;white-space:nowrap;font-weight:800;transition:border-color .2s,box-shadow .2s}",
+      ".sc-targa4 .sc-nome{font-size:.7rem;max-width:92px;overflow:hidden;text-overflow:ellipsis}",
+      ".sc-targa4.mia{border-color:rgba(105,219,124,.75)}",
+      ".sc-targa4.turno{border-color:#ffd43b;box-shadow:0 0 12px rgba(255,212,59,.65)}",
       ".sc-aiuto{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:8;max-width:92%;text-align:center;background:rgba(10,18,50,.88);border:1.5px solid #69db7c;color:#fff;font-weight:800;font-size:.85rem;line-height:1.25;padding:6px 12px;border-radius:12px;pointer-events:none}",
       ".sc-panno .sc-mazzo{top:14px;left:16px}"
     ].join("");
@@ -504,6 +525,126 @@
       svgCache[k] = SGOmino.svg(c);
     }
     return svgCache[k];
+  }
+
+  // =====================================================================
+  //  STANZA A 4 (Scopa 2 vs 2 e Scopone): compagno di fronte, i due avversari agli angoli del tavolo,
+  //  tutti con avatar ed espressioni; tavolo a POSTI FISSI (8 posti, 4 per fila); distribuzione animata.
+  // =====================================================================
+  var stanzaCorr = {};   // correzione dell'altezza per gioco, misurata sullo schermo vero
+  function misureStanza4(gioco, wH, righeMano) {
+    var alt = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--alt")) || window.innerHeight || 700;
+    var k = alt + "x" + (window.innerWidth || 0), c = stanzaCorr[gioco];
+    if (!c || c.k !== k) c = stanzaCorr[gioco] = { k: k, v: 0, fatto: false };
+    var scW = Math.min(window.innerWidth || 375, 560) - 28;
+    var manoH = righeMano * Math.round(wH * ASP_CARTA) + (righeMano - 1) * 6;
+    var scH = Math.max(300, Math.min(840, Math.round(alt - 32 - 36 - (manoH + 64) + c.v)));
+    var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * 0.6);
+    var tavAw = Math.min((pianoW - 24) * 0.94 - 4, scW - 22), tavAh = (pianoH - 24) * 0.87;
+    var wT = Math.max(26, Math.min(110, Math.floor((tavAw - 15) / 4), Math.floor((tavAh - 5) / 2 / ASP_CARTA)));
+    return { alt: alt, scW: scW, scH: scH, pianoW: pianoW, pianoH: pianoH, tavAw: tavAw, tavAh: tavAh, wT: wT, corr: c };
+  }
+  // dopo il montaggio: se avanza o manca spazio sotto la mensola, rifà subito la stanza della misura giusta (una volta per schermo)
+  function correggiStanza4(M, sch, mensola, rifai) {
+    if (M.corr.fatto) return false;
+    M.corr.fatto = true;
+    var rS = sch.getBoundingClientRect(), padB = parseFloat(getComputedStyle(sch).paddingBottom) || 0;
+    var avanza = Math.floor((rS.bottom - padB - mensola.getBoundingClientRect().bottom) - Math.max(0, document.documentElement.scrollHeight - M.alt));
+    if (Math.abs(avanza) > 3) { M.corr.v += avanza; rifai(); return true; }
+    return false;
+  }
+  // posti fissi: stato = { idCarta: posto } che il gioco conserva fra un disegno e l'altro
+  function postiTavolo(stato, carte, M) {
+    var ids = {}, k, occ = {};
+    carte.forEach(function (c) { ids[c.id] = true; });
+    for (k in stato) if (!ids[k]) delete stato[k];   // chi è andato via libera il posto (gli altri NON si muovono)
+    for (k in stato) occ[stato[k]] = true;
+    carte.forEach(function (c) { if (stato[c.id] != null) return; var p = 0; while (occ[p]) p++; stato[c.id] = p; occ[p] = true; });
+    var maxP = 0; for (k in stato) maxP = Math.max(maxP, stato[k] + 1);
+    var col = 4, righe = Math.ceil(Math.max(8, maxP) / col), w = M.wT;
+    if (righe > 2) w = Math.max(26, Math.min(w, Math.floor((M.tavAh - (righe - 1) * 5) / righe / ASP_CARTA)));   // solo con 9+ carte
+    return {
+      w: w,
+      griglia: function (el) { return el("div", { style: "display:grid;grid-template-columns:repeat(" + col + "," + w + "px);grid-template-rows:repeat(" + righe + "," + Math.round(w * ASP_CARTA) + "px);gap:5px;justify-content:center;align-content:center;height:100%" }); },
+      metti: function (cel, id) { var p = stato[id] || 0; cel.style.gridColumn = (p % col + 1); cel.style.gridRow = (Math.floor(p / col) + 1); return cel; }
+    };
+  }
+  // i bot hanno sempre la stessa faccia: Matt la sua, gli altri stabili dal nome (e donna se il nome è da donna)
+  var BOT_DONNA = { Giulia: "coda", Rosa: "riccilunghi" }, BOT_UOMO = { Toni: "spettinati", Peppe: "stempiato" };
+  function facciaBot(nome) {
+    if (nome === "Matt") return AVATAR_BOT;
+    if (!window.SGOmino) return null;
+    var c = SGOmino.casuale(nome);
+    if (BOT_DONNA[nome]) { c.forma = "donna"; c.barba = "no"; c.capelli = BOT_DONNA[nome]; }
+    else if (BOT_UOMO[nome]) { c.forma = "uomo"; c.capelli = BOT_UOMO[nome]; c.orecchini = "nessuno"; if (/^(fiocco|mollette|cerchietto)$/.test(c.cappello)) c.cappello = "nessuno"; c.trucco = "nessuno"; c.ombretto = c.eyeliner = c.mascara = c.rossetto = c.blush = "nessuno"; if (/^(gonna|minigonna|gonnapieghe|gonnatubino|gonnalunga)$/.test(c.sotto)) c.sotto = "jeans"; }
+    return c;
+  }
+  // la stanza: sedie = [sinistra, compagno (di fronte), destra], ognuna { cfg, nome, n, turno, mia, faccia, fumetto }
+  function stanza4(el, M, sedie) {
+    var scena = el("div", { class: "sc-scena", style: "height:" + M.scH + "px" });
+    scena.appendChild(el("div", { class: "sc-quadro", style: "left:16px;top:18px;background:linear-gradient(135deg,#3f6b8f,#9cc4d9 60%,#e7d9a8)" }));
+    scena.appendChild(el("div", { class: "sc-quadro", style: "right:16px;top:18px;background:linear-gradient(135deg,#8f3f5c,#e3a26b 60%,#f2e3b5)" }));
+    var posti = sedie.map(function (p) {
+      var cfg = p.cfg || facciaBot(p.nome);
+      var box = el("div", { class: "sc-avv" }), fig = el("div", { class: "sc-avv-fig", html: cfg && window.SGOmino ? svgAvatar(cfg, p.faccia || "normale") : "" });
+      box.appendChild(fig);
+      if (p.fumetto) box.appendChild(el("div", { class: "sc-fumetto" + (p.faccia === "esulta" ? " scopa" : ""), text: p.fumetto }));
+      var targa = el("div", { class: "sc-targa4" + (p.turno ? " turno" : "") + (p.mia ? " mia" : "") }, [
+        el("span", { class: "sc-nome", text: (p.mia ? "🤝 " : "") + p.nome }), el("span", { class: "sc-num", text: p.n }) ]);
+      var vent = el("div", { class: "sc-avv-carte" });
+      for (var i = 0; i < p.n; i++) vent.appendChild(el("div", { class: "sc-dorso" }));
+      scena.appendChild(vent); scena.appendChild(box); scena.appendChild(targa);
+      return { box: box, fig: fig, targa: targa, vent: vent, p: p };
+    });
+    var prosp = el("div", { class: "sc-prosp", style: "perspective:" + Math.max(600, Math.round(M.scH * 1.15)) + "px" });
+    var piano = el("div", { class: "sc-piano", style: "width:" + M.pianoW + "px;height:" + M.pianoH + "px;margin-left:" + (-M.pianoW / 2) + "px;transform:rotateX(54deg)" });
+    var feltro = el("div", { class: "sc-panno" });
+    piano.appendChild(feltro); prosp.appendChild(piano); scena.appendChild(prosp);
+    function siedi() {   // dopo il montaggio: ognuno seduto con la vita al bordo lontano del tavolo
+      var bordo = piano.getBoundingClientRect().top - scena.getBoundingClientRect().top, sw = scena.clientWidth;
+      var w = Math.max(70, Math.min(Math.round(sw * 0.34), 150, Math.round((bordo + 6 - 30) / 0.975)));
+      posti.forEach(function (s, i) {
+        var cx = Math.round(sw * [0.2, 0.5, 0.8][i]), top = Math.round(bordo + 6 - w * 0.975);
+        s.box.style.width = w + "px"; s.box.style.left = (cx - w / 2) + "px"; s.box.style.marginLeft = "0"; s.box.style.top = top + "px";
+        s.targa.style.left = cx + "px"; s.targa.style.top = Math.round(top + w * 0.1) + "px";
+        var cw = Math.round(w * 0.16), ch = Math.round(cw * ASP_CARTA), n = s.vent.children.length, ang = n > 5 ? 6 : 12;
+        s.vent.style.left = cx + "px"; s.vent.style.top = Math.round(top + w * 0.76) + "px";
+        [].forEach.call(s.vent.children, function (d, k) {
+          var a = (k - (n - 1) / 2) * ang;
+          d.style.width = cw + "px"; d.style.height = ch + "px"; d.style.left = (-cw / 2) + "px";
+          d.style.transform = "translateX(" + (a * 1.1) + "px) rotate(" + a + "deg)";
+        });
+        var fm = s.box.querySelector(".sc-fumetto");
+        if (fm) { fm.style.left = Math.round(w * (i === 2 ? 0.05 : 0.7)) + "px"; fm.style.top = Math.round(w * 0.15) + "px"; }
+        if (s.p.faccia === "esulta" && s.p.salta && s.fig.animate) s.fig.animate([{ transform: "none" }, { transform: "translateY(-18px)" }, { transform: "none" }], { duration: 650, easing: "ease-out" });
+      });
+    }
+    return { scena: scena, feltro: feltro, siedi: siedi, posti: posti };
+  }
+  // distribuzione come dal vero: prima le carte nuove in tavola, poi a giro (tu, poi gli altri tre nell'ordine delle sedie).
+  // Restituisce quando finisce (ms dal momento della chiamata), così i bot aspettano.
+  function animaDistribuzione4(nuoveTav, manoEls, dorsiPerSedia, feltro, passo) {
+    var t0 = 0;
+    nuoveTav.forEach(function (cel, i) {
+      if (!cel.animate) return;
+      cel.animate([{ translate: "0 -120px", scale: "0.5", opacity: 0 }, { translate: "0 0", scale: "1", opacity: 1 }],
+        { duration: 420, delay: i * 200, easing: "cubic-bezier(.2,.7,.3,1)", fill: "backwards" });
+    });
+    if (nuoveTav.length) t0 = nuoveTav.length * 0.2 + 0.2;
+    var fr = feltro.getBoundingClientRect(), ox = fr.left + fr.width / 2, oy = fr.top + fr.height * 0.4;
+    function vola(e, rit) {
+      if (!e || !e.animate) return;
+      var r = e.getBoundingClientRect();
+      e.animate([{ translate: Math.round(ox - (r.left + r.width / 2)) + "px " + Math.round(oy - (r.top + r.height / 2)) + "px", scale: "0.4", opacity: 0 },
+        { opacity: 1, offset: 0.25 }, { translate: "0 0", scale: "1", opacity: 1 }], { duration: 420, delay: rit * 1000, easing: "cubic-bezier(.2,.7,.3,1)", fill: "backwards" });
+    }
+    var n = manoEls.length; dorsiPerSedia.forEach(function (d) { n = Math.max(n, d.length); });
+    var giro = 1 + dorsiPerSedia.length;
+    for (var k = 0; k < n; k++) {
+      vola(manoEls[k], t0 + (k * giro) * passo);
+      dorsiPerSedia.forEach(function (d, j) { vola(d[k], t0 + (k * giro + 1 + j) * passo); });
+    }
+    return (t0 + n * giro * passo) * 1000 + 450;
   }
 
   // ---------- vista (uguale per bot/host/ospite) ----------
@@ -1170,6 +1311,9 @@
     creaMazzo: creaMazzo, catture: catture, primiera: primiera, trova: trova,
     cartaEl: cartaEl, dorsoEl: dorsoEl, manina: manina, posto: posto, assicuraStile: assicuraStile,
     mazzo: mazzo, larghezza: larghezza, ASP_CARTA: ASP_CARTA,
-    validaSet: validaSet, prefisso: prefisso, PRIM: PRIM
+    validaSet: validaSet, prefisso: prefisso, PRIM: PRIM,
+    // stanza a 4 con gli avatar (Scopa 2 vs 2 e Scopone)
+    misureStanza4: misureStanza4, correggiStanza4: correggiStanza4, postiTavolo: postiTavolo, stanza4: stanza4, animaDistribuzione4: animaDistribuzione4,
+    mioAvatar: mioAvatar, avatarValido: avatarValido
   };
 })();

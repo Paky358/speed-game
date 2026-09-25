@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 120,
+    data: "26 settembre 2026",
+    titolo: "Scopa 2 vs 2 e Scopone con gli avatar 🤝",
+    descrizione: [
+      "Anche Scopa 2 vs 2 e Scopone ora sono una stanza vera: il tuo compagno seduto di fronte (col 🤝 e il bordo verde), i due avversari agli angoli del tavolo, ognuno col suo ventaglio di carte coperte.",
+      "Le facce cambiano: chi deve giocare ci pensa su 🤔, chi fa scopa esulta e salta con il compagno, gli altri ci restano male.",
+      "I bot hanno un nome e una faccia fissi: Matt (sempre lui!), Giulia e Toni nella 2 vs 2; Matt, Rosa e Peppe nello Scopone. Online si vedono gli avatar veri degli amici.",
+      "Tavolo come nella Scopa: a tutta altezza, 8 posti fissi, carte che non cambiano grandezza e non saltano. Distribuzione animata a giro (tavolo, poi tu e gli altri a turno).",
+      "Scopone: le tue 10 carte stanno su due file da 5, grandi e leggibili.",
+      "Musica nuova per tutti e tre i giochi di scopa: più allegra e ritmata, stile osteria."
+    ]
+  },
+  {
     v: 119,
     data: "26 settembre 2026",
     titolo: "Scopa: tavolo a tutto schermo 🃏",
