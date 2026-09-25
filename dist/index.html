@@ -10426,6 +10426,17 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 123,
+    data: "26 settembre 2026",
+    titolo: "Glow Hockey: disco dal cielo, bordi luminosi e musica 🔥",
+    descrizione: [
+      "Dopo un gol niente più attesa a racchette bloccate: il disco CADE DALL'ALTO. Parte grande con la sua ombra, si rimpicciolisce fino a toccare terra (tump!) e da lì si può colpire. Intanto ti muovi liberamente.",
+      "Anche a inizio partita il disco arriva dall'alto.",
+      "I bordi si illuminano nel punto esatto in cui il disco li colpisce.",
+      "Musica gasante in stile Geometry Dash: cassa dritta, basso che pompa, arpeggio e melodia. Tasto 🎵/🔇 in alto a destra sul campo."
+    ]
+  },
+  {
     v: 122,
     data: "26 settembre 2026",
     titolo: "Palla a Pendolo con gli avatar 🎯",
@@ -15820,14 +15831,90 @@ window.SG_SIPERO = {
       else if (tipo === "sponda") nota(330, t0, 0.05, 0.12, "triangle");
       else if (tipo === "gol") [523, 659, 784, 1046].forEach(function (f, i) { nota(f, t0 + i * 0.09, 0.16, 0.22, "triangle"); });
       else if (tipo === "golSubito") [392, 330, 262].forEach(function (f, i) { nota(f, t0 + i * 0.11, 0.18, 0.2, "sine"); });
+      else if (tipo === "atterra") { nota(120, t0, 0.12, 0.3, "sine"); nota(240, t0, 0.05, 0.12, "triangle"); }   // "tump" del disco che tocca terra
     } catch (e) {}
   }
   function vibra(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+
+  // ---------- musica gasante (stile Geometry Dash), generata: niente file ----------
+  // 140 battiti: cassa dritta, clap sul 2 e 4, charleston, basso "pompato" in levare, arpeggio brillante
+  // su La- · Fa · Do · Sol, e dopo l'intro una melodia. Tasto 🎵/🔇 (scelta ricordata).
+  var MusicaHK = (function () {
+    var on = true, ctx = null, master = null, timer = null, nextT = 0, step = 0, rumore = null;
+    try { on = localStorage.getItem("sg-musica-hockey") !== "off"; } catch (e) {}
+    var S = 60 / 140 / 4;
+    function hz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+    var GIRO = [
+      { b: 45, a: [69, 72, 76, 81], m: [81, 79, 76, 79] },   // La-
+      { b: 41, a: [65, 69, 72, 77], m: [77, 76, 72, 76] },   // Fa
+      { b: 48, a: [67, 72, 76, 79], m: [79, 76, 72, 84] },   // Do
+      { b: 43, a: [67, 71, 74, 79], m: [79, 83, 86, 83] }    // Sol
+    ];
+    function osc(tipo, f, t0, dur, vol, filtroHz) {
+      var o = ctx.createOscillator(), g = ctx.createGain(), dest = master;
+      o.type = tipo; o.frequency.value = f;
+      if (filtroHz) { var fl = ctx.createBiquadFilter(); fl.type = "lowpass"; fl.frequency.value = filtroHz; g.connect(fl); fl.connect(master); dest = null; }
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); if (dest) g.connect(dest); o.start(t0); o.stop(t0 + dur + 0.03);
+    }
+    function cassa(t0) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.setValueAtTime(160, t0); o.frequency.exponentialRampToValueAtTime(42, t0 + 0.11);
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.8, t0 + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.2);
+      o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + 0.25);
+    }
+    function suonoRumore(t0, dur, vol, tipoF, fHz) {
+      if (!rumore) { rumore = ctx.createBuffer(1, Math.round(ctx.sampleRate * 0.2), ctx.sampleRate); var d = rumore.getChannelData(0); for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+      var s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      s.buffer = rumore; f.type = tipoF; f.frequency.value = fHz;
+      g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      s.connect(f); f.connect(g); g.connect(master); s.start(t0); s.stop(t0 + dur + 0.02);
+    }
+    function passo(t0) {
+      var i = step % 16, battuta = Math.floor(step / 16), c = GIRO[battuta % 4], intro = battuta < 2;
+      if (i % 4 === 0) cassa(t0);
+      if (!intro && (i === 4 || i === 12)) suonoRumore(t0, 0.13, 0.35, "bandpass", 1600);        // clap
+      suonoRumore(t0, 0.03, i % 2 ? 0.05 : (i % 4 === 2 ? 0.1 : 0.03), "highpass", 8000);       // charleston
+      if (i % 4 === 2) { osc("sawtooth", hz(c.b), t0, S * 1.7, 0.22, 700); osc("sine", hz(c.b - 12), t0, S * 1.7, 0.3); }   // basso in levare
+      osc("square", hz(c.a[[0, 1, 2, 3, 2, 1, 2, 3][i % 8]]), t0, S * 0.9, intro ? 0.035 : 0.05, 3200);                    // arpeggio
+      if (battuta >= 4 && i % 4 === 0) osc("sawtooth", hz(c.m[i / 4]), t0, S * 3.4, 0.07, 4200);                          // melodia
+      step++;
+    }
+    function loop() { if (!ctx) return; while (nextT < ctx.currentTime + 0.25) { passo(nextT); nextT += S; } }
+    function parti() {
+      ctx = SG.audioCtx && SG.audioCtx(); if (!ctx || timer) return;
+      if (!master) {
+        master = ctx.createGain();
+        var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -12; comp.ratio.value = 10; comp.attack.value = 0.003; comp.release.value = 0.15;
+        master.connect(comp); comp.connect(ctx.destination);
+      }
+      master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(0.0001, ctx.currentTime); master.gain.exponentialRampToValueAtTime(0.38, ctx.currentTime + 0.8);
+      nextT = ctx.currentTime + 0.08; step = 0; loop(); timer = setInterval(loop, 80);
+    }
+    function ferma() {
+      if (timer) { clearInterval(timer); timer = null; }
+      if (ctx && master) { try { master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(Math.max(0.0001, master.gain.value), ctx.currentTime); master.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4); } catch (e) {} }
+    }
+    var giocando = false;
+    return {
+      avvia: function () { giocando = true; if (on) parti(); },
+      ferma: function () { giocando = false; ferma(); },
+      bottone: function (el) {   // tasto 🎵/🔇 in alto a destra sul campo
+        var b = el("button", { title: "Musica", text: on ? "🎵" : "🔇", style: "position:absolute;top:calc(6px + env(safe-area-inset-top));right:8px;z-index:31;width:40px;height:40px;border-radius:12px;border:0;background:rgba(0,0,0,.35);font-size:1.2rem;cursor:pointer" });
+        b.addEventListener("click", function () {
+          on = !on; try { localStorage.setItem("sg-musica-hockey", on ? "on" : "off"); } catch (e) {}
+          b.textContent = on ? "🎵" : "🔇"; if (giocando) { if (on) parti(); else ferma(); }
+        });
+        return b;
+      }
+    };
+  })();
   // i tocchi li conta la fisica (st.colpi / st.sponde): chi disegna suona quando i contatori salgono
   function suonaEventi(s, mem) {
     if ((s.colpi || 0) > (mem.colpi || 0)) suono("colpo", s.forzaColpo || 1);
     if ((s.sponde || 0) > (mem.sponde || 0)) suono("sponda");
-    mem.colpi = s.colpi || 0; mem.sponde = s.sponde || 0;
+    if ((s.atterra || 0) > (mem.atterra || 0)) { suono("atterra"); vibra(12); }
+    mem.colpi = s.colpi || 0; mem.sponde = s.sponde || 0; mem.atterra = s.atterra || 0;
   }
   function suonoGol(fatto) { suono(fatto ? "gol" : "golSubito"); vibra(fatto ? [40, 50, 40] : 60); }
 
@@ -15912,7 +15999,12 @@ window.SG_SIPERO = {
     // un tocco vero (non la racchetta ferma appoggiata al disco): conta per il suono
     if (vn < -0.05 || Math.hypot(pvx, pvy) > 0.3) { st.colpi = (st.colpi || 0) + 1; st.forzaColpo = Math.hypot(st.pvx, st.pvy); }
   }
-  function sponda(st, v) { if (Math.abs(v) > 0.25) st.sponde = (st.sponde || 0) + 1; }
+  // sponda vera: conta per il suono e segna DOVE ha toccato (il bordo lì si illumina)
+  function sponda(st, v) { if (Math.abs(v) > 0.25) { st.sponde = (st.sponde || 0) + 1; st.spX = st.px; st.spY = st.py; } }
+  // dopo un gol (e a inizio partita) il disco CADE DALL'ALTO: finché è in aria non si muove e non si colpisce,
+  // ma le racchette sono libere. Appena tocca terra si gioca.
+  var CADUTA = 0.9;
+  function faiCadere(st) { st.cade = CADUTA; }
   // un sotto-passo di fisica (dt fisso). Le velocità racchetta arrivano da fuori (st._hvx…)
   // palo della porta: uno spigolo contro cui il disco rimbalza (come nel biliardino)
   function palo(st, x, y) {
@@ -15925,6 +16017,7 @@ window.SG_SIPERO = {
   }
   function passo(st, dt, onGol) {
     if (st.fase !== "gioco") return;
+    if (st.cade > 0) { st.cade -= dt; if (st.cade <= 0) { st.cade = 0; st.atterra = (st.atterra || 0) + 1; } return; }   // disco ancora in aria
     var prevx = st.px, prevy = st.py;
     st.px += st.pvx * dt; st.py += st.pvy * dt;
     var f = Math.exp(-ATTRITO * dt); st.pvx *= f; st.pvy *= f;
@@ -15990,6 +16083,7 @@ window.SG_SIPERO = {
   // Il campo (sfondo, bordi, linee) non cambia mai: lo disegno UNA volta su un canvas
   // nascosto e a ogni frame lo copio. Poi sopra solo punteggio, racchette e disco.
   var campoCache = null;
+  var luci = [], luciN = null;   // punti del bordo illuminati (dai contatori delle sponde)
   function disegna(ctx, cssW, o, flip) {
     var G = geo(cssW), B = G.B, F = G.F, W = cssW, H = G.H, T = TEMA;
     var dpr = window.devicePixelRatio || 1;
@@ -16044,11 +16138,34 @@ window.SG_SIPERO = {
     }
     racchetta(o.hx, o.hy, flip ? T.avv : T.io);   // racchetta dell'host
     racchetta(o.gx, o.gy, flip ? T.io : T.avv);   // racchetta dell'ospite / del computer
+    // bordi che si illuminano dove il disco li tocca (si spengono in mezzo secondo)
+    var ora = performance.now();
+    var spN = o.spN != null ? o.spN : o.sponde;
+    if (spN != null && spN !== luciN) { if (luciN != null && o.spX != null) luci.push({ x: o.spX, y: o.spY, t: ora }); luciN = spN; }
+    for (var li = luci.length - 1; li >= 0; li--) {
+      var L = luci[li], a = 1 - (ora - L.t) / 550; if (a <= 0) { luci.splice(li, 1); continue; }
+      var lp = P(L.x, L.y), bx = lp[0], by = lp[1], dmin = Math.min(bx - B, W - B - bx, by - B, H - B - by);   // il punto del bordo più vicino
+      if (dmin === bx - B) bx = B / 2; else if (dmin === W - B - bx) bx = W - B / 2; else if (dmin === by - B) by = B / 2; else by = H - B / 2;
+      var colL = by < H / 2 ? T.bordoAlto : T.bordoBasso, rL = F * 0.2;
+      ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = a;
+      var gl = ctx.createRadialGradient(bx, by, 0, bx, by, rL); gl.addColorStop(0, "#ffffff"); gl.addColorStop(0.25, colL); gl.addColorStop(1, colL + "00");
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(bx, by, rL, 0, 6.2832); ctx.fill(); ctx.restore();
+    }
     var pk = P(o.px, o.py);
-    cerchio(ctx, pk[0], pk[1], RP * F, T.discoBordo);
-    cerchio(ctx, pk[0], pk[1], RP * F * 0.8, T.disco);
-    // scritta gol
-    if (o.fase === "gol") { ctx.fillStyle = "#ffd43b"; ctx.font = "800 " + Math.round(F * 0.11) + "px system-ui,sans-serif"; ctx.fillText("GOL!", W / 2, H / 2); }
+    if (o.cade > 0) {   // disco che cade dall'alto: parte grande e sfumato, si rimpicciolisce fino a toccare terra
+      var k = Math.min(1, o.cade / CADUTA), sc = 1 + 2.6 * k * k;
+      ctx.save(); ctx.globalAlpha = 0.25 + 0.35 * (1 - k); ctx.fillStyle = "#000";   // l'ombra: piccola e chiara in alto, piena appena prima di toccare
+      ctx.beginPath(); ctx.ellipse(pk[0], pk[1], RP * F * (0.5 + 0.5 * (1 - k)), RP * F * (0.5 + 0.5 * (1 - k)), 0, 0, 6.2832); ctx.fill(); ctx.restore();
+      ctx.save(); ctx.globalAlpha = 0.55 + 0.45 * (1 - k);
+      cerchio(ctx, pk[0], pk[1] - RP * F * 1.2 * k, RP * F * sc, T.discoBordo);
+      cerchio(ctx, pk[0], pk[1] - RP * F * 1.2 * k, RP * F * sc * 0.8, T.disco);
+      ctx.restore();
+    } else {
+      cerchio(ctx, pk[0], pk[1], RP * F, T.discoBordo);
+      cerchio(ctx, pk[0], pk[1], RP * F * 0.8, T.disco);
+    }
+    // scritta gol (per un attimo dopo il gol, mentre il disco cade)
+    if (o.fase === "gol" || o.golVis) { ctx.fillStyle = "#ffd43b"; ctx.font = "800 " + Math.round(F * 0.11) + "px system-ui,sans-serif"; ctx.fillText("GOL!", W / 2, H / 2); }
   }
 
   // ---------- controllo racchetta (input locale) ----------
@@ -16221,15 +16338,15 @@ window.SG_SIPERO = {
         if (!salvato) { salvato = true; salvaHockey(st, DIFF[liv] ? liv : "medio"); }
         render();
       } else {
-        // pausa GOL: tutto fermo, il disco riparte nella metà di chi ha subito
-        st.fase = "gol"; st.golT = performance.now(); servi(st, chi === 1 ? -1 : 1); st._bot = null; rimettiRacchette();
+        // niente pausa: le racchette restano libere, il disco CADE DALL'ALTO nella metà di chi ha subito
+        st.golT = performance.now(); servi(st, chi === 1 ? -1 : 1); st._bot = null; faiCadere(st);
       }
     }
     function loop(now) {
       raf = requestAnimationFrame(loop);
       // (se l'app torna dallo sfondo non recupera di colpo mezzo secondo di fisica)
       var dt = ultimoT ? (now - ultimoT) / 1000 : 1 / 60; ultimoT = now; if (dt > 0.05) dt = 0.05;
-      if (st.fase === "gol" && now - st.golT > 1200) st.fase = "gioco";
+      st.golVis = st.golT && now - st.golT < 1100;   // scritta GOL! per un attimo
       if (st.fase === "gioco") botMuovi(st, dt, D);
       // posizioni delle racchette a inizio e fine frame + loro velocità (per la spinta sul disco)
       dtRacc += dt;
@@ -16255,7 +16372,7 @@ window.SG_SIPERO = {
       if (st.fase === "fine") return;   // la schermata è cambiata
       if (C) disegna(C.ctx, C.cssW, st, false);
     }
-    function stop() { if (raf) cancelAnimationFrame(raf); raf = null; }
+    function stop() { if (raf) cancelAnimationFrame(raf); raf = null; MusicaHK.ferma(); }
     function render() {
       var tipo = st.fase === "fine" ? "fine" : "gioco";
       if (tipo === vista && tipo !== "fine") return;
@@ -16265,7 +16382,7 @@ window.SG_SIPERO = {
         var vinto = st.vincitore === 1;
         var sf = t.schermata({ icona: vinto ? "🏆" : "🤖", titolo: vinto ? "Hai vinto!" : "Ha vinto il computer", sotto: "Glow Hockey · " + D.nome });
         sf._contenuto.appendChild(el("div", { style: "text-align:center;font-size:2rem;font-weight:800;margin:10px 0", text: st.s1 + " — " + st.s2 }));
-        sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { st.s1 = 0; st.s2 = 0; st.maxSotto = 0; st.vincitore = null; salvato = false; st._bot = null; servi(st); rimettiRacchette(); st.fase = "gioco"; vista = null; render(); } }));
+        sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { st.s1 = 0; st.s2 = 0; st.maxSotto = 0; st.vincitore = null; salvato = false; st._bot = null; servi(st); rimettiRacchette(); faiCadere(st); st.golT = 0; st.fase = "gioco"; vista = null; render(); } }));
         sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { stop(); t.esci(); } }));
         t.mostra(sf);
       } else {
@@ -16281,9 +16398,10 @@ window.SG_SIPERO = {
         t.mostra(sg);
         adattaCanvas(C);
         ultimoT = 0; raf = requestAnimationFrame(loop);
+        sg.appendChild(MusicaHK.bottone(el)); MusicaHK.avvia();   // musica gasante durante la partita
       }
     }
-    rimettiRacchette();
+    rimettiRacchette(); faiCadere(st);   // anche a inizio partita il disco arriva dall'alto
     render();
   }
 
@@ -16307,15 +16425,16 @@ window.SG_SIPERO = {
       onErrore: function () { senzaReteHK(t); }
     });
     function vm() { return { t: "g", fase: st.fase, px: st.px, py: st.py, pvx: st.pvx, pvy: st.pvy, hx: st.hx, hy: st.hy, gx: st.gx, gy: st.gy, s1: st.s1, s2: st.s2, vincitore: st.vincitore, codice: st.codice, pronta: st.pronta,
-      colpi: st.colpi || 0, sponde: st.sponde || 0, forzaColpo: st.forzaColpo || 0 }; }   // contatori: l'ospite suona quando salgono
+      colpi: st.colpi || 0, sponde: st.sponde || 0, forzaColpo: st.forzaColpo || 0,
+      cade: st.cade || 0, atterra: st.atterra || 0, golVis: !!st.golVis, spN: st.sponde || 0, spX: st.spX, spY: st.spY }; }   // disco in aria, bordo illuminato, scritta GOL   // contatori: l'ospite suona quando salgono
     function bcast(ret) { if (ret) rete.invia(vm()); else rete.inviaVeloce(vm()); }
     var memSuoni = {};
-    function gol(chi) { if (chi === 1) st.s1++; else st.s2++; suonoGol(chi === 1); if (st.s1 >= VINCI || st.s2 >= VINCI) { st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2; } else { st.fase = "gol"; st.golT = performance.now(); servi(st, chi === 1 ? -1 : 1); } bcast(true); }
+    function gol(chi) { if (chi === 1) st.s1++; else st.s2++; suonoGol(chi === 1); if (st.s1 >= VINCI || st.s2 >= VINCI) { st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2; } else { st.golT = performance.now(); servi(st, chi === 1 ? -1 : 1); faiCadere(st); } bcast(true); }   // niente pausa: il disco cade dall'alto
     function loop(now) {
       raf = requestAnimationFrame(loop);
       var dt = ultimoT ? (now - ultimoT) / 1000 : 0.016; ultimoT = now;
       if (dt > 0.1) dt = 0.1;
-      if (st.fase === "gol" && now - st.golT > 1200) { st.fase = "gioco"; }
+      st.golVis = st.golT && now - st.golT < 1100;   // scritta GOL! per un attimo
       // ammorbidisci la racchetta AVVERSARIA: scivola verso l'ultima posizione ricevuta
       // (toglie i micro-scatti sul mio schermo e gli spintoni anomali sul disco). Se il collegamento
       // è DIRETTO (bassa latenza) uso un ritardo minimo (~12ms) così i colpi dell'ospite arrivano
@@ -16335,8 +16454,8 @@ window.SG_SIPERO = {
       if (C) disegna(C.ctx, C.cssW, st, false);
       if (now - ultimoInvio > HZ) { ultimoInvio = now; bcast(false); }
     }
-    function stop() { if (raf) cancelAnimationFrame(raf); raf = null; }
-    function comincia() { if (st.fase === "lobby" && st.avvId) { st.s1 = 0; st.s2 = 0; st.vincitore = null; st.fase = "gioco"; servi(st); bcast(true); render(); } }
+    function stop() { if (raf) cancelAnimationFrame(raf); raf = null; MusicaHK.ferma(); }
+    function comincia() { if (st.fase === "lobby" && st.avvId) { st.s1 = 0; st.s2 = 0; st.vincitore = null; st.fase = "gioco"; servi(st); faiCadere(st); st.golT = 0; bcast(true); render(); } }
 
     function render() {
       var tipo = st.fase === "lobby" ? "lobby" : st.fase === "fine" ? "fine" : "gioco";
@@ -16373,6 +16492,7 @@ window.SG_SIPERO = {
         t.mostra(sg);
         adattaCanvas(C);
         ultimoT = 0; raf = requestAnimationFrame(loop);
+        sg.appendChild(MusicaHK.bottone(el)); MusicaHK.avvia();   // musica gasante durante la partita
       }
     }
     render();
@@ -16395,6 +16515,7 @@ window.SG_SIPERO = {
           if (S.vm) { if (m.s2 > S.vm.s2) suonoGol(true); else if (m.s1 > S.vm.s1) suonoGol(false); }
           suonaEventi(m, S.memSuoni || (S.memSuoni = { colpi: m.colpi, sponde: m.sponde }));
           S.vm = m; var now = performance.now();
+          if (m.cade > 0) { var fino = now + m.cade * 1000; if (!S.cadeFino || S.cadeFino < now || Math.abs(fino - S.cadeFino) > 150) S.cadeFino = fino; } else S.cadeFino = 0;   // caduta liscia fra un pacchetto e l'altro
           if (m.fase === "gioco") { S.buf.push({ rt: now, px: m.px, py: m.py, pvx: m.pvx, pvy: m.pvy, hx: m.hx, hy: m.hy }); while (S.buf.length > 2 && S.buf[0].rt < now - 1000) S.buf.shift(); }
           else { S.buf.length = 0; }   // gol/attesa: svuota, alla ripresa riparte pulito
           if (m.fase !== S.fase) { S.fase = m.fase; render(); }
@@ -16403,7 +16524,7 @@ window.SG_SIPERO = {
         onErrore: function () { stop(); erroreHK(t, "Problema di collegamento. Riprova."); }
       });
     }
-    function stop() { if (S.raf) cancelAnimationFrame(S.raf); S.raf = null; }
+    function stop() { if (S.raf) cancelAnimationFrame(S.raf); S.raf = null; MusicaHK.ferma(); }
     function loop(now) {
       S.raf = requestAnimationFrame(loop);
       var vm = S.vm; if (!vm || !S.C) return;
@@ -16432,7 +16553,8 @@ window.SG_SIPERO = {
           hx = A.hx + (B.hx - A.hx) * f; hy = A.hy + (B.hy - A.hy) * f;
         }
       }
-      var o = { fase: vm.fase, px: px, py: py, hx: hx, hy: hy, gx: S.me.x, gy: S.me.y, s1: vm.s1, s2: vm.s2 };
+      var o = { fase: vm.fase, px: px, py: py, hx: hx, hy: hy, gx: S.me.x, gy: S.me.y, s1: vm.s1, s2: vm.s2,
+        cade: S.cadeFino ? Math.max(0, (S.cadeFino - now) / 1000) : 0, golVis: vm.golVis, spN: vm.spN, spX: vm.spX, spY: vm.spY };
       disegna(S.C.ctx, S.C.cssW, o, true);
       if (now - S.ultimoInvio > HZ) { S.ultimoInvio = now; S.rete.invia({ t: "p", x: S.me.x, y: S.me.y }); }
     }
@@ -16472,6 +16594,7 @@ window.SG_SIPERO = {
         t.mostra(sg);
         adattaCanvas(S.C);
         S.buf = []; S.raf = requestAnimationFrame(loop);
+        sg.appendChild(MusicaHK.bottone(el)); MusicaHK.avvia();   // musica gasante durante la partita
       }
     }
   }

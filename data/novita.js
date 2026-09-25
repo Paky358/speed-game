@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 123,
+    data: "26 settembre 2026",
+    titolo: "Glow Hockey: disco dal cielo, bordi luminosi e musica 🔥",
+    descrizione: [
+      "Dopo un gol niente più attesa a racchette bloccate: il disco CADE DALL'ALTO. Parte grande con la sua ombra, si rimpicciolisce fino a toccare terra (tump!) e da lì si può colpire. Intanto ti muovi liberamente.",
+      "Anche a inizio partita il disco arriva dall'alto.",
+      "I bordi si illuminano nel punto esatto in cui il disco li colpisce.",
+      "Musica gasante in stile Geometry Dash: cassa dritta, basso che pompa, arpeggio e melodia. Tasto 🎵/🔇 in alto a destra sul campo."
+    ]
+  },
+  {
     v: 122,
     data: "26 settembre 2026",
     titolo: "Palla a Pendolo con gli avatar 🎯",
