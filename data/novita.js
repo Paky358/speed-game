@@ -14,7 +14,7 @@ window.SG_NOVITA = [
     titolo: "Scopa: tavolo a tutto schermo 🃏",
     descrizione: [
       "La stanza con Matt e il tavolo usa tutta l'altezza del telefono: niente più spazio vuoto sotto la tua mano.",
-      "Le carte in tavola non si rimpiccioliscono più alla quinta carta: restano grandi fino a 8 carte, andando su due file solo quando serve.",
+      "Le carte in tavola hanno SEMPRE la stessa grandezza da 1 a 6 carte (e sono più grandi di prima). Solo se in tavola ce ne sono 7 o più si rimpiccioliscono.",
       "Il suggerimento per scegliere la presa compare sul tavolo invece che sotto, così non sposta niente.",
       "Il punteggio in alto non finisce più sotto il tasto indietro."
     ]
