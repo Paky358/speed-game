@@ -10421,7 +10421,8 @@ window.SG_NOVITA = [
     titolo: "Scopa: tavolo a tutto schermo 🃏",
     descrizione: [
       "La stanza con Matt e il tavolo usa tutta l'altezza del telefono: niente più spazio vuoto sotto la tua mano.",
-      "Le carte in tavola hanno SEMPRE la stessa grandezza da 1 a 6 carte (e sono più grandi di prima). Solo se in tavola ce ne sono 7 o più si rimpiccioliscono.",
+      "Via il mazzo dal tavolo: tutto il panno è per le carte, con 8 posti (4 per fila). Le carte hanno SEMPRE la stessa grandezza fino a 8 in tavola; solo con 9 o più si rimpiccioliscono.",
+      "Distribuzione animata come dal vero: prima le 4 carte in tavola una alla volta, poi una a te e una a Matt, a turno. Anche quando si ridanno le carte a metà mano. Matt aspetta che la distribuzione finisca prima di giocare.",
       "Posti fissi in tavola: ogni carta resta dov'è finché non viene presa, il posto lasciato vuoto resta vuoto e la carta nuova va nel primo posto libero. Niente più carte che saltano.",
       "Il suggerimento per scegliere la presa compare sul tavolo invece che sotto, così non sposta niente.",
       "Il punteggio in alto non finisce più sotto il tasto indietro."
@@ -20428,7 +20429,7 @@ window.SG_SIPERO = {
       ".sc-prosp{position:absolute;inset:0;perspective-origin:50% 0%;z-index:2}",
       ".sc-piano{position:absolute;left:50%;bottom:0;transform-origin:50% 100%;border-radius:34px;background:linear-gradient(#6b3f1f,#4a2a14);padding:12px;box-shadow:0 -5px 0 #82502a inset;transform-style:preserve-3d}",
       ".sc-panno{position:relative;width:100%;height:100%;border-radius:24px;background:radial-gradient(90% 70% at 50% 30%,#35b273 0%,#1e8452 55%,#135c3a 100%);box-shadow:inset 0 0 26px rgba(0,0,0,.45);transform-style:preserve-3d}",
-      ".sc-terra.sc-t3d{position:absolute;left:5%;right:5%;top:17%;bottom:4%;padding:0;transform-style:preserve-3d}",
+      ".sc-terra.sc-t3d{position:absolute;left:3%;right:3%;top:9%;bottom:4%;padding:0;transform-style:preserve-3d}",
       ".sc-aiuto{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:8;max-width:92%;text-align:center;background:rgba(10,18,50,.88);border:1.5px solid #69db7c;color:#fff;font-weight:800;font-size:.85rem;line-height:1.25;padding:6px 12px;border-radius:12px;pointer-events:none}",
       ".sc-panno .sc-mazzo{top:14px;left:16px}"
     ].join("");
@@ -20523,9 +20524,10 @@ window.SG_SIPERO = {
     var scH = Math.max(300, Math.min(820, Math.round(alt - 32 - 36 - (Math.round(wH * ASP_CARTA) + 64) + scCorr.v)));
     var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * 0.7);
     var nT = (vm.presa && vm.presa.tavoloPrima ? vm.presa.tavoloPrima : vm.tavolo).length;
-    // carte in tavola: grandezza FISSA, quella con cui 6 carte stanno comode (3 posti per fila, 2 file).
-    // Da 1 a 6 carte non cambia mai; solo con 7 o più si rimpiccioliscono quanto basta.
-    var tavAw = (pianoW - 24) * 0.9 - 8, tavAh = pianoH * 0.78;
+    // carte in tavola: grandezza FISSA, quella con cui 8 carte stanno comode (4 posti per fila, 2 file).
+    // Da 1 a 8 carte non cambia mai; solo con 9 o più si rimpiccioliscono quanto basta.
+    // niente mazzo sul tavolo: le carte usano tutto il panno (ma restano dentro lo schermo, il tavolo è più largo del telefono)
+    var tavAw = Math.min((pianoW - 24) * 0.94 - 4, scW - 22), tavAh = (pianoH - 24) * 0.87;
     function misuraPer(n) {   // la carta più grande con cui n carte entrano nel tavolo
       var best = 0;
       for (var pr = 1; pr <= n; pr++) {
@@ -20534,11 +20536,11 @@ window.SG_SIPERO = {
       }
       return best;
     }
-    var wT = Math.min(110, Math.floor((tavAw - 10) / 3), Math.floor((tavAh - 5) / 2 / ASP_CARTA));   // 6 posti: 3 per fila, 2 file
-    if (nT > 6) wT = Math.min(wT, misuraPer(nT));
+    var wT = Math.min(110, Math.floor((tavAw - 15) / 4), Math.floor((tavAh - 5) / 2 / ASP_CARTA));   // 8 posti: 4 per fila, 2 file
+    if (nT > 8) wT = Math.min(wT, misuraPer(nT));
     wT = Math.max(26, wT);
     // POSTI FISSI in tavola: ogni carta resta nel suo posto finché non viene presa (niente carte che "saltano");
-    // una carta nuova va nel primo posto libero. Griglia fissa da 6 posti (3 x 2); più posti solo con 7+ carte.
+    // una carta nuova va nel primo posto libero. Griglia fissa da 8 posti (4 x 2); più posti solo con 9+ carte.
     var carteTav = (vm.presa && vm.presa.tavoloPrima ? vm.presa.tavoloPrima : vm.tavolo), idsTav = {};
     carteTav.forEach(function (c) { idsTav[c.id] = true; });
     for (var sid in scSlot) if (!idsTav[sid]) delete scSlot[sid];   // le carte andate via liberano il posto
@@ -20549,9 +20551,9 @@ window.SG_SIPERO = {
       scSlot[c.id] = p; occupati[p] = true;
     });
     var maxPosto = 0; for (sid in scSlot) maxPosto = Math.max(maxPosto, scSlot[sid] + 1);
-    var nPosti = Math.max(6, maxPosto);
+    var nPosti = Math.max(8, maxPosto);
     var maxFila = Math.max(1, Math.floor((tavAw + 5) / (wT + 5)));
-    var colT = nPosti <= 6 ? Math.min(3, maxFila) : Math.min(maxFila, Math.ceil(nPosti / Math.ceil(nPosti / maxFila)));
+    var colT = nPosti <= 8 ? Math.min(4, maxFila) : Math.min(maxFila, Math.ceil(nPosti / Math.ceil(nPosti / maxFila)));
     var righeT = Math.ceil(nPosti / colT);
     function grigliaTavolo() {   // le file restano anche vuote: il tavolo non si sposta mai
       return el("div", { style: "display:grid;grid-template-columns:repeat(" + colT + "," + wT + "px);grid-template-rows:repeat(" + righeT + "," + Math.round(wT * ASP_CARTA) + "px);gap:5px;justify-content:center;align-content:center;height:100%" });
@@ -20622,6 +20624,7 @@ window.SG_SIPERO = {
     var cartaSel = C.sel.carta ? trova(vm.mano, C.sel.carta) : null;
     var opts = cartaSel ? catture(cartaSel.v, vm.tavolo) : [];
     var capIds = {}; opts.forEach(function (set) { set.forEach(function (id) { capIds[id] = true; }); });
+    var prevTav = (scMount && scMount.prevTav) || {}, nuoveTav = [];
     var areaTavolo = el("div", { class: "sc-terra sc-t3d" });
     var pendingPlace = null;
     if (vm.presa) {
@@ -20660,6 +20663,7 @@ window.SG_SIPERO = {
         var cel = cartaEl(el, c, wT, extra, cap ? function () { C.tapTavolo(c.id); } : null);
         if (c.id === vm.messaGiu) cel.classList.add("sc-cade"); // appena scartata: si posa sul tavolo
         tw.appendChild(nelPosto(cel, c.id));
+        if (!prevTav[c.id]) nuoveTav.push(cel);   // carte appena arrivate in tavola (per la distribuzione animata)
       });
       areaTavolo.appendChild(tw);
     }
@@ -20667,7 +20671,7 @@ window.SG_SIPERO = {
     // il mazzo sul tavolo + rilevo se in questo giro si è distribuito (la mano è aumentata)
     var prevMano = scMount ? (scMount.prevMano || 0) : 0;
     var dealing = !vm.presa && vm.fase === "gioco" && vm.mano.length > prevMano;
-    if (vm.mazzoN > 0) { var deckEl = mazzo(el, vm.mazzoN); if (dealing) deckEl.classList.add("deal"); feltro.appendChild(deckEl); }
+    // (niente mazzo sul tavolo: lascia tutto il panno alle carte)
     box.appendChild(scena);
 
     // ---- SCOPA! (solo quando succede; di chi è il turno si vede dal nome col bordo dorato) ----
@@ -20676,11 +20680,11 @@ window.SG_SIPERO = {
     // ---- la mia mano (in basso, sulla mensola di legno a dimensione FISSA) ----
     var mensola = el("div", { class: "sc-mensola", style: "min-height:" + (Math.round(wH * ASP_CARTA) + 34) + "px" });
     var manoW = el("div", { class: "sc-mano-riga" });
+    var manoEls = [];
     vm.mano.forEach(function (c, i) {
       var extra = (C.sel.carta === c.id) ? "sel" : "";
-      if (dealing) extra += (extra ? " " : "") + "sc-deal";
       var cel = cartaEl(el, c, wH, extra, mioTurno ? function () { C.tapMano(c.id); } : null);
-      if (dealing) cel.style.animationDelay = (i * 0.09) + "s";
+      manoEls.push(cel);
       manoW.appendChild(cel);
     });
     mensola.appendChild(manoW);
@@ -20706,7 +20710,6 @@ window.SG_SIPERO = {
       t.mostra(s);
       scMount = { cont: s._contenuto, box: box, piede: s._piede };
     }
-    scMount.prevMano = vm.mano.length;   // per rilevare la prossima distribuzione
     // misuro quanto spazio avanza (o manca) sotto la mensola e rifaccio SUBITO la stanza della misura giusta
     // (prima che il telefono disegni: non si vede nessun salto). Una volta sola per schermo.
     if (!scCorr.fatto) {
@@ -20716,8 +20719,34 @@ window.SG_SIPERO = {
       scCorr.fatto = true;
       if (Math.abs(avanza) > 3) { scCorr.v += avanza; renderScopa(t, C, cb); return; }
     }
+    scMount.prevMano = vm.mano.length;   // per rilevare la prossima distribuzione
+    scMount.prevTav = {}; vm.tavolo.forEach(function (c) { scMount.prevTav[c.id] = true; });
     siediAvversario();
     if (pendingPlace) pendingPlace();
+    if (dealing) animaDistribuzione();
+    // DISTRIBUZIONE come dal vero: prima le carte in tavola una alla volta, poi una a te e una all'avversario, a turno
+    function animaDistribuzione() {
+      var passo = 0.2, t0 = 0;
+      if (!nuoveTav.length) nuoveTav = [];
+      nuoveTav.forEach(function (cel, i) {   // sul tavolo inclinato: arrivano dal centro del panno
+        if (!cel.animate) return;
+        cel.animate([{ translate: "0 -120px", scale: "0.5", opacity: 0 }, { translate: "0 0", scale: "1", opacity: 1 }],
+          { duration: 420, delay: i * passo * 1000, easing: "cubic-bezier(.2,.7,.3,1)", fill: "backwards" });
+      });
+      if (nuoveTav.length) t0 = nuoveTav.length * passo + 0.2;
+      var fr = feltro.getBoundingClientRect(), ox = fr.left + fr.width / 2, oy = fr.top + fr.height * 0.4;   // da qui partono le carte
+      function vola(elC, ritardo) {
+        if (!elC || !elC.animate) return;
+        var r = elC.getBoundingClientRect();
+        elC.animate([{ translate: Math.round(ox - (r.left + r.width / 2)) + "px " + Math.round(oy - (r.top + r.height / 2)) + "px", scale: "0.4", opacity: 0 },
+          { opacity: 1, offset: 0.25 }, { translate: "0 0", scale: "1", opacity: 1 }],
+          { duration: 460, delay: ritardo * 1000, easing: "cubic-bezier(.2,.7,.3,1)", fill: "backwards" });
+      }
+      var dorsi = ventaglio ? [].slice.call(ventaglio.children) : [];
+      var n = Math.max(manoEls.length, dorsi.length);
+      for (var k = 0; k < n; k++) { vola(manoEls[k], t0 + 2 * k * passo); vola(dorsi[k], t0 + (2 * k + 1) * passo); }
+      C._dealFino = Date.now() + (t0 + 2 * n * passo) * 1000 + 450;   // il bot aspetta che la distribuzione finisca
+    }
   }
 
   // riepilogo di fine smazzata / fine partita
@@ -20959,7 +20988,7 @@ window.SG_SIPERO = {
       suonoPresa(ev.scopa); aggiorna(); continua(ev);
     }
     function seTuraBot() {
-      if (M.st.fase === "gioco" && M.st.turno === "B") setTimeout(mossaBot, 650 + Math.random() * 400);
+      if (M.st.fase === "gioco" && M.st.turno === "B") setTimeout(mossaBot, Math.max(650 + Math.random() * 400, (C._dealFino || 0) - Date.now() + 250));   // dopo la distribuzione
     }
     function mossaBot() {
       if (M.st.fase !== "gioco" || M.st.turno !== "B") return;

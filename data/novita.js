@@ -14,7 +14,8 @@ window.SG_NOVITA = [
     titolo: "Scopa: tavolo a tutto schermo 🃏",
     descrizione: [
       "La stanza con Matt e il tavolo usa tutta l'altezza del telefono: niente più spazio vuoto sotto la tua mano.",
-      "Le carte in tavola hanno SEMPRE la stessa grandezza da 1 a 6 carte (e sono più grandi di prima). Solo se in tavola ce ne sono 7 o più si rimpiccioliscono.",
+      "Via il mazzo dal tavolo: tutto il panno è per le carte, con 8 posti (4 per fila). Le carte hanno SEMPRE la stessa grandezza fino a 8 in tavola; solo con 9 o più si rimpiccioliscono.",
+      "Distribuzione animata come dal vero: prima le 4 carte in tavola una alla volta, poi una a te e una a Matt, a turno. Anche quando si ridanno le carte a metà mano. Matt aspetta che la distribuzione finisca prima di giocare.",
       "Posti fissi in tavola: ogni carta resta dov'è finché non viene presa, il posto lasciato vuoto resta vuoto e la carta nuova va nel primo posto libero. Niente più carte che saltano.",
       "Il suggerimento per scegliere la presa compare sul tavolo invece che sotto, così non sposta niente.",
       "Il punteggio in alto non finisce più sotto il tasto indietro."
