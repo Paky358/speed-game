@@ -19,7 +19,7 @@
   };
   var FICHES_START = 500;
   var BONUS = 300, BONUS_MS = 2 * 3600 * 1000;   // 300 fiches gratis ogni 2 ore
-  var auth = null, db = null, pronto = false, utente = null, profilo = null, ascolta = [];
+  var auth = null, db = null, pronto = false, utente = null, profilo = null, ascolta = [], ultimaScheda = null;
 
   function notifica() { ascolta.forEach(function (cb) { try { cb(profilo); } catch (e) {} }); }
   function getNested(o, path) { var p = path.split("."); for (var i = 0; i < p.length; i++) { if (o == null) return undefined; o = o[p[i]]; } return o; }
@@ -46,7 +46,7 @@
       db = firebase.firestore();
       // la sessione resta salvata: riaprendo l'app si e' gia' loggati
       auth.onAuthStateChanged(function (u) {
-        utente = u || null;
+        utente = u || null; ultimaScheda = null;
         if (u) caricaProfilo(u.uid);
         else { profilo = null; pronto = true; notifica(); }
       });
@@ -124,6 +124,47 @@
       if (nuovo > (getNested(profilo, "stat.blackjack.recordFiches") || 0)) { patch["stat.blackjack.recordFiches"] = nuovo; setNested(profilo, "stat.blackjack.recordFiches", nuovo); }
       return db.collection("profili").doc(utente.uid).update(patch).then(function () { notifica(); return nuovo; });
     },
+    // ---- amici e classifica trofei ----
+    // Ognuno pubblica una "scheda" leggibile da tutti (nome, avatar, quanti trofei)
+    // nella raccolta "pubblici"; i dati veri restano privati in "profili".
+    // Gli amici sono una lista di uid nel proprio profilo (aggiunti col nome).
+    chiaveNome: function (nome) { return emailDa(nome).replace("@sg.local", ""); },
+    pubblica: function (dati) {
+      if (!auth || !utente || !profilo) return Promise.resolve();
+      var sch = { uid: utente.uid, nome: profilo.nome, chiave: SGNube.chiaveNome(profilo.nome), omino: profilo.omino || null, emoji: profilo.emoji || "🙂" };
+      for (var k in dati) sch[k] = dati[k];
+      var firma = JSON.stringify(sch);
+      if (firma === ultimaScheda) return Promise.resolve();   // niente di nuovo: non riscrive
+      ultimaScheda = firma;
+      sch.agg = Date.now();
+      return db.collection("pubblici").doc(utente.uid).set(sch).catch(function () { ultimaScheda = null; });
+    },
+    amici: function () { return (profilo && profilo.amici) || []; },
+    // cerca un giocatore col nome esatto (maiuscole e spazi non contano)
+    cercaNome: function (nome) {
+      if (!auth || !utente) return Promise.reject(new Error("offline"));
+      return db.collection("pubblici").where("chiave", "==", SGNube.chiaveNome(nome)).limit(1).get()
+        .then(function (q) { return q.empty ? null : q.docs[0].data(); });
+    },
+    aggiungiAmico: function (uid) {
+      if (!auth || !utente || !profilo) return Promise.reject(new Error("offline"));
+      var l = profilo.amici || []; if (l.indexOf(uid) < 0) l.push(uid);
+      profilo.amici = l;
+      return db.collection("profili").doc(utente.uid).update({ amici: firebase.firestore.FieldValue.arrayUnion(uid) });
+    },
+    togliAmico: function (uid) {
+      if (!auth || !utente || !profilo) return Promise.reject(new Error("offline"));
+      profilo.amici = (profilo.amici || []).filter(function (x) { return x !== uid; });
+      return db.collection("profili").doc(utente.uid).update({ amici: firebase.firestore.FieldValue.arrayRemove(uid) });
+    },
+    // le schede pubbliche di una lista di uid (chi non si trova viene saltato)
+    schede: function (uids) {
+      if (!auth || !utente) return Promise.reject(new Error("offline"));
+      return Promise.all((uids || []).map(function (u) {
+        return db.collection("pubblici").doc(u).get().then(function (d) { return d.exists ? d.data() : null; });
+      })).then(function (l) { return l.filter(Boolean); });
+    },
+
     // legge le statistiche di un gioco, es. statGioco("blackjack")
     statGioco: function (gioco) { return (profilo && profilo.stat && profilo.stat[gioco]) || {}; },
     // salva in un colpo: fiches del gioco + contatori (incrementi) + record (max) + valori da impostare

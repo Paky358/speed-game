@@ -703,3 +703,36 @@ body::before{
 .sc-avv.pensa .sc-avv-fig{ animation:avvPensa 1.6s ease-in-out infinite; }
 @keyframes avvPensa{ 0%,100%{ translate:0 0; } 50%{ translate:0 -4px; } }
 @media (prefers-reduced-motion: reduce){ .sc-avv-fig .om-tutto, .bjr-gioc .om-tutto, .bjr-matt .om-tutto, .sc-avv-fig .om-occhi, .bjr-gioc .om-occhi, .bjr-matt .om-occhi, .sc-avv.pensa .sc-avv-fig{ animation:none; } }
+
+/* ---- Amici e classifica trofei ---- */
+.am-schede{ display:grid; grid-template-columns:1fr 1fr; gap:6px; background:rgba(0,0,0,.22); border-radius:14px; padding:4px; margin-bottom:12px; }
+.am-tab{ border:0; border-radius:11px; padding:10px 4px; font:inherit; font-weight:800; font-size:.95rem; color:var(--testo-tenue); background:transparent; cursor:pointer; }
+.am-tab.attiva{ background:var(--carta); color:#fff; box-shadow:var(--ombra); }
+.am-corpo{ display:flex; flex-direction:column; gap:8px; }
+.am-cerca{ display:flex; gap:8px; align-items:stretch; }
+.am-cerca .link-campo{ flex:1; min-width:0; margin:0; }
+.am-cerca .am-agg{ width:auto; flex:0 0 auto; margin:0; padding:0 14px; font-size:.95rem; }
+.am-riga{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; font:inherit; color:inherit; cursor:pointer;
+  background:var(--carta); border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:8px 12px 8px 8px; box-shadow:var(--ombra); }
+div.am-riga{ cursor:default; }
+button.am-riga:active{ transform:scale(.985); }
+.am-riga.io{ border-color:rgba(120,230,140,.6); background:linear-gradient(135deg, rgba(90,200,110,.18), rgba(0,0,0,0)) , var(--carta); }
+.am-riga.p1{ border-color:rgba(255,215,90,.6); }
+.am-riga.p2{ border-color:rgba(220,228,238,.5); }
+.am-riga.p3{ border-color:rgba(232,168,102,.5); }
+.am-pos{ flex:0 0 34px; text-align:center; font-weight:900; font-size:1.15rem; color:var(--testo-tenue); }
+.am-riga.podio .am-pos{ font-size:1.6rem; }
+.am-fac{ flex:0 0 48px; width:48px; height:48px; border-radius:50%; overflow:hidden; background:rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; }
+.am-fac svg{ width:100%; height:100%; display:block; }
+.am-emo{ font-size:1.8rem; }
+.am-info{ flex:1; min-width:0; }
+.am-nome{ font-weight:800; font-size:1.05rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.am-dett{ font-size:.82rem; color:var(--testo-tenue); margin-top:2px; }
+.am-num{ flex:0 0 auto; text-align:right; line-height:1; }
+.am-num b{ font-size:1.5rem; color:#ffe58a; }
+.am-num span{ font-size:.75rem; color:var(--testo-tenue); }
+.am-togli{ flex:0 0 auto; width:38px; height:38px; border-radius:50%; border:0; font:inherit; font-size:1rem; cursor:pointer; color:var(--testo-tenue); background:rgba(0,0,0,.25); }
+.am-grande{ display:flex; justify-content:center; margin:0 0 12px; }
+.am-fac-grande{ width:120px; height:120px; border-radius:50%; overflow:hidden; background:rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; }
+.am-fac-grande svg{ width:100%; height:100%; display:block; }
+.am-fac-grande .am-emo{ font-size:4rem; }

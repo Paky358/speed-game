@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 124,
+    data: "26 settembre 2026",
+    titolo: "Amici e classifica trofei 👥",
+    descrizione: [
+      "Nuovo tasto 👥 Amici in home, accanto a Trofei.",
+      "Aggiungi un amico scrivendo il nome del suo profilo. Lo togli con la ✕.",
+      "Classifica: tu e i tuoi amici in fila, da chi ha più trofei a chi ne ha meno, con 🥇🥈🥉 per il podio e quanti trofei di ogni tipo (💠💎🥇🥈🥉).",
+      "Tocca un nome per vedere i suoi trofei gioco per gioco.",
+      "Per comparire nella lista degli altri, un amico deve aprire l'app aggiornata almeno una volta."
+    ]
+  },
+  {
     v: 123,
     data: "26 settembre 2026",
     titolo: "Glow Hockey: disco dal cielo, bordi luminosi e musica 🔥",
