@@ -896,7 +896,7 @@
 
   // ---------- LOCALE (contro il bot) : io = A, bot = B ----------
   function localeScopa(t, difficolta) {
-    var nomi = { A: (t.giocatori[0] || "Tu"), B: "🤖 Bot" };
+    var nomi = { A: (t.giocatori[0] || "Tu"), B: "Matt" };
     var M = creaMotore(nomi, t.mischia);
     var C = creaClient(t, {
       locale: true, sonoHost: true,

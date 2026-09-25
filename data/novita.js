@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 108,
+    data: "25 settembre 2026",
+    titolo: "Black Jack: arriva Matt, il dealer 🎩",
+    descrizione: [
+      "Il banco ora ha una faccia: Matt, in giacca e papillon, dietro al tavolo. Le sue carte vengono posate sul panno davanti a lui.",
+      "Matt reagisce: 'Fate il vostro gioco!' quando si punta, ci pensa quando pesca, fa il muso se sballa ed esulta se vince il banco.",
+      "Ogni giocatore ha il suo avatar al posto: i posti si adattano a quanti siete (da soli niente fila, fino a 5 una fila larga, da 6 a 10 due file).",
+      "Quando tocca a qualcuno, la sua faccia compare accanto al nome. Online ognuno vede l'avatar vero degli altri.",
+      "Anche nella Scopa il bot ora si chiama Matt."
+    ]
+  },
+  {
     v: 107,
     data: "25 settembre 2026",
     titolo: "Scopa: si gioca seduti al tavolo 🃏🧍",

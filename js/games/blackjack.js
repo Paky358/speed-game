@@ -419,7 +419,36 @@
     ".bj-mazzo .r{position:absolute;top:0;left:0;width:44px}",
     ".bj-mazzo .r:nth-child(1){transform:translate(5px,5px);opacity:.4}",
     ".bj-mazzo .r:nth-child(2){transform:translate(2.5px,2.5px);opacity:.7}",
-    ".bj-mazzo .bj-svg{width:100%;height:auto;filter:drop-shadow(0 2px 5px rgba(0,0,0,.55))}"
+    ".bj-mazzo .bj-svg{width:100%;height:auto;filter:drop-shadow(0 2px 5px rgba(0,0,0,.55))}",
+    // ---- la stanza del banco: Matt il dealer dietro al tavolo in prospettiva ----
+    ".bj-banco.stanza{position:relative;height:236px;padding:0;margin:0 -8px;overflow:hidden;border-radius:16px;background:radial-gradient(70% 55% at 50% 0%,rgba(255,214,140,.42),rgba(255,214,140,0) 70%),linear-gradient(#4a2c22 0%,#34201a 60%,#1f130e 100%);box-shadow:inset 0 0 44px rgba(0,0,0,.55)}",
+    ".bj-targa{position:absolute;left:50%;top:6px;transform:translateX(-50%);z-index:5;display:flex;gap:6px;align-items:center;background:rgba(10,18,50,.85);border:2px solid rgba(255,255,255,.18);border-radius:999px;padding:2px 11px;font-weight:800;font-size:.8rem;white-space:nowrap}",
+    ".bj-targa.turno{border-color:#ffd45e;box-shadow:0 0 14px rgba(255,212,94,.6)}",
+    ".bj-dealer{position:absolute;left:50%;width:128px;margin-left:-64px;top:40px;z-index:1}",
+    ".bj-dealer svg{display:block;width:100%;height:auto}",
+    ".bj-fum{position:absolute;right:calc(50% + 48px);top:54px;z-index:6;background:#fff;color:#12233a;font-weight:900;border-radius:13px;padding:5px 10px;font-size:.82rem;max-width:140px;white-space:normal;text-align:center;line-height:1.15;box-shadow:0 4px 12px rgba(0,0,0,.4);transform-origin:100% 100%;animation:bjFum .26s cubic-bezier(.3,1.6,.5,1)}",
+    ".bj-fum::after{content:'';position:absolute;right:-6px;bottom:6px;border:7px solid transparent;border-left-color:#fff;border-right:0}",
+    ".bj-fum.oro{background:linear-gradient(135deg,#ffe066,#ffb300);color:#3b2400}.bj-fum.oro::after{border-left-color:#ffc21a}",
+    "@keyframes bjFum{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}",
+    ".bj-prosp{position:absolute;left:0;right:0;bottom:0;height:100%;perspective:520px;perspective-origin:50% 0%;z-index:2;pointer-events:none}",
+    ".bj-piano{position:absolute;left:50%;bottom:-10px;width:118%;margin-left:-59%;height:106px;transform-origin:50% 100%;transform:rotateX(46deg);transform-style:preserve-3d;border-radius:60px 60px 0 0;background:linear-gradient(#6b3f1f,#4a2a14);padding:10px 12px 0;box-shadow:0 -5px 0 #82502a inset}",
+    ".bj-panno{position:relative;width:100%;height:100%;border-radius:50px 50px 0 0;background:radial-gradient(90% 90% at 50% 20%,#1f8a52,#0f6038 70%,#0a4a2a);box-shadow:inset 0 0 22px rgba(0,0,0,.45);display:flex;justify-content:center;align-items:flex-start;padding-top:8px;gap:6px}",
+    ".bj-panno .cc{width:42px;flex:0 0 auto;filter:drop-shadow(0 3px 5px rgba(0,0,0,.45))}",
+    ".bj-panno .cc.arriva{animation:bjArriva .45s cubic-bezier(.2,.85,.3,1)}",
+    "@keyframes bjArriva{from{transform:translate3d(0,-90px,60px) scale(.7);opacity:.3}to{transform:none;opacity:1}}",
+    ".bj-banco.stanza .bj-pt{position:absolute;right:12px;bottom:12px;z-index:4;margin:0}",
+    ".bj-wrap .bj-mazzo{top:32px;right:14px}",
+    // posti al tavolo: si adattano a quanti giocatori ci sono
+    ".bj-tavolata.pochi{overflow:visible;justify-content:center}",
+    ".bj-tavolata.pochi .bj-seat{flex:1 1 0;width:auto;max-width:150px;min-width:0}",
+    ".bj-tavolata.tanti{display:grid;overflow:visible;gap:6px}",
+    ".bj-tavolata.tanti .bj-seat{width:auto;min-width:0;padding:5px 4px 7px}",
+    ".bj-tavolata.tanti .bj-fan{height:40px}.bj-tavolata.tanti .bj-fan .cc{width:26px}",
+    ".bj-tavolata.tanti .nm{font-size:.7rem}.bj-tavolata.tanti .fi{font-size:.64rem;margin-bottom:2px}",
+    ".bj-av{position:relative;margin:-2px auto 3px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 35%,#4a64c9,#26357a);border:2px solid rgba(255,255,255,.25)}",
+    ".bj-av svg{position:absolute;left:50%;bottom:-1px;transform:translateX(-50%);width:96%;height:auto}",
+    ".bj-seat.attivo .bj-av{border-color:#ffd45e}",
+    ".bj-hchi{display:flex;align-items:center;gap:8px}"
   ].join("");
 
   function iniettaCSS() {
@@ -429,6 +458,33 @@
   }
 
   // ---- suoni (Web Audio) + vibrazione ----
+  // ---------- avatar: Matt il dealer + i giocatori ai loro posti ----------
+  var MATT_DEALER = { forma: "uomo", corpo: "medio", pelle: 2, capelli: "indietro", colCap: 1, barba: "corta", capo: "giacca", maglia: 7,
+    collo: "papillon", colCollo: 0, sopracc: "decise", occhi: "furbi", bocca: "ghigno" };
+  var FACCE = {
+    normale: {},
+    pensa: { occhi: "assonnati", sopracc: "alzate", bocca: "neutro" },
+    esulta: { occhi: "felici", sopracc: "alzate", bocca: "sorrisone" },
+    triste: { occhi: "dolci", sopracc: "preoccupate", bocca: "smorfia" }
+  };
+  var svgCache = {};
+  function svgAvatar(cfg, faccia, opts) {
+    var k = JSON.stringify(cfg) + "|" + faccia + "|" + (opts && opts.busto ? "b" : "");
+    if (!svgCache[k]) {
+      var c = {}, x = FACCE[faccia] || {}, n;
+      for (n in cfg) c[n] = cfg[n];
+      for (n in x) c[n] = x[n];
+      svgCache[k] = SGOmino.svg(c, opts);
+    }
+    return svgCache[k];
+  }
+  function mioAvatar(nome) {
+    var p = window.SGNube && SGNube.profilo && SGNube.profilo();
+    if (p && p.omino) return p.omino;
+    return window.SGOmino ? SGOmino.casuale(nome || "io") : null;
+  }
+  function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+
   function vibra(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
   function bip(freqDa, freqA, dur, tipo, vol) {
     var ctx = SG.audioCtx && SG.audioCtx(); if (!ctx) return;
@@ -552,11 +608,11 @@
     iniettaCSS();
     var el = t.el;
     var s = t.schermata({
-      titolo: "🃏 Black Jack", sotto: drv.sotto || "Banco: CPU",
+      titolo: "🃏 Black Jack", sotto: drv.sotto || "Banco: Matt",
       indietro: function () { if (window.confirm("Uscire dal tavolo?")) { document.body.classList.remove("bj-verde"); drv.onEsci(); } }
     });
     var wrap = el("div", { class: "bj-wrap" });
-    var zBanco = el("div", { class: "bj-banco" }), zHero = el("div", { class: "bj-hero" }),
+    var zBanco = el("div", { class: "bj-banco stanza" }), zHero = el("div", { class: "bj-hero" }),
         zMsg = el("div", { class: "bj-msg" }), zTav = el("div", { class: "bj-tavolata" });
     [zBanco, zHero, zMsg, zTav].forEach(function (z) { wrap.appendChild(z); });
     var mazzo = el("div", { class: "bj-mazzo" }, [
@@ -646,31 +702,64 @@
       }
     }
 
+    // il banco: Matt dietro al tavolo, le sue carte posate sul panno in prospettiva
     function disegnaBanco() {
       svuota(zBanco);
-      zBanco.appendChild(el("div", { class: "bj-titoloz", text: "Il Banco" }));
-      var riga = el("div", { class: "bj-carte" });
       var mostraTutto = (vm.fase === "banco" || vm.fase === "esito");
+      var pB = vm.banco.length ? BJ.punteggio(vm.banco) : 0;
+      // la faccia di Matt segue la mano
+      var faccia = "normale", fum = null, oro = false;
+      if (vm.fase === "punta") fum = "Fate il vostro gioco!";
+      else if (vm.fase === "banco") { faccia = pB > 21 ? "triste" : "pensa"; }
+      else if (vm.fase === "esito") {
+        var netto = 0;
+        vm.giocatori.forEach(function (g) { g.mani.forEach(function (m) { netto += (m.vincita - m.puntata); }); });
+        if (pB > 21) { faccia = "triste"; fum = "Sballato! 😵"; }
+        else if (BJ.eBlackjack(vm.banco)) { faccia = "esulta"; fum = "Black Jack! 😎"; oro = true; }
+        else if (netto < 0) { faccia = "esulta"; fum = "Il banco vince 😎"; }
+        else if (netto > 0) { faccia = "triste"; fum = "Complimenti! 👏"; }
+      }
+      zBanco.appendChild(el("div", { class: "bj-targa" + (vm.fase === "banco" ? " turno" : "") }, [ el("span", { text: "🎩 Matt · il banco" }) ]));
+      if (window.SGOmino) zBanco.appendChild(el("div", { class: "bj-dealer", html: svgAvatar(MATT_DEALER, faccia) }));
+      if (fum) zBanco.appendChild(el("div", { class: "bj-fum" + (oro ? " oro" : ""), text: fum }));
+      var panno = el("div", { class: "bj-panno" });
       vm.banco.forEach(function (c, i) {
         var coperta = (!mostraTutto && i === 1);
         var card = cartaEl(el, c, coperta, "cc");
-        if (anim.banco && i === vm.banco.length - 1) daVolare.push(card);
-        riga.appendChild(card);
+        if (anim.banco && i === vm.banco.length - 1) card.classList.add("arriva");   // arriva dal mazzo sul tavolo
+        panno.appendChild(card);
       });
-      if (!vm.banco.length) riga.appendChild(el("div", { style: "color:rgba(255,255,255,.4);font-size:.85rem", text: "—" }));
-      zBanco.appendChild(riga);
+      zBanco.appendChild(el("div", { class: "bj-prosp" }, [ el("div", { class: "bj-piano" }, [ panno ]) ]));
       if (vm.banco.length) {
-        var p = mostraTutto ? BJ.punteggio(vm.banco) : BJ.valoreCarta(vm.banco[0].v);
+        var p = mostraTutto ? pB : BJ.valoreCarta(vm.banco[0].v);
         zBanco.appendChild(el("div", { class: "bj-pt " + (mostraTutto && p > 21 ? "bust" : ""), text: mostraTutto ? ("" + p + (BJ.eBlackjack(vm.banco) ? " · BJ" : "")) : ("" + p + " +?") }));
       }
+    }
+    // avatar di un giocatore (quello vero se c'è, altrimenti uno fisso legato al nome)
+    function avatarDi(idx) {
+      var lista = drv.avatari ? drv.avatari() : [];
+      return avatarValido(lista[idx]) || (window.SGOmino ? SGOmino.casuale((vm.giocatori[idx] || {}).nome || idx) : null);
+    }
+    function bustoEl(idx, px) {
+      var cfg = avatarDi(idx);
+      if (!cfg) return null;
+      return el("div", { class: "bj-av", style: "width:" + px + "px;height:" + px + "px", html: svgAvatar(cfg, "normale", { busto: true }) });
     }
 
     function disegnaTavolata() {
       svuota(zTav);
       var inTurno = (vm.fase === "punta" || vm.fase === "assic" || vm.fase === "gioca");
+      // i posti si adattano: da soli niente fila, fino a 5 una fila larga, da 6 a 10 due file compatte
+      var N = vm.giocatori.length;
+      zTav.hidden = N < 2;
+      zTav.className = "bj-tavolata " + (N <= 5 ? "pochi" : "tanti");
+      zTav.style.gridTemplateColumns = N > 5 ? "repeat(" + Math.ceil(N / 2) + ",1fr)" : "";
+      var larg = Math.min(560, window.innerWidth || 375) - 36;
+      var avPx = N <= 5 ? Math.max(40, Math.min(58, Math.floor(larg / N) - 50)) : Math.max(28, Math.min(40, Math.floor(larg / Math.ceil(N / 2)) - 30));
       vm.giocatori.forEach(function (g, idx) {
         var attivo = inTurno && idx === vm.turno;
         var seat = el("div", { class: "bj-seat" + (attivo ? " attivo" : (inTurno ? " spenta" : "")) });
+        var av = bustoEl(idx, avPx); if (av) seat.appendChild(av);
         seat.appendChild(el("div", { class: "nm", text: g.nome + (idx === mioIdx() ? " (tu)" : "") }));
         seat.appendChild(el("div", { class: "fi", text: g.fiches + " 🪙" }));
         var mano = g.mani[0], fan = el("div", { class: "bj-fan" });
@@ -704,6 +793,13 @@
       if (vm.fase === "gioca") return heroGioca(mio);
       if (vm.fase === "esito") return heroEsito();
     }
+    // nome di chi gioca, con la sua faccia accanto quando al tavolo siete in più d'uno
+    function heroNome(idx, txt) {
+      var nome = el("div", { class: "bj-hnome", text: txt });
+      var av = vm.giocatori.length > 1 ? bustoEl(idx, 44) : null;
+      if (av) av.style.margin = "0";
+      return av ? el("div", { class: "bj-hchi" }, [av, nome]) : nome;
+    }
     function heroInfo(ico, txt) {
       zHero.appendChild(el("div", { style: "font-size:2.6rem;line-height:1", text: ico }));
       zHero.appendChild(el("div", { class: "bj-hnome", text: txt }));
@@ -714,7 +810,7 @@
       var minP = vm.puntataMin || 10, maxP = g.fiches;
       if (puntSel == null) puntSel = Math.min(100, maxP);
       puntSel = Math.max(minP, Math.min(puntSel, maxP));
-      zHero.appendChild(el("div", { class: "bj-hnome", text: g.nome + ", quanto punti?" }));
+      zHero.appendChild(heroNome(vm.turno, g.nome + ", quanto punti?"));
       zHero.appendChild(el("div", { class: "bj-hfiches", text: g.fiches + " 🪙 disponibili" }));
       var val = el("div", { class: "bj-punta-val", text: puntSel + " 🪙" });
       zHero.appendChild(val);
@@ -768,7 +864,7 @@
     }
     function heroGioca(mio) {
       var g = vm.giocatori[vm.turno];
-      zHero.appendChild(el("div", { class: "bj-hnome", text: g.nome + (mio ? "" : " sta giocando…") }));
+      zHero.appendChild(heroNome(vm.turno, g.nome + (mio ? "" : " sta giocando…")));
       zHero.appendChild(el("div", { class: "bj-hfiches", text: g.fiches + " 🪙" }));
       heroCarte(g);
       var ma = g.mani[g.attiva];
@@ -822,10 +918,12 @@
       else { prova = true; fichesIniz = [BJ.FICHES_INIZIALI]; }   // a zero: gioca di prova, non si salva
     }
     var M = BJ.creaMotore(nomi, t.mischia, fichesIniz), st = M.st, tav;
+    var avatari = nomi.map(function (n, i) { return i === 0 ? mioAvatar(n) : null; });   // gli altri: faccia fissa legata al nome
     function salva() { if (prof && !prova) SGNube.salvaFiches("blackjack", st.giocatori[0].fiches); }
     function refresh() { tav.aggiorna(vistaBJ(st)); }
     tav = tavoloBJ(t, {
-      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · ritira il bonus!") : ("👤 " + prof.nome + " · fiches salvate")) : "Un telefono · Banco CPU",
+      avatari: function () { return avatari; },
+      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · ritira il bonus!") : ("👤 " + prof.nome + " · fiches salvate")) : "Un telefono · Banco: Matt",
       puoAgire: function () { return true; },
       puoNuova: function () { return true; },
       guida: function () { return true; },
@@ -869,6 +967,7 @@
     var provaHost = false, mieFiches = prof ? SGNube.fiches("blackjack") : null;
     if (prof && (mieFiches == null || mieFiches < BJ.PUNTATA_MIN)) { provaHost = true; mieFiches = BJ.FICHES_INIZIALI; }
     var seats = [{ id: "host", nome: (prof ? prof.nome : (t.giocatori && t.giocatori[0])) || "Host", fiches: mieFiches }];
+    seats[0].omino = mioAvatar(seats[0].nome);
     var M = null, rete = null, codice = "…", tav = null;
 
     function nomiSeat() { return seats.map(function (x) { return x.nome; }); }
@@ -880,7 +979,7 @@
       if (tav) tav.aggiorna(vm);
     }
     function lobbyOut() {
-      if (rete) rete.invia({ t: "lobby", codice: codice, giocatori: seats.map(function (x) { return { id: x.id, nome: x.nome }; }) });
+      if (rete) rete.invia({ t: "lobby", codice: codice, giocatori: seats.map(function (x) { return { id: x.id, nome: x.nome, omino: x.omino || null }; }) });
       renderLobbyBJ(t, { sonoHost: true, codice: codice, giocatori: seats }, {
         onComincia: function () { M = BJ.creaMotore(nomiSeat(), t.mischia, seats.map(function (x) { return x.fiches; })); avviaTavoloHost(); M.nuovaMano(); bcast(); },
         onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
@@ -889,6 +988,7 @@
     function avviaTavoloHost() {
       tav = tavoloBJ(t, {
         sotto: "Online · sei l'host",
+        avatari: function () { return seats.map(function (x) { return x.omino; }); },
         mioIdx: function () { return 0; },
         puoAgire: function (vm) { return vm.turno === 0; },
         puoNuova: function () { return true; },
@@ -909,7 +1009,7 @@
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          if (seatDiId(id) < 0 && !M && seats.length < 10) seats.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), fiches: (typeof m.fiches === "number" ? m.fiches : null) });
+          if (seatDiId(id) < 0 && !M && seats.length < 10) seats.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), fiches: (typeof m.fiches === "number" ? m.fiches : null), omino: avatarValido(m.omino) });
           lobbyOut();
         } else if (M && m.t === "mossa") {
           var seat = seatDiId(id); if (seat < 0 || M.st.turno !== seat) return;
@@ -951,6 +1051,7 @@
       if (S.tav) return;
       S.tav = tavoloBJ(t, {
         sotto: "Online",
+        avatari: function () { return S.avatari || []; },
         mioIdx: function () { return S.mioSeat; },
         puoAgire: function (vm) { return vm.turno === S.mioSeat; },
         puoNuova: function () { return false; },
@@ -966,11 +1067,12 @@
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.mioId = id; S.rete.invia({ t: "join", nome: S.nome, fiches: S.fiches }); },
+        onAperto: function (id) { S.mioId = id; S.rete.invia({ t: "join", nome: S.nome, fiches: S.fiches, omino: mioAvatar(S.nome) }); },
         onMsg: function (m) {
           if (!m) return;
           if (m.t === "lobby") {
             S.mioSeat = (m.giocatori || []).findIndex(function (x) { return x.id === S.mioId; });
+            S.avatari = (m.giocatori || []).map(function (x) { return x.omino; });
             if (!S.tav) renderLobbyBJ(t, { sonoHost: false, codice: m.codice, giocatori: m.giocatori }, { onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
           } else if (m.t === "vm") {
             assicuraTavolo();
