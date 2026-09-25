@@ -706,6 +706,7 @@ body::before{
 .editor-avatar .om-azione.salva{ top:8px; bottom:auto; right:8px; height:40px; padding:0 12px; font-size:.9rem; border-radius:12px; }
 .editor-avatar .om-azione.caso{ left:8px; bottom:8px; width:42px; height:42px; padding:0; border-radius:50%; font-size:1.3rem; }
 .editor-avatar .om-freccia{ width:34px; height:50px; font-size:1.7rem; }
+.piede:empty{ margin-top:0; }   /* piede vuoto: non ruba spazio (giochi a tutto schermo) */
 </style>
 <div id="app"></div>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
@@ -10414,6 +10415,17 @@ window.SG_NCC_CATEGORIE = {
      descrizione-> elenco di righe: cosa cambia per chi gioca
    ========================================================= */
 window.SG_NOVITA = [
+  {
+    v: 119,
+    data: "26 settembre 2026",
+    titolo: "Scopa: tavolo a tutto schermo 🃏",
+    descrizione: [
+      "La stanza con Matt e il tavolo usa tutta l'altezza del telefono: niente più spazio vuoto sotto la tua mano.",
+      "Le carte in tavola non si rimpiccioliscono più alla quinta carta: restano grandi fino a 8 carte, andando su due file solo quando serve.",
+      "Il suggerimento per scegliere la presa compare sul tavolo invece che sotto, così non sposta niente.",
+      "Il punteggio in alto non finisce più sotto il tasto indietro."
+    ]
+  },
   {
     v: 118,
     data: "26 settembre 2026",
@@ -20416,6 +20428,7 @@ window.SG_SIPERO = {
       ".sc-piano{position:absolute;left:50%;bottom:0;transform-origin:50% 100%;border-radius:34px;background:linear-gradient(#6b3f1f,#4a2a14);padding:12px;box-shadow:0 -5px 0 #82502a inset;transform-style:preserve-3d}",
       ".sc-panno{position:relative;width:100%;height:100%;border-radius:24px;background:radial-gradient(90% 70% at 50% 30%,#35b273 0%,#1e8452 55%,#135c3a 100%);box-shadow:inset 0 0 26px rgba(0,0,0,.45);transform-style:preserve-3d}",
       ".sc-terra.sc-t3d{position:absolute;left:5%;right:5%;top:24%;bottom:4%;padding:0;transform-style:preserve-3d}",
+      ".sc-aiuto{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:8;max-width:92%;text-align:center;background:rgba(10,18,50,.88);border:1.5px solid #69db7c;color:#fff;font-weight:800;font-size:.85rem;line-height:1.25;padding:6px 12px;border-radius:12px;pointer-events:none}",
       ".sc-panno .sc-mazzo{top:14px;left:16px}"
     ].join("");
     document.head.appendChild(st);
@@ -20491,6 +20504,7 @@ window.SG_SIPERO = {
   //        preseIo, preseOpp, scopeIo, scopeOpp, settebelloIo, settebelloOpp,
   //        punti:{io,opp}, ultimoRound, presa:{mio,carta,presi,scopa}|null, vincitoreIo }
   // C = { vm, sel:{carta,presa}, ridisegna } ; cb = { onMossa(id,presa|null), onAvanti, onEsci, sonoHost, lobby... }
+  var scCorr = { k: null, v: 0 };   // correzione dell'altezza della stanza, misurata sullo schermo vero
   var scMount = null; // schermata di gioco già montata: la aggiorniamo senza rifarla ogni volta (niente lampeggio)
 
   function renderScopa(t, C, cb) {
@@ -20500,16 +20514,26 @@ window.SG_SIPERO = {
     var wH = larghezza(3, 10, 104);   // mano max 3
     // misure della stanza: altezza fissa (lo schermo non "salta"), il tavolo è un piano inclinato
     var scW = Math.min(window.innerWidth || 375, 560) - 28;
-    var scH = Math.max(330, Math.min(560, (window.innerHeight || 700) - 60 - 34 - (Math.round(wH * ASP_CARTA) + 44) - 26));
+    // altezza della stanza: TUTTO lo spazio che resta sullo schermo vero (--alt), poi corretta misurando dopo il montaggio
+    var alt = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--alt")) || window.innerHeight || 700;
+    var chiaveSchermo = alt + "x" + (window.innerWidth || 0);
+    if (scCorr.k !== chiaveSchermo) scCorr = { k: chiaveSchermo, v: 0 };
+    var scH = Math.max(300, Math.min(820, Math.round(alt - 32 - 36 - (Math.round(wH * ASP_CARTA) + 64) + scCorr.v)));
     var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * 0.7);
     var nT = (vm.presa && vm.presa.tavoloPrima ? vm.presa.tavoloPrima : vm.tavolo).length;
-    var perRiga = nT > 8 ? 5 : 4, righe = Math.max(1, Math.ceil(nT / perRiga));
-    var wT = Math.min(larghezza(perRiga, 5, 88, (pianoW - 24) * 0.9 - 8), Math.floor((pianoH * 0.66 - (righe - 1) * 6) / righe / ASP_CARTA));
-    var box = el("div", { style: "display:flex;flex-direction:column;min-height:calc(100vh - 108px);min-height:calc(var(--alt, 100dvh) - 108px)" });
+    // carte in tavola: provo 1, 2, 3… file e tengo la disposizione con le carte PIÙ GRANDI (niente crollo alla 5ª carta)
+    var tavAw = (pianoW - 24) * 0.9 - 8, tavAh = pianoH * 0.7, perRiga = Math.max(1, nT), wT = 0;
+    for (var pr = Math.max(1, nT); pr >= 1; pr--) {   // dalla fila unica in giù: cambio disposizione solo se le carte vengono davvero più grandi
+      var rr = Math.ceil(Math.max(1, nT) / pr), ww = Math.min(110, Math.floor((tavAw - (pr - 1) * 5) / pr), Math.floor((tavAh - (rr - 1) * 5) / rr / ASP_CARTA));
+      if (ww > wT * 1.12) { wT = ww; perRiga = pr; }
+    }
+    wT = Math.max(26, wT);
+    var larghezzaFila = perRiga * wT + (perRiga - 1) * 4 + 2;   // così le file si spezzano dove ho deciso io
+    var box = el("div", { style: "display:flex;flex-direction:column" });
 
     // ---- intestazione: punti (a sinistra) + tasto musica (a destra) ----
     var mioTurno = (vm.turno === vm.io && vm.fase === "gioco" && !vm.presa);
-    var head = el("div", { style: "display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px" });
+    var head = el("div", { style: "display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px;padding-left:40px" });   // a sinistra c'è il tasto indietro
     head.appendChild(el("div", { style: "font-size:.8rem;font-weight:700", html: "<b>" + vm.nomi.io + " " + vm.punti.io + "</b> — " + vm.nomi.opp + " " + vm.punti.opp + " <span class='tenue' style='font-weight:600'>(a " + TARGET + ")</span>" }));
     if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
     box.appendChild(head);
@@ -20575,7 +20599,7 @@ window.SG_SIPERO = {
     if (vm.presa) {
       // il tavolo RESTA fermo: rimostro il tavolo com'era e faccio volare via SOLO le carte prese
       var dir = vm.presa.mio ? "giu" : "su";
-      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center" });
+      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center;margin:0 auto;max-width:" + larghezzaFila + "px" });
       var presiEls = [];
       (vm.presa.tavoloPrima || vm.tavolo).forEach(function (c) {
         var cel = cartaEl(el, c, wT);
@@ -20601,7 +20625,7 @@ window.SG_SIPERO = {
         gioc.style.animation = "scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
       };
     } else {
-      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center" });
+      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center;margin:0 auto;max-width:" + larghezzaFila + "px" });
       if (!vm.tavolo.length) tw.appendChild(el("div", { class: "tenue", text: "tavolo vuoto" }));
       vm.tavolo.forEach(function (c) {
         var cap = mioTurno && cartaSel && capIds[c.id];
@@ -20636,10 +20660,10 @@ window.SG_SIPERO = {
     mensola.appendChild(el("div", { class: "sc-prese", html: "le tue prese <b>" + vm.preseIo + "</b>" + (vm.settebelloIo ? " · 7💰" : "") + (vm.scopeIo ? " · scope " + vm.scopeIo : "") }));
     box.appendChild(mensola);
 
-    // ---- suggerimento (nel piede) ----
+    // ---- suggerimento: in sovrimpressione sul tavolo (non sposta niente e non fa scorrere la pagina) ----
     var piedeNodi = [];
     if (mioTurno && cartaSel && opts.length >= 2) {   // solo l'aiuto per scegliere la presa (utile), niente scritte di turno
-      piedeNodi.push(el("p", { class: "modulo-nota", style: "text-align:center;margin:0", text: opts[0].length === 1 ? "Tocca la carta verde da prendere." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
+      scena.appendChild(el("div", { class: "sc-aiuto", text: opts[0].length === 1 ? "Tocca la carta verde da prendere." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
     }
 
     // ---- montaggio: la prima volta creo la schermata, poi aggiorno SOLO il contenuto (schermo fisso, niente lampeggio) ----
@@ -20656,6 +20680,15 @@ window.SG_SIPERO = {
       scMount = { cont: s._contenuto, box: box, piede: s._piede };
     }
     scMount.prevMano = vm.mano.length;   // per rilevare la prossima distribuzione
+    // misuro quanto spazio avanza (o manca) sotto la mensola e rifaccio SUBITO la stanza della misura giusta
+    // (prima che il telefono disegni: non si vede nessun salto). Una volta sola per schermo.
+    if (!scCorr.fatto) {
+      var sch = scMount.cont.parentNode, rS = sch.getBoundingClientRect(), padB = parseFloat(getComputedStyle(sch).paddingBottom) || 0;
+      var fondo = mensola.getBoundingClientRect().bottom, trabocca = Math.max(0, document.documentElement.scrollHeight - alt);
+      var avanza = Math.floor((rS.bottom - padB - fondo) - trabocca);
+      scCorr.fatto = true;
+      if (Math.abs(avanza) > 3) { scCorr.v += avanza; renderScopa(t, C, cb); return; }
+    }
     siediAvversario();
     if (pendingPlace) pendingPlace();
   }

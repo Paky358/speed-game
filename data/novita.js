@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 119,
+    data: "26 settembre 2026",
+    titolo: "Scopa: tavolo a tutto schermo 🃏",
+    descrizione: [
+      "La stanza con Matt e il tavolo usa tutta l'altezza del telefono: niente più spazio vuoto sotto la tua mano.",
+      "Le carte in tavola non si rimpiccioliscono più alla quinta carta: restano grandi fino a 8 carte, andando su due file solo quando serve.",
+      "Il suggerimento per scegliere la presa compare sul tavolo invece che sotto, così non sposta niente.",
+      "Il punteggio in alto non finisce più sotto il tasto indietro."
+    ]
+  },
+  {
     v: 118,
     data: "26 settembre 2026",
     titolo: "Avatar: accessori nuovi e borse 👜",
