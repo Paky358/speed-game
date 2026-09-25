@@ -99,51 +99,147 @@
   }
   function vivi(chars) { var n = 0; for (var i = 0; i < chars.length; i++) if (chars[i].a ? chars[i].a : chars[i].alive) n++; return n; }
 
-  // ---------- scena (canvas + controlli, per ruolo) ----------
-  function creaScena(t, ruolo, cb) {
+  // ---------- avatar: sulla trave si vedono di faccia, chi lancia lo vediamo di spalle ----------
+  var MATT = { forma: "uomo", corpo: "medio", pelle: 2, capelli: "ciuffo", colCap: 1, barba: "corta", capo: "felpa", maglia: 1,
+    cappello: "cappellino", colAcc: 0, sopracc: "decise", occhi: "furbi", bocca: "ghigno" };   // il bot Matt ha sempre la sua faccia
+  var BOT_NOMI = ["Matt", "Sara", "Leo", "Nina"];
+  function mioAvatar(nome) {
+    var p = window.SGNube && SGNube.profilo && SGNube.profilo();
+    if (p && p.omino) return p.omino;
+    return window.SGOmino ? SGOmino.casuale(nome || "io") : null;
+  }
+  function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  var BOT_DONNA = { Sara: "lunghi", Nina: "caschetto" }, BOT_UOMO = { Leo: "corti" };
+  function facciaDi(nome, cfg) {
+    if (avatarValido(cfg)) return cfg;
+    if (nome === "Matt") return MATT;
+    if (!window.SGOmino) return null;
+    var c = SGOmino.casuale(nome);   // i bot: faccia fissa dal nome, donna o uomo come il nome
+    if (BOT_DONNA[nome]) { c.forma = "donna"; c.barba = "no"; c.capelli = BOT_DONNA[nome]; }
+    if (BOT_UOMO[nome]) { c.forma = "uomo"; c.capelli = BOT_UOMO[nome]; c.orecchini = "nessuno"; c.cappello = "nessuno"; c.ombretto = c.eyeliner = c.mascara = c.rossetto = c.blush = "nessuno"; if (/gonna/.test(c.sotto)) c.sotto = "jeans"; }
+    return c;
+  }
+  function immagine(cfg) {   // l'avatar come immagine da disegnare sul canvas (pronta dopo un attimo)
+    if (!cfg || !window.SGOmino) return null;
+    var img = new Image(); img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGOmino.svg(cfg)); return img;
+  }
+  function colore(lista, v) { return typeof v === "string" && v.charAt(0) === "#" ? v : (lista[v] || lista[0]); }
+  function scurisci(h, k) {
+    var n = parseInt(String(h).slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    function c(v) { return Math.max(0, Math.min(255, Math.round(v * k))); }
+    return "rgb(" + c(r) + "," + c(g) + "," + c(b) + ")";
+  }
+  // chi lancia, visto DA DIETRO: spalle con la sua maglia, collo, orecchie, nuca coi suoi capelli (corti, medi o lunghi), cappello
+  function schiena(ctx, cx, hy, r, cfg) {
+    var O = SGOmino.OPZ, pelle = colore(O.pelle, cfg.pelle), cap = colore(O.colCap, cfg.colCap), mag = colore(O.maglia, cfg.maglia);
+    var acc = colore(O.colAcc, cfg.colAcc != null ? cfg.colAcc : cfg.maglia);
+    var i = O.capelli.indexOf(cfg.capelli), G = SGOmino.GRUPPI_CAPELLI, lung = i >= G[2][1] ? 2 : (i >= G[1][1] ? 1 : 0);
+    var calvo = /^(calvo|rasato|chierica)$/.test(cfg.capelli);
+    ctx.save();
+    // spalle e schiena
+    var gm = ctx.createLinearGradient(cx - r * 2.6, 0, cx + r * 2.6, 0);
+    gm.addColorStop(0, scurisci(mag, 0.7)); gm.addColorStop(0.45, mag); gm.addColorStop(1, scurisci(mag, 0.6));
+    ctx.fillStyle = gm; ctx.strokeStyle = scurisci(mag, 0.5); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx - r * 2.9, hy + r * 5); ctx.quadraticCurveTo(cx - r * 2.8, hy + r * 1.5, cx, hy + r * 1.25);
+    ctx.quadraticCurveTo(cx + r * 2.8, hy + r * 1.5, cx + r * 2.9, hy + r * 5); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = "rgba(0,0,0,.18)"; ctx.beginPath(); ctx.moveTo(cx, hy + r * 1.6); ctx.lineTo(cx, hy + r * 4.5); ctx.stroke();   // piega della schiena
+    // collo
+    ctx.fillStyle = scurisci(pelle, 0.85); ctx.fillRect(cx - r * 0.42, hy + r * 0.55, r * 0.84, r * 0.85);
+    // capelli lunghi che scendono sulla schiena
+    if (!calvo && lung === 2) {
+      ctx.fillStyle = cap; ctx.beginPath(); ctx.moveTo(cx - r * 1.02, hy); ctx.quadraticCurveTo(cx - r * 1.25, hy + r * 2.2, cx - r * 0.9, hy + r * 3.1);
+      ctx.quadraticCurveTo(cx, hy + r * 3.4, cx + r * 0.9, hy + r * 3.1); ctx.quadraticCurveTo(cx + r * 1.25, hy + r * 2.2, cx + r * 1.02, hy); ctx.closePath(); ctx.fill();
+    }
+    // orecchie e testa
+    ctx.fillStyle = pelle;
+    [-1, 1].forEach(function (s) { ctx.beginPath(); ctx.ellipse(cx + s * r * 0.98, hy + r * 0.08, r * 0.2, r * 0.3, 0, 0, 7); ctx.fill(); });
+    var gp = ctx.createRadialGradient(cx - r * 0.3, hy - r * 0.3, r * 0.2, cx, hy, r * 1.05);
+    gp.addColorStop(0, pelle); gp.addColorStop(1, scurisci(pelle, 0.8));
+    ctx.fillStyle = gp; ctx.beginPath(); ctx.arc(cx, hy, r, 0, 7); ctx.fill();
+    // nuca coi capelli
+    if (!calvo) {
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, hy, r * 1.05, 0, 7); ctx.clip();
+      var gc = ctx.createRadialGradient(cx - r * 0.35, hy - r * 0.5, r * 0.1, cx, hy, r * 1.2);
+      gc.addColorStop(0, cap); gc.addColorStop(1, scurisci(cap, 0.6));
+      ctx.fillStyle = gc; ctx.fillRect(cx - r * 1.2, hy - r * 1.2, r * 2.4, r * (lung ? 2.4 : 1.55));
+      ctx.strokeStyle = "rgba(255,255,255,.18)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx - r * 0.1, hy - r * 0.2, r * 0.6, 3.5, 4.6); ctx.stroke();
+      ctx.restore();
+      if (lung === 1) {
+        ctx.fillStyle = cap; ctx.beginPath(); ctx.moveTo(cx - r * 1.03, hy); ctx.quadraticCurveTo(cx - r * 1.08, hy + r * 1.1, cx - r * 0.5, hy + r * 1.25);
+        ctx.lineTo(cx + r * 0.5, hy + r * 1.25); ctx.quadraticCurveTo(cx + r * 1.08, hy + r * 1.1, cx + r * 1.03, hy); ctx.closePath(); ctx.fill();
+      }
+    }
+    // cappello (visto da dietro: la calotta col colore scelto)
+    if (cfg.cappello && cfg.cappello !== "nessuno") {
+      ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(cx, hy - r * 0.05, r * 1.08, Math.PI * 1.02, Math.PI * 1.98); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = scurisci(acc, 0.7); ctx.fillRect(cx - r * 1.08, hy - r * 0.12, r * 2.16, r * 0.2);
+    }
+    ctx.restore();
+  }
+
+  // ---------- scena (canvas a tutto schermo + comandi sopra l'acqua, per ruolo) ----------
+  function assicuraStilePendolo() {
+    if (document.getElementById("sg-pendolo-css")) return;
+    var st = document.createElement("style"); st.id = "sg-pendolo-css";
+    st.textContent = ".schermata.pd-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden}" +
+      ".pd-campo{position:relative;width:100%;height:var(--alt,100dvh);overflow:hidden;background:#0a3f61}" +
+      ".pd-campo canvas{position:absolute;inset:0;display:block;touch-action:none}" +
+      ".pd-comandi{position:absolute;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:flex-end;padding:0 10px;pointer-events:none}" +
+      ".pd-comandi > div{display:flex;gap:8px;pointer-events:auto}" +
+      ".pd-tasto{width:64px;height:64px;border-radius:18px;border:2px solid rgba(255,255,255,.35);background:rgba(8,20,48,.55);color:#fff;font:inherit;font-size:1.5rem;font-weight:900;touch-action:none;cursor:pointer;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}" +
+      ".pd-tasto:active{transform:scale(.94)}" +
+      ".pd-tasto.grande{width:auto;min-width:118px;padding:0 16px;font-size:1.05rem;background:linear-gradient(180deg,#ffe57e,#f4b011);color:#3a2500;border-color:#fff2b0}" +
+      ".pd-tasto:disabled{opacity:.4}";
+    document.head.appendChild(st);
+  }
+  // av = { posti: [{ cfg, nome } x3], lanc: { cfg, nome } }
+  function creaScena(t, ruolo, cb, av) {
     var el = t.el;
-    var s = t.schermata({ icona: "🎯", titolo: "Palla a Pendolo", sotto: ruolo === "trave" ? "Schiva e resta sulla trave!" : "Mira e butta giù i 3!",
-      indietro: function () { if (window.confirm("Uscire dal gioco?")) cb.onEsci(); } });
-    var wrap = el("div", { style: "display:flex;justify-content:center" });
-    var cv = el("canvas", { style: "touch-action:none;border-radius:14px;display:block;background:#0a3f61" });
-    wrap.appendChild(cv); s._contenuto.appendChild(wrap);
+    assicuraStilePendolo();
+    var s = t.schermata({ indietro: function () { if (window.confirm("Uscire dal gioco?")) cb.onEsci(); } });
+    s.classList.add("pd-piena");   // a tutto schermo: niente titolo, niente bordi
+    var campo = el("div", { class: "pd-campo" });
+    var cv = el("canvas");
+    campo.appendChild(cv); s._contenuto.appendChild(campo);
+    var comandi = el("div", { class: "pd-comandi" }), sx = el("div"), dx = el("div");
+    comandi.appendChild(sx); comandi.appendChild(dx); campo.appendChild(comandi);
+    var bSx = el("button", { class: "pd-tasto", text: "◀", "aria-label": ruolo === "trave" ? "Sinistra" : "Mira a sinistra" });
+    var bDx = el("button", { class: "pd-tasto", text: "▶", "aria-label": ruolo === "trave" ? "Destra" : "Mira a destra" });
+    sx.appendChild(bSx); sx.appendChild(bDx);
+    var bSalta = null;
     if (ruolo === "trave") {
-      var rM = el("div", { style: "display:flex;gap:10px;margin-top:10px" });
-      var mSx = el("button", { class: "btn btn-fantasma", style: "flex:1;font-weight:900;font-size:1.2rem", text: "◀" });
-      var mDx = el("button", { class: "btn btn-fantasma", style: "flex:1;font-weight:900;font-size:1.2rem", text: "▶" });
-      rM.appendChild(mSx); rM.appendChild(mDx); s._piede.appendChild(rM);
-      var bSalta = el("button", { class: "btn btn-primario", style: "width:100%;margin-top:8px;font-weight:900", text: "⤴ SALTA" });
-      s._piede.appendChild(bSalta);
-      s._piede.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Muoviti ◀ ▶ e SALTA quando il mirino punta te!" }));
-      hold(mSx, function () { cb.onMov(-1); }, function () { cb.onMov(0); });
-      hold(mDx, function () { cb.onMov(1); }, function () { cb.onMov(0); });
+      bSalta = el("button", { class: "pd-tasto grande", text: "⤴ SALTA" }); dx.appendChild(bSalta);
+      hold(bSx, function () { cb.onMov(-1); }, function () { cb.onMov(0); });
+      hold(bDx, function () { cb.onMov(1); }, function () { cb.onMov(0); });
       bSalta.addEventListener("pointerdown", function (e) { e.preventDefault(); cb.onSalta(); });
     } else {
-      var rA = el("div", { style: "display:flex;gap:10px;margin-top:10px" });
-      var aSx = el("button", { class: "btn btn-fantasma", style: "flex:1;font-weight:900;font-size:1.2rem", text: "◀" });
-      var aDx = el("button", { class: "btn btn-fantasma", style: "flex:1;font-weight:900;font-size:1.2rem", text: "▶" });
-      rA.appendChild(aSx); rA.appendChild(aDx); s._piede.appendChild(rA);
-      var bLancia = el("button", { class: "btn btn-primario", style: "width:100%;margin-top:8px;font-weight:900", text: "🎯 LANCIA" });
-      s._piede.appendChild(bLancia);
-      s._piede.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Mira ◀ ▶, poi LANCIA (o tocca il campo). Forza fissa: conta il tempismo." }));
-      hold(aSx, function () { cb.onAim(-1); }, function () { cb.onAim(0); });
-      hold(aDx, function () { cb.onAim(1); }, function () { cb.onAim(0); });
+      var bLancia = el("button", { class: "pd-tasto grande", text: "🎯 LANCIA" }); dx.appendChild(bLancia);
+      hold(bSx, function () { cb.onAim(-1); }, function () { cb.onAim(0); });
+      hold(bDx, function () { cb.onAim(1); }, function () { cb.onAim(0); });
       bLancia.addEventListener("pointerdown", function (e) { e.preventDefault(); cb.onLancia(); });
       var dX = null, mov = 0, tD = 0;
       cv.addEventListener("pointerdown", function (e) { dX = e.clientX; mov = 0; tD = performance.now(); try { cv.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); });
-      cv.addEventListener("pointermove", function (e) { if (dX === null) return; var dx = e.clientX - dX; dX = e.clientX; mov += Math.abs(dx); cb.onAimDrag(dx / (cv.clientWidth || 300)); e.preventDefault(); });
+      cv.addEventListener("pointermove", function (e) { if (dX === null) return; var ddx = e.clientX - dX; dX = e.clientX; mov += Math.abs(ddx); cb.onAimDrag(ddx / (cv.clientWidth || 300)); e.preventDefault(); });
       cv.addEventListener("pointerup", function (e) { if (dX !== null && mov < 14 && performance.now() - tD < 400) cb.onLancia(); dX = null; e.preventDefault(); });
       cv.addEventListener("pointercancel", function () { dX = null; });
     }
     t.mostra(s);
-    var ctx = cv.getContext("2d"), ref = { cv: cv, ctx: ctx, W: 0, H: 0, prevA: [], fallers: [], splashes: [], prevSw: 0, ruolo: ruolo, mirino: vuoiMirino(), bSalta: (ruolo === "trave" ? bSalta : null) };
+    av = av || {};
+    var posti = [];
+    for (var i = 0; i < NSEAT; i++) {
+      var p = (av.posti && av.posti[i]) || {}, nome = p.nome || BOT_NOMI[i + 1] || "Bot", cfg = facciaDi(nome, p.cfg);
+      posti.push({ nome: nome, cfg: cfg, img: immagine(cfg) });
+    }
+    var lanc = av.lanc || {};
+    var ctx = cv.getContext("2d"), ref = { cv: cv, ctx: ctx, W: 0, H: 0, prevA: [], fallers: [], splashes: [], prevSw: 0, ruolo: ruolo, mirino: vuoiMirino(),
+      bSalta: bSalta, posti: posti, lancCfg: facciaDi(lanc.nome || "Matt", lanc.cfg), lancNome: lanc.nome || "Matt", t0: performance.now(),
+      aiuto: ruolo === "trave" ? "Muoviti ◀ ▶ e SALTA quando il mirino punta te!" : "Mira ◀ ▶ (o trascina) e LANCIA: conta il tempismo!" };
     function dim() {
-      var w = Math.min(460, (window.innerWidth || 360) - 24), rect = cv.getBoundingClientRect();
-      var h = clamp((window.innerHeight || 640) - rect.top - 190, 280, 640), dpr = window.devicePixelRatio || 1;
+      var w = campo.clientWidth || Math.min(window.innerWidth || 360, 600), h = campo.clientHeight || (window.innerHeight || 640), dpr = window.devicePixelRatio || 1;
       cv.style.width = w + "px"; cv.style.height = h + "px"; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ref.W = w; ref.H = h;
     }
-    dim(); window.addEventListener("resize", dim);
+    dim(); setTimeout(dim, 120); window.addEventListener("resize", dim);
     ref.rimuovi = function () { window.removeEventListener("resize", dim); };
     // tasti (desktop)
     function kd(e) { var k = e.key.toLowerCase();
@@ -168,7 +264,7 @@
     var beamY = H * 0.44, waterY = H * 0.56, handsY = H * 0.92, cx = W / 2;
     // morti nuove -> fontanella + splash
     for (var i = 0; i < S.c.length; i++) { var wasA = ref.prevA[i] === undefined ? 1 : ref.prevA[i];
-      if (wasA && !S.c[i].a) { ref.fallers.push({ x: S.c[i].x * W, y: beamY, vy: H * 0.15, col: COLSEAT[i], rot: 0 }); }
+      if (wasA && !S.c[i].a) { ref.fallers.push({ x: S.c[i].x * W, y: beamY, vy: H * 0.15, col: COLSEAT[i], rot: 0, seat: i }); }
       ref.prevA[i] = S.c[i].a; }
     if (S.sw && !ref.prevSw) whoosh(); ref.prevSw = S.sw;
     if (ref.bSalta && S.ms >= 0 && S.c[S.ms]) { var giu = S.c[S.ms].cd > 0; if (ref.bSalta.disabled !== giu) ref.bSalta.disabled = giu; }   // tasto SALTA spento in ricarica
@@ -204,11 +300,12 @@
     // personaggi sulla trave
     for (var c = 0; c < S.c.length; c++) { var ch = S.c[c]; if (!ch.a) continue;
       var jy = ch.j > 0 ? -Math.sin((JUMP - ch.j) / JUMP * Math.PI) * H * 0.09 : 0;
-      botDis(ctx, ch.x * W, beamY + jy, COLSEAT[c], 1, 0);
+      var hA = avH(W, H);
+      if (!disegnaAvatar(ctx, ref.posti[c], ch.x * W, beamY + jy, hA, 0)) botDis(ctx, ch.x * W, beamY + jy, COLSEAT[c], 1, 0);
+      targhetta(ctx, ch.x * W, beamY + jy - hA * 1.02, c === S.ms ? "TU" : ref.posti[c].nome, COLSEAT[c], c === S.ms);
       if (c === S.ms) { var mxc = ch.x * W;
-        ctx.fillStyle = "#ffd43b"; ctx.font = "bold 12px system-ui"; ctx.textAlign = "center"; ctx.fillText("TU", mxc, beamY + jy - H * 0.11); ctx.textAlign = "left";
         if (ch.cd > 0) {   // barretta di ricarica del salto (sopra la testa)
-          var bw = W * 0.075, byy = beamY + jy - H * 0.085, pr = clamp(1 - ch.cd / JCD, 0, 1);
+          var bw = W * 0.12, byy = beamY + jy - avH(W, H) * 1.02 - 26, pr = clamp(1 - ch.cd / JCD, 0, 1);
           ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.fillRect(mxc - bw / 2, byy, bw, 5);
           ctx.fillStyle = "#ffd43b"; ctx.fillRect(mxc - bw / 2, byy, bw * pr, 5);
         }
@@ -216,19 +313,50 @@
     }
     // fontanelle
     for (var f = ref.fallers.length - 1; f >= 0; f--) { var fa = ref.fallers[f]; fa.vy += H * 1.4 * dt; fa.y += fa.vy * dt; fa.rot += dt * 6;
-      if (fa.y >= waterY) { splash(); ref.splashes.push({ x: fa.x, y: waterY, r: 6, a: 1 }); ref.fallers.splice(f, 1); } else botDis(ctx, fa.x, fa.y, fa.col, 0.9, fa.rot); }
+      if (fa.y >= waterY) { splash(); ref.splashes.push({ x: fa.x, y: waterY, r: 6, a: 1 }); ref.fallers.splice(f, 1); }
+      else if (!disegnaAvatar(ctx, ref.posti[fa.seat], fa.x, fa.y, avH(W, H) * 0.9, fa.rot)) botDis(ctx, fa.x, fa.y, fa.col, 0.9, fa.rot); }
     for (var q = ref.splashes.length - 1; q >= 0; q--) { var sp = ref.splashes[q]; sp.r += W * 0.20 * dt; sp.a -= dt * 1.6;
       if (sp.a <= 0) ref.splashes.splice(q, 1); else { ctx.strokeStyle = "rgba(255,255,255," + sp.a + ")"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(sp.x, sp.y, sp.r, 0, 7); ctx.stroke(); } }
     if (p <= 1.0) disegnaPalla();   // palla davanti/alla trave: DAVANTI ai personaggi
-    // giocatore di spalle (il lanciatore) al centro
-    ctx.fillStyle = "#2b2f3a"; ctx.beginPath(); ctx.ellipse(cx, H + H * 0.02, W * 0.16, H * 0.11, 0, 0, 7); ctx.fill();
-    ctx.fillStyle = "#3a4150"; ctx.beginPath(); ctx.arc(cx, H * 0.92, H * 0.05, 0, 7); ctx.fill();
+    // chi lancia, visto di spalle in basso al centro (col suo avatar: capelli, pelle, maglia, cappello)
+    var rT = Math.min(W * 0.075, H * 0.05);
+    if (ref.lancCfg && window.SGOmino) schiena(ctx, cx, H * 0.84, rT, ref.lancCfg);
+    else { ctx.fillStyle = "#3a4150"; ctx.beginPath(); ctx.arc(cx, H * 0.92, H * 0.05, 0, 7); ctx.fill(); }
+    targhetta(ctx, cx, H * 0.84 - rT * 1.6, ref.ruolo === "lanciatore" ? "TU" : (ref.lancNome || "Matt"), "#ffd43b", ref.ruolo === "lanciatore");
+    // aiuto nei primi secondi
+    var tA = (performance.now() - ref.t0) / 1000;
+    if (tA < 4.5) { ctx.save(); ctx.globalAlpha = Math.min(1, (4.5 - tA) / 0.6); ctx.font = "bold 13px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      var lw = ctx.measureText(ref.aiuto).width + 24; ctx.fillStyle = "rgba(4,18,28,.72)";
+      ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(W / 2 - lw / 2, 44, lw, 28, 14); else ctx.rect(W / 2 - lw / 2, 44, lw, 28); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.fillText(ref.aiuto, W / 2, 58.5); ctx.restore(); }
     // HUD
     var nv = vivi(S.c);
     ctx.fillStyle = "#04121c"; ctx.globalAlpha = .5; ctx.fillRect(0, 0, W, 34); ctx.globalAlpha = 1;
     ctx.fillStyle = "#fff"; ctx.font = "bold 18px system-ui"; ctx.textBaseline = "middle";
-    ctx.textAlign = "left"; ctx.fillText("⏱️ " + Math.ceil(S.tm) + "s", 12, 17);
+    ctx.textAlign = "left"; ctx.fillText("⏱️ " + Math.ceil(S.tm) + "s", 58, 17);   // a sinistra c'è il tasto indietro
     ctx.textAlign = "right"; ctx.fillText((ref.ruolo === "trave" ? "🏃 In piedi: " : "🎯 Bot: ") + nv, W - 12, 17); ctx.textAlign = "left";
+  }
+  function avH(W, H) { return Math.min(H * 0.15, W * 0.3); }   // altezza dell'avatar sulla trave
+  // l'avatar vero (immagine SVG) coi piedi sul punto x,y; se ruota (cade) gira attorno al centro
+  function disegnaAvatar(ctx, posto, x, y, h, rot) {
+    var img = posto && posto.img;
+    if (!img || !img.complete || !img.naturalWidth) return false;
+    var w = h * 200 / 264;
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,.2)"; if (!rot) { ctx.beginPath(); ctx.ellipse(x, y + 2, w * 0.3, h * 0.035, 0, 0, 7); ctx.fill(); }
+    ctx.translate(x, y - h / 2); if (rot) ctx.rotate(rot);
+    ctx.drawImage(img, -w / 2, -h / 2, w, h);
+    ctx.restore();
+    return true;
+  }
+  // targhetta col nome sopra la testa (bordo del colore del posto; "TU" dorato)
+  function targhetta(ctx, x, y, testo, col, mio) {
+    ctx.save(); ctx.font = "bold 12px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    var w = ctx.measureText(testo).width + 16, h = 20;
+    ctx.fillStyle = mio ? "#ffd43b" : "rgba(10,18,50,.82)"; ctx.strokeStyle = col; ctx.lineWidth = 2;
+    ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x - w / 2, y - h / 2, w, h, 10); else ctx.rect(x - w / 2, y - h / 2, w, h); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = mio ? "#3a2500" : "#fff"; ctx.fillText(testo, x, y + 0.5);
+    ctx.restore();
   }
   function botDis(ctx, x, y, col, sc, rot) {
     ctx.save(); ctx.translate(x, y); if (rot) ctx.rotate(rot); ctx.scale(sc, sc);
@@ -254,16 +382,17 @@
   function locale(t, diff, ruolo, collis) {
     ruolo = ruolo === "trave" ? "trave" : "lanciatore";
     var P = diffP(diff), raf = null, vivo = true, last = performance.now(), ST, ref, mySeat;
+    var io = (t.giocatori && t.giocatori[0]) || "Tu";
     if (ruolo === "trave") {   // TU sulla trave (posto 0), un bot lancia, gli altri 2 posti = bot
       ST = nuovoStato(P, mkChars({ 0: "io", 1: null, 2: null }), true); ST.time = P.durTrave; mySeat = 0;
       ref = creaScena(t, "trave", { onAim: function () {}, onAimDrag: function () {}, onLancia: function () {},
         onMov: function (d) { ST.chars[0].mov = d; }, onSalta: function () { if (ST.chars[0].jt <= 0 && ST.chars[0].jcd <= 0) { ST.chars[0].jt = JUMP; ST.chars[0].jcd = JCD; } },
-        onEsci: function () { stop(); t.esci(); } });
+        onEsci: function () { stop(); t.esci(); } }, { posti: [{ nome: io, cfg: mioAvatar(io) }, { nome: "Sara" }, { nome: "Leo" }], lanc: { nome: "Matt" } });
     } else {                   // TU lanci contro 3 bot
       ST = nuovoStato(P, mkChars(null), false); mySeat = -1;
       ref = creaScena(t, "lanciatore", { onAim: function (d) { ST.aimHold = d; }, onAimDrag: function (fr) { ST.aim = clamp(ST.aim + fr * AIMG, -1, 1); },
         onLancia: function () { ST.lanciaFlag = true; }, onMov: function () {}, onSalta: function () {},
-        onEsci: function () { stop(); t.esci(); } });
+        onEsci: function () { stop(); t.esci(); } }, { posti: [{ nome: "Matt" }, { nome: "Sara" }, { nome: "Leo" }], lanc: { nome: io, cfg: mioAvatar(io) } });
     }
     ST.collis = !!collis;
     function stop() { vivo = false; if (raf) cancelAnimationFrame(raf); ref.rimuovi(); }
@@ -287,6 +416,7 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var P = diffP(diff), codice = "…", pronta = false;
     var posti = {}, nomi = { host: (t.giocatori && t.giocatori[0]) || "Host" }, lanc = "host";
+    var omini = { host: mioAvatar(nomi.host) };   // avatar di chi gioca (id -> cfg)
     for (var _s = 0; _s < NSEAT; _s++) posti[_s] = null;   // seat -> id | null(bot)
     var fase = "lobby", ST = null, ref = null, raf = null, loop = null, ultimoInvio = 0, last = 0, rete = null;
 
@@ -318,7 +448,7 @@
         if (fase === "lobby") { delete nomi[id]; lobbyAgg(); } else if (ST) { var k = seatDi(id); } },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") { if (fase === "lobby" && seatDi(id) < 0 && lanc !== id) { var p = postoLibero(); if (p >= 0) { posti[p] = id; nomi[id] = String(m.nome || "Amico").slice(0, 16); } } lobbyAgg(); }
+        if (m.t === "join") { if (fase === "lobby" && seatDi(id) < 0 && lanc !== id) { var p = postoLibero(); if (p >= 0) { posti[p] = id; nomi[id] = String(m.nome || "Amico").slice(0, 16); omini[id] = avatarValido(m.omino); } } lobbyAgg(); }
         else if (m.t === "vuoiLanciare") { if (fase === "lobby") { nomi[id] = nomi[id] || "Amico"; claim(id); lobbyAgg(); } }
         else if (fase === "gioco" && ST) {
           if (id === lanc) { if (m.t === "aim") ST.aimHold = m.d || 0; else if (m.t === "lancia") ST.lanciaFlag = true; }
@@ -330,7 +460,9 @@
 
     function inizia() {
       fase = "gioco"; ST = nuovoStato(P, mkChars(posti), lanc === null); ST.collis = !!collis;
-      rete.invia({ t: "via", lanc: lanc, seggi: seggi(), nomi: nomi });
+      var BOT_TRAVE = ["Sara", "Leo", "Nina"], av = { posti: [], lanc: lanc ? { nome: nomi[lanc], cfg: omini[lanc] || null } : { nome: "Matt" } };
+      for (var sb = 0; sb < NSEAT; sb++) av.posti.push(posti[sb] ? { nome: nomi[posti[sb]], cfg: omini[posti[sb]] || null } : { nome: (lanc && sb === 0) ? "Matt" : BOT_TRAVE[sb] });   // se lancia un umano, Matt sta sulla trave
+      rete.invia({ t: "via", lanc: lanc, seggi: seggi(), nomi: nomi, av: av });
       for (var s = 0; s < NSEAT; s++) if (posti[s] && posti[s] !== "host") rete.invia({ t: "ruolo", to: posti[s], seat: s });
       if (lanc && lanc !== "host") rete.invia({ t: "ruolo", to: lanc, seat: -1 });
       var mioRuolo = (lanc === "host") ? "lanciatore" : "trave", mioSeat = seatDi("host");
@@ -340,7 +472,7 @@
         onMov: function (d) { if (mioSeat >= 0 && ST.chars[mioSeat]) ST.chars[mioSeat].mov = d; },
         onSalta: function () { if (mioSeat >= 0 && ST.chars[mioSeat] && ST.chars[mioSeat].jt <= 0 && ST.chars[mioSeat].jcd <= 0) { ST.chars[mioSeat].jt = JUMP; ST.chars[mioSeat].jcd = JCD; } },
         onEsci: function () { chiudi(); t.esci(); }
-      });
+      }, av);
       last = performance.now(); loop = requestAnimationFrame(giro);
     }
     function giro(now) {
@@ -389,13 +521,13 @@
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome }); attesa();
+        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: mioAvatar(S.nome) }); attesa();
           setTimeout(function () { if (!S.ref && S.fase === null && S.msg2) S.msg2.textContent = "Non trovo la partita: controlla il codice o attendi l'host…"; }, 8000); },
         onMsg: function (m) {
           if (!m || !m.t) return;
           if (m.t === "lobby") { S.lanc = m.lanc; S.seggi = m.seggi; if (!S.ref) mostraLobby(m); }
           else if (m.t === "ruolo") { if (m.to === S.myId) { S.seat = m.seat; S.ruolo = (m.seat < 0) ? "lanciatore" : "trave"; } }
-          else if (m.t === "via") { S.lanc = m.lanc; S.seggi = m.seggi;
+          else if (m.t === "via") { S.lanc = m.lanc; S.seggi = m.seggi; S.av = m.av || null;
             if (S.lanc === S.myId) { S.ruolo = "lanciatore"; S.seat = -1; } else { S.ruolo = "trave"; for (var i = 0; i < m.seggi.length; i++) if (m.seggi[i] && m.seggi[i].id === S.myId) S.seat = i; }
             S.buf = []; S.lastP = {}; build(); S.fase = "gioco"; }
           else if (m.t === "g") { if (!S.ref || S.fase === "fine") { if (S.fase !== "gioco") { S.lanc = m.lanc; setRuoloDaSeggi(m.seggi); build(); } }
@@ -419,7 +551,7 @@
         onMov: function (d) { S.mov = d || 0; if (S.ruolo === "trave" && S.rete) S.rete.invia({ t: "mov", d: d }); },
         onSalta: function () { if (S.ruolo === "trave" && S.rete) S.rete.invia({ t: "salta" }); },
         onEsci: function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); }
-      });
+      }, S.av);
     }
     function vistaOra(now) {   // interpola gli snapshot (movimento liscio come Horto)
       var b = S.buf, last = b[b.length - 1].s, rt = now - S.delayMs;

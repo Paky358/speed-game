@@ -597,7 +597,7 @@
     scena.appendChild(el("div", { class: "sc-quadro", style: "right:16px;top:62px;background:linear-gradient(135deg,#8f3f5c,#e3a26b 60%,#f2e3b5)" }));
     var posti = sedie.map(function (p) {
       var cfg = p.cfg || facciaBot(p.nome);
-      var box = el("div", { class: "sc-avv" }), fig = el("div", { class: "sc-avv-fig", html: cfg && window.SGOmino ? svgAvatar(cfg, p.faccia || "normale") : "" });
+      var box = el("div", { class: "sc-avv" + (p.faccia === "pensa" ? " pensa" : "") }), fig = el("div", { class: "sc-avv-fig", html: cfg && window.SGOmino ? svgAvatar(cfg, p.faccia || "normale") : "" });
       box.appendChild(fig);
       if (p.fumetto) box.appendChild(el("div", { class: "sc-fumetto" + (p.faccia === "esulta" ? " scopa" : ""), text: p.fumetto }));
       var targa = el("div", { class: "sc-targa4" + (p.turno ? " turno" : "") + (p.mia ? " mia" : "") }, [
@@ -630,6 +630,13 @@
         if (s.p.faccia === "esulta" && s.p.salta && s.fig.animate) s.fig.animate([{ transform: "none" }, { transform: "translateY(-18px)" }, { transform: "none" }], { duration: 650, easing: "ease-out" });
       });
     }
+    // gli altri guardano chi deve giocare (solo gli occhi): verso la sedia di turno, o in basso se tocca a te
+    var diTurno = -1; sedie.forEach(function (p, i) { if (p.turno) diTurno = i; });
+    posti.forEach(function (s, i) {
+      var oc = s.fig.querySelector(".om-occhi"); if (!oc || s.p.turno) return;
+      var dx = diTurno < 0 ? 0 : (diTurno > i ? 3 : (diTurno < i ? -3 : 0)), dy = diTurno < 0 && sedie.ioTurno ? 2.5 : 0;
+      if (dx || dy) oc.style.translate = dx + "px " + dy + "px";
+    });
     return { scena: scena, feltro: feltro, siedi: siedi, posti: posti };
   }
   // distribuzione come dal vero: prima le carte nuove in tavola, poi a giro (tu, poi gli altri tre nell'ordine delle sedie).
@@ -740,7 +747,7 @@
     var cfgAvv = (vm.avatar && vm.avatar.opp) || (window.SGOmino ? SGOmino.casuale(vm.nomi.opp) : null);
     var avv = null, avvFig = null;
     if (cfgAvv && window.SGOmino) {
-      avv = el("div", { class: "sc-avv" });
+      avv = el("div", { class: "sc-avv" + (faccia === "pensa" ? " pensa" : "") });
       avvFig = el("div", { class: "sc-avv-fig", html: svgAvatar(cfgAvv, faccia) });
       avv.appendChild(avvFig);
       var ventaglio = el("div", { class: "sc-avv-carte" });

@@ -292,7 +292,8 @@
       return { cfg: null, nome: st.nomi[s], n: st.mani[s].length, turno: st.turno === s && !st.presa, mia: s === 2, faccia: faccia, fumetto: fumetto,
         salta: faccia === "esulta" && st.presa && s === st.presa.chi };
     }
-    var R = C().stanza4(el, M, [sedia(1), sedia(2), sedia(3)]);
+    var sedie = [sedia(1), sedia(2), sedia(3)]; sedie.ioTurno = mioTurno;   // se tocca a te, gli altri guardano in basso verso di te
+    var R = C().stanza4(el, M, sedie);
     R.scena.appendChild(head);
     var feltro = R.feltro;
 

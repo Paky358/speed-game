@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 122,
+    data: "26 settembre 2026",
+    titolo: "Palla a Pendolo con gli avatar 🎯",
+    descrizione: [
+      "Sulla trave ci sono gli avatar veri: il tuo (con \"TU\" sopra), quelli degli amici online e i bot con la loro faccia (Matt, Sara, Leo).",
+      "Chi lancia si vede di spalle in basso, coi suoi colori: capelli, pelle, maglia e cappello. Se lanci tu, ci sei tu di schiena!",
+      "A tutto schermo: niente titolo, i tasti ◀ ▶ e SALTA/LANCIA stanno sopra l'acqua agli angoli. Un aiuto compare solo nei primi secondi.",
+      "Quando cadi in acqua cade proprio il tuo avatar, che fa la capriola.",
+      "\"Finto 3D\" nei giochi con gli avatar (Scopa, 2 vs 2, Scopone, Black Jack): respirano e sbattono le palpebre, chi deve giocare ci pensa su e nei giochi a 4 gli altri lo guardano."
+    ]
+  },
+  {
     v: 121,
     data: "26 settembre 2026",
     titolo: "Scopa, 2 vs 2 e Scopone da bordo a bordo 🟩🟥",

@@ -693,3 +693,13 @@ body::before{
 .editor-avatar .om-azione.caso{ left:8px; bottom:8px; width:42px; height:42px; padding:0; border-radius:50%; font-size:1.3rem; }
 .editor-avatar .om-freccia{ width:34px; height:50px; font-size:1.7rem; }
 .piede:empty{ margin-top:0; }   /* piede vuoto: non ruba spazio (giochi a tutto schermo) */
+/* "finto 3D" degli avatar nei giochi: respirano, sbattono le palpebre (ognuno col suo ritmo), chi deve giocare ci pensa su */
+.sc-avv-fig .om-tutto, .bjr-gioc .om-tutto, .bjr-matt .om-tutto{ transform-box:fill-box; transform-origin:50% 100%; animation:omRespiro 3.2s ease-in-out infinite; }
+.sc-avv-fig .om-occhi, .bjr-gioc .om-occhi, .bjr-matt .om-occhi{ transform-box:fill-box; transform-origin:50% 50%; animation:omBatti 4.6s infinite; transition:translate .35s ease; }
+.sc-avv:nth-of-type(2n) .om-tutto, .bjr-gioc:nth-child(2n) .om-tutto{ animation-delay:-1.3s; }
+.sc-avv:nth-of-type(3n) .om-tutto, .bjr-gioc:nth-child(3n) .om-tutto{ animation-delay:-2.2s; }
+.sc-avv:nth-of-type(2n) .om-occhi, .bjr-gioc:nth-child(2n) .om-occhi{ animation-delay:-1.9s; }
+.sc-avv:nth-of-type(3n) .om-occhi, .bjr-gioc:nth-child(3n) .om-occhi{ animation-delay:-3.3s; }
+.sc-avv.pensa .sc-avv-fig{ animation:avvPensa 1.6s ease-in-out infinite; }
+@keyframes avvPensa{ 0%,100%{ translate:0 0; } 50%{ translate:0 -4px; } }
+@media (prefers-reduced-motion: reduce){ .sc-avv-fig .om-tutto, .bjr-gioc .om-tutto, .bjr-matt .om-tutto, .sc-avv-fig .om-occhi, .bjr-gioc .om-occhi, .bjr-matt .om-occhi, .sc-avv.pensa .sc-avv-fig{ animation:none; } }
