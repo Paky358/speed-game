@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 110,
+    data: "26 settembre 2026",
+    titolo: "Black Jack: priorità al tavolo 🎰",
+    descrizione: [
+      "Il tavolo ora occupa gran parte dello schermo e i giocatori sono più grandi.",
+      "I nomi stanno sopra le teste e il punteggio è scritto accanto alle carte di ognuno: niente più etichette sopra le facce.",
+      "La parte sotto è più compatta: carte più piccole e i quattro tasti (Carta, Stai, Raddoppia, Dividi) su una riga sola.",
+      "A fine mano la vincita o la perdita compare accanto al nome."
+    ]
+  },
+  {
     v: 109,
     data: "25 settembre 2026",
     titolo: "Black Jack: tutti seduti al tavolo 🎰",

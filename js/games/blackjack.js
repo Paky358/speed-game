@@ -456,7 +456,25 @@
     ".bj-wrap .bj-mazzo{right:14px}",
     ".bj-av{position:relative;margin:-2px auto 3px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 35%,#4a64c9,#26357a);border:2px solid rgba(255,255,255,.25)}",
     ".bj-av svg{position:absolute;left:50%;bottom:-1px;transform:translateX(-50%);width:96%;height:auto}",
-    ".bj-hchi{display:flex;align-items:center;gap:8px}"
+    ".bj-hchi{display:flex;align-items:center;gap:8px}",
+    // nomi sopra le teste, punteggio accanto alle carte
+    ".bj-nome{position:absolute;transform:translate(-50%,-100%);background:rgba(10,18,50,.8);border:1.5px solid rgba(255,255,255,.16);border-radius:999px;padding:0 7px;font-size:.66rem;font-weight:800;white-space:nowrap;max-width:96px;overflow:hidden;text-overflow:ellipsis}",
+    ".bj-nome.mini{font-size:.56rem;padding:0 5px;max-width:76px}",
+    ".bj-nome.attivo{border-color:#ffd45e;box-shadow:0 0 10px rgba(255,212,94,.6)}",
+    ".bj-nome .piu{color:#7dffa8}.bj-nome .meno{color:#ff9d8a}",
+    ".bj-punti{position:absolute;transform:translateY(-50%);margin:0;font-size:.7rem;padding:0 6px}.bj-punti.mini{font-size:.6rem;padding:0 4px}",
+    // PRIORITÀ AL TAVOLO: la parte sotto (carte grandi e tasti) è compatta
+    ".bj-hero{flex:0 0 auto;gap:4px;padding:6px 6px 4px}",
+    ".bj-hero .bj-hnome{font-size:.95rem}.bj-hero .bj-hfiches{font-size:.75rem}",
+    ".bj-hero .bj-av{width:30px!important;height:30px!important}",
+    ".bj-hcarte{min-height:0;gap:6px}.bj-hcarte .cc{width:50px}.bj-hcarte.doppia .cc{width:40px}",
+    ".bj-mano{padding:3px}",
+    ".bj-hero .bj-pt{margin-top:3px!important;height:22px;font-size:.78rem}",
+    ".bj-azioni{gap:6px}",
+    ".bj-btn{flex:1 1 20%;min-width:0;min-height:42px;font-size:.88rem;border-radius:12px}",
+    ".bj-punta-val{font-size:1.7rem}",
+    ".bj-sbtn{min-height:38px;font-size:.92rem}",
+    ".bj-wrap{min-height:0;gap:6px}"
   ].join("");
 
   function iniettaCSS() {
@@ -753,11 +771,11 @@
     function disegnaScena() {
       svuota(zBanco); zTav.hidden = true;
       var W = zBanco.clientWidth || (Math.min(560, window.innerWidth || 375) - 16);
-      var H = Math.round(Math.max(260, Math.min(390, (window.innerHeight || 700) * 0.41)));
+      var H = Math.round(Math.max(300, Math.min(560, (window.innerHeight || 700) * 0.55)));   // priorità al tavolo
       zBanco.style.height = H + "px";
       mazzo.style.top = (H - 78) + "px";
       var N = vm.giocatori.length, inTurno = (vm.fase === "punta" || vm.fase === "assic" || vm.fase === "gioca");
-      var PW = Math.round(W * 1.12), PH = Math.round(H * 0.95);
+      var PW = Math.round(W * 1.12), PH = Math.round(H * 0.8);
       var cx = PW / 2, cy = PH, rx = PW / 2 - 18, ry = PH - 18;
       var strato = el("div", { class: "bj-pl" });   // i giocatori, dietro al tavolo
       var prosp = el("div", { class: "bj-prosp", style: "perspective:" + Math.round(H * 1.8) + "px" });
@@ -784,8 +802,8 @@
         }
         // le carte, posate tra le fiche e il banco
         var carte = []; g.mani.forEach(function (m) { carte = carte.concat(m.carte); });
-        if (carte.length) sulPanno(pc[0], pc[1], carteSulPanno(carte, cw, anim.ultima === idx, -1));
-        return { idx: idx, g: g, segno: segno };
+        var gruppo = carte.length ? sulPanno(pc[0], pc[1], carteSulPanno(carte, cw, anim.ultima === idx, -1)) : null;
+        return { idx: idx, g: g, segno: segno, gruppo: gruppo };
       });
       // le carte di Matt, vicino a noi (siamo dietro di lui)
       var mostraTutto = (vm.fase === "banco" || vm.fase === "esito");
@@ -798,7 +816,7 @@
       sopra.appendChild(matt);
       if (fm.fum) sopra.appendChild(el("div", { class: "bj-fum" + (fm.oro ? " oro" : ""), text: fm.fum }));
       // ora che il tavolo è in prospettiva, siedo ognuno dietro al suo posto (più lontano = più piccolo)
-      var base = N === 1 ? 190 : (N === 2 ? 165 : (N <= 4 ? 132 : (N <= 6 ? 108 : (N <= 8 ? 90 : 78))));
+      var base = (N === 1 ? 190 : (N === 2 ? 165 : (N <= 4 ? 132 : (N <= 6 ? 108 : (N <= 8 ? 90 : 78))))) * Math.max(1, Math.min(1.4, H / 340));
       var zr = zBanco.getBoundingClientRect();
       segni.forEach(function (sg) {
         var r = sg.segno.getBoundingClientRect();
@@ -810,20 +828,20 @@
         if (cfg) strato.appendChild(el("div", { class: "bj-gioc" + (attivo ? " attivo" : ""),
           style: "left:" + Math.round(x - w / 2) + "px;top:" + testa + "px;width:" + w + "px;z-index:" + Math.round(y),
           html: svgAvatar(cfg, facciaDi(sg.g, sg.idx)) }));
-        // nome e punteggio sul bordo del tavolo
-        var g = sg.g, m = g.mani[g.attiva] || g.mani[0], figli = [el("span", { class: "nm", text: g.nome + (drv.mioIdx && sg.idx === mioIdx() && N > 1 ? " ⭐" : "") })];
-        if (m && m.carte.length) {
-          var pm = BJ.punteggio(m.carte);
-          figli.push(el("span", { class: "bj-badge " + (m.esito === "vince" || m.esito === "blackjack" ? "win" : (pm > 21 ? "bust" : "")),
+        // il nome sopra la testa (a fine mano: quanto ha vinto o perso)
+        var g = sg.g, m = g.mani[g.attiva] || g.mani[0], n = vm.fase === "esito" ? nettoDi(g) : 0;
+        var nome = el("div", { class: "bj-nome" + (attivo ? " attivo" : "") + (N > 4 ? " mini" : ""), style: "left:" + Math.round(x) + "px;top:" + Math.max(14, testa + Math.round(w * 0.06)) + "px" }, [
+          el("span", { text: g.nome + (drv.mioIdx && sg.idx === mioIdx() && N > 1 ? " ⭐" : "") }),
+          n ? el("b", { class: n > 0 ? "piu" : "meno", text: " " + (n > 0 ? "+" : "−") + Math.abs(n) }) : null ]);
+        sopra.appendChild(nome);
+        // il punteggio scritto accanto alle sue carte sul tavolo
+        if (sg.gruppo && m && m.carte.length) {
+          var rc = sg.gruppo.getBoundingClientRect(), pm = BJ.punteggio(m.carte);
+          sopra.appendChild(el("div", { class: "bj-badge bj-punti " + (m.esito === "vince" || m.esito === "blackjack" ? "win" : (pm > 21 ? "bust" : "")) + (N > 6 ? " mini" : ""),
+            style: "left:" + Math.round(rc.right - zr.left + 2) + "px;top:" + Math.round(rc.top + rc.height / 2 - zr.top) + "px",
             text: vm.fase === "esito" && m.esito ? etichettaEsito(m) : BJ.testo(m.carte) }));
         }
-        var et = el("div", { class: "bj-etich" + (attivo ? " attivo" : "") + (N > 6 ? " mini" : ""), style: "left:" + Math.round(x) + "px;top:" + Math.round(y + 3) + "px" }, figli);
-        sopra.appendChild(et);
-        if (vm.fase === "esito") {   // quanto ha vinto o perso questa mano
-          var n = nettoDi(g);
-          if (n) sopra.appendChild(el("div", { class: "bj-delta " + (n > 0 ? "piu" : "meno"), style: "left:" + Math.round(x) + "px;top:" + Math.max(2, testa - 4) + "px", text: (n > 0 ? "+" : "−") + Math.abs(n) }));
-        }
-        if (bolla && sg.idx === bolla.seat) sopra.appendChild(el("div", { class: "bj-bolla-pos", style: "left:" + Math.round(x) + "px;top:" + Math.max(24, testa) + "px" }, [ el("div", { class: "bj-bolla", text: bolla.testo }) ]));
+        if (bolla && sg.idx === bolla.seat) sopra.appendChild(el("div", { class: "bj-bolla-pos", style: "left:" + Math.round(x) + "px;top:" + Math.max(30, testa - 14) + "px" }, [ el("div", { class: "bj-bolla", text: bolla.testo }) ]));
       });
     }
     function disegnaBanco() { disegnaScena(); }
