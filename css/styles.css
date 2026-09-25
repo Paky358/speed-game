@@ -661,3 +661,24 @@ body::before{
 .editor-avatar .piede .btn-fantasma{ flex:0 0 38%; }
 .editor-avatar .piede .btn-primario{ flex:1; }
 .editor-avatar .om-stella{ font-size:.85rem; padding:5px 12px; }
+/* v2 (richiesta utente): niente titolo, tasti sul palco accanto al nome, schede su una riga sola → più spazio per scorrere le scelte */
+.editor-avatar .testa, .editor-avatar .piede{ display:none; }
+.schermata.editor-avatar{ padding-top:calc(10px + env(safe-area-inset-top)); padding-bottom:0; }
+.editor-avatar .omino-palco.editor{ height:clamp(190px, calc(var(--alt, 100dvh) * .32), 270px); margin-bottom:8px; }
+.editor-avatar .om-figura{ height:calc(100% - 62px); bottom:48px; }
+.editor-avatar .om-pedana{ bottom:34px; }
+.editor-avatar .om-targa{ bottom:12px; max-width:34%; font-size:.8rem; padding:6px 12px; }
+.om-azione{ position:absolute; bottom:8px; z-index:2; border:0; border-radius:14px; cursor:pointer; font:inherit; font-weight:900; min-height:44px; padding:0 14px; }
+.om-azione:active{ transform:scale(.95); }
+.om-azione.caso{ left:8px; font-size:.92rem; color:#eaf0ff; background:rgba(8,16,44,.65); box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.2); }
+.om-azione.salva{ right:8px; font-size:1.02rem; color:#3a2a00; background:linear-gradient(180deg,#ffe57e,#f4b011);
+  box-shadow:0 4px 12px rgba(244,176,17,.45), inset 0 2px 4px rgba(255,255,255,.5); }
+.om-indietro{ position:absolute; left:8px; top:8px; z-index:2; width:40px; height:40px; border:0; border-radius:12px; cursor:pointer;
+  background:rgba(8,16,44,.6); color:#fff; font-size:1.7rem; font-weight:900; line-height:1; padding:0 0 4px; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.2); }
+.editor-avatar .om-stella{ left:56px; top:12px; }
+.editor-avatar .om-freccia{ top:44%; }
+/* schede: tutte e 6 su una riga, icona sopra e nome piccolo */
+.editor-avatar .omino-schede{ grid-template-columns:repeat(6,1fr); gap:5px; margin-bottom:2px; }
+.editor-avatar .omino-schede .cat-tab{ flex-direction:column; gap:1px; min-height:52px; padding:5px 1px; font-size:clamp(.62rem, 2.85vw, .8rem); border-radius:12px; }
+.editor-avatar .omino-schede .cat-tab .ci{ font-size:1.25rem; }
+.editor-avatar .omino-pannello{ padding-bottom:calc(16px + env(safe-area-inset-bottom)); }

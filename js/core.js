@@ -929,14 +929,15 @@
     var bozze = io.omini ? [io.omini[0] || null, io.omini[1] || null] : [cfg, null];
     bozze[slot] = cfg;
     if (!bozze[1 - slot]) bozze[1 - slot] = secondoOmino(cfg, io.nome);
-    var s = schermata({ titolo: "Il mio avatar", indietro: dopo });
-    s.classList.add("editor-avatar");   // tutto in uno schermo: palco e schede fermi, scorrono solo le scelte, Salva sempre in basso
+    var s = schermata({});
+    s.classList.add("editor-avatar");   // tutto in uno schermo, senza titolo: sul palco indietro, A caso e Salva; sotto scorrono solo le scelte
     // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre, targa col nome
     var figura = el("div", { class: "om-figura" });
     var stella = el("button", { class: "om-stella", onclick: function () { if (slot !== principale) { principale = slot; popOmino(); disegnaCambi(); } } });
     var puntini = el("div", { class: "om-puntini" });
     var palco = el("div", { class: "omino-palco editor" }, [el("div", { class: "om-faro" }), el("div", { class: "om-pedana" }), figura,
       el("div", { class: "om-targa", text: io.nome }), stella, puntini,
+      el("button", { class: "om-indietro", "aria-label": "Indietro", text: "‹", onclick: function () { dopo(); } }),
       el("button", { class: "om-freccia sx", "aria-label": "Personaggio precedente", text: "‹", onclick: function () { scorri(-1); } }),
       el("button", { class: "om-freccia dx", "aria-label": "Personaggio successivo", text: "›", onclick: function () { scorri(1); } })]);
     function disegnaCambi() {
@@ -1058,11 +1059,11 @@
       }
       aggiornaPannello();
     }
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🎲 A caso", onclick: function () {
+    palco.appendChild(el("button", { class: "om-azione caso", text: "🎲 A caso", onclick: function () {
       cfg = O.norm(O.casuale()); anteprima(true); disegnaPannello();
     } }));
     var salvato = false;
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva", onclick: function () {
+    palco.appendChild(el("button", { class: "om-azione salva", text: "✅ Salva", onclick: function () {
       if (salvato) return; salvato = true;
       this.textContent = "👋 Salvato!";   // si vede subito che il tocco è arrivato
       bozze[slot] = cfg; var tutti = bozze.map(function (b) { return O.norm(b); });
