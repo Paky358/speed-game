@@ -15,6 +15,7 @@ window.SG_NOVITA = [
     descrizione: [
       "La stanza con Matt e il tavolo usa tutta l'altezza del telefono: niente più spazio vuoto sotto la tua mano.",
       "Le carte in tavola hanno SEMPRE la stessa grandezza da 1 a 6 carte (e sono più grandi di prima). Solo se in tavola ce ne sono 7 o più si rimpiccioliscono.",
+      "Posti fissi in tavola: ogni carta resta dov'è finché non viene presa, il posto lasciato vuoto resta vuoto e la carta nuova va nel primo posto libero. Niente più carte che saltano.",
       "Il suggerimento per scegliere la presa compare sul tavolo invece che sotto, così non sposta niente.",
       "Il punteggio in alto non finisce più sotto il tasto indietro."
     ]

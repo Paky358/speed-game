@@ -10422,6 +10422,7 @@ window.SG_NOVITA = [
     descrizione: [
       "La stanza con Matt e il tavolo usa tutta l'altezza del telefono: niente più spazio vuoto sotto la tua mano.",
       "Le carte in tavola hanno SEMPRE la stessa grandezza da 1 a 6 carte (e sono più grandi di prima). Solo se in tavola ce ne sono 7 o più si rimpiccioliscono.",
+      "Posti fissi in tavola: ogni carta resta dov'è finché non viene presa, il posto lasciato vuoto resta vuoto e la carta nuova va nel primo posto libero. Niente più carte che saltano.",
       "Il suggerimento per scegliere la presa compare sul tavolo invece che sotto, così non sposta niente.",
       "Il punteggio in alto non finisce più sotto il tasto indietro."
     ]
@@ -20504,6 +20505,7 @@ window.SG_SIPERO = {
   //        preseIo, preseOpp, scopeIo, scopeOpp, settebelloIo, settebelloOpp,
   //        punti:{io,opp}, ultimoRound, presa:{mio,carta,presi,scopa}|null, vincitoreIo }
   // C = { vm, sel:{carta,presa}, ridisegna } ; cb = { onMossa(id,presa|null), onAvanti, onEsci, sonoHost, lobby... }
+  var scSlot = {};   // id carta in tavola -> numero del suo posto (resta fermo finché non viene presa)
   var scCorr = { k: null, v: 0 };   // correzione dell'altezza della stanza, misurata sullo schermo vero
   var scMount = null; // schermata di gioco già montata: la aggiorniamo senza rifarla ogni volta (niente lampeggio)
 
@@ -20521,7 +20523,7 @@ window.SG_SIPERO = {
     var scH = Math.max(300, Math.min(820, Math.round(alt - 32 - 36 - (Math.round(wH * ASP_CARTA) + 64) + scCorr.v)));
     var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * 0.7);
     var nT = (vm.presa && vm.presa.tavoloPrima ? vm.presa.tavoloPrima : vm.tavolo).length;
-    // carte in tavola: grandezza FISSA, quella con cui 6 carte stanno comode (su una o due file).
+    // carte in tavola: grandezza FISSA, quella con cui 6 carte stanno comode (3 posti per fila, 2 file).
     // Da 1 a 6 carte non cambia mai; solo con 7 o più si rimpiccioliscono quanto basta.
     var tavAw = (pianoW - 24) * 0.9 - 8, tavAh = pianoH * 0.78;
     function misuraPer(n) {   // la carta più grande con cui n carte entrano nel tavolo
@@ -20532,14 +20534,29 @@ window.SG_SIPERO = {
       }
       return best;
     }
-    var wT = misuraPer(6);
-    if (Math.floor((tavAw - 15) / 4) >= wT - 3) wT = Math.min(wT, Math.floor((tavAw - 15) / 4));   // se per poco non ci stanno 4 in fila, stringo di un pelo
+    var wT = Math.min(110, Math.floor((tavAw - 10) / 3), Math.floor((tavAh - 5) / 2 / ASP_CARTA));   // 6 posti: 3 per fila, 2 file
     if (nT > 6) wT = Math.min(wT, misuraPer(nT));
     wT = Math.max(26, wT);
-    // file: quante carte ci stanno in una riga a questa grandezza, poi righe bilanciate (es. 5 = 3+2, 6 = 3+3)
-    var maxFila = Math.max(1, Math.floor((tavAw + 5) / (wT + 5))), righeT = Math.ceil(Math.max(1, nT) / maxFila);
-    var perRiga = Math.ceil(Math.max(1, nT) / righeT);
-    var larghezzaFila = perRiga * wT + (perRiga - 1) * 4 + 2;   // così le file si spezzano dove ho deciso io
+    // POSTI FISSI in tavola: ogni carta resta nel suo posto finché non viene presa (niente carte che "saltano");
+    // una carta nuova va nel primo posto libero. Griglia fissa da 6 posti (3 x 2); più posti solo con 7+ carte.
+    var carteTav = (vm.presa && vm.presa.tavoloPrima ? vm.presa.tavoloPrima : vm.tavolo), idsTav = {};
+    carteTav.forEach(function (c) { idsTav[c.id] = true; });
+    for (var sid in scSlot) if (!idsTav[sid]) delete scSlot[sid];   // le carte andate via liberano il posto
+    var occupati = {}; for (sid in scSlot) occupati[scSlot[sid]] = true;
+    carteTav.forEach(function (c) {
+      if (scSlot[c.id] != null) return;
+      var p = 0; while (occupati[p]) p++;
+      scSlot[c.id] = p; occupati[p] = true;
+    });
+    var maxPosto = 0; for (sid in scSlot) maxPosto = Math.max(maxPosto, scSlot[sid] + 1);
+    var nPosti = Math.max(6, maxPosto);
+    var maxFila = Math.max(1, Math.floor((tavAw + 5) / (wT + 5)));
+    var colT = nPosti <= 6 ? Math.min(3, maxFila) : Math.min(maxFila, Math.ceil(nPosti / Math.ceil(nPosti / maxFila)));
+    var righeT = Math.ceil(nPosti / colT);
+    function grigliaTavolo() {   // le file restano anche vuote: il tavolo non si sposta mai
+      return el("div", { style: "display:grid;grid-template-columns:repeat(" + colT + "," + wT + "px);grid-template-rows:repeat(" + righeT + "," + Math.round(wT * ASP_CARTA) + "px);gap:5px;justify-content:center;align-content:center;height:100%" });
+    }
+    function nelPosto(cel, id) { var p = scSlot[id] || 0; cel.style.gridColumn = (p % colT + 1); cel.style.gridRow = (Math.floor(p / colT) + 1); return cel; }
     var box = el("div", { style: "display:flex;flex-direction:column" });
 
     // ---- intestazione: punti (a sinistra) + tasto musica (a destra) ----
@@ -20610,12 +20627,12 @@ window.SG_SIPERO = {
     if (vm.presa) {
       // il tavolo RESTA fermo: rimostro il tavolo com'era e faccio volare via SOLO le carte prese
       var dir = vm.presa.mio ? "giu" : "su";
-      var tw0 = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center;margin:0 auto;max-width:" + larghezzaFila + "px" });
+      var tw0 = grigliaTavolo();
       var presiEls = [];
       (vm.presa.tavoloPrima || vm.tavolo).forEach(function (c) {
         var cel = cartaEl(el, c, wT);
         if (vm.presa.presiIds && vm.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); }
-        tw0.appendChild(cel);
+        tw0.appendChild(nelPosto(cel, c.id));
       });
       areaTavolo.appendChild(tw0);
       // la mia carta giocata: parte dalla mano, va SOPRA la/e carta/e che prende, poi vola via con la presa
@@ -20636,14 +20653,13 @@ window.SG_SIPERO = {
         gioc.style.animation = "scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
       };
     } else {
-      var tw = el("div", { style: "display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-content:center;margin:0 auto;max-width:" + larghezzaFila + "px" });
-      if (!vm.tavolo.length) tw.appendChild(el("div", { class: "tenue", text: "tavolo vuoto" }));
+      var tw = grigliaTavolo();
       vm.tavolo.forEach(function (c) {
         var cap = mioTurno && cartaSel && capIds[c.id];
         var extra = (C.sel.presa.indexOf(c.id) >= 0) ? "presel" : (cap ? "cap" : "");
         var cel = cartaEl(el, c, wT, extra, cap ? function () { C.tapTavolo(c.id); } : null);
         if (c.id === vm.messaGiu) cel.classList.add("sc-cade"); // appena scartata: si posa sul tavolo
-        tw.appendChild(cel);
+        tw.appendChild(nelPosto(cel, c.id));
       });
       areaTavolo.appendChild(tw);
     }
