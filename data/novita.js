@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 109,
+    data: "25 settembre 2026",
+    titolo: "Black Jack: tutti seduti al tavolo 🎰",
+    descrizione: [
+      "Ora la vista è da dietro Matt: vedi tutti i giocatori seduti attorno al tavolo a mezzaluna, faccia a faccia.",
+      "Il tavolo si adatta: da soli sei grande al centro, in due le facce si vedono benissimo, fino a 10 si stringono ma ci stanno tutti.",
+      "Le fiche puntate si vedono sul tavolo, in pila davanti a ognuno. A fine mano chi perde resta senza e chi vince vede la sua vincita.",
+      "Le facce reagiscono: chi gioca ci pensa, chi sballa fa il muso, chi fa Black Jack esulta. A fine mano compare quanto hai vinto o perso."
+    ]
+  },
+  {
     v: 108,
     data: "25 settembre 2026",
     titolo: "Black Jack: arriva Matt, il dealer 🎩",
