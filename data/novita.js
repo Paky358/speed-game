@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 115,
+    data: "26 settembre 2026",
+    titolo: "Black Jack: la regia da TV 🎬",
+    descrizione: [
+      "Si apre con Matt che vi guarda e dà il benvenuto, poi la telecamera passa su ognuno di voi e vi presenta.",
+      "Tavolo ovale vero, con tutti seduti attorno. Durante le puntate si vede tutto il tavolo, con il valore scritto sopra ogni pila di fiche.",
+      "Alla seconda carta la telecamera scorre lungo il tavolo; quando tocca a qualcuno fa lo zoom su di lui: faccia, fiche e carte da vicino.",
+      "Quando gioca Matt, zoom sulle sue carte mentre scopre quella coperta. A fine mano si torna a tutti, con vincite e perdite.",
+      "Le carte si posano a cascata come fanno i croupier: non finiscono più sopra quelle del vicino, nemmeno in 10.",
+      "Tocca la faccia di un giocatore (o di Matt) per guardarlo da vicino per un attimo."
+    ]
+  },
+  {
     v: 114,
     data: "26 settembre 2026",
     titolo: "Avatar: 55 tagli e tante facce nuove 💇",
