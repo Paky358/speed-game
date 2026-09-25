@@ -474,7 +474,16 @@
     ".bj-btn{flex:1 1 20%;min-width:0;min-height:42px;font-size:.88rem;border-radius:12px}",
     ".bj-punta-val{font-size:1.7rem}",
     ".bj-sbtn{min-height:38px;font-size:.92rem}",
-    ".bj-wrap{min-height:0;gap:6px}"
+    ".bj-wrap{min-height:0;gap:6px}",
+    // la scritta grande sulla parete: chi sta giocando
+    ".bj-turno{position:absolute;left:50%;top:10px;transform:translateX(-50%);text-align:center;font-weight:900;font-size:1.25rem;color:#ffe066;text-shadow:0 2px 10px rgba(0,0,0,.7),0 0 18px rgba(255,200,60,.35);white-space:nowrap;max-width:78%;overflow:hidden;text-overflow:ellipsis;line-height:1.1}",
+    ".bj-turno small{display:block;font-size:.72rem;color:#ffe58a;opacity:.85;font-weight:800}",
+    // sotto: tasti ai lati delle carte
+    ".bj-hriga{display:flex;align-items:center;gap:8px;width:100%}",
+    ".bj-col{flex:0 0 26%;display:flex;flex-direction:column;gap:8px}",
+    ".bj-col .bj-btn{flex:none;width:100%;min-height:54px;font-size:.92rem}",
+    ".bj-hcentro{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center}",
+    ".bj-hcarte{flex-wrap:nowrap}"
   ].join("");
 
   function iniettaCSS() {
@@ -647,6 +656,7 @@
       el("div", { class: "r", html: BJ.retroSVG() })
     ]);
     wrap.appendChild(mazzo);
+    mazzo.style.visibility = "hidden";   // il mazzo non si vede (spazio al tavolo): le carte partono da Matt
     s._contenuto.appendChild(wrap); t.mostra(s);
     document.body.classList.add("bj-verde");
 
@@ -771,11 +781,11 @@
     function disegnaScena() {
       svuota(zBanco); zTav.hidden = true;
       var W = zBanco.clientWidth || (Math.min(560, window.innerWidth || 375) - 16);
-      var H = Math.round(Math.max(300, Math.min(560, (window.innerHeight || 700) * 0.55)));   // priorità al tavolo
+      var H = Math.round(Math.max(300, Math.min(620, (window.innerHeight || 700) - 290)));   // priorità al tavolo: tutto lo spazio che avanza sotto
       zBanco.style.height = H + "px";
-      mazzo.style.top = (H - 78) + "px";
+      mazzo.style.top = Math.round(H * 0.74) + "px"; mazzo.style.left = "calc(50% - 22px)"; mazzo.style.right = "auto";
       var N = vm.giocatori.length, inTurno = (vm.fase === "punta" || vm.fase === "assic" || vm.fase === "gioca");
-      var PW = Math.round(W * 1.12), PH = Math.round(H * 0.8);
+      var PW = Math.round(W * 1.12), PH = Math.round(H * 0.88);
       var cx = PW / 2, cy = PH, rx = PW / 2 - 18, ry = PH - 18;
       var strato = el("div", { class: "bj-pl" });   // i giocatori, dietro al tavolo
       var prosp = el("div", { class: "bj-prosp", style: "perspective:" + Math.round(H * 1.8) + "px" });
@@ -815,6 +825,13 @@
       matt.appendChild(el("div", { class: "bj-matt-nome", text: "🎩 Matt" + (pB != null ? " · " + (mostraTutto ? pB + (BJ.eBlackjack(vm.banco) ? " BJ" : "") : pB + " +?") : "") }));
       sopra.appendChild(matt);
       if (fm.fum) sopra.appendChild(el("div", { class: "bj-fum" + (fm.oro ? " oro" : ""), text: fm.fum }));
+      // in grande sulla parete: chi sta giocando (così sotto non serve scriverlo)
+      var gt = vm.giocatori[vm.turno], scritta = null, sotto = null;
+      if (vm.fase === "distrib") scritta = "Matt distribuisce…";
+      else if (vm.fase === "banco") scritta = "Tocca a Matt 🎩";
+      else if (vm.fase === "esito") scritta = "Fine mano";
+      else if (gt) { scritta = (vm.fase === "punta" ? "Punta " : (vm.fase === "assic" ? "Assicura? " : "Tocca a ")) + gt.nome; sotto = gt.fiches + " 🪙"; }
+      if (scritta) sopra.appendChild(el("div", { class: "bj-turno" }, [ el("div", { text: scritta }), sotto ? el("small", { text: sotto }) : null ]));
       // ora che il tavolo è in prospettiva, siedo ognuno dietro al suo posto (più lontano = più piccolo)
       var base = (N === 1 ? 190 : (N === 2 ? 165 : (N <= 4 ? 132 : (N <= 6 ? 108 : (N <= 8 ? 90 : 78))))) * Math.max(1, Math.min(1.4, H / 340));
       var zr = zBanco.getBoundingClientRect();
@@ -879,14 +896,13 @@
       zHero.appendChild(el("div", { style: "font-size:2.6rem;line-height:1", text: ico }));
       zHero.appendChild(el("div", { class: "bj-hnome", text: txt }));
     }
+    // chi gioca e quante fiche ha lo dice la scritta grande sulla parete: qui sotto solo carte e tasti
     function heroPunta(mio) {
       var g = vm.giocatori[vm.turno];
-      if (!mio) { zHero.appendChild(el("div", { class: "bj-hnome", text: g.nome + " sta puntando…" })); return; }
+      if (!mio) { zHero.appendChild(el("div", { class: "bj-hfiches", text: "sta puntando…" })); return; }
       var minP = vm.puntataMin || 10, maxP = g.fiches;
       if (puntSel == null) puntSel = Math.min(100, maxP);
       puntSel = Math.max(minP, Math.min(puntSel, maxP));
-      zHero.appendChild(heroNome(vm.turno, g.nome + ", quanto punti?"));
-      zHero.appendChild(el("div", { class: "bj-hfiches", text: g.fiches + " 🪙 disponibili" }));
       var val = el("div", { class: "bj-punta-val", text: puntSel + " 🪙" });
       zHero.appendChild(val);
       var bPunta;
@@ -909,8 +925,7 @@
     }
     function heroAssic(mio) {
       var g = vm.giocatori[vm.turno], costo = Math.floor(g.puntata / 2);
-      zHero.appendChild(el("div", { class: "bj-hnome", text: g.nome + ": assicurazione?" }));
-      if (mio) zHero.appendChild(el("div", { class: "bj-hfiches", text: "Il banco mostra un Asso. Assicuri per " + costo + " 🪙? (2:1)" }));
+      if (mio) zHero.appendChild(el("div", { class: "bj-hfiches", text: "Il banco mostra un Asso: assicuri per " + costo + " 🪙? (paga 2 a 1)" }));
       heroCarte(g);
       if (!mio) return;
       var az = el("div", { class: "bj-azioni" });
@@ -918,15 +933,17 @@
       az.appendChild(el("button", { class: "bj-btn bj-b-no", text: "No", onclick: function () { drv.onAssicura(false); } }));
       zHero.appendChild(az);
     }
-    function heroCarte(g) {
+    function heroCarte(g, dove) {
       var gi = vm.giocatori.indexOf(g);
       var box = el("div", { class: "bj-mani" });
       g.mani.forEach(function (m, i) {
-        var mano = el("div", { class: "bj-mano" + (i === g.attiva && vm.fase === "gioca" ? " attiva" : "") });
-        var cc = el("div", { class: "bj-hcarte" + (g.mani.length > 1 ? " doppia" : "") });
+        var mano = el("div", { class: "bj-mano" + (i === g.attiva && vm.fase === "gioca" && g.mani.length > 1 ? " attiva" : "") });
+        var cc = el("div", { class: "bj-hcarte" });
+        var n = m.carte.length, w = g.mani.length > 1 ? (n <= 2 ? 48 : 38) : (n <= 2 ? 76 : (n === 3 ? 60 : 48));   // carte grandi finché ci stanno
         m.carte.forEach(function (c, ci) {
           var isUlt = (i === g.attiva && ci === m.carte.length - 1);
           var card = cartaEl(el, c, false, "");
+          card.style.width = w + "px";
           if (anim.ultima === gi && isUlt) daVolare.push(card);
           cc.appendChild(card);
         });
@@ -935,28 +952,25 @@
         mano.appendChild(el("div", { class: "bj-pt " + (pm > 21 ? "bust" : (m.esito === "vince" || m.esito === "blackjack" ? "win" : "")), style: "display:block;margin:6px auto 0;width:fit-content", text: BJ.testo(m.carte) + " · " + m.puntata + "🪙" }));
         box.appendChild(mano);
       });
-      zHero.appendChild(box);
+      (dove || zHero).appendChild(box);
     }
     function heroGioca(mio) {
       var g = vm.giocatori[vm.turno];
-      zHero.appendChild(heroNome(vm.turno, g.nome + (mio ? "" : " sta giocando…")));
-      zHero.appendChild(el("div", { class: "bj-hfiches", text: g.fiches + " 🪙" }));
-      heroCarte(g);
+      var centro = el("div", { class: "bj-hcentro" });
+      heroCarte(g, centro);
       var ma = g.mani[g.attiva];
       if (ma && ma.chiusa) {   // mano finita: resta a schermo un attimo prima di passare
         var pm = BJ.punteggio(ma.carte);
-        zHero.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:" + (pm > 21 ? "#ff9d8a" : "#9fe6b4"),
+        centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:" + (pm > 21 ? "#ff9d8a" : "#9fe6b4"),
           text: pm > 21 ? ("Sballato! " + pm) : (BJ.eBlackjack(ma.carte) ? "Black Jack! 🎉" : "Fermo a " + pm) }));
-        return;
       }
-      if (!mio) return;
-      var v = mosseValideVm(vm), az = el("div", { class: "bj-azioni" });
+      if (!mio || (ma && ma.chiusa)) { zHero.appendChild(centro); return; }
+      // tasti ai lati delle carte: a sinistra Dividi e Raddoppia, a destra Stai e Carta
+      var v = mosseValideVm(vm);
       function b(txt, cls, on, mv) { var x = el("button", { class: "bj-btn " + cls, text: txt, onclick: function () { drv.onMossa(mv); } }); if (!on) x.disabled = true; return x; }
-      az.appendChild(b("Carta", "bj-b-carta", true, "carta"));
-      az.appendChild(b("Stai", "bj-b-stai", true, "stai"));
-      az.appendChild(b("Raddoppia", "bj-b-radd", v.raddoppia, "raddoppia"));
-      az.appendChild(b("Dividi", "bj-b-dividi", v.dividi, "dividi"));
-      zHero.appendChild(az);
+      var sx = el("div", { class: "bj-col" }, [ b("Dividi", "bj-b-dividi", v.dividi, "dividi"), b("Raddoppia", "bj-b-radd", v.raddoppia, "raddoppia") ]);
+      var dx = el("div", { class: "bj-col" }, [ b("Stai", "bj-b-stai", true, "stai"), b("Carta", "bj-b-carta", true, "carta") ]);
+      zHero.appendChild(el("div", { class: "bj-hriga" }, [sx, centro, dx]));
     }
     function heroEsito() {
       zHero.appendChild(el("div", { class: "bj-hnome", text: "Fine mano " + (vm.giro - 1) }));

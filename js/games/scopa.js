@@ -519,7 +519,7 @@
     var wH = larghezza(3, 10, 104);   // mano max 3
     // misure della stanza: altezza fissa (lo schermo non "salta"), il tavolo è un piano inclinato
     var scW = Math.min(window.innerWidth || 375, 560) - 28;
-    var scH = Math.max(330, Math.min(560, (window.innerHeight || 700) - 108 - 34 - (Math.round(wH * ASP_CARTA) + 44) - 26));
+    var scH = Math.max(330, Math.min(560, (window.innerHeight || 700) - 60 - 34 - (Math.round(wH * ASP_CARTA) + 44) - 26));
     var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * 0.7);
     var nT = (vm.presa && vm.presa.tavoloPrima ? vm.presa.tavoloPrima : vm.tavolo).length;
     var perRiga = nT > 8 ? 5 : 4, righe = Math.max(1, Math.ceil(nT / perRiga));

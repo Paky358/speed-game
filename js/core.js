@@ -1575,7 +1575,17 @@
       el: el,
       svuota: svuota,
       mischia: mischia,
-      schermata: schermata,
+      // nei giochi niente scritta col nome del gioco in alto (si sa a cosa si gioca): massimo spazio.
+      // Restano i titoli che dicono qualcosa ("Hai vinto!", "Fine smazzata"…).
+      schermata: function (o) {
+        o = o || {};
+        var nomeG = String(g.nome || "").toLowerCase();
+        if (o.titolo && nomeG && String(o.titolo).toLowerCase().indexOf(nomeG) >= 0) o = Object.assign({}, o, { titolo: null });
+        if (!o.titolo) o = Object.assign({}, o, { icona: null, sotto: null });
+        var s = schermata(o);
+        if (!o.titolo) s.classList.add("senza-testa");
+        return s;
+      },
       mostra: function (s) { mostra(s); },
 
       // passaggio del telefono, poi esegue "quando"

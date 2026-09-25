@@ -13,7 +13,7 @@ OUT=dist/index.html
 {
   echo '<!doctype html>'
   echo '<meta charset="utf-8">'
-  echo '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
+  echo '<meta name="viewport" content="width=device-width, initial-scale=1">'
   echo '<meta name="theme-color" content="#0c1636">'
   echo '<title>SPeeD GAME</title>'
   # app installabile: icona sulla Home e niente barra dell'indirizzo
@@ -22,7 +22,7 @@ OUT=dist/index.html
   echo '<link rel="apple-touch-icon" href="app/icona-192.png">'
   echo '<meta name="apple-mobile-web-app-capable" content="yes">'
   echo '<meta name="mobile-web-app-capable" content="yes">'
-  echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">'
+  echo '<meta name="apple-mobile-web-app-status-bar-style" content="black">'
   echo '<meta name="apple-mobile-web-app-title" content="SPeeD GAME">'
   echo '<script>if ("serviceWorker" in navigator) addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });</script>'
   echo '<style>'

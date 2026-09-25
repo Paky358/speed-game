@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 111,
+    data: "26 settembre 2026",
+    titolo: "Più spazio per giocare 📐",
+    descrizione: [
+      "Nei giochi non c'è più la scritta col nome del gioco in alto: resta solo la freccia per tornare indietro, piccola nell'angolo.",
+      "Sul telefono con l'app installata la schermata non finisce più sotto i tasti di Android: niente più scorrere per trovare i pulsanti.",
+      "Black Jack: tavolo ancora più grande, via il mazzo a destra, e sulla parete c'è scritto in grande a chi tocca e quante fiche ha.",
+      "Black Jack: sotto restano le tue carte grandi, con Dividi e Raddoppia a sinistra e Stai e Carta a destra.",
+      "Scopa: il tavolo si prende lo spazio lasciato libero dalla scritta."
+    ]
+  },
+  {
     v: 110,
     data: "26 settembre 2026",
     titolo: "Black Jack: priorità al tavolo 🎰",
