@@ -886,15 +886,15 @@
                                ["rossetto", "Rossetto"], ["colRossetto", "Colore rossetto"], ["blush", "Blush"], ["colBlush", "Colore blush"]] },
     { nome: "Capelli", icona: "💇", voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
     { nome: "Vestiti", icona: "👕", voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]] },
-    { nome: "Accessori", icona: "🎩", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"]] }
+    { nome: "Accessori", icona: "🎩", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"], ["borsa", "Borsa"], ["colBorsa", "Colore borsa"]] }
   ];
-  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1 };
-  var TRUCCO_COL = { colOmbretto: "ombretto", colEyeliner: "eyeliner", colRossetto: "rossetto", colBlush: "blush" };   // il colore si vede solo se quel trucco c'è
+  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1 };
+  var TRUCCO_COL = { colOmbretto: "ombretto", colEyeliner: "eyeliner", colRossetto: "rossetto", colBlush: "blush", colBorsa: "borsa" };   // il colore si vede solo se quel trucco c'è
   var TRUCCO_VOCI = /^(ombretto|eyeliner|mascara|rossetto|blush|col(Ombretto|Eyeliner|Rossetto|Blush))$/;   // anteprime in primo piano sul viso
-  var OMINO_INTERO = { forma: 1, corpo: 1, sotto: 1, capo: 1, stampa: 1 };   // anteprima a figura intera (le altre: solo la testa)
-  var ACC_COLORATI = /cappellino|berretto|fascia|cuffie|cilindro|cowboy|pescatore|basco|festa|gatto/;   // cappelli con un colore da scegliere
-  var COLLO_COLORATI = /sciarpa|papillon|cravatta|bandana/;
-  var OMINO_LIBERO = { colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1 };   // colori dove c'è anche la tavolozza libera
+  var OMINO_INTERO = { forma: 1, corpo: 1, sotto: 1, capo: 1, stampa: 1, borsa: 1 };   // anteprima a figura intera (le altre: solo la testa)
+  var ACC_COLORATI = /cappellino|berretto|fascia|cuffie|cilindro|cowboy|pescatore|basco|festa|gatto|cerchietto|fiocco|mollette|paglia/;   // cappelli con un colore da scegliere
+  var COLLO_COLORATI = /sciarpa|papillon|cravatta|bandana|foulard/;
+  var OMINO_LIBERO = { colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1 };   // colori dove c'è anche la tavolozza libera
   var OMINO_RITOCCHI = [["occG", "Grandezza occhi"], ["occD", "Distanza occhi"], ["occA", "Altezza occhi"],
     ["soprA", "Altezza sopracciglia"], ["nasoG", "Grandezza naso"], ["boccaA", "Altezza bocca"]];
   // piccolo "pop" quando scegli qualcosa nell'editor (la vibrazione la fa già il tocco)
@@ -1002,7 +1002,7 @@
     function scegli(k, v, zitto) {
       if (cfg[k] === v) return;
       if (zitto) { cfg[k] = v; anteprima(false); return; }   // mentre trascini (colore libero, cursori): niente saltelli
-      var rifai = /^(forma|cappello|collo)$/.test(k) || (/^(ombretto|eyeliner|rossetto|blush)$/.test(k) && (cfg[k] === "nessuno") !== (v === "nessuno"));   // "Sotto" solo per la donna, i colori solo se servono
+      var rifai = /^(forma|cappello|collo)$/.test(k) || (/^(ombretto|eyeliner|rossetto|blush|borsa)$/.test(k) && /^nessun/.test(cfg[k]) !== /^nessun/.test(v));   // "Sotto" solo per la donna, i colori solo se servono
       if (k === "capo" && /^vestito/.test(cfg[k]) !== /^vestito/.test(v)) rifai = true;   // col vestito spariscono le voci "Sotto"
       cfg[k] = v;
       if (k === "forma" && v === "uomo") {   // niente capi solo da donna sull'uomo
@@ -1019,7 +1019,7 @@
         var k = vc[0];
         if (k === "colAcc" && !ACC_COLORATI.test(cfg.cappello)) return;
         if (k === "colCollo" && !COLLO_COLORATI.test(cfg.collo)) return;
-        if (TRUCCO_COL[k] && cfg[TRUCCO_COL[k]] === "nessuno") return;
+        if (TRUCCO_COL[k] && /^nessun[oa]$/.test(cfg[TRUCCO_COL[k]])) return;
         if ((k === "sotto" || k === "pantaloni") && /^vestito/.test(cfg.capo)) return;   // il vestito copre anche sotto
         var gruppi = k === "capelli" ? O.GRUPPI_CAPELLI : null;   // tagli divisi in Corti / Medi / Lunghi
         if (!gruppi) pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));

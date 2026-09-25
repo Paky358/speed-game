@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 118,
+    data: "26 settembre 2026",
+    titolo: "Avatar: accessori nuovi e borse 👜",
+    descrizione: [
+      "In testa: cerchietto, fiocco, mollette e cappello di paglia, tutti col colore che vuoi.",
+      "Occhiali a gatto e occhiali grandi da diva. Orecchini: perla, cuoricini e cerchi grandi.",
+      "Al collo: girocollo, catenina col cuoricino e foulard annodato.",
+      "Borse: a tracolla o borsetta in mano, in 10 colori più quello libero.",
+      "I tacchi ora si vedono di profilo, col tacco a spillo. Gli stivali alti vanno sotto la gonna invece di coprirla."
+    ]
+  },
+  {
     v: 117,
     data: "26 settembre 2026",
     titolo: "Avatar: tanti vestiti e scarpe da donna 👗",
