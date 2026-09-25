@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 113,
+    data: "26 settembre 2026",
+    titolo: "Black Jack: si gioca sul lato lungo 🎰",
+    descrizione: [
+      "Il tavolo è girato come quelli veri: i giocatori siedono in fila sul lato lungo, in fondo, per tutta la larghezza dello schermo; la parte curva è dal lato di Matt.",
+      "Da 6 a 10 giocatori ci si mette su due file sfalsate: chi sta dietro spunta sopra le spalle di chi sta davanti, così le facce restano più grandi.",
+      "Il tavolo è ancora più lungo e usa tutto lo spazio della parete."
+    ]
+  },
+  {
     v: 112,
     data: "26 settembre 2026",
     titolo: "Black Jack a tutto schermo 📱",

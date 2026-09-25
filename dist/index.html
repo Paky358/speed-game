@@ -9851,6 +9851,16 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 113,
+    data: "26 settembre 2026",
+    titolo: "Black Jack: si gioca sul lato lungo 🎰",
+    descrizione: [
+      "Il tavolo è girato come quelli veri: i giocatori siedono in fila sul lato lungo, in fondo, per tutta la larghezza dello schermo; la parte curva è dal lato di Matt.",
+      "Da 6 a 10 giocatori ci si mette su due file sfalsate: chi sta dietro spunta sopra le spalle di chi sta davanti, così le facce restano più grandi.",
+      "Il tavolo è ancora più lungo e usa tutto lo spazio della parete."
+    ]
+  },
+  {
     v: 112,
     data: "26 settembre 2026",
     titolo: "Black Jack a tutto schermo 📱",
@@ -13672,8 +13682,8 @@ window.SG_SIPERO = {
     ".bj-gioc{position:absolute}.bj-gioc svg{display:block;width:100%;height:auto}",
     ".bj-gioc.attivo svg{filter:drop-shadow(0 0 7px rgba(255,212,94,.95))}",
     ".bj-prosp{position:absolute;inset:0;perspective-origin:50% -10%;z-index:2;pointer-events:none}",
-    ".bj-piano{position:absolute;left:50%;bottom:-6px;transform-origin:50% 100%;transform:rotateX(58deg);transform-style:preserve-3d;border-radius:50% 50% 14px 14px/100% 100% 14px 14px;background:linear-gradient(#7a4724,#4a2a14);padding:13px;box-shadow:0 -6px 0 #8a562c inset}",
-    ".bj-panno{position:relative;width:100%;height:100%;border-radius:50% 50% 8px 8px/100% 100% 8px 8px;background:radial-gradient(80% 90% at 50% 100%,#1f8a52,#127043 60%,#0b5431);box-shadow:inset 0 0 26px rgba(0,0,0,.45);transform-style:preserve-3d}",
+    ".bj-piano{position:absolute;left:50%;bottom:-6px;transform-origin:50% 100%;transform:rotateX(58deg);transform-style:preserve-3d;border-radius:26px 26px 50% 50%/26px 26px 30% 30%;background:linear-gradient(#7a4724,#4a2a14);padding:13px;box-shadow:0 -6px 0 #8a562c inset}",
+    ".bj-panno{position:relative;width:100%;height:100%;border-radius:16px 16px 50% 50%/16px 16px 30% 30%;background:radial-gradient(90% 80% at 50% 30%,#1f8a52,#127043 60%,#0b5431);box-shadow:inset 0 0 26px rgba(0,0,0,.45);transform-style:preserve-3d}",
     ".bj-panno::after{content:'BLACK JACK PAGA 3 A 2';position:absolute;left:0;right:0;top:66%;text-align:center;font-weight:800;font-size:13px;letter-spacing:3px;color:rgba(255,215,120,.42)}",
     ".bj-segno{position:absolute;width:100px;height:2px;margin:-1px 0 0 -50px}",
     ".bj-pila{position:absolute;transform:translate(-50%,-50%);transform-style:preserve-3d}",
@@ -14037,7 +14047,7 @@ window.SG_SIPERO = {
       var H = zBanco.clientHeight || Math.max(300, (window.innerHeight || 700) - 230);   // il tavolo prende tutto lo schermo che resta sopra la parte fissa di sotto
       mazzo.style.top = Math.round(H * 0.74) + "px"; mazzo.style.left = "calc(50% - 22px)"; mazzo.style.right = "auto";
       var N = vm.giocatori.length, inTurno = (vm.fase === "punta" || vm.fase === "assic" || vm.fase === "gioca");
-      var PW = Math.round(W * 1.12), PH = Math.round(H * 0.88);
+      var PW = Math.round(W * 1.3), PH = Math.round(H * 0.97);   // largo: in prospettiva il lato in fondo arriva quasi da bordo a bordo
       var cx = PW / 2, cy = PH, rx = PW / 2 - 18, ry = PH - 18;
       var strato = el("div", { class: "bj-pl" });   // i giocatori, dietro al tavolo
       var prosp = el("div", { class: "bj-prosp", style: "perspective:" + Math.round(H * 1.8) + "px" });
@@ -14047,13 +14057,17 @@ window.SG_SIPERO = {
       piano.appendChild(panno); prosp.appendChild(piano);
       [strato, prosp, sopra].forEach(function (z) { zBanco.appendChild(z); });
       function sulPanno(x, y, nodo) { nodo.style.left = Math.round(x) + "px"; nodo.style.top = Math.round(y) + "px"; panno.appendChild(nodo); return nodo; }
-      // i posti lungo la mezzaluna, da sinistra a destra (più siete, più si allarga)
-      var ampiezza = N === 1 ? 0 : Math.min(118, 40 + N * 11);
-      var cw = N === 1 ? 60 : (N <= 2 ? 48 : (N <= 4 ? 36 : (N <= 7 ? 28 : 23))), fd = N === 1 ? 44 : (N <= 3 ? 36 : (N <= 6 ? 28 : 22));
+      // i giocatori siedono sul lato LUNGO del tavolo (quello in fondo), in fila per tutta la larghezza; in tanti: due file sfalsate
+      // tutti sul lato lungo in fondo; da 6 in su due file sfalsate (una sì e una no un po' più indietro e più in alto)
+      var DUE = N > 5, PWi = PW - 26, PHi = PH - 13, fondoL = PWi * 0.8;
+      var passo = N === 1 ? 0 : Math.min(PWi * 0.24, (DUE ? fondoL : PWi * 0.72) / (N - 1));
+      function posto(idx) {
+        var xf = PWi / 2 + (idx - (N - 1) / 2) * passo, dietro = DUE && idx % 2 === 1;
+        return { bordo: [xf, 4], pf: [xf, PHi * (dietro ? 0.25 : 0.13)], pc: [xf, PHi * (dietro ? 0.41 : 0.29)] };
+      }
+      var cw = N === 1 ? 60 : (N <= 2 ? 48 : (N <= 4 ? 32 : (N <= 7 ? 26 : 22))), fd = N === 1 ? 44 : (N <= 3 ? 36 : (N <= 6 ? 28 : 22));
       var segni = vm.giocatori.map(function (g, idx) {
-        var th = (90 + ampiezza / 2 - (N === 1 ? 0 : idx * ampiezza / (N - 1))) * Math.PI / 180;
-        function pt(r) { return [cx + rx * r * Math.cos(th), cy - ry * r * Math.sin(th)]; }
-        var bordo = pt(1.12), pf = pt(0.8), pc = pt(0.58);
+        var ps = posto(idx), bordo = ps.bordo, pf = ps.pf, pc = ps.pc;
         var segno = sulPanno(bordo[0], bordo[1], el("div", { class: "bj-segno" }));
         // la pila di fiche puntate, davanti al posto
         var colori = pilaFiche(vm.fase === "esito" ? g.mani.reduce(function (s, m) { return s + (m.vincita || 0); }, 0) : puntataDi(g));   // a fine mano: chi perde resta senza, chi vince vede la vincita
@@ -14085,13 +14099,24 @@ window.SG_SIPERO = {
       else if (gt) { scritta = (vm.fase === "punta" ? "Punta " : (vm.fase === "assic" ? "Assicura? " : "Tocca a ")) + gt.nome; sotto = gt.fiches + " 🪙"; }
       if (scritta) sopra.appendChild(el("div", { class: "bj-turno" }, [ el("div", { text: scritta }), sotto ? el("small", { text: sotto }) : null ]));
       // ora che il tavolo è in prospettiva, siedo ognuno dietro al suo posto (più lontano = più piccolo)
-      var base = (N === 1 ? 190 : (N === 2 ? 165 : (N <= 4 ? 132 : (N <= 6 ? 108 : (N <= 8 ? 90 : 78))))) * Math.max(1, Math.min(1.4, H / 340));
+      var base = (N === 1 ? 190 : (N === 2 ? 165 : (N <= 4 ? 132 : (N <= 6 ? 108 : (N <= 8 ? 90 : 78))))) * Math.max(1, Math.min(1.4, H / 340)) * 1.2;
       var zr = zBanco.getBoundingClientRect();
+      // distanza tra un posto e l'altro sullo schermo: nessuno è più largo di così (si toccano appena, non si coprono)
+      // distanza sullo schermo dal vicino più vicino: nessuno è più largo di così (si toccano appena, non si coprono)
+      var centri = segni.map(function (sg) { var r = sg.segno.getBoundingClientRect(); return [r.left + r.width / 2, r.top]; });
+      function spazioDi(i) {
+        var d = 999;
+        (DUE ? [i - 2, i + 2] : [i - 1, i + 1]).forEach(function (j) {   // in due file il vicino vero è due posti più in là
+ if (j >= 0 && j < N) d = Math.min(d, Math.hypot(centri[j][0] - centri[i][0], centri[j][1] - centri[i][1])); });
+        return d;
+      }
       segni.forEach(function (sg) {
         var r = sg.segno.getBoundingClientRect();
         var sc = Math.max(0.7, Math.min(1.35, r.width / 100));
         var x = r.left + r.width / 2 - zr.left, y = r.top + r.height / 2 - zr.top;
-        var w = Math.round(base * sc), testa = Math.round(y - w * 0.9);
+        var w = Math.round(Math.min(base * sc, spazioDi(sg.idx) * 1.2));
+        if (DUE && sg.idx % 2 === 1) { w = Math.round(w * 0.92); y -= Math.round(w * 0.42); }   // fila dietro: un po' più in alto, spunta sopra le spalle
+        var testa = Math.round(y - w * 0.9);
         var cima = N === 1 ? 64 : 52;   // in alto c'è la scritta del turno: nessuna testa ci va sopra
         if (testa - (N === 1 ? 0 : 14) < cima) { w = Math.max(40, Math.round((y - cima - (N === 1 ? 0 : 14)) / 0.9)); testa = Math.round(y - w * 0.9); }
         var attivo = inTurno && sg.idx === vm.turno;
