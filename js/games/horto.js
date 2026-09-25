@@ -501,7 +501,7 @@
     s._contenuto.appendChild(strip);
     var big = el("div", { class: "ho-ff-big" }); s._contenuto.appendChild(big);
     function vai() { if (fatto) return; fatto = true; if (rafId) cancelAnimationFrame(rafId); tos.forEach(clearTimeout); poi(); }
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Vedi la classifica ▶", onclick: vai }));
+    // niente tasto per saltarlo: il photo finish si guarda sempre tutto, poi la classifica arriva da sola
     t.mostra(s);
     var winCav = cavs[vincitore];
     // Tutti partono affiancati e vanno alla STESSA velocità: il distacco che si vede è quello VERO

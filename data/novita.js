@@ -19,7 +19,7 @@ window.SG_NOVITA = [
       "Telecamera che segue la corsa come in TV: i cavalli restano grandi mentre scorrono prato, staccionata e cartelli dei metri. Il traguardo arriva solo alla fine.",
       "Minimappa in alto del percorso a mezzo ovale, con un pallino per ogni cavallo, più la tua posizione e i metri che mancano.",
       "Si parte dai cancelletti che si aprono al VIA. Polvere dietro gli zoccoli, righe di vento quando frusti e galoppo più veloce; se sei sfinito il cavallo rallenta.",
-      "Photo finish con i cavalli nuovi (si fermano pure le zampe nello scatto) e podio finale con gli avatar."
+      "Photo finish con i cavalli nuovi (si fermano pure le zampe nello scatto): è obbligatorio, non si può saltare. Poi podio finale con gli avatar."
     ]
   },
   {
