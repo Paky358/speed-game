@@ -11,9 +11,9 @@
   "use strict";
 
   var ASP = 1.7;                 // altezza campo in unità (larghezza = 1)
-  var RP = 0.05;                 // raggio disco
-  var RPAD = 0.09;               // raggio racchetta
-  var GOALW = 0.44;              // larghezza porta (in x, centrata)
+  var RP = 0.055;                // raggio disco (+10% il 26 set: il campo ora è più alto, a tutto schermo)
+  var RPAD = 0.10;               // raggio racchetta (+10%)
+  var GOALW = 0.46;              // larghezza porta (in x, centrata): un filo più larga col disco più grande
   var REST = 0.94;              // rimbalzo pareti
   var MAXV = 3.4;                // velocità massima disco (unità/sec)
   var PADK = 0.8;                // quanto la racchetta spinge il disco

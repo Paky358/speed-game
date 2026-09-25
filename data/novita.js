@@ -16,6 +16,7 @@ window.SG_NOVITA = [
       "Dopo un gol niente più attesa a racchette bloccate: il disco CADE DALL'ALTO. Parte grande con la sua ombra, si rimpicciolisce fino a toccare terra (tump!) e da lì si può colpire. Intanto ti muovi liberamente.",
       "Anche a inizio partita il disco arriva dall'alto.",
       "Il campo prende TUTTO lo schermo, da bordo a bordo e fino in fondo: niente più spazio vuoto sotto.",
+      "Disco e racchette più grandi del 10% (si vedono e si seguono meglio sul campo più alto) e porte un filo più larghe. Il bot è stato riprovato con partite simulate: Facile resta facile, Difficile è una sfida alla pari.",
       "I bordi si illuminano nel punto esatto in cui il disco li colpisce.",
       "Musica gasante in stile Geometry Dash: cassa dritta, basso che pompa, arpeggio e melodia. Tasto 🎵/🔇 in alto a destra sul campo."
     ]
