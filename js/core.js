@@ -931,20 +931,23 @@
     if (!bozze[1 - slot]) bozze[1 - slot] = secondoOmino(cfg, io.nome);
     var s = schermata({});
     s.classList.add("editor-avatar");   // tutto in uno schermo, senza titolo: sul palco indietro, A caso e Salva; sotto scorrono solo le scelte
-    // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre, targa col nome
+    var iniziali = bozze.map(function (b) { return O.norm(b); });   // com'erano all'ingresso (se esci senza salvare)
+    // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre
     var figura = el("div", { class: "om-figura" });
-    var stella = el("button", { class: "om-stella", onclick: function () { if (slot !== principale) { principale = slot; popOmino(); disegnaCambi(); } } });
     var puntini = el("div", { class: "om-puntini" });
     var palco = el("div", { class: "omino-palco editor" }, [el("div", { class: "om-faro" }), el("div", { class: "om-pedana" }), figura,
-      el("div", { class: "om-targa", text: io.nome }), stella, puntini,
-      el("button", { class: "om-indietro", "aria-label": "Indietro", text: "‹", onclick: function () { dopo(); } }),
+      puntini,
+      el("button", { class: "om-indietro", "aria-label": "Indietro", text: "‹", onclick: function () { esci(); } }),
       el("button", { class: "om-freccia sx", "aria-label": "Personaggio precedente", text: "‹", onclick: function () { scorri(-1); } }),
       el("button", { class: "om-freccia dx", "aria-label": "Personaggio successivo", text: "›", onclick: function () { scorri(1); } })]);
     function disegnaCambi() {
-      var mio = slot === principale;
-      stella.classList.toggle("on", mio);
-      stella.textContent = mio ? "⭐ Principale" : "☆ Rendi principale";
-      puntini.innerHTML = bozze.map(function (b, n) { return "<i class='" + (n === slot ? "on" : "") + (n === principale ? " pr" : "") + "'></i>"; }).join("");
+      puntini.innerHTML = bozze.map(function (b, n) { return "<i class='" + (n === slot ? "on" : "") + "'></i>"; }).join("");
+    }
+    // il principale (quello usato nei giochi) è quello sul palco quando esci.
+    // Con la freccia indietro le modifiche non salvate si perdono, ma la scelta del personaggio resta.
+    function esci() {
+      if (slot !== principale) salvaOminoMio(iniziali[slot], iniziali, slot);
+      dopo();
     }
     function scorri(dir) {   // dir: +1 = verso destra (il prossimo), -1 = verso sinistra
       bozze[slot] = cfg; slot = (slot + dir + bozze.length) % bozze.length; cfg = O.norm(bozze[slot]);
@@ -1059,15 +1062,15 @@
       }
       aggiornaPannello();
     }
-    palco.appendChild(el("button", { class: "om-azione caso", text: "🎲 A caso", onclick: function () {
+    palco.appendChild(el("button", { class: "om-azione caso", text: "🎲", "aria-label": "Personaggio a caso", onclick: function () {
       cfg = O.norm(O.casuale()); anteprima(true); disegnaPannello();
     } }));
     var salvato = false;
     palco.appendChild(el("button", { class: "om-azione salva", text: "✅ Salva", onclick: function () {
       if (salvato) return; salvato = true;
-      this.textContent = "👋 Salvato!";   // si vede subito che il tocco è arrivato
+      this.textContent = "👋 Fatto";   // si vede subito che il tocco è arrivato
       bozze[slot] = cfg; var tutti = bozze.map(function (b) { return O.norm(b); });
-      salvaOminoMio(tutti[principale], tutti, principale); saluta(); popOmino();   // si salvano tutti; nei giochi va il principale (⭐)
+      salvaOminoMio(tutti[slot], tutti, slot); saluta(); popOmino();   // si salvano tutti; nei giochi va quello sul palco
       setTimeout(dopo, 1000);   // prima ti saluta, poi torna indietro
     } }));
     anteprima(); disegnaSchede(); disegnaPannello();

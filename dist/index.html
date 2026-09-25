@@ -696,6 +696,16 @@ body::before{
 .editor-avatar .omino-schede .cat-tab{ flex-direction:column; gap:1px; min-height:52px; padding:5px 1px; font-size:clamp(.62rem, 2.85vw, .8rem); border-radius:12px; }
 .editor-avatar .omino-schede .cat-tab .ci{ font-size:1.25rem; }
 .editor-avatar .omino-pannello{ padding-bottom:calc(16px + env(safe-area-inset-bottom)); }
+/* v3 (richiesta utente): avatar più grande, niente nome né stella; Salva piccolo in alto a destra, dado tondo in basso a sinistra, puntini sotto i piedi */
+.editor-avatar .om-targa, .editor-avatar .om-stella{ display:none; }
+.editor-avatar .om-figura{ height:calc(100% - 26px); bottom:14px; }
+.editor-avatar .om-pedana{ bottom:8px; width:230px; }
+.editor-avatar .om-faro{ width:260px; }
+.editor-avatar .om-puntini{ top:auto; right:auto; left:50%; bottom:9px; transform:translateX(-50%); }
+.editor-avatar .om-azione{ min-height:0; }
+.editor-avatar .om-azione.salva{ top:8px; bottom:auto; right:8px; height:40px; padding:0 12px; font-size:.9rem; border-radius:12px; }
+.editor-avatar .om-azione.caso{ left:8px; bottom:8px; width:42px; height:42px; padding:0; border-radius:50%; font-size:1.3rem; }
+.editor-avatar .om-freccia{ width:34px; height:50px; font-size:1.7rem; }
 </style>
 <div id="app"></div>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
@@ -2874,20 +2884,23 @@ body::before{
     if (!bozze[1 - slot]) bozze[1 - slot] = secondoOmino(cfg, io.nome);
     var s = schermata({});
     s.classList.add("editor-avatar");   // tutto in uno schermo, senza titolo: sul palco indietro, A caso e Salva; sotto scorrono solo le scelte
-    // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre, targa col nome
+    var iniziali = bozze.map(function (b) { return O.norm(b); });   // com'erano all'ingresso (se esci senza salvare)
+    // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre
     var figura = el("div", { class: "om-figura" });
-    var stella = el("button", { class: "om-stella", onclick: function () { if (slot !== principale) { principale = slot; popOmino(); disegnaCambi(); } } });
     var puntini = el("div", { class: "om-puntini" });
     var palco = el("div", { class: "omino-palco editor" }, [el("div", { class: "om-faro" }), el("div", { class: "om-pedana" }), figura,
-      el("div", { class: "om-targa", text: io.nome }), stella, puntini,
-      el("button", { class: "om-indietro", "aria-label": "Indietro", text: "‹", onclick: function () { dopo(); } }),
+      puntini,
+      el("button", { class: "om-indietro", "aria-label": "Indietro", text: "‹", onclick: function () { esci(); } }),
       el("button", { class: "om-freccia sx", "aria-label": "Personaggio precedente", text: "‹", onclick: function () { scorri(-1); } }),
       el("button", { class: "om-freccia dx", "aria-label": "Personaggio successivo", text: "›", onclick: function () { scorri(1); } })]);
     function disegnaCambi() {
-      var mio = slot === principale;
-      stella.classList.toggle("on", mio);
-      stella.textContent = mio ? "⭐ Principale" : "☆ Rendi principale";
-      puntini.innerHTML = bozze.map(function (b, n) { return "<i class='" + (n === slot ? "on" : "") + (n === principale ? " pr" : "") + "'></i>"; }).join("");
+      puntini.innerHTML = bozze.map(function (b, n) { return "<i class='" + (n === slot ? "on" : "") + "'></i>"; }).join("");
+    }
+    // il principale (quello usato nei giochi) è quello sul palco quando esci.
+    // Con la freccia indietro le modifiche non salvate si perdono, ma la scelta del personaggio resta.
+    function esci() {
+      if (slot !== principale) salvaOminoMio(iniziali[slot], iniziali, slot);
+      dopo();
     }
     function scorri(dir) {   // dir: +1 = verso destra (il prossimo), -1 = verso sinistra
       bozze[slot] = cfg; slot = (slot + dir + bozze.length) % bozze.length; cfg = O.norm(bozze[slot]);
@@ -3002,15 +3015,15 @@ body::before{
       }
       aggiornaPannello();
     }
-    palco.appendChild(el("button", { class: "om-azione caso", text: "🎲 A caso", onclick: function () {
+    palco.appendChild(el("button", { class: "om-azione caso", text: "🎲", "aria-label": "Personaggio a caso", onclick: function () {
       cfg = O.norm(O.casuale()); anteprima(true); disegnaPannello();
     } }));
     var salvato = false;
     palco.appendChild(el("button", { class: "om-azione salva", text: "✅ Salva", onclick: function () {
       if (salvato) return; salvato = true;
-      this.textContent = "👋 Salvato!";   // si vede subito che il tocco è arrivato
+      this.textContent = "👋 Fatto";   // si vede subito che il tocco è arrivato
       bozze[slot] = cfg; var tutti = bozze.map(function (b) { return O.norm(b); });
-      salvaOminoMio(tutti[principale], tutti, principale); saluta(); popOmino();   // si salvano tutti; nei giochi va il principale (⭐)
+      salvaOminoMio(tutti[slot], tutti, slot); saluta(); popOmino();   // si salvano tutti; nei giochi va quello sul palco
       setTimeout(dopo, 1000);   // prima ti saluta, poi torna indietro
     } }));
     anteprima(); disegnaSchede(); disegnaPannello();
@@ -10258,12 +10271,12 @@ window.SG_NOVITA = [
     data: "26 settembre 2026",
     titolo: "Avatar: trucco completo, due avatar e ricci nuovi 💄",
     descrizione: [
-      "Due personaggi a testa: sotto il riflettore c'è il tuo principale (⭐). Scorri col dito a destra o a sinistra, o usa le frecce, per passare all'altro. Con \"Rendi principale\" scegli quale usare nei giochi.",
+      "Due personaggi a testa: sotto il riflettore c'è quello che usi. Scorri col dito a destra o a sinistra (o usa le frecce) per passare all'altro: quello che hai sul palco quando esci diventa quello dei giochi.",
       "Il trucco ha una scheda tutta sua e si può mettere tutto insieme: ombretto, eyeliner, mascara, rossetto e blush, ognuno col suo colore (anche libero). Le anteprime sono in primo piano sul viso.",
       "Ombretto leggero, sfumato, intenso o con brillantini. Eyeliner sottile, alato, grafico o matita sotto. Mascara naturale, volume o ciglia finte. Rossetto velato, pieno o lucido. Blush leggero, intenso o abbronzato.",
       "Sei tagli ricci nuovi, con i boccoli disegnati uno per uno. Corti: riccioletti, ciuffo riccio. Medi: caschetto riccio, ricci con frangia. Lunghi: ricci lunghi, ricci raccolti.",
       "Corpo femminile più proporzionato: fianchi meno larghi.",
-      "Editor più comodo: niente titolo, \"A caso\" e \"Salva\" sono sul palco accanto al tuo nome, le sei schede stanno su una riga sola. Così c'è molto più spazio per scorrere le scelte, che hanno scritte grandi e vanno a capo, tre per riga.",
+      "Editor più comodo: avatar grande sul palco, \"Salva\" piccolo in alto a destra, il dado per l'avatar a caso in basso a sinistra, le sei schede su una riga. Molto più spazio per scorrere le scelte, con scritte grandi che vanno a capo.",
       "Nelle anteprime dei tagli il cappello sparisce, così vedi bene i capelli.",
       "Il ciuffo di lato non copre più l'occhio."
     ]

@@ -13,12 +13,12 @@ window.SG_NOVITA = [
     data: "26 settembre 2026",
     titolo: "Avatar: trucco completo, due avatar e ricci nuovi 💄",
     descrizione: [
-      "Due personaggi a testa: sotto il riflettore c'è il tuo principale (⭐). Scorri col dito a destra o a sinistra, o usa le frecce, per passare all'altro. Con \"Rendi principale\" scegli quale usare nei giochi.",
+      "Due personaggi a testa: sotto il riflettore c'è quello che usi. Scorri col dito a destra o a sinistra (o usa le frecce) per passare all'altro: quello che hai sul palco quando esci diventa quello dei giochi.",
       "Il trucco ha una scheda tutta sua e si può mettere tutto insieme: ombretto, eyeliner, mascara, rossetto e blush, ognuno col suo colore (anche libero). Le anteprime sono in primo piano sul viso.",
       "Ombretto leggero, sfumato, intenso o con brillantini. Eyeliner sottile, alato, grafico o matita sotto. Mascara naturale, volume o ciglia finte. Rossetto velato, pieno o lucido. Blush leggero, intenso o abbronzato.",
       "Sei tagli ricci nuovi, con i boccoli disegnati uno per uno. Corti: riccioletti, ciuffo riccio. Medi: caschetto riccio, ricci con frangia. Lunghi: ricci lunghi, ricci raccolti.",
       "Corpo femminile più proporzionato: fianchi meno larghi.",
-      "Editor più comodo: niente titolo, \"A caso\" e \"Salva\" sono sul palco accanto al tuo nome, le sei schede stanno su una riga sola. Così c'è molto più spazio per scorrere le scelte, che hanno scritte grandi e vanno a capo, tre per riga.",
+      "Editor più comodo: avatar grande sul palco, \"Salva\" piccolo in alto a destra, il dado per l'avatar a caso in basso a sinistra, le sei schede su una riga. Molto più spazio per scorrere le scelte, con scritte grandi che vanno a capo.",
       "Nelle anteprime dei tagli il cappello sparisce, così vedi bene i capelli.",
       "Il ciuffo di lato non copre più l'occhio."
     ]
