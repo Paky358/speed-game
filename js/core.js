@@ -924,29 +924,40 @@
     if (!io) return schermataAccesso(function () { schermataOmino(dopo); });
     var O = SGOmino, cfg = O.norm(io.omino || O.casuale(io.nome));
     var tab = 0;
-    // due avatar a persona: si passa dall'uno all'altro coi tondini sotto il riflettore
-    var slot = io.omini ? (io.ominoN || 0) : 0, bozze = io.omini ? [io.omini[0] || null, io.omini[1] || null] : [cfg, null];
+    // più personaggi a persona: sotto il riflettore c'è il principale, scorrendo a destra/sinistra (o con le frecce) si passa agli altri
+    var principale = io.omini ? (io.ominoN || 0) : 0, slot = principale;
+    var bozze = io.omini ? [io.omini[0] || null, io.omini[1] || null] : [cfg, null];
     bozze[slot] = cfg;
     if (!bozze[1 - slot]) bozze[1 - slot] = secondoOmino(cfg, io.nome);
     var s = schermata({ icona: "🧍", titolo: "Il mio avatar", sotto: "Crealo come vuoi: ti rappresenta nei giochi", indietro: dopo });
     // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre, targa col nome
     var figura = el("div", { class: "om-figura" });
-    var cambi = [0, 1].map(function (n) {
-      return el("button", { class: "om-slot om-slot" + n, "aria-label": "Avatar " + (n + 1), onclick: function () { vaiA(n); } });
-    });
+    var stella = el("button", { class: "om-stella", onclick: function () { if (slot !== principale) { principale = slot; popOmino(); disegnaCambi(); } } });
+    var puntini = el("div", { class: "om-puntini" });
     var palco = el("div", { class: "omino-palco editor" }, [el("div", { class: "om-faro" }), el("div", { class: "om-pedana" }), figura,
-      el("div", { class: "om-targa", text: io.nome })].concat(cambi));
+      el("div", { class: "om-targa", text: io.nome }), stella, puntini,
+      el("button", { class: "om-freccia sx", "aria-label": "Personaggio precedente", text: "‹", onclick: function () { scorri(-1); } }),
+      el("button", { class: "om-freccia dx", "aria-label": "Personaggio successivo", text: "›", onclick: function () { scorri(1); } })]);
     function disegnaCambi() {
-      cambi.forEach(function (b, n) {
-        b.classList.toggle("attiva", n === slot);
-        b.innerHTML = O.svg(n === slot ? cfg : bozze[n], { busto: true }) + "<span>" + (n + 1) + "</span>";
-      });
+      var mio = slot === principale;
+      stella.classList.toggle("on", mio);
+      stella.textContent = mio ? "⭐ Principale" : "☆ Rendi principale";
+      puntini.innerHTML = bozze.map(function (b, n) { return "<i class='" + (n === slot ? "on" : "") + (n === principale ? " pr" : "") + "'></i>"; }).join("");
     }
-    function vaiA(n) {
-      if (n === slot) return;
-      bozze[slot] = cfg; slot = n; cfg = O.norm(bozze[n]);
-      anteprima(true); saluta(); disegnaPannello();
+    function scorri(dir) {   // dir: +1 = verso destra (il prossimo), -1 = verso sinistra
+      bozze[slot] = cfg; slot = (slot + dir + bozze.length) % bozze.length; cfg = O.norm(bozze[slot]);
+      anteprima(false); disegnaPannello(); popOmino();
+      var sv = figura.firstChild;   // entra scivolando dal lato giusto
+      if (sv && sv.animate) sv.animate([{ transform: "translateX(" + (dir * 90) + "px)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 320, easing: "cubic-bezier(.2,.8,.3,1)" });
     }
+    // scorrimento col dito sul palco
+    var x0 = null, y0 = null;
+    palco.addEventListener("touchstart", function (e) { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+    palco.addEventListener("touchend", function (e) {
+      if (x0 == null) return;
+      var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+      if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.5) scorri(dx < 0 ? 1 : -1);   // dito verso sinistra = il prossimo
+    });
     var schede = el("div", { class: "omino-schede" });
     var pannello = el("div", { class: "omino-pannello" });
     s._contenuto.appendChild(palco); s._contenuto.appendChild(schede); s._contenuto.appendChild(pannello);
@@ -1052,7 +1063,8 @@
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva il mio avatar", onclick: function () {
       if (salvato) return; salvato = true;
       this.textContent = "👋 Salvato!";   // si vede subito che il tocco è arrivato
-      bozze[slot] = cfg; salvaOminoMio(cfg, bozze.map(function (b) { return O.norm(b); }), slot); saluta(); popOmino();   // quello che vedi quando salvi è quello che usi nei giochi
+      bozze[slot] = cfg; var tutti = bozze.map(function (b) { return O.norm(b); });
+      salvaOminoMio(tutti[principale], tutti, principale); saluta(); popOmino();   // si salvano tutti; nei giochi va il principale (⭐)
       setTimeout(dopo, 1000);   // prima ti saluta, poi torna indietro
     } }));
     anteprima(); disegnaSchede(); disegnaPannello();

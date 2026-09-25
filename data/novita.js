@@ -13,7 +13,7 @@ window.SG_NOVITA = [
     data: "26 settembre 2026",
     titolo: "Avatar: trucco completo, due avatar e ricci nuovi 💄",
     descrizione: [
-      "Due avatar a testa: sotto il riflettore ci sono i tondini 1 e 2 per passare dall'uno all'altro. Nei giochi usi quello che stai guardando quando premi Salva.",
+      "Due personaggi a testa: sotto il riflettore c'è il tuo principale (⭐). Scorri col dito a destra o a sinistra, o usa le frecce, per passare all'altro. Con \"Rendi principale\" scegli quale usare nei giochi.",
       "Il trucco ha una scheda tutta sua e si può mettere tutto insieme: ombretto, eyeliner, mascara, rossetto e blush, ognuno col suo colore (anche libero). Le anteprime sono in primo piano sul viso.",
       "Ombretto leggero, sfumato, intenso o con brillantini. Eyeliner sottile, alato, grafico o matita sotto. Mascara naturale, volume o ciglia finte. Rossetto velato, pieno o lucido. Blush leggero, intenso o abbronzato.",
       "Sei tagli ricci nuovi, con i boccoli disegnati uno per uno. Corti: riccioletti, ciuffo riccio. Medi: caschetto riccio, ricci con frangia. Lunghi: ricci lunghi, ricci raccolti.",
