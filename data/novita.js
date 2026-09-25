@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 112,
+    data: "26 settembre 2026",
+    titolo: "Black Jack a tutto schermo 📱",
+    descrizione: [
+      "Il Black Jack ora occupa esattamente lo schermo, fino in fondo: il tavolo si prende tutto lo spazio, sotto restano solo le tue carte e i tasti.",
+      "Le carte grandi si adattano allo spazio e non finiscono più sopra i tasti.",
+      "La scritta del turno in alto non si sovrappone più a nomi e teste.",
+      "Da soli o in pochi, carte e fiche sul tavolo sono più grandi. A fine mano, sotto, un riassunto compatto delle fiche di tutti."
+    ]
+  },
+  {
     v: 111,
     data: "26 settembre 2026",
     titolo: "Più spazio per giocare 📐",

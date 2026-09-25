@@ -483,7 +483,14 @@
     ".bj-col{flex:0 0 26%;display:flex;flex-direction:column;gap:8px}",
     ".bj-col .bj-btn{flex:none;width:100%;min-height:54px;font-size:.92rem}",
     ".bj-hcentro{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center}",
-    ".bj-hcarte{flex-wrap:nowrap}"
+    ".bj-hcarte{flex-wrap:nowrap}.bj-hcarte .cc{flex:none}",
+    ".bj-col{flex:0 0 24%}",
+    ".bj-esiti{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px;font-size:.78rem;color:#ffe58a;max-height:62px;overflow:hidden}.bj-esiti b{color:#fff}",
+    // IL BLACK JACK OCCUPA ESATTAMENTE LO SCHERMO: niente da scorrere; sotto altezza fissa, il tavolo prende il resto
+    ".bj-wrap{position:fixed;top:0;bottom:0;left:0;right:0;max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:6px;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:5;border-radius:0}",
+    ".bj-sala{flex:1 1 auto;min-height:0;margin:0}",
+    ".bj-hero{flex:0 0 196px;height:196px;min-height:0;justify-content:center;overflow:hidden}",
+    ".bj-msg:empty,.bj-wrap .bj-tavolata{display:none}"
   ].join("");
 
   function iniettaCSS() {
@@ -781,8 +788,7 @@
     function disegnaScena() {
       svuota(zBanco); zTav.hidden = true;
       var W = zBanco.clientWidth || (Math.min(560, window.innerWidth || 375) - 16);
-      var H = Math.round(Math.max(300, Math.min(620, (window.innerHeight || 700) - 290)));   // priorità al tavolo: tutto lo spazio che avanza sotto
-      zBanco.style.height = H + "px";
+      var H = zBanco.clientHeight || Math.max(300, (window.innerHeight || 700) - 230);   // il tavolo prende tutto lo schermo che resta sopra la parte fissa di sotto
       mazzo.style.top = Math.round(H * 0.74) + "px"; mazzo.style.left = "calc(50% - 22px)"; mazzo.style.right = "auto";
       var N = vm.giocatori.length, inTurno = (vm.fase === "punta" || vm.fase === "assic" || vm.fase === "gioca");
       var PW = Math.round(W * 1.12), PH = Math.round(H * 0.88);
@@ -797,7 +803,7 @@
       function sulPanno(x, y, nodo) { nodo.style.left = Math.round(x) + "px"; nodo.style.top = Math.round(y) + "px"; panno.appendChild(nodo); return nodo; }
       // i posti lungo la mezzaluna, da sinistra a destra (più siete, più si allarga)
       var ampiezza = N === 1 ? 0 : Math.min(118, 40 + N * 11);
-      var cw = N <= 2 ? 42 : (N <= 4 ? 34 : (N <= 7 ? 27 : 22)), fd = N <= 3 ? 34 : (N <= 6 ? 28 : 22);
+      var cw = N === 1 ? 60 : (N <= 2 ? 48 : (N <= 4 ? 36 : (N <= 7 ? 28 : 23))), fd = N === 1 ? 44 : (N <= 3 ? 36 : (N <= 6 ? 28 : 22));
       var segni = vm.giocatori.map(function (g, idx) {
         var th = (90 + ampiezza / 2 - (N === 1 ? 0 : idx * ampiezza / (N - 1))) * Math.PI / 180;
         function pt(r) { return [cx + rx * r * Math.cos(th), cy - ry * r * Math.sin(th)]; }
@@ -817,7 +823,7 @@
       });
       // le carte di Matt, vicino a noi (siamo dietro di lui)
       var mostraTutto = (vm.fase === "banco" || vm.fase === "esito");
-      if (vm.banco.length) sulPanno(cx, PH * 0.8, carteSulPanno(vm.banco, 46, anim.banco, mostraTutto ? -1 : 1));
+      if (vm.banco.length) sulPanno(cx, PH * 0.8, carteSulPanno(vm.banco, Math.round(Math.max(46, Math.min(66, H / 9))), anim.banco, mostraTutto ? -1 : 1));
       // Matt: la sua faccia in basso a sinistra, con il fumetto
       var fm = faccinaMatt(), pB = vm.banco.length ? (mostraTutto ? BJ.punteggio(vm.banco) : BJ.valoreCarta(vm.banco[0].v)) : null;
       var matt = el("div", { class: "bj-matt" + (vm.fase === "banco" ? " turno" : "") });
@@ -840,6 +846,8 @@
         var sc = Math.max(0.7, Math.min(1.35, r.width / 100));
         var x = r.left + r.width / 2 - zr.left, y = r.top + r.height / 2 - zr.top;
         var w = Math.round(base * sc), testa = Math.round(y - w * 0.9);
+        var cima = N === 1 ? 64 : 52;   // in alto c'è la scritta del turno: nessuna testa ci va sopra
+        if (testa - (N === 1 ? 0 : 14) < cima) { w = Math.max(40, Math.round((y - cima - (N === 1 ? 0 : 14)) / 0.9)); testa = Math.round(y - w * 0.9); }
         var attivo = inTurno && sg.idx === vm.turno;
         var cfg = avatarDi(sg.idx);
         if (cfg) strato.appendChild(el("div", { class: "bj-gioc" + (attivo ? " attivo" : ""),
@@ -850,7 +858,7 @@
         var nome = el("div", { class: "bj-nome" + (attivo ? " attivo" : "") + (N > 4 ? " mini" : ""), style: "left:" + Math.round(x) + "px;top:" + Math.max(14, testa + Math.round(w * 0.06)) + "px" }, [
           el("span", { text: g.nome + (drv.mioIdx && sg.idx === mioIdx() && N > 1 ? " ⭐" : "") }),
           n ? el("b", { class: n > 0 ? "piu" : "meno", text: " " + (n > 0 ? "+" : "−") + Math.abs(n) }) : null ]);
-        sopra.appendChild(nome);
+        if (N > 1) sopra.appendChild(nome);   // da soli il nome lo dice già la scritta grande
         // il punteggio scritto accanto alle sue carte sul tavolo
         if (sg.gruppo && m && m.carte.length) {
           var rc = sg.gruppo.getBoundingClientRect(), pm = BJ.punteggio(m.carte);
@@ -939,7 +947,9 @@
       g.mani.forEach(function (m, i) {
         var mano = el("div", { class: "bj-mano" + (i === g.attiva && vm.fase === "gioca" && g.mani.length > 1 ? " attiva" : "") });
         var cc = el("div", { class: "bj-hcarte" });
-        var n = m.carte.length, w = g.mani.length > 1 ? (n <= 2 ? 48 : 38) : (n <= 2 ? 76 : (n === 3 ? 60 : 48));   // carte grandi finché ci stanno
+        // carte grandi finché ci stanno: la larghezza si calcola sullo spazio vero, così non finiscono sopra i tasti
+        var spazio = (Math.min(560, window.innerWidth || 375) - 12) * (dove ? 0.44 : 0.62) / g.mani.length - 12;
+        var n = m.carte.length, w = Math.max(30, Math.min(80, Math.floor((spazio - (n - 1) * 6) / n)));
         m.carte.forEach(function (c, ci) {
           var isUlt = (i === g.attiva && ci === m.carte.length - 1);
           var card = cartaEl(el, c, false, "");
@@ -973,17 +983,11 @@
       zHero.appendChild(el("div", { class: "bj-hriga" }, [sx, centro, dx]));
     }
     function heroEsito() {
-      zHero.appendChild(el("div", { class: "bj-hnome", text: "Fine mano " + (vm.giro - 1) }));
+      // chi ha vinto o perso si vede già sul tavolo (+/− sopra le teste): qui solo le fiche e il tasto
+      var riga = el("div", { class: "bj-esiti" });
+      vm.giocatori.forEach(function (g) { riga.appendChild(el("span", {}, [ el("b", { text: g.nome }), " " + g.fiches + " 🪙" ])); });
+      zHero.appendChild(riga);
       if (vm.rimescolato) zHero.appendChild(el("div", { class: "bj-hfiches", text: "🔀 Sabot rimescolato" }));
-      var classifica = vm.giocatori.slice().sort(function (a, b) { return b.fiches - a.fiches; });
-      var lista = el("div", { style: "width:100%;max-width:360px" });
-      classifica.forEach(function (g) {
-        lista.appendChild(el("div", { style: "display:flex;justify-content:space-between;padding:5px 10px;border-bottom:1px solid rgba(255,255,255,.08)" }, [
-          el("span", { style: "font-weight:800", text: g.nome + (vm.giocatori.indexOf(g) === mioIdx() ? " (tu)" : "") }),
-          el("span", { style: "font-weight:900;color:#ffe58a", text: g.fiches + " 🪙" })
-        ]));
-      });
-      zHero.appendChild(lista);
       if (drv.puoNuova && drv.puoNuova()) {
         var az = el("div", { class: "bj-azioni" });
         az.appendChild(el("button", { class: "bj-btn bj-b-carta", text: "Nuova mano ▶", onclick: function () { drv.onNuova(); } }));
