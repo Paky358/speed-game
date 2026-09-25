@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 116,
+    data: "26 settembre 2026",
+    titolo: "Avatar: trucco completo, due avatar e ricci nuovi 💄",
+    descrizione: [
+      "Due avatar a testa: sotto il riflettore ci sono i tondini 1 e 2 per passare dall'uno all'altro. Nei giochi usi quello che stai guardando quando premi Salva.",
+      "Il trucco ha una scheda tutta sua e si può mettere tutto insieme: ombretto, eyeliner, mascara, rossetto e blush, ognuno col suo colore (anche libero). Le anteprime sono in primo piano sul viso.",
+      "Ombretto leggero, sfumato, intenso o con brillantini. Eyeliner sottile, alato, grafico o matita sotto. Mascara naturale, volume o ciglia finte. Rossetto velato, pieno o lucido. Blush leggero, intenso o abbronzato.",
+      "Sei tagli ricci nuovi, con i boccoli disegnati uno per uno. Corti: riccioletti, ciuffo riccio. Medi: caschetto riccio, ricci con frangia. Lunghi: ricci lunghi, ricci raccolti.",
+      "Corpo femminile più proporzionato: fianchi meno larghi.",
+      "Il ciuffo di lato non copre più l'occhio."
+    ]
+  },
+  {
     v: 115,
     data: "26 settembre 2026",
     titolo: "Black Jack: la regia da TV 🎬",

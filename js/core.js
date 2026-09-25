@@ -796,7 +796,7 @@
   function profiloAttivo() {
     if (window.SGNube && SGNube.disponibile()) {
       var pc = SGNube.profilo();
-      return pc ? { id: pc.uid, nome: pc.nome, emoji: pc.emoji, omino: pc.omino || null, cloud: true } : null;
+      return pc ? { id: pc.uid, nome: pc.nome, emoji: pc.emoji, omino: pc.omino || null, omini: pc.omini || null, ominoN: pc.ominoN || 0, cloud: true } : null;
     }
     var id = leggiL(K_ATTIVO, null);
     return profili().filter(function (p) { return p.id === id; })[0] || null;
@@ -881,16 +881,20 @@
   var SEZ_OMINO = [
     { nome: "Corpo",     voci: [["forma", "Forma"], ["corpo", "Corporatura"], ["pelle", "Pelle"]] },
     { nome: "Viso",      voci: [["viso", "Forma del viso"], ["orecchie", "Orecchie"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
-                               ["guance", "Guance"], ["segno", "Segni particolari"], ["trucco", "Trucco"], ["colTrucco", "Colore trucco"]] },
+                               ["guance", "Guance"], ["segno", "Segni particolari"]] },
+    { nome: "Trucco",    voci: [["ombretto", "Ombretto"], ["colOmbretto", "Colore ombretto"], ["eyeliner", "Eyeliner"], ["colEyeliner", "Colore eyeliner"], ["mascara", "Mascara"],
+                               ["rossetto", "Rossetto"], ["colRossetto", "Colore rossetto"], ["blush", "Blush"], ["colBlush", "Colore blush"]] },
     { nome: "Capelli",   voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
     { nome: "Vestiti",   voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]] },
     { nome: "Accessori", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"]] }
   ];
-  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colTrucco: 1, colCollo: 1 };
+  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1 };
+  var TRUCCO_COL = { colOmbretto: "ombretto", colEyeliner: "eyeliner", colRossetto: "rossetto", colBlush: "blush" };   // il colore si vede solo se quel trucco c'è
+  var TRUCCO_VOCI = /^(ombretto|eyeliner|mascara|rossetto|blush|col(Ombretto|Eyeliner|Rossetto|Blush))$/;   // anteprime in primo piano sul viso
   var OMINO_INTERO = { forma: 1, corpo: 1, sotto: 1, capo: 1, stampa: 1 };   // anteprima a figura intera (le altre: solo la testa)
   var ACC_COLORATI = /cappellino|berretto|fascia|cuffie|cilindro|cowboy|pescatore|basco|festa|gatto/;   // cappelli con un colore da scegliere
   var COLLO_COLORATI = /sciarpa|papillon|cravatta|bandana/;
-  var OMINO_LIBERO = { colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colTrucco: 1, colCollo: 1 };   // colori dove c'è anche la tavolozza libera
+  var OMINO_LIBERO = { colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1 };   // colori dove c'è anche la tavolozza libera
   var OMINO_RITOCCHI = [["occG", "Grandezza occhi"], ["occD", "Distanza occhi"], ["occA", "Altezza occhi"],
     ["soprA", "Altezza sopracciglia"], ["nasoG", "Grandezza naso"], ["boccaA", "Altezza bocca"]];
   // piccolo "pop" quando scegli qualcosa nell'editor (la vibrazione la fa già il tocco)
@@ -903,28 +907,52 @@
       o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + 0.14);
     } catch (e) {}
   }
-  function salvaOminoMio(cfg) {
+  // omini = i due avatar, n = quello in uso nei giochi (cfg)
+  function salvaOminoMio(cfg, omini, n) {
     var io = profiloAttivo(); if (!io) return;
-    if (io.cloud) { SGNube.salvaOmino(cfg); return; }
+    if (io.cloud) { SGNube.salvaOmino(cfg, omini, n); return; }
     var p = profili().filter(function (x) { return x.id === io.id; })[0];
-    if (p) { p.omino = cfg; salvaProfilo(p); }
+    if (p) { p.omino = cfg; if (omini) { p.omini = omini; p.ominoN = n; } salvaProfilo(p); }
+  }
+  // il secondo avatar la prima volta: a caso, ma dell'altra forma (maschio <-> femmina)
+  function secondoOmino(primo, nome) {
+    for (var i = 2; i < 40; i++) { var c = SGOmino.casuale(nome + "#" + i); if (c.forma !== primo.forma) return c; }
+    return SGOmino.casuale(nome + "#2");
   }
   function schermataOmino(dopo) {
     var io = profiloAttivo();
     if (!io) return schermataAccesso(function () { schermataOmino(dopo); });
     var O = SGOmino, cfg = O.norm(io.omino || O.casuale(io.nome));
     var tab = 0;
+    // due avatar a persona: si passa dall'uno all'altro coi tondini sotto il riflettore
+    var slot = io.omini ? (io.ominoN || 0) : 0, bozze = io.omini ? [io.omini[0] || null, io.omini[1] || null] : [cfg, null];
+    bozze[slot] = cfg;
+    if (!bozze[1 - slot]) bozze[1 - slot] = secondoOmino(cfg, io.nome);
     var s = schermata({ icona: "🧍", titolo: "Il mio avatar", sotto: "Crealo come vuoi: ti rappresenta nei giochi", indietro: dopo });
     // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre, targa col nome
     var figura = el("div", { class: "om-figura" });
+    var cambi = [0, 1].map(function (n) {
+      return el("button", { class: "om-slot om-slot" + n, "aria-label": "Avatar " + (n + 1), onclick: function () { vaiA(n); } });
+    });
     var palco = el("div", { class: "omino-palco editor" }, [el("div", { class: "om-faro" }), el("div", { class: "om-pedana" }), figura,
-      el("div", { class: "om-targa", text: io.nome })]);
+      el("div", { class: "om-targa", text: io.nome })].concat(cambi));
+    function disegnaCambi() {
+      cambi.forEach(function (b, n) {
+        b.classList.toggle("attiva", n === slot);
+        b.innerHTML = O.svg(n === slot ? cfg : bozze[n], { busto: true }) + "<span>" + (n + 1) + "</span>";
+      });
+    }
+    function vaiA(n) {
+      if (n === slot) return;
+      bozze[slot] = cfg; slot = n; cfg = O.norm(bozze[n]);
+      anteprima(true); saluta(); disegnaPannello();
+    }
     var schede = el("div", { class: "omino-schede" });
     var pannello = el("div", { class: "omino-pannello" });
     s._contenuto.appendChild(palco); s._contenuto.appendChild(schede); s._contenuto.appendChild(pannello);
     function unisci(k, v) { var c = {}; for (var x in cfg) c[x] = cfg[x]; c[k] = v; return c; }
     function anteprima(salto) {
-      figura.innerHTML = O.svg(cfg, { hd: true });
+      figura.innerHTML = O.svg(cfg, { hd: true }); disegnaCambi();
       if (salto) {   // saltello senza ricalcolare la pagina (le anteprime sono tante)
         var sv = figura.firstChild;
         if (sv && sv.animate) sv.animate([{ transform: "none" }, { transform: "translateY(-12px) scale(.96,1.05)", offset: 0.3 },
@@ -951,13 +979,13 @@
           return;
         }
         b.classList.toggle("attiva", cfg[k] === v);
-        if (b._mini && k !== cambiata) b._mini.innerHTML = O.svg(unisci(k, v), /^(sotto|modScarpe)$/.test(k) ? { gambe: true } : { busto: !OMINO_INTERO[k] });
+        if (b._mini && k !== cambiata) b._mini.innerHTML = O.svg(unisci(k, v), /^(sotto|modScarpe)$/.test(k) ? { gambe: true } : (TRUCCO_VOCI.test(k) ? { viso: true, senzaOcchiali: true } : { busto: !OMINO_INTERO[k] }));
       });
     }
     function scegli(k, v, zitto) {
       if (cfg[k] === v) return;
       if (zitto) { cfg[k] = v; anteprima(false); return; }   // mentre trascini (colore libero, cursori): niente saltelli
-      var rifai = /^(forma|cappello|collo|trucco)$/.test(k);   // "Sotto" solo per la donna, "Colore accessorio" solo se serve
+      var rifai = /^(forma|cappello|collo)$/.test(k) || (/^(ombretto|eyeliner|rossetto|blush)$/.test(k) && (cfg[k] === "nessuno") !== (v === "nessuno"));   // "Sotto" solo per la donna, i colori solo se servono
       cfg[k] = v; if (k === "forma" && v === "uomo" && /^gonna/.test(cfg.sotto)) cfg.sotto = "jeans";
       anteprima(true); if (rifai) disegnaPannello(); else aggiornaPannello(k);
     }
@@ -967,7 +995,7 @@
         var k = vc[0];
         if (k === "colAcc" && !ACC_COLORATI.test(cfg.cappello)) return;
         if (k === "colCollo" && !COLLO_COLORATI.test(cfg.collo)) return;
-        if (k === "colTrucco" && cfg.trucco === "nessuno") return;
+        if (TRUCCO_COL[k] && cfg[TRUCCO_COL[k]] === "nessuno") return;
         var gruppi = k === "capelli" ? O.GRUPPI_CAPELLI : null;   // tagli divisi in Corti / Medi / Lunghi
         if (!gruppi) pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
         var riga = el("div", { class: "om-griglia" + (OMINO_COLORI[k] ? " colori" : "") });
@@ -1024,7 +1052,7 @@
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva il mio avatar", onclick: function () {
       if (salvato) return; salvato = true;
       this.textContent = "👋 Salvato!";   // si vede subito che il tocco è arrivato
-      salvaOminoMio(cfg); saluta(); popOmino();
+      bozze[slot] = cfg; salvaOminoMio(cfg, bozze.map(function (b) { return O.norm(b); }), slot); saluta(); popOmino();   // quello che vedi quando salvi è quello che usi nei giochi
       setTimeout(dopo, 1000);   // prima ti saluta, poi torna indietro
     } }));
     anteprima(); disegnaSchede(); disegnaPannello();

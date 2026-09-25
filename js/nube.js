@@ -96,10 +96,16 @@
     },
 
     // ---- omino personalizzato (stile Mii) ----
-    salvaOmino: function (cfg) {
+    // omini = i due avatar della persona, n = quale usa nei giochi (omino = quello in uso)
+    salvaOmino: function (cfg, omini, n) {
       if (!auth || !utente || !profilo) return Promise.resolve();
-      profilo.omino = cfg; notifica();
-      return db.collection("profili").doc(utente.uid).update({ omino: cfg }).catch(function () {});
+      var patch = { omino: cfg };
+      if (omini) { patch.omini = omini; patch.ominoN = n || 0; }
+      for (var k in patch) profilo[k] = patch[k];
+      notifica();
+      var doc = db.collection("profili").doc(utente.uid);
+      // in due passi: l'avatar in uso si salva comunque anche se il secondo pezzo non passasse
+      return doc.update({ omino: cfg }).then(function () { if (omini) return doc.update({ omini: omini, ominoN: n || 0 }); }).catch(function () {});
     },
 
     // ---- bonus gratuito ogni 2 ore ----
