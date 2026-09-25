@@ -879,14 +879,14 @@
 
   // ---- AVATAR: il tuo personaggio stile Mii (disegno in js/omino.js; nel codice resta "omino") ----
   var SEZ_OMINO = [
-    { nome: "Corpo",     voci: [["forma", "Forma"], ["corpo", "Corporatura"], ["pelle", "Pelle"]] },
-    { nome: "Viso",      voci: [["viso", "Forma del viso"], ["orecchie", "Orecchie"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
+    { nome: "Corpo", icona: "🧍", voci: [["forma", "Forma"], ["corpo", "Corporatura"], ["pelle", "Pelle"]] },
+    { nome: "Viso", icona: "🙂", voci: [["viso", "Forma del viso"], ["orecchie", "Orecchie"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
                                ["guance", "Guance"], ["segno", "Segni particolari"]] },
-    { nome: "Trucco",    voci: [["ombretto", "Ombretto"], ["colOmbretto", "Colore ombretto"], ["eyeliner", "Eyeliner"], ["colEyeliner", "Colore eyeliner"], ["mascara", "Mascara"],
+    { nome: "Trucco", icona: "💄", voci: [["ombretto", "Ombretto"], ["colOmbretto", "Colore ombretto"], ["eyeliner", "Eyeliner"], ["colEyeliner", "Colore eyeliner"], ["mascara", "Mascara"],
                                ["rossetto", "Rossetto"], ["colRossetto", "Colore rossetto"], ["blush", "Blush"], ["colBlush", "Colore blush"]] },
-    { nome: "Capelli",   voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
-    { nome: "Vestiti",   voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]] },
-    { nome: "Accessori", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"]] }
+    { nome: "Capelli", icona: "💇", voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
+    { nome: "Vestiti", icona: "👕", voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]] },
+    { nome: "Accessori", icona: "🎩", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"]] }
   ];
   var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1 };
   var TRUCCO_COL = { colOmbretto: "ombretto", colEyeliner: "eyeliner", colRossetto: "rossetto", colBlush: "blush" };   // il colore si vede solo se quel trucco c'è
@@ -929,7 +929,8 @@
     var bozze = io.omini ? [io.omini[0] || null, io.omini[1] || null] : [cfg, null];
     bozze[slot] = cfg;
     if (!bozze[1 - slot]) bozze[1 - slot] = secondoOmino(cfg, io.nome);
-    var s = schermata({ icona: "🧍", titolo: "Il mio avatar", sotto: "Crealo come vuoi: ti rappresenta nei giochi", indietro: dopo });
+    var s = schermata({ titolo: "Il mio avatar", indietro: dopo });
+    s.classList.add("editor-avatar");   // tutto in uno schermo: palco e schede fermi, scorrono solo le scelte, Salva sempre in basso
     // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre, targa col nome
     var figura = el("div", { class: "om-figura" });
     var stella = el("button", { class: "om-stella", onclick: function () { if (slot !== principale) { principale = slot; popOmino(); disegnaCambi(); } } });
@@ -978,7 +979,8 @@
     }
     function disegnaSchede() {
       schede.innerHTML = "";
-      SEZ_OMINO.forEach(function (sz, i) { schede.appendChild(el("button", { class: "cat-tab" + (i === tab ? " attiva" : ""), text: sz.nome, onclick: function () { tab = i; disegnaSchede(); disegnaPannello(); } })); });
+      SEZ_OMINO.forEach(function (sz, i) { schede.appendChild(el("button", { class: "cat-tab" + (i === tab ? " attiva" : ""),
+        onclick: function () { tab = i; disegnaSchede(); disegnaPannello(); pannello.scrollTop = 0; } }, [el("span", { class: "ci", text: sz.icona }), el("span", { text: sz.nome })])); });
     }
     // aggiorna solo i riquadri (niente ricostruzione della schermata: non salta lo scroll)
     function aggiornaPannello(cambiata) {   // cambiata = voce appena scelta: le sue anteprime non cambiano, non si ridisegnano
@@ -990,7 +992,7 @@
           return;
         }
         b.classList.toggle("attiva", cfg[k] === v);
-        if (b._mini && k !== cambiata) b._mini.innerHTML = O.svg(unisci(k, v), /^(sotto|modScarpe)$/.test(k) ? { gambe: true } : (TRUCCO_VOCI.test(k) ? { viso: true, senzaOcchiali: true } : { busto: !OMINO_INTERO[k] }));
+        if (b._mini && k !== cambiata) b._mini.innerHTML = O.svg(unisci(k, v), /^(sotto|modScarpe)$/.test(k) ? { gambe: true } : (TRUCCO_VOCI.test(k) ? { viso: true, senzaOcchiali: true } : { busto: !OMINO_INTERO[k], senzaCappello: /^(capelli|colCap)$/.test(k) }));
       });
     }
     function scegli(k, v, zitto) {
@@ -1060,7 +1062,7 @@
       cfg = O.norm(O.casuale()); anteprima(true); disegnaPannello();
     } }));
     var salvato = false;
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva il mio avatar", onclick: function () {
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva", onclick: function () {
       if (salvato) return; salvato = true;
       this.textContent = "👋 Salvato!";   // si vede subito che il tocco è arrivato
       bozze[slot] = cfg; var tutti = bozze.map(function (b) { return O.norm(b); });

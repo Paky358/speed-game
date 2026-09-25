@@ -629,6 +629,52 @@ body::before{
 .om-puntini i{ width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.3); }
 .om-puntini i.on{ background:#fff; transform:scale(1.25); }
 .om-puntini i.pr{ box-shadow:0 0 0 2px #ffd23b; }
+
+/* =========================================================
+   EDITOR AVATAR — tutto in uno schermo (niente scorrere per salvare)
+   in alto il palco, sotto le 6 schede grandi, in mezzo scorrono solo le scelte,
+   in fondo "A caso" e "Salva" sempre a portata di pollice
+   ========================================================= */
+.schermata.editor-avatar{ flex:0 0 auto; height:var(--alt, 100dvh); max-height:var(--alt, 100dvh); min-height:0; overflow:hidden; padding-bottom:0; }
+.editor-avatar .testa{ margin-bottom:8px; }
+.editor-avatar .testa h1{ font-size:1.35rem; }
+.editor-avatar .contenuto{ display:flex; flex-direction:column; min-height:0; }
+.editor-avatar .omino-palco.editor{ position:relative; flex:0 0 auto; width:100%; max-width:none; margin:0 0 10px;
+  height:clamp(170px, calc(var(--alt, 100dvh) * .29), 250px); }
+.editor-avatar .om-figura{ height:calc(100% - 40px); bottom:26px; }
+.editor-avatar .om-figura svg{ height:100%; }
+/* schede: 3 per riga, grandi, con l'icona; il testo va a capo invece di rimpicciolirsi */
+.editor-avatar .omino-schede{ flex:0 0 auto; display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin:0 0 4px; }
+.editor-avatar .omino-schede .cat-tab{ min-height:46px; padding:6px 6px; font-size:1rem; line-height:1.1; justify-content:center; gap:6px;
+  white-space:normal; text-align:center; border-radius:14px; }
+.editor-avatar .omino-schede .cat-tab .ci{ font-size:1.2rem; }
+/* le scelte: unica parte che scorre */
+.editor-avatar .omino-pannello{ flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
+  margin:0 -16px; padding:2px 16px 16px;
+  -webkit-mask-image:linear-gradient(transparent, #000 10px, #000 calc(100% - 14px), transparent);
+          mask-image:linear-gradient(transparent, #000 10px, #000 calc(100% - 14px), transparent); }
+.editor-avatar .omino-pannello .etichetta{ font-size:1.12rem; font-weight:900; color:#fff; text-transform:none; letter-spacing:0;
+  margin:16px 0 8px; padding-left:10px; border-left:4px solid #ffd23b; line-height:1.2; }
+.editor-avatar .om-griglia{ grid-template-columns:repeat(3,1fr); gap:9px; }
+.editor-avatar .om-griglia.colori{ grid-template-columns:repeat(auto-fill,minmax(46px,1fr)); gap:10px; }
+.editor-avatar .om-colore{ height:46px; }
+.editor-avatar .om-opz.om-forma{ padding:6px 4px 8px; display:flex; flex-direction:column; align-items:center; }
+.editor-avatar .om-mini{ height:78px; }
+.editor-avatar .om-mini.intero{ height:96px; }
+.editor-avatar .om-nome{ font-size:.95rem; line-height:1.15; color:#e6ecff; white-space:normal; overflow:visible; text-overflow:clip;
+  margin-top:4px; min-height:2.3em; display:flex; align-items:center; justify-content:center; text-align:center; overflow-wrap:anywhere; }
+.editor-avatar .om-opz.attiva .om-nome{ color:#ffd76a; }
+.editor-avatar .om-ritocco{ grid-template-columns:1fr 1.2fr 30px; padding:10px 12px; }
+.editor-avatar .om-rit-nome{ font-size:1rem; }
+.editor-avatar .om-rit-val{ font-size:1rem; }
+.editor-avatar .om-cursore{ height:32px; }
+/* in fondo: due tasti affiancati, sempre visibili */
+.editor-avatar .piede{ flex:0 0 auto; flex-direction:row; gap:10px; margin:0 -16px; padding:10px 16px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg, rgba(10,16,44,.2), rgba(10,16,44,.95) 40%); border-top:1px solid rgba(255,255,255,.08); }
+.editor-avatar .piede .btn{ min-height:54px; font-size:1.08rem; }
+.editor-avatar .piede .btn-fantasma{ flex:0 0 38%; }
+.editor-avatar .piede .btn-primario{ flex:1; }
+.editor-avatar .om-stella{ font-size:.85rem; padding:5px 12px; }
 </style>
 <div id="app"></div>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
@@ -1036,6 +1082,7 @@ body::before{
     var P = col(OPZ.pelle, c.pelle), H = col(OPZ.colCap, c.colCap), M = col(OPZ.maglia, c.maglia),
         T = col(OPZ.pantaloni, c.pantaloni), I = col(OPZ.iride, c.iride), A = col(OPZ.colAcc, c.colAcc), S = col(OPZ.scarpe, c.scarpe);
     if (opts.senzaOcchiali) c.occhiali = "nessuno";   // anteprime del trucco: gli occhiali coprirebbero gli occhi
+    if (opts.senzaCappello) c.cappello = "nessuno";   // anteprime dei capelli: il cappello coprirebbe il taglio
     var acc = c.cappello, tipo = c.capelli;
     // cappelli che coprono la testa: i capelli si vedono solo sotto questa linea
     var LINEA = { cappellino: 73, berretto: 73, cilindro: 53, cowboy: 58, pescatore: 63, basco: 52 }[acc], cappello = LINEA != null;
@@ -2754,14 +2801,14 @@ body::before{
 
   // ---- AVATAR: il tuo personaggio stile Mii (disegno in js/omino.js; nel codice resta "omino") ----
   var SEZ_OMINO = [
-    { nome: "Corpo",     voci: [["forma", "Forma"], ["corpo", "Corporatura"], ["pelle", "Pelle"]] },
-    { nome: "Viso",      voci: [["viso", "Forma del viso"], ["orecchie", "Orecchie"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
+    { nome: "Corpo", icona: "🧍", voci: [["forma", "Forma"], ["corpo", "Corporatura"], ["pelle", "Pelle"]] },
+    { nome: "Viso", icona: "🙂", voci: [["viso", "Forma del viso"], ["orecchie", "Orecchie"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
                                ["guance", "Guance"], ["segno", "Segni particolari"]] },
-    { nome: "Trucco",    voci: [["ombretto", "Ombretto"], ["colOmbretto", "Colore ombretto"], ["eyeliner", "Eyeliner"], ["colEyeliner", "Colore eyeliner"], ["mascara", "Mascara"],
+    { nome: "Trucco", icona: "💄", voci: [["ombretto", "Ombretto"], ["colOmbretto", "Colore ombretto"], ["eyeliner", "Eyeliner"], ["colEyeliner", "Colore eyeliner"], ["mascara", "Mascara"],
                                ["rossetto", "Rossetto"], ["colRossetto", "Colore rossetto"], ["blush", "Blush"], ["colBlush", "Colore blush"]] },
-    { nome: "Capelli",   voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
-    { nome: "Vestiti",   voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]] },
-    { nome: "Accessori", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"]] }
+    { nome: "Capelli", icona: "💇", voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
+    { nome: "Vestiti", icona: "👕", voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]] },
+    { nome: "Accessori", icona: "🎩", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"]] }
   ];
   var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1 };
   var TRUCCO_COL = { colOmbretto: "ombretto", colEyeliner: "eyeliner", colRossetto: "rossetto", colBlush: "blush" };   // il colore si vede solo se quel trucco c'è
@@ -2804,7 +2851,8 @@ body::before{
     var bozze = io.omini ? [io.omini[0] || null, io.omini[1] || null] : [cfg, null];
     bozze[slot] = cfg;
     if (!bozze[1 - slot]) bozze[1 - slot] = secondoOmino(cfg, io.nome);
-    var s = schermata({ icona: "🧍", titolo: "Il mio avatar", sotto: "Crealo come vuoi: ti rappresenta nei giochi", indietro: dopo });
+    var s = schermata({ titolo: "Il mio avatar", indietro: dopo });
+    s.classList.add("editor-avatar");   // tutto in uno schermo: palco e schede fermi, scorrono solo le scelte, Salva sempre in basso
     // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre, targa col nome
     var figura = el("div", { class: "om-figura" });
     var stella = el("button", { class: "om-stella", onclick: function () { if (slot !== principale) { principale = slot; popOmino(); disegnaCambi(); } } });
@@ -2853,7 +2901,8 @@ body::before{
     }
     function disegnaSchede() {
       schede.innerHTML = "";
-      SEZ_OMINO.forEach(function (sz, i) { schede.appendChild(el("button", { class: "cat-tab" + (i === tab ? " attiva" : ""), text: sz.nome, onclick: function () { tab = i; disegnaSchede(); disegnaPannello(); } })); });
+      SEZ_OMINO.forEach(function (sz, i) { schede.appendChild(el("button", { class: "cat-tab" + (i === tab ? " attiva" : ""),
+        onclick: function () { tab = i; disegnaSchede(); disegnaPannello(); pannello.scrollTop = 0; } }, [el("span", { class: "ci", text: sz.icona }), el("span", { text: sz.nome })])); });
     }
     // aggiorna solo i riquadri (niente ricostruzione della schermata: non salta lo scroll)
     function aggiornaPannello(cambiata) {   // cambiata = voce appena scelta: le sue anteprime non cambiano, non si ridisegnano
@@ -2865,7 +2914,7 @@ body::before{
           return;
         }
         b.classList.toggle("attiva", cfg[k] === v);
-        if (b._mini && k !== cambiata) b._mini.innerHTML = O.svg(unisci(k, v), /^(sotto|modScarpe)$/.test(k) ? { gambe: true } : (TRUCCO_VOCI.test(k) ? { viso: true, senzaOcchiali: true } : { busto: !OMINO_INTERO[k] }));
+        if (b._mini && k !== cambiata) b._mini.innerHTML = O.svg(unisci(k, v), /^(sotto|modScarpe)$/.test(k) ? { gambe: true } : (TRUCCO_VOCI.test(k) ? { viso: true, senzaOcchiali: true } : { busto: !OMINO_INTERO[k], senzaCappello: /^(capelli|colCap)$/.test(k) }));
       });
     }
     function scegli(k, v, zitto) {
@@ -2935,7 +2984,7 @@ body::before{
       cfg = O.norm(O.casuale()); anteprima(true); disegnaPannello();
     } }));
     var salvato = false;
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva il mio avatar", onclick: function () {
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✅ Salva", onclick: function () {
       if (salvato) return; salvato = true;
       this.textContent = "👋 Salvato!";   // si vede subito che il tocco è arrivato
       bozze[slot] = cfg; var tutti = bozze.map(function (b) { return O.norm(b); });
@@ -10192,6 +10241,8 @@ window.SG_NOVITA = [
       "Ombretto leggero, sfumato, intenso o con brillantini. Eyeliner sottile, alato, grafico o matita sotto. Mascara naturale, volume o ciglia finte. Rossetto velato, pieno o lucido. Blush leggero, intenso o abbronzato.",
       "Sei tagli ricci nuovi, con i boccoli disegnati uno per uno. Corti: riccioletti, ciuffo riccio. Medi: caschetto riccio, ricci con frangia. Lunghi: ricci lunghi, ricci raccolti.",
       "Corpo femminile più proporzionato: fianchi meno larghi.",
+      "Editor più comodo: tutto sta in uno schermo, scorrono solo le scelte e \"Salva\" è sempre in basso. Schede grandi con le icone, scritte più grandi che vanno a capo, tre scelte per riga.",
+      "Nelle anteprime dei tagli il cappello sparisce, così vedi bene i capelli.",
       "Il ciuffo di lato non copre più l'occhio."
     ]
   },

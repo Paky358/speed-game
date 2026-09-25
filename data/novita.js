@@ -18,6 +18,8 @@ window.SG_NOVITA = [
       "Ombretto leggero, sfumato, intenso o con brillantini. Eyeliner sottile, alato, grafico o matita sotto. Mascara naturale, volume o ciglia finte. Rossetto velato, pieno o lucido. Blush leggero, intenso o abbronzato.",
       "Sei tagli ricci nuovi, con i boccoli disegnati uno per uno. Corti: riccioletti, ciuffo riccio. Medi: caschetto riccio, ricci con frangia. Lunghi: ricci lunghi, ricci raccolti.",
       "Corpo femminile più proporzionato: fianchi meno larghi.",
+      "Editor più comodo: tutto sta in uno schermo, scorrono solo le scelte e \"Salva\" è sempre in basso. Schede grandi con le icone, scritte più grandi che vanno a capo, tre scelte per riga.",
+      "Nelle anteprime dei tagli il cappello sparisce, così vedi bene i capelli.",
       "Il ciuffo di lato non copre più l'occhio."
     ]
   },
