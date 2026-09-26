@@ -10861,6 +10861,16 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 128,
+    data: "26 settembre 2026",
+    titolo: "Game show più fluido ⚡",
+    descrizione: [
+      "Lo studio della Linea del tempo non lagga più: la scenografia (arco, torri, pubblico, pavimento, cornice) ora è un'immagine disegnata una volta sola che la telecamera sposta senza fatica.",
+      "Restano in movimento fari, barre delle torri, lucine del pubblico e lampadine, ma fatti in modo leggero. Anche gli avatar dei leggii sono immagini già pronte.",
+      "Sui telefoni meno potenti lo studio si alleggerisce da solo (fari fermi e immagini più leggere)."
+    ]
+  },
+  {
     v: 127,
     data: "26 settembre 2026",
     titolo: "La linea del tempo diventa un GAME SHOW 📺",
@@ -24735,114 +24745,102 @@ window.SG_SIPERO = {
   function dorme(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
   function vuota(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
 
+  // Telefoni meno potenti: niente fari che girano e immagini dello studio più leggere
+  var LEGGERO = !!((navigator.deviceMemory && navigator.deviceMemory <= 3) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 3));
+
   function assicuraStileStudio() {
     if (document.getElementById("sg-studio-css")) return;
     var st = document.createElement("style"); st.id = "sg-studio-css";
+    // Regola d'oro per non far laggare: le animazioni muovono SOLO transform e opacity su pezzi piccoli.
+    // Tutto quello che sta fermo (sfondo, arco, pubblico, pavimento, cornice) è disegnato una volta sola su canvas.
     st.textContent = [
-      ".schermata.st-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#07041a}",
+      ".schermata.st-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#07041a;animation:none}",
       ".schermata.st-piena>.testa,.schermata.st-piena>.piede{display:none}",
       ".schermata.st-piena>.contenuto{height:100%;margin:0;padding:0}",
       ".st-vista{position:relative;width:100%;max-width:520px;margin:0 auto;height:var(--alt,100dvh);overflow:hidden;background:#07041a;user-select:none;-webkit-user-select:none}",
       ".st-mondo{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}",
       ".st-mondo>*{position:absolute}",
-      ".st-quieto .st-anim,.st-quieto .st-anim *,.st-quieto .st-anim:before,.st-quieto .st-anim:after{animation-play-state:paused!important}",
+      ".st-quieto .st-anim,.st-quieto .st-anim *{animation-play-state:paused!important}",
       ".st-quieto .st-leggio .luce{opacity:0!important}",
-      // sfondo luminoso da prima serata
-      ".st-sfondo{inset:0;background:radial-gradient(38% 26% at 50% 26%,rgba(255,206,110,.55),transparent 70%),radial-gradient(34% 40% at 6% 34%,rgba(255,62,165,.55),transparent 70%),",
-        "radial-gradient(34% 40% at 94% 34%,rgba(34,211,238,.5),transparent 70%),radial-gradient(60% 30% at 50% 70%,rgba(140,90,255,.45),transparent 75%),linear-gradient(#3a1b8c,#27106a 40%,#1a0b4d 70%,#120736)}",
-      ".st-sfondo:before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 2px,transparent 2px 64px),repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 2px,transparent 2px 64px)}",
-      ".st-traliccio{left:0;right:0;top:0;background:linear-gradient(#3b3560,#1d1838);box-shadow:0 6px 18px rgba(0,0,0,.5)}",
-      ".st-traliccio:before{content:'';position:absolute;inset:18% 0;background:repeating-linear-gradient(60deg,transparent 0 10px,rgba(255,255,255,.18) 10px 12px),repeating-linear-gradient(-60deg,transparent 0 10px,rgba(255,255,255,.18) 10px 12px)}",
-      ".st-faro{border-radius:50%;background:radial-gradient(circle at 45% 40%,#fff 0 18%,#ffe9a8 30%,#ffb300 55%,#5a3a00 70%);box-shadow:0 0 22px 8px rgba(255,220,130,.7)}",
-      ".st-fascio{transform-origin:50% 0;opacity:.55;clip-path:polygon(46% 0,54% 0,100% 100%,0 100%);animation:stFascio 6s ease-in-out infinite alternate}",
+      ".st-tela{left:0;top:0}",
+      // fari che girano (solo rotazione)
+      ".st-fascio{transform-origin:50% 0;opacity:.5;clip-path:polygon(46% 0,54% 0,100% 100%,0 100%);will-change:transform;animation:stFascio 6s ease-in-out infinite alternate}",
       "@keyframes stFascio{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}",
-      ".st-arco{border-radius:46% 46% 18px 18px/14% 14% 18px 18px;border:6px solid transparent;",
-        "background:linear-gradient(rgba(10,6,40,.55),rgba(10,6,40,.2)) padding-box,linear-gradient(135deg,#ff3ea5,#ffd43b,#22d3ee,#a06bff,#ff3ea5) border-box;background-size:100% 100%,300% 300%;",
-        "box-shadow:0 0 50px rgba(255,62,165,.5),0 0 90px rgba(34,211,238,.3),inset 0 0 50px rgba(34,211,238,.25);animation:stArco 6s linear infinite}",
-      "@keyframes stArco{to{background-position:0 0,300% 0}}",
-      ".st-torre{border-radius:14px;overflow:hidden;background:#0a0624;box-shadow:0 0 0 3px #2b2366,0 0 30px rgba(255,62,165,.45)}",
-      ".st-torre i{position:absolute;bottom:0;width:12%;border-radius:4px 4px 0 0;background:linear-gradient(#fff3a8,#ffb300 40%,#ff3ea5 75%,#7b2cff);animation:stEq 1s ease-in-out infinite alternate}",
-      "@keyframes stEq{from{height:14%}to{height:94%}}",
-      ".st-torre b{position:absolute;left:0;right:0;top:6%;text-align:center;font-size:20px;letter-spacing:.25em;color:#ffe066;text-shadow:0 0 12px #ff9d2e;z-index:1}",
-      // pubblico
-      ".st-pub{overflow:hidden;border-radius:18px 18px 0 0;background-color:#140c3c;",
-        "background-image:radial-gradient(circle at 13px 10px,#8f7ad8 0 4px,#5b4aa6 6.5px,transparent 7.5px),radial-gradient(ellipse 12px 9px at 13px 25px,#5a489e 0 8px,#3a2d78 11px,transparent 12px),",
-        "radial-gradient(circle at 13px 10px,#6f5cb8 0 4px,#46388a 6.5px,transparent 7.5px),radial-gradient(ellipse 12px 9px at 13px 25px,#43357f 0 8px,#2c2263 11px,transparent 12px);",
-        "background-size:26px 28px,26px 28px,31px 33px,31px 33px;background-position:0 0,0 0,9px 15px,9px 15px}",
-      ".st-pub:after{content:'';position:absolute;inset:0;background:linear-gradient(rgba(10,5,35,.7),rgba(10,5,35,0) 55%),linear-gradient(90deg,rgba(255,62,165,.18),transparent 30%,transparent 70%,rgba(34,211,238,.18))}",
-      ".st-pub.salta{animation:stSalta .22s steps(2) infinite}",
+      // barre delle torri LED (solo scala verticale)
+      ".st-eq{overflow:hidden;border-radius:14px}",
+      ".st-eq i{position:absolute;bottom:0;height:88%;width:11%;border-radius:4px 4px 0 0;background:linear-gradient(#fff3a8,#ffb300 40%,#ff3ea5 75%,#7b2cff);transform-origin:50% 100%;will-change:transform;animation:stEq 1s ease-in-out infinite alternate}",
+      "@keyframes stEq{from{transform:scaleY(.16)}to{transform:scaleY(1)}}",
+      // lampadine della cornice: due disegni che si alternano (solo opacità)
+      ".st-lampade{will-change:opacity;animation:stLampade .9s linear infinite}",
+      "@keyframes stLampade{0%,49%{opacity:1}51%,100%{opacity:0}}",
+      // pubblico (canvas) che salta quando applaude, con lucine dei telefoni e flash
+      ".st-pubwrap{left:0;will-change:transform}",
+      ".st-pubwrap>*{position:absolute}",
+      ".st-pubwrap.salta{animation:stSalta .22s steps(2) infinite}",
       "@keyframes stSalta{50%{transform:translateY(-4px)}}",
-      ".st-ringhiera{height:5px;border-radius:3px;background:linear-gradient(90deg,transparent,#ffd43b,transparent);box-shadow:0 0 10px rgba(255,212,59,.6)}",
-      ".st-lucina{width:6px;height:6px;border-radius:50%;background:#e8fbff;box-shadow:0 0 8px 3px rgba(160,240,255,.8);animation:stLuccica 2.4s ease-in-out infinite}",
+      ".st-lucina{width:6px;height:6px;margin:-3px;border-radius:50%;background:#e8fbff;box-shadow:0 0 8px 3px rgba(160,240,255,.8);will-change:opacity;animation:stLuccica 2.4s ease-in-out infinite}",
       "@keyframes stLuccica{0%,100%{opacity:.15}50%{opacity:1}}",
-      ".st-flash{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle,#fff 0 30%,rgba(255,255,255,0) 70%);opacity:0}",
+      ".st-flash{width:26px;height:26px;margin:-13px;border-radius:50%;background:radial-gradient(circle,#fff 0 30%,rgba(255,255,255,0) 70%);opacity:0}",
       ".st-flash.on{animation:stFlash .5s ease-out}",
       "@keyframes stFlash{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(2.4)}100%{opacity:0;transform:scale(1)}}",
-      ".st-fumetto{font-weight:900;font-size:36px;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.4),0 0 20px rgba(255,62,165,.7);opacity:0;white-space:nowrap;transform:translate(-50%,0);pointer-events:none;z-index:5}",
+      ".st-fumetto{font-weight:900;font-size:36px;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.4);opacity:0;white-space:nowrap;transform:translate(-50%,0);pointer-events:none;z-index:5}",
       ".st-fumetto.on{animation:stFum 1.8s ease-out}",
       "@keyframes stFum{0%{opacity:0;transform:translate(-50%,20px) scale(.6)}15%{opacity:1;transform:translate(-50%,0) scale(1.1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-30px)}}",
-      // pavimento lucido
-      ".st-pavimento{left:0;right:0;bottom:0;background:radial-gradient(60% 40% at 50% 0,rgba(255,206,110,.3),transparent 70%),",
-        "repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 2px,transparent 2px 70px),linear-gradient(#2c1c78,#170d4a 50%,#0c0628)}",
-      ".st-pavimento:before{content:'';position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(90deg,#ff3ea5,#ffd43b,#22d3ee,#a06bff,#ff3ea5);background-size:200% 100%;animation:stScorri 4s linear infinite;box-shadow:0 0 22px #ffd43b}",
-      "@keyframes stScorri{to{background-position:200% 0}}",
-      // maxischermo con cornice di lampadine
-      ".st-cornice{border-radius:26px;background:radial-gradient(circle,#fffbe0 0 2.5px,#ffc93c 3.6px,rgba(255,160,40,.35) 5px,transparent 7px) 0 0/20px 20px;",
-        "box-shadow:0 0 0 3px #3a2a00,0 0 40px rgba(255,190,60,.55);animation:stLampadine .9s steps(2) infinite}",
-      "@keyframes stLampadine{50%{background-position:10px 10px}}",
-      ".st-schermo{border-radius:14px;overflow:hidden;box-shadow:0 0 0 5px #120a38,0 0 40px rgba(120,170,255,.5);background:radial-gradient(130% 55% at 50% 0%,#2d44a8 0%,#18225a 50%,#0b1030 100%)}",
+      // maxischermo
+      ".st-schermo{border-radius:14px;overflow:hidden;box-shadow:0 0 0 5px #120a38;background:radial-gradient(130% 55% at 50% 0%,#2d44a8 0%,#18225a 50%,#0b1030 100%)}",
       ".st-sch-in{position:absolute;inset:0;display:flex;flex-direction:column;padding:calc(8px + env(safe-area-inset-top)) 12px 10px}",
       ".st-vista.con-barra .st-sch-in{padding-bottom:104px}",
       ".st-sch-in .tl-hud{flex:0 0 auto;margin-left:42px;align-items:center}",
-      ".st-vetro{position:absolute;inset:0;pointer-events:none;background:linear-gradient(118deg,rgba(255,255,255,.1),transparent 32%),repeating-linear-gradient(0deg,rgba(0,0,0,.07) 0 1px,transparent 1px 3px)}",
+      ".st-sch-in .tl-ev .card{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(255,255,255,.1)}",
+      ".st-vetro{position:absolute;inset:0;pointer-events:none;background:linear-gradient(118deg,rgba(255,255,255,.1),transparent 32%)}",
       ".st-idle{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px}",
-      ".st-idle .logo{font-size:46px;font-weight:900;line-height:1.03;letter-spacing:.03em;background:linear-gradient(#fff6c9,#ffca3a 55%,#e07b0a);-webkit-background-clip:text;background-clip:text;color:transparent;",
-        "filter:drop-shadow(0 4px 0 rgba(0,0,0,.35)) drop-shadow(0 0 24px rgba(255,160,40,.55))}",
-      ".st-idle .stelle{color:#ffe066;letter-spacing:.35em;font-size:24px;text-shadow:0 0 12px #ffb300}",
+      ".st-idle .logo{font-size:46px;font-weight:900;line-height:1.03;letter-spacing:.03em;color:#ffd43b;text-shadow:0 4px 0 #a85c00,0 0 22px rgba(255,160,40,.55)}",
+      ".st-idle .stelle{color:#ffe066;letter-spacing:.35em;font-size:24px}",
       ".st-idle .sotto{font-size:14px;font-weight:800;letter-spacing:.32em;text-transform:uppercase;color:#cdd6ff}",
       ".st-sch-in .tl-esito{justify-content:center;padding-bottom:40px}",
       ".st-sch-in .tl-flip{width:min(310px,88%);height:230px}",
-      ".st-raggi{position:absolute;left:50%;top:38%;width:180%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;opacity:0;",
+      ".st-raggi{position:absolute;left:50%;top:38%;width:180%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;opacity:0;will-change:transform;",
         "background:repeating-conic-gradient(rgba(255,230,120,.22) 0 8deg,transparent 8deg 20deg);-webkit-mask:radial-gradient(circle,#000 20%,transparent 65%);mask:radial-gradient(circle,#000 20%,transparent 65%);animation:stRaggi 14s linear infinite,stAppari .6s ease 1.3s forwards}",
       ".st-raggi.ko{background:repeating-conic-gradient(rgba(255,93,108,.2) 0 8deg,transparent 8deg 20deg)}",
       "@keyframes stRaggi{to{transform:translate(-50%,-50%) rotate(360deg)}}",
       "@keyframes stAppari{to{opacity:1}}",
-      // leggii (le postazioni): avatar con alone, banco lucido con nome, punti a LED, pulsante e striscia luminosa
+      // leggii (le postazioni)
       ".st-leggio{display:flex;flex-direction:column;align-items:center}",
       ".st-leggio .alone{position:absolute;left:50%;top:0;width:96%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;opacity:.45;",
         "background:radial-gradient(circle,var(--col) 0,transparent 66%);transition:opacity .4s,transform .4s}",
       ".st-leggio .luce{position:absolute;left:50%;bottom:40%;width:150%;height:420%;transform:translateX(-50%);opacity:0;transition:opacity .45s;pointer-events:none;",
-        "background:linear-gradient(to top,rgba(255,246,205,.55),rgba(255,246,205,0) 85%);clip-path:polygon(40% 0,60% 0,100% 100%,0 100%)}",
-      ".st-leggio .av{position:relative;z-index:2;width:74%;aspect-ratio:1}",
-      ".st-leggio .av svg{width:100%;height:100%;display:block;filter:drop-shadow(0 .3em .4em rgba(0,0,0,.45))}",
+        "background:linear-gradient(to top,rgba(255,246,205,.5),rgba(255,246,205,0) 85%);clip-path:polygon(40% 0,60% 0,100% 100%,0 100%)}",
+      ".st-leggio .av{position:relative;z-index:2;width:74%;aspect-ratio:178/182}",
+      ".st-leggio .av canvas{width:100%;height:100%;display:block}",
       ".st-leggio .podio{position:relative;z-index:3;width:100%;margin-top:-.9em}",
       ".st-leggio .piano{position:relative;height:1.1em;border-radius:.55em .55em .2em .2em;background:linear-gradient(#ffffff,#d8d2ff 35%,#8d84d8 75%,#5a50a8);",
         "box-shadow:inset 0 .12em 0 #fff,0 .25em .45em rgba(0,0,0,.4)}",
-      ".st-leggio .buzz{position:absolute;right:13%;top:-.5em;width:1.15em;height:.62em;border-radius:1em 1em .2em .2em;background:radial-gradient(circle at 40% 30%,#ffc2c7,#ff2d45 55%,#8a0f1c);box-shadow:0 0 .7em rgba(255,45,69,.7)}",
-      ".st-leggio .tu{position:absolute;left:10%;top:-.62em;background:linear-gradient(#fff3a8,#ffca3a);color:#241f00;font-weight:900;font-size:.72em;padding:.08em .55em;border-radius:99px;box-shadow:0 .1em .4em rgba(0,0,0,.4)}",
+      ".st-leggio .buzz{position:absolute;right:13%;top:-.5em;width:1.15em;height:.62em;border-radius:1em 1em .2em .2em;background:radial-gradient(circle at 40% 30%,#ffc2c7,#ff2d45 55%,#8a0f1c)}",
+      ".st-leggio .tu{position:absolute;left:10%;top:-.62em;background:linear-gradient(#fff3a8,#ffca3a);color:#241f00;font-weight:900;font-size:.72em;padding:.08em .55em;border-radius:99px}",
       ".st-leggio .fronte{position:relative;margin:0 5%;padding:.75em .4em .7em;text-align:center;clip-path:polygon(0 0,100% 0,95% 100%,5% 100%);",
         "background:linear-gradient(90deg,rgba(255,255,255,.14),transparent 22%,transparent 78%,rgba(255,255,255,.1)),linear-gradient(#36268a,#1b1152 55%,#0d0730)}",
       ".st-leggio .fronte:after{content:'';position:absolute;left:8%;right:8%;top:.22em;height:.34em;",
-        "background:radial-gradient(circle,#fffbe0 0 .09em,var(--col) .15em,transparent .21em) 0 0/.62em .34em;animation:stLampadine .8s steps(2) infinite}",
-      ".st-leggio .nome{font-weight:900;font-size:1.3em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 .35em var(--col),0 .08em 0 rgba(0,0,0,.4)}",
+        "background:radial-gradient(circle,#fffbe0 0 .09em,var(--col) .15em,transparent .21em) 0 0/.62em .34em}",
+      ".st-leggio .nome{font-weight:900;font-size:1.3em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 .08em 0 rgba(0,0,0,.45)}",
       ".st-leggio .punti{display:inline-block;margin-top:.3em;min-width:72%;font-family:'Courier New',ui-monospace,monospace;font-weight:900;font-size:1.6em;letter-spacing:.04em;color:#ffe066;",
-        "background:#05030f;border-radius:.3em;padding:.08em .4em;text-shadow:0 0 .35em rgba(255,224,102,.95);box-shadow:inset 0 0 .5em rgba(0,0,0,.9),0 0 0 .08em rgba(255,224,102,.3)}",
-      ".st-leggio .punti.neg{color:#ff8d98;text-shadow:0 0 .35em rgba(255,93,108,.9)}",
-      ".st-leggio .led{height:.42em;margin:0 9%;border-radius:0 0 .3em .3em;background:var(--col);box-shadow:0 0 1.1em var(--col),0 0 .35em var(--col)}",
+        "background:#05030f;border-radius:.3em;padding:.08em .4em;box-shadow:inset 0 0 0 .08em rgba(255,224,102,.3)}",
+      ".st-leggio .punti.neg{color:#ff8d98}",
+      ".st-leggio .led{position:relative;height:.42em;margin:0 9%;border-radius:0 0 .3em .3em;background:var(--col);box-shadow:0 0 .8em var(--col)}",
+      ".st-leggio .led:after{content:'';position:absolute;left:-12%;right:-12%;top:-160%;bottom:-160%;border-radius:50%;background:radial-gradient(closest-side,var(--col),transparent);opacity:0;will-change:opacity}",
       ".st-leggio.acceso .alone{opacity:1;transform:translateX(-50%) scale(1.12)}",
       ".st-leggio.acceso .luce{opacity:1}",
-      ".st-leggio.acceso .led{animation:stLed .6s ease-in-out infinite alternate}",
-      "@keyframes stLed{to{box-shadow:0 0 2.2em var(--col),0 0 .6em #fff}}",
+      ".st-leggio.acceso .led:after{animation:stLed .6s ease-in-out infinite alternate}",
+      "@keyframes stLed{from{opacity:.2}to{opacity:.95}}",
       ".st-leggio .cart{position:absolute;z-index:4;left:50%;top:-44%;width:48%;aspect-ratio:1;perspective:400px;opacity:0;transform:translateX(-50%) translateY(40%) scale(.2);transition:transform .35s cubic-bezier(.3,1.5,.5,1),opacity .2s}",
       ".st-leggio .cart:after{content:'';position:absolute;left:50%;top:96%;width:.5em;height:2.2em;margin-left:-.25em;background:linear-gradient(90deg,#b58a4e,#e6c28a,#b58a4e);border-radius:.2em;z-index:-1}",
       ".st-leggio .cart.su{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}",
       ".st-leggio .cart .in{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .6s}",
       ".st-leggio .cart.gira .in{transform:rotateY(180deg)}",
       ".st-leggio .cart .f{position:absolute;inset:0;border-radius:.9em;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center;",
-        "font-size:3.4em;font-weight:900;background:linear-gradient(#ffffff,#e8e4ff);color:#2a1d6e;box-shadow:0 .3em .8em rgba(0,0,0,.45),inset 0 0 0 .08em rgba(0,0,0,.08)}",
+        "font-size:3.4em;font-weight:900;background:linear-gradient(#ffffff,#e8e4ff);color:#2a1d6e;box-shadow:0 .25em .5em rgba(0,0,0,.4)}",
       ".st-leggio .cart .f.r{transform:rotateY(180deg)}",
       ".st-leggio .cart .f.r.si{background:linear-gradient(#6ff0a6,#27b567)} .st-leggio .cart .f.r.no{background:linear-gradient(#ff95a0,#e0364a)}",
-      ".st-leggio .delta{position:absolute;z-index:5;left:50%;top:6%;transform:translateX(-50%);font-weight:900;font-size:2.6em;opacity:0;white-space:nowrap;text-shadow:0 .08em 0 rgba(0,0,0,.45),0 0 .4em rgba(0,0,0,.4)}",
+      ".st-leggio .delta{position:absolute;z-index:5;left:50%;top:6%;transform:translateX(-50%);font-weight:900;font-size:2.6em;opacity:0;white-space:nowrap;text-shadow:0 .08em 0 rgba(0,0,0,.45)}",
       ".st-leggio .delta.on{animation:stDelta 1.7s ease-out}",
       "@keyframes stDelta{0%{opacity:0;transform:translate(-50%,20%) scale(.6)}15%{opacity:1;transform:translate(-50%,-20%) scale(1.15)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-120%)}}",
       // sovrimpressioni sopra la telecamera
@@ -24852,7 +24850,7 @@ window.SG_SIPERO = {
       ".st-rec:before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3b3b;margin-right:6px;animation:stRec 1s steps(2) infinite}",
       "@keyframes stRec{50%{opacity:.2}}",
       ".st-terzo{position:absolute;left:12px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:22;display:flex;align-items:center;gap:10px;max-width:calc(100% - 24px);padding:6px 16px 6px 6px;",
-        "border-radius:16px;border-left:7px solid var(--col,#ff3ea5);background:linear-gradient(100deg,#fff3b0,#ffca3a 55%,#f59f00);color:#241f00;box-shadow:0 10px 26px rgba(0,0,0,.5);",
+        "border-radius:16px;border-left:7px solid var(--col,#ff3ea5);background:linear-gradient(100deg,#fff3b0,#ffca3a 55%,#f59f00);color:#241f00;box-shadow:0 8px 20px rgba(0,0,0,.45);",
         "transform:translateX(-120%);transition:transform .45s cubic-bezier(.3,1.3,.5,1)}",
       ".st-terzo.on{transform:none}",
       ".st-terzo .fac{width:46px;height:46px;border-radius:50%;overflow:hidden;background:rgba(0,0,0,.15);flex:0 0 auto}",
@@ -24867,7 +24865,8 @@ window.SG_SIPERO = {
       ".st-lampo{position:absolute;inset:0;z-index:24;background:#fff;opacity:0;pointer-events:none}",
       ".st-lampo.on{animation:stLampo .45s ease-out}",
       "@keyframes stLampo{0%{opacity:.85}100%{opacity:0}}",
-      "@media (prefers-reduced-motion:reduce){.st-fascio,.st-arco,.st-torre i,.st-lucina,.st-cornice,.st-pavimento:before,.st-leggio .fronte:after{animation:none}}"
+      ".st-leggero .st-fascio,.st-leggero .st-eq i,.st-leggero .st-lucina,.st-leggero .st-lampade{animation:none}",
+      "@media (prefers-reduced-motion:reduce){.st-fascio,.st-eq i,.st-lucina,.st-lampade{animation:none}}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -24878,33 +24877,31 @@ window.SG_SIPERO = {
     assicuraStileStudio();
     var el = t.el, s = t.schermata({});
     s.classList.add("st-piena");
-    var vista = el("div", { class: "st-vista" }), mondo = el("div", { class: "st-mondo" });
+    var vista = el("div", { class: "st-vista" + (LEGGERO ? " st-leggero" : "") }), mondo = el("div", { class: "st-mondo" });
     vista.appendChild(mondo);
     vista.addEventListener("scroll", function () { vista.scrollTop = 0; vista.scrollLeft = 0; });
     var S = { t: t, s: s, vista: vista, mondo: mondo, gioc: [], io: -1, L: [], shot: null, timer: null };
-    // --- studio ---
-    function pezzo(cls, html) { var e = el("div", { class: cls, html: html || "" }); mondo.appendChild(e); return e; }
-    S.sfondo = pezzo("st-sfondo");
+    function pezzo(tag, cls, dove) { var e = el(tag, { class: cls }); (dove || mondo).appendChild(e); return e; }
+    // --- studio: il fondo fermo è un'immagine sola (canvas), sopra solo pochi pezzi che si muovono ---
+    S.tela = pezzo("canvas", "st-tela");
     S.fasci = [];
-    var coloriFasci = ["rgba(255,236,170,.55)", "rgba(255,62,165,.5)", "rgba(34,211,238,.5)", "rgba(255,236,170,.55)", "rgba(160,110,255,.5)", "rgba(255,236,170,.55)"];
-    coloriFasci.forEach(function (c, i) { var f = pezzo("st-fascio st-anim"); f.style.background = "linear-gradient(" + c + ",transparent 88%)"; f.style.animationDelay = (-i * 1.7) + "s"; f.style.animationDuration = (5 + (i % 3)) + "s"; S.fasci.push(f); });
-    S.arco = pezzo("st-arco st-anim");
-    S.torri = [0, 1].map(function () {
-      var tr = pezzo("st-torre st-anim", "<b>★ ★ ★</b>");
-      for (var k = 0; k < 8; k++) { var b = el("i"); b.style.left = (2 + k * 12.3) + "%"; b.style.animationDelay = (-k * 0.31) + "s"; b.style.animationDuration = (0.7 + (k % 3) * 0.22) + "s"; tr.appendChild(b); }
-      return tr;
+    if (!LEGGERO) ["rgba(255,236,170,.55)", "rgba(255,62,165,.5)", "rgba(34,211,238,.5)", "rgba(255,236,170,.55)"].forEach(function (c, i) {
+      var f = pezzo("div", "st-fascio st-anim"); f.style.background = "linear-gradient(" + c + ",transparent 88%)";
+      f.style.animationDelay = (-i * 1.9) + "s"; f.style.animationDuration = (5 + (i % 3)) + "s"; S.fasci.push(f);
     });
-    S.pub = [pezzo("st-pub"), pezzo("st-pub"), pezzo("st-pub")];
-    S.ringhiere = []; for (var r = 0; r < 6; r++) S.ringhiere.push(pezzo("st-ringhiera"));
-    S.lucine = []; for (var q = 0; q < 16; q++) { var lu = pezzo("st-lucina st-anim"); lu.style.animationDelay = (-Math.random() * 2.4) + "s"; lu._rx = Math.random(); lu._ry = Math.random(); lu._lato = q % 3; S.lucine.push(lu); }
-    S.flash = []; for (q = 0; q < 6; q++) { var fl = pezzo("st-flash"); fl._rx = Math.random(); fl._ry = Math.random(); fl._lato = q % 3; S.flash.push(fl); }
-    S.traliccio = pezzo("st-traliccio");
-    S.fari = []; for (q = 0; q < 6; q++) S.fari.push(pezzo("st-faro"));
-    S.cornice = pezzo("st-cornice st-anim");
-    S.schermo = pezzo("st-schermo");
+    S.eq = [0, 1].map(function () {
+      var e = pezzo("div", "st-eq st-anim");
+      for (var k = 0; k < 7; k++) { var b = el("i"); b.style.left = (4 + k * 13.4) + "%"; b.style.animationDelay = (-k * 0.31) + "s"; b.style.animationDuration = (0.7 + (k % 3) * 0.22) + "s"; if (LEGGERO) b.style.transform = "scaleY(" + (0.3 + ((k * 37) % 60) / 100) + ")"; e.appendChild(b); }
+      return e;
+    });
+    S.pubWrap = pezzo("div", "st-pubwrap");
+    S.telaPub = pezzo("canvas", "st-tela", S.pubWrap);
+    S.lucine = []; for (var q = 0; q < (LEGGERO ? 0 : 10); q++) { var lu = pezzo("div", "st-lucina st-anim", S.pubWrap); lu.style.animationDelay = (-Math.random() * 2.4) + "s"; lu._rx = Math.random(); lu._ry = Math.random(); lu._zona = q % 3; S.lucine.push(lu); }
+    S.flash = []; for (q = 0; q < 6; q++) { var fl = pezzo("div", "st-flash", S.pubWrap); fl._rx = Math.random(); fl._ry = Math.random(); fl._zona = q % 3; S.flash.push(fl); }
+    S.lampade = pezzo("canvas", "st-lampade st-anim");
+    S.schermo = pezzo("div", "st-schermo");
     S.sch = el("div", { class: "st-sch-in" }); S.schermo.appendChild(S.sch); S.schermo.appendChild(el("div", { class: "st-vetro" }));
-    S.pavimento = pezzo("st-pavimento st-anim");
-    S.fumetto = pezzo("st-fumetto");
+    S.fumetto = pezzo("div", "st-fumetto");
     S.zonaLeggii = el("div"); S.zonaLeggii.style.cssText = "position:absolute;left:0;top:0;width:0;height:0"; mondo.appendChild(S.zonaLeggii);
     // --- sovrimpressioni ---
     vista.appendChild(el("button", { class: "st-esci", text: "‹", "aria-label": "Esci", onclick: function () { if (window.confirm("Uscire dalla partita?")) { fermaTimer(S); opz.esci(); } } }));
@@ -24920,22 +24917,48 @@ window.SG_SIPERO = {
     logoSchermo(S);
     S.shot = function () { return { x: 0, y: 0, w: S.W, h: S.H }; };
     camera(S, S.shot(), 0);
-    function suResize() { if (!S.vivo()) { window.removeEventListener("resize", suResize); return; } layoutStudio(S); camera(S, S.shot(), 0); }
+    // se cambia la misura dello schermo ridisegno lo studio (una volta, dopo che si è assestato)
+    var toR = null;
+    function suResize() {
+      if (!S.vivo()) { window.removeEventListener("resize", suResize); return; }
+      clearTimeout(toR);
+      toR = setTimeout(function () { if (!S.vivo()) return; if (Math.abs(S.vista.clientWidth - S.VW) < 2 && Math.abs(S.vista.clientHeight - S.VH) < 2) return; layoutStudio(S); camera(S, S.shot(), 0); }, 200);
+    }
     window.addEventListener("resize", suResize);
     return S;
   }
 
+  // ---- avatar dei leggii come immagini già pronte (non si ridisegnano a ogni zoom della telecamera) ----
+  var cacheImg = {};
+  function immagineAvatar(g, f, cb) {
+    var svg = avatarDi(g, f); if (!svg) return;
+    var e = cacheImg[svg];
+    if (!e) {
+      e = cacheImg[svg] = { img: new Image(), ok: false, cbs: [] };
+      e.img.onload = function () { e.ok = true; var l = e.cbs; e.cbs = []; l.forEach(function (c) { c(e.img); }); };
+      e.img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.replace("<svg ", "<svg width='356' height='364' "));
+    }
+    if (e.ok) cb(e.img); else if (cb) e.cbs.push(cb);
+  }
+  function mettiAvatar(X, g, f) {
+    var v = X.versione = (X.versione || 0) + 1;
+    immagineAvatar(g, f, function (img) {
+      if (X.versione !== v) return;   // nel frattempo è cambiata faccia
+      var c = X.avc, x = c.getContext("2d"); x.clearRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+    });
+  }
   function costruisciLeggii(S) {
     var el = S.t.el; vuota(S.zonaLeggii); S.L = [];
     S.gioc.forEach(function (g, i) {
       var L = el("div", { class: "st-leggio" }); L.style.position = "absolute"; L.style.setProperty("--col", ST_COL[i % ST_COL.length]);
       L.innerHTML = "<div class='luce'></div><div class='alone'></div>" +
-        "<div class='cart'><div class='in'><div class='f'>?</div><div class='f r'></div></div></div><div class='delta'></div><div class='av'></div>" +
+        "<div class='cart'><div class='in'><div class='f'>?</div><div class='f r'></div></div></div><div class='delta'></div><div class='av'><canvas width='356' height='364'></canvas></div>" +
         "<div class='podio'><div class='piano'><span class='buzz'></span></div><div class='fronte'><div class='nome'></div><div class='punti'>0</div></div><div class='led'></div></div>";
       L.querySelector(".nome").textContent = g.nome;
       if (i === S.io) L.querySelector(".piano").appendChild(el("span", { class: "tu", text: "TU" }));
-      var X = { el: L, av: L.querySelector(".av"), cart: L.querySelector(".cart"), delta: L.querySelector(".delta"), pEl: L.querySelector(".punti"), valore: 0, faccia: null };
-      X.av.innerHTML = avatarDi(g);
+      var X = { el: L, avc: L.querySelector(".av canvas"), cart: L.querySelector(".cart"), delta: L.querySelector(".delta"), pEl: L.querySelector(".punti"), valore: 0, faccia: null };
+      mettiAvatar(X, g, null);
+      setTimeout(function () { ["esulta", "triste", "pensa"].forEach(function (f) { immagineAvatar(g, f, null); }); }, 1500 + i * 200);   // pronte per dopo (non tutte insieme all'entrata)
       S.L.push(X);
     });
   }
@@ -24953,6 +24976,132 @@ window.SG_SIPERO = {
     for (i = 0; i < B; i++) out.push({ cx: 0.04 * VW + spf * (pari ? i + 0.5 : i + 1), top: 1.27 * VH, w: wb, fila: 1 });
     return out;
   }
+
+  // ---- disegno dello studio su canvas (una volta sola) ----
+  function qualitaTela(S) { return Math.min(LEGGERO ? 1 : 2, window.devicePixelRatio || 1, 4000 / S.H); }
+  function preparaTela(c, w, h, q) {
+    c.width = Math.max(1, Math.round(w * q)); c.height = Math.max(1, Math.round(h * q));
+    c.style.width = w + "px"; c.style.height = h + "px";
+    var x = c.getContext("2d"); x.setTransform(q, 0, 0, q, 0, 0); return x;
+  }
+  function rett(x, X, Y, w, h, r) {
+    x.beginPath(); x.moveTo(X + r, Y); x.lineTo(X + w - r, Y); x.quadraticCurveTo(X + w, Y, X + w, Y + r); x.lineTo(X + w, Y + h - r);
+    x.quadraticCurveTo(X + w, Y + h, X + w - r, Y + h); x.lineTo(X + r, Y + h); x.quadraticCurveTo(X, Y + h, X, Y + h - r); x.lineTo(X, Y + r); x.quadraticCurveTo(X, Y, X + r, Y); x.closePath();
+  }
+  function alone(x, cx, cy, r, col) { var g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, col); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(cx - r, cy - r, 2 * r, 2 * r); }
+  function lampadina(x, px, py, accesa) {
+    if (accesa) { alone(x, px, py, 8, "rgba(255,190,60,.55)"); x.fillStyle = "#ffc93c"; x.beginPath(); x.arc(px, py, 3.6, 0, 7); x.fill(); x.fillStyle = "#fffbe0"; x.beginPath(); x.arc(px, py, 2.4, 0, 7); x.fill(); }
+    else { x.fillStyle = "#5e4108"; x.beginPath(); x.arc(px, py, 3.6, 0, 7); x.fill(); x.fillStyle = "#8a6716"; x.beginPath(); x.arc(px, py, 2.2, 0, 7); x.fill(); }
+  }
+  function puntiCornice(R) {   // le lampadine lungo il bordo del maxischermo, ogni 20px
+    var p = [], x0 = R.x - 8, y0 = R.y - 8, x1 = R.x + R.w + 8, y1 = R.y + R.h + 8, d;
+    for (d = x0 + 10; d < x1 - 5; d += 20) p.push([d, y0]);
+    for (d = y0 + 10; d < y1 - 5; d += 20) p.push([x1, d]);
+    for (d = x1 - 10; d > x0 + 5; d -= 20) p.push([d, y1]);
+    for (d = y1 - 10; d > y0 + 5; d -= 20) p.push([x0, d]);
+    return p;
+  }
+  function disegnaStudio(S) {
+    var VW = S.VW, VH = S.VH, W = S.W, H = S.H, R = S.R.schermo, q = qualitaTela(S), i;
+    var x = preparaTela(S.tela, W, H, q);
+    // fondo luminoso da prima serata
+    var g = x.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#3a1b8c"); g.addColorStop(0.4, "#27106a"); g.addColorStop(0.7, "#1a0b4d"); g.addColorStop(1, "#120736");
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    alone(x, W * 0.5, H * 0.24, VW * 0.9, "rgba(255,206,110,.5)");
+    alone(x, W * 0.03, H * 0.3, VW * 0.85, "rgba(255,62,165,.55)");
+    alone(x, W * 0.97, H * 0.3, VW * 0.85, "rgba(34,211,238,.5)");
+    alone(x, W * 0.5, H * 0.68, VW * 1.1, "rgba(140,90,255,.4)");
+    x.fillStyle = "rgba(255,255,255,.05)"; for (i = 0; i < W; i += 64) x.fillRect(i, 0, 2, H);
+    x.fillStyle = "rgba(255,255,255,.035)"; for (i = 0; i < H; i += 64) x.fillRect(0, i, W, 2);
+    // fari fissi dipinti (sui telefoni leggeri al posto di quelli che girano)
+    if (LEGGERO) [0.1, 0.37, 0.63, 0.9].forEach(function (p, k) {
+      x.save(); x.translate(W * p, 0.03 * VH); x.rotate((k % 2 ? 1 : -1) * 0.25);
+      var fg = x.createLinearGradient(0, 0, 0, 1.3 * VH); fg.addColorStop(0, "rgba(255,236,170,.35)"); fg.addColorStop(1, "rgba(255,236,170,0)");
+      x.fillStyle = fg; x.beginPath(); x.moveTo(-0.02 * VW, 0); x.lineTo(0.02 * VW, 0); x.lineTo(0.22 * VW, 1.3 * VH); x.lineTo(-0.22 * VW, 1.3 * VH); x.closePath(); x.fill(); x.restore();
+    });
+    // arco al neon attorno al maxischermo
+    var ax = R.x - 0.13 * VW, aw = R.w + 0.26 * VW, ay = 0.012 * VH, ah = 1.12 * VH, ry = Math.min(aw * 0.3, 0.16 * VH);
+    x.beginPath(); x.moveTo(ax, ay + ah); x.lineTo(ax, ay + ry); x.ellipse(ax + aw / 2, ay + ry, aw / 2, ry, 0, Math.PI, 2 * Math.PI); x.lineTo(ax + aw, ay + ah);
+    x.fillStyle = "rgba(10,6,40,.45)"; x.fill();
+    var ag = x.createLinearGradient(ax, ay, ax + aw, ay + ah);
+    ag.addColorStop(0, "#ff3ea5"); ag.addColorStop(0.35, "#ffd43b"); ag.addColorStop(0.65, "#22d3ee"); ag.addColorStop(1, "#a06bff");
+    x.save(); x.lineWidth = 7; x.strokeStyle = ag; x.shadowColor = "rgba(255,62,165,.9)"; x.shadowBlur = 26; x.stroke(); x.restore();
+    x.lineWidth = 2; x.strokeStyle = "rgba(255,255,255,.75)"; x.stroke();
+    // torri LED (le barre che ballano sono sopra, a parte)
+    S.torriR = [[0.06 * VW, 0.1 * VH, 0.36 * VW, 0.36 * VH], [1.58 * VW, 0.1 * VH, 0.36 * VW, 0.36 * VH]];
+    S.torriR.forEach(function (p) {
+      x.save(); rett(x, p[0], p[1], p[2], p[3], 14); x.fillStyle = "#0a0624"; x.shadowColor = "rgba(255,62,165,.65)"; x.shadowBlur = 26; x.fill(); x.restore();
+      rett(x, p[0], p[1], p[2], p[3], 14); x.lineWidth = 3; x.strokeStyle = "#2b2366"; x.stroke();
+      x.save(); x.fillStyle = "#ffe066"; x.font = "900 20px system-ui,sans-serif"; x.textAlign = "center"; x.shadowColor = "#ff9d2e"; x.shadowBlur = 12;
+      x.fillText("★  ★  ★", p[0] + p[2] / 2, p[1] + 30); x.restore();
+    });
+    // traliccio con i fari in alto
+    var th = 0.035 * VH, tg = x.createLinearGradient(0, 0, 0, th); tg.addColorStop(0, "#3b3560"); tg.addColorStop(1, "#1d1838");
+    x.fillStyle = tg; x.fillRect(0, 0, W, th);
+    x.strokeStyle = "rgba(255,255,255,.18)"; x.lineWidth = 2; x.beginPath();
+    for (i = -th; i < W + th; i += 12) { x.moveTo(i, th * 0.18); x.lineTo(i + th * 0.5, th * 0.82); x.moveTo(i + th * 0.5, th * 0.18); x.lineTo(i, th * 0.82); }
+    x.stroke();
+    for (i = 0; i < 6; i++) {
+      var fx = W * (0.07 + i * 0.172), fy = 0.02 * VH + 12;
+      alone(x, fx, fy, 44, "rgba(255,220,130,.6)");
+      var lg = x.createRadialGradient(fx - 2, fy - 3, 1, fx, fy, 12); lg.addColorStop(0, "#fff"); lg.addColorStop(0.35, "#ffe9a8"); lg.addColorStop(0.7, "#ffb300"); lg.addColorStop(1, "#5a3a00");
+      x.fillStyle = lg; x.beginPath(); x.arc(fx, fy, 12, 0, 7); x.fill();
+    }
+    // pavimento lucido con la striscia di luci
+    var py = 1.48 * VH, pg = x.createLinearGradient(0, py, 0, H); pg.addColorStop(0, "#2c1c78"); pg.addColorStop(0.5, "#170d4a"); pg.addColorStop(1, "#0c0628");
+    x.fillStyle = pg; x.fillRect(0, py, W, H - py);
+    x.save(); x.beginPath(); x.rect(0, py, W, H - py); x.clip(); alone(x, W / 2, py, VW * 0.9, "rgba(255,206,110,.28)"); x.restore();
+    x.fillStyle = "rgba(255,255,255,.07)"; for (i = 0; i < W; i += 70) x.fillRect(i, py, 2, H - py);
+    var sg = x.createLinearGradient(0, 0, W, 0);
+    ["#ff3ea5", "#ffd43b", "#22d3ee", "#a06bff", "#ff3ea5"].forEach(function (c, k) { sg.addColorStop(k / 4, c); });
+    x.save(); x.fillStyle = sg; x.shadowColor = "#ffd43b"; x.shadowBlur = 20; x.fillRect(0, py, W, 6); x.restore();
+    // maxischermo: alone azzurro dietro, cornice dorata con le lampadine
+    x.save(); rett(x, R.x, R.y, R.w, R.h, 14); x.fillStyle = "#0b1030"; x.shadowColor = "rgba(120,170,255,.6)"; x.shadowBlur = 40; x.fill(); x.restore();
+    x.save(); rett(x, R.x - 16, R.y - 16, R.w + 32, R.h + 32, 26); x.fillStyle = "#2a1d00"; x.shadowColor = "rgba(255,190,60,.6)"; x.shadowBlur = 34; x.fill(); x.restore();
+    rett(x, R.x - 16, R.y - 16, R.w + 32, R.h + 32, 26); x.lineWidth = 3; x.strokeStyle = "#3a2a00"; x.stroke();
+    var pc = puntiCornice(R);
+    pc.forEach(function (p, k) { lampadina(x, p[0], p[1], k % 2 === 1); });
+    // seconda serie di lampadine (quelle che si alternano): canvas sopra che si accende e spegne
+    var lx = R.x - 16, ly = R.y - 16, y2 = preparaTela(S.lampade, R.w + 32, R.h + 32, q);
+    S.lampade.style.left = lx + "px"; S.lampade.style.top = ly + "px";
+    pc.forEach(function (p, k) { lampadina(y2, p[0] - lx, p[1] - ly, k % 2 === 0); });
+  }
+  // il pubblico: silhouette disegnate una volta sola (poi il canvas intero "salta" quando applaude)
+  function disegnaPubblico(S) {
+    var VW = S.VW, VH = S.VH, W = S.W, top = 0.52 * VH, h = 1.48 * VH - top, q = qualitaTela(S);
+    S.pubWrap.style.top = top + "px"; S.pubWrap.style.width = W + "px"; S.pubWrap.style.height = h + "px";
+    var x = preparaTela(S.telaPub, W, h, q);
+    var seme = 7; function rnd() { seme = (seme * 16807) % 2147483647; return seme / 2147483647; }
+    var fondo = (S.R.schermo.y + S.R.schermo.h + 18) - top;   // la fascia sotto il maxischermo parte sotto la cornice (così le lampadine restano sopra)
+    S.zonePub = [[0.03 * VW, 0, 0.42 * VW, h], [1.55 * VW, 0, 0.42 * VW, h], [0.03 * VW, fondo, 1.94 * VW, h - fondo]];
+    S.zonePub.forEach(function (z) {
+      x.save(); rett(x, z[0], z[1], z[2], z[3] + 30, 18); x.clip();
+      x.fillStyle = "#140c3c"; x.fillRect(z[0], z[1], z[2], z[3]);
+      [[26, 28, 0, 0, ["#3a2d78", "#5a489e", "#5b4aa6", "#8f7ad8"]], [31, 33, 9, 15, ["#2c2263", "#43357f", "#46388a", "#6f5cb8"]]].forEach(function (G) {
+        for (var yy = z[1] + G[3] - 30; yy < z[1] + z[3]; yy += G[1]) {
+          for (var xx = z[0] + G[2] - 26; xx < z[0] + z[2]; xx += G[0]) {
+            var j = (rnd() - 0.5) * 4, cx = xx + 13 + j;
+            x.fillStyle = G[4][0]; x.beginPath(); x.ellipse(cx, yy + 25, 12, 9, 0, 0, 7); x.fill();
+            x.fillStyle = G[4][1]; x.beginPath(); x.ellipse(cx, yy + 22, 8, 4.5, 0, 0, 7); x.fill();
+            x.fillStyle = G[4][2]; x.beginPath(); x.arc(cx, yy + 10, 7, 0, 7); x.fill();
+            x.fillStyle = G[4][3]; x.beginPath(); x.arc(cx - 1, yy + 9, 4, 0, 7); x.fill();
+          }
+        }
+      });
+      var sg = x.createLinearGradient(0, z[1], 0, z[1] + z[3]); sg.addColorStop(0, "rgba(10,5,35,.7)"); sg.addColorStop(0.55, "rgba(10,5,35,0)");
+      x.fillStyle = sg; x.fillRect(z[0], z[1], z[2], z[3]);
+      var hg = x.createLinearGradient(z[0], 0, z[0] + z[2], 0);
+      hg.addColorStop(0, "rgba(255,62,165,.2)"); hg.addColorStop(0.3, "rgba(255,62,165,0)"); hg.addColorStop(0.7, "rgba(34,211,238,0)"); hg.addColorStop(1, "rgba(34,211,238,.2)");
+      x.fillStyle = hg; x.fillRect(z[0], z[1], z[2], z[3]);
+      x.restore();
+    });
+    for (var i = 0; i < 6; i++) {   // ringhiere dorate delle gradinate
+      var lato = i % 2, fila = Math.floor(i / 2), ry = (0.72 + fila * 0.26) * VH - top, rx = lato ? 1.55 * VW : 0.03 * VW;
+      var rg = x.createLinearGradient(rx, 0, rx + 0.42 * VW, 0); rg.addColorStop(0, "rgba(255,212,59,0)"); rg.addColorStop(0.5, "#ffd43b"); rg.addColorStop(1, "rgba(255,212,59,0)");
+      x.save(); x.fillStyle = rg; x.shadowColor = "rgba(255,212,59,.6)"; x.shadowBlur = 10; x.fillRect(rx, ry, 0.42 * VW, 5); x.restore();
+    }
+  }
   function layoutStudio(S) {
     var VW = S.vista.clientWidth || 360, VH = S.vista.clientHeight || 640, W = 2 * VW, H = 2 * VH;
     S.VW = VW; S.VH = VH; S.W = W; S.H = H;
@@ -24960,18 +25109,13 @@ window.SG_SIPERO = {
     S.mondo.style.width = W + "px"; S.mondo.style.height = H + "px";
     S.R = { schermo: { x: 0.5 * VW, y: 0.06 * VH, w: VW, h: VH } };
     var R = S.R.schermo;
+    disegnaStudio(S);
+    disegnaPubblico(S);
     pos(S.schermo, R.x, R.y, R.w, R.h);
-    pos(S.cornice, R.x - 16, R.y - 16, R.w + 32, R.h + 32);
-    pos(S.arco, R.x - 0.13 * VW, 0.01 * VH, R.w + 0.26 * VW, 1.13 * VH);
-    pos(S.traliccio, 0, 0, W, 0.035 * VH);
-    S.fari.forEach(function (f, i) { var x = W * (0.07 + i * 0.172); pos(f, x - 12, 0.02 * VH, 24, 24); var fa = S.fasci[i]; if (fa) pos(fa, x - 0.3 * VW, 0.03 * VH, 0.6 * VW, 1.55 * VH); });
-    pos(S.torri[0], 0.06 * VW, 0.1 * VH, 0.36 * VW, 0.36 * VH); pos(S.torri[1], 1.58 * VW, 0.1 * VH, 0.36 * VW, 0.36 * VH);
-    var pubs = [[0.03 * VW, 0.52 * VH, 0.42 * VW, 0.98 * VH], [1.55 * VW, 0.52 * VH, 0.42 * VW, 0.98 * VH], [0.03 * VW, 0.98 * VH, 1.94 * VW, 0.52 * VH]];
-    S.pub.forEach(function (p, i) { pos(p, pubs[i][0], pubs[i][1], pubs[i][2], pubs[i][3]); });
-    S.ringhiere.forEach(function (r, i) { var lato = i % 2, fila = Math.floor(i / 2); pos(r, lato ? 1.55 * VW : 0.03 * VW, (0.72 + fila * 0.26) * VH, 0.42 * VW, 5); });
-    function inPub(e) { var p = pubs[e._lato]; pos(e, p[0] + e._rx * (p[2] - 20), p[1] + 20 + e._ry * (p[3] - 60)); }
+    S.fasci.forEach(function (f, i) { var fx = W * (0.1 + i * 0.267); pos(f, fx - 0.22 * VW, 0.03 * VH, 0.44 * VW, 1.35 * VH); });
+    S.eq.forEach(function (e, i) { var p = S.torriR[i]; pos(e, p[0], p[1] + 44, p[2], p[3] - 44); });
+    function inPub(e) { var z = S.zonePub[e._zona]; pos(e, z[0] + 12 + e._rx * (z[2] - 24), z[1] + 24 + e._ry * (z[3] - 60)); }
     S.lucine.forEach(inPub); S.flash.forEach(inPub);
-    pos(S.pavimento, 0, 1.48 * VH, W, H - 1.48 * VH);
     pos(S.fumetto, W / 2, 1.06 * VH);
     // leggii
     S.posti = postiLeggii(S);
@@ -25041,7 +25185,7 @@ window.SG_SIPERO = {
   function lampo(S) { var l = S.lampoEl; l.classList.remove("on"); void l.offsetWidth; l.classList.add("on"); }
   function accendi(S, i, on) { var X = S.L[i]; if (X) X.el.classList.toggle("acceso", !!on); }
   function accendiSolo(S, i) { S.L.forEach(function (X, k) { X.el.classList.toggle("acceso", k === i); }); }
-  function faccia(S, i, f) { var X = S.L[i]; if (!X || X.faccia === (f || null)) return; X.faccia = f || null; X.av.innerHTML = avatarDi(S.gioc[i], f); }
+  function faccia(S, i, f) { var X = S.L[i]; if (!X || X.faccia === (f || null)) return; X.faccia = f || null; mettiAvatar(X, S.gioc[i], f); }
   function tutteNormali(S) { S.L.forEach(function (X, i) { faccia(S, i, null); }); }
   function puntiLeggio(S, i, valore, delta) {
     var X = S.L[i]; if (!X) return;
@@ -25070,9 +25214,9 @@ window.SG_SIPERO = {
     S.fumetto.textContent = l[Math.floor(Math.random() * l.length)];
     S.fumetto.classList.remove("on"); void S.fumetto.offsetWidth; S.fumetto.classList.add("on");
     if (tipo === "applauso") {
-      S.pub.forEach(function (p) { p.classList.add("salta"); });
+      S.pubWrap.classList.add("salta");
       S.flash.forEach(function (f, k) { setTimeout(function () { f.classList.remove("on"); void f.offsetWidth; f.classList.add("on"); }, 100 + Math.random() * 1300); });
-      setTimeout(function () { S.pub.forEach(function (p) { p.classList.remove("salta"); }); }, 1900);
+      setTimeout(function () { S.pubWrap.classList.remove("salta"); }, 1900);
       FX.applauso();
     } else FX.ohh();
   }

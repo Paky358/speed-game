@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 128,
+    data: "26 settembre 2026",
+    titolo: "Game show più fluido ⚡",
+    descrizione: [
+      "Lo studio della Linea del tempo non lagga più: la scenografia (arco, torri, pubblico, pavimento, cornice) ora è un'immagine disegnata una volta sola che la telecamera sposta senza fatica.",
+      "Restano in movimento fari, barre delle torri, lucine del pubblico e lampadine, ma fatti in modo leggero. Anche gli avatar dei leggii sono immagini già pronte.",
+      "Sui telefoni meno potenti lo studio si alleggerisce da solo (fari fermi e immagini più leggere)."
+    ]
+  },
+  {
     v: 127,
     data: "26 settembre 2026",
     titolo: "La linea del tempo diventa un GAME SHOW 📺",
