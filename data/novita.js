@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 131,
+    data: "26 settembre 2026",
+    titolo: "Nomi, Cose e Città nello studio ✍️📋",
+    descrizione: [
+      "Anche Nomi, Cose e Città ora è un game show, con sigla, pubblico e i vostri avatar ai leggii.",
+      "La lettera esce sul maxischermo come una slot machine, con il rullo di tamburi e l'applauso.",
+      "A ogni turno la telecamera va su chi scrive (con il passaggio del telefono) e poi entra nel suo FOGLIO: un foglio a righe con la lettera cerchiata in rosso, si scrive in corsivo e il tempo è una riga che si accorcia.",
+      "Quando tutti hanno scritto si va al TABELLONE: categoria per categoria, le parole di tutti una sotto l'altra con il voto di ognuno (c'è anche \"👍 tutti\" per fare prima). Accanto a ogni parola vedi subito se vale 10, 5 (uguale a un'altra approvata) o 0.",
+      "Alla fine del giro i punti scorrono sui leggii tra gli applausi e la classifica compare sul maxischermo."
+    ]
+  },
+  {
     v: 130,
     data: "26 settembre 2026",
     titolo: "La Patata Bollente nello studio 💣📺",

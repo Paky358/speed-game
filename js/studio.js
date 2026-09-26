@@ -346,7 +346,9 @@
     function suResize() {
       if (!S.vivo()) { window.removeEventListener("resize", suResize); return; }
       clearTimeout(toR);
-      toR = setTimeout(function () { if (!S.vivo()) return; if (Math.abs(S.vista.clientWidth - S.VW) < 2 && Math.abs(S.vista.clientHeight - S.VH) < 2) return; layoutStudio(S); camera(S, S.shot(), 0); }, 200);
+      toR = setTimeout(function () { if (!S.vivo()) return;
+        var ae = document.activeElement; if (ae && /^(INPUT|TEXTAREA)$/.test(ae.tagName)) return;   // è la tastiera che si apre: non ridisegno lo studio
+        if (Math.abs(S.vista.clientWidth - S.VW) < 2 && Math.abs(S.vista.clientHeight - S.VH) < 2) return; layoutStudio(S); camera(S, S.shot(), 0); }, 200);
     }
     window.addEventListener("resize", suResize);
     return S;
