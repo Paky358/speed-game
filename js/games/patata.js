@@ -23,6 +23,7 @@
   // Pause dello spettacolo (il tempo della bomba NON scende): rivelazione della categoria con la bomba
   // che vola sul primo, bomba che passa al nuovo dopo un'esplosione, e l'esplosione stessa.
   var ATTESA_INIZIO = 4600, ATTESA_ROUND = 1800, DURATA_BOOM = 3400;
+  var ATTESA_SORPRESA = 2600;   // in più quando la categoria è a sorpresa: gira la ruota delle categorie
 
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
   function pescaCategorie(n) { var pool = (window.SG_PATATA || []).slice(); return mischia(pool).slice(0, n); }
@@ -36,7 +37,7 @@
     giocatoriMax: 10,
     difficolta: 2,
     regole: [
-      "Si vota fra <b>3 categorie</b>: si gioca la più votata.",
+      "Si vota fra <b>3 categorie</b> o <b>🎲 a sorpresa</b> (una a caso, la sceglie la ruota): si gioca la più votata.",
       "Ognuno ha un suo tempo (parte da <b>15 secondi</b>) che scende <b>solo mentre tiene la bomba</b>. Dici a voce una parola della categoria e <b>passi la bomba</b> toccando un altro giocatore nel cerchio.",
       "Non puoi ripassare alla <b>stessa persona</b> finché non hai fatto il giro. Se chi te l'ha data <b>non ha detto la parola</b>, usa <b>“Rimanda indietro”</b>: riprende lui, col tempo che aveva.",
       "A chi <b>finisce il tempo</b> la bomba esplode: eliminato. Ogni round il tempo di partenza cala. Vince l'<b>ultimo rimasto</b>."
@@ -108,12 +109,18 @@
     }
     var loop = setInterval(aggiorna, 120);
 
-    function avviaGioco(cat) {
-      st.categoria = cat; st.round = 0; st.boom = null; st.vincitore = null; st.passaggi = 0; st.remPrima = null; st.eliminati = [];
+    // "a sorpresa": una categoria a caso fra tutte, ma non una delle tre in votazione
+    function sorpresa() {
+      var tutte = mischia(extraCats.concat(deck)).filter(function (c) { return st.cats.indexOf(c) < 0; });
+      return tutte.length ? tutte[0] : st.cats[Math.floor(Math.random() * st.cats.length)];
+    }
+    function scegli(idx) { if (idx >= st.cats.length) avviaGioco(sorpresa(), true); else avviaGioco(st.cats[idx], false); }   // l'ultima voce è "a sorpresa"
+    function avviaGioco(cat, aCaso) {
+      st.sorpresa = !!aCaso; st.categoria = cat; st.round = 0; st.boom = null; st.vincitore = null; st.passaggi = 0; st.remPrima = null; st.eliminati = [];
       st.players.forEach(function (p) { p.eliminato = false; });
       var vv = vivi(); st.holder = vv[Math.floor(Math.random() * vv.length)].id;
       st.prev = null; st.ultimo = null; st.soloDare = null; st.giro = [st.holder]; st.cap = capMs(0); st.remaining = st.cap;
-      st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_INIZIO; onCambio();
+      st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_INIZIO + (st.sorpresa ? ATTESA_SORPRESA : 0); onCambio();
     }
     function esplode() {
       var h = holderObj(); if (!h) return;
@@ -139,16 +146,16 @@
 
     return {
       st: st, vivi: vivi,
-      vota: function (id, idx) { var p = pById(id); if (p && st.fase === "voto") { p.voto = idx; onCambio(); } },
+      vota: function (id, idx) { var p = pById(id); if (p && st.fase === "voto" && idx >= 0 && idx <= st.cats.length) { p.voto = idx; onCambio(); } },
       via: function () {
         if (st.fase !== "voto") return;
-        var conta = st.cats.map(function () { return 0; });
+        var conta = st.cats.map(function () { return 0; }); conta.push(0);   // + "a sorpresa"
         st.players.forEach(function (p) { if (p.voto != null && conta[p.voto] != null) conta[p.voto]++; });
         var max = Math.max.apply(null, conta), top = [];
         conta.forEach(function (c, i) { if (c === max) top.push(i); });
-        avviaGioco(st.cats[top[Math.floor(Math.random() * top.length)]]);
+        scegli(top[Math.floor(Math.random() * top.length)]);
       },
-      viaCon: function (idx) { if (st.fase === "voto") avviaGioco(st.cats[idx]); },
+      viaCon: function (idx) { if (st.fase === "voto") scegli(idx); },
       passa: function (fromId, targetId) {
         aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder || Date.now() < st.attesa) return;
         var tgt = pById(targetId); if (!tgt || tgt.eliminato || targetId === st.holder) return;
@@ -188,7 +195,7 @@
         }
         onCambio();
       },
-      nuova: function () { st.players.forEach(function (p) { p.eliminato = false; p.voto = null; }); st.eliminati = []; st.cats = pesca(3); st.fase = "voto"; st.categoria = null; st.boom = null; st.vincitore = null; onCambio(); },
+      nuova: function () { st.players.forEach(function (p) { p.eliminato = false; p.voto = null; }); st.eliminati = []; st.cats = pesca(3); st.fase = "voto"; st.categoria = null; st.sorpresa = false; st.boom = null; st.vincitore = null; onCambio(); },
       remaining: function () { return Math.max(0, st.remaining); },
       distruggi: function () { clearInterval(loop); },
       vm: function () {
@@ -199,7 +206,7 @@
           classifica = ord.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null }; });
         }
         return {
-          fase: st.fase, categoria: st.categoria, cats: st.cats, round: st.round,
+          fase: st.fase, categoria: st.categoria, sorpresa: !!st.sorpresa, cats: st.cats, round: st.round,
           players: st.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null, eliminato: p.eliminato, voto: p.voto }; }),
           holder: st.holder, prev: st.prev, ultimo: st.ultimo, giro: st.giro.slice(),
           soloDare: (function () { if (st.soloDare == null) return null; var s = pById(st.soloDare); return (s && !s.eliminato) ? st.soloDare : null; })(),
@@ -268,6 +275,11 @@
       ".pt-catbtn{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;padding:18px;border-radius:18px;border:3px solid transparent;cursor:pointer;color:#fff;font:inherit;font-size:21px;font-weight:900;",
         "background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.05));box-shadow:0 6px 16px rgba(0,0,0,.3)}",
       ".pt-catbtn small{font-size:13px;font-weight:700;opacity:.8}",
+      ".pt-catbtn.sorpresa{background:linear-gradient(135deg,rgba(160,107,255,.42),rgba(255,62,165,.2))}",
+      ".pt-rullo{width:100%;max-width:380px;border-radius:20px;background:linear-gradient(#2a1f6e,#140c3e);box-shadow:0 0 0 3px #ffd43b,0 10px 26px rgba(0,0,0,.45)}",
+      ".pt-rullo .st-cella{padding:0 14px;font-size:34px;font-weight:900;line-height:1.1;color:#ffe066;text-shadow:0 3px 0 rgba(0,0,0,.35)}",
+      ".pt-rullo.fermo{animation:ptClac .5s cubic-bezier(.3,1.6,.5,1)}",
+      "@keyframes ptClac{0%{transform:none}35%{transform:scale(1.08)}100%{transform:none}}",
       ".pt-catbtn.scelta{border-color:#ffd43b;background:linear-gradient(135deg,rgba(255,212,59,.32),rgba(255,212,59,.08))}",
       ".pt-rivela{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}",
       ".pt-catgrande{font-size:40px;font-weight:900;color:#ffe066;text-shadow:0 4px 0 rgba(0,0,0,.35);padding:0 10px;animation:ptEsce .5s cubic-bezier(.3,1.5,.5,1) both}",
@@ -396,10 +408,12 @@
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
-      } }));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
@@ -534,6 +548,11 @@
           el("span", { text: cat }), cb.locale ? null : el("small", { text: voti === 1 ? "1 voto" : voti + " voti" })
         ]));
       });
+      // la quarta scelta: una categoria a caso, la sceglie la ruota
+      var iS = vm.cats.length, vS = vm.players.filter(function (p) { return p.voto === iS; }).length, sS = mio && mio.voto === iS;
+      box.appendChild(el("button", { class: "pt-catbtn sorpresa" + (sS ? " scelta" : ""), onclick: function () { swishP(); if (cb.locale) cb.onScegliCat(iS); else cb.onVota(iS); } }, [
+        el("span", { text: "🎲 A sorpresa" }), el("small", { text: (cb.locale ? "" : (vS === 1 ? "1 voto · " : vS + " voti · ")) + "una categoria a caso" })
+      ]));
       S.sch.appendChild(box);
     }
     if (R.inq !== "schermo") { R.inq = "schermo"; ST.suSchermo(S, 900); }
@@ -547,13 +566,25 @@
     ST.viaBarra(S); ST.tocca(S, []); nascondiBomba(R);
     if (R.inq !== "schermo") { R.inq = "schermo"; await ST.suSchermo(S, 600); }
     ST.fermaTimer(S); ST.vuota(S.sch);
-    var riv = el("div", { class: "pt-rivela" }, [ el("div", { class: "pt-titolo", text: "La categoria è…" }) ]);
+    var riv = el("div", { class: "pt-rivela" }, [ el("div", { class: "pt-titolo", text: vm.sorpresa ? "🎲 Categoria a sorpresa…" : "La categoria è…" }) ]);
     S.sch.appendChild(riv);
-    ST.FX.rullo(1.1);
-    await ST.dorme(1250);
-    riv.appendChild(el("div", { class: "pt-catgrande", text: vm.categoria || "" }));
-    ST.FX.applauso();
-    await ST.dorme(1000);
+    if (vm.sorpresa) {
+      // la ruota delle categorie: parte veloce e rallenta piano piano fino a fermarsi
+      var tutte = (window.SG_PATATA || []).slice(); if (tutte.indexOf(vm.categoria) < 0) tutte.push(vm.categoria);
+      var ruota = ST.rullo(S, { cls: "pt-rullo", alt: 120, voci: tutte, ultima: vm.categoria || "", durata: 3400, scatto: function (k) { tickP(k % 2 ? 620 : 780); } });
+      riv.appendChild(ruota.el);
+      ST.FX.rullo(3.2);
+      await ruota.via();
+      ruota.el.classList.add("fermo");
+      ST.FX.applauso();
+      await ST.dorme(1300);
+    } else {
+      ST.FX.rullo(1.1);
+      await ST.dorme(1250);
+      riv.appendChild(el("div", { class: "pt-catgrande", text: vm.categoria || "" }));
+      ST.FX.applauso();
+      await ST.dorme(1000);
+    }
     schermoPatata(R);
     R.inq = "largo"; await ST.largo(S, 800);
     await arrivaBomba(R, true);

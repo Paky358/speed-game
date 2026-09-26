@@ -538,11 +538,13 @@
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
         S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
-      } }));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
       S.rete = SGNet.entra(codice, {

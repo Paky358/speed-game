@@ -44,7 +44,7 @@
     ".tl-reaz{width:64px;height:64px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.1);flex:0 0 auto;animation:tlPop .45s ease 1.15s both}",
     // tempo
     ".tl-timer{flex:0 0 auto;height:6px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin:2px 0 10px;}",
-    ".tl-timer-fill{height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,var(--verde),var(--accento));box-shadow:0 0 10px rgba(255,202,58,.6)}",
+    ".tl-timer-fill{height:100%;width:100%;border-radius:99px;transform-origin:0 50%;will-change:transform;background:linear-gradient(90deg,var(--verde),var(--accento));box-shadow:0 0 10px rgba(255,202,58,.6)}",
     ".tl-timer.poco .tl-timer-fill{background:linear-gradient(90deg,#ff8a3a,var(--rosso));box-shadow:0 0 10px rgba(255,93,108,.7)}",
     // la carta da piazzare (colore della categoria)
     ".tl-mano{flex:0 0 auto;position:relative;overflow:hidden;border-radius:20px;padding:12px 16px 14px;margin-bottom:10px;color:#fff;",
@@ -96,6 +96,10 @@
       "background:linear-gradient(145deg,var(--c1),var(--c2));box-shadow:0 14px 34px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.35);overflow:hidden}",
     ".tl-flip-f .q{font-size:5rem;font-weight:900;opacity:.9}",
     ".tl-flip-f.retro{transform:rotateY(180deg)}",
+    ".tl-flip.fatto{perspective:none}",
+    ".tl-flip.fatto .tl-flip-in{animation:none;transform:none;transform-style:flat}",
+    ".tl-flip.fatto .tl-flip-f{display:none}",
+    ".tl-flip.fatto .tl-flip-f.retro{display:flex;transform:none}",
     ".tl-flip.ok .retro{box-shadow:0 0 0 4px var(--verde),0 0 40px rgba(55,212,126,.55),0 14px 34px rgba(0,0,0,.45)}",
     ".tl-flip.ko .retro{background:linear-gradient(145deg,#5a5f78,#2b2f45);box-shadow:0 0 0 4px var(--rosso),0 0 40px rgba(255,93,108,.45)}",
     ".tl-flip.ko .tl-flip-in{animation:tlGira 1.1s cubic-bezier(.3,1.3,.5,1) .25s both,tlScuoti .5s ease 1.35s}",
@@ -328,13 +332,15 @@
     var fill = el("div", { class: "tl-timer-fill" });
     wrap.appendChild(fill);
     var frac = Math.max(0, Math.min(1, rimastiMs / totaliMs));
-    fill.style.width = (frac * 100) + "%";
-    requestAnimationFrame(function () { fill.style.transition = "width " + rimastiMs + "ms linear"; fill.style.width = "0%"; });
+    // la barra si accorcia con una scala: la muove la scheda grafica, niente ridisegni a ogni fotogramma (neanche mentre la telecamera si muove)
+    fill.style.transform = "scaleX(" + frac.toFixed(4) + ")";
+    var anim = null;
+    try { if (fill.animate && rimastiMs > 0) anim = fill.animate([{ transform: "scaleX(" + frac.toFixed(4) + ")" }, { transform: "scaleX(0)" }], { duration: rimastiMs, easing: "linear", fill: "forwards" }); } catch (e) {}
     // gli ultimi 8 secondi la barra diventa rossa
     var toPoco = rimastiMs > 8000 ? setTimeout(function () { wrap.classList.add("poco"); }, rimastiMs - 8000) : null;
     if (onScaduto && rimastiMs > 0) wrap._to = setTimeout(onScaduto, rimastiMs);
     else if (onScaduto) onScaduto();
-    wrap._stop = function () { if (wrap._to) clearTimeout(wrap._to); if (toPoco) clearTimeout(toPoco); };
+    wrap._stop = function () { if (wrap._to) clearTimeout(wrap._to); if (toPoco) clearTimeout(toPoco); if (anim) try { anim.pause(); } catch (e) {} };
     return wrap;
   }
   // Il risultato: la carta si gira e svela l'anno (o resta un mistero), poi punti e voti
@@ -461,12 +467,13 @@
     viaBarra(S); fermaTimer(S);
     await suSchermo(S, 700);
     vuota(S.sch);
-    S.sch.appendChild(el("div", { class: "st-raggi" + (ok ? "" : " ko") }));
+    S.sch.appendChild(ST.raggi(S, !ok));
     S.sch.appendChild(nodoEsito(el, { giusto: ok, anno: es.anno, titolo: es.titolo, fatto: es.fatto, cat: es.cat, nome: es.nome, scaduto: es.scaduto, finito: es.finito }, null));
     FX.rullo(1.2);
     setTimeout(function () { ok ? FX.giusto() : FX.sbagliato(); }, 1300);
     await dorme(2300);
     if (!S.vivo()) return;
+    var fl = S.sch.querySelector(".tl-flip"); if (fl) fl.classList.add("fatto");   // carta girata: da qui in poi è piatta (niente 3D mentre la telecamera si muove)
     // la reazione di chi ha giocato, col pubblico
     lampo(S); accendiSolo(S, R.gi);
     await suLeggio(S, R.gi, 650);
@@ -615,6 +622,7 @@
     var carta = stato.carta = stato.mazzo.pop();
     stato.giocatori.forEach(function (x) { delete x._voto; });
     // 1) stacco su chi gioca (e il telefono passa a lui)
+    ST.logoSchermo(S);   // fra un turno e l'altro sul maxischermo torna il logo
     await stacco(S, gi, uno ? "Dove va questa carta?" : "Passa il telefono a " + g.nome);
     if (!uno) await aspettaTasto(S, "📱 Sono " + g.nome + ", tocca a me ▶");
     if (!S.vivo()) return;
@@ -826,10 +834,12 @@
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         ctx(); S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
-      } }));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
@@ -924,6 +934,7 @@
         if (vm.fase === "turno") {
           ultimaFase = "turno";
           if (mioTurno) FX.turno();
+          ST.logoSchermo(S);
           await stacco(S, gi, mioTurno ? "Tocca a te!" : "Sta per scegliere…");
           if (S.vivo()) await suSchermo(S, 900);
           return true;

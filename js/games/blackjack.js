@@ -355,6 +355,9 @@
 (function () {
   "use strict";
   var BJ = window.__BJ;
+  // l'ultima puntata di ognuno: la mano dopo riparte da lì (non da 100)
+  var ultimePuntate = {};
+  function chiavePuntata(g) { return (g.id || "") + "|" + (g.nome || ""); }
 
   var CSS = [
     ".bj-wrap{position:relative;display:flex;flex-direction:column;gap:8px;min-height:78vh}",
@@ -1028,7 +1031,7 @@
       var g = vm.giocatori[vm.turno];
       if (!mio) { zHero.appendChild(el("div", { class: "bj-hfiches", text: "sta puntando…" })); return; }
       var minP = vm.puntataMin || 10, maxP = g.fiches;
-      if (puntSel == null) puntSel = Math.min(100, maxP);
+      if (puntSel == null) puntSel = Math.min(ultimePuntate[chiavePuntata(g)] || 100, maxP);   // di base la stessa puntata della mano prima
       puntSel = Math.max(minP, Math.min(puntSel, maxP));
       var val = el("div", { class: "bj-punta-val", text: puntSel + " 🪙" });
       zHero.appendChild(val);
@@ -1045,9 +1048,9 @@
       });
       zHero.appendChild(riga);
       var az = el("div", { class: "bj-azioni" });
-      bPunta = el("button", { class: "bj-btn bj-b-carta", text: "Punta " + puntSel + " ▶", onclick: function () { var v = puntSel; puntSel = null; suonoChip(); drv.onPunta(v); } });
+      bPunta = el("button", { class: "bj-btn bj-b-carta", text: "Punta " + puntSel + " ▶", onclick: function () { var v = puntSel; puntSel = null; ultimePuntate[chiavePuntata(g)] = v; suonoChip(); drv.onPunta(v); } });
       az.appendChild(bPunta);
-      az.appendChild(el("button", { class: "bj-btn bj-b-stai", text: "Tutto (" + maxP + ")", onclick: function () { puntSel = null; suonoChip(); drv.onPunta(maxP); } }));
+      az.appendChild(el("button", { class: "bj-btn bj-b-stai", text: "Tutto (" + maxP + ")", onclick: function () { puntSel = null; ultimePuntate[chiavePuntata(g)] = maxP; suonoChip(); drv.onPunta(maxP); } }));
       zHero.appendChild(az);
     }
     function heroAssic(mio) {
@@ -1253,11 +1256,13 @@
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       var msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
         S.nome = (input.value || "Amico").trim() || "Amico"; msg.textContent = "Collegamento in corso…"; collega();
-      } }));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function assicuraTavolo() {
       if (S.tav) return;

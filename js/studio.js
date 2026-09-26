@@ -26,38 +26,238 @@
       });
     } catch (e) {}
   }
-  var FX = {
-    // applauso del pubblico: tanti battiti di mani (rumore filtrato) sparsi in un secondo e mezzo
-    applauso: function () {
-      var c = ctx(); if (!c) return;
-      try {
-        var buf = rumore(c, 0.05);
-        for (var i = 0; i < 48; i++) {
-          var t0 = c.currentTime + Math.random() * 1.6, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
-          s.buffer = buf; f.type = "bandpass"; f.frequency.value = 900 + Math.random() * 1700; f.Q.value = 1.3;
-          g.gain.setValueAtTime((0.05 + Math.random() * 0.08) * (1 - (t0 - c.currentTime) / 2.2), t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05);
-          s.connect(f); f.connect(g); g.connect(c.destination); s.start(t0); s.stop(t0 + 0.06);
-        }
-      } catch (e) {}
-    },
-    // "ohhh" deluso del pubblico: due voci che scendono
-    ohh: function () {
-      var c = ctx(); if (!c) return;
-      try {
-        [0, 7].forEach(function (d) {
-          var t0 = c.currentTime, o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
-          o.type = "sawtooth"; o.frequency.setValueAtTime(250 + d, t0); o.frequency.exponentialRampToValueAtTime(170 + d, t0 + 0.9);
-          f.type = "lowpass"; f.frequency.value = 650;
-          g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.07, t0 + 0.15); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1);
-          o.connect(f); f.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + 1.05);
+  // i suoni semplici di prima: servono finché quelli veri non sono pronti (o se il telefono non li sa preparare)
+  function applausoSemplice(vol) {
+    var c = ctx(); if (!c) return;
+    try {
+      var buf = rumore(c, 0.05);
+      for (var i = 0; i < 70; i++) {
+        var t0 = c.currentTime + Math.random() * 1.8, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+        s.buffer = buf; f.type = "bandpass"; f.frequency.value = 900 + Math.random() * 1700; f.Q.value = 1.3;
+        g.gain.setValueAtTime((0.06 + Math.random() * 0.1) * (vol || 1) * (1 - (t0 - c.currentTime) / 2.4), t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05);
+        s.connect(f); f.connect(g); g.connect(c.destination); s.start(t0); s.stop(t0 + 0.06);
+      }
+    } catch (e) {}
+  }
+  function ohhSemplice() {
+    var c = ctx(); if (!c) return;
+    try {
+      [0, 7].forEach(function (d) {
+        var t0 = c.currentTime, o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
+        o.type = "sawtooth"; o.frequency.setValueAtTime(250 + d, t0); o.frequency.exponentialRampToValueAtTime(170 + d, t0 + 0.9);
+        f.type = "lowpass"; f.frequency.value = 650;
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.07, t0 + 0.15); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1);
+        o.connect(f); f.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + 1.05);
+      });
+    } catch (e) {}
+  }
+  // ---- i suoni veri del pubblico (applauso pieno, ovazione coi fischi, "ohhh") si preparano una volta sola, poi si suonano e basta ----
+  var BUF = {};
+  function preparaSuoni() {
+    var c = ctx(), OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (preparaSuoni.fatto || !c || !OAC) return;
+    preparaSuoni.fatto = true;
+    rendi(OAC, c.sampleRate, 3.4, function (o) { folla(o, 3.4, 320, false); }, "applauso");
+    rendi(OAC, c.sampleRate, 4.4, function (o) { folla(o, 4.4, 520, true); }, "ovazione");
+    rendi(OAC, c.sampleRate, 1.5, ohhFolla, "ohh");
+  }
+  function rendi(OAC, sr, dur, costruisci, nome) {
+    try {
+      var o = new OAC(2, Math.ceil(sr * dur), sr);
+      costruisci(o);
+      o.oncomplete = function (e) { if (e && e.renderedBuffer) BUF[nome] = e.renderedBuffer; };
+      var p = o.startRendering();
+      if (p && p.then) p.then(function (b) { BUF[nome] = b; }, function () {});
+    } catch (e) {}
+  }
+  function pan(c, out, v) { if (!c.createStereoPanner) return out; var p = c.createStereoPanner(); p.pan.value = v; p.connect(out); return p; }
+  // un applauso vero: centinaia di battiti di mani sparsi a destra e a sinistra, più il fruscio della gente
+  function folla(c, dur, n, grande) {
+    var out = c.createGain(); out.gain.value = grande ? 1 : 0.9; out.connect(c.destination);
+    var clap = rumore(c, 0.035), fondo = rumore(c, dur, true), tiene = dur * (grande ? 0.5 : 0.42);
+    function forza(t) { return Math.min(1, t / 0.16) * (t < tiene ? 1 : Math.pow(Math.max(0, 1 - (t - tiene) / (dur - tiene)), 1.6)); }
+    for (var k = 0; k < n; k++) {
+      var t = Math.random() * dur * 0.95, e = forza(t); if (e < 0.04) continue;
+      var s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+      s.buffer = clap; s.playbackRate.value = 0.75 + Math.random() * 0.6;
+      f.type = "bandpass"; f.frequency.value = 650 + Math.random() * 2100; f.Q.value = 0.7 + Math.random() * 0.9;
+      g.gain.setValueAtTime((0.1 + Math.random() * 0.2) * e, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.018 + Math.random() * 0.03);
+      s.connect(f); f.connect(g); g.connect(pan(c, out, Math.random() * 1.8 - 0.9));
+      s.start(t); s.stop(t + 0.07);
+    }
+    var sf = c.createBufferSource(), ff = c.createBiquadFilter(), gf = c.createGain();
+    sf.buffer = fondo; ff.type = "bandpass"; ff.frequency.value = 1500; ff.Q.value = 0.45;
+    gf.gain.setValueAtTime(0.0001, 0); gf.gain.linearRampToValueAtTime(0.07, 0.18); gf.gain.setValueAtTime(0.07, tiene); gf.gain.linearRampToValueAtTime(0.0001, dur);
+    sf.connect(ff); ff.connect(gf); gf.connect(out); sf.start(0);
+    if (grande) [0.3, 1.15, 2.1].forEach(function (t0, i) { fischio(c, out, t0 + Math.random() * 0.25, i % 2 ? 0.7 : -0.6); });
+  }
+  function fischio(c, out, t0, p) {   // il fischio di chi fa il tifo
+    var o = c.createOscillator(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(1800, t0); o.frequency.linearRampToValueAtTime(2800, t0 + 0.12); o.frequency.setValueAtTime(2200, t0 + 0.2); o.frequency.linearRampToValueAtTime(2900, t0 + 0.5);
+    lfo.frequency.value = 7; lg.gain.value = 35; lfo.connect(lg); lg.connect(o.frequency);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.04, t0 + 0.04); g.gain.setValueAtTime(0.012, t0 + 0.16);
+    g.gain.exponentialRampToValueAtTime(0.045, t0 + 0.24); g.gain.setValueAtTime(0.045, t0 + 0.46); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.6);
+    o.connect(g); g.connect(pan(c, out, p)); o.start(t0); o.stop(t0 + 0.62); lfo.start(t0); lfo.stop(t0 + 0.62);
+  }
+  function ohhFolla(c) {   // "ohhh" deluso: tante voci che scendono insieme
+    var out = c.createGain(); out.gain.value = 0.9; out.connect(c.destination);
+    for (var v = 0; v < 10; v++) {
+      var f0 = 140 + Math.random() * 190, t0 = Math.random() * 0.15, o = c.createOscillator(), b1 = c.createBiquadFilter(), b2 = c.createBiquadFilter(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+      o.type = "sawtooth"; o.frequency.setValueAtTime(f0 * 1.06, t0); o.frequency.exponentialRampToValueAtTime(f0 * 0.74, t0 + 1.15);
+      lfo.frequency.value = 4.5 + Math.random() * 2; lg.gain.value = f0 * 0.015; lfo.connect(lg); lg.connect(o.frequency);
+      b1.type = "bandpass"; b1.frequency.value = 480 + Math.random() * 120; b1.Q.value = 3;   // la "o"
+      b2.type = "lowpass"; b2.frequency.value = 1300;
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.06, t0 + 0.2); g.gain.setValueAtTime(0.06, t0 + 0.55); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.3);
+      o.connect(b1); b1.connect(b2); b2.connect(g); g.connect(pan(c, out, Math.random() * 1.4 - 0.7));
+      o.start(t0); o.stop(t0 + 1.35); lfo.start(t0); lfo.stop(t0 + 1.35);
+    }
+  }
+  function suonaBuf(nome, vol) {
+    var c = ctx(), b = BUF[nome]; if (!c || !b) return false;
+    try {
+      var s = c.createBufferSource(), g = c.createGain();
+      s.buffer = b; s.playbackRate.value = 0.94 + Math.random() * 0.12; g.gain.value = vol == null ? 1 : vol;
+      s.connect(g); g.connect(c.destination); s.start(); return true;
+    } catch (e) { return false; }
+  }
+
+  // ---- la musichetta chill sotto allo studio: accordi morbidi, basso e batteria leggera, suonati al momento (niente file da scaricare) ----
+  var Musica = (function () {
+    var KEY = "sg_musica_studio", voglio = true, va = false, timer = null, bus = null, duck = null, master = null, rum = null;
+    var prossimo = 0, passo = 0, vuoto = 0, colpi = [], VOL = 0.42;
+    try { voglio = localStorage.getItem(KEY) !== "0"; } catch (e) {}
+    var BPM = 84, SEDI = 60 / BPM / 4;   // la durata di un sedicesimo
+    var ACC = [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [48, 52, 55, 59]];   // Fa maj7 → Mi m7 → Re m7 → Do maj7
+    var BAS = [41, 40, 38, 36];
+    var MEL = [[[0, 76], [3, 72], [6, 69], [10, 72]], [[0, 74], [3, 71], [6, 67], [10, 71]], [[0, 72], [3, 69], [6, 65], [10, 69]], [[0, 71], [3, 67], [6, 64], [10, 67], [14, 72]]];
+    function hz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+    function ep(c, t, m, dur, vol) {   // piano elettrico morbido
+      var o1 = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(), g2 = c.createGain(), lp = c.createBiquadFilter();
+      o1.type = "sine"; o1.frequency.value = hz(m); o2.type = "triangle"; o2.frequency.value = hz(m) * 2.002; g2.gain.value = 0.16;
+      lp.type = "lowpass"; lp.frequency.setValueAtTime(2400, t); lp.frequency.exponentialRampToValueAtTime(900, t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(vol * 0.35, t + 0.35); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o1.connect(g); o2.connect(g2); g2.connect(g); g.connect(lp); lp.connect(bus);
+      o1.start(t); o2.start(t); o1.stop(t + dur + 0.05); o2.stop(t + dur + 0.05);
+    }
+    function pad(c, t, note, dur, vol) {   // tappeto caldo: due voci appena stonate per nota
+      note.forEach(function (m) {
+        [-5, 5].forEach(function (det) {
+          var o = c.createOscillator(), g = c.createGain(), lp = c.createBiquadFilter();
+          o.type = "sawtooth"; o.frequency.value = hz(m); o.detune.value = det;
+          lp.type = "lowpass"; lp.frequency.value = 650;
+          g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.6); g.gain.setValueAtTime(vol, t + dur - 0.4); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.3);
+          o.connect(lp); lp.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.35);
         });
+      });
+    }
+    function basso(c, t, m, dur, vol) {
+      var o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(), g2 = c.createGain(), lp = c.createBiquadFilter();
+      o.type = "sine"; o.frequency.value = hz(m); o2.type = "triangle"; o2.frequency.value = hz(m); g2.gain.value = 0.35;
+      lp.type = "lowpass"; lp.frequency.value = 420;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.015); g.gain.exponentialRampToValueAtTime(vol * 0.5, t + 0.25); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); o2.connect(g2); g2.connect(g); g.connect(lp); lp.connect(bus);
+      o.start(t); o2.start(t); o.stop(t + dur + 0.05); o2.stop(t + dur + 0.05);
+    }
+    function cassa(c, t, vol) {
+      var o = c.createOscillator(), g = c.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(115, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.12);
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+      o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.3);
+      if (vol > 0.3) colpi.push(t);   // le luci LED ballano a tempo
+    }
+    function rumoreBreve(c, t, tipo, freq, dur, vol) {   // rullante (passabanda) e charleston (passaalto)
+      var s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+      s.buffer = rum; f.type = tipo; f.frequency.value = freq; if (tipo === "bandpass") f.Q.value = 0.7;
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      s.connect(f); f.connect(g); g.connect(bus); s.start(t, Math.random() * 0.2); s.stop(t + dur + 0.02);
+    }
+    function campana(c, t, m, vol) {
+      var o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(), g2 = c.createGain();
+      o.type = "sine"; o.frequency.value = hz(m); o2.type = "sine"; o2.frequency.value = hz(m) * 3.01; g2.gain.value = 0.12;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
+      o.connect(g); o2.connect(g2); g2.connect(g); g.connect(bus); o.start(t); o2.start(t); o.stop(t + 1.15); o2.stop(t + 1.15);
+    }
+    function suonaPasso(c, p, t) {
+      var bar = Math.floor(p / 16) % 4, st = p % 16, giro = Math.floor(p / 64), acc = ACC[bar], r = BAS[bar];
+      if (st === 0) pad(c, t, acc, SEDI * 16, 0.011);
+      if (st === 0) acc.forEach(function (m) { ep(c, t, m, 1.3, 0.045); });
+      if (st === 6 || st === 10) acc.forEach(function (m) { ep(c, t, m, 0.35, 0.028); });
+      if (st === 0) basso(c, t, r, 0.8, 0.22);
+      if (st === 7) basso(c, t, r + 12, 0.2, 0.1);
+      if (st === 10) basso(c, t, r + 7, 0.4, 0.15);
+      if (st === 0) cassa(c, t, 0.5); if (st === 10) cassa(c, t, 0.34); if (st === 7 && bar === 3) cassa(c, t, 0.22);
+      if (st === 4 || st === 12) rumoreBreve(c, t, "bandpass", 1700, 0.16, 0.08);
+      if (st % 2 === 0) rumoreBreve(c, t, "highpass", 7000, 0.045, st % 4 === 2 ? 0.032 : 0.022);
+      if (giro % 2 === 1) MEL[bar].forEach(function (n) { if (n[0] === st) campana(c, t, n[1], 0.04); });
+    }
+    function programma() {
+      var c = AC; if (!c || !va) return;
+      if (!document.querySelector(".st-vista")) { if (++vuoto > 16) ferma(); return; }   // non c'è più lo studio: la musica sfuma
+      vuoto = 0;
+      if (document.hidden || c.state !== "running") { prossimo = c.currentTime + 0.1; return; }   // app in pausa: non accumulo note
+      if (prossimo < c.currentTime - 0.2) prossimo = c.currentTime + 0.05;
+      while (prossimo < c.currentTime + 0.35) {
+        var sw = (passo % 4 === 2) ? SEDI * 0.3 : 0;   // un po' di swing
+        try { suonaPasso(c, passo, prossimo + sw); } catch (e) {}
+        prossimo += SEDI; passo++;
+      }
+    }
+    function avvia() {
+      if (!voglio || va) return;
+      var c = ctx(); if (!c) return;
+      try {
+        va = true; colpi = []; vuoto = 0;
+        var n = Math.floor(c.sampleRate * 0.4); rum = c.createBuffer(1, n, c.sampleRate); var d = rum.getChannelData(0); for (var i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+        bus = c.createGain(); var lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 5200;
+        duck = c.createGain(); master = c.createGain();
+        master.gain.setValueAtTime(0.0001, c.currentTime); master.gain.linearRampToValueAtTime(VOL, c.currentTime + 2.5);
+        bus.connect(lp); lp.connect(duck); duck.connect(master); master.connect(c.destination);
+        prossimo = c.currentTime + 0.15; passo = 0;
+        timer = setInterval(programma, 90);
+      } catch (e) { va = false; }
+    }
+    function ferma(subito) {
+      if (!va) return;
+      va = false; clearInterval(timer); timer = null;
+      var c = AC, m = master; master = null;
+      if (c && m) {
+        try { m.gain.cancelScheduledValues(c.currentTime); m.gain.setValueAtTime(m.gain.value, c.currentTime); m.gain.linearRampToValueAtTime(0.0001, c.currentTime + (subito ? 0.15 : 1.2)); } catch (e) {}
+        setTimeout(function () { try { m.disconnect(); } catch (e) {} }, 1500);
+      }
+    }
+    function attiva(on) { voglio = !!on; try { localStorage.setItem(KEY, on ? "1" : "0"); } catch (e) {} if (on) avvia(); else ferma(true); }
+    // quando applaudono o c'è il rullo di tamburi la musica si abbassa un momento
+    function abbassa(sec) {
+      var c = AC; if (!va || !c || !duck) return;
+      try {
+        var t = c.currentTime; duck.gain.cancelScheduledValues(t); duck.gain.setValueAtTime(duck.gain.value, t);
+        duck.gain.linearRampToValueAtTime(0.35, t + 0.15); duck.gain.setValueAtTime(0.35, t + sec); duck.gain.linearRampToValueAtTime(1, t + sec + 0.8);
       } catch (e) {}
+    }
+    // 0..1: quanto è fresco l'ultimo colpo di cassa (per far ballare le luci LED a tempo); senza musica batte un tempo finto
+    function battito() {
+      var c = AC;
+      if (va && c) { var now = c.currentTime; while (colpi.length > 1 && colpi[1] <= now) colpi.shift(); var t = colpi[0]; return (t != null && t <= now) ? Math.exp(-(now - t) * 7) : 0; }
+      var b = performance.now() / 1000 * BPM / 60 / 2; return Math.exp(-(b - Math.floor(b)) * 120 / BPM * 7);
+    }
+    return { avvia: avvia, ferma: ferma, attiva: attiva, accesa: function () { return voglio; }, abbassa: abbassa, battito: battito };
+  })();
+
+  var FX = {
+    // applauso del pubblico: quanto = "forte" (ovazione coi fischi, per chi vince) o "piano" (un applauso di cortesia)
+    applauso: function (quanto) {
+      Musica.abbassa(quanto === "piano" ? 1.6 : 2.8);
+      var vol = quanto === "piano" ? 0.45 : 1;
+      if (!suonaBuf(quanto === "forte" ? "ovazione" : "applauso", vol)) applausoSemplice(vol);
     },
+    // "ohhh" deluso del pubblico
+    ohh: function () { Musica.abbassa(1.4); if (!suonaBuf("ohh", 1)) ohhSemplice(); },
     // rullo di tamburo prima della rivelazione
     rullo: function (dur) {
       var c = ctx(); if (!c) return;
+      dur = dur || 1.1; Musica.abbassa(dur + 0.6);
       try {
-        var buf = rumore(c, 0.04); dur = dur || 1.1;
+        var buf = rumore(c, 0.04);
         for (var x = 0; x < dur; x += 0.045) {
           var t0 = c.currentTime + x, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
           s.buffer = buf; f.type = "lowpass"; f.frequency.value = 520;
@@ -65,13 +265,12 @@
           s.connect(f); f.connect(g); g.connect(c.destination); s.start(t0); s.stop(t0 + 0.045);
         }
       } catch (e) {}
-    }
-  ,
-    fanfara: function () { beep([660, 880, 1046, 1318], 0.22, "triangle"); try { if (navigator.vibrate) navigator.vibrate([120, 60, 120, 60, 200]); } catch (e) {} }
+    },
+    fanfara: function () { Musica.abbassa(1.6); beep([660, 880, 1046, 1318], 0.22, "triangle"); try { if (navigator.vibrate) navigator.vibrate([120, 60, 120, 60, 200]); } catch (e) {} }
   };
-  function rumore(c, dur) {
+  function rumore(c, dur, piatto) {   // rumore bianco (piatto, oppure che si spegne: il colpo di un battito)
     var n = Math.floor(c.sampleRate * dur), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
-    for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (piatto ? 1 : 1 - i / n);
     return b;
   }
 
@@ -138,12 +337,10 @@
       ".st-quieto .st-leggio .luce,.st-quieto .st-leggio .pozza{opacity:0!important}",
       ".st-tela{left:0;top:0}",
       // fari che girano (solo rotazione)
-      ".st-fascio{transform-origin:50% 0;opacity:.5;clip-path:polygon(46% 0,54% 0,100% 100%,0 100%);will-change:transform;animation:stFascio 6s ease-in-out infinite alternate}",
+      ".st-fascio{transform-origin:50% 0;opacity:.5;will-change:transform;animation:stFascio 6s ease-in-out infinite alternate}",
       "@keyframes stFascio{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}",
-      // barre delle torri LED (solo scala verticale)
-      ".st-eq{overflow:hidden;border-radius:14px}",
-      ".st-eq i{position:absolute;bottom:0;height:88%;width:11%;border-radius:4px 4px 0 0;background:linear-gradient(#fff3a8,#ffb300 40%,#ff3ea5 75%,#7b2cff);transform-origin:50% 100%;will-change:transform;animation:stEq 1s ease-in-out infinite alternate}",
-      "@keyframes stEq{from{transform:scaleY(.16)}to{transform:scaleY(1)}}",
+      // torri LED: un pannello a led (canvas) che si ridisegna pochi fotogrammi al secondo, a tempo di musica
+      ".st-eq{pointer-events:none}",
       // lampadine della cornice: due disegni che si alternano (solo opacità)
       ".st-lampade{will-change:opacity;animation:stLampade .9s linear infinite}",
       "@keyframes stLampade{0%,49%{opacity:1}51%,100%{opacity:0}}",
@@ -163,7 +360,7 @@
       ".st-cartellone:after{content:'';display:block;width:3px;height:12px;margin:0 auto;background:#c9a46a}",
       "@keyframes stSventola{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}",
       "@keyframes stSventolaPoco{from{transform:rotate(-9deg) translateY(0)}to{transform:rotate(9deg) translateY(-4px)}}",
-      ".st-occhio{border-radius:50%;opacity:.5;will-change:transform;animation:stGiro var(--dur,8s) ease-in-out var(--rit,0s) infinite}",
+      ".st-occhio{opacity:.5;will-change:transform;animation:stGiro var(--dur,8s) ease-in-out var(--rit,0s) infinite}",
       "@keyframes stGiro{0%,100%{transform:translate(0,0)}33%{transform:translate(var(--dx),var(--dy))}66%{transform:translate(calc(var(--dx) * .35),calc(var(--dy) * -.7))}}",
       ".st-ringhiera{height:5px;border-radius:3px;background:linear-gradient(90deg,transparent,#ffd43b,transparent);box-shadow:0 0 10px rgba(255,212,59,.6)}",
       ".st-lucina{width:6px;height:6px;margin:-3px;border-radius:50%;background:#e8fbff;box-shadow:0 0 8px 3px rgba(160,240,255,.8);will-change:opacity;animation:stLuccica 2.4s ease-in-out infinite}",
@@ -178,7 +375,8 @@
       ".st-schermo{border-radius:14px;overflow:hidden;box-shadow:0 0 0 5px #120a38;background:radial-gradient(130% 55% at 50% 0%,#2d44a8 0%,#18225a 50%,#0b1030 100%)}",
       ".st-sch-in{position:absolute;inset:0;display:flex;flex-direction:column;padding:calc(8px + env(safe-area-inset-top)) 12px 10px}",
       ".st-vista.con-barra .st-sch-in{padding-bottom:104px}",
-      ".st-sch-in .tl-hud{flex:0 0 auto;margin-left:42px;align-items:center}",
+      ".st-sch-in .tl-hud{flex:0 0 auto;margin-left:42px;margin-right:42px;align-items:center}",
+      ".st-sch-in .tl-scroll{-webkit-mask:none;mask:none}",
       ".st-sch-in .tl-ev .card{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(255,255,255,.1)}",
       ".st-vetro{position:absolute;inset:0;pointer-events:none;background:linear-gradient(118deg,rgba(255,255,255,.1),transparent 32%)}",
       ".st-idle{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px}",
@@ -187,59 +385,50 @@
       ".st-idle .sotto{font-size:14px;font-weight:800;letter-spacing:.32em;text-transform:uppercase;color:#cdd6ff}",
       ".st-sch-in .tl-esito{justify-content:center;padding-bottom:40px}",
       ".st-sch-in .tl-flip{width:min(310px,88%);height:230px}",
-      ".st-raggi{position:absolute;left:50%;top:38%;width:180%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;opacity:0;will-change:transform;",
-        "background:repeating-conic-gradient(rgba(255,230,120,.22) 0 8deg,transparent 8deg 20deg);-webkit-mask:radial-gradient(circle,#000 20%,transparent 65%);mask:radial-gradient(circle,#000 20%,transparent 65%);animation:stRaggi 14s linear infinite,stAppari .6s ease 1.3s forwards}",
-      ".st-raggi.ko{background:repeating-conic-gradient(rgba(255,93,108,.2) 0 8deg,transparent 8deg 20deg)}",
+      ".st-raggi{position:absolute;left:50%;top:38%;width:180%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;opacity:0;will-change:transform;animation:stRaggi 14s linear infinite,stAppari .6s ease 1.3s forwards}",
       "@keyframes stRaggi{to{transform:translate(-50%,-50%) rotate(360deg)}}",
       "@keyframes stAppari{to{opacity:1}}",
       // leggii (le postazioni)
       ".st-leggio{display:flex;flex-direction:column;align-items:center}",
-      ".st-leggio .alone{position:absolute;left:50%;top:0;width:96%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;opacity:.45;",
-        "background:radial-gradient(circle,var(--col) 0,transparent 66%);transition:opacity .4s,transform .4s}",
-      // occhio di bue: il fascio scende fino al pavimento e ci lascia una pozza di luce, e illumina il banco
-      ".st-leggio .luce{position:absolute;left:50%;bottom:-17%;width:172%;height:480%;transform:translateX(-50%);opacity:0;transition:opacity .45s;pointer-events:none;",
-        "background:linear-gradient(to top,rgba(255,246,205,.46),rgba(255,246,205,.2) 40%,rgba(255,246,205,0) 92%);clip-path:polygon(43% 0,57% 0,100% 100%,0 100%)}",
-      ".st-leggio .pozza{position:absolute;z-index:1;left:50%;bottom:-24%;width:180%;height:30%;transform:translateX(-50%);border-radius:50%;opacity:0;transition:opacity .45s;pointer-events:none;",
-        "background:radial-gradient(closest-side,rgba(255,248,215,.85),rgba(255,232,160,.4) 50%,rgba(255,232,160,0))}",
+      ".st-leggio .alone{position:absolute;left:50%;top:0;width:96%;aspect-ratio:1;transform:translateX(-50%);opacity:.45;transition:opacity .4s,transform .4s;pointer-events:none}",
+      // occhio di bue: il fascio scende fino al pavimento e ci lascia una pozza di luce, e illumina il banco (tutto già disegnato: si accende con l'opacità)
+      ".st-leggio .luce{position:absolute;left:50%;bottom:-17%;width:172%;height:480%;transform:translateX(-50%);opacity:0;transition:opacity .45s;pointer-events:none}",
+      ".st-leggio .pozza{position:absolute;z-index:1;left:50%;bottom:-24%;width:180%;height:30%;transform:translateX(-50%);opacity:0;transition:opacity .45s;pointer-events:none}",
       ".st-leggio.acceso .pozza{opacity:1}",
-      ".st-leggio .fronte:before{content:'';position:absolute;inset:0;background:linear-gradient(rgba(255,246,205,.3),rgba(255,246,205,.08));opacity:0;transition:opacity .45s;pointer-events:none}",
-      ".st-leggio.acceso .fronte:before{opacity:1}",
       ".st-leggio .av{position:relative;z-index:2;width:74%;aspect-ratio:178/182}",
       ".st-leggio .av canvas{width:100%;height:100%;display:block}",
-      ".st-leggio .podio{position:relative;z-index:3;width:100%;margin-top:-.9em}",
-      ".st-leggio .piano{position:relative;height:1.1em;border-radius:.55em .55em .2em .2em;background:linear-gradient(#ffffff,#d8d2ff 35%,#8d84d8 75%,#5a50a8);",
-        "box-shadow:inset 0 .12em 0 #fff,0 .25em .45em rgba(0,0,0,.4)}",
-      ".st-leggio .buzz{position:absolute;right:13%;top:-.5em;width:1.15em;height:.62em;border-radius:1em 1em .2em .2em;background:radial-gradient(circle at 40% 30%,#ffc2c7,#ff2d45 55%,#8a0f1c)}",
-      ".st-leggio .tu{position:absolute;left:10%;top:-.62em;background:linear-gradient(#fff3a8,#ffca3a);color:#241f00;font-weight:900;font-size:.72em;padding:.08em .55em;border-radius:99px}",
-      ".st-leggio .fronte{position:relative;margin:0 5%;padding:.75em .4em .7em;text-align:center;clip-path:polygon(0 0,100% 0,95% 100%,5% 100%);",
-        "background:linear-gradient(90deg,rgba(255,255,255,.14),transparent 22%,transparent 78%,rgba(255,255,255,.1)),linear-gradient(#36268a,#1b1152 55%,#0d0730)}",
-      ".st-leggio .fronte:after{content:'';position:absolute;left:8%;right:8%;top:.22em;height:.34em;",
-        "background:radial-gradient(circle,#fffbe0 0 .09em,var(--col) .15em,transparent .21em) 0 0/.62em .34em}",
-      ".st-leggio .nome{font-weight:900;font-size:1.3em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 .08em 0 rgba(0,0,0,.45)}",
-      ".st-leggio .punti{display:inline-block;margin-top:.3em;min-width:72%;font-family:'Courier New',ui-monospace,monospace;font-weight:900;font-size:1.6em;letter-spacing:.04em;color:#ffe066;",
-        "background:#05030f;border-radius:.3em;padding:.08em .4em;box-shadow:inset 0 0 0 .08em rgba(255,224,102,.3)}",
-      ".st-leggio .punti.neg{color:#ff8d98}",
-      ".st-leggio .led{position:relative;height:.42em;margin:0 9%;border-radius:0 0 .3em .3em;background:var(--col);box-shadow:0 0 .8em var(--col)}",
-      ".st-leggio .led:after{content:'';position:absolute;left:-12%;right:-12%;top:-160%;bottom:-160%;border-radius:50%;background:radial-gradient(closest-side,var(--col),transparent);opacity:0;will-change:opacity}",
+      // il bancone è un'immagine (canvas): niente da ridisegnare quando la telecamera si muove, e non può sparire
+      ".st-leggio .podio{position:relative;z-index:3;width:100%;height:6.82em;margin-top:-.9em}",
+      ".st-leggio .banco,.st-leggio .banco-luce{position:absolute;left:0;top:-1.1em;width:100%;height:calc(100% + 2.2em);pointer-events:none}",
+      ".st-leggio .banco-luce{opacity:0;transition:opacity .45s}",
+      ".st-leggio.acceso .banco-luce{opacity:1}",
+      ".st-leggio .bagliore{position:absolute;left:-.85%;top:5.73em;width:101.7%;height:1.76em;opacity:0;pointer-events:none}",
+      ".st-leggio.acceso .bagliore{animation:stLed .6s ease-in-out infinite alternate}",
+      ".st-leggio .piano{position:absolute;left:0;top:0;width:100%;height:1.1em}",
       ".st-leggio.acceso .alone{opacity:1;transform:translateX(-50%) scale(1.12)}",
       ".st-leggio.acceso .luce{opacity:1}",
-      ".st-leggio.acceso .led:after{animation:stLed .6s ease-in-out infinite alternate}",
       "@keyframes stLed{from{opacity:.2}to{opacity:.95}}",
-      ".st-leggio .cart{position:absolute;z-index:4;left:50%;top:-44%;width:48%;aspect-ratio:1;perspective:400px;opacity:0;transform:translateX(-50%) translateY(40%) scale(.2);transition:transform .35s cubic-bezier(.3,1.5,.5,1),opacity .2s}",
+      ".st-leggio .cart{position:absolute;z-index:4;left:50%;top:-44%;width:48%;aspect-ratio:1;opacity:0;transform:translateX(-50%) translateY(40%) scale(.2);transition:transform .35s cubic-bezier(.3,1.5,.5,1),opacity .2s}",
       ".st-leggio .cart:after{content:'';position:absolute;left:50%;top:96%;width:.5em;height:2.2em;margin-left:-.25em;background:linear-gradient(90deg,#b58a4e,#e6c28a,#b58a4e);border-radius:.2em;z-index:-1}",
       ".st-leggio .cart.su{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}",
-      ".st-leggio .cart .in{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .6s}",
-      ".st-leggio .cart.gira .in{transform:rotateY(180deg)}",
-      ".st-leggio .cart .f{position:absolute;inset:0;border-radius:.9em;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center;",
+      ".st-leggio .cart .in{position:absolute;inset:0}",
+      ".st-leggio .cart.gira .in{animation:stGiraCart .6s ease-in-out}",
+      "@keyframes stGiraCart{0%,100%{transform:none}50%{transform:scaleX(.04)}}",
+      ".st-leggio .cart .f{position:absolute;inset:0;border-radius:.9em;display:flex;align-items:center;justify-content:center;",
         "font-size:3.4em;font-weight:900;background:linear-gradient(#ffffff,#e8e4ff);color:#2a1d6e;box-shadow:0 .25em .5em rgba(0,0,0,.4)}",
-      ".st-leggio .cart .f.r{transform:rotateY(180deg)}",
+      ".st-leggio .cart .f.r,.st-leggio .cart.gira .f{visibility:hidden}",
+      ".st-leggio .cart.gira .f{animation:stFronte .6s linear}",
+      ".st-leggio .cart.gira .f.r{visibility:visible;animation:stRetro .6s linear}",
+      "@keyframes stFronte{0%,49%{visibility:visible}50%,100%{visibility:hidden}}",
+      "@keyframes stRetro{0%,49%{visibility:hidden}50%,100%{visibility:visible}}",
       ".st-leggio .cart .f.r.si{background:linear-gradient(#6ff0a6,#27b567)} .st-leggio .cart .f.r.no{background:linear-gradient(#ff95a0,#e0364a)}",
       ".st-leggio .delta{position:absolute;z-index:5;left:50%;top:6%;transform:translateX(-50%);font-weight:900;font-size:2.6em;opacity:0;white-space:nowrap;text-shadow:0 .08em 0 rgba(0,0,0,.45)}",
       ".st-leggio .delta.on{animation:stDelta 1.7s ease-out}",
       "@keyframes stDelta{0%{opacity:0;transform:translate(-50%,20%) scale(.6)}15%{opacity:1;transform:translate(-50%,-20%) scale(1.15)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-120%)}}",
       // sovrimpressioni sopra la telecamera
       ".st-esci{position:absolute;left:8px;top:calc(8px + env(safe-area-inset-top));z-index:25;width:36px;height:36px;border-radius:50%;border:0;background:rgba(0,0,0,.4);color:#fff;font:inherit;font-size:1.25rem;font-weight:900;cursor:pointer}",
-      ".st-rec{position:absolute;right:10px;top:calc(12px + env(safe-area-inset-top));z-index:25;font-size:11px;font-weight:900;letter-spacing:.1em;color:#fff;background:rgba(0,0,0,.45);border-radius:99px;padding:3px 10px;opacity:0;transition:opacity .3s}",
+      ".st-musica{position:absolute;right:8px;top:calc(8px + env(safe-area-inset-top));z-index:25;width:36px;height:36px;border-radius:50%;border:0;background:rgba(0,0,0,.4);color:#fff;font:inherit;font-size:1.05rem;cursor:pointer}",
+      ".st-rec{position:absolute;right:52px;top:calc(12px + env(safe-area-inset-top));z-index:25;font-size:11px;font-weight:900;letter-spacing:.1em;color:#fff;background:rgba(0,0,0,.45);border-radius:99px;padding:3px 10px;opacity:0;transition:opacity .3s}",
       ".st-rec.on{opacity:1}",
       ".st-rec:before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3b3b;margin-right:6px;animation:stRec 1s steps(2) infinite}",
       "@keyframes stRec{50%{opacity:.2}}",
@@ -259,24 +448,25 @@
       ".st-lampo{position:absolute;inset:0;z-index:24;background:#fff;opacity:0;pointer-events:none}",
       ".st-lampo.on{animation:stLampo .45s ease-out}",
       "@keyframes stLampo{0%{opacity:.85}100%{opacity:0}}",
-      ".st-leggero .st-fascio,.st-leggero .st-eq i,.st-leggero .st-lucina,.st-leggero .st-lampade,.st-leggero .st-fila,.st-leggero .st-bastone,.st-leggero .st-cartellone,.st-leggero .st-occhio{animation:none}",
+      // se il telefono fatica mentre la telecamera si muove, si spengono le luci che ballano (prima di tutto la fluidità)
+      ".st-leggero-auto .st-fascio,.st-leggero-auto .st-occhio,.st-leggero-auto .st-bastone,.st-leggero-auto .st-lucina{display:none}",
+      ".st-leggero .st-fascio,.st-leggero .st-lucina,.st-leggero .st-lampade,.st-leggero .st-fila,.st-leggero .st-bastone,.st-leggero .st-cartellone,.st-leggero .st-occhio{animation:none}",
       // coriandoli, scossa della telecamera
       ".st-coriandoli{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}",
       ".st-coriandoli i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;will-change:transform;animation:stCade 2.6s cubic-bezier(.2,.6,.4,1) forwards}",
       "@keyframes stCade{to{transform:translate(var(--dx),110vh) rotate(var(--r))}}",
-      ".st-scena{position:absolute;inset:0}",
-      ".st-scena.scossa{animation:stScossa .55s ease-out}",
-      "@keyframes stScossa{0%{transform:translate(0,0)}15%{transform:translate(-9px,5px)}30%{transform:translate(8px,-6px)}45%{transform:translate(-6px,-3px)}60%{transform:translate(5px,4px)}80%{transform:translate(-2px,1px)}100%{transform:translate(0,0)}}",
+      ".st-scena{position:absolute;inset:0;will-change:transform}",
+      // rullo della slot machine (lettera, categoria a sorpresa): tre caselle che scorrono, ombra sopra e sotto come un cilindro
+      ".st-rullo{position:relative;overflow:hidden}",
+      ".st-cella{position:absolute;left:0;top:0;width:100%;display:flex;align-items:center;justify-content:center;text-align:center;will-change:transform}",
+      ".st-rullo:after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(rgba(0,0,0,.34),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 70%,rgba(0,0,0,.34))}",
       // leggii toccabili (es. a chi passare la bomba) ed eliminati
       ".st-leggio .anello{position:absolute;z-index:1;left:50%;top:-4%;width:90%;aspect-ratio:1;margin-left:-45%;border-radius:50%;border:.28em solid #6ff0a6;opacity:0;pointer-events:none}",
       ".st-leggio.tocca{cursor:pointer}",
       ".st-leggio.tocca .anello{opacity:1;will-change:transform,opacity;animation:stAnello 1s ease-in-out infinite}",
       "@keyframes stAnello{0%,100%{transform:scale(.92);opacity:.55}50%{transform:scale(1.06);opacity:1}}",
-      ".st-leggio.fuori .av canvas{filter:grayscale(1) brightness(.5)}",
-      ".st-leggio.fuori .podio{filter:grayscale(.85) brightness(.55)}",
       ".st-leggio.fuori .alone{opacity:0}",
-      ".st-leggio .punti.testo{font-size:1.25em;letter-spacing:.02em}",
-      "@media (prefers-reduced-motion:reduce){.st-fascio,.st-eq i,.st-lucina,.st-lampade,.st-fila,.st-bastone,.st-cartellone,.st-occhio{animation:none}}"
+      "@media (prefers-reduced-motion:reduce){.st-fascio,.st-lucina,.st-lampade,.st-fila,.st-bastone,.st-cartellone,.st-occhio{animation:none}}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -295,23 +485,20 @@
     function pezzo(tag, cls, dove) { var e = el(tag, { class: cls }); (dove || mondo).appendChild(e); return e; }
     // --- studio: il fondo fermo è un'immagine sola (canvas), sopra solo pochi pezzi che si muovono ---
     S.tela = pezzo("canvas", "st-tela");
+    // i fari che girano sono luci già disegnate (canvas): la scheda grafica le gira senza ridisegnarle, anche mentre la telecamera si muove
     S.fasci = [];
     if (!LEGGERO) ["rgba(255,236,170,.55)", "rgba(255,62,165,.5)", "rgba(34,211,238,.5)", "rgba(255,236,170,.55)"].forEach(function (c, i) {
-      var f = pezzo("div", "st-fascio st-anim"); f.style.background = "linear-gradient(" + c + ",transparent 88%)";
+      var f = pezzo("canvas", "st-fascio st-anim"); fascio(f, c);
       f.style.animationDelay = (-i * 1.9) + "s"; f.style.animationDuration = (5 + (i % 3)) + "s"; S.fasci.push(f);
     });
-    S.eq = [0, 1].map(function () {
-      var e = pezzo("div", "st-eq st-anim");
-      for (var k = 0; k < 7; k++) { var b = el("i"); b.style.left = (4 + k * 13.4) + "%"; b.style.animationDelay = (-k * 0.31) + "s"; b.style.animationDuration = (0.7 + (k % 3) * 0.22) + "s"; if (LEGGERO) b.style.transform = "scaleY(" + (0.3 + ((k * 37) % 60) / 100) + ")"; e.appendChild(b); }
-      return e;
-    });
+    S.eq = [0, 1].map(function () { return pezzo("canvas", "st-eq"); });   // torri LED: pannelli a led (canvas)
     // il pubblico: file di mini avatar (canvas, create in disegnaPubblico) + cose vive sopra
     S.pubWrap = pezzo("div", "st-pubwrap");
     S.strisce = [];
     S.pubDeco = pezzo("div", "st-pubdeco", S.pubWrap);
     S.ringhiere = []; for (var q = 0; q < 6; q++) S.ringhiere.push(pezzo("div", "st-ringhiera", S.pubDeco));
     S.occhi = LEGGERO ? [] : ["rgba(255,62,165,.55)", "rgba(34,211,238,.5)", "rgba(255,212,59,.42)"].map(function (c, i) {
-      var o = pezzo("div", "st-occhio st-anim", S.pubDeco); o.style.background = "radial-gradient(closest-side," + c + ",transparent)";
+      var o = pezzo("canvas", "st-occhio st-anim", S.pubDeco); chiazza(o, c);
       o.style.setProperty("--dur", (7 + i * 2) + "s"); o.style.setProperty("--rit", (-i * 2.3) + "s"); o._i = i; return o;
     });
     var COLB = ["#ff3ea5", "#22d3ee", "#ffd43b", "#a06bff", "#51cf66"];
@@ -327,6 +514,11 @@
     S.zonaLeggii = el("div"); S.zonaLeggii.style.cssText = "position:absolute;left:0;top:0;width:0;height:0"; mondo.appendChild(S.zonaLeggii);
     // --- sovrimpressioni ---
     vista.appendChild(el("button", { class: "st-esci", text: "‹", "aria-label": "Esci", onclick: function () { if (window.confirm("Uscire dalla partita?")) { fermaTimer(S); opz.esci(); } } }));
+    // la musichetta di sottofondo si accende e si spegne da qui (e il telefono se lo ricorda)
+    var bMus = el("button", { class: "st-musica", "aria-label": "Musica", text: Musica.accesa() ? "🎵" : "🔇", onclick: function () { var on = !Musica.accesa(); Musica.attiva(on); bMus.textContent = on ? "🎵" : "🔇"; } });
+    vista.appendChild(bMus);
+    // il primo tocco sblocca l'audio del telefono (serve a chi entra da un link, senza aver toccato niente)
+    vista.addEventListener("pointerdown", function () { ctx(); Musica.avvia(); }, { passive: true });
     S.rec = el("div", { class: "st-rec", text: "IN ONDA" }); vista.appendChild(S.rec);
     S.terzoEl = el("div", { class: "st-terzo" }); vista.appendChild(S.terzoEl);
     S.barraEl = el("div", { class: "st-barra" }); vista.appendChild(S.barraEl);
@@ -337,10 +529,24 @@
     S.impostaGiocatori = function (lista, io) { S.gioc = lista.map(function (g) { return { nome: g.nome, omino: g.omino || null }; }); S.io = io == null ? -1 : io; costruisciLeggii(S); layoutStudio(S); };
     S.impostaGiocatori(giocatori, opz.io);
     // appena le facce del pubblico sono pronte ridisegno la folla (all'inizio per un attimo ci sono le sagome)
-    preparaPoolPubblico(function () { if (S.vivo() && S.zonePub) disegnaPubblico(S); });
+    // la sigla aspetta le facce del pubblico: così la folla non si ridisegna mentre la telecamera si muove
+    S.pubPronto = new Promise(function (ok) {
+      preparaPoolPubblico(function () { if (S.vivo() && S.zonePub) disegnaPubblico(S); ok(); });
+      setTimeout(ok, 1500);
+    });
     logoSchermo(S);
-    S.shot = function () { return { x: 0, y: 0, w: S.W, h: S.H }; };
-    camera(S, S.shot(), 0);
+    // Prima di tutto la telecamera sta un attimo sul maxischermo a grandezza vera: il telefono prepara lo studio
+    // alla risoluzione piena una volta sola, e poi (con la telecamera mossa a mano) non lo ridisegna più a ogni zoom.
+    S.shot = function () { return S.R.schermo; };
+    metti(S, vistaDi(S, S.R.schermo), true);
+    S.rasterOk = false;
+    S.attesaRaster = new Promise(function (ok) {
+      requestAnimationFrame(function () { requestAnimationFrame(function () { setTimeout(ok, 30); }); });
+      setTimeout(ok, 250);
+    }).then(function () { S.rasterOk = true; });
+    preparaSuoni();
+    Musica.avvia();
+    avviaEq(S);
     // se cambia la misura dello schermo ridisegno lo studio (una volta, dopo che si è assestato)
     var toR = null;
     function suResize() {
@@ -364,30 +570,150 @@
       e.img.onload = function () { e.ok = true; var l = e.cbs; e.cbs = []; l.forEach(function (c) { c(e.img); }); };
       e.img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.replace("<svg ", "<svg width='356' height='364' "));
     }
-    if (e.ok) cb(e.img); else if (cb) e.cbs.push(cb);
+    if (!cb) return;   // solo da preparare per dopo
+    if (e.ok) cb(e.img); else e.cbs.push(cb);
   }
   function mettiAvatar(X, g, f) {
     var v = X.versione = (X.versione || 0) + 1;
     immagineAvatar(g, f, function (img) {
       if (X.versione !== v) return;   // nel frattempo è cambiata faccia
-      var c = X.avc, x = c.getContext("2d"); x.clearRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+      var c = X.avc, x = c.getContext("2d"), w = c.width, h = c.height; x.clearRect(0, 0, w, h); x.drawImage(img, 0, 0, w, h);
+      if (X.grigio) {   // eliminato: in bianco e nero e più scuro, disegnato qui una volta (un filtro peserebbe a ogni fotogramma)
+        x.save(); x.globalCompositeOperation = "saturation"; x.fillStyle = "#808080"; x.fillRect(0, 0, w, h);
+        x.globalCompositeOperation = "destination-in"; x.drawImage(img, 0, 0, w, h);
+        x.globalCompositeOperation = "source-atop"; x.fillStyle = "rgba(0,0,0,.5)"; x.fillRect(0, 0, w, h); x.restore();
+      }
     });
   }
   function costruisciLeggii(S) {
     var el = S.t.el; vuota(S.zonaLeggii); S.L = [];
     S.gioc.forEach(function (g, i) {
-      var L = el("div", { class: "st-leggio" }); L.style.position = "absolute"; L.style.setProperty("--col", ST_COL[i % ST_COL.length]);
-      L.innerHTML = "<div class='luce'></div><div class='pozza'></div><div class='alone'></div>" +
+      var col = ST_COL[i % ST_COL.length], L = el("div", { class: "st-leggio" }); L.style.position = "absolute"; L.style.setProperty("--col", col);
+      // tutto quello che si illumina è già disegnato (canvas): accendere un leggio cambia solo l'opacità
+      L.innerHTML = "<canvas class='luce' width='96' height='268'></canvas><canvas class='pozza'></canvas><canvas class='alone'></canvas>" +
         "<div class='anello'></div><div class='cart'><div class='in'><div class='f'>?</div><div class='f r'></div></div></div><div class='delta'></div><div class='av'><canvas width='356' height='364'></canvas></div>" +
-        "<div class='podio'><div class='piano'><span class='buzz'></span></div><div class='fronte'><div class='nome'></div><div class='punti'>0</div></div><div class='led'></div></div>";
-      L.querySelector(".nome").textContent = g.nome;
+        "<div class='podio'><canvas class='banco'></canvas><canvas class='banco-luce'></canvas><canvas class='bagliore'></canvas><div class='piano'></div></div>";
+      cono(L.querySelector(".luce")); pozza(L.querySelector(".pozza")); chiazza(L.querySelector(".alone"), rgbaDi(col, 1)); bagliore(L.querySelector(".bagliore"), col);
       L.addEventListener("click", function () { if (S.onTocca && L.classList.contains("tocca")) S.onTocca(i); });   // il gioco decide chi si può toccare
-      if (i === S.io) L.querySelector(".piano").appendChild(el("span", { class: "tu", text: "TU" }));
-      var X = { el: L, avc: L.querySelector(".av canvas"), cart: L.querySelector(".cart"), delta: L.querySelector(".delta"), pEl: L.querySelector(".punti"), valore: 0, faccia: null };
+      var X = { el: L, avc: L.querySelector(".av canvas"), cart: L.querySelector(".cart"), delta: L.querySelector(".delta"),
+        banco: L.querySelector(".banco"), bancoLuce: L.querySelector(".banco-luce"), nome: g.nome, col: col, tu: i === S.io,
+        disp: { t: "0", neg: false, testo: false }, valore: 0, faccia: null };
       mettiAvatar(X, g, null);
       setTimeout(function () { ["esulta", "triste", "pensa"].forEach(function (f) { immagineAvatar(g, f, null); }); }, 1500 + i * 200);   // pronte per dopo (non tutte insieme all'entrata)
       S.L.push(X);
     });
+  }
+  function rgbaDi(hex, a) { var n = parseInt(String(hex).slice(1), 16); return "rgba(" + (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255) + "," + a + ")"; }
+  function pozza(c) {   // la pozza di luce sul pavimento (un'ellisse morbida)
+    c.width = 240; c.height = 40;
+    var x = c.getContext("2d"); x.translate(120, 20); x.scale(1, 40 / 240);
+    var g = x.createRadialGradient(0, 0, 0, 0, 0, 120);
+    g.addColorStop(0, "rgba(255,248,215,.85)"); g.addColorStop(0.5, "rgba(255,232,160,.4)"); g.addColorStop(1, "rgba(255,232,160,0)");
+    x.fillStyle = g; x.beginPath(); x.arc(0, 0, 120, 0, 7); x.fill();
+  }
+  function bagliore(c, col) {   // il bagliore della striscia led sotto al bancone quando il leggio è acceso
+    c.width = 150; c.height = 40;
+    var x = c.getContext("2d"); x.translate(75, 20); x.scale(1, 40 / 150);
+    var g = x.createRadialGradient(0, 0, 0, 0, 0, 75);
+    g.addColorStop(0, rgbaDi(col, 1)); g.addColorStop(1, rgbaDi(col, 0));
+    x.fillStyle = g; x.beginPath(); x.arc(0, 0, 75, 0, 7); x.fill();
+  }
+
+  // ---- il bancone del concorrente, disegnato su canvas (misure in "em": 1em = un decimo della larghezza del leggio) ----
+  // Da y = 0 (il piano) in giù: piano 1.1em, frontale 5.3em con lampadine, nome e display, striscia led .42em.
+  var FONT_PAGINA = null;
+  function fontPagina() { if (!FONT_PAGINA) { try { FONT_PAGINA = getComputedStyle(document.body).fontFamily || "system-ui,sans-serif"; } catch (e) { FONT_PAGINA = "system-ui,sans-serif"; } } return FONT_PAGINA; }
+  function rettTondo(x, X, Y, w, h, rs, ri) {   // rettangolo con angoli sopra (rs) e sotto (ri) diversi
+    x.beginPath(); x.moveTo(X + rs, Y); x.lineTo(X + w - rs, Y); x.quadraticCurveTo(X + w, Y, X + w, Y + rs); x.lineTo(X + w, Y + h - ri);
+    x.quadraticCurveTo(X + w, Y + h, X + w - ri, Y + h); x.lineTo(X + ri, Y + h); x.quadraticCurveTo(X, Y + h, X, Y + h - ri); x.lineTo(X, Y + rs); x.quadraticCurveTo(X, Y, X + rs, Y); x.closePath();
+  }
+  function trapezio(x, w, em) {   // il frontale: stretto in basso
+    var x0 = 0.05 * w, x1 = 0.95 * w, y0 = 1.1 * em, y1 = 6.4 * em, r = 0.05 * (x1 - x0);
+    x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y0); x.lineTo(x1 - r, y1); x.lineTo(x0 + r, y1); x.closePath();
+  }
+  function misuraBanco(X) {   // dimensioni del canvas in pixel veri (nitido anche negli zoom della telecamera)
+    var w = X.w || 100, em = w * 0.1, H = (6.82 + 2.2) * em, q = Math.min(LEGGERO ? 1.6 : 3, (window.devicePixelRatio || 1) * 1.3);
+    return { w: w, em: em, H: H, q: q, cw: Math.max(1, Math.round(w * q)), ch: Math.max(1, Math.round(H * q)), su: 1.1 * em };
+  }
+  function fondoBanco(X) {   // tutto quello che non cambia: piano, pulsante, frontale, lampadine, nome, striscia led
+    var M = misuraBanco(X), c = X.fondo || (X.fondo = document.createElement("canvas")), w = M.w, em = M.em, q = M.q;
+    c.width = M.cw; c.height = M.ch;
+    var x = c.getContext("2d"); x.setTransform(q, 0, 0, q, 0, M.su * q);
+    // piano
+    x.save(); x.shadowColor = "rgba(0,0,0,.4)"; x.shadowOffsetY = 0.25 * em * q; x.shadowBlur = 0.45 * em * q;
+    var g = x.createLinearGradient(0, 0, 0, 1.1 * em); g.addColorStop(0, "#ffffff"); g.addColorStop(0.35, "#d8d2ff"); g.addColorStop(0.75, "#8d84d8"); g.addColorStop(1, "#5a50a8");
+    x.fillStyle = g; rettTondo(x, 0, 0, w, 1.1 * em, 0.55 * em, 0.2 * em); x.fill(); x.restore();
+    // pulsante rosso
+    var bw = 1.15 * em, bh = 0.62 * em, bx = w * 0.87 - bw, by = -0.5 * em;
+    g = x.createRadialGradient(bx + bw * 0.4, by + bh * 0.3, 0, bx + bw * 0.4, by + bh * 0.3, bw * 0.75);
+    g.addColorStop(0, "#ffc2c7"); g.addColorStop(0.55, "#ff2d45"); g.addColorStop(1, "#8a0f1c");
+    x.fillStyle = g; rettTondo(x, bx, by, bw, bh, bh * 0.95, 0.2 * em); x.fill();
+    // "TU" sul leggio di chi ha questo telefono
+    if (X.tu) {
+      var f = 0.72 * em; x.font = "900 " + f.toFixed(2) + "px " + fontPagina();
+      var tw = x.measureText("TU").width + 1.1 * f, th = f * 1.25, tx = w * 0.1, ty = -0.62 * em;
+      g = x.createLinearGradient(0, ty, 0, ty + th); g.addColorStop(0, "#fff3a8"); g.addColorStop(1, "#ffca3a");
+      x.fillStyle = g; rettTondo(x, tx, ty, tw, th, th / 2, th / 2); x.fill();
+      x.fillStyle = "#241f00"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("TU", tx + tw / 2, ty + th / 2 + f * 0.04);
+    }
+    // frontale
+    trapezio(x, w, em);
+    g = x.createLinearGradient(0, 1.1 * em, 0, 6.4 * em); g.addColorStop(0, "#36268a"); g.addColorStop(0.55, "#1b1152"); g.addColorStop(1, "#0d0730");
+    x.fillStyle = g; x.fill();
+    g = x.createLinearGradient(0.05 * w, 0, 0.95 * w, 0); g.addColorStop(0, "rgba(255,255,255,.14)"); g.addColorStop(0.22, "rgba(255,255,255,0)"); g.addColorStop(0.78, "rgba(255,255,255,0)"); g.addColorStop(1, "rgba(255,255,255,.1)");
+    x.fillStyle = g; x.fill();
+    // lampadine in fila
+    var fx0 = 0.05 * w + 0.08 * 0.9 * w, fx1 = 0.95 * w - 0.08 * 0.9 * w, passo = 0.62 * em, cy = 1.1 * em + 0.39 * em;
+    for (var lx = fx0 + passo / 2; lx < fx1; lx += passo) {
+      g = x.createRadialGradient(lx, cy, 0, lx, cy, 0.21 * em);
+      g.addColorStop(0, "#fffbe0"); g.addColorStop(0.43, "#fffbe0"); g.addColorStop(0.7, X.col); g.addColorStop(1, rgbaDi(X.col, 0));
+      x.fillStyle = g; x.fillRect(lx - 0.21 * em, cy - 0.21 * em, 0.42 * em, 0.42 * em);
+    }
+    // nome
+    var fn = 1.3 * em, nome = String(X.nome || ""); x.font = "900 " + fn.toFixed(2) + "px " + fontPagina();
+    var maxW = 0.9 * w - 0.8 * em;
+    if (x.measureText(nome).width > maxW) { while (nome.length > 1 && x.measureText(nome + "…").width > maxW) nome = nome.slice(0, -1); nome += "…"; }
+    x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillStyle = "rgba(0,0,0,.45)"; x.fillText(nome, w / 2, 1.1 * em + 1.55 * em + 0.08 * em);
+    x.fillStyle = "#fff"; x.fillText(nome, w / 2, 1.1 * em + 1.55 * em);
+    // striscia led colorata
+    x.save(); x.shadowColor = X.col; x.shadowBlur = 0.8 * em * q; x.fillStyle = X.col;
+    rettTondo(x, 0.09 * w, 6.4 * em, 0.82 * w, 0.42 * em, 0.01, 0.3 * em); x.fill(); x.restore();
+    X.fondoW = w;
+    // la luce sul frontale quando il leggio è acceso (canvas a parte: si accende con l'opacità)
+    var cl = X.bancoLuce; if (cl) {
+      cl.width = M.cw; cl.height = M.ch; var y = cl.getContext("2d"); y.setTransform(q, 0, 0, q, 0, M.su * q);
+      trapezio(y, w, em); g = y.createLinearGradient(0, 1.1 * em, 0, 6.4 * em); g.addColorStop(0, "rgba(255,246,205,.3)"); g.addColorStop(1, "rgba(255,246,205,.08)");
+      y.fillStyle = g; y.fill();
+    }
+  }
+  // il display del leggio (punti o una scritta) sopra al fondo; se il concorrente è eliminato tutto in bianco e nero
+  function disegnaBanco(X) {
+    if (!X || !X.banco) return;
+    if (!X.fondo || X.fondoW !== X.w) fondoBanco(X);
+    var M = misuraBanco(X), c = X.banco, w = M.w, em = M.em, q = M.q;
+    if (c.width !== M.cw || c.height !== M.ch) { c.width = M.cw; c.height = M.ch; }
+    var dest = X.grigio ? (X.tmp || (X.tmp = document.createElement("canvas"))) : c;
+    if (dest !== c) { dest.width = M.cw; dest.height = M.ch; }
+    var x = dest.getContext("2d");
+    x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, M.cw, M.ch); x.drawImage(X.fondo, 0, 0);
+    x.setTransform(q, 0, 0, q, 0, M.su * q);
+    var d = X.disp || { t: "" }, dy = 1.1 * em + 2.61 * em, dh = 1.95 * em;
+    var f = (d.testo ? 1.2 : 1.6) * em, font = d.testo ? "900 " + f.toFixed(2) + "px " + fontPagina() : "900 " + f.toFixed(2) + "px 'Courier New',ui-monospace,monospace";
+    x.font = font;
+    var tw = x.measureText(d.t).width, dw = Math.min(0.86 * w, Math.max(0.72 * 0.9 * w, tw + 0.9 * em)), dx = (w - dw) / 2;
+    x.fillStyle = "#05030f"; rettTondo(x, dx, dy, dw, dh, 0.3 * em, 0.3 * em); x.fill();
+    x.strokeStyle = "rgba(255,224,102,.3)"; x.lineWidth = 0.08 * em; rettTondo(x, dx + 0.04 * em, dy + 0.04 * em, dw - 0.08 * em, dh - 0.08 * em, 0.26 * em, 0.26 * em); x.stroke();
+    x.fillStyle = d.neg ? "#ff8d98" : "#ffe066"; x.textAlign = "center"; x.textBaseline = "middle";
+    if (tw > dw - 0.4 * em) { x.save(); x.translate(w / 2, dy + dh / 2); x.scale((dw - 0.4 * em) / tw, 1); x.fillText(d.t, 0, f * 0.04); x.restore(); }
+    else x.fillText(d.t, w / 2, dy + dh / 2 + f * 0.04);
+    if (dest !== c) {   // eliminato: grigio e più scuro
+      var y = c.getContext("2d"); y.setTransform(1, 0, 0, 1, 0, 0); y.clearRect(0, 0, M.cw, M.ch); y.drawImage(dest, 0, 0);
+      y.globalCompositeOperation = "saturation"; y.fillStyle = "#808080"; y.fillRect(0, 0, M.cw, M.ch);
+      y.globalCompositeOperation = "destination-in"; y.drawImage(dest, 0, 0);
+      y.globalCompositeOperation = "source-atop"; y.fillStyle = "rgba(0,0,0,.45)"; y.fillRect(0, 0, M.cw, M.ch);
+      y.globalCompositeOperation = "source-over";
+    }
   }
   // posti dei leggii: fino a 4 una fila; da 5 a 10 due file sfalsate (quella dietro più piccola e più in alto)
   function postiLeggii(S) {
@@ -410,6 +736,113 @@
     c.width = Math.max(1, Math.round(w * q)); c.height = Math.max(1, Math.round(h * q));
     c.style.width = w + "px"; c.style.height = h + "px";
     var x = c.getContext("2d"); x.setTransform(q, 0, 0, q, 0, 0); return x;
+  }
+  // ---- luci morbide disegnate una volta (canvas piccoli): la scheda grafica le ingrandisce e le muove senza ridisegnarle ----
+  function trasp(col) { return col.replace(/,\s*[\d.]+\)$/, ",0)"); }   // lo stesso colore, trasparente
+  function fascio(c, col) {   // fascio di un faro: stretto in alto, largo in basso, sfuma verso il fondo
+    c.width = 64; c.height = 380;
+    var x = c.getContext("2d"), g = x.createLinearGradient(0, 0, 0, 380);
+    g.addColorStop(0, col); g.addColorStop(0.88, trasp(col)); g.addColorStop(1, trasp(col));
+    x.fillStyle = g; x.beginPath(); x.moveTo(29.4, 0); x.lineTo(34.6, 0); x.lineTo(64, 380); x.lineTo(0, 380); x.closePath(); x.fill();
+  }
+  function chiazza(c, col) {   // macchia di luce rotonda (occhi di bue colorati sulla folla)
+    c.width = c.height = 132;
+    var x = c.getContext("2d"), g = x.createRadialGradient(66, 66, 0, 66, 66, 66);
+    g.addColorStop(0, col); g.addColorStop(1, trasp(col));
+    x.fillStyle = g; x.fillRect(0, 0, 132, 132);
+  }
+  function cono(c) {   // occhio di bue sul leggio: scende dall'alto fino al pavimento
+    if (!c || !c.getContext) return;
+    var w = c.width, h = c.height, x = c.getContext("2d"), g = x.createLinearGradient(0, h, 0, 0);
+    g.addColorStop(0, "rgba(255,246,205,.46)"); g.addColorStop(0.4, "rgba(255,246,205,.2)"); g.addColorStop(0.92, "rgba(255,246,205,0)"); g.addColorStop(1, "rgba(255,246,205,0)");
+    x.fillStyle = g; x.beginPath(); x.moveTo(w * 0.43, 0); x.lineTo(w * 0.57, 0); x.lineTo(w, h); x.lineTo(0, h); x.closePath(); x.fill();
+  }
+  // ---- torri LED: due pannelli a led che ballano a tempo di musica (un canvas ciascuno, ridisegnato 14 volte al secondo) ----
+  var COL_LED = (function () {   // dal basso (viola) all'alto (giallo chiaro)
+    var t = [[123, 44, 255], [255, 62, 165], [255, 179, 0], [255, 243, 168]], out = [];
+    for (var s = 0; s < 12; s++) {
+      var p = s / 11 * 3, k = Math.min(2, Math.floor(p)), f = p - k, a = t[k], b = t[k + 1];
+      out.push("rgb(" + Math.round(a[0] + (b[0] - a[0]) * f) + "," + Math.round(a[1] + (b[1] - a[1]) * f) + "," + Math.round(a[2] + (b[2] - a[2]) * f) + ")");
+    }
+    return out;
+  })();
+  function disegnaTorreEq(c, liv) {
+    if (!c || !c.getContext || c.width < 2) return;
+    var x = c.getContext("2d"), W = c.width, H = c.height, N = 7, SEG = 12, bw = W / N, sh = H / SEG;
+    x.clearRect(0, 0, W, H);
+    for (var b = 0; b < N; b++) {
+      var acc = Math.round((liv ? liv[b] : 0.3 + ((b * 37) % 60) / 100) * SEG);
+      for (var s = 0; s < SEG; s++) {
+        x.globalAlpha = s < acc ? 1 : 0.13; x.fillStyle = COL_LED[s];
+        x.fillRect(b * bw + bw * 0.15, H - (s + 1) * sh + sh * 0.15, bw * 0.7, sh * 0.7);
+      }
+    }
+    x.globalAlpha = 1;
+  }
+  function disegnaEq(S) { (S.eq || []).forEach(function (c, k) { disegnaTorreEq(c, S.eqLiv ? S.eqLiv.slice(k * 7, k * 7 + 7) : null); }); }
+  function avviaEq(S) {
+    if (LEGGERO) return disegnaEq(S);   // telefoni leggeri: pannelli fermi
+    var obi = []; S.eqLiv = []; for (var b = 0; b < 14; b++) { S.eqLiv.push(Math.random() * 0.6); obi.push(Math.random()); }
+    var id = setInterval(function () {
+      if (!S.vivo()) { clearInterval(id); return; }
+      if (document.hidden || S.leggeroAuto || S.mondo.classList.contains("st-quieto")) return;   // non si vede (o il telefono fatica): fermo
+      var batt = Musica.battito();
+      for (var b = 0; b < 14; b++) {
+        if (Math.random() < 0.3) obi[b] = 0.12 + Math.random() * 0.7;
+        var tgt = Math.min(1, obi[b] + batt * ((b % 7) < 3 ? 0.55 : 0.3)), l = S.eqLiv[b];   // le barre dei bassi saltano di più sul colpo
+        S.eqLiv[b] = l + (tgt - l) * (tgt > l ? 0.75 : 0.3);   // sale di scatto, scende piano
+      }
+      disegnaEq(S);
+    }, 70);
+  }
+  // raggi che girano dietro a una carta o a un risultato (già sfumati verso il bordo: niente maschere da ricalcolare)
+  function raggi(S, ko) {
+    var c = document.createElement("canvas"); c.className = "st-raggi"; c.width = c.height = 256;
+    var x = c.getContext("2d"), m = 128, k, a, g;
+    x.fillStyle = ko ? "rgba(255,93,108,.2)" : "rgba(255,230,120,.22)";
+    for (k = 0; k < 18; k++) { a = (k * 20 - 90) * Math.PI / 180; x.beginPath(); x.moveTo(m, m); x.arc(m, m, 190, a, a + 8 * Math.PI / 180); x.closePath(); x.fill(); }
+    g = x.createRadialGradient(m, m, 0, m, m, 181 * 0.65);
+    g.addColorStop(0, "#000"); g.addColorStop(0.2 / 0.65, "#000"); g.addColorStop(1, "rgba(0,0,0,0)");
+    x.globalCompositeOperation = "destination-in"; x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+    return c;
+  }
+  // ---- il rullo della slot machine: parte veloce e rallenta piano piano fino a fermarsi sulla voce giusta ----
+  // opz: { cls, alt (altezza di una casella in px), voci (le scritte che passano), ultima (dove si ferma), durata (ms), scatto(k) a ogni casella che passa }
+  // Tre caselle che si danno il cambio: a ogni scatto se ne riscrive una sola, il resto lo muove la scheda grafica.
+  function rullo(S, opz) {
+    var el = S.t.el, H = opz.alt, fin = el("div", { class: "st-rullo " + (opz.cls || "") }), celle = [], mostra = [null, null, null], k;
+    fin.style.height = H + "px";
+    for (k = 0; k < 3; k++) { var ce = el("div", { class: "st-cella" }); ce.style.height = H + "px"; fin.appendChild(ce); celle.push(ce); }
+    var voci = opz.voci && opz.voci.length ? opz.voci : [opz.ultima], N = Math.max(10, Math.round(opz.durata / 140)), seq = [], prec = null;
+    function pesca(no) { var v, n = 0; do { v = voci[Math.floor(Math.random() * voci.length)]; } while (voci.length > 1 && (v === no || v === prec) && ++n < 20); return v; }
+    for (k = 0; k <= N + 1; k++) { seq.push(pesca(null)); prec = seq[k]; }   // mai due uguali di fila
+    seq[N] = opz.ultima;
+    if (seq[N - 1] === opz.ultima) seq[N - 1] = pesca(opz.ultima);
+    if (seq[N + 1] === opz.ultima) seq[N + 1] = pesca(opz.ultima);
+    var ora = -1;
+    function posa(p) {   // p = quante caselle sono passate (con la virgola)
+      var i = Math.min(N, Math.floor(p)), f = p - i;
+      if (i !== ora) { if (ora >= 0 && opz.scatto) opz.scatto(i); ora = i; }
+      for (var d = -1; d <= 1; d++) {   // la voce dopo sta sopra e scende al centro
+        var idx = i + d, c = ((idx % 3) + 3) % 3;
+        if (mostra[c] !== idx) { mostra[c] = idx; celle[c].textContent = seq[Math.max(0, Math.min(N + 1, idx))]; }
+        celle[c].style.transform = "translate3d(0," + ((f - d) * H).toFixed(1) + "px,0)";
+      }
+    }
+    posa(0);
+    return { el: fin, via: function () {
+      return new Promise(function (ok) {
+        var t0 = performance.now(), finito = false;
+        function fine() { if (finito) return; finito = true; posa(N); ok(); }
+        (function giro() {
+          if (finito) return;
+          var u = Math.min(1, (performance.now() - t0) / opz.durata);
+          posa(N * (1 - Math.pow(1 - u, 2.2)));   // frena come una ruota vera: veloce all'inizio, piano piano alla fine
+          if (u >= 1) fine(); else requestAnimationFrame(giro);
+        })();
+        setTimeout(fine, opz.durata + 150);   // si ferma comunque sulla voce giusta
+      });
+    } };
   }
   function rett(x, X, Y, w, h, r) {
     x.beginPath(); x.moveTo(X + r, Y); x.lineTo(X + w - r, Y); x.quadraticCurveTo(X + w, Y, X + w, Y + r); x.lineTo(X + w, Y + h - r);
@@ -602,7 +1035,11 @@
     disegnaPubblico(S);
     pos(S.schermo, R.x, R.y, R.w, R.h);
     S.fasci.forEach(function (f, i) { var fx = W * (0.1 + i * 0.267); pos(f, fx - 0.22 * VW, 0.03 * VH, 0.44 * VW, 1.35 * VH); });
-    S.eq.forEach(function (e, i) { var p = S.torriR[i]; pos(e, p[0], p[1] + 44, p[2], p[3] - 44); });
+    S.eq.forEach(function (e, i) {   // dentro agli angoli tondi della torre
+      var p = S.torriR[i], qe = LEGGERO ? 1 : 1.5; pos(e, p[0] + 6, p[1] + 44, p[2] - 12, p[3] - 50);
+      e.width = Math.max(1, Math.round((p[2] - 12) * qe)); e.height = Math.max(1, Math.round((p[3] - 50) * qe));
+    });
+    disegnaEq(S);
     function inPub(e) { var z = S.zonePub[e._zona]; pos(e, z[0] + 12 + e._rx * (z[2] - 24), z[1] + 24 + e._ry * (z[3] - 60)); }
     S.lucine.forEach(inPub); S.flash.forEach(inPub);
     S.bastoni.forEach(inPub); S.cartelli.forEach(inPub);
@@ -619,21 +1056,80 @@
       var p = S.posti[i], X = S.L[i]; if (!X) return;
       pos(X.el, p.cx - p.w / 2, p.top, p.w);
       X.el.style.fontSize = (p.w * 0.1).toFixed(1) + "px";
+      if (X.w !== p.w) { X.w = p.w; disegnaBanco(X); }   // il bancone si ridisegna solo se cambia misura
       S.zonaLeggii.appendChild(X.el);
     });
     S.file = S.posti.length > 4 ? 2 : 1;
   }
 
   // ---------- TELECAMERA ----------
+  // La muovo io fotogramma per fotogramma (non con una transizione CSS). Con la transizione il telefono ridisegnava tutto lo
+  // studio all'inizio e alla fine di ogni movimento: scatti, e a volte il bancone spariva per un attimo. Così invece lo studio,
+  // disegnato una volta a grandezza piena, viene solo spostato e ingrandito dalla scheda grafica.
+  function curva(x1, y1, x2, y2) {   // accelerazione morbida (come cubic-bezier del CSS)
+    var cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+    function X(t) { return ((ax * t + bx) * t + cx) * t; }
+    function D(t) { return (3 * ax * t + 2 * bx) * t + cx; }
+    return function (u) {
+      if (u <= 0) return 0; if (u >= 1) return 1;
+      var t = u, i, e, d;
+      for (i = 0; i < 8; i++) { e = X(t) - u; if (Math.abs(e) < 1e-5) break; d = D(t); if (Math.abs(d) < 1e-6) break; t -= e / d; }
+      if (!(t >= 0 && t <= 1) || Math.abs(X(t) - u) > 1e-3) { var a = 0, b = 1; t = u; for (i = 0; i < 30; i++) { e = X(t); if (Math.abs(e - u) < 1e-5) break; if (e < u) a = t; else b = t; t = (a + b) / 2; } }
+      return ((ay * t + by) * t + cy) * t;
+    };
+  }
+  var EASE = curva(0.45, 0.05, 0.25, 1);
+  function vistaDi(S, r) {   // centro e ingrandimento di un'inquadratura, senza mai uscire dallo studio (niente fasce nere ai bordi)
+    var s = Math.min(S.VW / r.w, S.VH / r.h), cx = r.x + r.w / 2, cy = r.y + r.h / 2, vw = S.VW / s, vh = S.VH / s;
+    if (vw <= S.W) cx = Math.max(vw / 2, Math.min(S.W - vw / 2, cx));
+    if (vh <= S.H) cy = Math.max(vh / 2, Math.min(S.H - vh / 2, cy));
+    return { cx: cx, cy: cy, s: s };
+  }
+  function metti(S, v, fermo) {   // mette la telecamera su un punto dello studio (centro e ingrandimento)
+    var s = v.s, tx = S.VW / 2 - v.cx * s, ty = S.VH / 2 - v.cy * s;
+    if (fermo && Math.abs(s - 1) < 0.001) { s = 1; tx = Math.round(tx); ty = Math.round(ty); }   // ferma sul maxischermo: nitida al pixel
+    S.mondo.style.transform = "translate3d(" + tx.toFixed(2) + "px," + ty.toFixed(2) + "px,0) scale(" + s.toFixed(5) + ")";
+    S.cam = { cx: v.cx, cy: v.cy, s: v.s };
+  }
   function camera(S, r, ms) {
-    var s = Math.min(S.VW / r.w, S.VH / r.h), tx = (S.VW - r.w * s) / 2 - r.x * s, ty = (S.VH - r.h * s) / 2 - r.y * s;
-    if (Math.abs(s - 1) < 0.001) { s = 1; tx = Math.round(tx); ty = Math.round(ty); }   // sul maxischermo: nitido al pixel
-    S.mondo.style.transition = ms ? "transform " + ms + "ms cubic-bezier(.45,.05,.25,1)" : "none";
-    S.mondo.style.transform = "translate3d(" + tx.toFixed(1) + "px," + ty.toFixed(1) + "px,0) scale(" + s.toFixed(4) + ")";
-    var suSch = r === S.R.schermo;
+    if (!S.rasterOk && S.attesaRaster) return S.attesaRaster.then(function () { return camera(S, r, ms); });   // prima lo studio si prepara
+    var dest = vistaDi(S, r), suSch = r === S.R.schermo, mossa = S.mossa = (S.mossa || 0) + 1;
     S.mondo.classList.toggle("st-quieto", suSch);   // sul maxischermo lo studio si ferma (risparmio batteria)
     S.rec.classList.toggle("on", !suSch);
-    return dorme(ms || 0);
+    if (!ms || !S.cam) { metti(S, dest, true); return dorme(0); }
+    var da = S.cam, t0 = performance.now(), l0 = Math.log(da.s), l1 = Math.log(dest.s);
+    return new Promise(function (fine) {
+      function passo(t) {
+        if (S.mossa !== mossa) return;   // nel frattempo è partita un'altra inquadratura
+        var u = Math.min(1, ((t || performance.now()) - t0) / ms), e = EASE(u);
+        if (u >= 1) { metti(S, dest, true); return; }
+        // il centro scorre dritto, lo zoom cambia in proporzione: il movimento sembra quello di una telecamera vera
+        metti(S, { cx: da.cx + (dest.cx - da.cx) * e, cy: da.cy + (dest.cy - da.cy) * e, s: Math.exp(l0 + (l1 - l0) * e) }, false);
+        contaFotogramma(S, t || performance.now());
+        requestAnimationFrame(passo);
+      }
+      requestAnimationFrame(passo);
+      setTimeout(function () { if (S.mossa === mossa) metti(S, dest, true); fineMovimento(S); fine(); }, ms);   // arriva comunque, anche se lo schermo non ridisegna
+    });
+  }
+  // Se il telefono fatica mentre la telecamera si muove (tanti fotogrammi saltati in più movimenti), spengo le luci che ballano:
+  // prima di tutto la fluidità. Vale solo per questa partita.
+  function contaFotogramma(S, t) {
+    var m = S.misura || (S.misura = { ult: 0, dt: [], mosse: 0, male: 0 });
+    if (m.ult && t - m.ult > 0 && t - m.ult < 250) m.dt.push(t - m.ult);
+    m.ult = t;
+  }
+  function fineMovimento(S) {
+    var m = S.misura; if (!m) return;
+    var d = m.dt.slice(3).sort(function (a, b) { return a - b; }); m.dt = []; m.ult = 0;
+    if (d.length < 12 || S.leggeroAuto || LEGGERO) return;
+    var base = Math.max(d[Math.floor(d.length * 0.1)], 1), lenti = 0, soglia = Math.max(base * 1.8, 25);
+    d.forEach(function (x) { if (x > soglia) lenti++; });
+    m.mosse++; if (lenti / d.length > 0.25) m.male++;
+    if (m.mosse >= 3 && m.male >= 2) {
+      S.leggeroAuto = true; S.vista.classList.add("st-leggero", "st-leggero-auto");
+      try { console.info("[studio] il telefono fatica: tolgo le luci che ballano"); } catch (e) {}
+    }
   }
   function inquadra(S, shot, ms) { S.shot = shot; return camera(S, shot(), ms); }
   function suSchermo(S, ms) { return inquadra(S, function () { return S.R.schermo; }, ms); }
@@ -685,7 +1181,7 @@
   function puntiLeggio(S, i, valore, delta) {
     var X = S.L[i]; if (!X) return;
     var da = X.valore; X.valore = valore;
-    function scrivi(v) { X.pEl.textContent = v; X.pEl.classList.toggle("neg", v < 0); }
+    function scrivi(v) { if (X.disp && !X.disp.testo && X.disp.t === String(v)) return; X.disp = { t: String(v), neg: v < 0, testo: false }; disegnaBanco(X); }
     if (!delta) return scrivi(valore);
     X.delta.textContent = (delta > 0 ? "+" : "−") + Math.abs(delta);
     X.delta.style.color = delta > 0 ? "#6ff0a6" : "#ff8d98";
@@ -708,11 +1204,11 @@
     var l = testi[tipo] || testi.applauso;
     S.fumetto.textContent = l[Math.floor(Math.random() * l.length)];
     S.fumetto.classList.remove("on"); void S.fumetto.offsetWidth; S.fumetto.classList.add("on");
-    if (tipo === "applauso") {
+    if (tipo !== "ohh") {   // "applauso", "ovazione" (chi vince: coi fischi) o "piano" (applauso di cortesia)
       S.pubWrap.classList.add("salta");
       S.flash.forEach(function (f, k) { setTimeout(function () { f.classList.remove("on"); void f.offsetWidth; f.classList.add("on"); }, 100 + Math.random() * 1300); });
-      setTimeout(function () { S.pubWrap.classList.remove("salta"); }, 1900);
-      FX.applauso();
+      setTimeout(function () { S.pubWrap.classList.remove("salta"); }, tipo === "ovazione" ? 2800 : 1900);
+      FX.applauso(tipo === "ovazione" ? "forte" : tipo === "piano" ? "piano" : null);
     } else FX.ohh();
   }
   function logoSchermo(S) {
@@ -725,6 +1221,7 @@
   // ---------- LA REGIA: i momenti dello spettacolo ----------
   async function apertura(S) {
     viaBarra(S); logoSchermo(S);
+    if (S.pubPronto) await S.pubPronto;   // le facce del pubblico pronte prima di muovere la telecamera
     await suPubblico(S, 0, 0);
     terzo(S, null, "In diretta dallo studio", S.titolo || "", "📺");
     pubblico(S, "applauso");
@@ -735,6 +1232,7 @@
         if (!S.vivo()) return;
         await suLeggio(S, i, 850); accendiSolo(S, i); faccia(S, i, "esulta");
         terzo(S, i, S.gioc[i].nome, i === S.io ? "Sei tu! In bocca al lupo" : "Concorrente n° " + (i + 1));
+        pubblico(S, "piano");   // il pubblico accoglie ogni concorrente
         await dorme(700); faccia(S, i, null); viaTerzo(S);
       }
       accendiSolo(S, -1);
@@ -743,6 +1241,7 @@
         if (!S.vivo()) return;
         var quanti = S.posti.filter(function (p) { return p.fila === f; }).length;
         terzo(S, null, f === 0 ? "Ecco i concorrenti!" : "…e in seconda fila!", quanti + " concorrenti", "🎤");
+        pubblico(S, "applauso");
         await panFila(S, f, 2600, function (k) { accendi(S, k, true); faccia(S, k, "esulta"); setTimeout(function () { accendi(S, k, false); faccia(S, k, null); }, 900); });
       }
       viaTerzo(S);
@@ -756,6 +1255,7 @@
     await suLeggio(S, gi, 900);
     faccia(S, gi, "pensa");
     terzo(S, gi, "Tocca a " + (S.gioc[gi] ? S.gioc[gi].nome : ""), sotto);
+    pubblico(S, "piano");
     await dorme(1300);
     viaTerzo(S); faccia(S, gi, null);
   }
@@ -770,7 +1270,7 @@
       await suLeggio(S, vinc, 1100);
       faccia(S, vinc, "esulta");
       terzo(S, vinc, (S.gioc[vinc] ? S.gioc[vinc].nome : "") + " vince!", sotto || "", "🏆");
-      pubblico(S, "applauso"); coriandoli(); FX.fanfara();
+      pubblico(S, "ovazione"); coriandoli(); FX.fanfara();
       await dorme(3000); viaTerzo(S);
     }
     await largo(S, 1400); await dorme(700);
@@ -779,11 +1279,32 @@
 
   // ---- pezzi in più per i giochi (es. la bomba della Patata) ----
   // scritta libera sul display del leggio (al posto dei punti): es. "IN GARA", "💀 OUT", il countdown
-  function testoLeggio(S, i, testo, neg) { var X = S.L[i]; if (!X) return; X.pEl.textContent = testo; X.pEl.classList.add("testo"); X.pEl.classList.toggle("neg", !!neg); }
+  function testoLeggio(S, i, testo, neg) {
+    var X = S.L[i]; if (!X) return; testo = String(testo);
+    if (X.disp && X.disp.testo && X.disp.t === testo && X.disp.neg === !!neg) return;   // uguale a prima: non ridisegno
+    X.disp = { t: testo, neg: !!neg, testo: true }; disegnaBanco(X);
+  }
   // quali leggii si possono toccare (anello verde che pulsa); lista di indici
   function tocca(S, lista) { S.L.forEach(function (X, k) { X.el.classList.toggle("tocca", lista.indexOf(k) >= 0); }); }
-  function fuori(S, i, on) { var X = S.L[i]; if (X) X.el.classList.toggle("fuori", !!on); }
-  function scossa(S) { var e = S.scena; e.classList.remove("scossa"); void e.offsetWidth; e.classList.add("scossa"); }
+  function fuori(S, i, on) {
+    var X = S.L[i]; if (!X) return; X.el.classList.toggle("fuori", !!on);
+    if (!!X.grigio !== !!on) { X.grigio = !!on; mettiAvatar(X, S.gioc[i], X.faccia); disegnaBanco(X); }   // avatar e bancone in bianco e nero
+  }
+  // la telecamera trema (un'esplosione): la muovo io, così lo studio non si ridisegna
+  function scossa(S) {
+    var e = S.scena, t0 = performance.now(), D = 550, id = S.scossaId = (S.scossaId || 0) + 1;
+    var K = [[0, 0, 0], [0.15, -9, 5], [0.3, 8, -6], [0.45, -6, -3], [0.6, 5, 4], [0.8, -2, 1], [1, 0, 0]];
+    function passo(t) {
+      if (S.scossaId !== id) return;
+      var u = Math.min(1, ((t || performance.now()) - t0) / D), k = 1;
+      while (k < K.length - 1 && K[k][0] < u) k++;
+      var a = K[k - 1], b = K[k], f = (u - a[0]) / (b[0] - a[0]); f = 1 - (1 - f) * (1 - f);
+      e.style.transform = u >= 1 ? "" : "translate3d(" + (a[1] + (b[1] - a[1]) * f).toFixed(1) + "px," + (a[2] + (b[2] - a[2]) * f).toFixed(1) + "px,0)";
+      if (u < 1) requestAnimationFrame(passo);
+    }
+    requestAnimationFrame(passo);
+    setTimeout(function () { if (S.scossaId === id) e.style.transform = ""; }, D + 60);
+  }
   // punto del mondo sopra la testa del concorrente i (per metterci sopra una cosa, es. la bomba)
   function sopraTesta(S, i) { var p = S.posti[i] || S.posti[0]; return { x: p.cx, y: p.top, w: p.w }; }
 
@@ -795,6 +1316,7 @@
     apertura: apertura, stacco: stacco, finale: finale,
     testoLeggio: testoLeggio, tocca: tocca, fuori: fuori, scossa: scossa, sopraTesta: sopraTesta,
     avatarDi: avatarDi, mioAvatar: mioAvatar, avatarValido: avatarValido, coriandoli: coriandoli,
+    raggi: raggi, rullo: rullo,
     dorme: dorme, vuota: vuota, durataApertura: durataApertura, STACCO: STACCO, FX: FX, COLORI: ST_COL
   };
 })();

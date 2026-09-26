@@ -9,6 +9,41 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 134,
+    data: "26 settembre 2026",
+    titolo: "Nomi, Cose e Città online 🔗✍️",
+    descrizione: [
+      "Nomi, Cose e Città si gioca anche \"ognuno dal suo telefono\": apri una stanza, mandi il codice o il link, e si gioca nello studio del game show.",
+      "Si scrive tutti nello stesso momento, ognuno sul suo foglio, con lo stesso tempo per tutti. Sul maxischermo si vede chi ha già finito.",
+      "Al tabellone ognuno vota dal suo telefono: una parola vale finché non la boccia almeno metà degli altri. Con \"Ho votato\" si passa alla categoria dopo quando hanno votato tutti.",
+      "C'è anche nella Sala online, tra i giochi che l'host può lanciare per tutti.",
+      "Quando entri da un invito non devi più scrivere il nome: entri direttamente col profilo del tuo telefono (vale per tutti i giochi online)."
+    ]
+  },
+  {
+    v: 133,
+    data: "26 settembre 2026",
+    titolo: "Studio senza scatti, musica e applausi 🎵👏",
+    descrizione: [
+      "Game show più fluidi: la telecamera ora si muove senza far ridisegnare lo studio al telefono, e il bancone dei concorrenti non sparisce più durante i movimenti.",
+      "Le torri di luci in alto a destra e a sinistra ora sono pannelli LED che ballano a tempo di musica, molto più leggeri per il telefono. Se il telefono fa fatica, lo studio si alleggerisce da solo.",
+      "Sotto al gioco c'è una musichetta chill. Si spegne e si riaccende col tasto 🎵 in alto a destra, e il telefono se lo ricorda.",
+      "Applausi veri del pubblico: quando entra ogni concorrente, a ogni turno, quando indovini; e l'ovazione con i fischi per chi vince.",
+      "Black Jack: la nuova mano parte con la stessa puntata della mano prima (non più sempre 100)."
+    ]
+  },
+  {
+    v: 132,
+    data: "26 settembre 2026",
+    titolo: "Categoria a sorpresa, slot che rallenta e studio più fluido 🎲",
+    descrizione: [
+      "Patata Bollente: oltre alle 3 categorie ora si può votare \"🎲 A sorpresa\". Se vince, sul maxischermo gira la ruota delle categorie, che rallenta piano piano e si ferma su una categoria a caso. Il tempo della bomba resta fermo finché la ruota gira.",
+      "Nomi, Cose e Città: la slot machine della lettera ora è un rullo vero. Parte velocissima e rallenta piano piano (tac… tac…… tac) fino a fermarsi sulla lettera, senza più frenate di colpo.",
+      "Studio del game show più fluido quando la telecamera si muove: luci, fari, raggi e cartellini sono più leggeri per il telefono, e la barra del tempo non ridisegna più lo schermo a ogni istante.",
+      "La linea del tempo: fra un turno e l'altro sul maxischermo torna il logo del programma."
+    ]
+  },
+  {
     v: 131,
     data: "26 settembre 2026",
     titolo: "Nomi, Cose e Città nello studio ✍️📋",

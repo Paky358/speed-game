@@ -2302,7 +2302,7 @@ button.am-riga:active{ transform:scale(.985); }
   var catAttiva = "tutti";
   function catDi(g) { return CAT_GIOCO[g.id] || null; }
   // Giochi che hanno la modalità "ognuno dal suo telefono" (usabili nella Sala online).
-  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, drop4: 1, horto: 1, navale: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1 };
+  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1 };
   function giocoOnline(g) { return !!(g && GIOCHI_ONLINE[g.id]); }
   var app;                    // contenitore radice (#app)
   var linkParams = {};        // impostazioni arrivate da un link condiviso
@@ -4197,6 +4197,9 @@ button.am-riga:active{ transform:scale(.985); }
       },
       mostra: function (s) { mostra(s); },
 
+      // il nome del profilo di questo telefono (chi entra da un invito entra direttamente con questo)
+      nomeProfilo: function () { var p = profiloAttivo(); return p && p.nome ? String(p.nome).trim().slice(0, 16) : ""; },
+
       // passaggio del telefono, poi esegue "quando"
       passaA: function (nome, quando) { passaIlTelefono(nome, quando); },
 
@@ -4687,38 +4690,238 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
       });
     } catch (e) {}
   }
-  var FX = {
-    // applauso del pubblico: tanti battiti di mani (rumore filtrato) sparsi in un secondo e mezzo
-    applauso: function () {
-      var c = ctx(); if (!c) return;
-      try {
-        var buf = rumore(c, 0.05);
-        for (var i = 0; i < 48; i++) {
-          var t0 = c.currentTime + Math.random() * 1.6, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
-          s.buffer = buf; f.type = "bandpass"; f.frequency.value = 900 + Math.random() * 1700; f.Q.value = 1.3;
-          g.gain.setValueAtTime((0.05 + Math.random() * 0.08) * (1 - (t0 - c.currentTime) / 2.2), t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05);
-          s.connect(f); f.connect(g); g.connect(c.destination); s.start(t0); s.stop(t0 + 0.06);
-        }
-      } catch (e) {}
-    },
-    // "ohhh" deluso del pubblico: due voci che scendono
-    ohh: function () {
-      var c = ctx(); if (!c) return;
-      try {
-        [0, 7].forEach(function (d) {
-          var t0 = c.currentTime, o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
-          o.type = "sawtooth"; o.frequency.setValueAtTime(250 + d, t0); o.frequency.exponentialRampToValueAtTime(170 + d, t0 + 0.9);
-          f.type = "lowpass"; f.frequency.value = 650;
-          g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.07, t0 + 0.15); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1);
-          o.connect(f); f.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + 1.05);
+  // i suoni semplici di prima: servono finché quelli veri non sono pronti (o se il telefono non li sa preparare)
+  function applausoSemplice(vol) {
+    var c = ctx(); if (!c) return;
+    try {
+      var buf = rumore(c, 0.05);
+      for (var i = 0; i < 70; i++) {
+        var t0 = c.currentTime + Math.random() * 1.8, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+        s.buffer = buf; f.type = "bandpass"; f.frequency.value = 900 + Math.random() * 1700; f.Q.value = 1.3;
+        g.gain.setValueAtTime((0.06 + Math.random() * 0.1) * (vol || 1) * (1 - (t0 - c.currentTime) / 2.4), t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05);
+        s.connect(f); f.connect(g); g.connect(c.destination); s.start(t0); s.stop(t0 + 0.06);
+      }
+    } catch (e) {}
+  }
+  function ohhSemplice() {
+    var c = ctx(); if (!c) return;
+    try {
+      [0, 7].forEach(function (d) {
+        var t0 = c.currentTime, o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
+        o.type = "sawtooth"; o.frequency.setValueAtTime(250 + d, t0); o.frequency.exponentialRampToValueAtTime(170 + d, t0 + 0.9);
+        f.type = "lowpass"; f.frequency.value = 650;
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.07, t0 + 0.15); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1);
+        o.connect(f); f.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + 1.05);
+      });
+    } catch (e) {}
+  }
+  // ---- i suoni veri del pubblico (applauso pieno, ovazione coi fischi, "ohhh") si preparano una volta sola, poi si suonano e basta ----
+  var BUF = {};
+  function preparaSuoni() {
+    var c = ctx(), OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (preparaSuoni.fatto || !c || !OAC) return;
+    preparaSuoni.fatto = true;
+    rendi(OAC, c.sampleRate, 3.4, function (o) { folla(o, 3.4, 320, false); }, "applauso");
+    rendi(OAC, c.sampleRate, 4.4, function (o) { folla(o, 4.4, 520, true); }, "ovazione");
+    rendi(OAC, c.sampleRate, 1.5, ohhFolla, "ohh");
+  }
+  function rendi(OAC, sr, dur, costruisci, nome) {
+    try {
+      var o = new OAC(2, Math.ceil(sr * dur), sr);
+      costruisci(o);
+      o.oncomplete = function (e) { if (e && e.renderedBuffer) BUF[nome] = e.renderedBuffer; };
+      var p = o.startRendering();
+      if (p && p.then) p.then(function (b) { BUF[nome] = b; }, function () {});
+    } catch (e) {}
+  }
+  function pan(c, out, v) { if (!c.createStereoPanner) return out; var p = c.createStereoPanner(); p.pan.value = v; p.connect(out); return p; }
+  // un applauso vero: centinaia di battiti di mani sparsi a destra e a sinistra, più il fruscio della gente
+  function folla(c, dur, n, grande) {
+    var out = c.createGain(); out.gain.value = grande ? 1 : 0.9; out.connect(c.destination);
+    var clap = rumore(c, 0.035), fondo = rumore(c, dur, true), tiene = dur * (grande ? 0.5 : 0.42);
+    function forza(t) { return Math.min(1, t / 0.16) * (t < tiene ? 1 : Math.pow(Math.max(0, 1 - (t - tiene) / (dur - tiene)), 1.6)); }
+    for (var k = 0; k < n; k++) {
+      var t = Math.random() * dur * 0.95, e = forza(t); if (e < 0.04) continue;
+      var s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+      s.buffer = clap; s.playbackRate.value = 0.75 + Math.random() * 0.6;
+      f.type = "bandpass"; f.frequency.value = 650 + Math.random() * 2100; f.Q.value = 0.7 + Math.random() * 0.9;
+      g.gain.setValueAtTime((0.1 + Math.random() * 0.2) * e, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.018 + Math.random() * 0.03);
+      s.connect(f); f.connect(g); g.connect(pan(c, out, Math.random() * 1.8 - 0.9));
+      s.start(t); s.stop(t + 0.07);
+    }
+    var sf = c.createBufferSource(), ff = c.createBiquadFilter(), gf = c.createGain();
+    sf.buffer = fondo; ff.type = "bandpass"; ff.frequency.value = 1500; ff.Q.value = 0.45;
+    gf.gain.setValueAtTime(0.0001, 0); gf.gain.linearRampToValueAtTime(0.07, 0.18); gf.gain.setValueAtTime(0.07, tiene); gf.gain.linearRampToValueAtTime(0.0001, dur);
+    sf.connect(ff); ff.connect(gf); gf.connect(out); sf.start(0);
+    if (grande) [0.3, 1.15, 2.1].forEach(function (t0, i) { fischio(c, out, t0 + Math.random() * 0.25, i % 2 ? 0.7 : -0.6); });
+  }
+  function fischio(c, out, t0, p) {   // il fischio di chi fa il tifo
+    var o = c.createOscillator(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(1800, t0); o.frequency.linearRampToValueAtTime(2800, t0 + 0.12); o.frequency.setValueAtTime(2200, t0 + 0.2); o.frequency.linearRampToValueAtTime(2900, t0 + 0.5);
+    lfo.frequency.value = 7; lg.gain.value = 35; lfo.connect(lg); lg.connect(o.frequency);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.04, t0 + 0.04); g.gain.setValueAtTime(0.012, t0 + 0.16);
+    g.gain.exponentialRampToValueAtTime(0.045, t0 + 0.24); g.gain.setValueAtTime(0.045, t0 + 0.46); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.6);
+    o.connect(g); g.connect(pan(c, out, p)); o.start(t0); o.stop(t0 + 0.62); lfo.start(t0); lfo.stop(t0 + 0.62);
+  }
+  function ohhFolla(c) {   // "ohhh" deluso: tante voci che scendono insieme
+    var out = c.createGain(); out.gain.value = 0.9; out.connect(c.destination);
+    for (var v = 0; v < 10; v++) {
+      var f0 = 140 + Math.random() * 190, t0 = Math.random() * 0.15, o = c.createOscillator(), b1 = c.createBiquadFilter(), b2 = c.createBiquadFilter(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+      o.type = "sawtooth"; o.frequency.setValueAtTime(f0 * 1.06, t0); o.frequency.exponentialRampToValueAtTime(f0 * 0.74, t0 + 1.15);
+      lfo.frequency.value = 4.5 + Math.random() * 2; lg.gain.value = f0 * 0.015; lfo.connect(lg); lg.connect(o.frequency);
+      b1.type = "bandpass"; b1.frequency.value = 480 + Math.random() * 120; b1.Q.value = 3;   // la "o"
+      b2.type = "lowpass"; b2.frequency.value = 1300;
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.06, t0 + 0.2); g.gain.setValueAtTime(0.06, t0 + 0.55); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.3);
+      o.connect(b1); b1.connect(b2); b2.connect(g); g.connect(pan(c, out, Math.random() * 1.4 - 0.7));
+      o.start(t0); o.stop(t0 + 1.35); lfo.start(t0); lfo.stop(t0 + 1.35);
+    }
+  }
+  function suonaBuf(nome, vol) {
+    var c = ctx(), b = BUF[nome]; if (!c || !b) return false;
+    try {
+      var s = c.createBufferSource(), g = c.createGain();
+      s.buffer = b; s.playbackRate.value = 0.94 + Math.random() * 0.12; g.gain.value = vol == null ? 1 : vol;
+      s.connect(g); g.connect(c.destination); s.start(); return true;
+    } catch (e) { return false; }
+  }
+
+  // ---- la musichetta chill sotto allo studio: accordi morbidi, basso e batteria leggera, suonati al momento (niente file da scaricare) ----
+  var Musica = (function () {
+    var KEY = "sg_musica_studio", voglio = true, va = false, timer = null, bus = null, duck = null, master = null, rum = null;
+    var prossimo = 0, passo = 0, vuoto = 0, colpi = [], VOL = 0.42;
+    try { voglio = localStorage.getItem(KEY) !== "0"; } catch (e) {}
+    var BPM = 84, SEDI = 60 / BPM / 4;   // la durata di un sedicesimo
+    var ACC = [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [48, 52, 55, 59]];   // Fa maj7 → Mi m7 → Re m7 → Do maj7
+    var BAS = [41, 40, 38, 36];
+    var MEL = [[[0, 76], [3, 72], [6, 69], [10, 72]], [[0, 74], [3, 71], [6, 67], [10, 71]], [[0, 72], [3, 69], [6, 65], [10, 69]], [[0, 71], [3, 67], [6, 64], [10, 67], [14, 72]]];
+    function hz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+    function ep(c, t, m, dur, vol) {   // piano elettrico morbido
+      var o1 = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(), g2 = c.createGain(), lp = c.createBiquadFilter();
+      o1.type = "sine"; o1.frequency.value = hz(m); o2.type = "triangle"; o2.frequency.value = hz(m) * 2.002; g2.gain.value = 0.16;
+      lp.type = "lowpass"; lp.frequency.setValueAtTime(2400, t); lp.frequency.exponentialRampToValueAtTime(900, t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(vol * 0.35, t + 0.35); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o1.connect(g); o2.connect(g2); g2.connect(g); g.connect(lp); lp.connect(bus);
+      o1.start(t); o2.start(t); o1.stop(t + dur + 0.05); o2.stop(t + dur + 0.05);
+    }
+    function pad(c, t, note, dur, vol) {   // tappeto caldo: due voci appena stonate per nota
+      note.forEach(function (m) {
+        [-5, 5].forEach(function (det) {
+          var o = c.createOscillator(), g = c.createGain(), lp = c.createBiquadFilter();
+          o.type = "sawtooth"; o.frequency.value = hz(m); o.detune.value = det;
+          lp.type = "lowpass"; lp.frequency.value = 650;
+          g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.6); g.gain.setValueAtTime(vol, t + dur - 0.4); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.3);
+          o.connect(lp); lp.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.35);
         });
+      });
+    }
+    function basso(c, t, m, dur, vol) {
+      var o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(), g2 = c.createGain(), lp = c.createBiquadFilter();
+      o.type = "sine"; o.frequency.value = hz(m); o2.type = "triangle"; o2.frequency.value = hz(m); g2.gain.value = 0.35;
+      lp.type = "lowpass"; lp.frequency.value = 420;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.015); g.gain.exponentialRampToValueAtTime(vol * 0.5, t + 0.25); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); o2.connect(g2); g2.connect(g); g.connect(lp); lp.connect(bus);
+      o.start(t); o2.start(t); o.stop(t + dur + 0.05); o2.stop(t + dur + 0.05);
+    }
+    function cassa(c, t, vol) {
+      var o = c.createOscillator(), g = c.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(115, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.12);
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+      o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.3);
+      if (vol > 0.3) colpi.push(t);   // le luci LED ballano a tempo
+    }
+    function rumoreBreve(c, t, tipo, freq, dur, vol) {   // rullante (passabanda) e charleston (passaalto)
+      var s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+      s.buffer = rum; f.type = tipo; f.frequency.value = freq; if (tipo === "bandpass") f.Q.value = 0.7;
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      s.connect(f); f.connect(g); g.connect(bus); s.start(t, Math.random() * 0.2); s.stop(t + dur + 0.02);
+    }
+    function campana(c, t, m, vol) {
+      var o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(), g2 = c.createGain();
+      o.type = "sine"; o.frequency.value = hz(m); o2.type = "sine"; o2.frequency.value = hz(m) * 3.01; g2.gain.value = 0.12;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
+      o.connect(g); o2.connect(g2); g2.connect(g); g.connect(bus); o.start(t); o2.start(t); o.stop(t + 1.15); o2.stop(t + 1.15);
+    }
+    function suonaPasso(c, p, t) {
+      var bar = Math.floor(p / 16) % 4, st = p % 16, giro = Math.floor(p / 64), acc = ACC[bar], r = BAS[bar];
+      if (st === 0) pad(c, t, acc, SEDI * 16, 0.011);
+      if (st === 0) acc.forEach(function (m) { ep(c, t, m, 1.3, 0.045); });
+      if (st === 6 || st === 10) acc.forEach(function (m) { ep(c, t, m, 0.35, 0.028); });
+      if (st === 0) basso(c, t, r, 0.8, 0.22);
+      if (st === 7) basso(c, t, r + 12, 0.2, 0.1);
+      if (st === 10) basso(c, t, r + 7, 0.4, 0.15);
+      if (st === 0) cassa(c, t, 0.5); if (st === 10) cassa(c, t, 0.34); if (st === 7 && bar === 3) cassa(c, t, 0.22);
+      if (st === 4 || st === 12) rumoreBreve(c, t, "bandpass", 1700, 0.16, 0.08);
+      if (st % 2 === 0) rumoreBreve(c, t, "highpass", 7000, 0.045, st % 4 === 2 ? 0.032 : 0.022);
+      if (giro % 2 === 1) MEL[bar].forEach(function (n) { if (n[0] === st) campana(c, t, n[1], 0.04); });
+    }
+    function programma() {
+      var c = AC; if (!c || !va) return;
+      if (!document.querySelector(".st-vista")) { if (++vuoto > 16) ferma(); return; }   // non c'è più lo studio: la musica sfuma
+      vuoto = 0;
+      if (document.hidden || c.state !== "running") { prossimo = c.currentTime + 0.1; return; }   // app in pausa: non accumulo note
+      if (prossimo < c.currentTime - 0.2) prossimo = c.currentTime + 0.05;
+      while (prossimo < c.currentTime + 0.35) {
+        var sw = (passo % 4 === 2) ? SEDI * 0.3 : 0;   // un po' di swing
+        try { suonaPasso(c, passo, prossimo + sw); } catch (e) {}
+        prossimo += SEDI; passo++;
+      }
+    }
+    function avvia() {
+      if (!voglio || va) return;
+      var c = ctx(); if (!c) return;
+      try {
+        va = true; colpi = []; vuoto = 0;
+        var n = Math.floor(c.sampleRate * 0.4); rum = c.createBuffer(1, n, c.sampleRate); var d = rum.getChannelData(0); for (var i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+        bus = c.createGain(); var lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 5200;
+        duck = c.createGain(); master = c.createGain();
+        master.gain.setValueAtTime(0.0001, c.currentTime); master.gain.linearRampToValueAtTime(VOL, c.currentTime + 2.5);
+        bus.connect(lp); lp.connect(duck); duck.connect(master); master.connect(c.destination);
+        prossimo = c.currentTime + 0.15; passo = 0;
+        timer = setInterval(programma, 90);
+      } catch (e) { va = false; }
+    }
+    function ferma(subito) {
+      if (!va) return;
+      va = false; clearInterval(timer); timer = null;
+      var c = AC, m = master; master = null;
+      if (c && m) {
+        try { m.gain.cancelScheduledValues(c.currentTime); m.gain.setValueAtTime(m.gain.value, c.currentTime); m.gain.linearRampToValueAtTime(0.0001, c.currentTime + (subito ? 0.15 : 1.2)); } catch (e) {}
+        setTimeout(function () { try { m.disconnect(); } catch (e) {} }, 1500);
+      }
+    }
+    function attiva(on) { voglio = !!on; try { localStorage.setItem(KEY, on ? "1" : "0"); } catch (e) {} if (on) avvia(); else ferma(true); }
+    // quando applaudono o c'è il rullo di tamburi la musica si abbassa un momento
+    function abbassa(sec) {
+      var c = AC; if (!va || !c || !duck) return;
+      try {
+        var t = c.currentTime; duck.gain.cancelScheduledValues(t); duck.gain.setValueAtTime(duck.gain.value, t);
+        duck.gain.linearRampToValueAtTime(0.35, t + 0.15); duck.gain.setValueAtTime(0.35, t + sec); duck.gain.linearRampToValueAtTime(1, t + sec + 0.8);
       } catch (e) {}
+    }
+    // 0..1: quanto è fresco l'ultimo colpo di cassa (per far ballare le luci LED a tempo); senza musica batte un tempo finto
+    function battito() {
+      var c = AC;
+      if (va && c) { var now = c.currentTime; while (colpi.length > 1 && colpi[1] <= now) colpi.shift(); var t = colpi[0]; return (t != null && t <= now) ? Math.exp(-(now - t) * 7) : 0; }
+      var b = performance.now() / 1000 * BPM / 60 / 2; return Math.exp(-(b - Math.floor(b)) * 120 / BPM * 7);
+    }
+    return { avvia: avvia, ferma: ferma, attiva: attiva, accesa: function () { return voglio; }, abbassa: abbassa, battito: battito };
+  })();
+
+  var FX = {
+    // applauso del pubblico: quanto = "forte" (ovazione coi fischi, per chi vince) o "piano" (un applauso di cortesia)
+    applauso: function (quanto) {
+      Musica.abbassa(quanto === "piano" ? 1.6 : 2.8);
+      var vol = quanto === "piano" ? 0.45 : 1;
+      if (!suonaBuf(quanto === "forte" ? "ovazione" : "applauso", vol)) applausoSemplice(vol);
     },
+    // "ohhh" deluso del pubblico
+    ohh: function () { Musica.abbassa(1.4); if (!suonaBuf("ohh", 1)) ohhSemplice(); },
     // rullo di tamburo prima della rivelazione
     rullo: function (dur) {
       var c = ctx(); if (!c) return;
+      dur = dur || 1.1; Musica.abbassa(dur + 0.6);
       try {
-        var buf = rumore(c, 0.04); dur = dur || 1.1;
+        var buf = rumore(c, 0.04);
         for (var x = 0; x < dur; x += 0.045) {
           var t0 = c.currentTime + x, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
           s.buffer = buf; f.type = "lowpass"; f.frequency.value = 520;
@@ -4726,13 +4929,12 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
           s.connect(f); f.connect(g); g.connect(c.destination); s.start(t0); s.stop(t0 + 0.045);
         }
       } catch (e) {}
-    }
-  ,
-    fanfara: function () { beep([660, 880, 1046, 1318], 0.22, "triangle"); try { if (navigator.vibrate) navigator.vibrate([120, 60, 120, 60, 200]); } catch (e) {} }
+    },
+    fanfara: function () { Musica.abbassa(1.6); beep([660, 880, 1046, 1318], 0.22, "triangle"); try { if (navigator.vibrate) navigator.vibrate([120, 60, 120, 60, 200]); } catch (e) {} }
   };
-  function rumore(c, dur) {
+  function rumore(c, dur, piatto) {   // rumore bianco (piatto, oppure che si spegne: il colpo di un battito)
     var n = Math.floor(c.sampleRate * dur), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
-    for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (piatto ? 1 : 1 - i / n);
     return b;
   }
 
@@ -4799,12 +5001,10 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
       ".st-quieto .st-leggio .luce,.st-quieto .st-leggio .pozza{opacity:0!important}",
       ".st-tela{left:0;top:0}",
       // fari che girano (solo rotazione)
-      ".st-fascio{transform-origin:50% 0;opacity:.5;clip-path:polygon(46% 0,54% 0,100% 100%,0 100%);will-change:transform;animation:stFascio 6s ease-in-out infinite alternate}",
+      ".st-fascio{transform-origin:50% 0;opacity:.5;will-change:transform;animation:stFascio 6s ease-in-out infinite alternate}",
       "@keyframes stFascio{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}",
-      // barre delle torri LED (solo scala verticale)
-      ".st-eq{overflow:hidden;border-radius:14px}",
-      ".st-eq i{position:absolute;bottom:0;height:88%;width:11%;border-radius:4px 4px 0 0;background:linear-gradient(#fff3a8,#ffb300 40%,#ff3ea5 75%,#7b2cff);transform-origin:50% 100%;will-change:transform;animation:stEq 1s ease-in-out infinite alternate}",
-      "@keyframes stEq{from{transform:scaleY(.16)}to{transform:scaleY(1)}}",
+      // torri LED: un pannello a led (canvas) che si ridisegna pochi fotogrammi al secondo, a tempo di musica
+      ".st-eq{pointer-events:none}",
       // lampadine della cornice: due disegni che si alternano (solo opacità)
       ".st-lampade{will-change:opacity;animation:stLampade .9s linear infinite}",
       "@keyframes stLampade{0%,49%{opacity:1}51%,100%{opacity:0}}",
@@ -4824,7 +5024,7 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
       ".st-cartellone:after{content:'';display:block;width:3px;height:12px;margin:0 auto;background:#c9a46a}",
       "@keyframes stSventola{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}",
       "@keyframes stSventolaPoco{from{transform:rotate(-9deg) translateY(0)}to{transform:rotate(9deg) translateY(-4px)}}",
-      ".st-occhio{border-radius:50%;opacity:.5;will-change:transform;animation:stGiro var(--dur,8s) ease-in-out var(--rit,0s) infinite}",
+      ".st-occhio{opacity:.5;will-change:transform;animation:stGiro var(--dur,8s) ease-in-out var(--rit,0s) infinite}",
       "@keyframes stGiro{0%,100%{transform:translate(0,0)}33%{transform:translate(var(--dx),var(--dy))}66%{transform:translate(calc(var(--dx) * .35),calc(var(--dy) * -.7))}}",
       ".st-ringhiera{height:5px;border-radius:3px;background:linear-gradient(90deg,transparent,#ffd43b,transparent);box-shadow:0 0 10px rgba(255,212,59,.6)}",
       ".st-lucina{width:6px;height:6px;margin:-3px;border-radius:50%;background:#e8fbff;box-shadow:0 0 8px 3px rgba(160,240,255,.8);will-change:opacity;animation:stLuccica 2.4s ease-in-out infinite}",
@@ -4839,7 +5039,8 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
       ".st-schermo{border-radius:14px;overflow:hidden;box-shadow:0 0 0 5px #120a38;background:radial-gradient(130% 55% at 50% 0%,#2d44a8 0%,#18225a 50%,#0b1030 100%)}",
       ".st-sch-in{position:absolute;inset:0;display:flex;flex-direction:column;padding:calc(8px + env(safe-area-inset-top)) 12px 10px}",
       ".st-vista.con-barra .st-sch-in{padding-bottom:104px}",
-      ".st-sch-in .tl-hud{flex:0 0 auto;margin-left:42px;align-items:center}",
+      ".st-sch-in .tl-hud{flex:0 0 auto;margin-left:42px;margin-right:42px;align-items:center}",
+      ".st-sch-in .tl-scroll{-webkit-mask:none;mask:none}",
       ".st-sch-in .tl-ev .card{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(255,255,255,.1)}",
       ".st-vetro{position:absolute;inset:0;pointer-events:none;background:linear-gradient(118deg,rgba(255,255,255,.1),transparent 32%)}",
       ".st-idle{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px}",
@@ -4848,59 +5049,50 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
       ".st-idle .sotto{font-size:14px;font-weight:800;letter-spacing:.32em;text-transform:uppercase;color:#cdd6ff}",
       ".st-sch-in .tl-esito{justify-content:center;padding-bottom:40px}",
       ".st-sch-in .tl-flip{width:min(310px,88%);height:230px}",
-      ".st-raggi{position:absolute;left:50%;top:38%;width:180%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;opacity:0;will-change:transform;",
-        "background:repeating-conic-gradient(rgba(255,230,120,.22) 0 8deg,transparent 8deg 20deg);-webkit-mask:radial-gradient(circle,#000 20%,transparent 65%);mask:radial-gradient(circle,#000 20%,transparent 65%);animation:stRaggi 14s linear infinite,stAppari .6s ease 1.3s forwards}",
-      ".st-raggi.ko{background:repeating-conic-gradient(rgba(255,93,108,.2) 0 8deg,transparent 8deg 20deg)}",
+      ".st-raggi{position:absolute;left:50%;top:38%;width:180%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;opacity:0;will-change:transform;animation:stRaggi 14s linear infinite,stAppari .6s ease 1.3s forwards}",
       "@keyframes stRaggi{to{transform:translate(-50%,-50%) rotate(360deg)}}",
       "@keyframes stAppari{to{opacity:1}}",
       // leggii (le postazioni)
       ".st-leggio{display:flex;flex-direction:column;align-items:center}",
-      ".st-leggio .alone{position:absolute;left:50%;top:0;width:96%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;opacity:.45;",
-        "background:radial-gradient(circle,var(--col) 0,transparent 66%);transition:opacity .4s,transform .4s}",
-      // occhio di bue: il fascio scende fino al pavimento e ci lascia una pozza di luce, e illumina il banco
-      ".st-leggio .luce{position:absolute;left:50%;bottom:-17%;width:172%;height:480%;transform:translateX(-50%);opacity:0;transition:opacity .45s;pointer-events:none;",
-        "background:linear-gradient(to top,rgba(255,246,205,.46),rgba(255,246,205,.2) 40%,rgba(255,246,205,0) 92%);clip-path:polygon(43% 0,57% 0,100% 100%,0 100%)}",
-      ".st-leggio .pozza{position:absolute;z-index:1;left:50%;bottom:-24%;width:180%;height:30%;transform:translateX(-50%);border-radius:50%;opacity:0;transition:opacity .45s;pointer-events:none;",
-        "background:radial-gradient(closest-side,rgba(255,248,215,.85),rgba(255,232,160,.4) 50%,rgba(255,232,160,0))}",
+      ".st-leggio .alone{position:absolute;left:50%;top:0;width:96%;aspect-ratio:1;transform:translateX(-50%);opacity:.45;transition:opacity .4s,transform .4s;pointer-events:none}",
+      // occhio di bue: il fascio scende fino al pavimento e ci lascia una pozza di luce, e illumina il banco (tutto già disegnato: si accende con l'opacità)
+      ".st-leggio .luce{position:absolute;left:50%;bottom:-17%;width:172%;height:480%;transform:translateX(-50%);opacity:0;transition:opacity .45s;pointer-events:none}",
+      ".st-leggio .pozza{position:absolute;z-index:1;left:50%;bottom:-24%;width:180%;height:30%;transform:translateX(-50%);opacity:0;transition:opacity .45s;pointer-events:none}",
       ".st-leggio.acceso .pozza{opacity:1}",
-      ".st-leggio .fronte:before{content:'';position:absolute;inset:0;background:linear-gradient(rgba(255,246,205,.3),rgba(255,246,205,.08));opacity:0;transition:opacity .45s;pointer-events:none}",
-      ".st-leggio.acceso .fronte:before{opacity:1}",
       ".st-leggio .av{position:relative;z-index:2;width:74%;aspect-ratio:178/182}",
       ".st-leggio .av canvas{width:100%;height:100%;display:block}",
-      ".st-leggio .podio{position:relative;z-index:3;width:100%;margin-top:-.9em}",
-      ".st-leggio .piano{position:relative;height:1.1em;border-radius:.55em .55em .2em .2em;background:linear-gradient(#ffffff,#d8d2ff 35%,#8d84d8 75%,#5a50a8);",
-        "box-shadow:inset 0 .12em 0 #fff,0 .25em .45em rgba(0,0,0,.4)}",
-      ".st-leggio .buzz{position:absolute;right:13%;top:-.5em;width:1.15em;height:.62em;border-radius:1em 1em .2em .2em;background:radial-gradient(circle at 40% 30%,#ffc2c7,#ff2d45 55%,#8a0f1c)}",
-      ".st-leggio .tu{position:absolute;left:10%;top:-.62em;background:linear-gradient(#fff3a8,#ffca3a);color:#241f00;font-weight:900;font-size:.72em;padding:.08em .55em;border-radius:99px}",
-      ".st-leggio .fronte{position:relative;margin:0 5%;padding:.75em .4em .7em;text-align:center;clip-path:polygon(0 0,100% 0,95% 100%,5% 100%);",
-        "background:linear-gradient(90deg,rgba(255,255,255,.14),transparent 22%,transparent 78%,rgba(255,255,255,.1)),linear-gradient(#36268a,#1b1152 55%,#0d0730)}",
-      ".st-leggio .fronte:after{content:'';position:absolute;left:8%;right:8%;top:.22em;height:.34em;",
-        "background:radial-gradient(circle,#fffbe0 0 .09em,var(--col) .15em,transparent .21em) 0 0/.62em .34em}",
-      ".st-leggio .nome{font-weight:900;font-size:1.3em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 .08em 0 rgba(0,0,0,.45)}",
-      ".st-leggio .punti{display:inline-block;margin-top:.3em;min-width:72%;font-family:'Courier New',ui-monospace,monospace;font-weight:900;font-size:1.6em;letter-spacing:.04em;color:#ffe066;",
-        "background:#05030f;border-radius:.3em;padding:.08em .4em;box-shadow:inset 0 0 0 .08em rgba(255,224,102,.3)}",
-      ".st-leggio .punti.neg{color:#ff8d98}",
-      ".st-leggio .led{position:relative;height:.42em;margin:0 9%;border-radius:0 0 .3em .3em;background:var(--col);box-shadow:0 0 .8em var(--col)}",
-      ".st-leggio .led:after{content:'';position:absolute;left:-12%;right:-12%;top:-160%;bottom:-160%;border-radius:50%;background:radial-gradient(closest-side,var(--col),transparent);opacity:0;will-change:opacity}",
+      // il bancone è un'immagine (canvas): niente da ridisegnare quando la telecamera si muove, e non può sparire
+      ".st-leggio .podio{position:relative;z-index:3;width:100%;height:6.82em;margin-top:-.9em}",
+      ".st-leggio .banco,.st-leggio .banco-luce{position:absolute;left:0;top:-1.1em;width:100%;height:calc(100% + 2.2em);pointer-events:none}",
+      ".st-leggio .banco-luce{opacity:0;transition:opacity .45s}",
+      ".st-leggio.acceso .banco-luce{opacity:1}",
+      ".st-leggio .bagliore{position:absolute;left:-.85%;top:5.73em;width:101.7%;height:1.76em;opacity:0;pointer-events:none}",
+      ".st-leggio.acceso .bagliore{animation:stLed .6s ease-in-out infinite alternate}",
+      ".st-leggio .piano{position:absolute;left:0;top:0;width:100%;height:1.1em}",
       ".st-leggio.acceso .alone{opacity:1;transform:translateX(-50%) scale(1.12)}",
       ".st-leggio.acceso .luce{opacity:1}",
-      ".st-leggio.acceso .led:after{animation:stLed .6s ease-in-out infinite alternate}",
       "@keyframes stLed{from{opacity:.2}to{opacity:.95}}",
-      ".st-leggio .cart{position:absolute;z-index:4;left:50%;top:-44%;width:48%;aspect-ratio:1;perspective:400px;opacity:0;transform:translateX(-50%) translateY(40%) scale(.2);transition:transform .35s cubic-bezier(.3,1.5,.5,1),opacity .2s}",
+      ".st-leggio .cart{position:absolute;z-index:4;left:50%;top:-44%;width:48%;aspect-ratio:1;opacity:0;transform:translateX(-50%) translateY(40%) scale(.2);transition:transform .35s cubic-bezier(.3,1.5,.5,1),opacity .2s}",
       ".st-leggio .cart:after{content:'';position:absolute;left:50%;top:96%;width:.5em;height:2.2em;margin-left:-.25em;background:linear-gradient(90deg,#b58a4e,#e6c28a,#b58a4e);border-radius:.2em;z-index:-1}",
       ".st-leggio .cart.su{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}",
-      ".st-leggio .cart .in{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .6s}",
-      ".st-leggio .cart.gira .in{transform:rotateY(180deg)}",
-      ".st-leggio .cart .f{position:absolute;inset:0;border-radius:.9em;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center;",
+      ".st-leggio .cart .in{position:absolute;inset:0}",
+      ".st-leggio .cart.gira .in{animation:stGiraCart .6s ease-in-out}",
+      "@keyframes stGiraCart{0%,100%{transform:none}50%{transform:scaleX(.04)}}",
+      ".st-leggio .cart .f{position:absolute;inset:0;border-radius:.9em;display:flex;align-items:center;justify-content:center;",
         "font-size:3.4em;font-weight:900;background:linear-gradient(#ffffff,#e8e4ff);color:#2a1d6e;box-shadow:0 .25em .5em rgba(0,0,0,.4)}",
-      ".st-leggio .cart .f.r{transform:rotateY(180deg)}",
+      ".st-leggio .cart .f.r,.st-leggio .cart.gira .f{visibility:hidden}",
+      ".st-leggio .cart.gira .f{animation:stFronte .6s linear}",
+      ".st-leggio .cart.gira .f.r{visibility:visible;animation:stRetro .6s linear}",
+      "@keyframes stFronte{0%,49%{visibility:visible}50%,100%{visibility:hidden}}",
+      "@keyframes stRetro{0%,49%{visibility:hidden}50%,100%{visibility:visible}}",
       ".st-leggio .cart .f.r.si{background:linear-gradient(#6ff0a6,#27b567)} .st-leggio .cart .f.r.no{background:linear-gradient(#ff95a0,#e0364a)}",
       ".st-leggio .delta{position:absolute;z-index:5;left:50%;top:6%;transform:translateX(-50%);font-weight:900;font-size:2.6em;opacity:0;white-space:nowrap;text-shadow:0 .08em 0 rgba(0,0,0,.45)}",
       ".st-leggio .delta.on{animation:stDelta 1.7s ease-out}",
       "@keyframes stDelta{0%{opacity:0;transform:translate(-50%,20%) scale(.6)}15%{opacity:1;transform:translate(-50%,-20%) scale(1.15)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-120%)}}",
       // sovrimpressioni sopra la telecamera
       ".st-esci{position:absolute;left:8px;top:calc(8px + env(safe-area-inset-top));z-index:25;width:36px;height:36px;border-radius:50%;border:0;background:rgba(0,0,0,.4);color:#fff;font:inherit;font-size:1.25rem;font-weight:900;cursor:pointer}",
-      ".st-rec{position:absolute;right:10px;top:calc(12px + env(safe-area-inset-top));z-index:25;font-size:11px;font-weight:900;letter-spacing:.1em;color:#fff;background:rgba(0,0,0,.45);border-radius:99px;padding:3px 10px;opacity:0;transition:opacity .3s}",
+      ".st-musica{position:absolute;right:8px;top:calc(8px + env(safe-area-inset-top));z-index:25;width:36px;height:36px;border-radius:50%;border:0;background:rgba(0,0,0,.4);color:#fff;font:inherit;font-size:1.05rem;cursor:pointer}",
+      ".st-rec{position:absolute;right:52px;top:calc(12px + env(safe-area-inset-top));z-index:25;font-size:11px;font-weight:900;letter-spacing:.1em;color:#fff;background:rgba(0,0,0,.45);border-radius:99px;padding:3px 10px;opacity:0;transition:opacity .3s}",
       ".st-rec.on{opacity:1}",
       ".st-rec:before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3b3b;margin-right:6px;animation:stRec 1s steps(2) infinite}",
       "@keyframes stRec{50%{opacity:.2}}",
@@ -4920,24 +5112,25 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
       ".st-lampo{position:absolute;inset:0;z-index:24;background:#fff;opacity:0;pointer-events:none}",
       ".st-lampo.on{animation:stLampo .45s ease-out}",
       "@keyframes stLampo{0%{opacity:.85}100%{opacity:0}}",
-      ".st-leggero .st-fascio,.st-leggero .st-eq i,.st-leggero .st-lucina,.st-leggero .st-lampade,.st-leggero .st-fila,.st-leggero .st-bastone,.st-leggero .st-cartellone,.st-leggero .st-occhio{animation:none}",
+      // se il telefono fatica mentre la telecamera si muove, si spengono le luci che ballano (prima di tutto la fluidità)
+      ".st-leggero-auto .st-fascio,.st-leggero-auto .st-occhio,.st-leggero-auto .st-bastone,.st-leggero-auto .st-lucina{display:none}",
+      ".st-leggero .st-fascio,.st-leggero .st-lucina,.st-leggero .st-lampade,.st-leggero .st-fila,.st-leggero .st-bastone,.st-leggero .st-cartellone,.st-leggero .st-occhio{animation:none}",
       // coriandoli, scossa della telecamera
       ".st-coriandoli{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}",
       ".st-coriandoli i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;will-change:transform;animation:stCade 2.6s cubic-bezier(.2,.6,.4,1) forwards}",
       "@keyframes stCade{to{transform:translate(var(--dx),110vh) rotate(var(--r))}}",
-      ".st-scena{position:absolute;inset:0}",
-      ".st-scena.scossa{animation:stScossa .55s ease-out}",
-      "@keyframes stScossa{0%{transform:translate(0,0)}15%{transform:translate(-9px,5px)}30%{transform:translate(8px,-6px)}45%{transform:translate(-6px,-3px)}60%{transform:translate(5px,4px)}80%{transform:translate(-2px,1px)}100%{transform:translate(0,0)}}",
+      ".st-scena{position:absolute;inset:0;will-change:transform}",
+      // rullo della slot machine (lettera, categoria a sorpresa): tre caselle che scorrono, ombra sopra e sotto come un cilindro
+      ".st-rullo{position:relative;overflow:hidden}",
+      ".st-cella{position:absolute;left:0;top:0;width:100%;display:flex;align-items:center;justify-content:center;text-align:center;will-change:transform}",
+      ".st-rullo:after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(rgba(0,0,0,.34),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 70%,rgba(0,0,0,.34))}",
       // leggii toccabili (es. a chi passare la bomba) ed eliminati
       ".st-leggio .anello{position:absolute;z-index:1;left:50%;top:-4%;width:90%;aspect-ratio:1;margin-left:-45%;border-radius:50%;border:.28em solid #6ff0a6;opacity:0;pointer-events:none}",
       ".st-leggio.tocca{cursor:pointer}",
       ".st-leggio.tocca .anello{opacity:1;will-change:transform,opacity;animation:stAnello 1s ease-in-out infinite}",
       "@keyframes stAnello{0%,100%{transform:scale(.92);opacity:.55}50%{transform:scale(1.06);opacity:1}}",
-      ".st-leggio.fuori .av canvas{filter:grayscale(1) brightness(.5)}",
-      ".st-leggio.fuori .podio{filter:grayscale(.85) brightness(.55)}",
       ".st-leggio.fuori .alone{opacity:0}",
-      ".st-leggio .punti.testo{font-size:1.25em;letter-spacing:.02em}",
-      "@media (prefers-reduced-motion:reduce){.st-fascio,.st-eq i,.st-lucina,.st-lampade,.st-fila,.st-bastone,.st-cartellone,.st-occhio{animation:none}}"
+      "@media (prefers-reduced-motion:reduce){.st-fascio,.st-lucina,.st-lampade,.st-fila,.st-bastone,.st-cartellone,.st-occhio{animation:none}}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -4956,23 +5149,20 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
     function pezzo(tag, cls, dove) { var e = el(tag, { class: cls }); (dove || mondo).appendChild(e); return e; }
     // --- studio: il fondo fermo è un'immagine sola (canvas), sopra solo pochi pezzi che si muovono ---
     S.tela = pezzo("canvas", "st-tela");
+    // i fari che girano sono luci già disegnate (canvas): la scheda grafica le gira senza ridisegnarle, anche mentre la telecamera si muove
     S.fasci = [];
     if (!LEGGERO) ["rgba(255,236,170,.55)", "rgba(255,62,165,.5)", "rgba(34,211,238,.5)", "rgba(255,236,170,.55)"].forEach(function (c, i) {
-      var f = pezzo("div", "st-fascio st-anim"); f.style.background = "linear-gradient(" + c + ",transparent 88%)";
+      var f = pezzo("canvas", "st-fascio st-anim"); fascio(f, c);
       f.style.animationDelay = (-i * 1.9) + "s"; f.style.animationDuration = (5 + (i % 3)) + "s"; S.fasci.push(f);
     });
-    S.eq = [0, 1].map(function () {
-      var e = pezzo("div", "st-eq st-anim");
-      for (var k = 0; k < 7; k++) { var b = el("i"); b.style.left = (4 + k * 13.4) + "%"; b.style.animationDelay = (-k * 0.31) + "s"; b.style.animationDuration = (0.7 + (k % 3) * 0.22) + "s"; if (LEGGERO) b.style.transform = "scaleY(" + (0.3 + ((k * 37) % 60) / 100) + ")"; e.appendChild(b); }
-      return e;
-    });
+    S.eq = [0, 1].map(function () { return pezzo("canvas", "st-eq"); });   // torri LED: pannelli a led (canvas)
     // il pubblico: file di mini avatar (canvas, create in disegnaPubblico) + cose vive sopra
     S.pubWrap = pezzo("div", "st-pubwrap");
     S.strisce = [];
     S.pubDeco = pezzo("div", "st-pubdeco", S.pubWrap);
     S.ringhiere = []; for (var q = 0; q < 6; q++) S.ringhiere.push(pezzo("div", "st-ringhiera", S.pubDeco));
     S.occhi = LEGGERO ? [] : ["rgba(255,62,165,.55)", "rgba(34,211,238,.5)", "rgba(255,212,59,.42)"].map(function (c, i) {
-      var o = pezzo("div", "st-occhio st-anim", S.pubDeco); o.style.background = "radial-gradient(closest-side," + c + ",transparent)";
+      var o = pezzo("canvas", "st-occhio st-anim", S.pubDeco); chiazza(o, c);
       o.style.setProperty("--dur", (7 + i * 2) + "s"); o.style.setProperty("--rit", (-i * 2.3) + "s"); o._i = i; return o;
     });
     var COLB = ["#ff3ea5", "#22d3ee", "#ffd43b", "#a06bff", "#51cf66"];
@@ -4988,6 +5178,11 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
     S.zonaLeggii = el("div"); S.zonaLeggii.style.cssText = "position:absolute;left:0;top:0;width:0;height:0"; mondo.appendChild(S.zonaLeggii);
     // --- sovrimpressioni ---
     vista.appendChild(el("button", { class: "st-esci", text: "‹", "aria-label": "Esci", onclick: function () { if (window.confirm("Uscire dalla partita?")) { fermaTimer(S); opz.esci(); } } }));
+    // la musichetta di sottofondo si accende e si spegne da qui (e il telefono se lo ricorda)
+    var bMus = el("button", { class: "st-musica", "aria-label": "Musica", text: Musica.accesa() ? "🎵" : "🔇", onclick: function () { var on = !Musica.accesa(); Musica.attiva(on); bMus.textContent = on ? "🎵" : "🔇"; } });
+    vista.appendChild(bMus);
+    // il primo tocco sblocca l'audio del telefono (serve a chi entra da un link, senza aver toccato niente)
+    vista.addEventListener("pointerdown", function () { ctx(); Musica.avvia(); }, { passive: true });
     S.rec = el("div", { class: "st-rec", text: "IN ONDA" }); vista.appendChild(S.rec);
     S.terzoEl = el("div", { class: "st-terzo" }); vista.appendChild(S.terzoEl);
     S.barraEl = el("div", { class: "st-barra" }); vista.appendChild(S.barraEl);
@@ -4998,10 +5193,24 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
     S.impostaGiocatori = function (lista, io) { S.gioc = lista.map(function (g) { return { nome: g.nome, omino: g.omino || null }; }); S.io = io == null ? -1 : io; costruisciLeggii(S); layoutStudio(S); };
     S.impostaGiocatori(giocatori, opz.io);
     // appena le facce del pubblico sono pronte ridisegno la folla (all'inizio per un attimo ci sono le sagome)
-    preparaPoolPubblico(function () { if (S.vivo() && S.zonePub) disegnaPubblico(S); });
+    // la sigla aspetta le facce del pubblico: così la folla non si ridisegna mentre la telecamera si muove
+    S.pubPronto = new Promise(function (ok) {
+      preparaPoolPubblico(function () { if (S.vivo() && S.zonePub) disegnaPubblico(S); ok(); });
+      setTimeout(ok, 1500);
+    });
     logoSchermo(S);
-    S.shot = function () { return { x: 0, y: 0, w: S.W, h: S.H }; };
-    camera(S, S.shot(), 0);
+    // Prima di tutto la telecamera sta un attimo sul maxischermo a grandezza vera: il telefono prepara lo studio
+    // alla risoluzione piena una volta sola, e poi (con la telecamera mossa a mano) non lo ridisegna più a ogni zoom.
+    S.shot = function () { return S.R.schermo; };
+    metti(S, vistaDi(S, S.R.schermo), true);
+    S.rasterOk = false;
+    S.attesaRaster = new Promise(function (ok) {
+      requestAnimationFrame(function () { requestAnimationFrame(function () { setTimeout(ok, 30); }); });
+      setTimeout(ok, 250);
+    }).then(function () { S.rasterOk = true; });
+    preparaSuoni();
+    Musica.avvia();
+    avviaEq(S);
     // se cambia la misura dello schermo ridisegno lo studio (una volta, dopo che si è assestato)
     var toR = null;
     function suResize() {
@@ -5025,30 +5234,150 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
       e.img.onload = function () { e.ok = true; var l = e.cbs; e.cbs = []; l.forEach(function (c) { c(e.img); }); };
       e.img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.replace("<svg ", "<svg width='356' height='364' "));
     }
-    if (e.ok) cb(e.img); else if (cb) e.cbs.push(cb);
+    if (!cb) return;   // solo da preparare per dopo
+    if (e.ok) cb(e.img); else e.cbs.push(cb);
   }
   function mettiAvatar(X, g, f) {
     var v = X.versione = (X.versione || 0) + 1;
     immagineAvatar(g, f, function (img) {
       if (X.versione !== v) return;   // nel frattempo è cambiata faccia
-      var c = X.avc, x = c.getContext("2d"); x.clearRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+      var c = X.avc, x = c.getContext("2d"), w = c.width, h = c.height; x.clearRect(0, 0, w, h); x.drawImage(img, 0, 0, w, h);
+      if (X.grigio) {   // eliminato: in bianco e nero e più scuro, disegnato qui una volta (un filtro peserebbe a ogni fotogramma)
+        x.save(); x.globalCompositeOperation = "saturation"; x.fillStyle = "#808080"; x.fillRect(0, 0, w, h);
+        x.globalCompositeOperation = "destination-in"; x.drawImage(img, 0, 0, w, h);
+        x.globalCompositeOperation = "source-atop"; x.fillStyle = "rgba(0,0,0,.5)"; x.fillRect(0, 0, w, h); x.restore();
+      }
     });
   }
   function costruisciLeggii(S) {
     var el = S.t.el; vuota(S.zonaLeggii); S.L = [];
     S.gioc.forEach(function (g, i) {
-      var L = el("div", { class: "st-leggio" }); L.style.position = "absolute"; L.style.setProperty("--col", ST_COL[i % ST_COL.length]);
-      L.innerHTML = "<div class='luce'></div><div class='pozza'></div><div class='alone'></div>" +
+      var col = ST_COL[i % ST_COL.length], L = el("div", { class: "st-leggio" }); L.style.position = "absolute"; L.style.setProperty("--col", col);
+      // tutto quello che si illumina è già disegnato (canvas): accendere un leggio cambia solo l'opacità
+      L.innerHTML = "<canvas class='luce' width='96' height='268'></canvas><canvas class='pozza'></canvas><canvas class='alone'></canvas>" +
         "<div class='anello'></div><div class='cart'><div class='in'><div class='f'>?</div><div class='f r'></div></div></div><div class='delta'></div><div class='av'><canvas width='356' height='364'></canvas></div>" +
-        "<div class='podio'><div class='piano'><span class='buzz'></span></div><div class='fronte'><div class='nome'></div><div class='punti'>0</div></div><div class='led'></div></div>";
-      L.querySelector(".nome").textContent = g.nome;
+        "<div class='podio'><canvas class='banco'></canvas><canvas class='banco-luce'></canvas><canvas class='bagliore'></canvas><div class='piano'></div></div>";
+      cono(L.querySelector(".luce")); pozza(L.querySelector(".pozza")); chiazza(L.querySelector(".alone"), rgbaDi(col, 1)); bagliore(L.querySelector(".bagliore"), col);
       L.addEventListener("click", function () { if (S.onTocca && L.classList.contains("tocca")) S.onTocca(i); });   // il gioco decide chi si può toccare
-      if (i === S.io) L.querySelector(".piano").appendChild(el("span", { class: "tu", text: "TU" }));
-      var X = { el: L, avc: L.querySelector(".av canvas"), cart: L.querySelector(".cart"), delta: L.querySelector(".delta"), pEl: L.querySelector(".punti"), valore: 0, faccia: null };
+      var X = { el: L, avc: L.querySelector(".av canvas"), cart: L.querySelector(".cart"), delta: L.querySelector(".delta"),
+        banco: L.querySelector(".banco"), bancoLuce: L.querySelector(".banco-luce"), nome: g.nome, col: col, tu: i === S.io,
+        disp: { t: "0", neg: false, testo: false }, valore: 0, faccia: null };
       mettiAvatar(X, g, null);
       setTimeout(function () { ["esulta", "triste", "pensa"].forEach(function (f) { immagineAvatar(g, f, null); }); }, 1500 + i * 200);   // pronte per dopo (non tutte insieme all'entrata)
       S.L.push(X);
     });
+  }
+  function rgbaDi(hex, a) { var n = parseInt(String(hex).slice(1), 16); return "rgba(" + (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255) + "," + a + ")"; }
+  function pozza(c) {   // la pozza di luce sul pavimento (un'ellisse morbida)
+    c.width = 240; c.height = 40;
+    var x = c.getContext("2d"); x.translate(120, 20); x.scale(1, 40 / 240);
+    var g = x.createRadialGradient(0, 0, 0, 0, 0, 120);
+    g.addColorStop(0, "rgba(255,248,215,.85)"); g.addColorStop(0.5, "rgba(255,232,160,.4)"); g.addColorStop(1, "rgba(255,232,160,0)");
+    x.fillStyle = g; x.beginPath(); x.arc(0, 0, 120, 0, 7); x.fill();
+  }
+  function bagliore(c, col) {   // il bagliore della striscia led sotto al bancone quando il leggio è acceso
+    c.width = 150; c.height = 40;
+    var x = c.getContext("2d"); x.translate(75, 20); x.scale(1, 40 / 150);
+    var g = x.createRadialGradient(0, 0, 0, 0, 0, 75);
+    g.addColorStop(0, rgbaDi(col, 1)); g.addColorStop(1, rgbaDi(col, 0));
+    x.fillStyle = g; x.beginPath(); x.arc(0, 0, 75, 0, 7); x.fill();
+  }
+
+  // ---- il bancone del concorrente, disegnato su canvas (misure in "em": 1em = un decimo della larghezza del leggio) ----
+  // Da y = 0 (il piano) in giù: piano 1.1em, frontale 5.3em con lampadine, nome e display, striscia led .42em.
+  var FONT_PAGINA = null;
+  function fontPagina() { if (!FONT_PAGINA) { try { FONT_PAGINA = getComputedStyle(document.body).fontFamily || "system-ui,sans-serif"; } catch (e) { FONT_PAGINA = "system-ui,sans-serif"; } } return FONT_PAGINA; }
+  function rettTondo(x, X, Y, w, h, rs, ri) {   // rettangolo con angoli sopra (rs) e sotto (ri) diversi
+    x.beginPath(); x.moveTo(X + rs, Y); x.lineTo(X + w - rs, Y); x.quadraticCurveTo(X + w, Y, X + w, Y + rs); x.lineTo(X + w, Y + h - ri);
+    x.quadraticCurveTo(X + w, Y + h, X + w - ri, Y + h); x.lineTo(X + ri, Y + h); x.quadraticCurveTo(X, Y + h, X, Y + h - ri); x.lineTo(X, Y + rs); x.quadraticCurveTo(X, Y, X + rs, Y); x.closePath();
+  }
+  function trapezio(x, w, em) {   // il frontale: stretto in basso
+    var x0 = 0.05 * w, x1 = 0.95 * w, y0 = 1.1 * em, y1 = 6.4 * em, r = 0.05 * (x1 - x0);
+    x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y0); x.lineTo(x1 - r, y1); x.lineTo(x0 + r, y1); x.closePath();
+  }
+  function misuraBanco(X) {   // dimensioni del canvas in pixel veri (nitido anche negli zoom della telecamera)
+    var w = X.w || 100, em = w * 0.1, H = (6.82 + 2.2) * em, q = Math.min(LEGGERO ? 1.6 : 3, (window.devicePixelRatio || 1) * 1.3);
+    return { w: w, em: em, H: H, q: q, cw: Math.max(1, Math.round(w * q)), ch: Math.max(1, Math.round(H * q)), su: 1.1 * em };
+  }
+  function fondoBanco(X) {   // tutto quello che non cambia: piano, pulsante, frontale, lampadine, nome, striscia led
+    var M = misuraBanco(X), c = X.fondo || (X.fondo = document.createElement("canvas")), w = M.w, em = M.em, q = M.q;
+    c.width = M.cw; c.height = M.ch;
+    var x = c.getContext("2d"); x.setTransform(q, 0, 0, q, 0, M.su * q);
+    // piano
+    x.save(); x.shadowColor = "rgba(0,0,0,.4)"; x.shadowOffsetY = 0.25 * em * q; x.shadowBlur = 0.45 * em * q;
+    var g = x.createLinearGradient(0, 0, 0, 1.1 * em); g.addColorStop(0, "#ffffff"); g.addColorStop(0.35, "#d8d2ff"); g.addColorStop(0.75, "#8d84d8"); g.addColorStop(1, "#5a50a8");
+    x.fillStyle = g; rettTondo(x, 0, 0, w, 1.1 * em, 0.55 * em, 0.2 * em); x.fill(); x.restore();
+    // pulsante rosso
+    var bw = 1.15 * em, bh = 0.62 * em, bx = w * 0.87 - bw, by = -0.5 * em;
+    g = x.createRadialGradient(bx + bw * 0.4, by + bh * 0.3, 0, bx + bw * 0.4, by + bh * 0.3, bw * 0.75);
+    g.addColorStop(0, "#ffc2c7"); g.addColorStop(0.55, "#ff2d45"); g.addColorStop(1, "#8a0f1c");
+    x.fillStyle = g; rettTondo(x, bx, by, bw, bh, bh * 0.95, 0.2 * em); x.fill();
+    // "TU" sul leggio di chi ha questo telefono
+    if (X.tu) {
+      var f = 0.72 * em; x.font = "900 " + f.toFixed(2) + "px " + fontPagina();
+      var tw = x.measureText("TU").width + 1.1 * f, th = f * 1.25, tx = w * 0.1, ty = -0.62 * em;
+      g = x.createLinearGradient(0, ty, 0, ty + th); g.addColorStop(0, "#fff3a8"); g.addColorStop(1, "#ffca3a");
+      x.fillStyle = g; rettTondo(x, tx, ty, tw, th, th / 2, th / 2); x.fill();
+      x.fillStyle = "#241f00"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("TU", tx + tw / 2, ty + th / 2 + f * 0.04);
+    }
+    // frontale
+    trapezio(x, w, em);
+    g = x.createLinearGradient(0, 1.1 * em, 0, 6.4 * em); g.addColorStop(0, "#36268a"); g.addColorStop(0.55, "#1b1152"); g.addColorStop(1, "#0d0730");
+    x.fillStyle = g; x.fill();
+    g = x.createLinearGradient(0.05 * w, 0, 0.95 * w, 0); g.addColorStop(0, "rgba(255,255,255,.14)"); g.addColorStop(0.22, "rgba(255,255,255,0)"); g.addColorStop(0.78, "rgba(255,255,255,0)"); g.addColorStop(1, "rgba(255,255,255,.1)");
+    x.fillStyle = g; x.fill();
+    // lampadine in fila
+    var fx0 = 0.05 * w + 0.08 * 0.9 * w, fx1 = 0.95 * w - 0.08 * 0.9 * w, passo = 0.62 * em, cy = 1.1 * em + 0.39 * em;
+    for (var lx = fx0 + passo / 2; lx < fx1; lx += passo) {
+      g = x.createRadialGradient(lx, cy, 0, lx, cy, 0.21 * em);
+      g.addColorStop(0, "#fffbe0"); g.addColorStop(0.43, "#fffbe0"); g.addColorStop(0.7, X.col); g.addColorStop(1, rgbaDi(X.col, 0));
+      x.fillStyle = g; x.fillRect(lx - 0.21 * em, cy - 0.21 * em, 0.42 * em, 0.42 * em);
+    }
+    // nome
+    var fn = 1.3 * em, nome = String(X.nome || ""); x.font = "900 " + fn.toFixed(2) + "px " + fontPagina();
+    var maxW = 0.9 * w - 0.8 * em;
+    if (x.measureText(nome).width > maxW) { while (nome.length > 1 && x.measureText(nome + "…").width > maxW) nome = nome.slice(0, -1); nome += "…"; }
+    x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillStyle = "rgba(0,0,0,.45)"; x.fillText(nome, w / 2, 1.1 * em + 1.55 * em + 0.08 * em);
+    x.fillStyle = "#fff"; x.fillText(nome, w / 2, 1.1 * em + 1.55 * em);
+    // striscia led colorata
+    x.save(); x.shadowColor = X.col; x.shadowBlur = 0.8 * em * q; x.fillStyle = X.col;
+    rettTondo(x, 0.09 * w, 6.4 * em, 0.82 * w, 0.42 * em, 0.01, 0.3 * em); x.fill(); x.restore();
+    X.fondoW = w;
+    // la luce sul frontale quando il leggio è acceso (canvas a parte: si accende con l'opacità)
+    var cl = X.bancoLuce; if (cl) {
+      cl.width = M.cw; cl.height = M.ch; var y = cl.getContext("2d"); y.setTransform(q, 0, 0, q, 0, M.su * q);
+      trapezio(y, w, em); g = y.createLinearGradient(0, 1.1 * em, 0, 6.4 * em); g.addColorStop(0, "rgba(255,246,205,.3)"); g.addColorStop(1, "rgba(255,246,205,.08)");
+      y.fillStyle = g; y.fill();
+    }
+  }
+  // il display del leggio (punti o una scritta) sopra al fondo; se il concorrente è eliminato tutto in bianco e nero
+  function disegnaBanco(X) {
+    if (!X || !X.banco) return;
+    if (!X.fondo || X.fondoW !== X.w) fondoBanco(X);
+    var M = misuraBanco(X), c = X.banco, w = M.w, em = M.em, q = M.q;
+    if (c.width !== M.cw || c.height !== M.ch) { c.width = M.cw; c.height = M.ch; }
+    var dest = X.grigio ? (X.tmp || (X.tmp = document.createElement("canvas"))) : c;
+    if (dest !== c) { dest.width = M.cw; dest.height = M.ch; }
+    var x = dest.getContext("2d");
+    x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, M.cw, M.ch); x.drawImage(X.fondo, 0, 0);
+    x.setTransform(q, 0, 0, q, 0, M.su * q);
+    var d = X.disp || { t: "" }, dy = 1.1 * em + 2.61 * em, dh = 1.95 * em;
+    var f = (d.testo ? 1.2 : 1.6) * em, font = d.testo ? "900 " + f.toFixed(2) + "px " + fontPagina() : "900 " + f.toFixed(2) + "px 'Courier New',ui-monospace,monospace";
+    x.font = font;
+    var tw = x.measureText(d.t).width, dw = Math.min(0.86 * w, Math.max(0.72 * 0.9 * w, tw + 0.9 * em)), dx = (w - dw) / 2;
+    x.fillStyle = "#05030f"; rettTondo(x, dx, dy, dw, dh, 0.3 * em, 0.3 * em); x.fill();
+    x.strokeStyle = "rgba(255,224,102,.3)"; x.lineWidth = 0.08 * em; rettTondo(x, dx + 0.04 * em, dy + 0.04 * em, dw - 0.08 * em, dh - 0.08 * em, 0.26 * em, 0.26 * em); x.stroke();
+    x.fillStyle = d.neg ? "#ff8d98" : "#ffe066"; x.textAlign = "center"; x.textBaseline = "middle";
+    if (tw > dw - 0.4 * em) { x.save(); x.translate(w / 2, dy + dh / 2); x.scale((dw - 0.4 * em) / tw, 1); x.fillText(d.t, 0, f * 0.04); x.restore(); }
+    else x.fillText(d.t, w / 2, dy + dh / 2 + f * 0.04);
+    if (dest !== c) {   // eliminato: grigio e più scuro
+      var y = c.getContext("2d"); y.setTransform(1, 0, 0, 1, 0, 0); y.clearRect(0, 0, M.cw, M.ch); y.drawImage(dest, 0, 0);
+      y.globalCompositeOperation = "saturation"; y.fillStyle = "#808080"; y.fillRect(0, 0, M.cw, M.ch);
+      y.globalCompositeOperation = "destination-in"; y.drawImage(dest, 0, 0);
+      y.globalCompositeOperation = "source-atop"; y.fillStyle = "rgba(0,0,0,.45)"; y.fillRect(0, 0, M.cw, M.ch);
+      y.globalCompositeOperation = "source-over";
+    }
   }
   // posti dei leggii: fino a 4 una fila; da 5 a 10 due file sfalsate (quella dietro più piccola e più in alto)
   function postiLeggii(S) {
@@ -5071,6 +5400,113 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
     c.width = Math.max(1, Math.round(w * q)); c.height = Math.max(1, Math.round(h * q));
     c.style.width = w + "px"; c.style.height = h + "px";
     var x = c.getContext("2d"); x.setTransform(q, 0, 0, q, 0, 0); return x;
+  }
+  // ---- luci morbide disegnate una volta (canvas piccoli): la scheda grafica le ingrandisce e le muove senza ridisegnarle ----
+  function trasp(col) { return col.replace(/,\s*[\d.]+\)$/, ",0)"); }   // lo stesso colore, trasparente
+  function fascio(c, col) {   // fascio di un faro: stretto in alto, largo in basso, sfuma verso il fondo
+    c.width = 64; c.height = 380;
+    var x = c.getContext("2d"), g = x.createLinearGradient(0, 0, 0, 380);
+    g.addColorStop(0, col); g.addColorStop(0.88, trasp(col)); g.addColorStop(1, trasp(col));
+    x.fillStyle = g; x.beginPath(); x.moveTo(29.4, 0); x.lineTo(34.6, 0); x.lineTo(64, 380); x.lineTo(0, 380); x.closePath(); x.fill();
+  }
+  function chiazza(c, col) {   // macchia di luce rotonda (occhi di bue colorati sulla folla)
+    c.width = c.height = 132;
+    var x = c.getContext("2d"), g = x.createRadialGradient(66, 66, 0, 66, 66, 66);
+    g.addColorStop(0, col); g.addColorStop(1, trasp(col));
+    x.fillStyle = g; x.fillRect(0, 0, 132, 132);
+  }
+  function cono(c) {   // occhio di bue sul leggio: scende dall'alto fino al pavimento
+    if (!c || !c.getContext) return;
+    var w = c.width, h = c.height, x = c.getContext("2d"), g = x.createLinearGradient(0, h, 0, 0);
+    g.addColorStop(0, "rgba(255,246,205,.46)"); g.addColorStop(0.4, "rgba(255,246,205,.2)"); g.addColorStop(0.92, "rgba(255,246,205,0)"); g.addColorStop(1, "rgba(255,246,205,0)");
+    x.fillStyle = g; x.beginPath(); x.moveTo(w * 0.43, 0); x.lineTo(w * 0.57, 0); x.lineTo(w, h); x.lineTo(0, h); x.closePath(); x.fill();
+  }
+  // ---- torri LED: due pannelli a led che ballano a tempo di musica (un canvas ciascuno, ridisegnato 14 volte al secondo) ----
+  var COL_LED = (function () {   // dal basso (viola) all'alto (giallo chiaro)
+    var t = [[123, 44, 255], [255, 62, 165], [255, 179, 0], [255, 243, 168]], out = [];
+    for (var s = 0; s < 12; s++) {
+      var p = s / 11 * 3, k = Math.min(2, Math.floor(p)), f = p - k, a = t[k], b = t[k + 1];
+      out.push("rgb(" + Math.round(a[0] + (b[0] - a[0]) * f) + "," + Math.round(a[1] + (b[1] - a[1]) * f) + "," + Math.round(a[2] + (b[2] - a[2]) * f) + ")");
+    }
+    return out;
+  })();
+  function disegnaTorreEq(c, liv) {
+    if (!c || !c.getContext || c.width < 2) return;
+    var x = c.getContext("2d"), W = c.width, H = c.height, N = 7, SEG = 12, bw = W / N, sh = H / SEG;
+    x.clearRect(0, 0, W, H);
+    for (var b = 0; b < N; b++) {
+      var acc = Math.round((liv ? liv[b] : 0.3 + ((b * 37) % 60) / 100) * SEG);
+      for (var s = 0; s < SEG; s++) {
+        x.globalAlpha = s < acc ? 1 : 0.13; x.fillStyle = COL_LED[s];
+        x.fillRect(b * bw + bw * 0.15, H - (s + 1) * sh + sh * 0.15, bw * 0.7, sh * 0.7);
+      }
+    }
+    x.globalAlpha = 1;
+  }
+  function disegnaEq(S) { (S.eq || []).forEach(function (c, k) { disegnaTorreEq(c, S.eqLiv ? S.eqLiv.slice(k * 7, k * 7 + 7) : null); }); }
+  function avviaEq(S) {
+    if (LEGGERO) return disegnaEq(S);   // telefoni leggeri: pannelli fermi
+    var obi = []; S.eqLiv = []; for (var b = 0; b < 14; b++) { S.eqLiv.push(Math.random() * 0.6); obi.push(Math.random()); }
+    var id = setInterval(function () {
+      if (!S.vivo()) { clearInterval(id); return; }
+      if (document.hidden || S.leggeroAuto || S.mondo.classList.contains("st-quieto")) return;   // non si vede (o il telefono fatica): fermo
+      var batt = Musica.battito();
+      for (var b = 0; b < 14; b++) {
+        if (Math.random() < 0.3) obi[b] = 0.12 + Math.random() * 0.7;
+        var tgt = Math.min(1, obi[b] + batt * ((b % 7) < 3 ? 0.55 : 0.3)), l = S.eqLiv[b];   // le barre dei bassi saltano di più sul colpo
+        S.eqLiv[b] = l + (tgt - l) * (tgt > l ? 0.75 : 0.3);   // sale di scatto, scende piano
+      }
+      disegnaEq(S);
+    }, 70);
+  }
+  // raggi che girano dietro a una carta o a un risultato (già sfumati verso il bordo: niente maschere da ricalcolare)
+  function raggi(S, ko) {
+    var c = document.createElement("canvas"); c.className = "st-raggi"; c.width = c.height = 256;
+    var x = c.getContext("2d"), m = 128, k, a, g;
+    x.fillStyle = ko ? "rgba(255,93,108,.2)" : "rgba(255,230,120,.22)";
+    for (k = 0; k < 18; k++) { a = (k * 20 - 90) * Math.PI / 180; x.beginPath(); x.moveTo(m, m); x.arc(m, m, 190, a, a + 8 * Math.PI / 180); x.closePath(); x.fill(); }
+    g = x.createRadialGradient(m, m, 0, m, m, 181 * 0.65);
+    g.addColorStop(0, "#000"); g.addColorStop(0.2 / 0.65, "#000"); g.addColorStop(1, "rgba(0,0,0,0)");
+    x.globalCompositeOperation = "destination-in"; x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+    return c;
+  }
+  // ---- il rullo della slot machine: parte veloce e rallenta piano piano fino a fermarsi sulla voce giusta ----
+  // opz: { cls, alt (altezza di una casella in px), voci (le scritte che passano), ultima (dove si ferma), durata (ms), scatto(k) a ogni casella che passa }
+  // Tre caselle che si danno il cambio: a ogni scatto se ne riscrive una sola, il resto lo muove la scheda grafica.
+  function rullo(S, opz) {
+    var el = S.t.el, H = opz.alt, fin = el("div", { class: "st-rullo " + (opz.cls || "") }), celle = [], mostra = [null, null, null], k;
+    fin.style.height = H + "px";
+    for (k = 0; k < 3; k++) { var ce = el("div", { class: "st-cella" }); ce.style.height = H + "px"; fin.appendChild(ce); celle.push(ce); }
+    var voci = opz.voci && opz.voci.length ? opz.voci : [opz.ultima], N = Math.max(10, Math.round(opz.durata / 140)), seq = [], prec = null;
+    function pesca(no) { var v, n = 0; do { v = voci[Math.floor(Math.random() * voci.length)]; } while (voci.length > 1 && (v === no || v === prec) && ++n < 20); return v; }
+    for (k = 0; k <= N + 1; k++) { seq.push(pesca(null)); prec = seq[k]; }   // mai due uguali di fila
+    seq[N] = opz.ultima;
+    if (seq[N - 1] === opz.ultima) seq[N - 1] = pesca(opz.ultima);
+    if (seq[N + 1] === opz.ultima) seq[N + 1] = pesca(opz.ultima);
+    var ora = -1;
+    function posa(p) {   // p = quante caselle sono passate (con la virgola)
+      var i = Math.min(N, Math.floor(p)), f = p - i;
+      if (i !== ora) { if (ora >= 0 && opz.scatto) opz.scatto(i); ora = i; }
+      for (var d = -1; d <= 1; d++) {   // la voce dopo sta sopra e scende al centro
+        var idx = i + d, c = ((idx % 3) + 3) % 3;
+        if (mostra[c] !== idx) { mostra[c] = idx; celle[c].textContent = seq[Math.max(0, Math.min(N + 1, idx))]; }
+        celle[c].style.transform = "translate3d(0," + ((f - d) * H).toFixed(1) + "px,0)";
+      }
+    }
+    posa(0);
+    return { el: fin, via: function () {
+      return new Promise(function (ok) {
+        var t0 = performance.now(), finito = false;
+        function fine() { if (finito) return; finito = true; posa(N); ok(); }
+        (function giro() {
+          if (finito) return;
+          var u = Math.min(1, (performance.now() - t0) / opz.durata);
+          posa(N * (1 - Math.pow(1 - u, 2.2)));   // frena come una ruota vera: veloce all'inizio, piano piano alla fine
+          if (u >= 1) fine(); else requestAnimationFrame(giro);
+        })();
+        setTimeout(fine, opz.durata + 150);   // si ferma comunque sulla voce giusta
+      });
+    } };
   }
   function rett(x, X, Y, w, h, r) {
     x.beginPath(); x.moveTo(X + r, Y); x.lineTo(X + w - r, Y); x.quadraticCurveTo(X + w, Y, X + w, Y + r); x.lineTo(X + w, Y + h - r);
@@ -5263,7 +5699,11 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
     disegnaPubblico(S);
     pos(S.schermo, R.x, R.y, R.w, R.h);
     S.fasci.forEach(function (f, i) { var fx = W * (0.1 + i * 0.267); pos(f, fx - 0.22 * VW, 0.03 * VH, 0.44 * VW, 1.35 * VH); });
-    S.eq.forEach(function (e, i) { var p = S.torriR[i]; pos(e, p[0], p[1] + 44, p[2], p[3] - 44); });
+    S.eq.forEach(function (e, i) {   // dentro agli angoli tondi della torre
+      var p = S.torriR[i], qe = LEGGERO ? 1 : 1.5; pos(e, p[0] + 6, p[1] + 44, p[2] - 12, p[3] - 50);
+      e.width = Math.max(1, Math.round((p[2] - 12) * qe)); e.height = Math.max(1, Math.round((p[3] - 50) * qe));
+    });
+    disegnaEq(S);
     function inPub(e) { var z = S.zonePub[e._zona]; pos(e, z[0] + 12 + e._rx * (z[2] - 24), z[1] + 24 + e._ry * (z[3] - 60)); }
     S.lucine.forEach(inPub); S.flash.forEach(inPub);
     S.bastoni.forEach(inPub); S.cartelli.forEach(inPub);
@@ -5280,21 +5720,80 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
       var p = S.posti[i], X = S.L[i]; if (!X) return;
       pos(X.el, p.cx - p.w / 2, p.top, p.w);
       X.el.style.fontSize = (p.w * 0.1).toFixed(1) + "px";
+      if (X.w !== p.w) { X.w = p.w; disegnaBanco(X); }   // il bancone si ridisegna solo se cambia misura
       S.zonaLeggii.appendChild(X.el);
     });
     S.file = S.posti.length > 4 ? 2 : 1;
   }
 
   // ---------- TELECAMERA ----------
+  // La muovo io fotogramma per fotogramma (non con una transizione CSS). Con la transizione il telefono ridisegnava tutto lo
+  // studio all'inizio e alla fine di ogni movimento: scatti, e a volte il bancone spariva per un attimo. Così invece lo studio,
+  // disegnato una volta a grandezza piena, viene solo spostato e ingrandito dalla scheda grafica.
+  function curva(x1, y1, x2, y2) {   // accelerazione morbida (come cubic-bezier del CSS)
+    var cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+    function X(t) { return ((ax * t + bx) * t + cx) * t; }
+    function D(t) { return (3 * ax * t + 2 * bx) * t + cx; }
+    return function (u) {
+      if (u <= 0) return 0; if (u >= 1) return 1;
+      var t = u, i, e, d;
+      for (i = 0; i < 8; i++) { e = X(t) - u; if (Math.abs(e) < 1e-5) break; d = D(t); if (Math.abs(d) < 1e-6) break; t -= e / d; }
+      if (!(t >= 0 && t <= 1) || Math.abs(X(t) - u) > 1e-3) { var a = 0, b = 1; t = u; for (i = 0; i < 30; i++) { e = X(t); if (Math.abs(e - u) < 1e-5) break; if (e < u) a = t; else b = t; t = (a + b) / 2; } }
+      return ((ay * t + by) * t + cy) * t;
+    };
+  }
+  var EASE = curva(0.45, 0.05, 0.25, 1);
+  function vistaDi(S, r) {   // centro e ingrandimento di un'inquadratura, senza mai uscire dallo studio (niente fasce nere ai bordi)
+    var s = Math.min(S.VW / r.w, S.VH / r.h), cx = r.x + r.w / 2, cy = r.y + r.h / 2, vw = S.VW / s, vh = S.VH / s;
+    if (vw <= S.W) cx = Math.max(vw / 2, Math.min(S.W - vw / 2, cx));
+    if (vh <= S.H) cy = Math.max(vh / 2, Math.min(S.H - vh / 2, cy));
+    return { cx: cx, cy: cy, s: s };
+  }
+  function metti(S, v, fermo) {   // mette la telecamera su un punto dello studio (centro e ingrandimento)
+    var s = v.s, tx = S.VW / 2 - v.cx * s, ty = S.VH / 2 - v.cy * s;
+    if (fermo && Math.abs(s - 1) < 0.001) { s = 1; tx = Math.round(tx); ty = Math.round(ty); }   // ferma sul maxischermo: nitida al pixel
+    S.mondo.style.transform = "translate3d(" + tx.toFixed(2) + "px," + ty.toFixed(2) + "px,0) scale(" + s.toFixed(5) + ")";
+    S.cam = { cx: v.cx, cy: v.cy, s: v.s };
+  }
   function camera(S, r, ms) {
-    var s = Math.min(S.VW / r.w, S.VH / r.h), tx = (S.VW - r.w * s) / 2 - r.x * s, ty = (S.VH - r.h * s) / 2 - r.y * s;
-    if (Math.abs(s - 1) < 0.001) { s = 1; tx = Math.round(tx); ty = Math.round(ty); }   // sul maxischermo: nitido al pixel
-    S.mondo.style.transition = ms ? "transform " + ms + "ms cubic-bezier(.45,.05,.25,1)" : "none";
-    S.mondo.style.transform = "translate3d(" + tx.toFixed(1) + "px," + ty.toFixed(1) + "px,0) scale(" + s.toFixed(4) + ")";
-    var suSch = r === S.R.schermo;
+    if (!S.rasterOk && S.attesaRaster) return S.attesaRaster.then(function () { return camera(S, r, ms); });   // prima lo studio si prepara
+    var dest = vistaDi(S, r), suSch = r === S.R.schermo, mossa = S.mossa = (S.mossa || 0) + 1;
     S.mondo.classList.toggle("st-quieto", suSch);   // sul maxischermo lo studio si ferma (risparmio batteria)
     S.rec.classList.toggle("on", !suSch);
-    return dorme(ms || 0);
+    if (!ms || !S.cam) { metti(S, dest, true); return dorme(0); }
+    var da = S.cam, t0 = performance.now(), l0 = Math.log(da.s), l1 = Math.log(dest.s);
+    return new Promise(function (fine) {
+      function passo(t) {
+        if (S.mossa !== mossa) return;   // nel frattempo è partita un'altra inquadratura
+        var u = Math.min(1, ((t || performance.now()) - t0) / ms), e = EASE(u);
+        if (u >= 1) { metti(S, dest, true); return; }
+        // il centro scorre dritto, lo zoom cambia in proporzione: il movimento sembra quello di una telecamera vera
+        metti(S, { cx: da.cx + (dest.cx - da.cx) * e, cy: da.cy + (dest.cy - da.cy) * e, s: Math.exp(l0 + (l1 - l0) * e) }, false);
+        contaFotogramma(S, t || performance.now());
+        requestAnimationFrame(passo);
+      }
+      requestAnimationFrame(passo);
+      setTimeout(function () { if (S.mossa === mossa) metti(S, dest, true); fineMovimento(S); fine(); }, ms);   // arriva comunque, anche se lo schermo non ridisegna
+    });
+  }
+  // Se il telefono fatica mentre la telecamera si muove (tanti fotogrammi saltati in più movimenti), spengo le luci che ballano:
+  // prima di tutto la fluidità. Vale solo per questa partita.
+  function contaFotogramma(S, t) {
+    var m = S.misura || (S.misura = { ult: 0, dt: [], mosse: 0, male: 0 });
+    if (m.ult && t - m.ult > 0 && t - m.ult < 250) m.dt.push(t - m.ult);
+    m.ult = t;
+  }
+  function fineMovimento(S) {
+    var m = S.misura; if (!m) return;
+    var d = m.dt.slice(3).sort(function (a, b) { return a - b; }); m.dt = []; m.ult = 0;
+    if (d.length < 12 || S.leggeroAuto || LEGGERO) return;
+    var base = Math.max(d[Math.floor(d.length * 0.1)], 1), lenti = 0, soglia = Math.max(base * 1.8, 25);
+    d.forEach(function (x) { if (x > soglia) lenti++; });
+    m.mosse++; if (lenti / d.length > 0.25) m.male++;
+    if (m.mosse >= 3 && m.male >= 2) {
+      S.leggeroAuto = true; S.vista.classList.add("st-leggero", "st-leggero-auto");
+      try { console.info("[studio] il telefono fatica: tolgo le luci che ballano"); } catch (e) {}
+    }
   }
   function inquadra(S, shot, ms) { S.shot = shot; return camera(S, shot(), ms); }
   function suSchermo(S, ms) { return inquadra(S, function () { return S.R.schermo; }, ms); }
@@ -5346,7 +5845,7 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
   function puntiLeggio(S, i, valore, delta) {
     var X = S.L[i]; if (!X) return;
     var da = X.valore; X.valore = valore;
-    function scrivi(v) { X.pEl.textContent = v; X.pEl.classList.toggle("neg", v < 0); }
+    function scrivi(v) { if (X.disp && !X.disp.testo && X.disp.t === String(v)) return; X.disp = { t: String(v), neg: v < 0, testo: false }; disegnaBanco(X); }
     if (!delta) return scrivi(valore);
     X.delta.textContent = (delta > 0 ? "+" : "−") + Math.abs(delta);
     X.delta.style.color = delta > 0 ? "#6ff0a6" : "#ff8d98";
@@ -5369,11 +5868,11 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
     var l = testi[tipo] || testi.applauso;
     S.fumetto.textContent = l[Math.floor(Math.random() * l.length)];
     S.fumetto.classList.remove("on"); void S.fumetto.offsetWidth; S.fumetto.classList.add("on");
-    if (tipo === "applauso") {
+    if (tipo !== "ohh") {   // "applauso", "ovazione" (chi vince: coi fischi) o "piano" (applauso di cortesia)
       S.pubWrap.classList.add("salta");
       S.flash.forEach(function (f, k) { setTimeout(function () { f.classList.remove("on"); void f.offsetWidth; f.classList.add("on"); }, 100 + Math.random() * 1300); });
-      setTimeout(function () { S.pubWrap.classList.remove("salta"); }, 1900);
-      FX.applauso();
+      setTimeout(function () { S.pubWrap.classList.remove("salta"); }, tipo === "ovazione" ? 2800 : 1900);
+      FX.applauso(tipo === "ovazione" ? "forte" : tipo === "piano" ? "piano" : null);
     } else FX.ohh();
   }
   function logoSchermo(S) {
@@ -5386,6 +5885,7 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
   // ---------- LA REGIA: i momenti dello spettacolo ----------
   async function apertura(S) {
     viaBarra(S); logoSchermo(S);
+    if (S.pubPronto) await S.pubPronto;   // le facce del pubblico pronte prima di muovere la telecamera
     await suPubblico(S, 0, 0);
     terzo(S, null, "In diretta dallo studio", S.titolo || "", "📺");
     pubblico(S, "applauso");
@@ -5396,6 +5896,7 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
         if (!S.vivo()) return;
         await suLeggio(S, i, 850); accendiSolo(S, i); faccia(S, i, "esulta");
         terzo(S, i, S.gioc[i].nome, i === S.io ? "Sei tu! In bocca al lupo" : "Concorrente n° " + (i + 1));
+        pubblico(S, "piano");   // il pubblico accoglie ogni concorrente
         await dorme(700); faccia(S, i, null); viaTerzo(S);
       }
       accendiSolo(S, -1);
@@ -5404,6 +5905,7 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
         if (!S.vivo()) return;
         var quanti = S.posti.filter(function (p) { return p.fila === f; }).length;
         terzo(S, null, f === 0 ? "Ecco i concorrenti!" : "…e in seconda fila!", quanti + " concorrenti", "🎤");
+        pubblico(S, "applauso");
         await panFila(S, f, 2600, function (k) { accendi(S, k, true); faccia(S, k, "esulta"); setTimeout(function () { accendi(S, k, false); faccia(S, k, null); }, 900); });
       }
       viaTerzo(S);
@@ -5417,6 +5919,7 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
     await suLeggio(S, gi, 900);
     faccia(S, gi, "pensa");
     terzo(S, gi, "Tocca a " + (S.gioc[gi] ? S.gioc[gi].nome : ""), sotto);
+    pubblico(S, "piano");
     await dorme(1300);
     viaTerzo(S); faccia(S, gi, null);
   }
@@ -5431,7 +5934,7 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
       await suLeggio(S, vinc, 1100);
       faccia(S, vinc, "esulta");
       terzo(S, vinc, (S.gioc[vinc] ? S.gioc[vinc].nome : "") + " vince!", sotto || "", "🏆");
-      pubblico(S, "applauso"); coriandoli(); FX.fanfara();
+      pubblico(S, "ovazione"); coriandoli(); FX.fanfara();
       await dorme(3000); viaTerzo(S);
     }
     await largo(S, 1400); await dorme(700);
@@ -5440,11 +5943,32 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
 
   // ---- pezzi in più per i giochi (es. la bomba della Patata) ----
   // scritta libera sul display del leggio (al posto dei punti): es. "IN GARA", "💀 OUT", il countdown
-  function testoLeggio(S, i, testo, neg) { var X = S.L[i]; if (!X) return; X.pEl.textContent = testo; X.pEl.classList.add("testo"); X.pEl.classList.toggle("neg", !!neg); }
+  function testoLeggio(S, i, testo, neg) {
+    var X = S.L[i]; if (!X) return; testo = String(testo);
+    if (X.disp && X.disp.testo && X.disp.t === testo && X.disp.neg === !!neg) return;   // uguale a prima: non ridisegno
+    X.disp = { t: testo, neg: !!neg, testo: true }; disegnaBanco(X);
+  }
   // quali leggii si possono toccare (anello verde che pulsa); lista di indici
   function tocca(S, lista) { S.L.forEach(function (X, k) { X.el.classList.toggle("tocca", lista.indexOf(k) >= 0); }); }
-  function fuori(S, i, on) { var X = S.L[i]; if (X) X.el.classList.toggle("fuori", !!on); }
-  function scossa(S) { var e = S.scena; e.classList.remove("scossa"); void e.offsetWidth; e.classList.add("scossa"); }
+  function fuori(S, i, on) {
+    var X = S.L[i]; if (!X) return; X.el.classList.toggle("fuori", !!on);
+    if (!!X.grigio !== !!on) { X.grigio = !!on; mettiAvatar(X, S.gioc[i], X.faccia); disegnaBanco(X); }   // avatar e bancone in bianco e nero
+  }
+  // la telecamera trema (un'esplosione): la muovo io, così lo studio non si ridisegna
+  function scossa(S) {
+    var e = S.scena, t0 = performance.now(), D = 550, id = S.scossaId = (S.scossaId || 0) + 1;
+    var K = [[0, 0, 0], [0.15, -9, 5], [0.3, 8, -6], [0.45, -6, -3], [0.6, 5, 4], [0.8, -2, 1], [1, 0, 0]];
+    function passo(t) {
+      if (S.scossaId !== id) return;
+      var u = Math.min(1, ((t || performance.now()) - t0) / D), k = 1;
+      while (k < K.length - 1 && K[k][0] < u) k++;
+      var a = K[k - 1], b = K[k], f = (u - a[0]) / (b[0] - a[0]); f = 1 - (1 - f) * (1 - f);
+      e.style.transform = u >= 1 ? "" : "translate3d(" + (a[1] + (b[1] - a[1]) * f).toFixed(1) + "px," + (a[2] + (b[2] - a[2]) * f).toFixed(1) + "px,0)";
+      if (u < 1) requestAnimationFrame(passo);
+    }
+    requestAnimationFrame(passo);
+    setTimeout(function () { if (S.scossaId === id) e.style.transform = ""; }, D + 60);
+  }
   // punto del mondo sopra la testa del concorrente i (per metterci sopra una cosa, es. la bomba)
   function sopraTesta(S, i) { var p = S.posti[i] || S.posti[0]; return { x: p.cx, y: p.top, w: p.w }; }
 
@@ -5456,6 +5980,7 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
     apertura: apertura, stacco: stacco, finale: finale,
     testoLeggio: testoLeggio, tocca: tocca, fuori: fuori, scossa: scossa, sopraTesta: sopraTesta,
     avatarDi: avatarDi, mioAvatar: mioAvatar, avatarValido: avatarValido, coriandoli: coriandoli,
+    raggi: raggi, rullo: rullo,
     dorme: dorme, vuota: vuota, durataApertura: durataApertura, STACCO: STACCO, FX: FX, COLORI: ST_COL
   };
 })();
@@ -11662,6 +12187,41 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 134,
+    data: "26 settembre 2026",
+    titolo: "Nomi, Cose e Città online 🔗✍️",
+    descrizione: [
+      "Nomi, Cose e Città si gioca anche \"ognuno dal suo telefono\": apri una stanza, mandi il codice o il link, e si gioca nello studio del game show.",
+      "Si scrive tutti nello stesso momento, ognuno sul suo foglio, con lo stesso tempo per tutti. Sul maxischermo si vede chi ha già finito.",
+      "Al tabellone ognuno vota dal suo telefono: una parola vale finché non la boccia almeno metà degli altri. Con \"Ho votato\" si passa alla categoria dopo quando hanno votato tutti.",
+      "C'è anche nella Sala online, tra i giochi che l'host può lanciare per tutti.",
+      "Quando entri da un invito non devi più scrivere il nome: entri direttamente col profilo del tuo telefono (vale per tutti i giochi online)."
+    ]
+  },
+  {
+    v: 133,
+    data: "26 settembre 2026",
+    titolo: "Studio senza scatti, musica e applausi 🎵👏",
+    descrizione: [
+      "Game show più fluidi: la telecamera ora si muove senza far ridisegnare lo studio al telefono, e il bancone dei concorrenti non sparisce più durante i movimenti.",
+      "Le torri di luci in alto a destra e a sinistra ora sono pannelli LED che ballano a tempo di musica, molto più leggeri per il telefono. Se il telefono fa fatica, lo studio si alleggerisce da solo.",
+      "Sotto al gioco c'è una musichetta chill. Si spegne e si riaccende col tasto 🎵 in alto a destra, e il telefono se lo ricorda.",
+      "Applausi veri del pubblico: quando entra ogni concorrente, a ogni turno, quando indovini; e l'ovazione con i fischi per chi vince.",
+      "Black Jack: la nuova mano parte con la stessa puntata della mano prima (non più sempre 100)."
+    ]
+  },
+  {
+    v: 132,
+    data: "26 settembre 2026",
+    titolo: "Categoria a sorpresa, slot che rallenta e studio più fluido 🎲",
+    descrizione: [
+      "Patata Bollente: oltre alle 3 categorie ora si può votare \"🎲 A sorpresa\". Se vince, sul maxischermo gira la ruota delle categorie, che rallenta piano piano e si ferma su una categoria a caso. Il tempo della bomba resta fermo finché la ruota gira.",
+      "Nomi, Cose e Città: la slot machine della lettera ora è un rullo vero. Parte velocissima e rallenta piano piano (tac… tac…… tac) fino a fermarsi sulla lettera, senza più frenate di colpo.",
+      "Studio del game show più fluido quando la telecamera si muove: luci, fari, raggi e cartellini sono più leggeri per il telefono, e la barra del tempo non ridisegna più lo schermo a ogni istante.",
+      "La linea del tempo: fra un turno e l'altro sul maxischermo torna il logo del programma."
+    ]
+  },
+  {
     v: 131,
     data: "26 settembre 2026",
     titolo: "Nomi, Cose e Città nello studio ✍️📋",
@@ -14371,11 +14931,13 @@ window.SG_SIPERO = {
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         ctx(); S.nome = (input.value || "Amico").trim() || "Amico";
         S.msg.textContent = "Collegamento in corso…"; collega();
-      }}));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
@@ -15649,6 +16211,9 @@ window.SG_SIPERO = {
 (function () {
   "use strict";
   var BJ = window.__BJ;
+  // l'ultima puntata di ognuno: la mano dopo riparte da lì (non da 100)
+  var ultimePuntate = {};
+  function chiavePuntata(g) { return (g.id || "") + "|" + (g.nome || ""); }
 
   var CSS = [
     ".bj-wrap{position:relative;display:flex;flex-direction:column;gap:8px;min-height:78vh}",
@@ -16322,7 +16887,7 @@ window.SG_SIPERO = {
       var g = vm.giocatori[vm.turno];
       if (!mio) { zHero.appendChild(el("div", { class: "bj-hfiches", text: "sta puntando…" })); return; }
       var minP = vm.puntataMin || 10, maxP = g.fiches;
-      if (puntSel == null) puntSel = Math.min(100, maxP);
+      if (puntSel == null) puntSel = Math.min(ultimePuntate[chiavePuntata(g)] || 100, maxP);   // di base la stessa puntata della mano prima
       puntSel = Math.max(minP, Math.min(puntSel, maxP));
       var val = el("div", { class: "bj-punta-val", text: puntSel + " 🪙" });
       zHero.appendChild(val);
@@ -16339,9 +16904,9 @@ window.SG_SIPERO = {
       });
       zHero.appendChild(riga);
       var az = el("div", { class: "bj-azioni" });
-      bPunta = el("button", { class: "bj-btn bj-b-carta", text: "Punta " + puntSel + " ▶", onclick: function () { var v = puntSel; puntSel = null; suonoChip(); drv.onPunta(v); } });
+      bPunta = el("button", { class: "bj-btn bj-b-carta", text: "Punta " + puntSel + " ▶", onclick: function () { var v = puntSel; puntSel = null; ultimePuntate[chiavePuntata(g)] = v; suonoChip(); drv.onPunta(v); } });
       az.appendChild(bPunta);
-      az.appendChild(el("button", { class: "bj-btn bj-b-stai", text: "Tutto (" + maxP + ")", onclick: function () { puntSel = null; suonoChip(); drv.onPunta(maxP); } }));
+      az.appendChild(el("button", { class: "bj-btn bj-b-stai", text: "Tutto (" + maxP + ")", onclick: function () { puntSel = null; ultimePuntate[chiavePuntata(g)] = maxP; suonoChip(); drv.onPunta(maxP); } }));
       zHero.appendChild(az);
     }
     function heroAssic(mio) {
@@ -16547,11 +17112,13 @@ window.SG_SIPERO = {
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       var msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
         S.nome = (input.value || "Amico").trim() || "Amico"; msg.textContent = "Collegamento in corso…"; collega();
-      } }));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function assicuraTavolo() {
       if (S.tav) return;
@@ -17018,11 +17585,13 @@ window.SG_SIPERO = {
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
         S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
-      } }));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
@@ -18719,11 +19288,13 @@ window.SG_SIPERO = {
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
         S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
-      } }));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
@@ -19674,11 +20245,13 @@ window.SG_SIPERO = {
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
         S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
-      } }));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
@@ -19807,7 +20380,8 @@ window.SG_SIPERO = {
       "Ogni giro esce una <b>lettera</b> uguale per tutti: a turno ciascuno riempie le categorie con parole che iniziano con quella lettera.",
       "Poi si <b>vota</b>: per ogni parola gli altri dicono se vale. Ognuno ha il suo tasto e può cambiare idea cliccando di nuovo.",
       "Se <b>più della metà</b> approva la parola vale <b>10 punti</b>; se due hanno scritto la <b>stessa</b> parola valgono <b>5</b> a testa; se è bocciata o vuota, <b>0</b>.",
-      "Si gioca un certo numero di giri: alla fine vince chi ha totalizzato più punti."
+      "Si gioca un certo numero di giri: alla fine vince chi ha totalizzato più punti.",
+      "<b>Online</b> (ognuno dal suo telefono): si scrive tutti nello stesso momento, poi al tabellone ognuno vota dal suo telefono. Ogni parola <b>vale</b> finché non la boccia almeno metà degli altri."
     ],
 
     impostazioni: function (box, dove, aiuti) {
@@ -19817,6 +20391,25 @@ window.SG_SIPERO = {
       dove.categorie = scelte;
       dove.secondi = 60;
       dove.round = 2;
+      dove.modo = "telefono";
+      if (!aiuti.torneo && !aiuti.sala) {   // nella sala si gioca sempre online
+        box.appendChild(el("div", { class: "etichetta", text: "Come si gioca" }));
+        var nota = el("div", { class: "link-avviso", hidden: "hidden" }), bT, bO;
+        var scegliModo = function (m) {
+          dove.modo = m;
+          bT.className = "modo-chip" + (m === "telefono" ? " attiva" : ""); bO.className = "modo-chip" + (m === "online" ? " attiva" : "");
+          nota.hidden = (m !== "online");
+          nota.textContent = (window.SGNet && SGNet.disponibile())
+            ? "Apri una stanza e manda il codice: tutti scrivono insieme, ognuno dal suo telefono, e poi votate al tabellone."
+            : "Qui il collegamento non è disponibile. Funziona quando il gioco è aperto dal sito pubblicato online.";
+        };
+        bT = el("button", { class: "modo-chip attiva", onclick: function () { scegliModo("telefono"); } }, [
+          el("span", { class: "mi", text: "📱" }), el("div", {}, [el("div", { class: "mt", text: "Un telefono solo" }), el("div", { class: "ms", text: "Si passa di mano" })])]);
+        bO = el("button", { class: "modo-chip", onclick: function () { scegliModo("online"); } }, [
+          el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Ognuno dal suo" }), el("div", { class: "ms", text: "Tutti scrivono insieme" })])]);
+        box.appendChild(el("div", { class: "modo-griglia" }, [bT, bO]));
+        box.appendChild(nota);
+      }
 
       function isScelta(c) { return scelte.indexOf(c) >= 0; }
       function toggle(c, chip) {
@@ -19911,8 +20504,10 @@ window.SG_SIPERO = {
 
     avvia: function (t) {
       var imp = t.impostazioni || {};
+      if (t.linkParams && t.linkParams.stanza) return ospiteNcc(t, t.linkParams.stanza);
       var cats = (imp.categorie && imp.categorie.length >= 3) ? imp.categorie.slice()
         : (window.SG_NCC_CATEGORIE ? window.SG_NCC_CATEGORIE.normali.slice(0, 5) : []);
+      if (imp.modo === "online") return hostNcc(t, cats, imp);
       var st = {
         g: t.giocatori.map(function (n) { return { nome: n, punti: 0 }; }),
         cats: cats, secondi: imp.secondi || 60, giri: imp.round || 2,
@@ -19943,10 +20538,8 @@ window.SG_SIPERO = {
       ".nc-giro{font-size:18px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#cdd6ff}",
       ".nc-slot{width:210px;height:230px;border-radius:30px;display:flex;align-items:center;justify-content:center;font-size:170px;font-weight:900;line-height:1;color:#241f00;",
         "background:linear-gradient(#fff6c9,#ffca3a 55%,#e0a90a);box-shadow:0 12px 30px rgba(0,0,0,.45),inset 0 -8px 0 rgba(0,0,0,.15)}",
-      ".nc-slot.gira{animation:ncGira .08s linear infinite}",
-      ".nc-slot.fermo{animation:ncPop .55s cubic-bezier(.3,1.6,.5,1)}",
-      "@keyframes ncGira{0%{transform:translateY(-4px)}50%{transform:translateY(4px)}100%{transform:translateY(-4px)}}",
-      "@keyframes ncPop{from{transform:scale(.6)}to{transform:none}}",
+      ".nc-slot.fermo{animation:ncClac .5s cubic-bezier(.3,1.6,.5,1)}",
+      "@keyframes ncClac{0%{transform:none}35%{transform:scale(1.1)}100%{transform:none}}",
       ".nc-sotto{font-size:22px;font-weight:800}",
       ".nc-cats{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:94%}",
       ".nc-cats span{background:rgba(255,255,255,.1);border-radius:99px;padding:5px 11px;font-weight:800;font-size:15px}",
@@ -20012,7 +20605,16 @@ window.SG_SIPERO = {
       ".nc-cl .fac{width:40px;height:40px}",
       ".nc-cl .nm{flex:1;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".nc-cl .pt{font-weight:900;color:#ffe066}",
-      ".nc-cl .pi{font-size:12px;font-weight:800;color:#6ff0a6;margin-left:4px}"
+      ".nc-cl .pi{font-size:12px;font-weight:800;color:#6ff0a6;margin-left:4px}",
+      // online: il mio voto (ognuno vota dal suo telefono), le attese, la lobby
+      ".nc-mio{border:0;border-radius:99px;padding:8px 14px;font:inherit;font-size:14px;font-weight:900;cursor:pointer}",
+      ".nc-mio.si{background:#2ecc71;color:#08210f}",
+      ".nc-mio.no{background:#ff5d6c;color:#2a0006}",
+      ".nc-attesa{margin:0;text-align:center;font-weight:800;color:#cdd6ff}",
+      ".nc-lobby{display:flex;align-items:center;gap:10px;padding:6px 10px 6px 6px;border-radius:12px;margin-bottom:6px;background:rgba(255,255,255,.06);font-weight:700}",
+      ".nc-lobby .fac{width:38px;height:38px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.1);flex:0 0 auto}",
+      ".nc-lobby .fac svg{width:100%;height:100%;display:block}",
+      ".nc-cats-lobby{justify-content:flex-start;max-width:none}"
     ].join("");
     document.head.appendChild(s);
   }
@@ -20058,18 +20660,13 @@ window.SG_SIPERO = {
     ST.viaBarra(S); ST.accendiSolo(S, -1);
     await ST.suSchermo(S, 800);
     ST.fermaTimer(S); ST.vuota(S.sch);
-    var slot = el("div", { class: "nc-slot gira", text: "A" }), sotto = el("div", { class: "nc-sotto", text: "La lettera è…" });
-    S.sch.appendChild(el("div", { class: "nc-estr" }, [ el("div", { class: "nc-giro", text: "Giro " + (st.giro + 1) + " di " + st.giri }), slot, sotto ]));
-    ST.FX.rullo(1.5);
-    var passo = 60, fine = Date.now() + 1500;
-    await new Promise(function (ok) {
-      (function giro() {
-        slot.textContent = LETTERE[Math.floor(Math.random() * LETTERE.length)]; tick(700 + Math.random() * 300);
-        if (Date.now() >= fine) return ok();
-        passo = Math.min(220, passo * 1.12); setTimeout(giro, passo);
-      })();
-    });
-    slot.textContent = st.lettera; slot.className = "nc-slot fermo"; sotto.textContent = "Tutte le parole con la " + st.lettera + "!";
+    // la slot machine: le lettere scorrono veloci e rallentano piano piano fino a fermarsi (tac… tac…… tac)
+    var slot = ST.rullo(S, { cls: "nc-slot", alt: 230, voci: LETTERE, ultima: st.lettera, durata: 3600, scatto: function (k) { tick(k % 2 ? 640 : 820); } });
+    var sotto = el("div", { class: "nc-sotto", text: "La lettera è…" });
+    S.sch.appendChild(el("div", { class: "nc-estr" }, [ el("div", { class: "nc-giro", text: "Giro " + (st.giro + 1) + " di " + st.giri }), slot.el, sotto ]));
+    ST.FX.rullo(3.4);
+    await slot.via();
+    slot.el.classList.add("fermo"); sotto.textContent = "Tutte le parole con la " + st.lettera + "!";
     ST.FX.applauso();
     await ST.dorme(1100);
     var cats = el("div", { class: "nc-cats" });
@@ -20090,8 +20687,9 @@ window.SG_SIPERO = {
       fatti
     ]));
   }
-  function foglietto(st, i, scritto) {
-    var X = st.S.L[i]; if (!X) return;
+  function foglietto(st, i, scritto) { fogliettoS(st.S, i, scritto); }
+  function fogliettoS(S, i, scritto) {
+    var X = S.L[i]; if (!X) return;
     var f = X.el.querySelector(".nc-foglietto");
     if (!f) { f = document.createElement("div"); f.className = "nc-foglietto"; var piano = X.el.querySelector(".piano"); if (piano) piano.appendChild(f); }
     f.classList.toggle("scritto", !!scritto);
@@ -20105,7 +20703,7 @@ window.SG_SIPERO = {
     ST.accendiSolo(S, i); ST.testoLeggio(S, i, "✍️ scrive");
     await ST.suLeggio(S, i, 400);
     ST.lampo(S);
-    await apriFoglio(st, i);   // la telecamera "entra" nel foglio: si scrive
+    st.risposte[i] = await apriFoglio(S, st.t.el, g, st.lettera, st.cats, st.secondi * 1000);   // la telecamera "entra" nel foglio: si scrive
     if (!S.vivo()) return;
     st.fatti[i] = true; foglietto(st, i, true);
     ST.testoLeggio(S, i, "✅ fatto"); ST.faccia(S, i, "esulta");
@@ -20114,17 +20712,17 @@ window.SG_SIPERO = {
     ST.faccia(S, i, null);
   }
   // il foglio a righe: la lettera cerchiata, una riga per categoria, il tempo è una matita che si accorcia
-  function apriFoglio(st, i) {
-    var S = st.S, el = st.t.el, g = st.g[i];
+  // ms = quanto tempo c'è; si chiude con "Ho finito", quando scade il tempo o se lo chiude il gioco (S._chiudiFoglio). Restituisce le parole.
+  function apriFoglio(S, el, g, lettera, cats, ms) {
     return new Promise(function (fine) {
       var foglio = el("div", { class: "nc-foglio" }), campi = [], chiuso = false;
       var barraT = el("i"), tempo = el("div", { class: "nc-tempo" }, [barraT]);
       var carta = el("div", { class: "nc-carta" }, [
-        el("div", { class: "nc-testa" }, [ el("div", { class: "nc-chi2" }, [ fac(el, g), el("span", { text: g.nome }) ]), el("div", { class: "nc-lett", text: st.lettera }) ]),
+        el("div", { class: "nc-testa" }, [ el("div", { class: "nc-chi2" }, [ fac(el, g), el("span", { text: g.nome }) ]), el("div", { class: "nc-lett", text: lettera }) ]),
         tempo
       ]);
-      st.cats.forEach(function (c) {
-        var inp = el("input", { type: "text", maxlength: "30", autocomplete: "off", autocapitalize: "words", spellcheck: "false", placeholder: "con la " + st.lettera + "…" });
+      cats.forEach(function (c) {
+        var inp = el("input", { type: "text", maxlength: "30", autocomplete: "off", autocapitalize: "words", spellcheck: "false", placeholder: "con la " + lettera + "…" });
         inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); var k = campi.indexOf(inp); if (campi[k + 1]) campi[k + 1].focus(); else inp.blur(); } });
         campi.push(inp);
         carta.appendChild(el("label", { class: "nc-riga" }, [ el("span", { class: "c", text: c.emoji + " " + c.testo }), inp ]));
@@ -20133,19 +20731,23 @@ window.SG_SIPERO = {
       S.vista.appendChild(foglio);
       S.rec.classList.remove("on");   // sul foglio niente scritta "IN ONDA" sopra la lettera
       requestAnimationFrame(function () { foglio.classList.add("on"); });
+      setTimeout(function () { foglio.classList.add("on"); }, 90);   // anche se lo schermo non ha ancora ridisegnato
       // il tempo: la barra si accorcia (solo transform), gli ultimi 10 secondi diventa rossa
-      var ms = st.secondi * 1000;
-      requestAnimationFrame(function () { requestAnimationFrame(function () { barraT.style.transition = "transform " + ms + "ms linear"; barraT.style.transform = "scaleX(0)"; }); });
+      var partita = false, t0 = Date.now();
+      function parti() { if (partita) return; partita = true; var resta = Math.max(0, ms - (Date.now() - t0)); barraT.style.transform = "scaleX(" + (resta / ms).toFixed(4) + ")"; void barraT.offsetWidth; barraT.style.transition = "transform " + resta + "ms linear"; barraT.style.transform = "scaleX(0)"; }
+      requestAnimationFrame(function () { requestAnimationFrame(parti); });
+      setTimeout(parti, 120);
       var toPoco = setTimeout(function () { tempo.classList.add("poco"); }, Math.max(0, ms - 10000));
       var toFine = setTimeout(chiudi, ms);
       function chiudi() {
         if (chiuso) return; chiuso = true; clearTimeout(toFine); clearTimeout(toPoco);
-        campi.forEach(function (inp, ci) { st.risposte[i][ci] = (inp.value || "").trim(); });
+        var parole = campi.map(function (inp) { return (inp.value || "").trim(); }); S._chiudiFoglio = null;
         try { if (document.activeElement) document.activeElement.blur(); } catch (e) {}
         ST.viaBarra(S);
         foglio.classList.add("via");
-        setTimeout(function () { foglio.classList.remove("on"); setTimeout(function () { if (foglio.parentNode) foglio.parentNode.removeChild(foglio); fine(); }, 260); }, 330);
+        setTimeout(function () { foglio.classList.remove("on"); setTimeout(function () { if (foglio.parentNode) foglio.parentNode.removeChild(foglio); fine(parole); }, 260); }, 330);
       }
+      S._chiudiFoglio = chiudi;
       ST.barra(S, [ el("button", { class: "btn btn-primario", text: "Ho finito ▶", onclick: chiudi }) ]);
       setTimeout(function () { try { if (campi[0]) campi[0].focus({ preventScroll: true }); } catch (e) {} }, 650);
     });
@@ -20269,6 +20871,461 @@ window.SG_SIPERO = {
     st.giro += 1;
     iniziaGiro(t, st);
   }
+
+  // =========================================================
+  //  ONLINE — ognuno scrive dal suo telefono, tutti nello stesso momento.
+  //  L'host tiene lo stato (lettera, tempo, parole, voti, punti) e lo manda a tutti;
+  //  ogni telefono ha il suo studio e la sua regia (i momenti dello spettacolo uno dopo l'altro).
+  //  Al tabellone ognuno vota dal suo telefono: una parola vale finché non la boccia almeno metà degli altri.
+  // =========================================================
+  var DURATA_LETTERA = 7400;    // la slot machine della lettera sui telefoni
+  var ANTICIPO_FOGLIO = 1600;   // la telecamera va sul leggio e si apre il foglio: poi parte il tempo
+  var GRAZIA = 2500;            // finito il tempo, aspetto i fogli che arrivano un po' in ritardo
+  var TEMPO_VOTO = 90000;       // al massimo, per ogni categoria del tabellone
+  function senzaReteN(t) {
+    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5",
+      text: "La modalità \"ognuno dal suo telefono\" funziona quando il gioco è aperto dal sito pubblicato online. Da un file locale non è disponibile: intanto usa \"Un telefono solo\"." }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
+    t.mostra(s);
+  }
+  function erroreN(t, txt) {
+    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    s._contenuto.appendChild(t.el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: t.esci }));
+    t.mostra(s);
+  }
+
+  function hostNcc(t, cats, imp) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaReteN(t);
+    var nomeHost = (t.giocatori && t.giocatori[0]) || "Host";
+    var H = { fase: "lobby", codice: "…", pronta: false, cats: cats, secondi: imp.secondi || 60, giri: imp.round || 2, giro: 0, lettera: null,
+      players: [{ id: "host", nome: nomeHost, omino: ST.mioAvatar(nomeHost), punti: 0 }],
+      risposte: {}, fatti: {}, voti: {}, ci: 0, pronti: {}, scadenza: 0, ultimo: null, to: null };
+    function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
+    function pres() { return H.players.filter(function (p) { return !p.via; }); }
+    function clearTo() { if (H.to) { clearTimeout(H.to); H.to = null; } }
+    var cb = { sonoHost: true, myId: "host",
+      onComincia: comincia,
+      onRisposte: function (r) { risposte("host", r); },
+      onVoto: function (a, ci, si) { voto("host", a, ci, si); },
+      onPronto: function (ci) { pronto("host", ci); },
+      onProssimo: prossimoGiro, onNuova: nuova,
+      onFine: function (cl) { clearTo(); rete.chiudi(); t.fine(cl); },
+      onEsci: function () { clearTo(); rete.chiudi(); t.esci(); } };
+    var rete = SGNet.ospita("nomicose", {
+      onCodice: function (c) { H.codice = c; bd(); },
+      onConnesso: function () { H.pronta = true; bd(); },
+      onAddio: function (id) {
+        if (H.fase === "lobby") { H.players = H.players.filter(function (p) { return p.id !== id; }); bd(); return; }
+        var p = pById(id); if (!p || p.via) return;
+        p.via = true; controlla(); bd();
+      },
+      onMsg: function (id, m) {
+        if (!m || !m.t) return;
+        if (m.t === "join") {
+          if (H.fase === "lobby" && !pById(id) && H.players.length < 10) H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: ST.avatarValido(m.omino), punti: 0 });
+          bd();
+        }
+        else if (m.t === "risposte") risposte(id, m.r);
+        else if (m.t === "voto") voto(id, m.a, m.ci, m.si);
+        else if (m.t === "pronto") pronto(id, m.ci);
+      },
+      onErrore: function () { senzaReteN(t); }
+    });
+    function vm() {
+      var o = { fase: H.fase, codice: H.codice, pronta: H.pronta, giro: H.giro, giri: H.giri, lettera: H.lettera, secondi: H.secondi, cats: H.cats,
+        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, punti: p.punti, via: !!p.via }; }),
+        fatti: Object.keys(H.fatti) };
+      if (H.fase === "scrittura") o.rimMs = Math.max(0, H.scadenza - Date.now());
+      if (H.fase === "tabellone") {
+        o.ci = H.ci; o.pronti = Object.keys(H.pronti);
+        o.tab = H.players.map(function (p) { return { id: p.id, parola: (H.risposte[p.id] || [])[H.ci] || "", no: Object.keys(((H.voti[p.id] || {})[H.ci]) || {}) }; });
+      }
+      if (H.fase === "punti" || H.fase === "fine") o.ultimo = H.ultimo;
+      return o;
+    }
+    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); disegnaNccVM(t, v, cb); }
+    function comincia() {
+      if (H.fase !== "lobby" || H.players.length < 2) return;
+      H.fase = "apertura"; bd();   // la sigla dello studio, uguale su tutti i telefoni
+      H.to = setTimeout(nuovoGiro, ST.durataApertura(H.players.length));
+    }
+    function nuovoGiro() {
+      clearTo();
+      H.lettera = letteraACaso(H.lettera); H.risposte = {}; H.fatti = {}; H.voti = {}; H.ci = 0; H.pronti = {}; H.ultimo = null;
+      H.fase = "lettera"; bd();
+      H.to = setTimeout(scrittura, DURATA_LETTERA);
+    }
+    function scrittura() {
+      clearTo();
+      H.fase = "scrittura"; H.scadenza = Date.now() + H.secondi * 1000 + ANTICIPO_FOGLIO; bd();
+      H.to = setTimeout(tabellone, H.secondi * 1000 + ANTICIPO_FOGLIO + GRAZIA);
+    }
+    function risposte(id, r) {
+      var p = pById(id); if (H.fase !== "scrittura" || !p || p.via || H.fatti[id]) return;
+      H.risposte[id] = H.cats.map(function (_, ci) { return String((r && r[ci]) || "").trim().slice(0, 30); });
+      H.fatti[id] = true; controlla(); bd();
+    }
+    function tabellone() {
+      clearTo();
+      H.fase = "tabellone"; H.ci = 0; H.pronti = {}; bd();
+      H.to = setTimeout(prossimaCat, TEMPO_VOTO);
+    }
+    function voto(id, a, ci, si) {
+      if (H.fase !== "tabellone" || ci !== H.ci || id === a || !pById(id) || !pById(a)) return;
+      var v = H.voti[a] || (H.voti[a] = {}), c = v[ci] || (v[ci] = {});
+      if (si) delete c[id]; else c[id] = true;   // si segna solo chi la boccia: di base vale
+      bd();
+    }
+    function pronto(id, ci) {
+      if (H.fase !== "tabellone" || ci !== H.ci || !pById(id)) return;
+      H.pronti[id] = true; controlla(); bd();
+    }
+    function prossimaCat() {
+      clearTo();
+      if (H.ci + 1 < H.cats.length) { H.ci++; H.pronti = {}; bd(); H.to = setTimeout(prossimaCat, TEMPO_VOTO); return; }
+      calcola();
+    }
+    // chi ha finito di scrivere / di votare: quando ci sono tutti si va avanti senza aspettare il tempo
+    function controlla() {
+      if (H.fase === "lobby" || H.fase === "fine") return;
+      if (pres().length < 2) { clearTo(); H.ultimo = H.ultimo || { tot: {} }; H.fase = "fine"; return; }   // è rimasto uno solo: finisce qui
+      if (H.fase === "scrittura" && pres().every(function (p) { return H.fatti[p.id]; })) { clearTo(); H.to = setTimeout(tabellone, 1400); }
+      if (H.fase === "tabellone" && pres().every(function (p) { return H.pronti[p.id]; })) { clearTo(); H.to = setTimeout(prossimaCat, 700); }
+    }
+    // i punti del giro: vale se più della metà degli altri non l'ha bocciata; uguale a un'altra valida = 5
+    function calcola() {
+      clearTo();
+      var presenti = pres(), idsP = presenti.map(function (p) { return p.id; }), votanti = presenti.length - 1, tot = {};
+      presenti.forEach(function (p) { tot[p.id] = 0; });
+      H.cats.forEach(function (_, ci) {
+        var valida = {}, conta = {};
+        presenti.forEach(function (p) {
+          var w = (H.risposte[p.id] || [])[ci] || "";
+          if (!w) { valida[p.id] = false; return; }
+          var no = Object.keys(((H.voti[p.id] || {})[ci]) || {}).filter(function (id) { return id !== p.id && idsP.indexOf(id) >= 0; }).length;
+          valida[p.id] = (votanti - no) * 2 > votanti;
+          if (valida[p.id]) { var k = norm(w); conta[k] = (conta[k] || 0) + 1; }
+        });
+        presenti.forEach(function (p) { if (valida[p.id]) tot[p.id] += conta[norm((H.risposte[p.id] || [])[ci])] >= 2 ? PUNTI_DOPPIA : PUNTI_OK; });
+      });
+      presenti.forEach(function (p) { p.punti += tot[p.id]; });
+      H.ultimo = { tot: tot };
+      H.fase = (H.giro + 1 >= H.giri) ? "fine" : "punti"; bd();
+    }
+    function prossimoGiro() { if (H.fase === "punti") { H.giro++; nuovoGiro(); } }
+    function nuova() {   // stessa gente, si ricomincia (senza sigla)
+      if (H.fase !== "fine") return;
+      H.players = pres(); H.players.forEach(function (p) { p.punti = 0; });
+      if (H.players.length < 2) return;
+      H.giro = 0; H.lettera = null; nuovoGiro();
+    }
+    disegnaNccVM(t, vm(), cb);
+  }
+
+  function ospiteNcc(t, codice) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaReteN(t);
+    var el = t.el, G = { myId: null, vm: null, rete: null, nome: "", msg: null };
+    var cb = { sonoHost: false, myId: null,
+      onRisposte: function (r) { G.rete && G.rete.invia({ t: "risposte", r: r }); },
+      onVoto: function (a, ci, si) { G.rete && G.rete.invia({ t: "voto", a: a, ci: ci, si: si }); },
+      onPronto: function (ci) { G.rete && G.rete.invia({ t: "pronto", ci: ci }); },
+      onEsci: function () { if (G.rete) G.rete.chiudi(); t.esci(); } };
+    function disegna() { if (G.vm) { cb.myId = G.myId; disegnaNccVM(t, G.vm, cb); } }
+    schermaNome();
+    function schermaNome() {
+      var s = t.schermata({ icona: "✍️", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
+      var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
+      G.msg = el("div", { class: "link-avviso" });
+      s._contenuto.appendChild(input); s._contenuto.appendChild(G.msg);
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+        try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
+        G.nome = (input.value || "Amico").trim() || "Amico"; G.msg.textContent = "Collegamento in corso…"; collega();
+      } });
+      s._piede.appendChild(bEntra);
+      t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
+    }
+    function collega() {
+      G.rete = SGNet.entra(codice, {
+        onAperto: function (id) { G.myId = id; G.rete.invia({ t: "join", nome: G.nome, omino: ST.mioAvatar(G.nome) });
+          setTimeout(function () { if (!G.vm && G.msg) G.msg.textContent = "Non trovo la partita. Controlla il codice, o l'host non ha ancora aperto la stanza…"; }, 8000); },
+        onMsg: function (m) { if (m && m.t === "vm") { G.vm = m.vm; disegna(); } },
+        onChiuso: function () { if (G.vm && G.vm.fase === "fine") return; erroreN(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
+        onErrore: function () { erroreN(t, "Problema di collegamento. Controlla la connessione e riprova."); }
+      });
+    }
+  }
+
+  // ---- ogni telefono: lobby, poi lo studio con la sua regia ----
+  var RN = null;
+  function idxN(vm, id) { for (var i = 0; i < vm.players.length; i++) if (vm.players[i].id === id) return i; return -1; }
+  function disegnaNccVM(t, vm, cb) {
+    assicuraStileN();
+    if (vm.fase === "lobby") { RN = null; return lobbyN(t, vm, cb); }
+    // lo studio si fa una volta per partita (e di nuovo se l'host ricomincia dopo la fine)
+    if (!RN || (!RN.S.vivo() && (vm.fase !== "fine" || !RN.fineFatta))) {
+      RN = { t: t, cb: cb, usciti: {} };
+      RN.S = ST.crea(t, vm.players, { io: idxN(vm, cb.myId), esci: function () { cb.onEsci(); }, titolo: "Nomi, Cose e Città", logo: ["NOMI, COSE", "E CITTÀ"] });
+      vm.players.forEach(function (p, i) { ST.puntiLeggio(RN.S, i, p.punti, 0); });
+    }
+    RN.vm = vm; RN.cb = cb; RN.vmTs = Date.now();
+    if (vm.fase !== "scrittura" && RN.S._chiudiFoglio) RN.S._chiudiFoglio();   // il tempo è finito per tutti: il foglio si chiude
+    regiaTickN(RN);
+  }
+  async function regiaTickN(R) {
+    if (R.corre) { R.ancora = true; return; }
+    R.corre = true;
+    try {
+      for (var giri = 0; giri < 40; giri++) {
+        R.ancora = false;
+        var fatto = await regiaPassoN(R);
+        if (!fatto && !R.ancora) break;
+      }
+    } catch (e) {} finally { R.corre = false; }
+  }
+  // un passo della regia: true se ha fatto un momento dello spettacolo (poi si guarda lo stato più recente)
+  async function regiaPassoN(R) {
+    var vm = R.vm, S = R.S;
+    if (!S.vivo()) return false;
+    vm.players.forEach(function (p, i) { if (p.via && !R.usciti[p.id]) { R.usciti[p.id] = true; ST.fuori(S, i, true); ST.testoLeggio(S, i, "👋 uscito", true); } });
+    var kG = vm.giro;
+    if (vm.fase === "apertura") {
+      if (R.aperturaFatta) return false;
+      R.aperturaFatta = true; await ST.apertura(S); return true;
+    }
+    R.aperturaFatta = true;
+    if (vm.fase === "lettera") {
+      if (R.kLettera === kG) return false;
+      R.kLettera = kG;
+      vm.players.forEach(function (p, i) { if (!p.via) { ST.puntiLeggio(S, i, p.punti, 0); fogliettoS(S, i, false); } });
+      await estraiLettera({ S: S, t: R.t, giro: vm.giro, giri: vm.giri, lettera: vm.lettera, cats: vm.cats });
+      return true;
+    }
+    if (vm.fase === "scrittura") {
+      if (R.kScrivi !== kG) { R.kScrivi = kG; R.kLettera = kG; await scriviOnline(R); return true; }
+      aggiornaFatti(R, vm); return false;
+    }
+    if (vm.fase === "tabellone") {
+      var kT = kG + "|" + vm.ci;
+      if (R.kTab !== kT) { R.kTab = kT; R.kScrivi = kG; await tabelloneOnline(R, vm); return true; }
+      aggiornaTab(R, vm); return false;
+    }
+    if (vm.fase === "punti" || vm.fase === "fine") {
+      if (R.kPunti !== kG) { R.kPunti = kG; await puntiOnline(R, vm); return true; }
+      if (vm.fase === "fine") {
+        if (R.fineFatta) return false;
+        R.fineFatta = true; await finaleOnline(R, vm); return true;
+      }
+      if (R.kClas !== kG) { R.kClas = kG; await classificaOnline(R, vm); return true; }
+      return false;
+    }
+    return false;
+  }
+  // tutti scrivono insieme: la telecamera va sul mio leggio e si apre il MIO foglio
+  async function scriviOnline(R) {
+    var S = R.S, el = R.t.el, cb = R.cb, vm = R.vm, io = idxN(vm, cb.myId), me = vm.players[io];
+    schermoScritturaOnline(R, vm);
+    if (io < 0 || !me || me.via || (vm.fatti || []).indexOf(cb.myId) >= 0) { await ST.suSchermo(S, 800); return; }
+    ST.accendiSolo(S, io); ST.testoLeggio(S, io, "✍️ scrive");
+    ST.terzo(S, io, "Si scrive tutti insieme!", "Parole con la " + vm.lettera, "✍️");
+    await ST.suLeggio(S, io, 700);
+    ST.viaTerzo(S); ST.lampo(S);
+    var rim = Math.max(3000, (R.vm.rimMs || 0) - (Date.now() - R.vmTs));   // il tempo che resta secondo l'host
+    var parole = await apriFoglio(S, el, me, vm.lettera, vm.cats, rim);
+    if (!S.vivo()) return;
+    cb.onRisposte(parole);
+    fogliettoS(S, io, true); ST.testoLeggio(S, io, "✅ fatto"); ST.faccia(S, io, "esulta");
+    await ST.suSchermo(S, 800);
+    ST.faccia(S, io, null);
+    if (R.vm.fase === "scrittura") ST.barra(S, [ el("p", { class: "nc-attesa", text: "Fatto! Aspettiamo gli altri…" }) ]);
+  }
+  function schermoScritturaOnline(R, vm) {
+    var S = R.S, el = R.t.el;
+    ST.fermaTimer(S); ST.vuota(S.sch);
+    R.listaFatti = el("div", { class: "nc-fatti" }); R.kFatti = null;
+    S.sch.appendChild(el("div", { class: "nc-estr" }, [
+      el("div", { class: "nc-giro", text: "Giro " + (vm.giro + 1) + " di " + vm.giri }),
+      el("div", { class: "nc-grande", text: vm.lettera }),
+      el("div", { class: "nc-chi", text: "✍️ Scrivono tutti" }),
+      R.listaFatti
+    ]));
+    aggiornaFatti(R, vm);
+  }
+  function aggiornaFatti(R, vm) {
+    var S = R.S, el = R.t.el, fatti = vm.fatti || [], k = fatti.join("|");
+    if (R.kFatti === k) return;
+    R.kFatti = k;
+    if (R.listaFatti) {
+      ST.vuota(R.listaFatti);
+      vm.players.forEach(function (p) { if (p.via) return; var ok = fatti.indexOf(p.id) >= 0;
+        R.listaFatti.appendChild(el("span", { class: ok ? "ok" : "" }, [ fac(el, p), el("span", { text: (ok ? "✅ " : "") + p.nome }) ])); });
+    }
+    vm.players.forEach(function (p, i) { if (p.via) return; var ok = fatti.indexOf(p.id) >= 0; fogliettoS(S, i, ok); ST.testoLeggio(S, i, ok ? "✅ fatto" : "✍️ scrive"); });
+  }
+  // il tabellone: una categoria alla volta, le parole di tutti; io voto le parole degli altri dal mio telefono
+  async function tabelloneOnline(R, vm) {
+    var S = R.S, el = R.t.el, cb = R.cb, ci = vm.ci, c = vm.cats[ci] || { emoji: "", testo: "" };
+    ST.viaBarra(S); R.righeTab = null; R.kBarra = null;
+    if (ci === 0) {   // prima categoria: si va al tabellone
+      ST.accendiSolo(S, -1); await ST.largo(S, 800);
+      ST.terzo(S, null, "Tutti hanno scritto!", "Andiamo al tabellone 📋", "📋"); ST.pubblico(S, "applauso");
+      await ST.dorme(1500); ST.viaTerzo(S);
+      if (!S.vivo()) return;
+    }
+    if (!S.shot || S.shot() !== S.R.schermo) await ST.suSchermo(S, 800);
+    vm = R.vm; if (vm.fase !== "tabellone" || vm.ci !== ci) return;   // intanto si è andati avanti
+    ST.fermaTimer(S); ST.vuota(S.sch);
+    var righe = el("div", { class: "nc-tab-righe" });
+    S.sch.appendChild(el("div", { class: "nc-tab" }, [
+      el("div", { class: "nc-tab-testa" }, [ el("small", { text: "📋 Tabellone · lettera " + vm.lettera + " · " + (ci + 1) + " di " + vm.cats.length }), el("div", { class: "nc-tab-cat", text: c.emoji + " " + c.testo }) ]),
+      righe
+    ]));
+    R.mieiNo = {}; R.righeTab = {};
+    var io = idxN(vm, cb.myId);
+    (vm.tab || []).forEach(function (w, a) {
+      var p = vm.players[a]; if (!p || p.via) return;
+      var riga = el("div", { class: "nc-tab-riga" }), esito = el("span", { class: "nc-esito" });
+      riga.style.animationDelay = (a * 0.12) + "s";
+      riga.appendChild(el("div", { class: "nc-tab-su" }, [ fac(el, p), el("span", { class: "nm", text: p.id === cb.myId ? "Tu" : p.nome }),
+        el("span", { class: "parola" + (w.parola ? "" : " vuota"), text: w.parola || "— vuoto" }), esito ]));
+      if (w.parola && p.id !== cb.myId && io >= 0 && !vm.players[io].via) {
+        var b = el("button", { class: "nc-mio" });
+        R.mieiNo[p.id] = (w.no || []).indexOf(cb.myId) >= 0;
+        var pinta = function () { var no = R.mieiNo[p.id]; b.className = "nc-mio" + (no ? " no" : " si"); b.textContent = no ? "👎 Non vale" : "👍 Vale"; };
+        b.addEventListener("click", function () { R.mieiNo[p.id] = !R.mieiNo[p.id]; pinta(); cb.onVoto(p.id, ci, !R.mieiNo[p.id]); aggiornaTab(R, R.vm); try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {} });
+        pinta(); riga.appendChild(el("div", { class: "nc-voti" }, [b]));
+      }
+      R.righeTab[p.id] = esito;
+      righe.appendChild(riga);
+    });
+    aggiornaTab(R, vm);
+  }
+  function aggiornaTab(R, vm) {
+    var S = R.S, el = R.t.el, cb = R.cb;
+    if (!R.righeTab || vm.fase !== "tabellone") return;
+    var presenti = vm.players.filter(function (p) { return !p.via; }), idsP = presenti.map(function (p) { return p.id; }), votanti = presenti.length - 1;
+    var stato = {}, conta = {};
+    (vm.tab || []).forEach(function (w, a) {
+      var p = vm.players[a]; if (!p || p.via || !w.parola) return;
+      var no = (w.no || []).filter(function (id) { return id !== p.id && idsP.indexOf(id) >= 0; });
+      if (p.id !== cb.myId && R.mieiNo && R.mieiNo[p.id] != null) {   // il mio voto lo conosco già (anche se l'host non l'ha ancora rimandato)
+        no = no.filter(function (id) { return id !== cb.myId; }); if (R.mieiNo[p.id]) no.push(cb.myId);
+      }
+      var si = votanti - no.length, ok = si * 2 > votanti;
+      stato[p.id] = { ok: ok, si: si };
+      if (ok) { var k = norm(w.parola); conta[k] = (conta[k] || 0) + 1; }
+    });
+    (vm.tab || []).forEach(function (w, a) {
+      var p = vm.players[a], e = p && R.righeTab[p.id]; if (!e) return;
+      if (!w.parola) { e.textContent = "0"; e.className = "nc-esito"; return; }
+      var s2 = stato[p.id], doppia = s2.ok && conta[norm(w.parola)] >= 2;
+      e.textContent = s2.ok ? (doppia ? "✔ uguale · 5" : "✔ vale · 10") : "✖ " + s2.si + "/" + votanti;
+      e.className = "nc-esito" + (s2.ok ? (doppia ? " doppia" : " si") : "");
+    });
+    var pronti = vm.pronti || [], io = idxN(vm, cb.myId), gioco = io >= 0 && !vm.players[io].via;
+    var sonoPronto = pronti.indexOf(cb.myId) >= 0 || R.prontoCi === vm.giro + "|" + vm.ci;
+    var mancano = presenti.filter(function (p) { return pronti.indexOf(p.id) < 0 && !(p.id === cb.myId && sonoPronto); }).map(function (p) { return p.id === cb.myId ? "te" : p.nome; });
+    var k = vm.ci + "|" + (sonoPronto ? 1 : 0) + "|" + mancano.join(",");
+    if (R.kBarra === k) return;
+    R.kBarra = k;
+    var ultima = vm.ci === vm.cats.length - 1;
+    if (gioco && !sonoPronto) ST.barra(S, [ el("button", { class: "btn btn-primario", text: ultima ? "✅ Ho votato: i punti!" : "✅ Ho votato, avanti ▶",
+      onclick: function () { R.prontoCi = vm.giro + "|" + vm.ci; cb.onPronto(vm.ci); aggiornaTab(R, R.vm); } }) ]);
+    else ST.barra(S, [ el("p", { class: "nc-attesa", text: mancano.length ? "Aspettiamo: " + mancano.join(", ") : "Si va avanti…" }) ]);
+  }
+  // i punti del giro scorrono sui leggii
+  async function puntiOnline(R, vm) {
+    var S = R.S, tot = (vm.ultimo && vm.ultimo.tot) || {};
+    ST.viaBarra(S); ST.accendiSolo(S, -1); ST.viaTerzo(S);
+    await ST.largo(S, 900);
+    ST.terzo(S, null, "Fine giro " + (vm.giro + 1), "Ecco i punti!", "🏁");
+    for (var i = 0; i < vm.players.length; i++) {
+      var p = vm.players[i]; if (p.via) continue;
+      var d = tot[p.id] || 0;
+      ST.puntiLeggio(S, i, p.punti, d);
+      ST.faccia(S, i, d > 0 ? "esulta" : "triste");
+      await ST.dorme(320);
+    }
+    ST.pubblico(S, "applauso");
+    await ST.dorme(1700); ST.viaTerzo(S); ST.tutteNormali(S);
+  }
+  function ordineN(vm) { return vm.players.filter(function (p) { return !p.via; }).sort(function (x, y) { return y.punti - x.punti; }); }
+  async function classificaOnline(R, vm) {
+    var S = R.S, el = R.t.el, cb = R.cb, tot = (vm.ultimo && vm.ultimo.tot) || {};
+    await ST.suSchermo(S, 800);
+    ST.fermaTimer(S); ST.vuota(S.sch);
+    var box = el("div", { class: "nc-clas" }, [ el("h2", { text: "🏁 Classifica dopo il giro " + (vm.giro + 1) }) ]);
+    ordineN(vm).forEach(function (p, k) {
+      var r = el("div", { class: "nc-cl" + (k === 0 ? " primo" : "") }, [
+        el("span", { class: "pos", text: ["🥇", "🥈", "🥉"][k] || (k + 1) + "°" }), fac(el, p), el("span", { class: "nm", text: p.nome + (p.id === cb.myId ? " (tu)" : "") }),
+        el("span", { class: "pt", text: String(p.punti) }), el("span", { class: "pi", text: "+" + (tot[p.id] || 0) })
+      ]);
+      r.style.animationDelay = (k * 0.1) + "s";
+      box.appendChild(r);
+    });
+    S.sch.appendChild(box);
+    if (cb.sonoHost) ST.barra(S, [ el("button", { class: "btn btn-primario", text: "Prossimo giro ▶", onclick: function () { ST.viaBarra(S); cb.onProssimo(); } }) ]);
+    else ST.barra(S, [ el("p", { class: "nc-attesa", text: "Il prossimo giro lo fa partire l'host…" }) ]);
+  }
+  async function finaleOnline(R, vm) {
+    var S = R.S, ordine = ordineN(vm), vinc = ordine[0] ? idxN(vm, ordine[0].id) : -1;
+    await ST.finale(S, vinc, (ordine[0] ? ordine[0].punti : 0) + " punti");
+    fineN(R.t, vm, R.cb, ordine);
+  }
+  function fineN(t, vm, cb, ordine) {
+    var el = t.el, s = t.schermata({ icona: "🏆", titolo: ordine[0] ? "Vince " + ordine[0].nome + "!" : "Fine partita", sotto: "Nomi, Cose e Città" });
+    var box = el("div", { style: "display:flex;flex-direction:column;gap:8px" });
+    ordine.forEach(function (p, k) {
+      box.appendChild(el("div", { class: "nc-cl" + (k === 0 ? " primo" : "") }, [
+        el("span", { class: "pos", text: ["🥇", "🥈", "🥉"][k] || (k + 1) + "°" }), fac(el, p), el("span", { class: "nm", text: p.nome + (p.id === cb.myId ? " (tu)" : "") }),
+        el("span", { class: "pt", text: p.punti + " punti" })
+      ]));
+    });
+    s._contenuto.appendChild(box);
+    if (cb.sonoHost) {
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
+      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏁 Fine", onclick: function () { cb.onFine(ordine.map(function (p) { return { nome: p.nome, punti: p.punti }; })); } }));
+    } else {
+      s._piede.appendChild(el("p", { class: "modulo-nota", text: "Se l'host fa un'altra partita, riparti da solo." }));
+      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    }
+    t.mostra(s);
+  }
+  // la lobby: chi c'è (con l'avatar), le categorie scelte; l'host fa partire
+  function lobbyN(t, vm, cb) {
+    var el = t.el, s = t.schermata({ icona: "✍️", titolo: "Nomi, Cose e Città · Lobby", sotto: "Ognuno dal suo telefono",
+      indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
+    if (cb.sonoHost) {
+      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
+      s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
+      if (vm.codice && vm.codice !== "…") {
+        var link = SG.creaLink({ gioco: "nomicose", stanza: vm.codice });
+        var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
+        s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
+          onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
+        s._contenuto.appendChild(campo);
+      }
+      s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
+        text: vm.pronta ? "🟢 Stanza pronta — manda il codice agli amici" : "🟡 Sto aprendo la stanza… (attendi il verde)" }));
+    }
+    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Chi c'è (" + vm.players.length + ")" }));
+    vm.players.forEach(function (p) {
+      s._contenuto.appendChild(el("div", { class: "nc-lobby" }, [ fac(el, p), el("span", { style: "flex:1", text: p.nome + (p.id === cb.myId ? " (tu)" : "") }) ]));
+    });
+    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Categorie · " + vm.secondi + " secondi · " + (vm.giri === 1 ? "1 giro" : vm.giri + " giri") }));
+    var cc = el("div", { class: "nc-cats nc-cats-lobby" });
+    (vm.cats || []).forEach(function (c) { cc.appendChild(el("span", { text: c.emoji + " " + c.testo })); });
+    s._contenuto.appendChild(cc);
+    if (cb.sonoHost) {
+      var ok = vm.players.length >= 2, b = el("button", { class: "btn btn-primario", text: "Via ▶", onclick: cb.onComincia });
+      if (!ok) b.setAttribute("disabled", "disabled");
+      s._piede.appendChild(b);
+      if (!ok) s._piede.appendChild(el("p", { class: "modulo-nota", text: "Servono almeno 2 giocatori (aspetta che entrino)." }));
+    } else s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci…" }));
+    t.mostra(s);
+  }
 })();
 
 /* =========================================================
@@ -20296,6 +21353,7 @@ window.SG_SIPERO = {
   // Pause dello spettacolo (il tempo della bomba NON scende): rivelazione della categoria con la bomba
   // che vola sul primo, bomba che passa al nuovo dopo un'esplosione, e l'esplosione stessa.
   var ATTESA_INIZIO = 4600, ATTESA_ROUND = 1800, DURATA_BOOM = 3400;
+  var ATTESA_SORPRESA = 2600;   // in più quando la categoria è a sorpresa: gira la ruota delle categorie
 
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
   function pescaCategorie(n) { var pool = (window.SG_PATATA || []).slice(); return mischia(pool).slice(0, n); }
@@ -20309,7 +21367,7 @@ window.SG_SIPERO = {
     giocatoriMax: 10,
     difficolta: 2,
     regole: [
-      "Si vota fra <b>3 categorie</b>: si gioca la più votata.",
+      "Si vota fra <b>3 categorie</b> o <b>🎲 a sorpresa</b> (una a caso, la sceglie la ruota): si gioca la più votata.",
       "Ognuno ha un suo tempo (parte da <b>15 secondi</b>) che scende <b>solo mentre tiene la bomba</b>. Dici a voce una parola della categoria e <b>passi la bomba</b> toccando un altro giocatore nel cerchio.",
       "Non puoi ripassare alla <b>stessa persona</b> finché non hai fatto il giro. Se chi te l'ha data <b>non ha detto la parola</b>, usa <b>“Rimanda indietro”</b>: riprende lui, col tempo che aveva.",
       "A chi <b>finisce il tempo</b> la bomba esplode: eliminato. Ogni round il tempo di partenza cala. Vince l'<b>ultimo rimasto</b>."
@@ -20381,12 +21439,18 @@ window.SG_SIPERO = {
     }
     var loop = setInterval(aggiorna, 120);
 
-    function avviaGioco(cat) {
-      st.categoria = cat; st.round = 0; st.boom = null; st.vincitore = null; st.passaggi = 0; st.remPrima = null; st.eliminati = [];
+    // "a sorpresa": una categoria a caso fra tutte, ma non una delle tre in votazione
+    function sorpresa() {
+      var tutte = mischia(extraCats.concat(deck)).filter(function (c) { return st.cats.indexOf(c) < 0; });
+      return tutte.length ? tutte[0] : st.cats[Math.floor(Math.random() * st.cats.length)];
+    }
+    function scegli(idx) { if (idx >= st.cats.length) avviaGioco(sorpresa(), true); else avviaGioco(st.cats[idx], false); }   // l'ultima voce è "a sorpresa"
+    function avviaGioco(cat, aCaso) {
+      st.sorpresa = !!aCaso; st.categoria = cat; st.round = 0; st.boom = null; st.vincitore = null; st.passaggi = 0; st.remPrima = null; st.eliminati = [];
       st.players.forEach(function (p) { p.eliminato = false; });
       var vv = vivi(); st.holder = vv[Math.floor(Math.random() * vv.length)].id;
       st.prev = null; st.ultimo = null; st.soloDare = null; st.giro = [st.holder]; st.cap = capMs(0); st.remaining = st.cap;
-      st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_INIZIO; onCambio();
+      st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_INIZIO + (st.sorpresa ? ATTESA_SORPRESA : 0); onCambio();
     }
     function esplode() {
       var h = holderObj(); if (!h) return;
@@ -20412,16 +21476,16 @@ window.SG_SIPERO = {
 
     return {
       st: st, vivi: vivi,
-      vota: function (id, idx) { var p = pById(id); if (p && st.fase === "voto") { p.voto = idx; onCambio(); } },
+      vota: function (id, idx) { var p = pById(id); if (p && st.fase === "voto" && idx >= 0 && idx <= st.cats.length) { p.voto = idx; onCambio(); } },
       via: function () {
         if (st.fase !== "voto") return;
-        var conta = st.cats.map(function () { return 0; });
+        var conta = st.cats.map(function () { return 0; }); conta.push(0);   // + "a sorpresa"
         st.players.forEach(function (p) { if (p.voto != null && conta[p.voto] != null) conta[p.voto]++; });
         var max = Math.max.apply(null, conta), top = [];
         conta.forEach(function (c, i) { if (c === max) top.push(i); });
-        avviaGioco(st.cats[top[Math.floor(Math.random() * top.length)]]);
+        scegli(top[Math.floor(Math.random() * top.length)]);
       },
-      viaCon: function (idx) { if (st.fase === "voto") avviaGioco(st.cats[idx]); },
+      viaCon: function (idx) { if (st.fase === "voto") scegli(idx); },
       passa: function (fromId, targetId) {
         aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder || Date.now() < st.attesa) return;
         var tgt = pById(targetId); if (!tgt || tgt.eliminato || targetId === st.holder) return;
@@ -20461,7 +21525,7 @@ window.SG_SIPERO = {
         }
         onCambio();
       },
-      nuova: function () { st.players.forEach(function (p) { p.eliminato = false; p.voto = null; }); st.eliminati = []; st.cats = pesca(3); st.fase = "voto"; st.categoria = null; st.boom = null; st.vincitore = null; onCambio(); },
+      nuova: function () { st.players.forEach(function (p) { p.eliminato = false; p.voto = null; }); st.eliminati = []; st.cats = pesca(3); st.fase = "voto"; st.categoria = null; st.sorpresa = false; st.boom = null; st.vincitore = null; onCambio(); },
       remaining: function () { return Math.max(0, st.remaining); },
       distruggi: function () { clearInterval(loop); },
       vm: function () {
@@ -20472,7 +21536,7 @@ window.SG_SIPERO = {
           classifica = ord.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null }; });
         }
         return {
-          fase: st.fase, categoria: st.categoria, cats: st.cats, round: st.round,
+          fase: st.fase, categoria: st.categoria, sorpresa: !!st.sorpresa, cats: st.cats, round: st.round,
           players: st.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null, eliminato: p.eliminato, voto: p.voto }; }),
           holder: st.holder, prev: st.prev, ultimo: st.ultimo, giro: st.giro.slice(),
           soloDare: (function () { if (st.soloDare == null) return null; var s = pById(st.soloDare); return (s && !s.eliminato) ? st.soloDare : null; })(),
@@ -20541,6 +21605,11 @@ window.SG_SIPERO = {
       ".pt-catbtn{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;padding:18px;border-radius:18px;border:3px solid transparent;cursor:pointer;color:#fff;font:inherit;font-size:21px;font-weight:900;",
         "background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.05));box-shadow:0 6px 16px rgba(0,0,0,.3)}",
       ".pt-catbtn small{font-size:13px;font-weight:700;opacity:.8}",
+      ".pt-catbtn.sorpresa{background:linear-gradient(135deg,rgba(160,107,255,.42),rgba(255,62,165,.2))}",
+      ".pt-rullo{width:100%;max-width:380px;border-radius:20px;background:linear-gradient(#2a1f6e,#140c3e);box-shadow:0 0 0 3px #ffd43b,0 10px 26px rgba(0,0,0,.45)}",
+      ".pt-rullo .st-cella{padding:0 14px;font-size:34px;font-weight:900;line-height:1.1;color:#ffe066;text-shadow:0 3px 0 rgba(0,0,0,.35)}",
+      ".pt-rullo.fermo{animation:ptClac .5s cubic-bezier(.3,1.6,.5,1)}",
+      "@keyframes ptClac{0%{transform:none}35%{transform:scale(1.08)}100%{transform:none}}",
       ".pt-catbtn.scelta{border-color:#ffd43b;background:linear-gradient(135deg,rgba(255,212,59,.32),rgba(255,212,59,.08))}",
       ".pt-rivela{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}",
       ".pt-catgrande{font-size:40px;font-weight:900;color:#ffe066;text-shadow:0 4px 0 rgba(0,0,0,.35);padding:0 10px;animation:ptEsce .5s cubic-bezier(.3,1.5,.5,1) both}",
@@ -20669,10 +21738,12 @@ window.SG_SIPERO = {
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
-      } }));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
@@ -20807,6 +21878,11 @@ window.SG_SIPERO = {
           el("span", { text: cat }), cb.locale ? null : el("small", { text: voti === 1 ? "1 voto" : voti + " voti" })
         ]));
       });
+      // la quarta scelta: una categoria a caso, la sceglie la ruota
+      var iS = vm.cats.length, vS = vm.players.filter(function (p) { return p.voto === iS; }).length, sS = mio && mio.voto === iS;
+      box.appendChild(el("button", { class: "pt-catbtn sorpresa" + (sS ? " scelta" : ""), onclick: function () { swishP(); if (cb.locale) cb.onScegliCat(iS); else cb.onVota(iS); } }, [
+        el("span", { text: "🎲 A sorpresa" }), el("small", { text: (cb.locale ? "" : (vS === 1 ? "1 voto · " : vS + " voti · ")) + "una categoria a caso" })
+      ]));
       S.sch.appendChild(box);
     }
     if (R.inq !== "schermo") { R.inq = "schermo"; ST.suSchermo(S, 900); }
@@ -20820,13 +21896,25 @@ window.SG_SIPERO = {
     ST.viaBarra(S); ST.tocca(S, []); nascondiBomba(R);
     if (R.inq !== "schermo") { R.inq = "schermo"; await ST.suSchermo(S, 600); }
     ST.fermaTimer(S); ST.vuota(S.sch);
-    var riv = el("div", { class: "pt-rivela" }, [ el("div", { class: "pt-titolo", text: "La categoria è…" }) ]);
+    var riv = el("div", { class: "pt-rivela" }, [ el("div", { class: "pt-titolo", text: vm.sorpresa ? "🎲 Categoria a sorpresa…" : "La categoria è…" }) ]);
     S.sch.appendChild(riv);
-    ST.FX.rullo(1.1);
-    await ST.dorme(1250);
-    riv.appendChild(el("div", { class: "pt-catgrande", text: vm.categoria || "" }));
-    ST.FX.applauso();
-    await ST.dorme(1000);
+    if (vm.sorpresa) {
+      // la ruota delle categorie: parte veloce e rallenta piano piano fino a fermarsi
+      var tutte = (window.SG_PATATA || []).slice(); if (tutte.indexOf(vm.categoria) < 0) tutte.push(vm.categoria);
+      var ruota = ST.rullo(S, { cls: "pt-rullo", alt: 120, voci: tutte, ultima: vm.categoria || "", durata: 3400, scatto: function (k) { tickP(k % 2 ? 620 : 780); } });
+      riv.appendChild(ruota.el);
+      ST.FX.rullo(3.2);
+      await ruota.via();
+      ruota.el.classList.add("fermo");
+      ST.FX.applauso();
+      await ST.dorme(1300);
+    } else {
+      ST.FX.rullo(1.1);
+      await ST.dorme(1250);
+      riv.appendChild(el("div", { class: "pt-catgrande", text: vm.categoria || "" }));
+      ST.FX.applauso();
+      await ST.dorme(1000);
+    }
     schermoPatata(R);
     R.inq = "largo"; await ST.largo(S, 800);
     await arrivaBomba(R, true);
@@ -21553,9 +22641,11 @@ window.SG_SIPERO = {
       var s = t.schermata({ icona: "🎯", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" }); s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
-        try { SG.audioCtx && SG.audioCtx(); } catch (e) {} S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega(); } }));
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+        try { SG.audioCtx && SG.audioCtx(); } catch (e) {} S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega(); } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
@@ -22206,10 +23296,12 @@ window.SG_SIPERO = {
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
-      } }));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
@@ -23619,11 +24711,13 @@ window.SG_SIPERO = {
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
         S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
-      } }));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
@@ -24269,11 +25363,13 @@ window.SG_SIPERO = {
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
         S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
-      } }));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
@@ -25303,10 +26399,12 @@ window.SG_SIPERO = {
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
-      }}));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
@@ -25563,7 +26661,7 @@ window.SG_SIPERO = {
     ".tl-reaz{width:64px;height:64px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.1);flex:0 0 auto;animation:tlPop .45s ease 1.15s both}",
     // tempo
     ".tl-timer{flex:0 0 auto;height:6px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin:2px 0 10px;}",
-    ".tl-timer-fill{height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,var(--verde),var(--accento));box-shadow:0 0 10px rgba(255,202,58,.6)}",
+    ".tl-timer-fill{height:100%;width:100%;border-radius:99px;transform-origin:0 50%;will-change:transform;background:linear-gradient(90deg,var(--verde),var(--accento));box-shadow:0 0 10px rgba(255,202,58,.6)}",
     ".tl-timer.poco .tl-timer-fill{background:linear-gradient(90deg,#ff8a3a,var(--rosso));box-shadow:0 0 10px rgba(255,93,108,.7)}",
     // la carta da piazzare (colore della categoria)
     ".tl-mano{flex:0 0 auto;position:relative;overflow:hidden;border-radius:20px;padding:12px 16px 14px;margin-bottom:10px;color:#fff;",
@@ -25615,6 +26713,10 @@ window.SG_SIPERO = {
       "background:linear-gradient(145deg,var(--c1),var(--c2));box-shadow:0 14px 34px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.35);overflow:hidden}",
     ".tl-flip-f .q{font-size:5rem;font-weight:900;opacity:.9}",
     ".tl-flip-f.retro{transform:rotateY(180deg)}",
+    ".tl-flip.fatto{perspective:none}",
+    ".tl-flip.fatto .tl-flip-in{animation:none;transform:none;transform-style:flat}",
+    ".tl-flip.fatto .tl-flip-f{display:none}",
+    ".tl-flip.fatto .tl-flip-f.retro{display:flex;transform:none}",
     ".tl-flip.ok .retro{box-shadow:0 0 0 4px var(--verde),0 0 40px rgba(55,212,126,.55),0 14px 34px rgba(0,0,0,.45)}",
     ".tl-flip.ko .retro{background:linear-gradient(145deg,#5a5f78,#2b2f45);box-shadow:0 0 0 4px var(--rosso),0 0 40px rgba(255,93,108,.45)}",
     ".tl-flip.ko .tl-flip-in{animation:tlGira 1.1s cubic-bezier(.3,1.3,.5,1) .25s both,tlScuoti .5s ease 1.35s}",
@@ -25847,13 +26949,15 @@ window.SG_SIPERO = {
     var fill = el("div", { class: "tl-timer-fill" });
     wrap.appendChild(fill);
     var frac = Math.max(0, Math.min(1, rimastiMs / totaliMs));
-    fill.style.width = (frac * 100) + "%";
-    requestAnimationFrame(function () { fill.style.transition = "width " + rimastiMs + "ms linear"; fill.style.width = "0%"; });
+    // la barra si accorcia con una scala: la muove la scheda grafica, niente ridisegni a ogni fotogramma (neanche mentre la telecamera si muove)
+    fill.style.transform = "scaleX(" + frac.toFixed(4) + ")";
+    var anim = null;
+    try { if (fill.animate && rimastiMs > 0) anim = fill.animate([{ transform: "scaleX(" + frac.toFixed(4) + ")" }, { transform: "scaleX(0)" }], { duration: rimastiMs, easing: "linear", fill: "forwards" }); } catch (e) {}
     // gli ultimi 8 secondi la barra diventa rossa
     var toPoco = rimastiMs > 8000 ? setTimeout(function () { wrap.classList.add("poco"); }, rimastiMs - 8000) : null;
     if (onScaduto && rimastiMs > 0) wrap._to = setTimeout(onScaduto, rimastiMs);
     else if (onScaduto) onScaduto();
-    wrap._stop = function () { if (wrap._to) clearTimeout(wrap._to); if (toPoco) clearTimeout(toPoco); };
+    wrap._stop = function () { if (wrap._to) clearTimeout(wrap._to); if (toPoco) clearTimeout(toPoco); if (anim) try { anim.pause(); } catch (e) {} };
     return wrap;
   }
   // Il risultato: la carta si gira e svela l'anno (o resta un mistero), poi punti e voti
@@ -25980,12 +27084,13 @@ window.SG_SIPERO = {
     viaBarra(S); fermaTimer(S);
     await suSchermo(S, 700);
     vuota(S.sch);
-    S.sch.appendChild(el("div", { class: "st-raggi" + (ok ? "" : " ko") }));
+    S.sch.appendChild(ST.raggi(S, !ok));
     S.sch.appendChild(nodoEsito(el, { giusto: ok, anno: es.anno, titolo: es.titolo, fatto: es.fatto, cat: es.cat, nome: es.nome, scaduto: es.scaduto, finito: es.finito }, null));
     FX.rullo(1.2);
     setTimeout(function () { ok ? FX.giusto() : FX.sbagliato(); }, 1300);
     await dorme(2300);
     if (!S.vivo()) return;
+    var fl = S.sch.querySelector(".tl-flip"); if (fl) fl.classList.add("fatto");   // carta girata: da qui in poi è piatta (niente 3D mentre la telecamera si muove)
     // la reazione di chi ha giocato, col pubblico
     lampo(S); accendiSolo(S, R.gi);
     await suLeggio(S, R.gi, 650);
@@ -26134,6 +27239,7 @@ window.SG_SIPERO = {
     var carta = stato.carta = stato.mazzo.pop();
     stato.giocatori.forEach(function (x) { delete x._voto; });
     // 1) stacco su chi gioca (e il telefono passa a lui)
+    ST.logoSchermo(S);   // fra un turno e l'altro sul maxischermo torna il logo
     await stacco(S, gi, uno ? "Dove va questa carta?" : "Passa il telefono a " + g.nome);
     if (!uno) await aspettaTasto(S, "📱 Sono " + g.nome + ", tocca a me ▶");
     if (!S.vivo()) return;
@@ -26345,10 +27451,12 @@ window.SG_SIPERO = {
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         ctx(); S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
-      } }));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
@@ -26443,6 +27551,7 @@ window.SG_SIPERO = {
         if (vm.fase === "turno") {
           ultimaFase = "turno";
           if (mioTurno) FX.turno();
+          ST.logoSchermo(S);
           await stacco(S, gi, mioTurno ? "Tocca a te!" : "Sta per scegliere…");
           if (S.vivo()) await suSchermo(S, 900);
           return true;
@@ -26874,11 +27983,13 @@ window.SG_SIPERO = {
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
         S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
-      } }));
+      } });
+      s._piede.appendChild(bEntra);
       t.mostra(s);
+      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
