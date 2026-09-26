@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 127,
+    data: "26 settembre 2026",
+    titolo: "La linea del tempo diventa un GAME SHOW 📺",
+    descrizione: [
+      "Si gioca in uno studio televisivo: maxischermo con la cornice di lampadine, arco al neon, luci che girano, torri LED, pubblico sugli spalti con le lucine dei telefoni, pavimento lucido.",
+      "Ognuno ha la sua POSTAZIONE: il tuo avatar dietro un banco lucido con il nome illuminato, i punti su un display a LED, il pulsante rosso e una striscia del suo colore. Quando tocca a te si accende l'occhio di bue.",
+      "La telecamera fa la regia: sigla iniziale sul pubblico e presentazione dei concorrenti, stacco su chi gioca, zoom sul maxischermo dove si gioca, inquadratura larga mentre si alzano i cartellini dei voti.",
+      "La rivelazione: rullo di tamburi, la carta si gira sul maxischermo con i raggi, poi stacco su chi ha giocato che esulta o si dispera, il pubblico applaude o fa \"ohhh\", i punti scorrono sul display. Poi i cartellini si girano uno dopo l'altro con +50 o −50.",
+      "Fino a 10 concorrenti: da 5 in su i leggii sono su due file sfalsate e la telecamera fa la panoramica lungo le file.",
+      "Online il tempo parte dopo lo stacco su chi gioca, così nessuno perde secondi. Niente si salta: è uno spettacolo!"
+    ]
+  },
+  {
     v: 126,
     data: "26 settembre 2026",
     titolo: "La linea del tempo tutta nuova ✨",

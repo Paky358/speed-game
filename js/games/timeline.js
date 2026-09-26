@@ -173,8 +173,52 @@
     turno: function () { beep([880, 1180], 0.12, "sine"); vibra(120); },
     voto: function () { beep([520], 0.1, "square"); vibra(30); },
     tic: function () { beep([1200], 0.05, "sine"); },
-    vittoria: function () { beep([660, 880, 1046, 1318], 0.22, "triangle"); vibra([120, 60, 120, 60, 200]); }
+    vittoria: function () { beep([660, 880, 1046, 1318], 0.22, "triangle"); vibra([120, 60, 120, 60, 200]); },
+    // applauso del pubblico: tanti battiti di mani (rumore filtrato) sparsi in un secondo e mezzo
+    applauso: function () {
+      var c = ctx(); if (!c) return;
+      try {
+        var buf = rumore(c, 0.05);
+        for (var i = 0; i < 48; i++) {
+          var t0 = c.currentTime + Math.random() * 1.6, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+          s.buffer = buf; f.type = "bandpass"; f.frequency.value = 900 + Math.random() * 1700; f.Q.value = 1.3;
+          g.gain.setValueAtTime((0.05 + Math.random() * 0.08) * (1 - (t0 - c.currentTime) / 2.2), t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05);
+          s.connect(f); f.connect(g); g.connect(c.destination); s.start(t0); s.stop(t0 + 0.06);
+        }
+      } catch (e) {}
+    },
+    // "ohhh" deluso del pubblico: due voci che scendono
+    ohh: function () {
+      var c = ctx(); if (!c) return;
+      try {
+        [0, 7].forEach(function (d) {
+          var t0 = c.currentTime, o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
+          o.type = "sawtooth"; o.frequency.setValueAtTime(250 + d, t0); o.frequency.exponentialRampToValueAtTime(170 + d, t0 + 0.9);
+          f.type = "lowpass"; f.frequency.value = 650;
+          g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.07, t0 + 0.15); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1);
+          o.connect(f); f.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + 1.05);
+        });
+      } catch (e) {}
+    },
+    // rullo di tamburo prima della rivelazione
+    rullo: function (dur) {
+      var c = ctx(); if (!c) return;
+      try {
+        var buf = rumore(c, 0.04); dur = dur || 1.1;
+        for (var x = 0; x < dur; x += 0.045) {
+          var t0 = c.currentTime + x, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+          s.buffer = buf; f.type = "lowpass"; f.frequency.value = 520;
+          g.gain.setValueAtTime(0.05 + 0.2 * (x / dur), t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.04);
+          s.connect(f); f.connect(g); g.connect(c.destination); s.start(t0); s.stop(t0 + 0.045);
+        }
+      } catch (e) {}
+    }
   };
+  function rumore(c, dur) {
+    var n = Math.floor(c.sampleRate * dur), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
+    for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    return b;
+  }
 
   function ordina(linea) { linea.sort(function (a, b) { return a.anno - b.anno; }); }
   function pescaDati(imp) {
@@ -267,32 +311,6 @@
   // così la linea non torna in cima e il punto scelto resta scelto
   var memScroll = { k: null, top: 0 }, memSel = { k: null, gap: null };
   function chiaveCarta(carta) { return carta ? carta.titolo : ""; }
-
-  // Scheletro di una schermata di gioco a tutto schermo: barra coi giocatori, riga di stato,
-  // (tempo), carta, zona che scorre. opts: { giocatori, turnoId, stato, sotto, timer, esci, ferma }
-  function schermoTL(t, opts) {
-    var el = t.el;
-    var s = t.schermata({});
-    s.classList.add("tl-piena"); if (opts.ferma) s.classList.add("tl-ferma");
-    var barra = el("div", { class: "tl-barra" }, [
-      el("button", { class: "tl-esci", text: "‹", "aria-label": "Esci", onclick: function () { if (window.confirm("Uscire dalla partita?")) opts.esci(); } }),
-      nodoTop(el, opts.giocatori || [], opts.turnoId)
-    ]);
-    s._contenuto.appendChild(barra);
-    if (opts.stato) s._contenuto.appendChild(el("div", { class: "tl-stato" }, [
-      opts.chi ? el("span", { class: "tl-chi", html: avatarDi(opts.chi) }) : null,
-      el("div", {}, [ el("span", { text: opts.stato }), opts.sotto ? el("small", { text: opts.sotto }) : null ])
-    ]));
-    if (opts.timer) s._contenuto.appendChild(opts.timer);
-    return s;
-  }
-  function zonaScroll(el, s, k) {
-    var z = el("div", { class: "tl-scroll" });
-    z.addEventListener("scroll", function () { memScroll = { k: k, top: z.scrollTop }; }, { passive: true });
-    s._contenuto.appendChild(z);
-    z._ripristina = function () { if (memScroll.k === k) z.scrollTop = memScroll.top; else memScroll = { k: k, top: 0 }; };
-    return z;
-  }
 
   // La carta da piazzare
   function nodoCartaMano(el, carta, occhiello) {
@@ -461,6 +479,500 @@
     t.mostra(s);
   }
 
+
+  // =========================================================
+  //  LO STUDIO DEL GAME SHOW
+  //  Un "mondo" grande (studio, pubblico, maxischermo, leggii) e una
+  //  telecamera che lo inquadra (transform). Si gioca sul maxischermo;
+  //  nei momenti morti la telecamera torna ai concorrenti. Niente si salta.
+  // =========================================================
+  var STACCO = 2600;   // ms di stacco su chi gioca prima che parta il suo tempo (online l'host lo aggiunge al timer)
+  function durataApertura(n) { return 7500 + (n <= 4 ? 1550 * n : 6800); }
+  var ST_COL = ["#ffd43b", "#4dabf7", "#ff6b6b", "#51cf66", "#cc5de8", "#ff922b", "#20c997", "#f783ac", "#a9e34b", "#74c0fc"];
+  function dorme(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function vuota(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+
+  function assicuraStileStudio() {
+    if (document.getElementById("sg-studio-css")) return;
+    var st = document.createElement("style"); st.id = "sg-studio-css";
+    st.textContent = [
+      ".schermata.st-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#07041a}",
+      ".schermata.st-piena>.testa,.schermata.st-piena>.piede{display:none}",
+      ".schermata.st-piena>.contenuto{height:100%;margin:0;padding:0}",
+      ".st-vista{position:relative;width:100%;max-width:520px;margin:0 auto;height:var(--alt,100dvh);overflow:hidden;background:#07041a;user-select:none;-webkit-user-select:none}",
+      ".st-mondo{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}",
+      ".st-mondo>*{position:absolute}",
+      ".st-quieto .st-anim,.st-quieto .st-anim *,.st-quieto .st-anim:before,.st-quieto .st-anim:after{animation-play-state:paused!important}",
+      ".st-quieto .st-leggio .luce{opacity:0!important}",
+      // sfondo luminoso da prima serata
+      ".st-sfondo{inset:0;background:radial-gradient(38% 26% at 50% 26%,rgba(255,206,110,.55),transparent 70%),radial-gradient(34% 40% at 6% 34%,rgba(255,62,165,.55),transparent 70%),",
+        "radial-gradient(34% 40% at 94% 34%,rgba(34,211,238,.5),transparent 70%),radial-gradient(60% 30% at 50% 70%,rgba(140,90,255,.45),transparent 75%),linear-gradient(#3a1b8c,#27106a 40%,#1a0b4d 70%,#120736)}",
+      ".st-sfondo:before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 2px,transparent 2px 64px),repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 2px,transparent 2px 64px)}",
+      ".st-traliccio{left:0;right:0;top:0;background:linear-gradient(#3b3560,#1d1838);box-shadow:0 6px 18px rgba(0,0,0,.5)}",
+      ".st-traliccio:before{content:'';position:absolute;inset:18% 0;background:repeating-linear-gradient(60deg,transparent 0 10px,rgba(255,255,255,.18) 10px 12px),repeating-linear-gradient(-60deg,transparent 0 10px,rgba(255,255,255,.18) 10px 12px)}",
+      ".st-faro{border-radius:50%;background:radial-gradient(circle at 45% 40%,#fff 0 18%,#ffe9a8 30%,#ffb300 55%,#5a3a00 70%);box-shadow:0 0 22px 8px rgba(255,220,130,.7)}",
+      ".st-fascio{transform-origin:50% 0;opacity:.55;clip-path:polygon(46% 0,54% 0,100% 100%,0 100%);animation:stFascio 6s ease-in-out infinite alternate}",
+      "@keyframes stFascio{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}",
+      ".st-arco{border-radius:46% 46% 18px 18px/14% 14% 18px 18px;border:6px solid transparent;",
+        "background:linear-gradient(rgba(10,6,40,.55),rgba(10,6,40,.2)) padding-box,linear-gradient(135deg,#ff3ea5,#ffd43b,#22d3ee,#a06bff,#ff3ea5) border-box;background-size:100% 100%,300% 300%;",
+        "box-shadow:0 0 50px rgba(255,62,165,.5),0 0 90px rgba(34,211,238,.3),inset 0 0 50px rgba(34,211,238,.25);animation:stArco 6s linear infinite}",
+      "@keyframes stArco{to{background-position:0 0,300% 0}}",
+      ".st-torre{border-radius:14px;overflow:hidden;background:#0a0624;box-shadow:0 0 0 3px #2b2366,0 0 30px rgba(255,62,165,.45)}",
+      ".st-torre i{position:absolute;bottom:0;width:12%;border-radius:4px 4px 0 0;background:linear-gradient(#fff3a8,#ffb300 40%,#ff3ea5 75%,#7b2cff);animation:stEq 1s ease-in-out infinite alternate}",
+      "@keyframes stEq{from{height:14%}to{height:94%}}",
+      ".st-torre b{position:absolute;left:0;right:0;top:6%;text-align:center;font-size:20px;letter-spacing:.25em;color:#ffe066;text-shadow:0 0 12px #ff9d2e;z-index:1}",
+      // pubblico
+      ".st-pub{overflow:hidden;border-radius:18px 18px 0 0;background-color:#140c3c;",
+        "background-image:radial-gradient(circle at 13px 10px,#8f7ad8 0 4px,#5b4aa6 6.5px,transparent 7.5px),radial-gradient(ellipse 12px 9px at 13px 25px,#5a489e 0 8px,#3a2d78 11px,transparent 12px),",
+        "radial-gradient(circle at 13px 10px,#6f5cb8 0 4px,#46388a 6.5px,transparent 7.5px),radial-gradient(ellipse 12px 9px at 13px 25px,#43357f 0 8px,#2c2263 11px,transparent 12px);",
+        "background-size:26px 28px,26px 28px,31px 33px,31px 33px;background-position:0 0,0 0,9px 15px,9px 15px}",
+      ".st-pub:after{content:'';position:absolute;inset:0;background:linear-gradient(rgba(10,5,35,.7),rgba(10,5,35,0) 55%),linear-gradient(90deg,rgba(255,62,165,.18),transparent 30%,transparent 70%,rgba(34,211,238,.18))}",
+      ".st-pub.salta{animation:stSalta .22s steps(2) infinite}",
+      "@keyframes stSalta{50%{transform:translateY(-4px)}}",
+      ".st-ringhiera{height:5px;border-radius:3px;background:linear-gradient(90deg,transparent,#ffd43b,transparent);box-shadow:0 0 10px rgba(255,212,59,.6)}",
+      ".st-lucina{width:6px;height:6px;border-radius:50%;background:#e8fbff;box-shadow:0 0 8px 3px rgba(160,240,255,.8);animation:stLuccica 2.4s ease-in-out infinite}",
+      "@keyframes stLuccica{0%,100%{opacity:.15}50%{opacity:1}}",
+      ".st-flash{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle,#fff 0 30%,rgba(255,255,255,0) 70%);opacity:0}",
+      ".st-flash.on{animation:stFlash .5s ease-out}",
+      "@keyframes stFlash{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(2.4)}100%{opacity:0;transform:scale(1)}}",
+      ".st-fumetto{font-weight:900;font-size:36px;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.4),0 0 20px rgba(255,62,165,.7);opacity:0;white-space:nowrap;transform:translate(-50%,0);pointer-events:none;z-index:5}",
+      ".st-fumetto.on{animation:stFum 1.8s ease-out}",
+      "@keyframes stFum{0%{opacity:0;transform:translate(-50%,20px) scale(.6)}15%{opacity:1;transform:translate(-50%,0) scale(1.1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-30px)}}",
+      // pavimento lucido
+      ".st-pavimento{left:0;right:0;bottom:0;background:radial-gradient(60% 40% at 50% 0,rgba(255,206,110,.3),transparent 70%),",
+        "repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 2px,transparent 2px 70px),linear-gradient(#2c1c78,#170d4a 50%,#0c0628)}",
+      ".st-pavimento:before{content:'';position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(90deg,#ff3ea5,#ffd43b,#22d3ee,#a06bff,#ff3ea5);background-size:200% 100%;animation:stScorri 4s linear infinite;box-shadow:0 0 22px #ffd43b}",
+      "@keyframes stScorri{to{background-position:200% 0}}",
+      // maxischermo con cornice di lampadine
+      ".st-cornice{border-radius:26px;background:radial-gradient(circle,#fffbe0 0 2.5px,#ffc93c 3.6px,rgba(255,160,40,.35) 5px,transparent 7px) 0 0/20px 20px;",
+        "box-shadow:0 0 0 3px #3a2a00,0 0 40px rgba(255,190,60,.55);animation:stLampadine .9s steps(2) infinite}",
+      "@keyframes stLampadine{50%{background-position:10px 10px}}",
+      ".st-schermo{border-radius:14px;overflow:hidden;box-shadow:0 0 0 5px #120a38,0 0 40px rgba(120,170,255,.5);background:radial-gradient(130% 55% at 50% 0%,#2d44a8 0%,#18225a 50%,#0b1030 100%)}",
+      ".st-sch-in{position:absolute;inset:0;display:flex;flex-direction:column;padding:calc(8px + env(safe-area-inset-top)) 12px 10px}",
+      ".st-vista.con-barra .st-sch-in{padding-bottom:104px}",
+      ".st-sch-in .tl-hud{flex:0 0 auto;margin-left:42px;align-items:center}",
+      ".st-vetro{position:absolute;inset:0;pointer-events:none;background:linear-gradient(118deg,rgba(255,255,255,.1),transparent 32%),repeating-linear-gradient(0deg,rgba(0,0,0,.07) 0 1px,transparent 1px 3px)}",
+      ".st-idle{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px}",
+      ".st-idle .logo{font-size:46px;font-weight:900;line-height:1.03;letter-spacing:.03em;background:linear-gradient(#fff6c9,#ffca3a 55%,#e07b0a);-webkit-background-clip:text;background-clip:text;color:transparent;",
+        "filter:drop-shadow(0 4px 0 rgba(0,0,0,.35)) drop-shadow(0 0 24px rgba(255,160,40,.55))}",
+      ".st-idle .stelle{color:#ffe066;letter-spacing:.35em;font-size:24px;text-shadow:0 0 12px #ffb300}",
+      ".st-idle .sotto{font-size:14px;font-weight:800;letter-spacing:.32em;text-transform:uppercase;color:#cdd6ff}",
+      ".st-sch-in .tl-esito{justify-content:center;padding-bottom:40px}",
+      ".st-sch-in .tl-flip{width:min(310px,88%);height:230px}",
+      ".st-raggi{position:absolute;left:50%;top:38%;width:180%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;opacity:0;",
+        "background:repeating-conic-gradient(rgba(255,230,120,.22) 0 8deg,transparent 8deg 20deg);-webkit-mask:radial-gradient(circle,#000 20%,transparent 65%);mask:radial-gradient(circle,#000 20%,transparent 65%);animation:stRaggi 14s linear infinite,stAppari .6s ease 1.3s forwards}",
+      ".st-raggi.ko{background:repeating-conic-gradient(rgba(255,93,108,.2) 0 8deg,transparent 8deg 20deg)}",
+      "@keyframes stRaggi{to{transform:translate(-50%,-50%) rotate(360deg)}}",
+      "@keyframes stAppari{to{opacity:1}}",
+      // leggii (le postazioni): avatar con alone, banco lucido con nome, punti a LED, pulsante e striscia luminosa
+      ".st-leggio{display:flex;flex-direction:column;align-items:center}",
+      ".st-leggio .alone{position:absolute;left:50%;top:0;width:96%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;opacity:.45;",
+        "background:radial-gradient(circle,var(--col) 0,transparent 66%);transition:opacity .4s,transform .4s}",
+      ".st-leggio .luce{position:absolute;left:50%;bottom:40%;width:150%;height:420%;transform:translateX(-50%);opacity:0;transition:opacity .45s;pointer-events:none;",
+        "background:linear-gradient(to top,rgba(255,246,205,.55),rgba(255,246,205,0) 85%);clip-path:polygon(40% 0,60% 0,100% 100%,0 100%)}",
+      ".st-leggio .av{position:relative;z-index:2;width:74%;aspect-ratio:1}",
+      ".st-leggio .av svg{width:100%;height:100%;display:block;filter:drop-shadow(0 .3em .4em rgba(0,0,0,.45))}",
+      ".st-leggio .podio{position:relative;z-index:3;width:100%;margin-top:-.9em}",
+      ".st-leggio .piano{position:relative;height:1.1em;border-radius:.55em .55em .2em .2em;background:linear-gradient(#ffffff,#d8d2ff 35%,#8d84d8 75%,#5a50a8);",
+        "box-shadow:inset 0 .12em 0 #fff,0 .25em .45em rgba(0,0,0,.4)}",
+      ".st-leggio .buzz{position:absolute;right:13%;top:-.5em;width:1.15em;height:.62em;border-radius:1em 1em .2em .2em;background:radial-gradient(circle at 40% 30%,#ffc2c7,#ff2d45 55%,#8a0f1c);box-shadow:0 0 .7em rgba(255,45,69,.7)}",
+      ".st-leggio .tu{position:absolute;left:10%;top:-.62em;background:linear-gradient(#fff3a8,#ffca3a);color:#241f00;font-weight:900;font-size:.72em;padding:.08em .55em;border-radius:99px;box-shadow:0 .1em .4em rgba(0,0,0,.4)}",
+      ".st-leggio .fronte{position:relative;margin:0 5%;padding:.75em .4em .7em;text-align:center;clip-path:polygon(0 0,100% 0,95% 100%,5% 100%);",
+        "background:linear-gradient(90deg,rgba(255,255,255,.14),transparent 22%,transparent 78%,rgba(255,255,255,.1)),linear-gradient(#36268a,#1b1152 55%,#0d0730)}",
+      ".st-leggio .fronte:after{content:'';position:absolute;left:8%;right:8%;top:.22em;height:.34em;",
+        "background:radial-gradient(circle,#fffbe0 0 .09em,var(--col) .15em,transparent .21em) 0 0/.62em .34em;animation:stLampadine .8s steps(2) infinite}",
+      ".st-leggio .nome{font-weight:900;font-size:1.3em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 .35em var(--col),0 .08em 0 rgba(0,0,0,.4)}",
+      ".st-leggio .punti{display:inline-block;margin-top:.3em;min-width:72%;font-family:'Courier New',ui-monospace,monospace;font-weight:900;font-size:1.6em;letter-spacing:.04em;color:#ffe066;",
+        "background:#05030f;border-radius:.3em;padding:.08em .4em;text-shadow:0 0 .35em rgba(255,224,102,.95);box-shadow:inset 0 0 .5em rgba(0,0,0,.9),0 0 0 .08em rgba(255,224,102,.3)}",
+      ".st-leggio .punti.neg{color:#ff8d98;text-shadow:0 0 .35em rgba(255,93,108,.9)}",
+      ".st-leggio .led{height:.42em;margin:0 9%;border-radius:0 0 .3em .3em;background:var(--col);box-shadow:0 0 1.1em var(--col),0 0 .35em var(--col)}",
+      ".st-leggio.acceso .alone{opacity:1;transform:translateX(-50%) scale(1.12)}",
+      ".st-leggio.acceso .luce{opacity:1}",
+      ".st-leggio.acceso .led{animation:stLed .6s ease-in-out infinite alternate}",
+      "@keyframes stLed{to{box-shadow:0 0 2.2em var(--col),0 0 .6em #fff}}",
+      ".st-leggio .cart{position:absolute;z-index:4;left:50%;top:-44%;width:48%;aspect-ratio:1;perspective:400px;opacity:0;transform:translateX(-50%) translateY(40%) scale(.2);transition:transform .35s cubic-bezier(.3,1.5,.5,1),opacity .2s}",
+      ".st-leggio .cart:after{content:'';position:absolute;left:50%;top:96%;width:.5em;height:2.2em;margin-left:-.25em;background:linear-gradient(90deg,#b58a4e,#e6c28a,#b58a4e);border-radius:.2em;z-index:-1}",
+      ".st-leggio .cart.su{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}",
+      ".st-leggio .cart .in{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .6s}",
+      ".st-leggio .cart.gira .in{transform:rotateY(180deg)}",
+      ".st-leggio .cart .f{position:absolute;inset:0;border-radius:.9em;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center;",
+        "font-size:3.4em;font-weight:900;background:linear-gradient(#ffffff,#e8e4ff);color:#2a1d6e;box-shadow:0 .3em .8em rgba(0,0,0,.45),inset 0 0 0 .08em rgba(0,0,0,.08)}",
+      ".st-leggio .cart .f.r{transform:rotateY(180deg)}",
+      ".st-leggio .cart .f.r.si{background:linear-gradient(#6ff0a6,#27b567)} .st-leggio .cart .f.r.no{background:linear-gradient(#ff95a0,#e0364a)}",
+      ".st-leggio .delta{position:absolute;z-index:5;left:50%;top:6%;transform:translateX(-50%);font-weight:900;font-size:2.6em;opacity:0;white-space:nowrap;text-shadow:0 .08em 0 rgba(0,0,0,.45),0 0 .4em rgba(0,0,0,.4)}",
+      ".st-leggio .delta.on{animation:stDelta 1.7s ease-out}",
+      "@keyframes stDelta{0%{opacity:0;transform:translate(-50%,20%) scale(.6)}15%{opacity:1;transform:translate(-50%,-20%) scale(1.15)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-120%)}}",
+      // sovrimpressioni sopra la telecamera
+      ".st-esci{position:absolute;left:8px;top:calc(8px + env(safe-area-inset-top));z-index:25;width:36px;height:36px;border-radius:50%;border:0;background:rgba(0,0,0,.4);color:#fff;font:inherit;font-size:1.25rem;font-weight:900;cursor:pointer}",
+      ".st-rec{position:absolute;right:10px;top:calc(12px + env(safe-area-inset-top));z-index:25;font-size:11px;font-weight:900;letter-spacing:.1em;color:#fff;background:rgba(0,0,0,.45);border-radius:99px;padding:3px 10px;opacity:0;transition:opacity .3s}",
+      ".st-rec.on{opacity:1}",
+      ".st-rec:before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3b3b;margin-right:6px;animation:stRec 1s steps(2) infinite}",
+      "@keyframes stRec{50%{opacity:.2}}",
+      ".st-terzo{position:absolute;left:12px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:22;display:flex;align-items:center;gap:10px;max-width:calc(100% - 24px);padding:6px 16px 6px 6px;",
+        "border-radius:16px;border-left:7px solid var(--col,#ff3ea5);background:linear-gradient(100deg,#fff3b0,#ffca3a 55%,#f59f00);color:#241f00;box-shadow:0 10px 26px rgba(0,0,0,.5);",
+        "transform:translateX(-120%);transition:transform .45s cubic-bezier(.3,1.3,.5,1)}",
+      ".st-terzo.on{transform:none}",
+      ".st-terzo .fac{width:46px;height:46px;border-radius:50%;overflow:hidden;background:rgba(0,0,0,.15);flex:0 0 auto}",
+      ".st-terzo .fac svg{width:100%;height:100%;display:block}",
+      ".st-terzo .ic{font-size:28px;flex:0 0 auto}",
+      ".st-terzo .tx{font-weight:900;font-size:18px;line-height:1.15;min-width:0}",
+      ".st-terzo .tx small{display:block;font-size:12px;font-weight:700;opacity:.8}",
+      ".st-barra{position:absolute;left:0;right:0;bottom:0;z-index:22;display:flex;flex-direction:column;gap:8px;padding:12px 14px calc(14px + env(safe-area-inset-bottom));",
+        "background:linear-gradient(rgba(7,4,26,0),rgba(7,4,26,.92) 36%);transform:translateY(110%);transition:transform .35s}",
+      ".st-barra.on{transform:none}",
+      ".st-barra .btn{min-height:58px;font-size:1.1rem}",
+      ".st-lampo{position:absolute;inset:0;z-index:24;background:#fff;opacity:0;pointer-events:none}",
+      ".st-lampo.on{animation:stLampo .45s ease-out}",
+      "@keyframes stLampo{0%{opacity:.85}100%{opacity:0}}",
+      "@media (prefers-reduced-motion:reduce){.st-fascio,.st-arco,.st-torre i,.st-lucina,.st-cornice,.st-pavimento:before,.st-leggio .fronte:after{animation:none}}"
+    ].join("");
+    document.head.appendChild(st);
+  }
+
+  // Crea lo studio (una sola volta per partita) e lo mette a schermo.
+  // giocatori: [{ nome, omino? }]; opz: { io (indice di chi ha questo telefono, -1 = nessuno), esci() }
+  function creaStudio(t, giocatori, opz) {
+    assicuraStileStudio();
+    var el = t.el, s = t.schermata({});
+    s.classList.add("st-piena");
+    var vista = el("div", { class: "st-vista" }), mondo = el("div", { class: "st-mondo" });
+    vista.appendChild(mondo);
+    vista.addEventListener("scroll", function () { vista.scrollTop = 0; vista.scrollLeft = 0; });
+    var S = { t: t, s: s, vista: vista, mondo: mondo, gioc: [], io: -1, L: [], shot: null, timer: null };
+    // --- studio ---
+    function pezzo(cls, html) { var e = el("div", { class: cls, html: html || "" }); mondo.appendChild(e); return e; }
+    S.sfondo = pezzo("st-sfondo");
+    S.fasci = [];
+    var coloriFasci = ["rgba(255,236,170,.55)", "rgba(255,62,165,.5)", "rgba(34,211,238,.5)", "rgba(255,236,170,.55)", "rgba(160,110,255,.5)", "rgba(255,236,170,.55)"];
+    coloriFasci.forEach(function (c, i) { var f = pezzo("st-fascio st-anim"); f.style.background = "linear-gradient(" + c + ",transparent 88%)"; f.style.animationDelay = (-i * 1.7) + "s"; f.style.animationDuration = (5 + (i % 3)) + "s"; S.fasci.push(f); });
+    S.arco = pezzo("st-arco st-anim");
+    S.torri = [0, 1].map(function () {
+      var tr = pezzo("st-torre st-anim", "<b>★ ★ ★</b>");
+      for (var k = 0; k < 8; k++) { var b = el("i"); b.style.left = (2 + k * 12.3) + "%"; b.style.animationDelay = (-k * 0.31) + "s"; b.style.animationDuration = (0.7 + (k % 3) * 0.22) + "s"; tr.appendChild(b); }
+      return tr;
+    });
+    S.pub = [pezzo("st-pub"), pezzo("st-pub"), pezzo("st-pub")];
+    S.ringhiere = []; for (var r = 0; r < 6; r++) S.ringhiere.push(pezzo("st-ringhiera"));
+    S.lucine = []; for (var q = 0; q < 16; q++) { var lu = pezzo("st-lucina st-anim"); lu.style.animationDelay = (-Math.random() * 2.4) + "s"; lu._rx = Math.random(); lu._ry = Math.random(); lu._lato = q % 3; S.lucine.push(lu); }
+    S.flash = []; for (q = 0; q < 6; q++) { var fl = pezzo("st-flash"); fl._rx = Math.random(); fl._ry = Math.random(); fl._lato = q % 3; S.flash.push(fl); }
+    S.traliccio = pezzo("st-traliccio");
+    S.fari = []; for (q = 0; q < 6; q++) S.fari.push(pezzo("st-faro"));
+    S.cornice = pezzo("st-cornice st-anim");
+    S.schermo = pezzo("st-schermo");
+    S.sch = el("div", { class: "st-sch-in" }); S.schermo.appendChild(S.sch); S.schermo.appendChild(el("div", { class: "st-vetro" }));
+    S.pavimento = pezzo("st-pavimento st-anim");
+    S.fumetto = pezzo("st-fumetto");
+    S.zonaLeggii = el("div"); S.zonaLeggii.style.cssText = "position:absolute;left:0;top:0;width:0;height:0"; mondo.appendChild(S.zonaLeggii);
+    // --- sovrimpressioni ---
+    vista.appendChild(el("button", { class: "st-esci", text: "‹", "aria-label": "Esci", onclick: function () { if (window.confirm("Uscire dalla partita?")) { fermaTimer(S); opz.esci(); } } }));
+    S.rec = el("div", { class: "st-rec", text: "IN ONDA" }); vista.appendChild(S.rec);
+    S.terzoEl = el("div", { class: "st-terzo" }); vista.appendChild(S.terzoEl);
+    S.barraEl = el("div", { class: "st-barra" }); vista.appendChild(S.barraEl);
+    S.lampoEl = el("div", { class: "st-lampo" }); vista.appendChild(S.lampoEl);
+    s._contenuto.appendChild(vista);
+    t.mostra(s);
+    S.vivo = function () { return vista.isConnected; };
+    S.impostaGiocatori = function (lista, io) { S.gioc = lista.map(function (g) { return { nome: g.nome, omino: g.omino || null }; }); S.io = io == null ? -1 : io; costruisciLeggii(S); layoutStudio(S); };
+    S.impostaGiocatori(giocatori, opz.io);
+    logoSchermo(S);
+    S.shot = function () { return { x: 0, y: 0, w: S.W, h: S.H }; };
+    camera(S, S.shot(), 0);
+    function suResize() { if (!S.vivo()) { window.removeEventListener("resize", suResize); return; } layoutStudio(S); camera(S, S.shot(), 0); }
+    window.addEventListener("resize", suResize);
+    return S;
+  }
+
+  function costruisciLeggii(S) {
+    var el = S.t.el; vuota(S.zonaLeggii); S.L = [];
+    S.gioc.forEach(function (g, i) {
+      var L = el("div", { class: "st-leggio" }); L.style.position = "absolute"; L.style.setProperty("--col", ST_COL[i % ST_COL.length]);
+      L.innerHTML = "<div class='luce'></div><div class='alone'></div>" +
+        "<div class='cart'><div class='in'><div class='f'>?</div><div class='f r'></div></div></div><div class='delta'></div><div class='av'></div>" +
+        "<div class='podio'><div class='piano'><span class='buzz'></span></div><div class='fronte'><div class='nome'></div><div class='punti'>0</div></div><div class='led'></div></div>";
+      L.querySelector(".nome").textContent = g.nome;
+      if (i === S.io) L.querySelector(".piano").appendChild(el("span", { class: "tu", text: "TU" }));
+      var X = { el: L, av: L.querySelector(".av"), cart: L.querySelector(".cart"), delta: L.querySelector(".delta"), pEl: L.querySelector(".punti"), valore: 0, faccia: null };
+      X.av.innerHTML = avatarDi(g);
+      S.L.push(X);
+    });
+  }
+  // posti dei leggii: fino a 4 una fila; da 5 a 10 due file sfalsate (quella dietro più piccola e più in alto)
+  function postiLeggii(S) {
+    var n = S.gioc.length, VW = S.VW, VH = S.VH, out = [], i;
+    if (n <= 4) {
+      var sp = 1.92 * VW / Math.max(1, n), w = Math.min(0.46 * VW, sp * 0.92);
+      for (i = 0; i < n; i++) out.push({ cx: 0.04 * VW + sp * (i + 0.5), top: 1.36 * VH, w: w, fila: 0 });
+      return out;
+    }
+    // file sfalsate di mezzo posto: con B == F serve mezzo posto in più di spazio
+    var F = Math.ceil(n / 2), B = n - F, pari = B === F, spf = 1.92 * VW / (F + (pari ? 0.5 : 0)), wf = Math.min(0.40 * VW, spf * 0.88), wb = wf * 0.84;
+    for (i = 0; i < F; i++) out.push({ cx: 0.04 * VW + spf * (i + 0.5) + (pari ? spf / 2 : 0), top: 1.5 * VH, w: wf, fila: 0 });
+    for (i = 0; i < B; i++) out.push({ cx: 0.04 * VW + spf * (pari ? i + 0.5 : i + 1), top: 1.27 * VH, w: wb, fila: 1 });
+    return out;
+  }
+  function layoutStudio(S) {
+    var VW = S.vista.clientWidth || 360, VH = S.vista.clientHeight || 640, W = 2 * VW, H = 2 * VH;
+    S.VW = VW; S.VH = VH; S.W = W; S.H = H;
+    function pos(e, x, y, w, h) { e.style.left = x + "px"; e.style.top = y + "px"; if (w != null) e.style.width = w + "px"; if (h != null) e.style.height = h + "px"; }
+    S.mondo.style.width = W + "px"; S.mondo.style.height = H + "px";
+    S.R = { schermo: { x: 0.5 * VW, y: 0.06 * VH, w: VW, h: VH } };
+    var R = S.R.schermo;
+    pos(S.schermo, R.x, R.y, R.w, R.h);
+    pos(S.cornice, R.x - 16, R.y - 16, R.w + 32, R.h + 32);
+    pos(S.arco, R.x - 0.13 * VW, 0.01 * VH, R.w + 0.26 * VW, 1.13 * VH);
+    pos(S.traliccio, 0, 0, W, 0.035 * VH);
+    S.fari.forEach(function (f, i) { var x = W * (0.07 + i * 0.172); pos(f, x - 12, 0.02 * VH, 24, 24); var fa = S.fasci[i]; if (fa) pos(fa, x - 0.3 * VW, 0.03 * VH, 0.6 * VW, 1.55 * VH); });
+    pos(S.torri[0], 0.06 * VW, 0.1 * VH, 0.36 * VW, 0.36 * VH); pos(S.torri[1], 1.58 * VW, 0.1 * VH, 0.36 * VW, 0.36 * VH);
+    var pubs = [[0.03 * VW, 0.52 * VH, 0.42 * VW, 0.98 * VH], [1.55 * VW, 0.52 * VH, 0.42 * VW, 0.98 * VH], [0.03 * VW, 0.98 * VH, 1.94 * VW, 0.52 * VH]];
+    S.pub.forEach(function (p, i) { pos(p, pubs[i][0], pubs[i][1], pubs[i][2], pubs[i][3]); });
+    S.ringhiere.forEach(function (r, i) { var lato = i % 2, fila = Math.floor(i / 2); pos(r, lato ? 1.55 * VW : 0.03 * VW, (0.72 + fila * 0.26) * VH, 0.42 * VW, 5); });
+    function inPub(e) { var p = pubs[e._lato]; pos(e, p[0] + e._rx * (p[2] - 20), p[1] + 20 + e._ry * (p[3] - 60)); }
+    S.lucine.forEach(inPub); S.flash.forEach(inPub);
+    pos(S.pavimento, 0, 1.48 * VH, W, H - 1.48 * VH);
+    pos(S.fumetto, W / 2, 1.06 * VH);
+    // leggii
+    S.posti = postiLeggii(S);
+    var ordine = S.posti.map(function (p, i) { return i; }).sort(function (a, b) { return S.posti[b].fila - S.posti[a].fila; });   // prima la fila dietro
+    ordine.forEach(function (i) {
+      var p = S.posti[i], X = S.L[i]; if (!X) return;
+      pos(X.el, p.cx - p.w / 2, p.top, p.w);
+      X.el.style.fontSize = (p.w * 0.1).toFixed(1) + "px";
+      S.zonaLeggii.appendChild(X.el);
+    });
+    S.file = S.posti.length > 4 ? 2 : 1;
+  }
+
+  // ---------- TELECAMERA ----------
+  function camera(S, r, ms) {
+    var s = Math.min(S.VW / r.w, S.VH / r.h), tx = (S.VW - r.w * s) / 2 - r.x * s, ty = (S.VH - r.h * s) / 2 - r.y * s;
+    if (Math.abs(s - 1) < 0.001) { s = 1; tx = Math.round(tx); ty = Math.round(ty); }   // sul maxischermo: nitido al pixel
+    S.mondo.style.transition = ms ? "transform " + ms + "ms cubic-bezier(.45,.05,.25,1)" : "none";
+    S.mondo.style.transform = "translate3d(" + tx.toFixed(1) + "px," + ty.toFixed(1) + "px,0) scale(" + s.toFixed(4) + ")";
+    var suSch = r === S.R.schermo;
+    S.mondo.classList.toggle("st-quieto", suSch);   // sul maxischermo lo studio si ferma (risparmio batteria)
+    S.rec.classList.toggle("on", !suSch);
+    return dorme(ms || 0);
+  }
+  function inquadra(S, shot, ms) { S.shot = shot; return camera(S, shot(), ms); }
+  function suSchermo(S, ms) { return inquadra(S, function () { return S.R.schermo; }, ms); }
+  function largo(S, ms) { return inquadra(S, function () { return { x: 0, y: 0, w: S.W, h: S.H }; }, ms); }
+  function suLeggio(S, i, ms) {
+    return inquadra(S, function () {
+      var p = S.posti[i] || S.posti[0], w = Math.max(0.64 * S.VW, p.w * 1.5), h = w * S.VH / S.VW;
+      var x = Math.max(0, Math.min(S.W - w, p.cx - w / 2)), y = Math.max(0, Math.min(S.H - h, p.top + p.w * 0.72 - h / 2));   // mai fuori dallo studio
+      return { x: x, y: y, w: w, h: h };
+    }, ms);
+  }
+  function suPubblico(S, lato, ms) { return inquadra(S, function () { return { x: lato ? 1.5 * S.VW : 0, y: 0.06 * S.VH, w: 0.5 * S.VW, h: 1.1 * S.VH }; }, ms); }
+  // panoramica lungo una fila di leggii: fn(i) viene chiamata quando la telecamera passa davanti al leggio i
+  async function panFila(S, fila, ms, fn) {
+    var idx = []; S.posti.forEach(function (p, i) { if (p.fila === fila) idx.push(i); });
+    idx.sort(function (a, b) { return S.posti[a].cx - S.posti[b].cx; });
+    if (!idx.length) return;
+    var w = 0.9 * S.VW, h = 0.9 * S.VH;
+    function rett(cx) { var p = S.posti[idx[0]]; return { x: Math.max(0, Math.min(S.W - w, cx - w / 2)), y: p.top + p.w * 0.66 - h / 2, w: w, h: h }; }
+    var a = S.posti[idx[0]].cx, b = S.posti[idx[idx.length - 1]].cx;
+    await inquadra(S, function () { return rett(a); }, 700);
+    idx.forEach(function (i, k) { setTimeout(function () { if (fn) fn(i); }, idx.length > 1 ? k * ms / (idx.length - 1) * 0.9 : 0); });
+    await inquadra(S, function () { return rett(b); }, ms);
+  }
+
+  // ---------- pezzi dello spettacolo ----------
+  function fermaTimer(S) { if (S.timer && S.timer._stop) S.timer._stop(); S.timer = null; }
+  function terzo(S, i, testo, sotto, ic) {
+    var el = S.t.el, T = S.terzoEl; vuota(T);
+    T.style.setProperty("--col", i != null && i >= 0 ? ST_COL[i % ST_COL.length] : "#ff3ea5");
+    if (i != null && i >= 0 && S.gioc[i]) T.appendChild(el("span", { class: "fac", html: avatarDi(S.gioc[i]) }));
+    else T.appendChild(el("span", { class: "ic", text: ic || "📺" }));
+    T.appendChild(el("div", { class: "tx" }, [ el("span", { text: testo }), sotto ? el("small", { text: sotto }) : null ]));
+    T.classList.remove("on"); void T.offsetWidth; T.classList.add("on");
+  }
+  function viaTerzo(S) { S.terzoEl.classList.remove("on"); }
+  function barra(S, nodi) { vuota(S.barraEl); nodi.forEach(function (n) { if (n) S.barraEl.appendChild(n); }); S.barraEl.classList.add("on"); S.vista.classList.add("con-barra"); }
+  function viaBarra(S) { S.barraEl.classList.remove("on"); S.vista.classList.remove("con-barra"); }
+  function aspettaTasto(S, testo) {
+    return new Promise(function (fine) {
+      barra(S, [ S.t.el("button", { class: "btn btn-primario", text: testo, onclick: function () { viaBarra(S); fine(); } }) ]);
+    });
+  }
+  function lampo(S) { var l = S.lampoEl; l.classList.remove("on"); void l.offsetWidth; l.classList.add("on"); }
+  function accendi(S, i, on) { var X = S.L[i]; if (X) X.el.classList.toggle("acceso", !!on); }
+  function accendiSolo(S, i) { S.L.forEach(function (X, k) { X.el.classList.toggle("acceso", k === i); }); }
+  function faccia(S, i, f) { var X = S.L[i]; if (!X || X.faccia === (f || null)) return; X.faccia = f || null; X.av.innerHTML = avatarDi(S.gioc[i], f); }
+  function tutteNormali(S) { S.L.forEach(function (X, i) { faccia(S, i, null); }); }
+  function puntiLeggio(S, i, valore, delta) {
+    var X = S.L[i]; if (!X) return;
+    var da = X.valore; X.valore = valore;
+    function scrivi(v) { X.pEl.textContent = v; X.pEl.classList.toggle("neg", v < 0); }
+    if (!delta) return scrivi(valore);
+    X.delta.textContent = (delta > 0 ? "+" : "−") + Math.abs(delta);
+    X.delta.style.color = delta > 0 ? "#6ff0a6" : "#ff8d98";
+    X.delta.classList.remove("on"); void X.delta.offsetWidth; X.delta.classList.add("on");
+    var t0 = performance.now();
+    (function passo() { var p = Math.min(1, (performance.now() - t0) / 800); scrivi(Math.round(da + (valore - da) * p)); if (p < 1) requestAnimationFrame(passo); })();
+    setTimeout(function () { scrivi(valore); }, 900);   // anche se l'animazione non gira
+  }
+  function cartello(S, i, stato, voto) {
+    var X = S.L[i]; if (!X) return;
+    var r = X.cart.querySelector(".f.r");
+    if (stato === "giu") { X.cart.classList.remove("su", "gira"); return; }
+    if (voto != null) { r.className = "f r " + (voto ? "si" : "no"); r.textContent = voto ? "👍" : "👎"; }
+    X.cart.classList.add("su");
+    if (stato === "gira") X.cart.classList.add("gira");
+  }
+  function cartelliGiu(S) { S.L.forEach(function (X, i) { cartello(S, i, "giu"); }); }
+  function pubblico(S, tipo) {
+    var testi = { applauso: ["👏 Bravo!", "👏👏👏", "🔥 Grande!", "👏 Evviva!"], ohh: ["😮 Ohhh…", "😱 Nooo!", "😬 Ahia…"] };
+    var l = testi[tipo] || testi.applauso;
+    S.fumetto.textContent = l[Math.floor(Math.random() * l.length)];
+    S.fumetto.classList.remove("on"); void S.fumetto.offsetWidth; S.fumetto.classList.add("on");
+    if (tipo === "applauso") {
+      S.pub.forEach(function (p) { p.classList.add("salta"); });
+      S.flash.forEach(function (f, k) { setTimeout(function () { f.classList.remove("on"); void f.offsetWidth; f.classList.add("on"); }, 100 + Math.random() * 1300); });
+      setTimeout(function () { S.pub.forEach(function (p) { p.classList.remove("salta"); }); }, 1900);
+      FX.applauso();
+    } else FX.ohh();
+  }
+  function logoSchermo(S) {
+    fermaTimer(S);
+    S.sch.innerHTML = "<div class='st-idle'><div class='stelle'>★ ★ ★</div><div class='logo'>LA LINEA<br>DEL TEMPO</div><div class='sotto'>il game show</div></div>";
+  }
+
+  // ---------- il gioco sul maxischermo ----------
+  // o: { giocatori, turnoId, stato, sotto, rimMs, onScaduto, carta, linea, scegli, sel, tent, nuovo, chiave }
+  function schermoGioco(S, o) {
+    var el = S.t.el, sch = S.sch;
+    fermaTimer(S); vuota(sch);
+    sch.appendChild(nodoTop(el, o.giocatori, o.turnoId));
+    sch.appendChild(el("div", { class: "tl-stato" }, [ el("div", {}, [ el("span", { text: o.stato }), o.sotto ? el("small", { text: o.sotto }) : null ]) ]));
+    if (o.rimMs != null) { S.timer = barraTimer(el, Math.min(TEMPO * 1000, Math.max(0, o.rimMs)), TEMPO * 1000, o.onScaduto || null); sch.appendChild(S.timer); }
+    sch.appendChild(nodoCartaMano(el, o.carta || { titolo: "" }));
+    var z = el("div", { class: "tl-scroll" }), k = o.chiave;
+    z.addEventListener("scroll", function () { memScroll = { k: k, top: z.scrollTop }; }, { passive: true });
+    var asse = nodoLinea(el, o.linea || [], { carta: o.carta, scegli: o.scegli, sel: o.sel, tent: o.tent, nuovo: o.nuovo });
+    z.appendChild(asse); sch.appendChild(z);
+    if (memScroll.k === k) z.scrollTop = memScroll.top;
+    else {
+      memScroll = { k: k, top: 0 };
+      if (o.tent != null) setTimeout(function () { var e = asse.querySelector(".tl-ev.tent"); if (e) { z.scrollTop = Math.max(0, e.offsetTop - z.clientHeight / 2 + e.offsetHeight / 2); memScroll = { k: k, top: z.scrollTop }; } }, 60);
+    }
+  }
+  // chi gioca sceglie il punto: risolve col punto scelto, o null se scade il tempo
+  function scegliSulloSchermo(S, o) {
+    return new Promise(function (fine) {
+      var scelto = null, finito = false;
+      function chiudi(v) { if (finito) return; finito = true; fermaTimer(S); viaBarra(S); fine(v); }
+      var conf = S.t.el("button", { class: "btn btn-primario tl-conferma", text: "⤵ Tocca dove va la carta", disabled: "disabled", onclick: function () { if (scelto != null) chiudi(scelto); } });
+      schermoGioco(S, { giocatori: o.giocatori, turnoId: o.turnoId, stato: "Tocca a te, " + o.nome + "!", sotto: "Dove va questa carta?", rimMs: TEMPO * 1000,
+        onScaduto: function () { chiudi(null); }, carta: o.carta, linea: o.linea, nuovo: o.nuovo, chiave: "loc|" + chiaveCarta(o.carta),
+        scegli: function (i) { scelto = i; conf.disabled = false; conf.textContent = "✅ Mettila qui"; } });
+      barra(S, [conf]);
+    });
+  }
+  function votaSulloSchermo(S, o) {
+    return new Promise(function (fine) {
+      schermoGioco(S, { giocatori: o.giocatori, turnoId: o.turnoId, stato: o.nome + ", sei d'accordo?", sotto: o.chi + " l'ha messa qui: è giusto?",
+        carta: o.carta, linea: o.linea, tent: o.gap, chiave: "locv|" + chiaveCarta(o.carta) + "|" + o.nome });
+      var el = S.t.el;
+      barra(S, [ el("div", { class: "tl-vota" }, [
+        el("button", { class: "btn btn-verde", text: "👍 Giusto", onclick: function () { viaBarra(S); fine(true); } }),
+        el("button", { class: "btn btn-rosso", text: "👎 No", onclick: function () { viaBarra(S); fine(false); } })
+      ]) ]);
+    });
+  }
+
+  // ---------- LA REGIA: i momenti dello spettacolo ----------
+  async function apertura(S) {
+    viaBarra(S); logoSchermo(S);
+    await suPubblico(S, 0, 0);
+    terzo(S, null, "In diretta dallo studio", "La linea del tempo", "📺");
+    pubblico(S, "applauso");
+    await dorme(600); await suSchermo(S, 1600); await dorme(400); await suPubblico(S, 1, 1600); viaTerzo(S);
+    await largo(S, 1300); await dorme(400);
+    if (S.gioc.length <= 4) {
+      for (var i = 0; i < S.gioc.length; i++) {
+        if (!S.vivo()) return;
+        await suLeggio(S, i, 850); accendiSolo(S, i); faccia(S, i, "esulta");
+        terzo(S, i, S.gioc[i].nome, i === S.io ? "Sei tu! In bocca al lupo" : "Concorrente n° " + (i + 1));
+        await dorme(700); faccia(S, i, null); viaTerzo(S);
+      }
+      accendiSolo(S, -1);
+    } else {
+      for (var f = 0; f < S.file; f++) {
+        if (!S.vivo()) return;
+        var quanti = S.posti.filter(function (p) { return p.fila === f; }).length;
+        terzo(S, null, f === 0 ? "Ecco i concorrenti!" : "…e in seconda fila!", quanti + " concorrenti", "🎤");
+        await panFila(S, f, 2600, function (k) { accendi(S, k, true); faccia(S, k, "esulta"); setTimeout(function () { accendi(S, k, false); faccia(S, k, null); }, 900); });
+      }
+      viaTerzo(S);
+    }
+    await largo(S, 1000); await dorme(300);
+  }
+  // stacco su chi gioca prima di andare sul maxischermo
+  async function stacco(S, gi, sotto) {
+    viaBarra(S); cartelliGiu(S); tutteNormali(S);
+    accendiSolo(S, gi);
+    await suLeggio(S, gi, 900);
+    faccia(S, gi, "pensa");
+    terzo(S, gi, "Tocca a " + (S.gioc[gi] ? S.gioc[gi].nome : ""), sotto);
+    await dorme(1300);
+    viaTerzo(S); faccia(S, gi, null);
+  }
+  // R = { gi, es: { giusto, anno, titolo, fatto, cat, scaduto, finito, nome }, voti: [{ i, d, giusto, delta }], dopo: [punti per indice] }
+  async function rivelazione(S, R) {
+    var el = S.t.el, es = R.es, ok = !!es.giusto;
+    viaBarra(S); fermaTimer(S);
+    await suSchermo(S, 700);
+    vuota(S.sch);
+    S.sch.appendChild(el("div", { class: "st-raggi" + (ok ? "" : " ko") }));
+    S.sch.appendChild(nodoEsito(el, { giusto: ok, anno: es.anno, titolo: es.titolo, fatto: es.fatto, cat: es.cat, nome: es.nome, scaduto: es.scaduto, finito: es.finito }, null));
+    FX.rullo(1.2);
+    setTimeout(function () { ok ? FX.giusto() : FX.sbagliato(); }, 1300);
+    await dorme(2300);
+    if (!S.vivo()) return;
+    // la reazione di chi ha giocato, col pubblico
+    lampo(S); accendiSolo(S, R.gi);
+    await suLeggio(S, R.gi, 650);
+    faccia(S, R.gi, ok ? "esulta" : "triste");
+    pubblico(S, ok ? "applauso" : "ohh");
+    puntiLeggio(S, R.gi, R.dopo[R.gi], ok ? PUNTI : -PUNTI);
+    if (ok) coriandoli();
+    await dorme(1900);
+    // i cartellini degli altri si girano
+    if (R.voti && R.voti.length) {
+      R.voti.forEach(function (v) { cartello(S, v.i, "su"); });
+      await largo(S, 900); await dorme(350);
+      function gira(v) { cartello(S, v.i, "gira", v.d); faccia(S, v.i, v.giusto ? "esulta" : "triste"); puntiLeggio(S, v.i, R.dopo[v.i], v.delta); }
+      if (S.file === 1) {
+        for (var k = 0; k < R.voti.length; k++) { if (!S.vivo()) return; gira(R.voti[k]); await dorme(420); }
+        await dorme(1300);
+      } else {
+        var perIdx = {}; R.voti.forEach(function (v) { perIdx[v.i] = v; });
+        for (var f = 0; f < S.file; f++) await panFila(S, f, 1800, function (i) { if (perIdx[i]) gira(perIdx[i]); });
+        await dorme(900); await largo(S, 800);
+      }
+    }
+    // tutti i punti giusti (anche chi non ha votato)
+    R.dopo.forEach(function (p, i) { if (S.L[i] && S.L[i].valore !== p) puntiLeggio(S, i, p, 0); });
+    cartelliGiu(S); tutteNormali(S); accendiSolo(S, -1);
+  }
+  async function finaleStudio(S, vinc, punti) {
+    viaBarra(S); fermaTimer(S); logoSchermo(S); cartelliGiu(S);
+    await largo(S, 1000);
+    terzo(S, null, "Fine della puntata!", "E il vincitore è…", "🏁");
+    FX.rullo(1.6);
+    await dorme(1800); viaTerzo(S);
+    if (vinc >= 0) {
+      lampo(S); accendiSolo(S, vinc);
+      await suLeggio(S, vinc, 1100);
+      faccia(S, vinc, "esulta");
+      terzo(S, vinc, (S.gioc[vinc] ? S.gioc[vinc].nome : "") + " vince!", punti + " punti", "🏆");
+      pubblico(S, "applauso"); coriandoli(); FX.vittoria();
+      await dorme(3000); viaTerzo(S);
+    }
+    await largo(S, 1400); await dorme(700);
+  }
+
   var gioco = {
     id: "timeline",
     nome: "La linea del tempo",
@@ -558,7 +1070,7 @@
     var mazzo = mischiaArr(pescaDati(t.impostazioni));
     var carte = (t.impostazioni && t.impostazioni.carte) || 5;
     var stato = {
-      mazzo: mazzo, linea: [mazzo.pop()], turno: 0, carta: null, _stop: null,
+      mazzo: mazzo, linea: [mazzo.pop()], turno: 0, carta: null,
       giocatori: t.giocatori.map(function (n) { return { nome: n, restano: carte, punti: 0 }; })
     };
     // chi ha il profilo su questo telefono (i trofei contano solo le sue giocate)
@@ -567,102 +1079,79 @@
     if (prof) stato.giocatori.forEach(function (g, i) { if (stato._io < 0 && g.nome === prof.nome) stato._io = i; });
     stato._T = stato._io >= 0 ? creaTraccia({ online: false, carte: carte, tutteCat: tutteLeCategorie(t.impostazioni) }) : null;
     ordina(stato.linea);
-    var uno = stato.giocatori.length === 1;
-    if (uno) turnoTel(t, stato);
-    else t.passaA(stato.giocatori[0].nome, function () { turnoTel(t, stato); });
+    // lo studio: tutti sullo stesso telefono, quindi nessun "TU"
+    stato.S = creaStudio(t, stato.giocatori, { io: -1, esci: t.esci });
+    apertura(stato.S).then(function () { turnoTel(t, stato); });
   }
   function attivi(stato) { var n = 0; stato.giocatori.forEach(function (g) { if (g.restano > 0) n++; }); return n; }
   function saltaFiniti(stato) { var giri = 0, N = stato.giocatori.length; while (N && stato.giocatori[stato.turno % N].restano === 0 && giri < N) { stato.turno++; giri++; } }
 
-  function turnoTel(t, stato) {
+  async function turnoTel(t, stato) {
+    var S = stato.S;
+    if (!S.vivo()) return;
     if (attivi(stato) === 0 || stato.mazzo.length === 0) return fineTel(t, stato);
     saltaFiniti(stato);
-    stato.carta = stato.mazzo.pop();
+    var N = stato.giocatori.length, gi = stato.turno % N, g = stato.giocatori[gi], uno = N === 1;
+    var carta = stato.carta = stato.mazzo.pop();
     stato.giocatori.forEach(function (x) { delete x._voto; });
-    var el = t.el, g = stato.giocatori[stato.turno % stato.giocatori.length], scelto = null;
-    var bar = barraTimer(el, TEMPO * 1000, TEMPO * 1000, function () { risolviTel(t, stato, null); });
-    stato._stop = function () { if (bar._stop) bar._stop(); };
-    var s = schermoTL(t, { giocatori: stato.giocatori, turnoId: g.nome, chi: g, stato: "Tocca a " + g.nome, sotto: "Dove va questa carta?", timer: bar,
-      esci: function () { stato._stop(); t.esci(); } });
-    s._contenuto.appendChild(nodoCartaMano(el, stato.carta));
-    var z = zonaScroll(el, s, "tel|" + chiaveCarta(stato.carta));
-    var conferma = el("button", { class: "btn btn-primario tl-conferma", text: "⤵ Tocca dove va la carta", disabled: "disabled", onclick: function () {
-      if (scelto != null) scegliTel(t, stato, scelto, bar);
-    } });
-    z.appendChild(nodoLinea(el, stato.linea, { carta: stato.carta, nuovo: stato._nuovo, scegli: function (i) {
-      scelto = i; conferma.disabled = false; conferma.textContent = "✅ Mettila qui";
-    } }));
-    stato._nuovo = null;   // la carta appena entrata si illumina solo al turno dopo
-    s._piede.appendChild(conferma);
-    t.mostra(s);
+    // 1) stacco su chi gioca (e il telefono passa a lui)
+    await stacco(S, gi, uno ? "Dove va questa carta?" : "Passa il telefono a " + g.nome);
+    if (!uno) await aspettaTasto(S, "📱 Sono " + g.nome + ", tocca a me ▶");
+    if (!S.vivo()) return;
     FX.turno();
-  }
-  // Il giocatore ha scelto il punto: se ci sono altri, passano a votare; poi si risolve.
-  function scegliTel(t, stato, gap, bar) {
-    if (bar && bar._stop) bar._stop();
-    var idx = stato.turno % stato.giocatori.length;
-    var votanti = stato.giocatori.filter(function (_, i) { return i !== idx; });
-    if (votanti.length === 0) return risolviTel(t, stato, gap);
-    votaTel(t, stato, gap, votanti, 0);
-  }
-  function votaTel(t, stato, gap, votanti, j) {
-    if (j >= votanti.length) return risolviTel(t, stato, gap);
-    var v = votanti[j];
-    t.passaA(v.nome, function () { schermoVotoTel(t, stato, gap, votanti, j); });
-  }
-  function schermoVotoTel(t, stato, gap, votanti, j) {
-    var el = t.el, v = votanti[j], carta = stato.carta, g = stato.giocatori[stato.turno % stato.giocatori.length];
-    var s = schermoTL(t, { giocatori: stato.giocatori, turnoId: g.nome, chi: v, stato: v.nome + ", sei d'accordo?", sotto: g.nome + " l'ha messa qui: è giusto?",
-      esci: t.esci });
-    s._contenuto.appendChild(nodoCartaMano(el, carta));
-    var z = zonaScroll(el, s, "voto|" + chiaveCarta(carta) + "|" + j);
-    z.appendChild(nodoLinea(el, stato.linea, { carta: carta, tent: gap }));
-    s._piede.appendChild(el("div", { class: "tl-vota" }, [
-      el("button", { class: "btn btn-verde", text: "👍 Giusto", onclick: function () { FX.voto(); v._voto = true; votaTel(t, stato, gap, votanti, j + 1); } }),
-      el("button", { class: "btn btn-rosso", text: "👎 No", onclick: function () { FX.voto(); v._voto = false; votaTel(t, stato, gap, votanti, j + 1); } })
-    ]));
-    t.mostra(s);
-    setTimeout(function () { var e = s.querySelector(".tl-ev.tent"); if (e && e.scrollIntoView) e.scrollIntoView({ block: "center", behavior: "smooth" }); }, 60);
-  }
-  function risolviTel(t, stato, gap) {
-    var carta = stato.carta, g = stato.giocatori[stato.turno % stato.giocatori.length];
-    var ok = gap != null && gapGiusto(stato.linea, gap, carta.anno);
-    // punti ai votanti (±50) a seconda se hanno indovinato o no
-    var votiEsito = [], gi = stato.turno % stato.giocatori.length;
+    // 2) si gioca sul maxischermo
+    await suSchermo(S, 900);
+    var gap = await scegliSulloSchermo(S, { giocatori: stato.giocatori, turnoId: g.nome, nome: g.nome, carta: carta, linea: stato.linea, nuovo: stato._nuovo });
+    stato._nuovo = null;
+    if (!S.vivo()) return;
+    // 3) votano gli altri, uno alla volta col telefono in mano; il cartellino resta coperto
+    var votanti = [];
+    if (gap != null) stato.giocatori.forEach(function (x, i) { if (i !== gi) votanti.push(i); });
+    for (var j = 0; j < votanti.length; j++) {
+      var vi = votanti[j], v = stato.giocatori[vi];
+      accendiSolo(S, vi);
+      await suLeggio(S, vi, 800);
+      terzo(S, vi, "Passa il telefono a " + v.nome, "Ora tocca a te votare", "📱");
+      await aspettaTasto(S, "📱 Sono " + v.nome + " ▶");
+      viaTerzo(S); if (!S.vivo()) return;
+      await suSchermo(S, 800);
+      v._voto = await votaSulloSchermo(S, { giocatori: stato.giocatori, turnoId: g.nome, nome: v.nome, chi: g.nome, carta: carta, linea: stato.linea, gap: gap });
+      FX.voto(); cartello(S, vi, "su", v._voto);
+    }
+    if (votanti.length) { accendiSolo(S, -1); await largo(S, 900); terzo(S, null, "Tutti hanno votato!", "Vediamo chi ha ragione…", "🗳️"); await dorme(1500); viaTerzo(S); }
+    // 4) risultato: punti e trofei, poi lo spettacolo
+    var ok = gap != null && gapGiusto(stato.linea, gap, carta.anno), voti = [];
     if (gi === stato._io) tPiazza(stato._T, ok, carta._cat);
     stato.giocatori.forEach(function (x, xi) {
-      if (x === g || x._voto == null) return;
+      if (xi === gi || x._voto == null) return;
       var giusto = (x._voto === ok);
       if (xi === stato._io) tVoto(stato._T, x._voto, giusto);
       x.punti += giusto ? VOTO : -VOTO;
-      votiEsito.push({ nome: x.nome, d: x._voto, giusto: giusto, delta: giusto ? VOTO : -VOTO });
+      voti.push({ i: xi, d: x._voto, giusto: giusto, delta: giusto ? VOTO : -VOTO });
       delete x._voto;
     });
     if (ok) { stato.linea.push(carta); ordina(stato.linea); g.punti += PUNTI; stato._nuovo = carta.titolo; }
     else { g.punti -= PUNTI; }
     g.restano -= 1;
-    esitoTel(t, stato, ok, g.restano === 0, gap == null, votiEsito);
-  }
-  function esitoTel(t, stato, ok, appenaFinito, scaduto, votiEsito) {
-    var el = t.el, carta = stato.carta, g = stato.giocatori[stato.turno % stato.giocatori.length];
-    ok ? FX.giusto() : FX.sbagliato();
-    var s = schermoTL(t, { giocatori: stato.giocatori, turnoId: g.nome, esci: t.esci });
-    s._contenuto.appendChild(nodoEsito(el, { giusto: ok, anno: carta.anno, titolo: carta.titolo, fatto: carta.fatto, cat: carta._cat,
-      nome: g.nome, scaduto: scaduto, finito: appenaFinito, voti: votiEsito }, g));
+    await rivelazione(S, { gi: gi, voti: voti, dopo: stato.giocatori.map(function (x) { return x.punti; }),
+      es: { giusto: ok, anno: carta.anno, titolo: carta.titolo, fatto: carta.fatto, cat: carta._cat, nome: g.nome, scaduto: gap == null, finito: g.restano === 0 } });
+    if (!S.vivo()) return;
+    if (g.restano === 0 && N > 1) { terzo(S, gi, "🎉 " + g.nome + " ha finito le carte!", "Complimenti", "🎉"); await dorme(1600); viaTerzo(S); }
     var finita = attivi(stato) === 0 || stato.mazzo.length === 0;
-    if (finita) { s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏆 Vedi la classifica", onclick: function () { fineTel(t, stato); } })); return t.mostra(s); }
-    stato.turno += 1; saltaFiniti(stato);
-    var prossimo = stato.giocatori[stato.turno % stato.giocatori.length].nome, uno = stato.giocatori.length === 1;
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: uno ? "Continua ▶" : "Passa a " + prossimo + " ▶",
-      onclick: function () { if (uno) turnoTel(t, stato); else t.passaA(prossimo, function () { turnoTel(t, stato); }); } }));
-    t.mostra(s);
+    if (finita) return fineTel(t, stato);
+    if (uno) await aspettaTasto(S, "Avanti ▶");
+    stato.turno += 1;
+    turnoTel(t, stato);
   }
   function classificaPunti(giocatori) {
     return giocatori.slice().sort(function (a, b) { return b.punti - a.punti; }).map(function (g) { return { id: g.id, nome: g.nome, punti: g.punti, omino: g.omino || null }; });
   }
-  function fineTel(t, stato) {
+  async function fineTel(t, stato) {
     var cl = classificaPunti(stato.giocatori), io = stato.giocatori[stato._io];
     if (io) tFine(stato._T, cl, function (r) { return r.nome === io.nome; }, io.restano === 0);
+    var vinc = -1; stato.giocatori.forEach(function (g, i) { if (vinc < 0 && cl[0] && g.nome === cl[0].nome) vinc = i; });
+    if (stato.S && stato.S.vivo()) await finaleStudio(stato.S, vinc, cl[0] ? cl[0].punti : 0);
+    if (stato.S && !stato.S.vivo()) return;
     schermataFine(t, cl, function () { partenzaTelefono(t); });
   }
 
@@ -705,6 +1194,7 @@
         if (st.iniziata && st.giocatori.length === 0) { clearTo(); rete.chiudi(); return t.esci(); }
         if (st.iniziata && st.fase !== "fine" && attivi(st) === 0) return finisci();
         if (eraCorr && st.fase === "turno") { clearTo(); st.turno = st.turno % st.giocatori.length; iniziaTurno(); return; }
+        if (eraCorr && st.fase === "esito") { st.turno = st.turno % st.giocatori.length; iniziaTurno(); return; }   // se esce chi doveva premere Avanti, si va avanti lo stesso
         if (st.fase === "votazione") verificaVoti();
         bd();
       },
@@ -728,15 +1218,18 @@
       if (st.iniziata || st.giocatori.length < 1) return;
       st.iniziata = true; st.linea = [st.mazzo.pop()]; ordina(st.linea);
       st.T = creaTraccia({ online: true, carte: st.carte, tutteCat: st.tutteCat });
-      iniziaTurno();
+      // prima la sigla dello studio (uguale su tutti i telefoni), poi il primo turno
+      st.fase = "apertura"; st.scadenza = null; bd();
+      st._to = setTimeout(iniziaTurno, durataApertura(st.giocatori.length));
     }
     function iniziaTurno() {
       clearTo();
       if (attivi(st) === 0 || st.mazzo.length === 0) return finisci();
       saltaFiniti(st);
       st.carta = st.mazzo.pop(); st.scelta = null; st.voti = {}; st.esito = null; st.fase = "turno";
-      st.scadenza = Date.now() + TEMPO * 1000;
-      st._to = setTimeout(function () { scelta(corr().id, null); }, TEMPO * 1000); // tempo scaduto = niente scelta
+      // il tempo parte dopo lo stacco della telecamera su chi gioca
+      st.scadenza = Date.now() + TEMPO * 1000 + STACCO;
+      st._to = setTimeout(function () { scelta(corr().id, null); }, TEMPO * 1000 + STACCO); // tempo scaduto = niente scelta
       bd();
     }
     function scelta(playerId, gap) {
@@ -850,74 +1343,138 @@
     }
   }
 
-  // Ricordo dell'ultima fase, per suonare al momento giusto
-  var ultimaFase = null, ultimoEsitoGiusto = null;
+  // Ricordo dell'ultima fase (per la lobby e la classifica)
+  var ultimaFase = null;
 
+  // ---- ONLINE: ogni telefono ha il suo studio e la sua "regia" ----
+  // Le novità dall'host arrivano in qualsiasi momento: la regia le mette in fila
+  // e fa partire i momenti dello spettacolo uno dopo l'altro, senza saltarne.
+  var REG = null;
+  function idxDi(vm, id) { for (var i = 0; i < vm.giocatori.length; i++) if (vm.giocatori[i].id === id) return i; return -1; }
+  function giocHUD(vm, meId) { return vm.giocatori.map(function (g) { return { id: g.id, nome: g.nome, punti: g.punti, omino: g.omino, _me: g.id === meId }; }); }
   function disegnaVM(t, vm, cb) {
-    var el = t.el;
-    if (vm.fase === "lobby") { ultimaFase = "lobby"; return disegnaLobby(t, vm, cb); }
-    if (vm.fase === "fine") {
-      if (ultimaFase !== "fine") { ultimaFase = "fine"; return schermataFine(t, vm.classifica || [], null); }
-      return;   // già mostrata: non la rifaccio (niente lampeggio)
+    if (vm.fase === "lobby") { ultimaFase = "lobby"; REG = null; return disegnaLobby(t, vm, cb); }
+    var ids = vm.giocatori.map(function (g) { return g.id; }).join("|");
+    if (!REG || (!REG.S.vivo() && !REG.fineFatta)) {
+      REG = { t: t, cb: cb, vm: vm, ids: ids };
+      REG.S = creaStudio(t, vm.giocatori, { io: idxDi(vm, cb.myId), esci: function () { cb.onEsci(); } });
+      vm.giocatori.forEach(function (g, i) { puntiLeggio(REG.S, i, g.punti, 0); });
+    } else if (REG.ids !== ids && REG.S.vivo()) {   // qualcuno è uscito: rifaccio i leggii
+      REG.ids = ids; REG.S.impostaGiocatori(vm.giocatori, idxDi(vm, cb.myId));
+      vm.giocatori.forEach(function (g, i) { puntiLeggio(REG.S, i, g.punti, 0); });
+      camera(REG.S, REG.S.shot(), 0);
     }
-    var mioTurno = vm.turnoId && cb.myId && vm.turnoId === cb.myId;
-    var stessaFase = ultimaFase === vm.fase;   // ridisegno per un aggiornamento: niente animazione d'entrata
-
-    // suoni sui cambi di fase
-    if (vm.fase === "turno" && ultimaFase !== "turno") { if (mioTurno) FX.turno(); }
-    if (vm.fase === "esito" && ultimaFase !== "esito") { vm.esito && (vm.esito.giusto ? FX.giusto() : FX.sbagliato()); }
-    ultimaFase = vm.fase;
-
-    var meId = cb.myId;
-    var gioc = vm.giocatori.map(function (g) { return { id: g.id, nome: g.nome, punti: g.punti, omino: g.omino, _me: g.id === meId }; });
-    var chi = trovaG(vm, vm.turnoId) || { nome: vm.turnoNome };
-    var timer = (vm.scadenza && (vm.fase === "turno" || vm.fase === "votazione")) ? barraTimer(el, vm.scadenza - Date.now(), TEMPO * 1000, null) : null;
-    var kCarta = chiaveCarta(vm.carta);
-
-    if (vm.fase === "turno") {
-      var s = schermoTL(t, { giocatori: gioc, turnoId: vm.turnoId, chi: chi, ferma: stessaFase, timer: timer, esci: cb.onEsci,
-        stato: mioTurno ? "Tocca a te!" : "Tocca a " + vm.turnoNome, sotto: mioTurno ? "Dove va questa carta?" : "Sta scegliendo dove metterla…" });
-      s._contenuto.appendChild(nodoCartaMano(el, vm.carta || { titolo: "" }));
-      var z = zonaScroll(el, s, "vm-turno|" + kCarta);
-      if (mioTurno) {
-        if (memSel.k !== kCarta) memSel = { k: kCarta, gap: null };
-        var conferma = el("button", { class: "btn btn-primario tl-conferma", text: memSel.gap != null ? "✅ Mettila qui" : "⤵ Tocca dove va la carta",
-          onclick: function () { if (memSel.gap != null) cb.onGap(memSel.gap); } });
-        if (memSel.gap == null) conferma.disabled = true;
-        z.appendChild(nodoLinea(el, vm.linea, { carta: vm.carta, sel: memSel.gap, scegli: function (i) {
-          memSel = { k: kCarta, gap: i }; conferma.disabled = false; conferma.textContent = "✅ Mettila qui";
-        } }));
-        s._piede.appendChild(conferma);
-      } else {
-        z.appendChild(nodoLinea(el, vm.linea, {}));
+    REG.cb = cb; REG.vm = vm;
+    regiaTick(REG);
+  }
+  async function regiaTick(R) {
+    if (R.corre) { R.ancora = true; return; }
+    R.corre = true;
+    try {
+      for (var giri = 0; giri < 30; giri++) {
+        R.ancora = false;
+        var fatto = await regiaPasso(R);
+        if (!fatto && !R.ancora) break;
       }
-      t.mostra(s); z._ripristina();
-    } else if (vm.fase === "votazione") {
-      var ioHoVotato = vm.hannoVotato.indexOf(cb.myId) >= 0;
-      var s2 = schermoTL(t, { giocatori: gioc, turnoId: vm.turnoId, chi: chi, ferma: stessaFase, timer: timer, esci: cb.onEsci,
-        stato: mioTurno ? "Gli altri votano…" : "Vota!", sotto: mioTurno ? "Speriamo siano d'accordo 🤞" : vm.turnoNome + " l'ha messa qui: è giusto?" });
-      s2._contenuto.appendChild(nodoCartaMano(el, vm.carta || { titolo: "" }));
-      var z2 = zonaScroll(el, s2, "vm-voto|" + kCarta);
-      z2.appendChild(nodoLinea(el, vm.linea, { carta: vm.carta, tent: vm.scelta }));
-      if (mioTurno) s2._piede.appendChild(el("p", { class: "tl-attesa", text: "Gli altri stanno votando la tua scelta…" }));
-      else if (ioHoVotato) s2._piede.appendChild(el("p", { class: "tl-attesa", text: "Hai votato. Aspetta gli altri…" }));
-      else {
-        s2._piede.appendChild(el("div", { class: "tl-vota" }, [
-          el("button", { class: "btn btn-verde", text: "👍 Giusto", onclick: function () { FX.voto(); cb.onVoto(true); } }),
-          el("button", { class: "btn btn-rosso", text: "👎 No", onclick: function () { FX.voto(); cb.onVoto(false); } })
-        ]));
+    } catch (e) {} finally { R.corre = false; }
+  }
+  // un passo della regia: true se ha fatto uno spettacolo (poi si ricontrolla la situazione più recente)
+  async function regiaPasso(R) {
+    var vm = R.vm, S = R.S, cb = R.cb, el = R.t.el;
+    if (!S.vivo()) return false;
+    var io = idxDi(vm, cb.myId), gi = idxDi(vm, vm.turnoId), mioTurno = gi >= 0 && gi === io;
+    var kT = (vm.turnoId || "") + "|" + chiaveCarta(vm.carta), nomeT = vm.turnoNome || "";
+    if (vm.fase === "apertura") {
+      if (R.aperturaFatta) return false;
+      R.aperturaFatta = true; ultimaFase = "apertura";
+      await apertura(S); return true;
+    }
+    if (vm.fase === "fine") {
+      if (R.fineFatta) return false;
+      R.fineFatta = true; ultimaFase = "fine";
+      var cl = vm.classifica || [], vinc = cl[0] ? idxDi(vm, cl[0].id) : -1;
+      await finaleStudio(S, vinc, cl[0] ? cl[0].punti : 0);
+      schermataFine(R.t, cl, null); return true;
+    }
+    if (vm.fase === "turno" || vm.fase === "votazione") {
+      if (R.kTurno !== kT) {   // turno nuovo: stacco su chi gioca, poi sul maxischermo
+        R.kTurno = kT; R.aperturaFatta = true; R.mioVoto = null; R.mostrato = null; R.alzati = {};
+        memSel = { k: chiaveCarta(vm.carta), gap: null };
+        vm.giocatori.forEach(function (g, i) { puntiLeggio(S, i, g.punti, 0); });
+        if (vm.fase === "turno") {
+          ultimaFase = "turno";
+          if (mioTurno) FX.turno();
+          await stacco(S, gi, mioTurno ? "Tocca a te!" : "Sta per scegliere…");
+          if (S.vivo()) await suSchermo(S, 900);
+          return true;
+        }
       }
-      t.mostra(s2);
-      if (memScroll.k === "vm-voto|" + kCarta) z2._ripristina();
-      else setTimeout(function () { var e = s2.querySelector(".tl-ev.tent"); if (e && e.scrollIntoView) e.scrollIntoView({ block: "center", behavior: "smooth" }); memScroll = { k: "vm-voto|" + kCarta, top: z2.scrollTop }; }, 60);
-    } else if (vm.fase === "esito") {
-      if (stessaFase) return;   // il risultato è già a schermo: non rifaccio girare la carta
-      var es = vm.esito || {};
-      var s3 = schermoTL(t, { giocatori: gioc, turnoId: vm.turnoId, esci: cb.onEsci });
-      s3._contenuto.appendChild(nodoEsito(el, es, chi));
-      if (mioTurno) s3._piede.appendChild(el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: cb.onAvanti }));
-      else s3._piede.appendChild(el("p", { class: "tl-attesa", text: "In attesa di " + vm.turnoNome + "…" }));
-      t.mostra(s3);
+      if (vm.fase === "turno") mostraTurno(R, vm, gi, mioTurno, nomeT, kT);
+      else mostraVoto(R, vm, gi, io, mioTurno, nomeT, kT);
+      return false;
+    }
+    if (vm.fase === "esito") {
+      var kE = kT + "|esito";
+      if (R.kEsito !== kE) {
+        R.kEsito = kE; R.kTurno = kT; ultimaFase = "esito";
+        var es = vm.esito || {}, voti = [];
+        (es.voti || []).forEach(function (v) { var i = idxDi(vm, v.id); if (i >= 0) { voti.push({ i: i, d: v.d, giusto: v.giusto, delta: v.delta }); cartello(S, i, "su"); } });
+        await rivelazione(S, { gi: gi, voti: voti, dopo: vm.giocatori.map(function (g) { return g.punti; }),
+          es: { giusto: es.giusto, anno: es.anno, titolo: es.titolo, fatto: es.fatto, cat: es.cat, nome: es.nome, scaduto: es.scaduto, finito: es.finito } });
+        if (S.vivo() && es.finito && vm.giocatori.length > 1) { terzo(S, gi, "🎉 " + es.nome + " ha finito le carte!", "Complimenti", "🎉"); await dorme(1500); viaTerzo(S); }
+        return true;
+      }
+      if (R.mostrato !== kE) {
+        R.mostrato = kE;
+        if (mioTurno) barra(S, [ el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: function () { viaBarra(S); cb.onAvanti(); } }) ]);
+        else barra(S, [ el("p", { class: "tl-attesa", text: "In attesa di " + nomeT + "…" }) ]);
+      }
+      return false;
+    }
+    return false;
+  }
+  function mostraTurno(R, vm, gi, mioTurno, nomeT, kT) {
+    var S = R.S, el = R.t.el, cb = R.cb, kCarta = chiaveCarta(vm.carta);
+    var chiave = "t|" + kT + "|" + vm.giocatori.length;
+    if (R.mostrato === chiave) return;
+    R.mostrato = chiave;
+    if (S.shot && S.shot() !== S.R.schermo) suSchermo(S, 700);
+    var conf = null;
+    if (mioTurno) {
+      conf = el("button", { class: "btn btn-primario tl-conferma", text: memSel.gap != null ? "✅ Mettila qui" : "⤵ Tocca dove va la carta",
+        onclick: function () { if (memSel.gap != null) { viaBarra(S); fermaTimer(S); cb.onGap(memSel.gap); } } });
+      if (memSel.gap == null) conf.disabled = true;
+    }
+    schermoGioco(S, { giocatori: giocHUD(vm, cb.myId), turnoId: vm.turnoId, stato: mioTurno ? "Tocca a te!" : "Tocca a " + nomeT,
+      sotto: mioTurno ? "Dove va questa carta?" : "Sta scegliendo dove metterla…", rimMs: vm.scadenza ? vm.scadenza - Date.now() : null,
+      carta: vm.carta, linea: vm.linea, sel: mioTurno ? memSel.gap : null, chiave: "vm-t|" + kT,
+      scegli: mioTurno ? function (i) { memSel = { k: kCarta, gap: i }; conf.disabled = false; conf.textContent = "✅ Mettila qui"; } : null });
+    if (conf) barra(S, [conf]);
+    else barra(S, [ el("p", { class: "tl-attesa", text: "Guarda bene la linea: dopo tocca votare!" }) ]);
+  }
+  function mostraVoto(R, vm, gi, io, mioTurno, nomeT, kT) {
+    var S = R.S, el = R.t.el, cb = R.cb;
+    var hoVotato = vm.hannoVotato.indexOf(cb.myId) >= 0 || R.mioVoto != null;
+    // cartellini (coperti) di chi ha già votato: il mio lo conosco, gli altri no
+    vm.hannoVotato.forEach(function (id) { var i = idxDi(vm, id); if (i >= 0 && !R.alzati[id]) { R.alzati[id] = true; cartello(S, i, "su", id === cb.myId ? R.mioVoto : null); } });
+    var devoVotare = !mioTurno && !hoVotato && io >= 0;
+    var chiave = "v|" + kT + "|" + vm.giocatori.length + "|" + (devoVotare ? "vota" : "guarda");
+    if (R.mostrato === chiave) return;
+    R.mostrato = chiave;
+    schermoGioco(S, { giocatori: giocHUD(vm, cb.myId), turnoId: vm.turnoId, stato: mioTurno ? "Gli altri votano…" : (devoVotare ? "Vota!" : "Hai votato"),
+      sotto: mioTurno ? "Speriamo siano d'accordo 🤞" : nomeT + " l'ha messa qui: è giusto?", rimMs: vm.scadenza ? vm.scadenza - Date.now() : null,
+      carta: vm.carta, linea: vm.linea, tent: vm.scelta, chiave: "vm-v|" + kT });
+    if (devoVotare) {
+      if (S.shot && S.shot() !== S.R.schermo) suSchermo(S, 700);
+      barra(S, [ el("div", { class: "tl-vota" }, [
+        el("button", { class: "btn btn-verde", text: "👍 Giusto", onclick: function () { FX.voto(); R.mioVoto = true; viaBarra(S); cb.onVoto(true); regiaTick(R); } }),
+        el("button", { class: "btn btn-rosso", text: "👎 No", onclick: function () { FX.voto(); R.mioVoto = false; viaBarra(S); cb.onVoto(false); regiaTick(R); } })
+      ]) ]);
+    } else {
+      // niente da fare: la telecamera va sui concorrenti a vedere i cartellini che si alzano
+      barra(S, [ el("p", { class: "tl-attesa", text: mioTurno ? "Gli altri stanno votando la tua scelta…" : "Hai votato. Aspetta gli altri…" }) ]);
+      largo(S, 900);
+      if (R.mioVoto != null && io >= 0) cartello(S, io, "su", R.mioVoto);
     }
   }
 
