@@ -508,7 +508,7 @@
       ".st-mondo{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}",
       ".st-mondo>*{position:absolute}",
       ".st-quieto .st-anim,.st-quieto .st-anim *{animation-play-state:paused!important}",
-      ".st-quieto .st-leggio .luce{opacity:0!important}",
+      ".st-quieto .st-leggio .luce,.st-quieto .st-leggio .pozza{opacity:0!important}",
       ".st-tela{left:0;top:0}",
       // fari che girano (solo rotazione)
       ".st-fascio{transform-origin:50% 0;opacity:.5;clip-path:polygon(46% 0,54% 0,100% 100%,0 100%);will-change:transform;animation:stFascio 6s ease-in-out infinite alternate}",
@@ -521,10 +521,24 @@
       ".st-lampade{will-change:opacity;animation:stLampade .9s linear infinite}",
       "@keyframes stLampade{0%,49%{opacity:1}51%,100%{opacity:0}}",
       // pubblico (canvas) che salta quando applaude, con lucine dei telefoni e flash
-      ".st-pubwrap{left:0;will-change:transform}",
-      ".st-pubwrap>*{position:absolute}",
-      ".st-pubwrap.salta{animation:stSalta .22s steps(2) infinite}",
-      "@keyframes stSalta{50%{transform:translateY(-4px)}}",
+      ".st-pubwrap{left:0}",
+      ".st-pubwrap>*,.st-pubdeco>*{position:absolute}",
+      ".st-pubdeco{left:0;top:0;width:100%;height:100%;pointer-events:none}",
+      // il pubblico è fatto a file (canvas): ogni fila ondeggia per conto suo, quando applaude saltano
+      ".st-fila{left:0;will-change:transform;animation:stOnda var(--dur,2s) ease-in-out var(--rit,0s) infinite}",
+      "@keyframes stOnda{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}",
+      ".st-pubwrap.salta .st-fila{animation:stSaltaFila .24s ease-in-out var(--rit,0s) infinite alternate}",
+      "@keyframes stSaltaFila{from{transform:translateY(0)}to{transform:translateY(-7px)}}",
+      // bastoncini luminosi e cartelli che sventolano, occhi di bue colorati che passano sulla folla
+      ".st-bastone{width:5px;height:22px;margin:-22px 0 0 -2.5px;border-radius:3px;background:linear-gradient(#fff,var(--c) 30%);box-shadow:0 0 8px 2px var(--c);transform-origin:50% 100%;will-change:transform;animation:stSventola var(--dur,1.4s) ease-in-out var(--rit,0s) infinite alternate}",
+      ".st-cartellone{margin:-34px 0 0 -22px;width:44px;transform-origin:50% 100%;will-change:transform;animation:stSventolaPoco var(--dur,1.8s) ease-in-out var(--rit,0s) infinite alternate}",
+      ".st-cartellone b{display:block;background:#fff;color:#2a1d6e;border-radius:4px;font:900 9px/1.1 system-ui,sans-serif;text-align:center;padding:4px 2px;box-shadow:0 2px 6px rgba(0,0,0,.4)}",
+      ".st-cartellone:after{content:'';display:block;width:3px;height:12px;margin:0 auto;background:#c9a46a}",
+      "@keyframes stSventola{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}",
+      "@keyframes stSventolaPoco{from{transform:rotate(-9deg) translateY(0)}to{transform:rotate(9deg) translateY(-4px)}}",
+      ".st-occhio{border-radius:50%;opacity:.5;will-change:transform;animation:stGiro var(--dur,8s) ease-in-out var(--rit,0s) infinite}",
+      "@keyframes stGiro{0%,100%{transform:translate(0,0)}33%{transform:translate(var(--dx),var(--dy))}66%{transform:translate(calc(var(--dx) * .35),calc(var(--dy) * -.7))}}",
+      ".st-ringhiera{height:5px;border-radius:3px;background:linear-gradient(90deg,transparent,#ffd43b,transparent);box-shadow:0 0 10px rgba(255,212,59,.6)}",
       ".st-lucina{width:6px;height:6px;margin:-3px;border-radius:50%;background:#e8fbff;box-shadow:0 0 8px 3px rgba(160,240,255,.8);will-change:opacity;animation:stLuccica 2.4s ease-in-out infinite}",
       "@keyframes stLuccica{0%,100%{opacity:.15}50%{opacity:1}}",
       ".st-flash{width:26px;height:26px;margin:-13px;border-radius:50%;background:radial-gradient(circle,#fff 0 30%,rgba(255,255,255,0) 70%);opacity:0}",
@@ -555,8 +569,14 @@
       ".st-leggio{display:flex;flex-direction:column;align-items:center}",
       ".st-leggio .alone{position:absolute;left:50%;top:0;width:96%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;opacity:.45;",
         "background:radial-gradient(circle,var(--col) 0,transparent 66%);transition:opacity .4s,transform .4s}",
-      ".st-leggio .luce{position:absolute;left:50%;bottom:40%;width:150%;height:420%;transform:translateX(-50%);opacity:0;transition:opacity .45s;pointer-events:none;",
-        "background:linear-gradient(to top,rgba(255,246,205,.5),rgba(255,246,205,0) 85%);clip-path:polygon(40% 0,60% 0,100% 100%,0 100%)}",
+      // occhio di bue: il fascio scende fino al pavimento e ci lascia una pozza di luce, e illumina il banco
+      ".st-leggio .luce{position:absolute;left:50%;bottom:-17%;width:172%;height:480%;transform:translateX(-50%);opacity:0;transition:opacity .45s;pointer-events:none;",
+        "background:linear-gradient(to top,rgba(255,246,205,.46),rgba(255,246,205,.2) 40%,rgba(255,246,205,0) 92%);clip-path:polygon(43% 0,57% 0,100% 100%,0 100%)}",
+      ".st-leggio .pozza{position:absolute;z-index:1;left:50%;bottom:-24%;width:180%;height:30%;transform:translateX(-50%);border-radius:50%;opacity:0;transition:opacity .45s;pointer-events:none;",
+        "background:radial-gradient(closest-side,rgba(255,248,215,.85),rgba(255,232,160,.4) 50%,rgba(255,232,160,0))}",
+      ".st-leggio.acceso .pozza{opacity:1}",
+      ".st-leggio .fronte:before{content:'';position:absolute;inset:0;background:linear-gradient(rgba(255,246,205,.3),rgba(255,246,205,.08));opacity:0;transition:opacity .45s;pointer-events:none}",
+      ".st-leggio.acceso .fronte:before{opacity:1}",
       ".st-leggio .av{position:relative;z-index:2;width:74%;aspect-ratio:178/182}",
       ".st-leggio .av canvas{width:100%;height:100%;display:block}",
       ".st-leggio .podio{position:relative;z-index:3;width:100%;margin-top:-.9em}",
@@ -612,8 +632,8 @@
       ".st-lampo{position:absolute;inset:0;z-index:24;background:#fff;opacity:0;pointer-events:none}",
       ".st-lampo.on{animation:stLampo .45s ease-out}",
       "@keyframes stLampo{0%{opacity:.85}100%{opacity:0}}",
-      ".st-leggero .st-fascio,.st-leggero .st-eq i,.st-leggero .st-lucina,.st-leggero .st-lampade{animation:none}",
-      "@media (prefers-reduced-motion:reduce){.st-fascio,.st-eq i,.st-lucina,.st-lampade{animation:none}}"
+      ".st-leggero .st-fascio,.st-leggero .st-eq i,.st-leggero .st-lucina,.st-leggero .st-lampade,.st-leggero .st-fila,.st-leggero .st-bastone,.st-leggero .st-cartellone,.st-leggero .st-occhio{animation:none}",
+      "@media (prefers-reduced-motion:reduce){.st-fascio,.st-eq i,.st-lucina,.st-lampade,.st-fila,.st-bastone,.st-cartellone,.st-occhio{animation:none}}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -641,10 +661,21 @@
       for (var k = 0; k < 7; k++) { var b = el("i"); b.style.left = (4 + k * 13.4) + "%"; b.style.animationDelay = (-k * 0.31) + "s"; b.style.animationDuration = (0.7 + (k % 3) * 0.22) + "s"; if (LEGGERO) b.style.transform = "scaleY(" + (0.3 + ((k * 37) % 60) / 100) + ")"; e.appendChild(b); }
       return e;
     });
+    // il pubblico: file di mini avatar (canvas, create in disegnaPubblico) + cose vive sopra
     S.pubWrap = pezzo("div", "st-pubwrap");
-    S.telaPub = pezzo("canvas", "st-tela", S.pubWrap);
-    S.lucine = []; for (var q = 0; q < (LEGGERO ? 0 : 10); q++) { var lu = pezzo("div", "st-lucina st-anim", S.pubWrap); lu.style.animationDelay = (-Math.random() * 2.4) + "s"; lu._rx = Math.random(); lu._ry = Math.random(); lu._zona = q % 3; S.lucine.push(lu); }
-    S.flash = []; for (q = 0; q < 6; q++) { var fl = pezzo("div", "st-flash", S.pubWrap); fl._rx = Math.random(); fl._ry = Math.random(); fl._zona = q % 3; S.flash.push(fl); }
+    S.strisce = [];
+    S.pubDeco = pezzo("div", "st-pubdeco", S.pubWrap);
+    S.ringhiere = []; for (var q = 0; q < 6; q++) S.ringhiere.push(pezzo("div", "st-ringhiera", S.pubDeco));
+    S.occhi = LEGGERO ? [] : ["rgba(255,62,165,.55)", "rgba(34,211,238,.5)", "rgba(255,212,59,.42)"].map(function (c, i) {
+      var o = pezzo("div", "st-occhio st-anim", S.pubDeco); o.style.background = "radial-gradient(closest-side," + c + ",transparent)";
+      o.style.setProperty("--dur", (7 + i * 2) + "s"); o.style.setProperty("--rit", (-i * 2.3) + "s"); o._i = i; return o;
+    });
+    var COLB = ["#ff3ea5", "#22d3ee", "#ffd43b", "#a06bff", "#51cf66"];
+    function vivo(e, zona) { e._rx = Math.random(); e._ry = Math.random(); e._zona = zona; e.style.setProperty("--dur", (1.1 + Math.random() * 0.9).toFixed(2) + "s"); e.style.setProperty("--rit", (-Math.random() * 2).toFixed(2) + "s"); return e; }
+    S.bastoni = []; for (q = 0; q < (LEGGERO ? 0 : 14); q++) { var ba = vivo(pezzo("div", "st-bastone st-anim", S.pubDeco), q % 3); ba.style.setProperty("--c", COLB[q % COLB.length]); S.bastoni.push(ba); }
+    S.cartelli = ["❤️ BRAVI", "⭐⭐⭐", "FORZA!", "👏👏", "WOW!"].map(function (tx, i) { var ca = vivo(pezzo("div", "st-cartellone st-anim", S.pubDeco), i % 3); ca.appendChild(el("b", { text: tx })); ca._ry *= 0.7; return ca; });
+    S.lucine = []; for (q = 0; q < (LEGGERO ? 0 : 10); q++) { var lu = pezzo("div", "st-lucina st-anim", S.pubDeco); lu.style.animationDelay = (-Math.random() * 2.4) + "s"; lu._rx = Math.random(); lu._ry = Math.random(); lu._zona = q % 3; S.lucine.push(lu); }
+    S.flash = []; for (q = 0; q < 6; q++) { var fl = pezzo("div", "st-flash", S.pubDeco); fl._rx = Math.random(); fl._ry = Math.random(); fl._zona = q % 3; S.flash.push(fl); }
     S.lampade = pezzo("canvas", "st-lampade st-anim");
     S.schermo = pezzo("div", "st-schermo");
     S.sch = el("div", { class: "st-sch-in" }); S.schermo.appendChild(S.sch); S.schermo.appendChild(el("div", { class: "st-vetro" }));
@@ -661,6 +692,8 @@
     S.vivo = function () { return vista.isConnected; };
     S.impostaGiocatori = function (lista, io) { S.gioc = lista.map(function (g) { return { nome: g.nome, omino: g.omino || null }; }); S.io = io == null ? -1 : io; costruisciLeggii(S); layoutStudio(S); };
     S.impostaGiocatori(giocatori, opz.io);
+    // appena le facce del pubblico sono pronte ridisegno la folla (all'inizio per un attimo ci sono le sagome)
+    preparaPoolPubblico(function () { if (S.vivo() && S.zonePub) disegnaPubblico(S); });
     logoSchermo(S);
     S.shot = function () { return { x: 0, y: 0, w: S.W, h: S.H }; };
     camera(S, S.shot(), 0);
@@ -698,7 +731,7 @@
     var el = S.t.el; vuota(S.zonaLeggii); S.L = [];
     S.gioc.forEach(function (g, i) {
       var L = el("div", { class: "st-leggio" }); L.style.position = "absolute"; L.style.setProperty("--col", ST_COL[i % ST_COL.length]);
-      L.innerHTML = "<div class='luce'></div><div class='alone'></div>" +
+      L.innerHTML = "<div class='luce'></div><div class='pozza'></div><div class='alone'></div>" +
         "<div class='cart'><div class='in'><div class='f'>?</div><div class='f r'></div></div></div><div class='delta'></div><div class='av'><canvas width='356' height='364'></canvas></div>" +
         "<div class='podio'><div class='piano'><span class='buzz'></span></div><div class='fronte'><div class='nome'></div><div class='punti'>0</div></div><div class='led'></div></div>";
       L.querySelector(".nome").textContent = g.nome;
@@ -783,6 +816,15 @@
       x.save(); x.fillStyle = "#ffe066"; x.font = "900 20px system-ui,sans-serif"; x.textAlign = "center"; x.shadowColor = "#ff9d2e"; x.shadowBlur = 12;
       x.fillText("★  ★  ★", p[0] + p[2] / 2, p[1] + 30); x.restore();
     });
+    // gradinate del pubblico: fondo scuro a gradoni (le persone sono sopra, a file che si muovono)
+    (S.zonePub || []).forEach(function (z) {
+      var zy = S.pubTop + z[1];
+      x.save(); x.beginPath(); rettAlto(x, z[0], zy, z[2], z[3], 18); x.clip();
+      var zg = x.createLinearGradient(0, zy, 0, zy + z[3]); zg.addColorStop(0, "#0c0729"); zg.addColorStop(1, "#1d1352");
+      x.fillStyle = zg; x.fillRect(z[0], zy, z[2], z[3]);
+      x.fillStyle = "rgba(255,255,255,.05)"; for (var gy2 = zy + 22; gy2 < zy + z[3]; gy2 += 24) x.fillRect(z[0], gy2, z[2], 3);
+      x.restore();
+    });
     // traliccio con i fari in alto
     var th = 0.035 * VH, tg = x.createLinearGradient(0, 0, 0, th); tg.addColorStop(0, "#3b3560"); tg.addColorStop(1, "#1d1838");
     x.fillStyle = tg; x.fillRect(0, 0, W, th);
@@ -815,38 +857,87 @@
     pc.forEach(function (p, k) { lampadina(y2, p[0] - lx, p[1] - ly, k % 2 === 0); });
   }
   // il pubblico: silhouette disegnate una volta sola (poi il canvas intero "salta" quando applaude)
+  // ---- il pubblico: tanti piccoli avatar veri, disegnati una volta a file (canvas) che ondeggiano ognuna per conto suo ----
+  var poolPubblico = null;   // una ventina di facce pronte (bitmap), riusate per tutta la folla
+  function preparaPoolPubblico(cb) {
+    if (poolPubblico) { if (poolPubblico.pronti) cb(); else poolPubblico.cbs.push(cb); return; }
+    poolPubblico = { pronti: false, img: [], cbs: [cb] };
+    var N = 20, fatti = 0;
+    function uno() {
+      if (++fatti < N) return;
+      poolPubblico.pronti = true; var l = poolPubblico.cbs; poolPubblico.cbs = [];
+      l.forEach(function (f) { try { f(); } catch (e) {} });
+    }
+    if (!window.SGOmino) { fatti = N - 1; uno(); return; }
+    for (var i = 0; i < N; i++) (function (i) {
+      var svg; try { svg = SGOmino.svg(SGOmino.casuale("pubblico-" + i), { busto: true }); } catch (e) { uno(); return; }
+      var img = new Image();
+      img.onload = function () {
+        try { var c = document.createElement("canvas"); c.width = 72; c.height = 74; c.getContext("2d").drawImage(img, 0, 0, 72, 74); poolPubblico.img.push(c); } catch (e) {}
+        uno();
+      };
+      img.onerror = uno;
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.replace("<svg ", "<svg width='72' height='74' "));
+    })(i);
+  }
+  // rettangolo con solo gli angoli in alto arrotondati (aggiunto al percorso in corso)
+  function rettAlto(x, X, Y, w, h, r) {
+    x.moveTo(X, Y + h); x.lineTo(X, Y + r); x.quadraticCurveTo(X, Y, X + r, Y); x.lineTo(X + w - r, Y);
+    x.quadraticCurveTo(X + w, Y, X + w, Y + r); x.lineTo(X + w, Y + h); x.closePath();
+  }
+  function sagoma(x, cx, y, s) {   // persona stilizzata (finché le facce non sono pronte)
+    x.fillStyle = "#3a2d78"; x.beginPath(); x.ellipse(cx, y + s * 0.92, s * 0.46, s * 0.34, 0, 0, 7); x.fill();
+    x.fillStyle = "#6f5cb8"; x.beginPath(); x.arc(cx, y + s * 0.38, s * 0.26, 0, 7); x.fill();
+  }
   function disegnaPubblico(S) {
-    var VW = S.VW, VH = S.VH, W = S.W, top = 0.52 * VH, h = 1.48 * VH - top, q = qualitaTela(S);
-    S.pubWrap.style.top = top + "px"; S.pubWrap.style.width = W + "px"; S.pubWrap.style.height = h + "px";
-    var x = preparaTela(S.telaPub, W, h, q);
-    var seme = 7; function rnd() { seme = (seme * 16807) % 2147483647; return seme / 2147483647; }
-    var fondo = (S.R.schermo.y + S.R.schermo.h + 18) - top;   // la fascia sotto il maxischermo parte sotto la cornice (così le lampadine restano sopra)
-    S.zonePub = [[0.03 * VW, 0, 0.42 * VW, h], [1.55 * VW, 0, 0.42 * VW, h], [0.03 * VW, fondo, 1.94 * VW, h - fondo]];
-    S.zonePub.forEach(function (z) {
-      x.save(); rett(x, z[0], z[1], z[2], z[3] + 30, 18); x.clip();
-      x.fillStyle = "#140c3c"; x.fillRect(z[0], z[1], z[2], z[3]);
-      [[26, 28, 0, 0, ["#3a2d78", "#5a489e", "#5b4aa6", "#8f7ad8"]], [31, 33, 9, 15, ["#2c2263", "#43357f", "#46388a", "#6f5cb8"]]].forEach(function (G) {
-        for (var yy = z[1] + G[3] - 30; yy < z[1] + z[3]; yy += G[1]) {
-          for (var xx = z[0] + G[2] - 26; xx < z[0] + z[2]; xx += G[0]) {
-            var j = (rnd() - 0.5) * 4, cx = xx + 13 + j;
-            x.fillStyle = G[4][0]; x.beginPath(); x.ellipse(cx, yy + 25, 12, 9, 0, 0, 7); x.fill();
-            x.fillStyle = G[4][1]; x.beginPath(); x.ellipse(cx, yy + 22, 8, 4.5, 0, 0, 7); x.fill();
-            x.fillStyle = G[4][2]; x.beginPath(); x.arc(cx, yy + 10, 7, 0, 7); x.fill();
-            x.fillStyle = G[4][3]; x.beginPath(); x.arc(cx - 1, yy + 9, 4, 0, 7); x.fill();
+    var W = S.W, h = S.pubH, q = Math.min(1.5, qualitaTela(S)), Z = S.zonePub;
+    S.pubWrap.style.top = S.pubTop + "px"; S.pubWrap.style.width = W + "px"; S.pubWrap.style.height = h + "px";
+    S.strisce.forEach(function (c) { if (c.parentNode) c.parentNode.removeChild(c); });
+    S.strisce = [];
+    var pool = (poolPubblico && poolPubblico.pronti && poolPubblico.img.length) ? poolPubblico.img : null;
+    var seme = 11; function rnd() { seme = (seme * 16807) % 2147483647; return seme / 2147483647; }
+    // le file: in alto (in fondo alla sala) più piccole, in basso (davanti) più grandi
+    var righe = [], y = 2;
+    while (y < h - 8) { var sz = 24 + 14 * (y / h); righe.push({ y: y, s: sz }); y += sz * 0.58; }
+    var PER = 4;
+    for (var r0 = 0; r0 < righe.length; r0 += PER) {
+      var gruppo = righe.slice(r0, r0 + PER), ult = gruppo[gruppo.length - 1];
+      var y0 = Math.max(0, Math.floor(gruppo[0].y - 3)), y1 = Math.min(h, Math.ceil(ult.y + ult.s * 1.08));
+      if (y1 - y0 < 4) continue;
+      var c = document.createElement("canvas"); c.className = "st-fila st-anim";
+      var x = preparaTela(c, W, y1 - y0, q);
+      c.style.top = y0 + "px";
+      c.style.setProperty("--dur", (1.6 + rnd() * 1.3).toFixed(2) + "s");
+      c.style.setProperty("--rit", (-rnd() * 2).toFixed(2) + "s");
+      x.translate(0, -y0);
+      x.save(); x.beginPath(); Z.forEach(function (z) { rettAlto(x, z[0], z[1], z[2], z[3], 18); }); x.clip();
+      gruppo.forEach(function (R, k) {
+        var s = R.s, passo = s * 0.78, off = ((r0 + k) % 2) * passo / 2;
+        Z.forEach(function (z, zi) {
+          if (R.y < z[1] - s * 0.2 || R.y > z[1] + z[3] - s * 0.35) return;
+          for (var px = z[0] - passo * 0.4 + off; px < z[0] + z[2] - s * 0.3; px += passo) {
+            // nella fascia sotto il maxischermo salto i tratti dove ci sono già le gradinate laterali
+            if (zi === 2 && ((px + s > Z[0][0] && px < Z[0][0] + Z[0][2]) || (px + s > Z[1][0] && px < Z[1][0] + Z[1][2]))) continue;
+            var ss = s * (0.9 + rnd() * 0.2), jx = (rnd() - 0.5) * s * 0.2, jy = (rnd() - 0.5) * s * 0.14;
+            if (pool) {
+              var im = pool[Math.floor(rnd() * pool.length)];
+              if (rnd() < 0.5) x.drawImage(im, px + jx, R.y + jy, ss, ss * 1.03);
+              else { x.save(); x.translate(px + jx + ss, R.y + jy); x.scale(-1, 1); x.drawImage(im, 0, 0, ss, ss * 1.03); x.restore(); }
+            } else sagoma(x, px + jx + ss / 2, R.y + jy, ss);
           }
-        }
+        });
       });
-      var sg = x.createLinearGradient(0, z[1], 0, z[1] + z[3]); sg.addColorStop(0, "rgba(10,5,35,.7)"); sg.addColorStop(0.55, "rgba(10,5,35,0)");
-      x.fillStyle = sg; x.fillRect(z[0], z[1], z[2], z[3]);
-      var hg = x.createLinearGradient(z[0], 0, z[0] + z[2], 0);
-      hg.addColorStop(0, "rgba(255,62,165,.2)"); hg.addColorStop(0.3, "rgba(255,62,165,0)"); hg.addColorStop(0.7, "rgba(34,211,238,0)"); hg.addColorStop(1, "rgba(34,211,238,.2)");
-      x.fillStyle = hg; x.fillRect(z[0], z[1], z[2], z[3]);
+      // luce da palco solo sulle persone: più buio in fondo (in alto), magenta a sinistra e azzurro a destra
+      x.globalCompositeOperation = "source-atop";
+      var sg = x.createLinearGradient(0, 0, 0, h); sg.addColorStop(0, "rgba(14,7,44,.72)"); sg.addColorStop(0.55, "rgba(14,7,44,.46)"); sg.addColorStop(1, "rgba(14,7,44,.34)");   // il pubblico sta in penombra: i concorrenti devono risaltare
+      x.fillStyle = sg; x.fillRect(0, y0, W, y1 - y0);
+      var hg = x.createLinearGradient(0, 0, W, 0);
+      hg.addColorStop(0, "rgba(255,62,165,.3)"); hg.addColorStop(0.22, "rgba(255,62,165,0)"); hg.addColorStop(0.78, "rgba(34,211,238,0)"); hg.addColorStop(1, "rgba(34,211,238,.3)");
+      x.fillStyle = hg; x.fillRect(0, y0, W, y1 - y0);
+      x.globalCompositeOperation = "source-over";
       x.restore();
-    });
-    for (var i = 0; i < 6; i++) {   // ringhiere dorate delle gradinate
-      var lato = i % 2, fila = Math.floor(i / 2), ry = (0.72 + fila * 0.26) * VH - top, rx = lato ? 1.55 * VW : 0.03 * VW;
-      var rg = x.createLinearGradient(rx, 0, rx + 0.42 * VW, 0); rg.addColorStop(0, "rgba(255,212,59,0)"); rg.addColorStop(0.5, "#ffd43b"); rg.addColorStop(1, "rgba(255,212,59,0)");
-      x.save(); x.fillStyle = rg; x.shadowColor = "rgba(255,212,59,.6)"; x.shadowBlur = 10; x.fillRect(rx, ry, 0.42 * VW, 5); x.restore();
+      S.pubWrap.insertBefore(c, S.pubDeco);
+      S.strisce.push(c);
     }
   }
   function layoutStudio(S) {
@@ -856,6 +947,10 @@
     S.mondo.style.width = W + "px"; S.mondo.style.height = H + "px";
     S.R = { schermo: { x: 0.5 * VW, y: 0.06 * VH, w: VW, h: VH } };
     var R = S.R.schermo;
+    // zone del pubblico (coordinate dentro al blocco del pubblico): due gradinate ai lati e la fascia sotto il maxischermo
+    S.pubTop = 0.52 * VH; S.pubH = 1.48 * VH - S.pubTop;
+    var fondo = (R.y + R.h + 18) - S.pubTop;   // la fascia parte sotto la cornice, così le lampadine restano sopra
+    S.zonePub = [[0.03 * VW, 0, 0.42 * VW, S.pubH], [1.55 * VW, 0, 0.42 * VW, S.pubH], [0.03 * VW, fondo, 1.94 * VW, S.pubH - fondo]];
     disegnaStudio(S);
     disegnaPubblico(S);
     pos(S.schermo, R.x, R.y, R.w, R.h);
@@ -863,6 +958,12 @@
     S.eq.forEach(function (e, i) { var p = S.torriR[i]; pos(e, p[0], p[1] + 44, p[2], p[3] - 44); });
     function inPub(e) { var z = S.zonePub[e._zona]; pos(e, z[0] + 12 + e._rx * (z[2] - 24), z[1] + 24 + e._ry * (z[3] - 60)); }
     S.lucine.forEach(inPub); S.flash.forEach(inPub);
+    S.bastoni.forEach(inPub); S.cartelli.forEach(inPub);
+    S.ringhiere.forEach(function (r, i) { var lato = i % 2, fila = Math.floor(i / 2); pos(r, lato ? 1.55 * VW : 0.03 * VW, (0.2 + fila * 0.26) * VH, 0.42 * VW, 5); });
+    S.occhi.forEach(function (o, i) {   // occhi di bue colorati che passano sulla folla
+      var z = S.zonePub[i], d = 0.55 * VW; pos(o, z[0] + z[2] / 2 - d / 2, z[1] + Math.min(z[3], 0.5 * VH) * 0.35 - d / 2, d, d);
+      o.style.setProperty("--dx", (i === 2 ? 0.7 * VW : (i ? -0.25 : 0.25) * VW) + "px"); o.style.setProperty("--dy", (i === 2 ? -0.06 * VH : 0.42 * VH) + "px");
+    });
     pos(S.fumetto, W / 2, 1.06 * VH);
     // leggii
     S.posti = postiLeggii(S);

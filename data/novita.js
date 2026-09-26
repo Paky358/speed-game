@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 129,
+    data: "26 settembre 2026",
+    titolo: "Pubblico vivo e occhio di bue 🎤",
+    descrizione: [
+      "Il pubblico del game show è fatto di tanti piccoli avatar veri, tutti diversi: le file ondeggiano ognuna per conto suo e quando qualcuno indovina saltano tutti.",
+      "In mezzo alla folla ci sono bastoncini luminosi che sventolano, cartelli (FORZA!, WOW!, ⭐⭐⭐…), lucine dei telefoni, flash delle foto e luci colorate che passano sul pubblico.",
+      "L'occhio di bue su chi gioca ora scende fino al pavimento, lascia una pozza di luce sotto il leggio e illumina anche il banco.",
+      "Il pubblico sta in penombra, così i concorrenti risaltano. Tutto resta leggero, senza lag."
+    ]
+  },
+  {
     v: 128,
     data: "26 settembre 2026",
     titolo: "Game show più fluido ⚡",
