@@ -4660,6 +4660,805 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
 })();
 
 /* =========================================================
+   STUDIO DEL GAME SHOW — condiviso dai giochi "Quiz e parole"
+   (La linea del tempo, La Patata Bollente, …).
+   Un "mondo" grande (studio luminoso, pubblico di mini avatar,
+   maxischermo, leggii dei concorrenti) e una telecamera che lo
+   inquadra con transform. Ogni gioco ci mette il suo contenuto
+   sul maxischermo (S.sch) e fa la sua regia con questi pezzi.
+   Regola d'oro per non far laggare: lo sfondo fermo è disegnato
+   una volta su canvas; le animazioni muovono solo transform/opacity.
+   ========================================================= */
+(function () {
+  "use strict";
+
+  // ---- suoni del pubblico (applauso, "ohhh", rullo di tamburi, fanfara) ----
+  var AC = null;
+  function ctx() { try { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === "suspended") AC.resume(); } catch (e) {} return AC; }
+  function beep(freqs, dur, tipo) {
+    var c = ctx(); if (!c) return;
+    try {
+      var t0 = c.currentTime;
+      freqs.forEach(function (f, i) {
+        var o = c.createOscillator(), g = c.createGain(), s = t0 + i * (dur * 0.6);
+        o.type = tipo || "sine"; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, s); g.gain.exponentialRampToValueAtTime(0.25, s + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, s + dur);
+        o.connect(g); g.connect(c.destination); o.start(s); o.stop(s + dur);
+      });
+    } catch (e) {}
+  }
+  var FX = {
+    // applauso del pubblico: tanti battiti di mani (rumore filtrato) sparsi in un secondo e mezzo
+    applauso: function () {
+      var c = ctx(); if (!c) return;
+      try {
+        var buf = rumore(c, 0.05);
+        for (var i = 0; i < 48; i++) {
+          var t0 = c.currentTime + Math.random() * 1.6, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+          s.buffer = buf; f.type = "bandpass"; f.frequency.value = 900 + Math.random() * 1700; f.Q.value = 1.3;
+          g.gain.setValueAtTime((0.05 + Math.random() * 0.08) * (1 - (t0 - c.currentTime) / 2.2), t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05);
+          s.connect(f); f.connect(g); g.connect(c.destination); s.start(t0); s.stop(t0 + 0.06);
+        }
+      } catch (e) {}
+    },
+    // "ohhh" deluso del pubblico: due voci che scendono
+    ohh: function () {
+      var c = ctx(); if (!c) return;
+      try {
+        [0, 7].forEach(function (d) {
+          var t0 = c.currentTime, o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
+          o.type = "sawtooth"; o.frequency.setValueAtTime(250 + d, t0); o.frequency.exponentialRampToValueAtTime(170 + d, t0 + 0.9);
+          f.type = "lowpass"; f.frequency.value = 650;
+          g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.07, t0 + 0.15); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1);
+          o.connect(f); f.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + 1.05);
+        });
+      } catch (e) {}
+    },
+    // rullo di tamburo prima della rivelazione
+    rullo: function (dur) {
+      var c = ctx(); if (!c) return;
+      try {
+        var buf = rumore(c, 0.04); dur = dur || 1.1;
+        for (var x = 0; x < dur; x += 0.045) {
+          var t0 = c.currentTime + x, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+          s.buffer = buf; f.type = "lowpass"; f.frequency.value = 520;
+          g.gain.setValueAtTime(0.05 + 0.2 * (x / dur), t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.04);
+          s.connect(f); f.connect(g); g.connect(c.destination); s.start(t0); s.stop(t0 + 0.045);
+        }
+      } catch (e) {}
+    }
+  ,
+    fanfara: function () { beep([660, 880, 1046, 1318], 0.22, "triangle"); try { if (navigator.vibrate) navigator.vibrate([120, 60, 120, 60, 200]); } catch (e) {} }
+  };
+  function rumore(c, dur) {
+    var n = Math.floor(c.sampleRate * dur), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
+    for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    return b;
+  }
+
+  function mioAvatar(nome) {
+    var p = window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo();
+    if (p && p.omino) return p.omino;
+    return window.SGOmino ? SGOmino.casuale(nome || "io") : null;
+  }
+  function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  var cacheAv = {};
+  var FACCE = { esulta: { occhi: "felici", sopracc: "alzate", bocca: "sorrisone" }, triste: { occhi: "dolci", sopracc: "preoccupate", bocca: "smorfia" },
+    pensa: { occhi: "assonnati", sopracc: "alzate", bocca: "neutro" }, paura: { occhi: "grandi", sopracc: "preoccupate", bocca: "nervoso" },
+    esploso: { occhi: "chiusi", sopracc: "preoccupate", bocca: "o" } };
+  // l'avatar di un giocatore: quello che ha mandato (online), il mio profilo se è il mio nome, sennò uno fisso dal nome
+  function avatarDi(g, faccia) {
+    if (!window.SGOmino || !g) return "";
+    var cfg = avatarValido(g.omino);
+    if (!cfg) { var p = window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo(); cfg = (p && p.omino && p.nome === g.nome) ? p.omino : SGOmino.casuale(g.nome || "?"); }
+    if (faccia && FACCE[faccia]) { var c2 = {}, n; for (n in cfg) c2[n] = cfg[n]; for (n in FACCE[faccia]) c2[n] = FACCE[faccia][n]; cfg = c2; }
+    var k = JSON.stringify(cfg);
+    if (!cacheAv[k]) { try { cacheAv[k] = SGOmino.svg(cfg, { busto: true }); } catch (e) { cacheAv[k] = ""; } }
+    return cacheAv[k];
+  }
+
+  function coriandoli() {
+    assicuraStileStudio();
+    var c = document.createElement("div"); c.className = "st-coriandoli";
+    var col = ["#ffd43b", "#37d47e", "#4dabf7", "#ff6b6b", "#cc5de8", "#fff"];
+    for (var i = 0; i < 40; i++) {
+      var p = document.createElement("i");
+      p.style.left = (Math.random() * 100) + "%";
+      p.style.background = col[i % col.length];
+      p.style.setProperty("--dx", (Math.random() * 120 - 60) + "px");
+      p.style.setProperty("--r", (Math.random() * 720 - 360) + "deg");
+      p.style.animationDelay = (Math.random() * 0.4) + "s";
+      c.appendChild(p);
+    }
+    document.body.appendChild(c);
+    setTimeout(function () { if (c.parentNode) c.parentNode.removeChild(c); }, 3200);
+  }
+
+  var STACCO = 2600;   // ms di stacco su chi gioca prima che parta il suo tempo (online l'host lo aggiunge al timer)
+  function durataApertura(n) { return 7500 + (n <= 4 ? 1550 * n : 6800); }
+  var ST_COL = ["#ffd43b", "#4dabf7", "#ff6b6b", "#51cf66", "#cc5de8", "#ff922b", "#20c997", "#f783ac", "#a9e34b", "#74c0fc"];
+  function dorme(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function vuota(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+
+  // Telefoni meno potenti: niente fari che girano e immagini dello studio più leggere
+  var LEGGERO = !!((navigator.deviceMemory && navigator.deviceMemory <= 3) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 3));
+
+  function assicuraStileStudio() {
+    if (document.getElementById("sg-studio-css")) return;
+    var st = document.createElement("style"); st.id = "sg-studio-css";
+    // Regola d'oro per non far laggare: le animazioni muovono SOLO transform e opacity su pezzi piccoli.
+    // Tutto quello che sta fermo (sfondo, arco, pubblico, pavimento, cornice) è disegnato una volta sola su canvas.
+    st.textContent = [
+      ".schermata.st-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#07041a;animation:none}",
+      ".schermata.st-piena>.testa,.schermata.st-piena>.piede{display:none}",
+      ".schermata.st-piena>.contenuto{height:100%;margin:0;padding:0}",
+      ".st-vista{position:relative;width:100%;max-width:520px;margin:0 auto;height:var(--alt,100dvh);overflow:hidden;background:#07041a;user-select:none;-webkit-user-select:none}",
+      ".st-mondo{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}",
+      ".st-mondo>*{position:absolute}",
+      ".st-quieto .st-anim,.st-quieto .st-anim *{animation-play-state:paused!important}",
+      ".st-quieto .st-leggio .luce,.st-quieto .st-leggio .pozza{opacity:0!important}",
+      ".st-tela{left:0;top:0}",
+      // fari che girano (solo rotazione)
+      ".st-fascio{transform-origin:50% 0;opacity:.5;clip-path:polygon(46% 0,54% 0,100% 100%,0 100%);will-change:transform;animation:stFascio 6s ease-in-out infinite alternate}",
+      "@keyframes stFascio{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}",
+      // barre delle torri LED (solo scala verticale)
+      ".st-eq{overflow:hidden;border-radius:14px}",
+      ".st-eq i{position:absolute;bottom:0;height:88%;width:11%;border-radius:4px 4px 0 0;background:linear-gradient(#fff3a8,#ffb300 40%,#ff3ea5 75%,#7b2cff);transform-origin:50% 100%;will-change:transform;animation:stEq 1s ease-in-out infinite alternate}",
+      "@keyframes stEq{from{transform:scaleY(.16)}to{transform:scaleY(1)}}",
+      // lampadine della cornice: due disegni che si alternano (solo opacità)
+      ".st-lampade{will-change:opacity;animation:stLampade .9s linear infinite}",
+      "@keyframes stLampade{0%,49%{opacity:1}51%,100%{opacity:0}}",
+      // pubblico (canvas) che salta quando applaude, con lucine dei telefoni e flash
+      ".st-pubwrap{left:0}",
+      ".st-pubwrap>*,.st-pubdeco>*{position:absolute}",
+      ".st-pubdeco{left:0;top:0;width:100%;height:100%;pointer-events:none}",
+      // il pubblico è fatto a file (canvas): ogni fila ondeggia per conto suo, quando applaude saltano
+      ".st-fila{left:0;will-change:transform;animation:stOnda var(--dur,2s) ease-in-out var(--rit,0s) infinite}",
+      "@keyframes stOnda{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}",
+      ".st-pubwrap.salta .st-fila{animation:stSaltaFila .24s ease-in-out var(--rit,0s) infinite alternate}",
+      "@keyframes stSaltaFila{from{transform:translateY(0)}to{transform:translateY(-7px)}}",
+      // bastoncini luminosi e cartelli che sventolano, occhi di bue colorati che passano sulla folla
+      ".st-bastone{width:5px;height:22px;margin:-22px 0 0 -2.5px;border-radius:3px;background:linear-gradient(#fff,var(--c) 30%);box-shadow:0 0 8px 2px var(--c);transform-origin:50% 100%;will-change:transform;animation:stSventola var(--dur,1.4s) ease-in-out var(--rit,0s) infinite alternate}",
+      ".st-cartellone{margin:-34px 0 0 -22px;width:44px;transform-origin:50% 100%;will-change:transform;animation:stSventolaPoco var(--dur,1.8s) ease-in-out var(--rit,0s) infinite alternate}",
+      ".st-cartellone b{display:block;background:#fff;color:#2a1d6e;border-radius:4px;font:900 9px/1.1 system-ui,sans-serif;text-align:center;padding:4px 2px;box-shadow:0 2px 6px rgba(0,0,0,.4)}",
+      ".st-cartellone:after{content:'';display:block;width:3px;height:12px;margin:0 auto;background:#c9a46a}",
+      "@keyframes stSventola{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}",
+      "@keyframes stSventolaPoco{from{transform:rotate(-9deg) translateY(0)}to{transform:rotate(9deg) translateY(-4px)}}",
+      ".st-occhio{border-radius:50%;opacity:.5;will-change:transform;animation:stGiro var(--dur,8s) ease-in-out var(--rit,0s) infinite}",
+      "@keyframes stGiro{0%,100%{transform:translate(0,0)}33%{transform:translate(var(--dx),var(--dy))}66%{transform:translate(calc(var(--dx) * .35),calc(var(--dy) * -.7))}}",
+      ".st-ringhiera{height:5px;border-radius:3px;background:linear-gradient(90deg,transparent,#ffd43b,transparent);box-shadow:0 0 10px rgba(255,212,59,.6)}",
+      ".st-lucina{width:6px;height:6px;margin:-3px;border-radius:50%;background:#e8fbff;box-shadow:0 0 8px 3px rgba(160,240,255,.8);will-change:opacity;animation:stLuccica 2.4s ease-in-out infinite}",
+      "@keyframes stLuccica{0%,100%{opacity:.15}50%{opacity:1}}",
+      ".st-flash{width:26px;height:26px;margin:-13px;border-radius:50%;background:radial-gradient(circle,#fff 0 30%,rgba(255,255,255,0) 70%);opacity:0}",
+      ".st-flash.on{animation:stFlash .5s ease-out}",
+      "@keyframes stFlash{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(2.4)}100%{opacity:0;transform:scale(1)}}",
+      ".st-fumetto{font-weight:900;font-size:36px;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.4);opacity:0;white-space:nowrap;transform:translate(-50%,0);pointer-events:none;z-index:5}",
+      ".st-fumetto.on{animation:stFum 1.8s ease-out}",
+      "@keyframes stFum{0%{opacity:0;transform:translate(-50%,20px) scale(.6)}15%{opacity:1;transform:translate(-50%,0) scale(1.1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-30px)}}",
+      // maxischermo
+      ".st-schermo{border-radius:14px;overflow:hidden;box-shadow:0 0 0 5px #120a38;background:radial-gradient(130% 55% at 50% 0%,#2d44a8 0%,#18225a 50%,#0b1030 100%)}",
+      ".st-sch-in{position:absolute;inset:0;display:flex;flex-direction:column;padding:calc(8px + env(safe-area-inset-top)) 12px 10px}",
+      ".st-vista.con-barra .st-sch-in{padding-bottom:104px}",
+      ".st-sch-in .tl-hud{flex:0 0 auto;margin-left:42px;align-items:center}",
+      ".st-sch-in .tl-ev .card{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(255,255,255,.1)}",
+      ".st-vetro{position:absolute;inset:0;pointer-events:none;background:linear-gradient(118deg,rgba(255,255,255,.1),transparent 32%)}",
+      ".st-idle{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px}",
+      ".st-idle .logo{font-size:46px;font-weight:900;line-height:1.03;letter-spacing:.03em;color:#ffd43b;text-shadow:0 4px 0 #a85c00,0 0 22px rgba(255,160,40,.55)}",
+      ".st-idle .stelle{color:#ffe066;letter-spacing:.35em;font-size:24px}",
+      ".st-idle .sotto{font-size:14px;font-weight:800;letter-spacing:.32em;text-transform:uppercase;color:#cdd6ff}",
+      ".st-sch-in .tl-esito{justify-content:center;padding-bottom:40px}",
+      ".st-sch-in .tl-flip{width:min(310px,88%);height:230px}",
+      ".st-raggi{position:absolute;left:50%;top:38%;width:180%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;opacity:0;will-change:transform;",
+        "background:repeating-conic-gradient(rgba(255,230,120,.22) 0 8deg,transparent 8deg 20deg);-webkit-mask:radial-gradient(circle,#000 20%,transparent 65%);mask:radial-gradient(circle,#000 20%,transparent 65%);animation:stRaggi 14s linear infinite,stAppari .6s ease 1.3s forwards}",
+      ".st-raggi.ko{background:repeating-conic-gradient(rgba(255,93,108,.2) 0 8deg,transparent 8deg 20deg)}",
+      "@keyframes stRaggi{to{transform:translate(-50%,-50%) rotate(360deg)}}",
+      "@keyframes stAppari{to{opacity:1}}",
+      // leggii (le postazioni)
+      ".st-leggio{display:flex;flex-direction:column;align-items:center}",
+      ".st-leggio .alone{position:absolute;left:50%;top:0;width:96%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;opacity:.45;",
+        "background:radial-gradient(circle,var(--col) 0,transparent 66%);transition:opacity .4s,transform .4s}",
+      // occhio di bue: il fascio scende fino al pavimento e ci lascia una pozza di luce, e illumina il banco
+      ".st-leggio .luce{position:absolute;left:50%;bottom:-17%;width:172%;height:480%;transform:translateX(-50%);opacity:0;transition:opacity .45s;pointer-events:none;",
+        "background:linear-gradient(to top,rgba(255,246,205,.46),rgba(255,246,205,.2) 40%,rgba(255,246,205,0) 92%);clip-path:polygon(43% 0,57% 0,100% 100%,0 100%)}",
+      ".st-leggio .pozza{position:absolute;z-index:1;left:50%;bottom:-24%;width:180%;height:30%;transform:translateX(-50%);border-radius:50%;opacity:0;transition:opacity .45s;pointer-events:none;",
+        "background:radial-gradient(closest-side,rgba(255,248,215,.85),rgba(255,232,160,.4) 50%,rgba(255,232,160,0))}",
+      ".st-leggio.acceso .pozza{opacity:1}",
+      ".st-leggio .fronte:before{content:'';position:absolute;inset:0;background:linear-gradient(rgba(255,246,205,.3),rgba(255,246,205,.08));opacity:0;transition:opacity .45s;pointer-events:none}",
+      ".st-leggio.acceso .fronte:before{opacity:1}",
+      ".st-leggio .av{position:relative;z-index:2;width:74%;aspect-ratio:178/182}",
+      ".st-leggio .av canvas{width:100%;height:100%;display:block}",
+      ".st-leggio .podio{position:relative;z-index:3;width:100%;margin-top:-.9em}",
+      ".st-leggio .piano{position:relative;height:1.1em;border-radius:.55em .55em .2em .2em;background:linear-gradient(#ffffff,#d8d2ff 35%,#8d84d8 75%,#5a50a8);",
+        "box-shadow:inset 0 .12em 0 #fff,0 .25em .45em rgba(0,0,0,.4)}",
+      ".st-leggio .buzz{position:absolute;right:13%;top:-.5em;width:1.15em;height:.62em;border-radius:1em 1em .2em .2em;background:radial-gradient(circle at 40% 30%,#ffc2c7,#ff2d45 55%,#8a0f1c)}",
+      ".st-leggio .tu{position:absolute;left:10%;top:-.62em;background:linear-gradient(#fff3a8,#ffca3a);color:#241f00;font-weight:900;font-size:.72em;padding:.08em .55em;border-radius:99px}",
+      ".st-leggio .fronte{position:relative;margin:0 5%;padding:.75em .4em .7em;text-align:center;clip-path:polygon(0 0,100% 0,95% 100%,5% 100%);",
+        "background:linear-gradient(90deg,rgba(255,255,255,.14),transparent 22%,transparent 78%,rgba(255,255,255,.1)),linear-gradient(#36268a,#1b1152 55%,#0d0730)}",
+      ".st-leggio .fronte:after{content:'';position:absolute;left:8%;right:8%;top:.22em;height:.34em;",
+        "background:radial-gradient(circle,#fffbe0 0 .09em,var(--col) .15em,transparent .21em) 0 0/.62em .34em}",
+      ".st-leggio .nome{font-weight:900;font-size:1.3em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 .08em 0 rgba(0,0,0,.45)}",
+      ".st-leggio .punti{display:inline-block;margin-top:.3em;min-width:72%;font-family:'Courier New',ui-monospace,monospace;font-weight:900;font-size:1.6em;letter-spacing:.04em;color:#ffe066;",
+        "background:#05030f;border-radius:.3em;padding:.08em .4em;box-shadow:inset 0 0 0 .08em rgba(255,224,102,.3)}",
+      ".st-leggio .punti.neg{color:#ff8d98}",
+      ".st-leggio .led{position:relative;height:.42em;margin:0 9%;border-radius:0 0 .3em .3em;background:var(--col);box-shadow:0 0 .8em var(--col)}",
+      ".st-leggio .led:after{content:'';position:absolute;left:-12%;right:-12%;top:-160%;bottom:-160%;border-radius:50%;background:radial-gradient(closest-side,var(--col),transparent);opacity:0;will-change:opacity}",
+      ".st-leggio.acceso .alone{opacity:1;transform:translateX(-50%) scale(1.12)}",
+      ".st-leggio.acceso .luce{opacity:1}",
+      ".st-leggio.acceso .led:after{animation:stLed .6s ease-in-out infinite alternate}",
+      "@keyframes stLed{from{opacity:.2}to{opacity:.95}}",
+      ".st-leggio .cart{position:absolute;z-index:4;left:50%;top:-44%;width:48%;aspect-ratio:1;perspective:400px;opacity:0;transform:translateX(-50%) translateY(40%) scale(.2);transition:transform .35s cubic-bezier(.3,1.5,.5,1),opacity .2s}",
+      ".st-leggio .cart:after{content:'';position:absolute;left:50%;top:96%;width:.5em;height:2.2em;margin-left:-.25em;background:linear-gradient(90deg,#b58a4e,#e6c28a,#b58a4e);border-radius:.2em;z-index:-1}",
+      ".st-leggio .cart.su{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}",
+      ".st-leggio .cart .in{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .6s}",
+      ".st-leggio .cart.gira .in{transform:rotateY(180deg)}",
+      ".st-leggio .cart .f{position:absolute;inset:0;border-radius:.9em;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center;",
+        "font-size:3.4em;font-weight:900;background:linear-gradient(#ffffff,#e8e4ff);color:#2a1d6e;box-shadow:0 .25em .5em rgba(0,0,0,.4)}",
+      ".st-leggio .cart .f.r{transform:rotateY(180deg)}",
+      ".st-leggio .cart .f.r.si{background:linear-gradient(#6ff0a6,#27b567)} .st-leggio .cart .f.r.no{background:linear-gradient(#ff95a0,#e0364a)}",
+      ".st-leggio .delta{position:absolute;z-index:5;left:50%;top:6%;transform:translateX(-50%);font-weight:900;font-size:2.6em;opacity:0;white-space:nowrap;text-shadow:0 .08em 0 rgba(0,0,0,.45)}",
+      ".st-leggio .delta.on{animation:stDelta 1.7s ease-out}",
+      "@keyframes stDelta{0%{opacity:0;transform:translate(-50%,20%) scale(.6)}15%{opacity:1;transform:translate(-50%,-20%) scale(1.15)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-120%)}}",
+      // sovrimpressioni sopra la telecamera
+      ".st-esci{position:absolute;left:8px;top:calc(8px + env(safe-area-inset-top));z-index:25;width:36px;height:36px;border-radius:50%;border:0;background:rgba(0,0,0,.4);color:#fff;font:inherit;font-size:1.25rem;font-weight:900;cursor:pointer}",
+      ".st-rec{position:absolute;right:10px;top:calc(12px + env(safe-area-inset-top));z-index:25;font-size:11px;font-weight:900;letter-spacing:.1em;color:#fff;background:rgba(0,0,0,.45);border-radius:99px;padding:3px 10px;opacity:0;transition:opacity .3s}",
+      ".st-rec.on{opacity:1}",
+      ".st-rec:before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3b3b;margin-right:6px;animation:stRec 1s steps(2) infinite}",
+      "@keyframes stRec{50%{opacity:.2}}",
+      ".st-terzo{position:absolute;left:12px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:22;display:flex;align-items:center;gap:10px;max-width:calc(100% - 24px);padding:6px 16px 6px 6px;",
+        "border-radius:16px;border-left:7px solid var(--col,#ff3ea5);background:linear-gradient(100deg,#fff3b0,#ffca3a 55%,#f59f00);color:#241f00;box-shadow:0 8px 20px rgba(0,0,0,.45);",
+        "transform:translateX(-120%);transition:transform .45s cubic-bezier(.3,1.3,.5,1)}",
+      ".st-terzo.on{transform:none}",
+      ".st-terzo .fac{width:46px;height:46px;border-radius:50%;overflow:hidden;background:rgba(0,0,0,.15);flex:0 0 auto}",
+      ".st-terzo .fac svg{width:100%;height:100%;display:block}",
+      ".st-terzo .ic{font-size:28px;flex:0 0 auto}",
+      ".st-terzo .tx{font-weight:900;font-size:18px;line-height:1.15;min-width:0}",
+      ".st-terzo .tx small{display:block;font-size:12px;font-weight:700;opacity:.8}",
+      ".st-barra{position:absolute;left:0;right:0;bottom:0;z-index:22;display:flex;flex-direction:column;gap:8px;padding:12px 14px calc(14px + env(safe-area-inset-bottom));",
+        "background:linear-gradient(rgba(7,4,26,0),rgba(7,4,26,.92) 36%);transform:translateY(110%);transition:transform .35s}",
+      ".st-barra.on{transform:none}",
+      ".st-barra .btn{min-height:58px;font-size:1.1rem}",
+      ".st-lampo{position:absolute;inset:0;z-index:24;background:#fff;opacity:0;pointer-events:none}",
+      ".st-lampo.on{animation:stLampo .45s ease-out}",
+      "@keyframes stLampo{0%{opacity:.85}100%{opacity:0}}",
+      ".st-leggero .st-fascio,.st-leggero .st-eq i,.st-leggero .st-lucina,.st-leggero .st-lampade,.st-leggero .st-fila,.st-leggero .st-bastone,.st-leggero .st-cartellone,.st-leggero .st-occhio{animation:none}",
+      // coriandoli, scossa della telecamera
+      ".st-coriandoli{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}",
+      ".st-coriandoli i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;will-change:transform;animation:stCade 2.6s cubic-bezier(.2,.6,.4,1) forwards}",
+      "@keyframes stCade{to{transform:translate(var(--dx),110vh) rotate(var(--r))}}",
+      ".st-scena{position:absolute;inset:0}",
+      ".st-scena.scossa{animation:stScossa .55s ease-out}",
+      "@keyframes stScossa{0%{transform:translate(0,0)}15%{transform:translate(-9px,5px)}30%{transform:translate(8px,-6px)}45%{transform:translate(-6px,-3px)}60%{transform:translate(5px,4px)}80%{transform:translate(-2px,1px)}100%{transform:translate(0,0)}}",
+      // leggii toccabili (es. a chi passare la bomba) ed eliminati
+      ".st-leggio .anello{position:absolute;z-index:1;left:50%;top:-4%;width:90%;aspect-ratio:1;margin-left:-45%;border-radius:50%;border:.28em solid #6ff0a6;opacity:0;pointer-events:none}",
+      ".st-leggio.tocca{cursor:pointer}",
+      ".st-leggio.tocca .anello{opacity:1;will-change:transform,opacity;animation:stAnello 1s ease-in-out infinite}",
+      "@keyframes stAnello{0%,100%{transform:scale(.92);opacity:.55}50%{transform:scale(1.06);opacity:1}}",
+      ".st-leggio.fuori .av canvas{filter:grayscale(1) brightness(.5)}",
+      ".st-leggio.fuori .podio{filter:grayscale(.85) brightness(.55)}",
+      ".st-leggio.fuori .alone{opacity:0}",
+      ".st-leggio .punti.testo{font-size:1.25em;letter-spacing:.02em}",
+      "@media (prefers-reduced-motion:reduce){.st-fascio,.st-eq i,.st-lucina,.st-lampade,.st-fila,.st-bastone,.st-cartellone,.st-occhio{animation:none}}"
+    ].join("");
+    document.head.appendChild(st);
+  }
+
+  // Crea lo studio (una sola volta per partita) e lo mette a schermo.
+  // giocatori: [{ nome, omino? }]; opz: { io (indice di chi ha questo telefono, -1 = nessuno), esci() }
+  function creaStudio(t, giocatori, opz) {
+    assicuraStileStudio();
+    var el = t.el, s = t.schermata({});
+    s.classList.add("st-piena");
+    var vista = el("div", { class: "st-vista" + (LEGGERO ? " st-leggero" : "") }), scena = el("div", { class: "st-scena" }), mondo = el("div", { class: "st-mondo" });
+    scena.appendChild(mondo); vista.appendChild(scena);   // la scena serve per far tremare l'inquadratura (scossa) senza toccare la telecamera
+    vista.addEventListener("scroll", function () { vista.scrollTop = 0; vista.scrollLeft = 0; });
+    var S = { t: t, s: s, vista: vista, scena: scena, mondo: mondo, gioc: [], io: -1, L: [], shot: null, timer: null,
+      titolo: opz.titolo || "", logo: opz.logo || [opz.titolo || "GAME SHOW"], onTocca: null };
+    function pezzo(tag, cls, dove) { var e = el(tag, { class: cls }); (dove || mondo).appendChild(e); return e; }
+    // --- studio: il fondo fermo è un'immagine sola (canvas), sopra solo pochi pezzi che si muovono ---
+    S.tela = pezzo("canvas", "st-tela");
+    S.fasci = [];
+    if (!LEGGERO) ["rgba(255,236,170,.55)", "rgba(255,62,165,.5)", "rgba(34,211,238,.5)", "rgba(255,236,170,.55)"].forEach(function (c, i) {
+      var f = pezzo("div", "st-fascio st-anim"); f.style.background = "linear-gradient(" + c + ",transparent 88%)";
+      f.style.animationDelay = (-i * 1.9) + "s"; f.style.animationDuration = (5 + (i % 3)) + "s"; S.fasci.push(f);
+    });
+    S.eq = [0, 1].map(function () {
+      var e = pezzo("div", "st-eq st-anim");
+      for (var k = 0; k < 7; k++) { var b = el("i"); b.style.left = (4 + k * 13.4) + "%"; b.style.animationDelay = (-k * 0.31) + "s"; b.style.animationDuration = (0.7 + (k % 3) * 0.22) + "s"; if (LEGGERO) b.style.transform = "scaleY(" + (0.3 + ((k * 37) % 60) / 100) + ")"; e.appendChild(b); }
+      return e;
+    });
+    // il pubblico: file di mini avatar (canvas, create in disegnaPubblico) + cose vive sopra
+    S.pubWrap = pezzo("div", "st-pubwrap");
+    S.strisce = [];
+    S.pubDeco = pezzo("div", "st-pubdeco", S.pubWrap);
+    S.ringhiere = []; for (var q = 0; q < 6; q++) S.ringhiere.push(pezzo("div", "st-ringhiera", S.pubDeco));
+    S.occhi = LEGGERO ? [] : ["rgba(255,62,165,.55)", "rgba(34,211,238,.5)", "rgba(255,212,59,.42)"].map(function (c, i) {
+      var o = pezzo("div", "st-occhio st-anim", S.pubDeco); o.style.background = "radial-gradient(closest-side," + c + ",transparent)";
+      o.style.setProperty("--dur", (7 + i * 2) + "s"); o.style.setProperty("--rit", (-i * 2.3) + "s"); o._i = i; return o;
+    });
+    var COLB = ["#ff3ea5", "#22d3ee", "#ffd43b", "#a06bff", "#51cf66"];
+    function vivo(e, zona) { e._rx = Math.random(); e._ry = Math.random(); e._zona = zona; e.style.setProperty("--dur", (1.1 + Math.random() * 0.9).toFixed(2) + "s"); e.style.setProperty("--rit", (-Math.random() * 2).toFixed(2) + "s"); return e; }
+    S.bastoni = []; for (q = 0; q < (LEGGERO ? 0 : 14); q++) { var ba = vivo(pezzo("div", "st-bastone st-anim", S.pubDeco), q % 3); ba.style.setProperty("--c", COLB[q % COLB.length]); S.bastoni.push(ba); }
+    S.cartelli = ["❤️ BRAVI", "⭐⭐⭐", "FORZA!", "👏👏", "WOW!"].map(function (tx, i) { var ca = vivo(pezzo("div", "st-cartellone st-anim", S.pubDeco), i % 3); ca.appendChild(el("b", { text: tx })); ca._ry *= 0.7; return ca; });
+    S.lucine = []; for (q = 0; q < (LEGGERO ? 0 : 10); q++) { var lu = pezzo("div", "st-lucina st-anim", S.pubDeco); lu.style.animationDelay = (-Math.random() * 2.4) + "s"; lu._rx = Math.random(); lu._ry = Math.random(); lu._zona = q % 3; S.lucine.push(lu); }
+    S.flash = []; for (q = 0; q < 6; q++) { var fl = pezzo("div", "st-flash", S.pubDeco); fl._rx = Math.random(); fl._ry = Math.random(); fl._zona = q % 3; S.flash.push(fl); }
+    S.lampade = pezzo("canvas", "st-lampade st-anim");
+    S.schermo = pezzo("div", "st-schermo");
+    S.sch = el("div", { class: "st-sch-in" }); S.schermo.appendChild(S.sch); S.schermo.appendChild(el("div", { class: "st-vetro" }));
+    S.fumetto = pezzo("div", "st-fumetto");
+    S.zonaLeggii = el("div"); S.zonaLeggii.style.cssText = "position:absolute;left:0;top:0;width:0;height:0"; mondo.appendChild(S.zonaLeggii);
+    // --- sovrimpressioni ---
+    vista.appendChild(el("button", { class: "st-esci", text: "‹", "aria-label": "Esci", onclick: function () { if (window.confirm("Uscire dalla partita?")) { fermaTimer(S); opz.esci(); } } }));
+    S.rec = el("div", { class: "st-rec", text: "IN ONDA" }); vista.appendChild(S.rec);
+    S.terzoEl = el("div", { class: "st-terzo" }); vista.appendChild(S.terzoEl);
+    S.barraEl = el("div", { class: "st-barra" }); vista.appendChild(S.barraEl);
+    S.lampoEl = el("div", { class: "st-lampo" }); vista.appendChild(S.lampoEl);
+    s._contenuto.appendChild(vista);
+    t.mostra(s);
+    S.vivo = function () { return vista.isConnected; };
+    S.impostaGiocatori = function (lista, io) { S.gioc = lista.map(function (g) { return { nome: g.nome, omino: g.omino || null }; }); S.io = io == null ? -1 : io; costruisciLeggii(S); layoutStudio(S); };
+    S.impostaGiocatori(giocatori, opz.io);
+    // appena le facce del pubblico sono pronte ridisegno la folla (all'inizio per un attimo ci sono le sagome)
+    preparaPoolPubblico(function () { if (S.vivo() && S.zonePub) disegnaPubblico(S); });
+    logoSchermo(S);
+    S.shot = function () { return { x: 0, y: 0, w: S.W, h: S.H }; };
+    camera(S, S.shot(), 0);
+    // se cambia la misura dello schermo ridisegno lo studio (una volta, dopo che si è assestato)
+    var toR = null;
+    function suResize() {
+      if (!S.vivo()) { window.removeEventListener("resize", suResize); return; }
+      clearTimeout(toR);
+      toR = setTimeout(function () { if (!S.vivo()) return; if (Math.abs(S.vista.clientWidth - S.VW) < 2 && Math.abs(S.vista.clientHeight - S.VH) < 2) return; layoutStudio(S); camera(S, S.shot(), 0); }, 200);
+    }
+    window.addEventListener("resize", suResize);
+    return S;
+  }
+
+  // ---- avatar dei leggii come immagini già pronte (non si ridisegnano a ogni zoom della telecamera) ----
+  var cacheImg = {};
+  function immagineAvatar(g, f, cb) {
+    var svg = avatarDi(g, f); if (!svg) return;
+    var e = cacheImg[svg];
+    if (!e) {
+      e = cacheImg[svg] = { img: new Image(), ok: false, cbs: [] };
+      e.img.onload = function () { e.ok = true; var l = e.cbs; e.cbs = []; l.forEach(function (c) { c(e.img); }); };
+      e.img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.replace("<svg ", "<svg width='356' height='364' "));
+    }
+    if (e.ok) cb(e.img); else if (cb) e.cbs.push(cb);
+  }
+  function mettiAvatar(X, g, f) {
+    var v = X.versione = (X.versione || 0) + 1;
+    immagineAvatar(g, f, function (img) {
+      if (X.versione !== v) return;   // nel frattempo è cambiata faccia
+      var c = X.avc, x = c.getContext("2d"); x.clearRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+    });
+  }
+  function costruisciLeggii(S) {
+    var el = S.t.el; vuota(S.zonaLeggii); S.L = [];
+    S.gioc.forEach(function (g, i) {
+      var L = el("div", { class: "st-leggio" }); L.style.position = "absolute"; L.style.setProperty("--col", ST_COL[i % ST_COL.length]);
+      L.innerHTML = "<div class='luce'></div><div class='pozza'></div><div class='alone'></div>" +
+        "<div class='anello'></div><div class='cart'><div class='in'><div class='f'>?</div><div class='f r'></div></div></div><div class='delta'></div><div class='av'><canvas width='356' height='364'></canvas></div>" +
+        "<div class='podio'><div class='piano'><span class='buzz'></span></div><div class='fronte'><div class='nome'></div><div class='punti'>0</div></div><div class='led'></div></div>";
+      L.querySelector(".nome").textContent = g.nome;
+      L.addEventListener("click", function () { if (S.onTocca && L.classList.contains("tocca")) S.onTocca(i); });   // il gioco decide chi si può toccare
+      if (i === S.io) L.querySelector(".piano").appendChild(el("span", { class: "tu", text: "TU" }));
+      var X = { el: L, avc: L.querySelector(".av canvas"), cart: L.querySelector(".cart"), delta: L.querySelector(".delta"), pEl: L.querySelector(".punti"), valore: 0, faccia: null };
+      mettiAvatar(X, g, null);
+      setTimeout(function () { ["esulta", "triste", "pensa"].forEach(function (f) { immagineAvatar(g, f, null); }); }, 1500 + i * 200);   // pronte per dopo (non tutte insieme all'entrata)
+      S.L.push(X);
+    });
+  }
+  // posti dei leggii: fino a 4 una fila; da 5 a 10 due file sfalsate (quella dietro più piccola e più in alto)
+  function postiLeggii(S) {
+    var n = S.gioc.length, VW = S.VW, VH = S.VH, out = [], i;
+    if (n <= 4) {
+      var sp = 1.92 * VW / Math.max(1, n), w = Math.min(0.46 * VW, sp * 0.92);
+      for (i = 0; i < n; i++) out.push({ cx: 0.04 * VW + sp * (i + 0.5), top: 1.36 * VH, w: w, fila: 0 });
+      return out;
+    }
+    // file sfalsate di mezzo posto: con B == F serve mezzo posto in più di spazio
+    var F = Math.ceil(n / 2), B = n - F, pari = B === F, spf = 1.92 * VW / (F + (pari ? 0.5 : 0)), wf = Math.min(0.40 * VW, spf * 0.88), wb = wf * 0.84;
+    for (i = 0; i < F; i++) out.push({ cx: 0.04 * VW + spf * (i + 0.5) + (pari ? spf / 2 : 0), top: 1.5 * VH, w: wf, fila: 0 });
+    for (i = 0; i < B; i++) out.push({ cx: 0.04 * VW + spf * (pari ? i + 0.5 : i + 1), top: 1.27 * VH, w: wb, fila: 1 });
+    return out;
+  }
+
+  // ---- disegno dello studio su canvas (una volta sola) ----
+  function qualitaTela(S) { return Math.min(LEGGERO ? 1 : 2, window.devicePixelRatio || 1, 4000 / S.H); }
+  function preparaTela(c, w, h, q) {
+    c.width = Math.max(1, Math.round(w * q)); c.height = Math.max(1, Math.round(h * q));
+    c.style.width = w + "px"; c.style.height = h + "px";
+    var x = c.getContext("2d"); x.setTransform(q, 0, 0, q, 0, 0); return x;
+  }
+  function rett(x, X, Y, w, h, r) {
+    x.beginPath(); x.moveTo(X + r, Y); x.lineTo(X + w - r, Y); x.quadraticCurveTo(X + w, Y, X + w, Y + r); x.lineTo(X + w, Y + h - r);
+    x.quadraticCurveTo(X + w, Y + h, X + w - r, Y + h); x.lineTo(X + r, Y + h); x.quadraticCurveTo(X, Y + h, X, Y + h - r); x.lineTo(X, Y + r); x.quadraticCurveTo(X, Y, X + r, Y); x.closePath();
+  }
+  function alone(x, cx, cy, r, col) { var g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, col); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(cx - r, cy - r, 2 * r, 2 * r); }
+  function lampadina(x, px, py, accesa) {
+    if (accesa) { alone(x, px, py, 8, "rgba(255,190,60,.55)"); x.fillStyle = "#ffc93c"; x.beginPath(); x.arc(px, py, 3.6, 0, 7); x.fill(); x.fillStyle = "#fffbe0"; x.beginPath(); x.arc(px, py, 2.4, 0, 7); x.fill(); }
+    else { x.fillStyle = "#5e4108"; x.beginPath(); x.arc(px, py, 3.6, 0, 7); x.fill(); x.fillStyle = "#8a6716"; x.beginPath(); x.arc(px, py, 2.2, 0, 7); x.fill(); }
+  }
+  function puntiCornice(R) {   // le lampadine lungo il bordo del maxischermo, ogni 20px
+    var p = [], x0 = R.x - 8, y0 = R.y - 8, x1 = R.x + R.w + 8, y1 = R.y + R.h + 8, d;
+    for (d = x0 + 10; d < x1 - 5; d += 20) p.push([d, y0]);
+    for (d = y0 + 10; d < y1 - 5; d += 20) p.push([x1, d]);
+    for (d = x1 - 10; d > x0 + 5; d -= 20) p.push([d, y1]);
+    for (d = y1 - 10; d > y0 + 5; d -= 20) p.push([x0, d]);
+    return p;
+  }
+  function disegnaStudio(S) {
+    var VW = S.VW, VH = S.VH, W = S.W, H = S.H, R = S.R.schermo, q = qualitaTela(S), i;
+    var x = preparaTela(S.tela, W, H, q);
+    // fondo luminoso da prima serata
+    var g = x.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#3a1b8c"); g.addColorStop(0.4, "#27106a"); g.addColorStop(0.7, "#1a0b4d"); g.addColorStop(1, "#120736");
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    alone(x, W * 0.5, H * 0.24, VW * 0.9, "rgba(255,206,110,.5)");
+    alone(x, W * 0.03, H * 0.3, VW * 0.85, "rgba(255,62,165,.55)");
+    alone(x, W * 0.97, H * 0.3, VW * 0.85, "rgba(34,211,238,.5)");
+    alone(x, W * 0.5, H * 0.68, VW * 1.1, "rgba(140,90,255,.4)");
+    x.fillStyle = "rgba(255,255,255,.05)"; for (i = 0; i < W; i += 64) x.fillRect(i, 0, 2, H);
+    x.fillStyle = "rgba(255,255,255,.035)"; for (i = 0; i < H; i += 64) x.fillRect(0, i, W, 2);
+    // fari fissi dipinti (sui telefoni leggeri al posto di quelli che girano)
+    if (LEGGERO) [0.1, 0.37, 0.63, 0.9].forEach(function (p, k) {
+      x.save(); x.translate(W * p, 0.03 * VH); x.rotate((k % 2 ? 1 : -1) * 0.25);
+      var fg = x.createLinearGradient(0, 0, 0, 1.3 * VH); fg.addColorStop(0, "rgba(255,236,170,.35)"); fg.addColorStop(1, "rgba(255,236,170,0)");
+      x.fillStyle = fg; x.beginPath(); x.moveTo(-0.02 * VW, 0); x.lineTo(0.02 * VW, 0); x.lineTo(0.22 * VW, 1.3 * VH); x.lineTo(-0.22 * VW, 1.3 * VH); x.closePath(); x.fill(); x.restore();
+    });
+    // arco al neon attorno al maxischermo
+    var ax = R.x - 0.13 * VW, aw = R.w + 0.26 * VW, ay = 0.012 * VH, ah = 1.12 * VH, ry = Math.min(aw * 0.3, 0.16 * VH);
+    x.beginPath(); x.moveTo(ax, ay + ah); x.lineTo(ax, ay + ry); x.ellipse(ax + aw / 2, ay + ry, aw / 2, ry, 0, Math.PI, 2 * Math.PI); x.lineTo(ax + aw, ay + ah);
+    x.fillStyle = "rgba(10,6,40,.45)"; x.fill();
+    var ag = x.createLinearGradient(ax, ay, ax + aw, ay + ah);
+    ag.addColorStop(0, "#ff3ea5"); ag.addColorStop(0.35, "#ffd43b"); ag.addColorStop(0.65, "#22d3ee"); ag.addColorStop(1, "#a06bff");
+    x.save(); x.lineWidth = 7; x.strokeStyle = ag; x.shadowColor = "rgba(255,62,165,.9)"; x.shadowBlur = 26; x.stroke(); x.restore();
+    x.lineWidth = 2; x.strokeStyle = "rgba(255,255,255,.75)"; x.stroke();
+    // torri LED (le barre che ballano sono sopra, a parte)
+    S.torriR = [[0.06 * VW, 0.1 * VH, 0.36 * VW, 0.36 * VH], [1.58 * VW, 0.1 * VH, 0.36 * VW, 0.36 * VH]];
+    S.torriR.forEach(function (p) {
+      x.save(); rett(x, p[0], p[1], p[2], p[3], 14); x.fillStyle = "#0a0624"; x.shadowColor = "rgba(255,62,165,.65)"; x.shadowBlur = 26; x.fill(); x.restore();
+      rett(x, p[0], p[1], p[2], p[3], 14); x.lineWidth = 3; x.strokeStyle = "#2b2366"; x.stroke();
+      x.save(); x.fillStyle = "#ffe066"; x.font = "900 20px system-ui,sans-serif"; x.textAlign = "center"; x.shadowColor = "#ff9d2e"; x.shadowBlur = 12;
+      x.fillText("★  ★  ★", p[0] + p[2] / 2, p[1] + 30); x.restore();
+    });
+    // gradinate del pubblico: fondo scuro a gradoni (le persone sono sopra, a file che si muovono)
+    (S.zonePub || []).forEach(function (z) {
+      var zy = S.pubTop + z[1];
+      x.save(); x.beginPath(); rettAlto(x, z[0], zy, z[2], z[3], 18); x.clip();
+      var zg = x.createLinearGradient(0, zy, 0, zy + z[3]); zg.addColorStop(0, "#0c0729"); zg.addColorStop(1, "#1d1352");
+      x.fillStyle = zg; x.fillRect(z[0], zy, z[2], z[3]);
+      x.fillStyle = "rgba(255,255,255,.05)"; for (var gy2 = zy + 22; gy2 < zy + z[3]; gy2 += 24) x.fillRect(z[0], gy2, z[2], 3);
+      x.restore();
+    });
+    // traliccio con i fari in alto
+    var th = 0.035 * VH, tg = x.createLinearGradient(0, 0, 0, th); tg.addColorStop(0, "#3b3560"); tg.addColorStop(1, "#1d1838");
+    x.fillStyle = tg; x.fillRect(0, 0, W, th);
+    x.strokeStyle = "rgba(255,255,255,.18)"; x.lineWidth = 2; x.beginPath();
+    for (i = -th; i < W + th; i += 12) { x.moveTo(i, th * 0.18); x.lineTo(i + th * 0.5, th * 0.82); x.moveTo(i + th * 0.5, th * 0.18); x.lineTo(i, th * 0.82); }
+    x.stroke();
+    for (i = 0; i < 6; i++) {
+      var fx = W * (0.07 + i * 0.172), fy = 0.02 * VH + 12;
+      alone(x, fx, fy, 44, "rgba(255,220,130,.6)");
+      var lg = x.createRadialGradient(fx - 2, fy - 3, 1, fx, fy, 12); lg.addColorStop(0, "#fff"); lg.addColorStop(0.35, "#ffe9a8"); lg.addColorStop(0.7, "#ffb300"); lg.addColorStop(1, "#5a3a00");
+      x.fillStyle = lg; x.beginPath(); x.arc(fx, fy, 12, 0, 7); x.fill();
+    }
+    // pavimento lucido con la striscia di luci
+    var py = 1.48 * VH, pg = x.createLinearGradient(0, py, 0, H); pg.addColorStop(0, "#2c1c78"); pg.addColorStop(0.5, "#170d4a"); pg.addColorStop(1, "#0c0628");
+    x.fillStyle = pg; x.fillRect(0, py, W, H - py);
+    x.save(); x.beginPath(); x.rect(0, py, W, H - py); x.clip(); alone(x, W / 2, py, VW * 0.9, "rgba(255,206,110,.28)"); x.restore();
+    x.fillStyle = "rgba(255,255,255,.07)"; for (i = 0; i < W; i += 70) x.fillRect(i, py, 2, H - py);
+    var sg = x.createLinearGradient(0, 0, W, 0);
+    ["#ff3ea5", "#ffd43b", "#22d3ee", "#a06bff", "#ff3ea5"].forEach(function (c, k) { sg.addColorStop(k / 4, c); });
+    x.save(); x.fillStyle = sg; x.shadowColor = "#ffd43b"; x.shadowBlur = 20; x.fillRect(0, py, W, 6); x.restore();
+    // maxischermo: alone azzurro dietro, cornice dorata con le lampadine
+    x.save(); rett(x, R.x, R.y, R.w, R.h, 14); x.fillStyle = "#0b1030"; x.shadowColor = "rgba(120,170,255,.6)"; x.shadowBlur = 40; x.fill(); x.restore();
+    x.save(); rett(x, R.x - 16, R.y - 16, R.w + 32, R.h + 32, 26); x.fillStyle = "#2a1d00"; x.shadowColor = "rgba(255,190,60,.6)"; x.shadowBlur = 34; x.fill(); x.restore();
+    rett(x, R.x - 16, R.y - 16, R.w + 32, R.h + 32, 26); x.lineWidth = 3; x.strokeStyle = "#3a2a00"; x.stroke();
+    var pc = puntiCornice(R);
+    pc.forEach(function (p, k) { lampadina(x, p[0], p[1], k % 2 === 1); });
+    // seconda serie di lampadine (quelle che si alternano): canvas sopra che si accende e spegne
+    var lx = R.x - 16, ly = R.y - 16, y2 = preparaTela(S.lampade, R.w + 32, R.h + 32, q);
+    S.lampade.style.left = lx + "px"; S.lampade.style.top = ly + "px";
+    pc.forEach(function (p, k) { lampadina(y2, p[0] - lx, p[1] - ly, k % 2 === 0); });
+  }
+  // il pubblico: silhouette disegnate una volta sola (poi il canvas intero "salta" quando applaude)
+  // ---- il pubblico: tanti piccoli avatar veri, disegnati una volta a file (canvas) che ondeggiano ognuna per conto suo ----
+  var poolPubblico = null;   // una ventina di facce pronte (bitmap), riusate per tutta la folla
+  function preparaPoolPubblico(cb) {
+    if (poolPubblico) { if (poolPubblico.pronti) cb(); else poolPubblico.cbs.push(cb); return; }
+    poolPubblico = { pronti: false, img: [], cbs: [cb] };
+    var N = 20, fatti = 0;
+    function uno() {
+      if (++fatti < N) return;
+      poolPubblico.pronti = true; var l = poolPubblico.cbs; poolPubblico.cbs = [];
+      l.forEach(function (f) { try { f(); } catch (e) {} });
+    }
+    if (!window.SGOmino) { fatti = N - 1; uno(); return; }
+    for (var i = 0; i < N; i++) (function (i) {
+      var svg; try { svg = SGOmino.svg(SGOmino.casuale("pubblico-" + i), { busto: true }); } catch (e) { uno(); return; }
+      var img = new Image();
+      img.onload = function () {
+        try { var c = document.createElement("canvas"); c.width = 72; c.height = 74; c.getContext("2d").drawImage(img, 0, 0, 72, 74); poolPubblico.img.push(c); } catch (e) {}
+        uno();
+      };
+      img.onerror = uno;
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.replace("<svg ", "<svg width='72' height='74' "));
+    })(i);
+  }
+  // rettangolo con solo gli angoli in alto arrotondati (aggiunto al percorso in corso)
+  function rettAlto(x, X, Y, w, h, r) {
+    x.moveTo(X, Y + h); x.lineTo(X, Y + r); x.quadraticCurveTo(X, Y, X + r, Y); x.lineTo(X + w - r, Y);
+    x.quadraticCurveTo(X + w, Y, X + w, Y + r); x.lineTo(X + w, Y + h); x.closePath();
+  }
+  function sagoma(x, cx, y, s) {   // persona stilizzata (finché le facce non sono pronte)
+    x.fillStyle = "#3a2d78"; x.beginPath(); x.ellipse(cx, y + s * 0.92, s * 0.46, s * 0.34, 0, 0, 7); x.fill();
+    x.fillStyle = "#6f5cb8"; x.beginPath(); x.arc(cx, y + s * 0.38, s * 0.26, 0, 7); x.fill();
+  }
+  function disegnaPubblico(S) {
+    var W = S.W, h = S.pubH, q = Math.min(1.5, qualitaTela(S)), Z = S.zonePub;
+    S.pubWrap.style.top = S.pubTop + "px"; S.pubWrap.style.width = W + "px"; S.pubWrap.style.height = h + "px";
+    S.strisce.forEach(function (c) { if (c.parentNode) c.parentNode.removeChild(c); });
+    S.strisce = [];
+    var pool = (poolPubblico && poolPubblico.pronti && poolPubblico.img.length) ? poolPubblico.img : null;
+    var seme = 11; function rnd() { seme = (seme * 16807) % 2147483647; return seme / 2147483647; }
+    // le file: in alto (in fondo alla sala) più piccole, in basso (davanti) più grandi
+    var righe = [], y = 2;
+    while (y < h - 8) { var sz = 24 + 14 * (y / h); righe.push({ y: y, s: sz }); y += sz * 0.58; }
+    var PER = 4;
+    for (var r0 = 0; r0 < righe.length; r0 += PER) {
+      var gruppo = righe.slice(r0, r0 + PER), ult = gruppo[gruppo.length - 1];
+      var y0 = Math.max(0, Math.floor(gruppo[0].y - 3)), y1 = Math.min(h, Math.ceil(ult.y + ult.s * 1.08));
+      if (y1 - y0 < 4) continue;
+      var c = document.createElement("canvas"); c.className = "st-fila st-anim";
+      var x = preparaTela(c, W, y1 - y0, q);
+      c.style.top = y0 + "px";
+      c.style.setProperty("--dur", (1.6 + rnd() * 1.3).toFixed(2) + "s");
+      c.style.setProperty("--rit", (-rnd() * 2).toFixed(2) + "s");
+      x.translate(0, -y0);
+      x.save(); x.beginPath(); Z.forEach(function (z) { rettAlto(x, z[0], z[1], z[2], z[3], 18); }); x.clip();
+      gruppo.forEach(function (R, k) {
+        var s = R.s, passo = s * 0.78, off = ((r0 + k) % 2) * passo / 2;
+        Z.forEach(function (z, zi) {
+          if (R.y < z[1] - s * 0.2 || R.y > z[1] + z[3] - s * 0.35) return;
+          for (var px = z[0] - passo * 0.4 + off; px < z[0] + z[2] - s * 0.3; px += passo) {
+            // nella fascia sotto il maxischermo salto i tratti dove ci sono già le gradinate laterali
+            if (zi === 2 && ((px + s > Z[0][0] && px < Z[0][0] + Z[0][2]) || (px + s > Z[1][0] && px < Z[1][0] + Z[1][2]))) continue;
+            var ss = s * (0.9 + rnd() * 0.2), jx = (rnd() - 0.5) * s * 0.2, jy = (rnd() - 0.5) * s * 0.14;
+            if (pool) {
+              var im = pool[Math.floor(rnd() * pool.length)];
+              if (rnd() < 0.5) x.drawImage(im, px + jx, R.y + jy, ss, ss * 1.03);
+              else { x.save(); x.translate(px + jx + ss, R.y + jy); x.scale(-1, 1); x.drawImage(im, 0, 0, ss, ss * 1.03); x.restore(); }
+            } else sagoma(x, px + jx + ss / 2, R.y + jy, ss);
+          }
+        });
+      });
+      // luce da palco solo sulle persone: più buio in fondo (in alto), magenta a sinistra e azzurro a destra
+      x.globalCompositeOperation = "source-atop";
+      var sg = x.createLinearGradient(0, 0, 0, h); sg.addColorStop(0, "rgba(14,7,44,.72)"); sg.addColorStop(0.55, "rgba(14,7,44,.46)"); sg.addColorStop(1, "rgba(14,7,44,.34)");   // il pubblico sta in penombra: i concorrenti devono risaltare
+      x.fillStyle = sg; x.fillRect(0, y0, W, y1 - y0);
+      var hg = x.createLinearGradient(0, 0, W, 0);
+      hg.addColorStop(0, "rgba(255,62,165,.3)"); hg.addColorStop(0.22, "rgba(255,62,165,0)"); hg.addColorStop(0.78, "rgba(34,211,238,0)"); hg.addColorStop(1, "rgba(34,211,238,.3)");
+      x.fillStyle = hg; x.fillRect(0, y0, W, y1 - y0);
+      x.globalCompositeOperation = "source-over";
+      x.restore();
+      S.pubWrap.insertBefore(c, S.pubDeco);
+      S.strisce.push(c);
+    }
+  }
+  function layoutStudio(S) {
+    var VW = S.vista.clientWidth || 360, VH = S.vista.clientHeight || 640, W = 2 * VW, H = 2 * VH;
+    S.VW = VW; S.VH = VH; S.W = W; S.H = H;
+    function pos(e, x, y, w, h) { e.style.left = x + "px"; e.style.top = y + "px"; if (w != null) e.style.width = w + "px"; if (h != null) e.style.height = h + "px"; }
+    S.mondo.style.width = W + "px"; S.mondo.style.height = H + "px";
+    S.R = { schermo: { x: 0.5 * VW, y: 0.06 * VH, w: VW, h: VH } };
+    var R = S.R.schermo;
+    // zone del pubblico (coordinate dentro al blocco del pubblico): due gradinate ai lati e la fascia sotto il maxischermo
+    S.pubTop = 0.52 * VH; S.pubH = 1.48 * VH - S.pubTop;
+    var fondo = (R.y + R.h + 18) - S.pubTop;   // la fascia parte sotto la cornice, così le lampadine restano sopra
+    S.zonePub = [[0.03 * VW, 0, 0.42 * VW, S.pubH], [1.55 * VW, 0, 0.42 * VW, S.pubH], [0.03 * VW, fondo, 1.94 * VW, S.pubH - fondo]];
+    disegnaStudio(S);
+    disegnaPubblico(S);
+    pos(S.schermo, R.x, R.y, R.w, R.h);
+    S.fasci.forEach(function (f, i) { var fx = W * (0.1 + i * 0.267); pos(f, fx - 0.22 * VW, 0.03 * VH, 0.44 * VW, 1.35 * VH); });
+    S.eq.forEach(function (e, i) { var p = S.torriR[i]; pos(e, p[0], p[1] + 44, p[2], p[3] - 44); });
+    function inPub(e) { var z = S.zonePub[e._zona]; pos(e, z[0] + 12 + e._rx * (z[2] - 24), z[1] + 24 + e._ry * (z[3] - 60)); }
+    S.lucine.forEach(inPub); S.flash.forEach(inPub);
+    S.bastoni.forEach(inPub); S.cartelli.forEach(inPub);
+    S.ringhiere.forEach(function (r, i) { var lato = i % 2, fila = Math.floor(i / 2); pos(r, lato ? 1.55 * VW : 0.03 * VW, (0.2 + fila * 0.26) * VH, 0.42 * VW, 5); });
+    S.occhi.forEach(function (o, i) {   // occhi di bue colorati che passano sulla folla
+      var z = S.zonePub[i], d = 0.55 * VW; pos(o, z[0] + z[2] / 2 - d / 2, z[1] + Math.min(z[3], 0.5 * VH) * 0.35 - d / 2, d, d);
+      o.style.setProperty("--dx", (i === 2 ? 0.7 * VW : (i ? -0.25 : 0.25) * VW) + "px"); o.style.setProperty("--dy", (i === 2 ? -0.06 * VH : 0.42 * VH) + "px");
+    });
+    pos(S.fumetto, W / 2, 1.06 * VH);
+    // leggii
+    S.posti = postiLeggii(S);
+    var ordine = S.posti.map(function (p, i) { return i; }).sort(function (a, b) { return S.posti[b].fila - S.posti[a].fila; });   // prima la fila dietro
+    ordine.forEach(function (i) {
+      var p = S.posti[i], X = S.L[i]; if (!X) return;
+      pos(X.el, p.cx - p.w / 2, p.top, p.w);
+      X.el.style.fontSize = (p.w * 0.1).toFixed(1) + "px";
+      S.zonaLeggii.appendChild(X.el);
+    });
+    S.file = S.posti.length > 4 ? 2 : 1;
+  }
+
+  // ---------- TELECAMERA ----------
+  function camera(S, r, ms) {
+    var s = Math.min(S.VW / r.w, S.VH / r.h), tx = (S.VW - r.w * s) / 2 - r.x * s, ty = (S.VH - r.h * s) / 2 - r.y * s;
+    if (Math.abs(s - 1) < 0.001) { s = 1; tx = Math.round(tx); ty = Math.round(ty); }   // sul maxischermo: nitido al pixel
+    S.mondo.style.transition = ms ? "transform " + ms + "ms cubic-bezier(.45,.05,.25,1)" : "none";
+    S.mondo.style.transform = "translate3d(" + tx.toFixed(1) + "px," + ty.toFixed(1) + "px,0) scale(" + s.toFixed(4) + ")";
+    var suSch = r === S.R.schermo;
+    S.mondo.classList.toggle("st-quieto", suSch);   // sul maxischermo lo studio si ferma (risparmio batteria)
+    S.rec.classList.toggle("on", !suSch);
+    return dorme(ms || 0);
+  }
+  function inquadra(S, shot, ms) { S.shot = shot; return camera(S, shot(), ms); }
+  function suSchermo(S, ms) { return inquadra(S, function () { return S.R.schermo; }, ms); }
+  function largo(S, ms) { return inquadra(S, function () { return { x: 0, y: 0, w: S.W, h: S.H }; }, ms); }
+  function suLeggio(S, i, ms) {
+    return inquadra(S, function () {
+      var p = S.posti[i] || S.posti[0], w = Math.max(0.64 * S.VW, p.w * 1.5), h = w * S.VH / S.VW;
+      var x = Math.max(0, Math.min(S.W - w, p.cx - w / 2)), y = Math.max(0, Math.min(S.H - h, p.top + p.w * 0.72 - h / 2));   // mai fuori dallo studio
+      return { x: x, y: y, w: w, h: h };
+    }, ms);
+  }
+  function suPubblico(S, lato, ms) { return inquadra(S, function () { return { x: lato ? 1.5 * S.VW : 0, y: 0.06 * S.VH, w: 0.5 * S.VW, h: 1.1 * S.VH }; }, ms); }
+  // panoramica lungo una fila di leggii: fn(i) viene chiamata quando la telecamera passa davanti al leggio i
+  async function panFila(S, fila, ms, fn) {
+    var idx = []; S.posti.forEach(function (p, i) { if (p.fila === fila) idx.push(i); });
+    idx.sort(function (a, b) { return S.posti[a].cx - S.posti[b].cx; });
+    if (!idx.length) return;
+    var w = 0.9 * S.VW, h = 0.9 * S.VH;
+    function rett(cx) { var p = S.posti[idx[0]]; return { x: Math.max(0, Math.min(S.W - w, cx - w / 2)), y: p.top + p.w * 0.66 - h / 2, w: w, h: h }; }
+    var a = S.posti[idx[0]].cx, b = S.posti[idx[idx.length - 1]].cx;
+    await inquadra(S, function () { return rett(a); }, 700);
+    idx.forEach(function (i, k) { setTimeout(function () { if (fn) fn(i); }, idx.length > 1 ? k * ms / (idx.length - 1) * 0.9 : 0); });
+    await inquadra(S, function () { return rett(b); }, ms);
+  }
+
+  // ---------- pezzi dello spettacolo ----------
+  function fermaTimer(S) { if (S.timer && S.timer._stop) S.timer._stop(); S.timer = null; }
+  function terzo(S, i, testo, sotto, ic) {
+    var el = S.t.el, T = S.terzoEl; vuota(T);
+    T.style.setProperty("--col", i != null && i >= 0 ? ST_COL[i % ST_COL.length] : "#ff3ea5");
+    if (i != null && i >= 0 && S.gioc[i]) T.appendChild(el("span", { class: "fac", html: avatarDi(S.gioc[i]) }));
+    else T.appendChild(el("span", { class: "ic", text: ic || "📺" }));
+    T.appendChild(el("div", { class: "tx" }, [ el("span", { text: testo }), sotto ? el("small", { text: sotto }) : null ]));
+    T.classList.remove("on"); void T.offsetWidth; T.classList.add("on");
+  }
+  function viaTerzo(S) { S.terzoEl.classList.remove("on"); }
+  function barra(S, nodi) { vuota(S.barraEl); nodi.forEach(function (n) { if (n) S.barraEl.appendChild(n); }); S.barraEl.classList.add("on"); S.vista.classList.add("con-barra"); }
+  function viaBarra(S) { S.barraEl.classList.remove("on"); S.vista.classList.remove("con-barra"); }
+  function aspettaTasto(S, testo) {
+    return new Promise(function (fine) {
+      barra(S, [ S.t.el("button", { class: "btn btn-primario", text: testo, onclick: function () { viaBarra(S); fine(); } }) ]);
+    });
+  }
+  function lampo(S) { var l = S.lampoEl; l.classList.remove("on"); void l.offsetWidth; l.classList.add("on"); }
+  function accendi(S, i, on) { var X = S.L[i]; if (X) X.el.classList.toggle("acceso", !!on); }
+  function accendiSolo(S, i) { S.L.forEach(function (X, k) { X.el.classList.toggle("acceso", k === i); }); }
+  function faccia(S, i, f) { var X = S.L[i]; if (!X || X.faccia === (f || null)) return; X.faccia = f || null; mettiAvatar(X, S.gioc[i], f); }
+  function tutteNormali(S) { S.L.forEach(function (X, i) { faccia(S, i, null); }); }
+  function puntiLeggio(S, i, valore, delta) {
+    var X = S.L[i]; if (!X) return;
+    var da = X.valore; X.valore = valore;
+    function scrivi(v) { X.pEl.textContent = v; X.pEl.classList.toggle("neg", v < 0); }
+    if (!delta) return scrivi(valore);
+    X.delta.textContent = (delta > 0 ? "+" : "−") + Math.abs(delta);
+    X.delta.style.color = delta > 0 ? "#6ff0a6" : "#ff8d98";
+    X.delta.classList.remove("on"); void X.delta.offsetWidth; X.delta.classList.add("on");
+    var t0 = performance.now();
+    (function passo() { var p = Math.min(1, (performance.now() - t0) / 800); scrivi(Math.round(da + (valore - da) * p)); if (p < 1) requestAnimationFrame(passo); })();
+    setTimeout(function () { scrivi(valore); }, 900);   // anche se l'animazione non gira
+  }
+  function cartello(S, i, stato, voto) {
+    var X = S.L[i]; if (!X) return;
+    var r = X.cart.querySelector(".f.r");
+    if (stato === "giu") { X.cart.classList.remove("su", "gira"); return; }
+    if (voto != null) { r.className = "f r " + (voto ? "si" : "no"); r.textContent = voto ? "👍" : "👎"; }
+    X.cart.classList.add("su");
+    if (stato === "gira") X.cart.classList.add("gira");
+  }
+  function cartelliGiu(S) { S.L.forEach(function (X, i) { cartello(S, i, "giu"); }); }
+  function pubblico(S, tipo) {
+    var testi = { applauso: ["👏 Bravo!", "👏👏👏", "🔥 Grande!", "👏 Evviva!"], ohh: ["😮 Ohhh…", "😱 Nooo!", "😬 Ahia…"] };
+    var l = testi[tipo] || testi.applauso;
+    S.fumetto.textContent = l[Math.floor(Math.random() * l.length)];
+    S.fumetto.classList.remove("on"); void S.fumetto.offsetWidth; S.fumetto.classList.add("on");
+    if (tipo === "applauso") {
+      S.pubWrap.classList.add("salta");
+      S.flash.forEach(function (f, k) { setTimeout(function () { f.classList.remove("on"); void f.offsetWidth; f.classList.add("on"); }, 100 + Math.random() * 1300); });
+      setTimeout(function () { S.pubWrap.classList.remove("salta"); }, 1900);
+      FX.applauso();
+    } else FX.ohh();
+  }
+  function logoSchermo(S) {
+    fermaTimer(S);
+    var el = S.t.el; vuota(S.sch);
+    var logo = el("div", { class: "logo" }); S.logo.forEach(function (r, k) { if (k) logo.appendChild(el("br")); logo.appendChild(document.createTextNode(r)); });
+    S.sch.appendChild(el("div", { class: "st-idle" }, [ el("div", { class: "stelle", text: "★ ★ ★" }), logo, el("div", { class: "sotto", text: "il game show" }) ]));
+  }
+
+  // ---------- LA REGIA: i momenti dello spettacolo ----------
+  async function apertura(S) {
+    viaBarra(S); logoSchermo(S);
+    await suPubblico(S, 0, 0);
+    terzo(S, null, "In diretta dallo studio", S.titolo || "", "📺");
+    pubblico(S, "applauso");
+    await dorme(600); await suSchermo(S, 1600); await dorme(400); await suPubblico(S, 1, 1600); viaTerzo(S);
+    await largo(S, 1300); await dorme(400);
+    if (S.gioc.length <= 4) {
+      for (var i = 0; i < S.gioc.length; i++) {
+        if (!S.vivo()) return;
+        await suLeggio(S, i, 850); accendiSolo(S, i); faccia(S, i, "esulta");
+        terzo(S, i, S.gioc[i].nome, i === S.io ? "Sei tu! In bocca al lupo" : "Concorrente n° " + (i + 1));
+        await dorme(700); faccia(S, i, null); viaTerzo(S);
+      }
+      accendiSolo(S, -1);
+    } else {
+      for (var f = 0; f < S.file; f++) {
+        if (!S.vivo()) return;
+        var quanti = S.posti.filter(function (p) { return p.fila === f; }).length;
+        terzo(S, null, f === 0 ? "Ecco i concorrenti!" : "…e in seconda fila!", quanti + " concorrenti", "🎤");
+        await panFila(S, f, 2600, function (k) { accendi(S, k, true); faccia(S, k, "esulta"); setTimeout(function () { accendi(S, k, false); faccia(S, k, null); }, 900); });
+      }
+      viaTerzo(S);
+    }
+    await largo(S, 1000); await dorme(300);
+  }
+  // stacco su chi gioca prima di andare sul maxischermo
+  async function stacco(S, gi, sotto) {
+    viaBarra(S); cartelliGiu(S); tutteNormali(S);
+    accendiSolo(S, gi);
+    await suLeggio(S, gi, 900);
+    faccia(S, gi, "pensa");
+    terzo(S, gi, "Tocca a " + (S.gioc[gi] ? S.gioc[gi].nome : ""), sotto);
+    await dorme(1300);
+    viaTerzo(S); faccia(S, gi, null);
+  }
+  async function finale(S, vinc, sotto) {
+    viaBarra(S); fermaTimer(S); logoSchermo(S); cartelliGiu(S);
+    await largo(S, 1000);
+    terzo(S, null, "Fine della puntata!", "E il vincitore è…", "🏁");
+    FX.rullo(1.6);
+    await dorme(1800); viaTerzo(S);
+    if (vinc >= 0) {
+      lampo(S); accendiSolo(S, vinc);
+      await suLeggio(S, vinc, 1100);
+      faccia(S, vinc, "esulta");
+      terzo(S, vinc, (S.gioc[vinc] ? S.gioc[vinc].nome : "") + " vince!", sotto || "", "🏆");
+      pubblico(S, "applauso"); coriandoli(); FX.fanfara();
+      await dorme(3000); viaTerzo(S);
+    }
+    await largo(S, 1400); await dorme(700);
+  }
+
+
+  // ---- pezzi in più per i giochi (es. la bomba della Patata) ----
+  // scritta libera sul display del leggio (al posto dei punti): es. "IN GARA", "💀 OUT", il countdown
+  function testoLeggio(S, i, testo, neg) { var X = S.L[i]; if (!X) return; X.pEl.textContent = testo; X.pEl.classList.add("testo"); X.pEl.classList.toggle("neg", !!neg); }
+  // quali leggii si possono toccare (anello verde che pulsa); lista di indici
+  function tocca(S, lista) { S.L.forEach(function (X, k) { X.el.classList.toggle("tocca", lista.indexOf(k) >= 0); }); }
+  function fuori(S, i, on) { var X = S.L[i]; if (X) X.el.classList.toggle("fuori", !!on); }
+  function scossa(S) { var e = S.scena; e.classList.remove("scossa"); void e.offsetWidth; e.classList.add("scossa"); }
+  // punto del mondo sopra la testa del concorrente i (per metterci sopra una cosa, es. la bomba)
+  function sopraTesta(S, i) { var p = S.posti[i] || S.posti[0]; return { x: p.cx, y: p.top, w: p.w }; }
+
+  window.SGStudio = {
+    crea: creaStudio, camera: camera, inquadra: inquadra, suSchermo: suSchermo, largo: largo, suLeggio: suLeggio, suPubblico: suPubblico, panFila: panFila,
+    terzo: terzo, viaTerzo: viaTerzo, barra: barra, viaBarra: viaBarra, aspettaTasto: aspettaTasto, lampo: lampo,
+    accendi: accendi, accendiSolo: accendiSolo, faccia: faccia, tutteNormali: tutteNormali, puntiLeggio: puntiLeggio,
+    cartello: cartello, cartelliGiu: cartelliGiu, pubblico: pubblico, logoSchermo: logoSchermo, fermaTimer: fermaTimer,
+    apertura: apertura, stacco: stacco, finale: finale,
+    testoLeggio: testoLeggio, tocca: tocca, fuori: fuori, scossa: scossa, sopraTesta: sopraTesta,
+    avatarDi: avatarDi, mioAvatar: mioAvatar, avatarValido: avatarValido, coriandoli: coriandoli,
+    dorme: dorme, vuota: vuota, durataApertura: durataApertura, STACCO: STACCO, FX: FX, COLORI: ST_COL
+  };
+})();
+
+/* =========================================================
    DATI — Tema "Il Primo Appuntamento" per il gioco "L'Asta"
    4 round, carte divise in tre fasce: A (le migliori),
    B (medie), C (scarti).
@@ -10860,6 +11659,19 @@ window.SG_NCC_CATEGORIE = {
      descrizione-> elenco di righe: cosa cambia per chi gioca
    ========================================================= */
 window.SG_NOVITA = [
+  {
+    v: 130,
+    data: "26 settembre 2026",
+    titolo: "La Patata Bollente nello studio 💣📺",
+    descrizione: [
+      "Anche la Patata Bollente ora è un game show: sigla, pubblico, occhi di bue e tutti voi dietro ai leggii con il vostro avatar.",
+      "Si vota la categoria sul maxischermo; poi rullo di tamburi, la categoria esce e la bomba VOLA sul primo che la tiene.",
+      "Durante il gioco il maxischermo mostra categoria e conto alla rovescia gigante. Chi ha la bomba sta sotto l'occhio di bue, con la bomba che trema sulla testa e la faccia spaventata. Per passarla tocchi il leggio di chi la riceve (gli anelli verdi dicono chi puoi scegliere) e la bomba vola da un leggio all'altro.",
+      "Quando scade il tempo: BOOM! Lampo, scossa, fiammata e zoom sul leggio: chi esplode diventa grigio con la faccia bruciata e \"💀 OUT\", il pubblico fa \"ohhh\".",
+      "Il tempo della bomba non scende durante le animazioni (rivelazione e bomba che arriva): nessuno perde secondi, anche online.",
+      "Alla fine l'occhio di bue sul vincitore, coriandoli e podio con gli avatar."
+    ]
+  },
   {
     v: 129,
     data: "26 settembre 2026",
@@ -19271,10 +20083,14 @@ window.SG_SIPERO = {
 (function () {
   "use strict";
 
+  var ST = window.SGStudio;   // lo studio del game show (condiviso, js/studio.js)
   var COLORI = ["#ff6b6b", "#4dabf7", "#51cf66", "#ffd43b", "#cc5de8", "#ff922b", "#20c997", "#f783ac", "#a9e34b", "#66d9e8"];
   // Il timer riparte a ogni "ricezione". Il tetto parte da 15s e cala di 2s
   // ogni 4 passaggi, fino a un minimo di 5s: 15, 13, 11, 9, 7, 5.
   function capMs(passaggi) { return Math.max(5000, 15000 - 2000 * Math.floor(passaggi / 4)); }
+  // Pause dello spettacolo (il tempo della bomba NON scende): rivelazione della categoria con la bomba
+  // che vola sul primo, bomba che passa al nuovo dopo un'esplosione, e l'esplosione stessa.
+  var ATTESA_INIZIO = 4600, ATTESA_ROUND = 1800, DURATA_BOOM = 3400;
 
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
   function pescaCategorie(n) { var pool = (window.SG_PATATA || []).slice(); return mischia(pool).slice(0, n); }
@@ -19342,9 +20158,9 @@ window.SG_SIPERO = {
     }
     var st = {
       fase: "voto", cats: pesca(3), categoria: null,
-      players: giocatori.map(function (g) { return { id: g.id, nome: g.nome, colore: g.colore, eliminato: false, voto: null }; }),
+      players: giocatori.map(function (g) { return { id: g.id, nome: g.nome, colore: g.colore, omino: g.omino || null, eliminato: false, voto: null }; }),
       holder: null, prev: null, ultimo: null, giro: [], round: 0, ts: 0, boom: null, vincitore: null,
-      remaining: 0, cap: 15000, passaggi: 0, remPrima: null, giroPrima: [], eliminati: [], soloDare: null
+      remaining: 0, cap: 15000, passaggi: 0, remPrima: null, giroPrima: [], eliminati: [], soloDare: null, attesa: 0
     };
     function pById(id) { for (var i = 0; i < st.players.length; i++) if (st.players[i].id === id) return st.players[i]; return null; }
     function vivi() { return st.players.filter(function (p) { return !p.eliminato; }); }
@@ -19353,6 +20169,7 @@ window.SG_SIPERO = {
     function aggiorna() {
       if (st.fase !== "gioco") return;
       var now = Date.now(), dt = now - st.ts; st.ts = now;
+      if (now < st.attesa) return;   // pausa dello spettacolo: il tempo è fermo
       if (!holderObj()) return;
       st.remaining -= dt;
       if (st.remaining <= 0) { st.remaining = 0; esplode(); }
@@ -19364,14 +20181,14 @@ window.SG_SIPERO = {
       st.players.forEach(function (p) { p.eliminato = false; });
       var vv = vivi(); st.holder = vv[Math.floor(Math.random() * vv.length)].id;
       st.prev = null; st.ultimo = null; st.soloDare = null; st.giro = [st.holder]; st.cap = capMs(0); st.remaining = st.cap;
-      st.fase = "gioco"; st.ts = Date.now(); onCambio();
+      st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_INIZIO; onCambio();
     }
     function esplode() {
       var h = holderObj(); if (!h) return;
       h.eliminato = true; st.eliminati.push(h.id); st.boom = { id: h.id, nome: h.nome }; st.fase = "esplosione"; onCambio();
       setTimeout(function () {
         st.boom = null; var v = vivi();
-        if (v.length <= 1) { st.fase = "fine"; st.vincitore = v[0] ? { nome: v[0].nome, colore: v[0].colore } : null; onCambio(); return; }
+        if (v.length <= 1) { st.fase = "fine"; st.vincitore = v[0] ? { id: v[0].id, nome: v[0].nome, colore: v[0].colore } : null; onCambio(); return; }
         st.round++;
         // togli gli eliminati dal giro, poi dai la bomba a caso a chi NON è ancora
         // stato scelto in questo giro (così si completa il giro); se hanno già avuto
@@ -19384,8 +20201,8 @@ window.SG_SIPERO = {
         if (st.giro.length >= v.length) st.giro = [nh.id];
         st.prev = null; st.ultimo = null; st.soloDare = null;
         st.cap = capMs(st.passaggi); st.remaining = st.cap; st.remPrima = null;
-        st.fase = "gioco"; st.ts = Date.now(); onCambio();
-      }, 2600);
+        st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_ROUND; onCambio();
+      }, DURATA_BOOM);
     }
 
     return {
@@ -19401,7 +20218,7 @@ window.SG_SIPERO = {
       },
       viaCon: function (idx) { if (st.fase === "voto") avviaGioco(st.cats[idx]); },
       passa: function (fromId, targetId) {
-        aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder) return;
+        aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder || Date.now() < st.attesa) return;
         var tgt = pById(targetId); if (!tgt || tgt.eliminato || targetId === st.holder) return;
         if (st.soloDare != null) { var sd = pById(st.soloDare); if (!sd || sd.eliminato) st.soloDare = null; }
         if (st.soloDare != null) {
@@ -19419,7 +20236,7 @@ window.SG_SIPERO = {
         st.ts = Date.now(); onCambio();
       },
       indietro: function (fromId) {
-        aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder || !st.prev) return;
+        aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder || !st.prev || Date.now() < st.attesa) return;
         var p = pById(st.prev); if (!p || p.eliminato) return;
         // il passaggio non valeva: torna a chi l'aveva, col tempo che aveva (NIENTE reset)
         st.passaggi = Math.max(0, st.passaggi - 1); st.cap = capMs(st.passaggi);
@@ -19434,7 +20251,7 @@ window.SG_SIPERO = {
         if (st.soloDare === id) st.soloDare = null;   // il bersaglio del vincolo non c'è più
         if (st.fase === "gioco" || st.fase === "esplosione") {
           var v = vivi();
-          if (v.length <= 1) { st.fase = "fine"; st.vincitore = v[0] ? { nome: v[0].nome, colore: v[0].colore } : null; }
+          if (v.length <= 1) { st.fase = "fine"; st.vincitore = v[0] ? { id: v[0].id, nome: v[0].nome, colore: v[0].colore } : null; }
           else if (st.holder === id) { st.holder = v[Math.floor(Math.random() * v.length)].id; st.prev = null; st.soloDare = null; st.giro = [st.holder]; st.cap = capMs(st.passaggi); st.remaining = st.cap; st.ts = Date.now(); }
         }
         onCambio();
@@ -19447,14 +20264,15 @@ window.SG_SIPERO = {
         if (st.fase === "fine") {
           // dal vincitore (ultimo rimasto) giù fino al primo esploso
           var ord = vivi().concat(st.eliminati.slice().reverse().map(function (id) { return pById(id); }).filter(Boolean));
-          classifica = ord.map(function (p) { return { nome: p.nome, colore: p.colore }; });
+          classifica = ord.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null }; });
         }
         return {
           fase: st.fase, categoria: st.categoria, cats: st.cats, round: st.round,
-          players: st.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, eliminato: p.eliminato, voto: p.voto }; }),
+          players: st.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null, eliminato: p.eliminato, voto: p.voto }; }),
           holder: st.holder, prev: st.prev, ultimo: st.ultimo, giro: st.giro.slice(),
           soloDare: (function () { if (st.soloDare == null) return null; var s = pById(st.soloDare); return (s && !s.eliminato) ? st.soloDare : null; })(),
-          remaining: Math.max(0, Math.round(st.remaining)), cap: st.cap, boom: st.boom, vincitore: st.vincitore, classifica: classifica
+          remaining: Math.max(0, Math.round(st.remaining)), cap: st.cap, boom: st.boom, vincitore: st.vincitore, classifica: classifica,
+          attesaMs: Math.max(0, st.attesa - Date.now())   // quanto manca prima che il tempo della bomba riparta
         };
       }
     };
@@ -19481,12 +20299,85 @@ window.SG_SIPERO = {
     } catch (e) {}
   }
 
-  var dispTimer = null, tickTimer = null, ultimoBoom = null;
+  function swishP() {   // "fiuu" della bomba che vola
+    var ctx = acP(); if (!ctx) return;
+    try {
+      var n = ctx.currentTime, len = Math.floor(ctx.sampleRate * 0.18), buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * i / len);
+      var s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      s.buffer = buf; f.type = "bandpass"; f.frequency.setValueAtTime(900, n); f.frequency.exponentialRampToValueAtTime(2600, n + 0.18); f.Q.value = 1.4; g.gain.value = 0.35;
+      s.connect(f); f.connect(g); g.connect(ctx.destination); s.start(n); s.stop(n + 0.2);
+    } catch (e) {}
+  }
+
+  var dispTimer = null, tickTimer = null;
   function stopTimers() { if (dispTimer) clearInterval(dispTimer); if (tickTimer) clearTimeout(tickTimer); dispTimer = tickTimer = null; }
   function assicuraStileP() {
     if (document.getElementById("sg-patata-css")) return;
     var s = document.createElement("style"); s.id = "sg-patata-css";
-    s.textContent = "@keyframes sgBomba{0%,100%{box-shadow:0 0 0 3px rgba(255,80,80,.5),0 0 16px 6px rgba(255,80,80,.65)}50%{box-shadow:0 0 0 4px rgba(255,120,60,.9),0 0 26px 12px rgba(255,120,60,.95)}}.sg-bomba{animation:sgBomba .5s ease-in-out infinite}@keyframes sgScoppio{0%{transform:scale(.6);opacity:0}40%{transform:scale(1.25);opacity:1}100%{transform:scale(1);opacity:1}}.sg-scoppio{animation:sgScoppio .5s ease-out}@keyframes sgTocca{0%,100%{box-shadow:0 0 0 2px rgba(130,220,170,.55)}50%{box-shadow:0 0 0 5px rgba(130,220,170,.95),0 0 12px 3px rgba(130,220,170,.55)}}.sg-tocca{animation:sgTocca 1.1s ease-in-out infinite;cursor:pointer}";
+    // come nello studio: si anima solo transform/opacity
+    s.textContent = [
+      // maxischermo durante il gioco (si vede da lontano: scritte grandi)
+      ".pt-sch{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:10px 6px}",
+      ".pt-cat{font-size:22px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#cdd6ff}",
+      ".pt-catnome{font-size:44px;font-weight:900;line-height:1.08;color:#ffe066;text-shadow:0 4px 0 rgba(0,0,0,.35);padding:0 6px}",
+      ".pt-bombona{font-size:110px;line-height:1;will-change:transform;animation:ptPulsa .6s ease-in-out infinite alternate}",
+      "@keyframes ptPulsa{from{transform:scale(.94)}to{transform:scale(1.06)}}",
+      ".pt-conto{font-family:'Courier New',ui-monospace,monospace;font-size:150px;font-weight:900;line-height:.95;color:#fff;text-shadow:0 0 30px rgba(255,120,60,.6)}",
+      ".pt-conto.poco{color:#ff5d6c}",
+      ".pt-chi{font-size:34px;font-weight:800;color:#fff}",
+      ".pt-chi b{color:#ffd43b}",
+      ".pt-regola{font-size:22px;font-weight:700;color:#cdd6ff;opacity:.85}",
+      ".pt-boomtxt{font-size:96px;font-weight:900;color:#ff5d6c;text-shadow:0 6px 0 rgba(0,0,0,.35);animation:ptEsce .45s cubic-bezier(.3,1.5,.5,1) both}",
+      // voto della categoria (si vede da vicino)
+      ".pt-voto{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;padding:8px 4px}",
+      ".pt-titolo{font-size:26px;font-weight:900;text-align:center}",
+      ".pt-sotto{font-size:14px;color:#cdd6ff;text-align:center;margin:-6px 0 4px}",
+      ".pt-catbtn{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;padding:18px;border-radius:18px;border:3px solid transparent;cursor:pointer;color:#fff;font:inherit;font-size:21px;font-weight:900;",
+        "background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.05));box-shadow:0 6px 16px rgba(0,0,0,.3)}",
+      ".pt-catbtn small{font-size:13px;font-weight:700;opacity:.8}",
+      ".pt-catbtn.scelta{border-color:#ffd43b;background:linear-gradient(135deg,rgba(255,212,59,.32),rgba(255,212,59,.08))}",
+      ".pt-rivela{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}",
+      ".pt-catgrande{font-size:40px;font-weight:900;color:#ffe066;text-shadow:0 4px 0 rgba(0,0,0,.35);padding:0 10px;animation:ptEsce .5s cubic-bezier(.3,1.5,.5,1) both}",
+      "@keyframes ptEsce{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}",
+      // la bomba sopra la testa (trema, la miccia sfavilla) e l'esplosione
+      ".pt-bomba{position:absolute;left:0;top:0;z-index:6;pointer-events:none;opacity:0;transition:opacity .25s;will-change:transform}",
+      ".pt-bomba-in{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;line-height:1;will-change:transform;animation:ptTrema .18s ease-in-out infinite alternate}",
+      ".pt-bomba.corri .pt-bomba-in{animation-duration:.07s}",
+      "@keyframes ptTrema{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}",
+      ".pt-miccia{position:absolute;right:6%;top:2%;width:24%;height:24%;border-radius:50%;background:radial-gradient(circle,#fff 0 25%,#ffd43b 45%,rgba(255,120,0,0) 70%);will-change:transform,opacity;animation:ptScintilla .12s steps(2) infinite}",
+      "@keyframes ptScintilla{50%{transform:scale(1.6);opacity:.6}}",
+      ".pt-boom{position:absolute;z-index:7;width:0;height:0;pointer-events:none}",
+      ".pt-boom:before{content:'';position:absolute;left:-150px;top:-150px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,#fff 0,#ffd43b 25%,#ff6b00 50%,rgba(255,60,0,0) 70%);will-change:transform,opacity;animation:ptOnda .8s ease-out forwards}",
+      ".pt-boom span{position:absolute;left:0;top:0;font-size:120px;line-height:1;will-change:transform,opacity;animation:ptBoom .9s ease-out forwards}",
+      ".pt-boom i{position:absolute;left:-30px;top:-30px;width:60px;height:60px;border-radius:50%;background:radial-gradient(circle,rgba(120,110,125,.9),rgba(80,70,85,0) 70%);opacity:0;will-change:transform,opacity;animation:ptFumo 1.6s ease-out forwards}",
+      ".pt-boom i:nth-child(1){--fx:-110px;--fy:-130px}.pt-boom i:nth-child(2){--fx:100px;--fy:-140px}.pt-boom i:nth-child(3){--fx:-150px;--fy:-20px}",
+      ".pt-boom i:nth-child(4){--fx:150px;--fy:-30px}.pt-boom i:nth-child(5){--fx:-40px;--fy:-190px}.pt-boom i:nth-child(6){--fx:50px;--fy:-180px}",
+      "@keyframes ptOnda{from{transform:scale(.2);opacity:1}to{transform:scale(1.8);opacity:0}}",
+      "@keyframes ptBoom{0%{transform:translate(-50%,-50%) scale(.2);opacity:1}40%{transform:translate(-50%,-50%) scale(1.3);opacity:1}100%{transform:translate(-50%,-50%) scale(1.1);opacity:0}}",
+      "@keyframes ptFumo{0%{transform:translate(0,0) scale(.3);opacity:0}20%{opacity:1}100%{transform:translate(var(--fx),var(--fy)) scale(2.2);opacity:0}}",
+      // barra sotto
+      ".pt-hint{font-size:.98rem}",
+      ".pt-indietro{width:100%;padding:12px;border-radius:14px;border:2px solid #ffa94d;background:rgba(255,169,77,.18);color:#ffd8a8;font:inherit;font-weight:700;cursor:pointer}",
+      // lobby e classifica con gli avatar
+      ".pt-lobby{display:flex;align-items:center;gap:10px;padding:6px 10px 6px 6px;border-radius:12px;margin-bottom:6px;background:rgba(255,255,255,.06);font-weight:700}",
+      ".pt-lobby .fac,.pt-riga .fac{width:38px;height:38px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.1);flex:0 0 auto}",
+      ".pt-lobby .fac svg,.pt-riga .fac svg,.pt-gradino .fac svg{width:100%;height:100%;display:block}",
+      ".pt-podio{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:8px 0 14px}",
+      ".pt-gradino{flex:1;max-width:120px;display:flex;flex-direction:column;align-items:center}",
+      ".pt-gradino .fac{width:70px;height:70px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.1)}",
+      ".pt-gradino.p1 .fac{width:90px;height:90px;box-shadow:0 0 0 3px #ffd43b,0 0 26px rgba(255,212,59,.55)}",
+      ".pt-gradino .nm{font-weight:800;font-size:.85rem;margin:4px 0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".pt-gradino .blocco{width:100%;border-radius:10px 10px 0 0;display:flex;justify-content:center;padding-top:6px;font-size:1.6rem}",
+      ".pt-gradino.p1 .blocco{height:84px;background:linear-gradient(#ffd75a,#c99a10)}",
+      ".pt-gradino.p2 .blocco{height:62px;background:linear-gradient(#e6ebf2,#98a3b3)}",
+      ".pt-gradino.p3 .blocco{height:46px;background:linear-gradient(#e8a866,#a8662a)}",
+      ".pt-riga{display:flex;align-items:center;gap:10px;padding:6px 12px 6px 6px;border-radius:14px;background:rgba(255,255,255,.06)}",
+      ".pt-riga.primo{background:rgba(255,212,59,.16);border:1px solid rgba(255,212,59,.5)}",
+      ".pt-riga .pos{width:28px;text-align:center;font-weight:900}",
+      ".pt-riga .nm{flex:1;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".pt-riga .et{font-size:.8rem;opacity:.8}"
+    ].join("");
     document.head.appendChild(s);
   }
 
@@ -19514,7 +20405,7 @@ window.SG_SIPERO = {
   // =========================================================
   function hostPatata(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteP(t);
-    var H = { fase: "lobby", codice: "…", pronta: false, players: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", colore: COLORI[0] }], motore: null, customCats: [] };
+    var H = { fase: "lobby", codice: "…", pronta: false, players: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", colore: COLORI[0], omino: ST.mioAvatar((t.giocatori && t.giocatori[0]) || "Host") }], motore: null, customCats: [] };
     var rete = SGNet.ospita("patata", {
       onCodice: function (c) { H.codice = c; bd(); },
       onConnesso: function () { H.pronta = true; bd(); },
@@ -19524,7 +20415,7 @@ window.SG_SIPERO = {
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") { if (H.fase === "lobby" && !H.players.some(function (p) { return p.id === id; }) && H.players.length < 10) H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), colore: COLORI[H.players.length % COLORI.length] }); bd(); }
+        if (m.t === "join") { if (H.fase === "lobby" && !H.players.some(function (p) { return p.id === id; }) && H.players.length < 10) H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), colore: COLORI[H.players.length % COLORI.length], omino: ST.avatarValido(m.omino) }); bd(); }
         else if (!H.motore) return;
         else if (m.t === "vota") H.motore.vota(id, m.idx);
         else if (m.t === "passa") H.motore.passa(id, m.target);
@@ -19533,7 +20424,7 @@ window.SG_SIPERO = {
       onErrore: function () { senzaReteP(t); }
     });
     function vmHost() {
-      if (H.fase === "lobby") return { fase: "lobby", codice: H.codice, pronta: H.pronta, players: H.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore }; }), customCats: H.customCats.slice() };
+      if (H.fase === "lobby") return { fase: "lobby", codice: H.codice, pronta: H.pronta, players: H.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null }; }), customCats: H.customCats.slice() };
       var vm = H.motore.vm(); vm.codice = H.codice; vm.pronta = H.pronta; return vm;
     }
     function bd() { rete.invia({ t: "vm", vm: vmHost() }); disegna(); }
@@ -19559,7 +20450,8 @@ window.SG_SIPERO = {
     var el = t.el, S = { myId: null, vm: null, vmTs: 0, rete: null, nome: "", msg: null };
     var cb = {
       locale: false, sonoHost: false, myId: null,
-      getRemaining: function () { if (!S.vm) return 0; return Math.max(0, S.vm.remaining - (Date.now() - S.vmTs)); },
+      // il tempo scende solo dopo la pausa dello spettacolo (attesaMs)
+      getRemaining: function () { if (!S.vm) return 0; return Math.max(0, S.vm.remaining - Math.max(0, (Date.now() - S.vmTs) - (S.vm.attesaMs || 0))); },
       onVota: function (idx) { S.rete && S.rete.invia({ t: "vota", idx: idx }); },
       onPassa: function (id) { S.rete && S.rete.invia({ t: "passa", target: id }); },
       onIndietro: function () { S.rete && S.rete.invia({ t: "indietro" }); },
@@ -19579,7 +20471,7 @@ window.SG_SIPERO = {
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome });
+        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: ST.mioAvatar(S.nome) });
           setTimeout(function () { if (!S.vm && S.msg) S.msg.textContent = "Non trovo la partita. Controlla il codice, o l'host non ha ancora aperto la stanza…"; }, 8000); },
         onMsg: function (m) { if (m && m.t === "vm") { S.vm = m.vm; S.vmTs = Date.now(); disegna(); } },
         onChiuso: function () { stopTimers(); erroreP(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
@@ -19603,181 +20495,339 @@ window.SG_SIPERO = {
   }
 
   // =========================================================
-  //  DISEGNO condiviso
+  //  DISEGNO: lo STUDIO del game show (condiviso con la Linea del tempo)
+  //  Tutti ai leggii; sul maxischermo la categoria e il conto alla rovescia gigante.
+  //  La bomba sta sopra la testa di chi la tiene e VOLA da un leggio all'altro:
+  //  chi ce l'ha tocca il leggio di chi la riceve. Quando scade: BOOM, zoom sul leggio.
   // =========================================================
+  var RP = null;   // la regia di questo telefono
+  function idxP(vm, id) { for (var i = 0; i < vm.players.length; i++) if (vm.players[i].id === id) return i; return -1; }
   function disegnaPatataVM(t, vm, cb) {
-    assicuraStileP(); stopTimers();
-    var el = t.el, myId = cb.myId;
-    var puoi = cb.locale || (vm.holder && vm.holder === myId);
-
-    // ---- LOBBY (solo online) ----
-    if (vm.fase === "lobby") {
-      var s = t.schermata({ icona: "💣", titolo: "La Patata Bollente · Lobby", sotto: "Ognuno dal suo telefono",
-        indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
-      if (cb.sonoHost) {
-        s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-        s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
-        if (vm.codice && vm.codice !== "…") {
-          var link = SG.creaLink({ gioco: "patata", stanza: vm.codice });
-          var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-          s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-            onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-          s._contenuto.appendChild(campo);
-        }
-        s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
-          text: vm.pronta ? "🟢 Stanza pronta — manda il codice agli amici" : "🟡 Sto aprendo la stanza… (attendi il verde)" }));
+    assicuraStileP();
+    if (vm.fase === "lobby") { RP = null; stopTimers(); return disegnaLobbyP(t, vm, cb); }
+    var ids = vm.players.map(function (p) { return p.id; }).join("|");
+    if (!RP || RP.ids !== ids || (!RP.S.vivo() && vm.fase !== "fine")) {
+      if (!(RP && RP.fineFatta && vm.fase === "fine")) {
+        stopTimers();
+        RP = { t: t, ids: ids, cb: cb, presentato: !!cb._presentato };
+        RP.S = ST.crea(t, vm.players, { io: cb.locale ? -1 : idxP(vm, cb.myId), esci: function () { cb.onEsci(); }, titolo: "La Patata Bollente", logo: ["LA PATATA", "BOLLENTE"] });
+        RP.S.onTocca = function (i) { var p = RP.vm && RP.vm.players[i]; if (p) { swishP(); RP.cb.onPassa(p.id); } };
+        vm.players.forEach(function (p, i) { ST.testoLeggio(RP.S, i, p.eliminato ? "💀 OUT" : "IN GARA", p.eliminato); if (p.eliminato) { ST.fuori(RP.S, i, true); ST.faccia(RP.S, i, "esploso"); } });
+        RP.bomba = creaBomba(RP.S);
       }
-      s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Chi c'è (" + vm.players.length + ")" }));
-      vm.players.forEach(function (p) {
-        s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:rgba(255,255,255,.06)" }, [
-          el("span", { style: "width:16px;height:16px;border-radius:50%;background:" + p.colore }),
-          el("span", { style: "flex:1", text: p.nome + (p.id === myId ? " (tu)" : "") })
-        ]));
-      });
-      if (cb.sonoHost) {
-        s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Categorie tue (facoltative)" }));
-        var inpCat = el("input", { class: "link-campo", type: "text", maxlength: "40", placeholder: "Scrivi una categoria…" });
-        function aggiungiCat() { if (inpCat.value.trim()) { cb.onAggiungiCat(inpCat.value); inpCat.value = ""; } }
-        inpCat.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); aggiungiCat(); } });
-        s._contenuto.appendChild(inpCat);
-        s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", style: "margin-top:6px", text: "＋ Aggiungi categoria", onclick: aggiungiCat }));
-        (vm.customCats || []).forEach(function (c, i) {
-          s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;margin-top:6px;background:rgba(255,255,255,.06)" }, [
-            el("span", { style: "flex:1", text: "📝 " + c }),
-            el("button", { class: "togli", text: "×", onclick: function () { cb.onTogliCat(i); } })
-          ]));
-        });
-        if ((vm.customCats || []).length) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Si giocheranno queste (se sono meno di 3, si completa con categorie a caso)." }));
-      }
-      if (cb.sonoHost) {
-        var ok = vm.players.length >= 2;
-        var b = el("button", { class: "btn btn-primario", text: "Continua ▶", onclick: cb.onContinua });
-        if (!ok) b.setAttribute("disabled", "disabled");
-        s._piede.appendChild(b);
-        if (!ok) s._piede.appendChild(el("p", { class: "modulo-nota", text: "Servono almeno 2 giocatori (aspetta che entrino)." }));
-      } else s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci…" }));
-      return t.mostra(s);
     }
-
-    // ---- VOTO CATEGORIA ----
-    if (vm.fase === "voto") {
-      var s2 = t.schermata({ icona: "🗳️", titolo: "Che categoria?", sotto: cb.locale ? "Toccatene una per iniziare" : "Vota: si gioca la più votata",
-        indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
-      var mio = null; vm.players.forEach(function (p) { if (p.id === myId) mio = p; });
-      vm.cats.forEach(function (cat, i) {
-        var voti = vm.players.filter(function (p) { return p.voto === i; }).length;
-        var scelto = mio && mio.voto === i;
-        var card = el("button", { style: "display:block;width:100%;text-align:left;margin-bottom:10px;padding:16px 18px;border-radius:14px;border:2px solid " + (scelto ? "#ffd43b" : "transparent") + ";cursor:pointer;color:#fff;background:rgba(255,255,255,.07);font-size:1.15rem;font-weight:700",
-          onclick: function () { if (cb.locale) cb.onScegliCat(i); else cb.onVota(i); } }, [
-          el("div", { text: cat }),
-          cb.locale ? null : el("div", { style: "font-size:.85rem;font-weight:600;opacity:.8;margin-top:4px", text: voti === 1 ? "1 voto" : voti + " voti" })
-        ]);
-        s2._contenuto.appendChild(card);
-      });
-      if (!cb.locale) {
-        if (cb.sonoHost) s2._piede.appendChild(el("button", { class: "btn btn-primario", text: "Via! ▶", onclick: cb.onVia }));
-        else s2._piede.appendChild(el("p", { class: "modulo-nota", text: "Vota pure; parte quando l'host dà il via." }));
+    RP.vm = vm; RP.cb = cb; RP.vmTs = Date.now();
+    regiaTickP(RP);
+  }
+  async function regiaTickP(R) {
+    if (R.corre) { R.ancora = true; return; }
+    R.corre = true;
+    try {
+      for (var giri = 0; giri < 30; giri++) {
+        R.ancora = false;
+        var fatto = await regiaPassoP(R);
+        if (!fatto && !R.ancora) break;
       }
-      return t.mostra(s2);
-    }
-
-    // ---- FINE ----
+    } catch (e) {} finally { R.corre = false; }
+  }
+  async function regiaPassoP(R) {
+    var vm = R.vm, S = R.S, cb = R.cb;
     if (vm.fase === "fine") {
-      var sf = t.schermata({ icona: "🏆", titolo: "Vince " + (vm.vincitore ? vm.vincitore.nome : "") + "!", sotto: "La Patata Bollente" });
-      sf._contenuto.appendChild(el("div", { style: "text-align:center;font-size:3rem;margin:6px 0 2px" , text: "🏆" }));
-      var cl = vm.classifica || [];
-      var ol = el("ol", { class: "classifica" });
-      cl.forEach(function (p, i) {
-        var etichetta = i === 0 ? "🏆 vincitore" : (i === cl.length - 1 ? "💥 primo esploso" : "");
-        ol.appendChild(el("li", { class: i === 0 ? "vincitore" : "" }, [
-          el("span", { class: "pos", text: (i + 1) + "°" }),
-          el("span", { class: "nome" }, [
-            el("span", { style: "display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:middle;margin-right:6px;background:" + p.colore }),
-            el("span", { text: p.nome })
-          ]),
-          el("span", { class: "punti", style: "font-size:.8rem;opacity:.8", text: etichetta })
+      if (R.fineFatta) return false;
+      R.fineFatta = true; stopTimers(); nascondiBomba(R);
+      var vinc = vm.vincitore ? idxP(vm, vm.vincitore.id) : -1;
+      if (S.vivo()) await ST.finale(S, vinc, "Ultimo sopravvissuto! 💣");
+      schermataFineP(R.t, vm, cb);
+      return true;
+    }
+    if (!S.vivo()) return false;
+    if (!R.presentato) {   // la sigla, una volta sola per partita
+      R.presentato = true; cb._presentato = true;
+      await ST.apertura(S);
+      return true;
+    }
+    if (vm.fase === "voto") { mostraVotoP(R, vm); return false; }
+    if (vm.fase === "gioco") {
+      var kR = vm.categoria + "|" + vm.round;
+      if (R.kRound !== kR) {
+        R.kRound = kR; stopTimers();
+        if (R.kCat !== vm.categoria) { R.kCat = vm.categoria; await rivelaCategoria(R); }
+        else await nuovoRound(R);
+        return true;
+      }
+      aggiornaGioco(R);
+      return false;
+    }
+    if (vm.fase === "esplosione" && vm.boom) {
+      var kB = vm.categoria + "|" + vm.round + "|" + vm.boom.id;
+      if (R.kBoom === kB) return false;
+      R.kBoom = kB;
+      await esplosione(R);
+      return true;
+    }
+    return false;
+  }
+
+  // ---- il maxischermo ----
+  function schermoPatata(R) {
+    var el = R.t.el, S = R.S, vm = R.vm, h = null;
+    ST.fermaTimer(S); ST.vuota(S.sch);
+    vm.players.forEach(function (p) { if (p.id === vm.holder) h = p; });
+    R.contoEl = el("div", { class: "pt-conto", text: (vm.cap / 1000).toFixed(1) });
+    R.chiEl = el("b", { text: h ? h.nome : "" });
+    S.sch.appendChild(el("div", { class: "pt-sch" }, [
+      el("div", { class: "pt-cat", text: "🗂️ categoria" }),
+      el("div", { class: "pt-catnome", text: vm.categoria || "" }),
+      el("div", { class: "pt-bombona", text: "💣" }),
+      R.contoEl,
+      el("div", { class: "pt-chi" }, [ el("span", { text: "Ha la bomba " }), R.chiEl ]),
+      el("div", { class: "pt-regola", text: "Chi la riceve riparte da " + (vm.cap / 1000) + "s" })
+    ]));
+  }
+  function mostraVotoP(R, vm) {
+    var S = R.S, el = R.t.el, cb = R.cb;
+    stopTimers(); nascondiBomba(R); ST.tocca(S, []); ST.accendiSolo(S, -1);
+    var mio = null; vm.players.forEach(function (p) { if (p.id === cb.myId) mio = p; });
+    var chiave = "voto|" + vm.cats.join("|") + "|" + vm.players.map(function (p) { return p.voto; }).join(",");
+    if (R.mostrato !== chiave) {
+      R.mostrato = chiave;
+      ST.fermaTimer(S); ST.vuota(S.sch);
+      var box = el("div", { class: "pt-voto" }, [
+        el("div", { class: "pt-titolo", text: "🗳️ Che categoria?" }),
+        el("div", { class: "pt-sotto", text: cb.locale ? "Toccatene una per iniziare" : "Vota: si gioca la più votata" })
+      ]);
+      vm.cats.forEach(function (cat, i) {
+        var voti = vm.players.filter(function (p) { return p.voto === i; }).length, scelto = mio && mio.voto === i;
+        box.appendChild(el("button", { class: "pt-catbtn" + (scelto ? " scelta" : ""), onclick: function () { swishP(); if (cb.locale) cb.onScegliCat(i); else cb.onVota(i); } }, [
+          el("span", { text: cat }), cb.locale ? null : el("small", { text: voti === 1 ? "1 voto" : voti + " voti" })
         ]));
       });
-      sf._contenuto.appendChild(ol);
-      if (cb.sonoHost) {
-        sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
-        sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Chiudi", onclick: cb.onEsci }));
-      } else sf._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa dell'host per un'altra partita…" }));
-      return t.mostra(sf);
+      S.sch.appendChild(box);
     }
+    if (R.inq !== "schermo") { R.inq = "schermo"; ST.suSchermo(S, 900); }
+    if (!cb.locale && cb.sonoHost) ST.barra(S, [ el("button", { class: "btn btn-primario", text: "Via! ▶", onclick: function () { ST.viaBarra(S); cb.onVia(); } }) ]);
+    else if (!cb.locale) ST.barra(S, [ el("p", { class: "tl-attesa", text: "Vota pure: parte quando l'host dà il via" }) ]);
+    else ST.viaBarra(S);
+  }
+  // la categoria esce dal maxischermo, poi la telecamera si allarga e la bomba vola sul primo
+  async function rivelaCategoria(R) {
+    var S = R.S, el = R.t.el, vm = R.vm;
+    ST.viaBarra(S); ST.tocca(S, []); nascondiBomba(R);
+    if (R.inq !== "schermo") { R.inq = "schermo"; await ST.suSchermo(S, 600); }
+    ST.fermaTimer(S); ST.vuota(S.sch);
+    var riv = el("div", { class: "pt-rivela" }, [ el("div", { class: "pt-titolo", text: "La categoria è…" }) ]);
+    S.sch.appendChild(riv);
+    ST.FX.rullo(1.1);
+    await ST.dorme(1250);
+    riv.appendChild(el("div", { class: "pt-catgrande", text: vm.categoria || "" }));
+    ST.FX.applauso();
+    await ST.dorme(1000);
+    schermoPatata(R);
+    R.inq = "largo"; await ST.largo(S, 800);
+    await arrivaBomba(R, true);
+  }
+  async function nuovoRound(R) {
+    var S = R.S;
+    schermoPatata(R);
+    if (R.inq !== "largo") { R.inq = "largo"; await ST.largo(S, 600); }
+    await arrivaBomba(R, false);
+  }
+  async function arrivaBomba(R, dalloSchermo) {
+    var S = R.S, vm = R.vm, i = idxP(vm, vm.holder); if (i < 0) return;
+    var p = vm.players[i];
+    ST.accendiSolo(S, i); ST.faccia(S, i, "paura");
+    var da = dalloSchermo ? { x: S.R.schermo.x + S.R.schermo.w / 2, y: S.R.schermo.y + S.R.schermo.h * 0.45 } : { x: ST.sopraTesta(S, i).x, y: -80 };
+    await voloBomba(R, da, puntoBomba(R, i), 650);
+    R.holder = vm.holder;
+    ST.terzo(S, i, "💣 Ha la bomba " + p.nome, "Di' una parola e passala!", "💣");
+    setTimeout(function () { if (R.vm.holder === p.id) ST.viaTerzo(S); }, 1600);
+    avviaCronometro(R);
+    aggiornaGioco(R);
+  }
+  async function esplosione(R) {
+    var S = R.S, vm = R.vm, i = idxP(vm, vm.boom.id), el = R.t.el;
+    stopTimers(); ST.tocca(S, []); ST.viaBarra(S);
+    boomP(); ST.lampo(S); ST.scossa(S);
+    var dove = puntoBomba(R, i); nascondiBomba(R);
+    var b = el("div", { class: "pt-boom" }, [ el("i"), el("i"), el("i"), el("i"), el("i"), el("i"), el("span", { text: "💥" }) ]);
+    b.style.left = dove.x + "px"; b.style.top = dove.y + "px";
+    S.mondo.appendChild(b); setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 1800);
+    ST.fermaTimer(S); ST.vuota(S.sch);
+    S.sch.appendChild(el("div", { class: "pt-sch" }, [ el("div", { class: "pt-boomtxt", text: "💥 BOOM!" }), el("div", { class: "pt-chi" }, [ el("b", { text: vm.boom.nome }), el("span", { text: " è fuori!" }) ]) ]));
+    R.inq = "leggio"; await ST.suLeggio(S, i, 450);
+    ST.faccia(S, i, "esploso"); ST.fuori(S, i, true); ST.testoLeggio(S, i, "💀 OUT", true); ST.accendiSolo(S, -1);
+    ST.pubblico(S, "ohh");
+    ST.terzo(S, i, "💥 BOOM! " + vm.boom.nome, "è eliminato!", "💥");
+    await ST.dorme(1500); ST.viaTerzo(S);
+    R.inq = "largo"; await ST.largo(S, 700);
+    R.holder = null;
+  }
 
-    // ---- GIOCO / ESPLOSIONE ----
-    var esplo = (vm.fase === "esplosione");
-    var holderP = null; vm.players.forEach(function (p) { if (p.id === vm.holder) holderP = p; });
-    var s3 = t.schermata({ icona: "💣", titolo: vm.categoria || "Patata Bollente", sotto: esplo ? "💥 BOOM!" : "Di' una parola e passa la bomba",
-      indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
-
-    // messaggio in alto
-    if (esplo && vm.boom) {
-      s3._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;font-size:1.1rem;color:#ff8787;font-weight:700", text: "💥 " + vm.boom.nome + " è ESPLOSO! Eliminato." }));
-    } else if (puoi && vm.soloDare) {
-      var chiRi = null; vm.players.forEach(function (p) { if (p.id === vm.soloDare) chiRi = p; });
-      s3._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;color:#ffd8a8;font-weight:700", html: "Te l'hanno rimandata: di' la parola e <b>ridàlla a " + (chiRi ? chiRi.nome : "chi te l'ha rimandata") + "</b> 👇" }));
-    } else if (puoi) {
-      s3._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", html: cb.locale ? ("Ha la bomba <b>" + (holderP ? holderP.nome : "") + "</b>: di' la parola, poi <b>tocca la testa</b> di chi la riceve 👇") : "Tocca a TE! Di' la parola a voce, poi <b>tocca la testa</b> (il pallino) di chi la riceve 👇" }));
-    } else {
-      s3._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Ha la bomba: " + (holderP ? holderP.nome : "") }));
+  // ---- durante il gioco: bomba, chi si può toccare, display dei leggii ----
+  function aggiornaGioco(R) {
+    var S = R.S, vm = R.vm, cb = R.cb, el = R.t.el;
+    if (vm.fase !== "gioco") return;
+    var hi = idxP(vm, vm.holder), inAttesa = Date.now() < R.vmTs + (vm.attesaMs || 0);
+    if (R.holder && R.holder !== vm.holder && hi >= 0) {   // la bomba è passata: vola da un leggio all'altro
+      var da = idxP(vm, R.holder);
+      if (da >= 0) { ST.faccia(S, da, vm.players[da].eliminato ? "esploso" : null); voloBomba(R, puntoBomba(R, da), puntoBomba(R, hi), 420); }
+      else posaBomba(R, hi);
+      ST.accendiSolo(S, hi); ST.faccia(S, hi, "paura");
+      if (R.chiEl) R.chiEl.textContent = vm.players[hi].nome;
     }
-    if (!esplo) s3._contenuto.appendChild(el("p", { style: "text-align:center;margin:0 0 4px;font-size:.8rem;opacity:.7", text: "Chi riceve fa ripartire il timer · ora riparte da " + (vm.cap / 1000) + "s" }));
-
-    // cerchio
-    var BOX = 300, R = 116, cx = BOX / 2, cy = BOX / 2;
-    var cerchio = el("div", { style: "position:relative;width:" + BOX + "px;max-width:92vw;aspect-ratio:1/1;margin:6px auto 2px" });
-    var n = vm.players.length;
-    var centro = el("div", { style: "position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;z-index:1" }, [
-      el("div", { style: "font-size:2.4rem" , text: "💣" }),
-      el("div", { class: "sg-count", style: "font-size:1.8rem;font-weight:800;line-height:1", text: (vm.remaining / 1000).toFixed(1) })
-    ]);
-    cerchio.appendChild(centro);
+    if (hi >= 0 && !R.holder) posaBomba(R, hi);
+    R.holder = vm.holder;
     vm.players.forEach(function (p, i) {
-      var ang = (i / n) * 2 * Math.PI - Math.PI / 2;
-      var x = 50 + (R / cx) * 50 * Math.cos(ang), y = 50 + (R / cy) * 50 * Math.sin(ang);
-      var isHolder = (p.id === vm.holder);
-      var passabile = puoi && !esplo && !p.eliminato && !isHolder && (vm.soloDare != null ? (p.id === vm.soloDare) : vm.giro.indexOf(p.id) < 0);
-      var nodo = el(passabile ? "button" : "div", { style: "position:absolute;left:" + x + "%;top:" + y + "%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;width:72px;background:none;border:0;padding:4px 0;" + (passabile ? "cursor:pointer" : "cursor:default"),
-        onclick: passabile ? function () { cb.onPassa(p.id); } : null });
-      nodo.appendChild(el("div", { style: "font-size:.72rem;font-weight:700;max-width:72px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:" + (p.eliminato ? "rgba(255,255,255,.35)" : p.colore) + (isHolder ? ";text-shadow:0 0 6px rgba(255,120,60,.9)" : ""), text: (p.id === myId ? "▸ " : "") + p.nome }));
-      var dotCls = (isHolder && !esplo) ? "sg-bomba" : (passabile ? "sg-tocca" : ((esplo && vm.boom && vm.boom.id === p.id) ? "sg-scoppio" : ""));
-      var lato = passabile ? 40 : 34;
-      var dot = el("div", { class: dotCls, style: "width:" + lato + "px;height:" + lato + "px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;background:" + p.colore + ";border:2px solid rgba(255,255,255,.9);" + (p.eliminato ? "filter:grayscale(1);opacity:.4" : ""),
-        text: p.eliminato ? "💀" : (esplo && vm.boom && vm.boom.id === p.id ? "💥" : (isHolder ? "💣" : "")) });
-      nodo.appendChild(dot);
-      if (p.eliminato) nodo.appendChild(el("div", { style: "font-size:.62rem;font-weight:700;color:rgba(255,255,255,.3)", text: "out" }));
-      cerchio.appendChild(nodo);
+      if (p.eliminato) { ST.fuori(S, i, true); ST.testoLeggio(S, i, "💀 OUT", true); }
+      else if (i !== hi) ST.testoLeggio(S, i, "IN GARA");
     });
-    s3._contenuto.appendChild(cerchio);
-
-    // pulsante "rimanda indietro" (se l'altro non ha detto la parola giusta)
-    if (puoi && !esplo && vm.prev) {
-      var prevP = null; vm.players.forEach(function (p) { if (p.id === vm.prev) prevP = p; });
-      if (prevP && !prevP.eliminato) s3._piede.appendChild(el("button", { style: "width:100%;padding:12px;border-radius:12px;border:2px solid #ffa94d;background:rgba(255,169,77,.15);color:#ffd8a8;font-weight:700;cursor:pointer", html: "🆘 SOLO se " + prevP.nome + " non ha detto la parola: <b>rimandagliela</b>", onclick: cb.onIndietro }));
+    // chi si può toccare (solo chi ha la bomba: in locale tutti, online il suo telefono)
+    var puoi = (cb.locale || vm.holder === cb.myId) && !inAttesa, lista = [];
+    if (puoi) vm.players.forEach(function (p, i) {
+      if (p.eliminato || i === hi) return;
+      if (vm.soloDare != null ? p.id === vm.soloDare : vm.giro.indexOf(p.id) < 0) lista.push(i);
+    });
+    ST.tocca(S, lista);
+    // la barra sotto: rimanda indietro / suggerimento
+    var prevP = null; vm.players.forEach(function (p) { if (p.id === vm.prev) prevP = p; });
+    var chiave = "b|" + vm.holder + "|" + (puoi ? 1 : 0) + "|" + (prevP && !prevP.eliminato ? prevP.id : "") + "|" + (vm.soloDare || "");
+    if (R.barraK !== chiave) {
+      R.barraK = chiave;
+      var nodi = [];
+      if (puoi && vm.soloDare) { var chiRi = null; vm.players.forEach(function (p) { if (p.id === vm.soloDare) chiRi = p; }); nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Te l'hanno rimandata: di' la parola e ridàlla a " + (chiRi ? chiRi.nome : "chi te l'ha rimandata") + " 👇" })); }
+      else if (puoi) nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Di' una parola su «" + vm.categoria + "» e tocca chi la riceve 👇" }));
+      else if (!cb.locale && hi >= 0) nodi.push(el("p", { class: "tl-attesa pt-hint", text: "💣 Ce l'ha " + vm.players[hi].nome + "… occhio che può toccare a te!" }));
+      if (puoi && prevP && !prevP.eliminato) nodi.push(el("button", { class: "pt-indietro", html: "🆘 SOLO se " + prevP.nome + " non ha detto la parola: <b>rimandagliela</b>", onclick: function () { swishP(); cb.onIndietro(); } }));
+      if (nodi.length) ST.barra(S, nodi); else ST.viaBarra(S);
     }
+    if (R.inq !== "largo" && R.inq !== "leggio") { R.inq = "largo"; ST.largo(S, 700); }
+    if (!dispTimer) avviaCronometro(R);
+  }
+  // countdown sul maxischermo e sul leggio di chi ha la bomba, ticchettio che accelera
+  function avviaCronometro(R) {
+    stopTimers();
+    var S = R.S;
+    dispTimer = setInterval(function () {
+      if (!S.vivo() || R.vm.fase !== "gioco") { stopTimers(); return; }
+      var r = Math.max(0, R.cb.getRemaining()), hi = idxP(R.vm, R.vm.holder), txt = (r / 1000).toFixed(1);
+      if (R.contoEl) { R.contoEl.textContent = txt; R.contoEl.classList.toggle("poco", r < 3000); }
+      if (hi >= 0) ST.testoLeggio(S, hi, "💣 " + txt, r < 3000);
+      if (R.bomba) R.bomba.classList.toggle("corri", r < 3000);
+      if (hi >= 0 && Date.now() >= R.vmTs + (R.vm.attesaMs || 0) && !R.toccaAttivo) { R.toccaAttivo = true; aggiornaGioco(R); }
+    }, 100);
+    R.toccaAttivo = Date.now() >= R.vmTs + (R.vm.attesaMs || 0);
+    (function loopSuono() {
+      if (!S.vivo() || R.vm.fase !== "gioco") { tickTimer = null; return; }
+      var r = R.cb.getRemaining(), inAttesa = Date.now() < R.vmTs + (R.vm.attesaMs || 0);
+      if (r > 0 && !inAttesa) tickP(560 + (1 - Math.min(1, r / 15000)) * 620);
+      tickTimer = setTimeout(loopSuono, Math.max(85, Math.min(620, r / 12)));
+    })();
+  }
 
-    t.mostra(s3);
+  // ---- la bomba (sopra la testa di chi la tiene) ----
+  function creaBomba(S) {
+    var b = document.createElement("div"); b.className = "pt-bomba";
+    b.innerHTML = "<div class='pt-bomba-in'><span class='pt-em'>💣</span><i class='pt-miccia'></i></div>";
+    S.mondo.appendChild(b);
+    return b;
+  }
+  function misuraBomba(R) { var p = R.S.posti[0]; return Math.round((p ? p.w : 120) * 0.5); }
+  function puntoBomba(R, i) { var q = ST.sopraTesta(R.S, i), d = misuraBomba(R); return { x: q.x, y: q.y - d * 0.45 }; }
+  function trasfBomba(R, p, giro) { var d = misuraBomba(R); return "translate(" + (p.x - d / 2).toFixed(1) + "px," + (p.y - d / 2).toFixed(1) + "px) rotate(" + (giro || 0) + "deg)"; }
+  function posaBomba(R, i) {
+    var b = R.bomba, d = misuraBomba(R); if (!b || i < 0) return;
+    b.style.width = b.style.height = d + "px"; b.style.fontSize = (d * 0.8) + "px";
+    b.style.transform = trasfBomba(R, puntoBomba(R, i)); b.style.opacity = 1;
+  }
+  function voloBomba(R, da, a, ms) {
+    var b = R.bomba, d = misuraBomba(R); if (!b) return Promise.resolve();
+    b.style.width = b.style.height = d + "px"; b.style.fontSize = (d * 0.8) + "px"; b.style.opacity = 1;
+    var mezzo = { x: (da.x + a.x) / 2, y: Math.min(da.y, a.y) - R.S.VH * 0.22 };   // parabola
+    var fine = trasfBomba(R, a);
+    b.style.transform = fine;
+    try { b.animate([{ transform: trasfBomba(R, da) }, { transform: trasfBomba(R, mezzo, 200) }, { transform: trasfBomba(R, a, 360) }], { duration: ms, easing: "cubic-bezier(.3,.1,.3,1)" }); } catch (e) {}
+    return ST.dorme(ms);
+  }
+  function nascondiBomba(R) { if (R.bomba) R.bomba.style.opacity = 0; R.holder = null; }
 
-    // countdown + suono, solo in gioco
-    var num = centro.querySelector(".sg-count");
-    if (!esplo && vm.fase === "gioco") {
-      dispTimer = setInterval(function () {
-        if (!document.body.contains(num)) { stopTimers(); return; }
-        var r = Math.max(0, cb.getRemaining());
-        num.textContent = (r / 1000).toFixed(1);
-      }, 100);
-      (function loopSuono() {
-        if (!document.body.contains(num)) { tickTimer = null; return; }
-        var r = cb.getRemaining();
-        if (r > 0) tickP(560 + (1 - Math.min(1, r / 15000)) * 620);
-        var iv = Math.max(85, Math.min(620, r / 12));
-        tickTimer = setTimeout(loopSuono, iv);
-      })();
-    } else if (esplo) {
-      if (vm.boom && vm.boom.id !== ultimoBoom) { ultimoBoom = vm.boom.id; boomP(); }
+  // ---- lobby (online) ----
+  function disegnaLobbyP(t, vm, cb) {
+    var el = t.el, myId = cb.myId;
+    var s = t.schermata({ icona: "💣", titolo: "La Patata Bollente · Lobby", sotto: "Ognuno dal suo telefono",
+      indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
+    if (cb.sonoHost) {
+      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
+      s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
+      if (vm.codice && vm.codice !== "…") {
+        var link = SG.creaLink({ gioco: "patata", stanza: vm.codice });
+        var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
+        s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
+          onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
+        s._contenuto.appendChild(campo);
+      }
+      s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
+        text: vm.pronta ? "🟢 Stanza pronta — manda il codice agli amici" : "🟡 Sto aprendo la stanza… (attendi il verde)" }));
     }
+    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Chi c'è (" + vm.players.length + ")" }));
+    vm.players.forEach(function (p) {
+      s._contenuto.appendChild(el("div", { class: "pt-lobby" }, [
+        el("span", { class: "fac", html: ST.avatarDi(p) }),
+        el("span", { style: "flex:1", text: p.nome + (p.id === myId ? " (tu)" : "") })
+      ]));
+    });
+    if (cb.sonoHost) {
+      s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Categorie tue (facoltative)" }));
+      var inpCat = el("input", { class: "link-campo", type: "text", maxlength: "40", placeholder: "Scrivi una categoria…" });
+      function aggiungiCat() { if (inpCat.value.trim()) { cb.onAggiungiCat(inpCat.value); inpCat.value = ""; } }
+      inpCat.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); aggiungiCat(); } });
+      s._contenuto.appendChild(inpCat);
+      s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", style: "margin-top:6px", text: "＋ Aggiungi categoria", onclick: aggiungiCat }));
+      (vm.customCats || []).forEach(function (c, i) {
+        s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;margin-top:6px;background:rgba(255,255,255,.06)" }, [
+          el("span", { style: "flex:1", text: "📝 " + c }),
+          el("button", { class: "togli", text: "×", onclick: function () { cb.onTogliCat(i); } })
+        ]));
+      });
+      if ((vm.customCats || []).length) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Si giocheranno queste (se sono meno di 3, si completa con categorie a caso)." }));
+      var ok = vm.players.length >= 2;
+      var b = el("button", { class: "btn btn-primario", text: "Continua ▶", onclick: cb.onContinua });
+      if (!ok) b.setAttribute("disabled", "disabled");
+      s._piede.appendChild(b);
+      if (!ok) s._piede.appendChild(el("p", { class: "modulo-nota", text: "Servono almeno 2 giocatori (aspetta che entrino)." }));
+    } else s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci…" }));
+    t.mostra(s);
+  }
+
+  // ---- classifica finale (dopo il finale nello studio) ----
+  function schermataFineP(t, vm, cb) {
+    var el = t.el;
+    var sf = t.schermata({ icona: "🏆", titolo: "Vince " + (vm.vincitore ? vm.vincitore.nome : "") + "!", sotto: "La Patata Bollente" });
+    var cl = vm.classifica || [];
+    var podio = el("div", { class: "pt-podio" });
+    [1, 0, 2].forEach(function (k) {
+      var p = cl[k]; if (!p) return;
+      podio.appendChild(el("div", { class: "pt-gradino p" + (k + 1) }, [
+        el("div", { class: "fac", html: ST.avatarDi(p, k === 0 ? "esulta" : null) }),
+        el("div", { class: "nm", text: p.nome }),
+        el("div", { class: "blocco", text: ["🏆", "🥈", "🥉"][k] })
+      ]));
+    });
+    sf._contenuto.appendChild(podio);
+    var box = el("div", { style: "display:flex;flex-direction:column;gap:6px" });
+    cl.forEach(function (p, i) {
+      box.appendChild(el("div", { class: "pt-riga" + (i === 0 ? " primo" : "") }, [
+        el("span", { class: "pos", text: (i + 1) + "°" }),
+        el("span", { class: "fac", html: ST.avatarDi(p, i === cl.length - 1 && cl.length > 1 ? "esploso" : null) }),
+        el("span", { class: "nm", text: p.nome }),
+        el("span", { class: "et", text: i === 0 ? "🏆 vincitore" : (i === cl.length - 1 ? "💥 primo esploso" : "") })
+      ]));
+    });
+    sf._contenuto.appendChild(box);
+    if (cb.sonoHost) {
+      sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
+      sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Chiudi", onclick: cb.onEsci }));
+    } else sf._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa dell'host per un'altra partita…" }));
+    t.mostra(sf);
   }
 })();
 
@@ -24380,9 +25430,6 @@ window.SG_SIPERO = {
     ".tl-voti .av svg{width:100%;height:100%;display:block}",
     ".tl-voti .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
     ".tl-voti .d{font-size:1rem;font-weight:900}",
-    ".tl-coriandoli{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}",
-    ".tl-coriandoli i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;animation:tlCade 2.4s cubic-bezier(.2,.6,.4,1) forwards}",
-    "@keyframes tlCade{to{transform:translate(var(--dx),110vh) rotate(var(--r));opacity:.9}}",
     // voto e attesa
     ".tl-vota{display:flex;gap:12px;}",
     ".tl-vota .btn{flex:1;font-size:1.15rem;min-height:60px}",
@@ -24438,51 +25485,18 @@ window.SG_SIPERO = {
     voto: function () { beep([520], 0.1, "square"); vibra(30); },
     tic: function () { beep([1200], 0.05, "sine"); },
     vittoria: function () { beep([660, 880, 1046, 1318], 0.22, "triangle"); vibra([120, 60, 120, 60, 200]); },
-    // applauso del pubblico: tanti battiti di mani (rumore filtrato) sparsi in un secondo e mezzo
-    applauso: function () {
-      var c = ctx(); if (!c) return;
-      try {
-        var buf = rumore(c, 0.05);
-        for (var i = 0; i < 48; i++) {
-          var t0 = c.currentTime + Math.random() * 1.6, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
-          s.buffer = buf; f.type = "bandpass"; f.frequency.value = 900 + Math.random() * 1700; f.Q.value = 1.3;
-          g.gain.setValueAtTime((0.05 + Math.random() * 0.08) * (1 - (t0 - c.currentTime) / 2.2), t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05);
-          s.connect(f); f.connect(g); g.connect(c.destination); s.start(t0); s.stop(t0 + 0.06);
-        }
-      } catch (e) {}
-    },
-    // "ohhh" deluso del pubblico: due voci che scendono
-    ohh: function () {
-      var c = ctx(); if (!c) return;
-      try {
-        [0, 7].forEach(function (d) {
-          var t0 = c.currentTime, o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
-          o.type = "sawtooth"; o.frequency.setValueAtTime(250 + d, t0); o.frequency.exponentialRampToValueAtTime(170 + d, t0 + 0.9);
-          f.type = "lowpass"; f.frequency.value = 650;
-          g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.07, t0 + 0.15); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1);
-          o.connect(f); f.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + 1.05);
-        });
-      } catch (e) {}
-    },
-    // rullo di tamburo prima della rivelazione
-    rullo: function (dur) {
-      var c = ctx(); if (!c) return;
-      try {
-        var buf = rumore(c, 0.04); dur = dur || 1.1;
-        for (var x = 0; x < dur; x += 0.045) {
-          var t0 = c.currentTime + x, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
-          s.buffer = buf; f.type = "lowpass"; f.frequency.value = 520;
-          g.gain.setValueAtTime(0.05 + 0.2 * (x / dur), t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.04);
-          s.connect(f); f.connect(g); g.connect(c.destination); s.start(t0); s.stop(t0 + 0.045);
-        }
-      } catch (e) {}
-    }
   };
-  function rumore(c, dur) {
-    var n = Math.floor(c.sampleRate * dur), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
-    for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
-    return b;
-  }
+
+  // lo studio del game show è condiviso con gli altri giochi (js/studio.js)
+  var ST = window.SGStudio;
+  var creaStudio = ST.crea, camera = ST.camera, suSchermo = ST.suSchermo, largo = ST.largo, suLeggio = ST.suLeggio, panFila = ST.panFila,
+    terzo = ST.terzo, viaTerzo = ST.viaTerzo, barra = ST.barra, viaBarra = ST.viaBarra, aspettaTasto = ST.aspettaTasto, lampo = ST.lampo,
+    accendiSolo = ST.accendiSolo, faccia = ST.faccia, tutteNormali = ST.tutteNormali, puntiLeggio = ST.puntiLeggio,
+    cartello = ST.cartello, cartelliGiu = ST.cartelliGiu, pubblico = ST.pubblico, fermaTimer = ST.fermaTimer,
+    apertura = ST.apertura, stacco = ST.stacco, avatarDi = ST.avatarDi, mioAvatar = ST.mioAvatar, avatarValido = ST.avatarValido,
+    coriandoli = ST.coriandoli, dorme = ST.dorme, vuota = ST.vuota, durataApertura = ST.durataApertura, STACCO = ST.STACCO;
+  FX.applauso = ST.FX.applauso; FX.ohh = ST.FX.ohh; FX.rullo = ST.FX.rullo;
+  var OPZ_STUDIO = { titolo: "La linea del tempo", logo: ["LA LINEA", "DEL TEMPO"] };
 
   function ordina(linea) { linea.sort(function (a, b) { return a.anno - b.anno; }); }
   function pescaDati(imp) {
@@ -24552,24 +25566,6 @@ window.SG_SIPERO = {
     return c ? { icona: c.icona || "📜", nome: c.nome } : { icona: "📜", nome: "Avvenimento" };
   }
   function stileCat(id) { var c = colCat(id); return "--c1:" + c[0] + ";--c2:" + c[1]; }
-  function mioAvatar(nome) {
-    var p = window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo();
-    if (p && p.omino) return p.omino;
-    return window.SGOmino ? SGOmino.casuale(nome || "io") : null;
-  }
-  function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
-  var cacheAv = {};
-  var FACCE = { esulta: { occhi: "felici", sopracc: "alzate", bocca: "sorrisone" }, triste: { occhi: "dolci", sopracc: "preoccupate", bocca: "smorfia" } };
-  // l'avatar di un giocatore: quello che ha mandato (online), il mio profilo se è il mio nome, sennò uno fisso dal nome
-  function avatarDi(g, faccia) {
-    if (!window.SGOmino || !g) return "";
-    var cfg = avatarValido(g.omino);
-    if (!cfg) { var p = window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo(); cfg = (p && p.omino && p.nome === g.nome) ? p.omino : SGOmino.casuale(g.nome || "?"); }
-    if (faccia && FACCE[faccia]) { var c2 = {}, n; for (n in cfg) c2[n] = cfg[n]; for (n in FACCE[faccia]) c2[n] = FACCE[faccia][n]; cfg = c2; }
-    var k = JSON.stringify(cfg);
-    if (!cacheAv[k]) { try { cacheAv[k] = SGOmino.svg(cfg, { busto: true }); } catch (e) { cacheAv[k] = ""; } }
-    return cacheAv[k];
-  }
 
   // ---- Memoria tra un ridisegno e l'altro (online si ridisegna a ogni novità) ----
   // così la linea non torna in cima e il punto scelto resta scelto
@@ -24688,21 +25684,6 @@ window.SG_SIPERO = {
     if (es.giusto) setTimeout(coriandoli, 1250);
     return box;
   }
-  function coriandoli() {
-    var c = document.createElement("div"); c.className = "tl-coriandoli";
-    var col = ["#ffd43b", "#37d47e", "#4dabf7", "#ff6b6b", "#cc5de8", "#fff"];
-    for (var i = 0; i < 40; i++) {
-      var p = document.createElement("i");
-      p.style.left = (Math.random() * 100) + "%";
-      p.style.background = col[i % col.length];
-      p.style.setProperty("--dx", (Math.random() * 120 - 60) + "px");
-      p.style.setProperty("--r", (Math.random() * 720 - 360) + "deg");
-      p.style.animationDelay = (Math.random() * 0.4) + "s";
-      c.appendChild(p);
-    }
-    document.body.appendChild(c);
-    setTimeout(function () { if (c.parentNode) c.parentNode.removeChild(c); }, 3200);
-  }
 
   // Schermata finale: podio con gli avatar, poi tutti in fila (usata da entrambe le modalità)
   function schermataFine(t, classifica, rigioca) {
@@ -24744,598 +25725,6 @@ window.SG_SIPERO = {
   }
 
 
-  // =========================================================
-  //  LO STUDIO DEL GAME SHOW
-  //  Un "mondo" grande (studio, pubblico, maxischermo, leggii) e una
-  //  telecamera che lo inquadra (transform). Si gioca sul maxischermo;
-  //  nei momenti morti la telecamera torna ai concorrenti. Niente si salta.
-  // =========================================================
-  var STACCO = 2600;   // ms di stacco su chi gioca prima che parta il suo tempo (online l'host lo aggiunge al timer)
-  function durataApertura(n) { return 7500 + (n <= 4 ? 1550 * n : 6800); }
-  var ST_COL = ["#ffd43b", "#4dabf7", "#ff6b6b", "#51cf66", "#cc5de8", "#ff922b", "#20c997", "#f783ac", "#a9e34b", "#74c0fc"];
-  function dorme(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-  function vuota(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
-
-  // Telefoni meno potenti: niente fari che girano e immagini dello studio più leggere
-  var LEGGERO = !!((navigator.deviceMemory && navigator.deviceMemory <= 3) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 3));
-
-  function assicuraStileStudio() {
-    if (document.getElementById("sg-studio-css")) return;
-    var st = document.createElement("style"); st.id = "sg-studio-css";
-    // Regola d'oro per non far laggare: le animazioni muovono SOLO transform e opacity su pezzi piccoli.
-    // Tutto quello che sta fermo (sfondo, arco, pubblico, pavimento, cornice) è disegnato una volta sola su canvas.
-    st.textContent = [
-      ".schermata.st-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#07041a;animation:none}",
-      ".schermata.st-piena>.testa,.schermata.st-piena>.piede{display:none}",
-      ".schermata.st-piena>.contenuto{height:100%;margin:0;padding:0}",
-      ".st-vista{position:relative;width:100%;max-width:520px;margin:0 auto;height:var(--alt,100dvh);overflow:hidden;background:#07041a;user-select:none;-webkit-user-select:none}",
-      ".st-mondo{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}",
-      ".st-mondo>*{position:absolute}",
-      ".st-quieto .st-anim,.st-quieto .st-anim *{animation-play-state:paused!important}",
-      ".st-quieto .st-leggio .luce,.st-quieto .st-leggio .pozza{opacity:0!important}",
-      ".st-tela{left:0;top:0}",
-      // fari che girano (solo rotazione)
-      ".st-fascio{transform-origin:50% 0;opacity:.5;clip-path:polygon(46% 0,54% 0,100% 100%,0 100%);will-change:transform;animation:stFascio 6s ease-in-out infinite alternate}",
-      "@keyframes stFascio{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}",
-      // barre delle torri LED (solo scala verticale)
-      ".st-eq{overflow:hidden;border-radius:14px}",
-      ".st-eq i{position:absolute;bottom:0;height:88%;width:11%;border-radius:4px 4px 0 0;background:linear-gradient(#fff3a8,#ffb300 40%,#ff3ea5 75%,#7b2cff);transform-origin:50% 100%;will-change:transform;animation:stEq 1s ease-in-out infinite alternate}",
-      "@keyframes stEq{from{transform:scaleY(.16)}to{transform:scaleY(1)}}",
-      // lampadine della cornice: due disegni che si alternano (solo opacità)
-      ".st-lampade{will-change:opacity;animation:stLampade .9s linear infinite}",
-      "@keyframes stLampade{0%,49%{opacity:1}51%,100%{opacity:0}}",
-      // pubblico (canvas) che salta quando applaude, con lucine dei telefoni e flash
-      ".st-pubwrap{left:0}",
-      ".st-pubwrap>*,.st-pubdeco>*{position:absolute}",
-      ".st-pubdeco{left:0;top:0;width:100%;height:100%;pointer-events:none}",
-      // il pubblico è fatto a file (canvas): ogni fila ondeggia per conto suo, quando applaude saltano
-      ".st-fila{left:0;will-change:transform;animation:stOnda var(--dur,2s) ease-in-out var(--rit,0s) infinite}",
-      "@keyframes stOnda{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}",
-      ".st-pubwrap.salta .st-fila{animation:stSaltaFila .24s ease-in-out var(--rit,0s) infinite alternate}",
-      "@keyframes stSaltaFila{from{transform:translateY(0)}to{transform:translateY(-7px)}}",
-      // bastoncini luminosi e cartelli che sventolano, occhi di bue colorati che passano sulla folla
-      ".st-bastone{width:5px;height:22px;margin:-22px 0 0 -2.5px;border-radius:3px;background:linear-gradient(#fff,var(--c) 30%);box-shadow:0 0 8px 2px var(--c);transform-origin:50% 100%;will-change:transform;animation:stSventola var(--dur,1.4s) ease-in-out var(--rit,0s) infinite alternate}",
-      ".st-cartellone{margin:-34px 0 0 -22px;width:44px;transform-origin:50% 100%;will-change:transform;animation:stSventolaPoco var(--dur,1.8s) ease-in-out var(--rit,0s) infinite alternate}",
-      ".st-cartellone b{display:block;background:#fff;color:#2a1d6e;border-radius:4px;font:900 9px/1.1 system-ui,sans-serif;text-align:center;padding:4px 2px;box-shadow:0 2px 6px rgba(0,0,0,.4)}",
-      ".st-cartellone:after{content:'';display:block;width:3px;height:12px;margin:0 auto;background:#c9a46a}",
-      "@keyframes stSventola{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}",
-      "@keyframes stSventolaPoco{from{transform:rotate(-9deg) translateY(0)}to{transform:rotate(9deg) translateY(-4px)}}",
-      ".st-occhio{border-radius:50%;opacity:.5;will-change:transform;animation:stGiro var(--dur,8s) ease-in-out var(--rit,0s) infinite}",
-      "@keyframes stGiro{0%,100%{transform:translate(0,0)}33%{transform:translate(var(--dx),var(--dy))}66%{transform:translate(calc(var(--dx) * .35),calc(var(--dy) * -.7))}}",
-      ".st-ringhiera{height:5px;border-radius:3px;background:linear-gradient(90deg,transparent,#ffd43b,transparent);box-shadow:0 0 10px rgba(255,212,59,.6)}",
-      ".st-lucina{width:6px;height:6px;margin:-3px;border-radius:50%;background:#e8fbff;box-shadow:0 0 8px 3px rgba(160,240,255,.8);will-change:opacity;animation:stLuccica 2.4s ease-in-out infinite}",
-      "@keyframes stLuccica{0%,100%{opacity:.15}50%{opacity:1}}",
-      ".st-flash{width:26px;height:26px;margin:-13px;border-radius:50%;background:radial-gradient(circle,#fff 0 30%,rgba(255,255,255,0) 70%);opacity:0}",
-      ".st-flash.on{animation:stFlash .5s ease-out}",
-      "@keyframes stFlash{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(2.4)}100%{opacity:0;transform:scale(1)}}",
-      ".st-fumetto{font-weight:900;font-size:36px;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.4);opacity:0;white-space:nowrap;transform:translate(-50%,0);pointer-events:none;z-index:5}",
-      ".st-fumetto.on{animation:stFum 1.8s ease-out}",
-      "@keyframes stFum{0%{opacity:0;transform:translate(-50%,20px) scale(.6)}15%{opacity:1;transform:translate(-50%,0) scale(1.1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-30px)}}",
-      // maxischermo
-      ".st-schermo{border-radius:14px;overflow:hidden;box-shadow:0 0 0 5px #120a38;background:radial-gradient(130% 55% at 50% 0%,#2d44a8 0%,#18225a 50%,#0b1030 100%)}",
-      ".st-sch-in{position:absolute;inset:0;display:flex;flex-direction:column;padding:calc(8px + env(safe-area-inset-top)) 12px 10px}",
-      ".st-vista.con-barra .st-sch-in{padding-bottom:104px}",
-      ".st-sch-in .tl-hud{flex:0 0 auto;margin-left:42px;align-items:center}",
-      ".st-sch-in .tl-ev .card{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(255,255,255,.1)}",
-      ".st-vetro{position:absolute;inset:0;pointer-events:none;background:linear-gradient(118deg,rgba(255,255,255,.1),transparent 32%)}",
-      ".st-idle{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px}",
-      ".st-idle .logo{font-size:46px;font-weight:900;line-height:1.03;letter-spacing:.03em;color:#ffd43b;text-shadow:0 4px 0 #a85c00,0 0 22px rgba(255,160,40,.55)}",
-      ".st-idle .stelle{color:#ffe066;letter-spacing:.35em;font-size:24px}",
-      ".st-idle .sotto{font-size:14px;font-weight:800;letter-spacing:.32em;text-transform:uppercase;color:#cdd6ff}",
-      ".st-sch-in .tl-esito{justify-content:center;padding-bottom:40px}",
-      ".st-sch-in .tl-flip{width:min(310px,88%);height:230px}",
-      ".st-raggi{position:absolute;left:50%;top:38%;width:180%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;opacity:0;will-change:transform;",
-        "background:repeating-conic-gradient(rgba(255,230,120,.22) 0 8deg,transparent 8deg 20deg);-webkit-mask:radial-gradient(circle,#000 20%,transparent 65%);mask:radial-gradient(circle,#000 20%,transparent 65%);animation:stRaggi 14s linear infinite,stAppari .6s ease 1.3s forwards}",
-      ".st-raggi.ko{background:repeating-conic-gradient(rgba(255,93,108,.2) 0 8deg,transparent 8deg 20deg)}",
-      "@keyframes stRaggi{to{transform:translate(-50%,-50%) rotate(360deg)}}",
-      "@keyframes stAppari{to{opacity:1}}",
-      // leggii (le postazioni)
-      ".st-leggio{display:flex;flex-direction:column;align-items:center}",
-      ".st-leggio .alone{position:absolute;left:50%;top:0;width:96%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;opacity:.45;",
-        "background:radial-gradient(circle,var(--col) 0,transparent 66%);transition:opacity .4s,transform .4s}",
-      // occhio di bue: il fascio scende fino al pavimento e ci lascia una pozza di luce, e illumina il banco
-      ".st-leggio .luce{position:absolute;left:50%;bottom:-17%;width:172%;height:480%;transform:translateX(-50%);opacity:0;transition:opacity .45s;pointer-events:none;",
-        "background:linear-gradient(to top,rgba(255,246,205,.46),rgba(255,246,205,.2) 40%,rgba(255,246,205,0) 92%);clip-path:polygon(43% 0,57% 0,100% 100%,0 100%)}",
-      ".st-leggio .pozza{position:absolute;z-index:1;left:50%;bottom:-24%;width:180%;height:30%;transform:translateX(-50%);border-radius:50%;opacity:0;transition:opacity .45s;pointer-events:none;",
-        "background:radial-gradient(closest-side,rgba(255,248,215,.85),rgba(255,232,160,.4) 50%,rgba(255,232,160,0))}",
-      ".st-leggio.acceso .pozza{opacity:1}",
-      ".st-leggio .fronte:before{content:'';position:absolute;inset:0;background:linear-gradient(rgba(255,246,205,.3),rgba(255,246,205,.08));opacity:0;transition:opacity .45s;pointer-events:none}",
-      ".st-leggio.acceso .fronte:before{opacity:1}",
-      ".st-leggio .av{position:relative;z-index:2;width:74%;aspect-ratio:178/182}",
-      ".st-leggio .av canvas{width:100%;height:100%;display:block}",
-      ".st-leggio .podio{position:relative;z-index:3;width:100%;margin-top:-.9em}",
-      ".st-leggio .piano{position:relative;height:1.1em;border-radius:.55em .55em .2em .2em;background:linear-gradient(#ffffff,#d8d2ff 35%,#8d84d8 75%,#5a50a8);",
-        "box-shadow:inset 0 .12em 0 #fff,0 .25em .45em rgba(0,0,0,.4)}",
-      ".st-leggio .buzz{position:absolute;right:13%;top:-.5em;width:1.15em;height:.62em;border-radius:1em 1em .2em .2em;background:radial-gradient(circle at 40% 30%,#ffc2c7,#ff2d45 55%,#8a0f1c)}",
-      ".st-leggio .tu{position:absolute;left:10%;top:-.62em;background:linear-gradient(#fff3a8,#ffca3a);color:#241f00;font-weight:900;font-size:.72em;padding:.08em .55em;border-radius:99px}",
-      ".st-leggio .fronte{position:relative;margin:0 5%;padding:.75em .4em .7em;text-align:center;clip-path:polygon(0 0,100% 0,95% 100%,5% 100%);",
-        "background:linear-gradient(90deg,rgba(255,255,255,.14),transparent 22%,transparent 78%,rgba(255,255,255,.1)),linear-gradient(#36268a,#1b1152 55%,#0d0730)}",
-      ".st-leggio .fronte:after{content:'';position:absolute;left:8%;right:8%;top:.22em;height:.34em;",
-        "background:radial-gradient(circle,#fffbe0 0 .09em,var(--col) .15em,transparent .21em) 0 0/.62em .34em}",
-      ".st-leggio .nome{font-weight:900;font-size:1.3em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 .08em 0 rgba(0,0,0,.45)}",
-      ".st-leggio .punti{display:inline-block;margin-top:.3em;min-width:72%;font-family:'Courier New',ui-monospace,monospace;font-weight:900;font-size:1.6em;letter-spacing:.04em;color:#ffe066;",
-        "background:#05030f;border-radius:.3em;padding:.08em .4em;box-shadow:inset 0 0 0 .08em rgba(255,224,102,.3)}",
-      ".st-leggio .punti.neg{color:#ff8d98}",
-      ".st-leggio .led{position:relative;height:.42em;margin:0 9%;border-radius:0 0 .3em .3em;background:var(--col);box-shadow:0 0 .8em var(--col)}",
-      ".st-leggio .led:after{content:'';position:absolute;left:-12%;right:-12%;top:-160%;bottom:-160%;border-radius:50%;background:radial-gradient(closest-side,var(--col),transparent);opacity:0;will-change:opacity}",
-      ".st-leggio.acceso .alone{opacity:1;transform:translateX(-50%) scale(1.12)}",
-      ".st-leggio.acceso .luce{opacity:1}",
-      ".st-leggio.acceso .led:after{animation:stLed .6s ease-in-out infinite alternate}",
-      "@keyframes stLed{from{opacity:.2}to{opacity:.95}}",
-      ".st-leggio .cart{position:absolute;z-index:4;left:50%;top:-44%;width:48%;aspect-ratio:1;perspective:400px;opacity:0;transform:translateX(-50%) translateY(40%) scale(.2);transition:transform .35s cubic-bezier(.3,1.5,.5,1),opacity .2s}",
-      ".st-leggio .cart:after{content:'';position:absolute;left:50%;top:96%;width:.5em;height:2.2em;margin-left:-.25em;background:linear-gradient(90deg,#b58a4e,#e6c28a,#b58a4e);border-radius:.2em;z-index:-1}",
-      ".st-leggio .cart.su{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}",
-      ".st-leggio .cart .in{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .6s}",
-      ".st-leggio .cart.gira .in{transform:rotateY(180deg)}",
-      ".st-leggio .cart .f{position:absolute;inset:0;border-radius:.9em;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center;",
-        "font-size:3.4em;font-weight:900;background:linear-gradient(#ffffff,#e8e4ff);color:#2a1d6e;box-shadow:0 .25em .5em rgba(0,0,0,.4)}",
-      ".st-leggio .cart .f.r{transform:rotateY(180deg)}",
-      ".st-leggio .cart .f.r.si{background:linear-gradient(#6ff0a6,#27b567)} .st-leggio .cart .f.r.no{background:linear-gradient(#ff95a0,#e0364a)}",
-      ".st-leggio .delta{position:absolute;z-index:5;left:50%;top:6%;transform:translateX(-50%);font-weight:900;font-size:2.6em;opacity:0;white-space:nowrap;text-shadow:0 .08em 0 rgba(0,0,0,.45)}",
-      ".st-leggio .delta.on{animation:stDelta 1.7s ease-out}",
-      "@keyframes stDelta{0%{opacity:0;transform:translate(-50%,20%) scale(.6)}15%{opacity:1;transform:translate(-50%,-20%) scale(1.15)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-120%)}}",
-      // sovrimpressioni sopra la telecamera
-      ".st-esci{position:absolute;left:8px;top:calc(8px + env(safe-area-inset-top));z-index:25;width:36px;height:36px;border-radius:50%;border:0;background:rgba(0,0,0,.4);color:#fff;font:inherit;font-size:1.25rem;font-weight:900;cursor:pointer}",
-      ".st-rec{position:absolute;right:10px;top:calc(12px + env(safe-area-inset-top));z-index:25;font-size:11px;font-weight:900;letter-spacing:.1em;color:#fff;background:rgba(0,0,0,.45);border-radius:99px;padding:3px 10px;opacity:0;transition:opacity .3s}",
-      ".st-rec.on{opacity:1}",
-      ".st-rec:before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3b3b;margin-right:6px;animation:stRec 1s steps(2) infinite}",
-      "@keyframes stRec{50%{opacity:.2}}",
-      ".st-terzo{position:absolute;left:12px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:22;display:flex;align-items:center;gap:10px;max-width:calc(100% - 24px);padding:6px 16px 6px 6px;",
-        "border-radius:16px;border-left:7px solid var(--col,#ff3ea5);background:linear-gradient(100deg,#fff3b0,#ffca3a 55%,#f59f00);color:#241f00;box-shadow:0 8px 20px rgba(0,0,0,.45);",
-        "transform:translateX(-120%);transition:transform .45s cubic-bezier(.3,1.3,.5,1)}",
-      ".st-terzo.on{transform:none}",
-      ".st-terzo .fac{width:46px;height:46px;border-radius:50%;overflow:hidden;background:rgba(0,0,0,.15);flex:0 0 auto}",
-      ".st-terzo .fac svg{width:100%;height:100%;display:block}",
-      ".st-terzo .ic{font-size:28px;flex:0 0 auto}",
-      ".st-terzo .tx{font-weight:900;font-size:18px;line-height:1.15;min-width:0}",
-      ".st-terzo .tx small{display:block;font-size:12px;font-weight:700;opacity:.8}",
-      ".st-barra{position:absolute;left:0;right:0;bottom:0;z-index:22;display:flex;flex-direction:column;gap:8px;padding:12px 14px calc(14px + env(safe-area-inset-bottom));",
-        "background:linear-gradient(rgba(7,4,26,0),rgba(7,4,26,.92) 36%);transform:translateY(110%);transition:transform .35s}",
-      ".st-barra.on{transform:none}",
-      ".st-barra .btn{min-height:58px;font-size:1.1rem}",
-      ".st-lampo{position:absolute;inset:0;z-index:24;background:#fff;opacity:0;pointer-events:none}",
-      ".st-lampo.on{animation:stLampo .45s ease-out}",
-      "@keyframes stLampo{0%{opacity:.85}100%{opacity:0}}",
-      ".st-leggero .st-fascio,.st-leggero .st-eq i,.st-leggero .st-lucina,.st-leggero .st-lampade,.st-leggero .st-fila,.st-leggero .st-bastone,.st-leggero .st-cartellone,.st-leggero .st-occhio{animation:none}",
-      "@media (prefers-reduced-motion:reduce){.st-fascio,.st-eq i,.st-lucina,.st-lampade,.st-fila,.st-bastone,.st-cartellone,.st-occhio{animation:none}}"
-    ].join("");
-    document.head.appendChild(st);
-  }
-
-  // Crea lo studio (una sola volta per partita) e lo mette a schermo.
-  // giocatori: [{ nome, omino? }]; opz: { io (indice di chi ha questo telefono, -1 = nessuno), esci() }
-  function creaStudio(t, giocatori, opz) {
-    assicuraStileStudio();
-    var el = t.el, s = t.schermata({});
-    s.classList.add("st-piena");
-    var vista = el("div", { class: "st-vista" + (LEGGERO ? " st-leggero" : "") }), mondo = el("div", { class: "st-mondo" });
-    vista.appendChild(mondo);
-    vista.addEventListener("scroll", function () { vista.scrollTop = 0; vista.scrollLeft = 0; });
-    var S = { t: t, s: s, vista: vista, mondo: mondo, gioc: [], io: -1, L: [], shot: null, timer: null };
-    function pezzo(tag, cls, dove) { var e = el(tag, { class: cls }); (dove || mondo).appendChild(e); return e; }
-    // --- studio: il fondo fermo è un'immagine sola (canvas), sopra solo pochi pezzi che si muovono ---
-    S.tela = pezzo("canvas", "st-tela");
-    S.fasci = [];
-    if (!LEGGERO) ["rgba(255,236,170,.55)", "rgba(255,62,165,.5)", "rgba(34,211,238,.5)", "rgba(255,236,170,.55)"].forEach(function (c, i) {
-      var f = pezzo("div", "st-fascio st-anim"); f.style.background = "linear-gradient(" + c + ",transparent 88%)";
-      f.style.animationDelay = (-i * 1.9) + "s"; f.style.animationDuration = (5 + (i % 3)) + "s"; S.fasci.push(f);
-    });
-    S.eq = [0, 1].map(function () {
-      var e = pezzo("div", "st-eq st-anim");
-      for (var k = 0; k < 7; k++) { var b = el("i"); b.style.left = (4 + k * 13.4) + "%"; b.style.animationDelay = (-k * 0.31) + "s"; b.style.animationDuration = (0.7 + (k % 3) * 0.22) + "s"; if (LEGGERO) b.style.transform = "scaleY(" + (0.3 + ((k * 37) % 60) / 100) + ")"; e.appendChild(b); }
-      return e;
-    });
-    // il pubblico: file di mini avatar (canvas, create in disegnaPubblico) + cose vive sopra
-    S.pubWrap = pezzo("div", "st-pubwrap");
-    S.strisce = [];
-    S.pubDeco = pezzo("div", "st-pubdeco", S.pubWrap);
-    S.ringhiere = []; for (var q = 0; q < 6; q++) S.ringhiere.push(pezzo("div", "st-ringhiera", S.pubDeco));
-    S.occhi = LEGGERO ? [] : ["rgba(255,62,165,.55)", "rgba(34,211,238,.5)", "rgba(255,212,59,.42)"].map(function (c, i) {
-      var o = pezzo("div", "st-occhio st-anim", S.pubDeco); o.style.background = "radial-gradient(closest-side," + c + ",transparent)";
-      o.style.setProperty("--dur", (7 + i * 2) + "s"); o.style.setProperty("--rit", (-i * 2.3) + "s"); o._i = i; return o;
-    });
-    var COLB = ["#ff3ea5", "#22d3ee", "#ffd43b", "#a06bff", "#51cf66"];
-    function vivo(e, zona) { e._rx = Math.random(); e._ry = Math.random(); e._zona = zona; e.style.setProperty("--dur", (1.1 + Math.random() * 0.9).toFixed(2) + "s"); e.style.setProperty("--rit", (-Math.random() * 2).toFixed(2) + "s"); return e; }
-    S.bastoni = []; for (q = 0; q < (LEGGERO ? 0 : 14); q++) { var ba = vivo(pezzo("div", "st-bastone st-anim", S.pubDeco), q % 3); ba.style.setProperty("--c", COLB[q % COLB.length]); S.bastoni.push(ba); }
-    S.cartelli = ["❤️ BRAVI", "⭐⭐⭐", "FORZA!", "👏👏", "WOW!"].map(function (tx, i) { var ca = vivo(pezzo("div", "st-cartellone st-anim", S.pubDeco), i % 3); ca.appendChild(el("b", { text: tx })); ca._ry *= 0.7; return ca; });
-    S.lucine = []; for (q = 0; q < (LEGGERO ? 0 : 10); q++) { var lu = pezzo("div", "st-lucina st-anim", S.pubDeco); lu.style.animationDelay = (-Math.random() * 2.4) + "s"; lu._rx = Math.random(); lu._ry = Math.random(); lu._zona = q % 3; S.lucine.push(lu); }
-    S.flash = []; for (q = 0; q < 6; q++) { var fl = pezzo("div", "st-flash", S.pubDeco); fl._rx = Math.random(); fl._ry = Math.random(); fl._zona = q % 3; S.flash.push(fl); }
-    S.lampade = pezzo("canvas", "st-lampade st-anim");
-    S.schermo = pezzo("div", "st-schermo");
-    S.sch = el("div", { class: "st-sch-in" }); S.schermo.appendChild(S.sch); S.schermo.appendChild(el("div", { class: "st-vetro" }));
-    S.fumetto = pezzo("div", "st-fumetto");
-    S.zonaLeggii = el("div"); S.zonaLeggii.style.cssText = "position:absolute;left:0;top:0;width:0;height:0"; mondo.appendChild(S.zonaLeggii);
-    // --- sovrimpressioni ---
-    vista.appendChild(el("button", { class: "st-esci", text: "‹", "aria-label": "Esci", onclick: function () { if (window.confirm("Uscire dalla partita?")) { fermaTimer(S); opz.esci(); } } }));
-    S.rec = el("div", { class: "st-rec", text: "IN ONDA" }); vista.appendChild(S.rec);
-    S.terzoEl = el("div", { class: "st-terzo" }); vista.appendChild(S.terzoEl);
-    S.barraEl = el("div", { class: "st-barra" }); vista.appendChild(S.barraEl);
-    S.lampoEl = el("div", { class: "st-lampo" }); vista.appendChild(S.lampoEl);
-    s._contenuto.appendChild(vista);
-    t.mostra(s);
-    S.vivo = function () { return vista.isConnected; };
-    S.impostaGiocatori = function (lista, io) { S.gioc = lista.map(function (g) { return { nome: g.nome, omino: g.omino || null }; }); S.io = io == null ? -1 : io; costruisciLeggii(S); layoutStudio(S); };
-    S.impostaGiocatori(giocatori, opz.io);
-    // appena le facce del pubblico sono pronte ridisegno la folla (all'inizio per un attimo ci sono le sagome)
-    preparaPoolPubblico(function () { if (S.vivo() && S.zonePub) disegnaPubblico(S); });
-    logoSchermo(S);
-    S.shot = function () { return { x: 0, y: 0, w: S.W, h: S.H }; };
-    camera(S, S.shot(), 0);
-    // se cambia la misura dello schermo ridisegno lo studio (una volta, dopo che si è assestato)
-    var toR = null;
-    function suResize() {
-      if (!S.vivo()) { window.removeEventListener("resize", suResize); return; }
-      clearTimeout(toR);
-      toR = setTimeout(function () { if (!S.vivo()) return; if (Math.abs(S.vista.clientWidth - S.VW) < 2 && Math.abs(S.vista.clientHeight - S.VH) < 2) return; layoutStudio(S); camera(S, S.shot(), 0); }, 200);
-    }
-    window.addEventListener("resize", suResize);
-    return S;
-  }
-
-  // ---- avatar dei leggii come immagini già pronte (non si ridisegnano a ogni zoom della telecamera) ----
-  var cacheImg = {};
-  function immagineAvatar(g, f, cb) {
-    var svg = avatarDi(g, f); if (!svg) return;
-    var e = cacheImg[svg];
-    if (!e) {
-      e = cacheImg[svg] = { img: new Image(), ok: false, cbs: [] };
-      e.img.onload = function () { e.ok = true; var l = e.cbs; e.cbs = []; l.forEach(function (c) { c(e.img); }); };
-      e.img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.replace("<svg ", "<svg width='356' height='364' "));
-    }
-    if (e.ok) cb(e.img); else if (cb) e.cbs.push(cb);
-  }
-  function mettiAvatar(X, g, f) {
-    var v = X.versione = (X.versione || 0) + 1;
-    immagineAvatar(g, f, function (img) {
-      if (X.versione !== v) return;   // nel frattempo è cambiata faccia
-      var c = X.avc, x = c.getContext("2d"); x.clearRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
-    });
-  }
-  function costruisciLeggii(S) {
-    var el = S.t.el; vuota(S.zonaLeggii); S.L = [];
-    S.gioc.forEach(function (g, i) {
-      var L = el("div", { class: "st-leggio" }); L.style.position = "absolute"; L.style.setProperty("--col", ST_COL[i % ST_COL.length]);
-      L.innerHTML = "<div class='luce'></div><div class='pozza'></div><div class='alone'></div>" +
-        "<div class='cart'><div class='in'><div class='f'>?</div><div class='f r'></div></div></div><div class='delta'></div><div class='av'><canvas width='356' height='364'></canvas></div>" +
-        "<div class='podio'><div class='piano'><span class='buzz'></span></div><div class='fronte'><div class='nome'></div><div class='punti'>0</div></div><div class='led'></div></div>";
-      L.querySelector(".nome").textContent = g.nome;
-      if (i === S.io) L.querySelector(".piano").appendChild(el("span", { class: "tu", text: "TU" }));
-      var X = { el: L, avc: L.querySelector(".av canvas"), cart: L.querySelector(".cart"), delta: L.querySelector(".delta"), pEl: L.querySelector(".punti"), valore: 0, faccia: null };
-      mettiAvatar(X, g, null);
-      setTimeout(function () { ["esulta", "triste", "pensa"].forEach(function (f) { immagineAvatar(g, f, null); }); }, 1500 + i * 200);   // pronte per dopo (non tutte insieme all'entrata)
-      S.L.push(X);
-    });
-  }
-  // posti dei leggii: fino a 4 una fila; da 5 a 10 due file sfalsate (quella dietro più piccola e più in alto)
-  function postiLeggii(S) {
-    var n = S.gioc.length, VW = S.VW, VH = S.VH, out = [], i;
-    if (n <= 4) {
-      var sp = 1.92 * VW / Math.max(1, n), w = Math.min(0.46 * VW, sp * 0.92);
-      for (i = 0; i < n; i++) out.push({ cx: 0.04 * VW + sp * (i + 0.5), top: 1.36 * VH, w: w, fila: 0 });
-      return out;
-    }
-    // file sfalsate di mezzo posto: con B == F serve mezzo posto in più di spazio
-    var F = Math.ceil(n / 2), B = n - F, pari = B === F, spf = 1.92 * VW / (F + (pari ? 0.5 : 0)), wf = Math.min(0.40 * VW, spf * 0.88), wb = wf * 0.84;
-    for (i = 0; i < F; i++) out.push({ cx: 0.04 * VW + spf * (i + 0.5) + (pari ? spf / 2 : 0), top: 1.5 * VH, w: wf, fila: 0 });
-    for (i = 0; i < B; i++) out.push({ cx: 0.04 * VW + spf * (pari ? i + 0.5 : i + 1), top: 1.27 * VH, w: wb, fila: 1 });
-    return out;
-  }
-
-  // ---- disegno dello studio su canvas (una volta sola) ----
-  function qualitaTela(S) { return Math.min(LEGGERO ? 1 : 2, window.devicePixelRatio || 1, 4000 / S.H); }
-  function preparaTela(c, w, h, q) {
-    c.width = Math.max(1, Math.round(w * q)); c.height = Math.max(1, Math.round(h * q));
-    c.style.width = w + "px"; c.style.height = h + "px";
-    var x = c.getContext("2d"); x.setTransform(q, 0, 0, q, 0, 0); return x;
-  }
-  function rett(x, X, Y, w, h, r) {
-    x.beginPath(); x.moveTo(X + r, Y); x.lineTo(X + w - r, Y); x.quadraticCurveTo(X + w, Y, X + w, Y + r); x.lineTo(X + w, Y + h - r);
-    x.quadraticCurveTo(X + w, Y + h, X + w - r, Y + h); x.lineTo(X + r, Y + h); x.quadraticCurveTo(X, Y + h, X, Y + h - r); x.lineTo(X, Y + r); x.quadraticCurveTo(X, Y, X + r, Y); x.closePath();
-  }
-  function alone(x, cx, cy, r, col) { var g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, col); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(cx - r, cy - r, 2 * r, 2 * r); }
-  function lampadina(x, px, py, accesa) {
-    if (accesa) { alone(x, px, py, 8, "rgba(255,190,60,.55)"); x.fillStyle = "#ffc93c"; x.beginPath(); x.arc(px, py, 3.6, 0, 7); x.fill(); x.fillStyle = "#fffbe0"; x.beginPath(); x.arc(px, py, 2.4, 0, 7); x.fill(); }
-    else { x.fillStyle = "#5e4108"; x.beginPath(); x.arc(px, py, 3.6, 0, 7); x.fill(); x.fillStyle = "#8a6716"; x.beginPath(); x.arc(px, py, 2.2, 0, 7); x.fill(); }
-  }
-  function puntiCornice(R) {   // le lampadine lungo il bordo del maxischermo, ogni 20px
-    var p = [], x0 = R.x - 8, y0 = R.y - 8, x1 = R.x + R.w + 8, y1 = R.y + R.h + 8, d;
-    for (d = x0 + 10; d < x1 - 5; d += 20) p.push([d, y0]);
-    for (d = y0 + 10; d < y1 - 5; d += 20) p.push([x1, d]);
-    for (d = x1 - 10; d > x0 + 5; d -= 20) p.push([d, y1]);
-    for (d = y1 - 10; d > y0 + 5; d -= 20) p.push([x0, d]);
-    return p;
-  }
-  function disegnaStudio(S) {
-    var VW = S.VW, VH = S.VH, W = S.W, H = S.H, R = S.R.schermo, q = qualitaTela(S), i;
-    var x = preparaTela(S.tela, W, H, q);
-    // fondo luminoso da prima serata
-    var g = x.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "#3a1b8c"); g.addColorStop(0.4, "#27106a"); g.addColorStop(0.7, "#1a0b4d"); g.addColorStop(1, "#120736");
-    x.fillStyle = g; x.fillRect(0, 0, W, H);
-    alone(x, W * 0.5, H * 0.24, VW * 0.9, "rgba(255,206,110,.5)");
-    alone(x, W * 0.03, H * 0.3, VW * 0.85, "rgba(255,62,165,.55)");
-    alone(x, W * 0.97, H * 0.3, VW * 0.85, "rgba(34,211,238,.5)");
-    alone(x, W * 0.5, H * 0.68, VW * 1.1, "rgba(140,90,255,.4)");
-    x.fillStyle = "rgba(255,255,255,.05)"; for (i = 0; i < W; i += 64) x.fillRect(i, 0, 2, H);
-    x.fillStyle = "rgba(255,255,255,.035)"; for (i = 0; i < H; i += 64) x.fillRect(0, i, W, 2);
-    // fari fissi dipinti (sui telefoni leggeri al posto di quelli che girano)
-    if (LEGGERO) [0.1, 0.37, 0.63, 0.9].forEach(function (p, k) {
-      x.save(); x.translate(W * p, 0.03 * VH); x.rotate((k % 2 ? 1 : -1) * 0.25);
-      var fg = x.createLinearGradient(0, 0, 0, 1.3 * VH); fg.addColorStop(0, "rgba(255,236,170,.35)"); fg.addColorStop(1, "rgba(255,236,170,0)");
-      x.fillStyle = fg; x.beginPath(); x.moveTo(-0.02 * VW, 0); x.lineTo(0.02 * VW, 0); x.lineTo(0.22 * VW, 1.3 * VH); x.lineTo(-0.22 * VW, 1.3 * VH); x.closePath(); x.fill(); x.restore();
-    });
-    // arco al neon attorno al maxischermo
-    var ax = R.x - 0.13 * VW, aw = R.w + 0.26 * VW, ay = 0.012 * VH, ah = 1.12 * VH, ry = Math.min(aw * 0.3, 0.16 * VH);
-    x.beginPath(); x.moveTo(ax, ay + ah); x.lineTo(ax, ay + ry); x.ellipse(ax + aw / 2, ay + ry, aw / 2, ry, 0, Math.PI, 2 * Math.PI); x.lineTo(ax + aw, ay + ah);
-    x.fillStyle = "rgba(10,6,40,.45)"; x.fill();
-    var ag = x.createLinearGradient(ax, ay, ax + aw, ay + ah);
-    ag.addColorStop(0, "#ff3ea5"); ag.addColorStop(0.35, "#ffd43b"); ag.addColorStop(0.65, "#22d3ee"); ag.addColorStop(1, "#a06bff");
-    x.save(); x.lineWidth = 7; x.strokeStyle = ag; x.shadowColor = "rgba(255,62,165,.9)"; x.shadowBlur = 26; x.stroke(); x.restore();
-    x.lineWidth = 2; x.strokeStyle = "rgba(255,255,255,.75)"; x.stroke();
-    // torri LED (le barre che ballano sono sopra, a parte)
-    S.torriR = [[0.06 * VW, 0.1 * VH, 0.36 * VW, 0.36 * VH], [1.58 * VW, 0.1 * VH, 0.36 * VW, 0.36 * VH]];
-    S.torriR.forEach(function (p) {
-      x.save(); rett(x, p[0], p[1], p[2], p[3], 14); x.fillStyle = "#0a0624"; x.shadowColor = "rgba(255,62,165,.65)"; x.shadowBlur = 26; x.fill(); x.restore();
-      rett(x, p[0], p[1], p[2], p[3], 14); x.lineWidth = 3; x.strokeStyle = "#2b2366"; x.stroke();
-      x.save(); x.fillStyle = "#ffe066"; x.font = "900 20px system-ui,sans-serif"; x.textAlign = "center"; x.shadowColor = "#ff9d2e"; x.shadowBlur = 12;
-      x.fillText("★  ★  ★", p[0] + p[2] / 2, p[1] + 30); x.restore();
-    });
-    // gradinate del pubblico: fondo scuro a gradoni (le persone sono sopra, a file che si muovono)
-    (S.zonePub || []).forEach(function (z) {
-      var zy = S.pubTop + z[1];
-      x.save(); x.beginPath(); rettAlto(x, z[0], zy, z[2], z[3], 18); x.clip();
-      var zg = x.createLinearGradient(0, zy, 0, zy + z[3]); zg.addColorStop(0, "#0c0729"); zg.addColorStop(1, "#1d1352");
-      x.fillStyle = zg; x.fillRect(z[0], zy, z[2], z[3]);
-      x.fillStyle = "rgba(255,255,255,.05)"; for (var gy2 = zy + 22; gy2 < zy + z[3]; gy2 += 24) x.fillRect(z[0], gy2, z[2], 3);
-      x.restore();
-    });
-    // traliccio con i fari in alto
-    var th = 0.035 * VH, tg = x.createLinearGradient(0, 0, 0, th); tg.addColorStop(0, "#3b3560"); tg.addColorStop(1, "#1d1838");
-    x.fillStyle = tg; x.fillRect(0, 0, W, th);
-    x.strokeStyle = "rgba(255,255,255,.18)"; x.lineWidth = 2; x.beginPath();
-    for (i = -th; i < W + th; i += 12) { x.moveTo(i, th * 0.18); x.lineTo(i + th * 0.5, th * 0.82); x.moveTo(i + th * 0.5, th * 0.18); x.lineTo(i, th * 0.82); }
-    x.stroke();
-    for (i = 0; i < 6; i++) {
-      var fx = W * (0.07 + i * 0.172), fy = 0.02 * VH + 12;
-      alone(x, fx, fy, 44, "rgba(255,220,130,.6)");
-      var lg = x.createRadialGradient(fx - 2, fy - 3, 1, fx, fy, 12); lg.addColorStop(0, "#fff"); lg.addColorStop(0.35, "#ffe9a8"); lg.addColorStop(0.7, "#ffb300"); lg.addColorStop(1, "#5a3a00");
-      x.fillStyle = lg; x.beginPath(); x.arc(fx, fy, 12, 0, 7); x.fill();
-    }
-    // pavimento lucido con la striscia di luci
-    var py = 1.48 * VH, pg = x.createLinearGradient(0, py, 0, H); pg.addColorStop(0, "#2c1c78"); pg.addColorStop(0.5, "#170d4a"); pg.addColorStop(1, "#0c0628");
-    x.fillStyle = pg; x.fillRect(0, py, W, H - py);
-    x.save(); x.beginPath(); x.rect(0, py, W, H - py); x.clip(); alone(x, W / 2, py, VW * 0.9, "rgba(255,206,110,.28)"); x.restore();
-    x.fillStyle = "rgba(255,255,255,.07)"; for (i = 0; i < W; i += 70) x.fillRect(i, py, 2, H - py);
-    var sg = x.createLinearGradient(0, 0, W, 0);
-    ["#ff3ea5", "#ffd43b", "#22d3ee", "#a06bff", "#ff3ea5"].forEach(function (c, k) { sg.addColorStop(k / 4, c); });
-    x.save(); x.fillStyle = sg; x.shadowColor = "#ffd43b"; x.shadowBlur = 20; x.fillRect(0, py, W, 6); x.restore();
-    // maxischermo: alone azzurro dietro, cornice dorata con le lampadine
-    x.save(); rett(x, R.x, R.y, R.w, R.h, 14); x.fillStyle = "#0b1030"; x.shadowColor = "rgba(120,170,255,.6)"; x.shadowBlur = 40; x.fill(); x.restore();
-    x.save(); rett(x, R.x - 16, R.y - 16, R.w + 32, R.h + 32, 26); x.fillStyle = "#2a1d00"; x.shadowColor = "rgba(255,190,60,.6)"; x.shadowBlur = 34; x.fill(); x.restore();
-    rett(x, R.x - 16, R.y - 16, R.w + 32, R.h + 32, 26); x.lineWidth = 3; x.strokeStyle = "#3a2a00"; x.stroke();
-    var pc = puntiCornice(R);
-    pc.forEach(function (p, k) { lampadina(x, p[0], p[1], k % 2 === 1); });
-    // seconda serie di lampadine (quelle che si alternano): canvas sopra che si accende e spegne
-    var lx = R.x - 16, ly = R.y - 16, y2 = preparaTela(S.lampade, R.w + 32, R.h + 32, q);
-    S.lampade.style.left = lx + "px"; S.lampade.style.top = ly + "px";
-    pc.forEach(function (p, k) { lampadina(y2, p[0] - lx, p[1] - ly, k % 2 === 0); });
-  }
-  // il pubblico: silhouette disegnate una volta sola (poi il canvas intero "salta" quando applaude)
-  // ---- il pubblico: tanti piccoli avatar veri, disegnati una volta a file (canvas) che ondeggiano ognuna per conto suo ----
-  var poolPubblico = null;   // una ventina di facce pronte (bitmap), riusate per tutta la folla
-  function preparaPoolPubblico(cb) {
-    if (poolPubblico) { if (poolPubblico.pronti) cb(); else poolPubblico.cbs.push(cb); return; }
-    poolPubblico = { pronti: false, img: [], cbs: [cb] };
-    var N = 20, fatti = 0;
-    function uno() {
-      if (++fatti < N) return;
-      poolPubblico.pronti = true; var l = poolPubblico.cbs; poolPubblico.cbs = [];
-      l.forEach(function (f) { try { f(); } catch (e) {} });
-    }
-    if (!window.SGOmino) { fatti = N - 1; uno(); return; }
-    for (var i = 0; i < N; i++) (function (i) {
-      var svg; try { svg = SGOmino.svg(SGOmino.casuale("pubblico-" + i), { busto: true }); } catch (e) { uno(); return; }
-      var img = new Image();
-      img.onload = function () {
-        try { var c = document.createElement("canvas"); c.width = 72; c.height = 74; c.getContext("2d").drawImage(img, 0, 0, 72, 74); poolPubblico.img.push(c); } catch (e) {}
-        uno();
-      };
-      img.onerror = uno;
-      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.replace("<svg ", "<svg width='72' height='74' "));
-    })(i);
-  }
-  // rettangolo con solo gli angoli in alto arrotondati (aggiunto al percorso in corso)
-  function rettAlto(x, X, Y, w, h, r) {
-    x.moveTo(X, Y + h); x.lineTo(X, Y + r); x.quadraticCurveTo(X, Y, X + r, Y); x.lineTo(X + w - r, Y);
-    x.quadraticCurveTo(X + w, Y, X + w, Y + r); x.lineTo(X + w, Y + h); x.closePath();
-  }
-  function sagoma(x, cx, y, s) {   // persona stilizzata (finché le facce non sono pronte)
-    x.fillStyle = "#3a2d78"; x.beginPath(); x.ellipse(cx, y + s * 0.92, s * 0.46, s * 0.34, 0, 0, 7); x.fill();
-    x.fillStyle = "#6f5cb8"; x.beginPath(); x.arc(cx, y + s * 0.38, s * 0.26, 0, 7); x.fill();
-  }
-  function disegnaPubblico(S) {
-    var W = S.W, h = S.pubH, q = Math.min(1.5, qualitaTela(S)), Z = S.zonePub;
-    S.pubWrap.style.top = S.pubTop + "px"; S.pubWrap.style.width = W + "px"; S.pubWrap.style.height = h + "px";
-    S.strisce.forEach(function (c) { if (c.parentNode) c.parentNode.removeChild(c); });
-    S.strisce = [];
-    var pool = (poolPubblico && poolPubblico.pronti && poolPubblico.img.length) ? poolPubblico.img : null;
-    var seme = 11; function rnd() { seme = (seme * 16807) % 2147483647; return seme / 2147483647; }
-    // le file: in alto (in fondo alla sala) più piccole, in basso (davanti) più grandi
-    var righe = [], y = 2;
-    while (y < h - 8) { var sz = 24 + 14 * (y / h); righe.push({ y: y, s: sz }); y += sz * 0.58; }
-    var PER = 4;
-    for (var r0 = 0; r0 < righe.length; r0 += PER) {
-      var gruppo = righe.slice(r0, r0 + PER), ult = gruppo[gruppo.length - 1];
-      var y0 = Math.max(0, Math.floor(gruppo[0].y - 3)), y1 = Math.min(h, Math.ceil(ult.y + ult.s * 1.08));
-      if (y1 - y0 < 4) continue;
-      var c = document.createElement("canvas"); c.className = "st-fila st-anim";
-      var x = preparaTela(c, W, y1 - y0, q);
-      c.style.top = y0 + "px";
-      c.style.setProperty("--dur", (1.6 + rnd() * 1.3).toFixed(2) + "s");
-      c.style.setProperty("--rit", (-rnd() * 2).toFixed(2) + "s");
-      x.translate(0, -y0);
-      x.save(); x.beginPath(); Z.forEach(function (z) { rettAlto(x, z[0], z[1], z[2], z[3], 18); }); x.clip();
-      gruppo.forEach(function (R, k) {
-        var s = R.s, passo = s * 0.78, off = ((r0 + k) % 2) * passo / 2;
-        Z.forEach(function (z, zi) {
-          if (R.y < z[1] - s * 0.2 || R.y > z[1] + z[3] - s * 0.35) return;
-          for (var px = z[0] - passo * 0.4 + off; px < z[0] + z[2] - s * 0.3; px += passo) {
-            // nella fascia sotto il maxischermo salto i tratti dove ci sono già le gradinate laterali
-            if (zi === 2 && ((px + s > Z[0][0] && px < Z[0][0] + Z[0][2]) || (px + s > Z[1][0] && px < Z[1][0] + Z[1][2]))) continue;
-            var ss = s * (0.9 + rnd() * 0.2), jx = (rnd() - 0.5) * s * 0.2, jy = (rnd() - 0.5) * s * 0.14;
-            if (pool) {
-              var im = pool[Math.floor(rnd() * pool.length)];
-              if (rnd() < 0.5) x.drawImage(im, px + jx, R.y + jy, ss, ss * 1.03);
-              else { x.save(); x.translate(px + jx + ss, R.y + jy); x.scale(-1, 1); x.drawImage(im, 0, 0, ss, ss * 1.03); x.restore(); }
-            } else sagoma(x, px + jx + ss / 2, R.y + jy, ss);
-          }
-        });
-      });
-      // luce da palco solo sulle persone: più buio in fondo (in alto), magenta a sinistra e azzurro a destra
-      x.globalCompositeOperation = "source-atop";
-      var sg = x.createLinearGradient(0, 0, 0, h); sg.addColorStop(0, "rgba(14,7,44,.72)"); sg.addColorStop(0.55, "rgba(14,7,44,.46)"); sg.addColorStop(1, "rgba(14,7,44,.34)");   // il pubblico sta in penombra: i concorrenti devono risaltare
-      x.fillStyle = sg; x.fillRect(0, y0, W, y1 - y0);
-      var hg = x.createLinearGradient(0, 0, W, 0);
-      hg.addColorStop(0, "rgba(255,62,165,.3)"); hg.addColorStop(0.22, "rgba(255,62,165,0)"); hg.addColorStop(0.78, "rgba(34,211,238,0)"); hg.addColorStop(1, "rgba(34,211,238,.3)");
-      x.fillStyle = hg; x.fillRect(0, y0, W, y1 - y0);
-      x.globalCompositeOperation = "source-over";
-      x.restore();
-      S.pubWrap.insertBefore(c, S.pubDeco);
-      S.strisce.push(c);
-    }
-  }
-  function layoutStudio(S) {
-    var VW = S.vista.clientWidth || 360, VH = S.vista.clientHeight || 640, W = 2 * VW, H = 2 * VH;
-    S.VW = VW; S.VH = VH; S.W = W; S.H = H;
-    function pos(e, x, y, w, h) { e.style.left = x + "px"; e.style.top = y + "px"; if (w != null) e.style.width = w + "px"; if (h != null) e.style.height = h + "px"; }
-    S.mondo.style.width = W + "px"; S.mondo.style.height = H + "px";
-    S.R = { schermo: { x: 0.5 * VW, y: 0.06 * VH, w: VW, h: VH } };
-    var R = S.R.schermo;
-    // zone del pubblico (coordinate dentro al blocco del pubblico): due gradinate ai lati e la fascia sotto il maxischermo
-    S.pubTop = 0.52 * VH; S.pubH = 1.48 * VH - S.pubTop;
-    var fondo = (R.y + R.h + 18) - S.pubTop;   // la fascia parte sotto la cornice, così le lampadine restano sopra
-    S.zonePub = [[0.03 * VW, 0, 0.42 * VW, S.pubH], [1.55 * VW, 0, 0.42 * VW, S.pubH], [0.03 * VW, fondo, 1.94 * VW, S.pubH - fondo]];
-    disegnaStudio(S);
-    disegnaPubblico(S);
-    pos(S.schermo, R.x, R.y, R.w, R.h);
-    S.fasci.forEach(function (f, i) { var fx = W * (0.1 + i * 0.267); pos(f, fx - 0.22 * VW, 0.03 * VH, 0.44 * VW, 1.35 * VH); });
-    S.eq.forEach(function (e, i) { var p = S.torriR[i]; pos(e, p[0], p[1] + 44, p[2], p[3] - 44); });
-    function inPub(e) { var z = S.zonePub[e._zona]; pos(e, z[0] + 12 + e._rx * (z[2] - 24), z[1] + 24 + e._ry * (z[3] - 60)); }
-    S.lucine.forEach(inPub); S.flash.forEach(inPub);
-    S.bastoni.forEach(inPub); S.cartelli.forEach(inPub);
-    S.ringhiere.forEach(function (r, i) { var lato = i % 2, fila = Math.floor(i / 2); pos(r, lato ? 1.55 * VW : 0.03 * VW, (0.2 + fila * 0.26) * VH, 0.42 * VW, 5); });
-    S.occhi.forEach(function (o, i) {   // occhi di bue colorati che passano sulla folla
-      var z = S.zonePub[i], d = 0.55 * VW; pos(o, z[0] + z[2] / 2 - d / 2, z[1] + Math.min(z[3], 0.5 * VH) * 0.35 - d / 2, d, d);
-      o.style.setProperty("--dx", (i === 2 ? 0.7 * VW : (i ? -0.25 : 0.25) * VW) + "px"); o.style.setProperty("--dy", (i === 2 ? -0.06 * VH : 0.42 * VH) + "px");
-    });
-    pos(S.fumetto, W / 2, 1.06 * VH);
-    // leggii
-    S.posti = postiLeggii(S);
-    var ordine = S.posti.map(function (p, i) { return i; }).sort(function (a, b) { return S.posti[b].fila - S.posti[a].fila; });   // prima la fila dietro
-    ordine.forEach(function (i) {
-      var p = S.posti[i], X = S.L[i]; if (!X) return;
-      pos(X.el, p.cx - p.w / 2, p.top, p.w);
-      X.el.style.fontSize = (p.w * 0.1).toFixed(1) + "px";
-      S.zonaLeggii.appendChild(X.el);
-    });
-    S.file = S.posti.length > 4 ? 2 : 1;
-  }
-
-  // ---------- TELECAMERA ----------
-  function camera(S, r, ms) {
-    var s = Math.min(S.VW / r.w, S.VH / r.h), tx = (S.VW - r.w * s) / 2 - r.x * s, ty = (S.VH - r.h * s) / 2 - r.y * s;
-    if (Math.abs(s - 1) < 0.001) { s = 1; tx = Math.round(tx); ty = Math.round(ty); }   // sul maxischermo: nitido al pixel
-    S.mondo.style.transition = ms ? "transform " + ms + "ms cubic-bezier(.45,.05,.25,1)" : "none";
-    S.mondo.style.transform = "translate3d(" + tx.toFixed(1) + "px," + ty.toFixed(1) + "px,0) scale(" + s.toFixed(4) + ")";
-    var suSch = r === S.R.schermo;
-    S.mondo.classList.toggle("st-quieto", suSch);   // sul maxischermo lo studio si ferma (risparmio batteria)
-    S.rec.classList.toggle("on", !suSch);
-    return dorme(ms || 0);
-  }
-  function inquadra(S, shot, ms) { S.shot = shot; return camera(S, shot(), ms); }
-  function suSchermo(S, ms) { return inquadra(S, function () { return S.R.schermo; }, ms); }
-  function largo(S, ms) { return inquadra(S, function () { return { x: 0, y: 0, w: S.W, h: S.H }; }, ms); }
-  function suLeggio(S, i, ms) {
-    return inquadra(S, function () {
-      var p = S.posti[i] || S.posti[0], w = Math.max(0.64 * S.VW, p.w * 1.5), h = w * S.VH / S.VW;
-      var x = Math.max(0, Math.min(S.W - w, p.cx - w / 2)), y = Math.max(0, Math.min(S.H - h, p.top + p.w * 0.72 - h / 2));   // mai fuori dallo studio
-      return { x: x, y: y, w: w, h: h };
-    }, ms);
-  }
-  function suPubblico(S, lato, ms) { return inquadra(S, function () { return { x: lato ? 1.5 * S.VW : 0, y: 0.06 * S.VH, w: 0.5 * S.VW, h: 1.1 * S.VH }; }, ms); }
-  // panoramica lungo una fila di leggii: fn(i) viene chiamata quando la telecamera passa davanti al leggio i
-  async function panFila(S, fila, ms, fn) {
-    var idx = []; S.posti.forEach(function (p, i) { if (p.fila === fila) idx.push(i); });
-    idx.sort(function (a, b) { return S.posti[a].cx - S.posti[b].cx; });
-    if (!idx.length) return;
-    var w = 0.9 * S.VW, h = 0.9 * S.VH;
-    function rett(cx) { var p = S.posti[idx[0]]; return { x: Math.max(0, Math.min(S.W - w, cx - w / 2)), y: p.top + p.w * 0.66 - h / 2, w: w, h: h }; }
-    var a = S.posti[idx[0]].cx, b = S.posti[idx[idx.length - 1]].cx;
-    await inquadra(S, function () { return rett(a); }, 700);
-    idx.forEach(function (i, k) { setTimeout(function () { if (fn) fn(i); }, idx.length > 1 ? k * ms / (idx.length - 1) * 0.9 : 0); });
-    await inquadra(S, function () { return rett(b); }, ms);
-  }
-
-  // ---------- pezzi dello spettacolo ----------
-  function fermaTimer(S) { if (S.timer && S.timer._stop) S.timer._stop(); S.timer = null; }
-  function terzo(S, i, testo, sotto, ic) {
-    var el = S.t.el, T = S.terzoEl; vuota(T);
-    T.style.setProperty("--col", i != null && i >= 0 ? ST_COL[i % ST_COL.length] : "#ff3ea5");
-    if (i != null && i >= 0 && S.gioc[i]) T.appendChild(el("span", { class: "fac", html: avatarDi(S.gioc[i]) }));
-    else T.appendChild(el("span", { class: "ic", text: ic || "📺" }));
-    T.appendChild(el("div", { class: "tx" }, [ el("span", { text: testo }), sotto ? el("small", { text: sotto }) : null ]));
-    T.classList.remove("on"); void T.offsetWidth; T.classList.add("on");
-  }
-  function viaTerzo(S) { S.terzoEl.classList.remove("on"); }
-  function barra(S, nodi) { vuota(S.barraEl); nodi.forEach(function (n) { if (n) S.barraEl.appendChild(n); }); S.barraEl.classList.add("on"); S.vista.classList.add("con-barra"); }
-  function viaBarra(S) { S.barraEl.classList.remove("on"); S.vista.classList.remove("con-barra"); }
-  function aspettaTasto(S, testo) {
-    return new Promise(function (fine) {
-      barra(S, [ S.t.el("button", { class: "btn btn-primario", text: testo, onclick: function () { viaBarra(S); fine(); } }) ]);
-    });
-  }
-  function lampo(S) { var l = S.lampoEl; l.classList.remove("on"); void l.offsetWidth; l.classList.add("on"); }
-  function accendi(S, i, on) { var X = S.L[i]; if (X) X.el.classList.toggle("acceso", !!on); }
-  function accendiSolo(S, i) { S.L.forEach(function (X, k) { X.el.classList.toggle("acceso", k === i); }); }
-  function faccia(S, i, f) { var X = S.L[i]; if (!X || X.faccia === (f || null)) return; X.faccia = f || null; mettiAvatar(X, S.gioc[i], f); }
-  function tutteNormali(S) { S.L.forEach(function (X, i) { faccia(S, i, null); }); }
-  function puntiLeggio(S, i, valore, delta) {
-    var X = S.L[i]; if (!X) return;
-    var da = X.valore; X.valore = valore;
-    function scrivi(v) { X.pEl.textContent = v; X.pEl.classList.toggle("neg", v < 0); }
-    if (!delta) return scrivi(valore);
-    X.delta.textContent = (delta > 0 ? "+" : "−") + Math.abs(delta);
-    X.delta.style.color = delta > 0 ? "#6ff0a6" : "#ff8d98";
-    X.delta.classList.remove("on"); void X.delta.offsetWidth; X.delta.classList.add("on");
-    var t0 = performance.now();
-    (function passo() { var p = Math.min(1, (performance.now() - t0) / 800); scrivi(Math.round(da + (valore - da) * p)); if (p < 1) requestAnimationFrame(passo); })();
-    setTimeout(function () { scrivi(valore); }, 900);   // anche se l'animazione non gira
-  }
-  function cartello(S, i, stato, voto) {
-    var X = S.L[i]; if (!X) return;
-    var r = X.cart.querySelector(".f.r");
-    if (stato === "giu") { X.cart.classList.remove("su", "gira"); return; }
-    if (voto != null) { r.className = "f r " + (voto ? "si" : "no"); r.textContent = voto ? "👍" : "👎"; }
-    X.cart.classList.add("su");
-    if (stato === "gira") X.cart.classList.add("gira");
-  }
-  function cartelliGiu(S) { S.L.forEach(function (X, i) { cartello(S, i, "giu"); }); }
-  function pubblico(S, tipo) {
-    var testi = { applauso: ["👏 Bravo!", "👏👏👏", "🔥 Grande!", "👏 Evviva!"], ohh: ["😮 Ohhh…", "😱 Nooo!", "😬 Ahia…"] };
-    var l = testi[tipo] || testi.applauso;
-    S.fumetto.textContent = l[Math.floor(Math.random() * l.length)];
-    S.fumetto.classList.remove("on"); void S.fumetto.offsetWidth; S.fumetto.classList.add("on");
-    if (tipo === "applauso") {
-      S.pubWrap.classList.add("salta");
-      S.flash.forEach(function (f, k) { setTimeout(function () { f.classList.remove("on"); void f.offsetWidth; f.classList.add("on"); }, 100 + Math.random() * 1300); });
-      setTimeout(function () { S.pubWrap.classList.remove("salta"); }, 1900);
-      FX.applauso();
-    } else FX.ohh();
-  }
-  function logoSchermo(S) {
-    fermaTimer(S);
-    S.sch.innerHTML = "<div class='st-idle'><div class='stelle'>★ ★ ★</div><div class='logo'>LA LINEA<br>DEL TEMPO</div><div class='sotto'>il game show</div></div>";
-  }
 
   // ---------- il gioco sul maxischermo ----------
   // o: { giocatori, turnoId, stato, sotto, rimMs, onScaduto, carta, linea, scegli, sel, tent, nuovo, chiave }
@@ -25380,43 +25769,6 @@ window.SG_SIPERO = {
     });
   }
 
-  // ---------- LA REGIA: i momenti dello spettacolo ----------
-  async function apertura(S) {
-    viaBarra(S); logoSchermo(S);
-    await suPubblico(S, 0, 0);
-    terzo(S, null, "In diretta dallo studio", "La linea del tempo", "📺");
-    pubblico(S, "applauso");
-    await dorme(600); await suSchermo(S, 1600); await dorme(400); await suPubblico(S, 1, 1600); viaTerzo(S);
-    await largo(S, 1300); await dorme(400);
-    if (S.gioc.length <= 4) {
-      for (var i = 0; i < S.gioc.length; i++) {
-        if (!S.vivo()) return;
-        await suLeggio(S, i, 850); accendiSolo(S, i); faccia(S, i, "esulta");
-        terzo(S, i, S.gioc[i].nome, i === S.io ? "Sei tu! In bocca al lupo" : "Concorrente n° " + (i + 1));
-        await dorme(700); faccia(S, i, null); viaTerzo(S);
-      }
-      accendiSolo(S, -1);
-    } else {
-      for (var f = 0; f < S.file; f++) {
-        if (!S.vivo()) return;
-        var quanti = S.posti.filter(function (p) { return p.fila === f; }).length;
-        terzo(S, null, f === 0 ? "Ecco i concorrenti!" : "…e in seconda fila!", quanti + " concorrenti", "🎤");
-        await panFila(S, f, 2600, function (k) { accendi(S, k, true); faccia(S, k, "esulta"); setTimeout(function () { accendi(S, k, false); faccia(S, k, null); }, 900); });
-      }
-      viaTerzo(S);
-    }
-    await largo(S, 1000); await dorme(300);
-  }
-  // stacco su chi gioca prima di andare sul maxischermo
-  async function stacco(S, gi, sotto) {
-    viaBarra(S); cartelliGiu(S); tutteNormali(S);
-    accendiSolo(S, gi);
-    await suLeggio(S, gi, 900);
-    faccia(S, gi, "pensa");
-    terzo(S, gi, "Tocca a " + (S.gioc[gi] ? S.gioc[gi].nome : ""), sotto);
-    await dorme(1300);
-    viaTerzo(S); faccia(S, gi, null);
-  }
   // R = { gi, es: { giusto, anno, titolo, fatto, cat, scaduto, finito, nome }, voti: [{ i, d, giusto, delta }], dopo: [punti per indice] }
   async function rivelazione(S, R) {
     var el = S.t.el, es = R.es, ok = !!es.giusto;
@@ -25455,23 +25807,6 @@ window.SG_SIPERO = {
     R.dopo.forEach(function (p, i) { if (S.L[i] && S.L[i].valore !== p) puntiLeggio(S, i, p, 0); });
     cartelliGiu(S); tutteNormali(S); accendiSolo(S, -1);
   }
-  async function finaleStudio(S, vinc, punti) {
-    viaBarra(S); fermaTimer(S); logoSchermo(S); cartelliGiu(S);
-    await largo(S, 1000);
-    terzo(S, null, "Fine della puntata!", "E il vincitore è…", "🏁");
-    FX.rullo(1.6);
-    await dorme(1800); viaTerzo(S);
-    if (vinc >= 0) {
-      lampo(S); accendiSolo(S, vinc);
-      await suLeggio(S, vinc, 1100);
-      faccia(S, vinc, "esulta");
-      terzo(S, vinc, (S.gioc[vinc] ? S.gioc[vinc].nome : "") + " vince!", punti + " punti", "🏆");
-      pubblico(S, "applauso"); coriandoli(); FX.vittoria();
-      await dorme(3000); viaTerzo(S);
-    }
-    await largo(S, 1400); await dorme(700);
-  }
-
   var gioco = {
     id: "timeline",
     nome: "La linea del tempo",
@@ -25579,7 +25914,7 @@ window.SG_SIPERO = {
     stato._T = stato._io >= 0 ? creaTraccia({ online: false, carte: carte, tutteCat: tutteLeCategorie(t.impostazioni) }) : null;
     ordina(stato.linea);
     // lo studio: tutti sullo stesso telefono, quindi nessun "TU"
-    stato.S = creaStudio(t, stato.giocatori, { io: -1, esci: t.esci });
+    stato.S = creaStudio(t, stato.giocatori, { io: -1, esci: t.esci, titolo: OPZ_STUDIO.titolo, logo: OPZ_STUDIO.logo });
     apertura(stato.S).then(function () { turnoTel(t, stato); });
   }
   function attivi(stato) { var n = 0; stato.giocatori.forEach(function (g) { if (g.restano > 0) n++; }); return n; }
@@ -25649,7 +25984,7 @@ window.SG_SIPERO = {
     var cl = classificaPunti(stato.giocatori), io = stato.giocatori[stato._io];
     if (io) tFine(stato._T, cl, function (r) { return r.nome === io.nome; }, io.restano === 0);
     var vinc = -1; stato.giocatori.forEach(function (g, i) { if (vinc < 0 && cl[0] && g.nome === cl[0].nome) vinc = i; });
-    if (stato.S && stato.S.vivo()) await finaleStudio(stato.S, vinc, cl[0] ? cl[0].punti : 0);
+    if (stato.S && stato.S.vivo()) await ST.finale(stato.S, vinc, (cl[0] ? cl[0].punti : 0) + " punti");
     if (stato.S && !stato.S.vivo()) return;
     schermataFine(t, cl, function () { partenzaTelefono(t); });
   }
@@ -25856,7 +26191,7 @@ window.SG_SIPERO = {
     var ids = vm.giocatori.map(function (g) { return g.id; }).join("|");
     if (!REG || (!REG.S.vivo() && !REG.fineFatta)) {
       REG = { t: t, cb: cb, vm: vm, ids: ids };
-      REG.S = creaStudio(t, vm.giocatori, { io: idxDi(vm, cb.myId), esci: function () { cb.onEsci(); } });
+      REG.S = creaStudio(t, vm.giocatori, { io: idxDi(vm, cb.myId), esci: function () { cb.onEsci(); }, titolo: OPZ_STUDIO.titolo, logo: OPZ_STUDIO.logo });
       vm.giocatori.forEach(function (g, i) { puntiLeggio(REG.S, i, g.punti, 0); });
     } else if (REG.ids !== ids && REG.S.vivo()) {   // qualcuno è uscito: rifaccio i leggii
       REG.ids = ids; REG.S.impostaGiocatori(vm.giocatori, idxDi(vm, cb.myId));
@@ -25892,7 +26227,7 @@ window.SG_SIPERO = {
       if (R.fineFatta) return false;
       R.fineFatta = true; ultimaFase = "fine";
       var cl = vm.classifica || [], vinc = cl[0] ? idxDi(vm, cl[0].id) : -1;
-      await finaleStudio(S, vinc, cl[0] ? cl[0].punti : 0);
+      await ST.finale(S, vinc, (cl[0] ? cl[0].punti : 0) + " punti");
       schermataFine(R.t, cl, null); return true;
     }
     if (vm.fase === "turno" || vm.fase === "votazione") {

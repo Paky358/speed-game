@@ -49,6 +49,8 @@ OUT=dist/index.html
   [ -e js/ably-key.js ] && { cat js/ably-key.js; echo ''; }
   [ -e js/net-ably.js ] && { cat js/net-ably.js; echo ''; }
   [ -e js/net-p2p.js ] && { cat js/net-p2p.js; echo ''; }
+  cat js/studio.js   # lo studio del game show, condiviso dai giochi (prima dei giochi)
+  echo ''
   for f in data/*.js; do [ -e "$f" ] && { cat "$f"; echo ''; }; done
   for f in js/games/*.js; do [ -e "$f" ] && { cat "$f"; echo ''; }; done
   echo 'SG.avviaApp();'

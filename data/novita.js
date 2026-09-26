@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 130,
+    data: "26 settembre 2026",
+    titolo: "La Patata Bollente nello studio 💣📺",
+    descrizione: [
+      "Anche la Patata Bollente ora è un game show: sigla, pubblico, occhi di bue e tutti voi dietro ai leggii con il vostro avatar.",
+      "Si vota la categoria sul maxischermo; poi rullo di tamburi, la categoria esce e la bomba VOLA sul primo che la tiene.",
+      "Durante il gioco il maxischermo mostra categoria e conto alla rovescia gigante. Chi ha la bomba sta sotto l'occhio di bue, con la bomba che trema sulla testa e la faccia spaventata. Per passarla tocchi il leggio di chi la riceve (gli anelli verdi dicono chi puoi scegliere) e la bomba vola da un leggio all'altro.",
+      "Quando scade il tempo: BOOM! Lampo, scossa, fiammata e zoom sul leggio: chi esplode diventa grigio con la faccia bruciata e \"💀 OUT\", il pubblico fa \"ohhh\".",
+      "Il tempo della bomba non scende durante le animazioni (rivelazione e bomba che arriva): nessuno perde secondi, anche online.",
+      "Alla fine l'occhio di bue sul vincitore, coriandoli e podio con gli avatar."
+    ]
+  },
+  {
     v: 129,
     data: "26 settembre 2026",
     titolo: "Pubblico vivo e occhio di bue 🎤",
