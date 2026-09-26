@@ -1163,25 +1163,61 @@
   }
 
   // ---- AVATAR: il tuo personaggio stile Mii (disegno in js/omino.js; nel codice resta "omino") ----
+  // zoom: "viso" = sul palco la telecamera va sulla faccia; solo: "donna" = la scheda c'è solo per lei; look: in cima i look pronti
   var SEZ_OMINO = [
-    { nome: "Corpo", icona: "🧍", voci: [["forma", "Forma"], ["corpo", "Corporatura"], ["pelle", "Pelle"]] },
-    { nome: "Viso", icona: "🙂", voci: [["viso", "Forma del viso"], ["orecchie", "Orecchie"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
+    { nome: "Corpo", icona: "🧍", voci: [["forma", "Maschio o femmina"], ["corpo", "Corporatura"], ["pelle", "Pelle"]] },
+    { nome: "Viso", icona: "🙂", zoom: "viso", voci: [["viso", "Forma del viso"], ["orecchie", "Orecchie"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
                                ["guance", "Guance"], ["segno", "Segni particolari"]] },
-    { nome: "Trucco", icona: "💄", voci: [["ombretto", "Ombretto"], ["colOmbretto", "Colore ombretto"], ["eyeliner", "Eyeliner"], ["colEyeliner", "Colore eyeliner"], ["mascara", "Mascara"],
+    { nome: "Trucco", icona: "💄", zoom: "viso", solo: "donna", voci: [["ombretto", "Ombretto"], ["colOmbretto", "Colore ombretto"], ["eyeliner", "Eyeliner"], ["colEyeliner", "Colore eyeliner"], ["mascara", "Mascara"],
                                ["rossetto", "Rossetto"], ["colRossetto", "Colore rossetto"], ["blush", "Blush"], ["colBlush", "Colore blush"]] },
-    { nome: "Capelli", icona: "💇", voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
-    { nome: "Vestiti", icona: "👕", voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]] },
-    { nome: "Accessori", icona: "🎩", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"], ["borsa", "Borsa"], ["colBorsa", "Colore borsa"]] }
+    { nome: "Capelli", icona: "💇", zoom: "viso", voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
+    { nome: "Vestiti", icona: "👕", look: true, voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]] },
+    { nome: "Accessori", icona: "🎩", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali e maschere"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"], ["borsa", "Borsa"], ["colBorsa", "Colore borsa"]] },
+    { nome: "Extra", icona: "🎈", voci: [["mano", "In mano"], ["colMano", "Colore"], ["schiena", "Sulla schiena"], ["colSchiena", "Colore"], ["animale", "Animaletto"], ["colAnimale", "Colore del pelo"], ["pittura", "Pittura sul viso"]] }
   ];
-  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1 };
+  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1, colMano: 1, colSchiena: 1, colAnimale: 1 };
   var TRUCCO_COL = { colOmbretto: "ombretto", colEyeliner: "eyeliner", colRossetto: "rossetto", colBlush: "blush", colBorsa: "borsa" };   // il colore si vede solo se quel trucco c'è
-  var TRUCCO_VOCI = /^(ombretto|eyeliner|mascara|rossetto|blush|col(Ombretto|Eyeliner|Rossetto|Blush))$/;   // anteprime in primo piano sul viso
-  var OMINO_INTERO = { forma: 1, corpo: 1, sotto: 1, capo: 1, stampa: 1, borsa: 1 };   // anteprima a figura intera (le altre: solo la testa)
-  var ACC_COLORATI = /cappellino|berretto|fascia|cuffie|cilindro|cowboy|pescatore|basco|festa|gatto|cerchietto|fiocco|mollette|paglia/;   // cappelli con un colore da scegliere
-  var COLLO_COLORATI = /sciarpa|papillon|cravatta|bandana|foulard/;
-  var OMINO_LIBERO = { colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1 };   // colori dove c'è anche la tavolozza libera
+  var TRUCCO_VOCI = /^(ombretto|eyeliner|mascara|rossetto|blush|pittura|col(Ombretto|Eyeliner|Rossetto|Blush))$/;   // anteprime in primo piano sul viso
+  var OMINO_INTERO = { forma: 1, corpo: 1, sotto: 1, capo: 1, stampa: 1, borsa: 1, mano: 1, schiena: 1, animale: 1 };   // anteprima a figura intera (le altre: solo la testa)
+  var ACC_COLORATI = /cappellino|berretto|fascia|cuffie|cilindro|cowboy|pescatore|basco|festa|gatto|cerchietto|fiocco|mollette|paglia|coppola|borsalino|visiera|mago|antenne/;   // cappelli con un colore da scegliere
+  var COLLO_COLORATI = /sciarpa|papillon|cravatta|bandana|foulard|medaglia|fischietto|cuffiecollo/;
+  var COLORE_DI = { colMano: ["mano", /palloncino|fiore|microfono|tazza|libro/], colSchiena: ["schiena", /zaino|mantello|farfalla/], colAnimale: ["animale", /gatto|cane|coniglio/] };   // colore che compare solo con certe scelte
+  var OMINO_LIBERO = { colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1, colMano: 1, colSchiena: 1 };   // colori dove c'è anche la tavolozza libera
   var OMINO_RITOCCHI = [["occG", "Grandezza occhi"], ["occD", "Distanza occhi"], ["occA", "Altezza occhi"],
     ["soprA", "Altezza sopracciglia"], ["nasoG", "Grandezza naso"], ["boccaA", "Altezza bocca"]];
+  // LOOK PRONTI: un tocco e cambiano vestiti e accessori insieme (viso, capelli e corpo restano i tuoi)
+  var LOOK_BASE = { cappello: "nessuno", occhiali: "nessuno", collo: "nessuno", mano: "nessuno", schiena: "nessuna", animale: "nessuno", pittura: "nessuna", borsa: "nessuna", stampa: "nessuna" };
+  var LOOK = [
+    { nome: "Casual", tutti: { capo: "maglietta", maglia: 1, sotto: "jeans", pantaloni: 8, modScarpe: "sneakers", scarpe: 1 }, donna: { capo: "crop", maglia: 5, sotto: "shortsjeans", pantaloni: 9 } },
+    { nome: "Elegante", tutti: { capo: "giacca", maglia: 7, sotto: "pantaloni", pantaloni: 1, modScarpe: "eleganti", scarpe: 0, collo: "papillon", colCollo: 0 },
+      donna: { capo: "vestitolungo", maglia: 0, modScarpe: "tacchi", collo: "perle", orecchini: "perla" } },
+    { nome: "Sportivo", tutti: { capo: "sportiva", maglia: 1, sotto: "tuta", pantaloni: 1, modScarpe: "sneakers", scarpe: 1, cappello: "visiera", colAcc: 8, collo: "fischietto", colCollo: 7 },
+      donna: { maglia: 5, sotto: "leggings", collo: "nessuno" } },
+    { nome: "Rock", tutti: { capo: "bomber", maglia: 7, sotto: "strappati", pantaloni: 1, modScarpe: "anfibi", scarpe: 0, occhiali: "sole", collo: "catena" } },
+    { nome: "Estate", tutti: { capo: "camicia", maglia: 6, stampa: "fiori", sotto: "bermuda", pantaloni: 10, modScarpe: "infradito", scarpe: 3, cappello: "paglia", colAcc: 6, occhiali: "sole", mano: "gelato", collo: "lei" },
+      donna: { capo: "top", stampa: "nessuna", sotto: "shortsjeans", pantaloni: 9, modScarpe: "zeppe", occhiali: "grandi" } },
+    { nome: "Inverno", tutti: { capo: "cappotto", maglia: 2, sotto: "jeans", pantaloni: 1, modScarpe: "stivali", scarpe: 5, cappello: "berretto", colAcc: 0, collo: "sciarpa", colCollo: 0 } },
+    { nome: "Tifoso", tutti: { capo: "calcio", maglia: 1, stampa: "numero", sotto: "pantaloncini", pantaloni: 8, modScarpe: "sneakers", scarpe: 1, pittura: "tricolore", mano: "bandiera" } },
+    { nome: "Rapper", tutti: { capo: "felpa", maglia: 7, sotto: "cargo", pantaloni: 1, modScarpe: "sneakers", scarpe: 1, cappello: "cappellino", colAcc: 7, occhiali: "sole", collo: "catena", mano: "microfono", colMano: 7 } },
+    { nome: "Cuoco", tutti: { capo: "grembiule", maglia: 8, sotto: "pantaloni", pantaloni: 1, modScarpe: "sneakers", scarpe: 1, cappello: "chef", mano: "pizza" } },
+    { nome: "Avventura", tutti: { capo: "camicia", maglia: 3, sotto: "cargo", pantaloni: 10, modScarpe: "anfibi", scarpe: 5, cappello: "pescatore", colAcc: 3, schiena: "zaino", colSchiena: 2, animale: "cane", colAnimale: 4 } },
+    { nome: "Musica", tutti: { capo: "maglietta", maglia: 7, stampa: "nota", sotto: "strappati", pantaloni: 8, modScarpe: "sneakers", scarpe: 0, cappello: "borsalino", colAcc: 7, schiena: "chitarra" } },
+    { nome: "Pirata", tutti: { capo: "camicia", maglia: 8, stampa: "righe", sotto: "pantaloni", pantaloni: 2, modScarpe: "stivali", scarpe: 0, cappello: "pirata", occhiali: "benda", animale: "pappagallo", collo: "bandana", colCollo: 0 } },
+    { nome: "Mago", tutti: { capo: "maglione", maglia: 4, sotto: "pantaloni", pantaloni: 6, modScarpe: "stivaletti", scarpe: 5, cappello: "mago", colAcc: 4, schiena: "mantello", colSchiena: 4, mano: "bacchetta", occhiali: "tondi" } },
+    { nome: "Supereroe", tutti: { capo: "supereroe", maglia: 1, sotto: "leggings", pantaloni: 4, modScarpe: "stivali", scarpe: 2, schiena: "mantello", colSchiena: 0, occhiali: "mascherina" } },
+    { nome: "Festa", tutti: { capo: "maglietta", maglia: 5, stampa: "stella", sotto: "jeans", pantaloni: 8, modScarpe: "sneakers", scarpe: 4, cappello: "festa", colAcc: 3, occhiali: "stelle", mano: "palloncino", colMano: 0, pittura: "cuori" } },
+    { nome: "Natale", tutti: { capo: "maglione", maglia: 0, sotto: "jeans", pantaloni: 1, modScarpe: "stivali", scarpe: 5, cappello: "babbo", collo: "sciarpa", colCollo: 2, mano: "tazza", colMano: 0 } },
+    { nome: "Vichingo", tutti: { capo: "maglione", maglia: 2, sotto: "pantaloni", pantaloni: 2, modScarpe: "stivali", scarpe: 5, cappello: "vichingo", schiena: "mantello", colSchiena: 7 } },
+    { nome: "Angioletto", tutti: { capo: "maglione", maglia: 8, sotto: "pantaloni", pantaloni: 7, modScarpe: "sneakers", scarpe: 1, cappello: "aureola", schiena: "ali" }, donna: { capo: "vestito", modScarpe: "ballerine" } },
+    { nome: "Diavoletto", tutti: { capo: "felpa", maglia: 0, sotto: "jeans", pantaloni: 1, modScarpe: "anfibi", scarpe: 0, cappello: "corna", schiena: "pipistrello" } },
+    { nome: "Fatina", tutti: { capo: "maglietta", maglia: 5, sotto: "jeans", pantaloni: 9, modScarpe: "sneakers", scarpe: 1, cappello: "tiara", schiena: "farfalla", colSchiena: 5, mano: "bacchetta" }, donna: { capo: "vestito", modScarpe: "ballerine" } }
+  ];
+  function conLook(cfg, L) {
+    var c = {}, k, pezzi = [LOOK_BASE, L.tutti, cfg.forma === "donna" ? L.donna : L.uomo];
+    for (k in cfg) c[k] = cfg[k];
+    pezzi.forEach(function (p) { if (p) for (k in p) c[k] = p[k]; });
+    return c;
+  }
   // piccolo "pop" quando scegli qualcosa nell'editor (la vibrazione la fa già il tocco)
   function popOmino() {
     var ctx = audioCtx(); if (!ctx) return;
@@ -1201,8 +1237,7 @@
   }
   // il secondo avatar la prima volta: a caso, ma dell'altra forma (maschio <-> femmina)
   function secondoOmino(primo, nome) {
-    for (var i = 2; i < 40; i++) { var c = SGOmino.casuale(nome + "#" + i); if (c.forma !== primo.forma) return c; }
-    return SGOmino.casuale(nome + "#2");
+    return SGOmino.casuale(nome + "#2", primo.forma === "donna" ? "uomo" : "donna");
   }
   function schermataOmino(dopo) {
     var io = profiloAttivo();
@@ -1217,8 +1252,8 @@
     var s = schermata({});
     s.classList.add("editor-avatar");   // tutto in uno schermo, senza titolo: sul palco indietro, A caso e Salva; sotto scorrono solo le scelte
     var iniziali = bozze.map(function (b) { return O.norm(b); });   // com'erano all'ingresso (se esci senza salvare)
-    // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre
-    var figura = el("div", { class: "om-figura" });
+    // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre (toccalo: reagisce!)
+    var figura = el("div", { class: "om-figura", title: "Toccami!" });
     var puntini = el("div", { class: "om-puntini" });
     var palco = el("div", { class: "omino-palco editor" }, [el("div", { class: "om-faro" }), el("div", { class: "om-pedana" }), figura,
       puntini,
@@ -1236,7 +1271,9 @@
     }
     function scorri(dir) {   // dir: +1 = verso destra (il prossimo), -1 = verso sinistra
       bozze[slot] = cfg; slot = (slot + dir + bozze.length) % bozze.length; cfg = O.norm(bozze[slot]);
-      anteprima(false); disegnaPannello(); popOmino();
+      storia = []; aggAnnulla();
+      if (visibile(tab) < 0) tab = 0;
+      anteprima(false); disegnaSchede(); disegnaPannello(); popOmino();
       var sv = figura.firstChild;   // entra scivolando dal lato giusto
       if (sv && sv.animate) sv.animate([{ transform: "translateX(" + (dir * 90) + "px)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 320, easing: "cubic-bezier(.2,.8,.3,1)" });
     }
@@ -1251,29 +1288,79 @@
     var schede = el("div", { class: "omino-schede" });
     var pannello = el("div", { class: "omino-pannello" });
     s._contenuto.appendChild(palco); s._contenuto.appendChild(schede); s._contenuto.appendChild(pannello);
-    function unisci(k, v) { var c = {}; for (var x in cfg) c[x] = cfg[x]; c[k] = v; return c; }
-    function anteprima(salto) {
+    function unisci(k, v) {
+      if (k === "forma") return O.adattaForma(cfg, v);   // maschio/femmina: cambiano anche capelli, barba, trucco
+      var c = {}; for (var x in cfg) c[x] = cfg[x]; c[k] = v; return c;
+    }
+    function salto() {   // saltello senza ricalcolare la pagina (le anteprime sono tante)
+      var sv = figura.firstChild;
+      if (sv && sv.animate) sv.animate([{ transform: "none" }, { transform: "translateY(-12px) scale(.96,1.05)", offset: 0.3 },
+        { transform: "scale(1.05,.95)", offset: 0.62 }, { transform: "none" }], { duration: 450, easing: "cubic-bezier(.3,1.5,.5,1)" });
+    }
+    function anteprima(conSalto) {
+      clearTimeout(tReaz);
       figura.innerHTML = O.svg(cfg, { hd: true }); disegnaCambi();
-      if (salto) {   // saltello senza ricalcolare la pagina (le anteprime sono tante)
-        var sv = figura.firstChild;
-        if (sv && sv.animate) sv.animate([{ transform: "none" }, { transform: "translateY(-12px) scale(.96,1.05)", offset: 0.3 },
-          { transform: "scale(1.05,.95)", offset: 0.62 }, { transform: "none" }], { duration: 450, easing: "cubic-bezier(.3,1.5,.5,1)" });
-        popOmino();
-      }
+      if (conSalto) { salto(); popOmino(); }
     }
     var tSaluto = null;
     function saluta() {   // alza il braccio e fa "ciao"
       clearTimeout(tSaluto); figura.classList.remove("saluta"); void figura.offsetWidth; figura.classList.add("saluta");
       tSaluto = setTimeout(function () { figura.classList.remove("saluta"); }, 1100);
     }
+    // toccalo e reagisce: ride, fa l'occhiolino, si emoziona, saluta
+    var REAZIONI = [{ occhi: "felici", bocca: "risata" }, { occhi: "occhiolino", bocca: "linguaccia" }, null, { occhi: "stelline", bocca: "o" }], nReaz = 0, tReaz = null;
+    figura.addEventListener("click", function () {
+      var r = REAZIONI[nReaz++ % REAZIONI.length];
+      if (!r) { anteprima(false); saluta(); popOmino(); return; }
+      var c2 = {}, k; for (k in cfg) c2[k] = cfg[k]; for (k in r) c2[k] = r[k];
+      figura.innerHTML = O.svg(c2, { hd: true }); salto(); popOmino();
+      clearTimeout(tReaz); tReaz = setTimeout(function () { figura.innerHTML = O.svg(cfg, { hd: true }); }, 1200);
+    });
+    // ↩️ annulla l'ultima scelta
+    var storia = [], trascina = false;
+    function ricorda() { storia.push(JSON.stringify(cfg)); if (storia.length > 40) storia.shift(); aggAnnulla(); }
+    var bAnnulla = el("button", { class: "om-azione annulla", text: "↩️", "aria-label": "Annulla l'ultima scelta", onclick: function () {
+      if (!storia.length) return;
+      var prima = cfg.forma; cfg = JSON.parse(storia.pop()); aggAnnulla();
+      if (visibile(tab) < 0) tab = 0;
+      anteprima(true); if (prima !== cfg.forma) disegnaSchede(); disegnaPannello();
+    } });
+    function aggAnnulla() { bAnnulla.classList.toggle("spento", !storia.length); }
+    // le schede: il trucco c'è solo per lei; la telecamera va sul viso per viso, trucco e capelli
+    function visibile(i) {   // (se lui ha già del trucco salvato, la scheda resta per poterlo togliere)
+      var sz = SEZ_OMINO[i], trucco = ["ombretto", "eyeliner", "mascara", "rossetto", "blush"].some(function (k) { return cfg[k] && !/^nessun/.test(cfg[k]); });
+      return sz && (!sz.solo || sz.solo === cfg.forma || (sz.nome === "Trucco" && trucco)) ? i : -1;
+    }
     function disegnaSchede() {
-      schede.innerHTML = "";
-      SEZ_OMINO.forEach(function (sz, i) { schede.appendChild(el("button", { class: "cat-tab" + (i === tab ? " attiva" : ""),
-        onclick: function () { tab = i; disegnaSchede(); disegnaPannello(); pannello.scrollTop = 0; } }, [el("span", { class: "ci", text: sz.icona }), el("span", { text: sz.nome })])); });
+      schede.innerHTML = ""; var n = 0;
+      SEZ_OMINO.forEach(function (sz, i) {
+        if (visibile(i) < 0) return; n++;
+        schede.appendChild(el("button", { class: "cat-tab" + (i === tab ? " attiva" : ""),
+          onclick: function () { tab = i; disegnaSchede(); disegnaPannello(); pannello.scrollTop = 0; } }, [el("span", { class: "ci", text: sz.icona }), el("span", { text: sz.nome })]));
+      });
+      schede.style.gridTemplateColumns = "repeat(" + n + ",minmax(0,1fr))";
+      schede.classList.toggle("sette", n > 6);
+      var z = SEZ_OMINO[tab].zoom;
+      figura.classList.toggle("zoom-viso", z === "viso"); palco.classList.toggle("zoomato", !!z);
+    }
+    function nomeDi(k, val) {
+      if (k === "forma") return val === "donna" ? "👧 Femmina" : "👦 Maschio";
+      var n = (O.NOMI_K && O.NOMI_K[k] && O.NOMI_K[k][val]) || O.NOMI[val] || val;
+      return n.charAt(0).toUpperCase() + n.slice(1);
+    }
+    function opzMini(k, c) {   // l'anteprima giusta per ogni voce: gambe, viso da vicino, figura intera o solo la testa
+      return O.svg(c, /^(sotto|modScarpe)$/.test(k) ? { gambe: true } : (TRUCCO_VOCI.test(k) ? { viso: true, senzaOcchiali: k !== "pittura" } : { busto: !OMINO_INTERO[k], senzaCappello: /^(capelli|colCap)$/.test(k) }));
     }
     // aggiorna solo i riquadri (niente ricostruzione della schermata: non salta lo scroll)
     function aggiornaPannello(cambiata) {   // cambiata = voce appena scelta: le sue anteprime non cambiano, non si ridisegnano
       [].forEach.call(pannello.querySelectorAll(".om-opz"), function (b) {
+        if (b._look) {
+          var cl = conLook(cfg, b._look), uguale = true;
+          for (var kk in cl) if (cl[kk] !== cfg[kk]) { uguale = false; break; }
+          b.classList.toggle("attiva", uguale);
+          if (b._mini) b._mini.innerHTML = O.svg(cl);
+          return;
+        }
         var k = b._k, v = b._v;
         if (b._libero) {   // tavolozza libera: attiva se il colore è uno scelto a mano
           var mio = typeof cfg[k] === "string";
@@ -1281,31 +1368,74 @@
           return;
         }
         b.classList.toggle("attiva", cfg[k] === v);
-        if (b._mini && k !== cambiata) b._mini.innerHTML = O.svg(unisci(k, v), /^(sotto|modScarpe)$/.test(k) ? { gambe: true } : (TRUCCO_VOCI.test(k) ? { viso: true, senzaOcchiali: true } : { busto: !OMINO_INTERO[k], senzaCappello: /^(capelli|colCap)$/.test(k) }));
+        if (b._mini && k !== cambiata) b._mini.innerHTML = opzMini(k, unisci(k, v));
       });
     }
     function scegli(k, v, zitto) {
       if (cfg[k] === v) return;
-      if (zitto) { cfg[k] = v; anteprima(false); return; }   // mentre trascini (colore libero, cursori): niente saltelli
-      var rifai = /^(forma|cappello|collo)$/.test(k) || (/^(ombretto|eyeliner|rossetto|blush|borsa)$/.test(k) && /^nessun/.test(cfg[k]) !== /^nessun/.test(v));   // "Sotto" solo per la donna, i colori solo se servono
+      if (zitto) { if (!trascina) { ricorda(); trascina = true; } cfg[k] = v; anteprima(false); return; }   // mentre trascini (colore libero, cursori): niente saltelli
+      if (!trascina) ricorda(); trascina = false;
+      if (k === "forma") {   // maschio/femmina: si adattano capelli, barba, trucco e vestiti
+        cfg = O.adattaForma(cfg, v);
+        if (visibile(tab) < 0) tab = 0;
+        anteprima(true); disegnaSchede(); disegnaPannello(); return;
+      }
+      var rifai = /^(cappello|collo|mano|schiena|animale)$/.test(k) || (/^(ombretto|eyeliner|rossetto|blush|borsa)$/.test(k) && /^nessun/.test(cfg[k]) !== /^nessun/.test(v));   // i colori compaiono solo se servono
       if (k === "capo" && /^vestito/.test(cfg[k]) !== /^vestito/.test(v)) rifai = true;   // col vestito spariscono le voci "Sotto"
       cfg[k] = v;
-      if (k === "forma" && v === "uomo") {   // niente capi solo da donna sull'uomo
-        if (O.SOLO_DONNA.test(cfg.sotto)) cfg.sotto = "jeans";
-        if (O.SOLO_DONNA.test(cfg.capo)) cfg.capo = "maglietta";
-        if (O.SOLO_DONNA.test(cfg.modScarpe)) cfg.modScarpe = "sneakers";
-      }
+      // una mano sola: borsetta e oggetti in mano non vanno insieme
+      if (k === "mano" && !/^(nessuno|pallone)$/.test(v) && cfg.borsa === "borsetta") cfg.borsa = "nessuna";
+      if (k === "borsa" && v === "borsetta" && !/^(nessuno|pallone)$/.test(cfg.mano)) cfg.mano = "nessuno";
       anteprima(true); if (rifai) disegnaPannello(); else aggiornaPannello(k);
+    }
+    function applicaLook(L) {
+      ricorda(); cfg = conLook(cfg, L);
+      anteprima(true); saluta(); disegnaPannello();
+    }
+    // 🎲 solo questa scheda: il resto non cambia
+    function acasoScheda() {
+      ricorda();
+      var donna = cfg.forma === "donna";
+      SEZ_OMINO[tab].voci.forEach(function (vc) {
+        var k = vc[0], lista = O.OPZ[k];
+        if (k === "forma" || !lista || (k === "barba" && donna)) return;
+        if (OMINO_COLORI[k]) { cfg[k] = Math.floor(Math.random() * (k === "colCap" ? 7 : lista.length)); return; }
+        var ok = lista.filter(function (v) {
+          if (O.BLOCCATI[k] && O.BLOCCATI[k].indexOf(v) >= 0) return false;
+          if (!donna && /^(sotto|capo|modScarpe)$/.test(k) && O.SOLO_DONNA.test(v)) return false;
+          if (k === "capelli") return donna ? O.CAPELLI_UOMO.indexOf(v) < 0 : O.CAPELLI_UOMO.indexOf(v) >= 0;
+          return true;
+        });
+        var niente = /^(nessun[oa]|no)$/.test(lista[0]) ? lista[0] : null;   // le cose "in più" non sempre
+        cfg[k] = niente && Math.random() < (/^(segno|guance)$/.test(k) ? 0.6 : 0.3) ? niente : ok[Math.floor(Math.random() * ok.length)];
+      });
+      if (!/^(nessuno|pallone)$/.test(cfg.mano) && cfg.borsa === "borsetta") cfg.borsa = "nessuna";
+      anteprima(true); disegnaPannello();
     }
     function disegnaPannello() {
       var st = pannello.scrollTop;   // ridisegnando non si torna in cima
       pannello.innerHTML = "";
-      SEZ_OMINO[tab].voci.forEach(function (vc) {
+      var sz = SEZ_OMINO[tab];
+      if (sz.nome !== "Corpo") pannello.appendChild(el("button", { class: "om-acaso", text: "🎲 " + sz.nome + " a caso", onclick: acasoScheda }));
+      if (sz.look) {   // i look pronti, in cima ai vestiti
+        pannello.appendChild(el("div", { class: "etichetta", text: "✨ Look pronti" }));
+        var rl = el("div", { class: "om-griglia" });
+        LOOK.forEach(function (L) {
+          var b = el("button", { class: "om-opz om-forma", onclick: function () { applicaLook(L); } });
+          b._mini = el("div", { class: "om-mini intero" }); b.appendChild(b._mini);
+          b.appendChild(el("div", { class: "om-nome", text: L.nome }));
+          b._look = L; rl.appendChild(b);
+        });
+        pannello.appendChild(rl);
+      }
+      sz.voci.forEach(function (vc) {
         var k = vc[0];
         if (k === "colAcc" && !ACC_COLORATI.test(cfg.cappello)) return;
         if (k === "colCollo" && !COLLO_COLORATI.test(cfg.collo)) return;
+        if (COLORE_DI[k] && !COLORE_DI[k][1].test(cfg[COLORE_DI[k][0]])) return;
         if (TRUCCO_COL[k] && /^nessun[oa]$/.test(cfg[TRUCCO_COL[k]])) return;
         if ((k === "sotto" || k === "pantaloni") && /^vestito/.test(cfg.capo)) return;   // il vestito copre anche sotto
+        if (k === "barba" && cfg.forma === "donna") return;   // lei niente barba
         var gruppi = k === "capelli" ? O.GRUPPI_CAPELLI : null;   // tagli divisi in Corti / Medi / Lunghi
         if (!gruppi) pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
         var riga = el("div", { class: "om-griglia" + (OMINO_COLORI[k] ? " colori" : "") });
@@ -1322,11 +1452,10 @@
             b = el("button", { class: "om-opz om-colore", style: "background:" + val, "aria-label": vc[1] + " " + (i + 1), onclick: function () { scegli(k, v); } });
           } else {
             var bloccato = !!(O.BLOCCATI[k] && O.BLOCCATI[k].indexOf(val) >= 0);
-            var nomeVis = O.NOMI[val] || val;
             b = el("button", { class: "om-opz om-forma" + (bloccato ? " bloccato" : ""), onclick: function () { if (!bloccato) scegli(k, v); } });
             b._mini = el("div", { class: "om-mini" + (/^(sotto|modScarpe)$/.test(k) ? " gambe" : (OMINO_INTERO[k] ? " intero" : "")) });
             b.appendChild(b._mini);
-            b.appendChild(el("div", { class: "om-nome", text: bloccato ? "🔒 coi trofei" : nomeVis.charAt(0).toUpperCase() + nomeVis.slice(1) }));
+            b.appendChild(el("div", { class: "om-nome", text: bloccato ? "🔒 coi trofei" : nomeDi(k, val) }));
           }
           b._k = k; b._v = v; riga.appendChild(b);
         });
@@ -1334,21 +1463,21 @@
           var ultimo = typeof cfg[k] === "string" ? cfg[k] : (O.OPZ[k][cfg[k]] || "#ffffff");
           var inp = el("input", { type: "color", value: ultimo, "aria-label": vc[1] + ": colore libero" });
           inp.addEventListener("input", function () { scegli(k, inp.value, true); });
-          inp.addEventListener("change", function () { cfg[k] = null; scegli(k, inp.value); });
+          inp.addEventListener("change", function () { if (!trascina) ricorda(); cfg[k] = null; trascina = true; scegli(k, inp.value); });
           var bl = el("label", { class: "om-opz om-colore om-libero", title: "Colore libero" }, [inp]);
           bl._k = k; bl._libero = true; riga.appendChild(bl);
         }
         pannello.appendChild(riga);
       });
       // ritocchi stile Mii (solo nella scheda Viso): cursori da -2 a +2
-      if (SEZ_OMINO[tab].nome === "Viso") {
+      if (sz.nome === "Viso") {
         pannello.appendChild(el("div", { class: "etichetta", text: "Ritocchi" }));
         OMINO_RITOCCHI.forEach(function (r) {
           var k = r[0], val = el("span", { class: "om-rit-val" });
           var cur = el("input", { type: "range", min: "-2", max: "2", step: "1", value: String(cfg[k] || 0), class: "om-cursore", "aria-label": r[1] });
           function scrivi() { var n = +cur.value; val.textContent = n > 0 ? "+" + n : String(n); }
           cur.addEventListener("input", function () { scrivi(); scegli(k, +cur.value, true); });
-          cur.addEventListener("change", function () { popOmino(); aggiornaPannello(); });
+          cur.addEventListener("change", function () { trascina = false; popOmino(); aggiornaPannello(); });
           scrivi();
           pannello.appendChild(el("div", { class: "om-ritocco" }, [el("span", { class: "om-rit-nome", text: r[1] }), cur, val]));
         });
@@ -1357,8 +1486,10 @@
       pannello.scrollTop = st;
     }
     palco.appendChild(el("button", { class: "om-azione caso", text: "🎲", "aria-label": "Personaggio a caso", onclick: function () {
-      cfg = O.norm(O.casuale()); anteprima(true); disegnaPannello();
+      ricorda(); cfg = O.norm(O.casuale()); if (visibile(tab) < 0) tab = 0;
+      anteprima(true); disegnaSchede(); disegnaPannello();
     } }));
+    palco.appendChild(bAnnulla); aggAnnulla();
     var salvato = false;
     palco.appendChild(el("button", { class: "om-azione salva", text: "✅ Salva", onclick: function () {
       if (salvato) return; salvato = true;

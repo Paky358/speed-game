@@ -9,6 +9,32 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 136,
+    data: "26 settembre 2026",
+    titolo: "Avatar rifatti: lui e lei, look pronti e tantissimi oggetti 🧍✨",
+    descrizione: [
+      "Maschio e femmina ora si distinguono subito. Lui ha spalle larghe e sopracciglia folte; lei ha la vita stretta, i fianchi morbidi, le ciglia e le labbra rosate.",
+      "Se passi da maschio a femmina (o viceversa), capelli, barba e trucco si adattano da soli. Gli avatar dei bot e dei giocatori senza profilo sono lui o lei in base al nome (Luca è un ragazzo, Anna una ragazza).",
+      "20 look pronti tra i vestiti: con un tocco diventi Pirata, Mago, Supereroe, Rapper, Tifoso, Cuoco, Angioletto, Diavoletto, Babbo Natale… Faccia, capelli e corpo restano i tuoi.",
+      "Nuova scheda \"Extra\": un oggetto in mano (palloncino, gelato, microfono, bacchetta magica, bandiera, pizza…), qualcosa sulla schiena (zaino, chitarra, mantello, ali d'angelo, ali di fata o di pipistrello), un animaletto (gatto, cane, coniglio, pulcino o pappagallo sulla spalla) e la pittura sul viso.",
+      "Tanti oggetti nuovi: 13 cappelli (coppola, borsalino, pirata, mago, cuoco, Babbo Natale, elmo vichingo, tiara, aureola, cornetti, orecchie da coniglio…), 6 occhiali e maschere, 5 cose al collo, 5 vestiti, 8 stampe, bermuda, mimetici, anfibi, infradito, pantofole e pattini.",
+      "Personalizzare è più divertente: in ogni scheda c'è il tasto \"🎲 a caso\" solo per quella parte, il tasto ↩️ annulla l'ultima scelta, la telecamera zooma sul viso quando scegli occhi, trucco e capelli, e se tocchi l'avatar ride, fa l'occhiolino o ti saluta."
+    ]
+  },
+  {
+    v: 135,
+    data: "26 settembre 2026",
+    titolo: "Black Jack più chiaro e più veloce 🃏",
+    descrizione: [
+      "Mentre giochi vedi sempre quanto ha il banco: Matt sta nell'angolo in basso a sinistra con il suo punteggio, anche quando la telecamera zooma su di te.",
+      "Quando tocca a Matt la telecamera va sulle sue carte, al centro, e solo quando è arrivata lui gira la carta coperta.",
+      "Sopra la testa di ognuno, oltre al nome, ci sono le fiches che ha. Le cifre hanno il punto: 1.000, 10.000.",
+      "Online si punta tutti insieme: ognuno fa la sua puntata dal suo telefono, senza aspettare il turno degli altri (e lo stesso per l'assicurazione).",
+      "Quando dividi, le carte arrivano una alla volta, come al casinò: prima giochi la prima mano, poi Matt dà la seconda carta all'altra.",
+      "Se qualcuno esce dalla partita online, il tavolo non resta più bloccato ad aspettarlo."
+    ]
+  },
+  {
     v: 134,
     data: "26 settembre 2026",
     titolo: "Nomi, Cose e Città online 🔗✍️",

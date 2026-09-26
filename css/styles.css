@@ -749,3 +749,17 @@ button.am-riga:active{ transform:scale(.985); }
 .am-etich{ margin:6px 0 0; }
 .am-etich:first-child{ margin-top:0; }
 .home-amici{ position:relative; }
+
+/* editor avatar: zoom sul viso, tasto annulla, "a caso" per scheda, l'avatar reagisce se lo tocchi */
+.editor-avatar .om-figura{ transition:transform .45s cubic-bezier(.3,.9,.3,1); transform-origin:50% 37%; cursor:pointer; }
+.editor-avatar .om-figura.zoom-viso{ transform:translateX(-50%) scale(1.8); }
+.om-pedana{ transition:opacity .3s; }
+.omino-palco.zoomato .om-pedana{ opacity:0; }
+.editor-avatar .om-azione.annulla{ right:8px; bottom:8px; width:42px; height:42px; padding:0; border-radius:50%; font-size:1.15rem; color:#eaf0ff; background:rgba(8,16,44,.65); box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.2); }
+.editor-avatar .om-azione.annulla.spento{ opacity:.35; }
+.om-acaso{ display:block; width:100%; margin:2px 0 8px; min-height:44px; border:0; border-radius:14px; font:inherit; font-weight:900; font-size:1rem; color:#fff; cursor:pointer;
+  background:linear-gradient(135deg,#7048e8,#4dabf7); box-shadow:0 4px 12px rgba(0,0,0,.25); }
+.om-acaso:active{ transform:scale(.97); }
+.editor-avatar .omino-schede.sette .cat-tab{ font-size:clamp(.54rem, 2.4vw, .74rem); }
+.editor-avatar .omino-schede .cat-tab{ min-width:0; overflow:hidden; }
+.editor-avatar .omino-schede .cat-tab span:last-child{ max-width:100%; overflow:hidden; text-overflow:clip; white-space:nowrap; }
