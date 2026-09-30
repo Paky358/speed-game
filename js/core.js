@@ -534,7 +534,43 @@
     { gioco: "scalinata", livello: "oro",      icona: "🏃", nome: "Maratona Verticale",     desc: "Sali 750 gradini in totale",                          stat: "gradini",           meta: 750 },
     { gioco: "scalinata", livello: "oro",      icona: "😈", nome: "Genio del Male",         desc: "Arriva in cima nel turno in cui tutti gli altri si scontrano", stat: "vinteAltriBloccati", meta: 1 },
     { gioco: "scalinata", livello: "diamante", icona: "🛗", nome: "Ascensore Privato",      desc: "Vinci in 3 turni: 5, 5, 5 senza mai scontrarti",      stat: "vinteIn3",          meta: 1 },
-    { gioco: "scalinata", livello: "diamante", icona: "👻", nome: "Il Fantasma",            desc: "Vinci senza subire nemmeno uno scontro",              stat: "vinteSenzaScontri", meta: 1 }
+    { gioco: "scalinata", livello: "diamante", icona: "👻", nome: "Il Fantasma",            desc: "Vinci senza subire nemmeno uno scontro",              stat: "vinteSenzaScontri", meta: 1 },
+    // ---- TRIS (26 set 2026, liste dell'utente; "Difficile" è il bot nuovo battibile, "Impossibile" resta imbattibile) ----
+    { gioco: "tris", livello: "bronzo",   icona: "✏️", nome: "Mossa d'Apertura",       desc: "Gioca la tua primissima partita",                              stat: "partite",         meta: 1 },
+    { gioco: "tris", livello: "bronzo",   icona: "⭕", nome: "Il Primo Tris",          desc: "Vinci una partita, in qualsiasi modo",                          stat: "vinte",           meta: 1 },
+    { gioco: "tris", livello: "bronzo",   icona: "🌱", nome: "Riscaldamento",          desc: "Batti il bot a livello Facile",                                stat: "vinteFacile",     meta: 1 },
+    { gioco: "tris", livello: "bronzo",   icona: "🤝", nome: "Nessun Vincitore",       desc: "Pareggia una partita: griglia piena e nessun tris",            stat: "pareggi",         meta: 1 },
+    { gioco: "tris", livello: "bronzo",   icona: "🔗", nome: "In Rete",                desc: "Gioca la tua prima partita online",                            stat: "online",          meta: 1 },
+    { gioco: "tris", livello: "argento",  icona: "🧠", nome: "Pensiero Laterale",      desc: "Batti il bot a livello Medio",                                 stat: "vinteMedio",      meta: 1 },
+    { gioco: "tris", livello: "argento",  icona: "📐", nome: "Geometria",              desc: "Vinci 5 partite chiudendo il tris in diagonale",               stat: "vinteDiagonale",  meta: 5 },
+    { gioco: "tris", livello: "argento",  icona: "⚔️", nome: "Spirito Competitivo",    desc: "Vinci 10 partite online",                                      stat: "vinteOnline",     meta: 10 },
+    { gioco: "tris", livello: "argento",  icona: "⚡", nome: "Scacco Matto in Tre",    desc: "Vinci mettendo solo 3 simboli (non vale contro il bot Facile)", stat: "vinteIn3",        meta: 1 },
+    { gioco: "tris", livello: "argento",  icona: "🕊️", nome: "Pace Fatta",             desc: "Pareggia 15 partite in tutto",                                 stat: "pareggi",         meta: 15 },
+    { gioco: "tris", livello: "oro",      icona: "🎓", nome: "Supera il Maestro",      desc: "Batti il bot a livello Difficile",                             stat: "vinteDifficile",  meta: 1 },
+    { gioco: "tris", livello: "oro",      icona: "🏅", nome: "Insuperabile",           desc: "Vinci 20 partite online",                                      stat: "vinteOnline",     meta: 20 },
+    { gioco: "tris", livello: "oro",      icona: "🧱", nome: "Muro Invalicabile",      desc: "Pareggia 5 partite di fila (senza vincere né perdere in mezzo)", stat: "serieParMax",   meta: 5 },
+    { gioco: "tris", livello: "oro",      icona: "🖊️", nome: "Grafomane",              desc: "Metti 200 simboli sulla griglia in tutto",                     stat: "simboli",         meta: 200 },
+    { gioco: "tris", livello: "diamante", icona: "👑", nome: "Dominio Totale",         desc: "Vinci 5 partite online di fila",                               stat: "serieOnlineMax",  meta: 5 },
+    { gioco: "tris", livello: "diamante", icona: "🤖", nome: "Intelligenza Superiore", desc: "Batti il bot Difficile 5 volte",                               stat: "vinteDifficile",  meta: 5 },
+    { gioco: "tris", livello: "diamante", icona: "🔮", nome: "Onniscienza",            desc: "Gioca 10 partite di fila contro il bot Difficile senza mai perdere", stat: "serieImbDiffMax", meta: 10 },
+    // ---- DROP 4 (Forza 4) ----
+    { gioco: "drop4", livello: "bronzo",   icona: "🟡", nome: "Battesimo di Gravità",   desc: "Gioca la tua primissima partita",                              stat: "partite",         meta: 1 },
+    { gioco: "drop4", livello: "bronzo",   icona: "🎉", nome: "Finalmente Forza 4!",    desc: "Vinci la tua prima partita",                                   stat: "vinte",           meta: 1 },
+    { gioco: "drop4", livello: "bronzo",   icona: "🌍", nome: "Sfida Globale",          desc: "Gioca la tua prima partita online",                            stat: "online",          meta: 1 },
+    { gioco: "drop4", livello: "bronzo",   icona: "🌱", nome: "Livello Base",           desc: "Batti il bot a livello Facile",                                stat: "vinteFacile",     meta: 1 },
+    { gioco: "drop4", livello: "bronzo",   icona: "🛑", nome: "Guastafeste",            desc: "Blocca 5 volte l'avversario che stava per fare 4",             stat: "blocchi",         meta: 5 },
+    { gioco: "drop4", livello: "argento",  icona: "🧠", nome: "Mente Tattica",          desc: "Batti il bot a livello Medio",                                 stat: "vinteMedio",      meta: 1 },
+    { gioco: "drop4", livello: "argento",  icona: "🗼", nome: "Costruttore di Torri",   desc: "Vinci 5 partite con 4 pedine in verticale",                    stat: "vinteVerticale",  meta: 5 },
+    { gioco: "drop4", livello: "argento",  icona: "➖", nome: "Orizzonte Piatto",       desc: "Vinci 5 partite con 4 pedine in orizzontale",                  stat: "vinteOrizzontale", meta: 5 },
+    { gioco: "drop4", livello: "argento",  icona: "⚔️", nome: "Gladiatore Online",      desc: "Vinci 10 partite online",                                      stat: "vinteOnline",     meta: 10 },
+    { gioco: "drop4", livello: "argento",  icona: "🏚️", nome: "Sfratto",                desc: "Vinci con più di 21 pedine sulla griglia",                     stat: "vinteSfratto",    meta: 1 },
+    { gioco: "drop4", livello: "oro",      icona: "🤖", nome: "Scacco alla Macchina",   desc: "Batti il bot a livello Difficile",                             stat: "vinteDifficile",  meta: 1 },
+    { gioco: "drop4", livello: "oro",      icona: "📐", nome: "Geometria Letale",       desc: "Vinci 10 partite con 4 pedine in diagonale",                   stat: "vinteDiagonale",  meta: 10 },
+    { gioco: "drop4", livello: "oro",      icona: "🏆", nome: "Leggenda della Griglia", desc: "Vinci 20 partite online",                                      stat: "vinteOnline",     meta: 20 },
+    { gioco: "drop4", livello: "oro",      icona: "🌧️", nome: "Pioggia di Gettoni",     desc: "Fai cadere 300 pedine in tutto",                               stat: "gettoni",         meta: 300 },
+    { gioco: "drop4", livello: "diamante", icona: "✨", nome: "Partita Perfetta",       desc: "Vinci mettendo solo 4 pedine (non vale contro il bot Facile)", stat: "vinteIn4",        meta: 1 },
+    { gioco: "drop4", livello: "diamante", icona: "💻", nome: "Dominio Cibernetico",    desc: "Batti il bot Difficile 5 volte",                               stat: "vinteDifficile",  meta: 5 },
+    { gioco: "drop4", livello: "diamante", icona: "🧊", nome: "Stallo Architettonico",  desc: "Pareggia una partita: griglia piena e nessuno fa 4",           stat: "pareggi",         meta: 1 },
   ];
 
   function valoreStat(prof, gioco, chiave) {
@@ -1606,14 +1642,14 @@
     }
     var s = schermata({ icona: torn ? "🏆" : "🎉", titolo: torn ? "Torneo" : "La sala",
       sotto: torn ? "Chi partecipa al torneo" : (g ? ("Si gioca a " + g.nome) : "Chi partecipa"),
-      indietro: schermataHome });
+      indietro: function () { if (!torn && g && modiDi(g).length > 1) schermataModo(g); else schermataHome(); } });
 
     var conta = el("p", { class: "modulo-nota" });
     var lista = el("div");
     var avanti = el("button", { class: "btn btn-primario", text: torn ? "Comincia il torneo ▶" : "Avanti ▶", onclick: function () {
       if (gruppo.length < (torn ? min : 1)) return;
       if (torn) return iniziaTorneo();
-      if (g) schermataPreGioco(g); else schermataScegliGioco();
+      if (g) schermataPreGioco(g, opts && opts.modo ? { modo: opts.modo } : null); else schermataScegliGioco();
     }});
 
     function ridisegna() {
@@ -1660,15 +1696,19 @@
   function schermataPreGioco(g, opts) {
     var torn = !!(opts && opts.torneo);
     var inSala = !!(opts && opts.sala);
+    var modo = inSala ? "online" : (opts && opts.modo) || null, M = modo ? modoDi(g, modo) : null, online = modo === "online";
+    var conAmici = !torn && !inSala && (!modo || (M && M.amici));   // la lista di chi gioca serve solo se si gioca sullo stesso telefono
     var s = schermata({ icona: g.icona, titolo: g.nome,
-      sotto: torn ? ("Torneo · " + nomeDifficolta(pesoGioco(g))) : (inSala ? "Sala · impostazioni" : "Impostazioni della partita"),
-      indietro: function () { if (torn) schermataTorneoHub(); else if (inSala) salaScegliGioco(); else schermataSala(g); } });
-    if (inSala) {
+      sotto: torn ? ("Torneo · " + nomeDifficolta(pesoGioco(g))) : (inSala ? "Sala · impostazioni" : (M ? M.icona + " " + M.nome + " · impostazioni" : "Impostazioni della partita")),
+      indietro: function () { if (torn) schermataTorneoHub(); else if (inSala) salaScegliGioco(); else if (conAmici) schermataSala(g, modo ? { modo: modo } : null); else if (modiDi(g).length > 1) schermataModo(g); else schermataHome(); } });
+    if (!conAmici && !torn && !inSala) {
+      if (online) s._contenuto.appendChild(el("p", { class: "modulo-nota sl-prima", text: "Scegli come giocare, poi apri la stanza: ti do il link da mandare agli amici e vi aspettate insieme nella saletta." }));
+    } else if (inSala) {
       s._contenuto.appendChild(el("div", { class: "sala-sommario" }, [
         el("span", { class: "chi", text: "👥 Sala · " + (sala ? sala.membri.length : 1) + " in gioco" }) ]));
     } else {
       s._contenuto.appendChild(el(torn ? "div" : "button", { class: "sala-sommario",
-        onclick: torn ? null : function () { schermataSala(g); } }, [
+        onclick: torn ? null : function () { schermataSala(g, modo ? { modo: modo } : null); } }, [
         el("span", { class: "chi", text: "👥 " + nomiGruppo().join(", ") }),
         torn ? null : el("span", { class: "modifica", text: "modifica" })
       ]));
@@ -1676,14 +1716,17 @@
     var impostazioni = {};
     if (typeof g.impostazioni === "function") {
       var box = el("div");
-      g.impostazioni(box, impostazioni, { el: el, torneo: torn, sala: inSala });
+      g.impostazioni(box, impostazioni, { el: el, torneo: torn, sala: inSala, modo: modo });
+      if (modo) impostazioni.modo = modo;   // il modo l'avete scelto prima: qui non si cambia
       s._contenuto.appendChild(box);
     }
     if (inSala) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "In una sala si gioca sempre online: appena cominci, gli altri entrano da soli." }));
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca",
       onclick: function () { schermataRegole(g, function () { schermataPreGioco(g, opts); }); } }));
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: inSala ? "Comincia per tutti ▶" : "Comincia ▶", onclick: function () {
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: inSala ? "Comincia per tutti ▶" : (online ? "🔗 Apri la stanza ▶" : "Comincia ▶"), onclick: function () {
       if (inSala) { impostazioni.modo = "online"; return salaLancia(g, impostazioni); }
+      if (modo) impostazioni.modo = modo;
+      if (!conAmici && !torn) { var io = profiloAttivo(), soloIo = [(io && io.nome) || nomiGruppo()[0] || "Giocatore 1"]; ultimaPartita = { gioco: g, impostazioni: impostazioni }; return avviaPartita(g, soloIo, impostazioni, opts); }   // online o contro il computer: ci sei solo tu (gli altri entrano dal link o sono bot)
       // online: l'host apre la stanza da solo, gli altri entrano via rete → niente vincolo di minimo qui
       if (!(impostazioni && impostazioni.modo === "online") && gruppo.length < (g.giocatoriMin || 2)) return schermataSala(g, opts);
       ultimaPartita = { gioco: g, impostazioni: impostazioni };
@@ -1875,11 +1918,186 @@
     mostra(s);
   }
 
-  // porta d'ingresso a un gioco dalla home: profilo → sala → impostazioni
+  // =========================================================
+  //  COME GIOCATE? — la prima scelta, prima di tutto il resto.
+  //  Ogni gioco dice i suoi modi "qui" (g.modi: un telefono, contro il computer…);
+  //  se si può giocare online si aggiunge da solo "Online".
+  //  amici: true = poi si aggiungono gli amici (solo per chi gioca sullo stesso telefono).
+  // =========================================================
+  var MODO_ONLINE = { modo: "online", icona: "🔗", nome: "Online", sotto: "Ognuno dal suo telefono: mandi il link agli amici" };
+  function modiDi(g) {
+    var m = (g && g.modi) ? g.modi.slice() : [];
+    if (giocoOnline(g)) m.push(MODO_ONLINE);
+    return m;
+  }
+  function modoDi(g, modo) { return modiDi(g).filter(function (m) { return m.modo === modo; })[0] || null; }
+  function schermataModo(g) {
+    var s = schermata({ icona: g.icona, titolo: g.nome, sotto: "Come giocate?", indietro: schermataHome });
+    var io = profiloAttivo(), griglia = el("div", { class: "modo-scelta" });
+    modiDi(g).forEach(function (m) {
+      griglia.appendChild(el("button", { class: "modo-grande" + (m.modo === "online" ? " online" : ""), onclick: function () { sceltoModo(g, m); } }, [
+        el("div", { class: "mg-ico", text: m.icona }),
+        el("div", { class: "mg-testo" }, [ el("div", { class: "mg-tit", text: m.nome }), el("div", { class: "mg-sotto", text: m.sotto || "" }) ]),
+        el("div", { class: "mg-freccia", text: "›" })
+      ]));
+    });
+    s._contenuto.appendChild(griglia);
+    if (io && io.omino && window.SGOmino) s._contenuto.appendChild(el("div", { class: "modo-avatar", html: SGOmino.svg(io.omino) }));
+    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca", onclick: function () { schermataRegole(g, function () { schermataModo(g); }); } }));
+    mostra(s);
+  }
+  function sceltoModo(g, m) {
+    if (m.amici) return schermataSala(g, { modo: m.modo });   // sullo stesso telefono: prima gli amici, poi le impostazioni
+    schermataPreGioco(g, { modo: m.modo });                  // contro il computer / online: subito le impostazioni
+  }
+
+  // =========================================================
+  //  SALETTA D'ATTESA ONLINE — uguale per tutti i giochi (t.lobby).
+  //  Chi è entrato aspetta coi personaggi in una saletta: respirano, sbattono le palpebre,
+  //  ogni tanto salutano o saltano; chi arriva entra con un saltello e dice "Ciao!".
+  //  Chi ospita vede in alto codice e "Manda il link", in fondo "Comincia".
+  //  o: { host, codice, pronta (false = sto aprendo), giocatori: [{ id, nome, omino, bot, host, tu }],
+  //       min, vuoti (posti liberi da mostrare), onComincia, onEsci, attesa (testo per chi aspetta),
+  //       extra: [nodi del gioco, es. scelta dei posti], nota, testoComincia }
+  //  Si aggiorna al suo posto (niente lampeggio): i personaggi già dentro restano, i nuovi entrano.
+  // =========================================================
+  var SL = { ultimo: null, timer: null };
+  function chiavePers(p, i) { return String(p.id != null ? p.id : (p.nome || i)); }
+  function condividiLink(link, g, bottone) {
+    var fatto = function () { if (!bottone) return; var t0 = bottone.innerHTML; bottone.innerHTML = "✅ Link copiato!"; setTimeout(function () { bottone.innerHTML = t0; }, 1800); };
+    if (navigator.share) { navigator.share({ title: g.nome, text: "Giochiamo a " + g.nome + "! Entra qui:", url: link }).catch(function () {}); return; }
+    try { navigator.clipboard.writeText(link).then(fatto, fatto); } catch (e) { fatto(); }
+  }
+  function saletta(g, o) {
+    o = o || {};
+    var U = SL.ultimo;
+    if (U && U.gid === g.id && U.host === !!o.host && document.body.contains(U.s)) { aggiornaSaletta(U, o); return U.s; }
+    var s = schermata({ icona: g.icona, titolo: g.nome, sotto: o.host ? "Online · la stanza è tua" : ("Online · stanza " + String(o.codice || "").toUpperCase()),
+      indietro: function () { if (o.host && !window.confirm("Chiudere la stanza per tutti?")) return; SL.ultimo = null; if (o.onEsci) o.onEsci(); } });
+    s.classList.add("saletta-schermo");
+    var U2 = { gid: g.id, host: !!o.host, s: s, figure: {}, o: o };
+    if (o.host) {
+      U2.cod = el("b", { text: "…" });
+      U2.link = el("button", { class: "btn btn-primario sl-link", html: "📤 Manda il link agli amici", onclick: function () { if (U2.linkUrl) condividiLink(U2.linkUrl, g, U2.link); } });
+      U2.stato = el("div", { class: "sl-stato" });
+      s._contenuto.appendChild(el("div", { class: "sl-invito" }, [ el("div", { class: "sl-cod" }, [ el("small", { text: "Codice" }), U2.cod ]), U2.link ]));
+      s._contenuto.appendChild(U2.stato);
+    }
+    // la saletta: muro, finestra, quadro col simbolo del gioco, orologio, pianta, divano e tappeto (uguale per tutti i giochi)
+    U2.stanza = el("div", { class: "sl-stanza" }, [ el("div", { class: "sl-muro" }), el("div", { class: "sl-insegna", text: "Sala d'attesa" }),
+      el("div", { class: "sl-finestra" }), el("div", { class: "sl-quadro" }, [ el("span", { text: g.icona || "🎲" }) ]),
+      el("div", { class: "sl-orologio", html: "<svg viewBox='0 0 40 40'><circle cx='20' cy='20' r='17' fill='#fff8e8' stroke='#6b4428' stroke-width='3'/><path d='M20 20 L20 9 M20 20 L28 24' stroke='#2b2b33' stroke-width='2.4' stroke-linecap='round'/><circle cx='20' cy='20' r='2' fill='#e03131'/></svg>" }),
+      el("div", { class: "sl-pavimento" }), el("div", { class: "sl-tappeto" }), el("div", { class: "sl-divano" }),
+      el("div", { class: "sl-pianta", html: "<svg viewBox='0 0 60 80'><path d='M30 50 C18 40 8 30 10 14 C20 22 26 34 30 50 Z' fill='#40c057'/><path d='M30 50 C42 40 52 30 50 12 C40 22 34 34 30 50 Z' fill='#2f9e44'/><path d='M30 52 C26 36 28 18 34 4 C38 20 36 36 30 52 Z' fill='#51cf66'/><path d='M16 50 L44 50 L40 78 L20 78 Z' fill='#c9713a' stroke='#8a4a22' stroke-width='2' stroke-linejoin='round'/><rect x='14' y='47' width='32' height='7' rx='2' fill='#d9854a' stroke='#8a4a22' stroke-width='2'/></svg>" }) ]);
+    U2.conta = el("div", { class: "sl-conta" });
+    U2.stanza.appendChild(U2.conta);
+    s._contenuto.appendChild(U2.stanza);
+    U2.extra = el("div", { class: "sl-extra" });
+    s._contenuto.appendChild(U2.extra);
+    if (!o.host) {
+      U2.attesa = el("div", { class: "sl-att-testo" });
+      U2.consiglio = el("div", { class: "sl-consiglio" });
+      s._contenuto.appendChild(el("div", { class: "sl-attesa" }, [ el("div", { class: "sl-att-tit", text: "✅ Sei dentro!" }), U2.attesa, U2.consiglio ]));
+    } else {
+      U2.go = el("button", { class: "btn btn-primario", onclick: function () { if (!U2.go.disabled && U2.o.onComincia) U2.o.onComincia(); } });
+      U2.nota = el("p", { class: "modulo-nota sl-nota" });
+      s._piede.appendChild(U2.go); s._piede.appendChild(U2.nota);
+    }
+    SL.ultimo = U2;
+    aggiornaSaletta(U2, o);
+    mostra(s);
+    avviaAnimeSaletta();
+    return s;
+  }
+  var CONSIGLI_SL = ["Tocca il tuo personaggio: ti saluta! 👋", "Mentre aspetti puoi cambiare avatar dal profilo, la prossima volta.", "Tocca gli altri personaggi: saltano! 🤸", "Appena l'host fa partire, il gioco si apre da solo."];
+  function aggiornaSaletta(U, o) {
+    U.o = o;
+    var gio = (o.giocatori || []).slice();
+    if (U.host) {
+      var pronto = o.codice && o.codice !== "…";
+      U.cod.textContent = pronto ? String(o.codice).toUpperCase() : "…";
+      U.linkUrl = pronto ? SG.creaLink({ gioco: U.gid, stanza: o.codice }) : "";
+      if (pronto) U.link.removeAttribute("disabled"); else U.link.setAttribute("disabled", "disabled");
+      var aperta = pronto && o.pronta !== false;
+      U.stato.className = "sl-stato" + (aperta ? "" : " giallo");
+      U.stato.textContent = aperta ? "🟢 Stanza aperta: chi apre il link entra qui sotto" : "🟡 Sto aprendo la stanza…";
+      var veri = gio.filter(function (p) { return !p.bot; }).length, min = o.min || 2;
+      U.go.textContent = o.testoComincia || "Comincia ▶";
+      if ((veri < min && !o.puoiDaSolo) || o.puoComincia === false) U.go.setAttribute("disabled", "disabled"); else U.go.removeAttribute("disabled");   // puoComincia: il gioco può chiedere altro (es. le squadre fatte)
+      U.nota.textContent = o.nota || (veri < min && !o.puoiDaSolo ? "Aspettiamo gli amici: " + (veri === 1 ? "per ora ci sei solo tu." : "servono almeno " + min + " giocatori.") : "Quando ci siete tutti, fai partire la partita.");
+    } else {
+      var chiHost = gio.filter(function (p) { return p.host; })[0];
+      U.attesa.textContent = o.attesa || ("Aspetta che " + (chiHost ? chiHost.nome : "l'host") + " faccia partire la partita…");
+      if (!U.consiglio.textContent) U.consiglio.textContent = CONSIGLI_SL[Math.floor(Math.random() * CONSIGLI_SL.length)];
+    }
+    // i nodi del gioco sotto la saletta (es. scelta del posto): si rimettono solo se sono cambiati
+    var ex = (o.extra || []).filter(Boolean);
+    if (ex.length !== U.extra.childNodes.length || ex.some(function (n, i) { return U.extra.childNodes[i] !== n; })) { svuota(U.extra); ex.forEach(function (n) { U.extra.appendChild(n); }); }
+    // i personaggi: chi c'è già resta (niente lampeggio), chi arriva entra col saltello, chi esce sparisce
+    var tieni = {}, n = gio.length, vuoti = Math.max(0, o.vuoti || 0), tot = n + vuoti, due = tot > 5;
+    var primaFila = due ? Math.ceil(tot / 2) : tot;
+    function posto(i) {   // due file: dietro (più piccoli e più in alto) e davanti
+      var dietro = due && i < primaFila, fila = dietro ? primaFila : tot - (due ? primaFila : 0), k = dietro || !due ? i : i - primaFila;
+      return { x: ((k + 0.5) / fila) * 100, dietro: dietro };
+    }
+    gio.forEach(function (p, i) {
+      var k = chiavePers(p, i), f = U.figure[k], cfg = p.omino || (window.SGOmino ? SGOmino.casuale(p.nome || k) : null), sig = JSON.stringify(cfg) + "|" + p.nome + "|" + !!p.tu + "|" + !!p.host + "|" + !!p.bot;
+      if (!f) {
+        f = { nodo: el("div", { class: "sl-av entra" }), sig: "" };
+        f.nodo.addEventListener("click", function () { animaAv(f.nodo, f.tu ? "saluta" : "salta"); });
+        U.figure[k] = f; U.stanza.appendChild(f.nodo);
+        (function (nodo) { setTimeout(function () { nodo.classList.remove("entra"); }, 700); })(f.nodo);
+        if (!p.tu && U.visti) { var ciao = el("div", { class: "sl-ciao", text: "Ciao! 👋" }); f.nodo.appendChild(ciao); setTimeout(function () { if (ciao.parentNode) ciao.parentNode.removeChild(ciao); }, 2200); }
+      }
+      if (f.sig !== sig) {
+        f.sig = sig; f.tu = !!p.tu;
+        var vecchiaCiao = f.nodo.querySelector(".sl-ciao");
+        f.nodo.innerHTML = "";
+        f.nodo.appendChild(el("div", { class: "sl-fig", html: cfg && window.SGOmino ? SGOmino.svg(cfg) : "<div class='sl-emo'>🙂</div>" }));
+        f.nodo.appendChild(el("div", { class: "sl-nome" + (p.tu ? " tu" : "") }, [ p.host ? el("span", { class: "sl-cor", text: "👑" }) : null, document.createTextNode(p.tu ? "Tu" : (p.nome || "…")), p.bot ? el("span", { text: " 🤖" }) : null ]));
+        if (vecchiaCiao) f.nodo.appendChild(vecchiaCiao);
+      }
+      var ps = posto(i);
+      f.nodo.classList.toggle("dietro", ps.dietro); f.nodo.classList.toggle("tu", !!p.tu); f.nodo.classList.toggle("bot", !!p.bot);
+      f.nodo.style.left = ps.x.toFixed(2) + "%";
+      f.nodo.style.animationDelay = (-(i * 0.7) % 3).toFixed(2) + "s";
+      tieni[k] = true;
+    });
+    Object.keys(U.figure).forEach(function (k) {
+      if (tieni[k]) return;
+      var nodo = U.figure[k].nodo; delete U.figure[k];
+      nodo.classList.add("esce"); setTimeout(function () { if (nodo.parentNode) nodo.parentNode.removeChild(nodo); }, 450);
+    });
+    // i posti liberi: sagome tratteggiate
+    [].slice.call(U.stanza.querySelectorAll(".sl-vuoto")).forEach(function (v) { v.parentNode.removeChild(v); });
+    for (var v = 0; v < vuoti; v++) { var pv = posto(n + v); U.stanza.appendChild(el("div", { class: "sl-av sl-vuoto" + (pv.dietro ? " dietro" : ""), style: "left:" + pv.x.toFixed(2) + "%" }, [ el("div", { class: "sl-sagoma" }), el("div", { class: "sl-nome", text: "posto libero" }) ])); }
+    U.stanza.classList.toggle("piena", due); U.stanza.classList.toggle("pochi", tot <= 3); U.stanza.classList.toggle("medi", tot > 3 && tot <= 5);
+    U.conta.textContent = n === 1 ? "1 in sala" : n + " in sala";
+    U.visti = true;
+  }
+  function animaAv(nodo, cosa) {
+    if (!nodo || nodo.classList.contains("salta") || nodo.classList.contains("saluta")) return;
+    nodo.classList.add(cosa); setTimeout(function () { nodo.classList.remove(cosa); }, cosa === "saluta" ? 1100 : 650);
+  }
+  // ogni tanto qualcuno saluta o fa un saltello (un solo orologio per tutte le salette)
+  function avviaAnimeSaletta() {
+    if (SL.timer) return;
+    SL.timer = setInterval(function () {
+      var U = SL.ultimo;
+      if (!U || !document.body.contains(U.s)) { clearInterval(SL.timer); SL.timer = null; return; }
+      if (document.hidden) return;
+      var nodi = [].slice.call(U.stanza.querySelectorAll(".sl-av:not(.sl-vuoto)"));
+      if (nodi.length) animaAv(nodi[Math.floor(Math.random() * nodi.length)], Math.random() < 0.45 ? "saluta" : "salta");
+    }, 2600);
+  }
+  // porta d'ingresso a un gioco dalla home: profilo → come giocate → (amici) → impostazioni
   function apriGioco(g) {
-    if (!profiloAttivo()) return schermataAccesso(function () { schermataSala(g); });
-    if (gruppo.length >= (g.giocatoriMin || 2)) return schermataPreGioco(g);
-    schermataSala(g);
+    if (!profiloAttivo()) return schermataAccesso(function () { apriGioco(g); });
+    if (modiDi(g).length > 1) return schermataModo(g);
+    var solo = modiDi(g)[0];
+    if (solo && !solo.amici) return schermataPreGioco(g, { modo: solo.modo });
+    if (!solo && (g.giocatoriMax || 10) <= 1) return schermataPreGioco(g);   // si gioca da soli (es. contro il computer): niente amici da aggiungere
+    schermataSala(g, solo ? { modo: solo.modo } : null);
   }
 
   // ---- Regole ----
@@ -2077,6 +2295,10 @@
 
       // il nome del profilo di questo telefono (chi entra da un invito entra direttamente con questo)
       nomeProfilo: function () { var p = profiloAttivo(); return p && p.nome ? String(p.nome).trim().slice(0, 16) : ""; },
+      // l'avatar di questo telefono (da mandare quando si entra in una stanza online)
+      mioOmino: function (nome) { var p = profiloAttivo(); return (p && p.omino) || (window.SGOmino ? SGOmino.casuale(nome || (p && p.nome) || "io") : null); },
+      // la saletta d'attesa online, uguale per tutti i giochi (vedi saletta())
+      lobby: function (o) { return saletta(g, o); },
 
       // passaggio del telefono, poi esegue "quando"
       passaA: function (nome, quando) { passaIlTelefono(nome, quando); },

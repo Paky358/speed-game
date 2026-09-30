@@ -62,5 +62,7 @@ if [ -d carte ]; then rm -rf dist/carte && cp -r carte dist/carte; fi
 # App installabile: icone, manifest e service worker
 if [ -d app ]; then rm -rf dist/app && cp -r app dist/app; fi
 [ -e sw.js ] && cp sw.js dist/sw.js
+# Elenchi di parole caricati solo quando servono (es. Nomi, Cose e Città): restano file a parte, non pesano sull'app
+if [ -d parole ]; then rm -rf dist/parole && cp -r parole dist/parole; fi
 
 echo "Creato $OUT"

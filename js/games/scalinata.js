@@ -30,6 +30,7 @@
     icona: "🪜",
     descrizione: "In quattro sulla scala: scegli 1, 3 o 5. Avanza solo chi sceglie un numero che nessun altro ha scelto. Primo in cima, vince.",
     giocatoriMin: 1,
+    modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "In 4 (anche con i bot), vi passate il telefono", amici: true }],
     giocatoriMax: 4,
     difficolta: 2,
     regole: [
@@ -44,6 +45,7 @@
       var el = aiuti.el;
       dove.modo = "telefono";
       if (aiuti.torneo) return; // nel torneo si gioca sempre a un telefono solo
+      if (aiuti.modo) { dove.modo = aiuti.modo; return; }   // come giocare l'avete già scelto prima
       box.appendChild(el("div", { class: "etichetta", text: "Come si gioca" }));
       var nota = el("div", { class: "link-avviso", hidden: "hidden" });
       var bT, bO;
@@ -312,8 +314,9 @@
     vm.posti.forEach(function (p) { if (p.chosen && !beepStato.ids[p.id]) { beepStato.ids[p.id] = true; bipScala(); } });
   }
 
+  function avatarOk(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   function postiPubblici(st) {
-    return st.posti.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, passi: p.passi, bot: p.bot, chosen: p.scelta != null }; });
+    return st.posti.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, passi: p.passi, bot: p.bot, chosen: p.scelta != null, omino: p.omino || null }; });
   }
   function vmScala(st) {
     var vm = { fase: st.fase, codice: st.codice, pronta: st.pronta, nRound: st.nRound, traguardo: TRAGUARDO,
@@ -331,7 +334,7 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteScala(t);
     var st = {
       fase: "lobby", codice: "…", pronta: false, nRound: 0, iniziata: false, vincitore: null,
-      posti: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", colore: COLORI[0], bot: false, passi: 0, scelta: null }],
+      posti: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", colore: COLORI[0], bot: false, passi: 0, scelta: null, omino: t.mioOmino ? t.mioOmino() : null }],
       deadline: 0, timer: null
     };
     var T = nuovaTracciaScala();
@@ -348,7 +351,7 @@
         if (!m || !m.t) return;
         if (m.t === "join") {
           if (st.fase === "lobby" && !st.posti.some(function (p) { return p.id === id; }) && st.posti.length < 4)
-            st.posti.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), colore: COLORI[st.posti.length], bot: false, passi: 0, scelta: null });
+            st.posti.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), colore: COLORI[st.posti.length], bot: false, passi: 0, scelta: null, omino: avatarOk(m.omino) });
           bd();
         } else if (m.t === "scegli") registraScelta(id, m.n);
       },
@@ -447,7 +450,7 @@
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome });
+        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : null });
           setTimeout(function () { if (!S.vm && S.msg) S.msg.textContent = "Non trovo la partita. Controlla il codice, o l'host non ha ancora aperto la stanza…"; }, 8000); },
         onMsg: function (m) {
           if (!(m && m.t === "vm")) return;
@@ -493,37 +496,13 @@
     if (vm.fase !== "scelta") scenaScelta = null;
 
     // ---- lobby ----
-    if (vm.fase === "lobby") {
-      var s = t.schermata({ icona: "🪜", titolo: "La Scalinata · Lobby", sotto: "Ognuno dal suo telefono",
-        indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
-      if (cb.sonoHost) {
-        s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-        s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
-        if (vm.codice && vm.codice !== "…") {
-          var link = SG.creaLink({ gioco: "scalinata", stanza: vm.codice });
-          var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-          s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-            onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-          s._contenuto.appendChild(campo);
-        }
-        s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
-          text: vm.pronta ? "🟢 Stanza pronta — manda il codice agli amici" : "🟡 Sto aprendo la stanza… (attendi il verde)" }));
-      }
-      s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Chi c'è (" + vm.posti.length + " di 4)" }));
-      vm.posti.forEach(function (p) { s._contenuto.appendChild(rigaGiocatoreScala(el, p, p.id === myId)); });
+    if (vm.fase === "lobby") {   // la saletta d'attesa (uguale per tutti i giochi); i posti liberi li prendono i bot
       var liberi = 4 - vm.posti.length;
-      for (var bi = 0; bi < liberi; bi++) {
-        s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:rgba(255,255,255,.03);opacity:.6" }, [
-          el("span", { style: "width:16px;height:16px;border-radius:50%;background:" + COLORI[vm.posti.length + bi] }),
-          el("span", { style: "flex:1", text: "🤖 " + (NOMI_BOT[bi] || ("Bot " + (bi + 1))) }),
-          el("span", { class: "tenue", text: "bot" })
-        ]));
-      }
-      if (cb.sonoHost) {
-        s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: cb.onComincia }));
-        if (liberi > 0) s._piede.appendChild(el("p", { class: "modulo-nota", text: "I " + liberi + " posti liberi li riempiono dei bot." }));
-      } else s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci…" }));
-      return t.mostra(s);
+      t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 1, puoiDaSolo: true, vuoti: liberi,
+        giocatori: vm.posti.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === myId }; }),
+        nota: cb.sonoHost && liberi > 0 ? "Puoi cominciare quando vuoi: " + (liberi === 1 ? "il posto libero lo prende un bot." : "i " + liberi + " posti liberi li prendono i bot.") : null,
+        attesa: "Aspetta che l'host cominci la salita! 🪜", onComincia: cb.onComincia, onEsci: cb.onEsci });
+      return;
     }
 
     var gioc = vm.posti.map(function (p) { return { nome: p.nome, colore: p.colore, passi: p.passi }; });

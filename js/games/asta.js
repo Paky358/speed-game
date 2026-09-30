@@ -287,6 +287,7 @@
     icona: "🔨",
     descrizione: "Compra all'asta le carte migliori e costruisci il kit che gli altri voteranno.",
     giocatoriMin: 2,
+    modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono per rilanciare", amici: true }],
     giocatoriMax: MAX_GIOCATORI,
     difficolta: 3,   // Difficile — vale di più nel torneo (1 facile, 2 media, 3 difficile)
 
@@ -330,7 +331,8 @@
       box.appendChild(el("div", { class: "modo-griglia" }, [bTemi, bFanta]));
 
       // --- Come si gioca: un telefono solo oppure ognuno dal suo (vale per tutte e due) ---
-      if (!aiuti.torneo) {
+      if (aiuti.modo) dove.modo = aiuti.modo;   // l'avete già scelto prima
+      else if (!aiuti.torneo) {
       box.appendChild(el("div", { class: "etichetta", text: "Come si gioca" }));
       var notaOn = el("div", { class: "link-avviso", hidden: "hidden" });
       var bTel, bOnl;
@@ -393,7 +395,7 @@
 
       // --- Nota Fantacalcio (solo modalità Fantacalcio) ---
       wrapFanta.appendChild(el("div", { class: "link-avviso",
-        text: "⚽ 20 crediti a testa · rosa da 5 (1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante). I calciatori escono a sorpresa dal mazzo, uno alla volta." }));
+        text: "⚽ 20 crediti a testa · rosa da 5 (1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante). I calciatori escono dal mazzo uno alla volta, in ordine tutto a caso." }));
       box.appendChild(wrapFanta);
     },
 
@@ -702,7 +704,7 @@
       roundIdx: st.roundIdx, roundNome: r.nome, roundIcona: r.icona, totRound: TOT_ROUND,
       rounds: (st.tema.round || []).map(function (x) { return { nome: x.nome, icona: x.icona }; }),
       giocatori: st.giocatori.map(function (g) {
-        return { id: g.id, nome: g.nome, crediti: g.crediti, haCarta: st.senzaCarta.indexOf(g.id) < 0, kit: g.kit.slice() };
+        return { id: g.id, nome: g.nome, omino: g.omino || null, crediti: g.crediti, haCarta: st.senzaCarta.indexOf(g.id) < 0, kit: g.kit.slice() };
       }),
       tavolo: st.tavolo.map(function (c) { return { nome: c.nome, emoji: c.emoji, tier: c.tier }; }),
       sceglieId: sceglie, sceglieNome: sceglie ? nomeDi(st, sceglie) : "",
@@ -724,7 +726,7 @@
       tema: tema, crediti: crediti, roundIdx: 0, chooserPtr: 0,
       tavolo: [], senzaCarta: [], asta: null, esito: null, classifica: null,
       fase: "lobby", iniziata: false, codice: "…", scadenza: null, _to: null, voti: {},
-      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: crediti, kit: [], stelle: 0 }]
+      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: crediti, kit: [], stelle: 0, omino: t.mioOmino ? t.mioOmino() : null }]
     };
     function stopTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
 
@@ -747,7 +749,7 @@
         if (!m || !m.t) return;
         if (m.t === "join") {
           if (!st.iniziata && !perId(st, id) && st.giocatori.length < MAX_GIOCATORI)
-            st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: st.crediti, kit: [], stelle: 0 });
+            st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: st.crediti, kit: [], stelle: 0, omino: avatarOk(m.omino) });
           bd();
         }
         else if (m.t === "scegli") scegli(id, m.idx);
@@ -935,7 +937,7 @@
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome });
+        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : null });
           setTimeout(function () { if (!S.vm && S.msg) S.msg.textContent = "Non trovo la partita. Controlla il codice, o l'host non ha ancora aperto la stanza…"; }, 8000); },
         onMsg: function (m) { if (m && m.t === "vm") { S.vm = m.vm; disegna(); } },
         onChiuso: function () { erroreSchermo(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
@@ -1207,50 +1209,27 @@
     return "L'Asta";
   }
 
+  function avatarOk(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   function lobbyAsta(t, vm, cb) {
-    var el = t.el;
-    var s = t.schermata({ icona: "🔨", titolo: "Sala d'attesa",
-      sotto: cb.sonoHost ? "Invita gli amici" : "Aspetta l'inizio", indietro: cb.onEsci });
-    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-    s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
-    if (cb.sonoHost && vm.codice && vm.codice !== "…") {
-      var link = SG.creaLink({ gioco: "asta", stanza: vm.codice });
-      var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-      s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-        onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-      s._contenuto.appendChild(campo);
-    }
+    var el = t.el, info = el("div");
     if (vm.formato === "fanta") {
-      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Modalità" }));
-      s._contenuto.appendChild(el("p", { class: "as-msg", text: "⚽ Mini asta Fantacalcio — rosa da 5 (1 P, 1 D, 2 C, 1 A), 20 crediti a testa." }));
+      info.appendChild(el("div", { class: "etichetta", text: "Modalità" }));
+      info.appendChild(el("p", { class: "as-msg", text: "⚽ Mini asta Fantacalcio — rosa da 5 (1 P, 1 D, 2 C, 1 A), 20 crediti a testa." }));
     } else {
-      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Argomento dell'asta" }));
+      info.appendChild(el("div", { class: "etichetta", text: "Argomento dell'asta" }));
       if (cb.sonoHost && vm.temi && vm.temi.length > 1) {
         var g = el("div", { class: "cat-griglia" });
         vm.temi.forEach(function (tm, i) {
           g.appendChild(el("button", { class: "cat-chip" + (tm.id === vm.temaId ? " attiva" : ""), onclick: function () { cb.onTema(i); } }, [
-            el("span", { class: "ci", text: tm.icona }), el("span", { text: tm.nome }), el("span", { class: "spunta", text: "✓" })
-          ]));
+            el("span", { class: "ci", text: tm.icona }), el("span", { text: tm.nome }), el("span", { class: "spunta", text: "✓" }) ]));
         });
-        s._contenuto.appendChild(g);
-      } else {
-        s._contenuto.appendChild(el("p", { class: "as-msg", text: vm.temaIcona + " " + vm.temaNome }));
-      }
+        info.appendChild(g);
+      } else info.appendChild(el("p", { class: "as-msg", text: vm.temaIcona + " " + vm.temaNome }));
     }
-    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Chi c'è (" + vm.giocatori.length + ")" }));
-    var lista = el("div");
-    vm.giocatori.forEach(function (g) {
-      lista.appendChild(el("div", { class: "lobby-giocatore",
-        text: "🙂 " + g.nome + (g.id === cb.myId ? " (tu)" : "") + " · " + g.crediti + " 💰" }));
-    });
-    s._contenuto.appendChild(lista);
-    if (cb.sonoHost) {
-      var b = el("button", { class: "btn btn-primario",
-        text: vm.giocatori.length < 2 ? "Servono almeno 2 giocatori" : "Comincia ▶", onclick: cb.onComincia });
-      if (vm.giocatori.length < 2) b.disabled = true;
-      s._piede.appendChild(b);
-    } else s._piede.appendChild(el("p", { class: "as-msg", text: "In attesa che l'host cominci…" }));
-    t.mostra(s);
+    t.lobby({ host: cb.sonoHost, codice: vm.codice, min: 2,
+      giocatori: vm.giocatori.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
+      extra: [info], attesa: "Aspetta che l'host cominci l'asta: tieni pronti i crediti! 💰",
+      onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
   function schermataFineAsta(t, vm, cb) {
@@ -1339,15 +1318,15 @@
     return out;
   }
 
-  // mazzo "truccato": A+B mescolati sopra, C mescolati in fondo
+  // il mazzo: i calciatori escono in un ordine TUTTO a caso (forti e scarsi mescolati, nessun ordine nascosto)
   function costruisciMazzoFanta(n) {
     var db = window.SG_FANTA_CALCIATORI || {};
-    var need = { P: n, D: n, C: 2 * n, A: n }, sopra = [], fondo = [];
+    var need = { P: n, D: n, C: 2 * n, A: n }, tutti = [];
     FANTA_ORD.forEach(function (r) {
       if (!db[r]) return;
-      pescaRuolo(db[r], need[r], r).forEach(function (c) { (c.tier === "C" ? fondo : sopra).push(c); });
+      tutti = tutti.concat(pescaRuolo(db[r], need[r], r));
     });
-    return mischia(sopra).concat(mischia(fondo));
+    return mischia(tutti);
   }
 
   function assegnaFanta(g, carta, prezzo) {
@@ -1573,7 +1552,7 @@
     var st = {
       formato: "fanta", crediti: FANTA_BUDGET, mazzo: [], asta: null, esito: null, classifica: null,
       fase: "lobby", iniziata: false, codice: "…", scadenza: null, _to: null, voti: {}, giriVuoti: 0,
-      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0 }]
+      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, omino: t.mioOmino ? t.mioOmino() : null }]
     };
     function stopTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
 
@@ -1594,7 +1573,7 @@
         if (!m || !m.t) return;
         if (m.t === "join") {
           if (!st.iniziata && !perId(st, id) && st.giocatori.length < MAX_GIOCATORI)
-            st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0 });
+            st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, omino: avatarOk(m.omino) });
           bd();
         }
         else if (m.t === "rilancia") rilanciaO(id);
@@ -1703,7 +1682,7 @@
     return {
       formato: "fanta", fase: st.fase, codice: st.codice,
       giocatori: st.giocatori.map(function (g) {
-        return { id: g.id, nome: g.nome, crediti: g.crediti, conta: { P: g.conta.P, D: g.conta.D, C: g.conta.C, A: g.conta.A },
+        return { id: g.id, nome: g.nome, omino: g.omino || null, crediti: g.crediti, conta: { P: g.conta.P, D: g.conta.D, C: g.conta.C, A: g.conta.A },
           vuoti: slotVuoti(g), max: maxFanta(g), kit: g.kit.slice() };
       }),
       asta: st.asta ? {

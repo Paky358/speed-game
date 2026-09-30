@@ -497,9 +497,9 @@
     function tornaLobby() { fase = "lobby"; ST = null; lobbyAgg(); }
     function chiudi() { if (loop) cancelAnimationFrame(loop); if (ref) ref.rimuovi(); if (rete) rete.chiudi(); }
 
-    function lobbyAgg() { if (fase !== "lobby") return; rete.invia({ t: "lobby", codice: codice, pronta: pronta, lanc: lanc, seggi: seggi(), nomi: nomi }); disegnaLobby(); }
+    function lobbyAgg() { if (fase !== "lobby") return; rete.invia({ t: "lobby", codice: codice, pronta: pronta, lanc: lanc, seggi: seggi(), nomi: nomi, omini: omini }); disegnaLobby(); }
     function disegnaLobby() { if (fase !== "lobby") return;
-      renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", lanc: lanc, seggi: seggi(), nomi: nomi },
+      renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", lanc: lanc, seggi: seggi(), nomi: nomi, omini: omini },
         { onComincia: inizia,
           onHostLanc: function () { hostVaA("L"); lobbyAgg(); },
           onHostSeat: function (i) { hostVaA(i); lobbyAgg(); },
@@ -587,7 +587,7 @@
     }
     function avviaGiro() { if (!S.raf) { S._last = performance.now(); S.raf = requestAnimationFrame(giro); } }
     function fermaGiro() { if (S.raf) cancelAnimationFrame(S.raf); S.raf = null; }
-    function mostraLobby(m) { renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, lanc: m.lanc, seggi: m.seggi, nomi: m.nomi },
+    function mostraLobby(m) { renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, lanc: m.lanc, seggi: m.seggi, nomi: m.nomi, omini: m.omini },
       { onClaim: function () { if (S.rete) S.rete.invia({ t: "vuoiLanciare" }); }, onEsci: function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); } }); }
     function attesa() { if (S.ref) return;
       var s = t.schermata({ icona: "🎯", titolo: "Palla a Pendolo · Sala", sotto: "Stanza " + codice.toUpperCase(), indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
@@ -603,23 +603,11 @@
     return (m.surv && m.surv[S.seat]) ? "Sei rimasto sulla trave fino alla fine! 🏆" : "Sei finito in acqua! 💦";
   }
 
-  // lobby con scelta del ruolo
+  // la saletta d'attesa (uguale per tutti i giochi); sotto, la scelta dei ruoli
   function renderLobby(t, vm, cb) {
-    var el = t.el;
-    var s = t.schermata({ icona: "🎯", titolo: "Palla a Pendolo · Sala", sotto: "Ognuno dal suo telefono",
-      indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
-    if (vm.sonoHost) {
-      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-      s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
-      if (vm.codice && vm.codice !== "…") { var link = SG.creaLink({ gioco: "pendolo", stanza: vm.codice });
-        var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-        s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-          onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-        s._contenuto.appendChild(campo); }
-      s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"), text: vm.pronta ? "🟢 Stanza pronta — manda il codice" : "🟡 Sto aprendo la stanza…" }));
-    } else {
-      s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:#69db7c;margin-bottom:2px", text: "✅ Sei nella stanza " + (vm.codice || "").toUpperCase() }));
-    }
+    var el = t.el, s = { _contenuto: el("div") }, om = vm.omini || {}, nomi = vm.nomi || {}, gio = [], vuoti = 0;
+    if (vm.lanc) gio.push({ id: vm.lanc, nome: nomi[vm.lanc] || "Host", omino: om[vm.lanc] || null, host: vm.lanc === "host", tu: vm.lanc === vm.myId });
+    (vm.seggi || []).forEach(function (sg) { if (sg) gio.push({ id: sg.id, nome: nomi[sg.id] || sg.nome || "Amico", omino: om[sg.id] || null, host: sg.id === "host", tu: sg.id === vm.myId }); else vuoti++; });
     // riga di un ruolo (con evidenza se è il mio e, per l'host, tocco per spostarmi lì)
     function rigaRuolo(sinistra, testo, mio, tap, azione) {
       var bg = mio ? "rgba(255,202,58,.18)" : "rgba(255,255,255,.06)";
@@ -652,12 +640,10 @@
     });
     if (vm.sonoHost) {
       s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin-top:4px", text: "Tocca il lanciatore o un posto sulla trave per metterti lì: chi c'era prende il tuo posto (bot o giocatore)." }));
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: cb.onComincia }));
-      s._piede.appendChild(el("p", { class: "modulo-nota", text: "Cominci quando vuoi: i posti vuoti sulla trave diventano bot." }));
-    } else {
-      s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci la partita…" }));
     }
-    t.mostra(s);
+    t.lobby({ host: vm.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 1, puoiDaSolo: true, vuoti: vuoti, giocatori: gio, extra: [s._contenuto],
+      nota: vm.sonoHost ? "Cominci quando vuoi: i posti vuoti sulla trave diventano bot." : null,
+      attesa: "Aspetta che l'host cominci: sotto puoi chiedere di lanciare tu! 🎯", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
   function errore(t, txt) { var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
@@ -669,6 +655,7 @@
 
   SG.registra({
     id: "pendolo",
+    modi: [{ modo: "bot", icona: "🎯", nome: "Da solo", sotto: "Contro i bot: lanci tu o schivi sulla trave" }],
     nome: "Palla a Pendolo",
     icona: "🎯",
     descrizione: "Mira e lancia la palla-pendolo (forza fissa) per buttare in acqua chi sta sulla trave. Da solo vs bot, oppure online: uno lancia, gli altri schivano.",
@@ -688,8 +675,10 @@
       function selR(r) { dove.ruolo = r; bLanc.className = "modo-chip" + (r === "lanciatore" ? " attiva" : ""); bTrave.className = "modo-chip" + (r === "trave" ? " attiva" : ""); }
       bBot = el("button", { class: "modo-chip attiva", onclick: function () { selM("bot"); } }, [el("span", { class: "mi", text: "🎯" }), el("div", {}, [el("div", { class: "mt", text: "Da solo" }), el("div", { class: "ms", text: "Contro i bot" })])]);
       bOnl = el("button", { class: "modo-chip", onclick: function () { selM("online"); } }, [el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online" }), el("div", { class: "ms", text: "Ognuno dal suo" })])]);
-      box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
-      box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
+      if (!aiuti.modo) {   // (se "come giocare" l'avete già scelto prima, qui non si sceglie)
+        box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
+        box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
+      }
       boxRuolo = el("div", {});
       boxRuolo.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Il tuo ruolo (da solo)" }));
       bLanc = el("button", { class: "modo-chip attiva", onclick: function () { selR("lanciatore"); } }, [el("span", { class: "mi", text: "🎯" }), el("div", {}, [el("div", { class: "mt", text: "Lanci tu" }), el("div", { class: "ms", text: "Butti giù 3 bot" })])]);
@@ -720,6 +709,7 @@
       notaOnline = el("div", { class: "link-avviso", hidden: "hidden" });
       notaOnline.textContent = (window.SGNet && SGNet.disponibile()) ? "Apri una stanza e manda il codice: in sala d'attesa scegliete i ruoli." : "Qui il collegamento non è disponibile: funziona dal sito pubblicato online.";
       box.appendChild(notaOnline);
+      if (aiuti.modo) { selM(aiuti.modo); notaOnline.hidden = true; }   // come giocare l'avete già scelto prima
     },
     avvia: function (t) {
       var imp = t.impostazioni || {};

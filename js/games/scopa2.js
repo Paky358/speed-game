@@ -509,10 +509,11 @@
 
     function quanti() { var n = 0; for (var s = 1; s <= 3; s++) if (posti[s]) n++; return n; }
     function seggiLobby() {
-      return [{ nome: (t.giocatori && t.giocatori[0]) || "Host", id: "host" },
-        posti[1] ? { nome: nomiUmani[1], id: posti[1] } : null,
-        posti[2] ? { nome: nomiUmani[2], id: posti[2] } : null,
-        posti[3] ? { nome: nomiUmani[3], id: posti[3] } : null];
+      var nh = (t.giocatori && t.giocatori[0]) || "Host";
+      return [{ nome: nh, id: "host", omino: C().mioAvatar(nh) },
+        posti[1] ? { nome: nomiUmani[1], id: posti[1], omino: avatariUmani[1] } : null,
+        posti[2] ? { nome: nomiUmani[2], id: posti[2], omino: avatariUmani[2] } : null,
+        posti[3] ? { nome: nomiUmani[3], id: posti[3], omino: avatariUmani[3] } : null];
     }
     function aggiornaLobby() {
       if (st) return;
@@ -586,42 +587,18 @@
 
   // sala uguale per host e ospite: mostra le due squadre (relative a chi guarda) con i bot; controlli solo all'host
   function renderLobby(t, vm, cb) {
-    var el = t.el;
-    var s = t.schermata({ icona: "🃏", titolo: "Scopa 2 vs 2 · Sala", sotto: "Ognuno dal suo telefono",
-      indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
-    var seggi = vm.seggi || [];
-    var mioSeat = 0; for (var k = 0; k < seggi.length; k++) if (seggi[k] && seggi[k].id === vm.myId) mioSeat = k;
-    if (vm.sonoHost) {
-      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-      s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
-      if (vm.codice && vm.codice !== "…") {
-        var link = SG.creaLink({ gioco: "scopa2v2", stanza: vm.codice });
-        var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-        s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-          onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-        s._contenuto.appendChild(campo);
-      }
-      s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
-        text: vm.pronta ? "🟢 Stanza pronta — manda il codice" : "🟡 Sto aprendo la stanza…" }));
-    } else {
-      s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:#69db7c;margin-bottom:2px", text: "✅ Sei nella stanza " + (vm.codice || "").toUpperCase() }));
-    }
-    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Le squadre (i posti vuoti li giocano i bot)" }));
-    [0, 1, 2, 3].forEach(function (idx) {
-      var g = seggi[idx], mia = (idx % 2 === mioSeat % 2), mio = g && g.id === vm.myId;
-      var chi = g ? (g.nome + (mio ? " (tu)" : "")) : "🤖 bot";
-      s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:10px;margin-bottom:5px;background:" + (mio ? "rgba(255,202,58,.16)" : "rgba(255,255,255,.06)") + ";border-left:4px solid " + (mia ? "#69db7c" : "#ff8787") }, [
-        el("span", { style: "font-size:.7rem;font-weight:700;color:" + (mia ? "#69db7c" : "#ff8787"), text: mia ? "NOI" : "LORO" }),
-        el("span", { style: "flex:1", text: chi })
-      ]));
-    });
-    if (vm.sonoHost) {
-      s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Turni: si alternano le squadre. Puoi cominciare quando vuoi (i posti vuoti li fanno i bot)." }));
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: cb.onComincia }));
-    } else {
-      s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci…" }));
-    }
-    t.mostra(s);
+    var el = t.el, seggi = vm.seggi || [], mioSeat = 0;
+    for (var k = 0; k < seggi.length; k++) if (seggi[k] && seggi[k].id === vm.myId) mioSeat = k;
+    var gio = [], umani = 0;
+    seggi.forEach(function (g, i) { if (g) { umani++; gio.push({ id: g.id, nome: g.nome, omino: g.omino || null, host: i === 0, tu: g.id === vm.myId }); } });
+    function nomeSeat(i) { var g = seggi[i]; return g ? (g.id === vm.myId ? "tu" : g.nome) : "🤖 bot"; }
+    var squadre = el("div", { class: "modulo-nota", style: "text-align:center;line-height:1.5" }, [
+      el("div", {}, [ el("b", { text: "🟢 La tua squadra: " }), document.createTextNode(nomeSeat(mioSeat % 2) + " + " + nomeSeat(mioSeat % 2 + 2)) ]),
+      el("div", {}, [ el("b", { text: "🔴 Gli avversari: " }), document.createTextNode(nomeSeat(1 - mioSeat % 2) + " + " + nomeSeat(3 - mioSeat % 2)) ]),
+      el("div", { style: "opacity:.75", text: "I posti liberi li giocano i bot." }) ]);
+    t.lobby({ host: vm.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 1, puoiDaSolo: true, vuoti: 4 - umani, giocatori: gio, extra: [squadre],
+      nota: vm.sonoHost ? "Puoi cominciare quando vuoi: i posti vuoti li fanno i bot." : null,
+      attesa: "Aspetta che l'host cominci: si gioca in coppia! 🃏", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
   function erroreScopa2(t, txt) {
@@ -644,6 +621,7 @@
     icona: "🃏",
     descrizione: "La Scopa a squadre, in quattro al tavolo: tu e il tuo compagno contro due. Contro i bot o online, ognuno dal suo telefono (i posti vuoti li fanno i bot).",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3,
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu e un bot contro due bot" }],
     regole: [
       "Si gioca <b>in quattro, due squadre</b>: tu + il Compagno (di fronte) contro due avversari. Le carte sono le 40 napoletane.",
       "Si gioca a turno alternando le squadre: <b>tu, un avversario, il tuo compagno, l'altro avversario</b>.",
@@ -667,8 +645,10 @@
         el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro i bot" }), el("div", { class: "ms", text: "Tu + 3 bot" })])]);
       bOnl = el("button", { class: "modo-chip", onclick: function () { sel("online"); } }, [
         el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online" }), el("div", { class: "ms", text: "Ognuno dal suo" })])]);
-      box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
-      box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
+      if (!aiuti.modo) {   // (se "come giocare" l'avete già scelto prima, qui non si sceglie)
+        box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
+        box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
+      }
       boxDiff = el("div", {});
       boxDiff.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei bot" }));
       var dg = el("div", { style: "display:flex;gap:8px" });
@@ -684,6 +664,7 @@
         ? "Apri una stanza e manda il codice: gli altri entrano dal loro telefono. I posti liberi li giocano i bot."
         : "Qui il collegamento non è disponibile: funziona quando il gioco è aperto dal sito pubblicato online.";
       box.appendChild(notaOnline);
+      if (aiuti.modo) { sel(aiuti.modo); notaOnline.hidden = true; }
     },
     avvia: function (t) {
       if (!window.SGCarte) { var s = t.schermata({ icona: "⚠️", titolo: "Un attimo" }); s._contenuto.appendChild(t.el("p", { text: "Ricarica la pagina e riprova." })); s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci })); return t.mostra(s); }

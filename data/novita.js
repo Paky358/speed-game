@@ -9,6 +9,22 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 137,
+    data: "30 settembre 2026",
+    titolo: "Come giocate? E la saletta d'attesa coi personaggi 🛋️",
+    descrizione: [
+      "Ogni gioco adesso comincia chiedendo come giocate: su questo telefono, contro il computer (dove c'è) oppure online. La scelta non sta più in mezzo alle impostazioni.",
+      "Su questo telefono: prima aggiungi gli amici, poi scegli le impostazioni. Online: scegli le impostazioni, apri la stanza e mandi il link agli amici (anche con WhatsApp, dal tasto \"Manda il link\").",
+      "Online si aspetta in una saletta d'attesa, uguale per tutti i giochi: divano, tappeto, quadro col simbolo del gioco, e i personaggi di chi è entrato. Respirano, si guardano intorno, ogni tanto salutano o fanno un saltello; chi arriva entra con un salto e dice \"Ciao!\". Tocca il tuo personaggio e ti saluta.",
+      "Nomi, Cose e Città: dopo \"Ho finito\" il gioco chiede conferma (e ti dice se hai lasciato caselle vuote).",
+      "Nomi, Cose e Città: le parole giuste, con la lettera giusta e che il gioco conosce (nomi, città, nazioni, animali, colori e altro), partono già con il pollice su da parte di tutti. Quelle con la lettera sbagliata o che il gioco non conosce partono bocciate: basta un tocco per cambiare voto.",
+      "Black Jack online: nella saletta vedi le tue fiches e puoi ritirare il bonus gratis anche se sei entrato da un invito. Le fiches ritirate arrivano subito al tavolo.",
+      "Asta Fantacalcio: i calciatori escono in ordine tutto a caso, forti e scarsi mescolati.",
+      "Tris: nuovo bot \"Difficile\", forte ma che ogni tanto si distrae, quindi si può battere. \"Impossibile\" resta imbattibile.",
+      "Arrivano i trofei di Tris e di Forza 4: 17 per gioco, più il Platino se li prendi tutti."
+    ]
+  },
+  {
     v: 136,
     data: "26 settembre 2026",
     titolo: "Avatar rifatti: lui e lei, look pronti e tantissimi oggetti 🧍✨",

@@ -26,6 +26,56 @@
   }
   function norm(s) { return (s || "").trim().toLowerCase(); }
 
+  // ---- le risposte giuste partono già col pollice su ----
+  // "giusta" = inizia con la lettera del giro ed è nell'elenco della sua categoria (file parole/ncc.js, caricato solo per questo gioco)
+  var PAROLE = null;   // { "Città": { "milano": 1, … }, … }
+  function pulisci(s) { s = String(s || "").toLowerCase(); try { s = s.normalize("NFD").replace(/[̀-ͯ]/g, ""); } catch (e) {} return s.replace(/[^a-z ]+/g, " ").replace(/\s+/g, " ").trim(); }
+  var ARTICOLI = /^(il|lo|la|i|gli|le|l|un|uno|una)\s+/;
+  function chiaveP(s) { return s.replace(/\s+/g, ""); }
+  function preparaParole() {
+    if (PAROLE || !window.SG_NCC_PAROLE) return;
+    var P = {};
+    Object.keys(window.SG_NCC_PAROLE).forEach(function (cat) {
+      var set = {}, n = 0;
+      String(window.SG_NCC_PAROLE[cat]).split("|").forEach(function (w) { var p = pulisci(w); if (!p) return; n++; set[chiaveP(p)] = 1; set[chiaveP(p.replace(ARTICOLI, ""))] = 1; });
+      if (n >= 20) P[cat] = set;   // un elenco vuoto o troppo corto vale come "niente elenco": conta solo la lettera
+    });
+    PAROLE = P;
+  }
+  function caricaParole() {
+    if (window.SG_NCC_PAROLE) { preparaParole(); return Promise.resolve(PAROLE); }
+    if (!caricaParole.p) caricaParole.p = new Promise(function (ok) {
+      var sc = document.createElement("script"); sc.src = "parole/ncc.js"; sc.async = true;
+      sc.onload = function () { preparaParole(); ok(PAROLE); };
+      sc.onerror = function () { caricaParole.p = null; ok(null); };   // senza elenco si gioca come prima
+      document.head.appendChild(sc);
+    });
+    return caricaParole.p;
+  }
+  // forme da cercare: com'è scritta, senza articolo, e dal plurale al singolare (gatti→gatto, banche→banca, ciliegie→ciliegia)
+  function formeP(p) {
+    var u = p.replace(ARTICOLI, ""), f = [p, u];
+    if (u.indexOf(" ") < 0 && u.length > 3) {
+      if (/chi$/.test(u)) f.push(u.replace(/chi$/, "co"));
+      if (/ghi$/.test(u)) f.push(u.replace(/ghi$/, "go"));
+      if (/che$/.test(u)) f.push(u.replace(/che$/, "ca"));
+      if (/ghe$/.test(u)) f.push(u.replace(/ghe$/, "ga"));
+      if (/i$/.test(u)) f.push(u.replace(/i$/, "o"), u.replace(/i$/, "e"), u.replace(/i$/, "a"), u.replace(/i$/, "io"));
+      if (/e$/.test(u)) f.push(u.replace(/e$/, "a"));
+    }
+    return f.map(chiaveP);
+  }
+  // false = lettera sbagliata o parola che il gioco non conosce; true = giusta; null = categoria senza elenco (inventata o "black"): conta solo la lettera
+  function rispostaGiusta(testo, cat, lettera) {
+    var p = pulisci(testo); if (!p) return false;
+    var l = pulisci(lettera).charAt(0), senza = p.replace(ARTICOLI, ""), pezzi = senza.split(" ");
+    var persona = /personaggio|cantante/i.test((cat && cat.testo) || "");
+    if (!(senza.charAt(0) === l || p.charAt(0) === l || (persona && pezzi[pezzi.length - 1].charAt(0) === l))) return false;   // per le persone vale anche il cognome
+    var set = PAROLE && cat && PAROLE[cat.testo];
+    if (!set) return null;
+    return formeP(p).some(function (k) { return !!set[k]; });
+  }
+
   SG.registra({
     id: "nomicose",
     nome: "Nomi, Cose e Città",
@@ -34,12 +84,14 @@
     giocatoriMin: 2,
     giocatoriMax: 10,
     difficolta: 2,   // Media — quanto vale vincerlo nel torneo
+    modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono: scrive uno alla volta", amici: true }],
     regole: [
       "Ogni giro esce una <b>lettera</b> uguale per tutti: a turno ciascuno riempie le categorie con parole che iniziano con quella lettera.",
       "Poi si <b>vota</b>: per ogni parola gli altri dicono se vale. Ognuno ha il suo tasto e può cambiare idea cliccando di nuovo.",
+      "Le parole <b>giuste</b> (con la lettera giusta e che il gioco conosce) partono già con <b>👍 da tutti</b>; quelle con la lettera sbagliata o che il gioco non conosce partono bocciate: basta un tocco per cambiare voto.",
       "Se <b>più della metà</b> approva la parola vale <b>10 punti</b>; se due hanno scritto la <b>stessa</b> parola valgono <b>5</b> a testa; se è bocciata o vuota, <b>0</b>.",
       "Si gioca un certo numero di giri: alla fine vince chi ha totalizzato più punti.",
-      "<b>Online</b> (ognuno dal suo telefono): si scrive tutti nello stesso momento, poi al tabellone ognuno vota dal suo telefono. Ogni parola <b>vale</b> finché non la boccia almeno metà degli altri."
+      "<b>Online</b> (ognuno dal suo telefono): si scrive tutti nello stesso momento, poi al tabellone ognuno vota dal suo telefono. Una parola <b>vale</b> se non la boccia almeno metà degli altri."
     ],
 
     impostazioni: function (box, dove, aiuti) {
@@ -50,7 +102,8 @@
       dove.secondi = 60;
       dove.round = 2;
       dove.modo = "telefono";
-      if (!aiuti.torneo && !aiuti.sala) {   // nella sala si gioca sempre online
+      if (aiuti.modo) dove.modo = aiuti.modo;   // come giocare l'avete già scelto prima
+      else if (!aiuti.torneo && !aiuti.sala) {   // nella sala si gioca sempre online
         box.appendChild(el("div", { class: "etichetta", text: "Come si gioca" }));
         var nota = el("div", { class: "link-avviso", hidden: "hidden" }), bT, bO;
         var scegliModo = function (m) {
@@ -163,6 +216,7 @@
     avvia: function (t) {
       var imp = t.impostazioni || {};
       if (t.linkParams && t.linkParams.stanza) return ospiteNcc(t, t.linkParams.stanza);
+      caricaParole();
       var cats = (imp.categorie && imp.categorie.length >= 3) ? imp.categorie.slice()
         : (window.SG_NCC_CATEGORIE ? window.SG_NCC_CATEGORIE.normali.slice(0, 5) : []);
       if (imp.modo === "online") return hostNcc(t, cats, imp);
@@ -213,6 +267,7 @@
       // il foglio (la telecamera ci entra dentro)
       ".nc-foglio{position:absolute;inset:0;z-index:21;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(12px + env(safe-area-inset-top)) 12px 120px;background:rgba(7,4,26,.6);opacity:0;pointer-events:none;transition:opacity .25s}",
       ".nc-foglio.on{opacity:1;pointer-events:auto}",
+    ".nc-conf-testo{color:#fff;font-weight:800;text-align:center;font-size:1.02rem;text-shadow:0 2px 6px rgba(0,0,0,.6)}.nc-conf-riga{display:flex;gap:8px}.nc-conf-riga .btn{flex:1;min-width:0;margin:0}",
       ".nc-carta{position:relative;margin:0 auto;max-width:460px;border-radius:6px 6px 12px 12px;padding:16px 14px 20px 46px;color:#1d2a5c;",
         "background:linear-gradient(90deg,transparent 34px,rgba(229,57,53,.55) 34px,rgba(229,57,53,.55) 36px,transparent 36px),repeating-linear-gradient(#fffdf4 0 35px,#bcd5f0 35px 36px),#fffdf4;",
         "box-shadow:0 18px 40px rgba(0,0,0,.5);transform-origin:50% 100%;animation:ncEntra .6s cubic-bezier(.2,1.2,.4,1) both}",
@@ -290,6 +345,7 @@
     st.lettera = letteraACaso(st.lettera);
     st.risposte = st.g.map(function () { return st.cats.map(function () { return ""; }); });
     st.voti = st.g.map(function () { return st.cats.map(function () { return st.g.map(function () { return false; }); }); });
+    st.votiPronti = {};
     st.fatti = st.g.map(function () { return false; });
     st.g.forEach(function (g, i) { ST.puntiLeggio(S, i, g.punti, 0); foglietto(st, i, false); });
     await estraiLettera(st);
@@ -406,7 +462,19 @@
         setTimeout(function () { foglio.classList.remove("on"); setTimeout(function () { if (foglio.parentNode) foglio.parentNode.removeChild(foglio); fine(parole); }, 260); }, 330);
       }
       S._chiudiFoglio = chiudi;
-      ST.barra(S, [ el("button", { class: "btn btn-primario", text: "Ho finito ▶", onclick: chiudi }) ]);
+      // "Ho finito" chiede conferma (con quante caselle mancano): un tocco per sbaglio non chiude il foglio
+      function tastoFinito() { ST.barra(S, [ el("button", { class: "btn btn-primario", text: "Ho finito ▶", onclick: chiediConferma }) ]); }
+      function chiediConferma() {
+        if (chiuso) return;
+        var vuote = campi.filter(function (inp) { return !(inp.value || "").trim(); }).length;
+        ST.barra(S, [
+          el("div", { class: "nc-conf-testo", text: vuote ? "Ti " + (vuote === 1 ? "manca 1 casella" : "mancano " + vuote + " caselle") + ": hai finito davvero?" : "Hai finito davvero? Dopo non puoi più cambiare." }),
+          el("div", { class: "nc-conf-riga" }, [
+            el("button", { class: "btn btn-fantasma", text: "✏️ Continuo", onclick: tastoFinito }),
+            el("button", { class: "btn btn-primario", text: "✅ Sì, ho finito", onclick: chiudi }) ])
+        ]);
+      }
+      tastoFinito();
       setTimeout(function () { try { if (campi[0]) campi[0].focus({ preventScroll: true }); } catch (e) {} }, 650);
     });
   }
@@ -422,6 +490,11 @@
         el("div", { class: "nc-tab-testa" }, [ el("small", { text: "📋 Tabellone · lettera " + st.lettera + " · " + (ci + 1) + " di " + st.cats.length }), el("div", { class: "nc-tab-cat", text: c.emoji + " " + c.testo }) ]),
         righe
       ]));
+      // le parole giuste partono col pollice su di tutti; le altre (lettera sbagliata o sconosciute) partono giù
+      if (!(st.votiPronti || (st.votiPronti = {}))[ci]) {
+        st.votiPronti[ci] = true;
+        st.g.forEach(function (_, a) { var w = st.risposte[a][ci]; if (w && rispostaGiusta(w, c, st.lettera) !== false) st.g.forEach(function (_, k) { if (k !== a) st.voti[a][ci][k] = true; }); });
+      }
       var votanti = st.g.length - 1, aggiorna = [];
       function vale(a) { if (!st.risposte[a][ci]) return false; var si = st.voti[a][ci].reduce(function (n, v, k) { return n + (k !== a && v ? 1 : 0); }, 0); return si * 2 > votanti; }
       // le parole uguali valgono di meno, ma solo tra quelle approvate (come nel calcolo dei punti): si ricontrolla tutto a ogni voto
@@ -627,13 +700,24 @@
     }
     function tabellone() {
       clearTo();
+      votiDiPartenza();
       H.fase = "tabellone"; H.ci = 0; H.pronti = {}; bd();
       H.to = setTimeout(prossimaCat, TEMPO_VOTO);
+    }
+    // le parole non giuste (lettera sbagliata o sconosciute) partono bocciate da tutti: basta un "Vale" per cambiare
+    function votiDiPartenza() {
+      H.players.forEach(function (p) {
+        H.cats.forEach(function (cat, ci) {
+          var w = (H.risposte[p.id] || [])[ci]; if (!w || rispostaGiusta(w, cat, H.lettera) !== false) return;
+          var v = H.voti[p.id] || (H.voti[p.id] = {}), c = v[ci] || (v[ci] = {});
+          H.players.forEach(function (q) { if (q.id !== p.id) c[q.id] = true; });
+        });
+      });
     }
     function voto(id, a, ci, si) {
       if (H.fase !== "tabellone" || ci !== H.ci || id === a || !pById(id) || !pById(a)) return;
       var v = H.voti[a] || (H.voti[a] = {}), c = v[ci] || (v[ci] = {});
-      if (si) delete c[id]; else c[id] = true;   // si segna solo chi la boccia: di base vale
+      if (si) delete c[id]; else c[id] = true;   // si segna solo chi la boccia
       bd();
     }
     function pronto(id, ci) {
@@ -952,36 +1036,14 @@
     t.mostra(s);
   }
   // la lobby: chi c'è (con l'avatar), le categorie scelte; l'host fa partire
+  // la saletta d'attesa (uguale per tutti i giochi): sotto, le categorie e il tempo scelti dall'host
   function lobbyN(t, vm, cb) {
-    var el = t.el, s = t.schermata({ icona: "✍️", titolo: "Nomi, Cose e Città · Lobby", sotto: "Ognuno dal suo telefono",
-      indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
-    if (cb.sonoHost) {
-      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-      s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
-      if (vm.codice && vm.codice !== "…") {
-        var link = SG.creaLink({ gioco: "nomicose", stanza: vm.codice });
-        var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-        s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-          onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-        s._contenuto.appendChild(campo);
-      }
-      s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
-        text: vm.pronta ? "🟢 Stanza pronta — manda il codice agli amici" : "🟡 Sto aprendo la stanza… (attendi il verde)" }));
-    }
-    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Chi c'è (" + vm.players.length + ")" }));
-    vm.players.forEach(function (p) {
-      s._contenuto.appendChild(el("div", { class: "nc-lobby" }, [ fac(el, p), el("span", { style: "flex:1", text: p.nome + (p.id === cb.myId ? " (tu)" : "") }) ]));
-    });
-    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Categorie · " + vm.secondi + " secondi · " + (vm.giri === 1 ? "1 giro" : vm.giri + " giri") }));
-    var cc = el("div", { class: "nc-cats nc-cats-lobby" });
+    var el = t.el, cc = el("div", { class: "nc-cats nc-cats-lobby" });
     (vm.cats || []).forEach(function (c) { cc.appendChild(el("span", { text: c.emoji + " " + c.testo })); });
-    s._contenuto.appendChild(cc);
-    if (cb.sonoHost) {
-      var ok = vm.players.length >= 2, b = el("button", { class: "btn btn-primario", text: "Via ▶", onclick: cb.onComincia });
-      if (!ok) b.setAttribute("disabled", "disabled");
-      s._piede.appendChild(b);
-      if (!ok) s._piede.appendChild(el("p", { class: "modulo-nota", text: "Servono almeno 2 giocatori (aspetta che entrino)." }));
-    } else s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci…" }));
-    t.mostra(s);
+    var info = el("div", {}, [ el("div", { class: "etichetta", text: "Categorie · " + vm.secondi + " secondi · " + (vm.giri === 1 ? "1 giro" : vm.giri + " giri") }), cc ]);
+    t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2, testoComincia: "Via ▶",
+      giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
+      extra: [info], attesa: "Aspetta che l'host dia il via: poi scrivete tutti insieme!",
+      onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 })();

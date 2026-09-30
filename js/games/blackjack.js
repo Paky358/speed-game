@@ -604,7 +604,8 @@
     return h > 0 ? (h + "h " + m + "m") : (m > 0 ? (m + "m") : "poco");
   }
   // riquadro con saldo fiches + tasto per ritirare il bonus gratis (ogni 2 ore)
-  function riquadroBonus(el) {
+  // dopo(nuovo) = facoltativo, avvisa chi lo usa (es. la saletta online) del nuovo saldo
+  function riquadroBonus(el, dopo) {
     var box = el("div", { style: "background:var(--carta,#1b1836);border-radius:14px;padding:12px;margin-bottom:12px;text-align:center;box-shadow:var(--ombra,0 6px 16px rgba(0,0,0,.3))" });
     var p = SGNube.profilo();
     var saldo = (p && p.fiches && p.fiches.blackjack != null) ? p.fiches.blackjack : 0;
@@ -618,7 +619,8 @@
       b.disabled = true;
       SGNube.ritiraBonus().then(function (nuovo) {
         testoSaldo.innerHTML = "🎰 Hai <b>" + fmt(nuovo) + "</b> fiches  ·  +" + fmt(SGNube.bonusImporto) + " 🎉";
-        agg();
+        suonoChip(); agg();
+        if (dopo) dopo(nuovo);
       }).catch(function () { agg(); });
     };
     agg();
@@ -1264,25 +1266,15 @@
   }
 
   // ---------- MODALITÀ ONLINE ----------
+  // la saletta d'attesa: chi è al tavolo aspetta col suo personaggio; l'host ha codice, link e "Comincia"
   function renderLobbyBJ(t, info, cb) {
     iniettaCSS();
-    var el = t.el;
-    var s = t.schermata({ icona: "🃏", titolo: "Black Jack online",
-      sotto: info.sonoHost ? "Sei l'host · gestisci il banco" : ("Stanza " + (info.codice || "").toUpperCase()),
-      indietro: function () { document.body.classList.remove("bj-verde"); cb.onEsci(); } });
-    if (info.sonoHost) {
-      s._contenuto.appendChild(el("div", { class: "link-avviso", html: "Codice: <b style='font-size:1.4rem;letter-spacing:2px'>" + (info.codice || "…") + "</b><br>Manda il codice o il link: gli amici entrano dal loro telefono." }));
-      s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare", onclick: function () { try { navigator.clipboard.writeText(SG.creaLink({ gioco: "blackjack", stanza: info.codice })); } catch (e) {} } }));
-    }
-    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Al tavolo (" + info.giocatori.length + ")" }));
-    info.giocatori.forEach(function (g, i) {
-      s._contenuto.appendChild(el("div", { class: "as-bid" }, [ el("div", { class: "who" }, [ el("b", { text: g.nome + (i === 0 ? " · host" : "") }) ]) ]));
-    });
-    if (info.sonoHost) {
-      var b = el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: cb.onComincia });
-      s._piede.appendChild(b);
-    } else s._piede.appendChild(el("p", { class: "as-msg", text: "In attesa che l'host cominci la partita…" }));
-    t.mostra(s);
+    document.body.classList.remove("bj-verde");
+    t.lobby({ host: info.sonoHost, codice: info.codice, pronta: info.pronta, min: 1, puoiDaSolo: true,
+      giocatori: info.giocatori.map(function (g, i) { return { id: g.id, nome: g.nome, omino: g.omino || null, host: i === 0, tu: info.sonoHost ? i === 0 : g.id === info.mioId }; }),
+      attesa: "Aspetta che l'host apra il tavolo: poi si punta tutti insieme.",
+      extra: cb.bonus ? [cb.bonus] : [],   // saldo + "Ritira il bonus" per chi ha il profilo (anche chi entra da invito)
+      onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
   function hostBJ(t) {
@@ -1293,7 +1285,12 @@
     if (prof && (mieFiches == null || mieFiches < BJ.PUNTATA_MIN)) { provaHost = true; mieFiches = BJ.FICHES_INIZIALI; }
     var seats = [{ id: "host", nome: (prof ? prof.nome : (t.giocatori && t.giocatori[0])) || "Host", fiches: mieFiches }];
     seats[0].omino = mioAvatar(seats[0].nome);
-    var M = null, rete = null, codice = "…", tav = null;
+    var M = null, rete = null, codice = "…", tav = null, pronta = false;
+    // bonus ritirato in saletta: si gioca con le fiches nuove (e se eri a zero non è più di prova)
+    var boxBonus = prof ? riquadroBonus(t.el, function (nuovo) {
+      if (M) { if (!provaHost) { M.st.giocatori[0].fiches += SGNube.bonusImporto; bcast(); } return; }
+      if (nuovo >= BJ.PUNTATA_MIN) { provaHost = false; seats[0].fiches = nuovo; }
+    }) : null;
 
     function nomiSeat() { return seats.map(function (x) { return x.nome; }); }
     function seatDiId(id) { for (var i = 0; i < seats.length; i++) if (seats[i].id === id) return i; return -1; }
@@ -1305,7 +1302,8 @@
     }
     function lobbyOut() {
       if (rete) rete.invia({ t: "lobby", codice: codice, giocatori: seats.map(function (x) { return { id: x.id, nome: x.nome, omino: x.omino || null }; }) });
-      renderLobbyBJ(t, { sonoHost: true, codice: codice, giocatori: seats }, {
+      renderLobbyBJ(t, { sonoHost: true, codice: codice, pronta: pronta, giocatori: seats }, {
+        bonus: boxBonus,
         onComincia: function () { M = BJ.creaMotore(nomiSeat(), t.mischia, seats.map(function (x) { return x.fiches; })); avviaTavoloHost(); M.nuovaMano(); bcast(); },
         onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
       });
@@ -1329,7 +1327,7 @@
     }
     rete = SGNet.ospita("blackjack", {
       onCodice: function (c) { codice = c; if (!M) lobbyOut(); },
-      onConnesso: function () { if (!M) lobbyOut(); },
+      onConnesso: function () { pronta = true; if (!M) lobbyOut(); },
       onAddio: function (id) {
         var i = seatDiId(id); if (i <= 0) return;
         if (M) { M.esce(i); bcast(); }   // a partita iniziata il posto resta (gli altri non cambiano numero): non si aspetta più
@@ -1340,6 +1338,10 @@
         if (m.t === "join") {
           if (seatDiId(id) < 0 && !M && seats.length < 10) seats.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), fiches: (typeof m.fiches === "number" ? m.fiches : null), omino: avatarValido(m.omino) });
           lobbyOut();
+        } else if (m.t === "fiches" && typeof m.fiches === "number") {   // chi aspetta ha ritirato il bonus
+          var sf = seatDiId(id);
+          if (sf > 0 && !M) seats[sf].fiches = m.fiches;
+          else if (sf > 0 && M && m.piu > 0) { M.st.giocatori[sf].fiches += Math.min(m.piu, (window.SGNube && SGNube.bonusImporto) || 300); bcast(); }   // ritirato proprio mentre partiva
         } else if (M && m.t === "mossa") {
           var seat = seatDiId(id); if (seat < 0) return;
           if (m.kind === "punta") M.punta(seat, m.val);            // le puntate arrivano da tutti insieme
@@ -1358,6 +1360,14 @@
     if (!(window.SGNet && SGNet.disponibile())) return localeBJ(t);
     var el = t.el, prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     var S = { rete: null, nome: "", mioSeat: -1, tav: null, giocatori: [], fiches: null };
+    // anche chi entra da invito ritira il bonus in saletta: l'host si segna le fiches nuove
+    var boxBonus = prof ? riquadroBonus(el, function (nuovo) {
+      if (!S.rete) return;
+      if (!S.tav) {
+        if (nuovo >= BJ.PUNTATA_MIN) { S.fiches = nuovo; S.prova = false; }
+        S.rete.invia({ t: "fiches", fiches: S.fiches });
+      } else if (!S.prova) S.rete.invia({ t: "fiches", fiches: nuovo, piu: SGNube.bonusImporto });   // la partita era appena partita
+    }) : null;
     if (prof) {   // già loggato col profilo: entra diretto, niente da riscrivere
       S.nome = prof.nome;
       var ff = SGNube.fiches("blackjack");
@@ -1404,7 +1414,7 @@
           if (m.t === "lobby") {
             S.mioSeat = (m.giocatori || []).findIndex(function (x) { return x.id === S.mioId; });
             S.avatari = (m.giocatori || []).map(function (x) { return x.omino; });
-            if (!S.tav) renderLobbyBJ(t, { sonoHost: false, codice: m.codice, giocatori: m.giocatori }, { onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+            if (!S.tav) renderLobbyBJ(t, { sonoHost: false, codice: m.codice, giocatori: m.giocatori, mioId: S.mioId }, { bonus: boxBonus, onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
           } else if (m.t === "vm") {
             assicuraTavolo();
             S.tav.aggiorna(m.vm);
@@ -1431,6 +1441,7 @@
     icona: "🃏",
     descrizione: "Il 21 contro il banco: punta le fiches, chiedi carta o stai, raddoppia e dividi. Carte francesi vere, Sabot da 6 mazzi. Da 1 a 10 giocatori.",
     giocatoriMin: 1, giocatoriMax: 10, difficolta: 2,
+    modi: [{ modo: "locale", icona: "📱", nome: "Su questo telefono", sotto: "Siete insieme e vi passate il telefono (fino a 10)", amici: true }],
     regole: [
       "Obiettivo: avvicinarti a <b>21</b> più del banco, senza superarlo. Le figure valgono 10, l'Asso 1 o 11.",
       "Ogni mano <b>punti le fiches</b>; poi ricevi due carte. Il banco ne mostra una sola.",
@@ -1442,6 +1453,7 @@
       var el = aiuti.el; dove.modo = "locale";
       if (aiuti.torneo) { dove.modo = "locale"; return; }
       if (window.SGNube && SGNube.disponibile() && SGNube.profilo()) box.appendChild(riquadroBonus(el));
+      if (aiuti.modo) { dove.modo = aiuti.modo; return; }   // come giocare l'avete già scelto prima
       var bLoc, bOnl, nota;
       function sel(m) {
         dove.modo = m;

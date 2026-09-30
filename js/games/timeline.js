@@ -506,6 +506,7 @@
     icona: "📜",
     descrizione: "Metti gli avvenimenti nell'ordine giusto e sfida gli amici a punti.",
     giocatoriMin: 1,
+    modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono, uno alla volta", amici: true }],
     giocatoriMax: MAX_GIOCATORI,
     difficolta: 2,   // Media — quanto vale vincerlo nel torneo (1 facile, 2 media, 3 difficile)
 
@@ -522,7 +523,8 @@
       var link = SG.parametriLink();
 
       dove.modo = "telefono";
-      if (!aiuti.torneo) {
+      if (aiuti.modo) dove.modo = aiuti.modo;   // come giocare l'avete già scelto prima
+      else if (!aiuti.torneo) {
       box.appendChild(el("div", { class: "etichetta", text: "Come si gioca" }));
       var notaOnline = el("div", { class: "link-avviso", hidden: "hidden" });
       var bTel, bOnl;
@@ -1009,27 +1011,12 @@
     }
   }
 
+  // la saletta d'attesa (uguale per tutti i giochi)
   function disegnaLobby(t, vm, cb) {
-    var el = t.el;
-    var s = t.schermata({ icona: "🔗", titolo: "Sala d'attesa", sotto: cb.sonoHost ? "Invita gli amici" : "Aspetta l'inizio", indietro: cb.onEsci });
-    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-    s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
-    if (cb.sonoHost && vm.codice && vm.codice !== "…") {
-      var link = SG.creaLink({ gioco: "timeline", stanza: vm.codice });
-      var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-      s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-        onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-      s._contenuto.appendChild(campo);
-    }
-    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Chi c'è (" + vm.giocatori.length + ")" }));
-    var lista = el("div");
-    vm.giocatori.forEach(function (g) { lista.appendChild(el("div", { class: "tl-lobby" }, [
-      el("span", { class: "fac", html: avatarDi(g) }), el("span", { text: g.nome + (g.id === cb.myId ? " (tu)" : "") })
-    ])); });
-    s._contenuto.appendChild(lista);
-    if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: vm.giocatori.length < 2 ? "Comincia (meglio in 2+)" : "Comincia ▶", onclick: cb.onComincia }));
-    else s._piede.appendChild(el("p", { class: "tl-attesa", text: "In attesa che l'host cominci…" }));
-    t.mostra(s);
+    t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2, puoiDaSolo: true,
+      giocatori: vm.giocatori.map(function (g, i) { return { id: g.id, nome: g.nome, omino: g.omino || null, host: i === 0, tu: g.id === cb.myId }; }),
+      nota: cb.sonoHost && vm.giocatori.length < 2 ? "Si gioca meglio in 2 o più: manda il link agli amici." : null,
+      attesa: "Aspetta che l'host faccia partire lo studio!", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
   function schermataNoNet(t) {

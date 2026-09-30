@@ -158,6 +158,7 @@
     icona: "🚢",
     descrizione: "La battaglia navale classica: sistemi la tua flotta e affondi quella dell'avversario. Contro il computer o online, uno contro uno.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 2,
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il computer" }],
     regole: [
       "Ognuno ha una griglia <b>10×10</b> e una <b>flotta</b>: Portaerei (5), Corazzata (4), Incrociatore (3), Sommergibile (3), Cacciatorpediniere (2).",
       "Prima <b>sistemi le tue navi</b> (le giri in orizzontale o verticale, o premi <b>Disponi a caso</b>). Non si possono sovrapporre.",
@@ -181,8 +182,10 @@
         el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro il computer" }), el("div", { class: "ms", text: "Da solo" })])]);
       bOnl = el("button", { class: "modo-chip", onclick: function () { sel("online"); } }, [
         el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online" }), el("div", { class: "ms", text: "Ognuno dal suo" })])]);
-      box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
-      box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
+      if (!aiuti.modo) {   // (se "come giocare" l'avete già scelto prima, qui non si sceglie)
+        box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
+        box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
+      }
 
       boxDiff = el("div", {});
       boxDiff.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura del computer" }));
@@ -200,6 +203,7 @@
         ? "Apri una stanza e manda il codice: l'altro entra dal suo telefono."
         : "Qui il collegamento non è disponibile: funziona quando il gioco è aperto dal sito pubblicato online.";
       box.appendChild(notaOnline);
+      if (aiuti.modo) { sel(aiuti.modo); notaOnline.hidden = true; }
     },
 
     avvia: function (t) {
@@ -490,21 +494,21 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     navMount = null;
     var el = t.el;
-    var L = { fase: "lobby", codice: "…", pronta: false, avvId: null, nomiIo: (t.giocatori && t.giocatori[0]) || "Host", nomiAvv: null };
+    var L = { fase: "lobby", codice: "…", pronta: false, avvId: null, nomiIo: (t.giocatori && t.giocatori[0]) || "Host", nomiAvv: null, ominoIo: t.mioOmino ? t.mioOmino() : null, ominoAvv: null };
     var G = null, rete = null;
     rete = SGNet.ospita("navale", {
       onCodice: function (c) { L.codice = c; if (L.fase === "lobby") lobby(); mandaSala(); },
       onConnesso: function () { L.pronta = true; if (L.fase === "lobby") lobby(); },
-      onAddio: function (id) { if (id === L.avvId) { L.avvId = null; L.nomiAvv = null; if (L.fase === "lobby") lobby(); } },
+      onAddio: function (id) { if (id === L.avvId) { L.avvId = null; L.nomiAvv = null; L.ominoAvv = null; if (L.fase === "lobby") lobby(); } },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") { if (!L.avvId) { L.avvId = id; L.nomiAvv = String(m.nome || "Avversario").slice(0, 16); } mandaSala(); if (L.fase === "lobby") lobby(); }
+        if (m.t === "join") { if (!L.avvId) { L.avvId = id; L.nomiAvv = String(m.nome || "Avversario").slice(0, 16); L.ominoAvv = avatarOk(m.omino); } mandaSala(); if (L.fase === "lobby") lobby(); }
         else if (G) G.daRete(m);
       },
       onErrore: function () { senzaRete(t); }
     });
-    function mandaSala() { rete.invia({ t: "sala", nomiHost: L.nomiIo, nomiAvv: L.nomiAvv, ci: !!L.avvId }); }
-    function lobby() { lobbyNavale(t, { sonoHost: true, codice: L.codice, pronta: L.pronta, avversario: !!L.avvId, nomiIo: L.nomiIo, nomiAvv: L.nomiAvv,
+    function mandaSala() { rete.invia({ t: "sala", nomiHost: L.nomiIo, nomiAvv: L.nomiAvv, ci: !!L.avvId, ominoHost: L.ominoIo, ominoAvv: L.ominoAvv }); }
+    function lobby() { lobbyNavale(t, { sonoHost: true, codice: L.codice, pronta: L.pronta, avversario: !!L.avvId, nomiIo: L.nomiIo, nomiAvv: L.nomiAvv, ominoIo: L.ominoIo, ominoAvv: L.ominoAvv,
       onComincia: comincia, onEsci: function () { rete.chiudi(); t.esci(); } }); }
     function comincia() {
       if (!L.avvId) return;
@@ -548,7 +552,7 @@
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome });
+        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : null });
           setTimeout(function () { if (!S.avviato && S.msg) S.msg.textContent = "Non trovo la partita: controlla il codice, o l'host non ha ancora aperto la stanza…"; }, 8000); },
         onMsg: function (m) {
           if (!m || !m.t) return;
@@ -561,7 +565,7 @@
       });
     }
     function lobby(sala) {
-      lobbyNavale(t, { sonoHost: false, nomiIo: S.nome, nomiAvv: (sala && sala.nomiHost) || "Host",
+      lobbyNavale(t, { sonoHost: false, nomiIo: S.nome, nomiAvv: (sala && sala.nomiHost) || "Host", ominoIo: sala && sala.ominoAvv, ominoAvv: sala && sala.ominoHost, codice: codice,
         onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
     }
     function avviaMotore() {
@@ -579,43 +583,14 @@
     }
   }
 
-  // lobby comune (host e ospite) — l'ospite vede la sala con i partecipanti
+  function avatarOk(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  // la saletta d'attesa (uguale per tutti i giochi): tu e il tuo avversario
   function lobbyNavale(t, o) {
-    var el = t.el;
-    var s = t.schermata({ icona: "🚢", titolo: "Battaglia Navale · Lobby", sotto: "Uno contro uno, ognuno dal suo",
-      indietro: function () { if (window.confirm("Uscire?")) o.onEsci(); } });
-    if (o.sonoHost) {
-      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-      s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (o.codice || "…").toUpperCase() }));
-      if (o.codice && o.codice !== "…") {
-        var link = SG.creaLink({ gioco: "navale", stanza: o.codice });
-        var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-        s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-          onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-        s._contenuto.appendChild(campo);
-      }
-      s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (o.pronta ? "#69db7c" : "#ffd43b"),
-        text: o.pronta ? "🟢 Stanza pronta — manda il codice" : "🟡 Sto aprendo la stanza…" }));
-    } else {
-      s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:#69db7c;margin:6px 0 2px", text: "✅ Sei nella stanza" }));
-    }
-    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Chi c'è" }));
-    var chi = [{ nome: o.sonoHost ? o.nomiIo : o.nomiAvv, tu: o.sonoHost }, { nome: o.sonoHost ? (o.nomiAvv || null) : o.nomiIo, tu: !o.sonoHost }];
-    chi.forEach(function (p) {
-      var pres = !!p.nome;
-      s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:" + (p.tu ? "rgba(255,202,58,.18)" : "rgba(255,255,255,.06)") }, [
-        el("span", { text: pres ? "🚢" : "…", style: "font-size:1.1rem" }),
-        el("span", { style: "flex:1;font-weight:700", text: pres ? (p.nome + (p.tu ? " (tu)" : "")) : "In attesa dell'avversario…" })
-      ]));
-    });
-    if (o.sonoHost) {
-      var b = el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: o.onComincia });
-      if (!o.avversario) b.setAttribute("disabled", "disabled");
-      s._piede.appendChild(b);
-    } else {
-      s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci…" }));
-    }
-    t.mostra(s);
+    var gio = o.sonoHost ? [{ id: "host", nome: o.nomiIo, omino: o.ominoIo || null, host: true, tu: true }] : [{ id: "host", nome: o.nomiAvv, omino: o.ominoAvv || null, host: true }, { id: "io", nome: o.nomiIo, omino: o.ominoIo || (t.mioOmino ? t.mioOmino(o.nomiIo) : null), tu: true }];
+    if (o.sonoHost && o.avversario) gio.push({ id: "avv", nome: o.nomiAvv, omino: o.ominoAvv || null });
+    t.lobby({ host: o.sonoHost, codice: o.codice, pronta: o.pronta, min: 2, vuoti: o.sonoHost && !o.avversario ? 1 : 0, giocatori: gio,
+      nota: o.sonoHost ? (o.avversario ? "✅ Avversario collegato! Quando vuoi, comincia." : "Manda il link: aspettiamo il tuo avversario.") : null,
+      attesa: "Aspetta che l'host cominci: poi piazzate le navi. 🚢", onComincia: o.onComincia, onEsci: o.onEsci });
   }
 
   function erroreNav(t, txt) {

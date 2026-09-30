@@ -74,6 +74,10 @@
       var bl = vinceCon(b, altro(me)); if (bl >= 0) return bl;   // altrimenti blocca
       return libs[Math.floor(Math.random() * libs.length)];      // altrimenti a caso (battibile)
     }
+    if (liv === "difficile") {   // difficile: forte, ma ogni tanto si distrae (si può battere); se può vincere, vince
+      var vd = vinceCon(b, me); if (vd >= 0) return vd;
+      if (Math.random() < 0.15) return libs[Math.floor(Math.random() * libs.length)];   // (simulato: un giocatore normale lo batte ~1 volta su 5)
+    }
     var r = minimax(b.slice(), me, me, 0);                        // impossibile: mai battuto
     return (r && r.mossa != null) ? r.mossa : libs[0];
   }
@@ -84,6 +88,8 @@
     icona: "⭕",
     descrizione: "Il filetto classico: allinea tre simboli. Da solo contro il bot, in due sullo stesso telefono o online.",
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 1,
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il bot" },
+      { modo: "telefono", icona: "📱", nome: "In due su questo telefono", sotto: "Vi passate il telefono a ogni mossa", amici: true }],
     regole: [
       "A turno si mette il proprio simbolo (<b>X</b> o <b>O</b>) in una casella libera della griglia 3×3.",
       "Vince chi per primo allinea <b>tre</b> simboli uguali: in orizzontale, verticale o diagonale.",
@@ -110,13 +116,15 @@
         el("span", { class: "mi", text: "📱" }), el("div", {}, [el("div", { class: "mt", text: "In due" }), el("div", { class: "ms", text: "Stesso telefono" })])]);
       bOnl = el("button", { class: "modo-chip", onclick: function () { sel("online"); } }, [
         el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online" }), el("div", { class: "ms", text: "Ognuno dal suo" })])]);
-      box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
-      box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr 1fr" }, [bBot, bTel, bOnl]));
+      if (!aiuti.modo) {
+        box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
+        box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr 1fr" }, [bBot, bTel, bOnl]));
+      }
 
       boxDiff = el("div", {});
       boxDiff.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura del bot" }));
       var diffWrap = el("div", { style: "display:flex;gap:8px" });
-      [["facile", "Facile"], ["medio", "Medio"], ["impossibile", "Impossibile"]].forEach(function (d) {
+      [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"], ["impossibile", "Impossibile"]].forEach(function (d) {
         var b = el("button", { class: "modo-chip" + (d[0] === "medio" ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {
           dove.difficolta = d[0];
           [].forEach.call(diffWrap.children, function (c) { c.className = "modo-chip"; c.style.flex = "1"; });
@@ -133,6 +141,7 @@
         ? "Apri una stanza e manda il codice: l'altro entra dal suo telefono."
         : "Qui il collegamento non è disponibile: funziona quando il gioco è aperto dal sito pubblicato online.";
       box.appendChild(notaOnline);
+      if (aiuti.modo) { sel(aiuti.modo); notaOnline.hidden = true; }
     },
 
     avvia: function (t) {
@@ -169,8 +178,33 @@
       ";font-size:clamp(2.2rem,14vw,3.4rem);font-weight:800;display:flex;align-items:center;justify-content:center;" +
       "cursor:" + (puoi ? "pointer" : "default") + ";-webkit-tap-highlight-color:transparent;transition:background .15s,transform .05s";
   }
+  // ---- trofei: a fine partita si contano solo per chi ha il profilo su questo telefono ----
+  // (contro il bot e online sei tu; in due sullo stesso telefono conta chi ha il nome del profilo)
+  var TT = { fatta: null };
+  function trofeiTris(vm, cb) {
+    if (vm.fase !== "fine" || !vm.fine) { TT.fatta = null; return; }
+    var chiave = vm.board.join(",") + "|" + vm.fine.vincitore;
+    if (TT.fatta === chiave) return; TT.fatta = chiave;
+    if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
+    var io = cb.mio, nm = String(SGNube.profilo().nome || "").trim().toLowerCase();
+    if (!io) io = String(vm.nomi.X || "").trim().toLowerCase() === nm ? "X" : (String(vm.nomi.O || "").trim().toLowerCase() === nm ? "O" : null);
+    if (!io) return;
+    var w = vm.fine.vincitore, vinta = w === io, pari = !w, online = !cb.locale, bot = !!cb.bot, liv = cb.liv;
+    var miei = vm.board.filter(function (x) { return x === io; }).length, lin = (vm.fine.linea || []).join(",");
+    var s0 = SGNube.statGioco("tris") || {};
+    var c = { partite: 1, vinte: vinta, pareggi: pari, online: online, vinteOnline: online && vinta,
+      vinteFacile: bot && liv === "facile" && vinta, vinteMedio: bot && liv === "medio" && vinta, vinteDifficile: bot && liv === "difficile" && vinta,
+      vinteDiagonale: vinta && (lin === "0,4,8" || lin === "2,4,6"), vinteIn3: vinta && miei === 3 && !(bot && liv === "facile"), simboli: miei };   // (contro il Facile, che gioca a caso, non vale)
+    var sPar = pari ? (s0.serieParOra || 0) + 1 : 0;                                                          // pareggi di fila (qualsiasi modo)
+    var sOn = online ? (vinta ? (s0.serieOnlineOra || 0) + 1 : 0) : (s0.serieOnlineOra || 0);                 // vittorie online di fila
+    var sDif = bot && liv === "difficile" ? (vinta || pari ? (s0.serieImbDiffOra || 0) + 1 : 0) : (s0.serieImbDiffOra || 0);   // imbattuto contro il Difficile
+    var incrs = []; for (var k in c) if (c[k]) incrs.push([k, +c[k]]);
+    SGNube.salvaProgressi(null, "tris", incrs, [["serieParMax", sPar], ["serieOnlineMax", sOn], ["serieImbDiffMax", sDif]],
+      [["serieParOra", sPar], ["serieOnlineOra", sOn], ["serieImbDiffOra", sDif]]);
+  }
   var trMount = null; // schermata Tris montata: a ogni mossa aggiorniamo solo il contenuto (niente lampeggio)
   function campoTris(t, vm, cb) {
+    trofeiTris(vm, cb);
     var el = t.el;
     var box = el("div", {});
     box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.2rem;margin:6px 0 12px;min-height:1.4em", html: statoHtml(vm, cb) }));
@@ -218,7 +252,7 @@
     function render() {
       var vm = { fase: st.fine ? "fine" : "gioco", board: st.board, turno: st.turno, fine: st.fine, nomi: nomi };
       campoTris(t, vm, {
-        locale: true, bot: modo === "bot", mio: modo === "bot" ? "X" : null,
+        locale: true, bot: modo === "bot", mio: modo === "bot" ? "X" : null, liv: difficolta,
         onCella: function (i) { gioca(i); },
         onRivincita: function () { primo = altro(primo); nuova(); },
         onEsci: t.esci
@@ -260,7 +294,7 @@
     var st = {
       fase: "lobby", codice: "…", pronta: false,
       board: boardVuota(), turno: "X", fine: null, primo: "X",
-      nomiX: (t.giocatori && t.giocatori[0]) || "Host", nomiO: null, avvId: null
+      nomiX: (t.giocatori && t.giocatori[0]) || "Host", nomiO: null, avvId: null, ominoX: t.mioOmino ? t.mioOmino() : null, ominoO: null
     };
     var rete = SGNet.ospita("tris", {
       onCodice: function (c) { st.codice = c; bd(); },
@@ -268,14 +302,14 @@
       onAddio: function (id) { if (id === st.avvId) { st.avvId = null; st.nomiO = null; if (st.fase !== "lobby") { st.fase = "lobby"; } bd(); } },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") { if (!st.avvId) { st.avvId = id; st.nomiO = String(m.nome || "Avversario").slice(0, 16); } bd(); }
+        if (m.t === "join") { if (!st.avvId) { st.avvId = id; st.nomiO = String(m.nome || "Avversario").slice(0, 16); st.ominoO = avatarOk(m.omino); } bd(); }
         else if (m.t === "mossa") { if (st.fase === "gioco" && st.turno === "O" && id === st.avvId) applica(m.i); }
       },
       onErrore: function () { senzaRete(t); }
     });
     function vm() {
       return { fase: st.fase, codice: st.codice, pronta: st.pronta, board: st.board, turno: st.turno,
-        fine: st.fine, nomi: { X: st.nomiX, O: st.nomiO || "Avversario" }, avversario: !!st.avvId };
+        fine: st.fine, nomi: { X: st.nomiX, O: st.nomiO || "Avversario" }, avversario: !!st.avvId, omini: { X: st.ominoX, O: st.avvId ? st.ominoO : null } };
     }
     function bd() { rete.invia({ t: "vm", vm: vm() }); disegna(); }
     function applica(i) {
@@ -330,7 +364,7 @@
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome });
+        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : null });
           setTimeout(function () { if (!S.vm && S.msg) S.msg.textContent = "Non trovo la partita: controlla il codice, o l'host non ha ancora aperto la stanza…"; }, 8000); },
         onMsg: function (m) { if (m && m.t === "vm") {
           var n = 0; if (m.vm && m.vm.board) for (var i = 0; i < m.vm.board.length; i++) if (m.vm.board[i]) n++;
@@ -349,40 +383,14 @@
     campoTris(t, vm, cb);
   }
 
+  function avatarOk(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  // la saletta d'attesa (uguale per tutti i giochi): tu e il tuo avversario
   function lobbyTris(t, vm, cb) {
-    var el = t.el;
-    var s = t.schermata({ icona: "⭕", titolo: "Tris · Lobby", sotto: "Ognuno dal suo telefono",
-      indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
-    if (cb.sonoHost) {
-      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-      s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
-      if (vm.codice && vm.codice !== "…") {
-        var link = SG.creaLink({ gioco: "tris", stanza: vm.codice });
-        var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-        s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-          onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-        s._contenuto.appendChild(campo);
-      }
-      s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
-        text: vm.pronta ? "🟢 Stanza pronta — manda il codice" : "🟡 Sto aprendo la stanza…" }));
-      s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin-top:10px",
-        text: vm.avversario ? "✅ Avversario collegato!" : "In attesa dell'avversario…" }));
-      var b = el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: cb.onComincia });
-      if (!vm.avversario) b.setAttribute("disabled", "disabled");
-      s._piede.appendChild(b);
-    } else {
-      s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:#69db7c;margin:6px 0 2px", text: "✅ Sei nella stanza" }));
-      s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Chi c'è" }));
-      [["X", vm.nomi.X, CX], ["O", vm.nomi.O, CO]].forEach(function (p) {
-        var mio = (p[0] === cb.mio);
-        s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:" + (mio ? "rgba(255,202,58,.18)" : "rgba(255,255,255,.06)") + (mio ? ";border:1px solid var(--accento)" : "") }, [
-          el("span", { style: "width:16px;height:16px;border-radius:50%;flex:0 0 auto;background:" + p[2] }),
-          el("span", { style: "flex:1;font-weight:700", text: p[1] + (mio ? " (tu)" : "") + " (" + p[0] + ")" })
-        ]));
-      });
-      s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci…" }));
-    }
-    t.mostra(s);
+    var om = vm.omini || {}, gio = [{ id: "X", nome: vm.nomi.X, omino: om.X || null, host: true, tu: cb.sonoHost }];
+    if (vm.avversario) gio.push({ id: "O", nome: vm.nomi.O, omino: om.O || null, tu: !cb.sonoHost });
+    t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2, vuoti: vm.avversario ? 0 : 1, giocatori: gio,
+      nota: cb.sonoHost ? (vm.avversario ? "✅ Avversario collegato! Quando vuoi, comincia." : "Manda il link: aspettiamo il tuo avversario.") : null,
+      attesa: "Aspetta che l'host cominci: tu giochi con il cerchio ⭕.", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
   function errore(t, txt) {

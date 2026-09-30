@@ -34,6 +34,7 @@
     icona: "💣",
     descrizione: "Esce una categoria: dici una parola a voce e lanci la bomba a chi vuoi. A chi scade il tempo, esplode! Si va avanti finché ne resta uno.",
     giocatoriMin: 2,
+    modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono con la bomba!", amici: true }],
     giocatoriMax: 10,
     difficolta: 2,
     regole: [
@@ -47,6 +48,7 @@
       var el = aiuti.el;
       dove.modo = "telefono";
       if (aiuti.torneo) return;
+      if (aiuti.modo) { dove.modo = aiuti.modo; return; }   // come giocare l'avete già scelto prima
       box.appendChild(el("div", { class: "etichetta", text: "Come si gioca" }));
       var nota = el("div", { class: "link-avviso", hidden: "hidden" });
       var bT, bO;
@@ -714,51 +716,29 @@
   function nascondiBomba(R) { if (R.bomba) R.bomba.style.opacity = 0; R.holder = null; }
 
   // ---- lobby (online) ----
+  // la saletta d'attesa (uguale per tutti i giochi); l'host sotto può aggiungere le sue categorie
   function disegnaLobbyP(t, vm, cb) {
-    var el = t.el, myId = cb.myId;
-    var s = t.schermata({ icona: "💣", titolo: "La Patata Bollente · Lobby", sotto: "Ognuno dal suo telefono",
-      indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
+    var el = t.el, extra = [];
     if (cb.sonoHost) {
-      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-      s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
-      if (vm.codice && vm.codice !== "…") {
-        var link = SG.creaLink({ gioco: "patata", stanza: vm.codice });
-        var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-        s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-          onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-        s._contenuto.appendChild(campo);
+      if (!cb._cat) {   // il riquadro delle categorie si crea una volta sola (così quello che scrivi non si perde quando entra qualcuno)
+        var inpCat = el("input", { class: "link-campo", type: "text", maxlength: "40", placeholder: "Scrivi una categoria…" }), lista = el("div");
+        var aggiungiCat = function () { if (inpCat.value.trim()) { cb.onAggiungiCat(inpCat.value); inpCat.value = ""; } };
+        inpCat.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); aggiungiCat(); } });
+        cb._cat = { lista: lista, box: el("div", {}, [ el("div", { class: "etichetta", text: "Categorie tue (facoltative)" }), inpCat,
+          el("button", { class: "btn btn-fantasma", style: "margin-top:6px", text: "＋ Aggiungi categoria", onclick: aggiungiCat }), lista ]) };
       }
-      s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
-        text: vm.pronta ? "🟢 Stanza pronta — manda il codice agli amici" : "🟡 Sto aprendo la stanza… (attendi il verde)" }));
-    }
-    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Chi c'è (" + vm.players.length + ")" }));
-    vm.players.forEach(function (p) {
-      s._contenuto.appendChild(el("div", { class: "pt-lobby" }, [
-        el("span", { class: "fac", html: ST.avatarDi(p) }),
-        el("span", { style: "flex:1", text: p.nome + (p.id === myId ? " (tu)" : "") })
-      ]));
-    });
-    if (cb.sonoHost) {
-      s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Categorie tue (facoltative)" }));
-      var inpCat = el("input", { class: "link-campo", type: "text", maxlength: "40", placeholder: "Scrivi una categoria…" });
-      function aggiungiCat() { if (inpCat.value.trim()) { cb.onAggiungiCat(inpCat.value); inpCat.value = ""; } }
-      inpCat.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); aggiungiCat(); } });
-      s._contenuto.appendChild(inpCat);
-      s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", style: "margin-top:6px", text: "＋ Aggiungi categoria", onclick: aggiungiCat }));
+      var L = cb._cat.lista; while (L.firstChild) L.removeChild(L.firstChild);
       (vm.customCats || []).forEach(function (c, i) {
-        s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;margin-top:6px;background:rgba(255,255,255,.06)" }, [
-          el("span", { style: "flex:1", text: "📝 " + c }),
-          el("button", { class: "togli", text: "×", onclick: function () { cb.onTogliCat(i); } })
-        ]));
+        L.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;margin-top:6px;background:rgba(255,255,255,.06)" }, [
+          el("span", { style: "flex:1", text: "📝 " + c }), el("button", { class: "togli", text: "×", onclick: function () { cb.onTogliCat(i); } }) ]));
       });
-      if ((vm.customCats || []).length) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Si giocheranno queste (se sono meno di 3, si completa con categorie a caso)." }));
-      var ok = vm.players.length >= 2;
-      var b = el("button", { class: "btn btn-primario", text: "Continua ▶", onclick: cb.onContinua });
-      if (!ok) b.setAttribute("disabled", "disabled");
-      s._piede.appendChild(b);
-      if (!ok) s._piede.appendChild(el("p", { class: "modulo-nota", text: "Servono almeno 2 giocatori (aspetta che entrino)." }));
-    } else s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci…" }));
-    t.mostra(s);
+      if ((vm.customCats || []).length) L.appendChild(el("p", { class: "modulo-nota", text: "Si giocheranno queste (se sono meno di 3, si completa con categorie a caso)." }));
+      extra.push(cb._cat.box);
+    }
+    t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2, testoComincia: "Continua ▶",
+      giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
+      extra: extra, attesa: "Aspetta l'host: poi si vota la categoria e parte la bomba! 💣",
+      onComincia: cb.onContinua, onEsci: cb.onEsci });
   }
 
   // ---- classifica finale (dopo il finale nello studio) ----

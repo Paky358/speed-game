@@ -704,8 +704,8 @@
     function chiudi() { if (loop) clearInterval(loop); if (toC) clearInterval(toC); if (ref) ref.rimuovi(); if (rete) rete.chiudi(); }
 
     function seggi() {
-      var a = [{ nome: (t.giocatori && t.giocatori[0]) || "Host", id: "host" }];
-      for (var s = 1; s < N; s++) a.push(posti[s] ? { nome: nomiU[s], id: posti[s] } : null);
+      var nh = (t.giocatori && t.giocatori[0]) || "Host", a = [{ nome: nh, id: "host", omino: mioAvatar(nh) }];
+      for (var s = 1; s < N; s++) a.push(posti[s] ? { nome: nomiU[s], id: posti[s], omino: ominiU[s] || null } : null);
       return a;
     }
     function aggiornaLobby() {
@@ -841,40 +841,11 @@
 
   // lobby uguale per host e ospite: mostra tutti i posti (bot inclusi), evidenzia il proprio.
   function renderLobby(t, vm, cb) {
-    var el = t.el;
-    var s = t.schermata({ icona: "🐎", titolo: "Horto Muso · Sala", sotto: "Ognuno dal suo telefono",
-      indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
-    if (vm.sonoHost) {
-      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-      s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
-      if (vm.codice && vm.codice !== "…") {
-        var link = SG.creaLink({ gioco: "horto", stanza: vm.codice });
-        var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-        s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-          onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-        s._contenuto.appendChild(campo);
-      }
-      s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
-        text: vm.pronta ? "🟢 Stanza pronta — manda il codice" : "🟡 Sto aprendo la stanza…" }));
-    } else {
-      s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:#69db7c;margin-bottom:2px", text: "✅ Sei nella stanza " + (vm.codice || "").toUpperCase() }));
-    }
-    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Cavalli (i posti liberi li giocano i bot)" }));
-    (vm.seggi || []).forEach(function (sg, i) {
-      var mio = sg && sg.id && sg.id === vm.myId;
-      var testo = sg ? ((i === 0 ? "👑 " : "") + sg.nome + (mio ? " (tu)" : "")) : "🤖 bot";
-      s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:" + (mio ? "rgba(255,202,58,.18)" : "rgba(255,255,255,.06)") + (mio ? ";border:1px solid var(--accento)" : "") }, [
-        el("span", { style: "width:16px;height:16px;border-radius:50%;flex:0 0 auto;background:" + COLORI[i % COLORI.length] }),
-        el("span", { style: "flex:1;font-weight:700", text: "🐎 " + testo })
-      ]));
-    });
-    if (vm.sonoHost) {
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Comincia la corsa ▶", onclick: cb.onComincia }));
-      s._piede.appendChild(el("p", { class: "modulo-nota", text: "Puoi cominciare quando vuoi: i posti vuoti diventano bot." }));
-    } else {
-      s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci la corsa…" }));
-    }
-    t.mostra(s);
+    var gio = [], vuoti = 0;
+    (vm.seggi || []).forEach(function (sg, i) { if (sg) gio.push({ id: sg.id, nome: sg.nome, omino: sg.omino || null, host: i === 0, tu: sg.id === vm.myId }); else vuoti++; });
+    t.lobby({ host: vm.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 1, puoiDaSolo: true, vuoti: vuoti, giocatori: gio, testoComincia: "Comincia la corsa ▶",
+      nota: vm.sonoHost ? "Puoi cominciare quando vuoi: i posti liberi li corrono i bot." : null,
+      attesa: "Aspetta che l'host dia il via alla corsa! 🐎", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
   function errore(t, txt) {
@@ -893,6 +864,7 @@
 
   SG.registra({
     id: "horto",
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro i bot", sotto: "Corri da solo contro i cavalli dei bot" }],
     nome: "Horto Muso",
     icona: "🐎",
     descrizione: "Corsa di cavalli: frusta per accelerare, ma occhio all'energia! Contro i bot o online, ognuno dal suo telefono.",
@@ -916,8 +888,10 @@
         el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro i bot" }), el("div", { class: "ms", text: "Da solo" })])]);
       bOnl = el("button", { class: "modo-chip", onclick: function () { selM("online"); } }, [
         el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online" }), el("div", { class: "ms", text: "Ognuno dal suo" })])]);
-      box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
-      box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
+      if (!aiuti.modo) {   // (se "come giocare" l'avete già scelto prima, qui non si sceglie)
+        box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
+        box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
+      }
       box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Quanti cavalli in gara" }));
       var wR = el("div", { style: "display:flex;gap:8px" });
       [2, 4, 6, 8].forEach(function (n) {
@@ -942,6 +916,7 @@
         ? "Apri una stanza e manda il codice: gli altri corrono dal loro telefono. I posti liberi li giocano i bot."
         : "Qui il collegamento non è disponibile: funziona quando il gioco è aperto dal sito pubblicato online.";
       box.appendChild(notaOnline);
+      if (aiuti.modo) { selM(aiuti.modo); notaOnline.hidden = true; }
     },
     avvia: function (t) {
       var imp = t.impostazioni || {};

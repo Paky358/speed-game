@@ -1065,6 +1065,7 @@
     icona: "🃏",
     descrizione: "Il classico gioco di carte napoletane: prendi le carte del tavolo e fai scopa. Contro il bot o online, ognuno dal suo telefono.",
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 3,
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Sfidi Matt, il bot della Scopa" }],
     regole: [
       "Si gioca <b>in due</b> con le 40 carte napoletane. Tre carte in mano a testa, quattro sul tavolo.",
       "Nel tuo turno giochi una carta: se ha lo <b>stesso valore</b> di una carta sul tavolo la <b>prendi</b>. Se non c'è un valore uguale, puoi prendere <b>più carte che sommano</b> al valore della tua.",
@@ -1088,8 +1089,10 @@
         el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro il bot" }), el("div", { class: "ms", text: "Da solo" })])]);
       bOnl = el("button", { class: "modo-chip", onclick: function () { sel("online"); } }, [
         el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online" }), el("div", { class: "ms", text: "Ognuno dal suo" })])]);
-      box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
-      box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
+      if (!aiuti.modo) {   // (se "come giocare" l'avete già scelto prima, qui non si sceglie)
+        box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
+        box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
+      }
       boxDiff = el("div", {});
       boxDiff.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura del bot" }));
       var diffWrap = el("div", { style: "display:flex;gap:8px" });
@@ -1107,6 +1110,7 @@
         ? "Apri una stanza e manda il codice: l'altro entra dal suo telefono (ognuno vede solo le proprie carte)."
         : "Qui il collegamento non è disponibile: funziona quando il gioco è aperto dal sito pubblicato online.";
       box.appendChild(notaOnline);
+      if (aiuti.modo) { sel(aiuti.modo); notaOnline.hidden = true; }
     },
     avvia: function (t) {
       var imp = t.impostazioni || {};
@@ -1177,8 +1181,8 @@
       onNuova: function () { M = creaMotore(nomi, t.mischia); bcast(); },
       onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
     });
-    function lobbyVm() { return { lobby: true, codice: codice, pronta: pronta, avversario: !!avvId, sonoHost: true, io: "A", nomi: nomi }; }
-    function aggiornaLobby() { if (M) return; if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, avversario: !!avvId, nomi: { A: nomi.A, B: nomi.B } }); disegnaLobby(); }
+    function lobbyVm() { return { lobby: true, codice: codice, pronta: pronta, avversario: !!avvId, sonoHost: true, io: "A", nomi: nomi, omini: omini }; }
+    function aggiornaLobby() { if (M) return; if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, avversario: !!avvId, nomi: { A: nomi.A, B: nomi.B }, omini: { A: omini.A, B: avvId ? omini.B : null } }); disegnaLobby(); }
     function bcast() {
       // all'ospite mando la SUA vista (vede solo le proprie carte); io disegno la mia
       if (M) { if (rete) rete.invia({ t: "vm", vm: vistaDa(M.st, "B", omini) }); C.setVm(vistaDa(M.st, "A", omini)); }
@@ -1195,7 +1199,7 @@
     rete = SGNet.ospita("scopa", {
       onCodice: function (c) { codice = c; if (!M) aggiornaLobby(); },
       onConnesso: function () { pronta = true; if (!M) aggiornaLobby(); },
-      onAddio: function (id) { if (id === avvId) { avvId = null; nomi.B = "Avversario"; if (M) { M = null; } aggiornaLobby(); } },
+      onAddio: function (id) { if (id === avvId) { avvId = null; nomi.B = "Avversario"; omini.B = null; if (M) { M = null; } aggiornaLobby(); } },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") { if (!avvId) { avvId = id; nomi.B = String(m.nome || "Avversario").slice(0, 16); omini.B = avatarValido(m.omino); } if (M) M.st.nomi.B = nomi.B; aggiornaLobby(); }
@@ -1261,7 +1265,7 @@
     }
     function mostraLobby(m) {
       if (C.vm) return;
-      renderLobby(t, { codice: m.codice, pronta: m.pronta, avversario: m.avversario, nomi: m.nomi, sonoHost: false, io: "B" },
+      renderLobby(t, { codice: m.codice, pronta: m.pronta, avversario: m.avversario, nomi: m.nomi, omini: m.omini, sonoHost: false, io: "B" },
         { onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (S.rete) S.rete.chiudi(); t.esci(); } });
     }
     function mostraAttesa() {   // placeholder finché non arriva la sala dall'host
@@ -1274,43 +1278,13 @@
     }
   }
 
-  // sala uguale per host e ospite: mostra i due giocatori; codice/Comincia solo all'host
+  // la saletta d'attesa (uguale per tutti i giochi): tu e il tuo avversario
   function renderLobby(t, vm, cb) {
-    var el = t.el;
-    var s = t.schermata({ icona: "🃏", titolo: "Scopa · Sala", sotto: "Ognuno dal suo telefono",
-      indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
-    if (vm.sonoHost) {
-      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-      s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
-      if (vm.codice && vm.codice !== "…") {
-        var link = SG.creaLink({ gioco: "scopa", stanza: vm.codice });
-        var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-        s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-          onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-        s._contenuto.appendChild(campo);
-      }
-      s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (vm.pronta ? "#69db7c" : "#ffd43b"),
-        text: vm.pronta ? "🟢 Stanza pronta — manda il codice" : "🟡 Sto aprendo la stanza…" }));
-    } else {
-      s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:#69db7c;margin-bottom:2px", text: "✅ Sei nella stanza " + (vm.codice || "").toUpperCase() }));
-    }
-    var nomi = vm.nomi || {};
-    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Chi c'è" }));
-    [["A", nomi.A || "Host", "#e0a11b"], ["B", vm.avversario ? (nomi.B || "Avversario") : null, "#d1495b"]].forEach(function (p) {
-      var mio = (p[0] === vm.io);
-      s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:" + (mio ? "rgba(255,202,58,.16)" : "rgba(255,255,255,.06)") + (p[1] ? "" : ";opacity:.55") }, [
-        el("span", { style: "width:16px;height:16px;border-radius:50%;flex:0 0 auto;background:" + p[2] }),
-        el("span", { style: "flex:1;font-weight:700", text: p[1] ? (p[1] + (mio ? " (tu)" : "")) : "In attesa dell'avversario…" })
-      ]));
-    });
-    if (vm.sonoHost) {
-      var b = el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: cb.onComincia });
-      if (!vm.avversario) b.setAttribute("disabled", "disabled");
-      s._piede.appendChild(b);
-    } else {
-      s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci…" }));
-    }
-    t.mostra(s);
+    var nomi = vm.nomi || {}, om = vm.omini || {}, gio = [{ id: "A", nome: nomi.A || "Host", omino: om.A || null, host: true, tu: vm.io === "A" }];
+    if (vm.avversario) gio.push({ id: "B", nome: nomi.B || "Avversario", omino: om.B || null, tu: vm.io === "B" });
+    t.lobby({ host: vm.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2, vuoti: vm.avversario ? 0 : 1, giocatori: gio,
+      nota: vm.sonoHost ? (vm.avversario ? "✅ Avversario collegato! Quando vuoi, comincia." : "Manda il link: aspettiamo il tuo avversario.") : null,
+      attesa: "Aspetta che l'host cominci: si gioca a Scopa! 🃏", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
   function erroreScopa(t, txt) {

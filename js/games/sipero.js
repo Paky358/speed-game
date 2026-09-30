@@ -40,6 +40,7 @@
     icona: "🤨",
     descrizione: "Due squadre costruiscono lo scenario di vita migliore e si sabotano a colpi di Malus. Il giudice decide chi vince.",
     giocatoriMin: 3,
+    modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Giudice e squadre sullo stesso telefono", amici: true }],
     giocatoriMax: 10,
     difficolta: 2,
     regole: [
@@ -62,7 +63,10 @@
       var notaOnRegole = el("div", { class: "link-avviso", hidden: "hidden" });
 
       // --- un telefono solo / ognuno dal suo telefono ---
-      if (!aiuti.torneo) {
+      if (aiuti.modo) {   // l'avete già scelto prima: online le fasi si scelgono nella saletta
+        dove.modo = aiuti.modo; boxRegole.hidden = (aiuti.modo === "online");
+        if (aiuti.modo === "online") { notaOnRegole.hidden = false; notaOnRegole.textContent = "Le fasi (Classica o Personalizzata), il giudice e le squadre li scegli nella saletta, dopo aver aperto la stanza."; box.appendChild(notaOnRegole); }
+      } else if (!aiuti.torneo) {
         box.appendChild(el("div", { class: "etichetta", text: "Come si gioca" }));
         var notaOn = el("div", { class: "link-avviso", hidden: "hidden" });
         var bT, bO;
@@ -355,7 +359,7 @@
     var g = giudiceDa(st.giocatori, st.assegna);
     var vm = {
       fase: st.fase, codice: st.codice,
-      giocatori: st.giocatori.map(function (x) { return { id: x.id, nome: x.nome }; }),
+      giocatori: st.giocatori.map(function (x) { return { id: x.id, nome: x.nome, omino: x.omino || null }; }),
       assegna: st.assegna, giudiceId: g ? g.id : null, giudiceNome: g ? g.nome : "",
       squadre: squadreDa(st.giocatori, st.assegna),
       scen: st.scen, mani: st.mani || null, vincitore: st.vincitore, step: null,
@@ -372,7 +376,7 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteS(t);
     var st = {
       fase: "lobby", codice: "…", iniziata: false,
-      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host" }],
+      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", omino: t.mioOmino ? t.mioOmino() : null }],
       assegna: {}, seq: seq, vincitore: null,
       regoleModalita: "classica", seqCustom: [],
       scen: [{ bonus: [], malusRic: [] }, { bonus: [], malusRic: [] }],
@@ -390,7 +394,7 @@
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") { if (!perIdS(st, id) && st.giocatori.length < 10) st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16) }); bd(); }
+        if (m.t === "join") { if (!perIdS(st, id) && st.giocatori.length < 10) st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarOkS(m.omino) }); bd(); }
         else if (m.t === "gioca") giocaCarte(id, m.carte);
         else if (m.t === "giudica") giudica(id, m.sq);
         else if (m.t === "avanti") avanti(id);
@@ -490,7 +494,7 @@
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome });
+        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : null });
           setTimeout(function () { if (!S.vm && S.msg) S.msg.textContent = "Non trovo la partita. Controlla il codice, o l'host non ha ancora aperto la stanza…"; }, 8000); },
         onMsg: function (m) { if (m && m.t === "vm") { S.vm = m.vm; disegna(); } },
         onChiuso: function () { erroreS(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
@@ -560,6 +564,7 @@
 
   // Editor delle fasi dentro la lobby online (solo host): si mettono
   // le regole DOPO aver creato la stanza e invitato gli amici.
+  function avatarOkS(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   function editorFasiLobby(t, s, vm, cb) {
     var el = t.el;
     s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Le fasi" }));
@@ -603,47 +608,29 @@
     var mySq = -1, sonoGiudice = (vm.giudiceId === myId);
     vm.squadre.forEach(function (sq, k) { if (sq.membri.some(function (m) { return m.id === myId; })) mySq = k; });
 
-    if (vm.fase === "lobby") {
-      var s = t.schermata({ icona: "🤨", titolo: "Sì... però · Lobby", sotto: "Ognuno dal suo telefono",
-        indietro: function () { if (window.confirm("Uscire?")) cb.onEsci(); } });
-      if (cb.sonoHost) {
-        s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
-        s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (vm.codice || "…").toUpperCase() }));
-        if (vm.codice && vm.codice !== "…") {
-          var linkS = SG.creaLink({ gioco: "sipero", stanza: vm.codice });
-          var campoS = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: linkS });
-          s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-            onclick: function () { campoS.focus(); campoS.select(); try { navigator.clipboard.writeText(linkS); } catch (e) {} } }));
-          s._contenuto.appendChild(campoS);
-        }
-        s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Chi c'è e le squadre" }));
-      }
+    if (vm.fase === "lobby") {   // la saletta d'attesa (uguale per tutti i giochi)
+      var s = { _contenuto: el("div") };
+      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Giudice e squadre" }));
       s._contenuto.appendChild(el("p", { class: "modulo-nota", text: cb.sonoHost ? "Scegli chi fa il giudice (⚖️) e assegna ognuno a una squadra (🟥/🟦), poi comincia." : "L'host sta formando le squadre…" }));
       vm.giocatori.forEach(function (g) {
         var a = vm.assegna[g.id];
         var ruolo = a === "g" ? "⚖️ Giudice" : a === 0 ? "🟥 Squadra 1" : a === 1 ? "🟦 Squadra 2" : "—";
         var riga = el("div", { style: "padding:8px 10px;border-radius:10px;margin-bottom:6px;background:rgba(255,255,255,.06)" });
-        riga.appendChild(el("div", { style: "display:flex;justify-content:space-between" }, [
-          el("span", { text: g.nome + (g.id === myId ? " (tu)" : "") }), el("span", { text: ruolo })
-        ]));
+        riga.appendChild(el("div", { style: "display:flex;justify-content:space-between" }, [ el("span", { text: g.nome + (g.id === myId ? " (tu)" : "") }), el("span", { text: ruolo }) ]));
         if (cb.sonoHost) {
           var row = el("div", { style: "display:flex;gap:6px;margin-top:6px" });
-          [["⚖️", "g"], ["🟥", 0], ["🟦", 1]].forEach(function (o) {
-            row.appendChild(el("button", { class: "btn btn-fantasma", style: "flex:1;padding:8px", text: o[0], onclick: function () { cb.onAssegna(g.id, o[1]); } }));
-          });
+          [["⚖️", "g"], ["🟥", 0], ["🟦", 1]].forEach(function (o) { row.appendChild(el("button", { class: "btn btn-fantasma", style: "flex:1;padding:8px", text: o[0], onclick: function () { cb.onAssegna(g.id, o[1]); } })); });
           riga.appendChild(row);
         }
         s._contenuto.appendChild(riga);
       });
       if (cb.sonoHost) editorFasiLobby(t, s, vm, cb);
-      if (cb.sonoHost) {
-        var ok = vm.giudiceId && vm.squadre[0].membri.length && vm.squadre[1].membri.length && tuttiAssegnati(vm);
-        var b = el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: cb.onComincia });
-        if (!ok) b.setAttribute("disabled", "disabled");
-        s._piede.appendChild(b);
-        if (!ok) s._piede.appendChild(el("p", { class: "modulo-nota", text: "Serve: 1 giudice, almeno 1 per squadra e tutti assegnati." }));
-      } else s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa che l'host cominci…" }));
-      return t.mostra(s);
+      var ok = !!(vm.giudiceId && vm.squadre[0].membri.length && vm.squadre[1].membri.length && tuttiAssegnati(vm));
+      t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 3, puoComincia: ok, extra: [s._contenuto],
+        giocatori: vm.giocatori.map(function (g, i) { return { id: g.id, nome: g.nome, omino: g.omino || null, host: i === 0, tu: g.id === myId }; }),
+        nota: cb.sonoHost && !ok ? "Per cominciare serve: 1 giudice, almeno 1 per squadra e tutti assegnati." : null,
+        attesa: "Aspetta: l'host sta scegliendo il giudice e le squadre. 🤨", onComincia: cb.onComincia, onEsci: cb.onEsci });
+      return;
     }
 
     if (vm.fase === "fine") {
