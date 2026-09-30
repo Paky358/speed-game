@@ -3,12 +3,12 @@
    A turno uno disegna una parola segreta (sceglie tra 3) sulla
    lavagna; gli altri la vedono comparire in tempo reale e provano
    a indovinarla scrivendo in chat. La risposta giusta non si vede:
-   compare solo "Marco ha indovinato!". Punti: 100, 80, 60, 40, poi
-   20 a chi indovina; 25 a chi disegna per ognuno che indovina.
+   compare solo "Marco ha indovinato!". Punti: chi indovina prende
+   tanti punti quanti secondi mancano; chi disegna 25 per ognuno che indovina.
    Col tempo si scoprono alcune lettere; "ci sei quasi" lo sa solo
    chi l'ha scritto. Solo ONLINE (ognuno dal suo telefono):
    host-autoritativo come gli altri giochi. I tratti viaggiano a
-   pezzetti (~14 al secondo, coordinate su una lavagna 1000x750)
+   pezzetti (~14 al secondo, coordinate su una lavagna 1000x1200)
    e l'host li rimanda a tutti; chi arriva dopo chiede il disegno intero.
    ========================================================= */
 (function () {
@@ -44,11 +44,12 @@
     "fuochi d'artificio|labirinto|puzzle|domino|scacchi|trofeo|medaglia|podio|acquario|circo|museo|biblioteca|supermercato|autolavaggio").split("|");
 
   // ---------- costanti ----------
-  var LW = 1000, LH = 750;                                     // la lavagna "logica" (4:3): i punti viaggiano in queste coordinate
-  var COLORI = ["#1d1d27", "#e03131", "#1971c2", "#2f9e44", "#ffffff"];   // nero, rosso, blu, verde; l'ultimo è la gomma
-  var NOMI_COL = ["Nero", "Rosso", "Blu", "Verde", "Gomma"];
-  var SPESSORI = [7, 20];                                      // sottile, grosso (in unità della lavagna)
-  var PUNTI_INDOVINA = [100, 80, 60, 40, 20];                  // il primo, il secondo…; dal quinto in poi 20
+  var LW = 1000, LH = 1200;                                    // la lavagna "logica", un po' più alta che larga (sta meglio sul telefono): i punti viaggiano in queste coordinate
+  // i colori principali (l'ultimo, bianco, è la gomma)
+  var COLORI = ["#1d1d27", "#868e96", "#8b5a2b", "#e03131", "#fd7e14", "#fcc419", "#2f9e44", "#3bc9db", "#1971c2", "#7048e8", "#f06595", "#f5c6a0", "#ffffff"];
+  var NOMI_COL = ["Nero", "Grigio", "Marrone", "Rosso", "Arancione", "Giallo", "Verde", "Azzurro", "Blu", "Viola", "Rosa", "Pelle", "Gomma"];
+  var GOMMA = COLORI.length - 1;
+  var SPESSORI = [6, 16, 36];                                  // sottile, medio, grosso (in unità della lavagna), anche per la gomma
   var PUNTI_DISEGNO = 25;                                      // a chi disegna, per ognuno che indovina
   var SCELTA_MS = 12000, PUNTI_MS = 6000, MAX_CHAT = 40;
   var COL_GIOC = ["#ffd43b", "#74c0fc", "#ff8787", "#8ce99a", "#e599f7", "#ffa94d", "#66d9e8", "#fcc2d7", "#b197fc", "#d8f5a2"];
@@ -127,7 +128,7 @@
       ".schermata.sb-piena>.contenuto{height:100%;margin:0;padding:0}",
       ".sb-scena{position:relative;height:var(--alt,100dvh);max-width:720px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;",
         "background:radial-gradient(120% 80% at 50% 0%,#2e2670,#15123a 70%);user-select:none;-webkit-user-select:none}",
-      ".sb-barra{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:calc(6px + env(safe-area-inset-top)) 8px 6px}",
+      ".sb-barra{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:calc(4px + env(safe-area-inset-top)) 8px 4px}",
       ".sb-esci{flex:0 0 auto;width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;font:inherit;font-size:1.3rem;font-weight:900;cursor:pointer}",
       ".sb-tempo{flex:0 0 auto;min-width:60px;text-align:center;font-weight:900;font-size:.95rem;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.12)}",
       ".sb-tempo.poco{background:#e03131;color:#fff;animation:sbPulsa .5s ease-in-out infinite alternate}",
@@ -142,6 +143,7 @@
       ".sb-lav{position:relative;flex:0 0 auto;display:flex;justify-content:center}",
       ".sb-cv{display:block;background:#fff;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.45);touch-action:none}",
       ".sb-cv.matita{cursor:crosshair}",
+      ".sb-cv.matita.secchio{cursor:cell}",
       ".sb-sopra{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;",
         "padding:12px;text-align:center;background:rgba(18,14,50,.9);border-radius:14px;color:#fff;overflow:hidden}",
       ".sb-sopra[hidden]{display:none}",
@@ -153,15 +155,20 @@
       ".sb-righe b{color:#8ce99a}",
       ".sb-fig{width:64px;height:64px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.12)}",
       ".sb-fig svg,.sb-chip-fig svg{display:block;width:170%;height:auto;margin:-6% 0 0 -35%}",
-      ".sb-riga{flex:0 0 auto;padding:6px 6px 2px}",
-      ".sb-strumenti{display:flex;gap:6px;justify-content:center;align-items:center}",
+      ".sb-riga{flex:0 0 auto;padding:5px 6px 2px}",
+      ".sb-strumenti{display:flex;flex-direction:column;gap:6px;align-items:stretch}",
       ".sb-strumenti[hidden],.sb-gente[hidden]{display:none}",
-      ".sb-col{width:40px;height:40px;border-radius:50%;border:3px solid rgba(255,255,255,.28);background:var(--c);cursor:pointer;padding:0;flex:0 0 auto;font-size:1.05rem;transition:transform .12s}",
-      ".sb-col.on{border-color:#ffe066;transform:scale(1.12);box-shadow:0 0 0 3px rgba(255,224,102,.35)}",
-      ".sb-spess,.sb-str{width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:1.15rem;cursor:pointer;flex:0 0 auto;",
+      // i 12 colori in una riga, sotto gomma, 3 grandezze, annulla e cestino
+      ".sb-tavolozza{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;width:100%;max-width:440px;margin:0 auto}",
+      ".sb-col{display:block;width:100%;max-width:32px;aspect-ratio:1/1;justify-self:center;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:var(--c);cursor:pointer;padding:0;transition:transform .12s}",
+      ".sb-col.on{border-color:#ffe066;transform:scale(1.22);box-shadow:0 0 0 2px rgba(255,224,102,.5)}",
+      ".sb-attrezzi{display:flex;gap:6px;justify-content:center}",
+      ".sb-spess,.sb-str{width:42px;height:36px;border-radius:12px;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:1.1rem;cursor:pointer;flex:0 0 auto;",
         "display:flex;align-items:center;justify-content:center;padding:0}",
-      ".sb-spess i{display:block;width:7px;height:7px;border-radius:50%;background:var(--c,#fff);box-shadow:0 0 0 2px rgba(255,255,255,.6)}",
-      ".sb-spess.grosso i{width:19px;height:19px}",
+      ".sb-spess.on,.sb-gomma.on,.sb-secchio.on{background:rgba(255,224,102,.28);box-shadow:inset 0 0 0 2px #ffe066}",
+      ".sb-spess i{display:block;border-radius:50%;background:var(--c,#1d1d27);box-shadow:0 0 0 1.5px rgba(255,255,255,.75)}",
+      ".sb-spess.s0 i{width:5px;height:5px}.sb-spess.s1 i{width:11px;height:11px}.sb-spess.s2 i{width:21px;height:21px}",
+      ".sb-scena.scrive .sb-riga{display:none}",
       ".sb-gente{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}",
       ".sb-gente::-webkit-scrollbar{display:none}",
       ".sb-chip{flex:0 0 auto;display:flex;align-items:center;gap:5px;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(255,255,255,.1);font-size:.78rem;font-weight:800;line-height:1.1}",
@@ -226,48 +233,107 @@
       if (!x || inp.disabled) return;
       inp.value = ""; cb.onProva(x);
     });
-    inp.addEventListener("focus", function () { setTimeout(function () { window.scrollTo(0, 0); }, 80); });   // iPhone: la tastiera non deve spingere su la lavagna
+    inp.addEventListener("focus", function () { setTimeout(function () { window.scrollTo(0, 0); misura(); }, 80); });   // iPhone: la tastiera non deve spingere su la lavagna
+    inp.addEventListener("blur", function () { setTimeout(misura, 80); });
     [barra, lav, riga, chat, form].forEach(function (n) { scena.appendChild(n); });
     s._contenuto.appendChild(scena);
     t.mostra(s);
 
     // ----- strumenti -----
-    var scelta = { c: 0, w: 0 };
-    var bCol = COLORI.map(function (c, i) {
-      return el("button", { class: "sb-col", style: "--c:" + c, "aria-label": NOMI_COL[i], text: i === COLORI.length - 1 ? "🧽" : "",
-        onclick: function () { scelta.c = i; aggStrumenti(); } });
+    var scelta = { c: 0, w: 1, secchio: false };
+    var tavolozza = el("div", { class: "sb-tavolozza" }), attrezzi = el("div", { class: "sb-attrezzi" });
+    var bCol = COLORI.slice(0, GOMMA).map(function (c, i) {
+      return el("button", { class: "sb-col", style: "--c:" + c, "aria-label": NOMI_COL[i], onclick: function () { scelta.c = i; aggStrumenti(); } });
     });
-    var bSp = el("button", { class: "sb-spess", "aria-label": "Spessore", onclick: function () { scelta.w = 1 - scelta.w; aggStrumenti(); } }, [el("i")]);
+    var bGomma = el("button", { class: "sb-str sb-gomma", "aria-label": "Gomma", text: "🧽", onclick: function () { scelta.c = GOMMA; aggStrumenti(); } });
+    var bSp = SPESSORI.map(function (_, i) {   // tre grandezze, per la matita e per la gomma
+      return el("button", { class: "sb-spess s" + i, "aria-label": ["Sottile", "Medio", "Grosso"][i], onclick: function () { scelta.w = i; scelta.secchio = false; aggStrumenti(); } }, [el("i")]);
+    });
+    // l'icona del secchiello la disegno io (l'emoji 🪣 sui telefoni vecchi esce come un quadratino): la goccia ha il colore scelto
+    var bSecchio = el("button", { class: "sb-str sb-secchio", "aria-label": "Secchiello: riempi una zona", onclick: function () { scelta.secchio = !scelta.secchio; aggStrumenti(); },
+      html: "<svg viewBox='0 0 24 24' width='24' height='24' aria-hidden='true'><path d='M10 3 17 10 10 17 3 10Z' fill='none' stroke='#fff' stroke-width='2' stroke-linejoin='round'/>" +
+        "<path d='M4.2 10.8h11.6L10 16.6z' fill='var(--c,#fcc419)'/><path d='M19.5 12.6c1.2 1.8 1.9 3 1.9 3.9a1.9 1.9 0 0 1-3.8 0c0-.9.7-2.1 1.9-3.9z' fill='var(--c,#fcc419)' stroke='#fff' stroke-width='.8'/></svg>" });
     var bAnn = el("button", { class: "sb-str", "aria-label": "Annulla", text: "↶", onclick: annullaMio });
     var bPul = el("button", { class: "sb-str", "aria-label": "Cancella tutto", text: "🗑️", onclick: pulisciMio });
-    bCol.forEach(function (b) { strumenti.appendChild(b); });
-    [bSp, bAnn, bPul].forEach(function (b) { strumenti.appendChild(b); });
+    bCol.forEach(function (b) { tavolozza.appendChild(b); });
+    [bGomma].concat(bSp, [bSecchio, bAnn, bPul]).forEach(function (b) { attrezzi.appendChild(b); });
+    strumenti.appendChild(tavolozza); strumenti.appendChild(attrezzi);
     function aggStrumenti() {
       bCol.forEach(function (b, i) { b.classList.toggle("on", i === scelta.c); });
-      bSp.classList.toggle("grosso", scelta.w === 1);
-      bSp.style.setProperty("--c", scelta.c === COLORI.length - 1 ? "#fff" : COLORI[scelta.c]);
+      bGomma.classList.toggle("on", scelta.c === GOMMA);
+      bSecchio.classList.toggle("on", scelta.secchio);
+      bSecchio.style.setProperty("--c", scelta.c === GOMMA ? "#fff" : COLORI[scelta.c]);
+      bSp.forEach(function (b, i) { b.classList.toggle("on", !scelta.secchio && i === scelta.w); b.style.setProperty("--c", scelta.c === GOMMA ? "#fff" : COLORI[scelta.c]); });
+      cv.classList.toggle("secchio", scelta.secchio);
     }
     aggStrumenti();
 
-    // ----- la lavagna: i tratti -----
-    var ctx = cv.getContext("2d"), k = 1, tratti = [], mio = null, attesa = [], nTr = 0, puoi = false;
-    function disegnaDa(tr, da) {   // da = da quale punto (indice nell'elenco x,y) ridisegnare
+    // ----- la lavagna -----
+    // Il disegno "vero" sta su una tela di misura fissa (come le coordinate, 1000x1200), uguale su tutti i telefoni:
+    // così anche il secchiello riempie le stesse zone dappertutto. Sullo schermo se ne vede una copia in scala.
+    var ctx = cv.getContext("2d"), tratti = [], mio = null, attesa = [], nTr = 0, puoi = false;
+    var tela = document.createElement("canvas"); tela.width = LW; tela.height = LH;
+    var tctx = tela.getContext("2d", { willReadFrequently: true });
+    function copia(x0, y0, x1, y1) {   // un pezzo della tela sulla lavagna che si vede
+      x0 = Math.max(0, Math.floor(x0) - 2); y0 = Math.max(0, Math.floor(y0) - 2); x1 = Math.min(LW, Math.ceil(x1) + 2); y1 = Math.min(LH, Math.ceil(y1) + 2);
+      if (x1 <= x0 || y1 <= y0) return;
+      var s = cv.width / LW;
+      ctx.drawImage(tela, x0, y0, x1 - x0, y1 - y0, x0 * s, y0 * s, (x1 - x0) * s, (y1 - y0) * s);
+    }
+    function mostraTutto() { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high"; ctx.drawImage(tela, 0, 0, cv.width, cv.height); }
+    function disegnaDa(tr, da, fermo) {   // da = da quale punto (indice nell'elenco x,y); fermo = non copiare ancora sullo schermo
       var p = tr.p; if (!p.length) return;
-      ctx.save(); ctx.setTransform(k, 0, 0, k, 0, 0);
-      ctx.strokeStyle = ctx.fillStyle = COLORI[tr.c] || COLORI[0];
-      ctx.lineWidth = SPESSORI[tr.w ? 1 : 0]; ctx.lineCap = "round"; ctx.lineJoin = "round";
-      if (p.length === 2) { ctx.beginPath(); ctx.arc(p[0], p[1], ctx.lineWidth / 2, 0, Math.PI * 2); ctx.fill(); }
+      if (tr.f) return riempi(p[0], p[1], COLORI[tr.c] || COLORI[0], fermo);
+      var lw = SPESSORI[tr.w] || SPESSORI[0], i = Math.max(0, da - (da % 2)), x0 = p[i], y0 = p[i + 1], x1 = x0, y1 = y0;
+      tctx.strokeStyle = tctx.fillStyle = COLORI[tr.c] || COLORI[0];
+      tctx.lineWidth = lw; tctx.lineCap = "round"; tctx.lineJoin = "round";
+      if (p.length === 2) { tctx.beginPath(); tctx.arc(p[0], p[1], lw / 2, 0, Math.PI * 2); tctx.fill(); }
       else {
-        var i = Math.max(0, da - (da % 2));
-        ctx.beginPath(); ctx.moveTo(p[i], p[i + 1]);
-        for (i += 2; i < p.length; i += 2) ctx.lineTo(p[i], p[i + 1]);
-        ctx.stroke();
+        tctx.beginPath(); tctx.moveTo(p[i], p[i + 1]);
+        for (i += 2; i < p.length; i += 2) {
+          tctx.lineTo(p[i], p[i + 1]);
+          if (p[i] < x0) x0 = p[i]; if (p[i] > x1) x1 = p[i]; if (p[i + 1] < y0) y0 = p[i + 1]; if (p[i + 1] > y1) y1 = p[i + 1];
+        }
+        tctx.stroke();
       }
-      ctx.restore();
+      if (!fermo) copia(x0 - lw, y0 - lw, x1 + lw, y1 + lw);
+    }
+    // il secchiello: riempie la zona toccata (i pixel simili attaccati),
+    // più un pixel di bordo che copre la sfumatura delle linee
+    function riempi(x, y, colore, fermo) {
+      x = intIn(x, LW - 1); y = intIn(y, LH - 1);
+      var img = tctx.getImageData(0, 0, LW, LH), d = img.data, W = LW, H = LH;
+      var r = parseInt(colore.slice(1, 3), 16), g = parseInt(colore.slice(3, 5), 16), b = parseInt(colore.slice(5, 7), 16);
+      var s0 = (y * W + x) * 4, r0 = d[s0], g0 = d[s0 + 1], b0 = d[s0 + 2];
+      if (Math.abs(r0 - r) + Math.abs(g0 - g) + Math.abs(b0 - b) < 16) return;   // è già di quel colore
+      var TOL = 100, zona = new Uint8Array(W * H), pila = [x, y], minX = x, maxX = x, minY = y, maxY = y;
+      function simile(q) { var j = q * 4; return Math.abs(d[j] - r0) + Math.abs(d[j + 1] - g0) + Math.abs(d[j + 2] - b0) <= TOL; }
+      while (pila.length) {
+        var py = pila.pop(), px = pila.pop(), q = py * W + px;
+        while (px > 0 && !zona[q - 1] && simile(q - 1)) { px--; q--; }   // fino al bordo a sinistra
+        var su = false, giu = false;
+        for (; px < W && !zona[q] && simile(q); px++, q++) {
+          zona[q] = 1;
+          if (px < minX) minX = px; if (px > maxX) maxX = px;
+          if (py > 0) { var u = q - W; if (!zona[u] && simile(u)) { if (!su) { pila.push(px, py - 1); su = true; } } else su = false; }
+          if (py < H - 1) { var v = q + W; if (!zona[v] && simile(v)) { if (!giu) { pila.push(px, py + 1); giu = true; } } else giu = false; }
+        }
+        if (py < minY) minY = py; if (py > maxY) maxY = py;
+      }
+      var ax = Math.max(0, minX - 1), bx = Math.min(W - 1, maxX + 1), ay = Math.max(0, minY - 1), by = Math.min(H - 1, maxY + 1);
+      for (var yy = ay; yy <= by; yy++) for (var xx = ax; xx <= bx; xx++) {
+        var kk = yy * W + xx;
+        if (zona[kk] || (xx > 0 && zona[kk - 1]) || (xx < W - 1 && zona[kk + 1]) || (yy > 0 && zona[kk - W]) || (yy < H - 1 && zona[kk + W])) {
+          var j = kk * 4; d[j] = r; d[j + 1] = g; d[j + 2] = b; d[j + 3] = 255;
+        }
+      }
+      tctx.putImageData(img, 0, 0, ax, ay, bx - ax + 1, by - ay + 1);
+      if (!fermo) copia(ax, ay, bx + 1, by + 1);
     }
     function ridisegna() {
-      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height);
-      tratti.forEach(function (tr) { disegnaDa(tr, 0); });
+      tctx.fillStyle = "#fff"; tctx.fillRect(0, 0, LW, LH);
+      tratti.forEach(function (tr) { disegnaDa(tr, 0, true); });
+      mostraTutto();
     }
     function coord(e) {
       var r = cv.getBoundingClientRect();
@@ -284,6 +350,12 @@
     cv.addEventListener("pointerdown", function (e) {
       if (!puoi) return;
       e.preventDefault();
+      if (scelta.secchio) {   // secchiello: riempie la zona toccata col colore scelto
+        var pt = coord(e), op = { id: io + "." + (++nTr), c: scelta.c, w: 0, f: 1, p: [Math.min(pt[0], LW - 1), Math.min(pt[1], LH - 1)] };
+        tratti.push(op); disegnaDa(op, 0);
+        cb.onTratto({ id: op.id, c: op.c, w: 0, f: 1, p: op.p });
+        return;
+      }
       try { cv.setPointerCapture(e.pointerId); } catch (x) {}
       mio = { id: io + "." + (++nTr), c: scelta.c, w: scelta.w, p: [] }; tratti.push(mio);
       aggiungi(coord(e));
@@ -300,18 +372,20 @@
     function annullaMio() { if (!puoi || !tratti.length) return; stacca(); var tr = tratti.pop(); ridisegna(); cb.onAnnulla(tr.id); }
     function pulisciMio() { if (!puoi || !tratti.length) return; stacca(); tratti = []; ridisegna(); cb.onPulisci(); }
 
-    // ----- misure: la lavagna 4:3 più grande possibile, lasciando spazio alla chat -----
+    // ----- misure: la lavagna più grande possibile, lasciando spazio alla chat -----
     function misura() {
       if (!document.body.contains(scena)) return;
       var W = scena.clientWidth, Ht = scena.clientHeight; if (!W || !Ht) return;
+      var scrive = document.activeElement === inp && !inp.disabled;
+      scena.classList.toggle("scrive", scrive);   // tastiera aperta: via le figurine, la chat al minimo
       var fisso = barra.offsetHeight + riga.offsetHeight + form.offsetHeight;
-      var hMax = Ht - fisso - Math.max(80, Math.round(Ht * 0.17)) - 10;
-      var cw = Math.min(W - 12, 700), ch = Math.round(cw * LH / LW);
+      var hMax = Ht - fisso - (scrive ? 44 : (puoi ? 52 : 84)) - 8;   // chi disegna non scrive: a lui basta meno chat
+      var cw = Math.min(W - 10, 720), ch = Math.round(cw * LH / LW);
       if (ch > hMax) { ch = Math.max(110, hMax); cw = Math.round(ch * LW / LH); }
       var dpr = Math.min(2.5, window.devicePixelRatio || 1);
       cv.style.width = cw + "px"; cv.style.height = ch + "px"; lav.style.height = ch + "px"; sopra.style.width = cw + "px";
-      cv.width = Math.round(cw * dpr); cv.height = Math.round(cw * dpr * LH / LW); k = cv.width / LW;
-      ridisegna();
+      cv.width = Math.round(cw * dpr); cv.height = Math.round(cw * dpr * LH / LW);
+      mostraTutto();   // basta ricopiare la tela: il disegno non cambia
     }
     var ro = window.ResizeObserver ? new ResizeObserver(function () { misura(); }) : null;
     if (ro) ro.observe(scena);
@@ -398,9 +472,11 @@
       if (chiave !== chiaveCentro) { chiaveCentro = chiave; centro.innerHTML = html; }
       giro.innerHTML = "Giro<br>" + vm.giro + "/" + vm.giri;
       // chi disegna ha gli strumenti; gli altri vedono chi gioca
+      var primaPuoi = puoi;
       puoi = vm.fase === "disegno" && dis;
       cv.classList.toggle("matita", puoi);
       strumenti.hidden = !puoi; gente.hidden = puoi;
+      if (puoi !== primaPuoi) misura();   // gli strumenti prendono più posto delle figurine: rifaccio le misure
       aggGente(vm);
       // sopra la lavagna
       var chiaveS = vm.fase + "|" + vm.turno + "|" + (dis ? (priv.opzioni || []).join(",") : "") + "|" + (vm.fase === "punti" ? JSON.stringify(vm.ultimo) : "");
@@ -456,15 +532,15 @@
       // un pezzo di tratto arrivato da chi disegna
       tratto: function (m) {
         var tr = null;
-        for (var j = tratti.length - 1; j >= 0; j--) if (tratti[j].id === m.id) { tr = tratti[j]; break; }
-        if (!tr) { tr = { id: m.id, c: m.c, w: m.w, p: [] }; tratti.push(tr); }
+        if (!m.f) for (var j = tratti.length - 1; j >= 0; j--) if (tratti[j].id === m.id) { tr = tratti[j]; break; }
+        if (!tr) { tr = { id: m.id, c: m.c, w: m.w, f: m.f ? 1 : 0, p: [] }; tratti.push(tr); }
         var da = tr.p.length;
         Array.prototype.push.apply(tr.p, m.p || []);
         disegnaDa(tr, Math.max(0, da - 2));
       },
       annulla: function (id) { tratti = tratti.filter(function (tr) { return tr.id !== id; }); ridisegna(); },
       pulisci: function () { tratti = []; ridisegna(); },
-      tutti: function (lista) { tratti = (lista || []).map(function (tr) { return { id: tr.id, c: tr.c, w: tr.w, p: (tr.p || []).slice() }; }); ridisegna(); },
+      tutti: function (lista) { tratti = (lista || []).map(function (tr) { return { id: tr.id, c: tr.c, w: tr.w, f: tr.f ? 1 : 0, p: (tr.p || []).slice() }; }); ridisegna(); },
       quasi: function (x) { riga1("🔥 «" + x + "»: ci sei quasi!", "quasi"); chat.scrollTop = chat.scrollHeight; FX.quasi(); },
       chiudi: function () { clearInterval(tSped); clearInterval(tTempo); clearInterval(tMisura); if (ro) ro.disconnect(); window.removeEventListener("resize", misura); }
     };
@@ -663,8 +739,8 @@
       msg("msg", x, p); bd();
     }
     function indovina(p) {
-      var k = H.indovinati.length; H.indovinati.push(p.id);
-      var pts = PUNTI_INDOVINA[Math.min(k, PUNTI_INDOVINA.length - 1)];
+      H.indovinati.push(p.id);
+      var pts = Math.max(1, Math.ceil((H.scadenza - Date.now()) / 1000));   // tanti punti quanti secondi mancano
       p.punti += pts; H.guad[p.id] = (H.guad[p.id] || 0) + pts;
       var d = pById(H.disegnatore); if (d) { d.punti += PUNTI_DISEGNO; H.guad[d.id] = (H.guad[d.id] || 0) + PUNTI_DISEGNO; }
       msg("ok", "🎉 " + p.nome + " ha indovinato!", p);
@@ -719,18 +795,20 @@
       if (H.fase !== "disegno" || da !== H.disegnatore || !m || typeof m.id !== "string") return;
       var p = Array.isArray(m.p) ? m.p : [];
       if (!p.length || p.length > 400 || p.length % 2) return;
+      var pieno = m.f ? 1 : 0;
+      if (pieno && p.length !== 2) return;   // il secchiello è un tocco solo
       var pul = [];
       for (var i = 0; i < p.length; i += 2) pul.push(intIn(p[i], LW), intIn(p[i + 1], LH));
-      var tr = trova(m.id);
+      var tr = pieno ? null : trova(m.id);
       if (!tr) {
         if (H.tratti.length >= 900) return;
-        tr = { id: String(m.id).slice(0, 24), c: intIn(m.c, COLORI.length - 1), w: m.w ? 1 : 0, p: [] };
+        tr = { id: String(m.id).slice(0, 24), c: intIn(m.c, COLORI.length - 1), w: intIn(m.w, SPESSORI.length - 1), f: pieno, p: [] };
         H.tratti.push(tr);
       }
       if (tr.p.length + pul.length > 8000) return;
       Array.prototype.push.apply(tr.p, pul);
-      rete.inviaVeloce({ t: "tr", da: da, n: H.turno, q: ++H.q, id: tr.id, c: tr.c, w: tr.w, p: pul });
-      if (da !== "host" && vista) vista.tratto({ id: tr.id, c: tr.c, w: tr.w, p: pul });
+      rete.inviaVeloce({ t: "tr", da: da, n: H.turno, q: ++H.q, id: tr.id, c: tr.c, w: tr.w, f: tr.f, p: pul });
+      if (da !== "host" && vista) vista.tratto({ id: tr.id, c: tr.c, w: tr.w, f: tr.f, p: pul });
     }
     function annulla(da, id) {
       if (H.fase !== "disegno" || da !== H.disegnatore) return;
@@ -780,7 +858,7 @@
     var cb = {
       sonoHost: false, myId: null,
       onEsci: esci,
-      onTratto: function (m) { if (S.rete) S.rete.invia({ t: "tr", id: m.id, c: m.c, w: m.w, p: m.p }); },
+      onTratto: function (m) { if (S.rete) S.rete.invia({ t: "tr", id: m.id, c: m.c, w: m.w, f: m.f ? 1 : 0, p: m.p }); },
       onAnnulla: function (id) { if (S.rete) S.rete.invia({ t: "annulla", id: id }); },
       onPulisci: function () { if (S.rete) S.rete.invia({ t: "pulisci" }); },
       onScegli: function (i) { if (S.rete) S.rete.invia({ t: "scegli", i: i }); },
@@ -876,7 +954,7 @@
     id: "scarabocchio",
     nome: "Scarabocchio",
     icona: "🎨",
-    descrizione: "Uno disegna una parola segreta, gli altri la indovinano scrivendo in chat: chi indovina prima prende più punti. Si gioca online, ognuno dal suo telefono. Da 2 a 10.",
+    descrizione: "Uno disegna una parola segreta, gli altri la indovinano scrivendo in chat: prendi tanti punti quanti secondi mancano. Si gioca online, ognuno dal suo telefono. Da 2 a 10.",
     giocatoriMin: 2, giocatoriMax: 10, difficolta: 1,
     modi: [],            // solo online: ognuno ha bisogno del suo schermo (la parola la vede solo chi disegna)
     soloOnline: true,
@@ -884,7 +962,8 @@
     regole: [
       "A turno uno di voi <b>disegna</b>: sceglie una parola tra 3 e la disegna sulla lavagna. Gli altri vedono il disegno comparire in tempo reale.",
       "Chi indovina <b>scrive la risposta in chat</b>. Se è giusta non la vede nessuno: compare solo «Marco ha indovinato!». Se ci sei quasi, il gioco lo dice solo a te.",
-      "Punti: il primo che indovina prende <b>100</b>, poi <b>80</b>, <b>60</b>, <b>40</b> e poi <b>20</b>. Chi disegna prende <b>25 punti</b> per ognuno che indovina.",
+      "Punti: chi indovina prende <b>tanti punti quanti secondi mancano</b> (indovini con 57 secondi sul timer? +57). Chi disegna prende <b>25 punti</b> per ognuno che indovina.",
+      "Chi disegna ha 12 colori, la gomma, 3 grandezze e il <b>secchiello</b> per riempire una zona chiusa con un tocco.",
       "Il tempo è poco: mentre passa si scoprono alcune lettere della parola. Chi disegna non può scrivere lettere o parole sulla lavagna!",
       "Dopo tutti i giri vince chi ha <b>più punti</b>."
     ],

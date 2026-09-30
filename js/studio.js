@@ -462,7 +462,10 @@
       ".st-rullo:after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(rgba(0,0,0,.34),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 70%,rgba(0,0,0,.34))}",
       // leggii toccabili (es. a chi passare la bomba) ed eliminati
       ".st-leggio .anello{position:absolute;z-index:1;left:50%;top:-4%;width:90%;aspect-ratio:1;margin-left:-45%;border-radius:50%;border:.28em solid #6ff0a6;opacity:0;pointer-events:none}",
-      ".st-leggio.tocca{cursor:pointer}",
+      ".st-leggio.tocca{cursor:pointer;touch-action:none}",
+      // la zona da toccare: testa, corpo e banco col nome (anche la parte del banco che sporge sotto)
+      ".st-leggio .tap{position:absolute;z-index:9;left:-5%;right:-5%;top:-14%;bottom:-18%;display:none;-webkit-tap-highlight-color:transparent}",
+      ".st-leggio.tocca .tap{display:block}",
       ".st-leggio.tocca .anello{opacity:1;will-change:transform,opacity;animation:stAnello 1s ease-in-out infinite}",
       "@keyframes stAnello{0%,100%{transform:scale(.92);opacity:.55}50%{transform:scale(1.06);opacity:1}}",
       ".st-leggio.fuori .alone{opacity:0}",
@@ -594,7 +597,18 @@
         "<div class='anello'></div><div class='cart'><div class='in'><div class='f'>?</div><div class='f r'></div></div></div><div class='delta'></div><div class='av'><canvas width='356' height='364'></canvas></div>" +
         "<div class='podio'><canvas class='banco'></canvas><canvas class='banco-luce'></canvas><canvas class='bagliore'></canvas><div class='piano'></div></div>";
       cono(L.querySelector(".luce")); pozza(L.querySelector(".pozza")); chiazza(L.querySelector(".alone"), rgbaDi(col, 1)); bagliore(L.querySelector(".bagliore"), col);
-      L.addEventListener("click", function () { if (S.onTocca && L.classList.contains("tocca")) S.onTocca(i); });   // il gioco decide chi si può toccare
+      // toccare un concorrente (es. per passargli la bomba). Il gioco decide chi si può toccare.
+      // Vale tutta la sagoma, banco col nome compreso (.tap), e basta un tocco anche se il dito si muove un po':
+      // su iPhone il "click" a volte non arriva (il tocco viene preso per uno scorrimento).
+      L.appendChild(el("div", { class: "tap" }));
+      (function (L, i) {
+        var giu = null, ultimo = 0;
+        function scegli() { if (S.onTocca && L.classList.contains("tocca") && Date.now() - ultimo > 450) { ultimo = Date.now(); S.onTocca(i); } }
+        L.addEventListener("pointerdown", function (e) { giu = { id: e.pointerId, x: e.clientX, y: e.clientY }; });
+        L.addEventListener("pointerup", function (e) { if (giu && giu.id === e.pointerId && Math.abs(e.clientX - giu.x) + Math.abs(e.clientY - giu.y) < 28) scegli(); giu = null; });
+        L.addEventListener("pointercancel", function () { giu = null; });
+        L.addEventListener("click", scegli);   // mouse e tastiera (se il tocco è già passato, il doppione si scarta)
+      })(L, i);
       var X = { el: L, avc: L.querySelector(".av canvas"), cart: L.querySelector(".cart"), delta: L.querySelector(".delta"),
         banco: L.querySelector(".banco"), bancoLuce: L.querySelector(".banco-luce"), nome: g.nome, col: col, tu: i === S.io,
         disp: { t: "0", neg: false, testo: false }, valore: 0, faccia: null };

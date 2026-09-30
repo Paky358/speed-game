@@ -639,6 +639,7 @@
     var S = R.S, vm = R.vm, cb = R.cb, el = R.t.el;
     if (vm.fase !== "gioco") return;
     var hi = idxP(vm, vm.holder), inAttesa = Date.now() < R.vmTs + (vm.attesaMs || 0);
+    if (inAttesa) R.toccaAttivo = false;   // finita la pausa, il cronometro riaccende chi si può toccare
     if (R.holder && R.holder !== vm.holder && hi >= 0) {   // la bomba è passata: vola da un leggio all'altro
       var da = idxP(vm, R.holder);
       if (da >= 0) { ST.faccia(S, da, vm.players[da].eliminato ? "esploso" : null); voloBomba(R, puntoBomba(R, da), puntoBomba(R, hi), 420); }

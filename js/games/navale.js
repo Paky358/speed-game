@@ -507,7 +507,7 @@
       },
       onErrore: function () { senzaRete(t); }
     });
-    function mandaSala() { rete.invia({ t: "sala", nomiHost: L.nomiIo, nomiAvv: L.nomiAvv, ci: !!L.avvId, ominoHost: L.ominoIo, ominoAvv: L.ominoAvv }); }
+    function mandaSala() { rete.invia({ t: "sala", nomiHost: L.nomiIo, nomiAvv: L.nomiAvv, ci: !!L.avvId, avv: L.avvId, ominoHost: L.ominoIo, ominoAvv: L.ominoAvv }); }
     function lobby() { lobbyNavale(t, { sonoHost: true, codice: L.codice, pronta: L.pronta, avversario: !!L.avvId, nomiIo: L.nomiIo, nomiAvv: L.nomiAvv, ominoIo: L.ominoIo, ominoAvv: L.ominoAvv,
       onComincia: comincia, onEsci: function () { rete.chiudi(); t.esci(); } }); }
     function comincia() {

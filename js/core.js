@@ -209,6 +209,7 @@
   });
 
   function schermataHome() {
+    if (window.SGNet && SGNet.chiudiGiochi) SGNet.chiudiGiochi();   // niente collegamenti vecchi aperti (la sala resta)
     var s = schermata({});
     s.className += " home";
     var io = profiloAttivo();
@@ -1910,12 +1911,14 @@
 
   function salaLancia(g, impostazioni, box) {
     if (!sala) return schermataHome();
+    SGNet.chiudiGiochi();                     // se era rimasta aperta la stanza del gioco di prima, si chiude
     var C = SGNet.nuovoCodice();
     SGNet._forza = C;                         // il gioco userà QUESTO codice stanza
     sala.gioco = g.id; sala.stanza = C; sala.inGioco = true;
     sala._bcast();                            // dice agli altri quale gioco aprire e con che codice
     var ctx = {
-      esci: function () { if (!sala) return schermataHome(); sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala._bcast(); disegnaSalaHost(); },
+      // si torna in sala: prima lo dico a tutti (tornano da soli), poi chiudo la stanza del gioco
+      esci: function () { if (!sala) return schermataHome(); sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala._bcast(); SGNet.chiudiGiochi(1500); disegnaSalaHost(); },
       // la partita è finita: nel torneo si sommano i punti
       risultato: function (g2, classifica) { salaRisultato(g2, classifica); },
       fine: function (g2, classifica) { salaRisultato(g2, classifica); salaFine(g2, classifica, ctx); }
@@ -1944,12 +1947,36 @@
   // ---------- OSPITE ----------
   function salaOspite(codice) {
     if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete();
-    if (!profiloAttivo()) return schermataAccesso(function () { salaOspite(codice); });
     var io = profiloAttivo();
-    salaG = { rete: null, codice: String(codice).toUpperCase(), myId: null, nome: io.nome, emoji: io.emoji, membri: [], inGioco: null, torneo: null, podio: false, _msg: null };
+    if (!io) return nomeOspiteSala(codice);   // senza profilo si entra lo stesso: basta il nome
+    entraInSala(codice, io.nome, io.emoji, io.omino || null);
+  }
+  // chi apre il link della sala (o del torneo) senza profilo: scrive il nome ed entra subito
+  function nomeOspiteSala(codice) {
+    var s = schermata({ icona: "👥", titolo: "Entra con gli amici", sotto: "Codice " + String(codice).toUpperCase(), indietro: schermataHome });
+    var ultimo = ""; try { ultimo = localStorage.getItem("sg-nome-ospite") || ""; } catch (e) {}
+    var input = el("input", { class: "link-campo", type: "text", maxlength: "16", placeholder: "Come ti chiami?" });
+    input.value = ultimo;
+    var avviso = el("div", { class: "link-avviso" });
+    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Scrivi il tuo nome ed entri subito, il profilo non serve. Se ce l'hai, accedi: avrai il tuo personaggio e i trofei." }));
+    s._contenuto.appendChild(input); s._contenuto.appendChild(avviso);
+    function entra() {
+      var n = (input.value || "").trim().slice(0, 16);
+      if (n.length < 2) { avviso.textContent = "Scrivi il tuo nome."; return; }
+      try { localStorage.setItem("sg-nome-ospite", n); } catch (e) {}
+      audioCtx();
+      entraInSala(codice, n, "🙂", window.SGOmino ? SGOmino.casuale(n) : null);
+    }
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") entra(); });
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: entra }));
+    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "👤 Ho un profilo: accedi", onclick: function () { schermataAccesso(function () { salaOspite(codice); }); } }));
+    mostra(s);
+  }
+  function entraInSala(codice, nome, emoji, omino) {
+    salaG = { rete: null, codice: String(codice).toUpperCase(), myId: null, nome: nome, emoji: emoji, omino: omino, membri: [], inGioco: null, torneo: null, podio: false, _msg: null };
     attendiSala();
     salaG.rete = SGNet.entra(salaG.codice, {
-      onAperto: function (id) { salaG.myId = id; salaG.rete.invia({ t: "join", nome: salaG.nome, emoji: salaG.emoji, omino: io.omino || null });
+      onAperto: function (id) { salaG.myId = id; salaG.rete.invia({ t: "join", nome: salaG.nome, emoji: salaG.emoji, omino: salaG.omino || null });
         setTimeout(function () { if (salaG && !salaG.membri.length && salaG._msg) salaG._msg.textContent = "Non trovo la sala: controlla il codice o attendi l'host…"; }, 8000); },
       onMsg: function (m) {
         if (!salaG || !m || m.t !== "sala") return;
@@ -1958,14 +1985,14 @@
           if (salaG.inGioco !== m.stanza) { salaG.inGioco = m.stanza; salaG.podio = false; salaLanciaOspite(m.gioco, m.stanza); }
           return;
         }
-        if (salaG.inGioco !== null) salaG.inGioco = null;
+        if (salaG.inGioco !== null) { salaG.inGioco = null; SGNet.chiudiGiochi(); }   // tornati in sala: il collegamento del gioco si chiude
         if (salaG.torneo && salaG.torneo.finito) { if (!salaG.podio) { salaG.podio = true; schermataPodioT(salaG.torneo, false); } return; }
         salaG.podio = false;
         disegnaSalaOspite();
       },
       onChiuso: function () { chiudiSalaOspite(); errore(schermataHome, "La sala è stata chiusa dall'host."); },
       onErrore: function () { chiudiSalaOspite(); errore(schermataHome, "Problema di collegamento con la sala. Riprova."); }
-    });
+    }, { tieni: true });   // resta aperta tra un gioco e l'altro
   }
 
   function chiudiSalaOspite() { try { if (salaG && salaG.rete) salaG.rete.chiudi(); } catch (e) {} salaG = null; }
@@ -1993,13 +2020,14 @@
   }
 
   function salaLanciaOspite(gid, code) {
+    SGNet.chiudiGiochi();   // il collegamento del gioco di prima (se c'è) si chiude: niente errori a sorpresa
     var g = giochi.filter(function (x) { return x.id === gid; })[0];
     if (!g) { disegnaSalaOspite(); return; }
     var vecchio = linkParams;
     linkParams = { gioco: gid, stanza: code };   // il gioco lo legge subito (t.linkParams)
     var ctx = {
-      esci: function () { if (salaG) salaG.inGioco = null; disegnaSalaOspite(); },
-      fine: function () { if (salaG) salaG.inGioco = null; disegnaSalaOspite(); }
+      esci: function () { SGNet.chiudiGiochi(); if (salaG) salaG.inGioco = null; disegnaSalaOspite(); },
+      fine: function () { SGNet.chiudiGiochi(); if (salaG) salaG.inGioco = null; disegnaSalaOspite(); }
     };
     avviaPartita(g, [], {}, null, ctx);
     linkParams = vecchio;
@@ -2444,9 +2472,16 @@
       mostra: function (s) { mostra(s); },
 
       // il nome del profilo di questo telefono (chi entra da un invito entra direttamente con questo)
-      nomeProfilo: function () { var p = profiloAttivo(); return p && p.nome ? String(p.nome).trim().slice(0, 16) : ""; },
+      nomeProfilo: function () {
+        var p = profiloAttivo(); if (p && p.nome) return String(p.nome).trim().slice(0, 16);
+        return (salaCtx && salaG && salaG.nome) ? salaG.nome : "";   // in sala senza profilo: il nome scritto entrando
+      },
       // l'avatar di questo telefono (da mandare quando si entra in una stanza online)
-      mioOmino: function (nome) { var p = profiloAttivo(); return (p && p.omino) || (window.SGOmino ? SGOmino.casuale(nome || (p && p.nome) || "io") : null); },
+      mioOmino: function (nome) {
+        var p = profiloAttivo(); if (p && p.omino) return p.omino;
+        if (salaCtx && salaG && salaG.omino) return salaG.omino;
+        return window.SGOmino ? SGOmino.casuale(nome || (p && p.nome) || "io") : null;
+      },
       // la saletta d'attesa online, uguale per tutti i giochi (vedi saletta()).
       // All'host dà anche "⚙️ Regole": le impostazioni di prima, da cambiare quando vuole;
       // dopo una modifica chiama tavolo.onRegole() (il gioco rilegge tavolo.impostazioni).

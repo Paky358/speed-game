@@ -9,6 +9,30 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 141,
+    data: "30 settembre 2026",
+    titolo: "Entrare e restare in partita: molto più facile 🔗",
+    descrizione: [
+      "Chi apre il link entra anche se la stanza dell'host non era ancora pronta: il telefono riprova da solo finché non è dentro.",
+      "Se blocchi lo schermo o vai un attimo su un'altra app (per esempio WhatsApp), non vieni più tolto dalla partita: hai 20 secondi per tornare, e quando torni sei ancora dentro.",
+      "Se è l'host a sparire un attimo (per esempio per mandare il link), gli amici lo aspettano invece di uscire.",
+      "Torneo e Sala online: si entra dal link anche senza profilo, basta scrivere il nome. Passando da un gioco all'altro il gioco di prima si chiude bene, niente più errori a sorpresa.",
+      "La Patata Bollente: per passare la bomba basta toccare il concorrente dove vuoi, anche il banco col nome, e un tocco solo (su iPhone a volte non passava)."
+    ]
+  },
+  {
+    v: 140,
+    data: "30 settembre 2026",
+    titolo: "Scarabocchio: secchiello, punti a tempo, 12 colori e lavagna più grande",
+    descrizione: [
+      "Chi indovina prende tanti punti quanti secondi mancano: indovini con 57 secondi sul timer, prendi 57 punti.",
+      "12 colori: nero, grigio, marrone, rosso, arancione, giallo, verde, azzurro, blu, viola, rosa e color pelle, più la gomma.",
+      "Tre grandezze (sottile, medio, grosso), sia per disegnare che per cancellare.",
+      "Nuovo secchiello: tocchi una zona chiusa e si riempie del colore scelto (il cielo, un prato, una maglietta). Si annulla come un tratto.",
+      "La lavagna è molto più grande. Quando apri la tastiera per scrivere si rimpicciolisce e spariscono le figurine, così il disegno resta sempre in vista."
+    ]
+  },
+  {
     v: 139,
     data: "30 settembre 2026",
     titolo: "Nuovo gioco: Scarabocchio 🎨",

@@ -10,6 +10,16 @@
 
    Un telefono "ospita" la stanza (è il cervello della
    partita); gli altri "entrano" con il codice.
+
+   Sui telefoni veri il collegamento va e viene (schermo
+   bloccato, cambio app per mandare il link, rete che salta),
+   quindi:
+   - chi entra ripete "sono entrato" finché l'host non lo vede
+     dentro (il primo può perdersi se la stanza non è ancora pronta);
+   - chi sparisce all'improvviso non viene tolto subito: ha un po'
+     di tempo per tornare, e quando torna ripete che c'è;
+   - se sparisce l'host, gli altri lo aspettano prima di arrendersi.
+   Chi esce apposta (tasto Esci) esce subito.
    ========================================================= */
 (function () {
   "use strict";
@@ -17,6 +27,9 @@
   var BROKER = "wss://broker.hivemq.com:8884/mqtt";
   var BASE = "seratagiochi/v1/";
   var ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // niente caratteri ambigui
+  var ATTESA_OSPITE = 20000;   // chi sparisce all'improvviso: tanto tempo per tornare prima di toglierlo
+  var ATTESA_HOST = 45000;     // se sparisce l'host (es. è andato a mandare il link), gli altri lo aspettano così
+  var RIPETI_ENTRATA = 2000, MAX_RIPETI = 45;   // "sono entrato" ogni 2 secondi, fino a un minuto e mezzo
 
   function codiceACaso(n) {
     var s = "";
@@ -28,14 +41,28 @@
     return { stato: BASE + codice + "/stato", azioni: BASE + codice + "/azioni" };
   }
 
+  // le stanze dei giochi aperte da questo telefono (non la sala): quando si passa a un altro
+  // gioco o si torna alla home si chiudono tutte, così non restano collegamenti vecchi
+  var aperte = [];
+  function segna(h, tieni) { if (!tieni) aperte.push(h); return h; }
+  function togli(h) { aperte = aperte.filter(function (x) { return x !== h; }); }
+
   window.SGNet = {
     disponibile: function () { return typeof mqtt !== "undefined"; },
 
-    // L'host apre una stanza. cb: { onCodice, onConnesso, onAddio(id), onMsg(id,msg), onErrore(e) }
     // Genera un codice stanza (usato dalla "sala" per preparare il codice
     // di un gioco prima ancora di aprirlo).
     nuovoCodice: function () { return codiceACaso(4); },
 
+    // Chiude le stanze dei giochi rimaste aperte (la sala no). ritardo (ms): le chiude un po' dopo,
+    // ma solo quelle aperte adesso (serve all'host: prima gli altri tornano in sala, poi si chiude).
+    chiudiGiochi: function (ritardo) {
+      var a = aperte.slice(); aperte = [];
+      function via() { a.forEach(function (h) { try { h.chiudi(); } catch (e) {} }); }
+      if (ritardo) setTimeout(via, ritardo); else via();
+    },
+
+    // L'host apre una stanza. cb: { onCodice, onConnesso, onAddio(id), onMsg(id,msg), onErrore(e) }
     ospita: function (giocoId, cb) {
       if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
       // La "sala" può imporre il codice della stanza (così lo conosce in anticipo
@@ -44,49 +71,67 @@
       SGNet._forza = null;
       var T = topics(codice);
       var META = BASE + codice + "/meta";
+      var chiusa = false, primaVolta = true;
+      var inForse = {};   // chi è sparito all'improvviso: id -> timer (se si rifà vivo in tempo, resta dentro)
       // Il codice si conosce SUBITO (non dipende dal collegamento): mostralo subito,
       // così la stanza dà sempre il codice anche se la rete è lenta a collegarsi.
       // (un tick dopo, così chi ci chiama ha già ricevuto l'oggetto "rete")
-      setTimeout(function () { cb.onCodice && cb.onCodice(codice); }, 0);
+      setTimeout(function () { if (!chiusa) cb.onCodice && cb.onCodice(codice); }, 0);
       var client = mqtt.connect(BROKER, {
         clean: true, reconnectPeriod: 2000,
-        // Se l'host sparisce all'improvviso, avvisa gli altri
+        // Se l'host sparisce all'improvviso, avvisa gli altri (che però lo aspettano un po')
         will: { topic: T.stato, payload: JSON.stringify({ t: "__hostgone" }), retain: false }
       });
       client.on("connect", function () {
+        if (chiusa) return;
         // quando è davvero collegato la stanza è "pronta": lo comunichiamo al gioco
-        client.subscribe(T.azioni, function () { cb.onConnesso && cb.onConnesso(); });
+        client.subscribe(T.azioni, function () { if (!chiusa) cb.onConnesso && cb.onConnesso(); });
         // annuncia QUALE gioco è questa stanza, così chi entra col codice apre quello giusto
         try { client.publish(META, JSON.stringify({ g: giocoId || "" }), { retain: true }); } catch (e) {}
+        // tornato dopo un buco (schermo bloccato, cambio app): lo dico a chi aspetta, così nessuno se ne va
+        if (!primaVolta) try { client.publish(T.stato, JSON.stringify({ t: "__hostqui" }), { retain: false }); } catch (e) {}
+        primaVolta = false;
       });
       client.on("message", function (_t, payload) {
+        if (chiusa) return;
         var m; try { m = JSON.parse(payload.toString()); } catch (e) { return; }
-        if (!m) return;
-        if (m.data && m.data.t === "__leave") { cb.onAddio && cb.onAddio(m.from); return; }
+        if (!m || !m.from) return;
+        if (inForse[m.from]) { clearTimeout(inForse[m.from]); delete inForse[m.from]; }   // si è rifatto vivo in tempo
+        if (m.data && m.data.t === "__leave") {
+          if (m.data.voluto) { cb.onAddio && cb.onAddio(m.from); return; }   // è uscito apposta
+          // sparito all'improvviso: lo aspetto un po' prima di toglierlo dalla partita
+          inForse[m.from] = setTimeout(function () { delete inForse[m.from]; if (!chiusa) cb.onAddio && cb.onAddio(m.from); }, ATTESA_OSPITE);
+          return;
+        }
         cb.onMsg && cb.onMsg(m.from, m.data);
       });
-      client.on("error", function (e) { cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message }); });
+      client.on("error", function (e) { if (!chiusa) cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message }); });
 
-      return {
+      var h = {
         // la partita (vm) viene mandata a tutti e "trattenuta" (retain) così
         // chi entra dopo riceve subito lo stato attuale
-        invia: function (msg) { try { if (client.connected) client.publish(T.stato, JSON.stringify(msg), { retain: true }); } catch (e) {} },
+        invia: function (msg) { try { if (!chiusa && client.connected) client.publish(T.stato, JSON.stringify(msg), { retain: true }); } catch (e) {} },
         // invio ad alta frequenza (streaming di gioco): NON trattenuto, per non intasare il broker
-        inviaVeloce: function (msg) { try { if (client.connected) client.publish(T.stato, JSON.stringify(msg), { retain: false }); } catch (e) {} },
+        inviaVeloce: function (msg) { try { if (!chiusa && client.connected) client.publish(T.stato, JSON.stringify(msg), { retain: false }); } catch (e) {} },
         inviaA: function (id, msg) { this.invia(msg); },
         chiudi: function () {
+          if (chiusa) return;
+          chiusa = true; togli(h);
+          Object.keys(inForse).forEach(function (k) { clearTimeout(inForse[k]); }); inForse = {};
           try {
-            client.publish(T.stato, JSON.stringify({ t: "__hostgone" }), { retain: false });
+            client.publish(T.stato, JSON.stringify({ t: "__hostgone", voluto: 1 }), { retain: false });   // chiusa apposta: gli altri escono subito
             client.publish(T.stato, "", { retain: true }); // pulisce lo stato trattenuto
             client.publish(META, "", { retain: true });    // pulisce l'annuncio del gioco
             client.end();
           } catch (e) {}
         }
       };
+      return segna(h, giocoId === "__sala");   // la sala resta aperta tra un gioco e l'altro
     },
 
     // Un ospite entra con il codice. cb: { onAperto(id), onMsg(msg), onChiuso, onErrore(e) }
-    entra: function (codice, cb) {
+    // opz.tieni = non chiuderla quando si cambia gioco (è la connessione della sala)
+    entra: function (codice, cb, opz) {
       if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
       var myId = "g" + Math.random().toString(36).slice(2, 9);
       var T = topics(codice);
@@ -94,24 +139,54 @@
         clean: true, reconnectPeriod: 2000,
         will: { topic: T.azioni, payload: JSON.stringify({ from: myId, data: { t: "__leave" } }), retain: false }
       });
-      var aperto = false;
+      var aperto = false, chiusa = false, entrata = null, dentro = false, tRipeti = null, tAddio = null;
+      function pubblica(msg) { try { if (client.connected) client.publish(T.azioni, JSON.stringify({ from: myId, data: msg }), { retain: false }); } catch (e) {} }
+      function smetti() { if (tRipeti) { clearInterval(tRipeti); tRipeti = null; } }
+      // "sono entrato" può perdersi (stanza non ancora pronta, host via un attimo):
+      // lo ripeto finché l'host non mi mette dentro (il mio codice compare nei suoi messaggi)
+      function insisti() {
+        smetti(); var n = 0;
+        tRipeti = setInterval(function () { if (dentro || chiusa || ++n > MAX_RIPETI) return smetti(); pubblica(entrata); }, RIPETI_ENTRATA);
+      }
       client.on("connect", function () {
-        client.subscribe(T.stato, function () { if (!aperto) { aperto = true; cb.onAperto && cb.onAperto(myId); } });
+        if (chiusa) return;
+        client.subscribe(T.stato, function () {
+          if (chiusa) return;
+          if (!aperto) { aperto = true; cb.onAperto && cb.onAperto(myId); }
+          else if (entrata) pubblica(entrata);   // ricollegato dopo un buco: ripeto che ci sono (l'host non mi toglie)
+        });
       });
-      client.on("message", function (_t, payload) {
-        var m; try { m = JSON.parse(payload.toString()); } catch (e) { return; }
-        if (!m || m === "") return;
-        if (m.t === "__hostgone") { cb.onChiuso && cb.onChiuso(); return; }
+      client.on("message", function (_t, payload, pacchetto) {
+        if (chiusa) return;
+        var testo = payload.toString(); if (!testo) return;
+        var m; try { m = JSON.parse(testo); } catch (e) { return; }
+        if (!m) return;
+        if (tAddio && !(pacchetto && pacchetto.retain)) { clearTimeout(tAddio); tAddio = null; }   // l'host c'è ancora
+        if (entrata && !dentro && testo.indexOf('"' + myId + '"') >= 0) { dentro = true; smetti(); }   // l'host mi ha messo nella partita
+        if (m.t === "__hostqui") return;
+        if (m.t === "__hostgone") {
+          if (m.voluto) { cb.onChiuso && cb.onChiuso(); return; }   // chiusa apposta
+          // sparito all'improvviso (schermo bloccato, cambio app): gli do tempo di tornare
+          if (!tAddio) tAddio = setTimeout(function () { tAddio = null; if (!chiusa) cb.onChiuso && cb.onChiuso(); }, ATTESA_HOST);
+          return;
+        }
         cb.onMsg && cb.onMsg(m);
       });
-      client.on("error", function (e) { cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message }); });
+      client.on("error", function (e) { if (!chiusa) cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message }); });
 
-      return {
-        invia: function (msg) { try { if (client.connected) client.publish(T.azioni, JSON.stringify({ from: myId, data: msg }), { retain: false }); } catch (e) {} },
+      var h = {
+        invia: function (msg) {
+          if (chiusa) return;
+          pubblica(msg);
+          if (msg && msg.t === "join") { entrata = msg; if (!dentro) insisti(); }
+        },
         chiudi: function () {
-          try { client.publish(T.azioni, JSON.stringify({ from: myId, data: { t: "__leave" } }), { retain: false }); client.end(); } catch (e) {}
+          if (chiusa) return;
+          chiusa = true; togli(h); smetti(); if (tAddio) { clearTimeout(tAddio); tAddio = null; }
+          try { client.publish(T.azioni, JSON.stringify({ from: myId, data: { t: "__leave", voluto: 1 } }), { retain: false }); client.end(); } catch (e) {}
         }
       };
+      return segna(h, opz && opz.tieni);
     },
 
     // Scopre QUALE gioco si sta giocando in una stanza, dal solo codice.

@@ -370,7 +370,7 @@
     });
     function vm() {
       return { fase: st.fase, codice: st.codice, pronta: st.pronta, board: st.board, turno: st.turno,
-        fine: st.fine, nomi: { G: st.nomiG, B: st.nomiB || "Avversario" }, avversario: !!st.avvId, omini: { G: st.ominoG, B: st.avvId ? st.ominoB : null }, ultima: st.ultima };
+        fine: st.fine, nomi: { G: st.nomiG, B: st.nomiB || "Avversario" }, avversario: !!st.avvId, avvId: st.avvId, omini: { G: st.ominoG, B: st.avvId ? st.ominoB : null }, ultima: st.ultima };
     }
     function bd() { rete.invia({ t: "vm", vm: vm() }); disegna(); }
     function applica(c) {
