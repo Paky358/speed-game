@@ -636,6 +636,13 @@
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function pres() { return H.players.filter(function (p) { return !p.via; }); }
     function clearTo() { if (H.to) { clearTimeout(H.to); H.to = null; } }
+    // "⚙️ Regole" in saletta: categorie, secondi e giri nuovi (gli amici vedono subito le categorie cambiate)
+    t.onRegole = function (im) {
+      if (H.fase !== "lobby") return;
+      if (im.categorie && im.categorie.length >= 3) H.cats = im.categorie.slice();
+      H.secondi = im.secondi || 60; H.giri = im.round || 2;
+      bd();
+    };
     var cb = { sonoHost: true, myId: "host",
       onComincia: comincia,
       onRisposte: function (r) { risposte("host", r); },

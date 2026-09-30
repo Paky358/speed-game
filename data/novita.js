@@ -9,6 +9,20 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 138,
+    data: "30 settembre 2026",
+    titolo: "Torneo online con un link solo, e regole sempre in mano all'host 🏆",
+    descrizione: [
+      "Torneo: adesso puoi giocarlo online. Scegli \"Online\", mandi UN link solo e gli amici entrano una volta per tutto il torneo. Tu scegli i giochi uno dopo l'altro e sul telefono di tutti si aprono da soli.",
+      "Nel torneo online la saletta mostra la classifica, che si aggiorna dopo ogni partita. Con \"Chiudi e premia\" tutti vedono il podio col campione.",
+      "Anche la Sala online adesso è una saletta coi personaggi, come quella dei giochi.",
+      "Saletta d'attesa: chi ha aperto la stanza ha il tasto \"⚙️ Regole\" e può cambiarle quando vuole, anche con gli amici già dentro.",
+      "Le regole da cambiare ci sono in L'Asta (modalità, crediti e tema), Horto Muso (cavalli e bot), Nomi, Cose e Città (categorie, secondi e giri), Palla a Pendolo (bot e collisioni) e La linea del tempo (categorie e carte).",
+      "Palla a Pendolo online: ognuno sceglie il suo ruolo con due tasti chiari, \"🎯 Lancio io\" e \"🏃 Sto sulla trave\". Vale anche per chi entra dal link.",
+      "Crea profilo: oltre a nome, password e faccina c'è il tasto \"🧍 Crea il tuo personaggio\". Il personaggio che fai si salva insieme al profilo."
+    ]
+  },
+  {
     v: 137,
     data: "30 settembre 2026",
     titolo: "Come giocate? E la saletta d'attesa coi personaggi 🛋️",

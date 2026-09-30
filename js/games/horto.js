@@ -642,6 +642,25 @@
     function seatDi(id) { for (var s = 1; s < N; s++) if (posti[s] === id) return s; return -1; }
     function postoLibero() { for (var s = 1; s < N; s++) if (!posti[s]) return s; return 0; }
     function quanti() { var n = 0; for (var s = 1; s < N; s++) if (posti[s]) n++; return n; }
+    // "⚙️ Regole" in saletta: bravura dei bot e cavalli in gara. Chi è dentro resta
+    // (se i cavalli calano, chi era oltre passa a un posto libero; mai meno cavalli di chi gioca).
+    t.onRegole = function (im) {
+      if (fase !== "lobby") return;
+      bp = botParam(im.difficolta || "medio");
+      var dentro = [];
+      for (var s = 1; s < N; s++) if (posti[s]) dentro.push({ id: posti[s], nome: nomiU[s], om: ominiU[s] });
+      var nuovoN = Math.max(2, dentro.length + 1, Math.min(MAXN, im.cavalli || 4));
+      var p2 = {}, n2 = {}, o2 = {};
+      for (s = 1; s < nuovoN; s++) { p2[s] = null; n2[s] = null; }
+      dentro.forEach(function (d, i) {   // chi può resta al suo posto; gli altri nei posti liberi
+        var vecchio = seatDi(d.id), dove = vecchio < nuovoN && !p2[vecchio] ? vecchio : 0;
+        if (!dove) for (var k = 1; k < nuovoN; k++) if (!p2[k] && !dentro.some(function (x) { return seatDi(x.id) === k; })) { dove = k; break; }
+        if (!dove) for (k = 1; k < nuovoN; k++) if (!p2[k]) { dove = k; break; }
+        p2[dove] = d.id; n2[dove] = d.nome; o2[dove] = d.om;
+      });
+      posti = p2; nomiU = n2; ominiU = o2; N = nuovoN;
+      aggiornaLobby();
+    };
 
     rete = SGNet.ospita("horto", {
       onCodice: function (c) { codice = c; aggiornaLobby(); },
@@ -696,6 +715,7 @@
     function bcast() { var sn = snap(cav, fase, Math.max(0, conto), nomi); if (nTick++ % 4 === 0 || fase !== "corsa") rete.inviaVeloce(sn); if (ref) disegna(ref, sn); }
     function fineCorsa() {
       fase = "fine"; ord = classificaDa(cav, arrivi);
+      if (t.risultato) t.risultato(ord.map(function (s) { return { nome: nomi[s] }; }));   // per il torneo online
       if (!foto) foto = cav.map(function (h) { return Math.min(1, h.pos); });
       rete.invia({ t: "fine", ord: ord, nomi: nomi, foto: foto });
       if (ref) { ref.rimuovi(); ref = null; }

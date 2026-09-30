@@ -403,6 +403,48 @@
       // Chi entra da un link è sempre un ospite: la modalità (temi o
       // fantacalcio) la decide l'host e arriva dentro la "foto" (vm).
       if (t.linkParams && t.linkParams.stanza) return ospiteAsta(t, t.linkParams.stanza);
+      PONTE = null;   // stanza nuova
+      avviaAsta(t);
+    }
+  };
+
+  // ---- la stanza dell'host resta la stessa anche se in saletta cambi modalità (temi <-> fantacalcio):
+  //      il nuovo "motore" riceve la stessa stanza e chi era già entrato, senza che gli amici escano ----
+  var PONTE = null;   // { vera, cb, codice, pronta, entrati: [{ id, m }], maniglia }
+  function ospitaAsta(cb) {
+    var P = PONTE;
+    if (P) {
+      P.cb = cb;
+      setTimeout(function () {
+        if (PONTE !== P) return;
+        if (P.codice) cb.onCodice(P.codice);
+        if (P.pronta) cb.onConnesso();
+        P.entrati.forEach(function (e) { cb.onMsg(e.id, e.m); });   // rientrano da soli nel nuovo motore
+      }, 0);
+      return P.maniglia;
+    }
+    P = PONTE = { cb: cb, codice: null, pronta: false, entrati: [] };
+    P.vera = SGNet.ospita("asta", {
+      onCodice: function (c) { P.codice = c; if (P.cb.onCodice) P.cb.onCodice(c); },
+      onConnesso: function () { P.pronta = true; if (P.cb.onConnesso) P.cb.onConnesso(); },
+      onAddio: function (id) { P.entrati = P.entrati.filter(function (e) { return e.id !== id; }); if (P.cb.onAddio) P.cb.onAddio(id); },
+      onMsg: function (id, m) {
+        if (m && m.t === "join" && !P.entrati.some(function (e) { return e.id === id; })) P.entrati.push({ id: id, m: m });
+        if (P.cb.onMsg) P.cb.onMsg(id, m);
+      },
+      onErrore: function (e) { if (P.cb.onErrore) P.cb.onErrore(e); }
+    });
+    if (!P.vera) { PONTE = null; return null; }
+    P.maniglia = {
+      invia: function (x) { P.vera.invia(x); },
+      inviaVeloce: function (x) { P.vera.inviaVeloce(x); },
+      inviaA: function (id, x) { P.vera.inviaA(id, x); },
+      chiudi: function () { if (PONTE === P) PONTE = null; P.vera.chiudi(); }
+    };
+    return P.maniglia;
+  }
+
+  function avviaAsta(t) {
       var formato = (t.impostazioni && t.impostazioni.formato) || "temi";
       if (formato === "fanta") {
         if (t.impostazioni && t.impostazioni.modo === "online") return hostFanta(t);
@@ -420,8 +462,7 @@
         giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: crediti, kit: [], stelle: 0 }; })
       };
       iniziaRound(t, st);
-    }
-  };
+  }
 
   function niente(t, msg) {
     var s = t.schermata({ icona: "🔨", titolo: "L'Asta", indietro: t.esci });
@@ -729,8 +770,18 @@
       giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: crediti, kit: [], stelle: 0, omino: t.mioOmino ? t.mioOmino() : null }]
     };
     function stopTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
+    // "⚙️ Regole" in saletta: tema e crediti nuovi; se passi al Fantacalcio cambia motore (stessa stanza, stessi amici)
+    t.onRegole = function (im) {
+      if (st.iniziata) return;
+      if ((im.formato || "temi") === "fanta") return avviaAsta(t);
+      var temi = window.SG_ASTA_TEMI || [];
+      st.tema = temi.filter(function (x) { return x.id === im.tema; })[0] || st.tema;
+      st.crediti = im.crediti || 15;
+      st.giocatori.forEach(function (g) { g.crediti = st.crediti; });
+      bd();
+    };
 
-    var rete = SGNet.ospita("asta", {
+    var rete = ospitaAsta({
       onCodice: function (c) { st.codice = c; bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
       onAddio: function (id) {
@@ -871,6 +922,7 @@
       st.classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
         .map(function (g) { return { nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐" }; });
       st.fase = "fine"; FX.fine(); bd();
+      if (t.risultato) t.risultato(st.classifica);   // per il torneo online
     }
 
     function scegliTema(idx) {  // l'host cambia argomento in lobby
@@ -1215,16 +1267,10 @@
     if (vm.formato === "fanta") {
       info.appendChild(el("div", { class: "etichetta", text: "Modalità" }));
       info.appendChild(el("p", { class: "as-msg", text: "⚽ Mini asta Fantacalcio — rosa da 5 (1 P, 1 D, 2 C, 1 A), 20 crediti a testa." }));
-    } else {
-      info.appendChild(el("div", { class: "etichetta", text: "Argomento dell'asta" }));
-      if (cb.sonoHost && vm.temi && vm.temi.length > 1) {
-        var g = el("div", { class: "cat-griglia" });
-        vm.temi.forEach(function (tm, i) {
-          g.appendChild(el("button", { class: "cat-chip" + (tm.id === vm.temaId ? " attiva" : ""), onclick: function () { cb.onTema(i); } }, [
-            el("span", { class: "ci", text: tm.icona }), el("span", { text: tm.nome }), el("span", { class: "spunta", text: "✓" }) ]));
-        });
-        info.appendChild(g);
-      } else info.appendChild(el("p", { class: "as-msg", text: vm.temaIcona + " " + vm.temaNome }));
+    } else {   // tutte le regole si cambiano da "⚙️ Regole" (l'host); qui tutti vedono come si gioca
+      var cr = (vm.giocatori && vm.giocatori[0] && vm.giocatori[0].crediti) || 15;
+      info.appendChild(el("div", { class: "etichetta", text: "Si gioca così" }));
+      info.appendChild(el("p", { class: "as-msg", text: "🎁 Temi classici · " + vm.temaIcona + " " + vm.temaNome + " · 💰 " + cr + " crediti a testa" }));
     }
     t.lobby({ host: cb.sonoHost, codice: vm.codice, min: 2,
       giocatori: vm.giocatori.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
@@ -1555,8 +1601,10 @@
       giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, omino: t.mioOmino ? t.mioOmino() : null }]
     };
     function stopTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
+    // "⚙️ Regole" in saletta: se torni ai Temi classici cambia motore (stessa stanza, stessi amici)
+    t.onRegole = function (im) { if (!st.iniziata && (im.formato || "temi") !== "fanta") avviaAsta(t); };
 
-    var rete = SGNet.ospita("asta", {
+    var rete = ospitaAsta({
       onCodice: function (c) { st.codice = c; bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
       onAddio: function (id) {
@@ -1660,6 +1708,7 @@
       st.classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
         .map(function (g) { return { nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐" }; });
       st.fase = "fine"; FX.fine(); bd();
+      if (t.risultato) t.risultato(st.classifica);   // per il torneo online
     }
     function nuovaInLobby() {
       stopTo();

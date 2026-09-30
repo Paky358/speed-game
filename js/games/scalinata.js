@@ -405,7 +405,10 @@
     }
     function prossimo() {
       if (st.fase !== "rivela") return;
-      if (st.posti.some(function (p) { return p.passi >= TRAGUARDO; })) { st.fase = "fine"; st.vincitore = vincitoreDi(st); bd(); }
+      if (st.posti.some(function (p) { return p.passi >= TRAGUARDO; })) { st.fase = "fine"; st.vincitore = vincitoreDi(st); bd();
+        if (t.risultato) { var ord = st.posti.slice().sort(function (a, b) { return b.passi - a.passi; });   // per il torneo online
+          t.risultato(ord.map(function (p) { return { nome: p.nome, pos: 1 + ord.filter(function (q) { return q.passi > p.passi; }).length }; })); }
+      }
       else nuovaScelta();
     }
     function nuova() {

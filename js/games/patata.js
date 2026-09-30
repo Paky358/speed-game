@@ -373,7 +373,13 @@
       if (H.fase === "lobby") return { fase: "lobby", codice: H.codice, pronta: H.pronta, players: H.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null }; }), customCats: H.customCats.slice() };
       var vm = H.motore.vm(); vm.codice = H.codice; vm.pronta = H.pronta; return vm;
     }
-    function bd() { rete.invia({ t: "vm", vm: vmHost() }); disegna(); }
+    var detto = false;   // il risultato della partita è già stato dato al torneo online?
+    function bd() {
+      var v = vmHost();
+      if (v.fase !== "fine") detto = false;
+      else if (!detto && v.classifica && t.risultato) { detto = true; t.risultato(v.classifica.map(function (p) { return { nome: p.nome }; })); }
+      rete.invia({ t: "vm", vm: v }); disegna();
+    }
     var cb = {
       locale: false, sonoHost: true, myId: "host",
       getRemaining: function () { return H.motore ? H.motore.remaining() : 0; },

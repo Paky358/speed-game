@@ -839,6 +839,19 @@ button.am-riga:active{ transform:scale(.985); }
 .sl-extra{ margin-bottom:10px; } .sl-extra:empty{ display:none; }
 .sl-nota{ text-align:center; margin:6px 0 0; }
 .sl-prima{ margin-top:0; }
+/* host: "⚙️ Regole" accanto a "Comincia", e il foglio con le impostazioni */
+.sl-tasti{ display:flex; gap:8px; align-items:stretch; }
+.sl-tasti .btn{ margin:0; }
+.sl-tasti .sl-regole{ flex:0 0 auto; width:auto; padding-left:14px; padding-right:14px; white-space:nowrap; }
+.sl-tasti .btn-primario{ flex:1 1 auto; min-width:0; }
+.sl-velo{ position:fixed; inset:0; z-index:9998; background:rgba(8,12,34,.72); display:flex; align-items:flex-end; justify-content:center; animation:entra .18s ease; }
+.sl-foglio{ width:100%; max-width:520px; max-height:88vh; max-height:88dvh; display:flex; flex-direction:column; gap:10px; background:var(--sfondo, #141233); border-radius:22px 22px 0 0; padding:14px 16px calc(14px + env(safe-area-inset-bottom)); box-shadow:0 -12px 40px rgba(0,0,0,.5); }
+.sl-foglio-testa{ display:flex; align-items:center; justify-content:space-between; font-size:1.1rem; }
+.sl-foglio-x{ border:0; background:var(--carta, #25224a); color:inherit; width:36px; height:36px; border-radius:50%; font-size:1rem; font-weight:900; cursor:pointer; }
+.sl-foglio-corpo{ flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+.sl-foglio > .btn{ margin:0; }
+/* crea profilo: il personaggio sotto la faccina */
+.omino-profilo.crea .omino-palco{ width:120px; }
 @media (prefers-reduced-motion: reduce){ .sl-av .om-tutto, .sl-av .om-occhi, .sl-insegna, .modo-avatar, .modo-avatar .om-tutto{ animation:none; } }
 .sl-stanza.pochi .sl-av{ width:clamp(88px, 28%, 132px); }
 .sl-stanza.medi .sl-av{ width:clamp(66px, 19%, 104px); }
@@ -849,6 +862,14 @@ button.am-riga:active{ transform:scale(.985); }
 .sl-tappeto{ position:absolute; left:50%; bottom:3%; width:84%; height:15%; transform:translateX(-50%); border-radius:50%; background:radial-gradient(closest-side, #e8595a 0 55%, #c92a2a 56% 70%, #f4d35e 71% 76%, #c92a2a 77% 100%); opacity:.85; }
 .sl-divano{ position:absolute; left:50%; bottom:25%; width:74%; height:17%; transform:translateX(-50%); border-radius:18px 18px 8px 8px; z-index:1;
   background:linear-gradient(90deg, #2b8a7e 0 9%, transparent 9% 91%, #2b8a7e 91%), linear-gradient(#3fb3a4 0 45%, #2f9e8f 45% 100%); box-shadow:0 8px 12px rgba(0,0,0,.28), inset 0 3px 0 rgba(255,255,255,.18); }
+/* torneo online: classifica nella saletta e campione sul podio */
+.sl-torneo{ background:rgba(255,255,255,.05); border-radius:16px; padding:10px 12px 8px; }
+.sl-torneo .classifica{ margin:4px 0 6px; }
+.sl-torneo .btn{ margin:6px 0 2px; }
+.sl-campione{ text-align:center; margin:4px 0 14px; }
+.sl-camp-cor{ font-size:2.6rem; line-height:1; animation:omSalta 1.2s ease-in-out infinite; }
+.sl-camp-nome{ font-size:1.6rem; font-weight:900; margin-top:4px; background:linear-gradient(135deg,#ffe58a,#f4b011); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
+.sl-camp-sotto{ font-size:.95rem; opacity:.8; }
 </style>
 <div id="app"></div>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
@@ -3177,7 +3198,7 @@ button.am-riga:active{ transform:scale(.985); }
 
     // Torneo: più giochi di fila con gli stessi giocatori, punti che si sommano
     s._piede.appendChild(el("button", {
-      class: "btn btn-primario", html: torneo ? "🏆 Riprendi il torneo" : "🏆 Torneo (più giochi di fila)",
+      class: "btn btn-primario", html: (torneo || (sala && sala.torneo)) ? "🏆 Riprendi il torneo" : "🏆 Torneo (più giochi di fila)",
       onclick: apriTorneo
     }));
 
@@ -4159,7 +4180,7 @@ button.am-riga:active{ transform:scale(.985); }
     } catch (e) {}
   }
   // omini = i due avatar, n = quello in uso nei giochi (cfg)
-  function salvaOminoMio(cfg, omini, n) {
+  function salvaOminoProfilo(cfg, omini, n) {
     var io = profiloAttivo(); if (!io) return;
     if (io.cloud) { SGNube.salvaOmino(cfg, omini, n); return; }
     var p = profili().filter(function (x) { return x.id === io.id; })[0];
@@ -4169,9 +4190,12 @@ button.am-riga:active{ transform:scale(.985); }
   function secondoOmino(primo, nome) {
     return SGOmino.casuale(nome + "#2", primo.forma === "donna" ? "uomo" : "donna");
   }
-  function schermataOmino(dopo) {
-    var io = profiloAttivo();
+  // bozza (facoltativa) = { nome, omino, omini, ominoN }: l'editor lavora su questa e non sul profilo
+  // (serve mentre crei il profilo: il personaggio si salva appena il profilo esiste)
+  function schermataOmino(dopo, bozza) {
+    var io = bozza || profiloAttivo();
     if (!io) return schermataAccesso(function () { schermataOmino(dopo); });
+    var salvaOminoMio = bozza ? function (c, om, n) { bozza.omino = c; bozza.omini = om; bozza.ominoN = n; } : salvaOminoProfilo;
     var O = SGOmino, cfg = O.norm(io.omino || O.casuale(io.nome));
     var tab = 0;
     // più personaggi a persona: sotto il riflettore c'è il principale, scorrendo a destra/sinistra (o con le frecce) si passa agli altri
@@ -4491,11 +4515,15 @@ button.am-riga:active{ transform:scale(.985); }
     })();
   }
 
-  function schermataCreaCloud(dopo) {
-    var scelta = { emoji: FACCINE[0] };
-    var s = schermata({ icona: "👤", titolo: "Crea profilo", sotto: "Nome, password e faccina", indietro: function () { schermataAccessoCloud(dopo); } });
+  // scelta = quello che hai già scritto/scelto (si ritrova tornando dall'editor del personaggio)
+  function schermataCreaCloud(dopo, scelta) {
+    scelta = scelta || { emoji: FACCINE[0], nome: "", pwd: "", omino: null, omini: null, ominoN: 0 };
+    var s = schermata({ icona: "👤", titolo: "Crea profilo", sotto: "Nome, password, faccina e personaggio", indietro: function () { schermataAccessoCloud(dopo); } });
     var nome = el("input", { class: "link-campo", type: "text", maxlength: "20", placeholder: "Come ti chiami?" });
     var pwd = el("input", { class: "link-campo", type: "password", maxlength: "40", placeholder: "Scegli una password (min 6)", style: "margin-top:8px" });
+    nome.value = scelta.nome || ""; pwd.value = scelta.pwd || "";
+    nome.addEventListener("input", function () { scelta.nome = nome.value; if (!scelta.omino) disegnaPers(); });
+    pwd.addEventListener("input", function () { scelta.pwd = pwd.value; });
     s._contenuto.appendChild(nome); s._contenuto.appendChild(pwd);
     s._contenuto.appendChild(el("div", { class: "etichetta", text: "Scegli la faccina" }));
     var griglia = el("div", { class: "faccine" });
@@ -4505,6 +4533,21 @@ button.am-riga:active{ transform:scale(.985); }
       } }));
     });
     s._contenuto.appendChild(griglia);
+    // il personaggio: finché non lo crei è quello "a caso" legato al nome che scrivi
+    var pers = el("div", { class: "omino-palco" + (scelta.omino ? "" : " vuoto") });
+    function disegnaPers() { if (window.SGOmino) pers.innerHTML = SGOmino.svg(scelta.omino || SGOmino.casuale((nome.value || "").trim() || "io")); }
+    if (window.SGOmino) {
+      disegnaPers();
+      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Il tuo personaggio" }));
+      s._contenuto.appendChild(el("div", { class: "omino-profilo crea" }, [ pers,
+        el("button", { class: "btn " + (scelta.omino ? "btn-fantasma" : "btn-primario"), text: scelta.omino ? "✏️ Modifica il personaggio" : "🧍 Crea il tuo personaggio", onclick: function () {
+          var b = { nome: (nome.value || "").trim() || "io", omino: scelta.omino, omini: scelta.omini, ominoN: scelta.ominoN };
+          schermataOmino(function () {
+            if (b.omino) { scelta.omino = b.omino; scelta.omini = b.omini; scelta.ominoN = b.ominoN || 0; }
+            schermataCreaCloud(dopo, scelta);
+          }, b);
+        } }) ]));
+    }
     var avviso = el("div", { class: "link-avviso" });
     s._contenuto.appendChild(avviso);
     var bCrea = el("button", { class: "btn btn-primario", text: "Crea profilo ▶", onclick: function () {
@@ -4512,7 +4555,11 @@ button.am-riga:active{ transform:scale(.985); }
       if (n.length < 2) { avviso.textContent = "Scrivi il tuo nome."; return; }
       if (pw.length < 6) { avviso.textContent = "La password deve avere almeno 6 caratteri."; return; }
       bCrea.disabled = true; avviso.textContent = "Creo il profilo…";
-      SGNube.crea(n, pw, scelta.emoji).then(function () { dopo(); }).catch(function (e) { bCrea.disabled = false; avviso.textContent = SGNube.messaggioErrore(e); });
+      SGNube.crea(n, pw, scelta.emoji).then(function () {
+        if (!scelta.omino) return dopo();
+        // il personaggio fatto prima si salva appena il profilo c'è
+        attendiProfilo(function () { SGNube.salvaOmino(scelta.omino, scelta.omini, scelta.ominoN || 0); dopo(); });
+      }).catch(function (e) { bCrea.disabled = false; avviso.textContent = SGNube.messaggioErrore(e); });
     } });
     s._piede.appendChild(bCrea);
     mostra(s);
@@ -4607,9 +4654,9 @@ button.am-riga:active{ transform:scale(.985); }
         torn ? null : el("span", { class: "modifica", text: "modifica" })
       ]));
     }
-    var impostazioni = {};
+    var impostazioni = {}, box = null;
     if (typeof g.impostazioni === "function") {
-      var box = el("div");
+      box = el("div");
       g.impostazioni(box, impostazioni, { el: el, torneo: torn, sala: inSala, modo: modo });
       if (modo) impostazioni.modo = modo;   // il modo l'avete scelto prima: qui non si cambia
       s._contenuto.appendChild(box);
@@ -4618,9 +4665,10 @@ button.am-riga:active{ transform:scale(.985); }
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca",
       onclick: function () { schermataRegole(g, function () { schermataPreGioco(g, opts); }); } }));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: inSala ? "Comincia per tutti ▶" : (online ? "🔗 Apri la stanza ▶" : "Comincia ▶"), onclick: function () {
-      if (inSala) { impostazioni.modo = "online"; return salaLancia(g, impostazioni); }
+      if (inSala) { impostazioni.modo = "online"; return salaLancia(g, impostazioni, box); }
       if (modo) impostazioni.modo = modo;
-      if (!conAmici && !torn) { var io = profiloAttivo(), soloIo = [(io && io.nome) || nomiGruppo()[0] || "Giocatore 1"]; ultimaPartita = { gioco: g, impostazioni: impostazioni }; return avviaPartita(g, soloIo, impostazioni, opts); }   // online o contro il computer: ci sei solo tu (gli altri entrano dal link o sono bot)
+      // online: le stesse impostazioni restano a portata dell'host nella saletta (tasto "⚙️ Regole")
+      if (!conAmici && !torn) { var io = profiloAttivo(), soloIo = [(io && io.nome) || nomiGruppo()[0] || "Giocatore 1"]; ultimaPartita = { gioco: g, impostazioni: impostazioni }; return avviaPartita(g, soloIo, impostazioni, online ? Object.assign({}, opts, { regole: box }) : opts); }   // online o contro il computer: ci sei solo tu (gli altri entrano dal link o sono bot)
       // online: l'host apre la stanza da solo, gli altri entrano via rete → niente vincolo di minimo qui
       if (!(impostazioni && impostazioni.modo === "online") && gruppo.length < (g.giocatoriMin || 2)) return schermataSala(g, opts);
       ultimaPartita = { gioco: g, impostazioni: impostazioni };
@@ -4645,8 +4693,9 @@ button.am-riga:active{ transform:scale(.985); }
   //  automatico nella lobby online del gioco) e a fine partita tutti
   //  tornano nella stessa sala. Solo l'host decide.
   // =========================================================
-  var sala = null;   // host:  { rete, codice, pronta, membri:[{id,nome,emoji}], gioco, stanza, inGioco }
-  var salaG = null;  // ospite: { rete, codice, myId, nome, emoji, membri, inGioco, _msg }
+  var sala = null;   // host:  { rete, codice, pronta, membri:[{id,nome,emoji,omino}], gioco, stanza, inGioco, torneo }
+  var salaG = null;  // ospite: { rete, codice, myId, nome, emoji, membri, inGioco, torneo, _msg }
+  // torneo online: { punti:{nome:n}, nomi:[chi ha giocato], n, ultima:{gioco,icona,assegnati}, finito }
 
   function salaSenzaRete(riprova) {
     var s = schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: schermataHome });
@@ -4655,15 +4704,75 @@ button.am-riga:active{ transform:scale(.985); }
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Ok", onclick: schermataHome }));
     mostra(s);
   }
+  function ominoOk(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  // la sala usa la saletta d'attesa dei giochi (stessi personaggi, stesso divano)
+  function gSala(torn) { return { id: "__sala", nome: torn ? "Torneo" : "Sala online", icona: torn ? "🏆" : "👥" }; }
+
+  // ---------- TORNEO ONLINE: classifica che si somma partita dopo partita ----------
+  function segnaNomeT(T, nome) { if (T && nome && T.nomi.indexOf(nome) < 0) T.nomi.push(nome); }
+  function classificaT(T) {
+    return T.nomi.map(function (n) { return { nome: n, punti: T.punti[n] || 0 }; }).sort(function (a, b) { return b.punti - a.punti; });
+  }
+  function listaT(T, evidenzia) {
+    var ol = el("ol", { class: "classifica" }), med = ["🥇", "🥈", "🥉"];
+    classificaT(T).forEach(function (r, i) {
+      ol.appendChild(el("li", { class: i === 0 && evidenzia ? "vincitore" : "" }, [
+        el("span", { class: "pos", text: med[i] || (i + 1) + "°" }), el("span", { class: "nome", text: r.nome }), el("span", { class: "punti", text: r.punti }) ]));
+    });
+    return ol;
+  }
+  function boxTorneo(T, host) {
+    var box = el("div", { class: "sl-torneo" });
+    box.appendChild(el("div", { class: "etichetta", text: T.n ? ("🏆 Classifica del torneo · " + T.n + (T.n === 1 ? " partita" : " partite")) : "🏆 Torneo: ancora nessuna partita" }));
+    box.appendChild(listaT(T, T.n > 0));
+    if (T.ultima) {
+      var chi = T.ultima.assegnati.filter(function (a) { return T.nomi.indexOf(a.nome) >= 0; });
+      box.appendChild(el("p", { class: "modulo-nota", text: "Ultima partita: " + T.ultima.icona + " " + T.ultima.gioco + (chi.length ? " — " + chi.map(function (a) { return a.nome + " +" + a.punti; }).join(" · ") : "") }));
+    }
+    if (host && T.n) box.appendChild(el("button", { class: "btn btn-fantasma", text: "🏁 Chiudi e premia", onclick: function () {
+      chiediConferma("Chiudere il torneo e premiare?", "Tutti vedranno il podio finale.", "🏁 Premia", salaTorneoFine);
+    } }));
+    return box;
+  }
+  function salaRisultato(g, classifica) {
+    var T = sala && sala.torneo; if (!T || !classifica || !classifica.length) return;
+    var ass = puntiDaClassifica(g, classifica);
+    ass.forEach(function (r) { T.punti[r.nome] = (T.punti[r.nome] || 0) + r.punti; });
+    T.n += 1; T.ultima = { gioco: g.nome, icona: g.icona || "🎲", assegnati: ass };
+    sala._bcast();
+  }
+  function schermataPodioT(T, host) {
+    var s = schermata({ icona: "🏆", titolo: "Torneo finito!", sotto: T.n + (T.n === 1 ? " partita giocata" : " partite giocate") });
+    var cl = classificaT(T);
+    if (cl.length) s._contenuto.appendChild(el("div", { class: "sl-campione" }, [ el("div", { class: "sl-camp-cor", text: "👑" }), el("div", { class: "sl-camp-nome", text: cl[0].nome }), el("div", { class: "sl-camp-sotto", text: "vince il torneo con " + cl[0].punti + " punti" }) ]));
+    s._contenuto.appendChild(listaT(T, true));
+    if (host) {
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Nuovo torneo (stessi amici)", onclick: function () {
+        T.punti = {}; T.n = 0; T.ultima = null; T.finito = false; sala._bcast(); disegnaSalaHost();
+      } }));
+      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Chiudi il torneo", onclick: function () { chiudiSala(); schermataHome(); } }));
+    } else {
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: function () { chiudiSalaOspite(); schermataHome(); } }));
+    }
+    mostra(s);
+  }
+  function salaTorneoFine() {
+    if (!sala || !sala.torneo) return;
+    sala.torneo.finito = true; sala._bcast();
+    schermataPodioT(sala.torneo, true);
+  }
 
   // ---------- HOST ----------
-  function creaSala() {
-    if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete(creaSala);
-    if (!profiloAttivo()) return schermataAccesso(creaSala);
+  // opz.torneo = torneo online: la stessa sala, con la classifica che si somma
+  function creaSala(opz) {
+    var torn = !!(opz && opz.torneo === true);
+    if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete();
+    if (!profiloAttivo()) return schermataAccesso(function () { creaSala(opz); });
     var io = profiloAttivo();
-    sala = { rete: null, codice: "…", pronta: false, membri: [{ id: "host", nome: io.nome, emoji: io.emoji }], gioco: null, stanza: null, inGioco: false };
-    function bcast() { if (sala && sala.rete) sala.rete.invia({ t: "sala", codice: sala.codice, membri: sala.membri, gioco: sala.gioco, stanza: sala.stanza }); }
-    function agg() { bcast(); if (sala && !sala.inGioco) disegnaSalaHost(); }
+    sala = { rete: null, codice: "…", pronta: false, membri: [{ id: "host", nome: io.nome, emoji: io.emoji, omino: io.omino || null }], gioco: null, stanza: null, inGioco: false,
+      torneo: torn ? { punti: {}, nomi: [io.nome], n: 0, ultima: null, finito: false } : null };
+    function bcast() { if (sala && sala.rete) sala.rete.invia({ t: "sala", codice: sala.codice, membri: sala.membri, gioco: sala.gioco, stanza: sala.stanza, torneo: sala.torneo }); }
+    function agg() { bcast(); if (sala && !sala.inGioco && !(sala.torneo && sala.torneo.finito)) disegnaSalaHost(); }
     sala._bcast = bcast;
     sala.rete = SGNet.ospita("__sala", {
       onCodice: function (c) { sala.codice = c; agg(); },
@@ -4671,11 +4780,14 @@ button.am-riga:active{ transform:scale(.985); }
       onAddio: function (id) { sala.membri = sala.membri.filter(function (m) { return m.id !== id; }); agg(); },
       onMsg: function (id, m) {
         if (!m || m.t !== "join") return;
-        if (!sala.membri.some(function (x) { return x.id === id; }))
-          sala.membri.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), emoji: m.emoji || "🙂" });
+        if (!sala.membri.some(function (x) { return x.id === id; })) {
+          var nome = String(m.nome || "Amico").slice(0, 16);
+          sala.membri.push({ id: id, nome: nome, emoji: m.emoji || "🙂", omino: ominoOk(m.omino) });
+          segnaNomeT(sala.torneo, nome);
+        }
         agg();
       },
-      onErrore: function () { salaSenzaRete(creaSala); }
+      onErrore: function () { salaSenzaRete(); }
     });
     disegnaSalaHost();
   }
@@ -4684,84 +4796,86 @@ button.am-riga:active{ transform:scale(.985); }
 
   function disegnaSalaHost() {
     if (!sala) return;
-    var s = schermata({ icona: "👥", titolo: "La sala", sotto: "Invita gli amici, poi scegli un gioco",
-      indietro: function () { if (window.confirm("Chiudere la sala per tutti?")) { chiudiSala(); schermataHome(); } } });
-    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della sala" }));
-    s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (sala.codice || "…").toUpperCase() }));
-    if (sala.codice && sala.codice !== "…") {
-      var link = SG.creaLink({ sala: sala.codice });
-      var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", value: link });
-      s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare",
-        onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
-      s._contenuto.appendChild(campo);
-    }
-    s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (sala.pronta ? "#69db7c" : "#ffd43b"),
-      text: sala.pronta ? "🟢 Sala pronta — manda il codice o il link" : "🟡 Sto aprendo la sala…" }));
-    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Chi c'è (" + sala.membri.length + ")" }));
-    var lista = el("div");
-    sala.membri.forEach(function (m) { lista.appendChild(el("div", { class: "lobby-giocatore", text: (m.emoji || "🙂") + " " + m.nome + (m.id === "host" ? " (tu)" : "") })); });
-    s._contenuto.appendChild(lista);
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🎮 Scegli un gioco", onclick: salaScegliGioco }));
-    s._piede.appendChild(el("p", { class: "modulo-nota", text: "Scegli un gioco quando vuoi: parte per tutti. A fine partita si torna qui." }));
-    mostra(s);
+    var T = sala.torneo;
+    if (T && T.finito) return schermataPodioT(T, true);
+    var pronto = sala.codice && sala.codice !== "…";
+    saletta(gSala(!!T), {
+      host: true, codice: sala.codice, pronta: sala.pronta, min: 1, puoiDaSolo: true,
+      link: pronto ? SG.creaLink({ sala: sala.codice }) : "",
+      sotto: T ? "Torneo online · un link per tutti i giochi" : "Sala online · un link per tutti i giochi",
+      confermaEsci: T ? "Chiudere il torneo per tutti?" : "Chiudere la sala per tutti?",
+      giocatori: sala.membri.map(function (m) { return { id: m.id, nome: m.nome, omino: m.omino || null, host: m.id === "host", tu: m.id === "host" }; }),
+      extra: T ? [boxTorneo(T, true)] : [],
+      testoComincia: T ? (T.n ? "🎮 Prossimo gioco" : "🎮 Scegli il primo gioco") : "🎮 Scegli un gioco",
+      nota: "Scegli un gioco: parte da solo sul telefono di tutti. A fine partita si torna qui.",
+      onComincia: salaScegliGioco,
+      onEsci: function () { chiudiSala(); schermataHome(); }
+    });
   }
 
   function salaScegliGioco() {
-    var s = schermata({ icona: "🎮", titolo: "Scegli un gioco", sotto: "Parte per tutta la sala", indietro: disegnaSalaHost });
+    var T = sala && sala.torneo;
+    var s = schermata({ icona: "🎮", titolo: T ? "Quale gioco?" : "Scegli un gioco", sotto: T ? "Parte per tutti · più è difficile, più punti vale" : "Parte per tutta la sala", indietro: disegnaSalaHost });
     var griglia = el("div", { class: "griglia-giochi" });
     giochi.forEach(function (g) { if (giocoOnline(g)) griglia.appendChild(tesseraGioco(g, function () { schermataPreGioco(g, { sala: true }); })); });
     s._contenuto.appendChild(griglia);
     mostra(s);
   }
 
-  function salaLancia(g, impostazioni) {
+  function salaLancia(g, impostazioni, box) {
     if (!sala) return schermataHome();
     var C = SGNet.nuovoCodice();
     SGNet._forza = C;                         // il gioco userà QUESTO codice stanza
     sala.gioco = g.id; sala.stanza = C; sala.inGioco = true;
     sala._bcast();                            // dice agli altri quale gioco aprire e con che codice
     var ctx = {
-      esci: function () { sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala._bcast(); disegnaSalaHost(); },
-      fine: function (g2, classifica) { salaFine(g2, classifica, ctx); }
+      esci: function () { if (!sala) return schermataHome(); sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala._bcast(); disegnaSalaHost(); },
+      // la partita è finita: nel torneo si sommano i punti
+      risultato: function (g2, classifica) { salaRisultato(g2, classifica); },
+      fine: function (g2, classifica) { salaRisultato(g2, classifica); salaFine(g2, classifica, ctx); }
     };
     var vecchio = linkParams; linkParams = {};      // l'host apre da host, non da ospite
-    avviaPartita(g, [sala.membri[0].nome], impostazioni, null, ctx);
+    avviaPartita(g, [sala.membri[0].nome], impostazioni, { regole: box }, ctx);
     linkParams = vecchio;
   }
 
   function salaFine(g, classifica, ctx) {
-    var s = schermata({ icona: "🏆", titolo: "Fine partita", sotto: g.nome });
+    var T = sala && sala.torneo, punti = {};
+    if (T && T.ultima) T.ultima.assegnati.forEach(function (a) { punti[a.nome] = a.punti; });
+    var s = schermata({ icona: "🏆", titolo: T ? "Punti di questa partita" : "Fine partita", sotto: g.nome });
     var ol = el("ol", { class: "classifica" }), med = ["🥇", "🥈", "🥉"];
     (classifica || []).forEach(function (r, i) {
       ol.appendChild(el("li", { class: i === 0 ? "vincitore" : "" }, [
         el("span", { class: "pos", text: med[i] || (i + 1) + "°" }),
         el("span", { class: "nome", text: r.nome }),
-        r.punti != null ? el("span", { class: "punti", text: r.punti }) : null ]));
+        T && punti[r.nome] != null ? el("span", { class: "punti", text: "+" + punti[r.nome] }) : (r.punti != null ? el("span", { class: "punti", text: r.punti }) : null) ]));
     });
     s._contenuto.appendChild(ol);
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "👥 Torna alla sala", onclick: ctx.esci }));
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: T ? "🏆 Classifica del torneo" : "👥 Torna alla sala", onclick: ctx.esci }));
     mostra(s);
   }
 
   // ---------- OSPITE ----------
   function salaOspite(codice) {
-    if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete(function () { salaOspite(codice); });
+    if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete();
     if (!profiloAttivo()) return schermataAccesso(function () { salaOspite(codice); });
     var io = profiloAttivo();
-    salaG = { rete: null, codice: String(codice).toUpperCase(), myId: null, nome: io.nome, emoji: io.emoji, membri: [], inGioco: null, _msg: null };
+    salaG = { rete: null, codice: String(codice).toUpperCase(), myId: null, nome: io.nome, emoji: io.emoji, membri: [], inGioco: null, torneo: null, podio: false, _msg: null };
     attendiSala();
     salaG.rete = SGNet.entra(salaG.codice, {
-      onAperto: function (id) { salaG.myId = id; salaG.rete.invia({ t: "join", nome: salaG.nome, emoji: salaG.emoji });
+      onAperto: function (id) { salaG.myId = id; salaG.rete.invia({ t: "join", nome: salaG.nome, emoji: salaG.emoji, omino: io.omino || null });
         setTimeout(function () { if (salaG && !salaG.membri.length && salaG._msg) salaG._msg.textContent = "Non trovo la sala: controlla il codice o attendi l'host…"; }, 8000); },
       onMsg: function (m) {
         if (!salaG || !m || m.t !== "sala") return;
-        salaG.membri = m.membri || [];
+        salaG.membri = m.membri || []; salaG.torneo = m.torneo || null;
         if (m.gioco && m.stanza) {
-          if (salaG.inGioco !== m.stanza) { salaG.inGioco = m.stanza; salaLanciaOspite(m.gioco, m.stanza); }
-        } else {
-          if (salaG.inGioco !== null) salaG.inGioco = null;
-          disegnaSalaOspite();
+          if (salaG.inGioco !== m.stanza) { salaG.inGioco = m.stanza; salaG.podio = false; salaLanciaOspite(m.gioco, m.stanza); }
+          return;
         }
+        if (salaG.inGioco !== null) salaG.inGioco = null;
+        if (salaG.torneo && salaG.torneo.finito) { if (!salaG.podio) { salaG.podio = true; schermataPodioT(salaG.torneo, false); } return; }
+        salaG.podio = false;
+        disegnaSalaOspite();
       },
       onChiuso: function () { chiudiSalaOspite(); errore(schermataHome, "La sala è stata chiusa dall'host."); },
       onErrore: function () { chiudiSalaOspite(); errore(schermataHome, "Problema di collegamento con la sala. Riprova."); }
@@ -4780,16 +4894,16 @@ button.am-riga:active{ transform:scale(.985); }
 
   function disegnaSalaOspite() {
     if (!salaG) return;
-    var s = schermata({ icona: "👥", titolo: "La sala", sotto: "Aspetta che l'host scelga un gioco",
-      indietro: function () { chiudiSalaOspite(); schermataHome(); } });
-    s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:#69db7c;margin-bottom:6px", text: "✅ Sei nella sala " + salaG.codice }));
-    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Chi c'è (" + salaG.membri.length + ")" }));
-    var lista = el("div");
-    salaG.membri.forEach(function (m) { lista.appendChild(el("div", { class: "lobby-giocatore", text: (m.emoji || "🙂") + " " + m.nome + (m.id === salaG.myId ? " (tu)" : "") })); });
-    s._contenuto.appendChild(lista);
-    salaG._msg = el("p", { class: "modulo-nota", text: "Quando l'host sceglie un gioco, parte da solo sul tuo telefono." });
-    s._contenuto.appendChild(salaG._msg);
-    mostra(s);
+    var T = salaG.torneo;
+    saletta(gSala(!!T), {
+      host: false, codice: salaG.codice,
+      sotto: (T ? "Torneo online" : "Sala online") + " · codice " + salaG.codice,
+      giocatori: salaG.membri.map(function (m) { return { id: m.id, nome: m.nome, omino: m.omino || null, host: m.id === "host", tu: m.id === salaG.myId }; }),
+      extra: T ? [boxTorneo(T, false)] : [],
+      attesa: "Aspetta che l'host scelga un gioco: parte da solo sul tuo telefono.",
+      onEsci: function () { chiudiSalaOspite(); schermataHome(); }
+    });
+    salaG._msg = null;
   }
 
   function salaLanciaOspite(gid, code) {
@@ -4859,15 +4973,46 @@ button.am-riga:active{ transform:scale(.985); }
   function chiavePers(p, i) { return String(p.id != null ? p.id : (p.nome || i)); }
   function condividiLink(link, g, bottone) {
     var fatto = function () { if (!bottone) return; var t0 = bottone.innerHTML; bottone.innerHTML = "✅ Link copiato!"; setTimeout(function () { bottone.innerHTML = t0; }, 1800); };
-    if (navigator.share) { navigator.share({ title: g.nome, text: "Giochiamo a " + g.nome + "! Entra qui:", url: link }).catch(function () {}); return; }
+    var invito = g.id === "__sala" ? (g.nome === "Torneo" ? "Vieni al torneo! Entra qui:" : "Vieni a giocare con noi! Entra qui:") : "Giochiamo a " + g.nome + "! Entra qui:";
+    if (navigator.share) { navigator.share({ title: g.nome, text: invito, url: link }).catch(function () {}); return; }
     try { navigator.clipboard.writeText(link).then(fatto, fatto); } catch (e) { fatto(); }
   }
-  function saletta(g, o) {
+  // le impostazioni hanno qualcosa da scegliere (a vista) anche online? Se no, niente tasto "Regole"
+  function haRegole(box) {
+    if (!box) return false;
+    return [].some.call(box.querySelectorAll(".modo-chip, .cat-chip, input, select, [data-regola]"), function (c) {
+      for (var n = c; n && n !== box; n = n.parentNode) if (n.hidden) return false;
+      return true;
+    });
+  }
+  function firmaImp(imp) { try { return JSON.stringify(imp); } catch (e) { return ""; } }
+  // il foglio "Regole" della saletta: dentro ci sono le stesse impostazioni di prima (restano come le avevi lasciate)
+  function foglioRegole(U) {
+    var R = U.R; if (!R || document.querySelector(".sl-velo")) return;
+    var prima = firmaImp(R.imp), velo;
+    function chiudi() {
+      if (R.box.parentNode) R.box.parentNode.removeChild(R.box);
+      if (velo.parentNode) velo.parentNode.removeChild(velo);
+      if (firmaImp(R.imp) === prima) return;
+      var fn = (U.o && U.o.onRegole) || (R.tavolo && R.tavolo.onRegole);
+      if (fn) fn(R.imp);
+      if (U.bRegole) { U.bRegole.textContent = "✅ Fatto"; setTimeout(function () { if (U.bRegole) U.bRegole.textContent = "⚙️ Regole"; }, 1600); }
+    }
+    velo = el("div", { class: "sl-velo", onclick: function (e) { if (e.target === velo) chiudi(); } }, [
+      el("div", { class: "sl-foglio" }, [
+        el("div", { class: "sl-foglio-testa" }, [ el("b", { text: "⚙️ Regole della partita" }), el("button", { class: "sl-foglio-x", "aria-label": "Chiudi", text: "✕", onclick: chiudi }) ]),
+        el("div", { class: "sl-foglio-corpo" }, [ R.box ]),
+        el("button", { class: "btn btn-primario", text: "✅ Fatto", onclick: chiudi })
+      ])
+    ]);
+    document.body.appendChild(velo);
+  }
+  function saletta(g, o, R) {
     o = o || {};
     var U = SL.ultimo;
-    if (U && U.gid === g.id && U.host === !!o.host && document.body.contains(U.s)) { aggiornaSaletta(U, o); return U.s; }
-    var s = schermata({ icona: g.icona, titolo: g.nome, sotto: o.host ? "Online · la stanza è tua" : ("Online · stanza " + String(o.codice || "").toUpperCase()),
-      indietro: function () { if (o.host && !window.confirm("Chiudere la stanza per tutti?")) return; SL.ultimo = null; if (o.onEsci) o.onEsci(); } });
+    if (U && U.gid === g.id && U.host === !!o.host && document.body.contains(U.s)) { if (R) U.R = R; aggiornaSaletta(U, o); return U.s; }
+    var s = schermata({ icona: g.icona, titolo: g.nome, sotto: o.sotto || (o.host ? "Online · la stanza è tua" : ("Online · stanza " + String(o.codice || "").toUpperCase())),
+      indietro: function () { if (o.host && !window.confirm(o.confermaEsci || "Chiudere la stanza per tutti?")) return; SL.ultimo = null; if (o.onEsci) o.onEsci(); } });
     s.classList.add("saletta-schermo");
     var U2 = { gid: g.id, host: !!o.host, s: s, figure: {}, o: o };
     if (o.host) {
@@ -4895,7 +5040,13 @@ button.am-riga:active{ transform:scale(.985); }
     } else {
       U2.go = el("button", { class: "btn btn-primario", onclick: function () { if (!U2.go.disabled && U2.o.onComincia) U2.o.onComincia(); } });
       U2.nota = el("p", { class: "modulo-nota sl-nota" });
-      s._piede.appendChild(U2.go); s._piede.appendChild(U2.nota);
+      U2.R = R || null;
+      // l'host può sempre cambiare le regole, anche con gli amici già dentro
+      if (R && haRegole(R.box)) {
+        U2.bRegole = el("button", { class: "btn btn-fantasma sl-regole", text: "⚙️ Regole", onclick: function () { foglioRegole(U2); } });
+        s._piede.appendChild(el("div", { class: "sl-tasti" }, [ U2.bRegole, U2.go ]));
+      } else s._piede.appendChild(U2.go);
+      s._piede.appendChild(U2.nota);
     }
     SL.ultimo = U2;
     aggiornaSaletta(U2, o);
@@ -4910,7 +5061,7 @@ button.am-riga:active{ transform:scale(.985); }
     if (U.host) {
       var pronto = o.codice && o.codice !== "…";
       U.cod.textContent = pronto ? String(o.codice).toUpperCase() : "…";
-      U.linkUrl = pronto ? SG.creaLink({ gioco: U.gid, stanza: o.codice }) : "";
+      U.linkUrl = pronto ? (o.link || SG.creaLink({ gioco: U.gid, stanza: o.codice })) : "";   // o.link: la sala/torneo ha il suo
       if (pronto) U.link.removeAttribute("disabled"); else U.link.setAttribute("disabled", "disabled");
       var aperta = pronto && o.pronta !== false;
       U.stato.className = "sl-stato" + (aperta ? "" : " giallo");
@@ -5063,7 +5214,8 @@ button.am-riga:active{ transform:scale(.985); }
   function puntiDaClassifica(g, classifica) {
     var peso = pesoGioco(g);
     return classifica.map(function (r, i) {
-      var perc = i < CURVA_TORNEO.length ? CURVA_TORNEO[i] : 6;
+      var k = (r.pos ? r.pos : i + 1) - 1;   // pos = il posto (a pari merito lo stesso posto, gli stessi punti)
+      var perc = k < CURVA_TORNEO.length ? CURVA_TORNEO[k] : 6;
       return { nome: r.nome, punti: Math.round(perc * peso) };
     });
   }
@@ -5087,9 +5239,27 @@ button.am-riga:active{ transform:scale(.985); }
   }
 
   function apriTorneo() {
+    if (sala && sala.torneo) return disegnaSalaHost();   // torneo online in corso
     if (torneo) return schermataTorneoHub();
-    if (!profiloAttivo()) return schermataAccesso(function () { schermataSala(null, { torneo: true }); });
-    schermataSala(null, { torneo: true });
+    if (!profiloAttivo()) return schermataAccesso(apriTorneo);
+    schermataTorneoModo();
+  }
+  // prima cosa: come giocate il torneo? Online = UN link solo per tutti i giochi
+  function schermataTorneoModo() {
+    var s = schermata({ icona: "🏆", titolo: "Torneo", sotto: "Come giocate?", indietro: schermataHome });
+    var griglia = el("div", { class: "modo-scelta" });
+    [{ icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono: prima aggiungi chi gioca", via: function () { schermataSala(null, { torneo: true }); } },
+     { icona: "🔗", nome: "Online", sotto: "Un link solo per tutto il torneo: ognuno dal suo telefono", online: true, via: function () { creaSala({ torneo: true }); } }
+    ].forEach(function (m) {
+      griglia.appendChild(el("button", { class: "modo-grande" + (m.online ? " online" : ""), onclick: m.via }, [
+        el("div", { class: "mg-ico", text: m.icona }),
+        el("div", { class: "mg-testo" }, [ el("div", { class: "mg-tit", text: m.nome }), el("div", { class: "mg-sotto", text: m.sotto }) ]),
+        el("div", { class: "mg-freccia", text: "›" })
+      ]));
+    });
+    s._contenuto.appendChild(griglia);
+    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Più giochi di fila, i punti si sommano: più il gioco è difficile, più punti vale." }));
+    mostra(s);
   }
 
   function iniziaTorneo() {
@@ -5191,11 +5361,17 @@ button.am-riga:active{ transform:scale(.985); }
       nomeProfilo: function () { var p = profiloAttivo(); return p && p.nome ? String(p.nome).trim().slice(0, 16) : ""; },
       // l'avatar di questo telefono (da mandare quando si entra in una stanza online)
       mioOmino: function (nome) { var p = profiloAttivo(); return (p && p.omino) || (window.SGOmino ? SGOmino.casuale(nome || (p && p.nome) || "io") : null); },
-      // la saletta d'attesa online, uguale per tutti i giochi (vedi saletta())
-      lobby: function (o) { return saletta(g, o); },
+      // la saletta d'attesa online, uguale per tutti i giochi (vedi saletta()).
+      // All'host dà anche "⚙️ Regole": le impostazioni di prima, da cambiare quando vuole;
+      // dopo una modifica chiama tavolo.onRegole() (il gioco rilegge tavolo.impostazioni).
+      lobby: function (o) { return saletta(g, o, (opts && opts.regole) ? { box: opts.regole, imp: tavolo.impostazioni, tavolo: tavolo } : null); },
 
       // passaggio del telefono, poi esegue "quando"
       passaA: function (nome, quando) { passaIlTelefono(nome, quando); },
+
+      // i giochi online dicono com'è finita ogni partita, senza lasciare la loro schermata finale:
+      // serve al torneo online per sommare i punti. classifica = [{ nome, pos? }] dal primo all'ultimo
+      risultato: function (classifica) { if (salaCtx && salaCtx.risultato && classifica && classifica.length) salaCtx.risultato(g, classifica); },
 
       // il gioco chiama questa quando è finito
       fine: function (classifica) {
@@ -13181,6 +13357,20 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 138,
+    data: "30 settembre 2026",
+    titolo: "Torneo online con un link solo, e regole sempre in mano all'host 🏆",
+    descrizione: [
+      "Torneo: adesso puoi giocarlo online. Scegli \"Online\", mandi UN link solo e gli amici entrano una volta per tutto il torneo. Tu scegli i giochi uno dopo l'altro e sul telefono di tutti si aprono da soli.",
+      "Nel torneo online la saletta mostra la classifica, che si aggiorna dopo ogni partita. Con \"Chiudi e premia\" tutti vedono il podio col campione.",
+      "Anche la Sala online adesso è una saletta coi personaggi, come quella dei giochi.",
+      "Saletta d'attesa: chi ha aperto la stanza ha il tasto \"⚙️ Regole\" e può cambiarle quando vuole, anche con gli amici già dentro.",
+      "Le regole da cambiare ci sono in L'Asta (modalità, crediti e tema), Horto Muso (cavalli e bot), Nomi, Cose e Città (categorie, secondi e giri), Palla a Pendolo (bot e collisioni) e La linea del tempo (categorie e carte).",
+      "Palla a Pendolo online: ognuno sceglie il suo ruolo con due tasti chiari, \"🎯 Lancio io\" e \"🏃 Sto sulla trave\". Vale anche per chi entra dal link.",
+      "Crea profilo: oltre a nome, password e faccina c'è il tasto \"🧍 Crea il tuo personaggio\". Il personaggio che fai si salva insieme al profilo."
+    ]
+  },
+  {
     v: 137,
     data: "30 settembre 2026",
     titolo: "Come giocate? E la saletta d'attesa coi personaggi 🛋️",
@@ -15445,6 +15635,48 @@ window.SG_SIPERO = {
       // Chi entra da un link è sempre un ospite: la modalità (temi o
       // fantacalcio) la decide l'host e arriva dentro la "foto" (vm).
       if (t.linkParams && t.linkParams.stanza) return ospiteAsta(t, t.linkParams.stanza);
+      PONTE = null;   // stanza nuova
+      avviaAsta(t);
+    }
+  };
+
+  // ---- la stanza dell'host resta la stessa anche se in saletta cambi modalità (temi <-> fantacalcio):
+  //      il nuovo "motore" riceve la stessa stanza e chi era già entrato, senza che gli amici escano ----
+  var PONTE = null;   // { vera, cb, codice, pronta, entrati: [{ id, m }], maniglia }
+  function ospitaAsta(cb) {
+    var P = PONTE;
+    if (P) {
+      P.cb = cb;
+      setTimeout(function () {
+        if (PONTE !== P) return;
+        if (P.codice) cb.onCodice(P.codice);
+        if (P.pronta) cb.onConnesso();
+        P.entrati.forEach(function (e) { cb.onMsg(e.id, e.m); });   // rientrano da soli nel nuovo motore
+      }, 0);
+      return P.maniglia;
+    }
+    P = PONTE = { cb: cb, codice: null, pronta: false, entrati: [] };
+    P.vera = SGNet.ospita("asta", {
+      onCodice: function (c) { P.codice = c; if (P.cb.onCodice) P.cb.onCodice(c); },
+      onConnesso: function () { P.pronta = true; if (P.cb.onConnesso) P.cb.onConnesso(); },
+      onAddio: function (id) { P.entrati = P.entrati.filter(function (e) { return e.id !== id; }); if (P.cb.onAddio) P.cb.onAddio(id); },
+      onMsg: function (id, m) {
+        if (m && m.t === "join" && !P.entrati.some(function (e) { return e.id === id; })) P.entrati.push({ id: id, m: m });
+        if (P.cb.onMsg) P.cb.onMsg(id, m);
+      },
+      onErrore: function (e) { if (P.cb.onErrore) P.cb.onErrore(e); }
+    });
+    if (!P.vera) { PONTE = null; return null; }
+    P.maniglia = {
+      invia: function (x) { P.vera.invia(x); },
+      inviaVeloce: function (x) { P.vera.inviaVeloce(x); },
+      inviaA: function (id, x) { P.vera.inviaA(id, x); },
+      chiudi: function () { if (PONTE === P) PONTE = null; P.vera.chiudi(); }
+    };
+    return P.maniglia;
+  }
+
+  function avviaAsta(t) {
       var formato = (t.impostazioni && t.impostazioni.formato) || "temi";
       if (formato === "fanta") {
         if (t.impostazioni && t.impostazioni.modo === "online") return hostFanta(t);
@@ -15462,8 +15694,7 @@ window.SG_SIPERO = {
         giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: crediti, kit: [], stelle: 0 }; })
       };
       iniziaRound(t, st);
-    }
-  };
+  }
 
   function niente(t, msg) {
     var s = t.schermata({ icona: "🔨", titolo: "L'Asta", indietro: t.esci });
@@ -15771,8 +16002,18 @@ window.SG_SIPERO = {
       giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: crediti, kit: [], stelle: 0, omino: t.mioOmino ? t.mioOmino() : null }]
     };
     function stopTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
+    // "⚙️ Regole" in saletta: tema e crediti nuovi; se passi al Fantacalcio cambia motore (stessa stanza, stessi amici)
+    t.onRegole = function (im) {
+      if (st.iniziata) return;
+      if ((im.formato || "temi") === "fanta") return avviaAsta(t);
+      var temi = window.SG_ASTA_TEMI || [];
+      st.tema = temi.filter(function (x) { return x.id === im.tema; })[0] || st.tema;
+      st.crediti = im.crediti || 15;
+      st.giocatori.forEach(function (g) { g.crediti = st.crediti; });
+      bd();
+    };
 
-    var rete = SGNet.ospita("asta", {
+    var rete = ospitaAsta({
       onCodice: function (c) { st.codice = c; bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
       onAddio: function (id) {
@@ -15913,6 +16154,7 @@ window.SG_SIPERO = {
       st.classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
         .map(function (g) { return { nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐" }; });
       st.fase = "fine"; FX.fine(); bd();
+      if (t.risultato) t.risultato(st.classifica);   // per il torneo online
     }
 
     function scegliTema(idx) {  // l'host cambia argomento in lobby
@@ -16257,16 +16499,10 @@ window.SG_SIPERO = {
     if (vm.formato === "fanta") {
       info.appendChild(el("div", { class: "etichetta", text: "Modalità" }));
       info.appendChild(el("p", { class: "as-msg", text: "⚽ Mini asta Fantacalcio — rosa da 5 (1 P, 1 D, 2 C, 1 A), 20 crediti a testa." }));
-    } else {
-      info.appendChild(el("div", { class: "etichetta", text: "Argomento dell'asta" }));
-      if (cb.sonoHost && vm.temi && vm.temi.length > 1) {
-        var g = el("div", { class: "cat-griglia" });
-        vm.temi.forEach(function (tm, i) {
-          g.appendChild(el("button", { class: "cat-chip" + (tm.id === vm.temaId ? " attiva" : ""), onclick: function () { cb.onTema(i); } }, [
-            el("span", { class: "ci", text: tm.icona }), el("span", { text: tm.nome }), el("span", { class: "spunta", text: "✓" }) ]));
-        });
-        info.appendChild(g);
-      } else info.appendChild(el("p", { class: "as-msg", text: vm.temaIcona + " " + vm.temaNome }));
+    } else {   // tutte le regole si cambiano da "⚙️ Regole" (l'host); qui tutti vedono come si gioca
+      var cr = (vm.giocatori && vm.giocatori[0] && vm.giocatori[0].crediti) || 15;
+      info.appendChild(el("div", { class: "etichetta", text: "Si gioca così" }));
+      info.appendChild(el("p", { class: "as-msg", text: "🎁 Temi classici · " + vm.temaIcona + " " + vm.temaNome + " · 💰 " + cr + " crediti a testa" }));
     }
     t.lobby({ host: cb.sonoHost, codice: vm.codice, min: 2,
       giocatori: vm.giocatori.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
@@ -16597,8 +16833,10 @@ window.SG_SIPERO = {
       giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, omino: t.mioOmino ? t.mioOmino() : null }]
     };
     function stopTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
+    // "⚙️ Regole" in saletta: se torni ai Temi classici cambia motore (stessa stanza, stessi amici)
+    t.onRegole = function (im) { if (!st.iniziata && (im.formato || "temi") !== "fanta") avviaAsta(t); };
 
-    var rete = SGNet.ospita("asta", {
+    var rete = ospitaAsta({
       onCodice: function (c) { st.codice = c; bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
       onAddio: function (id) {
@@ -16702,6 +16940,7 @@ window.SG_SIPERO = {
       st.classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
         .map(function (g) { return { nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐" }; });
       st.fase = "fine"; FX.fine(); bd();
+      if (t.risultato) t.risultato(st.classifica);   // per il torneo online
     }
     function nuovaInLobby() {
       stopTo();
@@ -18175,7 +18414,7 @@ window.SG_SIPERO = {
       if (rete) rete.invia({ t: "lobby", codice: codice, giocatori: seats.map(function (x) { return { id: x.id, nome: x.nome, omino: x.omino || null }; }) });
       renderLobbyBJ(t, { sonoHost: true, codice: codice, pronta: pronta, giocatori: seats }, {
         bonus: boxBonus,
-        onComincia: function () { M = BJ.creaMotore(nomiSeat(), t.mischia, seats.map(function (x) { return x.fiches; })); avviaTavoloHost(); M.nuovaMano(); bcast(); },
+        onComincia: function () { M = BJ.creaMotore(nomiSeat(), t.mischia, seats.map(function (x) { return x.fiches; })); inizio = M.st.giocatori.map(function (g) { return g.fiches; }); maniFinite = 0; avviaTavoloHost(); M.nuovaMano(); bcast(); },
         onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
       });
     }
@@ -18191,10 +18430,17 @@ window.SG_SIPERO = {
         onPunta: function (v) { suonoChip(); M.punta(0, v); bcast(); },
         onMossa: function (m) { if (M.st.turno === 0) { if (m === "stai") suonoStai(); M.azione(m); bcast(); } },
         onAssicura: function (si) { M.assicura(0, si); bcast(); },
-        onFineMano: function (vm) { if (prof && !provaHost) salvaFineMano(vm.giocatori[0], vm); },
+        onFineMano: function (vm) { if (prof && !provaHost) salvaFineMano(vm.giocatori[0], vm); maniFinite++; },
         onNuova: function () { M.nuovaMano(); bcast(); },
-        onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
+        onEsci: function () { risultatoBJ(); if (rete) rete.chiudi(); t.esci(); }
       });
+    }
+    // per il torneo online: quando l'host lascia il tavolo, conta chi ha guadagnato più fiches
+    var inizio = null, maniFinite = 0;
+    function risultatoBJ() {
+      if (!M || !inizio || !maniFinite || !t.risultato) return;
+      var r = M.st.giocatori.map(function (g, i) { return { nome: g.nome, netto: g.fiches - inizio[i] }; }).sort(function (a, b) { return b.netto - a.netto; });
+      t.risultato(r.map(function (x) { return { nome: x.nome, pos: 1 + r.filter(function (y) { return y.netto > x.netto; }).length }; }));
     }
     rete = SGNet.ospita("blackjack", {
       onCodice: function (c) { codice = c; if (!M) lobbyOut(); },
@@ -18735,6 +18981,9 @@ window.SG_SIPERO = {
       var w = vincitoreDrop(st.board);
       if (w) { st.fine = { vincitore: w.s, celle: w.celle }; st.fase = "fine"; }
       else if (!colonneLibere(st.board).length) { st.fine = { vincitore: null, celle: null }; st.fase = "fine"; }
+      // per il torneo online: chi ha vinto (pari = stesso posto)
+      if (st.fine && t.risultato) t.risultato(st.fine.vincitore === "B" ? [{ nome: st.nomiB, pos: 1 }, { nome: st.nomiG, pos: 2 }]
+        : [{ nome: st.nomiG, pos: 1 }, { nome: st.nomiB, pos: st.fine.vincitore ? 2 : 1 }]);
       else st.turno = altro(st.turno);
       bd();
     }
@@ -20323,6 +20572,25 @@ window.SG_SIPERO = {
     function seatDi(id) { for (var s = 1; s < N; s++) if (posti[s] === id) return s; return -1; }
     function postoLibero() { for (var s = 1; s < N; s++) if (!posti[s]) return s; return 0; }
     function quanti() { var n = 0; for (var s = 1; s < N; s++) if (posti[s]) n++; return n; }
+    // "⚙️ Regole" in saletta: bravura dei bot e cavalli in gara. Chi è dentro resta
+    // (se i cavalli calano, chi era oltre passa a un posto libero; mai meno cavalli di chi gioca).
+    t.onRegole = function (im) {
+      if (fase !== "lobby") return;
+      bp = botParam(im.difficolta || "medio");
+      var dentro = [];
+      for (var s = 1; s < N; s++) if (posti[s]) dentro.push({ id: posti[s], nome: nomiU[s], om: ominiU[s] });
+      var nuovoN = Math.max(2, dentro.length + 1, Math.min(MAXN, im.cavalli || 4));
+      var p2 = {}, n2 = {}, o2 = {};
+      for (s = 1; s < nuovoN; s++) { p2[s] = null; n2[s] = null; }
+      dentro.forEach(function (d, i) {   // chi può resta al suo posto; gli altri nei posti liberi
+        var vecchio = seatDi(d.id), dove = vecchio < nuovoN && !p2[vecchio] ? vecchio : 0;
+        if (!dove) for (var k = 1; k < nuovoN; k++) if (!p2[k] && !dentro.some(function (x) { return seatDi(x.id) === k; })) { dove = k; break; }
+        if (!dove) for (k = 1; k < nuovoN; k++) if (!p2[k]) { dove = k; break; }
+        p2[dove] = d.id; n2[dove] = d.nome; o2[dove] = d.om;
+      });
+      posti = p2; nomiU = n2; ominiU = o2; N = nuovoN;
+      aggiornaLobby();
+    };
 
     rete = SGNet.ospita("horto", {
       onCodice: function (c) { codice = c; aggiornaLobby(); },
@@ -20377,6 +20645,7 @@ window.SG_SIPERO = {
     function bcast() { var sn = snap(cav, fase, Math.max(0, conto), nomi); if (nTick++ % 4 === 0 || fase !== "corsa") rete.inviaVeloce(sn); if (ref) disegna(ref, sn); }
     function fineCorsa() {
       fase = "fine"; ord = classificaDa(cav, arrivi);
+      if (t.risultato) t.risultato(ord.map(function (s) { return { nome: nomi[s] }; }));   // per il torneo online
       if (!foto) foto = cav.map(function (h) { return Math.min(1, h.pos); });
       rete.invia({ t: "fine", ord: ord, nomi: nomi, foto: foto });
       if (ref) { ref.rimuovi(); ref = null; }
@@ -21127,12 +21396,12 @@ window.SG_SIPERO = {
         else if (canale.esitoBot) canale.esitoBot({ x: m.x, y: m.y, e: e.e });
         suono(e.e);
         if (e.e === "affondato" && !e.persa) mostraAvviso("☠️ Ti hanno affondato: " + e.nome);
-        if (e.persa) { fase = "fine"; esitoFine = false; render(); return; }
+        if (e.persa) { fase = "fine"; esitoFine = false; if (opt.onFine) opt.onFine(false); render(); return; }
         turno = "mio"; render();
       } else if (m.t === "esito") {              // esito del MIO colpo
         registraEsito(m);
         if (m.e === "affondato" && !m.persa) mostraAvviso("💥 Colpito e affondato!" + (m.nome ? " " + m.nome : ""));
-        if (m.persa) { fase = "fine"; esitoFine = true; render(); return; }
+        if (m.persa) { fase = "fine"; esitoFine = true; if (opt.onFine) opt.onFine(true); render(); return; }
         turno = "attesa"; render();              // ho sparato, ora tocca all'altro
       }
     }
@@ -21360,7 +21629,9 @@ window.SG_SIPERO = {
         sonoHost: sonoHost,
         invia: function (msg) { rete.inviaVeloce(msg); },
         onEsci: function () { rete.chiudi(); t.esci(); },
-        rivincita: function (reset) { rete.inviaVeloce({ t: "rivincita" }); reset(); }
+        rivincita: function (reset) { rete.inviaVeloce({ t: "rivincita" }); reset(); },
+        // per il torneo online: chi ha vinto
+        onFine: sonoHost ? function (vinto) { if (t.risultato) t.risultato(vinto ? [{ nome: L.nomiIo }, { nome: L.nomiAvv || "Avversario" }] : [{ nome: L.nomiAvv || "Avversario" }, { nome: L.nomiIo }]); } : null
       });
       G.setCanale({ manda: function (msg) { rete.inviaVeloce(msg); } });
       G.startRender();
@@ -22083,6 +22354,13 @@ window.SG_SIPERO = {
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function pres() { return H.players.filter(function (p) { return !p.via; }); }
     function clearTo() { if (H.to) { clearTimeout(H.to); H.to = null; } }
+    // "⚙️ Regole" in saletta: categorie, secondi e giri nuovi (gli amici vedono subito le categorie cambiate)
+    t.onRegole = function (im) {
+      if (H.fase !== "lobby") return;
+      if (im.categorie && im.categorie.length >= 3) H.cats = im.categorie.slice();
+      H.secondi = im.secondi || 60; H.giri = im.round || 2;
+      bd();
+    };
     var cb = { sonoHost: true, myId: "host",
       onComincia: comincia,
       onRisposte: function (r) { risposte("host", r); },
@@ -22870,7 +23148,13 @@ window.SG_SIPERO = {
       if (H.fase === "lobby") return { fase: "lobby", codice: H.codice, pronta: H.pronta, players: H.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null }; }), customCats: H.customCats.slice() };
       var vm = H.motore.vm(); vm.codice = H.codice; vm.pronta = H.pronta; return vm;
     }
-    function bd() { rete.invia({ t: "vm", vm: vmHost() }); disegna(); }
+    var detto = false;   // il risultato della partita è già stato dato al torneo online?
+    function bd() {
+      var v = vmHost();
+      if (v.fase !== "fine") detto = false;
+      else if (!detto && v.classifica && t.risultato) { detto = true; t.risultato(v.classifica.map(function (p) { return { nome: p.nome }; })); }
+      rete.invia({ t: "vm", vm: v }); disegna();
+    }
     var cb = {
       locale: false, sonoHost: true, myId: "host",
       getRemaining: function () { return H.motore ? H.motore.remaining() : 0; },
@@ -23692,6 +23976,8 @@ window.SG_SIPERO = {
     var omini = { host: mioAvatar(nomi.host) };   // avatar di chi gioca (id -> cfg)
     for (var _s = 0; _s < NSEAT; _s++) posti[_s] = null;   // seat -> id | null(bot)
     var fase = "lobby", ST = null, ref = null, raf = null, loop = null, ultimoInvio = 0, last = 0, rete = null;
+    // "⚙️ Regole" in saletta: bravura dei bot e collisioni valgono dalla prossima partita
+    t.onRegole = function (im) { diff = im.difficolta || "medio"; P = diffP(diff); collis = im.collisioni; };
 
     function seatDi(id) { for (var s = 0; s < NSEAT; s++) if (posti[s] === id) return s; return -1; }
     function postoLibero() { for (var s = 0; s < NSEAT; s++) if (!posti[s]) return s; return -1; }
@@ -23723,6 +24009,8 @@ window.SG_SIPERO = {
         if (!m || !m.t) return;
         if (m.t === "join") { if (fase === "lobby" && seatDi(id) < 0 && lanc !== id) { var p = postoLibero(); if (p >= 0) { posti[p] = id; nomi[id] = String(m.nome || "Amico").slice(0, 16); omini[id] = avatarValido(m.omino); } } lobbyAgg(); }
         else if (m.t === "vuoiLanciare") { if (fase === "lobby") { nomi[id] = nomi[id] || "Amico"; claim(id); lobbyAgg(); } }
+        else if (m.t === "vuoiTrave") {   // chi lanciava torna sulla trave (in un posto dei bot); a lanciare va un bot
+          if (fase === "lobby" && lanc === id) { var lib = postoLibero(); if (lib >= 0) { posti[lib] = id; lanc = null; } lobbyAgg(); } }
         else if (fase === "gioco" && ST) {
           if (id === lanc) { if (m.t === "aim") ST.aimHold = m.d || 0; else if (m.t === "lancia") ST.lanciaFlag = true; }
           else { var s = seatDi(id); if (s >= 0 && ST.chars[s]) { if (m.t === "mov") ST.chars[s].mov = m.d || 0; else if (m.t === "salta") { if (ST.chars[s].jt <= 0 && ST.chars[s].jcd <= 0) { ST.chars[s].jt = JUMP; ST.chars[s].jcd = JCD; } } } }
@@ -23762,6 +24050,12 @@ window.SG_SIPERO = {
       fase = "fine"; if (loop) cancelAnimationFrame(loop);
       var survSeat = {}; for (var s = 0; s < NSEAT; s++) survSeat[s] = ST.chars[s].alive ? 1 : 0;
       rete.invia({ t: "fine", vintoLanc: vintoLanc ? 1 : 0, surv: survSeat, seggi: seggi(), lanc: lanc });
+      if (t.risultato) {   // per il torneo online: prima chi ha vinto (i bot non contano)
+        var vinti = [], persi = [];
+        if (lanc) (vintoLanc ? vinti : persi).push(nomi[lanc]);
+        for (var sv = 0; sv < NSEAT; sv++) if (posti[sv]) (!vintoLanc && survSeat[sv] ? vinti : persi).push(nomi[posti[sv]]);
+        t.risultato(vinti.map(function (n) { return { nome: n, pos: 1 }; }).concat(persi.map(function (n) { return { nome: n, pos: vinti.length + 1 }; })));
+      }
       if (ref) { ref.rimuovi(); ref = null; }
       var hostSeat = seatDi("host"), hostVinto = (lanc === "host") ? vintoLanc : !!survSeat[hostSeat];
       var testo = testoFine(lanc === "host" ? "lanciatore" : "trave", hostVinto, vintoLanc, ST.chars.filter(function (x) { return x.alive; }).length, ST, P);
@@ -23774,7 +24068,8 @@ window.SG_SIPERO = {
     function disegnaLobby() { if (fase !== "lobby") return;
       renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", lanc: lanc, seggi: seggi(), nomi: nomi, omini: omini },
         { onComincia: inizia,
-          onHostLanc: function () { hostVaA("L"); lobbyAgg(); },
+          onLancio: function () { hostVaA("L"); lobbyAgg(); },
+          onTrave: function () { var lib = postoLibero(); hostVaA(lib >= 0 ? lib : 0); lobbyAgg(); },   // un posto dei bot, se c'è
           onHostSeat: function (i) { hostVaA(i); lobbyAgg(); },
           onEsci: function () { chiudi(); t.esci(); } }); }
     disegnaLobby();
@@ -23861,7 +24156,8 @@ window.SG_SIPERO = {
     function avviaGiro() { if (!S.raf) { S._last = performance.now(); S.raf = requestAnimationFrame(giro); } }
     function fermaGiro() { if (S.raf) cancelAnimationFrame(S.raf); S.raf = null; }
     function mostraLobby(m) { renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, lanc: m.lanc, seggi: m.seggi, nomi: m.nomi, omini: m.omini },
-      { onClaim: function () { if (S.rete) S.rete.invia({ t: "vuoiLanciare" }); }, onEsci: function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); } }); }
+      { onLancio: function () { if (S.rete) S.rete.invia({ t: "vuoiLanciare" }); },
+        onTrave: function () { if (S.rete) S.rete.invia({ t: "vuoiTrave" }); }, onEsci:function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); } }); }
     function attesa() { if (S.ref) return;
       var s = t.schermata({ icona: "🎯", titolo: "Palla a Pendolo · Sala", sotto: "Stanza " + codice.toUpperCase(), indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
       S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegato ✅ — sto entrando nella stanza…" }); s._contenuto.appendChild(S.msg2); t.mostra(s); }
@@ -23892,15 +24188,22 @@ window.SG_SIPERO = {
         tap ? el("span", { style: "font-size:.82rem;font-weight:800;color:var(--accento)", text: azione._et || "vai qui ▶" }) : null
       ]);
     }
-    // lanciatore
+    // il MIO ruolo: due tasti chiari, per l'host e per chi entra
     var lBot = !vm.lanc;
     var lNome = lBot ? "🤖 bot" : ((vm.nomi && vm.nomi[vm.lanc]) || (vm.lanc === "host" ? "Host" : "Amico"));
     var ioLanc = vm.lanc === vm.myId;
+    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Il tuo ruolo" }));
+    s._contenuto.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [
+      el("button", { class: "modo-chip" + (ioLanc ? " attiva" : ""), onclick: function () { if (!ioLanc) cb.onLancio(); } }, [
+        el("span", { class: "mi", text: "🎯" }), el("div", {}, [el("div", { class: "mt", text: "Lancio io" }), el("div", { class: "ms", text: "Butti giù chi è sulla trave" })])]),
+      el("button", { class: "modo-chip" + (ioLanc ? "" : " attiva"), onclick: function () { if (ioLanc) cb.onTrave(); } }, [
+        el("span", { class: "mi", text: "🏃" }), el("div", {}, [el("div", { class: "mt", text: "Sto sulla trave" }), el("div", { class: "ms", text: "Salti e schivi la palla" })])])
+    ]));
+    // chi lancia
     s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "🎯 Chi lancia" }));
-    var tapL = (vm.sonoHost && !ioLanc && cb.onHostLanc) ? function () { cb.onHostLanc(); } : null;
+    var tapL = (vm.sonoHost && !ioLanc && cb.onLancio) ? function () { cb.onLancio(); } : null;
     if (tapL) tapL._et = "lancio io ▶";
     s._contenuto.appendChild(rigaRuolo(el("span", { text: "🎯" }), lNome + (ioLanc ? " (tu)" : ""), ioLanc, tapL, tapL));
-    if (!vm.sonoHost && !ioLanc) s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", style: "margin-bottom:8px", text: "🎯 Voglio lanciare io", onclick: cb.onClaim }));
     // trave
     s._contenuto.appendChild(el("div", { class: "etichetta", text: "🏃 Sulla trave (posti liberi = bot)" }));
     (vm.seggi || []).forEach(function (sg, i) {
@@ -24400,7 +24703,10 @@ window.SG_SIPERO = {
     }
     function prossimo() {
       if (st.fase !== "rivela") return;
-      if (st.posti.some(function (p) { return p.passi >= TRAGUARDO; })) { st.fase = "fine"; st.vincitore = vincitoreDi(st); bd(); }
+      if (st.posti.some(function (p) { return p.passi >= TRAGUARDO; })) { st.fase = "fine"; st.vincitore = vincitoreDi(st); bd();
+        if (t.risultato) { var ord = st.posti.slice().sort(function (a, b) { return b.passi - a.passi; });   // per il torneo online
+          t.risultato(ord.map(function (p) { return { nome: p.nome, pos: 1 + ord.filter(function (q) { return q.passi > p.passi; }).length }; })); }
+      }
       else nuovaScelta();
     }
     function nuova() {
@@ -25778,10 +26084,17 @@ window.SG_SIPERO = {
     });
     function lobbyVm() { return { lobby: true, codice: codice, pronta: pronta, avversario: !!avvId, sonoHost: true, io: "A", nomi: nomi, omini: omini }; }
     function aggiornaLobby() { if (M) return; if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, avversario: !!avvId, nomi: { A: nomi.A, B: nomi.B }, omini: { A: omini.A, B: avvId ? omini.B : null } }); disegnaLobby(); }
+    var detto = false;   // il risultato della partita è già stato dato al torneo online?
     function bcast() {
       // all'ospite mando la SUA vista (vede solo le proprie carte); io disegno la mia
       if (M) { if (rete) rete.invia({ t: "vm", vm: vistaDa(M.st, "B", omini) }); C.setVm(vistaDa(M.st, "A", omini)); }
       else disegnaLobby();
+      if (!M || M.st.fase !== "fine") { detto = false; return; }
+      if (!detto && t.risultato) {   // per il torneo online: chi è arrivato prima al traguardo
+        detto = true;
+        var a = M.st.punti.A, b = M.st.punti.B;
+        t.risultato(a >= b ? [{ nome: nomi.A, pos: 1 }, { nome: nomi.B, pos: a === b ? 1 : 2 }] : [{ nome: nomi.B, pos: 1 }, { nome: nomi.A, pos: 2 }]);
+      }
     }
     function dopo(ev) {
       if (!ev || ev.errore) return;
@@ -26374,11 +26687,19 @@ window.SG_SIPERO = {
     function postoLibero() { for (var s = 1; s <= 3; s++) if (!posti[s]) return s; return 0; }
     function seatDi(id) { for (var s = 1; s <= 3; s++) if (posti[s] === id) return s; return -1; }
 
+    var detto = false;   // il risultato della partita è già stato dato al torneo online?
     function bcast() {
       if (!st) { disegnaLobby(); return; }
       // a ogni ospite mando la SUA vista; io (host) disegno la vista del posto 0
       for (var s = 1; s <= 3; s++) if (posti[s] && rete) rete.invia({ t: "vm", to: posti[s], vm: vistaDa(st, s) });
       Cl.setVm(vistaDa(st, 0));
+      if (st.fase !== "fine") { detto = false; return; }
+      if (!detto && t.risultato) {   // per il torneo online: la squadra che vince, poi l'altra (pari = stesso posto)
+        detto = true;
+        var v = st.punti[0] >= st.punti[1] ? 0 : 1, pari = st.punti[0] === st.punti[1];
+        t.risultato([0, 1, 2, 3].map(function (k) { return { nome: st.nomi[k], pos: (k % 2 === v || pari) ? 1 : 3 }; })
+          .sort(function (a, b) { return a.pos - b.pos; }));
+      }
     }
     function passo(seat, id, presa) {
       if (!st || st.turno !== seat) return;
@@ -27433,7 +27754,15 @@ window.SG_SIPERO = {
     }
     function giudica(id, sq) {
       var g = giudiceDa(st.giocatori, st.assegna);
-      if (st.fase === "giudizio" && g && id === g.id && (sq === 0 || sq === 1)) { st.vincitore = sq; st.fase = "fine"; bd(); }
+      if (st.fase === "giudizio" && g && id === g.id && (sq === 0 || sq === 1)) {
+        st.vincitore = sq; st.fase = "fine"; bd();
+        if (t.risultato) {   // per il torneo online: la squadra scelta dal giudice, poi il giudice, poi l'altra squadra
+          var S = squadreDa(st.giocatori, st.assegna), vinti = S[sq].membri, persi = S[1 - sq].membri;
+          t.risultato(vinti.map(function (m) { return { nome: m.nome, pos: 1 }; })
+            .concat([{ nome: g.nome, pos: vinti.length + 1 }])
+            .concat(persi.map(function (m) { return { nome: m.nome, pos: vinti.length + 2 }; })));
+        }
+      }
     }
     function nuova() {
       st.fase = "lobby"; st.iniziata = false; st.vincitore = null;
@@ -28246,6 +28575,7 @@ window.SG_SIPERO = {
         el("button", { text: "−", onclick: function () { agg(-1); } }), valore,
         el("button", { text: "+", onclick: function () { agg(1); } }) ]));
 
+      if (aiuti.modo !== "online") {   // online il link lo manda la saletta (con la stanza già aperta)
       box.appendChild(el("div", { class: "etichetta", text: "Da mandare agli amici" }));
       var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", hidden: "hidden" });
       var avviso = el("div", { class: "link-avviso", hidden: "hidden" });
@@ -28258,6 +28588,7 @@ window.SG_SIPERO = {
           avviso.hidden = false; avviso.textContent = "Link pronto! Se non si copia da solo, tienilo premuto e copialo.";
         } }));
       box.appendChild(campo); box.appendChild(avviso);
+      }
     },
 
     avvia: function (t) {
@@ -28388,6 +28719,13 @@ window.SG_SIPERO = {
     };
     function corr() { return st.giocatori[st.turno % st.giocatori.length]; }
     function clearTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
+    // "⚙️ Regole" in saletta: categorie e carte a testa nuove (il mazzo si rifà con le categorie scelte)
+    t.onRegole = function (im) {
+      if (st.iniziata) return;
+      st.carte = im.carte || 5; st.mazzo = mischiaArr(pescaDati(im)); st.tutteCat = tutteLeCategorie(im);
+      st.giocatori.forEach(function (g) { g.restano = st.carte; });
+      bd();
+    };
 
     var rete = SGNet.ospita("timeline", {
       onCodice: function (c) { st.codice = c; bd(); },
@@ -28484,6 +28822,7 @@ window.SG_SIPERO = {
     function finisci() {
       clearTo(); st.fase = "fine"; st.scadenza = null;
       st.classifica = classificaPunti(st.giocatori);
+      if (t.risultato) t.risultato(st.classifica);   // per il torneo online
       var io = st.giocatori[indexById(st, "host")];
       if (io) tFine(st.T, st.classifica, function (r) { return r.id === "host"; }, io.restano === 0);
       bd();
@@ -29026,6 +29365,9 @@ window.SG_SIPERO = {
       var w = vincitore(st.board);
       if (w) { st.fine = { vincitore: w.s, linea: w.linea }; st.fase = "fine"; }
       else if (pieno(st.board)) { st.fine = { vincitore: null, linea: null }; st.fase = "fine"; }
+      // per il torneo online: chi ha vinto (pari = stesso posto)
+      if (st.fine && t.risultato) t.risultato(st.fine.vincitore === "O" ? [{ nome: st.nomiO, pos: 1 }, { nome: st.nomiX, pos: 2 }]
+        : [{ nome: st.nomiX, pos: 1 }, { nome: st.nomiO, pos: st.fine.vincitore ? 2 : 1 }]);
       else st.turno = altro(st.turno);
       bd();
     }

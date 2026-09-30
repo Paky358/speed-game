@@ -825,6 +825,19 @@ button.am-riga:active{ transform:scale(.985); }
 .sl-extra{ margin-bottom:10px; } .sl-extra:empty{ display:none; }
 .sl-nota{ text-align:center; margin:6px 0 0; }
 .sl-prima{ margin-top:0; }
+/* host: "⚙️ Regole" accanto a "Comincia", e il foglio con le impostazioni */
+.sl-tasti{ display:flex; gap:8px; align-items:stretch; }
+.sl-tasti .btn{ margin:0; }
+.sl-tasti .sl-regole{ flex:0 0 auto; width:auto; padding-left:14px; padding-right:14px; white-space:nowrap; }
+.sl-tasti .btn-primario{ flex:1 1 auto; min-width:0; }
+.sl-velo{ position:fixed; inset:0; z-index:9998; background:rgba(8,12,34,.72); display:flex; align-items:flex-end; justify-content:center; animation:entra .18s ease; }
+.sl-foglio{ width:100%; max-width:520px; max-height:88vh; max-height:88dvh; display:flex; flex-direction:column; gap:10px; background:var(--sfondo, #141233); border-radius:22px 22px 0 0; padding:14px 16px calc(14px + env(safe-area-inset-bottom)); box-shadow:0 -12px 40px rgba(0,0,0,.5); }
+.sl-foglio-testa{ display:flex; align-items:center; justify-content:space-between; font-size:1.1rem; }
+.sl-foglio-x{ border:0; background:var(--carta, #25224a); color:inherit; width:36px; height:36px; border-radius:50%; font-size:1rem; font-weight:900; cursor:pointer; }
+.sl-foglio-corpo{ flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+.sl-foglio > .btn{ margin:0; }
+/* crea profilo: il personaggio sotto la faccina */
+.omino-profilo.crea .omino-palco{ width:120px; }
 @media (prefers-reduced-motion: reduce){ .sl-av .om-tutto, .sl-av .om-occhi, .sl-insegna, .modo-avatar, .modo-avatar .om-tutto{ animation:none; } }
 .sl-stanza.pochi .sl-av{ width:clamp(88px, 28%, 132px); }
 .sl-stanza.medi .sl-av{ width:clamp(66px, 19%, 104px); }
@@ -835,3 +848,11 @@ button.am-riga:active{ transform:scale(.985); }
 .sl-tappeto{ position:absolute; left:50%; bottom:3%; width:84%; height:15%; transform:translateX(-50%); border-radius:50%; background:radial-gradient(closest-side, #e8595a 0 55%, #c92a2a 56% 70%, #f4d35e 71% 76%, #c92a2a 77% 100%); opacity:.85; }
 .sl-divano{ position:absolute; left:50%; bottom:25%; width:74%; height:17%; transform:translateX(-50%); border-radius:18px 18px 8px 8px; z-index:1;
   background:linear-gradient(90deg, #2b8a7e 0 9%, transparent 9% 91%, #2b8a7e 91%), linear-gradient(#3fb3a4 0 45%, #2f9e8f 45% 100%); box-shadow:0 8px 12px rgba(0,0,0,.28), inset 0 3px 0 rgba(255,255,255,.18); }
+/* torneo online: classifica nella saletta e campione sul podio */
+.sl-torneo{ background:rgba(255,255,255,.05); border-radius:16px; padding:10px 12px 8px; }
+.sl-torneo .classifica{ margin:4px 0 6px; }
+.sl-torneo .btn{ margin:6px 0 2px; }
+.sl-campione{ text-align:center; margin:4px 0 14px; }
+.sl-camp-cor{ font-size:2.6rem; line-height:1; animation:omSalta 1.2s ease-in-out infinite; }
+.sl-camp-nome{ font-size:1.6rem; font-weight:900; margin-top:4px; background:linear-gradient(135deg,#ffe58a,#f4b011); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
+.sl-camp-sotto{ font-size:.95rem; opacity:.8; }

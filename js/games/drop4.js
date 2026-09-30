@@ -379,6 +379,9 @@
       var w = vincitoreDrop(st.board);
       if (w) { st.fine = { vincitore: w.s, celle: w.celle }; st.fase = "fine"; }
       else if (!colonneLibere(st.board).length) { st.fine = { vincitore: null, celle: null }; st.fase = "fine"; }
+      // per il torneo online: chi ha vinto (pari = stesso posto)
+      if (st.fine && t.risultato) t.risultato(st.fine.vincitore === "B" ? [{ nome: st.nomiB, pos: 1 }, { nome: st.nomiG, pos: 2 }]
+        : [{ nome: st.nomiG, pos: 1 }, { nome: st.nomiB, pos: st.fine.vincitore ? 2 : 1 }]);
       else st.turno = altro(st.turno);
       bd();
     }

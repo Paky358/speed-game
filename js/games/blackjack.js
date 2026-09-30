@@ -1304,7 +1304,7 @@
       if (rete) rete.invia({ t: "lobby", codice: codice, giocatori: seats.map(function (x) { return { id: x.id, nome: x.nome, omino: x.omino || null }; }) });
       renderLobbyBJ(t, { sonoHost: true, codice: codice, pronta: pronta, giocatori: seats }, {
         bonus: boxBonus,
-        onComincia: function () { M = BJ.creaMotore(nomiSeat(), t.mischia, seats.map(function (x) { return x.fiches; })); avviaTavoloHost(); M.nuovaMano(); bcast(); },
+        onComincia: function () { M = BJ.creaMotore(nomiSeat(), t.mischia, seats.map(function (x) { return x.fiches; })); inizio = M.st.giocatori.map(function (g) { return g.fiches; }); maniFinite = 0; avviaTavoloHost(); M.nuovaMano(); bcast(); },
         onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
       });
     }
@@ -1320,10 +1320,17 @@
         onPunta: function (v) { suonoChip(); M.punta(0, v); bcast(); },
         onMossa: function (m) { if (M.st.turno === 0) { if (m === "stai") suonoStai(); M.azione(m); bcast(); } },
         onAssicura: function (si) { M.assicura(0, si); bcast(); },
-        onFineMano: function (vm) { if (prof && !provaHost) salvaFineMano(vm.giocatori[0], vm); },
+        onFineMano: function (vm) { if (prof && !provaHost) salvaFineMano(vm.giocatori[0], vm); maniFinite++; },
         onNuova: function () { M.nuovaMano(); bcast(); },
-        onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
+        onEsci: function () { risultatoBJ(); if (rete) rete.chiudi(); t.esci(); }
       });
+    }
+    // per il torneo online: quando l'host lascia il tavolo, conta chi ha guadagnato più fiches
+    var inizio = null, maniFinite = 0;
+    function risultatoBJ() {
+      if (!M || !inizio || !maniFinite || !t.risultato) return;
+      var r = M.st.giocatori.map(function (g, i) { return { nome: g.nome, netto: g.fiches - inizio[i] }; }).sort(function (a, b) { return b.netto - a.netto; });
+      t.risultato(r.map(function (x) { return { nome: x.nome, pos: 1 + r.filter(function (y) { return y.netto > x.netto; }).length }; }));
     }
     rete = SGNet.ospita("blackjack", {
       onCodice: function (c) { codice = c; if (!M) lobbyOut(); },

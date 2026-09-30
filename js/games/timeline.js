@@ -571,6 +571,7 @@
         el("button", { text: "−", onclick: function () { agg(-1); } }), valore,
         el("button", { text: "+", onclick: function () { agg(1); } }) ]));
 
+      if (aiuti.modo !== "online") {   // online il link lo manda la saletta (con la stanza già aperta)
       box.appendChild(el("div", { class: "etichetta", text: "Da mandare agli amici" }));
       var campo = el("input", { class: "link-campo", type: "text", readonly: "readonly", hidden: "hidden" });
       var avviso = el("div", { class: "link-avviso", hidden: "hidden" });
@@ -583,6 +584,7 @@
           avviso.hidden = false; avviso.textContent = "Link pronto! Se non si copia da solo, tienilo premuto e copialo.";
         } }));
       box.appendChild(campo); box.appendChild(avviso);
+      }
     },
 
     avvia: function (t) {
@@ -713,6 +715,13 @@
     };
     function corr() { return st.giocatori[st.turno % st.giocatori.length]; }
     function clearTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
+    // "⚙️ Regole" in saletta: categorie e carte a testa nuove (il mazzo si rifà con le categorie scelte)
+    t.onRegole = function (im) {
+      if (st.iniziata) return;
+      st.carte = im.carte || 5; st.mazzo = mischiaArr(pescaDati(im)); st.tutteCat = tutteLeCategorie(im);
+      st.giocatori.forEach(function (g) { g.restano = st.carte; });
+      bd();
+    };
 
     var rete = SGNet.ospita("timeline", {
       onCodice: function (c) { st.codice = c; bd(); },
@@ -809,6 +818,7 @@
     function finisci() {
       clearTo(); st.fase = "fine"; st.scadenza = null;
       st.classifica = classificaPunti(st.giocatori);
+      if (t.risultato) t.risultato(st.classifica);   // per il torneo online
       var io = st.giocatori[indexById(st, "host")];
       if (io) tFine(st.T, st.classifica, function (r) { return r.id === "host"; }, io.restano === 0);
       bd();

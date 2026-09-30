@@ -318,6 +318,9 @@
       var w = vincitore(st.board);
       if (w) { st.fine = { vincitore: w.s, linea: w.linea }; st.fase = "fine"; }
       else if (pieno(st.board)) { st.fine = { vincitore: null, linea: null }; st.fase = "fine"; }
+      // per il torneo online: chi ha vinto (pari = stesso posto)
+      if (st.fine && t.risultato) t.risultato(st.fine.vincitore === "O" ? [{ nome: st.nomiO, pos: 1 }, { nome: st.nomiX, pos: 2 }]
+        : [{ nome: st.nomiX, pos: 1 }, { nome: st.nomiO, pos: st.fine.vincitore ? 2 : 1 }]);
       else st.turno = altro(st.turno);
       bd();
     }

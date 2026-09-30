@@ -290,12 +290,12 @@
         else if (canale.esitoBot) canale.esitoBot({ x: m.x, y: m.y, e: e.e });
         suono(e.e);
         if (e.e === "affondato" && !e.persa) mostraAvviso("☠️ Ti hanno affondato: " + e.nome);
-        if (e.persa) { fase = "fine"; esitoFine = false; render(); return; }
+        if (e.persa) { fase = "fine"; esitoFine = false; if (opt.onFine) opt.onFine(false); render(); return; }
         turno = "mio"; render();
       } else if (m.t === "esito") {              // esito del MIO colpo
         registraEsito(m);
         if (m.e === "affondato" && !m.persa) mostraAvviso("💥 Colpito e affondato!" + (m.nome ? " " + m.nome : ""));
-        if (m.persa) { fase = "fine"; esitoFine = true; render(); return; }
+        if (m.persa) { fase = "fine"; esitoFine = true; if (opt.onFine) opt.onFine(true); render(); return; }
         turno = "attesa"; render();              // ho sparato, ora tocca all'altro
       }
     }
@@ -523,7 +523,9 @@
         sonoHost: sonoHost,
         invia: function (msg) { rete.inviaVeloce(msg); },
         onEsci: function () { rete.chiudi(); t.esci(); },
-        rivincita: function (reset) { rete.inviaVeloce({ t: "rivincita" }); reset(); }
+        rivincita: function (reset) { rete.inviaVeloce({ t: "rivincita" }); reset(); },
+        // per il torneo online: chi ha vinto
+        onFine: sonoHost ? function (vinto) { if (t.risultato) t.risultato(vinto ? [{ nome: L.nomiIo }, { nome: L.nomiAvv || "Avversario" }] : [{ nome: L.nomiAvv || "Avversario" }, { nome: L.nomiIo }]); } : null
       });
       G.setCanale({ manda: function (msg) { rete.inviaVeloce(msg); } });
       G.startRender();

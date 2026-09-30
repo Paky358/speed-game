@@ -464,11 +464,19 @@
     function postoLibero() { for (var s = 1; s <= 3; s++) if (!posti[s]) return s; return 0; }
     function seatDi(id) { for (var s = 1; s <= 3; s++) if (posti[s] === id) return s; return -1; }
 
+    var detto = false;   // il risultato della partita è già stato dato al torneo online?
     function bcast() {
       if (!st) { disegnaLobby(); return; }
       // a ogni ospite mando la SUA vista; io (host) disegno la vista del posto 0
       for (var s = 1; s <= 3; s++) if (posti[s] && rete) rete.invia({ t: "vm", to: posti[s], vm: vistaDa(st, s) });
       Cl.setVm(vistaDa(st, 0));
+      if (st.fase !== "fine") { detto = false; return; }
+      if (!detto && t.risultato) {   // per il torneo online: la squadra che vince, poi l'altra (pari = stesso posto)
+        detto = true;
+        var v = st.punti[0] >= st.punti[1] ? 0 : 1, pari = st.punti[0] === st.punti[1];
+        t.risultato([0, 1, 2, 3].map(function (k) { return { nome: st.nomi[k], pos: (k % 2 === v || pari) ? 1 : 3 }; })
+          .sort(function (a, b) { return a.pos - b.pos; }));
+      }
     }
     function passo(seat, id, presa) {
       if (!st || st.turno !== seat) return;

@@ -444,7 +444,15 @@
     }
     function giudica(id, sq) {
       var g = giudiceDa(st.giocatori, st.assegna);
-      if (st.fase === "giudizio" && g && id === g.id && (sq === 0 || sq === 1)) { st.vincitore = sq; st.fase = "fine"; bd(); }
+      if (st.fase === "giudizio" && g && id === g.id && (sq === 0 || sq === 1)) {
+        st.vincitore = sq; st.fase = "fine"; bd();
+        if (t.risultato) {   // per il torneo online: la squadra scelta dal giudice, poi il giudice, poi l'altra squadra
+          var S = squadreDa(st.giocatori, st.assegna), vinti = S[sq].membri, persi = S[1 - sq].membri;
+          t.risultato(vinti.map(function (m) { return { nome: m.nome, pos: 1 }; })
+            .concat([{ nome: g.nome, pos: vinti.length + 1 }])
+            .concat(persi.map(function (m) { return { nome: m.nome, pos: vinti.length + 2 }; })));
+        }
+      }
     }
     function nuova() {
       st.fase = "lobby"; st.iniziata = false; st.vincitore = null;

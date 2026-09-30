@@ -1183,10 +1183,17 @@
     });
     function lobbyVm() { return { lobby: true, codice: codice, pronta: pronta, avversario: !!avvId, sonoHost: true, io: "A", nomi: nomi, omini: omini }; }
     function aggiornaLobby() { if (M) return; if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, avversario: !!avvId, nomi: { A: nomi.A, B: nomi.B }, omini: { A: omini.A, B: avvId ? omini.B : null } }); disegnaLobby(); }
+    var detto = false;   // il risultato della partita è già stato dato al torneo online?
     function bcast() {
       // all'ospite mando la SUA vista (vede solo le proprie carte); io disegno la mia
       if (M) { if (rete) rete.invia({ t: "vm", vm: vistaDa(M.st, "B", omini) }); C.setVm(vistaDa(M.st, "A", omini)); }
       else disegnaLobby();
+      if (!M || M.st.fase !== "fine") { detto = false; return; }
+      if (!detto && t.risultato) {   // per il torneo online: chi è arrivato prima al traguardo
+        detto = true;
+        var a = M.st.punti.A, b = M.st.punti.B;
+        t.risultato(a >= b ? [{ nome: nomi.A, pos: 1 }, { nome: nomi.B, pos: a === b ? 1 : 2 }] : [{ nome: nomi.B, pos: 1 }, { nome: nomi.A, pos: 2 }]);
+      }
     }
     function dopo(ev) {
       if (!ev || ev.errore) return;

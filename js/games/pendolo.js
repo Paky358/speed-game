@@ -419,6 +419,8 @@
     var omini = { host: mioAvatar(nomi.host) };   // avatar di chi gioca (id -> cfg)
     for (var _s = 0; _s < NSEAT; _s++) posti[_s] = null;   // seat -> id | null(bot)
     var fase = "lobby", ST = null, ref = null, raf = null, loop = null, ultimoInvio = 0, last = 0, rete = null;
+    // "⚙️ Regole" in saletta: bravura dei bot e collisioni valgono dalla prossima partita
+    t.onRegole = function (im) { diff = im.difficolta || "medio"; P = diffP(diff); collis = im.collisioni; };
 
     function seatDi(id) { for (var s = 0; s < NSEAT; s++) if (posti[s] === id) return s; return -1; }
     function postoLibero() { for (var s = 0; s < NSEAT; s++) if (!posti[s]) return s; return -1; }
@@ -450,6 +452,8 @@
         if (!m || !m.t) return;
         if (m.t === "join") { if (fase === "lobby" && seatDi(id) < 0 && lanc !== id) { var p = postoLibero(); if (p >= 0) { posti[p] = id; nomi[id] = String(m.nome || "Amico").slice(0, 16); omini[id] = avatarValido(m.omino); } } lobbyAgg(); }
         else if (m.t === "vuoiLanciare") { if (fase === "lobby") { nomi[id] = nomi[id] || "Amico"; claim(id); lobbyAgg(); } }
+        else if (m.t === "vuoiTrave") {   // chi lanciava torna sulla trave (in un posto dei bot); a lanciare va un bot
+          if (fase === "lobby" && lanc === id) { var lib = postoLibero(); if (lib >= 0) { posti[lib] = id; lanc = null; } lobbyAgg(); } }
         else if (fase === "gioco" && ST) {
           if (id === lanc) { if (m.t === "aim") ST.aimHold = m.d || 0; else if (m.t === "lancia") ST.lanciaFlag = true; }
           else { var s = seatDi(id); if (s >= 0 && ST.chars[s]) { if (m.t === "mov") ST.chars[s].mov = m.d || 0; else if (m.t === "salta") { if (ST.chars[s].jt <= 0 && ST.chars[s].jcd <= 0) { ST.chars[s].jt = JUMP; ST.chars[s].jcd = JCD; } } } }
@@ -489,6 +493,12 @@
       fase = "fine"; if (loop) cancelAnimationFrame(loop);
       var survSeat = {}; for (var s = 0; s < NSEAT; s++) survSeat[s] = ST.chars[s].alive ? 1 : 0;
       rete.invia({ t: "fine", vintoLanc: vintoLanc ? 1 : 0, surv: survSeat, seggi: seggi(), lanc: lanc });
+      if (t.risultato) {   // per il torneo online: prima chi ha vinto (i bot non contano)
+        var vinti = [], persi = [];
+        if (lanc) (vintoLanc ? vinti : persi).push(nomi[lanc]);
+        for (var sv = 0; sv < NSEAT; sv++) if (posti[sv]) (!vintoLanc && survSeat[sv] ? vinti : persi).push(nomi[posti[sv]]);
+        t.risultato(vinti.map(function (n) { return { nome: n, pos: 1 }; }).concat(persi.map(function (n) { return { nome: n, pos: vinti.length + 1 }; })));
+      }
       if (ref) { ref.rimuovi(); ref = null; }
       var hostSeat = seatDi("host"), hostVinto = (lanc === "host") ? vintoLanc : !!survSeat[hostSeat];
       var testo = testoFine(lanc === "host" ? "lanciatore" : "trave", hostVinto, vintoLanc, ST.chars.filter(function (x) { return x.alive; }).length, ST, P);
@@ -501,7 +511,8 @@
     function disegnaLobby() { if (fase !== "lobby") return;
       renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", lanc: lanc, seggi: seggi(), nomi: nomi, omini: omini },
         { onComincia: inizia,
-          onHostLanc: function () { hostVaA("L"); lobbyAgg(); },
+          onLancio: function () { hostVaA("L"); lobbyAgg(); },
+          onTrave: function () { var lib = postoLibero(); hostVaA(lib >= 0 ? lib : 0); lobbyAgg(); },   // un posto dei bot, se c'è
           onHostSeat: function (i) { hostVaA(i); lobbyAgg(); },
           onEsci: function () { chiudi(); t.esci(); } }); }
     disegnaLobby();
@@ -588,7 +599,8 @@
     function avviaGiro() { if (!S.raf) { S._last = performance.now(); S.raf = requestAnimationFrame(giro); } }
     function fermaGiro() { if (S.raf) cancelAnimationFrame(S.raf); S.raf = null; }
     function mostraLobby(m) { renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, lanc: m.lanc, seggi: m.seggi, nomi: m.nomi, omini: m.omini },
-      { onClaim: function () { if (S.rete) S.rete.invia({ t: "vuoiLanciare" }); }, onEsci: function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); } }); }
+      { onLancio: function () { if (S.rete) S.rete.invia({ t: "vuoiLanciare" }); },
+        onTrave: function () { if (S.rete) S.rete.invia({ t: "vuoiTrave" }); }, onEsci:function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); } }); }
     function attesa() { if (S.ref) return;
       var s = t.schermata({ icona: "🎯", titolo: "Palla a Pendolo · Sala", sotto: "Stanza " + codice.toUpperCase(), indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
       S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegato ✅ — sto entrando nella stanza…" }); s._contenuto.appendChild(S.msg2); t.mostra(s); }
@@ -619,15 +631,22 @@
         tap ? el("span", { style: "font-size:.82rem;font-weight:800;color:var(--accento)", text: azione._et || "vai qui ▶" }) : null
       ]);
     }
-    // lanciatore
+    // il MIO ruolo: due tasti chiari, per l'host e per chi entra
     var lBot = !vm.lanc;
     var lNome = lBot ? "🤖 bot" : ((vm.nomi && vm.nomi[vm.lanc]) || (vm.lanc === "host" ? "Host" : "Amico"));
     var ioLanc = vm.lanc === vm.myId;
+    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Il tuo ruolo" }));
+    s._contenuto.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [
+      el("button", { class: "modo-chip" + (ioLanc ? " attiva" : ""), onclick: function () { if (!ioLanc) cb.onLancio(); } }, [
+        el("span", { class: "mi", text: "🎯" }), el("div", {}, [el("div", { class: "mt", text: "Lancio io" }), el("div", { class: "ms", text: "Butti giù chi è sulla trave" })])]),
+      el("button", { class: "modo-chip" + (ioLanc ? "" : " attiva"), onclick: function () { if (ioLanc) cb.onTrave(); } }, [
+        el("span", { class: "mi", text: "🏃" }), el("div", {}, [el("div", { class: "mt", text: "Sto sulla trave" }), el("div", { class: "ms", text: "Salti e schivi la palla" })])])
+    ]));
+    // chi lancia
     s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "🎯 Chi lancia" }));
-    var tapL = (vm.sonoHost && !ioLanc && cb.onHostLanc) ? function () { cb.onHostLanc(); } : null;
+    var tapL = (vm.sonoHost && !ioLanc && cb.onLancio) ? function () { cb.onLancio(); } : null;
     if (tapL) tapL._et = "lancio io ▶";
     s._contenuto.appendChild(rigaRuolo(el("span", { text: "🎯" }), lNome + (ioLanc ? " (tu)" : ""), ioLanc, tapL, tapL));
-    if (!vm.sonoHost && !ioLanc) s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", style: "margin-bottom:8px", text: "🎯 Voglio lanciare io", onclick: cb.onClaim }));
     // trave
     s._contenuto.appendChild(el("div", { class: "etichetta", text: "🏃 Sulla trave (posti liberi = bot)" }));
     (vm.seggi || []).forEach(function (sg, i) {
