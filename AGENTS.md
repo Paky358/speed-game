@@ -37,5 +37,12 @@ Una web app di party game da telefono (tanti giochi, uno per file), in JavaScrip
 ## Trofei
 Lista `TROFEI` in core.js (`{ gioco, livello, icona, nome, desc, stat, meta }`) più i contatori nei giochi, salvati con `SGNube.salvaProgressi(...)`. Le liste arrivano dal proprietario: prima di aggiungerle, controllare che si possano davvero ottenere e che i numeri non siano esagerati.
 
+## Procedure dettagliate (skill)
+In `.agents/skills/` ci sono le procedure passo passo: leggi quella giusta prima di cominciare.
+- `nuovo-gioco`: creare un gioco nuovo o portarlo all'online (file da toccare, contratto, controlli finali).
+- `prova-nel-browser`: provare l'app con un profilo finto e amici finti.
+- `trofei`: aggiungere o cambiare trofei.
+- `contenuti`: scrivere liste di parole, carte, domande e avvenimenti.
+
 ## Come provare
 Non ci sono test automatici: si prova nel browser. Per l'online si sostituiscono `SGNet.ospita/entra` con dei finti che registrano i messaggi, e `SGNube.profilo` con un profilo finto: **mai** usare password o account veri.
