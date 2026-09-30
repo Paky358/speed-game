@@ -16,11 +16,12 @@
   // La misuro io e la rimisuro appena cambia qualcosa.
   (function altezzaVera() {
     function misura() {
-      var h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      document.documentElement.style.setProperty("--alt", Math.round(h || window.innerHeight) + "px");
+      var h = Math.round((window.visualViewport ? window.visualViewport.height : window.innerHeight) || window.innerHeight || 0);
+      if (h > 0) document.documentElement.style.setProperty("--alt", h + "px");   // con la pagina nascosta vale 0: non lo segno (resta l'altezza di prima)
     }
     misura();
     window.addEventListener("resize", misura);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) misura(); });
     window.addEventListener("orientationchange", function () { setTimeout(misura, 250); });
     window.addEventListener("pageshow", misura);
     if (window.visualViewport) window.visualViewport.addEventListener("resize", misura);
@@ -42,14 +43,14 @@
   var CAT_GIOCO = {
     scopa: "carte", scopa2v2: "carte", scopone: "carte", blackjack: "carte",
     tris: "sfida", drop4: "sfida", hockey: "sfida", navale: "sfida",
-    asta: "festa", impostore: "festa", sipero: "festa",
+    asta: "festa", impostore: "festa", sipero: "festa", scarabocchio: "festa",
     scalinata: "mini", horto: "mini", pendolo: "mini",
     timeline: "parole", nomicose: "parole", patata: "parole"
   };
   var catAttiva = "tutti";
   function catDi(g) { return CAT_GIOCO[g.id] || null; }
   // Giochi che hanno la modalità "ognuno dal suo telefono" (usabili nella Sala online).
-  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1 };
+  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1 };
   function giocoOnline(g) { return !!(g && GIOCHI_ONLINE[g.id]); }
   var app;                    // contenitore radice (#app)
   var linkParams = {};        // impostazioni arrivate da un link condiviso
@@ -1766,7 +1767,7 @@
     var s = schermata({ icona: "🎮", titolo: "Cambia gioco", sotto: "Stessi partecipanti",
       indietro: function () { schermataSala(null); } });
     var griglia = el("div", { class: "griglia-giochi" });
-    giochi.forEach(function (g) { griglia.appendChild(tesseraGioco(g, function () { schermataPreGioco(g); })); });
+    giochi.forEach(function (g) { if (!g.soloOnline) griglia.appendChild(tesseraGioco(g, function () { schermataPreGioco(g); })); });
     s._contenuto.appendChild(griglia);
     mostra(s);
   }
@@ -2372,7 +2373,7 @@
     var s = schermata({ icona: "🎮", titolo: "Quale gioco?", sotto: "Più è difficile, più punti vale",
       indietro: schermataTorneoHub });
     var griglia = el("div", { class: "griglia-giochi" });
-    giochi.forEach(function (g) { griglia.appendChild(tesseraGioco(g, function () { schermataPreGioco(g, { torneo: true }); })); });
+    giochi.forEach(function (g) { if (!g.soloOnline) griglia.appendChild(tesseraGioco(g, function () { schermataPreGioco(g, { torneo: true }); })); });   // sullo stesso telefono: niente giochi solo online
     s._contenuto.appendChild(griglia);
     mostra(s);
   }

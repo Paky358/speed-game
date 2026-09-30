@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 139,
+    data: "30 settembre 2026",
+    titolo: "Nuovo gioco: Scarabocchio 🎨",
+    descrizione: [
+      "Scarabocchio è il nostro \"disegna e indovina\". A turno uno sceglie una parola tra 3 e la disegna, gli altri la vedono comparire in tempo reale e provano a indovinarla scrivendo in chat.",
+      "La risposta giusta non la vede nessuno: compare solo \"Marco ha indovinato!\". Se ci sei quasi, il gioco lo dice solo a te.",
+      "Punti: 100 al primo che indovina, poi 80, 60, 40 e 20. Chi disegna prende 25 punti per ognuno che indovina.",
+      "Lavagna con 4 colori, gomma, due spessori, \"annulla\" e \"cancella tutto\". Mentre il tempo passa si scoprono alcune lettere della parola.",
+      "Si gioca online, ognuno dal suo telefono, da 2 a 10. Nella saletta l'host sceglie il tempo, i giri e se usare anche parole difficili, e conta anche nel torneo online."
+    ]
+  },
+  {
     v: 138,
     data: "30 settembre 2026",
     titolo: "Torneo online con un link solo, e regole sempre in mano all'host 🏆",
