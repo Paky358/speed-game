@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 142,
+    data: "1 ottobre 2026",
+    titolo: "Nuovo gioco online: Taboo 🤐",
+    descrizione: [
+      "Da 4 a 16 persone nella stessa stanza: l'host può dividere le squadre a caso o spostare i giocatori a mano.",
+      "A turno uno spiega a voce la parola senza pronunciare le cinque vietate. La squadra avversaria vede la carta e può fare BUZZ; i compagni vedono solo tempo e punti.",
+      "Parola indovinata: +1 punto. BUZZ: −1 punto. Si possono saltare fino a tre carte per turno.",
+      "L'host sceglie turni da 60, 90 o 120 secondi e da 1 a 4 giri. Il mazzo contiene 300 carte italiane senza ripetizioni nella partita."
+    ]
+  },
+  {
     v: 141,
     data: "30 settembre 2026",
     titolo: "Entrare e restare in partita: molto più facile 🔗",
