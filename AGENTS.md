@@ -26,6 +26,7 @@ Una web app di party game da telefono (tanti giochi, uno per file), in JavaScrip
 - Scene animate grandi: animare solo transform/opacity, sfondi e luci su canvas.
 
 ## Giochi online (ognuno dal suo telefono)
+- **Per un gioco nuovo parti SEMPRE dal modello** `.agents/skills/nuovo-gioco/modello-gioco-online.js` (un gioco vero, già provato) e cambia solo le parti segnate con "QUI". Gli errori più comuni sono elencati nella skill `nuovo-gioco`.
 - Prima schermata di ogni gioco: "Come giocate?". Il gioco dichiara i suoi modi locali in `modi`; "Online" lo aggiunge il core se l'id del gioco è in `GIOCHI_ONLINE` (core.js). La scelta del modo **non** sta nelle impostazioni: il core passa `aiuti.modo`.
 - Giochi solo online: `modi: []` e `soloOnline: true` (non compaiono nelle liste "sullo stesso telefono").
 - L'host tiene lo stato e manda a tutti una "foto" (vm); gli altri mandano solo le loro mosse. Nel vm/lobby devono esserci **gli id dei giocatori** (chi entra ripete "join" finché non vede il suo id).

@@ -5,7 +5,12 @@ description: Usala quando devi creare un nuovo gioco in SPeeD GAME (o portare un
 
 # Creare un nuovo gioco
 
-Leggi prima `AGENTS.md` e `docs/COME-SI-AGGIUNGE-UN-GIOCO.md`. Copia lo stile di un gioco simile già fatto (carte: `js/games/scopa.js`; a turni con domande: `js/games/timeline.js`; online in tempo reale: `js/games/horto.js`; disegno: `js/games/scarabocchio.js`).
+## Parti SEMPRE dal modello
+Copia `.agents/skills/nuovo-gioco/modello-gioco-online.js` in `js/games/<id>.js` e cambia **solo le parti segnate con "QUI"**.
+È un gioco vero e già provato ("Il più veloce"). Saletta, ingresso con o senza profilo, segreti a un telefono solo, "⚙️ Regole", uscite, fine partita, torneo e "Nuova partita" sono già fatti giusti: **non riscriverli a modo tuo**.
+Se il gioco ha anche un modo sullo stesso telefono (o contro il computer), aggiungilo accanto, sempre partendo dal modello.
+
+Leggi anche `AGENTS.md` e `docs/COME-SI-AGGIUNGE-UN-GIOCO.md`. Copia lo stile di un gioco simile già fatto (carte: `js/games/scopa.js`; a turni con domande: `js/games/timeline.js`; online in tempo reale: `js/games/horto.js`; disegno: `js/games/scarabocchio.js`).
 
 ## File da toccare (tutti)
 1. `js/games/<id>.js` — il gioco, in una funzione che si chiama da sola: `(function () { "use strict"; ... SG.registra({...}); })();`
@@ -59,6 +64,19 @@ SG.registra({
 - **Saletta**: `vuoti` sono solo i posti che mancano per arrivare al minimo, non tutti quelli fino al massimo. Se qualcuno esce, non rimescolare le squadre o i posti già decisi dall'host.
 - **Punti e penalità**: rileggi chi deve prenderli o perderli (per esempio, un BUZZ penalizza la squadra di chi ha sbagliato, non quella di chi l'ha visto).
 - Nessuna scritta col nome del gioco in alto nello schermo di gioco.
+
+## Nella pull request: copia questa lista e spunta solo quello che hai davvero fatto
+```
+- [ ] Partito dal modello: cambiate solo le parti "QUI"
+- [ ] id in GIOCHI_ONLINE e CAT_GIOCO (core.js), script in index.html, voce in cima a data/novita.js
+- [ ] Nella foto (vm) ci sono gli id dei giocatori; i segreti vanno solo con inviaVeloce + "to"
+- [ ] "Nuova partita" riporta tutti nella stessa saletta; "Esci" a partita iniziata chiede conferma
+- [ ] t.risultato coi nomi dei giocatori (a squadre: chi vince al posto 1)
+- [ ] Chi entra senza profilo scrive il nome; col profilo entra da solo
+- [ ] Provato: una partita intera online con 3 amici finti, uno che esce a metà, "Nuova partita"
+- [ ] Console senza errori; schermi 360x640 e 412x915 senza scorrere
+```
+Se un punto non l'hai potuto provare, scrivilo chiaramente: lo controllo io.
 
 ## Prima di aprire la pull request
 - Segui la skill `prova-nel-browser`: partita locale, partita online con amici finti, console senza errori, schermo di un telefono piccolo (360x640) e grande (412x915).
