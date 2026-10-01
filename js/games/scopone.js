@@ -25,7 +25,7 @@
     nome: "Scopone",
     icona: "🃏",
     descrizione: "Lo scopone in quattro (a squadre): tu e il tuo compagno contro due avversari. Varianti classico e scientifico. Contro il computer.",
-    giocatoriMin: 1, giocatoriMax: 1, difficolta: 3,
+    giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 1–4 giocatori",   // (i posti liberi li prendono i bot)
     regole: [
       "Si gioca <b>in quattro, a due squadre</b>: tu e il <b>Compagno</b> (di fronte) contro due <b>Rivali</b>. Qui giochi contro il computer.",
       "<b>Scientifico</b>: 10 carte a testa, niente carte sul tavolo. <b>Classico</b>: 9 a testa + 4 sul tavolo.",

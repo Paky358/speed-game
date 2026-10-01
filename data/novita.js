@@ -9,6 +9,28 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 144,
+    data: "1 ottobre 2026",
+    titolo: "Il numero giusto di giocatori su ogni gioco 👥",
+    descrizione: [
+      "Sotto ogni gioco c'è scritto per quanti è: per esempio Battaglia navale da 1 a 2, Scopone e Scopa 2 vs 2 da 1 a 4, Palla a pendolo da 1 a 4.",
+      "Sui giochi a due c'è scritto anche il torneo: fino a 10 amici."
+    ]
+  },
+  {
+    v: 143,
+    data: "1 ottobre 2026",
+    titolo: "Torneo a eliminazione per i giochi a due 🏆",
+    descrizione: [
+      "In \"Come giocate?\" di Tris, Drop 4, Battaglia navale e Scopa c'è il Torneo a eliminazione: mandi un link solo e giocate fino a 10.",
+      "Tutti entrano in panchina e ognuno, host compreso, tocca il girone in cui vuole giocare. Chi resta in panchina viene messo a caso nei posti liberi.",
+      "Ogni girone è una sfida a due: chi vince il girone 1 sfida chi vince il 2, e così via fino alla finale. Se uno resta solo, gioca contro il bot medio.",
+      "Le partite si aprono da sole sul telefono di chi gioca. Se finisce pari si rigioca; se una partita si blocca, l'host decide chi passa.",
+      "Chi non sta giocando può guardare in diretta le partite degli altri (👀 Guarda), anche quelle contro il bot. Nella Battaglia navale si vedono i colpi, mai le navi.",
+      "Il tabellone si apre quando vuoi col tasto 🏆, anche durante la tua partita."
+    ]
+  },
+  {
     v: 142,
     data: "1 ottobre 2026",
     titolo: "Nuovo gioco online: Taboo 🤐",

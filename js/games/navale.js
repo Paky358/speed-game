@@ -144,7 +144,14 @@
       ".nav-boat.giu{background:#e03131}",
       ".nav-tit{text-align:center;font-weight:800;font-size:1rem;margin:4px 0 6px;min-height:1.3em}",
       ".nav-sub{text-align:center;font-size:.74rem;color:rgba(255,255,255,.65);margin:2px 0 8px}",
-      ".nav-conta{display:flex;justify-content:center;gap:14px;font-size:.78rem;margin:6px 0}"
+      ".nav-conta{display:flex;justify-content:center;gap:14px;font-size:.78rem;margin:6px 0}",
+      // chi guarda: i due campi affiancati, piccoli
+      ".nav-guarda{display:flex;gap:6px;justify-content:center;align-items:flex-start}",
+      ".nav-guarda-lato{flex:1 1 0;min-width:0;max-width:240px}",
+      ".nav-guarda-lato .nav-sub{margin:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".nav-board.nav-g{width:100%;grid-template-columns:10px repeat(10,1fr);gap:1px;padding:3px}",
+      ".nav-g .nav-c{font-size:.55rem;border-radius:2px}",
+      ".nav-g .nav-lab{font-size:.45rem}"
     ].join("");
     document.head.appendChild(s);
   }
@@ -157,7 +164,7 @@
     nome: "Battaglia Navale",
     icona: "🚢",
     descrizione: "La battaglia navale classica: sistemi la tua flotta e affondi quella dell'avversario. Contro il computer o online, uno contro uno.",
-    giocatoriMin: 1, giocatoriMax: 1, difficolta: 2,
+    giocatoriMin: 1, giocatoriMax: 1, difficolta: 2, etichettaGiocatori: "👥 1–2 giocatori",   // (sullo stesso telefono: contro il computer; online in due)
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il computer" }],
     regole: [
       "Ognuno ha una griglia <b>10×10</b> e una <b>flotta</b>: Portaerei (5), Corazzata (4), Incrociatore (3), Sommergibile (3), Cacciatorpediniere (2).",
@@ -209,7 +216,7 @@
     avvia: function (t) {
       stile();
       var imp = t.impostazioni || {};
-      if (t.linkParams && t.linkParams.stanza) return ospiteNavale(t, t.linkParams.stanza);
+      if (t.linkParams && t.linkParams.stanza) return t.linkParams.guarda ? guardaNavale(t, t.linkParams.stanza) : ospiteNavale(t, t.linkParams.stanza);
       if (imp.modo === "online") return hostNavale(t);
       return controBot(t, imp.difficolta || "medio");
     }
@@ -368,7 +375,19 @@
       return w;
     }
 
+    // per chi guarda (torneo a eliminazione): i colpi sui due campi, mai dove sono le navi
+    var ultimaVista = null;
+    function mandaVista() {
+      if (!opt.vista) return;
+      var suIo = matrice(0), giuIo = 0;
+      for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) if (io.sparato[y][x]) { var k = io.mappa[y][x]; suIo[y][x] = k < 0 ? 1 : (io.navi[k] && io.navi[k].affondata ? 3 : 2); }
+      io.navi.forEach(function (n) { if (n && n.affondata) giuIo++; });
+      var v = { fase: fase === "attesaAvv" ? "piazza" : fase, tocca: turno === "mio" ? "io" : "avv", suIo: suIo, suAvv: attacco, giuIo: giuIo, giuAvv: affAvv, vinceIo: esitoFine };
+      var j = JSON.stringify(v); if (j === ultimaVista) return;
+      ultimaVista = j; opt.vista(v);
+    }
     function render() {
+      mandaVista();
       if (fase === "fine") return renderFine();
       if (fase === "piazza") return renderPiazza();
       if (fase === "attesaAvv") return renderAttesa();
@@ -458,6 +477,7 @@
   // =========================================================
   function controBot(t, liv) {
     navMount = null;
+    var io = (t.giocatori && t.giocatori[0]) || "Tu";
     var bot = flottaCasuale();      // la flotta del bot (segreta)
     var mem = { coda: [] };
     var ioPrimo = Math.random() < 0.5;
@@ -481,7 +501,10 @@
       sonoHost: null, invia: null,
       onEsci: function () { t.esci(); },
       rivincita: function (reset) { bot = flottaCasuale(); mem = { coda: [] }; ioPrimo = Math.random() < 0.5; reset(); },
-      startBot: function () { if (ioPrimo) { G.setTurno("mio"); } else { G.setTurno("attesa"); setTimeout(botTurno, 750); } }
+      startBot: function () { if (ioPrimo) { G.setTurno("mio"); } else { G.setTurno("attesa"); setTimeout(botTurno, 750); } },
+      // torneo a eliminazione: chi ha vinto, e la partita trasmessa a chi la guarda
+      onFine: function (vinto) { if (t.risultato) t.risultato(vinto ? [{ nome: io, pos: 1 }, { nome: "Computer", pos: 2 }] : [{ nome: "Computer", pos: 1 }, { nome: io, pos: 2 }]); },
+      vista: t.trasmetti ? function (v) { t.trasmetti({ t: "vista", v: v, nomi: [io, "🤖 Computer"] }); } : null
     });
     G.setCanale(canale);
     G.startRender();
@@ -525,7 +548,9 @@
         onEsci: function () { rete.chiudi(); t.esci(); },
         rivincita: function (reset) { rete.inviaVeloce({ t: "rivincita" }); reset(); },
         // per il torneo online: chi ha vinto
-        onFine: sonoHost ? function (vinto) { if (t.risultato) t.risultato(vinto ? [{ nome: L.nomiIo }, { nome: L.nomiAvv || "Avversario" }] : [{ nome: L.nomiAvv || "Avversario" }, { nome: L.nomiIo }]); } : null
+        onFine: sonoHost ? function (vinto) { if (t.risultato) t.risultato(vinto ? [{ nome: L.nomiIo, pos: 1 }, { nome: L.nomiAvv || "Avversario", pos: 2 }] : [{ nome: L.nomiAvv || "Avversario", pos: 1 }, { nome: L.nomiIo, pos: 2 }]); } : null,
+        // chi guarda (torneo a eliminazione) vede i colpi: lo mando "trattenuto", così chi arriva dopo lo vede subito
+        vista: sonoHost ? function (v) { rete.invia({ t: "vista", v: v, nomi: [L.nomiIo, L.nomiAvv || "Avversario"] }); } : null
       });
       G.setCanale({ manda: function (msg) { rete.inviaVeloce(msg); } });
       G.startRender();
@@ -583,6 +608,66 @@
       G.setCanale({ manda: function (msg) { S.rete.invia(msg); } });
       G.startRender();
     }
+  }
+
+  // chi guarda una partita del torneo a eliminazione: i due campi coi colpi (acqua, colpito, affondato),
+  // senza mai vedere dove sono le navi. (Niente suoni: farebbero vibrare il telefono.)
+  function guardaNavale(t, codice) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    navMount = null;
+    var el = t.el, rete = null, scritta = null, mont = null;
+    function esci() { if (rete) rete.chiudi(); t.esci(); }
+    function attesa(txt) {
+      if (scritta === txt) return; scritta = txt; mont = null;
+      var s = t.schermata({ indietro: esci });
+      s._contenuto.appendChild(el("p", { class: "modulo-nota guarda-attesa", text: txt }));
+      t.mostra(s);
+    }
+    function campo(gr) {
+      var g = el("div", { class: "nav-board nav-g" });
+      g.appendChild(el("div", { class: "nav-lab" }));
+      for (var c = 0; c < N; c++) g.appendChild(el("div", { class: "nav-lab", text: String(c + 1) }));
+      for (var y = 0; y < N; y++) {
+        g.appendChild(el("div", { class: "nav-lab", text: LET[y] }));
+        for (var x = 0; x < N; x++) {
+          var v = gr && gr[y] ? gr[y][x] : 0;
+          g.appendChild(el("div", { class: "nav-c " + (v === 1 ? "acqua" : v === 2 ? "colpito" : v === 3 ? "affondato" : "mare"), text: v === 1 ? "•" : v ? "✕" : "" }));
+        }
+      }
+      return g;
+    }
+    function disegna(m) {
+      var v = m.v, n = m.nomi || ["?", "?"];
+      if (v.fase === "piazza") return attesa("👀 " + n[0] + " e " + n[1] + " stanno sistemando le navi… ⚓");
+      scritta = null;
+      var box = el("div", {});
+      box.appendChild(el("div", { class: "guarda-riga", text: "👀 " + n[0] + " 🆚 " + n[1] }));
+      box.appendChild(el("div", { class: "nav-tit", text: v.fase === "fine" ? "🏆 Vince " + (v.vinceIo ? n[0] : n[1]) + "!" : "🎯 Spara " + (v.tocca === "io" ? n[0] : n[1]) + "…" }));
+      var due = el("div", { class: "nav-guarda" });
+      [[n[0], v.suIo, v.giuIo], [n[1], v.suAvv, v.giuAvv]].forEach(function (lato) {
+        due.appendChild(el("div", { class: "nav-guarda-lato" }, [ el("div", { class: "nav-sub", text: "🚢 " + lato[0] + " · affondate " + lato[2] + "/" + NTOT }), campo(lato[1]) ]));
+      });
+      box.appendChild(due);
+      var piede = v.fase === "fine" ? [el("p", { class: "modulo-nota", text: "Tra poco si torna al tabellone…" })] : [];
+      if (mont && document.body.contains(mont.box)) {   // aggiorno solo il contenuto (niente lampeggio)
+        mont.cont.replaceChild(box, mont.box); mont.box = box;
+        mont.piede.innerHTML = ""; piede.forEach(function (p) { mont.piede.appendChild(p); });
+      } else {
+        var s = t.schermata({ indietro: esci });
+        s._contenuto.appendChild(box); piede.forEach(function (p) { s._piede.appendChild(p); }); t.mostra(s);
+        mont = { cont: s._contenuto, box: box, piede: s._piede };
+      }
+    }
+    attesa("👀 Mi collego alla partita…");
+    rete = SGNet.entra(codice, {
+      onMsg: function (m) {
+        if (!m || !m.t) return;
+        if (m.t === "vista" && m.v) disegna(m);
+        else if (m.t === "sala") attesa("👀 La partita sta per cominciare…");
+      },
+      onChiuso: esci,   // partita finita e chiusa: si torna al tabellone
+      onErrore: function () { erroreNav(t, "Problema di collegamento. Controlla la connessione e riprova."); }
+    });
   }
 
   function avatarOk(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }

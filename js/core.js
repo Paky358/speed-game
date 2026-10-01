@@ -210,6 +210,7 @@
 
   function schermataHome() {
     if (window.SGNet && SGNet.chiudiGiochi) SGNet.chiudiGiochi();   // niente collegamenti vecchi aperti (la sala resta)
+    chiudiTabelloneElim();
     var s = schermata({});
     s.className += " home";
     var io = profiloAttivo();
@@ -1101,9 +1102,13 @@
   }
 
   function rangeGiocatori(g) {
-    if (g.etichettaGiocatori) return g.etichettaGiocatori;   // testo su misura (es. Horto: conta i cavalli in gara, non i profili)
-    var min = g.giocatoriMin || 2, max = g.giocatoriMax || 8;
-    return "👥 " + (min === max ? min : min + "–" + max) + " giocatori";
+    var base;
+    if (g.etichettaGiocatori) base = g.etichettaGiocatori;   // testo su misura (es. Horto: conta i cavalli in gara, non i profili)
+    else {
+      var min = g.giocatoriMin || 2, max = g.giocatoriMax || 8;
+      base = min === max ? (max === 1 ? "👤 1 giocatore" : "👥 " + max + " giocatori") : "👥 " + min + "–" + max + " giocatori";
+    }
+    return GIOCHI_ELIMINAZIONE[g.id] ? base + " · 🏆 torneo fino a " + MAX_ELIM : base;   // i giochi a due: torneo a eliminazione
   }
 
   // ---- Scelta dei giocatori ----
@@ -1793,7 +1798,10 @@
   }
   function ominoOk(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   // la sala usa la saletta d'attesa dei giochi (stessi personaggi, stesso divano)
-  function gSala(torn) { return { id: "__sala", nome: torn ? "Torneo" : "Sala online", icona: torn ? "🏆" : "👥" }; }
+  function gSala(torn, E) {
+    if (E) { var gg = giocoDa(E.gioco); return { id: "__sala", nome: "Torneo", icona: gg ? gg.icona : "🏆" }; }
+    return { id: "__sala", nome: torn ? "Torneo" : "Sala online", icona: torn ? "🏆" : "👥" };
+  }
 
   // ---------- TORNEO ONLINE: classifica che si somma partita dopo partita ----------
   function segnaNomeT(T, nome) { if (T && nome && T.nomi.indexOf(nome) < 0) T.nomi.push(nome); }
@@ -1852,20 +1860,27 @@
   // ---------- HOST ----------
   // opz.torneo = torneo online: la stessa sala, con la classifica che si somma
   function creaSala(opz) {
-    var torn = !!(opz && opz.torneo === true);
+    var torn = !!(opz && opz.torneo === true), elimG = (opz && typeof opz.eliminazione === "string") ? opz.eliminazione : null;
     if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete();
     if (!profiloAttivo()) return schermataAccesso(function () { creaSala(opz); });
     var io = profiloAttivo();
     sala = { rete: null, codice: "…", pronta: false, membri: [{ id: "host", nome: io.nome, emoji: io.emoji, omino: io.omino || null }], gioco: null, stanza: null, inGioco: false,
-      torneo: torn ? { punti: {}, nomi: [io.nome], n: 0, ultima: null, finito: false } : null };
-    function bcast() { if (sala && sala.rete) sala.rete.invia({ t: "sala", codice: sala.codice, membri: sala.membri, gioco: sala.gioco, stanza: sala.stanza, torneo: sala.torneo }); }
-    function agg() { bcast(); if (sala && !sala.inGioco && !(sala.torneo && sala.torneo.finito)) disegnaSalaHost(); }
+      torneo: torn ? { punti: {}, nomi: [io.nome], n: 0, ultima: null, finito: false } : null,
+      elim: elimG ? { gioco: elimG, iniziato: false, finito: false, turni: [], nomi: {}, campione: null, gironi: {} } : null, inPartitaK: null };
+    function bcast() { if (sala && sala.rete) sala.rete.invia({ t: "sala", codice: sala.codice, membri: sala.membri, gioco: sala.gioco, stanza: sala.stanza, torneo: sala.torneo, elim: sala.elim }); }
+    function agg() {
+      bcast(); if (!sala) return;
+      if (sala.elim) return seguiHost();   // torneo a eliminazione: la sala si vede solo quando non sto giocando
+      if (!sala.inGioco && !(sala.torneo && sala.torneo.finito)) disegnaSalaHost();
+    }
     sala._bcast = bcast;
     sala.rete = SGNet.ospita("__sala", {
       onCodice: function (c) { sala.codice = c; agg(); },
       onConnesso: function () { sala.pronta = true; agg(); },
-      onAddio: function (id) { sala.membri = sala.membri.filter(function (m) { return m.id !== id; }); agg(); },
+      onAddio: function (id) { sala.membri = sala.membri.filter(function (m) { return m.id !== id; }); if (sala.elim) { if (sala.elim.gironi) delete sala.elim.gironi[id]; elimUscito(id); } agg(); },
       onMsg: function (id, m) {
+        if (m && m.t === "esito" && sala.elim) return esitoPartita(m.k, !!m.vinto, id);   // torneo a eliminazione: com'è finita una partita
+        if (m && m.t === "girone" && sala.elim) return scegliGironeElim(id, m.g);   // torneo a eliminazione: dove si siede
         if (!m || m.t !== "join") return;
         if (!sala.membri.some(function (x) { return x.id === id; })) {
           var nome = String(m.nome || "Amico").slice(0, 16);
@@ -1883,19 +1898,21 @@
 
   function disegnaSalaHost() {
     if (!sala) return;
-    var T = sala.torneo;
+    var T = sala.torneo, E = sala.elim;
     if (T && T.finito) return schermataPodioT(T, true);
-    var pronto = sala.codice && sala.codice !== "…";
-    saletta(gSala(!!T), {
-      host: true, codice: sala.codice, pronta: sala.pronta, min: 1, puoiDaSolo: true,
+    var pronto = sala.codice && sala.codice !== "…", gE = E ? giocoDa(E.gioco) : null;
+    saletta(gSala(!!T, E), {
+      host: true, codice: sala.codice, pronta: sala.pronta, min: E ? 2 : 1, puoiDaSolo: !E,
       link: pronto ? SG.creaLink({ sala: sala.codice }) : "",
-      sotto: T ? "Torneo online · un link per tutti i giochi" : "Sala online · un link per tutti i giochi",
-      confermaEsci: T ? "Chiudere il torneo per tutti?" : "Chiudere la sala per tutti?",
+      sotto: E ? "Torneo a eliminazione · " + (gE ? gE.nome : "") : (T ? "Torneo online · un link per tutti i giochi" : "Sala online · un link per tutti i giochi"),
+      confermaEsci: (T || E) ? "Chiudere il torneo per tutti?" : "Chiudere la sala per tutti?",
       giocatori: sala.membri.map(function (m) { return { id: m.id, nome: m.nome, omino: m.omino || null, host: m.id === "host", tu: m.id === "host" }; }),
-      extra: T ? [boxTorneo(T, true)] : [],
-      testoComincia: T ? (T.n ? "🎮 Prossimo gioco" : "🎮 Scegli il primo gioco") : "🎮 Scegli un gioco",
-      nota: "Scegli un gioco: parte da solo sul telefono di tutti. A fine partita si torna qui.",
-      onComincia: salaScegliGioco,
+      extra: E ? [boxElim(E, "host", true, sala, seguiHost)] : (T ? [boxTorneo(T, true)] : []),
+      testoComincia: E ? (E.finito ? "↻ Nuovo torneo (stessi amici)" : (E.iniziato ? "Torneo in corso…" : "🏆 Comincia il torneo")) : (T ? (T.n ? "🎮 Prossimo gioco" : "🎮 Scegli il primo gioco") : "🎮 Scegli un gioco"),
+      puoComincia: E ? (!E.iniziato || E.finito) : undefined,
+      nota: E ? (E.iniziato && !E.finito ? "Le partite si aprono da sole sul telefono di chi gioca." : "Ognuno tocca il girone in cui vuole giocare. Quando siete pronti, fai partire il torneo.")
+        : "Scegli un gioco: parte da solo sul telefono di tutti. A fine partita si torna qui.",
+      onComincia: E ? function () { if (E.finito) nuovoElim(); else avviaElim(); } : salaScegliGioco,
       onEsci: function () { chiudiSala(); schermataHome(); }
     });
   }
@@ -1980,7 +1997,8 @@
         setTimeout(function () { if (salaG && !salaG.membri.length && salaG._msg) salaG._msg.textContent = "Non trovo la sala: controlla il codice o attendi l'host…"; }, 8000); },
       onMsg: function (m) {
         if (!salaG || !m || m.t !== "sala") return;
-        salaG.membri = m.membri || []; salaG.torneo = m.torneo || null;
+        salaG.membri = m.membri || []; salaG.torneo = m.torneo || null; salaG.elim = m.elim || null;
+        if (salaG.elim) return seguiOspite();   // torneo a eliminazione: si apre da sola la mia partita
         if (m.gioco && m.stanza) {
           if (salaG.inGioco !== m.stanza) { salaG.inGioco = m.stanza; salaG.podio = false; salaLanciaOspite(m.gioco, m.stanza); }
           return;
@@ -2007,13 +2025,13 @@
 
   function disegnaSalaOspite() {
     if (!salaG) return;
-    var T = salaG.torneo;
-    saletta(gSala(!!T), {
+    var T = salaG.torneo, E = salaG.elim;
+    saletta(gSala(!!T, E), {
       host: false, codice: salaG.codice,
-      sotto: (T ? "Torneo online" : "Sala online") + " · codice " + salaG.codice,
+      sotto: (E ? "Torneo a eliminazione" : (T ? "Torneo online" : "Sala online")) + " · codice " + salaG.codice,
       giocatori: salaG.membri.map(function (m) { return { id: m.id, nome: m.nome, omino: m.omino || null, host: m.id === "host", tu: m.id === salaG.myId }; }),
-      extra: T ? [boxTorneo(T, false)] : [],
-      attesa: "Aspetta che l'host scelga un gioco: parte da solo sul tuo telefono.",
+      extra: E ? [boxElim(E, salaG.myId, false, salaG, seguiOspite)] : (T ? [boxTorneo(T, false)] : []),
+      attesa: E ? (E.iniziato ? "Quando tocca a te, la partita si apre da sola." : "Tocca il girone in cui vuoi giocare, poi aspetta che l'host faccia partire il torneo.") : "Aspetta che l'host scelga un gioco: parte da solo sul tuo telefono.",
       onEsci: function () { chiudiSalaOspite(); schermataHome(); }
     });
     salaG._msg = null;
@@ -2033,6 +2051,290 @@
     linkParams = vecchio;
   }
 
+  // =========================================================
+  //  TORNEO A ELIMINAZIONE (giochi a due: Tris, Drop 4…)
+  //  Un link solo: si sorteggiano le coppie, chi vince va avanti.
+  //  Primo turno con un numero dispari: l'ultimo gioca contro il bot medio.
+  //  Nei turni dopo, chi resta senza avversario passa il turno.
+  //  Ogni partita è una stanza a parte tra i due: il primo la apre, l'altro
+  //  entra da solo; chi l'ha aperta (o chi gioca col bot) dice chi ha vinto.
+  //  L'host della sala può decidere a mano una partita bloccata.
+  // =========================================================
+  var GIOCHI_ELIMINAZIONE = { tris: 1, drop4: 1, navale: 1, scopa: 1 };
+  var MAX_ELIM = 10;   // giocano i primi 10 entrati in sala; gli altri guardano
+  function giocoDa(id) { return giochi.filter(function (g) { return g.id === id; })[0] || null; }
+  function nomeElim(E, id) { return id === "bot" ? "🤖 Bot (medio)" : ((E.nomi && E.nomi[id]) || "…"); }
+  // ha già avuto un turno facile (ha giocato col bot o è passato senza giocare)
+  function favoritoElim(E, id) {
+    return E.turni.some(function (tu) { return tu.some(function (p) { return p.a === id && (!p.b || p.b === "bot"); }); });
+  }
+  function creaTurnoElim(E, ids, primo) {
+    var r = E.turni.length, tu = [], solo = null;
+    ids = ids.slice();
+    if (ids.length % 2) {
+      // di solito resta solo l'ultimo; dopo il primo turno, se possibile, uno che non ha già avuto un turno facile
+      var j = ids.length - 1;
+      if (!primo) { while (j >= 0 && favoritoElim(E, ids[j])) j--; if (j < 0) j = ids.length - 1; }
+      solo = ids.splice(j, 1)[0];
+    }
+    for (var i = 0; i + 1 < ids.length; i += 2) tu.push({ a: ids[i], b: ids[i + 1], stanza: SGNet.nuovoCodice(), vince: null });
+    if (solo) tu.push(primo ? { a: solo, b: "bot", stanza: SGNet.nuovoCodice(), vince: null } : { a: solo, b: null, vince: solo });   // primo turno: col bot medio (la sua stanza serve a chi guarda); poi: passa il turno
+    tu.forEach(function (p, j) { p.k = r + "-" + j; });
+    E.turni.push(tu);
+  }
+  // ---- i gironi: prima di partire ognuno sceglie dove sedersi (all'inizio sono tutti in panchina) ----
+  var N_GIRONI = MAX_ELIM / 2;   // 5 gironi da 2 posti
+  function chiNelGirone(E, n) { return Object.keys(E.gironi || {}).filter(function (id) { return E.gironi[id] === n; }); }
+  function scegliGironeElim(id, n) {   // n = 1..5, 0 = panchina
+    var E = sala && sala.elim; if (!E || E.iniziato) return;
+    if (!sala.membri.some(function (m) { return m.id === id; })) return;
+    n = Math.floor(+n) || 0; if (n < 0 || n > N_GIRONI) return;
+    E.gironi = E.gironi || {};
+    if (n && E.gironi[id] !== n && chiNelGirone(E, n).length >= 2) return;   // girone pieno
+    delete E.gironi[id];   // (così chi si risiede va in fondo al girone)
+    if (n) E.gironi[id] = n;
+    sala._bcast(); seguiHost();
+  }
+  // i gironi alla partenza: chi è in panchina va a caso nei posti liberi (prima accanto a chi è solo),
+  // due rimasti soli si sfidano tra loro, e se ne resta uno solo gioca col bot. Al massimo 10: gli altri guardano.
+  function gironiElim(E) {
+    var dentro = {}; sala.membri.forEach(function (m) { dentro[m.id] = 1; });
+    var G = [];
+    for (var n = 1; n <= N_GIRONI; n++) { var g = chiNelGirone(E, n).filter(function (id) { return dentro[id]; }).slice(0, 2); g.n = n; G.push(g); }
+    var panca = mischia(sala.membri.map(function (m) { return m.id; }).filter(function (id) { return !(E.gironi && E.gironi[id]); }));
+    G.forEach(function (g) { if (g.length === 1 && panca.length) g.push(panca.shift()); });
+    G.forEach(function (g) { while (g.length < 2 && panca.length) g.push(panca.shift()); });
+    var soli = G.filter(function (g) { return g.length === 1; });
+    for (var i = 0; i + 1 < soli.length; i += 2) soli[i].push(soli[i + 1].pop());
+    return G.filter(function (g) { return g.length; });
+  }
+  function avviaElim() {
+    var E = sala && sala.elim; if (!E || (E.iniziato && !E.finito) || sala.membri.length < 2) return;
+    var G = gironiElim(E), nomi = {};
+    sala.membri.forEach(function (m) { nomi[m.id] = m.nome; });
+    E.nomi = {}; G.forEach(function (g) { g.forEach(function (id) { E.nomi[id] = nomi[id]; }); });
+    E.turni = []; E.campione = null; E.iniziato = true; E.finito = false;
+    // primo turno: un girone = una partita (chi è rimasto solo gioca col bot medio); poi chi vince il girone 1 sfida chi vince il 2, ecc.
+    var tu = G.map(function (g, j) { return { k: "0-" + j, girone: g.n, a: g[0], b: g[1] || "bot", stanza: SGNet.nuovoCodice(), vince: null }; });
+    E.turni.push(tu);
+    sala._bcast(); seguiHost();
+  }
+  function nuovoElim() {
+    var E = sala && sala.elim; if (!E) return;
+    E.iniziato = false; E.finito = false; E.turni = []; E.campione = null; sala.inPartitaK = null; sala.fuoriK = null; sala.guardaK = null;
+    sala._bcast(); seguiHost();
+  }
+  function trovaPartitaElim(E, k) {
+    for (var r = 0; r < E.turni.length; r++) for (var j = 0; j < E.turni[r].length; j++) if (E.turni[r][j].k === k) return E.turni[r][j];
+    return null;
+  }
+  // com'è finita una partita: lo dice chi l'ha aperta (o chi giocava col bot), oppure l'host a mano
+  function esitoPartita(k, vinto, daId) {
+    var E = sala && sala.elim; if (!E || !E.iniziato || E.finito) return;
+    var p = trovaPartitaElim(E, k); if (!p || p.vince) return;
+    if (daId !== p.a && daId !== "host") return;
+    p.vince = vinto ? p.a : p.b;
+    avanzaElim();
+  }
+  function avanzaElim() {
+    var E = sala.elim, tu = E.turni[E.turni.length - 1];
+    if (tu && tu.every(function (p) { return p.vince; })) {
+      var dentro = {}; sala.membri.forEach(function (m) { dentro[m.id] = 1; });
+      var avanti = tu.map(function (p) { return p.vince; }).filter(function (v) { return v !== "bot" && dentro[v]; });
+      if (avanti.length <= 1) { E.finito = true; E.campione = avanti[0] || null; }
+      else creaTurnoElim(E, avanti, false);
+    }
+    sala._bcast(); seguiHost();
+  }
+  // chi esce dalla sala a torneo iniziato: se stava giocando, vince l'altro (contro il bot, vince il bot)
+  function elimUscito(id) {
+    var E = sala.elim; if (!E || !E.iniziato || E.finito) return;
+    var tu = E.turni[E.turni.length - 1] || [], cambiato = false;
+    tu.forEach(function (p) { if (!p.vince && (p.a === id || p.b === id)) { p.vince = (p.a === id) ? (p.b || "bot") : p.a; cambiato = true; } });
+    if (cambiato) avanzaElim();
+  }
+  function miaPartitaElim(E, mioId) {
+    if (!E || !E.iniziato || E.finito) return null;
+    var tu = E.turni[E.turni.length - 1] || [];
+    for (var j = 0; j < tu.length; j++) { var p = tu[j]; if (!p.vince && p.b && (p.a === mioId || p.b === mioId)) return p; }
+    return null;
+  }
+  function eliminatoElim(E, id) {
+    return E.turni.some(function (tu) { return tu.some(function (p) { return p.vince && p.vince !== id && (p.a === id || p.b === id); }); });
+  }
+  // su ogni telefono: se tocca a me si apre da sola la mia partita; quando è decisa, si torna al tabellone
+  function seguiTabellone(S, mioId, mioNome, mostraSala, diEsito) {
+    S._mostra = mostraSala; S._mioId = mioId;
+    aggiornaTabelloneElim();   // il tabellone aperto sopra una partita si aggiorna da solo
+    var p = miaPartitaElim(S.elim, mioId);
+    if (p) {
+      if (S.inPartitaK !== p.k) { clearTimeout(S.tTorna); S.tTorna = null; S.guardaK = null; S.inPartitaK = p.k; S.fuoriK = null; giocaPartitaElim(S, p, mioId, mioNome, mostraSala, diEsito); }
+      else if (S.fuoriK === p.k) mostraSala();   // è uscito dalla sua partita: vede il tabellone, col tasto per rientrare
+      return;
+    }
+    if (S.inPartitaK) {   // la mia partita è appena decisa: si vede chi ha vinto, poi si torna al tabellone
+      var giaFuori = S.fuoriK === S.inPartitaK;   // (se ero già uscito dalla partita, si aggiorna subito)
+      S.inPartitaK = null; S.fuoriK = null;
+      if (giaFuori) return tornaTabelloneElim(S);
+      S.tTorna = setTimeout(function () { S.tTorna = null; tornaTabelloneElim(S, 2500); }, 2500);
+      return;
+    }
+    if (S.guardaK) {   // sto guardando una partita: resto lì finché non è decisa, poi si torna al tabellone
+      var w = S.elim && S.elim.iniziato ? trovaPartitaElim(S.elim, S.guardaK) : null;
+      if (w && !w.vince && w.stanza === S.guardaStanza) return;
+      S.guardaK = null;
+      S.tTorna = setTimeout(function () { S.tTorna = null; tornaTabelloneElim(S); }, 2500);
+      return;
+    }
+    if (S.tTorna) return;
+    tornaTabelloneElim(S);
+  }
+  // si torna al tabellone: la partita lasciata non può più disegnare. ritardo: chi aveva aperto la stanza
+  // la chiude un po' dopo, così l'avversario e chi guardava tornano al tabellone prima (niente "collegamento perso")
+  function tornaTabelloneElim(S, ritardo) {
+    lasciaPartita(); chiudiTabelloneElim(); SGNet.chiudiGiochi(ritardo || 0);
+    if (window.SGMusica && SGMusica.ferma) SGMusica.ferma();   // la musica della Scopa
+    if (S._mostra) S._mostra();
+  }
+  function seguiHost() { if (sala && sala.elim) seguiTabellone(sala, "host", sala.membri[0].nome, disegnaSalaHost, function (k, v) { esitoPartita(k, v, "host"); }); }
+  function seguiOspite() { if (salaG && salaG.elim) seguiTabellone(salaG, salaG.myId, salaG.nome, disegnaSalaOspite, function (k, v) { if (salaG && salaG.rete) salaG.rete.invia({ t: "esito", k: k, vinto: v }); }); }
+  function giocaPartitaElim(S, p, mioId, mioNome, mostraSala, diEsito) {
+    var g = giocoDa(S.elim.gioco); if (!g) return mostraSala();
+    chiudiTabelloneElim(); SGNet.chiudiGiochi();
+    function fuori() { S.fuoriK = p.k; tornaTabelloneElim(S); }
+    var ctx = {
+      esci: fuori, fine: fuori,
+      tabellone: function (s) { tastoTabellone(s, S); },
+      // la partita dice chi ha vinto: lo riferisce solo chi l'ha aperta (o chi gioca col bot). Pari = si rigioca
+      risultato: function (g2, cl) {
+        if (p.a !== mioId) return;
+        var primi = (cl || []).filter(function (r) { return (r.pos || 1) === 1; });
+        if (primi.length === 1) diEsito(p.k, primi[0].nome === mioNome);
+      }
+    };
+    var vecchio = linkParams;
+    if (p.b === "bot") {
+      // la partita col bot la possono guardare anche gli altri: questo telefono la trasmette nella stanza della partita
+      var rete = null, ultimo = null;
+      ctx.trasmetti = function (msg) {
+        ultimo = msg;
+        if (!rete && p.stanza) { SGNet._forza = p.stanza; rete = SGNet.ospita(g.id, { onConnesso: function () { if (rete && ultimo) rete.invia(ultimo); } }); }
+        if (rete) rete.invia(msg);
+      };
+      linkParams = {}; avviaPartita(g, [mioNome], { modo: "bot", difficolta: "medio" }, null, ctx);
+    }
+    else if (p.a === mioId) { linkParams = {}; SGNet._forza = p.stanza; avviaPartita(g, [mioNome], { modo: "online" }, null, ctx); }
+    else { linkParams = { gioco: g.id, stanza: p.stanza }; avviaPartita(g, [], {}, null, ctx); }
+    linkParams = vecchio;
+  }
+  // chi non sta giocando guarda in diretta la partita di altri (anche quella col bot), senza poter toccare
+  function guardaPartitaElim(S, p) {
+    var g = giocoDa(S.elim && S.elim.gioco); if (!g || !p.stanza) return;
+    chiudiTabelloneElim(); SGNet.chiudiGiochi();
+    clearTimeout(S.tTorna); S.tTorna = null;
+    S.guardaK = p.k; S.guardaStanza = p.stanza;
+    var attivo = true;
+    function via() { if (!attivo) return; attivo = false; if (S.guardaK === p.k) S.guardaK = null; clearTimeout(S.tTorna); S.tTorna = null; tornaTabelloneElim(S); }
+    var ctx = { esci: via, fine: via, risultato: function () {}, tabellone: function (s) { tastoTabellone(s, S); } };
+    var vecchio = linkParams;
+    linkParams = { gioco: g.id, stanza: p.stanza, guarda: 1 };
+    avviaPartita(g, [], {}, null, ctx);
+    linkParams = vecchio;
+  }
+  // il tabellone sopra la partita (tasto 🏆 in alto): si aggiorna da solo finché resta aperto
+  var FT = null;
+  function tastoTabellone(s, S) {
+    if (!s || s.querySelector(".tab-elim")) return;
+    var b = el("button", { class: "tab-elim", "aria-label": "Tabellone del torneo", text: "🏆", onclick: function () { apriTabelloneElim(S); } });
+    var testa = s.querySelector(".testa");
+    if (testa && !s.classList.contains("senza-testa")) { b.classList.add("in-testa"); b.textContent = "🏆 Tabellone"; testa.appendChild(b); }
+    else s.appendChild(b);   // nei giochi (senza titolo): piccolo, nell'angolo in alto a destra
+  }
+  function apriTabelloneElim(S) {
+    if (FT || !S.elim) return;
+    var corpo = el("div", { class: "sl-foglio-corpo" });
+    var velo = el("div", { class: "sl-velo", onclick: function (e) { if (e.target === velo) chiudiTabelloneElim(); } }, [
+      el("div", { class: "sl-foglio" }, [
+        el("div", { class: "sl-foglio-testa" }, [ el("b", { text: "🏆 Tabellone" }), el("button", { class: "sl-foglio-x", "aria-label": "Chiudi", text: "✕", onclick: chiudiTabelloneElim }) ]),
+        corpo,
+        el("button", { class: "btn btn-primario", text: "Torna alla partita", onclick: chiudiTabelloneElim })
+      ])
+    ]);
+    FT = { S: S, corpo: corpo, velo: velo };
+    aggiornaTabelloneElim();
+    if (FT) document.body.appendChild(velo);
+  }
+  function chiudiTabelloneElim() { if (!FT) return; if (FT.velo.parentNode) FT.velo.parentNode.removeChild(FT.velo); FT = null; }
+  function aggiornaTabelloneElim() {
+    if (!FT) return;
+    var S = FT.S; if (!S.elim || !S.elim.iniziato) return chiudiTabelloneElim();
+    svuota(FT.corpo);
+    FT.corpo.appendChild(boxElim(S.elim, S._mioId, S === sala, S, S === sala ? seguiHost : seguiOspite));
+  }
+  function nomeTurnoElim(nGioc) { return nGioc <= 2 ? "Finale" : (nGioc <= 4 ? "Semifinali" : (nGioc <= 8 ? "Quarti di finale" : "Primo turno")); }
+  // il tabellone (nella saletta): il mio stato, poi i turni dal più recente
+  function boxElim(E, mioId, host, S, segui) {
+    var box = el("div", { class: "sl-torneo" });
+    if (!E.iniziato) {   // prima di partire: ognuno sceglie il suo girone (all'inizio sono tutti in panchina)
+      var membri = (S && S.membri) || [], gir = E.gironi || {};
+      function chiamo(m) { return m.id === mioId ? "Tu" : m.nome; }
+      function siedi(n) { if (host) scegliGironeElim(mioId, n); else if (S && S.rete) S.rete.invia({ t: "girone", g: n }); }
+      box.appendChild(el("div", { class: "etichetta", text: "🏆 Scegli il tuo girone" }));
+      var griglia = el("div", { class: "sl-gironi" });
+      for (var gN = 1; gN <= N_GIRONI; gN++) (function (n) {
+        var chi = membri.filter(function (m) { return gir[m.id] === n; }), mio = gir[mioId] === n;
+        var b = el("button", { class: "sl-girone" + (mio ? " mio" : ""), onclick: function () { siedi(mio ? 0 : n); } }, [
+          el("b", { text: "Girone " + n }),
+          el("span", { class: chi[0] ? "" : "libero", text: chi[0] ? chiamo(chi[0]) : "posto libero" }),
+          el("span", { class: chi[1] ? "" : "libero", text: chi[1] ? chiamo(chi[1]) : "posto libero" }) ]);
+        if (chi.length >= 2 && !mio) { b.disabled = true; b.classList.add("pieno"); }
+        griglia.appendChild(b);
+      })(gN);
+      var panca = membri.filter(function (m) { return !gir[m.id]; });
+      griglia.appendChild(el("button", { class: "sl-girone panca" + (!gir[mioId] ? " mio" : ""), onclick: function () { siedi(0); } }, [
+        el("b", { text: "🪑 Panchina" }), el("span", { class: panca.length ? "" : "libero", text: panca.length ? panca.map(chiamo).join(", ") : "nessuno" }) ]));
+      box.appendChild(griglia);
+      box.appendChild(el("p", { class: "modulo-nota", text: "Tocca un girone per sederti: chi vince il girone 1 sfida chi vince il 2, e così via fino alla finale. Chi resta in panchina viene messo a caso nei posti liberi; se uno resta solo, gioca contro il bot medio." }));
+      if (membri.length > MAX_ELIM) box.appendChild(el("p", { class: "modulo-nota", text: "Siete in " + membri.length + ": i posti sono " + MAX_ELIM + ", chi resta in panchina guarda le partite 👀" }));
+      return box;
+    }
+    var mia = miaPartitaElim(E, mioId), stato;
+    if (E.finito) stato = E.campione ? "🏆 Campione: " + nomeElim(E, E.campione) + (E.campione === mioId ? " (sei tu!)" : "") : "Torneo finito";
+    else if (mia) stato = "▶️ Tocca a te contro " + nomeElim(E, mia.a === mioId ? mia.b : mia.a);
+    else if (!(E.nomi && E.nomi[mioId])) stato = "👀 Guardi il torneo: tocca «Guarda» su una partita";
+    else if (eliminatoElim(E, mioId)) stato = "Sei fuori: puoi guardare le partite 👀";
+    else stato = "Passi al turno dopo: intanto guarda gli altri ⏳";
+    box.appendChild(el("div", { class: "sl-elim-stato", text: stato }));
+    if (mia && S.fuoriK === mia.k) box.appendChild(el("button", { class: "btn btn-primario", text: "🔁 Rientra nella tua partita", onclick: function () { S.inPartitaK = null; S.fuoriK = null; segui(); } }));
+    for (var r = E.turni.length - 1; r >= 0; r--) {
+      var tu = E.turni[r], nG = 0;
+      tu.forEach(function (p) { nG += p.b ? 2 : 1; });
+      box.appendChild(el("div", { class: "etichetta", text: nomeTurnoElim(nG) + (r === E.turni.length - 1 && !E.finito ? " · si gioca ora" : "") }));
+      tu.forEach(function (p) {
+        var riga = el("div", { class: "sl-elim-riga" + ((p.a === mioId || p.b === mioId) ? " mia" : "") });
+        if (p.girone) riga.appendChild(el("span", { class: "sl-elim-g", text: "G" + p.girone }));   // il girone scelto (primo turno)
+        if (!p.b) riga.appendChild(el("span", { text: nomeElim(E, p.a) + " passa il turno" }));
+        else {
+          riga.appendChild(el("span", { class: p.vince === p.a ? "vince" : (p.vince ? "perde" : ""), text: nomeElim(E, p.a) }));
+          riga.appendChild(el("span", { class: "vs", text: "🆚" }));
+          riga.appendChild(el("span", { class: p.vince === p.b ? "vince" : (p.vince ? "perde" : ""), text: nomeElim(E, p.b) }));
+          if (!p.vince) {   // chi non sta giocando può guardarla in diretta
+            if (S && S.guardaK === p.k) riga.appendChild(el("span", { class: "stato", text: "👀 la stai guardando" }));
+            else if (!mia && !E.finito && p.stanza && p.a !== mioId && p.b !== mioId) riga.appendChild(el("button", { class: "sl-elim-guarda", text: "👀 Guarda", onclick: function () { guardaPartitaElim(S, p); } }));
+            else riga.appendChild(el("span", { class: "stato", text: "in corso…" }));
+          }
+          if (host && !p.vince && !E.finito) riga.appendChild(el("div", { class: "sl-elim-decidi" }, [   // se una partita si blocca, decide l'host
+            el("span", { text: "Bloccata? Passa:" }),
+            el("button", { text: nomeElim(E, p.a), onclick: function () { esitoPartita(p.k, true, "host"); } }),
+            el("button", { text: nomeElim(E, p.b), onclick: function () { esitoPartita(p.k, false, "host"); } })
+          ]));
+        }
+        box.appendChild(riga);
+      });
+    }
+    return box;
+  }
+
   function errore(dopo, txt) {
     var s = schermata({ icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
@@ -2046,10 +2348,12 @@
   //  se si può giocare online si aggiunge da solo "Online".
   //  amici: true = poi si aggiungono gli amici (solo per chi gioca sullo stesso telefono).
   // =========================================================
+  var MODO_ELIMINAZIONE = { modo: "eliminazione", icona: "🏆", nome: "Torneo a eliminazione", sotto: "Fino a 10 amici: sfide a due, chi vince va avanti" };
   var MODO_ONLINE = { modo: "online", icona: "🔗", nome: "Online", sotto: "Ognuno dal suo telefono: mandi il link agli amici" };
   function modiDi(g) {
     var m = (g && g.modi) ? g.modi.slice() : [];
     if (giocoOnline(g)) m.push(MODO_ONLINE);
+    if (g && GIOCHI_ELIMINAZIONE[g.id]) m.push(MODO_ELIMINAZIONE);
     return m;
   }
   function modoDi(g, modo) { return modiDi(g).filter(function (m) { return m.modo === modo; })[0] || null; }
@@ -2069,6 +2373,7 @@
     mostra(s);
   }
   function sceltoModo(g, m) {
+    if (m.modo === "eliminazione") return creaSala({ eliminazione: g.id });   // un link solo, coppie sorteggiate, chi vince va avanti
     if (m.amici) return schermataSala(g, { modo: m.modo });   // sullo stesso telefono: prima gli amici, poi le impostazioni
     schermataPreGioco(g, { modo: m.modo });                  // contro il computer / online: subito le impostazioni
   }
@@ -2443,7 +2748,12 @@
   //  Consegna al gioco un "tavolo" con tutto ciò che gli serve,
   //  senza fargli sapere come sono fatte le schermate comuni.
   // =========================================================
+  // il gioco aperto adesso: uno già lasciato (es. si è tornati al tabellone) non può più disegnare, uscire o dare risultati
+  var partitaN = 0;
+  function lasciaPartita() { partitaN++; }
   function avviaPartita(g, giocatori, impostazioni, opts, salaCtx) {
+    var questa = ++partitaN;
+    function viva() { return questa === partitaN; }
     var contenitore = el("div");
     var schermo = el("div");
     schermo.appendChild(contenitore);
@@ -2469,7 +2779,7 @@
         if (!o.titolo) s.classList.add("senza-testa");
         return s;
       },
-      mostra: function (s) { mostra(s); },
+      mostra: function (s) { if (!viva()) return; if (salaCtx && salaCtx.tabellone) salaCtx.tabellone(s); mostra(s); },   // torneo a eliminazione: tasto 🏆 Tabellone
 
       // il nome del profilo di questo telefono (chi entra da un invito entra direttamente con questo)
       nomeProfilo: function () {
@@ -2485,24 +2795,32 @@
       // la saletta d'attesa online, uguale per tutti i giochi (vedi saletta()).
       // All'host dà anche "⚙️ Regole": le impostazioni di prima, da cambiare quando vuole;
       // dopo una modifica chiama tavolo.onRegole() (il gioco rilegge tavolo.impostazioni).
-      lobby: function (o) { return saletta(g, o, (opts && opts.regole) ? { box: opts.regole, imp: tavolo.impostazioni, tavolo: tavolo } : null); },
+      lobby: function (o) {
+        if (!viva()) return null;
+        var s = saletta(g, o, (opts && opts.regole) ? { box: opts.regole, imp: tavolo.impostazioni, tavolo: tavolo } : null);
+        if (s && salaCtx && salaCtx.tabellone) salaCtx.tabellone(s);
+        return s;
+      },
+      // torneo a eliminazione: la partita col bot si trasmette, così gli altri la guardano (msg come quelli dell'host online)
+      trasmetti: (salaCtx && salaCtx.trasmetti) ? function (msg) { if (viva()) salaCtx.trasmetti(msg); } : null,
 
       // passaggio del telefono, poi esegue "quando"
       passaA: function (nome, quando) { passaIlTelefono(nome, quando); },
 
       // i giochi online dicono com'è finita ogni partita, senza lasciare la loro schermata finale:
       // serve al torneo online per sommare i punti. classifica = [{ nome, pos? }] dal primo all'ultimo
-      risultato: function (classifica) { if (salaCtx && salaCtx.risultato && classifica && classifica.length) salaCtx.risultato(g, classifica); },
+      risultato: function (classifica) { if (viva() && salaCtx && salaCtx.risultato && classifica && classifica.length) salaCtx.risultato(g, classifica); },
 
       // il gioco chiama questa quando è finito
       fine: function (classifica) {
+        if (!viva()) return;
         if (salaCtx) return salaCtx.fine(g, classifica, giocatori, impostazioni);
         if (opts && opts.torneo && torneo) return torneoRisultato(g, classifica);
         schermataFine(g, classifica, giocatori, impostazioni);
       },
 
       // uscite comuni
-      esci: salaCtx ? salaCtx.esci : schermataHome
+      esci: function () { if (viva()) (salaCtx ? salaCtx.esci : schermataHome)(); }
     };
 
     g.avvia(tavolo);

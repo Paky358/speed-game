@@ -188,7 +188,7 @@
 
     avvia: function (t) {
       var imp = t.impostazioni || {};
-      if (t.linkParams && t.linkParams.stanza) return ospiteDrop(t, t.linkParams.stanza);
+      if (t.linkParams && t.linkParams.stanza) return t.linkParams.guarda ? guardaDrop(t, t.linkParams.stanza) : ospiteDrop(t, t.linkParams.stanza);
       if (imp.modo === "online") return hostDrop(t);
       return localeDrop(t, imp.modo === "telefono" ? "telefono" : "bot", imp.difficolta || "medio", !!imp.torneo);
     }
@@ -232,6 +232,7 @@
     return String(vm.nomi.G || "").trim().toLowerCase() === nm ? "G" : (String(vm.nomi.B || "").trim().toLowerCase() === nm ? "B" : null);
   }
   function trofeiDrop(vm, cb) {
+    if (cb.guarda) return;   // chi guarda non gioca
     var io = mioColoreDrop(vm, cb);
     // "Guastafeste": la mia pedina nuova cade proprio dove l'avversario, al turno prima, avrebbe fatto 4
     if (io && TD.prec && vm.board) {
@@ -261,6 +262,7 @@
     assicuraStileDrop();
     var el = t.el;
     var box = el("div", {});
+    if (cb.guarda) box.appendChild(el("div", { class: "guarda-riga", html: "👀 <span style='color:" + CG + "'>" + esc(vm.nomi.G) + "</span> 🆚 <span style='color:" + CB + "'>" + esc(vm.nomi.B) + "</span>" }));
     box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.15rem;margin:6px 0 10px;min-height:1.4em", html: statoDrop(vm, cb) }));
     var board = el("div", { style: "display:flex;gap:6px;width:min(94vw,380px);margin:0 auto;background:" + GRIGLIA + ";padding:8px;border-radius:16px;box-sizing:border-box;box-shadow:0 6px 16px rgba(0,0,0,.35)" });
     function colonna(c) {
@@ -283,7 +285,9 @@
 
     var piedeNodi = [];
     if (vm.fase === "fine") {
-      if (cb.locale || cb.sonoHost) {
+      if (cb.guarda) {
+        piedeNodi.push(el("p", { class: "modulo-nota", text: vm.fine && vm.fine.vincitore ? "Tra poco si torna al tabellone…" : "Pareggio: si rigioca!" }));
+      } else if (cb.locale || cb.sonoHost) {
         piedeNodi.push(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: cb.onRivincita }));
         piedeNodi.push(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
       } else {
@@ -297,7 +301,7 @@
       drMount.piede.innerHTML = ""; piedeNodi.forEach(function (n) { drMount.piede.appendChild(n); });
     } else {
       var s = t.schermata({ icona: "🟡", titolo: "Drop 4", sotto: vm.nomi.G + " (gialla) · " + vm.nomi.B + " (bianca)",
-        indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+        indietro: function () { if (cb.guarda || window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
       s._contenuto.appendChild(box); piedeNodi.forEach(function (n) { s._piede.appendChild(n); }); t.mostra(s);
       drMount = { cont: s._contenuto, box: box, piede: s._piede };
     }
@@ -314,6 +318,7 @@
 
     function render() {
       var vm = { fase: st.fine ? "fine" : "gioco", board: st.board, turno: st.turno, fine: st.fine, nomi: nomi, ultima: st.ultima };
+      if (t.trasmetti) t.trasmetti({ t: "vm", vm: vm });   // torneo a eliminazione: gli altri guardano la partita col bot
       campoDrop(t, vm, {
         locale: true, bot: modo === "bot", mio: modo === "bot" ? "G" : null, liv: difficolta,
         onColonna: function (c) { gioca(c); },
@@ -328,6 +333,8 @@
       if (w) st.fine = { vincitore: w.s, celle: w.celle };
       else if (!colonneLibere(st.board).length) st.fine = { vincitore: null, celle: null };
       else st.turno = altro(st.turno);
+      // torneo a eliminazione: chi ha vinto (pari = stesso posto, si rigioca)
+      if (st.fine && t.risultato) t.risultato(classifica().map(function (r, i) { return { nome: r.nome, pos: st.fine.vincitore ? i + 1 : 1 }; }));
       if (st.fine && torneo) return t.fine(classifica());
       render();
       if (!st.fine && modo === "bot" && st.turno === "B") pensaBot();
@@ -435,6 +442,31 @@
         onErrore: function () { errore(t, "Problema di collegamento. Controlla la connessione e riprova."); }
       });
     }
+  }
+
+  // chi guarda una partita del torneo a eliminazione: la vede in diretta, senza poter toccare
+  function guardaDrop(t, codice) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var rete = null, scritta = null;   // (chi guarda: niente suoni, farebbero vibrare il telefono)
+    var cb = { guarda: true, sonoHost: false, mio: "-", onColonna: function () {}, onRivincita: function () {},
+      onEsci: function () { if (rete) rete.chiudi(); t.esci(); } };
+    function attesa(txt) {
+      if (scritta === txt) return; scritta = txt;
+      var s = t.schermata({ indietro: cb.onEsci });
+      s._contenuto.appendChild(t.el("p", { class: "modulo-nota guarda-attesa", text: txt }));
+      t.mostra(s);
+    }
+    attesa("👀 Mi collego alla partita…");
+    rete = SGNet.entra(codice, {
+      onMsg: function (m) {
+        if (!m || m.t !== "vm" || !m.vm || !m.vm.board) return;
+        if (m.vm.fase === "lobby") return attesa("👀 La partita sta per cominciare…");
+        scritta = null;
+        campoDrop(t, m.vm, cb);
+      },
+      onChiuso: function () { cb.onEsci(); },   // partita finita e chiusa: si torna al tabellone
+      onErrore: function () { errore(t, "Problema di collegamento. Controlla la connessione e riprova."); }
+    });
   }
 
   function disegnaVM(t, vm, cb) {

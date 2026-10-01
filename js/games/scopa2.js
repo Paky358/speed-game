@@ -628,7 +628,7 @@
     nome: "Scopa 2 vs 2",
     icona: "🃏",
     descrizione: "La Scopa a squadre, in quattro al tavolo: tu e il tuo compagno contro due. Contro i bot o online, ognuno dal suo telefono (i posti vuoti li fanno i bot).",
-    giocatoriMin: 1, giocatoriMax: 1, difficolta: 3,
+    giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 1–4 giocatori",   // (i posti liberi li prendono i bot)
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu e un bot contro due bot" }],
     regole: [
       "Si gioca <b>in quattro, due squadre</b>: tu + il Compagno (di fronte) contro due avversari. Le carte sono le 40 napoletane.",

@@ -679,7 +679,7 @@
     icona: "🎯",
     descrizione: "Mira e lancia la palla-pendolo (forza fissa) per buttare in acqua chi sta sulla trave. Da solo vs bot, oppure online: uno lancia, gli altri schivano.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 1,
-    etichettaGiocatori: "👤 Da solo o 🔗 online",
+    etichettaGiocatori: "👥 1–4 giocatori",   // (da solo, o online: chi lancia più 3 posti)
     regole: [
       "Sei di spalle: davanti una <b>trave sull'acqua</b> con dei personaggi. La palla appesa oscilla <b>in profondità</b>.",
       "<b>Lanciatore</b>: miri di lato (◀ ▶ o trascini) e premi <b>LANCIA</b>. Il lancio è <b>sempre uguale</b> e lento: conta il tempismo. Il <b>mirino rosso</b> mostra dove cadrà.",

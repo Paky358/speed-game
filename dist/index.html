@@ -870,6 +870,35 @@ button.am-riga:active{ transform:scale(.985); }
 .sl-camp-cor{ font-size:2.6rem; line-height:1; animation:omSalta 1.2s ease-in-out infinite; }
 .sl-camp-nome{ font-size:1.6rem; font-weight:900; margin-top:4px; background:linear-gradient(135deg,#ffe58a,#f4b011); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
 .sl-camp-sotto{ font-size:.95rem; opacity:.8; }
+/* torneo a eliminazione: il tabellone nella saletta */
+.sl-elim-stato{ font-weight:900; font-size:1.05rem; text-align:center; margin:2px 0 8px; color:#ffe066; }
+.sl-elim-riga{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:8px 10px; border-radius:12px; background:rgba(255,255,255,.06); margin-bottom:5px; font-weight:800; }
+.sl-elim-riga.mia{ box-shadow:inset 0 0 0 2px #ffe066; }
+.sl-elim-riga .vince{ color:#69db7c; }
+.sl-elim-riga .vince:after{ content:" ✅"; }
+.sl-elim-riga .perde{ opacity:.45; text-decoration:line-through; }
+.sl-elim-riga .vs{ opacity:.7; }
+.sl-elim-riga .stato{ margin-left:auto; font-size:.78rem; opacity:.7; font-weight:700; }
+.sl-elim-decidi{ flex-basis:100%; display:flex; align-items:center; gap:6px; font-size:.72rem; opacity:.85; }
+.sl-elim-decidi button{ border:0; border-radius:9px; padding:5px 9px; background:rgba(255,255,255,.12); color:inherit; font:inherit; font-size:.75rem; font-weight:800; cursor:pointer; }
+/* torneo a eliminazione: guardare le partite degli altri e il tabellone sopra la partita */
+.sl-elim-guarda{ margin-left:auto; border:0; border-radius:10px; padding:6px 10px; background:#ffe066; color:#2b2b33; font:inherit; font-size:.8rem; font-weight:900; cursor:pointer; }
+.tab-elim{ position:absolute; top:calc(6px + env(safe-area-inset-top)); right:max(6px, env(safe-area-inset-right)); z-index:30; min-height:34px; padding:4px 10px; border:0; border-radius:12px; background:rgba(0,0,0,.35); color:#fff; font:inherit; font-size:.9rem; font-weight:800; cursor:pointer; }
+.tab-elim.in-testa{ position:static; margin-left:auto; flex:0 0 auto; background:rgba(255,255,255,.12); }
+.guarda-riga{ text-align:center; font-size:.9rem; font-weight:800; opacity:.85; margin:0 0 2px; }
+.guarda-attesa{ text-align:center; font-size:1.05rem; margin-top:30vh; }
+.schermata.sc-piena > .tab-elim{ top:calc(48px + env(safe-area-inset-top)); }   /* Scopa: in alto a destra c'è la musica */
+/* torneo a eliminazione: i gironi da scegliere (e la panchina) */
+.sl-gironi{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:6px 0 4px; }
+.sl-girone{ display:flex; flex-direction:column; align-items:flex-start; gap:1px; min-width:0; padding:6px 10px; border-radius:12px; border:2px dashed rgba(255,255,255,.2); background:rgba(255,255,255,.05); color:inherit; font:inherit; font-size:.82rem; font-weight:800; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.sl-girone b{ font-size:.78rem; opacity:.75; }
+.sl-girone span{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sl-girone span.libero{ opacity:.4; font-weight:700; }
+.sl-girone.mio{ border:2px solid #ffe066; background:rgba(255,224,102,.14); }
+.sl-girone.pieno{ opacity:.6; cursor:default; border-style:solid; }
+.sl-girone.panca{ border-style:solid; background:rgba(160,110,60,.18); }
+.sl-girone.panca span{ white-space:normal; }
+.sl-elim-g{ font-size:.68rem; font-weight:900; padding:2px 6px; border-radius:8px; background:rgba(255,224,102,.18); color:#ffe066; }
 </style>
 <div id="app"></div>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
@@ -3125,6 +3154,7 @@ button.am-riga:active{ transform:scale(.985); }
 
   function schermataHome() {
     if (window.SGNet && SGNet.chiudiGiochi) SGNet.chiudiGiochi();   // niente collegamenti vecchi aperti (la sala resta)
+    chiudiTabelloneElim();
     var s = schermata({});
     s.className += " home";
     var io = profiloAttivo();
@@ -4016,9 +4046,13 @@ button.am-riga:active{ transform:scale(.985); }
   }
 
   function rangeGiocatori(g) {
-    if (g.etichettaGiocatori) return g.etichettaGiocatori;   // testo su misura (es. Horto: conta i cavalli in gara, non i profili)
-    var min = g.giocatoriMin || 2, max = g.giocatoriMax || 8;
-    return "👥 " + (min === max ? min : min + "–" + max) + " giocatori";
+    var base;
+    if (g.etichettaGiocatori) base = g.etichettaGiocatori;   // testo su misura (es. Horto: conta i cavalli in gara, non i profili)
+    else {
+      var min = g.giocatoriMin || 2, max = g.giocatoriMax || 8;
+      base = min === max ? (max === 1 ? "👤 1 giocatore" : "👥 " + max + " giocatori") : "👥 " + min + "–" + max + " giocatori";
+    }
+    return GIOCHI_ELIMINAZIONE[g.id] ? base + " · 🏆 torneo fino a " + MAX_ELIM : base;   // i giochi a due: torneo a eliminazione
   }
 
   // ---- Scelta dei giocatori ----
@@ -4708,7 +4742,10 @@ button.am-riga:active{ transform:scale(.985); }
   }
   function ominoOk(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   // la sala usa la saletta d'attesa dei giochi (stessi personaggi, stesso divano)
-  function gSala(torn) { return { id: "__sala", nome: torn ? "Torneo" : "Sala online", icona: torn ? "🏆" : "👥" }; }
+  function gSala(torn, E) {
+    if (E) { var gg = giocoDa(E.gioco); return { id: "__sala", nome: "Torneo", icona: gg ? gg.icona : "🏆" }; }
+    return { id: "__sala", nome: torn ? "Torneo" : "Sala online", icona: torn ? "🏆" : "👥" };
+  }
 
   // ---------- TORNEO ONLINE: classifica che si somma partita dopo partita ----------
   function segnaNomeT(T, nome) { if (T && nome && T.nomi.indexOf(nome) < 0) T.nomi.push(nome); }
@@ -4767,20 +4804,27 @@ button.am-riga:active{ transform:scale(.985); }
   // ---------- HOST ----------
   // opz.torneo = torneo online: la stessa sala, con la classifica che si somma
   function creaSala(opz) {
-    var torn = !!(opz && opz.torneo === true);
+    var torn = !!(opz && opz.torneo === true), elimG = (opz && typeof opz.eliminazione === "string") ? opz.eliminazione : null;
     if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete();
     if (!profiloAttivo()) return schermataAccesso(function () { creaSala(opz); });
     var io = profiloAttivo();
     sala = { rete: null, codice: "…", pronta: false, membri: [{ id: "host", nome: io.nome, emoji: io.emoji, omino: io.omino || null }], gioco: null, stanza: null, inGioco: false,
-      torneo: torn ? { punti: {}, nomi: [io.nome], n: 0, ultima: null, finito: false } : null };
-    function bcast() { if (sala && sala.rete) sala.rete.invia({ t: "sala", codice: sala.codice, membri: sala.membri, gioco: sala.gioco, stanza: sala.stanza, torneo: sala.torneo }); }
-    function agg() { bcast(); if (sala && !sala.inGioco && !(sala.torneo && sala.torneo.finito)) disegnaSalaHost(); }
+      torneo: torn ? { punti: {}, nomi: [io.nome], n: 0, ultima: null, finito: false } : null,
+      elim: elimG ? { gioco: elimG, iniziato: false, finito: false, turni: [], nomi: {}, campione: null, gironi: {} } : null, inPartitaK: null };
+    function bcast() { if (sala && sala.rete) sala.rete.invia({ t: "sala", codice: sala.codice, membri: sala.membri, gioco: sala.gioco, stanza: sala.stanza, torneo: sala.torneo, elim: sala.elim }); }
+    function agg() {
+      bcast(); if (!sala) return;
+      if (sala.elim) return seguiHost();   // torneo a eliminazione: la sala si vede solo quando non sto giocando
+      if (!sala.inGioco && !(sala.torneo && sala.torneo.finito)) disegnaSalaHost();
+    }
     sala._bcast = bcast;
     sala.rete = SGNet.ospita("__sala", {
       onCodice: function (c) { sala.codice = c; agg(); },
       onConnesso: function () { sala.pronta = true; agg(); },
-      onAddio: function (id) { sala.membri = sala.membri.filter(function (m) { return m.id !== id; }); agg(); },
+      onAddio: function (id) { sala.membri = sala.membri.filter(function (m) { return m.id !== id; }); if (sala.elim) { if (sala.elim.gironi) delete sala.elim.gironi[id]; elimUscito(id); } agg(); },
       onMsg: function (id, m) {
+        if (m && m.t === "esito" && sala.elim) return esitoPartita(m.k, !!m.vinto, id);   // torneo a eliminazione: com'è finita una partita
+        if (m && m.t === "girone" && sala.elim) return scegliGironeElim(id, m.g);   // torneo a eliminazione: dove si siede
         if (!m || m.t !== "join") return;
         if (!sala.membri.some(function (x) { return x.id === id; })) {
           var nome = String(m.nome || "Amico").slice(0, 16);
@@ -4798,19 +4842,21 @@ button.am-riga:active{ transform:scale(.985); }
 
   function disegnaSalaHost() {
     if (!sala) return;
-    var T = sala.torneo;
+    var T = sala.torneo, E = sala.elim;
     if (T && T.finito) return schermataPodioT(T, true);
-    var pronto = sala.codice && sala.codice !== "…";
-    saletta(gSala(!!T), {
-      host: true, codice: sala.codice, pronta: sala.pronta, min: 1, puoiDaSolo: true,
+    var pronto = sala.codice && sala.codice !== "…", gE = E ? giocoDa(E.gioco) : null;
+    saletta(gSala(!!T, E), {
+      host: true, codice: sala.codice, pronta: sala.pronta, min: E ? 2 : 1, puoiDaSolo: !E,
       link: pronto ? SG.creaLink({ sala: sala.codice }) : "",
-      sotto: T ? "Torneo online · un link per tutti i giochi" : "Sala online · un link per tutti i giochi",
-      confermaEsci: T ? "Chiudere il torneo per tutti?" : "Chiudere la sala per tutti?",
+      sotto: E ? "Torneo a eliminazione · " + (gE ? gE.nome : "") : (T ? "Torneo online · un link per tutti i giochi" : "Sala online · un link per tutti i giochi"),
+      confermaEsci: (T || E) ? "Chiudere il torneo per tutti?" : "Chiudere la sala per tutti?",
       giocatori: sala.membri.map(function (m) { return { id: m.id, nome: m.nome, omino: m.omino || null, host: m.id === "host", tu: m.id === "host" }; }),
-      extra: T ? [boxTorneo(T, true)] : [],
-      testoComincia: T ? (T.n ? "🎮 Prossimo gioco" : "🎮 Scegli il primo gioco") : "🎮 Scegli un gioco",
-      nota: "Scegli un gioco: parte da solo sul telefono di tutti. A fine partita si torna qui.",
-      onComincia: salaScegliGioco,
+      extra: E ? [boxElim(E, "host", true, sala, seguiHost)] : (T ? [boxTorneo(T, true)] : []),
+      testoComincia: E ? (E.finito ? "↻ Nuovo torneo (stessi amici)" : (E.iniziato ? "Torneo in corso…" : "🏆 Comincia il torneo")) : (T ? (T.n ? "🎮 Prossimo gioco" : "🎮 Scegli il primo gioco") : "🎮 Scegli un gioco"),
+      puoComincia: E ? (!E.iniziato || E.finito) : undefined,
+      nota: E ? (E.iniziato && !E.finito ? "Le partite si aprono da sole sul telefono di chi gioca." : "Ognuno tocca il girone in cui vuole giocare. Quando siete pronti, fai partire il torneo.")
+        : "Scegli un gioco: parte da solo sul telefono di tutti. A fine partita si torna qui.",
+      onComincia: E ? function () { if (E.finito) nuovoElim(); else avviaElim(); } : salaScegliGioco,
       onEsci: function () { chiudiSala(); schermataHome(); }
     });
   }
@@ -4895,7 +4941,8 @@ button.am-riga:active{ transform:scale(.985); }
         setTimeout(function () { if (salaG && !salaG.membri.length && salaG._msg) salaG._msg.textContent = "Non trovo la sala: controlla il codice o attendi l'host…"; }, 8000); },
       onMsg: function (m) {
         if (!salaG || !m || m.t !== "sala") return;
-        salaG.membri = m.membri || []; salaG.torneo = m.torneo || null;
+        salaG.membri = m.membri || []; salaG.torneo = m.torneo || null; salaG.elim = m.elim || null;
+        if (salaG.elim) return seguiOspite();   // torneo a eliminazione: si apre da sola la mia partita
         if (m.gioco && m.stanza) {
           if (salaG.inGioco !== m.stanza) { salaG.inGioco = m.stanza; salaG.podio = false; salaLanciaOspite(m.gioco, m.stanza); }
           return;
@@ -4922,13 +4969,13 @@ button.am-riga:active{ transform:scale(.985); }
 
   function disegnaSalaOspite() {
     if (!salaG) return;
-    var T = salaG.torneo;
-    saletta(gSala(!!T), {
+    var T = salaG.torneo, E = salaG.elim;
+    saletta(gSala(!!T, E), {
       host: false, codice: salaG.codice,
-      sotto: (T ? "Torneo online" : "Sala online") + " · codice " + salaG.codice,
+      sotto: (E ? "Torneo a eliminazione" : (T ? "Torneo online" : "Sala online")) + " · codice " + salaG.codice,
       giocatori: salaG.membri.map(function (m) { return { id: m.id, nome: m.nome, omino: m.omino || null, host: m.id === "host", tu: m.id === salaG.myId }; }),
-      extra: T ? [boxTorneo(T, false)] : [],
-      attesa: "Aspetta che l'host scelga un gioco: parte da solo sul tuo telefono.",
+      extra: E ? [boxElim(E, salaG.myId, false, salaG, seguiOspite)] : (T ? [boxTorneo(T, false)] : []),
+      attesa: E ? (E.iniziato ? "Quando tocca a te, la partita si apre da sola." : "Tocca il girone in cui vuoi giocare, poi aspetta che l'host faccia partire il torneo.") : "Aspetta che l'host scelga un gioco: parte da solo sul tuo telefono.",
       onEsci: function () { chiudiSalaOspite(); schermataHome(); }
     });
     salaG._msg = null;
@@ -4948,6 +4995,290 @@ button.am-riga:active{ transform:scale(.985); }
     linkParams = vecchio;
   }
 
+  // =========================================================
+  //  TORNEO A ELIMINAZIONE (giochi a due: Tris, Drop 4…)
+  //  Un link solo: si sorteggiano le coppie, chi vince va avanti.
+  //  Primo turno con un numero dispari: l'ultimo gioca contro il bot medio.
+  //  Nei turni dopo, chi resta senza avversario passa il turno.
+  //  Ogni partita è una stanza a parte tra i due: il primo la apre, l'altro
+  //  entra da solo; chi l'ha aperta (o chi gioca col bot) dice chi ha vinto.
+  //  L'host della sala può decidere a mano una partita bloccata.
+  // =========================================================
+  var GIOCHI_ELIMINAZIONE = { tris: 1, drop4: 1, navale: 1, scopa: 1 };
+  var MAX_ELIM = 10;   // giocano i primi 10 entrati in sala; gli altri guardano
+  function giocoDa(id) { return giochi.filter(function (g) { return g.id === id; })[0] || null; }
+  function nomeElim(E, id) { return id === "bot" ? "🤖 Bot (medio)" : ((E.nomi && E.nomi[id]) || "…"); }
+  // ha già avuto un turno facile (ha giocato col bot o è passato senza giocare)
+  function favoritoElim(E, id) {
+    return E.turni.some(function (tu) { return tu.some(function (p) { return p.a === id && (!p.b || p.b === "bot"); }); });
+  }
+  function creaTurnoElim(E, ids, primo) {
+    var r = E.turni.length, tu = [], solo = null;
+    ids = ids.slice();
+    if (ids.length % 2) {
+      // di solito resta solo l'ultimo; dopo il primo turno, se possibile, uno che non ha già avuto un turno facile
+      var j = ids.length - 1;
+      if (!primo) { while (j >= 0 && favoritoElim(E, ids[j])) j--; if (j < 0) j = ids.length - 1; }
+      solo = ids.splice(j, 1)[0];
+    }
+    for (var i = 0; i + 1 < ids.length; i += 2) tu.push({ a: ids[i], b: ids[i + 1], stanza: SGNet.nuovoCodice(), vince: null });
+    if (solo) tu.push(primo ? { a: solo, b: "bot", stanza: SGNet.nuovoCodice(), vince: null } : { a: solo, b: null, vince: solo });   // primo turno: col bot medio (la sua stanza serve a chi guarda); poi: passa il turno
+    tu.forEach(function (p, j) { p.k = r + "-" + j; });
+    E.turni.push(tu);
+  }
+  // ---- i gironi: prima di partire ognuno sceglie dove sedersi (all'inizio sono tutti in panchina) ----
+  var N_GIRONI = MAX_ELIM / 2;   // 5 gironi da 2 posti
+  function chiNelGirone(E, n) { return Object.keys(E.gironi || {}).filter(function (id) { return E.gironi[id] === n; }); }
+  function scegliGironeElim(id, n) {   // n = 1..5, 0 = panchina
+    var E = sala && sala.elim; if (!E || E.iniziato) return;
+    if (!sala.membri.some(function (m) { return m.id === id; })) return;
+    n = Math.floor(+n) || 0; if (n < 0 || n > N_GIRONI) return;
+    E.gironi = E.gironi || {};
+    if (n && E.gironi[id] !== n && chiNelGirone(E, n).length >= 2) return;   // girone pieno
+    delete E.gironi[id];   // (così chi si risiede va in fondo al girone)
+    if (n) E.gironi[id] = n;
+    sala._bcast(); seguiHost();
+  }
+  // i gironi alla partenza: chi è in panchina va a caso nei posti liberi (prima accanto a chi è solo),
+  // due rimasti soli si sfidano tra loro, e se ne resta uno solo gioca col bot. Al massimo 10: gli altri guardano.
+  function gironiElim(E) {
+    var dentro = {}; sala.membri.forEach(function (m) { dentro[m.id] = 1; });
+    var G = [];
+    for (var n = 1; n <= N_GIRONI; n++) { var g = chiNelGirone(E, n).filter(function (id) { return dentro[id]; }).slice(0, 2); g.n = n; G.push(g); }
+    var panca = mischia(sala.membri.map(function (m) { return m.id; }).filter(function (id) { return !(E.gironi && E.gironi[id]); }));
+    G.forEach(function (g) { if (g.length === 1 && panca.length) g.push(panca.shift()); });
+    G.forEach(function (g) { while (g.length < 2 && panca.length) g.push(panca.shift()); });
+    var soli = G.filter(function (g) { return g.length === 1; });
+    for (var i = 0; i + 1 < soli.length; i += 2) soli[i].push(soli[i + 1].pop());
+    return G.filter(function (g) { return g.length; });
+  }
+  function avviaElim() {
+    var E = sala && sala.elim; if (!E || (E.iniziato && !E.finito) || sala.membri.length < 2) return;
+    var G = gironiElim(E), nomi = {};
+    sala.membri.forEach(function (m) { nomi[m.id] = m.nome; });
+    E.nomi = {}; G.forEach(function (g) { g.forEach(function (id) { E.nomi[id] = nomi[id]; }); });
+    E.turni = []; E.campione = null; E.iniziato = true; E.finito = false;
+    // primo turno: un girone = una partita (chi è rimasto solo gioca col bot medio); poi chi vince il girone 1 sfida chi vince il 2, ecc.
+    var tu = G.map(function (g, j) { return { k: "0-" + j, girone: g.n, a: g[0], b: g[1] || "bot", stanza: SGNet.nuovoCodice(), vince: null }; });
+    E.turni.push(tu);
+    sala._bcast(); seguiHost();
+  }
+  function nuovoElim() {
+    var E = sala && sala.elim; if (!E) return;
+    E.iniziato = false; E.finito = false; E.turni = []; E.campione = null; sala.inPartitaK = null; sala.fuoriK = null; sala.guardaK = null;
+    sala._bcast(); seguiHost();
+  }
+  function trovaPartitaElim(E, k) {
+    for (var r = 0; r < E.turni.length; r++) for (var j = 0; j < E.turni[r].length; j++) if (E.turni[r][j].k === k) return E.turni[r][j];
+    return null;
+  }
+  // com'è finita una partita: lo dice chi l'ha aperta (o chi giocava col bot), oppure l'host a mano
+  function esitoPartita(k, vinto, daId) {
+    var E = sala && sala.elim; if (!E || !E.iniziato || E.finito) return;
+    var p = trovaPartitaElim(E, k); if (!p || p.vince) return;
+    if (daId !== p.a && daId !== "host") return;
+    p.vince = vinto ? p.a : p.b;
+    avanzaElim();
+  }
+  function avanzaElim() {
+    var E = sala.elim, tu = E.turni[E.turni.length - 1];
+    if (tu && tu.every(function (p) { return p.vince; })) {
+      var dentro = {}; sala.membri.forEach(function (m) { dentro[m.id] = 1; });
+      var avanti = tu.map(function (p) { return p.vince; }).filter(function (v) { return v !== "bot" && dentro[v]; });
+      if (avanti.length <= 1) { E.finito = true; E.campione = avanti[0] || null; }
+      else creaTurnoElim(E, avanti, false);
+    }
+    sala._bcast(); seguiHost();
+  }
+  // chi esce dalla sala a torneo iniziato: se stava giocando, vince l'altro (contro il bot, vince il bot)
+  function elimUscito(id) {
+    var E = sala.elim; if (!E || !E.iniziato || E.finito) return;
+    var tu = E.turni[E.turni.length - 1] || [], cambiato = false;
+    tu.forEach(function (p) { if (!p.vince && (p.a === id || p.b === id)) { p.vince = (p.a === id) ? (p.b || "bot") : p.a; cambiato = true; } });
+    if (cambiato) avanzaElim();
+  }
+  function miaPartitaElim(E, mioId) {
+    if (!E || !E.iniziato || E.finito) return null;
+    var tu = E.turni[E.turni.length - 1] || [];
+    for (var j = 0; j < tu.length; j++) { var p = tu[j]; if (!p.vince && p.b && (p.a === mioId || p.b === mioId)) return p; }
+    return null;
+  }
+  function eliminatoElim(E, id) {
+    return E.turni.some(function (tu) { return tu.some(function (p) { return p.vince && p.vince !== id && (p.a === id || p.b === id); }); });
+  }
+  // su ogni telefono: se tocca a me si apre da sola la mia partita; quando è decisa, si torna al tabellone
+  function seguiTabellone(S, mioId, mioNome, mostraSala, diEsito) {
+    S._mostra = mostraSala; S._mioId = mioId;
+    aggiornaTabelloneElim();   // il tabellone aperto sopra una partita si aggiorna da solo
+    var p = miaPartitaElim(S.elim, mioId);
+    if (p) {
+      if (S.inPartitaK !== p.k) { clearTimeout(S.tTorna); S.tTorna = null; S.guardaK = null; S.inPartitaK = p.k; S.fuoriK = null; giocaPartitaElim(S, p, mioId, mioNome, mostraSala, diEsito); }
+      else if (S.fuoriK === p.k) mostraSala();   // è uscito dalla sua partita: vede il tabellone, col tasto per rientrare
+      return;
+    }
+    if (S.inPartitaK) {   // la mia partita è appena decisa: si vede chi ha vinto, poi si torna al tabellone
+      var giaFuori = S.fuoriK === S.inPartitaK;   // (se ero già uscito dalla partita, si aggiorna subito)
+      S.inPartitaK = null; S.fuoriK = null;
+      if (giaFuori) return tornaTabelloneElim(S);
+      S.tTorna = setTimeout(function () { S.tTorna = null; tornaTabelloneElim(S, 2500); }, 2500);
+      return;
+    }
+    if (S.guardaK) {   // sto guardando una partita: resto lì finché non è decisa, poi si torna al tabellone
+      var w = S.elim && S.elim.iniziato ? trovaPartitaElim(S.elim, S.guardaK) : null;
+      if (w && !w.vince && w.stanza === S.guardaStanza) return;
+      S.guardaK = null;
+      S.tTorna = setTimeout(function () { S.tTorna = null; tornaTabelloneElim(S); }, 2500);
+      return;
+    }
+    if (S.tTorna) return;
+    tornaTabelloneElim(S);
+  }
+  // si torna al tabellone: la partita lasciata non può più disegnare. ritardo: chi aveva aperto la stanza
+  // la chiude un po' dopo, così l'avversario e chi guardava tornano al tabellone prima (niente "collegamento perso")
+  function tornaTabelloneElim(S, ritardo) {
+    lasciaPartita(); chiudiTabelloneElim(); SGNet.chiudiGiochi(ritardo || 0);
+    if (window.SGMusica && SGMusica.ferma) SGMusica.ferma();   // la musica della Scopa
+    if (S._mostra) S._mostra();
+  }
+  function seguiHost() { if (sala && sala.elim) seguiTabellone(sala, "host", sala.membri[0].nome, disegnaSalaHost, function (k, v) { esitoPartita(k, v, "host"); }); }
+  function seguiOspite() { if (salaG && salaG.elim) seguiTabellone(salaG, salaG.myId, salaG.nome, disegnaSalaOspite, function (k, v) { if (salaG && salaG.rete) salaG.rete.invia({ t: "esito", k: k, vinto: v }); }); }
+  function giocaPartitaElim(S, p, mioId, mioNome, mostraSala, diEsito) {
+    var g = giocoDa(S.elim.gioco); if (!g) return mostraSala();
+    chiudiTabelloneElim(); SGNet.chiudiGiochi();
+    function fuori() { S.fuoriK = p.k; tornaTabelloneElim(S); }
+    var ctx = {
+      esci: fuori, fine: fuori,
+      tabellone: function (s) { tastoTabellone(s, S); },
+      // la partita dice chi ha vinto: lo riferisce solo chi l'ha aperta (o chi gioca col bot). Pari = si rigioca
+      risultato: function (g2, cl) {
+        if (p.a !== mioId) return;
+        var primi = (cl || []).filter(function (r) { return (r.pos || 1) === 1; });
+        if (primi.length === 1) diEsito(p.k, primi[0].nome === mioNome);
+      }
+    };
+    var vecchio = linkParams;
+    if (p.b === "bot") {
+      // la partita col bot la possono guardare anche gli altri: questo telefono la trasmette nella stanza della partita
+      var rete = null, ultimo = null;
+      ctx.trasmetti = function (msg) {
+        ultimo = msg;
+        if (!rete && p.stanza) { SGNet._forza = p.stanza; rete = SGNet.ospita(g.id, { onConnesso: function () { if (rete && ultimo) rete.invia(ultimo); } }); }
+        if (rete) rete.invia(msg);
+      };
+      linkParams = {}; avviaPartita(g, [mioNome], { modo: "bot", difficolta: "medio" }, null, ctx);
+    }
+    else if (p.a === mioId) { linkParams = {}; SGNet._forza = p.stanza; avviaPartita(g, [mioNome], { modo: "online" }, null, ctx); }
+    else { linkParams = { gioco: g.id, stanza: p.stanza }; avviaPartita(g, [], {}, null, ctx); }
+    linkParams = vecchio;
+  }
+  // chi non sta giocando guarda in diretta la partita di altri (anche quella col bot), senza poter toccare
+  function guardaPartitaElim(S, p) {
+    var g = giocoDa(S.elim && S.elim.gioco); if (!g || !p.stanza) return;
+    chiudiTabelloneElim(); SGNet.chiudiGiochi();
+    clearTimeout(S.tTorna); S.tTorna = null;
+    S.guardaK = p.k; S.guardaStanza = p.stanza;
+    var attivo = true;
+    function via() { if (!attivo) return; attivo = false; if (S.guardaK === p.k) S.guardaK = null; clearTimeout(S.tTorna); S.tTorna = null; tornaTabelloneElim(S); }
+    var ctx = { esci: via, fine: via, risultato: function () {}, tabellone: function (s) { tastoTabellone(s, S); } };
+    var vecchio = linkParams;
+    linkParams = { gioco: g.id, stanza: p.stanza, guarda: 1 };
+    avviaPartita(g, [], {}, null, ctx);
+    linkParams = vecchio;
+  }
+  // il tabellone sopra la partita (tasto 🏆 in alto): si aggiorna da solo finché resta aperto
+  var FT = null;
+  function tastoTabellone(s, S) {
+    if (!s || s.querySelector(".tab-elim")) return;
+    var b = el("button", { class: "tab-elim", "aria-label": "Tabellone del torneo", text: "🏆", onclick: function () { apriTabelloneElim(S); } });
+    var testa = s.querySelector(".testa");
+    if (testa && !s.classList.contains("senza-testa")) { b.classList.add("in-testa"); b.textContent = "🏆 Tabellone"; testa.appendChild(b); }
+    else s.appendChild(b);   // nei giochi (senza titolo): piccolo, nell'angolo in alto a destra
+  }
+  function apriTabelloneElim(S) {
+    if (FT || !S.elim) return;
+    var corpo = el("div", { class: "sl-foglio-corpo" });
+    var velo = el("div", { class: "sl-velo", onclick: function (e) { if (e.target === velo) chiudiTabelloneElim(); } }, [
+      el("div", { class: "sl-foglio" }, [
+        el("div", { class: "sl-foglio-testa" }, [ el("b", { text: "🏆 Tabellone" }), el("button", { class: "sl-foglio-x", "aria-label": "Chiudi", text: "✕", onclick: chiudiTabelloneElim }) ]),
+        corpo,
+        el("button", { class: "btn btn-primario", text: "Torna alla partita", onclick: chiudiTabelloneElim })
+      ])
+    ]);
+    FT = { S: S, corpo: corpo, velo: velo };
+    aggiornaTabelloneElim();
+    if (FT) document.body.appendChild(velo);
+  }
+  function chiudiTabelloneElim() { if (!FT) return; if (FT.velo.parentNode) FT.velo.parentNode.removeChild(FT.velo); FT = null; }
+  function aggiornaTabelloneElim() {
+    if (!FT) return;
+    var S = FT.S; if (!S.elim || !S.elim.iniziato) return chiudiTabelloneElim();
+    svuota(FT.corpo);
+    FT.corpo.appendChild(boxElim(S.elim, S._mioId, S === sala, S, S === sala ? seguiHost : seguiOspite));
+  }
+  function nomeTurnoElim(nGioc) { return nGioc <= 2 ? "Finale" : (nGioc <= 4 ? "Semifinali" : (nGioc <= 8 ? "Quarti di finale" : "Primo turno")); }
+  // il tabellone (nella saletta): il mio stato, poi i turni dal più recente
+  function boxElim(E, mioId, host, S, segui) {
+    var box = el("div", { class: "sl-torneo" });
+    if (!E.iniziato) {   // prima di partire: ognuno sceglie il suo girone (all'inizio sono tutti in panchina)
+      var membri = (S && S.membri) || [], gir = E.gironi || {};
+      function chiamo(m) { return m.id === mioId ? "Tu" : m.nome; }
+      function siedi(n) { if (host) scegliGironeElim(mioId, n); else if (S && S.rete) S.rete.invia({ t: "girone", g: n }); }
+      box.appendChild(el("div", { class: "etichetta", text: "🏆 Scegli il tuo girone" }));
+      var griglia = el("div", { class: "sl-gironi" });
+      for (var gN = 1; gN <= N_GIRONI; gN++) (function (n) {
+        var chi = membri.filter(function (m) { return gir[m.id] === n; }), mio = gir[mioId] === n;
+        var b = el("button", { class: "sl-girone" + (mio ? " mio" : ""), onclick: function () { siedi(mio ? 0 : n); } }, [
+          el("b", { text: "Girone " + n }),
+          el("span", { class: chi[0] ? "" : "libero", text: chi[0] ? chiamo(chi[0]) : "posto libero" }),
+          el("span", { class: chi[1] ? "" : "libero", text: chi[1] ? chiamo(chi[1]) : "posto libero" }) ]);
+        if (chi.length >= 2 && !mio) { b.disabled = true; b.classList.add("pieno"); }
+        griglia.appendChild(b);
+      })(gN);
+      var panca = membri.filter(function (m) { return !gir[m.id]; });
+      griglia.appendChild(el("button", { class: "sl-girone panca" + (!gir[mioId] ? " mio" : ""), onclick: function () { siedi(0); } }, [
+        el("b", { text: "🪑 Panchina" }), el("span", { class: panca.length ? "" : "libero", text: panca.length ? panca.map(chiamo).join(", ") : "nessuno" }) ]));
+      box.appendChild(griglia);
+      box.appendChild(el("p", { class: "modulo-nota", text: "Tocca un girone per sederti: chi vince il girone 1 sfida chi vince il 2, e così via fino alla finale. Chi resta in panchina viene messo a caso nei posti liberi; se uno resta solo, gioca contro il bot medio." }));
+      if (membri.length > MAX_ELIM) box.appendChild(el("p", { class: "modulo-nota", text: "Siete in " + membri.length + ": i posti sono " + MAX_ELIM + ", chi resta in panchina guarda le partite 👀" }));
+      return box;
+    }
+    var mia = miaPartitaElim(E, mioId), stato;
+    if (E.finito) stato = E.campione ? "🏆 Campione: " + nomeElim(E, E.campione) + (E.campione === mioId ? " (sei tu!)" : "") : "Torneo finito";
+    else if (mia) stato = "▶️ Tocca a te contro " + nomeElim(E, mia.a === mioId ? mia.b : mia.a);
+    else if (!(E.nomi && E.nomi[mioId])) stato = "👀 Guardi il torneo: tocca «Guarda» su una partita";
+    else if (eliminatoElim(E, mioId)) stato = "Sei fuori: puoi guardare le partite 👀";
+    else stato = "Passi al turno dopo: intanto guarda gli altri ⏳";
+    box.appendChild(el("div", { class: "sl-elim-stato", text: stato }));
+    if (mia && S.fuoriK === mia.k) box.appendChild(el("button", { class: "btn btn-primario", text: "🔁 Rientra nella tua partita", onclick: function () { S.inPartitaK = null; S.fuoriK = null; segui(); } }));
+    for (var r = E.turni.length - 1; r >= 0; r--) {
+      var tu = E.turni[r], nG = 0;
+      tu.forEach(function (p) { nG += p.b ? 2 : 1; });
+      box.appendChild(el("div", { class: "etichetta", text: nomeTurnoElim(nG) + (r === E.turni.length - 1 && !E.finito ? " · si gioca ora" : "") }));
+      tu.forEach(function (p) {
+        var riga = el("div", { class: "sl-elim-riga" + ((p.a === mioId || p.b === mioId) ? " mia" : "") });
+        if (p.girone) riga.appendChild(el("span", { class: "sl-elim-g", text: "G" + p.girone }));   // il girone scelto (primo turno)
+        if (!p.b) riga.appendChild(el("span", { text: nomeElim(E, p.a) + " passa il turno" }));
+        else {
+          riga.appendChild(el("span", { class: p.vince === p.a ? "vince" : (p.vince ? "perde" : ""), text: nomeElim(E, p.a) }));
+          riga.appendChild(el("span", { class: "vs", text: "🆚" }));
+          riga.appendChild(el("span", { class: p.vince === p.b ? "vince" : (p.vince ? "perde" : ""), text: nomeElim(E, p.b) }));
+          if (!p.vince) {   // chi non sta giocando può guardarla in diretta
+            if (S && S.guardaK === p.k) riga.appendChild(el("span", { class: "stato", text: "👀 la stai guardando" }));
+            else if (!mia && !E.finito && p.stanza && p.a !== mioId && p.b !== mioId) riga.appendChild(el("button", { class: "sl-elim-guarda", text: "👀 Guarda", onclick: function () { guardaPartitaElim(S, p); } }));
+            else riga.appendChild(el("span", { class: "stato", text: "in corso…" }));
+          }
+          if (host && !p.vince && !E.finito) riga.appendChild(el("div", { class: "sl-elim-decidi" }, [   // se una partita si blocca, decide l'host
+            el("span", { text: "Bloccata? Passa:" }),
+            el("button", { text: nomeElim(E, p.a), onclick: function () { esitoPartita(p.k, true, "host"); } }),
+            el("button", { text: nomeElim(E, p.b), onclick: function () { esitoPartita(p.k, false, "host"); } })
+          ]));
+        }
+        box.appendChild(riga);
+      });
+    }
+    return box;
+  }
+
   function errore(dopo, txt) {
     var s = schermata({ icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
@@ -4961,10 +5292,12 @@ button.am-riga:active{ transform:scale(.985); }
   //  se si può giocare online si aggiunge da solo "Online".
   //  amici: true = poi si aggiungono gli amici (solo per chi gioca sullo stesso telefono).
   // =========================================================
+  var MODO_ELIMINAZIONE = { modo: "eliminazione", icona: "🏆", nome: "Torneo a eliminazione", sotto: "Fino a 10 amici: sfide a due, chi vince va avanti" };
   var MODO_ONLINE = { modo: "online", icona: "🔗", nome: "Online", sotto: "Ognuno dal suo telefono: mandi il link agli amici" };
   function modiDi(g) {
     var m = (g && g.modi) ? g.modi.slice() : [];
     if (giocoOnline(g)) m.push(MODO_ONLINE);
+    if (g && GIOCHI_ELIMINAZIONE[g.id]) m.push(MODO_ELIMINAZIONE);
     return m;
   }
   function modoDi(g, modo) { return modiDi(g).filter(function (m) { return m.modo === modo; })[0] || null; }
@@ -4984,6 +5317,7 @@ button.am-riga:active{ transform:scale(.985); }
     mostra(s);
   }
   function sceltoModo(g, m) {
+    if (m.modo === "eliminazione") return creaSala({ eliminazione: g.id });   // un link solo, coppie sorteggiate, chi vince va avanti
     if (m.amici) return schermataSala(g, { modo: m.modo });   // sullo stesso telefono: prima gli amici, poi le impostazioni
     schermataPreGioco(g, { modo: m.modo });                  // contro il computer / online: subito le impostazioni
   }
@@ -5358,7 +5692,12 @@ button.am-riga:active{ transform:scale(.985); }
   //  Consegna al gioco un "tavolo" con tutto ciò che gli serve,
   //  senza fargli sapere come sono fatte le schermate comuni.
   // =========================================================
+  // il gioco aperto adesso: uno già lasciato (es. si è tornati al tabellone) non può più disegnare, uscire o dare risultati
+  var partitaN = 0;
+  function lasciaPartita() { partitaN++; }
   function avviaPartita(g, giocatori, impostazioni, opts, salaCtx) {
+    var questa = ++partitaN;
+    function viva() { return questa === partitaN; }
     var contenitore = el("div");
     var schermo = el("div");
     schermo.appendChild(contenitore);
@@ -5384,7 +5723,7 @@ button.am-riga:active{ transform:scale(.985); }
         if (!o.titolo) s.classList.add("senza-testa");
         return s;
       },
-      mostra: function (s) { mostra(s); },
+      mostra: function (s) { if (!viva()) return; if (salaCtx && salaCtx.tabellone) salaCtx.tabellone(s); mostra(s); },   // torneo a eliminazione: tasto 🏆 Tabellone
 
       // il nome del profilo di questo telefono (chi entra da un invito entra direttamente con questo)
       nomeProfilo: function () {
@@ -5400,24 +5739,32 @@ button.am-riga:active{ transform:scale(.985); }
       // la saletta d'attesa online, uguale per tutti i giochi (vedi saletta()).
       // All'host dà anche "⚙️ Regole": le impostazioni di prima, da cambiare quando vuole;
       // dopo una modifica chiama tavolo.onRegole() (il gioco rilegge tavolo.impostazioni).
-      lobby: function (o) { return saletta(g, o, (opts && opts.regole) ? { box: opts.regole, imp: tavolo.impostazioni, tavolo: tavolo } : null); },
+      lobby: function (o) {
+        if (!viva()) return null;
+        var s = saletta(g, o, (opts && opts.regole) ? { box: opts.regole, imp: tavolo.impostazioni, tavolo: tavolo } : null);
+        if (s && salaCtx && salaCtx.tabellone) salaCtx.tabellone(s);
+        return s;
+      },
+      // torneo a eliminazione: la partita col bot si trasmette, così gli altri la guardano (msg come quelli dell'host online)
+      trasmetti: (salaCtx && salaCtx.trasmetti) ? function (msg) { if (viva()) salaCtx.trasmetti(msg); } : null,
 
       // passaggio del telefono, poi esegue "quando"
       passaA: function (nome, quando) { passaIlTelefono(nome, quando); },
 
       // i giochi online dicono com'è finita ogni partita, senza lasciare la loro schermata finale:
       // serve al torneo online per sommare i punti. classifica = [{ nome, pos? }] dal primo all'ultimo
-      risultato: function (classifica) { if (salaCtx && salaCtx.risultato && classifica && classifica.length) salaCtx.risultato(g, classifica); },
+      risultato: function (classifica) { if (viva() && salaCtx && salaCtx.risultato && classifica && classifica.length) salaCtx.risultato(g, classifica); },
 
       // il gioco chiama questa quando è finito
       fine: function (classifica) {
+        if (!viva()) return;
         if (salaCtx) return salaCtx.fine(g, classifica, giocatori, impostazioni);
         if (opts && opts.torneo && torneo) return torneoRisultato(g, classifica);
         schermataFine(g, classifica, giocatori, impostazioni);
       },
 
       // uscite comuni
-      esci: salaCtx ? salaCtx.esci : schermataHome
+      esci: function () { if (viva()) (salaCtx ? salaCtx.esci : schermataHome)(); }
     };
 
     g.avvia(tavolo);
@@ -13482,6 +13829,28 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 144,
+    data: "1 ottobre 2026",
+    titolo: "Il numero giusto di giocatori su ogni gioco 👥",
+    descrizione: [
+      "Sotto ogni gioco c'è scritto per quanti è: per esempio Battaglia navale da 1 a 2, Scopone e Scopa 2 vs 2 da 1 a 4, Palla a pendolo da 1 a 4.",
+      "Sui giochi a due c'è scritto anche il torneo: fino a 10 amici."
+    ]
+  },
+  {
+    v: 143,
+    data: "1 ottobre 2026",
+    titolo: "Torneo a eliminazione per i giochi a due 🏆",
+    descrizione: [
+      "In \"Come giocate?\" di Tris, Drop 4, Battaglia navale e Scopa c'è il Torneo a eliminazione: mandi un link solo e giocate fino a 10.",
+      "Tutti entrano in panchina e ognuno, host compreso, tocca il girone in cui vuole giocare. Chi resta in panchina viene messo a caso nei posti liberi.",
+      "Ogni girone è una sfida a due: chi vince il girone 1 sfida chi vince il 2, e così via fino alla finale. Se uno resta solo, gioca contro il bot medio.",
+      "Le partite si aprono da sole sul telefono di chi gioca. Se finisce pari si rigioca; se una partita si blocca, l'host decide chi passa.",
+      "Chi non sta giocando può guardare in diretta le partite degli altri (👀 Guarda), anche quelle contro il bot. Nella Battaglia navale si vedono i colpi, mai le navi.",
+      "Il tabellone si apre quando vuoi col tasto 🏆, anche durante la tua partita."
+    ]
+  },
+  {
     v: 142,
     data: "1 ottobre 2026",
     titolo: "Nuovo gioco online: Taboo 🤐",
@@ -19287,7 +19656,7 @@ window.SG_SIPERO = {
 
     avvia: function (t) {
       var imp = t.impostazioni || {};
-      if (t.linkParams && t.linkParams.stanza) return ospiteDrop(t, t.linkParams.stanza);
+      if (t.linkParams && t.linkParams.stanza) return t.linkParams.guarda ? guardaDrop(t, t.linkParams.stanza) : ospiteDrop(t, t.linkParams.stanza);
       if (imp.modo === "online") return hostDrop(t);
       return localeDrop(t, imp.modo === "telefono" ? "telefono" : "bot", imp.difficolta || "medio", !!imp.torneo);
     }
@@ -19331,6 +19700,7 @@ window.SG_SIPERO = {
     return String(vm.nomi.G || "").trim().toLowerCase() === nm ? "G" : (String(vm.nomi.B || "").trim().toLowerCase() === nm ? "B" : null);
   }
   function trofeiDrop(vm, cb) {
+    if (cb.guarda) return;   // chi guarda non gioca
     var io = mioColoreDrop(vm, cb);
     // "Guastafeste": la mia pedina nuova cade proprio dove l'avversario, al turno prima, avrebbe fatto 4
     if (io && TD.prec && vm.board) {
@@ -19360,6 +19730,7 @@ window.SG_SIPERO = {
     assicuraStileDrop();
     var el = t.el;
     var box = el("div", {});
+    if (cb.guarda) box.appendChild(el("div", { class: "guarda-riga", html: "👀 <span style='color:" + CG + "'>" + esc(vm.nomi.G) + "</span> 🆚 <span style='color:" + CB + "'>" + esc(vm.nomi.B) + "</span>" }));
     box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.15rem;margin:6px 0 10px;min-height:1.4em", html: statoDrop(vm, cb) }));
     var board = el("div", { style: "display:flex;gap:6px;width:min(94vw,380px);margin:0 auto;background:" + GRIGLIA + ";padding:8px;border-radius:16px;box-sizing:border-box;box-shadow:0 6px 16px rgba(0,0,0,.35)" });
     function colonna(c) {
@@ -19382,7 +19753,9 @@ window.SG_SIPERO = {
 
     var piedeNodi = [];
     if (vm.fase === "fine") {
-      if (cb.locale || cb.sonoHost) {
+      if (cb.guarda) {
+        piedeNodi.push(el("p", { class: "modulo-nota", text: vm.fine && vm.fine.vincitore ? "Tra poco si torna al tabellone…" : "Pareggio: si rigioca!" }));
+      } else if (cb.locale || cb.sonoHost) {
         piedeNodi.push(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: cb.onRivincita }));
         piedeNodi.push(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
       } else {
@@ -19396,7 +19769,7 @@ window.SG_SIPERO = {
       drMount.piede.innerHTML = ""; piedeNodi.forEach(function (n) { drMount.piede.appendChild(n); });
     } else {
       var s = t.schermata({ icona: "🟡", titolo: "Drop 4", sotto: vm.nomi.G + " (gialla) · " + vm.nomi.B + " (bianca)",
-        indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+        indietro: function () { if (cb.guarda || window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
       s._contenuto.appendChild(box); piedeNodi.forEach(function (n) { s._piede.appendChild(n); }); t.mostra(s);
       drMount = { cont: s._contenuto, box: box, piede: s._piede };
     }
@@ -19413,6 +19786,7 @@ window.SG_SIPERO = {
 
     function render() {
       var vm = { fase: st.fine ? "fine" : "gioco", board: st.board, turno: st.turno, fine: st.fine, nomi: nomi, ultima: st.ultima };
+      if (t.trasmetti) t.trasmetti({ t: "vm", vm: vm });   // torneo a eliminazione: gli altri guardano la partita col bot
       campoDrop(t, vm, {
         locale: true, bot: modo === "bot", mio: modo === "bot" ? "G" : null, liv: difficolta,
         onColonna: function (c) { gioca(c); },
@@ -19427,6 +19801,8 @@ window.SG_SIPERO = {
       if (w) st.fine = { vincitore: w.s, celle: w.celle };
       else if (!colonneLibere(st.board).length) st.fine = { vincitore: null, celle: null };
       else st.turno = altro(st.turno);
+      // torneo a eliminazione: chi ha vinto (pari = stesso posto, si rigioca)
+      if (st.fine && t.risultato) t.risultato(classifica().map(function (r, i) { return { nome: r.nome, pos: st.fine.vincitore ? i + 1 : 1 }; }));
       if (st.fine && torneo) return t.fine(classifica());
       render();
       if (!st.fine && modo === "bot" && st.turno === "B") pensaBot();
@@ -19534,6 +19910,31 @@ window.SG_SIPERO = {
         onErrore: function () { errore(t, "Problema di collegamento. Controlla la connessione e riprova."); }
       });
     }
+  }
+
+  // chi guarda una partita del torneo a eliminazione: la vede in diretta, senza poter toccare
+  function guardaDrop(t, codice) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var rete = null, scritta = null;   // (chi guarda: niente suoni, farebbero vibrare il telefono)
+    var cb = { guarda: true, sonoHost: false, mio: "-", onColonna: function () {}, onRivincita: function () {},
+      onEsci: function () { if (rete) rete.chiudi(); t.esci(); } };
+    function attesa(txt) {
+      if (scritta === txt) return; scritta = txt;
+      var s = t.schermata({ indietro: cb.onEsci });
+      s._contenuto.appendChild(t.el("p", { class: "modulo-nota guarda-attesa", text: txt }));
+      t.mostra(s);
+    }
+    attesa("👀 Mi collego alla partita…");
+    rete = SGNet.entra(codice, {
+      onMsg: function (m) {
+        if (!m || m.t !== "vm" || !m.vm || !m.vm.board) return;
+        if (m.vm.fase === "lobby") return attesa("👀 La partita sta per cominciare…");
+        scritta = null;
+        campoDrop(t, m.vm, cb);
+      },
+      onChiuso: function () { cb.onEsci(); },   // partita finita e chiusa: si torna al tabellone
+      onErrore: function () { errore(t, "Problema di collegamento. Controlla la connessione e riprova."); }
+    });
   }
 
   function disegnaVM(t, vm, cb) {
@@ -21747,7 +22148,14 @@ window.SG_SIPERO = {
       ".nav-boat.giu{background:#e03131}",
       ".nav-tit{text-align:center;font-weight:800;font-size:1rem;margin:4px 0 6px;min-height:1.3em}",
       ".nav-sub{text-align:center;font-size:.74rem;color:rgba(255,255,255,.65);margin:2px 0 8px}",
-      ".nav-conta{display:flex;justify-content:center;gap:14px;font-size:.78rem;margin:6px 0}"
+      ".nav-conta{display:flex;justify-content:center;gap:14px;font-size:.78rem;margin:6px 0}",
+      // chi guarda: i due campi affiancati, piccoli
+      ".nav-guarda{display:flex;gap:6px;justify-content:center;align-items:flex-start}",
+      ".nav-guarda-lato{flex:1 1 0;min-width:0;max-width:240px}",
+      ".nav-guarda-lato .nav-sub{margin:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".nav-board.nav-g{width:100%;grid-template-columns:10px repeat(10,1fr);gap:1px;padding:3px}",
+      ".nav-g .nav-c{font-size:.55rem;border-radius:2px}",
+      ".nav-g .nav-lab{font-size:.45rem}"
     ].join("");
     document.head.appendChild(s);
   }
@@ -21760,7 +22168,7 @@ window.SG_SIPERO = {
     nome: "Battaglia Navale",
     icona: "🚢",
     descrizione: "La battaglia navale classica: sistemi la tua flotta e affondi quella dell'avversario. Contro il computer o online, uno contro uno.",
-    giocatoriMin: 1, giocatoriMax: 1, difficolta: 2,
+    giocatoriMin: 1, giocatoriMax: 1, difficolta: 2, etichettaGiocatori: "👥 1–2 giocatori",   // (sullo stesso telefono: contro il computer; online in due)
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il computer" }],
     regole: [
       "Ognuno ha una griglia <b>10×10</b> e una <b>flotta</b>: Portaerei (5), Corazzata (4), Incrociatore (3), Sommergibile (3), Cacciatorpediniere (2).",
@@ -21812,7 +22220,7 @@ window.SG_SIPERO = {
     avvia: function (t) {
       stile();
       var imp = t.impostazioni || {};
-      if (t.linkParams && t.linkParams.stanza) return ospiteNavale(t, t.linkParams.stanza);
+      if (t.linkParams && t.linkParams.stanza) return t.linkParams.guarda ? guardaNavale(t, t.linkParams.stanza) : ospiteNavale(t, t.linkParams.stanza);
       if (imp.modo === "online") return hostNavale(t);
       return controBot(t, imp.difficolta || "medio");
     }
@@ -21971,7 +22379,19 @@ window.SG_SIPERO = {
       return w;
     }
 
+    // per chi guarda (torneo a eliminazione): i colpi sui due campi, mai dove sono le navi
+    var ultimaVista = null;
+    function mandaVista() {
+      if (!opt.vista) return;
+      var suIo = matrice(0), giuIo = 0;
+      for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) if (io.sparato[y][x]) { var k = io.mappa[y][x]; suIo[y][x] = k < 0 ? 1 : (io.navi[k] && io.navi[k].affondata ? 3 : 2); }
+      io.navi.forEach(function (n) { if (n && n.affondata) giuIo++; });
+      var v = { fase: fase === "attesaAvv" ? "piazza" : fase, tocca: turno === "mio" ? "io" : "avv", suIo: suIo, suAvv: attacco, giuIo: giuIo, giuAvv: affAvv, vinceIo: esitoFine };
+      var j = JSON.stringify(v); if (j === ultimaVista) return;
+      ultimaVista = j; opt.vista(v);
+    }
     function render() {
+      mandaVista();
       if (fase === "fine") return renderFine();
       if (fase === "piazza") return renderPiazza();
       if (fase === "attesaAvv") return renderAttesa();
@@ -22061,6 +22481,7 @@ window.SG_SIPERO = {
   // =========================================================
   function controBot(t, liv) {
     navMount = null;
+    var io = (t.giocatori && t.giocatori[0]) || "Tu";
     var bot = flottaCasuale();      // la flotta del bot (segreta)
     var mem = { coda: [] };
     var ioPrimo = Math.random() < 0.5;
@@ -22084,7 +22505,10 @@ window.SG_SIPERO = {
       sonoHost: null, invia: null,
       onEsci: function () { t.esci(); },
       rivincita: function (reset) { bot = flottaCasuale(); mem = { coda: [] }; ioPrimo = Math.random() < 0.5; reset(); },
-      startBot: function () { if (ioPrimo) { G.setTurno("mio"); } else { G.setTurno("attesa"); setTimeout(botTurno, 750); } }
+      startBot: function () { if (ioPrimo) { G.setTurno("mio"); } else { G.setTurno("attesa"); setTimeout(botTurno, 750); } },
+      // torneo a eliminazione: chi ha vinto, e la partita trasmessa a chi la guarda
+      onFine: function (vinto) { if (t.risultato) t.risultato(vinto ? [{ nome: io, pos: 1 }, { nome: "Computer", pos: 2 }] : [{ nome: "Computer", pos: 1 }, { nome: io, pos: 2 }]); },
+      vista: t.trasmetti ? function (v) { t.trasmetti({ t: "vista", v: v, nomi: [io, "🤖 Computer"] }); } : null
     });
     G.setCanale(canale);
     G.startRender();
@@ -22128,7 +22552,9 @@ window.SG_SIPERO = {
         onEsci: function () { rete.chiudi(); t.esci(); },
         rivincita: function (reset) { rete.inviaVeloce({ t: "rivincita" }); reset(); },
         // per il torneo online: chi ha vinto
-        onFine: sonoHost ? function (vinto) { if (t.risultato) t.risultato(vinto ? [{ nome: L.nomiIo }, { nome: L.nomiAvv || "Avversario" }] : [{ nome: L.nomiAvv || "Avversario" }, { nome: L.nomiIo }]); } : null
+        onFine: sonoHost ? function (vinto) { if (t.risultato) t.risultato(vinto ? [{ nome: L.nomiIo, pos: 1 }, { nome: L.nomiAvv || "Avversario", pos: 2 }] : [{ nome: L.nomiAvv || "Avversario", pos: 1 }, { nome: L.nomiIo, pos: 2 }]); } : null,
+        // chi guarda (torneo a eliminazione) vede i colpi: lo mando "trattenuto", così chi arriva dopo lo vede subito
+        vista: sonoHost ? function (v) { rete.invia({ t: "vista", v: v, nomi: [L.nomiIo, L.nomiAvv || "Avversario"] }); } : null
       });
       G.setCanale({ manda: function (msg) { rete.inviaVeloce(msg); } });
       G.startRender();
@@ -22186,6 +22612,66 @@ window.SG_SIPERO = {
       G.setCanale({ manda: function (msg) { S.rete.invia(msg); } });
       G.startRender();
     }
+  }
+
+  // chi guarda una partita del torneo a eliminazione: i due campi coi colpi (acqua, colpito, affondato),
+  // senza mai vedere dove sono le navi. (Niente suoni: farebbero vibrare il telefono.)
+  function guardaNavale(t, codice) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    navMount = null;
+    var el = t.el, rete = null, scritta = null, mont = null;
+    function esci() { if (rete) rete.chiudi(); t.esci(); }
+    function attesa(txt) {
+      if (scritta === txt) return; scritta = txt; mont = null;
+      var s = t.schermata({ indietro: esci });
+      s._contenuto.appendChild(el("p", { class: "modulo-nota guarda-attesa", text: txt }));
+      t.mostra(s);
+    }
+    function campo(gr) {
+      var g = el("div", { class: "nav-board nav-g" });
+      g.appendChild(el("div", { class: "nav-lab" }));
+      for (var c = 0; c < N; c++) g.appendChild(el("div", { class: "nav-lab", text: String(c + 1) }));
+      for (var y = 0; y < N; y++) {
+        g.appendChild(el("div", { class: "nav-lab", text: LET[y] }));
+        for (var x = 0; x < N; x++) {
+          var v = gr && gr[y] ? gr[y][x] : 0;
+          g.appendChild(el("div", { class: "nav-c " + (v === 1 ? "acqua" : v === 2 ? "colpito" : v === 3 ? "affondato" : "mare"), text: v === 1 ? "•" : v ? "✕" : "" }));
+        }
+      }
+      return g;
+    }
+    function disegna(m) {
+      var v = m.v, n = m.nomi || ["?", "?"];
+      if (v.fase === "piazza") return attesa("👀 " + n[0] + " e " + n[1] + " stanno sistemando le navi… ⚓");
+      scritta = null;
+      var box = el("div", {});
+      box.appendChild(el("div", { class: "guarda-riga", text: "👀 " + n[0] + " 🆚 " + n[1] }));
+      box.appendChild(el("div", { class: "nav-tit", text: v.fase === "fine" ? "🏆 Vince " + (v.vinceIo ? n[0] : n[1]) + "!" : "🎯 Spara " + (v.tocca === "io" ? n[0] : n[1]) + "…" }));
+      var due = el("div", { class: "nav-guarda" });
+      [[n[0], v.suIo, v.giuIo], [n[1], v.suAvv, v.giuAvv]].forEach(function (lato) {
+        due.appendChild(el("div", { class: "nav-guarda-lato" }, [ el("div", { class: "nav-sub", text: "🚢 " + lato[0] + " · affondate " + lato[2] + "/" + NTOT }), campo(lato[1]) ]));
+      });
+      box.appendChild(due);
+      var piede = v.fase === "fine" ? [el("p", { class: "modulo-nota", text: "Tra poco si torna al tabellone…" })] : [];
+      if (mont && document.body.contains(mont.box)) {   // aggiorno solo il contenuto (niente lampeggio)
+        mont.cont.replaceChild(box, mont.box); mont.box = box;
+        mont.piede.innerHTML = ""; piede.forEach(function (p) { mont.piede.appendChild(p); });
+      } else {
+        var s = t.schermata({ indietro: esci });
+        s._contenuto.appendChild(box); piede.forEach(function (p) { s._piede.appendChild(p); }); t.mostra(s);
+        mont = { cont: s._contenuto, box: box, piede: s._piede };
+      }
+    }
+    attesa("👀 Mi collego alla partita…");
+    rete = SGNet.entra(codice, {
+      onMsg: function (m) {
+        if (!m || !m.t) return;
+        if (m.t === "vista" && m.v) disegna(m);
+        else if (m.t === "sala") attesa("👀 La partita sta per cominciare…");
+      },
+      onChiuso: esci,   // partita finita e chiusa: si torna al tabellone
+      onErrore: function () { erroreNav(t, "Problema di collegamento. Controlla la connessione e riprova."); }
+    });
   }
 
   function avatarOk(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
@@ -24734,7 +25220,7 @@ window.SG_SIPERO = {
     icona: "🎯",
     descrizione: "Mira e lancia la palla-pendolo (forza fissa) per buttare in acqua chi sta sulla trave. Da solo vs bot, oppure online: uno lancia, gli altri schivano.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 1,
-    etichettaGiocatori: "👤 Da solo o 🔗 online",
+    etichettaGiocatori: "👥 1–4 giocatori",   // (da solo, o online: chi lancia più 3 posti)
     regole: [
       "Sei di spalle: davanti una <b>trave sull'acqua</b> con dei personaggi. La palla appesa oscilla <b>in profondità</b>.",
       "<b>Lanciatore</b>: miri di lato (◀ ▶ o trascini) e premi <b>LANCIA</b>. Il lancio è <b>sempre uguale</b> e lento: conta il tempismo. Il <b>mirino rosso</b> mostra dove cadrà.",
@@ -27120,9 +27606,9 @@ window.SG_SIPERO = {
     var box = el("div", { style: "display:flex;flex-direction:column" });
 
     // ---- intestazione: punti (a sinistra) + tasto musica (a destra) ----
-    var mioTurno = (vm.turno === vm.io && vm.fase === "gioco" && !vm.presa);
+    var mioTurno = !cb.guarda && (vm.turno === vm.io && vm.fase === "gioco" && !vm.presa);   // chi guarda non tocca
     var head = el("div", { class: "sc-testata" });   // punteggio e musica DENTRO la stanza (in alto; a sinistra c'è il tasto indietro)
-    head.appendChild(el("div", { style: "font-size:.8rem;font-weight:700", html: "<b>" + vm.nomi.io + " " + vm.punti.io + "</b> — " + vm.nomi.opp + " " + vm.punti.opp + " <span class='tenue' style='font-weight:600'>(a " + TARGET + ")</span>" }));
+    head.appendChild(el("div", { style: "font-size:.8rem;font-weight:700", html: (cb.guarda ? "👀 " : "") + "<b>" + vm.nomi.io + " " + vm.punti.io + "</b> — " + vm.nomi.opp + " " + vm.punti.opp + " <span class='tenue' style='font-weight:600'>(a " + TARGET + ")</span>" }));
     if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
 
     // ---- la stanza: l'avversario seduto dietro al tavolo verde in prospettiva ----
@@ -27246,7 +27732,7 @@ window.SG_SIPERO = {
       manoW.appendChild(cel);
     });
     mensola.appendChild(manoW);
-    mensola.appendChild(el("div", { class: "sc-prese", html: "le tue prese <b>" + vm.preseIo + "</b>" + (vm.settebelloIo ? " · 7💰" : "") + (vm.scopeIo ? " · scope " + vm.scopeIo : "") }));
+    mensola.appendChild(el("div", { class: "sc-prese", html: (cb.guarda ? "le carte di " + vm.nomi.io + " · prese" : "le tue prese") + " <b>" + vm.preseIo + "</b>" + (vm.settebelloIo ? " · 7💰" : "") + (vm.scopeIo ? " · scope " + vm.scopeIo : "") }));
     box.appendChild(mensola);
 
     // ---- suggerimento: in sovrimpressione sul tavolo (non sposta niente e non fa scorrere la pagina) ----
@@ -27262,7 +27748,7 @@ window.SG_SIPERO = {
       scMount.piede.innerHTML = "";
       piedeNodi.forEach(function (n) { scMount.piede.appendChild(n); });
     } else {
-      var s = t.schermata({ indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      var s = t.schermata({ indietro: function () { if (cb.guarda || window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
       s.classList.add("sc-piena");   // stanza da bordo a bordo
       s._contenuto.appendChild(box);
       piedeNodi.forEach(function (n) { s._piede.appendChild(n); });
@@ -27311,9 +27797,10 @@ window.SG_SIPERO = {
   // riepilogo di fine smazzata / fine partita
   function renderFine(t, C, cb) {
     var el = t.el, vm = C.vm, r = vm.ultimoRound;
+    var pari = vm.fase === "fine" && vm.punti && vm.punti.io === vm.punti.opp;
     var s = t.schermata({ icona: vm.fase === "fine" ? "🏆" : "🧮",
-      titolo: vm.fase === "fine" ? (vm.vincitoreIo ? "Hai vinto!" : "Ha vinto " + vm.nomi.opp) : "Fine smazzata",
-      sotto: "Scopa · " + vm.nomi.io + " vs " + vm.nomi.opp });
+      titolo: vm.fase === "fine" ? (cb.guarda ? (pari ? "Pareggio!" : "Ha vinto " + (vm.vincitoreIo ? vm.nomi.io : vm.nomi.opp)) : (vm.vincitoreIo ? "Hai vinto!" : "Ha vinto " + vm.nomi.opp)) : "Fine smazzata",
+      sotto: "Scopa · " + vm.nomi.io + " vs " + vm.nomi.opp, indietro: cb.guarda ? cb.onEsci : null });
     function riga(nome, a, b, vinc) {
       return el("div", { style: "display:flex;justify-content:space-between;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,.05);margin-bottom:5px" }, [
         el("span", { text: nome }),
@@ -27336,7 +27823,9 @@ window.SG_SIPERO = {
       s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:1.3rem;font-weight:800;margin-top:8px",
         html: vm.nomi.io + " <span style='color:#ffd43b'>" + (io === "A" ? r.tot.A : r.tot.B) + "</span> — " + (io === "A" ? r.tot.B : r.tot.A) + " " + vm.nomi.opp }));
     }
-    if (vm.fase === "fine") {
+    if (cb.guarda) {   // chi guarda: niente tasti, solo cosa succede
+      s._piede.appendChild(el("p", { class: "modulo-nota", text: vm.fase !== "fine" ? "In attesa della prossima smazzata…" : (pari ? "Pareggio: si rigioca!" : "Tra poco si torna al tabellone…") }));
+    } else if (vm.fase === "fine") {
       if (cb.sonoHost || cb.locale) {
         s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
         s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
@@ -27418,7 +27907,7 @@ window.SG_SIPERO = {
     };
     C._presaFino = 0; C._pend = null;
     C.setVm = function (vm) {
-      tracciaScopa(T, vm);   // trofei
+      if (!cb.guarda) tracciaScopa(T, vm);   // trofei (chi guarda non gioca)
       // pulisci la selezione se non è più il mio turno
       if (!vm || vm.turno !== vm.io || vm.fase !== "gioco") C.sel = { carta: null, presa: [] };
       if (C._pend) { clearTimeout(C._pend); C._pend = null; }
@@ -27508,7 +27997,7 @@ window.SG_SIPERO = {
     },
     avvia: function (t) {
       var imp = t.impostazioni || {};
-      if (t.linkParams && t.linkParams.stanza) return ospiteScopa(t, t.linkParams.stanza);
+      if (t.linkParams && t.linkParams.stanza) return t.linkParams.guarda ? guardaScopa(t, t.linkParams.stanza) : ospiteScopa(t, t.linkParams.stanza);
       if (imp.modo === "online") return hostScopa(t);
       return localeScopa(t, imp.difficolta || "medio");
     }
@@ -27539,7 +28028,18 @@ window.SG_SIPERO = {
       onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); t.esci(); }
     });
     var omini = { A: mioAvatar(nomi.A), B: AVATAR_BOT };
-    function aggiorna() { C.setVm(vistaDa(M.st, "A", omini)); }
+    var detto = false;   // il risultato di questa partita è già stato dato? (torneo a eliminazione)
+    function aggiorna() {
+      var v = vistaDa(M.st, "A", omini);
+      if (t.trasmetti) t.trasmetti({ t: "vm", vm: v });   // torneo a eliminazione: chi guarda vede la partita col bot
+      C.setVm(v);
+      if (M.st.fase !== "fine") { detto = false; return; }
+      if (!detto && t.risultato) {
+        detto = true;
+        var a = M.st.punti.A, b = M.st.punti.B;
+        t.risultato(a >= b ? [{ nome: nomi.A, pos: 1 }, { nome: nomi.B, pos: a === b ? 1 : 2 }] : [{ nome: nomi.B, pos: 1 }, { nome: nomi.A, pos: 2 }]);
+      }
+    }
     function continua(ev) {
       // se ha preso, mostra per un attimo cosa è stato preso, poi prosegue
       if (ev.presa && M.st.fase === "gioco") {
@@ -27677,6 +28177,35 @@ window.SG_SIPERO = {
       s._contenuto.appendChild(S.msg2);
       t.mostra(s);
     }
+  }
+
+  // chi guarda una partita del torneo a eliminazione: la vede in diretta alle spalle di un giocatore, senza toccare.
+  // (Niente suoni: farebbero vibrare il telefono.)
+  function guardaScopa(t, codice) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var rete = null, scritta = null;
+    var C = creaClient(t, {
+      guarda: true, sonoHost: false,
+      onMossa: function () {}, onAvanti: function () {}, onNuova: function () {},
+      onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
+    });
+    function attesa(txt) {
+      if (scritta === txt) return; scritta = txt;
+      var s = t.schermata({ indietro: function () { C.esci(); } });
+      s._contenuto.appendChild(t.el("p", { class: "modulo-nota guarda-attesa", text: txt }));
+      t.mostra(s);
+    }
+    C.esci = function () { if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); };
+    attesa("👀 Mi collego alla partita…");
+    rete = SGNet.entra(codice, {
+      onMsg: function (m) {
+        if (!m) return;
+        if (m.t === "vm" && m.vm) { scritta = null; C.setVm(m.vm); }
+        else if (m.t === "lobby") { C.vm = null; attesa("👀 La partita sta per cominciare…"); }
+      },
+      onChiuso: function () { C.esci(); },   // partita finita e chiusa: si torna al tabellone
+      onErrore: function () { erroreScopa(t, "Problema di collegamento. Riprova."); }
+    });
   }
 
   // la saletta d'attesa (uguale per tutti i giochi): tu e il tuo avversario
@@ -28344,7 +28873,7 @@ window.SG_SIPERO = {
     nome: "Scopa 2 vs 2",
     icona: "🃏",
     descrizione: "La Scopa a squadre, in quattro al tavolo: tu e il tuo compagno contro due. Contro i bot o online, ognuno dal suo telefono (i posti vuoti li fanno i bot).",
-    giocatoriMin: 1, giocatoriMax: 1, difficolta: 3,
+    giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 1–4 giocatori",   // (i posti liberi li prendono i bot)
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu e un bot contro due bot" }],
     regole: [
       "Si gioca <b>in quattro, due squadre</b>: tu + il Compagno (di fronte) contro due avversari. Le carte sono le 40 napoletane.",
@@ -28427,7 +28956,7 @@ window.SG_SIPERO = {
     nome: "Scopone",
     icona: "🃏",
     descrizione: "Lo scopone in quattro (a squadre): tu e il tuo compagno contro due avversari. Varianti classico e scientifico. Contro il computer.",
-    giocatoriMin: 1, giocatoriMax: 1, difficolta: 3,
+    giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 1–4 giocatori",   // (i posti liberi li prendono i bot)
     regole: [
       "Si gioca <b>in quattro, a due squadre</b>: tu e il <b>Compagno</b> (di fronte) contro due <b>Rivali</b>. Qui giochi contro il computer.",
       "<b>Scientifico</b>: 10 carte a testa, niente carte sul tavolo. <b>Classico</b>: 9 a testa + 4 sul tavolo.",
@@ -31098,7 +31627,7 @@ window.SG_SIPERO = {
 
     avvia: function (t) {
       var imp = t.impostazioni || {};
-      if (t.linkParams && t.linkParams.stanza) return ospiteTris(t, t.linkParams.stanza);
+      if (t.linkParams && t.linkParams.stanza) return t.linkParams.guarda ? guardaTris(t, t.linkParams.stanza) : ospiteTris(t, t.linkParams.stanza);
       if (imp.modo === "online") return hostTris(t);
       return localeTris(t, imp.modo === "telefono" ? "telefono" : "bot", imp.difficolta || "medio", !!imp.torneo);
     }
@@ -31134,6 +31663,7 @@ window.SG_SIPERO = {
   // (contro il bot e online sei tu; in due sullo stesso telefono conta chi ha il nome del profilo)
   var TT = { fatta: null };
   function trofeiTris(vm, cb) {
+    if (cb.guarda) return;   // chi guarda non gioca
     if (vm.fase !== "fine" || !vm.fine) { TT.fatta = null; return; }
     var chiave = vm.board.join(",") + "|" + vm.fine.vincitore;
     if (TT.fatta === chiave) return; TT.fatta = chiave;
@@ -31159,6 +31689,7 @@ window.SG_SIPERO = {
     trofeiTris(vm, cb);
     var el = t.el;
     var box = el("div", {});
+    if (cb.guarda) box.appendChild(el("div", { class: "guarda-riga", html: "👀 <span style='color:" + CX + "'>" + esc(vm.nomi.X) + "</span> 🆚 <span style='color:" + CO + "'>" + esc(vm.nomi.O) + "</span>" }));
     box.appendChild(el("div", { style: "text-align:center;font-weight:800;font-size:1.2rem;margin:6px 0 12px;min-height:1.4em", html: statoHtml(vm, cb) }));
     var grid = el("div", { style: "display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(86vw,330px);margin:0 auto" });
     vm.board.forEach(function (v, i) {
@@ -31171,7 +31702,9 @@ window.SG_SIPERO = {
 
     var piedeNodi = [];
     if (vm.fase === "fine") {
-      if (cb.locale || cb.sonoHost) {
+      if (cb.guarda) {
+        piedeNodi.push(el("p", { class: "modulo-nota", text: vm.fine && vm.fine.vincitore ? "Tra poco si torna al tabellone…" : "Pareggio: si rigioca!" }));
+      } else if (cb.locale || cb.sonoHost) {
         piedeNodi.push(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: cb.onRivincita }));
         piedeNodi.push(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
       } else {
@@ -31186,7 +31719,7 @@ window.SG_SIPERO = {
     } else {
       var sotto = vm.nomi.X + " (X) · " + vm.nomi.O + " (O)";
       var s = t.schermata({ icona: "⭕", titolo: "Tris", sotto: sotto,
-        indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+        indietro: function () { if (cb.guarda || window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
       s._contenuto.appendChild(box); piedeNodi.forEach(function (n) { s._piede.appendChild(n); }); t.mostra(s);
       trMount = { cont: s._contenuto, box: box, piede: s._piede };
     }
@@ -31203,6 +31736,7 @@ window.SG_SIPERO = {
 
     function render() {
       var vm = { fase: st.fine ? "fine" : "gioco", board: st.board, turno: st.turno, fine: st.fine, nomi: nomi };
+      if (t.trasmetti) t.trasmetti({ t: "vm", vm: vm });   // torneo a eliminazione: gli altri guardano la partita col bot
       campoTris(t, vm, {
         locale: true, bot: modo === "bot", mio: modo === "bot" ? "X" : null, liv: difficolta,
         onCella: function (i) { gioca(i); },
@@ -31217,6 +31751,8 @@ window.SG_SIPERO = {
       if (w) st.fine = { vincitore: w.s, linea: w.linea };
       else if (pieno(st.board)) st.fine = { vincitore: null, linea: null };
       else st.turno = altro(st.turno);
+      // torneo a eliminazione: chi ha vinto (pari = stesso posto, si rigioca)
+      if (st.fine && t.risultato) t.risultato(classifica().map(function (r, i) { return { nome: r.nome, pos: st.fine.vincitore ? i + 1 : 1 }; }));
       if (st.fine && torneo) return t.fine(classifica());
       render();
       if (!st.fine && modo === "bot" && st.turno === "O") pensaBot();
@@ -31331,6 +31867,31 @@ window.SG_SIPERO = {
         onErrore: function () { errore(t, "Problema di collegamento. Controlla la connessione e riprova."); }
       });
     }
+  }
+
+  // chi guarda una partita del torneo a eliminazione: la vede in diretta, senza poter toccare
+  function guardaTris(t, codice) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var rete = null, scritta = null;   // (chi guarda: niente suoni, farebbero vibrare il telefono)
+    var cb = { guarda: true, sonoHost: false, mio: "-", onCella: function () {}, onRivincita: function () {},
+      onEsci: function () { if (rete) rete.chiudi(); t.esci(); } };
+    function attesa(txt) {
+      if (scritta === txt) return; scritta = txt;
+      var s = t.schermata({ indietro: cb.onEsci });
+      s._contenuto.appendChild(t.el("p", { class: "modulo-nota guarda-attesa", text: txt }));
+      t.mostra(s);
+    }
+    attesa("👀 Mi collego alla partita…");
+    rete = SGNet.entra(codice, {
+      onMsg: function (m) {
+        if (!m || m.t !== "vm" || !m.vm || !m.vm.board) return;
+        if (m.vm.fase === "lobby") return attesa("👀 La partita sta per cominciare…");
+        scritta = null;
+        campoTris(t, m.vm, cb);
+      },
+      onChiuso: function () { cb.onEsci(); },   // partita finita e chiusa: si torna al tabellone
+      onErrore: function () { errore(t, "Problema di collegamento. Controlla la connessione e riprova."); }
+    });
   }
 
   function disegnaVM(t, vm, cb) {

@@ -33,7 +33,8 @@ Una web app di party game da telefono (tanti giochi, uno per file), in JavaScrip
 - Saletta d'attesa uguale per tutti: `t.lobby({ host, codice, pronta, giocatori:[{id,nome,omino,host,tu}], min, extra, onComincia, onEsci, ... })`.
 - Chi entra manda il suo avatar (`t.mioOmino(nome)`); chi ha un profilo entra da solo col suo nome (`t.nomeProfilo()`).
 - Regole cambiabili dall'host in saletta: il gioco implementa `t.onRegole(impostazioni)` se legge le impostazioni all'avvio.
-- A fine partita: `t.risultato([{ nome, pos }])` (serve al torneo online).
+- A fine partita: `t.risultato([{ nome, pos }])` (serve al torneo online). Nei giochi a due va chiamato anche nella partita contro il bot: serve al torneo a eliminazione (`GIOCHI_ELIMINAZIONE` in core.js).
+- Un gioco a due nel torneo a eliminazione deve anche: mostrare la partita a chi guarda (`t.linkParams.guarda`: si collega con `SGNet.entra` senza mandare "join", non può toccare, niente trofei né suoni; esempio `guardaTris` in tris.js) e, nella partita contro il bot, mandare lo stato con `t.trasmetti(msg)` (gli stessi messaggi dell'host online).
 
 ## Trofei
 Lista `TROFEI` in core.js (`{ gioco, livello, icona, nome, desc, stat, meta }`) più i contatori nei giochi, salvati con `SGNube.salvaProgressi(...)`. Le liste arrivano dal proprietario: prima di aggiungerle, controllare che si possano davvero ottenere e che i numeri non siano esagerati.
