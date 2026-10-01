@@ -4857,8 +4857,9 @@ button.am-riga:active{ transform:scale(.985); }
       nota: E ? (E.iniziato && !E.finito ? "Le partite si aprono da sole sul telefono di chi gioca." : "Ognuno tocca il girone in cui vuole giocare. Quando siete pronti, fai partire il torneo.")
         : "Scegli un gioco: parte da solo sul telefono di tutti. A fine partita si torna qui.",
       onComincia: E ? function () { if (E.finito) nuovoElim(); else avviaElim(); } : salaScegliGioco,
+      onRegole: E ? function () { sala._bcast(); } : undefined,
       onEsci: function () { chiudiSala(); schermataHome(); }
-    });
+    }, E ? regoleElim() : null);
   }
 
   function salaScegliGioco() {
@@ -5142,6 +5143,18 @@ button.am-riga:active{ transform:scale(.985); }
   }
   function seguiHost() { if (sala && sala.elim) seguiTabellone(sala, "host", sala.membri[0].nome, disegnaSalaHost, function (k, v) { esitoPartita(k, v, "host"); }); }
   function seguiOspite() { if (salaG && salaG.elim) seguiTabellone(salaG, salaG.myId, salaG.nome, disegnaSalaOspite, function (k, v) { if (salaG && salaG.rete) salaG.rete.invia({ t: "esito", k: k, vinto: v }); }); }
+  // ⚙️ Regole del torneo: le impostazioni del gioco (es. i punti da raggiungere nella Scopa), uguali per tutte le partite.
+  // Il riquadro resta sul telefono dell'host; i valori (E.imp) viaggiano con la sala.
+  function regoleElim() {
+    var E = sala && sala.elim, g = E && giocoDa(E.gioco);
+    if (!g || !g.impostazioni) return null;
+    if (!sala.regoleElim) {
+      var imp = {}, box = el("div", {});
+      g.impostazioni(box, imp, { el: el, sala: true, modo: "online" });
+      E.imp = imp; sala.regoleElim = { box: box, imp: imp };
+    }
+    return haRegole(sala.regoleElim.box) ? sala.regoleElim : null;
+  }
   function giocaPartitaElim(S, p, mioId, mioNome, mostraSala, diEsito) {
     var g = giocoDa(S.elim.gioco); if (!g) return mostraSala();
     chiudiTabelloneElim(); SGNet.chiudiGiochi();
@@ -5165,9 +5178,9 @@ button.am-riga:active{ transform:scale(.985); }
         if (!rete && p.stanza) { SGNet._forza = p.stanza; rete = SGNet.ospita(g.id, { onConnesso: function () { if (rete && ultimo) rete.invia(ultimo); } }); }
         if (rete) rete.invia(msg);
       };
-      linkParams = {}; avviaPartita(g, [mioNome], { modo: "bot", difficolta: "medio" }, null, ctx);
+      linkParams = {}; avviaPartita(g, [mioNome], Object.assign({}, S.elim.imp || {}, { modo: "bot", difficolta: "medio" }), null, ctx);
     }
-    else if (p.a === mioId) { linkParams = {}; SGNet._forza = p.stanza; avviaPartita(g, [mioNome], { modo: "online" }, null, ctx); }
+    else if (p.a === mioId) { linkParams = {}; SGNet._forza = p.stanza; avviaPartita(g, [mioNome], Object.assign({}, S.elim.imp || {}, { modo: "online" }), null, ctx); }
     else { linkParams = { gioco: g.id, stanza: p.stanza }; avviaPartita(g, [], {}, null, ctx); }
     linkParams = vecchio;
   }
@@ -13828,6 +13841,18 @@ window.SG_NCC_CATEGORIE = {
      descrizione-> elenco di righe: cosa cambia per chi gioca
    ========================================================= */
 window.SG_NOVITA = [
+  {
+    v: 145,
+    data: "1 ottobre 2026",
+    titolo: "Scopa, Scopa 2 vs 2 e Scopone: scegli a quanti punti 🃏",
+    descrizione: [
+      "Prima di cominciare scegli i punti da raggiungere: una mano sola, 7, 11 o 21. Oppure scrivi tu un numero da 1 a 99.",
+      "Online si cambia anche nella saletta (⚙️ Regole). Nel torneo a eliminazione di Scopa lo sceglie l'host e vale per tutte le partite.",
+      "Se si arriva ai punti a pari merito si gioca un'altra mano. Con una mano sola può finire pari.",
+      "I trofei della partita intera contano solo nelle partite da almeno 11 punti.",
+      "Correzione: lo Scopone per ora si gioca contro il computer (tu e 3 bot)."
+    ]
+  },
   {
     v: 144,
     data: "1 ottobre 2026",
@@ -26973,7 +26998,47 @@ window.SG_SIPERO = {
   var COLORE = { D: "#e0a11b", C: "#d1495b", S: "#2f6fb0", B: "#2e8b57" };
   var FIG = { 8: "💂", 9: "🐎", 10: "👑" };         // Fante, Cavallo, Re
   var PRIM = { 1: 16, 2: 12, 3: 13, 4: 14, 5: 15, 6: 18, 7: 21, 8: 10, 9: 10, 10: 10 };
-  var TARGET = 11;
+  var TARGET = 11;   // i punti da raggiungere se non si sceglie altro
+
+  // ---- punti da raggiungere (Scopa, Scopa 2 vs 2, Scopone): una mano sola, 7, 11, 21 o quanti si vuole (1–99) ----
+  function traguardoDa(imp) {   // 0 = una mano sola
+    var n = imp && imp.traguardo;
+    if (n === 0) return 0;
+    n = Math.floor(+n);
+    return n >= 1 && n <= 99 ? n : TARGET;
+  }
+  function testoTraguardo(n) { if (n == null) n = TARGET; return n ? "a " + n : "una mano"; }
+  // finita una mano, la partita è chiusa? Con una mano sola sì; altrimenti quando qualcuno arriva ai punti
+  // (se arrivano tutti e due a pari punti si gioca un'altra mano)
+  function partitaFinita(n, a, b) { return !n || ((a >= n || b >= n) && a !== b); }
+  function sceltaTraguardo(el, box, dove) {
+    dove.traguardo = TARGET;
+    box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Punti da raggiungere" }));
+    var scelte = [[0, "Una mano"], [7, "7"], [11, "11"], [21, "21"]], riga = el("div", { style: "display:flex;gap:6px" }), campo;
+    function segna() {
+      [].forEach.call(riga.children, function (c, i) { c.className = "modo-chip" + (scelte[i][0] === dove.traguardo ? " attiva" : ""); c.style.flex = i ? "1" : "1.7"; });
+    }
+    scelte.forEach(function (s) {
+      riga.appendChild(el("button", { class: "modo-chip", style: "justify-content:center;text-align:center;padding-left:4px;padding-right:4px", onclick: function () {
+        dove.traguardo = s[0]; campo.value = s[0] || ""; segna();
+      } }, [el("div", { class: "mt", text: s[1] })]));
+    });
+    box.appendChild(riga);
+    campo = el("input", { type: "number", min: "1", max: "99", inputmode: "numeric", class: "link-campo", placeholder: "1–99", "aria-label": "Punti da raggiungere", style: "width:5.5em;text-align:center;margin:0" });
+    campo.value = String(dove.traguardo);
+    campo.addEventListener("input", function () {
+      var n = Math.floor(+campo.value);
+      if (n >= 1 && n <= 99) { dove.traguardo = n; segna(); }
+    });
+    campo.addEventListener("change", function () {   // un numero fuori misura torna a quello scelto
+      var n = Math.floor(+campo.value);
+      if (n > 99) { dove.traguardo = 99; segna(); }
+      campo.value = dove.traguardo ? String(dove.traguardo) : "";
+    });
+    box.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.92rem" }, [
+      el("span", { text: "✏️ Oppure scegli tu:" }), campo, el("span", { class: "tenue", text: "punti" }) ]));
+    segna();
+  }
 
   function altro(k) { return k === "A" ? "B" : "A"; }
   function trova(arr, id) { for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
@@ -27023,8 +27088,9 @@ window.SG_SIPERO = {
   }
 
   // ---------- motore di partita (host-autoritativo / locale) ----------
-  function creaMotore(nomi, mischia) {
+  function creaMotore(nomi, mischia, traguardo) {
     var st = {
+      traguardo: traguardo == null ? TARGET : traguardo,
       mazzo: [], tavolo: [], mani: { A: [], B: [] }, prese: { A: [], B: [] },
       scope: { A: 0, B: 0 }, turno: "A", ultimaPresa: null,
       fase: "gioco", primo: "A", punti: { A: 0, B: 0 }, nomi: nomi,
@@ -27081,7 +27147,7 @@ window.SG_SIPERO = {
       var pa = puntiRound(p, st.scope, "A"), pb = puntiRound(p, st.scope, "B");
       st.punti.A += pa; st.punti.B += pb;
       st.ultimoRound = { p: p, scope: { A: st.scope.A, B: st.scope.B }, guad: { A: pa, B: pb }, tot: { A: st.punti.A, B: st.punti.B } };
-      if (st.punti.A >= TARGET || st.punti.B >= TARGET) st.fase = "fine";
+      if (partitaFinita(st.traguardo, st.punti.A, st.punti.B)) st.fase = "fine";
       else st.fase = "fineround";
     }
     function prossimoRound() {
@@ -27608,7 +27674,7 @@ window.SG_SIPERO = {
     // ---- intestazione: punti (a sinistra) + tasto musica (a destra) ----
     var mioTurno = !cb.guarda && (vm.turno === vm.io && vm.fase === "gioco" && !vm.presa);   // chi guarda non tocca
     var head = el("div", { class: "sc-testata" });   // punteggio e musica DENTRO la stanza (in alto; a sinistra c'è il tasto indietro)
-    head.appendChild(el("div", { style: "font-size:.8rem;font-weight:700", html: (cb.guarda ? "👀 " : "") + "<b>" + vm.nomi.io + " " + vm.punti.io + "</b> — " + vm.nomi.opp + " " + vm.punti.opp + " <span class='tenue' style='font-weight:600'>(a " + TARGET + ")</span>" }));
+    head.appendChild(el("div", { style: "font-size:.8rem;font-weight:700", html: (cb.guarda ? "👀 " : "") + "<b>" + vm.nomi.io + " " + vm.punti.io + "</b> — " + vm.nomi.opp + " " + vm.punti.opp + " <span class='tenue' style='font-weight:600'>(" + testoTraguardo(vm.traguardo) + ")</span>" }));
     if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
 
     // ---- la stanza: l'avversario seduto dietro al tavolo verde in prospettiva ----
@@ -27799,7 +27865,7 @@ window.SG_SIPERO = {
     var el = t.el, vm = C.vm, r = vm.ultimoRound;
     var pari = vm.fase === "fine" && vm.punti && vm.punti.io === vm.punti.opp;
     var s = t.schermata({ icona: vm.fase === "fine" ? "🏆" : "🧮",
-      titolo: vm.fase === "fine" ? (cb.guarda ? (pari ? "Pareggio!" : "Ha vinto " + (vm.vincitoreIo ? vm.nomi.io : vm.nomi.opp)) : (vm.vincitoreIo ? "Hai vinto!" : "Ha vinto " + vm.nomi.opp)) : "Fine smazzata",
+      titolo: vm.fase === "fine" ? (cb.guarda ? (pari ? "Pareggio!" : "Ha vinto " + (vm.vincitoreIo ? vm.nomi.io : vm.nomi.opp)) : (pari ? "Pareggio!" : (vm.vincitoreIo ? "Hai vinto!" : "Ha vinto " + vm.nomi.opp))) : "Fine smazzata",
       sotto: "Scopa · " + vm.nomi.io + " vs " + vm.nomi.opp, indietro: cb.guarda ? cb.onEsci : null });
     function riga(nome, a, b, vinc) {
       return el("div", { style: "display:flex;justify-content:space-between;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,.05);margin-bottom:5px" }, [
@@ -27865,7 +27931,8 @@ window.SG_SIPERO = {
       cappotto: tutti4 ? 1 : 0, sopraMedia: (tutti4 && r.scope[io] >= 1) ? 1 : 0 };
     if (p.settebello === io) T.match.sette++;
     if (r.tot[opp] >= 10 && r.tot[io] < 10) T.match.oppA10 = true;   // l'avversario è arrivato a 10 prima di te
-    if (vm.fase === "fine") {
+    // i trofei della partita intera valgono solo per le partite vere (almeno a 11): con una mano sola o pochi punti sarebbero regalati
+    if (vm.fase === "fine" && !(vm.traguardo != null && vm.traguardo < TARGET)) {
       c.partite = 1;
       if (vm.vincitoreIo) {
         c.vinte = 1;
@@ -27873,8 +27940,8 @@ window.SG_SIPERO = {
         if (r.tot[opp] === 0) c.vinteAZero = 1;
         if (T.match.oppA10) c.rimonte = 1;
       }
-      T.match = { sette: 0, oppA10: false };
     }
+    if (vm.fase === "fine") T.match = { sette: 0, oppA10: false };
     T.round = { scopeDenari: 0, scopeAsso: 0 };
     if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
     var incrs = []; for (var k in c) if (c[k]) incrs.push([k, c[k]]);
@@ -27929,7 +27996,7 @@ window.SG_SIPERO = {
   function vistaDa(st, io, omini) {
     var opp = altro(io);
     return {
-      fase: st.fase, io: io, turno: st.turno,
+      fase: st.fase, io: io, turno: st.turno, traguardo: st.traguardo,
       nomi: { io: st.nomi[io], opp: st.nomi[opp] }, avatar: omini ? { opp: omini[opp] || null } : null,
       mano: st.mani[io].slice(), oppN: st.mani[opp].length, tavolo: st.tavolo.slice(), mazzoN: st.mazzo.length,
       preseIo: st.prese[io].length, preseOpp: st.prese[opp].length,
@@ -27954,7 +28021,7 @@ window.SG_SIPERO = {
       "Nel tuo turno giochi una carta: se ha lo <b>stesso valore</b> di una carta sul tavolo la <b>prendi</b>. Se non c'è un valore uguale, puoi prendere <b>più carte che sommano</b> al valore della tua.",
       "Se dopo la presa il tavolo resta <b>vuoto</b> fai <b>Scopa</b> (+1 punto), tranne con l'ultima carta.",
       "A fine mazzo le carte rimaste sul tavolo vanno all'ultimo che ha preso.",
-      "Punti a fine smazzata: <b>Carte</b> (chi ne prende di più), <b>Denari</b> (più carte di denari), <b>Settebello</b> (il 7 di denari), <b>Primiera</b>, più le <b>Scope</b>. Vince chi arriva a <b>" + TARGET + "</b>.",
+      "Punti a fine smazzata: <b>Carte</b> (chi ne prende di più), <b>Denari</b> (più carte di denari), <b>Settebello</b> (il 7 di denari), <b>Primiera</b>, più le <b>Scope</b>. Vince chi arriva per primo ai <b>punti scelti</b> (di solito " + TARGET + "; a pari punti si gioca un'altra mano). Si può giocare anche <b>una mano sola</b>.",
       "Modalità: <b>contro il bot</b> (Facile/Medio/Difficile) oppure <b>online</b>, ognuno dal suo telefono."
     ],
     impostazioni: function (box, dove, aiuti) {
@@ -27988,6 +28055,7 @@ window.SG_SIPERO = {
         b.style.flex = "1"; diffWrap.appendChild(b);
       });
       boxDiff.appendChild(diffWrap); box.appendChild(boxDiff);
+      sceltaTraguardo(el, box, dove);
       notaOnline = el("div", { class: "link-avviso", hidden: "hidden" });
       notaOnline.textContent = (window.SGNet && SGNet.disponibile())
         ? "Apri una stanza e manda il codice: l'altro entra dal suo telefono (ognuno vede solo le proprie carte)."
@@ -28019,12 +28087,12 @@ window.SG_SIPERO = {
   // ---------- LOCALE (contro il bot) : io = A, bot = B ----------
   function localeScopa(t, difficolta) {
     var nomi = { A: (t.giocatori[0] || "Tu"), B: "Matt" };
-    var M = creaMotore(nomi, t.mischia);
+    var M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni));
     var C = creaClient(t, {
       locale: true, sonoHost: true,
       onMossa: function (id, presa) { mossaUmano(id, presa); },
       onAvanti: function () { M.prossimoRound(); aggiorna(); seTuraBot(); },
-      onNuova: function () { M = creaMotore(nomi, t.mischia); aggiorna(); seTuraBot(); },
+      onNuova: function () { M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni)); aggiorna(); seTuraBot(); },
       onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); t.esci(); }
     });
     var omini = { A: mioAvatar(nomi.A), B: AVATAR_BOT };
@@ -28072,7 +28140,7 @@ window.SG_SIPERO = {
       sonoHost: true,
       onMossa: function (id, presa) { if (!M) return; var ev = M.gioca("A", id, presa); dopo(ev); },
       onAvanti: function () { if (M) { M.prossimoRound(); bcast(); } },
-      onNuova: function () { M = creaMotore(nomi, t.mischia); bcast(); },
+      onNuova: function () { M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni)); bcast(); },
       onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
     });
     function lobbyVm() { return { lobby: true, codice: codice, pronta: pronta, avversario: !!avvId, sonoHost: true, io: "A", nomi: nomi, omini: omini }; }
@@ -28115,7 +28183,7 @@ window.SG_SIPERO = {
       if (M) return;
       renderLobby(t, lobbyVm(), {
         sonoHost: true,
-        onComincia: function () { if (avvId) { M = creaMotore(nomi, t.mischia); bcast(); } },
+        onComincia: function () { if (avvId) { M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni)); bcast(); } },
         onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
       });
     }
@@ -28239,7 +28307,9 @@ window.SG_SIPERO = {
     validaSet: validaSet, prefisso: prefisso, PRIM: PRIM,
     // stanza a 4 con gli avatar (Scopa 2 vs 2 e Scopone)
     misureStanza4: misureStanza4, correggiStanza4: correggiStanza4, postiTavolo: postiTavolo, stanza4: stanza4, animaDistribuzione4: animaDistribuzione4,
-    mioAvatar: mioAvatar, avatarValido: avatarValido
+    mioAvatar: mioAvatar, avatarValido: avatarValido,
+    // i punti da raggiungere (anche Scopa 2 vs 2 e Scopone)
+    traguardoDa: traguardoDa, testoTraguardo: testoTraguardo, partitaFinita: partitaFinita, sceltaTraguardo: sceltaTraguardo
   };
 })();
 
@@ -28268,8 +28338,9 @@ window.SG_SIPERO = {
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
 
   // ---------- motore (4 giocatori, 2 squadre, con pesca) ----------
-  function creaStato() {
+  function creaStato(traguardo) {   // traguardo: i punti da raggiungere (0 = una mano sola)
     return {
+      traguardo: traguardo == null ? TARGET : traguardo,
       mazzo: [], tavolo: [], mani: [[], [], [], []], prese: [[], [], [], []],
       scope: [0, 0, 0, 0], turno: 0, ultimaPresa: null, fase: "gioco", primo: 0,
       punti: [0, 0], ultimoRound: null, presa: null, messaGiu: null, nomi: {}
@@ -28315,7 +28386,7 @@ window.SG_SIPERO = {
     st.punti[0] += r.punti[0]; st.punti[1] += r.punti[1];
     r.tot = [st.punti[0], st.punti[1]];
     st.ultimoRound = r;
-    st.fase = (st.punti[0] >= TARGET || st.punti[1] >= TARGET) ? "fine" : "fineround";
+    st.fase = C().partitaFinita(st.traguardo, st.punti[0], st.punti[1]) ? "fine" : "fineround";
   }
   function prossimaMano(st) { if (st.fase !== "fineround") return; st.primo = (st.primo + 1) % 4; nuovaMano(st); }
   function carteTeam(st, tm) { var o = []; for (var s = 0; s < 4; s++) if (team(s) === tm) o = o.concat(st.prese[s]); return o; }
@@ -28396,7 +28467,7 @@ window.SG_SIPERO = {
     }
     var preseMioTeam = st.prese[io].concat(st.prese[(io + 2) % 4]);
     return {
-      fase: st.fase, io: io, turno: st.turno,
+      fase: st.fase, io: io, turno: st.turno, traguardo: st.traguardo,
       nomi: [st.nomi[0], st.nomi[1], st.nomi[2], st.nomi[3]],
       nCarte: [st.mani[0].length, st.mani[1].length, st.mani[2].length, st.mani[3].length],
       mano: st.mani[io].slice(), tavolo: st.tavolo.slice(), mazzoN: st.mazzo.length,
@@ -28448,7 +28519,7 @@ window.SG_SIPERO = {
     T.match.scopeSubite += r.scope[1];
     if (r.tot[1] >= 10 && r.tot[0] < 10) T.match.oppA10 = true;
     var sets = [], recs = [];
-    if (vm.fase === "fine") {
+    if (vm.fase === "fine" && !(vm.traguardo != null && vm.traguardo < TARGET)) {   // (con una mano sola o pochi punti sarebbero regalati)
       var M = T.match, vinto = vm.vincitoreMio;
       var s0 = (window.SGNube && SGNube.statGioco && SGNube.statGioco("scopa2v2")) || {}, serie = s0.serieVinteOra || 0;
       c.partite = 1;
@@ -28462,8 +28533,8 @@ window.SG_SIPERO = {
         if (M.scopeMie >= 3 && M.scopeComp === 0) c.trascinatore = 1;
       } else serie = 0;
       recs.push(["serieVinteMax", serie]); sets.push(["serieVinteOra", serie]);
-      T.match = { scopeMie: 0, scopeComp: 0, setteAvv: 0, scopeSubite: 0, oppA10: false };
     }
+    if (vm.fase === "fine") T.match = { scopeMie: 0, scopeComp: 0, setteAvv: 0, scopeSubite: 0, oppA10: false };
     T.round = { scopeMie: 0, setteMio: 0, assist: 0 };
     if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
     var incrs = []; for (var k in c) if (c[k]) incrs.push([k, c[k]]);
@@ -28521,7 +28592,7 @@ window.SG_SIPERO = {
     var prevMano = mont ? (mont.prevMano || 0) : 0;
     var dealing = !vm.presa && vm.fase === "gioco" && vm.mano.length > prevMano;   // la mano è aumentata: si è distribuito
     var head = el("div", { class: "sc-testata" });   // punteggio e musica DENTRO la stanza (in alto; a sinistra c'è il tasto indietro)
-    head.appendChild(el("div", { style: "font-size:.82rem;font-weight:700", html: "Noi <b style='color:#69db7c'>" + vm.punti.mia + "</b> — Loro <b>" + vm.punti.altra + "</b> <span class='tenue' style='font-weight:600'>(a " + TARGET + ")</span>" }));
+    head.appendChild(el("div", { style: "font-size:.82rem;font-weight:700", html: "Noi <b style='color:#69db7c'>" + vm.punti.mia + "</b> — Loro <b>" + vm.punti.altra + "</b> <span class='tenue' style='font-weight:600'>(" + C().testoTraguardo(vm.traguardo) + ")</span>" }));
     if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
 
     // la stanza: a sinistra e a destra gli avversari, di fronte il compagno
@@ -28613,7 +28684,7 @@ window.SG_SIPERO = {
   function renderFine(t, vm, cb) {
     var el = t.el, r = vm.ultimoRound;
     var s = t.schermata({ icona: vm.fase === "fine" ? "🏆" : "🧮",
-      titolo: vm.fase === "fine" ? (vm.vincitoreMio ? "Avete vinto!" : "Hanno vinto gli altri") : "Fine mano",
+      titolo: vm.fase === "fine" ? (vm.punti.mia === vm.punti.altra ? "Pareggio!" : (vm.vincitoreMio ? "Avete vinto!" : "Hanno vinto gli altri")) : "Fine mano",
       sotto: "Scopa 2 vs 2" });
     function riga(nome, a, b, vinc) {
       return el("div", { style: "display:flex;justify-content:space-between;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,.05);margin-bottom:5px" }, [
@@ -28647,14 +28718,14 @@ window.SG_SIPERO = {
   //  LOCALE — tu (posto 0) + 3 bot
   // ========================================================
   function localeScopa2(t, diff) {
-    var st = creaStato();
+    var st = creaStato(C().traguardoDa(t.impostazioni));
     st.nomi = { 0: (t.giocatori[0] || "Tu"), 1: NOMI_BOT[1], 2: NOMI_BOT[2], 3: NOMI_BOT[3] };
     nuovaMano(st);
     var Cl = creaClient(t, {
       locale: true, sonoHost: true,
       onMossa: function (id, presa) { gioco(0, id, presa); },
       onAvanti: function () { prossimaMano(st); aggiorna(); giro(); },
-      onNuova: function () { st = creaStato(); st.nomi = { 0: (t.giocatori[0] || "Tu"), 1: NOMI_BOT[1], 2: NOMI_BOT[2], 3: NOMI_BOT[3] }; nuovaMano(st); aggiorna(); giro(); },
+      onNuova: function () { st = creaStato(C().traguardoDa(t.impostazioni)); st.nomi = { 0: (t.giocatori[0] || "Tu"), 1: NOMI_BOT[1], 2: NOMI_BOT[2], 3: NOMI_BOT[3] }; nuovaMano(st); aggiorna(); giro(); },
       onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); t.esci(); }
     });
     function aggiorna() { Cl.setVm(vistaDa(st, 0)); }
@@ -28694,7 +28765,7 @@ window.SG_SIPERO = {
       sonoHost: true,
       onMossa: function (id, presa) { if (st) passo(0, id, presa); },
       onAvanti: function () { if (st) { prossimaMano(st); bcast(); giro(); } },
-      onNuova: function () { st = creaStato(); nomiPartenza(); nuovaMano(st); bcast(); giro(); },
+      onNuova: function () { st = creaStato(C().traguardoDa(t.impostazioni)); nomiPartenza(); nuovaMano(st); bcast(); giro(); },
       onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
     });
 
@@ -28776,7 +28847,7 @@ window.SG_SIPERO = {
     function disegnaLobby() {
       if (st) return;
       renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", seggi: seggiLobby() }, {
-        onComincia: function () { st = creaStato(); nomiPartenza(); for (var s = 1; s <= 3; s++) botSeat[s] = !posti[s]; nuovaMano(st); bcast(); giro(); },
+        onComincia: function () { st = creaStato(C().traguardoDa(t.impostazioni)); nomiPartenza(); for (var s = 1; s <= 3; s++) botSeat[s] = !posti[s]; nuovaMano(st); bcast(); giro(); },
         onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
       });
     }
@@ -28880,7 +28951,7 @@ window.SG_SIPERO = {
       "Si gioca a turno alternando le squadre: <b>tu, un avversario, il tuo compagno, l'altro avversario</b>.",
       "Come la Scopa normale: tre carte in mano a testa, quattro sul tavolo, si <b>pesca</b> tre a testa quando le mani finiscono, fino a esaurire il mazzo.",
       "Prendi con una carta di <b>valore uguale</b> (se c'è) oppure con una <b>somma</b>. Svuoti il tavolo? <b>Scopa</b> (+1), tranne con l'ultima carta.",
-      "Punti a fine mano, sommando i due compagni: <b>Carte, Denari, Settebello, Primiera</b> e le <b>Scope</b>. Vince la squadra che arriva a <b>" + TARGET + "</b>.",
+      "Punti a fine mano, sommando i due compagni: <b>Carte, Denari, Settebello, Primiera</b> e le <b>Scope</b>. Vince la squadra che arriva per prima ai <b>punti scelti</b> (di solito " + TARGET + "; a pari punti si gioca un'altra mano). Si può giocare anche <b>una mano sola</b>.",
       "Modalità: <b>contro i bot</b> (tu + 3 bot) oppure <b>online</b> (ognuno dal suo telefono; i posti liberi li giocano i bot)."
     ],
     impostazioni: function (box, dove, aiuti) {
@@ -28912,6 +28983,7 @@ window.SG_SIPERO = {
         b.style.flex = "1"; dg.appendChild(b);
       });
       boxDiff.appendChild(dg); box.appendChild(boxDiff);
+      C().sceltaTraguardo(el, box, dove);   // i punti da raggiungere (anche online, ⚙️ Regole)
       notaOnline = el("div", { class: "link-avviso", hidden: "hidden" });
       notaOnline.textContent = (window.SGNet && SGNet.disponibile())
         ? "Apri una stanza e manda il codice: gli altri entrano dal loro telefono. I posti liberi li giocano i bot."
@@ -28956,13 +29028,13 @@ window.SG_SIPERO = {
     nome: "Scopone",
     icona: "🃏",
     descrizione: "Lo scopone in quattro (a squadre): tu e il tuo compagno contro due avversari. Varianti classico e scientifico. Contro il computer.",
-    giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 1–4 giocatori",   // (i posti liberi li prendono i bot)
+    giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "🤖 Contro il computer",   // (tu e 3 bot: non c'è ancora l'online)
     regole: [
       "Si gioca <b>in quattro, a due squadre</b>: tu e il <b>Compagno</b> (di fronte) contro due <b>Rivali</b>. Qui giochi contro il computer.",
       "<b>Scientifico</b>: 10 carte a testa, niente carte sul tavolo. <b>Classico</b>: 9 a testa + 4 sul tavolo.",
       "Le carte sono date <b>tutte subito</b> (non si pesca). Nel tuo turno giochi una carta: se ha lo stesso valore di una del tavolo la <b>prendi</b>, altrimenti puoi prendere una <b>somma</b> di più carte.",
       "Svuoti il tavolo? <b>Scopa</b> (+1), tranne con l'ultima carta. A fine mano le carte rimaste vanno all'ultima squadra che ha preso.",
-      "Punti a fine mano (sommando i due compagni): <b>Carte, Denari, Settebello, Primiera</b> e le <b>Scope</b>. Vince la squadra che arriva a <b>" + TARGET + "</b>."
+      "Punti a fine mano (sommando i due compagni): <b>Carte, Denari, Settebello, Primiera</b> e le <b>Scope</b>. Vince la squadra che arriva per prima ai <b>punti scelti</b> (di solito " + TARGET + "; a pari punti si gioca un'altra mano). Si può giocare anche <b>una mano sola</b>."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
@@ -28985,6 +29057,7 @@ window.SG_SIPERO = {
         b.style.flex = "1"; dg.appendChild(b);
       });
       dWrap.appendChild(dg); box.appendChild(dWrap);
+      C().sceltaTraguardo(el, box, dove);   // i punti da raggiungere
       box.appendChild(el("p", { class: "modulo-nota", style: "margin-top:10px", text: "Giochi tu (in basso) con il Compagno di fronte, contro i due Rivali." }));
     },
     avvia: function (t) {
@@ -28995,8 +29068,9 @@ window.SG_SIPERO = {
   });
 
   // ---------- motore ----------
-  function creaStato(variante) {
+  function creaStato(variante, traguardo) {   // traguardo: i punti da raggiungere (0 = una mano sola)
     var st = {
+      traguardo: traguardo == null ? TARGET : traguardo,
       variante: variante, mazzo: C().creaMazzo(mischia), tavolo: [], mani: [[], [], [], []], prese: [[], [], [], []],
       scope: [0, 0, 0, 0], turno: 0, ultimaPresa: null, fase: "gioco", primo: 0,
       punti: { noi: 0, loro: 0 }, ultimoRound: null, presa: null, messaGiu: null,
@@ -29044,7 +29118,7 @@ window.SG_SIPERO = {
     st.punti.noi += r.puntiNoi; st.punti.loro += r.puntiLoro;
     r.tot = { noi: st.punti.noi, loro: st.punti.loro };
     st.ultimoRound = r;
-    st.fase = (st.punti.noi >= TARGET || st.punti.loro >= TARGET) ? "fine" : "fineround";
+    st.fase = C().partitaFinita(st.traguardo, st.punti.noi, st.punti.loro) ? "fine" : "fineround";
   }
   function carteSquadra(st, team) { var o = []; for (var s = 0; s < 4; s++) if (squadra(s) === team) o = o.concat(st.prese[s]); return o; }
   function contaScopone(st) {
@@ -29110,7 +29184,7 @@ window.SG_SIPERO = {
     if (r.sette === "noi" && r.pDen === "noi" && r.pCarte === "noi" && r.pPrim === "noi") c.grandeSlam = 1;
     st._T = null;
     var sets = [], recs = [];
-    if (st.fase === "fine") {
+    if (st.fase === "fine" && !(st.traguardo != null && st.traguardo < TARGET)) {   // (con una mano sola o pochi punti sarebbero regalati)
       var vinto = st.punti.noi > st.punti.loro, sci = st.variante === "scientifico";
       var s0 = (window.SGNube && SGNube.statGioco && SGNube.statGioco("scopone")) || {}, serie = s0.serieSciOra || 0;
       c.partite = 1;
@@ -29140,7 +29214,7 @@ window.SG_SIPERO = {
   function localeScopone(t, variante, diff) {
     C().assicuraStile();
     var el = t.el;
-    var st = creaStato(variante);
+    var st = creaStato(variante, C().traguardoDa(t.impostazioni));
     st.nomi = { 0: (t.giocatori[0] || "Tu"), 1: NOMI_BOT[1], 2: NOMI_BOT[2], 3: NOMI_BOT[3] };
     var sel = { carta: null, presa: [] };
     distribuisci(st);
@@ -29149,7 +29223,7 @@ window.SG_SIPERO = {
       onCella: function (i) { tapMano(i); },
       onTavolo: function (id) { tapTavolo(id); },
       onAvanti: function () { st.primo = (st.primo + 1) % 4; distribuisci(st); sel = { carta: null, presa: [] }; render(); avviaGiro(); },
-      onNuova: function () { st = creaStato(variante); st.nomi = { 0: (t.giocatori[0] || "Tu"), 1: NOMI_BOT[1], 2: NOMI_BOT[2], 3: NOMI_BOT[3] }; distribuisci(st); sel = { carta: null, presa: [] }; render(); avviaGiro(); },
+      onNuova: function () { st = creaStato(variante, C().traguardoDa(t.impostazioni)); st.nomi = { 0: (t.giocatori[0] || "Tu"), 1: NOMI_BOT[1], 2: NOMI_BOT[2], 3: NOMI_BOT[3] }; distribuisci(st); sel = { carta: null, presa: [] }; render(); avviaGiro(); },
       onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); t.esci(); }
     }); }
 
@@ -29212,7 +29286,7 @@ window.SG_SIPERO = {
     var prevMano = spMount ? (spMount.prevMano || 0) : 0;
     var dealing = !st.presa && st.fase === "gioco" && st.mani[0].length > prevMano;
     var head = el("div", { class: "sc-testata" });   // punteggio e musica DENTRO la stanza (in alto; a sinistra c'è il tasto indietro)
-    head.appendChild(el("div", { style: "font-size:.82rem;font-weight:700", html: "Noi <b style='color:#69db7c'>" + st.punti.noi + "</b> — Loro <b>" + st.punti.loro + "</b> <span class='tenue' style='font-weight:600'>(a " + TARGET + ")</span>" }));
+    head.appendChild(el("div", { style: "font-size:.82rem;font-weight:700", html: "Noi <b style='color:#69db7c'>" + st.punti.noi + "</b> — Loro <b>" + st.punti.loro + "</b> <span class='tenue' style='font-weight:600'>(" + C().testoTraguardo(st.traguardo) + ")</span>" }));
     if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
 
     // la stanza: Rivale 1 a sinistra, il compagno di fronte, Rivale 2 a destra
@@ -29304,7 +29378,7 @@ window.SG_SIPERO = {
   function fine(t, st, cb, s) {
     var el = t.el, r = st.ultimoRound;
     s = t.schermata({ icona: st.fase === "fine" ? "🏆" : "🧮",
-      titolo: st.fase === "fine" ? (st.punti.noi > st.punti.loro ? "Avete vinto!" : "Hanno vinto i Rivali") : "Fine mano",
+      titolo: st.fase === "fine" ? (st.punti.noi === st.punti.loro ? "Pareggio!" : (st.punti.noi > st.punti.loro ? "Avete vinto!" : "Hanno vinto i Rivali")) : "Fine mano",
       sotto: "Scopone " + (st.variante === "scientifico" ? "scientifico" : "classico") });
     function riga(nome, a, b, vinc) {
       return el("div", { style: "display:flex;justify-content:space-between;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,.05);margin-bottom:5px" }, [

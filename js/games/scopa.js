@@ -93,7 +93,47 @@
   var COLORE = { D: "#e0a11b", C: "#d1495b", S: "#2f6fb0", B: "#2e8b57" };
   var FIG = { 8: "💂", 9: "🐎", 10: "👑" };         // Fante, Cavallo, Re
   var PRIM = { 1: 16, 2: 12, 3: 13, 4: 14, 5: 15, 6: 18, 7: 21, 8: 10, 9: 10, 10: 10 };
-  var TARGET = 11;
+  var TARGET = 11;   // i punti da raggiungere se non si sceglie altro
+
+  // ---- punti da raggiungere (Scopa, Scopa 2 vs 2, Scopone): una mano sola, 7, 11, 21 o quanti si vuole (1–99) ----
+  function traguardoDa(imp) {   // 0 = una mano sola
+    var n = imp && imp.traguardo;
+    if (n === 0) return 0;
+    n = Math.floor(+n);
+    return n >= 1 && n <= 99 ? n : TARGET;
+  }
+  function testoTraguardo(n) { if (n == null) n = TARGET; return n ? "a " + n : "una mano"; }
+  // finita una mano, la partita è chiusa? Con una mano sola sì; altrimenti quando qualcuno arriva ai punti
+  // (se arrivano tutti e due a pari punti si gioca un'altra mano)
+  function partitaFinita(n, a, b) { return !n || ((a >= n || b >= n) && a !== b); }
+  function sceltaTraguardo(el, box, dove) {
+    dove.traguardo = TARGET;
+    box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Punti da raggiungere" }));
+    var scelte = [[0, "Una mano"], [7, "7"], [11, "11"], [21, "21"]], riga = el("div", { style: "display:flex;gap:6px" }), campo;
+    function segna() {
+      [].forEach.call(riga.children, function (c, i) { c.className = "modo-chip" + (scelte[i][0] === dove.traguardo ? " attiva" : ""); c.style.flex = i ? "1" : "1.7"; });
+    }
+    scelte.forEach(function (s) {
+      riga.appendChild(el("button", { class: "modo-chip", style: "justify-content:center;text-align:center;padding-left:4px;padding-right:4px", onclick: function () {
+        dove.traguardo = s[0]; campo.value = s[0] || ""; segna();
+      } }, [el("div", { class: "mt", text: s[1] })]));
+    });
+    box.appendChild(riga);
+    campo = el("input", { type: "number", min: "1", max: "99", inputmode: "numeric", class: "link-campo", placeholder: "1–99", "aria-label": "Punti da raggiungere", style: "width:5.5em;text-align:center;margin:0" });
+    campo.value = String(dove.traguardo);
+    campo.addEventListener("input", function () {
+      var n = Math.floor(+campo.value);
+      if (n >= 1 && n <= 99) { dove.traguardo = n; segna(); }
+    });
+    campo.addEventListener("change", function () {   // un numero fuori misura torna a quello scelto
+      var n = Math.floor(+campo.value);
+      if (n > 99) { dove.traguardo = 99; segna(); }
+      campo.value = dove.traguardo ? String(dove.traguardo) : "";
+    });
+    box.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.92rem" }, [
+      el("span", { text: "✏️ Oppure scegli tu:" }), campo, el("span", { class: "tenue", text: "punti" }) ]));
+    segna();
+  }
 
   function altro(k) { return k === "A" ? "B" : "A"; }
   function trova(arr, id) { for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
@@ -143,8 +183,9 @@
   }
 
   // ---------- motore di partita (host-autoritativo / locale) ----------
-  function creaMotore(nomi, mischia) {
+  function creaMotore(nomi, mischia, traguardo) {
     var st = {
+      traguardo: traguardo == null ? TARGET : traguardo,
       mazzo: [], tavolo: [], mani: { A: [], B: [] }, prese: { A: [], B: [] },
       scope: { A: 0, B: 0 }, turno: "A", ultimaPresa: null,
       fase: "gioco", primo: "A", punti: { A: 0, B: 0 }, nomi: nomi,
@@ -201,7 +242,7 @@
       var pa = puntiRound(p, st.scope, "A"), pb = puntiRound(p, st.scope, "B");
       st.punti.A += pa; st.punti.B += pb;
       st.ultimoRound = { p: p, scope: { A: st.scope.A, B: st.scope.B }, guad: { A: pa, B: pb }, tot: { A: st.punti.A, B: st.punti.B } };
-      if (st.punti.A >= TARGET || st.punti.B >= TARGET) st.fase = "fine";
+      if (partitaFinita(st.traguardo, st.punti.A, st.punti.B)) st.fase = "fine";
       else st.fase = "fineround";
     }
     function prossimoRound() {
@@ -728,7 +769,7 @@
     // ---- intestazione: punti (a sinistra) + tasto musica (a destra) ----
     var mioTurno = !cb.guarda && (vm.turno === vm.io && vm.fase === "gioco" && !vm.presa);   // chi guarda non tocca
     var head = el("div", { class: "sc-testata" });   // punteggio e musica DENTRO la stanza (in alto; a sinistra c'è il tasto indietro)
-    head.appendChild(el("div", { style: "font-size:.8rem;font-weight:700", html: (cb.guarda ? "👀 " : "") + "<b>" + vm.nomi.io + " " + vm.punti.io + "</b> — " + vm.nomi.opp + " " + vm.punti.opp + " <span class='tenue' style='font-weight:600'>(a " + TARGET + ")</span>" }));
+    head.appendChild(el("div", { style: "font-size:.8rem;font-weight:700", html: (cb.guarda ? "👀 " : "") + "<b>" + vm.nomi.io + " " + vm.punti.io + "</b> — " + vm.nomi.opp + " " + vm.punti.opp + " <span class='tenue' style='font-weight:600'>(" + testoTraguardo(vm.traguardo) + ")</span>" }));
     if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
 
     // ---- la stanza: l'avversario seduto dietro al tavolo verde in prospettiva ----
@@ -919,7 +960,7 @@
     var el = t.el, vm = C.vm, r = vm.ultimoRound;
     var pari = vm.fase === "fine" && vm.punti && vm.punti.io === vm.punti.opp;
     var s = t.schermata({ icona: vm.fase === "fine" ? "🏆" : "🧮",
-      titolo: vm.fase === "fine" ? (cb.guarda ? (pari ? "Pareggio!" : "Ha vinto " + (vm.vincitoreIo ? vm.nomi.io : vm.nomi.opp)) : (vm.vincitoreIo ? "Hai vinto!" : "Ha vinto " + vm.nomi.opp)) : "Fine smazzata",
+      titolo: vm.fase === "fine" ? (cb.guarda ? (pari ? "Pareggio!" : "Ha vinto " + (vm.vincitoreIo ? vm.nomi.io : vm.nomi.opp)) : (pari ? "Pareggio!" : (vm.vincitoreIo ? "Hai vinto!" : "Ha vinto " + vm.nomi.opp))) : "Fine smazzata",
       sotto: "Scopa · " + vm.nomi.io + " vs " + vm.nomi.opp, indietro: cb.guarda ? cb.onEsci : null });
     function riga(nome, a, b, vinc) {
       return el("div", { style: "display:flex;justify-content:space-between;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,.05);margin-bottom:5px" }, [
@@ -985,7 +1026,8 @@
       cappotto: tutti4 ? 1 : 0, sopraMedia: (tutti4 && r.scope[io] >= 1) ? 1 : 0 };
     if (p.settebello === io) T.match.sette++;
     if (r.tot[opp] >= 10 && r.tot[io] < 10) T.match.oppA10 = true;   // l'avversario è arrivato a 10 prima di te
-    if (vm.fase === "fine") {
+    // i trofei della partita intera valgono solo per le partite vere (almeno a 11): con una mano sola o pochi punti sarebbero regalati
+    if (vm.fase === "fine" && !(vm.traguardo != null && vm.traguardo < TARGET)) {
       c.partite = 1;
       if (vm.vincitoreIo) {
         c.vinte = 1;
@@ -993,8 +1035,8 @@
         if (r.tot[opp] === 0) c.vinteAZero = 1;
         if (T.match.oppA10) c.rimonte = 1;
       }
-      T.match = { sette: 0, oppA10: false };
     }
+    if (vm.fase === "fine") T.match = { sette: 0, oppA10: false };
     T.round = { scopeDenari: 0, scopeAsso: 0 };
     if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
     var incrs = []; for (var k in c) if (c[k]) incrs.push([k, c[k]]);
@@ -1049,7 +1091,7 @@
   function vistaDa(st, io, omini) {
     var opp = altro(io);
     return {
-      fase: st.fase, io: io, turno: st.turno,
+      fase: st.fase, io: io, turno: st.turno, traguardo: st.traguardo,
       nomi: { io: st.nomi[io], opp: st.nomi[opp] }, avatar: omini ? { opp: omini[opp] || null } : null,
       mano: st.mani[io].slice(), oppN: st.mani[opp].length, tavolo: st.tavolo.slice(), mazzoN: st.mazzo.length,
       preseIo: st.prese[io].length, preseOpp: st.prese[opp].length,
@@ -1074,7 +1116,7 @@
       "Nel tuo turno giochi una carta: se ha lo <b>stesso valore</b> di una carta sul tavolo la <b>prendi</b>. Se non c'è un valore uguale, puoi prendere <b>più carte che sommano</b> al valore della tua.",
       "Se dopo la presa il tavolo resta <b>vuoto</b> fai <b>Scopa</b> (+1 punto), tranne con l'ultima carta.",
       "A fine mazzo le carte rimaste sul tavolo vanno all'ultimo che ha preso.",
-      "Punti a fine smazzata: <b>Carte</b> (chi ne prende di più), <b>Denari</b> (più carte di denari), <b>Settebello</b> (il 7 di denari), <b>Primiera</b>, più le <b>Scope</b>. Vince chi arriva a <b>" + TARGET + "</b>.",
+      "Punti a fine smazzata: <b>Carte</b> (chi ne prende di più), <b>Denari</b> (più carte di denari), <b>Settebello</b> (il 7 di denari), <b>Primiera</b>, più le <b>Scope</b>. Vince chi arriva per primo ai <b>punti scelti</b> (di solito " + TARGET + "; a pari punti si gioca un'altra mano). Si può giocare anche <b>una mano sola</b>.",
       "Modalità: <b>contro il bot</b> (Facile/Medio/Difficile) oppure <b>online</b>, ognuno dal suo telefono."
     ],
     impostazioni: function (box, dove, aiuti) {
@@ -1108,6 +1150,7 @@
         b.style.flex = "1"; diffWrap.appendChild(b);
       });
       boxDiff.appendChild(diffWrap); box.appendChild(boxDiff);
+      sceltaTraguardo(el, box, dove);
       notaOnline = el("div", { class: "link-avviso", hidden: "hidden" });
       notaOnline.textContent = (window.SGNet && SGNet.disponibile())
         ? "Apri una stanza e manda il codice: l'altro entra dal suo telefono (ognuno vede solo le proprie carte)."
@@ -1139,12 +1182,12 @@
   // ---------- LOCALE (contro il bot) : io = A, bot = B ----------
   function localeScopa(t, difficolta) {
     var nomi = { A: (t.giocatori[0] || "Tu"), B: "Matt" };
-    var M = creaMotore(nomi, t.mischia);
+    var M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni));
     var C = creaClient(t, {
       locale: true, sonoHost: true,
       onMossa: function (id, presa) { mossaUmano(id, presa); },
       onAvanti: function () { M.prossimoRound(); aggiorna(); seTuraBot(); },
-      onNuova: function () { M = creaMotore(nomi, t.mischia); aggiorna(); seTuraBot(); },
+      onNuova: function () { M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni)); aggiorna(); seTuraBot(); },
       onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); t.esci(); }
     });
     var omini = { A: mioAvatar(nomi.A), B: AVATAR_BOT };
@@ -1192,7 +1235,7 @@
       sonoHost: true,
       onMossa: function (id, presa) { if (!M) return; var ev = M.gioca("A", id, presa); dopo(ev); },
       onAvanti: function () { if (M) { M.prossimoRound(); bcast(); } },
-      onNuova: function () { M = creaMotore(nomi, t.mischia); bcast(); },
+      onNuova: function () { M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni)); bcast(); },
       onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
     });
     function lobbyVm() { return { lobby: true, codice: codice, pronta: pronta, avversario: !!avvId, sonoHost: true, io: "A", nomi: nomi, omini: omini }; }
@@ -1235,7 +1278,7 @@
       if (M) return;
       renderLobby(t, lobbyVm(), {
         sonoHost: true,
-        onComincia: function () { if (avvId) { M = creaMotore(nomi, t.mischia); bcast(); } },
+        onComincia: function () { if (avvId) { M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni)); bcast(); } },
         onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
       });
     }
@@ -1359,6 +1402,8 @@
     validaSet: validaSet, prefisso: prefisso, PRIM: PRIM,
     // stanza a 4 con gli avatar (Scopa 2 vs 2 e Scopone)
     misureStanza4: misureStanza4, correggiStanza4: correggiStanza4, postiTavolo: postiTavolo, stanza4: stanza4, animaDistribuzione4: animaDistribuzione4,
-    mioAvatar: mioAvatar, avatarValido: avatarValido
+    mioAvatar: mioAvatar, avatarValido: avatarValido,
+    // i punti da raggiungere (anche Scopa 2 vs 2 e Scopone)
+    traguardoDa: traguardoDa, testoTraguardo: testoTraguardo, partitaFinita: partitaFinita, sceltaTraguardo: sceltaTraguardo
   };
 })();

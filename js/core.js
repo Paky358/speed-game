@@ -1913,8 +1913,9 @@
       nota: E ? (E.iniziato && !E.finito ? "Le partite si aprono da sole sul telefono di chi gioca." : "Ognuno tocca il girone in cui vuole giocare. Quando siete pronti, fai partire il torneo.")
         : "Scegli un gioco: parte da solo sul telefono di tutti. A fine partita si torna qui.",
       onComincia: E ? function () { if (E.finito) nuovoElim(); else avviaElim(); } : salaScegliGioco,
+      onRegole: E ? function () { sala._bcast(); } : undefined,
       onEsci: function () { chiudiSala(); schermataHome(); }
-    });
+    }, E ? regoleElim() : null);
   }
 
   function salaScegliGioco() {
@@ -2198,6 +2199,18 @@
   }
   function seguiHost() { if (sala && sala.elim) seguiTabellone(sala, "host", sala.membri[0].nome, disegnaSalaHost, function (k, v) { esitoPartita(k, v, "host"); }); }
   function seguiOspite() { if (salaG && salaG.elim) seguiTabellone(salaG, salaG.myId, salaG.nome, disegnaSalaOspite, function (k, v) { if (salaG && salaG.rete) salaG.rete.invia({ t: "esito", k: k, vinto: v }); }); }
+  // ⚙️ Regole del torneo: le impostazioni del gioco (es. i punti da raggiungere nella Scopa), uguali per tutte le partite.
+  // Il riquadro resta sul telefono dell'host; i valori (E.imp) viaggiano con la sala.
+  function regoleElim() {
+    var E = sala && sala.elim, g = E && giocoDa(E.gioco);
+    if (!g || !g.impostazioni) return null;
+    if (!sala.regoleElim) {
+      var imp = {}, box = el("div", {});
+      g.impostazioni(box, imp, { el: el, sala: true, modo: "online" });
+      E.imp = imp; sala.regoleElim = { box: box, imp: imp };
+    }
+    return haRegole(sala.regoleElim.box) ? sala.regoleElim : null;
+  }
   function giocaPartitaElim(S, p, mioId, mioNome, mostraSala, diEsito) {
     var g = giocoDa(S.elim.gioco); if (!g) return mostraSala();
     chiudiTabelloneElim(); SGNet.chiudiGiochi();
@@ -2221,9 +2234,9 @@
         if (!rete && p.stanza) { SGNet._forza = p.stanza; rete = SGNet.ospita(g.id, { onConnesso: function () { if (rete && ultimo) rete.invia(ultimo); } }); }
         if (rete) rete.invia(msg);
       };
-      linkParams = {}; avviaPartita(g, [mioNome], { modo: "bot", difficolta: "medio" }, null, ctx);
+      linkParams = {}; avviaPartita(g, [mioNome], Object.assign({}, S.elim.imp || {}, { modo: "bot", difficolta: "medio" }), null, ctx);
     }
-    else if (p.a === mioId) { linkParams = {}; SGNet._forza = p.stanza; avviaPartita(g, [mioNome], { modo: "online" }, null, ctx); }
+    else if (p.a === mioId) { linkParams = {}; SGNet._forza = p.stanza; avviaPartita(g, [mioNome], Object.assign({}, S.elim.imp || {}, { modo: "online" }), null, ctx); }
     else { linkParams = { gioco: g.id, stanza: p.stanza }; avviaPartita(g, [], {}, null, ctx); }
     linkParams = vecchio;
   }

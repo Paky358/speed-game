@@ -25,13 +25,13 @@
     nome: "Scopone",
     icona: "🃏",
     descrizione: "Lo scopone in quattro (a squadre): tu e il tuo compagno contro due avversari. Varianti classico e scientifico. Contro il computer.",
-    giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 1–4 giocatori",   // (i posti liberi li prendono i bot)
+    giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "🤖 Contro il computer",   // (tu e 3 bot: non c'è ancora l'online)
     regole: [
       "Si gioca <b>in quattro, a due squadre</b>: tu e il <b>Compagno</b> (di fronte) contro due <b>Rivali</b>. Qui giochi contro il computer.",
       "<b>Scientifico</b>: 10 carte a testa, niente carte sul tavolo. <b>Classico</b>: 9 a testa + 4 sul tavolo.",
       "Le carte sono date <b>tutte subito</b> (non si pesca). Nel tuo turno giochi una carta: se ha lo stesso valore di una del tavolo la <b>prendi</b>, altrimenti puoi prendere una <b>somma</b> di più carte.",
       "Svuoti il tavolo? <b>Scopa</b> (+1), tranne con l'ultima carta. A fine mano le carte rimaste vanno all'ultima squadra che ha preso.",
-      "Punti a fine mano (sommando i due compagni): <b>Carte, Denari, Settebello, Primiera</b> e le <b>Scope</b>. Vince la squadra che arriva a <b>" + TARGET + "</b>."
+      "Punti a fine mano (sommando i due compagni): <b>Carte, Denari, Settebello, Primiera</b> e le <b>Scope</b>. Vince la squadra che arriva per prima ai <b>punti scelti</b> (di solito " + TARGET + "; a pari punti si gioca un'altra mano). Si può giocare anche <b>una mano sola</b>."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
@@ -54,6 +54,7 @@
         b.style.flex = "1"; dg.appendChild(b);
       });
       dWrap.appendChild(dg); box.appendChild(dWrap);
+      C().sceltaTraguardo(el, box, dove);   // i punti da raggiungere
       box.appendChild(el("p", { class: "modulo-nota", style: "margin-top:10px", text: "Giochi tu (in basso) con il Compagno di fronte, contro i due Rivali." }));
     },
     avvia: function (t) {
@@ -64,8 +65,9 @@
   });
 
   // ---------- motore ----------
-  function creaStato(variante) {
+  function creaStato(variante, traguardo) {   // traguardo: i punti da raggiungere (0 = una mano sola)
     var st = {
+      traguardo: traguardo == null ? TARGET : traguardo,
       variante: variante, mazzo: C().creaMazzo(mischia), tavolo: [], mani: [[], [], [], []], prese: [[], [], [], []],
       scope: [0, 0, 0, 0], turno: 0, ultimaPresa: null, fase: "gioco", primo: 0,
       punti: { noi: 0, loro: 0 }, ultimoRound: null, presa: null, messaGiu: null,
@@ -113,7 +115,7 @@
     st.punti.noi += r.puntiNoi; st.punti.loro += r.puntiLoro;
     r.tot = { noi: st.punti.noi, loro: st.punti.loro };
     st.ultimoRound = r;
-    st.fase = (st.punti.noi >= TARGET || st.punti.loro >= TARGET) ? "fine" : "fineround";
+    st.fase = C().partitaFinita(st.traguardo, st.punti.noi, st.punti.loro) ? "fine" : "fineround";
   }
   function carteSquadra(st, team) { var o = []; for (var s = 0; s < 4; s++) if (squadra(s) === team) o = o.concat(st.prese[s]); return o; }
   function contaScopone(st) {
@@ -179,7 +181,7 @@
     if (r.sette === "noi" && r.pDen === "noi" && r.pCarte === "noi" && r.pPrim === "noi") c.grandeSlam = 1;
     st._T = null;
     var sets = [], recs = [];
-    if (st.fase === "fine") {
+    if (st.fase === "fine" && !(st.traguardo != null && st.traguardo < TARGET)) {   // (con una mano sola o pochi punti sarebbero regalati)
       var vinto = st.punti.noi > st.punti.loro, sci = st.variante === "scientifico";
       var s0 = (window.SGNube && SGNube.statGioco && SGNube.statGioco("scopone")) || {}, serie = s0.serieSciOra || 0;
       c.partite = 1;
@@ -209,7 +211,7 @@
   function localeScopone(t, variante, diff) {
     C().assicuraStile();
     var el = t.el;
-    var st = creaStato(variante);
+    var st = creaStato(variante, C().traguardoDa(t.impostazioni));
     st.nomi = { 0: (t.giocatori[0] || "Tu"), 1: NOMI_BOT[1], 2: NOMI_BOT[2], 3: NOMI_BOT[3] };
     var sel = { carta: null, presa: [] };
     distribuisci(st);
@@ -218,7 +220,7 @@
       onCella: function (i) { tapMano(i); },
       onTavolo: function (id) { tapTavolo(id); },
       onAvanti: function () { st.primo = (st.primo + 1) % 4; distribuisci(st); sel = { carta: null, presa: [] }; render(); avviaGiro(); },
-      onNuova: function () { st = creaStato(variante); st.nomi = { 0: (t.giocatori[0] || "Tu"), 1: NOMI_BOT[1], 2: NOMI_BOT[2], 3: NOMI_BOT[3] }; distribuisci(st); sel = { carta: null, presa: [] }; render(); avviaGiro(); },
+      onNuova: function () { st = creaStato(variante, C().traguardoDa(t.impostazioni)); st.nomi = { 0: (t.giocatori[0] || "Tu"), 1: NOMI_BOT[1], 2: NOMI_BOT[2], 3: NOMI_BOT[3] }; distribuisci(st); sel = { carta: null, presa: [] }; render(); avviaGiro(); },
       onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); t.esci(); }
     }); }
 
@@ -281,7 +283,7 @@
     var prevMano = spMount ? (spMount.prevMano || 0) : 0;
     var dealing = !st.presa && st.fase === "gioco" && st.mani[0].length > prevMano;
     var head = el("div", { class: "sc-testata" });   // punteggio e musica DENTRO la stanza (in alto; a sinistra c'è il tasto indietro)
-    head.appendChild(el("div", { style: "font-size:.82rem;font-weight:700", html: "Noi <b style='color:#69db7c'>" + st.punti.noi + "</b> — Loro <b>" + st.punti.loro + "</b> <span class='tenue' style='font-weight:600'>(a " + TARGET + ")</span>" }));
+    head.appendChild(el("div", { style: "font-size:.82rem;font-weight:700", html: "Noi <b style='color:#69db7c'>" + st.punti.noi + "</b> — Loro <b>" + st.punti.loro + "</b> <span class='tenue' style='font-weight:600'>(" + C().testoTraguardo(st.traguardo) + ")</span>" }));
     if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
 
     // la stanza: Rivale 1 a sinistra, il compagno di fronte, Rivale 2 a destra
@@ -373,7 +375,7 @@
   function fine(t, st, cb, s) {
     var el = t.el, r = st.ultimoRound;
     s = t.schermata({ icona: st.fase === "fine" ? "🏆" : "🧮",
-      titolo: st.fase === "fine" ? (st.punti.noi > st.punti.loro ? "Avete vinto!" : "Hanno vinto i Rivali") : "Fine mano",
+      titolo: st.fase === "fine" ? (st.punti.noi === st.punti.loro ? "Pareggio!" : (st.punti.noi > st.punti.loro ? "Avete vinto!" : "Hanno vinto i Rivali")) : "Fine mano",
       sotto: "Scopone " + (st.variante === "scientifico" ? "scientifico" : "classico") });
     function riga(nome, a, b, vinc) {
       return el("div", { style: "display:flex;justify-content:space-between;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,.05);margin-bottom:5px" }, [

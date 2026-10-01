@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 145,
+    data: "1 ottobre 2026",
+    titolo: "Scopa, Scopa 2 vs 2 e Scopone: scegli a quanti punti 🃏",
+    descrizione: [
+      "Prima di cominciare scegli i punti da raggiungere: una mano sola, 7, 11 o 21. Oppure scrivi tu un numero da 1 a 99.",
+      "Online si cambia anche nella saletta (⚙️ Regole). Nel torneo a eliminazione di Scopa lo sceglie l'host e vale per tutte le partite.",
+      "Se si arriva ai punti a pari merito si gioca un'altra mano. Con una mano sola può finire pari.",
+      "I trofei della partita intera contano solo nelle partite da almeno 11 punti.",
+      "Correzione: lo Scopone per ora si gioca contro il computer (tu e 3 bot)."
+    ]
+  },
+  {
     v: 144,
     data: "1 ottobre 2026",
     titolo: "Il numero giusto di giocatori su ogni gioco 👥",
