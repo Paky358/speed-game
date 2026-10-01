@@ -50,6 +50,16 @@ SG.registra({
 - Numeri col punto delle migliaia; "avatar", non "omino"; il primo bot si chiama Matt.
 - Stile nel file del gioco (un `<style>` aggiunto una volta), con un prefisso di classe tutto suo.
 
+## Errori già visti (da non ripetere)
+- **"Nuova partita"** riporta tutti nella stessa saletta, nella stessa stanza e con gli stessi giocatori. Mai chiudere la stanza e riaprirne un'altra, sennò gli amici restano fuori e serve un link nuovo.
+- **Messaggi segreti** (la carta, il ruolo, la parola) si mandano con `rete.inviaVeloce({ ..., to: id })`, mai con `rete.invia`: quello resta in stanza e lo riceve chi arriva dopo.
+- **`t.risultato`** vuole i **nomi dei giocatori**, mai "Squadra A". Nei giochi a squadre: chi vince al posto 1, gli altri dopo, e se finisce pari tutti al posto 1.
+- **Chi entra senza profilo** deve poter scrivere il suo nome. Si entra da soli solo se `t.nomeProfilo()` c'è.
+- **"Esci" a partita iniziata**: per l'host chiede conferma ("Chiudere la partita per tutti?"), perché un tocco sbagliato chiude il gioco a tutti.
+- **Saletta**: `vuoti` sono solo i posti che mancano per arrivare al minimo, non tutti quelli fino al massimo. Se qualcuno esce, non rimescolare le squadre o i posti già decisi dall'host.
+- **Punti e penalità**: rileggi chi deve prenderli o perderli (per esempio, un BUZZ penalizza la squadra di chi ha sbagliato, non quella di chi l'ha visto).
+- Nessuna scritta col nome del gioco in alto nello schermo di gioco.
+
 ## Prima di aprire la pull request
 - Segui la skill `prova-nel-browser`: partita locale, partita online con amici finti, console senza errori, schermo di un telefono piccolo (360x640) e grande (412x915).
 - Regole con i bot: tienile in funzioni separate dalla grafica e simula tante partite.
