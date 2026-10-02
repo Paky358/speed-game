@@ -19,6 +19,15 @@ Una web app di party game da telefono (tanti giochi, uno per file), in JavaScrip
 - Ogni novità visibile va scritta in cima a `data/novita.js` (numero `v` +1), con parole per chi gioca.
 - Messaggi di commit in italiano, dicendo cosa cambia per chi gioca.
 
+## Due computer (PC fisso e portatile)
+Il proprietario lavora con Claude da due computer, tenuti allineati da GitHub. Quando il PC fisso è acceso gli scrive anche dal portatile (Remote Control): il lavoro allora resta sul PC fisso.
+- Si lavora sul ramo **`lavori-in-corso`**, mai direttamente su `master` (che è il sito online). Se il ramo manca, crealo da `master`.
+- All'inizio di ogni sessione: `git fetch` e porta `lavori-in-corso` alla versione di GitHub. Se l'altro computer aveva salvato qualcosa, dillo in una riga.
+- "Salva il lavoro" (e comunque prima di chiudere o cambiare computer): commit e push di `lavori-in-corso`. Il sito non cambia.
+- "Pubblica": costruisci, prova, unisci `lavori-in-corso` in `master` e fai il push di tutti e due.
+- La memoria di Claude è diversa su ogni computer: le decisioni importanti si scrivono qui o in `data/novita.js`.
+- Il portatile è lento (processore A4, 4 GB): prove nel browser leggere, e chiudi i server di prova quando non servono.
+
 ## Regole fisse dei giochi
 - **Niente scorrimento per giocare** e niente titolo in alto nei giochi: il tavolo prima di tutto. I giochi a tutto schermo usano `height: var(--alt)` (l'altezza vera dello schermo, misurata da core.js).
 - **Niente lampeggio**: a ogni mossa si aggiorna solo la parte che cambia, mai tutta la schermata.
