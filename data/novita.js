@@ -9,6 +9,20 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 148,
+    data: "2 ottobre 2026",
+    titolo: "Nuovo gioco: La Ruota della Fortuna 🎡",
+    descrizione: [
+      "Come il quiz della TV: giri la ruota, chiami una consonante e guadagni quello che dice lo spicchio per ogni lettera che c'è. Con almeno 300 compri una vocale, e quando pensi di saperla risolvi la frase.",
+      "Ci sono Bancarotta (perdi i soldi della manche), Passa (perdi il turno) e il Jolly, che ti salva il turno la volta dopo.",
+      "Si gioca nello studio del game show: la telecamera va sulla ruota quando gira e sul concorrente di turno, il pubblico applaude o fa \"ohhh\", e il tabellone con la frase resta sempre in vista in alto.",
+      "Più di 700 frasi in 12 categorie: proverbi, modi di dire, film, canzoni italiane, personaggi famosi, luoghi, cibo, sport, animali e altro.",
+      "Da 2 a 4 alla ruota: contro i bot (il primo è Matt), sullo stesso telefono o online, ognuno dal suo telefono. Online l'host può riempire i posti vuoti coi bot.",
+      "Prima di cominciare scegli quante manche (3, 4 o 5) e quanto sono bravi i bot. Vince chi alla fine ha messo da parte più soldi.",
+      "La trovi nella categoria Quiz & parole."
+    ]
+  },
+  {
     v: 147,
     data: "2 ottobre 2026",
     titolo: "Collegamento più solido: si rientra nella partita 🔁",

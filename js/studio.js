@@ -1095,8 +1095,9 @@
   var EASE = curva(0.45, 0.05, 0.25, 1);
   function vistaDi(S, r) {   // centro e ingrandimento di un'inquadratura, senza mai uscire dallo studio (niente fasce nere ai bordi)
     var s = Math.min(S.VW / r.w, S.VH / r.h), cx = r.x + r.w / 2, cy = r.y + r.h / 2, vw = S.VW / s, vh = S.VH / s;
+    var su = (S.sopraLibero || 0) * S.VH;   // un gioco con qualcosa di fisso in alto (es. il tabellone della Ruota) può far salire la telecamera oltre il bordo
     if (vw <= S.W) cx = Math.max(vw / 2, Math.min(S.W - vw / 2, cx));
-    if (vh <= S.H) cy = Math.max(vh / 2, Math.min(S.H - vh / 2, cy));
+    if (vh <= S.H + su) cy = Math.max(vh / 2 - su, Math.min(S.H - vh / 2, cy));
     return { cx: cx, cy: cy, s: s };
   }
   function metti(S, v, fermo) {   // mette la telecamera su un punto dello studio (centro e ingrandimento)
@@ -1195,9 +1196,10 @@
   function puntiLeggio(S, i, valore, delta) {
     var X = S.L[i]; if (!X) return;
     var da = X.valore; X.valore = valore;
-    function scrivi(v) { if (X.disp && !X.disp.testo && X.disp.t === String(v)) return; X.disp = { t: String(v), neg: v < 0, testo: false }; disegnaBanco(X); }
+    function punti(n) { return (n < 0 ? "−" : "") + String(Math.abs(Math.round(n))).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }   // cifre col punto: 1.500
+    function scrivi(v) { var tx = punti(v); if (X.disp && !X.disp.testo && X.disp.t === tx) return; X.disp = { t: tx, neg: v < 0, testo: false }; disegnaBanco(X); }
     if (!delta) return scrivi(valore);
-    X.delta.textContent = (delta > 0 ? "+" : "−") + Math.abs(delta);
+    X.delta.textContent = (delta > 0 ? "+" : "−") + punti(Math.abs(delta));
     X.delta.style.color = delta > 0 ? "#6ff0a6" : "#ff8d98";
     X.delta.classList.remove("on"); void X.delta.offsetWidth; X.delta.classList.add("on");
     var t0 = performance.now();
