@@ -379,6 +379,8 @@
 (function () {
   "use strict";
   var BJ = window.__BJ;
+  // il saldo fiches col tasto del bonus serve anche al Poker (stesse fiches)
+  BJ.riquadroBonus = function (el, dopo) { return riquadroBonus(el, dopo); };
   // l'ultima puntata di ognuno: la mano dopo riparte da lì (non da 100)
   var ultimePuntate = {};
   function chiavePuntata(g) { return (g.id || "") + "|" + (g.nome || ""); }

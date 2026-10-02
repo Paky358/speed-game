@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 146,
+    data: "2 ottobre 2026",
+    titolo: "Nuovo gioco: il Poker con le carte francesi ♠️",
+    descrizione: [
+      "Due poker in uno: il Texas Hold'em (2 carte tue e 5 in mezzo per tutti) e il Poker all'italiana (5 carte, poi le cambi).",
+      "Contro il computer (scegli quanti bot e quanto sono bravi, il primo è Matt) oppure online, ognuno dal suo telefono: l'host può riempire i posti vuoti coi bot.",
+      "Si gioca con le stesse fiches del Black Jack: ti siedi con al massimo 1.000, e quello che vinci o perdi resta nel tuo profilo. Se le finisci, ti risiedi con altre fiches o ritiri il bonus.",
+      "Quando tocca a te: Passa, Chiama, Punta o Rilancia (con le scelte veloci: metà piatto, piatto, all-in) oppure Lascia.",
+      "Online ognuno vede solo le sue carte; alla fine si scoprono quelle di chi è arrivato in fondo. L'host può chiudere il tavolo e vedere chi ha guadagnato di più."
+    ]
+  },
+  {
     v: 145,
     data: "1 ottobre 2026",
     titolo: "Scopa, Scopa 2 vs 2 e Scopone: scegli a quanti punti 🃏",
