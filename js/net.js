@@ -30,6 +30,18 @@
   var ATTESA_OSPITE = 20000;   // chi sparisce all'improvviso: tanto tempo per tornare prima di toglierlo
   var ATTESA_HOST = 45000;     // se sparisce l'host (es. è andato a mandare il link), gli altri lo aspettano così
   var RIPETI_ENTRATA = 2000, MAX_RIPETI = 45;   // "sono entrato" ogni 2 secondi, fino a un minuto e mezzo
+  var CI_SONO = 8000;          // chi è dentro lo ripete ogni tanto: così un "sparito" arrivato in ritardo non lo toglie
+  var DURATA_ID = 6 * 3600 * 1000;
+
+  // chi rientra nella stessa stanza (pagina ricaricata, app riaperta) torna con lo STESSO codice:
+  // l'host lo riconosce e gli ridà il suo posto, invece di prenderlo per uno nuovo
+  function idPerStanza(codice) {
+    var k = "sg-id-" + String(codice).toUpperCase(), id = null;
+    try { var v = JSON.parse(localStorage.getItem(k) || "null"); if (v && v.id && Date.now() - v.t < DURATA_ID) id = v.id; } catch (e) {}
+    if (!id) id = "g" + Math.random().toString(36).slice(2, 9);
+    try { localStorage.setItem(k, JSON.stringify({ id: id, t: Date.now() })); } catch (e) {}
+    return id;
+  }
 
   function codiceACaso(n) {
     var s = "";
@@ -103,6 +115,7 @@
           inForse[m.from] = setTimeout(function () { delete inForse[m.from]; if (!chiusa) cb.onAddio && cb.onAddio(m.from); }, ATTESA_OSPITE);
           return;
         }
+        if (m.data && m.data.t === "__ci") return;   // "ci sono": serve solo a non toglierlo (qui sopra), il gioco non lo vede
         cb.onMsg && cb.onMsg(m.from, m.data);
       });
       client.on("error", function (e) { if (!chiusa) cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message }); });
@@ -133,13 +146,13 @@
     // opz.tieni = non chiuderla quando si cambia gioco (è la connessione della sala)
     entra: function (codice, cb, opz) {
       if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
-      var myId = "g" + Math.random().toString(36).slice(2, 9);
+      var myId = idPerStanza(codice);   // rientrando nella stessa stanza si torna "la stessa persona"
       var T = topics(codice);
       var client = mqtt.connect(BROKER, {
         clean: true, reconnectPeriod: 2000,
         will: { topic: T.azioni, payload: JSON.stringify({ from: myId, data: { t: "__leave" } }), retain: false }
       });
-      var aperto = false, chiusa = false, entrata = null, dentro = false, tRipeti = null, tAddio = null;
+      var aperto = false, chiusa = false, entrata = null, dentro = false, tRipeti = null, tAddio = null, tCi = null;
       function pubblica(msg) { try { if (client.connected) client.publish(T.azioni, JSON.stringify({ from: myId, data: msg }), { retain: false }); } catch (e) {} }
       function smetti() { if (tRipeti) { clearInterval(tRipeti); tRipeti = null; } }
       // "sono entrato" può perdersi (stanza non ancora pronta, host via un attimo):
@@ -178,11 +191,14 @@
         invia: function (msg) {
           if (chiusa) return;
           pubblica(msg);
-          if (msg && msg.t === "join") { entrata = msg; if (!dentro) insisti(); }
+          if (msg && msg.t === "join") {
+            entrata = msg; if (!dentro) insisti();
+            if (!tCi) tCi = setInterval(function () { if (!chiusa) pubblica({ t: "__ci" }); }, CI_SONO);   // "ci sono", ogni tanto
+          }
         },
         chiudi: function () {
           if (chiusa) return;
-          chiusa = true; togli(h); smetti(); if (tAddio) { clearTimeout(tAddio); tAddio = null; }
+          chiusa = true; togli(h); smetti(); if (tAddio) { clearTimeout(tAddio); tAddio = null; } if (tCi) { clearInterval(tCi); tCi = null; }
           try { client.publish(T.azioni, JSON.stringify({ from: myId, data: { t: "__leave", voluto: 1 } }), { retain: false }); client.end(); } catch (e) {}
         }
       };

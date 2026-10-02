@@ -39,6 +39,7 @@ Il proprietario lavora con Claude da due computer, tenuti allineati da GitHub. Q
 - Prima schermata di ogni gioco: "Come giocate?". Il gioco dichiara i suoi modi locali in `modi`; "Online" lo aggiunge il core se l'id del gioco è in `GIOCHI_ONLINE` (core.js). La scelta del modo **non** sta nelle impostazioni: il core passa `aiuti.modo`.
 - Giochi solo online: `modi: []` e `soloOnline: true` (non compaiono nelle liste "sullo stesso telefono").
 - L'host tiene lo stato e manda a tutti una "foto" (vm); gli altri mandano solo le loro mosse. Nel vm/lobby devono esserci **gli id dei giocatori** (chi entra ripete "join" finché non vede il suo id).
+- **Chi rientra** (pagina ricaricata, app riaperta) torna con lo **stesso id** (`SGNet.entra` lo ricorda per stanza): il "join" di un id già dentro deve rimandargli la foto e i suoi segreti (carte, parola…), senza cambiare la schermata dell'host e senza farlo entrare due volte.
 - Saletta d'attesa uguale per tutti: `t.lobby({ host, codice, pronta, giocatori:[{id,nome,omino,host,tu}], min, extra, onComincia, onEsci, ... })`.
 - Chi entra manda il suo avatar (`t.mioOmino(nome)`); chi ha un profilo entra da solo col suo nome (`t.nomeProfilo()`).
 - Regole cambiabili dall'host in saletta: il gioco implementa `t.onRegole(impostazioni)` se legge le impostazioni all'avvio.

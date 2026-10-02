@@ -622,12 +622,14 @@
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          if (!pById(id) && H.players.length < 10 && H.fase !== "fine") {
+          var giaDentro = !!pById(id);
+          if (!giaDentro && H.players.length < 10 && H.fase !== "fine") {
             var p = { id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino), punti: 0, col: COL_GIOC[H.players.length % COL_GIOC.length] };
             H.players.push(p);
             if (H.fase !== "lobby") { H.ordine.push(id); msg("sys", "👋 È arrivato " + p.nome); if (vista) vista.omini(mappaOmini()); }
           }
           bd();
+          if (giaDentro && H.fase !== "lobby") sync(id);   // chi rientra: il disegno fin qui e, se disegna lui, la parola
         }
         else if (m.t === "tr") tratto(id, m);
         else if (m.t === "annulla") annulla(id, m.id);

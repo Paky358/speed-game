@@ -509,7 +509,8 @@
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          if (seatDi(id) < 0 && !st) { var s = postoLibero(); if (s > 0) { posti[s] = id; nomiUmani[s] = String(m.nome || "Amico").slice(0, 16); avatariUmani[s] = C().avatarValido(m.omino); } }
+          if (st) { if (seatDi(id) > 0) bcast(); return; }   // a partita iniziata: chi rientra al suo posto si riprende le sue carte
+          if (seatDi(id) < 0) { var s = postoLibero(); if (s > 0) { posti[s] = id; nomiUmani[s] = String(m.nome || "Amico").slice(0, 16); avatariUmani[s] = C().avatarValido(m.omino); } }
           aggiornaLobby();   // trasmette la sala aggiornata a tutti gli ospiti
         } else if (m.t === "gioca" && st) { var sm = seatDi(id); if (sm > 0) passo(sm, m.carta, m.presa); }
       },

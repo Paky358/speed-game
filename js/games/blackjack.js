@@ -1345,7 +1345,8 @@
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          if (seatDiId(id) < 0 && !M && seats.length < 10) seats.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), fiches: (typeof m.fiches === "number" ? m.fiches : null), omino: avatarValido(m.omino) });
+          if (M) { bcast(); return; }   // a partita iniziata: chi rientra rivede il tavolo (e all'host resta il tavolo, non la saletta)
+          if (seatDiId(id) < 0 && seats.length < 10) seats.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), fiches: (typeof m.fiches === "number" ? m.fiches : null), omino: avatarValido(m.omino) });
           lobbyOut();
         } else if (m.t === "fiches" && typeof m.fiches === "number") {   // chi aspetta ha ritirato il bonus
           var sf = seatDiId(id);

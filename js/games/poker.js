@@ -573,6 +573,8 @@
     var W = prof ? portafoglio() : BUYIN, buyin = Math.min(W, BUYIN);
     S.fuori = W - buyin;
     function me() { if (!S.vm) return null; for (var i = 0; i < S.vm.players.length; i++) if (S.vm.players[i].id === S.myId) return S.vm.players[i]; return null; }
+    // la prima volta che mi vedo al tavolo: fuori = portafoglio − quelle sul tavolo (giusto anche se rientro dopo aver ricaricato la pagina)
+    function allinea() { var m = me(); if (S.allineato || !prof || !m) return; S.allineato = true; S.fuori = Math.max(0, W - m.stack); }
     function salva(subito) {   // nel profilo: fiches fuori + fiches sul tavolo (solo quando sono seduto)
       var m = me(); if (!prof || !m) return;
       clearTimeout(S.tSalva);
@@ -612,7 +614,7 @@
         onMsg: function (m) {
           if (!m || !m.t) return;
           if (m.to && m.to !== S.myId) return;   // era per un altro telefono
-          if (m.t === "vm") { S.vm = m.vm; salva(); disegna(t, m.vm, cb); }
+          if (m.t === "vm") { S.vm = m.vm; allinea(); salva(); disegna(t, m.vm, cb); }
           else if (m.t === "mie") { S.mie = { n: m.n, carte: m.carte || [] }; if (S.vm) disegna(t, S.vm, cb); }
           else if (m.t === "omini") { S.omini = m.omini || {}; if (S.vm) disegna(t, S.vm, cb); }
         },

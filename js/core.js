@@ -173,6 +173,23 @@
 
   // Entra in una stanza avendo solo il codice: scopre da solo QUALE gioco
   // si sta giocando, così apre quello giusto (non sempre la Linea del tempo).
+  // ---- rientrare in una partita da ospite: se la pagina si ricarica o l'app si riapre, l'ultima stanza
+  //      resta ricordata per un po' e in home compare "🔁 Rientra nella partita" (si torna la stessa persona: vedi SGNet.entra) ----
+  var DURATA_RIENTRO = 3 * 3600 * 1000;
+  function ricordaStanza(o) { try { o.t = Date.now(); localStorage.setItem("sg-ultima-stanza", JSON.stringify(o)); } catch (e) {} }
+  function dimenticaStanza() { try { localStorage.removeItem("sg-ultima-stanza"); } catch (e) {} }
+  function stanzaRecente() {
+    try {
+      var o = JSON.parse(localStorage.getItem("sg-ultima-stanza") || "null");
+      if (o && Date.now() - o.t < DURATA_RIENTRO && (o.sala || (o.gioco && o.stanza))) return o;
+    } catch (e) {}
+    return null;
+  }
+  function rientraStanza(o) {
+    location.hash = o.sala ? "sala=" + encodeURIComponent(o.sala) : "gioco=" + o.gioco + "&stanza=" + encodeURIComponent(o.stanza);
+    location.reload();
+  }
+
   function entraConCodice() {
     var c = window.prompt("Scrivi il codice della stanza:");
     if (!c) return;
@@ -242,6 +259,17 @@
       el("h1", { class: "home-titolo", text: "SPeeD GAME" }),
       rigaProfilo
     ]));
+    // stavi giocando da ospite e la pagina si è ricaricata (o hai riaperto l'app)? Si rientra al proprio posto
+    var rientro = stanzaRecente();
+    if (rientro) {
+      var gR = rientro.gioco ? giochi.filter(function (x) { return x.id === rientro.gioco; })[0] : null;
+      s._contenuto.appendChild(el("div", { class: "home-rientra" }, [
+        el("button", { class: "btn btn-primario", onclick: function () { rientraStanza(rientro); } }, [
+          el("span", { text: "🔁 Rientra nella partita" }),
+          el("small", { text: rientro.sala ? "👥 Sala online · stanza " + rientro.sala : (gR ? gR.icona + " " + gR.nome : "Partita") + " · stanza " + rientro.stanza }) ]),
+        el("button", { class: "home-rientra-x", "aria-label": "Non rientrare", text: "✕", onclick: function () { dimenticaStanza(); schermataHome(); } })
+      ]));
+    }
     // Barra delle categorie (sotto il profilo): "Tutti" + i gruppi. Cliccando si filtra
     // solo la griglia (senza rifare la schermata: niente lampeggio, non si torna in cima).
     var barra = el("div", { class: "cat-barra" });
@@ -1965,6 +1993,7 @@
   // ---------- OSPITE ----------
   function salaOspite(codice) {
     if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete();
+    ricordaStanza({ sala: String(codice).toUpperCase() });   // se la pagina si ricarica, si rientra nella sala
     var io = profiloAttivo();
     if (!io) return nomeOspiteSala(codice);   // senza profilo si entra lo stesso: basta il nome
     entraInSala(codice, io.nome, io.emoji, io.omino || null);
@@ -2014,7 +2043,7 @@
     }, { tieni: true });   // resta aperta tra un gioco e l'altro
   }
 
-  function chiudiSalaOspite() { try { if (salaG && salaG.rete) salaG.rete.chiudi(); } catch (e) {} salaG = null; }
+  function chiudiSalaOspite() { try { if (salaG && salaG.rete) salaG.rete.chiudi(); } catch (e) {} salaG = null; dimenticaStanza(); }
 
   function attendiSala() {
     var s = schermata({ icona: "👥", titolo: "Entro nella sala…", sotto: "Codice " + salaG.codice,
@@ -2767,6 +2796,8 @@
   function avviaPartita(g, giocatori, impostazioni, opts, salaCtx) {
     var questa = ++partitaN;
     function viva() { return questa === partitaN; }
+    // entrato da ospite con un invito: se la pagina si ricarica, in home c'è "Rientra nella partita"
+    if (linkParams && linkParams.stanza && !linkParams.guarda && !salaCtx) ricordaStanza({ gioco: g.id, stanza: String(linkParams.stanza).toUpperCase() });
     var contenitore = el("div");
     var schermo = el("div");
     schermo.appendChild(contenitore);
@@ -2833,7 +2864,11 @@
       },
 
       // uscite comuni
-      esci: function () { if (viva()) (salaCtx ? salaCtx.esci : schermataHome)(); }
+      esci: function () {
+        if (!viva()) return;
+        if (!salaCtx && tavolo.linkParams && tavolo.linkParams.stanza) dimenticaStanza();   // uscito apposta: niente "Rientra"
+        (salaCtx ? salaCtx.esci : schermataHome)();
+      }
     };
 
     g.avvia(tavolo);
