@@ -30,7 +30,7 @@
   var ATTESA_OSPITE = 20000;   // chi sparisce all'improvviso: tanto tempo per tornare prima di toglierlo
   var ATTESA_HOST = 120000;    // se sparisce l'host (es. è andato a mandare il link su WhatsApp), gli altri lo aspettano 2 minuti
   var RIPETI_ENTRATA = 2000, MAX_RIPETI = 45;   // "sono entrato" ogni 2 secondi, fino a un minuto e mezzo
-  var CI_SONO = 8000;          // chi è dentro lo ripete ogni tanto: così un "sparito" arrivato in ritardo non lo toglie
+  var CI_SONO = 15000;         // chi è dentro lo ripete ogni tanto (se è stato zitto): così un "sparito" in ritardo non lo toglie
   var DURATA_ID = 6 * 3600 * 1000;
 
   // chi rientra nella stessa stanza (pagina ricaricata, app riaperta) torna con lo STESSO codice:
@@ -157,8 +157,8 @@
         clean: true, reconnectPeriod: 2000,
         will: { topic: T.azioni, payload: JSON.stringify({ from: myId, data: { t: "__leave" } }), retain: false }
       });
-      var aperto = false, chiusa = false, entrata = null, dentro = false, tRipeti = null, tAddio = null, tCi = null;
-      function pubblica(msg) { try { if (client.connected) client.publish(T.azioni, JSON.stringify({ from: myId, data: msg }), { retain: false }); } catch (e) {} }
+      var aperto = false, chiusa = false, entrata = null, dentro = false, tRipeti = null, tAddio = null, tCi = null, ultimoInvio = 0;
+      function pubblica(msg) { try { if (client.connected) { client.publish(T.azioni, JSON.stringify({ from: myId, data: msg }), { retain: false }); ultimoInvio = Date.now(); } } catch (e) {} }
       function smetti() { if (tRipeti) { clearInterval(tRipeti); tRipeti = null; } }
       // "sono entrato" può perdersi (stanza non ancora pronta, host via un attimo):
       // lo ripeto finché l'host non mi mette dentro (il mio codice compare nei suoi messaggi)
@@ -198,7 +198,8 @@
           pubblica(msg);
           if (msg && msg.t === "join") {
             entrata = msg; if (!dentro) insisti();
-            if (!tCi) tCi = setInterval(function () { if (!chiusa) pubblica({ t: "__ci" }); }, CI_SONO);   // "ci sono", ogni tanto
+            // "ci sono", ogni tanto, solo se nel frattempo non ho mandato niente (meno messaggi = meno batteria)
+            if (!tCi) tCi = setInterval(function () { if (!chiusa && Date.now() - ultimoInvio >= CI_SONO - 1000) pubblica({ t: "__ci" }); }, CI_SONO);
           }
         },
         chiudi: function () {

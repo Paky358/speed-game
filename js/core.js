@@ -204,6 +204,17 @@
   // cambiando app il telefono lo toglie da solo: tornando, lo rimettiamo
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && schermoVoluto && !schermoLock) tieniAcceso(true); });
 
+  // ---- batteria: dopo 20 secondi senza tocchi gli avatar smettono di respirare e sbattere le palpebre
+  //      (sono tanti e fanno lavorare il telefono di continuo); al primo tocco ripartono ----
+  var tRiposo = null;
+  function svegliaAnimazioni() {
+    if (document.body) document.body.classList.remove("sg-riposo");
+    clearTimeout(tRiposo);
+    tRiposo = setTimeout(function () { if (document.body) document.body.classList.add("sg-riposo"); }, 20000);
+  }
+  ["pointerdown", "keydown"].forEach(function (ev) { document.addEventListener(ev, svegliaAnimazioni, { capture: true, passive: true }); });
+  svegliaAnimazioni();
+
   // ---- "⏳ Aspettiamo l'host…": l'host è uscito un attimo dall'app (gli altri lo aspettano 2 minuti) ----
   var hostVia = {}, avvisoHost = null;
   window.addEventListener("sg-host", function (e) {
