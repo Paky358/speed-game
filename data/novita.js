@@ -11,9 +11,11 @@ window.SG_NOVITA = [
   {
     v: 147,
     data: "2 ottobre 2026",
-    titolo: "Si rientra nella partita 🔁",
+    titolo: "Collegamento più solido: si rientra nella partita 🔁",
     descrizione: [
       "Se a un amico si blocca il telefono, cambia app o la pagina si ricarica, rientra nella partita al suo posto: con le sue carte, i suoi punti e il suo turno.",
+      "Durante le partite online e nella Sala lo schermo resta acceso: il telefono non si blocca da solo mentre aspetti il tuo turno.",
+      "Se l'host esce un attimo dall'app (per esempio per mandare il link), gli altri lo aspettano fino a 2 minuti e vedono \"⏳ Aspettiamo l'host…\".",
       "Se l'app si riapre da capo, in alto nella pagina iniziale c'è il tasto \"🔁 Rientra nella partita\" (si può togliere con la ✕).",
       "Vale anche per la Sala online e per il torneo a eliminazione: chi rientra ritrova la sua sfida.",
       "Unica eccezione per ora: nella Battaglia navale le navi di chi è entrato stanno sul suo telefono, quindi se la sua pagina si ricarica la partita va rifatta."

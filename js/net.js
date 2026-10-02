@@ -28,7 +28,7 @@
   var BASE = "seratagiochi/v1/";
   var ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // niente caratteri ambigui
   var ATTESA_OSPITE = 20000;   // chi sparisce all'improvviso: tanto tempo per tornare prima di toglierlo
-  var ATTESA_HOST = 45000;     // se sparisce l'host (es. è andato a mandare il link), gli altri lo aspettano così
+  var ATTESA_HOST = 120000;    // se sparisce l'host (es. è andato a mandare il link su WhatsApp), gli altri lo aspettano 2 minuti
   var RIPETI_ENTRATA = 2000, MAX_RIPETI = 45;   // "sono entrato" ogni 2 secondi, fino a un minuto e mezzo
   var CI_SONO = 8000;          // chi è dentro lo ripete ogni tanto: così un "sparito" arrivato in ritardo non lo toglie
   var DURATA_ID = 6 * 3600 * 1000;
@@ -41,6 +41,11 @@
     if (!id) id = "g" + Math.random().toString(36).slice(2, 9);
     try { localStorage.setItem(k, JSON.stringify({ id: id, t: Date.now() })); } catch (e) {}
     return id;
+  }
+
+  // l'host di una stanza è sparito o è tornato: l'app mostra (o toglie) "⏳ Aspettiamo l'host…"
+  function avvisaHost(stanza, via) {
+    try { window.dispatchEvent(new CustomEvent("sg-host", { detail: { stanza: stanza, via: !!via } })); } catch (e) {}
   }
 
   function codiceACaso(n) {
@@ -174,13 +179,13 @@
         var testo = payload.toString(); if (!testo) return;
         var m; try { m = JSON.parse(testo); } catch (e) { return; }
         if (!m) return;
-        if (tAddio && !(pacchetto && pacchetto.retain)) { clearTimeout(tAddio); tAddio = null; }   // l'host c'è ancora
+        if (tAddio && !(pacchetto && pacchetto.retain)) { clearTimeout(tAddio); tAddio = null; avvisaHost(T.stato, false); }   // l'host c'è ancora
         if (entrata && !dentro && testo.indexOf('"' + myId + '"') >= 0) { dentro = true; smetti(); }   // l'host mi ha messo nella partita
         if (m.t === "__hostqui") return;
         if (m.t === "__hostgone") {
           if (m.voluto) { cb.onChiuso && cb.onChiuso(); return; }   // chiusa apposta
-          // sparito all'improvviso (schermo bloccato, cambio app): gli do tempo di tornare
-          if (!tAddio) tAddio = setTimeout(function () { tAddio = null; if (!chiusa) cb.onChiuso && cb.onChiuso(); }, ATTESA_HOST);
+          // sparito all'improvviso (schermo bloccato, cambio app): gli do tempo di tornare (e lo dico sullo schermo)
+          if (!tAddio) { avvisaHost(T.stato, true); tAddio = setTimeout(function () { tAddio = null; avvisaHost(T.stato, false); if (!chiusa) cb.onChiuso && cb.onChiuso(); }, ATTESA_HOST); }
           return;
         }
         cb.onMsg && cb.onMsg(m);
@@ -198,7 +203,7 @@
         },
         chiudi: function () {
           if (chiusa) return;
-          chiusa = true; togli(h); smetti(); if (tAddio) { clearTimeout(tAddio); tAddio = null; } if (tCi) { clearInterval(tCi); tCi = null; }
+          chiusa = true; togli(h); smetti(); if (tAddio) { clearTimeout(tAddio); tAddio = null; avvisaHost(T.stato, false); } if (tCi) { clearInterval(tCi); tCi = null; }
           try { client.publish(T.azioni, JSON.stringify({ from: myId, data: { t: "__leave", voluto: 1 } }), { retain: false }); client.end(); } catch (e) {}
         }
       };

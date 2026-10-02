@@ -890,3 +890,5 @@ button.am-riga:active{ transform:scale(.985); }
 .home-rientra .btn{ flex:1; margin:0; display:flex; flex-direction:column; align-items:center; gap:2px; }
 .home-rientra small{ font-size:.75rem; font-weight:700; opacity:.85; }
 .home-rientra-x{ flex:0 0 46px; border:0; border-radius:14px; background:rgba(255,255,255,.1); color:inherit; font:inherit; font-size:1rem; font-weight:900; cursor:pointer; }
+/* "⏳ Aspettiamo l'host…": l'host è uscito un attimo dall'app */
+.host-via{ position:fixed; left:50%; top:calc(8px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:9999; max-width:calc(100% - 24px); box-sizing:border-box; padding:8px 14px; border-radius:999px; background:#e67700; color:#fff; font-weight:800; font-size:.88rem; text-align:center; box-shadow:0 6px 18px rgba(0,0,0,.4); pointer-events:none; }

@@ -190,6 +190,30 @@
     location.reload();
   }
 
+  // ---- schermo sempre acceso nelle partite online e nella Sala: se il telefono si blocca, il collegamento si ferma ----
+  var schermoLock = null, schermoVoluto = false;
+  function tieniAcceso(si) {
+    schermoVoluto = !!si;
+    if (!navigator.wakeLock) return;
+    if (si && !schermoLock) navigator.wakeLock.request("screen").then(function (x) {
+      if (!schermoVoluto) { x.release(); return; }
+      schermoLock = x; x.addEventListener("release", function () { if (schermoLock === x) schermoLock = null; });
+    }).catch(function () {});
+    else if (!si && schermoLock) { try { schermoLock.release(); } catch (e) {} schermoLock = null; }
+  }
+  // cambiando app il telefono lo toglie da solo: tornando, lo rimettiamo
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && schermoVoluto && !schermoLock) tieniAcceso(true); });
+
+  // ---- "⏳ Aspettiamo l'host…": l'host è uscito un attimo dall'app (gli altri lo aspettano 2 minuti) ----
+  var hostVia = {}, avvisoHost = null;
+  window.addEventListener("sg-host", function (e) {
+    var d = e.detail || {};
+    if (d.via) hostVia[d.stanza] = 1; else delete hostVia[d.stanza];
+    var serve = Object.keys(hostVia).length > 0;
+    if (serve && !avvisoHost) { avvisoHost = el("div", { class: "host-via", text: "⏳ Aspettiamo l'host: è uscito un attimo dall'app…" }); document.body.appendChild(avvisoHost); }
+    else if (!serve && avvisoHost) { if (avvisoHost.parentNode) avvisoHost.parentNode.removeChild(avvisoHost); avvisoHost = null; }
+  });
+
   function entraConCodice() {
     var c = window.prompt("Scrivi il codice della stanza:");
     if (!c) return;
@@ -228,6 +252,7 @@
   function schermataHome() {
     if (window.SGNet && SGNet.chiudiGiochi) SGNet.chiudiGiochi();   // niente collegamenti vecchi aperti (la sala resta)
     chiudiTabelloneElim();
+    tieniAcceso(false);
     var s = schermata({});
     s.className += " home";
     var io = profiloAttivo();
@@ -1892,6 +1917,7 @@
     if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete();
     if (!profiloAttivo()) return schermataAccesso(function () { creaSala(opz); });
     var io = profiloAttivo();
+    tieniAcceso(true);   // la Sala: lo schermo resta acceso finché si gioca
     sala = { rete: null, codice: "…", pronta: false, membri: [{ id: "host", nome: io.nome, emoji: io.emoji, omino: io.omino || null }], gioco: null, stanza: null, inGioco: false,
       torneo: torn ? { punti: {}, nomi: [io.nome], n: 0, ultima: null, finito: false } : null,
       elim: elimG ? { gioco: elimG, iniziato: false, finito: false, turni: [], nomi: {}, campione: null, gironi: {} } : null, inPartitaK: null };
@@ -1994,6 +2020,7 @@
   function salaOspite(codice) {
     if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete();
     ricordaStanza({ sala: String(codice).toUpperCase() });   // se la pagina si ricarica, si rientra nella sala
+    tieniAcceso(true);
     var io = profiloAttivo();
     if (!io) return nomeOspiteSala(codice);   // senza profilo si entra lo stesso: basta il nome
     entraInSala(codice, io.nome, io.emoji, io.omino || null);
@@ -2798,6 +2825,8 @@
     function viva() { return questa === partitaN; }
     // entrato da ospite con un invito: se la pagina si ricarica, in home c'è "Rientra nella partita"
     if (linkParams && linkParams.stanza && !linkParams.guarda && !salaCtx) ricordaStanza({ gioco: g.id, stanza: String(linkParams.stanza).toUpperCase() });
+    // online (host, ospite o dalla Sala): lo schermo resta acceso, così il collegamento non si ferma
+    tieniAcceso(!!(salaCtx || (linkParams && linkParams.stanza) || (impostazioni && impostazioni.modo === "online")));
     var contenitore = el("div");
     var schermo = el("div");
     schermo.appendChild(contenitore);
