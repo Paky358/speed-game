@@ -55,5 +55,7 @@ In `.agents/skills/` ci sono le procedure passo passo: leggi quella giusta prima
 - `trofei`: aggiungere o cambiare trofei.
 - `contenuti`: scrivere liste di parole, carte, domande e avvenimenti.
 
+In `docs/appunti-claude.md` ci sono gli appunti di Claude sul progetto (decisioni prese gioco per gioco, come provare, il mini-server di prova in PowerShell): su un computer nuovo, leggili e salvali nella memoria.
+
 ## Come provare
 Non ci sono test automatici: si prova nel browser. Per l'online si sostituiscono `SGNet.ospita/entra` con dei finti che registrano i messaggi, e `SGNube.profilo` con un profilo finto: **mai** usare password o account veri.
