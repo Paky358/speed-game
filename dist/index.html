@@ -899,6 +899,15 @@ button.am-riga:active{ transform:scale(.985); }
 .sl-girone.panca{ border-style:solid; background:rgba(160,110,60,.18); }
 .sl-girone.panca span{ white-space:normal; }
 .sl-elim-g{ font-size:.68rem; font-weight:900; padding:2px 6px; border-radius:8px; background:rgba(255,224,102,.18); color:#ffe066; }
+/* home: rientrare nella partita (pagina ricaricata o app riaperta mentre si giocava da ospite) */
+.home-rientra{ display:flex; gap:8px; align-items:stretch; margin:0 0 12px; }
+.home-rientra .btn{ flex:1; margin:0; display:flex; flex-direction:column; align-items:center; gap:2px; }
+.home-rientra small{ font-size:.75rem; font-weight:700; opacity:.85; }
+.home-rientra-x{ flex:0 0 46px; border:0; border-radius:14px; background:rgba(255,255,255,.1); color:inherit; font:inherit; font-size:1rem; font-weight:900; cursor:pointer; }
+/* "⏳ Aspettiamo l'host…": l'host è uscito un attimo dall'app */
+.host-via{ position:fixed; left:50%; top:calc(8px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:9999; max-width:calc(100% - 24px); box-sizing:border-box; padding:8px 14px; border-radius:999px; background:#e67700; color:#fff; font-weight:800; font-size:.88rem; text-align:center; box-shadow:0 6px 18px rgba(0,0,0,.4); pointer-events:none; }
+/* batteria: a riposo (20 s senza tocchi) gli avatar non respirano e non sbattono le palpebre; al primo tocco ripartono */
+body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, body.sg-riposo .sl-camp-cor{ animation:none !important; }
 </style>
 <div id="app"></div>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
@@ -2985,7 +2994,7 @@ button.am-riga:active{ transform:scale(.985); }
     { id: "parole", nome: "Quiz & parole", icona: "🧠" }
   ];
   var CAT_GIOCO = {
-    scopa: "carte", scopa2v2: "carte", scopone: "carte", blackjack: "carte", poker: "carte",
+    scopa: "carte", scopa2v2: "carte", scopone: "carte", blackjack: "carte", poker: "carte", ruota: "parole",
     tris: "sfida", drop4: "sfida", hockey: "sfida", navale: "sfida",
     asta: "festa", impostore: "festa", sipero: "festa", scarabocchio: "festa",
     scalinata: "mini", horto: "mini", pendolo: "mini",
@@ -2994,7 +3003,7 @@ button.am-riga:active{ transform:scale(.985); }
   var catAttiva = "tutti";
   function catDi(g) { return CAT_GIOCO[g.id] || null; }
   // Giochi che hanno la modalità "ognuno dal suo telefono" (usabili nella Sala online).
-  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, poker: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1 };
+  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, poker: 1, ruota: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1 };
   function giocoOnline(g) { return !!(g && GIOCHI_ONLINE[g.id]); }
   var app;                    // contenitore radice (#app)
   var linkParams = {};        // impostazioni arrivate da un link condiviso
@@ -3117,6 +3126,58 @@ button.am-riga:active{ transform:scale(.985); }
 
   // Entra in una stanza avendo solo il codice: scopre da solo QUALE gioco
   // si sta giocando, così apre quello giusto (non sempre la Linea del tempo).
+  // ---- rientrare in una partita da ospite: se la pagina si ricarica o l'app si riapre, l'ultima stanza
+  //      resta ricordata per un po' e in home compare "🔁 Rientra nella partita" (si torna la stessa persona: vedi SGNet.entra) ----
+  var DURATA_RIENTRO = 3 * 3600 * 1000;
+  function ricordaStanza(o) { try { o.t = Date.now(); localStorage.setItem("sg-ultima-stanza", JSON.stringify(o)); } catch (e) {} }
+  function dimenticaStanza() { try { localStorage.removeItem("sg-ultima-stanza"); } catch (e) {} }
+  function stanzaRecente() {
+    try {
+      var o = JSON.parse(localStorage.getItem("sg-ultima-stanza") || "null");
+      if (o && Date.now() - o.t < DURATA_RIENTRO && (o.sala || (o.gioco && o.stanza))) return o;
+    } catch (e) {}
+    return null;
+  }
+  function rientraStanza(o) {
+    location.hash = o.sala ? "sala=" + encodeURIComponent(o.sala) : "gioco=" + o.gioco + "&stanza=" + encodeURIComponent(o.stanza);
+    location.reload();
+  }
+
+  // ---- schermo sempre acceso nelle partite online e nella Sala: se il telefono si blocca, il collegamento si ferma ----
+  var schermoLock = null, schermoVoluto = false;
+  function tieniAcceso(si) {
+    schermoVoluto = !!si;
+    if (!navigator.wakeLock) return;
+    if (si && !schermoLock) navigator.wakeLock.request("screen").then(function (x) {
+      if (!schermoVoluto) { x.release(); return; }
+      schermoLock = x; x.addEventListener("release", function () { if (schermoLock === x) schermoLock = null; });
+    }).catch(function () {});
+    else if (!si && schermoLock) { try { schermoLock.release(); } catch (e) {} schermoLock = null; }
+  }
+  // cambiando app il telefono lo toglie da solo: tornando, lo rimettiamo
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && schermoVoluto && !schermoLock) tieniAcceso(true); });
+
+  // ---- batteria: dopo 20 secondi senza tocchi gli avatar smettono di respirare e sbattere le palpebre
+  //      (sono tanti e fanno lavorare il telefono di continuo); al primo tocco ripartono ----
+  var tRiposo = null;
+  function svegliaAnimazioni() {
+    if (document.body) document.body.classList.remove("sg-riposo");
+    clearTimeout(tRiposo);
+    tRiposo = setTimeout(function () { if (document.body) document.body.classList.add("sg-riposo"); }, 20000);
+  }
+  ["pointerdown", "keydown"].forEach(function (ev) { document.addEventListener(ev, svegliaAnimazioni, { capture: true, passive: true }); });
+  svegliaAnimazioni();
+
+  // ---- "⏳ Aspettiamo l'host…": l'host è uscito un attimo dall'app (gli altri lo aspettano 2 minuti) ----
+  var hostVia = {}, avvisoHost = null;
+  window.addEventListener("sg-host", function (e) {
+    var d = e.detail || {};
+    if (d.via) hostVia[d.stanza] = 1; else delete hostVia[d.stanza];
+    var serve = Object.keys(hostVia).length > 0;
+    if (serve && !avvisoHost) { avvisoHost = el("div", { class: "host-via", text: "⏳ Aspettiamo l'host: è uscito un attimo dall'app…" }); document.body.appendChild(avvisoHost); }
+    else if (!serve && avvisoHost) { if (avvisoHost.parentNode) avvisoHost.parentNode.removeChild(avvisoHost); avvisoHost = null; }
+  });
+
   function entraConCodice() {
     var c = window.prompt("Scrivi il codice della stanza:");
     if (!c) return;
@@ -3155,6 +3216,7 @@ button.am-riga:active{ transform:scale(.985); }
   function schermataHome() {
     if (window.SGNet && SGNet.chiudiGiochi) SGNet.chiudiGiochi();   // niente collegamenti vecchi aperti (la sala resta)
     chiudiTabelloneElim();
+    tieniAcceso(false);
     var s = schermata({});
     s.className += " home";
     var io = profiloAttivo();
@@ -3186,6 +3248,17 @@ button.am-riga:active{ transform:scale(.985); }
       el("h1", { class: "home-titolo", text: "SPeeD GAME" }),
       rigaProfilo
     ]));
+    // stavi giocando da ospite e la pagina si è ricaricata (o hai riaperto l'app)? Si rientra al proprio posto
+    var rientro = stanzaRecente();
+    if (rientro) {
+      var gR = rientro.gioco ? giochi.filter(function (x) { return x.id === rientro.gioco; })[0] : null;
+      s._contenuto.appendChild(el("div", { class: "home-rientra" }, [
+        el("button", { class: "btn btn-primario", onclick: function () { rientraStanza(rientro); } }, [
+          el("span", { text: "🔁 Rientra nella partita" }),
+          el("small", { text: rientro.sala ? "👥 Sala online · stanza " + rientro.sala : (gR ? gR.icona + " " + gR.nome : "Partita") + " · stanza " + rientro.stanza }) ]),
+        el("button", { class: "home-rientra-x", "aria-label": "Non rientrare", text: "✕", onclick: function () { dimenticaStanza(); schermataHome(); } })
+      ]));
+    }
     // Barra delle categorie (sotto il profilo): "Tutti" + i gruppi. Cliccando si filtra
     // solo la griglia (senza rifare la schermata: niente lampeggio, non si torna in cima).
     var barra = el("div", { class: "cat-barra" });
@@ -4808,6 +4881,7 @@ button.am-riga:active{ transform:scale(.985); }
     if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete();
     if (!profiloAttivo()) return schermataAccesso(function () { creaSala(opz); });
     var io = profiloAttivo();
+    tieniAcceso(true);   // la Sala: lo schermo resta acceso finché si gioca
     sala = { rete: null, codice: "…", pronta: false, membri: [{ id: "host", nome: io.nome, emoji: io.emoji, omino: io.omino || null }], gioco: null, stanza: null, inGioco: false,
       torneo: torn ? { punti: {}, nomi: [io.nome], n: 0, ultima: null, finito: false } : null,
       elim: elimG ? { gioco: elimG, iniziato: false, finito: false, turni: [], nomi: {}, campione: null, gironi: {} } : null, inPartitaK: null };
@@ -4909,6 +4983,8 @@ button.am-riga:active{ transform:scale(.985); }
   // ---------- OSPITE ----------
   function salaOspite(codice) {
     if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete();
+    ricordaStanza({ sala: String(codice).toUpperCase() });   // se la pagina si ricarica, si rientra nella sala
+    tieniAcceso(true);
     var io = profiloAttivo();
     if (!io) return nomeOspiteSala(codice);   // senza profilo si entra lo stesso: basta il nome
     entraInSala(codice, io.nome, io.emoji, io.omino || null);
@@ -4958,7 +5034,7 @@ button.am-riga:active{ transform:scale(.985); }
     }, { tieni: true });   // resta aperta tra un gioco e l'altro
   }
 
-  function chiudiSalaOspite() { try { if (salaG && salaG.rete) salaG.rete.chiudi(); } catch (e) {} salaG = null; }
+  function chiudiSalaOspite() { try { if (salaG && salaG.rete) salaG.rete.chiudi(); } catch (e) {} salaG = null; dimenticaStanza(); }
 
   function attendiSala() {
     var s = schermata({ icona: "👥", titolo: "Entro nella sala…", sotto: "Codice " + salaG.codice,
@@ -5711,6 +5787,10 @@ button.am-riga:active{ transform:scale(.985); }
   function avviaPartita(g, giocatori, impostazioni, opts, salaCtx) {
     var questa = ++partitaN;
     function viva() { return questa === partitaN; }
+    // entrato da ospite con un invito: se la pagina si ricarica, in home c'è "Rientra nella partita"
+    if (linkParams && linkParams.stanza && !linkParams.guarda && !salaCtx) ricordaStanza({ gioco: g.id, stanza: String(linkParams.stanza).toUpperCase() });
+    // online (host, ospite o dalla Sala): lo schermo resta acceso, così il collegamento non si ferma
+    tieniAcceso(!!(salaCtx || (linkParams && linkParams.stanza) || (impostazioni && impostazioni.modo === "online")));
     var contenitore = el("div");
     var schermo = el("div");
     schermo.appendChild(contenitore);
@@ -5777,7 +5857,11 @@ button.am-riga:active{ transform:scale(.985); }
       },
 
       // uscite comuni
-      esci: function () { if (viva()) (salaCtx ? salaCtx.esci : schermataHome)(); }
+      esci: function () {
+        if (!viva()) return;
+        if (!salaCtx && tavolo.linkParams && tavolo.linkParams.stanza) dimenticaStanza();   // uscito apposta: niente "Rientra"
+        (salaCtx ? salaCtx.esci : schermataHome)();
+      }
     };
 
     g.avvia(tavolo);
@@ -5891,8 +5975,25 @@ button.am-riga:active{ transform:scale(.985); }
   var BASE = "seratagiochi/v1/";
   var ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // niente caratteri ambigui
   var ATTESA_OSPITE = 20000;   // chi sparisce all'improvviso: tanto tempo per tornare prima di toglierlo
-  var ATTESA_HOST = 45000;     // se sparisce l'host (es. è andato a mandare il link), gli altri lo aspettano così
+  var ATTESA_HOST = 120000;    // se sparisce l'host (es. è andato a mandare il link su WhatsApp), gli altri lo aspettano 2 minuti
   var RIPETI_ENTRATA = 2000, MAX_RIPETI = 45;   // "sono entrato" ogni 2 secondi, fino a un minuto e mezzo
+  var CI_SONO = 15000;         // chi è dentro lo ripete ogni tanto (se è stato zitto): così un "sparito" in ritardo non lo toglie
+  var DURATA_ID = 6 * 3600 * 1000;
+
+  // chi rientra nella stessa stanza (pagina ricaricata, app riaperta) torna con lo STESSO codice:
+  // l'host lo riconosce e gli ridà il suo posto, invece di prenderlo per uno nuovo
+  function idPerStanza(codice) {
+    var k = "sg-id-" + String(codice).toUpperCase(), id = null;
+    try { var v = JSON.parse(localStorage.getItem(k) || "null"); if (v && v.id && Date.now() - v.t < DURATA_ID) id = v.id; } catch (e) {}
+    if (!id) id = "g" + Math.random().toString(36).slice(2, 9);
+    try { localStorage.setItem(k, JSON.stringify({ id: id, t: Date.now() })); } catch (e) {}
+    return id;
+  }
+
+  // l'host di una stanza è sparito o è tornato: l'app mostra (o toglie) "⏳ Aspettiamo l'host…"
+  function avvisaHost(stanza, via) {
+    try { window.dispatchEvent(new CustomEvent("sg-host", { detail: { stanza: stanza, via: !!via } })); } catch (e) {}
+  }
 
   function codiceACaso(n) {
     var s = "";
@@ -5966,6 +6067,7 @@ button.am-riga:active{ transform:scale(.985); }
           inForse[m.from] = setTimeout(function () { delete inForse[m.from]; if (!chiusa) cb.onAddio && cb.onAddio(m.from); }, ATTESA_OSPITE);
           return;
         }
+        if (m.data && m.data.t === "__ci") return;   // "ci sono": serve solo a non toglierlo (qui sopra), il gioco non lo vede
         cb.onMsg && cb.onMsg(m.from, m.data);
       });
       client.on("error", function (e) { if (!chiusa) cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message }); });
@@ -5996,14 +6098,14 @@ button.am-riga:active{ transform:scale(.985); }
     // opz.tieni = non chiuderla quando si cambia gioco (è la connessione della sala)
     entra: function (codice, cb, opz) {
       if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
-      var myId = "g" + Math.random().toString(36).slice(2, 9);
+      var myId = idPerStanza(codice);   // rientrando nella stessa stanza si torna "la stessa persona"
       var T = topics(codice);
       var client = mqtt.connect(BROKER, {
         clean: true, reconnectPeriod: 2000,
         will: { topic: T.azioni, payload: JSON.stringify({ from: myId, data: { t: "__leave" } }), retain: false }
       });
-      var aperto = false, chiusa = false, entrata = null, dentro = false, tRipeti = null, tAddio = null;
-      function pubblica(msg) { try { if (client.connected) client.publish(T.azioni, JSON.stringify({ from: myId, data: msg }), { retain: false }); } catch (e) {} }
+      var aperto = false, chiusa = false, entrata = null, dentro = false, tRipeti = null, tAddio = null, tCi = null, ultimoInvio = 0;
+      function pubblica(msg) { try { if (client.connected) { client.publish(T.azioni, JSON.stringify({ from: myId, data: msg }), { retain: false }); ultimoInvio = Date.now(); } } catch (e) {} }
       function smetti() { if (tRipeti) { clearInterval(tRipeti); tRipeti = null; } }
       // "sono entrato" può perdersi (stanza non ancora pronta, host via un attimo):
       // lo ripeto finché l'host non mi mette dentro (il mio codice compare nei suoi messaggi)
@@ -6024,13 +6126,13 @@ button.am-riga:active{ transform:scale(.985); }
         var testo = payload.toString(); if (!testo) return;
         var m; try { m = JSON.parse(testo); } catch (e) { return; }
         if (!m) return;
-        if (tAddio && !(pacchetto && pacchetto.retain)) { clearTimeout(tAddio); tAddio = null; }   // l'host c'è ancora
+        if (tAddio && !(pacchetto && pacchetto.retain)) { clearTimeout(tAddio); tAddio = null; avvisaHost(T.stato, false); }   // l'host c'è ancora
         if (entrata && !dentro && testo.indexOf('"' + myId + '"') >= 0) { dentro = true; smetti(); }   // l'host mi ha messo nella partita
         if (m.t === "__hostqui") return;
         if (m.t === "__hostgone") {
           if (m.voluto) { cb.onChiuso && cb.onChiuso(); return; }   // chiusa apposta
-          // sparito all'improvviso (schermo bloccato, cambio app): gli do tempo di tornare
-          if (!tAddio) tAddio = setTimeout(function () { tAddio = null; if (!chiusa) cb.onChiuso && cb.onChiuso(); }, ATTESA_HOST);
+          // sparito all'improvviso (schermo bloccato, cambio app): gli do tempo di tornare (e lo dico sullo schermo)
+          if (!tAddio) { avvisaHost(T.stato, true); tAddio = setTimeout(function () { tAddio = null; avvisaHost(T.stato, false); if (!chiusa) cb.onChiuso && cb.onChiuso(); }, ATTESA_HOST); }
           return;
         }
         cb.onMsg && cb.onMsg(m);
@@ -6041,11 +6143,15 @@ button.am-riga:active{ transform:scale(.985); }
         invia: function (msg) {
           if (chiusa) return;
           pubblica(msg);
-          if (msg && msg.t === "join") { entrata = msg; if (!dentro) insisti(); }
+          if (msg && msg.t === "join") {
+            entrata = msg; if (!dentro) insisti();
+            // "ci sono", ogni tanto, solo se nel frattempo non ho mandato niente (meno messaggi = meno batteria)
+            if (!tCi) tCi = setInterval(function () { if (!chiusa && Date.now() - ultimoInvio >= CI_SONO - 1000) pubblica({ t: "__ci" }); }, CI_SONO);
+          }
         },
         chiudi: function () {
           if (chiusa) return;
-          chiusa = true; togli(h); smetti(); if (tAddio) { clearTimeout(tAddio); tAddio = null; }
+          chiusa = true; togli(h); smetti(); if (tAddio) { clearTimeout(tAddio); tAddio = null; avvisaHost(T.stato, false); } if (tCi) { clearInterval(tCi); tCi = null; }
           try { client.publish(T.azioni, JSON.stringify({ from: myId, data: { t: "__leave", voluto: 1 } }), { retain: false }); client.end(); } catch (e) {}
         }
       };
@@ -7400,8 +7506,9 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
   var EASE = curva(0.45, 0.05, 0.25, 1);
   function vistaDi(S, r) {   // centro e ingrandimento di un'inquadratura, senza mai uscire dallo studio (niente fasce nere ai bordi)
     var s = Math.min(S.VW / r.w, S.VH / r.h), cx = r.x + r.w / 2, cy = r.y + r.h / 2, vw = S.VW / s, vh = S.VH / s;
+    var su = (S.sopraLibero || 0) * S.VH;   // un gioco con qualcosa di fisso in alto (es. il tabellone della Ruota) può far salire la telecamera oltre il bordo
     if (vw <= S.W) cx = Math.max(vw / 2, Math.min(S.W - vw / 2, cx));
-    if (vh <= S.H) cy = Math.max(vh / 2, Math.min(S.H - vh / 2, cy));
+    if (vh <= S.H + su) cy = Math.max(vh / 2 - su, Math.min(S.H - vh / 2, cy));
     return { cx: cx, cy: cy, s: s };
   }
   function metti(S, v, fermo) {   // mette la telecamera su un punto dello studio (centro e ingrandimento)
@@ -7500,9 +7607,10 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
   function puntiLeggio(S, i, valore, delta) {
     var X = S.L[i]; if (!X) return;
     var da = X.valore; X.valore = valore;
-    function scrivi(v) { if (X.disp && !X.disp.testo && X.disp.t === String(v)) return; X.disp = { t: String(v), neg: v < 0, testo: false }; disegnaBanco(X); }
+    function punti(n) { return (n < 0 ? "−" : "") + String(Math.abs(Math.round(n))).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }   // cifre col punto: 1.500
+    function scrivi(v) { var tx = punti(v); if (X.disp && !X.disp.testo && X.disp.t === tx) return; X.disp = { t: tx, neg: v < 0, testo: false }; disegnaBanco(X); }
     if (!delta) return scrivi(valore);
-    X.delta.textContent = (delta > 0 ? "+" : "−") + Math.abs(delta);
+    X.delta.textContent = (delta > 0 ? "+" : "−") + punti(Math.abs(delta));
     X.delta.style.color = delta > 0 ? "#6ff0a6" : "#ff8d98";
     X.delta.classList.remove("on"); void X.delta.offsetWidth; X.delta.classList.add("on");
     var t0 = performance.now();
@@ -13842,6 +13950,34 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 148,
+    data: "2 ottobre 2026",
+    titolo: "Nuovo gioco: La Ruota della Fortuna 🎡",
+    descrizione: [
+      "Come il quiz della TV: giri la ruota, chiami una consonante e guadagni quello che dice lo spicchio per ogni lettera che c'è. Con almeno 300 compri una vocale, e quando pensi di saperla risolvi la frase.",
+      "Ci sono Bancarotta (perdi i soldi della manche), Passa (perdi il turno) e il Jolly, che ti salva il turno la volta dopo.",
+      "Si gioca nello studio del game show: la telecamera va sulla ruota quando gira e sul concorrente di turno, il pubblico applaude o fa \"ohhh\", e il tabellone con la frase resta sempre in vista in alto.",
+      "Più di 700 frasi in 12 categorie: proverbi, modi di dire, film, canzoni italiane, personaggi famosi, luoghi, cibo, sport, animali e altro.",
+      "Da 2 a 4 alla ruota: contro i bot (il primo è Matt), sullo stesso telefono o online, ognuno dal suo telefono. Online l'host può riempire i posti vuoti coi bot.",
+      "Prima di cominciare scegli quante manche (3, 4 o 5) e quanto sono bravi i bot. Vince chi alla fine ha messo da parte più soldi.",
+      "La trovi nella categoria Quiz & parole."
+    ]
+  },
+  {
+    v: 147,
+    data: "2 ottobre 2026",
+    titolo: "Collegamento più solido: si rientra nella partita 🔁",
+    descrizione: [
+      "Se a un amico si blocca il telefono, cambia app o la pagina si ricarica, rientra nella partita al suo posto: con le sue carte, i suoi punti e il suo turno.",
+      "Durante le partite online e nella Sala lo schermo resta acceso: il telefono non si blocca da solo mentre aspetti il tuo turno.",
+      "Se l'host esce un attimo dall'app (per esempio per mandare il link), gli altri lo aspettano fino a 2 minuti e vedono \"⏳ Aspettiamo l'host…\".",
+      "Meno batteria: quando nessuno tocca lo schermo per un po' gli avatar si riposano, e il collegamento manda meno messaggi.",
+      "Se l'app si riapre da capo, in alto nella pagina iniziale c'è il tasto \"🔁 Rientra nella partita\" (si può togliere con la ✕).",
+      "Vale anche per la Sala online e per il torneo a eliminazione: chi rientra ritrova la sua sfida.",
+      "Unica eccezione per ora: nella Battaglia navale le navi di chi è entrato stanno sul suo telefono, quindi se la sua pagina si ricarica la partita va rifatta."
+    ]
+  },
+  {
     v: 146,
     data: "2 ottobre 2026",
     titolo: "Nuovo gioco: il Poker con le carte francesi ♠️",
@@ -15490,6 +15626,742 @@ window.SG_PATATA = [
   "Soprannomi affettuosi",
   "Insulti leggeri",
   "Abitudini fastidiose"
+];
+
+/* Frasi per "La Ruota della Fortuna": { c: categoria, f: frase } */
+window.SG_RUOTA_FRASI = [
+  // Proverbi
+  { c: "Proverbi", f: "CHI DORME NON PIGLIA PESCI" },
+  { c: "Proverbi", f: "CHI VA PIANO VA SANO E VA LONTANO" },
+  { c: "Proverbi", f: "CHI FA DA SÉ FA PER TRE" },
+  { c: "Proverbi", f: "L'UNIONE FA LA FORZA" },
+  { c: "Proverbi", f: "CAN CHE ABBAIA NON MORDE" },
+  { c: "Proverbi", f: "LA FRETTA È CATTIVA CONSIGLIERA" },
+  { c: "Proverbi", f: "OCCHIO NON VEDE CUORE NON DUOLE" },
+  { c: "Proverbi", f: "TUTTO È BENE QUEL CHE FINISCE BENE" },
+  { c: "Proverbi", f: "L'OCCASIONE FA L'UOMO LADRO" },
+  { c: "Proverbi", f: "A CAVAL DONATO NON SI GUARDA IN BOCCA" },
+  { c: "Proverbi", f: "NON TUTTI I MALI VENGONO PER NUOCERE" },
+  { c: "Proverbi", f: "IL LUPO PERDE IL PELO NON IL VIZIO" },
+  { c: "Proverbi", f: "CHI CERCA TROVA" },
+  { c: "Proverbi", f: "CHI TROVA UN AMICO TROVA UN TESORO" },
+  { c: "Proverbi", f: "IL MATTINO HA L'ORO IN BOCCA" },
+  { c: "Proverbi", f: "ROMA NON FU FATTA IN UN GIORNO" },
+  { c: "Proverbi", f: "TUTTE LE STRADE PORTANO A ROMA" },
+  { c: "Proverbi", f: "PAESE CHE VAI USANZA CHE TROVI" },
+  { c: "Proverbi", f: "CHI SEMINA VENTO RACCOGLIE TEMPESTA" },
+  { c: "Proverbi", f: "NON È TUTTO ORO QUEL CHE LUCCICA" },
+  { c: "Proverbi", f: "CHI PIÙ SPENDE MENO SPENDE" },
+  { c: "Proverbi", f: "CHI RIDE DI VENERDÌ PIANGE DI DOMENICA" },
+  { c: "Proverbi", f: "MEGLIO TARDI CHE MAI" },
+  { c: "Proverbi", f: "IL BEL GIOCO DURA POCO" },
+  { c: "Proverbi", f: "L'APPETITO VIEN MANGIANDO" },
+  { c: "Proverbi", f: "A BUON INTENDITOR POCHE PAROLE" },
+  { c: "Proverbi", f: "CHI NON RISICA NON ROSICA" },
+  { c: "Proverbi", f: "DOVE C'È FUMO C'È FUOCO" },
+  { c: "Proverbi", f: "SBAGLIANDO S'IMPARA" },
+  { c: "Proverbi", f: "IL TEMPO È DENARO" },
+  { c: "Proverbi", f: "LE BUGIE HANNO LE GAMBE CORTE" },
+  { c: "Proverbi", f: "CHI BEN COMINCIA È A METÀ DELL'OPERA" },
+  { c: "Proverbi", f: "È MEGLIO PREVENIRE CHE CURARE" },
+  { c: "Proverbi", f: "L'OZIO È IL PADRE DEI VIZI" },
+  { c: "Proverbi", f: "NON C'È DUE SENZA TRE" },
+  { c: "Proverbi", f: "CHI PRIMA ARRIVA MEGLIO ALLOGGIA" },
+  { c: "Proverbi", f: "CHI SI LODA S'IMBRODA" },
+  { c: "Proverbi", f: "GALLINA VECCHIA FA BUON BRODO" },
+  { c: "Proverbi", f: "CHI TROPPO VUOLE NULLA STRINGE" },
+  { c: "Proverbi", f: "IL BUON GIORNO SI VEDE DAL MATTINO" },
+  { c: "Proverbi", f: "LA NOTTE PORTA CONSIGLIO" },
+  { c: "Proverbi", f: "TANTO VA LA GATTA AL LARDO" },
+  { c: "Proverbi", f: "CHI LA DURA LA VINCE" },
+  { c: "Proverbi", f: "L'ABITO NON FA IL MONACO" },
+  { c: "Proverbi", f: "OGNI LASCIATA È PERSA" },
+  { c: "Proverbi", f: "QUATTRO OCCHI VEDONO MEGLIO DI DUE" },
+  { c: "Proverbi", f: "NON SI VIVE DI SOLO PANE" },
+  { c: "Proverbi", f: "IL RISO FA BUON SANGUE" },
+  { c: "Proverbi", f: "LA PRATICA VALE PIÙ DELLA GRAMMATICA" },
+  { c: "Proverbi", f: "L'ERBA DEL VICINO È SEMPRE PIÙ VERDE" },
+  { c: "Proverbi", f: "DEL MAIALE NON SI BUTTA VIA NIENTE" },
+  { c: "Proverbi", f: "CHI SI ACCONTENTA GODE" },
+  { c: "Proverbi", f: "MEGLIO SOLI CHE MALE ACCOMPAGNATI" },
+  { c: "Proverbi", f: "OGNI PROMESSA È DEBITO" },
+  { c: "Proverbi", f: "IL SILENZIO È D'ORO" },
+  { c: "Proverbi", f: "AD OGNI UCCELLO IL SUO NIDO È BELLO" },
+  { c: "Proverbi", f: "QUANDO IL GATTO NON C'È I TOPI BALLANO" },
+  { c: "Proverbi", f: "DI NOTTE TUTTI I GATTI SONO BIGI" },
+  { c: "Proverbi", f: "PRIMA IL DOVERE POI IL PIACERE" },
+  { c: "Proverbi", f: "TRA MOGLIE E MARITO NON METTERE IL DITO" },
+  { c: "Proverbi", f: "IL PESCE PUZZA DALLA TESTA" },
+  { c: "Proverbi", f: "OGNI MEDAGLIA HA IL SUO ROVESCIO" },
+  { c: "Proverbi", f: "I SOLDI NON FANNO LA FELICITÀ" },
+  { c: "Proverbi", f: "LA FORTUNA AIUTA GLI AUDACI" },
+  { c: "Proverbi", f: "LA FORTUNA È CIECA" },
+  { c: "Proverbi", f: "UNA RONDINE NON FA PRIMAVERA" },
+  { c: "Proverbi", f: "ACQUA PASSATA NON MACINA PIÙ" },
+  { c: "Proverbi", f: "OGNI COSA A SUO TEMPO" },
+  { c: "Proverbi", f: "CHI ROMPE PAGA E I COCCI SONO SUOI" },
+  { c: "Proverbi", f: "LA VERITÀ VIENE SEMPRE A GALLA" },
+  { c: "Proverbi", f: "BATTI IL FERRO FINCHÉ È CALDO" },
+  { c: "Proverbi", f: "IL MONDO È BELLO PERCHÉ È VARIO" },
+  { c: "Proverbi", f: "NON C'È ROSA SENZA SPINE" },
+
+  // Modi di dire
+  { c: "Modi di dire", f: "IN BOCCA AL LUPO" },
+  { c: "Modi di dire", f: "CREPI IL LUPO" },
+  { c: "Modi di dire", f: "PIOVE A CATINELLE" },
+  { c: "Modi di dire", f: "FARE DI NECESSITÀ VIRTÙ" },
+  { c: "Modi di dire", f: "COSTARE UN OCCHIO DELLA TESTA" },
+  { c: "Modi di dire", f: "AVERE LA TESTA TRA LE NUVOLE" },
+  { c: "Modi di dire", f: "NON VEDERE L'ORA" },
+  { c: "Modi di dire", f: "PRENDERE DUE PICCIONI CON UNA FAVA" },
+  { c: "Modi di dire", f: "ESSERE AL VERDE" },
+  { c: "Modi di dire", f: "CADERE DALLE NUVOLE" },
+  { c: "Modi di dire", f: "METTERCI LO ZAMPINO" },
+  { c: "Modi di dire", f: "PARLARE A VANVERA" },
+  { c: "Modi di dire", f: "DARE I NUMERI" },
+  { c: "Modi di dire", f: "ANDARE A RUOTA LIBERA" },
+  { c: "Modi di dire", f: "ESSERE SULLA STESSA BARCA" },
+  { c: "Modi di dire", f: "FARE FINTA DI NIENTE" },
+  { c: "Modi di dire", f: "PERDERE IL FILO DEL DISCORSO" },
+  { c: "Modi di dire", f: "FARE LE ORE PICCOLE" },
+  { c: "Modi di dire", f: "SENTIRSI UN PESCE FUORI DALL'ACQUA" },
+  { c: "Modi di dire", f: "UN PUGNO NELL'OCCHIO" },
+  { c: "Modi di dire", f: "VENDERE FUMO" },
+  { c: "Modi di dire", f: "DORMIRE COME UN GHIRO" },
+  { c: "Modi di dire", f: "TESTARDO COME UN MULO" },
+  { c: "Modi di dire", f: "FURBO COME UNA VOLPE" },
+  { c: "Modi di dire", f: "FORTE COME UN LEONE" },
+  { c: "Modi di dire", f: "LENTO COME UNA LUMACA" },
+  { c: "Modi di dire", f: "LAVARSENE LE MANI" },
+  { c: "Modi di dire", f: "A OCCHIO E CROCE" },
+  { c: "Modi di dire", f: "PRENDERE LUCCIOLE PER LANTERNE" },
+  { c: "Modi di dire", f: "DARE FILO DA TORCERE" },
+  { c: "Modi di dire", f: "FARE IL PASSO PIÙ LUNGO DELLA GAMBA" },
+  { c: "Modi di dire", f: "PIANGERE LACRIME DI COCCODRILLO" },
+  { c: "Modi di dire", f: "MANGIARE LA FOGLIA" },
+  { c: "Modi di dire", f: "FARE UN BUCO NELL'ACQUA" },
+  { c: "Modi di dire", f: "TIRARE ACQUA AL PROPRIO MULINO" },
+  { c: "Modi di dire", f: "METTERE LE MANI AVANTI" },
+  { c: "Modi di dire", f: "NON AVERE PELI SULLA LINGUA" },
+  { c: "Modi di dire", f: "ESSERE AL SETTIMO CIELO" },
+  { c: "Modi di dire", f: "LA GOCCIA CHE FA TRABOCCARE IL VASO" },
+  { c: "Modi di dire", f: "FARE CASTELLI IN ARIA" },
+  { c: "Modi di dire", f: "ANDARE A GONFIE VELE" },
+  { c: "Modi di dire", f: "TRA IL DIRE E IL FARE" },
+  { c: "Modi di dire", f: "AVERE IL CUORE IN GOLA" },
+  { c: "Modi di dire", f: "AVERE LA PELLE D'OCA" },
+  { c: "Modi di dire", f: "SBELLICARSI DALLE RISATE" },
+  { c: "Modi di dire", f: "AVERE UN CUORE D'ORO" },
+  { c: "Modi di dire", f: "IL GIOCO VALE LA CANDELA" },
+  { c: "Modi di dire", f: "DORMIRE SONNI TRANQUILLI" },
+  { c: "Modi di dire", f: "AVERE LE MANI BUCATE" },
+  { c: "Modi di dire", f: "FARE ORECCHIE DA MERCANTE" },
+  { c: "Modi di dire", f: "STARE CON LE MANI IN MANO" },
+  { c: "Modi di dire", f: "LA CILIEGINA SULLA TORTA" },
+  { c: "Modi di dire", f: "UN PEZZO DI PANE" },
+  { c: "Modi di dire", f: "RIDERE A CREPAPELLE" },
+  { c: "Modi di dire", f: "PRENDERE LA PALLA AL BALZO" },
+  { c: "Modi di dire", f: "AVERE UNA MEMORIA DI FERRO" },
+  { c: "Modi di dire", f: "UN COLPO DI FULMINE" },
+  { c: "Modi di dire", f: "AVERE IL POLLICE VERDE" },
+  { c: "Modi di dire", f: "ROSSO COME UN PEPERONE" },
+  { c: "Modi di dire", f: "BIANCO COME UN LENZUOLO" },
+  { c: "Modi di dire", f: "MAGRO COME UN CHIODO" },
+  { c: "Modi di dire", f: "AVERE UNA FAME DA LUPI" },
+  { c: "Modi di dire", f: "SE NON È ZUPPA È PAN BAGNATO" },
+  { c: "Modi di dire", f: "AVERE LA LUNA STORTA" },
+  { c: "Modi di dire", f: "AVERE LE FARFALLE NELLO STOMACO" },
+  { c: "Modi di dire", f: "COTTO E MANGIATO" },
+  { c: "Modi di dire", f: "SANO COME UN PESCE" },
+  { c: "Modi di dire", f: "FARE BELLA FIGURA" },
+  { c: "Modi di dire", f: "QUI GATTA CI COVA" },
+  { c: "Modi di dire", f: "FARE LA VOCE GROSSA" },
+  { c: "Modi di dire", f: "ESSERE UN LIBRO APERTO" },
+  { c: "Modi di dire", f: "AVERE LE IDEE CHIARE" },
+  { c: "Modi di dire", f: "ESSERE ALLA FRUTTA" },
+  { c: "Modi di dire", f: "BRUCIARE LE TAPPE" },
+  { c: "Modi di dire", f: "SALTARE DI PALO IN FRASCA" },
+  { c: "Modi di dire", f: "PERDERE LA TESTA" },
+  { c: "Modi di dire", f: "ESSERE IN GAMBA" },
+  { c: "Modi di dire", f: "FARE FIASCO" },
+
+  // Film (solo titoli)
+  { c: "Film", f: "LA VITA È BELLA" },
+  { c: "Film", f: "IL RE LEONE" },
+  { c: "Film", f: "LA BELLA E LA BESTIA" },
+  { c: "Film", f: "RITORNO AL FUTURO" },
+  { c: "Film", f: "IL SIGNORE DEGLI ANELLI" },
+  { c: "Film", f: "HARRY POTTER E LA PIETRA FILOSOFALE" },
+  { c: "Film", f: "GUERRE STELLARI" },
+  { c: "Film", f: "IL PADRINO" },
+  { c: "Film", f: "LA GRANDE BELLEZZA" },
+  { c: "Film", f: "LA DOLCE VITA" },
+  { c: "Film", f: "C'ERA UNA VOLTA IL WEST" },
+  { c: "Film", f: "IL BUONO IL BRUTTO IL CATTIVO" },
+  { c: "Film", f: "TRE UOMINI E UNA GAMBA" },
+  { c: "Film", f: "LA BANDA DEGLI ONESTI" },
+  { c: "Film", f: "QUO VADO" },
+  { c: "Film", f: "I SOLITI IGNOTI" },
+  { c: "Film", f: "UN SACCO BELLO" },
+  { c: "Film", f: "IL POSTINO" },
+  { c: "Film", f: "NUOVO CINEMA PARADISO" },
+  { c: "Film", f: "CHI HA INCASTRATO ROGER RABBIT" },
+  { c: "Film", f: "CHARLIE E LA FABBRICA DI CIOCCOLATO" },
+  { c: "Film", f: "ALLA RICERCA DI NEMO" },
+  { c: "Film", f: "LA SIRENETTA" },
+  { c: "Film", f: "BIANCANEVE E I SETTE NANI" },
+  { c: "Film", f: "LA CARICA DEI CENTO E UNO" },
+  { c: "Film", f: "TOY STORY" },
+  { c: "Film", f: "FROZEN IL REGNO DI GHIACCIO" },
+  { c: "Film", f: "IL LIBRO DELLA GIUNGLA" },
+  { c: "Film", f: "FORREST GUMP" },
+  { c: "Film", f: "I PREDATORI DELL'ARCA PERDUTA" },
+  { c: "Film", f: "JURASSIC PARK" },
+  { c: "Film", f: "LO SQUALO" },
+  { c: "Film", f: "IL GLADIATORE" },
+  { c: "Film", f: "MARY POPPINS" },
+  { c: "Film", f: "MAMMA HO PERSO L'AEREO" },
+  { c: "Film", f: "LA STORIA INFINITA" },
+  { c: "Film", f: "I PIRATI DEI CARAIBI" },
+  { c: "Film", f: "TRE METRI SOPRA IL CIELO" },
+  { c: "Film", f: "PERFETTI SCONOSCIUTI" },
+  { c: "Film", f: "CHE BELLA GIORNATA" },
+  { c: "Film", f: "CARS MOTORI RUGGENTI" },
+  { c: "Film", f: "GLI INCREDIBILI" },
+  { c: "Film", f: "KUNG FU PANDA" },
+  { c: "Film", f: "L'ERA GLACIALE" },
+  { c: "Film", f: "LILLI E IL VAGABONDO" },
+  { c: "Film", f: "GLI ARISTOGATTI" },
+  { c: "Film", f: "LA SPADA NELLA ROCCIA" },
+  { c: "Film", f: "VACANZE DI NATALE" },
+  { c: "Film", f: "PICCOLE DONNE" },
+  { c: "Film", f: "AMICI MIEI" },
+  { c: "Film", f: "LA FEBBRE DEL SABATO SERA" },
+  { c: "Film", f: "VIA COL VENTO" },
+  { c: "Film", f: "COLAZIONE DA TIFFANY" },
+  { c: "Film", f: "VACANZE ROMANE" },
+  { c: "Film", f: "TEMPI MODERNI" },
+  { c: "Film", f: "UNA POLTRONA PER DUE" },
+  { c: "Film", f: "BENVENUTI AL SUD" },
+  { c: "Film", f: "UN AMERICANO A ROMA" },
+  { c: "Film", f: "IL SORPASSO" },
+  { c: "Film", f: "OTTO E MEZZO" },
+  { c: "Film", f: "IL CAVALIERE OSCURO" },
+
+  // Canzoni italiane (solo titoli)
+  { c: "Canzoni italiane", f: "NEL BLU DIPINTO DI BLU" },
+  { c: "Canzoni italiane", f: "LA CANZONE DEL SOLE" },
+  { c: "Canzoni italiane", f: "CON TE PARTIRÒ" },
+  { c: "Canzoni italiane", f: "SARÀ PERCHÉ TI AMO" },
+  { c: "Canzoni italiane", f: "VIVO PER LEI" },
+  { c: "Canzoni italiane", f: "SE TELEFONANDO" },
+  { c: "Canzoni italiane", f: "UN'ESTATE ITALIANA" },
+  { c: "Canzoni italiane", f: "LUNA ROSSA" },
+  { c: "Canzoni italiane", f: "O SOLE MIO" },
+  { c: "Canzoni italiane", f: "L'ANNO CHE VERRÀ" },
+  { c: "Canzoni italiane", f: "PIAZZA GRANDE" },
+  { c: "Canzoni italiane", f: "LA CASA IN RIVA AL MARE" },
+  { c: "Canzoni italiane", f: "IL CIELO IN UNA STANZA" },
+  { c: "Canzoni italiane", f: "SAPORE DI SALE" },
+  { c: "Canzoni italiane", f: "SENZA FINE" },
+  { c: "Canzoni italiane", f: "IL RAGAZZO DELLA VIA GLUCK" },
+  { c: "Canzoni italiane", f: "L'ESTATE STA FINENDO" },
+  { c: "Canzoni italiane", f: "VITA SPERICOLATA" },
+  { c: "Canzoni italiane", f: "UNO SU MILLE" },
+  { c: "Canzoni italiane", f: "FUNICULÌ FUNICULÀ" },
+  { c: "Canzoni italiane", f: "LA VITA È ADESSO" },
+  { c: "Canzoni italiane", f: "QUESTO PICCOLO GRANDE AMORE" },
+  { c: "Canzoni italiane", f: "STRADA FACENDO" },
+  { c: "Canzoni italiane", f: "AMORE BELLISSIMO" },
+  { c: "Canzoni italiane", f: "CIAO AMORE CIAO" },
+  { c: "Canzoni italiane", f: "CERTE NOTTI" },
+  { c: "Canzoni italiane", f: "GENTE DI MARE" },
+  { c: "Canzoni italiane", f: "LA SOLITUDINE" },
+  { c: "Canzoni italiane", f: "UNA STORIA IMPORTANTE" },
+  { c: "Canzoni italiane", f: "PIÙ BELLA COSA" },
+  { c: "Canzoni italiane", f: "ADESSO TU" },
+  { c: "Canzoni italiane", f: "UN RAGGIO DI SOLE" },
+  { c: "Canzoni italiane", f: "PENSO POSITIVO" },
+  { c: "Canzoni italiane", f: "SENZA UNA DONNA" },
+  { c: "Canzoni italiane", f: "UNA GIORNATA UGGIOSA" },
+  { c: "Canzoni italiane", f: "IO VAGABONDO" },
+  { c: "Canzoni italiane", f: "MAMMA MARIA" },
+  { c: "Canzoni italiane", f: "CHE SARÀ" },
+  { c: "Canzoni italiane", f: "VOLEVO UN GATTO NERO" },
+  { c: "Canzoni italiane", f: "SEI UN MITO" },
+  { c: "Canzoni italiane", f: "HANNO UCCISO L'UOMO RAGNO" },
+  { c: "Canzoni italiane", f: "ACQUA AZZURRA ACQUA CHIARA" },
+  { c: "Canzoni italiane", f: "IO CHE NON VIVO SENZA TE" },
+  { c: "Canzoni italiane", f: "NON HO L'ETÀ" },
+  { c: "Canzoni italiane", f: "UNA LACRIMA SUL VISO" },
+  { c: "Canzoni italiane", f: "COME PRIMA" },
+  { c: "Canzoni italiane", f: "CIAO CIAO BAMBINA" },
+  { c: "Canzoni italiane", f: "ARRIVEDERCI ROMA" },
+  { c: "Canzoni italiane", f: "TUTTO IL RESTO È NOIA" },
+  { c: "Canzoni italiane", f: "NAPULE È" },
+  { c: "Canzoni italiane", f: "IL MIO CANTO LIBERO" },
+  { c: "Canzoni italiane", f: "MA CHE FREDDO FA" },
+  { c: "Canzoni italiane", f: "TANTI AUGURI" },
+
+  // Personaggi famosi
+  { c: "Personaggi famosi", f: "LEONARDO DA VINCI" },
+  { c: "Personaggi famosi", f: "CRISTOFORO COLOMBO" },
+  { c: "Personaggi famosi", f: "DANTE ALIGHIERI" },
+  { c: "Personaggi famosi", f: "MICHELANGELO BUONARROTI" },
+  { c: "Personaggi famosi", f: "GALILEO GALILEI" },
+  { c: "Personaggi famosi", f: "GIUSEPPE VERDI" },
+  { c: "Personaggi famosi", f: "ANTONIO VIVALDI" },
+  { c: "Personaggi famosi", f: "RAFFAELLO SANZIO" },
+  { c: "Personaggi famosi", f: "GUGLIELMO MARCONI" },
+  { c: "Personaggi famosi", f: "ALESSANDRO VOLTA" },
+  { c: "Personaggi famosi", f: "MARCO POLO" },
+  { c: "Personaggi famosi", f: "FEDERICO FELLINI" },
+  { c: "Personaggi famosi", f: "ENNIO MORRICONE" },
+  { c: "Personaggi famosi", f: "GIORGIO ARMANI" },
+  { c: "Personaggi famosi", f: "ENZO FERRARI" },
+  { c: "Personaggi famosi", f: "ALBERTO SORDI" },
+  { c: "Personaggi famosi", f: "SOPHIA LOREN" },
+  { c: "Personaggi famosi", f: "GINA LOLLOBRIGIDA" },
+  { c: "Personaggi famosi", f: "MARCELLO MASTROIANNI" },
+  { c: "Personaggi famosi", f: "ROBERTO BENIGNI" },
+  { c: "Personaggi famosi", f: "CARLO VERDONE" },
+  { c: "Personaggi famosi", f: "CHECCO ZALONE" },
+  { c: "Personaggi famosi", f: "BUD SPENCER E TERENCE HILL" },
+  { c: "Personaggi famosi", f: "ALDO GIOVANNI E GIACOMO" },
+  { c: "Personaggi famosi", f: "LUCIANO PAVAROTTI" },
+  { c: "Personaggi famosi", f: "ANDREA BOCELLI" },
+  { c: "Personaggi famosi", f: "ADRIANO CELENTANO" },
+  { c: "Personaggi famosi", f: "LAURA PAUSINI" },
+  { c: "Personaggi famosi", f: "VASCO ROSSI" },
+  { c: "Personaggi famosi", f: "GIANNI MORANDI" },
+  { c: "Personaggi famosi", f: "LUCIO BATTISTI" },
+  { c: "Personaggi famosi", f: "RAFFAELLA CARRÀ" },
+  { c: "Personaggi famosi", f: "MIKE BONGIORNO" },
+  { c: "Personaggi famosi", f: "PIPPO BAUDO" },
+  { c: "Personaggi famosi", f: "ALBERTO ANGELA" },
+  { c: "Personaggi famosi", f: "VALENTINO ROSSI" },
+  { c: "Personaggi famosi", f: "FRANCESCO TOTTI" },
+  { c: "Personaggi famosi", f: "ALESSANDRO DEL PIERO" },
+  { c: "Personaggi famosi", f: "GIANLUIGI BUFFON" },
+  { c: "Personaggi famosi", f: "ROBERTO BAGGIO" },
+  { c: "Personaggi famosi", f: "FEDERICA PELLEGRINI" },
+  { c: "Personaggi famosi", f: "JANNIK SINNER" },
+  { c: "Personaggi famosi", f: "ALBERTO TOMBA" },
+  { c: "Personaggi famosi", f: "MARCELL JACOBS" },
+  { c: "Personaggi famosi", f: "ALBERT EINSTEIN" },
+  { c: "Personaggi famosi", f: "ISAAC NEWTON" },
+  { c: "Personaggi famosi", f: "MARIE CURIE" },
+  { c: "Personaggi famosi", f: "NAPOLEONE BONAPARTE" },
+  { c: "Personaggi famosi", f: "GIULIO CESARE" },
+  { c: "Personaggi famosi", f: "WOLFGANG AMADEUS MOZART" },
+  { c: "Personaggi famosi", f: "LUDWIG VAN BEETHOVEN" },
+  { c: "Personaggi famosi", f: "PABLO PICASSO" },
+  { c: "Personaggi famosi", f: "VINCENT VAN GOGH" },
+  { c: "Personaggi famosi", f: "LIONEL MESSI" },
+  { c: "Personaggi famosi", f: "CRISTIANO RONALDO" },
+  { c: "Personaggi famosi", f: "DIEGO MARADONA" },
+  { c: "Personaggi famosi", f: "MICHAEL JACKSON" },
+  { c: "Personaggi famosi", f: "ELVIS PRESLEY" },
+  { c: "Personaggi famosi", f: "FREDDIE MERCURY" },
+  { c: "Personaggi famosi", f: "MARILYN MONROE" },
+  { c: "Personaggi famosi", f: "CHARLIE CHAPLIN" },
+  { c: "Personaggi famosi", f: "WALT DISNEY" },
+  { c: "Personaggi famosi", f: "STEVE JOBS" },
+  { c: "Personaggi famosi", f: "LEONARDO DICAPRIO" },
+  { c: "Personaggi famosi", f: "AUDREY HEPBURN" },
+  { c: "Personaggi famosi", f: "TOM HANKS" },
+  { c: "Personaggi famosi", f: "NEIL ARMSTRONG" },
+  { c: "Personaggi famosi", f: "USAIN BOLT" },
+  { c: "Personaggi famosi", f: "ROGER FEDERER" },
+  { c: "Personaggi famosi", f: "MICHAEL JORDAN" },
+  { c: "Personaggi famosi", f: "PINOCCHIO E GEPPETTO" },
+  { c: "Personaggi famosi", f: "ZIO PAPERONE" },
+  { c: "Personaggi famosi", f: "CAPPUCCETTO ROSSO" },
+  { c: "Personaggi famosi", f: "LA BELLA ADDORMENTATA" },
+  { c: "Personaggi famosi", f: "IL GATTO CON GLI STIVALI" },
+  { c: "Personaggi famosi", f: "PETER PAN" },
+  { c: "Personaggi famosi", f: "PIPPI CALZELUNGHE" },
+  { c: "Personaggi famosi", f: "SHERLOCK HOLMES" },
+  { c: "Personaggi famosi", f: "BABBO NATALE" },
+  { c: "Personaggi famosi", f: "LA BEFANA" },
+  { c: "Personaggi famosi", f: "TOPO GIGIO" },
+  { c: "Personaggi famosi", f: "GATTO SILVESTRO" },
+  { c: "Personaggi famosi", f: "BUGS BUNNY" },
+  { c: "Personaggi famosi", f: "CAPITAN UNCINO" },
+  { c: "Personaggi famosi", f: "SUPER MARIO" },
+
+  // Luoghi
+  { c: "Luoghi", f: "LA TORRE DI PISA" },
+  { c: "Luoghi", f: "IL COLOSSEO" },
+  { c: "Luoghi", f: "LA FONTANA DI TREVI" },
+  { c: "Luoghi", f: "PIAZZA SAN MARCO" },
+  { c: "Luoghi", f: "IL PONTE DI RIALTO" },
+  { c: "Luoghi", f: "IL DUOMO DI MILANO" },
+  { c: "Luoghi", f: "TEATRO ALLA SCALA" },
+  { c: "Luoghi", f: "LA REGGIA DI CASERTA" },
+  { c: "Luoghi", f: "IL VESUVIO" },
+  { c: "Luoghi", f: "IL VULCANO ETNA" },
+  { c: "Luoghi", f: "LE CINQUE TERRE" },
+  { c: "Luoghi", f: "LA COSTIERA AMALFITANA" },
+  { c: "Luoghi", f: "LA COSTA SMERALDA" },
+  { c: "Luoghi", f: "IL LAGO DI GARDA" },
+  { c: "Luoghi", f: "IL LAGO DI COMO" },
+  { c: "Luoghi", f: "LE DOLOMITI" },
+  { c: "Luoghi", f: "IL MONTE BIANCO" },
+  { c: "Luoghi", f: "LA CAPPELLA SISTINA" },
+  { c: "Luoghi", f: "GLI SCAVI DI POMPEI" },
+  { c: "Luoghi", f: "I SASSI DI MATERA" },
+  { c: "Luoghi", f: "I TRULLI DI ALBEROBELLO" },
+  { c: "Luoghi", f: "LA VALLE DEI TEMPLI" },
+  { c: "Luoghi", f: "IL CANAL GRANDE" },
+  { c: "Luoghi", f: "IL PONTE DEI SOSPIRI" },
+  { c: "Luoghi", f: "IL CARNEVALE DI VENEZIA" },
+  { c: "Luoghi", f: "IL GOLFO DI NAPOLI" },
+  { c: "Luoghi", f: "L'ISOLA DI CAPRI" },
+  { c: "Luoghi", f: "LE ISOLE EOLIE" },
+  { c: "Luoghi", f: "IL PONTE VECCHIO" },
+  { c: "Luoghi", f: "LA GALLERIA DEGLI UFFIZI" },
+  { c: "Luoghi", f: "L'ARCO DI TRIONFO" },
+  { c: "Luoghi", f: "LA TORRE EIFFEL" },
+  { c: "Luoghi", f: "IL MUSEO DEL LOUVRE" },
+  { c: "Luoghi", f: "LA STATUA DELLA LIBERTÀ" },
+  { c: "Luoghi", f: "IL PONTE DI BROOKLYN" },
+  { c: "Luoghi", f: "CENTRAL PARK" },
+  { c: "Luoghi", f: "LA GRANDE MURAGLIA CINESE" },
+  { c: "Luoghi", f: "LE PIRAMIDI D'EGITTO" },
+  { c: "Luoghi", f: "IL TAJ MAHAL" },
+  { c: "Luoghi", f: "IL BIG BEN" },
+  { c: "Luoghi", f: "IL GRAND CANYON" },
+  { c: "Luoghi", f: "LE CASCATE DEL NIAGARA" },
+  { c: "Luoghi", f: "LA FORESTA AMAZZONICA" },
+  { c: "Luoghi", f: "IL MONTE EVEREST" },
+  { c: "Luoghi", f: "IL DESERTO DEL SAHARA" },
+  { c: "Luoghi", f: "LA CITTÀ PROIBITA" },
+  { c: "Luoghi", f: "LA PORTA DI BRANDEBURGO" },
+  { c: "Luoghi", f: "L'ACROPOLI DI ATENE" },
+  { c: "Luoghi", f: "IL LAGO MAGGIORE" },
+  { c: "Luoghi", f: "LE ISOLE MALDIVE" },
+  { c: "Luoghi", f: "LA RIVIERA ROMAGNOLA" },
+  { c: "Luoghi", f: "IL FORO ROMANO" },
+  { c: "Luoghi", f: "IL PANTHEON" },
+  { c: "Luoghi", f: "LA PIAZZA DI SPAGNA" },
+  { c: "Luoghi", f: "L'ARENA DI VERONA" },
+  { c: "Luoghi", f: "LA CASA DI GIULIETTA" },
+  { c: "Luoghi", f: "LA MOLE ANTONELLIANA" },
+  { c: "Luoghi", f: "IL CASTELLO SFORZESCO" },
+  { c: "Luoghi", f: "LA GROTTA AZZURRA" },
+  { c: "Luoghi", f: "L'EMPIRE STATE BUILDING" },
+  { c: "Luoghi", f: "L'OPERA HOUSE DI SYDNEY" },
+  { c: "Luoghi", f: "IL MACHU PICCHU" },
+
+  // Cibo e cucina
+  { c: "Cibo e cucina", f: "SPAGHETTI ALLA CARBONARA" },
+  { c: "Cibo e cucina", f: "PIZZA MARGHERITA" },
+  { c: "Cibo e cucina", f: "LASAGNE ALLA BOLOGNESE" },
+  { c: "Cibo e cucina", f: "RISOTTO ALLA MILANESE" },
+  { c: "Cibo e cucina", f: "COTOLETTA ALLA MILANESE" },
+  { c: "Cibo e cucina", f: "TORTELLINI IN BRODO" },
+  { c: "Cibo e cucina", f: "SPAGHETTI AL POMODORO" },
+  { c: "Cibo e cucina", f: "SPAGHETTI ALLE VONGOLE" },
+  { c: "Cibo e cucina", f: "SPAGHETTI AGLIO OLIO E PEPERONCINO" },
+  { c: "Cibo e cucina", f: "PASTA E FAGIOLI" },
+  { c: "Cibo e cucina", f: "PASTA ALLA NORMA" },
+  { c: "Cibo e cucina", f: "TAGLIATELLE AL RAGÙ" },
+  { c: "Cibo e cucina", f: "GNOCCHI ALLA SORRENTINA" },
+  { c: "Cibo e cucina", f: "MELANZANE ALLA PARMIGIANA" },
+  { c: "Cibo e cucina", f: "POLLO ALLA CACCIATORA" },
+  { c: "Cibo e cucina", f: "SALTIMBOCCA ALLA ROMANA" },
+  { c: "Cibo e cucina", f: "VITELLO TONNATO" },
+  { c: "Cibo e cucina", f: "INSALATA CAPRESE" },
+  { c: "Cibo e cucina", f: "PROSCIUTTO E MELONE" },
+  { c: "Cibo e cucina", f: "PROSCIUTTO DI PARMA" },
+  { c: "Cibo e cucina", f: "PARMIGIANO REGGIANO" },
+  { c: "Cibo e cucina", f: "MOZZARELLA DI BUFALA" },
+  { c: "Cibo e cucina", f: "IL TIRAMISÙ" },
+  { c: "Cibo e cucina", f: "PANNA COTTA" },
+  { c: "Cibo e cucina", f: "GELATO AL PISTACCHIO" },
+  { c: "Cibo e cucina", f: "UN CAFFÈ ESPRESSO" },
+  { c: "Cibo e cucina", f: "CAPPUCCINO E CORNETTO" },
+  { c: "Cibo e cucina", f: "CANNOLI SICILIANI" },
+  { c: "Cibo e cucina", f: "CASSATA SICILIANA" },
+  { c: "Cibo e cucina", f: "SFOGLIATELLA RICCIA" },
+  { c: "Cibo e cucina", f: "PANETTONE E PANDORO" },
+  { c: "Cibo e cucina", f: "PANE E NUTELLA" },
+  { c: "Cibo e cucina", f: "PIZZA AI QUATTRO FORMAGGI" },
+  { c: "Cibo e cucina", f: "FOCACCIA GENOVESE" },
+  { c: "Cibo e cucina", f: "PESTO ALLA GENOVESE" },
+  { c: "Cibo e cucina", f: "ARANCINI DI RISO" },
+  { c: "Cibo e cucina", f: "SUPPLÌ AL TELEFONO" },
+  { c: "Cibo e cucina", f: "POLENTA E FUNGHI" },
+  { c: "Cibo e cucina", f: "BISTECCA ALLA FIORENTINA" },
+  { c: "Cibo e cucina", f: "CACIO E PEPE" },
+  { c: "Cibo e cucina", f: "LA PIZZA NAPOLETANA" },
+  { c: "Cibo e cucina", f: "MINESTRONE DI VERDURE" },
+  { c: "Cibo e cucina", f: "CARPACCIO DI MANZO" },
+  { c: "Cibo e cucina", f: "POLPETTE AL SUGO" },
+  { c: "Cibo e cucina", f: "TORTA DELLA NONNA" },
+  { c: "Cibo e cucina", f: "CROSTATA DI MARMELLATA" },
+  { c: "Cibo e cucina", f: "BISCOTTI AL CIOCCOLATO" },
+  { c: "Cibo e cucina", f: "CIOCCOLATA CALDA" },
+  { c: "Cibo e cucina", f: "SPREMUTA D'ARANCIA" },
+  { c: "Cibo e cucina", f: "GNOCCHI DI PATATE" },
+  { c: "Cibo e cucina", f: "RAVIOLI RICOTTA E SPINACI" },
+  { c: "Cibo e cucina", f: "LA PIADINA ROMAGNOLA" },
+  { c: "Cibo e cucina", f: "FRITTO MISTO DI PESCE" },
+  { c: "Cibo e cucina", f: "ZUPPA DI PESCE" },
+  { c: "Cibo e cucina", f: "PANINO CON LA PORCHETTA" },
+  { c: "Cibo e cucina", f: "BRUSCHETTA AL POMODORO" },
+  { c: "Cibo e cucina", f: "SPAGHETTI CON LE POLPETTE" },
+  { c: "Cibo e cucina", f: "TOAST PROSCIUTTO E FORMAGGIO" },
+  { c: "Cibo e cucina", f: "L'ACETO BALSAMICO DI MODENA" },
+  { c: "Cibo e cucina", f: "PASTA AL FORNO" },
+
+  // Cose di casa
+  { c: "Cose di casa", f: "LA LAVATRICE NUOVA" },
+  { c: "Cose di casa", f: "IL FRIGORIFERO PIENO" },
+  { c: "Cose di casa", f: "IL DIVANO COMODO" },
+  { c: "Cose di casa", f: "LA TELEVISIONE ACCESA" },
+  { c: "Cose di casa", f: "IL FORNO A MICROONDE" },
+  { c: "Cose di casa", f: "LA SCOPA E LA PALETTA" },
+  { c: "Cose di casa", f: "IL FERRO DA STIRO" },
+  { c: "Cose di casa", f: "UN ASCIUGAMANO PULITO" },
+  { c: "Cose di casa", f: "LO SPAZZOLINO DA DENTI" },
+  { c: "Cose di casa", f: "IL SAPONE PROFUMATO" },
+  { c: "Cose di casa", f: "LA TAZZA DI CAFFÈ" },
+  { c: "Cose di casa", f: "IL BICCHIERE D'ACQUA" },
+  { c: "Cose di casa", f: "LA BOTTIGLIA DI VETRO" },
+  { c: "Cose di casa", f: "IL LETTO MATRIMONIALE" },
+  { c: "Cose di casa", f: "IL CUSCINO MORBIDO" },
+  { c: "Cose di casa", f: "LA COPERTA DI LANA" },
+  { c: "Cose di casa", f: "L'ARMADIO DELLE SCARPE" },
+  { c: "Cose di casa", f: "LA SEDIA A DONDOLO" },
+  { c: "Cose di casa", f: "IL TAVOLO DA PRANZO" },
+  { c: "Cose di casa", f: "LA LAMPADA DA TAVOLO" },
+  { c: "Cose di casa", f: "LO SPECCHIO DEL BAGNO" },
+  { c: "Cose di casa", f: "LA DOCCIA CALDA" },
+  { c: "Cose di casa", f: "LA VASCA DA BAGNO" },
+  { c: "Cose di casa", f: "IL TELEFONO CHE SQUILLA" },
+  { c: "Cose di casa", f: "IL TELECOMANDO SPARITO" },
+  { c: "Cose di casa", f: "LA MOKA DEL MATTINO" },
+  { c: "Cose di casa", f: "LA PENTOLA A PRESSIONE" },
+  { c: "Cose di casa", f: "LA PADELLA ANTIADERENTE" },
+  { c: "Cose di casa", f: "IL LAVANDINO DELLA CUCINA" },
+  { c: "Cose di casa", f: "UN FRULLATORE RUMOROSO" },
+  { c: "Cose di casa", f: "IL TAPPETO PERSIANO" },
+  { c: "Cose di casa", f: "LA LIBRERIA PIENA DI LIBRI" },
+  { c: "Cose di casa", f: "LA SVEGLIA DEL MATTINO" },
+  { c: "Cose di casa", f: "L'OROLOGIO A CUCÙ" },
+  { c: "Cose di casa", f: "LA PORTA D'INGRESSO" },
+  { c: "Cose di casa", f: "LE CHIAVI DI CASA" },
+  { c: "Cose di casa", f: "IL CAMPANELLO ROTTO" },
+  { c: "Cose di casa", f: "IL SECCHIO E LO STRACCIO" },
+  { c: "Cose di casa", f: "LA CREDENZA DELLA NONNA" },
+  { c: "Cose di casa", f: "IL SERVIZIO DI PIATTI" },
+  { c: "Cose di casa", f: "IL CASSETTO DEI CALZINI" },
+  { c: "Cose di casa", f: "L'ASSE DA STIRO" },
+  { c: "Cose di casa", f: "LA LAMPADINA BRUCIATA" },
+  { c: "Cose di casa", f: "IL CAMINETTO ACCESO" },
+  { c: "Cose di casa", f: "LA STUFA A LEGNA" },
+  { c: "Cose di casa", f: "IL CARICATORE DEL TELEFONO" },
+  { c: "Cose di casa", f: "LA FINESTRA APERTA" },
+  { c: "Cose di casa", f: "IL TAPPETINO DEL BAGNO" },
+
+  // Sport
+  { c: "Sport", f: "CALCIO DI RIGORE" },
+  { c: "Sport", f: "CALCIO D'ANGOLO" },
+  { c: "Sport", f: "TIRO IN PORTA" },
+  { c: "Sport", f: "LA SQUADRA DEL CUORE" },
+  { c: "Sport", f: "LA FINALE DEI MONDIALI" },
+  { c: "Sport", f: "IL GIRO D'ITALIA" },
+  { c: "Sport", f: "IL TOUR DE FRANCE" },
+  { c: "Sport", f: "LA MARATONA DI NEW YORK" },
+  { c: "Sport", f: "LE OLIMPIADI INVERNALI" },
+  { c: "Sport", f: "LA MEDAGLIA D'ORO" },
+  { c: "Sport", f: "IL SALTO IN ALTO" },
+  { c: "Sport", f: "LA CORSA DEI CENTO METRI" },
+  { c: "Sport", f: "IL LANCIO DEL GIAVELLOTTO" },
+  { c: "Sport", f: "IL TUFFO DAL TRAMPOLINO" },
+  { c: "Sport", f: "LA NUOTATA A STILE LIBERO" },
+  { c: "Sport", f: "LA PALLAVOLO IN SPIAGGIA" },
+  { c: "Sport", f: "IL CANESTRO DA TRE PUNTI" },
+  { c: "Sport", f: "LA SCHIACCIATA A CANESTRO" },
+  { c: "Sport", f: "LA RACCHETTA DA TENNIS" },
+  { c: "Sport", f: "IL TORNEO DI WIMBLEDON" },
+  { c: "Sport", f: "IL GIRO DI PISTA" },
+  { c: "Sport", f: "IL GRAN PREMIO DI MONZA" },
+  { c: "Sport", f: "LA FORMULA UNO" },
+  { c: "Sport", f: "LA PARTITA A SCACCHI" },
+  { c: "Sport", f: "LO SCACCO MATTO" },
+  { c: "Sport", f: "LO STRIKE AL BOWLING" },
+  { c: "Sport", f: "IL CALCIO BALILLA" },
+  { c: "Sport", f: "LA MISCHIA DEL RUGBY" },
+  { c: "Sport", f: "IL GANCIO DESTRO" },
+  { c: "Sport", f: "IL TIFO DELLO STADIO" },
+  { c: "Sport", f: "FORZA AZZURRI" },
+  { c: "Sport", f: "CAMPIONI DEL MONDO" },
+  { c: "Sport", f: "IL GOL DELLA VITTORIA" },
+  { c: "Sport", f: "IL CARTELLINO ROSSO" },
+  { c: "Sport", f: "IL FUORIGIOCO" },
+  { c: "Sport", f: "LA PARATA DEL PORTIERE" },
+  { c: "Sport", f: "IL PALLONE D'ORO" },
+  { c: "Sport", f: "LA COPPA DEL MONDO" },
+  { c: "Sport", f: "LO SCUDETTO" },
+  { c: "Sport", f: "LA PARTITA DI CALCETTO" },
+  { c: "Sport", f: "LO SLALOM GIGANTE" },
+  { c: "Sport", f: "IL SALTO CON GLI SCI" },
+  { c: "Sport", f: "IL PATTINAGGIO SUL GHIACCIO" },
+  { c: "Sport", f: "LA PARTITA DI PING PONG" },
+  { c: "Sport", f: "LA CORSA CON I SACCHI" },
+  { c: "Sport", f: "IL TIRO ALLA FUNE" },
+
+  // Animali
+  { c: "Animali", f: "UN BRANCO DI LUPI" },
+  { c: "Animali", f: "UNO STORMO DI UCCELLI" },
+  { c: "Animali", f: "UNA MANDRIA DI BUFALI" },
+  { c: "Animali", f: "UN GREGGE DI PECORE" },
+  { c: "Animali", f: "UNO SCIAME DI API" },
+  { c: "Animali", f: "UN BANCO DI PESCI" },
+  { c: "Animali", f: "UNA COLONIA DI PINGUINI" },
+  { c: "Animali", f: "UN NIDO DI RONDINI" },
+  { c: "Animali", f: "UN CANE CHE ABBAIA" },
+  { c: "Animali", f: "IL GATTO SUL DIVANO" },
+  { c: "Animali", f: "IL PESCE ROSSO" },
+  { c: "Animali", f: "LA TARTARUGA MARINA" },
+  { c: "Animali", f: "IL LEONE DELLA SAVANA" },
+  { c: "Animali", f: "L'ELEFANTE AFRICANO" },
+  { c: "Animali", f: "LA GIRAFFA DAL COLLO LUNGO" },
+  { c: "Animali", f: "LA ZEBRA A STRISCE" },
+  { c: "Animali", f: "L'ORSO POLARE" },
+  { c: "Animali", f: "IL PANDA GIGANTE" },
+  { c: "Animali", f: "IL CANGURO CON IL CUCCIOLO" },
+  { c: "Animali", f: "LA SCIMMIA SULL'ALBERO" },
+  { c: "Animali", f: "IL DELFINO NEL MARE" },
+  { c: "Animali", f: "IL POLPO CON OTTO TENTACOLI" },
+  { c: "Animali", f: "LA BALENA AZZURRA" },
+  { c: "Animali", f: "L'AQUILA REALE" },
+  { c: "Animali", f: "LA CIVETTA NOTTURNA" },
+  { c: "Animali", f: "LA VOLPE ASTUTA" },
+  { c: "Animali", f: "LA RANA SULLA NINFEA" },
+  { c: "Animali", f: "IL CAVALLO AL GALOPPO" },
+  { c: "Animali", f: "LA MUCCA NEL PRATO" },
+  { c: "Animali", f: "LA GALLINA CHE FA L'UOVO" },
+  { c: "Animali", f: "IL MAIALE ROSA" },
+  { c: "Animali", f: "IL CORVO SUL TETTO" },
+  { c: "Animali", f: "L'ASINO CHE RAGLIA" },
+  { c: "Animali", f: "IL PAPPAGALLO CHE PARLA" },
+  { c: "Animali", f: "IL SERPENTE A SONAGLI" },
+  { c: "Animali", f: "LA FARFALLA COLORATA" },
+  { c: "Animali", f: "LA COCCINELLA ROSSA" },
+  { c: "Animali", f: "IL RICCIO NEL BOSCO" },
+  { c: "Animali", f: "LO SCOIATTOLO CON LE NOCCIOLE" },
+  { c: "Animali", f: "IL CAMMELLO NEL DESERTO" },
+  { c: "Animali", f: "IL COCCODRILLO DEL NILO" },
+  { c: "Animali", f: "L'IPPOPOTAMO NEL FIUME" },
+  { c: "Animali", f: "IL PINGUINO IMPERATORE" },
+  { c: "Animali", f: "LA FOCA CHE APPLAUDE" },
+  { c: "Animali", f: "LA MEDUSA TRASPARENTE" },
+  { c: "Animali", f: "IL PAGURO NELLA CONCHIGLIA" },
+  { c: "Animali", f: "IL CAVALLUCCIO MARINO" },
+  { c: "Animali", f: "LA TALPA SOTTOTERRA" },
+
+  // Mestieri
+  { c: "Mestieri", f: "IL PANETTIERE" },
+  { c: "Mestieri", f: "UN BRAVO IDRAULICO" },
+  { c: "Mestieri", f: "IL CAMERIERE DEL RISTORANTE" },
+  { c: "Mestieri", f: "LA MAESTRA DI MUSICA" },
+  { c: "Mestieri", f: "IL MEDICO DI FAMIGLIA" },
+  { c: "Mestieri", f: "L'INFERMIERA GENTILE" },
+  { c: "Mestieri", f: "IL POMPIERE CORAGGIOSO" },
+  { c: "Mestieri", f: "IL VIGILE URBANO" },
+  { c: "Mestieri", f: "IL CARABINIERE" },
+  { c: "Mestieri", f: "IL PROFESSORE DI STORIA" },
+  { c: "Mestieri", f: "IL PARRUCCHIERE" },
+  { c: "Mestieri", f: "IL FALEGNAME" },
+  { c: "Mestieri", f: "IL MURATORE AL LAVORO" },
+  { c: "Mestieri", f: "UN BRAVO ELETTRICISTA" },
+  { c: "Mestieri", f: "IL MECCANICO DI FIDUCIA" },
+  { c: "Mestieri", f: "LO CHEF STELLATO" },
+  { c: "Mestieri", f: "IL PASTICCERE" },
+  { c: "Mestieri", f: "IL GELATAIO" },
+  { c: "Mestieri", f: "IL GIARDINIERE" },
+  { c: "Mestieri", f: "IL CONTADINO" },
+  { c: "Mestieri", f: "IL PESCATORE" },
+  { c: "Mestieri", f: "IL PILOTA DI AEREI" },
+  { c: "Mestieri", f: "L'AUTISTA DELL'AUTOBUS" },
+  { c: "Mestieri", f: "IL TASSISTA" },
+  { c: "Mestieri", f: "IL COMMESSO DEL NEGOZIO" },
+  { c: "Mestieri", f: "LA CASSIERA DEL SUPERMERCATO" },
+  { c: "Mestieri", f: "IL FOTOGRAFO DI MATRIMONI" },
+  { c: "Mestieri", f: "LO SCRITTORE DI ROMANZI" },
+  { c: "Mestieri", f: "L'ATTORE DI TEATRO" },
+  { c: "Mestieri", f: "IL CANTANTE LIRICO" },
+  { c: "Mestieri", f: "IL VETERINARIO" },
+  { c: "Mestieri", f: "IL DENTISTA" },
+  { c: "Mestieri", f: "UN ASTRONAUTA NELLO SPAZIO" },
+  { c: "Mestieri", f: "IL BARISTA DEL BAR" },
+  { c: "Mestieri", f: "UN BRAVO ARCHITETTO" },
+  { c: "Mestieri", f: "IL CALZOLAIO" },
+  { c: "Mestieri", f: "IL MACELLAIO" },
+  { c: "Mestieri", f: "IL PIZZAIOLO" },
+  { c: "Mestieri", f: "IL BIDELLO" },
+  { c: "Mestieri", f: "IL DIRETTORE D'ORCHESTRA" },
+  { c: "Mestieri", f: "L'ARBITRO DELLA PARTITA" },
+  { c: "Mestieri", f: "IL GIORNALISTA" },
+  { c: "Mestieri", f: "LA SEGRETARIA" },
+  { c: "Mestieri", f: "IL BAGNINO DELLA SPIAGGIA" },
+  { c: "Mestieri", f: "IL GUARDIANO DEL FARO" },
+
+  // In vacanza
+  { c: "In vacanza", f: "OMBRELLONE IN SPIAGGIA" },
+  { c: "In vacanza", f: "UN BAGNO NEL MARE" },
+  { c: "In vacanza", f: "UN CASTELLO DI SABBIA" },
+  { c: "In vacanza", f: "LA CREMA SOLARE" },
+  { c: "In vacanza", f: "GLI OCCHIALI DA SOLE" },
+  { c: "In vacanza", f: "IL COSTUME DA BAGNO" },
+  { c: "In vacanza", f: "LA VALIGIA PIENA" },
+  { c: "In vacanza", f: "IL BIGLIETTO DEL TRENO" },
+  { c: "In vacanza", f: "LA CARTA D'IMBARCO" },
+  { c: "In vacanza", f: "IL VOLO PER LE VACANZE" },
+  { c: "In vacanza", f: "L'AEROPORTO AFFOLLATO" },
+  { c: "In vacanza", f: "IL PASSAPORTO NUOVO" },
+  { c: "In vacanza", f: "L'ALBERGO SUL MARE" },
+  { c: "In vacanza", f: "LA CAMERA CON VISTA" },
+  { c: "In vacanza", f: "LA PISCINA DELL'ALBERGO" },
+  { c: "In vacanza", f: "LA COLAZIONE A BUFFET" },
+  { c: "In vacanza", f: "UNA PASSEGGIATA IN MONTAGNA" },
+  { c: "In vacanza", f: "LA TENDA IN CAMPEGGIO" },
+  { c: "In vacanza", f: "LA NOTTE SOTTO LE STELLE" },
+  { c: "In vacanza", f: "UN GIRO IN BICICLETTA" },
+  { c: "In vacanza", f: "UNA GITA IN BARCA" },
+  { c: "In vacanza", f: "IL TRAMONTO SUL MARE" },
+  { c: "In vacanza", f: "LE CONCHIGLIE SULLA SABBIA" },
+  { c: "In vacanza", f: "IL GELATO SUL LUNGOMARE" },
+  { c: "In vacanza", f: "IL SOUVENIR PER LA NONNA" },
+  { c: "In vacanza", f: "UNA CARTOLINA DA ROMA" },
+  { c: "In vacanza", f: "UNA FOTO DI GRUPPO" },
+  { c: "In vacanza", f: "IL SELFIE SULLA SPIAGGIA" },
+  { c: "In vacanza", f: "LA SCOTTATURA DA SOLE" },
+  { c: "In vacanza", f: "UN TUFFO DALLO SCOGLIO" },
+  { c: "In vacanza", f: "LA MASCHERA E LE PINNE" },
+  { c: "In vacanza", f: "LE RACCHETTE DA SPIAGGIA" },
+  { c: "In vacanza", f: "IL PALLONE DA SPIAGGIA" },
+  { c: "In vacanza", f: "UNA CASA SUL LAGO" },
+  { c: "In vacanza", f: "IL TRENO PER LA RIVIERA" },
+  { c: "In vacanza", f: "LA CROCIERA NEL MEDITERRANEO" },
+  { c: "In vacanza", f: "IL TRAGHETTO PER L'ISOLA" },
+  { c: "In vacanza", f: "IL VIAGGIO IN MACCHINA" },
+  { c: "In vacanza", f: "IL PRANZO DI FERRAGOSTO" },
+  { c: "In vacanza", f: "LA SPIAGGIA AFFOLLATA" },
+  { c: "In vacanza", f: "LA VACANZA DEI SOGNI" },
+  { c: "In vacanza", f: "UNA SETTIMANA AL MARE" },
+  { c: "In vacanza", f: "LO SCI SULLA NEVE" },
+  { c: "In vacanza", f: "IL PUPAZZO DI NEVE" },
+  { c: "In vacanza", f: "LA GUIDA TURISTICA" },
+  { c: "In vacanza", f: "LA MAPPA DELLA CITTÀ" },
+  { c: "In vacanza", f: "IL RIFUGIO ALPINO" },
+  { c: "In vacanza", f: "LO ZAINO DA ESCURSIONE" },
+  { c: "In vacanza", f: "IL FALÒ SULLA SPIAGGIA" },
+  { c: "In vacanza", f: "IL PEDALÒ AL TRAMONTO" }
 ];
 
 /* =========================================================
@@ -19358,7 +20230,8 @@ window.SG_SIPERO = {
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          if (seatDiId(id) < 0 && !M && seats.length < 10) seats.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), fiches: (typeof m.fiches === "number" ? m.fiches : null), omino: avatarValido(m.omino) });
+          if (M) { bcast(); return; }   // a partita iniziata: chi rientra rivede il tavolo (e all'host resta il tavolo, non la saletta)
+          if (seatDiId(id) < 0 && seats.length < 10) seats.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), fiches: (typeof m.fiches === "number" ? m.fiches : null), omino: avatarValido(m.omino) });
           lobbyOut();
         } else if (m.t === "fiches" && typeof m.fiches === "number") {   // chi aspetta ha ritirato il bonus
           var sf = seatDiId(id);
@@ -25894,6 +26767,8 @@ window.SG_SIPERO = {
     var W = prof ? portafoglio() : BUYIN, buyin = Math.min(W, BUYIN);
     S.fuori = W - buyin;
     function me() { if (!S.vm) return null; for (var i = 0; i < S.vm.players.length; i++) if (S.vm.players[i].id === S.myId) return S.vm.players[i]; return null; }
+    // la prima volta che mi vedo al tavolo: fuori = portafoglio − quelle sul tavolo (giusto anche se rientro dopo aver ricaricato la pagina)
+    function allinea() { var m = me(); if (S.allineato || !prof || !m) return; S.allineato = true; S.fuori = Math.max(0, W - m.stack); }
     function salva(subito) {   // nel profilo: fiches fuori + fiches sul tavolo (solo quando sono seduto)
       var m = me(); if (!prof || !m) return;
       clearTimeout(S.tSalva);
@@ -25933,7 +26808,7 @@ window.SG_SIPERO = {
         onMsg: function (m) {
           if (!m || !m.t) return;
           if (m.to && m.to !== S.myId) return;   // era per un altro telefono
-          if (m.t === "vm") { S.vm = m.vm; salva(); disegna(t, m.vm, cb); }
+          if (m.t === "vm") { S.vm = m.vm; allinea(); salva(); disegna(t, m.vm, cb); }
           else if (m.t === "mie") { S.mie = { n: m.n, carte: m.carte || [] }; if (S.vm) disegna(t, S.vm, cb); }
           else if (m.t === "omini") { S.omini = m.omini || {}; if (S.vm) disegna(t, S.vm, cb); }
         },
@@ -26355,6 +27230,797 @@ window.SG_SIPERO = {
 
   // per le prove (motore e punti), senza toccare la partita
   window.__POKER = { creaMotore: creaMotore, valuta5: valuta5, miglioreMano: miglioreMano, confronta: confronta, equita: equita, cambioBot: cambioBot, decidiBot: decidiBot };
+})();
+
+/* =========================================================
+   LA RUOTA DELLA FORTUNA — come il quiz della TV.
+   Si gira la ruota, si chiama una consonante (lo spicchio vale per ogni lettera trovata),
+   si comprano le vocali, si risolve la frase. Bancarotta, Passa e Jolly come in TV.
+   Vince chi accumula di più in tutte le manche.
+   Modi: contro il computer (tu + bot, il primo è Matt), sullo stesso telefono (da 2 a 4,
+   tutti davanti allo stesso schermo), online (fino a 4, l'host può aggiungere bot).
+   Online l'host tiene la partita e manda a tutti la foto (vm) con la frase COPERTA:
+   la frase vera non viaggia mai finché non è risolta.
+   Le frasi stanno in data/ruota-frasi.js (window.SG_RUOTA_FRASI).
+   ========================================================= */
+(function () {
+  "use strict";
+
+  var ID = "ruota";
+  var MAX = 4;
+  var COSTO_VOCALE = 300, MINIMO_RISOLVI = 1000;   // chi risolve prende almeno 1.000
+  var T_MOSSA = 30000, T_RISOLVI = 60000;          // online: tempo per decidere (poi perde il turno)
+  var T_GIRO = 3400;                               // quanto gira la ruota
+  var VOCALI = ["A", "E", "I", "O", "U"];
+  var CONSONANTI = "BCDFGHJKLMNPQRSTVWXYZ".split("");
+  var FREQ_C = "NRTLSCDMPVGBFZHQKJWXY".split("");   // consonanti dalla più frequente in italiano
+  var FREQ_V = ["E", "A", "I", "O", "U"];
+  var NOMI_BOT = ["Matt", "Rosa", "Peppe", "Gina"];
+  var COL = 12, RIGHE = 4;
+  // la ruota: 24 spicchi (valori, 2 Bancarotta, 1 Passa, 1 Jolly)
+  var SPICCHI = [
+    { v: 500 }, { v: 300 }, { s: "bancarotta" }, { v: 700 }, { v: 400 }, { v: 250 },
+    { v: 800 }, { s: "passa" }, { v: 350 }, { v: 600 }, { v: 1000 }, { v: 300 },
+    { s: "jolly" }, { v: 450 }, { v: 200 }, { v: 900 }, { s: "bancarotta" }, { v: 500 },
+    { v: 650 }, { v: 2000 }, { v: 400 }, { v: 550 }, { v: 300 }, { v: 750 }
+  ];
+  var COLORI = ["#e03131", "#f08c00", "#fab005", "#2f9e44", "#1971c2", "#9c36b5"];
+  var ACC = { "À": "A", "È": "E", "É": "E", "Ì": "I", "Ò": "O", "Ù": "U" };
+  var FRASI_RISERVA = [
+    { c: "Proverbi", f: "CHI DORME NON PIGLIA PESCI" }, { c: "Proverbi", f: "TRA IL DIRE E IL FARE C'È DI MEZZO IL MARE" },
+    { c: "Modi di dire", f: "AVERE LE MANI IN PASTA" }, { c: "Cibo e cucina", f: "SPAGHETTI ALLA CARBONARA" },
+    { c: "Luoghi", f: "LA TORRE DI PISA" }, { c: "Cose di casa", f: "LA LAVATRICE NUOVA" },
+    { c: "Sport", f: "CALCIO DI RIGORE" }, { c: "In vacanza", f: "OMBRELLONE IN SPIAGGIA" }
+  ];
+
+  function base(ch) { return ACC[ch] || ch; }
+  function eLettera(ch) { return /^[A-ZÀÈÉÌÒÙ]$/.test(ch); }
+  function fmtN(n) { var s = String(Math.round(Math.abs(n || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, "."); return (n < 0 ? "−" : "") + s; }
+  function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  function svuota(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
+  function frasi() { var f = window.SG_RUOTA_FRASI; return f && f.length ? f : FRASI_RISERVA; }
+  function solo(testo) { return String(testo || "").toUpperCase().split("").map(base).filter(function (c) { return /[A-Z]/.test(c); }).join(""); }
+  // il tabellone: righe da 12 caselle, a capo tra una parola e l'altra
+  function righe(frase) {
+    var out = [], riga = "";
+    frase.split(" ").forEach(function (w) {
+      if (!riga) riga = w;
+      else if ((riga + " " + w).length <= COL) riga += " " + w;
+      else { out.push(riga); riga = w; }
+    });
+    if (riga) out.push(riga);
+    return out;
+  }
+  // la frase con le lettere non ancora uscite al posto "_" (è questa che viaggia online)
+  function coperta(frase, rivelate) {
+    return frase.split("").map(function (ch) { return eLettera(ch) && !rivelate[base(ch)] ? "_" : ch; }).join("");
+  }
+
+  // =========================================================
+  //  MOTORE (uguale contro il computer, sullo stesso telefono e per l'host online)
+  // =========================================================
+  function creaPartita(giocatori, mancheTot) {
+    var P = { giocatori: giocatori.map(function (g) { return { id: g.id, nome: g.nome, bot: !!g.bot, omino: g.omino || null, totale: 0, soldi: 0, jolly: 0, via: false }; }),
+      mancheTot: mancheTot, manche: 0, turno: 0, fase: "pronti", frase: "", cat: "", rivelate: {}, chiamate: {},
+      spicchio: -1, angolo: 0, giroN: 0, msg: "", ultime: [], usate: {}, vince: null, classifica: null };
+    function g() { return P.giocatori[P.turno]; }
+    function occ(L) { var n = 0; P.frase.split("").forEach(function (ch) { if (eLettera(ch) && base(ch) === L) n++; }); return n; }
+    function nascoste(lista) { var n = 0; P.frase.split("").forEach(function (ch) { var b = base(ch); if (eLettera(ch) && !P.rivelate[b] && lista.indexOf(b) >= 0) n++; }); return n; }
+    P.consonantiNascoste = function () { return nascoste(CONSONANTI); };
+    P.vocaliNascoste = function () { return nascoste(VOCALI); };
+    P.tutteFuori = function () { return P.consonantiNascoste() + P.vocaliNascoste() === 0; };
+    P.occ = occ;
+    function prossimo() {
+      var n = P.giocatori.length;
+      for (var k = 1; k <= n; k++) { var j = (P.turno + k) % n; if (!P.giocatori[j].via) { P.turno = j; break; } }
+      P.fase = "gira";
+    }
+    function perdeTurno(msg) {
+      var p = g();
+      if (p.jolly > 0) { p.jolly--; P.msg = msg + " Ma c'è il Jolly: tocca ancora a " + p.nome + "!"; P.fase = "gira"; return; }
+      P.msg = msg; prossimo();
+    }
+    P.nuovaManche = function () {
+      P.manche++;
+      var lista = frasi(), cand = [];
+      lista.forEach(function (x, i) { if (!P.usate[i]) cand.push(i); });
+      if (!cand.length) { P.usate = {}; cand = lista.map(function (x, i) { return i; }); }
+      var i = cand[Math.floor(Math.random() * cand.length)]; P.usate[i] = 1;
+      P.frase = String(lista[i].f).toUpperCase(); P.cat = lista[i].c;
+      P.rivelate = {}; P.chiamate = {}; P.ultime = []; P.vince = null; P.spicchio = -1;
+      P.giocatori.forEach(function (x) { x.soldi = 0; x.jolly = 0; });
+      P.turno = (P.manche - 1) % P.giocatori.length; if (P.giocatori[P.turno].via) prossimo();
+      P.fase = "gira"; P.msg = "Manche " + P.manche + " di " + P.mancheTot + ": " + P.cat;
+    };
+    P.puo = function () {   // cosa può fare chi è di turno
+      var p = g();
+      return { gira: P.fase === "gira" && P.consonantiNascoste() > 0, compra: P.fase === "gira" && p.soldi >= COSTO_VOCALE && P.vocaliNascoste() > 0, risolvi: P.fase === "gira" };
+    };
+    P.gira = function () {
+      if (!P.puo().gira) return false;
+      var i = Math.floor(Math.random() * SPICCHI.length);
+      var meta = (360 - ((i + 0.5) * 15 + (Math.random() * 9 - 4.5)) % 360) % 360;   // lo spicchio i sotto la freccia (in alto)
+      var giri = 4 + Math.floor(Math.random() * 2);
+      P.angolo = P.angolo + giri * 360 + ((meta - (P.angolo % 360)) + 720) % 360;
+      P.spicchio = i; P.giroN++; P.fase = "girando"; P.ultime = []; P.msg = g().nome + " gira la ruota…";
+      return true;
+    };
+    P.dopoGiro = function () {   // la ruota si è fermata
+      if (P.fase !== "girando") return;
+      var s = SPICCHI[P.spicchio], p = g();
+      if (s.v) { P.fase = "consonante"; P.msg = p.nome + ": " + fmtN(s.v) + " a lettera, scegli una consonante"; }
+      else if (s.s === "bancarotta") { p.soldi = 0; P.msg = "💥 Bancarotta! " + p.nome + " perde i soldi della manche."; prossimo(); }
+      else if (s.s === "passa") perdeTurno("⏭️ Passa!");
+      else { p.jolly++; P.fase = "gira"; P.msg = "🃏 Jolly per " + p.nome + "! Gira ancora."; }
+    };
+    P.consonante = function (L) {
+      if (P.fase !== "consonante" || CONSONANTI.indexOf(L) < 0 || P.chiamate[L]) return false;
+      var p = g(), n = occ(L), val = SPICCHI[P.spicchio].v;
+      P.chiamate[L] = 1;
+      if (n > 0) {
+        P.rivelate[L] = 1; P.ultime = [L]; p.soldi += val * n;
+        P.msg = p.nome + ": " + (n === 1 ? "c'è una " + L : "ci sono " + n + " " + L) + "! +" + fmtN(val * n);
+        if (P.tutteFuori()) return vinceManche(p), true;
+        P.fase = "gira";
+      } else perdeTurno("Nessuna " + L + ".");
+      return true;
+    };
+    P.compra = function () { if (!P.puo().compra) return false; g().soldi -= COSTO_VOCALE; P.fase = "vocale"; P.msg = g().nome + " compra una vocale…"; return true; };
+    P.vocale = function (V) {
+      if (P.fase !== "vocale" || VOCALI.indexOf(V) < 0 || P.chiamate[V]) return false;
+      var p = g(), n = occ(V);
+      P.chiamate[V] = 1;
+      if (n > 0) {
+        P.rivelate[V] = 1; P.ultime = [V];
+        P.msg = p.nome + ": " + (n === 1 ? "c'è una " + V : "ci sono " + n + " " + V) + "!";
+        if (P.tutteFuori()) return vinceManche(p), true;
+        P.fase = "gira";
+      } else perdeTurno("Nessuna " + V + ".");
+      return true;
+    };
+    P.risolvi = function () { if (!P.puo().risolvi) return false; P.fase = "risolvi"; P.msg = g().nome + " prova a risolvere…"; return true; };
+    P.soluzione = function (testo) {
+      if (P.fase !== "risolvi") return false;
+      if (solo(testo) === solo(P.frase)) vinceManche(g());
+      else { P.msg = "❌ " + g().nome + " sbaglia la soluzione."; prossimo(); }
+      return true;
+    };
+    P.rinuncia = function () {   // tempo scaduto o annulla: perde il turno
+      if (["gira", "consonante", "vocale", "risolvi"].indexOf(P.fase) < 0) return false;
+      P.msg = "⏰ " + g().nome + " perde il turno."; prossimo(); return true;
+    };
+    function vinceManche(p) {
+      CONSONANTI.concat(VOCALI).forEach(function (L) { P.rivelate[L] = 1; });
+      var vincita = Math.max(p.soldi, MINIMO_RISOLVI);
+      p.totale += vincita;
+      P.giocatori.forEach(function (x) { if (x !== p) x.soldi = 0; });
+      p.soldi = vincita;
+      P.vince = { id: p.id, vincita: vincita, frase: P.frase };
+      P.fase = "finemanche"; P.msg = "🎉 " + p.nome + " risolve! +" + fmtN(vincita);
+    }
+    P.dopoManche = function () {
+      if (P.fase !== "finemanche") return;
+      if (P.manche >= P.mancheTot) {
+        var ord = P.giocatori.slice().sort(function (a, b) { return b.totale - a.totale; });
+        P.classifica = ord.map(function (x) { return { id: x.id, nome: x.nome, punti: x.totale, pos: 1 + ord.filter(function (q) { return q.totale > x.totale; }).length }; });
+        P.fase = "fine"; P.msg = "";
+      } else P.nuovaManche();
+    };
+    P.esce = function (id) {
+      P.giocatori.forEach(function (x, i) {
+        if (x.id !== id || x.via) return;
+        x.via = true;
+        if (i === P.turno && ["gira", "consonante", "vocale", "risolvi"].indexOf(P.fase) >= 0) { P.msg = x.nome + " è uscito."; prossimo(); }
+      });
+    };
+    // la foto: MAI la frase vera (solo coperta), finché non è risolta
+    P.vista = function () {
+      var tp = P.giocatori[P.turno];
+      return { fase: P.fase, manche: P.manche, mancheTot: P.mancheTot, cat: P.cat, tab: P.fase === "finemanche" || P.fase === "fine" ? P.frase : coperta(P.frase, P.rivelate),
+        chiamate: Object.keys(P.chiamate), ultime: P.ultime.slice(), turno: tp ? tp.id : null, spicchio: P.spicchio, angolo: P.angolo, giroN: P.giroN, msg: P.msg,
+        puo: tp ? P.puo() : null, cons: P.consonantiNascoste(), voc: P.vocaliNascoste(), vince: P.vince, classifica: P.classifica,
+        giocatori: P.giocatori.filter(function (x) { return !x.via; }).map(function (x) { return { id: x.id, nome: x.nome, bot: x.bot, totale: x.totale, soldi: x.soldi, jolly: x.jolly }; }) };
+    };
+    return P;
+  }
+
+  // =========================================================
+  //  BOT
+  // =========================================================
+  function decidiBot(P, liv) {
+    var p = P.giocatori[P.turno], puo = P.puo();
+    var tot = solo(P.frase).length, noti = solo(coperta(P.frase, P.rivelate).replace(/_/g, "")).length, quota = tot ? noti / tot : 0;
+    var soglia = { facile: 0.85, medio: 0.72, difficile: 0.58 }[liv] || 0.72;
+    if (quota >= soglia || (!puo.gira && !puo.compra)) return { a: "risolvi", giusta: Math.random() < (liv === "facile" ? 0.75 : liv === "difficile" ? 0.98 : 0.9) };
+    if (puo.compra && (!puo.gira || (p.soldi >= 1500 && Math.random() < 0.35))) return { a: "compra" };
+    if (puo.gira) return { a: "gira" };
+    return { a: "risolvi", giusta: Math.random() < 0.6 };
+  }
+  // la lettera: i bot bravi "sentono" quelle che ci sono, quelli facili vanno più a caso
+  function letteraBot(P, liv, lista, freq) {
+    var libere = freq.filter(function (L) { return lista.indexOf(L) >= 0 && !P.chiamate[L]; });
+    if (!libere.length) return null;
+    var buone = libere.filter(function (L) { return P.occ(L) > 0; });
+    var fiuto = { facile: 0.35, medio: 0.6, difficile: 0.85 }[liv] || 0.6;
+    if (buone.length && Math.random() < fiuto) return buone[0];
+    if (liv === "facile") return libere[Math.floor(Math.random() * Math.min(libere.length, 8))];
+    return libere[0];
+  }
+
+  // =========================================================
+  //  SUONI (niente vibrazione: vibra solo quando tocchi tu)
+  // =========================================================
+  function bip(f, dur, tipo, vol, ritardo) {
+    var ctx = SG.audioCtx && SG.audioCtx(); if (!ctx) return;
+    try {
+      var t0 = ctx.currentTime + (ritardo || 0), o = ctx.createOscillator(), gg = ctx.createGain();
+      o.type = tipo || "triangle"; o.frequency.setValueAtTime(f, t0);
+      gg.gain.setValueAtTime(0.0001, t0); gg.gain.exponentialRampToValueAtTime(vol || 0.08, t0 + 0.01); gg.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(gg); gg.connect(ctx.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+    } catch (e) {}
+  }
+  function suonoGiro() { for (var k = 0; k < 18; k++) bip(900, 0.03, "square", 0.025, k * 0.06 + k * k * 0.004); }
+  function suonoLettera(n) { for (var k = 0; k < Math.min(n, 6); k++) bip(1046, 0.18, "triangle", 0.08, k * 0.16); }
+  function suonoNo() { bip(220, 0.35, "sawtooth", 0.05); }
+  function suonoVinto() { [523, 659, 784, 1046].forEach(function (f, k) { bip(f, 0.25, "triangle", 0.09, k * 0.12); }); }
+
+  // =========================================================
+  //  LA PARTITA SU QUESTO TELEFONO: contro il computer, sullo stesso telefono, oppure host online
+  // =========================================================
+  function partita(t, modo) {
+    var online = modo === "online";
+    if (online && !(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var imp = t.impostazioni || {}, liv = imp.difficolta || "medio", mancheTot = Math.max(1, Math.min(6, Math.floor(+imp.manche || 4)));
+    var nome = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Tu";
+    var posti = [];   // chi gioca: { id, nome, bot, omino }
+    var H = { fase: online ? "lobby" : "gioco", codice: "…", pronta: !online, omini: {} };
+    function aggiungiBot() {
+      var usati = {}; posti.forEach(function (p) { usati[p.nome] = 1; });
+      var n = NOMI_BOT.filter(function (x) { return !usati[x]; })[0] || ("Bot " + (posti.length + 1));
+      posti.push({ id: "bot" + Math.random().toString(36).slice(2, 7), nome: n, bot: true, omino: window.SGOmino ? SGOmino.casuale(n) : null });
+    }
+    if (modo === "telefono") {
+      (t.giocatori || []).slice(0, MAX).forEach(function (n, i) { posti.push({ id: "p" + i, nome: n, omino: window.SGOmino ? SGOmino.casuale(n) : null }); });
+      while (posti.length < 2) aggiungiBot();
+    } else {
+      posti.push({ id: "host", nome: nome, omino: t.mioOmino ? t.mioOmino(nome) : null });
+      if (!online) { var nb = Math.max(1, Math.min(MAX - 1, Math.floor(+imp.avversari || 2))); for (var b = 0; b < nb; b++) aggiungiBot(); }
+    }
+    H.omini.host = posti[0].omino;
+    var P = null, rete = null, tBot = null, tTempo = null, tFase = null;
+
+    function ferma() { clearTimeout(tBot); clearTimeout(tTempo); tBot = tTempo = null; }
+    function vm() {
+      if (H.fase !== "gioco" && H.fase !== "fine") return { fase: H.fase, codice: H.codice, pronta: H.pronta, mancheTot: mancheTot,
+        giocatori: posti.map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot }; }) };
+      var v = P.vista(); v.fase = H.fase === "fine" ? "fine" : v.fase; v.codice = H.codice; v.giocoFase = H.fase; v.sigla = !!H.sigla; return v;
+    }
+    function bd() { var v = vm(); if (rete) rete.invia({ t: "vm", vm: v }); disegna(t, v, cb); }
+    // il giro: bot, la ruota che si ferma, fine manche, tempo per decidere (online)
+    function ciclo() {
+      ferma();
+      if (H.fase !== "gioco" || !P || H.sigla) return;
+      if (P.fase === "girando") { tFase = setTimeout(function () { P.dopoGiro(); dopo(); }, T_GIRO); return; }
+      if (P.fase === "finemanche") { tFase = setTimeout(function () { P.dopoManche(); if (P.fase === "fine") finePartita(); else dopo(); }, 4500); return; }
+      if (P.fase === "fine") return;
+      var p = P.giocatori[P.turno];
+      var nuovo = H.ultimoTurno !== P.turno + ":" + P.manche; H.ultimoTurno = P.turno + ":" + P.manche;
+      // il bot aspetta un po' di più a inizio turno: prima la telecamera arriva al suo leggio
+      if (p.bot) { tBot = setTimeout(mossaBot, (P.fase === "risolvi" ? 1800 : 1100 + Math.random() * 700) + (nuovo ? 1700 : 0)); return; }
+      if (online && !(modo === "telefono")) tTempo = setTimeout(function () { if (P.rinuncia()) dopo(); }, P.fase === "risolvi" ? T_RISOLVI : T_MOSSA);
+    }
+    function dopo() { bd(); ciclo(); }
+    function mossaBot() {
+      var p = P.giocatori[P.turno]; if (!p || !p.bot) return;
+      if (P.fase === "gira") {
+        var d = decidiBot(P, liv);
+        if (d.a === "gira") P.gira();
+        else if (d.a === "compra") P.compra();
+        else { P.risolvi(); p._giusta = d.giusta; }
+      } else if (P.fase === "consonante") { var L = letteraBot(P, liv, CONSONANTI, FREQ_C); if (L) P.consonante(L); else P.rinuncia(); }
+      else if (P.fase === "vocale") { var V = letteraBot(P, liv, VOCALI, FREQ_V); if (V) P.vocale(V); else P.rinuncia(); }
+      else if (P.fase === "risolvi") P.soluzione(p._giusta ? P.frase : "SBAGLIATA");
+      dopo();   // (i suoni li fa il disegno, uguale su tutti i telefoni)
+    }
+    function finePartita() {
+      H.fase = "fine"; bd();
+      if (t.risultato && P.classifica) t.risultato(P.classifica.filter(function (r) { var x = posti.filter(function (p) { return p.id === r.id; })[0]; return x && !x.bot; }).map(function (r) { return { nome: r.nome, pos: r.pos }; }));
+    }
+    function comincia() {
+      if (posti.length < 2) return;
+      P = creaPartita(posti, mancheTot); P.nuovaManche(); H.fase = "gioco"; H.ultimoTurno = null;
+      // prima la sigla dello studio (presenta i concorrenti), poi si gioca
+      H.sigla = true; bd();
+      clearTimeout(tFase); tFase = setTimeout(function () { H.sigla = false; dopo(); }, window.SGStudio ? SGStudio.durataApertura(posti.length) : 0);
+    }
+    // le mosse di chi è di turno su questo telefono (o, sullo stesso telefono, di chiunque sia di turno)
+    function mia(id) {
+      if (!P || H.fase !== "gioco" || H.sigla) return false;
+      var p = P.giocatori[P.turno];
+      return p && !p.bot && (modo === "telefono" || p.id === id);
+    }
+    function azione(id, a, x) {
+      if (!mia(id)) return;
+      var ok = false;
+      if (a === "gira") ok = P.gira();
+      else if (a === "compra") ok = P.compra();
+      else if (a === "risolvi") ok = P.risolvi();
+      else if (a === "lettera") { var L = String(x || "").toUpperCase(); ok = P.fase === "vocale" ? P.vocale(L) : P.consonante(L); }
+      else if (a === "soluzione") ok = P.soluzione(x);
+      else if (a === "annulla") ok = P.fase === "risolvi" && P.rinuncia();
+      if (ok) dopo();
+    }
+    var cb = { sonoHost: true, online: online, telefono: modo === "telefono", myId: "host",
+      omini: function () { return H.omini; },
+      onAzione: function (a, x) { azione("host", a, x); },
+      onComincia: comincia,
+      onBot: function (piu) { if (H.fase !== "lobby") return; if (piu && posti.length < MAX) aggiungiBot(); else if (!piu) { for (var i = posti.length - 1; i > 0; i--) if (posti[i].bot) { posti.splice(i, 1); break; } } bd(); },
+      onNuova: function () {
+        clearTimeout(tFase); ferma();
+        if (online) { posti = posti.filter(function (p) { return !P || !P.giocatori.some(function (g) { return g.id === p.id && g.via; }); }); H.fase = "lobby"; P = null; bd(); }
+        else { P = null; comincia(); }
+      },
+      onEsci: function (gia) {   // gia = l'ha già confermato il tasto ‹ dello studio
+        if (H.fase === "gioco" && !gia && !window.confirm(online ? "Chiudere la partita per tutti?" : "Uscire dalla partita?")) return;
+        clearTimeout(tFase); ferma(); if (rete) rete.chiudi(); t.esci();
+      } };
+    // "⚙️ Regole" nella saletta: quante manche e bravura dei bot
+    t.onRegole = function (im) { if (H.fase !== "lobby") return; mancheTot = Math.max(1, Math.min(6, Math.floor(+im.manche || mancheTot))); liv = im.difficolta || liv; bd(); };
+
+    if (online) {
+      rete = SGNet.ospita(ID, {
+        onCodice: function (c) { H.codice = c; bd(); },
+        onConnesso: function () { H.pronta = true; bd(); },
+        onAddio: function (id) {
+          if (H.fase === "lobby") { posti = posti.filter(function (p) { return p.id !== id; }); bd(); return; }
+          if (P) { P.esce(id); dopo(); }
+        },
+        onMsg: function (id, m) {
+          if (!m || !m.t) return;
+          if (m.t === "join") {
+            var gia = posti.some(function (p) { return p.id === id; });
+            if (!gia && H.fase === "lobby" && posti.length < MAX) {
+              var p = { id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino) };
+              posti.push(p); H.omini[id] = p.omino;
+            }
+            rete.inviaVeloce({ t: "omini", omini: H.omini });
+            bd();   // anche a chi rientra: si rivede la partita al suo posto
+            return;
+          }
+          if (m.t === "azione") azione(id, m.a, m.x);
+        },
+        onErrore: function () { senzaRete(t); }
+      });
+      bd();
+    } else comincia();
+  }
+
+  // =========================================================
+  //  OSPITE ONLINE: disegna le foto dell'host e manda solo le sue mosse
+  // =========================================================
+  function ospite(t, codice) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var S = { rete: null, myId: null, nome: "", vm: null, omini: {} };
+    var cb = { sonoHost: false, online: true, myId: null,
+      omini: function () { return S.omini; },
+      onAzione: function (a, x) { if (S.rete) S.rete.invia({ t: "azione", a: a, x: x }); },
+      onEsci: function (gia) {
+        if (S.vm && S.vm.giocoFase === "gioco" && !gia && !window.confirm("Uscire dalla partita?")) return;
+        if (S.rete) S.rete.chiudi(); t.esci();
+      } };
+    if (t.nomeProfilo && t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();
+    function chiediNome() {
+      var s = t.schermata({ icona: "🎡", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var input = t.el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
+      s._contenuto.appendChild(input);
+      s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+        try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
+        S.nome = (input.value || "").trim().slice(0, 16) || "Amico"; collega();
+      } }));
+      t.mostra(s);
+    }
+    function collega() {
+      var s = t.schermata({ icona: "🎡", titolo: "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
+      t.mostra(s);
+      S.rete = SGNet.entra(codice, {
+        onAperto: function (id) { S.myId = id; cb.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : null }); },
+        onMsg: function (m) {
+          if (!m || !m.t) return;
+          if (m.to && m.to !== S.myId) return;
+          if (m.t === "vm") { S.vm = m.vm; disegna(t, m.vm, cb); }
+          else if (m.t === "omini") { S.omini = m.omini || {}; if (S.vm) disegna(t, S.vm, cb); }
+        },
+        onChiuso: function () { errore(t, "La partita è stata chiusa dall'host."); },
+        onErrore: function () { errore(t, "Problema di collegamento. Riprova."); }
+      });
+    }
+  }
+
+  // =========================================================
+  //  DISEGNO: la saletta, poi lo STUDIO TV (come gli altri giochi di quiz).
+  //  Il tabellone sta fisso in alto (sempre visibile, non si muove con la telecamera), la ruota sul maxischermo,
+  //  i concorrenti ai leggii (sul display i soldi della manche), i tasti nella barra in basso.
+  //  La telecamera va sulla ruota quando gira e sul concorrente di turno quando deve scegliere.
+  //  Suoni, facce e telecamera nascono dalle differenze tra una foto e l'altra: uguali su tutti i telefoni.
+  // =========================================================
+  var ST = null;   // lo studio del game show (js/studio.js)
+  var R = null;    // la regia della partita in corso su questo telefono
+  function disegna(t, vm, cb) {
+    ST = window.SGStudio;
+    if (vm.fase === "lobby") { R = null; return lobby(t, vm, cb); }
+    if (vm.fase === "fine") {
+      if (R && R.finita) return;   // la chiusura della puntata è già partita
+      if (R && R.S.vivo() && !R.sigla) {   // "Fine della puntata!": telecamera sul vincitore, poi la classifica
+        var ui = R; ui.finita = true; ui.cb = cb; fermaRegia(ui);
+        ui.sopra.classList.add("via");
+        var vinc = vm.classifica && vm.classifica.length ? ui.ids.indexOf(vm.classifica[0].id) : -1;
+        Promise.resolve(ST.finale(ui.S, vinc, "Ha vinto La Ruota della Fortuna! 🎡")).catch(function () {}).then(function () {
+          if (R === ui && ui.S.vivo()) { R = null; finale(t, vm, ui.cb); }
+        });
+        return;
+      }
+      R = null; return finale(t, vm, cb);
+    }
+    if (!R || !R.S.vivo()) R = creaStudioRuota(t, vm, cb);
+    R.cb = cb; R.vm = vm;
+    if (!R.sigla) aggiorna(R, vm);
+  }
+  function lobby(t, vm, cb) {
+    var el = t.el, extra = [el("p", { class: "modulo-nota", text: "Da 2 a 4 alla ruota · " + vm.mancheTot + " manche. I posti vuoti li possono prendere i bot." })];
+    if (cb.sonoHost) {
+      var nb = vm.giocatori.filter(function (p) { return p.bot; }).length;
+      extra.push(el("div", { class: "ru-bot-riga" }, [
+        el("span", { text: "🤖 Bot alla ruota: " + nb }),
+        el("button", { class: "btn btn-fantasma btn-piccolo", text: "−", disabled: nb ? null : "disabled", onclick: function () { cb.onBot(false); } }),
+        el("button", { class: "btn btn-fantasma btn-piccolo", text: "+", disabled: vm.giocatori.length < MAX ? null : "disabled", onclick: function () { cb.onBot(true); } }) ]));
+    }
+    t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2, puoiDaSolo: vm.giocatori.length >= 2, vuoti: Math.max(0, 2 - vm.giocatori.length),
+      giocatori: vm.giocatori.map(function (p) { return { id: p.id, nome: p.nome, omino: (cb.omini() || {})[p.id] || (p.bot && window.SGOmino ? SGOmino.casuale(p.nome) : null), host: p.id === "host", tu: p.id === cb.myId, bot: p.bot }; }),
+      extra: extra, attesa: "Aspetta che l'host cominci: si gira la ruota! 🎡", onComincia: cb.onComincia, onEsci: cb.onEsci });
+  }
+  function creaStudioRuota(t, vm, cb) {
+    stile();
+    var el = t.el, ids = vm.giocatori.map(function (p) { return p.id; });
+    var ui = { t: t, el: el, cb: cb, vm: vm, ids: ids, kTab: "", kTast: "", giroN: -1, scritto: [], prec: null, mostrati: {}, inq: "", barraH: -1, timer: [] };
+    ui.S = ST.crea(t, vm.giocatori.map(function (p) { return { nome: p.nome, omino: (cb.omini() || {})[p.id] || (window.SGOmino ? SGOmino.casuale(p.nome) : null) }; }),
+      { io: cb.telefono ? -1 : ids.indexOf(cb.myId), esci: function () { fermaRegia(ui); ui.cb.onEsci(true); }, titolo: "La Ruota della Fortuna", logo: ["LA RUOTA", "DELLA FORTUNA"] });
+    var S = ui.S;
+    S.sopraLibero = 0.6;   // la telecamera può salire sopra lo studio: lassù c'è il tabellone
+    S.vista.classList.add("ru-studio");
+    // in alto, fisso: categoria, tabellone, cosa succede
+    ui.cat = el("div", { class: "ru-cat" });
+    ui.tab = el("div", { class: "ru-tab" }); ui.celle = [];
+    for (var r = 0; r < RIGHE; r++) for (var c = 0; c < COL; c++) { var d = el("div", { class: "ru-cella vuota" }); ui.celle.push(d); ui.tab.appendChild(d); }
+    ui.msg = el("div", { class: "ru-msg" });
+    ui.sopra = el("div", { class: "ru-sopra" }, [ ui.cat, ui.tab, ui.msg ]);
+    S.vista.appendChild(ui.sopra);
+    // la ruota (va sul maxischermo) e i tasti (nella barra in basso)
+    ui.canvas = el("canvas", { class: "ru-disco", width: "440", height: "440" });
+    disegnaRuota(ui.canvas);
+    ui.ruota = el("div", { class: "ru-ruota-sch" }, [ ui.canvas,
+      el("div", { class: "ru-freccia", html: "<svg viewBox='0 0 10 10'><polygon points='0,0 10,0 5,10' fill='#ffd43b' stroke='#a85c00' stroke-width='.6'/></svg>" }),
+      el("div", { class: "ru-centro" }) ]);
+    ui.azioni = el("div", { class: "ru-azioni" });
+    vm.giocatori.forEach(function (p, i) { ST.puntiLeggio(S, i, p.soldi); ui.mostrati[p.id] = p.soldi; });
+    function via() { ST.vuota(S.sch); S.sch.appendChild(ui.ruota); ST.barra(S, [ ui.azioni ]); ui.sopra.classList.remove("via"); }
+    if (vm.sigla) {   // a inizio partita la sigla dello studio (il tabellone compare dopo)
+      ui.sigla = true; ui.sopra.classList.add("via");
+      Promise.resolve(ST.apertura(S)).catch(function () {}).then(function () {
+        ui.sigla = false;
+        if (!S.vivo() || R !== ui || ui.finita) return;
+        via(); aggiorna(ui, ui.vm);
+      });
+    } else via();
+    return ui;
+  }
+  // la ruota disegnata una volta sola; poi si fa girare tutta (transform), senza ridisegnarla
+  function disegnaRuota(cv) {
+    var c = cv.getContext("2d"), Rr = 220, passo = Math.PI * 2 / SPICCHI.length;
+    c.translate(Rr, Rr);
+    SPICCHI.forEach(function (sp, i) {
+      var a0 = -Math.PI / 2 + i * passo, a1 = a0 + passo;
+      c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, Rr - 4, a0, a1); c.closePath();
+      c.fillStyle = sp.s === "bancarotta" ? "#111" : sp.s === "passa" ? "#f1f3f5" : sp.s === "jolly" ? "#7048e8" : COLORI[i % COLORI.length];
+      c.fill(); c.strokeStyle = "rgba(255,255,255,.85)"; c.lineWidth = 2; c.stroke();
+      c.save(); c.rotate(a0 + passo / 2); c.textAlign = "right"; c.textBaseline = "middle";
+      c.fillStyle = sp.s === "passa" ? "#222" : "#fff"; c.font = "900 " + (sp.s ? 19 : 26) + "px system-ui, sans-serif";
+      c.fillText(sp.s === "bancarotta" ? "BANCAROTTA" : sp.s === "passa" ? "PASSA" : sp.s === "jolly" ? "JOLLY" : fmtN(sp.v), Rr - 16, 0);
+      c.restore();
+    });
+    c.beginPath(); c.arc(0, 0, Rr - 3, 0, Math.PI * 2); c.lineWidth = 6; c.strokeStyle = "#ffd43b"; c.stroke();
+  }
+
+  // ---- la telecamera: la parte di studio che si vede sta tra il tabellone (sopra) e la barra dei tasti (sotto) ----
+  function banda(ui) {
+    var S = ui.S, top = ui.sopra.offsetTop + ui.sopra.offsetHeight + 4;
+    var bar = S.barraEl.classList.contains("on") ? S.barraEl.offsetHeight : 0, bot = S.VH - bar - 2;
+    if (bot - top < S.VH * 0.22) { top = S.VH * 0.32; bot = S.VH * 0.72; }
+    return { top: top, bot: bot };
+  }
+  // l'inquadratura che mette il soggetto (centro cx,cy; largo w, alto h, in misure dello studio) al centro di quella parte
+  function nellaBanda(ui, cx, cy, w, h) {
+    var S = ui.S, b = banda(ui), s = Math.min(S.VW * 0.96 / w, (b.bot - b.top) * 0.94 / h);
+    var W = S.VW / s, HH = S.VH / s, ccy = cy - ((b.top + b.bot) / 2 - S.VH / 2) / s;
+    return { x: cx - W / 2, y: ccy - HH / 2, w: W, h: HH };
+  }
+  function shotRuota(ui) { var q = ui.S.R.schermo, lato = Math.min(q.w, q.h) * 0.94; return nellaBanda(ui, q.x + q.w / 2, q.y + q.h / 2, lato * 1.06, lato * 1.06); }
+  function shotLeggio(ui, i) { var S = ui.S, p = S.posti[i] || S.posti[0]; return nellaBanda(ui, p.cx, p.top + p.w * 0.62, Math.max(0.6 * S.VW, p.w * 1.3), p.w * 1.34); }
+  function inquadra(ui, cosa, i, ms) {
+    var k = cosa + ":" + (i == null ? "" : i);
+    if (k === ui.inq) return;
+    ui.inq = k;
+    ST.inquadra(ui.S, cosa === "ruota" ? function () { return shotRuota(ui); } : function () { return shotLeggio(ui, i); }, ms == null ? 700 : ms);
+  }
+  function dopo(ui, ms, fn) { ui.timer.push(setTimeout(function () { if (ui.S.vivo() && !ui.finita) fn(); }, ms)); }
+  function fermaRegia(ui) { ui.timer.forEach(clearTimeout); ui.timer = []; }
+  function facciaPerUnPo(ui, i, f) {
+    if (i < 0) return;
+    ST.faccia(ui.S, i, f);
+    clearTimeout(ui["tf" + i]); ui["tf" + i] = setTimeout(function () { if (ui.S.vivo()) ST.faccia(ui.S, i, null); }, 1900);
+  }
+  function trovaG(vm, id) { for (var i = 0; i < vm.giocatori.length; i++) if (vm.giocatori[i].id === id) return vm.giocatori[i]; return null; }
+  function conta(tab, L) { var n = 0; tab.split("").forEach(function (ch) { if (eLettera(ch) && base(ch) === L) n++; }); return n; }
+
+  function aggiorna(ui, vm) {
+    var S = ui.S, cb = ui.cb, prec = ui.prec || {}, it = ui.ids.indexOf(vm.turno), ip = ui.ids.indexOf(prec.turno);
+    var mioTurno = !!vm.turno && (cb.telefono ? !isBot(vm, vm.turno) : vm.turno === cb.myId);
+    var inRisolvi = vm.fase === "risolvi" && mioTurno;
+    if (!inRisolvi) ui.scritto = [];
+    ui.cat.textContent = (vm.cat || "") + "  ·  manche " + vm.manche + "/" + vm.mancheTot;
+    // ---- tabellone: 4 righe da 12, la frase al centro ----
+    var kt = vm.tab + "|" + (inRisolvi ? ui.scritto.join("") : "") + "|" + vm.ultime.join("");
+    if (kt !== ui.kTab) {
+      var primaVolta = !ui.kTab; ui.kTab = kt;
+      var rr = righe(vm.tab), su = Math.floor((RIGHE - Math.min(RIGHE, rr.length)) / 2), buco = 0;
+      ui.celle.forEach(function (d) { if (d.className !== "ru-cella vuota") d.className = "ru-cella vuota"; if (d.textContent) d.textContent = ""; });
+      rr.slice(0, RIGHE).forEach(function (riga, r) {
+        var x0 = Math.floor((COL - riga.length) / 2);
+        riga.split("").forEach(function (ch, k) {
+          var d = ui.celle[(su + r) * COL + x0 + k]; if (!d || ch === " ") return;
+          if (ch === "_") {
+            var sc = inRisolvi && ui.scritto[buco];
+            d.className = "ru-cella " + (sc ? "scritta" : "coperta"); d.textContent = sc || ""; buco++;
+          } else { d.className = "ru-cella" + (!primaVolta && vm.ultime.indexOf(base(ch)) >= 0 ? " nuova" : ""); d.textContent = ch; }
+        });
+      });
+    }
+    ui.msg.textContent = vm.msg || "";
+    // ---- i leggii: i soldi della manche (a fine manche il totale di tutta la partita), chi è uscito ----
+    var fineM = vm.fase === "finemanche";
+    ui.ids.forEach(function (id, i) {
+      var p = trovaG(vm, id);
+      if (!p) { ST.fuori(S, i, true); return; }
+      var val = fineM ? p.totale : p.soldi;
+      if (ui.mostrati[id] === val && ui.modoLeggii === fineM) return;
+      var d = 0;
+      if (fineM && prec.fase && prec.fase !== "finemanche") d = vm.vince && vm.vince.id === id ? vm.vince.vincita : 0;
+      else if (!fineM && prec.manche === vm.manche && ui.modoLeggii === fineM) d = val - (ui.mostrati[id] || 0);
+      ST.puntiLeggio(S, i, val, d);
+      ui.mostrati[id] = val;
+    });
+    ui.modoLeggii = fineM;
+    ST.accendiSolo(S, ["gira", "consonante", "vocale", "risolvi", "girando"].indexOf(vm.fase) >= 0 ? it : -1);
+    // ---- cosa è successo: telecamera, suoni e facce (uguali su tutti i telefoni) ----
+    var tieni = 0;   // per quanto la telecamera resta su un momento prima di tornare a chi è di turno
+    if (vm.giroN !== ui.giroN) {   // un giro nuovo: la telecamera va sulla ruota e la ruota gira
+      var primoGiro = ui.giroN === -1; ui.giroN = vm.giroN;
+      if (!primoGiro && vm.fase === "girando") {
+        fermaRegia(ui); ui.inq = ""; inquadra(ui, "ruota", null, 600);
+        var ang = vm.angolo;
+        ui.canvas.style.transition = "none";
+        dopo(ui, 600, function () {
+          ui.canvas.style.transition = "transform " + (T_GIRO - 900) + "ms cubic-bezier(.12,.7,.18,1)";
+          ui.canvas.style.transform = "rotate(" + ang + "deg)";
+          suonoGiro();
+        });
+      } else { ui.canvas.style.transition = "none"; ui.canvas.style.transform = "rotate(" + vm.angolo + "deg)"; }
+    }
+    if (prec.fase) {
+      if (prec.fase === "girando" && vm.fase !== "girando") {   // la ruota si è fermata: un attimo sulla ruota
+        var sp = SPICCHI[vm.spicchio] || {};
+        tieni = 650;
+        if (sp.s === "bancarotta" || sp.s === "passa") {   // poi sul concorrente sfortunato, poi su chi tocca
+          if (sp.s === "bancarotta") { ST.FX.ohh(); ST.scossa(S); }
+          dopo(ui, 650, function () { inquadra(ui, "leggio", ip, 600); facciaPerUnPo(ui, ip, sp.s === "bancarotta" ? "esploso" : "triste"); });
+          if (ip !== it) tieni = 2300;
+        } else if (sp.s === "jolly") ST.FX.applauso("piano");
+      }
+      if (vm.ultime.length && vm.ultime.join("") !== (prec.ultime || []).join("")) {   // una lettera trovata
+        var n = conta(vm.tab, vm.ultime[0]); suonoLettera(n); facciaPerUnPo(ui, it >= 0 ? it : ip, "esulta");
+        if (n >= 3) ST.FX.applauso("piano");
+      } else if (vm.msg !== prec.msg && /^Nessuna |sbaglia/.test(vm.msg || "")) { suonoNo(); facciaPerUnPo(ui, ip, "triste"); }
+      if (fineM && prec.fase !== "finemanche") {   // qualcuno ha risolto
+        var iv = ui.ids.indexOf(vm.vince && vm.vince.id);
+        fermaRegia(ui); ST.FX.applauso("forte"); ST.coriandoli(); suonoVinto();
+        if (iv >= 0) { ST.lampo(S); ST.accendiSolo(S, iv); ST.faccia(S, iv, "esulta"); inquadra(ui, "leggio", iv, 800); }
+      }
+      if (vm.manche !== prec.manche) ST.tutteNormali(S);
+    }
+    // ---- poi la telecamera va sul concorrente di turno ----
+    if (vm.fase !== "girando" && !fineM && it >= 0) {
+      if (tieni) dopo(ui, tieni, function () { inquadra(ui, "leggio", it, 700); });
+      else inquadra(ui, "leggio", it, prec.fase ? 700 : 0);
+    }
+    ui.prec = { fase: vm.fase, turno: vm.turno, manche: vm.manche, ultime: vm.ultime.slice(), msg: vm.msg };
+    disegnaAzioni(ui, vm, mioTurno);
+    // la barra ha cambiato altezza (es. è comparsa la tastiera): rimetto a fuoco l'inquadratura
+    var bh = S.barraEl.offsetHeight;
+    if (bh !== ui.barraH) { var primaB = ui.barraH === -1; ui.barraH = bh; if (!primaB && S.shot) ST.camera(S, S.shot(), 350); }
+  }
+  function isBot(vm, id) { for (var i = 0; i < vm.giocatori.length; i++) if (vm.giocatori[i].id === id) return vm.giocatori[i].bot; return false; }
+  function nomeDi(vm, cb, id) { for (var i = 0; i < vm.giocatori.length; i++) if (vm.giocatori[i].id === id) return id === cb.myId && !cb.telefono ? "te" : vm.giocatori[i].nome; return "?"; }
+  function disegnaAzioni(ui, vm, mioTurno) {
+    var cb = ui.cb, el = ui.el;
+    var chiave = [vm.fase, vm.turno, vm.chiamate.join(""), mioTurno, JSON.stringify(vm.puo), vm.fase === "risolvi" ? ui.scritto.join("") : ""].join("|");
+    if (chiave === ui.kTast) return;
+    ui.kTast = chiave; svuota(ui.azioni);
+    function stato(txt, cls) { ui.azioni.appendChild(el("div", { class: "ru-stato" + (cls ? " " + cls : ""), text: txt })); }
+    function btn(cls, txt, fn, off) { var b = el("button", { class: "ru-btn " + cls, text: txt, onclick: fn }); if (off) b.disabled = true; return b; }
+    function riscrivi() { ui.kTab = ""; aggiorna(ui, ui.vm); }
+    if (vm.fase === "girando") return stato("🎡 La ruota gira…");
+    if (vm.fase === "finemanche") return stato(vm.manche >= vm.mancheTot ? "Ultima manche finita!" : "Tra poco la manche " + (vm.manche + 1) + "… (sui leggii i totali)");
+    if (!mioTurno) return stato("Tocca a " + nomeDi(vm, cb, vm.turno) + "…");
+    var chi = cb.telefono ? nomeDi(vm, cb, vm.turno) + ", " : "";
+    if (vm.fase === "gira") {
+      stato(chi ? chi + "tocca a te!" : "Tocca a te!", "piccolo");
+      ui.azioni.appendChild(el("div", { class: "ru-riga" }, [
+        btn("gira", vm.cons ? "🎡 Gira" : "🎡 Finite", function () { cb.onAzione("gira"); }, !(vm.puo && vm.puo.gira)),
+        btn("vocale", "🅰️ Vocale " + COSTO_VOCALE, function () { cb.onAzione("compra"); }, !(vm.puo && vm.puo.compra)),
+        btn("risolvi", "💡 Risolvi", function () { cb.onAzione("risolvi"); }) ]));
+      return;
+    }
+    if (vm.fase === "consonante" || vm.fase === "vocale") {
+      var lista = vm.fase === "vocale" ? VOCALI : CONSONANTI;
+      stato(chi + (vm.fase === "vocale" ? "scegli una vocale" : "scegli una consonante"), "piccolo");
+      var gri = el("div", { class: "ru-lettere" + (vm.fase === "vocale" ? " vocali" : "") });
+      lista.forEach(function (L) { gri.appendChild(btn("lettera", L, function () { cb.onAzione("lettera", L); }, vm.chiamate.indexOf(L) >= 0)); });
+      ui.azioni.appendChild(gri);
+      return;
+    }
+    if (vm.fase === "risolvi") {
+      var buchi = (vm.tab.match(/_/g) || []).length, pieni = ui.scritto.length;
+      stato(chi + "scrivi le lettere che mancano (" + pieni + " di " + buchi + ")", "piccolo");
+      var tast = el("div", { class: "ru-lettere" });
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(function (L) {
+        tast.appendChild(btn("lettera", L, function () { if (ui.scritto.length < buchi) { ui.scritto.push(L); riscrivi(); } }));
+      });
+      tast.appendChild(btn("lettera canc", "⌫", function () { ui.scritto.pop(); riscrivi(); }));
+      ui.azioni.appendChild(tast);
+      ui.azioni.appendChild(el("div", { class: "ru-riga" }, [
+        btn("annulla", "Rinuncio", function () { ui.scritto = []; cb.onAzione("annulla"); }),
+        btn("gira", "✓ Risolvi", function () {
+          var k = 0, testo = vm.tab.replace(/_/g, function () { return ui.scritto[k++] || "?"; });
+          ui.scritto = []; cb.onAzione("soluzione", testo);
+        }, pieni < buchi) ]));
+    }
+  }
+  function finale(t, vm, cb) {
+    var s = t.schermata({ icona: "🏆", titolo: "Classifica finale", sotto: "La Ruota della Fortuna" });
+    var ol = t.el("ol", { class: "classifica" }), med = ["🥇", "🥈", "🥉"];
+    (vm.classifica || []).forEach(function (r) {
+      ol.appendChild(t.el("li", { class: r.pos === 1 ? "vincitore" : "" }, [
+        t.el("span", { class: "pos", text: med[r.pos - 1] || (r.pos + "°") }),
+        t.el("span", { class: "nome", text: r.id === cb.myId && !cb.telefono ? r.nome + " (tu)" : r.nome }),
+        t.el("span", { class: "punti", text: fmtN(r.punti) }) ]));
+    });
+    s._contenuto.appendChild(ol);
+    if (cb.sonoHost) s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: cb.online ? "↻ Nuova partita (stessi amici)" : "↻ Gioca ancora", onclick: cb.onNuova }));
+    else s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { cb.onEsci(true); } }));
+    t.mostra(s);
+  }
+  function errore(t, testo) {
+    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
+    t.mostra(s);
+  }
+  function senzaRete(t) {
+    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "La Ruota online funziona quando l'app è aperta dal sito pubblicato. Intanto puoi giocare contro il computer o sullo stesso telefono." }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
+    t.mostra(s);
+  }
+  var cssFatto = false;
+  function stile() {
+    if (cssFatto) return; cssFatto = true;
+    var st = document.createElement("style");
+    st.textContent = [
+      // il tabellone: in alto, fisso sopra lo studio (sotto ai tasti ‹ e 🎵 dello studio)
+      ".ru-sopra{position:absolute;left:8px;right:8px;top:calc(48px + env(safe-area-inset-top));z-index:21;display:flex;flex-direction:column;gap:4px;pointer-events:none;transition:opacity .5s}",
+      ".ru-sopra.via{opacity:0}",
+      ".ru-cat{text-align:center;font-weight:900;font-size:.82rem;letter-spacing:.05em;color:#ffe066;text-transform:uppercase;text-shadow:0 2px 4px rgba(0,0,0,.8)}",
+      ".ru-tab{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;padding:5px;border-radius:12px;background:#0b5e3c;box-shadow:inset 0 0 0 3px #12804f,0 6px 18px rgba(0,0,0,.55)}",
+      ".ru-cella{aspect-ratio:1/1.08;border-radius:4px;background:#fff;color:#14113a;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:clamp(.78rem,4.4vw,1.2rem);line-height:1}",
+      ".ru-cella.vuota{background:#118a54;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}",
+      ".ru-cella.coperta{background:#f8f9fa}",
+      ".ru-cella.scritta{background:#d0ebff;color:#1864ab}",
+      ".ru-cella.nuova{animation:ruNuova .9s ease-out}",
+      "@keyframes ruNuova{0%{background:#4dabf7;transform:scale(1.15)}100%{background:#fff;transform:none}}",
+      ".ru-msg{align-self:center;max-width:100%;text-align:center;font-weight:800;font-size:.8rem;line-height:1.2;padding:3px 10px;border-radius:99px;background:rgba(7,4,26,.75);color:#fff}",
+      ".ru-msg:empty{display:none}",
+      // la ruota sul maxischermo (senza il margine che lo studio lascia per la barra)
+      ".ru-studio .st-sch-in{padding:0!important}",
+      ".ru-ruota-sch{position:absolute;left:3%;right:3%;top:50%;aspect-ratio:1;transform:translateY(-50%)}",
+      ".ru-disco{display:block;width:100%;height:100%;border-radius:50%;box-shadow:0 8px 24px rgba(0,0,0,.5);will-change:transform}",
+      ".ru-freccia{position:absolute;left:50%;top:-5%;width:12%;height:12%;transform:translateX(-50%)}.ru-freccia svg{display:block;width:100%;height:100%}",
+      ".ru-centro{position:absolute;left:50%;top:50%;width:18%;height:18%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3bf,#f59f00);box-shadow:0 2px 6px rgba(0,0,0,.5)}",
+      // i tasti, nella barra dello studio
+      ".ru-studio .st-barra{gap:6px;padding:10px 8px calc(10px + env(safe-area-inset-bottom))}",
+      ".ru-azioni{display:flex;flex-direction:column;gap:6px;color:#fff}",
+      ".ru-stato{text-align:center;font-weight:800;font-size:.92rem;padding:4px 0}.ru-stato.piccolo{padding:0;font-size:.85rem}",
+      ".ru-riga{display:flex;gap:6px}",
+      ".ru-btn{flex:1;min-height:48px;border:0;border-radius:14px;font:inherit;font-weight:900;font-size:.88rem;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}",
+      ".ru-btn:disabled{opacity:.35}",
+      ".ru-btn.gira{background:#e8590c}.ru-btn.vocale{background:#1c7ed6}.ru-btn.risolvi{background:#2f9e44}.ru-btn.annulla{background:#495057}",
+      ".ru-lettere{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.ru-lettere.vocali{grid-template-columns:repeat(5,1fr)}",
+      ".ru-btn.lettera{min-height:38px;background:#f8f9fa;color:#14113a;font-size:1.02rem}.ru-btn.lettera:disabled{opacity:.25}",
+      ".ru-btn.canc{background:#ffc9c9;color:#c92a2a}",
+      ".ru-bot-riga{display:flex;align-items:center;gap:8px;justify-content:center;font-weight:800}"
+    ].join("");
+    document.head.appendChild(st);
+  }
+
+  SG.registra({
+    id: ID, nome: "La Ruota della Fortuna", icona: "🎡",
+    descrizione: "Gira la ruota, chiama le consonanti, compra le vocali e indovina la frase! Come in TV: Bancarotta, Passa e Jolly. Da soli contro i bot, in compagnia sullo stesso telefono o online.",
+    giocatoriMin: 1, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 1–4 giocatori",
+    modi: [
+      { modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu contro i bot, come in TV (il primo è Matt)" },
+      { modo: "telefono", icona: "📱", nome: "Sullo stesso telefono", sotto: "Da 2 a 4, tutti davanti allo stesso schermo", amici: true }
+    ],
+    regole: [
+      "Si indovina una <b>frase nascosta</b>: si sa solo la categoria.",
+      "Nel tuo turno <b>giri la ruota</b> e chiami una <b>consonante</b>: guadagni quello che dice lo spicchio per ogni lettera che c'è. Se la lettera non c'è, il turno passa.",
+      "<b>Bancarotta</b>: perdi i soldi della manche. <b>Passa</b>: perdi il turno. <b>Jolly</b>: lo tieni, e la prossima volta che perderesti il turno ti salva.",
+      "Con almeno " + COSTO_VOCALE + " puoi <b>comprare una vocale</b>. Quando pensi di saperla, <b>risolvi</b>: scrivi le lettere che mancano.",
+      "Chi risolve si tiene i soldi della manche (almeno " + fmtN(MINIMO_RISOLVI) + "). Vince chi alla fine ne ha di più."
+    ],
+    impostazioni: function (box, dove, aiuti) {
+      var el = aiuti.el;
+      dove.manche = 4; dove.difficolta = "medio"; dove.avversari = 2;
+      box.appendChild(el("div", { class: "etichetta", text: "Quante manche" }));
+      var gm = el("div", { style: "display:flex;gap:8px" });
+      [3, 4, 5].forEach(function (n) {
+        var b = el("button", { class: "modo-chip" + (n === 4 ? " attiva" : ""), style: "flex:1;justify-content:center", onclick: function () {
+          dove.manche = n; [].forEach.call(gm.children, function (c) { c.className = "modo-chip"; c.style.flex = "1"; }); b.className = "modo-chip attiva";
+        } }, [ el("div", { class: "mt", text: n + " manche" }) ]);
+        b.style.flex = "1"; gm.appendChild(b);
+      });
+      box.appendChild(gm);
+      if (aiuti.modo === "bot" || !aiuti.modo) {
+        box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Quanti avversari" }));
+        var ga = el("div", { style: "display:flex;gap:8px" });
+        [1, 2, 3].forEach(function (n) {
+          var b = el("button", { class: "modo-chip" + (n === 2 ? " attiva" : ""), style: "flex:1;justify-content:center", onclick: function () {
+            dove.avversari = n; [].forEach.call(ga.children, function (c) { c.className = "modo-chip"; c.style.flex = "1"; }); b.className = "modo-chip attiva";
+          } }, [ el("div", { class: "mt", text: n === 1 ? "1 bot" : n + " bot" }) ]);
+          b.style.flex = "1"; ga.appendChild(b);
+        });
+        box.appendChild(ga);
+      }
+      if (aiuti.modo !== "telefono") {
+        box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei bot" }));
+        var dg = el("div", { style: "display:flex;gap:8px" });
+        [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]].forEach(function (d) {
+          var b = el("button", { class: "modo-chip" + (d[0] === "medio" ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {
+            dove.difficolta = d[0]; [].forEach.call(dg.children, function (c) { c.className = "modo-chip"; c.style.flex = "1"; }); b.className = "modo-chip attiva";
+          } }, [ el("div", { class: "mt", text: d[1] }) ]);
+          b.style.flex = "1"; dg.appendChild(b);
+        });
+        box.appendChild(dg);
+      }
+    },
+    avvia: function (t) {
+      if (t.linkParams && t.linkParams.stanza) return ospite(t, t.linkParams.stanza);   // entrato da un invito
+      var modo = (t.impostazioni || {}).modo;
+      return partita(t, modo === "online" ? "online" : modo === "telefono" ? "telefono" : "bot");
+    }
+  });
+
+  // per le prove
+  window.__RUOTA = { creaPartita: creaPartita, righe: righe, coperta: coperta, solo: solo, decidiBot: decidiBot, letteraBot: letteraBot, SPICCHI: SPICCHI };
 })();
 
 /* =========================================================
@@ -27584,12 +29250,14 @@ window.SG_SIPERO = {
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          if (!pById(id) && H.players.length < 10 && H.fase !== "fine") {
+          var giaDentro = !!pById(id);
+          if (!giaDentro && H.players.length < 10 && H.fase !== "fine") {
             var p = { id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino), punti: 0, col: COL_GIOC[H.players.length % COL_GIOC.length] };
             H.players.push(p);
             if (H.fase !== "lobby") { H.ordine.push(id); msg("sys", "👋 È arrivato " + p.nome); if (vista) vista.omini(mappaOmini()); }
           }
           bd();
+          if (giaDentro && H.fase !== "lobby") sync(id);   // chi rientra: il disegno fin qui e, se disegna lui, la parola
         }
         else if (m.t === "tr") tratto(id, m);
         else if (m.t === "annulla") annulla(id, m.id);
@@ -29876,7 +31544,8 @@ window.SG_SIPERO = {
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          if (seatDi(id) < 0 && !st) { var s = postoLibero(); if (s > 0) { posti[s] = id; nomiUmani[s] = String(m.nome || "Amico").slice(0, 16); avatariUmani[s] = C().avatarValido(m.omino); } }
+          if (st) { if (seatDi(id) > 0) bcast(); return; }   // a partita iniziata: chi rientra al suo posto si riprende le sue carte
+          if (seatDi(id) < 0) { var s = postoLibero(); if (s > 0) { posti[s] = id; nomiUmani[s] = String(m.nome || "Amico").slice(0, 16); avatariUmani[s] = C().avatarValido(m.omino); } }
           aggiornaLobby();   // trasmette la sala aggiornata a tutti gli ospiti
         } else if (m.t === "gioca" && st) { var sm = seatDi(id); if (sm > 0) passo(sm, m.carta, m.presa); }
       },
