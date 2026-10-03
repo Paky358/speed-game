@@ -33,7 +33,7 @@ window.SG_NOVITA = [
       "Ognuno sceglie la sua squadra nella saletta, chi vuole fa il capo, e a ogni nuova partita il capo passa al compagno.",
       "Se uno esce e rientra, torna nella sua squadra; chi arriva a metà entra subito in gioco. Se il capo esce, un compagno può prendere il suo posto.",
       "🔄 Host di riserva: se chi ha aperto la stanza va su WhatsApp, blocca il telefono o gli si chiude l'app, dopo pochi secondi un altro giocatore prende il suo posto e la partita va avanti. Quando l'host torna, rientra come giocatore normale nella sua squadra. I giocatori di riserva sono due, così regge anche se ne escono due insieme.",
-      "Se esci un attimo la tua squadra non perde il turno: se il capo ha già dato l'indizio, i compagni continuano a indovinare. Se invece manca proprio chi serve (il capo per l'indizio, o l'unico che indovina), tutti aspettano che torni («⏳ I Rossi aspettano che torni…») e si salta il turno solo dopo 2 minuti.",
+      "Se esci un attimo la tua squadra non perde il turno: se il capo ha già dato l'indizio, i compagni continuano a indovinare; se invece manca proprio chi serve, si aspetta che torni.",
       "Il telefono controlla gli indizi: non vale dare una parola che è sul tabellone (neanche al plurale). A fine partita si vede di chi era ogni parola.",
       "Si gioca online, ognuno dal suo telefono, da 4 a 12 giocatori. Lo trovi in Quiz & parole."
     ]

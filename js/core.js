@@ -2501,7 +2501,9 @@
   var MODO_ONLINE = { modo: "online", icona: "🔗", nome: "Online: apro io la stanza", sotto: "Ognuno dal suo telefono: mandi il link agli amici" };
   var MODO_CODICE = { modo: "codice", icona: "🔑", nome: "Online: ho un codice", sotto: "Ti hanno invitato? Entra nella loro stanza" };
   function modiDi(g) {
-    var m = (g && g.modi) ? g.modi.slice() : [];
+    var io = profiloAttivo(), mioNome = String((io && io.nome) || "").trim().toUpperCase();
+    // soloPer: un modo che vede solo un account (es. "Prova da solo" per il proprietario, IL PAPPONE)
+    var m = (g && g.modi) ? g.modi.filter(function (x) { return !x.soloPer || x.soloPer === mioNome; }) : [];
     if (giocoOnline(g)) m.push(MODO_ONLINE);
     if (g && GIOCHI_ELIMINAZIONE[g.id]) m.push(MODO_ELIMINAZIONE);
     return m;
