@@ -108,6 +108,15 @@
       return doc.update({ omino: cfg }).then(function () { if (omini) return doc.update({ omini: omini, ominoN: n || 0 }); }).catch(function () {});
     },
 
+    // ---- liste personali (es. le parole di Parola d'ordine): un campo del profilo, salvato così com'è ----
+    lista: function (nome) { return (profilo && profilo.liste && profilo.liste[nome]) || []; },
+    salvaLista: function (nome, lista) {
+      if (!auth || !utente || !profilo) return Promise.resolve();
+      profilo.liste = profilo.liste || {}; profilo.liste[nome] = lista;
+      var patch = {}; patch["liste." + nome] = lista;
+      return db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+    },
+
     // ---- bonus gratuito ogni 2 ore ----
     bonusImporto: BONUS,
     puoRitirareBonus: function () { return !!(profilo && (Date.now() - (profilo.bonusUltimo || 0)) >= BONUS_MS); },

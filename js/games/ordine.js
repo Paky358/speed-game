@@ -39,15 +39,21 @@
   function norm(w) { return String(w || "").toUpperCase().split("").map(function (c) { return ACC[c] || c; }).join("").replace(/[^A-Z]/g, ""); }
   function radice(w) { var n = norm(w); return n.length > 4 ? n.replace(/[AEIOU]+$/, "") : n; }   // GATTO e GATTI hanno la stessa radice
   function elenco() { var f = window.SG_ORDINE_PAROLE; return f && f.length >= 60 ? f : RISERVA; }
-  // le parole del gruppo scritte dall'host: separate da virgola, una parola sola ciascuna
-  function leggiGruppo(testo) {
+  // le parole del gruppo: lettere (anche accentate), apostrofo e al massimo uno spazio in mezzo ("ZIO GINO"); fino a 12 caratteri
+  var MAX_LISTA = 150;
+  function pulisciParola(w) {
+    w = String(w || "").trim().replace(/\s+/g, " ").toUpperCase();
+    if (!w || w.length > 12 || !/^[A-ZÀÈÉÌÒÙ']+( [A-ZÀÈÉÌÒÙ']+)?$/.test(w) || norm(w).length < 2) return "";
+    return w;
+  }
+  // la lista salvata (array) o un testo scritto di fila: "Peppe, Ibiza, Kebab"
+  function leggiGruppo(x) {
     var visti = {}, out = [];
-    String(testo || "").split(/[,;\n]+/).forEach(function (w) {
-      w = w.trim().toUpperCase().replace(/\s+/g, "");
-      if (!w || w.length > 12 || !/^[A-ZÀ-Ú']+$/.test(w) || visti[norm(w)]) return;
+    (Array.isArray(x) ? x : String(x || "").split(/[,;\n]+/)).forEach(function (w) {
+      w = pulisciParola(w); if (!w || visti[norm(w)]) return;
       visti[norm(w)] = 1; out.push(w);
     });
-    return out.slice(0, 15);
+    return out.slice(0, MAX_LISTA);
   }
   // un indizio è buono se è UNA parola e non è (quasi) una parola ancora coperta sul tabellone
   function erroreIndizio(parola, tab) {
@@ -73,7 +79,7 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var imp = t.impostazioni || {};
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
-    var H = { fase: "lobby", codice: "…", pronta: false, nsq: +imp.squadre === 3 ? 3 : 2, gruppo: leggiGruppo(imp.gruppo),
+    var H = { fase: "lobby", codice: "…", pronta: false, nsq: +imp.squadre === 3 ? 3 : 2, gruppo: imp.usaMie === false ? [] : leggiGruppo(imp.gruppo), oro: imp.oro !== false,
       players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost), team: 0 }], capo: [null, null, null],
       tab: null, bid: 0, turno: 0, passo: "indizio", indizio: null, tentativi: 0, girate: 0, prop: {}, storia: [], fuori: [],
       vince: -1, classifica: null, msg: "", ultima: null, nGirate: 0 };
@@ -97,7 +103,7 @@
     // "⚙️ Regole" nella saletta: squadre e parole del gruppo
     t.onRegole = function (im) {
       if (H.fase !== "lobby") return;
-      H.nsq = +im.squadre === 3 ? 3 : 2; H.gruppo = leggiGruppo(im.gruppo);
+      H.nsq = +im.squadre === 3 ? 3 : 2; H.gruppo = im.usaMie === false ? [] : leggiGruppo(im.gruppo); H.oro = im.oro !== false;
       H.players.forEach(function (p) { if (p.team >= H.nsq) p.team = -1; });
       H.players.forEach(function (p) { if (p.team < 0) p.team = piuPiccola(); });
       sistemaCapi(); bd();
@@ -122,7 +128,7 @@
       return { fase: H.fase, codice: H.codice, pronta: H.pronta, nsq: H.nsq, gruppoN: H.gruppo.length,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, team: p.team, via: !!p.via, omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }),
         capo: H.capo.slice(0, H.nsq),
-        tab: H.tab ? H.tab.map(function (c) { return { w: c.w, g: c.g, c: (c.g || fine) ? c.c : null }; }) : null,
+        tab: H.tab ? H.tab.map(function (c) { return { w: c.w, g: c.g, c: (c.g || fine) ? c.c : null, oro: (c.g || fine) && c.oro ? 1 : 0 }; }) : null, oro: H.oro,
         bid: H.bid, turno: H.turno, passo: H.passo, indizio: H.indizio, tentativi: H.tentativi, girate: H.girate, prop: H.prop,
         storia: H.storia.slice(-8), fuori: H.fuori.slice(), vince: H.vince, classifica: H.classifica, msg: H.msg, ultima: H.ultima, resto: r };
     }
@@ -218,6 +224,10 @@
       colori.push("x");
       colori = mescola(colori);
       H.tab = parole.map(function (w, i) { return { w: w, c: colori[i], g: false }; });
+      if (H.oro) {   // la parola d'oro: una di nessuno, segreta a tutti (anche ai capi)
+        var neutre = []; H.tab.forEach(function (c, i) { if (c.c === "n") neutre.push(i); });
+        if (neutre.length) H.tab[neutre[Math.floor(Math.random() * neutre.length)]].oro = true;
+      }
       H.bid = 1 + Math.floor(Math.random() * 1e9); H.turno = primo; H.passo = "indizio"; H.indizio = null; H.tentativi = 0; H.girate = 0;
       H.prop = {}; H.storia = []; H.fuori = []; H.vince = -1; H.classifica = null; H.ultima = null; H.nGirate = 0;
       H.msg = "Cominciano i " + SQ[primo].nome + "!";
@@ -228,7 +238,7 @@
       var c = H.tab[i]; if (!c || c.g) return;
       var k = H.turno, p = pById(id);
       c.g = true; H.girate++; H.prop = {};
-      H.ultima = { i: i, k: k, c: c.c, n: ++H.nGirate };
+      H.ultima = { i: i, k: k, c: c.c, oro: c.oro ? 1 : 0, n: ++H.nGirate };
       var chi = p ? p.nome : SQ[k].nome;
       if (c.c === "x") {   // la parola nera
         H.fuori.push(k);
@@ -243,12 +253,13 @@
         if (H.tentativi <= 0) { H.msg = "✅ " + c.w + ": giusta! Finiti i tentativi."; return fineTurno(); }
         bd(); return;
       }
+      if (c.oro) { H.msg = "⭐ " + c.w + ": la parola d'oro! I " + SQ[k].nome + " giocano un altro turno."; return fineTurno(true); }
       H.msg = c.c === "n" ? "😐 " + c.w + ": di nessuno. Tocca agli altri." : "😬 " + c.w + ": era dei " + SQ[c.c].nome + "!";
       fineTurno();
     }
-    function fineTurno() {
+    function fineTurno(ancora) {   // ancora = la stessa squadra gioca un altro turno (parola d'oro)
       H.indizio = null; H.prop = {}; H.passo = "indizio"; H.girate = 0; H.tentativi = 0;
-      for (var s = 1; s <= H.nsq; s++) { var k2 = (H.turno + s) % H.nsq; if (H.fuori.indexOf(k2) < 0) { H.turno = k2; break; } }
+      if (!ancora) for (var s = 1; s <= H.nsq; s++) { var k2 = (H.turno + s) % H.nsq; if (H.fuori.indexOf(k2) < 0) { H.turno = k2; break; } }
       controllaTurno(); bd();
     }
     // una squadra gioca se ha almeno 2 persone collegate (il capo e chi indovina; se il capo è uscito, un altro prende il suo posto).
@@ -387,11 +398,14 @@
     if (cb.sonoHost) box.appendChild(el("button", { class: "btn btn-fantasma btn-piccolo", text: "🔀 Squadre a caso", onclick: function () { cb.manda({ t: "mischia" }); } }));
     var ok = prontiVm(vm);
     var nota = vm.nsq === 3 ? "A 3 squadre: almeno 6 giocatori, 2 per squadra." : "Almeno 4 giocatori, 2 per squadra.";
-    if (vm.gruppoN) nota += " Nel tabellone ci saranno anche parole del vostro gruppo.";
+    var info = [];
+    if (vm.oro) info.push("⭐ Parola d'oro accesa");
+    if (vm.gruppoN) info.push("📝 " + vm.gruppoN + (vm.gruppoN === 1 ? " parola vostra" : " parole vostre") + " nel mazzo");
+    if (info.length) nota += " " + info.join(" · ") + ".";
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: vm.nsq === 3 ? 6 : MIN,
       vuoti: Math.max(0, (vm.nsq === 3 ? 6 : MIN) - vm.players.length),   // solo i posti che mancano per cominciare
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
-      extra: [ box ], puoComincia: ok, nota: ok ? "Ognuno sceglie la sua squadra; il capo ha la 👑." : nota, testoComincia: "Comincia ▶",
+      extra: [ box ], puoComincia: ok, nota: ok ? "Ognuno sceglie la sua squadra; il capo ha la 👑." + (info.length ? " " + info.join(" · ") + "." : "") : nota, testoComincia: "Comincia ▶",
       attesa: "Scegli la tua squadra e aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
   function creaSchermo(t, vm, cb) {
@@ -464,7 +478,7 @@
     Object.keys(vm.prop || {}).forEach(function (id) { var i = vm.prop[id]; (chi[i] = chi[i] || []).push(id); });
     vm.tab.forEach(function (c, i) {
       var C = ui.carte[i], col = c.c != null ? c.c : (key ? key[i] : null);
-      var cls = "or-carta" + (c.g ? " g" : "") + (col != null ? " c" + col : "") + (!c.g && key ? " chiave" : "") + (fine && !c.g ? " svelata" : "") +
+      var cls = "or-carta" + (c.g ? " g" : "") + (col != null ? " c" + col : "") + (!c.g && key ? " chiave" : "") + (fine && !c.g ? " svelata" : "") + (c.oro ? " oro" : "") +
         (r.indovino && !c.g ? " attiva" : "") + (vm.prop[cb.myId] === i && r.indovino ? " mia" : "");
       if (C.cls !== cls) { C.b.className = cls; C.cls = cls; }
       var kp = (chi[i] || []).join(",");
@@ -477,7 +491,7 @@
     if (vm.ultima && vm.ultima.n !== ui.ultimaN) {
       ui.ultimaN = vm.ultima.n;
       var C = ui.carte[vm.ultima.i]; if (C) { C.b.classList.remove("appena"); void C.b.offsetWidth; C.b.classList.add("appena"); }
-      suona(vm.ultima.c === "x" ? "nera" : vm.ultima.c === vm.ultima.k ? "giusta" : vm.ultima.c === "n" ? "neutra" : "sbagliata");
+      suona(vm.ultima.oro ? "oro" : vm.ultima.c === "x" ? "nera" : vm.ultima.c === vm.ultima.k ? "giusta" : vm.ultima.c === "n" ? "neutra" : "sbagliata");
     }
     if (ui.msg.textContent !== (vm.msg || "")) ui.msg.textContent = vm.msg || "";
     // ---- in basso: cosa posso fare io (si ricostruisce solo se cambia il mio ruolo o la fase) ----
@@ -537,7 +551,7 @@
   // suoni brevi (niente vibrazione qui: vibra solo il tasto che tocchi tu)
   function suona(tipo) {
     var ctx = SG.audioCtx && SG.audioCtx(); if (!ctx) return;
-    var note = { giusta: [[784, 0], [1046, 0.1]], neutra: [[392, 0]], sbagliata: [[311, 0], [233, 0.14]], nera: [[160, 0], [110, 0.18], [70, 0.36]] }[tipo] || [];
+    var note = { oro: [[784, 0], [988, 0.09], [1175, 0.18], [1568, 0.27]], giusta: [[784, 0], [1046, 0.1]], neutra: [[392, 0]], sbagliata: [[311, 0], [233, 0.14]], nera: [[160, 0], [110, 0.18], [70, 0.36]] }[tipo] || [];
     note.forEach(function (x) {
       try {
         var t0 = ctx.currentTime + x[1], o = ctx.createOscillator(), g = ctx.createGain();
@@ -609,7 +623,18 @@
       ".or-sq-testa{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}",
       ".or-sq-membri{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px}",
       ".or-membro{padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.12);font-weight:800;font-size:.85rem}.or-membro.tu{box-shadow:inset 0 0 0 2px var(--c)}",
-      ".or-vuota{font-size:.8rem;opacity:.7}"
+      ".or-vuota{font-size:.8rem;opacity:.7}",
+      // la parola d'oro (girata, o svelata a fine partita)
+      ".or-carta.g.oro{background:#fab005;color:#3d2a00;box-shadow:inset 0 0 0 2px #fff3bf}.or-carta.g.oro .or-w{opacity:1}.or-carta.g.oro:before{content:'⭐';position:absolute;top:1px;left:3px;font-size:10px}",
+      ".or-carta.svelata.oro{background:#ffe066}",
+      // le tue parole nelle impostazioni: una alla volta, ognuna con la sua ✕
+      ".or-aggiungi{display:flex;gap:6px;align-items:center}.or-aggiungi .link-campo{flex:1;min-width:0;margin:0}",
+      ".or-esito{min-height:1.2em;margin:4px 0 0}",
+      ".or-conta{font-size:.8rem;font-weight:800;opacity:.8;margin:6px 0 4px}",
+      ".or-lista{display:flex;flex-wrap:wrap;gap:6px}",
+      ".or-parola{display:inline-flex;align-items:center;gap:4px;padding:4px 4px 4px 10px;border-radius:999px;background:rgba(255,255,255,.12);font-weight:800;font-size:.85rem}",
+      ".or-x{width:24px;height:24px;border:0;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font:inherit;font-size:.75rem;font-weight:900;cursor:pointer;touch-action:manipulation}",
+      ".or-lista-tasti{display:flex;gap:6px;margin-top:8px}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -624,26 +649,82 @@
       "Solo il <b>capo</b> di ogni squadra (👑) vede di chi è ogni parola. Nel suo turno dà un <b>indizio di una parola sola</b> e un numero: quante parole sue c'entrano (es. «Caldo, 2»).",
       "La squadra ne discute e le gira una alla volta: si possono girare fino al numero dell'indizio <b>più una</b>. Se giri una parola di un'altra squadra o di nessuno, il turno passa.",
       "Chi gira la <b>parola nera</b> perde (a 3 squadre esce dalla partita). Vince la squadra che trova per prima tutte le sue parole.",
-      "L'indizio non può essere una parola del tabellone (né quasi uguale). Il capo può dare anche «∞»: tentativi liberi."
+      "L'indizio non può essere una parola del tabellone (né quasi uguale). Il capo può dare anche «∞»: tentativi liberi.",
+      "⭐ <b>Parola d'oro</b> (se l'host la lascia accesa): tra le parole di nessuno una è d'oro, e non lo sa nessuno, nemmeno i capi. Chi la gira, invece di perdere il turno, gioca un altro turno."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
-      dove.squadre = 2; dove.gruppo = "";
+      stile();
+      dove.squadre = 2; dove.oro = true; dove.usaMie = true;
       // le scelte con bottoni .modo-chip: così l'host le ritrova in "⚙️ Regole" nella saletta
-      box.appendChild(el("div", { class: "etichetta", text: "Quante squadre" }));
-      var g = el("div", { class: "modo-griglia", style: "grid-template-columns:repeat(2,1fr)" });
-      [2, 3].forEach(function (n) {
-        var b = el("button", { class: "modo-chip" + (n === 2 ? " attiva" : ""), style: "justify-content:center", onclick: function () {
-          dove.squadre = n; [].forEach.call(g.children, function (c) { c.className = "modo-chip"; }); b.className = "modo-chip attiva";
-        } }, [ el("div", { class: "mt", text: n === 2 ? "2 squadre" : "3 squadre (da 6)" }) ]);
-        g.appendChild(b);
-      });
-      box.appendChild(g);
-      box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Parole del vostro gruppo (facoltative)" }));
-      var input = el("input", { type: "text", class: "link-campo", maxlength: "200", placeholder: "Es. Peppe, Ibiza, Kebab (separate da virgola)" });
-      input.addEventListener("input", function () { dove.gruppo = input.value; });
-      box.appendChild(input);
-      box.appendChild(el("p", { class: "modulo-nota", text: "Ne finiscono fino a " + MAX_GRUPPO + " in ogni tabellone, mescolate alle altre." }));
+      function chips(titolo, valori, chiave, nota) {
+        box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: titolo }));
+        var g = el("div", { class: "modo-griglia", style: "grid-template-columns:repeat(" + valori.length + ",1fr)" });
+        valori.forEach(function (v) {
+          var b = el("button", { class: "modo-chip" + (dove[chiave] === v[0] ? " attiva" : ""), style: "justify-content:center", onclick: function () {
+            dove[chiave] = v[0]; [].forEach.call(g.children, function (c) { c.className = "modo-chip"; }); b.className = "modo-chip attiva";
+          } }, [ el("div", { class: "mt", text: v[1] }) ]);
+          g.appendChild(b);
+        });
+        box.appendChild(g);
+        if (nota) box.appendChild(el("p", { class: "modulo-nota", text: nota }));
+      }
+      chips("Quante squadre", [[2, "2 squadre"], [3, "3 squadre (da 6)"]], "squadre");
+      chips("⭐ Parola d'oro", [[true, "Sì"], [false, "No"]], "oro", "Una parola di nessuno è d'oro, e non lo sa nessuno: chi la gira gioca un altro turno.");
+      // 📝 le TUE parole: restano salvate sul profilo. Si scrivono di fila ("Peppe, Ibiza, Kebab"), così gli amici se le passano;
+      // dopo si vedono una alla volta, ognuna con la sua ✕
+      var lista = leggiGruppo(window.SG && SG.listaProfilo ? SG.listaProfilo("ordine") : []);
+      dove.gruppo = lista.slice();
+      box.appendChild(el("div", { class: "etichetta", style: "margin-top:14px", text: "📝 Le tue parole" }));
+      box.appendChild(el("p", { class: "modulo-nota", text: "Restano salvate sul tuo profilo. Scrivile di fila, separate da virgola e spazio (es. Peppe, Ibiza, Kebab): così le puoi copiare e passare agli amici." }));
+      var input = el("input", { type: "text", class: "link-campo", maxlength: "2000", placeholder: "Peppe, Ibiza, Kebab", autocomplete: "off" });
+      var esito = el("p", { class: "modulo-nota or-esito" });
+      var elenco = el("div", { class: "or-lista" });
+      var conta = el("div", { class: "or-conta" });
+      var bCopia = el("button", { class: "btn btn-fantasma btn-piccolo", text: "📋 Copia tutte", onclick: function () {
+        var tx = lista.map(function (w) { return w.charAt(0) + w.slice(1).toLowerCase(); }).join(", ");
+        function fatto() { bCopia.textContent = "✅ Copiate!"; setTimeout(function () { bCopia.textContent = "📋 Copia tutte"; }, 1600); }
+        try { navigator.clipboard.writeText(tx).then(fatto, function () { window.prompt("Copia le tue parole:", tx); }); } catch (e) { window.prompt("Copia le tue parole:", tx); }
+      } });
+      var bSvuota = el("button", { class: "btn btn-fantasma btn-piccolo", text: "🗑️ Cancella tutte", onclick: function () {
+        if (!lista.length || !window.confirm("Cancellare tutte le tue " + lista.length + " parole?")) return;
+        lista = []; salva(); disegnaLista();
+      } });
+      function salva() {
+        if (window.SG && SG.salvaListaProfilo) SG.salvaListaProfilo("ordine", lista.slice());
+        dove.gruppo = lista.slice();   // così anche "⚙️ Regole" in saletta se ne accorge
+      }
+      function disegnaLista() {
+        while (elenco.firstChild) elenco.removeChild(elenco.firstChild);
+        lista.forEach(function (w, i) {
+          elenco.appendChild(el("span", { class: "or-parola" }, [ el("span", { text: w }),
+            el("button", { class: "or-x", "aria-label": "Cancella " + w, text: "✕", onclick: function () { lista.splice(i, 1); salva(); disegnaLista(); } }) ]));
+        });
+        conta.textContent = lista.length ? (lista.length === 1 ? "1 parola" : lista.length + " parole") + " · ne finiscono fino a " + MAX_GRUPPO + " in ogni tabellone" : "Ancora nessuna parola.";
+        bCopia.style.display = bSvuota.style.display = lista.length ? "" : "none";
+      }
+      function aggiungi() {
+        var nuove = String(input.value || "").split(/[,;\n]+/), messe = 0, scartate = [];
+        nuove.forEach(function (w) {
+          if (!w.trim()) return;
+          var p = pulisciParola(w);
+          if (!p) { scartate.push(w.trim()); return; }
+          if (lista.some(function (x) { return norm(x) === norm(p); })) return;   // c'è già
+          if (lista.length >= MAX_LISTA) { scartate.push(w.trim()); return; }
+          lista.push(p); messe++;
+        });
+        input.value = "";
+        if (messe) { salva(); disegnaLista(); }
+        esito.textContent = (messe ? "✅ Aggiunte: " + messe + ". " : "") + (scartate.length ? "Non valgono (max 12 lettere, niente numeri): " + scartate.slice(0, 5).join(", ") + (scartate.length > 5 ? "…" : "") : "");
+      }
+      input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); aggiungi(); } });
+      box.appendChild(el("div", { class: "or-aggiungi" }, [ input, el("button", { class: "btn btn-primario btn-piccolo", text: "➕ Aggiungi", onclick: aggiungi }) ]));
+      box.appendChild(esito);
+      box.appendChild(conta);
+      box.appendChild(elenco);
+      box.appendChild(el("div", { class: "or-lista-tasti" }, [ bCopia, bSvuota ]));
+      disegnaLista();
+      chips("Le tue parole nel tabellone", [[true, "Sì"], [false, "No"]], "usaMie");
     },
     avvia: function (t) {
       if (t.linkParams && t.linkParams.stanza) return ospite(t, t.linkParams.stanza);   // entrato da un invito

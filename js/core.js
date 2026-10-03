@@ -1367,6 +1367,19 @@
     var p = profili().filter(function (x) { return x.id === io.id; })[0];
     if (p) { p.omino = cfg; if (omini) { p.omini = omini; p.ominoN = n; } salvaProfilo(p); }
   }
+  // liste personali salvate sul profilo (es. le parole di Parola d'ordine): nel cloud se il profilo è online, se no su questo telefono
+  function listaProfilo(nome) {
+    var io = profiloAttivo(); if (!io) return [];
+    if (io.cloud) return (window.SGNube && SGNube.lista ? SGNube.lista(nome) : []).slice();
+    var p = profili().filter(function (x) { return x.id === io.id; })[0];
+    return ((p && p.liste && p.liste[nome]) || []).slice();
+  }
+  function salvaListaProfilo(nome, lista) {
+    var io = profiloAttivo(); if (!io) return;
+    if (io.cloud) { if (window.SGNube && SGNube.salvaLista) SGNube.salvaLista(nome, lista); return; }
+    var p = profili().filter(function (x) { return x.id === io.id; })[0];
+    if (p) { p.liste = p.liste || {}; p.liste[nome] = lista; salvaProfilo(p); }
+  }
   // il secondo avatar la prima volta: a caso, ma dell'altra forma (maschio <-> femmina)
   function secondoOmino(primo, nome) {
     return SGOmino.casuale(nome + "#2", primo.forma === "donna" ? "uomo" : "donna");
@@ -3014,6 +3027,7 @@
   window.SG = {
     registra: function (gioco) { giochi.push(gioco); },
     audioCtx: audioCtx,
+    listaProfilo: listaProfilo, salvaListaProfilo: salvaListaProfilo,   // liste salvate sul profilo di chi gioca
     avviaApp: function () {
       app = document.getElementById("app");
       linkParams = leggiParametriLink();
