@@ -164,7 +164,7 @@
     }, { codice: ripresa ? ripresa.codice : null, ascoltaStato: true, keepalive: 10 });
     // un altro telefono ha preso il posto di host (io ero sparito): esco in silenzio e rientro come giocatore normale
     function cediPosto() {
-      if (ceduto) return; ceduto = true;
+      if (ceduto) return; ceduto = true; clearTimeout(tAttesa);
       try { rete.lascia(); } catch (e) {}
       if (SGNet.ricordaId) SGNet.ricordaId(H.codice, IO);
       ospite(t, H.codice);
@@ -242,7 +242,7 @@
       var miaSquadra = p.team === H.turno, sonoCapo = H.capo[p.team] === id;
       if (m.t === "capo") {   // a partita iniziata: solo se il capo della squadra non c'è più
         if (capoVivo(p.team)) return;
-        H.capo[p.team] = id; mandaChiave(id); H.msg = p.nome + " fa il capo dei " + SQ[p.team].nome + "."; bd(); return;
+        H.capo[p.team] = id; mandaChiave(id); H.msg = p.nome + " fa il capo dei " + SQ[p.team].nome + "."; controllaTurno(); bd(); return;
       }
       if (m.t === "indizio") {
         if (!miaSquadra || !sonoCapo || H.passo !== "indizio") return;
@@ -329,19 +329,46 @@
       if (!ancora) for (var s = 1; s <= H.nsq; s++) { var k2 = (H.turno + s) % H.nsq; if (H.fuori.indexOf(k2) < 0) { H.turno = k2; break; } }
       controllaTurno(); bd();
     }
-    // una squadra gioca se ha almeno 2 persone collegate (il capo e chi indovina; se il capo è uscito, un altro prende il suo posto).
-    // Se è rimasta con meno, si salta il suo turno; quando gli altri rientrano, torna a giocare.
+    // Chi serve alla squadra di turno per andare avanti ADESSO ("" = c'è tutto):
+    // per l'indizio serve il capo (se è uscito, un altro dei presenti può prendere il suo posto) e almeno uno che poi indovini;
+    // per indovinare basta uno che indovina (il capo non serve più: l'indizio l'ha già dato).
+    function manca(k) {
+      var m = membri(k), altri = m.filter(function (p) { return p.id !== H.capo[k]; }).length;
+      if (H.passo === "indovina") return altri >= 1 ? "" : "indovino";
+      if (capoVivo(k)) return altri >= 1 ? "" : "indovino";
+      return m.length >= 2 ? "" : "capo";
+    }
+    // Se manca qualcuno NON si salta subito il turno: si aspetta che torni (fino a 2 minuti, es. è andato su WhatsApp).
+    // Solo dopo si passa alla squadra dopo. La scadenza sta nella partita, così vale anche se intanto cambia l'host.
+    var ATTESA_SQUADRA = 120000, tAttesa = null;
     function controllaTurno() {
+      clearTimeout(tAttesa); tAttesa = null;
+      if (H.fase !== "gioco") { H.attesa = null; return; }
       var k = H.turno;
-      if (membri(k).length >= 2) return;
+      if (!manca(k)) {
+        if (H.attesa) { H.attesa = null; H.msg = "👋 Si riprende!"; }
+        return;
+      }
+      if (!H.attesa || H.attesa.k !== k || H.attesa.passo !== H.passo) H.attesa = { k: k, passo: H.passo, fino: Date.now() + ATTESA_SQUADRA };
+      function riprova(ms) { tAttesa = setTimeout(function () { if (!ceduto) { controllaTurno(); bd(); } }, ms); }
+      if (Date.now() < H.attesa.fino) {
+        var assenti = H.players.filter(function (p) { return p.team === k && p.via; }).map(function (p) { return p.nome; });
+        H.msg = "⏳ I " + SQ[k].nome + " aspettano che torni " + (assenti.length === 1 ? assenti[0] : "qualcuno della squadra") + "…";
+        riprova(H.attesa.fino - Date.now() + 50);
+        return;
+      }
+      // passati i 2 minuti: tocca alla prossima squadra che può giocare
       for (var s = 1; s < H.nsq; s++) {
         var k2 = (k + s) % H.nsq;
         if (H.fuori.indexOf(k2) >= 0 || membri(k2).length < 2) continue;
-        H.msg = "I " + SQ[k].nome + " sono rimasti in pochi: si salta il loro turno.";
+        H.msg = "I " + SQ[k].nome + " non sono tornati: si salta il loro turno.";
         H.indizio = null; H.passo = "indizio"; H.prop = {}; H.girate = 0; H.tentativi = 0;
-        H.turno = k2; return;
+        H.turno = k2; H.attesa = null;
+        return controllaTurno();
       }
-      // nessuna squadra può giocare: si aspetta che qualcuno rientri
+      // nessuna squadra può giocare: si aspetta ancora che qualcuno rientri
+      H.msg = "⏳ Si aspetta che torni qualcuno…";
+      H.attesa.fino = Date.now() + 30000; riprova(30050);
     }
     function fine(k) {
       H.fase = "fine"; H.vince = k; H.prop = {}; H.indizio = null;
@@ -583,7 +610,7 @@
     }
     if (ui.msg.textContent !== (vm.msg || "")) ui.msg.textContent = vm.msg || "";
     // ---- in basso: cosa posso fare io (si ricostruisce solo se cambia il mio ruolo o la fase) ----
-    var ks = [vm.fase, vm.passo, vm.turno, r.team, r.capo, r.capoVia, vm.girate > 0, vm.fuori.join("")].join("|");
+    var ks = [vm.fase, vm.passo, vm.turno, r.team, r.capo, r.capoVia, vm.girate > 0, vm.fuori.join(""), vm.players.filter(function (p) { return p.team === r.team && !p.via; }).length].join("|");
     if (ks !== ui.kSotto) { ui.kSotto = ks; disegnaSotto(ui, vm, cb, r); }
   }
   function disegnaSotto(ui, vm, cb, r) {
@@ -601,7 +628,9 @@
       return;
     }
     if (r.team >= 0 && vm.fuori.indexOf(r.team) >= 0) { stato("La vostra squadra è fuori: guardate come va a finire."); return; }
-    if (r.capoVia && !r.capo && r.team >= 0) {
+    // "faccio io il capo": solo quando serve davvero (tocca a noi dare l'indizio) e resta qualcun altro per indovinare
+    var presentiSq = r.team >= 0 ? vm.players.filter(function (p) { return p.team === r.team && !p.via; }).length : 0;
+    if (r.capoVia && !r.capo && r.team >= 0 && r.mioTurno && vm.passo === "indizio" && presentiSq >= 2) {
       box.appendChild(el("button", { class: "or-btn ok", text: "👑 Il vostro capo è uscito: faccio io il capo", onclick: function () { cb.manda({ t: "capo" }); } }));
     }
     if (!r.mioTurno) { stato("Tocca ai " + SQ[vm.turno].nome + "…" + (r.capo ? " Intanto pensa al prossimo indizio." : "")); return; }
