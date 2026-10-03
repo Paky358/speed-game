@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parola d'ordine: 4 stili</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Bungee&family=Inter:wght@500;700;900&family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 18px 12px 40px; background: #1b1b22; color: #eee; font-family: Inter, system-ui, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 4px; text-align: center; }
+  p.sotto { margin: 0 0 18px; text-align: center; color: #aab; font-size: 14px; }
+  .fila { display: flex; flex-wrap: wrap; gap: 22px; justify-content: center; }
+  .scelta { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .etichetta { font-weight: 900; font-size: 16px; }
+  .etichetta small { display: block; font-weight: 500; font-size: 12.5px; color: #aab; text-align: center; max-width: 280px; }
+  .tel { width: 280px; height: 560px; border-radius: 30px; padding: 10px; background: #000; box-shadow: 0 0 0 2px #333, 0 18px 40px rgba(0,0,0,.6); }
+  .schermo { width: 100%; height: 100%; border-radius: 22px; overflow: hidden; position: relative; display: flex; flex-direction: column; gap: 7px; padding: 12px 9px 10px; }
+  .grid { flex: 1; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr); gap: 5px; min-height: 0; }
+  .c { position: relative; display: flex; align-items: center; justify-content: center; text-align: center; min-width: 0; overflow: hidden; }
+  .av { position: absolute; top: 3px; right: 3px; width: 16px; height: 16px; border-radius: 50%; font: 900 9px/16px Inter, sans-serif; color: #fff; text-align: center; box-shadow: 0 0 0 1.5px #fff; }
+  .piede { text-align: center; font-size: 11.5px; font-weight: 700; }
+  .btn { margin-top: 6px; border-radius: 12px; padding: 9px; text-align: center; font-weight: 900; font-size: 13px; }
+
+  /* ---------- A: DOSSIER SEGRETO ---------- */
+  .A .schermo { background: radial-gradient(120% 80% at 50% 0%, #2b3442 0%, #161b23 70%); font-family: "Special Elite", "Courier New", monospace; }
+  .A .top { display: flex; justify-content: space-between; align-items: center; color: #e9dfc7; font-size: 12px; letter-spacing: .08em; }
+  .A .top b { font-size: 15px; }
+  .A .top .r { color: #ff6b6b; } .A .top .b { color: #74c0fc; }
+  .A .nota { align-self: center; background: #fff8dc; color: #2b2b2b; padding: 6px 14px 5px; transform: rotate(-2deg); box-shadow: 0 3px 8px rgba(0,0,0,.5); font-size: 16px; position: relative; }
+  .A .nota:before { content: ""; position: absolute; top: -6px; left: 50%; width: 34px; height: 12px; margin-left: -17px; background: rgba(255,255,255,.55); transform: rotate(3deg); }
+  .A .c { background: linear-gradient(#e9d7a8, #d9c38c); color: #3a2f17; border-radius: 4px 4px 3px 3px; font-size: 9.5px; box-shadow: 0 2px 0 #a88f55, 0 3px 6px rgba(0,0,0,.4); }
+  .A .c:before { content: ""; position: absolute; top: 0; left: 6px; width: 40%; height: 4px; background: #c9b27a; border-radius: 0 0 3px 3px; }
+  .A .c .tim { position: absolute; inset: 14% 6%; display: flex; align-items: center; justify-content: center; border: 2.5px solid; border-radius: 5px; font-size: 9px; letter-spacing: .06em; transform: rotate(-14deg); opacity: .9; background: rgba(255,255,255,.12); }
+  .A .c.g { color: rgba(58,47,23,.35); }
+  .A .c.r .tim { color: #c92a2a; border-color: #c92a2a; } .A .c.b .tim { color: #1864ab; border-color: #1864ab; } .A .c.n .tim { color: #6b6b6b; border-color: #6b6b6b; }
+  .A .c.prop { box-shadow: 0 0 0 2.5px #fab005, 0 3px 6px rgba(0,0,0,.4); }
+  .A .piede { color: #e9dfc7; font-family: Inter, sans-serif; }
+  .A .btn { background: #e9dfc7; color: #2b2b2b; font-family: "Special Elite", monospace; letter-spacing: .05em; }
+
+  /* ---------- B: AGENTI (il gioco da tavolo, con gli avatar) ---------- */
+  .B .schermo { background: repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 2px, transparent 2px 22px), linear-gradient(#8a5a35, #6b4226); font-family: Fredoka, Inter, sans-serif; }
+  .B .top { display: flex; gap: 6px; }
+  .B .sq { flex: 1; border-radius: 12px; padding: 5px 8px; color: #fff; font-weight: 700; font-size: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: inset 0 -3px 0 rgba(0,0,0,.25); }
+  .B .sq b { font-size: 18px; } .B .sq.r { background: #e03131; } .B .sq.b { background: #1971c2; opacity: .75; }
+  .B .indizio { align-self: center; background: #fffbea; color: #3b2a12; border-radius: 999px; padding: 6px 16px; font-weight: 700; font-size: 15px; box-shadow: 0 3px 0 #c9a46a; }
+  .B .c { background: #f6edd8; border-radius: 8px; color: #3b2a12; font-weight: 700; font-size: 9.5px; flex-direction: column; box-shadow: 0 3px 0 #d6c39b; }
+  .B .c .giu { position: absolute; top: 4px; left: 0; right: 0; font-size: 6.5px; opacity: .35; transform: rotate(180deg); }
+  .B .c.g { box-shadow: 0 3px 0 rgba(0,0,0,.25); color: #fff; }
+  .B .c.r { background: #e03131; } .B .c.b { background: #1971c2; } .B .c.n { background: #c2b49a; color: #3b2a12; }
+  .B .agente { width: 26px; height: 26px; border-radius: 50%; background: #ffd8a8; position: relative; margin-bottom: 1px; box-shadow: 0 0 0 2px rgba(255,255,255,.8); }
+  .B .agente:before { content: ""; position: absolute; left: 3px; right: 3px; top: -2px; height: 11px; border-radius: 12px 12px 4px 4px; background: #3b2a12; }
+  .B .agente:after { content: ""; position: absolute; left: 7px; top: 12px; width: 12px; height: 4px; border-radius: 3px; background: #1b1b1b; box-shadow: 0 0 0 1px rgba(0,0,0,.2); }
+  .B .c.g .w { font-size: 7.5px; opacity: .85; }
+  .B .c.prop { box-shadow: 0 0 0 3px #ffd43b, 0 3px 0 #d6c39b; }
+  .B .piede { color: #fffbea; }
+  .B .btn { background: #fffbea; color: #3b2a12; box-shadow: 0 3px 0 #c9a46a; }
+
+  /* ---------- C: STUDIO TV (come la Ruota) ---------- */
+  .C .schermo { background: radial-gradient(90% 50% at 50% 0%, rgba(255,62,165,.35), transparent 70%), radial-gradient(70% 60% at 50% 100%, rgba(34,211,238,.25), transparent 70%), #0c0a24; font-family: Inter, sans-serif; }
+  .C .top { display: flex; gap: 8px; }
+  .C .podio { flex: 1; border-radius: 10px; padding: 4px 6px; text-align: center; color: #fff; font-weight: 900; font-size: 11px; background: linear-gradient(#2d1f7a, #160f45); border: 2px solid; }
+  .C .podio.r { border-color: #ff6b6b; box-shadow: 0 0 12px rgba(255,107,107,.7); } .C .podio.b { border-color: #4dabf7; opacity: .7; }
+  .C .podio b { display: block; font-family: Bungee, Inter, sans-serif; font-size: 20px; color: #ffe066; text-shadow: 0 0 8px rgba(255,224,102,.7); }
+  .C .led { align-self: stretch; text-align: center; font-family: Bungee, Inter, sans-serif; font-size: 18px; color: #ffe066; background: #05030f; border-radius: 8px; padding: 5px; letter-spacing: .08em; text-shadow: 0 0 8px rgba(255,224,102,.8); box-shadow: inset 0 0 0 2px rgba(255,224,102,.35); }
+  .C .cornice { flex: 1; min-height: 0; padding: 7px; border-radius: 14px; background: #1a1240; box-shadow: 0 0 0 3px #ffd43b, 0 0 18px rgba(255,212,59,.45); display: flex; }
+  .C .grid { gap: 4px; }
+  .C .c { border-radius: 6px; background: linear-gradient(#3b5bdb, #1c2f8f); color: #fff; font-weight: 900; font-size: 8.5px; box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
+  .C .c.r { background: linear-gradient(#ff6b6b, #c92a2a); box-shadow: 0 0 10px rgba(255,107,107,.8); }
+  .C .c.b { background: linear-gradient(#74c0fc, #1971c2); box-shadow: 0 0 10px rgba(77,171,247,.8); }
+  .C .c.n { background: #3a3550; color: rgba(255,255,255,.45); }
+  .C .c.prop { box-shadow: 0 0 0 2px #ffe066, 0 0 12px rgba(255,224,102,.9); }
+  .C .piede { color: #cdd6ff; }
+  .C .btn { background: linear-gradient(#ff3ea5, #b5177a); color: #fff; box-shadow: 0 0 14px rgba(255,62,165,.6); }
+
+  /* ---------- D: PULITA E MODERNA ---------- */
+  .D .schermo { background: #f7f5ef; font-family: Inter, sans-serif; color: #1f1f1f; }
+  .D .top { display: flex; justify-content: space-between; align-items: center; }
+  .D .pill { border-radius: 999px; padding: 4px 11px; font-weight: 900; font-size: 13px; }
+  .D .pill.r { background: #ffe3e3; color: #c92a2a; } .D .pill.b { background: #e7f5ff; color: #1864ab; }
+  .D .indizio { text-align: center; }
+  .D .indizio small { display: block; font-size: 10px; letter-spacing: .14em; color: #8a8576; font-weight: 700; }
+  .D .indizio b { font-size: 22px; font-weight: 900; letter-spacing: .02em; }
+  .D .indizio b span { display: inline-block; margin-left: 6px; min-width: 26px; border-radius: 8px; background: #1f1f1f; color: #fff; font-size: 16px; padding: 1px 6px; }
+  .D .c { background: #fff; border-radius: 10px; font-weight: 700; font-size: 9px; color: #2b2b2b; box-shadow: 0 1px 0 #e4e0d4, 0 0 0 1px #ebe7da; }
+  .D .c.r { background: #fa5252; color: #fff; box-shadow: none; } .D .c.b { background: #339af0; color: #fff; box-shadow: none; } .D .c.n { background: #e9e4d6; color: #a39c88; box-shadow: none; }
+  .D .c.prop { box-shadow: 0 0 0 2.5px #1f1f1f; }
+  .D .piede { color: #6b6658; }
+  .D .btn { background: #1f1f1f; color: #fff; }
+</style>
+</head>
+<body>
+<h1>Parola d'ordine: 4 stili a confronto</h1>
+<p class="sotto">Stesso momento di gioco: tocca ai Rossi, indizio «MARE · 2», due parole già girate, Giulia propone PESCA.</p>
+<div class="fila" id="fila"></div>
+<script>
+  var PAROLE = ["ONDA","PIANTA","CARTA","LUNA","PONTE","CORONA","FARO","PESCA","SOLE","BARCA","CHIAVE","TORRE","FUOCO","NEVE","PIZZA","DRAGO","CUORE","MAGO","TRENO","LIBRO","VELA","FUNGO","SPADA","MOSCA","COPPA"];
+  var STATO = { 0: "r", 9: "r", 20: "b", 13: "n" };   // parole già girate
+  var PROP = 7;                                        // PESCA: proposta da Giulia
+  var STILI = [
+    { k: "A", nome: "A · Dossier segreto", sotto: "Carte come cartelline di un'agenzia di spie, timbri colorati sulle parole girate, scrittura da macchina da scrivere." },
+    { k: "B", nome: "B · Agenti al tavolo", sotto: "Come il gioco da tavolo: carte di cartoncino su un tavolo di legno; le parole girate si coprono con una tessera agente." },
+    { k: "C", nome: "C · Studio TV", sotto: "Come la Ruota: luci, tabellone con le lampadine, punteggi sui podi e l'indizio sul display a LED." },
+    { k: "D", nome: "D · Pulita e moderna", sotto: "Stile app moderna, chiaro e ordinato: tessere bianche, colori pieni, indizio grande al centro." }
+  ];
+  function cella(s, w, i) {
+    var st = STATO[i], cls = "c" + (st ? " g " + st : "") + (i === PROP ? " prop" : "");
+    var av = i === PROP ? '<span class="av" style="background:#1971c2">G</span>' : "";
+    if (s === "A") return '<div class="' + cls + '">' + (st ? '<span>' + w + '</span><span class="tim">' + ({ r: "ROSSO", b: "BLU", n: "CIVILE" })[st] + '</span>' : w) + av + '</div>';
+    if (s === "B") return '<div class="' + cls + '">' + (st && st !== "n" ? '<span class="agente"></span><span class="w">' + w + '</span>' : (st === "n" ? '<span class="w">' + w + '</span>' : '<span class="giu">' + w + '</span>' + w)) + av + '</div>';
+    return '<div class="' + cls + '">' + w + av + '</div>';
+  }
+  function testa(s) {
+    if (s === "A") return '<div class="top"><span class="r">ROSSI <b>7</b></span><span>OPERAZIONE 27</span><span class="b">BLU <b>8</b></span></div><div class="nota">MARE · 2</div>';
+    if (s === "B") return '<div class="top"><div class="sq r">Rossi <b>7</b></div><div class="sq b">Blu <b>8</b></div></div><div class="indizio">Mare · 2</div>';
+    if (s === "C") return '<div class="top"><div class="podio r">ROSSI<b>7</b></div><div class="podio b">BLU<b>8</b></div></div><div class="led">MARE 2</div>';
+    return '<div class="top"><span class="pill r">Rossi 7</span><span class="pill b">Blu 8</span></div><div class="indizio"><small>INDIZIO</small><b>MARE<span>2</span></b></div>';
+  }
+  var fila = document.getElementById("fila");
+  STILI.forEach(function (S) {
+    var celle = PAROLE.map(function (w, i) { return cella(S.k, w, i); }).join("");
+    var griglia = S.k === "C" ? '<div class="cornice"><div class="grid">' + celle + '</div></div>' : '<div class="grid">' + celle + '</div>';
+    fila.insertAdjacentHTML("beforeend",
+      '<div class="scelta ' + S.k + '"><div class="etichetta">' + S.nome + '<small>' + S.sotto + '</small></div>' +
+      '<div class="tel"><div class="schermo">' + testa(S.k) + griglia +
+      '<div class="piede">Tocca una parola per proporla, tocca di nuovo per girarla.<div class="btn">Basta così, passo</div></div></div></div></div>');
+  });
+</script>
+</body>
+</html>

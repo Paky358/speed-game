@@ -21,7 +21,11 @@
     { nome: "Verdi", em: "🟢", col: "#2f9e44", chiaro: "#d3f9d8" }
   ];
   // quante parole per squadra: chi comincia ne ha una in più
-  var DIVISIONE = { 2: { sq: [9, 8], neutre: 7 }, 3: { sq: [7, 6, 6], neutre: 5 } };
+  // (25 = il classico 5x5; 20 = 5x4 come Codenames Pictures: caselle più grandi e partite più corte)
+  var DIVISIONE = {
+    25: { 2: { sq: [9, 8], neutre: 7 }, 3: { sq: [7, 6, 6], neutre: 5 } },
+    20: { 2: { sq: [8, 7], neutre: 4 }, 3: { sq: [6, 5, 5], neutre: 3 } }
+  };
   var MAX_GRUPPO = 5;   // parole del gruppo che finiscono in un tabellone
   // gli indizi dei bot della prova da solo (a caso: servono solo a far vedere come va il gioco)
   var PAROLE_BOT = ("CALDO FREDDO GRANDE PICCOLO VELOCE LENTO ANTICO MODERNO DOLCE AMARO GIALLO VERDE AZZURRO BIANCO MORBIDO DURO " +
@@ -100,7 +104,7 @@
       });
       h.msg = "";
       return h;
-    })(ripresa) : { fase: "lobby", codice: "…", pronta: false, nsq: +imp.squadre === 3 ? 3 : 2, gruppo: imp.usaMie === false ? [] : leggiGruppo(imp.gruppo), oro: imp.oro !== false,
+    })(ripresa) : { fase: "lobby", codice: "…", pronta: false, nsq: +imp.squadre === 3 ? 3 : 2, nparole: +imp.parole === 20 ? 20 : 25, gruppo: imp.usaMie === false ? [] : leggiGruppo(imp.gruppo), oro: imp.oro !== false,
       players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), team: 0 }], capo: [null, null, null],
       tab: null, bid: 0, turno: 0, passo: "indizio", indizio: null, tentativi: 0, girate: 0, prop: {}, storia: [], fuori: [],
       vince: -1, classifica: null, msg: "", ultima: null, nGirate: 0, gen: 1, hostId: IO, vici: [] };
@@ -131,7 +135,7 @@
     // "⚙️ Regole" nella saletta: squadre e parole del gruppo
     t.onRegole = function (im) {
       if (H.fase !== "lobby") return;
-      H.nsq = +im.squadre === 3 ? 3 : 2; H.gruppo = im.usaMie === false ? [] : leggiGruppo(im.gruppo); H.oro = im.oro !== false;
+      H.nsq = +im.squadre === 3 ? 3 : 2; H.nparole = +im.parole === 20 ? 20 : 25; H.gruppo = im.usaMie === false ? [] : leggiGruppo(im.gruppo); H.oro = im.oro !== false;
       H.players.forEach(function (p) { if (p.team >= H.nsq) p.team = -1; });
       H.players.forEach(function (p) { if (p.team < 0) p.team = piuPiccola(); });
       sistemaCapi(); bd();
@@ -297,9 +301,9 @@
       // 25 parole: qualcuna del gruppo (se ci sono) e le altre dall'elenco, senza doppioni
       var usate = {}, parole = [];
       mescola(H.gruppo).slice(0, MAX_GRUPPO).forEach(function (w) { usate[norm(w)] = 1; parole.push(w); });
-      mescola(elenco()).forEach(function (w) { if (parole.length < 25 && !usate[norm(w)]) { usate[norm(w)] = 1; parole.push(String(w).toUpperCase()); } });
+      mescola(elenco()).forEach(function (w) { if (parole.length < (H.nparole || 25) && !usate[norm(w)]) { usate[norm(w)] = 1; parole.push(String(w).toUpperCase()); } });
       parole = mescola(parole);
-      var d = DIVISIONE[H.nsq], primo = Math.floor(Math.random() * H.nsq), colori = [];
+      var d = DIVISIONE[H.nparole || 25][H.nsq], primo = Math.floor(Math.random() * H.nsq), colori = [];
       d.sq.forEach(function (q, j) { var k = (primo + j) % H.nsq; for (var x = 0; x < q; x++) colori.push(k); });
       for (var x = 0; x < d.neutre; x++) colori.push("n");
       colori.push("x");
@@ -567,6 +571,7 @@
     ui.ind = el("div", { class: "or-ind" });
     ui.storia = el("div", { class: "or-storia" });
     ui.tab = el("div", { class: "or-tab" });
+    ui.tab.style.gridTemplateRows = "repeat(" + Math.ceil(vm.tab.length / 5) + ",minmax(0,1fr))";   // 5 righe (25 parole) o 4 (20)
     vm.tab.forEach(function (c, i) {
       var w = el("span", { class: "or-w", text: c.w }), pr = el("span", { class: "or-pr" }), hint = el("span", { class: "or-hint", text: "tocca ancora" });
       var b = el("button", { class: "or-carta" }, [ w, pr, hint ]);
@@ -792,7 +797,7 @@
     // "Prova da solo" la vede solo il proprietario (account IL PAPPONE): per vedere com'è il gioco anche senza amici
     modi: [ { modo: "prova", icona: "🧪", nome: "Prova da solo", sotto: "Solo per te: tu e Matt contro due bot", soloPer: "IL PAPPONE" } ], soloOnline: true,
     regole: [
-      "Si gioca a <b>2 o 3 squadre</b>. Sul tabellone ci sono 25 parole: alcune sono di una squadra, alcune di nessuno e una è la <b>parola nera</b>.",
+      "Si gioca a <b>2 o 3 squadre</b>. Sul tabellone ci sono 25 parole (o 20, se l'host sceglie così): alcune sono di una squadra, alcune di nessuno e una è la <b>parola nera</b>.",
       "Solo il <b>capo</b> di ogni squadra (👑) vede di chi è ogni parola. Nel suo turno dà un <b>indizio di una parola sola</b> e un numero: quante parole sue c'entrano (es. «Caldo, 2»).",
       "La squadra ne discute e le gira una alla volta: si possono girare fino al numero dell'indizio <b>più una</b>. Se giri una parola di un'altra squadra o di nessuno, il turno passa.",
       "Chi gira la <b>parola nera</b> perde (a 3 squadre esce dalla partita). Vince la squadra che trova per prima tutte le sue parole.",
@@ -803,7 +808,7 @@
       var el = aiuti.el;
       stile();
       var prova = aiuti.modo === "prova";
-      dove.squadre = 2; dove.oro = true; dove.usaMie = true; dove.capoIo = true;
+      dove.squadre = 2; dove.parole = 25; dove.oro = true; dove.usaMie = true; dove.capoIo = true;
       // le scelte con bottoni .modo-chip: così l'host le ritrova in "⚙️ Regole" nella saletta
       function chips(titolo, valori, chiave, nota) {
         box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: titolo }));
@@ -819,6 +824,7 @@
       }
       if (prova) chips("Nella tua squadra il capo è…", [[true, "Io"], [false, "Matt"]], "capoIo", "I bot danno indizi a caso e indovinano un po' a naso: la prova serve a vedere come funziona il gioco.");
       else chips("Quante squadre", [[2, "2 squadre"], [3, "3 squadre (da 6)"]], "squadre");
+      chips("Quante parole sul tabellone", [[25, "25 (classico)"], [20, "20 (più grandi)"]], "parole", "Con 20 le caselle sono più grandi e la partita dura un po' meno.");
       chips("⭐ Parola d'oro", [[true, "Sì"], [false, "No"]], "oro", "Una parola di nessuno è d'oro, e non lo sa nessuno: chi la gira gioca un altro turno.");
       // 📝 le TUE parole: restano salvate sul profilo. Si scrivono di fila ("Peppe, Ibiza, Kebab"), così gli amici se le passano;
       // dopo si vedono una alla volta, ognuna con la sua ✕
