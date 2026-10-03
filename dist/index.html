@@ -672,6 +672,11 @@ body::before{
 .editor-avatar .piede{ flex:0 0 auto; flex-direction:row; gap:10px; margin:0 -16px; padding:10px 16px calc(12px + env(safe-area-inset-bottom));
   background:linear-gradient(180deg, rgba(10,16,44,.2), rgba(10,16,44,.95) 40%); border-top:1px solid rgba(255,255,255,.08); }
 .editor-avatar .piede .btn{ min-height:54px; font-size:1.08rem; }
+/* sottocategorie della scheda aperta (es. Vestiti: Parti superiori, Parti inferiori, Scarpe): una fila che scorre di lato se non ci sta */
+.editor-avatar .omino-sotto{ flex:0 0 auto; display:flex; gap:6px; overflow-x:auto; overflow-y:hidden; margin:2px -16px 0; padding:4px 16px 6px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.editor-avatar .omino-sotto::-webkit-scrollbar{ display:none; }
+.om-sub{ flex:0 0 auto; border:0; border-radius:999px; padding:8px 14px; font:inherit; font-size:.92rem; font-weight:800; color:#dfe6ff; background:rgba(255,255,255,.1); white-space:nowrap; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.om-sub.attiva{ background:#ffd23b; color:#2a1d00; }
 .editor-avatar .piede .btn-fantasma{ flex:0 0 38%; }
 .editor-avatar .piede .btn-primario{ flex:1; }
 .editor-avatar .om-stella{ font-size:.85rem; padding:5px 12px; }
@@ -1026,6 +1031,15 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       var doc = db.collection("profili").doc(utente.uid);
       // in due passi: l'avatar in uso si salva comunque anche se il secondo pezzo non passasse
       return doc.update({ omino: cfg }).then(function () { if (omini) return doc.update({ omini: omini, ominoN: n || 0 }); }).catch(function () {});
+    },
+
+    // ---- liste personali (es. le parole di Parola d'ordine): un campo del profilo, salvato così com'è ----
+    lista: function (nome) { return (profilo && profilo.liste && profilo.liste[nome]) || []; },
+    salvaLista: function (nome, lista) {
+      if (!auth || !utente || !profilo) return Promise.resolve();
+      profilo.liste = profilo.liste || {}; profilo.liste[nome] = lista;
+      var patch = {}; patch["liste." + nome] = lista;
+      return db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
     },
 
     // ---- bonus gratuito ogni 2 ore ----
@@ -2994,7 +3008,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     { id: "parole", nome: "Quiz & parole", icona: "🧠" }
   ];
   var CAT_GIOCO = {
-    scopa: "carte", scopa2v2: "carte", scopone: "carte", blackjack: "carte", poker: "carte", ruota: "parole",
+    scopa: "carte", scopa2v2: "carte", scopone: "carte", blackjack: "carte", poker: "carte", ruota: "parole", ordine: "parole",
     tris: "sfida", drop4: "sfida", hockey: "sfida", navale: "sfida",
     asta: "festa", impostore: "festa", sipero: "festa", scarabocchio: "festa",
     scalinata: "mini", horto: "mini", pendolo: "mini",
@@ -3003,7 +3017,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   var catAttiva = "tutti";
   function catDi(g) { return CAT_GIOCO[g.id] || null; }
   // Giochi che hanno la modalità "ognuno dal suo telefono" (usabili nella Sala online).
-  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, poker: 1, ruota: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1 };
+  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, poker: 1, ruota: 1, ordine: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1 };
   function giocoOnline(g) { return !!(g && GIOCHI_ONLINE[g.id]); }
   var app;                    // contenitore radice (#app)
   var linkParams = {};        // impostazioni arrivate da un link condiviso
@@ -3178,11 +3192,28 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     else if (!serve && avvisoHost) { if (avvisoHost.parentNode) avvisoHost.parentNode.removeChild(avvisoHost); avvisoHost = null; }
   });
 
-  function entraConCodice() {
-    var c = window.prompt("Scrivi il codice della stanza:");
-    if (!c) return;
-    c = c.trim().toUpperCase();
-    if (!c) return;
+  // 🔑 "Ho un codice": per chi è stato invitato e ha già l'app aperta (o il codice gliel'hanno detto a voce).
+  // Si può anche incollare tutto il link: il codice lo trovo io.
+  function entraConCodice(indietro) {
+    var s = schermata({ icona: "🔑", titolo: "Entra con un codice", sotto: "Te l'ha mandato chi ha aperto la stanza", indietro: indietro || schermataHome });
+    var input = el("input", { type: "text", class: "link-campo codice-campo", placeholder: "Es. ABCD", maxlength: "80", autocomplete: "off", autocapitalize: "characters", spellcheck: "false" });
+    var err = el("p", { class: "link-avviso", style: "min-height:1.3em;margin:6px 0 0" });
+    function vai() {
+      var t = (input.value || "").trim(), m = /(?:stanza|sala)=([A-Za-z0-9]+)/.exec(t);   // incollato tutto il link?
+      var c = (m ? m[1] : t).replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+      if (c.length < 3) { err.textContent = "Scrivi il codice della stanza (di solito sono 4 lettere)."; return; }
+      cercaStanza(c, function () { entraConCodice(indietro); });
+    }
+    input.addEventListener("input", function () { err.textContent = ""; });
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") vai(); });
+    s._contenuto.appendChild(input);
+    s._contenuto.appendChild(err);
+    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Il codice lo vede chi ha aperto la stanza, in alto nella saletta. Puoi anche incollare il link che ti hanno mandato." }));
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: vai }));
+    mostra(s);
+    setTimeout(function () { try { input.focus(); } catch (e) {} }, 250);
+  }
+  function cercaStanza(c, riprova) {
     if (!(window.SGNet && SGNet.disponibile())) {
       window.alert("Il collegamento non è disponibile qui. Apre solo dal sito pubblicato online.");
       return;
@@ -3196,8 +3227,9 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       if (!g) {
         svuota(s._contenuto); svuota(s._piede);
         s._contenuto.appendChild(el("p", { class: "link-avviso",
-          text: "Non trovo una partita con questo codice. Controlla di averlo scritto giusto, oppure apri il link che ti ha mandato chi organizza." }));
-        s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↩︎ Torna alla home", onclick: schermataHome }));
+          text: "Non trovo una partita con il codice " + c + ". Controlla di averlo scritto giusto, oppure apri il link che ti ha mandato chi organizza." }));
+        if (riprova) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✏️ Riscrivi il codice", onclick: riprova }));
+        s._piede.appendChild(el("button", { class: "btn " + (riprova ? "btn-fantasma" : "btn-primario"), text: "↩︎ Torna alla home", onclick: schermataHome }));
         mostra(s);
         return;
       }
@@ -3313,10 +3345,10 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       onclick: creaSala
     }));
 
-    // Tasto "Entra in una stanza" (per chi ha ricevuto un codice a voce)
+    // Tasto "Ho un codice" (per chi è stato invitato e ha già l'app aperta, o ha il codice a voce)
     s._piede.appendChild(el("button", {
-      class: "btn btn-fantasma", html: "🔗 Entra in una stanza (con un codice)",
-      onclick: entraConCodice
+      class: "btn btn-fantasma", html: "🔑 Ho un codice: entro in una stanza",
+      onclick: function () { entraConCodice(); }
     }));
 
     mostra(s);
@@ -4225,15 +4257,22 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   // ---- AVATAR: il tuo personaggio stile Mii (disegno in js/omino.js; nel codice resta "omino") ----
   // zoom: "viso" = sul palco la telecamera va sulla faccia; solo: "donna" = la scheda c'è solo per lei; look: in cima i look pronti
   var SEZ_OMINO = [
-    { nome: "Corpo", icona: "🧍", voci: [["forma", "Maschio o femmina"], ["corpo", "Corporatura"], ["pelle", "Pelle"]] },
+    { nome: "Corpo", icona: "🧍", voci: [["forma", "Maschio o femmina"], ["corpo", "Corporatura"], ["pelle", "Pelle"]],
+      sotto: [["Maschio o femmina", ["forma"]], ["Corporatura", ["corpo"]], ["Pelle", ["pelle"]]] },
     { nome: "Viso", icona: "🙂", zoom: "viso", voci: [["viso", "Forma del viso"], ["orecchie", "Orecchie"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
-                               ["guance", "Guance"], ["segno", "Segni particolari"]] },
+                               ["guance", "Guance"], ["segno", "Segni particolari"]],
+      sotto: [["Forma", ["viso", "orecchie"]], ["Occhi", ["occhi", "iride"]], ["Sopracciglia", ["sopracc"]], ["Naso e bocca", ["naso", "bocca"]], ["Guance e segni", ["guance", "segno"]], ["Ritocchi", ["ritocchi"]]] },
     { nome: "Trucco", icona: "💄", zoom: "viso", solo: "donna", voci: [["ombretto", "Ombretto"], ["colOmbretto", "Colore ombretto"], ["eyeliner", "Eyeliner"], ["colEyeliner", "Colore eyeliner"], ["mascara", "Mascara"],
-                               ["rossetto", "Rossetto"], ["colRossetto", "Colore rossetto"], ["blush", "Blush"], ["colBlush", "Colore blush"]] },
-    { nome: "Capelli", icona: "💇", zoom: "viso", voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
-    { nome: "Vestiti", icona: "👕", look: true, voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]] },
-    { nome: "Accessori", icona: "🎩", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali e maschere"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"], ["borsa", "Borsa"], ["colBorsa", "Colore borsa"]] },
-    { nome: "Extra", icona: "🎈", voci: [["mano", "In mano"], ["colMano", "Colore"], ["schiena", "Sulla schiena"], ["colSchiena", "Colore"], ["animale", "Animaletto"], ["colAnimale", "Colore del pelo"], ["pittura", "Pittura sul viso"]] }
+                               ["rossetto", "Rossetto"], ["colRossetto", "Colore rossetto"], ["blush", "Blush"], ["colBlush", "Colore blush"]],
+      sotto: [["Occhi", ["ombretto", "colOmbretto", "eyeliner", "colEyeliner", "mascara"]], ["Labbra", ["rossetto", "colRossetto"]], ["Guance", ["blush", "colBlush"]]] },
+    { nome: "Capelli", icona: "💇", zoom: "viso", voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]],
+      sotto: [["Taglio", ["capelli"]], ["Colore", ["colCap"]], ["Barba e baffi", ["barba"]]] },
+    { nome: "Vestiti", icona: "👕", look: true, voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]],
+      sotto: [["Look pronti", ["look"]], ["Parti superiori", ["capo", "maglia", "stampa"]], ["Parti inferiori", ["sotto", "pantaloni"]], ["Scarpe", ["modScarpe", "scarpe"]]] },
+    { nome: "Accessori", icona: "🎩", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali e maschere"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"], ["borsa", "Borsa"], ["colBorsa", "Colore borsa"]],
+      sotto: [["In testa", ["cappello", "colAcc"]], ["Occhiali", ["occhiali"]], ["Orecchini", ["orecchini"]], ["Al collo", ["collo", "colCollo"]], ["Borsa", ["borsa", "colBorsa"]]] },
+    { nome: "Extra", icona: "🎈", voci: [["mano", "In mano"], ["colMano", "Colore"], ["schiena", "Sulla schiena"], ["colSchiena", "Colore"], ["animale", "Animaletto"], ["colAnimale", "Colore del pelo"], ["pittura", "Pittura sul viso"]],
+      sotto: [["In mano", ["mano", "colMano"]], ["Sulla schiena", ["schiena", "colSchiena"]], ["Animaletto", ["animale", "colAnimale"]], ["Pittura sul viso", ["pittura"]]] }
   ];
   var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1, colMano: 1, colSchiena: 1, colAnimale: 1 };
   var TRUCCO_COL = { colOmbretto: "ombretto", colEyeliner: "eyeliner", colRossetto: "rossetto", colBlush: "blush", colBorsa: "borsa" };   // il colore si vede solo se quel trucco c'è
@@ -4295,6 +4334,19 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     var p = profili().filter(function (x) { return x.id === io.id; })[0];
     if (p) { p.omino = cfg; if (omini) { p.omini = omini; p.ominoN = n; } salvaProfilo(p); }
   }
+  // liste personali salvate sul profilo (es. le parole di Parola d'ordine): nel cloud se il profilo è online, se no su questo telefono
+  function listaProfilo(nome) {
+    var io = profiloAttivo(); if (!io) return [];
+    if (io.cloud) return (window.SGNube && SGNube.lista ? SGNube.lista(nome) : []).slice();
+    var p = profili().filter(function (x) { return x.id === io.id; })[0];
+    return ((p && p.liste && p.liste[nome]) || []).slice();
+  }
+  function salvaListaProfilo(nome, lista) {
+    var io = profiloAttivo(); if (!io) return;
+    if (io.cloud) { if (window.SGNube && SGNube.salvaLista) SGNube.salvaLista(nome, lista); return; }
+    var p = profili().filter(function (x) { return x.id === io.id; })[0];
+    if (p) { p.liste = p.liste || {}; p.liste[nome] = lista; salvaProfilo(p); }
+  }
   // il secondo avatar la prima volta: a caso, ma dell'altra forma (maschio <-> femmina)
   function secondoOmino(primo, nome) {
     return SGOmino.casuale(nome + "#2", primo.forma === "donna" ? "uomo" : "donna");
@@ -4350,7 +4402,8 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     });
     var schede = el("div", { class: "omino-schede" });
     var pannello = el("div", { class: "omino-pannello" });
-    s._contenuto.appendChild(palco); s._contenuto.appendChild(schede); s._contenuto.appendChild(pannello);
+    var sottoschede = el("div", { class: "omino-sotto" });   // le sottocategorie della scheda aperta (es. Vestiti: Parti superiori, Parti inferiori, Scarpe)
+    s._contenuto.appendChild(palco); s._contenuto.appendChild(schede); s._contenuto.appendChild(sottoschede); s._contenuto.appendChild(pannello);
     function unisci(k, v) {
       if (k === "forma") return O.adattaForma(cfg, v);   // maschio/femmina: cambiano anche capelli, barba, trucco
       var c = {}; for (var x in cfg) c[x] = cfg[x]; c[k] = v; return c;
@@ -4455,12 +4508,35 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       ricorda(); cfg = conLook(cfg, L);
       anteprima(true); saluta(); disegnaPannello();
     }
-    // 🎲 solo questa scheda: il resto non cambia
+    // le sottocategorie della scheda aperta (es. Vestiti: Look pronti, Parti superiori, Parti inferiori, Scarpe): se ne vede una alla volta
+    var subDi = {};   // scheda -> sottocategoria aperta (quando torni su una scheda ritrovi quella di prima)
+    function voceVisibile(k) {
+      if (k === "look" || k === "ritocchi") return true;
+      if (k === "colAcc" && !ACC_COLORATI.test(cfg.cappello)) return false;
+      if (k === "colCollo" && !COLLO_COLORATI.test(cfg.collo)) return false;
+      if (COLORE_DI[k] && !COLORE_DI[k][1].test(cfg[COLORE_DI[k][0]])) return false;
+      if (TRUCCO_COL[k] && /^nessun[oa]$/.test(cfg[TRUCCO_COL[k]])) return false;
+      if ((k === "sotto" || k === "pantaloni") && /^vestito/.test(cfg.capo)) return false;   // il vestito copre anche sotto
+      if (k === "barba" && cfg.forma === "donna") return false;   // lei niente barba
+      return true;
+    }
+    function sottoVisibili() {
+      var sz = SEZ_OMINO[tab], lista = sz.sotto || [[sz.nome, sz.voci.map(function (vc) { return vc[0]; })]];
+      return lista.map(function (x, j) { return { nome: x[0], chiavi: x[1], j: j }; })
+        .filter(function (x) { return x.chiavi.some(voceVisibile); });
+    }
+    function sottoAttuale() {
+      var l = sottoVisibili(), j = subDi[tab] || 0;
+      return l.filter(function (x) { return x.j === j; })[0] || l[0];
+    }
+    // 🎲 solo questa sottocategoria: il resto non cambia
     function acasoScheda() {
       ricorda();
-      var donna = cfg.forma === "donna";
-      SEZ_OMINO[tab].voci.forEach(function (vc) {
-        var k = vc[0], lista = O.OPZ[k];
+      var donna = cfg.forma === "donna", cur = sottoAttuale();
+      cur.chiavi.forEach(function (k) {
+        if (k === "look") { cfg = conLook(cfg, LOOK[Math.floor(Math.random() * LOOK.length)]); return; }
+        if (k === "ritocchi") { OMINO_RITOCCHI.forEach(function (r) { cfg[r[0]] = Math.floor(Math.random() * 5) - 2; }); return; }
+        var lista = O.OPZ[k];
         if (k === "forma" || !lista || (k === "barba" && donna)) return;
         if (OMINO_COLORI[k]) { cfg[k] = Math.floor(Math.random() * (k === "colCap" ? 7 : lista.length)); return; }
         var ok = lista.filter(function (v) {
@@ -4475,38 +4551,58 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       if (!/^(nessuno|pallone)$/.test(cfg.mano) && cfg.borsa === "borsetta") cfg.borsa = "nessuna";
       anteprima(true); disegnaPannello();
     }
+    function disegnaSotto(lista, cur) {   // la fila delle sottocategorie, sopra alle scelte
+      sottoschede.innerHTML = "";
+      sottoschede.style.display = lista.length > 1 ? "" : "none";
+      if (lista.length < 2) return;
+      lista.forEach(function (x) {
+        sottoschede.appendChild(el("button", { class: "om-sub" + (x.j === cur.j ? " attiva" : ""), text: x.nome,
+          onclick: function () { if (subDi[tab] === x.j) return; subDi[tab] = x.j; disegnaPannello(); pannello.scrollTop = 0; } }));
+      });
+      var a = sottoschede.querySelector(".om-sub.attiva");   // quella aperta sempre in vista (la fila può scorrere di lato)
+      if (a) sottoschede.scrollLeft = Math.max(0, a.offsetLeft - (sottoschede.clientWidth - a.offsetWidth) / 2);
+    }
     function disegnaPannello() {
       var st = pannello.scrollTop;   // ridisegnando non si torna in cima
       pannello.innerHTML = "";
-      var sz = SEZ_OMINO[tab];
-      if (sz.nome !== "Corpo") pannello.appendChild(el("button", { class: "om-acaso", text: "🎲 " + sz.nome + " a caso", onclick: acasoScheda }));
-      if (sz.look) {   // i look pronti, in cima ai vestiti
-        pannello.appendChild(el("div", { class: "etichetta", text: "✨ Look pronti" }));
-        var rl = el("div", { class: "om-griglia" });
-        LOOK.forEach(function (L) {
-          var b = el("button", { class: "om-opz om-forma", onclick: function () { applicaLook(L); } });
-          b._mini = el("div", { class: "om-mini intero" }); b.appendChild(b._mini);
-          b.appendChild(el("div", { class: "om-nome", text: L.nome }));
-          b._look = L; rl.appendChild(b);
-        });
-        pannello.appendChild(rl);
-      }
-      sz.voci.forEach(function (vc) {
-        var k = vc[0];
-        if (k === "colAcc" && !ACC_COLORATI.test(cfg.cappello)) return;
-        if (k === "colCollo" && !COLLO_COLORATI.test(cfg.collo)) return;
-        if (COLORE_DI[k] && !COLORE_DI[k][1].test(cfg[COLORE_DI[k][0]])) return;
-        if (TRUCCO_COL[k] && /^nessun[oa]$/.test(cfg[TRUCCO_COL[k]])) return;
-        if ((k === "sotto" || k === "pantaloni") && /^vestito/.test(cfg.capo)) return;   // il vestito copre anche sotto
-        if (k === "barba" && cfg.forma === "donna") return;   // lei niente barba
+      var sz = SEZ_OMINO[tab], lista = sottoVisibili(), cur = sottoAttuale();
+      disegnaSotto(lista, cur);
+      var etichette = cur.chiavi.filter(voceVisibile).length > 1;   // con una voce sola il nome c'è già nella sottocategoria
+      if (sz.nome !== "Corpo") pannello.appendChild(el("button", { class: "om-acaso", text: "🎲 " + (lista.length > 1 ? cur.nome : sz.nome) + " a caso", onclick: acasoScheda }));
+      cur.chiavi.forEach(function (k) {
+        if (!voceVisibile(k)) return;
+        if (k === "look") {   // i look pronti: un tocco e cambiano vestiti e accessori insieme
+          var rl = el("div", { class: "om-griglia" });
+          LOOK.forEach(function (L) {
+            var b = el("button", { class: "om-opz om-forma", onclick: function () { applicaLook(L); } });
+            b._mini = el("div", { class: "om-mini intero" }); b.appendChild(b._mini);
+            b.appendChild(el("div", { class: "om-nome", text: L.nome }));
+            b._look = L; rl.appendChild(b);
+          });
+          pannello.appendChild(rl);
+          return;
+        }
+        if (k === "ritocchi") {   // ritocchi stile Mii: cursori da -2 a +2
+          OMINO_RITOCCHI.forEach(function (r) {
+            var kk = r[0], val = el("span", { class: "om-rit-val" });
+            var cur2 = el("input", { type: "range", min: "-2", max: "2", step: "1", value: String(cfg[kk] || 0), class: "om-cursore", "aria-label": r[1] });
+            function scrivi() { var n = +cur2.value; val.textContent = n > 0 ? "+" + n : String(n); }
+            cur2.addEventListener("input", function () { scrivi(); scegli(kk, +cur2.value, true); });
+            cur2.addEventListener("change", function () { trascina = false; popOmino(); aggiornaPannello(); });
+            scrivi();
+            pannello.appendChild(el("div", { class: "om-ritocco" }, [el("span", { class: "om-rit-nome", text: r[1] }), cur2, val]));
+          });
+          return;
+        }
+        var vc = sz.voci.filter(function (x) { return x[0] === k; })[0] || [k, k];
         var gruppi = k === "capelli" ? O.GRUPPI_CAPELLI : null;   // tagli divisi in Corti / Medi / Lunghi
-        if (!gruppi) pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
+        if (!gruppi && etichette) pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
         var riga = el("div", { class: "om-griglia" + (OMINO_COLORI[k] ? " colori" : "") });
         O.OPZ[k].forEach(function (val, i) {
           if (gruppi) gruppi.forEach(function (g) {
             if (g[1] !== i) return;
             if (riga.children.length) pannello.appendChild(riga);
-            pannello.appendChild(el("div", { class: "etichetta", text: vc[1] + " · " + g[0] }));
+            pannello.appendChild(el("div", { class: "etichetta", text: g[0] }));
             riga = el("div", { class: "om-griglia" });
           });
           if (/^(sotto|capo|modScarpe)$/.test(k) && O.SOLO_DONNA.test(val) && cfg.forma !== "donna") return;   // gonne, vestiti, tacchi… solo per la donna
@@ -4532,19 +4628,6 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
         }
         pannello.appendChild(riga);
       });
-      // ritocchi stile Mii (solo nella scheda Viso): cursori da -2 a +2
-      if (sz.nome === "Viso") {
-        pannello.appendChild(el("div", { class: "etichetta", text: "Ritocchi" }));
-        OMINO_RITOCCHI.forEach(function (r) {
-          var k = r[0], val = el("span", { class: "om-rit-val" });
-          var cur = el("input", { type: "range", min: "-2", max: "2", step: "1", value: String(cfg[k] || 0), class: "om-cursore", "aria-label": r[1] });
-          function scrivi() { var n = +cur.value; val.textContent = n > 0 ? "+" + n : String(n); }
-          cur.addEventListener("input", function () { scrivi(); scegli(k, +cur.value, true); });
-          cur.addEventListener("change", function () { trascina = false; popOmino(); aggiornaPannello(); });
-          scrivi();
-          pannello.appendChild(el("div", { class: "om-ritocco" }, [el("span", { class: "om-rit-nome", text: r[1] }), cur, val]));
-        });
-      }
       aggiornaPannello();
       pannello.scrollTop = st;
     }
@@ -5382,9 +5465,12 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   //  amici: true = poi si aggiungono gli amici (solo per chi gioca sullo stesso telefono).
   // =========================================================
   var MODO_ELIMINAZIONE = { modo: "eliminazione", icona: "🏆", nome: "Torneo a eliminazione", sotto: "Fino a 10 amici: sfide a due, chi vince va avanti" };
-  var MODO_ONLINE = { modo: "online", icona: "🔗", nome: "Online", sotto: "Ognuno dal suo telefono: mandi il link agli amici" };
+  var MODO_ONLINE = { modo: "online", icona: "🔗", nome: "Online: apro io la stanza", sotto: "Ognuno dal suo telefono: mandi il link agli amici" };
+  var MODO_CODICE = { modo: "codice", icona: "🔑", nome: "Online: ho un codice", sotto: "Ti hanno invitato? Entra nella loro stanza" };
   function modiDi(g) {
-    var m = (g && g.modi) ? g.modi.slice() : [];
+    var io = profiloAttivo(), mioNome = String((io && io.nome) || "").trim().toUpperCase();
+    // soloPer: un modo che vede solo un account (es. "Prova da solo" per il proprietario, IL PAPPONE)
+    var m = (g && g.modi) ? g.modi.filter(function (x) { return !x.soloPer || x.soloPer === mioNome; }) : [];
     if (giocoOnline(g)) m.push(MODO_ONLINE);
     if (g && GIOCHI_ELIMINAZIONE[g.id]) m.push(MODO_ELIMINAZIONE);
     return m;
@@ -5393,7 +5479,9 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   function schermataModo(g) {
     var s = schermata({ icona: g.icona, titolo: g.nome, sotto: "Come giocate?", indietro: schermataHome });
     var io = profiloAttivo(), griglia = el("div", { class: "modo-scelta" });
-    modiDi(g).forEach(function (m) {
+    var modi = modiDi(g);
+    if (giocoOnline(g)) modi.splice(modi.indexOf(MODO_ONLINE) + 1, 0, MODO_CODICE);   // subito sotto "Online": chi è invitato entra col codice
+    modi.forEach(function (m) {
       griglia.appendChild(el("button", { class: "modo-grande" + (m.modo === "online" ? " online" : ""), onclick: function () { sceltoModo(g, m); } }, [
         el("div", { class: "mg-ico", text: m.icona }),
         el("div", { class: "mg-testo" }, [ el("div", { class: "mg-tit", text: m.nome }), el("div", { class: "mg-sotto", text: m.sotto || "" }) ]),
@@ -5406,6 +5494,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     mostra(s);
   }
   function sceltoModo(g, m) {
+    if (m.modo === "codice") return entraConCodice(function () { schermataModo(g); });   // invitato: si entra nella stanza di un altro
     if (m.modo === "eliminazione") return creaSala({ eliminazione: g.id });   // un link solo, coppie sorteggiate, chi vince va avanti
     if (m.amici) return schermataSala(g, { modo: m.modo });   // sullo stesso telefono: prima gli amici, poi le impostazioni
     schermataPreGioco(g, { modo: m.modo });                  // contro il computer / online: subito le impostazioni
@@ -5425,9 +5514,13 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   function chiavePers(p, i) { return String(p.id != null ? p.id : (p.nome || i)); }
   function condividiLink(link, g, bottone) {
     var fatto = function () { if (!bottone) return; var t0 = bottone.innerHTML; bottone.innerHTML = "✅ Link copiato!"; setTimeout(function () { bottone.innerHTML = t0; }, 1800); };
-    var invito = g.id === "__sala" ? (g.nome === "Torneo" ? "Vieni al torneo! Entra qui:" : "Vieni a giocare con noi! Entra qui:") : "Giochiamo a " + g.nome + "! Entra qui:";
+    var invito = g.id === "__sala" ? (g.nome === "Torneo" ? "Vieni al torneo!" : "Vieni a giocare con noi!") : "Giochiamo a " + g.nome + "!";
+    // il codice nel messaggio: chi ha già l'app la apre e lo scrive in "🔑 Ho un codice" (il link a volte si apre nel browser, non nell'app)
+    var m = /(?:stanza|sala)=([A-Za-z0-9]+)/.exec(link || ""), codice = m ? m[1].toUpperCase() : "";
+    if (codice) invito += "\nHai l'app? Aprila, tocca «🔑 Ho un codice» e scrivi: " + codice + "\nSe no, entra da qui:";
+    else invito += " Entra qui:";
     if (navigator.share) { navigator.share({ title: g.nome, text: invito, url: link }).catch(function () {}); return; }
-    try { navigator.clipboard.writeText(link).then(fatto, fatto); } catch (e) { fatto(); }
+    try { navigator.clipboard.writeText(invito + "\n" + link).then(fatto, fatto); } catch (e) { fatto(); }
   }
   // le impostazioni hanno qualcosa da scegliere (a vista) anche online? Se no, niente tasto "Regole"
   function haRegole(box) {
@@ -5590,7 +5683,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   // porta d'ingresso a un gioco dalla home: profilo → come giocate → (amici) → impostazioni
   function apriGioco(g) {
     if (!profiloAttivo()) return schermataAccesso(function () { apriGioco(g); });
-    if (modiDi(g).length > 1) return schermataModo(g);
+    if (modiDi(g).length > 1 || giocoOnline(g)) return schermataModo(g);   // online c'è sempre la scelta: apro io la stanza o entro con un codice
     var solo = modiDi(g)[0];
     if (solo && !solo.amici) return schermataPreGioco(g, { modo: solo.modo });
     if (!solo && (g.giocatoriMax || 10) <= 1) return schermataPreGioco(g);   // si gioca da soli (es. contro il computer): niente amici da aggiungere
@@ -5903,6 +5996,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   window.SG = {
     registra: function (gioco) { giochi.push(gioco); },
     audioCtx: audioCtx,
+    listaProfilo: listaProfilo, salvaListaProfilo: salvaListaProfilo,   // liste salvate sul profilo di chi gioca
     avviaApp: function () {
       app = document.getElementById("app");
       linkParams = leggiParametriLink();
@@ -6026,12 +6120,22 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       if (ritardo) setTimeout(via, ritardo); else via();
     },
 
-    // L'host apre una stanza. cb: { onCodice, onConnesso, onAddio(id), onMsg(id,msg), onErrore(e) }
-    ospita: function (giocoId, cb) {
+    // Ricorda con quale codice-giocatore questo telefono sta in una stanza (es. "host"):
+    // se poi ci rientra come ospite (host di riserva, app riaperta) torna la stessa persona.
+    ricordaId: function (codice, id) {
+      try { localStorage.setItem("sg-id-" + String(codice).toUpperCase(), JSON.stringify({ id: id, t: Date.now() })); } catch (e) {}
+    },
+
+    // L'host apre una stanza. cb: { onCodice, onConnesso, onAddio(id), onMsg(id,msg), onErrore(e), onStato(msg) }
+    // opz (facoltative, per l'host di riserva): codice = prende il posto in una stanza che c'è già;
+    // ascoltaStato = riceve anche quello che mandano gli host (onStato), così si accorge se un altro ha preso il posto;
+    // keepalive = ogni quanti secondi dice al broker "ci sono" (più basso = se sparisce ce ne si accorge prima)
+    ospita: function (giocoId, cb, opz) {
       if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
+      opz = opz || {};
       // La "sala" può imporre il codice della stanza (così lo conosce in anticipo
       // e lo manda agli altri per farli entrare in automatico).
-      var codice = SGNet._forza || codiceACaso(4);
+      var codice = opz.codice || SGNet._forza || codiceACaso(4);
       SGNet._forza = null;
       var T = topics(codice);
       var META = BASE + codice + "/meta";
@@ -6042,7 +6146,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       // (un tick dopo, così chi ci chiama ha già ricevuto l'oggetto "rete")
       setTimeout(function () { if (!chiusa) cb.onCodice && cb.onCodice(codice); }, 0);
       var client = mqtt.connect(BROKER, {
-        clean: true, reconnectPeriod: 2000,
+        clean: true, reconnectPeriod: 2000, keepalive: opz.keepalive || 60,
         // Se l'host sparisce all'improvviso, avvisa gli altri (che però lo aspettano un po')
         will: { topic: T.stato, payload: JSON.stringify({ t: "__hostgone" }), retain: false }
       });
@@ -6050,14 +6154,20 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
         if (chiusa) return;
         // quando è davvero collegato la stanza è "pronta": lo comunichiamo al gioco
         client.subscribe(T.azioni, function () { if (!chiusa) cb.onConnesso && cb.onConnesso(); });
+        if (opz.ascoltaStato) client.subscribe(T.stato);
         // annuncia QUALE gioco è questa stanza, così chi entra col codice apre quello giusto
         try { client.publish(META, JSON.stringify({ g: giocoId || "" }), { retain: true }); } catch (e) {}
         // tornato dopo un buco (schermo bloccato, cambio app): lo dico a chi aspetta, così nessuno se ne va
         if (!primaVolta) try { client.publish(T.stato, JSON.stringify({ t: "__hostqui" }), { retain: false }); } catch (e) {}
         primaVolta = false;
       });
-      client.on("message", function (_t, payload) {
+      client.on("message", function (topic, payload, pacchetto) {
         if (chiusa) return;
+        if (topic === T.stato) {   // (solo con ascoltaStato) quello che mandano gli host: anche uno che ha preso il nostro posto
+          var s; try { s = JSON.parse(payload.toString() || "null"); } catch (e) { return; }
+          if (s && cb.onStato) cb.onStato(s, !!(pacchetto && pacchetto.retain));
+          return;
+        }
         var m; try { m = JSON.parse(payload.toString()); } catch (e) { return; }
         if (!m || !m.from) return;
         if (inForse[m.from]) { clearTimeout(inForse[m.from]); delete inForse[m.from]; }   // si è rifatto vivo in tempo
@@ -6079,6 +6189,13 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
         // invio ad alta frequenza (streaming di gioco): NON trattenuto, per non intasare il broker
         inviaVeloce: function (msg) { try { if (!chiusa && client.connected) client.publish(T.stato, JSON.stringify(msg), { retain: false }); } catch (e) {} },
         inviaA: function (id, msg) { this.invia(msg); },
+        // se ne va in silenzio SENZA chiudere la stanza: un altro telefono ha preso il posto di host
+        lascia: function () {
+          if (chiusa) return;
+          chiusa = true; togli(h);
+          Object.keys(inForse).forEach(function (k) { clearTimeout(inForse[k]); }); inForse = {};
+          try { client.end(); } catch (e) {}   // uscita "educata": il broker non manda l'avviso "host sparito"
+        },
         chiudi: function () {
           if (chiusa) return;
           chiusa = true; togli(h);
@@ -6094,7 +6211,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       return segna(h, giocoId === "__sala");   // la sala resta aperta tra un gioco e l'altro
     },
 
-    // Un ospite entra con il codice. cb: { onAperto(id), onMsg(msg), onChiuso, onErrore(e) }
+    // Un ospite entra con il codice. cb: { onAperto(id), onMsg(msg), onChiuso, onErrore(e), onHostVia(sparito) }
     // opz.tieni = non chiuderla quando si cambia gioco (è la connessione della sala)
     entra: function (codice, cb, opz) {
       if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
@@ -6126,13 +6243,14 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
         var testo = payload.toString(); if (!testo) return;
         var m; try { m = JSON.parse(testo); } catch (e) { return; }
         if (!m) return;
-        if (tAddio && !(pacchetto && pacchetto.retain)) { clearTimeout(tAddio); tAddio = null; avvisaHost(T.stato, false); }   // l'host c'è ancora
+        if (tAddio && !(pacchetto && pacchetto.retain)) { clearTimeout(tAddio); tAddio = null; avvisaHost(T.stato, false); cb.onHostVia && cb.onHostVia(false); }   // l'host c'è ancora
         if (entrata && !dentro && testo.indexOf('"' + myId + '"') >= 0) { dentro = true; smetti(); }   // l'host mi ha messo nella partita
         if (m.t === "__hostqui") return;
         if (m.t === "__hostgone") {
           if (m.voluto) { cb.onChiuso && cb.onChiuso(); return; }   // chiusa apposta
           // sparito all'improvviso (schermo bloccato, cambio app): gli do tempo di tornare (e lo dico sullo schermo)
           if (!tAddio) { avvisaHost(T.stato, true); tAddio = setTimeout(function () { tAddio = null; avvisaHost(T.stato, false); if (!chiusa) cb.onChiuso && cb.onChiuso(); }, ATTESA_HOST); }
+          cb.onHostVia && cb.onHostVia(true);   // un gioco con l'host di riserva può prendere il suo posto
           return;
         }
         cb.onMsg && cb.onMsg(m);
@@ -6148,6 +6266,12 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
             // "ci sono", ogni tanto, solo se nel frattempo non ho mandato niente (meno messaggi = meno batteria)
             if (!tCi) tCi = setInterval(function () { if (!chiusa && Date.now() - ultimoInvio >= CI_SONO - 1000) pubblica({ t: "__ci" }); }, CI_SONO);
           }
+        },
+        // se ne va in silenzio (senza dire "esco"): serve all'host di riserva che sta per prendere il posto dell'host
+        lascia: function () {
+          if (chiusa) return;
+          chiusa = true; togli(h); smetti(); if (tAddio) { clearTimeout(tAddio); tAddio = null; avvisaHost(T.stato, false); } if (tCi) { clearInterval(tCi); tCi = null; }
+          try { client.end(); } catch (e) {}
         },
         chiudi: function () {
           if (chiusa) return;
@@ -13950,6 +14074,36 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 150,
+    data: "3 ottobre 2026",
+    titolo: "Entra con un codice 🔑 e avatar più ordinato",
+    descrizione: [
+      "In ogni gioco online ora scegli: «Online: apro io la stanza» oppure «Online: ho un codice». Se ti hanno invitato, scrivi il codice (o incolla il link) ed entri nella loro stanza, senza diventare tu l'host.",
+      "Il messaggio d'invito ora contiene anche il codice: chi ha già l'app la apre, tocca «🔑 Ho un codice» e lo scrive. Il link resta per chi non ce l'ha.",
+      "In home il tasto si chiama «🔑 Ho un codice: entro in una stanza».",
+      "Editor dell'avatar più ordinato: ogni scheda ha le sue sottocategorie in alto. Per esempio in Vestiti trovi Look pronti, Parti superiori, Parti inferiori e Scarpe; in Accessori In testa, Occhiali, Orecchini, Al collo e Borsa.",
+      "Il tasto 🎲 ora cambia a caso solo la sottocategoria aperta (per esempio solo le scarpe)."
+    ]
+  },
+  {
+    v: 149,
+    data: "3 ottobre 2026",
+    titolo: "Nuovo gioco: Parola d'ordine 🕵️",
+    descrizione: [
+      "Come Codenames: sul tabellone ci sono 25 parole. Il capo di ogni squadra (👑) sa quali sono le vostre e dà un indizio di una parola sola più un numero, per esempio «Caldo, 2».",
+      "La squadra ne discute: quando tocchi una parola ci compare sopra il tuo avatar, e la giri toccandola di nuovo. Attenti alla parola nera: chi la gira perde!",
+      "Si gioca a 2 squadre, oppure a 3 squadre se siete almeno in 6: chi gira la parola nera esce e gli altri continuano.",
+      "📝 Le tue parole: soprannomi, posti, parole del vostro gruppo. Le scrivi tutte di fila separate da virgola e spazio (es. Peppe, Ibiza, Kebab), restano salvate sul tuo profilo e ne finiscono fino a 5 in ogni tabellone. Poi le vedi una per una e le cancelli con la ✕; con «Copia tutte» le passi agli amici.",
+      "⭐ Parola d'oro (si può spegnere): tra le parole di nessuno una è d'oro, e non lo sa nessuno, nemmeno i capi. Chi la gira, invece di perdere il turno, gioca un altro turno.",
+      "Ognuno sceglie la sua squadra nella saletta, chi vuole fa il capo, e a ogni nuova partita il capo passa al compagno.",
+      "Se uno esce e rientra, torna nella sua squadra; chi arriva a metà entra subito in gioco. Se il capo esce, un compagno può prendere il suo posto.",
+      "🔄 Host di riserva: se chi ha aperto la stanza va su WhatsApp, blocca il telefono o gli si chiude l'app, dopo pochi secondi un altro giocatore prende il suo posto e la partita va avanti. Quando l'host torna, rientra come giocatore normale nella sua squadra. I giocatori di riserva sono due, così regge anche se ne escono due insieme.",
+      "Se esci un attimo la tua squadra non perde il turno: se il capo ha già dato l'indizio, i compagni continuano a indovinare; se invece manca proprio chi serve, si aspetta che torni.",
+      "Il telefono controlla gli indizi: non vale dare una parola che è sul tabellone (neanche al plurale). A fine partita si vede di chi era ogni parola.",
+      "Si gioca online, ognuno dal suo telefono, da 4 a 12 giocatori. Lo trovi in Quiz & parole."
+    ]
+  },
+  {
     v: 148,
     data: "2 ottobre 2026",
     titolo: "Nuovo gioco: La Ruota della Fortuna 🎡",
@@ -15541,6 +15695,80 @@ window.SG_NOVITA = [
       "Vittoria a chi finisce le carte per primo, con podio e medaglie."
     ]
   }
+];
+
+/* Parole del tabellone di "Parola d'ordine" (gioco tipo Codenames). Una parola per voce, in maiuscolo.
+   Regole: nomi conosciuti da tutti, meglio se con più significati (RETE, PIANTA, CALAMITA…); solo lettere, da 3 a 10;
+   nessuna parola (di 4 lettere o più) dentro un'altra della lista, così gli indizi non si confondono. */
+window.SG_ORDINE_PAROLE = [
+  // con più significati
+  "RETE", "PIANTA", "CARTA", "LINGUA", "SPINA", "BANCO", "CAMPO", "CHIAVE", "PESCA", "POSTA", "TAVOLA", "BOTTONE", "STELLA", "PONTE", "CORONA",
+  "CALCIO", "CANNA", "COLPO", "CODA", "RIGA", "LETTERA", "PAGINA", "PIANO", "FOGLIO", "NOTA", "LAMA", "MINA", "MOLLA", "BORSA",
+  "CASSA", "CUFFIA", "CAPO", "COLLO", "VITE", "PESO", "PUNTO", "BUCO", "NODO", "FILO", "LANA", "SETA", "VELA", "ARIA", "TERRA",
+  "LUCE", "OMBRA", "ONDA", "CORDA", "CATENA", "GOMMA", "PILA", "SCALA", "SCATOLA", "VASO", "TAPPO", "RAGGIO", "ANGOLO", "CERCHIO",
+  "QUADRO", "MANTELLO", "TACCO", "LACCIO", "ZAINO", "VALIGIA", "BAULE", "CARROZZA", "SLITTA", "PRESA", "BATTERIA", "MACCHINA", "VOLANTE", "ANCORA",
+  "REMO", "BOA", "CALAMITA", "BILANCIA", "METRO", "TELA", "BUSTO", "TEMPO", "STORIA", "ESTATE", "ALBA", "FRONTE", "VERSO", "PUNTA", "FUSO",
+  "FERRO", "ARGENTO", "DIAMANTE", "MATTONE", "POLVERE", "COPERTA", "PIUMINO", "COSTUME", "MASCHERA", "STIVALE", "CIABATTA", "COLOMBA", "CORNETTO", "MARGHERITA", "BASILICO",
+  "RISO", "DADO", "DAMA", "COPPA", "RIGORE", "PORTIERE", "PASTORE", "MAESTRO", "CAMERA", "CUCINA", "FARO", "POLO", "TALPA", "RICCIO",
+  "SIRENA", "TROMBA", "PALCO", "CARTONE", "FRECCIA", "CANNONE", "CAMINO", "ZUCCA", "PALMA", "MOSCA", "PEPE", "BOMBA", "COMETA",
+  // casa e oggetti
+  "SEDIA", "LETTO", "DIVANO", "LAMPADA", "SPECCHIO", "FINESTRA", "PORTA", "TETTO", "CANDELA", "OROLOGIO", "SVEGLIA", "CUSCINO", "TAPPETO", "TENDA", "CORNICE",
+  "PIATTO", "BICCHIERE", "FORCHETTA", "COLTELLO", "CUCCHIAIO", "PENTOLA", "PADELLA", "FORNO", "FRIGO", "LAVATRICE", "DOCCIA", "SAPONE", "SPUGNA", "SCOPA", "SECCHIO",
+  "ARMADIO", "CASSETTO", "MENSOLA", "RADIO", "TELEFONO", "COMPUTER", "SCHERMO", "TASTIERA", "CAVO", "LIBRO", "PENNA", "MATITA", "COLLA", "FORBICI", "QUADERNO",
+  "OMBRELLO", "BOTTIGLIA", "TAZZA", "VASSOIO", "TOVAGLIA", "MATERASSO", "LENZUOLO", "CESTINO", "SACCO", "BUSTA", "PACCO", "NASTRO", "SPAGO", "AGO",
+  "SPILLA", "BARATTOLO", "LATTINA", "MOKA", "TEIERA", "PENNELLO", "VERNICE", "STATUA", "BINOCOLO", "BUSSOLA", "MAPPA", "LENTE", "COMPASSO", "TIMONE", "ELICA",
+  // cibo
+  "PANE", "PASTA", "PIZZA", "CARNE", "PESCE", "UOVO", "FORMAGGIO", "BURRO", "OLIO", "ACETO", "SALE", "ZUCCHERO", "MIELE", "BISCOTTO", "TORTA",
+  "GELATO", "CARAMELLA", "PANINO", "LASAGNA", "MINESTRA", "BRODO", "INSALATA", "POMODORO", "PATATA", "CAROTA", "CIPOLLA", "AGLIO", "MELA", "BANANA",
+  "ARANCIA", "LIMONE", "FRAGOLA", "CILIEGIA", "UVA", "ANGURIA", "ANANAS", "COCCO", "NOCE", "CASTAGNA", "OLIVA", "FAGIOLO", "PISELLO", "VINO", "BIRRA",
+  "ACQUA", "LATTE", "CAFFÈ", "SUCCO", "SPAGHETTI", "MOZZARELLA", "PROSCIUTTO", "SALAME", "SALSICCIA", "BISTECCA", "CANNOLO", "CROSTATA", "TIRAMISÙ", "POLPETTA", "FUNGO",
+  // animali
+  "CANE", "GATTO", "LEONE", "TIGRE", "ORSO", "LUPO", "VOLPE", "CAVALLO", "MUCCA", "MAIALE", "PECORA", "CAPRA", "GALLINA", "ANATRA", "CIGNO",
+  "AQUILA", "GUFO", "CORVO", "PICCIONE", "PINGUINO", "DELFINO", "SQUALO", "POLPO", "MEDUSA", "GRANCHIO", "TARTARUGA", "RANA", "SERPENTE", "ELEFANTE",
+  "GIRAFFA", "ZEBRA", "SCIMMIA", "GORILLA", "CANGURO", "PANDA", "CAMMELLO", "CERVO", "CONIGLIO", "CRICETO", "TOPO", "RAGNO", "FORMICA", "APE", "VESPA",
+  "FARFALLA", "ZANZARA", "LUMACA", "VERME", "PULCE", "BALENA", "FOCA", "TRICHECO", "GHEPARDO", "BISONTE", "ASINO", "MULO", "CINGHIALE", "CASTORO",
+  "DINOSAURO", "DRAGO", "UNICORNO", "FENICE", "COCCINELLA", "IPPOPOTAMO", "KOALA", "OCA",
+  // natura e cielo
+  "SOLE", "LUNA", "CIELO", "NUVOLA", "PIOGGIA", "NEVE", "GRANDINE", "FULMINE", "TUONO", "TEMPESTA", "NEBBIA", "GHIACCIO", "VULCANO", "VALANGA",
+  "CASCATA", "LAGO", "FIUME", "MARE", "OCEANO", "SABBIA", "SCOGLIO", "GROTTA", "MONTAGNA", "COLLINA", "VALLE", "DESERTO", "OASI", "GIUNGLA",
+  "FORESTA", "BOSCO", "PRATO", "GIARDINO", "SERRA", "RADICE", "TRONCO", "RAMO", "FOGLIA", "FIORE", "ROSA", "TULIPANO", "CACTUS", "ALGA",
+  "ERBA", "QUERCIA", "PINO", "EDERA", "PIANETA", "GALASSIA", "SATELLITE", "RAZZO", "NOTTE", "INVERNO", "AUTUNNO", "FUOCO", "FUMO",
+  "CENERE", "CARBONE", "LEGNO", "PIOMBO", "ORO", "PERLA", "CRISTALLO", "VETRO", "PLASTICA", "MARMO", "PIETRA", "FANGO", "SEME", "VENTO",
+  "ISOLA", "POZZO", "FONTANA", "MULINO",
+  // corpo
+  "TESTA", "FACCIA", "OCCHIO", "NASO", "BOCCA", "DENTE", "ORECCHIO", "SPALLA", "BRACCIO", "GOMITO", "MANO", "DITO", "UNGHIA", "PANCIA", "SCHIENA",
+  "CUORE", "CERVELLO", "POLMONE", "STOMACO", "SANGUE", "OSSO", "PELLE", "PIEDE", "TALLONE", "BARBA", "BAFFI",
+  // persone e mestieri
+  "MEDICO", "CUOCO", "PIRATA", "POMPIERE", "GIUDICE", "AVVOCATO", "ATTORE", "CANTANTE", "PITTORE", "POETA", "MURATORE", "IDRAULICO", "CONTADINO", "MARINAIO", "PILOTA",
+  "ASTRONAUTA", "SPIA", "LADRO", "GUARDIA", "SOLDATO", "GENERALE", "CAPITANO", "SINDACO", "POSTINO", "BARBIERE", "SARTO", "FABBRO", "CAMERIERE", "CASSIERE", "INFERMIERE",
+  "DENTISTA", "MAGO", "STREGA", "FATA", "GIGANTE", "NANO", "ORCO", "VAMPIRO", "MOSTRO", "ALIENO", "ROBOT", "PAGLIACCIO", "GIULLARE", "CAVALIERE", "PRINCIPE",
+  "REGINA", "IMPERATORE", "FARAONE", "VICHINGO", "NINJA", "SAMURAI", "EROE", "CAMPIONE", "ARBITRO", "ALLENATORE", "FANTASMA", "BAMBINO", "NONNO", "SPOSA", "TURISTA",
+  // posti
+  "SCUOLA", "OSPEDALE", "CASTELLO", "PALAZZO", "TORRE", "STRADA", "PIAZZA", "VILLA", "CASA", "SALOTTO", "CANTINA", "SOFFITTA", "CORTILE", "BALCONE",
+  "ASCENSORE", "NEGOZIO", "MERCATO", "FARMACIA", "BAR", "RISTORANTE", "PIZZERIA", "ALBERGO", "STAZIONE", "AEROPORTO", "BANCA", "MUSEO", "BIBLIOTECA", "ZOO", "CIRCO",
+  "CAMPEGGIO", "PISCINA", "PALESTRA", "STADIO", "PRIGIONE", "FABBRICA", "UFFICIO", "CINEMA", "TEATRO", "PIRAMIDE", "LABIRINTO",
+  // città e paesi (pochi, famosissimi)
+  "ROMA", "NAPOLI", "MILANO", "VENEZIA", "FIRENZE", "TORINO", "PARIGI", "LONDRA", "BERLINO", "MADRID", "AMERICA", "AFRICA", "EGITTO", "INDIA",
+  "GRECIA", "SPAGNA", "FRANCIA", "BRASILE", "CANADA", "MESSICO", "AUSTRALIA", "GIAPPONE", "OLANDA", "VESUVIO", "ETNA", "COLOSSEO", "SICILIA", "SARDEGNA", "CAPRI",
+  "GIOVE", "SATURNO",
+  // sport e giochi
+  "TENNIS", "GOLF", "BOXE", "SCI", "NUOTO", "CORSA", "GARA", "MEDAGLIA", "PODIO", "TRAGUARDO", "MARATONA", "SALTO", "TUFFO", "RACCHETTA", "MAZZA",
+  "BIRILLO", "SCACCHI", "JOLLY", "TOMBOLA", "ALTALENA", "SCIVOLO", "GIOSTRA", "AQUILONE", "TROTTOLA", "BAMBOLA", "FISCHIETTO", "TROFEO",
+  // musica e spettacolo
+  "CHITARRA", "VIOLINO", "TAMBURO", "FLAUTO", "CAMPANA", "MICROFONO", "DISCO", "CANZONE", "CONCERTO", "ORCHESTRA", "BALLO", "DANZA", "OPERA", "SIPARIO",
+  "FILM", "SERIE", "REGISTA", "ANTENNA", "FOTO", "VIDEO",
+  // vestiti
+  "MAGLIA", "CAMICIA", "GIACCA", "CAPPOTTO", "GONNA", "PANTALONI", "CALZINO", "SCARPA", "SANDALO", "CRAVATTA", "SCIARPA", "GUANTO", "CAPPELLO", "CINTURA", "OCCHIALI",
+  "ANELLO", "BRACCIALE", "PIGIAMA", "DIVISA", "TUTA", "PARRUCCA", "VELO", "TASCA", "CERNIERA", "CASCO",
+  // trasporti
+  "TRENO", "TRAM", "AUTOBUS", "TAXI", "BICICLETTA", "PATTINO", "AEREO", "ELICOTTERO", "BARCA", "CANOA", "ZATTERA", "NAVE", "CAMION",
+  "RIMORCHIO", "MOTORE", "FRENO", "SEMAFORO", "CARTELLO", "BENZINA", "GOMMONE", "RUOTA",
+  // altro
+  "FORTUNA", "SEGRETO", "MISTERO", "SOGNO", "INCUBO", "REGALO", "FESTA", "COMPLEANNO", "PACE", "AMORE", "PAURA", "SCHERZO", "MAGIA", "TESORO",
+  "PIUMA", "BOLLA", "SCINTILLA", "CODICE", "FUMETTO", "CARTOLINA", "MONETA", "CHIODO", "MARTELLO",
+  "SEGA", "PINZA", "SCALPELLO", "TRAPANO", "BULLONE", "SFERA", "TORCIA", "LANTERNA", "FIAMMIFERO", "ACCENDINO",
+  "CITOFONO", "CANCELLO", "RECINTO", "PALO", "BANDIERA", "TAMBURELLO", "BOOMERANG", "GLOBO", "ATLANTE", "DIZIONARIO", "GIORNALE",
+  "RIVISTA", "GESSO", "LAVAGNA", "BANCHIERE", "ZAFFERANO", "CANNELLA", "VANIGLIA", "LIQUIRIZIA", "MENTA", "ROSMARINO", "SALVIA", "LAVANDA", "GELSOMINO"
 ];
 
 /* =========================================================
@@ -24666,6 +24894,891 @@ window.SG_SIPERO = {
       extra: [info], attesa: "Aspetta che l'host dia il via: poi scrivete tutti insieme!",
       onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
+})();
+
+/* =========================================================
+   PAROLA D'ORDINE — come Codenames, ognuno dal suo telefono.
+   2 o 3 squadre, 25 parole sul tabellone. Il capo di ogni squadra vede di chi è ogni parola
+   (e qual è la parola NERA) e dà un indizio di una parola sola più un numero.
+   La squadra propone (sulla parola compare l'avatar di chi la propone) e la gira.
+   Vince la squadra che gira per prima tutte le sue parole; chi gira la parola nera perde
+   (a 3 squadre esce, e le altre due continuano).
+   Online l'host tiene la partita: la "chiave" (di chi è ogni parola) va SOLO ai capi.
+   Chi esce e rientra torna nella sua squadra; chi arriva a metà entra nella squadra più piccola.
+   Le parole stanno in data/ordine-parole.js (window.SG_ORDINE_PAROLE).
+   Partito dal modello .agents/skills/nuovo-gioco/modello-gioco-online.js
+   ========================================================= */
+(function () {
+  "use strict";
+
+  var ID = "ordine";
+  var MIN = 4, MAX = 12;
+  var SQ = [
+    { nome: "Rossi", em: "🔴", col: "#e03131", chiaro: "#ffe3e3" },
+    { nome: "Blu", em: "🔵", col: "#1c7ed6", chiaro: "#d0ebff" },
+    { nome: "Verdi", em: "🟢", col: "#2f9e44", chiaro: "#d3f9d8" }
+  ];
+  // quante parole per squadra: chi comincia ne ha una in più
+  var DIVISIONE = { 2: { sq: [9, 8], neutre: 7 }, 3: { sq: [7, 6, 6], neutre: 5 } };
+  var MAX_GRUPPO = 5;   // parole del gruppo che finiscono in un tabellone
+  // gli indizi dei bot della prova da solo (a caso: servono solo a far vedere come va il gioco)
+  var PAROLE_BOT = ("CALDO FREDDO GRANDE PICCOLO VELOCE LENTO ANTICO MODERNO DOLCE AMARO GIALLO VERDE AZZURRO BIANCO MORBIDO DURO " +
+    "RUMOROSO LUMINOSO BAGNATO SECCO PERICOLOSO ITALIANO ESTIVO MAGICO PICCANTE ROTONDO ALTO PESANTE LEGGERO FAMOSO").split(" ");
+  var RISERVA = ("RETE PIANTA CARTA LINGUA SPINA BANCO CAMPO CHIAVE PESCA POSTA TAVOLA BOTTONE STELLA PONTE CORONA " +
+    "SOLE LUNA MARE NAVE TRENO AEREO RUOTA PALLA CANE GATTO LEONE TOPO RAGNO PIPISTRELLO ORSO BALENA " +
+    "PIZZA PANE LATTE MELA LIMONE TORTA GELATO CAFFÈ VINO SALE ROMA NAPOLI VENEZIA EGITTO MARTE " +
+    "MEDICO CUOCO PIRATA FANTASMA DRAGO ROBOT CAVALIERE RE REGINA PRINCIPE CASTELLO TORRE PIRAMIDE " +
+    "SCUOLA OSPEDALE BANCA CINEMA TEATRO STADIO PORTA FINESTRA LETTO SPECCHIO OROLOGIO TELEFONO " +
+    "COMPUTER LIBRO PENNA MATITA COLLA FORBICI ANELLO SCARPA CAPPELLO GUANTO OMBRELLO NEVE FUOCO " +
+    "VENTO TUONO ISOLA MONTAGNA FIUME DESERTO BOSCO RADICE FOGLIA FIORE ROSA ERBA SEME OSSO CUORE " +
+    "MANO OCCHIO DENTE NASO TESTA PIEDE BRACCIO SPADA ARCO FRECCIA SCUDO BOMBA MINA RAZZO MOTORE").split(" ");
+
+  function fmtN(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }   // 1.000
+  function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  function mescola(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
+  var ACC = { "À": "A", "Á": "A", "È": "E", "É": "E", "Ì": "I", "Í": "I", "Ò": "O", "Ó": "O", "Ù": "U", "Ú": "U" };
+  function norm(w) { return String(w || "").toUpperCase().split("").map(function (c) { return ACC[c] || c; }).join("").replace(/[^A-Z]/g, ""); }
+  function radice(w) { var n = norm(w); return n.length > 4 ? n.replace(/[AEIOU]+$/, "") : n; }   // GATTO e GATTI hanno la stessa radice
+  function elenco() { var f = window.SG_ORDINE_PAROLE; return f && f.length >= 60 ? f : RISERVA; }
+  // le parole del gruppo: lettere (anche accentate), apostrofo e al massimo uno spazio in mezzo ("ZIO GINO"); fino a 12 caratteri
+  var MAX_LISTA = 150;
+  function pulisciParola(w) {
+    w = String(w || "").trim().replace(/\s+/g, " ").toUpperCase();
+    if (!w || w.length > 12 || !/^[A-ZÀÈÉÌÒÙ']+( [A-ZÀÈÉÌÒÙ']+)?$/.test(w) || norm(w).length < 2) return "";
+    return w;
+  }
+  // la lista salvata (array) o un testo scritto di fila: "Peppe, Ibiza, Kebab"
+  function leggiGruppo(x) {
+    var visti = {}, out = [];
+    (Array.isArray(x) ? x : String(x || "").split(/[,;\n]+/)).forEach(function (w) {
+      w = pulisciParola(w); if (!w || visti[norm(w)]) return;
+      visti[norm(w)] = 1; out.push(w);
+    });
+    return out.slice(0, MAX_LISTA);
+  }
+  // un indizio è buono se è UNA parola e non è (quasi) una parola ancora coperta sul tabellone
+  function erroreIndizio(parola, tab) {
+    var p = String(parola || "").trim();
+    if (!p) return "Scrivi l'indizio.";
+    if (/\s/.test(p)) return "Una parola sola, senza spazi.";
+    if (!/^[A-Za-zÀ-ÿ]+$/.test(p)) return "Solo lettere, niente numeri o simboli.";
+    if (p.length < 2) return "Troppo corto.";
+    var n = norm(p), r = radice(p), err = "";
+    (tab || []).forEach(function (c) {
+      if (err || c.g) return;
+      var m = norm(c.w);
+      if (m === n || radice(c.w) === r) err = "«" + c.w + "» è sul tabellone: non vale!";
+      else if (m.length >= 4 && n.length >= 4 && (m.indexOf(n) >= 0 || n.indexOf(m) >= 0)) err = "Assomiglia troppo a «" + c.w + "», che è sul tabellone.";
+    });
+    return err;
+  }
+
+  // =========================================================
+  //  HOST: tiene la partita vera e manda a tutti la "foto" (vm)
+  // =========================================================
+  // HOST DI RISERVA: mentre si gioca l'host passa di nascosto tutta la partita a due "vice" (i primi due giocatori collegati).
+  // Se l'host sparisce (schermo bloccato, WhatsApp, app chiusa) dopo pochi secondi il vice prende il suo posto
+  // e la partita va avanti dal suo telefono; quando l'host torna rientra come giocatore normale, nella sua squadra.
+  // "gen" conta i cambi di host: le foto di un host vecchio (gen più basso) non contano più.
+  var SUBENTRO_MS = 6000;   // quanto aspetta il vice prima di prendere il posto (se l'host torna prima, niente cambia)
+  // ripresa (solo per il vice che prende il posto): { codice, stato (la copia della partita), io (il suo id), omini }
+  function host(t, ripresa) {
+    var imp = t.impostazioni || {};
+    var prova = !ripresa && imp.modo === "prova";   // 🧪 prova da solo (solo per il proprietario): tu e Matt contro due bot, senza rete
+    if (!prova && !(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var IO = ripresa ? ripresa.io : "host";   // il mio id nella partita
+    var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
+    var H = ripresa ? (function (r) {   // la partita come l'aveva l'host di prima
+      var h = JSON.parse(JSON.stringify(r.stato)), vecchio = h.hostId, io = null;
+      h.codice = r.codice; h.pronta = false; h.gen = (h.gen || 1) + 1; h.hostId = IO; h.vici = []; h.prop = {};
+      h.players.forEach(function (p) {
+        p.omino = avatarValido((r.omini || {})[p.id]);
+        if (p.id === vecchio) p.via = true;   // l'host di prima è sparito: se torna, rientra come giocatore
+        if (p.id === IO) { p.via = false; io = p; }
+      });
+      h.msg = "";
+      return h;
+    })(ripresa) : { fase: "lobby", codice: "…", pronta: false, nsq: +imp.squadre === 3 ? 3 : 2, gruppo: imp.usaMie === false ? [] : leggiGruppo(imp.gruppo), oro: imp.oro !== false,
+      players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), team: 0 }], capo: [null, null, null],
+      tab: null, bid: 0, turno: 0, passo: "indizio", indizio: null, tentativi: 0, girate: 0, prop: {}, storia: [], fuori: [],
+      vince: -1, classifica: null, msg: "", ultima: null, nGirate: 0, gen: 1, hostId: IO, vici: [] };
+    if (prova) {   // i bot: Matt in squadra con te (il primo bot si chiama sempre Matt), Rosa e Peppe nell'altra
+      H.nsq = 2;
+      [["bot1", "Matt", 0], ["bot2", "Rosa", 1], ["bot3", "Peppe", 1]].forEach(function (b) {
+        H.players.push({ id: b[0], nome: b[1], team: b[2], bot: true, omino: window.SGOmino ? SGOmino.casuale(b[1]) : null });
+      });
+      H.capo = [imp.capoIo === false ? "bot1" : IO, "bot2", null];
+    }
+    function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
+    function presenti() { return H.players.filter(function (p) { return !p.via; }); }
+    function membri(k) { return H.players.filter(function (p) { return p.team === k && !p.via; }); }
+    function piuPiccola() { var best = 0, n = 1e9; for (var k = 0; k < H.nsq; k++) { var m = membri(k).length; if (m < n) { n = m; best = k; } } return best; }
+    function capoVivo(k) { var c = pById(H.capo[k]); return !!(c && !c.via && c.team === k); }
+    // ogni squadra ha un capo: se manca (o ha cambiato squadra) lo diventa il primo della squadra
+    function sistemaCapi() {
+      for (var k = 0; k < 3; k++) {
+        if (k >= H.nsq) { H.capo[k] = null; continue; }
+        var c = pById(H.capo[k]);
+        if (!c || c.team !== k || (H.fase === "lobby" && c.via)) { var m = membri(k); H.capo[k] = m.length ? m[0].id : null; }
+      }
+    }
+    function resto(k) { var n = 0; (H.tab || []).forEach(function (c) { if (c.c === k && !c.g) n++; }); return n; }
+    function vive() { var v = []; for (var k = 0; k < H.nsq; k++) if (H.fuori.indexOf(k) < 0) v.push(k); return v; }
+    function omini() { var o = {}; H.players.forEach(function (p) { o[p.id] = p.omino || null; }); return o; }
+
+    // "⚙️ Regole" nella saletta: squadre e parole del gruppo
+    t.onRegole = function (im) {
+      if (H.fase !== "lobby") return;
+      H.nsq = +im.squadre === 3 ? 3 : 2; H.gruppo = im.usaMie === false ? [] : leggiGruppo(im.gruppo); H.oro = im.oro !== false;
+      H.players.forEach(function (p) { if (p.team >= H.nsq) p.team = -1; });
+      H.players.forEach(function (p) { if (p.team < 0) p.team = piuPiccola(); });
+      sistemaCapi(); bd();
+    };
+
+    var ripresaFatta = !ripresa, ceduto = false;
+    var callbacks = {
+      onCodice: function (c) { H.codice = c; if (SGNet.ricordaId) SGNet.ricordaId(c, IO); bd(); },   // se rientro come ospite, torno la stessa persona
+      onConnesso: function () {
+        H.pronta = true;
+        if (!ripresaFatta) {   // il vice ha appena preso il posto: le chiavi ai capi e l'appello (chi non risponde è uscito anche lui)
+          ripresaFatta = true; mandaChiavi();
+          H.appello = {}; rete.inviaVeloce({ t: "appello", gen: H.gen });
+          setTimeout(function () {
+            if (ceduto || !H.appello) return;
+            H.players.forEach(function (p) { if (p.id !== IO && !p.via && !H.appello[p.id]) { p.via = true; delete H.prop[p.id]; } });
+            H.appello = null;
+            if (H.fase === "gioco") controllaTurno();
+            bd();
+          }, 5000);
+          controllaTurno();
+        }
+        bd();
+      },
+      // le foto degli host: se un altro ha preso il mio posto (gen più alto) torno giocatore;
+      // se arriva una foto vecchia (un host che non sa ancora di essere stato sostituito) rimetto la mia
+      onStato: function (s) {
+        if (ceduto || !s || s.t !== "vm" || !s.vm || s.vm.gen == null) return;
+        if (s.vm.gen > H.gen && s.vm.hostId !== IO) return cediPosto();
+        if (s.vm.gen === H.gen && s.vm.hostId && s.vm.hostId !== IO && s.vm.hostId < IO) return cediPosto();   // due vice partiti insieme: ne resta uno solo
+        if (s.vm.gen < H.gen) bd();
+      },
+      onAddio: function (id) {
+        var p = pById(id); if (!p) return;
+        if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); sistemaCapi(); bd(); return; }
+        p.via = true; delete H.prop[id];   // a partita iniziata resta nella sua squadra: se torna, rientra
+        if (H.fase === "gioco") controllaTurno();
+        bd();
+      },
+      onMsg: function (id, m) { azione(id, m); }
+    };
+    var rete = prova ? { invia: function () {}, inviaVeloce: function () {}, chiudi: function () {}, lascia: function () {} }
+      : SGNet.ospita(ID, callbacks, { codice: ripresa ? ripresa.codice : null, ascoltaStato: true, keepalive: 10 });
+    if (prova) setTimeout(function () { H.codice = "PROVA"; H.pronta = true; comincia(); }, 0);   // in prova niente saletta: si comincia subito
+    // un altro telefono ha preso il posto di host (io ero sparito): esco in silenzio e rientro come giocatore normale
+    function cediPosto() {
+      if (ceduto) return; ceduto = true; clearTimeout(tAttesa);
+      try { rete.lascia(); } catch (e) {}
+      if (SGNet.ricordaId) SGNet.ricordaId(H.codice, IO);
+      ospite(t, H.codice);
+    }
+    // i vice: i primi due giocatori collegati dopo di me (se uno esce, lo sostituisce il prossimo). Gli mando di nascosto tutta la partita
+    // (senza gli avatar, li hanno già). Due, così se escono l'host e il primo vice quasi insieme c'è ancora chi prende il posto.
+    function scegliVice() {
+      var tenuti = (H.vici || []).filter(function (id) { var p = pById(id); return p && !p.via && id !== IO; });
+      H.players.forEach(function (p) { if (tenuti.length < 2 && !p.via && p.id !== IO && tenuti.indexOf(p.id) < 0) tenuti.push(p.id); });
+      H.vici = tenuti;
+    }
+    function mandaRiserva() {
+      if (!H.vici.length || (H.fase !== "gioco" && H.fase !== "fine")) return;
+      var copia = JSON.parse(JSON.stringify(H));
+      copia.players.forEach(function (p) { p.omino = null; });
+      H.vici.forEach(function (id) { rete.inviaVeloce({ t: "riserva", to: id, gen: H.gen, stato: copia }); });
+    }
+    // la "foto" per tutti: SEMPRE con gli id; la chiave del tabellone MAI (va solo ai capi)
+    function vm() {
+      var fine = H.fase === "fine", r = [];
+      for (var k = 0; k < H.nsq; k++) r.push(resto(k));
+      return { fase: H.fase, codice: H.codice, pronta: H.pronta, nsq: H.nsq, gruppoN: H.gruppo.length,
+        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, team: p.team, via: !!p.via, omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }),
+        capo: H.capo.slice(0, H.nsq),
+        tab: H.tab ? H.tab.map(function (c) { return { w: c.w, g: c.g, c: (c.g || fine) ? c.c : null, oro: (c.g || fine) && c.oro ? 1 : 0 }; }) : null, oro: H.oro,
+        bid: H.bid, turno: H.turno, passo: H.passo, indizio: H.indizio, tentativi: H.tentativi, girate: H.girate, prop: H.prop,
+        storia: H.storia.slice(-8), fuori: H.fuori.slice(), vince: H.vince, classifica: H.classifica, msg: H.msg, ultima: H.ultima, resto: r,
+        gen: H.gen, hostId: H.hostId, vici: H.vici.slice() };
+    }
+    function privato(id, m) {
+      if (id === IO) { if (m.t === "avviso") avviso(m.testo); return; }
+      m.to = id; rete.inviaVeloce(m);
+    }
+    var chiaveHost = null;
+    function chiave() { return H.tab ? H.tab.map(function (c) { return c.c; }) : null; }
+    function mandaChiave(id) {
+      if (!id || H.fase !== "gioco") return;
+      if (id === IO) { chiaveHost = { bid: H.bid, col: chiave() }; return; }
+      privato(id, { t: "chiave", bid: H.bid, col: chiave() });
+    }
+    function mandaChiavi() { for (var k = 0; k < H.nsq; k++) mandaChiave(H.capo[k]); }
+    function bd() { if (ceduto) return; scegliVice(); var v = vm(); rete.invia({ t: "vm", vm: v }); disegna(t, v, cbHost); mandaRiserva(); if (prova) pianificaBot(); }
+
+    // ----- le mosse (dell'host e degli ospiti passano tutte da qui) -----
+    function azione(id, m) {
+      if (!m || !m.t) return;
+      var p = pById(id);
+      if (m.t === "join") {
+        if (p) p.via = false;   // rientra: è di nuovo nella sua squadra
+        else if (H.players.length < MAX && H.fase !== "fine") {
+          p = { id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino), team: piuPiccola() };
+          H.players.push(p);
+        }
+        sistemaCapi();
+        if (H.fase === "gioco") controllaTurno();
+        rete.inviaVeloce({ t: "omini", omini: omini() });
+        bd();   // anche se c'era già: rimanda la foto (serve a chi si ricollega)
+        if (p && H.fase === "gioco" && H.capo.indexOf(id) >= 0) mandaChiave(id);
+        return;
+      }
+      if (!p) return;
+      if (m.t === "chiedi_chiave") { if (H.fase === "gioco" && H.capo[p.team] === id) mandaChiave(id); return; }
+      if (m.t === "presente") {   // risponde all'appello del nuovo host (se l'avevo già segnato uscito, rientra)
+        if (H.appello) H.appello[id] = 1;
+        if (p.via) { p.via = false; if (H.fase === "gioco") controllaTurno(); bd(); if (H.capo.indexOf(id) >= 0) mandaChiave(id); }
+        return;
+      }
+      if (H.fase === "lobby") {
+        if (m.t === "squadra" && +m.s >= 0 && +m.s < H.nsq) { p.team = +m.s; sistemaCapi(); bd(); }
+        else if (m.t === "capo") { H.capo[p.team] = id; bd(); }
+        else if (m.t === "mischia" && id === IO) mischia();
+        return;
+      }
+      if (H.fase !== "gioco" || p.via) return;
+      var miaSquadra = p.team === H.turno, sonoCapo = H.capo[p.team] === id;
+      if (m.t === "capo") {   // a partita iniziata: solo se il capo della squadra non c'è più
+        if (capoVivo(p.team)) return;
+        H.capo[p.team] = id; mandaChiave(id); H.msg = p.nome + " fa il capo dei " + SQ[p.team].nome + "."; controllaTurno(); bd(); return;
+      }
+      if (m.t === "indizio") {
+        if (!miaSquadra || !sonoCapo || H.passo !== "indizio") return;
+        var n = Math.floor(+m.n); if (!(n >= 0 && n <= 9)) return;
+        var err = erroreIndizio(m.parola, H.tab);
+        if (err) { privato(id, { t: "avviso", testo: err }); return; }
+        var parola = String(m.parola).trim().toUpperCase();
+        H.indizio = { parola: parola, n: n, k: H.turno };
+        H.tentativi = n === 0 ? 99 : n + 1; H.girate = 0; H.passo = "indovina"; H.prop = {}; H.msg = "";
+        H.storia.push({ k: H.turno, parola: parola, n: n });
+        bd(); return;
+      }
+      if (!miaSquadra || sonoCapo || H.passo !== "indovina") return;
+      if (m.t === "proponi") {
+        var i = Math.floor(+m.i);
+        if (i === -1) delete H.prop[id];
+        else if (H.tab[i] && !H.tab[i].g) H.prop[id] = i;
+        bd(); return;
+      }
+      if (m.t === "gira") { gira(Math.floor(+m.i), id); return; }
+      if (m.t === "passo" && H.girate >= 1) { H.msg = p.nome + " passa la mano."; fineTurno(); }
+    }
+    function mischia() {
+      var tutti = mescola(H.players.filter(function (p) { return !p.via; }));
+      tutti.forEach(function (p, i) { p.team = i % H.nsq; });
+      H.capo = [null, null, null]; sistemaCapi(); bd();
+    }
+
+    // ----- la partita -----
+    function pronti() {
+      if (presenti().length < (H.nsq === 3 ? 6 : MIN)) return false;
+      for (var k = 0; k < H.nsq; k++) if (membri(k).length < 2) return false;
+      return true;
+    }
+    function comincia() {
+      if (H.fase !== "lobby" || !pronti()) return;
+      sistemaCapi();
+      // 25 parole: qualcuna del gruppo (se ci sono) e le altre dall'elenco, senza doppioni
+      var usate = {}, parole = [];
+      mescola(H.gruppo).slice(0, MAX_GRUPPO).forEach(function (w) { usate[norm(w)] = 1; parole.push(w); });
+      mescola(elenco()).forEach(function (w) { if (parole.length < 25 && !usate[norm(w)]) { usate[norm(w)] = 1; parole.push(String(w).toUpperCase()); } });
+      parole = mescola(parole);
+      var d = DIVISIONE[H.nsq], primo = Math.floor(Math.random() * H.nsq), colori = [];
+      d.sq.forEach(function (q, j) { var k = (primo + j) % H.nsq; for (var x = 0; x < q; x++) colori.push(k); });
+      for (var x = 0; x < d.neutre; x++) colori.push("n");
+      colori.push("x");
+      colori = mescola(colori);
+      H.tab = parole.map(function (w, i) { return { w: w, c: colori[i], g: false }; });
+      if (H.oro) {   // la parola d'oro: una di nessuno, segreta a tutti (anche ai capi)
+        var neutre = []; H.tab.forEach(function (c, i) { if (c.c === "n") neutre.push(i); });
+        if (neutre.length) H.tab[neutre[Math.floor(Math.random() * neutre.length)]].oro = true;
+      }
+      H.bid = 1 + Math.floor(Math.random() * 1e9); H.turno = primo; H.passo = "indizio"; H.indizio = null; H.tentativi = 0; H.girate = 0;
+      H.prop = {}; H.storia = []; H.fuori = []; H.vince = -1; H.classifica = null; H.ultima = null; H.nGirate = 0;
+      H.msg = "Cominciano i " + SQ[primo].nome + "!";
+      H.fase = "gioco"; chiaveHost = null;
+      mandaChiavi(); controllaTurno(); bd();
+    }
+    function gira(i, id) {
+      var c = H.tab[i]; if (!c || c.g) return;
+      var k = H.turno, p = pById(id);
+      c.g = true; H.girate++; H.prop = {};
+      H.ultima = { i: i, k: k, c: c.c, oro: c.oro ? 1 : 0, n: ++H.nGirate };
+      var chi = p ? p.nome : SQ[k].nome;
+      if (c.c === "x") {   // la parola nera
+        H.fuori.push(k);
+        H.msg = "💣 " + chi + " ha girato la parola nera: i " + SQ[k].nome + " " + (H.nsq === 2 ? "perdono!" : "sono fuori!");
+        var v = vive();
+        if (v.length === 1) return fine(v[0]);
+        return fineTurno();
+      }
+      if (typeof c.c === "number" && H.fuori.indexOf(c.c) < 0 && resto(c.c) === 0) return fine(c.c);   // girata l'ultima parola di una squadra: vince lei
+      if (c.c === k) {
+        H.tentativi--; H.msg = "✅ " + c.w + ": giusta!";
+        if (H.tentativi <= 0) { H.msg = "✅ " + c.w + ": giusta! Finiti i tentativi."; return fineTurno(); }
+        bd(); return;
+      }
+      if (c.oro) { H.msg = "⭐ " + c.w + ": la parola d'oro! I " + SQ[k].nome + " giocano un altro turno."; return fineTurno(true); }
+      H.msg = c.c === "n" ? "😐 " + c.w + ": di nessuno. Tocca agli altri." : "😬 " + c.w + ": era dei " + SQ[c.c].nome + "!";
+      fineTurno();
+    }
+    function fineTurno(ancora) {   // ancora = la stessa squadra gioca un altro turno (parola d'oro)
+      H.indizio = null; H.prop = {}; H.passo = "indizio"; H.girate = 0; H.tentativi = 0;
+      if (!ancora) for (var s = 1; s <= H.nsq; s++) { var k2 = (H.turno + s) % H.nsq; if (H.fuori.indexOf(k2) < 0) { H.turno = k2; break; } }
+      controllaTurno(); bd();
+    }
+    // Chi serve alla squadra di turno per andare avanti ADESSO ("" = c'è tutto):
+    // per l'indizio servono il capo e almeno uno che poi indovini; per indovinare basta uno che indovina
+    // (il capo non serve più: l'indizio l'ha già dato).
+    function manca(k) {
+      var m = membri(k), altri = m.filter(function (p) { return p.id !== H.capo[k]; }).length;
+      if (H.passo === "indovina") return altri >= 1 ? "" : "indovino";
+      if (!capoVivo(k)) return "capo";
+      return altri >= 1 ? "" : "indovino";
+    }
+    // Se manca qualcuno si aspetta e basta, senza scritte (es. è andato un attimo su WhatsApp): niente turno perso.
+    // Dopo 2 minuti: se manca il capo e la squadra ha ancora due persone, il capo lo fa un compagno; se no tocca alla squadra dopo.
+    // La scadenza sta nella partita, così vale anche se intanto cambia l'host.
+    var ATTESA_SQUADRA = 120000, tAttesa = null;
+    function controllaTurno() {
+      clearTimeout(tAttesa); tAttesa = null;
+      if (H.fase !== "gioco") { H.attesa = null; return; }
+      var k = H.turno;
+      if (!manca(k)) { H.attesa = null; return; }
+      if (!H.attesa || H.attesa.k !== k || H.attesa.passo !== H.passo) H.attesa = { k: k, passo: H.passo, fino: Date.now() + ATTESA_SQUADRA };
+      function riprova(ms) { tAttesa = setTimeout(function () { if (!ceduto) { controllaTurno(); bd(); } }, ms); }
+      if (Date.now() < H.attesa.fino) { riprova(H.attesa.fino - Date.now() + 50); return; }
+      var m = membri(k);
+      if (manca(k) === "capo" && m.length >= 2) { H.capo[k] = m[0].id; mandaChiave(m[0].id); H.attesa = null; return; }
+      for (var s = 1; s < H.nsq; s++) {
+        var k2 = (k + s) % H.nsq;
+        if (H.fuori.indexOf(k2) >= 0 || membri(k2).length < 2) continue;
+        H.msg = ""; H.indizio = null; H.passo = "indizio"; H.prop = {}; H.girate = 0; H.tentativi = 0;
+        H.turno = k2; H.attesa = null;
+        return controllaTurno();
+      }
+      H.attesa.fino = Date.now() + 30000; riprova(30050);   // nessuna squadra può giocare: si aspetta ancora
+    }
+    function fine(k) {
+      H.fase = "fine"; H.vince = k; H.prop = {}; H.indizio = null;
+      H.classifica = H.players.map(function (p) { return { id: p.id, nome: p.nome, team: p.team, pos: p.team === k ? 1 : 2 }; })
+        .sort(function (a, b) { return a.pos - b.pos; });
+      H.msg = "🎉 Vincono i " + SQ[k].nome + "!";
+      bd();
+      // torneo online: i NOMI dei giocatori; a squadre chi vince al posto 1, gli altri dopo
+      if (t.risultato && !prova) t.risultato(H.classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }));
+    }
+    // "Nuova partita": stessa stanza, stessi amici, stesse squadre; il capo passa al prossimo della squadra
+    function nuova() {
+      H.fase = "lobby"; H.classifica = null; H.tab = null; H.players = presenti(); H.msg = ""; chiaveHost = null;
+      for (var k = 0; k < H.nsq; k++) {
+        var m = membri(k), i = -1;
+        m.forEach(function (p, j) { if (p.id === H.capo[k]) i = j; });
+        H.capo[k] = m.length ? m[(i + 1) % m.length].id : null;
+      }
+      if (prova) { H.capo = [imp.capoIo === false ? "bot1" : IO, "bot2", null]; return comincia(); }   // in prova si ricomincia subito
+      sistemaCapi(); bd();
+    }
+
+    // ----- 🧪 i bot della prova da solo: danno indizi a caso e indovinano un po' a naso (sbirciano la chiave 7 volte su 10) -----
+    var tBot = null;
+    function pianificaBot() {
+      clearTimeout(tBot); tBot = null;
+      if (H.fase !== "gioco") return;
+      var k = H.turno, capo = pById(H.capo[k]);
+      if (H.passo === "indizio") { if (capo && capo.bot) tBot = setTimeout(function () { botIndizio(k); }, 1700); return; }
+      var umani = membri(k).filter(function (p) { return !p.bot && p.id !== H.capo[k]; });
+      var bot = membri(k).filter(function (p) { return p.bot && p.id !== H.capo[k]; })[0];
+      if (umani.length || !bot) return;   // se in squadra indovini tu, il bot ti lascia fare
+      if (H.prop[bot.id] != null) tBot = setTimeout(function () { azione(bot.id, { t: "gira", i: H.prop[bot.id] }); }, 1000);
+      else tBot = setTimeout(function () { botScegli(k, bot.id); }, 1600);
+    }
+    function botIndizio(k) {
+      if (H.fase !== "gioco" || H.turno !== k || H.passo !== "indizio") return;
+      var lista = mescola(PAROLE_BOT), parola = "BOH";
+      for (var i = 0; i < lista.length; i++) if (!erroreIndizio(lista[i], H.tab)) { parola = lista[i]; break; }
+      azione(H.capo[k], { t: "indizio", parola: parola, n: Math.random() < 0.5 ? 1 : 2 });
+    }
+    function botScegli(k, id) {
+      if (H.fase !== "gioco" || H.turno !== k || H.passo !== "indovina") return;
+      if (H.girate >= 1 && Math.random() < 0.35) return azione(id, { t: "passo" });
+      var coperte = []; H.tab.forEach(function (c, i) { if (!c.g) coperte.push(i); });
+      var mie = coperte.filter(function (i) { return H.tab[i].c === k; });
+      var i = mie.length && Math.random() < 0.7 ? mie[Math.floor(Math.random() * mie.length)] : coperte[Math.floor(Math.random() * coperte.length)];
+      azione(id, { t: "proponi", i: i });   // prima l'avatar sulla parola, poi la gira
+    }
+
+    var cbHost = { sonoHost: true, myId: IO, onComincia: comincia, onNuova: nuova,
+      pronti: pronti,
+      omini: omini,
+      chiave: function () { return chiaveHost && chiaveHost.bid === H.bid && H.fase === "gioco" && H.capo.indexOf(IO) >= 0 ? chiaveHost.col : null; },
+      manda: function (m) { azione(IO, m); },
+      onEsci: function () {
+        if (H.fase === "gioco" && !window.confirm(prova ? "Uscire dalla prova?" : "Chiudere la partita per tutti?")) return;   // un tocco sbagliato non chiude il gioco a tutti
+        clearTimeout(tBot); rete.chiudi(); t.esci();
+      } };
+    if (!prova) bd();
+  }
+
+  // =========================================================
+  //  OSPITE: disegna le foto dell'host e manda solo le sue mosse
+  // =========================================================
+  function ospite(t, codice) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var S = { rete: null, myId: null, nome: "", vm: null, omini: {}, chiave: null, chiesta: 0, gen: 0, copia: null, tVice: null };
+    var cb = { sonoHost: false, myId: null,
+      omini: function () { return S.omini; },
+      chiave: function () { return S.chiave && S.vm && S.vm.fase === "gioco" && S.chiave.bid === S.vm.bid ? S.chiave.col : null; },
+      manda: function (m) { if (S.rete) S.rete.invia(m); },
+      onEsci: function () {
+        if (S.vm && S.vm.fase === "gioco" && !window.confirm("Uscire dalla partita?")) return;
+        if (S.rete) S.rete.chiudi(); t.esci();
+      } };
+    if (t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
+    function chiediNome() {
+      var s = t.schermata({ icona: "🕵️", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var input = t.el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
+      s._contenuto.appendChild(input);
+      s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+        try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
+        S.nome = (input.value || "").trim().slice(0, 16) || "Amico"; collega();
+      } }));
+      t.mostra(s);
+    }
+    // se sono capo e non ho la chiave di questo tabellone, la chiedo (il messaggio può perdersi)
+    function controllaChiave() {
+      var v = S.vm; if (!v || v.fase !== "gioco" || !S.myId) return;
+      var io = null; v.players.forEach(function (p) { if (p.id === S.myId) io = p; });
+      if (!io || v.capo[io.team] !== S.myId || (S.chiave && S.chiave.bid === v.bid)) return;
+      if (Date.now() - S.chiesta < 2500) return;
+      S.chiesta = Date.now(); S.rete.invia({ t: "chiedi_chiave" });
+    }
+    function collega() {
+      attesa();
+      S.rete = SGNet.entra(codice, {
+        onAperto: function (id) { S.myId = id; cb.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome) }); },
+        onMsg: function (m) {
+          if (!m || !m.t) return;
+          if (m.to && m.to !== S.myId) return;          // era per un altro telefono
+          if (m.t === "vm") {
+            if (m.vm.gen != null) { if (m.vm.gen < S.gen) return; S.gen = m.vm.gen; }   // la foto di un host vecchio (sostituito): non conta
+            S.vm = m.vm; disegna(t, m.vm, cb); controllaChiave();
+          }
+          else if (m.t === "chiave") { S.chiave = { bid: m.bid, col: m.col }; if (S.vm) disegna(t, S.vm, cb); }
+          else if (m.t === "omini") { S.omini = m.omini || {}; if (S.vm) disegna(t, S.vm, cb); }
+          else if (m.t === "riserva") { if (m.gen >= S.gen) S.copia = m.stato; }   // sono il vice: tengo la copia della partita
+          else if (m.t === "appello") { if (S.rete) S.rete.invia({ t: "presente" }); }   // il nuovo host chiede chi c'è
+          else if (m.t === "avviso") avviso(m.testo);
+        },
+        // l'host è sparito (o è tornato): se sono un vice, dopo un attimo prendo il suo posto (il secondo vice aspetta il doppio)
+        onHostVia: function (via) {
+          clearTimeout(S.tVice); S.tVice = null;
+          if (!via) return;
+          var v = S.vm, pos = v && v.vici ? v.vici.indexOf(S.myId) : -1;
+          if (!v || (v.fase !== "gioco" && v.fase !== "fine") || pos < 0 || !S.copia || S.copia.gen !== v.gen) return;
+          S.tVice = setTimeout(subentra, SUBENTRO_MS * (pos + 1));
+        },
+        onChiuso: function () { errore(t, "La partita è stata chiusa dall'host."); },
+        onErrore: function () { errore(t, "Problema di collegamento. Riprova."); }
+      });
+    }
+    function subentra() {
+      S.tVice = null;
+      var v = S.vm; if (!v || !v.vici || v.vici.indexOf(S.myId) < 0 || !S.copia || !S.rete || S.copia.gen !== S.gen) return;   // se un altro vice ha già preso il posto, niente
+      var copia = S.copia, rete = S.rete;
+      S.copia = null; S.rete = null;
+      try { rete.lascia(); } catch (e) {}
+      host(t, { codice: codice, stato: copia, io: S.myId, omini: S.omini });
+    }
+    function attesa() {
+      var s = t.schermata({ icona: "🕵️", titolo: "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
+      t.mostra(s);
+    }
+  }
+
+  // =========================================================
+  //  DISEGNO (uguale per host e ospiti): saletta, tabellone, fine
+  // =========================================================
+  var UI = null;   // la schermata di gioco si costruisce UNA volta per tabellone e poi si aggiorna a pezzi
+  function disegna(t, vm, cb) {
+    if (vm.fase === "lobby" || !vm.tab) { UI = null; return lobby(t, vm, cb); }
+    if (!UI || UI.bid !== vm.bid || !UI.s.isConnected) UI = creaSchermo(t, vm, cb);
+    UI.cb = cb; UI.vm = vm;
+    aggiorna(UI, vm, cb);
+  }
+  function trova(vm, id) { for (var i = 0; i < vm.players.length; i++) if (vm.players[i].id === id) return vm.players[i]; return null; }
+  function prontiVm(vm) {
+    var vivi = vm.players.filter(function (p) { return !p.via; });
+    if (vivi.length < (vm.nsq === 3 ? 6 : MIN)) return false;
+    for (var k = 0; k < vm.nsq; k++) if (vivi.filter(function (p) { return p.team === k; }).length < 2) return false;
+    return true;
+  }
+  function lobby(t, vm, cb) {
+    stile();
+    var el = t.el, io = trova(vm, cb.myId), box = el("div", { class: "or-squadre" });
+    for (var k = 0; k < vm.nsq; k++) (function (k) {
+      var mem = vm.players.filter(function (p) { return p.team === k; });
+      box.appendChild(el("div", { class: "or-sq", style: "--c:" + SQ[k].col }, [
+        el("div", { class: "or-sq-testa" }, [
+          el("b", { text: SQ[k].em + " " + SQ[k].nome }),
+          io && io.team !== k ? el("button", { class: "btn btn-fantasma btn-piccolo", text: "Vengo qui", onclick: function () { cb.manda({ t: "squadra", s: k }); } }) : null ]),
+        el("div", { class: "or-sq-membri" }, mem.length ? mem.map(function (p) {
+          return el("span", { class: "or-membro" + (p.id === cb.myId ? " tu" : ""), text: (vm.capo[k] === p.id ? "👑 " : "") + p.nome + (p.id === cb.myId ? " (tu)" : "") });
+        }) : [ el("span", { class: "or-vuota", text: "Nessuno: servono almeno 2" }) ]),
+        io && io.team === k && vm.capo[k] !== cb.myId ? el("button", { class: "btn btn-fantasma btn-piccolo", text: "👑 Faccio io il capo", onclick: function () { cb.manda({ t: "capo" }); } }) : null ]));
+    })(k);
+    if (cb.sonoHost) box.appendChild(el("button", { class: "btn btn-fantasma btn-piccolo", text: "🔀 Squadre a caso", onclick: function () { cb.manda({ t: "mischia" }); } }));
+    var ok = prontiVm(vm);
+    var nota = vm.nsq === 3 ? "A 3 squadre: almeno 6 giocatori, 2 per squadra." : "Almeno 4 giocatori, 2 per squadra.";
+    var info = [];
+    if (vm.oro) info.push("⭐ Parola d'oro accesa");
+    if (vm.gruppoN) info.push("📝 " + vm.gruppoN + (vm.gruppoN === 1 ? " parola vostra" : " parole vostre") + " nel mazzo");
+    if (info.length) nota += " " + info.join(" · ") + ".";
+    t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: vm.nsq === 3 ? 6 : MIN,
+      vuoti: Math.max(0, (vm.nsq === 3 ? 6 : MIN) - vm.players.length),   // solo i posti che mancano per cominciare
+      giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: vm.hostId ? p.id === vm.hostId : i === 0, tu: p.id === cb.myId }; }),
+      extra: [ box ], puoComincia: ok, nota: ok ? "Ognuno sceglie la sua squadra; il capo ha la 👑." + (info.length ? " " + info.join(" · ") + "." : "") : nota, testoComincia: "Comincia ▶",
+      attesa: "Scegli la tua squadra e aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
+  }
+  function creaSchermo(t, vm, cb) {
+    stile();
+    var el = t.el, s = t.schermata({}); s.classList.add("or-piena");   // schermo intero: niente titolo, niente scorrimento
+    var ui = { t: t, el: el, s: s, bid: vm.bid, cb: cb, carte: [], kSotto: "", kProp: [], chip: [], ultimaN: vm.ultima ? vm.ultima.n : 0, avCache: {} };
+    ui.chips = el("div", { class: "or-chips" });
+    for (var k = 0; k < vm.nsq; k++) { var c = el("div", { class: "or-chip", style: "--c:" + SQ[k].col }); ui.chip.push(c); ui.chips.appendChild(c); }
+    var esci = el("button", { class: "or-esci", "aria-label": "Esci", text: "‹", onclick: function () { ui.cb.onEsci(); } });
+    ui.ind = el("div", { class: "or-ind" });
+    ui.storia = el("div", { class: "or-storia" });
+    ui.tab = el("div", { class: "or-tab" });
+    vm.tab.forEach(function (c, i) {
+      var w = el("span", { class: "or-w", text: c.w }), pr = el("span", { class: "or-pr" }), hint = el("span", { class: "or-hint", text: "tocca ancora" });
+      var b = el("button", { class: "or-carta" }, [ w, pr, hint ]);
+      var L = c.w.length; w.style.fontSize = L <= 6 ? "clamp(10px,3.2vw,15px)" : L <= 8 ? "clamp(9px,2.75vw,13.5px)" : "clamp(8px,2.35vw,12px)";
+      b.addEventListener("click", function () { tocca(ui, i); });
+      ui.carte.push({ b: b, pr: pr, cls: "" }); ui.tab.appendChild(b);
+    });
+    ui.msg = el("div", { class: "or-msg" });
+    ui.sotto = el("div", { class: "or-sotto" });
+    s._contenuto.appendChild(el("div", { class: "or-scena" }, [ el("div", { class: "or-barra" }, [ esci, ui.chips ]), ui.ind, ui.storia, ui.tab, ui.msg, ui.sotto ]));
+    t.mostra(s);
+    return ui;
+  }
+  // chi sono io in questa partita
+  function ruolo(vm, cb) {
+    var io = trova(vm, cb.myId), team = io ? io.team : -1;
+    var capo = team >= 0 && vm.capo[team] === cb.myId;
+    var capoVia = team >= 0 && (function () { var c = trova(vm, vm.capo[team]); return !c || c.via; })();
+    return { io: io, team: team, capo: capo, capoVia: capoVia, mioTurno: vm.fase === "gioco" && team === vm.turno,
+      indovino: vm.fase === "gioco" && team === vm.turno && !capo && vm.passo === "indovina" };
+  }
+  function tocca(ui, i) {
+    var vm = ui.vm, r = ruolo(vm, ui.cb), c = vm.tab[i];
+    if (!r.indovino || !c || c.g) return;
+    if (vm.prop[ui.cb.myId] === i) ui.cb.manda({ t: "gira", i: i });   // secondo tocco sulla stessa parola: si gira
+    else ui.cb.manda({ t: "proponi", i: i });
+  }
+  function testaAvatar(ui, id, nome, team) {
+    var cfg = (ui.cb.omini && ui.cb.omini() || {})[id];
+    var k = id + "|" + (cfg ? 1 : 0);
+    if (!ui.avCache[k]) ui.avCache[k] = cfg && window.SGOmino ? SGOmino.svg(cfg, { busto: true }) : "<b>" + String(nome || "?").charAt(0).toUpperCase() + "</b>";
+    return "<span class='or-av' style='--c:" + (SQ[team] ? SQ[team].col : "#888") + "'>" + ui.avCache[k] + "</span>";
+  }
+  function aggiorna(ui, vm, cb) {
+    var r = ruolo(vm, cb), key = vm.fase === "gioco" && r.capo ? cb.chiave() : null, fine = vm.fase === "fine";
+    // ---- in alto: quante parole mancano a ogni squadra, di chi è il turno ----
+    ui.chip.forEach(function (c, k) {
+      var tx = SQ[k].em + " " + SQ[k].nome + " " + (vm.resto[k] != null ? vm.resto[k] : "");
+      if (c.textContent !== tx) c.textContent = tx;
+      c.classList.toggle("turno", !fine && vm.turno === k);
+      c.classList.toggle("fuori", vm.fuori.indexOf(k) >= 0);
+      c.classList.toggle("mia", r.team === k);
+    });
+    // ---- l'indizio ----
+    var ind;
+    if (fine) ind = vm.vince >= 0 ? "🎉 Vincono i " + SQ[vm.vince].nome + "!" : "Partita finita";
+    else if (vm.passo === "indizio") ind = r.mioTurno && r.capo ? "👑 Tocca a te: dai l'indizio" : "👑 Il capo dei " + SQ[vm.turno].nome + " pensa all'indizio…";
+    else ind = SQ[vm.turno].em + " «" + vm.indizio.parola + "» " + (vm.indizio.n === 0 ? "∞" : vm.indizio.n);
+    if (ui.ind.textContent !== ind) ui.ind.textContent = ind;
+    ui.ind.style.setProperty("--c", fine ? (SQ[vm.vince] || SQ[0]).col : SQ[vm.turno].col);
+    var st = vm.passo === "indovina" && !fine ? (vm.tentativi >= 99 ? "tentativi liberi" : "ancora " + vm.tentativi + (vm.tentativi === 1 ? " tentativo" : " tentativi")) : "";
+    var prima = vm.storia.filter(function (x) { return !vm.indizio || x !== vm.storia[vm.storia.length - 1]; }).slice(-4).reverse()
+      .map(function (x) { return SQ[x.k].em + " " + x.parola + " " + (x.n === 0 ? "∞" : x.n); }).join("  ·  ");
+    var stx = [st, prima].filter(Boolean).join("   |   ");
+    if (ui.storia.textContent !== stx) ui.storia.textContent = stx;
+    // ---- il tabellone (solo le carte che cambiano) ----
+    var chi = {};   // parola -> chi la propone
+    Object.keys(vm.prop || {}).forEach(function (id) { var i = vm.prop[id]; (chi[i] = chi[i] || []).push(id); });
+    vm.tab.forEach(function (c, i) {
+      var C = ui.carte[i], col = c.c != null ? c.c : (key ? key[i] : null);
+      var cls = "or-carta" + (c.g ? " g" : "") + (col != null ? " c" + col : "") + (!c.g && key ? " chiave" : "") + (fine && !c.g ? " svelata" : "") + (c.oro ? " oro" : "") +
+        (r.indovino && !c.g ? " attiva" : "") + (vm.prop[cb.myId] === i && r.indovino ? " mia" : "");
+      if (C.cls !== cls) { C.b.className = cls; C.cls = cls; }
+      var kp = (chi[i] || []).join(",");
+      if (C.kp !== kp) {
+        C.kp = kp;
+        C.pr.innerHTML = (chi[i] || []).slice(0, 4).map(function (id) { var p = trova(vm, id); return testaAvatar(ui, id, p && p.nome, p ? p.team : -1); }).join("");
+      }
+    });
+    // la parola appena girata: un piccolo scatto e il suo suono (uguale su tutti i telefoni)
+    if (vm.ultima && vm.ultima.n !== ui.ultimaN) {
+      ui.ultimaN = vm.ultima.n;
+      var C = ui.carte[vm.ultima.i]; if (C) { C.b.classList.remove("appena"); void C.b.offsetWidth; C.b.classList.add("appena"); }
+      suona(vm.ultima.oro ? "oro" : vm.ultima.c === "x" ? "nera" : vm.ultima.c === vm.ultima.k ? "giusta" : vm.ultima.c === "n" ? "neutra" : "sbagliata");
+    }
+    if (ui.msg.textContent !== (vm.msg || "")) ui.msg.textContent = vm.msg || "";
+    // ---- in basso: cosa posso fare io (si ricostruisce solo se cambia il mio ruolo o la fase) ----
+    var ks = [vm.fase, vm.passo, vm.turno, r.team, r.capo, r.capoVia, vm.girate > 0, vm.fuori.join(""), vm.players.filter(function (p) { return p.team === r.team && !p.via; }).length].join("|");
+    if (ks !== ui.kSotto) { ui.kSotto = ks; disegnaSotto(ui, vm, cb, r); }
+  }
+  function disegnaSotto(ui, vm, cb, r) {
+    var el = ui.el, box = ui.sotto;
+    while (box.firstChild) box.removeChild(box.firstChild);
+    function stato(tx) { box.appendChild(el("div", { class: "or-stato", text: tx })); }
+    if (vm.fase === "fine") {
+      var vinti = vm.players.filter(function (p) { return p.team === vm.vince; }).map(function (p) { return p.nome; }).join(", ");
+      stato((r.team === vm.vince ? "Avete vinto! " : "") + "Vincono: " + vinti + ". Sul tabellone ora vedete di chi era ogni parola.");
+      var riga = el("div", { class: "or-riga" });
+      if (cb.sonoHost) riga.appendChild(el("button", { class: "or-btn ok", text: "↻ Nuova partita", onclick: cb.onNuova }));
+      riga.appendChild(el("button", { class: "or-btn", text: "🏠 Esci", onclick: function () { cb.onEsci(); } }));
+      box.appendChild(riga);
+      if (!cb.sonoHost) stato("Se l'host fa un'altra partita, tornate da soli nella saletta.");
+      return;
+    }
+    if (r.team >= 0 && vm.fuori.indexOf(r.team) >= 0) { stato("La vostra squadra è fuori: guardate come va a finire."); return; }
+    if (!r.mioTurno) { stato("Tocca ai " + SQ[vm.turno].nome + "…" + (r.capo ? " Intanto pensa al prossimo indizio." : "")); return; }
+    if (vm.passo === "indizio") {
+      if (!r.capo) { stato("Il vostro capo sta pensando all'indizio…"); return; }
+      var input = el("input", { type: "text", class: "or-input", placeholder: "Una parola sola", maxlength: "20", autocomplete: "off", autocapitalize: "characters" });
+      var numeri = el("div", { class: "or-numeri" }), scelto = { n: 1 }, errore = el("div", { class: "or-err" });
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].forEach(function (n) {
+        var b = el("button", { class: "or-num" + (n === 1 ? " on" : ""), text: n === 0 ? "∞" : String(n), onclick: function () {
+          scelto.n = n; [].forEach.call(numeri.children, function (x) { x.classList.remove("on"); }); b.classList.add("on");
+        } });
+        numeri.appendChild(b);
+      });
+      input.addEventListener("input", function () { errore.textContent = ""; });
+      function manda() {
+        var err = erroreIndizio(input.value, vm.tab);
+        if (err) { errore.textContent = err; return; }
+        cb.manda({ t: "indizio", parola: input.value.trim(), n: scelto.n });
+        input.blur();
+      }
+      input.addEventListener("keydown", function (e) { if (e.key === "Enter") manda(); });
+      box.appendChild(el("div", { class: "or-riga" }, [ input, el("button", { class: "or-btn ok corto", text: "Invia", onclick: manda }) ]));
+      box.appendChild(numeri); box.appendChild(errore);
+      return;
+    }
+    if (r.capo) { stato("La tua squadra sta cercando… Tu non puoi aiutarli!"); return; }
+    stato("Tocca una parola per proporla, tocca di nuovo per girarla.");
+    box.appendChild(el("div", { class: "or-riga" }, [
+      el("button", { class: "or-btn", text: "✋ Basta così, passo", disabled: vm.girate > 0 ? null : "disabled", onclick: function () { cb.manda({ t: "passo" }); } }) ]));
+  }
+  function avviso(testo) {
+    if (!UI || !testo) return;
+    UI.msg.textContent = testo; UI.msg.classList.remove("su"); void UI.msg.offsetWidth; UI.msg.classList.add("su");
+  }
+  // suoni brevi (niente vibrazione qui: vibra solo il tasto che tocchi tu)
+  function suona(tipo) {
+    var ctx = SG.audioCtx && SG.audioCtx(); if (!ctx) return;
+    var note = { oro: [[784, 0], [988, 0.09], [1175, 0.18], [1568, 0.27]], giusta: [[784, 0], [1046, 0.1]], neutra: [[392, 0]], sbagliata: [[311, 0], [233, 0.14]], nera: [[160, 0], [110, 0.18], [70, 0.36]] }[tipo] || [];
+    note.forEach(function (x) {
+      try {
+        var t0 = ctx.currentTime + x[1], o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = tipo === "nera" ? "sawtooth" : "triangle"; o.frequency.setValueAtTime(x[0], t0);
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.09, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.28);
+        o.connect(g); g.connect(ctx.destination); o.start(t0); o.stop(t0 + 0.3);
+      } catch (e) {}
+    });
+  }
+  function errore(t, testo) {
+    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
+    t.mostra(s);
+  }
+  function senzaRete(t) {
+    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Questo gioco si gioca online: funziona quando l'app è aperta dal sito pubblicato." }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
+    t.mostra(s);
+  }
+  var cssFatto = false;
+  function stile() {
+    if (cssFatto) return; cssFatto = true;
+    var st = document.createElement("style");
+    st.textContent = [
+      ".schermata.or-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#15123a}",
+      ".schermata.or-piena>.testa,.schermata.or-piena>.piede{display:none}",
+      ".schermata.or-piena>.contenuto{height:100%;margin:0;padding:0}",
+      ".or-scena{height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;gap:6px;padding:calc(6px + env(safe-area-inset-top)) 8px calc(8px + env(safe-area-inset-bottom));overflow:hidden;color:#fff;user-select:none;-webkit-user-select:none}",
+      ".or-barra{display:flex;align-items:center;gap:8px;flex:none}",
+      ".or-esci{width:34px;height:34px;flex:none;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:1.2rem;font-weight:900;cursor:pointer}",
+      ".or-chips{flex:1;display:flex;gap:5px;min-width:0}",
+      ".or-chip{flex:1;min-width:0;text-align:center;font-weight:900;font-size:.8rem;padding:6px 4px;border-radius:10px;background:rgba(255,255,255,.08);box-shadow:inset 0 -3px var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".or-chip.turno{background:var(--c)}.or-chip.mia:after{content:' (voi)';font-weight:700;font-size:.7rem}.or-chip.fuori{opacity:.35;text-decoration:line-through}",
+      ".or-ind{flex:none;text-align:center;font-weight:900;font-size:1.05rem;padding:7px 8px;border-radius:12px;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 2px var(--c,#888);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".or-storia{flex:none;text-align:center;font-size:.72rem;font-weight:700;opacity:.75;min-height:1.1em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".or-tab{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr));gap:4px}",
+      ".or-carta{position:relative;min-width:0;min-height:0;border:0;border-radius:9px;padding:2px;background:#f1f3f5;color:#14113a;font:inherit;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:default;-webkit-tap-highlight-color:transparent;touch-action:manipulation;overflow:hidden}",
+      ".or-w{display:block;max-width:100%;line-height:1.05;letter-spacing:-.02em;overflow-wrap:anywhere;text-align:center}",
+      ".or-carta.attiva{cursor:pointer}.or-carta.attiva:active{transform:scale(.96)}",
+      ".or-carta.mia{box-shadow:inset 0 0 0 3px #fab005}",
+      ".or-hint{display:none;position:absolute;left:0;right:0;bottom:2px;font-size:8px;font-weight:800;color:#e67700;text-transform:uppercase}.or-carta.mia .or-hint{display:block}",
+      ".or-pr{position:absolute;top:2px;right:2px;display:flex;gap:1px}",
+      ".or-av{width:17px;height:17px;border-radius:50%;overflow:hidden;background:var(--c);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;box-shadow:0 0 0 1.5px #fff}.or-av svg{width:100%;height:100%;display:block}",
+      // la chiave del capo: colori pieni ma più chiari sulle parole ancora coperte
+      ".or-carta.chiave.c0{background:#ffc9c9;box-shadow:inset 0 -5px #e03131}.or-carta.chiave.c1{background:#a5d8ff;box-shadow:inset 0 -5px #1c7ed6}.or-carta.chiave.c2{background:#b2f2bb;box-shadow:inset 0 -5px #2f9e44}",
+      ".or-carta.chiave.cn{background:#efe3c8}.or-carta.chiave.cx{background:#212529;color:#fff}",
+      // le parole girate
+      ".or-carta.g{color:#fff}.or-carta.g .or-w{opacity:.85}",
+      ".or-carta.g.c0{background:#e03131}.or-carta.g.c1{background:#1c7ed6}.or-carta.g.c2{background:#2f9e44}.or-carta.g.cn{background:#c9b48a;color:#3d2f12}.or-carta.g.cx{background:#000;box-shadow:inset 0 0 0 2px #fa5252}",
+      // fine partita: si vede la chiave di tutte le parole che nessuno aveva girato
+      ".or-carta.svelata{opacity:.8}.or-carta.svelata.c0{background:#ffc9c9}.or-carta.svelata.c1{background:#a5d8ff}.or-carta.svelata.c2{background:#b2f2bb}.or-carta.svelata.cn{background:#efe3c8}.or-carta.svelata.cx{background:#212529;color:#fff}",
+      ".or-carta.appena{animation:orGira .45s ease-out}",
+      "@keyframes orGira{0%{transform:scale(1.12)}100%{transform:none}}",
+      ".or-msg{flex:none;text-align:center;font-weight:800;font-size:.82rem;min-height:1.2em;line-height:1.2}.or-msg.su{animation:orMsg 1.2s ease}",
+      "@keyframes orMsg{0%{color:#ffd43b;transform:scale(1.06)}100%{color:#fff;transform:none}}",
+      ".or-sotto{flex:none;display:flex;flex-direction:column;gap:6px}",
+      ".or-stato{text-align:center;font-weight:800;font-size:.88rem;line-height:1.3;padding:2px 0}",
+      ".or-riga{display:flex;gap:6px}",
+      ".or-btn{flex:1;min-height:46px;border:0;border-radius:14px;font:inherit;font-weight:900;font-size:.92rem;color:#fff;background:#495057;cursor:pointer;touch-action:manipulation}.or-btn.ok{background:#2f9e44}.or-btn.corto{flex:0 0 auto;padding:0 18px}.or-btn:disabled{opacity:.35}",
+      ".or-input{flex:1;min-width:0;height:46px;border:0;border-radius:14px;padding:0 14px;font:inherit;font-size:1.05rem;font-weight:800;text-transform:uppercase;color:#14113a;background:#fff}",
+      ".or-numeri{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}",
+      ".or-num{height:38px;border:0;border-radius:10px;font:inherit;font-weight:900;font-size:1rem;color:#14113a;background:#dee2e6;cursor:pointer;touch-action:manipulation}.or-num.on{background:#fab005}",
+      ".or-err{min-height:1.1em;text-align:center;font-size:.8rem;font-weight:800;color:#ffa8a8}",
+      // saletta: le squadre
+      ".or-squadre{display:flex;flex-direction:column;gap:8px;margin:6px 0}",
+      ".or-sq{border-radius:14px;padding:8px 10px;background:rgba(255,255,255,.06);box-shadow:inset 4px 0 var(--c)}",
+      ".or-sq-testa{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}",
+      ".or-sq-membri{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px}",
+      ".or-membro{padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.12);font-weight:800;font-size:.85rem}.or-membro.tu{box-shadow:inset 0 0 0 2px var(--c)}",
+      ".or-vuota{font-size:.8rem;opacity:.7}",
+      // la parola d'oro (girata, o svelata a fine partita)
+      ".or-carta.g.oro{background:#fab005;color:#3d2a00;box-shadow:inset 0 0 0 2px #fff3bf}.or-carta.g.oro .or-w{opacity:1}.or-carta.g.oro:before{content:'⭐';position:absolute;top:1px;left:3px;font-size:10px}",
+      ".or-carta.svelata.oro{background:#ffe066}",
+      // le tue parole nelle impostazioni: una alla volta, ognuna con la sua ✕
+      ".or-aggiungi{display:flex;gap:6px;align-items:center}.or-aggiungi .link-campo{flex:1;min-width:0;margin:0}",
+      ".or-esito{min-height:1.2em;margin:4px 0 0}",
+      ".or-conta{font-size:.8rem;font-weight:800;opacity:.8;margin:6px 0 4px}",
+      ".or-lista{display:flex;flex-wrap:wrap;gap:6px}",
+      ".or-parola{display:inline-flex;align-items:center;gap:4px;padding:4px 4px 4px 10px;border-radius:999px;background:rgba(255,255,255,.12);font-weight:800;font-size:.85rem}",
+      ".or-x{width:24px;height:24px;border:0;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font:inherit;font-size:.75rem;font-weight:900;cursor:pointer;touch-action:manipulation}",
+      ".or-lista-tasti{display:flex;gap:6px;margin-top:8px}"
+    ].join("");
+    document.head.appendChild(st);
+  }
+
+  SG.registra({
+    id: ID, nome: "Parola d'ordine", icona: "🕵️",
+    descrizione: "Come Codenames: il capo dà un indizio di una parola, la squadra trova le sue parole sul tabellone. Occhio alla parola nera! A 2 o 3 squadre, ognuno dal suo telefono.",
+    giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 4–12 giocatori",
+    // "Prova da solo" la vede solo il proprietario (account IL PAPPONE): per vedere com'è il gioco anche senza amici
+    modi: [ { modo: "prova", icona: "🧪", nome: "Prova da solo", sotto: "Solo per te: tu e Matt contro due bot", soloPer: "IL PAPPONE" } ], soloOnline: true,
+    regole: [
+      "Si gioca a <b>2 o 3 squadre</b>. Sul tabellone ci sono 25 parole: alcune sono di una squadra, alcune di nessuno e una è la <b>parola nera</b>.",
+      "Solo il <b>capo</b> di ogni squadra (👑) vede di chi è ogni parola. Nel suo turno dà un <b>indizio di una parola sola</b> e un numero: quante parole sue c'entrano (es. «Caldo, 2»).",
+      "La squadra ne discute e le gira una alla volta: si possono girare fino al numero dell'indizio <b>più una</b>. Se giri una parola di un'altra squadra o di nessuno, il turno passa.",
+      "Chi gira la <b>parola nera</b> perde (a 3 squadre esce dalla partita). Vince la squadra che trova per prima tutte le sue parole.",
+      "L'indizio non può essere una parola del tabellone (né quasi uguale). Il capo può dare anche «∞»: tentativi liberi.",
+      "⭐ <b>Parola d'oro</b> (se l'host la lascia accesa): tra le parole di nessuno una è d'oro, e non lo sa nessuno, nemmeno i capi. Chi la gira, invece di perdere il turno, gioca un altro turno."
+    ],
+    impostazioni: function (box, dove, aiuti) {
+      var el = aiuti.el;
+      stile();
+      var prova = aiuti.modo === "prova";
+      dove.squadre = 2; dove.oro = true; dove.usaMie = true; dove.capoIo = true;
+      // le scelte con bottoni .modo-chip: così l'host le ritrova in "⚙️ Regole" nella saletta
+      function chips(titolo, valori, chiave, nota) {
+        box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: titolo }));
+        var g = el("div", { class: "modo-griglia", style: "grid-template-columns:repeat(" + valori.length + ",1fr)" });
+        valori.forEach(function (v) {
+          var b = el("button", { class: "modo-chip" + (dove[chiave] === v[0] ? " attiva" : ""), style: "justify-content:center", onclick: function () {
+            dove[chiave] = v[0]; [].forEach.call(g.children, function (c) { c.className = "modo-chip"; }); b.className = "modo-chip attiva";
+          } }, [ el("div", { class: "mt", text: v[1] }) ]);
+          g.appendChild(b);
+        });
+        box.appendChild(g);
+        if (nota) box.appendChild(el("p", { class: "modulo-nota", text: nota }));
+      }
+      if (prova) chips("Nella tua squadra il capo è…", [[true, "Io"], [false, "Matt"]], "capoIo", "I bot danno indizi a caso e indovinano un po' a naso: la prova serve a vedere come funziona il gioco.");
+      else chips("Quante squadre", [[2, "2 squadre"], [3, "3 squadre (da 6)"]], "squadre");
+      chips("⭐ Parola d'oro", [[true, "Sì"], [false, "No"]], "oro", "Una parola di nessuno è d'oro, e non lo sa nessuno: chi la gira gioca un altro turno.");
+      // 📝 le TUE parole: restano salvate sul profilo. Si scrivono di fila ("Peppe, Ibiza, Kebab"), così gli amici se le passano;
+      // dopo si vedono una alla volta, ognuna con la sua ✕
+      var lista = leggiGruppo(window.SG && SG.listaProfilo ? SG.listaProfilo("ordine") : []);
+      dove.gruppo = lista.slice();
+      box.appendChild(el("div", { class: "etichetta", style: "margin-top:14px", text: "📝 Le tue parole" }));
+      box.appendChild(el("p", { class: "modulo-nota", text: "Restano salvate sul tuo profilo. Scrivile di fila, separate da virgola e spazio (es. Peppe, Ibiza, Kebab): così le puoi copiare e passare agli amici." }));
+      var input = el("input", { type: "text", class: "link-campo", maxlength: "2000", placeholder: "Peppe, Ibiza, Kebab", autocomplete: "off" });
+      var esito = el("p", { class: "modulo-nota or-esito" });
+      var elenco = el("div", { class: "or-lista" });
+      var conta = el("div", { class: "or-conta" });
+      var bCopia = el("button", { class: "btn btn-fantasma btn-piccolo", text: "📋 Copia tutte", onclick: function () {
+        var tx = lista.map(function (w) { return w.charAt(0) + w.slice(1).toLowerCase(); }).join(", ");
+        function fatto() { bCopia.textContent = "✅ Copiate!"; setTimeout(function () { bCopia.textContent = "📋 Copia tutte"; }, 1600); }
+        try { navigator.clipboard.writeText(tx).then(fatto, function () { window.prompt("Copia le tue parole:", tx); }); } catch (e) { window.prompt("Copia le tue parole:", tx); }
+      } });
+      var bSvuota = el("button", { class: "btn btn-fantasma btn-piccolo", text: "🗑️ Cancella tutte", onclick: function () {
+        if (!lista.length || !window.confirm("Cancellare tutte le tue " + lista.length + " parole?")) return;
+        lista = []; salva(); disegnaLista();
+      } });
+      function salva() {
+        if (window.SG && SG.salvaListaProfilo) SG.salvaListaProfilo("ordine", lista.slice());
+        dove.gruppo = lista.slice();   // così anche "⚙️ Regole" in saletta se ne accorge
+      }
+      function disegnaLista() {
+        while (elenco.firstChild) elenco.removeChild(elenco.firstChild);
+        lista.forEach(function (w, i) {
+          elenco.appendChild(el("span", { class: "or-parola" }, [ el("span", { text: w }),
+            el("button", { class: "or-x", "aria-label": "Cancella " + w, text: "✕", onclick: function () { lista.splice(i, 1); salva(); disegnaLista(); } }) ]));
+        });
+        conta.textContent = lista.length ? (lista.length === 1 ? "1 parola" : lista.length + " parole") + " · ne finiscono fino a " + MAX_GRUPPO + " in ogni tabellone" : "Ancora nessuna parola.";
+        bCopia.style.display = bSvuota.style.display = lista.length ? "" : "none";
+      }
+      function aggiungi() {
+        var nuove = String(input.value || "").split(/[,;\n]+/), messe = 0, scartate = [];
+        nuove.forEach(function (w) {
+          if (!w.trim()) return;
+          var p = pulisciParola(w);
+          if (!p) { scartate.push(w.trim()); return; }
+          if (lista.some(function (x) { return norm(x) === norm(p); })) return;   // c'è già
+          if (lista.length >= MAX_LISTA) { scartate.push(w.trim()); return; }
+          lista.push(p); messe++;
+        });
+        input.value = "";
+        if (messe) { salva(); disegnaLista(); }
+        esito.textContent = (messe ? "✅ Aggiunte: " + messe + ". " : "") + (scartate.length ? "Non valgono (max 12 lettere, niente numeri): " + scartate.slice(0, 5).join(", ") + (scartate.length > 5 ? "…" : "") : "");
+      }
+      input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); aggiungi(); } });
+      box.appendChild(el("div", { class: "or-aggiungi" }, [ input, el("button", { class: "btn btn-primario btn-piccolo", text: "➕ Aggiungi", onclick: aggiungi }) ]));
+      box.appendChild(esito);
+      box.appendChild(conta);
+      box.appendChild(elenco);
+      box.appendChild(el("div", { class: "or-lista-tasti" }, [ bCopia, bSvuota ]));
+      disegnaLista();
+      chips("Le tue parole nel tabellone", [[true, "Sì"], [false, "No"]], "usaMie");
+    },
+    avvia: function (t) {
+      if (t.linkParams && t.linkParams.stanza) return ospite(t, t.linkParams.stanza);   // entrato da un invito
+      return host(t);
+    }
+  });
+  window.__ORDINE = { erroreIndizio: erroreIndizio, leggiGruppo: leggiGruppo, radice: radice };
 })();
 
 /* =========================================================
