@@ -32,6 +32,7 @@ window.SG_NOVITA = [
       "⭐ Parola d'oro (si può spegnere): tra le parole di nessuno una è d'oro, e non lo sa nessuno, nemmeno i capi. Chi la gira, invece di perdere il turno, gioca un altro turno.",
       "Ognuno sceglie la sua squadra nella saletta, chi vuole fa il capo, e a ogni nuova partita il capo passa al compagno.",
       "Se uno esce e rientra, torna nella sua squadra; chi arriva a metà entra subito in gioco. Se il capo esce, un compagno può prendere il suo posto.",
+      "🔄 Host di riserva: se chi ha aperto la stanza va su WhatsApp, blocca il telefono o gli si chiude l'app, dopo pochi secondi un altro giocatore prende il suo posto e la partita va avanti. Quando l'host torna, rientra come giocatore normale nella sua squadra. I giocatori di riserva sono due, così regge anche se ne escono due insieme.",
       "Il telefono controlla gli indizi: non vale dare una parola che è sul tabellone (neanche al plurale). A fine partita si vede di chi era ogni parola.",
       "Si gioca online, ognuno dal suo telefono, da 4 a 12 giocatori. Lo trovi in Quiz & parole."
     ]

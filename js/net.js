@@ -79,12 +79,22 @@
       if (ritardo) setTimeout(via, ritardo); else via();
     },
 
-    // L'host apre una stanza. cb: { onCodice, onConnesso, onAddio(id), onMsg(id,msg), onErrore(e) }
-    ospita: function (giocoId, cb) {
+    // Ricorda con quale codice-giocatore questo telefono sta in una stanza (es. "host"):
+    // se poi ci rientra come ospite (host di riserva, app riaperta) torna la stessa persona.
+    ricordaId: function (codice, id) {
+      try { localStorage.setItem("sg-id-" + String(codice).toUpperCase(), JSON.stringify({ id: id, t: Date.now() })); } catch (e) {}
+    },
+
+    // L'host apre una stanza. cb: { onCodice, onConnesso, onAddio(id), onMsg(id,msg), onErrore(e), onStato(msg) }
+    // opz (facoltative, per l'host di riserva): codice = prende il posto in una stanza che c'è già;
+    // ascoltaStato = riceve anche quello che mandano gli host (onStato), così si accorge se un altro ha preso il posto;
+    // keepalive = ogni quanti secondi dice al broker "ci sono" (più basso = se sparisce ce ne si accorge prima)
+    ospita: function (giocoId, cb, opz) {
       if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
+      opz = opz || {};
       // La "sala" può imporre il codice della stanza (così lo conosce in anticipo
       // e lo manda agli altri per farli entrare in automatico).
-      var codice = SGNet._forza || codiceACaso(4);
+      var codice = opz.codice || SGNet._forza || codiceACaso(4);
       SGNet._forza = null;
       var T = topics(codice);
       var META = BASE + codice + "/meta";
@@ -95,7 +105,7 @@
       // (un tick dopo, così chi ci chiama ha già ricevuto l'oggetto "rete")
       setTimeout(function () { if (!chiusa) cb.onCodice && cb.onCodice(codice); }, 0);
       var client = mqtt.connect(BROKER, {
-        clean: true, reconnectPeriod: 2000,
+        clean: true, reconnectPeriod: 2000, keepalive: opz.keepalive || 60,
         // Se l'host sparisce all'improvviso, avvisa gli altri (che però lo aspettano un po')
         will: { topic: T.stato, payload: JSON.stringify({ t: "__hostgone" }), retain: false }
       });
@@ -103,14 +113,20 @@
         if (chiusa) return;
         // quando è davvero collegato la stanza è "pronta": lo comunichiamo al gioco
         client.subscribe(T.azioni, function () { if (!chiusa) cb.onConnesso && cb.onConnesso(); });
+        if (opz.ascoltaStato) client.subscribe(T.stato);
         // annuncia QUALE gioco è questa stanza, così chi entra col codice apre quello giusto
         try { client.publish(META, JSON.stringify({ g: giocoId || "" }), { retain: true }); } catch (e) {}
         // tornato dopo un buco (schermo bloccato, cambio app): lo dico a chi aspetta, così nessuno se ne va
         if (!primaVolta) try { client.publish(T.stato, JSON.stringify({ t: "__hostqui" }), { retain: false }); } catch (e) {}
         primaVolta = false;
       });
-      client.on("message", function (_t, payload) {
+      client.on("message", function (topic, payload, pacchetto) {
         if (chiusa) return;
+        if (topic === T.stato) {   // (solo con ascoltaStato) quello che mandano gli host: anche uno che ha preso il nostro posto
+          var s; try { s = JSON.parse(payload.toString() || "null"); } catch (e) { return; }
+          if (s && cb.onStato) cb.onStato(s, !!(pacchetto && pacchetto.retain));
+          return;
+        }
         var m; try { m = JSON.parse(payload.toString()); } catch (e) { return; }
         if (!m || !m.from) return;
         if (inForse[m.from]) { clearTimeout(inForse[m.from]); delete inForse[m.from]; }   // si è rifatto vivo in tempo
@@ -132,6 +148,13 @@
         // invio ad alta frequenza (streaming di gioco): NON trattenuto, per non intasare il broker
         inviaVeloce: function (msg) { try { if (!chiusa && client.connected) client.publish(T.stato, JSON.stringify(msg), { retain: false }); } catch (e) {} },
         inviaA: function (id, msg) { this.invia(msg); },
+        // se ne va in silenzio SENZA chiudere la stanza: un altro telefono ha preso il posto di host
+        lascia: function () {
+          if (chiusa) return;
+          chiusa = true; togli(h);
+          Object.keys(inForse).forEach(function (k) { clearTimeout(inForse[k]); }); inForse = {};
+          try { client.end(); } catch (e) {}   // uscita "educata": il broker non manda l'avviso "host sparito"
+        },
         chiudi: function () {
           if (chiusa) return;
           chiusa = true; togli(h);
@@ -147,7 +170,7 @@
       return segna(h, giocoId === "__sala");   // la sala resta aperta tra un gioco e l'altro
     },
 
-    // Un ospite entra con il codice. cb: { onAperto(id), onMsg(msg), onChiuso, onErrore(e) }
+    // Un ospite entra con il codice. cb: { onAperto(id), onMsg(msg), onChiuso, onErrore(e), onHostVia(sparito) }
     // opz.tieni = non chiuderla quando si cambia gioco (è la connessione della sala)
     entra: function (codice, cb, opz) {
       if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
@@ -179,13 +202,14 @@
         var testo = payload.toString(); if (!testo) return;
         var m; try { m = JSON.parse(testo); } catch (e) { return; }
         if (!m) return;
-        if (tAddio && !(pacchetto && pacchetto.retain)) { clearTimeout(tAddio); tAddio = null; avvisaHost(T.stato, false); }   // l'host c'è ancora
+        if (tAddio && !(pacchetto && pacchetto.retain)) { clearTimeout(tAddio); tAddio = null; avvisaHost(T.stato, false); cb.onHostVia && cb.onHostVia(false); }   // l'host c'è ancora
         if (entrata && !dentro && testo.indexOf('"' + myId + '"') >= 0) { dentro = true; smetti(); }   // l'host mi ha messo nella partita
         if (m.t === "__hostqui") return;
         if (m.t === "__hostgone") {
           if (m.voluto) { cb.onChiuso && cb.onChiuso(); return; }   // chiusa apposta
           // sparito all'improvviso (schermo bloccato, cambio app): gli do tempo di tornare (e lo dico sullo schermo)
           if (!tAddio) { avvisaHost(T.stato, true); tAddio = setTimeout(function () { tAddio = null; avvisaHost(T.stato, false); if (!chiusa) cb.onChiuso && cb.onChiuso(); }, ATTESA_HOST); }
+          cb.onHostVia && cb.onHostVia(true);   // un gioco con l'host di riserva può prendere il suo posto
           return;
         }
         cb.onMsg && cb.onMsg(m);
@@ -201,6 +225,12 @@
             // "ci sono", ogni tanto, solo se nel frattempo non ho mandato niente (meno messaggi = meno batteria)
             if (!tCi) tCi = setInterval(function () { if (!chiusa && Date.now() - ultimoInvio >= CI_SONO - 1000) pubblica({ t: "__ci" }); }, CI_SONO);
           }
+        },
+        // se ne va in silenzio (senza dire "esco"): serve all'host di riserva che sta per prendere il posto dell'host
+        lascia: function () {
+          if (chiusa) return;
+          chiusa = true; togli(h); smetti(); if (tAddio) { clearTimeout(tAddio); tAddio = null; avvisaHost(T.stato, false); } if (tCi) { clearInterval(tCi); tCi = null; }
+          try { client.end(); } catch (e) {}
         },
         chiudi: function () {
           if (chiusa) return;

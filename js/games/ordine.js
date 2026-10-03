@@ -75,14 +75,31 @@
   // =========================================================
   //  HOST: tiene la partita vera e manda a tutti la "foto" (vm)
   // =========================================================
-  function host(t) {
+  // HOST DI RISERVA: mentre si gioca l'host passa di nascosto tutta la partita a due "vice" (i primi due giocatori collegati).
+  // Se l'host sparisce (schermo bloccato, WhatsApp, app chiusa) dopo pochi secondi il vice prende il suo posto
+  // e la partita va avanti dal suo telefono; quando l'host torna rientra come giocatore normale, nella sua squadra.
+  // "gen" conta i cambi di host: le foto di un host vecchio (gen più basso) non contano più.
+  var SUBENTRO_MS = 6000;   // quanto aspetta il vice prima di prendere il posto (se l'host torna prima, niente cambia)
+  // ripresa (solo per il vice che prende il posto): { codice, stato (la copia della partita), io (il suo id), omini }
+  function host(t, ripresa) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var imp = t.impostazioni || {};
+    var IO = ripresa ? ripresa.io : "host";   // il mio id nella partita
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
-    var H = { fase: "lobby", codice: "…", pronta: false, nsq: +imp.squadre === 3 ? 3 : 2, gruppo: imp.usaMie === false ? [] : leggiGruppo(imp.gruppo), oro: imp.oro !== false,
-      players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost), team: 0 }], capo: [null, null, null],
+    var H = ripresa ? (function (r) {   // la partita come l'aveva l'host di prima
+      var h = JSON.parse(JSON.stringify(r.stato)), vecchio = h.hostId, io = null;
+      h.codice = r.codice; h.pronta = false; h.gen = (h.gen || 1) + 1; h.hostId = IO; h.vici = []; h.prop = {};
+      h.players.forEach(function (p) {
+        p.omino = avatarValido((r.omini || {})[p.id]);
+        if (p.id === vecchio) p.via = true;   // l'host di prima è sparito: se torna, rientra come giocatore
+        if (p.id === IO) { p.via = false; io = p; }
+      });
+      h.msg = "👑 " + (io ? io.nome : "Un amico") + " tiene la partita: l'host è uscito. Se torna, rientra nella sua squadra.";
+      return h;
+    })(ripresa) : { fase: "lobby", codice: "…", pronta: false, nsq: +imp.squadre === 3 ? 3 : 2, gruppo: imp.usaMie === false ? [] : leggiGruppo(imp.gruppo), oro: imp.oro !== false,
+      players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), team: 0 }], capo: [null, null, null],
       tab: null, bid: 0, turno: 0, passo: "indizio", indizio: null, tentativi: 0, girate: 0, prop: {}, storia: [], fuori: [],
-      vince: -1, classifica: null, msg: "", ultima: null, nGirate: 0 };
+      vince: -1, classifica: null, msg: "", ultima: null, nGirate: 0, gen: 1, hostId: IO, vici: [] };
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function presenti() { return H.players.filter(function (p) { return !p.via; }); }
     function membri(k) { return H.players.filter(function (p) { return p.team === k && !p.via; }); }
@@ -109,9 +126,33 @@
       sistemaCapi(); bd();
     };
 
+    var ripresaFatta = !ripresa, ceduto = false;
     var rete = SGNet.ospita(ID, {
-      onCodice: function (c) { H.codice = c; bd(); },
-      onConnesso: function () { H.pronta = true; bd(); },
+      onCodice: function (c) { H.codice = c; if (SGNet.ricordaId) SGNet.ricordaId(c, IO); bd(); },   // se rientro come ospite, torno la stessa persona
+      onConnesso: function () {
+        H.pronta = true;
+        if (!ripresaFatta) {   // il vice ha appena preso il posto: le chiavi ai capi e l'appello (chi non risponde è uscito anche lui)
+          ripresaFatta = true; mandaChiavi();
+          H.appello = {}; rete.inviaVeloce({ t: "appello", gen: H.gen });
+          setTimeout(function () {
+            if (ceduto || !H.appello) return;
+            H.players.forEach(function (p) { if (p.id !== IO && !p.via && !H.appello[p.id]) { p.via = true; delete H.prop[p.id]; } });
+            H.appello = null;
+            if (H.fase === "gioco") controllaTurno();
+            bd();
+          }, 5000);
+          controllaTurno();
+        }
+        bd();
+      },
+      // le foto degli host: se un altro ha preso il mio posto (gen più alto) torno giocatore;
+      // se arriva una foto vecchia (un host che non sa ancora di essere stato sostituito) rimetto la mia
+      onStato: function (s) {
+        if (ceduto || !s || s.t !== "vm" || !s.vm || s.vm.gen == null) return;
+        if (s.vm.gen > H.gen && s.vm.hostId !== IO) return cediPosto();
+        if (s.vm.gen === H.gen && s.vm.hostId && s.vm.hostId !== IO && s.vm.hostId < IO) return cediPosto();   // due vice partiti insieme: ne resta uno solo
+        if (s.vm.gen < H.gen) bd();
+      },
       onAddio: function (id) {
         var p = pById(id); if (!p) return;
         if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); sistemaCapi(); bd(); return; }
@@ -120,7 +161,27 @@
         bd();
       },
       onMsg: function (id, m) { azione(id, m); }
-    });
+    }, { codice: ripresa ? ripresa.codice : null, ascoltaStato: true, keepalive: 10 });
+    // un altro telefono ha preso il posto di host (io ero sparito): esco in silenzio e rientro come giocatore normale
+    function cediPosto() {
+      if (ceduto) return; ceduto = true;
+      try { rete.lascia(); } catch (e) {}
+      if (SGNet.ricordaId) SGNet.ricordaId(H.codice, IO);
+      ospite(t, H.codice);
+    }
+    // i vice: i primi due giocatori collegati dopo di me (se uno esce, lo sostituisce il prossimo). Gli mando di nascosto tutta la partita
+    // (senza gli avatar, li hanno già). Due, così se escono l'host e il primo vice quasi insieme c'è ancora chi prende il posto.
+    function scegliVice() {
+      var tenuti = (H.vici || []).filter(function (id) { var p = pById(id); return p && !p.via && id !== IO; });
+      H.players.forEach(function (p) { if (tenuti.length < 2 && !p.via && p.id !== IO && tenuti.indexOf(p.id) < 0) tenuti.push(p.id); });
+      H.vici = tenuti;
+    }
+    function mandaRiserva() {
+      if (!H.vici.length || (H.fase !== "gioco" && H.fase !== "fine")) return;
+      var copia = JSON.parse(JSON.stringify(H));
+      copia.players.forEach(function (p) { p.omino = null; });
+      H.vici.forEach(function (id) { rete.inviaVeloce({ t: "riserva", to: id, gen: H.gen, stato: copia }); });
+    }
     // la "foto" per tutti: SEMPRE con gli id; la chiave del tabellone MAI (va solo ai capi)
     function vm() {
       var fine = H.fase === "fine", r = [];
@@ -130,21 +191,22 @@
         capo: H.capo.slice(0, H.nsq),
         tab: H.tab ? H.tab.map(function (c) { return { w: c.w, g: c.g, c: (c.g || fine) ? c.c : null, oro: (c.g || fine) && c.oro ? 1 : 0 }; }) : null, oro: H.oro,
         bid: H.bid, turno: H.turno, passo: H.passo, indizio: H.indizio, tentativi: H.tentativi, girate: H.girate, prop: H.prop,
-        storia: H.storia.slice(-8), fuori: H.fuori.slice(), vince: H.vince, classifica: H.classifica, msg: H.msg, ultima: H.ultima, resto: r };
+        storia: H.storia.slice(-8), fuori: H.fuori.slice(), vince: H.vince, classifica: H.classifica, msg: H.msg, ultima: H.ultima, resto: r,
+        gen: H.gen, hostId: H.hostId, vici: H.vici.slice() };
     }
     function privato(id, m) {
-      if (id === "host") { if (m.t === "avviso") avviso(m.testo); return; }
+      if (id === IO) { if (m.t === "avviso") avviso(m.testo); return; }
       m.to = id; rete.inviaVeloce(m);
     }
     var chiaveHost = null;
     function chiave() { return H.tab ? H.tab.map(function (c) { return c.c; }) : null; }
     function mandaChiave(id) {
       if (!id || H.fase !== "gioco") return;
-      if (id === "host") { chiaveHost = { bid: H.bid, col: chiave() }; return; }
+      if (id === IO) { chiaveHost = { bid: H.bid, col: chiave() }; return; }
       privato(id, { t: "chiave", bid: H.bid, col: chiave() });
     }
     function mandaChiavi() { for (var k = 0; k < H.nsq; k++) mandaChiave(H.capo[k]); }
-    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); disegna(t, v, cbHost); }
+    function bd() { if (ceduto) return; scegliVice(); var v = vm(); rete.invia({ t: "vm", vm: v }); disegna(t, v, cbHost); mandaRiserva(); }
 
     // ----- le mosse (dell'host e degli ospiti passano tutte da qui) -----
     function azione(id, m) {
@@ -165,10 +227,15 @@
       }
       if (!p) return;
       if (m.t === "chiedi_chiave") { if (H.fase === "gioco" && H.capo[p.team] === id) mandaChiave(id); return; }
+      if (m.t === "presente") {   // risponde all'appello del nuovo host (se l'avevo già segnato uscito, rientra)
+        if (H.appello) H.appello[id] = 1;
+        if (p.via) { p.via = false; if (H.fase === "gioco") controllaTurno(); bd(); if (H.capo.indexOf(id) >= 0) mandaChiave(id); }
+        return;
+      }
       if (H.fase === "lobby") {
         if (m.t === "squadra" && +m.s >= 0 && +m.s < H.nsq) { p.team = +m.s; sistemaCapi(); bd(); }
         else if (m.t === "capo") { H.capo[p.team] = id; bd(); }
-        else if (m.t === "mischia" && id === "host") mischia();
+        else if (m.t === "mischia" && id === IO) mischia();
         return;
       }
       if (H.fase !== "gioco" || p.via) return;
@@ -296,11 +363,11 @@
       sistemaCapi(); bd();
     }
 
-    var cbHost = { sonoHost: true, myId: "host", onComincia: comincia, onNuova: nuova,
+    var cbHost = { sonoHost: true, myId: IO, onComincia: comincia, onNuova: nuova,
       pronti: pronti,
       omini: omini,
-      chiave: function () { return chiaveHost && chiaveHost.bid === H.bid && H.fase === "gioco" && H.capo.indexOf("host") >= 0 ? chiaveHost.col : null; },
-      manda: function (m) { azione("host", m); },
+      chiave: function () { return chiaveHost && chiaveHost.bid === H.bid && H.fase === "gioco" && H.capo.indexOf(IO) >= 0 ? chiaveHost.col : null; },
+      manda: function (m) { azione(IO, m); },
       onEsci: function () {
         if (H.fase === "gioco" && !window.confirm("Chiudere la partita per tutti?")) return;   // un tocco sbagliato non chiude il gioco a tutti
         rete.chiudi(); t.esci();
@@ -313,7 +380,7 @@
   // =========================================================
   function ospite(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var S = { rete: null, myId: null, nome: "", vm: null, omini: {}, chiave: null, chiesta: 0 };
+    var S = { rete: null, myId: null, nome: "", vm: null, omini: {}, chiave: null, chiesta: 0, gen: 0, copia: null, tVice: null };
     var cb = { sonoHost: false, myId: null,
       omini: function () { return S.omini; },
       chiave: function () { return S.chiave && S.vm && S.vm.fase === "gioco" && S.chiave.bid === S.vm.bid ? S.chiave.col : null; },
@@ -348,14 +415,35 @@
         onMsg: function (m) {
           if (!m || !m.t) return;
           if (m.to && m.to !== S.myId) return;          // era per un altro telefono
-          if (m.t === "vm") { S.vm = m.vm; disegna(t, m.vm, cb); controllaChiave(); }
+          if (m.t === "vm") {
+            if (m.vm.gen != null) { if (m.vm.gen < S.gen) return; S.gen = m.vm.gen; }   // la foto di un host vecchio (sostituito): non conta
+            S.vm = m.vm; disegna(t, m.vm, cb); controllaChiave();
+          }
           else if (m.t === "chiave") { S.chiave = { bid: m.bid, col: m.col }; if (S.vm) disegna(t, S.vm, cb); }
           else if (m.t === "omini") { S.omini = m.omini || {}; if (S.vm) disegna(t, S.vm, cb); }
+          else if (m.t === "riserva") { if (m.gen >= S.gen) S.copia = m.stato; }   // sono il vice: tengo la copia della partita
+          else if (m.t === "appello") { if (S.rete) S.rete.invia({ t: "presente" }); }   // il nuovo host chiede chi c'è
           else if (m.t === "avviso") avviso(m.testo);
+        },
+        // l'host è sparito (o è tornato): se sono un vice, dopo un attimo prendo il suo posto (il secondo vice aspetta il doppio)
+        onHostVia: function (via) {
+          clearTimeout(S.tVice); S.tVice = null;
+          if (!via) return;
+          var v = S.vm, pos = v && v.vici ? v.vici.indexOf(S.myId) : -1;
+          if (!v || (v.fase !== "gioco" && v.fase !== "fine") || pos < 0 || !S.copia || S.copia.gen !== v.gen) return;
+          S.tVice = setTimeout(subentra, SUBENTRO_MS * (pos + 1));
         },
         onChiuso: function () { errore(t, "La partita è stata chiusa dall'host."); },
         onErrore: function () { errore(t, "Problema di collegamento. Riprova."); }
       });
+    }
+    function subentra() {
+      S.tVice = null;
+      var v = S.vm; if (!v || !v.vici || v.vici.indexOf(S.myId) < 0 || !S.copia || !S.rete || S.copia.gen !== S.gen) return;   // se un altro vice ha già preso il posto, niente
+      var copia = S.copia, rete = S.rete;
+      S.copia = null; S.rete = null;
+      try { rete.lascia(); } catch (e) {}
+      host(t, { codice: codice, stato: copia, io: S.myId, omini: S.omini });
     }
     function attesa() {
       var s = t.schermata({ icona: "🕵️", titolo: "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
@@ -404,7 +492,7 @@
     if (info.length) nota += " " + info.join(" · ") + ".";
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: vm.nsq === 3 ? 6 : MIN,
       vuoti: Math.max(0, (vm.nsq === 3 ? 6 : MIN) - vm.players.length),   // solo i posti che mancano per cominciare
-      giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
+      giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: vm.hostId ? p.id === vm.hostId : i === 0, tu: p.id === cb.myId }; }),
       extra: [ box ], puoComincia: ok, nota: ok ? "Ognuno sceglie la sua squadra; il capo ha la 👑." + (info.length ? " " + info.join(" · ") + "." : "") : nota, testoComincia: "Comincia ▶",
       attesa: "Scegli la tua squadra e aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
