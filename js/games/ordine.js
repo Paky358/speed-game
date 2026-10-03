@@ -129,6 +129,8 @@
       }
     }
     function resto(k) { var n = 0; (H.tab || []).forEach(function (c) { if (c.c === k && !c.g) n++; }); return n; }
+    // la "chat" della partita: gli indizi dei capi e le parole girate (con chi le ha girate); ogni voce ha il suo numero
+    function scrivi(e) { H.log = H.log || []; H.logN = (H.logN || 0) + 1; e.n = H.logN; H.log.push(e); if (H.log.length > 60) H.log.shift(); }
     function vive() { var v = []; for (var k = 0; k < H.nsq; k++) if (H.fuori.indexOf(k) < 0) v.push(k); return v; }
     function omini() { var o = {}; H.players.forEach(function (p) { o[p.id] = p.omino || null; }); return o; }
 
@@ -209,7 +211,7 @@
         capo: H.capo.slice(0, H.nsq),
         tab: H.tab ? H.tab.map(function (c) { return { w: c.w, g: c.g, c: (c.g || fine) ? c.c : null, oro: (c.g || fine) && c.oro ? 1 : 0 }; }) : null, oro: H.oro,
         bid: H.bid, turno: H.turno, passo: H.passo, indizio: H.indizio, tentativi: H.tentativi, girate: H.girate, prop: H.prop,
-        storia: H.storia.slice(-8), fuori: H.fuori.slice(), vince: H.vince, classifica: H.classifica, msg: H.msg, ultima: H.ultima, resto: r,
+        storia: H.storia.slice(-8), log: (H.log || []).slice(-40), fuori: H.fuori.slice(), vince: H.vince, classifica: H.classifica, msg: H.msg, ultima: H.ultima, resto: r,
         gen: H.gen, hostId: H.hostId, vici: H.vici.slice() };
     }
     function privato(id, m) {
@@ -271,6 +273,7 @@
         H.indizio = { parola: parola, n: n, k: H.turno };
         H.tentativi = n === 0 ? 99 : n + 1; H.girate = 0; H.passo = "indovina"; H.prop = {}; H.msg = "";
         H.storia.push({ k: H.turno, parola: parola, n: n });
+        scrivi({ t: "ind", k: H.turno, id: id, nome: p.nome, p: parola, num: n });
         bd(); return;
       }
       if (!miaSquadra || sonoCapo || H.passo !== "indovina") return;
@@ -281,7 +284,7 @@
         bd(); return;
       }
       if (m.t === "gira") { gira(Math.floor(+m.i), id); return; }
-      if (m.t === "passo" && H.girate >= 1) { H.msg = p.nome + " passa la mano."; fineTurno(); }
+      if (m.t === "passo" && H.girate >= 1) { H.msg = p.nome + " passa la mano."; scrivi({ t: "passo", k: p.team, id: id, nome: p.nome }); fineTurno(); }
     }
     function mischia() {
       var tutti = mescola(H.players.filter(function (p) { return !p.via; }));
@@ -316,6 +319,7 @@
       H.bid = 1 + Math.floor(Math.random() * 1e9); H.turno = primo; H.passo = "indizio"; H.indizio = null; H.tentativi = 0; H.girate = 0;
       H.prop = {}; H.storia = []; H.fuori = []; H.vince = -1; H.classifica = null; H.ultima = null; H.nGirate = 0;
       H.msg = "Cominciano i " + SQ[primo].nome + "!";
+      H.log = []; H.logN = 0; scrivi({ t: "via", k: primo });
       H.fase = "gioco"; chiaveHost = null;
       mandaChiavi(); controllaTurno(); bd();
     }
@@ -325,6 +329,7 @@
       c.g = true; H.girate++; H.prop = {};
       H.ultima = { i: i, k: k, c: c.c, oro: c.oro ? 1 : 0, n: ++H.nGirate };
       var chi = p ? p.nome : SQ[k].nome;
+      scrivi({ t: "gira", k: k, id: id, nome: chi, w: c.w, c: c.c, oro: c.oro ? 1 : 0 });
       if (c.c === "x") {   // la parola nera
         H.fuori.push(k);
         H.msg = "💣 " + chi + " ha girato la parola nera: i " + SQ[k].nome + " " + (H.nsq === 2 ? "perdono!" : "sono fuori!");
@@ -383,7 +388,7 @@
       H.fase = "fine"; H.vince = k; H.prop = {}; H.indizio = null;
       H.classifica = H.players.map(function (p) { return { id: p.id, nome: p.nome, team: p.team, pos: p.team === k ? 1 : 2 }; })
         .sort(function (a, b) { return a.pos - b.pos; });
-      H.msg = "🎉 Vincono i " + SQ[k].nome + "!";
+      H.msg = "🎉 Vincono i " + SQ[k].nome + "!"; scrivi({ t: "fine", k: k });
       bd();
       // torneo online: i NOMI dei giocatori; a squadre chi vince al posto 1, gli altri dopo
       if (t.risultato && !prova) t.risultato(H.classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }));
@@ -561,27 +566,32 @@
       extra: [ box ], puoComincia: ok, nota: ok ? "Ognuno sceglie la sua squadra; il capo ha la 👑." + (info.length ? " " + info.join(" · ") + "." : "") : nota, testoComincia: "Comincia ▶",
       attesa: "Scegli la tua squadra e aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
+  // Lo schermo di gioco, stile "pulito e moderno": in alto le squadre con le faccine (il capo con la corona),
+  // l'indizio grande, il tabellone con caselle basse, al centro la "chat" della partita, in fondo i tasti.
   function creaSchermo(t, vm, cb) {
     stile();
     var el = t.el, s = t.schermata({}); s.classList.add("or-piena");   // schermo intero: niente titolo, niente scorrimento
-    var ui = { t: t, el: el, s: s, bid: vm.bid, cb: cb, carte: [], kSotto: "", kProp: [], chip: [], ultimaN: vm.ultima ? vm.ultima.n : 0, avCache: {} };
-    ui.chips = el("div", { class: "or-chips" });
-    for (var k = 0; k < vm.nsq; k++) { var c = el("div", { class: "or-chip", style: "--c:" + SQ[k].col }); ui.chip.push(c); ui.chips.appendChild(c); }
+    var ui = { t: t, el: el, s: s, bid: vm.bid, cb: cb, carte: [], kSotto: "", pan: [], ultimaN: vm.ultima ? vm.ultima.n : 0, facce: {}, logN: 0 };
     var esci = el("button", { class: "or-esci", "aria-label": "Esci", text: "‹", onclick: function () { ui.cb.onEsci(); } });
+    var pannelli = el("div", { class: "or-pannelli" });
+    for (var k = 0; k < vm.nsq; k++) {
+      var P = { n: el("b", { class: "or-pan-n" }), facce: el("div", { class: "or-facce" }), kf: "" };
+      P.el = el("div", { class: "or-pan", style: "--c:" + SQ[k].col }, [ el("div", { class: "or-pan-testa" }, [ el("span", { text: SQ[k].nome }), P.n ]), P.facce ]);
+      ui.pan.push(P); pannelli.appendChild(P.el);
+    }
     ui.ind = el("div", { class: "or-ind" });
-    ui.storia = el("div", { class: "or-storia" });
     ui.tab = el("div", { class: "or-tab" });
-    ui.tab.style.gridTemplateRows = "repeat(" + Math.ceil(vm.tab.length / 5) + ",minmax(0,1fr))";   // 5 righe (25 parole) o 4 (20)
     vm.tab.forEach(function (c, i) {
       var w = el("span", { class: "or-w", text: c.w }), pr = el("span", { class: "or-pr" }), hint = el("span", { class: "or-hint", text: "tocca ancora" });
       var b = el("button", { class: "or-carta" }, [ w, pr, hint ]);
-      var L = c.w.length; w.style.fontSize = L <= 6 ? "clamp(10px,3.2vw,15px)" : L <= 8 ? "clamp(9px,2.75vw,13.5px)" : "clamp(8px,2.35vw,12px)";
+      var L = c.w.length; w.style.fontSize = L <= 6 ? "clamp(10px,3.1vw,14px)" : L <= 8 ? "clamp(9px,2.7vw,13px)" : "clamp(8px,2.3vw,11.5px)";
       b.addEventListener("click", function () { tocca(ui, i); });
       ui.carte.push({ b: b, pr: pr, cls: "" }); ui.tab.appendChild(b);
     });
-    ui.msg = el("div", { class: "or-msg" });
+    ui.log = el("div", { class: "or-log" });
     ui.sotto = el("div", { class: "or-sotto" });
-    s._contenuto.appendChild(el("div", { class: "or-scena" }, [ el("div", { class: "or-barra" }, [ esci, ui.chips ]), ui.ind, ui.storia, ui.tab, ui.msg, ui.sotto ]));
+    ui.msg = el("div", { class: "or-toast" });
+    s._contenuto.appendChild(el("div", { class: "or-scena" }, [ el("div", { class: "or-alto" }, [ esci, pannelli ]), ui.ind, ui.tab, ui.log, ui.sotto, ui.msg ]));
     t.mostra(s);
     return ui;
   }
@@ -599,34 +609,68 @@
     if (vm.prop[ui.cb.myId] === i) ui.cb.manda({ t: "gira", i: i });   // secondo tocco sulla stessa parola: si gira
     else ui.cb.manda({ t: "proponi", i: i });
   }
-  function testaAvatar(ui, id, nome, team) {
+  // la faccina di un giocatore: l'avatar diventa un'immagine una volta sola e poi si riusa ovunque (squadre, chat, caselle)
+  function srcFaccia(ui, id) {
     var cfg = (ui.cb.omini && ui.cb.omini() || {})[id];
-    var k = id + "|" + (cfg ? 1 : 0);
-    if (!ui.avCache[k]) ui.avCache[k] = cfg && window.SGOmino ? SGOmino.svg(cfg, { busto: true }) : "<b>" + String(nome || "?").charAt(0).toUpperCase() + "</b>";
-    return "<span class='or-av' style='--c:" + (SQ[team] ? SQ[team].col : "#888") + "'>" + ui.avCache[k] + "</span>";
+    if (!cfg || !window.SGOmino) return null;
+    var k = id + "|" + JSON.stringify(cfg).length;
+    if (!ui.facce[k]) ui.facce[k] = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGOmino.svg(cfg, { busto: true }));
+    return ui.facce[k];
+  }
+  function faccia(ui, id, nome, cls) {
+    var src = srcFaccia(ui, id);
+    return ui.el("span", { class: "or-f" + (cls ? " " + cls : "") }, [ src ? ui.el("img", { src: src, alt: nome || "" }) : ui.el("b", { text: String(nome || "?").charAt(0).toUpperCase() }) ]);
+  }
+  function testaAvatar(ui, id, nome, team) {   // le faccine piccole sulle caselle proposte
+    var src = srcFaccia(ui, id);
+    return "<span class='or-av' style='--c:" + (SQ[team] ? SQ[team].col : "#888") + "'>" + (src ? "<img src='" + src + "' alt=''>" : "<b>" + String(nome || "?").charAt(0).toUpperCase() + "</b>") + "</span>";
+  }
+  // una riga della chat della partita
+  function rigaLog(ui, vm, e) {
+    var el = ui.el, col = SQ[e.k] ? SQ[e.k].col : "#888";
+    if (e.t === "via") return el("div", { class: "or-l sis" }, [ el("span", { text: "Cominciano i " + SQ[e.k].nome }) ]);
+    if (e.t === "fine") return el("div", { class: "or-l sis fine" }, [ el("span", { text: "🎉 Vincono i " + SQ[e.k].nome + "!" }) ]);
+    var testa = [ faccia(ui, e.id, e.nome), el("span", { class: "or-l-nome", style: "color:" + col, text: e.nome }) ];
+    if (e.t === "ind") return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-txt", text: "👑" }), el("span", { class: "or-l-ind", text: e.p + " " + (e.num === 0 ? "∞" : e.num) }) ]));
+    if (e.t === "passo") return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-txt", text: "passa" }) ]));
+    var esito = e.oro ? "⭐ d'oro: un altro turno!" : e.c === "x" ? "💣 la parola nera!" : e.c === e.k ? "✓" : e.c === "n" ? "di nessuno" : "era dei " + SQ[e.c].nome;
+    return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-w c" + e.c + (e.oro ? " oro" : ""), text: e.w }), el("span", { class: "or-l-esito" + (e.c === e.k && !e.oro ? " ok" : ""), text: esito }) ]));
   }
   function aggiorna(ui, vm, cb) {
     var r = ruolo(vm, cb), key = vm.fase === "gioco" && r.capo ? cb.chiave() : null, fine = vm.fase === "fine";
-    // ---- in alto: quante parole mancano a ogni squadra, di chi è il turno ----
-    ui.chip.forEach(function (c, k) {
-      var tx = SQ[k].em + " " + SQ[k].nome + " " + (vm.resto[k] != null ? vm.resto[k] : "");
-      if (c.textContent !== tx) c.textContent = tx;
-      c.classList.toggle("turno", !fine && vm.turno === k);
-      c.classList.toggle("fuori", vm.fuori.indexOf(k) >= 0);
-      c.classList.toggle("mia", r.team === k);
+    // ---- in alto: le squadre, quante parole mancano, le faccine (il capo con la corona) ----
+    ui.pan.forEach(function (P, k) {
+      var tx = String(vm.resto[k] != null ? vm.resto[k] : "");
+      if (P.n.textContent !== tx) P.n.textContent = tx;
+      P.el.classList.toggle("turno", !fine && vm.turno === k);
+      P.el.classList.toggle("vince", fine && vm.vince === k);
+      P.el.classList.toggle("fuori", vm.fuori.indexOf(k) >= 0);
+      var mem = vm.players.filter(function (p) { return p.team === k; });
+      mem.sort(function (a, b) { return (b.id === vm.capo[k]) - (a.id === vm.capo[k]); });   // il capo per primo
+      var kf = mem.map(function (p) { return p.id + (p.via ? "-" : "") + (p.id === vm.capo[k] ? "*" : ""); }).join(",") + "|" + cb.myId;
+      if (P.kf !== kf) {
+        P.kf = kf;
+        while (P.facce.firstChild) P.facce.removeChild(P.facce.firstChild);
+        mem.forEach(function (p) { P.facce.appendChild(faccia(ui, p.id, p.nome, (p.id === vm.capo[k] ? "capo" : "") + (p.via ? " via" : "") + (p.id === cb.myId ? " tu" : ""))); });
+      }
     });
-    // ---- l'indizio ----
-    var ind;
-    if (fine) ind = vm.vince >= 0 ? "🎉 Vincono i " + SQ[vm.vince].nome + "!" : "Partita finita";
-    else if (vm.passo === "indizio") ind = r.mioTurno && r.capo ? "👑 Tocca a te: dai l'indizio" : "👑 Il capo dei " + SQ[vm.turno].nome + " pensa all'indizio…";
-    else ind = SQ[vm.turno].em + " «" + vm.indizio.parola + "» " + (vm.indizio.n === 0 ? "∞" : vm.indizio.n);
-    if (ui.ind.textContent !== ind) ui.ind.textContent = ind;
-    ui.ind.style.setProperty("--c", fine ? (SQ[vm.vince] || SQ[0]).col : SQ[vm.turno].col);
-    var st = vm.passo === "indovina" && !fine ? (vm.tentativi >= 99 ? "tentativi liberi" : "ancora " + vm.tentativi + (vm.tentativi === 1 ? " tentativo" : " tentativi")) : "";
-    var prima = vm.storia.filter(function (x) { return !vm.indizio || x !== vm.storia[vm.storia.length - 1]; }).slice(-4).reverse()
-      .map(function (x) { return SQ[x.k].em + " " + x.parola + " " + (x.n === 0 ? "∞" : x.n); }).join("  ·  ");
-    var stx = [st, prima].filter(Boolean).join("   |   ");
-    if (ui.storia.textContent !== stx) ui.storia.textContent = stx;
+    // ---- l'indizio, grande al centro ----
+    var ki;
+    if (fine) ki = "f|" + vm.vince;
+    else if (vm.passo === "indizio") ki = "a|" + vm.turno + "|" + (r.mioTurno && r.capo);
+    else ki = "i|" + vm.turno + "|" + vm.indizio.parola + "|" + vm.indizio.n + "|" + vm.tentativi;
+    if (ui.kInd !== ki) {
+      ui.kInd = ki; var el = ui.el, I = ui.ind;
+      while (I.firstChild) I.removeChild(I.firstChild);
+      I.style.setProperty("--c", fine ? (SQ[vm.vince] || SQ[0]).col : SQ[vm.turno].col);
+      if (fine) I.appendChild(el("div", { class: "or-ind-stato", text: vm.vince >= 0 ? "🎉 Vincono i " + SQ[vm.vince].nome + "!" : "Partita finita" }));
+      else if (vm.passo === "indizio") I.appendChild(el("div", { class: "or-ind-stato", text: r.mioTurno && r.capo ? "👑 Tocca a te: dai l'indizio" : "Il capo dei " + SQ[vm.turno].nome + " pensa all'indizio…" }));
+      else {
+        I.appendChild(el("small", { text: "INDIZIO DEI " + SQ[vm.turno].nome.toUpperCase() }));
+        I.appendChild(el("b", {}, [ document.createTextNode(vm.indizio.parola), el("span", { class: "n", text: vm.indizio.n === 0 ? "∞" : String(vm.indizio.n) }) ]));
+        I.appendChild(el("div", { class: "or-ind-tent", text: vm.tentativi >= 99 ? "tentativi liberi" : "ancora " + vm.tentativi + (vm.tentativi === 1 ? " tentativo" : " tentativi") }));
+      }
+    }
     // ---- il tabellone (solo le carte che cambiano) ----
     var chi = {};   // parola -> chi la propone
     Object.keys(vm.prop || {}).forEach(function (id) { var i = vm.prop[id]; (chi[i] = chi[i] || []).push(id); });
@@ -647,9 +691,15 @@
       var C = ui.carte[vm.ultima.i]; if (C) { C.b.classList.remove("appena"); void C.b.offsetWidth; C.b.classList.add("appena"); }
       suona(vm.ultima.oro ? "oro" : vm.ultima.c === "x" ? "nera" : vm.ultima.c === vm.ultima.k ? "giusta" : vm.ultima.c === "n" ? "neutra" : "sbagliata");
     }
-    if (ui.msg.textContent !== (vm.msg || "")) ui.msg.textContent = vm.msg || "";
+    // ---- la chat: si aggiungono solo le righe nuove, e si scende in fondo ----
+    var nuove = (vm.log || []).filter(function (e) { return e.n > ui.logN; });
+    if (nuove.length) {
+      nuove.forEach(function (e) { ui.log.appendChild(rigaLog(ui, vm, e)); ui.logN = e.n; });
+      while (ui.log.children.length > 60) ui.log.removeChild(ui.log.firstChild);
+      ui.log.scrollTop = ui.log.scrollHeight;
+    }
     // ---- in basso: cosa posso fare io (si ricostruisce solo se cambia il mio ruolo o la fase) ----
-    var ks = [vm.fase, vm.passo, vm.turno, r.team, r.capo, r.capoVia, vm.girate > 0, vm.fuori.join(""), vm.players.filter(function (p) { return p.team === r.team && !p.via; }).length].join("|");
+    var ks = [vm.fase, vm.passo, vm.turno, r.team, r.capo, vm.girate > 0, vm.fuori.join("")].join("|");
     if (ks !== ui.kSotto) { ui.kSotto = ks; disegnaSotto(ui, vm, cb, r); }
   }
   function disegnaSotto(ui, vm, cb, r) {
@@ -658,10 +708,10 @@
     function stato(tx) { box.appendChild(el("div", { class: "or-stato", text: tx })); }
     if (vm.fase === "fine") {
       var vinti = vm.players.filter(function (p) { return p.team === vm.vince; }).map(function (p) { return p.nome; }).join(", ");
-      stato((r.team === vm.vince ? "Avete vinto! " : "") + "Vincono: " + vinti + ". Sul tabellone ora vedete di chi era ogni parola.");
+      stato((r.team === vm.vince ? "Avete vinto! " : "") + "Vincono: " + vinti + ". Ora vedete di chi era ogni parola.");
       var riga = el("div", { class: "or-riga" });
-      if (cb.sonoHost) riga.appendChild(el("button", { class: "or-btn ok", text: "↻ Nuova partita", onclick: cb.onNuova }));
-      riga.appendChild(el("button", { class: "or-btn", text: "🏠 Esci", onclick: function () { cb.onEsci(); } }));
+      if (cb.sonoHost) riga.appendChild(el("button", { class: "or-btn", text: "↻ Nuova partita", onclick: cb.onNuova }));
+      riga.appendChild(el("button", { class: "or-btn chiaro", text: "🏠 Esci", onclick: function () { cb.onEsci(); } }));
       box.appendChild(riga);
       if (!cb.sonoHost) stato("Se l'host fa un'altra partita, tornate da soli nella saletta.");
       return;
@@ -686,7 +736,7 @@
         input.blur();
       }
       input.addEventListener("keydown", function (e) { if (e.key === "Enter") manda(); });
-      box.appendChild(el("div", { class: "or-riga" }, [ input, el("button", { class: "or-btn ok corto", text: "Invia", onclick: manda }) ]));
+      box.appendChild(el("div", { class: "or-riga" }, [ input, el("button", { class: "or-btn corto", text: "Invia", onclick: manda }) ]));
       box.appendChild(numeri); box.appendChild(errore);
       return;
     }
@@ -695,9 +745,11 @@
     box.appendChild(el("div", { class: "or-riga" }, [
       el("button", { class: "or-btn", text: "✋ Basta così, passo", disabled: vm.girate > 0 ? null : "disabled", onclick: function () { cb.manda({ t: "passo" }); } }) ]));
   }
+  // un avviso breve (es. indizio non valido): compare sopra i tasti e sparisce da solo
   function avviso(testo) {
     if (!UI || !testo) return;
-    UI.msg.textContent = testo; UI.msg.classList.remove("su"); void UI.msg.offsetWidth; UI.msg.classList.add("su");
+    UI.msg.textContent = testo; UI.msg.classList.add("su");
+    clearTimeout(UI.tMsg); UI.tMsg = setTimeout(function () { if (UI) UI.msg.classList.remove("su"); }, 2600);
   }
   // suoni brevi (niente vibrazione qui: vibra solo il tasto che tocchi tu)
   function suona(tipo) {
@@ -729,56 +781,85 @@
     if (cssFatto) return; cssFatto = true;
     var st = document.createElement("style");
     st.textContent = [
-      ".schermata.or-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#15123a}",
+      // ---- lo schermo di gioco: stile "pulito e moderno" (chiaro, tessere bianche, colori pieni) ----
+      ".schermata.or-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#f7f5ef}",
       ".schermata.or-piena>.testa,.schermata.or-piena>.piede{display:none}",
       ".schermata.or-piena>.contenuto{height:100%;margin:0;padding:0}",
-      ".or-scena{height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;gap:6px;padding:calc(6px + env(safe-area-inset-top)) 8px calc(8px + env(safe-area-inset-bottom));overflow:hidden;color:#fff;user-select:none;-webkit-user-select:none}",
-      ".or-barra{display:flex;align-items:center;gap:8px;flex:none}",
-      ".or-esci{width:34px;height:34px;flex:none;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:1.2rem;font-weight:900;cursor:pointer}",
-      ".or-chips{flex:1;display:flex;gap:5px;min-width:0}",
-      ".or-chip{flex:1;min-width:0;text-align:center;font-weight:900;font-size:.8rem;padding:6px 4px;border-radius:10px;background:rgba(255,255,255,.08);box-shadow:inset 0 -3px var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-      ".or-chip.turno{background:var(--c)}.or-chip.mia:after{content:' (voi)';font-weight:700;font-size:.7rem}.or-chip.fuori{opacity:.35;text-decoration:line-through}",
-      ".or-ind{flex:none;text-align:center;font-weight:900;font-size:1.05rem;padding:7px 8px;border-radius:12px;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 2px var(--c,#888);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-      ".or-storia{flex:none;text-align:center;font-size:.72rem;font-weight:700;opacity:.75;min-height:1.1em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-      ".or-tab{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr));gap:4px}",
-      ".or-carta{position:relative;min-width:0;min-height:0;border:0;border-radius:9px;padding:2px;background:#f1f3f5;color:#14113a;font:inherit;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:default;-webkit-tap-highlight-color:transparent;touch-action:manipulation;overflow:hidden}",
+      ".or-scena{position:relative;height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;gap:7px;padding:calc(8px + env(safe-area-inset-top)) 9px calc(9px + env(safe-area-inset-bottom));overflow:hidden;color:#1f1f1f;background:#f7f5ef;user-select:none;-webkit-user-select:none}",
+      // in alto: le squadre con le faccine
+      ".or-alto{display:flex;gap:7px;align-items:stretch;flex:none}",
+      ".or-esci{width:34px;height:34px;flex:none;align-self:center;border-radius:50%;border:0;background:#ebe7da;color:#1f1f1f;font:inherit;font-size:1.2rem;font-weight:900;cursor:pointer}",
+      ".or-pannelli{flex:1;display:flex;gap:6px;min-width:0}",
+      ".or-pan{flex:1;min-width:0;border-radius:14px;padding:5px 7px 7px;background:#fff;box-shadow:0 0 0 1px #ebe7da;display:flex;flex-direction:column;gap:4px;transition:background .25s}",
+      ".or-pan-testa{display:flex;justify-content:space-between;align-items:baseline;gap:4px;font-weight:900;font-size:.78rem;color:var(--c)}",
+      ".or-pan-n{font-size:1.3rem;line-height:1}",
+      ".or-pan.turno,.or-pan.vince{background:var(--c);box-shadow:none}.or-pan.turno .or-pan-testa,.or-pan.vince .or-pan-testa{color:#fff}",
+      ".or-pan.fuori{opacity:.4}",
+      ".or-facce{display:flex;flex-wrap:wrap;gap:4px;min-height:26px;align-items:center}",
+      ".or-f{position:relative;flex:none;width:26px;height:26px;border-radius:50%;background:#f1efe8;box-shadow:0 0 0 2px #fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:#6b6658}",
+      ".or-f img{width:100%;height:100%;border-radius:50%;display:block}",
+      ".or-f.capo{margin-top:6px}.or-f.capo:after{content:'👑';position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:11px;line-height:1}",
+      ".or-f.via{opacity:.35}",
+      ".or-f.tu{box-shadow:0 0 0 2px #1f1f1f}",
+      // l'indizio, grande al centro
+      ".or-ind{flex:none;text-align:center;min-height:44px;display:flex;flex-direction:column;justify-content:center}",
+      ".or-ind small{font-size:.6rem;letter-spacing:.14em;color:#8a8576;font-weight:800}",
+      ".or-ind b{font-size:1.4rem;font-weight:900;line-height:1.1;color:var(--c)}",
+      ".or-ind b .n{display:inline-block;margin-left:7px;min-width:24px;border-radius:8px;background:#1f1f1f;color:#fff;font-size:1rem;padding:1px 6px;vertical-align:3px}",
+      ".or-ind-tent{font-size:.7rem;color:#8a8576;font-weight:700}",
+      ".or-ind-stato{font-weight:900;font-size:1rem;color:var(--c)}",
+      // il tabellone: caselle basse, non stirate
+      ".or-tab{flex:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-rows:clamp(38px,6.4vh,52px);gap:5px}",
+      ".or-carta{position:relative;min-width:0;min-height:0;border:0;border-radius:10px;padding:2px;background:#fff;color:#2b2b2b;font:inherit;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:default;-webkit-tap-highlight-color:transparent;touch-action:manipulation;overflow:hidden;box-shadow:0 1px 0 #e4e0d4,0 0 0 1px #ebe7da}",
       ".or-w{display:block;max-width:100%;line-height:1.05;letter-spacing:-.02em;overflow-wrap:anywhere;text-align:center}",
       ".or-carta.attiva{cursor:pointer}.or-carta.attiva:active{transform:scale(.96)}",
-      ".or-carta.mia{box-shadow:inset 0 0 0 3px #fab005}",
-      ".or-hint{display:none;position:absolute;left:0;right:0;bottom:2px;font-size:8px;font-weight:800;color:#e67700;text-transform:uppercase}.or-carta.mia .or-hint{display:block}",
+      ".or-carta.mia{box-shadow:0 0 0 2.5px #1f1f1f}",
+      ".or-hint{display:none;position:absolute;left:0;right:0;bottom:1px;font-size:7.5px;font-weight:800;color:#e67700;text-transform:uppercase}.or-carta.mia .or-hint{display:block}",
+      // le faccine di chi propone la parola (si vede bene chi la vorrebbe girare)
       ".or-pr{position:absolute;top:2px;right:2px;display:flex;gap:1px}",
-      ".or-av{width:17px;height:17px;border-radius:50%;overflow:hidden;background:var(--c);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;box-shadow:0 0 0 1.5px #fff}.or-av svg{width:100%;height:100%;display:block}",
-      // la chiave del capo: colori pieni ma più chiari sulle parole ancora coperte
-      ".or-carta.chiave.c0{background:#ffc9c9;box-shadow:inset 0 -5px #e03131}.or-carta.chiave.c1{background:#a5d8ff;box-shadow:inset 0 -5px #1c7ed6}.or-carta.chiave.c2{background:#b2f2bb;box-shadow:inset 0 -5px #2f9e44}",
-      ".or-carta.chiave.cn{background:#efe3c8}.or-carta.chiave.cx{background:#212529;color:#fff}",
-      // le parole girate
-      ".or-carta.g{color:#fff}.or-carta.g .or-w{opacity:.85}",
-      ".or-carta.g.c0{background:#e03131}.or-carta.g.c1{background:#1c7ed6}.or-carta.g.c2{background:#2f9e44}.or-carta.g.cn{background:#c9b48a;color:#3d2f12}.or-carta.g.cx{background:#000;box-shadow:inset 0 0 0 2px #fa5252}",
-      // fine partita: si vede la chiave di tutte le parole che nessuno aveva girato
-      ".or-carta.svelata{opacity:.8}.or-carta.svelata.c0{background:#ffc9c9}.or-carta.svelata.c1{background:#a5d8ff}.or-carta.svelata.c2{background:#b2f2bb}.or-carta.svelata.cn{background:#efe3c8}.or-carta.svelata.cx{background:#212529;color:#fff}",
+      ".or-av{width:22px;height:22px;border-radius:50%;overflow:hidden;background:var(--c);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;box-shadow:0 0 0 1.5px #fff,0 0 0 3px var(--c)}.or-av img{width:100%;height:100%;display:block}",
+      // la chiave del capo: le parole ancora coperte con il colore chiaro e una riga sotto
+      ".or-carta.chiave.c0{background:#ffe3e3;box-shadow:inset 0 -4px #fa5252}.or-carta.chiave.c1{background:#e7f5ff;box-shadow:inset 0 -4px #339af0}.or-carta.chiave.c2{background:#ebfbee;box-shadow:inset 0 -4px #40c057}",
+      ".or-carta.chiave.cn{background:#f4efe2}.or-carta.chiave.cx{background:#1f1f1f;color:#fff}",
+      // le parole girate: colori pieni
+      ".or-carta.g{color:#fff;box-shadow:none}",
+      ".or-carta.g.c0{background:#fa5252}.or-carta.g.c1{background:#339af0}.or-carta.g.c2{background:#40c057}.or-carta.g.cn{background:#e9e4d6;color:#a39c88}.or-carta.g.cx{background:#1f1f1f;box-shadow:0 0 0 2px #fa5252}",
+      // fine partita: si vede di chi era ogni parola che nessuno aveva girato
+      ".or-carta.svelata.c0{background:#ffe3e3}.or-carta.svelata.c1{background:#e7f5ff}.or-carta.svelata.c2{background:#ebfbee}.or-carta.svelata.cn{background:#f4efe2}.or-carta.svelata.cx{background:#1f1f1f;color:#fff}",
+      // la parola d'oro (girata, o svelata a fine partita)
+      ".or-carta.g.oro{background:#fcc419;color:#5c3d00}.or-carta.g.oro:before{content:'⭐';position:absolute;top:1px;left:3px;font-size:10px}",
+      ".or-carta.svelata.oro{background:#fff3bf}",
       ".or-carta.appena{animation:orGira .45s ease-out}",
       "@keyframes orGira{0%{transform:scale(1.12)}100%{transform:none}}",
-      ".or-msg{flex:none;text-align:center;font-weight:800;font-size:.82rem;min-height:1.2em;line-height:1.2}.or-msg.su{animation:orMsg 1.2s ease}",
-      "@keyframes orMsg{0%{color:#ffd43b;transform:scale(1.06)}100%{color:#fff;transform:none}}",
+      // al centro: la chat della partita (indizi e parole girate)
+      ".or-log{flex:1 1 auto;min-height:56px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:#fff;border-radius:14px;box-shadow:0 0 0 1px #ebe7da;padding:7px 9px;display:flex;flex-direction:column;gap:5px}",
+      ".or-l{display:flex;align-items:center;gap:6px;font-size:.8rem;line-height:1.2;min-width:0}",
+      ".or-l .or-f{width:22px;height:22px;box-shadow:none}",
+      ".or-l-nome{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34%}",
+      ".or-l-txt{color:#8a8576;font-weight:700}",
+      ".or-l-ind{font-weight:900;background:#1f1f1f;color:#fff;border-radius:7px;padding:2px 8px;letter-spacing:.02em}",
+      ".or-l-w{font-weight:900;border-radius:6px;padding:2px 7px;background:#e9e4d6;color:#6b6658}",
+      ".or-l-w.c0{background:#fa5252;color:#fff}.or-l-w.c1{background:#339af0;color:#fff}.or-l-w.c2{background:#40c057;color:#fff}.or-l-w.cx{background:#1f1f1f;color:#fff}.or-l-w.oro{background:#fcc419;color:#5c3d00}",
+      ".or-l-esito{color:#8a8576;font-size:.74rem;font-weight:700}.or-l-esito.ok{color:#2f9e44;font-weight:900;font-size:.9rem}",
+      ".or-l.sis{justify-content:center;color:#8a8576;font-weight:800;font-size:.74rem}.or-l.fine{color:#1f1f1f;font-size:.92rem}",
+      // in fondo: i tasti
       ".or-sotto{flex:none;display:flex;flex-direction:column;gap:6px}",
-      ".or-stato{text-align:center;font-weight:800;font-size:.88rem;line-height:1.3;padding:2px 0}",
+      ".or-stato{text-align:center;font-weight:800;font-size:.85rem;line-height:1.3;padding:2px 0;color:#6b6658}",
       ".or-riga{display:flex;gap:6px}",
-      ".or-btn{flex:1;min-height:46px;border:0;border-radius:14px;font:inherit;font-weight:900;font-size:.92rem;color:#fff;background:#495057;cursor:pointer;touch-action:manipulation}.or-btn.ok{background:#2f9e44}.or-btn.corto{flex:0 0 auto;padding:0 18px}.or-btn:disabled{opacity:.35}",
-      ".or-input{flex:1;min-width:0;height:46px;border:0;border-radius:14px;padding:0 14px;font:inherit;font-size:1.05rem;font-weight:800;text-transform:uppercase;color:#14113a;background:#fff}",
+      ".or-btn{flex:1;min-height:46px;border:0;border-radius:14px;font:inherit;font-weight:900;font-size:.92rem;color:#fff;background:#1f1f1f;cursor:pointer;touch-action:manipulation}.or-btn.chiaro{background:#ebe7da;color:#1f1f1f}.or-btn.corto{flex:0 0 auto;padding:0 18px}.or-btn:disabled{opacity:.3}",
+      ".or-input{flex:1;min-width:0;height:46px;border:1.5px solid #e4e0d4;border-radius:14px;padding:0 14px;font:inherit;font-size:1.05rem;font-weight:800;text-transform:uppercase;color:#1f1f1f;background:#fff}",
       ".or-numeri{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}",
-      ".or-num{height:38px;border:0;border-radius:10px;font:inherit;font-weight:900;font-size:1rem;color:#14113a;background:#dee2e6;cursor:pointer;touch-action:manipulation}.or-num.on{background:#fab005}",
-      ".or-err{min-height:1.1em;text-align:center;font-size:.8rem;font-weight:800;color:#ffa8a8}",
-      // saletta: le squadre
+      ".or-num{height:36px;border:0;border-radius:10px;font:inherit;font-weight:900;font-size:1rem;color:#1f1f1f;background:#ebe7da;cursor:pointer;touch-action:manipulation}.or-num.on{background:#1f1f1f;color:#fff}",
+      ".or-err{min-height:1.1em;text-align:center;font-size:.8rem;font-weight:800;color:#e03131}",
+      ".or-toast{position:absolute;left:50%;bottom:calc(118px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:88%;text-align:center;background:#1f1f1f;color:#fff;border-radius:999px;padding:8px 14px;font-weight:800;font-size:.82rem;opacity:0;pointer-events:none;transition:opacity .25s;z-index:5}.or-toast.su{opacity:1}",
+      // ---- saletta (nello stile scuro dell'app): le squadre ----
       ".or-squadre{display:flex;flex-direction:column;gap:8px;margin:6px 0}",
       ".or-sq{border-radius:14px;padding:8px 10px;background:rgba(255,255,255,.06);box-shadow:inset 4px 0 var(--c)}",
       ".or-sq-testa{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}",
       ".or-sq-membri{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px}",
       ".or-membro{padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.12);font-weight:800;font-size:.85rem}.or-membro.tu{box-shadow:inset 0 0 0 2px var(--c)}",
       ".or-vuota{font-size:.8rem;opacity:.7}",
-      // la parola d'oro (girata, o svelata a fine partita)
-      ".or-carta.g.oro{background:#fab005;color:#3d2a00;box-shadow:inset 0 0 0 2px #fff3bf}.or-carta.g.oro .or-w{opacity:1}.or-carta.g.oro:before{content:'⭐';position:absolute;top:1px;left:3px;font-size:10px}",
-      ".or-carta.svelata.oro{background:#ffe066}",
-      // le tue parole nelle impostazioni: una alla volta, ognuna con la sua ✕
+      // ---- le tue parole nelle impostazioni: una alla volta, ognuna con la sua ✕ ----
       ".or-aggiungi{display:flex;gap:6px;align-items:center}.or-aggiungi .link-campo{flex:1;min-width:0;margin:0}",
       ".or-esito{min-height:1.2em;margin:4px 0 0}",
       ".or-conta{font-size:.8rem;font-weight:800;opacity:.8;margin:6px 0 4px}",
