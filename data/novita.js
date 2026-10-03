@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 151,
+    data: "4 ottobre 2026",
+    titolo: "Parola d'ordine nello studio TV 📺",
+    descrizione: [
+      "Parola d'ordine ora si gioca nello studio, come gli altri giochi di Quiz & parole: i capi stanno in alto sui loro podi, i compagni di squadra in basso dietro un bancone grande, il tabellone sul maxischermo.",
+      "Quando il capo dà l'indizio la telecamera va su di lui e la parola esce da una vignetta sopra la sua testa.",
+      "Quando uno della squadra gira una parola, la telecamera va su di lui al bancone e la dice nella vignetta; poi la casella trema, il pubblico fa «ooooh» e dopo un paio di secondi si scopre se è giusta.",
+      "Il tabellone è nuovo, pulito e chiaro: in alto le squadre con le faccine (il capo con la corona), l'indizio grande, e sotto la chat della partita con gli indizi e le parole girate.",
+      "Si può scegliere anche il tabellone da 20 parole, con le caselle più grandi e partite un po' più corte."
+    ]
+  },
+  {
     v: 150,
     data: "3 ottobre 2026",
     titolo: "Entra con un codice 🔑 e avatar più ordinato",

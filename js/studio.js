@@ -529,7 +529,9 @@
     s._contenuto.appendChild(vista);
     t.mostra(s);
     S.vivo = function () { return vista.isConnected; };
-    S.impostaGiocatori = function (lista, io) { S.gioc = lista.map(function (g) { return { nome: g.nome, omino: g.omino || null }; }); S.io = io == null ? -1 : io; costruisciLeggii(S); layoutStudio(S); };
+    // (facoltativi, per i giochi che vogliono uno studio diverso) opz.posti(S) = dove stanno i leggii; opz.dopoLayout(S) = dopo ogni sistemazione
+    S.postiFn = opz.posti || null; S.dopoLayout = opz.dopoLayout || null;
+    S.impostaGiocatori = function (lista, io) { S.gioc = lista.map(function (g) { return { nome: g.nome, omino: g.omino || null, col: g.col || null }; }); S.io = io == null ? -1 : io; costruisciLeggii(S); layoutStudio(S); };
     S.impostaGiocatori(giocatori, opz.io);
     // appena le facce del pubblico sono pronte ridisegno la folla (all'inizio per un attimo ci sono le sagome)
     // la sigla aspetta le facce del pubblico: così la folla non si ridisegna mentre la telecamera si muove
@@ -591,7 +593,7 @@
   function costruisciLeggii(S) {
     var el = S.t.el; vuota(S.zonaLeggii); S.L = [];
     S.gioc.forEach(function (g, i) {
-      var col = ST_COL[i % ST_COL.length], L = el("div", { class: "st-leggio" }); L.style.position = "absolute"; L.style.setProperty("--col", col);
+      var col = g.col || ST_COL[i % ST_COL.length], L = el("div", { class: "st-leggio" }); L.style.position = "absolute"; L.style.setProperty("--col", col);   // g.col: il colore scelto dal gioco (es. quello della squadra)
       // tutto quello che si illumina è già disegnato (canvas): accendere un leggio cambia solo l'opacità
       L.innerHTML = "<canvas class='luce' width='96' height='268'></canvas><canvas class='pozza'></canvas><canvas class='alone'></canvas>" +
         "<div class='anello'></div><div class='cart'><div class='in'><div class='f'>?</div><div class='f r'></div></div></div><div class='delta'></div><div class='av'><canvas width='356' height='364'></canvas></div>" +
@@ -1064,7 +1066,7 @@
     });
     pos(S.fumetto, W / 2, 1.06 * VH);
     // leggii
-    S.posti = postiLeggii(S);
+    S.posti = S.postiFn ? S.postiFn(S) : postiLeggii(S);
     var ordine = S.posti.map(function (p, i) { return i; }).sort(function (a, b) { return S.posti[b].fila - S.posti[a].fila; });   // prima la fila dietro
     ordine.forEach(function (i) {
       var p = S.posti[i], X = S.L[i]; if (!X) return;
@@ -1074,6 +1076,7 @@
       S.zonaLeggii.appendChild(X.el);
     });
     S.file = S.posti.length > 4 ? 2 : 1;
+    if (S.dopoLayout) try { S.dopoLayout(S); } catch (e) {}   // il gioco sistema i suoi pezzi (es. i banconi delle squadre)
   }
 
   // ---------- TELECAMERA ----------
