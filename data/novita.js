@@ -9,6 +9,33 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 150,
+    data: "3 ottobre 2026",
+    titolo: "Entra con un codice 🔑 e avatar più ordinato",
+    descrizione: [
+      "In ogni gioco online ora scegli: «Online: apro io la stanza» oppure «Online: ho un codice». Se ti hanno invitato, scrivi il codice (o incolla il link) ed entri nella loro stanza, senza diventare tu l'host.",
+      "Il messaggio d'invito ora contiene anche il codice: chi ha già l'app la apre, tocca «🔑 Ho un codice» e lo scrive. Il link resta per chi non ce l'ha.",
+      "In home il tasto si chiama «🔑 Ho un codice: entro in una stanza».",
+      "Editor dell'avatar più ordinato: ogni scheda ha le sue sottocategorie in alto. Per esempio in Vestiti trovi Look pronti, Parti superiori, Parti inferiori e Scarpe; in Accessori In testa, Occhiali, Orecchini, Al collo e Borsa.",
+      "Il tasto 🎲 ora cambia a caso solo la sottocategoria aperta (per esempio solo le scarpe)."
+    ]
+  },
+  {
+    v: 149,
+    data: "3 ottobre 2026",
+    titolo: "Nuovo gioco: Parola d'ordine 🕵️",
+    descrizione: [
+      "Come Codenames: sul tabellone ci sono 25 parole. Il capo di ogni squadra (👑) sa quali sono le vostre e dà un indizio di una parola sola più un numero, per esempio «Caldo, 2».",
+      "La squadra ne discute: quando tocchi una parola ci compare sopra il tuo avatar, e la giri toccandola di nuovo. Attenti alla parola nera: chi la gira perde!",
+      "Si gioca a 2 squadre, oppure a 3 squadre se siete almeno in 6: chi gira la parola nera esce e gli altri continuano.",
+      "Le parole del vostro gruppo: prima di cominciare l'host può scrivere soprannomi, posti e parole vostre, e qualcuna finisce sul tabellone.",
+      "Ognuno sceglie la sua squadra nella saletta, chi vuole fa il capo, e a ogni nuova partita il capo passa al compagno.",
+      "Se uno esce e rientra, torna nella sua squadra; chi arriva a metà entra subito in gioco. Se il capo esce, un compagno può prendere il suo posto.",
+      "Il telefono controlla gli indizi: non vale dare una parola che è sul tabellone (neanche al plurale). A fine partita si vede di chi era ogni parola.",
+      "Si gioca online, ognuno dal suo telefono, da 4 a 12 giocatori. Lo trovi in Quiz & parole."
+    ]
+  },
+  {
     v: 148,
     data: "2 ottobre 2026",
     titolo: "Nuovo gioco: La Ruota della Fortuna 🎡",

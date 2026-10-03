@@ -41,7 +41,7 @@
     { id: "parole", nome: "Quiz & parole", icona: "🧠" }
   ];
   var CAT_GIOCO = {
-    scopa: "carte", scopa2v2: "carte", scopone: "carte", blackjack: "carte", poker: "carte", ruota: "parole",
+    scopa: "carte", scopa2v2: "carte", scopone: "carte", blackjack: "carte", poker: "carte", ruota: "parole", ordine: "parole",
     tris: "sfida", drop4: "sfida", hockey: "sfida", navale: "sfida",
     asta: "festa", impostore: "festa", sipero: "festa", scarabocchio: "festa",
     scalinata: "mini", horto: "mini", pendolo: "mini",
@@ -50,7 +50,7 @@
   var catAttiva = "tutti";
   function catDi(g) { return CAT_GIOCO[g.id] || null; }
   // Giochi che hanno la modalità "ognuno dal suo telefono" (usabili nella Sala online).
-  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, poker: 1, ruota: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1 };
+  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, poker: 1, ruota: 1, ordine: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1 };
   function giocoOnline(g) { return !!(g && GIOCHI_ONLINE[g.id]); }
   var app;                    // contenitore radice (#app)
   var linkParams = {};        // impostazioni arrivate da un link condiviso
@@ -225,11 +225,28 @@
     else if (!serve && avvisoHost) { if (avvisoHost.parentNode) avvisoHost.parentNode.removeChild(avvisoHost); avvisoHost = null; }
   });
 
-  function entraConCodice() {
-    var c = window.prompt("Scrivi il codice della stanza:");
-    if (!c) return;
-    c = c.trim().toUpperCase();
-    if (!c) return;
+  // 🔑 "Ho un codice": per chi è stato invitato e ha già l'app aperta (o il codice gliel'hanno detto a voce).
+  // Si può anche incollare tutto il link: il codice lo trovo io.
+  function entraConCodice(indietro) {
+    var s = schermata({ icona: "🔑", titolo: "Entra con un codice", sotto: "Te l'ha mandato chi ha aperto la stanza", indietro: indietro || schermataHome });
+    var input = el("input", { type: "text", class: "link-campo codice-campo", placeholder: "Es. ABCD", maxlength: "80", autocomplete: "off", autocapitalize: "characters", spellcheck: "false" });
+    var err = el("p", { class: "link-avviso", style: "min-height:1.3em;margin:6px 0 0" });
+    function vai() {
+      var t = (input.value || "").trim(), m = /(?:stanza|sala)=([A-Za-z0-9]+)/.exec(t);   // incollato tutto il link?
+      var c = (m ? m[1] : t).replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+      if (c.length < 3) { err.textContent = "Scrivi il codice della stanza (di solito sono 4 lettere)."; return; }
+      cercaStanza(c, function () { entraConCodice(indietro); });
+    }
+    input.addEventListener("input", function () { err.textContent = ""; });
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") vai(); });
+    s._contenuto.appendChild(input);
+    s._contenuto.appendChild(err);
+    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Il codice lo vede chi ha aperto la stanza, in alto nella saletta. Puoi anche incollare il link che ti hanno mandato." }));
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: vai }));
+    mostra(s);
+    setTimeout(function () { try { input.focus(); } catch (e) {} }, 250);
+  }
+  function cercaStanza(c, riprova) {
     if (!(window.SGNet && SGNet.disponibile())) {
       window.alert("Il collegamento non è disponibile qui. Apre solo dal sito pubblicato online.");
       return;
@@ -243,8 +260,9 @@
       if (!g) {
         svuota(s._contenuto); svuota(s._piede);
         s._contenuto.appendChild(el("p", { class: "link-avviso",
-          text: "Non trovo una partita con questo codice. Controlla di averlo scritto giusto, oppure apri il link che ti ha mandato chi organizza." }));
-        s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↩︎ Torna alla home", onclick: schermataHome }));
+          text: "Non trovo una partita con il codice " + c + ". Controlla di averlo scritto giusto, oppure apri il link che ti ha mandato chi organizza." }));
+        if (riprova) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "✏️ Riscrivi il codice", onclick: riprova }));
+        s._piede.appendChild(el("button", { class: "btn " + (riprova ? "btn-fantasma" : "btn-primario"), text: "↩︎ Torna alla home", onclick: schermataHome }));
         mostra(s);
         return;
       }
@@ -360,10 +378,10 @@
       onclick: creaSala
     }));
 
-    // Tasto "Entra in una stanza" (per chi ha ricevuto un codice a voce)
+    // Tasto "Ho un codice" (per chi è stato invitato e ha già l'app aperta, o ha il codice a voce)
     s._piede.appendChild(el("button", {
-      class: "btn btn-fantasma", html: "🔗 Entra in una stanza (con un codice)",
-      onclick: entraConCodice
+      class: "btn btn-fantasma", html: "🔑 Ho un codice: entro in una stanza",
+      onclick: function () { entraConCodice(); }
     }));
 
     mostra(s);
@@ -1272,15 +1290,22 @@
   // ---- AVATAR: il tuo personaggio stile Mii (disegno in js/omino.js; nel codice resta "omino") ----
   // zoom: "viso" = sul palco la telecamera va sulla faccia; solo: "donna" = la scheda c'è solo per lei; look: in cima i look pronti
   var SEZ_OMINO = [
-    { nome: "Corpo", icona: "🧍", voci: [["forma", "Maschio o femmina"], ["corpo", "Corporatura"], ["pelle", "Pelle"]] },
+    { nome: "Corpo", icona: "🧍", voci: [["forma", "Maschio o femmina"], ["corpo", "Corporatura"], ["pelle", "Pelle"]],
+      sotto: [["Maschio o femmina", ["forma"]], ["Corporatura", ["corpo"]], ["Pelle", ["pelle"]]] },
     { nome: "Viso", icona: "🙂", zoom: "viso", voci: [["viso", "Forma del viso"], ["orecchie", "Orecchie"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
-                               ["guance", "Guance"], ["segno", "Segni particolari"]] },
+                               ["guance", "Guance"], ["segno", "Segni particolari"]],
+      sotto: [["Forma", ["viso", "orecchie"]], ["Occhi", ["occhi", "iride"]], ["Sopracciglia", ["sopracc"]], ["Naso e bocca", ["naso", "bocca"]], ["Guance e segni", ["guance", "segno"]], ["Ritocchi", ["ritocchi"]]] },
     { nome: "Trucco", icona: "💄", zoom: "viso", solo: "donna", voci: [["ombretto", "Ombretto"], ["colOmbretto", "Colore ombretto"], ["eyeliner", "Eyeliner"], ["colEyeliner", "Colore eyeliner"], ["mascara", "Mascara"],
-                               ["rossetto", "Rossetto"], ["colRossetto", "Colore rossetto"], ["blush", "Blush"], ["colBlush", "Colore blush"]] },
-    { nome: "Capelli", icona: "💇", zoom: "viso", voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]] },
-    { nome: "Vestiti", icona: "👕", look: true, voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]] },
-    { nome: "Accessori", icona: "🎩", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali e maschere"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"], ["borsa", "Borsa"], ["colBorsa", "Colore borsa"]] },
-    { nome: "Extra", icona: "🎈", voci: [["mano", "In mano"], ["colMano", "Colore"], ["schiena", "Sulla schiena"], ["colSchiena", "Colore"], ["animale", "Animaletto"], ["colAnimale", "Colore del pelo"], ["pittura", "Pittura sul viso"]] }
+                               ["rossetto", "Rossetto"], ["colRossetto", "Colore rossetto"], ["blush", "Blush"], ["colBlush", "Colore blush"]],
+      sotto: [["Occhi", ["ombretto", "colOmbretto", "eyeliner", "colEyeliner", "mascara"]], ["Labbra", ["rossetto", "colRossetto"]], ["Guance", ["blush", "colBlush"]]] },
+    { nome: "Capelli", icona: "💇", zoom: "viso", voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]],
+      sotto: [["Taglio", ["capelli"]], ["Colore", ["colCap"]], ["Barba e baffi", ["barba"]]] },
+    { nome: "Vestiti", icona: "👕", look: true, voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]],
+      sotto: [["Look pronti", ["look"]], ["Parti superiori", ["capo", "maglia", "stampa"]], ["Parti inferiori", ["sotto", "pantaloni"]], ["Scarpe", ["modScarpe", "scarpe"]]] },
+    { nome: "Accessori", icona: "🎩", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali e maschere"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"], ["borsa", "Borsa"], ["colBorsa", "Colore borsa"]],
+      sotto: [["In testa", ["cappello", "colAcc"]], ["Occhiali", ["occhiali"]], ["Orecchini", ["orecchini"]], ["Al collo", ["collo", "colCollo"]], ["Borsa", ["borsa", "colBorsa"]]] },
+    { nome: "Extra", icona: "🎈", voci: [["mano", "In mano"], ["colMano", "Colore"], ["schiena", "Sulla schiena"], ["colSchiena", "Colore"], ["animale", "Animaletto"], ["colAnimale", "Colore del pelo"], ["pittura", "Pittura sul viso"]],
+      sotto: [["In mano", ["mano", "colMano"]], ["Sulla schiena", ["schiena", "colSchiena"]], ["Animaletto", ["animale", "colAnimale"]], ["Pittura sul viso", ["pittura"]]] }
   ];
   var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1, colMano: 1, colSchiena: 1, colAnimale: 1 };
   var TRUCCO_COL = { colOmbretto: "ombretto", colEyeliner: "eyeliner", colRossetto: "rossetto", colBlush: "blush", colBorsa: "borsa" };   // il colore si vede solo se quel trucco c'è
@@ -1397,7 +1422,8 @@
     });
     var schede = el("div", { class: "omino-schede" });
     var pannello = el("div", { class: "omino-pannello" });
-    s._contenuto.appendChild(palco); s._contenuto.appendChild(schede); s._contenuto.appendChild(pannello);
+    var sottoschede = el("div", { class: "omino-sotto" });   // le sottocategorie della scheda aperta (es. Vestiti: Parti superiori, Parti inferiori, Scarpe)
+    s._contenuto.appendChild(palco); s._contenuto.appendChild(schede); s._contenuto.appendChild(sottoschede); s._contenuto.appendChild(pannello);
     function unisci(k, v) {
       if (k === "forma") return O.adattaForma(cfg, v);   // maschio/femmina: cambiano anche capelli, barba, trucco
       var c = {}; for (var x in cfg) c[x] = cfg[x]; c[k] = v; return c;
@@ -1502,12 +1528,35 @@
       ricorda(); cfg = conLook(cfg, L);
       anteprima(true); saluta(); disegnaPannello();
     }
-    // 🎲 solo questa scheda: il resto non cambia
+    // le sottocategorie della scheda aperta (es. Vestiti: Look pronti, Parti superiori, Parti inferiori, Scarpe): se ne vede una alla volta
+    var subDi = {};   // scheda -> sottocategoria aperta (quando torni su una scheda ritrovi quella di prima)
+    function voceVisibile(k) {
+      if (k === "look" || k === "ritocchi") return true;
+      if (k === "colAcc" && !ACC_COLORATI.test(cfg.cappello)) return false;
+      if (k === "colCollo" && !COLLO_COLORATI.test(cfg.collo)) return false;
+      if (COLORE_DI[k] && !COLORE_DI[k][1].test(cfg[COLORE_DI[k][0]])) return false;
+      if (TRUCCO_COL[k] && /^nessun[oa]$/.test(cfg[TRUCCO_COL[k]])) return false;
+      if ((k === "sotto" || k === "pantaloni") && /^vestito/.test(cfg.capo)) return false;   // il vestito copre anche sotto
+      if (k === "barba" && cfg.forma === "donna") return false;   // lei niente barba
+      return true;
+    }
+    function sottoVisibili() {
+      var sz = SEZ_OMINO[tab], lista = sz.sotto || [[sz.nome, sz.voci.map(function (vc) { return vc[0]; })]];
+      return lista.map(function (x, j) { return { nome: x[0], chiavi: x[1], j: j }; })
+        .filter(function (x) { return x.chiavi.some(voceVisibile); });
+    }
+    function sottoAttuale() {
+      var l = sottoVisibili(), j = subDi[tab] || 0;
+      return l.filter(function (x) { return x.j === j; })[0] || l[0];
+    }
+    // 🎲 solo questa sottocategoria: il resto non cambia
     function acasoScheda() {
       ricorda();
-      var donna = cfg.forma === "donna";
-      SEZ_OMINO[tab].voci.forEach(function (vc) {
-        var k = vc[0], lista = O.OPZ[k];
+      var donna = cfg.forma === "donna", cur = sottoAttuale();
+      cur.chiavi.forEach(function (k) {
+        if (k === "look") { cfg = conLook(cfg, LOOK[Math.floor(Math.random() * LOOK.length)]); return; }
+        if (k === "ritocchi") { OMINO_RITOCCHI.forEach(function (r) { cfg[r[0]] = Math.floor(Math.random() * 5) - 2; }); return; }
+        var lista = O.OPZ[k];
         if (k === "forma" || !lista || (k === "barba" && donna)) return;
         if (OMINO_COLORI[k]) { cfg[k] = Math.floor(Math.random() * (k === "colCap" ? 7 : lista.length)); return; }
         var ok = lista.filter(function (v) {
@@ -1522,38 +1571,58 @@
       if (!/^(nessuno|pallone)$/.test(cfg.mano) && cfg.borsa === "borsetta") cfg.borsa = "nessuna";
       anteprima(true); disegnaPannello();
     }
+    function disegnaSotto(lista, cur) {   // la fila delle sottocategorie, sopra alle scelte
+      sottoschede.innerHTML = "";
+      sottoschede.style.display = lista.length > 1 ? "" : "none";
+      if (lista.length < 2) return;
+      lista.forEach(function (x) {
+        sottoschede.appendChild(el("button", { class: "om-sub" + (x.j === cur.j ? " attiva" : ""), text: x.nome,
+          onclick: function () { if (subDi[tab] === x.j) return; subDi[tab] = x.j; disegnaPannello(); pannello.scrollTop = 0; } }));
+      });
+      var a = sottoschede.querySelector(".om-sub.attiva");   // quella aperta sempre in vista (la fila può scorrere di lato)
+      if (a) sottoschede.scrollLeft = Math.max(0, a.offsetLeft - (sottoschede.clientWidth - a.offsetWidth) / 2);
+    }
     function disegnaPannello() {
       var st = pannello.scrollTop;   // ridisegnando non si torna in cima
       pannello.innerHTML = "";
-      var sz = SEZ_OMINO[tab];
-      if (sz.nome !== "Corpo") pannello.appendChild(el("button", { class: "om-acaso", text: "🎲 " + sz.nome + " a caso", onclick: acasoScheda }));
-      if (sz.look) {   // i look pronti, in cima ai vestiti
-        pannello.appendChild(el("div", { class: "etichetta", text: "✨ Look pronti" }));
-        var rl = el("div", { class: "om-griglia" });
-        LOOK.forEach(function (L) {
-          var b = el("button", { class: "om-opz om-forma", onclick: function () { applicaLook(L); } });
-          b._mini = el("div", { class: "om-mini intero" }); b.appendChild(b._mini);
-          b.appendChild(el("div", { class: "om-nome", text: L.nome }));
-          b._look = L; rl.appendChild(b);
-        });
-        pannello.appendChild(rl);
-      }
-      sz.voci.forEach(function (vc) {
-        var k = vc[0];
-        if (k === "colAcc" && !ACC_COLORATI.test(cfg.cappello)) return;
-        if (k === "colCollo" && !COLLO_COLORATI.test(cfg.collo)) return;
-        if (COLORE_DI[k] && !COLORE_DI[k][1].test(cfg[COLORE_DI[k][0]])) return;
-        if (TRUCCO_COL[k] && /^nessun[oa]$/.test(cfg[TRUCCO_COL[k]])) return;
-        if ((k === "sotto" || k === "pantaloni") && /^vestito/.test(cfg.capo)) return;   // il vestito copre anche sotto
-        if (k === "barba" && cfg.forma === "donna") return;   // lei niente barba
+      var sz = SEZ_OMINO[tab], lista = sottoVisibili(), cur = sottoAttuale();
+      disegnaSotto(lista, cur);
+      var etichette = cur.chiavi.filter(voceVisibile).length > 1;   // con una voce sola il nome c'è già nella sottocategoria
+      if (sz.nome !== "Corpo") pannello.appendChild(el("button", { class: "om-acaso", text: "🎲 " + (lista.length > 1 ? cur.nome : sz.nome) + " a caso", onclick: acasoScheda }));
+      cur.chiavi.forEach(function (k) {
+        if (!voceVisibile(k)) return;
+        if (k === "look") {   // i look pronti: un tocco e cambiano vestiti e accessori insieme
+          var rl = el("div", { class: "om-griglia" });
+          LOOK.forEach(function (L) {
+            var b = el("button", { class: "om-opz om-forma", onclick: function () { applicaLook(L); } });
+            b._mini = el("div", { class: "om-mini intero" }); b.appendChild(b._mini);
+            b.appendChild(el("div", { class: "om-nome", text: L.nome }));
+            b._look = L; rl.appendChild(b);
+          });
+          pannello.appendChild(rl);
+          return;
+        }
+        if (k === "ritocchi") {   // ritocchi stile Mii: cursori da -2 a +2
+          OMINO_RITOCCHI.forEach(function (r) {
+            var kk = r[0], val = el("span", { class: "om-rit-val" });
+            var cur2 = el("input", { type: "range", min: "-2", max: "2", step: "1", value: String(cfg[kk] || 0), class: "om-cursore", "aria-label": r[1] });
+            function scrivi() { var n = +cur2.value; val.textContent = n > 0 ? "+" + n : String(n); }
+            cur2.addEventListener("input", function () { scrivi(); scegli(kk, +cur2.value, true); });
+            cur2.addEventListener("change", function () { trascina = false; popOmino(); aggiornaPannello(); });
+            scrivi();
+            pannello.appendChild(el("div", { class: "om-ritocco" }, [el("span", { class: "om-rit-nome", text: r[1] }), cur2, val]));
+          });
+          return;
+        }
+        var vc = sz.voci.filter(function (x) { return x[0] === k; })[0] || [k, k];
         var gruppi = k === "capelli" ? O.GRUPPI_CAPELLI : null;   // tagli divisi in Corti / Medi / Lunghi
-        if (!gruppi) pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
+        if (!gruppi && etichette) pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
         var riga = el("div", { class: "om-griglia" + (OMINO_COLORI[k] ? " colori" : "") });
         O.OPZ[k].forEach(function (val, i) {
           if (gruppi) gruppi.forEach(function (g) {
             if (g[1] !== i) return;
             if (riga.children.length) pannello.appendChild(riga);
-            pannello.appendChild(el("div", { class: "etichetta", text: vc[1] + " · " + g[0] }));
+            pannello.appendChild(el("div", { class: "etichetta", text: g[0] }));
             riga = el("div", { class: "om-griglia" });
           });
           if (/^(sotto|capo|modScarpe)$/.test(k) && O.SOLO_DONNA.test(val) && cfg.forma !== "donna") return;   // gonne, vestiti, tacchi… solo per la donna
@@ -1579,19 +1648,6 @@
         }
         pannello.appendChild(riga);
       });
-      // ritocchi stile Mii (solo nella scheda Viso): cursori da -2 a +2
-      if (sz.nome === "Viso") {
-        pannello.appendChild(el("div", { class: "etichetta", text: "Ritocchi" }));
-        OMINO_RITOCCHI.forEach(function (r) {
-          var k = r[0], val = el("span", { class: "om-rit-val" });
-          var cur = el("input", { type: "range", min: "-2", max: "2", step: "1", value: String(cfg[k] || 0), class: "om-cursore", "aria-label": r[1] });
-          function scrivi() { var n = +cur.value; val.textContent = n > 0 ? "+" + n : String(n); }
-          cur.addEventListener("input", function () { scrivi(); scegli(k, +cur.value, true); });
-          cur.addEventListener("change", function () { trascina = false; popOmino(); aggiornaPannello(); });
-          scrivi();
-          pannello.appendChild(el("div", { class: "om-ritocco" }, [el("span", { class: "om-rit-nome", text: r[1] }), cur, val]));
-        });
-      }
       aggiornaPannello();
       pannello.scrollTop = st;
     }
@@ -2429,7 +2485,8 @@
   //  amici: true = poi si aggiungono gli amici (solo per chi gioca sullo stesso telefono).
   // =========================================================
   var MODO_ELIMINAZIONE = { modo: "eliminazione", icona: "🏆", nome: "Torneo a eliminazione", sotto: "Fino a 10 amici: sfide a due, chi vince va avanti" };
-  var MODO_ONLINE = { modo: "online", icona: "🔗", nome: "Online", sotto: "Ognuno dal suo telefono: mandi il link agli amici" };
+  var MODO_ONLINE = { modo: "online", icona: "🔗", nome: "Online: apro io la stanza", sotto: "Ognuno dal suo telefono: mandi il link agli amici" };
+  var MODO_CODICE = { modo: "codice", icona: "🔑", nome: "Online: ho un codice", sotto: "Ti hanno invitato? Entra nella loro stanza" };
   function modiDi(g) {
     var m = (g && g.modi) ? g.modi.slice() : [];
     if (giocoOnline(g)) m.push(MODO_ONLINE);
@@ -2440,7 +2497,9 @@
   function schermataModo(g) {
     var s = schermata({ icona: g.icona, titolo: g.nome, sotto: "Come giocate?", indietro: schermataHome });
     var io = profiloAttivo(), griglia = el("div", { class: "modo-scelta" });
-    modiDi(g).forEach(function (m) {
+    var modi = modiDi(g);
+    if (giocoOnline(g)) modi.splice(modi.indexOf(MODO_ONLINE) + 1, 0, MODO_CODICE);   // subito sotto "Online": chi è invitato entra col codice
+    modi.forEach(function (m) {
       griglia.appendChild(el("button", { class: "modo-grande" + (m.modo === "online" ? " online" : ""), onclick: function () { sceltoModo(g, m); } }, [
         el("div", { class: "mg-ico", text: m.icona }),
         el("div", { class: "mg-testo" }, [ el("div", { class: "mg-tit", text: m.nome }), el("div", { class: "mg-sotto", text: m.sotto || "" }) ]),
@@ -2453,6 +2512,7 @@
     mostra(s);
   }
   function sceltoModo(g, m) {
+    if (m.modo === "codice") return entraConCodice(function () { schermataModo(g); });   // invitato: si entra nella stanza di un altro
     if (m.modo === "eliminazione") return creaSala({ eliminazione: g.id });   // un link solo, coppie sorteggiate, chi vince va avanti
     if (m.amici) return schermataSala(g, { modo: m.modo });   // sullo stesso telefono: prima gli amici, poi le impostazioni
     schermataPreGioco(g, { modo: m.modo });                  // contro il computer / online: subito le impostazioni
@@ -2472,9 +2532,13 @@
   function chiavePers(p, i) { return String(p.id != null ? p.id : (p.nome || i)); }
   function condividiLink(link, g, bottone) {
     var fatto = function () { if (!bottone) return; var t0 = bottone.innerHTML; bottone.innerHTML = "✅ Link copiato!"; setTimeout(function () { bottone.innerHTML = t0; }, 1800); };
-    var invito = g.id === "__sala" ? (g.nome === "Torneo" ? "Vieni al torneo! Entra qui:" : "Vieni a giocare con noi! Entra qui:") : "Giochiamo a " + g.nome + "! Entra qui:";
+    var invito = g.id === "__sala" ? (g.nome === "Torneo" ? "Vieni al torneo!" : "Vieni a giocare con noi!") : "Giochiamo a " + g.nome + "!";
+    // il codice nel messaggio: chi ha già l'app la apre e lo scrive in "🔑 Ho un codice" (il link a volte si apre nel browser, non nell'app)
+    var m = /(?:stanza|sala)=([A-Za-z0-9]+)/.exec(link || ""), codice = m ? m[1].toUpperCase() : "";
+    if (codice) invito += "\nHai l'app? Aprila, tocca «🔑 Ho un codice» e scrivi: " + codice + "\nSe no, entra da qui:";
+    else invito += " Entra qui:";
     if (navigator.share) { navigator.share({ title: g.nome, text: invito, url: link }).catch(function () {}); return; }
-    try { navigator.clipboard.writeText(link).then(fatto, fatto); } catch (e) { fatto(); }
+    try { navigator.clipboard.writeText(invito + "\n" + link).then(fatto, fatto); } catch (e) { fatto(); }
   }
   // le impostazioni hanno qualcosa da scegliere (a vista) anche online? Se no, niente tasto "Regole"
   function haRegole(box) {
@@ -2637,7 +2701,7 @@
   // porta d'ingresso a un gioco dalla home: profilo → come giocate → (amici) → impostazioni
   function apriGioco(g) {
     if (!profiloAttivo()) return schermataAccesso(function () { apriGioco(g); });
-    if (modiDi(g).length > 1) return schermataModo(g);
+    if (modiDi(g).length > 1 || giocoOnline(g)) return schermataModo(g);   // online c'è sempre la scelta: apro io la stanza o entro con un codice
     var solo = modiDi(g)[0];
     if (solo && !solo.amici) return schermataPreGioco(g, { modo: solo.modo });
     if (!solo && (g.giocatoriMax || 10) <= 1) return schermataPreGioco(g);   // si gioca da soli (es. contro il computer): niente amici da aggiungere

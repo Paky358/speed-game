@@ -658,6 +658,11 @@ body::before{
 .editor-avatar .piede{ flex:0 0 auto; flex-direction:row; gap:10px; margin:0 -16px; padding:10px 16px calc(12px + env(safe-area-inset-bottom));
   background:linear-gradient(180deg, rgba(10,16,44,.2), rgba(10,16,44,.95) 40%); border-top:1px solid rgba(255,255,255,.08); }
 .editor-avatar .piede .btn{ min-height:54px; font-size:1.08rem; }
+/* sottocategorie della scheda aperta (es. Vestiti: Parti superiori, Parti inferiori, Scarpe): una fila che scorre di lato se non ci sta */
+.editor-avatar .omino-sotto{ flex:0 0 auto; display:flex; gap:6px; overflow-x:auto; overflow-y:hidden; margin:2px -16px 0; padding:4px 16px 6px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.editor-avatar .omino-sotto::-webkit-scrollbar{ display:none; }
+.om-sub{ flex:0 0 auto; border:0; border-radius:999px; padding:8px 14px; font:inherit; font-size:.92rem; font-weight:800; color:#dfe6ff; background:rgba(255,255,255,.1); white-space:nowrap; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.om-sub.attiva{ background:#ffd23b; color:#2a1d00; }
 .editor-avatar .piede .btn-fantasma{ flex:0 0 38%; }
 .editor-avatar .piede .btn-primario{ flex:1; }
 .editor-avatar .om-stella{ font-size:.85rem; padding:5px 12px; }
