@@ -42,6 +42,8 @@ OUT=dist/index.html
   echo ''
   cat js/omino.js
   echo ''
+  cat js/citta.js   # la città nuova (anteprima coi lavori in corso)
+  echo ''
   cat js/core.js
   echo ''
   cat js/net.js

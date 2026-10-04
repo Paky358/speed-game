@@ -755,6 +755,29 @@ button.am-riga:active{ transform:scale(.985); }
 .am-etich:first-child{ margin-top:0; }
 .home-amici{ position:relative; }
 
+/* la città nuova (anteprima coi lavori in corso): tasto a strisce gialle e nere accanto a Novità */
+.home-profilo .home-novita.home-citta{ padding:3px; border:0; -webkit-backdrop-filter:none; backdrop-filter:none;
+  background:repeating-linear-gradient(135deg,#ffd43b 0 9px,#1b1b1b 9px 18px); box-shadow:0 8px 20px rgba(0,0,0,.34); }
+.home-citta span{ display:inline-flex; align-items:center; min-height:40px; padding:0 14px; border-radius:99px;
+  background:#1b1b1b; color:#ffd43b; font-weight:900; letter-spacing:.02em; }
+.schermata.citta-vista{ position:fixed; inset:0; z-index:5; padding:0; min-height:0; overflow:hidden; animation:none; }
+.citta-mappa, .citta-mappa svg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+.citta-testa{ position:absolute; z-index:2; left:10px; right:10px; top:calc(10px + env(safe-area-inset-top));
+  display:flex; align-items:center; gap:10px; max-width:540px; margin:0 auto; }
+.citta-indietro{ flex:none; width:46px; height:46px; border-radius:50%; border:0; cursor:pointer; font-family:inherit;
+  font-size:1.9rem; font-weight:900; line-height:1; padding:0 0 4px; background:rgba(255,255,255,.95); color:#2b2b3a;
+  box-shadow:0 3px 10px rgba(0,0,0,.28); }
+.citta-cartello{ flex:1; min-width:0; padding:5px; border-radius:15px; pointer-events:none;
+  background:repeating-linear-gradient(135deg,#ffd43b 0 11px,#1b1b1b 11px 22px); box-shadow:0 8px 22px rgba(0,0,0,.38); }
+.citta-cartello div{ background:#1b1b1b; border-radius:11px; padding:6px 10px 7px; text-align:center; }
+.citta-cartello b{ display:block; color:#ffd43b; font-size:1.5rem; font-weight:900; letter-spacing:.07em; line-height:1.05; }
+.citta-cartello span{ display:block; color:#fff; font-size:.78rem; font-weight:900; letter-spacing:.34em; text-transform:uppercase; margin-top:2px; }
+.citta-nastro{ position:absolute; left:-12%; right:-12%; bottom:calc(18px + env(safe-area-inset-bottom)); height:34px;
+  transform:rotate(-2.5deg); display:flex; align-items:center; justify-content:center; pointer-events:none;
+  background:repeating-linear-gradient(135deg,#ffd43b 0 16px,#1b1b1b 16px 32px); box-shadow:0 4px 14px rgba(0,0,0,.35); }
+.citta-nastro span{ background:#ffd43b; color:#1b1b1b; font-weight:900; font-size:.92rem; letter-spacing:.08em;
+  padding:3px 12px; border:2px solid #1b1b1b; border-radius:6px; white-space:nowrap; }
+
 /* editor avatar: zoom sul viso, tasto annulla, "a caso" per scheda, l'avatar reagisce se lo tocchi */
 .editor-avatar .om-figura{ transition:transform .45s cubic-bezier(.3,.9,.3,1); transform-origin:50% 37%; cursor:pointer; }
 .editor-avatar .om-figura.zoom-viso{ transform:translateX(-50%) scale(1.8); }

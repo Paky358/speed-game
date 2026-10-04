@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 152,
+    data: "4 ottobre 2026",
+    titolo: "Arriva la nuova città 🏙️🚧",
+    descrizione: [
+      "In home, accanto a Novità, c'è il cartello giallo e nero «NEW CITY · open soon»: toccalo e sbirci la città che stiamo costruendo.",
+      "Presto la home diventerà una città: il Casinò per i giochi di carte, lo Studio TV per quiz e parole, la Sala giochi per i minigiochi, l'Arena per le sfide 1 contro 1, il Locale per le feste, la Sala Trofei con le classifiche, il Bar dove ci si trova con gli amici e la piazza delle novità.",
+      "La città segue l'ora vera: di giorno è chiara, al tramonto si accendono i lampioni e di notte brillano le finestre, le insegne e i fari dello stadio.",
+      "Per ora si guarda e basta: ci sono ancora i lavori in corso!"
+    ]
+  },
+  {
     v: 151,
     data: "4 ottobre 2026",
     titolo: "Parola d'ordine nello studio TV 📺",

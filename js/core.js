@@ -297,6 +297,8 @@
       if (!novitaTutteViste()) bNov.appendChild(el("span", { class: "pallino" }));
       rigaProfilo.appendChild(bNov);
     }
+    // la città nuova, ancora in costruzione: accanto a Novità, si apre solo per sbirciarla
+    if (window.SGCitta) rigaProfilo.appendChild(el("button", { class: "home-novita home-citta", onclick: schermataCitta }, [ el("span", { text: "🏙️ NEW CITY · open soon" }) ]));
     rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: schermataSfide }, [ el("span", { text: "🏆 Trofei" }) ]));
     rigaProfilo.appendChild(el("button", { class: "home-novita home-amici", onclick: function () { schermataAmici(); } }, [ el("span", { text: "👥 Classifica" }), cacheRich && cacheRich.arrivate.length ? el("span", { class: "pallino" }) : null ]));
     setTimeout(function () { aggiornaRichieste(); }, 0);   // richieste di amicizia nuove? pallino sul tasto
@@ -384,6 +386,20 @@
       onclick: function () { entraConCodice(); }
     }));
 
+    mostra(s);
+  }
+
+  // ---- La città nuova: anteprima coi lavori in corso (si guarda e basta, niente si tocca) ----
+  function schermataCitta() {
+    var io = profiloAttivo(), fase = SGCitta.fase(new Date());
+    var s = el("div", { class: "schermata citta-vista", style: "background:" + SGCitta.colorePrato(fase) }, [
+      el("div", { class: "citta-mappa", html: SGCitta.svg({ fase: fase, io: io && io.omino, sopra: 80 }) }),
+      el("div", { class: "citta-testa" }, [
+        el("button", { class: "citta-indietro", text: "‹", "aria-label": "Indietro", onclick: schermataHome }),
+        el("div", { class: "citta-cartello" }, [ el("div", {}, [ el("b", { text: "NEW CITY" }), el("span", { text: "open soon" }) ]) ])
+      ]),
+      el("div", { class: "citta-nastro" }, [ el("span", { text: "🚧 LAVORI IN CORSO 🚧" }) ])
+    ]);
     mostra(s);
   }
 
