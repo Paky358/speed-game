@@ -769,6 +769,29 @@ button.am-riga:active{ transform:scale(.985); }
 .am-etich:first-child{ margin-top:0; }
 .home-amici{ position:relative; }
 
+/* livello e Speed Coins: nel tasto del profilo in home, nel profilo e nell'avviso a fine partita */
+.profilo-chip.con-livello{ padding:5px 14px 5px 5px; gap:9px; text-align:left; }
+.chip-testo{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+.chip-nome{ line-height:1.1; }
+.chip-livello{ display:flex; align-items:center; gap:6px; }
+.chip-livello b{ font-size:.72rem; font-weight:900; color:#1b1b1b; background:linear-gradient(180deg,#ffe58a,#f7ad14); border-radius:99px; padding:1px 7px; white-space:nowrap; }
+.chip-xp{ display:block; width:58px; height:5px; border-radius:3px; background:rgba(255,255,255,.18); overflow:hidden; }
+.chip-xp i{ display:block; height:100%; border-radius:3px; background:linear-gradient(90deg,#74c0fc,#4c6ef5); }
+.chip-monete{ font-weight:900; font-size:.86rem; color:#ffe58a; white-space:nowrap; }
+.riquadro-livello{ background:var(--carta); border-radius:16px; padding:12px 14px; box-shadow:var(--ombra); margin:6px 0 14px; }
+.rl-alto{ display:flex; align-items:flex-end; justify-content:space-between; gap:10px; }
+.rl-liv small, .rl-liv span, .rl-monete span{ display:block; font-size:.72rem; color:var(--testo-tenue); font-weight:800; }
+.rl-liv b{ display:block; font-size:2.2rem; font-weight:900; line-height:1; color:#ffe58a; }
+.rl-monete{ text-align:right; }
+.rl-monete b{ display:block; font-size:1.25rem; font-weight:900; color:#ffe58a; }
+.rl-barra{ height:10px; border-radius:6px; background:rgba(255,255,255,.12); overflow:hidden; margin:10px 0 6px; }
+.rl-barra i{ display:block; height:100%; border-radius:6px; background:linear-gradient(90deg,#74c0fc,#4c6ef5); }
+.rl-xp{ font-size:.84rem; color:var(--testo-tenue); }
+.rl-xp b{ color:var(--testo); }
+.rl-regole{ margin:10px 0 0; padding-left:18px; font-size:.84rem; line-height:1.45; color:var(--testo-tenue); }
+.rl-regole b{ color:var(--testo); }
+.avviso-trofeo.tl-xp .at-ico{ background:linear-gradient(150deg,#a5d8ff,#4c6ef5); }
+
 /* la città nuova (anteprima coi lavori in corso): tasto a strisce gialle e nere accanto a Novità */
 .home-profilo .home-novita.home-citta{ padding:3px; border:0; -webkit-backdrop-filter:none; backdrop-filter:none;
   background:repeating-linear-gradient(135deg,#ffd43b 0 9px,#1b1b1b 9px 18px); box-shadow:0 8px 20px rgba(0,0,0,.34); }
@@ -1022,7 +1045,8 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       return auth.createUserWithEmailAndPassword(emailDa(nome), pwd).then(function (cred) {
         var p = {
           uid: cred.user.uid, nome: String(nome).trim().slice(0, 20), emoji: emoji || "🙂",
-          fiches: { blackjack: FICHES_START }, stat: {}, creato: Date.now()
+          fiches: { blackjack: FICHES_START }, stat: {}, creato: Date.now(),
+          level: 1, xp: 0, coins: 0, prestige: 0   // livello, XP, Speed Coins e Prestigio (regole in livelli.js)
         };
         return db.collection("profili").doc(cred.user.uid).set(p).then(function () { profilo = p; notifica(); return p; });
       });
@@ -1054,6 +1078,24 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       var doc = db.collection("profili").doc(utente.uid);
       // in due passi: l'avatar in uso si salva comunque anche se il secondo pezzo non passasse
       return doc.update({ omino: cfg }).then(function () { if (omini) return doc.update({ omini: omini, ominoN: n || 0 }); }).catch(function () {});
+    },
+
+    // ---- livello, XP, Speed Coins e Prestigio (i profili di prima partono da livello 1, 0 XP, 0 monete) ----
+    progressione: function () {
+      var p = profilo || {};
+      return { level: p.level || 1, xp: p.xp || 0, coins: p.coins || 0, prestige: p.prestige || 0, xpTot: p.xpTot || 0, xpGiorno: p.xpGiorno || "" };
+    },
+    // aggiunge gli XP al profilo e salva tutto in un colpo; ritorna { stato, eventi } (livelli saliti, prestigio)
+    aggiungiXp: function (punti, giorno) {
+      if (!auth || !utente || !profilo || !window.SGLivelli || !(punti > 0)) return null;
+      var r = SGLivelli.aggiungi(SGNube.progressione(), punti), s = r.stato, n = Math.round(punti);
+      var patch = { level: s.level, xp: s.xp, coins: s.coins, prestige: s.prestige, xpTot: firebase.firestore.FieldValue.increment(n) };
+      if (giorno) patch.xpGiorno = giorno;
+      profilo.level = s.level; profilo.xp = s.xp; profilo.coins = s.coins; profilo.prestige = s.prestige;
+      profilo.xpTot = (profilo.xpTot || 0) + n; if (giorno) profilo.xpGiorno = giorno;
+      db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+      notifica();
+      return r;
     },
 
     // ---- liste personali (es. le parole di Parola d'ordine): un campo del profilo, salvato così com'è ----
@@ -1088,7 +1130,8 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     chiaveNome: function (nome) { return emailDa(nome).replace("@sg.local", ""); },
     pubblica: function (dati) {
       if (!auth || !utente || !profilo) return Promise.resolve();
-      var sch = { uid: utente.uid, nome: profilo.nome, chiave: SGNube.chiaveNome(profilo.nome), omino: profilo.omino || null, emoji: profilo.emoji || "🙂" };
+      var sch = { uid: utente.uid, nome: profilo.nome, chiave: SGNube.chiaveNome(profilo.nome), omino: profilo.omino || null, emoji: profilo.emoji || "🙂",
+        livello: profilo.level || 1, prestigio: profilo.prestige || 0 };   // il livello lo vedono anche gli amici
       for (var k in dati) sch[k] = dati[k];
       var firma = JSON.stringify(sch);
       if (firma === ultimaScheda) return Promise.resolve();   // niente di nuovo: non riscrive
@@ -1214,6 +1257,72 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     }
   };
   init();
+})();
+
+/* =========================================================
+   SPeeD GAME — LIVELLI, XP, SPEED COINS E PRESTIGIO
+   Tutte le regole stanno qui, così si ritoccano in un posto solo.
+   - XP per passare al livello dopo: 100 x livello^0,95
+     (i primi livelli volano, poi ogni livello chiede un po' di più).
+     Con 1 XP al secondo, contando vittorie e bonus: livello 5 dopo 2-3 partite,
+     livello 10 dopo circa 1 ora, livello 20 dopo circa 4 ore, Prestigio dopo
+     circa 24 ore (giocando 3-4 ore a settimana: ogni 1 mese e mezzo / 2 mesi).
+   - Ogni livello raggiunto regala livello x 50 Speed Coins.
+   - Il livello massimo è 50: superato il 50 scatta il Prestigio
+     (si riparte dal livello 1 con 0 XP, +1 Prestigio, +5.000 Speed Coins;
+     le monete e il resto non si toccano).
+   - Gli XP di una partita dipendono da quanto dura: 1 XP al secondo
+     (al massimo 30 minuti contati), +50% se vinci, +250 alla prima
+     partita del giorno. Così ogni gioco vale per il tempo che ci passi.
+   ========================================================= */
+(function () {
+  "use strict";
+  var MAX = 50;                 // livello massimo: superato il 50 scatta il Prestigio
+  var BONUS_PRESTIGIO = 5000;   // Speed Coins quando si fa il Prestigio
+  var XP_SECONDO = 1;           // XP per ogni secondo di partita
+  var MAX_SECONDI = 1800;       // al massimo 30 minuti contati per partita
+  var MIN_SECONDI = 15;         // partite aperte e chiuse subito non valgono
+  var BONUS_VITTORIA = 0.5;     // +50% se vinci
+  var BONUS_GIORNO = 250;       // XP in più alla prima partita del giorno
+  var BASE = 100, POTENZA = 0.95;   // la curva: più alta la potenza, più lenti i livelli alti
+
+  // XP che servono per passare dal livello "livello" al successivo
+  function xpPerSalire(livello) { return Math.round(BASE * Math.pow(livello, POTENZA)); }
+  // Speed Coins regalati quando si raggiunge "livello"
+  function bonusLivello(livello) { return livello * 50; }
+
+  // aggiunge gli XP a uno stato { level, xp, coins, prestige } e dice cosa è successo
+  // (anche più livelli in un colpo solo, ognuno col suo bonus)
+  function aggiungi(stato, punti) {
+    var s = { level: stato.level || 1, xp: (stato.xp || 0) + Math.max(0, Math.round(punti || 0)), coins: stato.coins || 0, prestige: stato.prestige || 0 };
+    var eventi = [];
+    while (s.xp >= xpPerSalire(s.level)) {
+      if (s.level >= MAX) {   // superato il 50: Prestigio
+        s.level = 1; s.xp = 0; s.prestige += 1; s.coins += BONUS_PRESTIGIO;
+        eventi.push({ tipo: "prestigio", prestigio: s.prestige, monete: BONUS_PRESTIGIO });
+        break;
+      }
+      s.xp -= xpPerSalire(s.level);
+      s.level += 1;
+      var m = bonusLivello(s.level);
+      s.coins += m;
+      eventi.push({ tipo: "livello", livello: s.level, monete: m });
+    }
+    return { stato: s, eventi: eventi };
+  }
+
+  // gli XP di una partita: o = { secondi, vinto, primaDelGiorno }
+  function xpPartita(o) {
+    var sec = Math.min(MAX_SECONDI, Math.max(0, o.secondi || 0));
+    if (sec < MIN_SECONDI) return 0;
+    var xp = sec * XP_SECONDO * (o.vinto ? 1 + BONUS_VITTORIA : 1);
+    return Math.round(xp + (o.primaDelGiorno ? BONUS_GIORNO : 0));
+  }
+
+  window.SGLivelli = {
+    MAX: MAX, BONUS_PRESTIGIO: BONUS_PRESTIGIO, BONUS_GIORNO: BONUS_GIORNO, BONUS_VITTORIA: BONUS_VITTORIA, MAX_SECONDI: MAX_SECONDI,
+    xpPerSalire: xpPerSalire, bonusLivello: bonusLivello, aggiungi: aggiungi, xpPartita: xpPartita
+  };
 })();
 
 /* =========================================================
@@ -3714,10 +3823,13 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     var s = schermata({});
     s.className += " home";
     var io = profiloAttivo();
-    // riga profilo: il nome utente + il tasto "Novità" affianco
-    var profiloChip = el("button", { class: "profilo-chip", onclick: function () { schermataAccesso(schermataHome); } },
+    // riga profilo: il nome utente (col livello e le Speed Coins) + il tasto "Novità" affianco
+    var prog = io && io.cloud && window.SGLivelli && SGNube.progressione ? SGNube.progressione() : null;
+    var profiloChip = el("button", { class: "profilo-chip" + (prog ? " con-livello" : ""), onclick: function () { schermataAccesso(schermataHome); } },
       io ? [io.omino && window.SGOmino ? el("span", { class: "chip-omino", html: SGOmino.svg(io.omino, { busto: true }) }) : el("span", { text: io.emoji }),
-            el("span", { text: io.nome }), el("span", { class: "modifica", text: "cambia" })]
+            prog ? chipLivello(io.nome, prog) : el("span", { text: io.nome }),
+            prog ? el("span", { class: "chip-monete", text: "🪙 " + cifre(prog.coins) }) : null,
+            el("span", { class: "modifica", text: "cambia" })]
          : [el("span", { text: "👤" }), el("span", { text: "Crea il tuo profilo" })]);
     var rigaProfilo = el("div", { class: "home-profilo" }, [profiloChip]);
     if ((window.SG_NOVITA || []).length) {
@@ -3816,6 +3928,39 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     }));
 
     mostra(s);
+  }
+
+  // ---- Livello e Speed Coins (regole in livelli.js) ----
+  // nel tasto del profilo: nome, livello (con le stelle del Prestigio) e la barra degli XP
+  function chipLivello(nome, prog) {
+    var serve = SGLivelli.xpPerSalire(prog.level), pct = Math.max(3, Math.min(100, Math.floor(prog.xp * 100 / serve)));
+    return el("span", { class: "chip-testo" }, [
+      el("span", { class: "chip-nome", text: nome }),
+      el("span", { class: "chip-livello" }, [
+        el("b", { text: (prog.prestige ? "★" + prog.prestige + " " : "") + "Lv " + prog.level }),
+        el("i", { class: "chip-xp" }, [ el("i", { style: "width:" + pct + "%" }) ])
+      ])
+    ]);
+  }
+  // nel profilo: livello, barra degli XP, Speed Coins, Prestigio e come si guadagnano
+  function riquadroLivello(prog) {
+    var L = SGLivelli, serve = L.xpPerSalire(prog.level), pct = Math.max(2, Math.min(100, Math.floor(prog.xp * 100 / serve)));
+    var prossimo = prog.level >= L.MAX ? "Al prossimo traguardo scatta il <b>Prestigio</b>: +" + cifre(L.BONUS_PRESTIGIO) + " 🪙"
+      : "Al livello " + (prog.level + 1) + ": +" + cifre(L.bonusLivello(prog.level + 1)) + " 🪙";
+    return el("div", { class: "riquadro-livello" }, [
+      el("div", { class: "rl-alto" }, [
+        el("div", { class: "rl-liv" }, [ el("small", { text: prog.prestige ? "Prestigio " + prog.prestige + " ★" : "Livello" }), el("b", { text: "" + prog.level }), el("span", { text: "su " + L.MAX }) ]),
+        el("div", { class: "rl-monete" }, [ el("b", { text: "🪙 " + cifre(prog.coins) }), el("span", { text: "Speed Coins" }) ])
+      ]),
+      el("div", { class: "rl-barra" }, [ el("i", { style: "width:" + pct + "%" }) ]),
+      el("div", { class: "rl-xp", html: "<b>" + cifre(prog.xp) + "</b> / " + cifre(serve) + " XP · " + prossimo }),
+      el("ul", { class: "rl-regole" }, [
+        el("li", { html: "<b>1 XP per ogni secondo</b> di partita (al massimo 30 minuti a partita)" }),
+        el("li", { html: "<b>+" + Math.round(L.BONUS_VITTORIA * 100) + "%</b> se vinci, <b>+" + L.BONUS_GIORNO + " XP</b> alla prima partita del giorno" }),
+        el("li", { html: "Ogni livello nuovo regala <b>livello × 50</b> Speed Coins" }),
+        el("li", { html: "Dopo il livello " + L.MAX + " scatta il <b>Prestigio</b>: si riparte dal livello 1 con <b>" + cifre(L.BONUS_PRESTIGIO) + "</b> Speed Coins in regalo" })
+      ])
+    ]);
   }
 
   // ---- La città nuova: anteprima coi lavori in corso (si guarda e basta, niente si tocca) ----
@@ -4510,23 +4655,25 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   function prossimoAvviso() {
     if (avvisoAttivo || !codaTrofei.length) return;
     avvisoAttivo = true;
-    var t = codaTrofei.shift(), g = null;
+    var t = codaTrofei.shift(), g = null, xp = t.tipo === "xp";   // xp = avviso di XP / livello / Prestigio
     giochi.forEach(function (x) { if (x.id === t.gioco) g = x; });
     var liv = t.livello === "platino" ? "Platino" : (LIVELLI[t.livello] ? LIVELLI[t.livello].nome : "");
     var fatto = false, timer = null;
-    var box = el("div", { class: "avviso-trofeo tl-" + t.livello, onclick: function () { chiudi(); } }, [
+    var box = el("div", { class: "avviso-trofeo " + (xp ? t.cls : "tl-" + t.livello), onclick: function () { chiudi(); } }, [
       el("div", { class: "at-ico", text: t.icona || "🏆" }),
       el("div", { class: "at-corpo" }, [
-        el("div", { class: "at-su", text: "🏆 Trofeo " + liv + " sbloccato!" }),
+        el("div", { class: "at-su", text: xp ? t.su : "🏆 Trofeo " + liv + " sbloccato!" }),
         el("div", { class: "at-nome", text: t.nome }),
-        el("div", { class: "at-gioco", text: g ? g.nome : "" })
+        el("div", { class: "at-gioco", text: xp ? t.sotto : (g ? g.nome : "") })
       ])
     ]);
     document.body.appendChild(box);   // fuori dalla schermata: resta anche se il gioco cambia pagina
     requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add("dentro"); }); });
-    suonoTrofeo(t.livello === "platino");
-    try { if (navigator.vibrate) navigator.vibrate(t.livello === "platino" ? [40, 60, 40, 60, 80] : [30, 40, 30]); } catch (e) {}
-    timer = setTimeout(chiudi, 3600);
+    if (!xp) {
+      suonoTrofeo(t.livello === "platino");
+      try { if (navigator.vibrate) navigator.vibrate(t.livello === "platino" ? [40, 60, 40, 60, 80] : [30, 40, 30]); } catch (e) {}
+    } else if (t.cls !== "tl-xp") suonoTrofeo(t.cls === "tl-platino");   // livello salito o Prestigio: il suono del trofeo
+    timer = setTimeout(chiudi, xp && t.cls === "tl-xp" ? 3000 : 3600);
     function chiudi() {
       if (fatto) return; fatto = true; clearTimeout(timer);
       box.classList.remove("dentro");
@@ -5137,6 +5284,10 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
         el("button", { class: "btn " + (p.omino ? "btn-fantasma" : "btn-primario"), text: p.omino ? "✏️ Modifica il tuo avatar" : "🧍 Crea il tuo avatar",
           onclick: function () { schermataOmino(function () { schermataAccessoCloud(dopo); }); } })
       ]));
+      if (window.SGLivelli && SGNube.progressione) {
+        sp._contenuto.appendChild(el("div", { class: "etichetta", text: "⭐ Livello e Speed Coins" }));
+        sp._contenuto.appendChild(riquadroLivello(SGNube.progressione()));
+      }
       var fi = (p.fiches && p.fiches.blackjack != null) ? p.fiches.blackjack : SGNube.fichesStart;
       sp._contenuto.appendChild(el("div", { class: "etichetta", text: "🃏 Black Jack" }));
       sp._contenuto.appendChild(el("p", { class: "modulo-nota", html: "Hai <b>" + fi + " fiches</b>. Si portano avanti tra una partita e l'altra, su qualsiasi telefono." }));
@@ -6352,12 +6503,65 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   //  Consegna al gioco un "tavolo" con tutto ciò che gli serve,
   //  senza fargli sapere come sono fatte le schermate comuni.
   // =========================================================
+  // ---- XP a fine partita (livelli, Speed Coins e Prestigio: le regole sono in livelli.js) ----
+  // Ogni partita finita dà XP a chi ha il profilo: 1 al secondo, +50% se vinci, +250 alla prima del giorno.
+  // Il tempo parte dall'ultima volta che si è visti in saletta (o dalla partita prima): l'attesa non conta.
+  // Online l'host manda "__esito" con la classifica: ogni telefono si dà i suoi XP da solo.
+  var xpOrologio = { t0: Date.now(), ultimo: 0 }, reteXp = null;
+  function xpRiparti() { xpOrologio.t0 = Date.now(); }
+  function oggiStr() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+  function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  function stessoNome(a, b) { return String(a || "").trim().toLowerCase().slice(0, 16) === String(b || "").trim().toLowerCase().slice(0, 16); }
+  // classifica = [{ nome, pos? , punti? }] dal primo all'ultimo; soloSeCi = niente XP se il mio nome non c'è (es. chi guarda)
+  function premiaPartita(classifica, soloSeCi) {
+    var ora = Date.now();
+    if (ora - xpOrologio.ultimo < 4000) return;   // la stessa partita detta due volte (risultato + fine)
+    var sec = (ora - xpOrologio.t0) / 1000;
+    xpOrologio.t0 = ora;   // la prossima partita parte da qui
+    if (!(window.SGLivelli && window.SGNube && SGNube.aggiungiXp && SGNube.profilo())) return;   // solo coi profili
+    var p = SGNube.profilo(), lista = classifica || [], mio = null;
+    lista.forEach(function (r) { if (!mio && r && stessoNome(r.nome, p.nome)) mio = r; });
+    if (soloSeCi && !mio) return;
+    var primo = lista[0], vinto = !!mio && (mio.pos != null ? mio.pos === 1 : (mio === primo || (mio.punti != null && primo && mio.punti === primo.punti)));
+    var giorno = oggiStr(), prima = SGNube.progressione().xpGiorno !== giorno;
+    var xp = SGLivelli.xpPartita({ secondi: sec, vinto: vinto, primaDelGiorno: prima });
+    if (!xp) return;
+    xpOrologio.ultimo = ora;
+    var r = SGNube.aggiungiXp(xp, prima ? giorno : null);
+    if (r) avvisoXp(xp, r, vinto, prima);
+  }
+  // l'avviso in alto (lo stesso dei trofei): XP presi, livello salito con le monete, Prestigio
+  function avvisoXp(xp, r, vinto, prima) {
+    var s = r.stato, monete = 0, lv = 0, pr = 0;
+    r.eventi.forEach(function (e) { monete += e.monete; if (e.tipo === "livello") lv = e.livello; if (e.tipo === "prestigio") pr = e.prestigio; });
+    var su = "+" + cifre(xp) + " XP" + (vinto ? " · hai vinto" : "") + (prima ? " · prima del giorno" : "");
+    if (pr) codaTrofei.push({ tipo: "xp", cls: "tl-platino", icona: "🌟", su: "PRESTIGIO " + pr + "!", nome: "Si riparte dal livello 1", sotto: "+" + cifre(monete) + " Speed Coins 🪙" });
+    else if (lv) codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🆙", su: su, nome: "Livello " + lv + "!", sotto: "+" + cifre(monete) + " Speed Coins 🪙" });
+    else codaTrofei.push({ tipo: "xp", cls: "tl-xp", icona: "⭐", su: su, nome: "Livello " + s.level, sotto: "Ancora " + cifre(SGLivelli.xpPerSalire(s.level) - s.xp) + " XP per il livello " + (s.level + 1) });
+    prossimoAvviso();
+  }
+  // il collegamento: l'host ricorda la sua stanza (per mandare "__esito"), l'ospite lo riceve
+  function agganciaXpRete() {
+    if (!window.SGNet || SGNet.__xp) return;
+    SGNet.__xp = true;
+    var ospita = SGNet.ospita, entra = SGNet.entra;
+    if (ospita) SGNet.ospita = function (giocoId) { var h = ospita.apply(SGNet, arguments); if (giocoId !== "__sala" && h) reteXp = h; return h; };
+    if (entra) SGNet.entra = function (codice, cb) {
+      if (cb && typeof cb.onMsg === "function" && !cb.__xp) {
+        var orig = cb.onMsg; cb.__xp = true;
+        cb.onMsg = function (m) { if (m && m.t === "__esito") { premiaPartita(m.c, true); return; } return orig.apply(this, arguments); };
+      }
+      return entra.apply(SGNet, arguments);
+    };
+  }
+
   // il gioco aperto adesso: uno già lasciato (es. si è tornati al tabellone) non può più disegnare, uscire o dare risultati
   var partitaN = 0;
   function lasciaPartita() { partitaN++; }
   function avviaPartita(g, giocatori, impostazioni, opts, salaCtx) {
     var questa = ++partitaN;
     function viva() { return questa === partitaN; }
+    xpRiparti(); reteXp = null;   // gli XP contano da qui (e dall'ultima volta in saletta)
     // entrato da ospite con un invito: se la pagina si ricarica, in home c'è "Rientra nella partita"
     if (linkParams && linkParams.stanza && !linkParams.guarda && !salaCtx) ricordaStanza({ gioco: g.id, stanza: String(linkParams.stanza).toUpperCase() });
     // online (host, ospite o dalla Sala): lo schermo resta acceso, così il collegamento non si ferma
@@ -6405,6 +6609,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       // dopo una modifica chiama tavolo.onRegole() (il gioco rilegge tavolo.impostazioni).
       lobby: function (o) {
         if (!viva()) return null;
+        xpRiparti();   // in saletta si aspetta: gli XP contano da quando si comincia a giocare
         var s = saletta(g, o, (opts && opts.regole) ? { box: opts.regole, imp: tavolo.impostazioni, tavolo: tavolo } : null);
         if (s && salaCtx && salaCtx.tabellone) salaCtx.tabellone(s);
         return s;
@@ -6417,11 +6622,18 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 
       // i giochi online dicono com'è finita ogni partita, senza lasciare la loro schermata finale:
       // serve al torneo online per sommare i punti. classifica = [{ nome, pos? }] dal primo all'ultimo
-      risultato: function (classifica) { if (viva() && salaCtx && salaCtx.risultato && classifica && classifica.length) salaCtx.risultato(g, classifica); },
+      // (dà anche gli XP: a questo telefono e, se è l'host, a tutti gli altri con "__esito")
+      risultato: function (classifica) {
+        if (!viva() || !classifica || !classifica.length) return;
+        premiaPartita(classifica, true);
+        if (reteXp && reteXp.inviaVeloce) try { reteXp.inviaVeloce({ t: "__esito", c: classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }) }); } catch (e) {}
+        if (salaCtx && salaCtx.risultato) salaCtx.risultato(g, classifica);
+      },
 
       // il gioco chiama questa quando è finito
       fine: function (classifica) {
         if (!viva()) return;
+        premiaPartita(classifica, false);
         if (salaCtx) return salaCtx.fine(g, classifica, giocatori, impostazioni);
         if (opts && opts.torneo && torneo) return torneoRisultato(g, classifica);
         schermataFine(g, classifica, giocatori, impostazioni);
@@ -6476,6 +6688,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     audioCtx: audioCtx,
     listaProfilo: listaProfilo, salvaListaProfilo: salvaListaProfilo,   // liste salvate sul profilo di chi gioca
     avviaApp: function () {
+      agganciaXpRete();
       app = document.getElementById("app");
       linkParams = leggiParametriLink();
       function parti() {
@@ -14554,6 +14767,18 @@ window.SG_NCC_CATEGORIE = {
      descrizione-> elenco di righe: cosa cambia per chi gioca
    ========================================================= */
 window.SG_NOVITA = [
+  {
+    v: 153,
+    data: "4 ottobre 2026",
+    titolo: "Livelli, XP e Speed Coins ⭐🪙",
+    descrizione: [
+      "Chi ha il profilo ora sale di livello giocando: a fine partita compare in alto quanti XP hai preso.",
+      "Gli XP dipendono da quanto dura la partita: 1 XP per ogni secondo (al massimo 30 minuti a partita), +50% se vinci e +250 XP alla prima partita del giorno. Così ogni gioco vale per il tempo che ci passi.",
+      "I primi livelli volano: dopo 2 o 3 partite sei già al livello 5 e in circa un'ora di gioco arrivi al 10; poi ogni livello chiede un po' di più. Ogni livello nuovo regala Speed Coins, la nuova moneta del gioco: livello × 50 (arrivando al livello 10 ne prendi 500).",
+      "Il livello massimo è 50: dopo il 50 scatta il Prestigio. Si riparte dal livello 1, le monete restano e ne arrivano 5.000 in regalo. Le stelline ★ accanto al livello dicono quante volte hai fatto il Prestigio.",
+      "Livello e monete li vedi nel tasto del tuo profilo in home; toccandolo trovi la barra degli XP e tutte le regole."
+    ]
+  },
   {
     v: 152,
     data: "4 ottobre 2026",
