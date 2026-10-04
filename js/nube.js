@@ -2,7 +2,7 @@
    NUBE — profili e dati in cloud con Firebase.
    Login con NOME + PASSWORD (l'email vera e' finta: nome@sg.local,
    cosi' l'utente inserisce solo nome e password).
-   Salva i dati di ogni giocatore (es. le fiches del Black Jack)
+   Salva i dati di ogni giocatore (es. le Speed Coins, che al Casinò sono le fiches)
    in modo che si portino avanti tra una partita e l'altra.
    La apiKey qui e' pubblica per progetto: la sicurezza sta nelle
    regole del database (impostate nella console Firebase).
@@ -17,9 +17,15 @@
     messagingSenderId: "768605679598",
     appId: "1:768605679598:web:11ea341e4f41327755e8ff"
   };
-  var FICHES_START = 500;
-  var BONUS = 300, BONUS_MS = 2 * 3600 * 1000;   // 300 fiches gratis ogni 2 ore
+  // UNA MONETA SOLA (dal 4 ott 2026): le fiches del Casinò sono le Speed Coins del profilo (campo "coins").
+  // Si parte con 1.000 monete; il regalo di 300 ogni 2 ore resta, in monete.
+  var MONETE_START = 1000;
+  var BONUS = 300, BONUS_MS = 2 * 3600 * 1000;   // 300 monete gratis ogni 2 ore
   var auth = null, db = null, pronto = false, utente = null, profilo = null, ascolta = [], ultimaScheda = null;
+  // il saldo che il gioco del Casinò in corso "conosce" (letto all'inizio o salvato l'ultima volta):
+  // i giochi salvano il loro saldo e qui si aggiunge solo la differenza, così le monete prese
+  // intanto (livelli, bonus) non si cancellano mai
+  var visto = null;
 
   function notifica() { ascolta.forEach(function (cb) { try { cb(profilo); } catch (e) {} }); }
   function getNested(o, path) { var p = path.split("."); for (var i = 0; i < p.length; i++) { if (o == null) return undefined; o = o[p[i]]; } return o; }
@@ -55,8 +61,35 @@
   function caricaProfilo(uid) {
     db.collection("profili").doc(uid).get().then(function (doc) {
       profilo = doc.exists ? doc.data() : null;
+      unisciMonete();
       pronto = true; notifica();
     }).catch(function () { pronto = true; notifica(); });
+  }
+  // una volta per profilo: le fiches del Black Jack si sommano alle Speed Coins
+  // e chi in tutto ha meno di 1.000 monete sale a 1.000
+  function unisciMonete() {
+    if (!profilo || profilo.moneteUnite || !utente) return;
+    var f = (profilo.fiches && profilo.fiches.blackjack) || 0;
+    var tot = Math.max(MONETE_START, (profilo.coins || 0) + f);
+    profilo.coins = tot; profilo.moneteUnite = true;
+    if (profilo.fiches) delete profilo.fiches.blackjack;
+    var patch = { coins: tot, moneteUnite: true };
+    patch["fiches.blackjack"] = firebase.firestore.FieldValue.delete();
+    db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+  }
+  function monete() { return (profilo && profilo.coins) || 0; }
+  function progressione() {
+    var p = profilo || {};
+    return { level: p.level || 1, xp: p.xp || 0, coins: p.coins || 0, prestige: p.prestige || 0, xpTot: p.xpTot || 0, xpGiorno: p.xpGiorno || "" };
+  }
+  // aggiunge (o toglie) monete: in cloud con "increment", così non si perde niente
+  function cambiaMonete(delta) {
+    delta = Math.round(delta || 0);
+    if (!auth || !utente || !profilo || !delta) return Promise.resolve(monete());
+    profilo.coins = monete() + delta;
+    notifica();
+    return db.collection("profili").doc(utente.uid).update({ coins: firebase.firestore.FieldValue.increment(delta) })
+      .catch(function () {}).then(function () { return monete(); });
   }
 
   window.SGNube = {
@@ -64,7 +97,7 @@
     pronto: function () { return pronto; },
     utente: function () { return utente; },
     profilo: function () { return profilo; },
-    fichesStart: FICHES_START,
+    moneteStart: MONETE_START,
     messaggioErrore: messaggioErrore,
     // chiamato quando lo stato e' pronto e ad ogni cambio (login/logout/dati)
     onCambio: function (cb) { ascolta.push(cb); if (pronto) cb(profilo); },
@@ -74,8 +107,9 @@
       return auth.createUserWithEmailAndPassword(emailDa(nome), pwd).then(function (cred) {
         var p = {
           uid: cred.user.uid, nome: String(nome).trim().slice(0, 20), emoji: emoji || "🙂",
-          fiches: { blackjack: FICHES_START }, stat: {}, creato: Date.now(),
-          level: 1, xp: 0, coins: 0, prestige: 0   // livello, XP, Speed Coins e Prestigio (regole in livelli.js)
+          stat: {}, creato: Date.now(),
+          level: 1, xp: 0, coins: MONETE_START, prestige: 0,   // livello, XP, Speed Coins e Prestigio (regole in livelli.js)
+          moneteUnite: true   // una moneta sola: niente fiches a parte
         };
         return db.collection("profili").doc(cred.user.uid).set(p).then(function () { profilo = p; notifica(); return p; });
       });
@@ -86,14 +120,19 @@
     },
     esci: function () { return auth ? auth.signOut() : Promise.resolve(); },
 
+    // ---- il portafoglio: Speed Coins (al Casinò si vedono come fiches) ----
+    monete: monete,                 // solo da leggere/mostrare
+    cambiaMonete: cambiaMonete,     // + o − (premi, negozio…)
+    // i giochi del Casinò: fiches() all'inizio della partita (il saldo da cui partono),
+    // salvaFiches(gioco, n) col loro saldo nuovo: si salva solo la differenza
     fiches: function (gioco) {
-      return (profilo && profilo.fiches && profilo.fiches[gioco] != null) ? profilo.fiches[gioco] : null;
+      if (!profilo) return null;
+      visto = monete(); return visto;
     },
     salvaFiches: function (gioco, n) {
-      if (!auth || !utente || !profilo) return Promise.resolve();
-      profilo.fiches = profilo.fiches || {}; profilo.fiches[gioco] = n;
-      var patch = {}; patch["fiches." + gioco] = n;
-      return db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+      if (!auth || !utente || !profilo || n == null) return Promise.resolve();
+      var d = n - (visto == null ? monete() : visto); visto = n;
+      return cambiaMonete(d);
     },
 
     // ---- omino personalizzato (stile Mii) ----
@@ -109,16 +148,15 @@
       return doc.update({ omino: cfg }).then(function () { if (omini) return doc.update({ omini: omini, ominoN: n || 0 }); }).catch(function () {});
     },
 
-    // ---- livello, XP, Speed Coins e Prestigio (i profili di prima partono da livello 1, 0 XP, 0 monete) ----
-    progressione: function () {
-      var p = profilo || {};
-      return { level: p.level || 1, xp: p.xp || 0, coins: p.coins || 0, prestige: p.prestige || 0, xpTot: p.xpTot || 0, xpGiorno: p.xpGiorno || "" };
-    },
+    // ---- livello, XP, Speed Coins e Prestigio (i profili di prima partono da livello 1 e 0 XP) ----
+    progressione: progressione,
     // aggiunge gli XP al profilo e salva tutto in un colpo; ritorna { stato, eventi } (livelli saliti, prestigio)
     aggiungiXp: function (punti, giorno) {
       if (!auth || !utente || !profilo || !window.SGLivelli || !(punti > 0)) return null;
-      var r = SGLivelli.aggiungi(SGNube.progressione(), punti), s = r.stato, n = Math.round(punti);
-      var patch = { level: s.level, xp: s.xp, coins: s.coins, prestige: s.prestige, xpTot: firebase.firestore.FieldValue.increment(n) };
+      var r = window.SGLivelli.aggiungi(progressione(), punti), s = r.stato, n = Math.round(punti);
+      var piuMonete = s.coins - monete();   // i premi dei livelli: aggiunti, mai riscritti (il Casinò può averle cambiate intanto)
+      var patch = { level: s.level, xp: s.xp, prestige: s.prestige, xpTot: firebase.firestore.FieldValue.increment(n) };
+      if (piuMonete) patch.coins = firebase.firestore.FieldValue.increment(piuMonete);
       if (giorno) patch.xpGiorno = giorno;
       profilo.level = s.level; profilo.xp = s.xp; profilo.coins = s.coins; profilo.prestige = s.prestige;
       profilo.xpTot = (profilo.xpTot || 0) + n; if (giorno) profilo.xpGiorno = giorno;
@@ -143,9 +181,11 @@
     ritiraBonus: function () {
       if (!auth || !utente || !profilo) return Promise.reject(new Error("offline"));
       if ((Date.now() - (profilo.bonusUltimo || 0)) < BONUS_MS) return Promise.reject(new Error("presto"));
-      var nuovo = ((profilo.fiches && profilo.fiches.blackjack) || 0) + BONUS;
-      profilo.fiches = profilo.fiches || {}; profilo.fiches.blackjack = nuovo; profilo.bonusUltimo = Date.now();
-      var patch = { bonusUltimo: profilo.bonusUltimo }; patch["fiches.blackjack"] = nuovo;
+      // in monete; se un gioco del Casinò è aperto, aggiunge anche lui il regalo al suo saldo
+      var nuovo = monete() + BONUS;
+      profilo.coins = nuovo; profilo.bonusUltimo = Date.now();
+      if (visto != null) visto += BONUS;
+      var patch = { bonusUltimo: profilo.bonusUltimo, coins: firebase.firestore.FieldValue.increment(BONUS) };
       // conta i bonus ritirati (serve per i trofei) e aggiorna il record fiches
       patch["stat.blackjack.bonusRitirati"] = firebase.firestore.FieldValue.increment(1);
       setNested(profilo, "stat.blackjack.bonusRitirati", (getNested(profilo, "stat.blackjack.bonusRitirati") || 0) + 1);
@@ -259,13 +299,16 @@
 
     // legge le statistiche di un gioco, es. statGioco("blackjack")
     statGioco: function (gioco) { return (profilo && profilo.stat && profilo.stat[gioco]) || {}; },
-    // salva in un colpo: fiches del gioco + contatori (incrementi) + record (max) + valori da impostare
+    // salva in un colpo: saldo del Casinò (fiches = monete) + contatori (incrementi) + record (max) + valori da impostare
     //   incrs / recs / sets = liste di coppie [chiave, valore]
     //   (sets serve per cose che possono anche scendere, es. la serie di risposte giuste in corso)
     salvaProgressi: function (fichesN, gioco, incrs, recs, sets) {
       if (!auth || !utente || !profilo) return Promise.resolve();
       var FV = firebase.firestore.FieldValue, patch = {};
-      if (fichesN != null) { patch["fiches." + gioco] = fichesN; setNested(profilo, "fiches." + gioco, fichesN); }
+      if (fichesN != null) {   // come salvaFiches: solo la differenza dall'ultimo saldo visto
+        var d = Math.round(fichesN - (visto == null ? monete() : visto)); visto = fichesN;
+        if (d) { patch.coins = FV.increment(d); profilo.coins = monete() + d; }
+      }
       (incrs || []).forEach(function (kv) {
         if (!kv[1]) return;
         var k = "stat." + gioco + "." + kv[0];

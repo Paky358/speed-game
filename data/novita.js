@@ -9,6 +9,28 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 158,
+    data: "4 ottobre 2026",
+    titolo: "Una moneta sola: le Speed Coins 🪙",
+    descrizione: [
+      "Fiches e monete ora sono la stessa cosa: al Black Jack e al Poker giochi con le tue Speed Coins, che al tavolo diventano fiches.",
+      "Chi aveva già delle fiches non perde niente: si sono sommate alle monete. E chi in tutto aveva meno di 1.000 monete è salito a 1.000.",
+      "Chi crea il profilo da adesso parte con 1.000 Speed Coins. Il regalo di 300 ogni 2 ore resta, in monete.",
+      "Più XP: ora li danno anche Glow Hockey, lo Scopone e il Black Jack e il Poker contro il computer (quando ti alzi dal tavolo dopo almeno una mano)."
+    ]
+  },
+  {
+    v: 157,
+    data: "4 ottobre 2026",
+    titolo: "Il Casinò dentro: una sala per ogni gioco 🎰",
+    descrizione: [
+      "Entrando nel Casinò dalla città sei nella sala del Black Jack: in fondo c'è il tavolo con la gente che gioca con le fiches.",
+      "Scorri col dito (o usa le frecce) per passare da una sala all'altra: Scopa, Scopa 2 vs 2, Scopone e Poker. Ogni sala ha il nome del gioco in grande e una cosa tutta sua: il quadro del Settebello, le bandierine delle squadre, la lavagna coi punti, l'insegna al neon.",
+      "In basso ci sono i nomi di tutti i giochi del Casinò: toccane uno e vai subito nella sua sala.",
+      "Tocca il tavolo per giocare. Finita la partita torni nella stessa sala."
+    ]
+  },
+  {
     v: 156,
     data: "4 ottobre 2026",
     titolo: "Tris e Drop 4 al centro 🎯",

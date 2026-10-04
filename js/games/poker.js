@@ -2,8 +2,8 @@
    POKER con le carte francesi: Texas Hold'em e Poker all'italiana.
    Contro il computer (tu e i bot, il primo è Matt) oppure online, ognuno dal suo telefono
    (i posti vuoti l'host li può dare ai bot).
-   Si gioca con le fiches del Black Jack (un portafoglio solo): ci si siede con al massimo 1.000
-   e nel profilo si salva sempre "fiches fuori dal tavolo + fiches sul tavolo".
+   Si gioca con le Speed Coins del profilo (al tavolo sono le fiches, come al Black Jack): ci si siede
+   con al massimo 1.000 e nel profilo si salva sempre "monete fuori dal tavolo + fiches sul tavolo".
    Online l'host tiene la partita (motore qui sotto) e manda a tutti la foto (vm) SENZA le carte
    coperte; ognuno riceve le sue carte a parte (inviaVeloce + to).
    ========================================================= */
@@ -395,7 +395,7 @@
     var V = { variante: variante(imp.variante), liv: imp.difficolta || "medio" };
     var prof = conProfilo();
     var nome = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Tu";
-    var W = prof ? portafoglio() : BUYIN;   // il mio portafoglio (le fiches del Black Jack); senza profilo 1.000 per giocare
+    var W = prof ? portafoglio() : BUYIN;   // il mio portafoglio (le Speed Coins del profilo); senza profilo 1.000 per giocare
     if (prof && W < GRANDE) return senzaFiches(t, function () { partita(t, online); });
     var M = creaMotore(V.variante);
     var io = M.siedi({ id: "host", nome: nome, omino: t.mioOmino ? t.mioOmino(nome) : null, stack: Math.min(W, BUYIN) });
@@ -482,7 +482,7 @@
         fuori -= x; io.stack += x; io.buyin += x; io.seduto = true; salvaMio(true);
         if (M.stato === "attesa" && H.fase === "gioco") prossimaMano(); else bd();
       },
-      onBonus: function (nuovo) { fuori = Math.max(0, nuovo - io.stack); bd(); },   // ha ritirato il bonus del Black Jack
+      onBonus: function () { var b = SGNube.bonusImporto || 0; fuori += b; salvato += b; bd(); },   // ha ritirato il regalo: già aggiunto alle monete del profilo
       onBot: function (piu) {
         if (H.fase !== "lobby") return;
         if (piu && seduti().length < MAX[M.variante]) aggiungiBot();
@@ -511,6 +511,8 @@
         if (online && H.fase === "gioco" && !window.confirm("Chiudere il tavolo per tutti?")) return;
         if (!online && M.inCorso() && io.inMano && !io.lascia && !window.confirm("Lasciare il tavolo? Le fiches già puntate in questa mano restano sul tavolo.")) return;
         ferma(); clearTimeout(tMano); salvaMio(true);
+        // contro il computer: alzandoti dal tavolo dopo almeno una mano prendi gli XP (hai vinto se ti alzi con più fiches)
+        if (!online && M.n > 0 && t.risultato) t.risultato([{ nome: io.nome, pos: io.stack - io.buyin > 0 ? 1 : 2 }]);
         if (rete) rete.chiudi();
         t.esci();
       } };
@@ -591,7 +593,7 @@
         var m = me(), x = Math.min(S.fuori, BUYIN - (m ? m.stack : 0)); if (x < GRANDE || !S.rete) return;
         S.fuori -= x; S.rete.invia({ t: "rientra", fiches: x });
       },
-      onBonus: function (nuovo) { var m = me(); S.fuori = Math.max(0, nuovo - (m ? m.stack : 0)); if (S.vm) disegna(t, S.vm, cb); },
+      onBonus: function () { var b = SGNube.bonusImporto || 0; S.fuori += b; if (S.salvato != null) S.salvato += b; if (S.vm) disegna(t, S.vm, cb); },   // regalo già aggiunto alle monete
       onEsci: function () {
         if (S.vm && S.vm.fase === "gioco" && !window.confirm("Lasciare il tavolo? Le fiches già puntate in questa mano restano sul tavolo.")) return;
         salva(true); if (S.rete) S.rete.chiudi(); t.esci();
@@ -646,7 +648,7 @@
   }
   function lobby(t, vm, cb) {
     var el = t.el, extra = [], umani = vm.players.filter(function (p) { return !p.bot; }).length;
-    extra.push(el("p", { class: "modulo-nota", text: NOME_VAR[vm.variante] + " · da 2 a " + MAX[vm.variante] + " giocatori. Ognuno si siede con le sue fiches del Black Jack (al massimo " + fmtN(BUYIN) + ")." }));
+    extra.push(el("p", { class: "modulo-nota", text: NOME_VAR[vm.variante] + " · da 2 a " + MAX[vm.variante] + " giocatori. Ognuno si siede con le sue Speed Coins, che al tavolo diventano fiches (al massimo " + fmtN(BUYIN) + ")." }));
     if (vm.players.length > MAX[vm.variante]) extra.push(el("p", { class: "modulo-nota", style: "color:#ffa94d", text: "Siete troppi per questa variante: togli qualche bot." }));
     if (cb.sonoHost) {
       var nb = vm.players.length - umani;
@@ -665,7 +667,7 @@
       }),
       extra: extra, attesa: "Aspetta che l'host cominci: si gioca a " + NOME_VAR[vm.variante] + "! 🃏", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
-  // le mie fiches (e, se sono finite, il modo per risedersi o il bonus del Black Jack)
+  // le mie fiches (e, se sono finite, il modo per risedersi con altre monete o il regalo ogni 2 ore)
   function fichesBox(t, cb, io) {
     var el = t.el, box = el("div", { class: "pk-fiches" });
     if (io.stack >= GRANDE) { box.appendChild(el("div", { text: "🎰 Ti siedi con " + fmtN(io.stack) + " fiches" })); return box; }
@@ -902,8 +904,8 @@
     t.mostra(s);
   }
   function senzaFiches(t, riprova) {
-    var s = t.schermata({ icona: "🎰", titolo: "Ti servono delle fiches", indietro: t.esci });
-    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Il Poker si gioca con le fiches del Black Jack e adesso non ne hai. Ritira il bonus gratis, poi siediti al tavolo." }));
+    var s = t.schermata({ icona: "🪙", titolo: "Ti servono delle monete", indietro: t.esci });
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Il Poker si gioca con le tue Speed Coins e adesso non ne hai abbastanza. Ritira il regalo gratis, poi siediti al tavolo." }));
     if (BJ() && BJ().riquadroBonus) s._contenuto.appendChild(BJ().riquadroBonus(t.el, function () {}));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🃏 Siediti al tavolo", onclick: riprova }));
     t.mostra(s);
@@ -984,7 +986,7 @@
 
   SG.registra({
     id: ID, nome: "Poker", icona: "♠️",
-    descrizione: "Texas Hold'em o Poker all'italiana con le carte francesi, contro il computer o online. Si gioca con le fiches del Black Jack.",
+    descrizione: "Texas Hold'em o Poker all'italiana con le carte francesi, contro il computer o online. Si gioca con le tue Speed Coins.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 2–10 giocatori",
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu e i bot al tavolo (il primo è Matt)" }],
     regole: [
@@ -992,7 +994,7 @@
       "Prima di ogni mano due giocatori mettono i <b>bui</b> (" + PICCOLO + " e " + GRANDE + "). Quando tocca a te: <b>Passa</b>, <b>Chiama</b>, <b>Punta/Rilancia</b> o <b>Lascia</b>.",
       "<b>Poker all'italiana</b>: tutti mettono l'invito (" + INVITO + "), hai 5 carte, si punta, poi ognuno <b>cambia</b> fino a 4 carte e si punta di nuovo. Il mazzo è corto (in 4 si gioca dal 7 in su), il <b>colore batte il full</b> e a parità decide il seme: cuori, quadri, fiori, picche.",
       "Dalla più bassa: carta alta, coppia, doppia coppia, tris, scala, colore, full, poker, scala colore (all'italiana colore e full si scambiano).",
-      "Si gioca con le <b>fiches del Black Jack</b>: ti siedi con al massimo " + fmtN(BUYIN) + " e quello che vinci o perdi resta nel tuo profilo."
+      "Si gioca con le tue <b>Speed Coins</b>: ti siedi con al massimo " + fmtN(BUYIN) + " e quello che vinci o perdi resta nelle tue monete."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
@@ -1026,7 +1028,7 @@
       });
       box.appendChild(dg);
       if (conProfilo() && BJ() && BJ().riquadroBonus) { var f = BJ().riquadroBonus(el); f.style.marginTop = "12px"; box.appendChild(f); }
-      box.appendChild(el("p", { class: "modulo-nota", style: "margin-top:8px", text: "Si gioca con le fiches del Black Jack: ti siedi con al massimo " + fmtN(BUYIN) + " e quello che vinci o perdi resta nel profilo." }));
+      box.appendChild(el("p", { class: "modulo-nota", style: "margin-top:8px", text: "Si gioca con le tue Speed Coins: ti siedi con al massimo " + fmtN(BUYIN) + " e quello che vinci o perdi resta nelle tue monete." }));
     },
     avvia: function (t) {
       if (t.linkParams && t.linkParams.stanza) return ospite(t, t.linkParams.stanza);   // entrato da un invito

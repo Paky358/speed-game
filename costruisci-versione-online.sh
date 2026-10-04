@@ -46,6 +46,8 @@ OUT=dist/index.html
   echo ''
   cat js/citta.js   # la città nuova (anteprima coi lavori in corso)
   echo ''
+  cat js/casino.js  # il Casinò dentro: una sala per ogni gioco di carte
+  echo ''
   cat js/core.js
   echo ''
   cat js/net.js

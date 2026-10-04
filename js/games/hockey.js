@@ -579,7 +579,12 @@
       suonoGol(chi === 1);
       if (st.s1 >= VINCI || st.s2 >= VINCI) {
         st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2;
-        if (!salvato) { salvato = true; salvaHockey(st, DIFF[liv] ? liv : "medio"); }
+        if (!salvato) {
+          salvato = true; salvaHockey(st, DIFF[liv] ? liv : "medio");
+          // com'è finita (dà gli XP)
+          var io = { nome: (t.giocatori && t.giocatori[0]) || "Tu", pos: st.vincitore === 1 ? 1 : 2 }, bot = { nome: "🤖 " + D.nome, pos: st.vincitore === 1 ? 2 : 1 };
+          if (t.risultato) t.risultato(io.pos === 1 ? [io, bot] : [bot, io]);
+        }
         render();
       } else {
         // niente pausa: le racchette restano libere, il disco CADE DALL'ALTO nella metà di chi ha subito
@@ -673,7 +678,7 @@
       cade: st.cade || 0, atterra: st.atterra || 0, golVis: !!st.golVis, spN: st.sponde || 0, spX: st.spX, spY: st.spY }; }   // disco in aria, bordo illuminato, scritta GOL   // contatori: l'ospite suona quando salgono
     function bcast(ret) { if (ret) rete.invia(vm()); else rete.inviaVeloce(vm()); }
     var memSuoni = {};
-    function gol(chi) { if (chi === 1) st.s1++; else st.s2++; suonoGol(chi === 1); if (st.s1 >= VINCI || st.s2 >= VINCI) { st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2; } else { st.golT = performance.now(); servi(st, chi === 1 ? -1 : 1); faiCadere(st); } bcast(true); }   // niente pausa: il disco cade dall'alto
+    function gol(chi) { if (chi === 1) st.s1++; else st.s2++; suonoGol(chi === 1); if (st.s1 >= VINCI || st.s2 >= VINCI) { st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2; premiaHost(); } else { st.golT = performance.now(); servi(st, chi === 1 ? -1 : 1); faiCadere(st); } bcast(true); }   // niente pausa: il disco cade dall'alto
     function loop(now) {
       raf = requestAnimationFrame(loop);
       var dt = ultimoT ? (now - ultimoT) / 1000 : 0.016; ultimoT = now;
@@ -699,6 +704,11 @@
       if (now - ultimoInvio > HZ) { ultimoInvio = now; bcast(false); }
     }
     function stop() { if (raf) cancelAnimationFrame(raf); raf = null; MusicaHK.ferma(); }
+    // com'è finita (dà gli XP all'host; l'avversario se li dà da solo quando vede la fine)
+    function premiaHost() {
+      var v = st.vincitore === 1, io = { nome: (t.nomeProfilo && t.nomeProfilo()) || "Tu", pos: v ? 1 : 2 }, lui = { nome: "Avversario", pos: v ? 2 : 1 };
+      if (t.risultato) t.risultato(v ? [io, lui] : [lui, io]);
+    }
     function comincia() { if (st.fase === "lobby" && st.avvId) { st.s1 = 0; st.s2 = 0; st.vincitore = null; st.fase = "gioco"; servi(st); faiCadere(st); st.golT = 0; bcast(true); render(); } }
 
     function render() {
@@ -807,6 +817,12 @@
       var tipo = (f === "gioco" || f === "gol") ? "gioco" : f === "fine" ? "fine" : "attesa";
       if (tipo === S.vista && tipo === "gioco") return;
       S.vista = tipo; stop();
+      if (tipo === "gioco") S.premiato = false;
+      if (tipo === "fine" && !S.premiato && t.risultato && S.vm) {   // com'è finita: gli XP me li do da solo, una volta
+        S.premiato = true;
+        var vintoIo = S.vm.vincitore === 2, io = { nome: "Tu", pos: vintoIo ? 1 : 2 }, lui = { nome: "Avversario", pos: vintoIo ? 2 : 1 };
+        t.risultato(vintoIo ? [io, lui] : [lui, io]);
+      }
       if (tipo === "attesa") {
         var s = t.schermata({ icona: "🏒", titolo: "Glow Hockey · Sala", sotto: "Stanza " + codice.toUpperCase(), indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
         var dentro = (S.collegato || S.vm);

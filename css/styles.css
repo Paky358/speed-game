@@ -872,6 +872,57 @@ button.am-riga:active{ transform:scale(.985); }
 .ed-modale .mg-tit{ font-size:1.06rem; }
 .ed-modale .mg-sotto{ font-size:.82rem; }
 
+/* =========================================================
+   IL CASINÒ DENTRO: una sala per gioco (disegni in casino.js)
+   le sale scorrono di fianco (solo transform), il nome grande è un'insegna diversa per ogni sala
+   ========================================================= */
+.schermata.casino-sale{ position:relative; padding:0; flex:0 0 auto; height:var(--alt, 100dvh); min-height:0; max-height:var(--alt, 100dvh);
+  overflow:hidden; background:#0d0508; display:flex; flex-direction:column; }
+.cs-vista{ position:relative; flex:1; min-height:0; overflow:hidden; touch-action:pan-y; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
+.cs-sala{ position:absolute; inset:0; will-change:transform; cursor:pointer; background:#120a0d; }
+.cs-scena{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 45%; pointer-events:none; -webkit-user-drag:none; }
+.cs-testa{ position:absolute; top:calc(8px + env(safe-area-inset-top)); left:10px; right:10px; z-index:6; display:flex; align-items:center; gap:8px; pointer-events:none; }
+.cs-testa > *{ pointer-events:auto; }
+.cs-titolo{ flex:1; text-align:center; font-weight:900; letter-spacing:.32em; font-size:.74rem; color:#ffe29a; opacity:.8; pointer-events:none; }
+/* il nome del gioco, grande, appeso in alto nella sala */
+.cs-insegna{ position:absolute; left:50%; top:calc(50px + env(safe-area-inset-top)); transform:translateX(-50%); pointer-events:none; white-space:nowrap; }
+.cs-insegna::before, .cs-insegna::after{ content:""; position:absolute; top:-60px; height:60px; width:2px; background:rgba(0,0,0,.65); }
+.cs-insegna::before{ left:22%; } .cs-insegna::after{ right:22%; }
+.cs-insegna b{ position:relative; display:block; font-weight:900; letter-spacing:.07em; line-height:1; font-size:clamp(1.65rem, 9.4vw, 2.6rem); padding:.32em .62em .3em; border-radius:14px; }
+/* Black Jack: lettere d'oro su targa rossa, con le lampadine intorno */
+.cs-bj .cs-insegna b{ color:#ffe7a3; background:linear-gradient(180deg,#7d1325,#45070f); border:3px solid #e2b04a;
+  box-shadow:0 0 0 4px #45070f, 0 0 0 6px #b9862d, 0 12px 26px rgba(0,0,0,.6), inset 0 0 18px rgba(0,0,0,.5); text-shadow:0 0 12px rgba(255,200,90,.7), 0 2px 0 #6b3d00; }
+.cs-bj .cs-insegna b::after{ content:""; position:absolute; inset:-11px; border-radius:20px; border:3px dotted #fff1bd; opacity:.9; animation:cs-lampadine 1.6s steps(2) infinite; }
+@keyframes cs-lampadine{ 50%{ opacity:.45; } }
+/* Scopa: tavola di legno dipinta a mano */
+.cs-sc .cs-insegna b, .cs-s2 .cs-insegna b{ color:#fff1d6; text-shadow:0 2px 0 #3b2414, 0 0 8px rgba(0,0,0,.4); border:3px solid #3b2414;
+  background:repeating-linear-gradient(90deg,#6b4226 0 7px,#5d381f 7px 10px,#74482a 10px 18px); box-shadow:0 12px 24px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.15); }
+/* Scopa 2 vs 2: le due squadre ai lati (blu e rossa) */
+.cs-s2 .cs-insegna b{ border-left:9px solid #1c7ed6; border-right:9px solid #e03131; }
+/* Scopone: la lavagna col gesso */
+.cs-so .cs-insegna b{ color:#f4f5f0; background:radial-gradient(ellipse at 40% 30%,#3a5a47,#22362b); border:6px solid #8a5a32; letter-spacing:.12em;
+  text-shadow:0 0 2px rgba(255,255,255,.6), 1px 1px 0 rgba(255,255,255,.18); box-shadow:0 12px 24px rgba(0,0,0,.55), inset 0 0 14px rgba(0,0,0,.4); }
+/* Poker: insegna al neon */
+.cs-pk .cs-insegna b{ color:#fff; background:rgba(8,10,22,.88); border:2px solid rgba(255,79,216,.7); letter-spacing:.16em;
+  text-shadow:0 0 6px #ff4fd8, 0 0 14px #ff4fd8, 0 0 26px #b5179e; box-shadow:0 0 20px rgba(255,79,216,.35), inset 0 0 14px rgba(255,79,216,.22); animation:cs-neon 4s infinite; }
+@keyframes cs-neon{ 0%, 92%, 100%{ opacity:1; } 93%{ opacity:.55; } 95%{ opacity:1; } 96%{ opacity:.7; } }
+/* "tocca il tavolo per giocare" */
+.cs-tocca{ position:absolute; left:50%; bottom:16px; transform:translateX(-50%); white-space:nowrap; pointer-events:none;
+  padding:9px 16px; border-radius:999px; font-weight:900; font-size:.95rem; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#e2a93a);
+  box-shadow:0 6px 18px rgba(0,0,0,.5), 0 0 0 3px rgba(255,224,138,.25); animation:cs-pulsa 1.8s ease-in-out infinite; }
+@keyframes cs-pulsa{ 50%{ opacity:.62; } }
+/* frecce ai lati */
+.cs-freccia{ position:absolute; top:50%; z-index:4; width:38px; height:58px; margin-top:-29px; border:0; border-radius:14px; cursor:pointer;
+  background:rgba(10,4,8,.5); color:#ffe29a; font-size:2rem; font-weight:900; line-height:1; padding:0 0 4px; box-shadow:inset 0 0 0 1.5px rgba(255,226,154,.25); }
+.cs-freccia.sx{ left:8px; } .cs-freccia.dx{ right:8px; }
+.cs-freccia:active{ transform:scale(.92); }
+/* in basso: tutti i giochi del Casinò, per andare subito in una sala */
+.cs-giochi{ flex:none; display:flex; flex-wrap:wrap; justify-content:center; gap:7px; padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,#22090f,#0d0508); border-top:2px solid #b9862d; }
+.cs-link{ border:0; border-radius:999px; padding:8px 13px; font:inherit; font-weight:800; font-size:.86rem; cursor:pointer;
+  background:rgba(255,255,255,.08); color:#f3dcc0; box-shadow:inset 0 0 0 1.5px rgba(255,226,154,.18); }
+.cs-link.on{ background:linear-gradient(180deg,#ffe08a,#d9a43a); color:#3a1d00; box-shadow:0 2px 8px rgba(0,0,0,.4); }
+
 /* editor avatar: zoom sul viso, tasto annulla, "a caso" per scheda, l'avatar reagisce se lo tocchi */
 .editor-avatar .om-figura{ transition:transform .45s cubic-bezier(.3,.9,.3,1); transform-origin:50% 37%; cursor:pointer; }
 .editor-avatar .om-figura.zoom-viso{ transform:translateX(-50%) scale(1.8); }

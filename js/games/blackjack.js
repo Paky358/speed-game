@@ -609,18 +609,17 @@
   // dopo(nuovo) = facoltativo, avvisa chi lo usa (es. la saletta online) del nuovo saldo
   function riquadroBonus(el, dopo) {
     var box = el("div", { style: "background:var(--carta,#1b1836);border-radius:14px;padding:12px;margin-bottom:12px;text-align:center;box-shadow:var(--ombra,0 6px 16px rgba(0,0,0,.3))" });
-    var p = SGNube.profilo();
-    var saldo = (p && p.fiches && p.fiches.blackjack != null) ? p.fiches.blackjack : 0;
-    var testoSaldo = el("div", { style: "font-size:1.1rem;margin-bottom:8px;color:#ffe58a;font-weight:800", html: "🎰 Hai <b>" + fmt(saldo) + "</b> fiches" });
+    var saldo = SGNube.monete ? SGNube.monete() : 0;   // le fiches sono le Speed Coins del profilo
+    var testoSaldo = el("div", { style: "font-size:1.1rem;margin-bottom:8px;color:#ffe58a;font-weight:800", html: "🪙 Hai <b>" + fmt(saldo) + "</b> Speed Coins" });
     var b = el("button", { class: "btn btn-primario", style: "margin:0" });
     function agg() {
-      if (SGNube.puoRitirareBonus()) { b.disabled = false; b.textContent = "🎁 Ritira " + fmt(SGNube.bonusImporto) + " fiches gratis"; }
+      if (SGNube.puoRitirareBonus()) { b.disabled = false; b.textContent = "🎁 Ritira " + fmt(SGNube.bonusImporto) + " monete gratis"; }
       else { b.disabled = true; b.textContent = "⏳ Prossimo bonus tra " + fmtTempo(SGNube.prossimoBonusMs()); }
     }
     b.onclick = function () {
       b.disabled = true;
       SGNube.ritiraBonus().then(function (nuovo) {
-        testoSaldo.innerHTML = "🎰 Hai <b>" + fmt(nuovo) + "</b> fiches  ·  +" + fmt(SGNube.bonusImporto) + " 🎉";
+        testoSaldo.innerHTML = "🪙 Hai <b>" + fmt(nuovo) + "</b> Speed Coins  ·  +" + fmt(SGNube.bonusImporto) + " 🎉";
         suonoChip(); agg();
         if (dopo) dopo(nuovo);
       }).catch(function () { agg(); });
@@ -1248,11 +1247,18 @@
     }
     var M = BJ.creaMotore(nomi, t.mischia, fichesIniz), st = M.st, tav;
     var avatari = nomi.map(function (n, i) { return i === 0 ? mioAvatar(n) : null; });   // gli altri: faccia fissa legata al nome
+    var inizio = st.giocatori.map(function (g) { return g.fiches; }), maniFinite = 0;
     function salva() { if (prof && !prova) SGNube.salvaFiches("blackjack", st.giocatori[0].fiches); }
+    // alzandosi dal tavolo dopo almeno una mano: com'è andata (dà gli XP; vince chi ha guadagnato di più)
+    function risultatoLoc() {
+      if (!maniFinite || !t.risultato) return;
+      var r = st.giocatori.map(function (g, i) { return { nome: g.nome, netto: g.fiches - inizio[i] }; }).sort(function (a, b) { return b.netto - a.netto; });
+      t.risultato(r.map(function (x) { return { nome: x.nome, pos: x.netto > 0 ? 1 + r.filter(function (y) { return y.netto > x.netto; }).length : r.length + 1 }; }));
+    }
     function refresh() { tav.aggiorna(vistaBJ(st)); }
     tav = tavoloBJ(t, {
       avatari: function () { return avatari; },
-      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · ritira il bonus!") : ("👤 " + prof.nome + " · fiches salvate")) : "Un telefono · Banco: Matt",
+      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · ritira il bonus!") : ("👤 " + prof.nome + " · gioca con le tue Speed Coins")) : "Un telefono · Banco: Matt",
       puoAgire: function () { return true; },
       puoNuova: function () { return true; },
       guida: function () { return true; },
@@ -1260,9 +1266,9 @@
       onPunta: function (v) { suonoChip(); M.punta(st.turno, v); refresh(); },
       onMossa: function (m) { if (m === "stai") suonoStai(); M.azione(m); refresh(); },
       onAssicura: function (si) { M.assicura(st.turno, si); refresh(); },
-      onFineMano: function (v) { if (prof && !prova) salvaFineMano(v.giocatori[0], v); },
+      onFineMano: function (v) { if (prof && !prova) salvaFineMano(v.giocatori[0], v); maniFinite++; },
       onNuova: function () { M.nuovaMano(); refresh(); },
-      onEsci: function () { salva(); t.esci(); }
+      onEsci: function () { salva(); risultatoLoc(); t.esci(); }
     });
     M.nuovaMano(); refresh();
   }

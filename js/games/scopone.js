@@ -394,6 +394,9 @@
         html: "Noi <span style='color:#ffd43b'>" + r.tot.noi + "</span> — " + r.tot.loro + " Loro" }));
     }
     if (st.fase === "fine") {
+      // com'è finita (dà gli XP): tu e il compagno contro i rivali
+      var pNoi = st.punti.noi >= st.punti.loro ? 1 : 2, pLoro = st.punti.loro >= st.punti.noi ? 1 : 2;
+      if (t.risultato && st.nomi) t.risultato([0, 2, 1, 3].map(function (seat) { return { nome: st.nomi[seat], pos: seat % 2 === 0 ? pNoi : pLoro }; }));
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     } else s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Continua ▶", onclick: cb.onAvanti }));
