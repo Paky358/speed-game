@@ -32,6 +32,7 @@ SG.avviaApp();
 - Un amico entra: `__cbHost.onMsg("g1", { t: "join", nome: "Luca", omino: null })`. Poi manda le sue mosse con `__cbHost.onMsg("g1", { t: "...", ... })`.
 - Quello che vedrebbero gli altri telefoni: `__inviati.filter(m => m.t === "vm").pop().vm`.
 - Per provare il lato di chi entra: sostituisci `SGNet.entra = (codice, cb) => { window.__cbOsp = cb; setTimeout(() => cb.onAperto("g1"), 30); return { invia: m => ..., chiudi: () => {} }; }`, apri `#gioco=<id>&stanza=ABCD` e passagli le foto con `__cbOsp.onMsg({ t: "vm", vm: {...} })`.
+- Più telefoni insieme (host + ospiti collegati da un finto broker MQTT, anche telefoni che si spengono e tornano): `telefoni-finti.js` qui accanto.
 - Il collegamento vero (`js/net.js`) si prova solo se serve, sul broker pubblico: un host e un ospite nella stessa pagina funzionano.
 
 ## Cosa controllare sempre
