@@ -886,6 +886,57 @@ button.am-riga:active{ transform:scale(.985); }
 .ed-modale .mg-tit{ font-size:1.06rem; }
 .ed-modale .mg-sotto{ font-size:.82rem; }
 
+/* =========================================================
+   IL CASINÒ DENTRO: una sala per gioco (disegni in casino.js)
+   le sale scorrono di fianco (solo transform), il nome grande è un'insegna diversa per ogni sala
+   ========================================================= */
+.schermata.casino-sale{ position:relative; padding:0; flex:0 0 auto; height:var(--alt, 100dvh); min-height:0; max-height:var(--alt, 100dvh);
+  overflow:hidden; background:#0d0508; display:flex; flex-direction:column; }
+.cs-vista{ position:relative; flex:1; min-height:0; overflow:hidden; touch-action:pan-y; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
+.cs-sala{ position:absolute; inset:0; will-change:transform; cursor:pointer; background:#120a0d; }
+.cs-scena{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 45%; pointer-events:none; -webkit-user-drag:none; }
+.cs-testa{ position:absolute; top:calc(8px + env(safe-area-inset-top)); left:10px; right:10px; z-index:6; display:flex; align-items:center; gap:8px; pointer-events:none; }
+.cs-testa > *{ pointer-events:auto; }
+.cs-titolo{ flex:1; text-align:center; font-weight:900; letter-spacing:.32em; font-size:.74rem; color:#ffe29a; opacity:.8; pointer-events:none; }
+/* il nome del gioco, grande, appeso in alto nella sala */
+.cs-insegna{ position:absolute; left:50%; top:calc(50px + env(safe-area-inset-top)); transform:translateX(-50%); pointer-events:none; white-space:nowrap; }
+.cs-insegna::before, .cs-insegna::after{ content:""; position:absolute; top:-60px; height:60px; width:2px; background:rgba(0,0,0,.65); }
+.cs-insegna::before{ left:22%; } .cs-insegna::after{ right:22%; }
+.cs-insegna b{ position:relative; display:block; font-weight:900; letter-spacing:.07em; line-height:1; font-size:clamp(1.65rem, 9.4vw, 2.6rem); padding:.32em .62em .3em; border-radius:14px; }
+/* Black Jack: lettere d'oro su targa rossa, con le lampadine intorno */
+.cs-bj .cs-insegna b{ color:#ffe7a3; background:linear-gradient(180deg,#7d1325,#45070f); border:3px solid #e2b04a;
+  box-shadow:0 0 0 4px #45070f, 0 0 0 6px #b9862d, 0 12px 26px rgba(0,0,0,.6), inset 0 0 18px rgba(0,0,0,.5); text-shadow:0 0 12px rgba(255,200,90,.7), 0 2px 0 #6b3d00; }
+.cs-bj .cs-insegna b::after{ content:""; position:absolute; inset:-11px; border-radius:20px; border:3px dotted #fff1bd; opacity:.9; animation:cs-lampadine 1.6s steps(2) infinite; }
+@keyframes cs-lampadine{ 50%{ opacity:.45; } }
+/* Scopa: tavola di legno dipinta a mano */
+.cs-sc .cs-insegna b, .cs-s2 .cs-insegna b{ color:#fff1d6; text-shadow:0 2px 0 #3b2414, 0 0 8px rgba(0,0,0,.4); border:3px solid #3b2414;
+  background:repeating-linear-gradient(90deg,#6b4226 0 7px,#5d381f 7px 10px,#74482a 10px 18px); box-shadow:0 12px 24px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.15); }
+/* Scopa 2 vs 2: le due squadre ai lati (blu e rossa) */
+.cs-s2 .cs-insegna b{ border-left:9px solid #1c7ed6; border-right:9px solid #e03131; }
+/* Scopone: la lavagna col gesso */
+.cs-so .cs-insegna b{ color:#f4f5f0; background:radial-gradient(ellipse at 40% 30%,#3a5a47,#22362b); border:6px solid #8a5a32; letter-spacing:.12em;
+  text-shadow:0 0 2px rgba(255,255,255,.6), 1px 1px 0 rgba(255,255,255,.18); box-shadow:0 12px 24px rgba(0,0,0,.55), inset 0 0 14px rgba(0,0,0,.4); }
+/* Poker: insegna al neon */
+.cs-pk .cs-insegna b{ color:#fff; background:rgba(8,10,22,.88); border:2px solid rgba(255,79,216,.7); letter-spacing:.16em;
+  text-shadow:0 0 6px #ff4fd8, 0 0 14px #ff4fd8, 0 0 26px #b5179e; box-shadow:0 0 20px rgba(255,79,216,.35), inset 0 0 14px rgba(255,79,216,.22); animation:cs-neon 4s infinite; }
+@keyframes cs-neon{ 0%, 92%, 100%{ opacity:1; } 93%{ opacity:.55; } 95%{ opacity:1; } 96%{ opacity:.7; } }
+/* "tocca il tavolo per giocare" */
+.cs-tocca{ position:absolute; left:50%; bottom:16px; transform:translateX(-50%); white-space:nowrap; pointer-events:none;
+  padding:9px 16px; border-radius:999px; font-weight:900; font-size:.95rem; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#e2a93a);
+  box-shadow:0 6px 18px rgba(0,0,0,.5), 0 0 0 3px rgba(255,224,138,.25); animation:cs-pulsa 1.8s ease-in-out infinite; }
+@keyframes cs-pulsa{ 50%{ opacity:.62; } }
+/* frecce ai lati */
+.cs-freccia{ position:absolute; top:50%; z-index:4; width:38px; height:58px; margin-top:-29px; border:0; border-radius:14px; cursor:pointer;
+  background:rgba(10,4,8,.5); color:#ffe29a; font-size:2rem; font-weight:900; line-height:1; padding:0 0 4px; box-shadow:inset 0 0 0 1.5px rgba(255,226,154,.25); }
+.cs-freccia.sx{ left:8px; } .cs-freccia.dx{ right:8px; }
+.cs-freccia:active{ transform:scale(.92); }
+/* in basso: tutti i giochi del Casinò, per andare subito in una sala */
+.cs-giochi{ flex:none; display:flex; flex-wrap:wrap; justify-content:center; gap:7px; padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,#22090f,#0d0508); border-top:2px solid #b9862d; }
+.cs-link{ border:0; border-radius:999px; padding:8px 13px; font:inherit; font-weight:800; font-size:.86rem; cursor:pointer;
+  background:rgba(255,255,255,.08); color:#f3dcc0; box-shadow:inset 0 0 0 1.5px rgba(255,226,154,.18); }
+.cs-link.on{ background:linear-gradient(180deg,#ffe08a,#d9a43a); color:#3a1d00; box-shadow:0 2px 8px rgba(0,0,0,.4); }
+
 /* editor avatar: zoom sul viso, tasto annulla, "a caso" per scheda, l'avatar reagisce se lo tocchi */
 .editor-avatar .om-figura{ transition:transform .45s cubic-bezier(.3,.9,.3,1); transform-origin:50% 37%; cursor:pointer; }
 .editor-avatar .om-figura.zoom-viso{ transform:translateX(-50%) scale(1.8); }
@@ -1044,7 +1095,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
    NUBE — profili e dati in cloud con Firebase.
    Login con NOME + PASSWORD (l'email vera e' finta: nome@sg.local,
    cosi' l'utente inserisce solo nome e password).
-   Salva i dati di ogni giocatore (es. le fiches del Black Jack)
+   Salva i dati di ogni giocatore (es. le Speed Coins, che al Casinò sono le fiches)
    in modo che si portino avanti tra una partita e l'altra.
    La apiKey qui e' pubblica per progetto: la sicurezza sta nelle
    regole del database (impostate nella console Firebase).
@@ -1059,9 +1110,18 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     messagingSenderId: "768605679598",
     appId: "1:768605679598:web:11ea341e4f41327755e8ff"
   };
-  var FICHES_START = 500;
-  var BONUS = 300, BONUS_MS = 2 * 3600 * 1000;   // 300 fiches gratis ogni 2 ore
+  // UNA MONETA SOLA (dal 4 ott 2026): le fiches del Casinò sono le Speed Coins del profilo (campo "coins").
+  // Si parte con 1.000 monete; il regalo è di 1.000 monete al giorno (torna a mezzanotte).
+  var MONETE_START = 1000;
+  var BONUS = 1000;   // il regalo del giorno: si ritira una volta al giorno, torna disponibile a mezzanotte
+  function giornoDi(ms) { var d = new Date(ms); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+  function regaloPronto() { return !!(profilo && (!profilo.bonusUltimo || giornoDi(profilo.bonusUltimo) !== giornoDi(Date.now()))); }
+  function finoAMezzanotte() { var d = new Date(); d.setHours(24, 0, 0, 0); return Math.max(0, d.getTime() - Date.now()); }
   var auth = null, db = null, pronto = false, utente = null, profilo = null, ascolta = [], ultimaScheda = null;
+  // il saldo che il gioco del Casinò in corso "conosce" (letto all'inizio o salvato l'ultima volta):
+  // i giochi salvano il loro saldo e qui si aggiunge solo la differenza, così le monete prese
+  // intanto (livelli, bonus) non si cancellano mai
+  var visto = null;
 
   function notifica() { ascolta.forEach(function (cb) { try { cb(profilo); } catch (e) {} }); }
   function getNested(o, path) { var p = path.split("."); for (var i = 0; i < p.length; i++) { if (o == null) return undefined; o = o[p[i]]; } return o; }
@@ -1097,8 +1157,35 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   function caricaProfilo(uid) {
     db.collection("profili").doc(uid).get().then(function (doc) {
       profilo = doc.exists ? doc.data() : null;
+      unisciMonete();
       pronto = true; notifica();
     }).catch(function () { pronto = true; notifica(); });
+  }
+  // una volta per profilo: le fiches del Black Jack si sommano alle Speed Coins
+  // e chi in tutto ha meno di 1.000 monete sale a 1.000
+  function unisciMonete() {
+    if (!profilo || profilo.moneteUnite || !utente) return;
+    var f = (profilo.fiches && profilo.fiches.blackjack) || 0;
+    var tot = Math.max(MONETE_START, (profilo.coins || 0) + f);
+    profilo.coins = tot; profilo.moneteUnite = true;
+    if (profilo.fiches) delete profilo.fiches.blackjack;
+    var patch = { coins: tot, moneteUnite: true };
+    patch["fiches.blackjack"] = firebase.firestore.FieldValue.delete();
+    db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+  }
+  function monete() { return (profilo && profilo.coins) || 0; }
+  function progressione() {
+    var p = profilo || {};
+    return { level: p.level || 1, xp: p.xp || 0, coins: p.coins || 0, prestige: p.prestige || 0, xpTot: p.xpTot || 0, xpGiorno: p.xpGiorno || "" };
+  }
+  // aggiunge (o toglie) monete: in cloud con "increment", così non si perde niente
+  function cambiaMonete(delta) {
+    delta = Math.round(delta || 0);
+    if (!auth || !utente || !profilo || !delta) return Promise.resolve(monete());
+    profilo.coins = monete() + delta;
+    notifica();
+    return db.collection("profili").doc(utente.uid).update({ coins: firebase.firestore.FieldValue.increment(delta) })
+      .catch(function () {}).then(function () { return monete(); });
   }
 
   window.SGNube = {
@@ -1106,7 +1193,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     pronto: function () { return pronto; },
     utente: function () { return utente; },
     profilo: function () { return profilo; },
-    fichesStart: FICHES_START,
+    moneteStart: MONETE_START,
     messaggioErrore: messaggioErrore,
     // chiamato quando lo stato e' pronto e ad ogni cambio (login/logout/dati)
     onCambio: function (cb) { ascolta.push(cb); if (pronto) cb(profilo); },
@@ -1116,8 +1203,9 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       return auth.createUserWithEmailAndPassword(emailDa(nome), pwd).then(function (cred) {
         var p = {
           uid: cred.user.uid, nome: String(nome).trim().slice(0, 20), emoji: emoji || "🙂",
-          fiches: { blackjack: FICHES_START }, stat: {}, creato: Date.now(),
-          level: 1, xp: 0, coins: 0, prestige: 0   // livello, XP, Speed Coins e Prestigio (regole in livelli.js)
+          stat: {}, creato: Date.now(),
+          level: 1, xp: 0, coins: MONETE_START, prestige: 0,   // livello, XP, Speed Coins e Prestigio (regole in livelli.js)
+          moneteUnite: true   // una moneta sola: niente fiches a parte
         };
         return db.collection("profili").doc(cred.user.uid).set(p).then(function () { profilo = p; notifica(); return p; });
       });
@@ -1128,14 +1216,19 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     },
     esci: function () { return auth ? auth.signOut() : Promise.resolve(); },
 
+    // ---- il portafoglio: Speed Coins (al Casinò si vedono come fiches) ----
+    monete: monete,                 // solo da leggere/mostrare
+    cambiaMonete: cambiaMonete,     // + o − (premi, negozio…)
+    // i giochi del Casinò: fiches() all'inizio della partita (il saldo da cui partono),
+    // salvaFiches(gioco, n) col loro saldo nuovo: si salva solo la differenza
     fiches: function (gioco) {
-      return (profilo && profilo.fiches && profilo.fiches[gioco] != null) ? profilo.fiches[gioco] : null;
+      if (!profilo) return null;
+      visto = monete(); return visto;
     },
     salvaFiches: function (gioco, n) {
-      if (!auth || !utente || !profilo) return Promise.resolve();
-      profilo.fiches = profilo.fiches || {}; profilo.fiches[gioco] = n;
-      var patch = {}; patch["fiches." + gioco] = n;
-      return db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+      if (!auth || !utente || !profilo || n == null) return Promise.resolve();
+      var d = n - (visto == null ? monete() : visto); visto = n;
+      return cambiaMonete(d);
     },
 
     // ---- omino personalizzato (stile Mii) ----
@@ -1151,16 +1244,15 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       return doc.update({ omino: cfg }).then(function () { if (omini) return doc.update({ omini: omini, ominoN: n || 0 }); }).catch(function () {});
     },
 
-    // ---- livello, XP, Speed Coins e Prestigio (i profili di prima partono da livello 1, 0 XP, 0 monete) ----
-    progressione: function () {
-      var p = profilo || {};
-      return { level: p.level || 1, xp: p.xp || 0, coins: p.coins || 0, prestige: p.prestige || 0, xpTot: p.xpTot || 0, xpGiorno: p.xpGiorno || "" };
-    },
+    // ---- livello, XP, Speed Coins e Prestigio (i profili di prima partono da livello 1 e 0 XP) ----
+    progressione: progressione,
     // aggiunge gli XP al profilo e salva tutto in un colpo; ritorna { stato, eventi } (livelli saliti, prestigio)
     aggiungiXp: function (punti, giorno) {
       if (!auth || !utente || !profilo || !window.SGLivelli || !(punti > 0)) return null;
-      var r = SGLivelli.aggiungi(SGNube.progressione(), punti), s = r.stato, n = Math.round(punti);
-      var patch = { level: s.level, xp: s.xp, coins: s.coins, prestige: s.prestige, xpTot: firebase.firestore.FieldValue.increment(n) };
+      var r = window.SGLivelli.aggiungi(progressione(), punti), s = r.stato, n = Math.round(punti);
+      var piuMonete = s.coins - monete();   // i premi dei livelli: aggiunti, mai riscritti (il Casinò può averle cambiate intanto)
+      var patch = { level: s.level, xp: s.xp, prestige: s.prestige, xpTot: firebase.firestore.FieldValue.increment(n) };
+      if (piuMonete) patch.coins = firebase.firestore.FieldValue.increment(piuMonete);
       if (giorno) patch.xpGiorno = giorno;
       profilo.level = s.level; profilo.xp = s.xp; profilo.coins = s.coins; profilo.prestige = s.prestige;
       profilo.xpTot = (profilo.xpTot || 0) + n; if (giorno) profilo.xpGiorno = giorno;
@@ -1178,16 +1270,18 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       return db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
     },
 
-    // ---- bonus gratuito ogni 2 ore ----
+    // ---- il regalo del giorno: 1.000 monete, una volta al giorno (torna a mezzanotte) ----
     bonusImporto: BONUS,
-    puoRitirareBonus: function () { return !!(profilo && (Date.now() - (profilo.bonusUltimo || 0)) >= BONUS_MS); },
-    prossimoBonusMs: function () { return profilo ? Math.max(0, BONUS_MS - (Date.now() - (profilo.bonusUltimo || 0))) : BONUS_MS; },
+    puoRitirareBonus: regaloPronto,
+    prossimoBonusMs: function () { return regaloPronto() ? 0 : finoAMezzanotte(); },
     ritiraBonus: function () {
       if (!auth || !utente || !profilo) return Promise.reject(new Error("offline"));
-      if ((Date.now() - (profilo.bonusUltimo || 0)) < BONUS_MS) return Promise.reject(new Error("presto"));
-      var nuovo = ((profilo.fiches && profilo.fiches.blackjack) || 0) + BONUS;
-      profilo.fiches = profilo.fiches || {}; profilo.fiches.blackjack = nuovo; profilo.bonusUltimo = Date.now();
-      var patch = { bonusUltimo: profilo.bonusUltimo }; patch["fiches.blackjack"] = nuovo;
+      if (!regaloPronto()) return Promise.reject(new Error("presto"));
+      // in monete; se un gioco del Casinò è aperto, aggiunge anche lui il regalo al suo saldo
+      var nuovo = monete() + BONUS;
+      profilo.coins = nuovo; profilo.bonusUltimo = Date.now();
+      if (visto != null) visto += BONUS;
+      var patch = { bonusUltimo: profilo.bonusUltimo, coins: firebase.firestore.FieldValue.increment(BONUS) };
       // conta i bonus ritirati (serve per i trofei) e aggiorna il record fiches
       patch["stat.blackjack.bonusRitirati"] = firebase.firestore.FieldValue.increment(1);
       setNested(profilo, "stat.blackjack.bonusRitirati", (getNested(profilo, "stat.blackjack.bonusRitirati") || 0) + 1);
@@ -1301,13 +1395,16 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 
     // legge le statistiche di un gioco, es. statGioco("blackjack")
     statGioco: function (gioco) { return (profilo && profilo.stat && profilo.stat[gioco]) || {}; },
-    // salva in un colpo: fiches del gioco + contatori (incrementi) + record (max) + valori da impostare
+    // salva in un colpo: saldo del Casinò (fiches = monete) + contatori (incrementi) + record (max) + valori da impostare
     //   incrs / recs / sets = liste di coppie [chiave, valore]
     //   (sets serve per cose che possono anche scendere, es. la serie di risposte giuste in corso)
     salvaProgressi: function (fichesN, gioco, incrs, recs, sets) {
       if (!auth || !utente || !profilo) return Promise.resolve();
       var FV = firebase.firestore.FieldValue, patch = {};
-      if (fichesN != null) { patch["fiches." + gioco] = fichesN; setNested(profilo, "fiches." + gioco, fichesN); }
+      if (fichesN != null) {   // come salvaFiches: solo la differenza dall'ultimo saldo visto
+        var d = Math.round(fichesN - (visto == null ? monete() : visto)); visto = fichesN;
+        if (d) { patch.coins = FV.increment(d); profilo.coins = monete() + d; }
+      }
       (incrs || []).forEach(function (kv) {
         if (!kv[1]) return;
         var k = "stat." + gioco + "." + kv[0];
@@ -3611,6 +3708,376 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 })();
 
 /* =========================================================
+   SPeeD GAME — IL CASINÒ DENTRO: una sala per ogni gioco di carte
+   Entri e sei nella sala del Black Jack: in fondo il tavolo con la gente
+   che gioca con le fiches. Scorrendo: Scopa (niente fiches), Scopa 2 vs 2,
+   Scopone e Poker; ogni sala ha una cosa sua (il quadro, le bandierine,
+   la lavagna, l'insegna al neon…).
+   Ogni sala è un disegno fermo (SVG dentro un'immagine): si disegna una volta
+   sola, così scorrere da una sala all'altra è leggero anche sui telefoni lenti.
+   Il nome grande del gioco, le frecce e i tocchi stanno in core.js (schermataCasino).
+   Prospettiva centrale: x = destra/sinistra, y = altezza, z = profondità (in metri).
+   ========================================================= */
+(function () {
+  "use strict";
+  var W = 360, H = 640, CX = 180, HY = 205, F = 380, EYE = 2.85;   // telecamera più in alto di una persona, così si vede bene il piano del tavolo
+  var ZB = 7, XW = 2.0, YT = 4.1;                                     // parete di fondo, mezza larghezza della sala, soffitto
+
+  // ---- le sale, nell'ordine in cui si scorrono ----
+  var SALE = [
+    { id: "blackjack", nome: "Black Jack",   insegna: "BLACK JACK",   stile: "bj" },
+    { id: "scopa",     nome: "Scopa",        insegna: "SCOPA",        stile: "sc" },
+    { id: "scopa2v2",  nome: "Scopa 2 vs 2", insegna: "SCOPA 2 VS 2", stile: "s2" },
+    { id: "scopone",   nome: "Scopone",      insegna: "SCOPONE",      stile: "so" },
+    { id: "poker",     nome: "Poker",        insegna: "POKER",        stile: "pk" }
+  ];
+
+  // ---- prospettiva e pezzi di disegno ----
+  function P(x, y, z) { return [CX + F * x / z, HY + F * (EYE - y) / z]; }
+  function r1(v) { return Math.round(v * 10) / 10; }
+  function pts(a) { return a.map(function (p) { return r1(p[0]) + "," + r1(p[1]); }).join(" "); }
+  function poly(a, fill, extra) { return "<polygon points='" + pts(a) + "' fill='" + fill + "'" + (extra ? " " + extra : "") + "/>"; }
+  function linea(a, b, col, w, extra) { return "<line x1='" + r1(a[0]) + "' y1='" + r1(a[1]) + "' x2='" + r1(b[0]) + "' y2='" + r1(b[1]) + "' stroke='" + col + "' stroke-width='" + w + "'" + (extra ? " " + extra : "") + "/>"; }
+  function ell(c, rx, ry, fill, extra) { return "<ellipse cx='" + r1(c[0]) + "' cy='" + r1(c[1]) + "' rx='" + r1(rx) + "' ry='" + r1(ry) + "' fill='" + fill + "'" + (extra ? " " + extra : "") + "/>"; }
+  // pezzi di piano: parete di fondo (z fisso), piani orizzontali (y fisso), pareti di lato (x fisso)
+  function qFondo(x0, x1, y0, y1, z) { return [P(x0, y1, z), P(x1, y1, z), P(x1, y0, z), P(x0, y0, z)]; }
+  function qPiano(x0, x1, z0, z1, y) { return [P(x0, y, z1), P(x1, y, z1), P(x1, y, z0), P(x0, y, z0)]; }
+  function qLato(x, z0, z1, y0, y1) { return [P(x, y1, z0), P(x, y1, z1), P(x, y0, z1), P(x, y0, z0)]; }
+  // un cerchio steso in orizzontale (fiches, tappetini…): centro e raggi visti dalla telecamera
+  function tondo(x, y, z, r) { var c = P(x, y, z); return { c: c, rx: (P(x + r, y, z)[0] - P(x - r, y, z)[0]) / 2, ry: (P(x, y, z - r)[1] - P(x, y, z + r)[1]) / 2 }; }
+  // un ovale steso (tavoli): punti da t0 a t1 (radianti); t = 90° è il punto più lontano
+  function ovale(rx, rz, y, z0, t0, t1, n) {
+    var a = []; for (var i = 0; i <= n; i++) { var t = t0 + (t1 - t0) * i / n; a.push(P(rx * Math.cos(t), y, z0 + rz * Math.sin(t))); } return a;
+  }
+  function tono(c, k) {   // schiarisce (k > 0) o scurisce (k < 0) un colore #rrggbb
+    var n = parseInt(c.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+    function f(v) { return Math.max(0, Math.min(255, Math.round(k < 0 ? v * (1 + k) : v + (255 - v) * k))); }
+    return "#" + ((1 << 24) | (f(r) << 16) | (f(g) << 8) | f(b)).toString(16).slice(1);
+  }
+
+  // ---- la stanza: soffitto, pareti (con le righe della tappezzeria), zoccolo di legno, pavimento a quadri ----
+  function stanza(c) {
+    var o = [], x, z, i, j;
+    o.push(poly(qPiano(-XW, XW, 0.9, ZB, YT), "url(#gSoff)"));
+    o.push(poly(qLato(-XW, 0.9, ZB, 0, YT), c.lato), poly(qLato(XW, 0.9, ZB, 0, YT), c.lato));
+    o.push(poly(qFondo(-XW, XW, 0, YT, ZB), c.parete));
+    if (c.righe) {
+      for (x = -XW + 0.1; x < XW - 0.05; x += 0.42) o.push(poly(qFondo(x, x + 0.2, 0, YT, ZB), c.righe));
+      for (z = ZB - 0.2; z > 1.2; z -= 0.6) { o.push(poly(qLato(-XW, z - 0.28, z, 0, YT), c.righeLato), poly(qLato(XW, z - 0.28, z, 0, YT), c.righeLato)); }
+    }
+    if (c.extraPareti) o.push(c.extraPareti);
+    var hz = c.zoccoloH || 1.05, zs = tono(c.zoccolo, -0.28), cs = tono(c.cornice, -0.32);
+    o.push(poly(qFondo(-XW, XW, 0, hz, ZB), c.zoccolo), poly(qLato(-XW, 0.9, ZB, 0, hz), zs), poly(qLato(XW, 0.9, ZB, 0, hz), zs));
+    for (x = -XW + 0.12; x < XW - 0.4; x += 0.8) o.push(poly(qFondo(x, x + 0.66, 0.16, hz - 0.14, ZB), "none", "stroke='" + tono(c.zoccolo, 0.2) + "' stroke-width='1'"));
+    o.push(poly(qFondo(-XW, XW, hz, hz + 0.07, ZB), c.cornice), poly(qLato(-XW, 0.9, ZB, hz, hz + 0.07), cs), poly(qLato(XW, 0.9, ZB, hz, hz + 0.07), cs));
+    o.push(poly(qFondo(-XW, XW, YT - 0.16, YT, ZB), c.cornice), poly(qLato(-XW, 0.9, ZB, YT - 0.16, YT), cs), poly(qLato(XW, 0.9, ZB, YT - 0.16, YT), cs));
+    // pavimento: moquette o mattonelle a quadri, che si stringono verso il fondo
+    var q = c.quadro || 0.5;
+    o.push(poly(qPiano(-XW, XW, 0.9, ZB, 0), c.pav1));
+    for (z = ZB, i = 0; z > 1.6; z -= q, i++) for (x = -XW, j = 0; x < XW - 0.01; x += q, j++) if ((i + j) % 2) o.push(poly(qPiano(x, x + q, z - q, z, 0), c.pav2));
+    if (c.fughe) for (x = -XW; x <= XW + 0.01; x += q) o.push(linea(P(x, 0, ZB), P(x, 0, 1.2), c.fughe, 0.8));
+    // ombra dove le pareti toccano il pavimento
+    o.push(poly(qFondo(-XW, XW, 0, 0.3, ZB - 0.01), "url(#gOmbraMuro)"));
+    return o.join("");
+  }
+
+  // ---- luci ----
+  function lampada(x, z, yb, paralume, larga) {   // lampada che pende dal soffitto, con la luce sotto
+    var w = (larga || 0.3) * F / z, top = P(x, YT, z), a = P(x, yb + 0.26, z), b = P(x, yb, z);
+    return linea(top, a, "#0c0c0c", 1.3) +
+      "<ellipse cx='" + r1(b[0]) + "' cy='" + r1(b[1] + w * 0.25) + "' rx='" + r1(w * 2.6) + "' ry='" + r1(w * 1.6) + "' fill='url(#gAlone)'/>" +
+      "<path d='M" + r1(a[0] - w * 0.32) + "," + r1(a[1]) + " L" + r1(a[0] + w * 0.32) + "," + r1(a[1]) + " L" + r1(b[0] + w) + "," + r1(b[1]) + " L" + r1(b[0] - w) + "," + r1(b[1]) + " Z' fill='" + paralume + "'/>" +
+      "<path d='M" + r1(a[0] - w * 0.32) + "," + r1(a[1]) + " L" + r1(a[0] - w * 0.05) + "," + r1(a[1]) + " L" + r1(b[0] - w * 0.55) + "," + r1(b[1]) + " L" + r1(b[0] - w) + "," + r1(b[1]) + " Z' fill='#ffffff' opacity='.16'/>" +
+      ell(b, w, w * 0.24, "#fff4c9");
+  }
+  function pozza(x, y, z, r) { var t = tondo(x, y, z, r); return ell(t.c, t.rx, t.ry, "url(#gPozza)"); }   // la luce che cade sul tavolo
+  function applique(x, y, z) {   // lampada da parete
+    var p = P(x, y, z), k = F / z;
+    return ell(p, k * 0.42, k * 0.42, "url(#gAlone)") + "<rect x='" + r1(p[0] - k * 0.03) + "' y='" + r1(p[1]) + "' width='" + r1(k * 0.06) + "' height='" + r1(k * 0.16) + "' fill='#b0812d'/>" +
+      ell([p[0], p[1] - k * 0.02], k * 0.07, k * 0.09, "#fff1bf");
+  }
+
+  // ---- gente al tavolo: si vede da metà petto in su (sotto la copre il tavolo) ----
+  function busto(nome, x, z, k) {
+    if (!window.SGOmino) return "";
+    var cfg = SGOmino.casuale(nome), w = (k || 1.1) * F / z, h = w * 1.022, b = P(x, 0.52, z);
+    var svg = SGOmino.svg(cfg, { busto: true });
+    return "<image xlink:href=\"data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg) + "\" x='" + r1(b[0] - w / 2) + "' y='" + r1(b[1] - h) + "' width='" + r1(w) + "' height='" + r1(h) + "'/>";
+  }
+
+  // ---- fiches, carte ----
+  var FICHE = ["#e03131", "#1c7ed6", "#2b8a3e", "#212529", "#f08c00", "#7048e8"];
+  function pila(x, z, n, col, yT) {   // una pila di fiches coi segnetti bianchi sul bordo
+    var t = tondo(x, yT, z, 0.075), h = Math.max(1.5, 0.028 * F / z), o = [];
+    for (var i = 0; i < n; i++) {
+      var y = t.c[1] - i * h;
+      o.push(ell([t.c[0], y + h * 0.6], t.rx, t.ry, tono(col, -0.38)));
+      o.push(ell([t.c[0], y], t.rx, t.ry, col, "stroke='#ffffff' stroke-width='" + r1(Math.max(0.7, t.rx * 0.17)) + "' stroke-dasharray='" + r1(t.rx * 0.42) + " " + r1(t.rx * 0.5) + "'"));
+    }
+    return o.join("");
+  }
+  // una carta stesa sul tavolo: (x, z) centro, ang = girata in pianta (gradi);
+  // seme: "c" "q" "p" "f" (francesi), "denari" "coppe" "spade" "bastoni" (napoletane), niente = coperta
+  function carta(x, z, ang, yT, seme, dorso, k) {
+    k = k || 1;
+    var a = ang * Math.PI / 180, cw = 0.062 * k, ch = 0.09 * k, ca = Math.cos(a), sa = Math.sin(a);
+    function q(dx, dz) { return P(x + dx * ca - dz * sa, yT, z + dx * sa + dz * ca); }
+    var o = poly([q(-cw, ch), q(cw, ch), q(cw, -ch), q(-cw, -ch)], seme ? "#fbf7ee" : (dorso || "#1d4ed8"), "stroke='" + (seme ? "#a59c8c" : "#f1f3f5") + "' stroke-width='.7' stroke-linejoin='round'");
+    if (!seme) return o + poly([q(-cw * 0.6, ch * 0.72), q(cw * 0.6, ch * 0.72), q(cw * 0.6, -ch * 0.72), q(-cw * 0.6, -ch * 0.72)], "none", "stroke='#ffffff' stroke-opacity='.55' stroke-width='.6'");
+    var c = P(x, yT, z), s = Math.max(1.6, 0.03 * k * F / z);
+    if (seme === "c" || seme === "q") return o + "<path d='M" + r1(c[0]) + "," + r1(c[1] - s) + " L" + r1(c[0] + s * 0.8) + "," + r1(c[1]) + " L" + r1(c[0]) + "," + r1(c[1] + s) + " L" + r1(c[0] - s * 0.8) + "," + r1(c[1]) + " Z' fill='#d6336c'/>";
+    if (seme === "p" || seme === "f") return o + ell(c, s * 0.75, s * 0.75, "#212529");
+    if (seme === "denari") return o + ell(c, s * 0.95, s * 0.95, "#f2b705", "stroke='#c92a2a' stroke-width='.7'");
+    if (seme === "coppe") return o + "<path d='M" + r1(c[0] - s) + "," + r1(c[1] - s * 0.7) + " L" + r1(c[0] + s) + "," + r1(c[1] - s * 0.7) + " L" + r1(c[0] + s * 0.35) + "," + r1(c[1] + s * 0.3) + " L" + r1(c[0] + s * 0.35) + "," + r1(c[1] + s) + " L" + r1(c[0] - s * 0.35) + "," + r1(c[1] + s) + " L" + r1(c[0] - s * 0.35) + "," + r1(c[1] + s * 0.3) + " Z' fill='#e8590c'/>";
+    if (seme === "spade") return o + linea([c[0] - s * 0.6, c[1] + s], [c[0] + s * 0.6, c[1] - s], "#1971c2", Math.max(0.9, s * 0.35));
+    return o + linea([c[0] - s * 0.5, c[1] + s], [c[0] + s * 0.5, c[1] - s], "#2b8a3e", Math.max(1.2, s * 0.6), "stroke-linecap='round'");   // bastoni
+  }
+
+  // ---- quadri e cose appese alla parete di fondo ----
+  function cornice(x0, x1, y0, y1, legno, dentro) {
+    var b = 0.07;
+    return poly(qFondo(x0 - b, x1 + b, y0 - b, y1 + b, ZB - 0.02), legno) + poly(qFondo(x0, x1, y0, y1, ZB - 0.02), dentro);
+  }
+  function cartaParete(x, y, w, h, ang, seme, scritta, colScritta) {   // una carta grande in un quadro (Black Jack, Scopa)
+    var c = P(x, y, ZB - 0.03), k = F / ZB, ww = w * k, hh = h * k;
+    var o = "<g transform='translate(" + r1(c[0]) + "," + r1(c[1]) + ") rotate(" + ang + ")'>" +
+      "<rect x='" + r1(-ww / 2) + "' y='" + r1(-hh / 2) + "' width='" + r1(ww) + "' height='" + r1(hh) + "' rx='" + r1(ww * 0.1) + "' fill='#fbf7ee' stroke='#c9bfa9' stroke-width='.8'/>";
+    if (scritta) o += "<text x='" + r1(-ww * 0.3) + "' y='" + r1(-hh * 0.22) + "' font-family='Georgia,serif' font-weight='700' font-size='" + r1(ww * 0.3) + "' fill='" + colScritta + "' text-anchor='middle'>" + scritta + "</text>";
+    o += seme + "</g>";
+    return o;
+  }
+
+  // =========================================================
+  //  LE SALE
+  // =========================================================
+  function salaBJ() {
+    var z0 = 2.9, R = 1.2, yT = 0.87, o = [];
+    o.push(stanza({ parete: "#6d1426", righe: "#7b1b2f", lato: "#4a0d19", righeLato: "#531022", zoccolo: "#3b1e12", cornice: "#d4a240",
+      pav1: "#7a1220", pav2: "#62101b" }));
+    // il quadro: Asso di picche e Jack di cuori incrociati, in cornice d'oro
+    o.push(cornice(-0.62, 0.62, 1.95, 3.15, "#c8962e", "#2a0710"));
+    var k = F / ZB;
+    o.push(cartaParete(-0.18, 2.55, 0.5, 0.74, -14, "<path d='M0," + r1(-k * 0.13) + " C" + r1(k * 0.16) + "," + r1(-k * 0.02) + " " + r1(k * 0.12) + "," + r1(k * 0.12) + " 0," + r1(k * 0.06) + " C" + r1(-k * 0.12) + "," + r1(k * 0.12) + " " + r1(-k * 0.16) + "," + r1(-k * 0.02) + " 0," + r1(-k * 0.13) + " Z' fill='#212529'/>", "A", "#212529"));
+    o.push(cartaParete(0.2, 2.55, 0.5, 0.74, 12, "<path d='M0," + r1(k * 0.12) + " C" + r1(-k * 0.2) + "," + r1(-k * 0.02) + " " + r1(-k * 0.06) + "," + r1(-k * 0.16) + " 0," + r1(-k * 0.06) + " C" + r1(k * 0.06) + "," + r1(-k * 0.16) + " " + r1(k * 0.2) + "," + r1(-k * 0.02) + " 0," + r1(k * 0.12) + " Z' fill='#d6336c'/>", "J", "#d6336c"));
+    o.push(applique(-XW + 0.02, 2.5, 5.6), applique(XW - 0.02, 2.5, 5.6));
+    // la gente seduta dall'altra parte del tavolo (prima: il tavolo le copre le gambe)
+    var posti = [140, 106, 74, 40], nomi = ["Rosa", "Peppe", "Lina", "Tonio"];
+    posti.forEach(function (a, i) { var t = a * Math.PI / 180, r = R + 0.32; o.push(busto(nomi[i], r * Math.cos(t), z0 + r * Math.sin(t))); });
+    // il tavolo a mezzaluna: ombra e piedistallo sotto, bordo di legno davanti, bordo imbottito, panno verde
+    var om = tondo(0, 0, z0 + 0.4, 0.95);
+    o.push(ell(om.c, om.rx, om.ry, "#000000", "opacity='.22'"));
+    o.push(poly(qFondo(-0.28, 0.28, 0, yT - 0.08, z0 + 0.4), "#2a140b"), poly(qFondo(-0.55, 0.55, 0, 0.06, z0 + 0.4), "#2a140b"));
+    o.push(poly(qFondo(-R - 0.14, R + 0.14, yT - 0.1, yT + 0.02, z0), "url(#gLegno)"));
+    o.push(poly(ovale(R + 0.14, R + 0.14, yT + 0.02, z0, 0, Math.PI, 48), "#2a160d"));
+    o.push(poly(ovale(R + 0.14, R + 0.14, yT + 0.02, z0, 0, Math.PI, 48), "none", "stroke='#6b4a33' stroke-width='1.2'"));
+    o.push(poly(ovale(R, R, yT, z0, 0, Math.PI, 48), "url(#gFeltro)"));
+    o.push(pozza(-0.6, yT, z0 + 0.55, 0.7), pozza(0.6, yT, z0 + 0.55, 0.7));
+    // la scritta sul panno, ad arco
+    var arco = ovale(0.8, 0.8, yT, z0, Math.PI * 0.94, Math.PI * 0.06, 28);
+    o.push("<path id='arcoBJ' d='M" + arco.map(function (p) { return r1(p[0]) + "," + r1(p[1]); }).join(" L") + "' fill='none'/>");
+    o.push("<text font-family='Georgia,serif' font-weight='700' font-size='8.5' letter-spacing='1' fill='#e9c46a' opacity='.9'><textPath xlink:href='#arcoBJ' startOffset='50%' text-anchor='middle'>BLACK JACK PAGA 3 A 2</textPath></text>");
+    // per ogni giocatore: il cerchio della puntata con le fiches e le sue due carte
+    posti.forEach(function (a, i) {
+      var t = a * Math.PI / 180, cerchio = tondo(1.0 * Math.cos(t), yT, z0 + 1.0 * Math.sin(t), 0.12);
+      o.push(ell(cerchio.c, cerchio.rx, cerchio.ry, "none", "stroke='#f8f0d8' stroke-opacity='.75' stroke-width='1'"));
+      o.push(pila(1.0 * Math.cos(t), z0 + 1.0 * Math.sin(t), 3 + (i * 2) % 4, FICHE[i % FICHE.length], yT));
+      o.push(pila(1.0 * Math.cos(t) + 0.16, z0 + 1.0 * Math.sin(t) - 0.04, 2 + i % 3, FICHE[(i + 3) % FICHE.length], yT));
+      o.push(carta(0.7 * Math.cos(t) - 0.04, z0 + 0.7 * Math.sin(t), a - 90 + 8, yT, ["c", "p", "q", "f"][i]), carta(0.7 * Math.cos(t) + 0.05, z0 + 0.7 * Math.sin(t) - 0.02, a - 90 - 6, yT, ["p", "q", "f", "c"][i]));
+    });
+    // il banco: le carte del mazziere, la cassetta delle fiches e lo sabot
+    o.push(carta(-0.08, z0 + 0.38, 4, yT, "c"), carta(0.08, z0 + 0.38, -3, yT, null, "#b02a37"));
+    o.push(poly(qPiano(-0.42, 0.42, z0 + 0.05, z0 + 0.24, yT + 0.01), "#1b1b1b"));
+    for (var s = 0; s < 8; s++) { var x0 = -0.4 + s * 0.1; o.push(poly(qPiano(x0 + 0.012, x0 + 0.088, z0 + 0.07, z0 + 0.22, yT + 0.02), FICHE[s % FICHE.length])); }
+    o.push(poly(qPiano(0.6, 0.84, z0 + 0.08, z0 + 0.3, yT + 0.13), "#7a1622"), poly(qFondo(0.6, 0.84, yT, yT + 0.13, z0 + 0.08), "#4f0c14"));
+    o.push(lampada(-0.72, z0 + 0.4, 2.75, "#7a1222"), lampada(0.72, z0 + 0.4, 2.75, "#7a1222"));
+    return { o: o.join(""), feltro: ["#1d9a57", "#0d6136"], legno: ["#5a2f17", "#2b140a"], pozza: "#fff3c4" };
+  }
+
+  // tavolo di legno con la tovaglia a quadretti (Scopa e Scopa 2 vs 2)
+  function tavoloTovaglia(o, z0, hw, hd, col1, col2) {
+    var yT = 0.8, nx = Math.round(hw * 8), nz = 6, i, j, drop = 0.3;
+    o.push(poly(qFondo(-hw + 0.06, -hw + 0.15, 0, yT - drop, z0 - hd + 0.08), "#3d2416"), poly(qFondo(hw - 0.15, hw - 0.06, 0, yT - drop, z0 - hd + 0.08), "#3d2416"));
+    o.push(poly(qPiano(-hw, hw, z0 - hd, z0 + hd, yT), col1));
+    for (i = 0; i < nx; i++) for (j = 0; j < nz; j++) if ((i + j) % 2) o.push(poly(qPiano(-hw + 2 * hw * i / nx, -hw + 2 * hw * (i + 1) / nx, z0 - hd + 2 * hd * j / nz, z0 - hd + 2 * hd * (j + 1) / nz, yT), col2));
+    o.push(poly(qFondo(-hw, hw, yT - drop, yT, z0 - hd), col1));
+    for (i = 0; i < nx; i++) for (j = 0; j < 2; j++) if ((i + j) % 2) o.push(poly(qFondo(-hw + 2 * hw * i / nx, -hw + 2 * hw * (i + 1) / nx, yT - drop * (j + 1) / 2, yT - drop * j / 2, z0 - hd), col2));
+    o.push(poly(qFondo(-hw, hw, yT - drop, yT, z0 - hd), "#000000", "opacity='.16'"));
+    return yT;
+  }
+  // la sala della Scopa: osteria con le mattonelle di cotto e la luce calda; niente fiches
+  function stanzaOsteria(parete, extra) {
+    return stanza({ parete: parete, righe: null, lato: tono(parete, -0.3), zoccolo: "#6b4226", cornice: "#4a2c18", zoccoloH: 1.0,
+      pav1: "#b4552e", pav2: "#9c4626", fughe: "#7d3a1f", quadro: 0.45, extraPareti: extra });
+  }
+  function mattoni(x0, x1, y0, y1) {   // un pezzo di muro senza intonaco, coi mattoni
+    var o = [], h = 0.12, w = 0.26, r = 0;
+    for (var y = y0; y < y1 - 0.01; y += h, r++) for (var x = x0 - (r % 2) * w / 2; x < x1 - 0.01; x += w) {
+      var a = Math.max(x, x0), b = Math.min(x + w - 0.025, x1);
+      if (b > a + 0.03) o.push(poly(qFondo(a, b, y + 0.02, Math.min(y + h, y1), ZB - 0.01), r % 3 ? "#a2482a" : "#b8583a"));
+    }
+    return o.join("");
+  }
+  function salaScopa() {
+    var z0 = 3.25, hw = 1.05, hd = 0.55, o = [];
+    o.push(stanzaOsteria("#d89a5f", mattoni(-1.8, -0.95, 1.3, 2.1) + mattoni(-1.7, -1.05, 2.9, 3.5)));
+    // il quadro: il Settebello (il 7 di denari)
+    o.push(cornice(0.82, 1.5, 1.75, 2.85, "#4a2c18", "#f3ead2"));
+    [[-0.17, 2.6], [0.17, 2.6], [0, 2.4], [-0.17, 2.2], [0.17, 2.2], [-0.17, 1.98], [0.17, 1.98]].forEach(function (p) {   // il Settebello: 7 monete
+      p = [p[0] + 1.16, p[1]];
+      var c = P(p[0], p[1], ZB - 0.03), rr = 0.075 * F / ZB;
+      o.push(ell(c, rr, rr, "#f2b705", "stroke='#c92a2a' stroke-width='1'"), ell(c, rr * 0.4, rr * 0.4, "#c92a2a"));
+    });
+    o.push(applique(-XW + 0.02, 2.4, 5.4), applique(XW - 0.02, 2.4, 5.4));
+    // i due giocatori
+    o.push(busto("Ciccio", -0.5, z0 + hd + 0.36), busto("Carmela", 0.5, z0 + hd + 0.36));
+    var yT = tavoloTovaglia(o, z0, hw, hd, "#f4ede1", "#d33a3a");
+    o.push(pozza(0, yT, z0 + 0.1, 0.9));
+    // le carte: quattro in tavola, le carte in mano coperte, i mazzetti delle prese
+    [["denari", -0.3, 8], ["coppe", -0.1, -6], ["spade", 0.1, 5], ["bastoni", 0.3, -9]].forEach(function (c) { o.push(carta(c[1], z0 + 0.02, c[2], yT, c[0], null, 1.25)); });
+    [-0.5, 0.5].forEach(function (x, i) {
+      for (var n = 0; n < 3; n++) o.push(carta(x - 0.08 + n * 0.08, z0 + hd - 0.18, (n - 1) * 10, yT, null, "#8c1c13", 1.2));
+      for (n = 0; n < 4; n++) o.push(carta(x + (i ? 0.28 : -0.28), z0 + hd - 0.2, 4, yT + n * 0.006, null, "#8c1c13", 1.2));
+    });
+    o.push(lampada(0, z0 + 0.1, 2.55, "#2f6b4f", 0.36));
+    return { o: o.join(""), feltro: ["#1d9a57", "#0d6136"], legno: ["#6b4226", "#3d2416"], pozza: "#ffe6b0" };
+  }
+  function bandierine(y, z, colori) {   // il festone di bandierine da una parete all'altra
+    var o = [], n = 12;
+    var A = P(-XW, y, z), B = P(XW, y, z);
+    o.push("<path d='M" + r1(A[0]) + "," + r1(A[1]) + " Q" + r1(CX) + "," + r1(A[1] + 26) + " " + r1(B[0]) + "," + r1(B[1]) + "' stroke='#3b2a1d' stroke-width='1' fill='none'/>");
+    for (var i = 1; i < n; i++) {
+      var t = i / n, x = (1 - t) * (1 - t) * A[0] + 2 * t * (1 - t) * CX + t * t * B[0], yy = (1 - t) * (1 - t) * A[1] + 2 * t * (1 - t) * (A[1] + 26) + t * t * B[1], s = 0.11 * F / z;
+      o.push("<path d='M" + r1(x - s * 0.55) + "," + r1(yy) + " L" + r1(x + s * 0.55) + "," + r1(yy) + " L" + r1(x) + "," + r1(yy + s * 1.1) + " Z' fill='" + colori[i % colori.length] + "'/>");
+    }
+    return o.join("");
+  }
+  function salaScopa2() {
+    var z0 = 3.25, hw = 1.45, hd = 0.55, o = [];
+    o.push(stanzaOsteria("#d0905a", mattoni(-1.75, -1.0, 2.5, 3.3)));
+    // le due squadre: bandiere blu e rossa incrociate e il festone di bandierine
+    var k = F / ZB, c = P(0, 2.45, ZB - 0.02);
+    o.push(linea([c[0] - k * 0.5, c[1] + k * 0.5], [c[0] + k * 0.5, c[1] - k * 0.6], "#5c3b22", 2), linea([c[0] + k * 0.5, c[1] + k * 0.5], [c[0] - k * 0.5, c[1] - k * 0.6], "#5c3b22", 2));
+    o.push("<path d='M" + r1(c[0] - k * 0.5) + "," + r1(c[1] - k * 0.6) + " L" + r1(c[0] - k * 0.05) + "," + r1(c[1] - k * 0.47) + " L" + r1(c[0] - k * 0.38) + "," + r1(c[1] - k * 0.22) + " Z' fill='#1c7ed6'/>");
+    o.push("<path d='M" + r1(c[0] + k * 0.5) + "," + r1(c[1] - k * 0.6) + " L" + r1(c[0] + k * 0.05) + "," + r1(c[1] - k * 0.47) + " L" + r1(c[0] + k * 0.38) + "," + r1(c[1] - k * 0.22) + " Z' fill='#e03131'/>");
+    o.push(bandierine(3.55, ZB - 0.05, ["#1c7ed6", "#e03131", "#ffd43b"]));
+    o.push(applique(-XW + 0.02, 2.4, 5.4), applique(XW - 0.02, 2.4, 5.4));
+    // quattro giocatori: Noi (blu) e Loro (rossi)
+    var xs = [-1.08, -0.36, 0.36, 1.08], nomi = ["Gino", "Teresa", "Sasà", "Nina"];
+    xs.forEach(function (x, i) { o.push(busto(nomi[i], x, z0 + hd + 0.36, 0.98)); });
+    var yT = tavoloTovaglia(o, z0, hw, hd, "#f4ede1", "#d33a3a");
+    o.push(pozza(-0.5, yT, z0 + 0.1, 0.8), pozza(0.5, yT, z0 + 0.1, 0.8));
+    // le tovagliette delle due squadre e le carte
+    xs.forEach(function (x, i) {
+      o.push(poly(qPiano(x - 0.24, x + 0.24, z0 + hd - 0.36, z0 + hd - 0.04, yT + 0.003), i % 2 ? "#e03131" : "#1c7ed6", "opacity='.85'"));
+      for (var n = 0; n < 3; n++) o.push(carta(x - 0.08 + n * 0.08, z0 + hd - 0.2, (n - 1) * 10, yT + 0.005, null, "#8c1c13", 1.1));
+    });
+    [["denari", -0.35, 6], ["spade", -0.12, -8], ["coppe", 0.12, 4], ["bastoni", 0.35, -5]].forEach(function (c) { o.push(carta(c[1], z0 - 0.05, c[2], yT, c[0], null, 1.25)); });
+    o.push(lampada(-0.6, z0 + 0.1, 2.6, "#2f6b4f", 0.32), lampada(0.6, z0 + 0.1, 2.6, "#2f6b4f", 0.32));
+    return { o: o.join(""), feltro: ["#1d9a57", "#0d6136"], legno: ["#6b4226", "#3d2416"], pozza: "#ffe6b0" };
+  }
+  function salaScopone() {
+    var z0 = 3.2, hw = 1.4, hd = 0.62, yT = 0.82, o = [];
+    o.push(stanza({ parete: "#3f5a4a", righe: "#466353", lato: "#2c4034", righeLato: "#31473a", zoccolo: "#5a3a22", cornice: "#c79a4b",
+      pav1: "#6e4a2c", pav2: "#5c3d24", quadro: 0.42, fughe: "#4a301b" }));
+    // la lavagna coi punti di Noi e Loro
+    var k = F / ZB;
+    o.push(cornice(-0.85, 0.85, 1.9, 3.1, "#8a5a32", "#22312a"));
+    var a = P(-0.6, 2.85, ZB - 0.03), b = P(0.25, 2.85, ZB - 0.03), m = P(0, 3.0, ZB - 0.03), m2 = P(0, 2.0, ZB - 0.03);
+    o.push(linea(m, m2, "#e9ecef", 1.1, "opacity='.8'"));
+    o.push("<text x='" + r1(a[0] + k * 0.25) + "' y='" + r1(a[1]) + "' font-family='Comic Sans MS,Segoe Print,cursive' font-size='" + r1(k * 0.2) + "' fill='#f1f3f5' opacity='.92' text-anchor='middle'>NOI</text>");
+    o.push("<text x='" + r1(b[0] + k * 0.17) + "' y='" + r1(b[1]) + "' font-family='Comic Sans MS,Segoe Print,cursive' font-size='" + r1(k * 0.2) + "' fill='#f1f3f5' opacity='.92' text-anchor='middle'>LORO</text>");
+    [[-0.62, 6], [0.12, 4]].forEach(function (g) {   // i segnetti col gesso, a gruppi di cinque
+      for (var i = 0; i < g[1]; i++) {
+        var gx = g[0] + (i % 5) * 0.075 + Math.floor(i / 5) * 0.45, p1 = P(gx, 2.55, ZB - 0.03), p2 = P(gx, 2.25, ZB - 0.03);
+        o.push(linea(p1, p2, "#f8f9fa", 1.2, "opacity='.85' stroke-linecap='round'"));
+      }
+      if (g[1] >= 5) { var s1 = P(g[0] - 0.03, 2.3, ZB - 0.03), s2 = P(g[0] + 0.33, 2.5, ZB - 0.03); o.push(linea(s1, s2, "#f8f9fa", 1.2, "opacity='.85' stroke-linecap='round'")); }
+    });
+    o.push(applique(-XW + 0.02, 2.4, 5.4), applique(XW - 0.02, 2.4, 5.4));
+    var xs = [-1.05, -0.35, 0.35, 1.05], nomi = ["Pino", "Mena", "Totò", "Lia"];
+    xs.forEach(function (x, i) { o.push(busto(nomi[i], x, z0 + hd + 0.36, 0.98)); });
+    // il tavolo da gioco: bordo di legno e panno verde
+    o.push(poly(qFondo(-hw + 0.08, -hw + 0.18, 0, yT, z0 - hd + 0.1), "#3d2416"), poly(qFondo(hw - 0.18, hw - 0.08, 0, yT, z0 - hd + 0.1), "#3d2416"));
+    o.push(poly(qFondo(-hw, hw, yT - 0.12, yT + 0.02, z0 - hd), "url(#gLegno)"));
+    o.push(poly(qPiano(-hw, hw, z0 - hd, z0 + hd, yT + 0.02), "#6b4226"));
+    o.push(poly(qPiano(-hw + 0.1, hw - 0.1, z0 - hd + 0.1, z0 + hd - 0.08, yT + 0.021), "url(#gFeltro)"));
+    o.push(pozza(0, yT, z0, 1.1));
+    xs.forEach(function (x, i) {
+      for (var n = 0; n < 4; n++) o.push(carta(x - 0.1 + n * 0.065, z0 + hd - 0.24, (n - 1.5) * 9, yT + 0.03, null, "#8c1c13", 1.05));
+      o.push(carta(x + 0.02, z0 + 0.12, (i - 1.5) * 7, yT + 0.03, ["denari", "coppe", "spade", "bastoni"][i], null, 1.15));
+    });
+    o.push(lampada(-0.8, z0 + 0.15, 2.6, "#e8dcc0", 0.34), lampada(0.8, z0 + 0.15, 2.6, "#e8dcc0", 0.34));   // due lampade: la lavagna in mezzo resta libera
+    return { o: o.join(""), feltro: ["#2f9e5f", "#16653b"], legno: ["#6b4226", "#2b170c"], pozza: "#fff3c4" };
+  }
+  function salaPoker() {
+    var z0 = 3.4, yT = 0.86, o = [];
+    o.push(stanza({ parete: "#14243a", righe: "#182b45", lato: "#0d1a2b", righeLato: "#102034", zoccolo: "#2e1c12", cornice: "#7c5a2e",
+      pav1: "#103327", pav2: "#0d2a20" }));
+    // l'insegna al neon "ALL IN"
+    var a = P(0, 2.45, ZB - 0.03), k = F / ZB;
+    o.push("<text x='" + r1(a[0]) + "' y='" + r1(a[1]) + "' font-family='Arial Black,Arial,sans-serif' font-weight='900' font-size='" + r1(k * 0.5) + "' fill='none' stroke='#ff4fd8' stroke-width='3' opacity='.35' text-anchor='middle' filter='url(#fNeon)'>ALL IN</text>");
+    o.push("<text x='" + r1(a[0]) + "' y='" + r1(a[1]) + "' font-family='Arial Black,Arial,sans-serif' font-weight='900' font-size='" + r1(k * 0.5) + "' fill='none' stroke='#ffd6f5' stroke-width='1.2' text-anchor='middle'>ALL IN</text>");
+    o.push(applique(-XW + 0.02, 2.4, 5.4), applique(XW - 0.02, 2.4, 5.4));
+    var posti = [146, 116, 90, 64, 34], nomi = ["Matt", "Giada", "Bruno", "Sofia", "Leo"];
+    posti.forEach(function (g, i) { var t = g * Math.PI / 180; o.push(busto(nomi[i], 1.7 * Math.cos(t), z0 + 1.08 * Math.sin(t), 1.0)); });
+    // il tavolo ovale: bordo imbottito nero, legno, panno verde
+    o.push(poly(qFondo(-0.6, 0.6, 0, 0.6, z0 - 0.2), "#0c0c0c"));
+    var vicino = ovale(1.62, 0.9, yT, z0, Math.PI, 2 * Math.PI, 30), sotto = ovale(1.62, 0.9, yT - 0.12, z0, 2 * Math.PI, Math.PI, 30);
+    o.push(poly(vicino.concat(sotto), "#0f0f0f"));
+    o.push(poly(ovale(1.62, 0.9, yT, z0, 0, 2 * Math.PI, 60), "#1b1b1b"));
+    o.push(poly(ovale(1.62, 0.9, yT, z0, Math.PI * 1.08, Math.PI * 1.92, 30), "none", "stroke='#4a4a4a' stroke-width='1.2'"));
+    o.push(poly(ovale(1.46, 0.79, yT + 0.005, z0, 0, 2 * Math.PI, 60), "#6b3f1e"));
+    o.push(poly(ovale(1.38, 0.73, yT + 0.006, z0, 0, 2 * Math.PI, 60), "url(#gFeltro)"));
+    o.push(pozza(0, yT, z0, 1.1));
+    // le cinque carte in mezzo, il piatto, il bottone del mazziere
+    ["c", "p", "q", "f", "c"].forEach(function (s, i) { o.push(carta(-0.3 + i * 0.15, z0 + 0.12, 0, yT + 0.01, i < 4 ? s : null, "#1d4ed8", 1.15)); });
+    o.push(pila(-0.12, z0 - 0.22, 6, "#e03131", yT), pila(0.05, z0 - 0.26, 4, "#212529", yT), pila(0.2, z0 - 0.2, 5, "#1c7ed6", yT));
+    var bt = tondo(0.55, yT + 0.01, z0 + 0.45, 0.07);
+    o.push(ell(bt.c, bt.rx, bt.ry, "#f8f9fa", "stroke='#adb5bd' stroke-width='.6'"), "<text x='" + r1(bt.c[0]) + "' y='" + r1(bt.c[1] + bt.ry * 0.5) + "' font-family='Arial,sans-serif' font-weight='900' font-size='" + r1(bt.ry * 1.5) + "' fill='#212529' text-anchor='middle'>D</text>");
+    // davanti a ognuno: due carte coperte e le sue fiches
+    posti.forEach(function (g, i) {
+      var t = g * Math.PI / 180, x = 1.12 * Math.cos(t), z = z0 + 0.58 * Math.sin(t);
+      o.push(carta(x - 0.05, z, -8, yT + 0.01, null, "#1d4ed8"), carta(x + 0.05, z - 0.01, 7, yT + 0.01, null, "#1d4ed8"));
+      o.push(pila(x + (x < 0 ? 0.24 : -0.24), z - 0.12, 3 + i % 4, FICHE[i % FICHE.length], yT));
+    });
+    // la lampada lunga da tavolo da poker
+    var w1 = P(-0.95, 2.62, z0), w2 = P(0.95, 2.62, z0), w3 = P(1.12, 2.45, z0), w4 = P(-1.12, 2.45, z0);
+    o.push(linea(P(-0.7, YT, z0), P(-0.7, 2.62, z0), "#0c0c0c", 1.2), linea(P(0.7, YT, z0), P(0.7, 2.62, z0), "#0c0c0c", 1.2));
+    o.push("<ellipse cx='" + r1(CX) + "' cy='" + r1(w3[1] + 6) + "' rx='" + r1((w3[0] - w4[0]) * 0.75) + "' ry='26' fill='url(#gAlone)'/>");
+    o.push(poly([w1, w2, w3, w4], "#1f6f43"), poly([w4, w3, [w3[0], w3[1] + 3], [w4[0], w4[1] + 3]], "#fff1bf"));
+    o.push(linea(w1, w2, "#c9a24a", 1.4));
+    return { o: o.join(""), feltro: ["#1f8a55", "#0e5233"], legno: ["#141414", "#050505"], pozza: "#fff6d8" };
+  }
+
+  var DISEGNI = { blackjack: salaBJ, scopa: salaScopa, scopa2v2: salaScopa2, scopone: salaScopone, poker: salaPoker };
+
+  // la sala intera, pronta da mettere in un'immagine
+  function svgSala(id) {
+    var d = (DISEGNI[id] || salaBJ)();
+    var defs = "<defs>" +
+      "<linearGradient id='gSoff' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#050304'/><stop offset='1' stop-color='#1d1216'/></linearGradient>" +
+      "<radialGradient id='gFeltro' cx='.5' cy='.45' r='.65'><stop offset='0' stop-color='" + d.feltro[0] + "'/><stop offset='1' stop-color='" + d.feltro[1] + "'/></radialGradient>" +
+      "<linearGradient id='gLegno' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='" + d.legno[0] + "'/><stop offset='1' stop-color='" + d.legno[1] + "'/></linearGradient>" +
+      "<radialGradient id='gPozza'><stop offset='0' stop-color='" + d.pozza + "' stop-opacity='.38'/><stop offset='1' stop-color='" + d.pozza + "' stop-opacity='0'/></radialGradient>" +
+      "<radialGradient id='gAlone'><stop offset='0' stop-color='#ffe9a8' stop-opacity='.55'/><stop offset='1' stop-color='#ffe9a8' stop-opacity='0'/></radialGradient>" +
+      "<linearGradient id='gOmbraMuro' x1='0' y1='1' x2='0' y2='0'><stop offset='0' stop-color='#000' stop-opacity='.45'/><stop offset='1' stop-color='#000' stop-opacity='0'/></linearGradient>" +
+      "<radialGradient id='gVign' cx='.5' cy='.55' r='.75'><stop offset='.55' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.6'/></radialGradient>" +
+      "<linearGradient id='gFondo' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.55'/></linearGradient>" +
+      "<filter id='fNeon' x='-20%' y='-40%' width='140%' height='180%'><feGaussianBlur stdDeviation='3'/></filter>" +
+      "</defs>";
+    return "<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 " + W + " " + H + "' width='" + W + "' height='" + H + "'>" + defs + d.o +
+      "<rect width='" + W + "' height='" + H + "' fill='url(#gVign)'/><rect y='" + (H - 120) + "' width='" + W + "' height='120' fill='url(#gFondo)'/></svg>";
+  }
+  var cache = {};
+  function immagine(id) {
+    if (!cache[id]) cache[id] = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgSala(id));
+    return cache[id];
+  }
+
+  window.SGCasino = { SALE: SALE, immagine: immagine, svg: svgSala };
+})();
+
+/* =========================================================
    MOTORE COMUNE — "SG"
    Tutto ciò che ogni gioco condivide sta qui, scritto una
    volta sola: le schermate comuni (home, giocatori, regole,
@@ -4088,9 +4555,115 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   };
   function entraEdificio(k) {
     if (k === "piazza") { rientro = schermataCitta; return schermataNovita(); }   // la piazza: le novità
+    if (k === "casino") salaCasino = 0;   // entrando dalla città si comincia dal Black Jack
     schermataEdificio(k);
   }
+
+  // ---- Il Casinò dentro: una sala per ogni gioco di carte (i disegni sono in casino.js) ----
+  // si scorre col dito (o con le frecce) da una sala all'altra; in basso i nomi di tutti i giochi
+  // del Casinò per saltare subito a una sala; toccando la sala si sceglie come giocare
+  var salaCasino = 0;   // la sala che si sta guardando: finita la partita si torna lì
+  function schermataCasino() {
+    var SALE = SGCasino.SALE.filter(function (x) { return !!giocoDa(x.id); });
+    if (!SALE.length) return schermataCitta();
+    salaCasino = Math.max(0, Math.min(SALE.length - 1, salaCasino));
+    rientro = function () { schermataCasino(); };   // finita la partita (o "indietro") si torna nella stessa sala
+    var N = window.SGNube, prog = window.SGLivelli && N && N.progressione && N.profilo() ? N.progressione() : null;
+    var TRANS = "transform .34s cubic-bezier(.2,.8,.2,1)";
+    var vista = el("div", { class: "cs-vista", "aria-live": "polite" });
+    var sale = SALE.map(function (x) {
+      var img = el("img", { class: "cs-scena", alt: "", draggable: "false" });
+      var d = el("div", { class: "cs-sala cs-" + x.stile, role: "button", "aria-label": x.nome + ": tocca per giocare" }, [
+        img,
+        el("div", { class: "cs-insegna" }, [ el("b", { text: x.insegna }) ]),
+        el("div", { class: "cs-tocca", text: "👆 Tocca il tavolo per giocare" })
+      ]);
+      vista.appendChild(d);
+      return { d: d, img: img, x: x, pronta: false };
+    });
+    function carica(k) { var r = sale[k]; if (r && !r.pronta) { r.pronta = true; r.img.src = SGCasino.immagine(r.x.id); } }
+    // ogni sala al suo posto: quella di adesso al centro, le vicine pronte di fianco
+    function posa(dx, anima) {
+      sale.forEach(function (r, k) {
+        var off = k - salaCasino;
+        r.d.style.visibility = Math.abs(off) > 1 ? "hidden" : "";
+        r.d.style.transition = anima ? TRANS : "none";
+        r.d.style.transform = "translate3d(calc(" + (off * 100) + "% + " + Math.round(dx) + "px),0,0)";
+      });
+    }
+    var sx = el("button", { class: "cs-freccia sx", text: "‹", "aria-label": "Sala di prima", onclick: function () { vai(salaCasino - 1); } });
+    var dx = el("button", { class: "cs-freccia dx", text: "›", "aria-label": "Sala dopo", onclick: function () { vai(salaCasino + 1); } });
+    vista.appendChild(sx); vista.appendChild(dx);
+    var links = el("div", { class: "cs-giochi" });
+    var tasti = SALE.map(function (x, k) { var b = el("button", { class: "cs-link", text: x.nome, onclick: function () { vai(k); } }); links.appendChild(b); return b; });
+    function segna() {
+      tasti.forEach(function (b, k) { b.classList.toggle("on", k === salaCasino); });
+      sx.style.visibility = salaCasino > 0 ? "" : "hidden";
+      dx.style.visibility = salaCasino < sale.length - 1 ? "" : "hidden";
+      carica(salaCasino);
+      setTimeout(function () { carica(salaCasino - 1); carica(salaCasino + 1); }, 380);   // le vicine dopo, così si entra subito
+    }
+    function vai(j) {
+      j = Math.max(0, Math.min(sale.length - 1, j));
+      var da = salaCasino;
+      if (j === da) { posa(0, true); return; }
+      carica(j);
+      if (Math.abs(j - da) === 1) { salaCasino = j; posa(0, true); segna(); return; }
+      // sala lontana (dai nomi in basso): parte di fianco a quella di adesso e scorre al centro
+      var dir = j > da ? 1 : -1;
+      sale.forEach(function (r, k) { r.d.style.visibility = (k === da || k === j) ? "" : "hidden"; r.d.style.transition = "none"; });
+      sale[j].d.style.transform = "translate3d(" + (dir * 100) + "%,0,0)";
+      void sale[j].d.offsetWidth;
+      salaCasino = j;
+      sale[da].d.style.transition = sale[j].d.style.transition = TRANS;
+      sale[da].d.style.transform = "translate3d(" + (-dir * 100) + "%,0,0)";
+      sale[j].d.style.transform = "translate3d(0,0,0)";
+      segna();
+      setTimeout(function () { if (salaCasino === j) posa(0, false); }, 360);
+    }
+    function gioca() { var g = giocoDa(sale[salaCasino].x.id); if (g) scegliModoEdificio(g, "casino"); }
+    // il dito: trascinando si scorre (le sale seguono il dito), un tocco fermo apre "Come giocate?"
+    var tocco = null;
+    vista.addEventListener("pointerdown", function (e) {
+      if (e.button > 0 || (e.target.closest && e.target.closest("button"))) return;
+      tocco = { x: e.clientX, y: e.clientY, t: Date.now(), dx: 0, trascina: false, id: e.pointerId };
+    });
+    vista.addEventListener("pointermove", function (e) {
+      if (!tocco || e.pointerId !== tocco.id) return;
+      var mx = e.clientX - tocco.x, my = e.clientY - tocco.y;
+      if (!tocco.trascina && Math.abs(mx) > 8 && Math.abs(mx) > Math.abs(my)) { tocco.trascina = true; try { vista.setPointerCapture(e.pointerId); } catch (er) {} }
+      if (tocco.trascina) {
+        var bordo = (mx > 0 && salaCasino === 0) || (mx < 0 && salaCasino === sale.length - 1);
+        tocco.dx = bordo ? mx / 3 : mx;   // all'ultima sala si tira come un elastico
+        posa(tocco.dx, false);
+      }
+    });
+    function fineTocco(e) {
+      if (!tocco || e.pointerId !== tocco.id) return;
+      var t0 = tocco; tocco = null;
+      if (t0.trascina) {
+        var w = vista.clientWidth || 360, v = t0.dx / Math.max(1, Date.now() - t0.t);
+        if ((t0.dx < -w * 0.18 || v < -0.45) && salaCasino < sale.length - 1) vai(salaCasino + 1);
+        else if ((t0.dx > w * 0.18 || v > 0.45) && salaCasino > 0) vai(salaCasino - 1);
+        else posa(0, true);
+      } else if (e.type === "pointerup" && Math.abs(e.clientY - t0.y) < 12 && Math.abs(e.clientX - t0.x) < 12) gioca();
+    }
+    vista.addEventListener("pointerup", fineTocco);
+    vista.addEventListener("pointercancel", fineTocco);
+    var s = el("div", { class: "schermata casino-sale" }, [
+      vista,
+      el("div", { class: "cs-testa" }, [
+        el("button", { class: "ed-indietro", text: "‹", "aria-label": "Torna in città", onclick: function () { rientro = null; schermataCitta(); } }),
+        el("div", { class: "cs-titolo", text: "CASINÒ" }),
+        prog ? el("div", { class: "ed-monete", text: "🪙 " + cifre(prog.coins) }) : el("div", { class: "ed-monete vuoto" })
+      ]),
+      links
+    ]);
+    posa(0, false); segna();
+    mostra(s);
+  }
   function schermataEdificio(k) {
+    if (k === "casino" && window.SGCasino) return schermataCasino();   // il Casinò ha le sue sale, una per gioco
     var E = EDIFICI_CITTA[k]; if (!E) return schermataCitta();
     rientro = function () { schermataEdificio(k); };   // finita la partita (o "indietro") si torna qui
     var N = window.SGNube, prog = window.SGLivelli && N && N.progressione && N.profilo() ? N.progressione() : null;
@@ -4208,7 +4781,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     { gioco: "blackjack", livello: "bronzo",   icona: "🌧️", nome: "Domani Andrà Meglio",      desc: "Perdi 3 mani di fila. Non mollare!",                         stat: "serieSconfitteMax", meta: 3 },
     { gioco: "blackjack", livello: "argento",  icona: "🌊", nome: "Onda Positiva",            desc: "Vinci 20 mani contro il banco",                              stat: "maniVinte",         meta: 20 },
     { gioco: "blackjack", livello: "argento",  icona: "🎼", nome: "Armonia Perfetta",         desc: "Fai Black Jack 10 volte",                                    stat: "blackjackFatti",    meta: 10 },
-    { gioco: "blackjack", livello: "argento",  icona: "📅", nome: "Appuntamento Felice",      desc: "Ritira il bonus gratuito 10 volte",                          stat: "bonusRitirati",     meta: 10 },
+    { gioco: "blackjack", livello: "argento",  icona: "📅", nome: "Appuntamento Felice",      desc: "Ritira il regalo del giorno 10 volte",                          stat: "bonusRitirati",     meta: 10 },
     { gioco: "blackjack", livello: "argento",  icona: "🌾", nome: "Abbondanza",               desc: "Vinci 5.000 fiches in totale",                               stat: "fichesVinteTot",    meta: 5000 },
     { gioco: "blackjack", livello: "argento",  icona: "🌈", nome: "Ottimismo Incorreggibile", desc: "Sballa superando il 21 per 25 volte",                        stat: "maniSballate",      meta: 25 },
     { gioco: "blackjack", livello: "argento",  icona: "🫱", nome: "Pura Sinergia",            desc: "Pareggia con il banco 15 volte",                             stat: "maniPari",          meta: 15 },
@@ -4217,13 +4790,13 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     { gioco: "blackjack", livello: "argento",  icona: "🦁", nome: "Coraggio da Leoni",        desc: "Vinci una mano puntando almeno 500 fiches",                  stat: "puntataVintaMax",   meta: 500 },
     { gioco: "blackjack", livello: "oro",      icona: "☀️", nome: "Raggio di Sole",           desc: "Vinci 100 mani contro il banco",                             stat: "maniVinte",         meta: 100 },
     { gioco: "blackjack", livello: "oro",      icona: "🤩", nome: "Estasi del Gioco",         desc: "Fai Black Jack 50 volte",                                    stat: "blackjackFatti",    meta: 50 },
-    { gioco: "blackjack", livello: "oro",      icona: "💝", nome: "Gratitudine Infinita",     desc: "Ritira il bonus gratuito 50 volte",                          stat: "bonusRitirati",     meta: 50 },
+    { gioco: "blackjack", livello: "oro",      icona: "💝", nome: "Gratitudine Infinita",     desc: "Ritira il regalo del giorno 50 volte",                          stat: "bonusRitirati",     meta: 50 },
     { gioco: "blackjack", livello: "oro",      icona: "💎", nome: "Tesoro Luminoso",          desc: "Vinci 25.000 fiches in totale",                              stat: "fichesVinteTot",    meta: 25000 },
     { gioco: "blackjack", livello: "oro",      icona: "🏛️", nome: "Architetto del Ventuno",   desc: "Fai 21 esatto con 3 o più carte, 20 volte",                  stat: "ventunoTre",        meta: 20 },
     { gioco: "blackjack", livello: "oro",      icona: "🔥", nome: "All-In Emotivo",           desc: "Vinci una mano puntando almeno 2.500 fiches",                stat: "puntataVintaMax",   meta: 2500 },
     { gioco: "blackjack", livello: "diamante", icona: "☁️", nome: "Nuvola Nove",              desc: "Fai 2 Black Jack di fila nella stessa sessione",             stat: "serieBJMax",        meta: 2 },
     { gioco: "blackjack", livello: "diamante", icona: "🕊️", nome: "Spirito Libero",           desc: "Vinci 7 mani di fila senza perdere né pareggiare",           stat: "serieVinteMax",     meta: 7 },
-    { gioco: "blackjack", livello: "diamante", icona: "🧘", nome: "Pace dei Sensi",           desc: "Arriva ad avere 100.000 fiches nel profilo",                 stat: "recordFiches",      meta: 100000 },
+    { gioco: "blackjack", livello: "diamante", icona: "🧘", nome: "Pace dei Sensi",           desc: "Arriva ad avere 100.000 Speed Coins",                        stat: "recordFiches",      meta: 100000 },
     { gioco: "blackjack", livello: "diamante", icona: "🤹", nome: "Funambolo",                desc: "Vinci una mano con 5 o più carte senza sballare",            stat: "vinte5carte",       meta: 1 },
 
     // ---- Scopa ----
@@ -4430,7 +5003,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     var st = (window.SGNube && SGNube.statGioco) ? SGNube.statGioco(gioco) : {};
     var v = (st && st[chiave]) || 0;
     // il record fiches tiene conto anche del saldo attuale (es. dopo un bonus)
-    if (chiave === "recordFiches") { var ora = (prof.fiches && prof.fiches[gioco]) || 0; if (ora > v) v = ora; }
+    if (chiave === "recordFiches") { var ora = prof.coins || 0; if (ora > v) v = ora; }   // fiches = Speed Coins
     return v;
   }
   function trofeiDi(gid) { return TROFEI.filter(function (t) { return t.gioco === gid; }); }
@@ -5466,9 +6039,9 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
         sp._contenuto.appendChild(el("div", { class: "etichetta", text: "⭐ Livello e Speed Coins" }));
         sp._contenuto.appendChild(riquadroLivello(SGNube.progressione()));
       }
-      var fi = (p.fiches && p.fiches.blackjack != null) ? p.fiches.blackjack : SGNube.fichesStart;
+      var fi = SGNube.monete ? SGNube.monete() : 0;
       sp._contenuto.appendChild(el("div", { class: "etichetta", text: "🃏 Black Jack" }));
-      sp._contenuto.appendChild(el("p", { class: "modulo-nota", html: "Hai <b>" + fi + " fiches</b>. Si portano avanti tra una partita e l'altra, su qualsiasi telefono." }));
+      sp._contenuto.appendChild(el("p", { class: "modulo-nota", html: "Al Casinò le fiches sono le tue <b>Speed Coins</b> (" + cifre(fi) + " 🪙): quello che vinci o perdi al tavolo si somma alle monete, su qualsiasi telefono." }));
       var st = (p.stat && p.stat.blackjack) || {};
       var giocate = st.maniGiocate || 0, vinte = st.maniVinte || 0, perc = giocate ? Math.round(vinte / giocate * 100) : 0;
       var celle = [["Mani giocate", giocate], ["Mani vinte", vinte], ["% vittorie", perc + "%"],
@@ -14949,6 +15522,28 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 158,
+    data: "4 ottobre 2026",
+    titolo: "Una moneta sola: le Speed Coins 🪙",
+    descrizione: [
+      "Fiches e monete ora sono la stessa cosa: al Black Jack e al Poker giochi con le tue Speed Coins, che al tavolo diventano fiches.",
+      "Chi aveva già delle fiches non perde niente: si sono sommate alle monete. E chi in tutto aveva meno di 1.000 monete è salito a 1.000.",
+      "Chi crea il profilo da adesso parte con 1.000 Speed Coins. Il regalo ora è di 1.000 monete al giorno: si ritira una volta al giorno e torna a mezzanotte.",
+      "Più XP: ora li danno anche Glow Hockey, lo Scopone e il Black Jack e il Poker contro il computer (quando ti alzi dal tavolo dopo almeno una mano)."
+    ]
+  },
+  {
+    v: 157,
+    data: "4 ottobre 2026",
+    titolo: "Il Casinò dentro: una sala per ogni gioco 🎰",
+    descrizione: [
+      "Entrando nel Casinò dalla città sei nella sala del Black Jack: in fondo c'è il tavolo con la gente che gioca con le fiches.",
+      "Scorri col dito (o usa le frecce) per passare da una sala all'altra: Scopa, Scopa 2 vs 2, Scopone e Poker. Ogni sala ha il nome del gioco in grande e una cosa tutta sua: il quadro del Settebello, le bandierine delle squadre, la lavagna coi punti, l'insegna al neon.",
+      "In basso ci sono i nomi di tutti i giochi del Casinò: toccane uno e vai subito nella sua sala.",
+      "Tocca il tavolo per giocare. Finita la partita torni nella stessa sala."
+    ]
+  },
+  {
     v: 156,
     data: "4 ottobre 2026",
     titolo: "Tris e Drop 4 al centro 🎯",
@@ -20659,22 +21254,21 @@ window.SG_SIPERO = {
     var s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
     return h > 0 ? (h + "h " + m + "m") : (m > 0 ? (m + "m") : "poco");
   }
-  // riquadro con saldo fiches + tasto per ritirare il bonus gratis (ogni 2 ore)
+  // riquadro con saldo fiches + tasto per ritirare il bonus gratis (il regalo del giorno: 1.000 monete, torna a mezzanotte)
   // dopo(nuovo) = facoltativo, avvisa chi lo usa (es. la saletta online) del nuovo saldo
   function riquadroBonus(el, dopo) {
     var box = el("div", { style: "background:var(--carta,#1b1836);border-radius:14px;padding:12px;margin-bottom:12px;text-align:center;box-shadow:var(--ombra,0 6px 16px rgba(0,0,0,.3))" });
-    var p = SGNube.profilo();
-    var saldo = (p && p.fiches && p.fiches.blackjack != null) ? p.fiches.blackjack : 0;
-    var testoSaldo = el("div", { style: "font-size:1.1rem;margin-bottom:8px;color:#ffe58a;font-weight:800", html: "🎰 Hai <b>" + fmt(saldo) + "</b> fiches" });
+    var saldo = SGNube.monete ? SGNube.monete() : 0;   // le fiches sono le Speed Coins del profilo
+    var testoSaldo = el("div", { style: "font-size:1.1rem;margin-bottom:8px;color:#ffe58a;font-weight:800", html: "🪙 Hai <b>" + fmt(saldo) + "</b> Speed Coins" });
     var b = el("button", { class: "btn btn-primario", style: "margin:0" });
     function agg() {
-      if (SGNube.puoRitirareBonus()) { b.disabled = false; b.textContent = "🎁 Ritira " + fmt(SGNube.bonusImporto) + " fiches gratis"; }
-      else { b.disabled = true; b.textContent = "⏳ Prossimo bonus tra " + fmtTempo(SGNube.prossimoBonusMs()); }
+      if (SGNube.puoRitirareBonus()) { b.disabled = false; b.textContent = "🎁 Regalo del giorno: " + fmt(SGNube.bonusImporto) + " monete"; }
+      else { b.disabled = true; b.textContent = "⏳ Nuovo regalo tra " + fmtTempo(SGNube.prossimoBonusMs()) + " (a mezzanotte)"; }
     }
     b.onclick = function () {
       b.disabled = true;
       SGNube.ritiraBonus().then(function (nuovo) {
-        testoSaldo.innerHTML = "🎰 Hai <b>" + fmt(nuovo) + "</b> fiches  ·  +" + fmt(SGNube.bonusImporto) + " 🎉";
+        testoSaldo.innerHTML = "🪙 Hai <b>" + fmt(nuovo) + "</b> Speed Coins  ·  +" + fmt(SGNube.bonusImporto) + " 🎉";
         suonoChip(); agg();
         if (dopo) dopo(nuovo);
       }).catch(function () { agg(); });
@@ -21302,11 +21896,18 @@ window.SG_SIPERO = {
     }
     var M = BJ.creaMotore(nomi, t.mischia, fichesIniz), st = M.st, tav;
     var avatari = nomi.map(function (n, i) { return i === 0 ? mioAvatar(n) : null; });   // gli altri: faccia fissa legata al nome
+    var inizio = st.giocatori.map(function (g) { return g.fiches; }), maniFinite = 0;
     function salva() { if (prof && !prova) SGNube.salvaFiches("blackjack", st.giocatori[0].fiches); }
+    // alzandosi dal tavolo dopo almeno una mano: com'è andata (dà gli XP; vince chi ha guadagnato di più)
+    function risultatoLoc() {
+      if (!maniFinite || !t.risultato) return;
+      var r = st.giocatori.map(function (g, i) { return { nome: g.nome, netto: g.fiches - inizio[i] }; }).sort(function (a, b) { return b.netto - a.netto; });
+      t.risultato(r.map(function (x) { return { nome: x.nome, pos: x.netto > 0 ? 1 + r.filter(function (y) { return y.netto > x.netto; }).length : r.length + 1 }; }));
+    }
     function refresh() { tav.aggiorna(vistaBJ(st)); }
     tav = tavoloBJ(t, {
       avatari: function () { return avatari; },
-      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · ritira il bonus!") : ("👤 " + prof.nome + " · fiches salvate")) : "Un telefono · Banco: Matt",
+      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · ritira il regalo!") : ("👤 " + prof.nome + " · gioca con le tue Speed Coins")) : "Un telefono · Banco: Matt",
       puoAgire: function () { return true; },
       puoNuova: function () { return true; },
       guida: function () { return true; },
@@ -21314,9 +21915,9 @@ window.SG_SIPERO = {
       onPunta: function (v) { suonoChip(); M.punta(st.turno, v); refresh(); },
       onMossa: function (m) { if (m === "stai") suonoStai(); M.azione(m); refresh(); },
       onAssicura: function (si) { M.assicura(st.turno, si); refresh(); },
-      onFineMano: function (v) { if (prof && !prova) salvaFineMano(v.giocatori[0], v); },
+      onFineMano: function (v) { if (prof && !prova) salvaFineMano(v.giocatori[0], v); maniFinite++; },
       onNuova: function () { M.nuovaMano(); refresh(); },
-      onEsci: function () { salva(); t.esci(); }
+      onEsci: function () { salva(); risultatoLoc(); t.esci(); }
     });
     M.nuovaMano(); refresh();
   }
@@ -22630,7 +23231,12 @@ window.SG_SIPERO = {
       suonoGol(chi === 1);
       if (st.s1 >= VINCI || st.s2 >= VINCI) {
         st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2;
-        if (!salvato) { salvato = true; salvaHockey(st, DIFF[liv] ? liv : "medio"); }
+        if (!salvato) {
+          salvato = true; salvaHockey(st, DIFF[liv] ? liv : "medio");
+          // com'è finita (dà gli XP)
+          var io = { nome: (t.giocatori && t.giocatori[0]) || "Tu", pos: st.vincitore === 1 ? 1 : 2 }, bot = { nome: "🤖 " + D.nome, pos: st.vincitore === 1 ? 2 : 1 };
+          if (t.risultato) t.risultato(io.pos === 1 ? [io, bot] : [bot, io]);
+        }
         render();
       } else {
         // niente pausa: le racchette restano libere, il disco CADE DALL'ALTO nella metà di chi ha subito
@@ -22724,7 +23330,7 @@ window.SG_SIPERO = {
       cade: st.cade || 0, atterra: st.atterra || 0, golVis: !!st.golVis, spN: st.sponde || 0, spX: st.spX, spY: st.spY }; }   // disco in aria, bordo illuminato, scritta GOL   // contatori: l'ospite suona quando salgono
     function bcast(ret) { if (ret) rete.invia(vm()); else rete.inviaVeloce(vm()); }
     var memSuoni = {};
-    function gol(chi) { if (chi === 1) st.s1++; else st.s2++; suonoGol(chi === 1); if (st.s1 >= VINCI || st.s2 >= VINCI) { st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2; } else { st.golT = performance.now(); servi(st, chi === 1 ? -1 : 1); faiCadere(st); } bcast(true); }   // niente pausa: il disco cade dall'alto
+    function gol(chi) { if (chi === 1) st.s1++; else st.s2++; suonoGol(chi === 1); if (st.s1 >= VINCI || st.s2 >= VINCI) { st.fase = "fine"; st.vincitore = st.s1 > st.s2 ? 1 : 2; premiaHost(); } else { st.golT = performance.now(); servi(st, chi === 1 ? -1 : 1); faiCadere(st); } bcast(true); }   // niente pausa: il disco cade dall'alto
     function loop(now) {
       raf = requestAnimationFrame(loop);
       var dt = ultimoT ? (now - ultimoT) / 1000 : 0.016; ultimoT = now;
@@ -22750,6 +23356,11 @@ window.SG_SIPERO = {
       if (now - ultimoInvio > HZ) { ultimoInvio = now; bcast(false); }
     }
     function stop() { if (raf) cancelAnimationFrame(raf); raf = null; MusicaHK.ferma(); }
+    // com'è finita (dà gli XP all'host; l'avversario se li dà da solo quando vede la fine)
+    function premiaHost() {
+      var v = st.vincitore === 1, io = { nome: (t.nomeProfilo && t.nomeProfilo()) || "Tu", pos: v ? 1 : 2 }, lui = { nome: "Avversario", pos: v ? 2 : 1 };
+      if (t.risultato) t.risultato(v ? [io, lui] : [lui, io]);
+    }
     function comincia() { if (st.fase === "lobby" && st.avvId) { st.s1 = 0; st.s2 = 0; st.vincitore = null; st.fase = "gioco"; servi(st); faiCadere(st); st.golT = 0; bcast(true); render(); } }
 
     function render() {
@@ -22858,6 +23469,12 @@ window.SG_SIPERO = {
       var tipo = (f === "gioco" || f === "gol") ? "gioco" : f === "fine" ? "fine" : "attesa";
       if (tipo === S.vista && tipo === "gioco") return;
       S.vista = tipo; stop();
+      if (tipo === "gioco") S.premiato = false;
+      if (tipo === "fine" && !S.premiato && t.risultato && S.vm) {   // com'è finita: gli XP me li do da solo, una volta
+        S.premiato = true;
+        var vintoIo = S.vm.vincitore === 2, io = { nome: "Tu", pos: vintoIo ? 1 : 2 }, lui = { nome: "Avversario", pos: vintoIo ? 2 : 1 };
+        t.risultato(vintoIo ? [io, lui] : [lui, io]);
+      }
       if (tipo === "attesa") {
         var s = t.schermata({ icona: "🏒", titolo: "Glow Hockey · Sala", sotto: "Stanza " + codice.toUpperCase(), indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
         var dentro = (S.collegato || S.vm);
@@ -28556,8 +29173,8 @@ window.SG_SIPERO = {
    POKER con le carte francesi: Texas Hold'em e Poker all'italiana.
    Contro il computer (tu e i bot, il primo è Matt) oppure online, ognuno dal suo telefono
    (i posti vuoti l'host li può dare ai bot).
-   Si gioca con le fiches del Black Jack (un portafoglio solo): ci si siede con al massimo 1.000
-   e nel profilo si salva sempre "fiches fuori dal tavolo + fiches sul tavolo".
+   Si gioca con le Speed Coins del profilo (al tavolo sono le fiches, come al Black Jack): ci si siede
+   con al massimo 1.000 e nel profilo si salva sempre "monete fuori dal tavolo + fiches sul tavolo".
    Online l'host tiene la partita (motore qui sotto) e manda a tutti la foto (vm) SENZA le carte
    coperte; ognuno riceve le sue carte a parte (inviaVeloce + to).
    ========================================================= */
@@ -28949,7 +29566,7 @@ window.SG_SIPERO = {
     var V = { variante: variante(imp.variante), liv: imp.difficolta || "medio" };
     var prof = conProfilo();
     var nome = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Tu";
-    var W = prof ? portafoglio() : BUYIN;   // il mio portafoglio (le fiches del Black Jack); senza profilo 1.000 per giocare
+    var W = prof ? portafoglio() : BUYIN;   // il mio portafoglio (le Speed Coins del profilo); senza profilo 1.000 per giocare
     if (prof && W < GRANDE) return senzaFiches(t, function () { partita(t, online); });
     var M = creaMotore(V.variante);
     var io = M.siedi({ id: "host", nome: nome, omino: t.mioOmino ? t.mioOmino(nome) : null, stack: Math.min(W, BUYIN) });
@@ -29036,7 +29653,7 @@ window.SG_SIPERO = {
         fuori -= x; io.stack += x; io.buyin += x; io.seduto = true; salvaMio(true);
         if (M.stato === "attesa" && H.fase === "gioco") prossimaMano(); else bd();
       },
-      onBonus: function (nuovo) { fuori = Math.max(0, nuovo - io.stack); bd(); },   // ha ritirato il bonus del Black Jack
+      onBonus: function () { var b = SGNube.bonusImporto || 0; fuori += b; salvato += b; bd(); },   // ha ritirato il regalo: già aggiunto alle monete del profilo
       onBot: function (piu) {
         if (H.fase !== "lobby") return;
         if (piu && seduti().length < MAX[M.variante]) aggiungiBot();
@@ -29065,6 +29682,8 @@ window.SG_SIPERO = {
         if (online && H.fase === "gioco" && !window.confirm("Chiudere il tavolo per tutti?")) return;
         if (!online && M.inCorso() && io.inMano && !io.lascia && !window.confirm("Lasciare il tavolo? Le fiches già puntate in questa mano restano sul tavolo.")) return;
         ferma(); clearTimeout(tMano); salvaMio(true);
+        // contro il computer: alzandoti dal tavolo dopo almeno una mano prendi gli XP (hai vinto se ti alzi con più fiches)
+        if (!online && M.n > 0 && t.risultato) t.risultato([{ nome: io.nome, pos: io.stack - io.buyin > 0 ? 1 : 2 }]);
         if (rete) rete.chiudi();
         t.esci();
       } };
@@ -29145,7 +29764,7 @@ window.SG_SIPERO = {
         var m = me(), x = Math.min(S.fuori, BUYIN - (m ? m.stack : 0)); if (x < GRANDE || !S.rete) return;
         S.fuori -= x; S.rete.invia({ t: "rientra", fiches: x });
       },
-      onBonus: function (nuovo) { var m = me(); S.fuori = Math.max(0, nuovo - (m ? m.stack : 0)); if (S.vm) disegna(t, S.vm, cb); },
+      onBonus: function () { var b = SGNube.bonusImporto || 0; S.fuori += b; if (S.salvato != null) S.salvato += b; if (S.vm) disegna(t, S.vm, cb); },   // regalo già aggiunto alle monete
       onEsci: function () {
         if (S.vm && S.vm.fase === "gioco" && !window.confirm("Lasciare il tavolo? Le fiches già puntate in questa mano restano sul tavolo.")) return;
         salva(true); if (S.rete) S.rete.chiudi(); t.esci();
@@ -29200,7 +29819,7 @@ window.SG_SIPERO = {
   }
   function lobby(t, vm, cb) {
     var el = t.el, extra = [], umani = vm.players.filter(function (p) { return !p.bot; }).length;
-    extra.push(el("p", { class: "modulo-nota", text: NOME_VAR[vm.variante] + " · da 2 a " + MAX[vm.variante] + " giocatori. Ognuno si siede con le sue fiches del Black Jack (al massimo " + fmtN(BUYIN) + ")." }));
+    extra.push(el("p", { class: "modulo-nota", text: NOME_VAR[vm.variante] + " · da 2 a " + MAX[vm.variante] + " giocatori. Ognuno si siede con le sue Speed Coins, che al tavolo diventano fiches (al massimo " + fmtN(BUYIN) + ")." }));
     if (vm.players.length > MAX[vm.variante]) extra.push(el("p", { class: "modulo-nota", style: "color:#ffa94d", text: "Siete troppi per questa variante: togli qualche bot." }));
     if (cb.sonoHost) {
       var nb = vm.players.length - umani;
@@ -29219,7 +29838,7 @@ window.SG_SIPERO = {
       }),
       extra: extra, attesa: "Aspetta che l'host cominci: si gioca a " + NOME_VAR[vm.variante] + "! 🃏", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
-  // le mie fiches (e, se sono finite, il modo per risedersi o il bonus del Black Jack)
+  // le mie fiches (e, se sono finite, il modo per risedersi con altre monete o il regalo del giorno)
   function fichesBox(t, cb, io) {
     var el = t.el, box = el("div", { class: "pk-fiches" });
     if (io.stack >= GRANDE) { box.appendChild(el("div", { text: "🎰 Ti siedi con " + fmtN(io.stack) + " fiches" })); return box; }
@@ -29456,8 +30075,8 @@ window.SG_SIPERO = {
     t.mostra(s);
   }
   function senzaFiches(t, riprova) {
-    var s = t.schermata({ icona: "🎰", titolo: "Ti servono delle fiches", indietro: t.esci });
-    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Il Poker si gioca con le fiches del Black Jack e adesso non ne hai. Ritira il bonus gratis, poi siediti al tavolo." }));
+    var s = t.schermata({ icona: "🪙", titolo: "Ti servono delle monete", indietro: t.esci });
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Il Poker si gioca con le tue Speed Coins e adesso non ne hai abbastanza. Ritira il regalo gratis, poi siediti al tavolo." }));
     if (BJ() && BJ().riquadroBonus) s._contenuto.appendChild(BJ().riquadroBonus(t.el, function () {}));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🃏 Siediti al tavolo", onclick: riprova }));
     t.mostra(s);
@@ -29538,7 +30157,7 @@ window.SG_SIPERO = {
 
   SG.registra({
     id: ID, nome: "Poker", icona: "♠️",
-    descrizione: "Texas Hold'em o Poker all'italiana con le carte francesi, contro il computer o online. Si gioca con le fiches del Black Jack.",
+    descrizione: "Texas Hold'em o Poker all'italiana con le carte francesi, contro il computer o online. Si gioca con le tue Speed Coins.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 2–10 giocatori",
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu e i bot al tavolo (il primo è Matt)" }],
     regole: [
@@ -29546,7 +30165,7 @@ window.SG_SIPERO = {
       "Prima di ogni mano due giocatori mettono i <b>bui</b> (" + PICCOLO + " e " + GRANDE + "). Quando tocca a te: <b>Passa</b>, <b>Chiama</b>, <b>Punta/Rilancia</b> o <b>Lascia</b>.",
       "<b>Poker all'italiana</b>: tutti mettono l'invito (" + INVITO + "), hai 5 carte, si punta, poi ognuno <b>cambia</b> fino a 4 carte e si punta di nuovo. Il mazzo è corto (in 4 si gioca dal 7 in su), il <b>colore batte il full</b> e a parità decide il seme: cuori, quadri, fiori, picche.",
       "Dalla più bassa: carta alta, coppia, doppia coppia, tris, scala, colore, full, poker, scala colore (all'italiana colore e full si scambiano).",
-      "Si gioca con le <b>fiches del Black Jack</b>: ti siedi con al massimo " + fmtN(BUYIN) + " e quello che vinci o perdi resta nel tuo profilo."
+      "Si gioca con le tue <b>Speed Coins</b>: ti siedi con al massimo " + fmtN(BUYIN) + " e quello che vinci o perdi resta nelle tue monete."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
@@ -29580,7 +30199,7 @@ window.SG_SIPERO = {
       });
       box.appendChild(dg);
       if (conProfilo() && BJ() && BJ().riquadroBonus) { var f = BJ().riquadroBonus(el); f.style.marginTop = "12px"; box.appendChild(f); }
-      box.appendChild(el("p", { class: "modulo-nota", style: "margin-top:8px", text: "Si gioca con le fiches del Black Jack: ti siedi con al massimo " + fmtN(BUYIN) + " e quello che vinci o perdi resta nel profilo." }));
+      box.appendChild(el("p", { class: "modulo-nota", style: "margin-top:8px", text: "Si gioca con le tue Speed Coins: ti siedi con al massimo " + fmtN(BUYIN) + " e quello che vinci o perdi resta nelle tue monete." }));
     },
     avvia: function (t) {
       if (t.linkParams && t.linkParams.stanza) return ospite(t, t.linkParams.stanza);   // entrato da un invito
@@ -34478,6 +35097,9 @@ window.SG_SIPERO = {
         html: "Noi <span style='color:#ffd43b'>" + r.tot.noi + "</span> — " + r.tot.loro + " Loro" }));
     }
     if (st.fase === "fine") {
+      // com'è finita (dà gli XP): tu e il compagno contro i rivali
+      var pNoi = st.punti.noi >= st.punti.loro ? 1 : 2, pLoro = st.punti.loro >= st.punti.noi ? 1 : 2;
+      if (t.risultato && st.nomi) t.risultato([0, 2, 1, 3].map(function (seat) { return { nome: st.nomi[seat], pos: seat % 2 === 0 ? pNoi : pLoro }; }));
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     } else s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Continua ▶", onclick: cb.onAvanti }));
