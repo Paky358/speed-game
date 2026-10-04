@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 156,
+    data: "4 ottobre 2026",
+    titolo: "Tris e Drop 4 al centro 🎯",
+    descrizione: [
+      "Il tavolo di Tris e Drop 4 ora sta al centro dello schermo, non più attaccato in alto con tanto vuoto sotto.",
+      "A fine partita «Rivincita» ed «Esci» compaiono in basso, senza spostare il tavolo."
+    ]
+  },
+  {
     v: 155,
     data: "4 ottobre 2026",
     titolo: "XP anche nelle partite veloci ⚡",

@@ -302,6 +302,7 @@
     } else {
       var s = t.schermata({ icona: "🟡", titolo: "Drop 4", sotto: vm.nomi.G + " (gialla) · " + vm.nomi.B + " (bianca)",
         indietro: function () { if (cb.guarda || window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      s.classList.add("tavolo-centro");   // il tavolo sta al centro dello schermo
       s._contenuto.appendChild(box); piedeNodi.forEach(function (n) { s._piede.appendChild(n); }); t.mostra(s);
       drMount = { cont: s._contenuto, box: box, piede: s._piede };
     }

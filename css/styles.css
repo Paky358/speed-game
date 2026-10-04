@@ -602,6 +602,13 @@ body::before{
 .schermata.senza-testa{ position:relative; padding-top:calc(8px + env(safe-area-inset-top)); }
 .schermata.senza-testa > .testa{ position:absolute; top:calc(6px + env(safe-area-inset-top)); left:max(6px, env(safe-area-inset-left)); z-index:30; margin:0; }
 .schermata.senza-testa > .testa .btn-piccolo{ min-height:34px; padding:4px 10px; font-size:1.1rem; background:rgba(0,0,0,.35); border-radius:12px; color:#fff; }
+/* tavolo al centro dello schermo (Tris, Drop 4): i margini automatici centrano senza mai tagliare
+   il tavolo sui telefoni bassi; il posto dei tasti di fine partita è tenuto da subito,
+   così quando compaiono "Rivincita" ed "Esci" il tavolo non salta */
+.schermata.tavolo-centro > .contenuto{ display:flex; flex-direction:column; }
+.schermata.tavolo-centro > .contenuto > :first-child{ margin-top:auto; }
+.schermata.tavolo-centro > .contenuto > :last-child{ margin-bottom:auto; }
+.schermata.tavolo-centro > .piede{ min-height:calc(var(--tocco) * 2 + 10px); justify-content:flex-end; margin-top:14px; }
 .omino-schede .cat-tab{ padding:6px 5px; font-size:.74rem; }
 /* più personaggi: frecce ai lati del palco, stella del principale, puntini */
 .om-freccia{ position:absolute; top:50%; transform:translateY(-50%); z-index:2; width:38px; height:56px; border:0; border-radius:14px; cursor:pointer;

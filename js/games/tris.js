@@ -239,6 +239,7 @@
       var sotto = vm.nomi.X + " (X) · " + vm.nomi.O + " (O)";
       var s = t.schermata({ icona: "⭕", titolo: "Tris", sotto: sotto,
         indietro: function () { if (cb.guarda || window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+      s.classList.add("tavolo-centro");   // il tavolo sta al centro dello schermo
       s._contenuto.appendChild(box); piedeNodi.forEach(function (n) { s._piede.appendChild(n); }); t.mostra(s);
       trMount = { cont: s._contenuto, box: box, piede: s._piede };
     }
