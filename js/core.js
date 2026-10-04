@@ -285,10 +285,13 @@
     var s = schermata({});
     s.className += " home";
     var io = profiloAttivo();
-    // riga profilo: il nome utente + il tasto "Novità" affianco
-    var profiloChip = el("button", { class: "profilo-chip", onclick: function () { schermataAccesso(schermataHome); } },
+    // riga profilo: il nome utente (col livello e le Speed Coins) + il tasto "Novità" affianco
+    var prog = io && io.cloud && window.SGLivelli && SGNube.progressione ? SGNube.progressione() : null;
+    var profiloChip = el("button", { class: "profilo-chip" + (prog ? " con-livello" : ""), onclick: function () { schermataAccesso(schermataHome); } },
       io ? [io.omino && window.SGOmino ? el("span", { class: "chip-omino", html: SGOmino.svg(io.omino, { busto: true }) }) : el("span", { text: io.emoji }),
-            el("span", { text: io.nome }), el("span", { class: "modifica", text: "cambia" })]
+            prog ? chipLivello(io.nome, prog) : el("span", { text: io.nome }),
+            prog ? el("span", { class: "chip-monete", text: "🪙 " + cifre(prog.coins) }) : null,
+            el("span", { class: "modifica", text: "cambia" })]
          : [el("span", { text: "👤" }), el("span", { text: "Crea il tuo profilo" })]);
     var rigaProfilo = el("div", { class: "home-profilo" }, [profiloChip]);
     if ((window.SG_NOVITA || []).length) {
@@ -387,6 +390,39 @@
     }));
 
     mostra(s);
+  }
+
+  // ---- Livello e Speed Coins (regole in livelli.js) ----
+  // nel tasto del profilo: nome, livello (con le stelle del Prestigio) e la barra degli XP
+  function chipLivello(nome, prog) {
+    var serve = SGLivelli.xpPerSalire(prog.level), pct = Math.max(3, Math.min(100, Math.floor(prog.xp * 100 / serve)));
+    return el("span", { class: "chip-testo" }, [
+      el("span", { class: "chip-nome", text: nome }),
+      el("span", { class: "chip-livello" }, [
+        el("b", { text: (prog.prestige ? "★" + prog.prestige + " " : "") + "Lv " + prog.level }),
+        el("i", { class: "chip-xp" }, [ el("i", { style: "width:" + pct + "%" }) ])
+      ])
+    ]);
+  }
+  // nel profilo: livello, barra degli XP, Speed Coins, Prestigio e come si guadagnano
+  function riquadroLivello(prog) {
+    var L = SGLivelli, serve = L.xpPerSalire(prog.level), pct = Math.max(2, Math.min(100, Math.floor(prog.xp * 100 / serve)));
+    var prossimo = prog.level >= L.MAX ? "Al prossimo traguardo scatta il <b>Prestigio</b>: +" + cifre(L.BONUS_PRESTIGIO) + " 🪙"
+      : "Al livello " + (prog.level + 1) + ": +" + cifre(L.bonusLivello(prog.level + 1)) + " 🪙";
+    return el("div", { class: "riquadro-livello" }, [
+      el("div", { class: "rl-alto" }, [
+        el("div", { class: "rl-liv" }, [ el("small", { text: prog.prestige ? "Prestigio " + prog.prestige + " ★" : "Livello" }), el("b", { text: "" + prog.level }), el("span", { text: "su " + L.MAX }) ]),
+        el("div", { class: "rl-monete" }, [ el("b", { text: "🪙 " + cifre(prog.coins) }), el("span", { text: "Speed Coins" }) ])
+      ]),
+      el("div", { class: "rl-barra" }, [ el("i", { style: "width:" + pct + "%" }) ]),
+      el("div", { class: "rl-xp", html: "<b>" + cifre(prog.xp) + "</b> / " + cifre(serve) + " XP · " + prossimo }),
+      el("ul", { class: "rl-regole" }, [
+        el("li", { html: "<b>1 XP per ogni secondo</b> di partita (al massimo 30 minuti a partita)" }),
+        el("li", { html: "<b>+" + Math.round(L.BONUS_VITTORIA * 100) + "%</b> se vinci, <b>+" + L.BONUS_GIORNO + " XP</b> alla prima partita del giorno" }),
+        el("li", { html: "Ogni livello nuovo regala <b>livello × 50</b> Speed Coins" }),
+        el("li", { html: "Dopo il livello " + L.MAX + " scatta il <b>Prestigio</b>: si riparte dal livello 1 con <b>" + cifre(L.BONUS_PRESTIGIO) + "</b> Speed Coins in regalo" })
+      ])
+    ]);
   }
 
   // ---- La città nuova: anteprima coi lavori in corso (si guarda e basta, niente si tocca) ----
@@ -1081,23 +1117,25 @@
   function prossimoAvviso() {
     if (avvisoAttivo || !codaTrofei.length) return;
     avvisoAttivo = true;
-    var t = codaTrofei.shift(), g = null;
+    var t = codaTrofei.shift(), g = null, xp = t.tipo === "xp";   // xp = avviso di XP / livello / Prestigio
     giochi.forEach(function (x) { if (x.id === t.gioco) g = x; });
     var liv = t.livello === "platino" ? "Platino" : (LIVELLI[t.livello] ? LIVELLI[t.livello].nome : "");
     var fatto = false, timer = null;
-    var box = el("div", { class: "avviso-trofeo tl-" + t.livello, onclick: function () { chiudi(); } }, [
+    var box = el("div", { class: "avviso-trofeo " + (xp ? t.cls : "tl-" + t.livello), onclick: function () { chiudi(); } }, [
       el("div", { class: "at-ico", text: t.icona || "🏆" }),
       el("div", { class: "at-corpo" }, [
-        el("div", { class: "at-su", text: "🏆 Trofeo " + liv + " sbloccato!" }),
+        el("div", { class: "at-su", text: xp ? t.su : "🏆 Trofeo " + liv + " sbloccato!" }),
         el("div", { class: "at-nome", text: t.nome }),
-        el("div", { class: "at-gioco", text: g ? g.nome : "" })
+        el("div", { class: "at-gioco", text: xp ? t.sotto : (g ? g.nome : "") })
       ])
     ]);
     document.body.appendChild(box);   // fuori dalla schermata: resta anche se il gioco cambia pagina
     requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add("dentro"); }); });
-    suonoTrofeo(t.livello === "platino");
-    try { if (navigator.vibrate) navigator.vibrate(t.livello === "platino" ? [40, 60, 40, 60, 80] : [30, 40, 30]); } catch (e) {}
-    timer = setTimeout(chiudi, 3600);
+    if (!xp) {
+      suonoTrofeo(t.livello === "platino");
+      try { if (navigator.vibrate) navigator.vibrate(t.livello === "platino" ? [40, 60, 40, 60, 80] : [30, 40, 30]); } catch (e) {}
+    } else if (t.cls !== "tl-xp") suonoTrofeo(t.cls === "tl-platino");   // livello salito o Prestigio: il suono del trofeo
+    timer = setTimeout(chiudi, xp && t.cls === "tl-xp" ? 3000 : 3600);
     function chiudi() {
       if (fatto) return; fatto = true; clearTimeout(timer);
       box.classList.remove("dentro");
@@ -1708,6 +1746,10 @@
         el("button", { class: "btn " + (p.omino ? "btn-fantasma" : "btn-primario"), text: p.omino ? "✏️ Modifica il tuo avatar" : "🧍 Crea il tuo avatar",
           onclick: function () { schermataOmino(function () { schermataAccessoCloud(dopo); }); } })
       ]));
+      if (window.SGLivelli && SGNube.progressione) {
+        sp._contenuto.appendChild(el("div", { class: "etichetta", text: "⭐ Livello e Speed Coins" }));
+        sp._contenuto.appendChild(riquadroLivello(SGNube.progressione()));
+      }
       var fi = (p.fiches && p.fiches.blackjack != null) ? p.fiches.blackjack : SGNube.fichesStart;
       sp._contenuto.appendChild(el("div", { class: "etichetta", text: "🃏 Black Jack" }));
       sp._contenuto.appendChild(el("p", { class: "modulo-nota", html: "Hai <b>" + fi + " fiches</b>. Si portano avanti tra una partita e l'altra, su qualsiasi telefono." }));
@@ -2923,12 +2965,65 @@
   //  Consegna al gioco un "tavolo" con tutto ciò che gli serve,
   //  senza fargli sapere come sono fatte le schermate comuni.
   // =========================================================
+  // ---- XP a fine partita (livelli, Speed Coins e Prestigio: le regole sono in livelli.js) ----
+  // Ogni partita finita dà XP a chi ha il profilo: 1 al secondo, +50% se vinci, +250 alla prima del giorno.
+  // Il tempo parte dall'ultima volta che si è visti in saletta (o dalla partita prima): l'attesa non conta.
+  // Online l'host manda "__esito" con la classifica: ogni telefono si dà i suoi XP da solo.
+  var xpOrologio = { t0: Date.now(), ultimo: 0 }, reteXp = null;
+  function xpRiparti() { xpOrologio.t0 = Date.now(); }
+  function oggiStr() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+  function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  function stessoNome(a, b) { return String(a || "").trim().toLowerCase().slice(0, 16) === String(b || "").trim().toLowerCase().slice(0, 16); }
+  // classifica = [{ nome, pos? , punti? }] dal primo all'ultimo; soloSeCi = niente XP se il mio nome non c'è (es. chi guarda)
+  function premiaPartita(classifica, soloSeCi) {
+    var ora = Date.now();
+    if (ora - xpOrologio.ultimo < 4000) return;   // la stessa partita detta due volte (risultato + fine)
+    var sec = (ora - xpOrologio.t0) / 1000;
+    xpOrologio.t0 = ora;   // la prossima partita parte da qui
+    if (!(window.SGLivelli && window.SGNube && SGNube.aggiungiXp && SGNube.profilo())) return;   // solo coi profili
+    var p = SGNube.profilo(), lista = classifica || [], mio = null;
+    lista.forEach(function (r) { if (!mio && r && stessoNome(r.nome, p.nome)) mio = r; });
+    if (soloSeCi && !mio) return;
+    var primo = lista[0], vinto = !!mio && (mio.pos != null ? mio.pos === 1 : (mio === primo || (mio.punti != null && primo && mio.punti === primo.punti)));
+    var giorno = oggiStr(), prima = SGNube.progressione().xpGiorno !== giorno;
+    var xp = SGLivelli.xpPartita({ secondi: sec, vinto: vinto, primaDelGiorno: prima });
+    if (!xp) return;
+    xpOrologio.ultimo = ora;
+    var r = SGNube.aggiungiXp(xp, prima ? giorno : null);
+    if (r) avvisoXp(xp, r, vinto, prima);
+  }
+  // l'avviso in alto (lo stesso dei trofei): XP presi, livello salito con le monete, Prestigio
+  function avvisoXp(xp, r, vinto, prima) {
+    var s = r.stato, monete = 0, lv = 0, pr = 0;
+    r.eventi.forEach(function (e) { monete += e.monete; if (e.tipo === "livello") lv = e.livello; if (e.tipo === "prestigio") pr = e.prestigio; });
+    var su = "+" + cifre(xp) + " XP" + (vinto ? " · hai vinto" : "") + (prima ? " · prima del giorno" : "");
+    if (pr) codaTrofei.push({ tipo: "xp", cls: "tl-platino", icona: "🌟", su: "PRESTIGIO " + pr + "!", nome: "Si riparte dal livello 1", sotto: "+" + cifre(monete) + " Speed Coins 🪙" });
+    else if (lv) codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🆙", su: su, nome: "Livello " + lv + "!", sotto: "+" + cifre(monete) + " Speed Coins 🪙" });
+    else codaTrofei.push({ tipo: "xp", cls: "tl-xp", icona: "⭐", su: su, nome: "Livello " + s.level, sotto: "Ancora " + cifre(SGLivelli.xpPerSalire(s.level) - s.xp) + " XP per il livello " + (s.level + 1) });
+    prossimoAvviso();
+  }
+  // il collegamento: l'host ricorda la sua stanza (per mandare "__esito"), l'ospite lo riceve
+  function agganciaXpRete() {
+    if (!window.SGNet || SGNet.__xp) return;
+    SGNet.__xp = true;
+    var ospita = SGNet.ospita, entra = SGNet.entra;
+    if (ospita) SGNet.ospita = function (giocoId) { var h = ospita.apply(SGNet, arguments); if (giocoId !== "__sala" && h) reteXp = h; return h; };
+    if (entra) SGNet.entra = function (codice, cb) {
+      if (cb && typeof cb.onMsg === "function" && !cb.__xp) {
+        var orig = cb.onMsg; cb.__xp = true;
+        cb.onMsg = function (m) { if (m && m.t === "__esito") { premiaPartita(m.c, true); return; } return orig.apply(this, arguments); };
+      }
+      return entra.apply(SGNet, arguments);
+    };
+  }
+
   // il gioco aperto adesso: uno già lasciato (es. si è tornati al tabellone) non può più disegnare, uscire o dare risultati
   var partitaN = 0;
   function lasciaPartita() { partitaN++; }
   function avviaPartita(g, giocatori, impostazioni, opts, salaCtx) {
     var questa = ++partitaN;
     function viva() { return questa === partitaN; }
+    xpRiparti(); reteXp = null;   // gli XP contano da qui (e dall'ultima volta in saletta)
     // entrato da ospite con un invito: se la pagina si ricarica, in home c'è "Rientra nella partita"
     if (linkParams && linkParams.stanza && !linkParams.guarda && !salaCtx) ricordaStanza({ gioco: g.id, stanza: String(linkParams.stanza).toUpperCase() });
     // online (host, ospite o dalla Sala): lo schermo resta acceso, così il collegamento non si ferma
@@ -2976,6 +3071,7 @@
       // dopo una modifica chiama tavolo.onRegole() (il gioco rilegge tavolo.impostazioni).
       lobby: function (o) {
         if (!viva()) return null;
+        xpRiparti();   // in saletta si aspetta: gli XP contano da quando si comincia a giocare
         var s = saletta(g, o, (opts && opts.regole) ? { box: opts.regole, imp: tavolo.impostazioni, tavolo: tavolo } : null);
         if (s && salaCtx && salaCtx.tabellone) salaCtx.tabellone(s);
         return s;
@@ -2988,11 +3084,18 @@
 
       // i giochi online dicono com'è finita ogni partita, senza lasciare la loro schermata finale:
       // serve al torneo online per sommare i punti. classifica = [{ nome, pos? }] dal primo all'ultimo
-      risultato: function (classifica) { if (viva() && salaCtx && salaCtx.risultato && classifica && classifica.length) salaCtx.risultato(g, classifica); },
+      // (dà anche gli XP: a questo telefono e, se è l'host, a tutti gli altri con "__esito")
+      risultato: function (classifica) {
+        if (!viva() || !classifica || !classifica.length) return;
+        premiaPartita(classifica, true);
+        if (reteXp && reteXp.inviaVeloce) try { reteXp.inviaVeloce({ t: "__esito", c: classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }) }); } catch (e) {}
+        if (salaCtx && salaCtx.risultato) salaCtx.risultato(g, classifica);
+      },
 
       // il gioco chiama questa quando è finito
       fine: function (classifica) {
         if (!viva()) return;
+        premiaPartita(classifica, false);
         if (salaCtx) return salaCtx.fine(g, classifica, giocatori, impostazioni);
         if (opts && opts.torneo && torneo) return torneoRisultato(g, classifica);
         schermataFine(g, classifica, giocatori, impostazioni);
@@ -3047,6 +3150,7 @@
     audioCtx: audioCtx,
     listaProfilo: listaProfilo, salvaListaProfilo: salvaListaProfilo,   // liste salvate sul profilo di chi gioca
     avviaApp: function () {
+      agganciaXpRete();
       app = document.getElementById("app");
       linkParams = leggiParametriLink();
       function parti() {

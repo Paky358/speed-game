@@ -40,6 +40,8 @@ OUT=dist/index.html
   echo '<script>'
   cat js/nube.js
   echo ''
+  cat js/livelli.js   # livelli, XP, Speed Coins e Prestigio
+  echo ''
   cat js/omino.js
   echo ''
   cat js/citta.js   # la città nuova (anteprima coi lavori in corso)

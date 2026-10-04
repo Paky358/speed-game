@@ -74,7 +74,8 @@
       return auth.createUserWithEmailAndPassword(emailDa(nome), pwd).then(function (cred) {
         var p = {
           uid: cred.user.uid, nome: String(nome).trim().slice(0, 20), emoji: emoji || "🙂",
-          fiches: { blackjack: FICHES_START }, stat: {}, creato: Date.now()
+          fiches: { blackjack: FICHES_START }, stat: {}, creato: Date.now(),
+          level: 1, xp: 0, coins: 0, prestige: 0   // livello, XP, Speed Coins e Prestigio (regole in livelli.js)
         };
         return db.collection("profili").doc(cred.user.uid).set(p).then(function () { profilo = p; notifica(); return p; });
       });
@@ -106,6 +107,24 @@
       var doc = db.collection("profili").doc(utente.uid);
       // in due passi: l'avatar in uso si salva comunque anche se il secondo pezzo non passasse
       return doc.update({ omino: cfg }).then(function () { if (omini) return doc.update({ omini: omini, ominoN: n || 0 }); }).catch(function () {});
+    },
+
+    // ---- livello, XP, Speed Coins e Prestigio (i profili di prima partono da livello 1, 0 XP, 0 monete) ----
+    progressione: function () {
+      var p = profilo || {};
+      return { level: p.level || 1, xp: p.xp || 0, coins: p.coins || 0, prestige: p.prestige || 0, xpTot: p.xpTot || 0, xpGiorno: p.xpGiorno || "" };
+    },
+    // aggiunge gli XP al profilo e salva tutto in un colpo; ritorna { stato, eventi } (livelli saliti, prestigio)
+    aggiungiXp: function (punti, giorno) {
+      if (!auth || !utente || !profilo || !window.SGLivelli || !(punti > 0)) return null;
+      var r = SGLivelli.aggiungi(SGNube.progressione(), punti), s = r.stato, n = Math.round(punti);
+      var patch = { level: s.level, xp: s.xp, coins: s.coins, prestige: s.prestige, xpTot: firebase.firestore.FieldValue.increment(n) };
+      if (giorno) patch.xpGiorno = giorno;
+      profilo.level = s.level; profilo.xp = s.xp; profilo.coins = s.coins; profilo.prestige = s.prestige;
+      profilo.xpTot = (profilo.xpTot || 0) + n; if (giorno) profilo.xpGiorno = giorno;
+      db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+      notifica();
+      return r;
     },
 
     // ---- liste personali (es. le parole di Parola d'ordine): un campo del profilo, salvato così com'è ----
@@ -140,7 +159,8 @@
     chiaveNome: function (nome) { return emailDa(nome).replace("@sg.local", ""); },
     pubblica: function (dati) {
       if (!auth || !utente || !profilo) return Promise.resolve();
-      var sch = { uid: utente.uid, nome: profilo.nome, chiave: SGNube.chiaveNome(profilo.nome), omino: profilo.omino || null, emoji: profilo.emoji || "🙂" };
+      var sch = { uid: utente.uid, nome: profilo.nome, chiave: SGNube.chiaveNome(profilo.nome), omino: profilo.omino || null, emoji: profilo.emoji || "🙂",
+        livello: profilo.level || 1, prestigio: profilo.prestige || 0 };   // il livello lo vedono anche gli amici
       for (var k in dati) sch[k] = dati[k];
       var firma = JSON.stringify(sch);
       if (firma === ultimaScheda) return Promise.resolve();   // niente di nuovo: non riscrive

@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 153,
+    data: "4 ottobre 2026",
+    titolo: "Livelli, XP e Speed Coins ⭐🪙",
+    descrizione: [
+      "Chi ha il profilo ora sale di livello giocando: a fine partita compare in alto quanti XP hai preso.",
+      "Gli XP dipendono da quanto dura la partita: 1 XP per ogni secondo (al massimo 30 minuti a partita), +50% se vinci e +250 XP alla prima partita del giorno. Così ogni gioco vale per il tempo che ci passi.",
+      "I primi livelli volano, poi diventa sempre più difficile. Ogni livello nuovo regala Speed Coins, la nuova moneta del gioco: livello × 50 (arrivando al livello 10 ne prendi 500).",
+      "Il livello massimo è 50: dopo il 50 scatta il Prestigio. Si riparte dal livello 1, le monete restano e ne arrivano 5.000 in regalo. Le stelline ★ accanto al livello dicono quante volte hai fatto il Prestigio.",
+      "Livello e monete li vedi nel tasto del tuo profilo in home; toccandolo trovi la barra degli XP e tutte le regole."
+    ]
+  },
+  {
     v: 152,
     data: "4 ottobre 2026",
     titolo: "Arriva la nuova città 🏙️🚧",

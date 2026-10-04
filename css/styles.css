@@ -755,6 +755,29 @@ button.am-riga:active{ transform:scale(.985); }
 .am-etich:first-child{ margin-top:0; }
 .home-amici{ position:relative; }
 
+/* livello e Speed Coins: nel tasto del profilo in home, nel profilo e nell'avviso a fine partita */
+.profilo-chip.con-livello{ padding:5px 14px 5px 5px; gap:9px; text-align:left; }
+.chip-testo{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+.chip-nome{ line-height:1.1; }
+.chip-livello{ display:flex; align-items:center; gap:6px; }
+.chip-livello b{ font-size:.72rem; font-weight:900; color:#1b1b1b; background:linear-gradient(180deg,#ffe58a,#f7ad14); border-radius:99px; padding:1px 7px; white-space:nowrap; }
+.chip-xp{ display:block; width:58px; height:5px; border-radius:3px; background:rgba(255,255,255,.18); overflow:hidden; }
+.chip-xp i{ display:block; height:100%; border-radius:3px; background:linear-gradient(90deg,#74c0fc,#4c6ef5); }
+.chip-monete{ font-weight:900; font-size:.86rem; color:#ffe58a; white-space:nowrap; }
+.riquadro-livello{ background:var(--carta); border-radius:16px; padding:12px 14px; box-shadow:var(--ombra); margin:6px 0 14px; }
+.rl-alto{ display:flex; align-items:flex-end; justify-content:space-between; gap:10px; }
+.rl-liv small, .rl-liv span, .rl-monete span{ display:block; font-size:.72rem; color:var(--testo-tenue); font-weight:800; }
+.rl-liv b{ display:block; font-size:2.2rem; font-weight:900; line-height:1; color:#ffe58a; }
+.rl-monete{ text-align:right; }
+.rl-monete b{ display:block; font-size:1.25rem; font-weight:900; color:#ffe58a; }
+.rl-barra{ height:10px; border-radius:6px; background:rgba(255,255,255,.12); overflow:hidden; margin:10px 0 6px; }
+.rl-barra i{ display:block; height:100%; border-radius:6px; background:linear-gradient(90deg,#74c0fc,#4c6ef5); }
+.rl-xp{ font-size:.84rem; color:var(--testo-tenue); }
+.rl-xp b{ color:var(--testo); }
+.rl-regole{ margin:10px 0 0; padding-left:18px; font-size:.84rem; line-height:1.45; color:var(--testo-tenue); }
+.rl-regole b{ color:var(--testo); }
+.avviso-trofeo.tl-xp .at-ico{ background:linear-gradient(150deg,#a5d8ff,#4c6ef5); }
+
 /* la città nuova (anteprima coi lavori in corso): tasto a strisce gialle e nere accanto a Novità */
 .home-profilo .home-novita.home-citta{ padding:3px; border:0; -webkit-backdrop-filter:none; backdrop-filter:none;
   background:repeating-linear-gradient(135deg,#ffd43b 0 9px,#1b1b1b 9px 18px); box-shadow:0 8px 20px rgba(0,0,0,.34); }
