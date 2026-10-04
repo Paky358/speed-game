@@ -278,7 +278,11 @@
     if (document.querySelector(".home")) schermataHome();   // se sei in home, compare subito il pulsante
   });
 
+  // dove si torna con "indietro" / "esci": in home, oppure nell'edificio della città da cui si è entrati
+  var rientro = null;
+  function tornaHome() { var r = rientro; rientro = null; (r || schermataHome)(); }
   function schermataHome() {
+    rientro = null;
     if (window.SGNet && SGNet.chiudiGiochi) SGNet.chiudiGiochi();   // niente collegamenti vecchi aperti (la sala resta)
     chiudiTabelloneElim();
     tieniAcceso(false);
@@ -300,8 +304,8 @@
       if (!novitaTutteViste()) bNov.appendChild(el("span", { class: "pallino" }));
       rigaProfilo.appendChild(bNov);
     }
-    // la città nuova, ancora in costruzione: accanto a Novità, si apre solo per sbirciarla
-    if (window.SGCitta) rigaProfilo.appendChild(el("button", { class: "home-novita home-citta", onclick: schermataCitta }, [ el("span", { text: "🏙️ NEW CITY · open soon" }) ]));
+    // la città nuova (beta): accanto a Novità; gli edifici portano ai giochi della loro categoria
+    if (window.SGCitta) rigaProfilo.appendChild(el("button", { class: "home-novita home-citta", onclick: schermataCitta }, [ el("span", { text: "🏙️ NEW CITY · beta" }) ]));
     rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: schermataSfide }, [ el("span", { text: "🏆 Trofei" }) ]));
     rigaProfilo.appendChild(el("button", { class: "home-novita home-amici", onclick: function () { schermataAmici(); } }, [ el("span", { text: "👥 Classifica" }), cacheRich && cacheRich.arrivate.length ? el("span", { class: "pallino" }) : null ]));
     setTimeout(function () { aggiornaRichieste(); }, 0);   // richieste di amicizia nuove? pallino sul tasto
@@ -425,18 +429,118 @@
     ]);
   }
 
-  // ---- La città nuova: anteprima coi lavori in corso (si guarda e basta, niente si tocca) ----
+  // ---- La città nuova (beta): si tocca un edificio, la città fa zoom e si entra ----
   function schermataCitta() {
-    var io = profiloAttivo(), fase = SGCitta.fase(new Date());
+    var io = profiloAttivo(), fase = SGCitta.fase(new Date()), via = false;
+    var mappa = el("div", { class: "citta-mappa", html: SGCitta.svg({ fase: fase, io: io && io.omino, sopra: 80 }) });
     var s = el("div", { class: "schermata citta-vista", style: "background:" + SGCitta.colorePrato(fase) }, [
-      el("div", { class: "citta-mappa", html: SGCitta.svg({ fase: fase, io: io && io.omino, sopra: 80 }) }),
+      mappa,
       el("div", { class: "citta-testa" }, [
         el("button", { class: "citta-indietro", text: "‹", "aria-label": "Indietro", onclick: schermataHome }),
-        el("div", { class: "citta-cartello" }, [ el("div", {}, [ el("b", { text: "NEW CITY" }), el("span", { text: "open soon" }) ]) ])
+        el("div", { class: "citta-cartello" }, [ el("div", {}, [ el("b", { text: "NEW CITY" }), el("span", { text: "tocca un edificio" }) ]) ])
       ]),
       el("div", { class: "citta-nastro" }, [ el("span", { text: "🚧 LAVORI IN CORSO 🚧" }) ])
     ]);
+    mappa.addEventListener("click", function (e) {
+      var t = e.target && e.target.closest && e.target.closest("[data-vai]");
+      if (!t || via) return;
+      via = true;
+      var k = t.getAttribute("data-vai"), r = t.getBoundingClientRect(), R = mappa.getBoundingClientRect();
+      // zoom verso l'edificio toccato e dissolvenza (solo transform e opacity: niente scatti)
+      mappa.style.transformOrigin = Math.round(r.left + r.width / 2 - R.left) + "px " + Math.round(r.top + r.height / 2 - R.top) + "px";
+      mappa.style.transition = "transform .42s cubic-bezier(.55,0,.8,.3), opacity .42s ease-in";
+      requestAnimationFrame(function () { mappa.style.transform = "scale(2.6)"; mappa.style.opacity = "0"; });
+      suonoEdificio(k);
+      setTimeout(function () { entraEdificio(k); }, 400);
+    });
     mostra(s);
+  }
+
+  // ---- Dentro gli edifici della città: le sale coi giochi della categoria (stesso modello per tutti) ----
+  // cat = categoria dei giochi (CAT_GIOCO); azioni = tasti al posto dei giochi; deco = cose sparse sullo sfondo
+  var EDIFICI_CITTA = {
+    casino: { nome: "Casinò",      sotto: "I giochi di carte",            cat: "carte",  deco: ["🃏", "♠️", "🪙", "♦️", "🎲", "♣️"] },
+    studio: { nome: "Studio TV",   sotto: "Quiz & parole",                cat: "parole", deco: ["❓", "🎤", "💡", "🔤", "⭐", "📺"] },
+    giochi: { nome: "Sala giochi", sotto: "I minigiochi",                 cat: "mini",   deco: ["🕹️", "👾", "⭐", "🎯", "💥", "🔺"] },
+    arena:  { nome: "Arena",       sotto: "Sfide 1 contro 1",             cat: "sfida",  deco: ["⚔️", "🛡️", "🏁", "⚡", "🥊", "🎯"] },
+    locale: { nome: "Locale",      sotto: "Giochi da fare in gruppo",     cat: "festa",  deco: ["🎉", "🪩", "🎈", "🍹", "🎶", "✨"] },
+    trofei: { nome: "Sala Trofei", sotto: "Trofei e classifiche",         deco: ["🏆", "🥇", "⭐", "🎖️", "👑", "🥈"],
+      azioni: function () { return [
+        { icona: "🏆", nome: "I tuoi trofei", sotto: "Tutti i trofei, gioco per gioco", fai: schermataSfide },
+        { icona: "👥", nome: "Classifica e amici", sotto: "Chi ha più trofei, tra gli amici e tra tutti", fai: function () { schermataAmici(); } } ]; } },
+    bar:    { nome: "Bar",         sotto: "Ci si trova con gli amici",    deco: ["☕", "🥐", "🍹", "💬", "🎲", "🧁"],
+      azioni: function () { return [
+        { icona: "👥", nome: "Sala online", sotto: "Porta il gruppo da un gioco all'altro, ognuno dal suo telefono", fai: creaSala },
+        { icona: "🏆", nome: "Torneo", sotto: "Più giochi di fila: i punti si sommano", fai: apriTorneo },
+        { icona: "🔑", nome: "Ho un codice", sotto: "Entra nella stanza di un amico", fai: function () { entraConCodice(); } } ]; } }
+  };
+  function entraEdificio(k) {
+    if (k === "piazza") { rientro = schermataCitta; return schermataNovita(); }   // la piazza: le novità
+    schermataEdificio(k);
+  }
+  function schermataEdificio(k) {
+    var E = EDIFICI_CITTA[k]; if (!E) return schermataCitta();
+    rientro = function () { schermataEdificio(k); };   // finita la partita (o "indietro") si torna qui
+    var N = window.SGNube, prog = window.SGLivelli && N && N.progressione && N.profilo() ? N.progressione() : null;
+    var s = el("div", { class: "schermata edificio ed-" + k });
+    var deco = el("div", { class: "ed-deco", "aria-hidden": "true" });
+    E.deco.forEach(function (d, i) { deco.appendChild(el("span", { class: "d" + i, text: d })); });
+    s.appendChild(deco);
+    s.appendChild(el("div", { class: "ed-testa" }, [
+      el("button", { class: "ed-indietro", text: "‹", "aria-label": "Torna in città", onclick: function () { rientro = null; schermataCitta(); } }),
+      el("div", { class: "ed-titolo" }, [ el("b", { text: E.nome.toUpperCase() }), el("span", { text: E.sotto }) ]),
+      prog ? el("div", { class: "ed-monete", text: "🪙 " + cifre(prog.coins) }) : el("div", { class: "ed-monete vuoto" })
+    ]));
+    var griglia = el("div", { class: "griglia-giochi ed-sale" });
+    if (E.cat) giochi.forEach(function (g) { if (catDi(g) === E.cat) griglia.appendChild(tesseraGioco(g, function () { scegliModoEdificio(g, k); })); });
+    else E.azioni().forEach(function (a) {
+      griglia.appendChild(el("button", { class: "tessera ed-azione", onclick: a.fai }, [
+        el("span", { class: "icona" }, [ el("span", { class: "emoji", text: a.icona }) ]),
+        el("div", { class: "info" }, [ el("h2", { text: a.nome }), el("p", { text: a.sotto }) ])
+      ]));
+    });
+    s.appendChild(griglia);
+    mostra(s);
+  }
+  // toccato un gioco: "Come giocate?" in una finestra sopra la sala, coi modi veri del gioco
+  function scegliModoEdificio(g, k) {
+    if (!profiloAttivo()) return schermataAccesso(function () { schermataEdificio(k); });
+    var modi = modiDi(g).slice();
+    if (giocoOnline(g)) modi.splice(modi.indexOf(MODO_ONLINE) + 1, 0, MODO_CODICE);
+    if (modi.length <= 1) return apriGioco(g);   // un modo solo: si parte subito, come dalla home
+    var chiudi = function () { if (sfondo.parentNode) sfondo.parentNode.removeChild(sfondo); };
+    var lista = el("div", { class: "modo-scelta" });
+    modi.forEach(function (m) {
+      lista.appendChild(el("button", { class: "modo-grande" + (m.modo === "online" ? " online" : ""), onclick: function () { chiudi(); sceltoModo(g, m); } }, [
+        el("div", { class: "mg-ico", text: m.icona }),
+        el("div", { class: "mg-testo" }, [ el("div", { class: "mg-tit", text: m.nome }), el("div", { class: "mg-sotto", text: m.sotto || "" }) ]),
+        el("div", { class: "mg-freccia", text: "›" })
+      ]));
+    });
+    var sfondo = el("div", { class: "ed-modale-sfondo ed-" + k, onclick: function (e) { if (e.target === sfondo) chiudi(); } }, [
+      el("div", { class: "ed-modale", role: "dialog" }, [
+        el("div", { class: "edm-testa" }, [ el("span", { class: "edm-ico", text: g.icona || "🎲" }), el("div", {}, [ el("b", { text: g.nome }), el("span", { text: "Come giocate?" }) ]) ]),
+        lista,
+        el("div", { class: "edm-piede" }, [
+          el("button", { class: "btn btn-fantasma", text: "📖 Come si gioca", onclick: function () { chiudi(); schermataRegole(g, function () { schermataEdificio(k); }); } }),
+          el("button", { class: "btn btn-fantasma", text: "✕ Chiudi", onclick: chiudi })
+        ])
+      ])
+    ]);
+    document.body.appendChild(sfondo);
+  }
+  // un suono corto entrando (le fiches al Casinò, un "din" altrove): niente musica di sottofondo
+  function suonoEdificio(k) {
+    var ctx = audioCtx(); if (!ctx) return;
+    try {
+      var note = k === "casino" ? [[2400, 0], [2900, .07], [2600, .13]] : [[660, 0], [990, .09]];
+      note.forEach(function (n) {
+        var t0 = ctx.currentTime + n[1], o = ctx.createOscillator(), gn = ctx.createGain();
+        o.type = k === "casino" ? "triangle" : "sine"; o.frequency.setValueAtTime(n[0], t0);
+        gn.gain.setValueAtTime(0.0001, t0); gn.gain.exponentialRampToValueAtTime(k === "casino" ? 0.08 : 0.1, t0 + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t0 + (k === "casino" ? 0.12 : 0.3));
+        o.connect(gn); gn.connect(ctx.destination); o.start(t0); o.stop(t0 + 0.35);
+      });
+    } catch (e) {}
   }
 
   // ---- Novità (il diario di cosa viene aggiunto) ----
@@ -453,7 +557,7 @@
     try { localStorage.setItem(CHIAVE_NOVITA, String(ultimaVersioneNovita())); } catch (e) {}
   }
   function schermataNovita() {
-    var s = schermata({ icona: "🆕", titolo: "Novità", sotto: "Cosa è stato aggiunto", indietro: schermataHome });
+    var s = schermata({ icona: "🆕", titolo: "Novità", sotto: "Cosa è stato aggiunto", indietro: tornaHome });
     (window.SG_NOVITA || []).forEach(function (n) {
       var punti = el("ul", { class: "novita-punti" });
       (n.descrizione || []).forEach(function (r) { punti.appendChild(el("li", { text: r })); });
@@ -463,7 +567,7 @@
         punti
       ]));
     });
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Ho capito", onclick: schermataHome }));
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Ho capito", onclick: tornaHome }));
     segnaNovitaViste(); // aperto = visto
     mostra(s);
   }
@@ -724,7 +828,7 @@
 
   // schermata principale: l'elenco di TUTTI i giochi, ognuno coi suoi trofei dentro
   function schermataSfide() {
-    var s = schermata({ icona: "🏆", titolo: "Trofei", sotto: "Colleziona i trofei di ogni gioco", indietro: schermataHome });
+    var s = schermata({ icona: "🏆", titolo: "Trofei", sotto: "Colleziona i trofei di ogni gioco", indietro: tornaHome });
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     if (!prof) {
       s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ti serve il profilo per registrare i progressi e sbloccare i trofei: i dati ti seguono su ogni telefono." }));
@@ -906,7 +1010,7 @@
   function schermataAmici(scheda) {
     scheda = scheda || "generale";
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
-    var s = schermata({ icona: "👥", titolo: "Classifica e amici", sotto: "Chi ha più trofei", indietro: schermataHome });
+    var s = schermata({ icona: "👥", titolo: "Classifica e amici", sotto: "Chi ha più trofei", indietro: tornaHome });
     if (!prof) {
       s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ti serve il profilo per entrare in classifica, aggiungere amici e confrontare i trofei." }));
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "👤 Crea / accedi al profilo", onclick: function () { schermataAccesso(function () { schermataAmici(scheda); }); } }));
@@ -2568,7 +2672,7 @@
   }
   function modoDi(g, modo) { return modiDi(g).filter(function (m) { return m.modo === modo; })[0] || null; }
   function schermataModo(g) {
-    var s = schermata({ icona: g.icona, titolo: g.nome, sotto: "Come giocate?", indietro: schermataHome });
+    var s = schermata({ icona: g.icona, titolo: g.nome, sotto: "Come giocate?", indietro: tornaHome });
     var io = profiloAttivo(), griglia = el("div", { class: "modo-scelta" });
     var modi = modiDi(g);
     if (giocoOnline(g)) modi.splice(modi.indexOf(MODO_ONLINE) + 1, 0, MODO_CODICE);   // subito sotto "Online": chi è invitato entra col codice
@@ -3105,7 +3209,7 @@
       esci: function () {
         if (!viva()) return;
         if (!salaCtx && tavolo.linkParams && tavolo.linkParams.stanza) dimenticaStanza();   // uscito apposta: niente "Rientra"
-        (salaCtx ? salaCtx.esci : schermataHome)();
+        (salaCtx ? salaCtx.esci : tornaHome)();   // entrato da un edificio della città: si torna lì
       }
     };
 

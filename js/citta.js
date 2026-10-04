@@ -1,7 +1,8 @@
 /* =========================================================
    SPeeD GAME — LA CITTÀ (anteprima, lavori in corso)
    La futura home: una città isometrica dove ogni edificio è
-   una categoria di giochi. Per ora si guarda soltanto.
+   una categoria di giochi. Edifici, piazza e bar si toccano
+   (gruppi con data-vai): core.js apre l'interno giusto.
    Disegnata in SVG col codice (niente immagini, niente 3D vero).
    Di giorno, al tramonto o di notte secondo il sole vero in Italia.
    SGCitta.svg({ fase, io, sopra }) -> stringa SVG (300 x 600, più "sopra" di spazio libero in alto)
@@ -158,11 +159,13 @@
   function vaso(u, v) { var b = P(u, v, 3); return cil(u, v, .07, 3, 5, "#c97b3c") + sfera(b[0], b[1] - 10, 5, "#40c057"); }
   function figura(cfg, x, y, w) { var h = w * 1.32; return window.SGOmino.svg(cfg).replace("<svg ", "<svg x='" + f1(x - w / 2) + "' y='" + f1(y - h * .96) + "' width='" + f1(w) + "' height='" + f1(h) + "' "); }
   function gente(cfg, u, v, w) { var b = P(u, v, 0), g = figura(cfg, b[0], b[1], w); return S.notte ? "<g filter='url(#ctnp" + S.id + ")'>" + g + "</g>" : g; }
-  function etichetta(x, y, testo, col, badge) {
+  // un pezzo della città che si può toccare (edificio, piazza, bar): porta a "vai"
+  function tocco(vai, s) { return "<g class='ct-tocco' role='button' data-vai='" + vai + "'>" + s + "</g>"; }
+  function etichetta(x, y, testo, col, badge, vai) {
     var w = 20 + testo.length * 6.3, s = "<rect x='" + f1(x - w / 2) + "' y='" + f1(y - 10) + "' width='" + f1(w) + "' height='20' rx='10' fill='" + (S.notte ? "rgba(22,24,48,.9)" : "#ffffff") + "' stroke='" + col + "' stroke-width='2'/>" +
       "<text x='" + f1(x) + "' y='" + f1(y + 4) + "' text-anchor='middle' font-family='Nunito, Arial, sans-serif' font-weight='900' font-size='11.5' fill='" + (S.notte ? "#ffffff" : "#2b2b3a") + "'>" + testo + "</text>";
     if (badge) s += pallino([x + w / 2 - 2, y - 9], 7, "#fa5252", " stroke='#ffffff' stroke-width='1.5'") + "<text x='" + f1(x + w / 2 - 2) + "' y='" + f1(y - 6) + "' text-anchor='middle' font-family='Nunito, Arial, sans-serif' font-weight='900' font-size='8.5' fill='#ffffff'>" + badge + "</text>";
-    ET.push(s);
+    ET.push(vai ? tocco(vai, s) : s);
   }
   function tu(x, y) { return "<rect x='" + f1(x - 13) + "' y='" + f1(y - 10) + "' width='26' height='18' rx='9' fill='#4c6ef5'/><text x='" + f1(x) + "' y='" + f1(y + 3.5) + "' text-anchor='middle' font-family='Nunito, Arial, sans-serif' font-weight='900' font-size='11' fill='#ffffff'>Tu</text>"; }
 
@@ -359,8 +362,8 @@
   var DISEGNA = { casino: casino, studio: studio, giochi: arcade, locale: locale, trofei: trofei };
   function edificio(k) {
     var u = LOTTI[k][0], v = LOTTI[k][1], c = [u + 1.25, v + 1.25], n = NOMI[k], p = P(c[0], c[1], n[2]);
-    etichetta(p[0] + n[3], p[1] - 14, n[0], n[1]);
-    return { d: c[0] + c[1], s: k === "arena" ? arena(c[0], c[1]) : DISEGNA[k](u, v) };
+    etichetta(p[0] + n[3], p[1] - 14, n[0], n[1], null, k);
+    return { d: c[0] + c[1], s: tocco(k, k === "arena" ? arena(c[0], c[1]) : DISEGNA[k](u, v)) };
   }
   function strade(lista, w) {
     function banda(lungoV, c, ww) { return lungoV ? [P(c - ww, -14, 0), P(c + ww, -14, 0), P(c + ww, 52, 0), P(c - ww, 52, 0)] : [P(-14, c - ww, 0), P(52, c - ww, 0), P(52, c + ww, 0), P(-14, c + ww, 0)]; }
@@ -377,10 +380,10 @@
     var s = defs() + "<rect x='-200' y='-200' width='700' height='1000' fill='" + T("#9bd36d") + "'/>";
     for (i = 0; i < 80; i++) s += "<path d='M" + ((i * 67) % 300) + "," + ((i * 113) % 600) + " l2,-5 l2,5' stroke='" + T("#86c25a") + "' stroke-width='1.5' fill='none'/>";
     s += strade([[true, 10], [true, 16.4], [false, 10], [false, 16.4]], .54);
-    s += ell(10, 10, 0, 1.4, F("#f1e7d0", "t"), " stroke='" + F("#cbbd9c", "l") + "' stroke-width='2.5'") + ell(10, 10, 0, 1.1, "none", " stroke='" + F("#e2d3b0", "l") + "' stroke-width='1.6' stroke-dasharray='5 4'");
+    s += tocco("piazza", ell(10, 10, 0, 1.4, F("#f1e7d0", "t"), " stroke='" + F("#cbbd9c", "l") + "' stroke-width='2.5'") + ell(10, 10, 0, 1.1, "none", " stroke='" + F("#e2d3b0", "l") + "' stroke-width='1.6' stroke-dasharray='5 4'"));
     s += fiori(8.4, 12.9) + fiori(12.9, 8.4);
     Object.keys(LOTTI).forEach(function (k) { og.push(edificio(k)); });
-    og.push({ d: 20, s: fontana(10, 10) }, { d: 19.4, s: bacheca(10, 9) }, { d: 32.8, s: bar(16.4, 16.4) });
+    og.push({ d: 20, s: tocco("piazza", fontana(10, 10)) }, { d: 19.4, s: tocco("piazza", bacheca(10, 9)) }, { d: 32.8, s: tocco("bar", bar(16.4, 16.4)) });
     [[7.6, 12.4, 1], [12.4, 7.6, 1], [2.6, 7.4, .9]].forEach(function (t) { og.push({ d: t[0] + t[1], s: albero(t[0], t[1], t[2]) }); });
     [[14.2, 18.6], [18.6, 14.2], [20.9, 20.9]].forEach(function (t) { og.push({ d: t[0] + t[1], s: pino(t[0], t[1], 1) }); });
     [[7.5, 10.55], [10.55, 7.5]].forEach(function (l) { og.push({ d: l[0] + l[1], s: lampione(l[0], l[1]) }); });
@@ -397,8 +400,8 @@
     if (S.notte) s += "<rect x='-200' y='-200' width='700' height='1000' fill='url(#ctvig" + S.id + ")'/>";
     else if (S.tramonto) s += "<rect x='-200' y='-200' width='700' height='1000' fill='url(#ctcaldo" + S.id + ")'/>";
     var pb = P(16.4, 16.4, 40);
-    etichetta(pb[0], pb[1] - 12, "☕ Bar", "#e03131");
-    etichetta(150, 292, "📰 Novità", "#4c6ef5");
+    etichetta(pb[0], pb[1] - 12, "☕ Bar", "#e03131", null, "bar");
+    etichetta(150, 292, "📰 Novità", "#4c6ef5", null, "piazza");
     s += ET.join("");
     return io ? s + tu(145, 222) : s;
   }

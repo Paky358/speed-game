@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 154,
+    data: "4 ottobre 2026",
+    titolo: "Nella città si entra! 🏙️🚪",
+    descrizione: [
+      "Nella nuova città (il tasto «NEW CITY · beta» accanto a Novità) ora si toccano gli edifici: la città fa zoom e si entra.",
+      "Il Casinò ha i giochi di carte su un panno verde, lo Studio TV quiz e parole, la Sala giochi i minigiochi, l'Arena le sfide 1 contro 1 e il Locale i giochi di gruppo.",
+      "Tocchi un gioco e si apre la finestra «Come giocate?» con i modi di quel gioco. Finita la partita, torni nell'edificio.",
+      "La Sala Trofei porta ai tuoi trofei e alla classifica, il Bar alla Sala online, al Torneo e a «Ho un codice», la piazza alle Novità.",
+      "In alto vedi sempre le tue Speed Coins."
+    ]
+  },
+  {
     v: 153,
     data: "4 ottobre 2026",
     titolo: "Livelli, XP e Speed Coins ⭐🪙",

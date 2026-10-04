@@ -313,13 +313,13 @@ img{ max-width:100%; }
   /* leggero alone elettrico blu-bianco attorno a tutto il nome */
   filter:drop-shadow(0 0 1px rgba(220,235,255,.9)) drop-shadow(0 0 5px rgba(90,170,255,.55)) drop-shadow(0 0 12px rgba(77,171,247,.3)); }
 .home-sotto{ margin:8px 0 0; font-size:1.1rem; color:var(--testo-tenue); }
-.home .griglia-giochi{ display:flex; flex-direction:column; gap:14px; }
-.home .tessera{ padding:16px; }
-.home .tessera .icona{ width:60px; height:60px; font-size:2.1rem; }
-.home .tessera .info h2{ font-size:1.3rem; }
-.home .tessera .info p{ font-size:1.02rem; line-height:1.3; }
-.home .tessera .info .meta{ font-size:.95rem; margin-top:6px; }
-.home .tessera:not(.presto)::after{ font-size:2rem; }
+:is(.home, .edificio) .griglia-giochi{ display:flex; flex-direction:column; gap:14px; }
+:is(.home, .edificio) .tessera{ padding:16px; }
+:is(.home, .edificio) .tessera .icona{ width:60px; height:60px; font-size:2.1rem; }
+:is(.home, .edificio) .tessera .info h2{ font-size:1.3rem; }
+:is(.home, .edificio) .tessera .info p{ font-size:1.02rem; line-height:1.3; }
+:is(.home, .edificio) .tessera .info .meta{ font-size:.95rem; margin-top:6px; }
+:is(.home, .edificio) .tessera:not(.presto)::after{ font-size:2rem; }
 .home .piede{ margin-top:18px; }
 
 /* =========================================================
@@ -392,8 +392,8 @@ body::before{
 }
 
 /* --- Card dei giochi: rialzate, impilate, illustrazione in alto --- */
-.home .griglia-giochi{ display:grid; grid-template-columns:repeat(2,1fr); gap:15px; align-items:start; }
-.home .tessera{
+:is(.home, .edificio) .griglia-giochi{ display:grid; grid-template-columns:repeat(2,1fr); gap:15px; align-items:start; }
+:is(.home, .edificio) .tessera{
   flex-direction:column; align-items:stretch; gap:0; text-align:left;
   padding:0; overflow:hidden; border-radius:20px;
   background:linear-gradient(180deg,#33438f,#212e66);
@@ -405,11 +405,11 @@ body::before{
     0 22px 34px rgba(0,0,0,.28);
   transition:transform .08s ease, box-shadow .15s ease;
 }
-.home .tessera:active{ transform:translateY(2px); box-shadow:
+:is(.home, .edificio) .tessera:active{ transform:translateY(2px); box-shadow:
     inset 0 1px 0 rgba(255,255,255,.12), 0 3px 0 #151f47, 0 8px 16px rgba(0,0,0,.4); }
-@media (hover:hover){ .home .tessera:hover{ transform:translateY(-3px); box-shadow:
+@media (hover:hover){ :is(.home, .edificio) .tessera:hover{ transform:translateY(-3px); box-shadow:
     inset 0 1px 0 rgba(255,255,255,.16), 0 7px 0 #151f47, 0 16px 28px rgba(0,0,0,.46), 0 26px 40px rgba(0,0,0,.3); } }
-.home .tessera .icona{
+:is(.home, .edificio) .tessera .icona{
   width:100%; height:118px; margin:0; border-radius:0; flex:0 0 auto;
   display:flex; align-items:center; justify-content:center; font-size:3.1rem;
   background:linear-gradient(150deg,#5a6cd0 0%,#3b4a9c 55%,#33418c 100%);
@@ -419,19 +419,19 @@ body::before{
 /* Foto realistica del gioco (se presente): riempie il banner, l'emoji resta sotto come ripiego */
 .tessera .icona{ position:relative; overflow:hidden; }
 .tessera .icona .illustr{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
-.home .tessera .icona .illustr{ box-shadow:inset 0 -10px 20px rgba(0,0,0,.28); }
-.home .tessera .info{ flex:1; display:flex; flex-direction:column; gap:5px; padding:12px 13px 13px; }
-.home .tessera .info h2{ font-size:1.1rem; font-weight:800; line-height:1.12; }
-.home .tessera .info p{ font-size:.85rem; line-height:1.28; color:var(--testo-tenue);
+:is(.home, .edificio) .tessera .icona .illustr{ box-shadow:inset 0 -10px 20px rgba(0,0,0,.28); }
+:is(.home, .edificio) .tessera .info{ flex:1; display:flex; flex-direction:column; gap:5px; padding:12px 13px 13px; }
+:is(.home, .edificio) .tessera .info h2{ font-size:1.1rem; font-weight:800; line-height:1.12; }
+:is(.home, .edificio) .tessera .info p{ font-size:.85rem; line-height:1.28; color:var(--testo-tenue);
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-.home .tessera .info .meta{ margin-top:auto; padding-top:4px; font-size:.82rem; font-weight:800; color:#ffd76a; }
-.home .tessera:not(.presto)::after{ display:none; }
-.home .tessera.presto{ justify-content:center; align-items:center; min-height:150px; }
-.home .tessera.presto .icona{ height:auto; background:none; box-shadow:none; filter:none; font-size:2.4rem; padding-top:14px; }
-.home .tessera.presto .info{ flex:0; text-align:center; padding-top:0; }
+:is(.home, .edificio) .tessera .info .meta{ margin-top:auto; padding-top:4px; font-size:.82rem; font-weight:800; color:#ffd76a; }
+:is(.home, .edificio) .tessera:not(.presto)::after{ display:none; }
+:is(.home, .edificio) .tessera.presto{ justify-content:center; align-items:center; min-height:150px; }
+:is(.home, .edificio) .tessera.presto .icona{ height:auto; background:none; box-shadow:none; filter:none; font-size:2.4rem; padding-top:14px; }
+:is(.home, .edificio) .tessera.presto .info{ flex:0; text-align:center; padding-top:0; }
 
 /* --- Piccoli schermi: card a colonna singola se molto stretto --- */
-@media (max-width:340px){ .home .griglia-giochi{ grid-template-columns:1fr; } }
+@media (max-width:340px){ :is(.home, .edificio) .griglia-giochi{ grid-template-columns:1fr; } }
 
 /* --- Sfide e Trofei (stile PlayStation) --- */
 .sfide-sommario{ text-align:center; font-size:1.05rem; margin-bottom:12px; color:var(--testo);
@@ -800,6 +800,70 @@ button.am-riga:active{ transform:scale(.985); }
   background:repeating-linear-gradient(135deg,#ffd43b 0 16px,#1b1b1b 16px 32px); box-shadow:0 4px 14px rgba(0,0,0,.35); }
 .citta-nastro span{ background:#ffd43b; color:#1b1b1b; font-weight:900; font-size:.92rem; letter-spacing:.08em;
   padding:3px 12px; border:2px solid #1b1b1b; border-radius:6px; white-space:nowrap; }
+.ct-tocco{ cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.ct-tocco:active{ opacity:.8; }
+
+/* dentro gli edifici della città: lo stesso modello per tutti, cambiano solo colori e decorazioni */
+.schermata.edificio{ position:relative; overflow:hidden; background:var(--ed-bg); padding-top:calc(12px + env(safe-area-inset-top)); }
+.ed-deco{ position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+.ed-deco span{ position:absolute; line-height:1; font-size:3.4rem; opacity:.17; filter:blur(1.5px); transform:rotate(-14deg); }
+.ed-deco .d0{ top:8%; left:-12px; }
+.ed-deco .d1{ top:24%; right:-10px; font-size:4.3rem; transform:rotate(18deg); }
+.ed-deco .d2{ top:55%; left:-16px; transform:rotate(10deg); }
+.ed-deco .d3{ bottom:15%; right:-12px; font-size:3.9rem; transform:rotate(-22deg); }
+.ed-deco .d4{ bottom:3%; left:24%; font-size:2.8rem; transform:rotate(12deg); }
+.ed-deco .d5{ top:40%; left:46%; font-size:2.4rem; opacity:.09; }
+.ed-testa{ position:relative; z-index:1; display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+.ed-indietro{ flex:none; width:46px; height:46px; border-radius:50%; border:0; cursor:pointer; font-family:inherit; font-size:1.9rem;
+  font-weight:900; line-height:1; padding:0 0 4px; background:rgba(255,255,255,.92); color:#2b2b3a; box-shadow:0 3px 10px rgba(0,0,0,.28); }
+.ed-titolo{ flex:1; min-width:0; text-align:center; }
+.ed-titolo b{ display:block; font-size:clamp(1.1rem, 5.6vw, 1.85rem); font-weight:900; letter-spacing:.09em; line-height:1.1; white-space:nowrap;
+  background:linear-gradient(180deg,#fff7cf,#ffdf5f 45%,#f7ad14); -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:transparent; filter:drop-shadow(0 2px 0 rgba(0,0,0,.35)) drop-shadow(0 0 10px rgba(255,200,60,.35)); }
+.ed-titolo span{ display:block; font-size:.86rem; font-weight:800; color:rgba(255,255,255,.82); margin-top:4px; }
+.ed-monete{ flex:none; font-weight:900; font-size:.95rem; color:#ffe58a; background:rgba(0,0,0,.3); border-radius:99px; padding:9px 12px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.16); white-space:nowrap; }
+.ed-monete.vuoto{ visibility:hidden; width:46px; padding:0; }
+.ed-sale{ position:relative; z-index:1; }
+.edificio .tessera{ background:linear-gradient(180deg,var(--ed-carta),var(--ed-carta2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16), 0 5px 0 var(--ed-ombra), 0 12px 22px rgba(0,0,0,.42); }
+.edificio .tessera:active{ transform:translateY(2px); box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 3px 0 var(--ed-ombra), 0 8px 16px rgba(0,0,0,.4); }
+.edificio .tessera .icona{ background:linear-gradient(150deg,var(--ed-icona),var(--ed-carta2)); }
+.edificio .tessera.ed-azione .icona{ height:92px; }
+/* i temi: panno verde, studio, sala giochi, cemento, festa, marmo e oro, bar */
+.ed-casino{ --ed-bg:radial-gradient(rgba(0,0,0,.09) 1px, transparent 1.6px) 0 0/5px 5px, radial-gradient(130% 85% at 50% 16%, #2f9e44 0%, #1f7a35 45%, #11492a 100%);
+  --ed-carta:#2b7d40; --ed-carta2:#175230; --ed-ombra:#0b3018; --ed-icona:#3aa857; }
+.ed-studio{ --ed-bg:radial-gradient(55% 35% at 15% 0%, rgba(255,240,180,.28), transparent 70%), radial-gradient(55% 35% at 85% 0%, rgba(255,240,180,.22), transparent 70%), linear-gradient(180deg,#3b2a8f,#1b1250);
+  --ed-carta:#4b3aa8; --ed-carta2:#2a1f6e; --ed-ombra:#170f40; --ed-icona:#6a54d8; }
+.ed-giochi{ --ed-bg:repeating-linear-gradient(0deg, rgba(255,107,214,.07) 0 1px, transparent 1px 34px), repeating-linear-gradient(90deg, rgba(34,211,238,.07) 0 1px, transparent 1px 34px), linear-gradient(180deg,#22164e,#0c0924);
+  --ed-carta:#3a2a6e; --ed-carta2:#1f1645; --ed-ombra:#100b2a; --ed-icona:#f76707; }
+.ed-arena{ --ed-bg:repeating-linear-gradient(135deg, rgba(255,255,255,.03) 0 2px, transparent 2px 9px), linear-gradient(180deg,#6c757d,#3b4046 60%,#2b2f34);
+  --ed-carta:#5c636a; --ed-carta2:#3b4046; --ed-ombra:#212529; --ed-icona:#1c7ed6; }
+.ed-locale{ --ed-bg:radial-gradient(40% 25% at 20% 10%, rgba(255,107,214,.35), transparent 70%), radial-gradient(40% 25% at 85% 30%, rgba(34,211,238,.25), transparent 70%), linear-gradient(180deg,#5a1f4a,#260b22);
+  --ed-carta:#6d2a5c; --ed-carta2:#3d1435; --ed-ombra:#220a1e; --ed-icona:#f06595; }
+.ed-trofei{ --ed-bg:radial-gradient(60% 30% at 50% 0%, rgba(255,212,59,.3), transparent 70%), linear-gradient(180deg,#1e3a6e,#0e1c3c);
+  --ed-carta:#2c4c85; --ed-carta2:#18305a; --ed-ombra:#0b1830; --ed-icona:#fcc419; }
+.ed-bar{ --ed-bg:repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 26px, transparent 26px 52px), linear-gradient(180deg,#8b5a2b,#4a2c14);
+  --ed-carta:#9c6634; --ed-carta2:#5c3517; --ed-ombra:#38200c; --ed-icona:#e03131; }
+/* "Come giocate?" in una finestra sopra la sala */
+.ed-modale-sfondo{ position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center; padding:18px;
+  background:rgba(6,10,24,.62); animation:edSfondo .2s ease; }
+.ed-modale{ width:100%; max-width:440px; max-height:calc(var(--alt, 100dvh) - 36px); overflow:auto; border-radius:24px; padding:16px 14px 12px; color:#fff;
+  background:linear-gradient(180deg,var(--ed-carta),var(--ed-carta2)); box-shadow:0 0 0 2px rgba(255,215,90,.5), 0 20px 50px rgba(0,0,0,.55);
+  animation:edModale .22s cubic-bezier(.2,.9,.3,1.15); }
+@keyframes edSfondo{ from{ opacity:0; } to{ opacity:1; } }
+@keyframes edModale{ from{ opacity:0; transform:scale(.92); } to{ opacity:1; transform:none; } }
+.edm-testa{ display:flex; align-items:center; gap:12px; margin:0 4px 14px; }
+.edm-ico{ font-size:2.4rem; line-height:1; }
+.edm-testa b{ display:block; font-size:1.4rem; font-weight:900; }
+.edm-testa span{ display:block; font-size:.9rem; opacity:.82; font-weight:800; }
+.edm-piede{ display:flex; gap:8px; margin-top:12px; }
+.edm-piede .btn{ flex:1; }
+.ed-modale .modo-scelta{ gap:9px; }
+.ed-modale .modo-grande{ min-height:66px; padding:10px 14px; gap:12px; border-radius:18px; }
+.ed-modale .mg-ico{ font-size:1.9rem; width:42px; }
+.ed-modale .mg-tit{ font-size:1.06rem; }
+.ed-modale .mg-sotto{ font-size:.82rem; }
 
 /* editor avatar: zoom sul viso, tasto annulla, "a caso" per scheda, l'avatar reagisce se lo tocchi */
 .editor-avatar .om-figura{ transition:transform .45s cubic-bezier(.3,.9,.3,1); transform-origin:50% 37%; cursor:pointer; }
