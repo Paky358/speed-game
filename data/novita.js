@@ -15,7 +15,7 @@ window.SG_NOVITA = [
     descrizione: [
       "Fiches e monete ora sono la stessa cosa: al Black Jack e al Poker giochi con le tue Speed Coins, che al tavolo diventano fiches.",
       "Chi aveva già delle fiches non perde niente: si sono sommate alle monete. E chi in tutto aveva meno di 1.000 monete è salito a 1.000.",
-      "Chi crea il profilo da adesso parte con 1.000 Speed Coins. Il regalo di 300 ogni 2 ore resta, in monete.",
+      "Chi crea il profilo da adesso parte con 1.000 Speed Coins. Il regalo ora è di 1.000 monete al giorno: si ritira una volta al giorno e torna a mezzanotte.",
       "Più XP: ora li danno anche Glow Hockey, lo Scopone e il Black Jack e il Poker contro il computer (quando ti alzi dal tavolo dopo almeno una mano)."
     ]
   },

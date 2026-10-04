@@ -605,7 +605,7 @@
     var s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
     return h > 0 ? (h + "h " + m + "m") : (m > 0 ? (m + "m") : "poco");
   }
-  // riquadro con saldo fiches + tasto per ritirare il bonus gratis (ogni 2 ore)
+  // riquadro con saldo fiches + tasto per ritirare il bonus gratis (il regalo del giorno: 1.000 monete, torna a mezzanotte)
   // dopo(nuovo) = facoltativo, avvisa chi lo usa (es. la saletta online) del nuovo saldo
   function riquadroBonus(el, dopo) {
     var box = el("div", { style: "background:var(--carta,#1b1836);border-radius:14px;padding:12px;margin-bottom:12px;text-align:center;box-shadow:var(--ombra,0 6px 16px rgba(0,0,0,.3))" });
@@ -613,8 +613,8 @@
     var testoSaldo = el("div", { style: "font-size:1.1rem;margin-bottom:8px;color:#ffe58a;font-weight:800", html: "🪙 Hai <b>" + fmt(saldo) + "</b> Speed Coins" });
     var b = el("button", { class: "btn btn-primario", style: "margin:0" });
     function agg() {
-      if (SGNube.puoRitirareBonus()) { b.disabled = false; b.textContent = "🎁 Ritira " + fmt(SGNube.bonusImporto) + " monete gratis"; }
-      else { b.disabled = true; b.textContent = "⏳ Prossimo bonus tra " + fmtTempo(SGNube.prossimoBonusMs()); }
+      if (SGNube.puoRitirareBonus()) { b.disabled = false; b.textContent = "🎁 Regalo del giorno: " + fmt(SGNube.bonusImporto) + " monete"; }
+      else { b.disabled = true; b.textContent = "⏳ Nuovo regalo tra " + fmtTempo(SGNube.prossimoBonusMs()) + " (a mezzanotte)"; }
     }
     b.onclick = function () {
       b.disabled = true;
@@ -1258,7 +1258,7 @@
     function refresh() { tav.aggiorna(vistaBJ(st)); }
     tav = tavoloBJ(t, {
       avatari: function () { return avatari; },
-      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · ritira il bonus!") : ("👤 " + prof.nome + " · gioca con le tue Speed Coins")) : "Un telefono · Banco: Matt",
+      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · ritira il regalo!") : ("👤 " + prof.nome + " · gioca con le tue Speed Coins")) : "Un telefono · Banco: Matt",
       puoAgire: function () { return true; },
       puoNuova: function () { return true; },
       guida: function () { return true; },

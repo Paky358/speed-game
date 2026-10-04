@@ -18,9 +18,12 @@
     appId: "1:768605679598:web:11ea341e4f41327755e8ff"
   };
   // UNA MONETA SOLA (dal 4 ott 2026): le fiches del Casinò sono le Speed Coins del profilo (campo "coins").
-  // Si parte con 1.000 monete; il regalo di 300 ogni 2 ore resta, in monete.
+  // Si parte con 1.000 monete; il regalo è di 1.000 monete al giorno (torna a mezzanotte).
   var MONETE_START = 1000;
-  var BONUS = 300, BONUS_MS = 2 * 3600 * 1000;   // 300 monete gratis ogni 2 ore
+  var BONUS = 1000;   // il regalo del giorno: si ritira una volta al giorno, torna disponibile a mezzanotte
+  function giornoDi(ms) { var d = new Date(ms); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+  function regaloPronto() { return !!(profilo && (!profilo.bonusUltimo || giornoDi(profilo.bonusUltimo) !== giornoDi(Date.now()))); }
+  function finoAMezzanotte() { var d = new Date(); d.setHours(24, 0, 0, 0); return Math.max(0, d.getTime() - Date.now()); }
   var auth = null, db = null, pronto = false, utente = null, profilo = null, ascolta = [], ultimaScheda = null;
   // il saldo che il gioco del Casinò in corso "conosce" (letto all'inizio o salvato l'ultima volta):
   // i giochi salvano il loro saldo e qui si aggiunge solo la differenza, così le monete prese
@@ -174,13 +177,13 @@
       return db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
     },
 
-    // ---- bonus gratuito ogni 2 ore ----
+    // ---- il regalo del giorno: 1.000 monete, una volta al giorno (torna a mezzanotte) ----
     bonusImporto: BONUS,
-    puoRitirareBonus: function () { return !!(profilo && (Date.now() - (profilo.bonusUltimo || 0)) >= BONUS_MS); },
-    prossimoBonusMs: function () { return profilo ? Math.max(0, BONUS_MS - (Date.now() - (profilo.bonusUltimo || 0))) : BONUS_MS; },
+    puoRitirareBonus: regaloPronto,
+    prossimoBonusMs: function () { return regaloPronto() ? 0 : finoAMezzanotte(); },
     ritiraBonus: function () {
       if (!auth || !utente || !profilo) return Promise.reject(new Error("offline"));
-      if ((Date.now() - (profilo.bonusUltimo || 0)) < BONUS_MS) return Promise.reject(new Error("presto"));
+      if (!regaloPronto()) return Promise.reject(new Error("presto"));
       // in monete; se un gioco del Casinò è aperto, aggiunge anche lui il regalo al suo saldo
       var nuovo = monete() + BONUS;
       profilo.coins = nuovo; profilo.bonusUltimo = Date.now();

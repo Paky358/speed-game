@@ -667,7 +667,7 @@
       }),
       extra: extra, attesa: "Aspetta che l'host cominci: si gioca a " + NOME_VAR[vm.variante] + "! 🃏", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
-  // le mie fiches (e, se sono finite, il modo per risedersi con altre monete o il regalo ogni 2 ore)
+  // le mie fiches (e, se sono finite, il modo per risedersi con altre monete o il regalo del giorno)
   function fichesBox(t, cb, io) {
     var el = t.el, box = el("div", { class: "pk-fiches" });
     if (io.stack >= GRANDE) { box.appendChild(el("div", { text: "🎰 Ti siedi con " + fmtN(io.stack) + " fiches" })); return box; }
