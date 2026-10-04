@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 155,
+    data: "4 ottobre 2026",
+    titolo: "XP anche nelle partite veloci ⚡",
+    descrizione: [
+      "Ogni partita finita ora dà sempre XP, almeno 5, anche se dura pochi secondi: Tris, Drop 4 e tutte le partite contro il computer, a qualsiasi difficoltà.",
+      "Da lì vale la regola di sempre: 1 XP per ogni secondo di partita, +50% se vinci. Una partita a Tris di 20 secondi vale circa 20 XP, 30 se la vinci.",
+      "Contro il computer ora gli XP arrivano anche nei giochi che ti chiamano «Tu» invece che col nome del profilo."
+    ]
+  },
+  {
     v: 154,
     data: "4 ottobre 2026",
     titolo: "Nella città si entra! 🏙️🚪",

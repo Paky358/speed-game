@@ -11,7 +11,8 @@
      (si riparte dal livello 1 con 0 XP, +1 Prestigio, +5.000 Speed Coins;
      le monete e il resto non si toccano).
    - Gli XP di una partita dipendono da quanto dura: 1 XP al secondo
-     (al massimo 30 minuti contati), +50% se vinci, +250 alla prima
+     (almeno 5 XP per ogni partita finita, anche velocissima come a Tris;
+     al massimo 30 minuti contati), +50% se vinci, +250 alla prima
      partita del giorno. Così ogni gioco vale per il tempo che ci passi.
    ========================================================= */
 (function () {
@@ -20,7 +21,7 @@
   var BONUS_PRESTIGIO = 5000;   // Speed Coins quando si fa il Prestigio
   var XP_SECONDO = 1;           // XP per ogni secondo di partita
   var MAX_SECONDI = 1800;       // al massimo 30 minuti contati per partita
-  var MIN_SECONDI = 15;         // partite aperte e chiuse subito non valgono
+  var MIN_XP = 5;               // ogni partita finita vale almeno questo (le partite lasciate a metà non danno niente)
   var BONUS_VITTORIA = 0.5;     // +50% se vinci
   var BONUS_GIORNO = 250;       // XP in più alla prima partita del giorno
   var BASE = 100, POTENZA = 0.95;   // la curva: più alta la potenza, più lenti i livelli alti
@@ -53,13 +54,12 @@
   // gli XP di una partita: o = { secondi, vinto, primaDelGiorno }
   function xpPartita(o) {
     var sec = Math.min(MAX_SECONDI, Math.max(0, o.secondi || 0));
-    if (sec < MIN_SECONDI) return 0;
-    var xp = sec * XP_SECONDO * (o.vinto ? 1 + BONUS_VITTORIA : 1);
+    var xp = Math.max(MIN_XP, sec * XP_SECONDO) * (o.vinto ? 1 + BONUS_VITTORIA : 1);
     return Math.round(xp + (o.primaDelGiorno ? BONUS_GIORNO : 0));
   }
 
   window.SGLivelli = {
-    MAX: MAX, BONUS_PRESTIGIO: BONUS_PRESTIGIO, BONUS_GIORNO: BONUS_GIORNO, BONUS_VITTORIA: BONUS_VITTORIA, MAX_SECONDI: MAX_SECONDI,
+    MAX: MAX, BONUS_PRESTIGIO: BONUS_PRESTIGIO, BONUS_GIORNO: BONUS_GIORNO, BONUS_VITTORIA: BONUS_VITTORIA, MAX_SECONDI: MAX_SECONDI, MIN_XP: MIN_XP,
     xpPerSalire: xpPerSalire, bonusLivello: bonusLivello, aggiungi: aggiungi, xpPartita: xpPartita
   };
 })();

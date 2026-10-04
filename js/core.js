@@ -421,7 +421,7 @@
       el("div", { class: "rl-barra" }, [ el("i", { style: "width:" + pct + "%" }) ]),
       el("div", { class: "rl-xp", html: "<b>" + cifre(prog.xp) + "</b> / " + cifre(serve) + " XP · " + prossimo }),
       el("ul", { class: "rl-regole" }, [
-        el("li", { html: "<b>1 XP per ogni secondo</b> di partita (al massimo 30 minuti a partita)" }),
+        el("li", { html: "<b>1 XP per ogni secondo</b> di partita: almeno " + L.MIN_XP + " XP per ogni partita finita, al massimo 30 minuti contati" }),
         el("li", { html: "<b>+" + Math.round(L.BONUS_VITTORIA * 100) + "%</b> se vinci, <b>+" + L.BONUS_GIORNO + " XP</b> alla prima partita del giorno" }),
         el("li", { html: "Ogni livello nuovo regala <b>livello × 50</b> Speed Coins" }),
         el("li", { html: "Dopo il livello " + L.MAX + " scatta il <b>Prestigio</b>: si riparte dal livello 1 con <b>" + cifre(L.BONUS_PRESTIGIO) + "</b> Speed Coins in regalo" })
@@ -3078,6 +3078,8 @@
   function oggiStr() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
   function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
   function stessoNome(a, b) { return String(a || "").trim().toLowerCase().slice(0, 16) === String(b || "").trim().toLowerCase().slice(0, 16); }
+  // contro il computer certi giochi ti chiamano "Tu" (o "Io") invece che col nome del profilo
+  function sonoIo(n) { var x = String(n || "").toLowerCase().replace(/[^a-zàèéìòù]/g, ""); return x === "tu" || x === "io"; }
   // classifica = [{ nome, pos? , punti? }] dal primo all'ultimo; soloSeCi = niente XP se il mio nome non c'è (es. chi guarda)
   function premiaPartita(classifica, soloSeCi) {
     var ora = Date.now();
@@ -3087,6 +3089,7 @@
     if (!(window.SGLivelli && window.SGNube && SGNube.aggiungiXp && SGNube.profilo())) return;   // solo coi profili
     var p = SGNube.profilo(), lista = classifica || [], mio = null;
     lista.forEach(function (r) { if (!mio && r && stessoNome(r.nome, p.nome)) mio = r; });
+    if (!mio) lista.forEach(function (r) { if (!mio && r && sonoIo(r.nome)) mio = r; });
     if (soloSeCi && !mio) return;
     var primo = lista[0], vinto = !!mio && (mio.pos != null ? mio.pos === 1 : (mio === primo || (mio.punti != null && primo && mio.punti === primo.punti)));
     var giorno = oggiStr(), prima = SGNube.progressione().xpGiorno !== giorno;
@@ -3191,7 +3194,7 @@
       // (dà anche gli XP: a questo telefono e, se è l'host, a tutti gli altri con "__esito")
       risultato: function (classifica) {
         if (!viva() || !classifica || !classifica.length) return;
-        premiaPartita(classifica, true);
+        premiaPartita(classifica, false);   // questo telefono ha giocato davvero (host o contro il computer): XP anche se il nome è diverso
         if (reteXp && reteXp.inviaVeloce) try { reteXp.inviaVeloce({ t: "__esito", c: classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }) }); } catch (e) {}
         if (salaCtx && salaCtx.risultato) salaCtx.risultato(g, classifica);
       },
