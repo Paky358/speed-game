@@ -1,8 +1,11 @@
 /* =========================================================
    SPeeD GAME — LIVELLI, XP, SPEED COINS E PRESTIGIO
    Tutte le regole stanno qui, così si ritoccano in un posto solo.
-   - XP per passare al livello dopo: 100 x livello^1,5
-     (i primi livelli volano, poi diventa sempre più difficile)
+   - XP per passare al livello dopo: 100 x livello^0,95
+     (i primi livelli volano, poi ogni livello chiede un po' di più).
+     Con 1 XP al secondo, contando vittorie e bonus: livello 5 dopo 2-3 partite,
+     livello 10 dopo circa 1 ora, livello 20 dopo circa 4 ore, Prestigio dopo
+     circa 24 ore (giocando 3-4 ore a settimana: ogni 1 mese e mezzo / 2 mesi).
    - Ogni livello raggiunto regala livello x 50 Speed Coins.
    - Il livello massimo è 50: superato il 50 scatta il Prestigio
      (si riparte dal livello 1 con 0 XP, +1 Prestigio, +5.000 Speed Coins;
@@ -20,9 +23,10 @@
   var MIN_SECONDI = 15;         // partite aperte e chiuse subito non valgono
   var BONUS_VITTORIA = 0.5;     // +50% se vinci
   var BONUS_GIORNO = 250;       // XP in più alla prima partita del giorno
+  var BASE = 100, POTENZA = 0.95;   // la curva: più alta la potenza, più lenti i livelli alti
 
   // XP che servono per passare dal livello "livello" al successivo
-  function xpPerSalire(livello) { return Math.round(100 * Math.pow(livello, 1.5)); }
+  function xpPerSalire(livello) { return Math.round(BASE * Math.pow(livello, POTENZA)); }
   // Speed Coins regalati quando si raggiunge "livello"
   function bonusLivello(livello) { return livello * 50; }
 
