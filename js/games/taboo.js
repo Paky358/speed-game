@@ -60,7 +60,7 @@
   }
 
   function hostPartita(t) {
-    var G = { rete: null, myId: null, nome: "", vm: null, carta: null, fase: null, ui: null, uiTurno: -1, riepilogo: null, tic: null };
+    var G = { rete: null, myId: null, nome: "", vm: null, carta: null, fase: null, ui: null, uiTurno: -1, riepilogo: null, tic: null, statSalvate: Object.create(null) };
     stile();
     if (t.linkParams && t.linkParams.stanza) {
       if (t.nomeProfilo()) { G.nome = t.nomeProfilo(); return ospite(t, t.linkParams.stanza); }
@@ -74,6 +74,33 @@
     var squadre = { host: 0 }, punti = [0, 0], carte = mescola((window.SG_TABOO_CARTE || []).slice()), indiceCarta = 0;
     var coda = [], indiceTurno = 0, attivo = null, deadline = 0, passati = 0, riepilogo = null, cartaOra = null;
     var statTurno = null, chiaveCarta = 0, boxSquadre = null, schermo = null, ui = null;
+    var partitaId = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+    var statGiocatori = Object.create(null);
+
+    function statPersona(id) {
+      if (!statGiocatori[id]) statGiocatori[id] = { turniSpiegati: 0, carteIndovinate: 0, cartePassate: 0, buzzFatti: 0, buzzSubiti: 0, turniPositivi: 0, comboCarte: 0, comboCarteMax: 0, esitiTurni: [] };
+      return statGiocatori[id];
+    }
+    function salvaStatTaboo(id, v) {
+      if (!id || !v || !v.partitaId || G.statSalvate[v.partitaId]) return;
+      G.statSalvate[v.partitaId] = true;
+      if (t.guarda || (t.linkParams && t.linkParams.prova) || (t.impostazioni && t.impostazioni.prova)) return;
+      if (!(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      var me = (v.giocatori || []).find(function (p) { return p.id === id; });
+      var miei = v.statGiocatori && v.statGiocatori[id];
+      if (!me || !miei) return;
+      var vincitore = v.punti[0] === v.punti[1] ? -1 : (v.punti[0] > v.punti[1] ? 0 : 1);
+      var x = { partite: 1, partiteOnline: 1, turniSpiegati: miei.turniSpiegati, carteIndovinate: miei.carteIndovinate,
+        cartePassate: miei.cartePassate, buzzFatti: miei.buzzFatti, buzzSubiti: miei.buzzSubiti, turniPositivi: miei.turniPositivi };
+      if (vincitore >= 0 && v.squadre[id] === vincitore) x.vittorie = 1;
+      var s0 = SGNube.statGioco ? (SGNube.statGioco("taboo") || {}) : {};
+      var serie = s0.serieTurniPositiviOra || 0;
+      (miei.esitiTurni || []).forEach(function (buono) { serie = buono ? serie + 1 : 0; });
+      var incr = []; Object.keys(x).forEach(function (k) { if (x[k]) incr.push([k, x[k]]); });
+      SGNube.salvaProgressi(null, "taboo", incr,
+        [["comboCarteMax", miei.comboCarteMax || 0], ["serieTurniPositiviMax", serie]],
+        [["serieTurniPositiviOra", serie]]);
+    }
 
     function indice(id) { return giocatori.findIndex(function (p) { return p.id === id; }); }
     function squadra(id) { return squadre[id] === 1 ? 1 : 0; }
@@ -123,7 +150,7 @@
       aggiornaLobby();
     };
     function vm() {
-      return { fase: fase, codice: codice, pronta: pronta, giocatori: giocatori.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino, host: !!p.host }; }), squadre: squadre,
+      return { fase: fase, codice: codice, pronta: pronta, partitaId: partitaId, statGiocatori: fase === "fine" ? statGiocatori : null, giocatori: giocatori.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino, host: !!p.host }; }), squadre: squadre,
         punti: punti.slice(), durata: durata, giri: giri, turno: indiceTurno, totale: coda.length, attivo: attivo, team: attivo == null ? null : squadra(attivo), deadline: deadline,
         passati: passati, maxPassi: 3, chiaveCarta: chiaveCarta, riepilogo: riepilogo, vincitore: fase === "fine" ? (punti[0] === punti[1] ? -1 : (punti[0] > punti[1] ? 0 : 1)) : null };
     }
@@ -154,7 +181,7 @@
         if (m.t === "join") {
           if (fase === "lobby" && indice(id) < 0 && giocatori.length < MAX) {
             var nome = String(m.nome || "Amico").trim().slice(0, 16) || "Amico";
-            giocatori.push({ id: id, nome: nome, omino: valido(m.omino) });
+            giocatori.push({ id: id, nome: nome, omino: valido(m.omino) }); statPersona(id);
             squadre[id] = membri(0).length <= membri(1).length ? 0 : 1;
             aggiornaLobby();
           } else if (indice(id) >= 0) sincronizza(id);
@@ -182,17 +209,20 @@
     function prossimoTurno() {
       if (indiceTurno >= coda.length || indiceCarta >= carte.length || !membri(0).length || !membri(1).length) return finePartita();
       fase = "turno"; attivo = coda[indiceTurno++]; passati = 0; statTurno = { giuste: [], buzz: [], passate: [] }; riepilogo = null;
+      statPersona(attivo).turniSpiegati++;
       cartaOra = carte[indiceCarta++]; chiaveCarta++; deadline = Date.now() + durata * 1000;
       inviaStato(); giocatori.forEach(function (p) { inviaCarta(p.id); });
       mostraPartita(); aggiornaPartita();
       if (timer) clearInterval(timer);
       timer = setInterval(function () { aggiornaPartita(); if (Date.now() >= deadline) fineTurno(); }, 200);
     }
-    function registra(tipo) {
+    function registra(tipo, id) {
       if (fase !== "turno" || !statTurno) return;
-      if (tipo === "giusta") { punti[squadra(attivo)]++; statTurno.giuste.push(cartaOra.p); }
-      else if (tipo === "buzz") { punti[squadra(attivo)]--; statTurno.buzz.push(cartaOra.p); }
-      else { passati++; statTurno.passate.push(cartaOra.p); }
+      id = id || attivo;
+      var speaker = statPersona(attivo);
+      if (tipo === "giusta") { punti[squadra(attivo)]++; statTurno.giuste.push(cartaOra.p); speaker.carteIndovinate++; speaker.comboCarte++; speaker.comboCarteMax = Math.max(speaker.comboCarteMax, speaker.comboCarte); }
+      else if (tipo === "buzz") { punti[squadra(attivo)]--; statTurno.buzz.push(cartaOra.p); speaker.buzzSubiti++; speaker.comboCarte = 0; statPersona(id).buzzFatti++; }
+      else { passati++; statTurno.passate.push(cartaOra.p); speaker.cartePassate++; speaker.comboCarte = 0; }
       if (tipo === "passata" && passati > 3) return;
       if (passati >= 3 && tipo === "passata") { prossimaCarta(); return; }
       prossimaCarta();
@@ -204,6 +234,9 @@
     function fineTurno() {
       if (fase !== "turno") return;
       if (timer) { clearInterval(timer); timer = null; }
+      var esitoPositivo = statTurno.giuste.length > statTurno.buzz.length, statsTurno = statPersona(attivo);
+      if (esitoPositivo) statsTurno.turniPositivi++;
+      statsTurno.esitiTurni.push(esitoPositivo);
       fase = "riepilogo"; deadline = 0; riepilogo = { id: attivo, nome: (giocatori[indice(attivo)] || {}).nome || "Giocatore", team: squadra(attivo), giuste: statTurno.giuste.slice(), buzz: statTurno.buzz.slice(), passate: statTurno.passate.slice() };
       inviaStato(); mostraRiepilogo();
       timeoutEsito = setTimeout(function () { timeoutEsito = null; if (fase === "riepilogo") { if (indiceTurno >= coda.length) finePartita(); else prossimoTurno(); } }, 6500);
@@ -222,14 +255,15 @@
     function nuovaPartita() {
       if (timer) { clearInterval(timer); timer = null; }
       if (timeoutEsito) { clearTimeout(timeoutEsito); timeoutEsito = null; }
-      fase = "lobby"; punti = [0, 0]; attivo = null; deadline = 0; riepilogo = null; cartaOra = null; coda = []; indiceTurno = 0; ui = null;
+      fase = "lobby"; partitaId = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); statGiocatori = Object.create(null); giocatori.forEach(function (p) { statPersona(p.id); });
+      punti = [0, 0]; attivo = null; deadline = 0; riepilogo = null; cartaOra = null; coda = []; indiceTurno = 0; ui = null;
       aggiornaLobby();
     }
     function finePartita() {
       if (fase === "fine") return;
       if (timer) { clearInterval(timer); timer = null; }
       if (timeoutEsito) { clearTimeout(timeoutEsito); timeoutEsito = null; }
-      fase = "fine"; attivo = null; deadline = 0; inviaStato();
+      fase = "fine"; attivo = null; deadline = 0; salvaStatTaboo("host", vm()); inviaStato();
       if (t.risultato) t.risultato(classificaGiocatori());
       mostraFine(true);
     }
@@ -299,7 +333,7 @@
         if (!G.ui || G.uiTurno !== v.turno || G.fase !== "turno") { G.fase = "turno"; G.uiTurno = v.turno; G.uiKey = -1; creaSchermoOspite(); avviaTic(); }
         aggiornaOspite();
       } else if (v.fase === "riepilogo") { stopTic(); G.fase = v.fase; G.riepilogo = v.riepilogo; creaSchermoOspite(); mostraRiepilogoOspite(); }
-      else if (v.fase === "fine") { stopTic(); G.fase = v.fase; creaSchermoOspite(); mostraFineOspite(); }
+      else if (v.fase === "fine") { stopTic(); salvaStatTaboo(G.myId, v); G.fase = v.fase; creaSchermoOspite(); mostraFineOspite(); }
     }
     function ospite(t, codice) {
       if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
