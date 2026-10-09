@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 170,
+    data: "9 ottobre 2026",
+    titolo: "Trofei per Palla a Pendolo e Ruota della Fortuna 🏆",
+    descrizione: [
+      "Palla a Pendolo: 18 trofei, sia da lanciatore sia sulla trave. Il più duro: buttare giù tutti e tre i bot Difficili in 6 secondi.",
+      "Ruota della Fortuna: 18 trofei tra giri, consonanti, frasi risolte e manche da 5.000 punti. I più rari: battere i bot Difficili senza mai fare Bancarotta, o vincendo tutte le manche.",
+      "Anche questi danno XP e Speed Coins. Contano le partite giocate da qui in avanti, con il profilo."
+    ]
+  },
+  {
     v: 169,
     data: "9 ottobre 2026",
     titolo: "Il Casinò in prima persona e il nuovo Circolo 🎲",

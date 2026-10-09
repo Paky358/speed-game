@@ -51,7 +51,7 @@
           if (r.modo === "bot" && r.difficolta === "difficile") incrs.push([ruolo === "lanciatore" ? "vittorieLanciatoreDifficile" : "vittorieTraveDifficile", 1]);
           if (ruolo === "lanciatore" && abbattuti === 3) {
             incrs.push(["tripletta", 1]);
-            if (r.modo === "bot" && r.difficolta === "difficile" && +r.durata <= 5) incrs.push(["triplettaDifficileVeloce", 1]);
+            if (r.modo === "bot" && r.difficolta === "difficile" && +r.durata <= 6) incrs.push(["triplettaDifficileVeloce", 1]);
           }
         }
       }
