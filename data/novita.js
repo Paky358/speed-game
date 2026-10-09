@@ -14,7 +14,7 @@ window.SG_NOVITA = [
     titolo: "Trofei di Calcio Biliardo ⚽",
     descrizione: [
       "Arrivano 20 trofei: si parte con la prima partita e i primi gol, poi si punta a battere Matt, vincere online e segnare con tiri speciali.",
-      "I trofei più rari premiano chi batte Matt Difficile più volte, senza subire gol, o vince 10 partite online."
+      "I trofei più rari premiano chi batte Matt Difficile 5 volte, chi lo batte senza subire gol e chi arriva a 250 gol."
     ]
   },
   {
