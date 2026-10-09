@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 171,
+    data: "9 ottobre 2026",
+    titolo: "Trofei per Nomi, Cose e Città 🏆",
+    descrizione: [
+      "Arrivano 19 trofei per le parole approvate, i giri completati e le partite vinte, anche online.",
+      "I progressi si salvano alla fine della partita per il profilo che sta giocando."
+    ]
+  },
+  {
     v: 170,
     data: "9 ottobre 2026",
     titolo: "Trofei per Palla a Pendolo e Ruota della Fortuna 🏆",

@@ -15,6 +15,39 @@
   var K_PERSO = "sg_ncc_perso";
   var PUNTI_OK = 10;      // parola valida e unica
   var PUNTI_DOPPIA = 5;   // parola valida ma scritta anche da un altro
+  var SALVATI_NCC = {};
+  function sessioneNcc() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+  // I progressi si accumulano durante i giri e si salvano una volta sola alla fine.
+  function nuovoProgresso() { return { paroleValide: 0, paroleDoppie: 0, giriCompleti: 0, giriPerfetti: 0 }; }
+  function registraProgresso(g, cats, risposte, valida, esito) {
+    var p = g._trofei || (g._trofei = nuovoProgresso());
+    var piene = 0, giuste = 0, doppie = 0;
+    cats.forEach(function (_, ci) {
+      if (risposte[ci]) piene++;
+      if (valida[ci]) { giuste++; if (esito[ci] === PUNTI_DOPPIA) doppie++; }
+    });
+    p.paroleValide += giuste; p.paroleDoppie += doppie;
+    if (piene === cats.length) p.giriCompleti++;
+    if (giuste === cats.length) p.giriPerfetti++;
+  }
+  function salvaTrofeiNcc(t, sessione, id, nome, giocatore, vittoria, online) {
+    if (!giocatore || !giocatore._trofei) return;
+    if (t.prova || (t.linkParams && t.linkParams.prova) || !window.SGNube || !SGNube.disponibile() || !SGNube.pronto()) return;
+    var prof = SGNube.profilo(); if (!prof || !prof.nome) return;
+    // Online è autorevole l'host; ogni telefono salva soltanto i propri dati.
+    // Sul telefono condiviso conta il posto col nome del profilo.
+    if (!online && String(nome || "").trim().toLowerCase() !== String(prof.nome).trim().toLowerCase()) return;
+    var chiave = String(sessione || "") + "|" + String(id || "");
+    if (SALVATI_NCC[chiave]) return;
+    SALVATI_NCC[chiave] = true;
+    var stat = giocatore._trofei, inc = [["partite", 1]];
+    if (vittoria) inc.push(["vinte", 1]);
+    if (online) inc.push(["partiteOnline", 1]);
+    if (online && vittoria) inc.push(["vinteOnline", 1]);
+    ["paroleValide", "paroleDoppie", "giriCompleti", "giriPerfetti"].forEach(function (k) { if (stat[k]) inc.push([k, stat[k]]); });
+    SGNube.salvaProgressi(null, "nomicose", inc, [["puntiMax", giocatore.punti || 0]], []);
+  }
 
   function catPerso() { try { return JSON.parse(localStorage.getItem(K_PERSO)) || []; } catch (e) { return []; } }
   function salvaPerso(a) { try { localStorage.setItem(K_PERSO, JSON.stringify(a)); } catch (e) {} }
@@ -221,7 +254,8 @@
         : (window.SG_NCC_CATEGORIE ? window.SG_NCC_CATEGORIE.normali.slice(0, 5) : []);
       if (imp.modo === "online") return hostNcc(t, cats, imp);
       var st = {
-        g: t.giocatori.map(function (n) { return { nome: n, punti: 0 }; }),
+        sessioneTrofei: sessioneNcc(),
+        g: t.giocatori.map(function (n) { return { nome: n, punti: 0, _trofei: nuovoProgresso() }; }),
         cats: cats, secondi: imp.secondi || 60, giri: imp.round || 2,
         giro: 0, lettera: null, risposte: [], voti: []
       };
@@ -562,6 +596,7 @@
       var tot = esito[a].reduce(function (n, p) { return n + p; }, 0);
       gg.punti += tot;
       gg._ultimo = { esito: esito[a], valida: valida[a], tot: tot };
+      registraProgresso(gg, st.cats, st.risposte[a], valida[a], esito[a]);
     });
   }
 
@@ -584,6 +619,9 @@
     if (ultimo) {
       var vinc = st.g.indexOf(ordine[0]);
       await ST.finale(S, vinc, ordine[0].punti + " punti");
+      var mioNome = t.nomeProfilo && t.nomeProfilo();
+      var mioIndice = st.g.findIndex(function (gg) { return String(gg.nome).trim().toLowerCase() === String(mioNome || "").trim().toLowerCase(); });
+      if (mioIndice >= 0) salvaTrofeiNcc(t, st.sessioneTrofei, st.g[mioIndice].nome, st.g[mioIndice].nome, st.g[mioIndice], mioIndice === vinc, false);
       return t.fine(ordine.map(function (gg) { return { nome: gg.nome, punti: gg.punti }; }));
     }
     await ST.suSchermo(S, 800);
@@ -630,8 +668,8 @@
   function hostNcc(t, cats, imp) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteN(t);
     var nomeHost = (t.giocatori && t.giocatori[0]) || "Host";
-    var H = { fase: "lobby", codice: "…", pronta: false, cats: cats, secondi: imp.secondi || 60, giri: imp.round || 2, giro: 0, lettera: null,
-      players: [{ id: "host", nome: nomeHost, omino: ST.mioAvatar(nomeHost), punti: 0 }],
+    var H = { sessioneTrofei: sessioneNcc(), fase: "lobby", codice: "…", pronta: false, cats: cats, secondi: imp.secondi || 60, giri: imp.round || 2, giro: 0, lettera: null,
+      players: [{ id: "host", nome: nomeHost, omino: ST.mioAvatar(nomeHost), punti: 0, _trofei: nuovoProgresso() }],
       risposte: {}, fatti: {}, voti: {}, ci: 0, pronti: {}, scadenza: 0, ultimo: null, to: null };
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function pres() { return H.players.filter(function (p) { return !p.via; }); }
@@ -662,7 +700,7 @@
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          if (H.fase === "lobby" && !pById(id) && H.players.length < 10) H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: ST.avatarValido(m.omino), punti: 0 });
+          if (H.fase === "lobby" && !pById(id) && H.players.length < 10) H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: ST.avatarValido(m.omino), punti: 0, _trofei: nuovoProgresso() });
           bd();
         }
         else if (m.t === "risposte") risposte(id, m.r);
@@ -672,8 +710,8 @@
       onErrore: function () { senzaReteN(t); }
     });
     function vm() {
-      var o = { fase: H.fase, codice: H.codice, pronta: H.pronta, giro: H.giro, giri: H.giri, lettera: H.lettera, secondi: H.secondi, cats: H.cats,
-        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, punti: p.punti, via: !!p.via }; }),
+      var o = { sessioneTrofei: H.sessioneTrofei, fase: H.fase, codice: H.codice, pronta: H.pronta, giro: H.giro, giri: H.giri, lettera: H.lettera, secondi: H.secondi, cats: H.cats,
+        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, punti: p.punti, via: !!p.via, trofei: p._trofei || null }; }),
         fatti: Object.keys(H.fatti) };
       if (H.fase === "scrittura") o.rimMs = Math.max(0, H.scadenza - Date.now());
       if (H.fase === "tabellone") {
@@ -746,7 +784,7 @@
     // i punti del giro: vale se più della metà degli altri non l'ha bocciata; uguale a un'altra valida = 5
     function calcola() {
       clearTo();
-      var presenti = pres(), idsP = presenti.map(function (p) { return p.id; }), votanti = presenti.length - 1, tot = {};
+      var presenti = pres(), idsP = presenti.map(function (p) { return p.id; }), votanti = presenti.length - 1, tot = {}, validPer = {}, esitoPer = {};
       presenti.forEach(function (p) { tot[p.id] = 0; });
       H.cats.forEach(function (_, ci) {
         var valida = {}, conta = {};
@@ -757,9 +795,17 @@
           valida[p.id] = (votanti - no) * 2 > votanti;
           if (valida[p.id]) { var k = norm(w); conta[k] = (conta[k] || 0) + 1; }
         });
-        presenti.forEach(function (p) { if (valida[p.id]) tot[p.id] += conta[norm((H.risposte[p.id] || [])[ci])] >= 2 ? PUNTI_DOPPIA : PUNTI_OK; });
+        presenti.forEach(function (p) {
+          var ok = !!valida[p.id], doppia = ok && conta[norm((H.risposte[p.id] || [])[ci])] >= 2;
+          (validPer[p.id] || (validPer[p.id] = []))[ci] = ok;
+          (esitoPer[p.id] || (esitoPer[p.id] = []))[ci] = ok ? (doppia ? PUNTI_DOPPIA : PUNTI_OK) : 0;
+          if (ok) tot[p.id] += doppia ? PUNTI_DOPPIA : PUNTI_OK;
+        });
       });
-      presenti.forEach(function (p) { p.punti += tot[p.id]; });
+      presenti.forEach(function (p) {
+        p.punti += tot[p.id];
+        registraProgresso(p, H.cats, H.risposte[p.id] || [], validPer[p.id] || [], esitoPer[p.id] || []);
+      });
       H.ultimo = { tot: tot };
       H.fase = (H.giro + 1 >= H.giri) ? "fine" : "punti"; bd();
     }
@@ -1021,6 +1067,11 @@
   async function finaleOnline(R, vm) {
     var S = R.S, ordine = ordineN(vm), vinc = ordine[0] ? idxN(vm, ordine[0].id) : -1;
     await ST.finale(S, vinc, (ordine[0] ? ordine[0].punti : 0) + " punti");
+    var io = idxN(vm, R.cb.myId);
+    if (io >= 0) {
+      var mio = vm.players[io], vince = ordine[0] && ordine[0].id === mio.id;
+      salvaTrofeiNcc(R.t, vm.sessioneTrofei, mio.id, mio.nome, { punti: mio.punti, _trofei: mio.trofei || nuovoProgresso() }, !!vince, true);
+    }
     fineN(R.t, vm, R.cb, ordine);
   }
   function fineN(t, vm, cb, ordine) {

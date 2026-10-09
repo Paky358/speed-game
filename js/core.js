@@ -1317,6 +1317,27 @@
     { gioco: "ruota", livello: "diamante", icona: "👑", nome: "Re della Ruota",       desc: "Vinci 20 partite in modalità Sfida",                          stat: "vittorieSfida",                 meta: 20 },
     { gioco: "ruota", livello: "diamante", icona: "🛡️", nome: "Senza Bancarotta",     desc: "Batti i bot Difficili senza mai fare Bancarotta",            stat: "vittorieDifficileSenzaBancarotta", meta: 1 },
     { gioco: "ruota", livello: "diamante", icona: "💎", nome: "Partita Perfetta",     desc: "Batti i bot Difficili vincendo tutte le manche di una partita da almeno 3 manche", stat: "vittorieDifficileTutteLeManche", meta: 1 },
+
+    // ---- NOMI, COSE E CITTÀ ----
+    { gioco: "nomicose", livello: "bronzo",   icona: "✍️", nome: "Prima Matita",       desc: "Concludi la tua prima partita",                              stat: "partite",       meta: 1 },
+    { gioco: "nomicose", livello: "bronzo",   icona: "🔤", nome: "Parola Valida",      desc: "Fai approvare la tua prima parola",                        stat: "paroleValide",  meta: 1 },
+    { gioco: "nomicose", livello: "bronzo",   icona: "📋", nome: "Caselle Piene",      desc: "Completa tutte le categorie in un giro",                   stat: "giriCompleti",  meta: 1 },
+    { gioco: "nomicose", livello: "bronzo",   icona: "🌐", nome: "Al Tavolo Online",   desc: "Concludi una partita online",                              stat: "partiteOnline", meta: 1 },
+    { gioco: "nomicose", livello: "bronzo",   icona: "🏅", nome: "Prima Vittoria",     desc: "Vinci una partita",                                        stat: "vinte",         meta: 1 },
+    { gioco: "nomicose", livello: "bronzo",   icona: "🤝", nome: "Stessa Risposta",    desc: "Fai approvare 3 parole uguali alle tue e a quelle di un altro", stat: "paroleDoppie", meta: 3 },
+    { gioco: "nomicose", livello: "argento",  icona: "🔟", nome: "Serata di Parole",   desc: "Concludi 10 partite",                                      stat: "partite",       meta: 10 },
+    { gioco: "nomicose", livello: "argento",  icona: "🖋️", nome: "Penna Sciolta",      desc: "Fai approvare 50 parole",                                  stat: "paroleValide",  meta: 50 },
+    { gioco: "nomicose", livello: "argento",  icona: "🔁", nome: "In Rima con gli Altri", desc: "Fai approvare 15 parole uguali a quelle di un altro",       stat: "paroleDoppie", meta: 15 },
+    { gioco: "nomicose", livello: "argento",  icona: "📱", nome: "Amici in Rete",      desc: "Concludi 8 partite online",                                stat: "partiteOnline", meta: 8 },
+    { gioco: "nomicose", livello: "argento",  icona: "🥇", nome: "Cinque Trionfi",     desc: "Vinci 5 partite",                                          stat: "vinte",         meta: 5 },
+    { gioco: "nomicose", livello: "oro",      icona: "📚", nome: "Vocabolario Vivente", desc: "Fai approvare 150 parole",                                stat: "paroleValide",  meta: 150 },
+    { gioco: "nomicose", livello: "oro",      icona: "🧠", nome: "Giro Senza Macchie", desc: "Fai approvare tutte le parole in 10 giri",                stat: "giriPerfetti",  meta: 10 },
+    { gioco: "nomicose", livello: "oro",      icona: "🎉", nome: "Serate in Compagnia", desc: "Concludi 25 partite",                                     stat: "partite",       meta: 25 },
+    { gioco: "nomicose", livello: "oro",      icona: "🏆", nome: "Campione del Gruppo", desc: "Vinci 20 partite",                                        stat: "vinte",         meta: 20 },
+    { gioco: "nomicose", livello: "oro",      icona: "🛜", nome: "Campione Connesso",  desc: "Vinci 10 partite online",                                 stat: "vinteOnline",   meta: 10 },
+    { gioco: "nomicose", livello: "diamante", icona: "💎", nome: "Grande Lessico",     desc: "Fai approvare 300 parole",                                stat: "paroleValide",  meta: 300 },
+    { gioco: "nomicose", livello: "diamante", icona: "👑", nome: "Re delle Parole",    desc: "Vinci 35 partite",                                        stat: "vinte",         meta: 35 },
+    { gioco: "nomicose", livello: "diamante", icona: "✨", nome: "Giri da Manuale",    desc: "Fai approvare tutte le parole in 25 giri",                stat: "giriPerfetti",  meta: 25 },
   ];
 
   function valoreStat(prof, gioco, chiave) {
