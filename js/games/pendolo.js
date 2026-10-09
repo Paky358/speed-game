@@ -14,12 +14,51 @@
   var TH_BEAM = 1.0, SWING = 2.0, AIMK = 1.5, AIMG = 2.4, NSEAT = 3, HZ = 40;   // invii host ~25/s (più fluido per gli ospiti)
   var PEAKD = 1.28, PBEAM = 1.0;   // la palla va OLTRE la trave (picco profondità 1.28); il piano della trave è a p=1.0
   var BEAM_L = 0.14, BEAM_R = 0.86, AIM_SPAN = 0.40, MOVSP = 0.36, BOTSP = 0.22, HITF = 0.075, JUMP = 0.6, JCD = 2.0, MINSEP = 0.11;
+  var PARTITE_SALVATE = {};
   function vuoiMirino() { try { return localStorage.getItem("sg-pendolo-mirino") !== "0"; } catch (e) { return true; } }
   var COLSEAT = ["#ff6b6b", "#4dabf7", "#51cf66"];
   function diffP(d) {   // dodge: salto dei bot sulla trave · cd/aimErr: IA del lanciatore · durTrave: quanto devi sopravvivere
     return d === "facile"    ? { dodge: 0.032, dur: 40, durTrave: 18, cdMin: 2.0, cdVar: 1.4, aimErr: 0.16 }
          : d === "difficile" ? { dodge: 0.110, dur: 30, durTrave: 22, cdMin: 1.1, cdVar: 0.8, aimErr: 0.045 }
          :                      { dodge: 0.068, dur: 34, durTrave: 20, cdMin: 1.6, cdVar: 1.1, aimErr: 0.10 };
+  }
+  function nuovoIdPartita(modo) { return modo + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8); }
+  function salvaTrofei(r) {
+    try {
+      if (!r || r.spettatore || r.modo === "prova" || !r.gameId || !(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      var profilo = SGNube.profilo(), nome = String(profilo.nome || "").trim();
+      var nomePartita = String(r.nome || "").trim().toLowerCase();
+      if (!nome || (nome.toLowerCase() !== nomePartita && nome.slice(0, 16).toLowerCase() !== nomePartita)) return;
+      var idProfilo = String(profilo.uid || nome).trim().toLowerCase();
+      var chiave = "pendolo|" + r.gameId + "|" + idProfilo;
+      if (PARTITE_SALVATE[chiave]) return;
+      var chiaveSalvataggio = "sg-pendolo-partita-salvata-" + idProfilo + "-" + String(r.gameId);
+      try { if (window.localStorage && localStorage.getItem(chiaveSalvataggio) === "1") { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
+      var incrs = [["partite", 1]], record = [], valori = [];
+      var ruolo = r.ruolo === "lanciatore" ? "lanciatore" : "trave";
+      if (ruolo === "lanciatore") incrs.push(["partiteLanciatore", 1]);
+      else incrs.push(["partiteTrave", 1]);
+      var sfidaValida = r.modo === "bot" ? r.difficolta !== "facile" : r.modo === "online" && r.avversariUmani > 0;
+      var abbattuti = Math.max(0, Math.min(3, Math.floor(+r.abbattuti || 0)));
+      var schivate = Math.max(0, Math.floor(+r.schivate || 0));
+      if (sfidaValida) {
+        if (abbattuti) incrs.push(["avversariButtati", abbattuti]);
+        if (schivate) incrs.push(["saltiRiusciti", schivate]);
+        if (r.vinto) {
+          incrs.push(["vittorie", 1]);
+          incrs.push([ruolo === "lanciatore" ? "vittorieLanciatore" : "vittorieTrave", 1]);
+          if (r.modo === "online") incrs.push(["vittorieOnline", 1]);
+          if (r.modo === "bot" && r.difficolta === "difficile") incrs.push([ruolo === "lanciatore" ? "vittorieLanciatoreDifficile" : "vittorieTraveDifficile", 1]);
+          if (ruolo === "lanciatore" && abbattuti === 3) {
+            incrs.push(["tripletta", 1]);
+            if (r.modo === "bot" && r.difficolta === "difficile" && +r.durata <= 5) incrs.push(["triplettaDifficileVeloce", 1]);
+          }
+        }
+      }
+      PARTITE_SALVATE[chiave] = 1;
+      try { if (window.localStorage) localStorage.setItem(chiaveSalvataggio, "1"); } catch (e) {}
+      SGNube.salvaProgressi(null, "pendolo", incrs, record, valori);
+    } catch (e) {}
   }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function ballXf(a, p) { return 0.5 + a * AIM_SPAN * (0.45 + 0.55 * (p > 1 ? 1 : p)); }
@@ -39,7 +78,7 @@
   // ---------- simulazione (locale e host) ----------
   function mkChars(assign) {   // assign[seat] = id (umano) | null (bot)
     var base = [0.28, 0.5, 0.72], c = [];
-    for (var i = 0; i < NSEAT; i++) c.push({ fx: base[i], dir: i % 2 ? -1 : 1, mov: 0, jt: 0, jcd: 0, alive: true, human: !!(assign && assign[i]), ctrl: assign ? assign[i] : null });
+    for (var i = 0; i < NSEAT; i++) c.push({ fx: base[i], dir: i % 2 ? -1 : 1, mov: 0, jt: 0, jcd: 0, alive: true, schivate: 0, human: !!(assign && assign[i]), ctrl: assign ? assign[i] : null });
     return c;
   }
   function nuovoStato(P, chars, aiLanc) { return { th: 0, swinging: false, tSw: 0, aim: 0, aimLock: 0, aimHold: 0, lanciaFlag: false, chars: chars, time: P.dur, fase: "gioco", aiLanc: !!aiLanc, aiTarget: -1, aiCd: 0.8, aiGoal: 0, collis: false }; }
@@ -88,8 +127,9 @@
     var crossBack = ST.tSw >= 0.5 && pPrev > PBEAM && p <= PBEAM;
     if (ST.swinging && (crossOut || crossBack)) {
       for (var j = 0; j < ST.chars.length; j++) { var b = ST.chars[j]; if (!b.alive) continue;
-        var aria = b.jt > JUMP * 0.06 && b.jt < JUMP * 0.97;
-        if (!aria && Math.abs(b.fx - bxf) < HITF) { b.alive = false; colpo(); }
+        var aria = b.jt > JUMP * 0.06 && b.jt < JUMP * 0.97, sottoPalla = Math.abs(b.fx - bxf) < HITF;
+        if (aria && sottoPalla && b.human) b.schivate++;
+        if (!aria && sottoPalla) { b.alive = false; colpo(); }
       }
     }
   }
@@ -381,7 +421,7 @@
   // ========================================================
   function locale(t, diff, ruolo, collis) {
     ruolo = ruolo === "trave" ? "trave" : "lanciatore";
-    var P = diffP(diff), raf = null, vivo = true, last = performance.now(), ST, ref, mySeat;
+    var P = diffP(diff), raf = null, vivo = true, last = performance.now(), ST, ref, mySeat, gameId = nuovoIdPartita("bot");
     var io = (t.giocatori && t.giocatori[0]) || "Tu";
     if (ruolo === "trave") {   // TU sulla trave (posto 0), un bot lancia, gli altri 2 posti = bot
       ST = nuovoStato(P, mkChars({ 0: "io", 1: null, 2: null }), true); ST.time = P.durTrave; mySeat = 0;
@@ -402,6 +442,10 @@
       else { var nv = ST.chars.filter(function (x) { return x.alive; }).length; if (nv === 0 || ST.time <= 0) return fine(nv === 0); }
       raf = requestAnimationFrame(loop); }
     function fine(vinto) { stop();
+      var abbattuti = ruolo === "lanciatore" ? 3 - ST.chars.filter(function (x) { return x.alive; }).length : 0;
+      salvaTrofei({ gameId: gameId, modo: "bot", difficolta: diff, nome: io, ruolo: ruolo, vinto: vinto,
+        abbattuti: abbattuti, schivate: ruolo === "trave" ? ST.chars[0].schivate : 0,
+        durata: (ruolo === "trave" ? P.durTrave : P.dur) - ST.time });
       var testo = ruolo === "trave"
         ? (vinto ? "Sei rimasto sulla trave fino alla fine! 🏆" : "Ti ha beccato: sei finito in acqua! 💦")
         : (vinto ? ("Buttati giù tutti e 3 in " + (P.dur - ST.time).toFixed(1) + "s! 💦") : "Tempo scaduto: non li hai buttati giù tutti. Riprova!");
@@ -418,11 +462,16 @@
     var posti = {}, nomi = { host: (t.giocatori && t.giocatori[0]) || "Host" }, lanc = "host";
     var omini = { host: mioAvatar(nomi.host) };   // avatar di chi gioca (id -> cfg)
     for (var _s = 0; _s < NSEAT; _s++) posti[_s] = null;   // seat -> id | null(bot)
-    var fase = "lobby", ST = null, ref = null, raf = null, loop = null, ultimoInvio = 0, last = 0, rete = null;
+    var fase = "lobby", ST = null, ref = null, raf = null, loop = null, ultimoInvio = 0, last = 0, rete = null, gameId = "";
     // "⚙️ Regole" in saletta: bravura dei bot e collisioni valgono dalla prossima partita
     t.onRegole = function (im) { diff = im.difficolta || "medio"; P = diffP(diff); collis = im.collisioni; };
 
     function seatDi(id) { for (var s = 0; s < NSEAT; s++) if (posti[s] === id) return s; return -1; }
+    function avversariUmani() {
+      var n = lanc && lanc !== "host" ? 1 : 0;
+      for (var s = 0; s < NSEAT; s++) if (posti[s] && posti[s] !== "host") n++;
+      return Math.max(0, n - 1);   // non conta il profilo del telefono che salva
+    }
     function postoLibero() { for (var s = 0; s < NSEAT; s++) if (!posti[s]) return s; return -1; }
     function seggi() { var a = []; for (var s = 0; s < NSEAT; s++) a.push(posti[s] ? { id: posti[s], nome: nomi[posti[s]] } : null); return a; }
     function claim(id) {   // id diventa lanciatore; il vecchio va su un posto libero
@@ -463,10 +512,10 @@
     });
 
     function inizia() {
-      fase = "gioco"; ST = nuovoStato(P, mkChars(posti), lanc === null); ST.collis = !!collis;
+      gameId = nuovoIdPartita("online"); fase = "gioco"; ST = nuovoStato(P, mkChars(posti), lanc === null); ST.collis = !!collis;
       var BOT_TRAVE = ["Sara", "Leo", "Nina"], av = { posti: [], lanc: lanc ? { nome: nomi[lanc], cfg: omini[lanc] || null } : { nome: "Matt" } };
       for (var sb = 0; sb < NSEAT; sb++) av.posti.push(posti[sb] ? { nome: nomi[posti[sb]], cfg: omini[posti[sb]] || null } : { nome: (lanc && sb === 0) ? "Matt" : BOT_TRAVE[sb] });   // se lancia un umano, Matt sta sulla trave
-      rete.invia({ t: "via", lanc: lanc, seggi: seggi(), nomi: nomi, av: av });
+      rete.invia({ t: "via", lanc: lanc, seggi: seggi(), nomi: nomi, av: av, gameId: gameId, difficolta: diff });
       for (var s = 0; s < NSEAT; s++) if (posti[s] && posti[s] !== "host") rete.invia({ t: "ruolo", to: posti[s], seat: s });
       if (lanc && lanc !== "host") rete.invia({ t: "ruolo", to: lanc, seat: -1 });
       var mioRuolo = (lanc === "host") ? "lanciatore" : "trave", mioSeat = seatDi("host");
@@ -492,7 +541,16 @@
     function fineGioco(vintoLanc) {
       fase = "fine"; if (loop) cancelAnimationFrame(loop);
       var survSeat = {}; for (var s = 0; s < NSEAT; s++) survSeat[s] = ST.chars[s].alive ? 1 : 0;
-      rete.invia({ t: "fine", vintoLanc: vintoLanc ? 1 : 0, surv: survSeat, seggi: seggi(), lanc: lanc });
+      var hostRuolo = lanc === "host" ? "lanciatore" : "trave", hostSeat = seatDi("host");
+      var hostVinto = hostRuolo === "lanciatore" ? !!vintoLanc : !!survSeat[hostSeat];
+      var abbattuti = hostRuolo === "lanciatore" ? 3 - ST.chars.filter(function (x) { return x.alive; }).length : 0;
+      var schivate = {}; for (var ss = 0; ss < NSEAT; ss++) schivate[ss] = ST.chars[ss].schivate;
+      var umaniAvversari = avversariUmani(), durata = P.dur - ST.time;
+      salvaTrofei({ gameId: gameId, modo: "online", difficolta: diff, nome: nomi.host, ruolo: hostRuolo, vinto: hostVinto,
+        abbattuti: abbattuti, schivate: hostSeat >= 0 ? ST.chars[hostSeat].schivate : 0,
+        avversariUmani: umaniAvversari, durata: durata });
+      rete.invia({ t: "fine", gameId: gameId, difficolta: diff, vintoLanc: vintoLanc ? 1 : 0, surv: survSeat, seggi: seggi(), lanc: lanc,
+        avversariUmani: umaniAvversari, durata: durata, schivate: schivate, abbattuti: abbattuti });
       if (t.risultato) {   // per il torneo online: prima chi ha vinto (i bot non contano)
         var vinti = [], persi = [];
         if (lanc) (vintoLanc ? vinti : persi).push(nomi[lanc]);
@@ -546,7 +604,14 @@
           else if (m.t === "g") { if (!S.ref || S.fase === "fine") { if (S.fase !== "gioco") { S.lanc = m.lanc; setRuoloDaSeggi(m.seggi); build(); } }
             S.fase = "gioco"; var now = performance.now(); S.buf.push({ rt: now, s: m.s }); while (S.buf.length > 8 && S.buf[0].rt < now - 1500) S.buf.shift(); avviaGiro(); }
           else if (m.t === "fine") { fermaGiro(); if (S.ref) { S.ref.rimuovi(); S.ref = null; } S.fase = "fine";
-            var mioVinto = (S.lanc === S.myId) ? !!m.vintoLanc : !!(m.surv && m.surv[S.seat]);
+            var mioSeat = -1;
+            for (var si = 0; si < (m.seggi || []).length; si++) if (m.seggi[si] && m.seggi[si].id === S.myId) { mioSeat = si; break; }
+            var mioRuoloFine = (m.lanc === S.myId) ? "lanciatore" : "trave";
+            var mioVinto = mioRuoloFine === "lanciatore" ? !!m.vintoLanc : !!(m.surv && m.surv[mioSeat]);
+            salvaTrofei({ gameId: m.gameId, modo: "online", difficolta: m.difficolta, nome: S.nome, ruolo: mioRuoloFine,
+              vinto: mioVinto, abbattuti: mioRuoloFine === "lanciatore" ? m.abbattuti : 0,
+              schivate: mioSeat >= 0 && m.schivate ? m.schivate[mioSeat] : 0,
+              avversariUmani: m.avversariUmani, durata: m.durata });
             schermataFine(t, S.ruolo || "trave", mioVinto, testoFineOspite(S, m), { onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } }); }
         },
         onChiuso: function () { fermaGiro(); errore(t, "Collegamento perso. L'host ha chiuso la partita."); },

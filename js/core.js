@@ -1277,6 +1277,26 @@
     { gioco: "taboo", livello: "diamante", icona: "👑", nome: "Re delle Squadre",    desc: "Concludi 25 partite con la tua squadra vincitrice", stat: "vittorie",                 meta: 25 },
     { gioco: "taboo", livello: "diamante", icona: "💥", nome: "Dieci Perfette",      desc: "Fai indovinare 10 carte di fila nello stesso turno",stat: "comboCarteMax",            meta: 10 },
     { gioco: "taboo", livello: "diamante", icona: "🔮", nome: "Intesa Imbattibile",  desc: "Concludi 5 tuoi turni positivi di fila, anche tra partite diverse", stat: "serieTurniPositiviMax", meta: 5 },
+
+    // ---- Palla a Pendolo ----
+    { gioco: "pendolo", livello: "bronzo",   icona: "🏁", nome: "Prima Partita",        desc: "Concludi la tua prima partita",                                stat: "partite",                       meta: 1 },
+    { gioco: "pendolo", livello: "bronzo",   icona: "🎯", nome: "Prendi la Mira",        desc: "Gioca una partita da lanciatore",                             stat: "partiteLanciatore",             meta: 1 },
+    { gioco: "pendolo", livello: "bronzo",   icona: "🏃", nome: "Piedi sulla Trave",     desc: "Gioca una partita sulla trave",                               stat: "partiteTrave",                  meta: 1 },
+    { gioco: "pendolo", livello: "bronzo",   icona: "💦", nome: "Primo Tuffo",           desc: "Butta giù un avversario in una sfida",                       stat: "avversariButtati",              meta: 1 },
+    { gioco: "pendolo", livello: "bronzo",   icona: "⤴️", nome: "Salto al Momento",      desc: "Schiva la palla con un salto in una sfida",                   stat: "saltiRiusciti",                 meta: 1 },
+    { gioco: "pendolo", livello: "bronzo",   icona: "🏆", nome: "Prima Vittoria",        desc: "Vinci una sfida contro bot non Facili o contro una persona",  stat: "vittorie",                     meta: 1 },
+    { gioco: "pendolo", livello: "argento",  icona: "🔟", nome: "Dieci Partite",         desc: "Concludi 10 partite",                                         stat: "partite",                      meta: 10 },
+    { gioco: "pendolo", livello: "argento",  icona: "🎳", nome: "Caduta dopo Caduta",    desc: "Butta giù 10 avversari in totale nelle sfide",              stat: "avversariButtati",              meta: 10 },
+    { gioco: "pendolo", livello: "argento",  icona: "🔥", nome: "Braccio Sicuro",        desc: "Vinci 3 sfide da lanciatore",                                 stat: "vittorieLanciatore",            meta: 3 },
+    { gioco: "pendolo", livello: "argento",  icona: "⚖️", nome: "Equilibrio d'Argento",  desc: "Vinci 3 sfide sulla trave",                                   stat: "vittorieTrave",                 meta: 3 },
+    { gioco: "pendolo", livello: "argento",  icona: "🌐", nome: "Pendolo in Compagnia", desc: "Vinci 3 partite online contro almeno una persona",           stat: "vittorieOnline",                meta: 3 },
+    { gioco: "pendolo", livello: "oro",      icona: "📅", nome: "Serate sul Pendolo",   desc: "Concludi 25 partite",                                         stat: "partite",                      meta: 25 },
+    { gioco: "pendolo", livello: "oro",      icona: "🎪", nome: "Tripletta",             desc: "Butta giù tutti e tre gli avversari nella stessa partita",   stat: "tripletta",                    meta: 1 },
+    { gioco: "pendolo", livello: "oro",      icona: "🦾", nome: "Matt in Acqua",         desc: "Batti il bot Difficile giocando da lanciatore",             stat: "vittorieLanciatoreDifficile",   meta: 1 },
+    { gioco: "pendolo", livello: "oro",      icona: "🛡️", nome: "Sempre in Piedi",      desc: "Resisti al bot Difficile sulla trave",                      stat: "vittorieTraveDifficile",        meta: 1 },
+    { gioco: "pendolo", livello: "diamante", icona: "⚡", nome: "Lancio Lampo",          desc: "Batti il bot Difficile buttando giù tutti in 5 secondi",   stat: "triplettaDifficileVeloce",      meta: 1 },
+    { gioco: "pendolo", livello: "diamante", icona: "🧿", nome: "Mira da Campione",      desc: "Batti 5 volte il bot Difficile da lanciatore",            stat: "vittorieLanciatoreDifficile",   meta: 5 },
+    { gioco: "pendolo", livello: "diamante", icona: "🌊", nome: "Trave Impossibile",     desc: "Resisti 3 volte al bot Difficile sulla trave",            stat: "vittorieTraveDifficile",        meta: 3 },
   ];
 
   function valoreStat(prof, gioco, chiave) {
