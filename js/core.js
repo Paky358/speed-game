@@ -988,6 +988,26 @@
     { gioco: "drop4", livello: "diamante", icona: "✨", nome: "Partita Perfetta",       desc: "Vinci mettendo solo 4 pedine (non vale contro il bot Facile)", stat: "vinteIn4",        meta: 1 },
     { gioco: "drop4", livello: "diamante", icona: "💻", nome: "Dominio Cibernetico",    desc: "Batti il bot Difficile 5 volte",                               stat: "vinteDifficile",  meta: 5 },
     { gioco: "drop4", livello: "diamante", icona: "🧊", nome: "Stallo Architettonico",  desc: "Pareggia una partita: griglia piena e nessuno fa 4",           stat: "pareggi",         meta: 1 },
+
+    // ---- BATTAGLIA NAVALE ----
+    { gioco: "navale", livello: "bronzo",   icona: "🚢", nome: "Prima Salva",             desc: "Gioca la tua prima partita",                                  stat: "partite",             meta: 1 },
+    { gioco: "navale", livello: "bronzo",   icona: "🎯", nome: "Tiro a Segno",             desc: "Colpisci una nave",                                           stat: "colpiAsegno",         meta: 1 },
+    { gioco: "navale", livello: "bronzo",   icona: "💥", nome: "A Fondo!",                 desc: "Affonda la tua prima nave avversaria",                       stat: "naviAffondate",       meta: 1 },
+    { gioco: "navale", livello: "bronzo",   icona: "🏁", nome: "Prima Vittoria",           desc: "Vinci una partita",                                           stat: "vittorie",            meta: 1 },
+    { gioco: "navale", livello: "bronzo",   icona: "🔭", nome: "Buona la Prima",           desc: "Colpisci una nave con il primo tiro della partita",           stat: "primiColpiAsegno",    meta: 1 },
+    { gioco: "navale", livello: "bronzo",   icona: "🔗", nome: "In Rete",                  desc: "Gioca la tua prima partita online",                           stat: "partiteOnline",       meta: 1 },
+    { gioco: "navale", livello: "argento",  icona: "⚓", nome: "Marinaio Costante",        desc: "Gioca 10 partite",                                            stat: "partite",             meta: 10 },
+    { gioco: "navale", livello: "argento",  icona: "🫧", nome: "Flotta negli Abissi",      desc: "Affonda 25 navi avversarie in tutto",                        stat: "naviAffondate",       meta: 25 },
+    { gioco: "navale", livello: "argento",  icona: "🧭", nome: "Mira Sicura",              desc: "Colpisci 100 caselle occupate da navi",                      stat: "colpiAsegno",         meta: 100 },
+    { gioco: "navale", livello: "argento",  icona: "🧠", nome: "Occhio Tattico",           desc: "Batti il bot Medio 3 volte",                                  stat: "vittorieMedio",       meta: 3 },
+    { gioco: "navale", livello: "argento",  icona: "🌐", nome: "Duello Online",            desc: "Vinci 5 partite online",                                     stat: "vittorieOnline",      meta: 5 },
+    { gioco: "navale", livello: "oro",      icona: "🏴‍☠️", nome: "Ammiraglio",               desc: "Vinci 25 partite",                                            stat: "vittorie",            meta: 25 },
+    { gioco: "navale", livello: "oro",      icona: "🤖", nome: "Sfida Difficile",          desc: "Batti il bot Difficile",                                     stat: "vittorieDifficile",   meta: 1 },
+    { gioco: "navale", livello: "oro",      icona: "🌊", nome: "Mare di Colpi",            desc: "Spara 500 volte in tutto",                                   stat: "colpi",               meta: 500 },
+    { gioco: "navale", livello: "oro",      icona: "🏆", nome: "Capitano di Rete",         desc: "Vinci 15 partite online",                                    stat: "vittorieOnline",      meta: 15 },
+    { gioco: "navale", livello: "diamante", icona: "💎", nome: "Lupo di Mare",              desc: "Batti il bot Difficile 5 volte di fila",                      stat: "serieDifficileMax",   meta: 5 },
+    { gioco: "navale", livello: "diamante", icona: "⚡", nome: "Tiro dopo Tiro",           desc: "Colpisci 5 caselle di nave di fila",                         stat: "serieColpiMax",       meta: 5 },
+    { gioco: "navale", livello: "diamante", icona: "👑", nome: "Dominio Online",           desc: "Vinci 5 partite online di fila",                             stat: "serieOnlineMax",      meta: 5 },
   ];
 
   function valoreStat(prof, gioco, chiave) {
