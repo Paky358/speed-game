@@ -1,5 +1,5 @@
 /* =========================================================
-   SPeeD GAME — LA CITTÀ (anteprima, lavori in corso)
+   SPeeD GAME — LA CITTÀ
    La futura home: una città isometrica dove ogni edificio è
    una categoria di giochi. Edifici, piazza e bar si toccano
    (gruppi con data-vai): core.js apre l'interno giusto.
@@ -388,10 +388,7 @@
     [[14.2, 18.6], [18.6, 14.2], [20.9, 20.9]].forEach(function (t) { og.push({ d: t[0] + t[1], s: pino(t[0], t[1], 1) }); });
     [[7.5, 10.55], [10.55, 7.5]].forEach(function (l) { og.push({ d: l[0] + l[1], s: lampione(l[0], l[1]) }); });
     og.push({ d: 23.2, s: auto(12.6, 9.55, "#fa5252") }, { d: 29, s: auto(12.4, 15.98, "#4dabf7") });
-    // il cantiere: la gru, le transenne sulle strade che entrano in città, i birilli
-    og.push({ d: 10, s: gru(7.6, 2.3) });
-    [[5, 9.65, false], [9.65, 5, true], [16.05, 21, true], [21, 16.05, false]].forEach(function (t) { og.push({ d: t[0] + t[1] + .4, s: transenna(t[0], t[1], t[2]) }); });
-    [[5.5, 10.6], [10.6, 5.5], [15.9, 21.6], [21.6, 15.9], [16.8, 20.6]].forEach(function (t) { og.push({ d: t[0] + t[1], s: birillo(t[0], t[1]) }); });
+    // (il cantiere dell'anteprima, gru, transenne e birilli, è finito: la città è aperta; le funzioni restano per i lavori futuri)
     // la gente: in piazza a leggere le novità, al bar, per strada
     [[AM[0], 10.85, 9.6], [AM[1], 11.3, 10.2], [AM[4], 9.4, 10.65], [AM[2], 16.95, 17.35], [AM[3], 17.35, 16.95], [AM[5], 16.6, 13.6]].forEach(function (g) { og.push({ d: g[1] + g[2] + .2, s: gente(g[0], g[1], g[2], 22) }); });
     if (io) og.push({ d: 21.8, s: gente(io, 10.7, 10.9, 28) });

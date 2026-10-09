@@ -304,8 +304,8 @@
       if (!novitaTutteViste()) bNov.appendChild(el("span", { class: "pallino" }));
       rigaProfilo.appendChild(bNov);
     }
-    // la città nuova (beta): accanto a Novità; gli edifici portano ai giochi della loro categoria
-    if (window.SGCitta) rigaProfilo.appendChild(el("button", { class: "home-novita home-citta", onclick: schermataCitta }, [ el("span", { text: "🏙️ NEW CITY · beta" }) ]));
+    // la città: accanto a Novità; gli edifici portano ai giochi della loro categoria
+    if (window.SGCitta) rigaProfilo.appendChild(el("button", { class: "home-novita home-citta", onclick: schermataCitta }, [ el("span", { text: "🏙️ La città" }) ]));
     rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: schermataSfide }, [ el("span", { text: "🏆 Trofei" }) ]));
     rigaProfilo.appendChild(el("button", { class: "home-novita home-amici", onclick: function () { schermataAmici(); } }, [ el("span", { text: "👥 Classifica" }), cacheRich && cacheRich.arrivate.length ? el("span", { class: "pallino" }) : null ]));
     setTimeout(function () { aggiornaRichieste(); }, 0);   // richieste di amicizia nuove? pallino sul tasto
@@ -430,17 +430,64 @@
     ]);
   }
 
-  // ---- La città nuova (beta): si tocca un edificio, la città fa zoom e si entra ----
+  function tempoBreve(ms) { var m = Math.max(1, Math.ceil((ms || 0) / 60000)), h = Math.floor(m / 60); return h ? h + "h " + (m % 60) + "m" : m + " min"; }
+  // ---- La città: si tocca un edificio, la città fa zoom e si entra.
+  //      In alto chi sei (avatar, nome, livello con la barra degli XP) e le Speed Coins;
+  //      in basso Casa, Clan e Negozio (in arrivo) e il Regalo del giorno ----
   function schermataCitta() {
-    var io = profiloAttivo(), fase = SGCitta.fase(new Date()), via = false;
+    var io = profiloAttivo(), N = window.SGNube, fase = SGCitta.fase(new Date()), via = false;
+    var cloud = !!(N && N.profilo && N.profilo()), prog = window.SGLivelli && cloud && N.progressione ? N.progressione() : null;
     var mappa = el("div", { class: "citta-mappa", html: SGCitta.svg({ fase: fase, io: io && io.omino, sopra: 80 }) });
-    var s = el("div", { class: "schermata citta-vista", style: "background:" + SGCitta.colorePrato(fase) }, [
+    // in alto: tu (tocca per il profilo) e le monete
+    var testoIo = el("span", { class: "citta-io-testo" }, [ el("b", { text: io ? io.nome : "Entra" }) ]);
+    if (prog) {
+      var serve = SGLivelli.xpPerSalire(prog.level), pct = Math.max(3, Math.min(100, Math.floor(prog.xp * 100 / serve)));
+      testoIo.appendChild(el("small", { text: (prog.prestige ? "★" + prog.prestige + " · " : "") + "Livello " + prog.level }));
+      testoIo.appendChild(el("i", { class: "citta-xp" }, [ el("i", { style: "width:" + pct + "%" }) ]));
+    } else testoIo.appendChild(el("small", { text: io ? "Il tuo profilo" : "Crea il tuo profilo" }));
+    var faccia = el("span", { class: "citta-faccia" });
+    if (io && io.omino && window.SGOmino) faccia.innerHTML = SGOmino.svg(io.omino, { busto: true }); else faccia.textContent = (io && io.emoji) || "👤";
+    var monete = el("b", { text: prog ? cifre(prog.coins) : "—" });
+    // in basso: le cose in arrivo (spente) e il regalo del giorno
+    var avviso = el("div", { class: "citta-presto" });
+    function presto(testo) { avviso.textContent = testo; avviso.classList.remove("su"); void avviso.offsetWidth; avviso.classList.add("su"); }
+    function tastoPresto(icona, nome, frase) {
+      return el("button", { class: "citta-tasto spento", onclick: function () { presto(frase); } }, [ el("span", { class: "ct-ico", text: icona }), el("span", { text: nome }), el("small", { text: "🔒 presto" }) ]);
+    }
+    var regalo = el("button", { class: "citta-tasto" });
+    function aggRegalo() {
+      var pronto = cloud && N.puoRitirareBonus && N.puoRitirareBonus();
+      regalo.className = "citta-tasto regalo" + (pronto ? " pronto" : " spento");
+      svuota(regalo);
+      regalo.appendChild(el("span", { class: "ct-ico", text: "🎁" }));
+      regalo.appendChild(el("span", { text: "Regalo" }));
+      regalo.appendChild(el("small", { text: !cloud ? "col profilo" : (pronto ? "+" + cifre(N.bonusImporto) + " 🪙" : "tra " + tempoBreve(N.prossimoBonusMs())) }));
+    }
+    regalo.onclick = function () {
+      if (!cloud) return presto("Crea il tuo profilo per il regalo del giorno");
+      if (!N.puoRitirareBonus()) return presto("Il prossimo regalo arriva a mezzanotte 🌙");
+      regalo.disabled = true;
+      N.ritiraBonus().then(function (nuovo) {
+        monete.textContent = cifre(nuovo);
+        codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🎁", su: "Regalo del giorno", nome: "+" + cifre(N.bonusImporto) + " Speed Coins", sotto: "Il prossimo arriva a mezzanotte" });
+        prossimoAvviso();
+      }).catch(function () {}).then(function () { regalo.disabled = false; aggRegalo(); });
+    };
+    aggRegalo();
+    var s = el("div", { class: "schermata citta-vista" + (fase === "notte" ? " notte" : ""), style: "background:" + SGCitta.colorePrato(fase) }, [
       mappa,
       el("div", { class: "citta-testa" }, [
         el("button", { class: "citta-indietro", text: "‹", "aria-label": "Indietro", onclick: schermataHome }),
-        el("div", { class: "citta-cartello" }, [ el("div", {}, [ el("b", { text: "NEW CITY" }), el("span", { text: "tocca un edificio" }) ]) ])
+        el("button", { class: "citta-io", "aria-label": "Il tuo profilo", onclick: function () { schermataAccesso(schermataCitta); } }, [ faccia, testoIo ]),
+        el("div", { class: "citta-monete", "aria-label": "Speed Coins" }, [ el("span", { class: "citta-moneta" }), monete ])
       ]),
-      el("div", { class: "citta-nastro" }, [ el("span", { text: "🚧 LAVORI IN CORSO 🚧" }) ])
+      avviso,
+      el("div", { class: "citta-giu" }, [
+        tastoPresto("🏠", "Casa", "La tua casa arriva presto 🏠"),
+        tastoPresto("🛡️", "Clan", "I quartieri-clan arrivano presto 🛡️"),
+        tastoPresto("🛍️", "Negozio", "Il negozio arriva presto 🛍️"),
+        regalo
+      ])
     ]);
     mappa.addEventListener("click", function (e) {
       var t = e.target && e.target.closest && e.target.closest("[data-vai]");
@@ -1999,7 +2046,7 @@
   function schermataAccessoCloud(dopo) {
     var p = SGNube.profilo();
     if (p) {   // già dentro: mostra il profilo, le statistiche e il tasto esci
-      var sp = schermata({ icona: p.emoji || "👤", titolo: p.nome, sotto: "Il tuo profilo", indietro: schermataHome });
+      var sp = schermata({ icona: p.emoji || "👤", titolo: p.nome, sotto: "Il tuo profilo", indietro: function () { (dopo || schermataHome)(); } });   // dalla città si torna in città
       if (window.SGOmino) sp._contenuto.appendChild(el("div", { class: "omino-profilo" }, [
         el("div", { class: "omino-palco" + (p.omino ? "" : " vuoto"), html: SGOmino.svg(p.omino || SGOmino.casuale(p.nome)) }),
         el("button", { class: "btn " + (p.omino ? "btn-fantasma" : "btn-primario"), text: p.omino ? "✏️ Modifica il tuo avatar" : "🧍 Crea il tuo avatar",

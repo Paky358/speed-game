@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 166,
+    data: "9 ottobre 2026",
+    titolo: "La città non è più in prova 🏙️",
+    descrizione: [
+      "Via la scritta «beta»: in home il tasto ora si chiama semplicemente «La città».",
+      "In alto nella città vedi il tuo avatar, il nome, il livello con la barra degli XP e le tue Speed Coins. Toccandoli apri il tuo profilo.",
+      "In basso c'è il tasto del regalo del giorno: quando è pronto brilla e lo ritiri da lì, altrimenti ti dice tra quanto arriva il prossimo.",
+      "Ci sono già i tasti di Casa, Clan e Negozio: per ora sono chiusi, arrivano presto."
+    ]
+  },
+  {
     v: 165,
     data: "9 ottobre 2026",
     titolo: "Ogni trofeo ora dà XP e Speed Coins 🏆🪙",

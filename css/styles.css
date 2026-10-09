@@ -785,11 +785,11 @@ button.am-riga:active{ transform:scale(.985); }
 .rl-regole b{ color:var(--testo); }
 .avviso-trofeo.tl-xp .at-ico{ background:linear-gradient(150deg,#a5d8ff,#4c6ef5); }
 
-/* la città nuova (anteprima coi lavori in corso): tasto a strisce gialle e nere accanto a Novità */
-.home-profilo .home-novita.home-citta{ padding:3px; border:0; -webkit-backdrop-filter:none; backdrop-filter:none;
-  background:repeating-linear-gradient(135deg,#ffd43b 0 9px,#1b1b1b 9px 18px); box-shadow:0 8px 20px rgba(0,0,0,.34); }
+/* la città: tasto dorato accanto a Novità */
+.home-profilo .home-novita.home-citta{ padding:0; border:0; -webkit-backdrop-filter:none; backdrop-filter:none;
+  background:linear-gradient(180deg,#ffe08a,#f5b324); box-shadow:0 8px 20px rgba(0,0,0,.3), inset 0 -2px 0 rgba(160,90,0,.35); }
 .home-citta span{ display:inline-flex; align-items:center; min-height:40px; padding:0 14px; border-radius:99px;
-  background:#1b1b1b; color:#ffd43b; font-weight:900; letter-spacing:.02em; }
+  color:#3a2200; font-weight:900; letter-spacing:.02em; }
 .schermata.citta-vista{ position:fixed; inset:0; z-index:5; padding:0; min-height:0; overflow:hidden; animation:none; }
 .citta-mappa, .citta-mappa svg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
 .citta-testa{ position:absolute; z-index:2; left:10px; right:10px; top:calc(10px + env(safe-area-inset-top));
@@ -797,16 +797,38 @@ button.am-riga:active{ transform:scale(.985); }
 .citta-indietro{ flex:none; width:46px; height:46px; border-radius:50%; border:0; cursor:pointer; font-family:inherit;
   font-size:1.9rem; font-weight:900; line-height:1; padding:0 0 4px; background:rgba(255,255,255,.95); color:#2b2b3a;
   box-shadow:0 3px 10px rgba(0,0,0,.28); }
-.citta-cartello{ flex:1; min-width:0; padding:5px; border-radius:15px; pointer-events:none;
-  background:repeating-linear-gradient(135deg,#ffd43b 0 11px,#1b1b1b 11px 22px); box-shadow:0 8px 22px rgba(0,0,0,.38); }
-.citta-cartello div{ background:#1b1b1b; border-radius:11px; padding:6px 10px 7px; text-align:center; }
-.citta-cartello b{ display:block; color:#ffd43b; font-size:1.5rem; font-weight:900; letter-spacing:.07em; line-height:1.05; }
-.citta-cartello span{ display:block; color:#fff; font-size:.78rem; font-weight:900; letter-spacing:.34em; text-transform:uppercase; margin-top:2px; }
-.citta-nastro{ position:absolute; left:-12%; right:-12%; bottom:calc(18px + env(safe-area-inset-bottom)); height:34px;
-  transform:rotate(-2.5deg); display:flex; align-items:center; justify-content:center; pointer-events:none;
-  background:repeating-linear-gradient(135deg,#ffd43b 0 16px,#1b1b1b 16px 32px); box-shadow:0 4px 14px rgba(0,0,0,.35); }
-.citta-nastro span{ background:#ffd43b; color:#1b1b1b; font-weight:900; font-size:.92rem; letter-spacing:.08em;
-  padding:3px 12px; border:2px solid #1b1b1b; border-radius:6px; white-space:nowrap; }
+/* in alto: tu (avatar, nome, livello, barra degli XP) e le monete */
+.citta-io{ flex:1; min-width:0; display:flex; align-items:center; gap:8px; padding:4px 12px 4px 4px; border:0; border-radius:999px; cursor:pointer;
+  font:inherit; text-align:left; background:rgba(255,255,255,.95); color:#2b2b3a; box-shadow:0 3px 10px rgba(0,0,0,.28); }
+.citta-faccia{ width:40px; height:40px; flex:none; border-radius:50%; overflow:hidden; background:#e9ecef; display:flex; align-items:center; justify-content:center; font-size:1.3rem; }
+.citta-faccia svg{ width:100%; height:100%; display:block; }
+.citta-io-testo{ min-width:0; flex:1; display:flex; flex-direction:column; }
+.citta-io-testo b{ font-size:.98rem; font-weight:900; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.citta-io-testo small{ font-size:.74rem; font-weight:800; opacity:.8; line-height:1.2; }
+.citta-xp{ display:block; width:100%; max-width:130px; height:5px; border-radius:3px; background:rgba(0,0,0,.12); margin-top:3px; overflow:hidden; }
+.citta-xp i{ display:block; height:100%; border-radius:3px; background:linear-gradient(90deg,#4c6ef5,#7950f2); }
+.citta-monete{ flex:none; display:flex; align-items:center; gap:6px; padding:7px 12px 7px 7px; border-radius:999px; font-weight:900; font-size:1rem;
+  background:rgba(255,255,255,.95); color:#2b2b3a; box-shadow:0 3px 10px rgba(0,0,0,.28); }
+.citta-moneta{ width:22px; height:22px; flex:none; border-radius:50%; background:radial-gradient(circle at 35% 30%,#fff3bf,#fab005 55%,#e67700); box-shadow:inset 0 0 0 2px #f08c00; }
+/* in basso: Casa, Clan, Negozio (in arrivo) e il Regalo del giorno */
+.citta-giu{ position:absolute; z-index:2; left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); display:flex; gap:8px; max-width:540px; margin:0 auto; }
+.citta-tasto{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:1px; padding:6px 4px 6px; border:0; border-radius:16px; cursor:pointer;
+  font:inherit; font-weight:900; font-size:.8rem; line-height:1.15; background:rgba(255,255,255,.95); color:#2b2b3a; box-shadow:0 3px 10px rgba(0,0,0,.28); }
+.citta-tasto .ct-ico{ font-size:1.35rem; line-height:1.15; }
+.citta-tasto small{ font-size:.64rem; font-weight:800; opacity:.72; white-space:nowrap; }
+.citta-tasto.spento{ opacity:.66; }
+.citta-tasto.regalo.pronto{ opacity:1; background:linear-gradient(180deg,#ffe08a,#f5b324); color:#3a2200; animation:cittaRegalo 1.6s ease-in-out infinite; }
+@keyframes cittaRegalo{ 50%{ transform:scale(1.06); } }
+.citta-presto{ position:absolute; z-index:3; left:50%; bottom:calc(86px + env(safe-area-inset-bottom)); transform:translateX(-50%); padding:8px 14px;
+  border-radius:999px; background:rgba(20,22,44,.92); color:#fff; font-weight:800; font-size:.86rem; white-space:nowrap; opacity:0; pointer-events:none; }
+.citta-presto.su{ animation:cittaPresto 2.2s ease; }
+@keyframes cittaPresto{ 0%{ opacity:0; transform:translate(-50%,8px); } 12%{ opacity:1; transform:translate(-50%,0); } 80%{ opacity:1; } 100%{ opacity:0; } }
+/* di notte le targhette diventano scure */
+.citta-vista.notte .citta-io, .citta-vista.notte .citta-monete, .citta-vista.notte .citta-tasto, .citta-vista.notte .citta-indietro{
+  background:rgba(24,27,52,.92); color:#fff; box-shadow:0 0 0 1px rgba(255,255,255,.14), 0 3px 12px rgba(0,0,0,.45); }
+.citta-vista.notte .citta-xp{ background:rgba(255,255,255,.15); }
+.citta-vista.notte .citta-xp i{ background:linear-gradient(90deg,#ffd43b,#fab005); }
+.citta-vista.notte .citta-tasto.regalo.pronto{ background:linear-gradient(180deg,#ffe08a,#f5b324); color:#3a2200; }
 .ct-tocco{ cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .ct-tocco:active{ opacity:.8; }
 
