@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 169,
+    data: "9 ottobre 2026",
+    titolo: "Trofei di Palla a Pendolo 🎯",
+    descrizione: [
+      "Arrivano 18 trofei per chi lancia e per chi prova a restare sulla trave.",
+      "Le imprese contro i bot Facili non contano: per i trofei di bravura serve una sfida più impegnativa o una partita online contro una persona."
+    ]
+  },
+  {
     v: 168,
     data: "9 ottobre 2026",
     titolo: "Arriva la Ruota del giorno 🎡",
