@@ -941,6 +941,25 @@
     { gioco: "drop4", livello: "diamante", icona: "✨", nome: "Partita Perfetta",       desc: "Vinci mettendo solo 4 pedine (non vale contro il bot Facile)", stat: "vinteIn4",        meta: 1 },
     { gioco: "drop4", livello: "diamante", icona: "💻", nome: "Dominio Cibernetico",    desc: "Batti il bot Difficile 5 volte",                               stat: "vinteDifficile",  meta: 5 },
     { gioco: "drop4", livello: "diamante", icona: "🧊", nome: "Stallo Architettonico",  desc: "Pareggia una partita: griglia piena e nessuno fa 4",           stat: "pareggi",         meta: 1 },
+    // ---- TABOO ----
+    { gioco: "taboo", livello: "bronzo",   icona: "🤐", nome: "Prima Parola",       desc: "Finisci la tua prima partita",                         stat: "partite",                  meta: 1 },
+    { gioco: "taboo", livello: "bronzo",   icona: "🎙️", nome: "Prendi la Parola",   desc: "Spiega la tua prima carta alla squadra",              stat: "turniSpiegati",            meta: 1 },
+    { gioco: "taboo", livello: "bronzo",   icona: "✅", nome: "Ci Siamo!",           desc: "Fai indovinare una carta alla tua squadra",          stat: "carteIndovinate",          meta: 1 },
+    { gioco: "taboo", livello: "bronzo",   icona: "⏭️", nome: "Cambio Carta",        desc: "Passa una carta durante un tuo turno",               stat: "cartePassate",             meta: 1 },
+    { gioco: "taboo", livello: "bronzo",   icona: "🚨", nome: "Orecchie Aperte",     desc: "Fai il tuo primo BUZZ alla squadra avversaria",      stat: "buzzFatti",                meta: 1 },
+    { gioco: "taboo", livello: "bronzo",   icona: "🏆", nome: "Squadra Vincente",    desc: "Concludi una partita con la tua squadra vincitrice", stat: "vittorie",                 meta: 1 },
+    { gioco: "taboo", livello: "argento",  icona: "🎲", nome: "Ci Si Rivede",        desc: "Finisci 5 partite",                                 stat: "partite",                  meta: 5 },
+    { gioco: "taboo", livello: "argento",  icona: "🗣️", nome: "Voce del Gruppo",     desc: "Spiega 10 turni alla tua squadra",                  stat: "turniSpiegati",            meta: 10 },
+    { gioco: "taboo", livello: "argento",  icona: "💡", nome: "Parole in Fila",      desc: "Fai indovinare 25 carte in tutto",                  stat: "carteIndovinate",          meta: 25 },
+    { gioco: "taboo", livello: "argento",  icona: "🛤️", nome: "Piano B",             desc: "Passa 10 carte durante i tuoi turni",               stat: "cartePassate",             meta: 10 },
+    { gioco: "taboo", livello: "argento",  icona: "🔔", nome: "Fischietto Pronto",   desc: "Fai 8 BUZZ validi contro la squadra avversaria",    stat: "buzzFatti",                meta: 8 },
+    { gioco: "taboo", livello: "oro",      icona: "🥇", nome: "Capitano di Squadra", desc: "Concludi 15 partite con la tua squadra vincitrice", stat: "vittorie",                 meta: 15 },
+    { gioco: "taboo", livello: "oro",      icona: "🧠", nome: "Giro di Parole",      desc: "Fai indovinare 100 carte in tutto",                 stat: "carteIndovinate",          meta: 100 },
+    { gioco: "taboo", livello: "oro",      icona: "⚡", nome: "Sette di Fila",       desc: "Fai indovinare 7 carte di fila nello stesso turno", stat: "comboCarteMax",            meta: 7 },
+    { gioco: "taboo", livello: "oro",      icona: "🌟", nome: "Turno da Ricordare",  desc: "Concludi 15 turni con più indovinate che BUZZ",     stat: "turniPositivi",            meta: 15 },
+    { gioco: "taboo", livello: "diamante", icona: "👑", nome: "Re delle Squadre",    desc: "Concludi 25 partite con la tua squadra vincitrice", stat: "vittorie",                 meta: 25 },
+    { gioco: "taboo", livello: "diamante", icona: "💥", nome: "Dieci Perfette",      desc: "Fai indovinare 10 carte di fila nello stesso turno",stat: "comboCarteMax",            meta: 10 },
+    { gioco: "taboo", livello: "diamante", icona: "🔮", nome: "Intesa Imbattibile",  desc: "Concludi 5 tuoi turni positivi di fila, anche tra partite diverse", stat: "serieTurniPositiviMax", meta: 5 },
   ];
 
   function valoreStat(prof, gioco, chiave) {

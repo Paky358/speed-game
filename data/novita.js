@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 168,
+    data: "9 ottobre 2026",
+    titolo: "Trofei di Taboo 🤐",
+    descrizione: [
+      "Arrivano 18 trofei per le partite online: contano i turni in cui spieghi, le carte indovinate o passate e i BUZZ validi.",
+      "Le sfide più difficili premiano una lunga serie di carte indovinate e tante vittorie con la tua squadra."
+    ]
+  },
+  {
     v: 165,
     data: "9 ottobre 2026",
     titolo: "Ogni trofeo ora dà XP e Speed Coins 🏆🪙",
