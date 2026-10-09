@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 163,
+    data: "9 ottobre 2026",
+    titolo: "Calcio Biliardo: la tua faccia in campo, partita a tempo e rigori ⚽",
+    descrizione: [
+      "L'attaccante, il calciatore più avanzato, ha la faccia del tuo avatar. Quando segni, il tuo avatar esulta in mezzo al campo coi coriandoli del colore della squadra.",
+      "Nuova partita a tempo: 2, 3 o 5 minuti con l'orologio in alto. Se finisce pari si va ai rigori: 3 a testa e poi a oltranza. Tira solo l'attaccante e il portiere si tuffa a caso.",
+      "Scegli la formazione: Classica, Catenaccio (più difesa) o All'attacco. Online ognuno la sceglie in saletta, e Matt sceglie la sua a sorpresa.",
+      "Torneo a eliminazione: Calcio Biliardo ora c'è anche nei tornei della Sala, e chi non gioca guarda le partite in diretta.",
+      "Online, chi entra quando i due posti sono già presi guarda la partita in diretta, senza suoni.",
+      "Quando prendi il palo o sbagli un rigore, la folla fa «uuuh» per davvero."
+    ]
+  },
+  {
     v: 162,
     data: "9 ottobre 2026",
     titolo: "Calcio Biliardo: suoni veri dello stadio 📣",

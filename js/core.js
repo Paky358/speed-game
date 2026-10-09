@@ -2465,7 +2465,7 @@
   //  entra da solo; chi l'ha aperta (o chi gioca col bot) dice chi ha vinto.
   //  L'host della sala può decidere a mano una partita bloccata.
   // =========================================================
-  var GIOCHI_ELIMINAZIONE = { tris: 1, drop4: 1, navale: 1, scopa: 1 };
+  var GIOCHI_ELIMINAZIONE = { tris: 1, drop4: 1, navale: 1, scopa: 1, calciobiliardo: 1 };
   var MAX_ELIM = 10;   // giocano i primi 10 entrati in sala; gli altri guardano
   function giocoDa(id) { return giochi.filter(function (g) { return g.id === id; })[0] || null; }
   function nomeElim(E, id) { return id === "bot" ? "🤖 Bot (medio)" : ((E.nomi && E.nomi[id]) || "…"); }
