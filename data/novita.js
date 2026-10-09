@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 167,
+    data: "9 ottobre 2026",
+    titolo: "Trofei per Battaglia Navale, Poker e Taboo 🏆",
+    descrizione: [
+      "Battaglia Navale: 18 trofei. Colpisci e affonda le navi, batti il computer Difficile e vinci online. Il più duro: battere il Difficile 3 volte di fila.",
+      "Poker: 29 trofei, sia per il Texas Hold'em sia per quello all'italiana. Si vincono mani, si rilancia, si cambiano carte e si punta al full, al colore e al poker.",
+      "Taboo: 18 trofei. Fai indovinare le carte alla tua squadra, chiama i BUZZ agli avversari e prova a far indovinare 10 carte di fila in un turno.",
+      "Anche questi trofei danno XP e Speed Coins. Contano solo le partite giocate da qui in avanti, con il profilo."
+    ]
+  },
+  {
     v: 166,
     data: "9 ottobre 2026",
     titolo: "La città non è più in prova 🏙️",

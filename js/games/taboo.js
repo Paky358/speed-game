@@ -94,12 +94,13 @@
         cartePassate: miei.cartePassate, buzzFatti: miei.buzzFatti, buzzSubiti: miei.buzzSubiti, turniPositivi: miei.turniPositivi };
       if (vincitore >= 0 && v.squadre[id] === vincitore) x.vittorie = 1;
       var s0 = SGNube.statGioco ? (SGNube.statGioco("taboo") || {}) : {};
+      if (s0.ultimaPartitaTrofei === v.partitaId) return;   // partita già contata (es. pagina ricaricata a fine partita)
       var serie = s0.serieTurniPositiviOra || 0;
       (miei.esitiTurni || []).forEach(function (buono) { serie = buono ? serie + 1 : 0; });
       var incr = []; Object.keys(x).forEach(function (k) { if (x[k]) incr.push([k, x[k]]); });
       SGNube.salvaProgressi(null, "taboo", incr,
         [["comboCarteMax", miei.comboCarteMax || 0], ["serieTurniPositiviMax", serie]],
-        [["serieTurniPositiviOra", serie]]);
+        [["serieTurniPositiviOra", serie], ["ultimaPartitaTrofei", v.partitaId]]);
     }
 
     function indice(id) { return giocatori.findIndex(function (p) { return p.id === id; }); }
@@ -209,7 +210,7 @@
     function prossimoTurno() {
       if (indiceTurno >= coda.length || indiceCarta >= carte.length || !membri(0).length || !membri(1).length) return finePartita();
       fase = "turno"; attivo = coda[indiceTurno++]; passati = 0; statTurno = { giuste: [], buzz: [], passate: [] }; riepilogo = null;
-      statPersona(attivo).turniSpiegati++;
+      statPersona(attivo).turniSpiegati++; statPersona(attivo).comboCarte = 0;
       cartaOra = carte[indiceCarta++]; chiaveCarta++; deadline = Date.now() + durata * 1000;
       inviaStato(); giocatori.forEach(function (p) { inviaCarta(p.id); });
       mostraPartita(); aggiornaPartita();
@@ -295,7 +296,7 @@
       } else if (sMe !== squadra(idAttivo)) {
         ui.corpo.appendChild(t.el("div", { class: "tb-parola", text: cartaOra.p }));
         ui.corpo.appendChild(t.el("div", { class: "tb-vietate" }, cartaOra.v.map(function (v) { return t.el("div", { class: "tb-vietata", text: v }); })));
-        ui.tasti.appendChild(bottone(t, "buzz", "❌ BUZZ", function () { registra("buzz"); }));
+        ui.tasti.appendChild(bottone(t, "buzz", "❌ BUZZ", function () { registra("buzz", "host"); }));
       } else {
         ui.corpo.className = "tb-nascondi";
         ui.corpo.appendChild(t.el("div", { class: "tb-indovina", text: "Indovina!" }));
