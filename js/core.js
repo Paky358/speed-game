@@ -648,112 +648,133 @@
   };
   function entraEdificio(k) {
     if (k === "piazza") { rientro = schermataCitta; return schermataNovita(); }   // la piazza: le novità
-    if (k === "casino") salaCasino = 0;   // entrando dalla città si comincia dal Black Jack
+    if (k === "casino") salaCasino = null;   // entrando dalla città si comincia dal salone
     schermataEdificio(k);
   }
 
-  // ---- Il Casinò dentro: una sala per ogni gioco di carte (i disegni sono in casino.js) ----
-  // si scorre col dito (o con le frecce) da una sala all'altra; in basso i nomi di tutti i giochi
-  // del Casinò per saltare subito a una sala; toccando la sala si sceglie come giocare
-  var salaCasino = 0;   // la sala che si sta guardando: finita la partita si torna lì
+  // ---- Il Casinò dentro: il salone in prima persona (i disegni sono in casino.js).
+  //      Si entra dalla scalinata: a sinistra i tavoli del Black Jack, a destra quelli del Poker.
+  //      Toccando un tavolo la vista "cammina" fin lì (solo transform) e si entra nella sua sala,
+  //      dove si tocca il tavolo per scegliere come giocare; con ‹ si torna nel salone, poi in città ----
+  var salaCasino = null;   // il tavolo a cui sei (id del gioco), null = nel salone: finita la partita si torna lì
   function schermataCasino() {
-    var SALE = SGCasino.SALE.filter(function (x) { return !!giocoDa(x.id); });
-    if (!SALE.length) return schermataCitta();
-    salaCasino = Math.max(0, Math.min(SALE.length - 1, salaCasino));
-    rientro = function () { schermataCasino(); };   // finita la partita (o "indietro") si torna nella stessa sala
+    var SAL = SGCasino.salone(), tavoli = SAL.tavoli.filter(function (t) { return !!giocoDa(t.id); });
+    if (!tavoli.length) return schermataCitta();
+    if (salaCasino && !tavoli.some(function (t) { return t.id === salaCasino; })) salaCasino = null;
+    rientro = function () { schermataCasino(); };   // finita la partita (o "indietro") si torna allo stesso tavolo
     var N = window.SGNube, prog = window.SGLivelli && N && N.progressione && N.profilo() ? N.progressione() : null;
-    var TRANS = "transform .34s cubic-bezier(.2,.8,.2,1)";
-    var vista = el("div", { class: "cs-vista", "aria-live": "polite" });
-    var sale = SALE.map(function (x) {
-      var img = el("img", { class: "cs-scena", alt: "", draggable: "false" });
-      var d = el("div", { class: "cs-sala cs-" + x.stile, role: "button", "aria-label": x.nome + ": tocca per giocare" }, [
-        img,
-        el("div", { class: "cs-insegna" }, [ el("b", { text: x.insegna }) ]),
-        el("div", { class: "cs-tocca", text: "👆 Tocca il tavolo per giocare" })
-      ]);
-      vista.appendChild(d);
-      return { d: d, img: img, x: x, pronta: false };
-    });
-    function carica(k) { var r = sale[k]; if (r && !r.pronta) { r.pronta = true; r.img.src = SGCasino.immagine(r.x.id); } }
-    // ogni sala al suo posto: quella di adesso al centro, le vicine pronte di fianco
-    function posa(dx, anima) {
-      sale.forEach(function (r, k) {
-        var off = k - salaCasino;
-        r.d.style.visibility = Math.abs(off) > 1 ? "hidden" : "";
-        r.d.style.transition = anima ? TRANS : "none";
-        r.d.style.transform = "translate3d(calc(" + (off * 100) + "% + " + Math.round(dx) + "px),0,0)";
-      });
-    }
-    var sx = el("button", { class: "cs-freccia sx", text: "‹", "aria-label": "Sala di prima", onclick: function () { vai(salaCasino - 1); } });
-    var dx = el("button", { class: "cs-freccia dx", text: "›", "aria-label": "Sala dopo", onclick: function () { vai(salaCasino + 1); } });
-    vista.appendChild(sx); vista.appendChild(dx);
-    var links = el("div", { class: "cs-giochi" });
-    var tasti = SALE.map(function (x, k) { var b = el("button", { class: "cs-link", text: x.nome, onclick: function () { vai(k); } }); links.appendChild(b); return b; });
-    function segna() {
-      tasti.forEach(function (b, k) { b.classList.toggle("on", k === salaCasino); });
-      sx.style.visibility = salaCasino > 0 ? "" : "hidden";
-      dx.style.visibility = salaCasino < sale.length - 1 ? "" : "hidden";
-      carica(salaCasino);
-      setTimeout(function () { carica(salaCasino - 1); carica(salaCasino + 1); }, 380);   // le vicine dopo, così si entra subito
-    }
-    function vai(j) {
-      j = Math.max(0, Math.min(sale.length - 1, j));
-      var da = salaCasino;
-      if (j === da) { posa(0, true); return; }
-      carica(j);
-      if (Math.abs(j - da) === 1) { salaCasino = j; posa(0, true); segna(); return; }
-      // sala lontana (dai nomi in basso): parte di fianco a quella di adesso e scorre al centro
-      var dir = j > da ? 1 : -1;
-      sale.forEach(function (r, k) { r.d.style.visibility = (k === da || k === j) ? "" : "hidden"; r.d.style.transition = "none"; });
-      sale[j].d.style.transform = "translate3d(" + (dir * 100) + "%,0,0)";
-      void sale[j].d.offsetWidth;
-      salaCasino = j;
-      sale[da].d.style.transition = sale[j].d.style.transition = TRANS;
-      sale[da].d.style.transform = "translate3d(" + (-dir * 100) + "%,0,0)";
-      sale[j].d.style.transform = "translate3d(0,0,0)";
-      segna();
-      setTimeout(function () { if (salaCasino === j) posa(0, false); }, 360);
-    }
-    function gioca() { var g = giocoDa(sale[salaCasino].x.id); if (g) scegliModoEdificio(g, "casino"); }
-    // il dito: trascinando si scorre (le sale seguono il dito), un tocco fermo apre "Come giocate?"
-    var tocco = null;
-    vista.addEventListener("pointerdown", function (e) {
-      if (e.button > 0 || (e.target.closest && e.target.closest("button"))) return;
-      tocco = { x: e.clientX, y: e.clientY, t: Date.now(), dx: 0, trascina: false, id: e.pointerId };
-    });
-    vista.addEventListener("pointermove", function (e) {
-      if (!tocco || e.pointerId !== tocco.id) return;
-      var mx = e.clientX - tocco.x, my = e.clientY - tocco.y;
-      if (!tocco.trascina && Math.abs(mx) > 8 && Math.abs(mx) > Math.abs(my)) { tocco.trascina = true; try { vista.setPointerCapture(e.pointerId); } catch (er) {} }
-      if (tocco.trascina) {
-        var bordo = (mx > 0 && salaCasino === 0) || (mx < 0 && salaCasino === sale.length - 1);
-        tocco.dx = bordo ? mx / 3 : mx;   // all'ultima sala si tira come un elastico
-        posa(tocco.dx, false);
+    function pc(v, tot) { return (v * 100 / tot).toFixed(2) + "%"; }
+    // il salone: il disegno 360×640 steso come "copertina", con sopra le insegne, i luccichii e le zone da toccare
+    var vista = el("div", { class: "cs-vista" });
+    var salone = el("div", { class: "cs-salone" });
+    var dentro = el("div", { class: "cs-salone-in" }, [ el("img", { class: "cs-scena-salone", alt: "", draggable: "false", src: SAL.img }) ]);
+    SAL.luci.forEach(function (l, i) {
+      for (var k = 0; k < 5; k++) {
+        var a = k * 1.3 + i * 0.6, x = l[0] + Math.cos(a) * l[2] * 0.5, y = l[1] + l[2] * 0.12 + Math.sin(a) * l[2] * 0.26;
+        dentro.appendChild(el("i", { class: "cs-luccica", style: "left:" + pc(x, 360) + ";top:" + pc(y, 640) + ";animation-delay:" + (k * 0.55 + i * 0.3).toFixed(2) + "s" }));
       }
     });
-    function fineTocco(e) {
-      if (!tocco || e.pointerId !== tocco.id) return;
-      var t0 = tocco; tocco = null;
-      if (t0.trascina) {
-        var w = vista.clientWidth || 360, v = t0.dx / Math.max(1, Date.now() - t0.t);
-        if ((t0.dx < -w * 0.18 || v < -0.45) && salaCasino < sale.length - 1) vai(salaCasino + 1);
-        else if ((t0.dx > w * 0.18 || v > 0.45) && salaCasino > 0) vai(salaCasino - 1);
-        else posa(0, true);
-      } else if (e.type === "pointerup" && Math.abs(e.clientY - t0.y) < 12 && Math.abs(e.clientX - t0.x) < 12) gioca();
+    tavoli.forEach(function (t) {
+      var b = t.box;
+      dentro.appendChild(el("div", { class: "cs-cartello cs-" + t.stile, style: "left:" + pc(t.cartello[0], 360) + ";top:" + pc(t.cartello[1], 640) }, [ el("b", { text: t.insegna }) ]));
+      dentro.appendChild(el("button", { class: "cs-zona", "aria-label": t.nome + ": vai al tavolo", onclick: function () { vai(t.id); },
+        style: "left:" + pc(b[0], 360) + ";top:" + pc(b[1], 640) + ";width:" + pc(b[2] - b[0], 360) + ";height:" + pc(b[3] - b[1], 640) }));
+    });
+    salone.appendChild(dentro);
+    var invito = el("div", { class: "cs-tocca cs-invito", text: "👆 Scegli un tavolo" });
+    // la sala del tavolo (il primo piano): il suo disegno, l'insegna grande e "tocca per giocare"
+    var simg = el("img", { class: "cs-scena", alt: "", draggable: "false" }), insB = el("b");
+    var sala = el("div", { class: "cs-sala cs-primo", role: "button" }, [ simg, el("div", { class: "cs-insegna" }, [ insB ]), el("div", { class: "cs-tocca", text: "👆 Tocca il tavolo per giocare" }) ]);
+    sala.addEventListener("click", function () { var g = !cammina && salaCasino && giocoDa(salaCasino); if (g) scegliModoEdificio(g, "casino"); });
+    vista.appendChild(salone); vista.appendChild(invito); vista.appendChild(sala);
+
+    var geo = null, cammina = false;
+    function stendi() {
+      var cw = vista.clientWidth, ch = vista.clientHeight; if (!cw || !ch) return;
+      var s = Math.max(cw / 360, ch / 640), w = 360 * s, h = 640 * s;
+      geo = { s: s, ox: (cw - w) / 2, oy: (ch - h) * 0.45, cw: cw, ch: ch };
+      dentro.style.cssText = "width:" + w.toFixed(1) + "px;height:" + h.toFixed(1) + "px;left:" + geo.ox.toFixed(1) + "px;top:" + geo.oy.toFixed(1) + "px;--s:" + s.toFixed(3);
     }
-    vista.addEventListener("pointerup", fineTocco);
-    vista.addEventListener("pointercancel", fineTocco);
+    function tavolo(id) { return tavoli.filter(function (q) { return q.id === id; })[0]; }
+    function zoomSu(t) {   // la vista che porta il tavolo t al centro, da vicino
+      var fx = geo.ox + t.fuoco[0] * geo.s, fy = geo.oy + t.fuoco[1] * geo.s;
+      salone.style.transformOrigin = fx.toFixed(1) + "px " + fy.toFixed(1) + "px";
+      return "translate(" + (geo.cw / 2 - fx).toFixed(1) + "px," + (geo.ch * 0.52 - fy).toFixed(1) + "px) scale(2.6)";
+    }
+    function apriSala(id) {
+      var x = SGCasino.SALE.filter(function (q) { return q.id === id; })[0] || {};
+      sala.className = "cs-sala cs-primo cs-" + (x.stile || "bj") + (sala.classList.contains("su") ? " su" : "");
+      insB.textContent = x.insegna || "";
+      simg.src = SGCasino.immagine(id);
+      sala.setAttribute("aria-label", (x.nome || "") + ": tocca per giocare");
+    }
+    function vai(id, subito) {
+      var t = tavolo(id);
+      if (cammina || !geo || !t) return;
+      salaCasino = id; segna(); apriSala(id);
+      vista.classList.add("in-sala");
+      if (subito) {   // tornando da una partita: già al tavolo
+        salone.style.transition = sala.style.transition = "none";
+        salone.style.transform = zoomSu(t); salone.style.visibility = "hidden"; sala.classList.add("su");
+        void sala.offsetWidth; sala.style.transition = "";
+        return;
+      }
+      cammina = true;
+      salone.style.transition = "transform .85s cubic-bezier(.45,0,.25,1)";
+      salone.style.transform = zoomSu(t);
+      salone.classList.add("passi");
+      setTimeout(function () { sala.classList.add("su"); suonoEdificio("casino"); }, 560);
+      setTimeout(function () { cammina = false; salone.classList.remove("passi"); salone.style.visibility = "hidden"; }, 950);
+    }
+    function torna(poi) {   // dal tavolo al salone: la vista si allontana
+      if (cammina || !salaCasino) return;
+      cammina = true; salaCasino = null; segna();
+      vista.classList.remove("in-sala");
+      salone.style.visibility = "";
+      sala.classList.remove("su");
+      salone.style.transition = "transform .7s cubic-bezier(.3,0,.2,1)";
+      requestAnimationFrame(function () { salone.style.transform = "none"; });
+      setTimeout(function () { cammina = false; if (poi) poi(); }, 730);
+    }
+    // in basso i nomi dei giochi del Casinò: portano subito al loro tavolo
+    var links = el("div", { class: "cs-giochi" });
+    var tasti = tavoli.map(function (t) {
+      var b = el("button", { class: "cs-link", text: t.nome, onclick: function () {
+        if (salaCasino === t.id) return;
+        if (salaCasino) torna(function () { vai(t.id); }); else vai(t.id);
+      } });
+      links.appendChild(b); return b;
+    });
+    function segna() { tasti.forEach(function (b, k) { b.classList.toggle("on", tavoli[k].id === salaCasino); }); }
     var s = el("div", { class: "schermata casino-sale" }, [
       vista,
       el("div", { class: "cs-testa" }, [
-        el("button", { class: "ed-indietro", text: "‹", "aria-label": "Torna in città", onclick: function () { rientro = null; schermataCitta(); } }),
+        el("button", { class: "ed-indietro", text: "‹", "aria-label": "Indietro", onclick: function () {
+          if (salaCasino) torna(); else if (!cammina) { rientro = null; schermataCitta(); }
+        } }),
         el("div", { class: "cs-titolo", text: "CASINÒ" }),
         prog ? el("div", { class: "ed-monete", text: "🪙 " + cifre(prog.coins) }) : el("div", { class: "ed-monete vuoto" })
       ]),
       links
     ]);
-    posa(0, false); segna();
     mostra(s);
+    var parti = salaCasino; salaCasino = null; segna();
+    function prepara() {
+      stendi();
+      if (!geo) return requestAnimationFrame(prepara);
+      if (parti) vai(parti, true);
+      // le sale dei tavoli si preparano dopo, così si entra subito e poi il primo piano è pronto
+      setTimeout(function () { tavoli.forEach(function (t) { var im = new Image(); im.src = SGCasino.immagine(t.id); }); }, 450);
+    }
+    prepara();
+    // telefono girato o finestra cambiata: si ristende il salone (e la vista resta sul tavolo)
+    function ridim() {
+      if (!document.body.contains(vista)) return window.removeEventListener("resize", ridim);
+      stendi();
+      var t = salaCasino && tavolo(salaCasino);
+      if (t && geo) { salone.style.transition = "none"; salone.style.transform = zoomSu(t); }
+    }
+    window.addEventListener("resize", ridim);
   }
   function schermataEdificio(k) {
     if (k === "casino" && window.SGCasino) return schermataCasino();   // il Casinò ha le sue sale, una per gioco

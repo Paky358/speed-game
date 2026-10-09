@@ -1,5 +1,6 @@
 /* =========================================================
-   SPeeD GAME — IL CASINÒ DENTRO: una sala per ogni gioco di carte
+   SPeeD GAME — IL CASINÒ DENTRO: il salone in prima persona (più in basso)
+   e una sala per ogni gioco di carte
    Entri e sei nella sala del Black Jack: in fondo il tavolo con la gente
    che gioca con le fiches. Scorrendo: Scopa (niente fiches), Scopa 2 vs 2,
    Scopone e Poker; ogni sala ha una cosa sua (il quadro, le bandierine,
@@ -24,7 +25,12 @@
   ];
 
   // ---- prospettiva e pezzi di disegno ----
-  function P(x, y, z) { return [CX + F * x / z, HY + F * (EYE - y) / z]; }
+  var CP = 1, SP = 0;   // la telecamera può guardare un po' in giù (il salone): coseno e seno dell'inclinazione
+  function P(x, y, z) {
+    if (!SP) return [CX + F * x / z, HY + F * (EYE - y) / z];
+    var dy = y - EYE, prof = z * CP - dy * SP, alto = dy * CP + z * SP;
+    return [CX + F * x / prof, HY - F * alto / prof];
+  }
   function r1(v) { return Math.round(v * 10) / 10; }
   function pts(a) { return a.map(function (p) { return r1(p[0]) + "," + r1(p[1]); }).join(" "); }
   function poly(a, fill, extra) { return "<polygon points='" + pts(a) + "' fill='" + fill + "'" + (extra ? " " + extra : "") + "/>"; }
@@ -37,8 +43,9 @@
   // un cerchio steso in orizzontale (fiches, tappetini…): centro e raggi visti dalla telecamera
   function tondo(x, y, z, r) { var c = P(x, y, z); return { c: c, rx: (P(x + r, y, z)[0] - P(x - r, y, z)[0]) / 2, ry: (P(x, y, z - r)[1] - P(x, y, z + r)[1]) / 2 }; }
   // un ovale steso (tavoli): punti da t0 a t1 (radianti); t = 90° è il punto più lontano
-  function ovale(rx, rz, y, z0, t0, t1, n) {
-    var a = []; for (var i = 0; i <= n; i++) { var t = t0 + (t1 - t0) * i / n; a.push(P(rx * Math.cos(t), y, z0 + rz * Math.sin(t))); } return a;
+  function ovale(rx, rz, y, z0, t0, t1, n, cx) {   // cx = spostato di lato (i tavoli del salone)
+    cx = cx || 0;
+    var a = []; for (var i = 0; i <= n; i++) { var t = t0 + (t1 - t0) * i / n; a.push(P(cx + rx * Math.cos(t), y, z0 + rz * Math.sin(t))); } return a;
   }
   function tono(c, k) {   // schiarisce (k > 0) o scurisce (k < 0) un colore #rrggbb
     var n = parseInt(c.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
@@ -91,7 +98,8 @@
   // ---- gente al tavolo: si vede da metà petto in su (sotto la copre il tavolo) ----
   function busto(nome, x, z, k) {
     if (!window.SGOmino) return "";
-    var cfg = SGOmino.casuale(nome), w = (k || 1.1) * F / z, h = w * 1.022, b = P(x, 0.52, z);
+    var prof = z * CP - (0.52 - EYE) * SP;   // la distanza vera (col salone che guarda in giù)
+    var cfg = SGOmino.casuale(nome), w = (k || 1.1) * KB / 1.1 * F / prof, h = w * 1.022, b = P(x, 0.52, z);
     var svg = SGOmino.svg(cfg, { busto: true });
     return "<image xlink:href=\"data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg) + "\" x='" + r1(b[0] - w / 2) + "' y='" + r1(b[1] - h) + "' width='" + r1(w) + "' height='" + r1(h) + "'/>";
   }
@@ -342,10 +350,218 @@
 
   var DISEGNI = { blackjack: salaBJ, scopa: salaScopa, scopa2v2: salaScopa2, scopone: salaScopone, poker: salaPoker };
 
+  // =========================================================
+  //  IL SALONE: entri e lo guardi in prima persona, all'altezza degli occhi.
+  //  In fondo il bar con l'insegna, ai lati le slot, in alto i lampadari;
+  //  a sinistra il tavolo del Black Jack, a destra quello del Poker.
+  //  Toccando un tavolo ci si avvicina (in core.js) fino alla sua sala qui sopra.
+  // =========================================================
+  // si entra da una scalinata: gli occhi più in alto del pavimento della sala, lo sguardo un po' in giù
+  var CAM_SALONE = { HY: 335, F: 300, EYE: 2.6, PITCH: 14, XW: 4.4, ZB: 14, YT: 5.0 };
+  var TAVOLI = [
+    { id: "blackjack", nome: "Black Jack", insegna: "BLACK JACK", stile: "bj", x: -1.2, z: 3.5 },
+    { id: "poker",     nome: "Poker",      insegna: "POKER",      stile: "pk", x: 1.4, z: 4.2 }
+  ];
+  // dietro ai due tavoli principali, altri tavoli dello stesso gioco: la sala è piena e profonda
+  var TAVOLI_FONDO = [
+    { id: "blackjack", x: -2.15, z: 6.7,  nomi: ["Ugo", "Bice", "Nello", "Tina"] },
+    { id: "blackjack", x: -2.0,  z: 10.0, nomi: ["Ezio", "Pia", "Dino", "Lucia"] },
+    { id: "poker",     x: 2.2,   z: 7.5,  nomi: ["Raffa", "Olga", "Ciro", "Nadia"] },
+    { id: "poker",     x: 2.05,  z: 10.8, nomi: ["Aldo", "Ines", "Toto", "Vera"] }
+  ];
+  var KB = 1.1;   // grandezza delle persone al tavolo (nel salone un po' più piccole)
+  // disegna con la telecamera del salone, poi rimette quella delle sale
+  function conCamera(c, fn) {
+    var v = [HY, F, EYE, XW, ZB, YT, CP, SP, KB], a = (c.PITCH || 0) * Math.PI / 180;
+    HY = c.HY; F = c.F; EYE = c.EYE; XW = c.XW; ZB = c.ZB; YT = c.YT; CP = Math.cos(a); SP = Math.sin(a); KB = 0.86;
+    try { return fn(); } finally { HY = v[0]; F = v[1]; EYE = v[2]; XW = v[3]; ZB = v[4]; YT = v[5]; CP = v[6]; SP = v[7]; KB = v[8]; }
+  }
+  // una persona in piedi, tutta intera (i piedi a terra in x, z)
+  function inPiedi(nome, x, z) {
+    if (!window.SGOmino) return "";
+    var h = 2.05 * F / (z * CP + EYE * SP), w = h * 200 / 264, p = P(x, 0, z);
+    return "<image xlink:href=\"data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGOmino.svg(SGOmino.casuale(nome), {})) + "\" x='" + r1(p[0] - w / 2) + "' y='" + r1(p[1] - h * 253 / 264) + "' width='" + r1(w) + "' height='" + r1(h) + "'/>";
+  }
+  function slot(lato, z, n) {   // una slot machine contro la parete (lato -1 sinistra, 1 destra), girata verso il corridoio
+    var xo = lato * XW, xi = lato * (XW - 0.62), x0 = Math.min(xo, xi), x1 = Math.max(xo, xi), d = 0.7, h = 1.5, o = [];
+    var luci = ["#ff4fd8", "#ffd43b", "#4dabf7", "#69db7c"];
+    o.push(poly(qFondo(x0, x1, 0, h, z), "#2b2b35"));
+    o.push(poly(qLato(xi, z, z + d, 0, h), "#1d1d26"));
+    o.push(poly(qPiano(x0, x1, z, z + d, h), "#3f3f4c"));
+    o.push(poly(qLato(xi, z + 0.06, z + d - 0.06, 1.3, 1.46), luci[n % luci.length]));   // la luce in cima
+    o.push(poly(qLato(xi, z + 0.09, z + d - 0.09, 0.86, 1.22), "#0b1f3a"));              // lo schermo coi rulli
+    for (var r = 0; r < 3; r++) {
+      var zz = z + 0.13 + r * 0.155;
+      o.push(poly(qLato(xi, zz, zz + 0.13, 0.92, 1.16), "#fff8e1"));
+      var c = P(xi, 1.04, zz + 0.065);
+      o.push(ell(c, Math.max(0.8, 0.035 * F / (zz + 0.065)), Math.max(0.8, 0.04 * F / (zz + 0.065)), ["#e03131", "#f2b705", "#2b8a3e"][(n + r) % 3]));
+    }
+    o.push(poly(qLato(xi, z + 0.08, z + d - 0.08, 0.72, 0.8), "#c9a24a"));
+    var xs = xi - lato * 0.42, sg = tondo(xs, 0.7, z + d / 2, 0.17);   // lo sgabello
+    o.push(linea(P(xs, 0, z + d / 2), P(xs, 0.7, z + d / 2), "#8a6a2c", Math.max(1, 0.04 * F / (z + d / 2))));
+    o.push(ell(sg.c, sg.rx, sg.ry * 1.6, "#7a1220", "stroke='#4a0a12' stroke-width='1'"));
+    return o.join("");
+  }
+  function lampadario(x, z, y) {   // il lampadario di cristallo, coi pendagli e la luce intorno
+    var c = P(x, y, z), k = F / z, o = [];
+    o.push(linea(P(x, YT, z), P(x, y + 0.35, z), "#b08a3a", Math.max(1, k * 0.015)));
+    o.push(ell([c[0], c[1] + k * 0.1], k * 1.5, k * 1.0, "url(#gAlone)"));
+    [[0.62, 0.0], [0.44, 0.2], [0.24, 0.38]].forEach(function (g, i) {
+      var t = tondo(x, y + g[1], z, g[0]);
+      o.push(ell(t.c, t.rx, t.ry, "none", "stroke='#e9c46a' stroke-width='" + r1(Math.max(1, k * 0.02)) + "'"));
+      for (var a = 0; a < 14 - i * 3; a++) {   // i pendagli lungo l'anello
+        var an = a / (14 - i * 3) * Math.PI * 2, px = t.c[0] + t.rx * Math.cos(an), py = t.c[1] + t.ry * Math.sin(an);
+        o.push(linea([px, py], [px, py + k * 0.12], "#fff4d6", Math.max(0.6, k * 0.012), "opacity='.85'"));
+        o.push(ell([px, py + k * 0.13], k * 0.022, k * 0.032, "#fffbe8"));
+      }
+    });
+    o.push(ell(c, k * 0.16, k * 0.1, "#e9c46a"), ell([c[0], c[1] - k * 0.03], k * 0.08, k * 0.05, "#fff7d6"));
+    return o.join("");
+  }
+  // il tavolo del Black Jack a mezzaluna (come nella sua sala), spostato di lato
+  function tavoloBJ(cx, z0, nomi) {
+    var R = 1.0, yT = 0.87, o = [], posti = [150, 110, 70, 32]; nomi = nomi || ["Rosa", "Peppe", "Lina", "Tonio"];
+    posti.forEach(function (a, i) { var t = a * Math.PI / 180, r = R + 0.32; o.push(busto(nomi[i], cx + r * Math.cos(t), z0 + r * Math.sin(t))); });
+    var om = tondo(cx, 0, z0 + 0.4, 0.95);
+    o.push(ell(om.c, om.rx, om.ry, "#000000", "opacity='.3'"));
+    o.push(poly(qFondo(cx - 0.26, cx + 0.26, 0, yT - 0.08, z0 + 0.4), "#2a140b"), poly(qFondo(cx - 0.52, cx + 0.52, 0, 0.06, z0 + 0.4), "#2a140b"));
+    o.push(poly(qFondo(cx - R - 0.14, cx + R + 0.14, yT - 0.1, yT + 0.02, z0), "url(#gLegno)"));
+    o.push(poly(ovale(R + 0.14, R + 0.14, yT + 0.02, z0, 0, Math.PI, 40, cx), "#2a160d"));
+    o.push(poly(ovale(R, R, yT, z0, 0, Math.PI, 40, cx), "url(#gFeltro)"));
+    o.push(pozza(cx - 0.5, yT, z0 + 0.5, 0.65), pozza(cx + 0.5, yT, z0 + 0.5, 0.65));
+    posti.forEach(function (a, i) {
+      var t = a * Math.PI / 180;
+      o.push(pila(cx + 0.95 * Math.cos(t), z0 + 0.95 * Math.sin(t), 3 + (i * 2) % 4, FICHE[i % FICHE.length], yT));
+      o.push(carta(cx + 0.66 * Math.cos(t) - 0.04, z0 + 0.66 * Math.sin(t), a - 82, yT, ["c", "p", "q", "f"][i]), carta(cx + 0.66 * Math.cos(t) + 0.05, z0 + 0.66 * Math.sin(t) - 0.02, a - 96, yT, ["p", "q", "f", "c"][i]));
+    });
+    o.push(carta(cx - 0.08, z0 + 0.36, 4, yT, "c"), carta(cx + 0.08, z0 + 0.36, -3, yT, null, "#b02a37"));
+    o.push(poly(qPiano(cx - 0.4, cx + 0.4, z0 + 0.05, z0 + 0.22, yT + 0.01), "#1b1b1b"));
+    for (var s = 0; s < 8; s++) { var x0 = cx - 0.38 + s * 0.095; o.push(poly(qPiano(x0 + 0.012, x0 + 0.083, z0 + 0.07, z0 + 0.2, yT + 0.02), FICHE[s % FICHE.length])); }
+    o.push(lampada(cx - 0.5, z0 + 0.45, 2.75, "#7a1222"), lampada(cx + 0.5, z0 + 0.45, 2.75, "#7a1222"));
+    return o.join("");
+  }
+  // il tavolo ovale del Poker (come nella sua sala), spostato di lato
+  function tavoloPoker(cx, z0, nomi) {
+    var rx = 1.3, rz = 0.72, yT = 0.86, o = [], posti = [150, 116, 82, 48]; nomi = nomi || ["Matt", "Giada", "Bruno", "Sofia"];
+    posti.forEach(function (g, i) { var t = g * Math.PI / 180; o.push(busto(nomi[i], cx + 1.55 * Math.cos(t), z0 + 0.95 * Math.sin(t), 1.0)); });
+    o.push(ell(tondo(cx, 0, z0, 1.2).c, 1.2 * F / z0, 0.35 * F / z0, "#000000", "opacity='.3'"));
+    o.push(poly(qFondo(cx - 0.5, cx + 0.5, 0, 0.6, z0 - 0.2), "#0c0c0c"));
+    var vicino = ovale(rx, rz, yT, z0, Math.PI, 2 * Math.PI, 30, cx), sotto = ovale(rx, rz, yT - 0.12, z0, 2 * Math.PI, Math.PI, 30, cx);
+    o.push(poly(vicino.concat(sotto), "#0f0f0f"));
+    o.push(poly(ovale(rx, rz, yT, z0, 0, 2 * Math.PI, 60, cx), "#1b1b1b"));
+    o.push(poly(ovale(rx - 0.14, rz - 0.1, yT + 0.005, z0, 0, 2 * Math.PI, 60, cx), "#6b3f1e"));
+    o.push(poly(ovale(rx - 0.21, rz - 0.15, yT + 0.006, z0, 0, 2 * Math.PI, 60, cx), "url(#gFeltro2)"));
+    o.push(pozza(cx, yT, z0, 0.95));
+    ["c", "p", "q", "f", "c"].forEach(function (s, i) { o.push(carta(cx - 0.28 + i * 0.14, z0 + 0.1, 0, yT + 0.01, i < 4 ? s : null, "#1d4ed8", 1.1)); });
+    o.push(pila(cx - 0.1, z0 - 0.2, 6, "#e03131", yT), pila(cx + 0.06, z0 - 0.24, 4, "#212529", yT), pila(cx + 0.2, z0 - 0.18, 5, "#1c7ed6", yT));
+    posti.forEach(function (g, i) {
+      var t = g * Math.PI / 180, x = cx + 0.9 * Math.cos(t), z = z0 + 0.48 * Math.sin(t);
+      o.push(carta(x - 0.05, z, -8, yT + 0.01, null, "#1d4ed8"), carta(x + 0.05, z - 0.01, 7, yT + 0.01, null, "#1d4ed8"));
+    });
+    var w1 = P(cx - 0.8, 2.62, z0), w2 = P(cx + 0.8, 2.62, z0), w3 = P(cx + 0.95, 2.45, z0), w4 = P(cx - 0.95, 2.45, z0);
+    o.push(linea(P(cx - 0.6, YT, z0), P(cx - 0.6, 2.62, z0), "#0c0c0c", 1.2), linea(P(cx + 0.6, YT, z0), P(cx + 0.6, 2.62, z0), "#0c0c0c", 1.2));
+    o.push("<ellipse cx='" + r1((w3[0] + w4[0]) / 2) + "' cy='" + r1(w3[1] + 5) + "' rx='" + r1((w3[0] - w4[0]) * 0.75) + "' ry='" + r1(F / z0 * 0.4) + "' fill='url(#gAlone)'/>");
+    o.push(poly([w1, w2, w3, w4], "#1f6f43"), poly([w4, w3, [w3[0], w3[1] + 2.5], [w4[0], w4[1] + 2.5]], "#fff1bf"));
+    return o.join("");
+  }
+  // la scalinata di marmo da cui si entra (in primo piano), con la passatoia rossa e i bordi d'oro
+  function scalinata() {
+    var o = [], gradini = [[0.6, 0.4, 1.3], [0.4, 1.3, 1.62], [0.2, 1.62, 1.94]];   // [altezza, da z, a z]
+    gradini.forEach(function (g, i) {
+      o.push(poly(qPiano(-XW, XW, g[1], g[2], g[0]), i % 2 ? "#b9a581" : "#c7b48f"));
+      for (var x = -XW + 0.3; x < XW; x += 0.9) o.push(linea(P(x, g[0], g[1]), P(x + 0.35, g[0], g[2]), "#9c8763", 0.8, "opacity='.6'"));   // le venature
+      o.push(poly(qPiano(-0.62, 0.62, g[1], g[2], g[0] + 0.002), "#8c1022"), poly(qPiano(-0.55, 0.55, g[1], g[2], g[0] + 0.003), "#a3132a"));
+      o.push(poly(qPiano(-XW, XW, g[2] - 0.05, g[2], g[0] + 0.004), "#c9a24a"));   // il bordo d'oro del gradino
+      o.push(poly(qPiano(-0.66, 0.66, g[2] - 0.05, g[2], g[0] + 0.005), "#e9c46a"));
+    });
+    return o.join("");
+  }
+  function disegnoSalone() {
+    var o = [], x, z, i, k;
+    // il soffitto a cassettoni
+    o.push(poly(qPiano(-XW, XW, 1, ZB, YT), "url(#gSoff)"));
+    for (x = -XW + 1.1; x < XW; x += 1.1) o.push(linea(P(x, YT, 2.4), P(x, YT, ZB), "#8a6a2c", 1, "opacity='.45'"));
+    for (z = 3.2; z < ZB; z += 1.4) o.push(linea(P(-XW, YT, z), P(XW, YT, z), "#8a6a2c", 1, "opacity='.45'"));
+    // le pareti: tappezzeria rossa, zoccolo scuro, cornice d'oro, lesene dorate
+    o.push(poly(qFondo(-XW, XW, 0, YT, ZB), "#4b0b17"));
+    for (x = -XW + 0.12; x < XW; x += 0.46) o.push(poly(qFondo(x, x + 0.2, 0, YT, ZB), "#560e1b"));
+    o.push(poly(qLato(-XW, 1, ZB, 0, YT), "#3a0812"), poly(qLato(XW, 1, ZB, 0, YT), "#3a0812"));
+    for (z = 2; z < ZB; z += 0.62) o.push(poly(qLato(-XW, z, z + 0.28, 0, YT), "#420a15"), poly(qLato(XW, z, z + 0.28, 0, YT), "#420a15"));
+    o.push(poly(qLato(-XW, 1, ZB, 0, 0.95), "#22050a"), poly(qLato(XW, 1, ZB, 0, 0.95), "#22050a"), poly(qFondo(-XW, XW, 0, 0.95, ZB), "#2a060d"));
+    o.push(poly(qLato(-XW, 1, ZB, YT - 0.22, YT), "#8a6424"), poly(qLato(XW, 1, ZB, YT - 0.22, YT), "#8a6424"), poly(qFondo(-XW, XW, YT - 0.22, YT, ZB), "#9c7330"));
+    for (z = 4; z < ZB; z += 2.5) [-XW, XW].forEach(function (xx) {
+      o.push(poly(qLato(xx, z - 0.2, z + 0.2, 0, YT), "#7a5520"), poly(qLato(xx, z - 0.13, z + 0.13, 0.35, YT - 0.35), "#b08436"));
+    });
+    for (z = 5.25; z < ZB; z += 2.5) o.push(applique(-XW + 0.02, 2.75, z), applique(XW - 0.02, 2.75, z));
+    // in fondo il bar: le mensole con le bottiglie illuminate, l'insegna, il barista, il banco e gli sgabelli
+    var zb = ZB - 0.02, cb = P(0, 2.1, zb);
+    o.push(ell(cb, 2.6 * F / ZB, 1.4 * F / ZB, "url(#gAlone)"));
+    o.push(poly(qFondo(-2.3, 2.3, 1.25, 2.95, zb), "#1c0b07"));
+    var colB = ["#2b8a3e", "#c92a2a", "#f2b705", "#1c7ed6", "#e8590c", "#ced4da", "#862e9c"];
+    [1.32, 2.06].forEach(function (y, r) {
+      for (x = -2.15, i = 0; x < 2.1; x += 0.17, i++) {
+        var hb = 0.26 + ((i * 7 + r * 3) % 5) * 0.04;
+        o.push(poly(qFondo(x, x + 0.1, y, y + hb, zb - 0.01), colB[(i + r * 2) % colB.length], "opacity='.92'"));
+        o.push(poly(qFondo(x + 0.035, x + 0.065, y + hb, y + hb + 0.1, zb - 0.01), colB[(i + r * 2) % colB.length]));
+      }
+      o.push(poly(qFondo(-2.3, 2.3, y - 0.05, y, zb - 0.01), "#c9a24a"));
+    });
+    o.push(poly(qFondo(-2.45, 2.45, 2.95, 3.05, zb), "#c9a24a"));
+    var ins = P(0, 3.55, zb), kb = F / ZB;
+    ["#ff4fd8", "#ffe3fa"].forEach(function (col, j) {
+      o.push("<text x='" + r1(ins[0]) + "' y='" + r1(ins[1]) + "' font-family='Arial Black,Arial,sans-serif' font-weight='900' font-size='" + r1(kb * 0.52) + "' letter-spacing='" + r1(kb * 0.05) + "' fill='none' stroke='" + col + "' stroke-width='" + (j ? 0.9 : 2.6) + "' text-anchor='middle'" + (j ? "" : " opacity='.5' filter='url(#fNeon)'") + ">SPeeD CASINÒ</text>");
+    });
+    o.push(busto("Nando", 0.5, ZB - 0.5, 1.15), busto("Ivana", -1.3, ZB - 0.5, 1.15));
+    o.push(poly(qPiano(-2.5, 2.5, ZB - 1.3, ZB - 0.75, 1.12), "#5a2a12"), poly(qFondo(-2.5, 2.5, 0, 1.12, ZB - 1.3), "#3a1a0c"));
+    o.push(linea(P(-2.5, 1.12, ZB - 1.3), P(2.5, 1.12, ZB - 1.3), "#e9c46a", 1.2));
+    for (x = -2.1; x < 2.2; x += 0.7) o.push(poly(qFondo(x, x + 0.48, 0.15, 0.95, ZB - 1.31), "none", "stroke='#7a4a22' stroke-width='.8'"));
+    // il pavimento: moquette rossa coi rombi d'oro e la passatoia fino al bar
+    o.push(poly(qPiano(-XW, XW, 1, ZB, 0), "#5a0c19"));
+    for (z = 1.6, i = 0; z < ZB; z += 0.75, i++) for (x = -XW + (i % 2) * 0.375; x < XW; x += 0.75)
+      o.push(poly([P(x, 0, z - 0.13), P(x + 0.13, 0, z), P(x, 0, z + 0.13), P(x - 0.13, 0, z)], "#8c2a1c", "opacity='.75'"));
+    o.push(poly(qPiano(-0.6, 0.6, 1, ZB - 1.4, 0), "#2b0610"));
+    [-0.6, -0.5, 0.5, 0.6].forEach(function (xx) { o.push(linea(P(xx, 0, 1), P(xx, 0, ZB - 1.4), "#c9a24a", 1, "opacity='.8'")); });
+    o.push(pozza(0, 0, 3.4, 1.7), pozza(0, 0, 8, 1.8), pozza(0, 0, 12, 1.6));
+    o.push(poly(qFondo(-XW, XW, 0, 0.3, ZB - 0.01), "url(#gOmbraMuro)"));
+    // le slot machine lungo le pareti (dalle più lontane)
+    for (z = 12.6, k = 0; z > 6.2; z -= 0.92, k++) o.push(slot(-1, z, k), slot(1, z, k + 2));
+    // chi passeggia
+    o.push(inPiedi("Mimì", -0.3, 11.6), inPiedi("Gegè", 1.0, 9.6), inPiedi("Fefè", -1.0, 8.7));
+    // i lampadari
+    o.push(lampadario(0, 8.2, 4.15));
+    // i tavoli: prima il più lontano
+    var tv = TAVOLI.concat(TAVOLI_FONDO).sort(function (a, b) { return b.z - a.z; });   // prima i più lontani
+    tv.forEach(function (t) { o.push(t.id === "poker" ? tavoloPoker(t.x, t.z, t.nomi) : tavoloBJ(t.x, t.z, t.nomi)); });
+    o.push(lampadario(0, 4.6, 4.25));
+    o.push(scalinata());
+    return o.join("");
+  }
+  // dove stanno sullo schermo (disegno 360×640) i tavoli, le loro insegne e i luccichii dei lampadari
+  function geometriaSalone() {
+    return {
+      tavoli: TAVOLI.map(function (t) {
+        var w = t.id === "poker" ? 1.45 : 1.2, zf = t.z - (t.id === "poker" ? 0.75 : 0.05);
+        var sx = P(t.x - w, 0, t.z)[0], dx = P(t.x + w, 0, t.z)[0], su = P(t.x, 3.25, t.z)[1], giu = P(t.x, 0.15, zf)[1];
+        return { id: t.id, nome: t.nome, insegna: t.insegna, stile: t.stile,
+          box: [Math.max(0, sx), Math.max(0, su - 34), Math.min(W, dx), Math.min(H, giu)], fuoco: P(t.x, 0.95, t.z + 0.35), cartello: (function (c) { return [Math.max(88, Math.min(W - 88, c[0])), c[1]]; })(P(t.x, 3.25, t.z)) };   // l'insegna non esce dallo schermo
+      }),
+      luci: [[0, 4.6, 4.25], [0, 8.2, 4.15]].map(function (l) { var c = P(l[0], l[2], l[1]); return [c[0], c[1], F / l[1]]; })
+    };
+  }
+  var cacheSalone = null;
+  function salone() {
+    if (cacheSalone) return cacheSalone;
+    var d = conCamera(CAM_SALONE, function () { return { o: disegnoSalone(), g: geometriaSalone() }; });
+    var svg = svgCon({ o: d.o, feltro: ["#1d9a57", "#0d6136"], feltro2: ["#1f8a55", "#0e5233"], legno: ["#5a2f17", "#2b140a"], pozza: "#ffd98a" });
+    cacheSalone = { img: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg), tavoli: d.g.tavoli, luci: d.g.luci };
+    return cacheSalone;
+  }
+
   // la sala intera, pronta da mettere in un'immagine
-  function svgSala(id) {
-    var d = (DISEGNI[id] || salaBJ)();
+  function svgSala(id) { return svgCon((DISEGNI[id] || salaBJ)()); }
+  function svgCon(d) {
     var defs = "<defs>" +
+      "<radialGradient id='gFeltro2' cx='.5' cy='.45' r='.65'><stop offset='0' stop-color='" + (d.feltro2 || d.feltro)[0] + "'/><stop offset='1' stop-color='" + (d.feltro2 || d.feltro)[1] + "'/></radialGradient>" +
       "<linearGradient id='gSoff' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#050304'/><stop offset='1' stop-color='#1d1216'/></linearGradient>" +
       "<radialGradient id='gFeltro' cx='.5' cy='.45' r='.65'><stop offset='0' stop-color='" + d.feltro[0] + "'/><stop offset='1' stop-color='" + d.feltro[1] + "'/></radialGradient>" +
       "<linearGradient id='gLegno' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='" + d.legno[0] + "'/><stop offset='1' stop-color='" + d.legno[1] + "'/></linearGradient>" +
@@ -365,5 +581,6 @@
     return cache[id];
   }
 
-  window.SGCasino = { SALE: SALE, immagine: immagine, svg: svgSala };
+  // SALE: tutte le sale disegnate (anche quelle della Scopa, per l'edificio nuovo); TAVOLI: i giochi del salone del Casinò
+  window.SGCasino = { SALE: SALE, TAVOLI: TAVOLI, immagine: immagine, svg: svgSala, salone: salone };
 })();

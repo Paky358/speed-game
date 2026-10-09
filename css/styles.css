@@ -937,8 +937,8 @@ button.am-riga:active{ transform:scale(.985); }
 .ed-modale .mg-sotto{ font-size:.82rem; }
 
 /* =========================================================
-   IL CASINÒ DENTRO: una sala per gioco (disegni in casino.js)
-   le sale scorrono di fianco (solo transform), il nome grande è un'insegna diversa per ogni sala
+   IL CASINÒ DENTRO: il salone in prima persona e la sala di ogni tavolo (disegni in casino.js)
+   ci si avvicina al tavolo con solo transform; il nome grande è un'insegna diversa per ogni sala
    ========================================================= */
 .schermata.casino-sale{ position:relative; padding:0; flex:0 0 auto; height:var(--alt, 100dvh); min-height:0; max-height:var(--alt, 100dvh);
   overflow:hidden; background:#0d0508; display:flex; flex-direction:column; }
@@ -975,11 +975,33 @@ button.am-riga:active{ transform:scale(.985); }
   padding:9px 16px; border-radius:999px; font-weight:900; font-size:.95rem; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#e2a93a);
   box-shadow:0 6px 18px rgba(0,0,0,.5), 0 0 0 3px rgba(255,224,138,.25); animation:cs-pulsa 1.8s ease-in-out infinite; }
 @keyframes cs-pulsa{ 50%{ opacity:.62; } }
-/* frecce ai lati */
-.cs-freccia{ position:absolute; top:50%; z-index:4; width:38px; height:58px; margin-top:-29px; border:0; border-radius:14px; cursor:pointer;
-  background:rgba(10,4,8,.5); color:#ffe29a; font-size:2rem; font-weight:900; line-height:1; padding:0 0 4px; box-shadow:inset 0 0 0 1.5px rgba(255,226,154,.25); }
-.cs-freccia.sx{ left:8px; } .cs-freccia.dx{ right:8px; }
-.cs-freccia:active{ transform:scale(.92); }
+/* il salone in prima persona: si "cammina" verso un tavolo (solo transform), poi compare la sua sala */
+.cs-salone{ position:absolute; inset:0; will-change:transform; }
+.cs-salone-in{ position:absolute; }
+.cs-scena-salone{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; -webkit-user-drag:none; user-select:none; }
+.cs-salone.passi .cs-salone-in{ animation:csPassi .85s ease-in-out; }
+@keyframes csPassi{ 22%{ transform:translateY(-.5%); } 45%{ transform:none; } 68%{ transform:translateY(-.5%); } 90%{ transform:none; } }
+.cs-zona{ position:absolute; z-index:2; border:0; padding:0; background:transparent; cursor:pointer; border-radius:24px; -webkit-tap-highlight-color:transparent; }
+.cs-zona:active{ background:radial-gradient(closest-side, rgba(255,224,138,.25), transparent); }
+/* le insegne appese sopra i tavoli */
+.cs-cartello{ position:absolute; z-index:1; transform:translate(-50%,-100%); pointer-events:none; white-space:nowrap; font-size:calc(var(--s,1) * 13px); }
+.cs-cartello::before, .cs-cartello::after{ content:""; position:absolute; bottom:100%; height:calc(var(--s,1) * 160px); width:1.5px; background:rgba(0,0,0,.75); }
+.cs-cartello::before{ left:20%; } .cs-cartello::after{ right:20%; }
+.cs-cartello b{ position:relative; display:block; font-weight:900; letter-spacing:.08em; line-height:1; padding:.42em .75em .38em; border-radius:.55em; }
+.cs-cartello.cs-bj b{ color:#ffe7a3; background:linear-gradient(180deg,#7d1325,#45070f); border:2px solid #e2b04a;
+  box-shadow:0 0 0 3px #45070f, 0 0 0 4px #b9862d, 0 8px 18px rgba(0,0,0,.6); text-shadow:0 0 10px rgba(255,200,90,.7); }
+.cs-cartello.cs-bj b::after{ content:""; position:absolute; inset:-8px; border-radius:.9em; border:2px dotted #fff1bd; animation:cs-lampadine 1.6s steps(2) infinite; }
+.cs-cartello.cs-pk b{ color:#fff; background:rgba(8,10,22,.9); border:1.5px solid rgba(255,79,216,.75); letter-spacing:.18em;
+  text-shadow:0 0 5px #ff4fd8, 0 0 12px #ff4fd8; box-shadow:0 0 16px rgba(255,79,216,.35), inset 0 0 10px rgba(255,79,216,.2); animation:cs-neon 4s infinite; }
+/* i luccichii dei lampadari */
+.cs-luccica{ position:absolute; width:calc(var(--s,1) * 8px); height:calc(var(--s,1) * 8px); margin:calc(var(--s,1) * -4px) 0 0 calc(var(--s,1) * -4px); pointer-events:none; opacity:0;
+  background:radial-gradient(circle, #fff 0 16%, rgba(255,244,200,.85) 30%, transparent 70%); animation:csLuccica 2.8s ease-in-out infinite; }
+@keyframes csLuccica{ 0%, 100%{ opacity:0; transform:scale(.4); } 50%{ opacity:1; transform:scale(1.25); } }
+/* la sala del tavolo: compare mentre ci si avvicina */
+.cs-primo{ z-index:3; opacity:0; transform:scale(1.14); transition:opacity .4s ease, transform .6s cubic-bezier(.2,.8,.2,1); pointer-events:none; }
+.cs-primo.su{ opacity:1; transform:none; pointer-events:auto; }
+.cs-invito{ z-index:2; transition:opacity .25s; }
+.cs-vista.in-sala .cs-invito{ opacity:0; animation:none; }
 /* in basso: tutti i giochi del Casinò, per andare subito in una sala */
 .cs-giochi{ flex:none; display:flex; flex-wrap:wrap; justify-content:center; gap:7px; padding:10px 10px calc(10px + env(safe-area-inset-bottom));
   background:linear-gradient(180deg,#22090f,#0d0508); border-top:2px solid #b9862d; }
