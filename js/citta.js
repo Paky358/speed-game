@@ -376,7 +376,7 @@
     [[.5, .76], [1.12, 1.38], [1.76, 2.02]].forEach(function (k) { s += persiane("L", u + k[0], u + k[1], 26, 34.5, vf); });
     s += persiane("R", v + 1.72, v + 1.46, 26, 34.5, uf) + persiane("R", v + .98, v + .72, 26, 34.5, uf);
     // l'insegna di legno e la tenda a righe verdi
-    s += qR(uf + .01, v + 1.85, v + .4, 35.6, 40.6, F("#5a3a22", "r")) + txR(uf + .01, v + 1.125, 36.6, "CIRCOLO", 6.4, S.luci ? "#ffe066" : "#ffe8a3", G());   // in alto sul fianco, sotto il tetto: si vede dalla piazza
+    s += qL(vf + .01, u + .62, u + 1.88, 19.8, 23.3, F("#5a3a22", "l")) + txL(vf + .01, u + 1.25, 20.5, "CIRCOLO", 5.4, S.luci ? "#ffe066" : "#ffe8a3", G());   // l'insegna sopra la porta, verso la piazza
     s += tenda(vf, u + .9, u + 1.6, 19.4, .3, 4, "#2f9e44", "#ffffff");
     // il tetto di coppi
     s += tettoV(u + .18, u + 2.32, v + .12, v + 2.12, 41, 15, "#c0522b", M);
@@ -388,7 +388,7 @@
   }
 
   // ---------- la città ----------
-  var LOTTI = { casino: [4.15, 6.95], studio: [6.95, 4.15], circolo: [4.15, 4.15], giochi: [10.55, 13.35], arena: [13.35, 10.55], locale: [16.95, 19.75], trofei: [19.75, 16.95] };
+  var LOTTI = { casino: [4.15, 6.95], studio: [6.95, 4.15], circolo: [6.7, 6.7], giochi: [10.55, 13.35], arena: [13.35, 10.55], locale: [16.95, 19.75], trofei: [19.75, 16.95] };
   var NOMI = { casino: ["🃏 Casinò", "#e03131", 97, 0], studio: ["📺 Studio TV", "#7048e8", 99, 0], circolo: ["🎲 Circolo", "#2f9e44", 92, 0], giochi: ["🕹️ Sala giochi", "#f08c00", 80, -4], arena: ["⚔️ Arena", "#1c7ed6", 95, 0], locale: ["🎉 Locale", "#d6336c", 76, 0], trofei: ["🏆 Trofei", "#f59f00", 92, 0] };
   var DISEGNA = { casino: casino, studio: studio, circolo: circolo, giochi: arcade, locale: locale, trofei: trofei };
   function edificio(k) {
@@ -415,7 +415,7 @@
     s += fiori(8.4, 12.9) + fiori(12.9, 8.4);
     Object.keys(LOTTI).forEach(function (k) { og.push(edificio(k)); });
     og.push({ d: 20, s: tocco("piazza", fontana(10, 10)) }, { d: 19.4, s: tocco("piazza", bacheca(10, 9)) }, { d: 32.8, s: tocco("bar", bar(16.4, 16.4)) });
-    [[7.6, 12.4, 1], [12.4, 7.6, 1], [2.6, 7.4, .9]].forEach(function (t) { og.push({ d: t[0] + t[1], s: albero(t[0], t[1], t[2]) }); });
+    [[7.6, 12.4, 1], [12.4, 7.6, 1], [2.6, 7.4, .9], [4.9, 4.6, 1.1], [3.6, 5.6, .9], [5.7, 3.5, .95]].forEach(function (t) { og.push({ d: t[0] + t[1], s: albero(t[0], t[1], t[2]) }); });
     [[14.2, 18.6], [18.6, 14.2], [20.9, 20.9]].forEach(function (t) { og.push({ d: t[0] + t[1], s: pino(t[0], t[1], 1) }); });
     [[7.5, 10.55], [10.55, 7.5]].forEach(function (l) { og.push({ d: l[0] + l[1], s: lampione(l[0], l[1]) }); });
     og.push({ d: 23.2, s: auto(12.6, 9.55, "#fa5252") }, { d: 29, s: auto(12.4, 15.98, "#4dabf7") });
