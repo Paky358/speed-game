@@ -1317,6 +1317,27 @@
     { gioco: "ruota", livello: "diamante", icona: "👑", nome: "Re della Ruota",       desc: "Vinci 20 partite in modalità Sfida",                          stat: "vittorieSfida",                 meta: 20 },
     { gioco: "ruota", livello: "diamante", icona: "🛡️", nome: "Senza Bancarotta",     desc: "Batti i bot Difficili senza mai fare Bancarotta",            stat: "vittorieDifficileSenzaBancarotta", meta: 1 },
     { gioco: "ruota", livello: "diamante", icona: "💎", nome: "Partita Perfetta",     desc: "Batti i bot Difficili vincendo tutte le manche di una partita da almeno 3 manche", stat: "vittorieDifficileTutteLeManche", meta: 1 },
+
+    // ---- L'Asta ----
+    { gioco: "asta", livello: "bronzo",   icona: "🔨", nome: "Prima Asta",             desc: "Concludi la tua prima partita",                              stat: "partite",         meta: 1 },
+    { gioco: "asta", livello: "bronzo",   icona: "🏆", nome: "Al Primo Posto",         desc: "Vinci una partita",                                           stat: "vinte",            meta: 1 },
+    { gioco: "asta", livello: "bronzo",   icona: "🎒", nome: "Kit in Costruzione",     desc: "Gioca una partita dei Temi classici",                         stat: "partiteTemi",      meta: 1 },
+    { gioco: "asta", livello: "bronzo",   icona: "⚽", nome: "Rosa al Completo",       desc: "Gioca una partita di Mini asta Fantacalcio",                  stat: "partiteFanta",     meta: 1 },
+    { gioco: "asta", livello: "bronzo",   icona: "💰", nome: "La Prima Aggiudicazione",desc: "Vinci una carta con un'offerta",                               stat: "asteVinte",        meta: 1 },
+    { gioco: "asta", livello: "bronzo",   icona: "⭐", nome: "Pioggia di Stelle",      desc: "Ricevi almeno 5 stelle in totale",                            stat: "stelleRicevute",   meta: 5 },
+    { gioco: "asta", livello: "argento",  icona: "🔟", nome: "Dieci Serate",           desc: "Concludi 10 partite",                                         stat: "partite",          meta: 10 },
+    { gioco: "asta", livello: "argento",  icona: "🥈", nome: "Cinque Vittorie",        desc: "Vinci 5 partite",                                             stat: "vinte",            meta: 5 },
+    { gioco: "asta", livello: "argento",  icona: "🛎️", nome: "Banco Battuto",          desc: "Aggiudicati 20 carte con le tue offerte",                     stat: "asteVinte",        meta: 20 },
+    { gioco: "asta", livello: "argento",  icona: "🌐", nome: "Tavolo Online",          desc: "Concludi 5 partite online",                                   stat: "partiteOnline",    meta: 5 },
+    { gioco: "asta", livello: "argento",  icona: "🪙", nome: "Portafoglio Leggero",    desc: "Spendi 100 crediti nelle aste",                               stat: "creditiSpesi",     meta: 100 },
+    { gioco: "asta", livello: "oro",      icona: "🎒", nome: "Maestro dei Temi",       desc: "Vinci 5 partite dei Temi classici",                          stat: "vinteTemi",        meta: 5 },
+    { gioco: "asta", livello: "oro",      icona: "⚽", nome: "Re del Fantacalcio",     desc: "Vinci 5 partite di Mini asta Fantacalcio",                   stat: "vinteFanta",       meta: 5 },
+    { gioco: "asta", livello: "oro",      icona: "🤝", nome: "Compagnia Vincente",     desc: "Vinci 10 partite online",                                    stat: "vinteOnline",      meta: 10 },
+    { gioco: "asta", livello: "oro",      icona: "📣", nome: "Rilancio dopo Rilancio", desc: "Aggiudicati 50 carte con le tue offerte",                    stat: "asteVinte",        meta: 50 },
+    { gioco: "asta", livello: "oro",      icona: "🌟", nome: "Kit da Applausi",        desc: "Ricevi 50 stelle in totale",                                 stat: "stelleRicevute",   meta: 50 },
+    { gioco: "asta", livello: "diamante", icona: "💎", nome: "Presenza Costante",      desc: "Concludi 50 partite",                                         stat: "partite",          meta: 50 },
+    { gioco: "asta", livello: "diamante", icona: "👑", nome: "Leggenda della Stanza",  desc: "Vinci 20 partite online",                                    stat: "vinteOnline",      meta: 20 },
+    { gioco: "asta", livello: "diamante", icona: "⚡", nome: "Re del Martello",        desc: "Aggiudicati 100 carte con le tue offerte",                   stat: "asteVinte",        meta: 100 },
   ];
 
   function valoreStat(prof, gioco, chiave) {

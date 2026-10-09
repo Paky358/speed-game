@@ -11,6 +11,36 @@
   var TOT_ROUND = 4;
   var SECONDI = 10;      // conto alla rovescia dopo ogni rilancio
   var MAX_GIOCATORI = 10;
+  var PARTITE_SALVATE = Object.create(null);
+
+  function nuovaSessione() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
+  function salvaTrofeiAsta(t, vm, idGiocatore, online) {
+    try {
+      if (!vm || vm.fase !== "fine" || t.guarda || (t.linkParams && t.linkParams.prova) ||
+          (t.impostazioni && t.impostazioni.prova) || !vm.sessione ||
+          !(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      var profilo = SGNube.profilo(), lista = vm.giocatori || [];
+      var me = online ? lista.filter(function (g) { return g.id === idGiocatore; })[0] :
+        lista.filter(function (g) { return String(g.nome || "").trim().toLowerCase() === String(profilo.nome || "").trim().toLowerCase(); })[0];
+      if (!me || !String(profilo.nome || "").trim() || String(profilo.nome).trim().toLowerCase() !== String(me.nome || "").trim().toLowerCase()) return;
+      var profiloId = String(profilo.uid || profilo.nome).trim().toLowerCase();
+      var chiave = "asta|" + vm.sessione + "|" + profiloId;
+      if (PARTITE_SALVATE[chiave]) return;
+      var chiaveLocale = "sg-asta-ultima-partita-" + profiloId;
+      try { if (window.localStorage && localStorage.getItem(chiaveLocale) === String(vm.sessione)) { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
+      var classifica = vm.classifica || [], posizione = classifica.findIndex(function (g) { return online ? g.id === idGiocatore : String(g.nome || "").trim().toLowerCase() === String(me.nome || "").trim().toLowerCase(); });
+      var vinta = posizione === 0, formato = vm.formato === "fanta" ? "Fanta" : "Temi";
+      var incr = [["partite", 1], ["partite" + formato, 1], ["asteVinte", Math.max(0, +me.asteVinte || 0)],
+        ["creditiSpesi", Math.max(0, +me.creditiSpesi || 0)], ["stelleRicevute", Math.max(0, +me.stelle || 0)]];
+      if (online) incr.push(["partiteOnline", 1]);
+      if (vinta) { incr.push(["vinte", 1], ["vinte" + formato, 1]); if (online) incr.push(["vinteOnline", 1]); }
+      var s = SGNube.statGioco ? (SGNube.statGioco("asta") || {}) : {};
+      if (s.ultimaPartitaTrofei === vm.sessione) return;
+      PARTITE_SALVATE[chiave] = 1;
+      try { if (window.localStorage) localStorage.setItem(chiaveLocale, String(vm.sessione)); } catch (e) {}
+      SGNube.salvaProgressi(null, "asta", incr.filter(function (x) { return x[1] > 0; }), [], [["ultimaPartitaTrofei", vm.sessione]]);
+    } catch (e) {}
+  }
 
   // --- Aspetto specifico del gioco ---
   var stile = document.createElement("style");
@@ -458,8 +488,8 @@
       if (t.impostazioni && t.impostazioni.modo === "online") return hostAsta(t, tema, crediti);
 
       var st = {
-        tema: tema, roundIdx: 0, chooserPtr: 0, tavolo: [], senzaCarta: [], asta: null,
-        giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: crediti, kit: [], stelle: 0 }; })
+        tema: tema, crediti: crediti, sessione: nuovaSessione(), roundIdx: 0, chooserPtr: 0, tavolo: [], senzaCarta: [], asta: null,
+        giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: crediti, kit: [], stelle: 0, asteVinte: 0 }; })
       };
       iniziaRound(t, st);
   }
@@ -609,6 +639,7 @@
     var vincitore = a.leader, prezzo = a.offerta, carta = a.carta;
     st.giocatori[vincitore].crediti -= prezzo;
     st.giocatori[vincitore].kit.push(carta);
+    st.giocatori[vincitore].asteVinte = (st.giocatori[vincitore].asteVinte || 0) + 1;
     st.tavolo.splice(a.idxCarta, 1);
     st.senzaCarta = st.senzaCarta.filter(function (x) { return x !== vincitore; });
     st.chooserPtr++;
@@ -719,6 +750,12 @@
   function classificaFinale(t, st) {
     var classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
       .map(function (g) { return { nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐" }; });
+    var profilo = window.SGNube && SGNube.profilo ? SGNube.profilo() : null;
+    var me = profilo && st.giocatori.filter(function (g) { return String(g.nome).trim().toLowerCase() === String(profilo.nome || "").trim().toLowerCase(); })[0];
+    if (me) salvaTrofeiAsta(t, { fase: "fine", sessione: st.sessione, formato: st.formato,
+      giocatori: st.giocatori.map(function (g) { return { nome: g.nome, asteVinte: g.asteVinte, stelle: g.stelle,
+        creditiSpesi: (st.formato === "fanta" ? FANTA_BUDGET : st.crediti || st.giocatori[0].crediti + g.asteVinte) - g.crediti }; }),
+      classifica: classifica }, null, false);
     t.fine(classifica);
   }
 
@@ -739,13 +776,14 @@
     var r = st.tema.round[st.roundIdx] || {};
     var sceglie = st.senzaCarta.length ? st.senzaCarta[st.chooserPtr % st.senzaCarta.length] : null;
     return {
-      fase: st.fase, codice: st.codice,
+      fase: st.fase, codice: st.codice, sessione: st.sessione, formato: "temi",
       temaNome: st.tema.nome, temaIcona: st.tema.icona, temaId: st.tema.id,
       temi: (window.SG_ASTA_TEMI || []).map(function (x) { return { id: x.id, nome: x.nome, icona: x.icona }; }),
       roundIdx: st.roundIdx, roundNome: r.nome, roundIcona: r.icona, totRound: TOT_ROUND,
       rounds: (st.tema.round || []).map(function (x) { return { nome: x.nome, icona: x.icona }; }),
       giocatori: st.giocatori.map(function (g) {
-        return { id: g.id, nome: g.nome, omino: g.omino || null, crediti: g.crediti, haCarta: st.senzaCarta.indexOf(g.id) < 0, kit: g.kit.slice() };
+        return { id: g.id, nome: g.nome, omino: g.omino || null, crediti: g.crediti, creditiSpesi: st.crediti - g.crediti,
+          asteVinte: g.asteVinte || 0, stelle: g.stelle || 0, haCarta: st.senzaCarta.indexOf(g.id) < 0, kit: g.kit.slice() };
       }),
       tavolo: st.tavolo.map(function (c) { return { nome: c.nome, emoji: c.emoji, tier: c.tier }; }),
       sceglieId: sceglie, sceglieNome: sceglie ? nomeDi(st, sceglie) : "",
@@ -764,10 +802,10 @@
   function hostAsta(t, tema, crediti) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var st = {
-      tema: tema, crediti: crediti, roundIdx: 0, chooserPtr: 0,
+      tema: tema, crediti: crediti, sessione: null, roundIdx: 0, chooserPtr: 0,
       tavolo: [], senzaCarta: [], asta: null, esito: null, classifica: null,
       fase: "lobby", iniziata: false, codice: "…", scadenza: null, _to: null, voti: {},
-      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: crediti, kit: [], stelle: 0, omino: t.mioOmino ? t.mioOmino() : null }]
+      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: crediti, kit: [], stelle: 0, asteVinte: 0, omino: t.mioOmino ? t.mioOmino() : null }]
     };
     function stopTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
     // "⚙️ Regole" in saletta: tema e crediti nuovi; se passi al Fantacalcio cambia motore (stessa stanza, stessi amici)
@@ -800,7 +838,7 @@
         if (!m || !m.t) return;
         if (m.t === "join") {
           if (!st.iniziata && !perId(st, id) && st.giocatori.length < MAX_GIOCATORI)
-            st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: st.crediti, kit: [], stelle: 0, omino: avatarOk(m.omino) });
+            st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: st.crediti, kit: [], stelle: 0, asteVinte: 0, omino: avatarOk(m.omino) });
           bd();
         }
         else if (m.t === "scegli") scegli(id, m.idx);
@@ -816,7 +854,7 @@
 
     function comincia() {
       if (st.iniziata || st.giocatori.length < 2) return;
-      st.iniziata = true; st.roundIdx = 0; nuovoRound();
+      st.iniziata = true; st.sessione = nuovaSessione(); st.roundIdx = 0; nuovoRound();
     }
     function nuovoRound() {
       stopTo();
@@ -885,6 +923,7 @@
       var a = st.asta, g = perId(st, a.leader);
       if (!g) { st.asta = null; return prossima(); }
       g.crediti -= a.offerta; g.kit.push(a.carta);
+      g.asteVinte = (g.asteVinte || 0) + 1;
       st.tavolo.splice(a.idx, 1);
       st.senzaCarta = st.senzaCarta.filter(function (x) { return x !== a.leader; });
       st.chooserPtr++;
@@ -920,7 +959,7 @@
         });
       });
       st.classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
-        .map(function (g) { return { nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐" }; });
+        .map(function (g, i) { return { id: g.id, nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐", pos: i + 1 }; });
       st.fase = "fine"; FX.fine(); bd();
       if (t.risultato) t.risultato(st.classifica);   // per il torneo online
     }
@@ -932,9 +971,9 @@
     }
     function nuovaInLobby() {   // "Nuova partita": tutti tornano in lobby, stessi giocatori
       stopTo();
-      st.iniziata = false; st.fase = "lobby"; st.roundIdx = 0; st.chooserPtr = 0;
+      st.iniziata = false; st.fase = "lobby"; st.sessione = null; st.roundIdx = 0; st.chooserPtr = 0;
       st.tavolo = []; st.senzaCarta = []; st.asta = null; st.esito = null; st.classifica = null; st.voti = {}; st.scadenza = null;
-      st.giocatori.forEach(function (g) { g.crediti = st.crediti; g.kit = []; g.stelle = 0; });
+      st.giocatori.forEach(function (g) { g.crediti = st.crediti; g.kit = []; g.stelle = 0; g.asteVinte = 0; });
       bd();
     }
     var cb = {
@@ -1280,6 +1319,7 @@
 
   function schermataFineAsta(t, vm, cb) {
     var el = t.el;
+    salvaTrofeiAsta(t, vm, cb && cb.myId, true);
     var etichetta = vm.formato === "fanta" ? "Mini asta Fantacalcio" : ("L'Asta · " + (vm.temaNome || ""));
     var s = t.schermata({ icona: "🏆", titolo: "Classifica finale", sotto: etichetta });
     s._contenuto.appendChild(el("div", { class: "tl-coriandoli", text: "🎉🥳🎉" }));
@@ -1414,8 +1454,8 @@
   // ---------- SINGOLO TELEFONO ----------
   function avviaFanta(t) {
     var st = {
-      formato: "fanta", asta: null, giriVuoti: 0,
-      giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0 }; })
+      formato: "fanta", sessione: nuovaSessione(), asta: null, giriVuoti: 0,
+      giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0 }; })
     };
     st.mazzo = costruisciMazzoFanta(st.giocatori.length);
     introFanta(t, st);
@@ -1553,6 +1593,7 @@
     if (a.bar && a.bar._stop) a.bar._stop();
     var carta = st.mazzo.shift();
     assegnaFanta(st.giocatori[i], carta, prezzo);
+    st.giocatori[i].asteVinte = (st.giocatori[i].asteVinte || 0) + 1;
     st.giriVuoti = 0; st.asta = null; FX.aggiudicato();
     esitoFanta(t, st, i, carta, prezzo, "vinta");
   }
@@ -1596,9 +1637,9 @@
   function hostFanta(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var st = {
-      formato: "fanta", crediti: FANTA_BUDGET, mazzo: [], asta: null, esito: null, classifica: null,
+      formato: "fanta", crediti: FANTA_BUDGET, sessione: null, mazzo: [], asta: null, esito: null, classifica: null,
       fase: "lobby", iniziata: false, codice: "…", scadenza: null, _to: null, voti: {}, giriVuoti: 0,
-      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, omino: t.mioOmino ? t.mioOmino() : null }]
+      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, omino: t.mioOmino ? t.mioOmino() : null }]
     };
     function stopTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
     // "⚙️ Regole" in saletta: se torni ai Temi classici cambia motore (stessa stanza, stessi amici)
@@ -1621,7 +1662,7 @@
         if (!m || !m.t) return;
         if (m.t === "join") {
           if (!st.iniziata && !perId(st, id) && st.giocatori.length < MAX_GIOCATORI)
-            st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, omino: avatarOk(m.omino) });
+            st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, omino: avatarOk(m.omino) });
           bd();
         }
         else if (m.t === "rilancia") rilanciaO(id);
@@ -1636,7 +1677,7 @@
 
     function comincia() {
       if (st.iniziata || st.giocatori.length < 2) return;
-      st.iniziata = true; st.mazzo = costruisciMazzoFanta(st.giocatori.length); FX.round(); prossima();
+      st.iniziata = true; st.sessione = nuovaSessione(); st.mazzo = costruisciMazzoFanta(st.giocatori.length); FX.round(); prossima();
     }
     function prossima() {
       stopTo();
@@ -1682,7 +1723,7 @@
       stopTo();
       var a = st.asta; if (a.leader === null) return accollo();
       var g = perId(st, a.leader); if (!g) { st.asta = null; return prossima(); }
-      var carta = st.mazzo.shift(); assegnaFanta(g, carta, a.offerta); st.giriVuoti = 0;
+      var carta = st.mazzo.shift(); assegnaFanta(g, carta, a.offerta); g.asteVinte = (g.asteVinte || 0) + 1; st.giriVuoti = 0;
       st.esito = { chiId: g.id, chiNome: g.nome, carta: carta, prezzo: a.offerta, tipo: "vinta" };
       st.asta = null; st.scadenza = null; st.fase = "esito"; FX.aggiudicato(); bd();
     }
@@ -1706,14 +1747,14 @@
         });
       });
       st.classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
-        .map(function (g) { return { nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐" }; });
+        .map(function (g, i) { return { id: g.id, nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐", pos: i + 1 }; });
       st.fase = "fine"; FX.fine(); bd();
       if (t.risultato) t.risultato(st.classifica);   // per il torneo online
     }
     function nuovaInLobby() {
       stopTo();
       st.iniziata = false; st.fase = "lobby"; st.mazzo = []; st.asta = null; st.esito = null; st.classifica = null; st.voti = {}; st.scadenza = null; st.giriVuoti = 0;
-      st.giocatori.forEach(function (g) { g.crediti = FANTA_BUDGET; g.kit = []; g.conta = { P: 0, D: 0, C: 0, A: 0 }; g.stelle = 0; });
+      st.giocatori.forEach(function (g) { g.crediti = FANTA_BUDGET; g.kit = []; g.conta = { P: 0, D: 0, C: 0, A: 0 }; g.stelle = 0; g.asteVinte = 0; });
       bd();
     }
     var cb = {
@@ -1729,10 +1770,11 @@
 
   function vmFanta(st) {
     return {
-      formato: "fanta", fase: st.fase, codice: st.codice,
+      formato: "fanta", fase: st.fase, codice: st.codice, sessione: st.sessione,
       giocatori: st.giocatori.map(function (g) {
         return { id: g.id, nome: g.nome, omino: g.omino || null, crediti: g.crediti, conta: { P: g.conta.P, D: g.conta.D, C: g.conta.C, A: g.conta.A },
-          vuoti: slotVuoti(g), max: maxFanta(g), kit: g.kit.slice() };
+          vuoti: slotVuoti(g), max: maxFanta(g), asteVinte: g.asteVinte || 0,
+          creditiSpesi: FANTA_BUDGET - g.crediti, stelle: g.stelle || 0, kit: g.kit.slice() };
       }),
       asta: st.asta ? {
         carta: { nome: st.asta.carta.nome, squadra: st.asta.carta.squadra, ruolo: st.asta.carta.ruolo },

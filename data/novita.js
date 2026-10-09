@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 171,
+    data: "9 ottobre 2026",
+    titolo: "Trofei per L'Asta 🔨",
+    descrizione: [
+      "Arrivano 19 trofei per i Temi classici e la Mini asta Fantacalcio: conta le partite, le carte aggiudicate, le stelle e le vittorie online.",
+      "I progressi si salvano a fine partita quando giochi con il tuo profilo."
+    ]
+  },
+  {
     v: 170,
     data: "9 ottobre 2026",
     titolo: "Trofei per Palla a Pendolo e Ruota della Fortuna 🏆",
