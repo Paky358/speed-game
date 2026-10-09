@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 168,
+    data: "9 ottobre 2026",
+    titolo: "Trofei della Ruota della Fortuna 🎡",
+    descrizione: [
+      "Arrivano 18 trofei: gira, indovina lettere e frasi, e prova a battere i bot di bravura Media e Difficile.",
+      "Le vittorie contro il bot Facile non valgono per i trofei di bravura."
+    ]
+  },
+  {
     v: 167,
     data: "9 ottobre 2026",
     titolo: "Trofei per Battaglia Navale, Poker e Taboo 🏆",

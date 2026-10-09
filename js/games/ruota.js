@@ -23,6 +23,7 @@
   var FREQ_V = ["E", "A", "I", "O", "U"];
   var NOMI_BOT = ["Matt", "Rosa", "Peppe", "Gina"];
   var COL = 12, RIGHE = 4;
+  var PARTITE_SALVATE = {};
   // la ruota: 24 spicchi (valori, 2 Bancarotta, 1 Passa, 1 Jolly)
   var SPICCHI = [
     { v: 500 }, { v: 300 }, { s: "bancarotta" }, { v: 700 }, { v: 400 }, { v: 250 },
@@ -42,6 +43,39 @@
   function base(ch) { return ACC[ch] || ch; }
   function eLettera(ch) { return /^[A-ZÀÈÉÌÒÙ]$/.test(ch); }
   function fmtN(n) { var s = String(Math.round(Math.abs(n || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, "."); return (n < 0 ? "−" : "") + s; }
+  function salvaTrofei(vm, giocatoreId, modo, liv, nomeProfilo, spettatore) {
+    try {
+      if (spettatore || modo === "prova" || !vm || vm.fase !== "fine" || !(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      var profilo = SGNube.profilo(), lista = vm.giocatori || [];
+      var giocatore = giocatoreId ? lista.filter(function (p) { return p.id === giocatoreId; })[0] :
+        lista.filter(function (p) { return String(p.nome || "").trim().toLowerCase() === String(profilo.nome || "").trim().toLowerCase(); })[0];
+      if (!giocatore || !String(profilo.nome || "").trim() || String(profilo.nome).trim().toLowerCase() !== String(giocatore.nome || nomeProfilo || "").trim().toLowerCase()) return;
+      if (!vm.gameId) return;
+      var idGiocatore = giocatoreId || giocatore.id;
+      var chiave = "ruota|" + vm.gameId + "|" + String(profilo.uid || profilo.nome).trim().toLowerCase();
+      if (PARTITE_SALVATE[chiave]) return;
+      var chiaveSalvataggio = "sg-ruota-ultima-partita-" + String(profilo.uid || profilo.nome).trim().toLowerCase();
+      try { if (window.localStorage && localStorage.getItem(chiaveSalvataggio) === String(vm.gameId)) { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
+      var s = (vm.statFine || {})[idGiocatore] || {}, esito = (vm.classifica || []).filter(function (r) { return r.id === idGiocatore; })[0], vinta = !!(esito && esito.pos === 1);
+      var incrs = [["partite", 1]], record = [];
+      ["giri", "consonantiIndovinate", "vocaliIndovinate", "frasiRisolte"].forEach(function (k) {
+        if (+s[k] > 0) incrs.push([k, +s[k]]);
+      });
+      if ((modo !== "bot" || liv !== "facile") && +s.mancheDa5000 > 0) incrs.push(["mancheDa5000", +s.mancheDa5000]);
+      if (vinta) {
+        if (modo !== "bot" || liv !== "facile") incrs.push(["vittorieSfida", 1]);
+        if (modo === "bot" && liv === "medio") incrs.push(["vittorieMedio", 1]);
+        if (modo === "bot" && liv === "difficile") {
+          incrs.push(["vittorieDifficile", 1]);
+          if (!s.bancarotte) incrs.push(["vittorieDifficileSenzaBancarotta", 1]);
+          if (s.mancheVinte === vm.mancheTot && vm.mancheTot >= 3) incrs.push(["vittorieDifficileTutteLeManche", 1]);
+        }
+      }
+      PARTITE_SALVATE[chiave] = 1;
+      try { if (window.localStorage) localStorage.setItem(chiaveSalvataggio, String(vm.gameId)); } catch (e) {}
+      SGNube.salvaProgressi(null, ID, incrs, record, []);
+    } catch (e) {}
+  }
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   function svuota(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
   function frasi() { var f = window.SG_RUOTA_FRASI; return f && f.length ? f : FRASI_RISERVA; }
@@ -65,8 +99,11 @@
   // =========================================================
   //  MOTORE (uguale contro il computer, sullo stesso telefono e per l'host online)
   // =========================================================
-  function creaPartita(giocatori, mancheTot) {
-    var P = { giocatori: giocatori.map(function (g) { return { id: g.id, nome: g.nome, bot: !!g.bot, omino: g.omino || null, totale: 0, soldi: 0, jolly: 0, via: false }; }),
+  function creaPartita(giocatori, mancheTot, regole) {
+    var cfg = regole || {};
+    var P = { giocatori: giocatori.map(function (g) { return { id: g.id, nome: g.nome, bot: !!g.bot, omino: g.omino || null, totale: 0, soldi: 0, jolly: 0, via: false,
+      stat: { giri: 0, consonantiIndovinate: 0, vocaliIndovinate: 0, frasiRisolte: 0, mancheVinte: 0, mancheDa5000: 0, bancarotte: 0 } }; }),
+      modo: cfg.modo || "bot", difficolta: cfg.difficolta || "medio",
       mancheTot: mancheTot, manche: 0, turno: 0, fase: "pronti", frase: "", cat: "", rivelate: {}, chiamate: {},
       spicchio: -1, angolo: 0, giroN: 0, msg: "", ultime: [], usate: {}, vince: null, classifica: null };
     function g() { return P.giocatori[P.turno]; }
@@ -108,14 +145,14 @@
       var meta = (360 - ((i + 0.5) * 15 + (Math.random() * 9 - 4.5)) % 360) % 360;   // lo spicchio i sotto la freccia (in alto)
       var giri = 4 + Math.floor(Math.random() * 2);
       P.angolo = P.angolo + giri * 360 + ((meta - (P.angolo % 360)) + 720) % 360;
-      P.spicchio = i; P.giroN++; P.fase = "girando"; P.ultime = []; P.msg = g().nome + " gira la ruota…";
+      P.spicchio = i; P.giroN++; g().stat.giri++; P.fase = "girando"; P.ultime = []; P.msg = g().nome + " gira la ruota…";
       return true;
     };
     P.dopoGiro = function () {   // la ruota si è fermata
       if (P.fase !== "girando") return;
       var s = SPICCHI[P.spicchio], p = g();
       if (s.v) { P.fase = "consonante"; P.msg = p.nome + ": " + fmtN(s.v) + " a lettera, scegli una consonante"; }
-      else if (s.s === "bancarotta") { p.soldi = 0; P.msg = "💥 Bancarotta! " + p.nome + " perde i soldi della manche."; prossimo(); }
+      else if (s.s === "bancarotta") { p.soldi = 0; p.stat.bancarotte++; P.msg = "💥 Bancarotta! " + p.nome + " perde i soldi della manche."; prossimo(); }
       else if (s.s === "passa") perdeTurno("⏭️ Passa!");
       else { p.jolly++; P.fase = "gira"; P.msg = "🃏 Jolly per " + p.nome + "! Gira ancora."; }
     };
@@ -124,7 +161,9 @@
       var p = g(), n = occ(L), val = SPICCHI[P.spicchio].v;
       P.chiamate[L] = 1;
       if (n > 0) {
-        P.rivelate[L] = 1; P.ultime = [L]; p.soldi += val * n;
+        P.rivelate[L] = 1; P.ultime = [L];
+        if (P.modo !== "bot" || P.difficolta !== "facile") p.stat.consonantiIndovinate++;
+        p.soldi += val * n;
         P.msg = p.nome + ": " + (n === 1 ? "c'è una " + L : "ci sono " + n + " " + L) + "! +" + fmtN(val * n);
         if (P.tutteFuori()) return vinceManche(p), true;
         P.fase = "gira";
@@ -138,6 +177,7 @@
       P.chiamate[V] = 1;
       if (n > 0) {
         P.rivelate[V] = 1; P.ultime = [V];
+        if (P.modo !== "bot" || P.difficolta !== "facile") p.stat.vocaliIndovinate++;
         P.msg = p.nome + ": " + (n === 1 ? "c'è una " + V : "ci sono " + n + " " + V) + "!";
         if (P.tutteFuori()) return vinceManche(p), true;
         P.fase = "gira";
@@ -147,7 +187,7 @@
     P.risolvi = function () { if (!P.puo().risolvi) return false; P.fase = "risolvi"; P.msg = g().nome + " prova a risolvere…"; return true; };
     P.soluzione = function (testo) {
       if (P.fase !== "risolvi") return false;
-      if (solo(testo) === solo(P.frase)) vinceManche(g());
+      if (solo(testo) === solo(P.frase)) { if (P.modo !== "bot" || P.difficolta !== "facile") g().stat.frasiRisolte++; vinceManche(g()); }
       else { P.msg = "❌ " + g().nome + " sbaglia la soluzione."; prossimo(); }
       return true;
     };
@@ -159,6 +199,8 @@
       CONSONANTI.concat(VOCALI).forEach(function (L) { P.rivelate[L] = 1; });
       var vincita = Math.max(p.soldi, MINIMO_RISOLVI);
       p.totale += vincita;
+      p.stat.mancheVinte++;
+      if (vincita >= 5000) p.stat.mancheDa5000++;
       P.giocatori.forEach(function (x) { if (x !== p) x.soldi = 0; });
       p.soldi = vincita;
       P.vince = { id: p.id, vincita: vincita, frase: P.frase };
@@ -185,6 +227,7 @@
       return { fase: P.fase, manche: P.manche, mancheTot: P.mancheTot, cat: P.cat, tab: P.fase === "finemanche" || P.fase === "fine" ? P.frase : coperta(P.frase, P.rivelate),
         chiamate: Object.keys(P.chiamate), ultime: P.ultime.slice(), turno: tp ? tp.id : null, spicchio: P.spicchio, angolo: P.angolo, giroN: P.giroN, msg: P.msg,
         puo: tp ? P.puo() : null, cons: P.consonantiNascoste(), voc: P.vocaliNascoste(), vince: P.vince, classifica: P.classifica,
+        statFine: P.fase === "fine" ? P.giocatori.reduce(function (a, x) { a[x.id] = x.stat; return a; }, {}) : null,
         giocatori: P.giocatori.filter(function (x) { return !x.via; }).map(function (x) { return { id: x.id, nome: x.nome, bot: x.bot, totale: x.totale, soldi: x.soldi, jolly: x.jolly }; }) };
     };
     return P;
@@ -239,7 +282,7 @@
     var imp = t.impostazioni || {}, liv = imp.difficolta || "medio", mancheTot = Math.max(1, Math.min(6, Math.floor(+imp.manche || 4)));
     var nome = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Tu";
     var posti = [];   // chi gioca: { id, nome, bot, omino }
-    var H = { fase: online ? "lobby" : "gioco", codice: "…", pronta: !online, omini: {} };
+    var H = { fase: online ? "lobby" : "gioco", codice: "…", pronta: !online, omini: {}, gameId: "" };
     function aggiungiBot() {
       var usati = {}; posti.forEach(function (p) { usati[p.nome] = 1; });
       var n = NOMI_BOT.filter(function (x) { return !usati[x]; })[0] || ("Bot " + (posti.length + 1));
@@ -257,9 +300,10 @@
 
     function ferma() { clearTimeout(tBot); clearTimeout(tTempo); tBot = tTempo = null; }
     function vm() {
-      if (H.fase !== "gioco" && H.fase !== "fine") return { fase: H.fase, codice: H.codice, pronta: H.pronta, mancheTot: mancheTot,
+      if (H.fase !== "gioco" && H.fase !== "fine") return { fase: H.fase, codice: H.codice, pronta: H.pronta, mancheTot: mancheTot, gameId: H.gameId, modo: modo, difficolta: liv,
         giocatori: posti.map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot }; }) };
-      var v = P.vista(); v.fase = H.fase === "fine" ? "fine" : v.fase; v.codice = H.codice; v.giocoFase = H.fase; v.sigla = !!H.sigla; return v;
+      var v = P.vista(); v.fase = H.fase === "fine" ? "fine" : v.fase; v.codice = H.codice; v.giocoFase = H.fase; v.sigla = !!H.sigla;
+      v.gameId = H.gameId; v.modo = modo; v.difficolta = liv; return v;
     }
     function bd() { var v = vm(); if (rete) rete.invia({ t: "vm", vm: v }); disegna(t, v, cb); }
     // il giro: bot, la ruota che si ferma, fine manche, tempo per decidere (online)
@@ -289,12 +333,15 @@
       dopo();   // (i suoni li fa il disegno, uguale su tutti i telefoni)
     }
     function finePartita() {
-      H.fase = "fine"; bd();
+      H.fase = "fine";
+      salvaTrofei(vm(), null, modo, liv, nome, false);
+      bd();
       if (t.risultato && P.classifica) t.risultato(P.classifica.filter(function (r) { var x = posti.filter(function (p) { return p.id === r.id; })[0]; return x && !x.bot; }).map(function (r) { return { nome: r.nome, pos: r.pos }; }));
     }
     function comincia() {
       if (posti.length < 2) return;
-      P = creaPartita(posti, mancheTot); P.nuovaManche(); H.fase = "gioco"; H.ultimoTurno = null;
+      H.gameId = (online ? H.codice : modo) + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+      P = creaPartita(posti, mancheTot, { modo: modo, difficolta: liv }); P.nuovaManche(); H.fase = "gioco"; H.ultimoTurno = null;
       // prima la sigla dello studio (presenta i concorrenti), poi si gioca
       H.sigla = true; bd();
       clearTimeout(tFase); tFase = setTimeout(function () { H.sigla = false; dopo(); }, window.SGStudio ? SGStudio.durataApertura(posti.length) : 0);
@@ -394,7 +441,11 @@
         onMsg: function (m) {
           if (!m || !m.t) return;
           if (m.to && m.to !== S.myId) return;
-          if (m.t === "vm") { S.vm = m.vm; disegna(t, m.vm, cb); }
+          if (m.t === "vm") {
+            S.vm = m.vm;
+            if (m.vm.fase === "fine") salvaTrofei(m.vm, S.myId, m.vm.modo, m.vm.difficolta, S.nome, false);
+            disegna(t, m.vm, cb);
+          }
           else if (m.t === "omini") { S.omini = m.omini || {}; if (S.vm) disegna(t, S.vm, cb); }
         },
         onChiuso: function () { errore(t, "La partita è stata chiusa dall'host."); },

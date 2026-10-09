@@ -1059,6 +1059,26 @@
     { gioco: "taboo", livello: "diamante", icona: "👑", nome: "Re delle Squadre",    desc: "Concludi 25 partite con la tua squadra vincitrice", stat: "vittorie",                 meta: 25 },
     { gioco: "taboo", livello: "diamante", icona: "💥", nome: "Dieci Perfette",      desc: "Fai indovinare 10 carte di fila nello stesso turno",stat: "comboCarteMax",            meta: 10 },
     { gioco: "taboo", livello: "diamante", icona: "🔮", nome: "Intesa Imbattibile",  desc: "Concludi 5 tuoi turni positivi di fila, anche tra partite diverse", stat: "serieTurniPositiviMax", meta: 5 },
+
+    // ---- La Ruota della Fortuna ----
+    { gioco: "ruota", livello: "bronzo",   icona: "🎡", nome: "Primo Giro",          desc: "Gira la ruota 10 volte",                                      stat: "giri",                          meta: 10 },
+    { gioco: "ruota", livello: "bronzo",   icona: "🅰️", nome: "Una Vocale alla Volta",desc: "Scopri 3 vocali comprate",                                    stat: "vocaliIndovinate",              meta: 3 },
+    { gioco: "ruota", livello: "bronzo",   icona: "🔤", nome: "Consonante Fortunata",desc: "Indovina 10 consonanti in modalità Sfida",                    stat: "consonantiIndovinate",          meta: 10 },
+    { gioco: "ruota", livello: "bronzo",   icona: "💡", nome: "La Frase è Mia",       desc: "Risolvi una frase in modalità Sfida",                         stat: "frasiRisolte",                  meta: 1 },
+    { gioco: "ruota", livello: "bronzo",   icona: "🏅", nome: "Vittoria in Sfida",    desc: "Vinci una partita contro il computer Medio o Difficile, oppure contro persone", stat: "vittorieSfida", meta: 1 },
+    { gioco: "ruota", livello: "bronzo",   icona: "🎤", nome: "Al Microfono",         desc: "Concludi la tua prima partita",                              stat: "partite",                       meta: 1 },
+    { gioco: "ruota", livello: "argento",  icona: "🔟", nome: "Dieci Puntate",        desc: "Concludi 10 partite",                                         stat: "partite",                       meta: 10 },
+    { gioco: "ruota", livello: "argento",  icona: "🧩", nome: "Frasi Svelate",        desc: "Risolvi 10 frasi in modalità Sfida",                          stat: "frasiRisolte",                  meta: 10 },
+    { gioco: "ruota", livello: "argento",  icona: "🎯", nome: "Occhio alle Lettere",  desc: "Indovina 50 consonanti in modalità Sfida",                    stat: "consonantiIndovinate",          meta: 50 },
+    { gioco: "ruota", livello: "argento",  icona: "🥈", nome: "Cinque Trionfi",       desc: "Vinci 5 partite in modalità Sfida",                           stat: "vittorieSfida",                 meta: 5 },
+    { gioco: "ruota", livello: "argento",  icona: "🧠", nome: "Matt non ti Ferma",    desc: "Batti Matt e gli altri bot di bravura Media 3 volte",         stat: "vittorieMedio",                 meta: 3 },
+    { gioco: "ruota", livello: "oro",      icona: "📅", nome: "Ruota di Serate",      desc: "Concludi 25 partite",                                         stat: "partite",                       meta: 25 },
+    { gioco: "ruota", livello: "oro",      icona: "📣", nome: "Voce da Campione",     desc: "Risolvi 30 frasi in modalità Sfida",                          stat: "frasiRisolte",                  meta: 30 },
+    { gioco: "ruota", livello: "oro",      icona: "💰", nome: "Manche da 5.000",      desc: "Vinci 3 manche con almeno 5.000 punti ciascuna",             stat: "mancheDa5000",                  meta: 3 },
+    { gioco: "ruota", livello: "oro",      icona: "🤖", nome: "Matt al Tappeto",      desc: "Batti i bot di bravura Difficile",                            stat: "vittorieDifficile",             meta: 1 },
+    { gioco: "ruota", livello: "diamante", icona: "👑", nome: "Re della Ruota",       desc: "Vinci 20 partite in modalità Sfida",                          stat: "vittorieSfida",                 meta: 20 },
+    { gioco: "ruota", livello: "diamante", icona: "🛡️", nome: "Senza Bancarotta",     desc: "Batti i bot Difficili senza mai fare Bancarotta",            stat: "vittorieDifficileSenzaBancarotta", meta: 1 },
+    { gioco: "ruota", livello: "diamante", icona: "💎", nome: "Partita Perfetta",     desc: "Batti i bot Difficili vincendo tutte le manche di una partita da almeno 3 manche", stat: "vittorieDifficileTutteLeManche", meta: 1 },
   ];
 
   function valoreStat(prof, gioco, chiave) {
