@@ -799,11 +799,11 @@ button.am-riga:active{ transform:scale(.985); }
 .rl-regole b{ color:var(--testo); }
 .avviso-trofeo.tl-xp .at-ico{ background:linear-gradient(150deg,#a5d8ff,#4c6ef5); }
 
-/* la città nuova (anteprima coi lavori in corso): tasto a strisce gialle e nere accanto a Novità */
-.home-profilo .home-novita.home-citta{ padding:3px; border:0; -webkit-backdrop-filter:none; backdrop-filter:none;
-  background:repeating-linear-gradient(135deg,#ffd43b 0 9px,#1b1b1b 9px 18px); box-shadow:0 8px 20px rgba(0,0,0,.34); }
+/* la città: tasto dorato accanto a Novità */
+.home-profilo .home-novita.home-citta{ padding:0; border:0; -webkit-backdrop-filter:none; backdrop-filter:none;
+  background:linear-gradient(180deg,#ffe08a,#f5b324); box-shadow:0 8px 20px rgba(0,0,0,.3), inset 0 -2px 0 rgba(160,90,0,.35); }
 .home-citta span{ display:inline-flex; align-items:center; min-height:40px; padding:0 14px; border-radius:99px;
-  background:#1b1b1b; color:#ffd43b; font-weight:900; letter-spacing:.02em; }
+  color:#3a2200; font-weight:900; letter-spacing:.02em; }
 .schermata.citta-vista{ position:fixed; inset:0; z-index:5; padding:0; min-height:0; overflow:hidden; animation:none; }
 .citta-mappa, .citta-mappa svg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
 .citta-testa{ position:absolute; z-index:2; left:10px; right:10px; top:calc(10px + env(safe-area-inset-top));
@@ -811,16 +811,38 @@ button.am-riga:active{ transform:scale(.985); }
 .citta-indietro{ flex:none; width:46px; height:46px; border-radius:50%; border:0; cursor:pointer; font-family:inherit;
   font-size:1.9rem; font-weight:900; line-height:1; padding:0 0 4px; background:rgba(255,255,255,.95); color:#2b2b3a;
   box-shadow:0 3px 10px rgba(0,0,0,.28); }
-.citta-cartello{ flex:1; min-width:0; padding:5px; border-radius:15px; pointer-events:none;
-  background:repeating-linear-gradient(135deg,#ffd43b 0 11px,#1b1b1b 11px 22px); box-shadow:0 8px 22px rgba(0,0,0,.38); }
-.citta-cartello div{ background:#1b1b1b; border-radius:11px; padding:6px 10px 7px; text-align:center; }
-.citta-cartello b{ display:block; color:#ffd43b; font-size:1.5rem; font-weight:900; letter-spacing:.07em; line-height:1.05; }
-.citta-cartello span{ display:block; color:#fff; font-size:.78rem; font-weight:900; letter-spacing:.34em; text-transform:uppercase; margin-top:2px; }
-.citta-nastro{ position:absolute; left:-12%; right:-12%; bottom:calc(18px + env(safe-area-inset-bottom)); height:34px;
-  transform:rotate(-2.5deg); display:flex; align-items:center; justify-content:center; pointer-events:none;
-  background:repeating-linear-gradient(135deg,#ffd43b 0 16px,#1b1b1b 16px 32px); box-shadow:0 4px 14px rgba(0,0,0,.35); }
-.citta-nastro span{ background:#ffd43b; color:#1b1b1b; font-weight:900; font-size:.92rem; letter-spacing:.08em;
-  padding:3px 12px; border:2px solid #1b1b1b; border-radius:6px; white-space:nowrap; }
+/* in alto: tu (avatar, nome, livello, barra degli XP) e le monete */
+.citta-io{ flex:1; min-width:0; display:flex; align-items:center; gap:8px; padding:4px 12px 4px 4px; border:0; border-radius:999px; cursor:pointer;
+  font:inherit; text-align:left; background:rgba(255,255,255,.95); color:#2b2b3a; box-shadow:0 3px 10px rgba(0,0,0,.28); }
+.citta-faccia{ width:40px; height:40px; flex:none; border-radius:50%; overflow:hidden; background:#e9ecef; display:flex; align-items:center; justify-content:center; font-size:1.3rem; }
+.citta-faccia svg{ width:100%; height:100%; display:block; }
+.citta-io-testo{ min-width:0; flex:1; display:flex; flex-direction:column; }
+.citta-io-testo b{ font-size:.98rem; font-weight:900; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.citta-io-testo small{ font-size:.74rem; font-weight:800; opacity:.8; line-height:1.2; }
+.citta-xp{ display:block; width:100%; max-width:130px; height:5px; border-radius:3px; background:rgba(0,0,0,.12); margin-top:3px; overflow:hidden; }
+.citta-xp i{ display:block; height:100%; border-radius:3px; background:linear-gradient(90deg,#4c6ef5,#7950f2); }
+.citta-monete{ flex:none; display:flex; align-items:center; gap:6px; padding:7px 12px 7px 7px; border-radius:999px; font-weight:900; font-size:1rem;
+  background:rgba(255,255,255,.95); color:#2b2b3a; box-shadow:0 3px 10px rgba(0,0,0,.28); }
+.citta-moneta{ width:22px; height:22px; flex:none; border-radius:50%; background:radial-gradient(circle at 35% 30%,#fff3bf,#fab005 55%,#e67700); box-shadow:inset 0 0 0 2px #f08c00; }
+/* in basso: Casa, Clan, Negozio (in arrivo) e il Regalo del giorno */
+.citta-giu{ position:absolute; z-index:2; left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); display:flex; gap:8px; max-width:540px; margin:0 auto; }
+.citta-tasto{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:1px; padding:6px 4px 6px; border:0; border-radius:16px; cursor:pointer;
+  font:inherit; font-weight:900; font-size:.8rem; line-height:1.15; background:rgba(255,255,255,.95); color:#2b2b3a; box-shadow:0 3px 10px rgba(0,0,0,.28); }
+.citta-tasto .ct-ico{ font-size:1.35rem; line-height:1.15; }
+.citta-tasto small{ font-size:.64rem; font-weight:800; opacity:.72; white-space:nowrap; }
+.citta-tasto.spento{ opacity:.66; }
+.citta-tasto.regalo.pronto{ opacity:1; background:linear-gradient(180deg,#ffe08a,#f5b324); color:#3a2200; animation:cittaRegalo 1.6s ease-in-out infinite; }
+@keyframes cittaRegalo{ 50%{ transform:scale(1.06); } }
+.citta-presto{ position:absolute; z-index:3; left:50%; bottom:calc(86px + env(safe-area-inset-bottom)); transform:translateX(-50%); padding:8px 14px;
+  border-radius:999px; background:rgba(20,22,44,.92); color:#fff; font-weight:800; font-size:.86rem; white-space:nowrap; opacity:0; pointer-events:none; }
+.citta-presto.su{ animation:cittaPresto 2.2s ease; }
+@keyframes cittaPresto{ 0%{ opacity:0; transform:translate(-50%,8px); } 12%{ opacity:1; transform:translate(-50%,0); } 80%{ opacity:1; } 100%{ opacity:0; } }
+/* di notte le targhette diventano scure */
+.citta-vista.notte .citta-io, .citta-vista.notte .citta-monete, .citta-vista.notte .citta-tasto, .citta-vista.notte .citta-indietro{
+  background:rgba(24,27,52,.92); color:#fff; box-shadow:0 0 0 1px rgba(255,255,255,.14), 0 3px 12px rgba(0,0,0,.45); }
+.citta-vista.notte .citta-xp{ background:rgba(255,255,255,.15); }
+.citta-vista.notte .citta-xp i{ background:linear-gradient(90deg,#ffd43b,#fab005); }
+.citta-vista.notte .citta-tasto.regalo.pronto{ background:linear-gradient(180deg,#ffe08a,#f5b324); color:#3a2200; }
 .ct-tocco{ cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .ct-tocco:active{ opacity:.8; }
 
@@ -1256,6 +1278,23 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       if (giorno) patch.xpGiorno = giorno;
       profilo.level = s.level; profilo.xp = s.xp; profilo.coins = s.coins; profilo.prestige = s.prestige;
       profilo.xpTot = (profilo.xpTot || 0) + n; if (giorno) profilo.xpGiorno = giorno;
+      db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+      notifica();
+      return r;
+    },
+
+    // i premi dei trofei: XP e monete in un colpo, e il segno "già premiato" (premiTrofei.<chiave>) per non darli due volte
+    premiaTrofei: function (chiavi, punti, piuMonete) {
+      if (!auth || !utente || !profilo || !window.SGLivelli || !chiavi || !chiavi.length) return null;
+      var FV = firebase.firestore.FieldValue, n = Math.round(punti || 0);
+      var r = window.SGLivelli.aggiungi(progressione(), n), s = r.stato;
+      var delta = (s.coins - monete()) + Math.round(piuMonete || 0);   // i premi dei livelli + le monete dei trofei
+      var patch = { level: s.level, xp: s.xp, prestige: s.prestige };
+      if (n) patch.xpTot = FV.increment(n);
+      if (delta) patch.coins = FV.increment(delta);
+      profilo.premiTrofei = profilo.premiTrofei || {};
+      chiavi.forEach(function (k) { patch["premiTrofei." + k] = true; profilo.premiTrofei[k] = true; });
+      profilo.coins = monete() + delta; profilo.level = s.level; profilo.xp = s.xp; profilo.prestige = s.prestige; profilo.xpTot = (profilo.xpTot || 0) + n;
       db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
       notifica();
       return r;
@@ -3266,7 +3305,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 })();
 
 /* =========================================================
-   SPeeD GAME — LA CITTÀ (anteprima, lavori in corso)
+   SPeeD GAME — LA CITTÀ
    La futura home: una città isometrica dove ogni edificio è
    una categoria di giochi. Edifici, piazza e bar si toccano
    (gruppi con data-vai): core.js apre l'interno giusto.
@@ -3655,10 +3694,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     [[14.2, 18.6], [18.6, 14.2], [20.9, 20.9]].forEach(function (t) { og.push({ d: t[0] + t[1], s: pino(t[0], t[1], 1) }); });
     [[7.5, 10.55], [10.55, 7.5]].forEach(function (l) { og.push({ d: l[0] + l[1], s: lampione(l[0], l[1]) }); });
     og.push({ d: 23.2, s: auto(12.6, 9.55, "#fa5252") }, { d: 29, s: auto(12.4, 15.98, "#4dabf7") });
-    // il cantiere: la gru, le transenne sulle strade che entrano in città, i birilli
-    og.push({ d: 10, s: gru(7.6, 2.3) });
-    [[5, 9.65, false], [9.65, 5, true], [16.05, 21, true], [21, 16.05, false]].forEach(function (t) { og.push({ d: t[0] + t[1] + .4, s: transenna(t[0], t[1], t[2]) }); });
-    [[5.5, 10.6], [10.6, 5.5], [15.9, 21.6], [21.6, 15.9], [16.8, 20.6]].forEach(function (t) { og.push({ d: t[0] + t[1], s: birillo(t[0], t[1]) }); });
+    // (il cantiere dell'anteprima, gru, transenne e birilli, è finito: la città è aperta; le funzioni restano per i lavori futuri)
     // la gente: in piazza a leggere le novità, al bar, per strada
     [[AM[0], 10.85, 9.6], [AM[1], 11.3, 10.2], [AM[4], 9.4, 10.65], [AM[2], 16.95, 17.35], [AM[3], 17.35, 16.95], [AM[5], 16.6, 13.6]].forEach(function (g) { og.push({ d: g[1] + g[2] + .2, s: gente(g[0], g[1], g[2], 22) }); });
     if (io) og.push({ d: 21.8, s: gente(io, 10.7, 10.9, 28) });
@@ -4383,8 +4419,8 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       if (!novitaTutteViste()) bNov.appendChild(el("span", { class: "pallino" }));
       rigaProfilo.appendChild(bNov);
     }
-    // la città nuova (beta): accanto a Novità; gli edifici portano ai giochi della loro categoria
-    if (window.SGCitta) rigaProfilo.appendChild(el("button", { class: "home-novita home-citta", onclick: schermataCitta }, [ el("span", { text: "🏙️ NEW CITY · beta" }) ]));
+    // la città: accanto a Novità; gli edifici portano ai giochi della loro categoria
+    if (window.SGCitta) rigaProfilo.appendChild(el("button", { class: "home-novita home-citta", onclick: schermataCitta }, [ el("span", { text: "🏙️ La città" }) ]));
     rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: schermataSfide }, [ el("span", { text: "🏆 Trofei" }) ]));
     rigaProfilo.appendChild(el("button", { class: "home-novita home-amici", onclick: function () { schermataAmici(); } }, [ el("span", { text: "👥 Classifica" }), cacheRich && cacheRich.arrivate.length ? el("span", { class: "pallino" }) : null ]));
     setTimeout(function () { aggiornaRichieste(); }, 0);   // richieste di amicizia nuove? pallino sul tasto
@@ -4503,22 +4539,70 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
         el("li", { html: "<b>1 XP per ogni secondo</b> di partita: almeno " + L.MIN_XP + " XP per ogni partita finita, al massimo 30 minuti contati" }),
         el("li", { html: "<b>+" + Math.round(L.BONUS_VITTORIA * 100) + "%</b> se vinci, <b>+" + L.BONUS_GIORNO + " XP</b> alla prima partita del giorno" }),
         el("li", { html: "Ogni livello nuovo regala <b>livello × 50</b> Speed Coins" }),
+        el("li", { html: "Ogni <b>trofeo</b> regala XP e Speed Coins: bronzo 100, argento 250, oro 600, diamante 1.500, Platino 3.000" }),
         el("li", { html: "Dopo il livello " + L.MAX + " scatta il <b>Prestigio</b>: si riparte dal livello 1 con <b>" + cifre(L.BONUS_PRESTIGIO) + "</b> Speed Coins in regalo" })
       ])
     ]);
   }
 
-  // ---- La città nuova (beta): si tocca un edificio, la città fa zoom e si entra ----
+  function tempoBreve(ms) { var m = Math.max(1, Math.ceil((ms || 0) / 60000)), h = Math.floor(m / 60); return h ? h + "h " + (m % 60) + "m" : m + " min"; }
+  // ---- La città: si tocca un edificio, la città fa zoom e si entra.
+  //      In alto chi sei (avatar, nome, livello con la barra degli XP) e le Speed Coins;
+  //      in basso Casa, Clan e Negozio (in arrivo) e il Regalo del giorno ----
   function schermataCitta() {
-    var io = profiloAttivo(), fase = SGCitta.fase(new Date()), via = false;
+    var io = profiloAttivo(), N = window.SGNube, fase = SGCitta.fase(new Date()), via = false;
+    var cloud = !!(N && N.profilo && N.profilo()), prog = window.SGLivelli && cloud && N.progressione ? N.progressione() : null;
     var mappa = el("div", { class: "citta-mappa", html: SGCitta.svg({ fase: fase, io: io && io.omino, sopra: 80 }) });
-    var s = el("div", { class: "schermata citta-vista", style: "background:" + SGCitta.colorePrato(fase) }, [
+    // in alto: tu (tocca per il profilo) e le monete
+    var testoIo = el("span", { class: "citta-io-testo" }, [ el("b", { text: io ? io.nome : "Entra" }) ]);
+    if (prog) {
+      var serve = SGLivelli.xpPerSalire(prog.level), pct = Math.max(3, Math.min(100, Math.floor(prog.xp * 100 / serve)));
+      testoIo.appendChild(el("small", { text: (prog.prestige ? "★" + prog.prestige + " · " : "") + "Livello " + prog.level }));
+      testoIo.appendChild(el("i", { class: "citta-xp" }, [ el("i", { style: "width:" + pct + "%" }) ]));
+    } else testoIo.appendChild(el("small", { text: io ? "Il tuo profilo" : "Crea il tuo profilo" }));
+    var faccia = el("span", { class: "citta-faccia" });
+    if (io && io.omino && window.SGOmino) faccia.innerHTML = SGOmino.svg(io.omino, { busto: true }); else faccia.textContent = (io && io.emoji) || "👤";
+    var monete = el("b", { text: prog ? cifre(prog.coins) : "—" });
+    // in basso: le cose in arrivo (spente) e il regalo del giorno
+    var avviso = el("div", { class: "citta-presto" });
+    function presto(testo) { avviso.textContent = testo; avviso.classList.remove("su"); void avviso.offsetWidth; avviso.classList.add("su"); }
+    function tastoPresto(icona, nome, frase) {
+      return el("button", { class: "citta-tasto spento", onclick: function () { presto(frase); } }, [ el("span", { class: "ct-ico", text: icona }), el("span", { text: nome }), el("small", { text: "🔒 presto" }) ]);
+    }
+    var regalo = el("button", { class: "citta-tasto" });
+    function aggRegalo() {
+      var pronto = cloud && N.puoRitirareBonus && N.puoRitirareBonus();
+      regalo.className = "citta-tasto regalo" + (pronto ? " pronto" : " spento");
+      svuota(regalo);
+      regalo.appendChild(el("span", { class: "ct-ico", text: "🎁" }));
+      regalo.appendChild(el("span", { text: "Regalo" }));
+      regalo.appendChild(el("small", { text: !cloud ? "col profilo" : (pronto ? "+" + cifre(N.bonusImporto) + " 🪙" : "tra " + tempoBreve(N.prossimoBonusMs())) }));
+    }
+    regalo.onclick = function () {
+      if (!cloud) return presto("Crea il tuo profilo per il regalo del giorno");
+      if (!N.puoRitirareBonus()) return presto("Il prossimo regalo arriva a mezzanotte 🌙");
+      regalo.disabled = true;
+      N.ritiraBonus().then(function (nuovo) {
+        monete.textContent = cifre(nuovo);
+        codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🎁", su: "Regalo del giorno", nome: "+" + cifre(N.bonusImporto) + " Speed Coins", sotto: "Il prossimo arriva a mezzanotte" });
+        prossimoAvviso();
+      }).catch(function () {}).then(function () { regalo.disabled = false; aggRegalo(); });
+    };
+    aggRegalo();
+    var s = el("div", { class: "schermata citta-vista" + (fase === "notte" ? " notte" : ""), style: "background:" + SGCitta.colorePrato(fase) }, [
       mappa,
       el("div", { class: "citta-testa" }, [
         el("button", { class: "citta-indietro", text: "‹", "aria-label": "Indietro", onclick: schermataHome }),
-        el("div", { class: "citta-cartello" }, [ el("div", {}, [ el("b", { text: "NEW CITY" }), el("span", { text: "tocca un edificio" }) ]) ])
+        el("button", { class: "citta-io", "aria-label": "Il tuo profilo", onclick: function () { schermataAccesso(schermataCitta); } }, [ faccia, testoIo ]),
+        el("div", { class: "citta-monete", "aria-label": "Speed Coins" }, [ el("span", { class: "citta-moneta" }), monete ])
       ]),
-      el("div", { class: "citta-nastro" }, [ el("span", { text: "🚧 LAVORI IN CORSO 🚧" }) ])
+      avviso,
+      el("div", { class: "citta-giu" }, [
+        tastoPresto("🏠", "Casa", "La tua casa arriva presto 🏠"),
+        tastoPresto("🛡️", "Clan", "I quartieri-clan arrivano presto 🛡️"),
+        tastoPresto("🛍️", "Negozio", "Il negozio arriva presto 🛍️"),
+        regalo
+      ])
     ]);
     mappa.addEventListener("click", function (e) {
       var t = e.target && e.target.closest && e.target.closest("[data-vai]");
@@ -5019,6 +5103,77 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     { gioco: "drop4", livello: "diamante", icona: "✨", nome: "Partita Perfetta",       desc: "Vinci mettendo solo 4 pedine (non vale contro il bot Facile)", stat: "vinteIn4",        meta: 1 },
     { gioco: "drop4", livello: "diamante", icona: "💻", nome: "Dominio Cibernetico",    desc: "Batti il bot Difficile 5 volte",                               stat: "vinteDifficile",  meta: 5 },
     { gioco: "drop4", livello: "diamante", icona: "🧊", nome: "Stallo Architettonico",  desc: "Pareggia una partita: griglia piena e nessuno fa 4",           stat: "pareggi",         meta: 1 },
+
+    // ---- BATTAGLIA NAVALE ----
+    { gioco: "navale", livello: "bronzo",   icona: "🚢", nome: "Prima Salva",             desc: "Gioca la tua prima partita",                                  stat: "partite",             meta: 1 },
+    { gioco: "navale", livello: "bronzo",   icona: "🎯", nome: "Tiro a Segno",             desc: "Colpisci una nave",                                           stat: "colpiAsegno",         meta: 1 },
+    { gioco: "navale", livello: "bronzo",   icona: "💥", nome: "A Fondo!",                 desc: "Affonda la tua prima nave avversaria",                       stat: "naviAffondate",       meta: 1 },
+    { gioco: "navale", livello: "bronzo",   icona: "🏁", nome: "Prima Vittoria",           desc: "Vinci una partita",                                           stat: "vittorie",            meta: 1 },
+    { gioco: "navale", livello: "bronzo",   icona: "🔭", nome: "Buona la Prima",           desc: "Colpisci una nave con il primo tiro della partita",           stat: "primiColpiAsegno",    meta: 1 },
+    { gioco: "navale", livello: "bronzo",   icona: "🔗", nome: "In Rete",                  desc: "Gioca la tua prima partita online",                           stat: "partiteOnline",       meta: 1 },
+    { gioco: "navale", livello: "argento",  icona: "⚓", nome: "Marinaio Costante",        desc: "Gioca 10 partite",                                            stat: "partite",             meta: 10 },
+    { gioco: "navale", livello: "argento",  icona: "🫧", nome: "Flotta negli Abissi",      desc: "Affonda 25 navi avversarie in tutto",                        stat: "naviAffondate",       meta: 25 },
+    { gioco: "navale", livello: "argento",  icona: "🧭", nome: "Mira Sicura",              desc: "Colpisci 100 caselle occupate da navi",                      stat: "colpiAsegno",         meta: 100 },
+    { gioco: "navale", livello: "argento",  icona: "🧠", nome: "Occhio Tattico",           desc: "Batti il bot Medio 3 volte",                                  stat: "vittorieMedio",       meta: 3 },
+    { gioco: "navale", livello: "argento",  icona: "🌐", nome: "Duello Online",            desc: "Vinci 5 partite online",                                     stat: "vittorieOnline",      meta: 5 },
+    { gioco: "navale", livello: "oro",      icona: "🏴‍☠️", nome: "Ammiraglio",               desc: "Vinci 25 partite",                                            stat: "vittorie",            meta: 25 },
+    { gioco: "navale", livello: "oro",      icona: "🤖", nome: "Sfida Difficile",          desc: "Batti il bot Difficile",                                     stat: "vittorieDifficile",   meta: 1 },
+    { gioco: "navale", livello: "oro",      icona: "🌊", nome: "Mare di Colpi",            desc: "Spara 500 volte in tutto",                                   stat: "colpi",               meta: 500 },
+    { gioco: "navale", livello: "oro",      icona: "🏆", nome: "Capitano di Rete",         desc: "Vinci 15 partite online",                                    stat: "vittorieOnline",      meta: 15 },
+    { gioco: "navale", livello: "diamante", icona: "💎", nome: "Lupo di Mare",              desc: "Batti il bot Difficile 3 volte di fila",                      stat: "serieDifficileMax",   meta: 3 },
+    { gioco: "navale", livello: "diamante", icona: "⚡", nome: "Tiro dopo Tiro",           desc: "Colpisci 5 caselle di nave di fila",                         stat: "serieColpiMax",       meta: 5 },
+    { gioco: "navale", livello: "diamante", icona: "👑", nome: "Dominio Online",           desc: "Vinci 5 partite online di fila",                             stat: "serieOnlineMax",      meta: 5 },
+
+    // ---------- Poker ----------
+    { gioco: "poker", livello: "bronzo",   icona: "🪑", nome: "Una Mano al Tavolo",     desc: "Partecipa alla tua prima mano",                              stat: "maniGiocate",             meta: 1 },
+    { gioco: "poker", livello: "bronzo",   icona: "🃏", nome: "Carte Scoperte",         desc: "Vinci una mano arrivando a mostrare le carte",               stat: "maniVinteShowdown",       meta: 1 },
+    { gioco: "poker", livello: "bronzo",   icona: "📈", nome: "Alzo la Puntata",        desc: "Fai il tuo primo rilancio",                                  stat: "rilanci",                 meta: 1 },
+    { gioco: "poker", livello: "bronzo",   icona: "🔄", nome: "Cambio di Piano",        desc: "Cambia almeno una carta nel Poker all'italiana",            stat: "carteCambiate",           meta: 1 },
+    { gioco: "poker", livello: "bronzo",   icona: "🦊", nome: "Tutti a Terra",          desc: "Vinci una mano facendo lasciare gli avversari",             stat: "maniVinteSenzaShowdown",  meta: 1 },
+    { gioco: "poker", livello: "bronzo",   icona: "🌐", nome: "Primo Tavolo Online",    desc: "Gioca una mano online con almeno un'altra persona",         stat: "maniOnline",              meta: 1 },
+    { gioco: "poker", livello: "bronzo",   icona: "🇮🇹", nome: "Prima Mano Italiana",    desc: "Partecipa alla tua prima mano di Poker all'italiana",      stat: "maniItaliane",            meta: 1 },
+    { gioco: "poker", livello: "bronzo",   icona: "♣️", nome: "Buona la Prima",          desc: "Vinci la tua prima mano di Texas Hold'em",                 stat: "vittorieTexas",            meta: 1 },
+    { gioco: "poker", livello: "argento",  icona: "🔟", nome: "Dieci Mani",             desc: "Partecipa a 10 mani",                                       stat: "maniGiocate",             meta: 10 },
+    { gioco: "poker", livello: "argento",  icona: "🎭", nome: "Showdown Ricorrente",    desc: "Vinci 10 mani mostrando le carte",                           stat: "maniVinteShowdown",       meta: 10 },
+    { gioco: "poker", livello: "argento",  icona: "✌️", nome: "Doppia Soddisfazione",   desc: "Vinci 3 mani con una doppia coppia",                         stat: "vittorieDoppia",          meta: 3 },
+    { gioco: "poker", livello: "argento",  icona: "🗣️", nome: "Parola al Rilancio",     desc: "Vinci 3 mani dopo aver rilanciato",                          stat: "vittorieRilancio",        meta: 3 },
+    { gioco: "poker", livello: "argento",  icona: "🇮🇹", nome: "Mano Rinnovata",        desc: "Vinci 3 mani dopo aver cambiato carte all'italiana",         stat: "vittorieCambio",          meta: 3 },
+    { gioco: "poker", livello: "argento",  icona: "👥", nome: "Tavolo in Compagnia",   desc: "Partecipa a 10 mani online contro altre persone",           stat: "maniOnline",              meta: 10 },
+    { gioco: "poker", livello: "argento",  icona: "🇺🇸", nome: "Texas in Crescita",      desc: "Vinci 5 mani di Texas Hold'em",                             stat: "vittorieTexas",            meta: 5 },
+    { gioco: "poker", livello: "argento",  icona: "🔁", nome: "Tradizione Vincente",    desc: "Vinci 5 mani di Poker all'italiana",                       stat: "vittorieItaliana",         meta: 5 },
+    { gioco: "poker", livello: "oro",      icona: "🦾", nome: "Matt non Molla",         desc: "Vinci 10 mani contro bot a difficoltà Difficile",           stat: "vittorieDifficile",       meta: 10 },
+    { gioco: "poker", livello: "oro",      icona: "🤝", nome: "Amici al Piattone",      desc: "Vinci 10 mani online contro altre persone",                 stat: "vittorieOnline",          meta: 10 },
+    { gioco: "poker", livello: "oro",      icona: "🧠", nome: "Tris o Meglio",          desc: "Vinci 10 showdown con tris o una mano più forte",            stat: "vittorieTrisPlus",        meta: 10 },
+    { gioco: "poker", livello: "oro",      icona: "🏰", nome: "Castello di Carte",      desc: "Vinci allo showdown con un full, un poker o una scala colore", stat: "vittorieFullPlus",      meta: 1 },
+    { gioco: "poker", livello: "oro",      icona: "🏅", nome: "Re del Tavolo",          desc: "Vinci 50 mani mostrando le carte",                           stat: "maniVinteShowdown",       meta: 50 },
+    { gioco: "poker", livello: "oro",      icona: "🪜", nome: "Scala Maestra",          desc: "Vinci 5 showdown con una scala",                             stat: "vittorieScala",           meta: 5 },
+    { gioco: "poker", livello: "oro",      icona: "🎨", nome: "Colore Vincente",        desc: "Vinci 2 showdown con un colore",                            stat: "vittorieColore",          meta: 2 },
+    { gioco: "poker", livello: "oro",      icona: "🃏", nome: "Quattro Uguali",          desc: "Vinci allo showdown con quattro carte dello stesso valore", stat: "vittoriePoker",           meta: 1 },
+    { gioco: "poker", livello: "diamante", icona: "⚔️", nome: "Tre di Fila",            desc: "Vinci 3 mani di fila contro i bot Difficili",                stat: "serieDifficileMax",       meta: 3 },
+    { gioco: "poker", livello: "diamante", icona: "🔥", nome: "Cinque Online",          desc: "Vinci 5 mani online di fila contro altre persone",          stat: "serieOnlineMax",          meta: 5 },
+    { gioco: "poker", livello: "diamante", icona: "♠️", nome: "Poker da Campione",       desc: "Vinci 3 showdown con un poker",                              stat: "vittoriePoker",           meta: 3 },
+    { gioco: "poker", livello: "diamante", icona: "🤖", nome: "Matt non ti Ferma",       desc: "Vinci 5 mani di fila contro i bot Difficili",               stat: "serieDifficileMax",       meta: 5 },
+    { gioco: "poker", livello: "diamante", icona: "🌍", nome: "Amici di Lungo Corso",   desc: "Vinci 25 mani online contro altre persone",                 stat: "vittorieOnline",          meta: 25 },
+
+    // ---- TABOO ----
+    { gioco: "taboo", livello: "bronzo",   icona: "🤐", nome: "Prima Parola",       desc: "Finisci la tua prima partita",                         stat: "partite",                  meta: 1 },
+    { gioco: "taboo", livello: "bronzo",   icona: "🎙️", nome: "Prendi la Parola",   desc: "Spiega la tua prima carta alla squadra",              stat: "turniSpiegati",            meta: 1 },
+    { gioco: "taboo", livello: "bronzo",   icona: "✅", nome: "Ci Siamo!",           desc: "Fai indovinare una carta alla tua squadra",          stat: "carteIndovinate",          meta: 1 },
+    { gioco: "taboo", livello: "bronzo",   icona: "⏭️", nome: "Cambio Carta",        desc: "Passa una carta durante un tuo turno",               stat: "cartePassate",             meta: 1 },
+    { gioco: "taboo", livello: "bronzo",   icona: "🚨", nome: "Orecchie Aperte",     desc: "Fai il tuo primo BUZZ alla squadra avversaria",      stat: "buzzFatti",                meta: 1 },
+    { gioco: "taboo", livello: "bronzo",   icona: "🏆", nome: "Squadra Vincente",    desc: "Concludi una partita con la tua squadra vincitrice", stat: "vittorie",                 meta: 1 },
+    { gioco: "taboo", livello: "argento",  icona: "🎲", nome: "Ci Si Rivede",        desc: "Finisci 5 partite",                                 stat: "partite",                  meta: 5 },
+    { gioco: "taboo", livello: "argento",  icona: "🗣️", nome: "Voce del Gruppo",     desc: "Spiega 10 turni alla tua squadra",                  stat: "turniSpiegati",            meta: 10 },
+    { gioco: "taboo", livello: "argento",  icona: "💡", nome: "Parole in Fila",      desc: "Fai indovinare 25 carte in tutto",                  stat: "carteIndovinate",          meta: 25 },
+    { gioco: "taboo", livello: "argento",  icona: "🛤️", nome: "Piano B",             desc: "Passa 10 carte durante i tuoi turni",               stat: "cartePassate",             meta: 10 },
+    { gioco: "taboo", livello: "argento",  icona: "🔔", nome: "Fischietto Pronto",   desc: "Fai 8 BUZZ validi contro la squadra avversaria",    stat: "buzzFatti",                meta: 8 },
+    { gioco: "taboo", livello: "oro",      icona: "🥇", nome: "Capitano di Squadra", desc: "Concludi 15 partite con la tua squadra vincitrice", stat: "vittorie",                 meta: 15 },
+    { gioco: "taboo", livello: "oro",      icona: "🧠", nome: "Giro di Parole",      desc: "Fai indovinare 100 carte in tutto",                 stat: "carteIndovinate",          meta: 100 },
+    { gioco: "taboo", livello: "oro",      icona: "⚡", nome: "Sette di Fila",       desc: "Fai indovinare 7 carte di fila nello stesso turno", stat: "comboCarteMax",            meta: 7 },
+    { gioco: "taboo", livello: "oro",      icona: "🌟", nome: "Turno da Ricordare",  desc: "Concludi 15 turni con più indovinate che BUZZ",     stat: "turniPositivi",            meta: 15 },
+    { gioco: "taboo", livello: "diamante", icona: "👑", nome: "Re delle Squadre",    desc: "Concludi 25 partite con la tua squadra vincitrice", stat: "vittorie",                 meta: 25 },
+    { gioco: "taboo", livello: "diamante", icona: "💥", nome: "Dieci Perfette",      desc: "Fai indovinare 10 carte di fila nello stesso turno",stat: "comboCarteMax",            meta: 10 },
+    { gioco: "taboo", livello: "diamante", icona: "🔮", nome: "Intesa Imbattibile",  desc: "Concludi 5 tuoi turni positivi di fila, anche tra partite diverse", stat: "serieTurniPositiviMax", meta: 5 },
   ];
 
   function valoreStat(prof, gioco, chiave) {
@@ -5133,15 +5288,41 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   function controllaTrofei() {
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     if (!prof) { trofeiNoti = null; return; }
-    var ora = trofeiSbloccati(prof);
+    var ora = trofeiSbloccati(prof), nuovi = {};
     if (trofeiNoti && trofeiNoti.uid === prof.uid) {
-      for (var k in ora) if (!trofeiNoti.set[k]) codaTrofei.push(ora[k]);
+      for (var k in ora) if (!trofeiNoti.set[k]) { codaTrofei.push(ora[k]); nuovi[k] = 1; }
       // il Platino arriva per ultimo, dopo i trofei che l'hanno fatto scattare
       codaTrofei.sort(function (a, b) { return (a.livello === "platino") - (b.livello === "platino"); });
       prossimoAvviso();
     }
     trofeiNoti = { uid: prof.uid, set: ora };
     pubblicaTrofei(prof, ora);
+    premiaTrofei(prof, ora, nuovi);
+  }
+  // ---- i premi dei trofei: ogni trofeo dà XP e Speed Coins secondo il livello, una volta sola per profilo
+  //      (anche quelli presi prima che esistessero i premi: arrivano tutti insieme in un regalo) ----
+  var PREMI_TROFEI = { bronzo: { xp: 100, monete: 100 }, argento: { xp: 250, monete: 250 }, oro: { xp: 600, monete: 600 },
+    diamante: { xp: 1500, monete: 1500 }, platino: { xp: 3000, monete: 3000 } };
+  function premioTesto(livello) { var p = PREMI_TROFEI[livello]; return p ? " · +" + cifre(p.xp) + " XP · +" + cifre(p.monete) + " 🪙" : ""; }
+  function chiaveTrofeo(k) { var h = 5381; for (var i = 0; i < k.length; i++) h = (Math.imul(h, 33) ^ k.charCodeAt(i)) >>> 0; return "t" + h.toString(36); }
+  function premiaTrofei(prof, ora, inVista) {
+    if (!(window.SGNube && SGNube.premiaTrofei && window.SGLivelli)) return;
+    var fatti = prof.premiTrofei || {}, chiavi = [], xp = 0, mon = 0, xpN = 0, monN = 0, nascosti = 0;
+    for (var k in ora) {
+      var c = chiaveTrofeo(k), p = PREMI_TROFEI[ora[k].livello];
+      if (!p || fatti[c]) continue;
+      chiavi.push(c); xp += p.xp; mon += p.monete;
+      if (!inVista[k]) { nascosti++; xpN += p.xp; monN += p.monete; }   // quelli senza il loro avviso (presi prima)
+    }
+    if (!chiavi.length) return;
+    var r = SGNube.premiaTrofei(chiavi, xp, mon); if (!r) return;
+    if (nascosti) codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🎁", su: nascosti === 1 ? "Premio di un trofeo" : "Premi dei tuoi " + nascosti + " trofei",
+      nome: "+" + cifre(xpN) + " XP · +" + cifre(monN) + " Speed Coins", sotto: "Ogni trofeo ora dà XP e monete 🪙" });
+    var lv = 0, pr = 0, m2 = 0;
+    r.eventi.forEach(function (e) { m2 += e.monete; if (e.tipo === "livello") lv = e.livello; if (e.tipo === "prestigio") pr = e.prestigio; });
+    if (pr) codaTrofei.push({ tipo: "xp", cls: "tl-platino", icona: "🌟", su: "PRESTIGIO " + pr + "!", nome: "Si riparte dal livello 1", sotto: "+" + cifre(m2) + " Speed Coins 🪙" });
+    else if (lv) codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🆙", su: "Coi premi dei trofei", nome: "Livello " + lv + "!", sotto: "+" + cifre(m2) + " Speed Coins 🪙" });
+    prossimoAvviso();
   }
   // la "scheda" che vedono gli amici: quanti trofei, per livello e per gioco
   function pubblicaTrofei(prof, set) {
@@ -5437,7 +5618,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       el("div", { class: "at-corpo" }, [
         el("div", { class: "at-su", text: xp ? t.su : "🏆 Trofeo " + liv + " sbloccato!" }),
         el("div", { class: "at-nome", text: t.nome }),
-        el("div", { class: "at-gioco", text: xp ? t.sotto : (g ? g.nome : "") })
+        el("div", { class: "at-gioco", text: xp ? t.sotto : (g ? g.nome : "") + premioTesto(t.livello) })   // il premio del trofeo
       ])
     ]);
     document.body.appendChild(box);   // fuori dalla schermata: resta anche se il gioco cambia pagina
@@ -6051,7 +6232,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   function schermataAccessoCloud(dopo) {
     var p = SGNube.profilo();
     if (p) {   // già dentro: mostra il profilo, le statistiche e il tasto esci
-      var sp = schermata({ icona: p.emoji || "👤", titolo: p.nome, sotto: "Il tuo profilo", indietro: schermataHome });
+      var sp = schermata({ icona: p.emoji || "👤", titolo: p.nome, sotto: "Il tuo profilo", indietro: function () { (dopo || schermataHome)(); } });   // dalla città si torna in città
       if (window.SGOmino) sp._contenuto.appendChild(el("div", { class: "omino-profilo" }, [
         el("div", { class: "omino-palco" + (p.omino ? "" : " vuoto"), html: SGOmino.svg(p.omino || SGOmino.casuale(p.nome)) }),
         el("button", { class: "btn " + (p.omino ? "btn-fantasma" : "btn-primario"), text: p.omino ? "✏️ Modifica il tuo avatar" : "🧍 Crea il tuo avatar",
@@ -15543,6 +15724,37 @@ window.SG_NCC_CATEGORIE = {
      descrizione-> elenco di righe: cosa cambia per chi gioca
    ========================================================= */
 window.SG_NOVITA = [
+  {
+    v: 167,
+    data: "9 ottobre 2026",
+    titolo: "Trofei per Battaglia Navale, Poker e Taboo 🏆",
+    descrizione: [
+      "Battaglia Navale: 18 trofei. Colpisci e affonda le navi, batti il computer Difficile e vinci online. Il più duro: battere il Difficile 3 volte di fila.",
+      "Poker: 29 trofei, sia per il Texas Hold'em sia per quello all'italiana. Si vincono mani, si rilancia, si cambiano carte e si punta al full, al colore e al poker.",
+      "Taboo: 18 trofei. Fai indovinare le carte alla tua squadra, chiama i BUZZ agli avversari e prova a far indovinare 10 carte di fila in un turno.",
+      "Anche questi trofei danno XP e Speed Coins. Contano solo le partite giocate da qui in avanti, con il profilo."
+    ]
+  },
+  {
+    v: 166,
+    data: "9 ottobre 2026",
+    titolo: "La città non è più in prova 🏙️",
+    descrizione: [
+      "Via la scritta «beta»: in home il tasto ora si chiama semplicemente «La città».",
+      "In alto nella città vedi il tuo avatar, il nome, il livello con la barra degli XP e le tue Speed Coins. Toccandoli apri il tuo profilo.",
+      "In basso c'è il tasto del regalo del giorno: quando è pronto brilla e lo ritiri da lì, altrimenti ti dice tra quanto arriva il prossimo.",
+      "Ci sono già i tasti di Casa, Clan e Negozio: per ora sono chiusi, arrivano presto."
+    ]
+  },
+  {
+    v: 165,
+    data: "9 ottobre 2026",
+    titolo: "Ogni trofeo ora dà XP e Speed Coins 🏆🪙",
+    descrizione: [
+      "Quando sblocchi un trofeo prendi XP e monete in base al livello: bronzo 100, argento 250, oro 600, diamante 1.500 e Platino 3.000 (sia XP sia monete).",
+      "Anche i trofei che avevi già valgono: la prima volta che apri l'app arriva un regalo con i premi di tutti i trofei presi finora."
+    ]
+  },
   {
     v: 164,
     data: "9 ottobre 2026",
@@ -26064,6 +26276,31 @@ window.SG_SIPERO = {
     else if (esito.e === "affondato") { mem.coda = []; }
   }
 
+  // I progressi si registrano una volta alla fine di ogni partita, solo sul profilo di questo telefono.
+  function salvaStatNavale(t, esito, dati, modo, liv) {
+    try {
+      if (t.prova || (t.linkParams && t.linkParams.prova)) return;
+      if (!(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      if (!dati || !dati.chiave || navaleSalvate[dati.chiave]) return;
+      navaleSalvate[dati.chiave] = true;
+      var st = SGNube.statGioco ? (SGNube.statGioco("navale") || {}) : {};
+      var x = { partite: 1, colpi: dati.colpi, colpiAsegno: dati.colpiAsegno, colpiAcqua: dati.colpiAcqua,
+        naviAffondate: dati.naviAffondate, primiColpiAsegno: dati.primoColpoAsegno ? 1 : 0 };
+      if (esito) {
+        x.vittorie = 1;
+        if (modo === "bot") x["vittorie" + (liv === "difficile" ? "Difficile" : liv === "medio" ? "Medio" : "Facile")] = 1;
+        if (modo === "online") x.vittorieOnline = 1;
+      } else x.sconfitte = 1;
+      if (modo === "online") x.partiteOnline = 1;
+      var serieDif = liv === "difficile" && modo === "bot" ? (esito ? (st.serieDifOra || 0) + 1 : 0) : 0;
+      var serieOn = modo === "online" ? (esito ? (st.serieOnlineOra || 0) + 1 : 0) : 0;
+      var incr = []; Object.keys(x).forEach(function (k) { if (x[k]) incr.push([k, x[k]]); });
+      SGNube.salvaProgressi(null, "navale", incr,
+        [["serieDifficileMax", serieDif], ["serieOnlineMax", serieOn], ["serieColpiMax", dati.serieColpiMax]],
+        [["serieDifOra", serieDif], ["serieOnlineOra", serieOn]]);
+    } catch (e) {}
+  }
+
   // ---------- suoni ----------
   function suono(e) {
     try { if (navigator.vibrate) navigator.vibrate(e === "affondato" ? [0, 30, 40, 40] : e === "colpito" ? 25 : 8); } catch (x) {}
@@ -26210,7 +26447,7 @@ window.SG_SIPERO = {
   //  canale.manda(msg): { t:"colpo",x,y } oppure { t:"esito",x,y,e,celle,nome,persa }
   //  Il "ricevi" gestisce i colpi in arrivo e gli esiti dei miei colpi.
   // =========================================================
-  var navMount = null;
+  var navMount = null, navaleSalvate = {};
   function nuovoGioco(t, opt) {
     // opt = { titolo, sotto, nomeAvv, sonoHost|null, onEsci, invia(msg)|null (online), rivincita|null, indietro }
     var el = t.el;
@@ -26226,6 +26463,21 @@ window.SG_SIPERO = {
     var avviso = null, avvisoT = null; // scritta temporanea (es. "colpito e affondato")
     var ioPronto = false, avvPronto = false;
     var canale = null;              // impostato da bot/online
+    var colpiMiei = 0, colpiAsegno = 0, colpiAcqua = 0, naviAffondate = 0;
+    var serieColpi = 0, serieColpiMax = 0, primoColpoAsegno = false, fineSalvata = false, fineSeq = 0;
+
+    function termina(vinto) {
+      if (fineSalvata) return;
+      fineSalvata = true; fase = "fine"; esitoFine = vinto;
+      var rimaste = io.navi.filter(function (n) { return n && !n.affondata; }).length;
+      if (opt.onFine) opt.onFine(vinto, { colpi: colpiMiei, colpiAsegno: colpiAsegno, colpiAcqua: colpiAcqua,
+        naviAffondate: naviAffondate, naviRimaste: rimaste, primoColpoAsegno: primoColpoAsegno, serieColpiMax: serieColpiMax,
+        chiave: "navale-" + Date.now() + "-" + (++fineSeq) + "-" + Math.random().toString(36).slice(2) });
+    }
+    function azzeraStatistiche() {
+      colpiMiei = colpiAsegno = colpiAcqua = naviAffondate = serieColpi = serieColpiMax = 0;
+      primoColpoAsegno = false; fineSalvata = false;
+    }
 
     // ---- piazzamento (con ANTEPRIMA: prima proietto dove va la nave, poi confermo) ----
     function celleAnte() { // celle e validità dell'anteprima corrente (o null)
@@ -26261,10 +26513,16 @@ window.SG_SIPERO = {
     // ---- sparo (mio) ----
     function sparoIo(x, y) {
       if (fase !== "battaglia" || turno !== "mio" || attacco[y][x] !== 0) return;
+      colpiMiei++;
       turno = "attesa"; render();
       canale.manda({ t: "colpo", x: x, y: y });
     }
     function registraEsito(m) {
+      if (m.e === "affondato" || m.e === "colpito") {
+        colpiAsegno++; serieColpi++; if (serieColpi > serieColpiMax) serieColpiMax = serieColpi;
+        if (colpiMiei === 1) primoColpoAsegno = true;
+        if (m.e === "affondato") naviAffondate++;
+      } else if (m.e === "acqua") { colpiAcqua++; serieColpi = 0; }
       if (m.e === "affondato" && m.celle) { m.celle.forEach(function (c) { attacco[c.y][c.x] = 3; }); affAvv++; }
       else if (m.e === "colpito") attacco[m.y][m.x] = 2;
       else attacco[m.y][m.x] = 1;
@@ -26280,12 +26538,13 @@ window.SG_SIPERO = {
         else if (canale.esitoBot) canale.esitoBot({ x: m.x, y: m.y, e: e.e });
         suono(e.e);
         if (e.e === "affondato" && !e.persa) mostraAvviso("☠️ Ti hanno affondato: " + e.nome);
-        if (e.persa) { fase = "fine"; esitoFine = false; if (opt.onFine) opt.onFine(false); render(); return; }
+        if (e.persa) { termina(false); render(); return; }
         turno = "mio"; render();
       } else if (m.t === "esito") {              // esito del MIO colpo
+        if (fase !== "battaglia" || !attacco[m.y] || attacco[m.y][m.x] !== 0) return;
         registraEsito(m);
         if (m.e === "affondato" && !m.persa) mostraAvviso("💥 Colpito e affondato!" + (m.nome ? " " + m.nome : ""));
-        if (m.persa) { fase = "fine"; esitoFine = true; if (opt.onFine) opt.onFine(true); render(); return; }
+        if (m.persa) { termina(true); render(); return; }
         turno = "attesa"; render();              // ho sparato, ora tocca all'altro
       }
     }
@@ -26307,6 +26566,7 @@ window.SG_SIPERO = {
     }
     function rifaiPiazza() {
       io = statoVuoto(); attacco = matrice(0); affAvv = 0; prossima = 0; oriz = true; ante = null;
+      azzeraStatistiche();
       clearTimeout(avvisoT); avviso = null;
       ioPronto = false; avvPronto = false; esitoFine = null; fase = "piazza"; turno = "mio"; render();
     }
@@ -26486,7 +26746,7 @@ window.SG_SIPERO = {
       rivincita: function (reset) { bot = flottaCasuale(); mem = { coda: [] }; ioPrimo = Math.random() < 0.5; reset(); },
       startBot: function () { if (ioPrimo) { G.setTurno("mio"); } else { G.setTurno("attesa"); setTimeout(botTurno, 750); } },
       // torneo a eliminazione: chi ha vinto, e la partita trasmessa a chi la guarda
-      onFine: function (vinto) { if (t.risultato) t.risultato(vinto ? [{ nome: io, pos: 1 }, { nome: "Computer", pos: 2 }] : [{ nome: "Computer", pos: 1 }, { nome: io, pos: 2 }]); },
+      onFine: function (vinto, dati) { salvaStatNavale(t, vinto, dati, "bot", liv); if (t.risultato) t.risultato(vinto ? [{ nome: io, pos: 1 }, { nome: "Computer", pos: 2 }] : [{ nome: "Computer", pos: 1 }, { nome: io, pos: 2 }]); },
       vista: t.trasmetti ? function (v) { t.trasmetti({ t: "vista", v: v, nomi: [io, "🤖 Computer"] }); } : null
     });
     G.setCanale(canale);
@@ -26531,7 +26791,10 @@ window.SG_SIPERO = {
         onEsci: function () { rete.chiudi(); t.esci(); },
         rivincita: function (reset) { rete.inviaVeloce({ t: "rivincita" }); reset(); },
         // per il torneo online: chi ha vinto
-        onFine: sonoHost ? function (vinto) { if (t.risultato) t.risultato(vinto ? [{ nome: L.nomiIo, pos: 1 }, { nome: L.nomiAvv || "Avversario", pos: 2 }] : [{ nome: L.nomiAvv || "Avversario", pos: 1 }, { nome: L.nomiIo, pos: 2 }]); } : null,
+        onFine: function (vinto, dati) {
+          salvaStatNavale(t, vinto, dati, "online", null);
+          if (sonoHost && t.risultato) t.risultato(vinto ? [{ nome: L.nomiIo, pos: 1 }, { nome: L.nomiAvv || "Avversario", pos: 2 }] : [{ nome: L.nomiAvv || "Avversario", pos: 1 }, { nome: L.nomiIo, pos: 2 }]);
+        },
         // chi guarda (torneo a eliminazione) vede i colpi: lo mando "trattenuto", così chi arriva dopo lo vede subito
         vista: sonoHost ? function (v) { rete.invia({ t: "vista", v: v, nomi: [L.nomiIo, L.nomiAvv || "Avversario"] }); } : null
       });
@@ -26586,7 +26849,8 @@ window.SG_SIPERO = {
         sonoHost: false,
         invia: function (msg) { S.rete.invia(msg); },
         onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); },
-        rivincita: null
+        rivincita: null,
+        onFine: function (vinto, dati) { salvaStatNavale(t, vinto, dati, "online", null); }
       });
       G.setCanale({ manda: function (msg) { S.rete.invia(msg); } });
       G.startRender();
@@ -30484,6 +30748,49 @@ window.SG_SIPERO = {
   function portafoglio() { var f = conProfilo() && SGNube.fiches ? SGNube.fiches("blackjack") : null; return f == null ? 0 : f; }
   function svuota(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
 
+  // Un solo salvataggio per mano conclusa. L'id della sessione e il numero della mano
+  // restano nel profilo, così un messaggio online ripetuto o ricevuto al rientro non conta due volte.
+  function salvaTrofeiMano(vm, cb) {
+    if (cb.guarda || !vm || vm.stato !== "finemano" || !vm.manoStat || !conProfilo() || !SGNube.salvaProgressi) return;
+    var mio = null;
+    vm.manoStat.forEach(function (p) { if (p.id === cb.myId) mio = p; });
+    if (!mio || !mio.partecipa) return;
+    var chiave = String(vm.partitaId || "poker") + ":" + vm.n + ":" + cb.myId;
+    var st = (SGNube.statGioco && SGNube.statGioco(ID)) || {};
+    if (st.ultimaManoTrofei === chiave) return;
+    var x = { maniGiocate: 1 };
+    if (vm.variante === "it") x.maniItaliane = 1;
+    if (mio.vinta) x.maniVinte = 1;
+    if (mio.vinta && vm.variante === "he") x.vittorieTexas = 1;
+    if (mio.vinta && vm.variante === "it") x.vittorieItaliana = 1;
+    if (mio.showdown) x.maniMostrate = 1;
+    if (mio.vinta && mio.showdown) x.maniVinteShowdown = 1;
+    if (mio.vinta && !mio.showdown) x.maniVinteSenzaShowdown = 1;
+    x.rilanci = mio.rilanci || 0;
+    x.rilanciVeri = mio.rilanciVeri || 0;
+    x.carteCambiate = mio.carteCambiate || 0;
+    if (mio.vinta && mio.mano === "doppia") x.vittorieDoppia = 1;
+    if (mio.vinta && ["tris", "scala", "colore", "full", "poker", "scalacolore"].indexOf(mio.mano) >= 0) x.vittorieTrisPlus = 1;
+    if (mio.vinta && ["full", "poker", "scalacolore"].indexOf(mio.mano) >= 0) x.vittorieFullPlus = 1;
+    if (mio.vinta && mio.mano === "poker") x.vittoriePoker = 1;
+    if (mio.vinta && mio.mano === "scala") x.vittorieScala = 1;
+    if (mio.vinta && mio.mano === "colore") x.vittorieColore = 1;
+    if (mio.vinta && mio.rilanciVeri > 0) x.vittorieRilancio = 1;
+    if (mio.vinta && mio.carteCambiate > 0) x.vittorieCambio = 1;
+    if (mio.vinta && !vm.online && vm.difficolta === "difficile") x.vittorieDifficile = 1;
+    if (mio.controUmani) x.maniOnline = 1;
+    if (mio.vinta && mio.controUmani) x.vittorieOnline = 1;
+    var serieDiff = st.serieDifficileOra || 0, serieOnline = st.serieOnlineOra || 0;
+    if (!vm.online && vm.difficolta === "difficile") serieDiff = mio.vinta ? serieDiff + 1 : 0;
+    else serieDiff = 0;
+    if (mio.controUmani) serieOnline = mio.vinta ? serieOnline + 1 : 0;
+    else serieOnline = 0;
+    var incrs = []; Object.keys(x).forEach(function (k) { if (x[k]) incrs.push([k, x[k]]); });
+    SGNube.salvaProgressi(null, ID, incrs,
+      [["serieDifficileMax", serieDiff], ["serieOnlineMax", serieOnline]],
+      [["ultimaManoTrofei", chiave], ["serieDifficileOra", serieDiff], ["serieOnlineOra", serieOnline]]);
+  }
+
   // =========================================================
   //  CARTE E PUNTI
   // =========================================================
@@ -30559,7 +30866,8 @@ window.SG_SIPERO = {
     M.siedi = function (o) {
       var st = Math.max(0, Math.floor(o.stack || 0));
       var p = { id: o.id, nome: o.nome, omino: o.omino || null, bot: !!o.bot, stack: st, buyin: st, seduto: st > 0, via: false,
-        inMano: false, lascia: false, allin: false, inGiro: 0, messo: 0, mano: [], agito: false, azione: "", mostra: false, cambio: null, valut: null };
+        inMano: false, lascia: false, allin: false, inGiro: 0, messo: 0, mano: [], agito: false, azione: "", mostra: false, cambio: null, valut: null,
+        rilanciMano: 0, rilanciVeriMano: 0, carteCambiateMano: 0 };
       M.giocatori.push(p); return p;
     };
     M.trova = function (id) { for (var i = 0; i < M.giocatori.length; i++) if (M.giocatori[i].id === id) return i; return -1; };
@@ -30567,7 +30875,7 @@ window.SG_SIPERO = {
     M.inCorso = function () { return M.stato !== "attesa" && M.stato !== "finemano"; };
 
     M.nuovaMano = function () {
-      M.giocatori.forEach(function (p) { p.inMano = false; p.lascia = false; p.allin = false; p.inGiro = 0; p.messo = 0; p.mano = []; p.agito = false; p.azione = ""; p.mostra = false; p.cambio = null; p.valut = null; });
+      M.giocatori.forEach(function (p) { p.inMano = false; p.lascia = false; p.allin = false; p.inGiro = 0; p.messo = 0; p.mano = []; p.agito = false; p.azione = ""; p.mostra = false; p.cambio = null; p.valut = null; p.rilanciMano = 0; p.rilanciVeriMano = 0; p.carteCambiateMano = 0; });
       M.esito = null; M.tavolo = []; M.piatto = 0; M.scarti = []; M.corsa = false; M.turno = -1;
       var gioc = attivi();
       if (gioc.length < MIN) { M.stato = "attesa"; return false; }
@@ -30630,6 +30938,7 @@ window.SG_SIPERO = {
         }
         p.azione = p.allin ? "All-in" : (prima === 0 ? "Punta" : "Rilancia");
       } else return false;
+      if (tipo === "punta") { p.rilanciMano++; if (prima > 0 && tot > prima) p.rilanciVeriMano++; }
       p.agito = true;
       controlla();
       return true;
@@ -30671,6 +30980,7 @@ window.SG_SIPERO = {
       var visti = {};
       quali = (quali || []).map(Number).filter(function (k) { if (k >= 0 && k < 5 && !visti[k]) { visti[k] = 1; return true; } return false; }).slice(0, 4);
       quali.forEach(function (k) { M.scarti.push(p.mano[k]); p.mano[k] = pesca(); });
+      p.carteCambiateMano += quali.length;
       p.cambio = quali.length; p.azione = quali.length ? "Cambia " + quali.length : "Servito";
       forseFineCambio();
       return true;
@@ -30848,6 +31158,7 @@ window.SG_SIPERO = {
     var nome = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Tu";
     var W = prof ? portafoglio() : BUYIN;   // il mio portafoglio (le Speed Coins del profilo); senza profilo 1.000 per giocare
     if (prof && W < GRANDE) return senzaFiches(t, function () { partita(t, online); });
+    var partitaId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     var M = creaMotore(V.variante);
     var io = M.siedi({ id: "host", nome: nome, omino: t.mioOmino ? t.mioOmino(nome) : null, stack: Math.min(W, BUYIN) });
     var fuori = W - io.stack;   // quello che resta nel portafoglio, fuori dal tavolo
@@ -30872,6 +31183,13 @@ window.SG_SIPERO = {
     function vm() {
       var tp = M.turno >= 0 ? M.giocatori[M.turno] : null;
       return { fase: H.fase, codice: H.codice, pronta: H.pronta, variante: M.variante, stato: M.stato, n: M.n,
+        partitaId: partitaId, online: online, difficolta: V.liv,
+        manoStat: M.stato === "finemano" && M.esito ? M.giocatori.filter(function (p) { return p.inMano; }).map(function (p) {
+          return { id: p.id, partecipa: true, vinta: !!(M.esito.vinti && M.esito.vinti[p.id]), showdown: !!p.mostra,
+            mano: p.valut ? p.valut.tipo : null, altezza: p.valut && p.valut.v ? p.valut.v[1] : 0,
+            rilanci: p.rilanciMano || 0, rilanciVeri: p.rilanciVeriMano || 0, carteCambiate: p.carteCambiateMano || 0,
+            controUmani: online && M.giocatori.some(function (q) { return q !== p && q.inMano && !q.bot; }) };
+        }) : null,
         tavolo: M.tavolo.slice(), piatto: M.piattoTot(), daChiamare: M.daChiamare, rilMin: M.rilMin,
         turno: tp ? tp.id : null, dealer: M.dealer >= 0 && M.giocatori[M.dealer] ? M.giocatori[M.dealer].id : null,
         vinti: M.esito ? M.esito.vinti : null, classifica: H.classifica,
@@ -31087,6 +31405,7 @@ window.SG_SIPERO = {
   // =========================================================
   var UI = null;   // la schermata del tavolo si costruisce UNA volta e poi si aggiorna a pezzi
   function disegna(t, vm, cb) {
+    salvaTrofeiMano(vm, cb);
     if (vm.fase === "lobby") { UI = null; return lobby(t, vm, cb); }
     if (vm.fase === "fine") { UI = null; return finale(t, vm, cb); }
     if (!UI || !document.body.contains(UI.s)) UI = creaSchermo(t, cb);
@@ -37143,7 +37462,7 @@ window.SG_SIPERO = {
   }
 
   function hostPartita(t) {
-    var G = { rete: null, myId: null, nome: "", vm: null, carta: null, fase: null, ui: null, uiTurno: -1, riepilogo: null, tic: null };
+    var G = { rete: null, myId: null, nome: "", vm: null, carta: null, fase: null, ui: null, uiTurno: -1, riepilogo: null, tic: null, statSalvate: Object.create(null) };
     stile();
     if (t.linkParams && t.linkParams.stanza) {
       if (t.nomeProfilo()) { G.nome = t.nomeProfilo(); return ospite(t, t.linkParams.stanza); }
@@ -37157,6 +37476,34 @@ window.SG_SIPERO = {
     var squadre = { host: 0 }, punti = [0, 0], carte = mescola((window.SG_TABOO_CARTE || []).slice()), indiceCarta = 0;
     var coda = [], indiceTurno = 0, attivo = null, deadline = 0, passati = 0, riepilogo = null, cartaOra = null;
     var statTurno = null, chiaveCarta = 0, boxSquadre = null, schermo = null, ui = null;
+    var partitaId = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+    var statGiocatori = Object.create(null);
+
+    function statPersona(id) {
+      if (!statGiocatori[id]) statGiocatori[id] = { turniSpiegati: 0, carteIndovinate: 0, cartePassate: 0, buzzFatti: 0, buzzSubiti: 0, turniPositivi: 0, comboCarte: 0, comboCarteMax: 0, esitiTurni: [] };
+      return statGiocatori[id];
+    }
+    function salvaStatTaboo(id, v) {
+      if (!id || !v || !v.partitaId || G.statSalvate[v.partitaId]) return;
+      G.statSalvate[v.partitaId] = true;
+      if (t.guarda || (t.linkParams && t.linkParams.prova) || (t.impostazioni && t.impostazioni.prova)) return;
+      if (!(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      var me = (v.giocatori || []).find(function (p) { return p.id === id; });
+      var miei = v.statGiocatori && v.statGiocatori[id];
+      if (!me || !miei) return;
+      var vincitore = v.punti[0] === v.punti[1] ? -1 : (v.punti[0] > v.punti[1] ? 0 : 1);
+      var x = { partite: 1, partiteOnline: 1, turniSpiegati: miei.turniSpiegati, carteIndovinate: miei.carteIndovinate,
+        cartePassate: miei.cartePassate, buzzFatti: miei.buzzFatti, buzzSubiti: miei.buzzSubiti, turniPositivi: miei.turniPositivi };
+      if (vincitore >= 0 && v.squadre[id] === vincitore) x.vittorie = 1;
+      var s0 = SGNube.statGioco ? (SGNube.statGioco("taboo") || {}) : {};
+      if (s0.ultimaPartitaTrofei === v.partitaId) return;   // partita già contata (es. pagina ricaricata a fine partita)
+      var serie = s0.serieTurniPositiviOra || 0;
+      (miei.esitiTurni || []).forEach(function (buono) { serie = buono ? serie + 1 : 0; });
+      var incr = []; Object.keys(x).forEach(function (k) { if (x[k]) incr.push([k, x[k]]); });
+      SGNube.salvaProgressi(null, "taboo", incr,
+        [["comboCarteMax", miei.comboCarteMax || 0], ["serieTurniPositiviMax", serie]],
+        [["serieTurniPositiviOra", serie], ["ultimaPartitaTrofei", v.partitaId]]);
+    }
 
     function indice(id) { return giocatori.findIndex(function (p) { return p.id === id; }); }
     function squadra(id) { return squadre[id] === 1 ? 1 : 0; }
@@ -37206,7 +37553,7 @@ window.SG_SIPERO = {
       aggiornaLobby();
     };
     function vm() {
-      return { fase: fase, codice: codice, pronta: pronta, giocatori: giocatori.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino, host: !!p.host }; }), squadre: squadre,
+      return { fase: fase, codice: codice, pronta: pronta, partitaId: partitaId, statGiocatori: fase === "fine" ? statGiocatori : null, giocatori: giocatori.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino, host: !!p.host }; }), squadre: squadre,
         punti: punti.slice(), durata: durata, giri: giri, turno: indiceTurno, totale: coda.length, attivo: attivo, team: attivo == null ? null : squadra(attivo), deadline: deadline,
         passati: passati, maxPassi: 3, chiaveCarta: chiaveCarta, riepilogo: riepilogo, vincitore: fase === "fine" ? (punti[0] === punti[1] ? -1 : (punti[0] > punti[1] ? 0 : 1)) : null };
     }
@@ -37237,7 +37584,7 @@ window.SG_SIPERO = {
         if (m.t === "join") {
           if (fase === "lobby" && indice(id) < 0 && giocatori.length < MAX) {
             var nome = String(m.nome || "Amico").trim().slice(0, 16) || "Amico";
-            giocatori.push({ id: id, nome: nome, omino: valido(m.omino) });
+            giocatori.push({ id: id, nome: nome, omino: valido(m.omino) }); statPersona(id);
             squadre[id] = membri(0).length <= membri(1).length ? 0 : 1;
             aggiornaLobby();
           } else if (indice(id) >= 0) sincronizza(id);
@@ -37265,17 +37612,20 @@ window.SG_SIPERO = {
     function prossimoTurno() {
       if (indiceTurno >= coda.length || indiceCarta >= carte.length || !membri(0).length || !membri(1).length) return finePartita();
       fase = "turno"; attivo = coda[indiceTurno++]; passati = 0; statTurno = { giuste: [], buzz: [], passate: [] }; riepilogo = null;
+      statPersona(attivo).turniSpiegati++; statPersona(attivo).comboCarte = 0;
       cartaOra = carte[indiceCarta++]; chiaveCarta++; deadline = Date.now() + durata * 1000;
       inviaStato(); giocatori.forEach(function (p) { inviaCarta(p.id); });
       mostraPartita(); aggiornaPartita();
       if (timer) clearInterval(timer);
       timer = setInterval(function () { aggiornaPartita(); if (Date.now() >= deadline) fineTurno(); }, 200);
     }
-    function registra(tipo) {
+    function registra(tipo, id) {
       if (fase !== "turno" || !statTurno) return;
-      if (tipo === "giusta") { punti[squadra(attivo)]++; statTurno.giuste.push(cartaOra.p); }
-      else if (tipo === "buzz") { punti[squadra(attivo)]--; statTurno.buzz.push(cartaOra.p); }
-      else { passati++; statTurno.passate.push(cartaOra.p); }
+      id = id || attivo;
+      var speaker = statPersona(attivo);
+      if (tipo === "giusta") { punti[squadra(attivo)]++; statTurno.giuste.push(cartaOra.p); speaker.carteIndovinate++; speaker.comboCarte++; speaker.comboCarteMax = Math.max(speaker.comboCarteMax, speaker.comboCarte); }
+      else if (tipo === "buzz") { punti[squadra(attivo)]--; statTurno.buzz.push(cartaOra.p); speaker.buzzSubiti++; speaker.comboCarte = 0; statPersona(id).buzzFatti++; }
+      else { passati++; statTurno.passate.push(cartaOra.p); speaker.cartePassate++; speaker.comboCarte = 0; }
       if (tipo === "passata" && passati > 3) return;
       if (passati >= 3 && tipo === "passata") { prossimaCarta(); return; }
       prossimaCarta();
@@ -37287,6 +37637,9 @@ window.SG_SIPERO = {
     function fineTurno() {
       if (fase !== "turno") return;
       if (timer) { clearInterval(timer); timer = null; }
+      var esitoPositivo = statTurno.giuste.length > statTurno.buzz.length, statsTurno = statPersona(attivo);
+      if (esitoPositivo) statsTurno.turniPositivi++;
+      statsTurno.esitiTurni.push(esitoPositivo);
       fase = "riepilogo"; deadline = 0; riepilogo = { id: attivo, nome: (giocatori[indice(attivo)] || {}).nome || "Giocatore", team: squadra(attivo), giuste: statTurno.giuste.slice(), buzz: statTurno.buzz.slice(), passate: statTurno.passate.slice() };
       inviaStato(); mostraRiepilogo();
       timeoutEsito = setTimeout(function () { timeoutEsito = null; if (fase === "riepilogo") { if (indiceTurno >= coda.length) finePartita(); else prossimoTurno(); } }, 6500);
@@ -37305,14 +37658,15 @@ window.SG_SIPERO = {
     function nuovaPartita() {
       if (timer) { clearInterval(timer); timer = null; }
       if (timeoutEsito) { clearTimeout(timeoutEsito); timeoutEsito = null; }
-      fase = "lobby"; punti = [0, 0]; attivo = null; deadline = 0; riepilogo = null; cartaOra = null; coda = []; indiceTurno = 0; ui = null;
+      fase = "lobby"; partitaId = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); statGiocatori = Object.create(null); giocatori.forEach(function (p) { statPersona(p.id); });
+      punti = [0, 0]; attivo = null; deadline = 0; riepilogo = null; cartaOra = null; coda = []; indiceTurno = 0; ui = null;
       aggiornaLobby();
     }
     function finePartita() {
       if (fase === "fine") return;
       if (timer) { clearInterval(timer); timer = null; }
       if (timeoutEsito) { clearTimeout(timeoutEsito); timeoutEsito = null; }
-      fase = "fine"; attivo = null; deadline = 0; inviaStato();
+      fase = "fine"; attivo = null; deadline = 0; salvaStatTaboo("host", vm()); inviaStato();
       if (t.risultato) t.risultato(classificaGiocatori());
       mostraFine(true);
     }
@@ -37344,7 +37698,7 @@ window.SG_SIPERO = {
       } else if (sMe !== squadra(idAttivo)) {
         ui.corpo.appendChild(t.el("div", { class: "tb-parola", text: cartaOra.p }));
         ui.corpo.appendChild(t.el("div", { class: "tb-vietate" }, cartaOra.v.map(function (v) { return t.el("div", { class: "tb-vietata", text: v }); })));
-        ui.tasti.appendChild(bottone(t, "buzz", "❌ BUZZ", function () { registra("buzz"); }));
+        ui.tasti.appendChild(bottone(t, "buzz", "❌ BUZZ", function () { registra("buzz", "host"); }));
       } else {
         ui.corpo.className = "tb-nascondi";
         ui.corpo.appendChild(t.el("div", { class: "tb-indovina", text: "Indovina!" }));
@@ -37382,7 +37736,7 @@ window.SG_SIPERO = {
         if (!G.ui || G.uiTurno !== v.turno || G.fase !== "turno") { G.fase = "turno"; G.uiTurno = v.turno; G.uiKey = -1; creaSchermoOspite(); avviaTic(); }
         aggiornaOspite();
       } else if (v.fase === "riepilogo") { stopTic(); G.fase = v.fase; G.riepilogo = v.riepilogo; creaSchermoOspite(); mostraRiepilogoOspite(); }
-      else if (v.fase === "fine") { stopTic(); G.fase = v.fase; creaSchermoOspite(); mostraFineOspite(); }
+      else if (v.fase === "fine") { stopTic(); salvaStatTaboo(G.myId, v); G.fase = v.fase; creaSchermoOspite(); mostraFineOspite(); }
     }
     function ospite(t, codice) {
       if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
