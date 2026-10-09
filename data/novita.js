@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 161,
+    data: "9 ottobre 2026",
+    titolo: "Calcio Biliardo: lo stadio si sente 🏟️",
+    descrizione: [
+      "Suoni veri del pallone: il colpo quando lo calci, il pallone che rotola, i calciatori che si scontrano, le sponde e il palo.",
+      "Sotto c'è la folla dello stadio: ogni tanto batte le mani a ritmo, al gol esplode e quando prendi il palo fa «uuuh». Col tasto 🔊 in alto a destra li spegni.",
+      "Tiri forti anche dai bordi: più tiri indietro il dito, più la telecamera si alza e il campo si rimpicciolisce. Vicino al bordo dello schermo la forza piena arriva prima che il dito esca dallo schermo."
+    ]
+  },
+  {
     v: 160,
     data: "9 ottobre 2026",
     titolo: "Calcio Biliardo tutto nuovo ⚡",
