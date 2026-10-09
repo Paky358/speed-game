@@ -1317,6 +1317,27 @@
     { gioco: "ruota", livello: "diamante", icona: "👑", nome: "Re della Ruota",       desc: "Vinci 20 partite in modalità Sfida",                          stat: "vittorieSfida",                 meta: 20 },
     { gioco: "ruota", livello: "diamante", icona: "🛡️", nome: "Senza Bancarotta",     desc: "Batti i bot Difficili senza mai fare Bancarotta",            stat: "vittorieDifficileSenzaBancarotta", meta: 1 },
     { gioco: "ruota", livello: "diamante", icona: "💎", nome: "Partita Perfetta",     desc: "Batti i bot Difficili vincendo tutte le manche di una partita da almeno 3 manche", stat: "vittorieDifficileTutteLeManche", meta: 1 },
+
+    // ---- Sì... però ----
+    { gioco: "sipero", livello: "bronzo",   icona: "🤨", nome: "Ci Sono Anch'io",     desc: "Concludi la tua prima partita",                              stat: "partite",          meta: 1 },
+    { gioco: "sipero", livello: "bronzo",   icona: "⚖️", nome: "Primo Verdetto",       desc: "Fai da giudice in un round",                                  stat: "roundGiudice",     meta: 1 },
+    { gioco: "sipero", livello: "bronzo",   icona: "🟥", nome: "Dalla Parte Giusta",   desc: "Vinci il tuo primo round in squadra",                        stat: "roundVinti",       meta: 1 },
+    { gioco: "sipero", livello: "bronzo",   icona: "🟢", nome: "Un Tocco di Paradiso", desc: "Gioca 5 carte Bonus con la tua squadra",                    stat: "carteBonus",       meta: 5 },
+    { gioco: "sipero", livello: "bronzo",   icona: "🔴", nome: "Piccolo Disastro",     desc: "Gioca 5 carte Malus con la tua squadra",                    stat: "carteMalus",       meta: 5 },
+    { gioco: "sipero", livello: "bronzo",   icona: "🌐", nome: "Prima Stanza",         desc: "Concludi una partita online",                               stat: "partiteOnline",    meta: 1 },
+    { gioco: "sipero", livello: "argento",  icona: "🔟", nome: "Serate al Circolo",    desc: "Concludi 10 partite",                                       stat: "partite",          meta: 10 },
+    { gioco: "sipero", livello: "argento",  icona: "🎙️", nome: "Giudice Abituale",     desc: "Fai da giudice in 8 round",                                 stat: "roundGiudice",     meta: 8 },
+    { gioco: "sipero", livello: "argento",  icona: "🏅", nome: "La Squadra Convince",  desc: "Vinci 15 round in squadra",                                 stat: "roundVinti",       meta: 15 },
+    { gioco: "sipero", livello: "argento",  icona: "✨", nome: "Idee Brillanti",       desc: "Gioca 30 carte Bonus con la tua squadra",                   stat: "carteBonus",       meta: 30 },
+    { gioco: "sipero", livello: "argento",  icona: "💥", nome: "Malus a Raffica",      desc: "Gioca 30 carte Malus con la tua squadra",                  stat: "carteMalus",       meta: 30 },
+    { gioco: "sipero", livello: "oro",      icona: "🏆", nome: "Cinque Vittorie",      desc: "Vinci 5 partite",                                          stat: "vittorie",         meta: 5 },
+    { gioco: "sipero", livello: "oro",      icona: "🧑‍⚖️", nome: "Arbitro Esperto",      desc: "Fai da giudice in 20 round",                                stat: "roundGiudice",     meta: 20 },
+    { gioco: "sipero", livello: "oro",      icona: "🤝", nome: "Compagni di Avventura",desc: "Vinci 50 round in squadra",                                stat: "roundVinti",       meta: 50 },
+    { gioco: "sipero", livello: "oro",      icona: "📡", nome: "Squadra Connessa",     desc: "Vinci 5 partite online facendo parte della squadra scelta", stat: "vittorieOnline",   meta: 5 },
+    { gioco: "sipero", livello: "oro",      icona: "🃏", nome: "Scenari Memorabili",   desc: "Gioca 50 carte Bonus con la tua squadra",                  stat: "carteBonus",       meta: 50 },
+    { gioco: "sipero", livello: "diamante", icona: "💎", nome: "Venti Serate Online",  desc: "Concludi 20 partite online",                               stat: "partiteOnline",    meta: 20 },
+    { gioco: "sipero", livello: "diamante", icona: "🎓", nome: "Giudice di Fiducia",   desc: "Fai da giudice in 50 round",                                stat: "roundGiudice",     meta: 50 },
+    { gioco: "sipero", livello: "diamante", icona: "🔥", nome: "Il Verdetto è Tuo",    desc: "Vinci 5 partite di fila",                                   stat: "serieVittorieMax", meta: 5 },
   ];
 
   function valoreStat(prof, gioco, chiave) {

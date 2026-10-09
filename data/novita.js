@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 172,
+    data: "9 ottobre 2026",
+    titolo: "Trofei per Sì... però 🤨",
+    descrizione: [
+      "Arrivano 19 trofei: partecipa ai round, fai il giudice, gioca carte Bonus e Malus e porta la tua squadra alla vittoria.",
+      "Puoi conquistarli giocando con gli amici sullo stesso telefono o online. Le partite contano se giochi con il tuo profilo."
+    ]
+  },
+  {
     v: 170,
     data: "9 ottobre 2026",
     titolo: "Trofei per Palla a Pendolo e Ruota della Fortuna 🏆",
