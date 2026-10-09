@@ -747,3 +747,388 @@ while ($listener.IsListening) {
 }
 
 ```
+
+## ambiente-macchina-joetr.md
+
+Macchina Windows del proprietario di [[progetto-sg]]. **Non c'è Python né Node reali**: `python` è solo l'alias fittizio del Microsoft Store ("Python non è stato trovato"). Il Browser pane interno **non apre `file://`**.
+
+Per provare la web-app localmente: servire la cartella con un piccolo server **PowerShell** (`System.Net.HttpListener`) su `http://localhost:8765/`, poi aprire lì. Quando la finestra del browser è **nascosta** la pagina non viene disegnata → i clic "visivi" vanno in timeout: pilotare via `javascript_tool` (clic per testo, lettura DOM) e fare screenshot solo dopo aver portato la tab in primo piano. Nota: cambiare solo l'hash (dopo `#`) NON ricarica la pagina → per testare l'apertura da link, forzare `location.reload()`.
+
+**Screenshot del pane spesso vecchi** (26 set 2026): dopo un cambio la schermata catturata può essere quella di prima; aspettare 1 s (`computer wait`) e riprovare. Lo zoom a ritaglio non è supportato. Per guardare bene i DISEGNI (avatar SVG) conviene: server PowerShell che accetta anche `POST /salva?nome=x.png` (corpo = dataURL base64 → file PNG nella scratchpad), nella pagina disegnare gli SVG su un `<canvas>` a griglia con le etichette e mandarli con `fetch`, poi aprire il PNG con Read. Nitido, a qualsiasi grandezza. Una funzione di prova si può tenere in `localStorage` ed eseguire con `eval` dopo ogni ricarica.
+
+Il Browser pane **non apre gli URL di claude.ai** (bloccato dal classifier), quindi la pagina pubblicata (Artifact) non si può testare da qui: si prova il file `dist/serata-giochi.html` via il server locale.
+
+Screenshot a misura di telefono: la vista "mobile" del browser integrato taglia lo screenshot (si vede solo l'angolo in alto a sinistra). Funziona così: viewport "desktop", pagina con un iframe di index.html largo 360×740 e rimpicciolito con transform scale(0.66) dall'angolo in alto a sinistra; il profilo finto si mette dentro l'iframe (contentWindow) e poi SG.avviaApp().
+
+## calcio-biliardo.md
+
+Il 9 ott 2026 il proprietario si è "innamorato" di Soccer Pool, nell'app "2 Player games: the Challenge" di JindoBlu, e ha chiesto: "costruiamolo anche noi".
+
+**Fatto:** `js/games/calciobiliardo.js`, categoria "sfida" (Arena), anche online. Commit 5907e09, **pubblicato il 9 ott 2026** (7946e8a).
+- Prima versione identica all'originale; il proprietario: "non deve essere una copia". **Look nostro (pubblicato 9 ott, 0724165):** squadre gialli (#ffcc1f, sotto) e blu (#2f7dff) col fulmine al posto della stella, erba a scacchi, bordo che sfuma dal giallo al blu, reti del colore di chi difende, fulmine al centro, sfondo blu dell'app, campo grande (margini 10px), palla RP 0,031, mira con freccia a puntini + anello della forza (verde→rosso), targhette piccole (avatar 30px, nome, gol) vicino alla propria porta, uscita "‹" nell'angolo. MAI rifare copie identiche di giochi altrui.
+- Grafica della prima versione (sostituita):
+  - campo verde a strisce con la cornice bianca, sfondo color salmone;
+  - dischi neri e colorati con la stella (rossi in basso, blu in alto);
+  - punteggio a sinistra ed ESCI a destra, ruotati;
+  - avatar e nome di ognuno sopra e sotto il campo; in due sullo stesso telefono le scritte di chi sta in alto sono girate.
+- Si tocca un proprio disco e si tira indietro il dito (fionda, `TIRA` = 0,22 per la forza piena). Il cerchio della forza e il cono della direzione si vedono mentre si mira.
+- Fisica pura (`passo`/`simula`, 240 passi al secondo, attrito, urti, pali, rete). Un tiro dura circa 1,5 secondi.
+- Matt simula i tiri candidati ("palla fantasma" verso la porta) e riprova i migliori con l'errore di mira, così niente autogol.
+  - Provato: difficile batte facile 12 a 0; medio contro medio, 36 tiri a partita.
+- Online:
+  - l'host decide; il tiro viene mandato con `inviaVeloce` insieme alla foto di partenza;
+  - tutti lo rivedono uguale, poi si allineano alla foto dell'host;
+  - chi entra ha i blu, e il suo campo è girato (`flip`);
+  - 30 secondi per tirare.
+- Provato con telefoni finti: partita intera online, XP a tutti e due, "Nuova partita" che torna in saletta; contro Matt fino alla fine; in due sullo stesso telefono.
+- Per le prove c'è `window.__CB` (fisica, `sceltaBot`, `locale()` che dà lo stato).
+
+**Giochi di quell'app che si possono prendere** (dalla scheda del Play Store):
+- già nostri: air hockey (Glow Hockey), tris, forza 4;
+- da fare: ping pong, battaglia di trottole, serpenti, biliardo, calci di rigore, sumo, minigolf, macchine da corsa, duelli con spade, scacchi, Yazy (dadi), Reflex Race, Ball Run, Fruit Merge.
+- Biliardo e Minigolf riusano la stessa fisica dei dischi.
+
+**Idea del proprietario per dopo:** "Fuoco alle spalle" di Wii Party (vagoncini su un percorso fisso, colpire chi sta davanti, bonus velocità). Mia proposta: finto 3D come i vecchi giochi di corsa + avatar visti di spalle (da fare prima). Collegato a [[omini-avatar]].
+
+**Velocità (9 ott 2026, e2a012f):** il proprietario: troppo veloce, "sembra troppo biliardo", ma il Soccer Pool originale è troppo lento (la palla che striscia alla fine annoia). Via di mezzo scelta coi tiri simulati: VMAX 2,6 (era 3,1), palla MP 0,55 (era 0,45), attrito più frenata finale (DEC 0,8), urti 0,82, porta 0,38 (era 0,34). Palla max circa 3 (era 4), tiro di circa 1 secondo, circa 16 tiri per gol tra due Matt. Per ritoccare: le costanti in cima al file, poi la stessa misura.
+
+**Suoni e tiri dai bordi (9 ott 2026, a0e5b6e):** il proprietario non vuole i "bip" degli altri giochi: suoni da stadio fatti con WebAudio (niente file):
+- calcio, rotolamento continuo (velocità della palla), scontri tra dischi, sponda, palo con "uuuh";
+- folla sempre sotto (piano), applausi a ritmo ogni 25-45 secondi, urlo al gol;
+- tasto 🔊 in alto a destra, salvato in localStorage `sg-cb-suoni`.
+La forza del tiro si conta da dove appoggi il dito (non dal disco) e la forza piena arriva prima del bordo dello schermo (`forza()`: massimo tra 24 px e lo spazio rimasto meno 8). La telecamera si alza con la forza (zoom fino a -18%, `ZOOM_MAX`): era l'idea del proprietario, ma da sola non basta perché il dito parte dal bordo.
+
+**Suoni veri (9 ott 2026, db068b7):** i suoni fatti al computer non andavano: la folla "sembra il fruscio del mare", il gol "una macchina da corsa". Ora sono registrazioni vere di Mixkit (licenza gratuita, anche per app), scaricate col permesso del proprietario, in `suoni/calcio/`:
+- folla.mp3 = 438 "Crowd chanting at stadium", in giro continuo a volume 0,22;
+- gol.mp3 = 2110 "Crowd yelling at stadium";
+- palo.mp3 = 833 "Metal hammer hit";
+- calcio.mp3 = 2099 "Soccer ball kick".
+Si caricano solo dentro il gioco (`caricaSuoni`). Il build copia `suoni/` in `dist/`. Restano fatti col codice solo il clac e la sponda. Manca ancora un "uuuh" vero per il palo. Altri candidati Mixkit: 3022 "Stadium joy shouting crowd" (15 s), 462 "Huge crowd cheering victory", 363 "Stadium chaotic… drums and chants". Per scaricare file serve sempre il permesso del proprietario.
+
+## citta-home.md
+
+Il 3 ott 2026 il proprietario ha deciso che la home diventerà una **città**, ispirata a Pet Society.
+
+**Scelte fatte:**
+- Stile: isometrica 3D, variante **"Città giocattolo"**, che gli piace moltissimo ("SPETTACOLARE").
+- Disegno: SVG generato col codice, niente motore 3D.
+
+**Ora del giorno.** La città cambia con l'ora vera in Italia, seguendo il sole (calcolato per Roma, con l'ora legale):
+- tramonto e alba: mezz'ora prima e dopo, con luce arancione e lampioni accesi;
+- notte: finestre accese, insegne, fari dello stadio e dello Studio.
+
+**Gli edifici:**
+- Casinò (carte), Studio TV (quiz e parole), Sala giochi (minigiochi), Arena (1 contro 1), Locale (festa).
+- **Sala Trofei** con le classifiche: l'edificio l'ho scelto io, un tempio di marmo con una coppa d'oro in cima; dentro ci sono il podio dei primi 3, le vetrine con le coppe e la classifica. Ha preso il posto dei Negozi.
+- **Piazza = Novità** (richiesta del proprietario): una bacheca con gente che ne parla. Toccandola, la camera zooma, compaiono i fumetti e sale il foglio delle novità con le faccine-reazioni.
+- **Bar**: chiosco nella rotonda in basso, dove stanno la Sala online e il Torneo. È una mia proposta e va confermata.
+
+**Il quartiere, una schermata a parte** (dal tasto 🏠, idea del proprietario):
+- in mezzo la tua casa col giardino: recinto, cuccia, cassetta della posta;
+- intorno le case degli amici, ognuna diversa: tocchi la casa e la visiti;
+- ci sono anche i Negozi, dove si compreranno vestiti e mobili;
+- in futuro: personalizzare il quartiere e la casa anche fuori.
+
+**Anteprima pubblicata il 4 ott 2026** (commit 5b62319), su richiesta del proprietario.
+- In home, accanto a «Novità», c'è il tasto a strisce gialle e nere «🏙️ NEW CITY · open soon» (`schermataCitta` in core.js).
+- Il tasto apre la città disegnata da `js/citta.js` (`SGCitta.svg({fase, io, sopra})`, `SGCitta.fase()`), con:
+  - in alto il cartello «NEW CITY / OPEN SOON» e il tasto ‹ per tornare;
+  - in basso il nastro «LAVORI IN CORSO»;
+  - in scena la gru, le transenne e i birilli.
+- Nulla è cliccabile ("è solo visual"), tranne il tasto per tornare.
+- Il file `citta.js` è nello script di pubblicazione dopo `omino.js`.
+
+**Città toccabile, fatta il 4 ott 2026** su lavori-in-corso (commit 133cc33), **non ancora pubblicata**. Il proprietario mi ha girato una proposta di Gemini: edifici = sale delle categorie, schede e finestra dei modi.
+- L'ho fatta con 3 correzioni:
+  - nel Casinò ci sono tutti e 5 i giochi di carte (Gemini ne metteva 3);
+  - la finestra mostra i modi VERI di ogni gioco (`modiDi` + "Ho un codice"), non 3 modi fissi;
+  - solo un suono corto all'ingresso, niente brusio di sottofondo.
+- In `citta.js` gli edifici, la piazza e il bar sono gruppi `.ct-tocco` con `data-vai`.
+- In `core.js`:
+  - `schermataCitta`: al tocco, zoom (transform e opacity) e poi `entraEdificio(k)`;
+  - `EDIFICI_CITTA` + `schermataEdificio(k)`: un solo modello per tutte le sale, coi temi `.ed-<k>` (variabili `--ed-bg`/`--ed-carta`…) e le schede dei giochi riusate dalla home (`tesseraGioco`, stile `:is(.home,.edificio) .tessera`);
+  - `scegliModoEdificio(g,k)`: la finestra dei modi; `suonoEdificio`.
+- La Sala Trofei porta a `schermataSfide`/`schermataAmici`, il Bar a `creaSala`/`apriTorneo`/`entraConCodice`, la piazza a `schermataNovita`.
+- Ritorno: `rientro` + `tornaHome()`. "Esci" dal gioco, le Novità, i Trofei, la Classifica e "Come giocate?" tornano nell'edificio o nella città da cui si è entrati; `schermataHome` azzera il ritorno.
+- Il tasto in home è «🏙️ NEW CITY · beta», il cartello dice «tocca un edificio». Novità v154 già scritta.
+
+**Città toccabile PUBBLICATA il 4 ott 2026** (9dd9a59).
+
+**Casinò dentro, pubblicato il 4 ott 2026** (fe3116b). Richiesta del proprietario: entri nella sala del Black Jack col tavolo in profondità, scorri a destra verso la Scopa, il nome grande in alto, i nomi dei giochi per saltare, tocchi lo sfondo per giocare.
+- `js/casino.js` (`SGCasino.SALE`, `immagine(id)`): 5 sale in prospettiva centrale. È una funzione `P(x,y,z)`, con telecamera alta (EYE 2,85).
+- Ogni sala è un SVG messo in un `<img>` (avatar a busto dentro come immagini), disegnato una volta sola e tenuto in memoria.
+- Ogni sala ha una cosa sua:
+  - Black Jack: il quadro A♠ J♥;
+  - Scopa: il Settebello e i mattoni;
+  - Scopa 2 vs 2: bandierine blu e rosse e tovagliette delle squadre;
+  - Scopone: la lavagna NOI/LORO;
+  - Poker: il neon ALL IN e la lampada lunga.
+- `core.js`, `schermataCasino()`:
+  - le sale scorrono col dito con solo transform; si caricano quella di adesso e le due vicine;
+  - frecce ‹ ›, barra in basso coi nomi dei giochi, insegne HTML diverse per sala (`.cs-bj/.cs-sc/.cs-s2/.cs-so/.cs-pk`);
+  - un tocco fermo apre `scegliModoEdificio`.
+  - `salaCasino`: dalla città si entra al Black Jack, dopo una partita si torna nella stessa sala.
+- Per gli altri edifici (stessa idea) si può riusare questo modello.
+
+**Piano del proprietario (4 ott 2026, "dimmi che ne pensi di tutto"):**
+1. Dentro ogni edificio vuole la mappa isometrica, come la prova del Casinò coi tavoli, al posto delle schede. Mia proposta: posti fissi per tipo di oggetto (tavolo, cabinato, set, campo…), così un gioco nuovo si aggiunge da solo.
+2. Shop con contenuti esclusivi ogni settimana. Mia proposta:
+   - vetrina che cambia da sola ogni lunedì, più un catalogo fisso;
+   - prima i vestiti dell'avatar, poi i mobili;
+   - prezzi tra 500 e 2.000, esclusive tra 3.000 e 10.000 (si guadagnano circa 2.800 monete per ora di gioco);
+   - niente soldi veri, niente bauli a sorpresa.
+3. Casa di ognuno con stanze: all'inizio 3, poi altre salendo di livello. Mia proposta: una stanza in più ai livelli 15, 30 e 45, una speciale col Prestigio; arredamento a posti fissi all'inizio.
+4. **Quartiere = clan**: si sceglie il nome del quartiere; chi entra ha la casa nello stesso quartiere, in una zona della mappa diversa da quella dei giochi, e si vedono tutte le case scorrendo. Mia proposta:
+   - massimo 12-15 membri;
+   - colore o bandiera del quartiere;
+   - classifica settimanale dei quartieri;
+   - filtro per i nomi brutti.
+- Rischio da ricordare: monete e XP li scrive il telefono, quindi un furbo può barare. Per proteggerli serve il piano Firebase a consumo, da decidere col proprietario.
+
+**Idea del proprietario per dopo:** se le cose diventano troppe, la mappa potrà scorrere. Le case degli amici staranno in posti fissi, magari cambiando ogni giorno, e alla nostra casa daremo tanti bei dettagli.
+
+**Prototipi in `prototipi/`:**
+- `citta-stili.html`: i primi 4 stili;
+- `citta-iso.html`: le 4 varianti isometriche;
+- `citta-giocattolo.html`: l'ultima versione.
+
+Sono file unici con dentro una copia di js/omino.js. Il codice del disegno sta in fondo, dopo la copia degli avatar: per cambiarlo si modifica direttamente lì.
+
+**Fasi previste:**
+1. città con interni;
+2. casa, negozi, monete, livelli, visite;
+3. novità del giorno (la "Frase del giorno", vedi [[ruota-fortuna]]).
+
+**Why:** al proprietario piaceva Pet Society: personaggio, casa, negozi, soldi.
+
+**How to apply:**
+- Mantenere "Cerca un gioco" e "Ultimi giocati" sempre in basso.
+- Animazioni poche e leggere (vedi [[animazioni-senza-lag]]).
+- Collegato a [[categorie-e-minigiochi]], [[omini-avatar]], [[trofei-sistema]], [[party-hub-lobby]].
+
+## due-computer.md
+
+Il 2 ott 2026 l'utente ha provato a lavorare anche da un portatile Acer Extensa 215-21 (AMD A4-9120e, 4 GB): troppo lento e non è riuscito a collegare GitHub, quindi ha detto **"lavoriamo da questo PC, l'altro lasciamo stare"**. Si lavora solo dal **PC fisso** (Lenovo, Ryzen 5 2400G). Se scrive da un altro dispositivo, è tramite Remote Control su questo PC (acceso "tieni sveglio il computer mentre Claude lavora").
+
+**Why:** si è lamentato di non essere stato avvisato prima che il portatile sarebbe stato faticoso ("mi potevi avvisare che era così").
+
+**How to apply:**
+- Quando chiede di usare un computer diverso, dire subito e chiaramente se è adatto o no (processore, memoria, cosa va installato e cosa può andare storto), prima di fargli fare passaggi.
+- Il ramo `lavori-in-corso` resta (il lavoro non finito si salva lì, senza toccare il sito); "pubblica" = build, prova, unione in `master`, push di entrambi. Regole in AGENTS.md. Vedi [[niente-pubblica-ogni-volta]].
+- Gli appunti di progetto sono anche nel repo, in `docs/appunti-claude.md` (senza dati personali).
+
+## lavoro-nel-cloud.md
+
+Dal 1 ott 2026 l'utente ha crediti per lavorare nel cloud:
+- 100 crediti di Claude Code sul web;
+- 250 crediti di Codex (ChatGPT).
+
+Tutti e due lavorano sul repo GitHub `Paky358/speed-game`: è pubblico, ramo `master`, ed è lo stesso da cui si pubblica il sito. Il progetto c'era già: non va creato. L'utente entra su GitHub come Paky358.
+
+I miei appunti di questo computer lì non ci sono. Le regole del progetto per gli agenti nel cloud stanno in `AGENTS.md`, che Codex legge da solo; `CLAUDE.md` la importa con `@AGENTS.md`. Quando cambia una regola fissa (per esempio una nuova convenzione dei giochi online), va aggiornata anche `AGENTS.md`.
+
+Le procedure passo passo per gli agenti stanno in `.agents/skills/` (nuovo-gioco, prova-nel-browser, trofei, contenuti): Codex le legge da solo e AGENTS.md le elenca. Se cambia il modo di fare una di queste cose, va aggiornata anche la skill.
+
+Da ricordare all'utente:
+- lavorare in un posto alla volta, qui o nel cloud, sennò le modifiche si scontrano;
+- quello che fanno gli agenti nel cloud arriva di solito come proposta (pull request): va unita a `master` per andare online;
+- prima di passare al cloud, il lavoro fatto qui deve essere su GitHub. Mettere su `master` = pubblicare (vedi [[niente-pubblica-ogni-volta]]).
+
+**Come va col lavoro di Codex (1 ott 2026, Taboo, PR n. 1):**
+- Codex lavora su un ramo e apre una pull request. Io scarico il ramo, controllo, correggo, provo nel browser, unisco a `master` e pubblico. L'utente ha accettato questo flusso: "mandami il link, la controllo e la metto online".
+- La base era buona, ma c'erano 9 errori sulle regole del progetto (vedi "Errori già visti" nella skill nuovo-gioco).
+- L'utente ha chiesto se così risparmio token: il ripasso costa circa un terzo o metà di farlo da zero. Lui vuole che Codex sbagli meno, sennò usarli tutti e due non ha senso.
+- Per questo c'è un modello di gioco online già giusto da copiare (`.agents/skills/nuovo-gioco/modello-gioco-online.js`). Ogni lezione nuova va aggiunta alla skill, così la volta dopo si corregge meno.
+- I file arrivati da Codex vanno a capo in stile Windows (CRLF). Gli script perl devono togliere i ritorni a capo di Windows (`binmode` e poi `s/\x0D\x0A/\x0A/g`) prima di cercare pezzi su più righe.
+
+Vedi [[utente-e-stile]].
+
+## moneta-unica.md
+
+Il 4 ott 2026 il proprietario ha chiesto: "vogliamo fare una cosa soldi e fiche? … tutti i giocatori partono con 1000 monete". Poi: "il regalo mettilo giornaliero di 1000 monete che si resetta ogni mezzanotte". Pubblicato lo stesso giorno (commit fe3116b).
+
+**Come funziona (js/nube.js):**
+- Unione una volta per profilo (`unisciMonete`, flag `moneteUnite`): `coins = max(1000, coins + fiches.blackjack)`, poi `fiches.blackjack` cancellato. I profili nuovi partono con `coins: 1000`.
+- I giochi del Casinò usano ancora `SGNube.fiches()` (all'inizio della partita) e `salvaFiches` / `salvaProgressi(fichesN…)` col loro saldo. nube.js tiene `visto` (l'ultimo saldo che il gioco conosce) e salva solo la differenza, con `increment`. Così le monete prese intanto coi livelli non si cancellano.
+- Anche `aggiungiXp` salva le monete con `increment`.
+- Il regalo `ritiraBonus` aggiunge `visto += BONUS`, perché il gioco aperto aggiunge il regalo al suo saldo. Il Poker `onBonus` ora fa `fuori += bonus` e non riscrive più il saldo.
+- `SGNube.monete()` serve per mostrare il saldo: NON tocca `visto`.
+- Regalo del giorno: 1.000 monete, una volta per giorno di calendario del telefono (`bonusUltimo`), torna a mezzanotte.
+- Provato con un finto Firebase (unione, vincite e perdite, XP a metà partita, regalo): i conti tornano anche in cloud.
+
+**XP aggiunti lo stesso giorno:** Glow Hockey (bot e online), Scopone a fine partita, Black Jack e Poker contro il computer quando ti alzi dopo almeno una mano (`t.risultato`).
+
+**Why:** una moneta sola, più semplice per chi gioca. Al Casinò rischi le stesse monete del negozio.
+
+**How to apply:** ogni nuovo gioco con puntate legge con `fiches()` all'inizio e salva il suo saldo. Mai scrivere `coins` in assoluto da un gioco. Collegato a [[progressione-livelli]], [[profili-cloud-firebase]], [[citta-home]].
+
+## niente-pubblica-ogni-volta.md
+
+Non pubblicare (build `dist/` via `costruisci-versione-online.sh` e/o push/deploy sul
+sito) l'aggiornamento a ogni minima modifica. Fai le modifiche al codice e fermati lì.
+
+**Why:** l'utente è su piano Pro e vuole risparmiare token; ricostruire/pubblicare
+ogni volta è spreco (vedi [[utente-e-stile]]).
+
+**How to apply:** dopo una modifica, non lanciare il build né proporre di pubblicare
+in automatico. Ricostruisci/pubblichi solo quando l'utente lo chiede esplicitamente
+(es. "ora pubblica", "aggiorna il sito"). Vale anche per commit non richiesti: chiedi
+o aspetta che lo dica.
+
+## parola-ordine.md
+
+Il 3 ott 2026 l'utente ha scelto di fare il nostro Codenames: il suo gruppo di amici ci gioca sempre "a perdita di tempo". Prima aveva scartato:
+- il gioco a bivi a storie ("scelte troppo guidate");
+- la versione "lupus farlocco";
+- Identikit coi volti degli avatar ("poco margine");
+- Just One (in 4 non funziona, e tutti contro il gioco "non ha senso").
+
+**Come è fatto (online, 4–12 giocatori, categoria Quiz & parole)**
+- 2 squadre (9/8, 7 parole di nessuno, 1 nera) oppure 3 squadre da 6 giocatori in su (7/6/6, 5 di nessuno, 1 nera). A 3 squadre chi gira la nera esce e gli altri continuano.
+- La chiave (di chi è ogni parola) va solo ai capi, con un messaggio privato. Il capo, se non la riceve, la richiede da solo.
+- Si tocca una volta per proporre (compare l'avatar sulla parola) e una seconda volta per girare.
+- Indizi controllati: niente parole del tabellone né forme quasi uguali. "∞" vuol dire tentativi liberi.
+- Parole del gruppo scritte dall'host in "⚙️ Regole": ne finiscono fino a 5 per tabellone.
+- Chi rientra torna nella sua squadra, chi arriva a metà entra nella squadra più piccola. Se il capo esce, un compagno può prendere il suo posto. Una squadra con meno di 2 persone salta il turno.
+- A "Nuova partita" il capo passa al compagno.
+- Le parole (708) stanno in data/ordine-parole.js. Le ho scritte io: l'agente Sonnet si era fermato quando la sessione è finita. Nessuna parola di 4 o più lettere sta dentro un'altra, così il controllo degli indizi non sbaglia.
+- Salvato su lavori-in-corso il 3 ott 2026 (commit a7ceae4), non ancora pubblicato.
+
+**Regole speciali: l'utente ha voluto SOLO la parola d'oro** (3 ott 2026: "le regole di ieri non mi piacevano proprio a parte la parola d'oro"). Bocciate: emoji, talpa, bomba a tempo, nebbia, capo a turno, indizio disegnato.
+- Parola d'oro (fatta, accesa di serie, si spegne in impostazioni o in "⚙️ Regole"): una parola di nessuno, segreta a tutti, anche ai capi. Chi la gira gioca un altro turno, cioè la stessa squadra ricomincia con un nuovo indizio.
+
+**Host di riserva** (fatto il 3 ott 2026, SOLO per Parola d'ordine: l'utente: "alla fine solo qua serve")
+- L'host manda di nascosto la partita intera (senza avatar) ai primi 2 giocatori collegati, i "vici", con un messaggio "riserva" privato.
+- Se l'host sparisce, il broker manda "__hostgone" e gli ospiti ricevono `onHostVia(true)`. Il vice 1 prende il posto dopo 6 secondi, il vice 2 dopo 12, e solo se nessuno l'ha già fatto. Il nuovo host riparte con la funzione host già esistente, passandole la partita copiata (parametro `ripresa`), sullo STESSO codice stanza (`SGNet.ospita` con l'opzione codice).
+- "gen" conta i cambi di host. Gli ospiti ignorano le foto con gen più basso. Un host che vede un gen più alto lascia la stanza in silenzio (`lascia`) e rientra come ospite con il suo vecchio id (`SGNet.ricordaId`).
+- Il nuovo host fa l'"appello": chi non risponde entro 5 secondi viene segnato uscito, e se torna rientra.
+- L'host ha `keepalive` 10 secondi, così il broker si accorge prima che è sparito.
+- Provato con un finto broker che collega 4 telefoni finti nella stessa pagina (iframe, mqtt finto in ognuno). Casi provati: host sparito, host e vice spariti insieme, ritorno di tutti, "Nuova partita" dal nuovo host.
+- Limite: in saletta nessun cambio di host (si aspetta 2 minuti come prima).
+- Turni e assenze. L'utente: "se io do la parola e poi vado su whatsapp mica devo perdere il turno" e poi "non scrivere che il capo non c'è, si aspetta e basta". Regola (`manca` / `controllaTurno`):
+  - mentre si indovina basta che ci sia uno che indovina;
+  - per dare l'indizio servono il capo presente e almeno uno che indovini;
+  - se manca chi serve si aspetta IN SILENZIO, senza scritte e senza tasto "faccio io il capo";
+  - dopo 2 minuti: se manca il capo e la squadra ha ancora 2 presenti, il capo lo fa un compagno; se no tocca alla squadra dopo;
+  - anche il cambio di host è silenzioso, senza messaggio;
+  - la scadenza sta nella partita (`H.attesa`), così sopravvive al cambio di host.
+
+**Prova da solo** (3 ott 2026): l'utente è l'account **"IL PAPPONE"** (il proprietario) e voleva provare il gioco senza amici.
+- Il modo "🧪 Prova da solo" ha `soloPer: "IL PAPPONE"`; `modiDi` in core.js nasconde ai profili con un altro nome i modi che hanno `soloPer`.
+- Si gioca tu e Matt contro Rosa e Peppe, senza rete e senza saletta. I bot danno indizi a caso (aggettivi) e indovinano sbirciando la chiave 7 volte su 10.
+- Nelle impostazioni si sceglie se il capo sei tu o Matt.
+
+Pubblicato il 3 ott 2026 (commit 8a182b5), insieme a "Ho un codice", all'avatar con le sottocategorie e alle tue parole.
+
+**Versione nello studio TV, pubblicata il 4 ott 2026** (commit 5b62319). Contiene:
+- grafica "pulita e moderna" con la chat della partita al centro;
+- tabellone da 20 o 25 parole;
+- capi sui podi in alto e compagni ai banconi;
+- vignette e suspense prima di scoprire la parola.
+
+Prima di pubblicare l'ho provata online con 4 telefoni finti (finto broker MQTT in iframe, lo strumento ora sta nel progetto: `.agents/skills/prova-nel-browser/telefoni-finti.js`). Casi provati: indizio, parola girata con la suspense, «passo», parola nera, fine partita, «Nuova partita» (i capi cambiano). Zero errori su tutti i telefoni.
+
+**Le tue parole** (fatte il 3 ott 2026, su richiesta dell'utente)
+- Sono una lista salvata sul profilo, nel cloud oppure sul telefono per i profili locali (`SG.listaProfilo("ordine")` / `SG.salvaListaProfilo`; in nube.js `lista` / `salvaLista`, campo `liste.ordine`).
+- Si scrivono tutte di fila, separate da virgola e spazio, così il gruppo se le passa con copia e incolla. Poi si vedono UNA PER UNA, ognuna con la ✕ ("senza leggere un messaggio enorme").
+- C'è «📋 Copia tutte», che le copia nello stesso formato, e «Cancella tutte».
+- Ogni parola: massimo 12 caratteri, ammessi uno spazio in mezzo e l'apostrofo. In ogni tabellone ne finiscono fino a 5.
+
+**Why:** l'utente vuole un gioco tranquillo dove tutti ragionano, che il gruppo apra "a perdita di tempo" al posto di Codenames.
+
+**How to apply:** per le regole speciali aspettare la scelta dell'utente e spiegarle sempre con un esempio, perché le descrizioni brevi non gli bastano. I pacchetti a tema li ho sconsigliati: le parole di un solo tema si somigliano troppo.
+
+## progressione-livelli.md
+
+Il 4 ott 2026 il proprietario ha chiesto il sistema di progressione. Sue regole, tenute così:
+- campi del profilo `level` (1), `xp` (0), `coins` (0), `prestige` (0);
+- curva: XP per salire = 100 × livello^1,5;
+- livello massimo 50, poi Prestigio: livello 1, xp 0, prestige +1, monete e resto intatti;
+- bonus: livello × 50 Speed Coins a ogni livello nuovo, 5.000 al Prestigio.
+
+Il suo dubbio era quanti XP dare per gioco. Ho deciso XP **a tempo**: 1 XP al secondo di partita (massimo 30 minuti contati), +50% se vinci, +250 alla prima partita del giorno (campo `xpGiorno`).
+
+**Partite veloci (4 ott 2026).** L'utente: "Giocare a Tris mi deve dare dei punti, anche nelle modalità più facili". Proponeva 1 XP per mossa, ma il tempo ne dà di più: circa 20 XP a partita contro 3-5. Il Tris contro il computer dava 0 per due motivi:
+- la soglia dei 15 secondi;
+- il gioco chiama il giocatore "Tu" e non col nome del profilo.
+
+Le correzioni (commit su lavori-in-corso, non ancora pubblicate):
+- `MIN_XP = 5` per ogni partita finita, al posto della soglia dei 15 secondi;
+- `sonoIo()` riconosce "Tu"/"Io";
+- `tavolo.risultato` premia senza `soloSeCi`; solo `__esito`, l'ospite online, lo tiene, per escludere chi guarda.
+
+Provato: Tris facile vinto in 16 secondi = +23 XP.
+
+**Curva cambiata il 4 ott 2026.** Con 100×L^1,5 il Prestigio arrivava dopo circa 200 ore. Il proprietario: "assolutamente fuori scala… adatta a un MMORPG, non a un party game casual". I suoi tempi:
+- livello 1-5 dopo 2-3 partite;
+- livello 10 in circa 1 ora;
+- livello 20 in 4-5 ore;
+- Prestigio in 20-25 ore al massimo, cioè ogni 1 mese e mezzo / 2 mesi (le "stagioni").
+
+Ora la curva è **100 × livello^0,95** (`BASE`/`POTENZA` in `livelli.js`). Calcolata a circa 4.200 XP l'ora:
+- livello 5: 950 XP, circa 14 minuti;
+- livello 10: circa 4.100 XP, circa 1 ora;
+- livello 20: circa 16.800 XP, circa 4 ore;
+- Prestigio: circa 107.000 XP, circa 24-25 ore coi bonus del giorno.
+
+Con ^1,2 il Prestigio sarebbe arrivato dopo 60 ore; abbassando la base, invece, i primi livelli sarebbero diventati troppo veloci.
+
+Tutti i numeri stanno in `js/livelli.js` (`SGLivelli`).
+
+**Come funziona:**
+- `nube.js`: `progressione()` legge i campi (i profili vecchi partono da livello 1); `aggiungiXp(punti, giorno)` salva tutto in un colpo, più `xpTot`. La scheda pubblica ora ha anche `livello` e `prestigio`.
+- `core.js`, `premiaPartita(classifica, soloSeCi)`, chiamata da `tavolo.risultato` (host e partite col bot) e da `tavolo.fine` (giochi in locale).
+  - Il tempo parte dall'ultima saletta (`tavolo.lobby` azzera l'orologio).
+  - Se arriva due volte entro 4 secondi conta una volta sola.
+  - Vince chi ha pos 1 (oppure il primo della classifica).
+- Online l'host manda `{t:"__esito", c: classifica}` con `inviaVeloce`.
+  - `agganciaXpRete` (chiamata in `avviaApp`) avvolge `SGNet.ospita`, per ricordare la stanza dell'host, e `SGNet.entra`, così l'ospite intercetta `__esito` e si dà i suoi XP.
+  - Chi guarda non prende XP: il suo nome non è nella classifica.
+- Gli avvisi usano la coda dei trofei (`codaTrofei`, tipo "xp"): "+XP", "Livello N! +monete", "PRESTIGIO".
+- In home il tasto del profilo mostra ★prestigio, Lv, barra XP e 🪙 monete; nel profilo c'è `riquadroLivello` con le regole.
+- Novità v153 già scritta.
+
+**Provato** con 4 telefoni finti (`.agents/skills/prova-nel-browser/telefoni-finti.js`): XP a host e ospiti, +50% ai vincitori, bonus giornaliero, avviso del livello 2; curva e Prestigio controllati coi conti.
+
+**Da fare / idee proposte:**
+- trofei che danno XP;
+- negozio dove spendere le Speed Coins (vestiti per l'avatar, mobili per la casa, vedi [[citta-home]]);
+- livello visibile in classifica e in saletta;
+- le fiches del Black Jack restano a parte (moneta del Casinò), vedi [[profili-cloud-firebase]].
+
+**Why:** dare un motivo per tornare a giocare e preparare monete e livelli per la città e il negozio.
+
+**How to apply:** per cambiare il ritmo si ritoccano i numeri in `livelli.js` e basta. Si pubblica solo quando il proprietario dice "pubblica".
+
+## ruota-fortuna.md
+
+La Ruota della Fortuna è il gioco chiesto il 2 ott 2026 per far venire voglia di aprire l'app ("aggancio"). L'ho fatto nello studio TV su richiesta dell'utente.
+
+- Si gioca da 2 a 4 (anche solo in 2). Ci sono i bot, il primo è Matt. Modi: contro il computer, sullo stesso telefono, online.
+- Categoria Quiz & parole.
+- Il tabellone (12×4) sta fisso in alto, fuori dalla telecamera. La ruota è sul maxischermo.
+- La telecamera:
+  - va sulla ruota quando gira, poi torna sul leggio di chi è di turno;
+  - con Bancarotta o Passa passa prima dal concorrente sfortunato.
+- Perché la ruota non finisca sotto il tabellone, la telecamera può salire oltre il bordo dello studio. Lo fa `S.sopraLibero` in studio.js.
+- Sui leggii ci sono i soldi della manche; a fine manche, il totale.
+- A inizio partita c'è la sigla dello studio. L'host aspetta `durataApertura` prima di far muovere i bot. A fine partita, `ST.finale` e poi la classifica.
+- Le frasi stanno in data/ruota-frasi.js: 709, scritte da un agente Sonnet e controllate. Nella foto online la frase viaggia sempre coperta.
+
+**Why:** l'utente voleva un gioco che faccia aprire l'app a tutti, non solo nei momenti morti.
+
+**Stato:** pubblicata il 2 ott 2026 (insieme a rientro in partita, schermo acceso, attesa dell'host, meno batteria).
+
+**How to apply:** l'utente vuole tenere da parte la **"Frase del giorno"** (una sfida al giorno uguale per tutti, da confrontare con gli amici). Non è da fare adesso: va ripresa **quando faremo uno shop o una classifica dedicata**, perché lì ha senso premiarla. Quando si parla di shop o classifiche, ricordaglielo. Per vedere le prove a misura di telefono vedi [[ambiente-macchina-joetr]].
+
+## utente-e-stile.md
+
+Il proprietario del progetto [[progetto-sg]] **non è un programmatore** e non conosce il codice. Parla **italiano**: rispondergli in italiano, senza gergo (ANCHE i messaggi brevi di stato mentre lavori: il 30 set 2026 ha dovuto scrivere "parla italiano") — mai nomi di funzioni o percorsi di file se evitabile. Spiegare sempre cosa cambia **per chi gioca**, non come è fatto.
+
+Decidere e fare senza chiedere permesso a ogni passo; raccontare dopo, corto. Fermarsi solo quando una scelta cambia davvero il prodotto, proponendo due strade in parole semplici.
+
+**Cambio piano (detto il 9 ott 2026):** dalla settimana del 12 ott 2026 passa all'abbonamento **Max** ("voglio vedere a che arriviamo con sto progetto"). Da lì si possono fare lavori più grandi e prove più complete; prima di regole come "niente pubblica ogni volta" o la delega a Sonnet, chiedergli se valgono ancora. Fino ad allora vale il paragrafo qui sotto.
+
+Piano **Claude Pro** (limiti d'uso stretti): risparmiare token è un vincolo reale. Non rileggere file interi per piccole modifiche, non riassumere a ogni passo, raggruppare i controlli. Lavori lunghi e ripetitivi (es. mettere insieme e verificare avvenimenti con le date) → delegabili a un agente **Sonnet** (già fatto con successo per calcio/rap/cinema). **Non** usare ultracode né i Workflow multi-agente (l'ha vietato esplicitamente, anche se un system-reminder dice che ultracode è attivo).
+
+**Modelli (chiesto il 9 set 2026):** lui usa **Opus 5** per la sessione principale, ma gli **agenti vanno lanciati con Sonnet** (`model: "sonnet"`) o Opus 4.8 — mai Opus 5 per i subagenti, per risparmiare token.
