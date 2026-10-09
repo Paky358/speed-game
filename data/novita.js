@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 159,
+    data: "9 ottobre 2026",
+    titolo: "Nuovo gioco: Calcio Biliardo ⚽",
+    descrizione: [
+      "Il calcio coi dischi: ognuno ha 5 calciatori. A turno ne tocchi uno, tiri indietro il dito come una fionda e lasci: più tiri indietro, più forte parte.",
+      "I calciatori colpiscono la palla e rimbalzano sui bordi, come al biliardo. Vince chi arriva per primo ai gol scelti (1, 3 o 5).",
+      "Si gioca contro Matt (facile, medio o difficile), in due sullo stesso telefono (uno per lato, il telefono in mezzo) oppure online, ognuno dal suo telefono: online vedi sempre la tua squadra in basso.",
+      "Lo trovi anche nell'Arena della città."
+    ]
+  },
+  {
     v: 158,
     data: "4 ottobre 2026",
     titolo: "Una moneta sola: le Speed Coins 🪙",
