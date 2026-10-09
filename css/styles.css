@@ -959,17 +959,38 @@ button.am-riga:active{ transform:scale(.985); }
 .cs-bj .cs-insegna b::after{ content:""; position:absolute; inset:-11px; border-radius:20px; border:3px dotted #fff1bd; opacity:.9; animation:cs-lampadine 1.6s steps(2) infinite; }
 @keyframes cs-lampadine{ 50%{ opacity:.45; } }
 /* Scopa: tavola di legno dipinta a mano */
-.cs-sc .cs-insegna b, .cs-s2 .cs-insegna b{ color:#fff1d6; text-shadow:0 2px 0 #3b2414, 0 0 8px rgba(0,0,0,.4); border:3px solid #3b2414;
+.cs-sc .cs-insegna b, .cs-s2 .cs-insegna b, .cs-cartello.cs-sc b, .cs-cartello.cs-s2 b, .cs-cartello.cs-cr-carte b, .cs-cartello.cs-cr-tavolo b{ color:#fff1d6; text-shadow:0 2px 0 #3b2414, 0 0 8px rgba(0,0,0,.4); border:3px solid #3b2414;
   background:repeating-linear-gradient(90deg,#6b4226 0 7px,#5d381f 7px 10px,#74482a 10px 18px); box-shadow:0 12px 24px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.15); }
 /* Scopa 2 vs 2: le due squadre ai lati (blu e rossa) */
-.cs-s2 .cs-insegna b{ border-left:9px solid #1c7ed6; border-right:9px solid #e03131; }
+.cs-s2 .cs-insegna b, .cs-cartello.cs-s2 b{ border-left:9px solid #1c7ed6; border-right:9px solid #e03131; }
 /* Scopone: la lavagna col gesso */
-.cs-so .cs-insegna b{ color:#f4f5f0; background:radial-gradient(ellipse at 40% 30%,#3a5a47,#22362b); border:6px solid #8a5a32; letter-spacing:.12em;
+.cs-so .cs-insegna b, .cs-cartello.cs-so b{ color:#f4f5f0; background:radial-gradient(ellipse at 40% 30%,#3a5a47,#22362b); border:6px solid #8a5a32; letter-spacing:.12em;
   text-shadow:0 0 2px rgba(255,255,255,.6), 1px 1px 0 rgba(255,255,255,.18); box-shadow:0 12px 24px rgba(0,0,0,.55), inset 0 0 14px rgba(0,0,0,.4); }
 /* Poker: insegna al neon */
 .cs-pk .cs-insegna b{ color:#fff; background:rgba(8,10,22,.88); border:2px solid rgba(255,79,216,.7); letter-spacing:.16em;
   text-shadow:0 0 6px #ff4fd8, 0 0 14px #ff4fd8, 0 0 26px #b5179e; box-shadow:0 0 20px rgba(255,79,216,.35), inset 0 0 14px rgba(255,79,216,.22); animation:cs-neon 4s infinite; }
 @keyframes cs-neon{ 0%, 92%, 100%{ opacity:1; } 93%{ opacity:.55; } 95%{ opacity:1; } 96%{ opacity:.7; } }
+/* Tris: il foglio con la X rossa e il cerchio blu ai lati */
+.cs-tr .cs-insegna b, .cs-cartello.cs-tr b{ color:#212529; background:#fbfaf4; border:3px solid #ced4da; letter-spacing:.14em;
+  border-left:10px solid #e03131; border-right:10px solid #1c7ed6; box-shadow:0 12px 24px rgba(0,0,0,.45); }
+/* Drop 4: plastica blu e lettere gialle */
+.cs-f4 .cs-insegna b, .cs-cartello.cs-f4 b{ color:#ffe066; background:linear-gradient(180deg,#2a74e8,#1849a9); border:3px solid #fcc419;
+  text-shadow:0 2px 0 #0d2d6b; box-shadow:0 0 0 3px #1849a9, 0 12px 24px rgba(0,0,0,.5); }
+/* Battaglia Navale: blu marina con la corda d'oro */
+.cs-nv .cs-insegna b, .cs-cartello.cs-nv b{ color:#f8f9fa; background:linear-gradient(180deg,#0f4c81,#0a2f52); border:3px double #d9b36c;
+  letter-spacing:.06em; text-shadow:0 2px 0 #05192d; box-shadow:0 12px 24px rgba(0,0,0,.5); font-size:.82em; }
+.cs-nv .cs-insegna b{ font-size:clamp(1.15rem, 6.6vw, 1.9rem); }
+/* le targhe sopra le porte del Circolo: niente fili, attaccate al muro */
+.cs-cartello.cs-muro::before, .cs-cartello.cs-muro::after{ display:none; }
+.cs-cartello.cs-muro{ font-size:calc(var(--s,1) * 11px); text-align:center; }
+.cs-cartello.cs-cr-giardino b{ color:#3a2200; background:linear-gradient(180deg,#f1d27a,#c9a24a); border:2px solid #8a6424; letter-spacing:.12em; box-shadow:0 4px 10px rgba(0,0,0,.4); }
+.cs-lucchetto{ display:inline-block; margin-top:.35em; padding:.22em .65em; border-radius:999px; font-style:normal; font-weight:800; font-size:.86em;
+  color:#fff; background:rgba(20,22,44,.82); white-space:nowrap; }
+/* "arriva presto" (la porta del giardino) */
+.cs-presto{ position:absolute; z-index:5; left:50%; top:42%; transform:translate(-50%,-50%); padding:10px 16px; max-width:86%; text-align:center;
+  border-radius:16px; background:rgba(20,22,44,.92); color:#fff; font-weight:800; font-size:.9rem; opacity:0; pointer-events:none; }
+.cs-presto.su{ animation:csPresto 2.8s ease; }
+@keyframes csPresto{ 0%{ opacity:0; transform:translate(-50%,-40%); } 10%{ opacity:1; transform:translate(-50%,-50%); } 82%{ opacity:1; } 100%{ opacity:0; } }
 /* "tocca il tavolo per giocare" */
 .cs-tocca{ position:absolute; left:50%; bottom:16px; transform:translateX(-50%); white-space:nowrap; pointer-events:none;
   padding:9px 16px; border-radius:999px; font-weight:900; font-size:.95rem; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#e2a93a);
@@ -1000,7 +1021,7 @@ button.am-riga:active{ transform:scale(.985); }
 /* la sala del tavolo: compare mentre ci si avvicina */
 .cs-primo{ z-index:3; opacity:0; transform:scale(1.14); transition:opacity .4s ease, transform .6s cubic-bezier(.2,.8,.2,1); pointer-events:none; }
 .cs-primo.su{ opacity:1; transform:none; pointer-events:auto; }
-.cs-invito{ z-index:2; transition:opacity .25s; }
+.cs-invito{ z-index:4; transition:opacity .25s; }
 .cs-vista.in-sala .cs-invito{ opacity:0; animation:none; }
 /* in basso: tutti i giochi del Casinò, per andare subito in una sala */
 .cs-giochi{ flex:none; display:flex; flex-wrap:wrap; justify-content:center; gap:7px; padding:10px 10px calc(10px + env(safe-area-inset-bottom));

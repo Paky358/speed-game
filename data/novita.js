@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 169,
+    data: "9 ottobre 2026",
+    titolo: "Il Casinò in prima persona e il nuovo Circolo 🎲",
+    descrizione: [
+      "Nel Casinò ora entri dalla scalinata e vedi tutto il salone: il lampadario, il bar con l'insegna, le slot e tanti tavoli pieni di gente. A sinistra i tavoli del Black Jack, a destra quelli del Poker. Tocchi un tavolo e ci cammini incontro fino a sederti.",
+      "In città c'è un edificio nuovo, il Circolo, coi muri gialli e le persiane verdi. Dentro c'è un atrio con le porte aperte: da una si intravede la Sala delle Carte (Scopa, Scopa 2 contro 2 e Scopone), dall'altra la Sala dei Giochi da Tavolo (Tris, Drop 4 e Battaglia Navale).",
+      "La porta del giardino per ora è chiusa: presto ci saranno bocce, freccette e calcio balilla.",
+      "In basso ci sono sempre i nomi di tutti i giochi dell'edificio, per andare dritti al tavolo. Finita la partita torni al tavolo dov'eri.",
+      "Nell'Arena restano i giochi sportivi: Glow Hockey e Calcio Biliardo."
+    ]
+  },
+  {
     v: 168,
     data: "9 ottobre 2026",
     titolo: "Arriva la Ruota del giorno 🎡",

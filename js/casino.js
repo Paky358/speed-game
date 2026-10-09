@@ -1,13 +1,12 @@
 /* =========================================================
-   SPeeD GAME — IL CASINÒ DENTRO: il salone in prima persona (più in basso)
-   e una sala per ogni gioco di carte
-   Entri e sei nella sala del Black Jack: in fondo il tavolo con la gente
-   che gioca con le fiches. Scorrendo: Scopa (niente fiches), Scopa 2 vs 2,
-   Scopone e Poker; ogni sala ha una cosa sua (il quadro, le bandierine,
-   la lavagna, l'insegna al neon…).
-   Ogni sala è un disegno fermo (SVG dentro un'immagine): si disegna una volta
-   sola, così scorrere da una sala all'altra è leggero anche sui telefoni lenti.
-   Il nome grande del gioco, le frecce e i tocchi stanno in core.js (schermataCasino).
+   SPeeD GAME — GLI INTERNI IN PRIMA PERSONA: il Casinò e il Circolo
+   - Le scene (il salone del Casinò, l'atrio del Circolo con le porte, la Sala
+     delle Carte e la Sala dei Giochi da Tavolo) si guardano in prima persona:
+     toccando un tavolo o una porta, core.js (schermataInterno) "cammina" fin lì.
+   - Le sale: una per gioco, il primo piano del suo tavolo con la gente che gioca;
+     ognuna ha una cosa sua (il quadro, le bandierine, la lavagna, il neon…).
+   Ogni disegno è fermo (SVG dentro un'immagine) e si fa una volta sola:
+   leggero anche sui telefoni lenti.
    Prospettiva centrale: x = destra/sinistra, y = altezza, z = profondità (in metri).
    ========================================================= */
 (function () {
@@ -21,7 +20,10 @@
     { id: "scopa",     nome: "Scopa",        insegna: "SCOPA",        stile: "sc" },
     { id: "scopa2v2",  nome: "Scopa 2 vs 2", insegna: "SCOPA 2 VS 2", stile: "s2" },
     { id: "scopone",   nome: "Scopone",      insegna: "SCOPONE",      stile: "so" },
-    { id: "poker",     nome: "Poker",        insegna: "POKER",        stile: "pk" }
+    { id: "poker",     nome: "Poker",        insegna: "POKER",        stile: "pk" },
+    { id: "tris",      nome: "Tris",         insegna: "TRIS",         stile: "tr" },
+    { id: "drop4",     nome: "Drop 4",       insegna: "DROP 4",       stile: "f4" },
+    { id: "navale",    nome: "Battaglia Navale", insegna: "BATTAGLIA NAVALE", stile: "nv" }
   ];
 
   // ---- prospettiva e pezzi di disegno ----
@@ -193,15 +195,70 @@
   }
 
   // tavolo di legno con la tovaglia a quadretti (Scopa e Scopa 2 vs 2)
-  function tavoloTovaglia(o, z0, hw, hd, col1, col2) {
+  function tavoloTovaglia(o, z0, hw, hd, col1, col2, cx) {   // cx = spostato di lato (le sale del Circolo)
+    cx = cx || 0;
     var yT = 0.8, nx = Math.round(hw * 8), nz = 6, i, j, drop = 0.3;
-    o.push(poly(qFondo(-hw + 0.06, -hw + 0.15, 0, yT - drop, z0 - hd + 0.08), "#3d2416"), poly(qFondo(hw - 0.15, hw - 0.06, 0, yT - drop, z0 - hd + 0.08), "#3d2416"));
-    o.push(poly(qPiano(-hw, hw, z0 - hd, z0 + hd, yT), col1));
-    for (i = 0; i < nx; i++) for (j = 0; j < nz; j++) if ((i + j) % 2) o.push(poly(qPiano(-hw + 2 * hw * i / nx, -hw + 2 * hw * (i + 1) / nx, z0 - hd + 2 * hd * j / nz, z0 - hd + 2 * hd * (j + 1) / nz, yT), col2));
-    o.push(poly(qFondo(-hw, hw, yT - drop, yT, z0 - hd), col1));
-    for (i = 0; i < nx; i++) for (j = 0; j < 2; j++) if ((i + j) % 2) o.push(poly(qFondo(-hw + 2 * hw * i / nx, -hw + 2 * hw * (i + 1) / nx, yT - drop * (j + 1) / 2, yT - drop * j / 2, z0 - hd), col2));
-    o.push(poly(qFondo(-hw, hw, yT - drop, yT, z0 - hd), "#000000", "opacity='.16'"));
+    o.push(poly(qFondo(cx - hw + 0.06, cx - hw + 0.15, 0, yT - drop, z0 - hd + 0.08), "#3d2416"), poly(qFondo(cx + hw - 0.15, cx + hw - 0.06, 0, yT - drop, z0 - hd + 0.08), "#3d2416"));
+    o.push(poly(qPiano(cx - hw, cx + hw, z0 - hd, z0 + hd, yT), col1));
+    for (i = 0; i < nx; i++) for (j = 0; j < nz; j++) if ((i + j) % 2) o.push(poly(qPiano(cx - hw + 2 * hw * i / nx, cx - hw + 2 * hw * (i + 1) / nx, z0 - hd + 2 * hd * j / nz, z0 - hd + 2 * hd * (j + 1) / nz, yT), col2));
+    o.push(poly(qFondo(cx - hw, cx + hw, yT - drop, yT, z0 - hd), col1));
+    for (i = 0; i < nx; i++) for (j = 0; j < 2; j++) if ((i + j) % 2) o.push(poly(qFondo(cx - hw + 2 * hw * i / nx, cx - hw + 2 * hw * (i + 1) / nx, yT - drop * (j + 1) / 2, yT - drop * j / 2, z0 - hd), col2));
+    o.push(poly(qFondo(cx - hw, cx + hw, yT - drop, yT, z0 - hd), "#000000", "opacity='.16'"));
     return yT;
+  }
+  // tavolo di legno nudo (Tris, Forza 4, Battaglia Navale): piano, bordo davanti e gambe
+  function tavoloLegno(o, cx, z0, hw, hd, legno) {
+    var yT = 0.8, l = legno || "#8a5a34";
+    o.push(poly(qFondo(cx - hw + 0.05, cx - hw + 0.13, 0, yT - 0.06, z0 - hd + 0.06), tono(l, -0.45)), poly(qFondo(cx + hw - 0.13, cx + hw - 0.05, 0, yT - 0.06, z0 - hd + 0.06), tono(l, -0.45)));
+    o.push(poly(qPiano(cx - hw, cx + hw, z0 - hd, z0 + hd, yT), l));
+    for (var x = cx - hw + 0.18; x < cx + hw; x += 0.18) o.push(linea(P(x, yT, z0 - hd), P(x, yT, z0 + hd), tono(l, -0.15), 0.6, "opacity='.6'"));   // le assi
+    o.push(poly(qFondo(cx - hw, cx + hw, yT - 0.07, yT, z0 - hd), tono(l, -0.3)));
+    return yT;
+  }
+  // il Tris sul foglio: la griglia a matita, le X rosse e i cerchi blu, la matita
+  function tris(o, cx, z0, yT, k) {
+    var s = 0.17 * k, y = yT + 0.002, i;
+    o.push(poly(qPiano(cx - s * 1.9, cx + s * 1.9, z0 - s * 1.75, z0 + s * 1.75, y), "#fbfaf4", "stroke='#d6d0c0' stroke-width='.6'"));
+    for (i = -1; i <= 1; i += 2) {
+      o.push(linea(P(cx + i * s * 0.5, y, z0 - s * 1.45), P(cx + i * s * 0.5, y, z0 + s * 1.45), "#495057", Math.max(0.8, 1.6 * k)));
+      o.push(linea(P(cx - s * 1.5, y, z0 + i * s * 0.5), P(cx + s * 1.5, y, z0 + i * s * 0.5), "#495057", Math.max(0.8, 1.6 * k)));
+    }
+    [[-1, 1, "x"], [0, 0, "x"], [1, -1, "o"], [1, 1, "o"], [-1, -1, "x"], [0, 1, "o"]].forEach(function (m) {
+      var c = [cx + m[0] * s, z0 + m[1] * s], r = s * 0.32;
+      if (m[2] === "x") { o.push(linea(P(c[0] - r, y, c[1] - r), P(c[0] + r, y, c[1] + r), "#e03131", Math.max(1, 2.2 * k), "stroke-linecap='round'"), linea(P(c[0] - r, y, c[1] + r), P(c[0] + r, y, c[1] - r), "#e03131", Math.max(1, 2.2 * k), "stroke-linecap='round'")); }
+      else { var t = tondo(c[0], y, c[1], r); o.push(ell(t.c, t.rx, t.ry, "none", "stroke='#1c7ed6' stroke-width='" + r1(Math.max(1, 2.2 * k)) + "'")); }
+    });
+    o.push(poly([P(cx + s * 2.1, y, z0 - s * 0.6), P(cx + s * 2.25, y, z0 - s * 0.6), P(cx + s * 1.7, y, z0 + s * 1.3), P(cx + s * 1.58, y, z0 + s * 1.26)], "#fcc419"));   // la matita
+  }
+  // la griglia di Forza 4 in piedi sul tavolo, coi gettoni rossi e gialli
+  function forza4(o, cx, z0, yT, k) {
+    var w = 0.5 * k, h = 0.44 * k, y0 = yT + 0.03, r, c;
+    o.push(poly(qFondo(cx - w - 0.04 * k, cx - w + 0.02 * k, yT, y0 + h + 0.03 * k, z0), "#1849a9"), poly(qFondo(cx + w - 0.02 * k, cx + w + 0.04 * k, yT, y0 + h + 0.03 * k, z0), "#1849a9"));   // i piedi
+    o.push(poly(qFondo(cx - w, cx + w, y0, y0 + h, z0), "#1c62d6", "stroke='#103a8a' stroke-width='1'"));
+    var col = ["", "", "r", "", "", "", "",  "", "g", "r", "", "", "", "",  "g", "r", "g", "r", "", "", "",  "r", "g", "g", "r", "g", "", "r"];   // dal basso
+    for (r = 0; r < 6; r++) for (c = 0; c < 7; c++) {
+      var x = cx - w + (c + 0.5) * 2 * w / 7, yy = y0 + (r + 0.5) * h / 6, p = P(x, yy, z0 - 0.005), rr = Math.max(0.8, 0.026 * k * F / z0), v = col[(5 - r) * 7 + c] || "";
+      o.push(ell(p, rr, rr, v === "r" ? "#e03131" : v === "g" ? "#fcc419" : "#0d2d6b"));
+    }
+  }
+  // Battaglia Navale: due valigette aperte, col mare a quadretti, le navi grigie e i pioli
+  function navale(o, cx, z0, yT, k) {
+    [-1, 1].forEach(function (lato) {
+      var x0 = cx + lato * 0.06 * k + (lato < 0 ? -0.62 * k : 0), x1 = x0 + 0.56 * k, z1 = z0 - 0.3 * k, z2 = z0 + 0.22 * k, y = yT + 0.01, i, j;
+      o.push(poly(qPiano(x0, x1, z1, z2, y), lato < 0 ? "#868e96" : "#a3a8ad"));
+      o.push(poly(qPiano(x0 + 0.03 * k, x1 - 0.03 * k, z1 + 0.03 * k, z2 - 0.03 * k, y + 0.002), "#1c7ed6"));
+      for (i = 1; i < 8; i++) o.push(linea(P(x0 + 0.03 * k + i * (x1 - x0 - 0.06 * k) / 8, y + 0.003, z1 + 0.03 * k), P(x0 + 0.03 * k + i * (x1 - x0 - 0.06 * k) / 8, y + 0.003, z2 - 0.03 * k), "#74c0fc", 0.5));
+      for (j = 1; j < 8; j++) o.push(linea(P(x0 + 0.03 * k, y + 0.003, z1 + 0.03 * k + j * (z2 - z1 - 0.06 * k) / 8), P(x1 - 0.03 * k, y + 0.003, z1 + 0.03 * k + j * (z2 - z1 - 0.06 * k) / 8), "#74c0fc", 0.5));
+      var dx = (x1 - x0 - 0.06 * k) / 8, dz = (z2 - z1 - 0.06 * k) / 8, bx = x0 + 0.03 * k, bz = z1 + 0.03 * k;
+      [[1, 1, 4, 0], [5, 3, 0, 3], [2, 5, 3, 0]].forEach(function (n) {   // le navi: [colonna, riga, lunga in x, lunga in z]
+        o.push(poly(qPiano(bx + n[0] * dx + dx * 0.15, bx + (n[0] + Math.max(1, n[2])) * dx - dx * 0.15, bz + n[1] * dz + dz * 0.15, bz + (n[1] + Math.max(1, n[3])) * dz - dz * 0.15, y + 0.02), "#ced4da", "stroke='#495057' stroke-width='.5'"));
+      });
+      [[0, 6, 1], [3, 2, 0], [6, 6, 1], [2, 1, 1], [7, 0, 0]].forEach(function (pp) {   // i pioli: rossi colpito, bianchi acqua
+        var c = P(bx + (pp[0] + 0.5) * dx, y + 0.03, bz + (pp[1] + 0.5) * dz);
+        o.push(ell(c, Math.max(0.7, dx * 0.22 * F / z0), Math.max(0.6, dz * 0.18 * F / z0), pp[2] ? "#e03131" : "#f8f9fa"));
+      });
+      o.push(poly(qFondo(x0, x1, y, y + 0.17 * k, z2), lato < 0 ? "#6c737a" : "#868e96"), poly(qFondo(x0 + 0.04 * k, x1 - 0.04 * k, y + 0.035 * k, y + 0.14 * k, z2 - 0.001), "#0b4a8b"));   // il coperchio in piedi
+    });
   }
   // la sala della Scopa: osteria con le mattonelle di cotto e la luce calda; niente fiches
   function stanzaOsteria(parete, extra) {
@@ -348,7 +405,72 @@
     return { o: o.join(""), feltro: ["#1f8a55", "#0e5233"], legno: ["#141414", "#050505"], pozza: "#fff6d8" };
   }
 
-  var DISEGNI = { blackjack: salaBJ, scopa: salaScopa, scopa2v2: salaScopa2, scopone: salaScopone, poker: salaPoker };
+  // ---- le sale del Circolo per i giochi da tavolo ----
+  function lavagnetta(x0, x1, y0, y1, fn) {   // una lavagna appesa alla parete di fondo, col gesso
+    return cornice(x0, x1, y0, y1, "#8a5a32", "#22312a") + (fn ? fn() : "");
+  }
+  function salaTris() {   // lo studio: carta da parati, la lavagnetta col tris, il foglio sul tavolo
+    var z0 = 3.2, o = [];
+    o.push(stanza({ parete: "#e3cf9f", righe: "#dcc490", lato: "#b9a36f", righeLato: "#c2ab78", zoccolo: "#6b4226", cornice: "#4a2c18",
+      pav1: "#9a6a42", pav2: "#8a5d38", quadro: 0.34, fughe: "#6e4a2c" }));
+    var k = F / ZB;
+    o.push(lavagnetta(-0.75, 0.75, 1.9, 3.05, function () {
+      var s = "", a, b;
+      for (var i = -1; i <= 1; i += 2) {
+        a = P(i * 0.17, 2.95, ZB - 0.03); b = P(i * 0.17, 2.0, ZB - 0.03); s += linea(a, b, "#f1f3f5", 1.4, "opacity='.85'");
+        a = P(-0.5, 2.475 + i * 0.16, ZB - 0.03); b = P(0.5, 2.475 + i * 0.16, ZB - 0.03); s += linea(a, b, "#f1f3f5", 1.4, "opacity='.85'");
+      }
+      [[-0.34, 2.79, "X"], [0, 2.475, "O"], [0.34, 2.16, "X"], [0.34, 2.79, "O"]].forEach(function (m) {
+        var p = P(m[0], m[1], ZB - 0.03);
+        s += "<text x='" + r1(p[0]) + "' y='" + r1(p[1] + k * 0.08) + "' font-family='Comic Sans MS,Segoe Print,cursive' font-size='" + r1(k * 0.24) + "' fill='" + (m[2] === "X" ? "#ffa8a8" : "#a5d8ff") + "' text-anchor='middle'>" + m[2] + "</text>";
+      });
+      return s;
+    }));
+    o.push(applique(-XW + 0.02, 2.4, 5.4), applique(XW - 0.02, 2.4, 5.4));
+    o.push(busto("Ninni", -0.5, z0 + 0.82), busto("Peppino", 0.5, z0 + 0.82));
+    var yT = tavoloLegno(o, 0, z0, 0.95, 0.5, "#9c6b3f");
+    o.push(pozza(0, yT, z0 + 0.1, 0.8));
+    tris(o, 0, z0 + 0.05, yT, 1.25);
+    o.push(lampada(-0.62, z0 + 0.1, 2.6, "#2f6b4f", 0.28), lampada(0.62, z0 + 0.1, 2.6, "#2f6b4f", 0.28));   // due lampade: la lavagnetta in mezzo resta libera
+    return { o: o.join(""), feltro: ["#1d9a57", "#0d6136"], legno: ["#6b4226", "#3d2416"], pozza: "#ffe6b0" };
+  }
+  function salaForza4() {   // la sala blu: il poster coi gettoni, la griglia gigante sul tavolo
+    var z0 = 3.3, o = [];
+    o.push(stanza({ parete: "#2b4c7e", righe: "#2f548a", lato: "#1d3456", righeLato: "#213a5f", zoccolo: "#5a3a22", cornice: "#c79a4b",
+      pav1: "#7a5233", pav2: "#6b472c", quadro: 0.42, fughe: "#4a301b" }));
+    var c = P(0, 2.5, ZB - 0.03), kk = F / ZB;
+    o.push(cornice(-0.62, 0.62, 2.0, 3.0, "#c79a4b", "#fff3bf"));
+    [[-0.3, 2.3, "#e03131"], [0, 2.3, "#fcc419"], [0.3, 2.3, "#e03131"], [-0.15, 2.62, "#fcc419"], [0.15, 2.62, "#e03131"], [0, 2.86, "#fcc419"]].forEach(function (g) {
+      var p = P(g[0], g[1], ZB - 0.03); o.push(ell(p, kk * 0.12, kk * 0.12, g[2], "stroke='" + tono(g[2], -0.3) + "' stroke-width='1'"));
+    });
+    o.push(applique(-XW + 0.02, 2.4, 5.4), applique(XW - 0.02, 2.4, 5.4));
+    o.push(busto("Totò", -0.98, z0 + 0.72), busto("Mimma", 0.98, z0 + 0.72));
+    var yT = tavoloLegno(o, 0, z0, 1.15, 0.5, "#8a5a34");
+    o.push(pozza(0, yT, z0 + 0.1, 0.9));
+    forza4(o, 0, z0 + 0.12, yT, 1.08);
+    // i gettoni sparsi davanti ai due giocatori
+    [[-0.7, "#e03131"], [-0.58, "#e03131"], [0.6, "#fcc419"], [0.72, "#fcc419"]].forEach(function (g, i) { var t = tondo(g[0], yT + 0.01, z0 - 0.15 + (i % 2) * 0.1, 0.05); o.push(ell(t.c, t.rx, t.ry, g[1], "stroke='" + tono(g[1], -0.3) + "' stroke-width='.8'")); });
+    o.push(lampada(-0.6, z0 + 0.2, 2.6, "#e8dcc0", 0.3), lampada(0.6, z0 + 0.2, 2.6, "#e8dcc0", 0.3));
+    return { o: o.join(""), feltro: ["#1d9a57", "#0d6136"], legno: ["#6b4226", "#3d2416"], pozza: "#fff3c4" };
+  }
+  function salaNavale() {   // la sala del mare: l'oblò, il timone, le due valigette sul tavolo
+    var z0 = 3.25, o = [];
+    o.push(stanza({ parete: "#1f3b57", righe: "#23425f", lato: "#142a40", righeLato: "#183049", zoccolo: "#6b4226", cornice: "#d9b36c",
+      pav1: "#8a5d38", pav2: "#7a5230", quadro: 0.36, fughe: "#5c3d24" }));
+    var kk = F / ZB, ob = P(-0.95, 2.55, ZB - 0.03), tm = P(0.95, 2.55, ZB - 0.03), i;
+    o.push(ell(ob, kk * 0.42, kk * 0.42, "#b08436"), ell(ob, kk * 0.34, kk * 0.34, "#7fc8f8"), ell([ob[0] - kk * 0.1, ob[1] - kk * 0.1], kk * 0.12, kk * 0.08, "#ffffff", "opacity='.5'"));   // l'oblò col cielo
+    for (i = 0; i < 8; i++) { var a = i * Math.PI / 4; o.push(linea(tm, [tm[0] + Math.cos(a) * kk * 0.5, tm[1] + Math.sin(a) * kk * 0.5], "#8a5a32", Math.max(1.4, kk * 0.05), "stroke-linecap='round'")); }   // il timone
+    o.push(ell(tm, kk * 0.36, kk * 0.36, "none", "stroke='#a0652b' stroke-width='" + r1(kk * 0.07) + "'"), ell(tm, kk * 0.08, kk * 0.08, "#a0652b"));
+    o.push(applique(-XW + 0.02, 2.4, 5.4), applique(XW - 0.02, 2.4, 5.4));
+    o.push(busto("Capitano", -0.62, z0 + 0.82), busto("Marina", 0.62, z0 + 0.82));
+    var yT = tavoloLegno(o, 0, z0, 1.2, 0.52, "#9c6b3f");
+    o.push(pozza(0, yT, z0 + 0.1, 0.95));
+    navale(o, 0, z0 + 0.02, yT, 1.35);
+    o.push(lampada(0, z0 + 0.1, 2.6, "#d9b36c", 0.4));
+    return { o: o.join(""), feltro: ["#1d9a57", "#0d6136"], legno: ["#6b4226", "#3d2416"], pozza: "#fff3c4" };
+  }
+
+  var DISEGNI = { blackjack: salaBJ, scopa: salaScopa, scopa2v2: salaScopa2, scopone: salaScopone, poker: salaPoker, tris: salaTris, drop4: salaForza4, navale: salaNavale };
 
   // =========================================================
   //  IL SALONE: entri e lo guardi in prima persona, all'altezza degli occhi.
@@ -536,25 +658,231 @@
     o.push(scalinata());
     return o.join("");
   }
-  // dove stanno sullo schermo (disegno 360×640) i tavoli, le loro insegne e i luccichii dei lampadari
-  function geometriaSalone() {
-    return {
-      tavoli: TAVOLI.map(function (t) {
-        var w = t.id === "poker" ? 1.45 : 1.2, zf = t.z - (t.id === "poker" ? 0.75 : 0.05);
-        var sx = P(t.x - w, 0, t.z)[0], dx = P(t.x + w, 0, t.z)[0], su = P(t.x, 3.25, t.z)[1], giu = P(t.x, 0.15, zf)[1];
-        return { id: t.id, nome: t.nome, insegna: t.insegna, stile: t.stile,
-          box: [Math.max(0, sx), Math.max(0, su - 34), Math.min(W, dx), Math.min(H, giu)], fuoco: P(t.x, 0.95, t.z + 0.35), cartello: (function (c) { return [Math.max(88, Math.min(W - 88, c[0])), c[1]]; })(P(t.x, 3.25, t.z)) };   // l'insegna non esce dallo schermo
-      }),
-      luci: [[0, 4.6, 4.25], [0, 8.2, 4.15]].map(function (l) { var c = P(l[0], l[2], l[1]); return [c[0], c[1], F / l[1]]; })
-    };
+  // =========================================================
+  //  IL CIRCOLO: l'atrio con le porte aperte (si intravedono le sale), la Sala delle Carte
+  //  e la Sala dei Giochi da Tavolo. Stesse regole del salone del Casinò.
+  // =========================================================
+  var CAM_ATRIO = { HY: 330, F: 290, EYE: 1.65, PITCH: 0, XW: 2.9, ZB: 4, YT: 3.4 };
+  var CAM_SALA = { HY: 330, F: 318, EYE: 2.3, PITCH: 12, XW: 3.6, ZB: 9, YT: 3.4 };
+  var PORTE = { carte: [-2.0, -0.85], giardino: [-0.45, 0.45], tavolo: [0.85, 2.0] }, HP = 2.4;
+  function giocatori(o, nomi, cx, z, passo, k) {   // le persone sedute dall'altra parte del tavolo
+    nomi.forEach(function (n, i) { o.push(busto(n, cx + (i - (nomi.length - 1) / 2) * passo, z, k)); });
   }
-  var cacheSalone = null;
-  function salone() {
-    if (cacheSalone) return cacheSalone;
-    var d = conCamera(CAM_SALONE, function () { return { o: disegnoSalone(), g: geometriaSalone() }; });
-    var svg = svgCon({ o: d.o, feltro: ["#1d9a57", "#0d6136"], feltro2: ["#1f8a55", "#0e5233"], legno: ["#5a2f17", "#2b140a"], pozza: "#ffd98a" });
-    cacheSalone = { img: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg), tavoli: d.g.tavoli, luci: d.g.luci };
-    return cacheSalone;
+  function carteInTavola(o, cx, z0, yT, k) {   // la Scopa in corso: quattro carte in tavola e le carte in mano coperte
+    [["denari", -0.3, 8], ["coppe", -0.1, -6], ["spade", 0.1, 5], ["bastoni", 0.3, -9]].forEach(function (c) { o.push(carta(cx + c[1] * k, z0, c[2], yT, c[0], null, 1.15 * k)); });
+  }
+  // una stanzetta dietro una porta dell'atrio (si vede solo dal vano della porta)
+  function stanzetta(o, x0, x1, muro, pav1, pav2, q) {
+    var z0 = ZB + 0.12, z1 = ZB + 4.4, yS = 3.0, x, z, i, j;
+    o.push(poly(qPiano(x0, x1, z0, z1, yS), "#2a1a10"));
+    o.push(poly(qFondo(x0, x1, 0, yS, z1), muro), poly(qFondo(x0, x1, 0, 0.9, z1), tono(muro, -0.35)));
+    o.push(poly(qPiano(x0, x1, z0, z1, 0), pav1));
+    for (z = z1, i = 0; z > z0; z -= q, i++) for (x = x0, j = 0; x < x1 - 0.01; x += q, j++) if ((i + j) % 2) o.push(poly(qPiano(x, x + q, Math.max(z0, z - q), z, 0), pav2));
+    o.push(ell(P((x0 + x1) / 2, 2.2, z1 - 1.5), 2.4 * F / z1, 1.6 * F / z1, "url(#gAlone)"));   // la luce calda della sala
+  }
+  function disegnoAtrio() {
+    var o = [], x, z, i, k = F / ZB;
+    // 1) le sale dietro le porte: a sinistra le carte, a destra i giochi da tavolo
+    stanzetta(o, -5.2, -0.6, "#cf8f52", "#b4552e", "#9c4626", 0.45);
+    var lc = -2.05, zc = ZB + 2.3, yT;
+    giocatori(o, ["Ciccio", "Carmela"], lc, zc + 0.8, 0.78);
+    yT = tavoloTovaglia(o, zc, 0.72, 0.42, "#f4ede1", "#d33a3a", lc);
+    carteInTavola(o, lc, zc, yT, 1);
+    o.push(inPiedi("Gegè", -3.3, ZB + 3.4), lampada(lc, zc + 0.1, 2.2, "#2f6b4f", 0.3));
+    stanzetta(o, 0.6, 5.2, "#35607a", "#9a6a42", "#8d613b", 0.3);
+    var rc = 2.05;
+    for (i = 0; i < 3; i++) for (x = 2.2; x < 4.6; x += 0.32) o.push(poly(qFondo(x, x + 0.26, 1.2 + i * 0.5, 1.2 + i * 0.5 + 0.22 + ((x * 7 + i) % 3) * 0.05, ZB + 4.39), ["#e03131", "#fcc419", "#1c7ed6", "#2b8a3e", "#f08c00", "#7048e8"][Math.floor(x * 3 + i) % 6]));   // lo scaffale dei giochi
+    giocatori(o, ["Totò", "Mimma"], rc, zc + 0.8, 1.15);
+    yT = tavoloLegno(o, rc, zc, 0.75, 0.42, "#8a5a34");
+    forza4(o, rc, zc + 0.05, yT, 0.72);
+    o.push(lampada(rc, zc + 0.1, 2.2, "#e8dcc0", 0.3));
+    // 2) il soffitto con le travi e il pavimento di legno col tappeto
+    o.push(poly(qPiano(-XW, XW, 1, ZB, YT), "#efe2c4"));
+    [1.9, 2.7, 3.5].forEach(function (zt) { o.push(poly(qPiano(-XW, XW, zt - 0.11, zt + 0.11, YT - 0.2), "#4a2c18"), poly(qFondo(-XW, XW, YT - 0.2, YT, zt - 0.11), "#6b4226")); });
+    o.push(poly(qPiano(-XW, XW, 1, ZB, 0), "#8a5a34"));
+    for (x = -XW; x < XW; x += 0.24) { o.push(linea(P(x, 0, 1), P(x, 0, ZB), "#6e4528", 0.7)); for (z = 1 + ((x * 10) % 3) * 0.3; z < ZB; z += 0.95) o.push(linea(P(x, 0, z), P(x + 0.24, 0, z), "#6e4528", 0.6)); }
+    o.push(poly(qPiano(-1.15, 1.15, 1.6, 3.5, 0.002), "#7a1f2b"), poly(qPiano(-1.0, 1.0, 1.75, 3.35, 0.003), "#c9a24a"), poly(qPiano(-0.94, 0.94, 1.81, 3.29, 0.004), "#8c2a33"));
+    o.push(poly([P(0, 0.005, 1.95), P(0.55, 0.005, 2.55), P(0, 0.005, 3.15), P(-0.55, 0.005, 2.55)], "#1f3b57"), poly([P(0, 0.006, 2.15), P(0.3, 0.006, 2.55), P(0, 0.006, 2.95), P(-0.3, 0.006, 2.55)], "#c9a24a"));
+    // 3) la parete di fondo coi vani delle porte: in alto verde, in basso la boiserie di noce
+    var pieni = [[-XW, PORTE.carte[0]], [PORTE.carte[1], PORTE.giardino[0]], [PORTE.giardino[1], PORTE.tavolo[0]], [PORTE.tavolo[1], XW]];
+    function muro(a, b, y0, y1) {
+      o.push(poly(qFondo(a, b, Math.max(y0, 1.0), y1, ZB), "#2f5d4a"));
+      for (x = a + 0.08; x < b - 0.05; x += 0.36) o.push(poly(qFondo(x, Math.min(b, x + 0.16), Math.max(y0, 1.0), y1, ZB - 0.001), "#33654f"));
+      if (y0 < 1.0) { o.push(poly(qFondo(a, b, y0, 1.0, ZB), "#5a3a22")); for (x = a + 0.06; x < b - 0.2; x += 0.55) o.push(poly(qFondo(x, Math.min(b - 0.06, x + 0.45), 0.14, 0.86, ZB - 0.002), "none", "stroke='#7a5230' stroke-width='1'")); o.push(poly(qFondo(a, b, 0.98, 1.05, ZB - 0.003), "#c9a24a")); }
+    }
+    pieni.forEach(function (p) { muro(p[0], p[1], 0, YT); });
+    ["carte", "giardino", "tavolo"].forEach(function (kp) { var p = PORTE[kp]; muro(p[0], p[1], HP, YT); });
+    o.push(poly(qFondo(-XW, XW, YT - 0.16, YT, ZB - 0.004), "#c9a24a"));
+    // le porte: cornice di noce, lo spessore del muro, la soglia di marmo
+    ["carte", "tavolo"].forEach(function (kp) {
+      var a = PORTE[kp][0], b = PORTE[kp][1], esterno = kp === "carte" ? a : b;
+      o.push(poly(qLato(esterno, ZB, ZB + 0.25, 0, HP), "#4a2c18"), poly(qPiano(a, b, ZB, ZB + 0.25, HP), "#3a2214"), poly(qPiano(a, b, ZB, ZB + 0.25, 0.004), "#d8cbb0"));
+      o.push(poly(qFondo(a - 0.1, a, 0, HP + 0.1, ZB - 0.005), "#7a4f2a"), poly(qFondo(b, b + 0.1, 0, HP + 0.1, ZB - 0.005), "#7a4f2a"), poly(qFondo(a - 0.14, b + 0.14, HP + 0.08, HP + 0.2, ZB - 0.006), "#8a5a32"));
+    });
+    // la porta del giardino: chiusa, a vetri, con la luce verde dietro
+    var g0 = PORTE.giardino[0], g1 = PORTE.giardino[1], zg = ZB + 0.08;
+    o.push(poly(qFondo(g0, g1, 0, HP, zg), "#5a3a22"));
+    [g0 + 0.06, (g0 + g1) / 2 + 0.03].forEach(function (a) {
+      for (i = 0; i < 3; i++) {
+        var y0 = 0.95 + i * 0.47;
+        o.push(poly(qFondo(a, a + 0.36, y0, y0 + 0.4, zg - 0.001), "#9fd38a"), poly(qFondo(a + 0.04, a + 0.17, y0 + 0.2, y0 + 0.38, zg - 0.002), "#d8f5c4", "opacity='.6'"));
+      }
+      o.push(poly(qFondo(a + 0.03, a + 0.33, 0.12, 0.82, zg - 0.001), "none", "stroke='#7a5230' stroke-width='1'"));
+    });
+    o.push(linea(P(0, 0, zg - 0.003), P(0, HP, zg - 0.003), "#3a2214", 1.5), ell(P(-0.07, 1.05, zg - 0.004), 2.2, 2.2, "#e9c46a"), ell(P(0.07, 1.05, zg - 0.004), 2.2, 2.2, "#e9c46a"));
+    o.push(poly(qFondo(g0 - 0.1, g0, 0, HP + 0.1, ZB - 0.005), "#7a4f2a"), poly(qFondo(g1, g1 + 0.1, 0, HP + 0.1, ZB - 0.005), "#7a4f2a"), poly(qFondo(g0 - 0.14, g1 + 0.14, HP + 0.08, HP + 0.2, ZB - 0.006), "#8a5a32"));
+    // l'orologio sopra la porta del giardino e le applique
+    var ck = P(0, 2.95, ZB - 0.01);
+    o.push(ell(ck, k * 0.24, k * 0.24, "#f8f1df", "stroke='#8a5a32' stroke-width='" + r1(k * 0.04) + "'"), linea(ck, [ck[0], ck[1] - k * 0.15], "#212529", 1.4), linea(ck, [ck[0] + k * 0.1, ck[1] + k * 0.04], "#212529", 1.4));
+    o.push(applique(-0.65, 1.9, ZB - 0.01), applique(0.65, 1.9, ZB - 0.01), applique(-2.55, 1.9, ZB - 0.01), applique(2.55, 1.9, ZB - 0.01));
+    o.push(lampada(0, 1.9, 2.8, "#c79a4b", 0.26));
+    return o.join("");
+  }
+  // la Sala delle Carte: osteria calda, col cotto, i mattoni, il Settebello e la lavagna dei punti
+  function disegnoCarte() {
+    var o = [], yT;
+    o.push(stanza({ parete: "#d39a5e", righe: null, lato: "#a3703f", zoccolo: "#6b4226", cornice: "#4a2c18", zoccoloH: 1.0,
+      pav1: "#b4552e", pav2: "#9c4626", fughe: "#7d3a1f", quadro: 0.5, extraPareti: mattoni(-3.3, -2.2, 1.3, 2.3) + mattoni(2.4, 3.3, 2.4, 3.1) }));
+    o.push(poly(qPiano(-XW, XW, 0.9, ZB, YT), "#e6d2ac"));   // il soffitto chiaro, con le travi
+    [2.4, 4.2, 6.0, 7.8].forEach(function (zt) { o.push(poly(qPiano(-XW, XW, zt - 0.12, zt + 0.12, YT - 0.18), "#4a2c18"), poly(qFondo(-XW, XW, YT - 0.18, YT, zt - 0.12), "#6b4226")); });
+    // il Settebello in cornice e la lavagna dei punti di Noi e Loro
+    o.push(cornice(-2.0, -1.2, 1.7, 2.75, "#4a2c18", "#f3ead2"));
+    [[-0.17, 2.6], [0.17, 2.6], [0, 2.4], [-0.17, 2.2], [0.17, 2.2], [-0.17, 1.98], [0.17, 1.98]].forEach(function (p) {
+      var c = P(p[0] - 1.6, p[1] - 0.08, ZB - 0.03), rr = 0.075 * F / ZB;
+      o.push(ell(c, rr, rr, "#f2b705", "stroke='#c92a2a' stroke-width='1'"), ell(c, rr * 0.4, rr * 0.4, "#c92a2a"));
+    });
+    var kk = F / ZB;
+    o.push(lavagnetta(-0.7, 0.7, 1.75, 2.75, function () {
+      var a = P(-0.35, 2.5, ZB - 0.03), b = P(0.35, 2.5, ZB - 0.03), s = linea(P(0, 2.7, ZB - 0.03), P(0, 1.85, ZB - 0.03), "#e9ecef", 1, "opacity='.8'");
+      s += "<text x='" + r1(a[0]) + "' y='" + r1(a[1]) + "' font-family='Comic Sans MS,Segoe Print,cursive' font-size='" + r1(kk * 0.2) + "' fill='#f1f3f5' text-anchor='middle'>NOI</text>";
+      s += "<text x='" + r1(b[0]) + "' y='" + r1(b[1]) + "' font-family='Comic Sans MS,Segoe Print,cursive' font-size='" + r1(kk * 0.2) + "' fill='#f1f3f5' text-anchor='middle'>LORO</text>";
+      for (var i = 0; i < 5; i++) { s += linea(P(-0.5 + i * 0.07, 2.3, ZB - 0.03), P(-0.5 + i * 0.07, 2.05, ZB - 0.03), "#f8f9fa", 1, "opacity='.85'"); if (i < 3) s += linea(P(0.2 + i * 0.07, 2.3, ZB - 0.03), P(0.2 + i * 0.07, 2.05, ZB - 0.03), "#f8f9fa", 1, "opacity='.85'"); }
+      return s;
+    }));
+    o.push(applique(-XW + 0.02, 2.2, 6.6), applique(XW - 0.02, 2.2, 6.6));
+    // lo Scopone in fondo: tavolo col panno verde
+    var zs = 6.9;
+    giocatori(o, ["Pino", "Mena", "Totò", "Lia"], 0, zs + 0.92, 0.66, 0.98);
+    o.push(poly(qFondo(-1.1, -1.0, 0, 0.8, zs - 0.45), "#3d2416"), poly(qFondo(1.0, 1.1, 0, 0.8, zs - 0.45), "#3d2416"));
+    o.push(poly(qPiano(-1.2, 1.2, zs - 0.55, zs + 0.55, 0.82), "#6b4226"), poly(qPiano(-1.1, 1.1, zs - 0.47, zs + 0.47, 0.821), "url(#gFeltro)"), poly(qFondo(-1.2, 1.2, 0.7, 0.82, zs - 0.55), "url(#gLegno)"));
+    [-0.3, -0.1, 0.1, 0.3].forEach(function (x, i) { o.push(carta(x, zs, (i - 1.5) * 8, 0.83, ["denari", "coppe", "spade", "bastoni"][i], null, 1.1)); });
+    o.push(lampada(0, zs + 0.1, 2.5, "#e8dcc0", 0.32));
+    // la Scopa 2 contro 2 a destra: il festone delle squadre, le tovagliette blu e rosse
+    var x2 = 1.55, z2 = 4.4;
+    o.push(bandierine(3.0, z2 + 0.4, ["#1c7ed6", "#e03131", "#ffd43b"]));
+    giocatori(o, ["Gino", "Teresa", "Sasà", "Nina"], x2, z2 + 0.86, 0.52, 0.95);
+    yT = tavoloTovaglia(o, z2, 1.05, 0.48, "#f4ede1", "#d33a3a", x2);
+    [0, 1, 2, 3].forEach(function (i) { var x = x2 + (i - 1.5) * 0.52; o.push(poly(qPiano(x - 0.2, x + 0.2, z2 + 0.12, z2 + 0.42, yT + 0.003), i % 2 ? "#e03131" : "#1c7ed6", "opacity='.85'")); });
+    carteInTavola(o, x2, z2 - 0.08, yT, 1);
+    o.push(lampada(x2 - 0.5, z2 + 0.1, 2.45, "#2f6b4f", 0.28), lampada(x2 + 0.5, z2 + 0.1, 2.45, "#2f6b4f", 0.28));
+    // la Scopa a sinistra, in due
+    var x1 = -1.5, z1 = 3.7;
+    giocatori(o, ["Ciccio", "Carmela"], x1, z1 + 0.82, 0.8);
+    yT = tavoloTovaglia(o, z1, 0.75, 0.45, "#f4ede1", "#d33a3a", x1);
+    carteInTavola(o, x1, z1, yT, 1);
+    o.push(lampada(x1, z1 + 0.1, 2.45, "#2f6b4f", 0.32));
+    return o.join("");
+  }
+  // la Sala dei Giochi da Tavolo: azzurra, col parquet e lo scaffale pieno di scatole di giochi
+  function disegnoTavolo() {
+    var o = [], yT, x, i;
+    o.push(stanza({ parete: "#3f6e8c", righe: "#447595", lato: "#2c5068", righeLato: "#305670", zoccolo: "#6b4226", cornice: "#d9b36c",
+      pav1: "#9a6a42", pav2: "#8d613b", quadro: 0.32, fughe: "#6e4a2c" }));
+    o.push(poly(qPiano(-XW, XW, 0.9, ZB, YT), "#e8ecef"));   // il soffitto chiaro, con le travi
+    [2.4, 4.2, 6.0, 7.8].forEach(function (zt) { o.push(poly(qPiano(-XW, XW, zt - 0.11, zt + 0.11, YT - 0.16), "#5a3a22"), poly(qFondo(-XW, XW, YT - 0.16, YT, zt - 0.11), "#6b4226")); });
+    // lo scaffale dei giochi sulla parete di fondo
+    var cols = ["#e03131", "#fcc419", "#1c7ed6", "#2b8a3e", "#f08c00", "#7048e8", "#d6336c", "#15aabf"];
+    o.push(poly(qFondo(-2.9, -1.0, 0.9, 2.95, ZB - 0.05), "#5a3a22"), poly(qFondo(1.0, 2.9, 0.9, 2.95, ZB - 0.05), "#5a3a22"));
+    [[-2.9, -1.0], [1.0, 2.9]].forEach(function (sc, si) {
+      for (i = 0; i < 4; i++) {
+        var y0 = 1.0 + i * 0.5;
+        o.push(poly(qFondo(sc[0], sc[1], y0 - 0.04, y0, ZB - 0.06), "#8a5a32"));
+        for (x = sc[0] + 0.06; x < sc[1] - 0.1; x += 0.16) {
+          var h = 0.28 + ((x * 13 + i * 5 + si) % 4) * 0.04, c = cols[Math.floor(x * 7 + i * 3 + si * 5 + 40) % cols.length];
+          if ((Math.floor(x * 11) + i) % 5 === 0) o.push(poly(qFondo(x, x + 0.4, y0, y0 + 0.09, ZB - 0.07), c), poly(qFondo(x, x + 0.4, y0 + 0.09, y0 + 0.17, ZB - 0.07), cols[(Math.floor(x * 5) + i) % cols.length]));   // scatole sdraiate
+          else o.push(poly(qFondo(x, x + 0.13, y0, y0 + h, ZB - 0.07), c), poly(qFondo(x + 0.02, x + 0.11, y0 + h * 0.55, y0 + h * 0.7, ZB - 0.071), "#ffffff", "opacity='.55'"));
+        }
+      }
+    });
+    // il quadro col Tris in mezzo
+    o.push(cornice(-0.55, 0.55, 1.75, 2.75, "#d9b36c", "#fbfaf4"));
+    var kk = F / ZB;
+    [[-0.28, 2.45, "X", "#e03131"], [0, 2.18, "O", "#1c7ed6"], [0.28, 2.45, "X", "#e03131"]].forEach(function (m) { var p = P(m[0], m[1], ZB - 0.03); o.push("<text x='" + r1(p[0]) + "' y='" + r1(p[1]) + "' font-family='Arial Black,Arial,sans-serif' font-size='" + r1(kk * 0.32) + "' fill='" + m[3] + "' text-anchor='middle'>" + m[2] + "</text>"); });
+    o.push(applique(-XW + 0.02, 2.2, 6.6), applique(XW - 0.02, 2.2, 6.6));
+    // la Battaglia Navale in fondo
+    var zn = 6.9;
+    giocatori(o, ["Capitano", "Marina"], 0, zn + 0.9, 1.0);
+    yT = tavoloLegno(o, 0, zn, 1.1, 0.5, "#9c6b3f");
+    navale(o, 0, zn + 0.02, yT, 1.15);
+    o.push(lampada(0, zn + 0.1, 2.5, "#d9b36c", 0.34));
+    // Drop 4 a destra
+    var x2 = 1.55, z2 = 4.4;
+    giocatori(o, ["Totò", "Mimma"], x2, z2 + 0.8, 1.15);
+    yT = tavoloLegno(o, x2, z2, 0.95, 0.45, "#8a5a34");
+    forza4(o, x2, z2 + 0.02, yT, 0.85);
+    o.push(lampada(x2, z2 + 0.1, 2.45, "#e8dcc0", 0.3));
+    // il Tris a sinistra
+    var x1 = -1.5, z1 = 3.7;
+    giocatori(o, ["Ninni", "Peppino"], x1, z1 + 0.8, 0.8);
+    yT = tavoloLegno(o, x1, z1, 0.72, 0.44, "#9c6b3f");
+    tris(o, x1, z1 + 0.02, yT, 1.0);
+    o.push(lampada(x1, z1 + 0.1, 2.45, "#2f6b4f", 0.3));
+    return o.join("");
+  }
+
+  // ---- le scene in prima persona: telecamera, disegno, luci e punti da toccare ----
+  //      va: { gioco: id } (si entra nella sua sala) | { scena: id } (si passa la porta) | { presto: "testo" }
+  function datiSala(id) { return SALE.filter(function (q) { return q.id === id; })[0] || { nome: id, insegna: String(id).toUpperCase(), stile: "bj" }; }
+  function puntoTavolo(id, x, z, w, zf, yCart) {
+    var s = datiSala(id);
+    return { id: id, nome: s.nome, insegna: s.insegna, stile: s.stile, x: x, z: z, w: w, yTop: yCart, yBot: 0.15, zf: zf, fuoco: [x, 0.95, z + 0.35], cartello: [x, yCart, z], va: { gioco: id } };
+  }
+  function puntoPorta(kp, nome, insegna, stile, va) {
+    var a = PORTE[kp][0], b = PORTE[kp][1], x = (a + b) / 2;
+    return { id: kp, nome: nome, insegna: insegna, stile: stile, x: x, z: ZB, w: (b - a) / 2 + 0.1, yTop: HP + 0.2, yBot: 0, zf: ZB, fuoco: [x, 1.25, ZB + 0.6], cartello: kp === "giardino" ? [x, 1.95, ZB] : [x, HP + 0.25, ZB], muro: true, va: va };
+  }
+  var COLORI_SCENA = { feltro: ["#1d9a57", "#0d6136"], feltro2: ["#1f8a55", "#0e5233"], legno: ["#5a2f17", "#2b140a"], pozza: "#ffd98a" };
+  var SCENE = {
+    salone: { cam: CAM_SALONE, disegno: disegnoSalone, luci: [[0, 4.25, 4.6], [0, 4.15, 8.2]],
+      punti: function () { return TAVOLI.map(function (t) { return puntoTavolo(t.id, t.x, t.z, t.id === "poker" ? 1.45 : 1.2, t.z - (t.id === "poker" ? 0.75 : 0.05), 3.25); }); } },
+    circolo: { cam: CAM_ATRIO, disegno: disegnoAtrio, luci: [],
+      punti: function () { return [
+        puntoPorta("carte", "Sala delle Carte", "SALA CARTE", "cr-carte", { scena: "carte" }),
+        puntoPorta("giardino", "Giardino", "GIARDINO", "cr-giardino", { presto: "Il giardino apre presto: bocce, freccette e calcio balilla 🌳" }),
+        puntoPorta("tavolo", "Giochi da Tavolo", "GIOCHI DA TAVOLO", "cr-tavolo", { scena: "tavolo" }) ]; } },
+    carte: { cam: CAM_SALA, disegno: disegnoCarte, luci: [],
+      punti: function () { return [puntoTavolo("scopa", -1.5, 3.7, 0.95, 3.25, 2.7), puntoTavolo("scopa2v2", 1.55, 4.4, 1.25, 3.92, 2.8), puntoTavolo("scopone", 0, 6.9, 1.3, 6.35, 2.95)]; } },
+    tavolo: { cam: CAM_SALA, disegno: disegnoTavolo, luci: [],
+      punti: function () { return [puntoTavolo("tris", -1.5, 3.7, 0.92, 3.26, 2.7), puntoTavolo("drop4", 1.55, 4.4, 1.15, 3.95, 2.8), puntoTavolo("navale", 0, 6.9, 1.25, 6.4, 2.95)]; } }
+  };
+  // dove stanno sullo schermo (disegno 360×640) i punti, le loro insegne e i luccichii
+  function geometria(sc) {
+    var punti = sc.punti().map(function (p) {
+      var c = [P(p.x - p.w, p.yBot, p.zf), P(p.x + p.w, p.yBot, p.zf), P(p.x - p.w, p.yTop, p.z), P(p.x + p.w, p.yTop, p.z)];
+      var xs = c.map(function (q) { return q[0]; }), ys = c.map(function (q) { return q[1]; });
+      var cart = p.cartello ? P(p.cartello[0], p.cartello[1], p.cartello[2]) : null, m = Math.min(100, 34 + p.insegna.length * 5.6);   // l'insegna resta dentro lo schermo
+      return { id: p.id, nome: p.nome, insegna: p.insegna, stile: p.stile, va: p.va, muro: !!p.muro,
+        box: [Math.max(0, Math.min.apply(null, xs)), Math.max(0, Math.min.apply(null, ys) - (cart && !p.muro ? 34 : 0)), Math.min(W, Math.max.apply(null, xs)), Math.min(H, Math.max.apply(null, ys))],
+        fuoco: P(p.fuoco[0], p.fuoco[1], p.fuoco[2]), cartello: cart ? [Math.max(m, Math.min(W - m, cart[0])), cart[1]] : null };
+    });
+    var luci = (sc.luci || []).map(function (l) { var c = P(l[0], l[1], l[2]); return [c[0], c[1], F / l[2]]; });
+    return { punti: punti, luci: luci };
+  }
+  var cacheScene = {}, cachePunti = {};
+  // solo dove stanno le cose da toccare (leggero: niente disegno), es. per sapere quali giochi ci sono dietro le porte
+  function punti(id) {
+    var sc = SCENE[id]; if (!sc) return null;
+    if (!cachePunti[id]) cachePunti[id] = conCamera(sc.cam, function () { return geometria(sc); });
+    return cachePunti[id];
+  }
+  // la scena intera, col disegno pronto da mettere in un'immagine
+  function scena(id) {
+    if (cacheScene[id]) return cacheScene[id];
+    var sc = SCENE[id]; if (!sc) return null;
+    var o = conCamera(sc.cam, function () { return sc.disegno(); }), g = punti(id);
+    var svg = svgCon({ o: o, feltro: COLORI_SCENA.feltro, feltro2: COLORI_SCENA.feltro2, legno: COLORI_SCENA.legno, pozza: COLORI_SCENA.pozza });
+    cacheScene[id] = { img: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg), punti: g.punti, luci: g.luci };
+    return cacheScene[id];
   }
 
   // la sala intera, pronta da mettere in un'immagine
@@ -581,6 +909,6 @@
     return cache[id];
   }
 
-  // SALE: tutte le sale disegnate (anche quelle della Scopa, per l'edificio nuovo); TAVOLI: i giochi del salone del Casinò
-  window.SGCasino = { SALE: SALE, TAVOLI: TAVOLI, immagine: immagine, svg: svgSala, salone: salone };
+  // SALE: le sale di ogni gioco (primo piano); scena(id): le scene in prima persona (salone del Casinò, atrio e sale del Circolo)
+  window.SGCasino = { SALE: SALE, TAVOLI: TAVOLI, immagine: immagine, svg: svgSala, scena: scena, punti: punti };
 })();

@@ -356,10 +356,41 @@
     return s + linea(t, [t[0], t[1] - 8], T("#d0ebff"), 2.4) + pallino([t[0], t[1] - 9], 2.2, T("#e7f5ff"));
   }
 
+  // il Circolo: palazzo all'italiana coi muri gialli, le persiane verdi, il tetto di coppi,
+  // l'insegna di legno sopra la porta, la tenda a righe e il tavolino fuori con la tovaglia a quadri
+  function persiane(lato, a, b, z1, z2, x) {   // una finestra con le due ante verdi aperte
+    var V = "#2f9e44", w = Math.abs(b - a) * .32;
+    if (lato === "L") return qL(x, a - w, a, z1, z2, F(V, "l")) + finL(x, a, b, z1, z2, "#ffffff") + qL(x, b, b + w, z1, z2, F(V, "l"));
+    return qR(x, a + w, a, z1, z2, F(V, "r")) + finR(x, a, b, z1, z2, "#ffffff") + qR(x, b, b - w, z1, z2, F(V, "r"));
+  }
+  function circolo(u, v) {
+    var M = "#f2c46d", s = basamento(u, v), vf = v + 2, uf = u + 2.2;
+    s += box(u + .3, v + .25, 1.9, 1.75, 3, 38, M);
+    s += qL(vf, u + .3, uf, 3, 6, F("#c9a24a", "l")) + qR(uf, vf, v + .25, 3, 6, F("#c9a24a", "r"));   // lo zoccolo
+    s += qL(vf, u + .3, uf, 22.5, 24, F("#fff4e6", "l")) + qR(uf, vf, v + .25, 22.5, 24, F("#fff4e6", "r"));   // la fascia tra i piani
+    // pianterreno: la porta a vetri in mezzo, una finestra per parte; di lato due finestre
+    s += qL(vf, u + .98, u + 1.52, 3, 19.5, F("#6b4226", "l")) + qL(vf, u + 1.04, u + 1.46, 9, 18.5, S.luci ? "#ffd75e" : T("#a5d8ff")) + qL(vf, u + 1.243, u + 1.257, 3, 19.5, F("#4a2c18", "l"));
+    s += persiane("L", u + .5, u + .76, 9, 18.5, vf) + persiane("L", u + 1.76, u + 2.02, 9, 18.5, vf);
+    s += persiane("R", v + 1.72, v + 1.46, 9, 18.5, uf) + persiane("R", v + .98, v + .72, 9, 18.5, uf);
+    // primo piano
+    [[.5, .76], [1.12, 1.38], [1.76, 2.02]].forEach(function (k) { s += persiane("L", u + k[0], u + k[1], 26, 34.5, vf); });
+    s += persiane("R", v + 1.72, v + 1.46, 26, 34.5, uf) + persiane("R", v + .98, v + .72, 26, 34.5, uf);
+    // l'insegna di legno e la tenda a righe verdi
+    s += qR(uf + .01, v + 1.85, v + .4, 35.6, 40.6, F("#5a3a22", "r")) + txR(uf + .01, v + 1.125, 36.6, "CIRCOLO", 6.4, S.luci ? "#ffe066" : "#ffe8a3", G());   // in alto sul fianco, sotto il tetto: si vede dalla piazza
+    s += tenda(vf, u + .9, u + 1.6, 19.4, .3, 4, "#2f9e44", "#ffffff");
+    // il tetto di coppi
+    s += tettoV(u + .18, u + 2.32, v + .12, v + 2.12, 41, 15, "#c0522b", M);
+    for (var i = 1; i < 6; i++) { var t = i / 6; s += linea(P(u + .18 + t * 1.07, v + .12, 41 + t * 15), P(u + .18 + t * 1.07, v + 2.12, 41 + t * 15), F("#a8441f", "t"), .7); }
+    s += box(u + 1.6, v + .8, .22, .22, 48, 12, "#c0522b");   // il comignolo
+    // fuori: il tavolino con la tovaglia a quadri, due sedie e due vasi
+    s += box(u + .32, vf + .22, .38, .3, 0, 7.5, "#ffffff", { ct: T("#e03131") }) + box(u + .26, vf + .6, .14, .14, 0, 4.5, "#a0652b") + box(u + .62, vf + .6, .14, .14, 0, 4.5, "#a0652b");
+    return s + vaso(u + .82, vf + .2) + vaso(u + 1.68, vf + .2);
+  }
+
   // ---------- la città ----------
-  var LOTTI = { casino: [4.15, 6.95], studio: [6.95, 4.15], giochi: [10.55, 13.35], arena: [13.35, 10.55], locale: [16.95, 19.75], trofei: [19.75, 16.95] };
-  var NOMI = { casino: ["🃏 Casinò", "#e03131", 97, 0], studio: ["📺 Studio TV", "#7048e8", 99, 0], giochi: ["🕹️ Sala giochi", "#f08c00", 80, -4], arena: ["⚔️ Arena", "#1c7ed6", 95, 0], locale: ["🎉 Locale", "#d6336c", 76, 0], trofei: ["🏆 Trofei", "#f59f00", 92, 0] };
-  var DISEGNA = { casino: casino, studio: studio, giochi: arcade, locale: locale, trofei: trofei };
+  var LOTTI = { casino: [4.15, 6.95], studio: [6.95, 4.15], circolo: [4.15, 4.15], giochi: [10.55, 13.35], arena: [13.35, 10.55], locale: [16.95, 19.75], trofei: [19.75, 16.95] };
+  var NOMI = { casino: ["🃏 Casinò", "#e03131", 97, 0], studio: ["📺 Studio TV", "#7048e8", 99, 0], circolo: ["🎲 Circolo", "#2f9e44", 92, 0], giochi: ["🕹️ Sala giochi", "#f08c00", 80, -4], arena: ["⚔️ Arena", "#1c7ed6", 95, 0], locale: ["🎉 Locale", "#d6336c", 76, 0], trofei: ["🏆 Trofei", "#f59f00", 92, 0] };
+  var DISEGNA = { casino: casino, studio: studio, circolo: circolo, giochi: arcade, locale: locale, trofei: trofei };
   function edificio(k) {
     var u = LOTTI[k][0], v = LOTTI[k][1], c = [u + 1.25, v + 1.25], n = NOMI[k], p = P(c[0], c[1], n[2]);
     etichetta(p[0] + n[3], p[1] - 14, n[0], n[1], null, k);
