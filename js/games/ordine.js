@@ -40,6 +40,27 @@
     "MANO OCCHIO DENTE NASO TESTA PIEDE BRACCIO SPADA ARCO FRECCIA SCUDO BOMBA MINA RAZZO MOTORE").split(" ");
 
   function fmtN(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }   // 1.000
+  var PARTITE_SALVATE = {};
+  function salvaProgressiOrdine(idPartita, giocatoreId, progressi, players, spettatore) {
+    try {
+      if (spettatore || !progressi || !giocatoreId || !window.SGNube || !SGNube.disponibile || !SGNube.disponibile() || !SGNube.profilo || !SGNube.salvaProgressi) return;
+      var profilo = SGNube.profilo(), nome = String((profilo && profilo.nome) || "").trim();
+      var player = (players || []).filter(function (p) { return p.id === giocatoreId; })[0];
+      if (!player || !nome || nome.toLowerCase() !== String(player.nome || "").trim().toLowerCase()) return;
+      var idProfilo = String((profilo && profilo.uid) || nome).trim().toLowerCase();
+      var chiave = "ordine|" + idPartita + "|" + idProfilo;
+      if (PARTITE_SALVATE[chiave]) return;
+      try { if (window.localStorage && localStorage.getItem("sg-progressi-" + chiave)) { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
+      var x = progressi[giocatoreId] || {}, incrs = [];
+      ["partite", "partiteOnline", "vittorie", "vittorieCapo", "indizi", "paroleGiuste", "paroleOro"].forEach(function (k) {
+        if (+x[k] > 0) incrs.push([k, +x[k]]);
+      });
+      if (!incrs.length) return;
+      PARTITE_SALVATE[chiave] = 1;
+      try { if (window.localStorage) localStorage.setItem("sg-progressi-" + chiave, "1"); } catch (e) {}
+      SGNube.salvaProgressi(null, ID, incrs, [], []);
+    } catch (e) {}
+  }
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   function mescola(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
   var ACC = { "À": "A", "Á": "A", "È": "E", "É": "E", "Ì": "I", "Í": "I", "Ò": "O", "Ó": "O", "Ù": "U", "Ú": "U" };
@@ -102,12 +123,12 @@
         if (p.id === vecchio) p.via = true;   // l'host di prima è sparito: se torna, rientra come giocatore
         if (p.id === IO) { p.via = false; io = p; }
       });
-      h.msg = "";
+      h.msg = ""; h.progressi = h.progressi || {};
       return h;
     })(ripresa) : { fase: "lobby", codice: "…", pronta: false, nsq: +imp.squadre === 3 ? 3 : 2, nparole: +imp.parole === 20 ? 20 : 25, gruppo: imp.usaMie === false ? [] : leggiGruppo(imp.gruppo), oro: imp.oro !== false,
       players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), team: 0 }], capo: [null, null, null],
       tab: null, bid: 0, turno: 0, passo: "indizio", indizio: null, tentativi: 0, girate: 0, prop: {}, storia: [], fuori: [],
-      vince: -1, classifica: null, msg: "", ultima: null, nGirate: 0, gen: 1, hostId: IO, vici: [] };
+      vince: -1, classifica: null, msg: "", ultima: null, nGirate: 0, gen: 1, hostId: IO, vici: [], progressi: {} };
     if (prova) {   // i bot: Matt in squadra con te (il primo bot si chiama sempre Matt), Rosa e Peppe nell'altra
       H.nsq = 2;
       [["bot1", "Matt", 0], ["bot2", "Rosa", 1], ["bot3", "Peppe", 1]].forEach(function (b) {
@@ -213,7 +234,12 @@
         tab: H.tab ? H.tab.map(function (c) { return { w: c.w, g: c.g, c: (c.g || fine) ? c.c : null, oro: (c.g || fine) && c.oro ? 1 : 0 }; }) : null, oro: H.oro,
         bid: H.bid, turno: H.turno, passo: H.passo, indizio: H.indizio, tentativi: H.tentativi, girate: H.girate, prop: H.prop,
         storia: H.storia.slice(-8), log: (H.log || []).slice(-40), fuori: H.fuori.slice(), vince: H.vince, classifica: H.classifica, msg: H.msg, ultima: H.ultima, resto: r,
-        gen: H.gen, hostId: H.hostId, vici: H.vici.slice(), sospeso: H.sospeso || null };
+        gen: H.gen, hostId: H.hostId, vici: H.vici.slice(), sospeso: H.sospeso || null,
+        progressiFine: fine ? H.progressi : null };
+    }
+    function progresso(id) {
+      if (!H.progressi[id]) H.progressi[id] = { indizi: 0, paroleGiuste: 0, paroleOro: 0 };
+      return H.progressi[id];
     }
     function privato(id, m) {
       if (id === IO) { if (m.t === "avviso") avviso(m.testo); return; }
@@ -272,6 +298,7 @@
         if (err) { privato(id, { t: "avviso", testo: err }); return; }
         var parola = String(m.parola).trim().toUpperCase();
         H.indizio = { parola: parola, n: n, k: H.turno };
+        progresso(id).indizi++;
         H.tentativi = n === 0 ? 99 : n + 1; H.girate = 0; H.passo = "indovina"; H.prop = {}; H.msg = "";
         H.storia.push({ k: H.turno, parola: parola, n: n });
         scrivi({ t: "ind", k: H.turno, id: id, nome: p.nome, p: parola, num: n });
@@ -302,6 +329,7 @@
     function comincia() {
       if (H.fase !== "lobby" || !pronti()) return;
       sistemaCapi();
+      H.progressi = {};
       // 25 parole: qualcuna del gruppo (se ci sono) e le altre dall'elenco, senza doppioni
       var usate = {}, parole = [];
       mescola(H.gruppo).slice(0, MAX_GRUPPO).forEach(function (w) { usate[norm(w)] = 1; parole.push(w); });
@@ -344,6 +372,11 @@
       var c = H.tab[i]; if (!c || c.g) return;
       var k = H.turno, p = pById(id);
       c.g = true; H.girate++; H.prop = {};
+      if (p) {
+        var pg = progresso(id);
+        if (c.c === p.team) pg.paroleGiuste++;
+        if (c.oro) pg.paroleOro++;
+      }
       H.ultima = { i: i, k: k, c: c.c, oro: c.oro ? 1 : 0, n: ++H.nGirate };
       var chi = p ? p.nome : SQ[k].nome;
       scrivi({ t: "gira", k: k, id: id, nome: chi, w: c.w, c: c.c, oro: c.oro ? 1 : 0 });
@@ -406,6 +439,13 @@
       H.classifica = H.players.map(function (p) { return { id: p.id, nome: p.nome, team: p.team, pos: p.team === k ? 1 : 2 }; })
         .sort(function (a, b) { return a.pos - b.pos; });
       H.msg = "🎉 Vincono i " + SQ[k].nome + "!"; scrivi({ t: "fine", k: k });
+      H.players.forEach(function (p) {
+        var pg = progresso(p.id);
+        pg.partite = 1; pg.partiteOnline = 1;
+        pg.vittorie = p.team === k ? 1 : 0;
+        pg.vittorieCapo = p.team === k && H.capo[k] === p.id ? 1 : 0;
+      });
+      if (!prova && !t.guarda) salvaProgressiOrdine(H.codice + "|" + H.bid, IO, vm().progressiFine, H.players, t.guarda);
       bd();
       // torneo online: i NOMI dei giocatori; a squadre chi vince al posto 1, gli altri dopo
       if (t.risultato && !prova) t.risultato(H.classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }));
@@ -505,7 +545,9 @@
           if (m.to && m.to !== S.myId) return;          // era per un altro telefono
           if (m.t === "vm") {
             if (m.vm.gen != null) { if (m.vm.gen < S.gen) return; S.gen = m.vm.gen; }   // la foto di un host vecchio (sostituito): non conta
-            S.vm = m.vm; disegna(t, m.vm, cb); controllaChiave();
+            S.vm = m.vm;
+            if (m.vm.fase === "fine" && !t.guarda) salvaProgressiOrdine(m.vm.codice + "|" + m.vm.bid, S.myId, m.vm.progressiFine, m.vm.players, t.guarda);
+            disegna(t, m.vm, cb); controllaChiave();
           }
           else if (m.t === "chiave") { S.chiave = { bid: m.bid, col: m.col }; if (S.vm) disegna(t, S.vm, cb); }
           else if (m.t === "omini") { S.omini = m.omini || {}; if (S.vm) disegna(t, S.vm, cb); }

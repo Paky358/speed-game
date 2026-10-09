@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 170,
+    data: "9 ottobre 2026",
+    titolo: "Trofei di Parola d'ordine 🕵️",
+    descrizione: [
+      "Arrivano 19 trofei per le partite online: premiano chi dà indizi, aiuta la squadra a trovare le parole e guida il gruppo da capo."
+    ]
+  },
+  {
     v: 169,
     data: "9 ottobre 2026",
     titolo: "Il Casinò in prima persona e il nuovo Circolo 🎲",
