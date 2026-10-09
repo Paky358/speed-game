@@ -951,8 +951,8 @@ button.am-riga:active{ transform:scale(.985); }
 .ed-modale .mg-sotto{ font-size:.82rem; }
 
 /* =========================================================
-   IL CASINÒ DENTRO: una sala per gioco (disegni in casino.js)
-   le sale scorrono di fianco (solo transform), il nome grande è un'insegna diversa per ogni sala
+   IL CASINÒ DENTRO: il salone in prima persona e la sala di ogni tavolo (disegni in casino.js)
+   ci si avvicina al tavolo con solo transform; il nome grande è un'insegna diversa per ogni sala
    ========================================================= */
 .schermata.casino-sale{ position:relative; padding:0; flex:0 0 auto; height:var(--alt, 100dvh); min-height:0; max-height:var(--alt, 100dvh);
   overflow:hidden; background:#0d0508; display:flex; flex-direction:column; }
@@ -973,27 +973,70 @@ button.am-riga:active{ transform:scale(.985); }
 .cs-bj .cs-insegna b::after{ content:""; position:absolute; inset:-11px; border-radius:20px; border:3px dotted #fff1bd; opacity:.9; animation:cs-lampadine 1.6s steps(2) infinite; }
 @keyframes cs-lampadine{ 50%{ opacity:.45; } }
 /* Scopa: tavola di legno dipinta a mano */
-.cs-sc .cs-insegna b, .cs-s2 .cs-insegna b{ color:#fff1d6; text-shadow:0 2px 0 #3b2414, 0 0 8px rgba(0,0,0,.4); border:3px solid #3b2414;
+.cs-sc .cs-insegna b, .cs-s2 .cs-insegna b, .cs-cartello.cs-sc b, .cs-cartello.cs-s2 b, .cs-cartello.cs-cr-carte b, .cs-cartello.cs-cr-tavolo b{ color:#fff1d6; text-shadow:0 2px 0 #3b2414, 0 0 8px rgba(0,0,0,.4); border:3px solid #3b2414;
   background:repeating-linear-gradient(90deg,#6b4226 0 7px,#5d381f 7px 10px,#74482a 10px 18px); box-shadow:0 12px 24px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.15); }
 /* Scopa 2 vs 2: le due squadre ai lati (blu e rossa) */
-.cs-s2 .cs-insegna b{ border-left:9px solid #1c7ed6; border-right:9px solid #e03131; }
+.cs-s2 .cs-insegna b, .cs-cartello.cs-s2 b{ border-left:9px solid #1c7ed6; border-right:9px solid #e03131; }
 /* Scopone: la lavagna col gesso */
-.cs-so .cs-insegna b{ color:#f4f5f0; background:radial-gradient(ellipse at 40% 30%,#3a5a47,#22362b); border:6px solid #8a5a32; letter-spacing:.12em;
+.cs-so .cs-insegna b, .cs-cartello.cs-so b{ color:#f4f5f0; background:radial-gradient(ellipse at 40% 30%,#3a5a47,#22362b); border:6px solid #8a5a32; letter-spacing:.12em;
   text-shadow:0 0 2px rgba(255,255,255,.6), 1px 1px 0 rgba(255,255,255,.18); box-shadow:0 12px 24px rgba(0,0,0,.55), inset 0 0 14px rgba(0,0,0,.4); }
 /* Poker: insegna al neon */
 .cs-pk .cs-insegna b{ color:#fff; background:rgba(8,10,22,.88); border:2px solid rgba(255,79,216,.7); letter-spacing:.16em;
   text-shadow:0 0 6px #ff4fd8, 0 0 14px #ff4fd8, 0 0 26px #b5179e; box-shadow:0 0 20px rgba(255,79,216,.35), inset 0 0 14px rgba(255,79,216,.22); animation:cs-neon 4s infinite; }
 @keyframes cs-neon{ 0%, 92%, 100%{ opacity:1; } 93%{ opacity:.55; } 95%{ opacity:1; } 96%{ opacity:.7; } }
+/* Tris: il foglio con la X rossa e il cerchio blu ai lati */
+.cs-tr .cs-insegna b, .cs-cartello.cs-tr b{ color:#212529; background:#fbfaf4; border:3px solid #ced4da; letter-spacing:.14em;
+  border-left:10px solid #e03131; border-right:10px solid #1c7ed6; box-shadow:0 12px 24px rgba(0,0,0,.45); }
+/* Drop 4: plastica blu e lettere gialle */
+.cs-f4 .cs-insegna b, .cs-cartello.cs-f4 b{ color:#ffe066; background:linear-gradient(180deg,#2a74e8,#1849a9); border:3px solid #fcc419;
+  text-shadow:0 2px 0 #0d2d6b; box-shadow:0 0 0 3px #1849a9, 0 12px 24px rgba(0,0,0,.5); }
+/* Battaglia Navale: blu marina con la corda d'oro */
+.cs-nv .cs-insegna b, .cs-cartello.cs-nv b{ color:#f8f9fa; background:linear-gradient(180deg,#0f4c81,#0a2f52); border:3px double #d9b36c;
+  letter-spacing:.06em; text-shadow:0 2px 0 #05192d; box-shadow:0 12px 24px rgba(0,0,0,.5); font-size:.82em; }
+.cs-nv .cs-insegna b{ font-size:clamp(1.15rem, 6.6vw, 1.9rem); }
+/* le targhe sopra le porte del Circolo: niente fili, attaccate al muro */
+.cs-cartello.cs-muro::before, .cs-cartello.cs-muro::after{ display:none; }
+.cs-cartello.cs-muro{ font-size:calc(var(--s,1) * 11px); text-align:center; }
+.cs-cartello.cs-cr-giardino b{ color:#3a2200; background:linear-gradient(180deg,#f1d27a,#c9a24a); border:2px solid #8a6424; letter-spacing:.12em; box-shadow:0 4px 10px rgba(0,0,0,.4); }
+.cs-lucchetto{ display:inline-block; margin-top:.35em; padding:.22em .65em; border-radius:999px; font-style:normal; font-weight:800; font-size:.86em;
+  color:#fff; background:rgba(20,22,44,.82); white-space:nowrap; }
+/* "arriva presto" (la porta del giardino) */
+.cs-presto{ position:absolute; z-index:5; left:50%; top:42%; transform:translate(-50%,-50%); padding:10px 16px; max-width:86%; text-align:center;
+  border-radius:16px; background:rgba(20,22,44,.92); color:#fff; font-weight:800; font-size:.9rem; opacity:0; pointer-events:none; }
+.cs-presto.su{ animation:csPresto 2.8s ease; }
+@keyframes csPresto{ 0%{ opacity:0; transform:translate(-50%,-40%); } 10%{ opacity:1; transform:translate(-50%,-50%); } 82%{ opacity:1; } 100%{ opacity:0; } }
 /* "tocca il tavolo per giocare" */
 .cs-tocca{ position:absolute; left:50%; bottom:16px; transform:translateX(-50%); white-space:nowrap; pointer-events:none;
   padding:9px 16px; border-radius:999px; font-weight:900; font-size:.95rem; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#e2a93a);
   box-shadow:0 6px 18px rgba(0,0,0,.5), 0 0 0 3px rgba(255,224,138,.25); animation:cs-pulsa 1.8s ease-in-out infinite; }
 @keyframes cs-pulsa{ 50%{ opacity:.62; } }
-/* frecce ai lati */
-.cs-freccia{ position:absolute; top:50%; z-index:4; width:38px; height:58px; margin-top:-29px; border:0; border-radius:14px; cursor:pointer;
-  background:rgba(10,4,8,.5); color:#ffe29a; font-size:2rem; font-weight:900; line-height:1; padding:0 0 4px; box-shadow:inset 0 0 0 1.5px rgba(255,226,154,.25); }
-.cs-freccia.sx{ left:8px; } .cs-freccia.dx{ right:8px; }
-.cs-freccia:active{ transform:scale(.92); }
+/* il salone in prima persona: si "cammina" verso un tavolo (solo transform), poi compare la sua sala */
+.cs-salone{ position:absolute; inset:0; will-change:transform; }
+.cs-salone-in{ position:absolute; }
+.cs-scena-salone{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; -webkit-user-drag:none; user-select:none; }
+.cs-salone.passi .cs-salone-in{ animation:csPassi .85s ease-in-out; }
+@keyframes csPassi{ 22%{ transform:translateY(-.5%); } 45%{ transform:none; } 68%{ transform:translateY(-.5%); } 90%{ transform:none; } }
+.cs-zona{ position:absolute; z-index:2; border:0; padding:0; background:transparent; cursor:pointer; border-radius:24px; -webkit-tap-highlight-color:transparent; }
+.cs-zona:active{ background:radial-gradient(closest-side, rgba(255,224,138,.25), transparent); }
+/* le insegne appese sopra i tavoli */
+.cs-cartello{ position:absolute; z-index:1; transform:translate(-50%,-100%); pointer-events:none; white-space:nowrap; font-size:calc(var(--s,1) * 13px); }
+.cs-cartello::before, .cs-cartello::after{ content:""; position:absolute; bottom:100%; height:calc(var(--s,1) * 160px); width:1.5px; background:rgba(0,0,0,.75); }
+.cs-cartello::before{ left:20%; } .cs-cartello::after{ right:20%; }
+.cs-cartello b{ position:relative; display:block; font-weight:900; letter-spacing:.08em; line-height:1; padding:.42em .75em .38em; border-radius:.55em; }
+.cs-cartello.cs-bj b{ color:#ffe7a3; background:linear-gradient(180deg,#7d1325,#45070f); border:2px solid #e2b04a;
+  box-shadow:0 0 0 3px #45070f, 0 0 0 4px #b9862d, 0 8px 18px rgba(0,0,0,.6); text-shadow:0 0 10px rgba(255,200,90,.7); }
+.cs-cartello.cs-bj b::after{ content:""; position:absolute; inset:-8px; border-radius:.9em; border:2px dotted #fff1bd; animation:cs-lampadine 1.6s steps(2) infinite; }
+.cs-cartello.cs-pk b{ color:#fff; background:rgba(8,10,22,.9); border:1.5px solid rgba(255,79,216,.75); letter-spacing:.18em;
+  text-shadow:0 0 5px #ff4fd8, 0 0 12px #ff4fd8; box-shadow:0 0 16px rgba(255,79,216,.35), inset 0 0 10px rgba(255,79,216,.2); animation:cs-neon 4s infinite; }
+/* i luccichii dei lampadari */
+.cs-luccica{ position:absolute; width:calc(var(--s,1) * 8px); height:calc(var(--s,1) * 8px); margin:calc(var(--s,1) * -4px) 0 0 calc(var(--s,1) * -4px); pointer-events:none; opacity:0;
+  background:radial-gradient(circle, #fff 0 16%, rgba(255,244,200,.85) 30%, transparent 70%); animation:csLuccica 2.8s ease-in-out infinite; }
+@keyframes csLuccica{ 0%, 100%{ opacity:0; transform:scale(.4); } 50%{ opacity:1; transform:scale(1.25); } }
+/* la sala del tavolo: compare mentre ci si avvicina */
+.cs-primo{ z-index:3; opacity:0; transform:scale(1.14); transition:opacity .4s ease, transform .6s cubic-bezier(.2,.8,.2,1); pointer-events:none; }
+.cs-primo.su{ opacity:1; transform:none; pointer-events:auto; }
+.cs-invito{ z-index:4; transition:opacity .25s; }
+.cs-vista.in-sala .cs-invito{ opacity:0; animation:none; }
 /* in basso: tutti i giochi del Casinò, per andare subito in una sala */
 .cs-giochi{ flex:none; display:flex; flex-wrap:wrap; justify-content:center; gap:7px; padding:10px 10px calc(10px + env(safe-area-inset-bottom));
   background:linear-gradient(180deg,#22090f,#0d0508); border-top:2px solid #b9862d; }
@@ -3735,10 +3778,41 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     return s + linea(t, [t[0], t[1] - 8], T("#d0ebff"), 2.4) + pallino([t[0], t[1] - 9], 2.2, T("#e7f5ff"));
   }
 
+  // il Circolo: palazzo all'italiana coi muri gialli, le persiane verdi, il tetto di coppi,
+  // l'insegna di legno sopra la porta, la tenda a righe e il tavolino fuori con la tovaglia a quadri
+  function persiane(lato, a, b, z1, z2, x) {   // una finestra con le due ante verdi aperte
+    var V = "#2f9e44", w = Math.abs(b - a) * .32;
+    if (lato === "L") return qL(x, a - w, a, z1, z2, F(V, "l")) + finL(x, a, b, z1, z2, "#ffffff") + qL(x, b, b + w, z1, z2, F(V, "l"));
+    return qR(x, a + w, a, z1, z2, F(V, "r")) + finR(x, a, b, z1, z2, "#ffffff") + qR(x, b, b - w, z1, z2, F(V, "r"));
+  }
+  function circolo(u, v) {
+    var M = "#f2c46d", s = basamento(u, v), vf = v + 2, uf = u + 2.2;
+    s += box(u + .3, v + .25, 1.9, 1.75, 3, 38, M);
+    s += qL(vf, u + .3, uf, 3, 6, F("#c9a24a", "l")) + qR(uf, vf, v + .25, 3, 6, F("#c9a24a", "r"));   // lo zoccolo
+    s += qL(vf, u + .3, uf, 22.5, 24, F("#fff4e6", "l")) + qR(uf, vf, v + .25, 22.5, 24, F("#fff4e6", "r"));   // la fascia tra i piani
+    // pianterreno: la porta a vetri in mezzo, una finestra per parte; di lato due finestre
+    s += qL(vf, u + .98, u + 1.52, 3, 19.5, F("#6b4226", "l")) + qL(vf, u + 1.04, u + 1.46, 9, 18.5, S.luci ? "#ffd75e" : T("#a5d8ff")) + qL(vf, u + 1.243, u + 1.257, 3, 19.5, F("#4a2c18", "l"));
+    s += persiane("L", u + .5, u + .76, 9, 18.5, vf) + persiane("L", u + 1.76, u + 2.02, 9, 18.5, vf);
+    s += persiane("R", v + 1.72, v + 1.46, 9, 18.5, uf) + persiane("R", v + .98, v + .72, 9, 18.5, uf);
+    // primo piano
+    [[.5, .76], [1.12, 1.38], [1.76, 2.02]].forEach(function (k) { s += persiane("L", u + k[0], u + k[1], 26, 34.5, vf); });
+    s += persiane("R", v + 1.72, v + 1.46, 26, 34.5, uf) + persiane("R", v + .98, v + .72, 26, 34.5, uf);
+    // l'insegna di legno e la tenda a righe verdi
+    s += qL(vf + .01, u + .62, u + 1.88, 19.8, 23.3, F("#5a3a22", "l")) + txL(vf + .01, u + 1.25, 20.5, "CIRCOLO", 5.4, S.luci ? "#ffe066" : "#ffe8a3", G());   // l'insegna sopra la porta, verso la piazza
+    s += tenda(vf, u + .9, u + 1.6, 19.4, .3, 4, "#2f9e44", "#ffffff");
+    // il tetto di coppi
+    s += tettoV(u + .18, u + 2.32, v + .12, v + 2.12, 41, 15, "#c0522b", M);
+    for (var i = 1; i < 6; i++) { var t = i / 6; s += linea(P(u + .18 + t * 1.07, v + .12, 41 + t * 15), P(u + .18 + t * 1.07, v + 2.12, 41 + t * 15), F("#a8441f", "t"), .7); }
+    s += box(u + 1.6, v + .8, .22, .22, 48, 12, "#c0522b");   // il comignolo
+    // fuori: il tavolino con la tovaglia a quadri, due sedie e due vasi
+    s += box(u + .32, vf + .22, .38, .3, 0, 7.5, "#ffffff", { ct: T("#e03131") }) + box(u + .26, vf + .6, .14, .14, 0, 4.5, "#a0652b") + box(u + .62, vf + .6, .14, .14, 0, 4.5, "#a0652b");
+    return s + vaso(u + .82, vf + .2) + vaso(u + 1.68, vf + .2);
+  }
+
   // ---------- la città ----------
-  var LOTTI = { casino: [4.15, 6.95], studio: [6.95, 4.15], giochi: [10.55, 13.35], arena: [13.35, 10.55], locale: [16.95, 19.75], trofei: [19.75, 16.95] };
-  var NOMI = { casino: ["🃏 Casinò", "#e03131", 97, 0], studio: ["📺 Studio TV", "#7048e8", 99, 0], giochi: ["🕹️ Sala giochi", "#f08c00", 80, -4], arena: ["⚔️ Arena", "#1c7ed6", 95, 0], locale: ["🎉 Locale", "#d6336c", 76, 0], trofei: ["🏆 Trofei", "#f59f00", 92, 0] };
-  var DISEGNA = { casino: casino, studio: studio, giochi: arcade, locale: locale, trofei: trofei };
+  var LOTTI = { casino: [4.15, 6.95], studio: [6.95, 4.15], circolo: [6.7, 6.7], giochi: [10.55, 13.35], arena: [13.35, 10.55], locale: [16.95, 19.75], trofei: [19.75, 16.95] };
+  var NOMI = { casino: ["🃏 Casinò", "#e03131", 97, 0], studio: ["📺 Studio TV", "#7048e8", 99, 0], circolo: ["🎲 Circolo", "#2f9e44", 92, 0], giochi: ["🕹️ Sala giochi", "#f08c00", 80, -4], arena: ["⚔️ Arena", "#1c7ed6", 95, 0], locale: ["🎉 Locale", "#d6336c", 76, 0], trofei: ["🏆 Trofei", "#f59f00", 92, 0] };
+  var DISEGNA = { casino: casino, studio: studio, circolo: circolo, giochi: arcade, locale: locale, trofei: trofei };
   function edificio(k) {
     var u = LOTTI[k][0], v = LOTTI[k][1], c = [u + 1.25, v + 1.25], n = NOMI[k], p = P(c[0], c[1], n[2]);
     etichetta(p[0] + n[3], p[1] - 14, n[0], n[1], null, k);
@@ -3763,7 +3837,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     s += fiori(8.4, 12.9) + fiori(12.9, 8.4);
     Object.keys(LOTTI).forEach(function (k) { og.push(edificio(k)); });
     og.push({ d: 20, s: tocco("piazza", fontana(10, 10)) }, { d: 19.4, s: tocco("piazza", bacheca(10, 9)) }, { d: 32.8, s: tocco("bar", bar(16.4, 16.4)) });
-    [[7.6, 12.4, 1], [12.4, 7.6, 1], [2.6, 7.4, .9]].forEach(function (t) { og.push({ d: t[0] + t[1], s: albero(t[0], t[1], t[2]) }); });
+    [[7.6, 12.4, 1], [12.4, 7.6, 1], [2.6, 7.4, .9], [4.9, 4.6, 1.1], [3.6, 5.6, .9], [5.7, 3.5, .95]].forEach(function (t) { og.push({ d: t[0] + t[1], s: albero(t[0], t[1], t[2]) }); });
     [[14.2, 18.6], [18.6, 14.2], [20.9, 20.9]].forEach(function (t) { og.push({ d: t[0] + t[1], s: pino(t[0], t[1], 1) }); });
     [[7.5, 10.55], [10.55, 7.5]].forEach(function (l) { og.push({ d: l[0] + l[1], s: lampione(l[0], l[1]) }); });
     og.push({ d: 23.2, s: auto(12.6, 9.55, "#fa5252") }, { d: 29, s: auto(12.4, 15.98, "#4dabf7") });
@@ -3817,14 +3891,14 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 })();
 
 /* =========================================================
-   SPeeD GAME — IL CASINÒ DENTRO: una sala per ogni gioco di carte
-   Entri e sei nella sala del Black Jack: in fondo il tavolo con la gente
-   che gioca con le fiches. Scorrendo: Scopa (niente fiches), Scopa 2 vs 2,
-   Scopone e Poker; ogni sala ha una cosa sua (il quadro, le bandierine,
-   la lavagna, l'insegna al neon…).
-   Ogni sala è un disegno fermo (SVG dentro un'immagine): si disegna una volta
-   sola, così scorrere da una sala all'altra è leggero anche sui telefoni lenti.
-   Il nome grande del gioco, le frecce e i tocchi stanno in core.js (schermataCasino).
+   SPeeD GAME — GLI INTERNI IN PRIMA PERSONA: il Casinò e il Circolo
+   - Le scene (il salone del Casinò, l'atrio del Circolo con le porte, la Sala
+     delle Carte e la Sala dei Giochi da Tavolo) si guardano in prima persona:
+     toccando un tavolo o una porta, core.js (schermataInterno) "cammina" fin lì.
+   - Le sale: una per gioco, il primo piano del suo tavolo con la gente che gioca;
+     ognuna ha una cosa sua (il quadro, le bandierine, la lavagna, il neon…).
+   Ogni disegno è fermo (SVG dentro un'immagine) e si fa una volta sola:
+   leggero anche sui telefoni lenti.
    Prospettiva centrale: x = destra/sinistra, y = altezza, z = profondità (in metri).
    ========================================================= */
 (function () {
@@ -3838,11 +3912,19 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     { id: "scopa",     nome: "Scopa",        insegna: "SCOPA",        stile: "sc" },
     { id: "scopa2v2",  nome: "Scopa 2 vs 2", insegna: "SCOPA 2 VS 2", stile: "s2" },
     { id: "scopone",   nome: "Scopone",      insegna: "SCOPONE",      stile: "so" },
-    { id: "poker",     nome: "Poker",        insegna: "POKER",        stile: "pk" }
+    { id: "poker",     nome: "Poker",        insegna: "POKER",        stile: "pk" },
+    { id: "tris",      nome: "Tris",         insegna: "TRIS",         stile: "tr" },
+    { id: "drop4",     nome: "Drop 4",       insegna: "DROP 4",       stile: "f4" },
+    { id: "navale",    nome: "Battaglia Navale", insegna: "BATTAGLIA NAVALE", stile: "nv" }
   ];
 
   // ---- prospettiva e pezzi di disegno ----
-  function P(x, y, z) { return [CX + F * x / z, HY + F * (EYE - y) / z]; }
+  var CP = 1, SP = 0;   // la telecamera può guardare un po' in giù (il salone): coseno e seno dell'inclinazione
+  function P(x, y, z) {
+    if (!SP) return [CX + F * x / z, HY + F * (EYE - y) / z];
+    var dy = y - EYE, prof = z * CP - dy * SP, alto = dy * CP + z * SP;
+    return [CX + F * x / prof, HY - F * alto / prof];
+  }
   function r1(v) { return Math.round(v * 10) / 10; }
   function pts(a) { return a.map(function (p) { return r1(p[0]) + "," + r1(p[1]); }).join(" "); }
   function poly(a, fill, extra) { return "<polygon points='" + pts(a) + "' fill='" + fill + "'" + (extra ? " " + extra : "") + "/>"; }
@@ -3855,8 +3937,9 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   // un cerchio steso in orizzontale (fiches, tappetini…): centro e raggi visti dalla telecamera
   function tondo(x, y, z, r) { var c = P(x, y, z); return { c: c, rx: (P(x + r, y, z)[0] - P(x - r, y, z)[0]) / 2, ry: (P(x, y, z - r)[1] - P(x, y, z + r)[1]) / 2 }; }
   // un ovale steso (tavoli): punti da t0 a t1 (radianti); t = 90° è il punto più lontano
-  function ovale(rx, rz, y, z0, t0, t1, n) {
-    var a = []; for (var i = 0; i <= n; i++) { var t = t0 + (t1 - t0) * i / n; a.push(P(rx * Math.cos(t), y, z0 + rz * Math.sin(t))); } return a;
+  function ovale(rx, rz, y, z0, t0, t1, n, cx) {   // cx = spostato di lato (i tavoli del salone)
+    cx = cx || 0;
+    var a = []; for (var i = 0; i <= n; i++) { var t = t0 + (t1 - t0) * i / n; a.push(P(cx + rx * Math.cos(t), y, z0 + rz * Math.sin(t))); } return a;
   }
   function tono(c, k) {   // schiarisce (k > 0) o scurisce (k < 0) un colore #rrggbb
     var n = parseInt(c.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
@@ -3909,7 +3992,8 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   // ---- gente al tavolo: si vede da metà petto in su (sotto la copre il tavolo) ----
   function busto(nome, x, z, k) {
     if (!window.SGOmino) return "";
-    var cfg = SGOmino.casuale(nome), w = (k || 1.1) * F / z, h = w * 1.022, b = P(x, 0.52, z);
+    var prof = z * CP - (0.52 - EYE) * SP;   // la distanza vera (col salone che guarda in giù)
+    var cfg = SGOmino.casuale(nome), w = (k || 1.1) * KB / 1.1 * F / prof, h = w * 1.022, b = P(x, 0.52, z);
     var svg = SGOmino.svg(cfg, { busto: true });
     return "<image xlink:href=\"data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg) + "\" x='" + r1(b[0] - w / 2) + "' y='" + r1(b[1] - h) + "' width='" + r1(w) + "' height='" + r1(h) + "'/>";
   }
@@ -4003,15 +4087,70 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   }
 
   // tavolo di legno con la tovaglia a quadretti (Scopa e Scopa 2 vs 2)
-  function tavoloTovaglia(o, z0, hw, hd, col1, col2) {
+  function tavoloTovaglia(o, z0, hw, hd, col1, col2, cx) {   // cx = spostato di lato (le sale del Circolo)
+    cx = cx || 0;
     var yT = 0.8, nx = Math.round(hw * 8), nz = 6, i, j, drop = 0.3;
-    o.push(poly(qFondo(-hw + 0.06, -hw + 0.15, 0, yT - drop, z0 - hd + 0.08), "#3d2416"), poly(qFondo(hw - 0.15, hw - 0.06, 0, yT - drop, z0 - hd + 0.08), "#3d2416"));
-    o.push(poly(qPiano(-hw, hw, z0 - hd, z0 + hd, yT), col1));
-    for (i = 0; i < nx; i++) for (j = 0; j < nz; j++) if ((i + j) % 2) o.push(poly(qPiano(-hw + 2 * hw * i / nx, -hw + 2 * hw * (i + 1) / nx, z0 - hd + 2 * hd * j / nz, z0 - hd + 2 * hd * (j + 1) / nz, yT), col2));
-    o.push(poly(qFondo(-hw, hw, yT - drop, yT, z0 - hd), col1));
-    for (i = 0; i < nx; i++) for (j = 0; j < 2; j++) if ((i + j) % 2) o.push(poly(qFondo(-hw + 2 * hw * i / nx, -hw + 2 * hw * (i + 1) / nx, yT - drop * (j + 1) / 2, yT - drop * j / 2, z0 - hd), col2));
-    o.push(poly(qFondo(-hw, hw, yT - drop, yT, z0 - hd), "#000000", "opacity='.16'"));
+    o.push(poly(qFondo(cx - hw + 0.06, cx - hw + 0.15, 0, yT - drop, z0 - hd + 0.08), "#3d2416"), poly(qFondo(cx + hw - 0.15, cx + hw - 0.06, 0, yT - drop, z0 - hd + 0.08), "#3d2416"));
+    o.push(poly(qPiano(cx - hw, cx + hw, z0 - hd, z0 + hd, yT), col1));
+    for (i = 0; i < nx; i++) for (j = 0; j < nz; j++) if ((i + j) % 2) o.push(poly(qPiano(cx - hw + 2 * hw * i / nx, cx - hw + 2 * hw * (i + 1) / nx, z0 - hd + 2 * hd * j / nz, z0 - hd + 2 * hd * (j + 1) / nz, yT), col2));
+    o.push(poly(qFondo(cx - hw, cx + hw, yT - drop, yT, z0 - hd), col1));
+    for (i = 0; i < nx; i++) for (j = 0; j < 2; j++) if ((i + j) % 2) o.push(poly(qFondo(cx - hw + 2 * hw * i / nx, cx - hw + 2 * hw * (i + 1) / nx, yT - drop * (j + 1) / 2, yT - drop * j / 2, z0 - hd), col2));
+    o.push(poly(qFondo(cx - hw, cx + hw, yT - drop, yT, z0 - hd), "#000000", "opacity='.16'"));
     return yT;
+  }
+  // tavolo di legno nudo (Tris, Forza 4, Battaglia Navale): piano, bordo davanti e gambe
+  function tavoloLegno(o, cx, z0, hw, hd, legno) {
+    var yT = 0.8, l = legno || "#8a5a34";
+    o.push(poly(qFondo(cx - hw + 0.05, cx - hw + 0.13, 0, yT - 0.06, z0 - hd + 0.06), tono(l, -0.45)), poly(qFondo(cx + hw - 0.13, cx + hw - 0.05, 0, yT - 0.06, z0 - hd + 0.06), tono(l, -0.45)));
+    o.push(poly(qPiano(cx - hw, cx + hw, z0 - hd, z0 + hd, yT), l));
+    for (var x = cx - hw + 0.18; x < cx + hw; x += 0.18) o.push(linea(P(x, yT, z0 - hd), P(x, yT, z0 + hd), tono(l, -0.15), 0.6, "opacity='.6'"));   // le assi
+    o.push(poly(qFondo(cx - hw, cx + hw, yT - 0.07, yT, z0 - hd), tono(l, -0.3)));
+    return yT;
+  }
+  // il Tris sul foglio: la griglia a matita, le X rosse e i cerchi blu, la matita
+  function tris(o, cx, z0, yT, k) {
+    var s = 0.17 * k, y = yT + 0.002, i;
+    o.push(poly(qPiano(cx - s * 1.9, cx + s * 1.9, z0 - s * 1.75, z0 + s * 1.75, y), "#fbfaf4", "stroke='#d6d0c0' stroke-width='.6'"));
+    for (i = -1; i <= 1; i += 2) {
+      o.push(linea(P(cx + i * s * 0.5, y, z0 - s * 1.45), P(cx + i * s * 0.5, y, z0 + s * 1.45), "#495057", Math.max(0.8, 1.6 * k)));
+      o.push(linea(P(cx - s * 1.5, y, z0 + i * s * 0.5), P(cx + s * 1.5, y, z0 + i * s * 0.5), "#495057", Math.max(0.8, 1.6 * k)));
+    }
+    [[-1, 1, "x"], [0, 0, "x"], [1, -1, "o"], [1, 1, "o"], [-1, -1, "x"], [0, 1, "o"]].forEach(function (m) {
+      var c = [cx + m[0] * s, z0 + m[1] * s], r = s * 0.32;
+      if (m[2] === "x") { o.push(linea(P(c[0] - r, y, c[1] - r), P(c[0] + r, y, c[1] + r), "#e03131", Math.max(1, 2.2 * k), "stroke-linecap='round'"), linea(P(c[0] - r, y, c[1] + r), P(c[0] + r, y, c[1] - r), "#e03131", Math.max(1, 2.2 * k), "stroke-linecap='round'")); }
+      else { var t = tondo(c[0], y, c[1], r); o.push(ell(t.c, t.rx, t.ry, "none", "stroke='#1c7ed6' stroke-width='" + r1(Math.max(1, 2.2 * k)) + "'")); }
+    });
+    o.push(poly([P(cx + s * 2.1, y, z0 - s * 0.6), P(cx + s * 2.25, y, z0 - s * 0.6), P(cx + s * 1.7, y, z0 + s * 1.3), P(cx + s * 1.58, y, z0 + s * 1.26)], "#fcc419"));   // la matita
+  }
+  // la griglia di Forza 4 in piedi sul tavolo, coi gettoni rossi e gialli
+  function forza4(o, cx, z0, yT, k) {
+    var w = 0.5 * k, h = 0.44 * k, y0 = yT + 0.03, r, c;
+    o.push(poly(qFondo(cx - w - 0.04 * k, cx - w + 0.02 * k, yT, y0 + h + 0.03 * k, z0), "#1849a9"), poly(qFondo(cx + w - 0.02 * k, cx + w + 0.04 * k, yT, y0 + h + 0.03 * k, z0), "#1849a9"));   // i piedi
+    o.push(poly(qFondo(cx - w, cx + w, y0, y0 + h, z0), "#1c62d6", "stroke='#103a8a' stroke-width='1'"));
+    var col = ["", "", "r", "", "", "", "",  "", "g", "r", "", "", "", "",  "g", "r", "g", "r", "", "", "",  "r", "g", "g", "r", "g", "", "r"];   // dal basso
+    for (r = 0; r < 6; r++) for (c = 0; c < 7; c++) {
+      var x = cx - w + (c + 0.5) * 2 * w / 7, yy = y0 + (r + 0.5) * h / 6, p = P(x, yy, z0 - 0.005), rr = Math.max(0.8, 0.026 * k * F / z0), v = col[(5 - r) * 7 + c] || "";
+      o.push(ell(p, rr, rr, v === "r" ? "#e03131" : v === "g" ? "#fcc419" : "#0d2d6b"));
+    }
+  }
+  // Battaglia Navale: due valigette aperte, col mare a quadretti, le navi grigie e i pioli
+  function navale(o, cx, z0, yT, k) {
+    [-1, 1].forEach(function (lato) {
+      var x0 = cx + lato * 0.06 * k + (lato < 0 ? -0.62 * k : 0), x1 = x0 + 0.56 * k, z1 = z0 - 0.3 * k, z2 = z0 + 0.22 * k, y = yT + 0.01, i, j;
+      o.push(poly(qPiano(x0, x1, z1, z2, y), lato < 0 ? "#868e96" : "#a3a8ad"));
+      o.push(poly(qPiano(x0 + 0.03 * k, x1 - 0.03 * k, z1 + 0.03 * k, z2 - 0.03 * k, y + 0.002), "#1c7ed6"));
+      for (i = 1; i < 8; i++) o.push(linea(P(x0 + 0.03 * k + i * (x1 - x0 - 0.06 * k) / 8, y + 0.003, z1 + 0.03 * k), P(x0 + 0.03 * k + i * (x1 - x0 - 0.06 * k) / 8, y + 0.003, z2 - 0.03 * k), "#74c0fc", 0.5));
+      for (j = 1; j < 8; j++) o.push(linea(P(x0 + 0.03 * k, y + 0.003, z1 + 0.03 * k + j * (z2 - z1 - 0.06 * k) / 8), P(x1 - 0.03 * k, y + 0.003, z1 + 0.03 * k + j * (z2 - z1 - 0.06 * k) / 8), "#74c0fc", 0.5));
+      var dx = (x1 - x0 - 0.06 * k) / 8, dz = (z2 - z1 - 0.06 * k) / 8, bx = x0 + 0.03 * k, bz = z1 + 0.03 * k;
+      [[1, 1, 4, 0], [5, 3, 0, 3], [2, 5, 3, 0]].forEach(function (n) {   // le navi: [colonna, riga, lunga in x, lunga in z]
+        o.push(poly(qPiano(bx + n[0] * dx + dx * 0.15, bx + (n[0] + Math.max(1, n[2])) * dx - dx * 0.15, bz + n[1] * dz + dz * 0.15, bz + (n[1] + Math.max(1, n[3])) * dz - dz * 0.15, y + 0.02), "#ced4da", "stroke='#495057' stroke-width='.5'"));
+      });
+      [[0, 6, 1], [3, 2, 0], [6, 6, 1], [2, 1, 1], [7, 0, 0]].forEach(function (pp) {   // i pioli: rossi colpito, bianchi acqua
+        var c = P(bx + (pp[0] + 0.5) * dx, y + 0.03, bz + (pp[1] + 0.5) * dz);
+        o.push(ell(c, Math.max(0.7, dx * 0.22 * F / z0), Math.max(0.6, dz * 0.18 * F / z0), pp[2] ? "#e03131" : "#f8f9fa"));
+      });
+      o.push(poly(qFondo(x0, x1, y, y + 0.17 * k, z2), lato < 0 ? "#6c737a" : "#868e96"), poly(qFondo(x0 + 0.04 * k, x1 - 0.04 * k, y + 0.035 * k, y + 0.14 * k, z2 - 0.001), "#0b4a8b"));   // il coperchio in piedi
+    });
   }
   // la sala della Scopa: osteria con le mattonelle di cotto e la luce calda; niente fiches
   function stanzaOsteria(parete, extra) {
@@ -4158,12 +4297,491 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     return { o: o.join(""), feltro: ["#1f8a55", "#0e5233"], legno: ["#141414", "#050505"], pozza: "#fff6d8" };
   }
 
-  var DISEGNI = { blackjack: salaBJ, scopa: salaScopa, scopa2v2: salaScopa2, scopone: salaScopone, poker: salaPoker };
+  // ---- le sale del Circolo per i giochi da tavolo ----
+  function lavagnetta(x0, x1, y0, y1, fn) {   // una lavagna appesa alla parete di fondo, col gesso
+    return cornice(x0, x1, y0, y1, "#8a5a32", "#22312a") + (fn ? fn() : "");
+  }
+  function salaTris() {   // lo studio: carta da parati, la lavagnetta col tris, il foglio sul tavolo
+    var z0 = 3.2, o = [];
+    o.push(stanza({ parete: "#e3cf9f", righe: "#dcc490", lato: "#b9a36f", righeLato: "#c2ab78", zoccolo: "#6b4226", cornice: "#4a2c18",
+      pav1: "#9a6a42", pav2: "#8a5d38", quadro: 0.34, fughe: "#6e4a2c" }));
+    var k = F / ZB;
+    o.push(lavagnetta(-0.75, 0.75, 1.9, 3.05, function () {
+      var s = "", a, b;
+      for (var i = -1; i <= 1; i += 2) {
+        a = P(i * 0.17, 2.95, ZB - 0.03); b = P(i * 0.17, 2.0, ZB - 0.03); s += linea(a, b, "#f1f3f5", 1.4, "opacity='.85'");
+        a = P(-0.5, 2.475 + i * 0.16, ZB - 0.03); b = P(0.5, 2.475 + i * 0.16, ZB - 0.03); s += linea(a, b, "#f1f3f5", 1.4, "opacity='.85'");
+      }
+      [[-0.34, 2.79, "X"], [0, 2.475, "O"], [0.34, 2.16, "X"], [0.34, 2.79, "O"]].forEach(function (m) {
+        var p = P(m[0], m[1], ZB - 0.03);
+        s += "<text x='" + r1(p[0]) + "' y='" + r1(p[1] + k * 0.08) + "' font-family='Comic Sans MS,Segoe Print,cursive' font-size='" + r1(k * 0.24) + "' fill='" + (m[2] === "X" ? "#ffa8a8" : "#a5d8ff") + "' text-anchor='middle'>" + m[2] + "</text>";
+      });
+      return s;
+    }));
+    o.push(applique(-XW + 0.02, 2.4, 5.4), applique(XW - 0.02, 2.4, 5.4));
+    o.push(busto("Ninni", -0.5, z0 + 0.82), busto("Peppino", 0.5, z0 + 0.82));
+    var yT = tavoloLegno(o, 0, z0, 0.95, 0.5, "#9c6b3f");
+    o.push(pozza(0, yT, z0 + 0.1, 0.8));
+    tris(o, 0, z0 + 0.05, yT, 1.25);
+    o.push(lampada(-0.62, z0 + 0.1, 2.6, "#2f6b4f", 0.28), lampada(0.62, z0 + 0.1, 2.6, "#2f6b4f", 0.28));   // due lampade: la lavagnetta in mezzo resta libera
+    return { o: o.join(""), feltro: ["#1d9a57", "#0d6136"], legno: ["#6b4226", "#3d2416"], pozza: "#ffe6b0" };
+  }
+  function salaForza4() {   // la sala blu: il poster coi gettoni, la griglia gigante sul tavolo
+    var z0 = 3.3, o = [];
+    o.push(stanza({ parete: "#2b4c7e", righe: "#2f548a", lato: "#1d3456", righeLato: "#213a5f", zoccolo: "#5a3a22", cornice: "#c79a4b",
+      pav1: "#7a5233", pav2: "#6b472c", quadro: 0.42, fughe: "#4a301b" }));
+    var c = P(0, 2.5, ZB - 0.03), kk = F / ZB;
+    o.push(cornice(-0.62, 0.62, 2.0, 3.0, "#c79a4b", "#fff3bf"));
+    [[-0.3, 2.3, "#e03131"], [0, 2.3, "#fcc419"], [0.3, 2.3, "#e03131"], [-0.15, 2.62, "#fcc419"], [0.15, 2.62, "#e03131"], [0, 2.86, "#fcc419"]].forEach(function (g) {
+      var p = P(g[0], g[1], ZB - 0.03); o.push(ell(p, kk * 0.12, kk * 0.12, g[2], "stroke='" + tono(g[2], -0.3) + "' stroke-width='1'"));
+    });
+    o.push(applique(-XW + 0.02, 2.4, 5.4), applique(XW - 0.02, 2.4, 5.4));
+    o.push(busto("Totò", -0.98, z0 + 0.72), busto("Mimma", 0.98, z0 + 0.72));
+    var yT = tavoloLegno(o, 0, z0, 1.15, 0.5, "#8a5a34");
+    o.push(pozza(0, yT, z0 + 0.1, 0.9));
+    forza4(o, 0, z0 + 0.12, yT, 1.08);
+    // i gettoni sparsi davanti ai due giocatori
+    [[-0.7, "#e03131"], [-0.58, "#e03131"], [0.6, "#fcc419"], [0.72, "#fcc419"]].forEach(function (g, i) { var t = tondo(g[0], yT + 0.01, z0 - 0.15 + (i % 2) * 0.1, 0.05); o.push(ell(t.c, t.rx, t.ry, g[1], "stroke='" + tono(g[1], -0.3) + "' stroke-width='.8'")); });
+    o.push(lampada(-0.6, z0 + 0.2, 2.6, "#e8dcc0", 0.3), lampada(0.6, z0 + 0.2, 2.6, "#e8dcc0", 0.3));
+    return { o: o.join(""), feltro: ["#1d9a57", "#0d6136"], legno: ["#6b4226", "#3d2416"], pozza: "#fff3c4" };
+  }
+  function salaNavale() {   // la sala del mare: l'oblò, il timone, le due valigette sul tavolo
+    var z0 = 3.25, o = [];
+    o.push(stanza({ parete: "#1f3b57", righe: "#23425f", lato: "#142a40", righeLato: "#183049", zoccolo: "#6b4226", cornice: "#d9b36c",
+      pav1: "#8a5d38", pav2: "#7a5230", quadro: 0.36, fughe: "#5c3d24" }));
+    var kk = F / ZB, ob = P(-0.95, 2.55, ZB - 0.03), tm = P(0.95, 2.55, ZB - 0.03), i;
+    o.push(ell(ob, kk * 0.42, kk * 0.42, "#b08436"), ell(ob, kk * 0.34, kk * 0.34, "#7fc8f8"), ell([ob[0] - kk * 0.1, ob[1] - kk * 0.1], kk * 0.12, kk * 0.08, "#ffffff", "opacity='.5'"));   // l'oblò col cielo
+    for (i = 0; i < 8; i++) { var a = i * Math.PI / 4; o.push(linea(tm, [tm[0] + Math.cos(a) * kk * 0.5, tm[1] + Math.sin(a) * kk * 0.5], "#8a5a32", Math.max(1.4, kk * 0.05), "stroke-linecap='round'")); }   // il timone
+    o.push(ell(tm, kk * 0.36, kk * 0.36, "none", "stroke='#a0652b' stroke-width='" + r1(kk * 0.07) + "'"), ell(tm, kk * 0.08, kk * 0.08, "#a0652b"));
+    o.push(applique(-XW + 0.02, 2.4, 5.4), applique(XW - 0.02, 2.4, 5.4));
+    o.push(busto("Capitano", -0.62, z0 + 0.82), busto("Marina", 0.62, z0 + 0.82));
+    var yT = tavoloLegno(o, 0, z0, 1.2, 0.52, "#9c6b3f");
+    o.push(pozza(0, yT, z0 + 0.1, 0.95));
+    navale(o, 0, z0 + 0.02, yT, 1.35);
+    o.push(lampada(0, z0 + 0.1, 2.6, "#d9b36c", 0.4));
+    return { o: o.join(""), feltro: ["#1d9a57", "#0d6136"], legno: ["#6b4226", "#3d2416"], pozza: "#fff3c4" };
+  }
+
+  var DISEGNI = { blackjack: salaBJ, scopa: salaScopa, scopa2v2: salaScopa2, scopone: salaScopone, poker: salaPoker, tris: salaTris, drop4: salaForza4, navale: salaNavale };
+
+  // =========================================================
+  //  IL SALONE: entri e lo guardi in prima persona, all'altezza degli occhi.
+  //  In fondo il bar con l'insegna, ai lati le slot, in alto i lampadari;
+  //  a sinistra il tavolo del Black Jack, a destra quello del Poker.
+  //  Toccando un tavolo ci si avvicina (in core.js) fino alla sua sala qui sopra.
+  // =========================================================
+  // si entra da una scalinata: gli occhi più in alto del pavimento della sala, lo sguardo un po' in giù
+  var CAM_SALONE = { HY: 335, F: 300, EYE: 2.6, PITCH: 14, XW: 4.4, ZB: 14, YT: 5.0 };
+  var TAVOLI = [
+    { id: "blackjack", nome: "Black Jack", insegna: "BLACK JACK", stile: "bj", x: -1.2, z: 3.5 },
+    { id: "poker",     nome: "Poker",      insegna: "POKER",      stile: "pk", x: 1.4, z: 4.2 }
+  ];
+  // dietro ai due tavoli principali, altri tavoli dello stesso gioco: la sala è piena e profonda
+  var TAVOLI_FONDO = [
+    { id: "blackjack", x: -2.15, z: 6.7,  nomi: ["Ugo", "Bice", "Nello", "Tina"] },
+    { id: "blackjack", x: -2.0,  z: 10.0, nomi: ["Ezio", "Pia", "Dino", "Lucia"] },
+    { id: "poker",     x: 2.2,   z: 7.5,  nomi: ["Raffa", "Olga", "Ciro", "Nadia"] },
+    { id: "poker",     x: 2.05,  z: 10.8, nomi: ["Aldo", "Ines", "Toto", "Vera"] }
+  ];
+  var KB = 1.1;   // grandezza delle persone al tavolo (nel salone un po' più piccole)
+  // disegna con la telecamera del salone, poi rimette quella delle sale
+  function conCamera(c, fn) {
+    var v = [HY, F, EYE, XW, ZB, YT, CP, SP, KB], a = (c.PITCH || 0) * Math.PI / 180;
+    HY = c.HY; F = c.F; EYE = c.EYE; XW = c.XW; ZB = c.ZB; YT = c.YT; CP = Math.cos(a); SP = Math.sin(a); KB = 0.86;
+    try { return fn(); } finally { HY = v[0]; F = v[1]; EYE = v[2]; XW = v[3]; ZB = v[4]; YT = v[5]; CP = v[6]; SP = v[7]; KB = v[8]; }
+  }
+  // una persona in piedi, tutta intera (i piedi a terra in x, z)
+  function inPiedi(nome, x, z) {
+    if (!window.SGOmino) return "";
+    var h = 2.05 * F / (z * CP + EYE * SP), w = h * 200 / 264, p = P(x, 0, z);
+    return "<image xlink:href=\"data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGOmino.svg(SGOmino.casuale(nome), {})) + "\" x='" + r1(p[0] - w / 2) + "' y='" + r1(p[1] - h * 253 / 264) + "' width='" + r1(w) + "' height='" + r1(h) + "'/>";
+  }
+  function slot(lato, z, n) {   // una slot machine contro la parete (lato -1 sinistra, 1 destra), girata verso il corridoio
+    var xo = lato * XW, xi = lato * (XW - 0.62), x0 = Math.min(xo, xi), x1 = Math.max(xo, xi), d = 0.7, h = 1.5, o = [];
+    var luci = ["#ff4fd8", "#ffd43b", "#4dabf7", "#69db7c"];
+    o.push(poly(qFondo(x0, x1, 0, h, z), "#2b2b35"));
+    o.push(poly(qLato(xi, z, z + d, 0, h), "#1d1d26"));
+    o.push(poly(qPiano(x0, x1, z, z + d, h), "#3f3f4c"));
+    o.push(poly(qLato(xi, z + 0.06, z + d - 0.06, 1.3, 1.46), luci[n % luci.length]));   // la luce in cima
+    o.push(poly(qLato(xi, z + 0.09, z + d - 0.09, 0.86, 1.22), "#0b1f3a"));              // lo schermo coi rulli
+    for (var r = 0; r < 3; r++) {
+      var zz = z + 0.13 + r * 0.155;
+      o.push(poly(qLato(xi, zz, zz + 0.13, 0.92, 1.16), "#fff8e1"));
+      var c = P(xi, 1.04, zz + 0.065);
+      o.push(ell(c, Math.max(0.8, 0.035 * F / (zz + 0.065)), Math.max(0.8, 0.04 * F / (zz + 0.065)), ["#e03131", "#f2b705", "#2b8a3e"][(n + r) % 3]));
+    }
+    o.push(poly(qLato(xi, z + 0.08, z + d - 0.08, 0.72, 0.8), "#c9a24a"));
+    var xs = xi - lato * 0.42, sg = tondo(xs, 0.7, z + d / 2, 0.17);   // lo sgabello
+    o.push(linea(P(xs, 0, z + d / 2), P(xs, 0.7, z + d / 2), "#8a6a2c", Math.max(1, 0.04 * F / (z + d / 2))));
+    o.push(ell(sg.c, sg.rx, sg.ry * 1.6, "#7a1220", "stroke='#4a0a12' stroke-width='1'"));
+    return o.join("");
+  }
+  function lampadario(x, z, y) {   // il lampadario di cristallo, coi pendagli e la luce intorno
+    var c = P(x, y, z), k = F / z, o = [];
+    o.push(linea(P(x, YT, z), P(x, y + 0.35, z), "#b08a3a", Math.max(1, k * 0.015)));
+    o.push(ell([c[0], c[1] + k * 0.1], k * 1.5, k * 1.0, "url(#gAlone)"));
+    [[0.62, 0.0], [0.44, 0.2], [0.24, 0.38]].forEach(function (g, i) {
+      var t = tondo(x, y + g[1], z, g[0]);
+      o.push(ell(t.c, t.rx, t.ry, "none", "stroke='#e9c46a' stroke-width='" + r1(Math.max(1, k * 0.02)) + "'"));
+      for (var a = 0; a < 14 - i * 3; a++) {   // i pendagli lungo l'anello
+        var an = a / (14 - i * 3) * Math.PI * 2, px = t.c[0] + t.rx * Math.cos(an), py = t.c[1] + t.ry * Math.sin(an);
+        o.push(linea([px, py], [px, py + k * 0.12], "#fff4d6", Math.max(0.6, k * 0.012), "opacity='.85'"));
+        o.push(ell([px, py + k * 0.13], k * 0.022, k * 0.032, "#fffbe8"));
+      }
+    });
+    o.push(ell(c, k * 0.16, k * 0.1, "#e9c46a"), ell([c[0], c[1] - k * 0.03], k * 0.08, k * 0.05, "#fff7d6"));
+    return o.join("");
+  }
+  // il tavolo del Black Jack a mezzaluna (come nella sua sala), spostato di lato
+  function tavoloBJ(cx, z0, nomi) {
+    var R = 1.0, yT = 0.87, o = [], posti = [150, 110, 70, 32]; nomi = nomi || ["Rosa", "Peppe", "Lina", "Tonio"];
+    posti.forEach(function (a, i) { var t = a * Math.PI / 180, r = R + 0.32; o.push(busto(nomi[i], cx + r * Math.cos(t), z0 + r * Math.sin(t))); });
+    var om = tondo(cx, 0, z0 + 0.4, 0.95);
+    o.push(ell(om.c, om.rx, om.ry, "#000000", "opacity='.3'"));
+    o.push(poly(qFondo(cx - 0.26, cx + 0.26, 0, yT - 0.08, z0 + 0.4), "#2a140b"), poly(qFondo(cx - 0.52, cx + 0.52, 0, 0.06, z0 + 0.4), "#2a140b"));
+    o.push(poly(qFondo(cx - R - 0.14, cx + R + 0.14, yT - 0.1, yT + 0.02, z0), "url(#gLegno)"));
+    o.push(poly(ovale(R + 0.14, R + 0.14, yT + 0.02, z0, 0, Math.PI, 40, cx), "#2a160d"));
+    o.push(poly(ovale(R, R, yT, z0, 0, Math.PI, 40, cx), "url(#gFeltro)"));
+    o.push(pozza(cx - 0.5, yT, z0 + 0.5, 0.65), pozza(cx + 0.5, yT, z0 + 0.5, 0.65));
+    posti.forEach(function (a, i) {
+      var t = a * Math.PI / 180;
+      o.push(pila(cx + 0.95 * Math.cos(t), z0 + 0.95 * Math.sin(t), 3 + (i * 2) % 4, FICHE[i % FICHE.length], yT));
+      o.push(carta(cx + 0.66 * Math.cos(t) - 0.04, z0 + 0.66 * Math.sin(t), a - 82, yT, ["c", "p", "q", "f"][i]), carta(cx + 0.66 * Math.cos(t) + 0.05, z0 + 0.66 * Math.sin(t) - 0.02, a - 96, yT, ["p", "q", "f", "c"][i]));
+    });
+    o.push(carta(cx - 0.08, z0 + 0.36, 4, yT, "c"), carta(cx + 0.08, z0 + 0.36, -3, yT, null, "#b02a37"));
+    o.push(poly(qPiano(cx - 0.4, cx + 0.4, z0 + 0.05, z0 + 0.22, yT + 0.01), "#1b1b1b"));
+    for (var s = 0; s < 8; s++) { var x0 = cx - 0.38 + s * 0.095; o.push(poly(qPiano(x0 + 0.012, x0 + 0.083, z0 + 0.07, z0 + 0.2, yT + 0.02), FICHE[s % FICHE.length])); }
+    o.push(lampada(cx - 0.5, z0 + 0.45, 2.75, "#7a1222"), lampada(cx + 0.5, z0 + 0.45, 2.75, "#7a1222"));
+    return o.join("");
+  }
+  // il tavolo ovale del Poker (come nella sua sala), spostato di lato
+  function tavoloPoker(cx, z0, nomi) {
+    var rx = 1.3, rz = 0.72, yT = 0.86, o = [], posti = [150, 116, 82, 48]; nomi = nomi || ["Matt", "Giada", "Bruno", "Sofia"];
+    posti.forEach(function (g, i) { var t = g * Math.PI / 180; o.push(busto(nomi[i], cx + 1.55 * Math.cos(t), z0 + 0.95 * Math.sin(t), 1.0)); });
+    o.push(ell(tondo(cx, 0, z0, 1.2).c, 1.2 * F / z0, 0.35 * F / z0, "#000000", "opacity='.3'"));
+    o.push(poly(qFondo(cx - 0.5, cx + 0.5, 0, 0.6, z0 - 0.2), "#0c0c0c"));
+    var vicino = ovale(rx, rz, yT, z0, Math.PI, 2 * Math.PI, 30, cx), sotto = ovale(rx, rz, yT - 0.12, z0, 2 * Math.PI, Math.PI, 30, cx);
+    o.push(poly(vicino.concat(sotto), "#0f0f0f"));
+    o.push(poly(ovale(rx, rz, yT, z0, 0, 2 * Math.PI, 60, cx), "#1b1b1b"));
+    o.push(poly(ovale(rx - 0.14, rz - 0.1, yT + 0.005, z0, 0, 2 * Math.PI, 60, cx), "#6b3f1e"));
+    o.push(poly(ovale(rx - 0.21, rz - 0.15, yT + 0.006, z0, 0, 2 * Math.PI, 60, cx), "url(#gFeltro2)"));
+    o.push(pozza(cx, yT, z0, 0.95));
+    ["c", "p", "q", "f", "c"].forEach(function (s, i) { o.push(carta(cx - 0.28 + i * 0.14, z0 + 0.1, 0, yT + 0.01, i < 4 ? s : null, "#1d4ed8", 1.1)); });
+    o.push(pila(cx - 0.1, z0 - 0.2, 6, "#e03131", yT), pila(cx + 0.06, z0 - 0.24, 4, "#212529", yT), pila(cx + 0.2, z0 - 0.18, 5, "#1c7ed6", yT));
+    posti.forEach(function (g, i) {
+      var t = g * Math.PI / 180, x = cx + 0.9 * Math.cos(t), z = z0 + 0.48 * Math.sin(t);
+      o.push(carta(x - 0.05, z, -8, yT + 0.01, null, "#1d4ed8"), carta(x + 0.05, z - 0.01, 7, yT + 0.01, null, "#1d4ed8"));
+    });
+    var w1 = P(cx - 0.8, 2.62, z0), w2 = P(cx + 0.8, 2.62, z0), w3 = P(cx + 0.95, 2.45, z0), w4 = P(cx - 0.95, 2.45, z0);
+    o.push(linea(P(cx - 0.6, YT, z0), P(cx - 0.6, 2.62, z0), "#0c0c0c", 1.2), linea(P(cx + 0.6, YT, z0), P(cx + 0.6, 2.62, z0), "#0c0c0c", 1.2));
+    o.push("<ellipse cx='" + r1((w3[0] + w4[0]) / 2) + "' cy='" + r1(w3[1] + 5) + "' rx='" + r1((w3[0] - w4[0]) * 0.75) + "' ry='" + r1(F / z0 * 0.4) + "' fill='url(#gAlone)'/>");
+    o.push(poly([w1, w2, w3, w4], "#1f6f43"), poly([w4, w3, [w3[0], w3[1] + 2.5], [w4[0], w4[1] + 2.5]], "#fff1bf"));
+    return o.join("");
+  }
+  // la scalinata di marmo da cui si entra (in primo piano), con la passatoia rossa e i bordi d'oro
+  function scalinata() {
+    var o = [], gradini = [[0.6, 0.4, 1.3], [0.4, 1.3, 1.62], [0.2, 1.62, 1.94]];   // [altezza, da z, a z]
+    gradini.forEach(function (g, i) {
+      o.push(poly(qPiano(-XW, XW, g[1], g[2], g[0]), i % 2 ? "#b9a581" : "#c7b48f"));
+      for (var x = -XW + 0.3; x < XW; x += 0.9) o.push(linea(P(x, g[0], g[1]), P(x + 0.35, g[0], g[2]), "#9c8763", 0.8, "opacity='.6'"));   // le venature
+      o.push(poly(qPiano(-0.62, 0.62, g[1], g[2], g[0] + 0.002), "#8c1022"), poly(qPiano(-0.55, 0.55, g[1], g[2], g[0] + 0.003), "#a3132a"));
+      o.push(poly(qPiano(-XW, XW, g[2] - 0.05, g[2], g[0] + 0.004), "#c9a24a"));   // il bordo d'oro del gradino
+      o.push(poly(qPiano(-0.66, 0.66, g[2] - 0.05, g[2], g[0] + 0.005), "#e9c46a"));
+    });
+    return o.join("");
+  }
+  function disegnoSalone() {
+    var o = [], x, z, i, k;
+    // il soffitto a cassettoni
+    o.push(poly(qPiano(-XW, XW, 1, ZB, YT), "url(#gSoff)"));
+    for (x = -XW + 1.1; x < XW; x += 1.1) o.push(linea(P(x, YT, 2.4), P(x, YT, ZB), "#8a6a2c", 1, "opacity='.45'"));
+    for (z = 3.2; z < ZB; z += 1.4) o.push(linea(P(-XW, YT, z), P(XW, YT, z), "#8a6a2c", 1, "opacity='.45'"));
+    // le pareti: tappezzeria rossa, zoccolo scuro, cornice d'oro, lesene dorate
+    o.push(poly(qFondo(-XW, XW, 0, YT, ZB), "#4b0b17"));
+    for (x = -XW + 0.12; x < XW; x += 0.46) o.push(poly(qFondo(x, x + 0.2, 0, YT, ZB), "#560e1b"));
+    o.push(poly(qLato(-XW, 1, ZB, 0, YT), "#3a0812"), poly(qLato(XW, 1, ZB, 0, YT), "#3a0812"));
+    for (z = 2; z < ZB; z += 0.62) o.push(poly(qLato(-XW, z, z + 0.28, 0, YT), "#420a15"), poly(qLato(XW, z, z + 0.28, 0, YT), "#420a15"));
+    o.push(poly(qLato(-XW, 1, ZB, 0, 0.95), "#22050a"), poly(qLato(XW, 1, ZB, 0, 0.95), "#22050a"), poly(qFondo(-XW, XW, 0, 0.95, ZB), "#2a060d"));
+    o.push(poly(qLato(-XW, 1, ZB, YT - 0.22, YT), "#8a6424"), poly(qLato(XW, 1, ZB, YT - 0.22, YT), "#8a6424"), poly(qFondo(-XW, XW, YT - 0.22, YT, ZB), "#9c7330"));
+    for (z = 4; z < ZB; z += 2.5) [-XW, XW].forEach(function (xx) {
+      o.push(poly(qLato(xx, z - 0.2, z + 0.2, 0, YT), "#7a5520"), poly(qLato(xx, z - 0.13, z + 0.13, 0.35, YT - 0.35), "#b08436"));
+    });
+    for (z = 5.25; z < ZB; z += 2.5) o.push(applique(-XW + 0.02, 2.75, z), applique(XW - 0.02, 2.75, z));
+    // in fondo il bar: le mensole con le bottiglie illuminate, l'insegna, il barista, il banco e gli sgabelli
+    var zb = ZB - 0.02, cb = P(0, 2.1, zb);
+    o.push(ell(cb, 2.6 * F / ZB, 1.4 * F / ZB, "url(#gAlone)"));
+    o.push(poly(qFondo(-2.3, 2.3, 1.25, 2.95, zb), "#1c0b07"));
+    var colB = ["#2b8a3e", "#c92a2a", "#f2b705", "#1c7ed6", "#e8590c", "#ced4da", "#862e9c"];
+    [1.32, 2.06].forEach(function (y, r) {
+      for (x = -2.15, i = 0; x < 2.1; x += 0.17, i++) {
+        var hb = 0.26 + ((i * 7 + r * 3) % 5) * 0.04;
+        o.push(poly(qFondo(x, x + 0.1, y, y + hb, zb - 0.01), colB[(i + r * 2) % colB.length], "opacity='.92'"));
+        o.push(poly(qFondo(x + 0.035, x + 0.065, y + hb, y + hb + 0.1, zb - 0.01), colB[(i + r * 2) % colB.length]));
+      }
+      o.push(poly(qFondo(-2.3, 2.3, y - 0.05, y, zb - 0.01), "#c9a24a"));
+    });
+    o.push(poly(qFondo(-2.45, 2.45, 2.95, 3.05, zb), "#c9a24a"));
+    var ins = P(0, 3.55, zb), kb = F / ZB;
+    ["#ff4fd8", "#ffe3fa"].forEach(function (col, j) {
+      o.push("<text x='" + r1(ins[0]) + "' y='" + r1(ins[1]) + "' font-family='Arial Black,Arial,sans-serif' font-weight='900' font-size='" + r1(kb * 0.52) + "' letter-spacing='" + r1(kb * 0.05) + "' fill='none' stroke='" + col + "' stroke-width='" + (j ? 0.9 : 2.6) + "' text-anchor='middle'" + (j ? "" : " opacity='.5' filter='url(#fNeon)'") + ">SPeeD CASINÒ</text>");
+    });
+    o.push(busto("Nando", 0.5, ZB - 0.5, 1.15), busto("Ivana", -1.3, ZB - 0.5, 1.15));
+    o.push(poly(qPiano(-2.5, 2.5, ZB - 1.3, ZB - 0.75, 1.12), "#5a2a12"), poly(qFondo(-2.5, 2.5, 0, 1.12, ZB - 1.3), "#3a1a0c"));
+    o.push(linea(P(-2.5, 1.12, ZB - 1.3), P(2.5, 1.12, ZB - 1.3), "#e9c46a", 1.2));
+    for (x = -2.1; x < 2.2; x += 0.7) o.push(poly(qFondo(x, x + 0.48, 0.15, 0.95, ZB - 1.31), "none", "stroke='#7a4a22' stroke-width='.8'"));
+    // il pavimento: moquette rossa coi rombi d'oro e la passatoia fino al bar
+    o.push(poly(qPiano(-XW, XW, 1, ZB, 0), "#5a0c19"));
+    for (z = 1.6, i = 0; z < ZB; z += 0.75, i++) for (x = -XW + (i % 2) * 0.375; x < XW; x += 0.75)
+      o.push(poly([P(x, 0, z - 0.13), P(x + 0.13, 0, z), P(x, 0, z + 0.13), P(x - 0.13, 0, z)], "#8c2a1c", "opacity='.75'"));
+    o.push(poly(qPiano(-0.6, 0.6, 1, ZB - 1.4, 0), "#2b0610"));
+    [-0.6, -0.5, 0.5, 0.6].forEach(function (xx) { o.push(linea(P(xx, 0, 1), P(xx, 0, ZB - 1.4), "#c9a24a", 1, "opacity='.8'")); });
+    o.push(pozza(0, 0, 3.4, 1.7), pozza(0, 0, 8, 1.8), pozza(0, 0, 12, 1.6));
+    o.push(poly(qFondo(-XW, XW, 0, 0.3, ZB - 0.01), "url(#gOmbraMuro)"));
+    // le slot machine lungo le pareti (dalle più lontane)
+    for (z = 12.6, k = 0; z > 6.2; z -= 0.92, k++) o.push(slot(-1, z, k), slot(1, z, k + 2));
+    // chi passeggia
+    o.push(inPiedi("Mimì", -0.3, 11.6), inPiedi("Gegè", 1.0, 9.6), inPiedi("Fefè", -1.0, 8.7));
+    // i lampadari
+    o.push(lampadario(0, 8.2, 4.15));
+    // i tavoli: prima il più lontano
+    var tv = TAVOLI.concat(TAVOLI_FONDO).sort(function (a, b) { return b.z - a.z; });   // prima i più lontani
+    tv.forEach(function (t) { o.push(t.id === "poker" ? tavoloPoker(t.x, t.z, t.nomi) : tavoloBJ(t.x, t.z, t.nomi)); });
+    o.push(lampadario(0, 4.6, 4.25));
+    o.push(scalinata());
+    return o.join("");
+  }
+  // =========================================================
+  //  IL CIRCOLO: l'atrio con le porte aperte (si intravedono le sale), la Sala delle Carte
+  //  e la Sala dei Giochi da Tavolo. Stesse regole del salone del Casinò.
+  // =========================================================
+  var CAM_ATRIO = { HY: 330, F: 290, EYE: 1.65, PITCH: 0, XW: 2.9, ZB: 4, YT: 3.4 };
+  var CAM_SALA = { HY: 330, F: 318, EYE: 2.3, PITCH: 12, XW: 3.6, ZB: 9, YT: 3.4 };
+  var PORTE = { carte: [-2.0, -0.85], giardino: [-0.45, 0.45], tavolo: [0.85, 2.0] }, HP = 2.4;
+  function giocatori(o, nomi, cx, z, passo, k) {   // le persone sedute dall'altra parte del tavolo
+    nomi.forEach(function (n, i) { o.push(busto(n, cx + (i - (nomi.length - 1) / 2) * passo, z, k)); });
+  }
+  function carteInTavola(o, cx, z0, yT, k) {   // la Scopa in corso: quattro carte in tavola e le carte in mano coperte
+    [["denari", -0.3, 8], ["coppe", -0.1, -6], ["spade", 0.1, 5], ["bastoni", 0.3, -9]].forEach(function (c) { o.push(carta(cx + c[1] * k, z0, c[2], yT, c[0], null, 1.15 * k)); });
+  }
+  // una stanzetta dietro una porta dell'atrio (si vede solo dal vano della porta)
+  function stanzetta(o, x0, x1, muro, pav1, pav2, q) {
+    var z0 = ZB + 0.12, z1 = ZB + 4.4, yS = 3.0, x, z, i, j;
+    o.push(poly(qPiano(x0, x1, z0, z1, yS), "#2a1a10"));
+    o.push(poly(qFondo(x0, x1, 0, yS, z1), muro), poly(qFondo(x0, x1, 0, 0.9, z1), tono(muro, -0.35)));
+    o.push(poly(qPiano(x0, x1, z0, z1, 0), pav1));
+    for (z = z1, i = 0; z > z0; z -= q, i++) for (x = x0, j = 0; x < x1 - 0.01; x += q, j++) if ((i + j) % 2) o.push(poly(qPiano(x, x + q, Math.max(z0, z - q), z, 0), pav2));
+    o.push(ell(P((x0 + x1) / 2, 2.2, z1 - 1.5), 2.4 * F / z1, 1.6 * F / z1, "url(#gAlone)"));   // la luce calda della sala
+  }
+  function disegnoAtrio() {
+    var o = [], x, z, i, k = F / ZB;
+    // 1) le sale dietro le porte: a sinistra le carte, a destra i giochi da tavolo
+    stanzetta(o, -5.2, -0.6, "#cf8f52", "#b4552e", "#9c4626", 0.45);
+    var lc = -2.05, zc = ZB + 2.3, yT;
+    giocatori(o, ["Ciccio", "Carmela"], lc, zc + 0.8, 0.78);
+    yT = tavoloTovaglia(o, zc, 0.72, 0.42, "#f4ede1", "#d33a3a", lc);
+    carteInTavola(o, lc, zc, yT, 1);
+    o.push(inPiedi("Gegè", -3.3, ZB + 3.4), lampada(lc, zc + 0.1, 2.2, "#2f6b4f", 0.3));
+    stanzetta(o, 0.6, 5.2, "#35607a", "#9a6a42", "#8d613b", 0.3);
+    var rc = 2.05;
+    for (i = 0; i < 3; i++) for (x = 2.2; x < 4.6; x += 0.32) o.push(poly(qFondo(x, x + 0.26, 1.2 + i * 0.5, 1.2 + i * 0.5 + 0.22 + ((x * 7 + i) % 3) * 0.05, ZB + 4.39), ["#e03131", "#fcc419", "#1c7ed6", "#2b8a3e", "#f08c00", "#7048e8"][Math.floor(x * 3 + i) % 6]));   // lo scaffale dei giochi
+    giocatori(o, ["Totò", "Mimma"], rc, zc + 0.8, 1.15);
+    yT = tavoloLegno(o, rc, zc, 0.75, 0.42, "#8a5a34");
+    forza4(o, rc, zc + 0.05, yT, 0.72);
+    o.push(lampada(rc, zc + 0.1, 2.2, "#e8dcc0", 0.3));
+    // 2) il soffitto con le travi e il pavimento di legno col tappeto
+    o.push(poly(qPiano(-XW, XW, 1, ZB, YT), "#efe2c4"));
+    [1.9, 2.7, 3.5].forEach(function (zt) { o.push(poly(qPiano(-XW, XW, zt - 0.11, zt + 0.11, YT - 0.2), "#4a2c18"), poly(qFondo(-XW, XW, YT - 0.2, YT, zt - 0.11), "#6b4226")); });
+    o.push(poly(qPiano(-XW, XW, 1, ZB, 0), "#8a5a34"));
+    for (x = -XW; x < XW; x += 0.24) { o.push(linea(P(x, 0, 1), P(x, 0, ZB), "#6e4528", 0.7)); for (z = 1 + ((x * 10) % 3) * 0.3; z < ZB; z += 0.95) o.push(linea(P(x, 0, z), P(x + 0.24, 0, z), "#6e4528", 0.6)); }
+    o.push(poly(qPiano(-1.15, 1.15, 1.6, 3.5, 0.002), "#7a1f2b"), poly(qPiano(-1.0, 1.0, 1.75, 3.35, 0.003), "#c9a24a"), poly(qPiano(-0.94, 0.94, 1.81, 3.29, 0.004), "#8c2a33"));
+    o.push(poly([P(0, 0.005, 1.95), P(0.55, 0.005, 2.55), P(0, 0.005, 3.15), P(-0.55, 0.005, 2.55)], "#1f3b57"), poly([P(0, 0.006, 2.15), P(0.3, 0.006, 2.55), P(0, 0.006, 2.95), P(-0.3, 0.006, 2.55)], "#c9a24a"));
+    // 3) la parete di fondo coi vani delle porte: in alto verde, in basso la boiserie di noce
+    var pieni = [[-XW, PORTE.carte[0]], [PORTE.carte[1], PORTE.giardino[0]], [PORTE.giardino[1], PORTE.tavolo[0]], [PORTE.tavolo[1], XW]];
+    function muro(a, b, y0, y1) {
+      o.push(poly(qFondo(a, b, Math.max(y0, 1.0), y1, ZB), "#2f5d4a"));
+      for (x = a + 0.08; x < b - 0.05; x += 0.36) o.push(poly(qFondo(x, Math.min(b, x + 0.16), Math.max(y0, 1.0), y1, ZB - 0.001), "#33654f"));
+      if (y0 < 1.0) { o.push(poly(qFondo(a, b, y0, 1.0, ZB), "#5a3a22")); for (x = a + 0.06; x < b - 0.2; x += 0.55) o.push(poly(qFondo(x, Math.min(b - 0.06, x + 0.45), 0.14, 0.86, ZB - 0.002), "none", "stroke='#7a5230' stroke-width='1'")); o.push(poly(qFondo(a, b, 0.98, 1.05, ZB - 0.003), "#c9a24a")); }
+    }
+    pieni.forEach(function (p) { muro(p[0], p[1], 0, YT); });
+    ["carte", "giardino", "tavolo"].forEach(function (kp) { var p = PORTE[kp]; muro(p[0], p[1], HP, YT); });
+    o.push(poly(qFondo(-XW, XW, YT - 0.16, YT, ZB - 0.004), "#c9a24a"));
+    // le porte: cornice di noce, lo spessore del muro, la soglia di marmo
+    ["carte", "tavolo"].forEach(function (kp) {
+      var a = PORTE[kp][0], b = PORTE[kp][1], esterno = kp === "carte" ? a : b;
+      o.push(poly(qLato(esterno, ZB, ZB + 0.25, 0, HP), "#4a2c18"), poly(qPiano(a, b, ZB, ZB + 0.25, HP), "#3a2214"), poly(qPiano(a, b, ZB, ZB + 0.25, 0.004), "#d8cbb0"));
+      o.push(poly(qFondo(a - 0.1, a, 0, HP + 0.1, ZB - 0.005), "#7a4f2a"), poly(qFondo(b, b + 0.1, 0, HP + 0.1, ZB - 0.005), "#7a4f2a"), poly(qFondo(a - 0.14, b + 0.14, HP + 0.08, HP + 0.2, ZB - 0.006), "#8a5a32"));
+    });
+    // la porta del giardino: chiusa, a vetri, con la luce verde dietro
+    var g0 = PORTE.giardino[0], g1 = PORTE.giardino[1], zg = ZB + 0.08;
+    o.push(poly(qFondo(g0, g1, 0, HP, zg), "#5a3a22"));
+    [g0 + 0.06, (g0 + g1) / 2 + 0.03].forEach(function (a) {
+      for (i = 0; i < 3; i++) {
+        var y0 = 0.95 + i * 0.47;
+        o.push(poly(qFondo(a, a + 0.36, y0, y0 + 0.4, zg - 0.001), "#9fd38a"), poly(qFondo(a + 0.04, a + 0.17, y0 + 0.2, y0 + 0.38, zg - 0.002), "#d8f5c4", "opacity='.6'"));
+      }
+      o.push(poly(qFondo(a + 0.03, a + 0.33, 0.12, 0.82, zg - 0.001), "none", "stroke='#7a5230' stroke-width='1'"));
+    });
+    o.push(linea(P(0, 0, zg - 0.003), P(0, HP, zg - 0.003), "#3a2214", 1.5), ell(P(-0.07, 1.05, zg - 0.004), 2.2, 2.2, "#e9c46a"), ell(P(0.07, 1.05, zg - 0.004), 2.2, 2.2, "#e9c46a"));
+    o.push(poly(qFondo(g0 - 0.1, g0, 0, HP + 0.1, ZB - 0.005), "#7a4f2a"), poly(qFondo(g1, g1 + 0.1, 0, HP + 0.1, ZB - 0.005), "#7a4f2a"), poly(qFondo(g0 - 0.14, g1 + 0.14, HP + 0.08, HP + 0.2, ZB - 0.006), "#8a5a32"));
+    // l'orologio sopra la porta del giardino e le applique
+    var ck = P(0, 2.95, ZB - 0.01);
+    o.push(ell(ck, k * 0.24, k * 0.24, "#f8f1df", "stroke='#8a5a32' stroke-width='" + r1(k * 0.04) + "'"), linea(ck, [ck[0], ck[1] - k * 0.15], "#212529", 1.4), linea(ck, [ck[0] + k * 0.1, ck[1] + k * 0.04], "#212529", 1.4));
+    o.push(applique(-0.65, 1.9, ZB - 0.01), applique(0.65, 1.9, ZB - 0.01), applique(-2.55, 1.9, ZB - 0.01), applique(2.55, 1.9, ZB - 0.01));
+    o.push(lampada(0, 1.9, 2.8, "#c79a4b", 0.26));
+    return o.join("");
+  }
+  // la Sala delle Carte: osteria calda, col cotto, i mattoni, il Settebello e la lavagna dei punti
+  function disegnoCarte() {
+    var o = [], yT;
+    o.push(stanza({ parete: "#d39a5e", righe: null, lato: "#a3703f", zoccolo: "#6b4226", cornice: "#4a2c18", zoccoloH: 1.0,
+      pav1: "#b4552e", pav2: "#9c4626", fughe: "#7d3a1f", quadro: 0.5, extraPareti: mattoni(-3.3, -2.2, 1.3, 2.3) + mattoni(2.4, 3.3, 2.4, 3.1) }));
+    o.push(poly(qPiano(-XW, XW, 0.9, ZB, YT), "#e6d2ac"));   // il soffitto chiaro, con le travi
+    [2.4, 4.2, 6.0, 7.8].forEach(function (zt) { o.push(poly(qPiano(-XW, XW, zt - 0.12, zt + 0.12, YT - 0.18), "#4a2c18"), poly(qFondo(-XW, XW, YT - 0.18, YT, zt - 0.12), "#6b4226")); });
+    // il Settebello in cornice e la lavagna dei punti di Noi e Loro
+    o.push(cornice(-2.0, -1.2, 1.7, 2.75, "#4a2c18", "#f3ead2"));
+    [[-0.17, 2.6], [0.17, 2.6], [0, 2.4], [-0.17, 2.2], [0.17, 2.2], [-0.17, 1.98], [0.17, 1.98]].forEach(function (p) {
+      var c = P(p[0] - 1.6, p[1] - 0.08, ZB - 0.03), rr = 0.075 * F / ZB;
+      o.push(ell(c, rr, rr, "#f2b705", "stroke='#c92a2a' stroke-width='1'"), ell(c, rr * 0.4, rr * 0.4, "#c92a2a"));
+    });
+    var kk = F / ZB;
+    o.push(lavagnetta(-0.7, 0.7, 1.75, 2.75, function () {
+      var a = P(-0.35, 2.5, ZB - 0.03), b = P(0.35, 2.5, ZB - 0.03), s = linea(P(0, 2.7, ZB - 0.03), P(0, 1.85, ZB - 0.03), "#e9ecef", 1, "opacity='.8'");
+      s += "<text x='" + r1(a[0]) + "' y='" + r1(a[1]) + "' font-family='Comic Sans MS,Segoe Print,cursive' font-size='" + r1(kk * 0.2) + "' fill='#f1f3f5' text-anchor='middle'>NOI</text>";
+      s += "<text x='" + r1(b[0]) + "' y='" + r1(b[1]) + "' font-family='Comic Sans MS,Segoe Print,cursive' font-size='" + r1(kk * 0.2) + "' fill='#f1f3f5' text-anchor='middle'>LORO</text>";
+      for (var i = 0; i < 5; i++) { s += linea(P(-0.5 + i * 0.07, 2.3, ZB - 0.03), P(-0.5 + i * 0.07, 2.05, ZB - 0.03), "#f8f9fa", 1, "opacity='.85'"); if (i < 3) s += linea(P(0.2 + i * 0.07, 2.3, ZB - 0.03), P(0.2 + i * 0.07, 2.05, ZB - 0.03), "#f8f9fa", 1, "opacity='.85'"); }
+      return s;
+    }));
+    o.push(applique(-XW + 0.02, 2.2, 6.6), applique(XW - 0.02, 2.2, 6.6));
+    // lo Scopone in fondo: tavolo col panno verde
+    var zs = 6.9;
+    giocatori(o, ["Pino", "Mena", "Totò", "Lia"], 0, zs + 0.92, 0.66, 0.98);
+    o.push(poly(qFondo(-1.1, -1.0, 0, 0.8, zs - 0.45), "#3d2416"), poly(qFondo(1.0, 1.1, 0, 0.8, zs - 0.45), "#3d2416"));
+    o.push(poly(qPiano(-1.2, 1.2, zs - 0.55, zs + 0.55, 0.82), "#6b4226"), poly(qPiano(-1.1, 1.1, zs - 0.47, zs + 0.47, 0.821), "url(#gFeltro)"), poly(qFondo(-1.2, 1.2, 0.7, 0.82, zs - 0.55), "url(#gLegno)"));
+    [-0.3, -0.1, 0.1, 0.3].forEach(function (x, i) { o.push(carta(x, zs, (i - 1.5) * 8, 0.83, ["denari", "coppe", "spade", "bastoni"][i], null, 1.1)); });
+    o.push(lampada(0, zs + 0.1, 2.5, "#e8dcc0", 0.32));
+    // la Scopa 2 contro 2 a destra: il festone delle squadre, le tovagliette blu e rosse
+    var x2 = 1.55, z2 = 4.4;
+    o.push(bandierine(3.0, z2 + 0.4, ["#1c7ed6", "#e03131", "#ffd43b"]));
+    giocatori(o, ["Gino", "Teresa", "Sasà", "Nina"], x2, z2 + 0.86, 0.52, 0.95);
+    yT = tavoloTovaglia(o, z2, 1.05, 0.48, "#f4ede1", "#d33a3a", x2);
+    [0, 1, 2, 3].forEach(function (i) { var x = x2 + (i - 1.5) * 0.52; o.push(poly(qPiano(x - 0.2, x + 0.2, z2 + 0.12, z2 + 0.42, yT + 0.003), i % 2 ? "#e03131" : "#1c7ed6", "opacity='.85'")); });
+    carteInTavola(o, x2, z2 - 0.08, yT, 1);
+    o.push(lampada(x2 - 0.5, z2 + 0.1, 2.45, "#2f6b4f", 0.28), lampada(x2 + 0.5, z2 + 0.1, 2.45, "#2f6b4f", 0.28));
+    // la Scopa a sinistra, in due
+    var x1 = -1.5, z1 = 3.7;
+    giocatori(o, ["Ciccio", "Carmela"], x1, z1 + 0.82, 0.8);
+    yT = tavoloTovaglia(o, z1, 0.75, 0.45, "#f4ede1", "#d33a3a", x1);
+    carteInTavola(o, x1, z1, yT, 1);
+    o.push(lampada(x1, z1 + 0.1, 2.45, "#2f6b4f", 0.32));
+    return o.join("");
+  }
+  // la Sala dei Giochi da Tavolo: azzurra, col parquet e lo scaffale pieno di scatole di giochi
+  function disegnoTavolo() {
+    var o = [], yT, x, i;
+    o.push(stanza({ parete: "#3f6e8c", righe: "#447595", lato: "#2c5068", righeLato: "#305670", zoccolo: "#6b4226", cornice: "#d9b36c",
+      pav1: "#9a6a42", pav2: "#8d613b", quadro: 0.32, fughe: "#6e4a2c" }));
+    o.push(poly(qPiano(-XW, XW, 0.9, ZB, YT), "#e8ecef"));   // il soffitto chiaro, con le travi
+    [2.4, 4.2, 6.0, 7.8].forEach(function (zt) { o.push(poly(qPiano(-XW, XW, zt - 0.11, zt + 0.11, YT - 0.16), "#5a3a22"), poly(qFondo(-XW, XW, YT - 0.16, YT, zt - 0.11), "#6b4226")); });
+    // lo scaffale dei giochi sulla parete di fondo
+    var cols = ["#e03131", "#fcc419", "#1c7ed6", "#2b8a3e", "#f08c00", "#7048e8", "#d6336c", "#15aabf"];
+    o.push(poly(qFondo(-2.9, -1.0, 0.9, 2.95, ZB - 0.05), "#5a3a22"), poly(qFondo(1.0, 2.9, 0.9, 2.95, ZB - 0.05), "#5a3a22"));
+    [[-2.9, -1.0], [1.0, 2.9]].forEach(function (sc, si) {
+      for (i = 0; i < 4; i++) {
+        var y0 = 1.0 + i * 0.5;
+        o.push(poly(qFondo(sc[0], sc[1], y0 - 0.04, y0, ZB - 0.06), "#8a5a32"));
+        for (x = sc[0] + 0.06; x < sc[1] - 0.1; x += 0.16) {
+          var h = 0.28 + ((x * 13 + i * 5 + si) % 4) * 0.04, c = cols[Math.floor(x * 7 + i * 3 + si * 5 + 40) % cols.length];
+          if ((Math.floor(x * 11) + i) % 5 === 0) o.push(poly(qFondo(x, x + 0.4, y0, y0 + 0.09, ZB - 0.07), c), poly(qFondo(x, x + 0.4, y0 + 0.09, y0 + 0.17, ZB - 0.07), cols[(Math.floor(x * 5) + i) % cols.length]));   // scatole sdraiate
+          else o.push(poly(qFondo(x, x + 0.13, y0, y0 + h, ZB - 0.07), c), poly(qFondo(x + 0.02, x + 0.11, y0 + h * 0.55, y0 + h * 0.7, ZB - 0.071), "#ffffff", "opacity='.55'"));
+        }
+      }
+    });
+    // il quadro col Tris in mezzo
+    o.push(cornice(-0.55, 0.55, 1.75, 2.75, "#d9b36c", "#fbfaf4"));
+    var kk = F / ZB;
+    [[-0.28, 2.45, "X", "#e03131"], [0, 2.18, "O", "#1c7ed6"], [0.28, 2.45, "X", "#e03131"]].forEach(function (m) { var p = P(m[0], m[1], ZB - 0.03); o.push("<text x='" + r1(p[0]) + "' y='" + r1(p[1]) + "' font-family='Arial Black,Arial,sans-serif' font-size='" + r1(kk * 0.32) + "' fill='" + m[3] + "' text-anchor='middle'>" + m[2] + "</text>"); });
+    o.push(applique(-XW + 0.02, 2.2, 6.6), applique(XW - 0.02, 2.2, 6.6));
+    // la Battaglia Navale in fondo
+    var zn = 6.9;
+    giocatori(o, ["Capitano", "Marina"], 0, zn + 0.9, 1.0);
+    yT = tavoloLegno(o, 0, zn, 1.1, 0.5, "#9c6b3f");
+    navale(o, 0, zn + 0.02, yT, 1.15);
+    o.push(lampada(0, zn + 0.1, 2.5, "#d9b36c", 0.34));
+    // Drop 4 a destra
+    var x2 = 1.55, z2 = 4.4;
+    giocatori(o, ["Totò", "Mimma"], x2, z2 + 0.8, 1.15);
+    yT = tavoloLegno(o, x2, z2, 0.95, 0.45, "#8a5a34");
+    forza4(o, x2, z2 + 0.02, yT, 0.85);
+    o.push(lampada(x2, z2 + 0.1, 2.45, "#e8dcc0", 0.3));
+    // il Tris a sinistra
+    var x1 = -1.5, z1 = 3.7;
+    giocatori(o, ["Ninni", "Peppino"], x1, z1 + 0.8, 0.8);
+    yT = tavoloLegno(o, x1, z1, 0.72, 0.44, "#9c6b3f");
+    tris(o, x1, z1 + 0.02, yT, 1.0);
+    o.push(lampada(x1, z1 + 0.1, 2.45, "#2f6b4f", 0.3));
+    return o.join("");
+  }
+
+  // ---- le scene in prima persona: telecamera, disegno, luci e punti da toccare ----
+  //      va: { gioco: id } (si entra nella sua sala) | { scena: id } (si passa la porta) | { presto: "testo" }
+  function datiSala(id) { return SALE.filter(function (q) { return q.id === id; })[0] || { nome: id, insegna: String(id).toUpperCase(), stile: "bj" }; }
+  function puntoTavolo(id, x, z, w, zf, yCart) {
+    var s = datiSala(id);
+    return { id: id, nome: s.nome, insegna: s.insegna, stile: s.stile, x: x, z: z, w: w, yTop: yCart, yBot: 0.15, zf: zf, fuoco: [x, 0.95, z + 0.35], cartello: [x, yCart, z], va: { gioco: id } };
+  }
+  function puntoPorta(kp, nome, insegna, stile, va) {
+    var a = PORTE[kp][0], b = PORTE[kp][1], x = (a + b) / 2;
+    return { id: kp, nome: nome, insegna: insegna, stile: stile, x: x, z: ZB, w: (b - a) / 2 + 0.1, yTop: HP + 0.2, yBot: 0, zf: ZB, fuoco: [x, 1.25, ZB + 0.6], cartello: kp === "giardino" ? [x, 1.95, ZB] : [x, HP + 0.25, ZB], muro: true, va: va };
+  }
+  var COLORI_SCENA = { feltro: ["#1d9a57", "#0d6136"], feltro2: ["#1f8a55", "#0e5233"], legno: ["#5a2f17", "#2b140a"], pozza: "#ffd98a" };
+  var SCENE = {
+    salone: { cam: CAM_SALONE, disegno: disegnoSalone, luci: [[0, 4.25, 4.6], [0, 4.15, 8.2]],
+      punti: function () { return TAVOLI.map(function (t) { return puntoTavolo(t.id, t.x, t.z, t.id === "poker" ? 1.45 : 1.2, t.z - (t.id === "poker" ? 0.75 : 0.05), 3.25); }); } },
+    circolo: { cam: CAM_ATRIO, disegno: disegnoAtrio, luci: [],
+      punti: function () { return [
+        puntoPorta("carte", "Sala delle Carte", "SALA CARTE", "cr-carte", { scena: "carte" }),
+        puntoPorta("giardino", "Giardino", "GIARDINO", "cr-giardino", { presto: "Il giardino apre presto: bocce, freccette e calcio balilla 🌳" }),
+        puntoPorta("tavolo", "Giochi da Tavolo", "GIOCHI DA TAVOLO", "cr-tavolo", { scena: "tavolo" }) ]; } },
+    carte: { cam: CAM_SALA, disegno: disegnoCarte, luci: [],
+      punti: function () { return [puntoTavolo("scopa", -1.5, 3.7, 0.95, 3.25, 2.7), puntoTavolo("scopa2v2", 1.55, 4.4, 1.25, 3.92, 2.8), puntoTavolo("scopone", 0, 6.9, 1.3, 6.35, 2.95)]; } },
+    tavolo: { cam: CAM_SALA, disegno: disegnoTavolo, luci: [],
+      punti: function () { return [puntoTavolo("tris", -1.5, 3.7, 0.92, 3.26, 2.7), puntoTavolo("drop4", 1.55, 4.4, 1.15, 3.95, 2.8), puntoTavolo("navale", 0, 6.9, 1.25, 6.4, 2.95)]; } }
+  };
+  // dove stanno sullo schermo (disegno 360×640) i punti, le loro insegne e i luccichii
+  function geometria(sc) {
+    var punti = sc.punti().map(function (p) {
+      var c = [P(p.x - p.w, p.yBot, p.zf), P(p.x + p.w, p.yBot, p.zf), P(p.x - p.w, p.yTop, p.z), P(p.x + p.w, p.yTop, p.z)];
+      var xs = c.map(function (q) { return q[0]; }), ys = c.map(function (q) { return q[1]; });
+      var cart = p.cartello ? P(p.cartello[0], p.cartello[1], p.cartello[2]) : null, m = Math.min(100, 34 + p.insegna.length * 5.6);   // l'insegna resta dentro lo schermo
+      return { id: p.id, nome: p.nome, insegna: p.insegna, stile: p.stile, va: p.va, muro: !!p.muro,
+        box: [Math.max(0, Math.min.apply(null, xs)), Math.max(0, Math.min.apply(null, ys) - (cart && !p.muro ? 34 : 0)), Math.min(W, Math.max.apply(null, xs)), Math.min(H, Math.max.apply(null, ys))],
+        fuoco: P(p.fuoco[0], p.fuoco[1], p.fuoco[2]), cartello: cart ? [Math.max(m, Math.min(W - m, cart[0])), cart[1]] : null };
+    });
+    var luci = (sc.luci || []).map(function (l) { var c = P(l[0], l[1], l[2]); return [c[0], c[1], F / l[2]]; });
+    return { punti: punti, luci: luci };
+  }
+  var cacheScene = {}, cachePunti = {};
+  // solo dove stanno le cose da toccare (leggero: niente disegno), es. per sapere quali giochi ci sono dietro le porte
+  function punti(id) {
+    var sc = SCENE[id]; if (!sc) return null;
+    if (!cachePunti[id]) cachePunti[id] = conCamera(sc.cam, function () { return geometria(sc); });
+    return cachePunti[id];
+  }
+  // la scena intera, col disegno pronto da mettere in un'immagine
+  function scena(id) {
+    if (cacheScene[id]) return cacheScene[id];
+    var sc = SCENE[id]; if (!sc) return null;
+    var o = conCamera(sc.cam, function () { return sc.disegno(); }), g = punti(id);
+    var svg = svgCon({ o: o, feltro: COLORI_SCENA.feltro, feltro2: COLORI_SCENA.feltro2, legno: COLORI_SCENA.legno, pozza: COLORI_SCENA.pozza });
+    cacheScene[id] = { img: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg), punti: g.punti, luci: g.luci };
+    return cacheScene[id];
+  }
 
   // la sala intera, pronta da mettere in un'immagine
-  function svgSala(id) {
-    var d = (DISEGNI[id] || salaBJ)();
+  function svgSala(id) { return svgCon((DISEGNI[id] || salaBJ)()); }
+  function svgCon(d) {
     var defs = "<defs>" +
+      "<radialGradient id='gFeltro2' cx='.5' cy='.45' r='.65'><stop offset='0' stop-color='" + (d.feltro2 || d.feltro)[0] + "'/><stop offset='1' stop-color='" + (d.feltro2 || d.feltro)[1] + "'/></radialGradient>" +
       "<linearGradient id='gSoff' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#050304'/><stop offset='1' stop-color='#1d1216'/></linearGradient>" +
       "<radialGradient id='gFeltro' cx='.5' cy='.45' r='.65'><stop offset='0' stop-color='" + d.feltro[0] + "'/><stop offset='1' stop-color='" + d.feltro[1] + "'/></radialGradient>" +
       "<linearGradient id='gLegno' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='" + d.legno[0] + "'/><stop offset='1' stop-color='" + d.legno[1] + "'/></linearGradient>" +
@@ -4183,7 +4801,8 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     return cache[id];
   }
 
-  window.SGCasino = { SALE: SALE, immagine: immagine, svg: svgSala };
+  // SALE: le sale di ogni gioco (primo piano); scena(id): le scene in prima persona (salone del Casinò, atrio e sale del Circolo)
+  window.SGCasino = { SALE: SALE, TAVOLI: TAVOLI, immagine: immagine, svg: svgSala, scena: scena, punti: punti };
 })();
 
 /* =========================================================
@@ -4819,10 +5438,12 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   // ---- Dentro gli edifici della città: le sale coi giochi della categoria (stesso modello per tutti) ----
   // cat = categoria dei giochi (CAT_GIOCO); azioni = tasti al posto dei giochi; deco = cose sparse sullo sfondo
   var EDIFICI_CITTA = {
-    casino: { nome: "Casinò",      sotto: "I giochi di carte",            cat: "carte",  deco: ["🃏", "♠️", "🪙", "♦️", "🎲", "♣️"] },
+    casino: { nome: "Casinò",      sotto: "Black Jack e Poker",           cat: "carte",  deco: ["🃏", "♠️", "🪙", "♦️", "🎲", "♣️"] },
+    circolo: { nome: "Il Circolo", sotto: "Carte e giochi da tavolo",     cat: "carte",  deco: ["🂡", "⭕", "🟡", "🚢", "☕", "🃏"] },
     studio: { nome: "Studio TV",   sotto: "Quiz & parole",                cat: "parole", deco: ["❓", "🎤", "💡", "🔤", "⭐", "📺"] },
     giochi: { nome: "Sala giochi", sotto: "I minigiochi",                 cat: "mini",   deco: ["🕹️", "👾", "⭐", "🎯", "💥", "🔺"] },
-    arena:  { nome: "Arena",       sotto: "Sfide 1 contro 1",             cat: "sfida",  deco: ["⚔️", "🛡️", "🏁", "⚡", "🥊", "🎯"] },
+    arena:  { nome: "Arena",       sotto: "Sport e sfide 1 contro 1",     cat: "sfida",  deco: ["⚔️", "🛡️", "🏁", "⚡", "🥊", "🎯"],
+      fuori: { tris: 1, drop4: 1, navale: 1 } },   // Tris, Drop 4 e Battaglia Navale stanno al Circolo
     locale: { nome: "Locale",      sotto: "Giochi da fare in gruppo",     cat: "festa",  deco: ["🎉", "🪩", "🎈", "🍹", "🎶", "✨"] },
     trofei: { nome: "Sala Trofei", sotto: "Trofei e classifiche",         deco: ["🏆", "🥇", "⭐", "🎖️", "👑", "🥈"],
       azioni: function () { return [
@@ -4836,115 +5457,207 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   };
   function entraEdificio(k) {
     if (k === "piazza") { rientro = schermataCitta; return schermataNovita(); }   // la piazza: le novità
-    if (k === "casino") salaCasino = 0;   // entrando dalla città si comincia dal Black Jack
+    if (INTERNI[k]) percorsoInterno[k] = [];   // entrando dalla città si comincia dall'ingresso
     schermataEdificio(k);
   }
 
-  // ---- Il Casinò dentro: una sala per ogni gioco di carte (i disegni sono in casino.js) ----
-  // si scorre col dito (o con le frecce) da una sala all'altra; in basso i nomi di tutti i giochi
-  // del Casinò per saltare subito a una sala; toccando la sala si sceglie come giocare
-  var salaCasino = 0;   // la sala che si sta guardando: finita la partita si torna lì
-  function schermataCasino() {
-    var SALE = SGCasino.SALE.filter(function (x) { return !!giocoDa(x.id); });
-    if (!SALE.length) return schermataCitta();
-    salaCasino = Math.max(0, Math.min(SALE.length - 1, salaCasino));
-    rientro = function () { schermataCasino(); };   // finita la partita (o "indietro") si torna nella stessa sala
+  // ---- Gli interni in prima persona: il Casinò e il Circolo (i disegni sono in casino.js).
+  //      Si entra in una scena (il salone, l'atrio con le porte). Toccando un tavolo o una porta la vista
+  //      "cammina" fin lì (solo transform) e compare la scena dopo (una sala del Circolo) o la sala del gioco,
+  //      dove si tocca il tavolo per scegliere come giocare. Con ‹ si torna indietro un passo alla volta.
+  //      In basso i nomi di tutti i giochi dell'edificio, per andare dritti al tavolo ----
+  var INTERNI = {
+    casino:  { titolo: "CASINÒ",     scena: "salone" },
+    circolo: { titolo: "IL CIRCOLO", scena: "circolo" }
+  };
+  var percorsoInterno = {};   // dove sei in ogni edificio: i punti toccati (es. ["carte", "scopa"]); finita la partita si torna lì
+  function schermataInterno(k) {
+    var I = INTERNI[k];
+    if (!I || !window.SGCasino) return schermataCitta();
+    rientro = function () { schermataInterno(k); };   // finita la partita (o "indietro") si torna allo stesso tavolo
     var N = window.SGNube, prog = window.SGLivelli && N && N.progressione && N.profilo() ? N.progressione() : null;
-    var TRANS = "transform .34s cubic-bezier(.2,.8,.2,1)";
-    var vista = el("div", { class: "cs-vista", "aria-live": "polite" });
-    var sale = SALE.map(function (x) {
-      var img = el("img", { class: "cs-scena", alt: "", draggable: "false" });
-      var d = el("div", { class: "cs-sala cs-" + x.stile, role: "button", "aria-label": x.nome + ": tocca per giocare" }, [
-        img,
+    function pc(v, tot) { return (v * 100 / tot).toFixed(2) + "%"; }
+    // tutti i giochi dell'edificio con la strada per arrivarci (porte e tavoli da toccare)
+    var strade = [];
+    (function cerca(idScena, strada) {
+      (SGCasino.punti(idScena) || { punti: [] }).punti.forEach(function (p) {
+        if (p.va.gioco && giocoDa(p.va.gioco)) strade.push({ id: p.va.gioco, nome: giocoDa(p.va.gioco).nome, strada: strada.concat(p.id) });
+        else if (p.va.scena) cerca(p.va.scena, strada.concat(p.id));
+      });
+    })(I.scena, []);
+    if (!strade.length) return schermataCitta();
+    var vista = el("div", { class: "cs-vista" }), strati = [], percorso = [], cammina = false, geo = null;
+    var invito = el("div", { class: "cs-tocca cs-invito" }), avviso = el("div", { class: "cs-presto" });
+    var titolo = el("div", { class: "cs-titolo", text: I.titolo });
+    vista.appendChild(invito); vista.appendChild(avviso);
+
+    // una scena: il disegno 360×640 steso come "copertina", con sopra le insegne, i luccichii e le zone da toccare
+    function stratoScena(idScena, nome) {
+      var S = SGCasino.scena(idScena);
+      var mov = el("div", { class: "cs-salone" });
+      var dentro = el("div", { class: "cs-salone-in" }, [ el("img", { class: "cs-scena-salone", alt: "", draggable: "false", src: S.img }) ]);
+      S.luci.forEach(function (l, i) {
+        for (var q = 0; q < 5; q++) {
+          var a = q * 1.3 + i * 0.6, x = l[0] + Math.cos(a) * l[2] * 0.5, y = l[1] + l[2] * 0.12 + Math.sin(a) * l[2] * 0.26;
+          dentro.appendChild(el("i", { class: "cs-luccica", style: "left:" + pc(x, 360) + ";top:" + pc(y, 640) + ";animation-delay:" + (q * 0.55 + i * 0.3).toFixed(2) + "s" }));
+        }
+      });
+      S.punti.forEach(function (p) {
+        if (p.va.gioco && !giocoDa(p.va.gioco)) return;
+        var b = p.box;
+        if (p.cartello) dentro.appendChild(el("div", { class: "cs-cartello cs-" + p.stile + (p.muro ? " cs-muro" : ""), style: "left:" + pc(p.cartello[0], 360) + ";top:" + pc(p.cartello[1], 640) },
+          [ el("b", { text: p.insegna }), p.va.presto ? el("i", { class: "cs-lucchetto", text: "🔒 Prossimamente" }) : null ]));
+        dentro.appendChild(el("button", { class: "cs-zona", "aria-label": p.nome, onclick: function () { tocca(p); },
+          style: "left:" + pc(b[0], 360) + ";top:" + pc(b[1], 640) + ";width:" + pc(b[2] - b[0], 360) + ";height:" + pc(b[3] - b[1], 640) }));
+      });
+      mov.appendChild(dentro);
+      var porte = S.punti.some(function (p) { return p.va.scena; });
+      return { tipo: "scena", el: mov, dentro: dentro, punti: S.punti, nome: nome, invito: porte ? "👆 Scegli una porta" : "👆 Scegli un tavolo" };
+    }
+    // la sala di un gioco (il primo piano del tavolo): si tocca e si sceglie come giocare
+    function stratoSala(id, nome) {
+      var x = SGCasino.SALE.filter(function (q) { return q.id === id; })[0] || { nome: id, insegna: id, stile: "bj" };
+      var d = el("div", { class: "cs-sala cs-primo cs-" + x.stile, role: "button", "aria-label": x.nome + ": tocca per giocare" }, [
+        el("img", { class: "cs-scena", alt: "", draggable: "false", src: SGCasino.immagine(id) }),
         el("div", { class: "cs-insegna" }, [ el("b", { text: x.insegna }) ]),
         el("div", { class: "cs-tocca", text: "👆 Tocca il tavolo per giocare" })
       ]);
-      vista.appendChild(d);
-      return { d: d, img: img, x: x, pronta: false };
-    });
-    function carica(k) { var r = sale[k]; if (r && !r.pronta) { r.pronta = true; r.img.src = SGCasino.immagine(r.x.id); } }
-    // ogni sala al suo posto: quella di adesso al centro, le vicine pronte di fianco
-    function posa(dx, anima) {
-      sale.forEach(function (r, k) {
-        var off = k - salaCasino;
-        r.d.style.visibility = Math.abs(off) > 1 ? "hidden" : "";
-        r.d.style.transition = anima ? TRANS : "none";
-        r.d.style.transform = "translate3d(calc(" + (off * 100) + "% + " + Math.round(dx) + "px),0,0)";
+      d.addEventListener("click", function () { var g = !cammina && giocoDa(id); if (g) scegliModoEdificio(g, k); });
+      return { tipo: "sala", el: d, id: id, nome: nome };
+    }
+    function stendi(s) {
+      if (s.tipo !== "scena" || !geo) return;
+      s.dentro.style.cssText = "width:" + (360 * geo.s).toFixed(1) + "px;height:" + (640 * geo.s).toFixed(1) + "px;left:" + geo.ox.toFixed(1) + "px;top:" + geo.oy.toFixed(1) + "px;--s:" + geo.s.toFixed(3);
+    }
+    function misura() {
+      var cw = vista.clientWidth, ch = vista.clientHeight; if (!cw || !ch) return false;
+      var s = Math.max(cw / 360, ch / 640);
+      geo = { s: s, ox: (cw - 360 * s) / 2, oy: (ch - 640 * s) * 0.45, cw: cw, ch: ch };
+      strati.forEach(stendi);
+      return true;
+    }
+    function cima() { return strati[strati.length - 1]; }
+    function zoomSu(s, p) {   // la vista che porta il punto p della scena s al centro, da vicino
+      var fx = geo.ox + p.fuoco[0] * geo.s, fy = geo.oy + p.fuoco[1] * geo.s;
+      s.el.style.transformOrigin = fx.toFixed(1) + "px " + fy.toFixed(1) + "px";
+      return "translate(" + (geo.cw / 2 - fx).toFixed(1) + "px," + (geo.ch * 0.52 - fy).toFixed(1) + "px) scale(" + (p.va.scena ? 2.3 : 2.6) + ")";
+    }
+    function aggiorna() {   // il titolo, il "tocca qui", il gioco acceso nei tasti in basso; si ricorda dove sei
+      var c = cima(), nome = I.titolo;
+      strati.forEach(function (s) { if (s.tipo === "scena" && s.nome) nome = s.nome; });
+      titolo.textContent = nome;
+      invito.textContent = c && c.invito || "";
+      vista.classList.toggle("in-sala", !!c && c.tipo === "sala");
+      tasti.forEach(function (b) { b.el.classList.toggle("on", c && c.tipo === "sala" && c.id === b.id); });
+      percorsoInterno[k] = percorso.slice();
+    }
+    function presto(testo) { avviso.textContent = testo; avviso.classList.remove("su"); void avviso.offsetWidth; avviso.classList.add("su"); }
+    function tocca(p) {
+      if (cammina) return;
+      if (p.va.presto) return presto(p.va.presto);
+      avanti(p);
+    }
+    // un passo avanti: la vista si avvicina al punto e compare quello che c'è dietro
+    function avanti(p, subito, poi) {
+      var sotto = cima();
+      if (cammina || !geo || !sotto || sotto.tipo !== "scena") return;
+      var nuovo = p.va.scena ? stratoScena(p.va.scena, p.nome.toUpperCase()) : stratoSala(p.va.gioco);
+      if (nuovo.tipo === "scena") nuovo.el.classList.add("cs-primo");
+      vista.insertBefore(nuovo.el, invito);
+      strati.push(nuovo); percorso.push(p.id); sotto.verso = p;
+      stendi(nuovo); aggiorna();
+      if (subito) {
+        sotto.el.style.transition = nuovo.el.style.transition = "none";
+        sotto.el.style.transform = zoomSu(sotto, p); sotto.el.style.visibility = "hidden";
+        nuovo.el.classList.add("su"); void nuovo.el.offsetWidth; nuovo.el.style.transition = "";
+        if (poi) poi();
+        return;
+      }
+      cammina = true;
+      sotto.el.style.transition = "transform .85s cubic-bezier(.45,0,.25,1)";
+      sotto.el.style.transform = zoomSu(sotto, p);
+      sotto.el.classList.add("passi");
+      setTimeout(function () { nuovo.el.classList.add("su"); suonoEdificio(nuovo.tipo === "sala" && k === "casino" ? "casino" : k); }, 560);
+      setTimeout(function () { cammina = false; sotto.el.classList.remove("passi"); sotto.el.style.visibility = "hidden"; if (poi) poi(); }, 950);
+      if (nuovo.tipo === "scena") prepara(nuovo.punti, 1100);
+    }
+    // un passo indietro: quello di sopra sparisce e la vista si allontana
+    function indietro(poi) {
+      if (cammina || strati.length < 2) return;
+      cammina = true;
+      var su = strati.pop(), sotto = cima();
+      percorso.pop(); sotto.verso = null; aggiorna();
+      sotto.el.style.visibility = "";
+      su.el.style.transform = ""; su.el.classList.remove("su");
+      sotto.el.style.transition = "transform .7s cubic-bezier(.3,0,.2,1)";
+      requestAnimationFrame(function () { sotto.el.style.transform = "none"; });
+      setTimeout(function () { if (su.el.parentNode) su.el.parentNode.removeChild(su.el); cammina = false; if (poi) poi(); }, 730);
+    }
+    function punto(s, id) { return (s.punti || []).filter(function (p) { return p.id === id; })[0]; }
+    // dai tasti in basso: dritti al tavolo di quel gioco (le porte di mezzo si passano subito, l'ultimo passo si cammina)
+    function vaiA(strada) {
+      if (cammina) return;
+      var com = 0;
+      while (com < percorso.length && com < strada.length && percorso[com] === strada[com]) com++;
+      if (com === strada.length && percorso.length === strada.length) return;
+      if (strati.length - 1 > com) {   // torno dove la strada si divide
+        if (strati.length - 2 === com) return indietro(function () { vaiA(strada); });
+        while (strati.length - 1 > com) { var s = strati.pop(); if (s.el.parentNode) s.el.parentNode.removeChild(s.el); percorso.pop(); }
+        var base = cima(); base.verso = null; base.el.style.transition = "none"; base.el.style.transform = "none"; base.el.style.visibility = "";
+        aggiorna();
+      }
+      (function passo(i) {
+        var p = punto(cima(), strada[i]); if (!p) return;
+        if (i < strada.length - 1) avanti(p, true, function () { passo(i + 1); });
+        else avanti(p);
+      })(com);
+    }
+    // i disegni dietro le porte e le sale dei tavoli si preparano dopo, uno alla volta (così si entra subito)
+    function prepara(lista, dopo) {
+      lista.forEach(function (p, i) {
+        setTimeout(function () {
+          if (!document.body.contains(vista)) return;
+          if (p.va.scena) SGCasino.scena(p.va.scena); else if (p.va.gioco) { var im = new Image(); im.src = SGCasino.immagine(p.va.gioco); }
+        }, dopo + i * 250);
       });
     }
-    var sx = el("button", { class: "cs-freccia sx", text: "‹", "aria-label": "Sala di prima", onclick: function () { vai(salaCasino - 1); } });
-    var dx = el("button", { class: "cs-freccia dx", text: "›", "aria-label": "Sala dopo", onclick: function () { vai(salaCasino + 1); } });
-    vista.appendChild(sx); vista.appendChild(dx);
     var links = el("div", { class: "cs-giochi" });
-    var tasti = SALE.map(function (x, k) { var b = el("button", { class: "cs-link", text: x.nome, onclick: function () { vai(k); } }); links.appendChild(b); return b; });
-    function segna() {
-      tasti.forEach(function (b, k) { b.classList.toggle("on", k === salaCasino); });
-      sx.style.visibility = salaCasino > 0 ? "" : "hidden";
-      dx.style.visibility = salaCasino < sale.length - 1 ? "" : "hidden";
-      carica(salaCasino);
-      setTimeout(function () { carica(salaCasino - 1); carica(salaCasino + 1); }, 380);   // le vicine dopo, così si entra subito
-    }
-    function vai(j) {
-      j = Math.max(0, Math.min(sale.length - 1, j));
-      var da = salaCasino;
-      if (j === da) { posa(0, true); return; }
-      carica(j);
-      if (Math.abs(j - da) === 1) { salaCasino = j; posa(0, true); segna(); return; }
-      // sala lontana (dai nomi in basso): parte di fianco a quella di adesso e scorre al centro
-      var dir = j > da ? 1 : -1;
-      sale.forEach(function (r, k) { r.d.style.visibility = (k === da || k === j) ? "" : "hidden"; r.d.style.transition = "none"; });
-      sale[j].d.style.transform = "translate3d(" + (dir * 100) + "%,0,0)";
-      void sale[j].d.offsetWidth;
-      salaCasino = j;
-      sale[da].d.style.transition = sale[j].d.style.transition = TRANS;
-      sale[da].d.style.transform = "translate3d(" + (-dir * 100) + "%,0,0)";
-      sale[j].d.style.transform = "translate3d(0,0,0)";
-      segna();
-      setTimeout(function () { if (salaCasino === j) posa(0, false); }, 360);
-    }
-    function gioca() { var g = giocoDa(sale[salaCasino].x.id); if (g) scegliModoEdificio(g, "casino"); }
-    // il dito: trascinando si scorre (le sale seguono il dito), un tocco fermo apre "Come giocate?"
-    var tocco = null;
-    vista.addEventListener("pointerdown", function (e) {
-      if (e.button > 0 || (e.target.closest && e.target.closest("button"))) return;
-      tocco = { x: e.clientX, y: e.clientY, t: Date.now(), dx: 0, trascina: false, id: e.pointerId };
+    var tasti = strade.map(function (r) {
+      var b = el("button", { class: "cs-link", text: r.nome, onclick: function () { vaiA(r.strada); } });
+      links.appendChild(b);
+      return { el: b, id: r.id };
     });
-    vista.addEventListener("pointermove", function (e) {
-      if (!tocco || e.pointerId !== tocco.id) return;
-      var mx = e.clientX - tocco.x, my = e.clientY - tocco.y;
-      if (!tocco.trascina && Math.abs(mx) > 8 && Math.abs(mx) > Math.abs(my)) { tocco.trascina = true; try { vista.setPointerCapture(e.pointerId); } catch (er) {} }
-      if (tocco.trascina) {
-        var bordo = (mx > 0 && salaCasino === 0) || (mx < 0 && salaCasino === sale.length - 1);
-        tocco.dx = bordo ? mx / 3 : mx;   // all'ultima sala si tira come un elastico
-        posa(tocco.dx, false);
-      }
-    });
-    function fineTocco(e) {
-      if (!tocco || e.pointerId !== tocco.id) return;
-      var t0 = tocco; tocco = null;
-      if (t0.trascina) {
-        var w = vista.clientWidth || 360, v = t0.dx / Math.max(1, Date.now() - t0.t);
-        if ((t0.dx < -w * 0.18 || v < -0.45) && salaCasino < sale.length - 1) vai(salaCasino + 1);
-        else if ((t0.dx > w * 0.18 || v > 0.45) && salaCasino > 0) vai(salaCasino - 1);
-        else posa(0, true);
-      } else if (e.type === "pointerup" && Math.abs(e.clientY - t0.y) < 12 && Math.abs(e.clientX - t0.x) < 12) gioca();
-    }
-    vista.addEventListener("pointerup", fineTocco);
-    vista.addEventListener("pointercancel", fineTocco);
-    var s = el("div", { class: "schermata casino-sale" }, [
+    var s = el("div", { class: "schermata casino-sale interno-" + k }, [
       vista,
       el("div", { class: "cs-testa" }, [
-        el("button", { class: "ed-indietro", text: "‹", "aria-label": "Torna in città", onclick: function () { rientro = null; schermataCitta(); } }),
-        el("div", { class: "cs-titolo", text: "CASINÒ" }),
+        el("button", { class: "ed-indietro", text: "‹", "aria-label": "Indietro", onclick: function () {
+          if (strati.length > 1) indietro(); else if (!cammina) { rientro = null; schermataCitta(); }
+        } }),
+        titolo,
         prog ? el("div", { class: "ed-monete", text: "🪙 " + cifre(prog.coins) }) : el("div", { class: "ed-monete vuoto" })
       ]),
       links
     ]);
-    posa(0, false); segna();
     mostra(s);
+    var radice = stratoScena(I.scena, null), ritorno = (percorsoInterno[k] || []).slice();
+    vista.insertBefore(radice.el, invito); strati.push(radice);
+    (function parti() {
+      if (!misura()) return requestAnimationFrame(parti);
+      aggiorna();
+      // tornando da una partita: di nuovo dov'eri, senza camminare
+      (function passo(i) { var p = i < ritorno.length && punto(cima(), ritorno[i]); if (p) avanti(p, true, function () { passo(i + 1); }); })(0);
+      prepara(radice.punti, 450);
+    })();
+    // telefono girato o finestra cambiata: si ristende tutto (e la vista resta dov'era)
+    function ridim() {
+      if (!document.body.contains(vista)) return window.removeEventListener("resize", ridim);
+      if (!misura()) return;
+      strati.forEach(function (st) { if (st.verso) { st.el.style.transition = "none"; st.el.style.transform = zoomSu(st, st.verso); } });
+    }
+    window.addEventListener("resize", ridim);
   }
   function schermataEdificio(k) {
-    if (k === "casino" && window.SGCasino) return schermataCasino();   // il Casinò ha le sue sale, una per gioco
+    if (INTERNI[k] && window.SGCasino) return schermataInterno(k);   // Casinò e Circolo: gli interni in prima persona
     var E = EDIFICI_CITTA[k]; if (!E) return schermataCitta();
     rientro = function () { schermataEdificio(k); };   // finita la partita (o "indietro") si torna qui
     var N = window.SGNube, prog = window.SGLivelli && N && N.progressione && N.profilo() ? N.progressione() : null;
@@ -4958,7 +5671,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       prog ? el("div", { class: "ed-monete", text: "🪙 " + cifre(prog.coins) }) : el("div", { class: "ed-monete vuoto" })
     ]));
     var griglia = el("div", { class: "griglia-giochi ed-sale" });
-    if (E.cat) giochi.forEach(function (g) { if (catDi(g) === E.cat) griglia.appendChild(tesseraGioco(g, function () { scegliModoEdificio(g, k); })); });
+    if (E.cat) giochi.forEach(function (g) { if (catDi(g) === E.cat && !(E.fuori && E.fuori[g.id])) griglia.appendChild(tesseraGioco(g, function () { scegliModoEdificio(g, k); })); });
     else E.azioni().forEach(function (a) {
       griglia.appendChild(el("button", { class: "tessera ed-azione", onclick: a.fai }, [
         el("span", { class: "icona" }, [ el("span", { class: "emoji", text: a.icona }) ]),
@@ -5371,6 +6084,46 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     { gioco: "taboo", livello: "diamante", icona: "👑", nome: "Re delle Squadre",    desc: "Concludi 25 partite con la tua squadra vincitrice", stat: "vittorie",                 meta: 25 },
     { gioco: "taboo", livello: "diamante", icona: "💥", nome: "Dieci Perfette",      desc: "Fai indovinare 10 carte di fila nello stesso turno",stat: "comboCarteMax",            meta: 10 },
     { gioco: "taboo", livello: "diamante", icona: "🔮", nome: "Intesa Imbattibile",  desc: "Concludi 5 tuoi turni positivi di fila, anche tra partite diverse", stat: "serieTurniPositiviMax", meta: 5 },
+
+    // ---- Palla a Pendolo ----
+    { gioco: "pendolo", livello: "bronzo",   icona: "🏁", nome: "Prima Partita",        desc: "Concludi la tua prima partita",                                stat: "partite",                       meta: 1 },
+    { gioco: "pendolo", livello: "bronzo",   icona: "🎯", nome: "Prendi la Mira",        desc: "Gioca una partita da lanciatore",                             stat: "partiteLanciatore",             meta: 1 },
+    { gioco: "pendolo", livello: "bronzo",   icona: "🏃", nome: "Piedi sulla Trave",     desc: "Gioca una partita sulla trave",                               stat: "partiteTrave",                  meta: 1 },
+    { gioco: "pendolo", livello: "bronzo",   icona: "💦", nome: "Primo Tuffo",           desc: "Butta giù un avversario in una sfida",                       stat: "avversariButtati",              meta: 1 },
+    { gioco: "pendolo", livello: "bronzo",   icona: "⤴️", nome: "Salto al Momento",      desc: "Schiva la palla con un salto in una sfida",                   stat: "saltiRiusciti",                 meta: 1 },
+    { gioco: "pendolo", livello: "bronzo",   icona: "🏆", nome: "Prima Vittoria",        desc: "Vinci una sfida contro bot non Facili o contro una persona",  stat: "vittorie",                     meta: 1 },
+    { gioco: "pendolo", livello: "argento",  icona: "🔟", nome: "Dieci Partite",         desc: "Concludi 10 partite",                                         stat: "partite",                      meta: 10 },
+    { gioco: "pendolo", livello: "argento",  icona: "🎳", nome: "Caduta dopo Caduta",    desc: "Butta giù 10 avversari in totale nelle sfide",              stat: "avversariButtati",              meta: 10 },
+    { gioco: "pendolo", livello: "argento",  icona: "🔥", nome: "Braccio Sicuro",        desc: "Vinci 3 sfide da lanciatore",                                 stat: "vittorieLanciatore",            meta: 3 },
+    { gioco: "pendolo", livello: "argento",  icona: "⚖️", nome: "Equilibrio d'Argento",  desc: "Vinci 3 sfide sulla trave",                                   stat: "vittorieTrave",                 meta: 3 },
+    { gioco: "pendolo", livello: "argento",  icona: "🌐", nome: "Pendolo in Compagnia", desc: "Vinci 3 partite online contro almeno una persona",           stat: "vittorieOnline",                meta: 3 },
+    { gioco: "pendolo", livello: "oro",      icona: "📅", nome: "Serate sul Pendolo",   desc: "Concludi 25 partite",                                         stat: "partite",                      meta: 25 },
+    { gioco: "pendolo", livello: "oro",      icona: "🎪", nome: "Lanciatore Esperto",    desc: "Vinci 10 sfide da lanciatore",                                stat: "vittorieLanciatore",           meta: 10 },
+    { gioco: "pendolo", livello: "oro",      icona: "🦾", nome: "Matt in Acqua",         desc: "Batti 3 volte il bot Difficile giocando da lanciatore",     stat: "vittorieLanciatoreDifficile",   meta: 3 },
+    { gioco: "pendolo", livello: "oro",      icona: "🛡️", nome: "Sempre in Piedi",      desc: "Resisti al bot Difficile sulla trave",                      stat: "vittorieTraveDifficile",        meta: 1 },
+    { gioco: "pendolo", livello: "diamante", icona: "⚡", nome: "Lancio Lampo",          desc: "Batti il bot Difficile buttando giù tutti in 6 secondi",   stat: "triplettaDifficileVeloce",      meta: 1 },
+    { gioco: "pendolo", livello: "diamante", icona: "🧿", nome: "Mira da Campione",      desc: "Batti 20 volte il bot Difficile da lanciatore",           stat: "vittorieLanciatoreDifficile",   meta: 20 },
+    { gioco: "pendolo", livello: "diamante", icona: "🌊", nome: "Trave Impossibile",     desc: "Resisti 3 volte al bot Difficile sulla trave",            stat: "vittorieTraveDifficile",        meta: 3 },
+
+    // ---- La Ruota della Fortuna ----
+    { gioco: "ruota", livello: "bronzo",   icona: "🎡", nome: "Dieci Giri",          desc: "Gira la ruota 10 volte",                                      stat: "giri",                          meta: 10 },
+    { gioco: "ruota", livello: "bronzo",   icona: "🅰️", nome: "Una Vocale alla Volta",desc: "Scopri 3 vocali comprate in modalità Sfida",                  stat: "vocaliIndovinate",              meta: 3 },
+    { gioco: "ruota", livello: "bronzo",   icona: "🔤", nome: "Consonante Fortunata",desc: "Indovina 10 consonanti in modalità Sfida",                    stat: "consonantiIndovinate",          meta: 10 },
+    { gioco: "ruota", livello: "bronzo",   icona: "💡", nome: "La Frase è Mia",       desc: "Risolvi una frase in modalità Sfida",                         stat: "frasiRisolte",                  meta: 1 },
+    { gioco: "ruota", livello: "bronzo",   icona: "🏅", nome: "Vittoria in Sfida",    desc: "Vinci una partita contro il computer Medio o Difficile, oppure contro persone", stat: "vittorieSfida", meta: 1 },
+    { gioco: "ruota", livello: "bronzo",   icona: "🎤", nome: "Al Microfono",         desc: "Concludi la tua prima partita",                              stat: "partite",                       meta: 1 },
+    { gioco: "ruota", livello: "argento",  icona: "🔟", nome: "Dieci Puntate",        desc: "Concludi 10 partite",                                         stat: "partite",                       meta: 10 },
+    { gioco: "ruota", livello: "argento",  icona: "🧩", nome: "Frasi Svelate",        desc: "Risolvi 10 frasi in modalità Sfida",                          stat: "frasiRisolte",                  meta: 10 },
+    { gioco: "ruota", livello: "argento",  icona: "🎯", nome: "Occhio alle Lettere",  desc: "Indovina 50 consonanti in modalità Sfida",                    stat: "consonantiIndovinate",          meta: 50 },
+    { gioco: "ruota", livello: "argento",  icona: "🥈", nome: "Cinque Trionfi",       desc: "Vinci 5 partite in modalità Sfida",                           stat: "vittorieSfida",                 meta: 5 },
+    { gioco: "ruota", livello: "argento",  icona: "🧠", nome: "Avanti il Prossimo",   desc: "Batti Matt e gli altri bot di bravura Media 3 volte",         stat: "vittorieMedio",                 meta: 3 },
+    { gioco: "ruota", livello: "oro",      icona: "📅", nome: "Ruota di Serate",      desc: "Concludi 25 partite",                                         stat: "partite",                       meta: 25 },
+    { gioco: "ruota", livello: "oro",      icona: "📣", nome: "Voce da Campione",     desc: "Risolvi 30 frasi in modalità Sfida",                          stat: "frasiRisolte",                  meta: 30 },
+    { gioco: "ruota", livello: "oro",      icona: "💰", nome: "Manche da 5.000",      desc: "Vinci 3 manche con almeno 5.000 punti ciascuna",             stat: "mancheDa5000",                  meta: 3 },
+    { gioco: "ruota", livello: "oro",      icona: "🤖", nome: "Matt al Tappeto",      desc: "Batti i bot di bravura Difficile",                            stat: "vittorieDifficile",             meta: 1 },
+    { gioco: "ruota", livello: "diamante", icona: "👑", nome: "Re della Ruota",       desc: "Vinci 20 partite in modalità Sfida",                          stat: "vittorieSfida",                 meta: 20 },
+    { gioco: "ruota", livello: "diamante", icona: "🛡️", nome: "Senza Bancarotta",     desc: "Batti i bot Difficili senza mai fare Bancarotta",            stat: "vittorieDifficileSenzaBancarotta", meta: 1 },
+    { gioco: "ruota", livello: "diamante", icona: "💎", nome: "Partita Perfetta",     desc: "Batti i bot Difficili vincendo tutte le manche di una partita da almeno 3 manche", stat: "vittorieDifficileTutteLeManche", meta: 1 },
   ];
 
   function valoreStat(prof, gioco, chiave) {
@@ -6555,7 +7308,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     }
     var s = schermata({ icona: torn ? "🏆" : "🎉", titolo: torn ? "Torneo" : "La sala",
       sotto: torn ? "Chi partecipa al torneo" : (g ? ("Si gioca a " + g.nome) : "Chi partecipa"),
-      indietro: function () { if (!torn && g && modiDi(g).length > 1) schermataModo(g); else schermataHome(); } });
+      indietro: function () { if (!torn && g && modiDi(g).length > 1) schermataModo(g); else tornaHome(); } });   // tornaHome: torna anche nell'edificio da cui si è entrati
 
     var conta = el("p", { class: "modulo-nota" });
     var lista = el("div");
@@ -6613,7 +7366,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     var conAmici = !torn && !inSala && (!modo || (M && M.amici));   // la lista di chi gioca serve solo se si gioca sullo stesso telefono
     var s = schermata({ icona: g.icona, titolo: g.nome,
       sotto: torn ? ("Torneo · " + nomeDifficolta(pesoGioco(g))) : (inSala ? "Sala · impostazioni" : (M ? M.icona + " " + M.nome + " · impostazioni" : "Impostazioni della partita")),
-      indietro: function () { if (torn) schermataTorneoHub(); else if (inSala) salaScegliGioco(); else if (conAmici) schermataSala(g, modo ? { modo: modo } : null); else if (modiDi(g).length > 1) schermataModo(g); else schermataHome(); } });
+      indietro: function () { if (torn) schermataTorneoHub(); else if (inSala) salaScegliGioco(); else if (conAmici) schermataSala(g, modo ? { modo: modo } : null); else if (modiDi(g).length > 1) schermataModo(g); else tornaHome(); } });
     if (!conAmici && !torn && !inSala) {
       if (online) s._contenuto.appendChild(el("p", { class: "modulo-nota sl-prima", text: "Scegli come giocare, poi apri la stanza: ti do il link da mandare agli amici e vi aspettate insieme nella saletta." }));
     } else if (inSala) {
@@ -15923,6 +16676,28 @@ window.SG_NCC_CATEGORIE = {
      descrizione-> elenco di righe: cosa cambia per chi gioca
    ========================================================= */
 window.SG_NOVITA = [
+  {
+    v: 170,
+    data: "9 ottobre 2026",
+    titolo: "Trofei per Palla a Pendolo e Ruota della Fortuna 🏆",
+    descrizione: [
+      "Palla a Pendolo: 18 trofei, sia da lanciatore sia sulla trave. Il più duro: buttare giù tutti e tre i bot Difficili in 6 secondi.",
+      "Ruota della Fortuna: 18 trofei tra giri, consonanti, frasi risolte e manche da 5.000 punti. I più rari: battere i bot Difficili senza mai fare Bancarotta, o vincendo tutte le manche.",
+      "Anche questi danno XP e Speed Coins. Contano le partite giocate da qui in avanti, con il profilo."
+    ]
+  },
+  {
+    v: 169,
+    data: "9 ottobre 2026",
+    titolo: "Il Casinò in prima persona e il nuovo Circolo 🎲",
+    descrizione: [
+      "Nel Casinò ora entri dalla scalinata e vedi tutto il salone: il lampadario, il bar con l'insegna, le slot e tanti tavoli pieni di gente. A sinistra i tavoli del Black Jack, a destra quelli del Poker. Tocchi un tavolo e ci cammini incontro fino a sederti.",
+      "In città c'è un edificio nuovo, il Circolo, coi muri gialli e le persiane verdi. Dentro c'è un atrio con le porte aperte: da una si intravede la Sala delle Carte (Scopa, Scopa 2 contro 2 e Scopone), dall'altra la Sala dei Giochi da Tavolo (Tris, Drop 4 e Battaglia Navale).",
+      "La porta del giardino per ora è chiusa: presto ci saranno bocce, freccette e calcio balilla.",
+      "In basso ci sono sempre i nomi di tutti i giochi dell'edificio, per andare dritti al tavolo. Finita la partita torni al tavolo dov'eri.",
+      "Nell'Arena restano i giochi sportivi: Glow Hockey e Calcio Biliardo."
+    ]
+  },
   {
     v: 168,
     data: "9 ottobre 2026",
@@ -30201,12 +30976,51 @@ window.SG_SIPERO = {
   var TH_BEAM = 1.0, SWING = 2.0, AIMK = 1.5, AIMG = 2.4, NSEAT = 3, HZ = 40;   // invii host ~25/s (più fluido per gli ospiti)
   var PEAKD = 1.28, PBEAM = 1.0;   // la palla va OLTRE la trave (picco profondità 1.28); il piano della trave è a p=1.0
   var BEAM_L = 0.14, BEAM_R = 0.86, AIM_SPAN = 0.40, MOVSP = 0.36, BOTSP = 0.22, HITF = 0.075, JUMP = 0.6, JCD = 2.0, MINSEP = 0.11;
+  var PARTITE_SALVATE = {};
   function vuoiMirino() { try { return localStorage.getItem("sg-pendolo-mirino") !== "0"; } catch (e) { return true; } }
   var COLSEAT = ["#ff6b6b", "#4dabf7", "#51cf66"];
   function diffP(d) {   // dodge: salto dei bot sulla trave · cd/aimErr: IA del lanciatore · durTrave: quanto devi sopravvivere
     return d === "facile"    ? { dodge: 0.032, dur: 40, durTrave: 18, cdMin: 2.0, cdVar: 1.4, aimErr: 0.16 }
          : d === "difficile" ? { dodge: 0.110, dur: 30, durTrave: 22, cdMin: 1.1, cdVar: 0.8, aimErr: 0.045 }
          :                      { dodge: 0.068, dur: 34, durTrave: 20, cdMin: 1.6, cdVar: 1.1, aimErr: 0.10 };
+  }
+  function nuovoIdPartita(modo) { return modo + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8); }
+  function salvaTrofei(r) {
+    try {
+      if (!r || r.spettatore || r.modo === "prova" || !r.gameId || !(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      var profilo = SGNube.profilo(), nome = String(profilo.nome || "").trim();
+      var nomePartita = String(r.nome || "").trim().toLowerCase();
+      if (!nome || (nome.toLowerCase() !== nomePartita && nome.slice(0, 16).toLowerCase() !== nomePartita)) return;
+      var idProfilo = String(profilo.uid || nome).trim().toLowerCase();
+      var chiave = "pendolo|" + r.gameId + "|" + idProfilo;
+      if (PARTITE_SALVATE[chiave]) return;
+      var chiaveSalvataggio = "sg-pendolo-partita-salvata-" + idProfilo + "-" + String(r.gameId);
+      try { if (window.localStorage && localStorage.getItem(chiaveSalvataggio) === "1") { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
+      var incrs = [["partite", 1]], record = [], valori = [];
+      var ruolo = r.ruolo === "lanciatore" ? "lanciatore" : "trave";
+      if (ruolo === "lanciatore") incrs.push(["partiteLanciatore", 1]);
+      else incrs.push(["partiteTrave", 1]);
+      var sfidaValida = r.modo === "bot" ? r.difficolta !== "facile" : r.modo === "online" && r.avversariUmani > 0;
+      var abbattuti = Math.max(0, Math.min(3, Math.floor(+r.abbattuti || 0)));
+      var schivate = Math.max(0, Math.floor(+r.schivate || 0));
+      if (sfidaValida) {
+        if (abbattuti) incrs.push(["avversariButtati", abbattuti]);
+        if (schivate) incrs.push(["saltiRiusciti", schivate]);
+        if (r.vinto) {
+          incrs.push(["vittorie", 1]);
+          incrs.push([ruolo === "lanciatore" ? "vittorieLanciatore" : "vittorieTrave", 1]);
+          if (r.modo === "online") incrs.push(["vittorieOnline", 1]);
+          if (r.modo === "bot" && r.difficolta === "difficile") incrs.push([ruolo === "lanciatore" ? "vittorieLanciatoreDifficile" : "vittorieTraveDifficile", 1]);
+          if (ruolo === "lanciatore" && abbattuti === 3) {
+            incrs.push(["tripletta", 1]);
+            if (r.modo === "bot" && r.difficolta === "difficile" && +r.durata <= 6) incrs.push(["triplettaDifficileVeloce", 1]);
+          }
+        }
+      }
+      PARTITE_SALVATE[chiave] = 1;
+      try { if (window.localStorage) localStorage.setItem(chiaveSalvataggio, "1"); } catch (e) {}
+      SGNube.salvaProgressi(null, "pendolo", incrs, record, valori);
+    } catch (e) {}
   }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function ballXf(a, p) { return 0.5 + a * AIM_SPAN * (0.45 + 0.55 * (p > 1 ? 1 : p)); }
@@ -30226,7 +31040,7 @@ window.SG_SIPERO = {
   // ---------- simulazione (locale e host) ----------
   function mkChars(assign) {   // assign[seat] = id (umano) | null (bot)
     var base = [0.28, 0.5, 0.72], c = [];
-    for (var i = 0; i < NSEAT; i++) c.push({ fx: base[i], dir: i % 2 ? -1 : 1, mov: 0, jt: 0, jcd: 0, alive: true, human: !!(assign && assign[i]), ctrl: assign ? assign[i] : null });
+    for (var i = 0; i < NSEAT; i++) c.push({ fx: base[i], dir: i % 2 ? -1 : 1, mov: 0, jt: 0, jcd: 0, alive: true, schivate: 0, human: !!(assign && assign[i]), ctrl: assign ? assign[i] : null });
     return c;
   }
   function nuovoStato(P, chars, aiLanc) { return { th: 0, swinging: false, tSw: 0, aim: 0, aimLock: 0, aimHold: 0, lanciaFlag: false, chars: chars, time: P.dur, fase: "gioco", aiLanc: !!aiLanc, aiTarget: -1, aiCd: 0.8, aiGoal: 0, collis: false }; }
@@ -30275,8 +31089,9 @@ window.SG_SIPERO = {
     var crossBack = ST.tSw >= 0.5 && pPrev > PBEAM && p <= PBEAM;
     if (ST.swinging && (crossOut || crossBack)) {
       for (var j = 0; j < ST.chars.length; j++) { var b = ST.chars[j]; if (!b.alive) continue;
-        var aria = b.jt > JUMP * 0.06 && b.jt < JUMP * 0.97;
-        if (!aria && Math.abs(b.fx - bxf) < HITF) { b.alive = false; colpo(); }
+        var aria = b.jt > JUMP * 0.06 && b.jt < JUMP * 0.97, sottoPalla = Math.abs(b.fx - bxf) < HITF;
+        if (aria && sottoPalla && b.human) b.schivate++;
+        if (!aria && sottoPalla) { b.alive = false; colpo(); }
       }
     }
   }
@@ -30568,7 +31383,7 @@ window.SG_SIPERO = {
   // ========================================================
   function locale(t, diff, ruolo, collis) {
     ruolo = ruolo === "trave" ? "trave" : "lanciatore";
-    var P = diffP(diff), raf = null, vivo = true, last = performance.now(), ST, ref, mySeat;
+    var P = diffP(diff), raf = null, vivo = true, last = performance.now(), ST, ref, mySeat, gameId = nuovoIdPartita("bot");
     var io = (t.giocatori && t.giocatori[0]) || "Tu";
     if (ruolo === "trave") {   // TU sulla trave (posto 0), un bot lancia, gli altri 2 posti = bot
       ST = nuovoStato(P, mkChars({ 0: "io", 1: null, 2: null }), true); ST.time = P.durTrave; mySeat = 0;
@@ -30589,6 +31404,10 @@ window.SG_SIPERO = {
       else { var nv = ST.chars.filter(function (x) { return x.alive; }).length; if (nv === 0 || ST.time <= 0) return fine(nv === 0); }
       raf = requestAnimationFrame(loop); }
     function fine(vinto) { stop();
+      var abbattuti = ruolo === "lanciatore" ? 3 - ST.chars.filter(function (x) { return x.alive; }).length : 0;
+      salvaTrofei({ gameId: gameId, modo: "bot", difficolta: diff, nome: io, ruolo: ruolo, vinto: vinto,
+        abbattuti: abbattuti, schivate: ruolo === "trave" ? ST.chars[0].schivate : 0,
+        durata: (ruolo === "trave" ? P.durTrave : P.dur) - ST.time });
       var testo = ruolo === "trave"
         ? (vinto ? "Sei rimasto sulla trave fino alla fine! 🏆" : "Ti ha beccato: sei finito in acqua! 💦")
         : (vinto ? ("Buttati giù tutti e 3 in " + (P.dur - ST.time).toFixed(1) + "s! 💦") : "Tempo scaduto: non li hai buttati giù tutti. Riprova!");
@@ -30605,11 +31424,16 @@ window.SG_SIPERO = {
     var posti = {}, nomi = { host: (t.giocatori && t.giocatori[0]) || "Host" }, lanc = "host";
     var omini = { host: mioAvatar(nomi.host) };   // avatar di chi gioca (id -> cfg)
     for (var _s = 0; _s < NSEAT; _s++) posti[_s] = null;   // seat -> id | null(bot)
-    var fase = "lobby", ST = null, ref = null, raf = null, loop = null, ultimoInvio = 0, last = 0, rete = null;
+    var fase = "lobby", ST = null, ref = null, raf = null, loop = null, ultimoInvio = 0, last = 0, rete = null, gameId = "";
     // "⚙️ Regole" in saletta: bravura dei bot e collisioni valgono dalla prossima partita
     t.onRegole = function (im) { diff = im.difficolta || "medio"; P = diffP(diff); collis = im.collisioni; };
 
     function seatDi(id) { for (var s = 0; s < NSEAT; s++) if (posti[s] === id) return s; return -1; }
+    function avversariUmani() {
+      var n = lanc && lanc !== "host" ? 1 : 0;
+      for (var s = 0; s < NSEAT; s++) if (posti[s] && posti[s] !== "host") n++;
+      return Math.max(0, n - 1);   // non conta il profilo del telefono che salva
+    }
     function postoLibero() { for (var s = 0; s < NSEAT; s++) if (!posti[s]) return s; return -1; }
     function seggi() { var a = []; for (var s = 0; s < NSEAT; s++) a.push(posti[s] ? { id: posti[s], nome: nomi[posti[s]] } : null); return a; }
     function claim(id) {   // id diventa lanciatore; il vecchio va su un posto libero
@@ -30650,10 +31474,10 @@ window.SG_SIPERO = {
     });
 
     function inizia() {
-      fase = "gioco"; ST = nuovoStato(P, mkChars(posti), lanc === null); ST.collis = !!collis;
+      gameId = nuovoIdPartita("online"); fase = "gioco"; ST = nuovoStato(P, mkChars(posti), lanc === null); ST.collis = !!collis;
       var BOT_TRAVE = ["Sara", "Leo", "Nina"], av = { posti: [], lanc: lanc ? { nome: nomi[lanc], cfg: omini[lanc] || null } : { nome: "Matt" } };
       for (var sb = 0; sb < NSEAT; sb++) av.posti.push(posti[sb] ? { nome: nomi[posti[sb]], cfg: omini[posti[sb]] || null } : { nome: (lanc && sb === 0) ? "Matt" : BOT_TRAVE[sb] });   // se lancia un umano, Matt sta sulla trave
-      rete.invia({ t: "via", lanc: lanc, seggi: seggi(), nomi: nomi, av: av });
+      rete.invia({ t: "via", lanc: lanc, seggi: seggi(), nomi: nomi, av: av, gameId: gameId, difficolta: diff });
       for (var s = 0; s < NSEAT; s++) if (posti[s] && posti[s] !== "host") rete.invia({ t: "ruolo", to: posti[s], seat: s });
       if (lanc && lanc !== "host") rete.invia({ t: "ruolo", to: lanc, seat: -1 });
       var mioRuolo = (lanc === "host") ? "lanciatore" : "trave", mioSeat = seatDi("host");
@@ -30679,7 +31503,16 @@ window.SG_SIPERO = {
     function fineGioco(vintoLanc) {
       fase = "fine"; if (loop) cancelAnimationFrame(loop);
       var survSeat = {}; for (var s = 0; s < NSEAT; s++) survSeat[s] = ST.chars[s].alive ? 1 : 0;
-      rete.invia({ t: "fine", vintoLanc: vintoLanc ? 1 : 0, surv: survSeat, seggi: seggi(), lanc: lanc });
+      var hostRuolo = lanc === "host" ? "lanciatore" : "trave", hostSeat = seatDi("host");
+      var hostVinto = hostRuolo === "lanciatore" ? !!vintoLanc : !!survSeat[hostSeat];
+      var abbattuti = hostRuolo === "lanciatore" ? 3 - ST.chars.filter(function (x) { return x.alive; }).length : 0;
+      var schivate = {}; for (var ss = 0; ss < NSEAT; ss++) schivate[ss] = ST.chars[ss].schivate;
+      var umaniAvversari = avversariUmani(), durata = P.dur - ST.time;
+      salvaTrofei({ gameId: gameId, modo: "online", difficolta: diff, nome: nomi.host, ruolo: hostRuolo, vinto: hostVinto,
+        abbattuti: abbattuti, schivate: hostSeat >= 0 ? ST.chars[hostSeat].schivate : 0,
+        avversariUmani: umaniAvversari, durata: durata });
+      rete.invia({ t: "fine", gameId: gameId, difficolta: diff, vintoLanc: vintoLanc ? 1 : 0, surv: survSeat, seggi: seggi(), lanc: lanc,
+        avversariUmani: umaniAvversari, durata: durata, schivate: schivate, abbattuti: abbattuti });
       if (t.risultato) {   // per il torneo online: prima chi ha vinto (i bot non contano)
         var vinti = [], persi = [];
         if (lanc) (vintoLanc ? vinti : persi).push(nomi[lanc]);
@@ -30733,7 +31566,14 @@ window.SG_SIPERO = {
           else if (m.t === "g") { if (!S.ref || S.fase === "fine") { if (S.fase !== "gioco") { S.lanc = m.lanc; setRuoloDaSeggi(m.seggi); build(); } }
             S.fase = "gioco"; var now = performance.now(); S.buf.push({ rt: now, s: m.s }); while (S.buf.length > 8 && S.buf[0].rt < now - 1500) S.buf.shift(); avviaGiro(); }
           else if (m.t === "fine") { fermaGiro(); if (S.ref) { S.ref.rimuovi(); S.ref = null; } S.fase = "fine";
-            var mioVinto = (S.lanc === S.myId) ? !!m.vintoLanc : !!(m.surv && m.surv[S.seat]);
+            var mioSeat = -1;
+            for (var si = 0; si < (m.seggi || []).length; si++) if (m.seggi[si] && m.seggi[si].id === S.myId) { mioSeat = si; break; }
+            var mioRuoloFine = (m.lanc === S.myId) ? "lanciatore" : "trave";
+            var mioVinto = mioRuoloFine === "lanciatore" ? !!m.vintoLanc : !!(m.surv && m.surv[mioSeat]);
+            salvaTrofei({ gameId: m.gameId, modo: "online", difficolta: m.difficolta, nome: S.nome, ruolo: mioRuoloFine,
+              vinto: mioVinto, abbattuti: mioRuoloFine === "lanciatore" ? m.abbattuti : 0,
+              schivate: mioSeat >= 0 && m.schivate ? m.schivate[mioSeat] : 0,
+              avversariUmani: m.avversariUmani, durata: m.durata });
             schermataFine(t, S.ruolo || "trave", mioVinto, testoFineOspite(S, m), { onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } }); }
         },
         onChiuso: function () { fermaGiro(); errore(t, "Collegamento perso. L'host ha chiuso la partita."); },
@@ -32048,6 +32888,7 @@ window.SG_SIPERO = {
   var FREQ_V = ["E", "A", "I", "O", "U"];
   var NOMI_BOT = ["Matt", "Rosa", "Peppe", "Gina"];
   var COL = 12, RIGHE = 4;
+  var PARTITE_SALVATE = {};
   // la ruota: 24 spicchi (valori, 2 Bancarotta, 1 Passa, 1 Jolly)
   var SPICCHI = [
     { v: 500 }, { v: 300 }, { s: "bancarotta" }, { v: 700 }, { v: 400 }, { v: 250 },
@@ -32067,6 +32908,39 @@ window.SG_SIPERO = {
   function base(ch) { return ACC[ch] || ch; }
   function eLettera(ch) { return /^[A-ZÀÈÉÌÒÙ]$/.test(ch); }
   function fmtN(n) { var s = String(Math.round(Math.abs(n || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, "."); return (n < 0 ? "−" : "") + s; }
+  function salvaTrofei(vm, giocatoreId, modo, liv, nomeProfilo, spettatore) {
+    try {
+      if (spettatore || modo === "prova" || !vm || vm.fase !== "fine" || !(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      var profilo = SGNube.profilo(), lista = vm.giocatori || [];
+      var giocatore = giocatoreId ? lista.filter(function (p) { return p.id === giocatoreId; })[0] :
+        lista.filter(function (p) { return String(p.nome || "").trim().toLowerCase() === String(profilo.nome || "").trim().toLowerCase(); })[0];
+      if (!giocatore || !String(profilo.nome || "").trim() || String(profilo.nome).trim().toLowerCase() !== String(giocatore.nome || nomeProfilo || "").trim().toLowerCase()) return;
+      if (!vm.gameId) return;
+      var idGiocatore = giocatoreId || giocatore.id;
+      var chiave = "ruota|" + vm.gameId + "|" + String(profilo.uid || profilo.nome).trim().toLowerCase();
+      if (PARTITE_SALVATE[chiave]) return;
+      var chiaveSalvataggio = "sg-ruota-ultima-partita-" + String(profilo.uid || profilo.nome).trim().toLowerCase();
+      try { if (window.localStorage && localStorage.getItem(chiaveSalvataggio) === String(vm.gameId)) { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
+      var s = (vm.statFine || {})[idGiocatore] || {}, esito = (vm.classifica || []).filter(function (r) { return r.id === idGiocatore; })[0], vinta = !!(esito && esito.pos === 1);
+      var incrs = [["partite", 1]], record = [];
+      ["giri", "consonantiIndovinate", "vocaliIndovinate", "frasiRisolte"].forEach(function (k) {
+        if (+s[k] > 0) incrs.push([k, +s[k]]);
+      });
+      if ((modo !== "bot" || liv !== "facile") && +s.mancheDa5000 > 0) incrs.push(["mancheDa5000", +s.mancheDa5000]);
+      if (vinta) {
+        if (modo !== "bot" || liv !== "facile") incrs.push(["vittorieSfida", 1]);
+        if (modo === "bot" && liv === "medio") incrs.push(["vittorieMedio", 1]);
+        if (modo === "bot" && liv === "difficile") {
+          incrs.push(["vittorieDifficile", 1]);
+          if (!s.bancarotte) incrs.push(["vittorieDifficileSenzaBancarotta", 1]);
+          if (s.mancheVinte === vm.mancheTot && vm.mancheTot >= 3) incrs.push(["vittorieDifficileTutteLeManche", 1]);
+        }
+      }
+      PARTITE_SALVATE[chiave] = 1;
+      try { if (window.localStorage) localStorage.setItem(chiaveSalvataggio, String(vm.gameId)); } catch (e) {}
+      SGNube.salvaProgressi(null, ID, incrs, record, []);
+    } catch (e) {}
+  }
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   function svuota(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
   function frasi() { var f = window.SG_RUOTA_FRASI; return f && f.length ? f : FRASI_RISERVA; }
@@ -32090,8 +32964,11 @@ window.SG_SIPERO = {
   // =========================================================
   //  MOTORE (uguale contro il computer, sullo stesso telefono e per l'host online)
   // =========================================================
-  function creaPartita(giocatori, mancheTot) {
-    var P = { giocatori: giocatori.map(function (g) { return { id: g.id, nome: g.nome, bot: !!g.bot, omino: g.omino || null, totale: 0, soldi: 0, jolly: 0, via: false }; }),
+  function creaPartita(giocatori, mancheTot, regole) {
+    var cfg = regole || {};
+    var P = { giocatori: giocatori.map(function (g) { return { id: g.id, nome: g.nome, bot: !!g.bot, omino: g.omino || null, totale: 0, soldi: 0, jolly: 0, via: false,
+      stat: { giri: 0, consonantiIndovinate: 0, vocaliIndovinate: 0, frasiRisolte: 0, mancheVinte: 0, mancheDa5000: 0, bancarotte: 0 } }; }),
+      modo: cfg.modo || "bot", difficolta: cfg.difficolta || "medio",
       mancheTot: mancheTot, manche: 0, turno: 0, fase: "pronti", frase: "", cat: "", rivelate: {}, chiamate: {},
       spicchio: -1, angolo: 0, giroN: 0, msg: "", ultime: [], usate: {}, vince: null, classifica: null };
     function g() { return P.giocatori[P.turno]; }
@@ -32133,14 +33010,14 @@ window.SG_SIPERO = {
       var meta = (360 - ((i + 0.5) * 15 + (Math.random() * 9 - 4.5)) % 360) % 360;   // lo spicchio i sotto la freccia (in alto)
       var giri = 4 + Math.floor(Math.random() * 2);
       P.angolo = P.angolo + giri * 360 + ((meta - (P.angolo % 360)) + 720) % 360;
-      P.spicchio = i; P.giroN++; P.fase = "girando"; P.ultime = []; P.msg = g().nome + " gira la ruota…";
+      P.spicchio = i; P.giroN++; g().stat.giri++; P.fase = "girando"; P.ultime = []; P.msg = g().nome + " gira la ruota…";
       return true;
     };
     P.dopoGiro = function () {   // la ruota si è fermata
       if (P.fase !== "girando") return;
       var s = SPICCHI[P.spicchio], p = g();
       if (s.v) { P.fase = "consonante"; P.msg = p.nome + ": " + fmtN(s.v) + " a lettera, scegli una consonante"; }
-      else if (s.s === "bancarotta") { p.soldi = 0; P.msg = "💥 Bancarotta! " + p.nome + " perde i soldi della manche."; prossimo(); }
+      else if (s.s === "bancarotta") { p.soldi = 0; p.stat.bancarotte++; P.msg = "💥 Bancarotta! " + p.nome + " perde i soldi della manche."; prossimo(); }
       else if (s.s === "passa") perdeTurno("⏭️ Passa!");
       else { p.jolly++; P.fase = "gira"; P.msg = "🃏 Jolly per " + p.nome + "! Gira ancora."; }
     };
@@ -32149,7 +33026,9 @@ window.SG_SIPERO = {
       var p = g(), n = occ(L), val = SPICCHI[P.spicchio].v;
       P.chiamate[L] = 1;
       if (n > 0) {
-        P.rivelate[L] = 1; P.ultime = [L]; p.soldi += val * n;
+        P.rivelate[L] = 1; P.ultime = [L];
+        if (P.modo !== "bot" || P.difficolta !== "facile") p.stat.consonantiIndovinate++;
+        p.soldi += val * n;
         P.msg = p.nome + ": " + (n === 1 ? "c'è una " + L : "ci sono " + n + " " + L) + "! +" + fmtN(val * n);
         if (P.tutteFuori()) return vinceManche(p), true;
         P.fase = "gira";
@@ -32163,6 +33042,7 @@ window.SG_SIPERO = {
       P.chiamate[V] = 1;
       if (n > 0) {
         P.rivelate[V] = 1; P.ultime = [V];
+        if (P.modo !== "bot" || P.difficolta !== "facile") p.stat.vocaliIndovinate++;
         P.msg = p.nome + ": " + (n === 1 ? "c'è una " + V : "ci sono " + n + " " + V) + "!";
         if (P.tutteFuori()) return vinceManche(p), true;
         P.fase = "gira";
@@ -32172,7 +33052,7 @@ window.SG_SIPERO = {
     P.risolvi = function () { if (!P.puo().risolvi) return false; P.fase = "risolvi"; P.msg = g().nome + " prova a risolvere…"; return true; };
     P.soluzione = function (testo) {
       if (P.fase !== "risolvi") return false;
-      if (solo(testo) === solo(P.frase)) vinceManche(g());
+      if (solo(testo) === solo(P.frase)) { if (P.modo !== "bot" || P.difficolta !== "facile") g().stat.frasiRisolte++; vinceManche(g()); }
       else { P.msg = "❌ " + g().nome + " sbaglia la soluzione."; prossimo(); }
       return true;
     };
@@ -32184,6 +33064,8 @@ window.SG_SIPERO = {
       CONSONANTI.concat(VOCALI).forEach(function (L) { P.rivelate[L] = 1; });
       var vincita = Math.max(p.soldi, MINIMO_RISOLVI);
       p.totale += vincita;
+      p.stat.mancheVinte++;
+      if (vincita >= 5000) p.stat.mancheDa5000++;
       P.giocatori.forEach(function (x) { if (x !== p) x.soldi = 0; });
       p.soldi = vincita;
       P.vince = { id: p.id, vincita: vincita, frase: P.frase };
@@ -32210,6 +33092,7 @@ window.SG_SIPERO = {
       return { fase: P.fase, manche: P.manche, mancheTot: P.mancheTot, cat: P.cat, tab: P.fase === "finemanche" || P.fase === "fine" ? P.frase : coperta(P.frase, P.rivelate),
         chiamate: Object.keys(P.chiamate), ultime: P.ultime.slice(), turno: tp ? tp.id : null, spicchio: P.spicchio, angolo: P.angolo, giroN: P.giroN, msg: P.msg,
         puo: tp ? P.puo() : null, cons: P.consonantiNascoste(), voc: P.vocaliNascoste(), vince: P.vince, classifica: P.classifica,
+        statFine: P.fase === "fine" ? P.giocatori.reduce(function (a, x) { a[x.id] = x.stat; return a; }, {}) : null,
         giocatori: P.giocatori.filter(function (x) { return !x.via; }).map(function (x) { return { id: x.id, nome: x.nome, bot: x.bot, totale: x.totale, soldi: x.soldi, jolly: x.jolly }; }) };
     };
     return P;
@@ -32264,7 +33147,7 @@ window.SG_SIPERO = {
     var imp = t.impostazioni || {}, liv = imp.difficolta || "medio", mancheTot = Math.max(1, Math.min(6, Math.floor(+imp.manche || 4)));
     var nome = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Tu";
     var posti = [];   // chi gioca: { id, nome, bot, omino }
-    var H = { fase: online ? "lobby" : "gioco", codice: "…", pronta: !online, omini: {} };
+    var H = { fase: online ? "lobby" : "gioco", codice: "…", pronta: !online, omini: {}, gameId: "" };
     function aggiungiBot() {
       var usati = {}; posti.forEach(function (p) { usati[p.nome] = 1; });
       var n = NOMI_BOT.filter(function (x) { return !usati[x]; })[0] || ("Bot " + (posti.length + 1));
@@ -32282,9 +33165,10 @@ window.SG_SIPERO = {
 
     function ferma() { clearTimeout(tBot); clearTimeout(tTempo); tBot = tTempo = null; }
     function vm() {
-      if (H.fase !== "gioco" && H.fase !== "fine") return { fase: H.fase, codice: H.codice, pronta: H.pronta, mancheTot: mancheTot,
+      if (H.fase !== "gioco" && H.fase !== "fine") return { fase: H.fase, codice: H.codice, pronta: H.pronta, mancheTot: mancheTot, gameId: H.gameId, modo: modo, difficolta: liv,
         giocatori: posti.map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot }; }) };
-      var v = P.vista(); v.fase = H.fase === "fine" ? "fine" : v.fase; v.codice = H.codice; v.giocoFase = H.fase; v.sigla = !!H.sigla; return v;
+      var v = P.vista(); v.fase = H.fase === "fine" ? "fine" : v.fase; v.codice = H.codice; v.giocoFase = H.fase; v.sigla = !!H.sigla;
+      v.gameId = H.gameId; v.modo = modo; v.difficolta = liv; return v;
     }
     function bd() { var v = vm(); if (rete) rete.invia({ t: "vm", vm: v }); disegna(t, v, cb); }
     // il giro: bot, la ruota che si ferma, fine manche, tempo per decidere (online)
@@ -32314,12 +33198,15 @@ window.SG_SIPERO = {
       dopo();   // (i suoni li fa il disegno, uguale su tutti i telefoni)
     }
     function finePartita() {
-      H.fase = "fine"; bd();
+      H.fase = "fine";
+      salvaTrofei(vm(), null, modo, liv, nome, false);
+      bd();
       if (t.risultato && P.classifica) t.risultato(P.classifica.filter(function (r) { var x = posti.filter(function (p) { return p.id === r.id; })[0]; return x && !x.bot; }).map(function (r) { return { nome: r.nome, pos: r.pos }; }));
     }
     function comincia() {
       if (posti.length < 2) return;
-      P = creaPartita(posti, mancheTot); P.nuovaManche(); H.fase = "gioco"; H.ultimoTurno = null;
+      H.gameId = (online ? H.codice : modo) + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+      P = creaPartita(posti, mancheTot, { modo: modo, difficolta: liv }); P.nuovaManche(); H.fase = "gioco"; H.ultimoTurno = null;
       // prima la sigla dello studio (presenta i concorrenti), poi si gioca
       H.sigla = true; bd();
       clearTimeout(tFase); tFase = setTimeout(function () { H.sigla = false; dopo(); }, window.SGStudio ? SGStudio.durataApertura(posti.length) : 0);
@@ -32419,7 +33306,11 @@ window.SG_SIPERO = {
         onMsg: function (m) {
           if (!m || !m.t) return;
           if (m.to && m.to !== S.myId) return;
-          if (m.t === "vm") { S.vm = m.vm; disegna(t, m.vm, cb); }
+          if (m.t === "vm") {
+            S.vm = m.vm;
+            if (m.vm.fase === "fine") salvaTrofei(m.vm, S.myId, m.vm.modo, m.vm.difficolta, S.nome, false);
+            disegna(t, m.vm, cb);
+          }
           else if (m.t === "omini") { S.omini = m.omini || {}; if (S.vm) disegna(t, S.vm, cb); }
         },
         onChiuso: function () { errore(t, "La partita è stata chiusa dall'host."); },
