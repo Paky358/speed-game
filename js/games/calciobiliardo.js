@@ -17,12 +17,13 @@
   var MIN = 2, MAX = 2;          // online: in due
 
   // ---------- il campo (misure in "larghezze di campo") ----------
-  var W = 1, L = 1.55, PORTA = 0.34, FONDO = 0.07;
+  var W = 1, L = 1.55, PORTA = 0.38, FONDO = 0.07;
   var PL = (W - PORTA) / 2, PR = (W + PORTA) / 2;              // i pali
-  var R = 0.05, RP = 0.031, MD = 1, MP = 0.45;                 // raggio e peso: calciatori e palla
-  var DT = 1 / 240, VMAX = 3.1, TIRA = 0.22;                   // TIRA = quanto si tira indietro il dito per la forza piena
-  var ATT_D = Math.exp(-1.35 * DT), ATT_P = Math.exp(-1.05 * DT), DEC = 0.45 * DT;   // attrito dell'erba
-  var E_URTO = 0.9, E_MURO = 0.75;
+  var R = 0.05, RP = 0.031, MD = 1, MP = 0.55;                 // raggio e peso: calciatori e palla (la palla un po' pesante: parte meno sparata)
+  var DT = 1 / 240, VMAX = 2.6, TIRA = 0.22;                   // TIRA = quanto si tira indietro il dito per la forza piena
+  // attrito dell'erba: una parte che rallenta sempre e una che frena forte alla fine (niente palla che striscia piano piano)
+  var ATT_D = Math.exp(-1.2 * DT), ATT_P = Math.exp(-0.85 * DT), DEC = 0.8 * DT;
+  var E_URTO = 0.82, E_MURO = 0.72;                            // urti più morbidi del biliardo
   var MAX_SEC = 8;                                             // un tiro dura al massimo 8 secondi
   var TEMPO = 30;                                              // online: secondi per tirare
   var GIALLO = "#ffcc1f", BLU = "#2f7dff", NOTTE = "#0d1533";   // le due squadre: gialli (sotto) e blu (sopra)

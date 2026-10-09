@@ -13,6 +13,8 @@ window.SG_NOVITA = [
     data: "9 ottobre 2026",
     titolo: "Calcio Biliardo tutto nuovo ⚡",
     descrizione: [
+      "Palla più calma: il tiro è meno forte e la palla corre meno, sembra più calcio e meno biliardo. E alla fine si ferma in fretta, senza strisciare piano piano.",
+      "Le porte sono un filo più larghe, così i gol arrivano lo stesso.",
       "Le squadre ora sono gialli e blu, e sui calciatori c'è il fulmine di SPeeD GAME.",
       "Il campo è molto più grande e la palla si vede meglio. Le porte hanno il colore di chi le difende.",
       "Mentre tiri indietro il dito vedi la freccia a puntini e un anello che si riempie: verde piano, rosso a tutta forza.",
