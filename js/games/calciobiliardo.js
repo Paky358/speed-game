@@ -19,13 +19,14 @@
   // ---------- il campo (misure in "larghezze di campo") ----------
   var W = 1, L = 1.55, PORTA = 0.34, FONDO = 0.07;
   var PL = (W - PORTA) / 2, PR = (W + PORTA) / 2;              // i pali
-  var R = 0.05, RP = 0.027, MD = 1, MP = 0.45;                 // raggio e peso: calciatori e palla
+  var R = 0.05, RP = 0.031, MD = 1, MP = 0.45;                 // raggio e peso: calciatori e palla
   var DT = 1 / 240, VMAX = 3.1, TIRA = 0.22;                   // TIRA = quanto si tira indietro il dito per la forza piena
   var ATT_D = Math.exp(-1.35 * DT), ATT_P = Math.exp(-1.05 * DT), DEC = 0.45 * DT;   // attrito dell'erba
   var E_URTO = 0.9, E_MURO = 0.75;
   var MAX_SEC = 8;                                             // un tiro dura al massimo 8 secondi
   var TEMPO = 30;                                              // online: secondi per tirare
-  var ROSSO = "#ef4d4d", BLU = "#2fa8e6";
+  var GIALLO = "#ffcc1f", BLU = "#2f7dff", NOTTE = "#0d1533";   // le due squadre: gialli (sotto) e blu (sopra)
+  function colore(q) { return q === 0 ? GIALLO : BLU; }
   // formazione: [x, distanza dalla PROPRIA linea di fondo]; l'ultimo è l'attaccante (si mette a centrocampo)
   var FORM = [[0.5, 0.075], [0.2, 0.36], [0.5, 0.42], [0.8, 0.36], [0.5, 0]];
 
@@ -34,7 +35,7 @@
   function r4(v) { return Math.round(v * 10000) / 10000; }
 
   // =========================================================
-  //  FISICA (pura: niente disegno). Corpo 0 = palla, 1-5 rossi (sotto), 6-10 blu (sopra)
+  //  FISICA (pura: niente disegno). Corpo 0 = palla, 1-5 gialli (sotto), 6-10 blu (sopra)
   // =========================================================
   function nuovoStato(batte) {   // batte = la squadra che dà il calcio d'inizio (il suo attaccante sta vicino alla palla)
     var s = { x: [W / 2], y: [L / 2], vx: [0], vy: [0] };
@@ -85,7 +86,7 @@
     s.vx[i] -= J * nx / mi; s.vy[i] -= J * ny / mi; s.vx[j] += J * nx / mj; s.vy[j] += J * ny / mj;
     if (ev) ev.urto = Math.max(ev.urto, -rv);
   }
-  // un passo di fisica; ritorna la squadra che ha segnato (0 = rossi nella porta in alto, 1 = blu in quella in basso) o -1
+  // un passo di fisica; ritorna la squadra che ha segnato (0 = gialli nella porta in alto, 1 = blu in quella in basso) o -1
   function passo(s, ev) {
     var i, j;
     for (i = 0; i < 11; i++) {
@@ -184,7 +185,7 @@
   // =========================================================
   //  LO SCHERMO DI GIOCO (uguale per tutti i modi): campo su tela, il resto a pezzi
   //  o = { flip: la mia squadra è la blu (la giro in basso), ruota: in due sullo stesso telefono,
-  //        nomi: [rossi, blu], omini: [rossi, blu] }
+  //        nomi: [gialli, blu], omini: [gialli, blu] }
   //  cb = { onTiro(i, vx, vy), onEsci() }
   // =========================================================
   function creaSchermo(t, cb, o) {
@@ -193,21 +194,20 @@
     var ui = { t: t, cb: cb, o: o, st: null, anim: null, mira: null, turno: 0, fase: "mira", puoi: false, mie: [], golVisto: null, scadenza: null, testo: { giu: "", su: "" } };
     var scena = el("div", { class: "cb-scena" });
     ui.cv = el("canvas", { class: "cb-campo" }); ui.ctx = ui.cv.getContext("2d");
-    ui.punti = el("div", { class: "cb-punti" }, [el("span", {})]);
-    var esci = el("button", { class: "cb-esci", "aria-label": "Esci", onclick: function () { cb.onEsci(); } }, [el("span", { text: "ESCI" })]);
-    function info(cls, q) {
-      var av = el("div", { class: "cb-av" }), nome = el("div", { class: "cb-nome" }), msg = el("div", { class: "cb-msg" });
-      var box = el("div", { class: "cb-info " + cls }, [av, el("div", { class: "cb-testi" }, [nome, msg])]);
+    var esci = el("button", { class: "cb-esci", "aria-label": "Esci", text: "‹", onclick: function () { cb.onEsci(); } });
+    // la targhetta di ognuno, vicino alla sua porta: avatar piccolo, nome, "tocca a te" e i suoi gol
+    function targa(cls, q) {
+      var av = el("div", { class: "cb-av" }), msg = el("div", { class: "cb-msg" }), gol = el("div", { class: "cb-golnum", text: "0" });
+      var box = el("div", { class: "cb-targa " + cls }, [av, el("div", { class: "cb-testi" }, [el("div", { class: "cb-nome", text: (o.nomi && o.nomi[q]) || "" }), msg]), gol]);
+      box.style.setProperty("--sq", colore(q));
       var cfg = o.omini && o.omini[q];
       if (cfg && window.SGOmino) av.innerHTML = SGOmino.svg(cfg, { busto: true });
-      nome.textContent = (o.nomi && o.nomi[q]) || "";
-      nome.style.color = q === 0 ? "#b3261e" : "#0f6aa3";
-      return { box: box, msg: msg };
+      return { box: box, msg: msg, gol: gol };
     }
     var qGiu = o.flip ? 1 : 0;
-    ui.giu = info("giu", qGiu); ui.su = info("su" + (o.ruota ? " ruota" : ""), 1 - qGiu);
+    ui.giu = targa("giu", qGiu); ui.su = targa("su" + (o.ruota ? " ruota" : ""), 1 - qGiu);
     ui.golTxt = el("div", { class: "cb-gol" });
-    [ui.cv, ui.su.box, ui.giu.box, ui.punti, esci, ui.golTxt].forEach(function (n) { scena.appendChild(n); });
+    [ui.cv, ui.su.box, ui.giu.box, esci, ui.golTxt].forEach(function (n) { scena.appendChild(n); });
     s._contenuto.appendChild(scena);
     t.mostra(s);
 
@@ -216,7 +216,7 @@
       if (!vivo()) { window.removeEventListener("resize", misura); return; }
       var cw = scena.clientWidth || 360, ch = scena.clientHeight || 640, dpr = Math.min(2, window.devicePixelRatio || 1);
       ui.cv.width = Math.round(cw * dpr); ui.cv.height = Math.round(ch * dpr); ui.cw = cw; ui.ch = ch; ui.dpr = dpr;
-      ui.S = Math.min((cw - 2 * 46) / W, (ch - 2 * 96) / (L + 2 * FONDO));
+      ui.S = Math.min((cw - 20) / W, (ch - 2 * 62) / (L + 2 * FONDO));   // il campo più grande possibile: restano solo le targhette
       ui.ox = (cw - ui.S * W) / 2; ui.oy = (ch - ui.S * L) / 2;
       sfondo(ui); disegna(ui);
     }
@@ -291,8 +291,9 @@
       if (d.st && !ui.anim) ui.st = daFoto(d.st);
       ui.turno = d.turno; ui.fase = d.fase; ui.puoi = !!d.puoi; ui.mie = d.mie || [];
       if (!ui.puoi) ui.mira = null;
-      var g = d.gol || [0, 0], a = g[qGiu], b = g[1 - qGiu];
-      ui.punti.firstChild.innerHTML = "<b style='color:" + (qGiu === 0 ? ROSSO : BLU) + "'>" + a + "</b> : <b style='color:" + (qGiu === 0 ? BLU : ROSSO) + "'>" + b + "</b>";
+      var g = d.gol || [0, 0];
+      if (ui.giu.gol.textContent !== String(g[qGiu])) ui.giu.gol.textContent = g[qGiu];
+      if (ui.su.gol.textContent !== String(g[1 - qGiu])) ui.su.gol.textContent = g[1 - qGiu];
       ui.testo = testi || { giu: "", su: "" };
       ui.scadenza = d.resto != null ? Date.now() + d.resto * 1000 : null;
       scriviTesti();
@@ -309,8 +310,9 @@
     }
     ui.timer = setInterval(function () { if (!vivo()) { clearInterval(ui.timer); return; } if (ui.scadenza) scriviTesti(); }, 1000);
     ui.mostraGol = function (q) {
-      ui.golTxt.textContent = "GOL!";
-      ui.golTxt.style.textShadow = "0 4px 0 " + (q === 0 ? "#b3261e" : "#0f6aa3") + ", 0 0 24px rgba(0,0,0,.35)";
+      ui.golTxt.textContent = "⚡ GOL! ⚡";
+      ui.golTxt.style.color = colore(q);
+      ui.golTxt.style.textShadow = "0 4px 0 " + NOTTE + ", 0 0 28px " + colore(q);
       ui.golTxt.classList.remove("su"); void ui.golTxt.offsetWidth; ui.golTxt.classList.add("su");
       suono("gol");
     };
@@ -321,33 +323,49 @@
   function sfondo(ui) {
     var c = document.createElement("canvas"); c.width = ui.cv.width; c.height = ui.cv.height;
     var g = c.getContext("2d"); g.setTransform(ui.dpr, 0, 0, ui.dpr, 0, 0);
-    var S = ui.S, ox = ui.ox, oy = ui.oy, B = Math.max(6, 0.04 * S), fw = W * S, fh = L * S, pw = PORTA * S, pd = FONDO * S, px = ox + PL * S;
-    g.fillStyle = "#ffffff";
-    g.fillRect(ox - B, oy - B, fw + 2 * B, fh + 2 * B);
-    g.fillRect(px - B, oy - pd - B, pw + 2 * B, pd + B);
-    g.fillRect(px - B, oy + fh, pw + 2 * B, pd + B);
-    rete(g, px, oy - pd, pw, pd); rete(g, px, oy + fh, pw, pd);
-    for (var i = 0; i < 10; i++) { g.fillStyle = i % 2 ? "#4ea93f" : "#57b447"; g.fillRect(ox, oy + fh * i / 10, fw, fh / 10 + 1); }
-    g.strokeStyle = "#ffffff"; g.lineWidth = Math.max(3, 0.018 * S);
+    var S = ui.S, ox = ui.ox, oy = ui.oy, B = Math.max(4, 0.022 * S), fw = W * S, fh = L * S, pw = PORTA * S, pd = FONDO * S, px = ox + PL * S;
+    var qSu = ui.o.flip ? 0 : 1;   // la squadra che difende la porta in alto (la porta ha il suo colore)
+    // bordo luminoso: giallo da una parte, blu dall'altra
+    var gb = g.createLinearGradient(0, oy - pd, 0, oy + fh + pd);
+    gb.addColorStop(0, colore(qSu)); gb.addColorStop(0.5, "#ffffff"); gb.addColorStop(1, colore(1 - qSu));
+    g.shadowColor = "rgba(0,0,0,.45)"; g.shadowBlur = 18;
+    g.fillStyle = gb; tondoRett(g, ox - B, oy - B, fw + 2 * B, fh + 2 * B, 14); g.fill();
+    g.shadowBlur = 0;
+    tondoRett(g, px - B, oy - pd - B, pw + 2 * B, pd + B + 4, 8); g.fill();
+    tondoRett(g, px - B, oy + fh - 4, pw + 2 * B, pd + B + 4, 8); g.fill();
+    rete(g, px, oy - pd, pw, pd, colore(qSu)); rete(g, px, oy + fh, pw, pd, colore(1 - qSu));
+    // erba tagliata a scacchi
+    g.save(); tondoRett(g, ox, oy, fw, fh, 10); g.clip();
+    var nx = 6, ny = 9;
+    for (var i = 0; i < nx; i++) for (var j = 0; j < ny; j++) { g.fillStyle = (i + j) % 2 ? "#3f9e3a" : "#48ab42"; g.fillRect(ox + fw * i / nx, oy + fh * j / ny, fw / nx + 1, fh / ny + 1); }
+    // righe bianche
+    g.strokeStyle = "rgba(255,255,255,.92)"; g.lineWidth = Math.max(2.5, 0.014 * S);
     g.beginPath(); g.moveTo(ox, oy + fh / 2); g.lineTo(ox + fw, oy + fh / 2); g.stroke();
-    g.beginPath(); g.arc(ox + fw / 2, oy + fh / 2, 0.1 * S, 0, Math.PI * 2); g.stroke();
-    var aw = 0.56 * S, ad = 0.17 * S;
-    g.strokeRect(ox + (fw - aw) / 2, oy, aw, ad); g.strokeRect(ox + (fw - aw) / 2, oy + fh - ad, aw, ad);
+    g.beginPath(); g.arc(ox + fw / 2, oy + fh / 2, 0.13 * S, 0, Math.PI * 2); g.stroke();
+    var aw = 0.56 * S, ad = 0.18 * S;
+    tondoRett(g, ox + (fw - aw) / 2, oy - 6, aw, ad + 6, 10); g.stroke();
+    tondoRett(g, ox + (fw - aw) / 2, oy + fh - ad, aw, ad + 6, 10); g.stroke();
+    g.restore();
+    // il fulmine di SPeeD GAME in mezzo al campo
+    g.save(); g.globalAlpha = 0.22; fulmine(g, ox + fw / 2, oy + fh / 2, 0.1 * S, "#ffffff"); g.restore();
     ui.bg = c;
   }
-  function rete(g, x, y, w, h) {
-    g.fillStyle = "#f7b9a6"; g.fillRect(x, y, w, h);
+  function tondoRett(g, x, y, w, h, r) {
+    g.beginPath(); g.moveTo(x + r, y); g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r); g.lineTo(x + w, y + h - r);
+    g.quadraticCurveTo(x + w, y + h, x + w - r, y + h); g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r); g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y); g.closePath();
+  }
+  function rete(g, x, y, w, h, col) {   // la rete della porta, del colore di chi la difende
+    g.fillStyle = NOTTE; g.fillRect(x, y, w, h);
     g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
-    g.strokeStyle = "rgba(255,255,255,.6)"; g.lineWidth = 1;
-    for (var k = -h; k < w + h; k += 7) {
-      g.beginPath(); g.moveTo(x + k, y); g.lineTo(x + k + h, y + h); g.stroke();
-      g.beginPath(); g.moveTo(x + k + h, y); g.lineTo(x + k, y + h); g.stroke();
-    }
+    g.globalAlpha = 0.55; g.strokeStyle = col; g.lineWidth = 1;
+    for (var k = 0; k < w + h; k += 6) { g.beginPath(); g.moveTo(x + k, y); g.lineTo(x + k, y + h); g.stroke(); }
+    for (var k2 = 0; k2 < h; k2 += 6) { g.beginPath(); g.moveTo(x, y + k2); g.lineTo(x + w, y + k2); g.stroke(); }
     g.restore();
   }
-  function stella(g, x, y, r) {
-    g.fillStyle = "#ffffff"; g.beginPath();
-    for (var k = 0; k < 10; k++) { var a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * 0.45 : r; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+  function fulmine(g, x, y, r, col) {   // il fulmine (come nel logo), centrato in x,y, alto 2r
+    var P = [[-0.05, -1], [0.5, -1], [0.12, -0.18], [0.48, -0.18], [-0.2, 1], [0.02, 0.12], [-0.45, 0.12]];
+    g.fillStyle = col; g.beginPath();
+    P.forEach(function (p, k) { var px = x + p[0] * r, py = y + p[1] * r; if (k) g.lineTo(px, py); else g.moveTo(px, py); });
     g.closePath(); g.fill();
   }
   function disegna(ui) {
@@ -359,31 +377,43 @@
     var S = ui.S, flip = ui.o.flip, i;
     function X(x) { return ui.ox + S * (flip ? W - x : x); }
     function Y(y) { return ui.oy + S * (flip ? L - y : y); }
-    // la mira: il cerchio della forza e il cono della direzione
-    if (ui.mira) {
-      var m = ui.mira, cx = X(s.x[m.i]), cy = Y(s.y[m.i]);
-      var dx = s.x[m.i] - m.fx, dy = s.y[m.i] - m.fy, len = Math.hypot(dx, dy), p = Math.min(1, len / TIRA);
-      g.fillStyle = "rgba(110,55,30,.3)"; g.beginPath(); g.arc(cx, cy, TIRA * S, 0, Math.PI * 2); g.fill();
+    // la mira: l'elastico fino al dito e la freccia a puntini (più lunga, più forte)
+    var m = ui.mira, pm = 0;
+    if (m) {
+      var cx = X(s.x[m.i]), cy = Y(s.y[m.i]), qm = squadraDi(m.i);
+      var dx = s.x[m.i] - m.fx, dy = s.y[m.i] - m.fy, len = Math.hypot(dx, dy); pm = Math.min(1, len / TIRA);
+      var fxs = X(m.fx), fys = Y(m.fy);
+      g.strokeStyle = colore(qm); g.globalAlpha = 0.55; g.lineWidth = 3; g.setLineDash([2, 5]);
+      g.beginPath(); g.moveTo(cx, cy); g.lineTo(fxs, fys); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
       if (len > 0.004) {
         var ux = dx / len, uy = dy / len; if (flip) { ux = -ux; uy = -uy; }
-        var lun = (0.35 + 1.15 * p) * S, w0 = R * S * 0.8, w1 = R * S * (1.4 + p), ex = cx + ux * lun, ey = cy + uy * lun, nx = -uy, ny = ux;
-        var gr = g.createLinearGradient(cx, cy, ex, ey);
-        gr.addColorStop(0, "rgba(255,255,255," + (0.35 + 0.4 * p).toFixed(2) + ")"); gr.addColorStop(1, "rgba(255,255,255,0)");
-        g.fillStyle = gr; g.beginPath();
-        g.moveTo(cx + nx * w0, cy + ny * w0); g.lineTo(ex + nx * w1, ey + ny * w1); g.lineTo(ex - nx * w1, ey - ny * w1); g.lineTo(cx - nx * w0, cy - ny * w0);
-        g.closePath(); g.fill();
+        var lun = (0.3 + 1.0 * pm) * S, k;
+        g.fillStyle = "#ffffff";
+        for (k = R * S * 1.6; k < lun; k += 11) { g.globalAlpha = 0.95 - 0.7 * k / lun; g.beginPath(); g.arc(cx + ux * k, cy + uy * k, 3.2, 0, Math.PI * 2); g.fill(); }
+        g.globalAlpha = 1;
+        var ax = cx + ux * lun, ay = cy + uy * lun, nx = -uy, ny = ux, t0 = 10;
+        g.fillStyle = colore(qm); g.strokeStyle = NOTTE; g.lineWidth = 2;
+        g.beginPath(); g.moveTo(ax + ux * t0, ay + uy * t0); g.lineTo(ax + nx * t0 * 0.8, ay + ny * t0 * 0.8); g.lineTo(ax - nx * t0 * 0.8, ay - ny * t0 * 0.8); g.closePath(); g.fill(); g.stroke();
       }
     }
-    // i calciatori
+    // i calciatori: disco del colore della squadra col fulmine
     for (i = 1; i <= 10; i++) {
       var x = X(s.x[i]), y = Y(s.y[i]), r = R * S, q = squadraDi(i);
-      g.fillStyle = "rgba(0,0,0,.22)"; g.beginPath(); g.arc(x + r * 0.16, y + r * 0.22, r, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#151515"; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
-      g.fillStyle = q === 0 ? ROSSO : BLU; g.beginPath(); g.arc(x, y, r * 0.8, 0, Math.PI * 2); g.fill();
-      stella(g, x, y, r * 0.46);
-      if (ui.fase === "mira" && q === ui.turno && !ui.anim) {   // chi deve tirare
-        g.strokeStyle = "rgba(255,255,255,.9)"; g.lineWidth = 2; g.setLineDash([4, 4]);
-        g.beginPath(); g.arc(x, y, r + 4, 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
+      g.fillStyle = "rgba(0,0,0,.28)"; g.beginPath(); g.arc(x + r * 0.12, y + r * 0.2, r, 0, Math.PI * 2); g.fill();
+      g.fillStyle = NOTTE; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+      var gd = g.createRadialGradient(x - r * 0.3, y - r * 0.35, r * 0.1, x, y, r * 0.86);
+      gd.addColorStop(0, "#ffffff"); gd.addColorStop(0.28, colore(q)); gd.addColorStop(1, q === 0 ? "#d99a00" : "#1c4fc4");
+      g.fillStyle = gd; g.beginPath(); g.arc(x, y, r * 0.84, 0, Math.PI * 2); g.fill();
+      fulmine(g, x, y, r * 0.5, q === 0 ? NOTTE : "#ffffff");
+      if (ui.fase === "mira" && q === ui.turno && !ui.anim) {   // chi deve tirare: un anello che gira intorno
+        g.strokeStyle = colore(q); g.lineWidth = 2.5; g.setLineDash([5, 4]);
+        g.beginPath(); g.arc(x, y, r + 5, 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
+      }
+      if (m && m.i === i) {   // la forza: un anello che si riempie (verde, giallo, rosso)
+        g.strokeStyle = "rgba(255,255,255,.25)"; g.lineWidth = 6;
+        g.beginPath(); g.arc(x, y, r + 9, 0, Math.PI * 2); g.stroke();
+        g.strokeStyle = "hsl(" + Math.round(120 - 120 * pm) + ",90%,55%)"; g.lineCap = "round";
+        g.beginPath(); g.arc(x, y, r + 9, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.02, pm)); g.stroke(); g.lineCap = "butt";
       }
     }
     // la palla
@@ -413,8 +443,8 @@
     };
     function testi() {
       if (P.fase === "gol" || P.fase === "moto") return { giu: "", su: "" };
-      if (bot) return P.turno === 0 ? { giu: "Tocca a te! Tira indietro un calciatore e lascia", su: "" } : { giu: "", su: "🤖 Matt sta pensando…" };
-      return P.turno === 0 ? { giu: "Tocca a te! Tira indietro e lascia", su: "Aspetta il tuo turno" } : { giu: "Aspetta il tuo turno", su: "Tocca a te! Tira indietro e lascia" };
+      if (bot) return P.turno === 0 ? { giu: "Tocca a te! Tira e lascia", su: "" } : { giu: "", su: "Matt pensa…" };
+      return P.turno === 0 ? { giu: "Tocca a te! Tira e lascia", su: "" } : { giu: "", su: "Tocca a te! Tira e lascia" };
     }
     function aggiorna() {
       ui.aggiorna({ st: { x: P.s.x, y: P.s.y }, gol: P.gol, turno: P.turno, fase: P.fase, puoi: P.fase === "mira" && (!bot || P.turno === 0),
@@ -469,7 +499,7 @@
     var tit = tu == null ? "Ha vinto " + d.nomi[d.vincitore] + "!" : (vinto ? "Hai vinto!" : "Ha vinto " + d.nomi[d.vincitore]);
     var s = t.schermata({ icona: vinto || tu == null ? "🏆" : "⚽", titolo: tit });
     s._contenuto.appendChild(t.el("div", { class: "cb-fine" }, [
-      t.el("div", { class: "cb-fine-riga" }, [ t.el("span", { style: "color:" + ROSSO, text: d.nomi[0] }), t.el("b", { html: "<span style='color:" + ROSSO + "'>" + d.gol[0] + "</span> : <span style='color:" + BLU + "'>" + d.gol[1] + "</span>" }), t.el("span", { style: "color:" + BLU, text: d.nomi[1] }) ])
+      t.el("div", { class: "cb-fine-riga" }, [ t.el("span", { style: "color:" + GIALLO, text: d.nomi[0] }), t.el("b", { html: "<span style='color:" + GIALLO + "'>" + d.gol[0] + "</span> : <span style='color:" + BLU + "'>" + d.gol[1] + "</span>" }), t.el("span", { style: "color:" + BLU, text: d.nomi[1] }) ])
     ]));
     if (nota) s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center", text: nota }));
     tasti.forEach(function (b) { if (b) s._piede.appendChild(b); });
@@ -632,7 +662,7 @@
   function miaSquadra(vm, cb) { for (var k = 0; k < vm.players.length; k++) if (vm.players[k].id === cb.myId) return k; return -1; }
   function disegnaOnline(t, vm, cb) {
     if (vm.fase === "lobby") { UI = null; return lobby(t, vm, cb); }
-    var me = miaSquadra(vm, cb), nomi = [(vm.players[0] || {}).nome || "Rossi", (vm.players[1] || {}).nome || "Blu"];
+    var me = miaSquadra(vm, cb), nomi = [(vm.players[0] || {}).nome || "Gialli", (vm.players[1] || {}).nome || "Blu"];
     if (vm.fase === "fine") {
       UI = null;
       var nota = vm.ritiro ? "L'avversario è uscito dalla partita." : (cb.sonoHost ? "" : "Se l'host fa un'altra partita, torni da solo nella saletta.");
@@ -642,15 +672,15 @@
     }
     if (!UI || !document.body.contains(UI.cv))
       UI = creaSchermo(t, cb, { flip: me === 1, ruota: false, nomi: nomi, omini: [(vm.players[0] || {}).omino || null, (vm.players[1] || {}).omino || null] });
-    var lui = nomi[1 - Math.max(0, me)], mio = vm.stato === "mira" && vm.turno === me;
-    var testi = vm.stato !== "mira" ? { giu: "", su: "" } : (mio ? { giu: "Tocca a te! Tira indietro un calciatore e lascia", su: "" } : { giu: "", su: "Tocca a " + lui + "…" });
+    var mio = vm.stato === "mira" && vm.turno === me;
+    var testi = vm.stato !== "mira" ? { giu: "", su: "" } : (mio ? { giu: "Tocca a te! Tira e lascia", su: "" } : { giu: "", su: "Sta mirando…" });
     UI.aggiorna({ st: vm.st, gol: vm.gol, turno: vm.turno, fase: vm.stato, puoi: mio, mie: [me], resto: vm.resto, golN: vm.golN, golDi: vm.golDi }, testi);
   }
   function lobby(t, vm, cb) {
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN,
       vuoti: Math.max(0, MIN - vm.players.length),
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
-      extra: [t.el("p", { class: "modulo-nota", text: "In due: chi apre la stanza ha i rossi, chi entra i blu. Vince chi arriva per primo a " + vm.golMax + (vm.golMax === 1 ? " gol." : " gol.") })],
+      extra: [t.el("p", { class: "modulo-nota", text: "In due: chi apre la stanza ha i gialli, chi entra i blu. Vince chi arriva per primo a " + vm.golMax + " gol." })],
       attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
   function errore(t, testo) {
@@ -671,28 +701,28 @@
     if (cssFatto) return; cssFatto = true;
     var st = document.createElement("style");
     st.textContent = [
-      ".schermata.cb-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#f3977b}",
+      ".schermata.cb-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:radial-gradient(120% 75% at 50% 50%,#1c2d6e 0%,#0d1533 72%)}",
       ".schermata.cb-piena>.testa,.schermata.cb-piena>.piede{display:none}",
       ".schermata.cb-piena>.contenuto{height:100%;margin:0;padding:0}",
       ".cb-scena{position:relative;height:var(--alt,100dvh);overflow:hidden;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}",
       ".cb-campo{position:absolute;inset:0;width:100%;height:100%;touch-action:none}",
-      ".cb-punti,.cb-esci{position:absolute;top:50%;width:42px;height:118px;margin-top:-59px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(120,40,20,.18)}",
-      ".cb-punti{left:0;border-radius:0 60px 60px 0;pointer-events:none}",
-      ".cb-punti span{display:block;transform:rotate(-90deg);white-space:nowrap;font-weight:900;font-size:1.5rem;color:#5b5b6b;letter-spacing:.04em}",
-      ".cb-esci{right:0;border:0;border-radius:60px 0 0 60px;font:inherit;cursor:pointer;padding:0}",
-      ".cb-esci span{display:block;transform:rotate(90deg);font-weight:900;font-size:1.05rem;color:#3c3c4e;letter-spacing:.06em}",
-      ".cb-info{position:absolute;left:52px;right:52px;display:flex;align-items:center;gap:10px;pointer-events:none}",
-      ".cb-info.giu{bottom:calc(12px + env(safe-area-inset-bottom))}",
-      ".cb-info.su{top:calc(12px + env(safe-area-inset-top))}",
-      ".cb-info.ruota{transform:rotate(180deg)}",
-      ".cb-av{width:44px;height:44px;flex:none;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.45);box-shadow:0 0 0 3px rgba(255,255,255,.7)}",
+      // il tasto per uscire: piccolo, nell'angolo (come negli altri giochi)
+      ".cb-esci{position:absolute;top:calc(10px + env(safe-area-inset-top));left:10px;z-index:3;width:36px;height:36px;border:0;border-radius:12px;padding:0 0 3px;cursor:pointer;font:inherit;font-size:1.4rem;font-weight:900;line-height:1;color:#fff;background:rgba(255,255,255,.14)}",
+      // la targhetta di ognuno: avatar piccolo, nome, messaggio e i suoi gol
+      ".cb-targa{position:absolute;left:50%;transform:translateX(-50%);max-width:calc(100% - 112px);display:flex;align-items:center;gap:8px;padding:3px 4px 3px 3px;border-radius:999px;pointer-events:none;",
+      "background:rgba(8,13,36,.82);box-shadow:0 0 0 2px rgba(255,255,255,.12);transition:box-shadow .25s}",
+      ".cb-targa.giu{bottom:calc(10px + env(safe-area-inset-bottom))}",
+      ".cb-targa.su{top:calc(10px + env(safe-area-inset-top))}",
+      ".cb-targa.ruota{transform:translateX(-50%) rotate(180deg)}",
+      ".cb-targa.turno{box-shadow:0 0 0 2px var(--sq),0 0 16px 2px var(--sq)}",
+      ".cb-av{width:30px;height:30px;flex:none;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.18)}",
       ".cb-av svg{width:100%;height:100%;display:block}",
       ".cb-testi{min-width:0;flex:1}",
-      ".cb-nome{font-weight:900;font-size:1.02rem;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-      ".cb-msg{font-weight:800;font-size:.86rem;line-height:1.2;color:#5a2617;min-height:1.2em}",
-      ".cb-info.turno .cb-msg{color:#fff;text-shadow:0 1px 2px rgba(90,30,15,.5)}",
-      ".cb-info.turno .cb-av{box-shadow:0 0 0 3px #fff,0 0 14px 4px rgba(255,255,255,.75)}",
-      ".cb-gol{position:absolute;left:0;right:0;top:50%;margin-top:-.6em;text-align:center;font-weight:900;font-size:clamp(3.2rem,19vw,5.6rem);line-height:1.2;color:#fff;opacity:0;pointer-events:none}",
+      ".cb-nome{font-weight:900;font-size:.8rem;line-height:1.15;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".cb-msg{font-weight:800;font-size:.68rem;line-height:1.2;color:var(--sq);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".cb-msg:empty{display:none}",
+      ".cb-golnum{flex:none;min-width:1.5em;padding:0 8px;border-radius:999px;text-align:center;font-weight:900;font-size:1.35rem;line-height:30px;color:#0d1533;background:var(--sq)}",
+      ".cb-gol{position:absolute;left:0;right:0;top:50%;margin-top:-.6em;text-align:center;font-weight:900;font-size:clamp(2.6rem,14vw,4.6rem);line-height:1.2;color:#fff;opacity:0;pointer-events:none}",
       ".cb-gol.su{animation:cbGol 1.5s ease}",
       "@keyframes cbGol{0%{opacity:0;transform:scale(.55)}15%{opacity:1;transform:scale(1.1)}30%{transform:scale(1)}80%{opacity:1}100%{opacity:0}}",
       ".cb-fine{text-align:center;margin:18px 0 8px}",

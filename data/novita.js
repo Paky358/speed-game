@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 160,
+    data: "9 ottobre 2026",
+    titolo: "Calcio Biliardo tutto nuovo ⚡",
+    descrizione: [
+      "Le squadre ora sono gialli e blu, e sui calciatori c'è il fulmine di SPeeD GAME.",
+      "Il campo è molto più grande e la palla si vede meglio. Le porte hanno il colore di chi le difende.",
+      "Mentre tiri indietro il dito vedi la freccia a puntini e un anello che si riempie: verde piano, rosso a tutta forza.",
+      "Nome, avatar e gol di ognuno stanno in una targhetta piccola vicino alla sua porta."
+    ]
+  },
+  {
     v: 159,
     data: "9 ottobre 2026",
     titolo: "Nuovo gioco: Calcio Biliardo ⚽",
