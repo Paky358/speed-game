@@ -845,6 +845,28 @@
     { gioco: "hockey", livello: "diamante", icona: "🔌", nome: "Cortocircuito Totale",      desc: "Batti il bot Difficile 5 volte di fila (una sconfitta col Difficile azzera)", stat: "serieDiffMax", meta: 5 },
     { gioco: "hockey", livello: "diamante", icona: "👑", nome: "Leggenda del Tavolo",       desc: "Segna 1.000 gol in totale",                           stat: "golFatti",          meta: 1000 },
 
+    // ---------- Calcio Biliardo ----------
+    { gioco: "calciobiliardo", livello: "bronzo",   icona: "🏟️", nome: "Esordio in Campo",      desc: "Gioca la tua prima partita",                               stat: "partite",           meta: 1 },
+    { gioco: "calciobiliardo", livello: "bronzo",   icona: "⚽", nome: "La Prima Rete",          desc: "Segna il tuo primo gol",                                    stat: "golFatti",          meta: 1 },
+    { gioco: "calciobiliardo", livello: "bronzo",   icona: "🥅", nome: "Tre Punti",              desc: "Vinci la tua prima partita",                                stat: "vittorie",          meta: 1 },
+    { gioco: "calciobiliardo", livello: "bronzo",   icona: "🤖", nome: "Matt, Attento!",         desc: "Batti Matt Facile",                                         stat: "vinte_facile",      meta: 1 },
+    { gioco: "calciobiliardo", livello: "bronzo",   icona: "😎", nome: "Faccia da Gol",          desc: "Segna con il tuo attaccante, quello col tuo avatar",        stat: "golAttaccante",     meta: 1 },
+    { gioco: "calciobiliardo", livello: "bronzo",   icona: "🚀", nome: "Partenza Lampo",         desc: "Segna col primo tiro dopo un calcio d'inizio",              stat: "golPrimoTiro",      meta: 1 },
+    { gioco: "calciobiliardo", livello: "argento",  icona: "⚡", nome: "Reti in Crescita",       desc: "Segna 25 gol in totale",                                    stat: "golFatti",          meta: 25 },
+    { gioco: "calciobiliardo", livello: "argento",  icona: "🧠", nome: "Matt alla Prova",        desc: "Batti Matt Medio",                                          stat: "vinte_medio",       meta: 1 },
+    { gioco: "calciobiliardo", livello: "argento",  icona: "🪵", nome: "Sponda Vincente",        desc: "Segna 5 gol dopo un rimbalzo sulla sponda nello stesso tiro", stat: "golSponda",         meta: 5 },
+    { gioco: "calciobiliardo", livello: "argento",  icona: "🎯", nome: "Tiro da Lontano",       desc: "Segna 5 gol partendo dalla tua metà campo",                  stat: "golLontano",        meta: 5 },
+    { gioco: "calciobiliardo", livello: "argento",  icona: "⏱️", nome: "Fischio Finale",        desc: "Vinci una partita a tempo",                                  stat: "vinteTempo",        meta: 1 },
+    { gioco: "calciobiliardo", livello: "oro",      icona: "💯", nome: "Cento Reti",             desc: "Segna 100 gol in totale",                                   stat: "golFatti",          meta: 100 },
+    { gioco: "calciobiliardo", livello: "oro",      icona: "🦾", nome: "Matt Battuto",           desc: "Batti Matt Difficile",                                      stat: "vinte_difficile",   meta: 1 },
+    { gioco: "calciobiliardo", livello: "oro",      icona: "🌐", nome: "Vittoria in Rete",       desc: "Vinci una partita online",                                  stat: "vinteOnline",       meta: 1 },
+    { gioco: "calciobiliardo", livello: "oro",      icona: "🏆", nome: "Rigori da Campione",     desc: "Vinci una partita ai rigori",                               stat: "vinteRigori",       meta: 1 },
+    { gioco: "calciobiliardo", livello: "oro",      icona: "🔄", nome: "Rimonta Completa",       desc: "Vinci dopo essere stato sotto di 2 gol",                    stat: "rimonte",           meta: 1 },
+    { gioco: "calciobiliardo", livello: "oro",      icona: "🥅", nome: "Palo e Rete",            desc: "Segna 3 gol dopo aver colpito il palo nello stesso tiro",    stat: "golPalo",           meta: 3 },
+    { gioco: "calciobiliardo", livello: "diamante", icona: "🧱", nome: "Muro Giallo e Blu",      desc: "Batti Matt Difficile senza subire gol, segnandone almeno 3", stat: "cappotti_difficile", meta: 1 },
+    { gioco: "calciobiliardo", livello: "diamante", icona: "👑", nome: "Cinque Volte Matt",      desc: "Batti Matt Difficile 5 volte",                               stat: "vinte_difficile",   meta: 5 },
+    { gioco: "calciobiliardo", livello: "diamante", icona: "🤝", nome: "Amici in Rete",          desc: "Vinci 10 partite online",                                   stat: "vinteOnline",       meta: 10 },
+
     // ---------- Scopone (classico + scientifico, contro il computer) ----------
     { gioco: "scopone", livello: "bronzo",   icona: "🪑", nome: "Il Tavolo dei Grandi",     desc: "Gioca la tua prima partita",                          stat: "partite",           meta: 1 },
     { gioco: "scopone", livello: "bronzo",   icona: "📜", nome: "Tradizione",               desc: "Vinci una partita a Scopone Classico",                stat: "vinteClassico",     meta: 1 },

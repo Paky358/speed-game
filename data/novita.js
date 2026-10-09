@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 164,
+    data: "9 ottobre 2026",
+    titolo: "Trofei di Calcio Biliardo ⚽",
+    descrizione: [
+      "Arrivano 20 trofei: si parte con la prima partita e i primi gol, poi si punta a battere Matt, vincere online e segnare con tiri speciali.",
+      "I trofei più rari premiano chi batte Matt Difficile più volte, senza subire gol, o vince 10 partite online."
+    ]
+  },
+  {
     v: 163,
     data: "9 ottobre 2026",
     titolo: "Calcio Biliardo: la tua faccia in campo, partita a tempo e rigori ⚽",
