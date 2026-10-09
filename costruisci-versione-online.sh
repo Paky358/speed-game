@@ -70,5 +70,7 @@ if [ -d app ]; then rm -rf dist/app && cp -r app dist/app; fi
 [ -e sw.js ] && cp sw.js dist/sw.js
 # Elenchi di parole caricati solo quando servono (es. Nomi, Cose e Città): restano file a parte, non pesano sull'app
 if [ -d parole ]; then rm -rf dist/parole && cp -r parole dist/parole; fi
+# Suoni registrati (es. lo stadio di Calcio Biliardo): file a parte, scaricati solo quando servono
+if [ -d suoni ]; then rm -rf dist/suoni && cp -r suoni dist/suoni; fi
 
 echo "Creato $OUT"

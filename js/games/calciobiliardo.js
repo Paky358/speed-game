@@ -157,126 +157,75 @@
   }
 
   // =========================================================
-  //  SUONI DA STADIO (fatti col codice, niente file): il calcio al pallone, il pallone che
-  //  rotola, i calciatori che si scontrano, la sponda, il palo con l'"uuuh", la folla sotto,
-  //  gli applausi a ritmo e l'urlo al gol. Si spengono col tasto 🔊 (resta ricordato).
+  //  SUONI DA STADIO: registrazioni vere (Mixkit, uso libero anche nelle app) in suoni/calcio/:
+  //  la folla coi cori sotto la partita, le urla al gol, il calcio al pallone, il colpo sul palo.
+  //  Fatti col codice restano solo il "clac" dei calciatori e il tonfo sulle sponde.
+  //  Si scaricano solo quando si gioca a Calcio Biliardo. Si spengono col tasto 🔊 (resta ricordato).
   //  Vibrazione solo quando prendi un calciatore.
   // =========================================================
   var CHIAVE_SUONI = "sg-cb-suoni";
+  var REGISTRAZIONI = { folla: "suoni/calcio/folla.mp3", gol: "suoni/calcio/gol.mp3", palo: "suoni/calcio/palo.mp3", calcio: "suoni/calcio/calcio.mp3" };
+  var BUF = {}, caricati = false, FOLLA = null, follaVoluta = false;
   function suoniOn() { try { return localStorage.getItem(CHIAVE_SUONI) !== "0"; } catch (e) { return true; } }
   function ac() { if (!suoniOn()) return null; try { return (window.SG && SG.audioCtx && SG.audioCtx()) || null; } catch (e) { return null; } }
-  var bufRumore = null;
-  function rumore(c) {   // 2 secondi di fruscio (un po' "scuro"), riusato da tutti i suoni
-    if (bufRumore && bufRumore.sampleRate === c.sampleRate) return bufRumore;
-    var n = c.sampleRate * 2, b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0), sc = 0;
-    for (var i = 0; i < n; i++) { var w = Math.random() * 2 - 1; sc = (sc + 0.02 * w) / 1.02; d[i] = w * 0.55 + sc * 3.2; }
-    return (bufRumore = b);
+  function caricaSuoni() {
+    var c = ac(); if (!c || caricati || !window.fetch) return; caricati = true;
+    Object.keys(REGISTRAZIONI).forEach(function (k) {
+      fetch(REGISTRAZIONI[k]).then(function (r) { if (!r.ok) throw new Error("manca"); return r.arrayBuffer(); })
+        .then(function (dati) { return new Promise(function (ok, no) { c.decodeAudioData(dati, ok, no); }); })
+        .then(function (b) { BUF[k] = b; if (k === "folla" && follaVoluta) follaAvvia(); })
+        .catch(function () {});
+    });
   }
-  function busta(c, nodo, t0, picco, attacco, durata) {   // sale in fretta e si spegne
-    var g = c.createGain();
-    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(picco, t0 + attacco); g.gain.exponentialRampToValueAtTime(0.0001, t0 + attacco + durata);
-    nodo.connect(g); g.connect(c.destination); return g;
-  }
-  function fruscio(c, t0, tipo, freq, q, picco, durata) {
-    var s = c.createBufferSource(); s.buffer = rumore(c);
-    var f = c.createBiquadFilter(); f.type = tipo; f.frequency.value = freq; f.Q.value = q || 0.7;
-    s.connect(f); busta(c, f, t0, picco, 0.004, durata); s.start(t0, Math.random() * 1.5); s.stop(t0 + durata + 0.05);
-  }
-  function nota(c, t0, tipo, f0, f1, picco, durata) {
-    var o = c.createOscillator(); o.type = tipo; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f1, t0 + durata);
-    busta(c, o, t0, picco, 0.003, durata); o.start(t0); o.stop(t0 + durata + 0.05);
+  function suona(k, vol, vel) {   // fa partire una registrazione (vol 0-1, vel = velocità per non sentirla sempre uguale)
+    var c = ac(), b = BUF[k]; if (!c || !b) return null;
+    try {
+      var s = c.createBufferSource(), g = c.createGain(); s.buffer = b; if (vel) s.playbackRate.value = vel;
+      g.gain.value = vol; s.connect(g); g.connect(c.destination); s.start(); return { s: s, g: g, c: c };
+    } catch (e) { return null; }
   }
   var ultimi = {};
   function presto(k, ms) { var n = Date.now(); if (n - (ultimi[k] || 0) < ms) return true; ultimi[k] = n; return false; }
-  function sCalcio(f) {   // il calcio al pallone: il colpo sordo della pancia del pallone + lo schiocco del cuoio
-    var c = ac(); if (!c || presto("calcio", 60)) return; var t = c.currentTime, k = Math.min(1, f);
-    try { nota(c, t, "sine", 150 + 70 * k, 50, 0.22 + 0.45 * k, 0.17); fruscio(c, t, "bandpass", 1300 + 700 * k, 1.1, 0.07 + 0.2 * k, 0.05); } catch (e) {}
+  function nota(c, t0, tipo, f0, f1, picco, durata) {   // un suono corto fatto col codice (per clac e tonfi)
+    var o = c.createOscillator(), g = c.createGain(); o.type = tipo;
+    o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f1, t0 + durata);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(picco, t0 + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t0 + durata);
+    o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + durata + 0.05);
+  }
+  function sCalcio(f) {   // il calcio al pallone (registrazione vera), più forte se il colpo è forte
+    if (presto("calcio", 70)) return; var k = Math.min(1, f);
+    suona("calcio", 0.25 + 0.75 * k, 0.94 + Math.random() * 0.12);
   }
   function sDischi(f) {   // due calciatori che si scontrano: "clac"
-    var c = ac(); if (!c || presto("dischi", 50)) return; var t = c.currentTime, k = Math.min(1, f);
-    try { fruscio(c, t, "bandpass", 2600, 3, 0.05 + 0.16 * k, 0.035); nota(c, t, "triangle", 950, 420, 0.03 + 0.09 * k, 0.04); } catch (e) {}
+    var c = ac(); if (!c || presto("dischi", 50)) return; var k = Math.min(1, f);
+    try { nota(c, c.currentTime, "triangle", 1100, 500, 0.04 + 0.12 * k, 0.05); } catch (e) {}
   }
   function sSponda(f) {   // contro il bordo: un tonfo
-    var c = ac(); if (!c || presto("sponda", 70)) return; var t = c.currentTime, k = Math.min(1, f);
-    try { nota(c, t, "sine", 120, 58, 0.07 + 0.22 * k, 0.12); fruscio(c, t, "lowpass", 500, 0.7, 0.04 + 0.1 * k, 0.08); } catch (e) {}
+    var c = ac(); if (!c || presto("sponda", 70)) return; var k = Math.min(1, f);
+    try { nota(c, c.currentTime, "sine", 120, 58, 0.06 + 0.2 * k, 0.12); } catch (e) {}
   }
-  function sTiro(p) {   // il dito lascia: lo "swish" del calciatore che parte
-    var c = ac(); if (!c) return; var t = c.currentTime;
-    try { var s = c.createBufferSource(); s.buffer = rumore(c); var f = c.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 1.2;
-      f.frequency.setValueAtTime(500, t); f.frequency.exponentialRampToValueAtTime(1800 + 1200 * p, t + 0.14);
-      s.connect(f); busta(c, f, t, 0.03 + 0.08 * p, 0.03, 0.12); s.start(t, Math.random()); s.stop(t + 0.2); } catch (e) {}
+  function sPalo(f) {   // il palo: colpo sul metallo (registrazione vera)
+    if (presto("palo", 300)) return;
+    suona("palo", 0.35 + 0.6 * Math.min(1, f), 0.9 + Math.random() * 0.1);
   }
-  // l'urlo della folla: un'ondata che sale (gol) o un "uuuh" che scende (palo)
-  function sUrlo(forte, durata, scende) {
-    var c = ac(); if (!c) return; var t = c.currentTime;
-    try {
-      var s = c.createBufferSource(); s.buffer = rumore(c); s.loop = true;
-      var bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 0.9;
-      bp.frequency.setValueAtTime(scende ? 1100 : 750, t); bp.frequency.linearRampToValueAtTime(scende ? 420 : 1500, t + durata * (scende ? 0.9 : 0.35));
-      var g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(forte, t + (scende ? 0.15 : 0.3));
-      g.gain.setValueAtTime(forte, t + durata * 0.45); g.gain.exponentialRampToValueAtTime(0.0001, t + durata);
-      s.connect(bp); bp.connect(g); g.connect(c.destination); s.start(t, Math.random()); s.stop(t + durata + 0.1);
-      // le voci: tanti "ooo" un po' stonati, come una curva intera
-      var v = c.createBiquadFilter(); v.type = "bandpass"; v.frequency.value = 560; v.Q.value = 2.2;
-      var gv = c.createGain(); gv.gain.setValueAtTime(0.0001, t); gv.gain.exponentialRampToValueAtTime(forte * 0.3, t + 0.3); gv.gain.exponentialRampToValueAtTime(0.0001, t + durata);
-      v.connect(gv); gv.connect(c.destination);
-      for (var k = 0; k < 7; k++) {
-        var o = c.createOscillator(); o.type = "sawtooth"; var f0 = (scende ? 340 : 250) * (1 + (Math.random() - 0.5) * 0.1);
-        o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f0 * (scende ? 0.72 : 1.3), t + durata);
-        o.connect(v); o.start(t + Math.random() * 0.08); o.stop(t + durata + 0.1);
-      }
-    } catch (e) {}
+  function sGol() {   // le urla dei tifosi e la folla che si alza per un momento
+    suona("gol", 1);
+    if (FOLLA) { try { var t = FOLLA.c.currentTime; FOLLA.g.gain.cancelScheduledValues(t); FOLLA.g.gain.setValueAtTime(0.5, t); FOLLA.g.gain.linearRampToValueAtTime(0.22, t + 6); } catch (e) {} }
   }
-  function sPalo(f) {   // il palo: "dinnn" e la folla che fa "uuuh"
-    var c = ac(); if (!c || presto("palo", 400)) return; var t = c.currentTime;
-    try { nota(c, t, "triangle", 1750, 1650, 0.12 + 0.12 * Math.min(1, f), 0.35); nota(c, t, "sine", 2630, 2600, 0.05, 0.3); } catch (e) {}
-    if (f > 0.6) sUrlo(0.14, 1.5, true);
-  }
-  function sApplausi() {   // la curva che batte le mani a ritmo: clap, clap, clap-clap-clap (due volte)
-    var c = ac(); if (!c) return; var t0 = c.currentTime + 0.05;
-    try {
-      [0, 0.5, 1.0, 1.25, 1.5, 2.2, 2.7, 3.2, 3.45, 3.7].forEach(function (b) {
-        for (var k = 0; k < 7; k++) fruscio(c, t0 + b + Math.random() * 0.035, "bandpass", 1500 + Math.random() * 900, 0.9, 0.035, 0.035);
-      });
-    } catch (e) {}
-  }
-  // la folla sotto, sempre (piano), e il pallone che rotola mentre corre
-  var FOLLA = null, ROTOLA = null;
+  // la folla coi cori, sempre sotto la partita (piano), in giro continuo
   function follaAvvia() {
+    follaVoluta = true;
     var c = ac(); if (!c || FOLLA) return;
-    try {
-      var s = c.createBufferSource(); s.buffer = rumore(c); s.loop = true;
-      var bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 680; bp.Q.value = 0.55;
-      var g = c.createGain(); g.gain.setValueAtTime(0.0001, c.currentTime); g.gain.exponentialRampToValueAtTime(0.045, c.currentTime + 1.6);
-      var lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 0.16; lg.gain.value = 0.016; lfo.connect(lg); lg.connect(g.gain);
-      s.connect(bp); bp.connect(g); g.connect(c.destination); s.start(); lfo.start();
-      FOLLA = { c: c, s: s, g: g, lfo: lfo };
-    } catch (e) {}
+    if (!BUF.folla) { caricaSuoni(); return; }   // parte appena è scaricata
+    var f = suona("folla", 0.0001); if (!f) return;
+    f.s.loop = true;
+    try { f.g.gain.setValueAtTime(0.0001, c.currentTime); f.g.gain.exponentialRampToValueAtTime(0.22, c.currentTime + 1.5); } catch (e) {}
+    FOLLA = f;
   }
   function follaFerma() {
+    follaVoluta = false;
     var F = FOLLA; FOLLA = null; if (!F) return;
-    try { var t = F.c.currentTime; F.g.gain.cancelScheduledValues(t); F.g.gain.setValueAtTime(0.03, t); F.g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5); F.s.stop(t + 0.6); F.lfo.stop(t + 0.6); } catch (e) {}
-  }
-  function rotolaAvvia() {
-    var c = ac(); if (!c || ROTOLA) return;
-    try {
-      var s = c.createBufferSource(); s.buffer = rumore(c); s.loop = true;
-      var f = c.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 200; f.Q.value = 0.8;
-      var g = c.createGain(); g.gain.value = 0.0001;
-      var lfo = c.createOscillator(), lg = c.createGain(); lfo.type = "triangle"; lfo.frequency.value = 6; lg.gain.value = 0; lfo.connect(lg); lg.connect(g.gain);   // le cuciture del pallone
-      s.connect(f); f.connect(g); g.connect(c.destination); s.start(0, Math.random()); lfo.start();
-      ROTOLA = { c: c, s: s, f: f, g: g, lfo: lfo, lg: lg };
-    } catch (e) {}
-  }
-  function rotolaVel(v) {
-    if (!ROTOLA) return;
-    try { var t = ROTOLA.c.currentTime, k = Math.min(1, v / 2.4);
-      ROTOLA.g.gain.setTargetAtTime(0.0001 + 0.1 * k, t, 0.04); ROTOLA.f.frequency.setTargetAtTime(160 + 520 * k, t, 0.04);
-      ROTOLA.lfo.frequency.setTargetAtTime(4 + 18 * k, t, 0.04); ROTOLA.lg.gain.setTargetAtTime(0.03 * k, t, 0.04); } catch (e) {}
-  }
-  function rotolaFerma() {
-    var R0 = ROTOLA; ROTOLA = null; if (!R0) return;
-    try { var t = R0.c.currentTime; R0.g.gain.cancelScheduledValues(t); R0.g.gain.setTargetAtTime(0.0001, t, 0.05); R0.lg.gain.setTargetAtTime(0, t, 0.05); R0.s.stop(t + 0.35); R0.lfo.stop(t + 0.35); } catch (e) {}
+    try { var t = F.c.currentTime; F.g.gain.cancelScheduledValues(t); F.g.gain.setValueAtTime(0.2, t); F.g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6); F.s.stop(t + 0.7); } catch (e) {}
   }
   function vibra(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
 
@@ -289,15 +238,14 @@
   function creaSchermo(t, cb, o) {
     stile();
     var el = t.el, s = t.schermata({}); s.classList.add("cb-piena");
-    var ui = { t: t, cb: cb, o: o, st: null, anim: null, mira: null, zoom: 1, turno: 0, fase: "mira", puoi: false, mie: [], golVisto: null, scadenza: null, testo: { giu: "", su: "" },
-      prossimoCoro: Date.now() + 20000 + Math.random() * 15000 };
+    var ui = { t: t, cb: cb, o: o, st: null, anim: null, mira: null, zoom: 1, turno: 0, fase: "mira", puoi: false, mie: [], golVisto: null, scadenza: null, testo: { giu: "", su: "" } };
     var scena = el("div", { class: "cb-scena" });
     ui.cv = el("canvas", { class: "cb-campo" }); ui.ctx = ui.cv.getContext("2d");
     var esci = el("button", { class: "cb-esci", "aria-label": "Esci", text: "‹", onclick: function () { cb.onEsci(); } });
     var audio = el("button", { class: "cb-audio", "aria-label": "Suoni", text: suoniOn() ? "🔊" : "🔇", onclick: function () {
       var on = !suoniOn(); try { localStorage.setItem(CHIAVE_SUONI, on ? "1" : "0"); } catch (e) {}
       audio.textContent = on ? "🔊" : "🔇";
-      if (on) follaAvvia(); else { follaFerma(); rotolaFerma(); }
+      if (on) follaAvvia(); else follaFerma();
     } });
     // la targhetta di ognuno, vicino alla sua porta: avatar piccolo, nome, "tocca a te" e i suoi gol
     function targa(cls, q) {
@@ -358,7 +306,7 @@
     function lascia(e) {
       var m = ui.mira; if (!m || e.pointerId !== m.id) return;
       var fz = forza(ui); ui.mira = null;
-      if (e.type === "pointerup" && fz.p >= 0.07 && ui.puoi) { sTiro(fz.p); cb.onTiro(m.i, fz.ux * VMAX * fz.p, fz.uy * VMAX * fz.p); }
+      if (e.type === "pointerup" && fz.p >= 0.07 && ui.puoi) { cb.onTiro(m.i, fz.ux * VMAX * fz.p, fz.uy * VMAX * fz.p); }
       gira();
     }
     ui.cv.addEventListener("pointerup", lascia);
@@ -368,7 +316,7 @@
     function gira() { if (!ui.raf) ui.raf = requestAnimationFrame(loop); }
     function loop(now) {
       ui.raf = null;
-      if (!vivo()) { rotolaFerma(); return; }
+      if (!vivo()) return;
       // la telecamera: più tiri forte, più si alza (il campo si rimpicciolisce e c'è più posto per il dito)
       var zMira = ui.mira ? 1 - ZOOM_MAX * forza(ui).p : 1;
       ui.zoom += (zMira - ui.zoom) * 0.22; if (Math.abs(zMira - ui.zoom) < 0.002) ui.zoom = zMira;
@@ -384,10 +332,8 @@
         if (ev.dischi > 0.06) sDischi(ev.dischi / 2.4);
         if (ev.muro > 0.25) sSponda(ev.muro / 2.4);
         if (ev.palo > 0.2) sPalo(ev.palo / 2.4);
-        rotolaVel(Math.hypot(A.s.vx[0], A.s.vy[0]));
         if (fine) {
           if (g < 0) ferma(A.s);
-          rotolaFerma();
           ui.anim = null; ui.st = A.s; disegna(ui);
           A.fatto(g, A.s);
           if (ui.zoom !== 1) gira();
@@ -402,7 +348,6 @@
       var s0 = daFoto(tiro.st);
       s0.vx[tiro.i] = tiro.vx; s0.vy[tiro.i] = tiro.vy;
       ui.mira = null; ui.anim = { s: s0, acc: 0, passi: 0, fatto: fatto || function () {} };
-      rotolaAvvia();
       gira();
     };
     // aggiorna solo quello che cambia (testi, punti, posizioni da ferme)
@@ -428,18 +373,15 @@
       if (ui.su.msg.textContent !== (ui.testo.su || "")) ui.su.msg.textContent = ui.testo.su || "";
     }
     ui.timer = setInterval(function () {
-      if (!vivo()) { clearInterval(ui.timer); follaFerma(); rotolaFerma(); return; }   // finita la partita: lo stadio si spegne
+      if (!vivo()) { clearInterval(ui.timer); follaFerma(); return; }   // finita la partita: lo stadio si spegne
       if (ui.scadenza) scriviTesti();
-      if (Date.now() > ui.prossimoCoro) { ui.prossimoCoro = Date.now() + 25000 + Math.random() * 20000; sApplausi(); }   // ogni tanto la curva batte le mani
     }, 1000);
     ui.mostraGol = function (q) {
       ui.golTxt.textContent = "⚡ GOL! ⚡";
       ui.golTxt.style.color = colore(q);
       ui.golTxt.style.textShadow = "0 4px 0 " + NOTTE + ", 0 0 28px " + colore(q);
       ui.golTxt.classList.remove("su"); void ui.golTxt.offsetWidth; ui.golTxt.classList.add("su");
-      sUrlo(0.3, 3.2);                                  // lo stadio esplode
-      setTimeout(function () { if (vivo()) sApplausi(); }, 1700);
-      ui.prossimoCoro = Date.now() + 25000 + Math.random() * 15000;
+      sGol();                                           // le urla dei tifosi
     };
     return ui;
   }

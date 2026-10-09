@@ -9,12 +9,21 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 162,
+    data: "9 ottobre 2026",
+    titolo: "Calcio Biliardo: suoni veri dello stadio 📣",
+    descrizione: [
+      "Al posto dei suoni fatti al computer ora ci sono registrazioni vere: i cori dei tifosi sotto la partita, le urla quando si segna, il calcio al pallone e il colpo sul palo.",
+      "Si scaricano solo quando giochi a Calcio Biliardo. Col tasto 🔊 in alto a destra li spegni."
+    ]
+  },
+  {
     v: 161,
     data: "9 ottobre 2026",
     titolo: "Calcio Biliardo: lo stadio si sente 🏟️",
     descrizione: [
-      "Suoni veri del pallone: il colpo quando lo calci, il pallone che rotola, i calciatori che si scontrano, le sponde e il palo.",
-      "Sotto c'è la folla dello stadio: ogni tanto batte le mani a ritmo, al gol esplode e quando prendi il palo fa «uuuh». Col tasto 🔊 in alto a destra li spegni.",
+      "Suoni del pallone: il colpo quando lo calci, i calciatori che si scontrano, le sponde e il palo.",
+      "Sotto c'è la folla dello stadio. Col tasto 🔊 in alto a destra spegni i suoni.",
       "Tiri forti anche dai bordi: più tiri indietro il dito, più la telecamera si alza e il campo si rimpicciolisce. Vicino al bordo dello schermo la forza piena arriva prima che il dito esca dallo schermo."
     ]
   },
