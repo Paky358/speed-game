@@ -605,24 +605,27 @@
     var s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
     return h > 0 ? (h + "h " + m + "m") : (m > 0 ? (m + "m") : "poco");
   }
-  // riquadro con saldo fiches + tasto per ritirare il bonus gratis (il regalo del giorno: 1.000 monete, torna a mezzanotte)
-  // dopo(nuovo) = facoltativo, avvisa chi lo usa (es. la saletta online) del nuovo saldo
+  // riquadro con saldo fiches + tasto per la ruota del giorno (monete o XP, un giro al giorno: torna a mezzanotte)
+  // dopo(nuovo, piu) = facoltativo, avvisa chi lo usa (es. la saletta online) del nuovo saldo e di quante monete sono arrivate
   function riquadroBonus(el, dopo) {
     var box = el("div", { style: "background:var(--carta,#1b1836);border-radius:14px;padding:12px;margin-bottom:12px;text-align:center;box-shadow:var(--ombra,0 6px 16px rgba(0,0,0,.3))" });
     var saldo = SGNube.monete ? SGNube.monete() : 0;   // le fiches sono le Speed Coins del profilo
     var testoSaldo = el("div", { style: "font-size:1.1rem;margin-bottom:8px;color:#ffe58a;font-weight:800", html: "🪙 Hai <b>" + fmt(saldo) + "</b> Speed Coins" });
     var b = el("button", { class: "btn btn-primario", style: "margin:0" });
     function agg() {
-      if (SGNube.puoRitirareBonus()) { b.disabled = false; b.textContent = "🎁 Regalo del giorno: " + fmt(SGNube.bonusImporto) + " monete"; }
-      else { b.disabled = true; b.textContent = "⏳ Nuovo regalo tra " + fmtTempo(SGNube.prossimoBonusMs()) + " (a mezzanotte)"; }
+      if (SGNube.puoRitirareBonus()) { b.disabled = false; b.textContent = "🎡 Gira la ruota del giorno: monete o XP"; }
+      else { b.disabled = true; b.textContent = "⏳ Nuovo giro della ruota tra " + fmtTempo(SGNube.prossimoBonusMs()) + " (a mezzanotte)"; }
     }
     b.onclick = function () {
-      b.disabled = true;
-      SGNube.ritiraBonus().then(function (nuovo) {
-        testoSaldo.innerHTML = "🪙 Hai <b>" + fmt(nuovo) + "</b> Speed Coins  ·  +" + fmt(SGNube.bonusImporto) + " 🎉";
-        suonoChip(); agg();
-        if (dopo) dopo(nuovo);
-      }).catch(function () { agg(); });
+      if (!(window.SG && SG.ruotaDelGiorno)) return;
+      var prima = SGNube.monete ? SGNube.monete() : 0;
+      SG.ruotaDelGiorno(function (res) {
+        var piu = res.coins - prima;
+        testoSaldo.innerHTML = "🪙 Hai <b>" + fmt(res.coins) + "</b> Speed Coins" + (piu > 0 ? "  ·  +" + fmt(piu) + " 🎉" : "");
+        if (piu > 0) suonoChip();
+        agg();
+        if (dopo && piu) dopo(res.coins, piu);
+      });
     };
     agg();
     box.appendChild(testoSaldo); box.appendChild(b);
@@ -1258,7 +1261,7 @@
     function refresh() { tav.aggiorna(vistaBJ(st)); }
     tav = tavoloBJ(t, {
       avatari: function () { return avatari; },
-      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · ritira il regalo!") : ("👤 " + prof.nome + " · gioca con le tue Speed Coins")) : "Un telefono · Banco: Matt",
+      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · gira la ruota del giorno!") : ("👤 " + prof.nome + " · gioca con le tue Speed Coins")) : "Un telefono · Banco: Matt",
       puoAgire: function () { return true; },
       puoNuova: function () { return true; },
       guida: function () { return true; },
@@ -1295,8 +1298,8 @@
     seats[0].omino = mioAvatar(seats[0].nome);
     var M = null, rete = null, codice = "…", tav = null, pronta = false;
     // bonus ritirato in saletta: si gioca con le fiches nuove (e se eri a zero non è più di prova)
-    var boxBonus = prof ? riquadroBonus(t.el, function (nuovo) {
-      if (M) { if (!provaHost) { M.st.giocatori[0].fiches += SGNube.bonusImporto; bcast(); } return; }
+    var boxBonus = prof ? riquadroBonus(t.el, function (nuovo, piu) {
+      if (M) { if (!provaHost) { M.st.giocatori[0].fiches += piu; bcast(); } return; }
       if (nuovo >= BJ.PUNTATA_MIN) { provaHost = false; seats[0].fiches = nuovo; }
     }) : null;
 
@@ -1357,7 +1360,7 @@
         } else if (m.t === "fiches" && typeof m.fiches === "number") {   // chi aspetta ha ritirato il bonus
           var sf = seatDiId(id);
           if (sf > 0 && !M) seats[sf].fiches = m.fiches;
-          else if (sf > 0 && M && m.piu > 0) { M.st.giocatori[sf].fiches += Math.min(m.piu, (window.SGNube && SGNube.bonusImporto) || 300); bcast(); }   // ritirato proprio mentre partiva
+          else if (sf > 0 && M && m.piu > 0) { M.st.giocatori[sf].fiches += Math.min(m.piu, 10000); bcast(); }   // ritirato proprio mentre partiva (al massimo il premio grosso della ruota coi livelli saliti)
         } else if (M && m.t === "mossa") {
           var seat = seatDiId(id); if (seat < 0) return;
           if (m.kind === "punta") M.punta(seat, m.val);            // le puntate arrivano da tutti insieme
@@ -1377,12 +1380,12 @@
     var el = t.el, prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     var S = { rete: null, nome: "", mioSeat: -1, tav: null, giocatori: [], fiches: null };
     // anche chi entra da invito ritira il bonus in saletta: l'host si segna le fiches nuove
-    var boxBonus = prof ? riquadroBonus(el, function (nuovo) {
+    var boxBonus = prof ? riquadroBonus(el, function (nuovo, piu) {
       if (!S.rete) return;
       if (!S.tav) {
         if (nuovo >= BJ.PUNTATA_MIN) { S.fiches = nuovo; S.prova = false; }
         S.rete.invia({ t: "fiches", fiches: S.fiches });
-      } else if (!S.prova) S.rete.invia({ t: "fiches", fiches: nuovo, piu: SGNube.bonusImporto });   // la partita era appena partita
+      } else if (!S.prova) S.rete.invia({ t: "fiches", fiches: nuovo, piu: piu });   // la partita era appena partita
     }) : null;
     if (prof) {   // già loggato col profilo: entra diretto, niente da riscrivere
       S.nome = prof.nome;

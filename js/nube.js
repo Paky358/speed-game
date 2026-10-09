@@ -18,9 +18,14 @@
     appId: "1:768605679598:web:11ea341e4f41327755e8ff"
   };
   // UNA MONETA SOLA (dal 4 ott 2026): le fiches del Casinò sono le Speed Coins del profilo (campo "coins").
-  // Si parte con 1.000 monete; il regalo è di 1.000 monete al giorno (torna a mezzanotte).
+  // Si parte con 1.000 monete; ogni giorno si gira la ruota del giorno (monete o XP, torna a mezzanotte).
   var MONETE_START = 1000;
-  var BONUS = 1000;   // il regalo del giorno: si ritira una volta al giorno, torna disponibile a mezzanotte
+  var BONUS = 1000;   // il vecchio regalo fisso (resta per ritiraBonus; ora si usa la ruota qui sotto)
+  // la ruota del giorno: spicchi in ordine (monete e XP alternati), ognuno esce 1 volta su 12
+  var RUOTA = [
+    { monete: 5000, top: true }, { xp: 250 }, { monete: 1000 }, { xp: 500 }, { monete: 500 }, { xp: 1000 },
+    { monete: 2000 }, { xp: 250 }, { monete: 1000 }, { xp: 2000, top: true }, { monete: 1500 }, { xp: 500 }
+  ];
   function giornoDi(ms) { var d = new Date(ms); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
   function regaloPronto() { return !!(profilo && (!profilo.bonusUltimo || giornoDi(profilo.bonusUltimo) !== giornoDi(Date.now()))); }
   function finoAMezzanotte() { var d = new Date(); d.setHours(24, 0, 0, 0); return Math.max(0, d.getTime() - Date.now()); }
@@ -211,6 +216,32 @@
       setNested(profilo, "stat.blackjack.bonusRitirati", (getNested(profilo, "stat.blackjack.bonusRitirati") || 0) + 1);
       if (nuovo > (getNested(profilo, "stat.blackjack.recordFiches") || 0)) { patch["stat.blackjack.recordFiches"] = nuovo; setNested(profilo, "stat.blackjack.recordFiches", nuovo); }
       return db.collection("profili").doc(utente.uid).update(patch).then(function () { notifica(); return nuovo; });
+    },
+    // ---- la ruota del giorno (al posto del regalo fisso): un giro al giorno, torna a mezzanotte.
+    //      12 spicchi uguali, ognuno esce 1 volta su 12: in media circa 900 monete e 375 XP al giorno ----
+    ruota: RUOTA,
+    // sceglie lo spicchio e lo salva SUBITO (prima che la ruota finisca di girare: chiudere l'app non fa rigirare)
+    // ritorna { i, premio, coins, eventi } oppure null
+    giraRuota: function () {
+      if (!auth || !utente || !profilo || !regaloPronto()) return null;
+      var FV = firebase.firestore.FieldValue, i = Math.floor(Math.random() * RUOTA.length), pr = RUOTA[i];
+      var patch = { bonusUltimo: Date.now() }, eventi = [], delta = 0;
+      if (pr.xp && window.SGLivelli) {
+        var r = window.SGLivelli.aggiungi(progressione(), pr.xp), s = r.stato;
+        delta = s.coins - monete(); eventi = r.eventi;   // i premi dei livelli saliti
+        patch.level = s.level; patch.xp = s.xp; patch.prestige = s.prestige; patch.xpTot = FV.increment(pr.xp);
+        profilo.level = s.level; profilo.xp = s.xp; profilo.prestige = s.prestige; profilo.xpTot = (profilo.xpTot || 0) + pr.xp;
+      } else delta = pr.monete || 0;
+      var nuovo = monete() + delta;
+      profilo.coins = nuovo; profilo.bonusUltimo = patch.bonusUltimo;
+      if (delta) { patch.coins = FV.increment(delta); if (visto != null) visto += delta; }   // un gioco del Casinò aperto lo aggiunge al suo saldo
+      // conta i giri (servono ai trofei del regalo del giorno) e aggiorna il record di monete
+      patch["stat.blackjack.bonusRitirati"] = FV.increment(1);
+      setNested(profilo, "stat.blackjack.bonusRitirati", (getNested(profilo, "stat.blackjack.bonusRitirati") || 0) + 1);
+      if (nuovo > (getNested(profilo, "stat.blackjack.recordFiches") || 0)) { patch["stat.blackjack.recordFiches"] = nuovo; setNested(profilo, "stat.blackjack.recordFiches", nuovo); }
+      db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+      // avvisa() quando la ruota si ferma: così i trofei che scattano non escono mentre gira
+      return { i: i, premio: pr, coins: nuovo, eventi: eventi, avvisa: notifica };
     },
     // ---- amici e classifica trofei ----
     // Ognuno pubblica una "scheda" leggibile da tutti (nome, avatar, quanti trofei)

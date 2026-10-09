@@ -431,9 +431,131 @@
   }
 
   function tempoBreve(ms) { var m = Math.max(1, Math.ceil((ms || 0) / 60000)), h = Math.floor(m / 60); return h ? h + "h " + (m % 60) + "m" : m + " min"; }
+
+  // ---- La ruota del giorno (al posto del regalo fisso): un giro al giorno, torna a mezzanotte.
+  //      Spicchi di monete (oro) e di XP (viola); le regole e i premi stanno in nube.js (SGNube.ruota).
+  //      dopo(esito) = facoltativo: chi l'ha aperta aggiorna le sue monete / il suo livello ----
+  function testoPremioRuota(p) { return p.xp ? cifre(p.xp) + " XP" : cifre(p.monete); }
+  function disegnaRuotaGiorno(cv, R, lato) {
+    var dpr = Math.min(2, window.devicePixelRatio || 1), r = lato / 2, n = R.length, passo = Math.PI * 2 / n;
+    cv.width = cv.height = Math.round(lato * dpr); cv.style.width = cv.style.height = lato + "px";
+    var c = cv.getContext("2d"); c.scale(dpr, dpr); c.translate(r, r);
+    R.forEach(function (p, i) {
+      var a0 = -Math.PI / 2 + i * passo, a1 = a0 + passo, g = c.createRadialGradient(0, 0, r * 0.15, 0, 0, r);
+      if (p.top && p.xp) { g.addColorStop(0, "#5ff0d0"); g.addColorStop(1, "#0b8f78"); }
+      else if (p.top) { g.addColorStop(0, "#ff7a6b"); g.addColorStop(1, "#c3171f"); }
+      else if (p.xp) { g.addColorStop(0, i % 4 === 1 ? "#a58bff" : "#8f7bff"); g.addColorStop(1, i % 4 === 1 ? "#5a33d6" : "#4a2fb8"); }
+      else { g.addColorStop(0, "#ffe9a0"); g.addColorStop(1, i % 4 === 2 ? "#f0a400" : "#e39300"); }
+      c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, r - 2, a0, a1); c.closePath();
+      c.fillStyle = g; c.fill(); c.strokeStyle = "rgba(255,255,255,.75)"; c.lineWidth = 2; c.stroke();
+      // la scritta lungo il raggio, verso il bordo
+      c.save(); c.rotate(a0 + passo / 2); c.textAlign = "right"; c.textBaseline = "middle";
+      var scuro = !p.xp && !p.top, testo = p.xp ? cifre(p.xp) : cifre(p.monete);
+      c.fillStyle = scuro ? "#4a2a00" : "#fff"; c.font = "900 " + Math.round(lato * (testo.length > 4 ? 0.068 : 0.078)) + "px system-ui, sans-serif";
+      if (!scuro) { c.shadowColor = "rgba(0,0,0,.35)"; c.shadowBlur = 3; }
+      c.fillText(testo, r - lato * 0.115, 0);
+      c.shadowBlur = 0;
+      // dopo il numero: la moneta o la scritta XP
+      if (p.xp) { c.font = "900 " + Math.round(lato * 0.04) + "px system-ui, sans-serif"; c.fillStyle = "rgba(255,255,255,.9)"; c.fillText("XP", r - lato * 0.05, 0); }
+      else {
+        c.beginPath(); c.arc(r - lato * 0.072, 0, lato * 0.026, 0, Math.PI * 2);
+        c.fillStyle = p.top ? "#ffd43b" : "#fff3bf"; c.fill(); c.lineWidth = 1.5; c.strokeStyle = "#b7791f"; c.stroke();
+      }
+      c.restore();
+    });
+  }
+  function suonoRuota(tipo) {
+    var ctx = audioCtx(); if (!ctx) return;
+    try {
+      var note = tipo === "tic" ? [[1900, 0, 0.035, 0.05]] : tipo === "top" ? [[784, 0, .3, .2], [988, .1, .3, .2], [1175, .2, .3, .2], [1568, .3, .6, .22], [2093, .45, .7, .18]]
+        : [[880, 0, .25, .18], [1175, .1, .25, .18], [1568, .2, .5, .18]];
+      note.forEach(function (n) {
+        var t0 = ctx.currentTime + n[1], o = ctx.createOscillator(), gn = ctx.createGain();
+        o.type = tipo === "tic" ? "triangle" : "sine"; o.frequency.setValueAtTime(n[0], t0);
+        gn.gain.setValueAtTime(0.0001, t0); gn.gain.exponentialRampToValueAtTime(n[3], t0 + 0.008); gn.gain.exponentialRampToValueAtTime(0.0001, t0 + n[2]);
+        o.connect(gn); gn.connect(ctx.destination); o.start(t0); o.stop(t0 + n[2] + 0.05);
+      });
+    } catch (e) {}
+  }
+  function ruotaDelGiorno(dopo) {
+    var N = window.SGNube, R = N && N.ruota;
+    if (!R || !(N.profilo && N.profilo())) return;
+    var n = R.length, passo = 360 / n, lato = Math.max(220, Math.min(330, Math.round(window.innerWidth - 90), Math.round((window.innerHeight || 640) * 0.48)));
+    var pronta = N.puoRitirareBonus(), ang = 0, girando = false, finita = false;
+    var cv = el("canvas", { class: "rg-disco" });
+    disegnaRuotaGiorno(cv, R, lato);
+    // le lampadine sul bordo (ferme: gira solo il disco)
+    var luci = "";
+    for (var k = 0; k < 24; k++) {
+      var a = k * Math.PI * 2 / 24, x = 50 + 48.3 * Math.sin(a), y = 50 - 48.3 * Math.cos(a);
+      luci += '<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="1.35" class="' + (k % 2 ? "rg-l2" : "rg-l1") + '"/>';
+    }
+    var bordo = el("div", { class: "rg-bordo", html: '<svg viewBox="0 0 100 100">' + luci + "</svg>" });
+    var freccia = el("div", { class: "rg-freccia" });
+    var gira = el("button", { class: "rg-gira", text: pronta ? "GIRA" : "⏳" });
+    var sotto = el("div", { class: "rg-sotto", text: pronta ? "Un giro al giorno: monete o XP. Tocca GIRA!" : "Hai già girato oggi: il prossimo giro tra " + tempoBreve(N.prossimoBonusMs()) + " (a mezzanotte)" });
+    var esito = el("div", { class: "rg-esito" });
+    var chiudiB = el("button", { class: "btn " + (pronta ? "btn-fantasma" : "btn-primario") + " rg-chiudi", text: pronta ? "Più tardi" : "Chiudi" });
+    var tutto = el("div", { class: "rg-tutto", style: "width:" + (lato + 22) + "px;height:" + (lato + 22) + "px" }, [ bordo, cv, freccia, gira ]);
+    var velo = el("div", { class: "rg-velo" }, [ el("div", { class: "rg-scheda" }, [
+      el("div", { class: "rg-titolo", text: "🎡 Ruota del giorno" }), sotto, tutto, esito, chiudiB ]) ]);
+    if (!pronta) velo.classList.add("ferma");
+    function chiudi() {
+      if (girando) return;
+      velo.classList.remove("su");
+      setTimeout(function () { if (velo.parentNode) velo.parentNode.removeChild(velo); }, 260);
+    }
+    chiudiB.onclick = chiudi;
+    velo.addEventListener("click", function (e) { if (e.target === velo) chiudi(); });
+    gira.onclick = function () {
+      if (girando || finita) return;
+      var res = N.giraRuota();
+      if (!res) { sotto.textContent = "Hai già girato oggi: torna dopo mezzanotte 🌙"; gira.textContent = "⏳"; velo.classList.add("ferma"); return; }
+      girando = true; gira.disabled = true; chiudiB.style.visibility = "hidden";
+      sotto.textContent = "Gira, gira…";
+      // dove deve fermarsi: lo spicchio vinto sotto la freccia (in alto), non sempre nel centro dello spicchio
+      var theta = (res.i + 0.5) * passo + (Math.random() - 0.5) * passo * 0.7;
+      var meta = Math.ceil(ang / 360) * 360 + 360 * 6 + ((360 - theta) % 360);
+      var a0 = ang, t0 = 0, durata = 5200, tacca = Math.floor(ang / passo);
+      function passo1(ora) {
+        if (!t0) t0 = ora;
+        var k = Math.min(1, (ora - t0) / durata), e = 1 - Math.pow(1 - k, 4);
+        ang = a0 + (meta - a0) * e;
+        cv.style.transform = "rotate(" + ang.toFixed(2) + "deg)";
+        var tq = Math.floor(ang / passo);
+        if (tq !== tacca) { tacca = tq; suonoRuota("tic"); freccia.classList.remove("tic"); void freccia.offsetWidth; freccia.classList.add("tic"); }
+        if (k < 1) requestAnimationFrame(passo1); else fermata();
+      }
+      requestAnimationFrame(passo1);
+      function fermata() {
+        girando = false; finita = true;
+        var p = res.premio;
+        tutto.classList.add("vinto"); if (p.top) velo.classList.add("top");
+        suonoRuota(p.top ? "top" : "vinto");
+        try { if (navigator.vibrate) navigator.vibrate(p.top ? [40, 60, 40, 60, 90] : [30, 40, 30]); } catch (e) {}
+        esito.innerHTML = "";
+        esito.appendChild(el("b", { text: "+" + testoPremioRuota(p) + (p.xp ? "" : " 🪙") }));
+        esito.appendChild(el("span", { text: p.top ? "Premio grosso! ⭐" : (p.xp ? "Punti esperienza per salire di livello" : "Speed Coins") }));
+        esito.classList.add("su");
+        sotto.textContent = "Il prossimo giro a mezzanotte 🌙";
+        gira.textContent = "✓";
+        chiudiB.textContent = "Ritira"; chiudiB.className = "btn btn-primario rg-chiudi"; chiudiB.style.visibility = "";
+        // livelli saliti con gli XP della ruota (ognuno regala monete)
+        var lv = 0, pr = 0, m2 = 0;
+        (res.eventi || []).forEach(function (e) { m2 += e.monete; if (e.tipo === "livello") lv = e.livello; if (e.tipo === "prestigio") pr = e.prestigio; });
+        if (pr) codaTrofei.push({ tipo: "xp", cls: "tl-platino", icona: "🌟", su: "PRESTIGIO " + pr + "!", nome: "Si riparte dal livello 1", sotto: "+" + cifre(m2) + " Speed Coins 🪙" });
+        else if (lv) codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🆙", su: "Con la ruota del giorno", nome: "Livello " + lv + "!", sotto: "+" + cifre(m2) + " Speed Coins 🪙" });
+        if (res.avvisa) res.avvisa();   // ora i trofei (es. "Ritira il regalo del giorno 10 volte")
+        prossimoAvviso();
+        if (dopo) dopo(res);
+      }
+    };
+    document.body.appendChild(velo);
+    requestAnimationFrame(function () { requestAnimationFrame(function () { velo.classList.add("su"); }); });
+  }
   // ---- La città: si tocca un edificio, la città fa zoom e si entra.
   //      In alto chi sei (avatar, nome, livello con la barra degli XP) e le Speed Coins;
-  //      in basso Casa, Clan e Negozio (in arrivo) e il Regalo del giorno ----
+  //      in basso Casa, Clan e Negozio (in arrivo) e la Ruota del giorno ----
   function schermataCitta() {
     var io = profiloAttivo(), N = window.SGNube, fase = SGCitta.fase(new Date()), via = false;
     var cloud = !!(N && N.profilo && N.profilo()), prog = window.SGLivelli && cloud && N.progressione ? N.progressione() : null;
@@ -448,7 +570,7 @@
     var faccia = el("span", { class: "citta-faccia" });
     if (io && io.omino && window.SGOmino) faccia.innerHTML = SGOmino.svg(io.omino, { busto: true }); else faccia.textContent = (io && io.emoji) || "👤";
     var monete = el("b", { text: prog ? cifre(prog.coins) : "—" });
-    // in basso: le cose in arrivo (spente) e il regalo del giorno
+    // in basso: le cose in arrivo (spente) e la ruota del giorno
     var avviso = el("div", { class: "citta-presto" });
     function presto(testo) { avviso.textContent = testo; avviso.classList.remove("su"); void avviso.offsetWidth; avviso.classList.add("su"); }
     function tastoPresto(icona, nome, frase) {
@@ -459,19 +581,21 @@
       var pronto = cloud && N.puoRitirareBonus && N.puoRitirareBonus();
       regalo.className = "citta-tasto regalo" + (pronto ? " pronto" : " spento");
       svuota(regalo);
-      regalo.appendChild(el("span", { class: "ct-ico", text: "🎁" }));
-      regalo.appendChild(el("span", { text: "Regalo" }));
-      regalo.appendChild(el("small", { text: !cloud ? "col profilo" : (pronto ? "+" + cifre(N.bonusImporto) + " 🪙" : "tra " + tempoBreve(N.prossimoBonusMs())) }));
+      regalo.appendChild(el("span", { class: "ct-ico", text: "🎡" }));
+      regalo.appendChild(el("span", { text: "Ruota" }));
+      regalo.appendChild(el("small", { text: !cloud ? "col profilo" : (pronto ? "gira!" : "tra " + tempoBreve(N.prossimoBonusMs())) }));
+    }
+    // dopo il giro: monete, livello e barra degli XP si aggiornano lì dove sono (niente ridisegno della città)
+    function aggTesta() {
+      var p = N.progressione(); monete.textContent = cifre(p.coins);
+      var sm = testoIo.querySelector("small"), bar = testoIo.querySelector(".citta-xp > i");
+      if (sm) sm.textContent = (p.prestige ? "★" + p.prestige + " · " : "") + "Livello " + p.level;
+      if (bar) bar.style.width = Math.max(3, Math.min(100, Math.floor(p.xp * 100 / SGLivelli.xpPerSalire(p.level)))) + "%";
+      aggRegalo();
     }
     regalo.onclick = function () {
-      if (!cloud) return presto("Crea il tuo profilo per il regalo del giorno");
-      if (!N.puoRitirareBonus()) return presto("Il prossimo regalo arriva a mezzanotte 🌙");
-      regalo.disabled = true;
-      N.ritiraBonus().then(function (nuovo) {
-        monete.textContent = cifre(nuovo);
-        codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🎁", su: "Regalo del giorno", nome: "+" + cifre(N.bonusImporto) + " Speed Coins", sotto: "Il prossimo arriva a mezzanotte" });
-        prossimoAvviso();
-      }).catch(function () {}).then(function () { regalo.disabled = false; aggRegalo(); });
+      if (!cloud) return presto("Crea il tuo profilo per girare la ruota del giorno");
+      ruotaDelGiorno(aggTesta);
     };
     aggRegalo();
     var s = el("div", { class: "schermata citta-vista" + (fase === "notte" ? " notte" : ""), style: "background:" + SGCitta.colorePrato(fase) }, [
@@ -742,7 +866,7 @@
     { gioco: "blackjack", livello: "bronzo",   icona: "🪑", nome: "Il Primo Passo",           desc: "Siediti al tavolo e gioca la tua primissima mano",           stat: "maniGiocate",       meta: 1 },
     { gioco: "blackjack", livello: "bronzo",   icona: "😊", nome: "Il Primo Sorriso",         desc: "Vinci la tua prima mano contro il banco",                    stat: "maniVinte",         meta: 1 },
     { gioco: "blackjack", livello: "bronzo",   icona: "✨", nome: "Magia del Ventuno",        desc: "Fai il tuo primo Black Jack",                                stat: "blackjackFatti",    meta: 1 },
-    { gioco: "blackjack", livello: "bronzo",   icona: "🎁", nome: "Piccolo Dono",             desc: "Ritira il tuo primo bonus gratuito",                         stat: "bonusRitirati",     meta: 1 },
+    { gioco: "blackjack", livello: "bronzo",   icona: "🎁", nome: "Piccolo Dono",             desc: "Gira per la prima volta la ruota del giorno",                 stat: "bonusRitirati",     meta: 1 },
     { gioco: "blackjack", livello: "bronzo",   icona: "🐷", nome: "Risparmiatore Felice",     desc: "Vinci 500 fiches in totale",                                 stat: "fichesVinteTot",    meta: 500 },
     { gioco: "blackjack", livello: "bronzo",   icona: "🙃", nome: "Sbagliando si Impara",     desc: "Sballa superando il 21 per 5 volte",                         stat: "maniSballate",      meta: 5 },
     { gioco: "blackjack", livello: "bronzo",   icona: "🤝", nome: "Stretta di Mano",          desc: "Pareggia con il banco 3 volte",                              stat: "maniPari",          meta: 3 },
@@ -750,7 +874,7 @@
     { gioco: "blackjack", livello: "bronzo",   icona: "🌧️", nome: "Domani Andrà Meglio",      desc: "Perdi 3 mani di fila. Non mollare!",                         stat: "serieSconfitteMax", meta: 3 },
     { gioco: "blackjack", livello: "argento",  icona: "🌊", nome: "Onda Positiva",            desc: "Vinci 20 mani contro il banco",                              stat: "maniVinte",         meta: 20 },
     { gioco: "blackjack", livello: "argento",  icona: "🎼", nome: "Armonia Perfetta",         desc: "Fai Black Jack 10 volte",                                    stat: "blackjackFatti",    meta: 10 },
-    { gioco: "blackjack", livello: "argento",  icona: "📅", nome: "Appuntamento Felice",      desc: "Ritira il regalo del giorno 10 volte",                          stat: "bonusRitirati",     meta: 10 },
+    { gioco: "blackjack", livello: "argento",  icona: "📅", nome: "Appuntamento Felice",      desc: "Gira la ruota del giorno 10 volte",                            stat: "bonusRitirati",     meta: 10 },
     { gioco: "blackjack", livello: "argento",  icona: "🌾", nome: "Abbondanza",               desc: "Vinci 5.000 fiches in totale",                               stat: "fichesVinteTot",    meta: 5000 },
     { gioco: "blackjack", livello: "argento",  icona: "🌈", nome: "Ottimismo Incorreggibile", desc: "Sballa superando il 21 per 25 volte",                        stat: "maniSballate",      meta: 25 },
     { gioco: "blackjack", livello: "argento",  icona: "🫱", nome: "Pura Sinergia",            desc: "Pareggia con il banco 15 volte",                             stat: "maniPari",          meta: 15 },
@@ -759,7 +883,7 @@
     { gioco: "blackjack", livello: "argento",  icona: "🦁", nome: "Coraggio da Leoni",        desc: "Vinci una mano puntando almeno 500 fiches",                  stat: "puntataVintaMax",   meta: 500 },
     { gioco: "blackjack", livello: "oro",      icona: "☀️", nome: "Raggio di Sole",           desc: "Vinci 100 mani contro il banco",                             stat: "maniVinte",         meta: 100 },
     { gioco: "blackjack", livello: "oro",      icona: "🤩", nome: "Estasi del Gioco",         desc: "Fai Black Jack 50 volte",                                    stat: "blackjackFatti",    meta: 50 },
-    { gioco: "blackjack", livello: "oro",      icona: "💝", nome: "Gratitudine Infinita",     desc: "Ritira il regalo del giorno 50 volte",                          stat: "bonusRitirati",     meta: 50 },
+    { gioco: "blackjack", livello: "oro",      icona: "💝", nome: "Gratitudine Infinita",     desc: "Gira la ruota del giorno 50 volte",                            stat: "bonusRitirati",     meta: 50 },
     { gioco: "blackjack", livello: "oro",      icona: "💎", nome: "Tesoro Luminoso",          desc: "Vinci 25.000 fiches in totale",                              stat: "fichesVinteTot",    meta: 25000 },
     { gioco: "blackjack", livello: "oro",      icona: "🏛️", nome: "Architetto del Ventuno",   desc: "Fai 21 esatto con 3 o più carte, 20 volte",                  stat: "ventunoTre",        meta: 20 },
     { gioco: "blackjack", livello: "oro",      icona: "🔥", nome: "All-In Emotivo",           desc: "Vinci una mano puntando almeno 2.500 fiches",                stat: "puntataVintaMax",   meta: 2500 },
@@ -3551,6 +3675,8 @@
     },
     // la sala: i giochi possono rimandarci dalla loro schermata finale
     cambiaGioco: function () { schermataScegliGioco(); },
+    // la ruota del giorno (monete o XP, un giro al giorno): la apre anche il Black Jack quando restano poche monete
+    ruotaDelGiorno: ruotaDelGiorno,
     sala: function () { schermataSala(null); },
     // impostazioni arrivate da un link (le legge il gioco per i valori di partenza)
     parametriLink: function () { return linkParams; },

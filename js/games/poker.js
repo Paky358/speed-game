@@ -536,7 +536,7 @@
         fuori -= x; io.stack += x; io.buyin += x; io.seduto = true; salvaMio(true);
         if (M.stato === "attesa" && H.fase === "gioco") prossimaMano(); else bd();
       },
-      onBonus: function () { var b = SGNube.bonusImporto || 0; fuori += b; salvato += b; bd(); },   // ha ritirato il regalo: già aggiunto alle monete del profilo
+      onBonus: function (nuovo, piu) { var b = piu || 0; fuori += b; salvato += b; bd(); },   // monete della ruota del giorno: già aggiunte al profilo
       onBot: function (piu) {
         if (H.fase !== "lobby") return;
         if (piu && seduti().length < MAX[M.variante]) aggiungiBot();
@@ -647,7 +647,7 @@
         var m = me(), x = Math.min(S.fuori, BUYIN - (m ? m.stack : 0)); if (x < GRANDE || !S.rete) return;
         S.fuori -= x; S.rete.invia({ t: "rientra", fiches: x });
       },
-      onBonus: function () { var b = SGNube.bonusImporto || 0; S.fuori += b; if (S.salvato != null) S.salvato += b; if (S.vm) disegna(t, S.vm, cb); },   // regalo già aggiunto alle monete
+      onBonus: function (nuovo, piu) { var b = piu || 0; S.fuori += b; if (S.salvato != null) S.salvato += b; if (S.vm) disegna(t, S.vm, cb); },   // monete della ruota già aggiunte al profilo
       onEsci: function () {
         if (S.vm && S.vm.fase === "gioco" && !window.confirm("Lasciare il tavolo? Le fiches già puntate in questa mano restano sul tavolo.")) return;
         salva(true); if (S.rete) S.rete.chiudi(); t.esci();
@@ -722,7 +722,7 @@
       }),
       extra: extra, attesa: "Aspetta che l'host cominci: si gioca a " + NOME_VAR[vm.variante] + "! 🃏", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
-  // le mie fiches (e, se sono finite, il modo per risedersi con altre monete o il regalo del giorno)
+  // le mie fiches (e, se sono finite, il modo per risedersi con altre monete o la ruota del giorno)
   function fichesBox(t, cb, io) {
     var el = t.el, box = el("div", { class: "pk-fiches" });
     if (io.stack >= GRANDE) { box.appendChild(el("div", { text: "🎰 Ti siedi con " + fmtN(io.stack) + " fiches" })); return box; }
@@ -730,7 +730,7 @@
     if (x >= GRANDE) box.appendChild(el("button", { class: "btn btn-primario", text: "🎰 Siediti con " + fmtN(x) + " fiches", onclick: cb.onRientra }));
     else {
       box.appendChild(el("div", { text: "Non hai più fiches da mettere sul tavolo." }));
-      if (conProfilo() && BJ() && BJ().riquadroBonus) box.appendChild(BJ().riquadroBonus(el, function (nuovo) { cb.onBonus(nuovo); }));
+      if (conProfilo() && BJ() && BJ().riquadroBonus) box.appendChild(BJ().riquadroBonus(el, function (nuovo, piu) { cb.onBonus(nuovo, piu); }));
     }
     return box;
   }
@@ -960,7 +960,7 @@
   }
   function senzaFiches(t, riprova) {
     var s = t.schermata({ icona: "🪙", titolo: "Ti servono delle monete", indietro: t.esci });
-    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Il Poker si gioca con le tue Speed Coins e adesso non ne hai abbastanza. Ritira il regalo gratis, poi siediti al tavolo." }));
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Il Poker si gioca con le tue Speed Coins e adesso non ne hai abbastanza. Gira la ruota del giorno (monete o XP), poi siediti al tavolo." }));
     if (BJ() && BJ().riquadroBonus) s._contenuto.appendChild(BJ().riquadroBonus(t.el, function () {}));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🃏 Siediti al tavolo", onclick: riprova }));
     t.mostra(s);

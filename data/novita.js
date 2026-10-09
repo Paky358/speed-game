@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 168,
+    data: "9 ottobre 2026",
+    titolo: "Arriva la Ruota del giorno 🎡",
+    descrizione: [
+      "Al posto del regalo fisso, una volta al giorno giri la ruota: può uscire da 500 a 5.000 Speed Coins oppure da 250 a 2.000 XP.",
+      "Ogni spicchio ha la stessa probabilità di uscire: i due premi grossi sono 5.000 monete e 2.000 XP.",
+      "La trovi in basso nella città (tasto 🎡 Ruota) e nel Black Jack e nel Poker quando ti mancano le monete. Torna disponibile ogni giorno a mezzanotte.",
+      "Ora l'app si aggiorna subito: quando esce una novità basta chiuderla e riaprirla."
+    ]
+  },
+  {
     v: 167,
     data: "9 ottobre 2026",
     titolo: "Trofei per Battaglia Navale, Poker e Taboo 🏆",
