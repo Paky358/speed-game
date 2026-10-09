@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 166,
+    data: "9 ottobre 2026",
+    titolo: "Trofei del Poker ♠️",
+    descrizione: [
+      "Arrivano 29 trofei per le mani giocate, i rilanci, i cambi di carte, entrambe le varianti, le combinazioni vincenti e le partite online.",
+      "I diamanti premiano imprese rare ma raggiungibili: un poker ripetuto, cinque mani di fila contro i bot Difficili o 25 vittorie online."
+    ]
+  },
+  {
     v: 165,
     data: "9 ottobre 2026",
     titolo: "Ogni trofeo ora dà XP e Speed Coins 🏆🪙",
