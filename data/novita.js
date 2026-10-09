@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 167,
+    data: "9 ottobre 2026",
+    titolo: "Trofei di Battaglia Navale 🚢",
+    descrizione: [
+      "Arrivano 18 trofei: gioca, colpisci e affonda le navi, poi mettiti alla prova contro il bot Difficile e online.",
+      "I progressi si salvano a fine partita solo per chi gioca con un profilo."
+    ]
+  },
+  {
     v: 165,
     data: "9 ottobre 2026",
     titolo: "Ogni trofeo ora dà XP e Speed Coins 🏆🪙",

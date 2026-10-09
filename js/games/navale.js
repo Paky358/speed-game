@@ -81,6 +81,31 @@
     else if (esito.e === "affondato") { mem.coda = []; }
   }
 
+  // I progressi si registrano una volta alla fine di ogni partita, solo sul profilo di questo telefono.
+  function salvaStatNavale(t, esito, dati, modo, liv) {
+    try {
+      if (t.prova || (t.linkParams && t.linkParams.prova)) return;
+      if (!(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      if (!dati || !dati.chiave || navaleSalvate[dati.chiave]) return;
+      navaleSalvate[dati.chiave] = true;
+      var st = SGNube.statGioco ? (SGNube.statGioco("navale") || {}) : {};
+      var x = { partite: 1, colpi: dati.colpi, colpiAsegno: dati.colpiAsegno, colpiAcqua: dati.colpiAcqua,
+        naviAffondate: dati.naviAffondate, primiColpiAsegno: dati.primoColpoAsegno ? 1 : 0 };
+      if (esito) {
+        x.vittorie = 1;
+        if (modo === "bot") x["vittorie" + (liv === "difficile" ? "Difficile" : liv === "medio" ? "Medio" : "Facile")] = 1;
+        if (modo === "online") x.vittorieOnline = 1;
+      } else x.sconfitte = 1;
+      if (modo === "online") x.partiteOnline = 1;
+      var serieDif = liv === "difficile" && modo === "bot" ? (esito ? (st.serieDifOra || 0) + 1 : 0) : 0;
+      var serieOn = modo === "online" ? (esito ? (st.serieOnlineOra || 0) + 1 : 0) : 0;
+      var incr = []; Object.keys(x).forEach(function (k) { if (x[k]) incr.push([k, x[k]]); });
+      SGNube.salvaProgressi(null, "navale", incr,
+        [["serieDifficileMax", serieDif], ["serieOnlineMax", serieOn], ["serieColpiMax", dati.serieColpiMax]],
+        [["serieDifOra", serieDif], ["serieOnlineOra", serieOn]]);
+    } catch (e) {}
+  }
+
   // ---------- suoni ----------
   function suono(e) {
     try { if (navigator.vibrate) navigator.vibrate(e === "affondato" ? [0, 30, 40, 40] : e === "colpito" ? 25 : 8); } catch (x) {}
@@ -227,7 +252,7 @@
   //  canale.manda(msg): { t:"colpo",x,y } oppure { t:"esito",x,y,e,celle,nome,persa }
   //  Il "ricevi" gestisce i colpi in arrivo e gli esiti dei miei colpi.
   // =========================================================
-  var navMount = null;
+  var navMount = null, navaleSalvate = {};
   function nuovoGioco(t, opt) {
     // opt = { titolo, sotto, nomeAvv, sonoHost|null, onEsci, invia(msg)|null (online), rivincita|null, indietro }
     var el = t.el;
@@ -243,6 +268,21 @@
     var avviso = null, avvisoT = null; // scritta temporanea (es. "colpito e affondato")
     var ioPronto = false, avvPronto = false;
     var canale = null;              // impostato da bot/online
+    var colpiMiei = 0, colpiAsegno = 0, colpiAcqua = 0, naviAffondate = 0;
+    var serieColpi = 0, serieColpiMax = 0, primoColpoAsegno = false, fineSalvata = false, fineSeq = 0;
+
+    function termina(vinto) {
+      if (fineSalvata) return;
+      fineSalvata = true; fase = "fine"; esitoFine = vinto;
+      var rimaste = io.navi.filter(function (n) { return n && !n.affondata; }).length;
+      if (opt.onFine) opt.onFine(vinto, { colpi: colpiMiei, colpiAsegno: colpiAsegno, colpiAcqua: colpiAcqua,
+        naviAffondate: naviAffondate, naviRimaste: rimaste, primoColpoAsegno: primoColpoAsegno, serieColpiMax: serieColpiMax,
+        chiave: "navale-" + Date.now() + "-" + (++fineSeq) + "-" + Math.random().toString(36).slice(2) });
+    }
+    function azzeraStatistiche() {
+      colpiMiei = colpiAsegno = colpiAcqua = naviAffondate = serieColpi = serieColpiMax = 0;
+      primoColpoAsegno = false; fineSalvata = false;
+    }
 
     // ---- piazzamento (con ANTEPRIMA: prima proietto dove va la nave, poi confermo) ----
     function celleAnte() { // celle e validità dell'anteprima corrente (o null)
@@ -278,10 +318,16 @@
     // ---- sparo (mio) ----
     function sparoIo(x, y) {
       if (fase !== "battaglia" || turno !== "mio" || attacco[y][x] !== 0) return;
+      colpiMiei++;
       turno = "attesa"; render();
       canale.manda({ t: "colpo", x: x, y: y });
     }
     function registraEsito(m) {
+      if (m.e === "affondato" || m.e === "colpito") {
+        colpiAsegno++; serieColpi++; if (serieColpi > serieColpiMax) serieColpiMax = serieColpi;
+        if (colpiMiei === 1) primoColpoAsegno = true;
+        if (m.e === "affondato") naviAffondate++;
+      } else if (m.e === "acqua") { colpiAcqua++; serieColpi = 0; }
       if (m.e === "affondato" && m.celle) { m.celle.forEach(function (c) { attacco[c.y][c.x] = 3; }); affAvv++; }
       else if (m.e === "colpito") attacco[m.y][m.x] = 2;
       else attacco[m.y][m.x] = 1;
@@ -297,12 +343,13 @@
         else if (canale.esitoBot) canale.esitoBot({ x: m.x, y: m.y, e: e.e });
         suono(e.e);
         if (e.e === "affondato" && !e.persa) mostraAvviso("☠️ Ti hanno affondato: " + e.nome);
-        if (e.persa) { fase = "fine"; esitoFine = false; if (opt.onFine) opt.onFine(false); render(); return; }
+        if (e.persa) { termina(false); render(); return; }
         turno = "mio"; render();
       } else if (m.t === "esito") {              // esito del MIO colpo
+        if (fase !== "battaglia" || !attacco[m.y] || attacco[m.y][m.x] !== 0) return;
         registraEsito(m);
         if (m.e === "affondato" && !m.persa) mostraAvviso("💥 Colpito e affondato!" + (m.nome ? " " + m.nome : ""));
-        if (m.persa) { fase = "fine"; esitoFine = true; if (opt.onFine) opt.onFine(true); render(); return; }
+        if (m.persa) { termina(true); render(); return; }
         turno = "attesa"; render();              // ho sparato, ora tocca all'altro
       }
     }
@@ -324,6 +371,7 @@
     }
     function rifaiPiazza() {
       io = statoVuoto(); attacco = matrice(0); affAvv = 0; prossima = 0; oriz = true; ante = null;
+      azzeraStatistiche();
       clearTimeout(avvisoT); avviso = null;
       ioPronto = false; avvPronto = false; esitoFine = null; fase = "piazza"; turno = "mio"; render();
     }
@@ -503,7 +551,7 @@
       rivincita: function (reset) { bot = flottaCasuale(); mem = { coda: [] }; ioPrimo = Math.random() < 0.5; reset(); },
       startBot: function () { if (ioPrimo) { G.setTurno("mio"); } else { G.setTurno("attesa"); setTimeout(botTurno, 750); } },
       // torneo a eliminazione: chi ha vinto, e la partita trasmessa a chi la guarda
-      onFine: function (vinto) { if (t.risultato) t.risultato(vinto ? [{ nome: io, pos: 1 }, { nome: "Computer", pos: 2 }] : [{ nome: "Computer", pos: 1 }, { nome: io, pos: 2 }]); },
+      onFine: function (vinto, dati) { salvaStatNavale(t, vinto, dati, "bot", liv); if (t.risultato) t.risultato(vinto ? [{ nome: io, pos: 1 }, { nome: "Computer", pos: 2 }] : [{ nome: "Computer", pos: 1 }, { nome: io, pos: 2 }]); },
       vista: t.trasmetti ? function (v) { t.trasmetti({ t: "vista", v: v, nomi: [io, "🤖 Computer"] }); } : null
     });
     G.setCanale(canale);
@@ -548,7 +596,10 @@
         onEsci: function () { rete.chiudi(); t.esci(); },
         rivincita: function (reset) { rete.inviaVeloce({ t: "rivincita" }); reset(); },
         // per il torneo online: chi ha vinto
-        onFine: sonoHost ? function (vinto) { if (t.risultato) t.risultato(vinto ? [{ nome: L.nomiIo, pos: 1 }, { nome: L.nomiAvv || "Avversario", pos: 2 }] : [{ nome: L.nomiAvv || "Avversario", pos: 1 }, { nome: L.nomiIo, pos: 2 }]); } : null,
+        onFine: function (vinto, dati) {
+          salvaStatNavale(t, vinto, dati, "online", null);
+          if (sonoHost && t.risultato) t.risultato(vinto ? [{ nome: L.nomiIo, pos: 1 }, { nome: L.nomiAvv || "Avversario", pos: 2 }] : [{ nome: L.nomiAvv || "Avversario", pos: 1 }, { nome: L.nomiIo, pos: 2 }]);
+        },
         // chi guarda (torneo a eliminazione) vede i colpi: lo mando "trattenuto", così chi arriva dopo lo vede subito
         vista: sonoHost ? function (v) { rete.invia({ t: "vista", v: v, nomi: [L.nomiIo, L.nomiAvv || "Avversario"] }); } : null
       });
@@ -603,7 +654,8 @@
         sonoHost: false,
         invia: function (msg) { S.rete.invia(msg); },
         onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); },
-        rivincita: null
+        rivincita: null,
+        onFine: function (vinto, dati) { salvaStatNavale(t, vinto, dati, "online", null); }
       });
       G.setCanale({ manda: function (msg) { S.rete.invia(msg); } });
       G.startRender();
