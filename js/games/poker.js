@@ -33,6 +33,49 @@
   function portafoglio() { var f = conProfilo() && SGNube.fiches ? SGNube.fiches("blackjack") : null; return f == null ? 0 : f; }
   function svuota(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
 
+  // Un solo salvataggio per mano conclusa. L'id della sessione e il numero della mano
+  // restano nel profilo, così un messaggio online ripetuto o ricevuto al rientro non conta due volte.
+  function salvaTrofeiMano(vm, cb) {
+    if (cb.guarda || !vm || vm.stato !== "finemano" || !vm.manoStat || !conProfilo() || !SGNube.salvaProgressi) return;
+    var mio = null;
+    vm.manoStat.forEach(function (p) { if (p.id === cb.myId) mio = p; });
+    if (!mio || !mio.partecipa) return;
+    var chiave = String(vm.partitaId || "poker") + ":" + vm.n + ":" + cb.myId;
+    var st = (SGNube.statGioco && SGNube.statGioco(ID)) || {};
+    if (st.ultimaManoTrofei === chiave) return;
+    var x = { maniGiocate: 1 };
+    if (vm.variante === "it") x.maniItaliane = 1;
+    if (mio.vinta) x.maniVinte = 1;
+    if (mio.vinta && vm.variante === "he") x.vittorieTexas = 1;
+    if (mio.vinta && vm.variante === "it") x.vittorieItaliana = 1;
+    if (mio.showdown) x.maniMostrate = 1;
+    if (mio.vinta && mio.showdown) x.maniVinteShowdown = 1;
+    if (mio.vinta && !mio.showdown) x.maniVinteSenzaShowdown = 1;
+    x.rilanci = mio.rilanci || 0;
+    x.rilanciVeri = mio.rilanciVeri || 0;
+    x.carteCambiate = mio.carteCambiate || 0;
+    if (mio.vinta && mio.mano === "doppia") x.vittorieDoppia = 1;
+    if (mio.vinta && ["tris", "scala", "colore", "full", "poker", "scalacolore"].indexOf(mio.mano) >= 0) x.vittorieTrisPlus = 1;
+    if (mio.vinta && ["full", "poker", "scalacolore"].indexOf(mio.mano) >= 0) x.vittorieFullPlus = 1;
+    if (mio.vinta && mio.mano === "poker") x.vittoriePoker = 1;
+    if (mio.vinta && mio.mano === "scala") x.vittorieScala = 1;
+    if (mio.vinta && mio.mano === "colore") x.vittorieColore = 1;
+    if (mio.vinta && mio.rilanciVeri > 0) x.vittorieRilancio = 1;
+    if (mio.vinta && mio.carteCambiate > 0) x.vittorieCambio = 1;
+    if (mio.vinta && !vm.online && vm.difficolta === "difficile") x.vittorieDifficile = 1;
+    if (mio.controUmani) x.maniOnline = 1;
+    if (mio.vinta && mio.controUmani) x.vittorieOnline = 1;
+    var serieDiff = st.serieDifficileOra || 0, serieOnline = st.serieOnlineOra || 0;
+    if (!vm.online && vm.difficolta === "difficile") serieDiff = mio.vinta ? serieDiff + 1 : 0;
+    else serieDiff = 0;
+    if (mio.controUmani) serieOnline = mio.vinta ? serieOnline + 1 : 0;
+    else serieOnline = 0;
+    var incrs = []; Object.keys(x).forEach(function (k) { if (x[k]) incrs.push([k, x[k]]); });
+    SGNube.salvaProgressi(null, ID, incrs,
+      [["serieDifficileMax", serieDiff], ["serieOnlineMax", serieOnline]],
+      [["ultimaManoTrofei", chiave], ["serieDifficileOra", serieDiff], ["serieOnlineOra", serieOnline]]);
+  }
+
   // =========================================================
   //  CARTE E PUNTI
   // =========================================================
@@ -108,7 +151,8 @@
     M.siedi = function (o) {
       var st = Math.max(0, Math.floor(o.stack || 0));
       var p = { id: o.id, nome: o.nome, omino: o.omino || null, bot: !!o.bot, stack: st, buyin: st, seduto: st > 0, via: false,
-        inMano: false, lascia: false, allin: false, inGiro: 0, messo: 0, mano: [], agito: false, azione: "", mostra: false, cambio: null, valut: null };
+        inMano: false, lascia: false, allin: false, inGiro: 0, messo: 0, mano: [], agito: false, azione: "", mostra: false, cambio: null, valut: null,
+        rilanciMano: 0, rilanciVeriMano: 0, carteCambiateMano: 0 };
       M.giocatori.push(p); return p;
     };
     M.trova = function (id) { for (var i = 0; i < M.giocatori.length; i++) if (M.giocatori[i].id === id) return i; return -1; };
@@ -116,7 +160,7 @@
     M.inCorso = function () { return M.stato !== "attesa" && M.stato !== "finemano"; };
 
     M.nuovaMano = function () {
-      M.giocatori.forEach(function (p) { p.inMano = false; p.lascia = false; p.allin = false; p.inGiro = 0; p.messo = 0; p.mano = []; p.agito = false; p.azione = ""; p.mostra = false; p.cambio = null; p.valut = null; });
+      M.giocatori.forEach(function (p) { p.inMano = false; p.lascia = false; p.allin = false; p.inGiro = 0; p.messo = 0; p.mano = []; p.agito = false; p.azione = ""; p.mostra = false; p.cambio = null; p.valut = null; p.rilanciMano = 0; p.rilanciVeriMano = 0; p.carteCambiateMano = 0; });
       M.esito = null; M.tavolo = []; M.piatto = 0; M.scarti = []; M.corsa = false; M.turno = -1;
       var gioc = attivi();
       if (gioc.length < MIN) { M.stato = "attesa"; return false; }
@@ -179,6 +223,7 @@
         }
         p.azione = p.allin ? "All-in" : (prima === 0 ? "Punta" : "Rilancia");
       } else return false;
+      if (tipo === "punta") { p.rilanciMano++; if (prima > 0 && tot > prima) p.rilanciVeriMano++; }
       p.agito = true;
       controlla();
       return true;
@@ -220,6 +265,7 @@
       var visti = {};
       quali = (quali || []).map(Number).filter(function (k) { if (k >= 0 && k < 5 && !visti[k]) { visti[k] = 1; return true; } return false; }).slice(0, 4);
       quali.forEach(function (k) { M.scarti.push(p.mano[k]); p.mano[k] = pesca(); });
+      p.carteCambiateMano += quali.length;
       p.cambio = quali.length; p.azione = quali.length ? "Cambia " + quali.length : "Servito";
       forseFineCambio();
       return true;
@@ -397,6 +443,7 @@
     var nome = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Tu";
     var W = prof ? portafoglio() : BUYIN;   // il mio portafoglio (le Speed Coins del profilo); senza profilo 1.000 per giocare
     if (prof && W < GRANDE) return senzaFiches(t, function () { partita(t, online); });
+    var partitaId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     var M = creaMotore(V.variante);
     var io = M.siedi({ id: "host", nome: nome, omino: t.mioOmino ? t.mioOmino(nome) : null, stack: Math.min(W, BUYIN) });
     var fuori = W - io.stack;   // quello che resta nel portafoglio, fuori dal tavolo
@@ -421,6 +468,13 @@
     function vm() {
       var tp = M.turno >= 0 ? M.giocatori[M.turno] : null;
       return { fase: H.fase, codice: H.codice, pronta: H.pronta, variante: M.variante, stato: M.stato, n: M.n,
+        partitaId: partitaId, online: online, difficolta: V.liv,
+        manoStat: M.stato === "finemano" && M.esito ? M.giocatori.filter(function (p) { return p.inMano; }).map(function (p) {
+          return { id: p.id, partecipa: true, vinta: !!(M.esito.vinti && M.esito.vinti[p.id]), showdown: !!p.mostra,
+            mano: p.valut ? p.valut.tipo : null, altezza: p.valut && p.valut.v ? p.valut.v[1] : 0,
+            rilanci: p.rilanciMano || 0, rilanciVeri: p.rilanciVeriMano || 0, carteCambiate: p.carteCambiateMano || 0,
+            controUmani: online && M.giocatori.some(function (q) { return q !== p && q.inMano && !q.bot; }) };
+        }) : null,
         tavolo: M.tavolo.slice(), piatto: M.piattoTot(), daChiamare: M.daChiamare, rilMin: M.rilMin,
         turno: tp ? tp.id : null, dealer: M.dealer >= 0 && M.giocatori[M.dealer] ? M.giocatori[M.dealer].id : null,
         vinti: M.esito ? M.esito.vinti : null, classifica: H.classifica,
@@ -636,6 +690,7 @@
   // =========================================================
   var UI = null;   // la schermata del tavolo si costruisce UNA volta e poi si aggiorna a pezzi
   function disegna(t, vm, cb) {
+    salvaTrofeiMano(vm, cb);
     if (vm.fase === "lobby") { UI = null; return lobby(t, vm, cb); }
     if (vm.fase === "fine") { UI = null; return finale(t, vm, cb); }
     if (!UI || !document.body.contains(UI.s)) UI = creaSchermo(t, cb);
