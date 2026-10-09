@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 165,
+    data: "9 ottobre 2026",
+    titolo: "Ogni trofeo ora dà XP e Speed Coins 🏆🪙",
+    descrizione: [
+      "Quando sblocchi un trofeo prendi XP e monete in base al livello: bronzo 100, argento 250, oro 600, diamante 1.500 e Platino 3.000 (sia XP sia monete).",
+      "Anche i trofei che avevi già valgono: la prima volta che apri l'app arriva un regalo con i premi di tutti i trofei presi finora."
+    ]
+  },
+  {
     v: 164,
     data: "9 ottobre 2026",
     titolo: "Trofei di Calcio Biliardo ⚽",

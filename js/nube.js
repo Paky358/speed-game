@@ -168,6 +168,23 @@
       return r;
     },
 
+    // i premi dei trofei: XP e monete in un colpo, e il segno "già premiato" (premiTrofei.<chiave>) per non darli due volte
+    premiaTrofei: function (chiavi, punti, piuMonete) {
+      if (!auth || !utente || !profilo || !window.SGLivelli || !chiavi || !chiavi.length) return null;
+      var FV = firebase.firestore.FieldValue, n = Math.round(punti || 0);
+      var r = window.SGLivelli.aggiungi(progressione(), n), s = r.stato;
+      var delta = (s.coins - monete()) + Math.round(piuMonete || 0);   // i premi dei livelli + le monete dei trofei
+      var patch = { level: s.level, xp: s.xp, prestige: s.prestige };
+      if (n) patch.xpTot = FV.increment(n);
+      if (delta) patch.coins = FV.increment(delta);
+      profilo.premiTrofei = profilo.premiTrofei || {};
+      chiavi.forEach(function (k) { patch["premiTrofei." + k] = true; profilo.premiTrofei[k] = true; });
+      profilo.coins = monete() + delta; profilo.level = s.level; profilo.xp = s.xp; profilo.prestige = s.prestige; profilo.xpTot = (profilo.xpTot || 0) + n;
+      db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+      notifica();
+      return r;
+    },
+
     // ---- liste personali (es. le parole di Parola d'ordine): un campo del profilo, salvato così com'è ----
     lista: function (nome) { return (profilo && profilo.liste && profilo.liste[nome]) || []; },
     salvaLista: function (nome, lista) {

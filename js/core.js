@@ -424,6 +424,7 @@
         el("li", { html: "<b>1 XP per ogni secondo</b> di partita: almeno " + L.MIN_XP + " XP per ogni partita finita, al massimo 30 minuti contati" }),
         el("li", { html: "<b>+" + Math.round(L.BONUS_VITTORIA * 100) + "%</b> se vinci, <b>+" + L.BONUS_GIORNO + " XP</b> alla prima partita del giorno" }),
         el("li", { html: "Ogni livello nuovo regala <b>livello × 50</b> Speed Coins" }),
+        el("li", { html: "Ogni <b>trofeo</b> regala XP e Speed Coins: bronzo 100, argento 250, oro 600, diamante 1.500, Platino 3.000" }),
         el("li", { html: "Dopo il livello " + L.MAX + " scatta il <b>Prestigio</b>: si riparte dal livello 1 con <b>" + cifre(L.BONUS_PRESTIGIO) + "</b> Speed Coins in regalo" })
       ])
     ]);
@@ -1054,15 +1055,41 @@
   function controllaTrofei() {
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     if (!prof) { trofeiNoti = null; return; }
-    var ora = trofeiSbloccati(prof);
+    var ora = trofeiSbloccati(prof), nuovi = {};
     if (trofeiNoti && trofeiNoti.uid === prof.uid) {
-      for (var k in ora) if (!trofeiNoti.set[k]) codaTrofei.push(ora[k]);
+      for (var k in ora) if (!trofeiNoti.set[k]) { codaTrofei.push(ora[k]); nuovi[k] = 1; }
       // il Platino arriva per ultimo, dopo i trofei che l'hanno fatto scattare
       codaTrofei.sort(function (a, b) { return (a.livello === "platino") - (b.livello === "platino"); });
       prossimoAvviso();
     }
     trofeiNoti = { uid: prof.uid, set: ora };
     pubblicaTrofei(prof, ora);
+    premiaTrofei(prof, ora, nuovi);
+  }
+  // ---- i premi dei trofei: ogni trofeo dà XP e Speed Coins secondo il livello, una volta sola per profilo
+  //      (anche quelli presi prima che esistessero i premi: arrivano tutti insieme in un regalo) ----
+  var PREMI_TROFEI = { bronzo: { xp: 100, monete: 100 }, argento: { xp: 250, monete: 250 }, oro: { xp: 600, monete: 600 },
+    diamante: { xp: 1500, monete: 1500 }, platino: { xp: 3000, monete: 3000 } };
+  function premioTesto(livello) { var p = PREMI_TROFEI[livello]; return p ? " · +" + cifre(p.xp) + " XP · +" + cifre(p.monete) + " 🪙" : ""; }
+  function chiaveTrofeo(k) { var h = 5381; for (var i = 0; i < k.length; i++) h = (Math.imul(h, 33) ^ k.charCodeAt(i)) >>> 0; return "t" + h.toString(36); }
+  function premiaTrofei(prof, ora, inVista) {
+    if (!(window.SGNube && SGNube.premiaTrofei && window.SGLivelli)) return;
+    var fatti = prof.premiTrofei || {}, chiavi = [], xp = 0, mon = 0, xpN = 0, monN = 0, nascosti = 0;
+    for (var k in ora) {
+      var c = chiaveTrofeo(k), p = PREMI_TROFEI[ora[k].livello];
+      if (!p || fatti[c]) continue;
+      chiavi.push(c); xp += p.xp; mon += p.monete;
+      if (!inVista[k]) { nascosti++; xpN += p.xp; monN += p.monete; }   // quelli senza il loro avviso (presi prima)
+    }
+    if (!chiavi.length) return;
+    var r = SGNube.premiaTrofei(chiavi, xp, mon); if (!r) return;
+    if (nascosti) codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🎁", su: nascosti === 1 ? "Premio di un trofeo" : "Premi dei tuoi " + nascosti + " trofei",
+      nome: "+" + cifre(xpN) + " XP · +" + cifre(monN) + " Speed Coins", sotto: "Ogni trofeo ora dà XP e monete 🪙" });
+    var lv = 0, pr = 0, m2 = 0;
+    r.eventi.forEach(function (e) { m2 += e.monete; if (e.tipo === "livello") lv = e.livello; if (e.tipo === "prestigio") pr = e.prestigio; });
+    if (pr) codaTrofei.push({ tipo: "xp", cls: "tl-platino", icona: "🌟", su: "PRESTIGIO " + pr + "!", nome: "Si riparte dal livello 1", sotto: "+" + cifre(m2) + " Speed Coins 🪙" });
+    else if (lv) codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🆙", su: "Coi premi dei trofei", nome: "Livello " + lv + "!", sotto: "+" + cifre(m2) + " Speed Coins 🪙" });
+    prossimoAvviso();
   }
   // la "scheda" che vedono gli amici: quanti trofei, per livello e per gioco
   function pubblicaTrofei(prof, set) {
@@ -1358,7 +1385,7 @@
       el("div", { class: "at-corpo" }, [
         el("div", { class: "at-su", text: xp ? t.su : "🏆 Trofeo " + liv + " sbloccato!" }),
         el("div", { class: "at-nome", text: t.nome }),
-        el("div", { class: "at-gioco", text: xp ? t.sotto : (g ? g.nome : "") })
+        el("div", { class: "at-gioco", text: xp ? t.sotto : (g ? g.nome : "") + premioTesto(t.livello) })   // il premio del trofeo
       ])
     ]);
     document.body.appendChild(box);   // fuori dalla schermata: resta anche se il gioco cambia pagina
