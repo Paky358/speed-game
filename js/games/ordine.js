@@ -280,8 +280,11 @@
       if (!miaSquadra || sonoCapo || H.passo !== "indovina" || H.sospeso) return;   // mentre una parola è in sospeso non si tocca niente
       if (m.t === "proponi") {
         var i = Math.floor(+m.i);
-        if (i === -1) delete H.prop[id];
-        else if (H.tab[i] && !H.tab[i].g) H.prop[id] = i;
+        if (i === -1) delete H.prop[id];   // (togli tutti i miei segni)
+        else if (H.tab[i] && !H.tab[i].g) {   // ognuno può segnare più parole: si aggiungono (al massimo 9)
+          var mie = (H.prop[id] || []).filter(function (x) { return x !== i && H.tab[x] && !H.tab[x].g; });
+          mie.push(i); H.prop[id] = mie.slice(-9);
+        }
         bd(); return;
       }
       if (m.t === "gira") { sospendi(Math.floor(+m.i), id); return; }
@@ -330,7 +333,7 @@
     function sospendi(i, id) {
       var c = H.tab[i]; if (!c || c.g || H.sospeso) return;
       H.nSosp = (H.nSosp || 0) + 1;
-      H.sospeso = { i: i, id: id, k: H.turno, n: H.nSosp }; H.prop = {};
+      H.sospeso = { i: i, id: id, k: H.turno, n: H.nSosp };   // gli altri segni restano: si può continuare con quelle
       bd();
       clearTimeout(tSosp); tSosp = setTimeout(rivela, SOSPENSE_MS);
     }
@@ -340,10 +343,13 @@
       if (H.fase !== "gioco" || H.turno !== s.k) return bd();
       gira(s.i, s.id);
     }
+    function togliSegno(i) {   // la parola girata non è più segnata da nessuno (le altre restano)
+      Object.keys(H.prop).forEach(function (id) { var l = (H.prop[id] || []).filter(function (x) { return x !== i; }); if (l.length) H.prop[id] = l; else delete H.prop[id]; });
+    }
     function gira(i, id) {
       var c = H.tab[i]; if (!c || c.g) return;
       var k = H.turno, p = pById(id);
-      c.g = true; H.girate++; H.prop = {};
+      c.g = true; H.girate++; togliSegno(i);
       H.ultima = { i: i, k: k, c: c.c, oro: c.oro ? 1 : 0, n: ++H.nGirate };
       var chi = p ? p.nome : SQ[k].nome;
       scrivi({ t: "gira", k: k, id: id, nome: chi, w: c.w, c: c.c, oro: c.oro ? 1 : 0 });
@@ -360,7 +366,7 @@
         if (H.tentativi <= 0) { H.msg = "✅ " + c.w + ": giusta! Finiti i tentativi."; return fineTurno(); }
         bd(); return;
       }
-      if (c.oro) { H.msg = "⭐ " + c.w + ": la parola d'oro! I " + SQ[k].nome + " giocano un altro turno."; return fineTurno(true); }
+      if (c.oro) { H.msg = "⭐ " + c.w + ": la parola d'oro! I " + SQ[k].nome + " continuano a indovinare."; bd(); return; }   // si va avanti con lo stesso indizio, senza perdere un tentativo
       H.msg = c.c === "n" ? "😐 " + c.w + ": di nessuno. Tocca agli altri." : "😬 " + c.w + ": era dei " + SQ[c.c].nome + "!";
       fineTurno();
     }
@@ -433,7 +439,8 @@
       var umani = membri(k).filter(function (p) { return !p.bot && p.id !== H.capo[k]; });
       var bot = membri(k).filter(function (p) { return p.bot && p.id !== H.capo[k]; })[0];
       if (umani.length || !bot) return;   // se in squadra indovini tu, il bot ti lascia fare
-      if (H.prop[bot.id] != null) tBot = setTimeout(function () { azione(bot.id, { t: "gira", i: H.prop[bot.id] }); }, 1000);
+      var segnate = H.prop[bot.id] || [];
+      if (segnate.length) tBot = setTimeout(function () { azione(bot.id, { t: "gira", i: segnate[segnate.length - 1] }); }, 1000);
       else tBot = setTimeout(function () { botScegli(k, bot.id); }, H.girate ? 1800 : 3600);   // dopo l'indizio, prima la vignetta del capo
     }
     function botIndizio(k) {
@@ -768,10 +775,11 @@
     return { io: io, team: team, capo: capo, capoVia: capoVia, mioTurno: vm.fase === "gioco" && team === vm.turno,
       indovino: vm.fase === "gioco" && team === vm.turno && !capo && vm.passo === "indovina" };
   }
+  function segnata(vm, id, i) { var l = vm.prop && vm.prop[id]; return l != null && [].concat(l).indexOf(i) >= 0; }   // la parola i è tra quelle segnate da id?
   function tocca(ui, i) {
     var vm = ui.vm, r = ruolo(vm, ui.cb), c = vm.tab[i];
     if (!r.indovino || !c || c.g) return;
-    if (vm.prop[ui.cb.myId] === i) ui.cb.manda({ t: "gira", i: i });   // secondo tocco sulla stessa parola: si gira
+    if (segnata(vm, ui.cb.myId, i)) ui.cb.manda({ t: "gira", i: i });   // secondo tocco su una parola che ho già segnato: si gira
     else ui.cb.manda({ t: "proponi", i: i });
   }
   // la faccina di un giocatore: l'avatar diventa un'immagine una volta sola e poi si riusa ovunque (squadre, chat, caselle)
@@ -798,7 +806,7 @@
     var testa = [ faccia(ui, e.id, e.nome), el("span", { class: "or-l-nome", style: "color:" + col, text: e.nome }) ];
     if (e.t === "ind") return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-txt", text: "👑" }), el("span", { class: "or-l-ind", text: e.p + " " + (e.num === 0 ? "∞" : e.num) }) ]));
     if (e.t === "passo") return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-txt", text: "passa" }) ]));
-    var esito = e.oro ? "⭐ d'oro: un altro turno!" : e.c === "x" ? "💣 la parola nera!" : e.c === e.k ? "✓" : e.c === "n" ? "di nessuno" : "era dei " + SQ[e.c].nome;
+    var esito = e.oro ? "⭐ d'oro: si continua!" : e.c === "x" ? "💣 la parola nera!" : e.c === e.k ? "✓" : e.c === "n" ? "di nessuno" : "era dei " + SQ[e.c].nome;
     return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-w c" + e.c + (e.oro ? " oro" : ""), text: e.w }), el("span", { class: "or-l-esito" + (e.c === e.k && !e.oro ? " ok" : ""), text: esito }) ]));
   }
   function aggiorna(ui, vm, cb) {
@@ -844,13 +852,13 @@
     }
     // ---- il tabellone (solo le carte che cambiano) ----
     var chi = {};   // parola -> chi la propone
-    Object.keys(vm.prop || {}).forEach(function (id) { var i = vm.prop[id]; (chi[i] = chi[i] || []).push(id); });
+    Object.keys(vm.prop || {}).forEach(function (id) { [].concat(vm.prop[id]).forEach(function (i) { (chi[i] = chi[i] || []).push(id); }); });
     vm.tab.forEach(function (c, i) {
       var C = ui.carte[i], col = c.c != null ? c.c : (key ? key[i] : null);
       var cls = "or-carta" + (c.g ? " g" : "") + (col != null ? " c" + col : "") + (!c.g && key ? " chiave" : "") + (fine && !c.g ? " svelata" : "") + (c.oro ? " oro" : "") + (vm.sospeso && vm.sospeso.i === i && !c.g ? " sospesa" : "") +
-        (r.indovino && !c.g && !vm.sospeso ? " attiva" : "") + (vm.prop[cb.myId] === i && r.indovino ? " mia" : "");
+        (r.indovino && !c.g && !vm.sospeso ? " attiva" : "") + (segnata(vm, cb.myId, i) && r.indovino ? " mia" : "");
       if (C.cls !== cls) { C.b.className = cls; C.cls = cls; }
-      var kp = (chi[i] || []).join(",");
+      var kp = (chi[i] || []).join(",") + "|" + Object.keys((cb.omini && cb.omini()) || {}).length;   // si ridisegna anche quando arrivano gli avatar
       if (C.kp !== kp) {
         C.kp = kp;
         C.pr.innerHTML = (chi[i] || []).slice(0, 4).map(function (id) { var p = trova(vm, id); return testaAvatar(ui, id, p && p.nome, p ? p.team : -1); }).join("");
@@ -930,7 +938,7 @@
       return;
     }
     if (r.capo) { stato("La tua squadra sta cercando… Tu non puoi aiutarli!"); return; }
-    stato("Tocca una parola per proporla, tocca di nuovo per girarla.");
+    stato("Tocca le parole per segnarle (anche più di una); tocca di nuovo una parola segnata per girarla.");
     box.appendChild(el("div", { class: "or-riga" }, [
       el("button", { class: "or-btn", text: "✋ Basta così, passo", disabled: vm.girate > 0 ? null : "disabled", onclick: function () { cb.manda({ t: "passo" }); } }) ]));
   }
@@ -1101,7 +1109,7 @@
       "La squadra ne discute e le gira una alla volta: si possono girare fino al numero dell'indizio <b>più una</b>. Se giri una parola di un'altra squadra o di nessuno, il turno passa.",
       "Chi gira la <b>parola nera</b> perde (a 3 squadre esce dalla partita). Vince la squadra che trova per prima tutte le sue parole.",
       "L'indizio non può essere una parola del tabellone (né quasi uguale). Il capo può dare anche «∞»: tentativi liberi.",
-      "⭐ <b>Parola d'oro</b> (se l'host la lascia accesa): tra le parole di nessuno una è d'oro, e non lo sa nessuno, nemmeno i capi. Chi la gira, invece di perdere il turno, gioca un altro turno."
+      "⭐ <b>Parola d'oro</b> (se l'host la lascia accesa): tra le parole di nessuno una è d'oro, e non lo sa nessuno, nemmeno i capi. Chi la gira non perde il turno: la squadra continua a indovinare con lo stesso indizio, senza consumare un tentativo."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
@@ -1124,7 +1132,7 @@
       if (prova) chips("Nella tua squadra il capo è…", [[true, "Io"], [false, "Matt"]], "capoIo", "I bot danno indizi a caso e indovinano un po' a naso: la prova serve a vedere come funziona il gioco.");
       else chips("Quante squadre", [[2, "2 squadre"], [3, "3 squadre (da 6)"]], "squadre");
       chips("Quante parole sul tabellone", [[25, "25 (classico)"], [20, "20 (più grandi)"]], "parole", "Con 20 le caselle sono più grandi e la partita dura un po' meno.");
-      chips("⭐ Parola d'oro", [[true, "Sì"], [false, "No"]], "oro", "Una parola di nessuno è d'oro, e non lo sa nessuno: chi la gira gioca un altro turno.");
+      chips("⭐ Parola d'oro", [[true, "Sì"], [false, "No"]], "oro", "Una parola di nessuno è d'oro, e non lo sa nessuno: chi la gira continua a indovinare con lo stesso indizio.");
       // 📝 le TUE parole: restano salvate sul profilo. Si scrivono di fila ("Peppe, Ibiza, Kebab"), così gli amici se le passano;
       // dopo si vedono una alla volta, ognuna con la sua ✕
       var lista = leggiGruppo(window.SG && SG.listaProfilo ? SG.listaProfilo("ordine") : []);

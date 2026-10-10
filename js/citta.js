@@ -12,6 +12,7 @@
   "use strict";
 
   var A = 25, uid = 0, nf = 0;
+  var ALTO = 790;   // quanto è lunga la città (si scorre col dito): quattro file di edifici
   var P, S, ET;   // proiezione, luce ed etichette del disegno in corso
 
   // ---------- attrezzi ----------
@@ -157,6 +158,9 @@
     return s;
   }
   function vaso(u, v) { var b = P(u, v, 3); return cil(u, v, .07, 3, 5, "#c97b3c") + sfera(b[0], b[1] - 10, 5, "#40c057"); }
+  function panchina(u, v) {   // la panchina di legno del parco
+    return ombra(P(u + .35, v + .1, 0), 12) + box(u, v, .05, .05, 0, 4, "#495057") + box(u + .65, v, .05, .05, 0, 4, "#495057") + box(u - .05, v - .08, .8, .22, 4, 1.5, "#c97b3c") + box(u - .05, v - .1, .8, .05, 5.5, 5, "#a0652b");
+  }
   function figura(cfg, x, y, w) { var h = w * 1.32; return window.SGOmino.svg(cfg).replace("<svg ", "<svg x='" + f1(x - w / 2) + "' y='" + f1(y - h * .96) + "' width='" + f1(w) + "' height='" + f1(h) + "' "); }
   function gente(cfg, u, v, w) { var b = P(u, v, 0), g = figura(cfg, b[0], b[1], w); return S.notte ? "<g filter='url(#ctnp" + S.id + ")'>" + g + "</g>" : g; }
   // un pezzo della città che si può toccare (edificio, piazza, bar): porta a "vai"
@@ -388,8 +392,9 @@
   }
 
   // ---------- la città ----------
-  var LOTTI = { casino: [4.15, 6.95], studio: [6.95, 4.15], circolo: [6.7, 6.7], giochi: [10.55, 13.35], arena: [13.35, 10.55], locale: [16.95, 19.75], trofei: [19.75, 16.95] };
-  var NOMI = { casino: ["🃏 Casinò", "#e03131", 97, 0], studio: ["📺 Studio TV", "#7048e8", 99, 0], circolo: ["🎲 Circolo", "#2f9e44", 92, 0], giochi: ["🕹️ Sala giochi", "#f08c00", 80, -4], arena: ["⚔️ Arena", "#1c7ed6", 95, 0], locale: ["🎉 Locale", "#d6336c", 76, 0], trofei: ["🏆 Trofei", "#f59f00", 92, 0] };
+  var LOTTI = { casino: [4.15, 6.95], studio: [6.95, 4.15], circolo: [23.35, 26.15], giochi: [10.55, 13.35], arena: [13.35, 10.55], locale: [16.95, 19.75], trofei: [19.75, 16.95] };
+  // i nomi: subito sopra il tetto di ogni edificio (altezza scelta a mano, così toccano l'edificio)
+  var NOMI = { casino: ["🃏 Casinò", "#e03131", 95, 0], studio: ["📺 Studio TV", "#7048e8", 76, 0], circolo: ["🎲 Circolo", "#2f9e44", 70, 0], giochi: ["🕹️ Sala giochi", "#f08c00", 78, -4], arena: ["⚔️ Arena", "#1c7ed6", 46, 0], locale: ["🎉 Locale", "#d6336c", 64, 0], trofei: ["🏆 Trofei", "#f59f00", 74, 0] };
   var DISEGNA = { casino: casino, studio: studio, circolo: circolo, giochi: arcade, locale: locale, trofei: trofei };
   function edificio(k) {
     var u = LOTTI[k][0], v = LOTTI[k][1], c = [u + 1.25, v + 1.25], n = NOMI[k], p = P(c[0], c[1], n[2]);
@@ -408,25 +413,27 @@
   function disegna(fase, io) {
     S = FASI[fase] || FASI.giorno; P = proiezione(150, 0); ET = []; nf = 0;
     var AM = NOMI_GENTE.map(function (n) { return window.SGOmino.casuale(n); }), og = [], i;
-    var s = defs() + "<rect x='-200' y='-200' width='700' height='1000' fill='" + T("#9bd36d") + "'/>";
-    for (i = 0; i < 80; i++) s += "<path d='M" + ((i * 67) % 300) + "," + ((i * 113) % 600) + " l2,-5 l2,5' stroke='" + T("#86c25a") + "' stroke-width='1.5' fill='none'/>";
-    s += strade([[true, 10], [true, 16.4], [false, 10], [false, 16.4]], .54);
+    var s = defs() + "<rect x='-200' y='-200' width='700' height='1300' fill='" + T("#9bd36d") + "'/>";
+    for (i = 0; i < 110; i++) s += "<path d='M" + ((i * 67) % 300) + "," + ((i * 113) % ALTO) + " l2,-5 l2,5' stroke='" + T("#86c25a") + "' stroke-width='1.5' fill='none'/>";
+    s += strade([[true, 10], [true, 16.4], [true, 22.8], [false, 10], [false, 16.4], [false, 22.8]], .54);
     s += tocco("piazza", ell(10, 10, 0, 1.4, F("#f1e7d0", "t"), " stroke='" + F("#cbbd9c", "l") + "' stroke-width='2.5'") + ell(10, 10, 0, 1.1, "none", " stroke='" + F("#e2d3b0", "l") + "' stroke-width='1.6' stroke-dasharray='5 4'"));
-    s += fiori(8.4, 12.9) + fiori(12.9, 8.4);
+    s += fiori(8.4, 12.9) + fiori(12.9, 8.4) + fiori(21.2, 25.6) + fiori(25.6, 21.2);
+    s += ell(22.8, 22.8, 0, 1.0, F("#8ce99a", "t"), L("#69db7c")) + ell(22.8, 22.8, 0, .72, "none", " stroke='" + F("#ffffff", "t") + "' stroke-width='1.4' stroke-dasharray='4 4'");   // l'aiuola della rotonda in basso
     Object.keys(LOTTI).forEach(function (k) { og.push(edificio(k)); });
     og.push({ d: 20, s: tocco("piazza", fontana(10, 10)) }, { d: 19.4, s: tocco("piazza", bacheca(10, 9)) }, { d: 32.8, s: tocco("bar", bar(16.4, 16.4)) });
-    [[7.6, 12.4, 1], [12.4, 7.6, 1], [2.6, 7.4, .9], [4.9, 4.6, 1.1], [3.6, 5.6, .9], [5.7, 3.5, .95]].forEach(function (t) { og.push({ d: t[0] + t[1], s: albero(t[0], t[1], t[2]) }); });
+    [[7.6, 12.4, 1], [12.4, 7.6, 1], [2.6, 7.4, .9], [4.9, 4.6, 1.1], [3.6, 5.6, .9], [5.7, 3.5, .95], [26.4, 23.8, 1.15], [27.9, 24.9, 1], [26.9, 25.6, .9], [24.2, 20.9, .9], [20.9, 24.2, .9]].forEach(function (t) { og.push({ d: t[0] + t[1], s: albero(t[0], t[1], t[2]) }); });
     [[14.2, 18.6], [18.6, 14.2], [20.9, 20.9]].forEach(function (t) { og.push({ d: t[0] + t[1], s: pino(t[0], t[1], 1) }); });
-    [[7.5, 10.55], [10.55, 7.5]].forEach(function (l) { og.push({ d: l[0] + l[1], s: lampione(l[0], l[1]) }); });
-    og.push({ d: 23.2, s: auto(12.6, 9.55, "#fa5252") }, { d: 29, s: auto(12.4, 15.98, "#4dabf7") });
+    [[7.5, 10.55], [10.55, 7.5], [20.3, 23.35], [23.35, 20.3]].forEach(function (l) { og.push({ d: l[0] + l[1], s: lampione(l[0], l[1]) }); });
+    og.push({ d: 51.4, s: panchina(25.8, 25.6) });   // il parco accanto al Circolo
+    og.push({ d: 23.2, s: auto(12.6, 9.55, "#fa5252") }, { d: 29, s: auto(12.4, 15.98, "#4dabf7") }, { d: 41.6, s: auto(18.9, 22.38, "#fcc419") });
     // (il cantiere dell'anteprima, gru, transenne e birilli, è finito: la città è aperta; le funzioni restano per i lavori futuri)
     // la gente: in piazza a leggere le novità, al bar, per strada
     [[AM[0], 10.85, 9.6], [AM[1], 11.3, 10.2], [AM[4], 9.4, 10.65], [AM[2], 16.95, 17.35], [AM[3], 17.35, 16.95], [AM[5], 16.6, 13.6]].forEach(function (g) { og.push({ d: g[1] + g[2] + .2, s: gente(g[0], g[1], g[2], 22) }); });
     if (io) og.push({ d: 21.8, s: gente(io, 10.7, 10.9, 28) });
     og.sort(function (x, y) { return x.d - y.d; });
     og.forEach(function (o) { s += o.s; });
-    if (S.notte) s += "<rect x='-200' y='-200' width='700' height='1000' fill='url(#ctvig" + S.id + ")'/>";
-    else if (S.tramonto) s += "<rect x='-200' y='-200' width='700' height='1000' fill='url(#ctcaldo" + S.id + ")'/>";
+    if (S.notte) s += "<rect x='-200' y='-200' width='700' height='1300' fill='url(#ctvig" + S.id + ")'/>";
+    else if (S.tramonto) s += "<rect x='-200' y='-200' width='700' height='1300' fill='url(#ctcaldo" + S.id + ")'/>";
     var pb = P(16.4, 16.4, 40);
     etichetta(pb[0], pb[1] - 12, "☕ Bar", "#e03131", null, "bar");
     etichetta(150, 292, "📰 Novità", "#4c6ef5", null, "piazza");
@@ -461,7 +468,7 @@
     svg: function (opz) {
       opz = opz || {};
       var corpo = disegna(opz.fase || fase(new Date()), opz.io || null), m = opz.sopra || 0;
-      return "<svg viewBox='0 " + (-m) + " 300 " + (600 + m) + "' preserveAspectRatio='xMidYMid meet' xmlns='http://www.w3.org/2000/svg'>" + corpo + "</svg>";
+      return "<svg viewBox='0 " + (-m) + " 300 " + (ALTO + m) + "' width='300' height='" + (ALTO + m) + "' preserveAspectRatio='xMidYMid meet' xmlns='http://www.w3.org/2000/svg'>" + corpo + "</svg>";
     },
     fase: fase,
     colorePrato: function (f) { S = FASI[f] || FASI.giorno; return T("#9bd36d"); }

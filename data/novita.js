@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 171,
+    data: "10 ottobre 2026",
+    titolo: "La città si allunga e Parola d'ordine migliora 🏙️",
+    descrizione: [
+      "La città ora è più lunga e si scorre su e giù col dito. In fondo c'è una fila nuova: il Circolo ha il suo posto tutto per sé, accanto a un parco con gli alberi e la panchina. Nessun edificio ne copre più un altro.",
+      "I nomi degli edifici adesso stanno appoggiati sul tetto di ognuno, non più sospesi in aria.",
+      "Uscendo da un edificio torni nel punto della città dove eri arrivato.",
+      "Parola d'ordine: ognuno può segnare più parole insieme, e su ogni parola segnata si vede sempre la faccina di chi l'ha scelta.",
+      "Parola d'ordine: la parola d'oro non fa più ricominciare il turno. Chi la trova continua a indovinare con lo stesso indizio, senza consumare un tentativo."
+    ]
+  },
+  {
     v: 170,
     data: "9 ottobre 2026",
     titolo: "Trofei per Palla a Pendolo e Ruota della Fortuna 🏆",

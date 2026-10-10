@@ -556,6 +556,7 @@
   // ---- La città: si tocca un edificio, la città fa zoom e si entra.
   //      In alto chi sei (avatar, nome, livello con la barra degli XP) e le Speed Coins;
   //      in basso Casa, Clan e Negozio (in arrivo) e la Ruota del giorno ----
+  var scrollCitta = 0;   // fin dove avevi scorso la città: uscendo da un edificio si torna lì (dalla home si riparte dall'alto)
   function schermataCitta() {
     var io = profiloAttivo(), N = window.SGNube, fase = SGCitta.fase(new Date()), via = false;
     var cloud = !!(N && N.profilo && N.profilo()), prog = window.SGLivelli && cloud && N.progressione ? N.progressione() : null;
@@ -601,7 +602,7 @@
     var s = el("div", { class: "schermata citta-vista" + (fase === "notte" ? " notte" : ""), style: "background:" + SGCitta.colorePrato(fase) }, [
       mappa,
       el("div", { class: "citta-testa" }, [
-        el("button", { class: "citta-indietro", text: "‹", "aria-label": "Indietro", onclick: schermataHome }),
+        el("button", { class: "citta-indietro", text: "‹", "aria-label": "Indietro", onclick: function () { scrollCitta = 0; schermataHome(); } }),
         el("button", { class: "citta-io", "aria-label": "Il tuo profilo", onclick: function () { schermataAccesso(schermataCitta); } }, [ faccia, testoIo ]),
         el("div", { class: "citta-monete", "aria-label": "Speed Coins" }, [ el("span", { class: "citta-moneta" }), monete ])
       ]),
@@ -618,6 +619,7 @@
       if (!t || via) return;
       via = true;
       var k = t.getAttribute("data-vai"), r = t.getBoundingClientRect(), R = mappa.getBoundingClientRect();
+      scrollCitta = mappa.scrollTop;
       // zoom verso l'edificio toccato e dissolvenza (solo transform e opacity: niente scatti)
       mappa.style.transformOrigin = Math.round(r.left + r.width / 2 - R.left) + "px " + Math.round(r.top + r.height / 2 - R.top) + "px";
       mappa.style.transition = "transform .42s cubic-bezier(.55,0,.8,.3), opacity .42s ease-in";
@@ -626,6 +628,7 @@
       setTimeout(function () { entraEdificio(k); }, 400);
     });
     mostra(s);
+    if (scrollCitta) mappa.scrollTop = scrollCitta;
   }
 
   // ---- Dentro gli edifici della città: le sale coi giochi della categoria (stesso modello per tutti) ----
