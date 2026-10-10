@@ -74,7 +74,8 @@
       if (pareggio) incr.push(["pareggi", 1]);
       var s = SGNube.statGioco ? (SGNube.statGioco("sipero") || {}) : {};
       if (s.ultimaPartitaTrofei === vm.sessione) return;
-      var serie = vinta ? (+s.serieVittorieOra || 0) + 1 : 0;
+      var giudice = online && vm.assegna && vm.assegna[giocatoreId] === "g";   // da giudice non si può vincere: la serie resta com'era
+      var serie = vinta ? (+s.serieVittorieOra || 0) + 1 : giudice ? (+s.serieVittorieOra || 0) : 0;
       PARTITE_SALVATE[chiave] = 1;
       try { if (window.localStorage) localStorage.setItem(chiaveLocale, String(vm.sessione)); } catch (e) {}
       SGNube.salvaProgressi(null, "sipero", incr.filter(function (x) { return x[1] > 0; }),

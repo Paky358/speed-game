@@ -812,7 +812,8 @@
     function prossimoGiro() { if (H.fase === "punti") { H.giro++; nuovoGiro(); } }
     function nuova() {   // stessa gente, si ricomincia (senza sigla)
       if (H.fase !== "fine") return;
-      H.players = pres(); H.players.forEach(function (p) { p.punti = 0; });
+      H.players = pres(); H.players.forEach(function (p) { p.punti = 0; p._trofei = nuovoProgresso(); });
+      H.sessioneTrofei = sessioneNcc();   // partita nuova: i trofei contano anche questa (e ripartono da zero)
       if (H.players.length < 2) return;
       H.giro = 0; H.lettera = null; nuovoGiro();
     }

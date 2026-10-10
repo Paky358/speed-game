@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 173,
+    data: "10 ottobre 2026",
+    titolo: "Trofei per altri 5 giochi 🏆",
+    descrizione: [
+      "Arrivano 19 trofei ciascuno per L'Asta, Nomi Cose e Città, Parola d'ordine, La Patata Bollente e Sì... però.",
+      "Si va dalla prima partita alle sfide più dure: 25 vittorie di squadra in Parola d'ordine, 300 parole approvate in Nomi Cose e Città, 100 carte vinte all'asta, 3 vittorie di fila alla Patata.",
+      "Anche questi danno XP e Speed Coins. Contano le partite giocate da qui in avanti, con il profilo."
+    ]
+  },
+  {
     v: 172,
     data: "10 ottobre 2026",
     titolo: "Parola d'ordine si anima 🎬",
