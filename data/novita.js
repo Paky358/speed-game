@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 173,
+    data: "10 ottobre 2026",
+    titolo: "Trofei per La Patata Bollente 💣",
+    descrizione: [
+      "Arrivano 19 trofei: passa la bomba, rimandala indietro, sopravvivi alle esplosioni e prova a restare l'ultimo in gara.",
+      "Ci sono trofei anche per le partite online e per quelle con categoria a sorpresa. I progressi si salvano con il tuo profilo quando la partita finisce."
+    ]
+  },
+  {
     v: 170,
     data: "9 ottobre 2026",
     titolo: "Trofei per Palla a Pendolo e Ruota della Fortuna 🏆",
