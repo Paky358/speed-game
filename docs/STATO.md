@@ -68,7 +68,7 @@ dal proprio.
   Media nel torneo.
   - **Un telefono solo**: si passa di mano, ognuno sceglie in segreto.
   - **Ognuno dal suo telefono** (online): stanza con codice + link; i posti liberi li
-    riempiono dei **bot** (il primo è **Matt**), così si gioca anche da soli, in 2 o
+    riempiono dei **bot** (il primo è **Bot**), così si gioca anche da soli, in 2 o
     in 3. Nella scelta si vedono tutti: chi sceglie **illumina il pallino** e fa un
     **bip**. Secondo gioco (con l'Asta e Sì... però) con l'online completo.
 

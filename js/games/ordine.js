@@ -111,7 +111,7 @@
   // ripresa (solo per il vice che prende il posto): { codice, stato (la copia della partita), io (il suo id), omini }
   function host(t, ripresa) {
     var imp = t.impostazioni || {};
-    var prova = !ripresa && imp.modo === "prova";   // 🧪 prova da solo (solo per il proprietario): tu e Matt contro due bot, senza rete
+    var prova = !ripresa && imp.modo === "prova";   // 🧪 prova da solo (solo per il proprietario): tu e Bot contro due bot, senza rete
     if (!prova && !(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var IO = ripresa ? ripresa.io : "host";   // il mio id nella partita
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
@@ -129,9 +129,9 @@
       players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), team: 0 }], capo: [null, null, null],
       tab: null, bid: 0, turno: 0, passo: "indizio", indizio: null, tentativi: 0, girate: 0, prop: {}, storia: [], fuori: [],
       vince: -1, classifica: null, msg: "", ultima: null, nGirate: 0, gen: 1, hostId: IO, vici: [], progressi: {} };
-    if (prova) {   // i bot: Matt in squadra con te (il primo bot si chiama sempre Matt), Rosa e Peppe nell'altra
+    if (prova) {   // i bot: Bot in squadra con te (il primo bot si chiama sempre Bot), Rosa e Peppe nell'altra
       H.nsq = 2;
-      [["bot1", "Matt", 0], ["bot2", "Rosa", 1], ["bot3", "Peppe", 1]].forEach(function (b) {
+      [["bot1", "Bot", 0], ["bot2", "Rosa", 1], ["bot3", "Peppe", 1]].forEach(function (b) {
         H.players.push({ id: b[0], nome: b[1], team: b[2], bot: true, omino: window.SGOmino ? SGOmino.casuale(b[1]) : null });
       });
       H.capo = [imp.capoIo === false ? "bot1" : IO, "bot2", null];
@@ -1188,7 +1188,7 @@
     descrizione: "Come Codenames: il capo dà un indizio di una parola, la squadra trova le sue parole sul tabellone. Occhio alla parola nera! A 2 o 3 squadre, ognuno dal suo telefono.",
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 4–12 giocatori",
     // "Prova da solo" la vede solo il proprietario (account IL PAPPONE): per vedere com'è il gioco anche senza amici
-    modi: [ { modo: "prova", icona: "🧪", nome: "Prova da solo", sotto: "Solo per te: tu e Matt contro due bot", soloPer: "IL PAPPONE" } ], soloOnline: true,
+    modi: [ { modo: "prova", icona: "🧪", nome: "Prova da solo", sotto: "Solo per te: tu e Bot contro due bot", soloPer: "IL PAPPONE" } ], soloOnline: true,
     regole: [
       "Si gioca a <b>2 o 3 squadre</b>. Sul tabellone ci sono 25 parole (o 20, se l'host sceglie così): alcune sono di una squadra, alcune di nessuno e una è la <b>parola nera</b>.",
       "Solo il <b>capo</b> di ogni squadra (👑) vede di chi è ogni parola. Nel suo turno dà un <b>indizio di una parola sola</b> e un numero: quante parole sue c'entrano (es. «Caldo, 2»).",
@@ -1215,7 +1215,7 @@
         box.appendChild(g);
         if (nota) box.appendChild(el("p", { class: "modulo-nota", text: nota }));
       }
-      if (prova) chips("Nella tua squadra il capo è…", [[true, "Io"], [false, "Matt"]], "capoIo", "I bot danno indizi a caso e indovinano un po' a naso: la prova serve a vedere come funziona il gioco.");
+      if (prova) chips("Nella tua squadra il capo è…", [[true, "Io"], [false, "Bot"]], "capoIo", "I bot danno indizi a caso e indovinano un po' a naso: la prova serve a vedere come funziona il gioco.");
       else chips("Quante squadre", [[2, "2 squadre"], [3, "3 squadre (da 6)"]], "squadre");
       chips("Quante parole sul tabellone", [[25, "25 (classico)"], [20, "20 (più grandi)"]], "parole", "Con 20 le caselle sono più grandi e la partita dura un po' meno.");
       chips("⭐ Parola d'oro", [[true, "Sì"], [false, "No"]], "oro", "Una parola di nessuno è d'oro, e non lo sa nessuno: chi la gira continua a indovinare con lo stesso indizio.");

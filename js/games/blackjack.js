@@ -486,14 +486,14 @@
     ".bjr-matt{position:absolute;display:flex;flex-direction:column;align-items:center;cursor:pointer;pointer-events:auto}",
     ".bjr-matt .bj-av{width:58px;height:58px;margin:0}.bjr-matt.turno .bj-av,.bjr-matt.turno .bjr-matt-nome{border-color:#ffd45e}",
     ".bjr-matt-nome{margin-top:-8px;position:relative;background:rgba(10,18,50,.9);border:2px solid rgba(255,255,255,.16);border-radius:10px;padding:1px 8px;font-size:.7rem;font-weight:800;white-space:nowrap}",
-    // Matt e quanto ha il banco stanno FUORI dalla telecamera: si vedono sempre, anche negli zoom
+    // Bot e quanto ha il banco stanno FUORI dalla telecamera: si vedono sempre, anche negli zoom
     ".bj-sala .bjr-matt{left:6px;bottom:6px;z-index:6}.bjr-matt-nome b{font-size:1.02rem;color:#ffe066;margin-left:4px}.bjr-matt-nome b.bust{color:#ff9d8a}.bj-sala>.bjr-fum{z-index:6}",
     // dopo "Dividi": un mazzetto per mano, quello che si gioca illuminato
     ".bjr-cc.cascata.divise{display:flex;align-items:flex-end;gap:9px}.bjr-mn{position:relative;flex:none;border-radius:5px;transform-style:preserve-3d}.bjr-mn.on{box-shadow:0 0 0 2px #ffd45e,0 0 12px rgba(255,212,94,.7)}",
     ".bjr-fum{position:absolute;max-width:150px;background:#fff;color:#12233a;font-weight:900;border-radius:13px;padding:5px 10px;font-size:.8rem;line-height:1.15;box-shadow:0 4px 12px rgba(0,0,0,.4);transform:translateY(-100%);animation:bjFum .26s cubic-bezier(.3,1.6,.5,1)}",
     ".bjr-fum.oro{background:linear-gradient(135deg,#ffe066,#ffb300);color:#3b2400}",
     "@keyframes bjFum{from{transform:translateY(-100%) scale(.3);opacity:0}}",
-    // apertura: Matt ci guarda, poi la telecamera passa su ognuno
+    // apertura: Bot ci guarda, poi la telecamera passa su ognuno
     ".bjr-intro{position:absolute;inset:0;z-index:8;overflow:hidden;background:radial-gradient(70% 55% at 50% 10%,rgba(255,214,140,.45),rgba(255,214,140,0) 70%),linear-gradient(#4a2c22,#1f130e);transition:opacity .6s,transform .6s cubic-bezier(.5,0,.75,0)}",
     ".bjr-intro.via{opacity:0;transform:translateX(-60%) scale(1.15);pointer-events:none}",
     ".bjr-intro .mg{position:absolute;left:50%;bottom:14%;width:78%;max-width:340px;transform:translateX(-50%)}.bjr-intro .mg svg{display:block;width:100%;height:auto}",
@@ -549,7 +549,7 @@
   }
 
   // ---- suoni (Web Audio) + vibrazione ----
-  // ---------- avatar: Matt il dealer + i giocatori ai loro posti ----------
+  // ---------- avatar: Bot il dealer + i giocatori ai loro posti ----------
   var MATT_DEALER = { forma: "uomo", corpo: "medio", pelle: 2, capelli: "indietro", colCap: 1, barba: "corta", capo: "giacca", maglia: 7,
     collo: "papillon", colCollo: 0, sopracc: "decise", occhi: "furbi", bocca: "ghigno" };
   var FACCE = {
@@ -703,7 +703,7 @@
     iniettaCSS();
     var el = t.el;
     var s = t.schermata({
-      titolo: "🃏 Black Jack", sotto: drv.sotto || "Banco: Matt",
+      titolo: "🃏 Black Jack", sotto: drv.sotto || "Banco: Bot",
       indietro: function () { if (window.confirm("Uscire dal tavolo?")) { document.body.classList.remove("bj-verde"); drv.onEsci(); } }
     });
     var wrap = el("div", { class: "bj-wrap" });
@@ -716,7 +716,7 @@
       el("div", { class: "r", html: BJ.retroSVG() })
     ]);
     wrap.appendChild(mazzo);
-    mazzo.style.visibility = "hidden";   // il mazzo non si vede (spazio al tavolo): le carte partono da Matt
+    mazzo.style.visibility = "hidden";   // il mazzo non si vede (spazio al tavolo): le carte partono da Bot
     s._contenuto.appendChild(wrap); t.mostra(s);
     document.body.classList.add("bj-verde");
     // se lo schermo cambia misura (barre del telefono, rotazione) il tavolo si ridisegna sulla misura nuova
@@ -724,7 +724,7 @@
 
     var vm = null, anim = { ultima: -1, banco: false }, timerPasso = null, daVolare = [], puntSel = null;
     var bolla = null, bollaId = -1, bollaTimer = null;   // nuvoletta della mossa
-    var scopri = { attesa: false, t: null };   // la carta coperta di Matt si gira solo quando la telecamera è arrivata
+    var scopri = { attesa: false, t: null };   // la carta coperta di Bot si gira solo quando la telecamera è arrivata
     function svuota(n) { while (n.firstChild) n.removeChild(n.firstChild); }
     function mioIdx() { return drv.mioIdx ? drv.mioIdx() : vm.turno; }
     // chi sta decidendo adesso: online puntate e assicurazione si fanno tutti insieme
@@ -782,7 +782,7 @@
       var g = vm.giocatori[vm.turno]; if (!g) return false;
       var m = g.mani[g.attiva]; return !!(m && m.chiusa);
     }
-    // dopo "Dividi" la mano che tocca ha una carta sola: Matt le dà la seconda
+    // dopo "Dividi" la mano che tocca ha una carta sola: Bot le dà la seconda
     function manoDaCompletare() {
       if (!vm || vm.fase !== "gioca") return false;
       var g = vm.giocatori[vm.turno]; if (!g) return false;
@@ -851,7 +851,7 @@
     function cartaR(c, w, nuova, coperta) { var d = el("div", { class: "bjr-carta" + (nuova ? " arriva" : ""), html: BJ.cartaHTML(c, coperta) }); d.style.width = w + "px"; return d; }
 
     var cam = el("div", { class: "bjr-cam" }), capt = el("div", { class: "bj-turno" });
-    // Matt con quanto ha il banco: fuori dalla telecamera, così si vede sempre (anche quando zooma su chi gioca)
+    // Bot con quanto ha il banco: fuori dalla telecamera, così si vede sempre (anche quando zooma su chi gioca)
     var hud = el("div", { class: "bjr-matt" }, [ el("div", { class: "bj-av" }), el("div", { class: "bjr-matt-nome" }) ]), fumEl = null;
     hud.onclick = function () { sbircia(-1); };
     zBanco.appendChild(cam); zBanco.appendChild(capt); zBanco.appendChild(hud);
@@ -911,7 +911,7 @@
       var W = zBanco.clientWidth, H = zBanco.clientHeight, N = vm.giocatori.length;
       if (!R || R.N !== N || Math.abs(R.W - W) > 2 || Math.abs(R.H - H) > 2) costruisci();
       zTav.hidden = true;
-      mazzo.style.top = Math.round(R.by + 10) + "px"; mazzo.style.left = Math.round(R.bx - 22) + "px"; mazzo.style.right = "auto";   // le carte partono da Matt
+      mazzo.style.top = Math.round(R.by + 10) + "px"; mazzo.style.left = Math.round(R.bx - 22) + "px"; mazzo.style.right = "auto";   // le carte partono da Bot
       vm.giocatori.forEach(function (g, i) {
         var s = R.seg[i], attivo = decide(i);
         // faccia e luce di chi gioca
@@ -968,7 +968,7 @@
           s.ccW = totW * ((s.carte && s.carte.sc) || 1);   // quanto sono larghe sullo schermo (per lo zoom)
         }
       });
-      // le carte di Matt (vicino a noi): la coperta si gira solo quando la telecamera è arrivata
+      // le carte di Bot (vicino a noi): la coperta si gira solo quando la telecamera è arrivata
       var scoperta = (vm.fase === "banco" || vm.fase === "esito") && !scopri.attesa;
       var kb = vm.banco.map(function (c) { return c.v + "" + c.s; }).join(",") + "|" + scoperta;
       if (R.k.b !== kb) {
@@ -977,17 +977,17 @@
         if (gira) giraCarta(R.bancoCC.children[1], vm.banco[1]);
         else { svuota(R.bancoCC); vm.banco.forEach(function (c, k) { R.bancoCC.appendChild(cartaR(c, 50, k >= pr && vm.banco.length > pr, !scoperta && k === 1)); }); }
       }
-      // Matt nell'angolo con quanto ha il banco (sempre visibile)
+      // Bot nell'angolo con quanto ha il banco (sempre visibile)
       var fm = faccinaMatt(), pB = testoBanco(scoperta);
       var km = fm.faccia + "|" + fm.fum + "|" + pB + "|" + vm.fase;
       if (R.k.m !== km) {
         R.k.m = km;
         hud.className = "bjr-matt" + (vm.fase === "banco" ? " turno" : "");
         if (window.SGOmino) hud.firstChild.innerHTML = svgAvatar(MATT_DEALER, fm.faccia, { busto: true });
-        var hn = hud.lastChild; hn.innerHTML = ""; hn.appendChild(document.createTextNode(pB ? "🎩 Banco" : "🎩 Matt"));
+        var hn = hud.lastChild; hn.innerHTML = ""; hn.appendChild(document.createTextNode(pB ? "🎩 Banco" : "🎩 Bot"));
         if (pB) hn.appendChild(el("b", { class: /Sball/.test(pB) ? "bust" : "", text: pB }));
         if (fumEl) fumEl.remove(); fumEl = null;
-        if (fm.fum) { fumEl = el("div", { class: "bjr-fum" + (fm.oro ? " oro" : ""), style: "left:8px;top:" + (R.H - 96) + "px", text: fm.fum }); zBanco.appendChild(fumEl); }   // il fumetto sta sopra la testa di Matt, lontano dalle carte
+        if (fm.fum) { fumEl = el("div", { class: "bjr-fum" + (fm.oro ? " oro" : ""), style: "left:8px;top:" + (R.H - 96) + "px", text: fm.fum }); zBanco.appendChild(fumEl); }   // il fumetto sta sopra la testa di Bot, lontano dalle carte
       }
       // la nuvoletta della mossa sopra la testa di chi l'ha detta
       [].forEach.call(R.sopra.querySelectorAll(".bjr-bolla"), function (b) { if (!bolla || +b.dataset.id !== bollaId) b.remove(); });
@@ -997,8 +997,8 @@
       }
       // in grande sulla parete: chi sta giocando
       var gt = vm.giocatori[vm.turno], scritta = "", sotto = "";
-      if (vm.fase === "distrib") scritta = "Matt distribuisce…";
-      else if (vm.fase === "banco") scritta = "Tocca a Matt 🎩";
+      if (vm.fase === "distrib") scritta = "Bot distribuisce…";
+      else if (vm.fase === "banco") scritta = "Tocca a Bot 🎩";
       else if (vm.fase === "esito") scritta = "Fine mano";
       else if (vm.fase === "punta" && drv.mioIdx) {   // online si punta tutti insieme
         var manc = vm.giocatori.filter(function (x, j) { return puoPuntare(vm, j); }).map(function (x) { return x.nome; });
@@ -1030,12 +1030,12 @@
       var s = R.seg[i], top = s.testa - 22, bot = Math.max(s.carte.y, s.fp.y) + 34;
       return { x: s.x, y: (top + bot) / 2, w: Math.max(s.w * (largo ? 3 : 1.3), largo ? 230 : 140, (s.ccW || 0) * 1.35), h: (bot - top) * (largo ? 1.25 : 1) };
     }
-    // lo zoom sul banco va sulle CARTE di Matt, al centro (la sua faccia è già nell'angolo)
+    // lo zoom sul banco va sulle CARTE di Bot, al centro (la sua faccia è già nell'angolo)
     function suMatt() {
       var n = Math.max(2, vm.banco.length), w = Math.max(210, (53 * n) * R.bsc + 120);
       return { x: R.bx, y: R.by, w: w, h: w * 0.62 };
     }
-    // cosa ha il banco, scritto accanto a Matt: finché la seconda è coperta "10 + ?"
+    // cosa ha il banco, scritto accanto a Bot: finché la seconda è coperta "10 + ?"
     function testoBanco(scoperta) {
       if (!vm.banco.length) return "";
       if (!scoperta) { var c = vm.banco[0]; return (c.v === 1 ? "A" : BJ.valoreCarta(c.v)) + (vm.banco.length > 1 ? " + ?" : ""); }
@@ -1072,7 +1072,7 @@
       inquadra(i < 0 ? suMatt() : suGiocatore(i));
       setTimeout(function () { if (Date.now() >= sbirciaFino) telecamera(); }, 2350);
     }
-    // ---------- APERTURA (la prima volta): Matt ci guarda, poi la telecamera passa su ognuno ----------
+    // ---------- APERTURA (la prima volta): Bot ci guarda, poi la telecamera passa su ognuno ----------
     var intro = { fatta: false, corre: false };
     function apertura() {
       intro.fatta = true; intro.corre = true;
@@ -1206,7 +1206,7 @@
       var centro = el("div", { class: "bj-hcentro" });
       heroCarte(g, centro);
       var ma = g.mani[g.attiva], attesa = ma && !ma.chiusa && ma.carte.length < 2;   // dopo "Dividi": aspetta la seconda carta
-      if (attesa) centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:#ffe58a", text: "Matt ti dà la carta…" }));
+      if (attesa) centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:#ffe58a", text: "Bot ti dà la carta…" }));
       if (ma && ma.chiusa) {   // mano finita: resta a schermo un attimo prima di passare
         var pm = BJ.punteggio(ma.carte);
         centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:" + (pm > 21 ? "#ff9d8a" : "#9fe6b4"),
@@ -1261,7 +1261,7 @@
     function refresh() { tav.aggiorna(vistaBJ(st)); }
     tav = tavoloBJ(t, {
       avatari: function () { return avatari; },
-      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · gira la ruota del giorno!") : ("👤 " + prof.nome + " · gioca con le tue Speed Coins")) : "Un telefono · Banco: Matt",
+      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · gira la ruota del giorno!") : ("👤 " + prof.nome + " · gioca con le tue Speed Coins")) : "Un telefono · Banco: Bot",
       puoAgire: function () { return true; },
       puoNuova: function () { return true; },
       guida: function () { return true; },

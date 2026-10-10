@@ -52,7 +52,7 @@ SG.registra({
 ## Schermo
 - Niente titolo in alto e **niente scorrimento** per giocare. A tutto schermo: `.schermata.<pref>-piena{padding:0!important;height:var(--alt,100dvh);overflow:hidden}` con testa e piede nascosti (vedi `horto.js`).
 - **Niente lampeggio**: costruisci la schermata una volta e poi aggiorna solo i pezzi che cambiano.
-- Numeri col punto delle migliaia; "avatar", non "omino"; il primo bot si chiama Matt.
+- Numeri col punto delle migliaia; "avatar", non "omino"; il primo bot si chiama Bot.
 - Stile nel file del gioco (un `<style>` aggiunto una volta), con un prefisso di classe tutto suo.
 
 ## Errori già visti (da non ripetere)

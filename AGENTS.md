@@ -31,7 +31,7 @@ Il proprietario lavora con Claude da due computer, tenuti allineati da GitHub. Q
 ## Regole fisse dei giochi
 - **Niente scorrimento per giocare** e niente titolo in alto nei giochi: il tavolo prima di tutto. I giochi a tutto schermo usano `height: var(--alt)` (l'altezza vera dello schermo, misurata da core.js).
 - **Niente lampeggio**: a ogni mossa si aggiorna solo la parte che cambia, mai tutta la schermata.
-- Vibrazione solo quando si tocca per scegliere, mai mentre si scorre. Il primo bot si chiama sempre **Matt**.
+- Vibrazione solo quando si tocca per scegliere, mai mentre si scorre. I bot non si chiamano mai Matt: il primo si chiama sempre **Bot** (deciso il 10 ott 2026).
 - Scene animate grandi: animare solo transform/opacity, sfondi e luci su canvas.
 
 ## Giochi online (ognuno dal suo telefono)

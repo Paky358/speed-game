@@ -196,7 +196,7 @@
     //      giocato.<gioco> = { p: partite, v: vinte, s: perse, t: secondi giocati, serie, serieMax, u: l'ultima volta }
     //      esito: "vinta", "persa" oppure null (partita sullo stesso telefono senza il tuo nome in classifica) ----
     giocato: function () { return (profilo && profilo.giocato) || {}; },
-    contaPartita: function (gioco, esito, secondi) {
+    contaPartita: function (gioco, esito, secondi, punti) {   // punti: il tuo punteggio (per il record), se il gioco lo dà
       if (!auth || !utente || !profilo || !gioco) return;
       var FV = firebase.firestore.FieldValue, b = "giocato." + gioco + ".", patch = {}, sec = Math.max(0, Math.min(7200, Math.round(secondi || 0)));
       function piu(k, n) { if (!n) return; patch[b + k] = FV.increment(n); setNested(profilo, b + k, (getNested(profilo, b + k) || 0) + n); }
@@ -204,6 +204,7 @@
       piu("p", 1); piu("t", sec);
       if (esito === "vinta") { piu("v", 1); var serie = (getNested(profilo, b + "serie") || 0) + 1; metti("serie", serie); if (serie > (getNested(profilo, b + "serieMax") || 0)) metti("serieMax", serie); }
       if (esito === "persa") { piu("s", 1); metti("serie", 0); }
+      if (typeof punti === "number" && isFinite(punti) && punti > 0 && punti > (getNested(profilo, b + "rec") || 0)) metti("rec", Math.round(punti));   // il record del punteggio
       metti("u", Date.now());
       db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
     },

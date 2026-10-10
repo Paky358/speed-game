@@ -7,7 +7,7 @@
    Primo in cima (gradino TRAGUARDO) vince.
    Un telefono solo: il telefono si passa, ognuno sceglie in segreto.
    Ognuno dal suo (online): si sceglie tutti insieme; i posti liberi
-   li riempiono dei bot (il primo è "Matt"). Quando uno sceglie, il
+   li riempiono dei bot (il primo è "Bot"). Quando uno sceglie, il
    suo pallino si illumina e il telefono fa un "bip".
    ========================================================= */
 (function () {
@@ -18,7 +18,7 @@
   var SUSPENSE = 2000; // i numeri restano in testa 2 secondi prima di avanzare
   var SCELTE = [1, 3, 5];
   var COLORI = ["#ff6b6b", "#4dabf7", "#51cf66", "#ffd43b"];
-  var NOMI_BOT = ["Matt", "Kevin", "Cody"];
+  var NOMI_BOT = ["Bot", "Kevin", "Cody"];
   var beepStato = { round: -1, ids: {} };
   var scenaScelta = null; // schermata di scelta viva, per aggiornarla senza ridisegnare tutto
 
@@ -286,7 +286,7 @@
   // =========================================================
   //  ONLINE — ognuno dal suo telefono (host-authoritative).
   //  Sempre 4 posti: i giocatori veri entrano, i posti liberi
-  //  li riempiono dei bot (il primo è "Matt"). Nella fase di
+  //  li riempiono dei bot (il primo è "Bot"). Nella fase di
   //  scelta si vedono tutti; quando uno sceglie, il suo pallino
   //  si illumina e il telefono fa un "bip".
   // =========================================================

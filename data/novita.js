@@ -15,7 +15,9 @@ window.SG_NOVITA = [
     descrizione: [
       "Nel tuo profilo c'è il tasto «📊 Le tue statistiche»: per ogni gioco partite, vinte, perse, % di vittorie, tempo giocato e serie migliore di vittorie di fila.",
       "In alto il tempo giocato in tutto e il tuo gioco preferito. Il Black Jack tiene anche le sue mani di sempre.",
+      "Nei giochi coi punti c'è anche il tuo record: il punteggio più alto che hai fatto.",
       "Contano le partite giocate col profilo da oggi in poi.",
+      "Il bot ora si chiama semplicemente Bot, in tutti i giochi.",
       "Nel negozio gli oggetti speciali hanno una frase in più quando li tocchi."
     ]
   },
@@ -134,8 +136,8 @@ window.SG_NOVITA = [
     data: "9 ottobre 2026",
     titolo: "Trofei di Calcio Biliardo ⚽",
     descrizione: [
-      "Arrivano 20 trofei: si parte con la prima partita e i primi gol, poi si punta a battere Matt, vincere online e segnare con tiri speciali.",
-      "I trofei più rari premiano chi batte Matt Difficile 5 volte, chi lo batte senza subire gol e chi arriva a 250 gol."
+      "Arrivano 20 trofei: si parte con la prima partita e i primi gol, poi si punta a battere Bot, vincere online e segnare con tiri speciali.",
+      "I trofei più rari premiano chi batte Bot Difficile 5 volte, chi lo batte senza subire gol e chi arriva a 250 gol."
     ]
   },
   {
@@ -145,7 +147,7 @@ window.SG_NOVITA = [
     descrizione: [
       "L'attaccante, il calciatore più avanzato, ha la faccia del tuo avatar. Quando segni, il tuo avatar esulta in mezzo al campo coi coriandoli del colore della squadra.",
       "Nuova partita a tempo: 2, 3 o 5 minuti con l'orologio in alto. Se finisce pari si va ai rigori: 3 a testa e poi a oltranza. Tira solo l'attaccante e il portiere si tuffa a caso.",
-      "Scegli la formazione: Classica, Catenaccio (più difesa) o All'attacco. Online ognuno la sceglie in saletta, e Matt sceglie la sua a sorpresa.",
+      "Scegli la formazione: Classica, Catenaccio (più difesa) o All'attacco. Online ognuno la sceglie in saletta, e Bot sceglie la sua a sorpresa.",
       "Torneo a eliminazione: Calcio Biliardo ora c'è anche nei tornei della Sala, e chi non gioca guarda le partite in diretta.",
       "Online, chi entra quando i due posti sono già presi guarda la partita in diretta, senza suoni.",
       "Quando prendi il palo o sbagli un rigore, la folla fa «uuuh» per davvero."
@@ -190,7 +192,7 @@ window.SG_NOVITA = [
     descrizione: [
       "Il calcio coi dischi: ognuno ha 5 calciatori. A turno ne tocchi uno, tiri indietro il dito come una fionda e lasci: più tiri indietro, più forte parte.",
       "I calciatori colpiscono la palla e rimbalzano sui bordi, come al biliardo. Vince chi arriva per primo ai gol scelti (1, 3 o 5).",
-      "Si gioca contro Matt (facile, medio o difficile), in due sullo stesso telefono (uno per lato, il telefono in mezzo) oppure online, ognuno dal suo telefono: online vedi sempre la tua squadra in basso.",
+      "Si gioca contro Bot (facile, medio o difficile), in due sullo stesso telefono (uno per lato, il telefono in mezzo) oppure online, ognuno dal suo telefono: online vedi sempre la tua squadra in basso.",
       "Lo trovi anche nell'Arena della città."
     ]
   },
@@ -321,7 +323,7 @@ window.SG_NOVITA = [
       "Ci sono Bancarotta (perdi i soldi della manche), Passa (perdi il turno) e il Jolly, che ti salva il turno la volta dopo.",
       "Si gioca nello studio del game show: la telecamera va sulla ruota quando gira e sul concorrente di turno, il pubblico applaude o fa \"ohhh\", e il tabellone con la frase resta sempre in vista in alto.",
       "Più di 700 frasi in 12 categorie: proverbi, modi di dire, film, canzoni italiane, personaggi famosi, luoghi, cibo, sport, animali e altro.",
-      "Da 2 a 4 alla ruota: contro i bot (il primo è Matt), sullo stesso telefono o online, ognuno dal suo telefono. Online l'host può riempire i posti vuoti coi bot.",
+      "Da 2 a 4 alla ruota: contro i bot (il primo è Bot), sullo stesso telefono o online, ognuno dal suo telefono. Online l'host può riempire i posti vuoti coi bot.",
       "Prima di cominciare scegli quante manche (3, 4 o 5) e quanto sono bravi i bot. Vince chi alla fine ha messo da parte più soldi.",
       "La trovi nella categoria Quiz & parole."
     ]
@@ -346,7 +348,7 @@ window.SG_NOVITA = [
     titolo: "Nuovo gioco: il Poker con le carte francesi ♠️",
     descrizione: [
       "Due poker in uno: il Texas Hold'em (2 carte tue e 5 in mezzo per tutti) e il Poker all'italiana (5 carte, poi le cambi).",
-      "Contro il computer (scegli quanti bot e quanto sono bravi, il primo è Matt) oppure online, ognuno dal suo telefono: l'host può riempire i posti vuoti coi bot.",
+      "Contro il computer (scegli quanti bot e quanto sono bravi, il primo è Bot) oppure online, ognuno dal suo telefono: l'host può riempire i posti vuoti coi bot.",
       "Si gioca con le stesse fiches del Black Jack: ti siedi con al massimo 1.000, e quello che vinci o perdi resta nel tuo profilo. Se le finisci, ti risiedi con altre fiches o ritiri il bonus.",
       "Quando tocca a te: Passa, Chiama, Punta o Rilancia (con le scelte veloci: metà piatto, piatto, all-in) oppure Lascia.",
       "Online ognuno vede solo le sue carte; alla fine si scoprono quelle di chi è arrivato in fondo. L'host può chiudere il tavolo e vedere chi ha guadagnato di più."
@@ -481,11 +483,11 @@ window.SG_NOVITA = [
     data: "26 settembre 2026",
     titolo: "Black Jack più chiaro e più veloce 🃏",
     descrizione: [
-      "Mentre giochi vedi sempre quanto ha il banco: Matt sta nell'angolo in basso a sinistra con il suo punteggio, anche quando la telecamera zooma su di te.",
-      "Quando tocca a Matt la telecamera va sulle sue carte, al centro, e solo quando è arrivata lui gira la carta coperta.",
+      "Mentre giochi vedi sempre quanto ha il banco: Bot sta nell'angolo in basso a sinistra con il suo punteggio, anche quando la telecamera zooma su di te.",
+      "Quando tocca a Bot la telecamera va sulle sue carte, al centro, e solo quando è arrivata lui gira la carta coperta.",
       "Sopra la testa di ognuno, oltre al nome, ci sono le fiches che ha. Le cifre hanno il punto: 1.000, 10.000.",
       "Online si punta tutti insieme: ognuno fa la sua puntata dal suo telefono, senza aspettare il turno degli altri (e lo stesso per l'assicurazione).",
-      "Quando dividi, le carte arrivano una alla volta, come al casinò: prima giochi la prima mano, poi Matt dà la seconda carta all'altra.",
+      "Quando dividi, le carte arrivano una alla volta, come al casinò: prima giochi la prima mano, poi Bot dà la seconda carta all'altra.",
       "Se qualcuno esce dalla partita online, il tavolo non resta più bloccato ad aspettarlo."
     ]
   },
@@ -602,7 +604,7 @@ window.SG_NOVITA = [
     titolo: "Horto Muso rifatto: ippodromo, cavalli veri e il tuo avatar in sella 🏇",
     descrizione: [
       "Cavalli disegnati da capo: galoppano davvero (zampe snodate, criniera e coda che ondeggiano), 8 mantelli diversi con stella, lista e calzini bianchi, briglie e gualdrappa col numero.",
-      "In sella c'è il TUO avatar; online quelli dei tuoi amici. I bot sono Matt, Sara, Leo, Nina, Giulia, Toni e Rosa.",
+      "In sella c'è il TUO avatar; online quelli dei tuoi amici. I bot sono Bot, Sara, Leo, Nina, Giulia, Toni e Rosa.",
       "Ippodromo a tutto schermo: cielo, tribuna con la folla che salta, staccionata e prato a strisce.",
       "Telecamera che segue la corsa come in TV: i cavalli restano grandi mentre scorrono prato, staccionata e cartelli dei metri. Il traguardo arriva solo alla fine.",
       "Minimappa in alto del percorso a mezzo ovale, con un pallino per ogni cavallo, più la tua posizione e i metri che mancano.",
@@ -642,7 +644,7 @@ window.SG_NOVITA = [
     data: "26 settembre 2026",
     titolo: "Palla a Pendolo con gli avatar 🎯",
     descrizione: [
-      "Sulla trave ci sono gli avatar veri: il tuo (con \"TU\" sopra), quelli degli amici online e i bot con la loro faccia (Matt, Sara, Leo).",
+      "Sulla trave ci sono gli avatar veri: il tuo (con \"TU\" sopra), quelli degli amici online e i bot con la loro faccia (Bot, Sara, Leo).",
       "Chi lancia si vede di spalle in basso, coi suoi colori: capelli, pelle, maglia e cappello. Se lanci tu, ci sei tu di schiena!",
       "A tutto schermo: niente titolo, i tasti ◀ ▶ e SALTA/LANCIA stanno sopra l'acqua agli angoli. Un aiuto compare solo nei primi secondi.",
       "Quando cadi in acqua cade proprio il tuo avatar, che fa la capriola.",
@@ -666,7 +668,7 @@ window.SG_NOVITA = [
     descrizione: [
       "Anche Scopa 2 vs 2 e Scopone ora sono una stanza vera: il tuo compagno seduto di fronte (col 🤝 e il bordo verde), i due avversari agli angoli del tavolo, ognuno col suo ventaglio di carte coperte.",
       "Le facce cambiano: chi deve giocare ci pensa su 🤔, chi fa scopa esulta e salta con il compagno, gli altri ci restano male.",
-      "I bot hanno un nome e una faccia fissi: Matt (sempre lui!), Giulia e Toni nella 2 vs 2; Matt, Rosa e Peppe nello Scopone. Online si vedono gli avatar veri degli amici.",
+      "I bot hanno un nome e una faccia fissi: Bot (sempre lui!), Giulia e Toni nella 2 vs 2; Bot, Rosa e Peppe nello Scopone. Online si vedono gli avatar veri degli amici.",
       "Tavolo come nella Scopa: a tutta altezza, 8 posti fissi, carte che non cambiano grandezza e non saltano. Distribuzione animata a giro (tavolo, poi tu e gli altri a turno).",
       "Scopone: le tue 10 carte stanno su due file da 5, grandi e leggibili.",
       "Musica nuova per tutti e tre i giochi di scopa: più allegra e ritmata, stile osteria."
@@ -677,9 +679,9 @@ window.SG_NOVITA = [
     data: "26 settembre 2026",
     titolo: "Scopa: tavolo a tutto schermo 🃏",
     descrizione: [
-      "La stanza con Matt e il tavolo usa tutta l'altezza del telefono: niente più spazio vuoto sotto la tua mano.",
+      "La stanza con Bot e il tavolo usa tutta l'altezza del telefono: niente più spazio vuoto sotto la tua mano.",
       "Via il mazzo dal tavolo: tutto il panno è per le carte, con 8 posti (4 per fila). Le carte hanno SEMPRE la stessa grandezza fino a 8 in tavola; solo con 9 o più si rimpiccioliscono.",
-      "Distribuzione animata come dal vero: prima le 4 carte in tavola una alla volta, poi una a te e una a Matt, a turno. Anche quando si ridanno le carte a metà mano. Matt aspetta che la distribuzione finisca prima di giocare.",
+      "Distribuzione animata come dal vero: prima le 4 carte in tavola una alla volta, poi una a te e una a Bot, a turno. Anche quando si ridanno le carte a metà mano. Bot aspetta che la distribuzione finisca prima di giocare.",
       "Posti fissi in tavola: ogni carta resta dov'è finché non viene presa, il posto lasciato vuoto resta vuoto e la carta nuova va nel primo posto libero. Niente più carte che saltano.",
       "Il suggerimento per scegliere la presa compare sul tavolo invece che sotto, così non sposta niente.",
       "Il punteggio in alto non finisce più sotto il tasto indietro."
@@ -729,12 +731,12 @@ window.SG_NOVITA = [
     data: "26 settembre 2026",
     titolo: "Black Jack: la regia da TV 🎬",
     descrizione: [
-      "Si apre con Matt che vi guarda e dà il benvenuto, poi la telecamera passa su ognuno di voi e vi presenta.",
+      "Si apre con Bot che vi guarda e dà il benvenuto, poi la telecamera passa su ognuno di voi e vi presenta.",
       "Tavolo ovale vero, con tutti seduti attorno. Durante le puntate si vede tutto il tavolo, con il valore scritto sopra ogni pila di fiche.",
       "Alla seconda carta la telecamera scorre lungo il tavolo; quando tocca a qualcuno fa lo zoom su di lui: faccia, fiche e carte da vicino.",
-      "Quando gioca Matt, zoom sulle sue carte mentre scopre quella coperta. A fine mano si torna a tutti, con vincite e perdite.",
+      "Quando gioca Bot, zoom sulle sue carte mentre scopre quella coperta. A fine mano si torna a tutti, con vincite e perdite.",
       "Le carte si posano a cascata come fanno i croupier: non finiscono più sopra quelle del vicino, nemmeno in 10.",
-      "Tocca la faccia di un giocatore (o di Matt) per guardarlo da vicino per un attimo."
+      "Tocca la faccia di un giocatore (o di Bot) per guardarlo da vicino per un attimo."
     ]
   },
   {
@@ -756,7 +758,7 @@ window.SG_NOVITA = [
     data: "26 settembre 2026",
     titolo: "Black Jack: si gioca sul lato lungo 🎰",
     descrizione: [
-      "Il tavolo è girato come quelli veri: i giocatori siedono in fila sul lato lungo, in fondo, per tutta la larghezza dello schermo; la parte curva è dal lato di Matt.",
+      "Il tavolo è girato come quelli veri: i giocatori siedono in fila sul lato lungo, in fondo, per tutta la larghezza dello schermo; la parte curva è dal lato di Bot.",
       "Da 6 a 10 giocatori ci si mette su due file sfalsate: chi sta dietro spunta sopra le spalle di chi sta davanti, così le facce restano più grandi.",
       "Il tavolo è ancora più lungo e usa tutto lo spazio della parete."
     ]
@@ -800,7 +802,7 @@ window.SG_NOVITA = [
     data: "25 settembre 2026",
     titolo: "Black Jack: tutti seduti al tavolo 🎰",
     descrizione: [
-      "Ora la vista è da dietro Matt: vedi tutti i giocatori seduti attorno al tavolo a mezzaluna, faccia a faccia.",
+      "Ora la vista è da dietro Bot: vedi tutti i giocatori seduti attorno al tavolo a mezzaluna, faccia a faccia.",
       "Il tavolo si adatta: da soli sei grande al centro, in due le facce si vedono benissimo, fino a 10 si stringono ma ci stanno tutti.",
       "Le fiche puntate si vedono sul tavolo, in pila davanti a ognuno. A fine mano chi perde resta senza e chi vince vede la sua vincita.",
       "Le facce reagiscono: chi gioca ci pensa, chi sballa fa il muso, chi fa Black Jack esulta. A fine mano compare quanto hai vinto o perso."
@@ -809,13 +811,13 @@ window.SG_NOVITA = [
   {
     v: 108,
     data: "25 settembre 2026",
-    titolo: "Black Jack: arriva Matt, il dealer 🎩",
+    titolo: "Black Jack: arriva Bot, il dealer 🎩",
     descrizione: [
-      "Il banco ora ha una faccia: Matt, in giacca e papillon, dietro al tavolo. Le sue carte vengono posate sul panno davanti a lui.",
-      "Matt reagisce: 'Fate il vostro gioco!' quando si punta, ci pensa quando pesca, fa il muso se sballa ed esulta se vince il banco.",
+      "Il banco ora ha una faccia: Bot, in giacca e papillon, dietro al tavolo. Le sue carte vengono posate sul panno davanti a lui.",
+      "Bot reagisce: 'Fate il vostro gioco!' quando si punta, ci pensa quando pesca, fa il muso se sballa ed esulta se vince il banco.",
       "Ogni giocatore ha il suo avatar al posto: i posti si adattano a quanti siete (da soli niente fila, fino a 5 una fila larga, da 6 a 10 due file).",
       "Quando tocca a qualcuno, la sua faccia compare accanto al nome. Online ognuno vede l'avatar vero degli altri.",
-      "Anche nella Scopa il bot ora si chiama Matt."
+      "Anche nella Scopa il bot ora si chiama Bot."
     ]
   },
   {
@@ -938,7 +940,7 @@ window.SG_NOVITA = [
     data: "24 settembre 2026",
     titolo: "La Scalinata: i bot ora ragionano 🧠🪜",
     descrizione: [
-      "Matt, Kevin e Cody si ricordano cosa scegli: se giochi sempre lo stesso numero, uno di loro ti blocca.",
+      "Bot, Kevin e Cody si ricordano cosa scegli: se giochi sempre lo stesso numero, uno di loro ti blocca.",
       "Quando qualcuno è vicino alla cima, provano a fermarlo scegliendo il suo numero.",
       "Restano un po' imprevedibili: niente trucchi facili, bisogna cambiare strategia."
     ]
@@ -1367,7 +1369,7 @@ window.SG_NOVITA = [
     data: "14 settembre 2026",
     titolo: "La Scalinata anche in 2 o 3 (con i bot) 🪜",
     descrizione: [
-      "Ora non serve per forza essere in 4: puoi giocare la Scalinata da solo, in 2 o in 3 e i posti liberi li riempiono i bot (Matt, Kevin, Cody).",
+      "Ora non serve per forza essere in 4: puoi giocare la Scalinata da solo, in 2 o in 3 e i posti liberi li riempiono i bot (Bot, Kevin, Cody).",
       "Vale sia a un telefono solo sia online. Prima obbligava a mettere 4 persone: sistemato."
     ]
   },
@@ -1588,7 +1590,7 @@ window.SG_NOVITA = [
     data: "11 settembre 2026",
     titolo: "La Scalinata si gioca anche online, con i bot 🪜🔗",
     descrizione: [
-      "Ora la Scalinata si può fare \"ognuno dal suo telefono\": apri la stanza, mandi il codice, e i posti liberi li riempiono dei bot. Così giochi anche da solo, in 2 o in 3 (il primo bot si chiama Matt).",
+      "Ora la Scalinata si può fare \"ognuno dal suo telefono\": apri la stanza, mandi il codice, e i posti liberi li riempiono dei bot. Così giochi anche da solo, in 2 o in 3 (il primo bot si chiama Bot).",
       "Nella fase di scelta vedi sempre tutti i giocatori: quando uno sceglie, il suo pallino si illumina e il telefono fa un \"bip\", così capisci al volo chi manca ancora.",
       "Poi i numeri restano un paio di secondi sopra la testa di tutti prima di far salire le pedine: più suspense per leggere se qualcuno ha fatto il tuo stesso numero."
     ]

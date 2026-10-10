@@ -141,8 +141,8 @@
 
   // ---------- avatar: sulla trave si vedono di faccia, chi lancia lo vediamo di spalle ----------
   var MATT = { forma: "uomo", corpo: "medio", pelle: 2, capelli: "ciuffo", colCap: 1, barba: "corta", capo: "felpa", maglia: 1,
-    cappello: "cappellino", colAcc: 0, sopracc: "decise", occhi: "furbi", bocca: "ghigno" };   // il bot Matt ha sempre la sua faccia
-  var BOT_NOMI = ["Matt", "Sara", "Leo", "Nina"];
+    cappello: "cappellino", colAcc: 0, sopracc: "decise", occhi: "furbi", bocca: "ghigno" };   // il bot Bot ha sempre la sua faccia
+  var BOT_NOMI = ["Bot", "Sara", "Leo", "Nina"];
   function mioAvatar(nome) {
     var p = window.SGNube && SGNube.profilo && SGNube.profilo();
     if (p && p.omino) return p.omino;
@@ -152,7 +152,7 @@
   var BOT_DONNA = { Sara: "lunghi", Nina: "caschetto" }, BOT_UOMO = { Leo: "corti" };
   function facciaDi(nome, cfg) {
     if (avatarValido(cfg)) return cfg;
-    if (nome === "Matt") return MATT;
+    if (nome === "Bot") return MATT;
     if (!window.SGOmino) return null;
     var c = SGOmino.casuale(nome);   // i bot: faccia fissa dal nome, donna o uomo come il nome
     if (BOT_DONNA[nome]) { c.forma = "donna"; c.barba = "no"; c.capelli = BOT_DONNA[nome]; }
@@ -272,7 +272,7 @@
     }
     var lanc = av.lanc || {};
     var ctx = cv.getContext("2d"), ref = { cv: cv, ctx: ctx, W: 0, H: 0, prevA: [], fallers: [], splashes: [], prevSw: 0, ruolo: ruolo, mirino: vuoiMirino(),
-      bSalta: bSalta, posti: posti, lancCfg: facciaDi(lanc.nome || "Matt", lanc.cfg), lancNome: lanc.nome || "Matt", t0: performance.now(),
+      bSalta: bSalta, posti: posti, lancCfg: facciaDi(lanc.nome || "Bot", lanc.cfg), lancNome: lanc.nome || "Bot", t0: performance.now(),
       aiuto: ruolo === "trave" ? "Muoviti ◀ ▶ e SALTA quando il mirino punta te!" : "Mira ◀ ▶ (o trascina) e LANCIA: conta il tempismo!" };
     function dim() {
       var w = campo.clientWidth || Math.min(window.innerWidth || 360, 600), h = campo.clientHeight || (window.innerHeight || 640), dpr = window.devicePixelRatio || 1;
@@ -362,7 +362,7 @@
     var rT = Math.min(W * 0.075, H * 0.05);
     if (ref.lancCfg && window.SGOmino) schiena(ctx, cx, H * 0.84, rT, ref.lancCfg);
     else { ctx.fillStyle = "#3a4150"; ctx.beginPath(); ctx.arc(cx, H * 0.92, H * 0.05, 0, 7); ctx.fill(); }
-    targhetta(ctx, cx, H * 0.84 - rT * 1.6, ref.ruolo === "lanciatore" ? "TU" : (ref.lancNome || "Matt"), "#ffd43b", ref.ruolo === "lanciatore");
+    targhetta(ctx, cx, H * 0.84 - rT * 1.6, ref.ruolo === "lanciatore" ? "TU" : (ref.lancNome || "Bot"), "#ffd43b", ref.ruolo === "lanciatore");
     // aiuto nei primi secondi
     var tA = (performance.now() - ref.t0) / 1000;
     if (tA < 4.5) { ctx.save(); ctx.globalAlpha = Math.min(1, (4.5 - tA) / 0.6); ctx.font = "bold 13px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -427,12 +427,12 @@
       ST = nuovoStato(P, mkChars({ 0: "io", 1: null, 2: null }), true); ST.time = P.durTrave; mySeat = 0;
       ref = creaScena(t, "trave", { onAim: function () {}, onAimDrag: function () {}, onLancia: function () {},
         onMov: function (d) { ST.chars[0].mov = d; }, onSalta: function () { if (ST.chars[0].jt <= 0 && ST.chars[0].jcd <= 0) { ST.chars[0].jt = JUMP; ST.chars[0].jcd = JCD; } },
-        onEsci: function () { stop(); t.esci(); } }, { posti: [{ nome: io, cfg: mioAvatar(io) }, { nome: "Sara" }, { nome: "Leo" }], lanc: { nome: "Matt" } });
+        onEsci: function () { stop(); t.esci(); } }, { posti: [{ nome: io, cfg: mioAvatar(io) }, { nome: "Sara" }, { nome: "Leo" }], lanc: { nome: "Bot" } });
     } else {                   // TU lanci contro 3 bot
       ST = nuovoStato(P, mkChars(null), false); mySeat = -1;
       ref = creaScena(t, "lanciatore", { onAim: function (d) { ST.aimHold = d; }, onAimDrag: function (fr) { ST.aim = clamp(ST.aim + fr * AIMG, -1, 1); },
         onLancia: function () { ST.lanciaFlag = true; }, onMov: function () {}, onSalta: function () {},
-        onEsci: function () { stop(); t.esci(); } }, { posti: [{ nome: "Matt" }, { nome: "Sara" }, { nome: "Leo" }], lanc: { nome: io, cfg: mioAvatar(io) } });
+        onEsci: function () { stop(); t.esci(); } }, { posti: [{ nome: "Bot" }, { nome: "Sara" }, { nome: "Leo" }], lanc: { nome: io, cfg: mioAvatar(io) } });
     }
     ST.collis = !!collis;
     function stop() { vivo = false; if (raf) cancelAnimationFrame(raf); ref.rimuovi(); }
@@ -513,8 +513,8 @@
 
     function inizia() {
       gameId = nuovoIdPartita("online"); fase = "gioco"; ST = nuovoStato(P, mkChars(posti), lanc === null); ST.collis = !!collis;
-      var BOT_TRAVE = ["Sara", "Leo", "Nina"], av = { posti: [], lanc: lanc ? { nome: nomi[lanc], cfg: omini[lanc] || null } : { nome: "Matt" } };
-      for (var sb = 0; sb < NSEAT; sb++) av.posti.push(posti[sb] ? { nome: nomi[posti[sb]], cfg: omini[posti[sb]] || null } : { nome: (lanc && sb === 0) ? "Matt" : BOT_TRAVE[sb] });   // se lancia un umano, Matt sta sulla trave
+      var BOT_TRAVE = ["Sara", "Leo", "Nina"], av = { posti: [], lanc: lanc ? { nome: nomi[lanc], cfg: omini[lanc] || null } : { nome: "Bot" } };
+      for (var sb = 0; sb < NSEAT; sb++) av.posti.push(posti[sb] ? { nome: nomi[posti[sb]], cfg: omini[posti[sb]] || null } : { nome: (lanc && sb === 0) ? "Bot" : BOT_TRAVE[sb] });   // se lancia un umano, Bot sta sulla trave
       rete.invia({ t: "via", lanc: lanc, seggi: seggi(), nomi: nomi, av: av, gameId: gameId, difficolta: diff });
       for (var s = 0; s < NSEAT; s++) if (posti[s] && posti[s] !== "host") rete.invia({ t: "ruolo", to: posti[s], seat: s });
       if (lanc && lanc !== "host") rete.invia({ t: "ruolo", to: lanc, seat: -1 });

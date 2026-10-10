@@ -621,10 +621,10 @@
       metti: function (cel, id) { var p = stato[id] || 0; cel.style.gridColumn = (p % col + 1); cel.style.gridRow = (Math.floor(p / col) + 1); return cel; }
     };
   }
-  // i bot hanno sempre la stessa faccia: Matt la sua, gli altri stabili dal nome (e donna se il nome è da donna)
+  // i bot hanno sempre la stessa faccia: Bot la sua, gli altri stabili dal nome (e donna se il nome è da donna)
   var BOT_DONNA = { Giulia: "coda", Rosa: "riccilunghi" }, BOT_UOMO = { Toni: "spettinati", Peppe: "stempiato" };
   function facciaBot(nome) {
-    if (nome === "Matt") return AVATAR_BOT;
+    if (nome === "Bot") return AVATAR_BOT;
     if (!window.SGOmino) return null;
     var c = SGOmino.casuale(nome);
     if (BOT_DONNA[nome]) { c.forma = "donna"; c.barba = "no"; c.capelli = BOT_DONNA[nome]; }
@@ -1110,7 +1110,7 @@
     icona: "🃏",
     descrizione: "Il classico gioco di carte napoletane: prendi le carte del tavolo e fai scopa. Contro il bot o online, ognuno dal suo telefono.",
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 3,
-    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Sfidi Matt, il bot della Scopa" }],
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Sfidi Bot, il bot della Scopa" }],
     regole: [
       "Si gioca <b>in due</b> con le 40 carte napoletane. Tre carte in mano a testa, quattro sul tavolo.",
       "Nel tuo turno giochi una carta: se ha lo <b>stesso valore</b> di una carta sul tavolo la <b>prendi</b>. Se non c'è un valore uguale, puoi prendere <b>più carte che sommano</b> al valore della tua.",
@@ -1181,7 +1181,7 @@
 
   // ---------- LOCALE (contro il bot) : io = A, bot = B ----------
   function localeScopa(t, difficolta) {
-    var nomi = { A: (t.giocatori[0] || "Tu"), B: "Matt" };
+    var nomi = { A: (t.giocatori[0] || "Tu"), B: "Bot" };
     var M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni));
     var C = creaClient(t, {
       locale: true, sonoHost: true,

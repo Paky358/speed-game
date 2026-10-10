@@ -1162,22 +1162,22 @@
     { gioco: "calciobiliardo", livello: "bronzo",   icona: "🏟️", nome: "Esordio in Campo",      desc: "Gioca la tua prima partita",                               stat: "partite",           meta: 1 },
     { gioco: "calciobiliardo", livello: "bronzo",   icona: "⚽", nome: "La Prima Rete",          desc: "Segna il tuo primo gol",                                    stat: "golFatti",          meta: 1 },
     { gioco: "calciobiliardo", livello: "bronzo",   icona: "🥅", nome: "Tre Punti",              desc: "Vinci la tua prima partita",                                stat: "vittorie",          meta: 1 },
-    { gioco: "calciobiliardo", livello: "bronzo",   icona: "🤖", nome: "Matt, Attento!",         desc: "Batti Matt Facile",                                         stat: "vinte_facile",      meta: 1 },
+    { gioco: "calciobiliardo", livello: "bronzo",   icona: "🤖", nome: "Bot, Attento!",         desc: "Batti Bot Facile",                                         stat: "vinte_facile",      meta: 1 },
     { gioco: "calciobiliardo", livello: "bronzo",   icona: "😎", nome: "Faccia da Gol",          desc: "Segna con il tuo attaccante, quello col tuo avatar",        stat: "golAttaccante",     meta: 1 },
     { gioco: "calciobiliardo", livello: "bronzo",   icona: "🌐", nome: "Vittoria in Rete",       desc: "Vinci una partita online",                                  stat: "vinteOnline",       meta: 1 },
     { gioco: "calciobiliardo", livello: "argento",  icona: "⚡", nome: "Reti in Crescita",       desc: "Segna 25 gol in totale",                                    stat: "golFatti",          meta: 25 },
-    { gioco: "calciobiliardo", livello: "argento",  icona: "🧠", nome: "Matt alla Prova",        desc: "Batti Matt Medio",                                          stat: "vinte_medio",       meta: 1 },
+    { gioco: "calciobiliardo", livello: "argento",  icona: "🧠", nome: "Bot alla Prova",        desc: "Batti Bot Medio",                                          stat: "vinte_medio",       meta: 1 },
     { gioco: "calciobiliardo", livello: "argento",  icona: "🪵", nome: "Sponda Vincente",        desc: "Segna 5 gol dopo un rimbalzo sulla sponda nello stesso tiro", stat: "golSponda",         meta: 5 },
     { gioco: "calciobiliardo", livello: "argento",  icona: "🎯", nome: "Tiro da Lontano",       desc: "Segna 5 gol partendo dalla tua metà campo",                  stat: "golLontano",        meta: 5 },
     { gioco: "calciobiliardo", livello: "argento",  icona: "⏱️", nome: "Fischio Finale",        desc: "Vinci una partita a tempo",                                  stat: "vinteTempo",        meta: 1 },
     { gioco: "calciobiliardo", livello: "oro",      icona: "💯", nome: "Cento Reti",             desc: "Segna 100 gol in totale",                                   stat: "golFatti",          meta: 100 },
-    { gioco: "calciobiliardo", livello: "oro",      icona: "🦾", nome: "Matt Battuto",           desc: "Batti Matt Difficile",                                      stat: "vinte_difficile",   meta: 1 },
+    { gioco: "calciobiliardo", livello: "oro",      icona: "🦾", nome: "Bot Battuto",           desc: "Batti Bot Difficile",                                      stat: "vinte_difficile",   meta: 1 },
     { gioco: "calciobiliardo", livello: "oro",      icona: "🤝", nome: "Amici in Rete",          desc: "Vinci 10 partite online",                                   stat: "vinteOnline",       meta: 10 },
     { gioco: "calciobiliardo", livello: "oro",      icona: "🏆", nome: "Rigori da Campione",     desc: "Vinci una partita ai rigori",                               stat: "vinteRigori",       meta: 1 },
     { gioco: "calciobiliardo", livello: "oro",      icona: "🔄", nome: "Rimonta Completa",       desc: "Vinci dopo essere stato sotto di 2 gol",                    stat: "rimonte",           meta: 1 },
     { gioco: "calciobiliardo", livello: "oro",      icona: "🔔", nome: "Palo e Rete",            desc: "Segna 3 gol dopo aver colpito il palo nello stesso tiro",    stat: "golPalo",           meta: 3 },
-    { gioco: "calciobiliardo", livello: "diamante", icona: "🧱", nome: "Muro Giallo e Blu",      desc: "Batti Matt Difficile senza subire gol, segnandone almeno 3", stat: "cappotti_difficile", meta: 1 },
-    { gioco: "calciobiliardo", livello: "diamante", icona: "👑", nome: "Cinque Volte Matt",      desc: "Batti Matt Difficile 5 volte",                               stat: "vinte_difficile",   meta: 5 },
+    { gioco: "calciobiliardo", livello: "diamante", icona: "🧱", nome: "Muro Giallo e Blu",      desc: "Batti Bot Difficile senza subire gol, segnandone almeno 3", stat: "cappotti_difficile", meta: 1 },
+    { gioco: "calciobiliardo", livello: "diamante", icona: "👑", nome: "Cinque Volte Bot",      desc: "Batti Bot Difficile 5 volte",                               stat: "vinte_difficile",   meta: 5 },
     { gioco: "calciobiliardo", livello: "diamante", icona: "🌟", nome: "Leggenda del Campo",     desc: "Segna 250 gol in totale",                                   stat: "golFatti",          meta: 250 },
 
     // ---------- Scopone (classico + scientifico, contro il computer) ----------
@@ -1291,7 +1291,7 @@
     { gioco: "poker", livello: "argento",  icona: "👥", nome: "Tavolo in Compagnia",   desc: "Partecipa a 10 mani online contro altre persone",           stat: "maniOnline",              meta: 10 },
     { gioco: "poker", livello: "argento",  icona: "🇺🇸", nome: "Texas in Crescita",      desc: "Vinci 5 mani di Texas Hold'em",                             stat: "vittorieTexas",            meta: 5 },
     { gioco: "poker", livello: "argento",  icona: "🔁", nome: "Tradizione Vincente",    desc: "Vinci 5 mani di Poker all'italiana",                       stat: "vittorieItaliana",         meta: 5 },
-    { gioco: "poker", livello: "oro",      icona: "🦾", nome: "Matt non Molla",         desc: "Vinci 10 mani contro bot a difficoltà Difficile",           stat: "vittorieDifficile",       meta: 10 },
+    { gioco: "poker", livello: "oro",      icona: "🦾", nome: "Bot non Molla",         desc: "Vinci 10 mani contro bot a difficoltà Difficile",           stat: "vittorieDifficile",       meta: 10 },
     { gioco: "poker", livello: "oro",      icona: "🤝", nome: "Amici al Piattone",      desc: "Vinci 10 mani online contro altre persone",                 stat: "vittorieOnline",          meta: 10 },
     { gioco: "poker", livello: "oro",      icona: "🧠", nome: "Tris o Meglio",          desc: "Vinci 10 showdown con tris o una mano più forte",            stat: "vittorieTrisPlus",        meta: 10 },
     { gioco: "poker", livello: "oro",      icona: "🏰", nome: "Castello di Carte",      desc: "Vinci allo showdown con un full, un poker o una scala colore", stat: "vittorieFullPlus",      meta: 1 },
@@ -1302,7 +1302,7 @@
     { gioco: "poker", livello: "diamante", icona: "⚔️", nome: "Tre di Fila",            desc: "Vinci 3 mani di fila contro i bot Difficili",                stat: "serieDifficileMax",       meta: 3 },
     { gioco: "poker", livello: "diamante", icona: "🔥", nome: "Cinque Online",          desc: "Vinci 5 mani online di fila contro altre persone",          stat: "serieOnlineMax",          meta: 5 },
     { gioco: "poker", livello: "diamante", icona: "♠️", nome: "Poker da Campione",       desc: "Vinci 3 showdown con un poker",                              stat: "vittoriePoker",           meta: 3 },
-    { gioco: "poker", livello: "diamante", icona: "🤖", nome: "Matt non ti Ferma",       desc: "Vinci 5 mani di fila contro i bot Difficili",               stat: "serieDifficileMax",       meta: 5 },
+    { gioco: "poker", livello: "diamante", icona: "🤖", nome: "Bot non ti Ferma",       desc: "Vinci 5 mani di fila contro i bot Difficili",               stat: "serieDifficileMax",       meta: 5 },
     { gioco: "poker", livello: "diamante", icona: "🌍", nome: "Amici di Lungo Corso",   desc: "Vinci 25 mani online contro altre persone",                 stat: "vittorieOnline",          meta: 25 },
 
     // ---- TABOO ----
@@ -1339,7 +1339,7 @@
     { gioco: "pendolo", livello: "argento",  icona: "🌐", nome: "Pendolo in Compagnia", desc: "Vinci 3 partite online contro almeno una persona",           stat: "vittorieOnline",                meta: 3 },
     { gioco: "pendolo", livello: "oro",      icona: "📅", nome: "Serate sul Pendolo",   desc: "Concludi 25 partite",                                         stat: "partite",                      meta: 25 },
     { gioco: "pendolo", livello: "oro",      icona: "🎪", nome: "Lanciatore Esperto",    desc: "Vinci 10 sfide da lanciatore",                                stat: "vittorieLanciatore",           meta: 10 },
-    { gioco: "pendolo", livello: "oro",      icona: "🦾", nome: "Matt in Acqua",         desc: "Batti 3 volte il bot Difficile giocando da lanciatore",     stat: "vittorieLanciatoreDifficile",   meta: 3 },
+    { gioco: "pendolo", livello: "oro",      icona: "🦾", nome: "Bot in Acqua",         desc: "Batti 3 volte il bot Difficile giocando da lanciatore",     stat: "vittorieLanciatoreDifficile",   meta: 3 },
     { gioco: "pendolo", livello: "oro",      icona: "🛡️", nome: "Sempre in Piedi",      desc: "Resisti al bot Difficile sulla trave",                      stat: "vittorieTraveDifficile",        meta: 1 },
     { gioco: "pendolo", livello: "diamante", icona: "⚡", nome: "Lancio Lampo",          desc: "Batti il bot Difficile buttando giù tutti in 6 secondi",   stat: "triplettaDifficileVeloce",      meta: 1 },
     { gioco: "pendolo", livello: "diamante", icona: "🧿", nome: "Mira da Campione",      desc: "Batti 20 volte il bot Difficile da lanciatore",           stat: "vittorieLanciatoreDifficile",   meta: 20 },
@@ -1356,11 +1356,11 @@
     { gioco: "ruota", livello: "argento",  icona: "🧩", nome: "Frasi Svelate",        desc: "Risolvi 10 frasi in modalità Sfida",                          stat: "frasiRisolte",                  meta: 10 },
     { gioco: "ruota", livello: "argento",  icona: "🎯", nome: "Occhio alle Lettere",  desc: "Indovina 50 consonanti in modalità Sfida",                    stat: "consonantiIndovinate",          meta: 50 },
     { gioco: "ruota", livello: "argento",  icona: "🥈", nome: "Cinque Trionfi",       desc: "Vinci 5 partite in modalità Sfida",                           stat: "vittorieSfida",                 meta: 5 },
-    { gioco: "ruota", livello: "argento",  icona: "🧠", nome: "Avanti il Prossimo",   desc: "Batti Matt e gli altri bot di bravura Media 3 volte",         stat: "vittorieMedio",                 meta: 3 },
+    { gioco: "ruota", livello: "argento",  icona: "🧠", nome: "Avanti il Prossimo",   desc: "Batti Bot e gli altri bot di bravura Media 3 volte",         stat: "vittorieMedio",                 meta: 3 },
     { gioco: "ruota", livello: "oro",      icona: "📅", nome: "Ruota di Serate",      desc: "Concludi 25 partite",                                         stat: "partite",                       meta: 25 },
     { gioco: "ruota", livello: "oro",      icona: "📣", nome: "Voce da Campione",     desc: "Risolvi 30 frasi in modalità Sfida",                          stat: "frasiRisolte",                  meta: 30 },
     { gioco: "ruota", livello: "oro",      icona: "💰", nome: "Manche da 5.000",      desc: "Vinci 3 manche con almeno 5.000 punti ciascuna",             stat: "mancheDa5000",                  meta: 3 },
-    { gioco: "ruota", livello: "oro",      icona: "🤖", nome: "Matt al Tappeto",      desc: "Batti i bot di bravura Difficile",                            stat: "vittorieDifficile",             meta: 1 },
+    { gioco: "ruota", livello: "oro",      icona: "🤖", nome: "Bot al Tappeto",      desc: "Batti i bot di bravura Difficile",                            stat: "vittorieDifficile",             meta: 1 },
     { gioco: "ruota", livello: "diamante", icona: "👑", nome: "Re della Ruota",       desc: "Vinci 20 partite in modalità Sfida",                          stat: "vittorieSfida",                 meta: 20 },
     { gioco: "ruota", livello: "diamante", icona: "🛡️", nome: "Senza Bancarotta",     desc: "Batti i bot Difficili senza mai fare Bancarotta",            stat: "vittorieDifficileSenzaBancarotta", meta: 1 },
     { gioco: "ruota", livello: "diamante", icona: "💎", nome: "Partita Perfetta",     desc: "Batti i bot Difficili vincendo tutte le manche di una partita da almeno 3 manche", stat: "vittorieDifficileTutteLeManche", meta: 1 },
@@ -2604,7 +2604,7 @@
       var r = el("div", { class: "st-gioco" }, [
         el("div", { class: "st-testa" }, [ el("span", { class: "st-ico", text: g.icona || "🎲" }), el("b", { text: g.nome }), el("small", { text: q ? "ultima volta " + q : "" }) ]),
         el("div", { class: "st-griglia" }, [ cella(cifre(x.p), "Partite"), cella(cifre(x.v || 0), "Vinte", "verde"), cella(cifre(x.s || 0), "Perse", "rosso"), cella(percVittorie(x), "% vittorie") ]),
-        el("div", { class: "st-riga" }, [ el("span", { text: "⏱️ " + tempoGiocato(x.t) }), x.serieMax ? el("span", { text: "🔥 Serie migliore: " + x.serieMax + (x.serieMax === 1 ? " vittoria" : " vittorie di fila") }) : null ])
+        el("div", { class: "st-riga" }, [ el("span", { text: "⏱️ " + tempoGiocato(x.t) }), x.serieMax ? el("span", { text: "🔥 Serie migliore: " + x.serieMax + (x.serieMax === 1 ? " vittoria" : " vittorie di fila") }) : null, x.rec ? el("span", { text: "🏅 Record: " + cifre(x.rec) + " punti" }) : null ])
       ]);
       if (g.id === "blackjack") {   // il Black Jack conta anche le mani (da sempre)
         var bj = (p.stat && p.stat.blackjack) || {};
@@ -3816,7 +3816,7 @@
     if (!mio) lista.forEach(function (r) { if (!mio && r && sonoIo(r.nome)) mio = r; });
     if (soloSeCi && !mio) return;
     var primo = lista[0], vinto = !!mio && (mio.pos != null ? mio.pos === 1 : (mio === primo || (mio.punti != null && primo && mio.punti === primo.punti)));
-    if (giocoXp && SGNube.contaPartita) SGNube.contaPartita(giocoXp, mio ? (vinto ? "vinta" : "persa") : null, sec);   // le statistiche del gioco (📊 nel profilo)
+    if (giocoXp && SGNube.contaPartita) SGNube.contaPartita(giocoXp, mio ? (vinto ? "vinta" : "persa") : null, sec, mio && typeof mio.punti === "number" ? mio.punti : null);   // le statistiche del gioco (📊 nel profilo)
     var giorno = oggiStr(), prima = SGNube.progressione().xpGiorno !== giorno;
     var xp = SGLivelli.xpPartita({ secondi: sec, vinto: vinto, primaDelGiorno: prima });
     if (!xp) return;

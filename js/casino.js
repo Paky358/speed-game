@@ -374,7 +374,7 @@
     o.push("<text x='" + r1(a[0]) + "' y='" + r1(a[1]) + "' font-family='Arial Black,Arial,sans-serif' font-weight='900' font-size='" + r1(k * 0.5) + "' fill='none' stroke='#ff4fd8' stroke-width='3' opacity='.35' text-anchor='middle' filter='url(#fNeon)'>ALL IN</text>");
     o.push("<text x='" + r1(a[0]) + "' y='" + r1(a[1]) + "' font-family='Arial Black,Arial,sans-serif' font-weight='900' font-size='" + r1(k * 0.5) + "' fill='none' stroke='#ffd6f5' stroke-width='1.2' text-anchor='middle'>ALL IN</text>");
     o.push(applique(-XW + 0.02, 2.4, 5.4), applique(XW - 0.02, 2.4, 5.4));
-    var posti = [146, 116, 90, 64, 34], nomi = ["Matt", "Giada", "Bruno", "Sofia", "Leo"];
+    var posti = [146, 116, 90, 64, 34], nomi = ["Bot", "Giada", "Bruno", "Sofia", "Leo"];
     posti.forEach(function (g, i) { var t = g * Math.PI / 180; o.push(busto(nomi[i], 1.7 * Math.cos(t), z0 + 1.08 * Math.sin(t), 1.0)); });
     // il tavolo ovale: bordo imbottito nero, legno, panno verde
     o.push(poly(qFondo(-0.6, 0.6, 0, 0.6, z0 - 0.2), "#0c0c0c"));
@@ -564,7 +564,7 @@
   }
   // il tavolo ovale del Poker (come nella sua sala), spostato di lato
   function tavoloPoker(cx, z0, nomi) {
-    var rx = 1.3, rz = 0.72, yT = 0.86, o = [], posti = [150, 116, 82, 48]; nomi = nomi || ["Matt", "Giada", "Bruno", "Sofia"];
+    var rx = 1.3, rz = 0.72, yT = 0.86, o = [], posti = [150, 116, 82, 48]; nomi = nomi || ["Bot", "Giada", "Bruno", "Sofia"];
     posti.forEach(function (g, i) { var t = g * Math.PI / 180; o.push(busto(nomi[i], cx + 1.55 * Math.cos(t), z0 + 0.95 * Math.sin(t), 1.0)); });
     o.push(ell(tondo(cx, 0, z0, 1.2).c, 1.2 * F / z0, 0.35 * F / z0, "#000000", "opacity='.3'"));
     o.push(poly(qFondo(cx - 0.5, cx + 0.5, 0, 0.6, z0 - 0.2), "#0c0c0c"));

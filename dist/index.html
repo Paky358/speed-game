@@ -1360,6 +1360,35 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .ne-compra:disabled{ background:#e9e1d1; color:#8a7a62; box-shadow:none; transform:none; }
 .ne-x{ position:absolute; right:12px; top:10px; width:36px; height:36px; border-radius:50%; border:0; background:rgba(59,43,34,.08); font:inherit; font-weight:900; color:#3b2b22; cursor:pointer; }
 .ne-vista .ca-avviso{ z-index:45; }
+.ne-speciale{ padding:3px 10px; border-radius:999px; background:linear-gradient(180deg,#ffe08a,#f2b324); color:#3a2200; font-weight:900; font-size:.72rem; }
+.ne-scheda .ne-frase{ max-width:340px; color:#3b2b22; font-style:italic; font-weight:600; line-height:1.35; }
+
+/* =========================================================
+   📊 LE STATISTICHE (core.js, schermataStatistiche): il tasto nel profilo e i riquadri di ogni gioco
+   ========================================================= */
+.st-tasto{ display:flex; align-items:center; gap:12px; width:100%; margin-top:14px; padding:12px 14px; border:0; border-radius:16px; background:var(--carta); box-shadow:var(--ombra); color:inherit; font:inherit; text-align:left; cursor:pointer; }
+.st-tasto:active{ transform:scale(.98); }
+.st-tasto-ico{ flex:none; font-size:1.7rem; }
+.st-tasto-testo{ flex:1; display:flex; flex-direction:column; gap:2px; min-width:0; }
+.st-tasto-testo b{ font-size:1rem; }
+.st-tasto-testo small{ font-size:.78rem; color:var(--testo-tenue); }
+.st-tasto-va{ flex:none; font-size:1.6rem; font-weight:900; color:var(--testo-tenue); }
+.st-griglia{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+.st-griglia.st-totali{ grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:6px; }
+.st-cella{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:9px 4px; border-radius:12px; background:var(--carta); box-shadow:var(--ombra); text-align:center; min-width:0; }
+.st-cella b{ font-size:1.15rem; font-weight:900; color:#ffe58a; line-height:1.1; white-space:nowrap; }
+.st-totali .st-cella b{ font-size:1.25rem; }
+.st-cella small{ font-size:.66rem; color:var(--testo-tenue); }
+.st-cella.verde b{ color:#8ce99a; }
+.st-cella.rosso b{ color:#ffa8a8; }
+.st-gioco{ margin-top:12px; padding:10px; border-radius:16px; background:rgba(255,255,255,.05); box-shadow:inset 0 0 0 1px rgba(255,255,255,.08); }
+.st-gioco .st-cella{ background:rgba(0,0,0,.18); box-shadow:none; }
+.st-testa{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.st-ico{ font-size:1.4rem; }
+.st-testa b{ flex:1; font-size:1rem; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.st-testa small{ flex:none; font-size:.7rem; color:var(--testo-tenue); }
+.st-riga{ display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:8px; font-size:.8rem; color:var(--testo-tenue); }
+.st-nota{ margin-top:14px; font-size:.75rem; }
 </style>
 <div id="app"></div>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
@@ -1564,6 +1593,22 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 
     // ---- liste personali (es. le parole di Parola d'ordine): un campo del profilo, salvato così com'è ----
     lista: function (nome) { return (profilo && profilo.liste && profilo.liste[nome]) || []; },
+    // ---- le statistiche di ogni gioco (le scrive core.js a fine partita, per tutti i giochi):
+    //      giocato.<gioco> = { p: partite, v: vinte, s: perse, t: secondi giocati, serie, serieMax, u: l'ultima volta }
+    //      esito: "vinta", "persa" oppure null (partita sullo stesso telefono senza il tuo nome in classifica) ----
+    giocato: function () { return (profilo && profilo.giocato) || {}; },
+    contaPartita: function (gioco, esito, secondi, punti) {   // punti: il tuo punteggio (per il record), se il gioco lo dà
+      if (!auth || !utente || !profilo || !gioco) return;
+      var FV = firebase.firestore.FieldValue, b = "giocato." + gioco + ".", patch = {}, sec = Math.max(0, Math.min(7200, Math.round(secondi || 0)));
+      function piu(k, n) { if (!n) return; patch[b + k] = FV.increment(n); setNested(profilo, b + k, (getNested(profilo, b + k) || 0) + n); }
+      function metti(k, v) { patch[b + k] = v; setNested(profilo, b + k, v); }
+      piu("p", 1); piu("t", sec);
+      if (esito === "vinta") { piu("v", 1); var serie = (getNested(profilo, b + "serie") || 0) + 1; metti("serie", serie); if (serie > (getNested(profilo, b + "serieMax") || 0)) metti("serieMax", serie); }
+      if (esito === "persa") { piu("s", 1); metti("serie", 0); }
+      if (typeof punti === "number" && isFinite(punti) && punti > 0 && punti > (getNested(profilo, b + "rec") || 0)) metti("rec", Math.round(punti));   // il record del punteggio
+      metti("u", Date.now());
+      db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+    },
     // ---- la casa da arredare (js/casa.js): sta tutta in un campo del profilo, così non si perde cambiando telefono ----
     casa: function () { return (profilo && profilo.casa) || null; },
     salvaCasa: function (dati) {
@@ -4455,7 +4500,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     o.push("<text x='" + r1(a[0]) + "' y='" + r1(a[1]) + "' font-family='Arial Black,Arial,sans-serif' font-weight='900' font-size='" + r1(k * 0.5) + "' fill='none' stroke='#ff4fd8' stroke-width='3' opacity='.35' text-anchor='middle' filter='url(#fNeon)'>ALL IN</text>");
     o.push("<text x='" + r1(a[0]) + "' y='" + r1(a[1]) + "' font-family='Arial Black,Arial,sans-serif' font-weight='900' font-size='" + r1(k * 0.5) + "' fill='none' stroke='#ffd6f5' stroke-width='1.2' text-anchor='middle'>ALL IN</text>");
     o.push(applique(-XW + 0.02, 2.4, 5.4), applique(XW - 0.02, 2.4, 5.4));
-    var posti = [146, 116, 90, 64, 34], nomi = ["Matt", "Giada", "Bruno", "Sofia", "Leo"];
+    var posti = [146, 116, 90, 64, 34], nomi = ["Bot", "Giada", "Bruno", "Sofia", "Leo"];
     posti.forEach(function (g, i) { var t = g * Math.PI / 180; o.push(busto(nomi[i], 1.7 * Math.cos(t), z0 + 1.08 * Math.sin(t), 1.0)); });
     // il tavolo ovale: bordo imbottito nero, legno, panno verde
     o.push(poly(qFondo(-0.6, 0.6, 0, 0.6, z0 - 0.2), "#0c0c0c"));
@@ -4645,7 +4690,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   }
   // il tavolo ovale del Poker (come nella sua sala), spostato di lato
   function tavoloPoker(cx, z0, nomi) {
-    var rx = 1.3, rz = 0.72, yT = 0.86, o = [], posti = [150, 116, 82, 48]; nomi = nomi || ["Matt", "Giada", "Bruno", "Sofia"];
+    var rx = 1.3, rz = 0.72, yT = 0.86, o = [], posti = [150, 116, 82, 48]; nomi = nomi || ["Bot", "Giada", "Bruno", "Sofia"];
     posti.forEach(function (g, i) { var t = g * Math.PI / 180; o.push(busto(nomi[i], cx + 1.55 * Math.cos(t), z0 + 0.95 * Math.sin(t), 1.0)); });
     o.push(ell(tondo(cx, 0, z0, 1.2).c, 1.2 * F / z0, 0.35 * F / z0, "#000000", "opacity='.3'"));
     o.push(poly(qFondo(cx - 0.5, cx + 0.5, 0, 0.6, z0 - 0.2), "#0c0c0c"));
@@ -5507,6 +5552,20 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     tappeto_liso: 120, quadro_storto: 60, lampadina: 40, letto_semplice: 450, comodino_cartone: 30, armadio_storto: 400, sveglia: 50, lampada_storta: 90,
     poster_strappato: 40, wc_vecchio: 250, lavandino_colonna: 200, specchio_scheggiato: 80, doccia_tenda: 500, carta_igienica: 10, bicchiere_spazzolino: 20, tappetino: 60 };
   Object.keys(PREZZI_USATO).forEach(function (t) { if (OGG[t]) OGG[t].prezzo = PREZZI_USATO[t]; });
+  // ---- gli oggetti speciali del negozio: una frase in più nella scheda per comprarli (gli altri no: il negozio resta pulito) ----
+  var FRASI = {
+    vasca: "Una vasca vera, coi piedini dorati: ci entri, ti riempi di schiuma e le bolle volano per tutto il bagno. Il massimo del relax.",
+    acquario: "Due pesciolini che nuotano avanti e indietro tutto il giorno. E non c'è nemmeno da dargli da mangiare!",
+    frigo_moderno: "Il frigo dei sogni: dentro c'è di tutto, dalla torta con la ciliegina alle carote. Aprilo e scegli cosa mangiare.",
+    cucina_moderna: "Accendila e nel forno si cuoce una torta. Il profumo arriva fino in camera.",
+    armadio_bianco: "Tre ante piene di vestiti, scarpe e scatole. Aprilo e cambi look quando vuoi.",
+    letto_matrimoniale: "Una trapunta rosa morbidissima e due cuscini belli gonfi: qui si dorme come re.",
+    divano_velluto: "Velluto verde acqua, bottoni come nei salotti eleganti e due cuscini gialli. Il pezzo forte del soggiorno.",
+    libreria: "Piena di libri colorati, con una piantina in mezzo: la stanza sembra subito più intelligente.",
+    tv_piatta: "Lo schermo piatto con la partita sempre in onda. Accendila e la stanza si illumina di blu.",
+    lampada_stelo: "Accendila la sera: fa una luce calda che riempie l'angolo."
+  };
+  Object.keys(FRASI).forEach(function (t) { if (OGG[t]) OGG[t].frase = FRASI[t]; });
 
   // ---- di fianco (in Arreda il tasto "Gira": davanti → di fianco → di fianco dall'altra parte) ----
   //      solo i mobili dove ha senso; letti e vasca visti dai piedi (ci si dorme e ci si fa il bagno anche così)
@@ -6503,7 +6562,9 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       aperto = pz; while (scheda.firstChild) scheda.removeChild(scheda.firstChild);
       var x = el("button", "ne-x", "✕"); x.onclick = chiudi; scheda.appendChild(x);
       var im = el("img"); im.src = pz.img; im.alt = ""; scheda.appendChild(im);
-      scheda.appendChild(el("h3", null, pz.nome)); scheda.appendChild(el("p", null, pz.cosa));
+      scheda.appendChild(el("h3", null, pz.nome));
+      if (pz.o && pz.o.frase) { scheda.appendChild(el("span", "ne-speciale", "✨ Speciale")); scheda.appendChild(el("p", "ne-frase", pz.o.frase)); }   // solo gli oggetti speciali
+      scheda.appendChild(el("p", null, pz.cosa));
       var nota = el("p", "ne-nota"), b = el("button", "ne-compra"); scheda.appendChild(nota); scheda.appendChild(b);
       function agg() {
         var tua = mia(pz), n = pz.tipo === "ogg" ? nelBaule(pz.id) : 0, manca = pz.prezzo - soldi();
@@ -7724,22 +7785,22 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     { gioco: "calciobiliardo", livello: "bronzo",   icona: "🏟️", nome: "Esordio in Campo",      desc: "Gioca la tua prima partita",                               stat: "partite",           meta: 1 },
     { gioco: "calciobiliardo", livello: "bronzo",   icona: "⚽", nome: "La Prima Rete",          desc: "Segna il tuo primo gol",                                    stat: "golFatti",          meta: 1 },
     { gioco: "calciobiliardo", livello: "bronzo",   icona: "🥅", nome: "Tre Punti",              desc: "Vinci la tua prima partita",                                stat: "vittorie",          meta: 1 },
-    { gioco: "calciobiliardo", livello: "bronzo",   icona: "🤖", nome: "Matt, Attento!",         desc: "Batti Matt Facile",                                         stat: "vinte_facile",      meta: 1 },
+    { gioco: "calciobiliardo", livello: "bronzo",   icona: "🤖", nome: "Bot, Attento!",         desc: "Batti Bot Facile",                                         stat: "vinte_facile",      meta: 1 },
     { gioco: "calciobiliardo", livello: "bronzo",   icona: "😎", nome: "Faccia da Gol",          desc: "Segna con il tuo attaccante, quello col tuo avatar",        stat: "golAttaccante",     meta: 1 },
     { gioco: "calciobiliardo", livello: "bronzo",   icona: "🌐", nome: "Vittoria in Rete",       desc: "Vinci una partita online",                                  stat: "vinteOnline",       meta: 1 },
     { gioco: "calciobiliardo", livello: "argento",  icona: "⚡", nome: "Reti in Crescita",       desc: "Segna 25 gol in totale",                                    stat: "golFatti",          meta: 25 },
-    { gioco: "calciobiliardo", livello: "argento",  icona: "🧠", nome: "Matt alla Prova",        desc: "Batti Matt Medio",                                          stat: "vinte_medio",       meta: 1 },
+    { gioco: "calciobiliardo", livello: "argento",  icona: "🧠", nome: "Bot alla Prova",        desc: "Batti Bot Medio",                                          stat: "vinte_medio",       meta: 1 },
     { gioco: "calciobiliardo", livello: "argento",  icona: "🪵", nome: "Sponda Vincente",        desc: "Segna 5 gol dopo un rimbalzo sulla sponda nello stesso tiro", stat: "golSponda",         meta: 5 },
     { gioco: "calciobiliardo", livello: "argento",  icona: "🎯", nome: "Tiro da Lontano",       desc: "Segna 5 gol partendo dalla tua metà campo",                  stat: "golLontano",        meta: 5 },
     { gioco: "calciobiliardo", livello: "argento",  icona: "⏱️", nome: "Fischio Finale",        desc: "Vinci una partita a tempo",                                  stat: "vinteTempo",        meta: 1 },
     { gioco: "calciobiliardo", livello: "oro",      icona: "💯", nome: "Cento Reti",             desc: "Segna 100 gol in totale",                                   stat: "golFatti",          meta: 100 },
-    { gioco: "calciobiliardo", livello: "oro",      icona: "🦾", nome: "Matt Battuto",           desc: "Batti Matt Difficile",                                      stat: "vinte_difficile",   meta: 1 },
+    { gioco: "calciobiliardo", livello: "oro",      icona: "🦾", nome: "Bot Battuto",           desc: "Batti Bot Difficile",                                      stat: "vinte_difficile",   meta: 1 },
     { gioco: "calciobiliardo", livello: "oro",      icona: "🤝", nome: "Amici in Rete",          desc: "Vinci 10 partite online",                                   stat: "vinteOnline",       meta: 10 },
     { gioco: "calciobiliardo", livello: "oro",      icona: "🏆", nome: "Rigori da Campione",     desc: "Vinci una partita ai rigori",                               stat: "vinteRigori",       meta: 1 },
     { gioco: "calciobiliardo", livello: "oro",      icona: "🔄", nome: "Rimonta Completa",       desc: "Vinci dopo essere stato sotto di 2 gol",                    stat: "rimonte",           meta: 1 },
     { gioco: "calciobiliardo", livello: "oro",      icona: "🔔", nome: "Palo e Rete",            desc: "Segna 3 gol dopo aver colpito il palo nello stesso tiro",    stat: "golPalo",           meta: 3 },
-    { gioco: "calciobiliardo", livello: "diamante", icona: "🧱", nome: "Muro Giallo e Blu",      desc: "Batti Matt Difficile senza subire gol, segnandone almeno 3", stat: "cappotti_difficile", meta: 1 },
-    { gioco: "calciobiliardo", livello: "diamante", icona: "👑", nome: "Cinque Volte Matt",      desc: "Batti Matt Difficile 5 volte",                               stat: "vinte_difficile",   meta: 5 },
+    { gioco: "calciobiliardo", livello: "diamante", icona: "🧱", nome: "Muro Giallo e Blu",      desc: "Batti Bot Difficile senza subire gol, segnandone almeno 3", stat: "cappotti_difficile", meta: 1 },
+    { gioco: "calciobiliardo", livello: "diamante", icona: "👑", nome: "Cinque Volte Bot",      desc: "Batti Bot Difficile 5 volte",                               stat: "vinte_difficile",   meta: 5 },
     { gioco: "calciobiliardo", livello: "diamante", icona: "🌟", nome: "Leggenda del Campo",     desc: "Segna 250 gol in totale",                                   stat: "golFatti",          meta: 250 },
 
     // ---------- Scopone (classico + scientifico, contro il computer) ----------
@@ -7853,7 +7914,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     { gioco: "poker", livello: "argento",  icona: "👥", nome: "Tavolo in Compagnia",   desc: "Partecipa a 10 mani online contro altre persone",           stat: "maniOnline",              meta: 10 },
     { gioco: "poker", livello: "argento",  icona: "🇺🇸", nome: "Texas in Crescita",      desc: "Vinci 5 mani di Texas Hold'em",                             stat: "vittorieTexas",            meta: 5 },
     { gioco: "poker", livello: "argento",  icona: "🔁", nome: "Tradizione Vincente",    desc: "Vinci 5 mani di Poker all'italiana",                       stat: "vittorieItaliana",         meta: 5 },
-    { gioco: "poker", livello: "oro",      icona: "🦾", nome: "Matt non Molla",         desc: "Vinci 10 mani contro bot a difficoltà Difficile",           stat: "vittorieDifficile",       meta: 10 },
+    { gioco: "poker", livello: "oro",      icona: "🦾", nome: "Bot non Molla",         desc: "Vinci 10 mani contro bot a difficoltà Difficile",           stat: "vittorieDifficile",       meta: 10 },
     { gioco: "poker", livello: "oro",      icona: "🤝", nome: "Amici al Piattone",      desc: "Vinci 10 mani online contro altre persone",                 stat: "vittorieOnline",          meta: 10 },
     { gioco: "poker", livello: "oro",      icona: "🧠", nome: "Tris o Meglio",          desc: "Vinci 10 showdown con tris o una mano più forte",            stat: "vittorieTrisPlus",        meta: 10 },
     { gioco: "poker", livello: "oro",      icona: "🏰", nome: "Castello di Carte",      desc: "Vinci allo showdown con un full, un poker o una scala colore", stat: "vittorieFullPlus",      meta: 1 },
@@ -7864,7 +7925,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     { gioco: "poker", livello: "diamante", icona: "⚔️", nome: "Tre di Fila",            desc: "Vinci 3 mani di fila contro i bot Difficili",                stat: "serieDifficileMax",       meta: 3 },
     { gioco: "poker", livello: "diamante", icona: "🔥", nome: "Cinque Online",          desc: "Vinci 5 mani online di fila contro altre persone",          stat: "serieOnlineMax",          meta: 5 },
     { gioco: "poker", livello: "diamante", icona: "♠️", nome: "Poker da Campione",       desc: "Vinci 3 showdown con un poker",                              stat: "vittoriePoker",           meta: 3 },
-    { gioco: "poker", livello: "diamante", icona: "🤖", nome: "Matt non ti Ferma",       desc: "Vinci 5 mani di fila contro i bot Difficili",               stat: "serieDifficileMax",       meta: 5 },
+    { gioco: "poker", livello: "diamante", icona: "🤖", nome: "Bot non ti Ferma",       desc: "Vinci 5 mani di fila contro i bot Difficili",               stat: "serieDifficileMax",       meta: 5 },
     { gioco: "poker", livello: "diamante", icona: "🌍", nome: "Amici di Lungo Corso",   desc: "Vinci 25 mani online contro altre persone",                 stat: "vittorieOnline",          meta: 25 },
 
     // ---- TABOO ----
@@ -7901,7 +7962,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     { gioco: "pendolo", livello: "argento",  icona: "🌐", nome: "Pendolo in Compagnia", desc: "Vinci 3 partite online contro almeno una persona",           stat: "vittorieOnline",                meta: 3 },
     { gioco: "pendolo", livello: "oro",      icona: "📅", nome: "Serate sul Pendolo",   desc: "Concludi 25 partite",                                         stat: "partite",                      meta: 25 },
     { gioco: "pendolo", livello: "oro",      icona: "🎪", nome: "Lanciatore Esperto",    desc: "Vinci 10 sfide da lanciatore",                                stat: "vittorieLanciatore",           meta: 10 },
-    { gioco: "pendolo", livello: "oro",      icona: "🦾", nome: "Matt in Acqua",         desc: "Batti 3 volte il bot Difficile giocando da lanciatore",     stat: "vittorieLanciatoreDifficile",   meta: 3 },
+    { gioco: "pendolo", livello: "oro",      icona: "🦾", nome: "Bot in Acqua",         desc: "Batti 3 volte il bot Difficile giocando da lanciatore",     stat: "vittorieLanciatoreDifficile",   meta: 3 },
     { gioco: "pendolo", livello: "oro",      icona: "🛡️", nome: "Sempre in Piedi",      desc: "Resisti al bot Difficile sulla trave",                      stat: "vittorieTraveDifficile",        meta: 1 },
     { gioco: "pendolo", livello: "diamante", icona: "⚡", nome: "Lancio Lampo",          desc: "Batti il bot Difficile buttando giù tutti in 6 secondi",   stat: "triplettaDifficileVeloce",      meta: 1 },
     { gioco: "pendolo", livello: "diamante", icona: "🧿", nome: "Mira da Campione",      desc: "Batti 20 volte il bot Difficile da lanciatore",           stat: "vittorieLanciatoreDifficile",   meta: 20 },
@@ -7918,11 +7979,11 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     { gioco: "ruota", livello: "argento",  icona: "🧩", nome: "Frasi Svelate",        desc: "Risolvi 10 frasi in modalità Sfida",                          stat: "frasiRisolte",                  meta: 10 },
     { gioco: "ruota", livello: "argento",  icona: "🎯", nome: "Occhio alle Lettere",  desc: "Indovina 50 consonanti in modalità Sfida",                    stat: "consonantiIndovinate",          meta: 50 },
     { gioco: "ruota", livello: "argento",  icona: "🥈", nome: "Cinque Trionfi",       desc: "Vinci 5 partite in modalità Sfida",                           stat: "vittorieSfida",                 meta: 5 },
-    { gioco: "ruota", livello: "argento",  icona: "🧠", nome: "Avanti il Prossimo",   desc: "Batti Matt e gli altri bot di bravura Media 3 volte",         stat: "vittorieMedio",                 meta: 3 },
+    { gioco: "ruota", livello: "argento",  icona: "🧠", nome: "Avanti il Prossimo",   desc: "Batti Bot e gli altri bot di bravura Media 3 volte",         stat: "vittorieMedio",                 meta: 3 },
     { gioco: "ruota", livello: "oro",      icona: "📅", nome: "Ruota di Serate",      desc: "Concludi 25 partite",                                         stat: "partite",                       meta: 25 },
     { gioco: "ruota", livello: "oro",      icona: "📣", nome: "Voce da Campione",     desc: "Risolvi 30 frasi in modalità Sfida",                          stat: "frasiRisolte",                  meta: 30 },
     { gioco: "ruota", livello: "oro",      icona: "💰", nome: "Manche da 5.000",      desc: "Vinci 3 manche con almeno 5.000 punti ciascuna",             stat: "mancheDa5000",                  meta: 3 },
-    { gioco: "ruota", livello: "oro",      icona: "🤖", nome: "Matt al Tappeto",      desc: "Batti i bot di bravura Difficile",                            stat: "vittorieDifficile",             meta: 1 },
+    { gioco: "ruota", livello: "oro",      icona: "🤖", nome: "Bot al Tappeto",      desc: "Batti i bot di bravura Difficile",                            stat: "vittorieDifficile",             meta: 1 },
     { gioco: "ruota", livello: "diamante", icona: "👑", nome: "Re della Ruota",       desc: "Vinci 20 partite in modalità Sfida",                          stat: "vittorieSfida",                 meta: 20 },
     { gioco: "ruota", livello: "diamante", icona: "🛡️", nome: "Senza Bancarotta",     desc: "Batti i bot Difficili senza mai fare Bancarotta",            stat: "vittorieDifficileSenzaBancarotta", meta: 1 },
     { gioco: "ruota", livello: "diamante", icona: "💎", nome: "Partita Perfetta",     desc: "Batti i bot Difficili vincendo tutte le manche di una partita da almeno 3 manche", stat: "vittorieDifficileTutteLeManche", meta: 1 },
@@ -9099,21 +9160,13 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
         sp._contenuto.appendChild(el("div", { class: "etichetta", text: "⭐ Livello e Speed Coins" }));
         sp._contenuto.appendChild(riquadroLivello(SGNube.progressione()));
       }
-      var fi = SGNube.monete ? SGNube.monete() : 0;
-      sp._contenuto.appendChild(el("div", { class: "etichetta", text: "🃏 Black Jack" }));
-      sp._contenuto.appendChild(el("p", { class: "modulo-nota", html: "Al Casinò le fiches sono le tue <b>Speed Coins</b> (" + cifre(fi) + " 🪙): quello che vinci o perdi al tavolo si somma alle monete, su qualsiasi telefono." }));
-      var st = (p.stat && p.stat.blackjack) || {};
-      var giocate = st.maniGiocate || 0, vinte = st.maniVinte || 0, perc = giocate ? Math.round(vinte / giocate * 100) : 0;
-      var celle = [["Mani giocate", giocate], ["Mani vinte", vinte], ["% vittorie", perc + "%"],
-        ["Black Jack", st.blackjackFatti || 0], ["Record fiches", st.recordFiches || fi], ["Vincita max", st.vincitaMax || 0]];
-      var griglia = el("div", { style: "display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px" });
-      celle.forEach(function (v) {
-        griglia.appendChild(el("div", { style: "background:var(--carta);border-radius:12px;padding:10px 4px;text-align:center;box-shadow:var(--ombra)" }, [
-          el("div", { style: "font-size:1.35rem;font-weight:900;color:#ffe58a;line-height:1.1", text: "" + v[1] }),
-          el("div", { style: "font-size:.7rem;color:var(--testo-tenue);margin-top:3px", text: v[0] })
-        ]));
-      });
-      sp._contenuto.appendChild(griglia);
+      // le statistiche di tutti i giochi stanno in una schermata a parte
+      var tot = totaliGiocato(SGNube.giocato ? SGNube.giocato() : {});
+      sp._contenuto.appendChild(el("button", { class: "st-tasto", onclick: function () { schermataStatistiche(function () { schermataAccessoCloud(dopo); }); } }, [
+        el("span", { class: "st-tasto-ico", text: "📊" }),
+        el("span", { class: "st-tasto-testo" }, [ el("b", { text: "Le tue statistiche" }), el("small", { text: tot.p ? cifre(tot.p) + (tot.p === 1 ? " partita" : " partite") + " · " + tempoGiocato(tot.t) + " giocati" : "Vittorie, sconfitte e tempo di ogni gioco" }) ]),
+        el("span", { class: "st-tasto-va", text: "›" })
+      ]));
       sp._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🚪 Esci dal profilo", onclick: function () {
         chiediConferma("Sei sicuro di voler uscire dal profilo?", "Se non ricordi la password non potrai più accedere.", "🚪 Esci", function () {
           SGNube.esci().then(function () { schermataHome(); });
@@ -9135,6 +9188,55 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     } });
     s._piede.appendChild(bEntra);
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "➕ Non ho un profilo, crealo", onclick: function () { schermataCreaCloud(dopo); } }));
+    mostra(s);
+  }
+
+  // ---- 📊 le statistiche di ogni gioco: partite, vinte, perse, % di vittorie, tempo giocato, serie migliore ----
+  //      (le scrive premiaPartita a fine partita; contano dal 10 ottobre 2026. Il Black Jack ha anche le sue mani di sempre)
+  function tempoGiocato(sec) {
+    var m = Math.round((sec || 0) / 60);
+    if (m < 1) return sec > 0 ? "meno di 1 min" : "0 min";
+    if (m < 60) return m + " min";
+    var h = Math.floor(m / 60), r = m % 60;
+    return cifre(h) + " h" + (r && h < 100 ? " " + r + " min" : "");
+  }
+  function quandoGiocato(ms) {
+    if (!ms) return "";
+    var oggi = new Date(); oggi.setHours(0, 0, 0, 0);
+    var giorni = Math.floor((oggi.getTime() - new Date(ms).setHours(0, 0, 0, 0)) / 86400000);
+    return giorni <= 0 ? "oggi" : giorni === 1 ? "ieri" : giorni < 7 ? giorni + " giorni fa" : giorni < 30 ? Math.floor(giorni / 7) + (giorni < 14 ? " settimana fa" : " settimane fa") : "più di un mese fa";
+  }
+  function totaliGiocato(gi) {
+    var t = { p: 0, v: 0, s: 0, t: 0 };
+    Object.keys(gi || {}).forEach(function (k) { var x = gi[k] || {}; t.p += x.p || 0; t.v += x.v || 0; t.s += x.s || 0; t.t += x.t || 0; });
+    return t;
+  }
+  function percVittorie(x) { var n = (x.v || 0) + (x.s || 0); return n ? Math.round((x.v || 0) * 100 / n) + "%" : "—"; }
+  function schermataStatistiche(dopo) {
+    var p = SGNube.profilo(); if (!p) return (dopo || schermataHome)();
+    var gi = (SGNube.giocato && SGNube.giocato()) || {}, tot = totaliGiocato(gi);
+    var s = schermata({ icona: "📊", titolo: "Statistiche", sotto: p.nome, indietro: function () { (dopo || schermataHome)(); } });
+    function cella(valore, nome, cls) { return el("div", { class: "st-cella" + (cls ? " " + cls : "") }, [ el("b", { text: "" + valore }), el("small", { text: nome }) ]); }
+    // in alto i totali
+    s._contenuto.appendChild(el("div", { class: "st-griglia st-totali" }, [ cella(tempoGiocato(tot.t), "Tempo giocato"), cella(cifre(tot.p), "Partite"), cella(percVittorie(tot), "Vittorie") ]));
+    var lista = giochi.filter(function (g) { return gi[g.id] && gi[g.id].p; }).sort(function (a, b) { return (gi[b.id].t || 0) - (gi[a.id].t || 0) || gi[b.id].p - gi[a.id].p; });
+    if (lista.length) s._contenuto.appendChild(el("p", { class: "modulo-nota", html: "Il tuo gioco preferito: <b>" + lista[0].icona + " " + lista[0].nome + "</b> (" + tempoGiocato(gi[lista[0].id].t) + ")" }));
+    // un riquadro per ogni gioco giocato, dal più giocato
+    lista.forEach(function (g) {
+      var x = gi[g.id], q = quandoGiocato(x.u);
+      var r = el("div", { class: "st-gioco" }, [
+        el("div", { class: "st-testa" }, [ el("span", { class: "st-ico", text: g.icona || "🎲" }), el("b", { text: g.nome }), el("small", { text: q ? "ultima volta " + q : "" }) ]),
+        el("div", { class: "st-griglia" }, [ cella(cifre(x.p), "Partite"), cella(cifre(x.v || 0), "Vinte", "verde"), cella(cifre(x.s || 0), "Perse", "rosso"), cella(percVittorie(x), "% vittorie") ]),
+        el("div", { class: "st-riga" }, [ el("span", { text: "⏱️ " + tempoGiocato(x.t) }), x.serieMax ? el("span", { text: "🔥 Serie migliore: " + x.serieMax + (x.serieMax === 1 ? " vittoria" : " vittorie di fila") }) : null, x.rec ? el("span", { text: "🏅 Record: " + cifre(x.rec) + " punti" }) : null ])
+      ]);
+      if (g.id === "blackjack") {   // il Black Jack conta anche le mani (da sempre)
+        var bj = (p.stat && p.stat.blackjack) || {};
+        if (bj.maniGiocate) r.appendChild(el("div", { class: "st-riga" }, [ el("span", { text: "🃏 Mani: " + cifre(bj.maniVinte || 0) + " vinte su " + cifre(bj.maniGiocate) }), el("span", { text: "✨ Black Jack fatti: " + cifre(bj.blackjackFatti || 0) }), bj.vincitaMax ? el("span", { text: "💰 Vincita più alta: " + cifre(bj.vincitaMax) }) : null ]));
+      }
+      s._contenuto.appendChild(r);
+    });
+    if (!lista.length) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ancora niente qui: gioca una partita col tuo profilo e le statistiche si riempiono." }));
+    s._contenuto.appendChild(el("p", { class: "modulo-nota st-nota", text: "Contano le partite giocate col profilo dal 10 ottobre 2026. Le partite sullo stesso telefono in cui non giochi col tuo nome contano nelle partite e nel tempo, non nelle vittorie." }));
     mostra(s);
   }
 
@@ -10318,7 +10420,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   // Ogni partita finita dà XP a chi ha il profilo: 1 al secondo, +50% se vinci, +250 alla prima del giorno.
   // Il tempo parte dall'ultima volta che si è visti in saletta (o dalla partita prima): l'attesa non conta.
   // Online l'host manda "__esito" con la classifica: ogni telefono si dà i suoi XP da solo.
-  var xpOrologio = { t0: Date.now(), ultimo: 0 }, reteXp = null;
+  var xpOrologio = { t0: Date.now(), ultimo: 0 }, reteXp = null, giocoXp = null;   // giocoXp: il gioco aperto (per le statistiche)
   function xpRiparti() { xpOrologio.t0 = Date.now(); }
   function oggiStr() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
   function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
@@ -10337,6 +10439,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     if (!mio) lista.forEach(function (r) { if (!mio && r && sonoIo(r.nome)) mio = r; });
     if (soloSeCi && !mio) return;
     var primo = lista[0], vinto = !!mio && (mio.pos != null ? mio.pos === 1 : (mio === primo || (mio.punti != null && primo && mio.punti === primo.punti)));
+    if (giocoXp && SGNube.contaPartita) SGNube.contaPartita(giocoXp, mio ? (vinto ? "vinta" : "persa") : null, sec, mio && typeof mio.punti === "number" ? mio.punti : null);   // le statistiche del gioco (📊 nel profilo)
     var giorno = oggiStr(), prima = SGNube.progressione().xpGiorno !== giorno;
     var xp = SGLivelli.xpPartita({ secondi: sec, vinto: vinto, primaDelGiorno: prima });
     if (!xp) return;
@@ -10375,7 +10478,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   function avviaPartita(g, giocatori, impostazioni, opts, salaCtx) {
     var questa = ++partitaN;
     function viva() { return questa === partitaN; }
-    xpRiparti(); reteXp = null;   // gli XP contano da qui (e dall'ultima volta in saletta)
+    xpRiparti(); reteXp = null; giocoXp = g.id;   // gli XP contano da qui (e dall'ultima volta in saletta)
     // entrato da ospite con un invito: se la pagina si ricarica, in home c'è "Rientra nella partita"
     if (linkParams && linkParams.stanza && !linkParams.guarda && !salaCtx) ricordaStanza({ gioco: g.id, stanza: String(linkParams.stanza).toUpperCase() });
     // online (host, ospite o dalla Sala): lo schermo resta acceso, così il collegamento non si ferma
@@ -18599,6 +18702,19 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 175,
+    data: "10 ottobre 2026",
+    titolo: "Le tue statistiche 📊",
+    descrizione: [
+      "Nel tuo profilo c'è il tasto «📊 Le tue statistiche»: per ogni gioco partite, vinte, perse, % di vittorie, tempo giocato e serie migliore di vittorie di fila.",
+      "In alto il tempo giocato in tutto e il tuo gioco preferito. Il Black Jack tiene anche le sue mani di sempre.",
+      "Nei giochi coi punti c'è anche il tuo record: il punteggio più alto che hai fatto.",
+      "Contano le partite giocate col profilo da oggi in poi.",
+      "Il bot ora si chiama semplicemente Bot, in tutti i giochi.",
+      "Nel negozio gli oggetti speciali hanno una frase in più quando li tocchi."
+    ]
+  },
+  {
     v: 174,
     data: "10 ottobre 2026",
     titolo: "La tua casa e il negozio 🏠🛍️",
@@ -18713,8 +18829,8 @@ window.SG_NOVITA = [
     data: "9 ottobre 2026",
     titolo: "Trofei di Calcio Biliardo ⚽",
     descrizione: [
-      "Arrivano 20 trofei: si parte con la prima partita e i primi gol, poi si punta a battere Matt, vincere online e segnare con tiri speciali.",
-      "I trofei più rari premiano chi batte Matt Difficile 5 volte, chi lo batte senza subire gol e chi arriva a 250 gol."
+      "Arrivano 20 trofei: si parte con la prima partita e i primi gol, poi si punta a battere Bot, vincere online e segnare con tiri speciali.",
+      "I trofei più rari premiano chi batte Bot Difficile 5 volte, chi lo batte senza subire gol e chi arriva a 250 gol."
     ]
   },
   {
@@ -18724,7 +18840,7 @@ window.SG_NOVITA = [
     descrizione: [
       "L'attaccante, il calciatore più avanzato, ha la faccia del tuo avatar. Quando segni, il tuo avatar esulta in mezzo al campo coi coriandoli del colore della squadra.",
       "Nuova partita a tempo: 2, 3 o 5 minuti con l'orologio in alto. Se finisce pari si va ai rigori: 3 a testa e poi a oltranza. Tira solo l'attaccante e il portiere si tuffa a caso.",
-      "Scegli la formazione: Classica, Catenaccio (più difesa) o All'attacco. Online ognuno la sceglie in saletta, e Matt sceglie la sua a sorpresa.",
+      "Scegli la formazione: Classica, Catenaccio (più difesa) o All'attacco. Online ognuno la sceglie in saletta, e Bot sceglie la sua a sorpresa.",
       "Torneo a eliminazione: Calcio Biliardo ora c'è anche nei tornei della Sala, e chi non gioca guarda le partite in diretta.",
       "Online, chi entra quando i due posti sono già presi guarda la partita in diretta, senza suoni.",
       "Quando prendi il palo o sbagli un rigore, la folla fa «uuuh» per davvero."
@@ -18769,7 +18885,7 @@ window.SG_NOVITA = [
     descrizione: [
       "Il calcio coi dischi: ognuno ha 5 calciatori. A turno ne tocchi uno, tiri indietro il dito come una fionda e lasci: più tiri indietro, più forte parte.",
       "I calciatori colpiscono la palla e rimbalzano sui bordi, come al biliardo. Vince chi arriva per primo ai gol scelti (1, 3 o 5).",
-      "Si gioca contro Matt (facile, medio o difficile), in due sullo stesso telefono (uno per lato, il telefono in mezzo) oppure online, ognuno dal suo telefono: online vedi sempre la tua squadra in basso.",
+      "Si gioca contro Bot (facile, medio o difficile), in due sullo stesso telefono (uno per lato, il telefono in mezzo) oppure online, ognuno dal suo telefono: online vedi sempre la tua squadra in basso.",
       "Lo trovi anche nell'Arena della città."
     ]
   },
@@ -18900,7 +19016,7 @@ window.SG_NOVITA = [
       "Ci sono Bancarotta (perdi i soldi della manche), Passa (perdi il turno) e il Jolly, che ti salva il turno la volta dopo.",
       "Si gioca nello studio del game show: la telecamera va sulla ruota quando gira e sul concorrente di turno, il pubblico applaude o fa \"ohhh\", e il tabellone con la frase resta sempre in vista in alto.",
       "Più di 700 frasi in 12 categorie: proverbi, modi di dire, film, canzoni italiane, personaggi famosi, luoghi, cibo, sport, animali e altro.",
-      "Da 2 a 4 alla ruota: contro i bot (il primo è Matt), sullo stesso telefono o online, ognuno dal suo telefono. Online l'host può riempire i posti vuoti coi bot.",
+      "Da 2 a 4 alla ruota: contro i bot (il primo è Bot), sullo stesso telefono o online, ognuno dal suo telefono. Online l'host può riempire i posti vuoti coi bot.",
       "Prima di cominciare scegli quante manche (3, 4 o 5) e quanto sono bravi i bot. Vince chi alla fine ha messo da parte più soldi.",
       "La trovi nella categoria Quiz & parole."
     ]
@@ -18925,7 +19041,7 @@ window.SG_NOVITA = [
     titolo: "Nuovo gioco: il Poker con le carte francesi ♠️",
     descrizione: [
       "Due poker in uno: il Texas Hold'em (2 carte tue e 5 in mezzo per tutti) e il Poker all'italiana (5 carte, poi le cambi).",
-      "Contro il computer (scegli quanti bot e quanto sono bravi, il primo è Matt) oppure online, ognuno dal suo telefono: l'host può riempire i posti vuoti coi bot.",
+      "Contro il computer (scegli quanti bot e quanto sono bravi, il primo è Bot) oppure online, ognuno dal suo telefono: l'host può riempire i posti vuoti coi bot.",
       "Si gioca con le stesse fiches del Black Jack: ti siedi con al massimo 1.000, e quello che vinci o perdi resta nel tuo profilo. Se le finisci, ti risiedi con altre fiches o ritiri il bonus.",
       "Quando tocca a te: Passa, Chiama, Punta o Rilancia (con le scelte veloci: metà piatto, piatto, all-in) oppure Lascia.",
       "Online ognuno vede solo le sue carte; alla fine si scoprono quelle di chi è arrivato in fondo. L'host può chiudere il tavolo e vedere chi ha guadagnato di più."
@@ -19060,11 +19176,11 @@ window.SG_NOVITA = [
     data: "26 settembre 2026",
     titolo: "Black Jack più chiaro e più veloce 🃏",
     descrizione: [
-      "Mentre giochi vedi sempre quanto ha il banco: Matt sta nell'angolo in basso a sinistra con il suo punteggio, anche quando la telecamera zooma su di te.",
-      "Quando tocca a Matt la telecamera va sulle sue carte, al centro, e solo quando è arrivata lui gira la carta coperta.",
+      "Mentre giochi vedi sempre quanto ha il banco: Bot sta nell'angolo in basso a sinistra con il suo punteggio, anche quando la telecamera zooma su di te.",
+      "Quando tocca a Bot la telecamera va sulle sue carte, al centro, e solo quando è arrivata lui gira la carta coperta.",
       "Sopra la testa di ognuno, oltre al nome, ci sono le fiches che ha. Le cifre hanno il punto: 1.000, 10.000.",
       "Online si punta tutti insieme: ognuno fa la sua puntata dal suo telefono, senza aspettare il turno degli altri (e lo stesso per l'assicurazione).",
-      "Quando dividi, le carte arrivano una alla volta, come al casinò: prima giochi la prima mano, poi Matt dà la seconda carta all'altra.",
+      "Quando dividi, le carte arrivano una alla volta, come al casinò: prima giochi la prima mano, poi Bot dà la seconda carta all'altra.",
       "Se qualcuno esce dalla partita online, il tavolo non resta più bloccato ad aspettarlo."
     ]
   },
@@ -19181,7 +19297,7 @@ window.SG_NOVITA = [
     titolo: "Horto Muso rifatto: ippodromo, cavalli veri e il tuo avatar in sella 🏇",
     descrizione: [
       "Cavalli disegnati da capo: galoppano davvero (zampe snodate, criniera e coda che ondeggiano), 8 mantelli diversi con stella, lista e calzini bianchi, briglie e gualdrappa col numero.",
-      "In sella c'è il TUO avatar; online quelli dei tuoi amici. I bot sono Matt, Sara, Leo, Nina, Giulia, Toni e Rosa.",
+      "In sella c'è il TUO avatar; online quelli dei tuoi amici. I bot sono Bot, Sara, Leo, Nina, Giulia, Toni e Rosa.",
       "Ippodromo a tutto schermo: cielo, tribuna con la folla che salta, staccionata e prato a strisce.",
       "Telecamera che segue la corsa come in TV: i cavalli restano grandi mentre scorrono prato, staccionata e cartelli dei metri. Il traguardo arriva solo alla fine.",
       "Minimappa in alto del percorso a mezzo ovale, con un pallino per ogni cavallo, più la tua posizione e i metri che mancano.",
@@ -19221,7 +19337,7 @@ window.SG_NOVITA = [
     data: "26 settembre 2026",
     titolo: "Palla a Pendolo con gli avatar 🎯",
     descrizione: [
-      "Sulla trave ci sono gli avatar veri: il tuo (con \"TU\" sopra), quelli degli amici online e i bot con la loro faccia (Matt, Sara, Leo).",
+      "Sulla trave ci sono gli avatar veri: il tuo (con \"TU\" sopra), quelli degli amici online e i bot con la loro faccia (Bot, Sara, Leo).",
       "Chi lancia si vede di spalle in basso, coi suoi colori: capelli, pelle, maglia e cappello. Se lanci tu, ci sei tu di schiena!",
       "A tutto schermo: niente titolo, i tasti ◀ ▶ e SALTA/LANCIA stanno sopra l'acqua agli angoli. Un aiuto compare solo nei primi secondi.",
       "Quando cadi in acqua cade proprio il tuo avatar, che fa la capriola.",
@@ -19245,7 +19361,7 @@ window.SG_NOVITA = [
     descrizione: [
       "Anche Scopa 2 vs 2 e Scopone ora sono una stanza vera: il tuo compagno seduto di fronte (col 🤝 e il bordo verde), i due avversari agli angoli del tavolo, ognuno col suo ventaglio di carte coperte.",
       "Le facce cambiano: chi deve giocare ci pensa su 🤔, chi fa scopa esulta e salta con il compagno, gli altri ci restano male.",
-      "I bot hanno un nome e una faccia fissi: Matt (sempre lui!), Giulia e Toni nella 2 vs 2; Matt, Rosa e Peppe nello Scopone. Online si vedono gli avatar veri degli amici.",
+      "I bot hanno un nome e una faccia fissi: Bot (sempre lui!), Giulia e Toni nella 2 vs 2; Bot, Rosa e Peppe nello Scopone. Online si vedono gli avatar veri degli amici.",
       "Tavolo come nella Scopa: a tutta altezza, 8 posti fissi, carte che non cambiano grandezza e non saltano. Distribuzione animata a giro (tavolo, poi tu e gli altri a turno).",
       "Scopone: le tue 10 carte stanno su due file da 5, grandi e leggibili.",
       "Musica nuova per tutti e tre i giochi di scopa: più allegra e ritmata, stile osteria."
@@ -19256,9 +19372,9 @@ window.SG_NOVITA = [
     data: "26 settembre 2026",
     titolo: "Scopa: tavolo a tutto schermo 🃏",
     descrizione: [
-      "La stanza con Matt e il tavolo usa tutta l'altezza del telefono: niente più spazio vuoto sotto la tua mano.",
+      "La stanza con Bot e il tavolo usa tutta l'altezza del telefono: niente più spazio vuoto sotto la tua mano.",
       "Via il mazzo dal tavolo: tutto il panno è per le carte, con 8 posti (4 per fila). Le carte hanno SEMPRE la stessa grandezza fino a 8 in tavola; solo con 9 o più si rimpiccioliscono.",
-      "Distribuzione animata come dal vero: prima le 4 carte in tavola una alla volta, poi una a te e una a Matt, a turno. Anche quando si ridanno le carte a metà mano. Matt aspetta che la distribuzione finisca prima di giocare.",
+      "Distribuzione animata come dal vero: prima le 4 carte in tavola una alla volta, poi una a te e una a Bot, a turno. Anche quando si ridanno le carte a metà mano. Bot aspetta che la distribuzione finisca prima di giocare.",
       "Posti fissi in tavola: ogni carta resta dov'è finché non viene presa, il posto lasciato vuoto resta vuoto e la carta nuova va nel primo posto libero. Niente più carte che saltano.",
       "Il suggerimento per scegliere la presa compare sul tavolo invece che sotto, così non sposta niente.",
       "Il punteggio in alto non finisce più sotto il tasto indietro."
@@ -19308,12 +19424,12 @@ window.SG_NOVITA = [
     data: "26 settembre 2026",
     titolo: "Black Jack: la regia da TV 🎬",
     descrizione: [
-      "Si apre con Matt che vi guarda e dà il benvenuto, poi la telecamera passa su ognuno di voi e vi presenta.",
+      "Si apre con Bot che vi guarda e dà il benvenuto, poi la telecamera passa su ognuno di voi e vi presenta.",
       "Tavolo ovale vero, con tutti seduti attorno. Durante le puntate si vede tutto il tavolo, con il valore scritto sopra ogni pila di fiche.",
       "Alla seconda carta la telecamera scorre lungo il tavolo; quando tocca a qualcuno fa lo zoom su di lui: faccia, fiche e carte da vicino.",
-      "Quando gioca Matt, zoom sulle sue carte mentre scopre quella coperta. A fine mano si torna a tutti, con vincite e perdite.",
+      "Quando gioca Bot, zoom sulle sue carte mentre scopre quella coperta. A fine mano si torna a tutti, con vincite e perdite.",
       "Le carte si posano a cascata come fanno i croupier: non finiscono più sopra quelle del vicino, nemmeno in 10.",
-      "Tocca la faccia di un giocatore (o di Matt) per guardarlo da vicino per un attimo."
+      "Tocca la faccia di un giocatore (o di Bot) per guardarlo da vicino per un attimo."
     ]
   },
   {
@@ -19335,7 +19451,7 @@ window.SG_NOVITA = [
     data: "26 settembre 2026",
     titolo: "Black Jack: si gioca sul lato lungo 🎰",
     descrizione: [
-      "Il tavolo è girato come quelli veri: i giocatori siedono in fila sul lato lungo, in fondo, per tutta la larghezza dello schermo; la parte curva è dal lato di Matt.",
+      "Il tavolo è girato come quelli veri: i giocatori siedono in fila sul lato lungo, in fondo, per tutta la larghezza dello schermo; la parte curva è dal lato di Bot.",
       "Da 6 a 10 giocatori ci si mette su due file sfalsate: chi sta dietro spunta sopra le spalle di chi sta davanti, così le facce restano più grandi.",
       "Il tavolo è ancora più lungo e usa tutto lo spazio della parete."
     ]
@@ -19379,7 +19495,7 @@ window.SG_NOVITA = [
     data: "25 settembre 2026",
     titolo: "Black Jack: tutti seduti al tavolo 🎰",
     descrizione: [
-      "Ora la vista è da dietro Matt: vedi tutti i giocatori seduti attorno al tavolo a mezzaluna, faccia a faccia.",
+      "Ora la vista è da dietro Bot: vedi tutti i giocatori seduti attorno al tavolo a mezzaluna, faccia a faccia.",
       "Il tavolo si adatta: da soli sei grande al centro, in due le facce si vedono benissimo, fino a 10 si stringono ma ci stanno tutti.",
       "Le fiche puntate si vedono sul tavolo, in pila davanti a ognuno. A fine mano chi perde resta senza e chi vince vede la sua vincita.",
       "Le facce reagiscono: chi gioca ci pensa, chi sballa fa il muso, chi fa Black Jack esulta. A fine mano compare quanto hai vinto o perso."
@@ -19388,13 +19504,13 @@ window.SG_NOVITA = [
   {
     v: 108,
     data: "25 settembre 2026",
-    titolo: "Black Jack: arriva Matt, il dealer 🎩",
+    titolo: "Black Jack: arriva Bot, il dealer 🎩",
     descrizione: [
-      "Il banco ora ha una faccia: Matt, in giacca e papillon, dietro al tavolo. Le sue carte vengono posate sul panno davanti a lui.",
-      "Matt reagisce: 'Fate il vostro gioco!' quando si punta, ci pensa quando pesca, fa il muso se sballa ed esulta se vince il banco.",
+      "Il banco ora ha una faccia: Bot, in giacca e papillon, dietro al tavolo. Le sue carte vengono posate sul panno davanti a lui.",
+      "Bot reagisce: 'Fate il vostro gioco!' quando si punta, ci pensa quando pesca, fa il muso se sballa ed esulta se vince il banco.",
       "Ogni giocatore ha il suo avatar al posto: i posti si adattano a quanti siete (da soli niente fila, fino a 5 una fila larga, da 6 a 10 due file).",
       "Quando tocca a qualcuno, la sua faccia compare accanto al nome. Online ognuno vede l'avatar vero degli altri.",
-      "Anche nella Scopa il bot ora si chiama Matt."
+      "Anche nella Scopa il bot ora si chiama Bot."
     ]
   },
   {
@@ -19517,7 +19633,7 @@ window.SG_NOVITA = [
     data: "24 settembre 2026",
     titolo: "La Scalinata: i bot ora ragionano 🧠🪜",
     descrizione: [
-      "Matt, Kevin e Cody si ricordano cosa scegli: se giochi sempre lo stesso numero, uno di loro ti blocca.",
+      "Bot, Kevin e Cody si ricordano cosa scegli: se giochi sempre lo stesso numero, uno di loro ti blocca.",
       "Quando qualcuno è vicino alla cima, provano a fermarlo scegliendo il suo numero.",
       "Restano un po' imprevedibili: niente trucchi facili, bisogna cambiare strategia."
     ]
@@ -19946,7 +20062,7 @@ window.SG_NOVITA = [
     data: "14 settembre 2026",
     titolo: "La Scalinata anche in 2 o 3 (con i bot) 🪜",
     descrizione: [
-      "Ora non serve per forza essere in 4: puoi giocare la Scalinata da solo, in 2 o in 3 e i posti liberi li riempiono i bot (Matt, Kevin, Cody).",
+      "Ora non serve per forza essere in 4: puoi giocare la Scalinata da solo, in 2 o in 3 e i posti liberi li riempiono i bot (Bot, Kevin, Cody).",
       "Vale sia a un telefono solo sia online. Prima obbligava a mettere 4 persone: sistemato."
     ]
   },
@@ -20167,7 +20283,7 @@ window.SG_NOVITA = [
     data: "11 settembre 2026",
     titolo: "La Scalinata si gioca anche online, con i bot 🪜🔗",
     descrizione: [
-      "Ora la Scalinata si può fare \"ognuno dal suo telefono\": apri la stanza, mandi il codice, e i posti liberi li riempiono dei bot. Così giochi anche da solo, in 2 o in 3 (il primo bot si chiama Matt).",
+      "Ora la Scalinata si può fare \"ognuno dal suo telefono\": apri la stanza, mandi il codice, e i posti liberi li riempiono dei bot. Così giochi anche da solo, in 2 o in 3 (il primo bot si chiama Bot).",
       "Nella fase di scelta vedi sempre tutti i giocatori: quando uno sceglie, il suo pallino si illumina e il telefono fa un \"bip\", così capisci al volo chi manca ancora.",
       "Poi i numeri restano un paio di secondi sopra la testa di tutti prima di far salire le pedine: più suspense per leggere se qualcuno ha fatto il tuo stesso numero."
     ]
@@ -24429,14 +24545,14 @@ window.SG_SIPERO = {
     ".bjr-matt{position:absolute;display:flex;flex-direction:column;align-items:center;cursor:pointer;pointer-events:auto}",
     ".bjr-matt .bj-av{width:58px;height:58px;margin:0}.bjr-matt.turno .bj-av,.bjr-matt.turno .bjr-matt-nome{border-color:#ffd45e}",
     ".bjr-matt-nome{margin-top:-8px;position:relative;background:rgba(10,18,50,.9);border:2px solid rgba(255,255,255,.16);border-radius:10px;padding:1px 8px;font-size:.7rem;font-weight:800;white-space:nowrap}",
-    // Matt e quanto ha il banco stanno FUORI dalla telecamera: si vedono sempre, anche negli zoom
+    // Bot e quanto ha il banco stanno FUORI dalla telecamera: si vedono sempre, anche negli zoom
     ".bj-sala .bjr-matt{left:6px;bottom:6px;z-index:6}.bjr-matt-nome b{font-size:1.02rem;color:#ffe066;margin-left:4px}.bjr-matt-nome b.bust{color:#ff9d8a}.bj-sala>.bjr-fum{z-index:6}",
     // dopo "Dividi": un mazzetto per mano, quello che si gioca illuminato
     ".bjr-cc.cascata.divise{display:flex;align-items:flex-end;gap:9px}.bjr-mn{position:relative;flex:none;border-radius:5px;transform-style:preserve-3d}.bjr-mn.on{box-shadow:0 0 0 2px #ffd45e,0 0 12px rgba(255,212,94,.7)}",
     ".bjr-fum{position:absolute;max-width:150px;background:#fff;color:#12233a;font-weight:900;border-radius:13px;padding:5px 10px;font-size:.8rem;line-height:1.15;box-shadow:0 4px 12px rgba(0,0,0,.4);transform:translateY(-100%);animation:bjFum .26s cubic-bezier(.3,1.6,.5,1)}",
     ".bjr-fum.oro{background:linear-gradient(135deg,#ffe066,#ffb300);color:#3b2400}",
     "@keyframes bjFum{from{transform:translateY(-100%) scale(.3);opacity:0}}",
-    // apertura: Matt ci guarda, poi la telecamera passa su ognuno
+    // apertura: Bot ci guarda, poi la telecamera passa su ognuno
     ".bjr-intro{position:absolute;inset:0;z-index:8;overflow:hidden;background:radial-gradient(70% 55% at 50% 10%,rgba(255,214,140,.45),rgba(255,214,140,0) 70%),linear-gradient(#4a2c22,#1f130e);transition:opacity .6s,transform .6s cubic-bezier(.5,0,.75,0)}",
     ".bjr-intro.via{opacity:0;transform:translateX(-60%) scale(1.15);pointer-events:none}",
     ".bjr-intro .mg{position:absolute;left:50%;bottom:14%;width:78%;max-width:340px;transform:translateX(-50%)}.bjr-intro .mg svg{display:block;width:100%;height:auto}",
@@ -24492,7 +24608,7 @@ window.SG_SIPERO = {
   }
 
   // ---- suoni (Web Audio) + vibrazione ----
-  // ---------- avatar: Matt il dealer + i giocatori ai loro posti ----------
+  // ---------- avatar: Bot il dealer + i giocatori ai loro posti ----------
   var MATT_DEALER = { forma: "uomo", corpo: "medio", pelle: 2, capelli: "indietro", colCap: 1, barba: "corta", capo: "giacca", maglia: 7,
     collo: "papillon", colCollo: 0, sopracc: "decise", occhi: "furbi", bocca: "ghigno" };
   var FACCE = {
@@ -24646,7 +24762,7 @@ window.SG_SIPERO = {
     iniettaCSS();
     var el = t.el;
     var s = t.schermata({
-      titolo: "🃏 Black Jack", sotto: drv.sotto || "Banco: Matt",
+      titolo: "🃏 Black Jack", sotto: drv.sotto || "Banco: Bot",
       indietro: function () { if (window.confirm("Uscire dal tavolo?")) { document.body.classList.remove("bj-verde"); drv.onEsci(); } }
     });
     var wrap = el("div", { class: "bj-wrap" });
@@ -24659,7 +24775,7 @@ window.SG_SIPERO = {
       el("div", { class: "r", html: BJ.retroSVG() })
     ]);
     wrap.appendChild(mazzo);
-    mazzo.style.visibility = "hidden";   // il mazzo non si vede (spazio al tavolo): le carte partono da Matt
+    mazzo.style.visibility = "hidden";   // il mazzo non si vede (spazio al tavolo): le carte partono da Bot
     s._contenuto.appendChild(wrap); t.mostra(s);
     document.body.classList.add("bj-verde");
     // se lo schermo cambia misura (barre del telefono, rotazione) il tavolo si ridisegna sulla misura nuova
@@ -24667,7 +24783,7 @@ window.SG_SIPERO = {
 
     var vm = null, anim = { ultima: -1, banco: false }, timerPasso = null, daVolare = [], puntSel = null;
     var bolla = null, bollaId = -1, bollaTimer = null;   // nuvoletta della mossa
-    var scopri = { attesa: false, t: null };   // la carta coperta di Matt si gira solo quando la telecamera è arrivata
+    var scopri = { attesa: false, t: null };   // la carta coperta di Bot si gira solo quando la telecamera è arrivata
     function svuota(n) { while (n.firstChild) n.removeChild(n.firstChild); }
     function mioIdx() { return drv.mioIdx ? drv.mioIdx() : vm.turno; }
     // chi sta decidendo adesso: online puntate e assicurazione si fanno tutti insieme
@@ -24725,7 +24841,7 @@ window.SG_SIPERO = {
       var g = vm.giocatori[vm.turno]; if (!g) return false;
       var m = g.mani[g.attiva]; return !!(m && m.chiusa);
     }
-    // dopo "Dividi" la mano che tocca ha una carta sola: Matt le dà la seconda
+    // dopo "Dividi" la mano che tocca ha una carta sola: Bot le dà la seconda
     function manoDaCompletare() {
       if (!vm || vm.fase !== "gioca") return false;
       var g = vm.giocatori[vm.turno]; if (!g) return false;
@@ -24794,7 +24910,7 @@ window.SG_SIPERO = {
     function cartaR(c, w, nuova, coperta) { var d = el("div", { class: "bjr-carta" + (nuova ? " arriva" : ""), html: BJ.cartaHTML(c, coperta) }); d.style.width = w + "px"; return d; }
 
     var cam = el("div", { class: "bjr-cam" }), capt = el("div", { class: "bj-turno" });
-    // Matt con quanto ha il banco: fuori dalla telecamera, così si vede sempre (anche quando zooma su chi gioca)
+    // Bot con quanto ha il banco: fuori dalla telecamera, così si vede sempre (anche quando zooma su chi gioca)
     var hud = el("div", { class: "bjr-matt" }, [ el("div", { class: "bj-av" }), el("div", { class: "bjr-matt-nome" }) ]), fumEl = null;
     hud.onclick = function () { sbircia(-1); };
     zBanco.appendChild(cam); zBanco.appendChild(capt); zBanco.appendChild(hud);
@@ -24854,7 +24970,7 @@ window.SG_SIPERO = {
       var W = zBanco.clientWidth, H = zBanco.clientHeight, N = vm.giocatori.length;
       if (!R || R.N !== N || Math.abs(R.W - W) > 2 || Math.abs(R.H - H) > 2) costruisci();
       zTav.hidden = true;
-      mazzo.style.top = Math.round(R.by + 10) + "px"; mazzo.style.left = Math.round(R.bx - 22) + "px"; mazzo.style.right = "auto";   // le carte partono da Matt
+      mazzo.style.top = Math.round(R.by + 10) + "px"; mazzo.style.left = Math.round(R.bx - 22) + "px"; mazzo.style.right = "auto";   // le carte partono da Bot
       vm.giocatori.forEach(function (g, i) {
         var s = R.seg[i], attivo = decide(i);
         // faccia e luce di chi gioca
@@ -24911,7 +25027,7 @@ window.SG_SIPERO = {
           s.ccW = totW * ((s.carte && s.carte.sc) || 1);   // quanto sono larghe sullo schermo (per lo zoom)
         }
       });
-      // le carte di Matt (vicino a noi): la coperta si gira solo quando la telecamera è arrivata
+      // le carte di Bot (vicino a noi): la coperta si gira solo quando la telecamera è arrivata
       var scoperta = (vm.fase === "banco" || vm.fase === "esito") && !scopri.attesa;
       var kb = vm.banco.map(function (c) { return c.v + "" + c.s; }).join(",") + "|" + scoperta;
       if (R.k.b !== kb) {
@@ -24920,17 +25036,17 @@ window.SG_SIPERO = {
         if (gira) giraCarta(R.bancoCC.children[1], vm.banco[1]);
         else { svuota(R.bancoCC); vm.banco.forEach(function (c, k) { R.bancoCC.appendChild(cartaR(c, 50, k >= pr && vm.banco.length > pr, !scoperta && k === 1)); }); }
       }
-      // Matt nell'angolo con quanto ha il banco (sempre visibile)
+      // Bot nell'angolo con quanto ha il banco (sempre visibile)
       var fm = faccinaMatt(), pB = testoBanco(scoperta);
       var km = fm.faccia + "|" + fm.fum + "|" + pB + "|" + vm.fase;
       if (R.k.m !== km) {
         R.k.m = km;
         hud.className = "bjr-matt" + (vm.fase === "banco" ? " turno" : "");
         if (window.SGOmino) hud.firstChild.innerHTML = svgAvatar(MATT_DEALER, fm.faccia, { busto: true });
-        var hn = hud.lastChild; hn.innerHTML = ""; hn.appendChild(document.createTextNode(pB ? "🎩 Banco" : "🎩 Matt"));
+        var hn = hud.lastChild; hn.innerHTML = ""; hn.appendChild(document.createTextNode(pB ? "🎩 Banco" : "🎩 Bot"));
         if (pB) hn.appendChild(el("b", { class: /Sball/.test(pB) ? "bust" : "", text: pB }));
         if (fumEl) fumEl.remove(); fumEl = null;
-        if (fm.fum) { fumEl = el("div", { class: "bjr-fum" + (fm.oro ? " oro" : ""), style: "left:8px;top:" + (R.H - 96) + "px", text: fm.fum }); zBanco.appendChild(fumEl); }   // il fumetto sta sopra la testa di Matt, lontano dalle carte
+        if (fm.fum) { fumEl = el("div", { class: "bjr-fum" + (fm.oro ? " oro" : ""), style: "left:8px;top:" + (R.H - 96) + "px", text: fm.fum }); zBanco.appendChild(fumEl); }   // il fumetto sta sopra la testa di Bot, lontano dalle carte
       }
       // la nuvoletta della mossa sopra la testa di chi l'ha detta
       [].forEach.call(R.sopra.querySelectorAll(".bjr-bolla"), function (b) { if (!bolla || +b.dataset.id !== bollaId) b.remove(); });
@@ -24940,8 +25056,8 @@ window.SG_SIPERO = {
       }
       // in grande sulla parete: chi sta giocando
       var gt = vm.giocatori[vm.turno], scritta = "", sotto = "";
-      if (vm.fase === "distrib") scritta = "Matt distribuisce…";
-      else if (vm.fase === "banco") scritta = "Tocca a Matt 🎩";
+      if (vm.fase === "distrib") scritta = "Bot distribuisce…";
+      else if (vm.fase === "banco") scritta = "Tocca a Bot 🎩";
       else if (vm.fase === "esito") scritta = "Fine mano";
       else if (vm.fase === "punta" && drv.mioIdx) {   // online si punta tutti insieme
         var manc = vm.giocatori.filter(function (x, j) { return puoPuntare(vm, j); }).map(function (x) { return x.nome; });
@@ -24973,12 +25089,12 @@ window.SG_SIPERO = {
       var s = R.seg[i], top = s.testa - 22, bot = Math.max(s.carte.y, s.fp.y) + 34;
       return { x: s.x, y: (top + bot) / 2, w: Math.max(s.w * (largo ? 3 : 1.3), largo ? 230 : 140, (s.ccW || 0) * 1.35), h: (bot - top) * (largo ? 1.25 : 1) };
     }
-    // lo zoom sul banco va sulle CARTE di Matt, al centro (la sua faccia è già nell'angolo)
+    // lo zoom sul banco va sulle CARTE di Bot, al centro (la sua faccia è già nell'angolo)
     function suMatt() {
       var n = Math.max(2, vm.banco.length), w = Math.max(210, (53 * n) * R.bsc + 120);
       return { x: R.bx, y: R.by, w: w, h: w * 0.62 };
     }
-    // cosa ha il banco, scritto accanto a Matt: finché la seconda è coperta "10 + ?"
+    // cosa ha il banco, scritto accanto a Bot: finché la seconda è coperta "10 + ?"
     function testoBanco(scoperta) {
       if (!vm.banco.length) return "";
       if (!scoperta) { var c = vm.banco[0]; return (c.v === 1 ? "A" : BJ.valoreCarta(c.v)) + (vm.banco.length > 1 ? " + ?" : ""); }
@@ -25015,7 +25131,7 @@ window.SG_SIPERO = {
       inquadra(i < 0 ? suMatt() : suGiocatore(i));
       setTimeout(function () { if (Date.now() >= sbirciaFino) telecamera(); }, 2350);
     }
-    // ---------- APERTURA (la prima volta): Matt ci guarda, poi la telecamera passa su ognuno ----------
+    // ---------- APERTURA (la prima volta): Bot ci guarda, poi la telecamera passa su ognuno ----------
     var intro = { fatta: false, corre: false };
     function apertura() {
       intro.fatta = true; intro.corre = true;
@@ -25149,7 +25265,7 @@ window.SG_SIPERO = {
       var centro = el("div", { class: "bj-hcentro" });
       heroCarte(g, centro);
       var ma = g.mani[g.attiva], attesa = ma && !ma.chiusa && ma.carte.length < 2;   // dopo "Dividi": aspetta la seconda carta
-      if (attesa) centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:#ffe58a", text: "Matt ti dà la carta…" }));
+      if (attesa) centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:#ffe58a", text: "Bot ti dà la carta…" }));
       if (ma && ma.chiusa) {   // mano finita: resta a schermo un attimo prima di passare
         var pm = BJ.punteggio(ma.carte);
         centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:" + (pm > 21 ? "#ff9d8a" : "#9fe6b4"),
@@ -25204,7 +25320,7 @@ window.SG_SIPERO = {
     function refresh() { tav.aggiorna(vistaBJ(st)); }
     tav = tavoloBJ(t, {
       avatari: function () { return avatari; },
-      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · gira la ruota del giorno!") : ("👤 " + prof.nome + " · gioca con le tue Speed Coins")) : "Un telefono · Banco: Matt",
+      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · gira la ruota del giorno!") : ("👤 " + prof.nome + " · gioca con le tue Speed Coins")) : "Un telefono · Banco: Bot",
       puoAgire: function () { return true; },
       puoNuova: function () { return true; },
       guida: function () { return true; },
@@ -25451,10 +25567,10 @@ window.SG_SIPERO = {
    tiri indietro il dito come una fionda e lasci. I dischi colpiscono la
    palla e gli altri dischi e rimbalzano sui bordi: fai gol nella porta
    avversaria. Vince chi arriva per primo ai gol scelti.
-   Modi: contro il computer (Matt), in due sullo stesso telefono (uno per
+   Modi: contro il computer (Bot), in due sullo stesso telefono (uno per
    lato, il telefono in mezzo), online (ognuno dal suo: l'host decide il
    tiro vero, gli altri lo rivedono uguale e poi si allineano alla sua foto).
-   La fisica sta in funzioni a parte (passo/simula): la usa anche Matt,
+   La fisica sta in funzioni a parte (passo/simula): la usa anche Bot,
    che prova tanti tiri "per finta" e sceglie il migliore.
    ========================================================= */
 (function () {
@@ -25578,7 +25694,7 @@ window.SG_SIPERO = {
     if (s.y[0] > L + RP) return 1;
     return -1;
   }
-  function simula(s, sec) {   // fa andare il tiro fino alla fine (per Matt e per le prove)
+  function simula(s, sec) {   // fa andare il tiro fino alla fine (per Bot e per le prove)
     var n = Math.round((sec || MAX_SEC) / DT);
     for (var k = 0; k < n; k++) { var g = passo(s, null); if (g >= 0) return g; if (fermo(s)) return -1; }
     ferma(s); return -1;
@@ -25620,7 +25736,7 @@ window.SG_SIPERO = {
     cand.forEach(function (c) { c.v = prova(c.i, c.a, c.p); });
     var rum = { facile: 0.16, medio: 0.06, difficile: 0.015 }[liv] || 0.06;
     // i tiri migliori si riprovano con un po' di errore di mira: se sbagliando di poco
-    // finirebbero in autogol, valgono quanto il caso peggiore (così Matt è prudente)
+    // finirebbero in autogol, valgono quanto il caso peggiore (così Bot è prudente)
     cand.sort(function (a, b) { return b.v - a.v; });
     var best = cand[0], bv = -Infinity;
     cand.slice(0, 6).forEach(function (c) {
@@ -26034,7 +26150,7 @@ window.SG_SIPERO = {
 
   // =========================================================
   //  LE REGOLE DELLA PARTITA (uguali in tutti i modi): turni, gol, partita a tempo, rigori,
-  //  e i contatori per i trofei. Le usa chi tiene la partita: il telefono (contro Matt o in due)
+  //  e i contatori per i trofei. Le usa chi tiene la partita: il telefono (contro Bot o in due)
   //  oppure l'host online. Gli altri ricevono solo la "foto" (vm) e i tiri.
   // =========================================================
   function statoVuoto() {
@@ -26157,12 +26273,12 @@ window.SG_SIPERO = {
     };
     return M;
   }
-  // il messaggio nella targhetta della squadra q (chi = { mie: squadre di questo telefono, bot: squadra di Matt o -1 })
+  // il messaggio nella targhetta della squadra q (chi = { mie: squadre di questo telefono, bot: squadra di Bot o -1 })
   function riga(vm, q, chi) {
     var parti = [];
     if (vm.rig && vm.rig.tiri[q].length) parti.push("Rigori " + vm.rig.tiri[q].map(function (x) { return x ? "✓" : "✗"; }).join(""));
     if (vm.stato === "mira" && vm.turno === q) {
-      if (chi.bot === q) parti.push("Matt pensa…");
+      if (chi.bot === q) parti.push("Bot pensa…");
       else if (chi.mie.indexOf(q) >= 0) parti.push(vm.rig ? "Tira il rigore!" : "Tocca a te! Tira e lascia");
       else parti.push("Sta mirando…");
     }
@@ -26200,7 +26316,7 @@ window.SG_SIPERO = {
   function locale(t, modo) {
     var imp = t.impostazioni || {}, bot = modo === "bot", liv = imp.difficolta || "medio";
     var g0 = t.giocatori || [];
-    var nomi = bot ? [g0[0] || "Tu", "Matt"] : [g0[0] || "Giocatore 1", g0[1] || "Giocatore 2"];
+    var nomi = bot ? [g0[0] || "Tu", "Bot"] : [g0[0] || "Giocatore 1", g0[1] || "Giocatore 2"];
     var omini = [t.mioOmino ? t.mioOmino(nomi[0]) : null, window.SGOmino ? SGOmino.casuale(nomi[1]) : null];
     var chi = { mie: bot ? [0] : [0, 1], bot: bot ? 1 : -1 };
     var primo = 0, M = null, ui = null, tm = null;
@@ -26220,7 +26336,7 @@ window.SG_SIPERO = {
       if (t.trasmetti) t.trasmetti({ t: "vm", vm: vmPubblico(vm) });
     }
     function inizia() {
-      var form = [imp.form || "classica", bot ? NOMI_FORM[Math.floor(Math.random() * NOMI_FORM.length)] : (imp.form2 || "classica")];   // Matt sceglie a caso
+      var form = [imp.form || "classica", bot ? NOMI_FORM[Math.floor(Math.random() * NOMI_FORM.length)] : (imp.form2 || "classica")];   // Bot sceglie a caso
       M = creaMotore({ vince: imp.vince, gol: imp.gol, minuti: imp.minuti, form: form, primo: primo });
       ui = creaSchermo(t, cb, { flip: false, ruota: !bot, nomi: nomi, omini: omini });
       aggiorna(); segui();
@@ -26251,7 +26367,7 @@ window.SG_SIPERO = {
     function fine() {
       via();
       var P = M.P, v = P.vincitore, cl = [{ nome: nomi[v], pos: 1 }, { nome: nomi[1 - v], pos: 2 }];
-      // i trofei: contro Matt conta chi gioca; in due sullo stesso telefono conta chi ha il nome del profilo
+      // i trofei: contro Bot conta chi gioca; in due sullo stesso telefono conta chi ha il nome del profilo
       var prof = window.SGNube && SGNube.profilo && SGNube.profilo(), mio = bot ? 0 : (prof && nomi[1] === prof.nome ? 1 : (prof && nomi[0] === prof.nome ? 0 : -1));
       if (mio >= 0) salvaStat(P, mio, { modo: bot ? "bot" : "telefono", liv: liv });
       if (t.risultato) t.risultato(cl);
@@ -26585,9 +26701,9 @@ window.SG_SIPERO = {
 
   SG.registra({
     id: ID, nome: "Calcio Biliardo", icona: "⚽",
-    descrizione: "Il calcio coi dischi: tiri indietro un calciatore come una fionda, colpisci la palla e fai gol. Contro Matt, in due sullo stesso telefono o online.",
+    descrizione: "Il calcio coi dischi: tiri indietro un calciatore come una fionda, colpisci la palla e fai gol. Contro Bot, in due sullo stesso telefono o online.",
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 2,
-    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Sfidi Matt" },
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Sfidi Bot" },
       { modo: "telefono", icona: "📱", nome: "In due su questo telefono", sotto: "Uno per lato, il telefono in mezzo", amici: true }],
     regole: [
       "Ognuno ha <b>5 calciatori</b>. A turno se ne tira <b>uno</b>: toccalo, tira indietro il dito come una <b>fionda</b> e lascia. Più tiri indietro, più forte parte.",
@@ -26624,7 +26740,7 @@ window.SG_SIPERO = {
       var forme = NOMI_FORM.map(function (k) { return [k, FORMAZIONI[k].icona + " " + FORMAZIONI[k].nome]; });
       if (dove.modo === "telefono") { chips("Formazione dei gialli", forme, "form", "classica"); chips("Formazione dei blu", forme, "form2", "classica"); }
       else if (!aiuti.sala) chips(dove.modo === "online" ? "La tua formazione (la cambi anche in saletta)" : "La tua formazione", forme, "form", "classica");
-      if (dove.modo === "bot") chips("Bravura di Matt", [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]], "difficolta", "medio");
+      if (dove.modo === "bot") chips("Bravura di Bot", [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]], "difficolta", "medio");
     },
     avvia: function (t) {
       if (t.linkParams && t.linkParams.stanza) return t.linkParams.guarda ? guarda(t, t.linkParams.stanza) : ospite(t, t.linkParams.stanza);   // invito o chi guarda (torneo)
@@ -26634,7 +26750,7 @@ window.SG_SIPERO = {
     }
   });
 
-  // per le prove: la fisica e Matt, senza disegno
+  // per le prove: la fisica e Bot, senza disegno
   window.__CB = { nuovoStato: nuovoStato, statoRigore: statoRigore, simula: simula, sceltaBot: sceltaBot, copia: copia, passo: passo, fermo: fermo, decisoRigori: decisoRigori, VMAX: VMAX };
 })();
 
@@ -28047,7 +28163,7 @@ window.SG_SIPERO = {
   function botParam(diff) { return { S: diff === "facile" ? 42 : diff === "difficile" ? 18 : 28, I: diff === "facile" ? 520 : diff === "difficile" ? 290 : 350 }; }
 
   // ---------- fantini: gli avatar dei giocatori, i bot con la loro faccia fissa ----------
-  var BOT_NOMI = ["Matt", "Sara", "Leo", "Nina", "Giulia", "Toni", "Rosa"];   // il primo bot è sempre Matt
+  var BOT_NOMI = ["Bot", "Sara", "Leo", "Nina", "Giulia", "Toni", "Rosa"];   // il primo bot è sempre Bot
   function nomeBot(i) { return BOT_NOMI[(i - 1) % BOT_NOMI.length]; }
   var MATT = { forma: "uomo", corpo: "medio", pelle: 2, capelli: "ciuffo", colCap: 1, barba: "corta", capo: "felpa", maglia: 1,
     cappello: "cappellino", colAcc: 0, sopracc: "decise", occhi: "furbi", bocca: "ghigno" };
@@ -28060,7 +28176,7 @@ window.SG_SIPERO = {
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   function facciaDi(nome, cfg) {
     if (avatarValido(cfg)) return cfg;
-    if (nome === "Matt") return MATT;
+    if (nome === "Bot") return MATT;
     if (!window.SGOmino) return null;
     var c = SGOmino.casuale(nome);   // faccia fissa dal nome, donna o uomo come il nome
     if (BOT_DONNA[nome]) { c.forma = "donna"; c.barba = "no"; c.capelli = BOT_DONNA[nome]; }
@@ -28909,7 +29025,7 @@ window.SG_SIPERO = {
     etichettaGiocatori: "👥 1–8 giocatori",   // 1 da solo vs bot, fino a 8 online (i cavalli in gara)
     regole: [
       "Si parte dai <b>cancelletti</b>: corsie dritte, stessa distanza per tutti (1000 m). La telecamera segue la corsa e in alto la minimappa mostra dove siete sul percorso.",
-      "In sella c'è il tuo <b>avatar</b>; i bot sono Matt e i suoi amici.",
+      "In sella c'è il tuo <b>avatar</b>; i bot sono Bot e i suoi amici.",
       "I cavalli corrono già da soli a una <b>velocità minima</b>. Tu hai il tasto <b>FRUSTA</b>: ogni click dà una spinta.",
       "Ogni frustata consuma <b>energia</b> (la barra sopra il tuo cavallo). Se non frusti, l'energia si <b>ricarica</b>.",
       "Se l'energia arriva a <b>zero</b> vai in <b>sfinimento</b>: rallenti e per <b>3 secondi</b> non puoi frustare.",
@@ -31162,7 +31278,7 @@ window.SG_SIPERO = {
   // ripresa (solo per il vice che prende il posto): { codice, stato (la copia della partita), io (il suo id), omini }
   function host(t, ripresa) {
     var imp = t.impostazioni || {};
-    var prova = !ripresa && imp.modo === "prova";   // 🧪 prova da solo (solo per il proprietario): tu e Matt contro due bot, senza rete
+    var prova = !ripresa && imp.modo === "prova";   // 🧪 prova da solo (solo per il proprietario): tu e Bot contro due bot, senza rete
     if (!prova && !(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var IO = ripresa ? ripresa.io : "host";   // il mio id nella partita
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
@@ -31180,9 +31296,9 @@ window.SG_SIPERO = {
       players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), team: 0 }], capo: [null, null, null],
       tab: null, bid: 0, turno: 0, passo: "indizio", indizio: null, tentativi: 0, girate: 0, prop: {}, storia: [], fuori: [],
       vince: -1, classifica: null, msg: "", ultima: null, nGirate: 0, gen: 1, hostId: IO, vici: [], progressi: {} };
-    if (prova) {   // i bot: Matt in squadra con te (il primo bot si chiama sempre Matt), Rosa e Peppe nell'altra
+    if (prova) {   // i bot: Bot in squadra con te (il primo bot si chiama sempre Bot), Rosa e Peppe nell'altra
       H.nsq = 2;
-      [["bot1", "Matt", 0], ["bot2", "Rosa", 1], ["bot3", "Peppe", 1]].forEach(function (b) {
+      [["bot1", "Bot", 0], ["bot2", "Rosa", 1], ["bot3", "Peppe", 1]].forEach(function (b) {
         H.players.push({ id: b[0], nome: b[1], team: b[2], bot: true, omino: window.SGOmino ? SGOmino.casuale(b[1]) : null });
       });
       H.capo = [imp.capoIo === false ? "bot1" : IO, "bot2", null];
@@ -32239,7 +32355,7 @@ window.SG_SIPERO = {
     descrizione: "Come Codenames: il capo dà un indizio di una parola, la squadra trova le sue parole sul tabellone. Occhio alla parola nera! A 2 o 3 squadre, ognuno dal suo telefono.",
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 4–12 giocatori",
     // "Prova da solo" la vede solo il proprietario (account IL PAPPONE): per vedere com'è il gioco anche senza amici
-    modi: [ { modo: "prova", icona: "🧪", nome: "Prova da solo", sotto: "Solo per te: tu e Matt contro due bot", soloPer: "IL PAPPONE" } ], soloOnline: true,
+    modi: [ { modo: "prova", icona: "🧪", nome: "Prova da solo", sotto: "Solo per te: tu e Bot contro due bot", soloPer: "IL PAPPONE" } ], soloOnline: true,
     regole: [
       "Si gioca a <b>2 o 3 squadre</b>. Sul tabellone ci sono 25 parole (o 20, se l'host sceglie così): alcune sono di una squadra, alcune di nessuno e una è la <b>parola nera</b>.",
       "Solo il <b>capo</b> di ogni squadra (👑) vede di chi è ogni parola. Nel suo turno dà un <b>indizio di una parola sola</b> e un numero: quante parole sue c'entrano (es. «Caldo, 2»).",
@@ -32266,7 +32382,7 @@ window.SG_SIPERO = {
         box.appendChild(g);
         if (nota) box.appendChild(el("p", { class: "modulo-nota", text: nota }));
       }
-      if (prova) chips("Nella tua squadra il capo è…", [[true, "Io"], [false, "Matt"]], "capoIo", "I bot danno indizi a caso e indovinano un po' a naso: la prova serve a vedere come funziona il gioco.");
+      if (prova) chips("Nella tua squadra il capo è…", [[true, "Io"], [false, "Bot"]], "capoIo", "I bot danno indizi a caso e indovinano un po' a naso: la prova serve a vedere come funziona il gioco.");
       else chips("Quante squadre", [[2, "2 squadre"], [3, "3 squadre (da 6)"]], "squadre");
       chips("Quante parole sul tabellone", [[25, "25 (classico)"], [20, "20 (più grandi)"]], "parole", "Con 20 le caselle sono più grandi e la partita dura un po' meno.");
       chips("⭐ Parola d'oro", [[true, "Sì"], [false, "No"]], "oro", "Una parola di nessuno è d'oro, e non lo sa nessuno: chi la gira continua a indovinare con lo stesso indizio.");
@@ -33311,8 +33427,8 @@ window.SG_SIPERO = {
 
   // ---------- avatar: sulla trave si vedono di faccia, chi lancia lo vediamo di spalle ----------
   var MATT = { forma: "uomo", corpo: "medio", pelle: 2, capelli: "ciuffo", colCap: 1, barba: "corta", capo: "felpa", maglia: 1,
-    cappello: "cappellino", colAcc: 0, sopracc: "decise", occhi: "furbi", bocca: "ghigno" };   // il bot Matt ha sempre la sua faccia
-  var BOT_NOMI = ["Matt", "Sara", "Leo", "Nina"];
+    cappello: "cappellino", colAcc: 0, sopracc: "decise", occhi: "furbi", bocca: "ghigno" };   // il bot Bot ha sempre la sua faccia
+  var BOT_NOMI = ["Bot", "Sara", "Leo", "Nina"];
   function mioAvatar(nome) {
     var p = window.SGNube && SGNube.profilo && SGNube.profilo();
     if (p && p.omino) return p.omino;
@@ -33322,7 +33438,7 @@ window.SG_SIPERO = {
   var BOT_DONNA = { Sara: "lunghi", Nina: "caschetto" }, BOT_UOMO = { Leo: "corti" };
   function facciaDi(nome, cfg) {
     if (avatarValido(cfg)) return cfg;
-    if (nome === "Matt") return MATT;
+    if (nome === "Bot") return MATT;
     if (!window.SGOmino) return null;
     var c = SGOmino.casuale(nome);   // i bot: faccia fissa dal nome, donna o uomo come il nome
     if (BOT_DONNA[nome]) { c.forma = "donna"; c.barba = "no"; c.capelli = BOT_DONNA[nome]; }
@@ -33442,7 +33558,7 @@ window.SG_SIPERO = {
     }
     var lanc = av.lanc || {};
     var ctx = cv.getContext("2d"), ref = { cv: cv, ctx: ctx, W: 0, H: 0, prevA: [], fallers: [], splashes: [], prevSw: 0, ruolo: ruolo, mirino: vuoiMirino(),
-      bSalta: bSalta, posti: posti, lancCfg: facciaDi(lanc.nome || "Matt", lanc.cfg), lancNome: lanc.nome || "Matt", t0: performance.now(),
+      bSalta: bSalta, posti: posti, lancCfg: facciaDi(lanc.nome || "Bot", lanc.cfg), lancNome: lanc.nome || "Bot", t0: performance.now(),
       aiuto: ruolo === "trave" ? "Muoviti ◀ ▶ e SALTA quando il mirino punta te!" : "Mira ◀ ▶ (o trascina) e LANCIA: conta il tempismo!" };
     function dim() {
       var w = campo.clientWidth || Math.min(window.innerWidth || 360, 600), h = campo.clientHeight || (window.innerHeight || 640), dpr = window.devicePixelRatio || 1;
@@ -33532,7 +33648,7 @@ window.SG_SIPERO = {
     var rT = Math.min(W * 0.075, H * 0.05);
     if (ref.lancCfg && window.SGOmino) schiena(ctx, cx, H * 0.84, rT, ref.lancCfg);
     else { ctx.fillStyle = "#3a4150"; ctx.beginPath(); ctx.arc(cx, H * 0.92, H * 0.05, 0, 7); ctx.fill(); }
-    targhetta(ctx, cx, H * 0.84 - rT * 1.6, ref.ruolo === "lanciatore" ? "TU" : (ref.lancNome || "Matt"), "#ffd43b", ref.ruolo === "lanciatore");
+    targhetta(ctx, cx, H * 0.84 - rT * 1.6, ref.ruolo === "lanciatore" ? "TU" : (ref.lancNome || "Bot"), "#ffd43b", ref.ruolo === "lanciatore");
     // aiuto nei primi secondi
     var tA = (performance.now() - ref.t0) / 1000;
     if (tA < 4.5) { ctx.save(); ctx.globalAlpha = Math.min(1, (4.5 - tA) / 0.6); ctx.font = "bold 13px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -33597,12 +33713,12 @@ window.SG_SIPERO = {
       ST = nuovoStato(P, mkChars({ 0: "io", 1: null, 2: null }), true); ST.time = P.durTrave; mySeat = 0;
       ref = creaScena(t, "trave", { onAim: function () {}, onAimDrag: function () {}, onLancia: function () {},
         onMov: function (d) { ST.chars[0].mov = d; }, onSalta: function () { if (ST.chars[0].jt <= 0 && ST.chars[0].jcd <= 0) { ST.chars[0].jt = JUMP; ST.chars[0].jcd = JCD; } },
-        onEsci: function () { stop(); t.esci(); } }, { posti: [{ nome: io, cfg: mioAvatar(io) }, { nome: "Sara" }, { nome: "Leo" }], lanc: { nome: "Matt" } });
+        onEsci: function () { stop(); t.esci(); } }, { posti: [{ nome: io, cfg: mioAvatar(io) }, { nome: "Sara" }, { nome: "Leo" }], lanc: { nome: "Bot" } });
     } else {                   // TU lanci contro 3 bot
       ST = nuovoStato(P, mkChars(null), false); mySeat = -1;
       ref = creaScena(t, "lanciatore", { onAim: function (d) { ST.aimHold = d; }, onAimDrag: function (fr) { ST.aim = clamp(ST.aim + fr * AIMG, -1, 1); },
         onLancia: function () { ST.lanciaFlag = true; }, onMov: function () {}, onSalta: function () {},
-        onEsci: function () { stop(); t.esci(); } }, { posti: [{ nome: "Matt" }, { nome: "Sara" }, { nome: "Leo" }], lanc: { nome: io, cfg: mioAvatar(io) } });
+        onEsci: function () { stop(); t.esci(); } }, { posti: [{ nome: "Bot" }, { nome: "Sara" }, { nome: "Leo" }], lanc: { nome: io, cfg: mioAvatar(io) } });
     }
     ST.collis = !!collis;
     function stop() { vivo = false; if (raf) cancelAnimationFrame(raf); ref.rimuovi(); }
@@ -33683,8 +33799,8 @@ window.SG_SIPERO = {
 
     function inizia() {
       gameId = nuovoIdPartita("online"); fase = "gioco"; ST = nuovoStato(P, mkChars(posti), lanc === null); ST.collis = !!collis;
-      var BOT_TRAVE = ["Sara", "Leo", "Nina"], av = { posti: [], lanc: lanc ? { nome: nomi[lanc], cfg: omini[lanc] || null } : { nome: "Matt" } };
-      for (var sb = 0; sb < NSEAT; sb++) av.posti.push(posti[sb] ? { nome: nomi[posti[sb]], cfg: omini[posti[sb]] || null } : { nome: (lanc && sb === 0) ? "Matt" : BOT_TRAVE[sb] });   // se lancia un umano, Matt sta sulla trave
+      var BOT_TRAVE = ["Sara", "Leo", "Nina"], av = { posti: [], lanc: lanc ? { nome: nomi[lanc], cfg: omini[lanc] || null } : { nome: "Bot" } };
+      for (var sb = 0; sb < NSEAT; sb++) av.posti.push(posti[sb] ? { nome: nomi[posti[sb]], cfg: omini[posti[sb]] || null } : { nome: (lanc && sb === 0) ? "Bot" : BOT_TRAVE[sb] });   // se lancia un umano, Bot sta sulla trave
       rete.invia({ t: "via", lanc: lanc, seggi: seggi(), nomi: nomi, av: av, gameId: gameId, difficolta: diff });
       for (var s = 0; s < NSEAT; s++) if (posti[s] && posti[s] !== "host") rete.invia({ t: "ruolo", to: posti[s], seat: s });
       if (lanc && lanc !== "host") rete.invia({ t: "ruolo", to: lanc, seat: -1 });
@@ -33976,7 +34092,7 @@ window.SG_SIPERO = {
 
 /* =========================================================
    POKER con le carte francesi: Texas Hold'em e Poker all'italiana.
-   Contro il computer (tu e i bot, il primo è Matt) oppure online, ognuno dal suo telefono
+   Contro il computer (tu e i bot, il primo è Bot) oppure online, ognuno dal suo telefono
    (i posti vuoti l'host li può dare ai bot).
    Si gioca con le Speed Coins del profilo (al tavolo sono le fiches, come al Black Jack): ci si siede
    con al massimo 1.000 e nel profilo si salva sempre "monete fuori dal tavolo + fiches sul tavolo".
@@ -33992,7 +34108,7 @@ window.SG_SIPERO = {
   var PICCOLO = 10, GRANDE = 20;       // Texas Hold'em: i bui
   var INVITO = 10, PUNTA_IT = 20;      // all'italiana: l'invito di tutti e la puntata più piccola
   var T_MOSSA = 30000;                 // online: tempo per decidere, poi passa (o lascia) da solo
-  var NOMI_BOT = ["Matt", "Rosa", "Peppe", "Gina", "Tonio", "Lia", "Dino", "Pina", "Ciro", "Nina", "Totò", "Lella"];
+  var NOMI_BOT = ["Bot", "Rosa", "Peppe", "Gina", "Tonio", "Lia", "Dino", "Pina", "Ciro", "Nina", "Totò", "Lella"];
   var SEMI = ["♠", "♥", "♦", "♣"], ROSSO = { 1: 1, 2: 1 };
   var FORZA_SEME = [1, 4, 3, 2];       // all'italiana, a parità: cuori, quadri, fiori, picche
   var FIGURE = { 1: "A", 11: "J", 12: "Q", 13: "K" };
@@ -35019,7 +35135,7 @@ window.SG_SIPERO = {
     id: ID, nome: "Poker", icona: "♠️",
     descrizione: "Texas Hold'em o Poker all'italiana con le carte francesi, contro il computer o online. Si gioca con le tue Speed Coins.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 2–10 giocatori",
-    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu e i bot al tavolo (il primo è Matt)" }],
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu e i bot al tavolo (il primo è Bot)" }],
     regole: [
       "<b>Texas Hold'em</b>: hai 2 carte tue e ne escono 5 in mezzo per tutti (3, poi 1, poi 1). Vince la migliore combinazione di 5 carte.",
       "Prima di ogni mano due giocatori mettono i <b>bui</b> (" + PICCOLO + " e " + GRANDE + "). Quando tocca a te: <b>Passa</b>, <b>Chiama</b>, <b>Punta/Rilancia</b> o <b>Lascia</b>.",
@@ -35076,7 +35192,7 @@ window.SG_SIPERO = {
    Si gira la ruota, si chiama una consonante (lo spicchio vale per ogni lettera trovata),
    si comprano le vocali, si risolve la frase. Bancarotta, Passa e Jolly come in TV.
    Vince chi accumula di più in tutte le manche.
-   Modi: contro il computer (tu + bot, il primo è Matt), sullo stesso telefono (da 2 a 4,
+   Modi: contro il computer (tu + bot, il primo è Bot), sullo stesso telefono (da 2 a 4,
    tutti davanti allo stesso schermo), online (fino a 4, l'host può aggiungere bot).
    Online l'host tiene la partita e manda a tutti la foto (vm) con la frase COPERTA:
    la frase vera non viaggia mai finché non è risolta.
@@ -35094,7 +35210,7 @@ window.SG_SIPERO = {
   var CONSONANTI = "BCDFGHJKLMNPQRSTVWXYZ".split("");
   var FREQ_C = "NRTLSCDMPVGBFZHQKJWXY".split("");   // consonanti dalla più frequente in italiano
   var FREQ_V = ["E", "A", "I", "O", "U"];
-  var NOMI_BOT = ["Matt", "Rosa", "Peppe", "Gina"];
+  var NOMI_BOT = ["Bot", "Rosa", "Peppe", "Gina"];
   var COL = 12, RIGHE = 4;
   var PARTITE_SALVATE = {};
   // la ruota: 24 spicchi (valori, 2 Bancarotta, 1 Passa, 1 Jolly)
@@ -35857,7 +35973,7 @@ window.SG_SIPERO = {
     descrizione: "Gira la ruota, chiama le consonanti, compra le vocali e indovina la frase! Come in TV: Bancarotta, Passa e Jolly. Da soli contro i bot, in compagnia sullo stesso telefono o online.",
     giocatoriMin: 1, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 1–4 giocatori",
     modi: [
-      { modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu contro i bot, come in TV (il primo è Matt)" },
+      { modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu contro i bot, come in TV (il primo è Bot)" },
       { modo: "telefono", icona: "📱", nome: "Sullo stesso telefono", sotto: "Da 2 a 4, tutti davanti allo stesso schermo", amici: true }
     ],
     regole: [
@@ -35922,7 +36038,7 @@ window.SG_SIPERO = {
    Primo in cima (gradino TRAGUARDO) vince.
    Un telefono solo: il telefono si passa, ognuno sceglie in segreto.
    Ognuno dal suo (online): si sceglie tutti insieme; i posti liberi
-   li riempiono dei bot (il primo è "Matt"). Quando uno sceglie, il
+   li riempiono dei bot (il primo è "Bot"). Quando uno sceglie, il
    suo pallino si illumina e il telefono fa un "bip".
    ========================================================= */
 (function () {
@@ -35933,7 +36049,7 @@ window.SG_SIPERO = {
   var SUSPENSE = 2000; // i numeri restano in testa 2 secondi prima di avanzare
   var SCELTE = [1, 3, 5];
   var COLORI = ["#ff6b6b", "#4dabf7", "#51cf66", "#ffd43b"];
-  var NOMI_BOT = ["Matt", "Kevin", "Cody"];
+  var NOMI_BOT = ["Bot", "Kevin", "Cody"];
   var beepStato = { round: -1, ids: {} };
   var scenaScelta = null; // schermata di scelta viva, per aggiornarla senza ridisegnare tutto
 
@@ -36201,7 +36317,7 @@ window.SG_SIPERO = {
   // =========================================================
   //  ONLINE — ognuno dal suo telefono (host-authoritative).
   //  Sempre 4 posti: i giocatori veri entrano, i posti liberi
-  //  li riempiono dei bot (il primo è "Matt"). Nella fase di
+  //  li riempiono dei bot (il primo è "Bot"). Nella fase di
   //  scelta si vedono tutti; quando uno sceglie, il suo pallino
   //  si illumina e il telefono fa un "bip".
   // =========================================================
@@ -38136,10 +38252,10 @@ window.SG_SIPERO = {
       metti: function (cel, id) { var p = stato[id] || 0; cel.style.gridColumn = (p % col + 1); cel.style.gridRow = (Math.floor(p / col) + 1); return cel; }
     };
   }
-  // i bot hanno sempre la stessa faccia: Matt la sua, gli altri stabili dal nome (e donna se il nome è da donna)
+  // i bot hanno sempre la stessa faccia: Bot la sua, gli altri stabili dal nome (e donna se il nome è da donna)
   var BOT_DONNA = { Giulia: "coda", Rosa: "riccilunghi" }, BOT_UOMO = { Toni: "spettinati", Peppe: "stempiato" };
   function facciaBot(nome) {
-    if (nome === "Matt") return AVATAR_BOT;
+    if (nome === "Bot") return AVATAR_BOT;
     if (!window.SGOmino) return null;
     var c = SGOmino.casuale(nome);
     if (BOT_DONNA[nome]) { c.forma = "donna"; c.barba = "no"; c.capelli = BOT_DONNA[nome]; }
@@ -38625,7 +38741,7 @@ window.SG_SIPERO = {
     icona: "🃏",
     descrizione: "Il classico gioco di carte napoletane: prendi le carte del tavolo e fai scopa. Contro il bot o online, ognuno dal suo telefono.",
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 3,
-    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Sfidi Matt, il bot della Scopa" }],
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Sfidi Bot, il bot della Scopa" }],
     regole: [
       "Si gioca <b>in due</b> con le 40 carte napoletane. Tre carte in mano a testa, quattro sul tavolo.",
       "Nel tuo turno giochi una carta: se ha lo <b>stesso valore</b> di una carta sul tavolo la <b>prendi</b>. Se non c'è un valore uguale, puoi prendere <b>più carte che sommano</b> al valore della tua.",
@@ -38696,7 +38812,7 @@ window.SG_SIPERO = {
 
   // ---------- LOCALE (contro il bot) : io = A, bot = B ----------
   function localeScopa(t, difficolta) {
-    var nomi = { A: (t.giocatori[0] || "Tu"), B: "Matt" };
+    var nomi = { A: (t.giocatori[0] || "Tu"), B: "Bot" };
     var M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni));
     var C = creaClient(t, {
       locale: true, sonoHost: true,
@@ -38940,7 +39056,7 @@ window.SG_SIPERO = {
   "use strict";
   var TARGET = 11;
   // nomi di default dei posti bot, relativi al posto 0 (host/tu)
-  var NOMI_BOT = { 1: "Matt", 2: "Giulia", 3: "Toni" };   // 1 e 3 avversari, 2 il tuo compagno (il primo bot si chiama sempre Matt)
+  var NOMI_BOT = { 1: "Bot", 2: "Giulia", 3: "Toni" };   // 1 e 3 avversari, 2 il tuo compagno (il primo bot si chiama sempre Bot)
   function C() { return window.SGCarte; }
   function team(seat) { return seat % 2; }                 // 0 = Squadra 1 (posti 0,2), 1 = Squadra 2 (posti 1,3)
   function trova(a, id) { for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return null; }
@@ -39628,7 +39744,7 @@ window.SG_SIPERO = {
 (function () {
   "use strict";
   var TARGET = 11;
-  var NOMI_BOT = { 1: "Matt", 2: "Rosa", 3: "Peppe" };   // 1 e 3 rivali, 2 il tuo compagno (il primo bot si chiama sempre Matt)
+  var NOMI_BOT = { 1: "Bot", 2: "Rosa", 3: "Peppe" };   // 1 e 3 rivali, 2 il tuo compagno (il primo bot si chiama sempre Bot)
   function C() { return window.SGCarte; } // aiuti condivisi (carte + logica di presa)
   function squadra(s) { return (s % 2 === 0) ? "noi" : "loro"; }
   function trova(a, id) { for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return null; }

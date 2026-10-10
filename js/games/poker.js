@@ -1,6 +1,6 @@
 /* =========================================================
    POKER con le carte francesi: Texas Hold'em e Poker all'italiana.
-   Contro il computer (tu e i bot, il primo è Matt) oppure online, ognuno dal suo telefono
+   Contro il computer (tu e i bot, il primo è Bot) oppure online, ognuno dal suo telefono
    (i posti vuoti l'host li può dare ai bot).
    Si gioca con le Speed Coins del profilo (al tavolo sono le fiches, come al Black Jack): ci si siede
    con al massimo 1.000 e nel profilo si salva sempre "monete fuori dal tavolo + fiches sul tavolo".
@@ -16,7 +16,7 @@
   var PICCOLO = 10, GRANDE = 20;       // Texas Hold'em: i bui
   var INVITO = 10, PUNTA_IT = 20;      // all'italiana: l'invito di tutti e la puntata più piccola
   var T_MOSSA = 30000;                 // online: tempo per decidere, poi passa (o lascia) da solo
-  var NOMI_BOT = ["Matt", "Rosa", "Peppe", "Gina", "Tonio", "Lia", "Dino", "Pina", "Ciro", "Nina", "Totò", "Lella"];
+  var NOMI_BOT = ["Bot", "Rosa", "Peppe", "Gina", "Tonio", "Lia", "Dino", "Pina", "Ciro", "Nina", "Totò", "Lella"];
   var SEMI = ["♠", "♥", "♦", "♣"], ROSSO = { 1: 1, 2: 1 };
   var FORZA_SEME = [1, 4, 3, 2];       // all'italiana, a parità: cuori, quadri, fiori, picche
   var FIGURE = { 1: "A", 11: "J", 12: "Q", 13: "K" };
@@ -1043,7 +1043,7 @@
     id: ID, nome: "Poker", icona: "♠️",
     descrizione: "Texas Hold'em o Poker all'italiana con le carte francesi, contro il computer o online. Si gioca con le tue Speed Coins.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 2–10 giocatori",
-    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu e i bot al tavolo (il primo è Matt)" }],
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu e i bot al tavolo (il primo è Bot)" }],
     regole: [
       "<b>Texas Hold'em</b>: hai 2 carte tue e ne escono 5 in mezzo per tutti (3, poi 1, poi 1). Vince la migliore combinazione di 5 carte.",
       "Prima di ogni mano due giocatori mettono i <b>bui</b> (" + PICCOLO + " e " + GRANDE + "). Quando tocca a te: <b>Passa</b>, <b>Chiama</b>, <b>Punta/Rilancia</b> o <b>Lascia</b>.",

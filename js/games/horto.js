@@ -30,7 +30,7 @@
   function botParam(diff) { return { S: diff === "facile" ? 42 : diff === "difficile" ? 18 : 28, I: diff === "facile" ? 520 : diff === "difficile" ? 290 : 350 }; }
 
   // ---------- fantini: gli avatar dei giocatori, i bot con la loro faccia fissa ----------
-  var BOT_NOMI = ["Matt", "Sara", "Leo", "Nina", "Giulia", "Toni", "Rosa"];   // il primo bot è sempre Matt
+  var BOT_NOMI = ["Bot", "Sara", "Leo", "Nina", "Giulia", "Toni", "Rosa"];   // il primo bot è sempre Bot
   function nomeBot(i) { return BOT_NOMI[(i - 1) % BOT_NOMI.length]; }
   var MATT = { forma: "uomo", corpo: "medio", pelle: 2, capelli: "ciuffo", colCap: 1, barba: "corta", capo: "felpa", maglia: 1,
     cappello: "cappellino", colAcc: 0, sopracc: "decise", occhi: "furbi", bocca: "ghigno" };
@@ -43,7 +43,7 @@
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   function facciaDi(nome, cfg) {
     if (avatarValido(cfg)) return cfg;
-    if (nome === "Matt") return MATT;
+    if (nome === "Bot") return MATT;
     if (!window.SGOmino) return null;
     var c = SGOmino.casuale(nome);   // faccia fissa dal nome, donna o uomo come il nome
     if (BOT_DONNA[nome]) { c.forma = "donna"; c.barba = "no"; c.capelli = BOT_DONNA[nome]; }
@@ -892,7 +892,7 @@
     etichettaGiocatori: "👥 1–8 giocatori",   // 1 da solo vs bot, fino a 8 online (i cavalli in gara)
     regole: [
       "Si parte dai <b>cancelletti</b>: corsie dritte, stessa distanza per tutti (1000 m). La telecamera segue la corsa e in alto la minimappa mostra dove siete sul percorso.",
-      "In sella c'è il tuo <b>avatar</b>; i bot sono Matt e i suoi amici.",
+      "In sella c'è il tuo <b>avatar</b>; i bot sono Bot e i suoi amici.",
       "I cavalli corrono già da soli a una <b>velocità minima</b>. Tu hai il tasto <b>FRUSTA</b>: ogni click dà una spinta.",
       "Ogni frustata consuma <b>energia</b> (la barra sopra il tuo cavallo). Se non frusti, l'energia si <b>ricarica</b>.",
       "Se l'energia arriva a <b>zero</b> vai in <b>sfinimento</b>: rallenti e per <b>3 secondi</b> non puoi frustare.",

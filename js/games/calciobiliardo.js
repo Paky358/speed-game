@@ -4,10 +4,10 @@
    tiri indietro il dito come una fionda e lasci. I dischi colpiscono la
    palla e gli altri dischi e rimbalzano sui bordi: fai gol nella porta
    avversaria. Vince chi arriva per primo ai gol scelti.
-   Modi: contro il computer (Matt), in due sullo stesso telefono (uno per
+   Modi: contro il computer (Bot), in due sullo stesso telefono (uno per
    lato, il telefono in mezzo), online (ognuno dal suo: l'host decide il
    tiro vero, gli altri lo rivedono uguale e poi si allineano alla sua foto).
-   La fisica sta in funzioni a parte (passo/simula): la usa anche Matt,
+   La fisica sta in funzioni a parte (passo/simula): la usa anche Bot,
    che prova tanti tiri "per finta" e sceglie il migliore.
    ========================================================= */
 (function () {
@@ -131,7 +131,7 @@
     if (s.y[0] > L + RP) return 1;
     return -1;
   }
-  function simula(s, sec) {   // fa andare il tiro fino alla fine (per Matt e per le prove)
+  function simula(s, sec) {   // fa andare il tiro fino alla fine (per Bot e per le prove)
     var n = Math.round((sec || MAX_SEC) / DT);
     for (var k = 0; k < n; k++) { var g = passo(s, null); if (g >= 0) return g; if (fermo(s)) return -1; }
     ferma(s); return -1;
@@ -173,7 +173,7 @@
     cand.forEach(function (c) { c.v = prova(c.i, c.a, c.p); });
     var rum = { facile: 0.16, medio: 0.06, difficile: 0.015 }[liv] || 0.06;
     // i tiri migliori si riprovano con un po' di errore di mira: se sbagliando di poco
-    // finirebbero in autogol, valgono quanto il caso peggiore (così Matt è prudente)
+    // finirebbero in autogol, valgono quanto il caso peggiore (così Bot è prudente)
     cand.sort(function (a, b) { return b.v - a.v; });
     var best = cand[0], bv = -Infinity;
     cand.slice(0, 6).forEach(function (c) {
@@ -587,7 +587,7 @@
 
   // =========================================================
   //  LE REGOLE DELLA PARTITA (uguali in tutti i modi): turni, gol, partita a tempo, rigori,
-  //  e i contatori per i trofei. Le usa chi tiene la partita: il telefono (contro Matt o in due)
+  //  e i contatori per i trofei. Le usa chi tiene la partita: il telefono (contro Bot o in due)
   //  oppure l'host online. Gli altri ricevono solo la "foto" (vm) e i tiri.
   // =========================================================
   function statoVuoto() {
@@ -710,12 +710,12 @@
     };
     return M;
   }
-  // il messaggio nella targhetta della squadra q (chi = { mie: squadre di questo telefono, bot: squadra di Matt o -1 })
+  // il messaggio nella targhetta della squadra q (chi = { mie: squadre di questo telefono, bot: squadra di Bot o -1 })
   function riga(vm, q, chi) {
     var parti = [];
     if (vm.rig && vm.rig.tiri[q].length) parti.push("Rigori " + vm.rig.tiri[q].map(function (x) { return x ? "✓" : "✗"; }).join(""));
     if (vm.stato === "mira" && vm.turno === q) {
-      if (chi.bot === q) parti.push("Matt pensa…");
+      if (chi.bot === q) parti.push("Bot pensa…");
       else if (chi.mie.indexOf(q) >= 0) parti.push(vm.rig ? "Tira il rigore!" : "Tocca a te! Tira e lascia");
       else parti.push("Sta mirando…");
     }
@@ -753,7 +753,7 @@
   function locale(t, modo) {
     var imp = t.impostazioni || {}, bot = modo === "bot", liv = imp.difficolta || "medio";
     var g0 = t.giocatori || [];
-    var nomi = bot ? [g0[0] || "Tu", "Matt"] : [g0[0] || "Giocatore 1", g0[1] || "Giocatore 2"];
+    var nomi = bot ? [g0[0] || "Tu", "Bot"] : [g0[0] || "Giocatore 1", g0[1] || "Giocatore 2"];
     var omini = [t.mioOmino ? t.mioOmino(nomi[0]) : null, window.SGOmino ? SGOmino.casuale(nomi[1]) : null];
     var chi = { mie: bot ? [0] : [0, 1], bot: bot ? 1 : -1 };
     var primo = 0, M = null, ui = null, tm = null;
@@ -773,7 +773,7 @@
       if (t.trasmetti) t.trasmetti({ t: "vm", vm: vmPubblico(vm) });
     }
     function inizia() {
-      var form = [imp.form || "classica", bot ? NOMI_FORM[Math.floor(Math.random() * NOMI_FORM.length)] : (imp.form2 || "classica")];   // Matt sceglie a caso
+      var form = [imp.form || "classica", bot ? NOMI_FORM[Math.floor(Math.random() * NOMI_FORM.length)] : (imp.form2 || "classica")];   // Bot sceglie a caso
       M = creaMotore({ vince: imp.vince, gol: imp.gol, minuti: imp.minuti, form: form, primo: primo });
       ui = creaSchermo(t, cb, { flip: false, ruota: !bot, nomi: nomi, omini: omini });
       aggiorna(); segui();
@@ -804,7 +804,7 @@
     function fine() {
       via();
       var P = M.P, v = P.vincitore, cl = [{ nome: nomi[v], pos: 1 }, { nome: nomi[1 - v], pos: 2 }];
-      // i trofei: contro Matt conta chi gioca; in due sullo stesso telefono conta chi ha il nome del profilo
+      // i trofei: contro Bot conta chi gioca; in due sullo stesso telefono conta chi ha il nome del profilo
       var prof = window.SGNube && SGNube.profilo && SGNube.profilo(), mio = bot ? 0 : (prof && nomi[1] === prof.nome ? 1 : (prof && nomi[0] === prof.nome ? 0 : -1));
       if (mio >= 0) salvaStat(P, mio, { modo: bot ? "bot" : "telefono", liv: liv });
       if (t.risultato) t.risultato(cl);
@@ -1138,9 +1138,9 @@
 
   SG.registra({
     id: ID, nome: "Calcio Biliardo", icona: "⚽",
-    descrizione: "Il calcio coi dischi: tiri indietro un calciatore come una fionda, colpisci la palla e fai gol. Contro Matt, in due sullo stesso telefono o online.",
+    descrizione: "Il calcio coi dischi: tiri indietro un calciatore come una fionda, colpisci la palla e fai gol. Contro Bot, in due sullo stesso telefono o online.",
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 2,
-    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Sfidi Matt" },
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Sfidi Bot" },
       { modo: "telefono", icona: "📱", nome: "In due su questo telefono", sotto: "Uno per lato, il telefono in mezzo", amici: true }],
     regole: [
       "Ognuno ha <b>5 calciatori</b>. A turno se ne tira <b>uno</b>: toccalo, tira indietro il dito come una <b>fionda</b> e lascia. Più tiri indietro, più forte parte.",
@@ -1177,7 +1177,7 @@
       var forme = NOMI_FORM.map(function (k) { return [k, FORMAZIONI[k].icona + " " + FORMAZIONI[k].nome]; });
       if (dove.modo === "telefono") { chips("Formazione dei gialli", forme, "form", "classica"); chips("Formazione dei blu", forme, "form2", "classica"); }
       else if (!aiuti.sala) chips(dove.modo === "online" ? "La tua formazione (la cambi anche in saletta)" : "La tua formazione", forme, "form", "classica");
-      if (dove.modo === "bot") chips("Bravura di Matt", [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]], "difficolta", "medio");
+      if (dove.modo === "bot") chips("Bravura di Bot", [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]], "difficolta", "medio");
     },
     avvia: function (t) {
       if (t.linkParams && t.linkParams.stanza) return t.linkParams.guarda ? guarda(t, t.linkParams.stanza) : ospite(t, t.linkParams.stanza);   // invito o chi guarda (torneo)
@@ -1187,6 +1187,6 @@
     }
   });
 
-  // per le prove: la fisica e Matt, senza disegno
+  // per le prove: la fisica e Bot, senza disegno
   window.__CB = { nuovoStato: nuovoStato, statoRigore: statoRigore, simula: simula, sceltaBot: sceltaBot, copia: copia, passo: passo, fermo: fermo, decisoRigori: decisoRigori, VMAX: VMAX };
 })();

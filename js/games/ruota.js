@@ -3,7 +3,7 @@
    Si gira la ruota, si chiama una consonante (lo spicchio vale per ogni lettera trovata),
    si comprano le vocali, si risolve la frase. Bancarotta, Passa e Jolly come in TV.
    Vince chi accumula di più in tutte le manche.
-   Modi: contro il computer (tu + bot, il primo è Matt), sullo stesso telefono (da 2 a 4,
+   Modi: contro il computer (tu + bot, il primo è Bot), sullo stesso telefono (da 2 a 4,
    tutti davanti allo stesso schermo), online (fino a 4, l'host può aggiungere bot).
    Online l'host tiene la partita e manda a tutti la foto (vm) con la frase COPERTA:
    la frase vera non viaggia mai finché non è risolta.
@@ -21,7 +21,7 @@
   var CONSONANTI = "BCDFGHJKLMNPQRSTVWXYZ".split("");
   var FREQ_C = "NRTLSCDMPVGBFZHQKJWXY".split("");   // consonanti dalla più frequente in italiano
   var FREQ_V = ["E", "A", "I", "O", "U"];
-  var NOMI_BOT = ["Matt", "Rosa", "Peppe", "Gina"];
+  var NOMI_BOT = ["Bot", "Rosa", "Peppe", "Gina"];
   var COL = 12, RIGHE = 4;
   var PARTITE_SALVATE = {};
   // la ruota: 24 spicchi (valori, 2 Bancarotta, 1 Passa, 1 Jolly)
@@ -784,7 +784,7 @@
     descrizione: "Gira la ruota, chiama le consonanti, compra le vocali e indovina la frase! Come in TV: Bancarotta, Passa e Jolly. Da soli contro i bot, in compagnia sullo stesso telefono o online.",
     giocatoriMin: 1, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 1–4 giocatori",
     modi: [
-      { modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu contro i bot, come in TV (il primo è Matt)" },
+      { modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu contro i bot, come in TV (il primo è Bot)" },
       { modo: "telefono", icona: "📱", nome: "Sullo stesso telefono", sotto: "Da 2 a 4, tutti davanti allo stesso schermo", amici: true }
     ],
     regole: [

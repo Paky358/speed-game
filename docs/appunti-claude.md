@@ -209,7 +209,7 @@ Piano concordato (pubblicare un passo alla volta):
 3. omino nei giochi uno alla volta (Scalinata, Black Jack, sala online per primi)
 
 Passo 3 iniziato (25 set): Scopa 1v1 con tavolo in PROSPETTIVA (CSS rotateX, .sc-scena/.sc-piano in scopa.js), avversario seduto dietro al tavolo con espressioni (FACCE: pensa/esulta/triste), AVATAR_BOT fisso, online l'avatar viaggia nel "join" e in vm.avatar. L'utente ha scartato la vista di sé da dietro ("si vedono solo gli avversari"); le proprie carte restano sulla mensola. Anteprime prima del gioco vero: file HTML autonomo (omino.js incollato dentro) mandato con SendUserFile.
-Black Jack (25 set): dealer = MATT_DEALER (giacca+papillon) dietro tavolo in prospettiva, fumetti di reazione; posti con busti adattati a N (1: niente fila, ≤5 "pochi", 6-10 "tanti" due file); drv.avatari() in locale/host/ospite, avatar nel "lobby". Poi (richiesta utente) vista DA DIETRO MATT: giocatori seduti (avatar interi, faccia verso di noi) in fila sul LATO LUNGO dritto in fondo al tavolo (l'utente: "non dovrebbero giocare sulla parte grande?"), parte curva verso Matt, da 6 in su due file sfalsate; BJ a tutto schermo (.bj-wrap fixed, sotto altezza fissa 196px, tavolo prende il resto), posizionati misurando dei segnaposto sul piano 3D (getBoundingClientRect), grandezza per N; fiche in pila (translateZ) davanti a ognuno, carte sul panno; Matt in cerchietto in basso a sinistra con fumetto. L'utente vuole il gioco "il più interattivo possibile". FATTO E PUBBLICATO (26 set, commit cb2996a) — "regia da TV" nel Black Jack (in blackjack.js: costruisci()/disegnaScena() aggiornano solo i pezzi cambiati, telecamera()/inquadra() con transform sul .bjr-cam, apertura() la prima volta; carte a CASCATA con spostamento adattato allo spazio fino al vicino; parte sotto 150px con tasti ai lati) — apertura con Matt a figura intera che saluta, carrellata su ogni giocatore, panoramica per le puntate (valore scritto sopra ogni pila), distribuzione con la telecamera che scorre sulla 2ª carta, ZOOM su chi gioca, zoom su Matt che scopre, panoramica finale; tavolo OVALE con giocatori lungo l'arco lontano; tocco su una faccia = sbircia. L'utente vuole personalizzare lui Matt; in futuro emote. Anteprima: scratchpad/blackjack-regia.html. Il bot della Scopa ora si chiama "Matt" (stessa faccia base: pelle 2, barba corta, occhi furbi) — vedi [[scalinata-bot-matt]].
+Black Jack (25 set): dealer = MATT_DEALER (giacca+papillon) dietro tavolo in prospettiva, fumetti di reazione; posti con busti adattati a N (1: niente fila, ≤5 "pochi", 6-10 "tanti" due file); drv.avatari() in locale/host/ospite, avatar nel "lobby". Poi (richiesta utente) vista DA DIETRO MATT: giocatori seduti (avatar interi, faccia verso di noi) in fila sul LATO LUNGO dritto in fondo al tavolo (l'utente: "non dovrebbero giocare sulla parte grande?"), parte curva verso Bot, da 6 in su due file sfalsate; BJ a tutto schermo (.bj-wrap fixed, sotto altezza fissa 196px, tavolo prende il resto), posizionati misurando dei segnaposto sul piano 3D (getBoundingClientRect), grandezza per N; fiche in pila (translateZ) davanti a ognuno, carte sul panno; Bot in cerchietto in basso a sinistra con fumetto. L'utente vuole il gioco "il più interattivo possibile". FATTO E PUBBLICATO (26 set, commit cb2996a) — "regia da TV" nel Black Jack (in blackjack.js: costruisci()/disegnaScena() aggiornano solo i pezzi cambiati, telecamera()/inquadra() con transform sul .bjr-cam, apertura() la prima volta; carte a CASCATA con spostamento adattato allo spazio fino al vicino; parte sotto 150px con tasti ai lati) — apertura con Bot a figura intera che saluta, carrellata su ogni giocatore, panoramica per le puntate (valore scritto sopra ogni pila), distribuzione con la telecamera che scorre sulla 2ª carta, ZOOM su chi gioca, zoom su Bot che scopre, panoramica finale; tavolo OVALE con giocatori lungo l'arco lontano; tocco su una faccia = sbircia. L'utente vuole personalizzare lui Bot; in futuro emote. Anteprima: scratchpad/blackjack-regia.html. Il bot della Scopa ora si chiama "Bot" (stessa faccia base: pelle 2, barba corta, occhi furbi) — vedi [[scalinata-bot-matt]].
 
 26 set (commit 19deacb): DUE AVATAR a persona (profilo.omini [a,b] + ominoN; profilo.omino = quello in uso, i giochi leggono sempre omino); sotto il riflettore si apre il principale (ominoN), si scorre col dito o con le frecce ‹ › per cambiare; il principale è quello sul palco quando esci (niente più stella, commit 487543b); il secondo la prima volta nasce dell'altra forma. Trucco a PEZZI (ombretto/eyeliner/mascara/rossetto/blush, ognuno col colore) in scheda "Trucco", il vecchio trucco/colTrucco viene convertito in norm(); anteprime trucco con opts.viso (primo piano). Ricci definiti: nuvola() (bordo a gobbette) + spirali() + molla() (boccoli), tagli riccioletti/ricciciuffo/riccibob/riccifrangia/riccilunghi/ricciraccolti; GRUPPI_CAPELLI ora 0-22 / 22-39 / 39-61. Donna: fianchi ridotti (he -1, non +6).
 
@@ -231,7 +231,7 @@ Gonne e vestiti si disegnano DOPO le scarpe (gonnaPezzo), così gli stivali alti
 26 set (commit f28b9ca): avatar anche in SCOPA 2v2 e SCOPONE.
 - Stanza a 4 condivisa in scopa.js, esportata in SGCarte: misureStanza4, correggiStanza4, postiTavolo, stanza4, animaDistribuzione4, mioAvatar, avatarValido.
 - Sedie [sinistra=io+1, compagno=io+2, destra=io+3]; targhe .sc-targa4 (il compagno ha 🤝 e il bordo verde).
-- Bot con nomi fissi: 2v2 Matt, Giulia, Toni; Scopone Matt, Rosa, Peppe. facciaBot(nome): Matt = AVATAR_BOT; donna o uomo forzati per nome.
+- Bot con nomi fissi: 2v2 Bot, Giulia, Toni; Scopone Bot, Rosa, Peppe. facciaBot(nome): Bot = AVATAR_BOT; donna o uomo forzati per nome.
 - Online 2v2: l'ospite manda omino nel join, l'host mette st.avatari nella vista.
 - Scopone: mano su 2 file da 5.
 - Musica SGMusica rifatta allegra ("troppo chill" per l'utente): 128 bpm, basso zum-pa, pizzicati, melodia, cassa e charleston.
@@ -240,7 +240,7 @@ Gonne e vestiti si disegnano DOPO le scarpe (gonnaPezzo), così gli stivali alti
 - Sulla trave gli avatar sono immagini SVG disegnate sul canvas (immagine/disegnaAvatar) con la targhetta del nome.
 - Chi lancia si vede DI SPALLE con schiena(): colori presi dal cfg, lunghezza capelli da GRUPPI_CAPELLI.
 - A tutto schermo (.pd-piena), tasti sopra l'acqua.
-- Bot: Matt, Sara, Leo, Nina (donna o uomo forzati per nome).
+- Bot: Bot, Sara, Leo, Nina (donna o uomo forzati per nome).
 - Online: l'ospite manda omino nel join, l'host manda "av" nel messaggio "via".
 FINTO 3D (styles.css): respiro om-tutto, ciglia om-occhi, .sc-avv.pensa che fa su e giù, sguardo con translate su .om-occhi verso chi è di turno (stanza4, sedie.ioTurno). L'utente ha scartato il dondolio a destra e sinistra.
 
@@ -251,7 +251,7 @@ FINTO 3D (styles.css): respiro om-tutto, ciglia om-occhi, .sc-avv.pensa che fa s
 - Minimappa a mezzo ovale (puntoMappa), cancelletti, cartelli dei metri.
 - Photo finish coi cavalli SVG, podio con gli avatar.
 - L'utente voleva la pista tonda: ho sconsigliato (cavalli minuscoli, sagome finte in curva) e fatto camera + minimappa. Approvato ("GASI FAI COSI").
-- Bot: Matt, Sara, Leo, Nina, Giulia, Toni, Rosa.
+- Bot: Bot, Sara, Leo, Nina, Giulia, Toni, Rosa.
 - Online: omino nel join; l'host manda av nel "via"; lo snap ha b = sta frustando.
 - L'host simula e disegna a 60 Hz ma trasmette 1 volta su 4.
 
@@ -429,7 +429,7 @@ Il 1 ott 2026 l'utente ha chiesto il **Poker con le carte francesi**. Scelte sue
 
 **How to apply (piano già deciso, non richiedere):**
 - un gioco "Poker" (id `poker`, file `js/games/poker.js`, da mettere in `GIOCHI_ONLINE`, `CAT_GIOCO` "carte" e in index.html); variante scelta nelle impostazioni (chip "Texas Hold'em" / "All'italiana"); partire dal modello `.agents/skills/nuovo-gioco/modello-gioco-online.js`.
-- modi: contro il computer (tu + bot, il primo bot si chiama Matt) e online (amici + bot aggiunti dall'host in saletta). Hold'em 2–10 giocatori, italiana 2–6.
+- modi: contro il computer (tu + bot, il primo bot si chiama Bot) e online (amici + bot aggiunti dall'host in saletta). Hold'em 2–10 giocatori, italiana 2–6.
 - fiches: ci si siede con al massimo 1.000; nel profilo si salva sempre "fiches fuori dal tavolo + fiches sul tavolo" (`SGNube.salvaFiches("blackjack", …)` dopo ogni cambio); senza profilo 1.000 finte non salvate; senza fiches: riquadro bonus del Black Jack (da esportare come `window.__BJ.riquadroBonus`). Chi finisce le fiches può rientrare.
 - Hold'em No-Limit: bui 10/20, piatti laterali, online 30 s per decidere (poi passa o lascia da solo).
 - italiana: invito 10 a testa, puntata minima 20, mazzo corto dal (11 − giocatori) in su, il colore batte il full, scala minima A-7-8-9-10, a parità decide il seme (cuori, quadri, fiori, picche), puntata → cambio fino a 4 carte → puntata → confronto.
@@ -512,7 +512,7 @@ Ossatura comune in `js/core.js`; ogni gioco si "innesta" via `SG.registra(...)`;
 
 ---
 name: scalinata-bot-matt
-description: "Nel gioco La Scalinata (e in generale coi bot), il primo bot va sempre chiamato \"Matt\""
+description: "Nel gioco La Scalinata (e in generale coi bot), il primo bot va sempre chiamato \"Bot\""
 metadata: 
   node_type: memory
   type: feedback
@@ -520,10 +520,10 @@ metadata:
   modified: 2026-09-11T09:27:28.614Z
 ---
 
-Nella Scalinata online (e quando si riempie una lobby con bot per raggiungere i 4 giocatori), il **primo bot** deve chiamarsi sempre **"Matt"**.
+Nella Scalinata online (e quando si riempie una lobby con bot per raggiungere i 4 giocatori), il **primo bot** deve chiamarsi sempre **"Bot"**.
 
 **Why:** preferenza esplicita dell'utente (nome ricorrente che gli piace).
-**How to apply:** quando genero nomi bot, il primo dell'elenco è "Matt"; gli altri a seguire con altri nomi. Vale per [[progetto-sg]].
+**How to apply:** quando genero nomi bot, il primo dell'elenco è "Bot"; gli altri a seguire con altri nomi. Vale per [[progetto-sg]].
 
 ---
 
@@ -773,14 +773,14 @@ Il 9 ott 2026 il proprietario si è "innamorato" di Soccer Pool, nell'app "2 Pla
   - avatar e nome di ognuno sopra e sotto il campo; in due sullo stesso telefono le scritte di chi sta in alto sono girate.
 - Si tocca un proprio disco e si tira indietro il dito (fionda, `TIRA` = 0,22 per la forza piena). Il cerchio della forza e il cono della direzione si vedono mentre si mira.
 - Fisica pura (`passo`/`simula`, 240 passi al secondo, attrito, urti, pali, rete). Un tiro dura circa 1,5 secondi.
-- Matt simula i tiri candidati ("palla fantasma" verso la porta) e riprova i migliori con l'errore di mira, così niente autogol.
+- Bot simula i tiri candidati ("palla fantasma" verso la porta) e riprova i migliori con l'errore di mira, così niente autogol.
   - Provato: difficile batte facile 12 a 0; medio contro medio, 36 tiri a partita.
 - Online:
   - l'host decide; il tiro viene mandato con `inviaVeloce` insieme alla foto di partenza;
   - tutti lo rivedono uguale, poi si allineano alla foto dell'host;
   - chi entra ha i blu, e il suo campo è girato (`flip`);
   - 30 secondi per tirare.
-- Provato con telefoni finti: partita intera online, XP a tutti e due, "Nuova partita" che torna in saletta; contro Matt fino alla fine; in due sullo stesso telefono.
+- Provato con telefoni finti: partita intera online, XP a tutti e due, "Nuova partita" che torna in saletta; contro Bot fino alla fine; in due sullo stesso telefono.
 - Per le prove c'è `window.__CB` (fisica, `sceltaBot`, `locale()` che dà lo stato).
 
 **Giochi di quell'app che si possono prendere** (dalla scheda del Play Store):
@@ -790,7 +790,7 @@ Il 9 ott 2026 il proprietario si è "innamorato" di Soccer Pool, nell'app "2 Pla
 
 **Idea del proprietario per dopo:** "Fuoco alle spalle" di Wii Party (vagoncini su un percorso fisso, colpire chi sta davanti, bonus velocità). Mia proposta: finto 3D come i vecchi giochi di corsa + avatar visti di spalle (da fare prima). Collegato a [[omini-avatar]].
 
-**Velocità (9 ott 2026, e2a012f):** il proprietario: troppo veloce, "sembra troppo biliardo", ma il Soccer Pool originale è troppo lento (la palla che striscia alla fine annoia). Via di mezzo scelta coi tiri simulati: VMAX 2,6 (era 3,1), palla MP 0,55 (era 0,45), attrito più frenata finale (DEC 0,8), urti 0,82, porta 0,38 (era 0,34). Palla max circa 3 (era 4), tiro di circa 1 secondo, circa 16 tiri per gol tra due Matt. Per ritoccare: le costanti in cima al file, poi la stessa misura.
+**Velocità (9 ott 2026, e2a012f):** il proprietario: troppo veloce, "sembra troppo biliardo", ma il Soccer Pool originale è troppo lento (la palla che striscia alla fine annoia). Via di mezzo scelta coi tiri simulati: VMAX 2,6 (era 3,1), palla MP 0,55 (era 0,45), attrito più frenata finale (DEC 0,8), urti 0,82, porta 0,38 (era 0,34). Palla max circa 3 (era 4), tiro di circa 1 secondo, circa 16 tiri per gol tra due Bot. Per ritoccare: le costanti in cima al file, poi la stessa misura.
 
 **Suoni e tiri dai bordi (9 ott 2026, a0e5b6e):** il proprietario non vuole i "bip" degli altri giochi: suoni da stadio fatti con WebAudio (niente file):
 - calcio, rotolamento continuo (velocità della palla), scontri tra dischi, sponda, palo con "uuuh";
@@ -1036,8 +1036,8 @@ Il 3 ott 2026 l'utente ha scelto di fare il nostro Codenames: il suo gruppo di a
 
 **Prova da solo** (3 ott 2026): l'utente è l'account **"IL PAPPONE"** (il proprietario) e voleva provare il gioco senza amici.
 - Il modo "🧪 Prova da solo" ha `soloPer: "IL PAPPONE"`; `modiDi` in core.js nasconde ai profili con un altro nome i modi che hanno `soloPer`.
-- Si gioca tu e Matt contro Rosa e Peppe, senza rete e senza saletta. I bot danno indizi a caso (aggettivi) e indovinano sbirciando la chiave 7 volte su 10.
-- Nelle impostazioni si sceglie se il capo sei tu o Matt.
+- Si gioca tu e Bot contro Rosa e Peppe, senza rete e senza saletta. I bot danno indizi a caso (aggettivi) e indovinano sbirciando la chiave 7 volte su 10.
+- Nelle impostazioni si sceglie se il capo sei tu o Bot.
 
 Pubblicato il 3 ott 2026 (commit 8a182b5), insieme a "Ho un codice", all'avatar con le sottocategorie e alle tue parole.
 
@@ -1125,7 +1125,7 @@ Tutti i numeri stanno in `js/livelli.js` (`SGLivelli`).
 
 La Ruota della Fortuna è il gioco chiesto il 2 ott 2026 per far venire voglia di aprire l'app ("aggancio"). L'ho fatto nello studio TV su richiesta dell'utente.
 
-- Si gioca da 2 a 4 (anche solo in 2). Ci sono i bot, il primo è Matt. Modi: contro il computer, sullo stesso telefono, online.
+- Si gioca da 2 a 4 (anche solo in 2). Ci sono i bot, il primo è Bot. Modi: contro il computer, sullo stesso telefono, online.
 - Categoria Quiz & parole.
 - Il tabellone (12×4) sta fisso in alto, fuori dalla telecamera. La ruota è sul maxischermo.
 - La telecamera:

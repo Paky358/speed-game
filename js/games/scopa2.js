@@ -15,7 +15,7 @@
   "use strict";
   var TARGET = 11;
   // nomi di default dei posti bot, relativi al posto 0 (host/tu)
-  var NOMI_BOT = { 1: "Matt", 2: "Giulia", 3: "Toni" };   // 1 e 3 avversari, 2 il tuo compagno (il primo bot si chiama sempre Matt)
+  var NOMI_BOT = { 1: "Bot", 2: "Giulia", 3: "Toni" };   // 1 e 3 avversari, 2 il tuo compagno (il primo bot si chiama sempre Bot)
   function C() { return window.SGCarte; }
   function team(seat) { return seat % 2; }                 // 0 = Squadra 1 (posti 0,2), 1 = Squadra 2 (posti 1,3)
   function trova(a, id) { for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return null; }

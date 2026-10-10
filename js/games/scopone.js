@@ -14,7 +14,7 @@
 (function () {
   "use strict";
   var TARGET = 11;
-  var NOMI_BOT = { 1: "Matt", 2: "Rosa", 3: "Peppe" };   // 1 e 3 rivali, 2 il tuo compagno (il primo bot si chiama sempre Matt)
+  var NOMI_BOT = { 1: "Bot", 2: "Rosa", 3: "Peppe" };   // 1 e 3 rivali, 2 il tuo compagno (il primo bot si chiama sempre Bot)
   function C() { return window.SGCarte; } // aiuti condivisi (carte + logica di presa)
   function squadra(s) { return (s % 2 === 0) ? "noi" : "loro"; }
   function trova(a, id) { for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return null; }
