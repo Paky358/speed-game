@@ -17,6 +17,7 @@
 
   var ST = window.SGStudio;   // lo studio del game show (condiviso, js/studio.js)
   var COLORI = ["#ff6b6b", "#4dabf7", "#51cf66", "#ffd43b", "#cc5de8", "#ff922b", "#20c997", "#f783ac", "#a9e34b", "#66d9e8"];
+  var PARTITE_SALVATE = Object.create(null);
   // Il timer riparte a ogni "ricezione". Il tetto parte da 15s e cala di 2s
   // ogni 4 passaggi, fino a un minimo di 5s: 15, 13, 11, 9, 7, 5.
   function capMs(passaggi) { return Math.max(5000, 15000 - 2000 * Math.floor(passaggi / 4)); }
@@ -24,6 +25,49 @@
   // che vola sul primo, bomba che passa al nuovo dopo un'esplosione, e l'esplosione stessa.
   var ATTESA_INIZIO = 4600, ATTESA_ROUND = 1800, DURATA_BOOM = 3400;
   var ATTESA_SORPRESA = 2600;   // in più quando la categoria è a sorpresa: gira la ruota delle categorie
+
+  function nuovaSessioneP() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
+  function creaStatGiocatoriP(players) {
+    var out = Object.create(null);
+    players.forEach(function (p) { out[p.id] = { votiCategoria: 0, bombeRicevute: 0, passaggi: 0, rimandi: 0, esplosioni: 0, roundSopravvissuti: 0 }; });
+    return out;
+  }
+  function salvaTrofeiPatata(t, vm, cb) {
+    try {
+      if (!vm || vm.fase !== "fine" || t.guarda || (t.linkParams && (t.linkParams.guarda || t.linkParams.prova)) ||
+          (t.impostazioni && t.impostazioni.prova) || !vm.partitaId ||
+          !(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      var profilo = SGNube.profilo(), lista = vm.players || [], id = null, me = null;
+      if (cb.locale) {
+        var nomeProfilo = String(profilo.nome || "").trim().toLowerCase();
+        me = lista.filter(function (p) { return String(p.nome || "").trim().toLowerCase() === nomeProfilo; })[0];
+        id = me && me.id;
+      } else {
+        id = cb.myId;
+        me = lista.filter(function (p) { return p.id === id; })[0];
+      }
+      if (!me || !id || !String(profilo.nome || "").trim() || String(profilo.nome).trim().toLowerCase() !== String(me.nome || "").trim().toLowerCase()) return;
+      var profiloId = String(profilo.uid || profilo.nome).trim().toLowerCase();
+      var chiave = "patata|" + vm.partitaId + "|" + profiloId;
+      if (PARTITE_SALVATE[chiave]) return;
+      var chiaveLocale = "sg-patata-ultima-partita-" + profiloId;
+      try { if (window.localStorage && localStorage.getItem(chiaveLocale) === String(vm.partitaId)) { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
+      var miei = (vm.statFine || {})[id] || {}, vinta = !!(vm.vincitore && vm.vincitore.id === id);
+      var incr = [["partite", 1], ["votiCategoria", +miei.votiCategoria || 0], ["bombeRicevute", +miei.bombeRicevute || 0],
+        ["passaggi", +miei.passaggi || 0], ["rimandi", +miei.rimandi || 0], ["esplosioni", +miei.esplosioni || 0],
+        ["roundSopravvissuti", +miei.roundSopravvissuti || 0]];
+      if (!cb.locale) incr.push(["partiteOnline", 1]);
+      if (vm.sorpresa) incr.push(["partiteSorpresa", 1]);
+      if (vinta) { incr.push(["vittorie", 1]); if (!cb.locale) incr.push(["vittorieOnline", 1]); }
+      var s = SGNube.statGioco ? (SGNube.statGioco("patata") || {}) : {};
+      if (s.ultimaPartitaTrofei === vm.partitaId) return;
+      var serie = vinta ? (+s.serieVittorieOra || 0) + 1 : 0;
+      PARTITE_SALVATE[chiave] = 1;
+      try { if (window.localStorage) localStorage.setItem(chiaveLocale, String(vm.partitaId)); } catch (e) {}
+      SGNube.salvaProgressi(null, "patata", incr.filter(function (x) { return x[1] > 0; }),
+        [["serieVittorieMax", serie]], [["serieVittorieOra", serie], ["ultimaPartitaTrofei", vm.partitaId]]);
+    } catch (e) {}
+  }
 
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
   function pescaCategorie(n) { var pool = (window.SG_PATATA || []).slice(); return mischia(pool).slice(0, n); }
@@ -97,6 +141,8 @@
       holder: null, prev: null, ultimo: null, giro: [], round: 0, ts: 0, boom: null, vincitore: null,
       remaining: 0, cap: 15000, passaggi: 0, remPrima: null, giroPrima: [], eliminati: [], soloDare: null, attesa: 0
     };
+    var partitaId = nuovaSessioneP(), statGiocatori = creaStatGiocatoriP(st.players);
+    function statP(id) { return statGiocatori[id] || (statGiocatori[id] = { votiCategoria: 0, bombeRicevute: 0, passaggi: 0, rimandi: 0, esplosioni: 0, roundSopravvissuti: 0 }); }
     function pById(id) { for (var i = 0; i < st.players.length; i++) if (st.players[i].id === id) return st.players[i]; return null; }
     function vivi() { return st.players.filter(function (p) { return !p.eliminato; }); }
     function holderObj() { return pById(st.holder); }
@@ -121,14 +167,17 @@
       st.sorpresa = !!aCaso; st.categoria = cat; st.round = 0; st.boom = null; st.vincitore = null; st.passaggi = 0; st.remPrima = null; st.eliminati = [];
       st.players.forEach(function (p) { p.eliminato = false; });
       var vv = vivi(); st.holder = vv[Math.floor(Math.random() * vv.length)].id;
+      statP(st.holder).bombeRicevute++;
       st.prev = null; st.ultimo = null; st.soloDare = null; st.giro = [st.holder]; st.cap = capMs(0); st.remaining = st.cap;
       st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_INIZIO + (st.sorpresa ? ATTESA_SORPRESA : 0); onCambio();
     }
     function esplode() {
       var h = holderObj(); if (!h) return;
+      statP(h.id).esplosioni++;
       h.eliminato = true; st.eliminati.push(h.id); st.boom = { id: h.id, nome: h.nome }; st.fase = "esplosione"; onCambio();
       setTimeout(function () {
         st.boom = null; var v = vivi();
+        v.forEach(function (p) { statP(p.id).roundSopravvissuti++; });
         if (v.length <= 1) { st.fase = "fine"; st.vincitore = v[0] ? { id: v[0].id, nome: v[0].nome, colore: v[0].colore } : null; onCambio(); return; }
         st.round++;
         // togli gli eliminati dal giro, poi dai la bomba a caso a chi NON è ancora
@@ -148,7 +197,7 @@
 
     return {
       st: st, vivi: vivi,
-      vota: function (id, idx) { var p = pById(id); if (p && st.fase === "voto" && idx >= 0 && idx <= st.cats.length) { p.voto = idx; onCambio(); } },
+      vota: function (id, idx) { var p = pById(id); if (p && st.fase === "voto" && idx >= 0 && idx <= st.cats.length) { if (p.voto == null) statP(id).votiCategoria++; p.voto = idx; onCambio(); } },
       via: function () {
         if (st.fase !== "voto") return;
         var conta = st.cats.map(function () { return 0; }); conta.push(0);   // + "a sorpresa"
@@ -169,7 +218,7 @@
         }
         st.soloDare = null;                     // vincolo consumato
         st.remPrima = st.remaining;             // per l'eventuale "rimanda indietro"
-        st.passaggi++; st.cap = capMs(st.passaggi); st.remaining = st.cap;  // riceve -> timer riparte
+        st.passaggi++; statP(fromId).passaggi++; statP(targetId).bombeRicevute++; st.cap = capMs(st.passaggi); st.remaining = st.cap;  // riceve -> timer riparte
         st.ultimo = st.holder;                  // tenuto solo come info (il ritorno si fa col pulsante "Rimanda indietro")
         st.giroPrima = st.giro.slice();         // per ripristinarlo con "rimanda indietro"
         st.prev = st.holder; st.holder = targetId; st.giro.push(targetId);
@@ -179,6 +228,7 @@
       indietro: function (fromId) {
         aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder || !st.prev || Date.now() < st.attesa) return;
         var p = pById(st.prev); if (!p || p.eliminato) return;
+        statP(fromId).rimandi++;
         // il passaggio non valeva: torna a chi l'aveva, col tempo che aveva (NIENTE reset)
         st.passaggi = Math.max(0, st.passaggi - 1); st.cap = capMs(st.passaggi);
         if (st.remPrima != null) st.remaining = st.remPrima;
@@ -197,7 +247,7 @@
         }
         onCambio();
       },
-      nuova: function () { st.players.forEach(function (p) { p.eliminato = false; p.voto = null; }); st.eliminati = []; st.cats = pesca(3); st.fase = "voto"; st.categoria = null; st.sorpresa = false; st.boom = null; st.vincitore = null; onCambio(); },
+      nuova: function () { st.players.forEach(function (p) { p.eliminato = false; p.voto = null; }); st.eliminati = []; st.cats = pesca(3); st.fase = "voto"; st.categoria = null; st.sorpresa = false; st.boom = null; st.vincitore = null; partitaId = nuovaSessioneP(); statGiocatori = creaStatGiocatoriP(st.players); onCambio(); },
       remaining: function () { return Math.max(0, st.remaining); },
       distruggi: function () { clearInterval(loop); },
       vm: function () {
@@ -209,6 +259,7 @@
         }
         return {
           fase: st.fase, categoria: st.categoria, sorpresa: !!st.sorpresa, cats: st.cats, round: st.round,
+          partitaId: partitaId, statFine: st.fase === "fine" ? statGiocatori : null,
           players: st.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null, eliminato: p.eliminato, voto: p.voto }; }),
           holder: st.holder, prev: st.prev, ultimo: st.ultimo, giro: st.giro.slice(),
           soloDare: (function () { if (st.soloDare == null) return null; var s = pById(st.soloDare); return (s && !s.eliminato) ? st.soloDare : null; })(),
@@ -750,6 +801,7 @@
 
   // ---- classifica finale (dopo il finale nello studio) ----
   function schermataFineP(t, vm, cb) {
+    salvaTrofeiPatata(t, vm, cb);
     var el = t.el;
     var sf = t.schermata({ icona: "🏆", titolo: "Vince " + (vm.vincitore ? vm.vincitore.nome : "") + "!", sotto: "La Patata Bollente" });
     var cl = vm.classifica || [];

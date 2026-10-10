@@ -1362,6 +1362,27 @@
     { gioco: "nomicose", livello: "diamante", icona: "💎", nome: "Grande Lessico",     desc: "Fai approvare 300 parole",                                stat: "paroleValide",  meta: 300 },
     { gioco: "nomicose", livello: "diamante", icona: "👑", nome: "Re delle Parole",    desc: "Vinci 35 partite",                                        stat: "vinte",         meta: 35 },
     { gioco: "nomicose", livello: "diamante", icona: "✨", nome: "Giri da Manuale",    desc: "Fai approvare tutte le parole in 25 giri",                stat: "giriPerfetti",  meta: 25 },
+
+    // ---- La Patata Bollente ----
+    { gioco: "patata", livello: "bronzo",   icona: "💣", nome: "Si Comincia",         desc: "Concludi la tua prima partita",                                      stat: "partite",             meta: 1 },
+    { gioco: "patata", livello: "bronzo",   icona: "🤲", nome: "Bomba in Mano",       desc: "Ricevi la bomba 5 volte",                                             stat: "bombeRicevute",       meta: 5 },
+    { gioco: "patata", livello: "bronzo",   icona: "🏃", nome: "Passa la Patata",     desc: "Passa la bomba 5 volte",                                             stat: "passaggi",            meta: 5 },
+    { gioco: "patata", livello: "bronzo",   icona: "🛡️", nome: "Ancora in Gara",      desc: "Sopravvivi a 3 esplosioni",                                          stat: "roundSopravvissuti",  meta: 3 },
+    { gioco: "patata", livello: "bronzo",   icona: "🗳️", nome: "Scelta di Gruppo",    desc: "Vota una categoria in una partita online",                           stat: "votiCategoria",       meta: 1 },
+    { gioco: "patata", livello: "bronzo",   icona: "📱", nome: "Prima Bomba Online",  desc: "Concludi una partita online",                                       stat: "partiteOnline",       meta: 1 },
+    { gioco: "patata", livello: "argento",  icona: "🔟", nome: "Serate Esplosive",    desc: "Concludi 10 partite",                                                stat: "partite",             meta: 10 },
+    { gioco: "patata", livello: "argento",  icona: "💨", nome: "Mani Veloci",         desc: "Passa la bomba 30 volte",                                           stat: "passaggi",            meta: 30 },
+    { gioco: "patata", livello: "argento",  icona: "↩️", nome: "Non Era Valida",      desc: "Rimanda indietro la bomba 5 volte",                                 stat: "rimandi",             meta: 5 },
+    { gioco: "patata", livello: "argento",  icona: "🧍", nome: "Duro a Morire",       desc: "Sopravvivi a 25 esplosioni",                                        stat: "roundSopravvissuti",  meta: 25 },
+    { gioco: "patata", livello: "argento",  icona: "🎲", nome: "La Ruota Decide",     desc: "Gioca 3 partite con una categoria a sorpresa",                      stat: "partiteSorpresa",     meta: 3 },
+    { gioco: "patata", livello: "oro",      icona: "🏆", nome: "Ultimo Rimasto",      desc: "Vinci 5 partite",                                                    stat: "vittorie",            meta: 5 },
+    { gioco: "patata", livello: "oro",      icona: "⚡", nome: "Passaggi Fulminei",   desc: "Passa la bomba 100 volte",                                          stat: "passaggi",            meta: 100 },
+    { gioco: "patata", livello: "oro",      icona: "🌋", nome: "Sopravvissuto",       desc: "Sopravvivi a 60 esplosioni",                                        stat: "roundSopravvissuti",  meta: 60 },
+    { gioco: "patata", livello: "oro",      icona: "🌐", nome: "Ultimo Online",       desc: "Vinci 5 partite online",                                            stat: "vittorieOnline",      meta: 5 },
+    { gioco: "patata", livello: "oro",      icona: "🎰", nome: "Amante del Rischio",  desc: "Gioca 10 partite con una categoria a sorpresa",                     stat: "partiteSorpresa",     meta: 10 },
+    { gioco: "patata", livello: "diamante", icona: "👑", nome: "Re della Patata",     desc: "Vinci 20 partite online",                                           stat: "vittorieOnline",      meta: 20 },
+    { gioco: "patata", livello: "diamante", icona: "🔥", nome: "Serie Bollente",      desc: "Vinci 5 partite di fila",                                           stat: "serieVittorieMax",    meta: 5 },
+    { gioco: "patata", livello: "diamante", icona: "💎", nome: "Giro Infinito",       desc: "Passa la bomba 200 volte",                                          stat: "passaggi",            meta: 200 },
   ];
 
   function valoreStat(prof, gioco, chiave) {
