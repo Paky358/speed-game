@@ -16,12 +16,71 @@
   "use strict";
 
   var MAX_MANO = 7;
+  var PARTITE_SALVATE = Object.create(null);
   var CLASSICA = [
     { tipo: "bonus", n: 2, bers: "se" },
     { tipo: "malus", n: 2, bers: "avv" },
     { tipo: "bonus", n: 1, bers: "se" },
     { tipo: "malus", n: 2, bers: "avv" }
   ];
+
+  function nuovaSessione() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
+  function statPersona(st, id) {
+    if (!st.statGiocatori) st.statGiocatori = Object.create(null);
+    if (!st.statGiocatori[id]) st.statGiocatori[id] = { roundGiocati: 0, roundGiudice: 0, roundVinti: 0, carteBonus: 0, carteMalus: 0 };
+    return st.statGiocatori[id];
+  }
+  function contaRound(st, giocatori, assegna) {
+    var giudice = giudiceDa(giocatori, assegna);
+    giocatori.forEach(function (g) {
+      statPersona(st, g.id).roundGiocati++;
+      if (giudice && g.id === giudice.id) statPersona(st, g.id).roundGiudice++;
+    });
+  }
+  function contaCarteSquadra(st, giocatori, assegna, squadra, tipo, quante) {
+    giocatori.forEach(function (g) {
+      if (squadraDiId(assegna, g.id) === squadra) statPersona(st, g.id)[tipo === "bonus" ? "carteBonus" : "carteMalus"] += quante;
+    });
+  }
+  function salvaTrofeiSipero(t, vm, giocatoreId, online, classifica) {
+    try {
+      if (!vm || vm.fase !== "fine" || t.guarda || (t.linkParams && (t.linkParams.guarda || t.linkParams.prova)) ||
+          (t.impostazioni && t.impostazioni.prova) || !vm.sessione ||
+          !(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      var profilo = SGNube.profilo(), lista = vm.giocatori || [];
+      var me = online ? lista.filter(function (g) { return g.id === giocatoreId; })[0] :
+        lista.filter(function (g) { return String(g.nome || "").trim().toLowerCase() === String(profilo.nome || "").trim().toLowerCase(); })[0];
+      if (!me || !String(profilo.nome || "").trim() || String(profilo.nome).trim().toLowerCase() !== String(me.nome || "").trim().toLowerCase()) return;
+      var profiloId = String(profilo.uid || profilo.nome).trim().toLowerCase();
+      var chiave = "sipero|" + vm.sessione + "|" + profiloId;
+      if (PARTITE_SALVATE[chiave]) return;
+      var chiaveLocale = "sg-sipero-ultima-partita-" + profiloId;
+      try { if (window.localStorage && localStorage.getItem(chiaveLocale) === String(vm.sessione)) { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
+      var idStat = online ? giocatoreId : me.nome;
+      var miei = (vm.statFine || {})[idStat] || {};
+      var vinta = false, pareggio = false;
+      if (online) vinta = vm.assegna && (vm.assegna[giocatoreId] === 0 || vm.assegna[giocatoreId] === 1) && vm.assegna[giocatoreId] === vm.vincitore;
+      else {
+        var pos = (classifica || []).filter(function (g) { return String(g.nome || "").trim().toLowerCase() === String(me.nome || "").trim().toLowerCase(); })[0];
+        var massimo = Math.max.apply(null, (classifica || []).map(function (g) { return +g.punti || 0; }));
+        var primi = (classifica || []).filter(function (g) { return (+g.punti || 0) === massimo; });
+        vinta = !!pos && (+pos.punti || 0) === massimo && primi.length === 1;
+        pareggio = !!pos && (+pos.punti || 0) === massimo && primi.length > 1;
+      }
+      var incr = [["partite", 1], ["roundGiocati", +miei.roundGiocati || 0], ["roundGiudice", +miei.roundGiudice || 0],
+        ["roundVinti", +miei.roundVinti || 0], ["carteBonus", +miei.carteBonus || 0], ["carteMalus", +miei.carteMalus || 0]];
+      if (online) incr.push(["partiteOnline", 1]);
+      if (vinta) { incr.push(["vittorie", 1]); if (online) incr.push(["vittorieOnline", 1]); }
+      if (pareggio) incr.push(["pareggi", 1]);
+      var s = SGNube.statGioco ? (SGNube.statGioco("sipero") || {}) : {};
+      if (s.ultimaPartitaTrofei === vm.sessione) return;
+      var serie = vinta ? (+s.serieVittorieOra || 0) + 1 : 0;
+      PARTITE_SALVATE[chiave] = 1;
+      try { if (window.localStorage) localStorage.setItem(chiaveLocale, String(vm.sessione)); } catch (e) {}
+      SGNube.salvaProgressi(null, "sipero", incr.filter(function (x) { return x[1] > 0; }),
+        [["serieVittorieMax", serie]], [["serieVittorieOra", serie], ["ultimaPartitaTrofei", vm.sessione]]);
+    } catch (e) {}
+  }
 
   function altra(k) { return k === 0 ? 1 : 0; }
   function taglia(s) { return s.length > 34 ? s.slice(0, 32) + "…" : s; }
@@ -167,7 +226,7 @@
       var st = {
         giocatori: t.giocatori.slice(), punti: punti,
         bonus: dati.bonus, malus: dati.malus, sequenza: seq,
-        round: 0, totale: imp.round || 6
+        round: 0, totale: imp.round || 6, sessione: nuovaSessione(), statGiocatori: Object.create(null)
       };
       iniziaRound(t, st);
     }
@@ -186,6 +245,8 @@
     var n = st.giocatori.length;
     var gi = (st.round - 1) % n;
     st.giudice = st.giocatori[gi];
+    st.giocatori.forEach(function (nome) { statPersona(st, nome).roundGiocati++; });
+    statPersona(st, st.giudice).roundGiudice++;
     var altri = [];
     for (var d = 1; d < n; d++) altri.push(st.giocatori[(gi + d) % n]);
     var h = Math.ceil(altri.length / 2);
@@ -232,6 +293,7 @@
     }, function (scelte) {
       var dest = (f.tipo === "bonus") ? st.scen[target].bonus : st.scen[target].malusRic;
       scelte.forEach(function (c) { dest.push(c); });
+      st.squadre[sq].membri.forEach(function (nome) { statPersona(st, nome)[f.tipo === "bonus" ? "carteBonus" : "carteMalus"] += scelte.length; });
       st.mani[sq][f.tipo] = manoTipo.filter(function (c) { return scelte.indexOf(c) < 0; });
       ricarica(t, st.mani[sq][f.tipo], f.tipo === "bonus" ? st.bonus : st.malus, MAX_MANO);
       st.stepIdx += 1; prossimoStep(t, st);
@@ -304,7 +366,7 @@
       var g = el("div", { style: "display:flex;flex-direction:column;gap:10px" });
       st.squadre.forEach(function (sq, k) {
         g.appendChild(el("button", { class: "btn btn-fantasma", style: "font-size:1.1rem;padding:16px;text-align:left", html: (k === 0 ? "🟥 " : "🟦 ") + membriTxt(sq),
-          onclick: function () { sq.membri.forEach(function (m) { st.punti[m] = (st.punti[m] || 0) + 1; }); esitoRound(t, st, k); } }));
+          onclick: function () { sq.membri.forEach(function (m) { st.punti[m] = (st.punti[m] || 0) + 1; statPersona(st, m).roundVinti++; }); esitoRound(t, st, k); } }));
       });
       s._contenuto.appendChild(g);
       t.mostra(s);
@@ -334,6 +396,7 @@
     var classifica = st.giocatori.slice()
       .sort(function (a, b) { return (st.punti[b] || 0) - (st.punti[a] || 0); })
       .map(function (nome) { return { nome: nome, punti: st.punti[nome] || 0 }; });
+    salvaTrofeiSipero(t, { fase: "fine", sessione: st.sessione, giocatori: st.giocatori.map(function (nome) { return { nome: nome }; }), statFine: st.statGiocatori }, null, false, classifica);
     t.fine(classifica);
   }
 
@@ -360,6 +423,7 @@
     var vm = {
       fase: st.fase, codice: st.codice,
       giocatori: st.giocatori.map(function (x) { return { id: x.id, nome: x.nome, omino: x.omino || null }; }),
+      sessione: st.sessione, statFine: st.fase === "fine" ? st.statGiocatori : null,
       assegna: st.assegna, giudiceId: g ? g.id : null, giudiceNome: g ? g.nome : "",
       squadre: squadreDa(st.giocatori, st.assegna),
       scen: st.scen, mani: st.mani || null, vincitore: st.vincitore, step: null,
@@ -378,6 +442,7 @@
       fase: "lobby", codice: "…", iniziata: false,
       giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", omino: t.mioOmino ? t.mioOmino() : null }],
       assegna: {}, seq: seq, vincitore: null,
+      sessione: null, statGiocatori: Object.create(null),
       regoleModalita: "classica", seqCustom: [],
       scen: [{ bonus: [], malusRic: [] }, { bonus: [], malusRic: [] }],
       mani: null, steps: [], stepIdx: 0,
@@ -394,7 +459,7 @@
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") { if (!perIdS(st, id) && st.giocatori.length < 10) st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarOkS(m.omino) }); bd(); }
+        if (m.t === "join") { if (!perIdS(st, id) && st.giocatori.length < 10) { st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarOkS(m.omino) }); statPersona(st, id); } bd(); }
         else if (m.t === "gioca") giocaCarte(id, m.carte);
         else if (m.t === "giudica") giudica(id, m.sq);
         else if (m.t === "avanti") avanti(id);
@@ -409,7 +474,8 @@
       var sq = squadreDa(st.giocatori, st.assegna), g = giudiceDa(st.giocatori, st.assegna);
       var tutti = st.giocatori.every(function (x) { var a = st.assegna[x.id]; return a === 0 || a === 1 || a === "g"; });
       if (!g || !sq[0].membri.length || !sq[1].membri.length || !tutti) return;
-      st.iniziata = true; st.fase = "gioco"; st.vincitore = null;
+      st.iniziata = true; st.fase = "gioco"; st.vincitore = null; st.sessione = nuovaSessione(); st.statGiocatori = Object.create(null);
+      contaRound(st, st.giocatori, st.assegna);
       st.scen = [{ bonus: [], malusRic: [] }, { bonus: [], malusRic: [] }];
       st.mani = [
         { bonus: ricarica(t, [], st.bonus, MAX_MANO), malus: ricarica(t, [], st.malus, MAX_MANO) },
@@ -432,6 +498,7 @@
       var target = (step.f.bers === "se") ? step.sq : altra(step.sq);
       var dest = (step.f.tipo === "bonus") ? st.scen[target].bonus : st.scen[target].malusRic;
       carte.forEach(function (c) { dest.push(c); });
+      contaCarteSquadra(st, st.giocatori, st.assegna, step.sq, step.f.tipo, carte.length);
       st.mani[step.sq][step.f.tipo] = mano.filter(function (c) { return carte.indexOf(c) < 0; });
       ricarica(t, st.mani[step.sq][step.f.tipo], step.f.tipo === "bonus" ? st.bonus : st.malus, MAX_MANO);
       st.stepIdx += 1;
@@ -445,7 +512,9 @@
     function giudica(id, sq) {
       var g = giudiceDa(st.giocatori, st.assegna);
       if (st.fase === "giudizio" && g && id === g.id && (sq === 0 || sq === 1)) {
-        st.vincitore = sq; st.fase = "fine"; bd();
+        st.vincitore = sq; st.fase = "fine";
+        st.giocatori.forEach(function (g) { if (squadraDiId(st.assegna, g.id) === sq) statPersona(st, g.id).roundVinti++; });
+        bd();
         if (t.risultato) {   // per il torneo online: la squadra scelta dal giudice, poi il giudice, poi l'altra squadra
           var S = squadreDa(st.giocatori, st.assegna), vinti = S[sq].membri, persi = S[1 - sq].membri;
           t.risultato(vinti.map(function (m) { return { nome: m.nome, pos: 1 }; })
@@ -456,6 +525,7 @@
     }
     function nuova() {
       st.fase = "lobby"; st.iniziata = false; st.vincitore = null;
+      st.sessione = null; st.statGiocatori = Object.create(null);
       st.scen = [{ bonus: [], malusRic: [] }, { bonus: [], malusRic: [] }];
       st.mani = null; st.steps = []; st.stepIdx = 0; bd();
     }
@@ -642,6 +712,7 @@
     }
 
     if (vm.fase === "fine") {
+      salvaTrofeiSipero(t, vm, cb.myId, true, null);
       var s = t.schermata({ icona: "🏆", titolo: "Vince la Squadra " + (vm.vincitore + 1) + "!", sotto: "Stanza " + (vm.codice || "") });
       s._contenuto.appendChild(nodoScenari(t, vm, mySq));
       if (cb.sonoHost) {
