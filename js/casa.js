@@ -57,7 +57,7 @@
   function ogg(id, d) { d.id = id; OGG[id] = d; }
 
   // ---- SOGGIORNO, roba di partenza ----
-  ogg("divano_toppa", { nome: "Divano con la toppa", stanza: "soggiorno", tipo: "pav", w: 196, h: 92, prof: 0.85, qual: 0, disegno: function () {
+  ogg("divano_toppa", { nome: "Divano con la toppa", stanza: "soggiorno", tipo: "pav", w: 196, h: 92, prof: 0.85, qual: 0, azione: "siedi", seduta: 52, posti: [64, 134], disegno: function () {
     var c = "#8b6a4f";
     return svg(196, 92, morbido("a", c) + morbido("b", tono(c, -0.12)) + morbido("t", "#b8863b") +
       "<pattern id='q' width='8' height='8' patternUnits='userSpaceOnUse'><rect width='8' height='8' fill='#c9a24a'/><rect width='4' height='8' fill='#b5462f' opacity='.55'/><rect width='8' height='4' fill='#b5462f' opacity='.35'/></pattern>",
@@ -82,15 +82,16 @@
       C(9, 9.5, 1, "#555") + C(69, 9.5, 1, "#555") + C(9, 34, 1, "#555") + C(69, 34, 1, "#555") +
       Pth("M50 30 l6 5", "none", "stroke='#7a4a22' stroke-width='1'"));   // una scheggia
   } });
-  ogg("tv_tubo", { nome: "TV a tubo", stanza: "soggiorno", tipo: "acc", w: 54, h: 78, qual: 0, disegno: function () {
-    return svg(54, 78, morbido("a", "#c9bfa8") + lin("s", "#5b6b63", "#2f3a35", true),
+  ogg("tv_tubo", { nome: "TV a tubo", stanza: "soggiorno", tipo: "acc", w: 54, h: 78, qual: 0, stati: "accendi", luce: { x: 0.43, y: 0.62, r: 1.6, c: "#9fd8ff" }, disegno: function (on) {
+    return svg(54, 78, morbido("a", "#c9bfa8") + lin("s", on ? "#7fd0c8" : "#5b6b63", on ? "#3d7aa8" : "#2f3a35", true),
       Pth("M27 30 L10 4 M27 30 L44 2", "none", "stroke='#444' stroke-width='1.6'") + C(10, 4, 2, "#888") + C(44, 2, 2, "#888") +   // le antenne a orecchie di coniglio
       R(2, 28, 50, 46, "url(#a)", 7, bordo()) + R(6, 32, 34, 32, "url(#s)", 7, bordo(1.6)) +
+      (on ? Pth("M9 44 L37 44 M9 50 L37 50 M9 56 L37 56", "none", "stroke='#fff' stroke-width='1' opacity='.25'") + C(17, 47, 5, "#ffd43b", "opacity='.85'") + Pth("M24 58 Q30 44 37 52 L37 61 L24 61 Z", "#69db7c", "opacity='.8'") : "") +   // accesa: un cartone animato un po' sgranato
       Pth("M10 36 Q18 34 22 40", "none", "stroke='#fff' stroke-width='2' opacity='.35'") +
       C(46, 38, 2.6, "#7d725d", bordo(1)) + C(46, 47, 2.6, "#7d725d", bordo(1)) + R(43, 54, 6, 6, "#7d725d", 1) +
       R(8, 74, 8, 3, "#555") + R(38, 74, 8, 3, "#555"));
   } });
-  ogg("sedia_plastica", { nome: "Sedia di plastica", stanza: "soggiorno", tipo: "pav", w: 46, h: 84, prof: 0.45, piano: 44, qual: 0, disegno: function () {
+  ogg("sedia_plastica", { nome: "Sedia di plastica", stanza: "soggiorno", tipo: "pav", w: 46, h: 84, prof: 0.45, piano: 44, qual: 0, azione: "siedi", seduta: 40, posti: [23], disegno: function () {
     var c = "#ece9df";
     return svg(46, 84, morbido("a", c),
       Pth("M8 4 Q23 0 38 4 L36 40 L10 40 Z", "url(#a)", bordo()) + Pth("M14 10 L32 10 M14 18 L32 18", "none", "stroke='#cfcabb' stroke-width='3'") +
@@ -104,22 +105,29 @@
       Pth("M17 34 C22 30 28 32 31 38", "none", "stroke='#8a7a3a' stroke-width='3'") + E(31, 39, 3, 2, "#a3833c") +
       Pth("M7 34 L27 34 L24 53 L10 53 Z", "url(#v)", bordo()) + R(6, 32, 22, 5, "#c94a2c", 1.5, bordo(1.4)));
   } });
-  ogg("frigo_ammaccato", { nome: "Frigo ammaccato", stanza: "soggiorno", tipo: "pav", w: 62, h: 146, prof: 0.6, piano: 146, qual: 0, disegno: function () {
-    var c = "#ece4c9";
-    return svg(62, 146, morbido("a", c),
-      R(2, 2, 58, 140, "url(#a)", 8, bordo()) + Pth("M2 52 L60 52", "none", bordo()) +
-      R(48, 20, 5, 24, "#bdb49a", 2, bordo(1.2)) + R(48, 62, 5, 30, "#bdb49a", 2, bordo(1.2)) +
+  ogg("frigo_ammaccato", { nome: "Frigo ammaccato", stanza: "soggiorno", tipo: "pav", w: 62, h: 146, prof: 0.6, piano: 146, qual: 0, stati: "apri", lato: -1, corpo: [16, 74], luce: { x: 0.45, y: 0.62, r: 1.1, c: "#fff6cf" }, disegno: function (on) {
+    var c = "#ece4c9", s;
+    s = R(2, 2, 58, 140, "url(#a)", 8, bordo()) + Pth("M2 52 L60 52", "none", bordo());
+    if (!on) s += R(48, 20, 5, 24, "#bdb49a", 2, bordo(1.2)) + R(48, 62, 5, 30, "#bdb49a", 2, bordo(1.2)) +
       Pth("M14 96 Q20 102 16 110 Q12 104 14 96 Z", tono(c, -0.12)) +   // l'ammaccatura
       C(40, 128, 5, "#b0703a", "opacity='.45'") + C(42, 130, 2, "#8a4d22", "opacity='.5'") +   // un po' di ruggine
-      R(12, 70, 10, 10, "#ff6b6b", 2, "transform='rotate(-8 17 75)'") + R(26, 66, 9, 12, "#ffd43b", 2, "transform='rotate(6 30 72)'") +   // le calamite
-      R(6, 142, 10, 4, "#555") + R(46, 142, 10, 4, "#555"));
+      R(12, 70, 10, 10, "#ff6b6b", 2, "transform='rotate(-8 17 75)'") + R(26, 66, 9, 12, "#ffd43b", 2, "transform='rotate(6 30 72)'");   // le calamite
+    else s += R(6, 56, 50, 82, "url(#dentro)", 4, bordo(1.4)) + R(6, 80, 50, 2.5, "#cfd8dc") + R(6, 108, 50, 2.5, "#cfd8dc") +   // aperto: la luce dentro e i ripiani
+      R(10, 62, 9, 17, "#fff", 2, bordo(1)) + R(11, 60, 7, 4, "#4dabf7", 1) +                 // il latte
+      C(28, 75, 4.5, "#e03131", bordo(1)) + Pth("M28 70 l1 -3", "none", "stroke='#2b8a3e' stroke-width='1.4'") +   // la mela
+      Pth("M36 79 L50 79 L46 71 Z", "#ffd43b", bordo(1)) + C(41, 76, 1, "#e9b10a") + C(45, 77, 0.8, "#e9b10a") +   // il formaggio
+      R(12, 98, 30, 9, "#adb5bd", 3, bordo(1)) + R(36, 88, 8, 19, "#69db7c", 2, bordo(1)) + E(30, 126, 14, 5, "#ffa94d", bordo(1)) +   // avanzi
+      Pth("M60 52 L74 58 L74 136 L60 142 Z", "url(#a)", bordo()) + R(66, 74, 4, 40, "#bdb49a", 1.5);   // l'anta aperta verso di noi
+    return svg(90, 146, morbido("a", c) + "<radialGradient id='dentro' cx='.5' cy='.2' r='.9'><stop offset='0' stop-color='#fffbe6'/><stop offset='1' stop-color='#e9edf0'/></radialGradient>",
+      "<g transform='translate(14 0)'>" + s + R(6, 142, 10, 4, "#555") + R(46, 142, 10, 4, "#555") + "</g>");   // più largo: l'anta aperta sta a destra
   } });
-  ogg("fornello_vecchio", { nome: "Fornello vecchio", stanza: "soggiorno", tipo: "pav", w: 62, h: 90, prof: 0.6, piano: 86, qual: 0, disegno: function () {
-    var c = "#d9cfb6";
+  ogg("fornello_vecchio", { nome: "Fornello vecchio", stanza: "soggiorno", tipo: "pav", w: 62, h: 90, prof: 0.6, piano: 86, qual: 0, stati: "accendi", disegno: function (on) {
+    var c = "#d9cfb6", fiamma = function (x) { return Pth("M" + (x - 6) + " 8 Q" + (x - 5) + " 2 " + (x - 3) + " 5 Q" + (x - 2) + " -1 " + x + " 3 Q" + (x + 2) + " -1 " + (x + 3) + " 5 Q" + (x + 5) + " 2 " + (x + 6) + " 8 Z", "#4dabf7", "opacity='.9'") + Pth("M" + (x - 3) + " 8 Q" + x + " 1 " + (x + 3) + " 8 Z", "#d0ebff"); };
     return svg(62, 90, morbido("a", c) + morbido("l", "#9b7650"),
       R(2, 30, 58, 58, "url(#l)", 3, bordo()) + R(8, 38, 21, 44, tono("#9b7650", 0.1), 2, bordo(1.4)) + R(33, 38, 21, 44, tono("#9b7650", 0.1), 2, bordo(1.4) + " transform='rotate(3 43 40)'") +
       R(1, 8, 60, 24, "url(#a)", 3, bordo()) + E(17, 8, 11, 3, "#3b3b3b") + E(45, 8, 11, 3, "#3b3b3b") + E(17, 8, 6, 1.6, "#6a6a6a") + E(45, 8, 6, 1.6, "#6a6a6a") +
-      C(12, 20, 3, "#555", bordo(1)) + C(24, 20, 3, "#555", bordo(1)) + C(38, 20, 3, "none", "stroke='#555' stroke-width='1.4' stroke-dasharray='2 2'") + C(50, 20, 3, "#555", bordo(1)) +   // una manopola manca
+      (on ? fiamma(17) + fiamma(45) : "") +   // acceso: le fiammelle blu
+      C(12, 20, 3, on ? "#e03131" : "#555", bordo(1)) + C(24, 20, 3, "#555", bordo(1)) + C(38, 20, 3, "none", "stroke='#555' stroke-width='1.4' stroke-dasharray='2 2'") + C(50, 20, 3, on ? "#e03131" : "#555", bordo(1)) +   // una manopola manca
       C(25, 50, 1.6, "#3b2b22") + C(40, 52, 1.6, "#3b2b22"));
   } });
   ogg("tappeto_liso", { nome: "Tappeto liso", stanza: "tutte", tipo: "tappeto", w: 170, h: 46, qual: 0, disegno: function () {
@@ -134,21 +142,23 @@
       Pth("M7 26 Q15 18 22 24 Q28 19 37 25 L37 31 L7 31 Z", "#a8b58a", "opacity='.7'") + C(30, 14, 3, "#f0d58a", "opacity='.7'") + "</g>" +
       Pth("M22 0 L13 7 M22 0 L31 7", "none", "stroke='#555' stroke-width='1'"));
   } });
-  ogg("lampadina", { nome: "Lampadina appesa", stanza: "tutte", tipo: "muro", w: 22, h: 70, alto: true, qual: 0, disegno: function () {
-    return svg(22, 70, "<radialGradient id='l'><stop offset='0' stop-color='#fff8d6'/><stop offset='1' stop-color='#ffd76a'/></radialGradient>",
+  ogg("lampadina", { nome: "Lampadina appesa", stanza: "tutte", tipo: "muro", w: 22, h: 70, alto: true, qual: 0, stati: "accendi", luce: { x: 0.5, y: 0.81, r: 2.2, c: "#ffe9a8" }, disegno: function (on) {
+    return svg(22, 70, "<radialGradient id='l'><stop offset='0' stop-color='" + (on ? "#ffffff" : "#f1efe6") + "'/><stop offset='1' stop-color='" + (on ? "#ffe066" : "#cfcab8") + "'/></radialGradient>",
       Pth("M11 0 L11 44", "none", "stroke='#333' stroke-width='1.6'") + R(7, 42, 8, 7, "#666", 1.5, bordo(1.2)) +
-      E(11, 57, 8, 10, "url(#l)", bordo(1.4)) + Pth("M8 54 Q11 60 14 54", "none", "stroke='#c9a24a' stroke-width='1'"));
+      E(11, 57, 8, 10, "url(#l)", bordo(1.4)) + Pth("M8 54 Q11 60 14 54", "none", "stroke='" + (on ? "#ff922b" : "#9a9482") + "' stroke-width='1.2'"));
   } });
 
   // ---- CAMERA, roba di partenza ----
-  ogg("letto_semplice", { nome: "Letto di legno semplice", stanza: "camera", tipo: "pav", w: 200, h: 82, prof: 1.0, qual: 0, disegno: function () {
+  ogg("letto_semplice", { nome: "Letto di legno semplice", stanza: "camera", tipo: "pav", w: 200, h: 82, prof: 1.0, qual: 0, azione: "dormi", cuscino: [49, 45], disegno: function (on, parte) {
+    var coperta = Pth("M60 34 Q120 30 190 38 L194 62 L58 62 Z", "url(#q)", bordo()),   // la coperta a quadri
+      davanti = R(12, 60, 186, 10, "url(#l)", 2, bordo()) + R(16, 70, 8, 10, tono("#b88b5c", -0.3), 1, bordo(1.4)) + R(184, 70, 8, 10, tono("#b88b5c", -0.3), 1, bordo(1.4)) +
+      Pth("M100 64 l10 2", "none", "stroke='#7a5230' stroke-width='1'");
     return svg(200, 82, morbido("l", "#b88b5c") + "<pattern id='q' width='14' height='14' patternUnits='userSpaceOnUse'><rect width='14' height='14' fill='#5d7fa3'/><rect width='7' height='14' fill='#8aa6c4' opacity='.6'/><rect width='14' height='7' fill='#3e5f82' opacity='.4'/></pattern>",
+      parte === "coperta" ? Pth("M14 47 Q30 43 52 45 Q62 30 98 31 Q150 28 190 38 L194 62 L14 62 Z", "url(#q)", bordo()) + R(2, 4, 16, 74, "url(#l)", 3, bordo()) + davanti :   // chi dorme: la coperta fin sotto il mento, col corpo sotto che fa la gobba
       R(2, 4, 16, 74, "url(#l)", 3, bordo()) +                 // la testiera, una tavola sola
       R(14, 40, 182, 22, "#efe7d4", 6, bordo()) +              // il materasso
       Pth("M20 30 Q40 24 52 32 L52 44 L20 44 Z", "#f6f1e3", bordo(1.6)) +   // il cuscino schiacciato
-      Pth("M60 34 Q120 30 190 38 L194 62 L58 62 Z", "url(#q)", bordo()) +  // la coperta a quadri
-      R(12, 60, 186, 10, "url(#l)", 2, bordo()) + R(16, 70, 8, 10, tono("#b88b5c", -0.3), 1, bordo(1.4)) + R(184, 70, 8, 10, tono("#b88b5c", -0.3), 1, bordo(1.4)) +
-      Pth("M100 64 l10 2", "none", "stroke='#7a5230' stroke-width='1'"));
+      coperta + davanti);
   } });
   ogg("comodino_cartone", { nome: "Scatola di cartone", stanza: "camera", tipo: "pav", w: 46, h: 44, prof: 0.45, piano: 44, qual: 0, disegno: function () {
     var c = "#c99a62";
@@ -158,24 +168,34 @@
       "<text x='23' y='32' text-anchor='middle' font-family='Arial Black,Arial' font-size='6' fill='#a33' opacity='.7'>FRAGILE</text>" +
       Pth("M8 14 l4 3 m-1 -4 l3 3", "none", "stroke='#8a5a32' stroke-width='1'"));
   } });
-  ogg("armadio_storto", { nome: "Armadio con l'anta storta", stanza: "camera", tipo: "pav", w: 100, h: 186, prof: 0.6, qual: 0, disegno: function () {
-    var c = "#a87b52";
-    return svg(104, 186, morbido("a", c) + morbido("b", tono(c, 0.08)),
-      R(4, 6, 94, 172, "url(#a)", 3, bordo()) + R(2, 2, 98, 8, tono(c, -0.2), 2, bordo()) +
-      R(9, 14, 41, 156, "url(#b)", 2, bordo(1.8)) +
+  ogg("armadio_storto", { nome: "Armadio con l'anta storta", stanza: "camera", tipo: "pav", w: 100, h: 186, prof: 0.6, qual: 0, stati: "apri", vestiti: true, corpo: [22, 120], disegno: function (on) {
+    var c = "#a87b52", s = R(4, 6, 94, 172, "url(#a)", 3, bordo()) + R(2, 2, 98, 8, tono(c, -0.2), 2, bordo());
+    if (!on) s += R(9, 14, 41, 156, "url(#b)", 2, bordo(1.8)) +
       "<g transform='rotate(3 56 20)'>" + R(53, 14, 41, 156, "url(#b)", 2, bordo(1.8)) + "</g>" +   // l'anta storta
-      C(44, 90, 2.4, "#e0c070", bordo(1)) + C(62, 92, 2.4, "none", "stroke='#7a5230' stroke-width='1' stroke-dasharray='1.5 1.5'") +   // un pomello manca
-      R(8, 178, 10, 8, tono(c, -0.4), 1) + R(84, 178, 10, 8, tono(c, -0.4), 1));
+      C(44, 90, 2.4, "#e0c070", bordo(1)) + C(62, 92, 2.4, "none", "stroke='#7a5230' stroke-width='1' stroke-dasharray='1.5 1.5'");   // un pomello manca
+    else {   // aperto: i vestiti appesi, le maglie piegate in alto, le scarpe in basso; le ante girate verso di noi
+      var gruccia = function (x, col, lungo) { return Pth("M" + x + " 36 l0 -4 q0 -3 3 -3", "none", "stroke='#888' stroke-width='1.2'") + Pth("M" + (x - 9) + " 40 L" + x + " 35 L" + (x + 9) + " 40 L" + (x + 8) + " " + (40 + lungo) + " L" + (x - 8) + " " + (40 + lungo) + " Z", col, bordo(1.3)) + Pth("M" + (x - 3) + " 36 L" + x + " 42 L" + (x + 3) + " 36", "none", "stroke='" + tono(col, -0.3) + "' stroke-width='1.2'"); };
+      s += R(9, 14, 86, 156, tono(c, -0.5), 2, bordo(1.6)) + R(9, 14, 86, 156, "url(#ombra)", 2) +
+        R(10, 20, 84, 4, "#ccc", 2) + R(10, 120, 84, 4, tono(c, -0.15), 1) +
+        gruccia(22, "#e03131", 52) + gruccia(38, "#4dabf7", 60) + gruccia(54, "#ffd43b", 46) + gruccia(70, "#51cf66", 64) + gruccia(84, "#be4bdb", 50) +
+        R(16, 108, 22, 6, "#74c0fc", 2, bordo(1)) + R(18, 102, 18, 6, "#ff8787", 2, bordo(1)) + R(56, 108, 26, 6, "#ffe066", 2, bordo(1)) +
+        R(16, 150, 18, 10, "#5c3a21", 4, bordo(1.2)) + R(36, 150, 18, 10, "#5c3a21", 4, bordo(1.2)) + R(62, 152, 24, 8, "#f1f3f5", 3, bordo(1.2)) +
+        Pth("M9 14 L-6 20 L-6 166 L9 170 Z", "url(#b)", bordo(1.6)) + Pth("M95 14 L112 22 L112 168 L95 170 Z", "url(#b)", bordo(1.6)) +   // le ante aperte
+        C(-2, 90, 2, "#e0c070", bordo(1));
+    }
+    return svg(142, 186, morbido("a", c) + morbido("b", tono(c, 0.08)) + lin("ombra", "rgba(0,0,0,.35)", "rgba(0,0,0,0)", true),
+      "<g transform='translate(20 0)'>" + s + R(8, 178, 10, 8, tono(c, -0.4), 1) + R(84, 178, 10, 8, tono(c, -0.4), 1) + "</g>");
   } });
-  ogg("sveglia", { nome: "Sveglia", stanza: "tutte", tipo: "acc", w: 16, h: 18, qual: 0, disegno: function () {
+  ogg("sveglia", { nome: "Sveglia", stanza: "tutte", tipo: "acc", w: 16, h: 18, qual: 0, uso: "suona", disegno: function () {
     return svg(16, 18, "",
       C(4, 4, 3, "#c9a24a", bordo(1)) + C(12, 4, 3, "#c9a24a", bordo(1)) + C(8, 10, 6.5, "#e03131", bordo(1.2)) + C(8, 10, 4.8, "#fff8e8") +
       Pth("M8 10 L8 7 M8 10 L10 11", "none", "stroke='#333' stroke-width='1'") + Pth("M4 16 L3 18 M12 16 L13 18", "none", "stroke='#333' stroke-width='1.4'"));
   } });
-  ogg("lampada_storta", { nome: "Lampada col paralume storto", stanza: "camera", tipo: "acc", w: 26, h: 44, qual: 0, disegno: function () {
-    return svg(28, 44, morbido("p", "#e8d6a8"),
-      "<g transform='rotate(-9 14 12)'>" + Pth("M5 18 L9 4 L19 4 L23 18 Z", "url(#p)", bordo(1.4)) + "</g>" + Pth("M14 18 L14 38", "none", "stroke='#7a6a52' stroke-width='2.4'") +
-      E(14, 40, 9, 3, "#7a6a52", bordo(1.2)));
+  ogg("lampada_storta", { nome: "Lampada col paralume storto", stanza: "camera", tipo: "acc", w: 26, h: 44, qual: 0, stati: "accendi", luce: { x: 0.5, y: 0.3, r: 1.5, c: "#ffe3a3" }, disegno: function (on) {
+    return svg(28, 44, on ? lin("p", "#fff8dc", "#ffd77a", true) : morbido("p", "#e8d6a8"),
+      Pth("M14 18 L14 38", "none", "stroke='#7a6a52' stroke-width='2.4'") + (on ? E(14, 19, 6, 2.4, "#fff3b0") : "") +
+      "<g transform='rotate(-9 14 12)'>" + Pth("M5 18 L9 4 L19 4 L23 18 Z", "url(#p)", bordo(1.4)) + "</g>" +
+      E(14, 40, 9, 3, "#7a6a52", bordo(1.2)) + C(20, 37, 1.4, on ? "#e03131" : "#555"));
   } });
   ogg("poster_strappato", { nome: "Poster strappato", stanza: "camera", tipo: "muro", w: 40, h: 54, qual: 0, disegno: function () {
     return svg(42, 56, lin("c", "#6c5ce7", "#e84393", true),
@@ -185,19 +205,26 @@
   } });
 
   // ---- BAGNO, roba di partenza ----
-  ogg("wc_vecchio", { nome: "Gabinetto vecchio", stanza: "bagno", tipo: "pav", w: 44, h: 82, prof: 0.65, qual: 0, disegno: function () {
+  function sciacquone(x, y) {   // l'acqua che gira nel gabinetto (un attimo, quando si tira l'acqua)
+    return E(x, y, 13, 3.4, "#74c0fc", bordo(1)) + Pth("M" + (x - 9) + " " + (y - 1) + " Q" + x + " " + (y - 6) + " " + (x + 9) + " " + (y - 1), "none", "stroke='#fff' stroke-width='1.4'") +
+      C(x - 6, y - 8, 1.6, "#a5d8ff") + C(x + 4, y - 11, 1.3, "#a5d8ff") + C(x + 9, y - 7, 1.1, "#a5d8ff");
+  }
+  ogg("wc_vecchio", { nome: "Gabinetto vecchio", stanza: "bagno", tipo: "pav", w: 44, h: 82, prof: 0.65, qual: 0, uso: "wc", disegno: function (on) {
     var c = "#f1ecd8";
     return svg(48, 82, morbido("a", c),
-      R(8, 2, 32, 30, "url(#a)", 4, bordo()) + R(14, 6, 8, 4, "#d9cfa8", 2, bordo(1)) +      // la cassetta col tasto
+      R(8, 2, 32, 30, "url(#a)", 4, bordo()) + R(14, on ? 7 : 6, 8, on ? 3 : 4, on ? "#bfb48a" : "#d9cfa8", 2, bordo(1)) +      // la cassetta col tasto (premuto quando si tira l'acqua)
       Pth("M6 34 L42 34 Q44 48 34 56 L32 74 L16 74 L14 56 Q4 48 6 34 Z", "url(#a)", bordo()) +
       Pth("M4 32 L44 32 L44 37 L4 37 Z", "#e8dfb8", bordo(1.6)) +   // la tavoletta un po' ingiallita
+      (on ? sciacquone(24, 33) : "") +
       R(12, 74, 24, 6, tono(c, -0.1), 2, bordo(1.6)) + E(30, 50, 3, 5, "#d9c98a", "opacity='.5'"));
   } });
-  ogg("lavandino_colonna", { nome: "Lavandino scheggiato", stanza: "bagno", tipo: "pav", w: 54, h: 88, prof: 0.45, piano: 80, qual: 0, disegno: function () {
+  ogg("lavandino_colonna", { nome: "Lavandino scheggiato", stanza: "bagno", tipo: "pav", w: 54, h: 88, prof: 0.45, piano: 80, qual: 0, uso: "acqua", disegno: function (on) {
     var c = "#f3efe3";
     return svg(56, 88, morbido("a", c),
-      Pth("M22 6 L22 2 L32 2 L32 4", "none", "stroke='#9aa' stroke-width='3'") + C(20, 8, 2.4, "#bbb", bordo(1)) + C(34, 8, 2.4, "#bbb", bordo(1)) +
+      Pth("M22 8 L22 1.5 L33 1.5 L33 4", "none", "stroke='#9aa' stroke-width='3'") + C(18, 8, 2.4, "#bbb", bordo(1)) + C(38, 8, 2.4, on ? "#4dabf7" : "#bbb", bordo(1)) +
+      (on ? R(31.2, 3.5, 3.6, 8, "#4dabf7", 1.8) + R(32.2, 4, 1.2, 6, "#fff", 0.6, "opacity='.8'") : "") +   // l'acqua che scende
       Pth("M2 10 L54 10 Q54 26 42 28 L14 28 Q2 26 2 10 Z", "url(#a)", bordo()) + Pth("M44 10 l4 3 l3 -3", "#e3dccb", bordo(1)) +   // la scheggiatura
+      (on ? E(33, 10.5, 9, 2.2, "#74c0fc") + C(25, 6, 1.3, "#4dabf7") + C(42, 5, 1.5, "#4dabf7") + C(28, 3, 1, "#74c0fc") + C(40, 2, 1, "#74c0fc") : "") +
       Pth("M20 28 L36 28 L34 84 L22 84 Z", "url(#a)", bordo()) + R(18, 82, 20, 5, tono(c, -0.1), 2, bordo(1.4)));
   } });
   ogg("specchio_scheggiato", { nome: "Specchio scheggiato", stanza: "bagno", tipo: "muro", w: 40, h: 50, qual: 0, disegno: function () {
@@ -206,13 +233,17 @@
       Pth("M28 5 L24 16 L30 22 L26 34", "none", "stroke='#fff' stroke-width='1.2' opacity='.9'") + Pth("M9 12 L15 9", "none", "stroke='#fff' stroke-width='2' opacity='.6'") +
       Pth("M37 40 L33 47 L37 47 Z", "#9a8f7a"));
   } });
-  ogg("doccia_tenda", { nome: "Doccia con la tenda", stanza: "bagno", tipo: "pav", w: 88, h: 200, prof: 0.85, qual: 0, disegno: function () {
-    return svg(90, 200, lin("t", "#e8eef0", "#c9d6da"),
-      Pth("M4 6 L86 6", "none", "stroke='#9aa4a8' stroke-width='3'") +
-      Pth("M6 8 Q14 100 8 186 L46 186 Q42 100 46 8 Z", "url(#t)", bordo(1.6)) + Pth("M46 8 Q50 100 46 186 L84 186 Q88 100 84 8 Z", "url(#t)", bordo(1.6)) +
-      Pth("M18 8 Q24 100 18 186 M32 8 Q36 100 32 186 M58 8 Q62 100 58 186 M72 8 Q76 100 72 186", "none", "stroke='#b5c4c9' stroke-width='1.4'") +
-      C(20, 150, 4, "#7d8f5a", "opacity='.35'") + C(26, 160, 2.5, "#7d8f5a", "opacity='.35'") + C(66, 172, 3, "#7d8f5a", "opacity='.35'") +   // un po' di muffa
-      R(2, 186, 86, 12, "#e9e5da", 2, bordo()));
+  ogg("doccia_tenda", { nome: "Doccia con la tenda", stanza: "bagno", tipo: "pav", w: 88, h: 200, prof: 0.85, qual: 0, uso: "doccia", disegno: function (on) {
+    var s = Pth("M80 0 L80 14 Q80 18 74 18 L66 18", "none", "stroke='#9aa4a8' stroke-width='3'") + Pth("M60 15 L70 15 L68 22 L62 22 Z", "#c3cdd1", bordo(1.2)) +   // il tubo e il soffione
+      Pth("M4 26 L86 26", "none", "stroke='#9aa4a8' stroke-width='3'");
+    if (on) s += C(50, 70, 13, "#4f6a75") + E(50, 112, 17, 28, "#4f6a75") + E(36, 98, 5, 16, "#4f6a75", "transform='rotate(30 36 98)'") + E(64, 96, 5, 16, "#4f6a75", "transform='rotate(-40 64 96)'") + E(50, 158, 13, 26, "#4f6a75");   // dentro c'è qualcuno: l'ombra dietro la tenda
+    s += Pth("M6 28 Q14 110 8 186 L46 186 Q42 110 46 28 Z", "url(#t)", bordo(1.6) + (on ? " opacity='.8'" : "")) + Pth("M46 28 Q50 110 46 186 L84 186 Q88 110 84 28 Z", "url(#t)", bordo(1.6) + (on ? " opacity='.8'" : "")) +
+      Pth("M18 28 Q24 110 18 186 M32 28 Q36 110 32 186 M58 28 Q62 110 58 186 M72 28 Q76 110 72 186", "none", "stroke='#b5c4c9' stroke-width='1.4'") +
+      C(20, 150, 4, "#7d8f5a", "opacity='.35'") + C(26, 160, 2.5, "#7d8f5a", "opacity='.35'") + C(66, 172, 3, "#7d8f5a", "opacity='.35'");   // un po' di muffa
+    if (on) s += Pth("M60 24 L56 34 M65 24 L65 36 M70 24 L74 34", "none", "stroke='#74c0fc' stroke-width='1.6' stroke-linecap='round'") +   // l'acqua che scende
+      E(30, 14, 14, 8, "#fff", "opacity='.75'") + E(50, 8, 16, 8, "#fff", "opacity='.7'") + E(70, 30, 12, 7, "#fff", "opacity='.6'") + E(16, 32, 9, 6, "#fff", "opacity='.6'") +   // il vapore
+      C(34, 184, 1.6, "#74c0fc") + C(60, 185, 1.4, "#74c0fc") + C(48, 183, 1.2, "#74c0fc");
+    return svg(90, 200, lin("t", "#e8eef0", "#c9d6da"), s + R(2, 186, 86, 12, "#e9e5da", 2, bordo()));
   } });
   ogg("carta_igienica", { nome: "Carta igienica", stanza: "bagno", tipo: "acc", w: 12, h: 12, qual: 0, disegno: function () {
     return svg(14, 14, morbido("a", "#fbfbf6"),
@@ -228,7 +259,7 @@
   } });
 
   // ---- dal negozio (anteprima): le cose belle ----
-  ogg("divano_velluto", { nome: "Divano di velluto", stanza: "soggiorno", tipo: "pav", w: 204, h: 94, prof: 0.9, qual: 2, prezzo: 1800, disegno: function () {
+  ogg("divano_velluto", { nome: "Divano di velluto", stanza: "soggiorno", tipo: "pav", w: 204, h: 94, prof: 0.9, qual: 2, prezzo: 1800, azione: "siedi", seduta: 50, posti: [66, 138], disegno: function () {
     var c = "#1f8a8a";
     return svg(204, 94, morbido("a", c) + morbido("b", tono(c, -0.1)) + lin("o", "#f6d77a", "#c9962e", true) + morbido("k", "#f2c14e"),
       R(16, 6, 172, 50, "url(#a)", 22, bordo()) + Pth("M60 10 L60 52 M102 8 L102 52 M144 10 L144 52", "none", "stroke='" + tono(c, -0.25) + "' stroke-width='1.6'") +
@@ -238,17 +269,20 @@
       Pth("M40 34 Q50 26 62 34 L60 50 L38 50 Z", "url(#k)", bordo(1.6)) + Pth("M142 34 Q154 26 166 34 L164 50 L142 50 Z", "url(#k)", bordo(1.6)) +   // i cuscini gialli
       R(10, 72, 184, 10, tono(c, -0.3), 4, bordo()) + Pth("M22 82 L18 93 M182 82 L186 93", "none", "stroke='url(#o)' stroke-width='5' stroke-linecap='round'") + Pth("M22 82 L18 93 M182 82 L186 93", "none", "stroke='" + LINEA + "' stroke-width='1' opacity='.4'"));
   } });
-  ogg("poltrona_gialla", { nome: "Poltrona gialla", stanza: "soggiorno", tipo: "pav", w: 80, h: 92, prof: 0.8, qual: 2, prezzo: 900, disegno: function () {
+  ogg("poltrona_gialla", { nome: "Poltrona gialla", stanza: "soggiorno", tipo: "pav", w: 80, h: 92, prof: 0.8, qual: 2, prezzo: 900, azione: "siedi", seduta: 52, posti: [40], disegno: function () {
     var c = "#f2b134";
     return svg(80, 92, morbido("a", c) + morbido("b", tono(c, -0.1)),
       R(12, 4, 56, 54, "url(#a)", 20, bordo()) + R(2, 36, 18, 44, "url(#b)", 9, bordo()) + R(60, 36, 18, 44, "url(#b)", 9, bordo()) +
       R(18, 52, 44, 20, "url(#a)", 7, bordo()) + R(8, 72, 64, 8, tono(c, -0.3), 3, bordo()) +
       Pth("M16 80 L13 91 M64 80 L67 91", "none", "stroke='#5a3a22' stroke-width='4' stroke-linecap='round'"));
   } });
-  ogg("tv_piatta", { nome: "TV a schermo piatto", stanza: "soggiorno", tipo: "acc", w: 84, h: 54, qual: 2, prezzo: 1500, disegno: function () {
-    return svg(86, 56, lin("s", "#3a4a8a", "#121a3a", true),
+  ogg("tv_piatta", { nome: "TV a schermo piatto", stanza: "soggiorno", tipo: "acc", w: 84, h: 54, qual: 2, prezzo: 1500, stati: "accendi", luce: { x: 0.5, y: 0.45, r: 2.2, c: "#a5c8ff" }, disegno: function (on) {
+    return svg(86, 56, on ? lin("s", "#8fd3f4", "#4dabf7", true) + lin("p", "#69db7c", "#2b8a3e", true) : lin("s", "#3a4a8a", "#121a3a", true),
       R(2, 2, 82, 46, "#1b1b1f", 3, bordo(1.6)) + R(5, 5, 76, 40, "url(#s)", 1) +
-      Pth("M8 8 L30 8 L14 40 L8 40 Z", "#fff", "opacity='.08'") + R(36, 48, 14, 4, "#2b2b30") + R(28, 52, 30, 3, "#2b2b30", 1.5));
+      (on ? R(5, 32, 76, 13, "url(#p)") + C(62, 14, 5, "#ffe066") + E(24, 14, 8, 3, "#fff", "opacity='.85'") + E(30, 12, 6, 3, "#fff", "opacity='.85'") +   // una partita di calcio
+        Pth("M43 32 L43 45 M5 38 L81 38", "none", "stroke='#fff' stroke-width='.7' opacity='.6'") + C(40, 30, 1.6, "#fff", bordo(0.5)) + R(30, 26, 2.4, 5, "#e03131", 1) + R(50, 25, 2.4, 5, "#1c7ed6", 1) +
+        R(8, 7, 14, 4, "#000", 1, "opacity='.5'") + R(9.5, 8, 3, 2, "#fff") + R(15, 8, 5, 2, "#ffe066") : "") +
+      Pth("M8 8 L30 8 L14 40 L8 40 Z", "#fff", "opacity='.08'") + R(36, 48, 14, 4, "#2b2b30") + R(28, 52, 30, 3, "#2b2b30", 1.5) + C(80, 47, 0.9, on ? "#51cf66" : "#e03131"));
   } });
   ogg("mobile_tv", { nome: "Mobile basso di legno", stanza: "soggiorno", tipo: "pav", w: 130, h: 48, prof: 0.45, piano: 46, qual: 2, prezzo: 800, disegno: function () {
     var c = "#a8754a";
@@ -270,18 +304,20 @@
       Pth("M6 30 Q16 26 26 30 Q36 34 46 29 Q54 26 60 29", "none", "stroke='#fff' stroke-width='1.4' opacity='.7'") + C(46, 16, 5, "#ffd43b") +
       Pth("M14 28 L20 18 L22 28 Z", "#fff", bordo(0.8)));
   } });
-  ogg("letto_matrimoniale", { nome: "Letto con la trapunta", stanza: "camera", tipo: "pav", w: 204, h: 96, prof: 1.6, qual: 2, prezzo: 2000, disegno: function () {
+  ogg("letto_matrimoniale", { nome: "Letto con la trapunta", stanza: "camera", tipo: "pav", w: 204, h: 96, prof: 1.6, qual: 2, prezzo: 2000, azione: "dormi", cuscino: [54, 50], disegno: function (on, parte) {
+    var trapunta = function (x0) { return Pth("M" + x0 + " " + (x0 < 60 ? 36 : 40) + " Q120 30 180 44 L182 70 L" + (x0 - 2) + " 70 Z", "url(#t)", bordo()) + Pth("M90 42 L90 70 M120 38 L120 70 M150 40 L150 70", "none", "stroke='" + tono("#e8789a", -0.2) + "' stroke-width='1.2' stroke-dasharray='3 3'"); },
+      davanti = R(176, 40, 26, 52, "url(#l)", 6, bordo()) + R(18, 68, 170, 12, "url(#l)", 3, bordo());
     return svg(206, 96, morbido("l", "#8a5a3a") + morbido("t", "#e8789a"),
-      R(2, 2, 26, 90, "url(#l)", 8, bordo()) + R(176, 40, 26, 52, "url(#l)", 6, bordo()) +
+      parte === "coperta" ? Pth("M22 52 Q40 47 62 50 Q74 34 110 36 Q150 32 180 44 L182 70 L20 70 Z", "url(#t)", bordo()) + Pth("M120 38 L120 70 M150 40 L150 70", "none", "stroke='" + tono("#e8789a", -0.2) + "' stroke-width='1.2' stroke-dasharray='3 3'") + R(2, 2, 26, 90, "url(#l)", 8, bordo()) + davanti :
+      R(2, 2, 26, 90, "url(#l)", 8, bordo()) +
       R(20, 46, 166, 24, "#fbf6ec", 8, bordo()) +
       Pth("M30 26 Q44 18 58 26 Q60 36 56 44 L30 44 Q26 36 30 26 Z", "#fff", bordo(1.6)) + Pth("M34 32 Q48 24 62 32 Q64 42 60 48 L34 48 Q30 40 34 32 Z", "#f6eadb", bordo(1.6)) +
-      Pth("M64 40 Q120 30 180 44 L182 70 L62 70 Z", "url(#t)", bordo()) + Pth("M90 42 L90 70 M120 38 L120 70 M150 40 L150 70", "none", "stroke='" + tono("#e8789a", -0.2) + "' stroke-width='1.2' stroke-dasharray='3 3'") +
-      R(18, 68, 170, 12, "url(#l)", 3, bordo()));
+      trapunta(64) + davanti);
   } });
-  ogg("wc_moderno", { nome: "Gabinetto moderno", stanza: "bagno", tipo: "pav", w: 42, h: 74, prof: 0.6, qual: 2, prezzo: 900, disegno: function () {
+  ogg("wc_moderno", { nome: "Gabinetto moderno", stanza: "bagno", tipo: "pav", w: 42, h: 74, prof: 0.6, qual: 2, prezzo: 900, uso: "wc", disegno: function (on) {
     return svg(44, 74, morbido("a", "#ffffff"),
-      R(8, 2, 28, 26, "url(#a)", 6, bordo()) + R(18, 6, 8, 3, "#c0c8cc", 1.5) +
-      Pth("M4 30 L40 30 Q42 46 32 52 L30 68 L14 68 Q14 60 12 52 Q2 46 4 30 Z", "url(#a)", bordo()) + R(3, 28, 38, 5, "#f4f6f7", 2.5, bordo(1.4)) +
+      R(8, 2, 28, 26, "url(#a)", 6, bordo()) + R(18, 6, 8, 3, on ? "#4dabf7" : "#c0c8cc", 1.5) +
+      Pth("M4 30 L40 30 Q42 46 32 52 L30 68 L14 68 Q14 60 12 52 Q2 46 4 30 Z", "url(#a)", bordo()) + R(3, 28, 38, 5, "#f4f6f7", 2.5, bordo(1.4)) + (on ? sciacquone(22, 29) : "") +
       Pth("M8 34 Q10 44 16 48", "none", "stroke='#fff' stroke-width='2' opacity='.9'"));
   } });
   ogg("specchio_tondo", { nome: "Specchio tondo dorato", stanza: "tutte", tipo: "muro", w: 46, h: 46, qual: 2, prezzo: 600, disegno: function () {
@@ -430,7 +466,7 @@
 
   var cacheImg = {};
   function datauri(s) { return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s); }
-  function imgOggetto(t) { var d = OGG[t]; if (!d) return ""; if (!cacheImg[t]) cacheImg[t] = datauri(d.disegno()); return cacheImg[t]; }
+  function imgOggetto(t, on, parte) { var d = OGG[t]; if (!d) return ""; var k = t + (on ? "|on" : "") + (parte ? "|" + parte : ""); if (!cacheImg[k]) cacheImg[k] = datauri(d.disegno(!!on, parte)); return cacheImg[k]; }
   function imgMuri(st, carta) { var k = "m|" + st.id + "|" + carta; if (!cacheImg[k]) cacheImg[k] = datauri(disegnoMuri(st, carta)); return cacheImg[k]; }
   function imgPav(st, pav) { var k = "p|" + st.id + "|" + pav; if (!cacheImg[k]) cacheImg[k] = datauri(disegnoPavimento(st, pav)); return cacheImg[k]; }
   function campioneCarta(id) { var c = CARTE[id]; return datauri("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60' width='60' height='60'><defs>" + c.motivo("m") + "</defs><rect width='60' height='60' fill='url(#m)'/></svg>"); }
@@ -449,28 +485,50 @@
   // =========================================================
   function crea(opts) {
     var casa = opts.dati && opts.dati.v ? opts.dati : casaIniziale();
-    var stanzaId = "soggiorno", arreda = false, sel = null, palcoS = 1, avTimer = null, avAnim = null;
+    var stanzaId = opts.stanza || "soggiorno", arreda = false, sel = null, palcoS = 1, avTimer = null, avAnim = null;
     function el(tag, cls, testo) { var e = document.createElement(tag); if (cls) e.className = cls; if (testo != null) e.textContent = testo; return e; }
     function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
     var tSalva = null;
     function salva() { clearTimeout(tSalva); tSalva = setTimeout(function () { if (opts.salva) opts.salva(casa); }, 400); }
 
     // ---- i suoni (corti, fatti al volo: niente file) ----
+    var bufRumore = null;
+    function rumore(ctx, a, dur, f0, f1, vol, filtro) {   // un fruscio (acqua, sciacquone, doccia)
+      if (!bufRumore) { bufRumore = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate); var dd = bufRumore.getChannelData(0); for (var i = 0; i < dd.length; i++) dd[i] = Math.random() * 2 - 1; }
+      var src = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain();
+      src.buffer = bufRumore; src.loop = true; fl.type = filtro || "lowpass"; fl.frequency.setValueAtTime(f0, a); fl.frequency.exponentialRampToValueAtTime(f1, a + dur);
+      g.gain.setValueAtTime(0.0001, a); g.gain.exponentialRampToValueAtTime(vol, a + 0.08); g.gain.setValueAtTime(vol, a + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, a + dur);
+      src.connect(fl); fl.connect(g); g.connect(ctx.destination); src.start(a); src.stop(a + dur + 0.05);
+    }
     function suono(tipo) {
       var ctx = opts.audio && opts.audio(); if (!ctx) return;
       try {
-        var t0 = ctx.currentTime, note = {
+        var t0 = ctx.currentTime, dring = [], i;
+        for (i = 0; i < 12; i++) dring.push([i % 2 ? 2100 : 1900, i * 0.055, 0.045, "square", 0.025]);
+        var note = {   // [frequenza, quando, quanto dura, tipo, volume, frequenza finale]
           su: [[520, 0, .07, "triangle", .07], [780, .04, .08, "triangle", .06]],
-          giu: [[150, 0, .12, "sine", .2], [900, 0, .03, "square", .03]],
+          giu: [[150, 0, .12, "sine", .2, 70], [900, 0, .03, "square", .03]],
           clink: [[1500, 0, .09, "triangle", .07], [2200, .05, .12, "triangle", .05]],
           baule: [[600, 0, .08, "sine", .08], [300, .06, .14, "sine", .08]],
           carta: [[300, 0, .3, "sawtooth", .025], [600, .08, .25, "sawtooth", .02]],
           compra: [[988, 0, .1, "triangle", .08], [1319, .08, .1, "triangle", .08], [1760, .16, .22, "triangle", .08]],
-          gira: [[700, 0, .06, "triangle", .06], [500, .05, .08, "triangle", .05]]
+          gira: [[700, 0, .06, "triangle", .06], [500, .05, .08, "triangle", .05]],
+          accendi: [[1800, 0, .025, "square", .035], [1300, .03, .03, "square", .03], [660, .06, .12, "sine", .04, 880]],
+          spegni: [[1300, 0, .025, "square", .03], [800, .03, .03, "square", .03], [520, .06, .1, "sine", .03, 330]],
+          apri: [[200, 0, .22, "sawtooth", .02, 310], [90, .02, .1, "sine", .12, 60]],
+          chiudi: [[120, 0, .12, "sine", .2, 55], [600, 0, .02, "square", .02]],
+          molla: [[200, 0, .22, "sine", .12, 480], [480, .12, .24, "sine", .06, 240]],
+          dring: dring,
+          sciacquone: [[140, .1, .9, "sine", .05, 60]],
+          bolla: [[600, 0, .08, "sine", .05, 1200]]
         }[tipo] || [];
+        if (tipo === "acqua") rumore(ctx, t0, 2.1, 1500, 1100, 0.11);
+        if (tipo === "sciacquone") rumore(ctx, t0, 1.7, 2600, 300, 0.16);
+        if (tipo === "doccia") rumore(ctx, t0, 4, 3200, 2600, 0.07, "bandpass");
+        if (tipo === "apri") rumore(ctx, t0, 0.25, 900, 400, 0.04);
         note.forEach(function (n) {
           var o = ctx.createOscillator(), g = ctx.createGain(), a = t0 + n[1];
-          o.type = n[3]; o.frequency.setValueAtTime(n[0], a); if (tipo === "giu") o.frequency.exponentialRampToValueAtTime(70, a + n[2]);
+          o.type = n[3]; o.frequency.setValueAtTime(n[0], a); if (n[5]) o.frequency.exponentialRampToValueAtTime(n[5], a + n[2]);
           g.gain.setValueAtTime(0.0001, a); g.gain.exponentialRampToValueAtTime(n[4], a + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, a + n[2]);
           o.connect(g); g.connect(ctx.destination); o.start(a); o.stop(a + n[2] + 0.05);
         });
@@ -539,19 +597,36 @@
       return n;
     }
     function posa(d) {
-      var n = nodo(d), g = geo(d);
+      var n = nodo(d), g = geo(d), o = OGG[d.t], on = !!d.on;
+      if (n._on !== on) { n._on = on; n._img.src = imgOggetto(d.t, on); }   // acceso/spento, aperto/chiuso: cambia solo il disegno
       n.style.left = g.l.toFixed(1) + "px"; n.style.top = g.t.toFixed(1) + "px"; n.style.width = g.w.toFixed(1) + "px"; n.style.height = g.h.toFixed(1) + "px"; n.style.zIndex = g.zi;
       n._img.style.transform = d.flip ? "scaleX(-1)" : "";
-      n.classList.toggle("tappeto", OGG[d.t].tipo === "tappeto"); n.classList.toggle("muro", OGG[d.t].tipo === "muro");
+      n.classList.toggle("tappeto", o.tipo === "tappeto"); n.classList.toggle("muro", o.tipo === "muro");
+      if (o.corpo) { var m = misura(d.t); n.style.setProperty("--ol", (o.corpo[0] / m.w * 100 + 3).toFixed(1) + "%"); n.style.setProperty("--or", ((m.w - o.corpo[1]) / m.w * 100 + 3).toFixed(1) + "%"); }   // l'ombra solo sotto il mobile, non sotto l'anta aperta
+      luce(d, n, g);
     }
+    function luce(d, n, g) {   // il chiarore delle lampade e delle TV accese (e del frigo aperto)
+      var L = OGG[d.t].luce;
+      if (!L || !d.on) { if (n._luce) { if (n._luce.parentNode) n._luce.parentNode.removeChild(n._luce); n._luce = null; } return; }
+      if (!n._luce) {
+        n._luce = el("i", "ca-luce" + (/^tv/.test(d.t) ? " tv" : "")); var cc = [1, 3, 5].map(function (i) { return parseInt(L.c.substr(i, 2), 16); }).join(",");
+        n._luce.style.background = "radial-gradient(closest-side, rgba(" + cc + ",.75) 0%, rgba(" + cc + ",.4) 35%, rgba(" + cc + ",0) 100%)"; strato.appendChild(n._luce);
+      }
+      var r = L.r * g.w / (misura(d.t).w / 100) / 2, x = g.l + (d.flip ? 1 - L.x : L.x) * g.w, y = g.t + L.y * g.h;
+      n._luce.style.left = (x - r).toFixed(1) + "px"; n._luce.style.top = (y - r).toFixed(1) + "px"; n._luce.style.width = n._luce.style.height = (2 * r).toFixed(1) + "px";
+      n._luce.style.zIndex = g.zi + (/^frigo/.test(d.t) ? 1 : -1);
+    }
+    function togliNodo(u) { var n = nodi[u]; if (!n) return; if (n.parentNode) n.parentNode.removeChild(n); if (n._luce && n._luce.parentNode) n._luce.parentNode.removeChild(n._luce); delete nodi[u]; }
     function disegnaStanza() {
       var st = datiStanza(), sz = stanza();
-      Object.keys(nodi).forEach(function (u) { if (nodi[u].parentNode) nodi[u].parentNode.removeChild(nodi[u]); }); nodi = {};
+      lasciaStare(); fermaAvatar();
+      Object.keys(nodi).forEach(togliNodo); nodi = {};
       muriA.src = imgMuri(st, sz.carta); pavA.src = imgPav(st, sz.pav);
+      sz.oggetti.forEach(function (d) { var o = OGG[d.t]; if (o.stati === "apri" || o.uso) d.on = false; });   // frigo, armadio e bagno si ritrovano chiusi
       sz.oggetti.forEach(posa);
       titolo.textContent = st.nome;
       [].forEach.call(tabs.children, function (b) { b.classList.toggle("on", b.dataset.id === stanzaId); });
-      if (av) { strato.appendChild(av); avPos.x = 0.3; avPos.z = 3.0; posaAv(); }
+      if (av) { strato.appendChild(av); avPos.x = 0.3; avPos.z = 3.0; posaAv(); aspetta(); }
       deseleziona();
     }
     function vaiStanza(id) {
@@ -559,36 +634,178 @@
       setTimeout(function () { stanzaId = id; disegnaStanza(); palco.classList.remove("cambia"); if (arreda) disegnaCassetto(); }, 180);
     }
 
-    // ---- l'avatar che gira per casa (solo transform-free: un elemento solo) ----
-    var av = null, avPos = { x: 0.3, z: 3.0 }, avDir = 1;
+    // ---- l'avatar che vive in casa: va dove tocchi, si siede, dorme, usa le cose ----
+    var av = null, avPos = { x: 0.3, z: 3.0 }, avDir = 1, imgAv = "", imgDorme = "";
+    var avStato = "libero", avSu = null, avUso = null, zTimer = null, copertaN = null;
     if (opts.avatar && window.SGOmino) {
       av = el("div", "ca-av"); var avImg = el("img"); avImg.alt = ""; avImg.draggable = false;
-      avImg.src = datauri(SGOmino.svg(opts.avatar, {})); av.appendChild(avImg); av._img = avImg;
-      av.addEventListener("pointerdown", function () { if (arreda) return; av.classList.remove("saluta"); void av.offsetWidth; av.classList.add("saluta"); suono("su"); });
+      imgAv = datauri(SGOmino.svg(opts.avatar, {})); avImg.src = imgAv; av.appendChild(avImg); av._img = avImg; av.appendChild(el("b"));
+      av.addEventListener("pointerdown", function () {
+        if (arreda) return;
+        if (avStato === "dorme" || avStato === "seduto") { lasciaStare(); aspetta(); return; }   // toccandolo si alza
+        saluta(); suono("su");
+      });
     }
+    function imgAvDorme() {   // a letto si vede solo dalle spalle in su: occhi chiusi e bocca a "o"
+      if (!imgDorme) {
+        var c = {}, n, sv = ""; for (n in opts.avatar) c[n] = opts.avatar[n]; c.occhi = "chiusi"; c.bocca = "o";
+        try { sv = SGOmino.svg(c, { busto: true }); } catch (e) {}
+        var vb = /viewBox='([^']+)'/.exec(sv); imgDorme = { src: datauri(sv), vb: vb ? vb[1].split(" ").map(Number) : [24, 17, 151, 155] };
+      }
+      return imgDorme;
+    }
+    function misureAv(z) { var k = scala(0, z), h = 1.5 * k * 264 / 230; return { k: k, h: h, w: h * 200 / 264 }; }   // alto circa un metro e mezzo
     function posaAv() {
-      if (!av) return;
-      var a = P(avPos.x, 0, avPos.z), k = scala(0, avPos.z), h = 1.5 * k * 264 / 230, w = h * 200 / 264;   // alto circa un metro e mezzo
-      av.style.left = (a[0] - w / 2).toFixed(1) + "px"; av.style.top = (a[1] - h * 0.96).toFixed(1) + "px"; av.style.width = w.toFixed(1) + "px"; av.style.height = h.toFixed(1) + "px";
+      if (!av || avStato === "dorme" || avStato === "seduto") return;
+      var a = P(avPos.x, 0, avPos.z), m = misureAv(avPos.z);
+      av.style.left = (a[0] - m.w / 2).toFixed(1) + "px"; av.style.top = (a[1] - m.h * 0.96).toFixed(1) + "px"; av.style.width = m.w.toFixed(1) + "px"; av.style.height = m.h.toFixed(1) + "px";
       av.style.zIndex = 100 + Math.round((ZB - avPos.z) * 100);
       av.style.transform = avDir < 0 ? "scaleX(-1)" : "";   // girato verso dove cammina (l'immagine dentro fa i passi)
     }
-    function passeggia() {
-      if (!av || arreda || !document.body.contains(s)) return;
-      var da = { x: avPos.x, z: avPos.z }, a = { x: -1.7 + Math.random() * 3.4, z: ZMIN + 0.4 + Math.random() * (ZB - 0.6 - ZMIN - 0.4) }, t0 = performance.now();
-      var dist = Math.sqrt(Math.pow(a.x - da.x, 2) + Math.pow(a.z - da.z, 2)), dur = Math.max(900, dist * 1100);
-      avDir = a.x >= da.x ? 1 : -1; av.classList.add("cammina");
+    function saluta() { if (!av) return; av.classList.remove("saluta"); void av.offsetWidth; av.classList.add("saluta"); }
+    function vaiA(x, z, poi, lento) {   // cammina fino a lì, poi fa "poi"
+      if (!av) { if (poi) poi(); return; }
+      lasciaStare(); fermaAvatar();
+      x = Math.max(-XW + 0.3, Math.min(XW - 0.3, x)); z = Math.max(ZMIN, Math.min(ZB - 0.3, z));
+      var da = { x: avPos.x, z: avPos.z }, dist = Math.sqrt(Math.pow(x - da.x, 2) + Math.pow(z - da.z, 2)), dur = Math.max(250, dist * (lento ? 1100 : 750)), t0 = performance.now();
+      if (dist < 0.04) { posaAv(); if (poi) poi(); else aspetta(); return; }
+      avDir = x >= da.x ? 1 : -1; av.classList.add("cammina"); avStato = "cammina";
       (function passo(t) {
-        if (!document.body.contains(s) || arreda) { av.classList.remove("cammina"); return; }
-        var p = Math.min(1, (t - t0) / dur), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
-        avPos.x = da.x + (a.x - da.x) * e; avPos.z = da.z + (a.z - da.z) * e; posaAv();
-        if (p < 1) avAnim = requestAnimationFrame(passo); else { av.classList.remove("cammina"); avTimer = setTimeout(passeggia, 2500 + Math.random() * 3500); }
+        if (!document.body.contains(s) || arreda) { av.classList.remove("cammina"); avStato = "libero"; return; }
+        var p = Math.min(1, (t - t0) / dur), e = 0.6 * p + 0.4 * p * p * (3 - 2 * p);
+        avPos.x = da.x + (x - da.x) * e; avPos.z = da.z + (z - da.z) * e; posaAv();
+        if (p < 1) avAnim = requestAnimationFrame(passo);
+        else { av.classList.remove("cammina"); avStato = "libero"; if (poi) poi(); else aspetta(); }
       })(t0);
     }
-    function fermaAvatar() { clearTimeout(avTimer); cancelAnimationFrame(avAnim); if (av) av.classList.remove("cammina"); }
+    function aspetta() { clearTimeout(avTimer); if (!arreda) avTimer = setTimeout(passeggia, 10000 + Math.random() * 6000); }   // dopo un po' che non lo comandi, gira da solo
+    function passeggia() {
+      if (!av || arreda || avStato !== "libero" || !document.body.contains(s)) return;
+      vaiA(-1.7 + Math.random() * 3.4, ZMIN + 0.4 + Math.random() * (ZB - 1 - ZMIN), function () { avTimer = setTimeout(passeggia, 2500 + Math.random() * 3500); }, true);
+    }
+    function fermaAvatar() { clearTimeout(avTimer); cancelAnimationFrame(avAnim); if (av) av.classList.remove("cammina"); if (avStato === "cammina") avStato = "libero"; }
+    function lasciaStare() {   // smette quello che sta facendo: si alza, chiude il frigo, esce dalla doccia...
+      if (avUso) { var u = avUso; avUso = null; clearTimeout(u.timer); if (u.fine) u.fine(); }
+      if (avStato === "dorme" || avStato === "seduto") alzati();
+    }
+    function alzati() {
+      var d = avSu; avSu = null; clearInterval(zTimer);
+      if (copertaN) { if (copertaN.parentNode) copertaN.parentNode.removeChild(copertaN); copertaN = null; }
+      av.classList.remove("sdraiato", "seduto"); av._img.src = imgAv; av.style.transformOrigin = ""; avStato = "libero";
+      if (d) avPos.z = Math.max(ZMIN, d.z - (OGG[d.t].prof || 0.4) / 2 - 0.2);
+      posaAv();
+    }
+    function sulMobile(d, ux, uy, m) {   // un punto del disegno (in centimetri) sullo schermo
+      var g = geo(d), mm = misura(d.t), px = g.w / mm.w;
+      return { x: g.l + (d.flip ? mm.w - ux : ux) * px, y: g.t + uy * px, g: g, px: px };
+    }
+    function dormi(d) {
+      var o = OGG[d.t], q = sulMobile(d, o.cuscino[0], o.cuscino[1]), m = misureAv(d.z), dir = d.flip ? -1 : 1;
+      var im = imgAvDorme(), vb = im.vb, k = m.h / 264 * 0.9, MX = 100, MY = 148;   // MX, MY: il mento nel disegno dell'avatar
+      avStato = "dorme"; avSu = d; av.classList.add("sdraiato"); av._img.src = im.src;   // la testa sul cuscino, il resto sotto la coperta
+      av.style.left = (q.x - (MX - vb[0]) * k).toFixed(1) + "px"; av.style.top = (q.y - (MY - vb[1]) * k).toFixed(1) + "px"; av.style.width = (vb[2] * k).toFixed(1) + "px"; av.style.height = (vb[3] * k).toFixed(1) + "px";
+      av.style.transformOrigin = ((MX - vb[0]) / vb[2] * 100).toFixed(1) + "% " + ((MY - vb[1]) / vb[3] * 100).toFixed(1) + "%"; av.style.transform = "rotate(" + (-9 * dir) + "deg)"; av.style.zIndex = q.g.zi + 1;
+      copertaN = el("img", "ca-coperta"); copertaN.alt = ""; copertaN.src = imgOggetto(d.t, false, "coperta");   // la coperta rimboccata sopra
+      copertaN.style.left = q.g.l.toFixed(1) + "px"; copertaN.style.top = q.g.t.toFixed(1) + "px"; copertaN.style.width = q.g.w.toFixed(1) + "px"; copertaN.style.height = q.g.h.toFixed(1) + "px";
+      copertaN.style.zIndex = q.g.zi + 2; copertaN.style.transform = d.flip ? "scaleX(-1)" : ""; strato.appendChild(copertaN);
+      suono("molla");
+      var zx = q.x + dir * 40 * k, zy = q.y - 120 * k;
+      zTimer = setInterval(function () { zeta(zx, zy, dir); }, 1300); setTimeout(function () { if (avStato === "dorme") zeta(zx, zy, dir); }, 500);
+    }
+    function zeta(x, y, dir) { var z = el("i", "ca-zzz", "z"); z.style.left = x.toFixed(1) + "px"; z.style.top = y.toFixed(1) + "px"; z.style.setProperty("--dx", (dir * 22) + "px"); strato.appendChild(z); setTimeout(function () { if (z.parentNode) z.parentNode.removeChild(z); }, 2300); }
+    function siedi(d, posto) {
+      var o = OGG[d.t], q = sulMobile(d, posto, o.seduta), m = misureAv(d.z);
+      avStato = "seduto"; avSu = d; av.classList.add("seduto");
+      av.style.left = (q.x - m.w / 2).toFixed(1) + "px"; av.style.top = (q.y - m.h * 0.74).toFixed(1) + "px"; av.style.width = m.w.toFixed(1) + "px"; av.style.height = m.h.toFixed(1) + "px";   // il sedere sul cuscino, i piedi penzoloni
+      av.style.transform = ""; av.style.zIndex = q.g.zi + 1;
+      suono("molla");
+    }
+    function limiti(mezzo) {   // da dove a dove si vede la stanza sullo schermo (in unità del palco), lasciando "mezzo" ai bordi
+      var sc = scena.getBoundingClientRect(), pr = palco.getBoundingClientRect(), k = pr.width / W;
+      return [(sc.left - pr.left) / k + mezzo, (sc.right - pr.left) / k - mezzo];
+    }
+    function nuvoletta(t, dopo) {   // una nuvoletta sopra la testa (cosa prende dal frigo, le note della doccia...)
+      setTimeout(function () {
+        if (!av || !document.body.contains(s)) return;
+        var r = av.getBoundingClientRect(), p = puntoPalco({ clientX: r.left + r.width / 2, clientY: r.top }), lim = limiti(26);
+        var b = el("i", "ca-nuvola", t); b.style.left = Math.max(lim[0], Math.min(lim[1], p.x)).toFixed(1) + "px"; b.style.top = p.y.toFixed(1) + "px"; strato.appendChild(b);
+        setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 1700);
+      }, dopo || 0);
+    }
+    var bLook = el("button", "ca-bottone", "👕 Cambia look");   // davanti all'armadio aperto
+    bLook.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
+    bLook.onclick = function () { if (opts.vestiti) { lasciaStare(); fermaAvatar(); opts.vestiti(); } };
+    function davantiA(d, accanto) {   // dove si mette l'avatar per usare un oggetto: di solito di fianco, così si vede cosa succede
+      var o = OGG[d.t], base = d, lato, mezzo;
+      if (o.tipo === "tappeto") return { x: d.x, z: d.z };
+      if (o.tipo === "muro") {
+        mezzo = misura(d.t).w / 200 + 0.4; lato = avPos.x < d.x ? -1 : 1; if (Math.abs(d.x + lato * mezzo) > XW - 0.3) lato = -lato;
+        return { x: d.x + lato * mezzo, z: ZB - 0.5 };
+      }
+      if (d.su) stanza().oggetti.forEach(function (x) { if (x.u === d.su) base = x; });
+      var pr = (OGG[base.t].prof || 0.3) / 2;
+      if (!accanto) return { x: d.x, z: base.z - pr - 0.22 };
+      mezzo = largo(base.t) / 2 + 0.5; lato = o.lato ? o.lato * (base.flip ? -1 : 1) : avPos.x < base.x ? -1 : 1;
+      if (Math.abs(base.x + lato * mezzo) > XW - 0.3) lato = -lato;
+      if (Math.abs(base.x + lato * mezzo) > XW - 0.3) return { x: d.x, z: base.z - pr - 0.22 };   // non c'è spazio ai lati: davanti
+      return { x: base.x + lato * mezzo, z: base.z - pr + 0.08 };
+    }
+    function interagisci(d, p) {
+      var o = OGG[d.t], dv = davantiA(d), m = misura(d.t), sgn = d.flip ? -1 : 1;
+      if (!av) { var n0 = nodi[d.u]; n0.classList.remove("rimbalza"); void n0.offsetWidth; n0.classList.add("rimbalza"); return; }
+      if (avSu === d) { lasciaStare(); aspetta(); return; }   // tocchi il letto (o il divano) dove sta già: si alza
+      if (o.azione === "dormi") return vaiA(d.x + sgn * (o.cuscino[0] + 30 - m.w / 2) / 100, dv.z, function () { dormi(d); });
+      if (o.azione === "siedi") {
+        var posto = o.posti[0];
+        o.posti.forEach(function (ps) { if (Math.abs(sulMobile(d, ps, 0).x - p.x) < Math.abs(sulMobile(d, posto, 0).x - p.x)) posto = ps; });   // il posto più vicino a dove hai toccato
+        return vaiA(d.x + sgn * (posto - m.w / 2) / 100, dv.z, function () { siedi(d, posto); });
+      }
+      dv = davantiA(d, o.uso !== "doccia");
+      vaiA(dv.x, dv.z, function () { avDir = d.x >= avPos.x ? 1 : -1; posaAv(); usa(d); });   // arrivato, si gira verso l'oggetto
+    }
+    function usa(d) {
+      var o = OGG[d.t], n = nodi[d.u]; if (!n) return aspetta();
+      function spegni() { d.on = false; if (nodi[d.u]) posa(d); }
+      function finche(ms, fine) { avUso = { fine: fine, timer: setTimeout(function () { avUso = null; fine(); aspetta(); }, ms) }; }
+      if (o.stati === "accendi") { d.on = !d.on; posa(d); suono(d.on ? "accendi" : "spegni"); salva(); aspetta(); return; }
+      if (o.stati === "apri") {
+        d.on = true; posa(d); suono("apri");
+        if (/^frigo/.test(d.t)) nuvoletta(["🥛", "🍎", "🧀", "🍕", "🥕", "🍦"][Math.floor(Math.random() * 6)], 700);
+        if (o.vestiti && opts.vestiti) {
+          var g = geo(d);
+          strato.appendChild(bLook); var lim = limiti(bLook.offsetWidth / 2 + 8);   // dentro lo schermo, anche se l'armadio è tutto di lato
+          bLook.style.left = Math.max(lim[0], Math.min(lim[1], g.ax)).toFixed(1) + "px"; bLook.style.top = (g.t + g.h * 0.3).toFixed(1) + "px";
+          bLook.classList.remove("su"); void bLook.offsetWidth; bLook.classList.add("su");
+        }
+        finche(o.vestiti ? 7000 : 2600, function () { spegni(); suono("chiudi"); if (bLook.parentNode) bLook.parentNode.removeChild(bLook); });
+        return;
+      }
+      if (o.uso === "doccia") {   // entra, la tenda si chiude, canta sotto l'acqua, poi esce pulito
+        av.classList.add("dentro"); d.on = true; posa(d); suono("doccia"); nuvoletta("🎵", 900); nuvoletta("🎶", 2200);
+        finche(4200, function () { spegni(); av.classList.remove("dentro"); nuvoletta("✨", 200); saluta(); });
+        return;
+      }
+      if (o.uso === "wc" || o.uso === "acqua") { d.on = true; posa(d); suono(o.uso === "wc" ? "sciacquone" : "acqua"); finche(o.uso === "wc" ? 1500 : 2100, spegni); return; }
+      if (o.uso === "suona") { n.classList.remove("trema"); void n.offsetWidth; n.classList.add("trema"); suono("dring"); aspetta(); return; }
+      n.classList.remove("rimbalza"); void n.offsetWidth; n.classList.add("rimbalza"); saluta(); aspetta();   // il resto: lo tocca e lo guarda
+    }
+    var meta = el("i", "ca-meta");   // il segno sul pavimento dove hai toccato
+    function segno(x, z) {
+      var a = P(x, 0, z), k = scala(0, z), w = 0.6 * k, h = Math.abs(P(x, 0, z - 0.3)[1] - P(x, 0, z + 0.3)[1]);
+      meta.style.left = (a[0] - w / 2).toFixed(1) + "px"; meta.style.top = (a[1] - h / 2).toFixed(1) + "px"; meta.style.width = w.toFixed(1) + "px"; meta.style.height = h.toFixed(1) + "px";
+      if (meta.parentNode !== strato) strato.appendChild(meta);
+      meta.classList.remove("su"); void meta.offsetWidth; meta.classList.add("su");
+    }
+    function toccaPavimento(e) {
+      var p = puntoPalco(e), f = daSchermo(p.x, p.y, 0), x, z;
+      if (!f || f.z > ZB - 0.3) { x = daMuro(p.x, p.y).x; z = ZB - 0.35; } else { x = f.x; z = f.z; }   // toccando la parete va lì sotto
+      x = Math.max(-XW + 0.3, Math.min(XW - 0.3, x)); z = Math.max(ZMIN, Math.min(ZB - 0.3, z));
+      segno(x, z); vaiA(x, z);
+    }
 
     // ---- toccare e trascinare ----
     var drag = null;
+    function largo(t) { var o = OGG[t]; return o.corpo ? (o.corpo[1] - o.corpo[0]) / 100 : misura(t).w / 100; }   // quanto è largo il mobile (senza le ante aperte)
     function figliDi(d) { return stanza().oggetti.filter(function (x) { return x.su === d.u; }); }
     function deseleziona() { sel = null; tool.classList.remove("su"); [].forEach.call(strato.children, function (n) { n.classList.remove("scelto"); }); }
     function seleziona(d) {
@@ -600,14 +817,14 @@
     function metiVia(d) {
       var lista = [d].concat(figliDi(d)), sz = stanza();
       lista.forEach(function (x) {
-        var n = nodi[x.u]; if (n) { n.classList.add("via"); (function (n) { setTimeout(function () { if (n.parentNode) n.parentNode.removeChild(n); }, 320); })(n); delete nodi[x.u]; }
+        var n = nodi[x.u]; if (n) { n.classList.add("via"); if (n._luce && n._luce.parentNode) n._luce.parentNode.removeChild(n._luce); (function (n) { setTimeout(function () { if (n.parentNode) n.parentNode.removeChild(n); }, 320); })(n); delete nodi[x.u]; }
         sz.oggetti = sz.oggetti.filter(function (y) { return y !== x; }); casa.baule.push(x.t);
       });
       deseleziona(); suono("baule"); dimmi("Messo nel baule 🧳"); salva(); if (arreda) disegnaCassetto();
       var tb = cTabs.querySelector("[data-id='baule']"); if (tb) { tb.classList.remove("pulsa"); void tb.offsetWidth; tb.classList.add("pulsa"); }
     }
     function tocco(e, d) {
-      if (!arreda) { var n0 = nodi[d.u]; n0.classList.remove("rimbalza"); void n0.offsetWidth; n0.classList.add("rimbalza"); return; }
+      if (!arreda) { interagisci(d, puntoPalco(e)); return; }   // fuori dall'Arreda: l'avatar ci va e lo usa
       e.preventDefault(); e.stopPropagation();
       var p = puntoPalco(e), g = geo(d);
       drag = { d: d, id: e.pointerId, sx: p.x, sy: p.y, ox: p.x - g.ax, oy: p.y - g.ay, mosso: false, vx: 0, ult: p, figli: figliDi(d).map(function (f) { return { f: f, dx: f.x - d.x }; }), su0: d.su };
@@ -616,8 +833,8 @@
     function sopraUnMobile(d, ax, ay) {   // un oggetto piccolo appoggiato sopra un mobile col ripiano?
       var trovato = null;
       stanza().oggetti.forEach(function (m) {
-        var o = OGG[m.t]; if (!o.piano || m === d || OGG[m.t].tipo !== "pav") return;
-        var yP = o.piano / 100, a = P(m.x, yP, m.z), w = misura(m.t).w / 100 * scala(yP, m.z);
+        var o = OGG[m.t]; if (!o.piano || m === d || o.tipo !== "pav") return;
+        var yP = o.piano / 100, a = P(m.x, yP, m.z), w = largo(m.t) * scala(yP, m.z);
         if (ax > a[0] - w / 2 && ax < a[0] + w / 2 && ay > a[1] - 30 && ay < a[1] + 16) { if (!trovato || m.z < trovato.z) trovato = m; }
       });
       return trovato;
@@ -636,11 +853,11 @@
         if (drag.bersaglio && drag.bersaglio !== mob && nodi[drag.bersaglio.u]) nodi[drag.bersaglio.u].classList.remove("bersaglio");
         if (mob && nodi[mob.u]) nodi[mob.u].classList.add("bersaglio"); drag.bersaglio = mob;   // il mobile su cui si appoggia si illumina
         if (mob) {
-          var yP = OGG[mob.t].piano / 100, wm = misura(mob.t).w / 100, ks = scala(yP, mob.z), aa = P(mob.x, yP, mob.z);
+          var yP = OGG[mob.t].piano / 100, wm = largo(mob.t), ks = scala(yP, mob.z), aa = P(mob.x, yP, mob.z);
           d.su = mob.u; d.y = yP; d.z = mob.z - 0.01; d.x = Math.max(mob.x - wm / 2 + wM / 2, Math.min(mob.x + wm / 2 - wM / 2, mob.x + (ax - aa[0]) / ks));
         } else {
           f = daSchermo(ax, ay, 0); d.su = null; d.y = 0;
-          if (f) { var pr = (o.prof || 0.3) / 2; d.x = Math.max(-XW + wM / 2, Math.min(XW - wM / 2, f.x)); d.z = Math.max(ZMIN, Math.min(ZB - pr, f.z)); }
+          if (f) { var pr = (o.prof || 0.3) / 2; d.x = Math.max(-XW + largo(d.t) / 2, Math.min(XW - largo(d.t) / 2, f.x)); d.z = Math.max(ZMIN, Math.min(ZB - pr, f.z)); }
         }
       }
       posa(d);
@@ -665,7 +882,10 @@
     }
     palco.addEventListener("pointermove", muovi);
     palco.addEventListener("pointerup", lascia); palco.addEventListener("pointercancel", lascia);
-    palco.addEventListener("pointerdown", function (e) { if (arreda && !e.target.closest(".ca-ogg") && !e.target.closest(".ca-tool")) deseleziona(); });
+    palco.addEventListener("pointerdown", function (e) {
+      if (arreda) { if (!e.target.closest(".ca-ogg") && !e.target.closest(".ca-tool")) deseleziona(); return; }
+      if (av && !e.target.closest(".ca-ogg, .ca-av, .ca-bottone")) toccaPavimento(e);   // fuori dall'Arreda: tocchi il pavimento e l'avatar va lì
+    });
     function polvere(d) {   // uno sbuffo di polvere quando si posa (solo transform e opacity)
       var g = geo(d), n = OGG[d.t].tipo === "muro" ? 4 : 7;
       for (var i = 0; i < n; i++) {
@@ -677,7 +897,7 @@
 
     // ---- l'Arreda: il cassetto in basso col baule, le pareti, i pavimenti e il negozio ----
     function entraArreda() {
-      arreda = true; s.classList.add("arreda"); fermaAvatar(); cassetto.classList.add("su"); bArreda.textContent = "✓ Fatto";
+      arreda = true; s.classList.add("arreda"); lasciaStare(); fermaAvatar(); cassetto.classList.add("su"); bArreda.textContent = "✓ Fatto";
       disegnaCassetto(); dimmi("Trascina i mobili dove vuoi ✨");
     }
     function esciArreda() {
@@ -733,7 +953,7 @@
     // ---- partenza ----
     s._monta = function () {
       (function prova() { if (!document.body.contains(s)) return; if (!stendi()) return requestAnimationFrame(prova); })();
-      disegnaStanza(); aggMonete(); if (av) { posaAv(); avTimer = setTimeout(passeggia, 1200); }
+      disegnaStanza(); aggMonete(); if (av) { posaAv(); clearTimeout(avTimer); avTimer = setTimeout(passeggia, 1200); }
       window.addEventListener("resize", function ridim() { if (!document.body.contains(s)) return window.removeEventListener("resize", ridim); stendi(); });
     };
     return s;

@@ -1196,7 +1196,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .ca-oggetti{ position:absolute; left:0; top:0; width:360px; height:640px; }
 .ca-ogg{ position:absolute; transform-origin:50% 100%; touch-action:none; -webkit-tap-highlight-color:transparent; }
 .ca-ogg img{ position:relative; z-index:1; width:100%; height:100%; display:block; transform-origin:50% 100%; pointer-events:none; -webkit-user-drag:none; }
-.ca-ogg::after{ content:""; position:absolute; left:4%; right:4%; bottom:-4%; height:12%; border-radius:50%; background:radial-gradient(closest-side, rgba(30,15,5,.38), rgba(30,15,5,0)); transition:transform .15s, opacity .15s; }
+.ca-ogg::after{ content:""; position:absolute; left:var(--ol,4%); right:var(--or,4%); bottom:-4%; height:12%; border-radius:50%; background:radial-gradient(closest-side, rgba(30,15,5,.38), rgba(30,15,5,0)); transition:transform .15s, opacity .15s; }
 .ca-ogg.tappeto::after, .ca-ogg.muro::after{ display:none; }
 .casa-vista.arreda .ca-ogg{ cursor:grab; }
 .ca-ogg.su{ transform:translateY(-9px) scale(1.07); z-index:900 !important; cursor:grabbing; }
@@ -1213,18 +1213,41 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .ca-sbuffo{ position:absolute; z-index:950; width:9px; height:9px; margin:-5px 0 0 -5px; border-radius:50%; background:rgba(240,230,210,.85); pointer-events:none; animation:caSbuffo .6s ease-out forwards; }
 @keyframes caSbuffo{ from{ transform:translate(0,0) scale(.6); opacity:.9; } to{ transform:translate(var(--dx,0), -12px) scale(2.1); opacity:0; } }
 /* l'avatar che gira per casa */
-.ca-av{ position:absolute; transform-origin:50% 100%; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:opacity .3s; }
+.ca-av{ position:absolute; transform-origin:50% 100%; pointer-events:none; -webkit-tap-highlight-color:transparent; transition:opacity .3s; }
 .ca-av img{ width:100%; height:100%; display:block; transform-origin:50% 100%; pointer-events:none; }
 .ca-av::after{ content:""; position:absolute; left:22%; right:22%; bottom:2%; height:7%; border-radius:50%; background:radial-gradient(closest-side, rgba(0,0,0,.35), rgba(0,0,0,0)); z-index:-1; }
 .ca-av.cammina img{ animation:caPasso .42s ease-in-out infinite; }
 @keyframes caPasso{ 50%{ transform:translateY(-3%) rotate(2deg); } }
 .ca-av.saluta img{ animation:caSalta .55s ease; }
 @keyframes caSalta{ 40%{ transform:translateY(-14%); } 70%{ transform:translateY(0) scale(1.04,.96); } }
-.casa-vista.arreda .ca-av{ opacity:0; pointer-events:none; }
+.casa-vista.arreda .ca-av, .casa-vista.arreda .ca-zzz, .casa-vista.arreda .ca-nuvola, .casa-vista.arreda .ca-meta{ opacity:0; visibility:hidden; pointer-events:none; transition:opacity .2s, visibility 0s .2s; }   /* in Arreda il personaggio sparisce: non dà fastidio mentre sposti i mobili */
+.ca-av.sdraiato::after, .ca-av.seduto::after{ display:none; }
+.ca-av.dentro{ opacity:0; pointer-events:none; }   /* sotto la doccia, dietro la tenda */
+.ca-av > b{ position:absolute; left:26%; right:26%; top:6%; bottom:3%; border-radius:40% 40% 18% 18%; pointer-events:auto; cursor:pointer; }   /* si tocca solo il corpo, non i lati vuoti del disegno */
+.casa-vista.arreda .ca-av > b, .ca-av.dentro > b{ pointer-events:none; }
+.ca-coperta{ position:absolute; pointer-events:none; -webkit-user-drag:none; }
+/* le cose che si usano: il chiarore delle luci, la sveglia che suona */
+.ca-luce{ position:absolute; border-radius:50%; pointer-events:none; opacity:.85; animation:caAccendi .35s ease; }
+.ca-luce.tv{ animation:caAccendi .35s ease, caTv 2.4s steps(1) .35s infinite; }
+@keyframes caAccendi{ from{ opacity:0; transform:scale(.6); } }
+@keyframes caTv{ 0%{ opacity:.7; } 20%{ opacity:.9; } 45%{ opacity:.6; } 70%{ opacity:.85; } 85%{ opacity:.68; } }
+.ca-ogg.trema img{ animation:caTrema .09s linear 10; }
+@keyframes caTrema{ 0%,100%{ transform:rotate(-9deg); } 50%{ transform:rotate(9deg) translateY(-1px); } }
+/* il segno sul pavimento dove hai toccato, le "z" di chi dorme, la nuvoletta sopra la testa */
+.ca-meta{ position:absolute; z-index:50; border-radius:50%; border:2.5px solid rgba(255,255,255,.95); box-shadow:0 0 0 2px rgba(59,43,34,.22), inset 0 0 6px rgba(255,255,255,.6); pointer-events:none; opacity:0; }
+.ca-meta.su{ animation:caMeta 1s ease-out forwards; }
+@keyframes caMeta{ 0%{ transform:scale(1.7); opacity:0; } 25%{ transform:scale(1); opacity:1; } 70%{ opacity:.9; } 100%{ transform:scale(.85); opacity:0; } }
+.ca-zzz{ position:absolute; z-index:960; font-style:normal; font-weight:900; font-size:15px; line-height:1; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.55); pointer-events:none; animation:caZzz 2.2s ease-out forwards; }
+@keyframes caZzz{ 0%{ transform:translate(0,0) scale(.5); opacity:0; } 20%{ opacity:1; } 100%{ transform:translate(var(--dx,20px),-42px) scale(1.5); opacity:0; } }
+.ca-nuvola{ position:absolute; z-index:960; font-style:normal; font-size:22px; line-height:1; padding:6px 8px; border-radius:16px; background:#fff; box-shadow:0 3px 8px rgba(0,0,0,.25); pointer-events:none; animation:caNuvola 1.7s ease forwards; }
+@keyframes caNuvola{ 0%{ transform:translate(-50%,-80%) scale(.3); opacity:0; } 15%{ transform:translate(-50%,-100%) scale(1.06); opacity:1; } 25%{ transform:translate(-50%,-100%) scale(1); opacity:1; } 80%{ transform:translate(-50%,-112%); opacity:1; } 100%{ transform:translate(-50%,-125%); opacity:0; } }
+.ca-bottone{ position:absolute; z-index:960; transform:translate(-50%,-50%); border:0; border-radius:999px; padding:8px 12px; font:inherit; font-weight:900; font-size:.8rem; white-space:nowrap; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#f2b324); box-shadow:0 4px 12px rgba(0,0,0,.35); cursor:pointer; }
+.ca-bottone.su{ animation:caBottone .35s cubic-bezier(.3,1.5,.5,1); }
+@keyframes caBottone{ from{ transform:translate(-50%,-50%) scale(.3); opacity:0; } }
 /* in alto: indietro, la stanza, le monete */
 .ca-testa{ position:absolute; z-index:20; left:10px; right:10px; top:calc(10px + env(safe-area-inset-top)); display:flex; align-items:center; gap:10px; pointer-events:none; }
 .ca-testa > *{ pointer-events:auto; }
-.ca-indietro{ flex:none; width:44px; height:44px; border-radius:50%; border:0; cursor:pointer; font:900 1.6rem/1 inherit; color:#3b2b22; background:#fffaf0; box-shadow:0 4px 12px rgba(0,0,0,.3); }
+.ca-indietro{ flex:none; width:44px; height:44px; border-radius:50%; border:0; cursor:pointer; font:inherit; font-weight:900; font-size:1.6rem; line-height:1; color:#3b2b22; background:#fffaf0; box-shadow:0 4px 12px rgba(0,0,0,.3); }
 .ca-titolo{ flex:0 1 auto; margin:0 auto; padding:7px 16px; border-radius:999px; text-align:center; font-weight:900; font-size:1rem; letter-spacing:.06em; color:#3b2b22; background:rgba(255,250,240,.92); box-shadow:0 4px 12px rgba(0,0,0,.25); pointer-events:none; }
 .ca-monete{ flex:none; padding:8px 12px; border-radius:999px; font-weight:900; font-size:.86rem; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#f2b324); box-shadow:0 4px 12px rgba(0,0,0,.3); }
 .ca-monete.pulsa{ animation:caPulsa .5s ease; }
@@ -1233,9 +1256,9 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .ca-giu{ position:absolute; z-index:20; left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); display:flex; gap:8px; align-items:stretch; max-width:540px; margin:0 auto; transition:transform .3s, opacity .3s; }
 .casa-vista.arreda .ca-giu{ transform:translateY(130%); opacity:0; pointer-events:none; }
 .ca-stanze{ flex:1; display:flex; gap:4px; padding:4px; border-radius:18px; background:rgba(255,250,240,.92); box-shadow:0 6px 18px rgba(0,0,0,.3); }
-.ca-tab{ flex:1; border:0; border-radius:14px; padding:10px 4px; font:800 .86rem inherit; color:#5a4636; background:transparent; cursor:pointer; }
+.ca-tab{ flex:1; border:0; border-radius:14px; padding:10px 4px; font:inherit; font-weight:800; font-size:.86rem; color:#5a4636; background:transparent; cursor:pointer; }
 .ca-tab.on{ background:#3b2b22; color:#fff3d6; }
-.ca-arreda{ flex:none; border:0; border-radius:18px; padding:0 16px; font:900 .95rem inherit; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#f2b324); box-shadow:0 6px 18px rgba(0,0,0,.3); cursor:pointer; }
+.ca-arreda{ flex:none; border:0; border-radius:18px; padding:0 16px; font:inherit; font-weight:900; font-size:.95rem; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#f2b324); box-shadow:0 6px 18px rgba(0,0,0,.3); cursor:pointer; }
 /* il cassetto dell'Arreda */
 .ca-cassetto{ position:absolute; z-index:30; left:0; right:0; bottom:0; max-width:620px; margin:0 auto; padding:10px 10px calc(12px + env(safe-area-inset-bottom)); border-radius:22px 22px 0 0;
   background:linear-gradient(180deg,#fffaf0,#f1e6d2); box-shadow:0 -10px 30px rgba(0,0,0,.35); transform:translateY(105%); transition:transform .32s cubic-bezier(.2,.9,.3,1), box-shadow .2s; }
@@ -1245,10 +1268,10 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .ca-ctesta{ display:flex; gap:8px; align-items:center; margin-bottom:8px; }
 .ca-ctabs{ flex:1; display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; }
 .ca-ctabs::-webkit-scrollbar{ display:none; }
-.ca-ctab{ flex:none; border:0; border-radius:999px; padding:8px 11px; font:800 .8rem inherit; color:#5a4636; background:rgba(59,43,34,.08); cursor:pointer; }
+.ca-ctab{ flex:none; border:0; border-radius:999px; padding:8px 11px; font:inherit; font-weight:800; font-size:.8rem; color:#5a4636; background:rgba(59,43,34,.08); cursor:pointer; }
 .ca-ctab.on{ background:#3b2b22; color:#fff3d6; }
 .ca-ctab.pulsa{ animation:caPulsa .5s ease 2; }
-.ca-fatto{ flex:none; border:0; border-radius:999px; padding:9px 14px; font:900 .85rem inherit; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#f2b324); cursor:pointer; }
+.ca-fatto{ flex:none; border:0; border-radius:999px; padding:9px 14px; font:inherit; font-weight:900; font-size:.85rem; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#f2b324); cursor:pointer; }
 .ca-clista{ display:grid; grid-auto-flow:column; grid-auto-columns:92px; grid-template-rows:112px; gap:8px; overflow-x:auto; overscroll-behavior:contain; padding-bottom:4px; scrollbar-width:none; }
 .ca-clista::-webkit-scrollbar{ display:none; }
 .ca-pezzo{ position:relative; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:2px; padding:6px 4px; border:0; border-radius:14px; background:#fff; box-shadow:0 2px 6px rgba(59,43,34,.15), inset 0 0 0 1.5px rgba(59,43,34,.08); cursor:pointer; font-family:inherit; color:#3b2b22; }

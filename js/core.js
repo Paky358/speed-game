@@ -563,11 +563,12 @@
     if (io && String(io.nome || "").trim().toUpperCase() === "IL PAPPONE") return true;
     try { return localStorage.getItem("sg-casa-prova") === "1"; } catch (e) { return false; }
   }
-  function schermataCasa() {
+  function schermataCasa(stanza) {
     if (!window.SGCasa) return schermataCitta();
     var io = profiloAttivo(), dati = null;
     try { dati = JSON.parse(localStorage.getItem("sg-casa-anteprima") || "null"); } catch (e) {}
-    var s = SGCasa.crea({ avatar: io && io.omino, nome: io && io.nome, dati: dati, audio: audioCtx,
+    var s = SGCasa.crea({ avatar: io && io.omino, nome: io && io.nome, dati: dati, audio: audioCtx, stanza: stanza,
+      vestiti: function () { schermataOmino(function () { schermataCasa("camera"); }); },   // dall'armadio aperto: si cambia il look e si torna in camera
       salva: function (c) { try { localStorage.setItem("sg-casa-anteprima", JSON.stringify(c)); } catch (e) {} },
       indietro: function () { schermataCitta(); } });
     mostra(s); s._monta();
