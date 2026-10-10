@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 176,
+    data: "10 ottobre 2026",
+    titolo: "Trofei per Horto Muso 🏇",
+    descrizione: [
+      "Arrivano 20 trofei: dalle prime corse ai podi, fino alle vittorie contro i bot più bravi e alle sfide online.",
+      "I risultati vengono salvati una volta sola per corsa e contano solo con il tuo profilo."
+    ]
+  },
+  {
     v: 175,
     data: "10 ottobre 2026",
     titolo: "Le tue statistiche 📊",
