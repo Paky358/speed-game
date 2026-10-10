@@ -44,7 +44,7 @@
     scopa: "carte", scopa2v2: "carte", scopone: "carte", blackjack: "carte", poker: "carte", ruota: "parole", ordine: "parole",
     tris: "sfida", drop4: "sfida", hockey: "sfida", navale: "sfida", calciobiliardo: "sfida",
     asta: "festa", impostore: "festa", sipero: "festa", scarabocchio: "festa",
-    scalinata: "mini", horto: "mini", pendolo: "mini",
+    scalinata: "mini", horto: "mini", pendolo: "mini", pallamatta: "mini",
     timeline: "parole", nomicose: "parole", patata: "parole", taboo: "parole"
   };
   var catAttiva = "tutti";

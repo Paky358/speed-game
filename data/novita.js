@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 180,
+    data: "11 ottobre 2026",
+    titolo: "Nuovo gioco: Palla Matta 🔴",
+    descrizione: [
+      "Dal cannone in alto spari una pallina che rimbalza sui pioli: trascina il dito per mirare (i puntini mostrano la strada) e lascia per tirare.",
+      "Fai scoppiare tutti i pioli arancioni con 10 palline. Più arancioni prendi, più vale ogni piolo: x2, x3, x5, fino a x10.",
+      "Il piolo viola vale 500 punti; i verdi attivano il tuo aiutante: Bomba, Multipalla, Mira lunga o Palla di fuoco. Il secchio che si muove in fondo ti ridà la pallina.",
+      "Con l'ultimo arancione: rallentatore e Febbre Matta, coi secchi da 10.000 a 50.000 punti e l'Inno alla gioia.",
+      "12 livelli da sbloccare, con 3 stelle e il record per ognuno. È nella Sala giochi. Presto anche la sfida con gli amici."
+    ]
+  },
+  {
     v: 179,
     data: "10 ottobre 2026",
     titolo: "Trofei per Horto Muso e Scarabocchio 🏇🎨",
