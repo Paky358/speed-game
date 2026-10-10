@@ -2,7 +2,7 @@
    SPeeD GAME — OMINI personalizzabili (stile Mii)
    Disegnati in SVG col codice: niente immagini, leggerissimi.
    Volume con sfumature morbide, ciocche, pieghe dei vestiti.
-   SGOmino.svg(cfg, {busto, px})  -> stringa SVG
+   SGOmino.svg(cfg, {busto, px, braccia})  -> stringa SVG (braccia: "uno" o "su" = alzate per esultare)
    SGOmino.el(cfg, opts)          -> elemento pronto
    SGOmino.casuale(seme)          -> omino a caso (sempre uguale per lo stesso seme)
    ========================================================= */
@@ -622,9 +622,11 @@
     var manica = { maglietta: 0.45, polo: 0.45, calcio: 0.45, canotta: 0, crop: 0.42, top: 0, vestito: 0.22, vestitolungo: 0.22, grembiule: 0.45 }[c.capo]; if (manica == null) manica = 1;
     var gilet = c.capo === "gilet", MS = gilet ? "#f4f4f6" : M, bMS = gilet ? "#b9bcc6" : bM;   // col gilet le maniche sono della camicia bianca
     if (gilet) o.push("<defs>" + lin("ms", 0.35, 1, [[0, "#ffffff"], [0.5, "#eef0f4"], [1, "#c6c9d3"]]) + "</defs>");   // quanta parte del braccio copre la manica
+    var bracciaSopra = [];   // le braccia alzate si disegnano per ultime, davanti alla testa e al corpo
     [1, -1].forEach(function (s) {
       var a = 100 + s * (ax - 100), h = 100 + s * (hx - 100), Pb = [[a, 166], [a - s * 12, 172], [h, 184], [h, 197]], d = curva(Pb);
-      o.push("<g class='om-braccio om-b" + (s === 1 ? 1 : 2) + "'>");   // gruppo a parte: nell'editor l'omino saluta
+      var alza = opts.braccia === "su" || (opts.braccia === "uno" && s === -1) ? (s === 1 ? 128 : -128) : 0, inizio = o.length;   // esulta: braccio (o braccia) in alto, un po' in fuori
+      o.push("<g class='om-braccio om-b" + (s === 1 ? 1 : 2) + "'" + (alza ? " transform='rotate(" + alza + " " + a.toFixed(1) + " 166)'" : "") + ">");   // gruppo a parte: nell'editor l'omino saluta
       if (manica < 1) o.push("<path d='" + d + "' stroke='" + bP + "' stroke-width='" + (aw + 2) + "' stroke-linecap='round' fill='none'/>",
         "<path d='" + d + "' stroke='" + u("pl") + "' stroke-width='" + (aw - 1.5) + "' stroke-linecap='round' fill='none'/>");
       if (manica > 0) {
@@ -642,6 +644,7 @@
       o.push("<circle cx='" + h + "' cy='204' r='" + (aw / 2 + 0.5) + "' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1.3'/>",
         "<circle cx='" + (h + s * (aw / 2 - 1)) + "' cy='201' r='" + (aw / 5 + 0.8) + "' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1'/>",
         "<path d='M" + (h - 2.2) + ",206.5 L" + (h - 2.2) + ",208.5 M" + (h + 0.8) + ",206.8 L" + (h + 0.8) + ",208.8' stroke='" + bP + "' stroke-width='.9' opacity='.55' stroke-linecap='round'/>", "</g>");
+      if (alza) Array.prototype.push.apply(bracciaSopra, o.splice(inizio));   // alzato: lo tolgo da qui, va disegnato per ultimo
     });
     // busto: maglia con scollo, pieghe, cuciture e orlo
     var tor = donna
@@ -1681,7 +1684,7 @@
     // busto (tondini): inquadratura che segue la grandezza della testa, così la faccia resta grande
     var vb = opts.busto ? [100 - 89 * kT, 150 - 156 * kT, 178 * kT, 182 * kT].map(function (n) { return n.toFixed(1); }).join(" ") : (opts.gambe ? "40 150 120 112" : (opts.viso ? "60 74 80 80" : "0 0 200 264"));   // gambe: inquadratura sui pantaloni; viso: primo piano (per il trucco)
     var px = opts.px ? " width='" + opts.px + "' height='" + Math.round(opts.px * (opts.busto ? 182 / 178 : 1.32)) + "'" : "";
-    return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='" + vb + "'" + px + " class='omino'>" + o.join("") + "</svg>";
+    return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='" + vb + "'" + px + " class='omino'>" + o.join("") + bracciaSopra.join("") + "</svg>";
   }
 
   function el(cfg, opts) { var s = document.createElement("span"); s.className = "omino-box"; s.innerHTML = svg(cfg, opts); return s; }

@@ -283,7 +283,10 @@
   var cacheAv = {};
   var FACCE = { esulta: { occhi: "felici", sopracc: "alzate", bocca: "sorrisone" }, triste: { occhi: "dolci", sopracc: "preoccupate", bocca: "smorfia" },
     pensa: { occhi: "assonnati", sopracc: "alzate", bocca: "neutro" }, paura: { occhi: "grandi", sopracc: "preoccupate", bocca: "nervoso" },
-    esploso: { occhi: "chiusi", sopracc: "preoccupate", bocca: "o" } };
+    esploso: { occhi: "chiusi", sopracc: "preoccupate", bocca: "o" },
+    arrabbiato: { occhi: "tondi", sopracc: "arrabbiate", bocca: "nervoso" },   // il capo quando la squadra sbaglia
+    evviva: { occhi: "felici", sopracc: "alzate", bocca: "risata" } };          // esultanza col braccio alzato
+  var BRACCIA = { evviva: "uno" };   // facce che alzano anche il braccio
   // l'avatar di un giocatore: quello che ha mandato (online), il mio profilo se è il mio nome, sennò uno fisso dal nome
   function avatarDi(g, faccia) {
     if (!window.SGOmino || !g) return "";
@@ -291,7 +294,8 @@
     if (!cfg) { var p = window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo(); cfg = (p && p.omino && p.nome === g.nome) ? p.omino : SGOmino.casuale(g.nome || "?"); }
     if (faccia && FACCE[faccia]) { var c2 = {}, n; for (n in cfg) c2[n] = cfg[n]; for (n in FACCE[faccia]) c2[n] = FACCE[faccia][n]; cfg = c2; }
     var k = JSON.stringify(cfg);
-    if (!cacheAv[k]) { try { cacheAv[k] = SGOmino.svg(cfg, { busto: true }); } catch (e) { cacheAv[k] = ""; } }
+    if (faccia && BRACCIA[faccia]) k += "|" + BRACCIA[faccia];
+    if (!cacheAv[k]) { try { cacheAv[k] = SGOmino.svg(cfg, { busto: true, braccia: BRACCIA[faccia] }); } catch (e) { cacheAv[k] = ""; } }
     return cacheAv[k];
   }
 
@@ -552,6 +556,17 @@
     preparaSuoni();
     Musica.avvia();
     avviaEq(S);
+    // mentre si scrive (es. il capo di Parola d'ordine dà l'indizio) lo studio resta alto com'era:
+    // sull'iPhone la tastiera fa "accorciare" lo schermo e lo studio rimpicciolito lasciava sotto il blu vuoto.
+    // Così invece il telefono sposta solo la vista per far vedere la casella sopra la tastiera, e la telecamera non si muove.
+    function scrive(e) { return e && /^(INPUT|TEXTAREA)$/.test(e.tagName) && S.vista.contains(e); }
+    function congela(si) {
+      var sch = S.vista.closest && S.vista.closest(".schermata");
+      [S.vista, sch].forEach(function (e) { if (!e) return; e.style.height = si ? S.VH + "px" : ""; e.style.maxHeight = si ? "none" : ""; });
+      if (!si) suResize();
+    }
+    S.vista.addEventListener("focusin", function (e) { if (scrive(e.target)) congela(true); });
+    S.vista.addEventListener("focusout", function () { setTimeout(function () { if (S.vivo() && !scrive(document.activeElement)) congela(false); }, 350); });
     // se cambia la misura dello schermo ridisegno lo studio (una volta, dopo che si è assestato)
     var toR = null;
     function suResize() {

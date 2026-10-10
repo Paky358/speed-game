@@ -636,7 +636,7 @@
       B.k = key;
       while (B.gente.firstChild) B.gente.removeChild(B.gente.firstChild);
       mem.forEach(function (p) {
-        B.gente.appendChild(ui.el("div", { class: "or-persona" + (p.via ? " via" : ""), "data-id": p.id }, [
+        B.gente.appendChild(ui.el("div", { class: "or-persona" + (p.via ? " via" : "") + (B.facce[p.id] === "evviva" ? " evviva" : ""), "data-id": p.id }, [
           ui.el("img", { src: srcAvatarBanco(ui, p.id, p.nome, B.facce[p.id]), alt: "" }), ui.el("span", { text: p.nome }) ]));
       });
     });
@@ -706,16 +706,58 @@
       }],
       [2800, function () { ST.suSchermo(S, 900); }], [900, function () {}]], true);
   }
-  function reazione(ui, vm, e) {   // una parola girata: le facce del capo e di chi l'ha girata (contente, tristi, esplose)
-    var S = ui.S, f = e.oro || e.c === e.k ? "esulta" : e.c === "x" ? "esploso" : "triste", B = ui.banchi[e.k];
-    ST.faccia(S, e.k, f);
-    if (B && e.id !== vm.capo[e.k]) { B.facce[e.id] = f; aggiornaBanchi(ui, vm); }
-    clearTimeout(ui["tr" + e.k]);
-    ui["tr" + e.k] = setTimeout(function () {
-      if (!S.vivo() || ui.finita) return;
-      ST.faccia(S, e.k, null);
-      if (B) { B.facce = {}; aggiornaBanchi(ui, ui.vm); }
-    }, 2200);
+  // la telecamera sul bancone di una squadra (tutti i giocatori dentro l'inquadratura)
+  function suBanco(ui, k, ms) {
+    var S = ui.S, B = ui.banchi[k]; if (!B) return;
+    ST.inquadra(S, function () { var b = B.box, w = b.w * 1.15, h = w * S.VH / S.VW; return { x: b.x + b.w / 2 - w / 2, y: b.y + b.h / 2 - h / 2, w: w, h: h }; }, ms);
+  }
+  function festaBanco(ui, k, si) {   // la squadra al bancone esulta col braccio alzato (o torna normale)
+    var B = ui.banchi[k], vm = ui.vm; if (!B) return;
+    B.facce = {};
+    if (si) (vm.players || []).forEach(function (p) { if (p.team === k && p.id !== vm.capo[k]) B.facce[p.id] = "evviva"; });
+    aggiornaBanchi(ui, vm);
+  }
+  function fumettoCapo(ui, k, testo) {   // il capo dice qualcosa dal suo podio (la stessa vignetta dell'indizio)
+    var S = ui.S, p = S.posti[k] || S.posti[0], V = ui.vignetta;
+    V.style.left = p.cx + "px"; V.style.top = (p.top + p.w * 0.04) + "px"; V.style.fontSize = (p.w * 0.12).toFixed(1) + "px";
+    while (V.firstChild) V.removeChild(V.firstChild);
+    V.appendChild(document.createTextNode(testo)); V.style.setProperty("--c", SQ[k] ? SQ[k].col : "#1f1f1f");
+    V.classList.remove("su"); void V.offsetWidth; V.classList.add("su");
+  }
+  // una parola girata. Giusta (o d'oro): la telecamera va sul bancone della squadra, che esulta col braccio alzato.
+  // Sbagliata: la telecamera va sul capo, che si arrabbia (con la parola nera esplode). Poi si torna al tabellone.
+  function reazione(ui, vm, e) {
+    var S = ui.S, giusta = e.oro || e.c === e.k, nera = e.c === "x", B = ui.banchi[e.k];
+    if (giusta) {
+      scena(ui, [[0, function () { ST.faccia(S, e.k, "esulta"); festaBanco(ui, e.k, true); suBanco(ui, e.k, 550); }],
+        [1700, function () { ST.faccia(S, e.k, null); festaBanco(ui, e.k, false); ST.suSchermo(S, 550); }], [550, function () {}]]);
+      return;
+    }
+    scena(ui, [[0, function () {
+        if (B && e.id !== ui.vm.capo[e.k]) { B.facce = {}; B.facce[e.id] = nera ? "esploso" : "triste"; aggiornaBanchi(ui, ui.vm); }
+        ST.suLeggio(S, e.k, 550); ST.faccia(S, e.k, nera ? "esploso" : "arrabbiato");
+      }],
+      [600, function () { fumettoCapo(ui, e.k, nera ? "💣 Noooo!" : ["💢 Ma no!", "💢 Uffa!", "💢 Nooo!", "💢 Ma dai!"][Math.floor(Math.random() * 4)]); }],
+      [1300, function () { ui.vignetta.classList.remove("su"); ST.faccia(S, e.k, null); if (B) { B.facce = {}; aggiornaBanchi(ui, ui.vm); } ST.suSchermo(S, 550); }],
+      [550, function () {}]]);
+  }
+  // all'inizio della partita: tutto lo studio, poi ogni squadra al suo bancone (esultano), poi i capi sui podi,
+  // uno per uno; dopo, la telecamera va sul capo che comincia (scenaTurno)
+  function presentazione(ui) {
+    var S = ui.S, vm = ui.vm, passi = [[0, function () { ST.largo(S, 0); }], [1100, function () {}]];
+    ui.banchi.forEach(function (B, k) {
+      var nomi = (vm.players || []).filter(function (p) { return p.team === k && p.id !== vm.capo[k] && !p.via; }).map(function (p) { return p.nome; });
+      if (!nomi.length) return;
+      passi.push([0, function () { festaBanco(ui, k, true); suBanco(ui, k, 700); ST.terzo(S, null, "I " + SQ[k].nome + "!", nomi.join(" · "), "👥"); ST.FX.applauso("piano"); }]);
+      passi.push([1800, function () { festaBanco(ui, k, false); }]);
+    });
+    for (var k = 0; k < vm.nsq; k++) (function (k) {
+      var capo = trova(vm, vm.capo[k]); if (!capo) return;
+      passi.push([0, function () { ST.suLeggio(S, k, 700); ST.faccia(S, k, "esulta"); ST.terzo(S, k, capo.nome, "Il capo dei " + SQ[k].nome, "👑"); }]);
+      passi.push([1600, function () { ST.faccia(S, k, null); }]);
+    })(k);
+    passi.push([0, function () { ST.viaTerzo(S); }], [100, function () {}]);
+    scena(ui, passi, true);
   }
   function creaSchermo(t, vm, cb) {
     stile(); ST = window.SGStudio;
@@ -764,7 +806,7 @@
     ui.msg = el("div", { class: "or-toast" }); S.vista.appendChild(ui.msg);
     // all'inizio di una partita uno sguardo a tutto lo studio, poi il tabellone
     ST.suSchermo(S, 0);
-    if ((vm.log || []).length <= 1 && vm.fase === "gioco") scena(ui, [[0, function () { ST.largo(S, 0); }], [1300, function () { ST.suSchermo(S, 1100); }], [1100, function () {}]]);
+    if ((vm.log || []).length <= 1 && vm.fase === "gioco") presentazione(ui);   // all'inizio: si presentano tutti
     return ui;
   }
   // chi sono io in questa partita
@@ -1067,6 +1109,8 @@
       ".or-banco{position:absolute;display:flex;flex-direction:column}",
       ".or-banco-gente{flex:1 1 auto;min-height:0;display:flex;justify-content:center;align-items:flex-end;gap:3%;padding:0 4%}",
       ".or-persona{position:relative;flex:0 1 auto;min-width:0;max-width:31%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}",
+      ".or-persona.evviva img{animation:orSalta .5s ease-in-out 3}@keyframes orSalta{50%{transform:translateY(-9%)}}",   // chi esulta fa due saltelli (solo transform)
+      ".st-vista .st-terzo{bottom:calc(var(--or-barra, 98px) + 8px + env(safe-area-inset-bottom))}",   // la scritta di chi è (presentazione) sopra i tasti, non sotto
       ".or-persona img{height:84%;width:auto;max-width:100%;object-fit:contain;display:block}",
       ".or-persona span{font-size:.8em;font-weight:900;color:#fff;margin-top:-.2em;text-shadow:0 .1em .2em rgba(0,0,0,.6);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}",
       ".or-persona.via{opacity:.3}",

@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 172,
+    data: "10 ottobre 2026",
+    titolo: "Parola d'ordine si anima 🎬",
+    descrizione: [
+      "All'inizio della partita lo studio presenta tutti: prima ogni squadra al suo bancone, che esulta, poi i capi sui podi col loro nome. Poi la telecamera va sul capo che comincia.",
+      "Parola giusta: la telecamera va sulla squadra, che esulta col braccio alzato e fa due saltelli.",
+      "Parola sbagliata: la telecamera va sul capo, che si arrabbia («💢 Ma no!»). Con la parola nera, invece, esplode.",
+      "Sistemato un problema degli iPhone: quando il capo scriveva l'indizio, lo studio si rimpiccioliva, sotto restava il blu vuoto e la telecamera si spostava. Ora resta tutto fermo."
+    ]
+  },
+  {
     v: 171,
     data: "10 ottobre 2026",
     titolo: "La città si allunga e Parola d'ordine migliora 🏙️",
