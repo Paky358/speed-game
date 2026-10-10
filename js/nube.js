@@ -192,6 +192,13 @@
 
     // ---- liste personali (es. le parole di Parola d'ordine): un campo del profilo, salvato così com'è ----
     lista: function (nome) { return (profilo && profilo.liste && profilo.liste[nome]) || []; },
+    // ---- la casa da arredare (js/casa.js): sta tutta in un campo del profilo, così non si perde cambiando telefono ----
+    casa: function () { return (profilo && profilo.casa) || null; },
+    salvaCasa: function (dati) {
+      if (!auth || !utente || !profilo || !dati) return Promise.resolve();
+      profilo.casa = dati;
+      return db.collection("profili").doc(utente.uid).update({ casa: dati }).catch(function () {});
+    },
     salvaLista: function (nome, lista) {
       if (!auth || !utente || !profilo) return Promise.resolve();
       profilo.liste = profilo.liste || {}; profilo.liste[nome] = lista;

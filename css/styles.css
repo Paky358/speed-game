@@ -1220,7 +1220,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 @keyframes caPasso{ 50%{ transform:translateY(-3%) rotate(2deg); } }
 .ca-av.saluta img{ animation:caSalta .55s ease; }
 @keyframes caSalta{ 40%{ transform:translateY(-14%); } 70%{ transform:translateY(0) scale(1.04,.96); } }
-.casa-vista.arreda .ca-av, .casa-vista.arreda .ca-zzz, .casa-vista.arreda .ca-nuvola, .casa-vista.arreda .ca-meta{ opacity:0; visibility:hidden; pointer-events:none; transition:opacity .2s, visibility 0s .2s; }   /* in Arreda il personaggio sparisce: non dà fastidio mentre sposti i mobili */
+.casa-vista.arreda .ca-av, .casa-vista.arreda .ca-zzz, .casa-vista.arreda .ca-bolla, .casa-vista.arreda .ca-nuvola, .casa-vista.arreda .ca-meta{ opacity:0; visibility:hidden; pointer-events:none; transition:opacity .2s, visibility 0s .2s; }   /* in Arreda il personaggio sparisce: non dà fastidio mentre sposti i mobili */
 .ca-av.sdraiato::after, .ca-av.seduto::after{ display:none; }
 .ca-av.dentro{ opacity:0; pointer-events:none; }   /* sotto la doccia, dietro la tenda */
 .ca-av > b{ position:absolute; left:26%; right:26%; top:6%; bottom:3%; border-radius:40% 40% 18% 18%; pointer-events:auto; cursor:pointer; }   /* si tocca solo il corpo, non i lati vuoti del disegno */
@@ -1239,6 +1239,8 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 @keyframes caMeta{ 0%{ transform:scale(1.7); opacity:0; } 25%{ transform:scale(1); opacity:1; } 70%{ opacity:.9; } 100%{ transform:scale(.85); opacity:0; } }
 .ca-zzz{ position:absolute; z-index:960; font-style:normal; font-weight:900; font-size:15px; line-height:1; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.55); pointer-events:none; animation:caZzz 2.2s ease-out forwards; }
 @keyframes caZzz{ 0%{ transform:translate(0,0) scale(.5); opacity:0; } 20%{ opacity:1; } 100%{ transform:translate(var(--dx,20px),-42px) scale(1.5); opacity:0; } }
+.ca-bolla{ position:absolute; z-index:960; border-radius:50%; background:radial-gradient(circle at 32% 30%, rgba(255,255,255,.95) 0 18%, rgba(190,230,255,.35) 40%, rgba(160,210,255,.15) 70%); box-shadow:inset 0 0 0 1px rgba(255,255,255,.8); pointer-events:none; animation:caBolla 2.2s ease-out forwards; }
+@keyframes caBolla{ 0%{ transform:translate(0,0) scale(.4); opacity:0; } 15%{ opacity:1; } 50%{ transform:translate(calc(var(--dx,10px) * .4),-24px) scale(1); } 100%{ transform:translate(var(--dx,10px),-52px) scale(1.15); opacity:0; } }
 .ca-nuvola{ position:absolute; z-index:960; font-style:normal; font-size:22px; line-height:1; padding:6px 8px; border-radius:16px; background:#fff; box-shadow:0 3px 8px rgba(0,0,0,.25); pointer-events:none; animation:caNuvola 1.7s ease forwards; }
 @keyframes caNuvola{ 0%{ transform:translate(-50%,-80%) scale(.3); opacity:0; } 15%{ transform:translate(-50%,-100%) scale(1.06); opacity:1; } 25%{ transform:translate(-50%,-100%) scale(1); opacity:1; } 80%{ transform:translate(-50%,-112%); opacity:1; } 100%{ transform:translate(-50%,-125%); opacity:0; } }
 .ca-bottone{ position:absolute; z-index:960; transform:translate(-50%,-50%); border:0; border-radius:999px; padding:8px 12px; font:inherit; font-weight:900; font-size:.8rem; white-space:nowrap; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#f2b324); box-shadow:0 4px 12px rgba(0,0,0,.35); cursor:pointer; }
@@ -1291,3 +1293,56 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .ca-avviso{ position:absolute; z-index:40; left:50%; top:calc(66px + env(safe-area-inset-top)); transform:translateX(-50%); padding:8px 14px; border-radius:999px; background:rgba(59,43,34,.92); color:#fff3d6; font-weight:800; font-size:.85rem; white-space:nowrap; opacity:0; pointer-events:none; }
 .ca-avviso.su{ animation:caAvviso 2.2s ease; }
 @keyframes caAvviso{ 0%{ opacity:0; transform:translate(-50%,-6px); } 12%{ opacity:1; transform:translate(-50%,0); } 80%{ opacity:1; } 100%{ opacity:0; } }
+
+/* =========================================================
+   IL NEGOZIO (js/casa.js, SGCasa.negozio): un negozio lungo che si scorre col dito,
+   gli oggetti in vetrina col cartellino del prezzo sotto; niente filtri (scorre liscio anche sui telefoni vecchi)
+   ========================================================= */
+.schermata.ne-vista{ position:fixed; inset:0; z-index:5; padding:0; min-height:0; overflow:hidden; animation:none; background:#d9c7a6; user-select:none; -webkit-user-select:none; }
+.ne-strada{ position:absolute; inset:0; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; scrollbar-width:none; touch-action:pan-x; }
+.ne-strada::-webkit-scrollbar{ display:none; }
+.ne-dentro{ position:relative; height:100%; }
+.ne-dentro > *{ position:absolute; }
+.ne-sezione{ z-index:0; box-shadow:inset 0 40px 40px -30px rgba(0,0,0,.12); }
+.ne-colonnina{ z-index:1; background:linear-gradient(90deg,#e9dcc4,#fff7e8 45%,#d9c8a8); box-shadow:0 0 6px rgba(0,0,0,.12); }
+.ne-pavimento{ z-index:1; background:repeating-linear-gradient(90deg,#c8955f 0 64px,#bd8a55 64px 128px); box-shadow:inset 0 14px 18px -8px rgba(0,0,0,.28); }
+.ne-battiscopa{ z-index:1; background:#fff8ea; box-shadow:0 2px 0 rgba(0,0,0,.08); }
+.ne-insegna{ z-index:3; transform:translateX(-50%); padding:8px 16px; border-radius:12px; background:#3b2b22; color:#fff3d6; font-style:normal; font-weight:900; font-size:.95rem; white-space:nowrap; box-shadow:0 6px 14px rgba(0,0,0,.25); }
+.ne-insegna::before, .ne-insegna::after{ content:""; position:absolute; bottom:100%; width:2px; height:400px; background:#7a6a58; }
+.ne-insegna::before{ left:22%; } .ne-insegna::after{ right:22%; }
+.ne-insegna.grande{ font-size:1.25rem; padding:10px 20px; background:linear-gradient(180deg,#e8590c,#c2410c); }
+.ne-pedana{ z-index:2; height:12px; border-radius:6px; background:linear-gradient(180deg,#a8754a,#8a5a35); box-shadow:0 4px 6px rgba(0,0,0,.25); }
+.ne-piedistallo{ z-index:2; border-radius:8px 8px 3px 3px; background:linear-gradient(90deg,#efe8db,#ffffff 40%,#e2d9c8); box-shadow:0 6px 8px rgba(0,0,0,.18), inset 0 6px 0 rgba(255,255,255,.7); }
+.ne-ogg{ z-index:3; cursor:pointer; -webkit-user-drag:none; transform-origin:50% 100%; }
+.ne-ogg.campione{ border-radius:6px; box-shadow:0 0 0 3px #fff, 0 6px 10px rgba(0,0,0,.25); }
+.ne-ogg.salta{ animation:caRimbalza .42s ease; }
+.ne-cartellino{ z-index:4; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:2px; max-width:124px; padding:5px 9px 6px; border:0; border-radius:10px; background:#fffdf7; box-shadow:0 3px 8px rgba(0,0,0,.2); font:inherit; color:#3b2b22; cursor:pointer; }
+.ne-cartellino b{ font-size:.66rem; line-height:1.15; font-weight:800; text-align:center; }
+.ne-cartellino i{ font-style:normal; font-weight:900; font-size:.86rem; color:#b5651d; white-space:nowrap; }
+.ne-cartellino.tua i{ color:#2b8a3e; }
+.ne-banco{ z-index:3; border-radius:10px 10px 0 0; background:linear-gradient(180deg,#b5824f,#8a5a35); box-shadow:inset 0 8px 0 #d39a63, 0 6px 10px rgba(0,0,0,.25); }
+.ne-cassa{ z-index:4; border-radius:6px 6px 2px 2px; background:linear-gradient(180deg,#495057,#212529); box-shadow:inset 0 4px 0 #69db7c; }
+.ne-commessa{ z-index:2; }
+.ne-fumetto{ z-index:5; max-width:170px; padding:9px 12px; border-radius:16px; background:#fff; color:#3b2b22; font-style:normal; font-weight:800; font-size:.82rem; line-height:1.25; box-shadow:0 4px 12px rgba(0,0,0,.2); }
+.ne-fumetto::after{ content:""; position:absolute; left:16px; bottom:-8px; border:8px solid transparent; border-top-color:#fff; border-bottom:0; }
+.ne-giu{ position:absolute; z-index:20; left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); display:flex; gap:8px; max-width:620px; margin:0 auto; }
+.ne-reparti{ flex:1; display:flex; gap:4px; overflow-x:auto; padding:4px; border-radius:18px; background:rgba(255,250,240,.94); box-shadow:0 6px 18px rgba(0,0,0,.3); scrollbar-width:none; }
+.ne-reparti::-webkit-scrollbar{ display:none; }
+.ne-chip{ flex:none; display:flex; flex-direction:column; align-items:center; gap:1px; border:0; border-radius:14px; padding:5px 10px; background:transparent; font:inherit; color:#5a4636; cursor:pointer; }
+.ne-chip span{ font-size:1.15rem; line-height:1; }
+.ne-chip b{ font-size:.62rem; font-weight:800; }
+.ne-chip.on{ background:#3b2b22; color:#fff3d6; }
+.ne-acasa{ flex:none; border:0; border-radius:18px; padding:0 14px; font:inherit; font-weight:900; font-size:.85rem; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#f2b324); box-shadow:0 6px 18px rgba(0,0,0,.3); cursor:pointer; }
+.ne-velo{ position:absolute; inset:0; z-index:40; background:rgba(30,20,10,.38); opacity:0; pointer-events:none; transition:opacity .2s; }
+.ne-velo.su{ opacity:1; pointer-events:auto; }
+.ne-scheda{ position:absolute; z-index:41; left:0; right:0; bottom:0; max-width:520px; margin:0 auto; padding:18px 16px calc(18px + env(safe-area-inset-bottom)); border-radius:22px 22px 0 0; background:linear-gradient(180deg,#fffaf0,#f1e6d2); box-shadow:0 -10px 30px rgba(0,0,0,.35); transform:translateY(105%); transition:transform .3s cubic-bezier(.2,.9,.3,1); display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center; }
+.ne-scheda.su{ transform:none; }
+.ne-scheda img{ height:150px; max-width:80%; object-fit:contain; }
+.ne-scheda h3{ margin:4px 0 0; font-size:1.1rem; color:#3b2b22; }
+.ne-scheda p{ margin:0; font-size:.86rem; color:#7a6046; font-weight:700; }
+.ne-scheda .ne-nota{ color:#2b8a3e; min-height:1.1em; }
+.ne-compra{ margin-top:6px; min-width:230px; border:0; border-radius:16px; padding:13px 18px; font:inherit; font-weight:900; font-size:1rem; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#f2b324); box-shadow:0 4px 0 #c98e12; cursor:pointer; }
+.ne-compra:active{ transform:translateY(2px); box-shadow:0 2px 0 #c98e12; }
+.ne-compra:disabled{ background:#e9e1d1; color:#8a7a62; box-shadow:none; transform:none; }
+.ne-x{ position:absolute; right:12px; top:10px; width:36px; height:36px; border-radius:50%; border:0; background:rgba(59,43,34,.08); font:inherit; font-weight:900; color:#3b2b22; cursor:pointer; }
+.ne-vista .ca-avviso{ z-index:45; }

@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 174,
+    data: "10 ottobre 2026",
+    titolo: "La tua casa e il negozio 🏠🛍️",
+    descrizione: [
+      "Nella città si apre la Casa: tre stanze tutte tue (Soggiorno con l'angolo cottura, Camera e Bagno). Si parte con roba scadente, il bello si compra. Serve il profilo: la casa si salva lì e non si perde cambiando telefono.",
+      "Tocca il pavimento e il tuo avatar ci va. Tocca le cose e le usa: dorme nel letto con la coperta fino al mento, si siede su divani e sedie, apre il frigo, fa la doccia cantando, il bagno nella vasca con la schiuma, accende TV e lampade, tira lo sciacquone.",
+      "Dall'armadio aperto si cambia look.",
+      "Con «✏️ Arreda» si sposta tutto col dito. I mobili si girano anche di fianco, le cose piccole si appoggiano sopra i mobili, i quadri si appendono anche sulle pareti di lato. Si cambiano carta da parati e pavimento.",
+      "Le stanze si possono allargare pagando (Media, Grande, Enorme): poi si scorrono col dito a destra e a sinistra.",
+      "Apre il Negozio, nella città o dalla casa: si scorre col dito tra i reparti. Ogni oggetto ha il prezzo scritto sotto. Si paga con le Speed Coins e quello che compri va nel baule di casa. C'è anche il Mercatino dell'usato, a poco."
+    ]
+  },
+  {
     v: 173,
     data: "10 ottobre 2026",
     titolo: "Trofei per altri 5 giochi 🏆",

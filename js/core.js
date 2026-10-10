@@ -556,21 +556,48 @@
   // ---- La città: si tocca un edificio, la città fa zoom e si entra.
   //      In alto chi sei (avatar, nome, livello con la barra degli XP) e le Speed Coins;
   //      in basso Casa, Clan e Negozio (in arrivo) e la Ruota del giorno ----
-  // ---- La casa (js/casa.js): per ora la vede solo il proprietario (account IL PAPPONE), finché non è pronta.
-  //      Anteprima: la casa si salva su questo telefono e il negozio usa monete finte ----
-  function casaAperta() {
-    var io = profiloAttivo();
-    if (io && String(io.nome || "").trim().toUpperCase() === "IL PAPPONE") return true;
-    try { return localStorage.getItem("sg-casa-prova") === "1"; } catch (e) { return false; }
+  // ---- La casa (js/casa.js) e il negozio: per tutti quelli col profilo. Si paga con le Speed Coins vere;
+  //      la casa si salva nel profilo (Firebase) e anche su questo telefono, così non si perde niente ----
+  var casaInUso = null, tCasaNube = null;   // la casa aperta adesso (casa e negozio lavorano sulla stessa)
+  function chiaveCasa() { var N = window.SGNube, u = N && N.utente && N.utente(); return u ? "sg-casa|" + u.uid : null; }
+  function datiCasa() {
+    var N = window.SGNube, k = chiaveCasa(); if (!k) return null;
+    if (casaInUso && casaInUso._chiave === k) return casaInUso;
+    var nube = N.casa && N.casa(), qui = null;
+    try { qui = JSON.parse(localStorage.getItem(k) || "null"); } catch (e) {}
+    var c = nube && (!qui || (nube.agg || 0) >= (qui.agg || 0)) ? JSON.parse(JSON.stringify(nube)) : qui;   // la più recente
+    if (!c || !c.v) { c = SGCasa.casaIniziale(); delete c.monete; }   // si parte dalla casa scadente, uguale per tutti
+    c._chiave = k; casaInUso = c; return c;
+  }
+  function salvaCasa(c) {
+    var k = chiaveCasa(); if (!k || !c) return;
+    c.agg = Date.now(); casaInUso = c;
+    var pulita = JSON.parse(JSON.stringify(c)); delete pulita._chiave;
+    try { localStorage.setItem(k, JSON.stringify(pulita)); } catch (e) {}
+    clearTimeout(tCasaNube); tCasaNube = setTimeout(function () { if (window.SGNube && SGNube.salvaCasa) SGNube.salvaCasa(pulita); }, 1500);   // nel profilo: un attimo dopo (non a ogni spostamento)
+  }
+  function soldiCasa() { return { monete: function () { return SGNube.monete(); }, spendi: function (n) { SGNube.cambiaMonete(-n); } }; }
+  function serveProfilo() {   // casa e negozio vogliono il profilo (le monete e i mobili sono tuoi)
+    var N = window.SGNube; if (N && N.profilo && N.profilo()) return false;
+    schermataAccesso(schermataCitta); return true;
   }
   function schermataCasa(stanza) {
     if (!window.SGCasa) return schermataCitta();
-    var io = profiloAttivo(), dati = null;
-    try { dati = JSON.parse(localStorage.getItem("sg-casa-anteprima") || "null"); } catch (e) {}
-    var s = SGCasa.crea({ avatar: io && io.omino, nome: io && io.nome, dati: dati, audio: audioCtx, stanza: stanza,
+    if (serveProfilo()) return;
+    var io = profiloAttivo(), m = soldiCasa();
+    var s = SGCasa.crea({ avatar: io && io.omino, nome: io && io.nome, dati: datiCasa(), audio: audioCtx, stanza: stanza, monete: m.monete, spendi: m.spendi, salva: salvaCasa,
       vestiti: function () { schermataOmino(function () { schermataCasa("camera"); }); },   // dall'armadio aperto: si cambia il look e si torna in camera
-      salva: function (c) { try { localStorage.setItem("sg-casa-anteprima", JSON.stringify(c)); } catch (e) {} },
+      negozio: function (st) { schermataNegozio(st); },   // dal cassetto dell'Arreda
       indietro: function () { schermataCitta(); } });
+    mostra(s); s._monta();
+  }
+  function schermataNegozio(daStanza) {   // daStanza: si arriva dalla casa (e indietro si torna lì), altrimenti dalla città
+    if (!window.SGCasa) return schermataCitta();
+    if (serveProfilo()) return;
+    var m = soldiCasa();
+    var s = SGCasa.negozio({ dati: datiCasa(), salva: salvaCasa, monete: m.monete, spendi: m.spendi, audio: audioCtx, reparto: daStanza || null,
+      indietro: function () { if (daStanza) schermataCasa(daStanza); else schermataCitta(); },
+      aCasa: daStanza ? null : function () { schermataCasa(); } });
     mostra(s); s._monta();
   }
   var scrollCitta = 0;   // fin dove avevi scorso la città: uscendo da un edificio si torna lì (dalla home si riparte dall'alto)
@@ -625,10 +652,9 @@
       ]),
       avviso,
       el("div", { class: "citta-giu" }, [
-        casaAperta() ? el("button", { class: "citta-tasto", onclick: function () { schermataCasa(); } }, [ el("span", { class: "ct-ico", text: "🏠" }), el("span", { text: "Casa" }), el("small", { text: "anteprima" }) ])
-          : tastoPresto("🏠", "Casa", "La tua casa arriva presto 🏠"),
+        el("button", { class: "citta-tasto", onclick: function () { if (!cloud) return presto("Crea il tuo profilo per avere la tua casa 🏠"); schermataCasa(); } }, [ el("span", { class: "ct-ico", text: "🏠" }), el("span", { text: "Casa" }), el("small", { text: cloud ? "arreda" : "col profilo" }) ]),
         tastoPresto("🛡️", "Clan", "I quartieri-clan arrivano presto 🛡️"),
-        tastoPresto("🛍️", "Negozio", "Il negozio arriva presto 🛍️"),
+        el("button", { class: "citta-tasto", onclick: function () { if (!cloud) return presto("Crea il tuo profilo per fare acquisti 🛍️"); schermataNegozio(); } }, [ el("span", { class: "ct-ico", text: "🛍️" }), el("span", { text: "Negozio" }), el("small", { text: cloud ? "compra" : "col profilo" }) ]),
         regalo
       ])
     ]);

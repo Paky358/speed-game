@@ -805,6 +805,27 @@ La forza del tiro si conta da dove appoggi il dito (non dal disco) e la forza pi
 - calcio.mp3 = 2099 "Soccer ball kick".
 Si caricano solo dentro il gioco (`caricaSuoni`). Il build copia `suoni/` in `dist/`. Restano fatti col codice solo il clac e la sponda. Manca ancora un "uuuh" vero per il palo. Altri candidati Mixkit: 3022 "Stadium joy shouting crowd" (15 s), 462 "Huge crowd cheering victory", 363 "Stadium chaotic… drums and chants". Per scaricare file serve sempre il permesso del proprietario.
 
+## casa-arredamento.md
+
+
+**Richieste del proprietario (10 ott 2026):** tre stanze (Soggiorno con angolo cottura, Camera, Bagno); partenza povera uguale per tutti, il bello si compra; personalizzare "bello bello bello" come Pet Society (spostare tutto dove vuoi); oggetti che si usano (letto, frigo, armadio…); l'avatar va dove tocchi; stanze che scorrono a destra/sinistra come Pet Society; pareti da allargare pagando; negozio vero da scorrere con **il prezzo scritto sotto ogni oggetto** (senza doverci toccare); casa aperta a tutti con monete vere.
+
+**Decisioni prese con lui:**
+- NO prima persona 360° (andrebbe rifatto tutto in 3D, telefoni lenti) e per ora NO "gira la stanza" a quarti (ogni mobile nuovo costerebbe 2-3 disegni). Pianta dall'alto solo in futuro, se si potranno comprare stanze nuove.
+- La casa vive in un campo `casa` del profilo Firebase (`SGNube.casa/salvaCasa`) + copia su localStorage `sg-casa|<uid>`; si prende la più recente (`agg`). In core.js `datiCasa/salvaCasa` (scrittura nel profilo 1,5 s dopo). Casa e negozio usano lo stesso oggetto in memoria.
+- Il vecchio salvataggio dell'anteprima (`sg-casa-anteprima`, monete finte) non si usa più: tutti ripartono dalla casa scadente.
+
+**Com'è fatta (js/casa.js):**
+- Prospettiva `P/scala/daSchermo/daMuro/daParete`; larghezza variabile `larghezza(xw)` (MISURE: Piccola 4,6 m, Media 2.500, Grande 6.000, Enorme 10.000; si paga la differenza; per stanza `mis`/`misMax`). Palco largo `W` che scorre (`tx`, slancio, segue l'avatar, scorre da solo portando un mobile al bordo).
+- Tocco: se il dito si muove scorre la stanza, se no l'avatar va lì/usa l'oggetto (`premi/trascina/su`). Oggetti: `azione` dormi/siedi/bagno, `stati` accendi/apri, `uso` doccia/wc/acqua/suona, `luce`, `vestiti` (armadio → editor avatar), `corpo` (larghezza vera senza ante).
+- `fianco` = disegno di fianco (divani, poltrona, letti, sedie, wc, vasca): tasto 🔄 davanti → fianco → fianco specchiato. Di fianco ci si dorme/si fa il bagno, ma non ci si siede.
+- Quadri anche sulle pareti di lato (`d.parete` sx/dx, immagine stesa con `omografia`).
+- Negozio `SGCasa.negozio(opts)`: reparti (Soggiorno, Cucina, Camera, Bagno, Decorazioni, Pareti e pavimenti, Mercatino dell'usato con la roba di partenza a poco), commessa al bancone, cartellini col prezzo, scheda per comprare.
+
+**Da fare / idee:** quartiere con le case degli amici visitabili; esterno personalizzabile; più oggetti; trofei della casa (non chiesti ancora).
+
+Vedi [[citta-home]], [[moneta-unica]], [[omini-avatar]].
+
 ## citta-home.md
 
 Il 3 ott 2026 il proprietario ha deciso che la home diventerà una **città**, ispirata a Pet Society.
