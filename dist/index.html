@@ -805,7 +805,10 @@ button.am-riga:active{ transform:scale(.985); }
 .home-citta span{ display:inline-flex; align-items:center; min-height:40px; padding:0 14px; border-radius:99px;
   color:#3a2200; font-weight:900; letter-spacing:.02em; }
 .schermata.citta-vista{ position:fixed; inset:0; z-index:5; padding:0; min-height:0; overflow:hidden; animation:none; }
-.citta-mappa, .citta-mappa svg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+/* la città è lunga: si scorre su e giù col dito (il riquadro in alto e i tasti in basso restano fermi) */
+.citta-mappa{ position:absolute; inset:0; overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.citta-mappa::-webkit-scrollbar{ display:none; }
+.citta-mappa svg{ display:block; width:100%; max-width:560px; height:auto; margin:0 auto; }
 .citta-testa{ position:absolute; z-index:2; left:10px; right:10px; top:calc(10px + env(safe-area-inset-top));
   display:flex; align-items:center; gap:10px; max-width:540px; margin:0 auto; }
 .citta-indietro{ flex:none; width:46px; height:46px; border-radius:50%; border:0; cursor:pointer; font-family:inherit;
@@ -1652,7 +1655,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
    SPeeD GAME — OMINI personalizzabili (stile Mii)
    Disegnati in SVG col codice: niente immagini, leggerissimi.
    Volume con sfumature morbide, ciocche, pieghe dei vestiti.
-   SGOmino.svg(cfg, {busto, px})  -> stringa SVG
+   SGOmino.svg(cfg, {busto, px, braccia})  -> stringa SVG (braccia: "uno" o "su" = alzate per esultare)
    SGOmino.el(cfg, opts)          -> elemento pronto
    SGOmino.casuale(seme)          -> omino a caso (sempre uguale per lo stesso seme)
    ========================================================= */
@@ -2272,9 +2275,11 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     var manica = { maglietta: 0.45, polo: 0.45, calcio: 0.45, canotta: 0, crop: 0.42, top: 0, vestito: 0.22, vestitolungo: 0.22, grembiule: 0.45 }[c.capo]; if (manica == null) manica = 1;
     var gilet = c.capo === "gilet", MS = gilet ? "#f4f4f6" : M, bMS = gilet ? "#b9bcc6" : bM;   // col gilet le maniche sono della camicia bianca
     if (gilet) o.push("<defs>" + lin("ms", 0.35, 1, [[0, "#ffffff"], [0.5, "#eef0f4"], [1, "#c6c9d3"]]) + "</defs>");   // quanta parte del braccio copre la manica
+    var bracciaSopra = [];   // le braccia alzate si disegnano per ultime, davanti alla testa e al corpo
     [1, -1].forEach(function (s) {
       var a = 100 + s * (ax - 100), h = 100 + s * (hx - 100), Pb = [[a, 166], [a - s * 12, 172], [h, 184], [h, 197]], d = curva(Pb);
-      o.push("<g class='om-braccio om-b" + (s === 1 ? 1 : 2) + "'>");   // gruppo a parte: nell'editor l'omino saluta
+      var alza = opts.braccia === "su" || (opts.braccia === "uno" && s === -1) ? (s === 1 ? 128 : -128) : 0, inizio = o.length;   // esulta: braccio (o braccia) in alto, un po' in fuori
+      o.push("<g class='om-braccio om-b" + (s === 1 ? 1 : 2) + "'" + (alza ? " transform='rotate(" + alza + " " + a.toFixed(1) + " 166)'" : "") + ">");   // gruppo a parte: nell'editor l'omino saluta
       if (manica < 1) o.push("<path d='" + d + "' stroke='" + bP + "' stroke-width='" + (aw + 2) + "' stroke-linecap='round' fill='none'/>",
         "<path d='" + d + "' stroke='" + u("pl") + "' stroke-width='" + (aw - 1.5) + "' stroke-linecap='round' fill='none'/>");
       if (manica > 0) {
@@ -2292,6 +2297,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       o.push("<circle cx='" + h + "' cy='204' r='" + (aw / 2 + 0.5) + "' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1.3'/>",
         "<circle cx='" + (h + s * (aw / 2 - 1)) + "' cy='201' r='" + (aw / 5 + 0.8) + "' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1'/>",
         "<path d='M" + (h - 2.2) + ",206.5 L" + (h - 2.2) + ",208.5 M" + (h + 0.8) + ",206.8 L" + (h + 0.8) + ",208.8' stroke='" + bP + "' stroke-width='.9' opacity='.55' stroke-linecap='round'/>", "</g>");
+      if (alza) Array.prototype.push.apply(bracciaSopra, o.splice(inizio));   // alzato: lo tolgo da qui, va disegnato per ultimo
     });
     // busto: maglia con scollo, pieghe, cuciture e orlo
     var tor = donna
@@ -3331,7 +3337,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     // busto (tondini): inquadratura che segue la grandezza della testa, così la faccia resta grande
     var vb = opts.busto ? [100 - 89 * kT, 150 - 156 * kT, 178 * kT, 182 * kT].map(function (n) { return n.toFixed(1); }).join(" ") : (opts.gambe ? "40 150 120 112" : (opts.viso ? "60 74 80 80" : "0 0 200 264"));   // gambe: inquadratura sui pantaloni; viso: primo piano (per il trucco)
     var px = opts.px ? " width='" + opts.px + "' height='" + Math.round(opts.px * (opts.busto ? 182 / 178 : 1.32)) + "'" : "";
-    return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='" + vb + "'" + px + " class='omino'>" + o.join("") + "</svg>";
+    return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='" + vb + "'" + px + " class='omino'>" + o.join("") + bracciaSopra.join("") + "</svg>";
   }
 
   function el(cfg, opts) { var s = document.createElement("span"); s.className = "omino-box"; s.innerHTML = svg(cfg, opts); return s; }
@@ -3434,6 +3440,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   "use strict";
 
   var A = 25, uid = 0, nf = 0;
+  var ALTO = 790;   // quanto è lunga la città (si scorre col dito): quattro file di edifici
   var P, S, ET;   // proiezione, luce ed etichette del disegno in corso
 
   // ---------- attrezzi ----------
@@ -3579,6 +3586,9 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     return s;
   }
   function vaso(u, v) { var b = P(u, v, 3); return cil(u, v, .07, 3, 5, "#c97b3c") + sfera(b[0], b[1] - 10, 5, "#40c057"); }
+  function panchina(u, v) {   // la panchina di legno del parco
+    return ombra(P(u + .35, v + .1, 0), 12) + box(u, v, .05, .05, 0, 4, "#495057") + box(u + .65, v, .05, .05, 0, 4, "#495057") + box(u - .05, v - .08, .8, .22, 4, 1.5, "#c97b3c") + box(u - .05, v - .1, .8, .05, 5.5, 5, "#a0652b");
+  }
   function figura(cfg, x, y, w) { var h = w * 1.32; return window.SGOmino.svg(cfg).replace("<svg ", "<svg x='" + f1(x - w / 2) + "' y='" + f1(y - h * .96) + "' width='" + f1(w) + "' height='" + f1(h) + "' "); }
   function gente(cfg, u, v, w) { var b = P(u, v, 0), g = figura(cfg, b[0], b[1], w); return S.notte ? "<g filter='url(#ctnp" + S.id + ")'>" + g + "</g>" : g; }
   // un pezzo della città che si può toccare (edificio, piazza, bar): porta a "vai"
@@ -3810,8 +3820,9 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   }
 
   // ---------- la città ----------
-  var LOTTI = { casino: [4.15, 6.95], studio: [6.95, 4.15], circolo: [6.7, 6.7], giochi: [10.55, 13.35], arena: [13.35, 10.55], locale: [16.95, 19.75], trofei: [19.75, 16.95] };
-  var NOMI = { casino: ["🃏 Casinò", "#e03131", 97, 0], studio: ["📺 Studio TV", "#7048e8", 99, 0], circolo: ["🎲 Circolo", "#2f9e44", 92, 0], giochi: ["🕹️ Sala giochi", "#f08c00", 80, -4], arena: ["⚔️ Arena", "#1c7ed6", 95, 0], locale: ["🎉 Locale", "#d6336c", 76, 0], trofei: ["🏆 Trofei", "#f59f00", 92, 0] };
+  var LOTTI = { casino: [4.15, 6.95], studio: [6.95, 4.15], circolo: [23.35, 26.15], giochi: [10.55, 13.35], arena: [13.35, 10.55], locale: [16.95, 19.75], trofei: [19.75, 16.95] };
+  // i nomi: subito sopra il tetto di ogni edificio (altezza scelta a mano, così toccano l'edificio)
+  var NOMI = { casino: ["🃏 Casinò", "#e03131", 95, 0], studio: ["📺 Studio TV", "#7048e8", 76, 0], circolo: ["🎲 Circolo", "#2f9e44", 70, 0], giochi: ["🕹️ Sala giochi", "#f08c00", 78, -4], arena: ["⚔️ Arena", "#1c7ed6", 46, 0], locale: ["🎉 Locale", "#d6336c", 64, 0], trofei: ["🏆 Trofei", "#f59f00", 74, 0] };
   var DISEGNA = { casino: casino, studio: studio, circolo: circolo, giochi: arcade, locale: locale, trofei: trofei };
   function edificio(k) {
     var u = LOTTI[k][0], v = LOTTI[k][1], c = [u + 1.25, v + 1.25], n = NOMI[k], p = P(c[0], c[1], n[2]);
@@ -3830,25 +3841,27 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   function disegna(fase, io) {
     S = FASI[fase] || FASI.giorno; P = proiezione(150, 0); ET = []; nf = 0;
     var AM = NOMI_GENTE.map(function (n) { return window.SGOmino.casuale(n); }), og = [], i;
-    var s = defs() + "<rect x='-200' y='-200' width='700' height='1000' fill='" + T("#9bd36d") + "'/>";
-    for (i = 0; i < 80; i++) s += "<path d='M" + ((i * 67) % 300) + "," + ((i * 113) % 600) + " l2,-5 l2,5' stroke='" + T("#86c25a") + "' stroke-width='1.5' fill='none'/>";
-    s += strade([[true, 10], [true, 16.4], [false, 10], [false, 16.4]], .54);
+    var s = defs() + "<rect x='-200' y='-200' width='700' height='1300' fill='" + T("#9bd36d") + "'/>";
+    for (i = 0; i < 110; i++) s += "<path d='M" + ((i * 67) % 300) + "," + ((i * 113) % ALTO) + " l2,-5 l2,5' stroke='" + T("#86c25a") + "' stroke-width='1.5' fill='none'/>";
+    s += strade([[true, 10], [true, 16.4], [true, 22.8], [false, 10], [false, 16.4], [false, 22.8]], .54);
     s += tocco("piazza", ell(10, 10, 0, 1.4, F("#f1e7d0", "t"), " stroke='" + F("#cbbd9c", "l") + "' stroke-width='2.5'") + ell(10, 10, 0, 1.1, "none", " stroke='" + F("#e2d3b0", "l") + "' stroke-width='1.6' stroke-dasharray='5 4'"));
-    s += fiori(8.4, 12.9) + fiori(12.9, 8.4);
+    s += fiori(8.4, 12.9) + fiori(12.9, 8.4) + fiori(21.2, 25.6) + fiori(25.6, 21.2);
+    s += ell(22.8, 22.8, 0, 1.0, F("#8ce99a", "t"), L("#69db7c")) + ell(22.8, 22.8, 0, .72, "none", " stroke='" + F("#ffffff", "t") + "' stroke-width='1.4' stroke-dasharray='4 4'");   // l'aiuola della rotonda in basso
     Object.keys(LOTTI).forEach(function (k) { og.push(edificio(k)); });
     og.push({ d: 20, s: tocco("piazza", fontana(10, 10)) }, { d: 19.4, s: tocco("piazza", bacheca(10, 9)) }, { d: 32.8, s: tocco("bar", bar(16.4, 16.4)) });
-    [[7.6, 12.4, 1], [12.4, 7.6, 1], [2.6, 7.4, .9], [4.9, 4.6, 1.1], [3.6, 5.6, .9], [5.7, 3.5, .95]].forEach(function (t) { og.push({ d: t[0] + t[1], s: albero(t[0], t[1], t[2]) }); });
+    [[7.6, 12.4, 1], [12.4, 7.6, 1], [2.6, 7.4, .9], [4.9, 4.6, 1.1], [3.6, 5.6, .9], [5.7, 3.5, .95], [26.4, 23.8, 1.15], [27.9, 24.9, 1], [26.9, 25.6, .9], [24.2, 20.9, .9], [20.9, 24.2, .9]].forEach(function (t) { og.push({ d: t[0] + t[1], s: albero(t[0], t[1], t[2]) }); });
     [[14.2, 18.6], [18.6, 14.2], [20.9, 20.9]].forEach(function (t) { og.push({ d: t[0] + t[1], s: pino(t[0], t[1], 1) }); });
-    [[7.5, 10.55], [10.55, 7.5]].forEach(function (l) { og.push({ d: l[0] + l[1], s: lampione(l[0], l[1]) }); });
-    og.push({ d: 23.2, s: auto(12.6, 9.55, "#fa5252") }, { d: 29, s: auto(12.4, 15.98, "#4dabf7") });
+    [[7.5, 10.55], [10.55, 7.5], [20.3, 23.35], [23.35, 20.3]].forEach(function (l) { og.push({ d: l[0] + l[1], s: lampione(l[0], l[1]) }); });
+    og.push({ d: 51.4, s: panchina(25.8, 25.6) });   // il parco accanto al Circolo
+    og.push({ d: 23.2, s: auto(12.6, 9.55, "#fa5252") }, { d: 29, s: auto(12.4, 15.98, "#4dabf7") }, { d: 41.6, s: auto(18.9, 22.38, "#fcc419") });
     // (il cantiere dell'anteprima, gru, transenne e birilli, è finito: la città è aperta; le funzioni restano per i lavori futuri)
     // la gente: in piazza a leggere le novità, al bar, per strada
     [[AM[0], 10.85, 9.6], [AM[1], 11.3, 10.2], [AM[4], 9.4, 10.65], [AM[2], 16.95, 17.35], [AM[3], 17.35, 16.95], [AM[5], 16.6, 13.6]].forEach(function (g) { og.push({ d: g[1] + g[2] + .2, s: gente(g[0], g[1], g[2], 22) }); });
     if (io) og.push({ d: 21.8, s: gente(io, 10.7, 10.9, 28) });
     og.sort(function (x, y) { return x.d - y.d; });
     og.forEach(function (o) { s += o.s; });
-    if (S.notte) s += "<rect x='-200' y='-200' width='700' height='1000' fill='url(#ctvig" + S.id + ")'/>";
-    else if (S.tramonto) s += "<rect x='-200' y='-200' width='700' height='1000' fill='url(#ctcaldo" + S.id + ")'/>";
+    if (S.notte) s += "<rect x='-200' y='-200' width='700' height='1300' fill='url(#ctvig" + S.id + ")'/>";
+    else if (S.tramonto) s += "<rect x='-200' y='-200' width='700' height='1300' fill='url(#ctcaldo" + S.id + ")'/>";
     var pb = P(16.4, 16.4, 40);
     etichetta(pb[0], pb[1] - 12, "☕ Bar", "#e03131", null, "bar");
     etichetta(150, 292, "📰 Novità", "#4c6ef5", null, "piazza");
@@ -3883,7 +3896,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     svg: function (opz) {
       opz = opz || {};
       var corpo = disegna(opz.fase || fase(new Date()), opz.io || null), m = opz.sopra || 0;
-      return "<svg viewBox='0 " + (-m) + " 300 " + (600 + m) + "' preserveAspectRatio='xMidYMid meet' xmlns='http://www.w3.org/2000/svg'>" + corpo + "</svg>";
+      return "<svg viewBox='0 " + (-m) + " 300 " + (ALTO + m) + "' width='300' height='" + (ALTO + m) + "' preserveAspectRatio='xMidYMid meet' xmlns='http://www.w3.org/2000/svg'>" + corpo + "</svg>";
     },
     fase: fase,
     colorePrato: function (f) { S = FASI[f] || FASI.giorno; return T("#9bd36d"); }
@@ -5363,6 +5376,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   // ---- La città: si tocca un edificio, la città fa zoom e si entra.
   //      In alto chi sei (avatar, nome, livello con la barra degli XP) e le Speed Coins;
   //      in basso Casa, Clan e Negozio (in arrivo) e la Ruota del giorno ----
+  var scrollCitta = 0;   // fin dove avevi scorso la città: uscendo da un edificio si torna lì (dalla home si riparte dall'alto)
   function schermataCitta() {
     var io = profiloAttivo(), N = window.SGNube, fase = SGCitta.fase(new Date()), via = false;
     var cloud = !!(N && N.profilo && N.profilo()), prog = window.SGLivelli && cloud && N.progressione ? N.progressione() : null;
@@ -5408,7 +5422,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     var s = el("div", { class: "schermata citta-vista" + (fase === "notte" ? " notte" : ""), style: "background:" + SGCitta.colorePrato(fase) }, [
       mappa,
       el("div", { class: "citta-testa" }, [
-        el("button", { class: "citta-indietro", text: "‹", "aria-label": "Indietro", onclick: schermataHome }),
+        el("button", { class: "citta-indietro", text: "‹", "aria-label": "Indietro", onclick: function () { scrollCitta = 0; schermataHome(); } }),
         el("button", { class: "citta-io", "aria-label": "Il tuo profilo", onclick: function () { schermataAccesso(schermataCitta); } }, [ faccia, testoIo ]),
         el("div", { class: "citta-monete", "aria-label": "Speed Coins" }, [ el("span", { class: "citta-moneta" }), monete ])
       ]),
@@ -5425,6 +5439,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       if (!t || via) return;
       via = true;
       var k = t.getAttribute("data-vai"), r = t.getBoundingClientRect(), R = mappa.getBoundingClientRect();
+      scrollCitta = mappa.scrollTop;
       // zoom verso l'edificio toccato e dissolvenza (solo transform e opacity: niente scatti)
       mappa.style.transformOrigin = Math.round(r.left + r.width / 2 - R.left) + "px " + Math.round(r.top + r.height / 2 - R.top) + "px";
       mappa.style.transition = "transform .42s cubic-bezier(.55,0,.8,.3), opacity .42s ease-in";
@@ -5433,6 +5448,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       setTimeout(function () { entraEdificio(k); }, 400);
     });
     mostra(s);
+    if (scrollCitta) mappa.scrollTop = scrollCitta;
   }
 
   // ---- Dentro gli edifici della città: le sale coi giochi della categoria (stesso modello per tutti) ----
@@ -6124,6 +6140,111 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     { gioco: "ruota", livello: "diamante", icona: "👑", nome: "Re della Ruota",       desc: "Vinci 20 partite in modalità Sfida",                          stat: "vittorieSfida",                 meta: 20 },
     { gioco: "ruota", livello: "diamante", icona: "🛡️", nome: "Senza Bancarotta",     desc: "Batti i bot Difficili senza mai fare Bancarotta",            stat: "vittorieDifficileSenzaBancarotta", meta: 1 },
     { gioco: "ruota", livello: "diamante", icona: "💎", nome: "Partita Perfetta",     desc: "Batti i bot Difficili vincendo tutte le manche di una partita da almeno 3 manche", stat: "vittorieDifficileTutteLeManche", meta: 1 },
+
+    // ---- L'Asta ----
+    { gioco: "asta", livello: "bronzo",   icona: "🔨", nome: "Prima Asta",             desc: "Concludi la tua prima partita",                              stat: "partite",         meta: 1 },
+    { gioco: "asta", livello: "bronzo",   icona: "🏆", nome: "Al Primo Posto",         desc: "Vinci una partita",                                           stat: "vinte",            meta: 1 },
+    { gioco: "asta", livello: "bronzo",   icona: "🎒", nome: "Kit in Costruzione",     desc: "Gioca una partita dei Temi classici",                         stat: "partiteTemi",      meta: 1 },
+    { gioco: "asta", livello: "bronzo",   icona: "⚽", nome: "Rosa al Completo",       desc: "Gioca una partita di Mini asta Fantacalcio",                  stat: "partiteFanta",     meta: 1 },
+    { gioco: "asta", livello: "bronzo",   icona: "💰", nome: "La Prima Aggiudicazione",desc: "Vinci una carta con un'offerta",                               stat: "asteVinte",        meta: 1 },
+    { gioco: "asta", livello: "bronzo",   icona: "⭐", nome: "Pioggia di Stelle",      desc: "Ricevi almeno 5 stelle in totale",                            stat: "stelleRicevute",   meta: 5 },
+    { gioco: "asta", livello: "argento",  icona: "🔟", nome: "Dieci Serate",           desc: "Concludi 10 partite",                                         stat: "partite",          meta: 10 },
+    { gioco: "asta", livello: "argento",  icona: "🥈", nome: "Cinque Vittorie",        desc: "Vinci 5 partite",                                             stat: "vinte",            meta: 5 },
+    { gioco: "asta", livello: "argento",  icona: "🛎️", nome: "Banco Battuto",          desc: "Aggiudicati 20 carte con le tue offerte",                     stat: "asteVinte",        meta: 20 },
+    { gioco: "asta", livello: "argento",  icona: "🌐", nome: "Tavolo Online",          desc: "Concludi 5 partite online",                                   stat: "partiteOnline",    meta: 5 },
+    { gioco: "asta", livello: "argento",  icona: "🪙", nome: "Portafoglio Leggero",    desc: "Spendi 100 crediti nelle aste",                               stat: "creditiSpesi",     meta: 100 },
+    { gioco: "asta", livello: "oro",      icona: "🎒", nome: "Maestro dei Temi",       desc: "Vinci 5 partite dei Temi classici",                          stat: "vinteTemi",        meta: 5 },
+    { gioco: "asta", livello: "oro",      icona: "⚽", nome: "Re del Fantacalcio",     desc: "Vinci 5 partite di Mini asta Fantacalcio",                   stat: "vinteFanta",       meta: 5 },
+    { gioco: "asta", livello: "oro",      icona: "🤝", nome: "Compagnia Vincente",     desc: "Vinci 10 partite online",                                    stat: "vinteOnline",      meta: 10 },
+    { gioco: "asta", livello: "oro",      icona: "📣", nome: "Rilancio dopo Rilancio", desc: "Aggiudicati 50 carte con le tue offerte",                    stat: "asteVinte",        meta: 50 },
+    { gioco: "asta", livello: "oro",      icona: "🌟", nome: "Kit da Applausi",        desc: "Ricevi 50 stelle in totale",                                 stat: "stelleRicevute",   meta: 50 },
+    { gioco: "asta", livello: "diamante", icona: "💎", nome: "Presenza Costante",      desc: "Concludi 50 partite",                                         stat: "partite",          meta: 50 },
+    { gioco: "asta", livello: "diamante", icona: "👑", nome: "Leggenda della Stanza",  desc: "Vinci 20 partite online",                                    stat: "vinteOnline",      meta: 20 },
+    { gioco: "asta", livello: "diamante", icona: "⚡", nome: "Re del Martello",        desc: "Aggiudicati 100 carte con le tue offerte",                   stat: "asteVinte",        meta: 100 },
+
+    // ---- NOMI, COSE E CITTÀ ----
+    { gioco: "nomicose", livello: "bronzo",   icona: "✍️", nome: "Prima Matita",       desc: "Concludi la tua prima partita",                              stat: "partite",       meta: 1 },
+    { gioco: "nomicose", livello: "bronzo",   icona: "🔤", nome: "Parola Valida",      desc: "Fai approvare la tua prima parola",                        stat: "paroleValide",  meta: 1 },
+    { gioco: "nomicose", livello: "bronzo",   icona: "📋", nome: "Caselle Piene",      desc: "Completa tutte le categorie in un giro",                   stat: "giriCompleti",  meta: 1 },
+    { gioco: "nomicose", livello: "bronzo",   icona: "🌐", nome: "Al Tavolo Online",   desc: "Concludi una partita online",                              stat: "partiteOnline", meta: 1 },
+    { gioco: "nomicose", livello: "bronzo",   icona: "🏅", nome: "Prima Vittoria",     desc: "Vinci una partita",                                        stat: "vinte",         meta: 1 },
+    { gioco: "nomicose", livello: "bronzo",   icona: "🤝", nome: "Stessa Risposta",    desc: "Scrivi 3 parole valide uguali a quelle di un altro giocatore", stat: "paroleDoppie", meta: 3 },
+    { gioco: "nomicose", livello: "argento",  icona: "🔟", nome: "Serata di Parole",   desc: "Concludi 10 partite",                                      stat: "partite",       meta: 10 },
+    { gioco: "nomicose", livello: "argento",  icona: "🖋️", nome: "Penna Sciolta",      desc: "Fai approvare 50 parole",                                  stat: "paroleValide",  meta: 50 },
+    { gioco: "nomicose", livello: "argento",  icona: "🔁", nome: "Menti Gemelle",      desc: "Scrivi 15 parole valide uguali a quelle di un altro",        stat: "paroleDoppie", meta: 15 },
+    { gioco: "nomicose", livello: "argento",  icona: "📱", nome: "Amici in Rete",      desc: "Concludi 8 partite online",                                stat: "partiteOnline", meta: 8 },
+    { gioco: "nomicose", livello: "argento",  icona: "🥇", nome: "Cinque Vittorie",    desc: "Vinci 5 partite",                                          stat: "vinte",         meta: 5 },
+    { gioco: "nomicose", livello: "oro",      icona: "📚", nome: "Vocabolario Vivente", desc: "Fai approvare 150 parole",                                stat: "paroleValide",  meta: 150 },
+    { gioco: "nomicose", livello: "oro",      icona: "🧠", nome: "Giro Senza Macchie", desc: "Fai approvare tutte le parole in 10 giri",                stat: "giriPerfetti",  meta: 10 },
+    { gioco: "nomicose", livello: "oro",      icona: "🎉", nome: "Serate in Compagnia", desc: "Concludi 25 partite",                                     stat: "partite",       meta: 25 },
+    { gioco: "nomicose", livello: "oro",      icona: "🏆", nome: "Campione del Gruppo", desc: "Vinci 10 partite",                                        stat: "vinte",         meta: 10 },
+    { gioco: "nomicose", livello: "oro",      icona: "🛜", nome: "Campione Connesso",  desc: "Vinci 10 partite online",                                 stat: "vinteOnline",   meta: 10 },
+    { gioco: "nomicose", livello: "diamante", icona: "💎", nome: "Grande Lessico",     desc: "Fai approvare 300 parole",                                stat: "paroleValide",  meta: 300 },
+    { gioco: "nomicose", livello: "diamante", icona: "👑", nome: "Re delle Parole",    desc: "Vinci 20 partite",                                        stat: "vinte",         meta: 20 },
+    { gioco: "nomicose", livello: "diamante", icona: "✨", nome: "Giri da Manuale",    desc: "Fai approvare tutte le parole in 25 giri",                stat: "giriPerfetti",  meta: 25 },
+
+    // ---- La Patata Bollente ----
+    { gioco: "patata", livello: "bronzo",   icona: "💣", nome: "Si Comincia",         desc: "Concludi la tua prima partita",                                      stat: "partite",             meta: 1 },
+    { gioco: "patata", livello: "bronzo",   icona: "🤲", nome: "Bomba in Mano",       desc: "Ricevi la bomba 5 volte",                                             stat: "bombeRicevute",       meta: 5 },
+    { gioco: "patata", livello: "bronzo",   icona: "🏃", nome: "Passa la Patata",     desc: "Passa la bomba 5 volte",                                             stat: "passaggi",            meta: 5 },
+    { gioco: "patata", livello: "bronzo",   icona: "🛡️", nome: "Ancora in Gara",      desc: "Sopravvivi a 3 esplosioni",                                          stat: "roundSopravvissuti",  meta: 3 },
+    { gioco: "patata", livello: "bronzo",   icona: "🗳️", nome: "Scelta di Gruppo",    desc: "Vota una categoria in una partita online",                           stat: "votiCategoria",       meta: 1 },
+    { gioco: "patata", livello: "bronzo",   icona: "📱", nome: "Prima Bomba Online",  desc: "Concludi una partita online",                                       stat: "partiteOnline",       meta: 1 },
+    { gioco: "patata", livello: "argento",  icona: "🔟", nome: "Serate Esplosive",    desc: "Concludi 10 partite",                                                stat: "partite",             meta: 10 },
+    { gioco: "patata", livello: "argento",  icona: "💨", nome: "Mani Veloci",         desc: "Passa la bomba 30 volte",                                           stat: "passaggi",            meta: 30 },
+    { gioco: "patata", livello: "argento",  icona: "↩️", nome: "Non Era Valida",      desc: "Rimanda indietro la bomba 5 volte",                                 stat: "rimandi",             meta: 5 },
+    { gioco: "patata", livello: "argento",  icona: "🧍", nome: "Duro a Morire",       desc: "Sopravvivi a 25 esplosioni",                                        stat: "roundSopravvissuti",  meta: 25 },
+    { gioco: "patata", livello: "argento",  icona: "🎲", nome: "La Ruota Decide",     desc: "Gioca 3 partite con una categoria a sorpresa",                      stat: "partiteSorpresa",     meta: 3 },
+    { gioco: "patata", livello: "oro",      icona: "🏆", nome: "Ultimo Rimasto",      desc: "Vinci 5 partite",                                                    stat: "vittorie",            meta: 5 },
+    { gioco: "patata", livello: "oro",      icona: "⚡", nome: "Passaggi Fulminei",   desc: "Passa la bomba 100 volte",                                          stat: "passaggi",            meta: 100 },
+    { gioco: "patata", livello: "oro",      icona: "🌋", nome: "Sopravvissuto",       desc: "Sopravvivi a 60 esplosioni",                                        stat: "roundSopravvissuti",  meta: 60 },
+    { gioco: "patata", livello: "oro",      icona: "🌐", nome: "Ultimo Online",       desc: "Vinci 5 partite online",                                            stat: "vittorieOnline",      meta: 5 },
+    { gioco: "patata", livello: "oro",      icona: "🎰", nome: "Amante del Rischio",  desc: "Gioca 10 partite con una categoria a sorpresa",                     stat: "partiteSorpresa",     meta: 10 },
+    { gioco: "patata", livello: "diamante", icona: "👑", nome: "Re della Patata",     desc: "Vinci 15 partite online",                                           stat: "vittorieOnline",      meta: 15 },
+    { gioco: "patata", livello: "diamante", icona: "🔥", nome: "Serie Bollente",      desc: "Vinci 3 partite di fila",                                           stat: "serieVittorieMax",    meta: 3 },
+    { gioco: "patata", livello: "diamante", icona: "💎", nome: "Giro Infinito",       desc: "Passa la bomba 200 volte",                                          stat: "passaggi",            meta: 200 },
+
+    // ---- Sì... però ----
+    { gioco: "sipero", livello: "bronzo",   icona: "🤨", nome: "Ci Sono Anch'io",     desc: "Concludi la tua prima partita",                              stat: "partite",          meta: 1 },
+    { gioco: "sipero", livello: "bronzo",   icona: "⚖️", nome: "Primo Verdetto",       desc: "Fai da giudice in un round",                                  stat: "roundGiudice",     meta: 1 },
+    { gioco: "sipero", livello: "bronzo",   icona: "🟥", nome: "Dalla Parte Giusta",   desc: "Vinci il tuo primo round in squadra",                        stat: "roundVinti",       meta: 1 },
+    { gioco: "sipero", livello: "bronzo",   icona: "🟢", nome: "Un Tocco di Paradiso", desc: "Gioca 5 carte Bonus con la tua squadra",                    stat: "carteBonus",       meta: 5 },
+    { gioco: "sipero", livello: "bronzo",   icona: "🔴", nome: "Piccolo Disastro",     desc: "Gioca 5 carte Malus con la tua squadra",                    stat: "carteMalus",       meta: 5 },
+    { gioco: "sipero", livello: "bronzo",   icona: "🌐", nome: "Prima Stanza",         desc: "Concludi una partita online",                               stat: "partiteOnline",    meta: 1 },
+    { gioco: "sipero", livello: "argento",  icona: "🔟", nome: "Serate al Circolo",    desc: "Concludi 10 partite",                                       stat: "partite",          meta: 10 },
+    { gioco: "sipero", livello: "argento",  icona: "🎙️", nome: "Giudice Abituale",     desc: "Fai da giudice in 8 round",                                 stat: "roundGiudice",     meta: 8 },
+    { gioco: "sipero", livello: "argento",  icona: "🏅", nome: "La Squadra Convince",  desc: "Vinci 15 round in squadra",                                 stat: "roundVinti",       meta: 15 },
+    { gioco: "sipero", livello: "argento",  icona: "✨", nome: "Idee Brillanti",       desc: "Gioca 30 carte Bonus con la tua squadra",                   stat: "carteBonus",       meta: 30 },
+    { gioco: "sipero", livello: "argento",  icona: "💥", nome: "Malus a Raffica",      desc: "Gioca 30 carte Malus con la tua squadra",                  stat: "carteMalus",       meta: 30 },
+    { gioco: "sipero", livello: "oro",      icona: "🏆", nome: "Cinque Vittorie",      desc: "Vinci 5 partite",                                          stat: "vittorie",         meta: 5 },
+    { gioco: "sipero", livello: "oro",      icona: "🧑‍⚖️", nome: "Arbitro Esperto",      desc: "Fai da giudice in 20 round",                                stat: "roundGiudice",     meta: 20 },
+    { gioco: "sipero", livello: "oro",      icona: "🤝", nome: "Compagni di Avventura",desc: "Vinci 50 round in squadra",                                stat: "roundVinti",       meta: 50 },
+    { gioco: "sipero", livello: "oro",      icona: "📡", nome: "Squadra Connessa",     desc: "Vinci 5 partite online facendo parte della squadra scelta", stat: "vittorieOnline",   meta: 5 },
+    { gioco: "sipero", livello: "oro",      icona: "🃏", nome: "Scenari Memorabili",   desc: "Gioca 50 carte Bonus con la tua squadra",                  stat: "carteBonus",       meta: 50 },
+    { gioco: "sipero", livello: "diamante", icona: "💎", nome: "Venti Serate Online",  desc: "Concludi 20 partite online",                               stat: "partiteOnline",    meta: 20 },
+    { gioco: "sipero", livello: "diamante", icona: "🎓", nome: "Giudice di Fiducia",   desc: "Fai da giudice in 50 round",                                stat: "roundGiudice",     meta: 50 },
+    { gioco: "sipero", livello: "diamante", icona: "🔥", nome: "Il Verdetto è Tuo",    desc: "Vinci 3 partite di fila (quelle da giudice non interrompono la serie)", stat: "serieVittorieMax", meta: 3 },
+
+    // ---- PAROLA D'ORDINE ----
+    { gioco: "ordine", livello: "bronzo",   icona: "🕵️", nome: "Prima Missione",        desc: "Concludi la tua prima partita online",                   stat: "partite",      meta: 1 },
+    { gioco: "ordine", livello: "bronzo",   icona: "👑", nome: "Capo per un Giro",      desc: "Dai il tuo primo indizio valido alla squadra",          stat: "indizi",       meta: 1 },
+    { gioco: "ordine", livello: "bronzo",   icona: "🔎", nome: "Occhio di Squadra",     desc: "Gira 3 parole della tua squadra",                      stat: "paroleGiuste", meta: 3 },
+    { gioco: "ordine", livello: "bronzo",   icona: "🗣️", nome: "Voce al Tabellone",     desc: "Dai 5 indizi validi nel corso delle partite",          stat: "indizi",       meta: 5 },
+    { gioco: "ordine", livello: "bronzo",   icona: "🏅", nome: "Prima Vittoria",        desc: "Vinci una partita con la tua squadra",                stat: "vittorie",     meta: 1 },
+    { gioco: "ordine", livello: "bronzo",   icona: "⭐", nome: "Parola d'Oro",          desc: "Gira la casella speciale della parola d'oro",          stat: "paroleOro",    meta: 1 },
+    { gioco: "ordine", livello: "argento",  icona: "📱", nome: "Serata in Rete",        desc: "Concludi 10 partite online",                           stat: "partiteOnline", meta: 10 },
+    { gioco: "ordine", livello: "argento",  icona: "🧩", nome: "Intesa Crescente",      desc: "Gira 25 parole della tua squadra",                    stat: "paroleGiuste", meta: 25 },
+    { gioco: "ordine", livello: "argento",  icona: "🎙️", nome: "Indiziere Affidabile", desc: "Dai 15 indizi validi",                                stat: "indizi",       meta: 15 },
+    { gioco: "ordine", livello: "argento",  icona: "🥇", nome: "Squadra Affiatata",     desc: "Vinci 5 partite con la tua squadra",                  stat: "vittorie",     meta: 5 },
+    { gioco: "ordine", livello: "argento",  icona: "🧢", nome: "Capitano Vincente",     desc: "Vinci 3 partite mentre sei il capo della squadra",    stat: "vittorieCapo", meta: 3 },
+    { gioco: "ordine", livello: "oro",      icona: "🗓️", nome: "Amico del Tabellone",  desc: "Concludi 25 partite online",                           stat: "partiteOnline", meta: 25 },
+    { gioco: "ordine", livello: "oro",      icona: "🧠", nome: "Mente in Sintonia",     desc: "Gira 100 parole della tua squadra",                   stat: "paroleGiuste", meta: 100 },
+    { gioco: "ordine", livello: "oro",      icona: "📣", nome: "Voce Esperta",          desc: "Dai 50 indizi validi",                                stat: "indizi",       meta: 50 },
+    { gioco: "ordine", livello: "oro",      icona: "🏆", nome: "Squadra Vincente",      desc: "Vinci 15 partite con la tua squadra",                 stat: "vittorie",     meta: 15 },
+    { gioco: "ordine", livello: "oro",      icona: "👑", nome: "Capo che Trascina",    desc: "Vinci 6 partite mentre sei il capo della squadra",     stat: "vittorieCapo", meta: 6 },
+    { gioco: "ordine", livello: "diamante", icona: "💎", nome: "Leggenda di Squadra",   desc: "Gira 150 parole della tua squadra",                   stat: "paroleGiuste", meta: 150 },
+    { gioco: "ordine", livello: "diamante", icona: "🎖️", nome: "Capitano Leggendario", desc: "Vinci 12 partite da capo della squadra",              stat: "vittorieCapo", meta: 12 },
+    { gioco: "ordine", livello: "diamante", icona: "🌟", nome: "Re del Tabellone",      desc: "Vinci 25 partite con la tua squadra",                 stat: "vittorie",     meta: 25 },
   ];
 
   function valoreStat(prof, gioco, chiave) {
@@ -9418,7 +9539,10 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
   var cacheAv = {};
   var FACCE = { esulta: { occhi: "felici", sopracc: "alzate", bocca: "sorrisone" }, triste: { occhi: "dolci", sopracc: "preoccupate", bocca: "smorfia" },
     pensa: { occhi: "assonnati", sopracc: "alzate", bocca: "neutro" }, paura: { occhi: "grandi", sopracc: "preoccupate", bocca: "nervoso" },
-    esploso: { occhi: "chiusi", sopracc: "preoccupate", bocca: "o" } };
+    esploso: { occhi: "chiusi", sopracc: "preoccupate", bocca: "o" },
+    arrabbiato: { occhi: "tondi", sopracc: "arrabbiate", bocca: "nervoso" },   // il capo quando la squadra sbaglia
+    evviva: { occhi: "felici", sopracc: "alzate", bocca: "risata" } };          // esultanza col braccio alzato
+  var BRACCIA = { evviva: "uno" };   // facce che alzano anche il braccio
   // l'avatar di un giocatore: quello che ha mandato (online), il mio profilo se è il mio nome, sennò uno fisso dal nome
   function avatarDi(g, faccia) {
     if (!window.SGOmino || !g) return "";
@@ -9426,7 +9550,8 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
     if (!cfg) { var p = window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo(); cfg = (p && p.omino && p.nome === g.nome) ? p.omino : SGOmino.casuale(g.nome || "?"); }
     if (faccia && FACCE[faccia]) { var c2 = {}, n; for (n in cfg) c2[n] = cfg[n]; for (n in FACCE[faccia]) c2[n] = FACCE[faccia][n]; cfg = c2; }
     var k = JSON.stringify(cfg);
-    if (!cacheAv[k]) { try { cacheAv[k] = SGOmino.svg(cfg, { busto: true }); } catch (e) { cacheAv[k] = ""; } }
+    if (faccia && BRACCIA[faccia]) k += "|" + BRACCIA[faccia];
+    if (!cacheAv[k]) { try { cacheAv[k] = SGOmino.svg(cfg, { busto: true, braccia: BRACCIA[faccia] }); } catch (e) { cacheAv[k] = ""; } }
     return cacheAv[k];
   }
 
@@ -9687,6 +9812,17 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
     preparaSuoni();
     Musica.avvia();
     avviaEq(S);
+    // mentre si scrive (es. il capo di Parola d'ordine dà l'indizio) lo studio resta alto com'era:
+    // sull'iPhone la tastiera fa "accorciare" lo schermo e lo studio rimpicciolito lasciava sotto il blu vuoto.
+    // Così invece il telefono sposta solo la vista per far vedere la casella sopra la tastiera, e la telecamera non si muove.
+    function scrive(e) { return e && /^(INPUT|TEXTAREA)$/.test(e.tagName) && S.vista.contains(e); }
+    function congela(si) {
+      var sch = S.vista.closest && S.vista.closest(".schermata");
+      [S.vista, sch].forEach(function (e) { if (!e) return; e.style.height = si ? S.VH + "px" : ""; e.style.maxHeight = si ? "none" : ""; });
+      if (!si) suResize();
+    }
+    S.vista.addEventListener("focusin", function (e) { if (scrive(e.target)) congela(true); });
+    S.vista.addEventListener("focusout", function () { setTimeout(function () { if (S.vivo() && !scrive(document.activeElement)) congela(false); }, 350); });
     // se cambia la misura dello schermo ridisegno lo studio (una volta, dopo che si è assestato)
     var toR = null;
     function suResize() {
@@ -16677,6 +16813,39 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 173,
+    data: "10 ottobre 2026",
+    titolo: "Trofei per altri 5 giochi 🏆",
+    descrizione: [
+      "Arrivano 19 trofei ciascuno per L'Asta, Nomi Cose e Città, Parola d'ordine, La Patata Bollente e Sì... però.",
+      "Si va dalla prima partita alle sfide più dure: 25 vittorie di squadra in Parola d'ordine, 300 parole approvate in Nomi Cose e Città, 100 carte vinte all'asta, 3 vittorie di fila alla Patata.",
+      "Anche questi danno XP e Speed Coins. Contano le partite giocate da qui in avanti, con il profilo."
+    ]
+  },
+  {
+    v: 172,
+    data: "10 ottobre 2026",
+    titolo: "Parola d'ordine si anima 🎬",
+    descrizione: [
+      "All'inizio della partita lo studio presenta tutti: prima ogni squadra al suo bancone, che esulta, poi i capi sui podi col loro nome. Poi la telecamera va sul capo che comincia.",
+      "Parola giusta: la telecamera va sulla squadra, che esulta col braccio alzato e fa due saltelli.",
+      "Parola sbagliata: la telecamera va sul capo, che si arrabbia («💢 Ma no!»). Con la parola nera, invece, esplode.",
+      "Sistemato un problema degli iPhone: quando il capo scriveva l'indizio, lo studio si rimpiccioliva, sotto restava il blu vuoto e la telecamera si spostava. Ora resta tutto fermo."
+    ]
+  },
+  {
+    v: 171,
+    data: "10 ottobre 2026",
+    titolo: "La città si allunga e Parola d'ordine migliora 🏙️",
+    descrizione: [
+      "La città ora è più lunga e si scorre su e giù col dito. In fondo c'è una fila nuova: il Circolo ha il suo posto tutto per sé, accanto a un parco con gli alberi e la panchina. Nessun edificio ne copre più un altro.",
+      "I nomi degli edifici adesso stanno appoggiati sul tetto di ognuno, non più sospesi in aria.",
+      "Uscendo da un edificio torni nel punto della città dove eri arrivato.",
+      "Parola d'ordine: ognuno può segnare più parole insieme, e su ogni parola segnata si vede sempre la faccina di chi l'ha scelta.",
+      "Parola d'ordine: la parola d'oro non fa più ricominciare il turno. Chi la trova continua a indovinare con lo stesso indizio, senza consumare un tentativo."
+    ]
+  },
+  {
     v: 170,
     data: "9 ottobre 2026",
     titolo: "Trofei per Palla a Pendolo e Ruota della Fortuna 🏆",
@@ -20066,6 +20235,36 @@ window.SG_SIPERO = {
   var TOT_ROUND = 4;
   var SECONDI = 10;      // conto alla rovescia dopo ogni rilancio
   var MAX_GIOCATORI = 10;
+  var PARTITE_SALVATE = Object.create(null);
+
+  function nuovaSessione() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
+  function salvaTrofeiAsta(t, vm, idGiocatore, online) {
+    try {
+      if (!vm || vm.fase !== "fine" || t.guarda || (t.linkParams && t.linkParams.prova) ||
+          (t.impostazioni && t.impostazioni.prova) || !vm.sessione ||
+          !(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      var profilo = SGNube.profilo(), lista = vm.giocatori || [];
+      var me = online ? lista.filter(function (g) { return g.id === idGiocatore; })[0] :
+        lista.filter(function (g) { return String(g.nome || "").trim().toLowerCase() === String(profilo.nome || "").trim().toLowerCase(); })[0];
+      if (!me || !String(profilo.nome || "").trim() || String(profilo.nome).trim().toLowerCase() !== String(me.nome || "").trim().toLowerCase()) return;
+      var profiloId = String(profilo.uid || profilo.nome).trim().toLowerCase();
+      var chiave = "asta|" + vm.sessione + "|" + profiloId;
+      if (PARTITE_SALVATE[chiave]) return;
+      var chiaveLocale = "sg-asta-ultima-partita-" + profiloId;
+      try { if (window.localStorage && localStorage.getItem(chiaveLocale) === String(vm.sessione)) { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
+      var classifica = vm.classifica || [], posizione = classifica.findIndex(function (g) { return online ? g.id === idGiocatore : String(g.nome || "").trim().toLowerCase() === String(me.nome || "").trim().toLowerCase(); });
+      var vinta = posizione === 0, formato = vm.formato === "fanta" ? "Fanta" : "Temi";
+      var incr = [["partite", 1], ["partite" + formato, 1], ["asteVinte", Math.max(0, +me.asteVinte || 0)],
+        ["creditiSpesi", Math.max(0, +me.creditiSpesi || 0)], ["stelleRicevute", Math.max(0, +me.stelle || 0)]];
+      if (online) incr.push(["partiteOnline", 1]);
+      if (vinta) { incr.push(["vinte", 1], ["vinte" + formato, 1]); if (online) incr.push(["vinteOnline", 1]); }
+      var s = SGNube.statGioco ? (SGNube.statGioco("asta") || {}) : {};
+      if (s.ultimaPartitaTrofei === vm.sessione) return;
+      PARTITE_SALVATE[chiave] = 1;
+      try { if (window.localStorage) localStorage.setItem(chiaveLocale, String(vm.sessione)); } catch (e) {}
+      SGNube.salvaProgressi(null, "asta", incr.filter(function (x) { return x[1] > 0; }), [], [["ultimaPartitaTrofei", vm.sessione]]);
+    } catch (e) {}
+  }
 
   // --- Aspetto specifico del gioco ---
   var stile = document.createElement("style");
@@ -20513,8 +20712,8 @@ window.SG_SIPERO = {
       if (t.impostazioni && t.impostazioni.modo === "online") return hostAsta(t, tema, crediti);
 
       var st = {
-        tema: tema, roundIdx: 0, chooserPtr: 0, tavolo: [], senzaCarta: [], asta: null,
-        giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: crediti, kit: [], stelle: 0 }; })
+        tema: tema, crediti: crediti, sessione: nuovaSessione(), roundIdx: 0, chooserPtr: 0, tavolo: [], senzaCarta: [], asta: null,
+        giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: crediti, kit: [], stelle: 0, asteVinte: 0 }; })
       };
       iniziaRound(t, st);
   }
@@ -20664,6 +20863,7 @@ window.SG_SIPERO = {
     var vincitore = a.leader, prezzo = a.offerta, carta = a.carta;
     st.giocatori[vincitore].crediti -= prezzo;
     st.giocatori[vincitore].kit.push(carta);
+    st.giocatori[vincitore].asteVinte = (st.giocatori[vincitore].asteVinte || 0) + 1;
     st.tavolo.splice(a.idxCarta, 1);
     st.senzaCarta = st.senzaCarta.filter(function (x) { return x !== vincitore; });
     st.chooserPtr++;
@@ -20774,6 +20974,12 @@ window.SG_SIPERO = {
   function classificaFinale(t, st) {
     var classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
       .map(function (g) { return { nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐" }; });
+    var profilo = window.SGNube && SGNube.profilo ? SGNube.profilo() : null;
+    var me = profilo && st.giocatori.filter(function (g) { return String(g.nome).trim().toLowerCase() === String(profilo.nome || "").trim().toLowerCase(); })[0];
+    if (me) salvaTrofeiAsta(t, { fase: "fine", sessione: st.sessione, formato: st.formato,
+      giocatori: st.giocatori.map(function (g) { return { nome: g.nome, asteVinte: g.asteVinte, stelle: g.stelle,
+        creditiSpesi: (st.formato === "fanta" ? FANTA_BUDGET : st.crediti || st.giocatori[0].crediti + g.asteVinte) - g.crediti }; }),
+      classifica: classifica }, null, false);
     t.fine(classifica);
   }
 
@@ -20794,13 +21000,14 @@ window.SG_SIPERO = {
     var r = st.tema.round[st.roundIdx] || {};
     var sceglie = st.senzaCarta.length ? st.senzaCarta[st.chooserPtr % st.senzaCarta.length] : null;
     return {
-      fase: st.fase, codice: st.codice,
+      fase: st.fase, codice: st.codice, sessione: st.sessione, formato: "temi",
       temaNome: st.tema.nome, temaIcona: st.tema.icona, temaId: st.tema.id,
       temi: (window.SG_ASTA_TEMI || []).map(function (x) { return { id: x.id, nome: x.nome, icona: x.icona }; }),
       roundIdx: st.roundIdx, roundNome: r.nome, roundIcona: r.icona, totRound: TOT_ROUND,
       rounds: (st.tema.round || []).map(function (x) { return { nome: x.nome, icona: x.icona }; }),
       giocatori: st.giocatori.map(function (g) {
-        return { id: g.id, nome: g.nome, omino: g.omino || null, crediti: g.crediti, haCarta: st.senzaCarta.indexOf(g.id) < 0, kit: g.kit.slice() };
+        return { id: g.id, nome: g.nome, omino: g.omino || null, crediti: g.crediti, creditiSpesi: st.crediti - g.crediti,
+          asteVinte: g.asteVinte || 0, stelle: g.stelle || 0, haCarta: st.senzaCarta.indexOf(g.id) < 0, kit: g.kit.slice() };
       }),
       tavolo: st.tavolo.map(function (c) { return { nome: c.nome, emoji: c.emoji, tier: c.tier }; }),
       sceglieId: sceglie, sceglieNome: sceglie ? nomeDi(st, sceglie) : "",
@@ -20819,10 +21026,10 @@ window.SG_SIPERO = {
   function hostAsta(t, tema, crediti) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var st = {
-      tema: tema, crediti: crediti, roundIdx: 0, chooserPtr: 0,
+      tema: tema, crediti: crediti, sessione: null, roundIdx: 0, chooserPtr: 0,
       tavolo: [], senzaCarta: [], asta: null, esito: null, classifica: null,
       fase: "lobby", iniziata: false, codice: "…", scadenza: null, _to: null, voti: {},
-      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: crediti, kit: [], stelle: 0, omino: t.mioOmino ? t.mioOmino() : null }]
+      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: crediti, kit: [], stelle: 0, asteVinte: 0, omino: t.mioOmino ? t.mioOmino() : null }]
     };
     function stopTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
     // "⚙️ Regole" in saletta: tema e crediti nuovi; se passi al Fantacalcio cambia motore (stessa stanza, stessi amici)
@@ -20855,7 +21062,7 @@ window.SG_SIPERO = {
         if (!m || !m.t) return;
         if (m.t === "join") {
           if (!st.iniziata && !perId(st, id) && st.giocatori.length < MAX_GIOCATORI)
-            st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: st.crediti, kit: [], stelle: 0, omino: avatarOk(m.omino) });
+            st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: st.crediti, kit: [], stelle: 0, asteVinte: 0, omino: avatarOk(m.omino) });
           bd();
         }
         else if (m.t === "scegli") scegli(id, m.idx);
@@ -20871,7 +21078,7 @@ window.SG_SIPERO = {
 
     function comincia() {
       if (st.iniziata || st.giocatori.length < 2) return;
-      st.iniziata = true; st.roundIdx = 0; nuovoRound();
+      st.iniziata = true; st.sessione = nuovaSessione(); st.roundIdx = 0; nuovoRound();
     }
     function nuovoRound() {
       stopTo();
@@ -20940,6 +21147,7 @@ window.SG_SIPERO = {
       var a = st.asta, g = perId(st, a.leader);
       if (!g) { st.asta = null; return prossima(); }
       g.crediti -= a.offerta; g.kit.push(a.carta);
+      g.asteVinte = (g.asteVinte || 0) + 1;
       st.tavolo.splice(a.idx, 1);
       st.senzaCarta = st.senzaCarta.filter(function (x) { return x !== a.leader; });
       st.chooserPtr++;
@@ -20975,7 +21183,7 @@ window.SG_SIPERO = {
         });
       });
       st.classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
-        .map(function (g) { return { nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐" }; });
+        .map(function (g, i) { return { id: g.id, nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐", pos: i + 1 }; });
       st.fase = "fine"; FX.fine(); bd();
       if (t.risultato) t.risultato(st.classifica);   // per il torneo online
     }
@@ -20987,9 +21195,9 @@ window.SG_SIPERO = {
     }
     function nuovaInLobby() {   // "Nuova partita": tutti tornano in lobby, stessi giocatori
       stopTo();
-      st.iniziata = false; st.fase = "lobby"; st.roundIdx = 0; st.chooserPtr = 0;
+      st.iniziata = false; st.fase = "lobby"; st.sessione = null; st.roundIdx = 0; st.chooserPtr = 0;
       st.tavolo = []; st.senzaCarta = []; st.asta = null; st.esito = null; st.classifica = null; st.voti = {}; st.scadenza = null;
-      st.giocatori.forEach(function (g) { g.crediti = st.crediti; g.kit = []; g.stelle = 0; });
+      st.giocatori.forEach(function (g) { g.crediti = st.crediti; g.kit = []; g.stelle = 0; g.asteVinte = 0; });
       bd();
     }
     var cb = {
@@ -21335,6 +21543,7 @@ window.SG_SIPERO = {
 
   function schermataFineAsta(t, vm, cb) {
     var el = t.el;
+    salvaTrofeiAsta(t, vm, cb && cb.myId, true);
     var etichetta = vm.formato === "fanta" ? "Mini asta Fantacalcio" : ("L'Asta · " + (vm.temaNome || ""));
     var s = t.schermata({ icona: "🏆", titolo: "Classifica finale", sotto: etichetta });
     s._contenuto.appendChild(el("div", { class: "tl-coriandoli", text: "🎉🥳🎉" }));
@@ -21469,8 +21678,8 @@ window.SG_SIPERO = {
   // ---------- SINGOLO TELEFONO ----------
   function avviaFanta(t) {
     var st = {
-      formato: "fanta", asta: null, giriVuoti: 0,
-      giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0 }; })
+      formato: "fanta", sessione: nuovaSessione(), asta: null, giriVuoti: 0,
+      giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0 }; })
     };
     st.mazzo = costruisciMazzoFanta(st.giocatori.length);
     introFanta(t, st);
@@ -21608,6 +21817,7 @@ window.SG_SIPERO = {
     if (a.bar && a.bar._stop) a.bar._stop();
     var carta = st.mazzo.shift();
     assegnaFanta(st.giocatori[i], carta, prezzo);
+    st.giocatori[i].asteVinte = (st.giocatori[i].asteVinte || 0) + 1;
     st.giriVuoti = 0; st.asta = null; FX.aggiudicato();
     esitoFanta(t, st, i, carta, prezzo, "vinta");
   }
@@ -21651,9 +21861,9 @@ window.SG_SIPERO = {
   function hostFanta(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var st = {
-      formato: "fanta", crediti: FANTA_BUDGET, mazzo: [], asta: null, esito: null, classifica: null,
+      formato: "fanta", crediti: FANTA_BUDGET, sessione: null, mazzo: [], asta: null, esito: null, classifica: null,
       fase: "lobby", iniziata: false, codice: "…", scadenza: null, _to: null, voti: {}, giriVuoti: 0,
-      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, omino: t.mioOmino ? t.mioOmino() : null }]
+      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, omino: t.mioOmino ? t.mioOmino() : null }]
     };
     function stopTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
     // "⚙️ Regole" in saletta: se torni ai Temi classici cambia motore (stessa stanza, stessi amici)
@@ -21676,7 +21886,7 @@ window.SG_SIPERO = {
         if (!m || !m.t) return;
         if (m.t === "join") {
           if (!st.iniziata && !perId(st, id) && st.giocatori.length < MAX_GIOCATORI)
-            st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, omino: avatarOk(m.omino) });
+            st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, omino: avatarOk(m.omino) });
           bd();
         }
         else if (m.t === "rilancia") rilanciaO(id);
@@ -21691,7 +21901,7 @@ window.SG_SIPERO = {
 
     function comincia() {
       if (st.iniziata || st.giocatori.length < 2) return;
-      st.iniziata = true; st.mazzo = costruisciMazzoFanta(st.giocatori.length); FX.round(); prossima();
+      st.iniziata = true; st.sessione = nuovaSessione(); st.mazzo = costruisciMazzoFanta(st.giocatori.length); FX.round(); prossima();
     }
     function prossima() {
       stopTo();
@@ -21737,7 +21947,7 @@ window.SG_SIPERO = {
       stopTo();
       var a = st.asta; if (a.leader === null) return accollo();
       var g = perId(st, a.leader); if (!g) { st.asta = null; return prossima(); }
-      var carta = st.mazzo.shift(); assegnaFanta(g, carta, a.offerta); st.giriVuoti = 0;
+      var carta = st.mazzo.shift(); assegnaFanta(g, carta, a.offerta); g.asteVinte = (g.asteVinte || 0) + 1; st.giriVuoti = 0;
       st.esito = { chiId: g.id, chiNome: g.nome, carta: carta, prezzo: a.offerta, tipo: "vinta" };
       st.asta = null; st.scadenza = null; st.fase = "esito"; FX.aggiudicato(); bd();
     }
@@ -21761,14 +21971,14 @@ window.SG_SIPERO = {
         });
       });
       st.classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
-        .map(function (g) { return { nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐" }; });
+        .map(function (g, i) { return { id: g.id, nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐", pos: i + 1 }; });
       st.fase = "fine"; FX.fine(); bd();
       if (t.risultato) t.risultato(st.classifica);   // per il torneo online
     }
     function nuovaInLobby() {
       stopTo();
       st.iniziata = false; st.fase = "lobby"; st.mazzo = []; st.asta = null; st.esito = null; st.classifica = null; st.voti = {}; st.scadenza = null; st.giriVuoti = 0;
-      st.giocatori.forEach(function (g) { g.crediti = FANTA_BUDGET; g.kit = []; g.conta = { P: 0, D: 0, C: 0, A: 0 }; g.stelle = 0; });
+      st.giocatori.forEach(function (g) { g.crediti = FANTA_BUDGET; g.kit = []; g.conta = { P: 0, D: 0, C: 0, A: 0 }; g.stelle = 0; g.asteVinte = 0; });
       bd();
     }
     var cb = {
@@ -21784,10 +21994,11 @@ window.SG_SIPERO = {
 
   function vmFanta(st) {
     return {
-      formato: "fanta", fase: st.fase, codice: st.codice,
+      formato: "fanta", fase: st.fase, codice: st.codice, sessione: st.sessione,
       giocatori: st.giocatori.map(function (g) {
         return { id: g.id, nome: g.nome, omino: g.omino || null, crediti: g.crediti, conta: { P: g.conta.P, D: g.conta.D, C: g.conta.C, A: g.conta.A },
-          vuoti: slotVuoti(g), max: maxFanta(g), kit: g.kit.slice() };
+          vuoti: slotVuoti(g), max: maxFanta(g), asteVinte: g.asteVinte || 0,
+          creditiSpesi: FANTA_BUDGET - g.crediti, stelle: g.stelle || 0, kit: g.kit.slice() };
       }),
       asta: st.asta ? {
         carta: { nome: st.asta.carta.nome, squadra: st.asta.carta.squadra, ruolo: st.asta.carta.ruolo },
@@ -27947,6 +28158,39 @@ window.SG_SIPERO = {
   var K_PERSO = "sg_ncc_perso";
   var PUNTI_OK = 10;      // parola valida e unica
   var PUNTI_DOPPIA = 5;   // parola valida ma scritta anche da un altro
+  var SALVATI_NCC = {};
+  function sessioneNcc() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+  // I progressi si accumulano durante i giri e si salvano una volta sola alla fine.
+  function nuovoProgresso() { return { paroleValide: 0, paroleDoppie: 0, giriCompleti: 0, giriPerfetti: 0 }; }
+  function registraProgresso(g, cats, risposte, valida, esito) {
+    var p = g._trofei || (g._trofei = nuovoProgresso());
+    var piene = 0, giuste = 0, doppie = 0;
+    cats.forEach(function (_, ci) {
+      if (risposte[ci]) piene++;
+      if (valida[ci]) { giuste++; if (esito[ci] === PUNTI_DOPPIA) doppie++; }
+    });
+    p.paroleValide += giuste; p.paroleDoppie += doppie;
+    if (piene === cats.length) p.giriCompleti++;
+    if (giuste === cats.length) p.giriPerfetti++;
+  }
+  function salvaTrofeiNcc(t, sessione, id, nome, giocatore, vittoria, online) {
+    if (!giocatore || !giocatore._trofei) return;
+    if (t.prova || (t.linkParams && t.linkParams.prova) || !window.SGNube || !SGNube.disponibile() || !SGNube.pronto()) return;
+    var prof = SGNube.profilo(); if (!prof || !prof.nome) return;
+    // Online è autorevole l'host; ogni telefono salva soltanto i propri dati.
+    // Sul telefono condiviso conta il posto col nome del profilo.
+    if (!online && String(nome || "").trim().toLowerCase() !== String(prof.nome).trim().toLowerCase()) return;
+    var chiave = String(sessione || "") + "|" + String(id || "");
+    if (SALVATI_NCC[chiave]) return;
+    SALVATI_NCC[chiave] = true;
+    var stat = giocatore._trofei, inc = [["partite", 1]];
+    if (vittoria) inc.push(["vinte", 1]);
+    if (online) inc.push(["partiteOnline", 1]);
+    if (online && vittoria) inc.push(["vinteOnline", 1]);
+    ["paroleValide", "paroleDoppie", "giriCompleti", "giriPerfetti"].forEach(function (k) { if (stat[k]) inc.push([k, stat[k]]); });
+    SGNube.salvaProgressi(null, "nomicose", inc, [["puntiMax", giocatore.punti || 0]], []);
+  }
 
   function catPerso() { try { return JSON.parse(localStorage.getItem(K_PERSO)) || []; } catch (e) { return []; } }
   function salvaPerso(a) { try { localStorage.setItem(K_PERSO, JSON.stringify(a)); } catch (e) {} }
@@ -28153,7 +28397,8 @@ window.SG_SIPERO = {
         : (window.SG_NCC_CATEGORIE ? window.SG_NCC_CATEGORIE.normali.slice(0, 5) : []);
       if (imp.modo === "online") return hostNcc(t, cats, imp);
       var st = {
-        g: t.giocatori.map(function (n) { return { nome: n, punti: 0 }; }),
+        sessioneTrofei: sessioneNcc(),
+        g: t.giocatori.map(function (n) { return { nome: n, punti: 0, _trofei: nuovoProgresso() }; }),
         cats: cats, secondi: imp.secondi || 60, giri: imp.round || 2,
         giro: 0, lettera: null, risposte: [], voti: []
       };
@@ -28494,6 +28739,7 @@ window.SG_SIPERO = {
       var tot = esito[a].reduce(function (n, p) { return n + p; }, 0);
       gg.punti += tot;
       gg._ultimo = { esito: esito[a], valida: valida[a], tot: tot };
+      registraProgresso(gg, st.cats, st.risposte[a], valida[a], esito[a]);
     });
   }
 
@@ -28516,6 +28762,9 @@ window.SG_SIPERO = {
     if (ultimo) {
       var vinc = st.g.indexOf(ordine[0]);
       await ST.finale(S, vinc, ordine[0].punti + " punti");
+      var mioNome = t.nomeProfilo && t.nomeProfilo();
+      var mioIndice = st.g.findIndex(function (gg) { return String(gg.nome).trim().toLowerCase() === String(mioNome || "").trim().toLowerCase(); });
+      if (mioIndice >= 0) salvaTrofeiNcc(t, st.sessioneTrofei, st.g[mioIndice].nome, st.g[mioIndice].nome, st.g[mioIndice], mioIndice === vinc, false);
       return t.fine(ordine.map(function (gg) { return { nome: gg.nome, punti: gg.punti }; }));
     }
     await ST.suSchermo(S, 800);
@@ -28562,8 +28811,8 @@ window.SG_SIPERO = {
   function hostNcc(t, cats, imp) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteN(t);
     var nomeHost = (t.giocatori && t.giocatori[0]) || "Host";
-    var H = { fase: "lobby", codice: "…", pronta: false, cats: cats, secondi: imp.secondi || 60, giri: imp.round || 2, giro: 0, lettera: null,
-      players: [{ id: "host", nome: nomeHost, omino: ST.mioAvatar(nomeHost), punti: 0 }],
+    var H = { sessioneTrofei: sessioneNcc(), fase: "lobby", codice: "…", pronta: false, cats: cats, secondi: imp.secondi || 60, giri: imp.round || 2, giro: 0, lettera: null,
+      players: [{ id: "host", nome: nomeHost, omino: ST.mioAvatar(nomeHost), punti: 0, _trofei: nuovoProgresso() }],
       risposte: {}, fatti: {}, voti: {}, ci: 0, pronti: {}, scadenza: 0, ultimo: null, to: null };
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function pres() { return H.players.filter(function (p) { return !p.via; }); }
@@ -28594,7 +28843,7 @@ window.SG_SIPERO = {
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          if (H.fase === "lobby" && !pById(id) && H.players.length < 10) H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: ST.avatarValido(m.omino), punti: 0 });
+          if (H.fase === "lobby" && !pById(id) && H.players.length < 10) H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: ST.avatarValido(m.omino), punti: 0, _trofei: nuovoProgresso() });
           bd();
         }
         else if (m.t === "risposte") risposte(id, m.r);
@@ -28604,8 +28853,8 @@ window.SG_SIPERO = {
       onErrore: function () { senzaReteN(t); }
     });
     function vm() {
-      var o = { fase: H.fase, codice: H.codice, pronta: H.pronta, giro: H.giro, giri: H.giri, lettera: H.lettera, secondi: H.secondi, cats: H.cats,
-        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, punti: p.punti, via: !!p.via }; }),
+      var o = { sessioneTrofei: H.sessioneTrofei, fase: H.fase, codice: H.codice, pronta: H.pronta, giro: H.giro, giri: H.giri, lettera: H.lettera, secondi: H.secondi, cats: H.cats,
+        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, punti: p.punti, via: !!p.via, trofei: p._trofei || null }; }),
         fatti: Object.keys(H.fatti) };
       if (H.fase === "scrittura") o.rimMs = Math.max(0, H.scadenza - Date.now());
       if (H.fase === "tabellone") {
@@ -28678,7 +28927,7 @@ window.SG_SIPERO = {
     // i punti del giro: vale se più della metà degli altri non l'ha bocciata; uguale a un'altra valida = 5
     function calcola() {
       clearTo();
-      var presenti = pres(), idsP = presenti.map(function (p) { return p.id; }), votanti = presenti.length - 1, tot = {};
+      var presenti = pres(), idsP = presenti.map(function (p) { return p.id; }), votanti = presenti.length - 1, tot = {}, validPer = {}, esitoPer = {};
       presenti.forEach(function (p) { tot[p.id] = 0; });
       H.cats.forEach(function (_, ci) {
         var valida = {}, conta = {};
@@ -28689,16 +28938,25 @@ window.SG_SIPERO = {
           valida[p.id] = (votanti - no) * 2 > votanti;
           if (valida[p.id]) { var k = norm(w); conta[k] = (conta[k] || 0) + 1; }
         });
-        presenti.forEach(function (p) { if (valida[p.id]) tot[p.id] += conta[norm((H.risposte[p.id] || [])[ci])] >= 2 ? PUNTI_DOPPIA : PUNTI_OK; });
+        presenti.forEach(function (p) {
+          var ok = !!valida[p.id], doppia = ok && conta[norm((H.risposte[p.id] || [])[ci])] >= 2;
+          (validPer[p.id] || (validPer[p.id] = []))[ci] = ok;
+          (esitoPer[p.id] || (esitoPer[p.id] = []))[ci] = ok ? (doppia ? PUNTI_DOPPIA : PUNTI_OK) : 0;
+          if (ok) tot[p.id] += doppia ? PUNTI_DOPPIA : PUNTI_OK;
+        });
       });
-      presenti.forEach(function (p) { p.punti += tot[p.id]; });
+      presenti.forEach(function (p) {
+        p.punti += tot[p.id];
+        registraProgresso(p, H.cats, H.risposte[p.id] || [], validPer[p.id] || [], esitoPer[p.id] || []);
+      });
       H.ultimo = { tot: tot };
       H.fase = (H.giro + 1 >= H.giri) ? "fine" : "punti"; bd();
     }
     function prossimoGiro() { if (H.fase === "punti") { H.giro++; nuovoGiro(); } }
     function nuova() {   // stessa gente, si ricomincia (senza sigla)
       if (H.fase !== "fine") return;
-      H.players = pres(); H.players.forEach(function (p) { p.punti = 0; });
+      H.players = pres(); H.players.forEach(function (p) { p.punti = 0; p._trofei = nuovoProgresso(); });
+      H.sessioneTrofei = sessioneNcc();   // partita nuova: i trofei contano anche questa (e ripartono da zero)
       if (H.players.length < 2) return;
       H.giro = 0; H.lettera = null; nuovoGiro();
     }
@@ -28953,6 +29211,11 @@ window.SG_SIPERO = {
   async function finaleOnline(R, vm) {
     var S = R.S, ordine = ordineN(vm), vinc = ordine[0] ? idxN(vm, ordine[0].id) : -1;
     await ST.finale(S, vinc, (ordine[0] ? ordine[0].punti : 0) + " punti");
+    var io = idxN(vm, R.cb.myId);
+    if (io >= 0) {
+      var mio = vm.players[io], vince = ordine[0] && ordine[0].id === mio.id;
+      salvaTrofeiNcc(R.t, vm.sessioneTrofei, mio.id, mio.nome, { punti: mio.punti, _trofei: mio.trofei || nuovoProgresso() }, !!vince, true);
+    }
     fineN(R.t, vm, R.cb, ordine);
   }
   function fineN(t, vm, cb, ordine) {
@@ -29029,6 +29292,27 @@ window.SG_SIPERO = {
     "MANO OCCHIO DENTE NASO TESTA PIEDE BRACCIO SPADA ARCO FRECCIA SCUDO BOMBA MINA RAZZO MOTORE").split(" ");
 
   function fmtN(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }   // 1.000
+  var PARTITE_SALVATE = {};
+  function salvaProgressiOrdine(idPartita, giocatoreId, progressi, players, spettatore) {
+    try {
+      if (spettatore || !progressi || !giocatoreId || !window.SGNube || !SGNube.disponibile || !SGNube.disponibile() || !SGNube.profilo || !SGNube.salvaProgressi) return;
+      var profilo = SGNube.profilo(), nome = String((profilo && profilo.nome) || "").trim();
+      var player = (players || []).filter(function (p) { return p.id === giocatoreId; })[0];
+      if (!player || !nome || nome.toLowerCase() !== String(player.nome || "").trim().toLowerCase()) return;
+      var idProfilo = String((profilo && profilo.uid) || nome).trim().toLowerCase();
+      var chiave = "ordine|" + idPartita + "|" + idProfilo;
+      if (PARTITE_SALVATE[chiave]) return;
+      try { if (window.localStorage && localStorage.getItem("sg-progressi-" + chiave)) { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
+      var x = progressi[giocatoreId] || {}, incrs = [];
+      ["partite", "partiteOnline", "vittorie", "vittorieCapo", "indizi", "paroleGiuste", "paroleOro"].forEach(function (k) {
+        if (+x[k] > 0) incrs.push([k, +x[k]]);
+      });
+      if (!incrs.length) return;
+      PARTITE_SALVATE[chiave] = 1;
+      try { if (window.localStorage) localStorage.setItem("sg-progressi-" + chiave, "1"); } catch (e) {}
+      SGNube.salvaProgressi(null, ID, incrs, [], []);
+    } catch (e) {}
+  }
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   function mescola(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
   var ACC = { "À": "A", "Á": "A", "È": "E", "É": "E", "Ì": "I", "Í": "I", "Ò": "O", "Ó": "O", "Ù": "U", "Ú": "U" };
@@ -29091,12 +29375,12 @@ window.SG_SIPERO = {
         if (p.id === vecchio) p.via = true;   // l'host di prima è sparito: se torna, rientra come giocatore
         if (p.id === IO) { p.via = false; io = p; }
       });
-      h.msg = "";
+      h.msg = ""; h.progressi = h.progressi || {};
       return h;
     })(ripresa) : { fase: "lobby", codice: "…", pronta: false, nsq: +imp.squadre === 3 ? 3 : 2, nparole: +imp.parole === 20 ? 20 : 25, gruppo: imp.usaMie === false ? [] : leggiGruppo(imp.gruppo), oro: imp.oro !== false,
       players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), team: 0 }], capo: [null, null, null],
       tab: null, bid: 0, turno: 0, passo: "indizio", indizio: null, tentativi: 0, girate: 0, prop: {}, storia: [], fuori: [],
-      vince: -1, classifica: null, msg: "", ultima: null, nGirate: 0, gen: 1, hostId: IO, vici: [] };
+      vince: -1, classifica: null, msg: "", ultima: null, nGirate: 0, gen: 1, hostId: IO, vici: [], progressi: {} };
     if (prova) {   // i bot: Matt in squadra con te (il primo bot si chiama sempre Matt), Rosa e Peppe nell'altra
       H.nsq = 2;
       [["bot1", "Matt", 0], ["bot2", "Rosa", 1], ["bot3", "Peppe", 1]].forEach(function (b) {
@@ -29202,7 +29486,12 @@ window.SG_SIPERO = {
         tab: H.tab ? H.tab.map(function (c) { return { w: c.w, g: c.g, c: (c.g || fine) ? c.c : null, oro: (c.g || fine) && c.oro ? 1 : 0 }; }) : null, oro: H.oro,
         bid: H.bid, turno: H.turno, passo: H.passo, indizio: H.indizio, tentativi: H.tentativi, girate: H.girate, prop: H.prop,
         storia: H.storia.slice(-8), log: (H.log || []).slice(-40), fuori: H.fuori.slice(), vince: H.vince, classifica: H.classifica, msg: H.msg, ultima: H.ultima, resto: r,
-        gen: H.gen, hostId: H.hostId, vici: H.vici.slice(), sospeso: H.sospeso || null };
+        gen: H.gen, hostId: H.hostId, vici: H.vici.slice(), sospeso: H.sospeso || null,
+        progressiFine: fine ? H.progressi : null };
+    }
+    function progresso(id) {
+      if (!H.progressi[id]) H.progressi[id] = { indizi: 0, paroleGiuste: 0, paroleOro: 0 };
+      return H.progressi[id];
     }
     function privato(id, m) {
       if (id === IO) { if (m.t === "avviso") avviso(m.testo); return; }
@@ -29261,6 +29550,7 @@ window.SG_SIPERO = {
         if (err) { privato(id, { t: "avviso", testo: err }); return; }
         var parola = String(m.parola).trim().toUpperCase();
         H.indizio = { parola: parola, n: n, k: H.turno };
+        progresso(id).indizi++;
         H.tentativi = n === 0 ? 99 : n + 1; H.girate = 0; H.passo = "indovina"; H.prop = {}; H.msg = "";
         H.storia.push({ k: H.turno, parola: parola, n: n });
         scrivi({ t: "ind", k: H.turno, id: id, nome: p.nome, p: parola, num: n });
@@ -29269,8 +29559,11 @@ window.SG_SIPERO = {
       if (!miaSquadra || sonoCapo || H.passo !== "indovina" || H.sospeso) return;   // mentre una parola è in sospeso non si tocca niente
       if (m.t === "proponi") {
         var i = Math.floor(+m.i);
-        if (i === -1) delete H.prop[id];
-        else if (H.tab[i] && !H.tab[i].g) H.prop[id] = i;
+        if (i === -1) delete H.prop[id];   // (togli tutti i miei segni)
+        else if (H.tab[i] && !H.tab[i].g) {   // ognuno può segnare più parole: si aggiungono (al massimo 9)
+          var mie = (H.prop[id] || []).filter(function (x) { return x !== i && H.tab[x] && !H.tab[x].g; });
+          mie.push(i); H.prop[id] = mie.slice(-9);
+        }
         bd(); return;
       }
       if (m.t === "gira") { sospendi(Math.floor(+m.i), id); return; }
@@ -29291,6 +29584,7 @@ window.SG_SIPERO = {
     function comincia() {
       if (H.fase !== "lobby" || !pronti()) return;
       sistemaCapi();
+      H.progressi = {};
       // 25 parole: qualcuna del gruppo (se ci sono) e le altre dall'elenco, senza doppioni
       var usate = {}, parole = [];
       mescola(H.gruppo).slice(0, MAX_GRUPPO).forEach(function (w) { usate[norm(w)] = 1; parole.push(w); });
@@ -29319,7 +29613,7 @@ window.SG_SIPERO = {
     function sospendi(i, id) {
       var c = H.tab[i]; if (!c || c.g || H.sospeso) return;
       H.nSosp = (H.nSosp || 0) + 1;
-      H.sospeso = { i: i, id: id, k: H.turno, n: H.nSosp }; H.prop = {};
+      H.sospeso = { i: i, id: id, k: H.turno, n: H.nSosp };   // gli altri segni restano: si può continuare con quelle
       bd();
       clearTimeout(tSosp); tSosp = setTimeout(rivela, SOSPENSE_MS);
     }
@@ -29329,10 +29623,18 @@ window.SG_SIPERO = {
       if (H.fase !== "gioco" || H.turno !== s.k) return bd();
       gira(s.i, s.id);
     }
+    function togliSegno(i) {   // la parola girata non è più segnata da nessuno (le altre restano)
+      Object.keys(H.prop).forEach(function (id) { var l = (H.prop[id] || []).filter(function (x) { return x !== i; }); if (l.length) H.prop[id] = l; else delete H.prop[id]; });
+    }
     function gira(i, id) {
       var c = H.tab[i]; if (!c || c.g) return;
       var k = H.turno, p = pById(id);
-      c.g = true; H.girate++; H.prop = {};
+      c.g = true; H.girate++; togliSegno(i);
+      if (p) {   // per i trofei: le parole della propria squadra e la parola d'oro
+        var pg = progresso(id);
+        if (c.c === p.team) pg.paroleGiuste++;
+        if (c.oro) pg.paroleOro++;
+      }
       H.ultima = { i: i, k: k, c: c.c, oro: c.oro ? 1 : 0, n: ++H.nGirate };
       var chi = p ? p.nome : SQ[k].nome;
       scrivi({ t: "gira", k: k, id: id, nome: chi, w: c.w, c: c.c, oro: c.oro ? 1 : 0 });
@@ -29349,7 +29651,7 @@ window.SG_SIPERO = {
         if (H.tentativi <= 0) { H.msg = "✅ " + c.w + ": giusta! Finiti i tentativi."; return fineTurno(); }
         bd(); return;
       }
-      if (c.oro) { H.msg = "⭐ " + c.w + ": la parola d'oro! I " + SQ[k].nome + " giocano un altro turno."; return fineTurno(true); }
+      if (c.oro) { H.msg = "⭐ " + c.w + ": la parola d'oro! I " + SQ[k].nome + " continuano a indovinare."; bd(); return; }   // si va avanti con lo stesso indizio, senza perdere un tentativo
       H.msg = c.c === "n" ? "😐 " + c.w + ": di nessuno. Tocca agli altri." : "😬 " + c.w + ": era dei " + SQ[c.c].nome + "!";
       fineTurno();
     }
@@ -29395,6 +29697,13 @@ window.SG_SIPERO = {
       H.classifica = H.players.map(function (p) { return { id: p.id, nome: p.nome, team: p.team, pos: p.team === k ? 1 : 2 }; })
         .sort(function (a, b) { return a.pos - b.pos; });
       H.msg = "🎉 Vincono i " + SQ[k].nome + "!"; scrivi({ t: "fine", k: k });
+      H.players.forEach(function (p) {
+        var pg = progresso(p.id);
+        pg.partite = 1; pg.partiteOnline = 1;
+        pg.vittorie = p.team === k ? 1 : 0;
+        pg.vittorieCapo = p.team === k && H.capo[k] === p.id ? 1 : 0;
+      });
+      if (!prova && !t.guarda) salvaProgressiOrdine(H.codice + "|" + H.bid, IO, vm().progressiFine, H.players, t.guarda);
       bd();
       // torneo online: i NOMI dei giocatori; a squadre chi vince al posto 1, gli altri dopo
       if (t.risultato && !prova) t.risultato(H.classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }));
@@ -29422,7 +29731,8 @@ window.SG_SIPERO = {
       var umani = membri(k).filter(function (p) { return !p.bot && p.id !== H.capo[k]; });
       var bot = membri(k).filter(function (p) { return p.bot && p.id !== H.capo[k]; })[0];
       if (umani.length || !bot) return;   // se in squadra indovini tu, il bot ti lascia fare
-      if (H.prop[bot.id] != null) tBot = setTimeout(function () { azione(bot.id, { t: "gira", i: H.prop[bot.id] }); }, 1000);
+      var segnate = H.prop[bot.id] || [];
+      if (segnate.length) tBot = setTimeout(function () { azione(bot.id, { t: "gira", i: segnate[segnate.length - 1] }); }, 1000);
       else tBot = setTimeout(function () { botScegli(k, bot.id); }, H.girate ? 1800 : 3600);   // dopo l'indizio, prima la vignetta del capo
     }
     function botIndizio(k) {
@@ -29494,7 +29804,9 @@ window.SG_SIPERO = {
           if (m.to && m.to !== S.myId) return;          // era per un altro telefono
           if (m.t === "vm") {
             if (m.vm.gen != null) { if (m.vm.gen < S.gen) return; S.gen = m.vm.gen; }   // la foto di un host vecchio (sostituito): non conta
-            S.vm = m.vm; disegna(t, m.vm, cb); controllaChiave();
+            S.vm = m.vm;
+            if (m.vm.fase === "fine" && !t.guarda) salvaProgressiOrdine(m.vm.codice + "|" + m.vm.bid, S.myId, m.vm.progressiFine, m.vm.players, t.guarda);
+            disegna(t, m.vm, cb); controllaChiave();
           }
           else if (m.t === "chiave") { S.chiave = { bid: m.bid, col: m.col }; if (S.vm) disegna(t, S.vm, cb); }
           else if (m.t === "omini") { S.omini = m.omini || {}; if (S.vm) disegna(t, S.vm, cb); }
@@ -29618,7 +29930,7 @@ window.SG_SIPERO = {
       B.k = key;
       while (B.gente.firstChild) B.gente.removeChild(B.gente.firstChild);
       mem.forEach(function (p) {
-        B.gente.appendChild(ui.el("div", { class: "or-persona" + (p.via ? " via" : ""), "data-id": p.id }, [
+        B.gente.appendChild(ui.el("div", { class: "or-persona" + (p.via ? " via" : "") + (B.facce[p.id] === "evviva" ? " evviva" : ""), "data-id": p.id }, [
           ui.el("img", { src: srcAvatarBanco(ui, p.id, p.nome, B.facce[p.id]), alt: "" }), ui.el("span", { text: p.nome }) ]));
       });
     });
@@ -29688,16 +30000,58 @@ window.SG_SIPERO = {
       }],
       [2800, function () { ST.suSchermo(S, 900); }], [900, function () {}]], true);
   }
-  function reazione(ui, vm, e) {   // una parola girata: le facce del capo e di chi l'ha girata (contente, tristi, esplose)
-    var S = ui.S, f = e.oro || e.c === e.k ? "esulta" : e.c === "x" ? "esploso" : "triste", B = ui.banchi[e.k];
-    ST.faccia(S, e.k, f);
-    if (B && e.id !== vm.capo[e.k]) { B.facce[e.id] = f; aggiornaBanchi(ui, vm); }
-    clearTimeout(ui["tr" + e.k]);
-    ui["tr" + e.k] = setTimeout(function () {
-      if (!S.vivo() || ui.finita) return;
-      ST.faccia(S, e.k, null);
-      if (B) { B.facce = {}; aggiornaBanchi(ui, ui.vm); }
-    }, 2200);
+  // la telecamera sul bancone di una squadra (tutti i giocatori dentro l'inquadratura)
+  function suBanco(ui, k, ms) {
+    var S = ui.S, B = ui.banchi[k]; if (!B) return;
+    ST.inquadra(S, function () { var b = B.box, w = b.w * 1.15, h = w * S.VH / S.VW; return { x: b.x + b.w / 2 - w / 2, y: b.y + b.h / 2 - h / 2, w: w, h: h }; }, ms);
+  }
+  function festaBanco(ui, k, si) {   // la squadra al bancone esulta col braccio alzato (o torna normale)
+    var B = ui.banchi[k], vm = ui.vm; if (!B) return;
+    B.facce = {};
+    if (si) (vm.players || []).forEach(function (p) { if (p.team === k && p.id !== vm.capo[k]) B.facce[p.id] = "evviva"; });
+    aggiornaBanchi(ui, vm);
+  }
+  function fumettoCapo(ui, k, testo) {   // il capo dice qualcosa dal suo podio (la stessa vignetta dell'indizio)
+    var S = ui.S, p = S.posti[k] || S.posti[0], V = ui.vignetta;
+    V.style.left = p.cx + "px"; V.style.top = (p.top + p.w * 0.04) + "px"; V.style.fontSize = (p.w * 0.12).toFixed(1) + "px";
+    while (V.firstChild) V.removeChild(V.firstChild);
+    V.appendChild(document.createTextNode(testo)); V.style.setProperty("--c", SQ[k] ? SQ[k].col : "#1f1f1f");
+    V.classList.remove("su"); void V.offsetWidth; V.classList.add("su");
+  }
+  // una parola girata. Giusta (o d'oro): la telecamera va sul bancone della squadra, che esulta col braccio alzato.
+  // Sbagliata: la telecamera va sul capo, che si arrabbia (con la parola nera esplode). Poi si torna al tabellone.
+  function reazione(ui, vm, e) {
+    var S = ui.S, giusta = e.oro || e.c === e.k, nera = e.c === "x", B = ui.banchi[e.k];
+    if (giusta) {
+      scena(ui, [[0, function () { ST.faccia(S, e.k, "esulta"); festaBanco(ui, e.k, true); suBanco(ui, e.k, 550); }],
+        [1700, function () { ST.faccia(S, e.k, null); festaBanco(ui, e.k, false); ST.suSchermo(S, 550); }], [550, function () {}]]);
+      return;
+    }
+    scena(ui, [[0, function () {
+        if (B && e.id !== ui.vm.capo[e.k]) { B.facce = {}; B.facce[e.id] = nera ? "esploso" : "triste"; aggiornaBanchi(ui, ui.vm); }
+        ST.suLeggio(S, e.k, 550); ST.faccia(S, e.k, nera ? "esploso" : "arrabbiato");
+      }],
+      [600, function () { fumettoCapo(ui, e.k, nera ? "💣 Noooo!" : ["💢 Ma no!", "💢 Uffa!", "💢 Nooo!", "💢 Ma dai!"][Math.floor(Math.random() * 4)]); }],
+      [1300, function () { ui.vignetta.classList.remove("su"); ST.faccia(S, e.k, null); if (B) { B.facce = {}; aggiornaBanchi(ui, ui.vm); } ST.suSchermo(S, 550); }],
+      [550, function () {}]]);
+  }
+  // all'inizio della partita: tutto lo studio, poi ogni squadra al suo bancone (esultano), poi i capi sui podi,
+  // uno per uno; dopo, la telecamera va sul capo che comincia (scenaTurno)
+  function presentazione(ui) {
+    var S = ui.S, vm = ui.vm, passi = [[0, function () { ST.largo(S, 0); }], [1100, function () {}]];
+    ui.banchi.forEach(function (B, k) {
+      var nomi = (vm.players || []).filter(function (p) { return p.team === k && p.id !== vm.capo[k] && !p.via; }).map(function (p) { return p.nome; });
+      if (!nomi.length) return;
+      passi.push([0, function () { festaBanco(ui, k, true); suBanco(ui, k, 700); ST.terzo(S, null, "I " + SQ[k].nome + "!", nomi.join(" · "), "👥"); ST.FX.applauso("piano"); }]);
+      passi.push([1800, function () { festaBanco(ui, k, false); }]);
+    });
+    for (var k = 0; k < vm.nsq; k++) (function (k) {
+      var capo = trova(vm, vm.capo[k]); if (!capo) return;
+      passi.push([0, function () { ST.suLeggio(S, k, 700); ST.faccia(S, k, "esulta"); ST.terzo(S, k, capo.nome, "Il capo dei " + SQ[k].nome, "👑"); }]);
+      passi.push([1600, function () { ST.faccia(S, k, null); }]);
+    })(k);
+    passi.push([0, function () { ST.viaTerzo(S); }], [100, function () {}]);
+    scena(ui, passi, true);
   }
   function creaSchermo(t, vm, cb) {
     stile(); ST = window.SGStudio;
@@ -29746,7 +30100,7 @@ window.SG_SIPERO = {
     ui.msg = el("div", { class: "or-toast" }); S.vista.appendChild(ui.msg);
     // all'inizio di una partita uno sguardo a tutto lo studio, poi il tabellone
     ST.suSchermo(S, 0);
-    if ((vm.log || []).length <= 1 && vm.fase === "gioco") scena(ui, [[0, function () { ST.largo(S, 0); }], [1300, function () { ST.suSchermo(S, 1100); }], [1100, function () {}]]);
+    if ((vm.log || []).length <= 1 && vm.fase === "gioco") presentazione(ui);   // all'inizio: si presentano tutti
     return ui;
   }
   // chi sono io in questa partita
@@ -29757,10 +30111,11 @@ window.SG_SIPERO = {
     return { io: io, team: team, capo: capo, capoVia: capoVia, mioTurno: vm.fase === "gioco" && team === vm.turno,
       indovino: vm.fase === "gioco" && team === vm.turno && !capo && vm.passo === "indovina" };
   }
+  function segnata(vm, id, i) { var l = vm.prop && vm.prop[id]; return l != null && [].concat(l).indexOf(i) >= 0; }   // la parola i è tra quelle segnate da id?
   function tocca(ui, i) {
     var vm = ui.vm, r = ruolo(vm, ui.cb), c = vm.tab[i];
     if (!r.indovino || !c || c.g) return;
-    if (vm.prop[ui.cb.myId] === i) ui.cb.manda({ t: "gira", i: i });   // secondo tocco sulla stessa parola: si gira
+    if (segnata(vm, ui.cb.myId, i)) ui.cb.manda({ t: "gira", i: i });   // secondo tocco su una parola che ho già segnato: si gira
     else ui.cb.manda({ t: "proponi", i: i });
   }
   // la faccina di un giocatore: l'avatar diventa un'immagine una volta sola e poi si riusa ovunque (squadre, chat, caselle)
@@ -29787,7 +30142,7 @@ window.SG_SIPERO = {
     var testa = [ faccia(ui, e.id, e.nome), el("span", { class: "or-l-nome", style: "color:" + col, text: e.nome }) ];
     if (e.t === "ind") return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-txt", text: "👑" }), el("span", { class: "or-l-ind", text: e.p + " " + (e.num === 0 ? "∞" : e.num) }) ]));
     if (e.t === "passo") return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-txt", text: "passa" }) ]));
-    var esito = e.oro ? "⭐ d'oro: un altro turno!" : e.c === "x" ? "💣 la parola nera!" : e.c === e.k ? "✓" : e.c === "n" ? "di nessuno" : "era dei " + SQ[e.c].nome;
+    var esito = e.oro ? "⭐ d'oro: si continua!" : e.c === "x" ? "💣 la parola nera!" : e.c === e.k ? "✓" : e.c === "n" ? "di nessuno" : "era dei " + SQ[e.c].nome;
     return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-w c" + e.c + (e.oro ? " oro" : ""), text: e.w }), el("span", { class: "or-l-esito" + (e.c === e.k && !e.oro ? " ok" : ""), text: esito }) ]));
   }
   function aggiorna(ui, vm, cb) {
@@ -29833,13 +30188,13 @@ window.SG_SIPERO = {
     }
     // ---- il tabellone (solo le carte che cambiano) ----
     var chi = {};   // parola -> chi la propone
-    Object.keys(vm.prop || {}).forEach(function (id) { var i = vm.prop[id]; (chi[i] = chi[i] || []).push(id); });
+    Object.keys(vm.prop || {}).forEach(function (id) { [].concat(vm.prop[id]).forEach(function (i) { (chi[i] = chi[i] || []).push(id); }); });
     vm.tab.forEach(function (c, i) {
       var C = ui.carte[i], col = c.c != null ? c.c : (key ? key[i] : null);
       var cls = "or-carta" + (c.g ? " g" : "") + (col != null ? " c" + col : "") + (!c.g && key ? " chiave" : "") + (fine && !c.g ? " svelata" : "") + (c.oro ? " oro" : "") + (vm.sospeso && vm.sospeso.i === i && !c.g ? " sospesa" : "") +
-        (r.indovino && !c.g && !vm.sospeso ? " attiva" : "") + (vm.prop[cb.myId] === i && r.indovino ? " mia" : "");
+        (r.indovino && !c.g && !vm.sospeso ? " attiva" : "") + (segnata(vm, cb.myId, i) && r.indovino ? " mia" : "");
       if (C.cls !== cls) { C.b.className = cls; C.cls = cls; }
-      var kp = (chi[i] || []).join(",");
+      var kp = (chi[i] || []).join(",") + "|" + Object.keys((cb.omini && cb.omini()) || {}).length;   // si ridisegna anche quando arrivano gli avatar
       if (C.kp !== kp) {
         C.kp = kp;
         C.pr.innerHTML = (chi[i] || []).slice(0, 4).map(function (id) { var p = trova(vm, id); return testaAvatar(ui, id, p && p.nome, p ? p.team : -1); }).join("");
@@ -29919,7 +30274,7 @@ window.SG_SIPERO = {
       return;
     }
     if (r.capo) { stato("La tua squadra sta cercando… Tu non puoi aiutarli!"); return; }
-    stato("Tocca una parola per proporla, tocca di nuovo per girarla.");
+    stato("Tocca le parole per segnarle (anche più di una); tocca di nuovo una parola segnata per girarla.");
     box.appendChild(el("div", { class: "or-riga" }, [
       el("button", { class: "or-btn", text: "✋ Basta così, passo", disabled: vm.girate > 0 ? null : "disabled", onclick: function () { cb.manda({ t: "passo" }); } }) ]));
   }
@@ -30048,6 +30403,8 @@ window.SG_SIPERO = {
       ".or-banco{position:absolute;display:flex;flex-direction:column}",
       ".or-banco-gente{flex:1 1 auto;min-height:0;display:flex;justify-content:center;align-items:flex-end;gap:3%;padding:0 4%}",
       ".or-persona{position:relative;flex:0 1 auto;min-width:0;max-width:31%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}",
+      ".or-persona.evviva img{animation:orSalta .5s ease-in-out 3}@keyframes orSalta{50%{transform:translateY(-9%)}}",   // chi esulta fa due saltelli (solo transform)
+      ".st-vista .st-terzo{bottom:calc(var(--or-barra, 98px) + 8px + env(safe-area-inset-bottom))}",   // la scritta di chi è (presentazione) sopra i tasti, non sotto
       ".or-persona img{height:84%;width:auto;max-width:100%;object-fit:contain;display:block}",
       ".or-persona span{font-size:.8em;font-weight:900;color:#fff;margin-top:-.2em;text-shadow:0 .1em .2em rgba(0,0,0,.6);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}",
       ".or-persona.via{opacity:.3}",
@@ -30090,7 +30447,7 @@ window.SG_SIPERO = {
       "La squadra ne discute e le gira una alla volta: si possono girare fino al numero dell'indizio <b>più una</b>. Se giri una parola di un'altra squadra o di nessuno, il turno passa.",
       "Chi gira la <b>parola nera</b> perde (a 3 squadre esce dalla partita). Vince la squadra che trova per prima tutte le sue parole.",
       "L'indizio non può essere una parola del tabellone (né quasi uguale). Il capo può dare anche «∞»: tentativi liberi.",
-      "⭐ <b>Parola d'oro</b> (se l'host la lascia accesa): tra le parole di nessuno una è d'oro, e non lo sa nessuno, nemmeno i capi. Chi la gira, invece di perdere il turno, gioca un altro turno."
+      "⭐ <b>Parola d'oro</b> (se l'host la lascia accesa): tra le parole di nessuno una è d'oro, e non lo sa nessuno, nemmeno i capi. Chi la gira non perde il turno: la squadra continua a indovinare con lo stesso indizio, senza consumare un tentativo."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
@@ -30113,7 +30470,7 @@ window.SG_SIPERO = {
       if (prova) chips("Nella tua squadra il capo è…", [[true, "Io"], [false, "Matt"]], "capoIo", "I bot danno indizi a caso e indovinano un po' a naso: la prova serve a vedere come funziona il gioco.");
       else chips("Quante squadre", [[2, "2 squadre"], [3, "3 squadre (da 6)"]], "squadre");
       chips("Quante parole sul tabellone", [[25, "25 (classico)"], [20, "20 (più grandi)"]], "parole", "Con 20 le caselle sono più grandi e la partita dura un po' meno.");
-      chips("⭐ Parola d'oro", [[true, "Sì"], [false, "No"]], "oro", "Una parola di nessuno è d'oro, e non lo sa nessuno: chi la gira gioca un altro turno.");
+      chips("⭐ Parola d'oro", [[true, "Sì"], [false, "No"]], "oro", "Una parola di nessuno è d'oro, e non lo sa nessuno: chi la gira continua a indovinare con lo stesso indizio.");
       // 📝 le TUE parole: restano salvate sul profilo. Si scrivono di fila ("Peppe, Ibiza, Kebab"), così gli amici se le passano;
       // dopo si vedono una alla volta, ognuna con la sua ✕
       var lista = leggiGruppo(window.SG && SG.listaProfilo ? SG.listaProfilo("ordine") : []);
@@ -30196,6 +30553,7 @@ window.SG_SIPERO = {
 
   var ST = window.SGStudio;   // lo studio del game show (condiviso, js/studio.js)
   var COLORI = ["#ff6b6b", "#4dabf7", "#51cf66", "#ffd43b", "#cc5de8", "#ff922b", "#20c997", "#f783ac", "#a9e34b", "#66d9e8"];
+  var PARTITE_SALVATE = Object.create(null);
   // Il timer riparte a ogni "ricezione". Il tetto parte da 15s e cala di 2s
   // ogni 4 passaggi, fino a un minimo di 5s: 15, 13, 11, 9, 7, 5.
   function capMs(passaggi) { return Math.max(5000, 15000 - 2000 * Math.floor(passaggi / 4)); }
@@ -30203,6 +30561,49 @@ window.SG_SIPERO = {
   // che vola sul primo, bomba che passa al nuovo dopo un'esplosione, e l'esplosione stessa.
   var ATTESA_INIZIO = 4600, ATTESA_ROUND = 1800, DURATA_BOOM = 3400;
   var ATTESA_SORPRESA = 2600;   // in più quando la categoria è a sorpresa: gira la ruota delle categorie
+
+  function nuovaSessioneP() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
+  function creaStatGiocatoriP(players) {
+    var out = Object.create(null);
+    players.forEach(function (p) { out[p.id] = { votiCategoria: 0, bombeRicevute: 0, passaggi: 0, rimandi: 0, esplosioni: 0, roundSopravvissuti: 0 }; });
+    return out;
+  }
+  function salvaTrofeiPatata(t, vm, cb) {
+    try {
+      if (!vm || vm.fase !== "fine" || t.guarda || (t.linkParams && (t.linkParams.guarda || t.linkParams.prova)) ||
+          (t.impostazioni && t.impostazioni.prova) || !vm.partitaId ||
+          !(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      var profilo = SGNube.profilo(), lista = vm.players || [], id = null, me = null;
+      if (cb.locale) {
+        var nomeProfilo = String(profilo.nome || "").trim().toLowerCase();
+        me = lista.filter(function (p) { return String(p.nome || "").trim().toLowerCase() === nomeProfilo; })[0];
+        id = me && me.id;
+      } else {
+        id = cb.myId;
+        me = lista.filter(function (p) { return p.id === id; })[0];
+      }
+      if (!me || !id || !String(profilo.nome || "").trim() || String(profilo.nome).trim().toLowerCase() !== String(me.nome || "").trim().toLowerCase()) return;
+      var profiloId = String(profilo.uid || profilo.nome).trim().toLowerCase();
+      var chiave = "patata|" + vm.partitaId + "|" + profiloId;
+      if (PARTITE_SALVATE[chiave]) return;
+      var chiaveLocale = "sg-patata-ultima-partita-" + profiloId;
+      try { if (window.localStorage && localStorage.getItem(chiaveLocale) === String(vm.partitaId)) { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
+      var miei = (vm.statFine || {})[id] || {}, vinta = !!(vm.vincitore && vm.vincitore.id === id);
+      var incr = [["partite", 1], ["votiCategoria", +miei.votiCategoria || 0], ["bombeRicevute", +miei.bombeRicevute || 0],
+        ["passaggi", +miei.passaggi || 0], ["rimandi", +miei.rimandi || 0], ["esplosioni", +miei.esplosioni || 0],
+        ["roundSopravvissuti", +miei.roundSopravvissuti || 0]];
+      if (!cb.locale) incr.push(["partiteOnline", 1]);
+      if (vm.sorpresa) incr.push(["partiteSorpresa", 1]);
+      if (vinta) { incr.push(["vittorie", 1]); if (!cb.locale) incr.push(["vittorieOnline", 1]); }
+      var s = SGNube.statGioco ? (SGNube.statGioco("patata") || {}) : {};
+      if (s.ultimaPartitaTrofei === vm.partitaId) return;
+      var serie = vinta ? (+s.serieVittorieOra || 0) + 1 : 0;
+      PARTITE_SALVATE[chiave] = 1;
+      try { if (window.localStorage) localStorage.setItem(chiaveLocale, String(vm.partitaId)); } catch (e) {}
+      SGNube.salvaProgressi(null, "patata", incr.filter(function (x) { return x[1] > 0; }),
+        [["serieVittorieMax", serie]], [["serieVittorieOra", serie], ["ultimaPartitaTrofei", vm.partitaId]]);
+    } catch (e) {}
+  }
 
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
   function pescaCategorie(n) { var pool = (window.SG_PATATA || []).slice(); return mischia(pool).slice(0, n); }
@@ -30276,6 +30677,8 @@ window.SG_SIPERO = {
       holder: null, prev: null, ultimo: null, giro: [], round: 0, ts: 0, boom: null, vincitore: null,
       remaining: 0, cap: 15000, passaggi: 0, remPrima: null, giroPrima: [], eliminati: [], soloDare: null, attesa: 0
     };
+    var partitaId = nuovaSessioneP(), statGiocatori = creaStatGiocatoriP(st.players);
+    function statP(id) { return statGiocatori[id] || (statGiocatori[id] = { votiCategoria: 0, bombeRicevute: 0, passaggi: 0, rimandi: 0, esplosioni: 0, roundSopravvissuti: 0 }); }
     function pById(id) { for (var i = 0; i < st.players.length; i++) if (st.players[i].id === id) return st.players[i]; return null; }
     function vivi() { return st.players.filter(function (p) { return !p.eliminato; }); }
     function holderObj() { return pById(st.holder); }
@@ -30300,14 +30703,17 @@ window.SG_SIPERO = {
       st.sorpresa = !!aCaso; st.categoria = cat; st.round = 0; st.boom = null; st.vincitore = null; st.passaggi = 0; st.remPrima = null; st.eliminati = [];
       st.players.forEach(function (p) { p.eliminato = false; });
       var vv = vivi(); st.holder = vv[Math.floor(Math.random() * vv.length)].id;
+      statP(st.holder).bombeRicevute++;
       st.prev = null; st.ultimo = null; st.soloDare = null; st.giro = [st.holder]; st.cap = capMs(0); st.remaining = st.cap;
       st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_INIZIO + (st.sorpresa ? ATTESA_SORPRESA : 0); onCambio();
     }
     function esplode() {
       var h = holderObj(); if (!h) return;
+      statP(h.id).esplosioni++;
       h.eliminato = true; st.eliminati.push(h.id); st.boom = { id: h.id, nome: h.nome }; st.fase = "esplosione"; onCambio();
       setTimeout(function () {
         st.boom = null; var v = vivi();
+        v.forEach(function (p) { statP(p.id).roundSopravvissuti++; });
         if (v.length <= 1) { st.fase = "fine"; st.vincitore = v[0] ? { id: v[0].id, nome: v[0].nome, colore: v[0].colore } : null; onCambio(); return; }
         st.round++;
         // togli gli eliminati dal giro, poi dai la bomba a caso a chi NON è ancora
@@ -30327,7 +30733,7 @@ window.SG_SIPERO = {
 
     return {
       st: st, vivi: vivi,
-      vota: function (id, idx) { var p = pById(id); if (p && st.fase === "voto" && idx >= 0 && idx <= st.cats.length) { p.voto = idx; onCambio(); } },
+      vota: function (id, idx) { var p = pById(id); if (p && st.fase === "voto" && idx >= 0 && idx <= st.cats.length) { if (p.voto == null) statP(id).votiCategoria++; p.voto = idx; onCambio(); } },
       via: function () {
         if (st.fase !== "voto") return;
         var conta = st.cats.map(function () { return 0; }); conta.push(0);   // + "a sorpresa"
@@ -30348,7 +30754,7 @@ window.SG_SIPERO = {
         }
         st.soloDare = null;                     // vincolo consumato
         st.remPrima = st.remaining;             // per l'eventuale "rimanda indietro"
-        st.passaggi++; st.cap = capMs(st.passaggi); st.remaining = st.cap;  // riceve -> timer riparte
+        st.passaggi++; statP(fromId).passaggi++; statP(targetId).bombeRicevute++; st.cap = capMs(st.passaggi); st.remaining = st.cap;  // riceve -> timer riparte
         st.ultimo = st.holder;                  // tenuto solo come info (il ritorno si fa col pulsante "Rimanda indietro")
         st.giroPrima = st.giro.slice();         // per ripristinarlo con "rimanda indietro"
         st.prev = st.holder; st.holder = targetId; st.giro.push(targetId);
@@ -30358,6 +30764,7 @@ window.SG_SIPERO = {
       indietro: function (fromId) {
         aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder || !st.prev || Date.now() < st.attesa) return;
         var p = pById(st.prev); if (!p || p.eliminato) return;
+        statP(fromId).rimandi++;
         // il passaggio non valeva: torna a chi l'aveva, col tempo che aveva (NIENTE reset)
         st.passaggi = Math.max(0, st.passaggi - 1); st.cap = capMs(st.passaggi);
         if (st.remPrima != null) st.remaining = st.remPrima;
@@ -30376,7 +30783,7 @@ window.SG_SIPERO = {
         }
         onCambio();
       },
-      nuova: function () { st.players.forEach(function (p) { p.eliminato = false; p.voto = null; }); st.eliminati = []; st.cats = pesca(3); st.fase = "voto"; st.categoria = null; st.sorpresa = false; st.boom = null; st.vincitore = null; onCambio(); },
+      nuova: function () { st.players.forEach(function (p) { p.eliminato = false; p.voto = null; }); st.eliminati = []; st.cats = pesca(3); st.fase = "voto"; st.categoria = null; st.sorpresa = false; st.boom = null; st.vincitore = null; partitaId = nuovaSessioneP(); statGiocatori = creaStatGiocatoriP(st.players); onCambio(); },
       remaining: function () { return Math.max(0, st.remaining); },
       distruggi: function () { clearInterval(loop); },
       vm: function () {
@@ -30388,6 +30795,7 @@ window.SG_SIPERO = {
         }
         return {
           fase: st.fase, categoria: st.categoria, sorpresa: !!st.sorpresa, cats: st.cats, round: st.round,
+          partitaId: partitaId, statFine: st.fase === "fine" ? statGiocatori : null,
           players: st.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null, eliminato: p.eliminato, voto: p.voto }; }),
           holder: st.holder, prev: st.prev, ultimo: st.ultimo, giro: st.giro.slice(),
           soloDare: (function () { if (st.soloDare == null) return null; var s = pById(st.soloDare); return (s && !s.eliminato) ? st.soloDare : null; })(),
@@ -30929,6 +31337,7 @@ window.SG_SIPERO = {
 
   // ---- classifica finale (dopo il finale nello studio) ----
   function schermataFineP(t, vm, cb) {
+    salvaTrofeiPatata(t, vm, cb);
     var el = t.el;
     var sf = t.schermata({ icona: "🏆", titolo: "Vince " + (vm.vincitore ? vm.vincitore.nome : "") + "!", sotto: "La Patata Bollente" });
     var cl = vm.classifica || [];
@@ -37828,12 +38237,72 @@ window.SG_SIPERO = {
   "use strict";
 
   var MAX_MANO = 7;
+  var PARTITE_SALVATE = Object.create(null);
   var CLASSICA = [
     { tipo: "bonus", n: 2, bers: "se" },
     { tipo: "malus", n: 2, bers: "avv" },
     { tipo: "bonus", n: 1, bers: "se" },
     { tipo: "malus", n: 2, bers: "avv" }
   ];
+
+  function nuovaSessione() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
+  function statPersona(st, id) {
+    if (!st.statGiocatori) st.statGiocatori = Object.create(null);
+    if (!st.statGiocatori[id]) st.statGiocatori[id] = { roundGiocati: 0, roundGiudice: 0, roundVinti: 0, carteBonus: 0, carteMalus: 0 };
+    return st.statGiocatori[id];
+  }
+  function contaRound(st, giocatori, assegna) {
+    var giudice = giudiceDa(giocatori, assegna);
+    giocatori.forEach(function (g) {
+      statPersona(st, g.id).roundGiocati++;
+      if (giudice && g.id === giudice.id) statPersona(st, g.id).roundGiudice++;
+    });
+  }
+  function contaCarteSquadra(st, giocatori, assegna, squadra, tipo, quante) {
+    giocatori.forEach(function (g) {
+      if (squadraDiId(assegna, g.id) === squadra) statPersona(st, g.id)[tipo === "bonus" ? "carteBonus" : "carteMalus"] += quante;
+    });
+  }
+  function salvaTrofeiSipero(t, vm, giocatoreId, online, classifica) {
+    try {
+      if (!vm || vm.fase !== "fine" || t.guarda || (t.linkParams && (t.linkParams.guarda || t.linkParams.prova)) ||
+          (t.impostazioni && t.impostazioni.prova) || !vm.sessione ||
+          !(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      var profilo = SGNube.profilo(), lista = vm.giocatori || [];
+      var me = online ? lista.filter(function (g) { return g.id === giocatoreId; })[0] :
+        lista.filter(function (g) { return String(g.nome || "").trim().toLowerCase() === String(profilo.nome || "").trim().toLowerCase(); })[0];
+      if (!me || !String(profilo.nome || "").trim() || String(profilo.nome).trim().toLowerCase() !== String(me.nome || "").trim().toLowerCase()) return;
+      var profiloId = String(profilo.uid || profilo.nome).trim().toLowerCase();
+      var chiave = "sipero|" + vm.sessione + "|" + profiloId;
+      if (PARTITE_SALVATE[chiave]) return;
+      var chiaveLocale = "sg-sipero-ultima-partita-" + profiloId;
+      try { if (window.localStorage && localStorage.getItem(chiaveLocale) === String(vm.sessione)) { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
+      var idStat = online ? giocatoreId : me.nome;
+      var miei = (vm.statFine || {})[idStat] || {};
+      var vinta = false, pareggio = false;
+      if (online) vinta = vm.assegna && (vm.assegna[giocatoreId] === 0 || vm.assegna[giocatoreId] === 1) && vm.assegna[giocatoreId] === vm.vincitore;
+      else {
+        var pos = (classifica || []).filter(function (g) { return String(g.nome || "").trim().toLowerCase() === String(me.nome || "").trim().toLowerCase(); })[0];
+        var massimo = Math.max.apply(null, (classifica || []).map(function (g) { return +g.punti || 0; }));
+        var primi = (classifica || []).filter(function (g) { return (+g.punti || 0) === massimo; });
+        vinta = !!pos && (+pos.punti || 0) === massimo && primi.length === 1;
+        pareggio = !!pos && (+pos.punti || 0) === massimo && primi.length > 1;
+      }
+      var incr = [["partite", 1], ["roundGiocati", +miei.roundGiocati || 0], ["roundGiudice", +miei.roundGiudice || 0],
+        ["roundVinti", +miei.roundVinti || 0], ["carteBonus", +miei.carteBonus || 0], ["carteMalus", +miei.carteMalus || 0]];
+      if (online) incr.push(["partiteOnline", 1]);
+      if (vinta) { incr.push(["vittorie", 1]); if (online) incr.push(["vittorieOnline", 1]); }
+      if (pareggio) incr.push(["pareggi", 1]);
+      var s = SGNube.statGioco ? (SGNube.statGioco("sipero") || {}) : {};
+      if (s.ultimaPartitaTrofei === vm.sessione) return;
+      var giudice = online && vm.assegna && vm.assegna[giocatoreId] === "g";   // da giudice non si può vincere: la serie resta com'era
+      var serie = vinta ? (+s.serieVittorieOra || 0) + 1 : giudice ? (+s.serieVittorieOra || 0) : 0;
+      PARTITE_SALVATE[chiave] = 1;
+      try { if (window.localStorage) localStorage.setItem(chiaveLocale, String(vm.sessione)); } catch (e) {}
+      SGNube.salvaProgressi(null, "sipero", incr.filter(function (x) { return x[1] > 0; }),
+        [["serieVittorieMax", serie]], [["serieVittorieOra", serie], ["ultimaPartitaTrofei", vm.sessione]]);
+    } catch (e) {}
+  }
 
   function altra(k) { return k === 0 ? 1 : 0; }
   function taglia(s) { return s.length > 34 ? s.slice(0, 32) + "…" : s; }
@@ -37979,7 +38448,7 @@ window.SG_SIPERO = {
       var st = {
         giocatori: t.giocatori.slice(), punti: punti,
         bonus: dati.bonus, malus: dati.malus, sequenza: seq,
-        round: 0, totale: imp.round || 6
+        round: 0, totale: imp.round || 6, sessione: nuovaSessione(), statGiocatori: Object.create(null)
       };
       iniziaRound(t, st);
     }
@@ -37998,6 +38467,8 @@ window.SG_SIPERO = {
     var n = st.giocatori.length;
     var gi = (st.round - 1) % n;
     st.giudice = st.giocatori[gi];
+    st.giocatori.forEach(function (nome) { statPersona(st, nome).roundGiocati++; });
+    statPersona(st, st.giudice).roundGiudice++;
     var altri = [];
     for (var d = 1; d < n; d++) altri.push(st.giocatori[(gi + d) % n]);
     var h = Math.ceil(altri.length / 2);
@@ -38044,6 +38515,7 @@ window.SG_SIPERO = {
     }, function (scelte) {
       var dest = (f.tipo === "bonus") ? st.scen[target].bonus : st.scen[target].malusRic;
       scelte.forEach(function (c) { dest.push(c); });
+      st.squadre[sq].membri.forEach(function (nome) { statPersona(st, nome)[f.tipo === "bonus" ? "carteBonus" : "carteMalus"] += scelte.length; });
       st.mani[sq][f.tipo] = manoTipo.filter(function (c) { return scelte.indexOf(c) < 0; });
       ricarica(t, st.mani[sq][f.tipo], f.tipo === "bonus" ? st.bonus : st.malus, MAX_MANO);
       st.stepIdx += 1; prossimoStep(t, st);
@@ -38116,7 +38588,7 @@ window.SG_SIPERO = {
       var g = el("div", { style: "display:flex;flex-direction:column;gap:10px" });
       st.squadre.forEach(function (sq, k) {
         g.appendChild(el("button", { class: "btn btn-fantasma", style: "font-size:1.1rem;padding:16px;text-align:left", html: (k === 0 ? "🟥 " : "🟦 ") + membriTxt(sq),
-          onclick: function () { sq.membri.forEach(function (m) { st.punti[m] = (st.punti[m] || 0) + 1; }); esitoRound(t, st, k); } }));
+          onclick: function () { sq.membri.forEach(function (m) { st.punti[m] = (st.punti[m] || 0) + 1; statPersona(st, m).roundVinti++; }); esitoRound(t, st, k); } }));
       });
       s._contenuto.appendChild(g);
       t.mostra(s);
@@ -38146,6 +38618,7 @@ window.SG_SIPERO = {
     var classifica = st.giocatori.slice()
       .sort(function (a, b) { return (st.punti[b] || 0) - (st.punti[a] || 0); })
       .map(function (nome) { return { nome: nome, punti: st.punti[nome] || 0 }; });
+    salvaTrofeiSipero(t, { fase: "fine", sessione: st.sessione, giocatori: st.giocatori.map(function (nome) { return { nome: nome }; }), statFine: st.statGiocatori }, null, false, classifica);
     t.fine(classifica);
   }
 
@@ -38172,6 +38645,7 @@ window.SG_SIPERO = {
     var vm = {
       fase: st.fase, codice: st.codice,
       giocatori: st.giocatori.map(function (x) { return { id: x.id, nome: x.nome, omino: x.omino || null }; }),
+      sessione: st.sessione, statFine: st.fase === "fine" ? st.statGiocatori : null,
       assegna: st.assegna, giudiceId: g ? g.id : null, giudiceNome: g ? g.nome : "",
       squadre: squadreDa(st.giocatori, st.assegna),
       scen: st.scen, mani: st.mani || null, vincitore: st.vincitore, step: null,
@@ -38190,6 +38664,7 @@ window.SG_SIPERO = {
       fase: "lobby", codice: "…", iniziata: false,
       giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", omino: t.mioOmino ? t.mioOmino() : null }],
       assegna: {}, seq: seq, vincitore: null,
+      sessione: null, statGiocatori: Object.create(null),
       regoleModalita: "classica", seqCustom: [],
       scen: [{ bonus: [], malusRic: [] }, { bonus: [], malusRic: [] }],
       mani: null, steps: [], stepIdx: 0,
@@ -38206,7 +38681,7 @@ window.SG_SIPERO = {
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") { if (!perIdS(st, id) && st.giocatori.length < 10) st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarOkS(m.omino) }); bd(); }
+        if (m.t === "join") { if (!perIdS(st, id) && st.giocatori.length < 10) { st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarOkS(m.omino) }); statPersona(st, id); } bd(); }
         else if (m.t === "gioca") giocaCarte(id, m.carte);
         else if (m.t === "giudica") giudica(id, m.sq);
         else if (m.t === "avanti") avanti(id);
@@ -38221,7 +38696,8 @@ window.SG_SIPERO = {
       var sq = squadreDa(st.giocatori, st.assegna), g = giudiceDa(st.giocatori, st.assegna);
       var tutti = st.giocatori.every(function (x) { var a = st.assegna[x.id]; return a === 0 || a === 1 || a === "g"; });
       if (!g || !sq[0].membri.length || !sq[1].membri.length || !tutti) return;
-      st.iniziata = true; st.fase = "gioco"; st.vincitore = null;
+      st.iniziata = true; st.fase = "gioco"; st.vincitore = null; st.sessione = nuovaSessione(); st.statGiocatori = Object.create(null);
+      contaRound(st, st.giocatori, st.assegna);
       st.scen = [{ bonus: [], malusRic: [] }, { bonus: [], malusRic: [] }];
       st.mani = [
         { bonus: ricarica(t, [], st.bonus, MAX_MANO), malus: ricarica(t, [], st.malus, MAX_MANO) },
@@ -38244,6 +38720,7 @@ window.SG_SIPERO = {
       var target = (step.f.bers === "se") ? step.sq : altra(step.sq);
       var dest = (step.f.tipo === "bonus") ? st.scen[target].bonus : st.scen[target].malusRic;
       carte.forEach(function (c) { dest.push(c); });
+      contaCarteSquadra(st, st.giocatori, st.assegna, step.sq, step.f.tipo, carte.length);
       st.mani[step.sq][step.f.tipo] = mano.filter(function (c) { return carte.indexOf(c) < 0; });
       ricarica(t, st.mani[step.sq][step.f.tipo], step.f.tipo === "bonus" ? st.bonus : st.malus, MAX_MANO);
       st.stepIdx += 1;
@@ -38257,7 +38734,9 @@ window.SG_SIPERO = {
     function giudica(id, sq) {
       var g = giudiceDa(st.giocatori, st.assegna);
       if (st.fase === "giudizio" && g && id === g.id && (sq === 0 || sq === 1)) {
-        st.vincitore = sq; st.fase = "fine"; bd();
+        st.vincitore = sq; st.fase = "fine";
+        st.giocatori.forEach(function (g) { if (squadraDiId(st.assegna, g.id) === sq) statPersona(st, g.id).roundVinti++; });
+        bd();
         if (t.risultato) {   // per il torneo online: la squadra scelta dal giudice, poi il giudice, poi l'altra squadra
           var S = squadreDa(st.giocatori, st.assegna), vinti = S[sq].membri, persi = S[1 - sq].membri;
           t.risultato(vinti.map(function (m) { return { nome: m.nome, pos: 1 }; })
@@ -38268,6 +38747,7 @@ window.SG_SIPERO = {
     }
     function nuova() {
       st.fase = "lobby"; st.iniziata = false; st.vincitore = null;
+      st.sessione = null; st.statGiocatori = Object.create(null);
       st.scen = [{ bonus: [], malusRic: [] }, { bonus: [], malusRic: [] }];
       st.mani = null; st.steps = []; st.stepIdx = 0; bd();
     }
@@ -38454,6 +38934,7 @@ window.SG_SIPERO = {
     }
 
     if (vm.fase === "fine") {
+      salvaTrofeiSipero(t, vm, cb.myId, true, null);
       var s = t.schermata({ icona: "🏆", titolo: "Vince la Squadra " + (vm.vincitore + 1) + "!", sotto: "Stanza " + (vm.codice || "") });
       s._contenuto.appendChild(nodoScenari(t, vm, mySq));
       if (cb.sonoHost) {
