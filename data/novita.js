@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 177,
+    data: "10 ottobre 2026",
+    titolo: "Trofei per tipo e città più comoda 🏆",
+    descrizione: [
+      "Nei trofei, sotto ogni gioco vedi quanti ne hai di ogni tipo: 🥉 bronzo, 🥈 argento, 🥇 oro, 💎 diamante e 💠 platino. Anche dentro ogni gioco, in cima.",
+      "Nella città si entra toccando anche l'edificio, non solo il nome. Prima, la sera e di notte, funzionava solo il nome.",
+      "Tenendo il dito su una scritta non si seleziona più il testo e non esce il menu del copia e incolla."
+    ]
+  },
+  {
     v: 176,
     data: "10 ottobre 2026",
     titolo: "Giorni di fila 🔥",

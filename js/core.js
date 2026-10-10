@@ -1483,6 +1483,17 @@
   function trofeoFatto(prof, t) { return valoreStat(prof, t.gioco, t.stat) >= t.meta; }
   function contaTrofei(prof, gid) { var l = trofeiDi(gid), n = 0; l.forEach(function (t) { if (trofeoFatto(prof, t)) n++; }); return { fatti: n, tot: l.length }; }
   function platinato(prof, gid) { var c = contaTrofei(prof, gid); return c.tot > 0 && c.fatti === c.tot; }
+  var ICONE_LIV = { bronzo: "🥉", argento: "🥈", oro: "🥇", diamante: "💎" };
+  function perLivello(prof, gid) {   // i trofei di un gioco divisi per tipo: { bronzo: { fatti, tot }, ... }
+    var r = {}; trofeiDi(gid).forEach(function (t) { var p = r[t.livello] || (r[t.livello] = { fatti: 0, tot: 0 }); p.tot++; if (trofeoFatto(prof, t)) p.fatti++; });
+    return r;
+  }
+  function chipLivelli(prof, gid) {   // la riga "🥉 3/9  🥈 1/6 …" sotto ogni gioco
+    var pl = perLivello(prof, gid), riga = el("div", { class: "sg-livelli" });
+    ORDINE_LIV.forEach(function (l) { var p = pl[l]; if (!p) return; riga.appendChild(el("span", { class: "sg-liv " + LIVELLI[l].cls + (p.fatti === p.tot ? " pieno" : ""), html: ICONE_LIV[l] + " <b>" + p.fatti + "</b>/" + p.tot })); });
+    if (platinato(prof, gid)) riga.appendChild(el("span", { class: "sg-liv tl-platino pieno", html: "💠 <b>Platino</b>" }));
+    return riga;
+  }
 
   // schermata principale: l'elenco di TUTTI i giochi, ognuno coi suoi trofei dentro
   function schermataSfide() {
@@ -1519,7 +1530,8 @@
         el("div", { class: "sg-corpo" }, [
           el("div", { class: "sg-nome", text: g.nome }),
           el("div", { class: "sg-sub", html: c.tot ? (c.fatti + "/" + c.tot + " trofei" + (plat ? "  ·  💠 Platino!" : "") + " <span class='sg-pct'>" + pct + "%</span>") : "Trofei in arrivo" }),
-          c.tot ? el("div", { class: "sg-barra" }, [ el("div", { class: "sg-fill", style: "width:" + pct + "%" }) ]) : null
+          c.tot ? el("div", { class: "sg-barra" }, [ el("div", { class: "sg-fill", style: "width:" + pct + "%" }) ]) : null,
+          c.tot ? chipLivelli(prof, g.id) : null   // quanti trofei per tipo
         ]),
         el("span", { class: "sg-frecc", text: plat ? "💠" : "›" })
       ]));
@@ -1548,10 +1560,14 @@
     if (!lista.length) {
       s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin-top:14px", text: "Le sfide di " + g.nome + " arrivano presto — le definiamo insieme. Intanto le tue partite vengono già registrate." }));
     } else {
+      var pl = perLivello(prof, gid), celle = [];   // in cima: quanti trofei per tipo, come nella schermata di tutti i giochi
+      ORDINE_LIV.forEach(function (l) { var p = pl[l] || { fatti: 0, tot: 0 }; celle.push(el("div", { class: "sm-liv " + LIVELLI[l].cls }, [ el("div", { class: "sm-ico", text: ICONE_LIV[l] }), el("div", { class: "sm-num", html: "<b>" + p.fatti + "</b>/" + p.tot }), el("div", { class: "sm-nome", text: LIVELLI[l].nome }) ])); });
+      celle.push(el("div", { class: "sm-liv tl-platino" }, [ el("div", { class: "sm-ico", text: "💠" }), el("div", { class: "sm-num", html: "<b>" + (plat ? 1 : 0) + "</b>/1" }), el("div", { class: "sm-nome", text: "Platino" }) ]));
+      s._contenuto.appendChild(el("div", { class: "sfide-sommario sm-gioco" }, [ el("div", { class: "sm-livelli" }, celle) ]));
       ORDINE_LIV.forEach(function (liv) {
         var gruppo = lista.filter(function (t) { return t.livello === liv; });
         if (!gruppo.length) return;
-        s._contenuto.appendChild(el("div", { class: "etichetta", text: LIVELLI[liv].nome }));
+        s._contenuto.appendChild(el("div", { class: "etichetta", text: ICONE_LIV[liv] + " " + LIVELLI[liv].nome + " · " + (pl[liv] ? pl[liv].fatti : 0) + "/" + gruppo.length }));
         gruppo.forEach(function (t) {
           var val = valoreStat(prof, t.gioco, t.stat), fatto = val >= t.meta;
           var perc = Math.max(0, Math.min(100, Math.round(val * 100 / t.meta)));
@@ -4004,6 +4020,8 @@
     listaProfilo: listaProfilo, salvaListaProfilo: salvaListaProfilo,   // liste salvate sul profilo di chi gioca
     avviaApp: function () {
       agganciaXpRete();
+      // niente menu della pressione lunga (copia, salva immagine…) fuori dai campi dove si scrive
+      document.addEventListener("contextmenu", function (e) { if (!(e.target && e.target.closest && e.target.closest("input, textarea, [contenteditable='true']"))) e.preventDefault(); });
       app = document.getElementById("app");
       linkParams = leggiParametriLink();
       function parti() {

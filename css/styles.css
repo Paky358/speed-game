@@ -1380,3 +1380,18 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .st-fuoco-testo{ display:flex; flex-direction:column; gap:2px; }
 .st-fuoco-testo b{ font-size:1rem; color:#ffd8a8; }
 .st-fuoco-testo small{ font-size:.74rem; color:var(--testo-tenue); }
+
+/* niente selezione del testo (copia e incolla) in tutta l'app, né il menu della pressione lunga: solo nei campi dove si scrive */
+html, body{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+img{ -webkit-user-drag:none; -webkit-touch-callout:none; }
+input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select:text; -webkit-touch-callout:default; }
+/* trofei: sotto ogni gioco quanti per tipo (🥉 3/9  🥈 1/6 …) */
+.sg-livelli{ display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+.sg-liv{ padding:1px 6px; border-radius:999px; font-size:.68rem; color:var(--testo-tenue); background:rgba(0,0,0,.2); border:1px solid rgba(255,255,255,.08); white-space:nowrap; }
+.sg-liv b{ color:var(--testo); }
+.sg-liv.pieno.tl-bronzo{ border-color:rgba(232,168,102,.7); }
+.sg-liv.pieno.tl-argento{ border-color:rgba(220,228,238,.7); }
+.sg-liv.pieno.tl-oro{ border-color:rgba(255,215,90,.8); }
+.sg-liv.pieno.tl-diamante{ border-color:rgba(92,199,236,.8); }
+.sg-liv.tl-platino{ border-color:rgba(190,160,255,.8); color:#e5dbff; }
+.sm-gioco{ margin-bottom:6px; }

@@ -432,8 +432,8 @@
     if (io) og.push({ d: 21.8, s: gente(io, 10.7, 10.9, 28) });
     og.sort(function (x, y) { return x.d - y.d; });
     og.forEach(function (o) { s += o.s; });
-    if (S.notte) s += "<rect x='-200' y='-200' width='700' height='1300' fill='url(#ctvig" + S.id + ")'/>";
-    else if (S.tramonto) s += "<rect x='-200' y='-200' width='700' height='1300' fill='url(#ctcaldo" + S.id + ")'/>";
+    if (S.notte) s += "<rect x='-200' y='-200' width='700' height='1300' fill='url(#ctvig" + S.id + ")' pointer-events='none'/>";   // (la sera e la notte: il velo non deve coprire gli edifici al tocco)
+    else if (S.tramonto) s += "<rect x='-200' y='-200' width='700' height='1300' fill='url(#ctcaldo" + S.id + ")' pointer-events='none'/>";
     var pb = P(16.4, 16.4, 40);
     etichetta(pb[0], pb[1] - 12, "☕ Bar", "#e03131", null, "bar");
     etichetta(150, 292, "📰 Novità", "#4c6ef5", null, "piazza");
