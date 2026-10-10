@@ -53,6 +53,39 @@
   var PUNTI_DISEGNO = 25;                                      // a chi disegna, per ognuno che indovina
   var SCELTA_MS = 12000, PUNTI_MS = 6000, MAX_CHAT = 40;
   var COL_GIOC = ["#ffd43b", "#74c0fc", "#ff8787", "#8ce99a", "#e599f7", "#ffa94d", "#66d9e8", "#fcc2d7", "#b197fc", "#d8f5a2"];
+  var PARTITE_SALVATE = Object.create(null);
+
+  function nuovaPartitaScara() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
+  function statVuoteScara() {
+    return { turniDisegnati: 0, indovinate: 0, indovinatePrimo: 0, indovinateVeloci: 0, quasi: 0,
+      disegniIndovinati: 0, disegniConTreIndovinatori: 0, indovinateDifficili: 0, paroleDifficiliDisegnate: 0,
+      paroleDifficiliIndovinate: 0, puntiIndovinando: 0, vittorie: 0, vittorieDifficili: 0, vittorieGruppo: 0 };
+  }
+  function salvaTrofeiScara(t, vm, cb) {
+    try {
+      if (!vm || vm.fase !== "fine" || !vm.partitaId || t.guarda ||
+          (t.linkParams && (t.linkParams.guarda || t.linkParams.prova)) ||
+          (t.impostazioni && t.impostazioni.prova) ||
+          !(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      var profilo = SGNube.profilo(), id = cb.myId, me = (vm.players || []).filter(function (p) { return p.id === id; })[0];
+      if (!me || !id || !String(profilo.nome || "").trim() || String(profilo.nome).trim().toLowerCase() !== String(me.nome || "").trim().toLowerCase()) return;
+      var profiloId = String(profilo.uid || profilo.nome).trim().toLowerCase();
+      var chiave = "scarabocchio|" + vm.partitaId + "|" + profiloId;
+      if (PARTITE_SALVATE[chiave]) return;
+      var chiaveLocale = "sg-scarabocchio-ultima-partita-" + profiloId;
+      try { if (window.localStorage && localStorage.getItem(chiaveLocale) === String(vm.partitaId)) { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
+      var s = (vm.statFine || {})[id] || {}, vittoria = (vm.classifica || []).some(function (p) { return p.id === id && p.pos === 1; });
+      var inc = [["partite", 1]];
+      Object.keys(s).forEach(function (k) { if (+s[k] > 0) inc.push([k, +s[k]]); });
+      if (vittoria) inc.push(["vittorie", 1]);
+      if (vittoria && vm.difficili && vm.paroleDifficiliDisegnate > 0) inc.push(["vittorieDifficili", 1]);
+      if (vittoria && (vm.players || []).filter(function (p) { return !p.via; }).length >= 6) inc.push(["vittorieGruppo", 1]);
+      PARTITE_SALVATE[chiave] = 1;
+      try { if (window.localStorage) localStorage.setItem(chiaveLocale, String(vm.partitaId)); } catch (e) {}
+      SGNube.salvaProgressi(null, "scarabocchio", inc,
+        [], [["ultimaPartitaTrofei", vm.partitaId]]);
+    } catch (e) {}
+  }
 
   function fmtN(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
   function mioAvatar(nome) {
@@ -562,6 +595,7 @@
 
   // ---------- la classifica finale ----------
   function finale(t, vm, cb) {
+    salvaTrofeiScara(t, vm, cb);
     var el = t.el;
     var s = t.schermata({ icona: "🏆", titolo: "Classifica finale" });
     var cl = vm.classifica || [];
@@ -590,9 +624,11 @@
     var H = { fase: "lobby", codice: "…", pronta: false, secondi: imp.secondi || 80, giri: imp.giri || 2, difficili: !!imp.difficili,
       players: [{ id: "host", nome: nomeHost, omino: mioAvatar(nomeHost), punti: 0, col: COL_GIOC[0] }],
       giro: 0, idx: -1, ordine: [], turno: 0, disegnatore: null, parola: null, opzioni: null, usate: {},
-      scadenza: 0, indovinati: [], scoperte: [], guad: {}, tratti: [], chat: [], nMsg: 0, ultimo: null, classifica: null, to: null, toInd: [] };
+      scadenza: 0, indovinati: [], scoperte: [], guad: {}, tratti: [], chat: [], nMsg: 0, ultimo: null, classifica: null, to: null, toInd: [],
+      partitaId: null, statGiocatori: Object.create(null), paroleDifficiliDisegnate: 0 };
     var vista = null;
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
+    function statP(id) { return H.statGiocatori[id] || (H.statGiocatori[id] = statVuoteScara()); }
     function presenti() { return H.players.filter(function (p) { return !p.via; }); }
     function ferma() { if (H.to) { clearTimeout(H.to); H.to = null; } H.toInd.forEach(clearTimeout); H.toInd = []; }
     function msg(k, x, p) {
@@ -626,6 +662,7 @@
           if (!giaDentro && H.players.length < 10 && H.fase !== "fine") {
             var p = { id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino), punti: 0, col: COL_GIOC[H.players.length % COL_GIOC.length] };
             H.players.push(p);
+            statP(id);
             if (H.fase !== "lobby") { H.ordine.push(id); msg("sys", "👋 È arrivato " + p.nome); if (vista) vista.omini(mappaOmini()); }
           }
           bd();
@@ -654,12 +691,12 @@
 
     function vm() {
       var o = { fase: H.fase, codice: H.codice, pronta: H.pronta, giro: H.giro, giri: H.giri, secondi: H.secondi, difficili: H.difficili,
-        turno: H.turno, disegnatore: H.disegnatore, chat: H.chat.slice(),
+        turno: H.turno, disegnatore: H.disegnatore, chat: H.chat.slice(), partitaId: H.partitaId,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, via: !!p.via, ok: H.indovinati.indexOf(p.id) >= 0, omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }) };
       if (H.fase === "scelta" || H.fase === "disegno") o.rimMs = Math.max(0, H.scadenza - Date.now());
       if (H.fase === "disegno") o.indizio = maschera(H.parola, H.scoperte);
       if (H.fase === "punti") o.ultimo = H.ultimo;
-      if (H.fase === "fine") o.classifica = H.classifica;
+      if (H.fase === "fine") { o.classifica = H.classifica; o.statFine = H.statGiocatori; o.paroleDifficiliDisegnate = H.paroleDifficiliDisegnate; }
       return o;
     }
     function bd() {
@@ -680,7 +717,8 @@
       H.players = presenti(); ricolora();
       H.players.forEach(function (p) { p.punti = 0; });
       H.giro = 1; H.idx = -1; H.turno = 0; H.ordine = H.players.map(function (p) { return p.id; });
-      H.chat = []; H.usate = {}; H.classifica = null;
+      H.chat = []; H.usate = {}; H.classifica = null; H.partitaId = nuovaPartitaScara(); H.statGiocatori = Object.create(null); H.paroleDifficiliDisegnate = 0;
+      H.players.forEach(function (p) { H.statGiocatori[p.id] = statVuoteScara(); });
       msg("sys", "🎨 Si comincia! Chi disegna non può scrivere, gli altri indovinano in chat.");
       prossimoTurno();
     }
@@ -713,6 +751,8 @@
       i = intIn(i, 2);
       ferma();
       H.parola = H.opzioni[i]; H.usate[H.parola] = 1;
+      statP(id).turniDisegnati++;
+      if (DIFFICILI.indexOf(H.parola) >= 0) { statP(id).paroleDifficiliDisegnate++; H.paroleDifficiliDisegnate++; }
       H.fase = "disegno"; H.scadenza = Date.now() + H.secondi * 1000;
       var d = pById(H.disegnatore);
       msg("sys", "✏️ " + (d ? d.nome : "…") + " sta disegnando");
@@ -736,14 +776,19 @@
       if (H.fase === "disegno") {
         if (id === H.disegnatore || H.indovinati.indexOf(id) >= 0) return;   // chi disegna o ha già indovinato non scrive (non si svela niente)
         if (giusta(x, H.parola)) return indovina(p);
-        if (quasi(x, H.parola)) return privato(id, { t: "quasi", x: x });   // "ci sei quasi" lo sa solo lui: agli altri non si svela niente
+        if (quasi(x, H.parola)) { statP(id).quasi++; return privato(id, { t: "quasi", x: x }); }   // "ci sei quasi" lo sa solo lui: agli altri non si svela niente
       }
       msg("msg", x, p); bd();
     }
     function indovina(p) {
+      var primo = H.indovinati.length === 0, veloci = H.scadenza - Date.now() >= H.secondi * 1000 * 0.6;
       H.indovinati.push(p.id);
       var pts = Math.max(1, Math.ceil((H.scadenza - Date.now()) / 1000));   // tanti punti quanti secondi mancano
       p.punti += pts; H.guad[p.id] = (H.guad[p.id] || 0) + pts;
+      var sp = statP(p.id); sp.indovinate++; sp.puntiIndovinando += pts;
+      if (primo) sp.indovinatePrimo++;
+      if (veloci) sp.indovinateVeloci++;
+      if (DIFFICILI.indexOf(H.parola) >= 0) sp.indovinateDifficili++;
       var d = pById(H.disegnatore); if (d) { d.punti += PUNTI_DISEGNO; H.guad[d.id] = (H.guad[d.id] || 0) + PUNTI_DISEGNO; }
       msg("ok", "🎉 " + p.nome + " ha indovinato!", p);
       if (tuttiOk()) {   // l'hanno indovinata tutti: il turno finisce subito
@@ -758,6 +803,11 @@
       ferma();
       if (!H.parola) { msg("sys", "Si passa al prossimo."); return prossimoTurno(); }   // uscito prima di scegliere la parola
       var d = pById(H.disegnatore), parola = H.parola;
+      if (d && H.indovinati.length) {
+        statP(d.id).disegniIndovinati++;
+        if (H.indovinati.length >= 3) statP(d.id).disegniConTreIndovinatori++;
+        if (DIFFICILI.indexOf(parola) >= 0) statP(d.id).paroleDifficiliIndovinate++;
+      }
       var righe = H.indovinati.map(function (id) { var p = pById(id); return { id: id, nome: p ? p.nome : "…", pts: H.guad[id] || 0 }; });
       if (d && H.guad[d.id]) righe.push({ id: d.id, nome: d.nome, pts: H.guad[d.id], dis: true });
       if (motivo === "tempo") msg("sys", "⏰ Tempo scaduto! La parola era «" + parola + "»");

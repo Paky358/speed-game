@@ -1425,6 +1425,28 @@
     { gioco: "ordine", livello: "diamante", icona: "💎", nome: "Leggenda di Squadra",   desc: "Gira 150 parole della tua squadra",                   stat: "paroleGiuste", meta: 150 },
     { gioco: "ordine", livello: "diamante", icona: "🎖️", nome: "Capitano Leggendario", desc: "Vinci 12 partite da capo della squadra",              stat: "vittorieCapo", meta: 12 },
     { gioco: "ordine", livello: "diamante", icona: "🌟", nome: "Re del Tabellone",      desc: "Vinci 25 partite con la tua squadra",                 stat: "vittorie",     meta: 25 },
+
+    // ---- Scarabocchio ----
+    { gioco: "scarabocchio", livello: "bronzo",   icona: "🎨", nome: "Prima Partita",          desc: "Concludi la tua prima partita",                                                stat: "partite",                    meta: 1 },
+    { gioco: "scarabocchio", livello: "bronzo",   icona: "✏️", nome: "Matita in Mano",         desc: "Disegna la tua prima parola",                                                   stat: "turniDisegnati",             meta: 1 },
+    { gioco: "scarabocchio", livello: "bronzo",   icona: "💡", nome: "Prima Intuizione",       desc: "Indovina una parola",                                                           stat: "indovinate",                 meta: 1 },
+    { gioco: "scarabocchio", livello: "bronzo",   icona: "🔥", nome: "Ci Sei Quasi",           desc: "Vai vicino alla parola con una risposta",                                       stat: "quasi",                      meta: 1 },
+    { gioco: "scarabocchio", livello: "bronzo",   icona: "⚡", nome: "Risposta al Volo",       desc: "Indovina per primo in un turno",                                                stat: "indovinatePrimo",            meta: 1 },
+    { gioco: "scarabocchio", livello: "bronzo",   icona: "👏", nome: "Disegno Apprezzato",     desc: "Fai indovinare una parola mentre disegni",                                      stat: "disegniIndovinati",          meta: 1 },
+    { gioco: "scarabocchio", livello: "argento",  icona: "🔟", nome: "Serata tra Amici",       desc: "Concludi 10 partite",                                                           stat: "partite",                    meta: 10 },
+    { gioco: "scarabocchio", livello: "argento",  icona: "🖌️", nome: "Matita Instancabile",    desc: "Disegna 20 parole",                                                             stat: "turniDisegnati",             meta: 20 },
+    { gioco: "scarabocchio", livello: "argento",  icona: "🧠", nome: "Occhio di Falco",        desc: "Indovina 25 parole",                                                            stat: "indovinate",                 meta: 25 },
+    { gioco: "scarabocchio", livello: "argento",  icona: "👥", nome: "Disegno Corale",         desc: "Fai indovinare la stessa parola ad almeno 3 persone, per 3 volte",                stat: "disegniConTreIndovinatori", meta: 3 },
+    { gioco: "scarabocchio", livello: "argento",  icona: "🦉", nome: "Parole Coraggiose",      desc: "Indovina 5 parole difficili",                                                   stat: "indovinateDifficili",       meta: 5 },
+    { gioco: "scarabocchio", livello: "oro",      icona: "🏆", nome: "Campione di Scarabocchio",desc: "Arriva al primo posto in 3 partite",                                           stat: "vittorie",                  meta: 3 },
+    { gioco: "scarabocchio", livello: "oro",      icona: "🚀", nome: "Mani Veloci",            desc: "Indovina 10 parole quando resta almeno il 60% del tempo",                       stat: "indovinateVeloci",          meta: 10 },
+    { gioco: "scarabocchio", livello: "oro",      icona: "🌟", nome: "Artista Apprezzato",     desc: "Fai indovinare 20 parole mentre disegni",                                      stat: "disegniIndovinati",         meta: 20 },
+    { gioco: "scarabocchio", livello: "oro",      icona: "🐉", nome: "Matita Temeraria",       desc: "Disegna 10 parole difficili scelte da te",                                      stat: "paroleDifficiliDisegnate", meta: 10 },
+    { gioco: "scarabocchio", livello: "oro",      icona: "💰", nome: "Pioggia di Punti",       desc: "Ottieni 1.000 punti indovinando parole",                                       stat: "puntiIndovinando",         meta: 1000 },
+    { gioco: "scarabocchio", livello: "oro",      icona: "🧩", nome: "Parole Dure, Vittorie",  desc: "Vinci 3 partite dopo che è stata disegnata almeno una parola difficile",        stat: "vittorieDifficili",        meta: 3 },
+    { gioco: "scarabocchio", livello: "diamante", icona: "👑", nome: "Maestro del Tavolo",     desc: "Arriva al primo posto in 10 partite",                                          stat: "vittorie",                  meta: 10 },
+    { gioco: "scarabocchio", livello: "diamante", icona: "🌐", nome: "Tutta la Stanza",        desc: "Vinci 3 partite con almeno 6 giocatori rimasti",                                stat: "vittorieGruppo",            meta: 3 },
+    { gioco: "scarabocchio", livello: "diamante", icona: "💎", nome: "Maestro delle Parole",   desc: "Indovina 10 parole difficili",                                                  stat: "paroleDifficiliIndovinate", meta: 10 },
   ];
 
   function valoreStat(prof, gioco, chiave) {

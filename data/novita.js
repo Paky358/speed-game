@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 174,
+    data: "10 ottobre 2026",
+    titolo: "Trofei per Scarabocchio 🎨",
+    descrizione: [
+      "Arrivano 20 trofei: disegna, indovina parole, aiuta il gruppo e prova le parole difficili.",
+      "I progressi si salvano alla fine della partita e contano solo per il tuo profilo."
+    ]
+  },
+  {
     v: 173,
     data: "10 ottobre 2026",
     titolo: "Trofei per altri 5 giochi 🏆",
