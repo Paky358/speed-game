@@ -1389,6 +1389,31 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .st-testa small{ flex:none; font-size:.7rem; color:var(--testo-tenue); }
 .st-riga{ display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:8px; font-size:.8rem; color:var(--testo-tenue); }
 .st-nota{ margin-top:14px; font-size:.75rem; }
+.st-fuoco{ display:flex; align-items:center; gap:10px; margin:4px 0 8px; padding:10px 12px; border-radius:14px; background:linear-gradient(90deg,rgba(255,146,43,.22),rgba(255,212,59,.08)); box-shadow:inset 0 0 0 1px rgba(255,169,77,.35); }
+.st-fuoco-ico{ font-size:1.6rem; }
+.st-fuoco-testo{ display:flex; flex-direction:column; gap:2px; }
+.st-fuoco-testo b{ font-size:1rem; color:#ffd8a8; }
+.st-fuoco-testo small{ font-size:.74rem; color:var(--testo-tenue); }
+
+/* niente selezione del testo (copia e incolla) in tutta l'app, né il menu della pressione lunga: solo nei campi dove si scrive */
+html, body{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+img{ -webkit-user-drag:none; -webkit-touch-callout:none; }
+input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select:text; -webkit-touch-callout:default; }
+/* trofei: sotto ogni gioco quanti per tipo (🥉 3/9  🥈 1/6 …) */
+.sg-livelli{ display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+.sg-liv{ padding:1px 6px; border-radius:999px; font-size:.68rem; color:var(--testo-tenue); background:rgba(0,0,0,.2); border:1px solid rgba(255,255,255,.08); white-space:nowrap; }
+.sg-liv b{ color:var(--testo); }
+.sg-liv.pieno.tl-bronzo{ border-color:rgba(232,168,102,.7); }
+.sg-liv.pieno.tl-argento{ border-color:rgba(220,228,238,.7); }
+.sg-liv.pieno.tl-oro{ border-color:rgba(255,215,90,.8); }
+.sg-liv.pieno.tl-diamante{ border-color:rgba(92,199,236,.8); }
+.sg-liv.tl-platino{ border-color:rgba(190,160,255,.8); color:#e5dbff; }
+.sm-gioco{ margin-bottom:6px; }
+/* l'avatar di casa: fermo, oppure il disegno che fa i passi mentre cammina (si scambiano con l'opacità, senza lampi) */
+.ca-av .ca-av-passo{ position:absolute; left:0; top:0; opacity:0; }
+.ca-av.cammina .ca-av-passo{ opacity:1; }
+.ca-av.cammina .ca-av-fermo{ opacity:0; }
+.ca-av.sdraiato .ca-av-passo, .ca-av.seduto .ca-av-passo{ display:none; }
 </style>
 <div id="app"></div>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
@@ -1593,6 +1618,22 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 
     // ---- liste personali (es. le parole di Parola d'ordine): un campo del profilo, salvato così com'è ----
     lista: function (nome) { return (profilo && profilo.liste && profilo.liste[nome]) || []; },
+    // ---- 🔥 i giorni di fila in cui entri nell'app col profilo (il giorno cambia a mezzanotte, come la ruota).
+    //      Premi: 7 giorni 500, 30 giorni 2.000, ogni 100 giorni 5.000 Speed Coins. Saltando un giorno si riparte da 1.
+    //      segnaGiorno() conta oggi (una volta sola) e dice { n, premio, max } oppure null se oggi era già contato ----
+    premioGiorni: function (n) { return n === 7 ? 500 : n === 30 ? 2000 : (n > 0 && n % 100 === 0) ? 5000 : 0; },
+    segnaGiorno: function () {
+      if (!auth || !utente || !profilo) return null;
+      var oggi = giornoDi(Date.now()); if (profilo.giornoUltimo === oggi) return null;
+      var d = new Date(); d.setDate(d.getDate() - 1);
+      var n = profilo.giornoUltimo === giornoDi(d.getTime()) ? (profilo.giorniFila || 0) + 1 : 1, premio = SGNube.premioGiorni(n);
+      var patch = { giornoUltimo: oggi, giorniFila: n };
+      profilo.giornoUltimo = oggi; profilo.giorniFila = n;
+      if (n > (profilo.giorniFilaMax || 0)) { patch.giorniFilaMax = n; profilo.giorniFilaMax = n; }
+      if (premio) { patch.coins = firebase.firestore.FieldValue.increment(premio); profilo.coins = monete() + premio; if (visto != null) visto += premio; }
+      db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+      return { n: n, premio: premio, max: profilo.giorniFilaMax || n };
+    },
     // ---- le statistiche di ogni gioco (le scrive core.js a fine partita, per tutti i giochi):
     //      giocato.<gioco> = { p: partite, v: vinte, s: perse, t: secondi giocati, serie, serieMax, u: l'ultima volta }
     //      esito: "vinta", "persa" oppure null (partita sullo stesso telefono senza il tuo nome in classifica) ----
@@ -2399,7 +2440,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
         });
       }
       // scarpe: suola, punta rinforzata, lacci incrociati
-      [97 - lw / 2, 103 + lw / 2].forEach(function (cx) {
+      [97 - lw / 2, 103 + lw / 2].forEach(function (cx, ip) { o.push("<g class='om-piede om-p" + (ip + 1) + "'>"); (function () {   // ogni piede nel suo gruppo: camminando si alza
         var rx = lw / 2 + 5, lacci = rgb(S)[0] > 200 && rgb(S)[1] > 200 ? "#9a9aa6" : "#e6e6ee", mod = c.modScarpe;
         if (mod === "anfibi") { o.push(   // anfibi: alti, lacci incrociati, suola grossa a carrarmato
           "<rect x='" + (cx - lw / 2 - 1.8) + "' y='226' width='" + (lw + 3.6) + "' height='22' rx='3.5' fill='" + u("s") + "' stroke='" + tono(S, -0.55) + "' stroke-width='1'/>",
@@ -2480,7 +2521,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
           "<path d='M" + (cx - rx + 2) + ",248.5 Q" + cx + ",252.5 " + (cx + rx - 2) + ",248.5' stroke='" + tono(S, 0.4) + "' stroke-width='.8' stroke-dasharray='1.6 1.4' opacity='.7' fill='none'/>",
           "<ellipse cx='" + (cx - 4) + "' cy='243.5' rx='5' ry='2.2' fill='" + u("lu") + "'/>",
           "<path d='M" + (cx - 3) + ",241 L" + (cx + 3) + ",244.2 M" + (cx + 3) + ",241 L" + (cx - 3) + ",244.2 M" + (cx - 2.5) + ",245.5 L" + (cx + 2.5) + ",245.5' stroke='" + lacci + "' stroke-width='1' opacity='.85' stroke-linecap='round'/>");
-      });
+      })(); o.push("</g>"); });
       if (gonnaPezzo) o.push.apply(o, gonnaPezzo);
       // cappotto e grembiule scendono sopra le gambe (disegnati dopo le scarpe)
       if (c.capo === "cappotto") o.push("<path d='M" + x(-he - 0.5) + "," + (Y - 4) + " L" + x(-he - 6) + "," + (Y + 30) + " Q100," + (Y + 35) + " " + x(he + 6) + "," + (Y + 30) + " L" + x(he + 0.5) + "," + (Y - 4) + " Z' fill='" + u("m") + "' stroke='" + bM + "' stroke-width='1.8' stroke-linejoin='round'/>",
@@ -3558,7 +3599,19 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     // busto (tondini): inquadratura che segue la grandezza della testa, così la faccia resta grande
     var vb = opts.busto ? [100 - 89 * kT, 150 - 156 * kT, 178 * kT, 182 * kT].map(function (n) { return n.toFixed(1); }).join(" ") : (opts.gambe ? "40 150 120 112" : (opts.viso ? "60 74 80 80" : "0 0 200 264"));   // gambe: inquadratura sui pantaloni; viso: primo piano (per il trucco)
     var px = opts.px ? " width='" + opts.px + "' height='" + Math.round(opts.px * (opts.busto ? 182 / 178 : 1.32)) + "'" : "";
-    return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='" + vb + "'" + px + " class='omino'>" + o.join("") + bracciaSopra.join("") + "</svg>";
+    // cammina: dentro il disegno i piedi si alzano a turno e le braccia dondolano (dalla spalla), ad ogni passo
+    var passo = "";
+    if (opts.cammina && !opts.busto) {
+      var sp = (sh - 6).toFixed(1);
+      passo = "<style>" +
+        ".om-b1{transform-origin:" + (100 - sp) + "px 166px;animation:omBr .42s ease-in-out infinite alternate}" +
+        ".om-b2{transform-origin:" + (100 + +sp) + "px 166px;animation:omBr .42s ease-in-out infinite alternate-reverse}" +
+        "@keyframes omBr{from{transform:rotate(-11deg)}to{transform:rotate(11deg)}}" +
+        ".om-p1,.om-p2{animation:omPi .84s ease-in-out infinite}.om-p2{animation-delay:-.42s}" +
+        "@keyframes omPi{0%,50%,100%{transform:translateY(0)}20%{transform:translateY(-6px)}}" +
+        "</style>";
+    }
+    return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='" + vb + "'" + px + " class='omino'>" + passo + o.join("") + bracciaSopra.join("") + "</svg>";
   }
 
   function el(cfg, opts) { var s = document.createElement("span"); s.className = "omino-box"; s.innerHTML = svg(cfg, opts); return s; }
@@ -4081,8 +4134,8 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     if (io) og.push({ d: 21.8, s: gente(io, 10.7, 10.9, 28) });
     og.sort(function (x, y) { return x.d - y.d; });
     og.forEach(function (o) { s += o.s; });
-    if (S.notte) s += "<rect x='-200' y='-200' width='700' height='1300' fill='url(#ctvig" + S.id + ")'/>";
-    else if (S.tramonto) s += "<rect x='-200' y='-200' width='700' height='1300' fill='url(#ctcaldo" + S.id + ")'/>";
+    if (S.notte) s += "<rect x='-200' y='-200' width='700' height='1300' fill='url(#ctvig" + S.id + ")' pointer-events='none'/>";   // (la sera e la notte: il velo non deve coprire gli edifici al tocco)
+    else if (S.tramonto) s += "<rect x='-200' y='-200' width='700' height='1300' fill='url(#ctcaldo" + S.id + ")' pointer-events='none'/>";
     var pb = P(16.4, 16.4, 40);
     etichetta(pb[0], pb[1] - 12, "☕ Bar", "#e03131", null, "bar");
     etichetta(150, 292, "📰 Novità", "#4c6ef5", null, "piazza");
@@ -6022,6 +6075,9 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     if (opts.avatar && window.SGOmino) {
       av = el("div", "ca-av"); var avImg = el("img"); avImg.alt = ""; avImg.draggable = false;
       imgAv = datauri(SGOmino.svg(opts.avatar, {})); avImg.src = imgAv; av.appendChild(avImg); av._img = avImg; av.appendChild(el("b"));
+      var avPasso = el("img", "ca-av-passo"); avPasso.alt = ""; avPasso.draggable = false;   // lo stesso avatar che fa i passi (piedi e braccia): si vede mentre cammina
+      try { avPasso.src = datauri(SGOmino.svg(opts.avatar, { cammina: true })); av.insertBefore(avPasso, avImg.nextSibling); } catch (e) {}
+      avImg.className = "ca-av-fermo";
       av.addEventListener("pointerdown", function () { if (!arreda) toccoAv = true; });   // il tocco vero lo decide su(): se il dito non si è mosso
     }
     function toccaAvatar() {
@@ -6303,17 +6359,26 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       cancelAnimationFrame(inerzia);
       gesto = { id: e.pointerId, x0: e.clientX, y0: e.clientY, tx0: tx, mosso: false, d: d, av: a, p: puntoPalco(e), ux: e.clientX, ut: performance.now(), v: 0 };
       try { palco.setPointerCapture(e.pointerId); } catch (er) {}
+      if (d && !arreda) { var g0 = gesto; g0.lungo = setTimeout(function () { tienePremuto(g0); }, 450); }   // tenuto premuto su un mobile: si apre l'Arreda e lo prendi
+    }
+    function tienePremuto(g0) {
+      if (gesto !== g0 || g0.mosso || !nodi[g0.d.u]) return;
+      gesto = null; var d = g0.d, p = g0.p, gg = geo(d), n = nodi[d.u];
+      entraArreda();
+      drag = { d: d, id: g0.id, sx: p.x, sy: p.y, ox: p.x - gg.ax, oy: p.y - gg.ay, mosso: false, vx: 0, ult: p, figli: figliDi(d).map(function (f) { return { f: f, dx: f.x - d.x }; }), su0: d.su };
+      seleziona(d); n.classList.remove("rimbalza"); void n.offsetWidth; n.classList.add("rimbalza"); suono("su");
+      try { if (navigator.vibrate) navigator.vibrate(15); } catch (er) {}
     }
     function trascina(e) {
       if (!gesto || e.pointerId !== gesto.id) return;
       var dx = e.clientX - gesto.x0, dy = e.clientY - gesto.y0, t = performance.now();
-      if (!gesto.mosso) { if (Math.abs(dx) + Math.abs(dy) < 9) return; gesto.mosso = true; }
+      if (!gesto.mosso) { if (Math.abs(dx) + Math.abs(dy) < 9) return; gesto.mosso = true; clearTimeout(gesto.lungo); }
       gesto.v = 0.6 * gesto.v + 0.4 * (e.clientX - gesto.ux) / Math.max(1, t - gesto.ut); gesto.ux = e.clientX; gesto.ut = t;
       tx = gesto.tx0 + dx / zoomScena(); applica();
     }
     function su(e) {
       if (!gesto || e.pointerId !== gesto.id) return;
-      var g = gesto; gesto = null;
+      var g = gesto; gesto = null; clearTimeout(g.lungo);
       if (e.type === "pointercancel") return;
       if (g.mosso) { if (performance.now() - g.ut < 80) lancia(g.v); return; }
       if (arreda) { deseleziona(); return; }
@@ -7225,6 +7290,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   }
   var scrollCitta = 0;   // fin dove avevi scorso la città: uscendo da un edificio si torna lì (dalla home si riparte dall'alto)
   function schermataCitta() {
+    controllaGiorno();   // (se l'app è rimasta aperta da ieri)
     var io = profiloAttivo(), N = window.SGNube, fase = SGCitta.fase(new Date()), via = false;
     var cloud = !!(N && N.profilo && N.profilo()), prog = window.SGLivelli && cloud && N.progressione ? N.progressione() : null;
     var mappa = el("div", { class: "citta-mappa", html: SGCitta.svg({ fase: fase, io: io && io.omino, sopra: 80 }) });
@@ -7232,7 +7298,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     var testoIo = el("span", { class: "citta-io-testo" }, [ el("b", { text: io ? io.nome : "Entra" }) ]);
     if (prog) {
       var serve = SGLivelli.xpPerSalire(prog.level), pct = Math.max(3, Math.min(100, Math.floor(prog.xp * 100 / serve)));
-      testoIo.appendChild(el("small", { text: (prog.prestige ? "★" + prog.prestige + " · " : "") + "Livello " + prog.level }));
+      testoIo.appendChild(el("small", { text: (prog.prestige ? "★" + prog.prestige + " · " : "") + "Livello " + prog.level + fuocoGiorni() }));
       testoIo.appendChild(el("i", { class: "citta-xp" }, [ el("i", { style: "width:" + pct + "%" }) ]));
     } else testoIo.appendChild(el("small", { text: io ? "Il tuo profilo" : "Crea il tuo profilo" }));
     var faccia = el("span", { class: "citta-faccia" });
@@ -7257,7 +7323,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     function aggTesta() {
       var p = N.progressione(); monete.textContent = cifre(p.coins);
       var sm = testoIo.querySelector("small"), bar = testoIo.querySelector(".citta-xp > i");
-      if (sm) sm.textContent = (p.prestige ? "★" + p.prestige + " · " : "") + "Livello " + p.level;
+      if (sm) sm.textContent = (p.prestige ? "★" + p.prestige + " · " : "") + "Livello " + p.level + fuocoGiorni();
       if (bar) bar.style.width = Math.max(3, Math.min(100, Math.floor(p.xp * 100 / SGLivelli.xpPerSalire(p.level)))) + "%";
       aggRegalo();
     }
@@ -8092,6 +8158,50 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     { gioco: "ordine", livello: "diamante", icona: "💎", nome: "Leggenda di Squadra",   desc: "Gira 150 parole della tua squadra",                   stat: "paroleGiuste", meta: 150 },
     { gioco: "ordine", livello: "diamante", icona: "🎖️", nome: "Capitano Leggendario", desc: "Vinci 12 partite da capo della squadra",              stat: "vittorieCapo", meta: 12 },
     { gioco: "ordine", livello: "diamante", icona: "🌟", nome: "Re del Tabellone",      desc: "Vinci 25 partite con la tua squadra",                 stat: "vittorie",     meta: 25 },
+
+    // ---- Horto Muso ----
+    { gioco: "horto", livello: "bronzo",   icona: "🏇", nome: "Ai Cancelletti",       desc: "Concludi la tua prima corsa",                                      stat: "partite",         meta: 1 },
+    { gioco: "horto", livello: "bronzo",   icona: "🐎", nome: "Cinque Corse",          desc: "Concludi 5 corse",                                                stat: "partite",         meta: 5 },
+    { gioco: "horto", livello: "bronzo",   icona: "🥉", nome: "Sul Podio",              desc: "Arriva tra i primi 3 in una corsa con almeno 4 cavalli, equilibrata o online", stat: "podi", meta: 1 },
+    { gioco: "horto", livello: "bronzo",   icona: "🏁", nome: "Primo al Traguardo",    desc: "Vinci una corsa a difficoltà Media o Difficile, o online contro una persona", stat: "vittorie", meta: 1 },
+    { gioco: "horto", livello: "bronzo",   icona: "🎖️", nome: "Tre Medaglie",          desc: "Arriva tra i primi 3 in 5 corse con almeno 4 cavalli, equilibrate o online", stat: "podi", meta: 5 },
+    { gioco: "horto", livello: "bronzo",   icona: "⚡", nome: "Quattro in Pista",      desc: "Vinci una corsa con almeno 4 cavalli, senza scegliere Facile",   stat: "vinte4",           meta: 1 },
+    { gioco: "horto", livello: "argento",  icona: "📅", nome: "Quindici Partenze",     desc: "Concludi 15 corse",                                               stat: "partite",         meta: 15 },
+    { gioco: "horto", livello: "argento",  icona: "🥈", nome: "Podio Abituale",        desc: "Arriva tra i primi 3 in 15 corse con almeno 4 cavalli, equilibrate o online", stat: "podi", meta: 15 },
+    { gioco: "horto", livello: "argento",  icona: "🏆", nome: "Cinque Vittorie",       desc: "Vinci 5 corse equilibrate o online",                            stat: "vittorie",        meta: 5 },
+    { gioco: "horto", livello: "argento",  icona: "🧠", nome: "Bot di Buon Passo",     desc: "Batti i bot a difficoltà Media",                                stat: "vinteMedio",      meta: 1 },
+    { gioco: "horto", livello: "argento",  icona: "🌐", nome: "Sfida in Compagnia",   desc: "Vinci una corsa online contro almeno una persona",               stat: "vinteOnline",     meta: 1 },
+    { gioco: "horto", livello: "argento",  icona: "🐴", nome: "Otto al Via",           desc: "Vinci con 8 cavalli in gara, senza scegliere Facile",            stat: "vinte8NonFacile", meta: 1 },
+    { gioco: "horto", livello: "oro",      icona: "🏟️", nome: "Stagione Completa",     desc: "Concludi 30 corse",                                               stat: "partite",         meta: 30 },
+    { gioco: "horto", livello: "oro",      icona: "🥇", nome: "Quindici Traguardi",    desc: "Vinci 15 corse equilibrate o online",                           stat: "vittorie",        meta: 15 },
+    { gioco: "horto", livello: "oro",      icona: "⚖️", nome: "Regolarità da Campione",desc: "Batti i bot a difficoltà Media 5 volte",                       stat: "vinteMedio",      meta: 5 },
+    { gioco: "horto", livello: "oro",      icona: "🦾", nome: "Il Bot Difficile",      desc: "Batti i bot a difficoltà Difficile",                           stat: "vinteDifficile",  meta: 1 },
+    { gioco: "horto", livello: "oro",      icona: "🤝", nome: "Rivincite Online",      desc: "Vinci 5 corse online contro almeno una persona",                stat: "vinteOnline",     meta: 5 },
+    { gioco: "horto", livello: "diamante", icona: "👑", nome: "Cinque Volte Difficile",desc: "Batti i bot a difficoltà Difficile 5 volte",                    stat: "vinteDifficile",  meta: 5 },
+    { gioco: "horto", livello: "diamante", icona: "💎", nome: "Otto Frecce",           desc: "Vinci 10 corse equilibrate con 8 cavalli",                      stat: "vinte8NonFacile", meta: 10 },
+    { gioco: "horto", livello: "diamante", icona: "🌟", nome: "Leggenda dell'Ippodromo",desc: "Vinci 30 corse equilibrate o online",                          stat: "vittorie",        meta: 30 },
+
+    // ---- Scarabocchio ----
+    { gioco: "scarabocchio", livello: "bronzo",   icona: "🎨", nome: "Prima Partita",          desc: "Concludi la tua prima partita",                                                stat: "partite",                    meta: 1 },
+    { gioco: "scarabocchio", livello: "bronzo",   icona: "✏️", nome: "Matita in Mano",         desc: "Disegna la tua prima parola",                                                   stat: "turniDisegnati",             meta: 1 },
+    { gioco: "scarabocchio", livello: "bronzo",   icona: "💡", nome: "Prima Intuizione",       desc: "Indovina una parola",                                                           stat: "indovinate",                 meta: 1 },
+    { gioco: "scarabocchio", livello: "bronzo",   icona: "🔥", nome: "Ci Sei Quasi",           desc: "Vai vicino alla parola con una risposta",                                       stat: "quasi",                      meta: 1 },
+    { gioco: "scarabocchio", livello: "bronzo",   icona: "⚡", nome: "Risposta al Volo",       desc: "Indovina per primo in un turno",                                                stat: "indovinatePrimo",            meta: 1 },
+    { gioco: "scarabocchio", livello: "bronzo",   icona: "👏", nome: "Disegno Apprezzato",     desc: "Fai indovinare una parola mentre disegni",                                      stat: "disegniIndovinati",          meta: 1 },
+    { gioco: "scarabocchio", livello: "argento",  icona: "🔟", nome: "Serata tra Amici",       desc: "Concludi 10 partite",                                                           stat: "partite",                    meta: 10 },
+    { gioco: "scarabocchio", livello: "argento",  icona: "🖌️", nome: "Matita Instancabile",    desc: "Disegna 20 parole",                                                             stat: "turniDisegnati",             meta: 20 },
+    { gioco: "scarabocchio", livello: "argento",  icona: "🧠", nome: "Occhio di Falco",        desc: "Indovina 25 parole",                                                            stat: "indovinate",                 meta: 25 },
+    { gioco: "scarabocchio", livello: "argento",  icona: "👥", nome: "Disegno Corale",         desc: "Fai indovinare la stessa parola ad almeno 3 persone, per 3 volte",                stat: "disegniConTreIndovinatori", meta: 3 },
+    { gioco: "scarabocchio", livello: "argento",  icona: "🦉", nome: "Parole Coraggiose",      desc: "Indovina 5 parole difficili",                                                   stat: "indovinateDifficili",       meta: 5 },
+    { gioco: "scarabocchio", livello: "oro",      icona: "🏆", nome: "Campione di Scarabocchio",desc: "Arriva al primo posto in 3 partite",                                           stat: "vittorie",                  meta: 3 },
+    { gioco: "scarabocchio", livello: "oro",      icona: "🚀", nome: "Mani Veloci",            desc: "Indovina 10 parole quando resta almeno il 60% del tempo",                       stat: "indovinateVeloci",          meta: 10 },
+    { gioco: "scarabocchio", livello: "oro",      icona: "🌟", nome: "Artista Apprezzato",     desc: "Fai indovinare 20 parole mentre disegni",                                      stat: "disegniIndovinati",         meta: 20 },
+    { gioco: "scarabocchio", livello: "oro",      icona: "🐉", nome: "Matita Temeraria",       desc: "Disegna 10 parole difficili scelte da te",                                      stat: "paroleDifficiliDisegnate", meta: 10 },
+    { gioco: "scarabocchio", livello: "oro",      icona: "💰", nome: "Pioggia di Punti",       desc: "Ottieni 1.000 punti indovinando parole",                                       stat: "puntiIndovinando",         meta: 1000 },
+    { gioco: "scarabocchio", livello: "oro",      icona: "🧩", nome: "Parole Dure, Vittorie",  desc: "Vinci 3 partite dopo che è stata disegnata almeno una parola difficile",        stat: "vittorieDifficili",        meta: 3 },
+    { gioco: "scarabocchio", livello: "diamante", icona: "👑", nome: "Maestro del Tavolo",     desc: "Arriva al primo posto in 10 partite",                                          stat: "vittorie",                  meta: 10 },
+    { gioco: "scarabocchio", livello: "diamante", icona: "🌐", nome: "Tutta la Stanza",        desc: "Vinci 3 partite con almeno 6 giocatori rimasti",                                stat: "vittorieGruppo",            meta: 3 },
+    { gioco: "scarabocchio", livello: "diamante", icona: "💎", nome: "Maestro delle Parole",   desc: "Fai indovinare 10 parole difficili mentre disegni",                                                  stat: "paroleDifficiliIndovinate", meta: 10 },
   ];
 
   function valoreStat(prof, gioco, chiave) {
@@ -8105,6 +8215,17 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
   function trofeoFatto(prof, t) { return valoreStat(prof, t.gioco, t.stat) >= t.meta; }
   function contaTrofei(prof, gid) { var l = trofeiDi(gid), n = 0; l.forEach(function (t) { if (trofeoFatto(prof, t)) n++; }); return { fatti: n, tot: l.length }; }
   function platinato(prof, gid) { var c = contaTrofei(prof, gid); return c.tot > 0 && c.fatti === c.tot; }
+  var ICONE_LIV = { bronzo: "🥉", argento: "🥈", oro: "🥇", diamante: "💎" };
+  function perLivello(prof, gid) {   // i trofei di un gioco divisi per tipo: { bronzo: { fatti, tot }, ... }
+    var r = {}; trofeiDi(gid).forEach(function (t) { var p = r[t.livello] || (r[t.livello] = { fatti: 0, tot: 0 }); p.tot++; if (trofeoFatto(prof, t)) p.fatti++; });
+    return r;
+  }
+  function chipLivelli(prof, gid) {   // la riga "🥉 3/9  🥈 1/6 …" sotto ogni gioco
+    var pl = perLivello(prof, gid), riga = el("div", { class: "sg-livelli" });
+    ORDINE_LIV.forEach(function (l) { var p = pl[l]; if (!p) return; riga.appendChild(el("span", { class: "sg-liv " + LIVELLI[l].cls + (p.fatti === p.tot ? " pieno" : ""), html: ICONE_LIV[l] + " <b>" + p.fatti + "</b>/" + p.tot })); });
+    if (platinato(prof, gid)) riga.appendChild(el("span", { class: "sg-liv tl-platino pieno", html: "💠 <b>Platino</b>" }));
+    return riga;
+  }
 
   // schermata principale: l'elenco di TUTTI i giochi, ognuno coi suoi trofei dentro
   function schermataSfide() {
@@ -8141,7 +8262,8 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
         el("div", { class: "sg-corpo" }, [
           el("div", { class: "sg-nome", text: g.nome }),
           el("div", { class: "sg-sub", html: c.tot ? (c.fatti + "/" + c.tot + " trofei" + (plat ? "  ·  💠 Platino!" : "") + " <span class='sg-pct'>" + pct + "%</span>") : "Trofei in arrivo" }),
-          c.tot ? el("div", { class: "sg-barra" }, [ el("div", { class: "sg-fill", style: "width:" + pct + "%" }) ]) : null
+          c.tot ? el("div", { class: "sg-barra" }, [ el("div", { class: "sg-fill", style: "width:" + pct + "%" }) ]) : null,
+          c.tot ? chipLivelli(prof, g.id) : null   // quanti trofei per tipo
         ]),
         el("span", { class: "sg-frecc", text: plat ? "💠" : "›" })
       ]));
@@ -8170,10 +8292,14 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     if (!lista.length) {
       s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin-top:14px", text: "Le sfide di " + g.nome + " arrivano presto — le definiamo insieme. Intanto le tue partite vengono già registrate." }));
     } else {
+      var pl = perLivello(prof, gid), celle = [];   // in cima: quanti trofei per tipo, come nella schermata di tutti i giochi
+      ORDINE_LIV.forEach(function (l) { var p = pl[l] || { fatti: 0, tot: 0 }; celle.push(el("div", { class: "sm-liv " + LIVELLI[l].cls }, [ el("div", { class: "sm-ico", text: ICONE_LIV[l] }), el("div", { class: "sm-num", html: "<b>" + p.fatti + "</b>/" + p.tot }), el("div", { class: "sm-nome", text: LIVELLI[l].nome }) ])); });
+      celle.push(el("div", { class: "sm-liv tl-platino" }, [ el("div", { class: "sm-ico", text: "💠" }), el("div", { class: "sm-num", html: "<b>" + (plat ? 1 : 0) + "</b>/1" }), el("div", { class: "sm-nome", text: "Platino" }) ]));
+      s._contenuto.appendChild(el("div", { class: "sfide-sommario sm-gioco" }, [ el("div", { class: "sm-livelli" }, celle) ]));
       ORDINE_LIV.forEach(function (liv) {
         var gruppo = lista.filter(function (t) { return t.livello === liv; });
         if (!gruppo.length) return;
-        s._contenuto.appendChild(el("div", { class: "etichetta", text: LIVELLI[liv].nome }));
+        s._contenuto.appendChild(el("div", { class: "etichetta", text: ICONE_LIV[liv] + " " + LIVELLI[liv].nome + " · " + (pl[liv] ? pl[liv].fatti : 0) + "/" + gruppo.length }));
         gruppo.forEach(function (t) {
           var val = valoreStat(prof, t.gioco, t.stat), fatto = val >= t.meta;
           var perc = Math.max(0, Math.min(100, Math.round(val * 100 / t.meta)));
@@ -8524,6 +8650,17 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "‹ Indietro", onclick: function () { schermataAmici(torna); } }));
     mostra(s);
   }
+  // ---- 🔥 i giorni di fila: entrando col profilo si conta il giorno; al 7°, al 30° e ogni 100 giorni c'è il premio (nube.js) ----
+  function prossimoPremioGiorni(n) { var m = n < 7 ? 7 : n < 30 ? 30 : (Math.floor(n / 100) + 1) * 100; return { giorno: m, monete: SGNube.premioGiorni(m) }; }
+  function fuocoGiorni() { var p = window.SGNube && SGNube.profilo && SGNube.profilo(); return p && p.giorniFila >= 2 ? " · 🔥 " + p.giorniFila : ""; }
+  function controllaGiorno() {
+    if (!(window.SGNube && SGNube.segnaGiorno && SGNube.profilo && SGNube.profilo())) return;
+    var r = SGNube.segnaGiorno(); if (!r || (r.n < 2 && !r.premio)) return;   // il primo giorno non si festeggia
+    var pp = prossimoPremioGiorni(r.n), manca = pp.giorno - r.n;
+    codaTrofei.push({ tipo: "xp", cls: r.premio ? "tl-oro" : "tl-xp", icona: "🔥", su: r.premio ? "PREMIO GIORNI DI FILA!" : "Bentornato!", nome: r.n + " giorni di fila!",
+      sotto: r.premio ? "+" + cifre(r.premio) + " Speed Coins 🪙" : "Ancora " + manca + (manca === 1 ? " giorno" : " giorni") + " per il premio di " + cifre(pp.monete) + " 🪙" });
+    prossimoAvviso();
+  }
   function prossimoAvviso() {
     if (avvisoAttivo || !codaTrofei.length) return;
     avvisoAttivo = true;
@@ -8572,6 +8709,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
       SGNube[nome] = function () { var r = orig.apply(SGNube, arguments); controllaTrofei(); return r; };
     });
     SGNube.onCambio(controllaTrofei);
+    SGNube.onCambio(function () { setTimeout(controllaGiorno, 0); });   // i giorni di fila: appena c'è il profilo (e se l'app resta aperta dopo mezzanotte)
   }
 
   // ---- Proposte e segnalazioni ----
@@ -9219,6 +9357,14 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     function cella(valore, nome, cls) { return el("div", { class: "st-cella" + (cls ? " " + cls : "") }, [ el("b", { text: "" + valore }), el("small", { text: nome }) ]); }
     // in alto i totali
     s._contenuto.appendChild(el("div", { class: "st-griglia st-totali" }, [ cella(tempoGiocato(tot.t), "Tempo giocato"), cella(cifre(tot.p), "Partite"), cella(percVittorie(tot), "Vittorie") ]));
+    var gf = p.giorniFila || 0, gm = p.giorniFilaMax || gf;   // 🔥 i giorni di fila in cui sei entrato
+    if (gf) {
+      var pp = prossimoPremioGiorni(gf);
+      s._contenuto.appendChild(el("div", { class: "st-fuoco" }, [
+        el("span", { class: "st-fuoco-ico", text: "🔥" }),
+        el("span", { class: "st-fuoco-testo" }, [ el("b", { text: gf + (gf === 1 ? " giorno di fila" : " giorni di fila") }), el("small", { text: "Record: " + gm + " · prossimo premio a " + pp.giorno + " giorni: " + cifre(pp.monete) + " 🪙" }) ])
+      ]));
+    }
     var lista = giochi.filter(function (g) { return gi[g.id] && gi[g.id].p; }).sort(function (a, b) { return (gi[b.id].t || 0) - (gi[a.id].t || 0) || gi[b.id].p - gi[a.id].p; });
     if (lista.length) s._contenuto.appendChild(el("p", { class: "modulo-nota", html: "Il tuo gioco preferito: <b>" + lista[0].icona + " " + lista[0].nome + "</b> (" + tempoGiocato(gi[lista[0].id].t) + ")" }));
     // un riquadro per ogni gioco giocato, dal più giocato
@@ -10606,6 +10752,8 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
     listaProfilo: listaProfilo, salvaListaProfilo: salvaListaProfilo,   // liste salvate sul profilo di chi gioca
     avviaApp: function () {
       agganciaXpRete();
+      // niente menu della pressione lunga (copia, salva immagine…) fuori dai campi dove si scrive
+      document.addEventListener("contextmenu", function (e) { if (!(e.target && e.target.closest && e.target.closest("input, textarea, [contenteditable='true']"))) e.preventDefault(); });
       app = document.getElementById("app");
       linkParams = leggiParametriLink();
       function parti() {
@@ -18701,6 +18849,45 @@ window.SG_NCC_CATEGORIE = {
      descrizione-> elenco di righe: cosa cambia per chi gioca
    ========================================================= */
 window.SG_NOVITA = [
+  {
+    v: 179,
+    data: "10 ottobre 2026",
+    titolo: "Trofei per Horto Muso e Scarabocchio 🏇🎨",
+    descrizione: [
+      "Horto Muso: 20 trofei, dalle prime corse ai podi, fino alle vittorie contro i bot più bravi e alle sfide online.",
+      "Scarabocchio: 20 trofei per chi disegna e per chi indovina: parole indovinate al volo, disegni capiti da tanti, parole difficili, vittorie con la stanza piena.",
+      "Contano le partite giocate col profilo da adesso in poi, una volta sola per partita."
+    ]
+  },
+  {
+    v: 178,
+    data: "10 ottobre 2026",
+    titolo: "In casa l'avatar cammina davvero 🚶",
+    descrizione: [
+      "Quando l'avatar attraversa la casa alza i piedi a turno e dondola le braccia.",
+      "Tieni premuto su un mobile: si apre «Arreda» e lo sposti subito col dito, senza passare dal tasto."
+    ]
+  },
+  {
+    v: 177,
+    data: "10 ottobre 2026",
+    titolo: "Trofei per tipo e città più comoda 🏆",
+    descrizione: [
+      "Nei trofei, sotto ogni gioco vedi quanti ne hai di ogni tipo: 🥉 bronzo, 🥈 argento, 🥇 oro, 💎 diamante e 💠 platino. Anche dentro ogni gioco, in cima.",
+      "Nella città si entra toccando anche l'edificio, non solo il nome. Prima, la sera e di notte, funzionava solo il nome.",
+      "Tenendo il dito su una scritta non si seleziona più il testo e non esce il menu del copia e incolla."
+    ]
+  },
+  {
+    v: 176,
+    data: "10 ottobre 2026",
+    titolo: "Giorni di fila 🔥",
+    descrizione: [
+      "Ogni giorno in cui entri nell'app col tuo profilo conta: se entri anche domani sono 2 giorni di fila, poi 3… Se salti un giorno si riparte da 1.",
+      "Premi: a 7 giorni di fila 500 Speed Coins, a 30 giorni 2.000 e ogni 100 giorni 5.000.",
+      "I giorni di fila si vedono nella città accanto al livello (🔥) e nelle tue statistiche, col tuo record."
+    ]
+  },
   {
     v: 175,
     data: "10 ottobre 2026",
@@ -28174,6 +28361,23 @@ window.SG_SIPERO = {
     return window.SGOmino ? SGOmino.casuale(nome || "io") : null;
   }
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  var GARE_SALVATE = [];
+  function idGara() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
+  function salvaTrofeiHorto(t, gara, ord, io) {
+    if (!gara || !gara.id || !ord || io == null || io < 0 || io >= ord.length || t.guarda || t.prova ||
+        (t.linkParams && t.linkParams.prova) || (t.impostazioni && t.impostazioni.prova)) return;
+    if (GARE_SALVATE.indexOf(gara.id) >= 0) return;
+    GARE_SALVATE.push(gara.id); if (GARE_SALVATE.length > 32) GARE_SALVATE.shift();
+    if (!(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo())) return;
+    var posizione = ord.indexOf(io) + 1, vinta = posizione === 1, online = !!gara.online, n = gara.n || ord.length, diff = gara.diff || "medio";
+    var vittoriaValida = vinta && (diff !== "facile" || (online && gara.umani > 1));
+    var c = { partite: 1, podi: posizione <= 3 && n >= 4 && (diff !== "facile" || (online && gara.umani > 1)) ? 1 : 0,
+      vittorie: vittoriaValida ? 1 : 0, vinteOnline: online && gara.umani > 1 && vinta ? 1 : 0,
+      vinteMedio: vinta && diff === "medio" ? 1 : 0, vinteDifficile: vinta && diff === "difficile" ? 1 : 0,
+      vinte4: vittoriaValida && n >= 4 ? 1 : 0, vinte8NonFacile: vittoriaValida && n >= 8 && diff !== "facile" ? 1 : 0 };
+    var incr = []; for (var k in c) if (c[k]) incr.push([k, c[k]]);
+    SGNube.salvaProgressi(null, "horto", incr, []);
+  }
   function facciaDi(nome, cfg) {
     if (avatarValido(cfg)) return cfg;
     if (nome === "Bot") return MATT;
@@ -28729,7 +28933,7 @@ window.SG_SIPERO = {
     var bp = botParam(diff), nomi = [(t.giocatori && t.giocatori[0]) || "Tu"], cav = [nuovoCav(true, "io")];
     for (var i = 1; i < N; i++) { cav.push(nuovoCav(false)); nomi.push(nomeBot(i)); }
     var av = avatariPer(nomi, [mioAvatar(nomi[0])]);
-    var fase = "via", conto = 3, raf = null, toC = null, ultimo = 0, primoArr = 0, finito = false, arrivi = [], foto = null;
+    var fase = "via", conto = 3, raf = null, toC = null, ultimo = 0, primoArr = 0, finito = false, arrivi = [], foto = null, garaId = idGara();
     var ref = costruisci(t, N, nomi, 0, {
       onFrusta: function () { if (fase === "corsa" && frusta(cav[0], performance.now())) frustaFX(); },
       onEsci: function () { stop(); t.esci(); }
@@ -28749,6 +28953,7 @@ window.SG_SIPERO = {
     function fine() {
       stop();
       var ord = classificaDa(cav, arrivi);
+      salvaTrofeiHorto(t, { id: garaId, n: N, diff: diff, online: false, umani: 1 }, ord, 0);
       finale(t, ord, nomi, 0, foto, { locale: true, onRigioca: function () { corsa(t, nRivali, diff); }, onEsci: t.esci });
     }
     disegna(ref, snap(cav, "via", 3, nomi));
@@ -28770,7 +28975,7 @@ window.SG_SIPERO = {
     var bp = botParam(diff), codice = "…", pronta = false;
     var posti = {}, nomiU = {}, ominiU = {};   // ominiU = avatar di chi entra (posto -> cfg)
     for (var _s = 1; _s < N; _s++) { posti[_s] = null; nomiU[_s] = null; }
-    var cav = null, nomi = null, ref = null, fase = "lobby", conto = 3, loop = null, toC = null, ultimo = 0, primoArr = 0, arrivi = [], ord = null, foto = null, rete = null;
+    var cav = null, nomi = null, ref = null, fase = "lobby", conto = 3, loop = null, toC = null, ultimo = 0, primoArr = 0, arrivi = [], ord = null, foto = null, rete = null, garaId = null, umaniGara = 1;
 
     function seatDi(id) { for (var s = 1; s < N; s++) if (posti[s] === id) return s; return -1; }
     function postoLibero() { for (var s = 1; s < N; s++) if (!posti[s]) return s; return 0; }
@@ -28817,14 +29022,15 @@ window.SG_SIPERO = {
     });
 
     function inizia() {
-      fase = "via"; conto = 3; arrivi = []; primoArr = 0; ord = null; foto = null;
+      fase = "via"; conto = 3; arrivi = []; primoArr = 0; ord = null; foto = null; garaId = idGara();
       nomi = [(t.giocatori && t.giocatori[0]) || "Host"]; cav = [nuovoCav(true, "host")]; var cfgs = [mioAvatar(nomi[0])];
       for (var s = 1; s < N; s++) {
         if (posti[s]) { cav.push(nuovoCav(true, posti[s])); nomi.push(nomiU[s] || ("Amico " + s)); cfgs[s] = ominiU[s]; rete.invia({ t: "seat", to: posti[s], seat: s }); }
         else { cav.push(nuovoCav(false)); nomi.push(nomeBot(s)); }
       }
+      umaniGara = 1 + quanti();
       var av = avatariPer(nomi, cfgs);
-      rete.invia({ t: "via", nomi: nomi, n: N, av: av });   // ogni telefono costruisce la corsa e fa il proprio countdown
+      rete.invia({ t: "via", nomi: nomi, n: N, av: av, garaId: garaId, diff: diff, umani: umaniGara });   // ogni telefono costruisce la corsa e fa il proprio countdown
       ref = costruisci(t, N, nomi, 0, {
         onFrusta: function () { if (fase === "corsa" && frusta(cav[0], performance.now())) frustaFX(); },
         onEsci: function () { chiudi(); t.esci(); }
@@ -28848,9 +29054,10 @@ window.SG_SIPERO = {
     function bcast() { var sn = snap(cav, fase, Math.max(0, conto), nomi); if (nTick++ % 4 === 0 || fase !== "corsa") rete.inviaVeloce(sn); if (ref) disegna(ref, sn); }
     function fineCorsa() {
       fase = "fine"; ord = classificaDa(cav, arrivi);
+      salvaTrofeiHorto(t, { id: garaId, n: N, diff: diff, online: true, umani: umaniGara }, ord, 0);
       if (t.risultato) t.risultato(ord.map(function (s) { return { nome: nomi[s] }; }));   // per il torneo online
       if (!foto) foto = cav.map(function (h) { return Math.min(1, h.pos); });
-      rete.invia({ t: "fine", ord: ord, nomi: nomi, foto: foto });
+      rete.invia({ t: "fine", ord: ord, nomi: nomi, foto: foto, garaId: garaId, diff: diff, n: N, umani: umaniGara });
       if (ref) { ref.rimuovi(); ref = null; }
       finale(t, ord, nomi, 0, foto, { sonoHost: true, onRigioca: function () { inizia(); }, onEsci: function () { chiudi(); t.esci(); } });
     }
@@ -28876,7 +29083,7 @@ window.SG_SIPERO = {
 
   function ospiteHorto(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var el = t.el, S = { rete: null, myId: null, nome: "", mySeat: 0, ref: null, fase: null, nomi: null, N: 0, msg: null,
+    var el = t.el, S = { rete: null, myId: null, nome: "", mySeat: 0, ref: null, fase: null, nomi: null, N: 0, msg: null, garaId: null, diff: "medio", umani: 1,
       buf: [], raf: null, lastP: [], delayMs: 120 };   // buffer per interpolare le posizioni (movimento liscio)
     schermaNome();
 
@@ -28935,7 +29142,7 @@ window.SG_SIPERO = {
             if (!S.ref) mostraLobby(m);   // l'ospite vede la stanza come l'host
           }
           else if (m.t === "via") {       // parte la corsa: costruisci e fai il countdown LOCALE (come l'host)
-            S.nomi = m.nomi; S.N = m.n || (m.nomi ? m.nomi.length : 4); S.av = m.av || null;
+            S.nomi = m.nomi; S.N = m.n || (m.nomi ? m.nomi.length : 4); S.av = m.av || null; S.garaId = m.garaId; S.diff = m.diff || "medio"; S.umani = m.umani || 1;
             fermaGiro(); S.buf = []; S.lastP = [];   // corsa nuova (anche rivincita): riparto pulito
             build({ nomi: S.nomi, N: S.N }); S.fase = "via"; contoOspite();
           }
@@ -28951,6 +29158,7 @@ window.SG_SIPERO = {
             if (S.contoTimer) { clearInterval(S.contoTimer); S.contoTimer = null; }
             fermaGiro(); S.buf = [];
             if (S.ref) { S.ref.rimuovi(); S.ref = null; } S.fase = "fine";
+            salvaTrofeiHorto(t, { id: m.garaId || S.garaId, n: m.n || S.N, diff: m.diff || S.diff, online: true, umani: m.umani || S.umani }, m.ord, S.mySeat);
             finale(t, m.ord, m.nomi, S.mySeat, m.foto, { sonoHost: false, onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
           }
         },
@@ -36687,6 +36895,39 @@ window.SG_SIPERO = {
   var PUNTI_DISEGNO = 25;                                      // a chi disegna, per ognuno che indovina
   var SCELTA_MS = 12000, PUNTI_MS = 6000, MAX_CHAT = 40;
   var COL_GIOC = ["#ffd43b", "#74c0fc", "#ff8787", "#8ce99a", "#e599f7", "#ffa94d", "#66d9e8", "#fcc2d7", "#b197fc", "#d8f5a2"];
+  var PARTITE_SALVATE = Object.create(null);
+
+  function nuovaPartitaScara() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
+  function statVuoteScara() {
+    return { turniDisegnati: 0, indovinate: 0, indovinatePrimo: 0, indovinateVeloci: 0, quasi: 0,
+      disegniIndovinati: 0, disegniConTreIndovinatori: 0, indovinateDifficili: 0, paroleDifficiliDisegnate: 0,
+      paroleDifficiliIndovinate: 0, puntiIndovinando: 0, vittorie: 0, vittorieDifficili: 0, vittorieGruppo: 0 };
+  }
+  function salvaTrofeiScara(t, vm, cb) {
+    try {
+      if (!vm || vm.fase !== "fine" || !vm.partitaId || t.guarda ||
+          (t.linkParams && (t.linkParams.guarda || t.linkParams.prova)) ||
+          (t.impostazioni && t.impostazioni.prova) ||
+          !(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      var profilo = SGNube.profilo(), id = cb.myId, me = (vm.players || []).filter(function (p) { return p.id === id; })[0];
+      if (!me || !id || !String(profilo.nome || "").trim() || String(profilo.nome).trim().toLowerCase() !== String(me.nome || "").trim().toLowerCase()) return;
+      var profiloId = String(profilo.uid || profilo.nome).trim().toLowerCase();
+      var chiave = "scarabocchio|" + vm.partitaId + "|" + profiloId;
+      if (PARTITE_SALVATE[chiave]) return;
+      var chiaveLocale = "sg-scarabocchio-ultima-partita-" + profiloId;
+      try { if (window.localStorage && localStorage.getItem(chiaveLocale) === String(vm.partitaId)) { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
+      var s = (vm.statFine || {})[id] || {}, vittoria = (vm.classifica || []).some(function (p) { return p.id === id && p.pos === 1; });
+      var inc = [["partite", 1]];
+      Object.keys(s).forEach(function (k) { if (+s[k] > 0) inc.push([k, +s[k]]); });
+      if (vittoria) inc.push(["vittorie", 1]);
+      if (vittoria && vm.difficili && vm.paroleDifficiliDisegnate > 0) inc.push(["vittorieDifficili", 1]);
+      if (vittoria && (vm.players || []).filter(function (p) { return !p.via; }).length >= 6) inc.push(["vittorieGruppo", 1]);
+      PARTITE_SALVATE[chiave] = 1;
+      try { if (window.localStorage) localStorage.setItem(chiaveLocale, String(vm.partitaId)); } catch (e) {}
+      SGNube.salvaProgressi(null, "scarabocchio", inc,
+        [], [["ultimaPartitaTrofei", vm.partitaId]]);
+    } catch (e) {}
+  }
 
   function fmtN(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
   function mioAvatar(nome) {
@@ -37196,6 +37437,7 @@ window.SG_SIPERO = {
 
   // ---------- la classifica finale ----------
   function finale(t, vm, cb) {
+    salvaTrofeiScara(t, vm, cb);
     var el = t.el;
     var s = t.schermata({ icona: "🏆", titolo: "Classifica finale" });
     var cl = vm.classifica || [];
@@ -37224,9 +37466,11 @@ window.SG_SIPERO = {
     var H = { fase: "lobby", codice: "…", pronta: false, secondi: imp.secondi || 80, giri: imp.giri || 2, difficili: !!imp.difficili,
       players: [{ id: "host", nome: nomeHost, omino: mioAvatar(nomeHost), punti: 0, col: COL_GIOC[0] }],
       giro: 0, idx: -1, ordine: [], turno: 0, disegnatore: null, parola: null, opzioni: null, usate: {},
-      scadenza: 0, indovinati: [], scoperte: [], guad: {}, tratti: [], chat: [], nMsg: 0, ultimo: null, classifica: null, to: null, toInd: [] };
+      scadenza: 0, indovinati: [], scoperte: [], guad: {}, tratti: [], chat: [], nMsg: 0, ultimo: null, classifica: null, to: null, toInd: [],
+      partitaId: null, statGiocatori: Object.create(null), paroleDifficiliDisegnate: 0 };
     var vista = null;
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
+    function statP(id) { return H.statGiocatori[id] || (H.statGiocatori[id] = statVuoteScara()); }
     function presenti() { return H.players.filter(function (p) { return !p.via; }); }
     function ferma() { if (H.to) { clearTimeout(H.to); H.to = null; } H.toInd.forEach(clearTimeout); H.toInd = []; }
     function msg(k, x, p) {
@@ -37260,6 +37504,7 @@ window.SG_SIPERO = {
           if (!giaDentro && H.players.length < 10 && H.fase !== "fine") {
             var p = { id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino), punti: 0, col: COL_GIOC[H.players.length % COL_GIOC.length] };
             H.players.push(p);
+            statP(id);
             if (H.fase !== "lobby") { H.ordine.push(id); msg("sys", "👋 È arrivato " + p.nome); if (vista) vista.omini(mappaOmini()); }
           }
           bd();
@@ -37288,12 +37533,12 @@ window.SG_SIPERO = {
 
     function vm() {
       var o = { fase: H.fase, codice: H.codice, pronta: H.pronta, giro: H.giro, giri: H.giri, secondi: H.secondi, difficili: H.difficili,
-        turno: H.turno, disegnatore: H.disegnatore, chat: H.chat.slice(),
+        turno: H.turno, disegnatore: H.disegnatore, chat: H.chat.slice(), partitaId: H.partitaId,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, via: !!p.via, ok: H.indovinati.indexOf(p.id) >= 0, omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }) };
       if (H.fase === "scelta" || H.fase === "disegno") o.rimMs = Math.max(0, H.scadenza - Date.now());
       if (H.fase === "disegno") o.indizio = maschera(H.parola, H.scoperte);
       if (H.fase === "punti") o.ultimo = H.ultimo;
-      if (H.fase === "fine") o.classifica = H.classifica;
+      if (H.fase === "fine") { o.classifica = H.classifica; o.statFine = H.statGiocatori; o.paroleDifficiliDisegnate = H.paroleDifficiliDisegnate; }
       return o;
     }
     function bd() {
@@ -37314,7 +37559,8 @@ window.SG_SIPERO = {
       H.players = presenti(); ricolora();
       H.players.forEach(function (p) { p.punti = 0; });
       H.giro = 1; H.idx = -1; H.turno = 0; H.ordine = H.players.map(function (p) { return p.id; });
-      H.chat = []; H.usate = {}; H.classifica = null;
+      H.chat = []; H.usate = {}; H.classifica = null; H.partitaId = nuovaPartitaScara(); H.statGiocatori = Object.create(null); H.paroleDifficiliDisegnate = 0;
+      H.players.forEach(function (p) { H.statGiocatori[p.id] = statVuoteScara(); });
       msg("sys", "🎨 Si comincia! Chi disegna non può scrivere, gli altri indovinano in chat.");
       prossimoTurno();
     }
@@ -37347,6 +37593,8 @@ window.SG_SIPERO = {
       i = intIn(i, 2);
       ferma();
       H.parola = H.opzioni[i]; H.usate[H.parola] = 1;
+      statP(id).turniDisegnati++;
+      if (DIFFICILI.indexOf(H.parola) >= 0) { statP(id).paroleDifficiliDisegnate++; H.paroleDifficiliDisegnate++; }
       H.fase = "disegno"; H.scadenza = Date.now() + H.secondi * 1000;
       var d = pById(H.disegnatore);
       msg("sys", "✏️ " + (d ? d.nome : "…") + " sta disegnando");
@@ -37370,14 +37618,19 @@ window.SG_SIPERO = {
       if (H.fase === "disegno") {
         if (id === H.disegnatore || H.indovinati.indexOf(id) >= 0) return;   // chi disegna o ha già indovinato non scrive (non si svela niente)
         if (giusta(x, H.parola)) return indovina(p);
-        if (quasi(x, H.parola)) return privato(id, { t: "quasi", x: x });   // "ci sei quasi" lo sa solo lui: agli altri non si svela niente
+        if (quasi(x, H.parola)) { statP(id).quasi++; return privato(id, { t: "quasi", x: x }); }   // "ci sei quasi" lo sa solo lui: agli altri non si svela niente
       }
       msg("msg", x, p); bd();
     }
     function indovina(p) {
+      var primo = H.indovinati.length === 0, veloci = H.scadenza - Date.now() >= H.secondi * 1000 * 0.6;
       H.indovinati.push(p.id);
       var pts = Math.max(1, Math.ceil((H.scadenza - Date.now()) / 1000));   // tanti punti quanti secondi mancano
       p.punti += pts; H.guad[p.id] = (H.guad[p.id] || 0) + pts;
+      var sp = statP(p.id); sp.indovinate++; sp.puntiIndovinando += pts;
+      if (primo) sp.indovinatePrimo++;
+      if (veloci) sp.indovinateVeloci++;
+      if (DIFFICILI.indexOf(H.parola) >= 0) sp.indovinateDifficili++;
       var d = pById(H.disegnatore); if (d) { d.punti += PUNTI_DISEGNO; H.guad[d.id] = (H.guad[d.id] || 0) + PUNTI_DISEGNO; }
       msg("ok", "🎉 " + p.nome + " ha indovinato!", p);
       if (tuttiOk()) {   // l'hanno indovinata tutti: il turno finisce subito
@@ -37392,6 +37645,11 @@ window.SG_SIPERO = {
       ferma();
       if (!H.parola) { msg("sys", "Si passa al prossimo."); return prossimoTurno(); }   // uscito prima di scegliere la parola
       var d = pById(H.disegnatore), parola = H.parola;
+      if (d && H.indovinati.length) {
+        statP(d.id).disegniIndovinati++;
+        if (H.indovinati.length >= 3) statP(d.id).disegniConTreIndovinatori++;
+        if (DIFFICILI.indexOf(parola) >= 0) statP(d.id).paroleDifficiliIndovinate++;
+      }
       var righe = H.indovinati.map(function (id) { var p = pById(id); return { id: id, nome: p ? p.nome : "…", pts: H.guad[id] || 0 }; });
       if (d && H.guad[d.id]) righe.push({ id: d.id, nome: d.nome, pts: H.guad[d.id], dis: true });
       if (motivo === "tempo") msg("sys", "⏰ Tempo scaduto! La parola era «" + parola + "»");
