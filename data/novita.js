@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 175,
+    data: "10 ottobre 2026",
+    titolo: "Le tue statistiche 📊",
+    descrizione: [
+      "Nel tuo profilo c'è il tasto «📊 Le tue statistiche»: per ogni gioco partite, vinte, perse, % di vittorie, tempo giocato e serie migliore di vittorie di fila.",
+      "In alto il tempo giocato in tutto e il tuo gioco preferito. Il Black Jack tiene anche le sue mani di sempre.",
+      "Contano le partite giocate col profilo da oggi in poi.",
+      "Nel negozio gli oggetti speciali hanno una frase in più quando li tocchi."
+    ]
+  },
+  {
     v: 174,
     data: "10 ottobre 2026",
     titolo: "La tua casa e il negozio 🏠🛍️",

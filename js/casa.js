@@ -512,6 +512,20 @@
     tappeto_liso: 120, quadro_storto: 60, lampadina: 40, letto_semplice: 450, comodino_cartone: 30, armadio_storto: 400, sveglia: 50, lampada_storta: 90,
     poster_strappato: 40, wc_vecchio: 250, lavandino_colonna: 200, specchio_scheggiato: 80, doccia_tenda: 500, carta_igienica: 10, bicchiere_spazzolino: 20, tappetino: 60 };
   Object.keys(PREZZI_USATO).forEach(function (t) { if (OGG[t]) OGG[t].prezzo = PREZZI_USATO[t]; });
+  // ---- gli oggetti speciali del negozio: una frase in più nella scheda per comprarli (gli altri no: il negozio resta pulito) ----
+  var FRASI = {
+    vasca: "Una vasca vera, coi piedini dorati: ci entri, ti riempi di schiuma e le bolle volano per tutto il bagno. Il massimo del relax.",
+    acquario: "Due pesciolini che nuotano avanti e indietro tutto il giorno. E non c'è nemmeno da dargli da mangiare!",
+    frigo_moderno: "Il frigo dei sogni: dentro c'è di tutto, dalla torta con la ciliegina alle carote. Aprilo e scegli cosa mangiare.",
+    cucina_moderna: "Accendila e nel forno si cuoce una torta. Il profumo arriva fino in camera.",
+    armadio_bianco: "Tre ante piene di vestiti, scarpe e scatole. Aprilo e cambi look quando vuoi.",
+    letto_matrimoniale: "Una trapunta rosa morbidissima e due cuscini belli gonfi: qui si dorme come re.",
+    divano_velluto: "Velluto verde acqua, bottoni come nei salotti eleganti e due cuscini gialli. Il pezzo forte del soggiorno.",
+    libreria: "Piena di libri colorati, con una piantina in mezzo: la stanza sembra subito più intelligente.",
+    tv_piatta: "Lo schermo piatto con la partita sempre in onda. Accendila e la stanza si illumina di blu.",
+    lampada_stelo: "Accendila la sera: fa una luce calda che riempie l'angolo."
+  };
+  Object.keys(FRASI).forEach(function (t) { if (OGG[t]) OGG[t].frase = FRASI[t]; });
 
   // ---- di fianco (in Arreda il tasto "Gira": davanti → di fianco → di fianco dall'altra parte) ----
   //      solo i mobili dove ha senso; letti e vasca visti dai piedi (ci si dorme e ci si fa il bagno anche così)
@@ -1508,7 +1522,9 @@
       aperto = pz; while (scheda.firstChild) scheda.removeChild(scheda.firstChild);
       var x = el("button", "ne-x", "✕"); x.onclick = chiudi; scheda.appendChild(x);
       var im = el("img"); im.src = pz.img; im.alt = ""; scheda.appendChild(im);
-      scheda.appendChild(el("h3", null, pz.nome)); scheda.appendChild(el("p", null, pz.cosa));
+      scheda.appendChild(el("h3", null, pz.nome));
+      if (pz.o && pz.o.frase) { scheda.appendChild(el("span", "ne-speciale", "✨ Speciale")); scheda.appendChild(el("p", "ne-frase", pz.o.frase)); }   // solo gli oggetti speciali
+      scheda.appendChild(el("p", null, pz.cosa));
       var nota = el("p", "ne-nota"), b = el("button", "ne-compra"); scheda.appendChild(nota); scheda.appendChild(b);
       function agg() {
         var tua = mia(pz), n = pz.tipo === "ogg" ? nelBaule(pz.id) : 0, manca = pz.prezzo - soldi();

@@ -192,6 +192,21 @@
 
     // ---- liste personali (es. le parole di Parola d'ordine): un campo del profilo, salvato così com'è ----
     lista: function (nome) { return (profilo && profilo.liste && profilo.liste[nome]) || []; },
+    // ---- le statistiche di ogni gioco (le scrive core.js a fine partita, per tutti i giochi):
+    //      giocato.<gioco> = { p: partite, v: vinte, s: perse, t: secondi giocati, serie, serieMax, u: l'ultima volta }
+    //      esito: "vinta", "persa" oppure null (partita sullo stesso telefono senza il tuo nome in classifica) ----
+    giocato: function () { return (profilo && profilo.giocato) || {}; },
+    contaPartita: function (gioco, esito, secondi) {
+      if (!auth || !utente || !profilo || !gioco) return;
+      var FV = firebase.firestore.FieldValue, b = "giocato." + gioco + ".", patch = {}, sec = Math.max(0, Math.min(7200, Math.round(secondi || 0)));
+      function piu(k, n) { if (!n) return; patch[b + k] = FV.increment(n); setNested(profilo, b + k, (getNested(profilo, b + k) || 0) + n); }
+      function metti(k, v) { patch[b + k] = v; setNested(profilo, b + k, v); }
+      piu("p", 1); piu("t", sec);
+      if (esito === "vinta") { piu("v", 1); var serie = (getNested(profilo, b + "serie") || 0) + 1; metti("serie", serie); if (serie > (getNested(profilo, b + "serieMax") || 0)) metti("serieMax", serie); }
+      if (esito === "persa") { piu("s", 1); metti("serie", 0); }
+      metti("u", Date.now());
+      db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+    },
     // ---- la casa da arredare (js/casa.js): sta tutta in un campo del profilo, così non si perde cambiando telefono ----
     casa: function () { return (profilo && profilo.casa) || null; },
     salvaCasa: function (dati) {

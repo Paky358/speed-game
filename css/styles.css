@@ -1346,3 +1346,32 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .ne-compra:disabled{ background:#e9e1d1; color:#8a7a62; box-shadow:none; transform:none; }
 .ne-x{ position:absolute; right:12px; top:10px; width:36px; height:36px; border-radius:50%; border:0; background:rgba(59,43,34,.08); font:inherit; font-weight:900; color:#3b2b22; cursor:pointer; }
 .ne-vista .ca-avviso{ z-index:45; }
+.ne-speciale{ padding:3px 10px; border-radius:999px; background:linear-gradient(180deg,#ffe08a,#f2b324); color:#3a2200; font-weight:900; font-size:.72rem; }
+.ne-scheda .ne-frase{ max-width:340px; color:#3b2b22; font-style:italic; font-weight:600; line-height:1.35; }
+
+/* =========================================================
+   📊 LE STATISTICHE (core.js, schermataStatistiche): il tasto nel profilo e i riquadri di ogni gioco
+   ========================================================= */
+.st-tasto{ display:flex; align-items:center; gap:12px; width:100%; margin-top:14px; padding:12px 14px; border:0; border-radius:16px; background:var(--carta); box-shadow:var(--ombra); color:inherit; font:inherit; text-align:left; cursor:pointer; }
+.st-tasto:active{ transform:scale(.98); }
+.st-tasto-ico{ flex:none; font-size:1.7rem; }
+.st-tasto-testo{ flex:1; display:flex; flex-direction:column; gap:2px; min-width:0; }
+.st-tasto-testo b{ font-size:1rem; }
+.st-tasto-testo small{ font-size:.78rem; color:var(--testo-tenue); }
+.st-tasto-va{ flex:none; font-size:1.6rem; font-weight:900; color:var(--testo-tenue); }
+.st-griglia{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+.st-griglia.st-totali{ grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:6px; }
+.st-cella{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:9px 4px; border-radius:12px; background:var(--carta); box-shadow:var(--ombra); text-align:center; min-width:0; }
+.st-cella b{ font-size:1.15rem; font-weight:900; color:#ffe58a; line-height:1.1; white-space:nowrap; }
+.st-totali .st-cella b{ font-size:1.25rem; }
+.st-cella small{ font-size:.66rem; color:var(--testo-tenue); }
+.st-cella.verde b{ color:#8ce99a; }
+.st-cella.rosso b{ color:#ffa8a8; }
+.st-gioco{ margin-top:12px; padding:10px; border-radius:16px; background:rgba(255,255,255,.05); box-shadow:inset 0 0 0 1px rgba(255,255,255,.08); }
+.st-gioco .st-cella{ background:rgba(0,0,0,.18); box-shadow:none; }
+.st-testa{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.st-ico{ font-size:1.4rem; }
+.st-testa b{ flex:1; font-size:1rem; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.st-testa small{ flex:none; font-size:.7rem; color:var(--testo-tenue); }
+.st-riga{ display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:8px; font-size:.8rem; color:var(--testo-tenue); }
+.st-nota{ margin-top:14px; font-size:.75rem; }

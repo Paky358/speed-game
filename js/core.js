@@ -2537,21 +2537,13 @@
         sp._contenuto.appendChild(el("div", { class: "etichetta", text: "⭐ Livello e Speed Coins" }));
         sp._contenuto.appendChild(riquadroLivello(SGNube.progressione()));
       }
-      var fi = SGNube.monete ? SGNube.monete() : 0;
-      sp._contenuto.appendChild(el("div", { class: "etichetta", text: "🃏 Black Jack" }));
-      sp._contenuto.appendChild(el("p", { class: "modulo-nota", html: "Al Casinò le fiches sono le tue <b>Speed Coins</b> (" + cifre(fi) + " 🪙): quello che vinci o perdi al tavolo si somma alle monete, su qualsiasi telefono." }));
-      var st = (p.stat && p.stat.blackjack) || {};
-      var giocate = st.maniGiocate || 0, vinte = st.maniVinte || 0, perc = giocate ? Math.round(vinte / giocate * 100) : 0;
-      var celle = [["Mani giocate", giocate], ["Mani vinte", vinte], ["% vittorie", perc + "%"],
-        ["Black Jack", st.blackjackFatti || 0], ["Record fiches", st.recordFiches || fi], ["Vincita max", st.vincitaMax || 0]];
-      var griglia = el("div", { style: "display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px" });
-      celle.forEach(function (v) {
-        griglia.appendChild(el("div", { style: "background:var(--carta);border-radius:12px;padding:10px 4px;text-align:center;box-shadow:var(--ombra)" }, [
-          el("div", { style: "font-size:1.35rem;font-weight:900;color:#ffe58a;line-height:1.1", text: "" + v[1] }),
-          el("div", { style: "font-size:.7rem;color:var(--testo-tenue);margin-top:3px", text: v[0] })
-        ]));
-      });
-      sp._contenuto.appendChild(griglia);
+      // le statistiche di tutti i giochi stanno in una schermata a parte
+      var tot = totaliGiocato(SGNube.giocato ? SGNube.giocato() : {});
+      sp._contenuto.appendChild(el("button", { class: "st-tasto", onclick: function () { schermataStatistiche(function () { schermataAccessoCloud(dopo); }); } }, [
+        el("span", { class: "st-tasto-ico", text: "📊" }),
+        el("span", { class: "st-tasto-testo" }, [ el("b", { text: "Le tue statistiche" }), el("small", { text: tot.p ? cifre(tot.p) + (tot.p === 1 ? " partita" : " partite") + " · " + tempoGiocato(tot.t) + " giocati" : "Vittorie, sconfitte e tempo di ogni gioco" }) ]),
+        el("span", { class: "st-tasto-va", text: "›" })
+      ]));
       sp._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🚪 Esci dal profilo", onclick: function () {
         chiediConferma("Sei sicuro di voler uscire dal profilo?", "Se non ricordi la password non potrai più accedere.", "🚪 Esci", function () {
           SGNube.esci().then(function () { schermataHome(); });
@@ -2573,6 +2565,55 @@
     } });
     s._piede.appendChild(bEntra);
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "➕ Non ho un profilo, crealo", onclick: function () { schermataCreaCloud(dopo); } }));
+    mostra(s);
+  }
+
+  // ---- 📊 le statistiche di ogni gioco: partite, vinte, perse, % di vittorie, tempo giocato, serie migliore ----
+  //      (le scrive premiaPartita a fine partita; contano dal 10 ottobre 2026. Il Black Jack ha anche le sue mani di sempre)
+  function tempoGiocato(sec) {
+    var m = Math.round((sec || 0) / 60);
+    if (m < 1) return sec > 0 ? "meno di 1 min" : "0 min";
+    if (m < 60) return m + " min";
+    var h = Math.floor(m / 60), r = m % 60;
+    return cifre(h) + " h" + (r && h < 100 ? " " + r + " min" : "");
+  }
+  function quandoGiocato(ms) {
+    if (!ms) return "";
+    var oggi = new Date(); oggi.setHours(0, 0, 0, 0);
+    var giorni = Math.floor((oggi.getTime() - new Date(ms).setHours(0, 0, 0, 0)) / 86400000);
+    return giorni <= 0 ? "oggi" : giorni === 1 ? "ieri" : giorni < 7 ? giorni + " giorni fa" : giorni < 30 ? Math.floor(giorni / 7) + (giorni < 14 ? " settimana fa" : " settimane fa") : "più di un mese fa";
+  }
+  function totaliGiocato(gi) {
+    var t = { p: 0, v: 0, s: 0, t: 0 };
+    Object.keys(gi || {}).forEach(function (k) { var x = gi[k] || {}; t.p += x.p || 0; t.v += x.v || 0; t.s += x.s || 0; t.t += x.t || 0; });
+    return t;
+  }
+  function percVittorie(x) { var n = (x.v || 0) + (x.s || 0); return n ? Math.round((x.v || 0) * 100 / n) + "%" : "—"; }
+  function schermataStatistiche(dopo) {
+    var p = SGNube.profilo(); if (!p) return (dopo || schermataHome)();
+    var gi = (SGNube.giocato && SGNube.giocato()) || {}, tot = totaliGiocato(gi);
+    var s = schermata({ icona: "📊", titolo: "Statistiche", sotto: p.nome, indietro: function () { (dopo || schermataHome)(); } });
+    function cella(valore, nome, cls) { return el("div", { class: "st-cella" + (cls ? " " + cls : "") }, [ el("b", { text: "" + valore }), el("small", { text: nome }) ]); }
+    // in alto i totali
+    s._contenuto.appendChild(el("div", { class: "st-griglia st-totali" }, [ cella(tempoGiocato(tot.t), "Tempo giocato"), cella(cifre(tot.p), "Partite"), cella(percVittorie(tot), "Vittorie") ]));
+    var lista = giochi.filter(function (g) { return gi[g.id] && gi[g.id].p; }).sort(function (a, b) { return (gi[b.id].t || 0) - (gi[a.id].t || 0) || gi[b.id].p - gi[a.id].p; });
+    if (lista.length) s._contenuto.appendChild(el("p", { class: "modulo-nota", html: "Il tuo gioco preferito: <b>" + lista[0].icona + " " + lista[0].nome + "</b> (" + tempoGiocato(gi[lista[0].id].t) + ")" }));
+    // un riquadro per ogni gioco giocato, dal più giocato
+    lista.forEach(function (g) {
+      var x = gi[g.id], q = quandoGiocato(x.u);
+      var r = el("div", { class: "st-gioco" }, [
+        el("div", { class: "st-testa" }, [ el("span", { class: "st-ico", text: g.icona || "🎲" }), el("b", { text: g.nome }), el("small", { text: q ? "ultima volta " + q : "" }) ]),
+        el("div", { class: "st-griglia" }, [ cella(cifre(x.p), "Partite"), cella(cifre(x.v || 0), "Vinte", "verde"), cella(cifre(x.s || 0), "Perse", "rosso"), cella(percVittorie(x), "% vittorie") ]),
+        el("div", { class: "st-riga" }, [ el("span", { text: "⏱️ " + tempoGiocato(x.t) }), x.serieMax ? el("span", { text: "🔥 Serie migliore: " + x.serieMax + (x.serieMax === 1 ? " vittoria" : " vittorie di fila") }) : null ])
+      ]);
+      if (g.id === "blackjack") {   // il Black Jack conta anche le mani (da sempre)
+        var bj = (p.stat && p.stat.blackjack) || {};
+        if (bj.maniGiocate) r.appendChild(el("div", { class: "st-riga" }, [ el("span", { text: "🃏 Mani: " + cifre(bj.maniVinte || 0) + " vinte su " + cifre(bj.maniGiocate) }), el("span", { text: "✨ Black Jack fatti: " + cifre(bj.blackjackFatti || 0) }), bj.vincitaMax ? el("span", { text: "💰 Vincita più alta: " + cifre(bj.vincitaMax) }) : null ]));
+      }
+      s._contenuto.appendChild(r);
+    });
+    if (!lista.length) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ancora niente qui: gioca una partita col tuo profilo e le statistiche si riempiono." }));
+    s._contenuto.appendChild(el("p", { class: "modulo-nota st-nota", text: "Contano le partite giocate col profilo dal 10 ottobre 2026. Le partite sullo stesso telefono in cui non giochi col tuo nome contano nelle partite e nel tempo, non nelle vittorie." }));
     mostra(s);
   }
 
@@ -3756,7 +3797,7 @@
   // Ogni partita finita dà XP a chi ha il profilo: 1 al secondo, +50% se vinci, +250 alla prima del giorno.
   // Il tempo parte dall'ultima volta che si è visti in saletta (o dalla partita prima): l'attesa non conta.
   // Online l'host manda "__esito" con la classifica: ogni telefono si dà i suoi XP da solo.
-  var xpOrologio = { t0: Date.now(), ultimo: 0 }, reteXp = null;
+  var xpOrologio = { t0: Date.now(), ultimo: 0 }, reteXp = null, giocoXp = null;   // giocoXp: il gioco aperto (per le statistiche)
   function xpRiparti() { xpOrologio.t0 = Date.now(); }
   function oggiStr() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
   function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
@@ -3775,6 +3816,7 @@
     if (!mio) lista.forEach(function (r) { if (!mio && r && sonoIo(r.nome)) mio = r; });
     if (soloSeCi && !mio) return;
     var primo = lista[0], vinto = !!mio && (mio.pos != null ? mio.pos === 1 : (mio === primo || (mio.punti != null && primo && mio.punti === primo.punti)));
+    if (giocoXp && SGNube.contaPartita) SGNube.contaPartita(giocoXp, mio ? (vinto ? "vinta" : "persa") : null, sec);   // le statistiche del gioco (📊 nel profilo)
     var giorno = oggiStr(), prima = SGNube.progressione().xpGiorno !== giorno;
     var xp = SGLivelli.xpPartita({ secondi: sec, vinto: vinto, primaDelGiorno: prima });
     if (!xp) return;
@@ -3813,7 +3855,7 @@
   function avviaPartita(g, giocatori, impostazioni, opts, salaCtx) {
     var questa = ++partitaN;
     function viva() { return questa === partitaN; }
-    xpRiparti(); reteXp = null;   // gli XP contano da qui (e dall'ultima volta in saletta)
+    xpRiparti(); reteXp = null; giocoXp = g.id;   // gli XP contano da qui (e dall'ultima volta in saletta)
     // entrato da ospite con un invito: se la pagina si ricarica, in home c'è "Rientra nella partita"
     if (linkParams && linkParams.stanza && !linkParams.guarda && !salaCtx) ricordaStanza({ gioco: g.id, stanza: String(linkParams.stanza).toUpperCase() });
     // online (host, ospite o dalla Sala): lo schermo resta acceso, così il collegamento non si ferma
