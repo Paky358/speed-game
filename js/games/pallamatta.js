@@ -78,7 +78,7 @@
     var p = creaLivello(lv, true, hh);
     var st = { lv: lv, H: hh || H, pioli: p, palline: PALLINE, punti: 0, fase: "mira", ang: PI / 2, palle: [], potere: potere || "bomba",
       arTot: p.filter(function (q) { return q.tipo === "arancio"; }).length, arPresi: 0, viola: -1, t: 0, febbre: false, mira: 0,
-      colpo: null, secchiPresi: 0, verdiPresi: 0, colpoMax: 0, extra: 0 };
+      colpo: null, secchiPresi: 0, verdiPresi: 0, colpoMax: 0, extra: 0, fuoco: 0 };
     nuovoViola(st);
     return st;
   }
@@ -128,8 +128,9 @@
     var vn = b.vx * nx + b.vy * ny; if (vn < 0) { b.vx -= 1.75 * vn * nx; b.vy -= 1.75 * vn * ny; }
   }
   // la strada della pallina per mirare: fino al primo piolo (o, con la Mira lunga, per un bel pezzo)
-  function strada(st, ang, lunga) {
+  function strada(st, ang, lunga, fuoco) {   // (fuoco: la pallina passerà attraverso i pioli, si vede tutta la parabola)
     var b = { x: CX + Math.cos(ang) * 6, y: CY + Math.sin(ang) * 6, vx: Math.cos(ang) * V0, vy: Math.sin(ang) * V0 }, pts = [], ev = [], urti = 0;
+    if (fuoco) { b.fuoco = true; lunga = true; }
     var finto = { pioli: st.pioli.map(function (q) { return { x: q.x, y: q.y, via: q.via, acceso: true }; }), febbre: st.febbre, t: st.t, H: st.H };
     for (var i = 0; i < 240 * (lunga ? 2.6 : 1.4); i++) {
       ev.length = 0; var vx = b.vx, vy = b.vy;
@@ -301,16 +302,24 @@
       if (p.y < CY + 1) a = p.x < CX ? PI - 0.06 : 0.06;
       st.ang = Math.max(0.06, Math.min(PI - 0.06, a));
     }
+    // il dito: tenendo premuto (o trascinando) si mira e lasciando la pallina NON parte;
+    // un tocco veloce, senza muovere il dito, fa partire la pallina dove avevi mirato
     cv.addEventListener("pointerdown", function (e) {
       if (st.fase !== "mira") return;
       e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (er) {}
       try { if (window.SG && SG.audioCtx) SG.audioCtx(); } catch (er2) {}
-      ui.dito = e.pointerId; mira(e);
+      clearTimeout(ui.tTieni);
+      ui.dito = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), mira: false };
+      var d0 = ui.dito; ui.tTieni = setTimeout(function () { if (ui.dito === d0 && st.fase === "mira") { d0.mira = true; mira(e); } }, 200);   // tenuto premuto: si mira lì
     });
-    cv.addEventListener("pointermove", function (e) { if (ui.dito === e.pointerId && st.fase === "mira") mira(e); });
+    cv.addEventListener("pointermove", function (e) {
+      var d = ui.dito; if (!d || d.id !== e.pointerId || st.fase !== "mira") return;
+      if (!d.mira && Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) > 7) d.mira = true;
+      if (d.mira) mira(e);
+    });
     function lascia(e) {
-      if (ui.dito !== e.pointerId) return; ui.dito = false;
-      if (e.type === "pointerup" && st.fase === "mira") { mira(e); tira(); }
+      var d = ui.dito; if (!d || d.id !== e.pointerId) return; ui.dito = null; clearTimeout(ui.tTieni);
+      if (e.type === "pointerup" && st.fase === "mira" && !d.mira && performance.now() - d.t < 260) tira();   // il tocco veloce: tira
     }
     cv.addEventListener("pointerup", lascia); cv.addEventListener("pointercancel", lascia);
 
@@ -321,6 +330,7 @@
       var b = { x: CX + Math.cos(st.ang) * 6, y: CY + Math.sin(st.ang) * 6, vx: Math.cos(st.ang) * V0, vy: Math.sin(st.ang) * V0, scia: [], fermo: { x: CX, y: CY, t: 0 } };
       st.palle = [b];
       if (st.mira > 0) st.mira--;
+      if (st.fuoco > 0) { st.fuoco--; b.fuoco = Infinity; dimmi("🔥 Palla di fuoco!"); }   // il potere caricato: tutto il tiro attraverso i pioli
       suonoTiro(); vibra(10); aggTesta();
     }
 
@@ -351,7 +361,7 @@
     }
     function attivaPotere(q, b) {   // il piolo verde: il potere dell'aiutante
       st.verdiPresi++; suonoPotere(); vibra(25);
-      var P = POTERI[st.potere]; dimmi(P.icona + " " + P.nome + "!");
+      var P = POTERI[st.potere]; dimmi(P.icona + " " + P.nome + (st.potere === "fuoco" ? ": pronta per il prossimo tiro!" : st.potere === "mira" ? " per i prossimi 3 tiri!" : "!"));
       if (st.potere === "bomba") {
         suonoBomba(); ui.fx.push({ t: "onda", x: q.x, y: q.y, r: 0, vita: 0.5 });
         st.pioli.forEach(function (o) { if (!o.via && !o.acceso && Math.hypot(o.x - q.x, o.y - q.y) < 15) evento({ t: "piolo", q: o, b: b }); });
@@ -359,7 +369,7 @@
       } else if (st.potere === "multi") {
         st.palle.push({ x: q.x, y: q.y - RP - RB - 0.2, vx: -b.vx * 0.8 + (Math.random() - 0.5) * 20, vy: -Math.abs(b.vy) * 0.6 - 15, scia: [], fermo: { x: q.x, y: q.y, t: st.t } });
       } else if (st.potere === "mira") { st.mira += 3; }
-      else if (st.potere === "fuoco") { b.fuoco = st.t + 3.2; }
+      else if (st.potere === "fuoco") { st.fuoco = (st.fuoco || 0) + 1; }   // come in Peggle: la palla di fuoco parte al tiro dopo
     }
     function febbre(b) {   // l'ultimo arancione!
       st.febbre = true; ui.lento = 0.22; ui.tLento = 1.1; ui.zoomA = { x: b.x, y: b.y };
@@ -380,7 +390,7 @@
       var rim = st.arTot - st.arPresi; hAr.textContent = "🟠 " + rim;
       fill.style.transform = "scaleX(" + (st.arPresi / Math.max(1, st.arTot)).toFixed(3) + ")";
       var m = molt(st); if (hMolt.textContent !== "x" + m) { hMolt.textContent = "x" + m; hMolt.classList.remove("su"); void hMolt.offsetWidth; hMolt.classList.add("su"); }
-      hPot.textContent = POTERI[st.potere].icona + (st.mira > 0 ? " " + st.mira : "");
+      hPot.textContent = POTERI[st.potere].icona + (st.mira > 0 ? " " + st.mira : "") + (st.fuoco > 0 ? " " + st.fuoco : "");   // quanti tiri col potere carico
     }
 
     // ---- il giro: fisica a passi fissi, poi il disegno ----
@@ -490,8 +500,8 @@
       }
       // la strada per mirare
       if (st.fase === "mira") {
-        var pts = strada(st, st.ang, st.mira > 0);
-        ctx.fillStyle = st.mira > 0 ? "rgba(140,233,154,.9)" : "rgba(255,255,255,.75)";
+        var pts = strada(st, st.ang, st.mira > 0, st.fuoco > 0);
+        ctx.fillStyle = st.fuoco > 0 ? "rgba(255,146,43,.95)" : st.mira > 0 ? "rgba(140,233,154,.9)" : "rgba(255,255,255,.75)";
         pts.forEach(function (p2, i) { if (i % 2) return; ctx.beginPath(); ctx.arc(ox + p2[0] * S, oy + p2[1] * S, Math.max(1.2, 0.45 * S * (1 - i / pts.length * 0.5)), 0, PI * 2); ctx.fill(); });
       }
       // le palline con la scia
@@ -590,6 +600,7 @@
     misura(); aggTesta();
     window.__PMpartita = { st: function () { return st; }, evento: evento, tira: tira, mira: function (a) { st.ang = a; }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); } };   // (per le prove)
     dimmi("Livello " + (lv + 1) + ": " + LIVELLI[lv].nome + " · prendi tutti i 🟠");
+    if (lv < 2) setTimeout(function () { if (vivo() && st.fase === "mira") dimmi("Tieni premuto per mirare · tocca per tirare"); }, 2500);
     anim = requestAnimationFrame(function (o) { ult = o; giro(o); });
   }
 
@@ -657,7 +668,7 @@
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 2,
     modi: [{ modo: "solo", icona: "🎯", nome: "Da solo", sotto: "I livelli, uno dopo l'altro" }],
     regole: [
-      "Trascina il dito per <b>mirare</b>: i puntini mostrano dove va la pallina. <b>Lascia</b> per tirare.",
+      "Tieni premuto (o trascina) per <b>mirare</b>: i puntini mostrano dove va la pallina. Lasciando il dito non parte niente: dai un <b>tocco veloce</b> per tirare.",
       "La pallina rimbalza sui pioli e li <b>accende</b>; quando esce, i pioli accesi scoppiano.",
       "Fai scoppiare tutti i pioli <b>arancioni</b> con <b>10 palline</b>. Più arancioni prendi, più vale ogni piolo: <b>x2, x3, x5, x10</b>.",
       "Il piolo <b>viola</b> vale 500 punti e cambia posto a ogni tiro. I pioli <b>verdi</b> attivano il potere del tuo <b>aiutante</b> (bomba, multipalla, mira lunga o palla di fuoco).",

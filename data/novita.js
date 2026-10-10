@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 181,
+    data: "11 ottobre 2026",
+    titolo: "Palla Matta: mira più comoda 🎯",
+    descrizione: [
+      "Tieni premuto (o trascina) per mirare: lasciando il dito la pallina non parte più. Per tirare dai un tocco veloce.",
+      "La Palla di fuoco funziona come in Peggle: il piolo verde la carica e parte al tiro dopo, attraversando tutti i pioli. Mentre miri vedi la sua strada in arancione."
+    ]
+  },
+  {
     v: 180,
     data: "11 ottobre 2026",
     titolo: "Nuovo gioco: Palla Matta 🔴",
