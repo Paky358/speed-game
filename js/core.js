@@ -556,6 +556,22 @@
   // ---- La città: si tocca un edificio, la città fa zoom e si entra.
   //      In alto chi sei (avatar, nome, livello con la barra degli XP) e le Speed Coins;
   //      in basso Casa, Clan e Negozio (in arrivo) e la Ruota del giorno ----
+  // ---- La casa (js/casa.js): per ora la vede solo il proprietario (account IL PAPPONE), finché non è pronta.
+  //      Anteprima: la casa si salva su questo telefono e il negozio usa monete finte ----
+  function casaAperta() {
+    var io = profiloAttivo();
+    if (io && String(io.nome || "").trim().toUpperCase() === "IL PAPPONE") return true;
+    try { return localStorage.getItem("sg-casa-prova") === "1"; } catch (e) { return false; }
+  }
+  function schermataCasa() {
+    if (!window.SGCasa) return schermataCitta();
+    var io = profiloAttivo(), dati = null;
+    try { dati = JSON.parse(localStorage.getItem("sg-casa-anteprima") || "null"); } catch (e) {}
+    var s = SGCasa.crea({ avatar: io && io.omino, nome: io && io.nome, dati: dati, audio: audioCtx,
+      salva: function (c) { try { localStorage.setItem("sg-casa-anteprima", JSON.stringify(c)); } catch (e) {} },
+      indietro: function () { schermataCitta(); } });
+    mostra(s); s._monta();
+  }
   var scrollCitta = 0;   // fin dove avevi scorso la città: uscendo da un edificio si torna lì (dalla home si riparte dall'alto)
   function schermataCitta() {
     var io = profiloAttivo(), N = window.SGNube, fase = SGCitta.fase(new Date()), via = false;
@@ -608,7 +624,8 @@
       ]),
       avviso,
       el("div", { class: "citta-giu" }, [
-        tastoPresto("🏠", "Casa", "La tua casa arriva presto 🏠"),
+        casaAperta() ? el("button", { class: "citta-tasto", onclick: function () { schermataCasa(); } }, [ el("span", { class: "ct-ico", text: "🏠" }), el("span", { text: "Casa" }), el("small", { text: "anteprima" }) ])
+          : tastoPresto("🏠", "Casa", "La tua casa arriva presto 🏠"),
         tastoPresto("🛡️", "Clan", "I quartieri-clan arrivano presto 🛡️"),
         tastoPresto("🛍️", "Negozio", "Il negozio arriva presto 🛍️"),
         regalo

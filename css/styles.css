@@ -1177,3 +1177,94 @@ button.am-riga:active{ transform:scale(.985); }
 .host-via{ position:fixed; left:50%; top:calc(8px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:9999; max-width:calc(100% - 24px); box-sizing:border-box; padding:8px 14px; border-radius:999px; background:#e67700; color:#fff; font-weight:800; font-size:.88rem; text-align:center; box-shadow:0 6px 18px rgba(0,0,0,.4); pointer-events:none; }
 /* batteria: a riposo (20 s senza tocchi) gli avatar non respirano e non sbattono le palpebre; al primo tocco ripartono */
 body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, body.sg-riposo .sl-camp-cor{ animation:none !important; }
+
+/* =========================================================
+   LA CASA (js/casa.js): tre stanze da arredare, la stanza di fronte con la profondità;
+   si sposta tutto col dito; animazioni solo transform/opacity (la carta che "passa" usa un ritaglio corto)
+   ========================================================= */
+.schermata.casa-vista{ position:fixed; inset:0; z-index:5; padding:0; min-height:0; overflow:hidden; animation:none; background:#2a2140; user-select:none; -webkit-user-select:none; }
+.ca-scena{ position:absolute; inset:0; overflow:hidden; transform-origin:50% 0; transition:transform .38s cubic-bezier(.2,.9,.3,1); }
+.casa-vista.arreda .ca-scena{ transform:translateY(calc(54px + env(safe-area-inset-top))) scale(.78); }   /* in Arreda la stanza si allontana: si vede tutta sopra il cassetto */
+.ca-ogg.bersaglio img{ filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 7px #69db7c); }
+.ca-palco{ position:absolute; left:0; top:0; width:360px; height:640px; transform-origin:0 0; transition:opacity .18s; touch-action:none; }
+.ca-palco.cambia{ opacity:0; }
+.ca-palco::after{ content:""; position:absolute; inset:0; pointer-events:none; z-index:960; background:radial-gradient(120% 85% at 50% 42%, rgba(40,20,10,0) 62%, rgba(40,20,10,.28) 100%); }   /* i bordi un po' in ombra: la stanza è più calda */
+.ca-strato{ position:absolute; left:0; top:0; width:360px; height:640px; pointer-events:none; -webkit-user-drag:none; }
+.ca-nuovo{ opacity:0; }
+.ca-nuovo.passa{ opacity:1; animation:caPassa .6s cubic-bezier(.3,.6,.3,1) forwards; }
+@keyframes caPassa{ from{ clip-path:inset(0 100% 0 0); } to{ clip-path:inset(0 0 0 0); } }
+.ca-oggetti{ position:absolute; left:0; top:0; width:360px; height:640px; }
+.ca-ogg{ position:absolute; transform-origin:50% 100%; touch-action:none; -webkit-tap-highlight-color:transparent; }
+.ca-ogg img{ position:relative; z-index:1; width:100%; height:100%; display:block; transform-origin:50% 100%; pointer-events:none; -webkit-user-drag:none; }
+.ca-ogg::after{ content:""; position:absolute; left:4%; right:4%; bottom:-4%; height:12%; border-radius:50%; background:radial-gradient(closest-side, rgba(30,15,5,.38), rgba(30,15,5,0)); transition:transform .15s, opacity .15s; }
+.ca-ogg.tappeto::after, .ca-ogg.muro::after{ display:none; }
+.casa-vista.arreda .ca-ogg{ cursor:grab; }
+.ca-ogg.su{ transform:translateY(-9px) scale(1.07); z-index:900 !important; cursor:grabbing; }
+.ca-ogg.su::after{ transform:translateY(9px) scale(.85); opacity:.55; }
+.ca-ogg.su img{ filter:drop-shadow(0 8px 6px rgba(0,0,0,.28)); }
+.ca-ogg.cade{ animation:caCade .48s cubic-bezier(.2,.9,.3,1.25); }
+@keyframes caCade{ 0%{ transform:translateY(-9px) scale(1.07); } 40%{ transform:scale(1.07,.88); } 68%{ transform:scale(.97,1.05); } 100%{ transform:none; } }
+.ca-ogg.rimbalza{ animation:caRimbalza .42s ease; }
+@keyframes caRimbalza{ 30%{ transform:scale(1.06,.92); } 60%{ transform:scale(.97,1.05); } 100%{ transform:none; } }
+.ca-ogg.arriva{ animation:caArriva .42s cubic-bezier(.4,.1,.6,1); }
+@keyframes caArriva{ 0%{ transform:translateY(-180px); opacity:0; } 20%{ opacity:1; } 100%{ transform:none; } }
+.ca-ogg.via{ transition:transform .3s ease-in, opacity .3s; transform:translateY(60px) scale(.3); opacity:0; }
+.ca-ogg.scelto img{ filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #ffd43b); }
+.ca-sbuffo{ position:absolute; z-index:950; width:9px; height:9px; margin:-5px 0 0 -5px; border-radius:50%; background:rgba(240,230,210,.85); pointer-events:none; animation:caSbuffo .6s ease-out forwards; }
+@keyframes caSbuffo{ from{ transform:translate(0,0) scale(.6); opacity:.9; } to{ transform:translate(var(--dx,0), -12px) scale(2.1); opacity:0; } }
+/* l'avatar che gira per casa */
+.ca-av{ position:absolute; transform-origin:50% 100%; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:opacity .3s; }
+.ca-av img{ width:100%; height:100%; display:block; transform-origin:50% 100%; pointer-events:none; }
+.ca-av::after{ content:""; position:absolute; left:22%; right:22%; bottom:2%; height:7%; border-radius:50%; background:radial-gradient(closest-side, rgba(0,0,0,.35), rgba(0,0,0,0)); z-index:-1; }
+.ca-av.cammina img{ animation:caPasso .42s ease-in-out infinite; }
+@keyframes caPasso{ 50%{ transform:translateY(-3%) rotate(2deg); } }
+.ca-av.saluta img{ animation:caSalta .55s ease; }
+@keyframes caSalta{ 40%{ transform:translateY(-14%); } 70%{ transform:translateY(0) scale(1.04,.96); } }
+.casa-vista.arreda .ca-av{ opacity:0; pointer-events:none; }
+/* in alto: indietro, la stanza, le monete */
+.ca-testa{ position:absolute; z-index:20; left:10px; right:10px; top:calc(10px + env(safe-area-inset-top)); display:flex; align-items:center; gap:10px; pointer-events:none; }
+.ca-testa > *{ pointer-events:auto; }
+.ca-indietro{ flex:none; width:44px; height:44px; border-radius:50%; border:0; cursor:pointer; font:900 1.6rem/1 inherit; color:#3b2b22; background:#fffaf0; box-shadow:0 4px 12px rgba(0,0,0,.3); }
+.ca-titolo{ flex:0 1 auto; margin:0 auto; padding:7px 16px; border-radius:999px; text-align:center; font-weight:900; font-size:1rem; letter-spacing:.06em; color:#3b2b22; background:rgba(255,250,240,.92); box-shadow:0 4px 12px rgba(0,0,0,.25); pointer-events:none; }
+.ca-monete{ flex:none; padding:8px 12px; border-radius:999px; font-weight:900; font-size:.86rem; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#f2b324); box-shadow:0 4px 12px rgba(0,0,0,.3); }
+.ca-monete.pulsa{ animation:caPulsa .5s ease; }
+@keyframes caPulsa{ 40%{ transform:scale(1.15); } }
+/* in basso: le stanze e "Arreda" */
+.ca-giu{ position:absolute; z-index:20; left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); display:flex; gap:8px; align-items:stretch; max-width:540px; margin:0 auto; transition:transform .3s, opacity .3s; }
+.casa-vista.arreda .ca-giu{ transform:translateY(130%); opacity:0; pointer-events:none; }
+.ca-stanze{ flex:1; display:flex; gap:4px; padding:4px; border-radius:18px; background:rgba(255,250,240,.92); box-shadow:0 6px 18px rgba(0,0,0,.3); }
+.ca-tab{ flex:1; border:0; border-radius:14px; padding:10px 4px; font:800 .86rem inherit; color:#5a4636; background:transparent; cursor:pointer; }
+.ca-tab.on{ background:#3b2b22; color:#fff3d6; }
+.ca-arreda{ flex:none; border:0; border-radius:18px; padding:0 16px; font:900 .95rem inherit; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#f2b324); box-shadow:0 6px 18px rgba(0,0,0,.3); cursor:pointer; }
+/* il cassetto dell'Arreda */
+.ca-cassetto{ position:absolute; z-index:30; left:0; right:0; bottom:0; max-width:620px; margin:0 auto; padding:10px 10px calc(12px + env(safe-area-inset-bottom)); border-radius:22px 22px 0 0;
+  background:linear-gradient(180deg,#fffaf0,#f1e6d2); box-shadow:0 -10px 30px rgba(0,0,0,.35); transform:translateY(105%); transition:transform .32s cubic-bezier(.2,.9,.3,1), box-shadow .2s; }
+.ca-cassetto.su{ transform:none; }
+.ca-cassetto.bersaglio{ box-shadow:0 -10px 30px rgba(0,0,0,.35), inset 0 0 0 3px #f2b324; }
+.ca-cassetto.bersaglio::before{ content:"Lascialo qui: va nel baule 🧳"; position:absolute; left:50%; top:-34px; transform:translateX(-50%); white-space:nowrap; padding:6px 12px; border-radius:999px; background:#3b2b22; color:#fff3d6; font-weight:800; font-size:.8rem; }
+.ca-ctesta{ display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+.ca-ctabs{ flex:1; display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; }
+.ca-ctabs::-webkit-scrollbar{ display:none; }
+.ca-ctab{ flex:none; border:0; border-radius:999px; padding:8px 11px; font:800 .8rem inherit; color:#5a4636; background:rgba(59,43,34,.08); cursor:pointer; }
+.ca-ctab.on{ background:#3b2b22; color:#fff3d6; }
+.ca-ctab.pulsa{ animation:caPulsa .5s ease 2; }
+.ca-fatto{ flex:none; border:0; border-radius:999px; padding:9px 14px; font:900 .85rem inherit; color:#3a2200; background:linear-gradient(180deg,#ffe08a,#f2b324); cursor:pointer; }
+.ca-clista{ display:grid; grid-auto-flow:column; grid-auto-columns:92px; grid-template-rows:112px; gap:8px; overflow-x:auto; overscroll-behavior:contain; padding-bottom:4px; scrollbar-width:none; }
+.ca-clista::-webkit-scrollbar{ display:none; }
+.ca-pezzo{ position:relative; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:2px; padding:6px 4px; border:0; border-radius:14px; background:#fff; box-shadow:0 2px 6px rgba(59,43,34,.15), inset 0 0 0 1.5px rgba(59,43,34,.08); cursor:pointer; font-family:inherit; color:#3b2b22; }
+.ca-pezzo img{ width:76px; height:62px; object-fit:contain; pointer-events:none; }
+.ca-pezzo b{ font-size:.66rem; line-height:1.15; font-weight:800; text-align:center; }
+.ca-pezzo small{ font-size:.66rem; font-weight:900; color:#8a6a3a; }
+.ca-pezzo:active{ transform:scale(.95); }
+.ca-pezzo.bello{ box-shadow:0 2px 6px rgba(59,43,34,.15), inset 0 0 0 2px #f2b324; }
+.ca-pezzo.messo{ box-shadow:inset 0 0 0 3px #3b2b22; }
+.ca-pezzo.negozio small{ color:#b5651d; }
+.ca-vuoto{ width:260px; align-self:center; font-size:.85rem; font-weight:700; color:#8a6a3a; line-height:1.35; }
+/* i tasti sopra il mobile scelto */
+.ca-tool{ position:absolute; z-index:950; display:flex; gap:6px; transform:translate(-50%,-100%) scale(.6); opacity:0; pointer-events:none; transition:transform .18s cubic-bezier(.3,1.5,.5,1), opacity .15s; }
+.ca-tool.su{ transform:translate(-50%,-100%); opacity:1; pointer-events:auto; }
+.ca-tool button{ width:36px; height:36px; border:0; border-radius:50%; background:#fffaf0; box-shadow:0 3px 8px rgba(0,0,0,.35); font-size:1.05rem; cursor:pointer; }
+/* l'avviso corto */
+.ca-avviso{ position:absolute; z-index:40; left:50%; top:calc(66px + env(safe-area-inset-top)); transform:translateX(-50%); padding:8px 14px; border-radius:999px; background:rgba(59,43,34,.92); color:#fff3d6; font-weight:800; font-size:.85rem; white-space:nowrap; opacity:0; pointer-events:none; }
+.ca-avviso.su{ animation:caAvviso 2.2s ease; }
+@keyframes caAvviso{ 0%{ opacity:0; transform:translate(-50%,-6px); } 12%{ opacity:1; transform:translate(-50%,0); } 80%{ opacity:1; } 100%{ opacity:0; } }
