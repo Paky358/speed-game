@@ -1375,3 +1375,8 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .st-testa small{ flex:none; font-size:.7rem; color:var(--testo-tenue); }
 .st-riga{ display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:8px; font-size:.8rem; color:var(--testo-tenue); }
 .st-nota{ margin-top:14px; font-size:.75rem; }
+.st-fuoco{ display:flex; align-items:center; gap:10px; margin:4px 0 8px; padding:10px 12px; border-radius:14px; background:linear-gradient(90deg,rgba(255,146,43,.22),rgba(255,212,59,.08)); box-shadow:inset 0 0 0 1px rgba(255,169,77,.35); }
+.st-fuoco-ico{ font-size:1.6rem; }
+.st-fuoco-testo{ display:flex; flex-direction:column; gap:2px; }
+.st-fuoco-testo b{ font-size:1rem; color:#ffd8a8; }
+.st-fuoco-testo small{ font-size:.74rem; color:var(--testo-tenue); }

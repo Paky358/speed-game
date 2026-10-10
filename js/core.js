@@ -602,6 +602,7 @@
   }
   var scrollCitta = 0;   // fin dove avevi scorso la città: uscendo da un edificio si torna lì (dalla home si riparte dall'alto)
   function schermataCitta() {
+    controllaGiorno();   // (se l'app è rimasta aperta da ieri)
     var io = profiloAttivo(), N = window.SGNube, fase = SGCitta.fase(new Date()), via = false;
     var cloud = !!(N && N.profilo && N.profilo()), prog = window.SGLivelli && cloud && N.progressione ? N.progressione() : null;
     var mappa = el("div", { class: "citta-mappa", html: SGCitta.svg({ fase: fase, io: io && io.omino, sopra: 80 }) });
@@ -609,7 +610,7 @@
     var testoIo = el("span", { class: "citta-io-testo" }, [ el("b", { text: io ? io.nome : "Entra" }) ]);
     if (prog) {
       var serve = SGLivelli.xpPerSalire(prog.level), pct = Math.max(3, Math.min(100, Math.floor(prog.xp * 100 / serve)));
-      testoIo.appendChild(el("small", { text: (prog.prestige ? "★" + prog.prestige + " · " : "") + "Livello " + prog.level }));
+      testoIo.appendChild(el("small", { text: (prog.prestige ? "★" + prog.prestige + " · " : "") + "Livello " + prog.level + fuocoGiorni() }));
       testoIo.appendChild(el("i", { class: "citta-xp" }, [ el("i", { style: "width:" + pct + "%" }) ]));
     } else testoIo.appendChild(el("small", { text: io ? "Il tuo profilo" : "Crea il tuo profilo" }));
     var faccia = el("span", { class: "citta-faccia" });
@@ -634,7 +635,7 @@
     function aggTesta() {
       var p = N.progressione(); monete.textContent = cifre(p.coins);
       var sm = testoIo.querySelector("small"), bar = testoIo.querySelector(".citta-xp > i");
-      if (sm) sm.textContent = (p.prestige ? "★" + p.prestige + " · " : "") + "Livello " + p.level;
+      if (sm) sm.textContent = (p.prestige ? "★" + p.prestige + " · " : "") + "Livello " + p.level + fuocoGiorni();
       if (bar) bar.style.width = Math.max(3, Math.min(100, Math.floor(p.xp * 100 / SGLivelli.xpPerSalire(p.level)))) + "%";
       aggRegalo();
     }
@@ -1901,6 +1902,17 @@
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "‹ Indietro", onclick: function () { schermataAmici(torna); } }));
     mostra(s);
   }
+  // ---- 🔥 i giorni di fila: entrando col profilo si conta il giorno; al 7°, al 30° e ogni 100 giorni c'è il premio (nube.js) ----
+  function prossimoPremioGiorni(n) { var m = n < 7 ? 7 : n < 30 ? 30 : (Math.floor(n / 100) + 1) * 100; return { giorno: m, monete: SGNube.premioGiorni(m) }; }
+  function fuocoGiorni() { var p = window.SGNube && SGNube.profilo && SGNube.profilo(); return p && p.giorniFila >= 2 ? " · 🔥 " + p.giorniFila : ""; }
+  function controllaGiorno() {
+    if (!(window.SGNube && SGNube.segnaGiorno && SGNube.profilo && SGNube.profilo())) return;
+    var r = SGNube.segnaGiorno(); if (!r || (r.n < 2 && !r.premio)) return;   // il primo giorno non si festeggia
+    var pp = prossimoPremioGiorni(r.n), manca = pp.giorno - r.n;
+    codaTrofei.push({ tipo: "xp", cls: r.premio ? "tl-oro" : "tl-xp", icona: "🔥", su: r.premio ? "PREMIO GIORNI DI FILA!" : "Bentornato!", nome: r.n + " giorni di fila!",
+      sotto: r.premio ? "+" + cifre(r.premio) + " Speed Coins 🪙" : "Ancora " + manca + (manca === 1 ? " giorno" : " giorni") + " per il premio di " + cifre(pp.monete) + " 🪙" });
+    prossimoAvviso();
+  }
   function prossimoAvviso() {
     if (avvisoAttivo || !codaTrofei.length) return;
     avvisoAttivo = true;
@@ -1949,6 +1961,7 @@
       SGNube[nome] = function () { var r = orig.apply(SGNube, arguments); controllaTrofei(); return r; };
     });
     SGNube.onCambio(controllaTrofei);
+    SGNube.onCambio(function () { setTimeout(controllaGiorno, 0); });   // i giorni di fila: appena c'è il profilo (e se l'app resta aperta dopo mezzanotte)
   }
 
   // ---- Proposte e segnalazioni ----
@@ -2596,6 +2609,14 @@
     function cella(valore, nome, cls) { return el("div", { class: "st-cella" + (cls ? " " + cls : "") }, [ el("b", { text: "" + valore }), el("small", { text: nome }) ]); }
     // in alto i totali
     s._contenuto.appendChild(el("div", { class: "st-griglia st-totali" }, [ cella(tempoGiocato(tot.t), "Tempo giocato"), cella(cifre(tot.p), "Partite"), cella(percVittorie(tot), "Vittorie") ]));
+    var gf = p.giorniFila || 0, gm = p.giorniFilaMax || gf;   // 🔥 i giorni di fila in cui sei entrato
+    if (gf) {
+      var pp = prossimoPremioGiorni(gf);
+      s._contenuto.appendChild(el("div", { class: "st-fuoco" }, [
+        el("span", { class: "st-fuoco-ico", text: "🔥" }),
+        el("span", { class: "st-fuoco-testo" }, [ el("b", { text: gf + (gf === 1 ? " giorno di fila" : " giorni di fila") }), el("small", { text: "Record: " + gm + " · prossimo premio a " + pp.giorno + " giorni: " + cifre(pp.monete) + " 🪙" }) ])
+      ]));
+    }
     var lista = giochi.filter(function (g) { return gi[g.id] && gi[g.id].p; }).sort(function (a, b) { return (gi[b.id].t || 0) - (gi[a.id].t || 0) || gi[b.id].p - gi[a.id].p; });
     if (lista.length) s._contenuto.appendChild(el("p", { class: "modulo-nota", html: "Il tuo gioco preferito: <b>" + lista[0].icona + " " + lista[0].nome + "</b> (" + tempoGiocato(gi[lista[0].id].t) + ")" }));
     // un riquadro per ogni gioco giocato, dal più giocato

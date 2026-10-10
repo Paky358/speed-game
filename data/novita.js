@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 176,
+    data: "10 ottobre 2026",
+    titolo: "Giorni di fila 🔥",
+    descrizione: [
+      "Ogni giorno in cui entri nell'app col tuo profilo conta: se entri anche domani sono 2 giorni di fila, poi 3… Se salti un giorno si riparte da 1.",
+      "Premi: a 7 giorni di fila 500 Speed Coins, a 30 giorni 2.000 e ogni 100 giorni 5.000.",
+      "I giorni di fila si vedono nella città accanto al livello (🔥) e nelle tue statistiche, col tuo record."
+    ]
+  },
+  {
     v: 175,
     data: "10 ottobre 2026",
     titolo: "Le tue statistiche 📊",

@@ -192,6 +192,22 @@
 
     // ---- liste personali (es. le parole di Parola d'ordine): un campo del profilo, salvato così com'è ----
     lista: function (nome) { return (profilo && profilo.liste && profilo.liste[nome]) || []; },
+    // ---- 🔥 i giorni di fila in cui entri nell'app col profilo (il giorno cambia a mezzanotte, come la ruota).
+    //      Premi: 7 giorni 500, 30 giorni 2.000, ogni 100 giorni 5.000 Speed Coins. Saltando un giorno si riparte da 1.
+    //      segnaGiorno() conta oggi (una volta sola) e dice { n, premio, max } oppure null se oggi era già contato ----
+    premioGiorni: function (n) { return n === 7 ? 500 : n === 30 ? 2000 : (n > 0 && n % 100 === 0) ? 5000 : 0; },
+    segnaGiorno: function () {
+      if (!auth || !utente || !profilo) return null;
+      var oggi = giornoDi(Date.now()); if (profilo.giornoUltimo === oggi) return null;
+      var d = new Date(); d.setDate(d.getDate() - 1);
+      var n = profilo.giornoUltimo === giornoDi(d.getTime()) ? (profilo.giorniFila || 0) + 1 : 1, premio = SGNube.premioGiorni(n);
+      var patch = { giornoUltimo: oggi, giorniFila: n };
+      profilo.giornoUltimo = oggi; profilo.giorniFila = n;
+      if (n > (profilo.giorniFilaMax || 0)) { patch.giorniFilaMax = n; profilo.giorniFilaMax = n; }
+      if (premio) { patch.coins = firebase.firestore.FieldValue.increment(premio); profilo.coins = monete() + premio; if (visto != null) visto += premio; }
+      db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
+      return { n: n, premio: premio, max: profilo.giorniFilaMax || n };
+    },
     // ---- le statistiche di ogni gioco (le scrive core.js a fine partita, per tutti i giochi):
     //      giocato.<gioco> = { p: partite, v: vinte, s: perse, t: secondi giocati, serie, serieMax, u: l'ultima volta }
     //      esito: "vinta", "persa" oppure null (partita sullo stesso telefono senza il tuo nome in classifica) ----
