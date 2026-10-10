@@ -1404,6 +1404,27 @@
     { gioco: "sipero", livello: "diamante", icona: "💎", nome: "Venti Serate Online",  desc: "Concludi 20 partite online",                               stat: "partiteOnline",    meta: 20 },
     { gioco: "sipero", livello: "diamante", icona: "🎓", nome: "Giudice di Fiducia",   desc: "Fai da giudice in 50 round",                                stat: "roundGiudice",     meta: 50 },
     { gioco: "sipero", livello: "diamante", icona: "🔥", nome: "Il Verdetto è Tuo",    desc: "Vinci 5 partite di fila",                                   stat: "serieVittorieMax", meta: 5 },
+
+    // ---- PAROLA D'ORDINE ----
+    { gioco: "ordine", livello: "bronzo",   icona: "🕵️", nome: "Prima Parola",          desc: "Concludi la tua prima partita online",                   stat: "partite",      meta: 1 },
+    { gioco: "ordine", livello: "bronzo",   icona: "👑", nome: "Capo per un Giro",      desc: "Dai il tuo primo indizio valido alla squadra",          stat: "indizi",       meta: 1 },
+    { gioco: "ordine", livello: "bronzo",   icona: "🔎", nome: "Occhio di Squadra",     desc: "Gira 3 parole della tua squadra",                      stat: "paroleGiuste", meta: 3 },
+    { gioco: "ordine", livello: "bronzo",   icona: "🗣️", nome: "Voce al Tabellone",     desc: "Dai 5 indizi validi nel corso delle partite",          stat: "indizi",       meta: 5 },
+    { gioco: "ordine", livello: "bronzo",   icona: "🏅", nome: "Prima Vittoria",        desc: "Vinci una partita con la tua squadra",                stat: "vittorie",     meta: 1 },
+    { gioco: "ordine", livello: "bronzo",   icona: "⭐", nome: "Parola d'Oro",          desc: "Gira la casella speciale della parola d'oro",          stat: "paroleOro",    meta: 1 },
+    { gioco: "ordine", livello: "argento",  icona: "📱", nome: "Serata in Rete",        desc: "Concludi 10 partite online",                           stat: "partiteOnline", meta: 10 },
+    { gioco: "ordine", livello: "argento",  icona: "🧩", nome: "Intesa Crescente",      desc: "Gira 25 parole della tua squadra",                    stat: "paroleGiuste", meta: 25 },
+    { gioco: "ordine", livello: "argento",  icona: "🎙️", nome: "Indiziere Affidabile", desc: "Dai 15 indizi validi",                                stat: "indizi",       meta: 15 },
+    { gioco: "ordine", livello: "argento",  icona: "🥇", nome: "Cinque Trionfi",        desc: "Vinci 5 partite con la tua squadra",                  stat: "vittorie",     meta: 5 },
+    { gioco: "ordine", livello: "argento",  icona: "🧢", nome: "Capitano Vincente",     desc: "Vinci 3 partite mentre sei il capo della squadra",    stat: "vittorieCapo", meta: 3 },
+    { gioco: "ordine", livello: "oro",      icona: "🗓️", nome: "Amico del Tabellone",  desc: "Concludi 25 partite online",                           stat: "partiteOnline", meta: 25 },
+    { gioco: "ordine", livello: "oro",      icona: "🧠", nome: "Mente in Sintonia",     desc: "Gira 100 parole della tua squadra",                   stat: "paroleGiuste", meta: 100 },
+    { gioco: "ordine", livello: "oro",      icona: "📣", nome: "Voce Esperta",          desc: "Dai 50 indizi validi",                                stat: "indizi",       meta: 50 },
+    { gioco: "ordine", livello: "oro",      icona: "🏆", nome: "Squadra Vincente",      desc: "Vinci 15 partite con la tua squadra",                 stat: "vittorie",     meta: 15 },
+    { gioco: "ordine", livello: "oro",      icona: "👑", nome: "Capo che Trascina",    desc: "Vinci 10 partite mentre sei il capo della squadra",    stat: "vittorieCapo", meta: 10 },
+    { gioco: "ordine", livello: "diamante", icona: "💎", nome: "Leggenda di Squadra",   desc: "Gira 200 parole della tua squadra",                   stat: "paroleGiuste", meta: 200 },
+    { gioco: "ordine", livello: "diamante", icona: "🎖️", nome: "Capitano Leggendario", desc: "Vinci 20 partite da capo della squadra",              stat: "vittorieCapo", meta: 20 },
+    { gioco: "ordine", livello: "diamante", icona: "🌟", nome: "Re del Tabellone",      desc: "Vinci 35 partite con la tua squadra",                 stat: "vittorie",     meta: 35 },
   ];
 
   function valoreStat(prof, gioco, chiave) {
