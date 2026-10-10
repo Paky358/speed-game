@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 178,
+    data: "10 ottobre 2026",
+    titolo: "In casa l'avatar cammina davvero 🚶",
+    descrizione: [
+      "Quando l'avatar attraversa la casa alza i piedi a turno e dondola le braccia.",
+      "Tieni premuto su un mobile: si apre «Arreda» e lo sposti subito col dito, senza passare dal tasto."
+    ]
+  },
+  {
     v: 177,
     data: "10 ottobre 2026",
     titolo: "Trofei per tipo e città più comoda 🏆",

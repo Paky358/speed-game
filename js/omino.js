@@ -525,7 +525,7 @@
         });
       }
       // scarpe: suola, punta rinforzata, lacci incrociati
-      [97 - lw / 2, 103 + lw / 2].forEach(function (cx) {
+      [97 - lw / 2, 103 + lw / 2].forEach(function (cx, ip) { o.push("<g class='om-piede om-p" + (ip + 1) + "'>"); (function () {   // ogni piede nel suo gruppo: camminando si alza
         var rx = lw / 2 + 5, lacci = rgb(S)[0] > 200 && rgb(S)[1] > 200 ? "#9a9aa6" : "#e6e6ee", mod = c.modScarpe;
         if (mod === "anfibi") { o.push(   // anfibi: alti, lacci incrociati, suola grossa a carrarmato
           "<rect x='" + (cx - lw / 2 - 1.8) + "' y='226' width='" + (lw + 3.6) + "' height='22' rx='3.5' fill='" + u("s") + "' stroke='" + tono(S, -0.55) + "' stroke-width='1'/>",
@@ -606,7 +606,7 @@
           "<path d='M" + (cx - rx + 2) + ",248.5 Q" + cx + ",252.5 " + (cx + rx - 2) + ",248.5' stroke='" + tono(S, 0.4) + "' stroke-width='.8' stroke-dasharray='1.6 1.4' opacity='.7' fill='none'/>",
           "<ellipse cx='" + (cx - 4) + "' cy='243.5' rx='5' ry='2.2' fill='" + u("lu") + "'/>",
           "<path d='M" + (cx - 3) + ",241 L" + (cx + 3) + ",244.2 M" + (cx + 3) + ",241 L" + (cx - 3) + ",244.2 M" + (cx - 2.5) + ",245.5 L" + (cx + 2.5) + ",245.5' stroke='" + lacci + "' stroke-width='1' opacity='.85' stroke-linecap='round'/>");
-      });
+      })(); o.push("</g>"); });
       if (gonnaPezzo) o.push.apply(o, gonnaPezzo);
       // cappotto e grembiule scendono sopra le gambe (disegnati dopo le scarpe)
       if (c.capo === "cappotto") o.push("<path d='M" + x(-he - 0.5) + "," + (Y - 4) + " L" + x(-he - 6) + "," + (Y + 30) + " Q100," + (Y + 35) + " " + x(he + 6) + "," + (Y + 30) + " L" + x(he + 0.5) + "," + (Y - 4) + " Z' fill='" + u("m") + "' stroke='" + bM + "' stroke-width='1.8' stroke-linejoin='round'/>",
@@ -1684,7 +1684,19 @@
     // busto (tondini): inquadratura che segue la grandezza della testa, così la faccia resta grande
     var vb = opts.busto ? [100 - 89 * kT, 150 - 156 * kT, 178 * kT, 182 * kT].map(function (n) { return n.toFixed(1); }).join(" ") : (opts.gambe ? "40 150 120 112" : (opts.viso ? "60 74 80 80" : "0 0 200 264"));   // gambe: inquadratura sui pantaloni; viso: primo piano (per il trucco)
     var px = opts.px ? " width='" + opts.px + "' height='" + Math.round(opts.px * (opts.busto ? 182 / 178 : 1.32)) + "'" : "";
-    return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='" + vb + "'" + px + " class='omino'>" + o.join("") + bracciaSopra.join("") + "</svg>";
+    // cammina: dentro il disegno i piedi si alzano a turno e le braccia dondolano (dalla spalla), ad ogni passo
+    var passo = "";
+    if (opts.cammina && !opts.busto) {
+      var sp = (sh - 6).toFixed(1);
+      passo = "<style>" +
+        ".om-b1{transform-origin:" + (100 - sp) + "px 166px;animation:omBr .42s ease-in-out infinite alternate}" +
+        ".om-b2{transform-origin:" + (100 + +sp) + "px 166px;animation:omBr .42s ease-in-out infinite alternate-reverse}" +
+        "@keyframes omBr{from{transform:rotate(-11deg)}to{transform:rotate(11deg)}}" +
+        ".om-p1,.om-p2{animation:omPi .84s ease-in-out infinite}.om-p2{animation-delay:-.42s}" +
+        "@keyframes omPi{0%,50%,100%{transform:translateY(0)}20%{transform:translateY(-6px)}}" +
+        "</style>";
+    }
+    return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='" + vb + "'" + px + " class='omino'>" + passo + o.join("") + bracciaSopra.join("") + "</svg>";
   }
 
   function el(cfg, opts) { var s = document.createElement("span"); s.className = "omino-box"; s.innerHTML = svg(cfg, opts); return s; }

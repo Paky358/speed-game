@@ -1395,3 +1395,8 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 .sg-liv.pieno.tl-diamante{ border-color:rgba(92,199,236,.8); }
 .sg-liv.tl-platino{ border-color:rgba(190,160,255,.8); color:#e5dbff; }
 .sm-gioco{ margin-bottom:6px; }
+/* l'avatar di casa: fermo, oppure il disegno che fa i passi mentre cammina (si scambiano con l'opacità, senza lampi) */
+.ca-av .ca-av-passo{ position:absolute; left:0; top:0; opacity:0; }
+.ca-av.cammina .ca-av-passo{ opacity:1; }
+.ca-av.cammina .ca-av-fermo{ opacity:0; }
+.ca-av.sdraiato .ca-av-passo, .ca-av.seduto .ca-av-passo{ display:none; }

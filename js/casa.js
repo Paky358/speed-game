@@ -982,6 +982,9 @@
     if (opts.avatar && window.SGOmino) {
       av = el("div", "ca-av"); var avImg = el("img"); avImg.alt = ""; avImg.draggable = false;
       imgAv = datauri(SGOmino.svg(opts.avatar, {})); avImg.src = imgAv; av.appendChild(avImg); av._img = avImg; av.appendChild(el("b"));
+      var avPasso = el("img", "ca-av-passo"); avPasso.alt = ""; avPasso.draggable = false;   // lo stesso avatar che fa i passi (piedi e braccia): si vede mentre cammina
+      try { avPasso.src = datauri(SGOmino.svg(opts.avatar, { cammina: true })); av.insertBefore(avPasso, avImg.nextSibling); } catch (e) {}
+      avImg.className = "ca-av-fermo";
       av.addEventListener("pointerdown", function () { if (!arreda) toccoAv = true; });   // il tocco vero lo decide su(): se il dito non si è mosso
     }
     function toccaAvatar() {
@@ -1263,17 +1266,26 @@
       cancelAnimationFrame(inerzia);
       gesto = { id: e.pointerId, x0: e.clientX, y0: e.clientY, tx0: tx, mosso: false, d: d, av: a, p: puntoPalco(e), ux: e.clientX, ut: performance.now(), v: 0 };
       try { palco.setPointerCapture(e.pointerId); } catch (er) {}
+      if (d && !arreda) { var g0 = gesto; g0.lungo = setTimeout(function () { tienePremuto(g0); }, 450); }   // tenuto premuto su un mobile: si apre l'Arreda e lo prendi
+    }
+    function tienePremuto(g0) {
+      if (gesto !== g0 || g0.mosso || !nodi[g0.d.u]) return;
+      gesto = null; var d = g0.d, p = g0.p, gg = geo(d), n = nodi[d.u];
+      entraArreda();
+      drag = { d: d, id: g0.id, sx: p.x, sy: p.y, ox: p.x - gg.ax, oy: p.y - gg.ay, mosso: false, vx: 0, ult: p, figli: figliDi(d).map(function (f) { return { f: f, dx: f.x - d.x }; }), su0: d.su };
+      seleziona(d); n.classList.remove("rimbalza"); void n.offsetWidth; n.classList.add("rimbalza"); suono("su");
+      try { if (navigator.vibrate) navigator.vibrate(15); } catch (er) {}
     }
     function trascina(e) {
       if (!gesto || e.pointerId !== gesto.id) return;
       var dx = e.clientX - gesto.x0, dy = e.clientY - gesto.y0, t = performance.now();
-      if (!gesto.mosso) { if (Math.abs(dx) + Math.abs(dy) < 9) return; gesto.mosso = true; }
+      if (!gesto.mosso) { if (Math.abs(dx) + Math.abs(dy) < 9) return; gesto.mosso = true; clearTimeout(gesto.lungo); }
       gesto.v = 0.6 * gesto.v + 0.4 * (e.clientX - gesto.ux) / Math.max(1, t - gesto.ut); gesto.ux = e.clientX; gesto.ut = t;
       tx = gesto.tx0 + dx / zoomScena(); applica();
     }
     function su(e) {
       if (!gesto || e.pointerId !== gesto.id) return;
-      var g = gesto; gesto = null;
+      var g = gesto; gesto = null; clearTimeout(g.lungo);
       if (e.type === "pointercancel") return;
       if (g.mosso) { if (performance.now() - g.ut < 80) lancia(g.v); return; }
       if (arreda) { deseleziona(); return; }
