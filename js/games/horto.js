@@ -41,6 +41,23 @@
     return window.SGOmino ? SGOmino.casuale(nome || "io") : null;
   }
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  var GARE_SALVATE = [];
+  function idGara() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
+  function salvaTrofeiHorto(t, gara, ord, io) {
+    if (!gara || !gara.id || !ord || io == null || io < 0 || io >= ord.length || t.guarda || t.prova ||
+        (t.linkParams && t.linkParams.prova) || (t.impostazioni && t.impostazioni.prova)) return;
+    if (GARE_SALVATE.indexOf(gara.id) >= 0) return;
+    GARE_SALVATE.push(gara.id); if (GARE_SALVATE.length > 32) GARE_SALVATE.shift();
+    if (!(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo())) return;
+    var posizione = ord.indexOf(io) + 1, vinta = posizione === 1, online = !!gara.online, n = gara.n || ord.length, diff = gara.diff || "medio";
+    var vittoriaValida = vinta && (diff !== "facile" || (online && gara.umani > 1));
+    var c = { partite: 1, podi: posizione <= 3 && n >= 4 && (diff !== "facile" || (online && gara.umani > 1)) ? 1 : 0,
+      vittorie: vittoriaValida ? 1 : 0, vinteOnline: online && gara.umani > 1 && vinta ? 1 : 0,
+      vinteMedio: vinta && diff === "medio" ? 1 : 0, vinteDifficile: vinta && diff === "difficile" ? 1 : 0,
+      vinte4: vittoriaValida && n >= 4 ? 1 : 0, vinte8NonFacile: vittoriaValida && n >= 8 && diff !== "facile" ? 1 : 0 };
+    var incr = []; for (var k in c) if (c[k]) incr.push([k, c[k]]);
+    SGNube.salvaProgressi(null, "horto", incr, []);
+  }
   function facciaDi(nome, cfg) {
     if (avatarValido(cfg)) return cfg;
     if (nome === "Bot") return MATT;
@@ -596,7 +613,7 @@
     var bp = botParam(diff), nomi = [(t.giocatori && t.giocatori[0]) || "Tu"], cav = [nuovoCav(true, "io")];
     for (var i = 1; i < N; i++) { cav.push(nuovoCav(false)); nomi.push(nomeBot(i)); }
     var av = avatariPer(nomi, [mioAvatar(nomi[0])]);
-    var fase = "via", conto = 3, raf = null, toC = null, ultimo = 0, primoArr = 0, finito = false, arrivi = [], foto = null;
+    var fase = "via", conto = 3, raf = null, toC = null, ultimo = 0, primoArr = 0, finito = false, arrivi = [], foto = null, garaId = idGara();
     var ref = costruisci(t, N, nomi, 0, {
       onFrusta: function () { if (fase === "corsa" && frusta(cav[0], performance.now())) frustaFX(); },
       onEsci: function () { stop(); t.esci(); }
@@ -616,6 +633,7 @@
     function fine() {
       stop();
       var ord = classificaDa(cav, arrivi);
+      salvaTrofeiHorto(t, { id: garaId, n: N, diff: diff, online: false, umani: 1 }, ord, 0);
       finale(t, ord, nomi, 0, foto, { locale: true, onRigioca: function () { corsa(t, nRivali, diff); }, onEsci: t.esci });
     }
     disegna(ref, snap(cav, "via", 3, nomi));
@@ -637,7 +655,7 @@
     var bp = botParam(diff), codice = "…", pronta = false;
     var posti = {}, nomiU = {}, ominiU = {};   // ominiU = avatar di chi entra (posto -> cfg)
     for (var _s = 1; _s < N; _s++) { posti[_s] = null; nomiU[_s] = null; }
-    var cav = null, nomi = null, ref = null, fase = "lobby", conto = 3, loop = null, toC = null, ultimo = 0, primoArr = 0, arrivi = [], ord = null, foto = null, rete = null;
+    var cav = null, nomi = null, ref = null, fase = "lobby", conto = 3, loop = null, toC = null, ultimo = 0, primoArr = 0, arrivi = [], ord = null, foto = null, rete = null, garaId = null, umaniGara = 1;
 
     function seatDi(id) { for (var s = 1; s < N; s++) if (posti[s] === id) return s; return -1; }
     function postoLibero() { for (var s = 1; s < N; s++) if (!posti[s]) return s; return 0; }
@@ -684,14 +702,15 @@
     });
 
     function inizia() {
-      fase = "via"; conto = 3; arrivi = []; primoArr = 0; ord = null; foto = null;
+      fase = "via"; conto = 3; arrivi = []; primoArr = 0; ord = null; foto = null; garaId = idGara();
       nomi = [(t.giocatori && t.giocatori[0]) || "Host"]; cav = [nuovoCav(true, "host")]; var cfgs = [mioAvatar(nomi[0])];
       for (var s = 1; s < N; s++) {
         if (posti[s]) { cav.push(nuovoCav(true, posti[s])); nomi.push(nomiU[s] || ("Amico " + s)); cfgs[s] = ominiU[s]; rete.invia({ t: "seat", to: posti[s], seat: s }); }
         else { cav.push(nuovoCav(false)); nomi.push(nomeBot(s)); }
       }
+      umaniGara = 1 + quanti();
       var av = avatariPer(nomi, cfgs);
-      rete.invia({ t: "via", nomi: nomi, n: N, av: av });   // ogni telefono costruisce la corsa e fa il proprio countdown
+      rete.invia({ t: "via", nomi: nomi, n: N, av: av, garaId: garaId, diff: diff, umani: umaniGara });   // ogni telefono costruisce la corsa e fa il proprio countdown
       ref = costruisci(t, N, nomi, 0, {
         onFrusta: function () { if (fase === "corsa" && frusta(cav[0], performance.now())) frustaFX(); },
         onEsci: function () { chiudi(); t.esci(); }
@@ -715,9 +734,10 @@
     function bcast() { var sn = snap(cav, fase, Math.max(0, conto), nomi); if (nTick++ % 4 === 0 || fase !== "corsa") rete.inviaVeloce(sn); if (ref) disegna(ref, sn); }
     function fineCorsa() {
       fase = "fine"; ord = classificaDa(cav, arrivi);
+      salvaTrofeiHorto(t, { id: garaId, n: N, diff: diff, online: true, umani: umaniGara }, ord, 0);
       if (t.risultato) t.risultato(ord.map(function (s) { return { nome: nomi[s] }; }));   // per il torneo online
       if (!foto) foto = cav.map(function (h) { return Math.min(1, h.pos); });
-      rete.invia({ t: "fine", ord: ord, nomi: nomi, foto: foto });
+      rete.invia({ t: "fine", ord: ord, nomi: nomi, foto: foto, garaId: garaId, diff: diff, n: N, umani: umaniGara });
       if (ref) { ref.rimuovi(); ref = null; }
       finale(t, ord, nomi, 0, foto, { sonoHost: true, onRigioca: function () { inizia(); }, onEsci: function () { chiudi(); t.esci(); } });
     }
@@ -743,7 +763,7 @@
 
   function ospiteHorto(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var el = t.el, S = { rete: null, myId: null, nome: "", mySeat: 0, ref: null, fase: null, nomi: null, N: 0, msg: null,
+    var el = t.el, S = { rete: null, myId: null, nome: "", mySeat: 0, ref: null, fase: null, nomi: null, N: 0, msg: null, garaId: null, diff: "medio", umani: 1,
       buf: [], raf: null, lastP: [], delayMs: 120 };   // buffer per interpolare le posizioni (movimento liscio)
     schermaNome();
 
@@ -802,7 +822,7 @@
             if (!S.ref) mostraLobby(m);   // l'ospite vede la stanza come l'host
           }
           else if (m.t === "via") {       // parte la corsa: costruisci e fai il countdown LOCALE (come l'host)
-            S.nomi = m.nomi; S.N = m.n || (m.nomi ? m.nomi.length : 4); S.av = m.av || null;
+            S.nomi = m.nomi; S.N = m.n || (m.nomi ? m.nomi.length : 4); S.av = m.av || null; S.garaId = m.garaId; S.diff = m.diff || "medio"; S.umani = m.umani || 1;
             fermaGiro(); S.buf = []; S.lastP = [];   // corsa nuova (anche rivincita): riparto pulito
             build({ nomi: S.nomi, N: S.N }); S.fase = "via"; contoOspite();
           }
@@ -818,6 +838,7 @@
             if (S.contoTimer) { clearInterval(S.contoTimer); S.contoTimer = null; }
             fermaGiro(); S.buf = [];
             if (S.ref) { S.ref.rimuovi(); S.ref = null; } S.fase = "fine";
+            salvaTrofeiHorto(t, { id: m.garaId || S.garaId, n: m.n || S.N, diff: m.diff || S.diff, online: true, umani: m.umani || S.umani }, m.ord, S.mySeat);
             finale(t, m.ord, m.nomi, S.mySeat, m.foto, { sonoHost: false, onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
           }
         },

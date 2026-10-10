@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 179,
+    data: "10 ottobre 2026",
+    titolo: "Trofei per Horto Muso e Scarabocchio 🏇🎨",
+    descrizione: [
+      "Horto Muso: 20 trofei, dalle prime corse ai podi, fino alle vittorie contro i bot più bravi e alle sfide online.",
+      "Scarabocchio: 20 trofei per chi disegna e per chi indovina: parole indovinate al volo, disegni capiti da tanti, parole difficili, vittorie con la stanza piena.",
+      "Contano le partite giocate col profilo da adesso in poi, una volta sola per partita."
+    ]
+  },
+  {
     v: 178,
     data: "10 ottobre 2026",
     titolo: "In casa l'avatar cammina davvero 🚶",

@@ -1470,6 +1470,28 @@
     { gioco: "ordine", livello: "diamante", icona: "💎", nome: "Leggenda di Squadra",   desc: "Gira 150 parole della tua squadra",                   stat: "paroleGiuste", meta: 150 },
     { gioco: "ordine", livello: "diamante", icona: "🎖️", nome: "Capitano Leggendario", desc: "Vinci 12 partite da capo della squadra",              stat: "vittorieCapo", meta: 12 },
     { gioco: "ordine", livello: "diamante", icona: "🌟", nome: "Re del Tabellone",      desc: "Vinci 25 partite con la tua squadra",                 stat: "vittorie",     meta: 25 },
+
+    // ---- Horto Muso ----
+    { gioco: "horto", livello: "bronzo",   icona: "🏇", nome: "Ai Cancelletti",       desc: "Concludi la tua prima corsa",                                      stat: "partite",         meta: 1 },
+    { gioco: "horto", livello: "bronzo",   icona: "🐎", nome: "Cinque Corse",          desc: "Concludi 5 corse",                                                stat: "partite",         meta: 5 },
+    { gioco: "horto", livello: "bronzo",   icona: "🥉", nome: "Sul Podio",              desc: "Arriva tra i primi 3 in una corsa con almeno 4 cavalli, equilibrata o online", stat: "podi", meta: 1 },
+    { gioco: "horto", livello: "bronzo",   icona: "🏁", nome: "Primo al Traguardo",    desc: "Vinci una corsa a difficoltà Media o Difficile, o online contro una persona", stat: "vittorie", meta: 1 },
+    { gioco: "horto", livello: "bronzo",   icona: "🎖️", nome: "Tre Medaglie",          desc: "Arriva tra i primi 3 in 5 corse con almeno 4 cavalli, equilibrate o online", stat: "podi", meta: 5 },
+    { gioco: "horto", livello: "bronzo",   icona: "⚡", nome: "Quattro in Pista",      desc: "Vinci una corsa con almeno 4 cavalli, senza scegliere Facile",   stat: "vinte4",           meta: 1 },
+    { gioco: "horto", livello: "argento",  icona: "📅", nome: "Quindici Partenze",     desc: "Concludi 15 corse",                                               stat: "partite",         meta: 15 },
+    { gioco: "horto", livello: "argento",  icona: "🥈", nome: "Podio Abituale",        desc: "Arriva tra i primi 3 in 15 corse con almeno 4 cavalli, equilibrate o online", stat: "podi", meta: 15 },
+    { gioco: "horto", livello: "argento",  icona: "🏆", nome: "Cinque Vittorie",       desc: "Vinci 5 corse equilibrate o online",                            stat: "vittorie",        meta: 5 },
+    { gioco: "horto", livello: "argento",  icona: "🧠", nome: "Bot di Buon Passo",     desc: "Batti i bot a difficoltà Media",                                stat: "vinteMedio",      meta: 1 },
+    { gioco: "horto", livello: "argento",  icona: "🌐", nome: "Sfida in Compagnia",   desc: "Vinci una corsa online contro almeno una persona",               stat: "vinteOnline",     meta: 1 },
+    { gioco: "horto", livello: "argento",  icona: "🐴", nome: "Otto al Via",           desc: "Vinci con 8 cavalli in gara, senza scegliere Facile",            stat: "vinte8NonFacile", meta: 1 },
+    { gioco: "horto", livello: "oro",      icona: "🏟️", nome: "Stagione Completa",     desc: "Concludi 30 corse",                                               stat: "partite",         meta: 30 },
+    { gioco: "horto", livello: "oro",      icona: "🥇", nome: "Quindici Traguardi",    desc: "Vinci 15 corse equilibrate o online",                           stat: "vittorie",        meta: 15 },
+    { gioco: "horto", livello: "oro",      icona: "⚖️", nome: "Regolarità da Campione",desc: "Batti i bot a difficoltà Media 5 volte",                       stat: "vinteMedio",      meta: 5 },
+    { gioco: "horto", livello: "oro",      icona: "🦾", nome: "Il Bot Difficile",      desc: "Batti i bot a difficoltà Difficile",                           stat: "vinteDifficile",  meta: 1 },
+    { gioco: "horto", livello: "oro",      icona: "🤝", nome: "Rivincite Online",      desc: "Vinci 5 corse online contro almeno una persona",                stat: "vinteOnline",     meta: 5 },
+    { gioco: "horto", livello: "diamante", icona: "👑", nome: "Cinque Volte Difficile",desc: "Batti i bot a difficoltà Difficile 5 volte",                    stat: "vinteDifficile",  meta: 5 },
+    { gioco: "horto", livello: "diamante", icona: "💎", nome: "Otto Frecce",           desc: "Vinci 10 corse equilibrate con 8 cavalli",                      stat: "vinte8NonFacile", meta: 10 },
+    { gioco: "horto", livello: "diamante", icona: "🌟", nome: "Leggenda dell'Ippodromo",desc: "Vinci 30 corse equilibrate o online",                          stat: "vittorie",        meta: 30 },
   ];
 
   function valoreStat(prof, gioco, chiave) {
