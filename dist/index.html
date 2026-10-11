@@ -1337,6 +1337,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .ne-banco{ z-index:3; border-radius:10px 10px 0 0; background:linear-gradient(180deg,#b5824f,#8a5a35); box-shadow:inset 0 8px 0 #d39a63, 0 6px 10px rgba(0,0,0,.25); }
 .ne-cassa{ z-index:4; border-radius:6px 6px 2px 2px; background:linear-gradient(180deg,#495057,#212529); box-shadow:inset 0 4px 0 #69db7c; }
 .ne-commessa{ z-index:2; }
+.ne-matita{ z-index:6; width:40px; height:40px; border-radius:50%; border:2px solid #f59f00; background:#fff; font-size:1.1rem; line-height:1; box-shadow:0 4px 10px rgba(0,0,0,.25); cursor:pointer; }
 .ne-fumetto{ z-index:5; max-width:170px; padding:9px 12px; border-radius:16px; background:#fff; color:#3b2b22; font-style:normal; font-weight:800; font-size:.82rem; line-height:1.25; box-shadow:0 4px 12px rgba(0,0,0,.2); }
 .ne-fumetto::after{ content:""; position:absolute; left:16px; bottom:-8px; border:8px solid transparent; border-top-color:#fff; border-bottom:0; }
 .ne-giu{ position:absolute; z-index:20; left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); display:flex; gap:8px; max-width:620px; margin:0 auto; }
@@ -1718,11 +1719,23 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
       var sch = { uid: utente.uid, nome: profilo.nome, chiave: SGNube.chiaveNome(profilo.nome), omino: profilo.omino || null, emoji: profilo.emoji || "🙂",
         livello: profilo.level || 1, prestigio: profilo.prestige || 0 };   // il livello lo vedono anche gli amici
       for (var k in dati) sch[k] = dati[k];
+      if (profilo.commessa) sch.commessa = profilo.commessa;   // (solo il proprietario: la commessa del negozio)
       var firma = JSON.stringify(sch);
       if (firma === ultimaScheda) return Promise.resolve();   // niente di nuovo: non riscrive
       ultimaScheda = firma;
       sch.agg = Date.now();
       return db.collection("pubblici").doc(utente.uid).set(sch).catch(function () { ultimaScheda = null; });
+    },
+    // la commessa del negozio: il proprietario la salva nel suo profilo e nella sua scheda pubblica, tutti la leggono da lì
+    salvaCommessa: function (cfg) {
+      if (!auth || !utente || !profilo) return Promise.resolve();
+      profilo.commessa = cfg; ultimaScheda = null;
+      db.collection("profili").doc(utente.uid).update({ commessa: cfg }).catch(function () {});
+      return db.collection("pubblici").doc(utente.uid).set({ commessa: cfg }, { merge: true }).catch(function () {});
+    },
+    commessa: function (nome) {
+      if (!auth || !utente) return Promise.resolve(null);
+      return SGNube.cercaNome(nome).then(function (sch) { return (sch && sch.commessa) || null; });
     },
     amici: function () { return (profilo && profilo.amici) || []; },
     // cerca un giocatore col nome esatto (maiuscole e spazi non contano)
@@ -6527,7 +6540,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
   }
 
   function negozio(opts) {
-    var casa = opts.dati && opts.dati.v ? opts.dati : casaIniziale(), tSalva = null, sezioni = [], pezzi = [];
+    var casa = opts.dati && opts.dati.v ? opts.dati : casaIniziale(), tSalva = null, sezioni = [], pezzi = [], cfgCommessa = opts.commessa || null;
     function salva() { clearTimeout(tSalva); tSalva = setTimeout(function () { if (opts.salva) opts.salva(casa); }, 300); }
     function suono(t) { suonaCasa(opts.audio, t); }
     var s = el("div", "schermata ne-vista"), strada = el("div", "ne-strada"), dentro = el("div", "ne-dentro");
@@ -6574,9 +6587,13 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
       // l'ingresso: il bancone con la commessa che saluta
       var lIng = Math.max(250, cw * 0.8), muroIng = metti("ne-sezione", 0, 0, lIng, pav); muroIng.style.background = "repeating-linear-gradient(90deg,#fff1d6 0 26px,#fbe7c2 26px 52px)";
       metti("ne-insegna grande", lIng / 2, Math.max(70, pav * 0.16), null, null, "🛍️ Negozio");
-      if (window.SGOmino) {
-        var cfg = SGOmino.casuale("commessa del negozio"), bw = 150 * k, im = metti("img", lIng / 2 - bw / 2 - 20 * k, pav - 92 * k - bw * 0.97, bw, bw); im.className = "ne-commessa";
+      if (window.SGOmino) {   // la commessa: quella disegnata dal proprietario (uguale per tutti), se no una a caso ma sempre la stessa
+        var cfg = cfgCommessa || SGOmino.casuale("commessa del negozio"), bw = 150 * k, cl = lIng / 2 - bw / 2 - 20 * k, ct = pav - 92 * k - bw * 0.97, im = metti("img", cl, ct, bw, bw); im.className = "ne-commessa";
         try { im.src = datauri(SGOmino.svg(cfg, { busto: true })); } catch (e) {}
+        if (opts.modificaCommessa) {   // solo il proprietario: la matita per cambiarla
+          var mat = el("button", "ne-matita", "✏️"); mat.setAttribute("aria-label", "Cambia la commessa"); mat.style.left = (cl + 6).toFixed(1) + "px"; mat.style.top = (ct + 10).toFixed(1) + "px";
+          mat.onclick = im.onclick = function () { chiudi(); opts.modificaCommessa(cfgCommessa || cfg); }; dentro.appendChild(mat);
+        }
       }
       metti("ne-banco", lIng / 2 - 110 * k, pav - 92 * k, 220 * k, 92 * k + 6);
       metti("ne-cassa", lIng / 2 + 40 * k, pav - 92 * k - 30 * k, 44 * k, 30 * k);
@@ -6664,6 +6681,10 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
     strada.addEventListener("scroll", function () { if (!tScroll) tScroll = requestAnimationFrame(doveSei); }, { passive: true });
     strada.addEventListener("wheel", function (e) { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { strada.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });   // col computer: la rotellina scorre di lato
 
+    s._commessa = function (c) {   // è arrivata la commessa del proprietario: si cambia solo lei
+      cfgCommessa = c; var im = dentro.querySelector(".ne-commessa");
+      if (im && window.SGOmino) try { im.src = datauri(SGOmino.svg(c, { busto: true })); } catch (e) {}
+    };
     s._monta = function () {
       aggMonete();
       (function prova() { if (!document.body.contains(s)) return; if (!costruisci()) return requestAnimationFrame(prova); if (opts.reparto) vaiReparto(opts.reparto); doveSei(); })();
@@ -7282,11 +7303,32 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
   function schermataNegozio(daStanza) {   // daStanza: si arriva dalla casa (e indietro si torna lì), altrimenti dalla città
     if (!window.SGCasa) return schermataCitta();
     if (serveProfilo()) return;
-    var m = soldiCasa();
+    var m = soldiCasa(), cm = commessaSalvata();
     var s = SGCasa.negozio({ dati: datiCasa(), salva: salvaCasa, monete: m.monete, spendi: m.spendi, audio: audioCtx, reparto: daStanza || null,
       indietro: function () { if (daStanza) schermataCasa(daStanza); else schermataCitta(); },
-      aCasa: daStanza ? null : function () { schermataCasa(); } });
+      aCasa: daStanza ? null : function () { schermataCasa(); },
+      commessa: cm, modificaCommessa: eProprietario() ? function (cfg) { modificaCommessa(cfg, daStanza); } : null });
     mostra(s); s._monta();
+    // la commessa vera la prende dalla scheda del proprietario (la prossima volta si vede subito)
+    if (window.SGNube && SGNube.commessa) SGNube.commessa(PROPRIETARIO).then(function (c) {
+      if (!c || JSON.stringify(c) === JSON.stringify(cm)) return;
+      try { localStorage.setItem("sg-commessa", JSON.stringify(c)); } catch (e) {}
+      if (document.body.contains(s) && s._commessa) s._commessa(c);
+    }).catch(function () {});
+  }
+  // la commessa del negozio: la disegna il proprietario con l'editor degli avatar, e la vedono tutti uguale
+  var PROPRIETARIO = "IL PAPPONE";
+  function eProprietario() { var io = profiloAttivo(); return String((io && io.nome) || "").trim().toUpperCase() === PROPRIETARIO; }
+  function commessaSalvata() { try { return JSON.parse(localStorage.getItem("sg-commessa") || "null"); } catch (e) { return null; } }
+  function modificaCommessa(cfg, daStanza) {
+    var bozza = { nome: "Commessa", omino: cfg, omini: null }, prima = JSON.stringify(cfg);
+    schermataOmino(function () {
+      if (bozza.omino && JSON.stringify(bozza.omino) !== prima) {
+        try { localStorage.setItem("sg-commessa", JSON.stringify(bozza.omino)); } catch (e) {}
+        if (window.SGNube && SGNube.salvaCommessa) SGNube.salvaCommessa(bozza.omino);
+      }
+      schermataNegozio(daStanza);
+    }, bozza);
   }
   var scrollCitta = 0;   // fin dove avevi scorso la città: uscendo da un edificio si torna lì (dalla home si riparte dall'alto)
   function schermataCitta() {
@@ -33094,7 +33136,8 @@ window.SG_SIPERO = {
     return p;
   }
   function salvaProgressi(p) { try { localStorage.setItem(CHIAVE, JSON.stringify({ rec: p.rec, stelle: p.stelle, potere: p.potere })); } catch (e) {} }
-  function sbloccato(p, i) { return i === 0 || (p.stelle[i] || 0) > 0; }
+  function sbloccato(p, i, t) { return i === 0 || (p.stelle[i] || 0) > 0 || tuttiAperti(t); }
+  function tuttiAperti(t) { return !!(t && t.nomeProfilo && String(t.nomeProfilo() || "").trim().toUpperCase() === "IL PAPPONE"); }   // il proprietario prova i livelli in ordine sparso
 
   // =========================================================
   //  LA SCHERMATA DEI LIVELLI (prima di giocare): scegli il livello e il tuo aiutante
@@ -33119,7 +33162,7 @@ window.SG_SIPERO = {
       s._contenuto.appendChild(el("div", { class: "pm-cap pm-cap-" + C.sfondo }, [el("span", { text: C.icona + " Capitolo " + (c + 1) + " · " + C.nome }), el("small", { text: "★ " + stelleCap + "/" + mie.length * 3 })]));
       var lv = el("div", { class: "pm-livelli" });
       mie.forEach(function (i, n) {
-        var L = LIVELLI[i], ok = sbloccato(p, i), st = p.stelle[i + 1] || 0;
+        var L = LIVELLI[i], ok = sbloccato(p, i, t), st = p.stelle[i + 1] || 0;
         lv.appendChild(el("button", { class: "pm-lv pm-lv-" + C.sfondo + (ok ? "" : " chiuso") + (st ? " fatto" : ""), onclick: function () {
           if (!ok) return; vibra(8); partita(t, i, p.potere);
         } }, [
@@ -33523,7 +33566,7 @@ window.SG_SIPERO = {
       righe.forEach(function (r) { box.appendChild(el("div", { class: "pm-rig" }, [el("span", { text: r[0] }), el("b", { text: r[1] })])); });
       if (nuovoRec) box.appendChild(el("div", { class: "pm-rec", text: "🏅 Nuovo record del livello!" }));
       var tasti = el("div", { class: "pm-tasti" });
-      if (vinto && lv + 1 < LIVELLI.length) tasti.appendChild(el("button", { class: "btn btn-primario", text: "▶ " + (LIVELLI[lv + 1].cap !== LIVELLI[lv].cap ? CAPITOLI[LIVELLI[lv + 1].cap].icona + " Capitolo " + (LIVELLI[lv + 1].cap + 1) : "Avanti: " + LIVELLI[lv + 1].nome), onclick: function () { chiudi(); partita(t, lv + 1, st.potere); } }));
+      if ((vinto || tuttiAperti(t)) && lv + 1 < LIVELLI.length) tasti.appendChild(el("button", { class: "btn btn-primario", text: "▶ " + (LIVELLI[lv + 1].cap !== LIVELLI[lv].cap ? CAPITOLI[LIVELLI[lv + 1].cap].icona + " Capitolo " + (LIVELLI[lv + 1].cap + 1) : "Avanti: " + LIVELLI[lv + 1].nome), onclick: function () { chiudi(); partita(t, lv + 1, st.potere); } }));
       tasti.appendChild(el("button", { class: "btn " + (vinto ? "btn-fantasma" : "btn-primario"), text: "↻ " + (vinto ? "Rigioca" : "Riprova"), onclick: function () { chiudi(); partita(t, lv, st.potere); } }));
       tasti.appendChild(el("button", { class: "btn btn-fantasma", text: "☰ Livelli", onclick: function () { chiudi(); schermataLivelli(t); } }));
       box.appendChild(tasti);
