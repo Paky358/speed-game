@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 192,
+    data: "11 ottobre 2026",
+    titolo: "Scavi visti dall'alto 🏺",
+    descrizione: [
+      "Il campo degli scavi ora si vede dall'alto: riempie lo schermo e tutti i quadrati sono grandi uguali, comodi da toccare anche in fondo.",
+      "In cima ci sono le rovine, la tenda e la professoressa Ida; i suoi consigli ora sono in basso, sopra i tasti. Il tuo avatar è un po' più grande."
+    ]
+  },
+  {
     v: 191,
     data: "11 ottobre 2026",
     titolo: "Gli scavi antichi 🏺⛏️",

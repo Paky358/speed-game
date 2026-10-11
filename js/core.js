@@ -642,7 +642,7 @@
     if (!window.SGScavi) return schermataCitta();
     if (serveProfilo()) return;
     var io = profiloAttivo(), u = window.SGNube && SGNube.utente && SGNube.utente();
-    var s = SGScavi.crea({ omino: io && io.omino, dati: datiScavi(), salva: salvaScavi, audio: audioCtx, seme: u ? u.uid : "",
+    var s = SGScavi.crea({ omino: io && io.omino, dati: datiScavi(), salva: salvaScavi, audio: audioCtx, seme: u ? u.uid : "", illimitati: eProprietario(),   // il proprietario (IL PAPPONE) ha i colpi illimitati, per provare
       monete: function () { return SGNube.monete(); }, cambia: function (n) { SGNube.cambiaMonete(n); },
       indietro: function () { schermataCitta(); } });
     mostra(s); s._monta();
