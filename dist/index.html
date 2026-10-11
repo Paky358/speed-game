@@ -2040,11 +2040,11 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
     colBlush:    ["#ff8fa3", "#ff6b6b", "#f4a261", "#e599f7", "#d9480f", "#c9856b"],
     guance:    ["no", "leggere", "rosse", "lentiggini"],
     capelli:   ["rasato", "corti", "riga", "spettinati", "ciuffo", "indietro", "undercut", "scodella", "riccicorti", "afrocorto", "pixie", "cresta", "calvo",
-                "sfumato", "spike", "banana", "treccine", "stempiato", "chierica", "afroalto", "riccioletti", "ricciciuffo",
+                "sfumato", "spike", "banana", "treccine", "stempiato", "chierica", "afroalto", "riccioletti", "ricciciuffo", "spazzola", "caesar", "codinouomo",
                 "frangia", "caschetto", "tendina", "mossi", "surfista", "mullet", "emo", "caschettolungo", "codinobasso",
-                "ciuffolaterale", "scalati", "boccolimedi", "anime", "bobfrangia", "arruffati", "riccibob", "riccifrangia",
+                "ciuffolaterale", "scalati", "boccolimedi", "anime", "bobfrangia", "arruffati", "riccibob", "riccifrangia", "rocker", "bobasimmetrico", "sfilato",
                 "lunghi", "onde", "coda", "codaalta", "codini", "treccia", "trecce", "mezzacoda", "chignon", "chignonspettinato", "ricci", "afro", "dread",
-                "lunghissimi", "codalaterale", "chignondoppio", "codebasse", "frangialunghi", "boccoli", "rigalato", "riccilunghi", "ricciraccolti"],
+                "lunghissimi", "codalaterale", "chignondoppio", "codebasse", "frangialunghi", "boccoli", "rigalato", "riccilunghi", "ricciraccolti", "hime", "tendinalunghi"],
     colCap:    ["#2a1d15", "#4b2f1d", "#7a4a26", "#b5672d", "#e0b85a", "#f3e3a8", "#9aa0a8", "#c0392b", "#2e86de", "#8e44ad", "#ff7eb6", "#fff8e7", "#e8702a", "#16a085", "#c2185b", "#101010"],
     barba:     ["no", "accenno", "corta", "folta", "barbalunga", "collare", "pizzetto", "ancora", "baffi", "baffipizzetto", "baffoni", "basettoni"],
     capo:      ["maglietta", "lunga", "felpa", "camicia", "canotta", "polo", "dolcevita", "giacca", "bomber", "calcio", "gilet", "sportiva", "cappotto", "grembiule", "supereroe",
@@ -2100,6 +2100,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
     puntino: "Puntino", patata: "A patata", dritto: "Dritto",
     sorrisetto: "Sorrisetto", risata: "Risata", triste: "Triste", micio: "Da micio", canini: "Canini", apparecchio: "Apparecchio", mordilabbro: "Morde il labbro", nervoso: "Nervoso",
     voglia: "Voglia", stellina: "Stellina",
+    spazzola: "A spazzola", caesar: "Alla Cesare", codinouomo: "Codino alto", rocker: "Rocker", bobasimmetrico: "Bob asimmetrico", sfilato: "Sfilato", hime: "Principessa", tendinalunghi: "Frangia a tendina",
     riccioletti: "Riccioletti", ricciciuffo: "Ciuffo riccio", riccibob: "Caschetto riccio", riccifrangia: "Ricci con frangia", riccilunghi: "Ricci lunghi", ricciraccolti: "Ricci raccolti",
     leggero: "Leggero", intenso: "Intenso", glitter: "Brillantini", sottile: "Sottile", alato: "Alato", grafico: "Grafico", matita: "Matita sotto",
     crop: "Crop top", top: "Top a spalline", camicetta: "Camicetta", cardigan: "Cardigan", maglione: "Maglione largo", vestito: "Vestito", vestitolungo: "Vestito lungo",
@@ -2128,7 +2129,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
   // capi solo per la forma "donna" (per l'uomo non compaiono nell'editor)
   var SOLO_DONNA = /^(gonna|gonnalunga|minigonna|gonnapieghe|gonnatubino|vestito|vestitolungo|tacchi|ballerine|zeppe|stivalialti)$/;
   // i tagli divisi per lunghezza: nell'editor sono tre file separate
-  var GRUPPI_CAPELLI = [["Corti", 0, 22], ["Medi", 22, 39], ["Lunghi", 39, 61]];
+  var GRUPPI_CAPELLI = [["Corti", 0, 25], ["Medi", 25, 45], ["Lunghi", 45, 69]];
   // accessori liberi per tutti; gli altri (es. corona) si sbloccheranno coi trofei
   var LIBERI = ["nessuno", "occhiali", "sole", "cappellino", "berretto", "fascia", "cuffie", "orecchini"];
 
@@ -2214,13 +2215,34 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
   // ciuffo spazzolato di lato: scende verso la tempia restando SOPRA il sopracciglio (non copre l'occhio)
   FRONTE.ciuffolaterale = "M45,106 C40,50 70,30 102,30 C134,30 162,50 155,100 C150,84 144,74 134,68 C118,62 98,63 84,68 C72,72 62,77 55,84 C50,90 47,98 45,106 Z";
   FRONTE.scalati = FRONTE.arruffati = FRONTE.spettinati;
-  FRONTE.boccolimedi = FRONTE.afro;
+  FRONTE.boccolimedi = FRONTE.tendina;
   FRONTE.anime = "M40,104 L24,86 L44,78 L28,54 L54,56 L48,28 L72,40 L78,12 L96,32 L110,6 L118,32 L140,14 L140,42 L168,38 L152,60 L178,72 L154,82 L162,104 C154,86 146,76 136,70 L126,84 L118,68 L106,82 L96,66 L84,82 L76,68 L66,84 C56,88 46,96 40,104 Z";
   FRONTE.bobfrangia = FRONTE.frangialunghi = FRONTE.frangia;
   FRONTE.lunghissimi = FRONTE.lunghi;
   FRONTE.codalaterale = FRONTE.chignondoppio = FRONTE.codebasse = FRONTE.chignon;
   FRONTE.boccoli = FRONTE.tendina;
   FRONTE.rigalato = FRONTE.riga;
+  // --- spettinati, arruffati e spike rifatti (11 ott 2026): ciocche morbide che si alzano, non più i triangoli a corona ---
+  FRONTE.spettinati = "M45,100 C42,66 52,46 64,38 Q58,26 66,22 Q74,28 80,30 Q82,16 92,13 Q98,22 104,27 Q112,13 124,16 Q124,26 128,31 Q140,24 146,30 Q142,38 142,44 C152,54 159,74 155,100 C150,82 144,72 134,66 C116,74 88,72 66,66 C56,74 50,86 45,100 Z";
+  FRONTE.spike = "M45,100 C42,72 50,54 58,46 Q50,36 50,22 Q62,30 70,34 Q66,20 72,8 Q82,20 88,30 Q94,14 102,4 Q108,18 110,30 Q120,16 130,10 Q130,24 128,34 Q140,26 150,24 Q146,38 141,46 C151,56 158,76 155,100 C150,82 144,72 134,66 C116,74 88,72 66,66 C56,74 50,86 45,100 Z";
+  FRONTE.scalati = FRONTE.spettinati;
+  FRONTE.arruffati = "M45,102 C40,64 50,44 62,38 Q56,28 64,24 Q70,30 78,31 Q80,20 90,17 Q96,26 102,28 Q110,18 120,19 Q122,28 126,32 Q136,26 144,32 Q140,40 141,46 C153,56 160,76 155,102 L150,94 L148,104 L143,88 C138,76 128,70 116,68 L110,76 L104,66 C96,66 88,68 82,70 L76,78 L72,68 C62,72 56,82 54,92 L50,104 L49,94 Z";
+  // --- tagli nuovi (11 ott 2026, "più varietà") ---
+  FRONTE.spazzola = "M46,98 C42,74 44,52 49,40 Q52,29 62,27 L138,27 Q148,29 151,40 C156,52 158,74 154,98 C150,84 146,74 138,68 C120,64 80,64 62,68 C54,74 50,84 46,98 Z";   // a spazzola: in cima piatto
+  FRONTE.caesar = "M45,100 C40,52 70,30 102,30 C134,30 162,50 155,100 C152,86 148,76 142,70 L136,72 L130,68 L122,71 L114,67 L106,70 L98,66 L90,70 L82,67 L74,71 L66,68 L60,71 C52,78 48,88 45,100 Z";   // alla Cesare: frangetta corta e dritta
+  FRONTE.codinouomo = FRONTE.indietro;   // codino alto: tirati indietro, lati corti, il nodo in cima
+  FRONTE.rocker = "M45,116 C38,50 70,30 100,30 C130,30 162,50 155,116 L150,108 L148,120 L143,104 C141,88 134,74 122,66 C112,62 106,62 100,64 C94,62 88,62 78,66 C66,74 59,88 57,104 L52,120 L50,108 Z";
+  FRONTE.bobasimmetrico = FRONTE.ciuffolaterale;
+  FRONTE.sfilato = "M44,110 C38,50 70,30 100,30 C130,30 162,50 156,110 L151,98 L150,110 L145,94 C142,80 134,70 120,66 L112,76 L108,64 C104,62 96,62 92,64 L88,76 L80,66 C66,70 58,80 55,94 L50,110 L49,98 Z";
+  FRONTE.hime = "M44,104 C38,50 70,30 100,30 C130,30 162,50 156,104 L152,80 L48,80 Z";   // principessa: frangia dritta
+  FRONTE.tendinalunghi = "M44,112 C38,50 70,30 100,30 C130,30 162,50 156,112 C152,96 148,84 140,76 C130,68 116,64 106,72 L100,62 L94,72 C84,64 70,68 60,76 C52,84 48,96 44,112 Z";   // frangia a tendina, aperta in mezzo
+  var DIETRO_NUOVI = {
+    rocker: "M40,92 C38,40 162,40 160,92 L164,128 L156,122 L158,140 L148,130 L144,146 L134,134 L66,134 L56,146 L52,130 L42,140 L44,122 L36,128 Z",
+    bobasimmetrico: "M40,92 C40,38 160,38 160,92 L166,160 Q152,168 138,158 L72,142 Q56,148 38,138 Z",
+    sfilato: "M38,92 C36,40 164,40 162,92 C166,108 160,118 170,132 L158,128 L162,144 L148,136 L146,150 L134,140 L66,140 L54,150 L52,136 L38,144 L42,128 L30,132 C40,118 34,108 38,92 Z",
+    hime: "M40,92 C38,38 162,38 160,92 L162,206 L38,206 Z",
+    tendinalunghi: "M40,92 C38,38 162,38 160,92 L168,196 Q100,210 32,196 Z"
+  };
   // --- ricci definiti: bordo "a nuvola" (tante gobbette) + riccioli a spirale disegnati uno per uno ---
   function ricampiona(pts, passo) {   // punti a distanza regolare lungo il contorno chiuso
     var r = [];
@@ -2255,7 +2277,53 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
   RICCI_DIETRO.riccifrangia = RICCI_DIETRO.riccibob;
   var RICCI_BELLI = { riccioletti: 1, ricciciuffo: 1, riccibob: 1, riccifrangia: 1, riccilunghi: 1 };
   // capelli ricci: trama a riccioli al posto delle ciocche dritte
-  var RICCI_TRAMA = { afro: 1, afrocorto: 1, riccicorti: 1, afroalto: 1, boccolimedi: 1, boccoli: 1 };
+  var RICCI_TRAMA = {};
+  // =========================================================
+  //  RICCI VERI (11 ott 2026, "migliorali tantissimo"): niente più trama a puntini. Un taglio riccio è fatto di tanti
+  //  riccioli tondi, ognuno col suo chiaro in alto a sinistra, la sua ombra e la spirale: il contorno viene a ciuffi, morbido.
+  //  RICCI[tipo] = { dietro / davanti: [contorno, passo, raggio] (masse di riccioli), molle / molleDietro: [[x, y0, y1, raggio]…]
+  //  (boccoli a molla che scendono), liscioDietro: la parte liscia dietro (per i boccoli con la testa liscia) }
+  // =========================================================
+  function dentroPoli(p, x, y) {
+    var d = false;
+    for (var i = 0, j = p.length - 1; i < p.length; j = i++) { var a = p[i], b = p[j]; if ((a[1] > y) !== (b[1] > y) && x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]) d = !d; }
+    return d;
+  }
+  function semeR(x, y) { var s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); }   // "a caso" ma sempre uguale per quel punto
+  function centriRicci(poli, passo) {   // i centri dei riccioli dentro un contorno: nido d'ape un po' mosso, [x, y, variazione]
+    var xs = poli.map(function (p) { return p[0]; }), ys = poli.map(function (p) { return p[1]; }), out = [];
+    var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+    for (var y = y0, rg = 0; y <= y1 + 0.1; y += passo * 0.86, rg++) for (var x = x0 + (rg % 2 ? passo / 2 : 0); x <= x1 + 0.1; x += passo) {
+      var jx = x + (semeR(x, y) - 0.5) * passo * 0.4, jy = y + (semeR(y + 3, x) - 0.5) * passo * 0.4;
+      if (dentroPoli(poli, jx, jy)) out.push([jx, jy, semeR(x + 1, y + 2)]);
+    }
+    return out;
+  }
+  function ovale(cx, cy, rx, ry, n, yMax) { var p = []; for (var i = 0; i < n; i++) { var a = Math.PI * 2 * i / n; p.push([cx + rx * Math.cos(a), Math.min(yMax || 999, cy + ry * Math.sin(a))]); } return p; }
+  var RF_FRONTE_AFRO = [[45, 100], [40, 78], [43, 56], [56, 37], [76, 23], [100, 18], [124, 23], [144, 37], [157, 56], [160, 78], [155, 100], [149, 90], [142, 74], [126, 64], [100, 61], [74, 64], [58, 74], [51, 90]];
+  var RF_BOB_FRONTE = [[42, 120], [38, 90], [42, 62], [56, 40], [78, 26], [100, 22], [122, 26], [144, 40], [158, 62], [162, 90], [158, 120], [151, 110], [147, 88], [137, 71], [118, 63], [100, 66], [82, 63], [63, 71], [53, 88], [49, 110]];
+  var RF_BOB_DIETRO = [[32, 96], [26, 70], [36, 42], [58, 22], [84, 12], [100, 10], [116, 12], [142, 22], [164, 42], [174, 70], [168, 96], [176, 122], [172, 148], [154, 160], [100, 156], [46, 160], [28, 148], [24, 122]];
+  var RICCI = {
+    riccicorti: { davanti: [[[47, 100], [44, 80], [48, 60], [60, 44], [78, 34], [100, 30], [122, 34], [140, 44], [152, 60], [156, 80], [153, 100], [148, 92], [142, 76], [126, 66], [100, 63], [74, 66], [58, 76], [52, 92]], 9, 6.8, "n"] },
+    afrocorto: { davanti: [RF_FRONTE_AFRO, 8.2, 6.2, "n"] },
+    afroalto: { davanti: [[[52, 84], [49, 56], [50, 24], [56, 12], [74, 7], [100, 5], [126, 7], [144, 12], [150, 24], [151, 56], [148, 84], [140, 72], [122, 66], [100, 64], [78, 66], [60, 72]], 8, 5.8, "n"] },
+    afro: { dietro: [ovale(100, 82, 80, 74, 32, 150), 9.5, 7.4, "n"], davanti: [RF_FRONTE_AFRO, 9, 7, "n"] },
+    riccioletti: { dietro: [[[40, 112], [34, 84], [38, 56], [54, 34], [76, 20], [100, 16], [124, 20], [146, 34], [162, 56], [166, 84], [160, 112], [140, 122], [100, 124], [60, 122]], 11, 7],
+      davanti: [[[44, 108], [40, 84], [44, 60], [58, 40], [78, 28], [100, 24], [122, 28], [142, 40], [156, 60], [160, 84], [156, 108], [150, 100], [146, 82], [136, 68], [118, 62], [100, 64], [82, 62], [64, 68], [54, 82], [50, 100]], 10, 6.8] },
+    ricciciuffo: { davanti: [[[52, 86], [48, 64], [50, 40], [62, 22], [82, 12], [100, 10], [118, 12], [138, 22], [150, 40], [152, 64], [148, 86], [140, 72], [124, 63], [100, 61], [76, 63], [60, 72]], 10, 7.4] },
+    riccibob: { dietro: [RF_BOB_DIETRO, 12.5, 8.2], davanti: [RF_BOB_FRONTE, 11, 7.8], molle: [[47, 108, 152, 6.2], [153, 108, 152, 6.2]] },
+    riccifrangia: { dietro: [RF_BOB_DIETRO, 12.5, 8.2], davanti: [[[42, 120], [38, 90], [42, 62], [56, 40], [78, 26], [100, 22], [122, 26], [144, 40], [158, 62], [162, 90], [158, 120], [151, 108], [149, 90], [140, 76], [122, 72], [100, 74], [78, 72], [60, 76], [51, 90], [49, 108]], 10.5, 7.2],
+      molle: [[47, 110, 152, 6], [153, 110, 152, 6]] },
+    riccilunghi: { dietro: [[[30, 100], [26, 70], [36, 42], [58, 22], [84, 12], [100, 10], [116, 12], [142, 22], [164, 42], [174, 70], [170, 100], [176, 130], [178, 160], [174, 188], [160, 206], [100, 210], [40, 206], [26, 188], [22, 160], [24, 130]], 12.5, 8.4],
+      davanti: [RF_BOB_FRONTE, 11, 7.8], molle: [[47, 108, 198, 6.4], [153, 108, 198, 6.4]] },
+    ricci: { dietro: [[[30, 96], [24, 66], [34, 38], [58, 18], [100, 8], [142, 18], [166, 38], [176, 66], [170, 96], [178, 126], [172, 158], [150, 170], [100, 166], [50, 170], [28, 158], [22, 126]], 14, 10.5],
+      davanti: [[[42, 112], [38, 86], [42, 60], [56, 38], [78, 24], [100, 20], [122, 24], [144, 38], [158, 60], [162, 86], [158, 112], [151, 100], [146, 82], [134, 68], [116, 62], [100, 64], [84, 62], [66, 68], [54, 82], [49, 100]], 13, 9.5] },
+    ricciraccolti: { dietro: [ovale(100, 17, 28, 24, 18), 8, 6.4, "n"], molle: [[53, 82, 120, 3.8], [147, 82, 120, 3.8]] },
+    boccolimedi: { liscioDietro: "M40,92 C38,40 162,40 160,92 L160,116 Q100,124 40,116 Z",
+      molleDietro: [[37, 98, 150, 7], [58, 112, 156, 7], [163, 98, 150, 7], [142, 112, 156, 7], [100, 116, 158, 7]], molle: [[47, 96, 146, 6.6], [153, 96, 146, 6.6]] },
+    boccoli: { liscioDietro: "M40,92 C38,40 162,40 160,92 L162,124 Q100,132 38,124 Z",
+      molleDietro: [[34, 98, 200, 7.2], [56, 116, 206, 7.2], [78, 122, 204, 7], [166, 98, 200, 7.2], [144, 116, 206, 7.2], [122, 122, 204, 7], [100, 124, 206, 7]], molle: [[47, 96, 194, 6.8], [153, 96, 194, 6.8]] }
+  };
   var DIETRO_MEDIO = "M40,92 C38,40 162,40 160,92 L161,130 Q150,138 140,131 L60,131 Q50,138 39,130 Z";
   var BARBA = {
     corta: "M47,100 C49,132 72,154 100,154 C128,154 151,132 153,100 C148,118 136,128 124,130 C116,139 108,141 100,141 C92,141 84,139 76,130 C64,128 52,118 47,100 Z",
@@ -2296,6 +2364,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
     var donna = c.forma === "donna";
     if (!donna) { if (SOLO_DONNA.test(c.capo)) c.capo = "maglietta"; if (SOLO_DONNA.test(c.modScarpe)) c.modScarpe = "sneakers"; }
     var bP = tono(P, -0.4), bH = tono(H, -0.5), bM = tono(M, -0.42), bT = tono(T, -0.45);
+    var HL = tono(H, 0.6), nNuv = 0, nMas = 0;   // il chiaro dei capelli; contatori per i ritagli
     var testa = TESTA[c.viso] || TESTA.tondo, fr = FRONTE[tipo];
     var o = [];
 
@@ -2307,6 +2376,8 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
       rad("p", 0.36, 0.28, 0.85, [[0, tono(P, 0.25)], [0.45, P], [0.85, tono(P, -0.1)], [1, tono(P, -0.24)]]),
       lin("pl", 0.3, 1, [[0, tono(P, 0.06)], [1, tono(P, -0.24)]]),
       rad("h", 0.35, 0.18, 0.95, [[0, tono(H, 0.38)], [0.4, H], [1, tono(H, -0.4)]]),
+      rad("cu", 0.36, 0.3, 0.78, [[0, tono(H, 0.2)], [0.6, H], [1, tono(H, -0.3)]]),   // un ricciolo: chiaro in alto a sinistra
+      lin("vol", 0, 1, [[0, "#fff", 0.16], [0.45, "#fff", 0], [1, "#000", 0.2]]),   // la luce dall'alto su tutta la chioma riccia
       lin("m", 0.35, 1, [[0, tono(M, 0.24)], [0.45, M], [1, tono(M, -0.34)]]),
       lin("t", 0.3, 1, [[0, tono(T, 0.2)], [0.5, T], [1, tono(T, -0.38)]]),
       rad("i", 0.5, 0.42, 0.62, [[0, tono(I, 0.5)], [0.55, I], [1, tono(I, -0.55)]]),
@@ -2341,17 +2412,52 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 
     // ---------- capelli DIETRO la testa ----------
     if (tipo === "lunghi") {
-      o.push("<path d='M40,92 C38,38 162,38 160,92 L168,188 Q100,204 32,188 Z' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8'/>");
+      massa("M40,92 C38,38 162,38 160,92 L168,188 Q100,204 32,188 Z");
       [[38, 104], [44, 112], [156, 104], [162, 112]].forEach(function (p) {
         o.push("<path d='M" + p[0] + "," + p[1] + " Q" + (p[0] + (p[0] < 100 ? -4 : 4)) + ",150 " + p[0] + ",186' stroke='" + bH + "' stroke-width='1.4' opacity='.4' fill='none' stroke-linecap='round'/>");
       });
     }
-    if (tipo === "caschetto") o.push("<path d='M40,92 C40,38 160,38 160,92 L162,142 Q148,152 134,144 L66,144 Q52,152 38,142 Z' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8'/>",
+    if (tipo === "caschetto") massa("M40,92 C40,38 160,38 160,92 L162,142 Q148,152 134,144 L66,144 Q52,152 38,142 Z"), o.push(
       "<path d='M42,110 Q40,128 44,142 M158,110 Q160,128 156,142' stroke='" + bH + "' stroke-width='1.4' opacity='.4' fill='none'/>");
     if (tipo === "coda") o.push("<path d='M146,62 C178,52 190,92 178,128 C173,143 160,148 155,136 C166,110 164,86 142,74 Z' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8'/>",
       "<path d='M156,70 Q176,86 168,128 M150,74 Q168,94 162,130' stroke='" + bH + "' stroke-width='1.3' opacity='.4' fill='none'/>",
       "<ellipse cx='149' cy='67' rx='6.5' ry='6' fill='#ff5c93' stroke='#b0144a' stroke-width='1.3'/>", "<circle cx='147' cy='65' r='2' fill='#fff' opacity='.5'/>");
-    if (tipo === "ricci") riccioli(true);
+    // --- i ricci veri (vedi RICCI): riccioli tondi uno per uno, e boccoli a molla ---
+    function f1(n) { return n.toFixed(1); }
+    function arco(x, y, s, a0, a1) { return "M" + f1(x + s * Math.cos(a0)) + "," + f1(y + s * Math.sin(a0)) + " A" + f1(s) + "," + f1(s) + " 0 " + (a1 - a0 > Math.PI ? 1 : 0) + ",1 " + f1(x + s * Math.cos(a1)) + "," + f1(y + s * Math.sin(a1)); }
+    function poliD(poli) { return "M" + poli.map(function (p) { return f1(p[0]) + "," + f1(p[1]); }).join(" L") + " Z"; }
+    // ricci stretti e afro: una chioma morbida col bordo a nuvola, e sopra le spirali sparse (non una trama ripetuta)
+    function massaNuvola(m, dietro) {   // m = [contorno, passo]
+      var poli = m[0], p = m[1], d = nuvola(poli, p * 1.6, p * 0.62), cid = id + "nv" + (++nNuv), sopra = !dietro && RQ.dietro;   // sopra: la parte davanti di una chioma che ha anche il dietro (bordo leggero, non si vede il doppio contorno)
+      o.push("<path d='" + d + "' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8' stroke-opacity='" + (sopra ? 0.3 : 1) + "' stroke-linejoin='round'/>",
+        "<clipPath id='" + cid + "'><path d='" + d + "'/></clipPath>", "<g clip-path='url(#" + cid + ")'>");
+      centriRicci(poli, p * 1.05).forEach(function (q) {
+        if (dietro && (q[0] - 100) * (q[0] - 100) + (q[1] - 92) * (q[1] - 92) < 46 * 46) return;   // dietro la testa: non si vede
+        var a0 = q[2] * 6.283, s = p * (0.3 + q[2] * 0.1);
+        o.push("<path d='" + arco(q[0], q[1], s, a0, a0 + 4.2) + "' stroke='" + bH + "' stroke-width='1.3' opacity='.42' fill='none' stroke-linecap='round'/>",
+          "<path d='" + arco(q[0] - 1, q[1] - 1, s * 1.15, a0 + 3.6, a0 + 4.9) + "' stroke='" + HL + "' stroke-width='1.2' opacity='.32' fill='none' stroke-linecap='round'/>");
+      });
+      o.push("<path d='" + d + "' fill='" + u("vol") + "'/>", "</g>");
+    }
+    function massaRiccia(m, dietro) { massaNuvola(m, dietro); }
+    // i boccoli a molla: un nastro di capelli attorcigliato che scende (davanti la parte chiara, dietro quella scura)
+    function boccoloMolla(x, y0, y1, r) {
+      var n = Math.max(2, Math.round((y1 - y0) / (r * 1.5))), st = (y1 - y0) / n, w = r * 1.25, d = "M" + f1(x) + "," + f1(y0), giri = "", luci = "";
+      for (var i = 0; i < n; i++) {
+        var ya = y0 + st * i, sd = i % 2 ? -1 : 1, a = r * (0.95 - 0.35 * i / n);
+        d += " Q" + f1(x + sd * a * 1.9) + "," + f1(ya + st / 2) + " " + f1(x) + "," + f1(ya + st);
+        giri += "M" + f1(x - sd * a * 0.2) + "," + f1(ya + st * 0.9) + " Q" + f1(x + sd * a * 0.4) + "," + f1(ya + st * 1.05) + " " + f1(x + sd * a * 0.6) + "," + f1(ya + st * 0.8) + " ";
+        luci += "M" + f1(x + sd * a * 0.5) + "," + f1(ya + st * 0.18) + " Q" + f1(x + sd * a * 1.05) + "," + f1(ya + st * 0.45) + " " + f1(x + sd * a * 0.8) + "," + f1(ya + st * 0.68) + " ";
+      }
+      o.push("<path d='" + d + "' stroke='" + bH + "' stroke-width='" + f1(w + 2) + "' fill='none' stroke-linecap='round' stroke-linejoin='round'/>",
+        "<path d='" + d + "' stroke='" + H + "' stroke-width='" + f1(w) + "' fill='none' stroke-linecap='round' stroke-linejoin='round'/>",
+        "<path d='" + giri + "' stroke='" + bH + "' stroke-width='" + f1(w * 0.35) + "' opacity='.55' fill='none' stroke-linecap='round'/>",
+        "<path d='" + luci + "' stroke='" + HL + "' stroke-width='" + f1(w * 0.22) + "' opacity='.55' fill='none' stroke-linecap='round'/>");
+    }
+    var RQ = RICCI[tipo];
+    if (RQ && RQ.liscioDietro) o.push("<path d='" + RQ.liscioDietro + "' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8' stroke-linejoin='round'/>");
+    if (RQ && RQ.dietro) massaRiccia(RQ.dietro, true);
+    if (RQ && RQ.molleDietro) RQ.molleDietro.forEach(function (m) { boccoloMolla(m[0], m[1], m[2], m[3]); });
     if (tipo === "chignon") {   // crocchia in cima, dietro la testa
       o.push("<circle cx='100' cy='28' r='19' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8'/>",
         "<path d='M86,24 Q100,10 114,24 M84,32 Q100,18 116,32 M90,40 Q100,30 110,40' stroke='" + bH + "' stroke-width='1.3' opacity='.4' fill='none'/>",
@@ -2364,10 +2470,23 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
         "<ellipse cx='" + X(52) + "' cy='80' rx='6' ry='7' fill='#ff5c93' stroke='#b0144a' stroke-width='1.3'/>", "<circle cx='" + X(50.5) + "' cy='77.5' r='1.8' fill='#fff' opacity='.5'/>");
     });
     // --- tagli nuovi: parti dietro la testa ---
-    function massa(d, trama) {   // una massa di capelli con gradiente, bordo e (se riccia) trama
+    function massa(d) {   // una massa di capelli lisci: gradiente, bordo, le ciocche che scendono e l'ombra lungo il bordo (dà volume)
       o.push("<path d='" + d + "' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8' stroke-linejoin='round'/>");
-      if (trama) o.push("<path d='" + d + "' fill='" + u("rc") + "'/>");
+      var nn = (d.match(/-?\d+(\.\d+)?/g) || []).map(Number), xs = [], ys = [];
+      for (var i = 0; i + 1 < nn.length; i += 2) { xs.push(nn[i]); ys.push(nn[i + 1]); }
+      var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y1 = Math.max.apply(null, ys), cid = id + "ms" + (++nMas);
+      if (y1 < 100) return;   // le masse piccole in cima (crocchie, nodi) restano così
+      o.push("<clipPath id='" + cid + "'><path d='" + d + "'/></clipPath>", "<g clip-path='url(#" + cid + ")'>");
+      for (var x = x0 + 7, k = 0; x < x1 - 4; x += 8, k++) {
+        var w2 = ((k * 37) % 7) - 3;
+        o.push("<path d='M" + f1(x) + ",86 Q" + f1(x + w2) + "," + f1((86 + y1) / 2) + " " + f1(x + w2 * 0.5 + (x < 100 ? -2 : 2)) + "," + f1(y1) + "' stroke='" + (k % 2 ? HL : bH) + "' stroke-width='" + (k % 2 ? 1 : 1.3) + "' opacity='" + (k % 2 ? 0.22 : 0.3) + "' fill='none'/>");
+      }
+      o.push("<path d='" + d + "' fill='none' stroke='" + tono(H, -0.45) + "' stroke-width='7' opacity='.22'/>", "</g>");
     }
+    if (DIETRO_NUOVI[tipo]) massa(DIETRO_NUOVI[tipo]);
+    if (tipo === "codinouomo") o.push("<circle cx='100' cy='21' r='13' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8'/>",   // il nodo in cima alla testa
+      "<path d='M90,17 Q100,9 110,17 M89,25 Q100,17 111,25' stroke='" + bH + "' stroke-width='1.2' opacity='.4' fill='none'/>",
+      "<path d='M92,13 Q99,8 106,10' stroke='#fff' stroke-width='2.4' opacity='.3' fill='none' stroke-linecap='round'/>");
     // riccioli a spirale sparsi su un riquadro (va dentro un ritaglio); luce sempre dall'alto a sinistra
     function spirali(x0, y0, x1, y1, passo, r) {
       for (var yy = y0, rg = 0; yy <= y1; yy += passo * 0.8, rg++) for (var xx = x0 + (rg % 2 ? passo / 2 : 0); xx <= x1; xx += passo) {
@@ -2404,7 +2523,6 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
       o.push("<path d='M79,30 C76,8 96,2 108,6 C124,2 132,18 124,32 C122,42 84,44 79,30 Z' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8'/>");
       ciocche(["M84,26 Q96,10 116,16", "M86,34 Q102,22 122,28", "M108,6 Q118,-2 126,4", "M82,14 Q76,6 70,10"]);
     }
-    if (tipo === "afro") massa("M100,2 C152,2 186,40 184,92 C182,132 162,152 140,152 L60,152 C38,152 18,132 16,92 C14,40 48,2 100,2 Z", true);
     if (tipo === "dread") for (var dr = 0; dr < 12; dr++) {   // treccine rasta che scendono ai lati e dietro
       var dx = dr < 6 ? 38 + dr * 5 : 162 - (dr - 6) * 5, lung = 150 + (dr % 3) * 14;
       o.push("<path d='M" + dx + ",70 Q" + (dx + (dr < 6 ? -6 : 6)) + "," + ((70 + lung) / 2) + " " + (dx + (dr < 6 ? -2 : 2)) + "," + lung + "' stroke='" + bH + "' stroke-width='9' stroke-linecap='round' fill='none'/>",
@@ -2412,14 +2530,12 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
         "<path d='M" + dx + ",70 Q" + (dx + (dr < 6 ? -6 : 6)) + "," + ((70 + lung) / 2) + " " + (dx + (dr < 6 ? -2 : 2)) + "," + lung + "' stroke='" + tono(H, -0.35) + "' stroke-width='6.5' stroke-dasharray='1.2 3.2' fill='none'/>");
     }
     // --- altri tagli: parti dietro la testa ---
-    if (tipo === "bobfrangia") o.push("<path d='M40,92 C40,38 160,38 160,92 L162,142 Q148,152 134,144 L66,144 Q52,152 38,142 Z' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8'/>");
+    if (tipo === "bobfrangia") massa("M40,92 C40,38 160,38 160,92 L162,142 Q148,152 134,144 L66,144 Q52,152 38,142 Z");
     if (tipo === "scalati") { massa("M40,92 C38,40 162,40 160,92 L165,130 L155,124 L157,142 L145,132 L141,148 L128,136 L72,136 L59,148 L55,132 L43,142 L45,124 L35,130 Z"); ciocche(["M44,104 Q40,118 46,134", "M156,104 Q160,118 154,134"]); }
     if (tipo === "arruffati") { massa("M40,92 C38,40 162,40 160,92 L166,138 Q158,148 150,140 Q142,154 132,144 L68,144 Q58,154 50,140 Q42,148 34,138 Z"); ciocche(["M42,104 Q36,122 44,140", "M158,104 Q164,122 156,140"]); }
-    if (tipo === "boccolimedi") massa("M36,92 C30,36 170,36 164,92 C172,112 166,130 170,146 Q150,158 134,148 L66,148 Q50,158 30,146 C34,130 28,112 36,92 Z", true);
     if (tipo === "anime" || tipo === "ciuffolaterale") { massa(DIETRO_MEDIO); ciocche(["M42,104 Q40,118 44,130", "M158,104 Q160,118 156,130"]); }
     if (tipo === "lunghissimi") { massa("M40,92 C38,38 162,38 160,92 L172,236 Q100,252 28,236 Z"); ciocche(["M38,104 Q30,170 36,232", "M162,104 Q170,170 164,232", "M46,120 Q42,180 48,230", "M154,120 Q158,180 152,230"]); }
     if (tipo === "frangialunghi" || tipo === "rigalato") { massa("M40,92 C38,38 162,38 160,92 L168,188 Q100,204 32,188 Z"); ciocche(["M38,104 Q34,150 40,184", "M162,104 Q166,150 160,184"]); }
-    if (tipo === "boccoli") massa("M38,92 C34,36 166,36 162,92 C170,114 160,132 170,150 C178,168 164,184 172,200 Q100,214 28,200 C36,184 22,168 30,150 C40,132 30,114 38,92 Z", true);
     if (tipo === "chignondoppio") [66, 134].forEach(function (bx) {   // due crocchie in alto ai lati
       o.push("<circle cx='" + bx + "' cy='36' r='17' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8'/>",
         "<path d='M" + (bx - 11) + ",34 Q" + bx + ",22 " + (bx + 11) + ",34 M" + (bx - 9) + ",42 Q" + bx + ",32 " + (bx + 9) + ",42' stroke='" + bH + "' stroke-width='1.2' opacity='.4' fill='none'/>",
@@ -2431,17 +2547,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
         "<path d='M" + X(56) + ",124 Q" + X(66) + ",148 " + X(60) + ",178' stroke='" + bH + "' stroke-width='1.2' opacity='.4' fill='none'/>");
       elastico(+X(50), 116);
     });
-    if (tipo === "afroalto") massa("M50,82 C44,52 46,16 62,7 Q100,-6 138,7 C154,16 156,52 150,82 Z", true);
     if (tipo === "chierica") massa("M44,124 C30,104 30,76 44,58 Q56,50 62,62 L138,62 Q144,50 156,58 C170,76 170,104 156,124 Q150,130 146,122 L54,122 Q50,130 44,124 Z");   // corona di capelli ai lati e dietro (la cima resta pelata)
-    if (RICCI_DIETRO[tipo]) {
-      var rd = RICCI_DIETRO[tipo];
-      o.push("<path d='" + rd[0] + "' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8' stroke-linejoin='round'/>",
-        "<clipPath id='" + id + "rd'><path d='" + rd[0] + "'/></clipPath>", "<g clip-path='" + u("rd") + "'>");
-      spirali(rd[1][0], rd[1][1], rd[1][2], rd[1][3], 13, 4.6);
-      o.push("</g>");
-      if (tipo === "riccilunghi") [[31, 112, 204], [42, 124, 212], [169, 112, 204], [158, 124, 212]].forEach(function (m) { molla(m[0], m[1], m[2], 3.4, 6.5); });
-      if (tipo === "riccibob" || tipo === "riccifrangia") [[30, 104, 156], [170, 104, 156]].forEach(function (m) { molla(m[0], m[1], m[2], 3.2, 6.5); });
-    }
     if (cappello) o.push("</g>");
     o.push("</g>");   // fine capelli dietro (scala testa)
 
@@ -3201,47 +3307,44 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
     if (pit === "fulmine") o.push("<path d='M135,103 L126,117 L132,117 L127,129 L140,113 L134,113 L138,103 Z' fill='#ffd43b' stroke='#e8590c' stroke-width='1.1' stroke-linejoin='round'/>");
     // ---------- capelli DAVANTI (con ciocche e riflesso lucido) ----------
     if (cappello) o.push("<g clip-path='" + u("sc2") + "'>");   // col cappello: tutto quello che sta sopra la visiera sparisce
-    if (/^(corti|spettinati|frangia|coda|ciuffo|riga|indietro|scodella|riccicorti|mullet|codinobasso|spike|banana|stempiato|treccine|scalati|arruffati)$/.test(tipo)) [1, -1].forEach(function (s) {   // basette
+    if (/^(corti|spettinati|frangia|coda|ciuffo|riga|indietro|scodella|riccicorti|mullet|codinobasso|spike|banana|stempiato|treccine|scalati|arruffati|caesar)$/.test(tipo)) [1, -1].forEach(function (s) {   // basette
       var bx = 100 - s * 54;
       o.push("<path d='M" + bx + ",92 Q" + (bx - s * 1) + ",104 " + (bx + s * 3) + ",113 L" + (bx + s * 7) + ",112 Q" + (bx + s * 5) + ",102 " + (bx + s * 6) + ",92 Z' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1' stroke-linejoin='round'/>");
     });
-    if (tipo === "undercut" || tipo === "sfumato" || tipo === "afroalto" || tipo === "ricciciuffo") o.push("<g clip-path='" + u("cv") + "'><path d='" + FRONTE.corti + "' fill='" + H + "' opacity='.35'/><path d='" + FRONTE.corti + "' fill='" + u("pt") + "' opacity='.7'/></g>");   // lati rasati
-    if (fr) {
+    if (/^(undercut|sfumato|afroalto|ricciciuffo|codinouomo|spazzola)$/.test(tipo)) o.push("<g clip-path='" + u("cv") + "'><path d='" + FRONTE.corti + "' fill='" + H + "' opacity='.35'/><path d='" + FRONTE.corti + "' fill='" + u("pt") + "' opacity='.7'/></g>");   // lati rasati
+    if (RQ && RQ.davanti) massaRiccia(RQ.davanti, false);   // i ricci davanti: riccioli veri fino all'attaccatura
+    else if (fr) {
       o.push("<path d='" + fr + "' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8' stroke-linejoin='round'/>", "<g clip-path='" + u("hc") + "'>");
-      if (RICCI_BELLI[tipo]) spirali(38, 8, 164, 124, 12, 4.4);
-      else if (RICCI_TRAMA[tipo]) o.push("<path d='" + fr + "' fill='" + u("rc") + "'/>");
-      else for (var ai = 0; ai < 13; ai++) {
+      for (var ai = 0; ai < 13; ai++) {
         var ang = (168 - ai * 13) * Math.PI / 180, ex2 = 106 + 80 * Math.cos(ang), ey2 = 26 + 80 * Math.sin(ang),
             cxq = 106 + 42 * Math.cos(ang + 0.14), cyq = 26 + 42 * Math.sin(ang + 0.14);
         o.push("<path d='M106,26 Q" + cxq.toFixed(1) + "," + cyq.toFixed(1) + " " + ex2.toFixed(1) + "," + ey2.toFixed(1) + "' stroke='" + (ai % 2 ? tono(H, 0.4) : bH) + "' stroke-width='" + (ai % 2 ? 1 : 1.4) + "' opacity='" + (ai % 2 ? 0.25 : 0.38) + "' fill='none'/>");
       }
+      if (tipo === "spazzola") for (var bz = 54; bz <= 146; bz += 4.5) o.push("<path d='M" + bz + ",27 L" + (bz + (bz - 100) * 0.04).toFixed(1) + ",40' stroke='" + (bz % 9 ? bH : HL) + "' stroke-width='1.2' opacity='.35'/>");   // le setole in cima
+      o.push("<path d='" + fr + "' fill='none' stroke='" + tono(H, -0.45) + "' stroke-width='7' opacity='.2'/>");   // l'ombra lungo il bordo: dà volume
       o.push("</g>", "<path d='M68,50 Q98,33 131,46' stroke='#fff' stroke-width='6' opacity='.22' fill='none' stroke-linecap='round'/>",
         "<path d='M74,47 Q98,36 124,44' stroke='#fff' stroke-width='2' opacity='.35' fill='none' stroke-linecap='round'/>");
     }
+    if (tipo === "hime") [[44, 57], [143, 156]].forEach(function (s) {   // principessa: le due ciocche dritte davanti alle orecchie, tagliate pari
+      o.push("<path d='M" + s[0] + ",78 L" + s[1] + ",78 L" + s[1] + ",136 L" + s[0] + ",136 Z' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.6' stroke-linejoin='round'/>",
+        "<path d='M" + (s[0] + 4) + ",82 L" + (s[0] + 4) + ",134 M" + (s[0] + 9) + ",82 L" + (s[0] + 9) + ",134' stroke='" + bH + "' stroke-width='1.1' opacity='.3'/>");
+    });
     if (tipo === "cresta") o.push("<path d='" + FRONTE.corti + "' fill='" + H + "' opacity='.16'/>",
       "<path d='" + FRONTE.corti + "' fill='" + u("pt") + "' opacity='.35'/>",
       "<path d='M85,44 C86,22 96,6 100,4 C104,6 114,22 115,44 C108,50 92,50 85,44 Z' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8'/>",
       "<path d='M92,42 Q94,24 100,8 M100,44 Q101,26 104,10 M108,43 Q107,28 106,14' stroke='" + bH + "' stroke-width='1.2' opacity='.4' fill='none'/>",
       "<path d='M95,16 Q96,28 93,40' stroke='#fff' stroke-width='2.5' opacity='.35' fill='none' stroke-linecap='round'/>");
-    if (tipo === "ricci") riccioli(false);
     // boccoli davanti che incorniciano il viso
-    if (tipo === "riccilunghi") { molla(47, 98, 192, 3.2, 7); molla(153, 98, 192, 3.2, 7); }
-    if (tipo === "riccibob" || tipo === "riccifrangia") { molla(46, 100, 146, 3, 6.5); molla(154, 100, 146, 3, 6.5); }
+    if (RQ && RQ.molle) RQ.molle.forEach(function (m) { boccoloMolla(m[0], m[1], m[2], m[3]); });
     if (tipo === "ricciraccolti") {
-      molla(52, 80, 124, 2.4, 4.6); molla(148, 80, 124, 2.4, 4.6);
       o.push("<path d='M84,36 Q100,28 116,36 L116,42 Q100,34 84,42 Z' fill='#ff5c93' stroke='#b0144a' stroke-width='1.3' stroke-linejoin='round'/>",   // fascia alla base della nuvola
         "<path d='M88,35 Q100,30 110,34' stroke='#fff' stroke-width='1.5' opacity='.45' fill='none' stroke-linecap='round'/>");
     }
     if (tipo === "ciuffo") o.push("<path d='M54,72 C46,40 72,10 114,12 C144,14 160,34 155,60 C148,46 136,40 122,42 C104,38 86,46 76,56 C68,60 59,64 54,72 Z' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.8' stroke-linejoin='round'/>",
       "<path d='M62,62 C62,38 86,20 116,20 M72,56 C76,36 98,26 124,28 M86,48 C94,36 112,32 134,36' stroke='" + bH + "' stroke-width='1.3' opacity='.4' fill='none'/>",
       "<path d='M70,40 C82,24 104,18 128,22' stroke='#fff' stroke-width='5' opacity='.25' fill='none' stroke-linecap='round'/>");
-    if (/^(codini|chignon|tendina|onde|trecce|mezzacoda|chignonspettinato|codaalta|codinobasso|chignondoppio|codebasse|codalaterale|boccoli)$/.test(tipo)) o.push("<path d='M100,31 L100,58' stroke='" + bH + "' stroke-width='1.6' opacity='.55'/>");   // riga in mezzo
+    if (/^(codini|chignon|tendina|onde|trecce|mezzacoda|chignonspettinato|codaalta|codinobasso|chignondoppio|codebasse|codalaterale|boccoli|boccolimedi|rocker)$/.test(tipo)) o.push("<path d='M100,31 L100,58' stroke='" + bH + "' stroke-width='1.6' opacity='.55'/>");   // riga in mezzo
     if (tipo === "riga" || tipo === "rigalato") o.push("<path d='M76,33 Q78,46 82,64' stroke='" + bH + "' stroke-width='1.8' opacity='.6' fill='none'/>", "<path d='M80,36 C100,40 122,48 140,64' stroke='" + tono(H, 0.35) + "' stroke-width='2' opacity='.35' fill='none'/>");
-    if (tipo === "riccicorti") for (var rq = 0; rq <= 10; rq++) {   // riccioli piccoli sull'attaccatura
-      var aq = Math.PI * (1.06 + 0.88 * rq / 10);
-      o.push("<circle cx='" + (100 + 52 * Math.cos(aq)).toFixed(1) + "' cy='" + (88 + 50 * Math.sin(aq)).toFixed(1) + "' r='7.5' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.1'/>",
-        "<path d='M" + (97 + 52 * Math.cos(aq)).toFixed(1) + "," + (88 + 50 * Math.sin(aq)).toFixed(1) + " a3,3 0 1,1 4,2' stroke='" + bH + "' stroke-width='1' opacity='.5' fill='none'/>");
-    }
     if (tipo === "chignonspettinato") o.push("<path d='M52,84 Q46,104 52,120 M148,84 Q154,104 148,120' stroke='" + H + "' stroke-width='2.2' fill='none' stroke-linecap='round'/>");   // ciocche libere sul viso
     if (tipo === "dread") [[56, 76, 50, 150], [66, 70, 62, 138], [144, 76, 150, 150], [134, 70, 138, 138]].forEach(function (d) {   // rasta davanti
       var p = "M" + d[0] + "," + d[1] + " Q" + ((d[0] + d[2]) / 2 - 3) + "," + ((d[1] + d[3]) / 2) + " " + d[2] + "," + d[3];
@@ -3709,12 +3812,12 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
   // ---- maschio / femmina ben distinti ----
   // tagli tipici: gli avatar a caso li rispettano, e cambiando forma nell'editor il taglio si adatta
   var CAPELLI_UOMO = ["rasato", "corti", "riga", "spettinati", "ciuffo", "indietro", "undercut", "scodella", "riccicorti", "afrocorto", "cresta", "calvo", "sfumato", "spike", "banana",
-    "treccine", "stempiato", "chierica", "afroalto", "riccioletti", "ricciciuffo", "surfista", "mullet", "emo", "codinobasso", "anime", "arruffati", "dread"];
+    "treccine", "stempiato", "chierica", "afroalto", "riccioletti", "ricciciuffo", "surfista", "mullet", "emo", "codinobasso", "anime", "arruffati", "dread", "spazzola", "caesar", "codinouomo", "rocker"];
   var DA_UOMO_A_DONNA = { riccicorti: "riccilunghi", riccioletti: "riccibob", ricciciuffo: "riccifrangia", afrocorto: "afro", afroalto: "afro", treccine: "trecce", dread: "trecce",
-    mullet: "mossi", surfista: "mossi", emo: "frangialunghi", codinobasso: "coda", anime: "scalati", arruffati: "scalati", scodella: "caschetto" };   // gli altri: lunghi lisci
+    mullet: "mossi", surfista: "mossi", emo: "frangialunghi", codinobasso: "coda", anime: "scalati", arruffati: "scalati", scodella: "caschetto", spazzola: "pixie", caesar: "pixie", codinouomo: "codaalta", rocker: "sfilato" };   // gli altri: lunghi lisci
   var DA_DONNA_A_UOMO = { ricci: "riccioletti", riccibob: "riccioletti", riccifrangia: "ricciciuffo", riccilunghi: "riccicorti", ricciraccolti: "riccioletti", boccoli: "riccioletti", boccolimedi: "riccicorti",
     afro: "afrocorto", trecce: "treccine", treccia: "treccine", codebasse: "treccine", pixie: "spettinati", frangia: "scodella", caschetto: "scodella", bobfrangia: "scodella",
-    scalati: "arruffati", mossi: "surfista", frangialunghi: "emo", ciuffolaterale: "ciuffo", coda: "codinobasso", codalaterale: "codinobasso" };   // gli altri: corti
+    scalati: "arruffati", mossi: "surfista", frangialunghi: "emo", ciuffolaterale: "ciuffo", coda: "codinobasso", codalaterale: "codinobasso", bobasimmetrico: "ciuffo", sfilato: "rocker", hime: "rocker", tendinalunghi: "rocker" };   // gli altri: corti
   var SOLO_LEI_TESTA = /^(fiocco|mollette|cerchietto|fiori|tiara)$/;   // in testa: cose da lei
   // cambia forma "per bene": al posto di tagli, barba, trucco e vestiti dell'altra forma mette quelli giusti
   function adattaForma(cfg, forma) {
@@ -20919,6 +21022,18 @@ window.SG_NCC_CATEGORIE = {
      descrizione-> elenco di righe: cosa cambia per chi gioca
    ========================================================= */
 window.SG_NOVITA = [
+  {
+    v: 190,
+    data: "11 ottobre 2026",
+    titolo: "Capelli tutti nuovi 💇",
+    descrizione: [
+      "I ricci sono rifatti da capo: niente più puntini. Ora hanno una chioma morbida col bordo a nuvola e le spirali, e sembrano capelli veri: ricci corti, afro, afro alto, riccioletti, caschetto riccio, ricci lunghi, ricci raccolti…",
+      "I boccoli ora scendono a molla, attorcigliati come veri boccoli.",
+      "Spettinati, arruffati e spike non hanno più i triangoli a corona: ciuffi morbidi che si alzano.",
+      "Tutti i capelli lisci hanno più volume: l'ombra lungo i bordi e le ciocche che scendono.",
+      "8 tagli nuovi. Per lui: a spazzola, alla Cesare, codino alto e rocker. Per lei: bob asimmetrico, sfilato, principessa (frangia dritta) e lunghi con la frangia a tendina."
+    ]
+  },
   {
     v: 189,
     data: "11 ottobre 2026",
