@@ -576,7 +576,7 @@
     try { localStorage.setItem(k, JSON.stringify(pulita)); } catch (e) {}
     clearTimeout(tCasaNube); tCasaNube = setTimeout(function () { if (window.SGNube && SGNube.salvaCasa) SGNube.salvaCasa(pulita); }, 1500);   // nel profilo: un attimo dopo (non a ogni spostamento)
   }
-  function soldiCasa() { return { monete: function () { return SGNube.monete(); }, spendi: function (n) { SGNube.cambiaMonete(-n); } }; }
+  function soldiCasa() { return { monete: function () { return SGNube.monete(); }, spendi: function (n) { SGNube.cambiaMonete(-n); }, guadagna: function (n) { SGNube.cambiaMonete(n); } }; }
   // ---- la pesca al laghetto (js/pesca.js): album, cesto ed esche nel profilo e su questo telefono (come la casa) ----
   var tPescaNube = null;
   function chiavePesca() { var N = window.SGNube, u = N && N.utente && N.utente(); return u ? "sg-pesca|" + u.uid : null; }
@@ -611,7 +611,7 @@
     if (!window.SGCasa) return schermataCitta();
     if (serveProfilo()) return;
     var io = profiloAttivo(), m = soldiCasa();
-    var s = SGCasa.crea({ avatar: io && io.omino, nome: io && io.nome, dati: datiCasa(), audio: audioCtx, stanza: stanza, monete: m.monete, spendi: m.spendi, salva: salvaCasa,
+    var s = SGCasa.crea({ avatar: io && io.omino, nome: io && io.nome, dati: datiCasa(), audio: audioCtx, stanza: stanza, monete: m.monete, spendi: m.spendi, guadagna: m.guadagna, salva: salvaCasa,
       vestiti: function () { schermataOmino(function () { schermataCasa("camera"); }); },   // dall'armadio aperto: si cambia il look e si torna in camera
       pesca: { dati: function () { return datiPesca() || (window.SGPesca ? { v: 1, album: {}, cesto: [], esche: {}, extra: 0, tot: 0 } : null); }, salva: salvaPesca },   // gli acquari prendono i pesci dal cesto della pesca
       negozio: function (st) { schermataNegozio(st); },   // dal cassetto dell'Arreda

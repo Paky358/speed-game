@@ -289,9 +289,11 @@
   } });
 
   // ---- dal negozio (anteprima): le cose belle ----
-  ogg("divano_velluto", { nome: "Divano di velluto", stanza: "soggiorno", tipo: "pav", w: 204, h: 94, prof: 0.9, qual: 2, prezzo: 1800, azione: "siedi", seduta: 50, posti: [66, 138], disegno: function () {
-    var c = "#1f8a8a";
-    return svg(204, 94, morbido("a", c) + morbido("b", tono(c, -0.1)) + lin("o", "#f6d77a", "#c9962e", true) + morbido("k", "#f2c14e"),
+  ogg("divano_velluto", { nome: "Divano di velluto", stanza: "soggiorno", cat: "divani", tipo: "pav", w: 204, h: 94, prof: 0.9, qual: 2, prezzo: 1800, azione: "siedi", seduta: 50, posti: [66, 138], 
+    prezzoColore: 450, colori: [{ id: "acqua", nome: "verde acqua", c: "#1f8a8a", k: "#f2c14e" }, { id: "rosa", nome: "rosa", c: "#e8789a", k: "#fff3bf" }, { id: "blu", nome: "blu notte", c: "#364fc7", k: "#ffd43b" }, { id: "senape", nome: "senape", c: "#d9a21b", k: "#1f8a8a" }, { id: "grigio", nome: "grigio", c: "#7d858d", k: "#ff8787" }, { id: "viola", nome: "viola", c: "#7048e8", k: "#c3fae8" }],
+    disegno: function (on, parte, _, K) {
+    var c = K.c;
+    return svg(204, 94, morbido("a", c) + morbido("b", tono(c, -0.1)) + lin("o", "#f6d77a", "#c9962e", true) + morbido("k", K.k),
       R(16, 6, 172, 50, "url(#a)", 22, bordo()) + Pth("M60 10 L60 52 M102 8 L102 52 M144 10 L144 52", "none", "stroke='" + tono(c, -0.25) + "' stroke-width='1.6'") +
       C(40, 30, 2, tono(c, -0.35)) + C(81, 30, 2, tono(c, -0.35)) + C(123, 30, 2, tono(c, -0.35)) + C(164, 30, 2, tono(c, -0.35)) +   // i bottoni capitonné
       R(4, 34, 28, 48, "url(#b)", 14, bordo()) + R(172, 34, 28, 48, "url(#b)", 14, bordo()) +
@@ -299,8 +301,10 @@
       Pth("M40 34 Q50 26 62 34 L60 50 L38 50 Z", "url(#k)", bordo(1.6)) + Pth("M142 34 Q154 26 166 34 L164 50 L142 50 Z", "url(#k)", bordo(1.6)) +   // i cuscini gialli
       R(10, 72, 184, 10, tono(c, -0.3), 4, bordo()) + Pth("M22 82 L18 93 M182 82 L186 93", "none", "stroke='url(#o)' stroke-width='5' stroke-linecap='round'") + Pth("M22 82 L18 93 M182 82 L186 93", "none", "stroke='" + LINEA + "' stroke-width='1' opacity='.4'"));
   } });
-  ogg("poltrona_gialla", { nome: "Poltrona gialla", stanza: "soggiorno", tipo: "pav", w: 80, h: 92, prof: 0.8, qual: 2, prezzo: 900, azione: "siedi", seduta: 52, posti: [40], disegno: function () {
-    var c = "#f2b134";
+  ogg("poltrona_gialla", { nome: "Poltrona imbottita", stanza: "soggiorno", cat: "divani", tipo: "pav", w: 80, h: 92, prof: 0.8, qual: 2, prezzo: 900, azione: "siedi", seduta: 52, posti: [40], 
+    prezzoColore: 250, colori: [{ id: "giallo", nome: "gialla", c: "#f2b134" }, { id: "rosso", nome: "rossa", c: "#e03131" }, { id: "salvia", nome: "verde salvia", c: "#8cb39a" }, { id: "azzurro", nome: "azzurra", c: "#4dabf7" }, { id: "lilla", nome: "lilla", c: "#b197fc" }, { id: "panna", nome: "panna", c: "#efe3c8" }],
+    disegno: function (on, parte, _, K) {
+    var c = K.c;
     return svg(80, 92, morbido("a", c) + morbido("b", tono(c, -0.1)),
       R(12, 4, 56, 54, "url(#a)", 20, bordo()) + R(2, 36, 18, 44, "url(#b)", 9, bordo()) + R(60, 36, 18, 44, "url(#b)", 9, bordo()) +
       R(18, 52, 44, 20, "url(#a)", 7, bordo()) + R(8, 72, 64, 8, tono(c, -0.3), 3, bordo()) +
@@ -334,11 +338,13 @@
       Pth("M6 30 Q16 26 26 30 Q36 34 46 29 Q54 26 60 29", "none", "stroke='#fff' stroke-width='1.4' opacity='.7'") + C(46, 16, 5, "#ffd43b") +
       Pth("M14 28 L20 18 L22 28 Z", "#fff", bordo(0.8)));
   } });
-  ogg("letto_matrimoniale", { nome: "Letto con la trapunta", stanza: "camera", tipo: "pav", w: 204, h: 96, prof: 1.6, qual: 2, prezzo: 2000, azione: "dormi", cuscino: [54, 50], disegno: function (on, parte) {
-    var trapunta = function (x0) { return Pth("M" + x0 + " " + (x0 < 60 ? 36 : 40) + " Q120 30 180 44 L182 70 L" + (x0 - 2) + " 70 Z", "url(#t)", bordo()) + Pth("M90 42 L90 70 M120 38 L120 70 M150 40 L150 70", "none", "stroke='" + tono("#e8789a", -0.2) + "' stroke-width='1.2' stroke-dasharray='3 3'"); },
+  ogg("letto_matrimoniale", { nome: "Letto con la trapunta", stanza: "camera", cat: "letti", tipo: "pav", w: 204, h: 96, prof: 1.6, qual: 2, prezzo: 2000, azione: "dormi", cuscino: [54, 50], 
+    prezzoColore: 500, colori: [{ id: "rosa", nome: "trapunta rosa", t: "#e8789a", l: "#8a5a3a" }, { id: "blu", nome: "trapunta blu", t: "#4c6ef5", l: "#8a5a3a" }, { id: "verde", nome: "trapunta verde", t: "#40c057", l: "#c08a55" }, { id: "lilla", nome: "bianco e lilla", t: "#b197fc", l: "#e9ecef" }, { id: "oro", nome: "nero e oro", t: "#f2c14e", l: "#343a40" }, { id: "rosso", nome: "rosso fuoco", t: "#e03131", l: "#5c3a21" }],
+    disegno: function (on, parte, _, K) {
+    var trapunta = function (x0) { return Pth("M" + x0 + " " + (x0 < 60 ? 36 : 40) + " Q120 30 180 44 L182 70 L" + (x0 - 2) + " 70 Z", "url(#t)", bordo()) + Pth("M90 42 L90 70 M120 38 L120 70 M150 40 L150 70", "none", "stroke='" + tono(K.t, -0.2) + "' stroke-width='1.2' stroke-dasharray='3 3'"); },
       davanti = R(176, 40, 26, 52, "url(#l)", 6, bordo()) + R(18, 68, 170, 12, "url(#l)", 3, bordo());
-    return svg(206, 96, morbido("l", "#8a5a3a") + morbido("t", "#e8789a"),
-      parte === "coperta" ? Pth("M22 52 Q40 47 62 50 Q74 34 110 36 Q150 32 180 44 L182 70 L20 70 Z", "url(#t)", bordo()) + Pth("M120 38 L120 70 M150 40 L150 70", "none", "stroke='" + tono("#e8789a", -0.2) + "' stroke-width='1.2' stroke-dasharray='3 3'") + R(2, 2, 26, 90, "url(#l)", 8, bordo()) + davanti :
+    return svg(206, 96, morbido("l", K.l) + morbido("t", K.t),
+      parte === "coperta" ? Pth("M22 52 Q40 47 62 50 Q74 34 110 36 Q150 32 180 44 L182 70 L20 70 Z", "url(#t)", bordo()) + Pth("M120 38 L120 70 M150 40 L150 70", "none", "stroke='" + tono(K.t, -0.2) + "' stroke-width='1.2' stroke-dasharray='3 3'") + R(2, 2, 26, 90, "url(#l)", 8, bordo()) + davanti :
       R(2, 2, 26, 90, "url(#l)", 8, bordo()) +
       R(20, 46, 166, 24, "#fbf6ec", 8, bordo()) +
       Pth("M30 26 Q44 18 58 26 Q60 36 56 44 L30 44 Q26 36 30 26 Z", "#fff", bordo(1.6)) + Pth("M34 32 Q48 24 62 32 Q64 42 60 48 L34 48 Q30 40 34 32 Z", "#f6eadb", bordo(1.6)) +
@@ -426,10 +432,12 @@
   } });
 
   // ---- dal negozio: camera ----
-  ogg("armadio_bianco", { nome: "Armadio bianco a tre ante", stanza: "camera", reparto: "camera", tipo: "pav", w: 120, h: 194, prof: 0.6, qual: 2, prezzo: 2400, stati: "apri", vestiti: true, corpo: [22, 142], disegno: function (on) {
-    var s = R(4, 8, 116, 178, "url(#a)", 3, bordo()) + R(2, 2, 120, 9, "#f4efe6", 2, bordo());
+  ogg("armadio_bianco", { nome: "Armadio a tre ante", stanza: "camera", cat: "mobili", tipo: "pav", w: 120, h: 194, prof: 0.6, qual: 2, prezzo: 2400, stati: "apri", vestiti: true, corpo: [22, 142], 
+    prezzoColore: 600, colori: [{ id: "bianco", nome: "bianco", c: "#f4efe6", a: "#ffffff", m: "#d4a72c" }, { id: "noce", nome: "noce", c: "#8a5a3a", a: "#a0683f", m: "#e0c070" }, { id: "azzurro", nome: "azzurro", c: "#a5d8ff", a: "#d0ebff", m: "#ffffff" }, { id: "nero", nome: "nero lucido", c: "#2b2b30", a: "#3d3d45", m: "#e0c070" }, { id: "rosa", nome: "rosa confetto", c: "#fcc2d7", a: "#ffdeeb", m: "#ffffff" }, { id: "verde", nome: "verde bosco", c: "#2b8a3e", a: "#37a24d", m: "#ffd43b" }],
+    disegno: function (on, parte, _, K) {
+    var s = R(4, 8, 116, 178, "url(#a)", 3, bordo()) + R(2, 2, 120, 9, K.c, 2, bordo());
     if (!on) s += R(9, 15, 34, 148, "url(#b)", 2, bordo(1.6)) + R(45, 15, 34, 148, "url(#b)", 2, bordo(1.6)) + R(81, 15, 34, 148, "url(#b)", 2, bordo(1.6)) +
-      R(37, 78, 3, 22, "#d4a72c", 1.5) + R(48, 78, 3, 22, "#d4a72c", 1.5) + R(109, 78, 3, 22, "#d4a72c", 1.5);
+      R(37, 78, 3, 22, K.m, 1.5) + R(48, 78, 3, 22, K.m, 1.5) + R(109, 78, 3, 22, K.m, 1.5);
     else {   // aperto: maglie, giacche e un vestito, le scatole in alto, le scarpe in basso
       var appeso = function (x, col, lungo, largo) { return Pth("M" + x + " 34 l0 -4 q0 -3 3 -3", "none", "stroke='#999' stroke-width='1.2'") + Pth("M" + (x - largo) + " 39 L" + x + " 34 L" + (x + largo) + " 39 L" + (x + largo - 1) + " " + (39 + lungo) + " L" + (x - largo + 1) + " " + (39 + lungo) + " Z", col, bordo(1.3)) + Pth("M" + (x - 3) + " 35 L" + x + " 41 L" + (x + 3) + " 35", "none", "stroke='" + tono(col, -0.3) + "' stroke-width='1.2'"); };
       var vestito = function (x, col) { return Pth("M" + x + " 34 l0 -4 q0 -3 3 -3", "none", "stroke='#999' stroke-width='1.2'") + Pth("M" + (x - 6) + " 38 L" + x + " 34 L" + (x + 6) + " 38 L" + (x + 4) + " 56 L" + (x + 12) + " 104 L" + (x - 12) + " 104 L" + (x - 4) + " 56 Z", col, bordo(1.3)) + Pth("M" + (x - 5) + " 56 L" + (x + 5) + " 56", "none", "stroke='#fff' stroke-width='2'"); };
@@ -437,10 +445,10 @@
         R(14, 17, 18, 8, "#f4d35e", 1.5, bordo(1)) + R(36, 17, 22, 8, "#9bd1e5", 1.5, bordo(1)) +   // le scatole sopra
         appeso(22, "#1971c2", 56, 9) + appeso(40, "#f76707", 46, 9) + vestito(60, "#e64980") + appeso(80, "#2b8a3e", 60, 9) + appeso(98, "#495057", 66, 10) +
         R(9, 128, 106, 3, tono("#c8b9a6", -0.1)) + R(14, 140, 16, 10, "#c92a2a", 4, bordo(1.2)) + R(32, 140, 16, 10, "#c92a2a", 4, bordo(1.2)) + R(56, 142, 22, 8, "#f8f9fa", 3, bordo(1.2)) + R(84, 140, 22, 10, "#5c3a21", 4, bordo(1.2)) +
-        Pth("M9 15 L-8 22 L-8 158 L9 163 Z", "url(#b)", bordo(1.6)) + Pth("M115 15 L134 23 L134 156 L115 163 Z", "url(#b)", bordo(1.6)) + R(-4, 80, 3, 18, "#d4a72c", 1.5) + R(127, 80, 3, 18, "#d4a72c", 1.5);
+        Pth("M9 15 L-8 22 L-8 158 L9 163 Z", "url(#b)", bordo(1.6)) + Pth("M115 15 L134 23 L134 156 L115 163 Z", "url(#b)", bordo(1.6)) + R(-4, 80, 3, 18, K.m, 1.5) + R(127, 80, 3, 18, K.m, 1.5);
     }
-    s += R(9, 166, 106, 18, "url(#b)", 2, bordo(1.6)) + R(54, 173, 16, 3, "#d4a72c", 1.5) + R(8, 186, 10, 7, "#c8b9a6", 1) + R(106, 186, 10, 7, "#c8b9a6", 1);
-    return svg(164, 194, morbido("a", "#f4efe6") + morbido("b", "#ffffff") + lin("ombra", "rgba(0,0,0,.3)", "rgba(0,0,0,0)", true), "<g transform='translate(20 0)'>" + s + "</g>");
+    s += R(9, 166, 106, 18, "url(#b)", 2, bordo(1.6)) + R(54, 173, 16, 3, K.m, 1.5) + R(8, 186, 10, 7, "#c8b9a6", 1) + R(106, 186, 10, 7, "#c8b9a6", 1);
+    return svg(164, 194, morbido("a", K.c) + morbido("b", K.a) + lin("ombra", "rgba(0,0,0,.3)", "rgba(0,0,0,0)", true), "<g transform='translate(20 0)'>" + s + "</g>");
   } });
   ogg("comodino_legno", { nome: "Comodino coi cassetti", stanza: "camera", reparto: "camera", tipo: "pav", w: 50, h: 58, prof: 0.45, piano: 56, qual: 2, prezzo: 400, disegno: function () {
     var c = "#c08a55";
@@ -540,6 +548,503 @@
   ogg("acquario_gigante", { nome: "Acquario gigante", stanza: "tutte", reparto: "deco", tipo: "pav", w: 230, h: 170, prof: 0.6, qual: 2, prezzo: 12000,
     vasca: { posti: 10, maxCm: 999, area: [18, 22, 212, 108], k: 0.36, maxL: 92 }, disegno: function (on, parte, pesci) { return vascaDisegno(230, 170, OGG.acquario_gigante.vasca, true, pesci); } });
 
+
+  // =========================================================
+  //  TANTA SCELTA (ispirata a The Sims): oggetti nuovi per ogni categoria del negozio, e i colori in più dei mobili
+  //  cat: il reparto del negozio · festa: "halloween" = si compra solo in quel periodo (poi resta di chi l'ha comprato)
+  // =========================================================
+  function anim(attr, valori, dur, extra) { return "<animate attributeName='" + attr + "' values='" + valori + "' dur='" + dur + "s' repeatCount='indefinite'" + (extra || "") + "/>"; }
+  function animT(tipo, valori, dur, extra) { return "<animateTransform attributeName='transform' type='" + tipo + "' values='" + valori + "' dur='" + dur + "s' repeatCount='indefinite'" + (extra || "") + "/>"; }
+  function gambe(x1, x2, y, h, c) { return R(x1, y, 4, h, c, 1.5, bordo(1)) + R(x2, y, 4, h, c, 1.5, bordo(1)); }
+
+  // ---- 🛋️ divani e poltrone ----
+  ogg("divano_pelle", { nome: "Divano Chesterfield", stanza: "tutte", cat: "divani", tipo: "pav", w: 200, h: 92, prof: 0.9, qual: 2, prezzo: 3200, azione: "siedi", seduta: 50, posti: [62, 138], 
+    prezzoColore: 700, colori: [{ id: "cuoio", nome: "cuoio", c: "#7a3e1d" }, { id: "nero", nome: "nero", c: "#2b2b30" }, { id: "bordeaux", nome: "bordeaux", c: "#862e3e" }, { id: "verde", nome: "verde inglese", c: "#1e5c3a" }, { id: "panna", nome: "panna", c: "#d9c9a6" }],
+    disegno: function (on, parte, _, K) {
+    var c = K.c, s = R(14, 6, 172, 52, "url(#a)", 14, bordo()), i, j;
+    for (i = 0; i < 7; i++) for (j = 0; j < 2; j++) s += C(32 + i * 23, 20 + j * 16, 1.7, tono(c, -0.4));
+    s += Pth("M32 20 L55 36 M55 20 L32 36 M78 20 L101 36 M101 20 L78 36 M124 20 L147 36 M147 20 L124 36", "none", "stroke='" + tono(c, -0.25) + "' stroke-width='.8' opacity='.6'");
+    return svg(200, 94, morbido("a", c) + morbido("b", tono(c, -0.12)), s + R(2, 30, 32, 52, "url(#b)", 14, bordo()) + R(166, 30, 32, 52, "url(#b)", 14, bordo()) +
+      Pth("M8 34 Q18 28 28 34 M172 34 Q182 28 192 34", "none", "stroke='" + tono(c, 0.25) + "' stroke-width='2'") + R(30, 52, 70, 22, "url(#a)", 7, bordo()) + R(100, 52, 70, 22, "url(#a)", 7, bordo()) +
+      R(8, 74, 184, 8, tono(c, -0.32), 3, bordo()) + R(12, 82, 7, 10, "#2b1d14", 2) + R(181, 82, 7, 10, "#2b1d14", 2));
+  } });
+  ogg("poltrona_sacco", { nome: "Poltrona a sacco", stanza: "tutte", cat: "divani", tipo: "pav", w: 82, h: 66, prof: 0.7, qual: 2, prezzo: 800, azione: "siedi", seduta: 30, posti: [41], 
+    prezzoColore: 150, colori: [{ id: "blu", nome: "blu", c: "#4c6ef5" }, { id: "rosso", nome: "rosso", c: "#f03e3e" }, { id: "lime", nome: "verde lime", c: "#82c91e" }, { id: "arancio", nome: "arancione", c: "#fd7e14" }, { id: "nero", nome: "nero", c: "#343a40" }, { id: "rosa", nome: "rosa", c: "#f783ac" }],
+    disegno: function (on, parte, _, K) {
+    var c = K.c;
+    return svg(82, 66, morbido("b", c), E(41, 62, 38, 4, "rgba(0,0,0,.15)") + Pth("M8 60 Q2 34 22 18 Q41 4 60 18 Q80 34 74 60 Z", "url(#b)", bordo()) +
+      Pth("M14 58 Q26 38 41 40 Q57 38 68 58", "none", "stroke='" + tono(c, -0.3) + "' stroke-width='1.8'") + Pth("M28 16 Q36 26 33 38", "none", "stroke='" + tono(c, 0.35) + "' stroke-width='2.2' opacity='.6'") + E(41, 44, 18, 6, tono(c, -0.15), "opacity='.5'"));
+  } });
+  ogg("pouf", { nome: "Pouf di velluto", stanza: "tutte", cat: "divani", tipo: "pav", w: 56, h: 44, prof: 0.5, qual: 2, prezzo: 500, azione: "siedi", seduta: 40, posti: [28], 
+    prezzoColore: 100, colori: [{ id: "fucsia", nome: "fucsia", c: "#c2255c" }, { id: "smeraldo", nome: "smeraldo", c: "#0ca678" }, { id: "oro", nome: "oro", c: "#f59f00" }, { id: "blu", nome: "blu", c: "#3b5bdb" }, { id: "grigio", nome: "grigio", c: "#868e96" }],
+    disegno: function (on, parte, _, K) {
+    var c = K.c;
+    return svg(56, 44, morbido("a", c), E(28, 40, 26, 4, "rgba(0,0,0,.15)") + R(3, 10, 50, 30, "url(#a)", 14, bordo()) + E(28, 11, 25, 7, tono(c, 0.22), bordo(1.4)) +
+      Pth("M8 24 Q28 31 48 24", "none", "stroke='" + tono(c, -0.25) + "' stroke-width='1.4'") + C(28, 11, 2, tono(c, -0.3)) + Pth("M28 11 L18 7 M28 11 L38 7 M28 11 L28 17", "none", "stroke='" + tono(c, -0.2) + "' stroke-width='.8'"));
+  } });
+  ogg("poltrona_relax", { nome: "Poltrona relax", stanza: "tutte", cat: "divani", tipo: "pav", w: 88, h: 100, prof: 0.85, qual: 2, prezzo: 1600, azione: "siedi", seduta: 50, posti: [44], disegno: function () {
+    var c = "#868e96";
+    return svg(88, 100, morbido("a", c) + morbido("b", tono(c, -0.12)), R(12, 2, 64, 62, "url(#a)", 18, bordo()) + Pth("M20 22 L68 22 M20 40 L68 40", "none", "stroke='" + tono(c, -0.25) + "' stroke-width='1.6'") +
+      R(2, 38, 20, 44, "url(#b)", 9, bordo()) + R(66, 38, 20, 44, "url(#b)", 9, bordo()) + R(18, 54, 52, 22, "url(#a)", 8, bordo()) + Pth("M22 76 L22 96 L66 96 L66 76", "url(#b)", bordo()) + R(70, 50, 4, 10, "#495057", 2));
+  } });
+
+  // ---- 🪑 sedie e sgabelli ----
+  ogg("sedia_ufficio", { nome: "Sedia da ufficio", stanza: "tutte", cat: "sedie", tipo: "pav", w: 56, h: 100, prof: 0.5, qual: 2, prezzo: 700, azione: "siedi", seduta: 48, posti: [28], disegno: function () {
+    var c = "#212529";
+    return svg(56, 100, morbido("a", "#343a40"), R(10, 2, 36, 40, "url(#a)", 12, bordo()) + R(16, 8, 24, 26, "#495057", 8) + R(25, 40, 6, 8, "#868e96") +
+      R(4, 46, 48, 10, "url(#a)", 5, bordo()) + R(25, 56, 6, 22, "#adb5bd", 1, bordo(1)) + Pth("M28 80 L6 90 M28 80 L50 90 M28 80 L28 94 M28 80 L16 94 M28 80 L40 94", "none", "stroke='" + c + "' stroke-width='3.4'") +
+      C(6, 92, 3, "#495057", bordo(1)) + C(50, 92, 3, "#495057", bordo(1)) + C(28, 96, 3, "#495057", bordo(1)) + R(0, 40, 6, 3, "#495057", 1) + R(50, 40, 6, 3, "#495057", 1));
+  } });
+  ogg("dondolo", { nome: "Sedia a dondolo", stanza: "tutte", cat: "sedie", tipo: "pav", w: 66, h: 98, prof: 0.6, qual: 2, prezzo: 1200, azione: "siedi", seduta: 46, posti: [33], disegno: function () {
+    var c = "#a0652b";
+    return svg(66, 98, morbido("a", c), R(14, 4, 38, 44, "url(#a)", 6, bordo(1.6)) + Pth("M22 10 L22 42 M33 8 L33 42 M44 10 L44 42", "none", "stroke='" + tono(c, -0.3) + "' stroke-width='2'") +
+      R(4, 34, 7, 20, tono(c, -0.1), 2, bordo(1)) + R(55, 34, 7, 20, tono(c, -0.1), 2, bordo(1)) + R(6, 44, 54, 8, "url(#a)", 3, bordo()) + R(12, 40, 42, 6, "#e64980", 3, bordo(1)) +
+      gambe(10, 52, 52, 30, tono(c, -0.2)) + Pth("M0 82 Q33 100 66 82", "none", "stroke='" + LINEA + "' stroke-width='6'") + Pth("M0 82 Q33 100 66 82", "none", "stroke='" + tono(c, -0.05) + "' stroke-width='3.6'"));
+  } });
+  ogg("sgabello_legno", { nome: "Sgabello di legno", stanza: "tutte", cat: "sedie", tipo: "pav", w: 40, h: 50, prof: 0.4, piano: 46, qual: 2, prezzo: 250, azione: "siedi", seduta: 46, posti: [20], disegno: function () {
+    var c = "#c08a55";
+    return svg(40, 50, morbido("a", c), E(20, 6, 18, 5, "url(#a)", bordo(1.4)) + R(2, 6, 36, 5, tono(c, -0.15), 2, bordo(1.2)) + Pth("M7 11 L3 49 M33 11 L37 49 M14 11 L14 49 M26 11 L26 49", "none", "stroke='" + tono(c, -0.3) + "' stroke-width='3.4'") + R(5, 32, 30, 3, tono(c, -0.2), 1));
+  } });
+  ogg("panca", { nome: "Panca imbottita", stanza: "tutte", cat: "sedie", tipo: "pav", w: 120, h: 50, prof: 0.45, piano: 44, qual: 2, prezzo: 650, azione: "siedi", seduta: 44, posti: [32, 88], disegno: function () {
+    var c = "#f1e3c2";
+    return svg(120, 50, morbido("a", c) + morbido("b", "#8b5a2b"), R(4, 8, 112, 14, "url(#a)", 6, bordo()) + Pth("M30 12 L30 20 M60 12 L60 20 M90 12 L90 20", "none", "stroke='" + tono(c, -0.25) + "' stroke-width='1.2'") +
+      R(2, 20, 116, 6, "url(#b)", 2, bordo(1.2)) + gambe(8, 108, 26, 24, "#6b4220") + R(12, 40, 96, 3, "#6b4220", 1));
+  } });
+
+  // ---- 🍽️ tavoli ----
+  ogg("tavolino_vetro", { nome: "Tavolino di vetro", stanza: "tutte", cat: "tavoli", tipo: "pav", w: 100, h: 46, prof: 0.6, piano: 42, qual: 2, prezzo: 650, disegno: function () {
+    return svg(100, 46, lin("v", "#e7f5ff", "#a5d8ff", true), R(2, 4, 96, 8, "url(#v)", 3, bordo(1.4) + " opacity='.9'") + Pth("M8 6 L34 6", "none", "stroke='#fff' stroke-width='1.6' opacity='.85'") +
+      R(10, 12, 4, 32, "#adb5bd", 1, bordo(1)) + R(86, 12, 4, 32, "#adb5bd", 1, bordo(1)) + R(10, 30, 80, 3, "#ced4da", 1) + R(30, 22, 16, 8, "#e03131", 1.5, bordo(.8)) + R(48, 24, 12, 6, "#1c7ed6", 1.5, bordo(.8)));
+  } });
+  ogg("scrivania", { nome: "Scrivania coi cassetti", stanza: "tutte", cat: "tavoli", tipo: "pav", w: 120, h: 78, prof: 0.6, piano: 76, qual: 2, prezzo: 900, disegno: function () {
+    var c = "#e9d8b8";
+    return svg(120, 80, morbido("a", c), R(2, 2, 116, 8, "url(#a)", 2, bordo()) + R(6, 10, 34, 66, tono(c, -0.08), 2, bordo(1.4)) +
+      R(9, 16, 28, 16, tono(c, 0.1), 1.5, bordo(1)) + R(9, 38, 28, 16, tono(c, 0.1), 1.5, bordo(1)) + R(9, 60, 28, 13, tono(c, 0.1), 1.5, bordo(1)) +
+      C(23, 24, 1.4, "#868e96") + C(23, 46, 1.4, "#868e96") + C(23, 66, 1.4, "#868e96") + R(108, 10, 6, 66, tono(c, -0.2), 1, bordo(1)) + R(40, 10, 68, 4, tono(c, -0.15)));
+  } });
+  ogg("tavolo_tondo", { nome: "Tavolo tondo bianco", stanza: "tutte", cat: "tavoli", tipo: "pav", w: 100, h: 78, prof: 0.9, piano: 76, qual: 2, prezzo: 1100, disegno: function () {
+    return svg(100, 78, morbido("a", "#f8f9fa"), E(50, 8, 48, 7, "url(#a)", bordo()) + R(2, 8, 96, 5, "#dee2e6", 2, bordo(1.2)) + R(45, 13, 10, 54, "#e9ecef", 2, bordo(1.2)) + E(50, 72, 26, 5, "#dee2e6", bordo(1.4)) +
+      E(36, 6, 8, 2.6, "#ffd43b", bordo(.8)) + Pth("M66 2 L66 7 M64 3 L68 3", "none", "stroke='#2f9e44' stroke-width='1.4'") + C(66, 2, 2.2, "#f783ac"));
+  } });
+
+  // ---- 🗄️ armadi e mobili ----
+  ogg("cassettiera", { nome: "Cassettiera arcobaleno", stanza: "tutte", cat: "mobili", tipo: "pav", w: 72, h: 86, prof: 0.5, piano: 82, qual: 2, prezzo: 700, disegno: function () {
+    var s = R(2, 2, 68, 80, "url(#a)", 3, bordo()), cols = ["#ff8787", "#ffd43b", "#69db7c", "#74c0fc"];
+    cols.forEach(function (k, i) { s += R(6, 6 + i * 19, 60, 16, k, 2, bordo(1.2)) + C(36, 14 + i * 19, 2.2, "#ffffff", bordo(.8)); });
+    return svg(72, 86, morbido("a", "#f1f3f5"), s + R(6, 82, 6, 4, "#495057") + R(60, 82, 6, 4, "#495057"));
+  } });
+  ogg("baule", { nome: "Baule del tesoro", stanza: "tutte", cat: "mobili", tipo: "pav", w: 80, h: 56, prof: 0.5, piano: 52, qual: 2, prezzo: 900, disegno: function () {
+    var c = "#8b5a2b";
+    return svg(80, 56, morbido("a", c), Pth("M4 22 Q40 2 76 22 L76 26 L4 26 Z", "url(#a)", bordo()) + R(4, 24, 72, 30, "url(#a)", 3, bordo()) + R(4, 24, 72, 4, "#e8c27a", 1) +
+      Pth("M16 9 L16 54 M64 9 L64 54", "none", "stroke='#e8c27a' stroke-width='6'") + Pth("M16 9 L16 54 M64 9 L64 54", "none", "stroke='" + LINEA + "' stroke-width='1' opacity='.35'") +
+      R(33, 22, 14, 14, "#ffd43b", 2, bordo(1.2)) + C(40, 28, 1.8, "#3b2b22") + R(39.2, 28, 1.6, 4, "#3b2b22"));
+  } });
+  ogg("vetrinetta", { nome: "Vetrinetta coi piatti", stanza: "tutte", cat: "mobili", tipo: "pav", w: 84, h: 170, prof: 0.45, piano: 168, qual: 2, prezzo: 1500, disegno: function () {
+    var c = "#d8b48a", s = R(2, 2, 80, 166, "url(#a)", 3, bordo()) + R(8, 10, 68, 92, "#e7f5ff", 2, bordo(1.2)) + Pth("M42 10 L42 102", "none", "stroke='" + tono(c, -0.2) + "' stroke-width='2.4'"), i;
+    for (i = 0; i < 3; i++) { var y = 38 + i * 30; s += R(8, y, 68, 3, tono(c, -0.1)); [18, 30, 54, 66].forEach(function (x, k) { s += C(x, y - 9, 8, k % 2 ? "#ffffff" : "#e7f5ff", bordo(.9)) + C(x, y - 9, 4.5, "none", "stroke='" + (i % 2 ? "#4dabf7" : "#f783ac") + "' stroke-width='1.2'"); }); }
+    s += Pth("M12 14 L28 14 L14 40 Z", "#ffffff", "opacity='.45'") + R(8, 108, 68, 50, tono(c, 0.08), 2, bordo(1.2)) + Pth("M42 108 L42 158", "none", "stroke='" + tono(c, -0.2) + "' stroke-width='1.4'") + C(37, 133, 2, "#e0c070") + C(47, 133, 2, "#e0c070");
+    return svg(84, 170, morbido("a", c), s);
+  } });
+  ogg("mensola_muro", { nome: "Mensola con i libri", stanza: "tutte", cat: "mobili", tipo: "muro", w: 80, h: 36, qual: 2, prezzo: 250, disegno: function () {
+    return svg(80, 36, "", R(2, 26, 76, 5, "#a0652b", 1.5, bordo(1.2)) + R(8, 6, 6, 20, "#e03131", 1, bordo(.8)) + R(14, 8, 5, 18, "#1c7ed6", 1, bordo(.8)) + R(19, 4, 6, 22, "#ffd43b", 1, bordo(.8)) +
+      Pth("M26 26 L32 9 L36 10 L30 26 Z", "#2f9e44", bordo(.8)) + R(54, 16, 12, 10, "#e8590c", 2, bordo(1)) + C(60, 12, 5, "#51cf66", bordo(.8)) + C(56, 9, 3, "#40c057") + C(64, 9, 3, "#40c057") +
+      Pth("M10 31 L14 35 M70 31 L66 35", "none", bordo(1.2)));
+  } });
+
+  // ---- 💡 luci ----
+  ogg("lampadario", { nome: "Lampadario di cristallo", stanza: "tutte", cat: "luci", tipo: "muro", w: 80, h: 70, qual: 2, prezzo: 1800, stati: "accendi", luce: { x: 0.5, y: 0.5, r: 3, c: "#fff3c4" }, disegno: function (on) {
+    var s = Pth("M40 0 L40 18", "none", "stroke='#adb5bd' stroke-width='2'") + E(40, 22, 9, 4, "#e0c070", bordo(1)) + Pth("M8 34 Q40 52 72 34", "none", "stroke='#e0c070' stroke-width='3.2'") + Pth("M40 22 L14 34 M40 22 L66 34 M40 22 L40 44", "none", "stroke='#e0c070' stroke-width='1.6'"), i;
+    for (i = 0; i < 5; i++) { var x = 10 + i * 15, y = 34 + Math.sin((i / 4) * Math.PI) * 9; s += R(x - 1.5, y - 8, 3, 8, "#fff", 1, bordo(.6)) + C(x, y - 10, 2.6, on ? "#fff3b0" : "#f1f3f5", bordo(.6)) + Pth("M" + x + " " + (y + 2) + " l-2.4 6 l2.4 7 l2.4 -7 z", on ? "#e7f5ff" : "#d0ebff", bordo(.5)); }
+    return svg(80, 70, "", (on ? E(40, 34, 38, 22, "#fff9db", "opacity='.45'") : "") + s);
+  } });
+  ogg("lampada_lava", { nome: "Lampada lava", stanza: "tutte", cat: "luci", tipo: "acc", w: 20, h: 46, qual: 2, prezzo: 450, stati: "accendi", luce: { x: 0.5, y: 0.45, r: 1.6, c: "#ff922b" }, disegno: function (on) {
+    return svg(20, 46, lin("g", on ? "#ffc078" : "#e9ecef", on ? "#f76707" : "#ced4da", true),
+      Pth("M6 10 L4 34 L16 34 L14 10 Z", "url(#g)", bordo(1.2)) +
+      (on ? "<circle cx='10' cy='28' r='3' fill='#e8590c'>" + anim("cy", "30;14;30", 6) + "</circle><circle cx='9' cy='18' r='2' fill='#d9480f'>" + anim("cy", "14;28;14", 7.5) + "</circle><circle cx='11' cy='22' r='1.4' fill='#e8590c'>" + anim("cy", "26;12;26", 5) + "</circle>" : E(10, 31, 4, 2, "#adb5bd")) +
+      Pth("M6 10 L8 3 L12 3 L14 10 Z", "#868e96", bordo(1)) + Pth("M4 34 L2 44 L18 44 L16 34 Z", "#868e96", bordo(1)));
+  } });
+  ogg("lucine", { nome: "Filo di lucine", stanza: "tutte", cat: "luci", tipo: "muro", w: 120, h: 30, qual: 2, prezzo: 350, stati: "accendi", luce: { x: 0.5, y: 0.5, r: 2.4, c: "#ffe066" }, disegno: function (on) {
+    var s = Pth("M2 4 Q30 26 60 12 Q90 0 118 22", "none", "stroke='#495057' stroke-width='1.2'"), cols = ["#ff6b6b", "#ffd43b", "#69db7c", "#4dabf7", "#f783ac"], i;
+    for (i = 0; i < 11; i++) { var t = i / 10, x = 4 + t * 112, y = t < .5 ? 4 + Math.sin(t * 2 * Math.PI) * 13 + t * 14 : 12 - Math.sin((t - .5) * 2 * Math.PI) * 11 + (t - .5) * 22; s += "<circle cx='" + r1(x) + "' cy='" + r1(y + 4) + "' r='3' fill='" + (on ? cols[i % 5] : "#ced4da") + "' stroke='" + LINEA + "' stroke-width='.6'>" + (on ? anim("opacity", "1;.45;1", (1.2 + (i % 3) * .5).toFixed(1)) : "") + "</circle>"; }
+    return svg(120, 30, "", s);
+  } });
+  ogg("lampada_scrivania", { nome: "Lampada da scrivania", stanza: "tutte", cat: "luci", tipo: "acc", w: 34, h: 40, qual: 2, prezzo: 300, stati: "accendi", luce: { x: 0.75, y: 0.6, r: 1.3, c: "#fff3c4" }, disegno: function (on) {
+    return svg(34, 40, "", E(10, 37, 9, 3, "#1c7ed6", bordo(1)) + Pth("M10 36 L8 18 L22 8", "none", "stroke='#1c7ed6' stroke-width='2.6'") + C(8, 18, 2, "#1864ab") +
+      Pth("M18 4 L32 12 L28 20 L16 12 Z", "#1c7ed6", bordo(1)) + (on ? Pth("M28 20 L34 34 L18 30 Z", "#fff3b0", "opacity='.6'") + C(26, 18, 2.4, "#fff3b0") : C(26, 18, 2.2, "#dee2e6")));
+  } });
+  ogg("neon_cuore", { nome: "Cuore al neon", stanza: "tutte", cat: "luci", tipo: "muro", w: 60, h: 52, qual: 2, prezzo: 900, stati: "accendi", luce: { x: 0.5, y: 0.5, r: 2.2, c: "#ff6b9d" }, disegno: function (on) {
+    var cuore = "M30 46 C8 32 2 20 8 11 C14 2 26 4 30 13 C34 4 46 2 52 11 C58 20 52 32 30 46 Z";
+    return svg(60, 52, "", R(2, 2, 56, 48, "rgba(0,0,0,.12)", 6) + (on ? Pth(cuore, "none", "stroke='#ff8fab' stroke-width='9' opacity='.35'") : "") +
+      Pth(cuore, "none", "stroke='" + (on ? "#ffdeeb" : "#c9a2b3") + "' stroke-width='3.4'") + (on ? Pth(cuore, "none", "stroke='#ff4d8d' stroke-width='1.4'" + "") : ""));
+  } });
+
+  // ---- 🕯️ altre luci ----
+  ogg("candele", { nome: "Candele profumate", stanza: "tutte", cat: "luci", tipo: "acc", w: 34, h: 30, qual: 2, prezzo: 250, stati: "accendi", luce: { x: 0.5, y: 0.3, r: 1.3, c: "#ffd8a8" }, disegno: function (on) {
+    function cand(x, h, c) { var y = 30 - h; return R(x - 4, y, 8, h - 2, c, 2, bordo(1)) + R(x - 0.5, y - 3, 1, 3, "#3b2b22") + (on ? "<path d='M" + x + " " + (y - 10) + " q3 4 0 7 q-3 -3 0 -7 Z' fill='#ffa94d'>" + anim("opacity", "1;.6;1", (0.4 + h / 60).toFixed(2)) + "</path>" + C(x, y - 5, 1.2, "#fff3bf") : ""); }
+    return svg(34, 30, "", E(17, 28, 16, 2.4, "#e9ecef", bordo(1)) + cand(8, 16, "#ffdeeb") + cand(17, 22, "#fff3bf") + cand(26, 13, "#d3f9d8"));
+  } });
+
+  // ---- 📺 elettronica e giochi ----
+  function nota(x, y, c) { return C(x, y, 2.2, c) + R(x + 1.3, y - 8, 1.2, 8, c) + Pth("M" + (x + 2.5) + " " + (y - 8) + " q4 2 3 6", "none", "stroke='" + c + "' stroke-width='1.2'"); }
+  function sale(x, cont, dur, ritardo) {   // una cosa che sale e svanisce (note, scintille, bollicine)
+    return "<g opacity='0'>" + animT("translate", "0 0;" + (x || 0) + " -14", dur, " begin='" + (ritardo || 0) + "s'") + anim("opacity", "0;1;0", dur, " begin='" + (ritardo || 0) + "s'") + cont + "</g>";
+  }
+  ogg("juke_box", { nome: "Juke-box", stanza: "tutte", cat: "elettronica", tipo: "pav", w: 76, h: 134, prof: 0.6, qual: 2, prezzo: 2800, stati: "accendi", luce: { x: 0.5, y: 0.35, r: 2.4, c: "#ffb3d9" }, cosa: "Accendilo e parte la musica 🎶", disegno: function (on) {
+    var s = Pth("M4 132 L4 42 Q4 2 38 2 Q72 2 72 42 L72 132 Z", "url(#l)", bordo()), cols = ["#ff6b6b", "#ffd43b", "#69db7c", "#4dabf7", "#cc5de8"], i;
+    cols.forEach(function (k, i) { var r = 28 - i * 4.5; s += "<path d='M" + (38 - r) + " 50 A" + r + " " + r + " 0 0 1 " + (38 + r) + " 50' fill='none' stroke='" + (on ? k : tono(k, -0.5)) + "' stroke-width='3.4' stroke-linecap='round'>" + (on ? anim("opacity", "1;.4;1", (0.7 + i * 0.25).toFixed(2)) : "") + "</path>"; });
+    s += R(12, 54, 52, 26, "#1b1b1f", 3, bordo(1.4));
+    s += "<g>" + (on ? animT("rotate", "0 38 67;360 38 67", 1.6) : "") + C(38, 67, 10, "#212529") + C(38, 67, 6.5, "none", "stroke='#495057' stroke-width='.8'") + C(38, 67, 3, "#e03131") + R(37.4, 58, 1.2, 4, "#868e96") + "</g>";   // il disco che gira
+    s += R(12, 84, 52, 32, "#c9a26b", 3, bordo(1.4));
+    for (i = 0; i < 6; i++) s += R(16, 88 + i * 4.6, 44, 2.2, "#7a5a3a", 1);
+    s += R(16, 119, 44, 7, "#e9ecef", 2, bordo(1));
+    [22, 30, 38, 46, 54].forEach(function (x, j) { s += C(x, 122.5, 1.6, on ? cols[j] : "#adb5bd"); });
+    if (on) s += sale(-4, nota(18, 30, "#fff"), 1.8) + sale(5, nota(54, 34, "#fff3bf"), 1.8, 0.9);
+    return svg(76, 134, morbido("l", "#a0522d"), s);
+  } });
+  ogg("flipper", { nome: "Flipper", stanza: "tutte", cat: "elettronica", tipo: "pav", w: 64, h: 120, prof: 0.9, qual: 2, prezzo: 3200, uso: "prendi", cibi: ["🕹️", "🏆", "💥"], dura: 4000, cosa: "Ci fai una partita 🕹️", disegno: function (on) {
+    var s = R(6, 2, 52, 40, "#212529", 4, bordo()) + R(10, 6, 44, 30, "url(#sc)", 2), i;
+    for (i = 0; i < 5; i++) s += "<circle cx='" + (16 + i * 8) + "' cy='" + (i % 2 ? 14 : 28) + "' r='2.2' fill='#fff3bf'>" + (on ? anim("opacity", "1;.2;1", (0.4 + i * 0.13).toFixed(2)) : "") + "</circle>";
+    s += Pth("M4 44 L60 44 L56 82 L8 82 Z", "#1c7ed6", bordo()) + C(22, 56, 4, "#ff6b6b", bordo(1)) + C(42, 56, 4, "#ffd43b", bordo(1)) + C(32, 66, 4, "#69db7c", bordo(1)) +
+      Pth("M18 76 L28 79 M46 76 L36 79", "none", "stroke='#fff' stroke-width='2.4' stroke-linecap='round'");
+    s += on ? "<circle r='2.4' fill='#e9ecef' stroke='#3b2b22' stroke-width='.6'><animateMotion path='M32 78 L50 50 L20 54 L40 70 L32 78' dur='1.6s' repeatCount='indefinite'/></circle>" : C(52, 74, 2.4, "#e9ecef", bordo(0.6));
+    s += R(8, 82, 48, 10, "#343a40", 2, bordo(1.4)) + R(10, 92, 5, 26, "#495057", 1, bordo(1)) + R(49, 92, 5, 26, "#495057", 1, bordo(1));
+    return svg(64, 120, lin("sc", on ? "#f783ac" : "#5c3d6e", on ? "#845ef7" : "#2b1d3a", true), s);
+  } });
+  ogg("biliardino", { nome: "Biliardino", stanza: "tutte", cat: "elettronica", tipo: "pav", w: 130, h: 86, prof: 0.8, qual: 2, prezzo: 2200, uso: "prendi", cibi: ["⚽", "🏆", "🥅"], dura: 4000, cosa: "Ci giochi a calcio ⚽", disegno: function (on) {
+    var s = R(2, 22, 126, 10, "url(#l)", 3, bordo()) + Pth("M4 30 L126 30 L118 56 L12 56 Z", "#2f9e44", bordo()) + Pth("M65 30 L65 56", "none", "stroke='#fff' stroke-width='1.2'") + E(65, 43, 9, 5, "none", "stroke='#fff' stroke-width='1.2'"), i, j;
+    s += on ? "<circle cy='44' r='2.6' fill='#fff' stroke='#3b2b22' stroke-width='.6'>" + anim("cx", "30;100;50;92;30", 1.4) + "</circle>" : C(65, 43, 2.6, "#fff", bordo(0.6));
+    for (i = 0; i < 4; i++) { var x = 26 + i * 26; s += R(x - 1, 16, 2, 56, "#adb5bd"); for (j = 0; j < 2; j++) s += R(x - 3, 35 + j * 9, 6, 7, i % 2 ? "#e03131" : "#1c7ed6", 2, bordo(0.7)); s += R(x - 3, 70, 6, 10, "#212529", 2); }
+    return svg(130, 86, morbido("l", "#a0652b"), s + R(10, 54, 110, 14, "url(#l)", 3, bordo()) + R(14, 68, 8, 16, "#5c3a21", 1) + R(108, 68, 8, 16, "#5c3a21", 1));
+  } });
+  ogg("arcade", { nome: "Cabinato arcade", stanza: "tutte", cat: "elettronica", tipo: "pav", w: 70, h: 166, prof: 0.7, qual: 2, prezzo: 3600, uso: "prendi", cibi: ["👾", "🏆", "⭐"], dura: 4000, cosa: "Ci giochi ai videogiochi di una volta 👾", disegno: function (on) {
+    var s = Pth("M8 2 L62 2 L62 70 L68 88 L68 164 L2 164 L2 88 L8 70 Z", "url(#a)", bordo()) + R(10, 6, 50, 14, "#ffd43b", 2, bordo(1.2)) + Pth("M16 13 l3 -3 l3 3 l-3 3 Z M48 13 l3 -3 l3 3 l-3 3 Z", "#e8590c") + R(26, 11, 18, 4, "#e8590c", 2) +
+      R(12, 24, 46, 42, "#1b1b1f", 2, bordo(1.2));
+    if (on) s += R(15, 27, 40, 36, "#1864ab") + "<g>" + animT("translate", "-6 0;6 0;-6 0", 2) + Pth("M24 36 h4 v-2 h4 v2 h4 v4 h-12 Z M26 40 v3 M34 40 v3", "#69db7c", "stroke='#69db7c' stroke-width='1'") + Pth("M38 34 h4 v-2 h4 v2 h4 v4 h-12 Z", "#ff8787") + "</g>" + R(33, 55, 6, 4, "#ffd43b") + "<rect x='35.4' width='1.2' height='3' fill='#fff'>" + anim("y", "52;30;52", 0.8) + "</rect>";
+    else s += R(15, 27, 40, 36, "#212529") + Pth("M18 30 L30 30 L20 50 Z", "#fff", "opacity='.06'");
+    s += Pth("M4 88 L66 88 L62 102 L8 102 Z", "#343a40", bordo(1.2)) + R(20, 84, 3, 8, "#adb5bd") + C(21.5, 83, 3, "#e03131", bordo(0.8)) + C(40, 94, 2.6, "#ffd43b", bordo(0.8)) + C(48, 92, 2.6, "#4dabf7", bordo(0.8)) + C(56, 94, 2.6, "#69db7c", bordo(0.8)) +
+      R(26, 118, 18, 26, "#495057", 2, bordo(1)) + R(33, 124, 4, 9, "#ffd43b", 1);
+    return svg(70, 166, morbido("a", "#7048e8"), s);
+  } });
+  ogg("console", { nome: "Console coi giochi", stanza: "tutte", cat: "elettronica", tipo: "acc", w: 46, h: 22, qual: 2, prezzo: 1200, uso: "prendi", cibi: ["🎮", "🏆", "⭐"], dura: 3500, cosa: "Ci giochi una partita 🎮", disegno: function (on) {
+    return svg(46, 22, "", R(2, 6, 26, 12, "#212529", 3, bordo(1.2)) + C(23, 12, 1.4, on ? "#51cf66" : "#495057") + R(5, 9, 12, 1.2, "#495057") +
+      Pth("M30 12 q0 -5 5 -5 l6 0 q5 0 5 5 l0 3 q0 4 -3 4 q-2 0 -3 -3 l-4 0 q-1 3 -3 3 q-3 0 -3 -4 Z", "#e9ecef", bordo(1)) + C(41, 11, 1, "#e03131") + C(43.2, 13.2, 1, "#1c7ed6") + R(32.6, 11.4, 4.4, 1.2, "#495057") + R(34.2, 9.8, 1.2, 4.4, "#495057"));
+  } });
+  ogg("computer", { nome: "Computer", stanza: "tutte", cat: "elettronica", tipo: "acc", w: 56, h: 50, qual: 2, prezzo: 1800, stati: "accendi", luce: { x: 0.5, y: 0.35, r: 1.6, c: "#a5d8ff" }, cosa: "Accendilo: c'è un videogioco 🖥️", disegno: function (on) {
+    var s = R(4, 2, 48, 32, "#343a40", 3, bordo(1.4)) + R(7, 5, 42, 26, on ? "url(#sc)" : "#1b1b1f", 1);
+    if (on) s += R(7, 25, 42, 6, "#69db7c") + C(40, 11, 3, "#fff3bf") + "<rect x='15' width='5' height='6' fill='#e8590c'>" + anim("y", "19;10;19", 0.9) + "</rect>" + R(30, 21, 5, 4, "#a0652b");
+    else s += Pth("M10 8 L22 8 L12 26 Z", "#fff", "opacity='.06'");
+    return svg(56, 50, lin("sc", "#74c0fc", "#d0ebff", true), s + R(24, 34, 8, 7, "#495057") + R(16, 41, 24, 3, "#495057", 1.5) + R(2, 45, 40, 4, "#dee2e6", 1.5, bordo(1)) + E(49, 47, 3.4, 2.2, "#dee2e6", bordo(0.8)));
+  } });
+  ogg("giradischi", { nome: "Giradischi", stanza: "tutte", cat: "elettronica", tipo: "acc", w: 46, h: 34, qual: 2, prezzo: 900, stati: "accendi", cosa: "Accendilo e suona un disco 🎶", disegno: function (on) {
+    var s = R(2, 20, 42, 12, "url(#l)", 2, bordo(1.2)) + E(20, 20, 15, 4.5, "#212529", bordo(1)) + E(20, 20, 9, 2.7, "none", "stroke='#495057' stroke-width='.8'") + E(20, 20, 3.4, 1.1, "#e03131");
+    if (on) s += "<path d='M10 19 Q20 16 30 19' stroke='#adb5bd' stroke-width='.8' fill='none'>" + anim("opacity", "0;1;0", 0.6) + "</path>" + sale(-3, nota(12, 12, "#e64980"), 1.6) + sale(4, nota(30, 13, "#4dabf7"), 1.6, 0.8);
+    return svg(46, 34, morbido("l", "#a0652b"), s + Pth("M38 16 L36 22 L28 21", "none", "stroke='#adb5bd' stroke-width='1.6' stroke-linecap='round'") + C(38, 16, 2, "#868e96") + C(36, 28, 1.4, on ? "#51cf66" : "#5c3a21") + C(40, 28, 1.4, "#e9ecef"));
+  } });
+  ogg("radio", { nome: "Radio vintage", stanza: "tutte", cat: "elettronica", tipo: "acc", w: 40, h: 30, qual: 2, prezzo: 500, stati: "accendi", cosa: "Accendila e c'è la musica 📻", disegno: function (on) {
+    var s = Pth("M8 9 Q20 1 32 9", "none", bordo(1.6)) + R(2, 8, 36, 20, "#e8590c", 4, bordo(1.2)) + C(12, 18, 7, "#ffe8cc", bordo(1));
+    s += on ? "<circle cx='12' cy='18' fill='#e8590c' opacity='.5'>" + anim("r", "3;5;3", 0.45) + "</circle>" : C(12, 18, 3, "#e8590c", "opacity='.5'");
+    s += R(22, 11, 13, 6, "#fff3bf", 1, bordo(0.8)) + (on ? "<rect y='11.5' width='1' height='5' fill='#e03131'>" + anim("x", "24;32;24", 3) + "</rect>" : R(27, 11.5, 1, 5, "#e03131")) + C(25, 23, 2, "#7a3e1d", bordo(0.6)) + C(32, 23, 2, "#7a3e1d", bordo(0.6));
+    return svg(40, 30, "", s);
+  } });
+  ogg("cassa", { nome: "Cassa con le luci", stanza: "tutte", cat: "elettronica", tipo: "pav", w: 36, h: 90, prof: 0.35, piano: 88, qual: 2, prezzo: 1100, stati: "accendi", luce: { x: 0.5, y: 0.6, r: 1.8, c: "#b197fc" }, cosa: "Accendila: bassi e luci colorate 🔊", disegno: function (on) {
+    var s = R(2, 2, 32, 86, "#212529", 4, bordo()) + C(18, 28, 7, "#343a40", bordo(1.2)) + C(18, 28, 3, "#495057") + C(18, 62, 12, on ? "url(#g)" : "#343a40", bordo(1.2));
+    s += on ? "<circle cx='18' cy='62' fill='#495057'>" + anim("r", "5;7.5;5", 0.45) + "</circle><circle cx='18' cy='62' r='14.5' fill='none' stroke-width='1.6'>" + anim("stroke", "#ff6b6b;#ffd43b;#69db7c;#4dabf7;#cc5de8;#ff6b6b", 2) + "</circle>" : C(18, 62, 5, "#495057");
+    return svg(36, 90, "<radialGradient id='g'><stop offset='0' stop-color='#cc5de8'/><stop offset='1' stop-color='#343a40'/></radialGradient>", s + C(18, 9, 1.6, on ? "#51cf66" : "#495057"));
+  } });
+
+  // ---- 🍹 bar e gelateria (come nei Sims: il tuo angolo bar in casa) ----
+  ogg("bancone_bar", { nome: "Bancone del bar", stanza: "tutte", cat: "bar", tipo: "pav", w: 170, h: 104, prof: 0.6, piano: 100, qual: 2, prezzo: 2600, disegno: function () {
+    var c = "#8b5a2b", s = R(6, 12, 158, 84, "url(#f)", 2, bordo()), i;
+    for (i = 0; i < 9; i++) s += R(12 + i * 17.4, 18, 12, 46, tono(c, 0.1), 2, "opacity='.8'");
+    return svg(170, 104, morbido("f", c) + morbido("t", "#3b2b22"), s + R(6, 68, 158, 4, "#ced4da") + R(10, 86, 150, 4, "#adb5bd", 2, bordo(1)) + R(4, 96, 162, 6, "#3b2b22", 2) + R(2, 2, 166, 11, "url(#t)", 3, bordo()));
+  } });
+  ogg("sgabello_bar", { nome: "Sgabello da bar", stanza: "tutte", cat: "bar", tipo: "pav", w: 42, h: 82, prof: 0.4, qual: 2, prezzo: 450, azione: "siedi", seduta: 78, posti: [21],
+    prezzoColore: 100, colori: [{ id: "rosso", nome: "rosso", c: "#e03131" }, { id: "nero", nome: "nero", c: "#343a40" }, { id: "menta", nome: "menta", c: "#38d9a9" }, { id: "giallo", nome: "giallo", c: "#fcc419" }],
+    disegno: function (on, parte, _, K) {
+      return svg(42, 82, morbido("a", K.c), E(21, 8, 19, 6, "url(#a)", bordo(1.4)) + R(2, 8, 38, 7, tono(K.c, -0.2), 3, bordo(1.2)) + R(19, 15, 4, 56, "#ced4da", 1, bordo(1)) +
+        E(21, 54, 12, 3, "none", "stroke='" + LINEA + "' stroke-width='4'") + E(21, 54, 12, 3, "none", "stroke='#adb5bd' stroke-width='2.2'") + E(21, 77, 15, 4, "#adb5bd", bordo(1.2)));
+    } });
+  ogg("tavolino_bistrot", { nome: "Tavolino da bistrot", stanza: "tutte", cat: "bar", tipo: "pav", w: 60, h: 76, prof: 0.6, piano: 74, qual: 2, prezzo: 500, disegno: function () {
+    return svg(60, 76, "", E(30, 7, 28, 5, "#f8f9fa", bordo()) + R(2, 7, 56, 3, "#dee2e6", 1.5, bordo(1)) + R(28, 10, 4, 58, "#343a40") + E(30, 70, 16, 4, "#343a40", bordo(1.2)) + Pth("M10 6 Q30 2 48 6", "none", "stroke='#ced4da' stroke-width='.8'"));
+  } });
+  ogg("macchina_gelati", { nome: "Macchina dei gelati", stanza: "tutte", cat: "bar", tipo: "pav", w: 70, h: 150, prof: 0.6, qual: 2, prezzo: 3500, uso: "prendi", cibi: ["🍦", "🍨", "🍧"], dura: 2600, cosa: "Ti fai un gelato 🍦", disegno: function (on) {
+    var s = Pth("M8 32 Q35 2 62 32 Z", "#ffc9de", bordo()) + Pth("M30 18 L35 30 L40 18 Z", "#e8a35b", bordo(1)) + C(35, 14, 5.4, "#ff8fab", bordo(1)) + C(35, 9, 3.4, "#fff3bf", bordo(0.8)) +
+      R(4, 30, 62, 100, "url(#a)", 8, bordo()) + R(10, 38, 50, 14, "#ffdeeb", 3, bordo(1.2)) + C(20, 45, 3, "#ff8fab") + C(35, 45, 3, "#fff3bf", bordo(0.5)) + C(50, 45, 3, "#a0652b");
+    [20, 35, 50].forEach(function (x) { s += R(x - 4, 58, 8, 10, "#ced4da", 2, bordo(1)) + R(x - 1, 54, 2, 6, "#868e96") + R(x - 3, 52, 6, 3, "#e03131", 1.5); });
+    s += R(10, 96, 50, 6, "#adb5bd", 2, bordo(1));
+    if (on) s += Pth("M30 82 L35 95 L40 82 Z", "#e8a35b", bordo(1)) + Pth("M29 82 Q35 64 41 82 Z M31 76 Q35 70 39 76", "#ff8fab", bordo(1)) + "<rect x='34' y='68' width='2' height='8' fill='#ff8fab'>" + anim("height", "2;8;2", 0.8) + "</rect>";
+    return svg(70, 150, morbido("a", "#f8f9fa"), s + R(8, 130, 54, 18, "#ff8fab", 4, bordo()) + R(14, 136, 42, 3, "#fff", 1.5, "opacity='.6'"));
+  } });
+  ogg("distributore_bibite", { nome: "Distributore di bibite", stanza: "tutte", cat: "bar", tipo: "pav", w: 76, h: 176, prof: 0.7, qual: 2, prezzo: 2800, uso: "prendi", cibi: ["🥤", "🧃", "🧋"], dura: 2400, suono: "lattina", cosa: "Ti prendi una bibita 🥤", disegno: function (on) {
+    var s = R(2, 2, 72, 172, "url(#a)", 5, bordo()) + R(8, 10, 42, 118, "#e7f5ff", 2, bordo(1.4)), cols = ["#e03131", "#1c7ed6", "#40c057", "#fab005", "#f76707"], r, c;
+    for (r = 0; r < 5; r++) { for (c = 0; c < 5; c++) s += R(11 + c * 7.6, 14 + r * 23, 5.6, 16, cols[(r + c) % 5], 1.5, bordo(0.6)); s += R(8, 31 + r * 23, 42, 2, "#adb5bd"); }
+    s += Pth("M12 14 L26 14 L14 60 Z", "#fff", "opacity='.35'") + R(54, 14, 16, 22, "#212529", 2) + (on ? R(56, 18, 12, 6, "#51cf66", 1) : R(56, 18, 12, 6, "#2b8a3e", 1, "opacity='.4'"));
+    for (r = 0; r < 3; r++) for (c = 0; c < 3; c++) s += C(57 + c * 5, 44 + r * 6, 1.8, "#dee2e6", bordo(0.6));
+    s += R(58, 68, 8, 12, "#495057", 1.5) + R(61, 70, 2, 8, "#212529") + R(10, 140, 40, 18, "#212529", 2, bordo(1.2));
+    if (on) s += "<rect x='26' width='6' height='10' rx='1.5' fill='#e03131' stroke='#3b2b22' stroke-width='.6'>" + anim("y", "118;146;146;146", 1.6) + "</rect>";
+    return svg(76, 176, morbido("a", "#e03131"), s);
+  } });
+  ogg("popcorn", { nome: "Carretto dei popcorn", stanza: "tutte", cat: "bar", tipo: "pav", w: 60, h: 124, prof: 0.5, qual: 2, prezzo: 1600, uso: "prendi", cibi: ["🍿"], dura: 2400, suono: "pop", cosa: "Ti fai i popcorn 🍿", disegno: function (on) {
+    var s = Pth("M4 16 L56 16 L50 4 L10 4 Z", "#e03131", bordo(1.4)) + Pth("M17 4 L14 16 M30 4 L30 16 M43 4 L46 16", "none", "stroke='#fff' stroke-width='3.4'") + R(8, 16, 44, 40, "#fff9db", 2, bordo(1.4)), i;
+    for (i = 0; i < 22; i++) s += C(12 + (i * 7.3) % 36, 52 - Math.floor(i / 6) * 4.4 - (i % 3), 2.6, i % 3 ? "#fff3bf" : "#ffe066", "stroke='#e8c27a' stroke-width='.5'");
+    if (on) for (i = 0; i < 4; i++) s += "<circle cx='" + (16 + i * 9) + "' r='2.4' fill='#fff3bf' stroke='#e8c27a' stroke-width='.5'>" + anim("cy", "40;22;40", (0.6 + i * 0.15).toFixed(2), " begin='" + (i * 0.2).toFixed(1) + "s'") + "</circle>";
+    s += R(24, 18, 12, 8, "#868e96", 2, bordo(0.8)) + R(6, 56, 48, 46, "#e03131", 3, bordo()) + R(12, 64, 36, 30, "#fff", 2, "opacity='.9'") + Pth("M20 70 l20 0 l-3 18 l-14 0 Z", "#e03131", bordo(1)) + Pth("M24 70 l2 18 M30 70 l0 18 M36 70 l-2 18", "none", "stroke='#fff' stroke-width='1.6'");
+    return svg(60, 124, "", s + C(14, 112, 9, "#495057", bordo(1.4)) + C(14, 112, 3, "#adb5bd") + C(46, 112, 9, "#495057", bordo(1.4)) + C(46, 112, 3, "#adb5bd"));
+  } });
+  ogg("zucchero_filato", { nome: "Zucchero filato", stanza: "tutte", cat: "bar", tipo: "pav", w: 56, h: 110, prof: 0.5, qual: 2, prezzo: 1400, uso: "prendi", cibi: ["🍭", "🩷"], dura: 2600, cosa: "Ti fai lo zucchero filato 🍭", disegno: function (on) {
+    var s = C(12, 20, 9, "#ffc9de", bordo(1)) + R(11.4, 28, 1.2, 18, "#fff", 0, bordo(0.4)) + C(44, 16, 8, "#d0bfff", bordo(1)) + R(43.4, 23, 1.2, 22, "#fff", 0, bordo(0.4)) +
+      Pth("M4 46 L10 58 L46 58 L52 46 Z", "#dee2e6", bordo(1.2)) + E(28, 46, 24, 6, "#f1f3f5", bordo(1.2));
+    s += on ? "<ellipse cx='28' cy='42' rx='14' fill='#ffc9de' stroke='#3b2b22' stroke-width='1'>" + anim("ry", "4;9;4", 1.4) + "</ellipse>" : E(28, 45, 6, 2, "#ffc9de");
+    return svg(56, 110, "", s + R(6, 58, 44, 40, "#74c0fc", 3, bordo()) + Pth("M16 58 L16 98 M28 58 L28 98 M40 58 L40 98", "none", "stroke='#fff' stroke-width='3.4' opacity='.7'") + C(14, 102, 7, "#495057", bordo(1.2)) + C(42, 102, 7, "#495057", bordo(1.2)));
+  } });
+  ogg("espresso_bar", { nome: "Macchina dell'espresso", stanza: "tutte", cat: "bar", tipo: "acc", w: 44, h: 40, qual: 2, prezzo: 900, uso: "prendi", cibi: ["☕"], dura: 2400, cosa: "Ti fai un caffè ☕", disegno: function (on) {
+    var s = R(4, 4, 36, 30, "url(#a)", 4, bordo(1.2)) + R(8, 8, 28, 8, "#343a40", 2) + C(30, 12, 3, "#fff", bordo(0.8)) + R(29.6, 10, 0.8, 2.4, "#e03131") + R(14, 18, 16, 5, "#495057", 1) + R(8, 9, 3, 6, "#e03131", 1) +
+      R(17, 27, 10, 7, "#fff", 1.5, bordo(0.8));
+    if (on) s += "<rect x='21.4' y='23' width='1.2' fill='#5c3a21'>" + anim("height", "0;4;4;0", 1.2) + "</rect>" + R(18, 28, 8, 2.4, "#7a4a2a");
+    return svg(44, 40, morbido("a", "#ced4da"), s + R(2, 34, 40, 5, "#495057", 2, bordo(1)));
+  } });
+  ogg("frigobar", { nome: "Frigo bar con le bibite", stanza: "tutte", cat: "bar", tipo: "pav", w: 56, h: 88, prof: 0.5, piano: 86, qual: 2, prezzo: 1100, stati: "accendi", luce: { x: 0.5, y: 0.5, r: 1.6, c: "#d0ebff" }, cosa: "Accendilo: dentro si illumina 🧃", disegno: function (on) {
+    var s = R(2, 2, 52, 84, "#343a40", 4, bordo()) + R(7, 7, 42, 72, on ? "#e7f5ff" : "#1b1b1f", 2), cols = ["#e03131", "#40c057", "#fab005", "#1c7ed6"], r, c;
+    for (r = 0; r < 3; r++) { for (c = 0; c < 4; c++) s += R(10 + c * 10, 12 + r * 23, 6, 16, cols[(r + c) % 4], 2, "opacity='" + (on ? 1 : 0.5) + "'"); s += R(7, 29 + r * 23, 42, 1.6, "#adb5bd"); }
+    return svg(56, 88, "", s + R(7, 7, 42, 72, "#a5d8ff", 2, "opacity='.18' stroke='#adb5bd' stroke-width='1.4'") + Pth("M10 10 L22 10 L12 40 Z", "#fff", "opacity='.25'") + R(44, 30, 3, 20, "#ced4da", 1.5));
+  } });
+  ogg("insegna_bar", { nome: "Insegna al neon BAR", stanza: "tutte", cat: "bar", tipo: "muro", w: 100, h: 40, qual: 2, prezzo: 1200, stati: "accendi", luce: { x: 0.5, y: 0.5, r: 2.6, c: "#ff8fd8" }, disegno: function (on) {
+    var d = "M12 8 L12 32 M12 8 L21 8 Q27 8 27 14 Q27 20 21 20 L12 20 M21 20 Q28 20 28 26 Q28 32 21 32 L12 32 M36 32 L44 8 L52 32 M39 23 L49 23 M60 32 L60 8 L69 8 Q76 8 76 14 Q76 20 69 20 L60 20 M68 20 L77 32 M84 10 L96 10 L90 18 Z M90 18 L90 28 M86 29 L94 29";
+    return svg(100, 40, "", R(2, 2, 96, 36, "#212529", 6, "opacity='.88'") + (on ? Pth(d, "none", "stroke='#ff8fd8' stroke-width='6' opacity='.35' stroke-linecap='round' stroke-linejoin='round'") : "") +
+      Pth(d, "none", "stroke='" + (on ? "#ffe3f6" : "#8f7a88") + "' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'"));
+  } });
+
+  // ---- 🍳 cucina ----
+  ogg("microonde", { nome: "Microonde", stanza: "tutte", cat: "cucina", tipo: "acc", w: 50, h: 30, qual: 2, prezzo: 600, uso: "prendi", cibi: ["🍕", "🍿", "🌭"], dura: 2600, cosa: "Ci scaldi qualcosa 🍕", disegno: function (on) {
+    var s = R(2, 2, 46, 26, "url(#a)", 3, bordo(1.2)) + R(5, 5, 30, 20, on ? "#ffe066" : "#343a40", 2, bordo(1));
+    if (on) s += E(20, 21, 9, 2, "#fff") + "<g>" + animT("translate", "-3 0;3 0;-3 0", 1.2) + C(20, 17.5, 3.4, "#e8590c") + "</g>";
+    return svg(50, 30, morbido("a", "#e9ecef"), s + R(37, 5, 8, 20, "#ced4da", 1) + C(41, 9, 1.4, "#868e96") + C(41, 13.4, 1.4, "#868e96") + R(38, 18, 6, 3.4, on ? "#51cf66" : "#212529", 0.5));
+  } });
+  ogg("macchina_caffe", { nome: "Macchinetta del caffè", stanza: "tutte", cat: "cucina", tipo: "acc", w: 26, h: 36, qual: 2, prezzo: 450, uso: "prendi", cibi: ["☕"], dura: 2200, cosa: "Ti fai un caffè ☕", disegno: function (on) {
+    var s = R(3, 2, 20, 8, "#212529", 2, bordo(1)) + R(5, 10, 16, 18, "#343a40", 1) + R(3, 28, 20, 6, "#212529", 2, bordo(1)) + R(9, 21, 8, 7, "#fff", 1.5, bordo(0.7)) + C(18, 6, 1, on ? "#ff6b6b" : "#495057");
+    if (on) s += "<rect x='12.4' y='12' width='1.2' fill='#5c3a21'>" + anim("height", "0;9;9;0", 1.2) + "</rect>";
+    return svg(26, 36, "", s);
+  } });
+  ogg("tostapane", { nome: "Tostapane", stanza: "tutte", cat: "cucina", tipo: "acc", w: 32, h: 26, qual: 2, prezzo: 250, uso: "prendi", cibi: ["🍞"], dura: 2000, suono: "pop", cosa: "Ti fai il pane tostato 🍞", disegno: function (on) {
+    var pane = function (x) { return R(x, on ? 2 : 9, 9, 10, "#e8a35b", 3, bordo(0.8)) + R(x + 1.5, on ? 3.5 : 10.5, 6, 6, "#f4c98a", 2); };
+    return svg(32, 26, morbido("a", "#ced4da"), pane(6) + pane(17) + R(2, 9, 28, 15, "url(#a)", 5, bordo(1.2)) + R(4, 9, 24, 2, "#495057", 1) + R(26, 14, 4, 2, "#212529", 1));
+  } });
+  ogg("frullatore", { nome: "Frullatore", stanza: "tutte", cat: "cucina", tipo: "acc", w: 22, h: 38, qual: 2, prezzo: 350, uso: "prendi", cibi: ["🥤", "🍓"], dura: 2400, cosa: "Ti fai un frullato 🍓", disegno: function (on) {
+    var s = R(5, 1, 12, 3, "#212529", 1) + Pth("M4 4 L18 4 L16 26 L6 26 Z", "#e7f5ff", bordo(1)) + Pth("M5 14 L17 14 L16 26 L6 26 Z", "#ff8787");
+    if (on) s += "<g>" + animT("rotate", "0 11 20;360 11 20", 0.3) + Pth("M7 20 L15 20", "none", "stroke='#fff' stroke-width='1.4'") + "</g>";
+    return svg(22, 38, "", s + R(3, 26, 16, 10, "#e03131", 2, bordo(1)) + C(11, 31, 2, on ? "#51cf66" : "#fff"));
+  } });
+  ogg("lavello", { nome: "Lavello con mobile", stanza: "tutte", cat: "cucina", tipo: "pav", w: 100, h: 92, prof: 0.6, piano: 88, qual: 2, prezzo: 1300, uso: "acqua", disegno: function (on) {
+    var s = R(2, 18, 96, 6, "#ced4da", 2, bordo(1.2)) + R(4, 24, 92, 66, "url(#a)", 2, bordo()) + R(8, 30, 40, 56, tono("#d8e2dc", 0.1), 2, bordo(1.2)) + R(52, 30, 40, 56, tono("#d8e2dc", 0.1), 2, bordo(1.2)) + R(42, 54, 2.4, 10, "#868e96", 1) + R(56, 54, 2.4, 10, "#868e96", 1) +
+      Pth("M50 18 L50 6 Q50 2 56 2 L60 2 L60 6", "none", "stroke='#adb5bd' stroke-width='3'");
+    if (on) s += "<rect x='58.6' y='6' width='2.4' height='12' fill='#74c0fc'>" + anim("opacity", "1;.6;1", 0.3) + "</rect>";
+    return svg(100, 92, morbido("a", "#d8e2dc"), s);
+  } });
+  ogg("pensile", { nome: "Pensile della cucina", stanza: "tutte", cat: "cucina", tipo: "muro", w: 90, h: 50, qual: 2, prezzo: 700, stati: "apri", disegno: function (on) {
+    var s = R(2, 2, 86, 46, "url(#a)", 3, bordo());
+    if (!on) s += R(6, 6, 38, 38, tono("#f4efe6", 0.3), 2, bordo(1.2)) + R(46, 6, 38, 38, tono("#f4efe6", 0.3), 2, bordo(1.2)) + R(38, 20, 2.4, 10, "#868e96", 1) + R(50, 20, 2.4, 10, "#868e96", 1);
+    else s += R(6, 6, 78, 38, "#e9e1d3", 2) + R(6, 24, 78, 2, "#c8b9a6") + R(10, 12, 8, 12, "#ffd43b", 2, bordo(0.8)) + R(20, 10, 8, 14, "#ff8787", 2, bordo(0.8)) + R(32, 14, 10, 10, "#e9ecef", 2, bordo(0.8)) + R(56, 30, 10, 12, "#a0652b", 2, bordo(0.8)) + R(70, 32, 10, 10, "#69db7c", 2, bordo(0.8)) + R(14, 30, 24, 12, "#fff", 2, bordo(0.8));
+    return svg(90, 50, morbido("a", "#f4efe6"), s);
+  } });
+
+  // ---- 🛁 bagno ----
+  ogg("lavatrice", { nome: "Lavatrice", stanza: "tutte", cat: "bagno", tipo: "pav", w: 62, h: 86, prof: 0.6, piano: 84, qual: 2, prezzo: 1400, stati: "accendi", cosa: "Accendila e il bucato gira 🌀", disegno: function (on) {
+    var s = R(2, 2, 58, 82, "url(#a)", 4, bordo()) + R(6, 6, 50, 12, "#e9ecef", 2, bordo(1)) + C(46, 12, 3.4, "#ced4da", bordo(0.8)) + R(10, 10, 14, 4, on ? "#51cf66" : "#adb5bd", 1) + C(31, 50, 21, "#ced4da", bordo(1.4)) + C(31, 50, 16, "#a5d8ff");
+    s += "<g>" + (on ? animT("rotate", "0 31 50;360 31 50", 1.2) : "") + E(25, 54, 7, 4, "#e64980") + E(37, 46, 6, 4, "#ffd43b") + E(30, 44, 5, 3, "#4dabf7") + "</g>" + Pth("M20 40 Q24 36 30 36", "none", "stroke='#fff' stroke-width='2' opacity='.7'");
+    return svg(62, 86, morbido("a", "#f8f9fa"), s);
+  } });
+  ogg("cesto_bucato", { nome: "Cesto del bucato", stanza: "tutte", cat: "bagno", tipo: "pav", w: 46, h: 56, prof: 0.4, qual: 2, prezzo: 200, disegno: function () {
+    var s = Pth("M8 12 Q14 0 22 10 Q30 2 38 12 Z", "#4dabf7", bordo(1)) + Pth("M18 12 Q24 4 30 12", "#ff8787", bordo(1)) + Pth("M4 12 L42 12 L38 54 L8 54 Z", "url(#a)", bordo()), i;
+    for (i = 0; i < 5; i++) s += Pth("M6 " + (20 + i * 7) + " L40 " + (20 + i * 7), "none", "stroke='" + tono("#d9b77e", -0.25) + "' stroke-width='1'");
+    return svg(46, 56, morbido("a", "#d9b77e"), s + R(2, 10, 42, 5, "#c99a5c", 2, bordo(1.2)));
+  } });
+  ogg("porta_asciugamani", { nome: "Asciugamani appesi", stanza: "tutte", cat: "bagno", tipo: "muro", w: 56, h: 56, qual: 2, prezzo: 300, disegno: function () {
+    return svg(56, 56, "", R(2, 4, 52, 3, "#adb5bd", 1.5, bordo(1)) + R(6, 5, 20, 46, "#ff8fab", 3, bordo(1.2)) + R(6, 40, 20, 3, "#fff", 0, "opacity='.7'") + R(30, 5, 20, 38, "#74c0fc", 3, bordo(1.2)) + R(30, 32, 20, 3, "#fff", 0, "opacity='.7'"));
+  } });
+  ogg("specchio_luci", { nome: "Specchio con le luci", stanza: "tutte", cat: "quadri", tipo: "muro", w: 60, h: 76, qual: 2, prezzo: 1100, stati: "accendi", luce: { x: 0.5, y: 0.5, r: 1.8, c: "#fff3c4" }, disegno: function (on) {
+    var s = R(2, 2, 56, 72, "#f8f9fa", 6, bordo(1.6)) + R(9, 9, 42, 58, "url(#v)", 3, bordo(1)) + Pth("M14 14 L26 14 L14 34 Z", "#fff", "opacity='.6'"), i;
+    for (i = 0; i < 5; i++) s += C(5.5, 10 + i * 14, 2.6, on ? "#fff3b0" : "#dee2e6", bordo(0.6)) + C(54.5, 10 + i * 14, 2.6, on ? "#fff3b0" : "#dee2e6", bordo(0.6));
+    return svg(60, 76, lin("v", "#d0ebff", "#a5d8ff", true), s);
+  } });
+
+  // ---- 🪴 piante ----
+  function foglia(x, y, r, a, c) { return "<g transform='translate(" + x + " " + y + ") rotate(" + a + ")'>" + Pth("M0 0 Q" + (r * 0.5) + " -" + (r * 0.5) + " 0 -" + r + " Q-" + (r * 0.5) + " -" + (r * 0.5) + " 0 0 Z", c, bordo(0.9)) + "</g>"; }
+  ogg("bonsai", { nome: "Bonsai", stanza: "tutte", cat: "piante", tipo: "acc", w: 40, h: 34, qual: 2, prezzo: 600, disegno: function () {
+    return svg(40, 34, "", Pth("M20 24 Q18 16 12 14 M19 20 Q24 14 30 12", "none", "stroke='#5c3a21' stroke-width='3' stroke-linecap='round'") + E(12, 11, 9, 6, "#2f9e44", bordo(1)) + E(29, 9, 9, 6, "#37b24d", bordo(1)) + E(20, 6, 7, 4.4, "#40c057", bordo(1)) +
+      Pth("M4 24 L36 24 L32 32 L8 32 Z", "#1c7ed6", bordo(1.2)) + R(3, 22, 34, 3.4, "#1864ab", 1.5, bordo(0.8)));
+  } });
+  ogg("ficus", { nome: "Ficus", stanza: "tutte", cat: "piante", tipo: "pav", w: 60, h: 150, prof: 0.5, qual: 2, prezzo: 900, disegno: function () {
+    var s = Pth("M30 112 Q28 80 32 40", "none", "stroke='#7a4a2a' stroke-width='4'"), i;
+    for (i = 0; i < 16; i++) s += foglia(30 + Math.sin(i * 2.3) * 16, 18 + i * 5.6, 12, (i % 2 ? 50 : -50) + Math.sin(i) * 20, i % 3 ? "#2f9e44" : "#40c057");
+    return svg(60, 150, morbido("v", "#f1f3f5"), s + Pth("M12 110 L48 110 L44 148 L16 148 Z", "url(#v)", bordo()) + R(10, 106, 40, 7, "#dee2e6", 3, bordo(1.4)));
+  } });
+  ogg("girasoli", { nome: "Vaso di girasoli", stanza: "tutte", cat: "piante", tipo: "acc", w: 28, h: 50, qual: 2, prezzo: 300, disegno: function () {
+    function fiore(x, y) { var s = "", i; for (i = 0; i < 8; i++) s += E(x + Math.cos(i * 0.785) * 4.4, y + Math.sin(i * 0.785) * 4.4, 2.6, 1.6, "#fcc419", "transform='rotate(" + (i * 45) + " " + r1(x + Math.cos(i * 0.785) * 4.4) + " " + r1(y + Math.sin(i * 0.785) * 4.4) + ")'"); return s + C(x, y, 3, "#7a4a2a"); }
+    return svg(28, 50, "", Pth("M9 30 L8 14 M14 30 L14 8 M19 30 L21 16", "none", "stroke='#2f9e44' stroke-width='1.6'") + fiore(8, 14) + fiore(14, 8) + fiore(21, 16) + Pth("M6 30 L22 30 L20 48 L8 48 Z", "#4dabf7", bordo(1.2)));
+  } });
+  ogg("orchidea", { nome: "Orchidea", stanza: "tutte", cat: "piante", tipo: "acc", w: 26, h: 44, qual: 2, prezzo: 500, disegno: function () {
+    function fiore(x, y) { return C(x - 2.6, y, 2.6, "#f3d9fa", bordo(0.5)) + C(x + 2.6, y, 2.6, "#f3d9fa", bordo(0.5)) + C(x, y - 2.6, 2.4, "#eebefa", bordo(0.5)) + C(x, y + 2, 1.6, "#cc5de8"); }
+    return svg(26, 44, "", Pth("M10 30 Q8 12 18 6", "none", "stroke='#5c940d' stroke-width='1.2'") + fiore(17, 7) + fiore(12, 13) + fiore(9, 20) + E(8, 30, 6, 2.4, "#2f9e44", "transform='rotate(-20 8 30)'") + E(18, 30, 6, 2.4, "#37b24d", "transform='rotate(20 18 30)'") + Pth("M5 31 L21 31 L19 42 L7 42 Z", "#fff", bordo(1.2)));
+  } });
+  ogg("palma", { nome: "Palma da salotto", stanza: "tutte", cat: "piante", tipo: "pav", w: 90, h: 180, prof: 0.6, qual: 2, prezzo: 1300, disegno: function () {
+    var s = Pth("M45 140 Q42 100 46 40", "none", "stroke='#a0652b' stroke-width='6'"), i;
+    for (i = 0; i < 7; i++) { var a = -150 + i * 20; s += "<g transform='translate(46 40) rotate(" + a + ")'>" + Pth("M0 0 Q20 -8 42 4 Q20 -2 0 0 Z", i % 2 ? "#2f9e44" : "#40c057", bordo(1)) + "</g>"; }
+    return svg(90, 180, morbido("v", "#d9480f"), s + Pth("M26 140 L64 140 L58 178 L32 178 Z", "url(#v)", bordo()) + R(24, 136, 42, 7, "#c2410c", 3, bordo(1.4)));
+  } });
+  ogg("pianta_appesa", { nome: "Pianta appesa", stanza: "tutte", cat: "piante", tipo: "muro", w: 50, h: 74, qual: 2, prezzo: 450, disegno: function () {
+    var s = Pth("M25 0 L12 30 M25 0 L38 30", "none", "stroke='#c99a5c' stroke-width='1.2'") + Pth("M10 30 L40 30 L36 44 L14 44 Z", "#e8590c", bordo(1.2)), i;
+    for (i = 0; i < 5; i++) s += Pth("M" + (14 + i * 5.5) + " 40 Q" + (10 + i * 6) + " " + (54 + (i % 2) * 8) + " " + (12 + i * 6) + " " + (62 + (i % 3) * 4), "none", "stroke='#2f9e44' stroke-width='1.4'") + foglia(12 + i * 6, 62 + (i % 3) * 4, 6, 180, "#40c057");
+    return svg(50, 74, "", s + foglia(14, 32, 9, -40, "#37b24d") + foglia(36, 32, 9, 40, "#37b24d") + foglia(25, 30, 10, 0, "#40c057"));
+  } });
+
+  // ---- 🖼️ quadri e specchi ----
+  ogg("quadro_tramonto", { nome: "Quadro del tramonto", stanza: "tutte", cat: "quadri", tipo: "muro", w: 72, h: 50, qual: 2, prezzo: 600, disegno: function () {
+    return svg(72, 50, lin("c", "#ff922b", "#ffd43b", true), R(2, 2, 68, 46, "#5c3a21", 3, bordo(1.6)) + R(6, 6, 60, 38, "url(#c)") + C(36, 30, 9, "#fff3bf") + R(6, 30, 60, 14, "#e8590c") + Pth("M6 30 L20 18 L32 30 Z", "#862e9c") + Pth("M40 30 L54 14 L66 26 L66 30 Z", "#5f3dc4") + Pth("M14 36 L58 36 M20 40 L52 40", "none", "stroke='#ffd43b' stroke-width='1.2' opacity='.7'"));
+  } });
+  ogg("quadro_gatto", { nome: "Ritratto del gatto", stanza: "tutte", cat: "quadri", tipo: "muro", w: 44, h: 54, qual: 2, prezzo: 450, disegno: function () {
+    return svg(44, 54, "", R(2, 2, 40, 50, "#d4a72c", 4, bordo(1.6)) + R(6, 6, 32, 42, "#d0ebff") + Pth("M12 44 Q12 26 22 26 Q32 26 32 44 Z", "#ff922b", bordo(1)) + C(22, 22, 8, "#ff922b", bordo(1)) + Pth("M15 17 L16 9 L20 15 M29 17 L28 9 L24 15", "#ff922b", bordo(1)) + C(19, 21, 1.2, "#3b2b22") + C(25, 21, 1.2, "#3b2b22") + Pth("M21 25 L22 26 L23 25", "none", bordo(0.6)) + R(14, 36, 16, 3, "#e03131", 1.5));
+  } });
+  ogg("mappa_mondo", { nome: "Mappa del mondo", stanza: "tutte", cat: "quadri", tipo: "muro", w: 96, h: 58, qual: 2, prezzo: 800, disegno: function () {
+    return svg(96, 58, "", R(2, 2, 92, 54, "#fff9db", 2, bordo(1.4)) + R(6, 6, 84, 46, "#a5d8ff") + Pth("M12 14 Q22 8 30 14 Q34 20 28 26 Q22 30 26 40 L20 42 Q14 30 12 22 Z", "#8ce99a", bordo(0.8)) + Pth("M42 12 Q50 8 54 14 Q50 18 52 24 Q56 36 50 44 Q44 36 44 26 Q40 20 42 12 Z", "#ffe066", bordo(0.8)) + Pth("M58 12 Q72 6 84 14 Q86 22 76 24 Q70 30 62 26 Q56 20 58 12 Z", "#ffc9c9", bordo(0.8)) + Pth("M72 36 Q80 34 84 40 Q80 46 72 44 Z", "#d0bfff", bordo(0.8)) + C(30, 34, 1.6, "#e03131"));
+  } });
+  ogg("quadro_astratto", { nome: "Quadro moderno", stanza: "tutte", cat: "quadri", tipo: "muro", w: 60, h: 60, qual: 2, prezzo: 700, disegno: function () {
+    return svg(60, 60, "", R(2, 2, 56, 56, "#212529", 2, bordo(1.4)) + R(5, 5, 50, 50, "#f8f9fa") + R(5, 5, 22, 28, "#e03131") + R(30, 36, 25, 19, "#1c7ed6") + R(40, 5, 15, 14, "#fcc419") + Pth("M27 5 L27 55 M5 33 L55 33 M40 5 L40 33 M30 36 L30 55", "none", "stroke='#212529' stroke-width='2.4'"));
+  } });
+  ogg("poster_spazio", { nome: "Poster dello spazio", stanza: "tutte", cat: "quadri", tipo: "muro", w: 48, h: 66, qual: 2, prezzo: 350, disegno: function () {
+    return svg(48, 66, lin("c", "#1b1b3a", "#5f3dc4", true), R(2, 2, 44, 62, "url(#c)", 1, bordo(1.2)) + C(30, 20, 9, "#ff922b", bordo(0.8)) + E(30, 20, 15, 3, "none", "stroke='#ffd43b' stroke-width='1.4'") + C(12, 12, 1, "#fff") + C(40, 44, 1.2, "#fff") + C(8, 40, 0.8, "#fff") +
+      Pth("M14 56 L20 40 L26 56 Z", "#e9ecef", bordo(0.8)) + Pth("M17 56 L20 62 L23 56 Z", "#ff922b") + C(20, 47, 2, "#4dabf7"));
+  } });
+  ogg("mensola_trofei", { nome: "Mensola dei trofei", stanza: "tutte", cat: "quadri", tipo: "muro", w: 70, h: 42, qual: 2, prezzo: 900, disegno: function () {
+    function coppa(x, c, h) { return Pth("M" + (x - 6) + " " + (34 - h) + " L" + (x + 6) + " " + (34 - h) + " Q" + (x + 6) + " " + (28 - h * 0.4) + " " + x + " " + (28 - h * 0.3) + " Q" + (x - 6) + " " + (28 - h * 0.4) + " " + (x - 6) + " " + (34 - h) + " Z", c, bordo(1)) + R(x - 1, 28 - h * 0.3, 2, 4 + h * 0.3, c) + R(x - 4, 31, 8, 3, tono(c, -0.2), 1, bordo(0.6)); }
+    return svg(70, 42, "", coppa(14, "#ced4da", 14) + coppa(35, "#fcc419", 22) + coppa(56, "#d9480f", 10) + R(2, 34, 66, 5, "#8b5a2b", 1.5, bordo(1.2)));
+  } });
+
+  // ---- 🧸 tappeti e decorazioni ----
+  ogg("tappeto_tondo", { nome: "Tappeto tondo", stanza: "tutte", cat: "deco", tipo: "tappeto", w: 140, h: 44, qual: 2, prezzo: 600,
+    prezzoColore: 120, colori: [{ id: "azzurro", nome: "azzurro", c: "#74c0fc", k: "#d0ebff" }, { id: "rosa", nome: "rosa", c: "#f783ac", k: "#ffdeeb" }, { id: "verde", nome: "verde", c: "#69db7c", k: "#d3f9d8" }, { id: "giallo", nome: "giallo", c: "#fcc419", k: "#fff3bf" }, { id: "grigio", nome: "grigio", c: "#868e96", k: "#e9ecef" }],
+    disegno: function (on, parte, _, K) {
+      return svg(140, 44, "", E(70, 22, 68, 20, K.c, bordo(1.6)) + E(70, 22, 54, 15, K.k) + E(70, 22, 40, 11, K.c) + E(70, 22, 26, 7, K.k) + E(70, 22, 12, 3.4, K.c));
+    } });
+  ogg("tappeto_pelo", { nome: "Tappeto di pelo bianco", stanza: "tutte", cat: "deco", tipo: "tappeto", w: 150, h: 46, qual: 2, prezzo: 800, disegno: function () {
+    var s = E(75, 23, 72, 21, "#f8f9fa", bordo(1.4)), i;
+    for (i = 0; i < 26; i++) { var a = i / 26 * Math.PI * 2; s += Pth("M" + r1(75 + Math.cos(a) * 70) + " " + r1(23 + Math.sin(a) * 20) + " l" + r1(Math.cos(a) * 4) + " " + r1(Math.sin(a) * 3), "none", "stroke='#dee2e6' stroke-width='2' stroke-linecap='round'"); }
+    return svg(150, 46, "", s + E(60, 18, 20, 5, "#fff") + E(95, 28, 16, 4, "#e9ecef"));
+  } });
+  ogg("orsacchiotto", { nome: "Orsacchiotto", stanza: "tutte", cat: "deco", tipo: "acc", w: 30, h: 34, qual: 2, prezzo: 300, disegno: function () {
+    var c = "#c08a55";
+    return svg(30, 34, "", C(8, 6, 4, c, bordo(1)) + C(22, 6, 4, c, bordo(1)) + E(15, 25, 10, 8, c, bordo(1.2)) + C(15, 12, 8, c, bordo(1.2)) + E(15, 15, 3.6, 2.6, "#f1d3b0") + C(15, 14, 1.2, "#3b2b22") + C(12, 10.5, 1, "#3b2b22") + C(18, 10.5, 1, "#3b2b22") + E(6, 31, 4, 3, c, bordo(1)) + E(24, 31, 4, 3, c, bordo(1)) + Pth("M11 19 L15 21 L19 19 L19 23 L15 21 L11 23 Z", "#e03131", bordo(0.6)));
+  } });
+  ogg("mappamondo", { nome: "Mappamondo", stanza: "tutte", cat: "deco", tipo: "acc", w: 28, h: 40, qual: 2, prezzo: 450, disegno: function () {
+    return svg(28, 40, "", Pth("M5 16 A11 11 0 0 0 23 24", "none", "stroke='#d4a72c' stroke-width='1.6'") + C(14, 16, 10, "#4dabf7", bordo(1.2)) + Pth("M8 10 Q12 8 14 12 Q12 16 10 18 Q6 16 8 10 Z M16 16 Q20 14 21 18 Q19 22 16 21 Z", "#69db7c") + R(13, 27, 2, 6, "#5c3a21") + E(14, 35, 8, 3, "#5c3a21", bordo(1)));
+  } });
+  ogg("pallone", { nome: "Pallone da calcio", stanza: "tutte", cat: "deco", tipo: "acc", w: 22, h: 22, qual: 2, prezzo: 100, disegno: function () {
+    return svg(22, 22, "", C(11, 11, 10, "#fff", bordo(1.2)) + Pth("M11 7 L15 10 L13.5 14.5 L8.5 14.5 L7 10 Z", "#212529") + Pth("M11 7 L11 2 M15 10 L20 8 M13.5 14.5 L16 19 M8.5 14.5 L6 19 M7 10 L2 8", "none", "stroke='#212529' stroke-width='.8'"));
+  } });
+  ogg("chitarra", { nome: "Chitarra", stanza: "tutte", cat: "deco", tipo: "pav", w: 40, h: 104, prof: 0.25, qual: 2, prezzo: 900, uso: "prendi", cibi: ["🎸", "🎶"], dura: 2600, suono: "chitarra", cosa: "La suoni 🎸", disegno: function () {
+    return svg(40, 104, morbido("a", "#e8590c"), R(17, 4, 6, 50, "#5c3a21", 1.5, bordo(1)) + R(15, 0, 10, 10, "#3b2b22", 2) + Pth("M20 50 Q4 50 6 68 Q2 82 10 94 Q20 104 30 94 Q38 82 34 68 Q36 50 20 50 Z", "url(#a)", bordo(1.4)) + C(20, 72, 5, "#3b2b22") + R(14, 86, 12, 3, "#3b2b22", 1) + Pth("M19 6 L19 86 M21 6 L21 86", "none", "stroke='#f1f3f5' stroke-width='.5'"));
+  } });
+
+  // ---- 🎃 Halloween: si comprano solo fino al 2 novembre (poi restano di chi le ha prese) ----
+  ogg("zucca", { nome: "Zucca intagliata", stanza: "tutte", cat: "halloween", festa: "halloween", tipo: "acc", w: 36, h: 32, qual: 2, prezzo: 300, stati: "accendi", luce: { x: 0.5, y: 0.6, r: 1.8, c: "#ff922b" }, disegno: function (on) {
+    var faccia = "M10 14 L14 10 L16 15 Z M26 14 L22 10 L20 15 Z M9 20 Q18 28 27 20 L24 21 L22 24 L19 21 L17 24 L14 21 L12 22 Z", luce = on ? "#ffe066" : "#7a3e1d";
+    return svg(36, 32, morbido("z", "#f76707"), Pth("M17 5 Q18 0 22 1", "none", "stroke='#2b8a3e' stroke-width='2.4' stroke-linecap='round'") + E(18, 18, 16, 12.6, "url(#z)", bordo(1.2)) + Pth("M12 7 Q8 18 12 30 M24 7 Q28 18 24 30", "none", "stroke='#d9480f' stroke-width='1'") +
+      "<path d='" + faccia + "' fill='" + luce + "'>" + (on ? anim("opacity", "1;.7;1;.85;1", 1.3) : "") + "</path>");
+  } });
+  ogg("zucche_pila", { nome: "Pila di zucche", stanza: "tutte", cat: "halloween", festa: "halloween", tipo: "pav", w: 56, h: 66, prof: 0.5, qual: 2, prezzo: 500, disegno: function () {
+    function z(x, y, rx, ry, c) { return E(x, y, rx, ry, c, bordo(1.2)) + Pth("M" + (x - rx * 0.4) + " " + (y - ry * 0.9) + " Q" + (x - rx * 0.6) + " " + y + " " + (x - rx * 0.4) + " " + (y + ry * 0.9) + " M" + (x + rx * 0.4) + " " + (y - ry * 0.9) + " Q" + (x + rx * 0.6) + " " + y + " " + (x + rx * 0.4) + " " + (y + ry * 0.9), "none", "stroke='" + tono(c, -0.25) + "' stroke-width='1'") + R(x - 1, y - ry - 4, 2, 5, "#2b8a3e", 1); }
+    return svg(56, 66, "", z(16, 52, 14, 11, "#f76707") + z(40, 54, 14, 10, "#fd7e14") + z(28, 32, 13, 10, "#ff922b") + z(28, 14, 8, 6.4, "#ffa94d") + Pth("M36 22 q8 -4 10 4", "none", "stroke='#2b8a3e' stroke-width='1.2'"));
+  } });
+  ogg("fantasma", { nome: "Fantasmino", stanza: "tutte", cat: "halloween", festa: "halloween", tipo: "pav", w: 56, h: 86, prof: 0.4, qual: 2, prezzo: 900, disegno: function () {
+    return svg(56, 86, "", E(28, 82, 16, 3, "#000", "opacity='.15'") + "<g>" + animT("translate", "0 0;0 -6;0 0", 3) +
+      Pth("M8 70 L8 30 Q8 6 28 6 Q48 6 48 30 L48 70 Q44 64 40 70 Q36 76 32 70 Q28 64 24 70 Q20 76 16 70 Q12 64 8 70 Z", "#f8f9fa", bordo(1.4)) + E(21, 30, 3.4, 5, "#212529") + E(35, 30, 3.4, 5, "#212529") + E(28, 44, 4, 5, "#212529") + E(17, 38, 3, 1.6, "#ffc9de") + E(39, 38, 3, 1.6, "#ffc9de") + "</g>");
+  } });
+  ogg("ragnatela", { nome: "Ragnatela col ragno", stanza: "tutte", cat: "halloween", festa: "halloween", tipo: "muro", w: 64, h: 64, qual: 2, prezzo: 250, disegno: function () {
+    var s = Pth("M2 2 L62 62 M2 2 L62 30 M2 2 L30 62 M2 2 L62 6 M2 2 L6 62", "none", "stroke='#dee2e6' stroke-width='.9'"), i;
+    for (i = 1; i < 5; i++) { var r = i * 13; s += Pth("M" + (2 + r) + " 2.6 Q" + (2 + r * 0.8) + " " + (2 + r * 0.25) + " " + (2 + r * 0.92) + " " + (2 + r * 0.46) + " Q" + (2 + r * 0.6) + " " + (2 + r * 0.6) + " " + (2 + r * 0.46) + " " + (2 + r * 0.92) + " Q" + (2 + r * 0.25) + " " + (2 + r * 0.8) + " 2.6 " + (2 + r), "none", "stroke='#dee2e6' stroke-width='.9'"); }
+    return svg(64, 64, "", s + "<g>" + animT("translate", "0 0;0 16;0 0", 4) + R(40.5, 0, 0.8, 30, "#dee2e6") + E(41, 32, 3.4, 4, "#212529") + Pth("M37 30 l-4 -3 M37 33 l-4 1 M37 35 l-3 3 M45 30 l4 -3 M45 33 l4 1 M45 35 l3 3", "none", "stroke='#212529' stroke-width='.9'") + C(40, 31, 0.7, "#e03131") + C(42, 31, 0.7, "#e03131") + "</g>");
+  } });
+  ogg("pipistrelli", { nome: "Pipistrelli", stanza: "tutte", cat: "halloween", festa: "halloween", tipo: "muro", w: 90, h: 44, qual: 2, prezzo: 350, disegno: function () {
+    function pip(x, y, d) { return "<g transform='translate(" + x + " " + y + ")'><g>" + animT("translate", "0 0;0 -4;0 0", d) + "<g>" + animT("scale", "1 1;1 .35;1 1", 0.35) + Pth("M0 0 Q-6 -8 -14 -4 Q-10 -2 -10 2 Q-6 0 -4 3 Z M0 0 Q6 -8 14 -4 Q10 -2 10 2 Q6 0 4 3 Z", "#212529") + "</g>" + E(0, 1, 3, 4, "#343a40") + Pth("M-2 -2 L-2 -5 L0 -3 L2 -5 L2 -2 Z", "#343a40") + C(-1, 0, 0.6, "#ffd43b") + C(1, 0, 0.6, "#ffd43b") + "</g></g>"; }
+    return svg(90, 44, "", pip(18, 18, 2.2) + pip(48, 28, 1.8) + pip(74, 14, 2.6));
+  } });
+  ogg("calderone", { nome: "Calderone della strega", stanza: "tutte", cat: "halloween", festa: "halloween", tipo: "pav", w: 70, h: 66, prof: 0.6, qual: 2, prezzo: 1200, stati: "accendi", luce: { x: 0.5, y: 0.3, r: 2, c: "#8ce99a" }, cosa: "Accendilo: la pozione bolle 🧪", disegno: function (on) {
+    var s = "", i;
+    if (on) s += Pth("M20 64 Q24 54 28 62 Q32 50 36 62 Q40 52 44 62 Q48 54 50 64 Z", "#ff922b", bordo(0.8));
+    s += E(35, 22, 28, 7, "#2b2b30", bordo(1.4)) + E(35, 22, 24, 5, on ? "#69db7c" : "#2f6b3a") + Pth("M7 22 Q4 54 20 58 L50 58 Q66 54 63 22", "url(#c)", bordo()) + Pth("M14 58 L10 64 M56 58 L60 64", "none", "stroke='" + LINEA + "' stroke-width='3'");
+    if (on) for (i = 0; i < 4; i++) s += sale(i % 2 ? 2 : -2, C(22 + i * 9, 20, 2.6 + (i % 2), "#8ce99a", "stroke='#2b8a3e' stroke-width='.6'"), (1 + i * 0.3).toFixed(1), (i * 0.35).toFixed(2));
+    return svg(70, 66, morbido("c", "#343a40"), s);
+  } });
+  ogg("lapide", { nome: "Lapide finta", stanza: "tutte", cat: "halloween", festa: "halloween", tipo: "pav", w: 50, h: 62, prof: 0.3, qual: 2, prezzo: 400, disegno: function () {
+    return svg(50, 62, morbido("p", "#adb5bd"), Pth("M6 58 L6 22 Q6 4 25 4 Q44 4 44 22 L44 58 Z", "url(#p)", bordo()) + Pth("M14 22 L14 36 M14 22 L19 22 Q22 22 22 26 Q22 29 19 29 L14 29 M18 29 L22 36 M26 22 L26 36 M31 36 L31 22 L36 22 Q39 22 39 26 Q39 29 36 29 L31 29", "none", "stroke='#495057' stroke-width='2' stroke-linecap='round'") +
+      Pth("M14 46 L20 42 M30 48 L36 44", "none", "stroke='#868e96' stroke-width='1'") + Pth("M2 58 Q10 52 18 58 Q26 52 34 58 Q42 52 48 58 L48 62 L2 62 Z", "#5c940d", bordo(1)));
+  } });
+  ogg("scheletro", { nome: "Scheletro che dondola", stanza: "tutte", cat: "halloween", festa: "halloween", tipo: "muro", w: 44, h: 96, qual: 2, prezzo: 700, disegno: function () {
+    var ossa = "stroke='#f8f9fa' stroke-width='3.2' stroke-linecap='round'", fil = "stroke='" + LINEA + "' stroke-width='5' stroke-linecap='round'", d = "M22 22 L22 52 M14 30 L30 30 M14 36 L30 36 M14 42 L30 42 M22 28 L10 46 M22 28 L34 46 M18 54 L14 80 M26 54 L30 80";
+    return svg(44, 96, "", "<g>" + animT("rotate", "-6 22 2;6 22 2;-6 22 2", 3) + R(21.5, 0, 1, 8, "#868e96") + Pth(d, "none", fil) + Pth(d, "none", ossa) + E(22, 53, 7, 3, "#f8f9fa", bordo(1)) + C(22, 14, 7, "#f8f9fa", bordo(1.2)) + C(19.4, 13, 1.8, "#212529") + C(24.6, 13, 1.8, "#212529") + Pth("M19 18 L25 18", "none", "stroke='#212529' stroke-width='.8' stroke-dasharray='1 1'") + "</g>");
+  } });
+  ogg("gatto_nero", { nome: "Gatto nero", stanza: "tutte", cat: "halloween", festa: "halloween", tipo: "acc", w: 30, h: 38, qual: 2, prezzo: 450, disegno: function () {
+    return svg(30, 38, "", Pth("M22 34 Q30 30 28 20", "none", "stroke='#212529' stroke-width='3' stroke-linecap='round'") + E(14, 28, 9, 9, "#212529") + C(14, 13, 7, "#212529") + Pth("M8 9 L8 2 L12 7 M20 9 L20 2 L16 7", "#212529", "stroke='#212529' stroke-width='1.6' stroke-linejoin='round'") +
+      "<ellipse cx='11' cy='13' rx='1.8' fill='#ffd43b'>" + anim("ry", "2.2;2.2;.2;2.2", 3.2) + "</ellipse><ellipse cx='17' cy='13' rx='1.8' fill='#ffd43b'>" + anim("ry", "2.2;2.2;.2;2.2", 3.2) + "</ellipse>" + C(14, 16, 0.8, "#f783ac"));
+  } });
+  ogg("candelabro", { nome: "Candelabro", stanza: "tutte", cat: "halloween", festa: "halloween", tipo: "acc", w: 34, h: 46, qual: 2, prezzo: 600, stati: "accendi", luce: { x: 0.5, y: 0.2, r: 1.6, c: "#ffc078" }, disegno: function (on) {
+    function cand(x, y) { return R(x - 2, y, 4, 10, "#f8f9fa", 1, bordo(0.7)) + (on ? "<path d='M" + x + " " + (y - 7) + " q2.4 3 0 5.6 q-2.4 -2.6 0 -5.6 Z' fill='#ffa94d'>" + anim("opacity", "1;.6;1", 0.5) + "</path>" : ""); }
+    return svg(34, 46, "", Pth("M6 26 Q6 32 17 32 Q28 32 28 26 M17 22 L17 40", "none", "stroke='#495057' stroke-width='2.4'") + cand(6, 16) + cand(17, 12) + cand(28, 16) + E(17, 42, 9, 3, "#495057", bordo(1)));
+  } });
+  ogg("tappeto_ragnatela", { nome: "Tappeto ragnatela", stanza: "tutte", cat: "halloween", festa: "halloween", tipo: "tappeto", w: 150, h: 46, qual: 2, prezzo: 500, disegno: function () {
+    var s = E(75, 23, 72, 21, "#343a40", bordo(1.4)), i;
+    for (i = 0; i < 8; i++) { var a = i / 8 * Math.PI * 2; s += Pth("M75 23 L" + r1(75 + Math.cos(a) * 70) + " " + r1(23 + Math.sin(a) * 20), "none", "stroke='#adb5bd' stroke-width='1'"); }
+    for (i = 1; i < 4; i++) s += E(75, 23, i * 18, i * 5, "none", "stroke='#adb5bd' stroke-width='1'");
+    return svg(150, 46, "", s + C(110, 20, 3, "#ff922b"));
+  } });
+  ogg("scopa_strega", { nome: "Scopa della strega", stanza: "tutte", cat: "halloween", festa: "halloween", tipo: "pav", w: 34, h: 112, prof: 0.2, qual: 2, prezzo: 400, disegno: function () {
+    var s = R(15, 0, 4, 80, "#7a4a2a", 2, bordo(1)) + Pth("M10 78 L24 78 L32 110 L2 110 Z", "#e8c27a", bordo(1.2)), i;
+    for (i = 0; i < 6; i++) s += Pth("M" + (12 + i * 2) + " 80 L" + (5 + i * 5) + " 108", "none", "stroke='#c99a5c' stroke-width='1'");
+    return svg(34, 112, "", s + R(9, 78, 16, 5, "#862e9c", 2, bordo(1)));
+  } });
+  ogg("cappello_strega", { nome: "Cappello da strega", stanza: "tutte", cat: "halloween", festa: "halloween", tipo: "acc", w: 34, h: 30, qual: 2, prezzo: 250, disegno: function () {
+    return svg(34, 30, "", E(17, 26, 16, 3.6, "#343a40", bordo(1.2)) + Pth("M8 25 L14 6 Q16 1 22 4 Q18 6 20 12 L26 25 Z", "#343a40", bordo(1.2)) + R(9, 20, 16, 4, "#862e9c", 1) + R(15, 19.6, 4, 4.8, "#ffd43b", 0.8));
+  } });
+
+  // ---- 🛏️ altri letti ----
+  ogg("letto_baldacchino", { nome: "Letto a baldacchino", stanza: "tutte", cat: "letti", tipo: "pav", w: 206, h: 190, prof: 1.6, qual: 2, prezzo: 4200, azione: "dormi", cuscino: [54, 144],
+    prezzoColore: 700, colori: [{ id: "rosso", nome: "rosso e oro", t: "#c92a2a", l: "#5c3a21" }, { id: "bianco", nome: "bianco e lilla", t: "#b197fc", l: "#f1f3f5" }, { id: "blu", nome: "blu notte", t: "#364fc7", l: "#2b2b30" }, { id: "rosa", nome: "rosa", t: "#f783ac", l: "#e9ecef" }],
+    disegno: function (on, parte, _, K) {   // il letto con la trapunta, più sotto, e sopra il tetto di stoffa con le tende raccolte
+      var letto = OGG.letto_matrimoniale.disegno(on, parte, _, K).replace("<svg ", "<svg y='94' ");
+      var pali = R(2, 8, 7, 178, "url(#bp)", 2, bordo(1.4)) + R(197, 8, 7, 178, "url(#bp)", 2, bordo(1.4));
+      var tetto = R(0, 2, 206, 16, "url(#bt)", 3, bordo()) + Pth("M0 18 Q26 30 52 18 Q78 30 103 18 Q128 30 154 18 Q180 30 206 18", "url(#bt)", bordo(1.4));
+      var tende = Pth("M6 18 Q24 60 10 120 L4 120 Z", "url(#bt)", bordo(1.2) + " opacity='.9'") + Pth("M200 18 Q182 60 196 120 L202 120 Z", "url(#bt)", bordo(1.2) + " opacity='.9'") + R(4, 112, 10, 4, "#e0c070", 2) + R(192, 112, 10, 4, "#e0c070", 2);
+      return svg(206, 190, morbido("bp", K.l) + morbido("bt", K.t), (parte === "coperta" ? "" : pali) + letto + (parte === "coperta" ? pali : "") + tende + tetto);
+    } });
+  ogg("futon", { nome: "Futon giapponese", stanza: "tutte", cat: "letti", tipo: "pav", w: 200, h: 46, prof: 1.0, qual: 2, prezzo: 1200, azione: "dormi", cuscino: [32, 18],
+    prezzoColore: 200, colori: [{ id: "blu", nome: "bianco e blu", t: "#4263eb", l: "#f1f3f5" }, { id: "rosso", nome: "rosso", t: "#e03131", l: "#fff5f5" }, { id: "verde", nome: "verde tè", t: "#74b816", l: "#f4fce3" }],
+    disegno: function (on, parte, _, K) {
+      var tatami = R(2, 34, 196, 10, "#d8c48a", 2, bordo()) + Pth("M40 36 L40 42 M80 36 L80 42 M120 36 L120 42 M160 36 L160 42", "none", "stroke='#b9a46a' stroke-width='1'");
+      if (parte === "coperta") return svg(200, 46, morbido("t", K.t), Pth("M8 28 Q20 24 34 26 Q46 12 90 14 Q150 12 192 22 L194 36 L8 36 Z", "url(#t)", bordo()) + tatami);
+      return svg(200, 46, morbido("t", K.t), tatami + R(6, 24, 190, 12, K.l, 5, bordo()) + Pth("M12 14 Q28 8 44 14 L44 26 L12 26 Z", "#fff", bordo(1.4)) + Pth("M56 22 Q120 14 192 22 L194 36 L54 36 Z", "url(#t)", bordo()) + Pth("M70 26 L186 26", "none", "stroke='#fff' stroke-width='1.4' opacity='.5'"));
+    } });
+
+  // ---- le frasi in più dei pezzi speciali nuovi ----
+  [["juke_box", "Il juke-box dei vecchi bar americani: accendilo e gira il disco, con le luci arcobaleno che si accendono a tempo."],
+   ["macchina_gelati", "Tre gusti (fragola, crema e cioccolato): l'avatar ci va, tira la leva e si fa un cono. Un angolo gelateria in casa!"],
+   ["distributore_bibite", "Pieno di lattine colorate: tocchi, cade la bibita e l'avatar se la beve. Perfetto vicino al bancone del bar."],
+   ["arcade", "Il cabinato delle sale giochi, con il joystick e i pulsanti colorati: l'avatar ci fa una partita."],
+   ["flipper", "Luci, rimbalzi e la pallina che corre: l'avatar ci gioca una partita."],
+   ["calderone", "Accendilo: la pozione verde bolle e fa le bollicine. Solo per Halloween!"],
+   ["fantasma", "Un fantasmino gentile che galleggia su e giù tutto il giorno. Solo per Halloween!"],
+   ["divano_pelle", "Pelle capitonné coi bottoni, braccioli arrotolati: il divano dei salotti inglesi."],
+   ["bancone_bar", "Il pezzo forte dell'angolo bar: ci appoggi sopra la macchina dell'espresso, i bicchieri e quello che vuoi."]
+  ].forEach(function (x) { if (OGG[x[0]]) OGG[x[0]].frase = x[1]; });
+
+  // i reparti del negozio anche per la roba di prima
+  var CAT_VECCHI = { divano_toppa: "divani", sedia_plastica: "sedie", sedia_legno: "sedie", tavolino_cassetta: "tavoli", tavolino_legno: "tavoli", tavolo_pranzo: "tavoli",
+    armadio_storto: "mobili", comodino_cartone: "mobili", comodino_legno: "letti", libreria: "mobili", mobile_tv: "mobili", letto_semplice: "letti",
+    lampadina: "luci", lampada_storta: "luci", lampada_stelo: "luci", lampada_comodino: "luci", tv_tubo: "elettronica", tv_piatta: "elettronica",
+    sveglia: "deco", orologio_muro: "deco", tappeto_liso: "deco", tappeto_persiano: "deco", frigo_ammaccato: "cucina", fornello_vecchio: "cucina", frigo_moderno: "cucina", cucina_moderna: "cucina",
+    wc_vecchio: "bagno", lavandino_colonna: "bagno", doccia_tenda: "bagno", carta_igienica: "bagno", bicchiere_spazzolino: "bagno", tappetino: "bagno", wc_moderno: "bagno", vasca: "bagno", lavandino_mobile: "bagno",
+    pianta_secca: "piante", monstera: "piante", cactus: "piante", quadro_storto: "quadri", poster_strappato: "quadri", quadro_mare: "quadri", poster_concerto: "quadri", specchio_tondo: "quadri", specchio_scheggiato: "quadri",
+    acquario: "acquari", acquario_pescatore: "acquari", acquario_gigante: "acquari" };
+  Object.keys(CAT_VECCHI).forEach(function (t) { if (OGG[t] && !OGG[t].cat) OGG[t].cat = CAT_VECCHI[t]; });
+
   // la roba di partenza si trova anche al Mercatino dell'usato del negozio, a poco
   var PREZZI_USATO = { divano_toppa: 400, tavolino_cassetta: 50, tv_tubo: 300, sedia_plastica: 80, pianta_secca: 60, frigo_ammaccato: 500, fornello_vecchio: 350,
     tappeto_liso: 120, quadro_storto: 60, lampadina: 40, letto_semplice: 450, comodino_cartone: 30, armadio_storto: 400, sveglia: 50, lampada_storta: 90,
@@ -553,9 +1058,9 @@
     acquario_gigante: "Il più grande che ci sia: 10 pesci di qualsiasi misura, anche il siluro gigante. La tua collezione da far vedere a tutti.",
     frigo_moderno: "Il frigo dei sogni: dentro c'è di tutto, dalla torta con la ciliegina alle carote. Aprilo e scegli cosa mangiare.",
     cucina_moderna: "Accendila e nel forno si cuoce una torta. Il profumo arriva fino in camera.",
-    armadio_bianco: "Tre ante piene di vestiti, scarpe e scatole. Aprilo e cambi look quando vuoi.",
-    letto_matrimoniale: "Una trapunta rosa morbidissima e due cuscini belli gonfi: qui si dorme come re.",
-    divano_velluto: "Velluto verde acqua, bottoni come nei salotti eleganti e due cuscini gialli. Il pezzo forte del soggiorno.",
+    armadio_bianco: "Tre ante piene di vestiti, scarpe e scatole. Aprilo e cambi look quando vuoi. Ci sono 6 colori: bianco, noce, azzurro, nero lucido, rosa e verde.",
+    letto_matrimoniale: "Una trapunta morbidissima e due cuscini belli gonfi: qui si dorme come re. Scegli il colore che vuoi.",
+    divano_velluto: "Velluto morbido, bottoni come nei salotti eleganti e due cuscini colorati. Il pezzo forte del soggiorno, in 6 colori.",
     libreria: "Piena di libri colorati, con una piantina in mezzo: la stanza sembra subito più intelligente.",
     tv_piatta: "Lo schermo piatto con la partita sempre in onda. Accendila e la stanza si illumina di blu.",
     lampada_stelo: "Accendila la sera: fa una luce calda che riempie l'angolo."
@@ -571,15 +1076,15 @@
       Pth("M14 46 Q46 40 80 46", "none", "stroke='" + tono(c, -0.3) + "' stroke-width='1.4' opacity='.6'") + C(70, 56, 2.6, tono(c, -0.4), "opacity='.5'") +
       R(6, 72, 80, 12, tono(c, -0.25), 4, bordo()) + R(12, 83, 9, 8, "url(#t)", 1, bordo(1.6)) + R(70, 83, 9, 8, "url(#t)", 1, bordo(1.6)));
   };
-  OGG.divano_velluto.fianco = function () {
-    var c = "#1f8a8a";
-    return svg(94, 94, morbido("a", c) + morbido("b", tono(c, -0.1)) + lin("o", "#f6d77a", "#c9962e", true) + morbido("k", "#f2c14e"),
+  OGG.divano_velluto.fianco = function (on, parte, _, K) {
+    var c = K.c;
+    return svg(94, 94, morbido("a", c) + morbido("b", tono(c, -0.1)) + lin("o", "#f6d77a", "#c9962e", true) + morbido("k", K.k),
       R(4, 6, 28, 52, "url(#a)", 14, bordo()) + C(18, 22, 2, tono(c, -0.35)) + Pth("M28 30 Q40 20 54 30 L52 44 L28 44 Z", "url(#k)", bordo(1.6)) +
       R(2, 36, 90, 40, "url(#b)", 18, bordo()) + R(8, 72, 78, 10, tono(c, -0.3), 4, bordo()) +
       Pth("M16 82 L12 93 M78 82 L82 93", "none", "stroke='url(#o)' stroke-width='5' stroke-linecap='round'"));
   };
-  OGG.poltrona_gialla.fianco = function () {
-    var c = "#f2b134";
+  OGG.poltrona_gialla.fianco = function (on, parte, _, K) {
+    var c = K.c;
     return svg(80, 92, morbido("a", c) + morbido("b", tono(c, -0.1)),
       R(4, 4, 26, 56, "url(#a)", 13, bordo()) + R(2, 36, 76, 40, "url(#b)", 16, bordo()) + R(6, 72, 68, 8, tono(c, -0.3), 3, bordo()) +
       Pth("M14 80 L11 91 M66 80 L69 91", "none", "stroke='#5a3a22' stroke-width='4' stroke-linecap='round'"));
@@ -595,9 +1100,9 @@
       Pth("M2 40 Q52 34 102 40 L102 66 L2 66 Z", "url(#q)", bordo()) + davanti);             // la coperta che pende davanti
   };
   OGG.letto_matrimoniale.fiancoCuscino = [82, 44];
-  OGG.letto_matrimoniale.fianco = function (on, parte) {
-    var defs = morbido("l", "#8a5a3a") + morbido("t", "#e8789a");
-    var piedi = R(2, 44, 160, 48, "url(#l)", 6, bordo()) + R(10, 52, 144, 4, tono("#8a5a3a", 0.15), 2);   // la pediera
+  OGG.letto_matrimoniale.fianco = function (on, parte, _, K) {
+    var defs = morbido("l", K.l) + morbido("t", K.t);
+    var piedi = R(2, 44, 160, 48, "url(#l)", 6, bordo()) + R(10, 52, 144, 4, tono(K.l, 0.15), 2);   // la pediera
     if (parte === "coperta") return svg(164, 96, defs, Pth("M10 46 Q40 34 82 40 Q124 34 154 46 L154 52 L10 52 Z", "url(#t)", bordo()) + piedi);
     return svg(164, 96, defs,
       R(6, 2, 152, 56, "url(#l)", 8, bordo()) +                                             // la testiera in fondo
@@ -647,15 +1152,34 @@
     fiori:      { nome: "Fiori blu", base: "#eef3fb", qual: 2, prezzo: 700, motivo: function (s) { return "<pattern id='" + s + "' width='30' height='30' patternUnits='userSpaceOnUse'><rect width='30' height='30' fill='#f3f6fc'/><g fill='#5b8bd6'><circle cx='8' cy='8' r='2.4'/><circle cx='5' cy='5' r='2'/><circle cx='11' cy='5' r='2'/><circle cx='5' cy='11' r='2'/><circle cx='11' cy='11' r='2'/></g><circle cx='8' cy='8' r='1.6' fill='#ffd43b'/><circle cx='23' cy='23' r='2' fill='#9ab8e8'/></pattern>"; } },
     azzurre:    { nome: "Piastrelle azzurre", base: "#d7eef5", qual: 2, prezzo: 650, motivo: function (s) { return "<pattern id='" + s + "' width='18' height='18' patternUnits='userSpaceOnUse'><rect width='18' height='18' fill='#9fc9d6'/><rect x='1' y='1' width='16' height='16' rx='1.5' fill='#d3ecf3'/><rect x='3' y='3' width='6' height='2' rx='1' fill='#fff' opacity='.6'/></pattern>"; } },
     mattoni:    { nome: "Mattoncini", base: "#e2b49a", qual: 2, prezzo: 750, motivo: function (s) { return "<pattern id='" + s + "' width='40' height='20' patternUnits='userSpaceOnUse'><rect width='40' height='20' fill='#f1e6dc'/><rect x='1' y='1' width='18' height='8' rx='1' fill='#d9825b'/><rect x='21' y='1' width='18' height='8' rx='1' fill='#cf7550'/><rect x='-9' y='11' width='18' height='8' rx='1' fill='#cf7550'/><rect x='11' y='11' width='18' height='8' rx='1' fill='#e08e66'/><rect x='31' y='11' width='18' height='8' rx='1' fill='#cf7550'/></pattern>"; } },
-    stelle:     { nome: "Cielo stellato", base: "#2b3a67", qual: 2, prezzo: 900, motivo: function (s) { return "<pattern id='" + s + "' width='40' height='40' patternUnits='userSpaceOnUse'><rect width='40' height='40' fill='#2b3a67'/><circle cx='8' cy='10' r='1.4' fill='#ffe066'/><circle cx='30' cy='6' r='1' fill='#fff'/><circle cx='22' cy='26' r='1.8' fill='#ffe066'/><circle cx='4' cy='32' r='0.9' fill='#fff'/><path d='M34 30 q2 -1 2 -4 q0 3 2 4 q-2 1 -2 4 q0 -3 -2 -4z' fill='#fff'/></pattern>"; } },
+    stelle:     { nome: "Cielo stellato", base: "#2b3a67", qual: 2, prezzo: 900, motivo: function (s) { return "<pattern id='" + s + "' width='40' height='40' patternUnits='userSpaceOnUse'><rect width='40' height='40' fill='#2b3a67'/><circle cx='8' cy='10' r='1.4' fill='#ffe066'/><circle cx='30' cy='6' r='1' fill='#fff'/><circle cx='22' cy='26' r='1.8' fill='#ffe066'/><circle cx='4' cy='32' r='0.9' fill='#fff'/><path d='M34 30 q2 -1 2 -4 q0 3 2 4 q-2 1 -2 4 q0 -3 -2 -4z' fill='#fff'/></pattern>"; }, soffitto: "motivo" },
+    pois:       { nome: "Rosa a pois", base: "#ffd8e4", qual: 2, prezzo: 650, motivo: function (s) { return "<pattern id='" + s + "' width='26' height='26' patternUnits='userSpaceOnUse'><rect width='26' height='26' fill='#ffe3ec'/><circle cx='6.5' cy='6.5' r='3.2' fill='#f783ac'/><circle cx='19.5' cy='19.5' r='3.2' fill='#f783ac'/></pattern>"; } },
+    perline:    { nome: "Perline di legno", base: "#e3b77e", qual: 2, prezzo: 800, motivo: function (s) { return "<pattern id='" + s + "' width='22' height='60' patternUnits='userSpaceOnUse'><rect width='22' height='60' fill='#e6bb83'/><rect width='2' height='60' fill='#b98a52'/><rect x='2' width='3' height='60' fill='#f1cd9b'/><ellipse cx='13' cy='22' rx='2' ry='4' fill='#cf9f63' opacity='.6'/></pattern>"; } },
+    onde:       { nome: "Onde del mare", base: "#cfeefa", qual: 2, prezzo: 750, motivo: function (s) { return "<pattern id='" + s + "' width='40' height='20' patternUnits='userSpaceOnUse'><rect width='40' height='20' fill='#d8f1fb'/><path d='M0 12 q10 -8 20 0 t20 0' fill='none' stroke='#74c0fc' stroke-width='2.4'/><path d='M0 18 q10 -6 20 0 t20 0' fill='none' stroke='#a5d8ff' stroke-width='1.4'/></pattern>"; } },
+    oro:        { nome: "Damasco d'oro", base: "#5c1f2e", qual: 2, prezzo: 1200, motivo: function (s) { return "<pattern id='" + s + "' width='36' height='44' patternUnits='userSpaceOnUse'><rect width='36' height='44' fill='#5c1f2e'/><path d='M18 6 q8 8 0 16 q-8 -8 0 -16 Z M18 22 q10 6 0 16 q-10 -10 0 -16 Z' fill='#d4a72c' opacity='.75'/><circle cx='0' cy='0' r='2.4' fill='#d4a72c' opacity='.6'/><circle cx='36' cy='44' r='2.4' fill='#d4a72c' opacity='.6'/><circle cx='0' cy='44' r='2.4' fill='#d4a72c' opacity='.6'/><circle cx='36' cy='0' r='2.4' fill='#d4a72c' opacity='.6'/></pattern>"; }, soffitto: "#7a3a48" },
+    halloween:  { nome: "Notte di Halloween", base: "#3b2a55", qual: 2, prezzo: 900, festa: "halloween", motivo: function (s) { return "<pattern id='" + s + "' width='60' height='60' patternUnits='userSpaceOnUse'><rect width='60' height='60' fill='#3b2a55'/>" +
+      "<path d='M8 14 q3 -4 6 0 q2 -3 4 0 q2 -3 4 0 q3 -4 6 0 q-4 -1 -6 3 q-2 -2 -4 0 q-2 -2 -4 0 q-2 -4 -6 -3 Z' fill='#1a1226'/>" +
+      "<circle cx='42' cy='42' r='7' fill='#f76707'/><path d='M38 36 q4 3 8 0' fill='none' stroke='#d9480f' stroke-width='1'/><path d='M42 35 l1 -4' stroke='#2b8a3e' stroke-width='2'/><path d='M39 41 l2 -2 l1 2 Z M43 41 l2 -2 l1 2 Z' fill='#ffd43b'/><path d='M38 45 q4 3 8 0' fill='none' stroke='#ffd43b' stroke-width='1.2'/>" +
+      "<circle cx='50' cy='10' r='1.2' fill='#ffe066'/><circle cx='20' cy='48' r='.9' fill='#fff'/><circle cx='28' cy='30' r='.8' fill='#ffe066'/></pattern>"; }, soffitto: "#2a1d3d" },
   };
+  // le feste: le cose a tema si comprano solo in quei giorni (poi restano di chi le ha prese)
+  var FESTE = { halloween: { nome: "Halloween", dal: [10, 1], al: [11, 2], fino: "fino al 2 novembre" } };
+  function inStagione(cosa) {
+    var f = cosa && cosa.festa && FESTE[cosa.festa]; if (!f) return true;
+    var d = new Date(), md = (d.getMonth() + 1) * 100 + d.getDate();
+    return md >= f.dal[0] * 100 + f.dal[1] && md <= f.al[0] * 100 + f.al[1];
+  }
   var PAVIMENTI = {
     laminato:   { nome: "Laminato graffiato", qual: 0, tipo: "assi", c1: "#a4774e", c2: "#946a43", righe: "#7d5735", graffi: true },
     linoleum:   { nome: "Linoleum consumato", qual: 0, tipo: "scacchi", c1: "#d9d2bd", c2: "#a9a28e", righe: "#8f8975", graffi: true },
     parquet:    { nome: "Parquet di rovere", qual: 2, prezzo: 800, tipo: "assi", c1: "#d6a86a", c2: "#c99a5c", righe: "#a8793e" },
     marmo:      { nome: "Marmo bianco", qual: 2, prezzo: 900, tipo: "scacchi", c1: "#f4f2ee", c2: "#e2ded6", righe: "#c9c3b8" },
     moquette:   { nome: "Moquette blu", qual: 2, prezzo: 700, tipo: "scacchi", c1: "#5c7cfa", c2: "#566fe8", righe: "#4c63d2" },
-    cotto:      { nome: "Cotto toscano", qual: 2, prezzo: 850, tipo: "scacchi", c1: "#c8693f", c2: "#b85d36", righe: "#9a4b2a" }
+    cotto:      { nome: "Cotto toscano", qual: 2, prezzo: 850, tipo: "scacchi", c1: "#c8693f", c2: "#b85d36", righe: "#9a4b2a" },
+    scacchiera: { nome: "Bianco e nero da bar", qual: 2, prezzo: 950, tipo: "scacchi", c1: "#f8f9fa", c2: "#2b2b30", righe: "#495057" },
+    noce:       { nome: "Parquet di noce", qual: 2, prezzo: 1000, tipo: "assi", c1: "#7a4a2a", c2: "#6b3f22", righe: "#4e2c15" },
+    rosa:       { nome: "Piastrelle rosa", qual: 2, prezzo: 750, tipo: "scacchi", c1: "#ffd6e2", c2: "#fcc2d7", righe: "#e8a3ba" },
+    prato:      { nome: "Erba sintetica", qual: 2, prezzo: 700, tipo: "scacchi", c1: "#69b34c", c2: "#5ea544", righe: "#4f8f39" }
   };
 
   // =========================================================
@@ -698,18 +1222,38 @@
   //  IL DISEGNO DELLA STANZA (muri e pavimento: due immagini, così si cambiano una alla volta)
   // =========================================================
   function quadP(a, b, c, d) { return [a, b, c, d]; }
+  // stende un motivo (la carta da parati) su una superficie in prospettiva: tanti triangoli, ognuno col suo "stiramento",
+  // così il disegno si restringe verso il fondo. pun(s,t) = il punto sullo schermo, uv(s,t) = il punto nel motivo (s,t da 0 a 1)
+  function stendiMotivo(pun, uv, ns, nt, fill) {
+    var o = "", i, j;
+    function n2(v) { return +v.toFixed(2); }
+    function tri(a, b, c) {
+      var A = pun(a[0], a[1]), B = pun(b[0], b[1]), Q = pun(c[0], c[1]), ua = uv(a[0], a[1]), ub = uv(b[0], b[1]), uc = uv(c[0], c[1]);
+      var du1 = ub[0] - ua[0], dv1 = ub[1] - ua[1], du2 = uc[0] - ua[0], dv2 = uc[1] - ua[1], det = du1 * dv2 - du2 * dv1; if (!det) return "";
+      var dX1 = B[0] - A[0], dY1 = B[1] - A[1], dX2 = Q[0] - A[0], dY2 = Q[1] - A[1];
+      var ma = (dX1 * dv2 - dX2 * dv1) / det, mc = (dX2 * du1 - dX1 * du2) / det, mb = (dY1 * dv2 - dY2 * dv1) / det, md = (dY2 * du1 - dY1 * du2) / det;
+      var me = A[0] - ma * ua[0] - mc * ua[1], mf = A[1] - mb * ua[0] - md * ua[1];
+      return "<polygon points='" + [ua, ub, uc].map(function (p) { return n2(p[0]) + "," + n2(p[1]); }).join(" ") + "' fill='" + fill + "' stroke='" + fill + "' stroke-width='.8' transform='matrix(" + [ma, mb, mc, md, me, mf].map(function (v) { return +v.toFixed(5); }).join(" ") + ")'/>";
+    }
+    for (i = 0; i < ns; i++) for (j = 0; j < nt; j++) { var s0 = i / ns, s1 = (i + 1) / ns, t0 = j / nt, t1 = (j + 1) / nt; o += tri([s0, t0], [s1, t0], [s1, t1]) + tri([s0, t0], [s1, t1], [s0, t1]); }
+    return o;
+  }
   function disegnoMuri(st, cartaId) {
     var c = CARTE[cartaId] || CARTE.sbiadita, o = [], zN = ZVICINO, base = c.base, i;
     var BL = P(-XW, 0, ZB), BR = P(XW, 0, ZB), TL = P(-XW, YT, ZB), TR = P(XW, YT, ZB);
-    // il soffitto
-    o.push(poly([P(-XW, YT, zN), P(XW, YT, zN), TR, TL], "#efe6d4"), poly([P(-XW, YT, zN), P(XW, YT, zN), TR, TL], "url(#ombraSoff)"));
-    // le pareti di lato (più scure) e quella di fondo con la carta da parati
-    o.push(poly([P(-XW, 0, zN), P(-XW, YT, zN), TL, BL], tono(base, -0.22)), poly([P(XW, 0, zN), P(XW, YT, zN), TR, BR], tono(base, -0.14)));
-    for (i = 1; i < 9; i++) {   // le righe della carta sui lati, in prospettiva
-      var z = ZB - i * (ZB - zN) / 9;
-      o.push("<line x1='" + r1(P(-XW, 0, z)[0]) + "' y1='" + r1(P(-XW, 0, z)[1]) + "' x2='" + r1(P(-XW, YT, z)[0]) + "' y2='" + r1(P(-XW, YT, z)[1]) + "' stroke='" + tono(base, -0.3) + "' stroke-width='1' opacity='.35'/>");
-      o.push("<line x1='" + r1(P(XW, 0, z)[0]) + "' y1='" + r1(P(XW, 0, z)[1]) + "' x2='" + r1(P(XW, YT, z)[0]) + "' y2='" + r1(P(XW, YT, z)[1]) + "' stroke='" + tono(base, -0.25) + "' stroke-width='1' opacity='.3'/>");
-    }
+    var kc = scala(YT / 2, ZB);   // i pixel per metro sul muro di fondo: il motivo della carta ha questa misura su tutti i muri
+    function zDi(s) { return 1 / (1 / zN + s * (1 / ZB - 1 / zN)); }   // la profondità a passi uguali sullo schermo
+    // il soffitto: col colore della carta (più chiaro), o col motivo se la carta lo vuole (il cielo stellato)
+    var qSoff = [P(-XW, YT, zN), P(XW, YT, zN), TR, TL];
+    o.push(poly(qSoff, c.soffitto === "motivo" ? tono(base, 0.1) : c.soffitto || tono(base, 0.5)));
+    if (c.soffitto === "motivo") o.push(stendiMotivo(function (s, t) { return P(-XW + 2 * XW * t, YT, zDi(s)); }, function (s, t) { return [(-XW + 2 * XW * t) * kc, (ZB - zDi(s)) * kc]; }, 14, 1, "url(#carta)"));
+    o.push(poly(qSoff, "url(#ombraSoff)"));
+    // le pareti di lato: la stessa carta di quella di fondo, in prospettiva, e un po' più scure
+    var qSx = [P(-XW, 0, zN), P(-XW, YT, zN), TL, BL], qDx = [P(XW, 0, zN), P(XW, YT, zN), TR, BR];
+    o.push(poly(qSx, base), poly(qDx, base));
+    o.push(stendiMotivo(function (s, t) { return P(-XW, YT * (1 - t), zDi(s)); }, function (s, t) { return [(zDi(s) - zN) * kc, YT * t * kc]; }, 14, 3, "url(#carta)"));
+    o.push(stendiMotivo(function (s, t) { return P(XW, YT * (1 - t), zDi(s)); }, function (s, t) { return [(ZB - zDi(s)) * kc, YT * t * kc]; }, 14, 3, "url(#carta)"));
+    o.push(poly(qSx, "#000", "opacity='.2'"), poly(qDx, "#000", "opacity='.12'"));
     o.push(poly([TL, TR, BR, BL], "url(#carta)"));
     if (c.macchie) o.push(E(r1(TL[0] + 50), r1(TL[1] + 30), 18, 12, "#a8955f", "opacity='.18'"), E(r1(TR[0] - 40), r1(BR[1] - 34), 14, 10, "#a8955f", "opacity='.16'"));
     if (c.crepe) o.push(Pth("M" + r1(TL[0] + 30) + " " + r1(TL[1] + 4) + " l8 14 l-5 10 l10 16 l-4 12", "none", "stroke='#9c8f72' stroke-width='1.2' opacity='.7'"), Pth("M" + r1(TR[0] - 24) + " " + r1(TR[1] + 20) + " l-6 10 l4 8 l-8 12", "none", "stroke='#9c8f72' stroke-width='1' opacity='.6'"));
@@ -784,11 +1328,27 @@
   function imgDi(d, on) {   // l'immagine di un mobile messo in casa: gli acquari hanno i loro pesci, gli altri sono uguali per tipo
     var o = OGG[d.t];
     if (o && o.vasca) { var k = "v|" + d.t + "|" + JSON.stringify(d.pesci || []); if (!cacheImg[k]) cacheImg[k] = datauri(o.disegno(false, null, d.pesci || [])); return cacheImg[k]; }
-    return imgOggetto(d.t, on, null, d.vista);
+    return imgOggetto(d.t, on, null, d.vista, d.col);
   }
-  function imgOggetto(t, on, parte, vista) {   // vista "fianco": il mobile girato di fianco (se ha quel disegno)
-    var d = OGG[t]; if (!d) return ""; var f = vista === "fianco" && d.fianco ? d.fianco : d.disegno, k = t + (on ? "|on" : "") + (parte ? "|" + parte : "") + (f === d.fianco ? "|fianco" : "");
-    if (!cacheImg[k]) cacheImg[k] = datauri(f(!!on, parte)); return cacheImg[k];
+  function colDi(o, col) {   // il colore di un mobile che ne ha tanti (se manca: il primo)
+    var l = o && o.colori; if (!l) return null; for (var i = 0; i < l.length; i++) if (l[i].id === col) return l[i]; return l[0];
+  }
+  function voce(t, col) { return col ? t + "~" + col : t; }   // nel baule ogni mobile col suo colore: "divano_velluto~rosa"
+  function daVoce(v) { v = String(v); var i = v.indexOf("~"); return i < 0 ? { t: v, col: null } : { t: v.slice(0, i), col: v.slice(i + 1) }; }
+  function possiede(casa, t) {   // ne hai almeno uno (in una stanza o nel baule)?
+    if (casa.baule.some(function (v) { return daVoce(v).t === t; })) return true;
+    return Object.keys(casa.stanze).some(function (k) { return casa.stanze[k].oggetti.some(function (d) { return d.t === t; }); });
+  }
+  function coloriMiei(casa, t) {   // i colori già pagati di quel mobile (chi l'aveva da prima degli altri colori ha il primo)
+    var o = OGG[t]; if (!o || !o.colori) return [];
+    if (casa.colori && casa.colori[t]) return casa.colori[t];
+    return possiede(casa, t) ? [o.colori[0].id] : [];
+  }
+  function aggiungiColore(casa, t, col) { var l = coloriMiei(casa, t).slice(); if (l.indexOf(col) < 0) l.push(col); casa.colori = casa.colori || {}; casa.colori[t] = l; }
+  function prezzoVendita(t) { var o = OGG[t]; return o && o.prezzo ? Math.floor(o.prezzo / 2) : 0; }   // si rivende a metà prezzo
+  function imgOggetto(t, on, parte, vista, col) {   // vista "fianco": il mobile girato di fianco (se ha quel disegno); col: il colore, per i mobili che ne hanno tanti
+    var d = OGG[t]; if (!d) return ""; var K = colDi(d, col), f = vista === "fianco" && d.fianco ? d.fianco : d.disegno, k = t + (K ? "~" + K.id : "") + (on ? "|on" : "") + (parte ? "|" + parte : "") + (f === d.fianco ? "|fianco" : "");
+    if (!cacheImg[k]) cacheImg[k] = datauri(f(!!on, parte, null, K)); return cacheImg[k];
   }
   function imgMuri(st, carta) { var k = "m|" + st.id + "|" + carta + "|" + XW; if (!cacheImg[k]) cacheImg[k] = datauri(disegnoMuri(st, carta)); return cacheImg[k]; }
   function imgPav(st, pav) { var k = "p|" + st.id + "|" + pav + "|" + XW; if (!cacheImg[k]) cacheImg[k] = datauri(disegnoPavimento(st, pav)); return cacheImg[k]; }
@@ -808,7 +1368,7 @@
   var misure = {};
   function misura(t, vista) {   // (vista "fianco": le misure del mobile girato di fianco)
     var fi = vista === "fianco" && OGG[t] && OGG[t].fianco, k = t + (fi ? "|fianco" : "");
-    if (!misure[k]) { var s = OGG[t] ? (cacheImg["s|" + k] || (cacheImg["s|" + k] = fi ? OGG[t].fianco() : OGG[t].disegno())) : ""; var m = /viewBox='0 0 ([\d.]+) ([\d.]+)'/.exec(s); misure[k] = m ? { w: +m[1], h: +m[2] } : { w: 50, h: 50 }; }
+    if (!misure[k]) { var s = OGG[t] ? (cacheImg["s|" + k] || (cacheImg["s|" + k] = fi ? OGG[t].fianco(false, undefined, undefined, colDi(OGG[t])) : OGG[t].disegno(false, undefined, undefined, colDi(OGG[t])))) : ""; var m = /viewBox='0 0 ([\d.]+) ([\d.]+)'/.exec(s); misure[k] = m ? { w: +m[1], h: +m[2] } : { w: 50, h: 50 }; }
     return misure[k];
   }
 
@@ -844,7 +1404,12 @@
         molla: [[200, 0, .22, "sine", .12, 480], [480, .12, .24, "sine", .06, 240]],
         dring: dring,
         sciacquone: [[140, .1, .9, "sine", .05, 60]],
-        bolla: [[600, 0, .08, "sine", .05, 1200]]
+        bolla: [[600, 0, .08, "sine", .05, 1200]],
+        macchina: [[440, 0, .1, "square", .025], [660, .12, .1, "square", .025], [880, .24, .16, "square", .025]],
+        lattina: [[300, 0, .08, "square", .04, 120], [1400, .25, .06, "triangle", .05], [1900, .3, .1, "triangle", .04]],
+        pop: [[500, 0, .05, "sine", .1, 900], [600, .12, .05, "sine", .08, 1100], [450, .22, .05, "sine", .08, 850]],
+        chitarra: [[196, 0, .9, "triangle", .07], [247, .04, .85, "triangle", .06], [294, .08, .8, "triangle", .06], [392, .12, .75, "triangle", .05]],
+        vendi: [[1760, 0, .08, "triangle", .07], [1319, .07, .08, "triangle", .07], [988, .14, .2, "triangle", .07]]
       }[tipo] || [];
       if (tipo === "acqua") rumore(ctx, t0, 2.1, 1500, 1100, 0.11);
       if (tipo === "sciacquone") rumore(ctx, t0, 1.7, 2600, 300, 0.16);
@@ -896,9 +1461,10 @@
     var fatto = el("button", "ca-fatto", "✓ Fatto"); fatto.onclick = esciArreda;
     var cTesta = el("div", "ca-ctesta"); cTesta.appendChild(cTabs); cTesta.appendChild(fatto);
     cassetto.appendChild(cTesta); cassetto.appendChild(cLista); s.appendChild(cassetto);
-    var tool = el("div", "ca-tool"), tGira = el("button", null, "🔄"), tVia = el("button", null, "📦");
-    tGira.title = "Gira"; tVia.title = "Metti nel baule";
-    tool.appendChild(tGira); tool.appendChild(tVia); palco.appendChild(tool);
+    var tool = el("div", "ca-tool"), tGira = el("button", null, "🔄"), tVia = el("button", null, "📦"), tColore = el("button", "ca-tcolore", "🎨"), tVendi = el("button", "ca-tvendi", "🪙");
+    tGira.title = "Gira"; tVia.title = "Metti nel baule"; tColore.title = "Cambia colore"; tVendi.title = "Vendi a metà prezzo";
+    tool.appendChild(tGira); tool.appendChild(tVia); tool.appendChild(tColore); tool.appendChild(tVendi); palco.appendChild(tool);
+    var tavolozza = el("div", "ca-colori"); palco.appendChild(tavolozza);   // i colori del mobile scelto (si apre col 🎨)
     var avviso = el("div", "ca-avviso"); s.appendChild(avviso);
     function dimmi(t) { avviso.textContent = t; avviso.classList.remove("su"); void avviso.offsetWidth; avviso.classList.add("su"); }
 
@@ -974,7 +1540,7 @@
     }
     function posa(d) {
       var n = nodo(d), g = geo(d), o = OGG[d.t], on = !!d.on;
-      var kk = (on ? 1 : 0) + "|" + (d.vista || "") + (o.vasca ? "|" + JSON.stringify(d.pesci || []) : ""); if (n._k !== kk) { n._k = kk; n._on = on; n._img.src = imgDi(d, on); }   // acceso/spento, aperto/chiuso, i pesci dell'acquario: cambia solo il disegno
+      var kk = (on ? 1 : 0) + "|" + (d.vista || "") + "|" + (d.col || "") + (o.vasca ? "|" + JSON.stringify(d.pesci || []) : ""); if (n._k !== kk) { n._k = kk; n._on = on; n._img.src = imgDi(d, on); }   // acceso/spento, aperto/chiuso, i pesci dell'acquario: cambia solo il disegno
       n.style.left = g.l.toFixed(1) + "px"; n.style.top = g.t.toFixed(1) + "px"; n.style.width = g.w.toFixed(1) + "px"; n.style.height = g.h.toFixed(1) + "px"; n.style.zIndex = g.zi;
       if (g.quad) {   // sulla parete di lato l'immagine si stende sui quattro angoli
         var mq = misura(d.t); n.classList.add("lato");
@@ -1096,7 +1662,7 @@
       avStato = "dorme"; avSu = d; av.classList.add("sdraiato"); av._img.src = im.src;   // la testa sul cuscino, il resto sotto la coperta
       av.style.left = (q.x - (MX - vb[0]) * k).toFixed(1) + "px"; av.style.top = (q.y - (MY - vb[1]) * k).toFixed(1) + "px"; av.style.width = (vb[2] * k).toFixed(1) + "px"; av.style.height = (vb[3] * k).toFixed(1) + "px";
       av.style.transformOrigin = ((MX - vb[0]) / vb[2] * 100).toFixed(1) + "% " + ((MY - vb[1]) / vb[3] * 100).toFixed(1) + "%"; av.style.transform = "rotate(" + ((bagno ? -5 : -9) * dir) + "deg)"; av.style.zIndex = q.g.zi + 1;
-      copertaN = el("img", "ca-coperta"); copertaN.alt = ""; copertaN.src = imgOggetto(d.t, false, "coperta", d.vista);   // la coperta rimboccata sopra
+      copertaN = el("img", "ca-coperta"); copertaN.alt = ""; copertaN.src = imgOggetto(d.t, false, "coperta", d.vista, d.col);   // la coperta rimboccata sopra
       copertaN.style.left = q.g.l.toFixed(1) + "px"; copertaN.style.top = q.g.t.toFixed(1) + "px"; copertaN.style.width = q.g.w.toFixed(1) + "px"; copertaN.style.height = q.g.h.toFixed(1) + "px";
       copertaN.style.zIndex = q.g.zi + 2; copertaN.style.transform = d.flip ? "scaleX(-1)" : ""; strato.appendChild(copertaN);
       suono(bagno ? "acqua" : "molla");
@@ -1180,6 +1746,10 @@
       }
       if (o.uso === "wc" || o.uso === "acqua") { d.on = true; posa(d); suono(o.uso === "wc" ? "sciacquone" : "acqua"); finche(o.uso === "wc" ? 1500 : 2100, spegni); return; }
       if (o.uso === "suona") { n.classList.remove("trema"); void n.offsetWidth; n.classList.add("trema"); suono("dring"); aspetta(); return; }
+      if (o.uso === "prendi") {   // gelato, bibita, popcorn, caffè, una partita al flipper…: la macchina va e l'avatar se la gode
+        var cb = o.cibi || ["✨"]; d.on = true; posa(d); suono(o.suono || "macchina"); nuvoletta(cb[Math.floor(Math.random() * cb.length)], 900);
+        finche(o.dura || 2400, function () { spegni(); saluta(); }); return;
+      }
       if (o.vasca) { apriVasca(d); aspetta(); return; }   // l'acquario: si mettono e si tolgono i pesci del cesto
       n.classList.remove("rimbalza"); void n.offsetWidth; n.classList.add("rimbalza"); saluta(); aspetta();   // il resto: lo tocca e lo guarda
     }
@@ -1243,10 +1813,58 @@
     var drag = null;
     function largo(t, vista) { var o = OGG[t]; return o.corpo && !vista ? (o.corpo[1] - o.corpo[0]) / 100 : misura(t, vista).w / 100; }   // quanto è largo il mobile (senza le ante aperte)
     function figliDi(d) { return stanza().oggetti.filter(function (x) { return x.su === d.u; }); }
-    function deseleziona() { sel = null; tool.classList.remove("su"); [].forEach.call(strato.children, function (n) { n.classList.remove("scelto"); }); }
+    function deseleziona() { sel = null; tool.classList.remove("su"); chiudiTavolozza(); prontoVendi(false); [].forEach.call(strato.children, function (n) { n.classList.remove("scelto"); }); }
     function seleziona(d) {
       deseleziona(); sel = d; var n = nodi[d.u]; if (!n) return; n.classList.add("scelto");
+      tColore.style.display = OGG[d.t].colori ? "" : "none"; tVendi.style.display = prezzoVendita(d.t) ? "" : "none";
       var g = geo(d); tool.style.left = g.ax.toFixed(1) + "px"; tool.style.top = Math.max(18, g.t - 8).toFixed(1) + "px"; tool.classList.add("su");
+    }
+    // ---- i colori: il primo arriva col mobile, gli altri si pagano una volta sola (poi sono tuoi e si rimettono gratis) ----
+    var prontoCol = null;
+    function chiudiTavolozza() { tavolozza.classList.remove("su"); prontoCol = null; }
+    function apriTavolozza() {
+      if (!sel || !OGG[sel.t].colori) return;
+      var o = OGG[sel.t], miei = coloriMiei(casa, sel.t), ora = colDi(o, sel.col);
+      while (tavolozza.firstChild) tavolozza.removeChild(tavolozza.firstChild);
+      o.colori.forEach(function (K) {
+        var b = el("button", "ca-col" + (K === ora ? " on" : "") + (miei.indexOf(K.id) < 0 ? " nuovo" : "") + (prontoCol === K.id ? " pronto" : ""));
+        b.style.setProperty("--c", K.c || K.t); b.style.setProperty("--k", K.k || K.a || K.l || K.c || K.t); b.title = K.nome;
+        if (miei.indexOf(K.id) < 0) b.appendChild(el("small", null, cifre(o.prezzoColore)));
+        b.onclick = function (e) { e.stopPropagation(); scegliColore(K); };
+        tavolozza.appendChild(b);
+      });
+      tavolozza.style.left = tool.style.left; tavolozza.style.top = Math.max(64, parseFloat(tool.style.top) - 46).toFixed(1) + "px";
+      tavolozza.classList.add("su");
+    }
+    function scegliColore(K) {
+      if (!sel) return; var o = OGG[sel.t], d = sel;
+      if (colDi(o, d.col) === K) return;
+      if (coloriMiei(casa, d.t).indexOf(K.id) < 0) {   // un colore nuovo: si paga solo il cambio colore (al secondo tocco)
+        if (prontoCol !== K.id) { prontoCol = K.id; dimmi(K.nome.charAt(0).toUpperCase() + K.nome.slice(1) + ": 🪙 " + cifre(o.prezzoColore) + " · tocca di nuovo per prenderlo"); apriTavolozza(); return; }
+        if (!spendi(o.prezzoColore)) return;
+        aggiungiColore(casa, d.t, K.id); dimmi("Colore nuovo! Ora è tuo per sempre 🎨");
+      }
+      prontoCol = null; d.col = K.id; posa(d); salva(); suono("carta");
+      var n = nodi[d.u]; if (n) { n.classList.remove("rimbalza"); void n.offsetWidth; n.classList.add("rimbalza"); }
+      apriTavolozza();
+    }
+    tColore.onclick = function () { if (tavolozza.classList.contains("su")) chiudiTavolozza(); else { prontoVendi(false); apriTavolozza(); } };
+    // ---- vendere: a metà del prezzo del negozio (si tocca 🪙 due volte, per non sbagliare) ----
+    var tVendiTimer = 0;
+    function prontoVendi(si) { clearTimeout(tVendiTimer); tVendi.classList.toggle("pronto", !!si); if (si) tVendiTimer = setTimeout(function () { tVendi.classList.remove("pronto"); }, 3500); }
+    tVendi.onclick = function () {
+      if (!sel) return; var n = prezzoVendita(sel.t); if (!n) return;
+      if (!tVendi.classList.contains("pronto")) { chiudiTavolozza(); prontoVendi(true); dimmi("Lo vendi per 🪙 " + cifre(n) + "? Tocca ancora 🪙"); return; }
+      prontoVendi(false); vendi(sel);
+    };
+    function guadagna(n) {
+      if (opts.guadagna) opts.guadagna(n); else casa.monete += n;
+      aggMonete(); monete.classList.remove("pulsa"); void monete.offsetWidth; monete.classList.add("pulsa"); suono("vendi");
+    }
+    function vendi(d) {   // venduto dalla stanza: le cose appoggiate sopra vanno nel baule, i pesci tornano nel cesto
+      var n = prezzoVendita(d.t), figli = figliDi(d);
+      if (figli.length) metiVia(figli[0], true, figli);
+      togli(d); deseleziona(); guadagna(n); dimmi("Venduto! +🪙 " + cifre(n)); salva(); if (arreda) disegnaCassetto();
     }
     tGira.onclick = function () {   // gira: i mobili che hanno il fianco fanno davanti → di fianco → di fianco dall'altra parte; gli altri si specchiano
       if (!sel) return;
@@ -1256,15 +1874,14 @@
       figliDi(sel).forEach(function (f) { f.x = Math.max(sel.x - mz + 0.05, Math.min(sel.x + mz - 0.05, f.x)); posa(f); });   // le cose appoggiate restano sopra
       var n = nodi[sel.u]; posa(sel); seleziona(sel); n.classList.remove("rimbalza"); void n.offsetWidth; n.classList.add("rimbalza"); suono("gira"); salva(); };
     tVia.onclick = function () { if (!sel) return; metiVia(sel); };
-    function metiVia(d) {
-      var lista = [d].concat(figliDi(d)), sz = stanza();
-      lista.forEach(function (x) {   // l'acquario va nel baule vuoto: i suoi pesci tornano nel cesto
-        if (x.pesci && x.pesci.length) { var Q = pesca(); if (Q) { Q.cesto = (Q.cesto || []).concat(x.pesci); opts.pesca.salva(Q); x.pesci = []; dimmi("I pesci sono tornati nel cesto 🧺"); } }
-      });
-      lista.forEach(function (x) {
-        var n = nodi[x.u]; if (n) { n.classList.add("via"); if (n._luce && n._luce.parentNode) n._luce.parentNode.removeChild(n._luce); (function (n) { setTimeout(function () { if (n.parentNode) n.parentNode.removeChild(n); }, 320); })(n); delete nodi[x.u]; }
-        sz.oggetti = sz.oggetti.filter(function (y) { return y !== x; }); casa.baule.push(x.t);
-      });
+    function togli(x) {   // toglie un mobile dalla stanza (l'acquario: i suoi pesci tornano nel cesto)
+      if (x.pesci && x.pesci.length) { var Q = pesca(); if (Q) { Q.cesto = (Q.cesto || []).concat(x.pesci); opts.pesca.salva(Q); x.pesci = []; dimmi("I pesci sono tornati nel cesto 🧺"); } }
+      var n = nodi[x.u]; if (n) { n.classList.add("via"); if (n._luce && n._luce.parentNode) n._luce.parentNode.removeChild(n._luce); (function (n) { setTimeout(function () { if (n.parentNode) n.parentNode.removeChild(n); }, 320); })(n); delete nodi[x.u]; }
+      var sz = stanza(); sz.oggetti = sz.oggetti.filter(function (y) { return y !== x; });
+    }
+    function metiVia(d, zitto, lista) {   // nel baule, col suo colore (e le cose appoggiate sopra con lui)
+      (lista || [d].concat(figliDi(d))).forEach(function (x) { togli(x); casa.baule.push(voce(x.t, x.col)); });
+      if (zitto) return;
       deseleziona(); suono("baule"); dimmi("Messo nel baule 🧳"); salva(); if (arreda) disegnaCassetto();
       var tb = cTabs.querySelector("[data-id='baule']"); if (tb) { tb.classList.remove("pulsa"); void tb.offsetWidth; tb.classList.add("pulsa"); }
     }
@@ -1409,10 +2026,24 @@
       while (cLista.firstChild) cLista.removeChild(cLista.firstChild);
       var sz = stanza(), st = datiStanza();
       if (scheda === "baule") {
-        var conta = {}; casa.baule.forEach(function (t) { conta[t] = (conta[t] || 0) + 1; });
-        var tipi = Object.keys(conta);
-        if (!tipi.length) cLista.appendChild(el("div", "ca-vuoto", "Il baule è vuoto. Trascina qui un mobile per metterlo via, o compra qualcosa nel negozio."));
-        tipi.forEach(function (t) { cLista.appendChild(scheda1(imgOggetto(t), OGG[t].nome, conta[t] > 1 ? "× " + conta[t] : "", OGG[t].qual ? "bello" : "", function () { tira(t); })); });
+        var conta = {}; casa.baule.forEach(function (v) { if (OGG[daVoce(v).t]) conta[v] = (conta[v] || 0) + 1; });
+        var voci = Object.keys(conta);
+        if (!voci.length) cLista.appendChild(el("div", "ca-vuoto", "Il baule è vuoto. Trascina qui un mobile per metterlo via, o compra qualcosa nel negozio."));
+        voci.forEach(function (v) {
+          var x = daVoce(v), o = OGG[x.t], K = colDi(o, x.col), pv = prezzoVendita(x.t);
+          var b = scheda1(imgOggetto(x.t, false, null, null, x.col), o.nome + (K ? " · " + K.nome : ""), conta[v] > 1 ? "× " + conta[v] : "", o.qual ? "bello" : "", function () { tira(v); });
+          if (pv) {   // vendere dal baule: 🪙, poi "Vendi?" per essere sicuri
+            var bv = el("i", "ca-vendi", "🪙"), tv = 0;
+            bv.onclick = function (e) {
+              e.stopPropagation(); clearTimeout(tv);
+              if (!bv.classList.contains("pronto")) { bv.classList.add("pronto"); bv.textContent = "Vendi " + cifre(pv) + "?"; tv = setTimeout(function () { bv.classList.remove("pronto"); bv.textContent = "🪙"; }, 3500); return; }
+              var i = casa.baule.indexOf(v); if (i < 0) return;
+              casa.baule.splice(i, 1); guadagna(pv); dimmi("Venduto! +🪙 " + cifre(pv)); salva(); disegnaCassetto();
+            };
+            b.appendChild(bv);
+          }
+          cLista.appendChild(b);
+        });
       } else if (scheda === "pareti") {
         casa.carte.forEach(function (c) { cLista.appendChild(scheda1(campioneCarta(c), CARTE[c].nome, sz.carta === c ? "messa" : "", sz.carta === c ? "messo" : "", function () { cambiaCarta(c); })); });
       } else if (scheda === "pavimenti") {
@@ -1424,15 +2055,15 @@
           cLista.appendChild(scheda1(campioneMisura(i), m.nome + " · " + String(Math.round(m.xw * 20) / 10).replace(".", ",") + " m", sotto, (sz.mis || 0) === i ? "messo" : mia ? "" : "negozio", function () { cambiaMisura(i, mia ? 0 : costo); }));
         });
       } else {
-        Object.keys(OGG).forEach(function (t) { if (OGG[t].prezzo) cLista.appendChild(scheda1(imgOggetto(t), OGG[t].nome, "🪙 " + cifre(OGG[t].prezzo), "negozio", function () { compra("ogg", t, OGG[t].prezzo); })); });
-        Object.keys(CARTE).forEach(function (c) { if (CARTE[c].prezzo && casa.carte.indexOf(c) < 0) cLista.appendChild(scheda1(campioneCarta(c), CARTE[c].nome, "🪙 " + cifre(CARTE[c].prezzo), "negozio", function () { compra("carta", c, CARTE[c].prezzo); })); });
+        Object.keys(OGG).forEach(function (t) { if (OGG[t].prezzo && inStagione(OGG[t])) cLista.appendChild(scheda1(imgOggetto(t), OGG[t].nome, "🪙 " + cifre(OGG[t].prezzo), "negozio", function () { compra("ogg", t, OGG[t].prezzo); })); });
+        Object.keys(CARTE).forEach(function (c) { if (CARTE[c].prezzo && inStagione(CARTE[c]) && casa.carte.indexOf(c) < 0) cLista.appendChild(scheda1(campioneCarta(c), CARTE[c].nome, "🪙 " + cifre(CARTE[c].prezzo), "negozio", function () { compra("carta", c, CARTE[c].prezzo); })); });
         Object.keys(PAVIMENTI).forEach(function (c) { if (PAVIMENTI[c].prezzo && casa.pavimenti.indexOf(c) < 0) cLista.appendChild(scheda1(campionePav(c), PAVIMENTI[c].nome, "🪙 " + cifre(PAVIMENTI[c].prezzo), "negozio", function () { compra("pav", c, PAVIMENTI[c].prezzo); })); });
       }
     }
-    function tira(t) {   // dal baule alla stanza: cade dall'alto e rimbalza
-      var o = OGG[t], sz = stanza(), m = misura(t), i = casa.baule.indexOf(t); if (i < 0) return;
+    function tira(v) {   // dal baule alla stanza: cade dall'alto e rimbalza
+      var x = daVoce(v), t = x.t, o = OGG[t], sz = stanza(), m = misura(t), i = casa.baule.indexOf(v); if (i < 0 || !o) return;
       casa.baule.splice(i, 1);
-      var d = { u: sz.prossimo++, t: t, x: 0, z: 3.2, y: 0, flip: false };
+      var d = { u: sz.prossimo++, t: t, x: 0, z: 3.2, y: 0, flip: false }; if (x.col) d.col = x.col;
       if (o.tipo === "muro") { d.z = ZB; d.y = Math.min(YT - m.h / 200 - 0.05, 1.7); }
       sz.oggetti.push(d); posa(d);
       var n = nodi[d.u]; n.classList.add("arriva"); setTimeout(function () { n.classList.remove("arriva"); polvere(d); suono("giu"); }, 420);
@@ -1480,22 +2111,29 @@
   //  i mobili finiscono nel baule di casa, carte da parati e pavimenti tra quelli da mettere.
   //  opts: { dati (la casa), salva(dati), monete(), spendi(n), indietro(), aCasa(), audio(), reparto }
   // =========================================================
-  var REPARTI = [
-    { id: "soggiorno", nome: "Soggiorno", ico: "🛋️", muro: "#f6e4c8", riga: "#efd8b6" },
-    { id: "cucina", nome: "Cucina", ico: "🍳", muro: "#e2f2e4", riga: "#d2eadb" },
-    { id: "camera", nome: "Camera", ico: "🛏️", muro: "#ece3f7", riga: "#e0d4f1" },
-    { id: "bagno", nome: "Bagno", ico: "🛁", muro: "#dcf0f7", riga: "#cce7f1" },
-    { id: "deco", nome: "Decorazioni", ico: "🖼️", muro: "#f9e4e2", riga: "#f2d3d0" },
-    { id: "pareti", nome: "Pareti e pavimenti", ico: "🎨", muro: "#f2ede3", riga: "#e8e0cf" },
-    { id: "usato", nome: "Mercatino dell'usato", ico: "♻️", muro: "#e8e0cf", riga: "#ddd2bb" }
+  var REPARTI = [   // divisi per tipo di oggetto (Halloween c'è solo nei suoi giorni, all'ingresso)
+    { id: "halloween", nome: "Halloween", corto: "Halloween", ico: "🎃", muro: "#3b2a55", riga: "#33244a", festa: "halloween" },
+    { id: "divani", nome: "Divani e poltrone", corto: "Divani", ico: "🛋️", muro: "#f6e4c8", riga: "#efd8b6" },
+    { id: "sedie", nome: "Sedie e sgabelli", corto: "Sedie", ico: "🪑", muro: "#fde8d7", riga: "#f9dcc4" },
+    { id: "tavoli", nome: "Tavoli e scrivanie", corto: "Tavoli", ico: "🍽️", muro: "#eef3e2", riga: "#e3ebd2" },
+    { id: "mobili", nome: "Armadi e mobili", corto: "Armadi", ico: "🗄️", muro: "#efe6dc", riga: "#e6d9cb" },
+    { id: "letti", nome: "Letti e comodini", corto: "Letti", ico: "🛏️", muro: "#ece3f7", riga: "#e0d4f1" },
+    { id: "luci", nome: "Luci e lampade", corto: "Luci", ico: "💡", muro: "#fff6d6", riga: "#fcedbd" },
+    { id: "elettronica", nome: "Elettronica e giochi", corto: "Giochi", ico: "🕹️", muro: "#e3e8fb", riga: "#d6ddf8" },
+    { id: "bar", nome: "Bar e gelateria", corto: "Bar", ico: "🍦", muro: "#ffe3ec", riga: "#ffd6e2" },
+    { id: "cucina", nome: "Cucina", corto: "Cucina", ico: "🍳", muro: "#e2f2e4", riga: "#d2eadb" },
+    { id: "bagno", nome: "Bagno", corto: "Bagno", ico: "🛁", muro: "#dcf0f7", riga: "#cce7f1" },
+    { id: "piante", nome: "Piante", corto: "Piante", ico: "🪴", muro: "#e6f4dc", riga: "#d8edca" },
+    { id: "quadri", nome: "Quadri e specchi", corto: "Quadri", ico: "🖼️", muro: "#f9e4e2", riga: "#f2d3d0" },
+    { id: "deco", nome: "Tappeti e decorazioni", corto: "Deco", ico: "🧸", muro: "#f3e6f5", riga: "#ead7ee" },
+    { id: "acquari", nome: "Acquari", corto: "Acquari", ico: "🐠", muro: "#d9f0fb", riga: "#c9e8f8" },
+    { id: "pareti", nome: "Pareti e pavimenti", corto: "Pareti", ico: "🎨", muro: "#f2ede3", riga: "#e8e0cf" },
+    { id: "usato", nome: "Mercatino dell'usato", corto: "Usato", ico: "♻️", muro: "#e8e0cf", riga: "#ddd2bb" }
   ];
-  function repartoDi(t) {
-    var o = OGG[t]; if (!o.qual) return "usato"; if (o.reparto) return o.reparto;
-    if (/^(frigo|fornello|cucina)/.test(t)) return "cucina";
-    if (o.tipo === "muro" || o.tipo === "tappeto" || o.stanza === "tutte") return "deco";
-    return o.stanza;
-  }
+  var DA_STANZA = { soggiorno: "divani", camera: "letti", bagno: "bagno" };   // dalla casa si entra nel reparto che serve a quella stanza
+  function repartoDi(t) { var o = OGG[t]; if (!o.qual) return "usato"; return o.cat || o.reparto || "deco"; }
   function cosaFa(o) {   // una riga sotto il nome: cosa ci si fa
+    if (o.cosa) return o.cosa;
     if (o.azione === "dormi") return "Ci si dorme 😴";
     if (o.azione === "siedi") return "Ci si siede";
     if (o.azione === "bagno") return "Ci si fa il bagno con la schiuma 🫧";
@@ -1533,7 +2171,8 @@
     // in basso: i reparti (toccandone uno ci si va) e la strada di casa
     var giu = el("div", "ne-giu"), chips = el("div", "ne-reparti");
     REPARTI.forEach(function (rp) {
-      var b = el("button", "ne-chip"); b.dataset.id = rp.id; b.appendChild(el("span", null, rp.ico)); b.appendChild(el("b", null, rp.nome.split(" ")[0]));
+      if (!pezziDel(rp.id).length) return;   // i reparti vuoti (Halloween fuori stagione) non ci sono
+      var b = el("button", "ne-chip" + (rp.festa ? " festa" : "")); b.dataset.id = rp.id; b.appendChild(el("span", null, rp.ico)); b.appendChild(el("b", null, rp.corto));
       b.onclick = function () { vaiReparto(rp.id, true); }; chips.appendChild(b);
     });
     giu.appendChild(chips);
@@ -1543,19 +2182,22 @@
     function dimmi(t) { avviso.textContent = t; avviso.classList.remove("su"); void avviso.offsetWidth; avviso.classList.add("su"); }
     function soldi() { return opts.monete ? opts.monete() : casa.monete; }
     function aggMonete() { monete.textContent = "🪙 " + cifre(soldi()) + (opts.monete ? "" : " · prova"); }
-    function nelBaule(t) { return casa.baule.filter(function (x) { return x === t; }).length; }
+    function nelBaule(t) { return casa.baule.filter(function (x) { return daVoce(x).t === t; }).length; }
     function mia(pz) { return pz.tipo === "carta" ? casa.carte.indexOf(pz.id) >= 0 : pz.tipo === "pavim" ? casa.pavimenti.indexOf(pz.id) >= 0 : false; }
 
     // ---- cosa c'è in ogni reparto (dal meno caro) ----
     function pezziDel(rp) {
       var l = [];
+      function carta(c) { l.push({ tipo: "carta", id: c, o: CARTE[c], nome: CARTE[c].nome, prezzo: CARTE[c].prezzo, img: rotoloCarta(c), w: 64, h: 124, cosa: "Carta da parati: si mette dall'Arreda" }); }
       if (rp === "pareti") {
-        Object.keys(CARTE).forEach(function (c) { if (CARTE[c].prezzo) l.push({ tipo: "carta", id: c, nome: CARTE[c].nome, prezzo: CARTE[c].prezzo, img: rotoloCarta(c), w: 64, h: 124, cosa: "Carta da parati: si mette dall'Arreda" }); });
+        Object.keys(CARTE).forEach(function (c) { if (CARTE[c].prezzo && !CARTE[c].festa) carta(c); });
         Object.keys(PAVIMENTI).forEach(function (c) { if (PAVIMENTI[c].prezzo) l.push({ tipo: "pavim", id: c, nome: PAVIMENTI[c].nome, prezzo: PAVIMENTI[c].prezzo, img: campionePav(c), w: 60, h: 60, cosa: "Pavimento: si mette dall'Arreda" }); });
         return l;
       }
-      Object.keys(OGG).forEach(function (t) { if (OGG[t].prezzo && repartoDi(t) === rp) l.push({ tipo: "ogg", id: t, o: OGG[t], nome: OGG[t].nome, prezzo: OGG[t].prezzo, img: imgOggetto(t), cosa: cosaFa(OGG[t]) }); });
-      return l.sort(function (a, b) { return a.prezzo - b.prezzo; });
+      Object.keys(OGG).forEach(function (t) { if (OGG[t].prezzo && inStagione(OGG[t]) && repartoDi(t) === rp) l.push({ tipo: "ogg", id: t, o: OGG[t], nome: OGG[t].nome, prezzo: OGG[t].prezzo, img: imgOggetto(t), cosa: cosaFa(OGG[t]) }); });
+      l.sort(function (a, b) { return a.prezzo - b.prezzo; });
+      Object.keys(CARTE).forEach(function (c) { if (CARTE[c].prezzo && CARTE[c].festa === rp && inStagione(CARTE[c])) carta(c); });   // la carta da parati della festa sta col suo reparto
+      return l;
     }
 
     // ---- il negozio disegnato: le pareti dei reparti, il pavimento, le vetrine coi cartellini ----
@@ -1587,7 +2229,8 @@
         x += 40;
         lista.forEach(function (pz) { x = vetrina(pz, x, pav, k) + 34; });
         x += 6; muro.style.width = (x - x0) + "px";
-        metti("ne-insegna", x0 + Math.min((x - x0) / 2, cw * 0.45), Math.max(70, pav * 0.16), null, null, rp.ico + " " + rp.nome);
+        metti("ne-insegna" + (rp.festa ? " festa" : ""), x0 + Math.min((x - x0) / 2, cw * 0.45), Math.max(70, pav * 0.16), null, null, rp.ico + " " + rp.nome + (rp.festa ? " · " + FESTE[rp.festa].fino : ""));
+        if (rp.festa) metti("ne-festone", x0 + 10, Math.max(70, pav * 0.16) + 44, x - x0 - 20, null, new Array(40).join("🎃 🦇 🕸️ 👻 "));   // il festone della festa
         metti("ne-colonnina", x - 8, 0, 16, pav);   // il pilastro tra un reparto e l'altro
         sezioni.push({ id: rp.id, x: x0 });
       });
@@ -1615,7 +2258,12 @@
       dentro.appendChild(im); dentro.appendChild(cart); pezzi.push(pz);
       return x + col;
     }
-    function aggCartellino(pz) { var tua = mia(pz); pz.pr.textContent = tua ? "✓ Già tua" : "🪙 " + cifre(pz.prezzo); pz.cart.classList.toggle("tua", tua); }
+    function aggCartellino(pz) {
+      var tua = mia(pz); pz.pr.textContent = tua ? "✓ Già tua" : "🪙 " + cifre(pz.prezzo); pz.cart.classList.toggle("tua", tua);
+      if (pz.o && pz.o.colori && !pz.pallini) {   // i pallini dei colori in cui c'è
+        pz.pallini = el("i", "ne-pallini"); pz.o.colori.forEach(function (K) { var p = el("span"); p.style.background = K.c || K.t; pz.pallini.appendChild(p); }); pz.cart.appendChild(pz.pallini);
+      }
+    }
 
     // ---- la scheda per comprare (si apre toccando un oggetto o il suo cartellino) ----
     var velo = el("div", "ne-velo"), scheda = el("div", "ne-scheda"), aperto = null;
@@ -1625,9 +2273,24 @@
       aperto = pz; while (scheda.firstChild) scheda.removeChild(scheda.firstChild);
       var x = el("button", "ne-x", "✕"); x.onclick = chiudi; scheda.appendChild(x);
       var im = el("img"); im.src = pz.img; im.alt = ""; scheda.appendChild(im);
-      scheda.appendChild(el("h3", null, pz.nome));
+      var h3 = el("h3", null, pz.nome); scheda.appendChild(h3);
+      if (pz.o && pz.o.festa && FESTE[pz.o.festa]) scheda.appendChild(el("span", "ne-speciale festa", "🎃 Solo " + FESTE[pz.o.festa].fino));
       if (pz.o && pz.o.frase) { scheda.appendChild(el("span", "ne-speciale", "✨ Speciale")); scheda.appendChild(el("p", "ne-frase", pz.o.frase)); }   // solo gli oggetti speciali
       scheda.appendChild(el("p", null, pz.cosa));
+      var col = null;   // il colore scelto (per i mobili che ne hanno tanti)
+      if (pz.tipo === "ogg" && pz.o.colori) {
+        var riga = el("div", "ne-colori");
+        var scegli = function (K, bt) {
+          col = K.id; im.src = imgOggetto(pz.id, false, null, null, K.id); h3.textContent = pz.nome + " · " + K.nome;
+          [].forEach.call(riga.children, function (x) { x.classList.toggle("on", x === bt); });
+        };
+        pz.o.colori.forEach(function (K) {
+          var bt = el("button", "ca-col"); bt.style.setProperty("--c", K.c || K.t); bt.style.setProperty("--k", K.k || K.a || K.l || K.c || K.t); bt.title = K.nome;
+          bt.onclick = function () { scegli(K, bt); suono("su"); }; riga.appendChild(bt);
+        });
+        scheda.appendChild(riga); scegli(pz.o.colori[0], riga.firstChild);
+        scheda.appendChild(el("p", "ne-nota ne-colnota", "Scegli il colore. Poi in casa lo cambi con 🎨: paghi solo il colore nuovo (🪙 " + cifre(pz.o.prezzoColore) + "), quelli già presi restano tuoi."));
+      }
       var nota = el("p", "ne-nota"), b = el("button", "ne-compra"); scheda.appendChild(nota); scheda.appendChild(b);
       function agg() {
         var tua = mia(pz), n = pz.tipo === "ogg" ? nelBaule(pz.id) : 0, manca = pz.prezzo - soldi();
@@ -1638,7 +2301,7 @@
       b.onclick = function () {
         if (mia(pz) || soldi() < pz.prezzo) return;
         if (opts.spendi) opts.spendi(pz.prezzo); else casa.monete -= pz.prezzo;
-        if (pz.tipo === "ogg") casa.baule.push(pz.id); else if (pz.tipo === "carta") casa.carte.push(pz.id); else casa.pavimenti.push(pz.id);
+        if (pz.tipo === "ogg") { if (col) aggiungiColore(casa, pz.id, col); casa.baule.push(voce(pz.id, col)); } else if (pz.tipo === "carta") casa.carte.push(pz.id); else casa.pavimenti.push(pz.id);
         salva(); suono("compra"); aggMonete(); monete.classList.remove("pulsa"); void monete.offsetWidth; monete.classList.add("pulsa");
         pz.img0.classList.remove("salta"); void pz.img0.offsetWidth; pz.img0.classList.add("salta"); aggCartellino(pz);
         dimmi(pz.tipo === "ogg" ? "Comprato! È nel baule di casa 🧳" : "Comprato! La metti dall'Arreda 🎨");
@@ -1668,7 +2331,7 @@
     };
     s._monta = function () {
       aggMonete();
-      (function prova() { if (!document.body.contains(s)) return; if (!costruisci()) return requestAnimationFrame(prova); if (opts.reparto) vaiReparto(opts.reparto); doveSei(); })();
+      (function prova() { if (!document.body.contains(s)) return; if (!costruisci()) return requestAnimationFrame(prova); if (opts.reparto) vaiReparto(DA_STANZA[opts.reparto] || opts.reparto); doveSei(); })();
       var lw = 0, lh = 0;
       window.addEventListener("resize", function ridim() {
         if (!document.body.contains(s)) return window.removeEventListener("resize", ridim);

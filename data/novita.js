@@ -9,6 +9,21 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 188,
+    data: "11 ottobre 2026",
+    titolo: "Il negozio si fa grande 🛍️🎃",
+    descrizione: [
+      "Più di 80 oggetti nuovi, divisi per tipo: Divani, Sedie, Tavoli, Armadi, Letti, Luci, Giochi, Bar, Cucina, Bagno, Piante, Quadri, Decorazioni e Acquari. In basso tocchi il reparto e ci vai subito.",
+      "Come nei Sims ti puoi fare l'angolo bar in casa: bancone, sgabelli, macchina dei gelati, distributore di bibite, popcorn, zucchero filato e macchina dell'espresso. L'avatar ci va e si prende il gelato, la bibita o il caffè.",
+      "Reparto Giochi: juke-box con la musica, flipper, biliardino, cabinato arcade, console, computer, giradischi e la cassa con le luci.",
+      "Reparto Halloween all'ingresso, solo fino al 2 novembre: zucche che si accendono, fantasmino che galleggia, pipistrelli, ragnatela col ragno, calderone che bolle, scheletro e la carta da parati \"Notte di Halloween\". Quello che compri resta tuo anche dopo.",
+      "Tanti mobili hanno più colori: divani, poltrone, armadi, letti, sgabelli e tappeti. Scegli il colore quando lo compri. In casa tocchi il mobile e poi 🎨: per un colore nuovo paghi solo il cambio colore, e i colori che hai già preso li rimetti gratis.",
+      "Ora puoi rivendere quello che non ti serve a metà prezzo: tocchi il mobile in Arreda e poi 🪙 due volte, oppure il 🪙 sulla sua scheda nel baule.",
+      "Nelle stanze allargate anche le pareti di lato hanno la carta da parati che hai messo, e il soffitto prende il suo colore. Con il cielo stellato anche il soffitto è pieno di stelle.",
+      "Nuove carte da parati (pois, perline di legno, onde, damasco d'oro) e nuovi pavimenti (bianco e nero da bar, parquet di noce, piastrelle rosa, erba sintetica)."
+    ]
+  },
+  {
     v: 187,
     data: "11 ottobre 2026",
     titolo: "Il laghetto tutto nuovo 🌅🎣",
