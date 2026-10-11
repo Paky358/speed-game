@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 193,
+    data: "11 ottobre 2026",
+    titolo: "Il T-rex è sepolto agli scavi 🦖",
+    descrizione: [
+      "Agli scavi è sepolto lo scheletro di un T-rex, diviso in 4 pezzi: il cranio, le costole con le braccine, il bacino con la zampa e la coda. Sono rari: circa un reperto su sette è un pezzo di dinosauro.",
+      "I pezzi sono grandi e disegnati come veri fossili: ossa color avorio, i buchi del cranio, i denti, le macchie della pietra. Tirarli fuori senza far franare la terra è una bella sfida.",
+      "Quando li hai tutti e 4, lo scheletro intero viene montato sul piedistallo del museo e ricevi 8.000 Speed Coins!"
+    ]
+  },
+  {
     v: 192,
     data: "11 ottobre 2026",
     titolo: "Scavi visti dall'alto 🏺",

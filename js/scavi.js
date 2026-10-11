@@ -24,7 +24,11 @@
     { id: "freccia", nome: "Punta di freccia", epoca: "preistoria", quando: "8000 a.C.", r: 1, v: 300, m: ["X", "X"] },
     { id: "dente", nome: "Dente di mammut", epoca: "preistoria", quando: "20000 a.C.", r: 2, v: 700, m: ["X.", "XX"] },
     { id: "ammonite", nome: "Ammonite fossile", epoca: "preistoria", quando: "150 milioni di anni fa", r: 2, v: 650, m: ["XX", "XX"] },
-    { id: "teschio", nome: "Teschio di dinosauro", epoca: "preistoria", quando: "70 milioni di anni fa", r: 4, v: 3500, m: ["XXX", "XX."] },
+    // il T-rex in 4 pezzi (dino: "trex"): uno su cinque reperti sepolti è un pezzo di dinosauro; con tutti e 4 lo scheletro va nel museo
+    { id: "teschio", nome: "Cranio di T-rex", epoca: "preistoria", quando: "68 milioni di anni fa", r: 4, v: 1500, lv: 1, dino: "trex", m: ["XXXX", "XXXX", "XXX."] },
+    { id: "trex_torace", nome: "Costole e braccine del T-rex", epoca: "preistoria", quando: "68 milioni di anni fa", r: 4, v: 1500, lv: 1, dino: "trex", m: ["XXXX", "XXXX", ".XX."] },
+    { id: "trex_zampa", nome: "Bacino e zampa del T-rex", epoca: "preistoria", quando: "68 milioni di anni fa", r: 4, v: 1500, lv: 1, dino: "trex", m: ["XXX", "XXX", ".X.", "XX."] },
+    { id: "trex_coda", nome: "Coda del T-rex", epoca: "preistoria", quando: "68 milioni di anni fa", r: 4, v: 1500, lv: 1, dino: "trex", m: ["XXXXX", "XXX.."] },
     { id: "scarabeo", nome: "Scarabeo sacro", epoca: "egitto", quando: "1500 a.C.", r: 2, v: 600, m: ["X"] },
     { id: "gatto", nome: "Statuetta del gatto", epoca: "egitto", quando: "1200 a.C.", r: 4, v: 3200, m: ["X.", "XX", "XX"] },
     { id: "maschera", nome: "Maschera d'oro del faraone", epoca: "egitto", quando: "1300 a.C.", r: 5, v: 12000, m: ["XXX", "XXX", ".X."] },
@@ -40,6 +44,9 @@
   ];
   var PER_ID = {}; REPERTI.forEach(function (x) { PER_ID[x.id] = x; });
   var PICCOLI = ["moneta", "civetta", "scarabeo", "coccio"];   // le sorprese in più nella buca
+  var DINO = { trex: { nome: "T-rex", pezzi: ["teschio", "trex_torace", "trex_zampa", "trex_coda"], premio: 8000 } }, CHANCE_DINO = .14;
+  function etichettaR(R) { return R.dino ? "Fossile" : RARITA[R.r]; }
+  function coloreR(R) { return R.dino ? "#8d6e3f" : COL_R[R.r]; }
 
   // ---------- attrezzi ----------
   function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
@@ -76,9 +83,121 @@
   function suonoMonete() { [0, 7, 12].forEach(function (k, i) { tono(1046 * Math.pow(2, k / 12), i * .06, .15, "triangle", .07); }); }
   function suonoCarta(r) { [0, 4, 7, 12, 16].slice(0, 1 + r).forEach(function (k, i) { tono(523 * Math.pow(2, k / 12), i * .08, .3, "triangle", .09); }); }
 
+  // =========================================================
+  //  I DISEGNI "BELLI" (SVG): il T-rex in 4 pezzi e lo scheletro montato. Ossa fossili color avorio con le sfumature,
+  //  i bordi scuri, le macchie del fossile e i riflessi. Ogni pezzo ha il riquadro della sua forma sotto terra (4×3 → 400×300).
+  //  ARTE[id](p) = il corpo del disegno (p = prefisso per gli id dei gradienti, così più disegni stanno nella stessa pagina)
+  // =========================================================
+  var OSSO_LINEA = "#5a4528", OSSO_BUCO = "#3a2c1c";
+  function defsOsso(p) {
+    return "<linearGradient id='" + p + "o' x1='0' y1='0' x2='.35' y2='1'><stop offset='0' stop-color='#f6edd6'/><stop offset='.5' stop-color='#e0cfa8'/><stop offset='1' stop-color='#b99d6d'/></linearGradient>" +
+      "<radialGradient id='" + p + "b' cx='.5' cy='.4' r='.7'><stop offset='0' stop-color='#2a1f13'/><stop offset='1' stop-color='#4d3a24'/></radialGradient>";
+  }
+  function osso(d, p, w) { return "<path d='" + d + "' fill='url(#" + p + "o)' stroke='" + OSSO_LINEA + "' stroke-width='" + (w || 4) + "' stroke-linejoin='round'/>"; }
+  function buco(d, p) { return "<path d='" + d + "' fill='url(#" + p + "b)' stroke='" + OSSO_LINEA + "' stroke-width='2.5' stroke-linejoin='round'/>"; }
+  function macchie(d, p, n, x0, y0, x1, y1, seme) {   // le macchie scure del fossile, solo dentro l'osso
+    var r = rnd(seme), s = "<clipPath id='" + p + "m" + seme + "'><path d='" + d + "'/></clipPath><g clip-path='url(#" + p + "m" + seme + ")'>";
+    for (var i = 0; i < n; i++) s += "<ellipse cx='" + (x0 + r() * (x1 - x0)).toFixed(1) + "' cy='" + (y0 + r() * (y1 - y0)).toFixed(1) + "' rx='" + (1.5 + r() * 5).toFixed(1) + "' ry='" + (1 + r() * 3).toFixed(1) + "' fill='#8a6a3e' opacity='" + (.15 + r() * .25).toFixed(2) + "'/>";
+    return s + "</g>";
+  }
+  function riflesso(d, w, op) { return "<path d='" + d + "' fill='none' stroke='#fffaf0' stroke-width='" + (w || 4) + "' stroke-linecap='round' opacity='" + (op || .55) + "'/>"; }
+  function bastone(d, w, col) {   // un osso lungo e sottile (costola, falange): il bordo scuro sotto, l'osso sopra, il riflesso
+    return "<path d='" + d + "' fill='none' stroke='" + OSSO_LINEA + "' stroke-width='" + (w + 4) + "' stroke-linecap='round' stroke-linejoin='round'/>" +
+      "<path d='" + d + "' fill='none' stroke='" + (col || "#e2d0a8") + "' stroke-width='" + w + "' stroke-linecap='round' stroke-linejoin='round'/>" +
+      "<path d='" + d + "' fill='none' stroke='#fffaf0' stroke-width='" + Math.max(1.5, w * .25) + "' stroke-linecap='round' opacity='.45' transform='translate(-1.5,-1.5)'/>";
+  }
+  function dente(x, y, l, giu) { var t = giu ? y + l : y - l; return "<path d='M" + (x - l * .28).toFixed(1) + "," + y + " Q" + (x - l * .1).toFixed(1) + "," + ((y + t) / 2).toFixed(1) + " " + x + "," + t + " Q" + (x + l * .22).toFixed(1) + "," + ((y + t) / 2).toFixed(1) + " " + (x + l * .28).toFixed(1) + "," + y + " Z' fill='#fbf5e3' stroke='" + OSSO_LINEA + "' stroke-width='2' stroke-linejoin='round'/>"; }
+  function vertebra(x, y, w, h, spina, p) {   // una vertebra col processo spinoso in alto
+    var s = "";
+    if (spina) s += osso("M" + (x - w * .18).toFixed(1) + "," + (y - h * .3).toFixed(1) + " L" + (x - w * .1).toFixed(1) + "," + (y - h * .5 - spina).toFixed(1) + " Q" + x + "," + (y - h * .58 - spina).toFixed(1) + " " + (x + w * .14).toFixed(1) + "," + (y - h * .48 - spina).toFixed(1) + " L" + (x + w * .2).toFixed(1) + "," + (y - h * .3).toFixed(1) + " Z", p, 3);
+    s += osso("M" + (x - w / 2).toFixed(1) + "," + (y - h * .32).toFixed(1) + " Q" + x + "," + (y - h * .62).toFixed(1) + " " + (x + w / 2).toFixed(1) + "," + (y - h * .32).toFixed(1) + " L" + (x + w * .46).toFixed(1) + "," + (y + h * .38).toFixed(1) + " Q" + x + "," + (y + h * .6).toFixed(1) + " " + (x - w * .46).toFixed(1) + "," + (y + h * .38).toFixed(1) + " Z", p, 3);
+    return s + "<ellipse cx='" + x.toFixed(1) + "' cy='" + y.toFixed(1) + "' rx='" + (w * .16).toFixed(1) + "' ry='" + (h * .14).toFixed(1) + "' fill='#8a6a3e' opacity='.35'/>";
+  }
+  var ARTE = {
+    teschio: function (p) {   // il cranio del T-rex, di profilo, a bocca un po' aperta
+      var su = "M18,150 C18,132 42,120 72,114 C104,108 124,96 154,88 C188,78 216,58 252,52 C294,45 342,52 366,74 C392,98 398,136 382,164 C372,178 352,182 336,176 L300,166 C250,164 200,166 150,168 C100,170 62,172 36,170 C22,168 18,160 18,150 Z";
+      var giu = "M42,196 C92,200 170,198 250,192 C300,188 340,192 362,206 C372,218 364,236 342,238 C292,244 222,242 152,234 C102,230 62,222 46,214 C36,208 36,200 42,196 Z";
+      var s = "<ellipse cx='200' cy='262' rx='170' ry='14' fill='#000' opacity='.12'/>", i;
+      [44, 66, 90, 114, 140, 166, 192, 218].forEach(function (x, k) { s += dente(x, 168, 26 - Math.abs(k - 2) * 2, true); });   // i denti di sopra
+      [56, 80, 104, 128, 154, 180, 206, 232].forEach(function (x, k) { s += dente(x, 200, 20 - Math.abs(k - 2) * 1.6, false); });   // quelli di sotto
+      s += osso(giu, p) + macchie(giu, p, 18, 40, 190, 370, 240, 11) + buco("M282,212 C292,204 312,204 322,212 C314,220 292,220 282,212 Z", p);
+      s += osso(su, p) + macchie(su, p, 34, 18, 45, 398, 180, 7);
+      s += osso("M236,58 L248,36 Q254,34 258,40 L262,56 Z", p, 3);   // il cornetto sopra l'occhio
+      for (i = 0; i < 6; i++) s += "<ellipse cx='" + (88 + i * 16) + "' cy='" + (108 - i * 4) + "' rx='6' ry='3.4' fill='#c4ad80' stroke='" + OSSO_LINEA + "' stroke-width='1.2' opacity='.9'/>";   // le bozze del muso
+      s += buco("M46,136 C52,126 70,124 78,130 C74,140 56,144 46,136 Z", p) +   // la narice
+        buco("M152,126 C176,108 208,96 232,100 C238,124 226,148 204,158 C182,160 160,148 152,126 Z", p) +   // la grande finestra davanti all'occhio
+        buco("M262,82 C276,80 284,94 282,108 C280,122 272,132 266,146 C262,132 252,120 250,106 C248,92 252,84 262,82 Z", p) +   // l'orbita a buco di serratura
+        buco("M298,104 C318,94 344,104 352,122 C350,146 334,160 318,160 C302,148 296,124 298,104 Z", p) +
+        buco("M308,74 C318,66 340,66 348,74 C338,82 318,82 308,74 Z", p);
+      return s + riflesso("M40,128 C90,112 150,98 200,74 C240,58 300,52 352,68", 5, .5) + riflesso("M70,206 C140,212 230,208 330,214", 3, .35);
+    },
+    trex_torace: function (p) {   // la colonna con le costole e le braccine minuscole
+      var s = "<ellipse cx='200' cy='288' rx='150' ry='10' fill='#000' opacity='.12'/>", i;
+      for (i = 0; i < 7; i++) { var x = 66 + i * 44, l = 150 - i * 12; s += bastone("M" + x + ",86 C" + (x + 24) + "," + (100 + l * .3) + " " + (x + 14) + "," + (86 + l * .75) + " " + (x - 12) + "," + (86 + l), 10 - i * .5); }   // le costole, più corte verso la coda
+      s += bastone("M50,232 C120,244 220,238 330,214", 5, "#d6c398") + bastone("M70,250 C140,258 200,256 260,246", 4, "#d6c398");   // le ossa della pancia
+      for (i = 0; i < 9; i++) { var vx = 36 + i * 41, vy = 76 - Math.sin(i / 8 * Math.PI) * 14; s += vertebra(vx, vy, 34, 28, 30 - i * 1.8, p); }
+      // la braccina (piccolissima!) con le due dita
+      s += bastone("M176,196 L198,244", 11) + bastone("M198,244 L184,272", 9) + bastone("M184,272 L172,288", 4) + bastone("M186,274 L188,292", 4);
+      s += "<path d='M168,286 Q164,296 172,298' fill='none' stroke='#3a2c1c' stroke-width='3' stroke-linecap='round'/><path d='M186,290 Q184,300 192,300' fill='none' stroke='#3a2c1c' stroke-width='3' stroke-linecap='round'/>";
+      return s;
+    },
+    trex_zampa: function (p) {   // il bacino e la zampa possente con le tre dita
+      var s = "<ellipse cx='170' cy='388' rx='120' ry='9' fill='#000' opacity='.12'/>";
+      var ileo = "M10,72 C14,56 44,48 96,46 C150,36 232,38 278,52 C296,58 296,76 282,86 C264,96 228,98 198,98 C182,100 168,106 150,112 C132,106 118,100 100,98 C58,98 18,94 10,82 Z";   // l'ileo: lungo e basso
+      s += osso("M118,108 C100,136 72,168 48,196 C32,206 28,222 44,228 C72,234 104,228 114,214 C106,206 94,204 84,202 C102,176 124,146 144,120 Z", p) +   // il pube, col grosso "stivale" in fondo
+        osso("M176,114 C196,136 220,162 244,184 C254,194 244,208 232,200 C210,186 188,160 166,128 Z", p);   // l'ischio, sottile verso dietro
+      s += osso(ileo, p) + macchie(ileo, p, 26, 12, 20, 296, 118, 21) + riflesso("M28,62 C80,48 170,40 266,54", 4, .5) +
+        "<path d='M60,70 C110,62 190,60 250,70' fill='none' stroke='#8a6a3e' stroke-width='2' opacity='.35'/>";
+      s += "<g transform='translate(300 0) scale(-1 1)'>";   // la gamba e il piede guardano avanti (a sinistra), come la testa
+      var femore = "M134,112 C152,104 172,116 168,134 C166,170 160,200 160,226 C168,238 160,254 144,254 C128,254 120,240 130,228 C132,198 132,168 130,136 C122,126 124,114 134,112 Z";
+      s += osso(femore, p) + macchie(femore, p, 10, 120, 104, 172, 254, 22) + riflesso("M140,132 C144,170 142,200 140,226", 3, .45);
+      s += buco("M136,104 C146,96 162,98 166,106 C158,114 142,114 136,104 Z", p);   // l'incavo dell'anca
+      s += bastone("M154,254 C150,280 154,304 160,326", 15) + bastone("M136,258 C134,284 138,304 146,322", 6, "#d6c398");   // tibia e fibula
+      s += bastone("M156,330 C180,340 200,352 222,360", 11) + bastone("M152,334 C168,350 178,364 190,372", 10) + bastone("M160,326 C190,330 222,338 252,350", 9);   // le ossa del piede
+      s += bastone("M222,360 L246,372", 7) + bastone("M190,372 L204,386", 7) + bastone("M252,350 L274,358", 7);   // le dita
+      s += "<path d='M246,370 Q262,372 268,384 Q254,382 244,378 Z' fill='#4a3826'/><path d='M204,384 Q214,392 214,398 Q202,394 198,390 Z' fill='#4a3826'/><path d='M274,356 Q288,358 294,368 Q282,368 272,364 Z' fill='#4a3826'/></g>";   // gli artigli
+      return s;
+    },
+    trex_coda: function (p) {   // la coda: vertebre sempre più piccole, con le "V" sotto
+      var s = "<ellipse cx='250' cy='186' rx='230' ry='9' fill='#000' opacity='.12'/>", i;
+      for (i = 0; i < 8; i++) { var x = 34 + i * 32, y = 84 - i * 2; s += bastone("M" + (x + 2) + "," + (y + 12) + " L" + (x + 12) + "," + (y + 58 - i * 5), 6 - i * .4, "#d6c398"); }   // le "V" sotto la coda
+      for (i = 0; i < 14; i++) { var vx = 30 + i * 33, vy = 82 - i * 2.4 + Math.sin(i * .6) * 4, w = 32 - i * 1.5, h = 28 - i * 1.4; s += vertebra(vx, vy, w, h, i < 9 ? 22 - i * 2.2 : 0, p); }
+      return s + riflesso("M20,62 C120,52 260,44 470,38", 3, .35);
+    },
+    trex: function (p) {   // lo scheletro intero, montato sul piedistallo del museo (600×360)
+      function pezzo(id, tx, ty, k) { return "<g transform='translate(" + tx + " " + ty + ") scale(" + k + ")'>" + ARTE[id](p) + "</g>"; }
+      var s = "<rect x='40' y='326' width='520' height='22' rx='6' fill='#8a6a46' stroke='#4a3420' stroke-width='3'/><rect x='60' y='320' width='480' height='10' rx='4' fill='#a8865a'/>" +
+        "<path d='M230,322 L232,150 M380,322 L378,120' stroke='#6b7280' stroke-width='5'/><path d='M230,322 L232,150 M380,322 L378,120' stroke='#cbd2d9' stroke-width='2'/>";
+      return s + pezzo("trex_coda", 336, 54, .54) + pezzo("trex_torace", 128, 60, .6) + pezzo("trex_zampa", 288, 92, .6) + pezzo("teschio", 0, 44, .46);
+    }
+  };
+  var ARTE_VB = { teschio: [400, 300], trex_torace: [400, 300], trex_zampa: [300, 400], trex_coda: [500, 200], trex: [600, 360] };
+  function crepeSvg(w, h, integro) {   // le crepe sul disegno (più crepe = meno intatto)
+    if (integro == null || integro >= 100) return "";
+    var s = "", n = Math.ceil((100 - integro) / 15), k = Math.min(w, h) / 40;
+    for (var q = 0; q < n; q++) { var cx = w * (.25 + .5 * seme01(q, 3)), cy = h * (.2 + .6 * seme01(q, 7)); s += "<path d='M" + cx.toFixed(1) + "," + cy.toFixed(1) + " l" + (6 * k).toFixed(1) + "," + (5 * k).toFixed(1) + " l" + (-3 * k).toFixed(1) + "," + (5 * k).toFixed(1) + " l" + (5 * k).toFixed(1) + "," + (5 * k).toFixed(1) + "' fill='none' stroke='#1a0e06' stroke-width='" + (1.6 * k).toFixed(1) + "' stroke-linecap='round' opacity='.85'/>"; }
+    return s;
+  }
+  var nArte = 0;
+  function svgArte(id, integro, ombra) {
+    var vb = ARTE_VB[id], p = "sva" + (++nArte) + "_", sil = ombra ? "<filter id='" + p + "sil'><feFlood flood-color='#3a2a1c' flood-opacity='.5'/><feComposite in2='SourceAlpha' operator='in'/></filter>" : "";
+    return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 " + vb[0] + " " + vb[1] + "' width='" + vb[0] + "' height='" + vb[1] + "'><defs>" + defsOsso(p) + sil + "</defs>" +
+      (ombra ? "<g filter='url(#" + p + "sil)'>" + ARTE[id](p) + "</g>" : ARTE[id](p) + crepeSvg(vb[0], vb[1], integro)) + "</svg>";
+  }
+  var cacheArte = {};
+  function immagineArte(id) {   // per la fossa: il disegno intero (le crepe le fa il canvas sopra)
+    if (!cacheArte[id]) { var im = new Image(); im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgArte(id, 100, false)); cacheArte[id] = im; }
+    return cacheArte[id];
+  }
+
   // ---------- il disegno dei reperti (per la fossa, la carta e il museo): x,y,w,h = il riquadro; integro = le crepe ----------
   function seme01(i, k) { var s = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return s - Math.floor(s); }
   function disegnaReperto(c, id, x, y, w, h, integro, ombra) {
+    if (ARTE[id] && !ombra) {   // i reperti col disegno nuovo: l'immagine, e sopra le crepe
+      var im = immagineArte(id); if (im.complete && im.naturalWidth) c.drawImage(im, x, y, w, h);
+      if (integro != null && integro < 100) { c.save(); c.translate(x, y); c.strokeStyle = "rgba(20,10,5,.85)"; c.lineWidth = 1.6; var nc = Math.ceil((100 - integro) / 15), kc = Math.min(w, h) / 40; for (var qc = 0; qc < nc; qc++) { var xc = w * (.25 + .5 * seme01(qc, 3)), yc = h * (.2 + .6 * seme01(qc, 7)); c.beginPath(); c.moveTo(xc, yc); c.lineTo(xc + 6 * kc, yc + 5 * kc); c.lineTo(xc + 3 * kc, yc + 10 * kc); c.lineTo(xc + 8 * kc, yc + 15 * kc); c.stroke(); } c.restore(); }
+      return;
+    }
     c.save(); c.translate(x, y); c.lineJoin = "round"; c.lineCap = "round";
     var S = function (f, s, lw) { c.fillStyle = ombra ? "rgba(30,20,12,.55)" : f; c.strokeStyle = ombra ? "rgba(30,20,12,.7)" : s; c.lineWidth = lw || 2; };
     function forma(fn) { c.beginPath(); fn(); c.fill(); c.stroke(); }
@@ -180,6 +299,7 @@
     c.restore();
   }
   function tela(id, px, integro, ombra) {   // un reperto disegnato in un riquadro px×px (per la carta e il museo)
+    if (ARTE[id]) { var img = el("img", "sv-arte"); img.alt = ""; img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgArte(id, integro, ombra)); img.style.width = img.style.height = px + "px"; return img; }
     var dpr = Math.min(2, window.devicePixelRatio || 1), cv = el("canvas"), R = PER_ID[id], w = R.m[0].length, h = R.m.length, k = px * .78 / Math.max(w, h);
     cv.width = px * dpr; cv.height = px * dpr; cv.style.width = cv.style.height = px + "px";
     var c = cv.getContext("2d"); c.scale(dpr, dpr); disegnaReperto(c, id, px / 2 - w * k / 2, px / 2 - h * k / 2, w * k, h * k, integro, ombra); return cv;
@@ -201,7 +321,8 @@
     // ---- il campo del giorno: sempre uguale per tutto il giorno (si riprende da dove eri) ----
     var R0 = rnd(hash(oggi() + "|" + (opts.seme || "scavi")));
     function sorteggia(r) {   // quasi sempre roba comune; i pezzi rari sono rari davvero
-      var x = r(), rar = x < .02 ? 5 : x < .08 ? 4 : x < .2 ? 3 : x < .5 ? 2 : 1, l = REPERTI.filter(function (p) { return p.r === rar; });
+      if (r() < CHANCE_DINO) { var dp = DINO.trex.pezzi; return dp[Math.floor(r() * dp.length)]; }   // un pezzo di dinosauro
+      var x = r(), rar = x < .02 ? 5 : x < .08 ? 4 : x < .2 ? 3 : x < .5 ? 2 : 1, l = REPERTI.filter(function (p) { return p.r === rar && !p.dino; });
       return l[Math.floor(r() * l.length)].id;
     }
     var nascosti = [];
@@ -491,7 +612,7 @@
     function oggettoIn(x, y) { return ogg.filter(function (o) { return o.celle.some(function (q) { return q[0] === x && q[1] === y; }); })[0]; }
     function sasso(x, y) { return sassi.some(function (z) { return z[0] === x && z[1] === y; }); }
     function apriFossa(id) {
-      var lv = PER_ID[id].r - 1, R = rnd(hash(oggi() + id + Math.random()));
+      var lv = PER_ID[id].lv != null ? PER_ID[id].lv : PER_ID[id].r - 1, R = rnd(hash(oggi() + id + Math.random()));
       fragile = 10 + lv * 5; peso = 1 + lv * .12; frana = 0; schegge = []; finita = false;
       fTit.innerHTML = "<b>Tira fuori il reperto</b><small>Vicino ai pezzi usa il pennello</small>";
       var largo = Math.min(cw - 24, 440); cs = Math.floor(largo / W);
@@ -589,18 +710,31 @@
         if (D.premi[ep.id]) return;
         if (REPERTI.filter(function (x) { return x.epoca === ep.id; }).every(function (x) { return D.album[x.id]; })) { D.premi[ep.id] = 1; if (opts.cambia) opts.cambia(PREMIO_EPOCA); setTimeout(function () { dimmi("🏛️ " + ep.nome + " completa! +🪙 " + cifre(PREMIO_EPOCA)); suonoMonete(); }, 900); }
       });
+      Object.keys(DINO).forEach(function (k) {   // tutti i pezzi del dinosauro: lo scheletro va nel museo (e il premio, una volta sola)
+        var dn = DINO[k]; if (D.premi[k] || !dn.pezzi.every(function (id) { return D.album[id]; })) return;
+        D.premi[k] = 1; scheletroNuovo = k; if (opts.cambia) opts.cambia(dn.premio);
+      });
       return nuovo;
     }
+    var scheletroNuovo = null;
+    function cartaScheletro(k) {   // la carta grande: lo scheletro intero montato
+      var dn = DINO[k], fig = el("div", "sv-fig sv-scheletro"), im = el("img", "sv-arte"); im.alt = ""; im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgArte(k, 100, false)); fig.appendChild(im);
+      suonoCarta(5); vibra(40);
+      finestra("🦖 Scheletro del " + dn.nome + " completo!", [fig, el("p", "sv-frase", "Hai trovato tutti e " + dn.pezzi.length + " i pezzi: ora lo scheletro è montato nel museo."), el("div", "sv-nuovo", "+🪙 " + cifre(dn.premio))],
+        [{ testo: "Evviva! 🎉", cls: "btn-primario", fn: function () { chiudiSopra(); aggTesta(); dopoCarta(); } }]);
+    }
+    function pezziTrovati(k) { return DINO[k].pezzi.filter(function (id) { return D.album[id]; }).length; }
     function cartaReperto(presi, franata) {
       var p = presi.filter(function (o) { return o.princ; })[0], extra = presi.filter(function (o) { return !o.princ; });
       var nodi = [], nuovi = {};
       presi.forEach(function (o) { nuovi[o.id] = nelMuseo(o); });
       if (p) {
         var R = PER_ID[p.id], fig = el("div", "sv-fig r" + R.r); fig.appendChild(tela(p.id, 150, p.integro)); nodi.push(fig);
-        var rar = el("span", "sv-rar", RARITA[R.r]); rar.style.background = COL_R[R.r]; nodi.push(rar);
+        var rar = el("span", "sv-rar", etichettaR(R)); rar.style.background = coloreR(R); nodi.push(rar);
         nodi.push(el("div", "sv-epoca", EPOCHE.filter(function (e) { return e.id === R.epoca; })[0].nome + " · " + R.quando));
         nodi.push(el("p", "sv-stato", p.integro >= 100 ? "Intatto! Perfetto per il museo 🏛️" : p.integro >= 60 ? "Un po' crepato (" + p.integro + "%)" : "Molto crepato (" + p.integro + "%): vale meno"));
         if (nuovi[p.id]) nodi.push(el("div", "sv-nuovo", "✨ Nuovo nel museo!"));
+        if (R.dino) nodi.push(el("div", "sv-dino", "🦖 Scheletro del " + DINO[R.dino].nome + ": " + pezziTrovati(R.dino) + "/" + DINO[R.dino].pezzi.length + " pezzi"));
         suonoCarta(R.r);
       } else nodi.push(el("p", "sv-frase", franata ? "La terra è franata e il reperto è rimasto sepolto. Col pennello la frana sale più piano." : "Il reperto è rimasto sotto terra."));
       if (extra.length) { var l = el("div", "sv-extra"); extra.forEach(function (o) { l.appendChild(el("span", null, "🎁 " + PER_ID[o.id].nome)); }); nodi.push(l); }
@@ -615,6 +749,7 @@
       salva();
     }
     function dopoCarta() {
+      if (scheletroNuovo) { var k = scheletroNuovo; scheletroNuovo = null; return cartaScheletro(k); }
       if (!rimasti()) parla("Oggi hai trovato tutto quello che c'era! Domani il campo è nuovo.");
       else if (colpi() <= 0) finitiColpi();
       else parla((opts.illimitati ? "Colpi illimitati ⛏️." : "Ti restano " + colpi() + " colpi.") + " Ci sono ancora " + rimasti() + " cose sepolte qui.");
@@ -626,10 +761,17 @@
       EPOCHE.forEach(function (ep) {
         var lista = REPERTI.filter(function (x) { return x.epoca === ep.id; }), presi = lista.filter(function (x) { return D.album[x.id]; }).length; tot += presi;
         nodi.push(el("div", "sv-sottot", ep.ico + " " + ep.nome + " · " + presi + "/" + lista.length + (D.premi[ep.id] ? " ✓" : "")));
+        Object.keys(DINO).forEach(function (k) {   // lo scheletro: montato se è completo, se no in ombra coi pezzi che mancano
+          var dn = DINO[k]; if (PER_ID[dn.pezzi[0]].epoca !== ep.id) return;
+          var fatto = !!D.premi[k], box = el("div", "sv-voce sv-grande" + (fatto ? "" : " buio")), im = el("img", "sv-arte"); im.alt = "";
+          im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgArte(k, 100, !fatto)); box.appendChild(im);
+          box.appendChild(el("b", null, "🦖 Scheletro del " + dn.nome)); box.appendChild(el("small", null, fatto ? "Completo! Montato nel museo" : pezziTrovati(k) + "/" + dn.pezzi.length + " pezzi · premio 🪙 " + cifre(dn.premio)));
+          nodi.push(box);
+        });
         var g = el("div", "sv-album");
         lista.forEach(function (x) {
           var a = D.album[x.id], v = el("div", "sv-voce r" + x.r + (a ? "" : " buio"));
-          v.appendChild(tela(x.id, 54, a ? a.top : null, !a)); v.appendChild(el("b", null, a ? x.nome : "???")); v.appendChild(el("small", null, a ? RARITA[x.r] + (a.top < 100 ? " · " + a.top + "%" : " · intatto") : RARITA[x.r]));
+          v.appendChild(tela(x.id, 54, a ? a.top : null, !a)); v.appendChild(el("b", null, a ? x.nome : "???")); v.appendChild(el("small", null, a ? etichettaR(x) + (a.top < 100 ? " · " + a.top + "%" : " · intatto") : etichettaR(x)));
           g.appendChild(v);
         });
         nodi.push(g);
@@ -737,6 +879,10 @@
       ".sv-album{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}",
       ".sv-voce{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 3px;border-radius:12px;background:#f6ead0;min-height:96px}",
       ".sv-voce.r3{box-shadow:inset 0 0 0 1.5px #1c7ed6}.sv-voce.r4{box-shadow:inset 0 0 0 1.5px #9c36b5}.sv-voce.r5{box-shadow:inset 0 0 0 2px #f59f00}",
+      ".sv-arte{display:block;object-fit:contain}",
+      ".sv-grande{margin:4px 0 6px;padding:8px}.sv-grande .sv-arte{width:100%!important;height:auto!important;aspect-ratio:600/360}",
+      ".sv-scheletro{width:100%!important;border-radius:16px!important;background:radial-gradient(ellipse,#fff3d6,#ead2a4 75%)!important}.sv-scheletro .sv-arte{width:100%;height:auto}",
+      ".sv-dino{margin-top:6px;padding:4px 10px;display:inline-block;border-radius:999px;font-weight:900;font-size:.8rem;color:#fff;background:#8d6e3f}",
       ".sv-voce b{font-size:.68rem;line-height:1.15}.sv-voce small{font-size:.6rem;line-height:1.2;color:#9a6a3c}.sv-voce.buio{opacity:.8}",
       ".sv-zaino{display:flex;flex-direction:column;gap:6px;margin-top:8px;text-align:left}",
       ".sv-riga{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:12px;background:#f6ead0;font-size:.85rem;font-weight:800}",
