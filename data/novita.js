@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 190,
+    data: "11 ottobre 2026",
+    titolo: "Capelli tutti nuovi 💇",
+    descrizione: [
+      "I ricci sono rifatti da capo: niente più puntini. Ora hanno una chioma morbida col bordo a nuvola e le spirali, e sembrano capelli veri: ricci corti, afro, afro alto, riccioletti, caschetto riccio, ricci lunghi, ricci raccolti…",
+      "I boccoli ora scendono a molla, attorcigliati come veri boccoli.",
+      "Spettinati, arruffati e spike non hanno più i triangoli a corona: ciuffi morbidi che si alzano.",
+      "Tutti i capelli lisci hanno più volume: l'ombra lungo i bordi e le ciocche che scendono.",
+      "8 tagli nuovi. Per lui: a spazzola, alla Cesare, codino alto e rocker. Per lei: bob asimmetrico, sfilato, principessa (frangia dritta) e lunghi con la frangia a tendina."
+    ]
+  },
+  {
     v: 189,
     data: "11 ottobre 2026",
     titolo: "A casa degli amici 🏠👋",
