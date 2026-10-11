@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 183,
+    data: "11 ottobre 2026",
+    titolo: "Palla Matta: la sfida con gli amici 🔴👥",
+    descrizione: [
+      "Nuova sfida da 2 a 4: online, ognuno dal suo telefono, oppure sullo stesso telefono passandovelo.",
+      "Stesso tavolo per tutti e un tiro a testa. I pezzi presi spariscono per tutti, ma i punti vanno a chi ha tirato. Chi prende l'ultimo arancione fa la Febbre Matta. Alla fine vince chi ha più punti.",
+      "Ognuno ha il suo aiutante: online lo scegli nella saletta, sullo stesso telefono prima del tuo primo tiro.",
+      "Online vedi dal vivo il cannone di chi sta mirando e ogni tiro esattamente uguale a lui. Chi non tira per 45 secondi tira da solo.",
+      "Chi apre la stanza sceglie il livello oppure lo fa uscire a caso, e si può rigiocare subito: le vittorie di ognuno restano segnate.",
+      "Il cannone non punta più dove tocchi: lo giri trascinando il dito da qualsiasi punto dello schermo, piano piano per i ritocchi e veloce per girarlo tanto."
+    ]
+  },
+  {
     v: 182,
     data: "11 ottobre 2026",
     titolo: "Palla Matta: tre capitoli e i mattoncini 🚀🌳🐠",
