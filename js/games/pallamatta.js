@@ -1,6 +1,6 @@
 /* =========================================================
    SPeeD GAME — PALLA MATTA (stile Peggle)
-   In alto c'è il cannone: trascini il dito per mirare (si vede la strada della pallina) e lasci per tirare.
+   In alto c'è il cannone: trascini il dito (dove vuoi) per girarlo, si vede la strada della pallina; un tocco veloce tira.
    La pallina scende rimbalzando sui pioli: quelli toccati si accendono e, quando la pallina esce, scoppiano.
    Devi far scoppiare tutti i pioli ARANCIONI con 10 palline. Il secchio in fondo, se ci entri, ti ridà la pallina.
    - pioli: blu 10 punti, arancioni 100, viola 500 (cambia posto a ogni tiro), verdi = il potere del tuo aiutante;
@@ -544,27 +544,29 @@
     }
     function arrot(x, a, b, w, h, r) { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
 
-    // ---- il dito: trascina per mirare, lascia per tirare ----
-    function alTavolo(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - ox) / S, y: (e.clientY - r.top - oy) / S }; }
-    function mira(e) {
-      var p = alTavolo(e), a = Math.atan2(p.y - CY, p.x - CX);
-      if (p.y < CY + 1) a = p.x < CX ? PI - 0.06 : 0.06;
-      st.ang = Math.max(0.06, Math.min(PI - 0.06, a));
+    // ---- il dito: il cannone si gira trascinando, da qualsiasi punto dello schermo ----
+    // non punta dove tocchi: resta dov'è e lo sposti col dito (a destra = gira a destra).
+    // Piano piano per i ritocchi fini, veloce per girarlo tanto.
+    function mira(e, d) {
+      var ora = performance.now(), dx = e.clientX - d.lx, v = Math.abs(dx) / Math.max(8, ora - d.lt);   // quanto è veloce il dito (pixel al millesimo)
+      var spinta = 1 + Math.min(2.5, Math.max(0, v - 0.15) * 4);
+      st.ang = Math.max(0.06, Math.min(PI - 0.06, st.ang - dx * 0.0035 * spinta));
+      d.lx = e.clientX; d.lt = ora;
     }
-    // il dito: tenendo premuto (o trascinando) si mira e lasciando la pallina NON parte;
+    // tenendo premuto (o trascinando) si mira e lasciando la pallina NON parte;
     // un tocco veloce, senza muovere il dito, fa partire la pallina dove avevi mirato
     cv.addEventListener("pointerdown", function (e) {
       if (st.fase !== "mira") return;
       e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (er) {}
       try { if (window.SG && SG.audioCtx) SG.audioCtx(); } catch (er2) {}
       clearTimeout(ui.tTieni);
-      ui.dito = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), mira: false };
-      var d0 = ui.dito; ui.tTieni = setTimeout(function () { if (ui.dito === d0 && st.fase === "mira") { d0.mira = true; mira(e); } }, 200);   // tenuto premuto: si mira lì
+      ui.dito = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), mira: false, lx: e.clientX, lt: performance.now() };
+      var d0 = ui.dito; ui.tTieni = setTimeout(function () { if (ui.dito === d0 && st.fase === "mira") d0.mira = true; }, 200);   // tenuto premuto: si mira, lasciando non tira
     });
     cv.addEventListener("pointermove", function (e) {
       var d = ui.dito; if (!d || d.id !== e.pointerId || st.fase !== "mira") return;
-      if (!d.mira && Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) > 7) d.mira = true;
-      if (d.mira) mira(e);
+      if (!d.mira && Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) > 7) { d.mira = true; d.lx = e.clientX; d.lt = performance.now(); }   // (si parte da qui: niente scatto)
+      if (d.mira) mira(e, d); else { d.lx = e.clientX; d.lt = performance.now(); }
     });
     function lascia(e) {
       var d = ui.dito; if (!d || d.id !== e.pointerId) return; ui.dito = null; clearTimeout(ui.tTieni);
@@ -852,7 +854,7 @@
     misura(); aggTesta();
     window.__PMpartita = { st: function () { return st; }, evento: evento, tira: tira, mira: function (a) { st.ang = a; }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); } };   // (per le prove)
     dimmi(CAPITOLI[LIVELLI[lv].cap].icona + " " + LIVELLI[lv].nome + " · prendi tutti i 🟠");
-    if (lv < 2) setTimeout(function () { if (vivo() && st.fase === "mira") dimmi("Tieni premuto per mirare · tocca per tirare"); }, 2500);
+    if (lv < 2) setTimeout(function () { if (vivo() && st.fase === "mira") dimmi("Trascina il dito per girare il cannone · tocca per tirare"); }, 2500);
     anim = requestAnimationFrame(function (o) { ult = o; giro(o); });
   }
 
@@ -924,7 +926,7 @@
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 2,
     modi: [{ modo: "solo", icona: "🎯", nome: "Da solo", sotto: "I livelli, uno dopo l'altro" }],
     regole: [
-      "Tieni premuto (o trascina) per <b>mirare</b>: i puntini mostrano dove va la pallina. Lasciando il dito non parte niente: dai un <b>tocco veloce</b> per tirare.",
+      "<b>Mirare</b>: trascina il dito, da qualsiasi punto dello schermo, e il cannone gira con lui (a destra gira a destra). Piano piano per i ritocchi, veloce per girarlo tanto. I puntini mostrano dove va la pallina. Lasciando il dito non parte niente: dai un <b>tocco veloce</b> per tirare.",
       "La pallina rimbalza sui pioli e li <b>accende</b>; quando esce, i pioli accesi scoppiano.",
       "Fai scoppiare tutti i pioli <b>arancioni</b> con <b>10 palline</b>. Più arancioni prendi, più vale ogni piolo: <b>x2, x3, x5, x10</b>.",
       "Il piolo <b>viola</b> vale 500 punti e cambia posto a ogni tiro. I pioli <b>verdi</b> attivano il potere del tuo <b>aiutante</b> (bomba, multipalla, mira lunga o palla di fuoco).",
