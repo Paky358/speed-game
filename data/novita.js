@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 187,
+    data: "11 ottobre 2026",
+    titolo: "Trofei per Palla Matta 🔴🏆",
+    descrizione: [
+      "Ora puoi collezionare trofei completando i livelli, usando gli aiutanti verdi e sfidando gli amici.",
+      "I tuoi pioli, secchi, stelle e vittorie vengono contati quando finisce la partita."
+    ]
+  },
+  {
     v: 186,
     data: "11 ottobre 2026",
     titolo: "Nuovo gioco: Gara di pesca 🎣👥",

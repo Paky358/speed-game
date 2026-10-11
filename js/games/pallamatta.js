@@ -285,7 +285,7 @@
   function nuovoStato(lv, gioc, pioli) {
     var p = pioli || creaLivello(lv, true);
     gioc = gioc || [{ nome: "Tu" }];
-    gioc.forEach(function (g) { g.punti = 0; g.palline = PALLINE; g.mira = 0; g.fuoco = 0; g.verdi = 0; g.secchi = 0; g.colpoMax = 0; if (!POTERI[g.potere]) g.potere = "bomba"; });
+    gioc.forEach(function (g) { g.punti = 0; g.palline = PALLINE; g.mira = 0; g.fuoco = 0; g.verdi = 0; g.secchi = 0; g.arancioni = 0; g.colpi = 0; g.colpoMax = 0; if (!POTERI[g.potere]) g.potere = "bomba"; });
     return { lv: lv, H: H, pioli: p, gioc: gioc, turno: 0, seq: 0, fase: "mira", ang: PI / 2, t: 0, febbre: false, colpo: null,
       arTot: p.filter(function (q) { return q.tipo === "arancio"; }).length, arPresi: 0 };
   }
@@ -390,8 +390,43 @@
   function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
 
   // ---------- i progressi: livelli sbloccati, record e stelle (sul telefono e nel profilo) ----------
-  var CHIAVE = "sg-pm-progressi2";   // (dai capitoli: i livelli sono nuovi, i progressi ripartono)
+  var CHIAVE = "sg-pm-progressi2", finiMemoria = {};   // (dai capitoli: i livelli sono nuovi, i progressi ripartono)
   function profiloOk() { return !!(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo()); }
+  function profiloTrofei() { var p = profiloOk() ? SGNube.profilo() : null; return p && String(p.nome || "").trim().toUpperCase() !== "IL PAPPONE" ? p : null; }
+  function salvaTrofeiUnaVolta(chiave, incr, rec) {
+    var p = profiloTrofei(); if (!p || !SGNube.salvaProgressi) return;
+    if (finiMemoria[chiave]) return; finiMemoria[chiave] = true;
+    try {
+      var k = "sg_pm_trofei_fini", fini = JSON.parse(localStorage.getItem(k) || "[]");
+      if (fini.indexOf(chiave) >= 0) return;
+      fini.push(chiave); if (fini.length > 80) fini.splice(0, fini.length - 80); localStorage.setItem(k, JSON.stringify(fini));
+    } catch (e) {}
+    try { SGNube.salvaProgressi(null, ID, (incr || []).filter(function (x) { return x[1]; }), rec || []); } catch (e) {}
+  }
+  function progressiPersona(g, vinta, sfida, chiave, stelle, idQuestoTelefono) {
+    var p = profiloTrofei(); if (!p || String(g.nome || "").trim().toLowerCase() !== String(p.nome || "").trim().toLowerCase() || (idQuestoTelefono && g.id !== idQuestoTelefono)) return;
+    var s = (SGNube.statGioco && SGNube.statGioco(ID)) || {}, incr = [], rec = [];
+    function aggiungi(k, n) { if (n) incr.push([k, n]); }
+    aggiungi(sfida ? "sfide" : "partite", 1); aggiungi("arancioni", g.arancioni || 0); aggiungi("secchi", g.secchi || 0); aggiungi("verdi", g.verdi || 0);
+    if (g.verdi > 0 && POTERI[g.potere]) aggiungi("potere_" + g.potere, 1);
+    if (sfida) {
+      if (vinta) aggiungi("sfideVinte", 1);
+      if (g.punti > 0) rec.push(["puntiSfidaMax", g.punti]);
+    } else {
+      if (vinta) {
+        aggiungi("livelliFiniti", 1); aggiungi("febbri", 1); aggiungi("stelle", stelle || 0);
+        if (stelle === 3) aggiungi("stelle3", 1);
+        if (g.palline >= PALLINE) aggiungi("senzaPerdere", 1);
+        var lv = (g.lv || 0) + 1;
+        if (!(s["l" + lv] > 0)) aggiungi("livelliUnici", 1);
+        rec.push(["livelloMax", lv], ["l" + lv, g.punti || 0], ["t" + lv, stelle || 0]);
+      }
+      rec.push(["puntiMax", g.punti || 0]);
+    }
+    aggiungi("colpi", g.colpi || 0);
+    rec.push(["colpoMax", g.colpoMax || 0]);
+    salvaTrofeiUnaVolta(chiave, incr, rec);
+  }
   function progressi() {
     var p = {}; try { p = JSON.parse(localStorage.getItem(CHIAVE) || "{}") || {}; } catch (e) {}
     p.rec = p.rec || {}; p.stelle = p.stelle || {};
@@ -670,6 +705,7 @@
     // ---- il tiro, riguardato come un filmato (rec di simulaTiro): le palline si muovono, i pezzi si accendono al momento giusto ----
     function riproduci(rec, poi) {
       var g = G();
+      g.colpi = (g.colpi || 0) + 1;
       g.palline--; if (g.mira > 0) g.mira--;
       if (rec.fuoco) { g.fuoco = Math.max(0, (g.fuoco || 0) - 1); dimmi("🔥 Palla di fuoco!"); }   // il potere caricato: tutto il tiro attraverso i pioli
       st.fase = "volo"; st.ang = rec.a; st.t = rec.t0; st.colpo = { punti: 0, colpiti: [], nota: 0 };
@@ -682,11 +718,11 @@
       if (e.k === "p") {
         if (!q || q.acceso) return;
         q.acceso = true; st.colpo.colpiti.push(q);
-        if (q.tipo === "arancio") st.arPresi++;
+        if (q.tipo === "arancio") { st.arPresi++; g.arancioni = (g.arancioni || 0) + 1; }
         g.punti += e.pts; st.colpo.punti += e.pts;
         scritta(q.x, q.y - 3, "+" + cifre(e.pts), q.tipo); if (!muto) suonoPiolo(st.colpo.nota++, q.tipo);
       } else if (e.k === "v") {
-        g.verdi = (g.verdi || 0) + 1; if (!muto) suonoPotere();
+        g.verdi = (g.verdi || 0) + 1; g.potereUsato = true; if (!muto) suonoPotere();
         var P = POTERI[e.pot] || POTERI.bomba; dimmi(P.icona + " " + P.nome + (e.pot === "fuoco" ? ": pronta per il prossimo tiro!" : e.pot === "mira" ? " per i prossimi 3 tiri!" : "!"));
         if (e.pot === "bomba") { if (!muto) suonoBomba(); if (q) ui.fx.push({ t: "onda", x: q.x, y: q.y, r: 0, vita: 0.5 }); }
         else if (e.pot === "mira") g.mira = (g.mira || 0) + 3;
@@ -935,7 +971,7 @@
   //  DA SOLO: un livello (stelle, record, livelli che si aprono)
   // =========================================================
   function partita(t, lv, potere) {
-    var io = nomeIo(t), g = { nome: io, potere: potere };
+    var io = nomeIo(t), g = { nome: io, potere: potere, lv: lv }, chiaveFine = "solo|" + Date.now() + "|" + Math.random().toString(36).slice(2);
     var st = nuovoStato(lv, [g]); nuovoViola(st);
     var tav = tavolo(t, { st: st, mio: function () { return st.fase === "mira"; }, onTiro: tira, onEsci: esci, faccia: function () { return t.mioOmino ? t.mioOmino(io) : null; } });
     function tira(ang) { tav.riproduci(simulaTiro(st, ang, g), dopo); }
@@ -948,13 +984,7 @@
       var p = progressi(), k = lv + 1, nuovoRec = g.punti > (p.rec[k] || 0);
       if (vinto) { if (nuovoRec) p.rec[k] = g.punti; if (stelle > (p.stelle[k] || 0)) p.stelle[k] = stelle; }
       p.potere = g.potere; salvaProgressi(p);
-      if (profiloOk() && SGNube.salvaProgressi) {   // nel profilo: per i trofei e per ritrovare i livelli su un altro telefono
-        var incr = [["partite", 1], ["arancioni", st.arPresi], ["secchi", g.secchi], ["verdi", g.verdi]];
-        if (vinto) { incr.push(["livelliFiniti", 1]); incr.push(["febbri", 1]); if (g.palline >= PALLINE) incr.push(["senzaPerdere", 1]); }
-        var rec = [["colpoMax", g.colpoMax], ["puntiMax", g.punti]];
-        if (vinto) { rec.push(["livelloMax", k]); rec.push(["l" + k, g.punti]); rec.push(["t" + k, stelle]); }
-        try { SGNube.salvaProgressi(null, ID, incr.filter(function (x) { return x[1]; }), rec); } catch (e) {}
-      }
+      progressiPersona(g, vinto, false, chiaveFine, stelle);
       if (t.risultato) t.risultato([{ nome: io, pos: vinto ? 1 : 2, punti: g.punti }]);   // XP e statistiche (record del punteggio)
       return nuovoRec;
     }
@@ -1011,7 +1041,7 @@
     var imp = t.impostazioni || {}, nomi = (t.giocatori && t.giocatori.length ? t.giocatori : ["Giocatore 1", "Giocatore 2"]).slice(0, 4);
     var prof = t.nomeProfilo && t.nomeProfilo();
     var gioc = nomi.map(function (n, i) { return { id: "g" + i, nome: n, potere: n === prof ? poterePreferito() : "bomba", vinte: 0, scelto: false }; });
-    var ultimo = -1, partite = 0, st = null, tav = null;
+    var ultimo = -1, partite = 0, st = null, tav = null, sessione = Date.now() + "|" + Math.random().toString(36).slice(2);
     function nuova() {
       if (tav) tav.chiudi();
       var lv = scegliLivello(imp.lv, ultimo); ultimo = lv;
@@ -1033,6 +1063,8 @@
       st.fase = "fine";
       var cl = classifica(gioc).map(function (r) { return { id: r.g.id, nome: r.g.nome, punti: r.g.punti, pos: r.pos, g: r.g }; });
       cl.forEach(function (r) { if (r.pos === 1) r.g.vinte++; });
+      var p = profiloTrofei(), mio = p && cl.filter(function (r) { return String(r.nome || "").trim().toLowerCase() === String(p.nome || "").trim().toLowerCase(); })[0];
+      if (mio) { mio.g.febbre = !!st.febbre; progressiPersona(mio.g, mio.pos === 1, true, "amici|" + sessione + "|" + partite + "|" + mio.g.id); }
       var esito = cl.map(function (r) { return { nome: r.nome, pos: r.pos, punti: r.punti }; });
       if (t.risultato) t.risultato(esito);
       if (imp.torneo) { tav.chiudi(); return t.fine(esito); }
@@ -1117,7 +1149,7 @@
     // la "foto" per tutti: SEMPRE con gli id dei giocatori; nel gioco anche il tavolo (tipi e pezzi già scoppiati)
     function vm() {
       var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, lvSc: H.lvSc, partita: H.partita, classifica: H.classifica,
-        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, potere: p.potere, vinte: p.vinte || 0, via: !!p.via, punti: p.punti || 0, palline: p.palline || 0, mira: p.mira || 0, fuoco: p.fuoco || 0 }; }) };
+        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, potere: p.potere, vinte: p.vinte || 0, via: !!p.via, punti: p.punti || 0, palline: p.palline || 0, mira: p.mira || 0, fuoco: p.fuoco || 0, arancioni: p.arancioni || 0, verdi: p.verdi || 0, secchi: p.secchi || 0, colpi: p.colpi || 0, colpoMax: p.colpoMax || 0 }; }) };
       if (H.fase !== "lobby" && H.st) {
         var st = H.st;
         v.lv = st.lv; v.seq = H.seq; v.turno = st.turno; v.n = st.pioli.length; v.ar = st.arPresi; v.feb = st.febbre; v.fs = st.fase === "mira" ? "mira" : "volo";
@@ -1189,6 +1221,8 @@
       var cl = classifica(H.players);
       H.classifica = cl.map(function (r) { return { id: r.g.id, nome: r.g.nome, punti: r.g.punti || 0, pos: r.pos }; });
       cl.forEach(function (r) { if (r.pos === 1) r.g.vinte = (r.g.vinte || 0) + 1; });
+      var hostRecord = cl.filter(function (r) { return r.g.id === "host"; })[0];
+      if (hostRecord) { hostRecord.g.febbre = !!H.st.febbre; progressiPersona(hostRecord.g, hostRecord.pos === 1, true, "online|" + H.codice + "|" + H.partita + "|host", null, "host"); }
       H.fase = "fine"; if (H.st && H.st.fase !== "volo" && H.st.fase !== "pulizia") H.st.fase = "fine";
       bd();
       // torneo online e XP: i NOMI dei giocatori col loro posto (pari merito = stesso posto)
@@ -1281,7 +1315,7 @@
       st.seq = vm.seq; st.turno = vm.turno; st.arPresi = vm.ar; st.febbre = !!vm.feb;
       vm.players.forEach(function (p, i) {
         var g = st.gioc[i] || (st.gioc[i] = {});
-        g.id = p.id; g.nome = p.nome; g.omino = p.omino; g.potere = p.potere; g.punti = p.punti; g.palline = p.palline; g.mira = p.mira; g.fuoco = p.fuoco; g.via = p.via; g.vinte = p.vinte;
+        g.id = p.id; g.nome = p.nome; g.omino = p.omino; g.potere = p.potere; g.punti = p.punti; g.palline = p.palline; g.mira = p.mira; g.fuoco = p.fuoco; g.via = p.via; g.vinte = p.vinte; g.arancioni = p.arancioni || 0; g.verdi = p.verdi || 0; g.secchi = p.secchi || 0; g.colpi = p.colpi || 0; g.colpoMax = p.colpoMax || 0;
       });
       st.pioli.forEach(function (q, i) { q.tipo = TIPO[vm.tipi.charAt(i)] || q.tipo; q.via = vm.via.charAt(i) === "1"; q.acceso = false; });
       if (vm.fase === "fine") { st.fase = "fine"; S.tav.nuovoTurno(); return fineOspite(vm); }
@@ -1307,6 +1341,8 @@
       if (ora - M.t > 100) manda(); else M.to = setTimeout(manda, 110);
     }
     function fineOspite(vm) {
+      var mio = (vm.players || []).filter(function (p) { return p.id === S.myId; })[0], classificaFine = vm.classifica || [];
+      if (mio) { mio.febbre = !!vm.feb; mio.lv = vm.lv; progressiPersona(mio, classificaFine.some(function (r) { return r.id === S.myId && r.pos === 1; }), true, "online|" + vm.codice + "|" + vm.partita + "|" + S.myId, null, S.myId); }
       suonoFine(); var cl = vm.classifica || [], v = vittorie(vm.players);
       S.tav.finestra({ titolo: titoloFine(cl, S.myId), sotto: vm.feb ? "Tutti gli arancioni presi!" : "Palline finite", righe: righeFine(cl, S.myId),
         nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null, t.el("p", { class: "pm-nota", text: "Se l'host fa un'altra partita, torni da solo nella saletta." })],
