@@ -79,6 +79,10 @@
   function adesso(sp, fase) { return sp.quando === "sempre" || sp.quando === fase || (fase === "tramonto" && sp.quando !== "tramonto" ? Math.random() < .5 : false); }   // al tramonto escono un po' quelli del giorno e un po' quelli della notte
   function valore(sp, cm) { var k = (cm - sp.cm[0]) / Math.max(1, sp.cm[1] - sp.cm[0]); return Math.round(sp.prezzo * (0.7 + 0.6 * k)); }   // i più grossi valgono di più
   function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  // quanto pesa un pesce (per la gara): cresce col cubo della lunghezza, i pesci alti pesano di più di quelli lunghi e stretti
+  var FORMA_KG = { snello: .7, normale: 1, alto: 1.35, lungo: .75, anguilla: .3, baffi: 1.05, storione: .95, gambero: 3 };
+  function pesoKg(sp, cm) { return Math.max(.01, Math.round(.000012 * cm * cm * cm * (FORMA_KG[sp.forma] || 1) * 100) / 100); }
+  function kg(n) { n = n || 0; return (n >= 100 ? cifre(n) : n.toFixed(n < 10 ? 2 : 1).replace(".", ",")) + " kg"; }
   function oggi() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
   function fase() { try { return window.SGCitta ? SGCitta.fase(new Date()) : "giorno"; } catch (e) { return "giorno"; } }
   function datiIniziali() { return { v: 1, album: {}, cesto: [], esche: { g: oggi(), usate: 0 }, extra: 0, tot: 0 }; }
@@ -220,24 +224,29 @@
   function crea(opts) {
     stile();
     AUDIO = opts.audio || null;
-    var D = opts.dati && opts.dati.v ? opts.dati : datiIniziali();
+    // la gara (js/games/garapesca.js): canna e lombrichi uguali per tutti e senza limite, niente album né cesto, il tempo e la classifica in alto
+    var GARA = opts.gara || null, gara = { fineAt: 0, righe: [], kg: 0, ultimo: 0, finita: false };
+    var D = !GARA && opts.dati && opts.dati.v ? opts.dati : datiIniziali();
+    if (GARA) opts.salva = null;
     D.album = D.album || {}; D.cesto = D.cesto || []; D.esche = D.esche || { g: oggi(), usate: 0 }; D.extra = D.extra || 0; D.tot = D.tot || 0;
     D.canne = D.canne || ["bambu"]; D.canna = D.canna || "bambu"; D.escheSp = D.escheSp || { colorata: 0, luminosa: 0 }; D.escaUso = ESCHE[D.escaUso] ? D.escaUso : "lombrico";
     function salva() { if (opts.salva) opts.salva(D); }
     function lombrichi() { if (D.esche.g !== oggi()) D.esche = { g: oggi(), usate: 0 }; return Math.max(0, ESCHE_GIORNO - D.esche.usate) + D.extra; }
     function eschePronte() {   // quante ne hai di quella che stai usando (finita una speciale, si torna ai lombrichi)
+      if (GARA) return gara.finita ? 0 : 99;
       if (D.escaUso !== "lombrico" && !(D.escheSp[D.escaUso] > 0)) D.escaUso = "lombrico";
       return D.escaUso === "lombrico" ? lombrichi() : D.escheSp[D.escaUso];
     }
     function usaEsca() {
+      if (GARA) return;
       if (D.escaUso !== "lombrico" && D.escheSp[D.escaUso] > 0) { D.escheSp[D.escaUso]--; if (!D.escheSp[D.escaUso]) dimmi("Finite le esche speciali: si torna ai lombrichi 🪱"); }
       else { lombrichi(); if (D.esche.usate < ESCHE_GIORNO) D.esche.usate++; else D.extra = Math.max(0, D.extra - 1); }
       salva(); aggTesta();
     }
-    function laCanna() { return canna(D.canna); }
+    function laCanna() { return GARA ? CANNE[0] : canna(D.canna); }
     function monete() { return opts.monete ? opts.monete() : 0; }
 
-    var s = el("div", "schermata pe-vista"), cv = el("canvas", "pe-tela"), ctx = cv.getContext("2d");
+    var s = el("div", "schermata pe-vista" + (GARA ? " pe-in-gara" : "")), cv = el("canvas", "pe-tela"), ctx = cv.getContext("2d");
     var testa = el("div", "pe-testa"), bInd = el("button", "pe-tasto", "‹"), nome = el("div", "pe-nome"), cEsche = el("div", "pe-chip"), cMonete = el("div", "pe-chip");
     bInd.setAttribute("aria-label", "Indietro"); bInd.onclick = function () { esci(); };
     [bInd, nome, cEsche, cMonete].forEach(function (n) { testa.appendChild(n); });
@@ -245,12 +254,25 @@
     bAlbum.onclick = function () { album(); }; bCesto.onclick = function () { cesto(); }; bAttr.onclick = function () { attrezzi(); };
     giu.appendChild(bAlbum); giu.appendChild(bCesto); giu.appendChild(bAttr);
     var aiuto = el("div", "pe-aiuto"), avviso = el("div", "pe-avviso"), sopra = el("div", "pe-sopra");
-    [cv, testa, giu, aiuto, avviso, sopra].forEach(function (n) { s.appendChild(n); });
+    var classi = GARA ? el("div", "pe-classi") : null;   // in gara: la classifica dal vivo
+    var bGara = !GARA && opts.apriGara ? el("button", "pe-gara-b", "👥 Gara con gli amici") : null;   // la gara di pesca online parte da qui
+    if (bGara) bGara.onclick = function () { if (st.fase !== "pronto") return dimmi("Finisci prima la pescata"); chiudi(); opts.apriGara(); };
+    [cv, testa, GARA ? classi : giu, bGara, aiuto, avviso, sopra].forEach(function (n) { if (n) s.appendChild(n); });
     var FASE = fase();
-    nome.textContent = "🎣 Laghetto " + (FASE === "notte" ? "🌙" : FASE === "tramonto" ? "🌅" : "☀️");
+    nome.textContent = GARA ? "⏱️ …" : "🎣 Laghetto " + (FASE === "notte" ? "🌙" : FASE === "tramonto" ? "🌅" : "☀️");
     function aggTesta() {
+      if (GARA) { cEsche.textContent = "🏆 " + kg(gara.kg); cMonete.style.display = "none"; return; }
       var n = eschePronte(); cEsche.textContent = ESCHE[D.escaUso].ico + " " + n; cMonete.textContent = "🪙 " + cifre(monete());
       bCesto.textContent = "🧺 Cesto" + (D.cesto.length ? " (" + D.cesto.length + ")" : "");
+    }
+    function orologio() {   // in gara: quanto manca (si aggiorna solo quando cambia il secondo)
+      var r = Math.max(0, Math.ceil((gara.fineAt - Date.now()) / 1000)), t = "⏱️ " + Math.floor(r / 60) + ":" + ("0" + r % 60).slice(-2);
+      if (gara.fineAt && nome.textContent !== t) { nome.textContent = t; nome.classList.toggle("pe-poco", r <= 10); }
+    }
+    function disegnaClassi() {
+      if (!classi) return;
+      while (classi.firstChild) classi.removeChild(classi.firstChild);
+      gara.righe.slice(0, 4).forEach(function (r, i) { classi.appendChild(el("div", "pe-cl" + (r.tu ? " tu" : ""), (i + 1) + ". " + (r.tu ? "Tu" : r.nome) + " · " + kg(r.kg))); });
     }
     function dimmi(t) { avviso.textContent = t; avviso.classList.remove("su"); void avviso.offsetWidth; avviso.classList.add("su"); }
     function suggerisci(t) { if (aiuto.textContent !== t) aiuto.textContent = t; aiuto.style.opacity = t ? "1" : "0"; }
@@ -326,7 +348,7 @@
     function nuovoPesce(daFuori, vicinoA, pesi) {   // vicinoA: un pesce adatto a quel punto del lago, che arriva lì vicino; pesi: le rarità dell'esca speciale
       var cur = null, sp = null, fv = vicinoA != null ? fracDi(vicinoA) : null;
       pesi = pesi || PESO_R;
-      if (Math.random() < (pesi === PESO_R ? .07 : .02)) { var tot = 0; CURIOSITA.forEach(function (q) { tot += q.peso; }); var r = Math.random() * tot; for (var i = 0; i < CURIOSITA.length; i++) { r -= CURIOSITA[i].peso; if (r <= 0) { cur = CURIOSITA[i]; break; } } }
+      if (!GARA && Math.random() < (pesi === PESO_R ? .07 : .02)) { var tot = 0; CURIOSITA.forEach(function (q) { tot += q.peso; }); var r = Math.random() * tot; for (var i = 0; i < CURIOSITA.length; i++) { r -= CURIOSITA[i].peso; if (r <= 0) { cur = CURIOSITA[i]; break; } } }
       if (!cur) {
         var ok = PESCI.filter(function (p) { return adesso(p, FASE) && (fv == null || (fv >= p.dove[0] - .08 && fv <= p.dove[1] + .08)); }), totp = 0;
         if (!ok.length) ok = PESCI.filter(function (p) { return p.r === 1 && p.quando === "sempre"; });
@@ -358,6 +380,7 @@
       if (sopra.classList.contains("su")) return;
       premuto = true;
       if (st.fase === "pronto") {
+        if (GARA && gara.finita) { premuto = false; return; }
         if (eschePronte() <= 0) { premuto = false; return finiteEsche(); }
         st.fase = "carica"; st.carica = 0; st.caricaDir = 1;
       } else if (st.fase === "attesa") ferra();
@@ -488,6 +511,15 @@
       salva();
       sopra.appendChild(box); sopra.classList.add("su");
     }
+    function garaPreso(p) {   // in gara: niente carta, il pesce va in classifica e si ripesca subito
+      st.fase = "carta";
+      if (p.sp && !gara.finita) {
+        var w = pesoKg(p.sp, p.cm); gara.kg += w;
+        dimmi("+" + kg(w) + " · " + p.sp.nome + " " + p.cm + " cm" + (p.sp.r >= 3 ? " 🤩" : " 🎉")); suonoPreso(p.sp.r); vibra(12);
+        if (GARA.onPreso) GARA.onPreso({ id: p.sp.id, cm: p.cm, kg: w, r: p.sp.r });
+      }
+      aggTesta(); fine(true);
+    }
     function svuota() { while (sopra.firstChild) sopra.removeChild(sopra.firstChild); }
     function chiudiSopra() { sopra.classList.remove("su"); }
     function finestra(titolo, nodi, tasti) {
@@ -573,6 +605,7 @@
           { testo: "Chiudi", fn: chiudiSopra }]);
     }
     function esci() {
+      if (GARA) return opts.indietro && opts.indietro();   // (in gara decide il gioco: chiede prima)
       if (st.fase === "lotta" || st.fase === "attesa" || st.fase === "volo") { if (st.pesce) st.pesce.stato = "fugge"; fine(false); }
       chiudi(); if (opts.indietro) opts.indietro();
     }
@@ -593,7 +626,8 @@
       if (st.fase === "volo") { st.volo.t += dt; if (st.volo.t >= st.volo.dur) inAcqua(); }
       if (st.fase === "attesa") { st.attesa += dt; cercaPesce(dt); }
       if (st.fase === "lotta") lotta(dt);
-      if (st.fase === "salto") { st.salto.t += dt; if (st.salto.t >= .75) carta(st.salto.p); }
+      if (st.fase === "salto") { st.salto.t += dt; if (st.salto.t >= .75) { if (GARA) garaPreso(st.salto.p); else carta(st.salto.p); } }
+      if (GARA) orologio();
       // i pesci
       pesci.forEach(function (p) {
         p.t += dt;
@@ -726,10 +760,23 @@
     function arrot(x, a, b, w, h, r) { r = Math.max(0, Math.min(r, w / 2, h / 2)); x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
     function chiudi() { cancelAnimationFrame(anim); window.removeEventListener("resize", misura); }
 
+    if (GARA) s._gara = {   // per la gara: il tempo, la classifica, gli avvisi e la fine
+      stato: function (o) {
+        if (o.fineAt) gara.fineAt = o.fineAt;
+        if (o.righe) { gara.righe = o.righe; var me = o.righe.filter(function (r) { return r.tu; })[0]; if (me && me.kg > gara.kg) gara.kg = me.kg; disegnaClassi(); aggTesta(); }
+        if (o.avviso && o.avviso.s !== gara.ultimo) { gara.ultimo = o.avviso.s; if (o.avviso.testo) dimmi(o.avviso.testo); }
+      },
+      ferma: function (testo) {   // tempo scaduto: la pescata in corso si perde
+        gara.finita = true; if (st.pesce && st.pesce.stato !== "preso") st.pesce.stato = "fugge";
+        if (st.fase !== "pronto" && st.fase !== "carta") fine(false);
+        suggerisci(""); dimmi(testo || "⏱️ Tempo scaduto!"); premuto = false;
+      },
+      chiedi: function (titolo, testo, siTesto, si) { finestra(titolo, [el("p", "pe-frase", testo)], [{ testo: "▶ Continua a pescare", cls: "btn-primario", fn: chiudiSopra }, { testo: siTesto, fn: si }]); }
+    };
     s._monta = function () {
       misura(); aggTesta();
-      suggerisci(eschePronte() > 0 ? "Tieni premuto per caricare il lancio, poi lascia" : "Esche finite per oggi");
-      if (!D.tot) dimmi("Benvenuto al laghetto! 🎣");
+      suggerisci(GARA ? "Tieni premuto per lanciare: vince chi pesca più chili!" : eschePronte() > 0 ? "Tieni premuto per caricare il lancio, poi lascia" : "Esche finite per oggi");
+      if (!D.tot && !GARA) dimmi("Benvenuto al laghetto! 🎣");
       anim = requestAnimationFrame(function (o) { ult = o; giro(o); });
     };
     s._chiudi = chiudi;
@@ -791,10 +838,18 @@
       ".pe-due{flex:none;display:flex;flex-direction:column;gap:4px;align-items:stretch}",
       ".pe-usa{height:26px;border:0;border-radius:8px;cursor:pointer;font:inherit;font-weight:900;font-size:.75rem;color:#fff;background:rgba(140,233,154,.35)}",
       ".pe-inuso{font-size:.72rem;font-weight:900;color:#8ce99a;text-align:center}",
-      ".pe-giu .pe-bott{font-size:.86rem;padding:0 4px}"
+      ".pe-giu .pe-bott{font-size:.86rem;padding:0 4px}",
+      // la gara: la classifica dal vivo in alto a destra e il tempo che diventa rosso
+      ".pe-classi{position:absolute;right:8px;top:calc(52px + env(safe-area-inset-top));z-index:3;display:flex;flex-direction:column;gap:3px;align-items:flex-end;pointer-events:none}",
+      ".pe-gara-b{position:absolute;left:8px;top:calc(52px + env(safe-area-inset-top));z-index:3;height:32px;padding:0 12px;border:0;border-radius:999px;cursor:pointer;font:inherit;font-weight:900;font-size:.8rem;color:#1a1440;background:#ffe066;box-shadow:0 4px 12px rgba(0,0,0,.25)}",
+      ".pe-cl{padding:3px 9px;border-radius:999px;font-weight:900;font-size:.78rem;color:#fff;background:rgba(0,0,0,.45);white-space:nowrap}",
+      ".pe-cl.tu{color:#1a1440;background:#ffe066}",
+      ".pe-in-gara .pe-avviso{top:calc(158px + env(safe-area-inset-top))}",
+      ".pe-nome.pe-poco{color:#ff6b6b;animation:pePoco .5s ease-in-out infinite alternate}",
+      "@keyframes pePoco{to{transform:scale(1.08)}}"
     ].join("");
     document.head.appendChild(st);
   }
 
-  window.SGPesca = { crea: crea, PESCI: PESCI, CURIOSITA: CURIOSITA, disegnaPesce: disegnaPesce, immaginePesce: immaginePesce, svgPesce: svgPesce, pesce: pesce };
+  window.SGPesca = { crea: crea, PESCI: PESCI, CURIOSITA: CURIOSITA, disegnaPesce: disegnaPesce, immaginePesce: immaginePesce, svgPesce: svgPesce, pesce: pesce, pesoKg: pesoKg, kg: kg };
 })();

@@ -44,13 +44,13 @@
     scopa: "carte", scopa2v2: "carte", scopone: "carte", blackjack: "carte", poker: "carte", ruota: "parole", ordine: "parole",
     tris: "sfida", drop4: "sfida", hockey: "sfida", navale: "sfida", calciobiliardo: "sfida",
     asta: "festa", impostore: "festa", sipero: "festa", scarabocchio: "festa",
-    scalinata: "mini", horto: "mini", pendolo: "mini", pallamatta: "mini",
+    scalinata: "mini", horto: "mini", pendolo: "mini", pallamatta: "mini", garapesca: "mini",
     timeline: "parole", nomicose: "parole", patata: "parole", taboo: "parole"
   };
   var catAttiva = "tutti";
   function catDi(g) { return CAT_GIOCO[g.id] || null; }
   // Giochi che hanno la modalità "ognuno dal suo telefono" (usabili nella Sala online).
-  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, poker: 1, ruota: 1, ordine: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1, calciobiliardo: 1, pallamatta: 1 };
+  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, poker: 1, ruota: 1, ordine: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1, calciobiliardo: 1, pallamatta: 1, garapesca: 1 };
   function giocoOnline(g) { return !!(g && GIOCHI_ONLINE[g.id]); }
   var app;                    // contenitore radice (#app)
   var linkParams = {};        // impostazioni arrivate da un link condiviso
@@ -599,6 +599,7 @@
     var io = profiloAttivo();
     var s = SGPesca.crea({ omino: io && io.omino, dati: datiPesca(), salva: salvaPesca, audio: audioCtx,
       monete: function () { return SGNube.monete(); }, cambia: function (n) { SGNube.cambiaMonete(n); },
+      apriGara: giocoDa("garapesca") ? function () { rientro = schermataPesca; apriGioco(giocoDa("garapesca")); } : null,   // la gara di pesca con gli amici, online
       indietro: function () { schermataCitta(); } });
     mostra(s); s._monta();
   }

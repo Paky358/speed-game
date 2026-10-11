@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 186,
+    data: "11 ottobre 2026",
+    titolo: "Nuovo gioco: Gara di pesca 🎣👥",
+    descrizione: [
+      "Tutti nello stesso laghetto, ognuno dal suo telefono, per 2, 3 o 5 minuti: vince chi pesca più chili!",
+      "Canna e lombrichi uguali per tutti e senza limite. Ogni pesce vale il suo peso, quindi i pesci grossi del largo fanno la differenza.",
+      "In alto vedi il tempo e la classifica dal vivo, e un avviso quando qualcuno prende un pesce raro.",
+      "Si apre dal laghetto (tasto \"Gara con gli amici\") o tra i Minigiochi. Alla fine si rigioca con gli stessi amici."
+    ]
+  },
+  {
     v: 185,
     data: "11 ottobre 2026",
     titolo: "Pesca: attrezzi e acquari 🎒🐠",
