@@ -574,7 +574,26 @@
     c.agg = Date.now(); casaInUso = c;
     var pulita = JSON.parse(JSON.stringify(c)); delete pulita._chiave;
     try { localStorage.setItem(k, JSON.stringify(pulita)); } catch (e) {}
-    clearTimeout(tCasaNube); tCasaNube = setTimeout(function () { if (window.SGNube && SGNube.salvaCasa) SGNube.salvaCasa(pulita); }, 1500);   // nel profilo: un attimo dopo (non a ogni spostamento)
+    clearTimeout(tCasaNube); tCasaNube = setTimeout(function () {   // nel profilo: un attimo dopo (non a ogni spostamento), e la copia che vedono gli amici
+      if (window.SGNube && SGNube.salvaCasa) SGNube.salvaCasa(pulita);
+      if (window.SGNube && SGNube.salvaVetrinaCasa) { SGNube.salvaVetrinaCasa(SGCasa.vetrina(pulita)); casaPubblicata = true; }
+    }, 1500);
+  }
+  var casaPubblicata = false;   // la copia per gli amici si rinfresca una volta all'avvio (per chi ha arredato prima che ci fossero le visite)
+  function pubblicaCasa() {
+    var N = window.SGNube; if (casaPubblicata || !window.SGCasa || !N || !N.salvaVetrinaCasa || !N.casa || !N.casa()) return;
+    casaPubblicata = true; N.salvaVetrinaCasa(SGCasa.vetrina(N.casa()));
+  }
+  // a casa di un amico: la sua casa com'è adesso, col suo avatar che ci gira dentro (si guarda, non si tocca niente)
+  function schermataCasaAmico(x, torna) {
+    if (!window.SGCasa || !(window.SGNube && SGNube.casaDi)) return;
+    var s0 = schermata({ icona: "🏠", titolo: x.nome, sotto: "Vado a casa sua…", indietro: function () { schermataTrofeiAmico(x, torna); } }); mostra(s0);
+    SGNube.casaDi(x.uid).catch(function () { return null; }).then(function (c) {
+      if (!s0.parentNode) return;   // è già tornato indietro
+      var s = SGCasa.crea({ visita: true, vuota: !c, dati: c, avatar: x.omino || null, nome: x.nome, audio: audioCtx, stanza: "soggiorno",
+        indietro: function () { schermataTrofeiAmico(x, torna); } });
+      mostra(s); s._monta();
+    });
   }
   function soldiCasa() { return { monete: function () { return SGNube.monete(); }, spendi: function (n) { SGNube.cambiaMonete(-n); }, guadagna: function (n) { SGNube.cambiaMonete(n); } }; }
   // ---- la pesca al laghetto (js/pesca.js): album, cesto ed esche nel profilo e su questo telefono (come la casa) ----
@@ -1735,6 +1754,7 @@
     var liv = { platino: 0, diamante: 0, oro: 0, argento: 0, bronzo: 0 }, perGioco = {}, n = 0;
     for (var k in set) { var t = set[k]; n++; if (liv[t.livello] != null) liv[t.livello]++; perGioco[t.gioco] = (perGioco[t.gioco] || 0) + 1; }
     SGNube.pubblica({ trofei: n, liv: liv, giochi: perGioco });
+    pubblicaCasa();
   }
 
   // ---- Amici e classifica trofei ----
@@ -1964,6 +1984,7 @@
     torna = torna || "generale";
     var s = schermata({ titolo: x.nome, sotto: "🏆 " + (x.trofei || 0) + " trofei", indietro: function () { schermataAmici(torna); } });
     s._contenuto.appendChild(el("div", { class: "am-grande" }, [ faccina(x, "am-fac-grande") ]));
+    if (!x.io && window.SGCasa) s._contenuto.appendChild(el("button", { class: "btn btn-primario am-casa", text: "🏠 Vai a casa sua", onclick: function () { schermataCasaAmico(x, torna); } }));
     var l = x.liv || {};
     function cella(cls, ico, nome, f) {
       return el("div", { class: "sm-liv " + cls }, [ el("div", { class: "sm-ico", text: ico }), el("div", { class: "sm-num", html: "<b>" + (f || 0) + "</b>" }), el("div", { class: "sm-nome", text: nome }) ]);

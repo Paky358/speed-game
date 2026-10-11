@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 189,
+    data: "11 ottobre 2026",
+    titolo: "A casa degli amici 🏠👋",
+    descrizione: [
+      "Ora puoi andare a trovare gli altri! In Classifica tocca un giocatore e poi \"🏠 Vai a casa sua\": vedi le sue stanze come le ha arredate, col suo avatar che gira per casa, l'acquario coi suoi pesci e le luci che ha lasciato accese.",
+      "A casa degli altri si guarda e basta: non si sposta niente e non si compra niente.",
+      "Anche la tua casa la vedono gli amici così com'è: ogni volta che la sistemi si aggiorna da sola.",
+      "Casinò e Circolo: le insegne dei tavoli e delle porte sono tutte della stessa grandezza, con la scritta al centro e messe in ordine (due ai lati, quella del tavolo in fondo al centro). Anche l'insegna grande della sala di ogni gioco ha la stessa misura per tutti.",
+      "Il negozio si apre più veloce: gli oggetti si disegnano mentre scorri. Il fumetto della commessa ora è sopra la sua testa."
+    ]
+  },
+  {
     v: 188,
     data: "11 ottobre 2026",
     titolo: "Il negozio si fa grande 🛍️🎃",

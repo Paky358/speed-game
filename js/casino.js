@@ -860,11 +860,22 @@
     var punti = sc.punti().map(function (p) {
       var c = [P(p.x - p.w, p.yBot, p.zf), P(p.x + p.w, p.yBot, p.zf), P(p.x - p.w, p.yTop, p.z), P(p.x + p.w, p.yTop, p.z)];
       var xs = c.map(function (q) { return q[0]; }), ys = c.map(function (q) { return q[1]; });
-      var cart = p.cartello ? P(p.cartello[0], p.cartello[1], p.cartello[2]) : null, m = Math.min(100, 34 + p.insegna.length * 5.6);   // l'insegna resta dentro lo schermo
+      var cart = p.cartello ? P(p.cartello[0], p.cartello[1], p.cartello[2]) : null, m = 78;   // l'insegna (larga 150, vedi .cs-cartello) resta dentro lo schermo
       return { id: p.id, nome: p.nome, insegna: p.insegna, stile: p.stile, va: p.va, muro: !!p.muro,
         box: [Math.max(0, Math.min.apply(null, xs)), Math.max(0, Math.min.apply(null, ys) - (cart && !p.muro ? 34 : 0)), Math.min(W, Math.max.apply(null, xs)), Math.min(H, Math.max.apply(null, ys))],
         fuoco: P(p.fuoco[0], p.fuoco[1], p.fuoco[2]), cartello: cart ? [Math.max(m, Math.min(W - m, cart[0])), cart[1]] : null };
     });
+    // le insegne dei tavoli, sempre in ordine (sono tutte della stessa misura, vedi .cs-cartello in styles.css):
+    // quelle a destra e a sinistra alla stessa altezza e alla stessa distanza dal centro; quella del tavolo in fondo al centro, un po' più in alto
+    var tav = punti.filter(function (p) { return p.cartello && !p.muro; });
+    if (tav.length) {
+      var yFila = Math.min.apply(null, tav.map(function (p) { return p.cartello[1]; }));
+      var lati = tav.filter(function (p) { return Math.abs(p.cartello[0] - W / 2) > 30; });
+      tav.forEach(function (p) {
+        if (lati.indexOf(p) >= 0) p.cartello = [W / 2 + (p.cartello[0] < W / 2 ? -1 : 1) * 92, yFila];
+        else p.cartello = [W / 2, yFila - (lati.length ? 44 : 0)];
+      });
+    }
     var luci = (sc.luci || []).map(function (l) { var c = P(l[0], l[1], l[2]); return [c[0], c[1], F / l[2]]; });
     return { punti: punti, luci: luci };
   }

@@ -1454,7 +1454,8 @@
     var giu = el("div", "ca-giu"), tabs = el("div", "ca-stanze"), bArreda = el("button", "ca-arreda", "✏️ Arreda");
     STANZE.forEach(function (st) { var b = el("button", "ca-tab", st.nome); b.onclick = function () { if (st.id !== stanzaId) vaiStanza(st.id); }; b.dataset.id = st.id; tabs.appendChild(b); });
     bArreda.onclick = function () { if (arreda) esciArreda(); else entraArreda(); };
-    giu.appendChild(tabs); giu.appendChild(bArreda); s.appendChild(giu);
+    giu.appendChild(tabs); if (!opts.visita) giu.appendChild(bArreda); s.appendChild(giu);
+    if (opts.visita) { s.classList.add("visita"); monete.style.display = "none"; }   // a casa di un amico: si gira e si guarda, ma non si sposta niente
     var cassetto = el("div", "ca-cassetto"), cTabs = el("div", "ca-ctabs"), cLista = el("div", "ca-clista");
     var schede = [["baule", "🧳 Baule"], ["pareti", "🖼️ Pareti"], ["pavimenti", "🟫 Pavimento"], ["misura", "📐 Stanza"], ["negozio", "🛍️ Negozio"]], scheda = "baule";
     schede.forEach(function (sc) { var b = el("button", "ca-ctab", sc[1]); b.dataset.id = sc[0]; b.onclick = function () { if (sc[0] === "negozio" && opts.negozio) return esci(function () { opts.negozio(stanzaId); }); scheda = sc[0]; disegnaCassetto(); }; cTabs.appendChild(b); });   // "Negozio" porta al negozio vero
@@ -1572,7 +1573,7 @@
       muriA.src = imgMuri(st, sz.carta); pavA.src = imgPav(st, sz.pav);
       sz.oggetti.forEach(function (d) { var o = OGG[d.t]; if (o.stati === "apri" || o.uso) d.on = false; });   // frigo, armadio e bagno si ritrovano chiusi
       sz.oggetti.forEach(posa);
-      titolo.textContent = st.nome;
+      titolo.textContent = opts.visita ? (opts.nome || "") + " · " + st.nome : st.nome;
       [].forEach.call(tabs.children, function (b) { b.classList.toggle("on", b.dataset.id === stanzaId); });
       if (av) { strato.appendChild(av); avPos.x = 0.3; avPos.z = 3.0; posaAv(); aspetta(); }
       deseleziona();
@@ -1750,6 +1751,7 @@
         var cb = o.cibi || ["✨"]; d.on = true; posa(d); suono(o.suono || "macchina"); nuvoletta(cb[Math.floor(Math.random() * cb.length)], 900);
         finche(o.dura || 2400, function () { spegni(); saluta(); }); return;
       }
+      if (o.vasca && opts.visita) { n.classList.remove("rimbalza"); void n.offsetWidth; n.classList.add("rimbalza"); nuvoletta("🐠", 600); saluta(); aspetta(); return; }   // l'acquario dell'amico: si guarda
       if (o.vasca) { apriVasca(d); aspetta(); return; }   // l'acquario: si mettono e si tolgono i pesci del cesto
       n.classList.remove("rimbalza"); void n.offsetWidth; n.classList.add("rimbalza"); saluta(); aspetta();   // il resto: lo tocca e lo guarda
     }
@@ -1972,7 +1974,7 @@
       if (d && !arreda) { var g0 = gesto; g0.lungo = setTimeout(function () { tienePremuto(g0); }, 450); }   // tenuto premuto su un mobile: si apre l'Arreda e lo prendi
     }
     function tienePremuto(g0) {
-      if (gesto !== g0 || g0.mosso || !nodi[g0.d.u]) return;
+      if (gesto !== g0 || g0.mosso || !nodi[g0.d.u] || opts.visita) return;
       gesto = null; var d = g0.d, p = g0.p, gg = geo(d), n = nodi[d.u];
       entraArreda();
       drag = { d: d, id: g0.id, sx: p.x, sy: p.y, ox: p.x - gg.ax, oy: p.y - gg.ay, mosso: false, vx: 0, ult: p, figli: figliDi(d).map(function (f) { return { f: f, dx: f.x - d.x }; }), su0: d.su };
@@ -2100,6 +2102,7 @@
     s._monta = function () {
       (function prova() { if (!document.body.contains(s)) return; if (!stendi()) return requestAnimationFrame(prova); })();
       disegnaStanza(); aggMonete(); if (av) { posaAv(); clearTimeout(avTimer); avTimer = setTimeout(passeggia, 1200); }
+      if (opts.visita) setTimeout(function () { dimmi(opts.vuota ? (opts.nome || "") + " non ha ancora arredato casa 🏚️" : "Benvenuto a casa di " + (opts.nome || "") + " 👋"); }, 500);
       window.addEventListener("resize", function ridim() { if (!document.body.contains(s)) return window.removeEventListener("resize", ridim); stendi(); });
     };
     return s;
@@ -2194,7 +2197,7 @@
         Object.keys(PAVIMENTI).forEach(function (c) { if (PAVIMENTI[c].prezzo) l.push({ tipo: "pavim", id: c, nome: PAVIMENTI[c].nome, prezzo: PAVIMENTI[c].prezzo, img: campionePav(c), w: 60, h: 60, cosa: "Pavimento: si mette dall'Arreda" }); });
         return l;
       }
-      Object.keys(OGG).forEach(function (t) { if (OGG[t].prezzo && inStagione(OGG[t]) && repartoDi(t) === rp) l.push({ tipo: "ogg", id: t, o: OGG[t], nome: OGG[t].nome, prezzo: OGG[t].prezzo, img: imgOggetto(t), cosa: cosaFa(OGG[t]) }); });
+      Object.keys(OGG).forEach(function (t) { if (OGG[t].prezzo && inStagione(OGG[t]) && repartoDi(t) === rp) l.push({ tipo: "ogg", id: t, o: OGG[t], nome: OGG[t].nome, prezzo: OGG[t].prezzo, img: null, cosa: cosaFa(OGG[t]) }); });
       l.sort(function (a, b) { return a.prezzo - b.prezzo; });
       Object.keys(CARTE).forEach(function (c) { if (CARTE[c].prezzo && CARTE[c].festa === rp && inStagione(CARTE[c])) carta(c); });   // la carta da parati della festa sta col suo reparto
       return l;
@@ -2203,7 +2206,7 @@
     // ---- il negozio disegnato: le pareti dei reparti, il pavimento, le vetrine coi cartellini ----
     function costruisci() {
       var h = strada.clientHeight, cw = strada.clientWidth; if (!h || !cw) return false;
-      while (dentro.firstChild) dentro.removeChild(dentro.firstChild); sezioni = []; pezzi = [];
+      if (vedi) vedi.disconnect(); while (dentro.firstChild) dentro.removeChild(dentro.firstChild); sezioni = []; pezzi = [];
       var pav = Math.round(h * 0.7), k = Math.max(0.75, Math.min(1.35, (pav - 120) / 200)), x = 0;
       dentro.style.height = h + "px";
       function metti(cls, l, t, w, hh, testo) { var e = el(cls === "img" ? "img" : "i", cls === "img" ? null : cls, testo); if (cls === "img") e.draggable = false; e.style.left = l.toFixed(1) + "px"; e.style.top = t.toFixed(1) + "px"; if (w != null) e.style.width = w.toFixed(1) + "px"; if (hh != null) e.style.height = hh.toFixed(1) + "px"; dentro.appendChild(e); return e; }
@@ -2220,7 +2223,7 @@
       }
       metti("ne-banco", lIng / 2 - 110 * k, pav - 92 * k, 220 * k, 92 * k + 6);
       metti("ne-cassa", lIng / 2 + 40 * k, pav - 92 * k - 30 * k, 44 * k, 30 * k);
-      metti("ne-fumetto", lIng / 2 + 50 * k, pav - 92 * k - 150 * k, null, null, "Ciao! Scorri per vedere tutto ➜");
+      metti("ne-fumetto sopra", lIng / 2 - 20 * k, pav - 92 * k - 150 * k * 0.97 - 8, null, null, "Ciao! Scorri per vedere tutto ➜");
       x = lIng;
       REPARTI.forEach(function (rp) {
         var lista = pezziDel(rp.id); if (!lista.length) return;
@@ -2239,6 +2242,9 @@
       dentro.style.width = x + "px";
       return true;
     }
+    function figura(pz) { return pz.img || (pz.img = imgOggetto(pz.id)); }   // il disegno di un oggetto: si fa la prima volta che serve
+    // le vetrine si disegnano solo quando ci arrivi scorrendo (sui telefoni lenti il negozio si apre subito)
+    var vedi = window.IntersectionObserver ? new IntersectionObserver(function (l) { l.forEach(function (e) { if (!e.isIntersecting) return; vedi.unobserve(e.target); e.target.src = figura(e.target._pz); }); }, { root: strada, rootMargin: "0px 500px" }) : null;
     function vetrina(pz, x, pav, k) {   // mette in vetrina un oggetto (col suo cartellino) e dice dove finisce
       var tipo = pz.tipo === "ogg" ? pz.o.tipo : pz.tipo, m = pz.tipo === "ogg" ? misura(pz.id) : { w: pz.w, h: pz.h };
       var sc = k * (tipo === "acc" ? 1.7 : tipo === "muro" ? 1.35 : tipo === "pavim" ? 1.4 : 1);   // le cose piccole un po' più grandi, come in vetrina
@@ -2249,7 +2255,7 @@
       else { base = pav + 6; yCart = pav + 20; }
       if (tipo === "acc") { var col2 = el("i", "ne-piedistallo"), pw = Math.max(44, w + 18); col2.style.cssText = "left:" + (cx - pw / 2).toFixed(1) + "px;top:" + (base - 2).toFixed(1) + "px;width:" + pw.toFixed(1) + "px;height:" + (pav - base + 10).toFixed(1) + "px"; dentro.appendChild(col2); }
       else if (tipo !== "muro" && tipo !== "tappeto") { var ped = el("i", "ne-pedana"), dw = w + 22; ped.style.cssText = "left:" + (cx - dw / 2).toFixed(1) + "px;top:" + (base - 6).toFixed(1) + "px;width:" + dw.toFixed(1) + "px"; dentro.appendChild(ped); }
-      var im = el("img", "ne-ogg" + (tipo === "pavim" ? " campione" : "")); im.src = pz.img; im.alt = pz.nome; im.draggable = false;
+      var im = el("img", "ne-ogg" + (tipo === "pavim" ? " campione" : "")); im.alt = ""; im.draggable = false; im._pz = pz; if (vedi) vedi.observe(im); else im.src = figura(pz);
       im.style.cssText = "left:" + (cx - w / 2).toFixed(1) + "px;top:" + (base - hh).toFixed(1) + "px;width:" + w.toFixed(1) + "px;height:" + hh.toFixed(1) + "px";
       var cart = el("button", "ne-cartellino"); cart.style.left = cx.toFixed(1) + "px"; cart.style.top = yCart.toFixed(1) + "px";
       cart.appendChild(el("b", null, pz.nome)); var pr = el("i"); cart.appendChild(pr);
@@ -2272,7 +2278,7 @@
     function apri(pz) {
       aperto = pz; while (scheda.firstChild) scheda.removeChild(scheda.firstChild);
       var x = el("button", "ne-x", "✕"); x.onclick = chiudi; scheda.appendChild(x);
-      var im = el("img"); im.src = pz.img; im.alt = ""; scheda.appendChild(im);
+      var im = el("img"); im.src = figura(pz); im.alt = ""; scheda.appendChild(im);
       var h3 = el("h3", null, pz.nome); scheda.appendChild(h3);
       if (pz.o && pz.o.festa && FESTE[pz.o.festa]) scheda.appendChild(el("span", "ne-speciale festa", "🎃 Solo " + FESTE[pz.o.festa].fino));
       if (pz.o && pz.o.frase) { scheda.appendChild(el("span", "ne-speciale", "✨ Speciale")); scheda.appendChild(el("p", "ne-frase", pz.o.frase)); }   // solo gli oggetti speciali
@@ -2342,8 +2348,22 @@
     return s;
   }
 
+  // la copia della casa che vedono gli amici quando vengono a trovarti: solo le stanze (niente baule, monete, colori comprati)
+  function vetrina(c) {
+    var v = { v: 1, stanze: {}, baule: [], carte: [], pavimenti: [] };
+    Object.keys((c && c.stanze) || {}).forEach(function (k) {
+      var z = c.stanze[k];
+      v.stanze[k] = { carta: z.carta, pav: z.pav, mis: z.mis || 0, misMax: z.misMax || 0, prossimo: z.prossimo || 1, oggetti: (z.oggetti || []).filter(function (d) { return OGG[d.t]; }).map(function (d) {
+        var o = {};
+        ["u", "t", "x", "z", "y", "flip", "su", "vista", "col", "parete", "on", "pesci"].forEach(function (p) { if (d[p] != null && d[p] !== false) o[p] = typeof d[p] === "number" ? Math.round(d[p] * 1000) / 1000 : d[p]; });
+        return o;
+      }) };
+    });
+    return v;
+  }
+
   window.SGCasa = {
-    OGG: OGG, CARTE: CARTE, PAVIMENTI: PAVIMENTI, STANZE: STANZE, casaIniziale: casaIniziale,
+    OGG: OGG, CARTE: CARTE, PAVIMENTI: PAVIMENTI, STANZE: STANZE, casaIniziale: casaIniziale, vetrina: vetrina,
     P: P, scala: scala, daSchermo: daSchermo, daMuro: daMuro, daParete: daParete, larghezza: larghezza, W: W, H: H, XW: XW, ZB: ZB, YT: YT, ZMIN: ZMIN,
     imgOggetto: imgOggetto, imgMuri: imgMuri, imgPav: imgPav, campioneCarta: campioneCarta, campionePav: campionePav,
     crea: crea,   // la schermata della casa

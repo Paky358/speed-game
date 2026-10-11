@@ -34,6 +34,7 @@ Il proprietario lavora con Claude da due computer, tenuti allineati da GitHub. Q
 - Account del proprietario: **IL PAPPONE**. Solo lui vede "Prova da solo" (Parola d'ordine), ha tutti i livelli di Palla Matta aperti e nel negozio ha la matita per disegnare la commessa (si salva nella sua scheda pubblica e la vedono tutti uguale).
 - Vibrazione solo quando si tocca per scegliere, mai mentre si scorre. I bot non si chiamano mai Matt: il primo si chiama sempre **Bot** (deciso il 10 ott 2026).
 - Scene animate grandi: animare solo transform/opacity, sfondi e luci su canvas.
+- Insegne di Casinò e Circolo: tutte della stessa misura (stessa targa e stessa scritta, al centro); ogni gioco cambia solo i colori, e gli ornamenti stanno dentro la targa. Due insegne ai lati alla stessa altezza, quella del tavolo in fondo al centro più in alto (deciso l'11 ott 2026; regola in styles.css e casino.js).
 
 ## Giochi online (ognuno dal suo telefono)
 - **Per un gioco nuovo parti SEMPRE dal modello** `.agents/skills/nuovo-gioco/modello-gioco-online.js` (un gioco vero, già provato) e cambia solo le parti segnate con "QUI". Gli errori più comuni sono elencati nella skill `nuovo-gioco`.

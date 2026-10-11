@@ -1437,3 +1437,28 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 .ne-chip.festa span{ filter:drop-shadow(0 0 4px #ff922b); }
 .ne-speciale.festa{ background:linear-gradient(180deg,#ffa94d,#e8590c); color:#1a1226; }
 .ne-scheda .ne-colnota{ color:#7a6552; font-size:.74rem; font-weight:700; }
+.ne-fumetto.sopra{ transform:translate(-50%,-100%); text-align:center; white-space:nowrap; max-width:none; }
+.ne-fumetto.sopra::after{ left:50%; margin-left:-8px; }
+.am-casa{ display:block; margin:4px auto 14px; }
+
+/* ---- le insegne appese nel Casinò e nel Circolo: TUTTE della stessa misura (regola fissa: stessa targa, stessa scritta, al centro).
+        Ogni gioco cambia solo i colori; gli ornamenti (lampadine, bande colorate, cornici) stanno dentro la targa, mai fuori ---- */
+.cs-cartello, .cs-cartello.cs-muro{ font-size:calc(var(--s,1) * 11.5px); }
+.cs-cartello[class] b{ box-sizing:border-box; width:calc(var(--s,1) * 150px); text-align:center; font-size:1em; letter-spacing:.08em; padding:.6em .4em .55em; border-width:2px; border-style:solid; border-radius:.6em; }
+.cs-cartello.cs-bj b{ box-shadow:inset 0 0 0 2px #45070f, 0 8px 18px rgba(0,0,0,.6); }
+.cs-cartello.cs-bj b::after{ inset:3px; border-radius:.45em; border-width:1.5px; }
+.cs-cartello.cs-s2 b{ border-left:2px solid #3b2414; border-right:2px solid #3b2414; box-shadow:inset 7px 0 #1c7ed6, inset -7px 0 #e03131, 0 8px 18px rgba(0,0,0,.55); }
+.cs-cartello.cs-tr b{ border-left:2px solid #ced4da; border-right:2px solid #ced4da; box-shadow:inset 7px 0 #e03131, inset -7px 0 #1c7ed6, 0 8px 18px rgba(0,0,0,.45); }
+.cs-cartello.cs-so b{ border-color:#8a5a32; box-shadow:inset 0 0 0 2px #8a5a32, inset 0 0 14px rgba(0,0,0,.4), 0 8px 18px rgba(0,0,0,.55); }
+.cs-cartello.cs-f4 b{ box-shadow:inset 0 0 0 2px #1849a9, 0 8px 18px rgba(0,0,0,.5); }
+.cs-cartello.cs-nv b{ border-color:#d9b36c; box-shadow:inset 0 0 0 2px #0a2f52, inset 0 0 0 3px #d9b36c, 0 8px 18px rgba(0,0,0,.5); }
+.cs-cartello.cs-pk b{ border-width:2px; }
+/* e l'insegna grande della sala di un gioco (quando ci si avvicina al tavolo): anche lei sempre della stessa misura */
+.cs-insegna[class] b{ box-sizing:border-box; width:min(84vw, 340px); text-align:center; font-size:clamp(1.15rem, 6.6vw, 1.9rem); letter-spacing:.06em; padding:.48em .3em .42em; border-width:3px; border-style:solid; }
+.cs-bj .cs-insegna b{ box-shadow:inset 0 0 0 3px #45070f, 0 12px 26px rgba(0,0,0,.6), inset 0 0 18px rgba(0,0,0,.5); }
+.cs-bj .cs-insegna b::after{ inset:5px; border-radius:10px; border-width:2px; }
+.cs-s2 .cs-insegna b{ border-color:#3b2414; box-shadow:inset 10px 0 #1c7ed6, inset -10px 0 #e03131, 0 12px 24px rgba(0,0,0,.55); }
+.cs-tr .cs-insegna b{ border-color:#ced4da; box-shadow:inset 10px 0 #e03131, inset -10px 0 #1c7ed6, 0 12px 24px rgba(0,0,0,.45); }
+.cs-so .cs-insegna b{ border-color:#8a5a32; box-shadow:inset 0 0 0 3px #8a5a32, inset 0 0 14px rgba(0,0,0,.4), 0 12px 24px rgba(0,0,0,.55); }
+.cs-f4 .cs-insegna b{ box-shadow:inset 0 0 0 3px #1849a9, 0 12px 24px rgba(0,0,0,.5); }
+.cs-nv .cs-insegna b{ border-color:#d9b36c; box-shadow:inset 0 0 0 3px #0a2f52, inset 0 0 0 4px #d9b36c, 0 12px 24px rgba(0,0,0,.5); }

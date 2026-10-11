@@ -231,6 +231,15 @@
       profilo.casa = dati;
       return db.collection("profili").doc(utente.uid).update({ casa: dati }).catch(function () {});
     },
+    // la casa che vedono gli amici (solo le stanze): sta nella scheda pubblica, che leggono tutti
+    salvaVetrinaCasa: function (v) {
+      if (!auth || !utente || !profilo || !v) return Promise.resolve();
+      return db.collection("pubblici").doc(utente.uid).set({ casa: v }, { merge: true }).catch(function () {});
+    },
+    casaDi: function (uid) {
+      if (!auth || !utente) return Promise.reject(new Error("offline"));
+      return db.collection("pubblici").doc(uid).get().then(function (d) { return d.exists ? (d.data().casa || null) : null; });
+    },
     // ---- la pesca (js/pesca.js): album, cesto ed esche in un campo del profilo ----
     pesca: function () { return (profilo && profilo.pesca) || null; },
     salvaPesca: function (dati) {
@@ -304,7 +313,7 @@
       if (firma === ultimaScheda) return Promise.resolve();   // niente di nuovo: non riscrive
       ultimaScheda = firma;
       sch.agg = Date.now();
-      return db.collection("pubblici").doc(utente.uid).set(sch).catch(function () { ultimaScheda = null; });
+      return db.collection("pubblici").doc(utente.uid).set(sch, { mergeFields: Object.keys(sch) }).catch(function () { ultimaScheda = null; });   // riscrive solo i suoi campi: la casa per gli amici resta
     },
     // la commessa del negozio: il proprietario la salva nel suo profilo e nella sua scheda pubblica, tutti la leggono da lì
     salvaCommessa: function (cfg) {
