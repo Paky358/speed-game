@@ -12,7 +12,7 @@
   "use strict";
 
   var A = 25, uid = 0, nf = 0;
-  var ALTO = 880;   // quanto è lunga la città (si scorre col dito): quattro file di edifici e in fondo il laghetto del parco
+  var ALTO = 960;   // quanto è lunga la città (si scorre col dito): quattro file di edifici, in fondo il laghetto del parco e gli scavi
   var P, S, ET;   // proiezione, luce ed etichette del disegno in corso
 
   // ---------- attrezzi ----------
@@ -411,6 +411,28 @@
     return s;
   }
 
+  // gli scavi antichi, fuori città oltre il parco: il campo coi picchetti e lo spago, la tenda, una colonna rotta e la professoressa
+  function scavi(uc, vc) {
+    var s = ell(uc, vc, 0, 1.75, F("#ecd3a0", "t"), L("#cfae74"));   // la sabbia
+    for (var i = 0; i < 5; i++) { var a = P(uc - 4.2 + i * .9, vc - 3.2 + i * .7, 0); s += "<ellipse cx='" + f1(a[0]) + "' cy='" + f1(a[1]) + "' rx='3' ry='1.6' fill='" + T("#d8c39a") + "'/>"; }   // il sentiero dal parco
+    var c0 = [P(uc - .8, vc - .8, 0), P(uc + .8, vc - .8, 0), P(uc + .8, vc + .8, 0), P(uc - .8, vc + .8, 0)];
+    s += poly(c0, F("#b9874d", "t"), L("#8a5a2b"));   // il campo smosso
+    for (i = 1; i < 4; i++) { var t = -.8 + i * .4; s += linea(P(t + uc, vc - .8, 0), P(t + uc, vc + .8, 0), "rgba(255,248,230,.85)", .7) + linea(P(uc - .8, vc + t, 0), P(uc + .8, vc + t, 0), "rgba(255,248,230,.85)", .7); }
+    [[-.8, -.8], [.8, -.8], [.8, .8], [-.8, .8]].forEach(function (k) { var b = P(uc + k[0], vc + k[1], 0); s += linea(b, [b[0], b[1] - 5], F("#7a4a22", "l"), 1.4) + pallino([b[0], b[1] - 5], 1, "#e03131"); });   // i picchetti
+    s += pallino(P(uc - .2, vc + .3, 0), 2.2, "#3b2414") + pallino(P(uc + .4, vc - .2, 0), 2, "#3b2414");   // due buche
+    var tu = uc - 1.5, tv = vc - .9;   // la tenda a righe
+    s += poly([P(tu, tv, 0), P(tu, tv + .9, 0), P(tu + .45, tv + .9, 13), P(tu + .45, tv, 13)], F("#f4ead2", "l"), L("#8a6a3a")) +
+      poly([P(tu + .9, tv, 0), P(tu + .9, tv + .9, 0), P(tu + .45, tv + .9, 13), P(tu + .45, tv, 13)], F("#f4ead2", "r"), L("#8a6a3a")) +
+      poly([P(tu, tv + .9, 0), P(tu + .9, tv + .9, 0), P(tu + .45, tv + .9, 13)], F("#c4452f", "t"), L("#8a3a2a"));
+    s += box(uc + 1.05, vc - 1.1, .22, .22, 0, 15, "#efe4cc") + box(uc + 1.0, vc - 1.15, .32, .32, 15, 2, "#e6d8b8");   // la colonna in piedi
+    s += box(uc + 1.25, vc + .3, .5, .2, 0, 3.5, "#e6d8b8");   // un pezzo di colonna caduto
+    s += "<ellipse cx='" + f1(P(uc - 1.1, vc + .9, 0)[0]) + "' cy='" + f1(P(uc - 1.1, vc + .9, 0)[1] - 4) + "' rx='3' ry='4.4' fill='" + T("#c8673a") + "' stroke='" + T("#6b2f14") + "' stroke-width='.8'/>";   // un'anfora
+    var pf = window.SGOmino.casuale("Ida"); pf.cappello = "cowboy"; pf.occhiali = "tondi"; pf.colCap = 6; pf = window.SGOmino.norm(pf);
+    var pb = P(uc + .2, vc + 1.2, 0);
+    s += S.notte ? "<g filter='url(#ctnp" + S.id + ")'>" + figura(pf, pb[0], pb[1], 20) + "</g>" : figura(pf, pb[0], pb[1], 20);
+    return s;
+  }
+
   // ---------- la città ----------
   var LOTTI ={ casino: [4.15, 6.95], studio: [6.95, 4.15], circolo: [23.35, 26.15], giochi: [10.55, 13.35], arena: [13.35, 10.55], locale: [16.95, 19.75], trofei: [19.75, 16.95] };
   // i nomi: subito sopra il tetto di ogni edificio (altezza scelta a mano, così toccano l'edificio)
@@ -446,6 +468,7 @@
     [[7.5, 10.55], [10.55, 7.5], [20.3, 23.35], [23.35, 20.3]].forEach(function (l) { og.push({ d: l[0] + l[1], s: lampione(l[0], l[1]) }); });
     og.push({ d: 51.4, s: panchina(25.8, 25.6) });   // il parco accanto al Circolo
     og.push({ d: 55.6, s: tocco("pesca", laghetto(28.4, 28.4)) });   // il laghetto del parco: si pesca
+    og.push({ d: 63, s: tocco("scavi", scavi(29.6, 33.4)) });   // gli scavi antichi, fuori città: si scava
     og.push({ d: 23.2, s: auto(12.6, 9.55, "#fa5252") }, { d: 29, s: auto(12.4, 15.98, "#4dabf7") }, { d: 41.6, s: auto(18.9, 22.38, "#fcc419") });
     // (il cantiere dell'anteprima, gru, transenne e birilli, è finito: la città è aperta; le funzioni restano per i lavori futuri)
     // la gente: in piazza a leggere le novità, al bar, per strada
@@ -459,6 +482,7 @@
     etichetta(pb[0], pb[1] - 12, "☕ Bar", "#e03131", null, "bar");
     etichetta(150, 292, "📰 Novità", "#4c6ef5", null, "piazza");
     var pl = P(28.4, 28.4, 34); etichetta(pl[0], pl[1] - 6, "🎣 Laghetto", "#1c7ed6", null, "pesca");
+    var ps = P(29.6, 33.4, 36); etichetta(ps[0] + 8, ps[1] - 6, "🏺 Scavi", "#b5651d", null, "scavi");
     s += ET.join("");
     return io ? s + tu(145, 222) : s;
   }

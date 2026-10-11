@@ -247,6 +247,13 @@
       profilo.pesca = dati;
       return db.collection("profili").doc(utente.uid).update({ pesca: dati }).catch(function () {});
     },
+    // ---- gli scavi (js/scavi.js): museo, zaino, colpi e il campo del giorno in un campo del profilo ----
+    scavi: function () { return (profilo && profilo.scavi) || null; },
+    salvaScavi: function (dati) {
+      if (!auth || !utente || !profilo || !dati) return Promise.resolve();
+      profilo.scavi = dati;
+      return db.collection("profili").doc(utente.uid).update({ scavi: dati }).catch(function () {});
+    },
     salvaLista: function (nome, lista) {
       if (!auth || !utente || !profilo) return Promise.resolve();
       profilo.liste = profilo.liste || {}; profilo.liste[nome] = lista;

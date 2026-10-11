@@ -50,6 +50,7 @@ OUT=dist/index.html
   cat js/casa.js    # la casa: tre stanze da arredare
   echo ''
   cat js/pesca.js   # la pesca al laghetto
+  cat js/scavi.js   # gli scavi antichi
   echo ''
   cat js/core.js
   echo ''

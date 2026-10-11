@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 191,
+    data: "11 ottobre 2026",
+    titolo: "Gli scavi antichi 🏺⛏️",
+    descrizione: [
+      "Fuori città, oltre il laghetto, c'è un sito archeologico con le colonne, la tenda e la professoressa Ida. Toccalo in città per andarci.",
+      "Il campo è diviso coi picchetti e lo spago. Tocchi un quadrato e il tuo avatar ci va col badile e scava: se intorno non c'è niente compaiono le ❌, se c'è qualcosa vicino pianta la bandierina ✅. A volte un coccio sulla terra fa da indizio.",
+      "Quando trovi qualcosa lo devi tirare fuori: il piccone è veloce ma fa franare la terra e può crepare il reperto, il pennello è lento ma sicuro. Se frana, tieni solo quello che è già fuori.",
+      "16 reperti da trovare tra Preistoria, Antico Egitto, Antica Grecia e Antica Roma: dal chiodo arrugginito al teschio di dinosauro, fino alla leggendaria maschera d'oro del faraone. Più è raro, più è in fondo e fragile.",
+      "Il primo di ogni reperto va nel museo. Completa un'epoca e ricevi 2.000 Speed Coins. Gli altri li vendi o li tieni nello zaino.",
+      "6 colpi al giorno gratis, col campo nuovo ogni mattina. Se ne vuoi altri: 5 colpi per 500 monete."
+    ]
+  },
+  {
     v: 190,
     data: "11 ottobre 2026",
     titolo: "Capelli tutti nuovi 💇",
