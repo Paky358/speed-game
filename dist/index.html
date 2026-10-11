@@ -6759,7 +6759,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
   var catAttiva = "tutti";
   function catDi(g) { return CAT_GIOCO[g.id] || null; }
   // Giochi che hanno la modalità "ognuno dal suo telefono" (usabili nella Sala online).
-  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, poker: 1, ruota: 1, ordine: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1, calciobiliardo: 1 };
+  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, poker: 1, ruota: 1, ordine: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1, calciobiliardo: 1, pallamatta: 1 };
   function giocoOnline(g) { return !!(g && GIOCHI_ONLINE[g.id]); }
   var app;                    // contenitore radice (#app)
   var linkParams = {};        // impostazioni arrivate da un link condiviso
@@ -18891,6 +18891,19 @@ window.SG_NCC_CATEGORIE = {
      descrizione-> elenco di righe: cosa cambia per chi gioca
    ========================================================= */
 window.SG_NOVITA = [
+  {
+    v: 183,
+    data: "11 ottobre 2026",
+    titolo: "Palla Matta: la sfida con gli amici 🔴👥",
+    descrizione: [
+      "Nuova sfida da 2 a 4: online, ognuno dal suo telefono, oppure sullo stesso telefono passandovelo.",
+      "Stesso tavolo per tutti e un tiro a testa. I pezzi presi spariscono per tutti, ma i punti vanno a chi ha tirato. Chi prende l'ultimo arancione fa la Febbre Matta. Alla fine vince chi ha più punti.",
+      "Ognuno ha il suo aiutante: online lo scegli nella saletta, sullo stesso telefono prima del tuo primo tiro.",
+      "Online vedi dal vivo il cannone di chi sta mirando e ogni tiro esattamente uguale a lui. Chi non tira per 45 secondi tira da solo.",
+      "Chi apre la stanza sceglie il livello oppure lo fa uscire a caso, e si può rigiocare subito: le vittorie di ognuno restano segnate.",
+      "Il cannone non punta più dove tocchi: lo giri trascinando il dito da qualsiasi punto dello schermo, piano piano per i ritocchi e veloce per girarlo tanto."
+    ]
+  },
   {
     v: 182,
     data: "11 ottobre 2026",
@@ -32734,13 +32747,13 @@ window.SG_SIPERO = {
 
 /* =========================================================
    SPeeD GAME — PALLA MATTA (stile Peggle)
-   In alto c'è il cannone: trascini il dito per mirare (si vede la strada della pallina) e lasci per tirare.
+   In alto c'è il cannone: trascini il dito (dove vuoi) per girarlo, si vede la strada della pallina; un tocco veloce tira.
    La pallina scende rimbalzando sui pioli: quelli toccati si accendono e, quando la pallina esce, scoppiano.
    Devi far scoppiare tutti i pioli ARANCIONI con 10 palline. Il secchio in fondo, se ci entri, ti ridà la pallina.
    - pioli: blu 10 punti, arancioni 100, viola 500 (cambia posto a ogni tiro), verdi = il potere del tuo aiutante;
    - più arancioni hai preso, più vale ogni piolo (x2, x3, x5, x10);
    - l'ultimo arancione: rallentatore, poi la FEBBRE MATTA con i secchi da 10.000 a 50.000 punti.
-   Modi: da solo coi livelli (la sfida a turni con gli amici arriva dopo).
+   Modi: da solo coi livelli; sfida a turni da 2 a 4 sullo stesso telefono o online (ogni tiro lo calcola un telefono solo e tutti lo riguardano uguale).
    La fisica e i livelli stanno in funzioni senza disegno (in fondo: window.__PM per le prove).
    ========================================================= */
 (function () {
@@ -33015,13 +33028,13 @@ window.SG_SIPERO = {
   }
 
   // ---------- lo stato di una partita ----------
-  function nuovoStato(lv, potere, hh) {
-    var p = creaLivello(lv, true, hh);
-    var st = { lv: lv, H: hh || H, pioli: p, palline: PALLINE, punti: 0, fase: "mira", ang: PI / 2, palle: [], potere: potere || "bomba",
-      arTot: p.filter(function (q) { return q.tipo === "arancio"; }).length, arPresi: 0, viola: -1, t: 0, febbre: false, mira: 0,
-      colpo: null, secchiPresi: 0, verdiPresi: 0, colpoMax: 0, extra: 0, fuoco: 0 };
-    nuovoViola(st);
-    return st;
+  // gioc: chi gioca [{ nome, potere, … }] (da solo uno, nelle sfide da 2 a 4); pioli: il tavolo già fatto (online: quello dell'host)
+  function nuovoStato(lv, gioc, pioli) {
+    var p = pioli || creaLivello(lv, true);
+    gioc = gioc || [{ nome: "Tu" }];
+    gioc.forEach(function (g) { g.punti = 0; g.palline = PALLINE; g.mira = 0; g.fuoco = 0; g.verdi = 0; g.secchi = 0; g.colpoMax = 0; if (!POTERI[g.potere]) g.potere = "bomba"; });
+    return { lv: lv, H: H, pioli: p, gioc: gioc, turno: 0, seq: 0, fase: "mira", ang: PI / 2, t: 0, febbre: false, colpo: null,
+      arTot: p.filter(function (q) { return q.tipo === "arancio"; }).length, arPresi: 0 };
   }
   function nuovoViola(st) {   // a ogni tiro un piolo blu diventa viola (quello di prima torna blu)
     st.pioli.forEach(function (q) { if (q.tipo === "viola" && !q.acceso) q.tipo = "blu"; });
@@ -33179,36 +33192,127 @@ window.SG_SIPERO = {
   }
 
   // =========================================================
-  //  LA PARTITA (un livello): il tavolo a tutto schermo
+  //  IL TIRO CALCOLATO TUTTO PRIMA: fisica, punti ed eventi, come un filmato
+  //  Lo calcola un telefono solo (online: l'host) e poi tutti lo riguardano uguale.
+  //  rec = { a: angolo, t0: orologio del secchio, fuoco, dur: secondi, fr: fotogrammi (30 al secondo: [x,y]×10 per pallina, 0 = uscita), ev: eventi }
+  //  eventi: p = pezzo acceso (i, pts) · v = verde (i, pot) · x = pallina in più (n) · s = secchio · F = febbre · fb = secchio della febbre (slot, pts) · r = pezzo rotto (i)
   // =========================================================
-  function partita(t, lv, potere) {
+  var FPS_REC = 30, PASSI_FR = 8;
+  function simulaTiro(st, ang, g) {   // g: chi tira (il suo aiutante e la palla di fuoco carica)
+    var pioli = st.pioli.map(function (q) { return { x: q.x, y: q.y, m: q.m, len: q.len, tipo: q.tipo, acceso: q.acceso, via: q.via }; });
+    var S2 = { pioli: pioli, H: st.H, febbre: st.febbre, t: st.t }, ar = st.arPresi, punti = 0, extra = 0, tt = 0, ev = [], fr = [], pe = [];
+    var fuoco = (g.fuoco || 0) > 0;
+    var b0 = { x: CX + Math.cos(ang) * 6, y: CY + Math.sin(ang) * 6, vx: Math.cos(ang) * V0, vy: Math.sin(ang) * V0, fuoco: fuoco, nuovo: 0 };
+    b0.fermo = { x: b0.x, y: b0.y, t: 0 };
+    var palle = [b0], tutte = [b0];
+    function tempo() { return Math.round(tt * 1000) / 1000; }
+    function quanto() { var f = ar / Math.max(1, st.arTot), m = 1; MOLT.forEach(function (x) { if (f >= x[0]) m = x[1]; }); return m; }
+    function accendi(q, b) {
+      if (q.acceso || q.via) return;
+      q.acceso = true; if (b) b.nuovo = tt;
+      if (q.tipo === "arancio") ar++;
+      var pts = PUNTI[q.tipo] * quanto(); punti += pts;
+      ev.push({ t: tempo(), k: "p", i: pioli.indexOf(q), pts: pts });
+      if (q.tipo === "verde") verde(q, b);
+      while (extra < EXTRA.length && punti >= EXTRA[extra]) ev.push({ t: tempo(), k: "x", n: extra++ });
+      if (q.tipo === "arancio" && ar >= st.arTot && !S2.febbre) { S2.febbre = true; ev.push({ t: tempo(), k: "F" }); }
+    }
+    function verde(q, b) {   // il piolo verde: il potere dell'aiutante di chi tira
+      ev.push({ t: tempo(), k: "v", i: pioli.indexOf(q), pot: g.potere });
+      if (g.potere === "bomba") {
+        pioli.forEach(function (o) { if (!o.via && !o.acceso && Math.hypot(o.x - q.x, o.y - q.y) < 15) accendi(o, b); });
+        if (b) { var dx = b.x - q.x, dy = b.y - q.y, d = Math.hypot(dx, dy) || 1; b.vx += dx / d * 25; b.vy += dy / d * 25 - 10; }
+      } else if (g.potere === "multi" && b) {
+        var nb = { x: q.x, y: q.y - RP - RB - 0.2, vx: -b.vx * 0.8 + (Math.random() - 0.5) * 20, vy: -Math.abs(b.vy) * 0.6 - 15, fermo: { x: q.x, y: q.y, t: tt }, nuovo: tt };
+        palle.push(nb); tutte.push(nb);
+      }
+    }
+    function foto() { fr.push(tutte.map(function (b) { return b.esce ? 0 : [Math.round(b.x * 10), Math.round(b.y * 10)]; })); }
+    foto();
+    for (var passi = 1; palle.length && tt < 60; passi++) {
+      tt += DT; S2.t = st.t + tt;
+      for (var j = 0; j < palle.length; j++) passo(S2, palle[j], DT, pe);
+      for (j = 0; j < pe.length; j++) {
+        var e = pe[j];
+        if (e.t === "piolo") accendi(e.q, e.b);
+        else if (e.t === "rotto") { if (!e.q.via) { e.q.via = true; ev.push({ t: tempo(), k: "r", i: pioli.indexOf(e.q) }); } }
+        else if (e.t === "secchio") { e.b.esce = true; ev.push({ t: tempo(), k: "s" }); }
+        else if (e.t === "febbre") { if (!e.b.esce) { e.b.esce = true; punti += FEBBRE[e.slot]; ev.push({ t: tempo(), k: "fb", slot: e.slot, pts: FEBBRE[e.slot] }); } }
+        else if (e.t === "fuori") e.b.esce = true;
+      }
+      pe.length = 0;
+      palle.forEach(function (b) {   // la pallina incastrata (come in Peggle): ferma da 1,5 secondi, o da 4 secondi senza accendere niente, si rompono i pezzi accesi lì intorno
+        if (b.esce) return;
+        if (Math.hypot(b.x - b.fermo.x, b.y - b.fermo.y) > 3) b.fermo = { x: b.x, y: b.y, t: tt };
+        var ferma = tt - b.fermo.t > 1.5, gira = tt - b.nuovo > 4;
+        if (!ferma && !gira) return;
+        var vicini = pioli.filter(function (q) { return q.acceso && !q.via && Math.hypot(q.x - b.x, q.y - b.y) < (ferma ? 7 : 11); });
+        if (vicini.length) vicini.forEach(function (q) { q.via = true; ev.push({ t: tempo(), k: "r", i: pioli.indexOf(q) }); });
+        else if (ferma) { b.vx += (Math.random() - 0.5) * 30; b.vy -= 20; }
+        b.fermo = { x: b.x, y: b.y, t: tt }; b.nuovo = tt;
+      });
+      palle = palle.filter(function (b) { return !b.esce; });
+      if (passi % PASSI_FR === 0 || !palle.length) foto();
+    }
+    return { a: ang, t0: st.t, fuoco: fuoco, dur: tempo(), fr: fr, ev: ev };
+  }
+  function prossimo(st) {   // a chi tocca: il prossimo che ha ancora palline (e non è uscito)
+    var n = st.gioc.length;
+    for (var k = 1; k <= n; k++) { var i = (st.turno + k) % n, p = st.gioc[i]; if (!p.via && p.palline > 0) { st.turno = i; return true; } }
+    return false;
+  }
+  function classifica(gioc) {   // dal primo all'ultimo; pari punti = stesso posto
+    var ord = gioc.slice().sort(function (a, b) { return b.punti - a.punti; });
+    return ord.map(function (g) { return { g: g, pos: 1 + ord.filter(function (x) { return x.punti > g.punti; }).length }; });
+  }
+  function livelloCaso(evita) { var i; do { i = Math.floor(Math.random() * LIVELLI.length); } while (i === evita && LIVELLI.length > 1); return i; }
+  function scegliLivello(sc, ultimo) { return sc == null || sc === "caso" || !LIVELLI[sc] ? livelloCaso(ultimo) : +sc; }
+  function nomeLivello(lv) { var L = LIVELLI[lv]; return L ? CAPITOLI[L.cap].icona + " " + L.nome : "🎲 a caso"; }
+  function nomeIo(t) { return (t.nomeProfilo && t.nomeProfilo()) || (t.giocatori && t.giocatori[0]) || "Tu"; }
+  function poterePreferito() { var p = progressi(); return POTERI[p.potere] ? p.potere : "bomba"; }
+  function salvaPotere(k) { var p = progressi(); p.potere = k; salvaProgressi(p); }
+  function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  var SIGLA = { blu: "b", arancio: "a", verde: "g", viola: "v" }, TIPO = { b: "blu", a: "arancio", g: "verde", v: "viola" };
+
+  // =========================================================
+  //  IL TAVOLO: lo schermo di gioco, uguale da solo, sullo stesso telefono e online.
+  //  Disegna, fa mirare chi deve tirare e riguarda i tiri calcolati con simulaTiro.
+  //  cfg: { st, mio() = adesso posso mirare e tirare?, onTiro(ang), onMira(ang), onEsci(), multi, sonoIo(g), faccia(g) = avatar }
+  // =========================================================
+  function tavolo(t, cfg) {
     stile();
-    var el = t.el, s = t.schermata({}); s.classList.add("pm-piena");
-    var st = nuovoStato(lv, potere), io = (t.nomeProfilo && t.nomeProfilo()) || (t.giocatori && t.giocatori[0]) || "Tu";
-    var ui = { mira: null, zoom: 1, zx: CX, zy: 70, lento: 1, salto: 0, fx: [], scritte: [], coriandoli: [], pulizia: null, lento0: false, dito: false, tAvviso: 0 };
-    var faccia = null;   // il tuo avatar (busto) per il disegno accanto al cannone
-    try { var cfgF = t.mioOmino ? t.mioOmino(io) : null; if (cfgF && window.SGOmino) { faccia = new Image(); faccia.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGOmino.svg(cfgF, { busto: true })); } } catch (e) {}
-    var scena = el("div", { class: "pm-scena" }), cv = el("canvas", { class: "pm-tavolo" }), ctx = cv.getContext("2d");
-    // in alto: esci, suoni, punti, palline; sotto la barra degli arancioni col moltiplicatore
-    var bEsci = el("button", { class: "pm-tasto", text: "‹", "aria-label": "Esci", onclick: function () { esci(); } });
+    var st = cfg.st, el = t.el, s = t.schermata({}); s.classList.add("pm-piena");
+    function G() { return st.gioc[st.turno] || st.gioc[0]; }
+    var ui = { zoom: 1, zx: CX, zy: 70, lento: 1, tLento: 0, salto: 0, fx: [], scritte: [], pulizia: null, dito: null, rec: null, rt: 0, ei: 0, vis: [], poi: null, angVuole: null, fT: null, lentoFatto: false };
+    var facce = {};   // l'avatar (busto) di chi tira, pronto come immagine
+    function faccia(g) {
+      if (!g) return null; var k = g.id || g.nome; if (k in facce) return facce[k];
+      facce[k] = null;
+      try { var cf = cfg.faccia ? cfg.faccia(g) : null; if (cf && window.SGOmino) { var im = new Image(); im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGOmino.svg(cf, { busto: true })); facce[k] = im; } } catch (e) {}
+      return facce[k];
+    }
+    var scena = el("div", { class: "pm-scena" + (cfg.multi ? " pm-multi" : "") }), cv = el("canvas", { class: "pm-tavolo" }), ctx = cv.getContext("2d");
+    // in alto: esci, suoni, punti (o di chi è il turno), palline; sotto la barra degli arancioni col moltiplicatore
+    var bEsci = el("button", { class: "pm-tasto", text: "‹", "aria-label": "Esci", onclick: function () { cfg.onEsci(); } });
     var bAudio = el("button", { class: "pm-tasto", text: suoniOn() ? "🔊" : "🔇", onclick: function () { var on = !suoniOn(); try { localStorage.setItem(CHIAVE_SUONI, on ? "1" : "0"); } catch (e) {} bAudio.textContent = on ? "🔊" : "🔇"; } });
-    var hPunti = el("div", { class: "pm-punti", text: "0" }), hPalle = el("div", { class: "pm-palle" }), hPot = el("div", { class: "pm-pot", text: POTERI[st.potere].icona });
+    var hPunti = el("div", { class: "pm-punti" + (cfg.multi ? " nome" : ""), text: "0" }), hPalle = el("div", { class: "pm-palle" }), hPot = el("div", { class: "pm-pot" });
     var barra = el("div", { class: "pm-barra" }), fill = el("i", { class: "pm-fill" }), hAr = el("span", { class: "pm-ar" }), hMolt = el("span", { class: "pm-molt", text: "x1" });
     barra.appendChild(fill); [0.4, 0.6, 0.76, 0.88].forEach(function (f, i) { var tk = el("i", { class: "pm-tacca", text: ["x2", "x3", "x5", "x10"][i] }); tk.style.left = (f * 100) + "%"; barra.appendChild(tk); });
     var testa = el("div", { class: "pm-testa" }, [bEsci, bAudio, el("div", { class: "pm-centro" }, [hPunti, el("div", { class: "pm-riga" }, [hAr, barra, hMolt])]), hPot, hPalle]);
+    var gioc = cfg.multi ? el("div", { class: "pm-gioc" }) : null, chip = [];   // in più giocatori: i punti di tutti
     var avviso = el("div", { class: "pm-avviso" }), sopra = el("div", { class: "pm-sopra" });
-    [cv, testa, avviso, sopra].forEach(function (n) { scena.appendChild(n); });
+    [cv, testa, gioc, avviso, sopra].forEach(function (n) { if (n) scena.appendChild(n); });
     s._contenuto.appendChild(scena);
     t.mostra(s);
     function vivo() { return document.body.contains(cv); }
 
-    // ---- misure: il tavolo più grande possibile sotto la testa ----
+    // ---- misure: il tavolo più grande possibile sotto la testa (uguale su tutti i telefoni, cambia solo la grandezza) ----
     var S = 3, ox = 0, oy = 0, cw = 360, ch = 640, dpr = 1, sprite = {}, sfondo = null;
     function misura() {
       if (!vivo()) { window.removeEventListener("resize", misura); return; }
       cw = scena.clientWidth || 360; ch = scena.clientHeight || 640; dpr = Math.min(2, window.devicePixelRatio || 1);
       cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
-      var top = testa.offsetHeight + 6;
+      var top = gioc ? gioc.offsetTop + gioc.offsetHeight + 4 : testa.offsetHeight + 6;
       S = Math.min((cw - 8) / W, (ch - top - 6) / st.H); ox = (cw - S * W) / 2; oy = top + (ch - top - 6 - S * st.H) / 2;
       sprite = {}; sfondo = null;
     }
@@ -33229,7 +33333,7 @@ window.SG_SIPERO = {
       sprite[k] = c; return c;
     }
     function disegnaSfondo() {   // lo sfondo del capitolo (spazio, natura, mare), disegnato una volta sola
-      var c = document.createElement("canvas"); c.width = cv.width; c.height = cv.height; var x = c.getContext("2d"), tema = CAPITOLI[LIVELLI[lv].cap].sfondo, i, r2, g;
+      var c = document.createElement("canvas"); c.width = cv.width; c.height = cv.height; var x = c.getContext("2d"), tema = CAPITOLI[LIVELLI[st.lv].cap].sfondo, i, r2, g;
       x.scale(dpr, dpr);
       function tondo(cx, cy, r, col) { x.beginPath(); x.arc(cx, cy, r, 0, PI * 2); x.fillStyle = col; x.fill(); }
       function alone(cx, cy, r, col) { var a = x.createRadialGradient(cx, cy, 0, cx, cy, r); a.addColorStop(0, col); a.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = a; x.fillRect(cx - r, cy - r, r * 2, r * 2); }
@@ -33278,87 +33382,91 @@ window.SG_SIPERO = {
     }
     function arrot(x, a, b, w, h, r) { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
 
-    // ---- il dito: trascina per mirare, lascia per tirare ----
-    function alTavolo(e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - ox) / S, y: (e.clientY - r.top - oy) / S }; }
-    function mira(e) {
-      var p = alTavolo(e), a = Math.atan2(p.y - CY, p.x - CX);
-      if (p.y < CY + 1) a = p.x < CX ? PI - 0.06 : 0.06;
-      st.ang = Math.max(0.06, Math.min(PI - 0.06, a));
+    // ---- il dito: il cannone si gira trascinando, da qualsiasi punto dello schermo ----
+    // non punta dove tocchi: resta dov'è e lo sposti col dito (a destra = gira a destra).
+    // Piano piano per i ritocchi fini, veloce per girarlo tanto.
+    function mira(e, d) {
+      var ora = performance.now(), dx = e.clientX - d.lx, v = Math.abs(dx) / Math.max(8, ora - d.lt);   // quanto è veloce il dito (pixel al millesimo)
+      var spinta = 1 + Math.min(2.5, Math.max(0, v - 0.15) * 4);
+      st.ang = Math.max(0.06, Math.min(PI - 0.06, st.ang - dx * 0.0035 * spinta));
+      d.lx = e.clientX; d.lt = ora;
+      if (cfg.onMira) cfg.onMira(st.ang);
     }
-    // il dito: tenendo premuto (o trascinando) si mira e lasciando la pallina NON parte;
+    // tenendo premuto (o trascinando) si mira e lasciando la pallina NON parte;
     // un tocco veloce, senza muovere il dito, fa partire la pallina dove avevi mirato
     cv.addEventListener("pointerdown", function (e) {
-      if (st.fase !== "mira") return;
+      if (!cfg.mio()) return;
       e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (er) {}
       try { if (window.SG && SG.audioCtx) SG.audioCtx(); } catch (er2) {}
       clearTimeout(ui.tTieni);
-      ui.dito = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), mira: false };
-      var d0 = ui.dito; ui.tTieni = setTimeout(function () { if (ui.dito === d0 && st.fase === "mira") { d0.mira = true; mira(e); } }, 200);   // tenuto premuto: si mira lì
+      ui.dito = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), mira: false, lx: e.clientX, lt: performance.now() };
+      var d0 = ui.dito; ui.tTieni = setTimeout(function () { if (ui.dito === d0 && cfg.mio()) d0.mira = true; }, 200);   // tenuto premuto: si mira, lasciando non tira
     });
     cv.addEventListener("pointermove", function (e) {
-      var d = ui.dito; if (!d || d.id !== e.pointerId || st.fase !== "mira") return;
-      if (!d.mira && Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) > 7) d.mira = true;
-      if (d.mira) mira(e);
+      var d = ui.dito; if (!d || d.id !== e.pointerId || !cfg.mio()) return;
+      if (!d.mira && Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) > 7) { d.mira = true; d.lx = e.clientX; d.lt = performance.now(); }   // (si parte da qui: niente scatto)
+      if (d.mira) mira(e, d); else { d.lx = e.clientX; d.lt = performance.now(); }
     });
     function lascia(e) {
       var d = ui.dito; if (!d || d.id !== e.pointerId) return; ui.dito = null; clearTimeout(ui.tTieni);
-      if (e.type === "pointerup" && st.fase === "mira" && !d.mira && performance.now() - d.t < 260) tira();   // il tocco veloce: tira
+      if (e.type === "pointerup" && !d.mira && performance.now() - d.t < 260) spara();   // il tocco veloce: tira
     }
     cv.addEventListener("pointerup", lascia); cv.addEventListener("pointercancel", lascia);
+    function spara() { if (!cfg.mio() || G().palline <= 0) return; st.fase = "attesa"; cfg.onTiro(st.ang); }
 
-    function tira() {
-      if (st.palline <= 0) return;
-      st.palline--; st.fase = "volo";
-      st.colpo = { punti: 0, colpiti: [], nota: 0, extra: 0, verde: false, t0: st.t };
-      var b = { x: CX + Math.cos(st.ang) * 6, y: CY + Math.sin(st.ang) * 6, vx: Math.cos(st.ang) * V0, vy: Math.sin(st.ang) * V0, scia: [], fermo: { x: CX, y: CY, t: 0 }, nuovo: st.t };
-      st.palle = [b];
-      if (st.mira > 0) st.mira--;
-      if (st.fuoco > 0) { st.fuoco--; b.fuoco = Infinity; dimmi("🔥 Palla di fuoco!"); }   // il potere caricato: tutto il tiro attraverso i pioli
-      suonoTiro(); vibra(10); aggTesta();
+    // ---- il tiro, riguardato come un filmato (rec di simulaTiro): le palline si muovono, i pezzi si accendono al momento giusto ----
+    function riproduci(rec, poi) {
+      var g = G();
+      g.palline--; if (g.mira > 0) g.mira--;
+      if (rec.fuoco) { g.fuoco = Math.max(0, (g.fuoco || 0) - 1); dimmi("🔥 Palla di fuoco!"); }   // il potere caricato: tutto il tiro attraverso i pioli
+      st.fase = "volo"; st.ang = rec.a; st.t = rec.t0; st.colpo = { punti: 0, colpiti: [], nota: 0 };
+      ui.rec = rec; ui.rt = 0; ui.ei = 0; ui.vis = []; ui.poi = poi; ui.angVuole = null; ui.lentoFatto = false; ui.fT = null;
+      for (var i = 0; i < rec.ev.length; i++) if (rec.ev[i].k === "F") { ui.fT = rec.ev[i].t; break; }
+      suonoTiro(); if (!cfg.sonoIo || cfg.sonoIo(g)) vibra(10); aggTesta();
     }
-
-    // ---- un evento della fisica: piolo, secchio, febbre, uscita ----
-    function evento(e) {
-      if (e.t === "piolo") {
-        var q = e.q; if (q.acceso) return;
-        q.acceso = true; st.colpo.colpiti.push(q); if (e.b) e.b.nuovo = st.t;
-        if (q.tipo === "arancio") { st.arPresi++; }
-        var pts = PUNTI[q.tipo] * molt(st); st.colpo.punti += pts; st.punti += pts;
-        scritta(q.x, q.y - 3, "+" + cifre(pts), q.tipo);
-        suonoPiolo(st.colpo.nota++, q.tipo);
-        if (q.tipo === "verde") attivaPotere(q, e.b);
-        controllaExtra();
-        if (q.tipo === "arancio" && st.arPresi >= st.arTot && !st.febbre) febbre(e.b);
-        aggTesta();
-      } else if (e.t === "secchio") {
-        st.palline++; st.secchiPresi++; suonoSecchio(); ui.salto = 1.2; vibra([20, 30, 20]); dimmi("Pallina gratis! 🪣"); aggTesta();
-        e.b.esce = true;
-      } else if (e.t === "febbre") {
-        var v = FEBBRE[e.slot]; st.punti += v; st.colpo.punti += v; scritta(e.slot * 20 + 10, st.H - 10, "+" + cifre(v), "febbre"); e.b.esce = true;
-        [0, 4, 7, 12, 16].forEach(function (k, i) { tono(523 * Math.pow(2, k / 12), i * 0.06, 0.25, "triangle", 0.09); });
-        fuochi(e.slot * 20 + 10, st.H - 15, 40); aggTesta();
-      } else if (e.t === "rotto") { if (!e.q.via) { e.q.via = true; scintille(e.q.x, e.q.y, COL[e.q.tipo][0], 8); suonoScoppio(6); } }
-      else if (e.t === "fuori") e.b.esce = true;
+    function applica(e, muto) {   // un evento del tiro: cambia lo stato (punti, palline, pezzi) e fa vedere e sentire
+      var g = G(), q = e.i != null ? st.pioli[e.i] : null;
+      if (e.k === "p") {
+        if (!q || q.acceso) return;
+        q.acceso = true; st.colpo.colpiti.push(q);
+        if (q.tipo === "arancio") st.arPresi++;
+        g.punti += e.pts; st.colpo.punti += e.pts;
+        scritta(q.x, q.y - 3, "+" + cifre(e.pts), q.tipo); if (!muto) suonoPiolo(st.colpo.nota++, q.tipo);
+      } else if (e.k === "v") {
+        g.verdi = (g.verdi || 0) + 1; if (!muto) suonoPotere();
+        var P = POTERI[e.pot] || POTERI.bomba; dimmi(P.icona + " " + P.nome + (e.pot === "fuoco" ? ": pronta per il prossimo tiro!" : e.pot === "mira" ? " per i prossimi 3 tiri!" : "!"));
+        if (e.pot === "bomba") { if (!muto) suonoBomba(); if (q) ui.fx.push({ t: "onda", x: q.x, y: q.y, r: 0, vita: 0.5 }); }
+        else if (e.pot === "mira") g.mira = (g.mira || 0) + 3;
+        else if (e.pot === "fuoco") g.fuoco = (g.fuoco || 0) + 1;   // come in Peggle: la palla di fuoco parte al tiro dopo
+      } else if (e.k === "x") {
+        g.palline++; dimmi("Pallina in più! " + cifre(EXTRA[e.n] || 0) + " punti in un tiro 🎉"); if (!muto) suonoSecchio();
+      } else if (e.k === "s") {
+        g.palline++; g.secchi = (g.secchi || 0) + 1; ui.salto = 1.2; dimmi("Pallina gratis! 🪣"); if (!muto) { suonoSecchio(); vibra([20, 30, 20]); }
+      } else if (e.k === "F") {   // l'ultimo arancione!
+        st.febbre = true;
+        if (!muto) { rullo(0.9); vibra([40, 40, 80]); setTimeout(function () { if (!vivo()) return; innoGioia(); dimmi("FEBBRE MATTA! 🎉"); fuochi(50, 70, 60); }, 950); }
+      } else if (e.k === "fb") {
+        g.punti += e.pts; st.colpo.punti += e.pts; scritta(e.slot * 20 + 10, st.H - 10, "+" + cifre(e.pts), "febbre");
+        if (!muto) [0, 4, 7, 12, 16].forEach(function (k, i) { tono(523 * Math.pow(2, k / 12), i * 0.06, 0.25, "triangle", 0.09); });
+        fuochi(e.slot * 20 + 10, st.H - 15, 40);
+      } else if (e.k === "r") {
+        if (q && !q.via) { q.via = true; scintille(q.x, q.y, COL[q.tipo][0], 8); if (!muto) suonoScoppio(6); }
+      }
+      aggTesta();
     }
-    function controllaExtra() {   // tanti punti in un tiro: una pallina in più
-      while (st.colpo.extra < EXTRA.length && st.colpo.punti >= EXTRA[st.colpo.extra]) { st.colpo.extra++; st.palline++; dimmi("Pallina in più! " + cifre(EXTRA[st.colpo.extra - 1]) + " punti in un tiro 🎉"); suonoSecchio(); }
+    function posiziona(R, rt) {   // le palline tra due fotogrammi
+      var f = rt * FPS_REC, i0 = Math.max(0, Math.min(R.fr.length - 1, Math.floor(f))), i1 = Math.min(R.fr.length - 1, i0 + 1), k = Math.max(0, Math.min(1, f - i0));
+      var a = R.fr[i0], b = R.fr[i1], n = Math.max(a.length, b.length);
+      for (var j = 0; j < n; j++) {
+        var p = a[j], q = b[j] || p, v = ui.vis[j] || (ui.vis[j] = { x: 0, y: 0, scia: [], on: false, fuoco: R.fuoco && j === 0 });
+        if (!p) { v.on = false; continue; }
+        v.on = true; v.x = (p[0] + (q[0] - p[0]) * k) / 10; v.y = (p[1] + (q[1] - p[1]) * k) / 10;
+        v.scia.push([v.x, v.y]); if (v.scia.length > 14) v.scia.shift();
+      }
     }
-    function attivaPotere(q, b) {   // il piolo verde: il potere dell'aiutante
-      st.verdiPresi++; suonoPotere(); vibra(25);
-      var P = POTERI[st.potere]; dimmi(P.icona + " " + P.nome + (st.potere === "fuoco" ? ": pronta per il prossimo tiro!" : st.potere === "mira" ? " per i prossimi 3 tiri!" : "!"));
-      if (st.potere === "bomba") {
-        suonoBomba(); ui.fx.push({ t: "onda", x: q.x, y: q.y, r: 0, vita: 0.5 });
-        st.pioli.forEach(function (o) { if (!o.via && !o.acceso && Math.hypot(o.x - q.x, o.y - q.y) < 15) evento({ t: "piolo", q: o, b: b }); });
-        var dx = b.x - q.x, dy = b.y - q.y, d = Math.hypot(dx, dy) || 1; b.vx += dx / d * 25; b.vy += dy / d * 25 - 10;
-      } else if (st.potere === "multi") {
-        st.palle.push({ x: q.x, y: q.y - RP - RB - 0.2, vx: -b.vx * 0.8 + (Math.random() - 0.5) * 20, vy: -Math.abs(b.vy) * 0.6 - 15, scia: [], fermo: { x: q.x, y: q.y, t: st.t }, nuovo: st.t });
-      } else if (st.potere === "mira") { st.mira += 3; }
-      else if (st.potere === "fuoco") { st.fuoco = (st.fuoco || 0) + 1; }   // come in Peggle: la palla di fuoco parte al tiro dopo
-    }
-    function febbre(b) {   // l'ultimo arancione!
-      st.febbre = true; ui.lento = 0.22; ui.tLento = 1.1; ui.zoomA = { x: b.x, y: b.y };
-      rullo(0.9); vibra([40, 40, 80]);
-      setTimeout(function () { if (!vivo()) return; innoGioia(); dimmi("FEBBRE MATTA! 🎉"); fuochi(50, 70, 60); }, 950);
+    function salta() {   // finisce subito il tiro (online, se si è rimasti indietro)
+      if (st.fase === "volo" && ui.rec) { var R = ui.rec; while (ui.ei < R.ev.length) applica(R.ev[ui.ei++], true); ui.rec = null; ui.vis = []; ui.lento = 1; ui.tLento = 0; finisceTiro(); }
+      if (st.fase === "pulizia" && ui.pulizia) { ui.pulizia.lista.forEach(function (q) { q.via = true; }); ui.pulizia.lista = []; dopoPulizia(); }
     }
 
     // ---- le scritte che salgono, gli scoppi e i coriandoli ----
@@ -33367,18 +33475,27 @@ window.SG_SIPERO = {
     function fuochi(x, y, n) { var cols = ["#ffd43b", "#ff6b6b", "#74c0fc", "#b197fc", "#8ce99a", "#ffa94d"]; for (var i = 0; i < n; i++) { var a = Math.random() * PI * 2, v = 15 + Math.random() * 35; ui.fx.push({ t: "sc", x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 10, col: cols[i % cols.length], vita: 0.9 + Math.random() * 0.6 }); } }
     function dimmi(txt) { avviso.textContent = txt; avviso.classList.remove("su"); void avviso.offsetWidth; avviso.classList.add("su"); }
 
-    // ---- la testa: punti, palline, arancioni, moltiplicatore ----
+    // ---- la testa: punti (o di chi è il turno), palline, arancioni, moltiplicatore; in più giocatori i punti di tutti ----
     function aggTesta() {
-      hPunti.textContent = cifre(st.punti);
-      hPalle.textContent = "⚪ " + st.palline;
+      var g = G();
+      hPunti.textContent = cfg.multi ? "🎯 " + (cfg.sonoIo && cfg.sonoIo(g) ? "Tocca a te" : g.nome) : cifre(g.punti);
+      hPalle.textContent = "⚪ " + g.palline;
       var rim = st.arTot - st.arPresi; hAr.textContent = "🟠 " + rim;
       fill.style.transform = "scaleX(" + (st.arPresi / Math.max(1, st.arTot)).toFixed(3) + ")";
       var m = molt(st); if (hMolt.textContent !== "x" + m) { hMolt.textContent = "x" + m; hMolt.classList.remove("su"); void hMolt.offsetWidth; hMolt.classList.add("su"); }
-      hPot.textContent = POTERI[st.potere].icona + (st.mira > 0 ? " " + st.mira : "") + (st.fuoco > 0 ? " " + st.fuoco : "");   // quanti tiri col potere carico
+      hPot.textContent = (POTERI[g.potere] || POTERI.bomba).icona + (g.mira > 0 ? " " + g.mira : "") + (g.fuoco > 0 ? " " + g.fuoco : "");   // quanti tiri col potere carico
+      if (gioc) st.gioc.forEach(function (p, i) {
+        var c = chip[i];
+        if (!c) { c = chip[i] = { box: el("div", { class: "pm-chip" }), n: el("b"), p: el("span") }; c.box.appendChild(c.n); c.box.appendChild(c.p); gioc.appendChild(c.box); }
+        var nome = cfg.sonoIo && cfg.sonoIo(p) ? "Tu" : p.nome, txt = cifre(p.punti) + " · ⚪" + p.palline;
+        if (c.n.textContent !== nome) c.n.textContent = nome;
+        if (c.p.textContent !== txt) c.p.textContent = txt;
+        c.box.classList.toggle("turno", i === st.turno); c.box.classList.toggle("via", !!p.via);
+      });
     }
 
-    // ---- il giro: fisica a passi fissi, poi il disegno ----
-    var ult = performance.now(), anim = 0, acc = 0;
+    // ---- il giro: il filmato del tiro (o la mira degli altri), poi il disegno ----
+    var ult = performance.now(), anim = 0;
     function giro(ora) {
       if (!vivo()) return;
       var dt = Math.min(0.05, (ora - ult) / 1000); ult = ora;
@@ -33386,35 +33503,20 @@ window.SG_SIPERO = {
       anim = requestAnimationFrame(giro);
     }
     function aggiorna(dt) {
-      // il rallentatore della febbre: poi torna normale
+      // il rallentatore della febbre: parte un attimo prima dell'ultimo arancione, poi torna normale
       if (ui.tLento > 0) { ui.tLento -= dt; if (ui.tLento <= 0) ui.lento = 1; }
       var dts = dt * (ui.lento || 1);
-      st.t += dts;
-      if (st.fase === "volo") {
-        acc += dts; var ev = [];
-        while (acc >= DT) {
-          acc -= DT;
-          st.palle.forEach(function (b) {
-            if (b.esce) return;
-            if (b.fuoco && st.t > b.fuoco) b.fuoco = 0;
-            passo(st, b, DT, ev);
-          });
-          ev.forEach(evento); ev.length = 0;
-        }
-        st.palle.forEach(function (b) {
-          b.scia.push([b.x, b.y]); if (b.scia.length > 14) b.scia.shift();
-          // la pallina incastrata (come in Peggle): ferma da 1,5 secondi, o da 4 secondi senza accendere niente di nuovo, si rompono i pezzi accesi lì intorno
-          if (Math.hypot(b.x - b.fermo.x, b.y - b.fermo.y) > 3) b.fermo = { x: b.x, y: b.y, t: st.t };
-          var ferma = st.t - b.fermo.t > 1.5, gira = st.t - (b.nuovo || 0) > 4;
-          if (ferma || gira) {
-            var vicini = st.pioli.filter(function (q) { return q.acceso && !q.via && Math.hypot(q.x - b.x, q.y - b.y) < (ferma ? 7 : 11); });
-            if (vicini.length) { vicini.forEach(function (q) { q.via = true; scintille(q.x, q.y, COL[q.tipo][0], 6); }); suonoScoppio(5); } else if (ferma) { b.vx += (Math.random() - 0.5) * 30; b.vy -= 20; }
-            b.fermo = { x: b.x, y: b.y, t: st.t }; b.nuovo = st.t;
-          }
-        });
-        st.palle = st.palle.filter(function (b) { return !b.esce; });
-        if (!st.palle.length) finisceTiro();
-      }
+      if (st.fase === "volo" && ui.rec) {
+        var R = ui.rec;
+        if (ui.fT != null && !ui.lentoFatto && ui.rt >= ui.fT - 0.35) { ui.lentoFatto = true; ui.lento = 0.22; ui.tLento = 2.7; dts = dt * 0.22; }
+        ui.rt += dts;
+        while (ui.ei < R.ev.length && R.ev[ui.ei].t <= ui.rt) applica(R.ev[ui.ei++]);
+        st.t = R.t0 + Math.min(ui.rt, R.dur);
+        posiziona(R, ui.rt);
+        if (ui.rt >= R.dur) { while (ui.ei < R.ev.length) applica(R.ev[ui.ei++]); ui.rec = null; ui.vis = []; finisceTiro(); }
+      } else st.t += dts;
+      // la mira di chi tira dall'altro telefono: il cannone lo segue morbido
+      if (ui.angVuole != null && !cfg.mio()) st.ang += (ui.angVuole - st.ang) * Math.min(1, dt * 12);
       if (st.fase === "pulizia") {   // i pioli accesi scoppiano uno dopo l'altro
         ui.pulizia.t -= dt;
         while (ui.pulizia.t <= 0 && ui.pulizia.lista.length) {
@@ -33430,21 +33532,20 @@ window.SG_SIPERO = {
       ui.scritte.forEach(function (w) { w.vita -= dt * 0.8; w.y -= dt * 8; });
       ui.scritte = ui.scritte.filter(function (w) { return w.vita > 0; });
       // la telecamera: si avvicina alla pallina nel rallentatore della febbre
-      var vuoleZoom = ui.lento < 1 && st.palle[0];
+      var vb = ui.vis.filter(function (b) { return b.on; })[0], vuoleZoom = ui.lento < 1 && vb;
       var zt = vuoleZoom ? 1.7 : 1; ui.zoom += (zt - ui.zoom) * Math.min(1, dt * 5);
-      if (vuoleZoom) { ui.zx += (st.palle[0].x - ui.zx) * Math.min(1, dt * 6); ui.zy += (st.palle[0].y - ui.zy) * Math.min(1, dt * 6); }
+      if (vuoleZoom) { ui.zx += (vb.x - ui.zx) * Math.min(1, dt * 6); ui.zy += (vb.y - ui.zy) * Math.min(1, dt * 6); }
     }
     function finisceTiro() {
-      st.fase = "pulizia"; st.colpoMax = Math.max(st.colpoMax, st.colpo.punti);
+      var g = G(); st.fase = "pulizia"; g.colpoMax = Math.max(g.colpoMax || 0, st.colpo.punti);
       var lista = st.colpo.colpiti.filter(function (q) { return !q.via; });
       if (st.febbre) lista = st.pioli.filter(function (q) { return q.acceso && !q.via; });
       ui.pulizia = { lista: lista, t: 0.15, k: 0 };
       if (st.colpo.punti > 0 && !st.febbre) scritta(50, st.H - 18, "Tiro: " + cifre(st.colpo.punti), "tiro");
     }
     function dopoPulizia() {
-      if (st.febbre) return vinto();
-      if (st.palline <= 0) return perso();
-      st.fase = "mira"; nuovoViola(st); aggTesta();
+      st.fase = "attesa"; ui.pulizia = null; aggTesta();
+      var poi = ui.poi; ui.poi = null; if (poi) poi();
     }
 
     // ---- il disegno ----
@@ -33484,31 +33585,34 @@ window.SG_SIPERO = {
         ctx.lineWidth = 2; ctx.strokeStyle = "#7a3e00"; ctx.stroke();
         ctx.fillStyle = "#fff3bf"; ctx.fillRect(bx, by - 1.5, sw, 3);
       }
-      // la strada per mirare
+      // la strada per mirare (si vede anche quella di chi tira dall'altro telefono)
+      var g = G();
       if (st.fase === "mira") {
-        var pts = strada(st, st.ang, st.mira > 0, st.fuoco > 0);
-        ctx.fillStyle = st.fuoco > 0 ? "rgba(255,146,43,.95)" : st.mira > 0 ? "rgba(140,233,154,.9)" : "rgba(255,255,255,.75)";
+        var pts = strada(st, st.ang, g.mira > 0, g.fuoco > 0);
+        ctx.fillStyle = g.fuoco > 0 ? "rgba(255,146,43,.95)" : g.mira > 0 ? "rgba(140,233,154,.9)" : "rgba(255,255,255,.75)";
         pts.forEach(function (p2, i) { if (i % 2) return; ctx.beginPath(); ctx.arc(ox + p2[0] * S, oy + p2[1] * S, Math.max(1.2, 0.45 * S * (1 - i / pts.length * 0.5)), 0, PI * 2); ctx.fill(); });
       }
       // le palline con la scia
-      st.palle.forEach(function (b) {
+      ui.vis.forEach(function (b) {
+        if (!b.on) return;
         b.scia.forEach(function (p3, i) { ctx.globalAlpha = (i / b.scia.length) * 0.35; ctx.fillStyle = b.fuoco ? "#ff922b" : "#e9ecef"; ctx.beginPath(); ctx.arc(ox + p3[0] * S, oy + p3[1] * S, RB * S * (0.4 + i / b.scia.length * 0.5), 0, PI * 2); ctx.fill(); });
         ctx.globalAlpha = 1;
         var gx = ox + b.x * S, gy2 = oy + b.y * S, gp = ctx.createRadialGradient(gx - RB * S * 0.4, gy2 - RB * S * 0.4, 1, gx, gy2, RB * S);
         gp.addColorStop(0, "#ffffff"); gp.addColorStop(1, b.fuoco ? "#ff6b00" : "#adb5bd");
         ctx.fillStyle = gp; ctx.beginPath(); ctx.arc(gx, gy2, RB * S, 0, PI * 2); ctx.fill();
       });
-      // il tuo avatar accanto al cannone: salta col secchio e nella febbre
-      if (faccia && faccia.complete && faccia.naturalWidth) {
+      // l'avatar di chi tira accanto al cannone: salta col secchio e nella febbre
+      var fa = faccia(g);
+      if (fa && fa.complete && fa.naturalWidth) {
         var fz = 11 * S, sal = (st.febbre || ui.salto > 0) ? Math.abs(Math.sin(st.t * 9)) * 2.2 * S : 0;
-        ctx.drawImage(faccia, ox + (CX - 15) * S - fz / 2, oy + 0.6 * S - sal, fz, fz * 1.02);
+        ctx.drawImage(fa, ox + (CX - 15) * S - fz / 2, oy + 0.6 * S - sal, fz, fz * 1.02);
       }
       // il cannone
       var cx2 = ox + CX * S, cy2 = oy + CY * S;
       ctx.save(); ctx.translate(cx2, cy2); ctx.rotate(st.ang - PI / 2);
       var gc = ctx.createLinearGradient(-2 * S, 0, 2 * S, 0); gc.addColorStop(0, "#495057"); gc.addColorStop(0.5, "#ced4da"); gc.addColorStop(1, "#343a40");
       ctx.fillStyle = gc; arrot(ctx, -2.1 * S, -1 * S, 4.2 * S, 8.5 * S, 1.5 * S); ctx.fill(); ctx.strokeStyle = "#212529"; ctx.lineWidth = 1.5; ctx.stroke();
-      if (st.fase === "mira" && st.palline > 0) { ctx.beginPath(); ctx.arc(0, 6 * S, RB * S, 0, PI * 2); ctx.fillStyle = "#f1f3f5"; ctx.fill(); }
+      if ((st.fase === "mira" || st.fase === "attesa") && g.palline > 0) { ctx.beginPath(); ctx.arc(0, 6 * S, RB * S, 0, PI * 2); ctx.fillStyle = "#f1f3f5"; ctx.fill(); }
       ctx.restore();
       ctx.beginPath(); ctx.arc(cx2, cy2, 4.4 * S, 0, PI * 2); var gk = ctx.createRadialGradient(cx2 - S, cy2 - S, 1, cx2, cy2, 4.4 * S); gk.addColorStop(0, "#ffd43b"); gk.addColorStop(1, "#c92a2a"); ctx.fillStyle = gk; ctx.fill(); ctx.strokeStyle = "#5c0f0f"; ctx.lineWidth = 2; ctx.stroke();
       // gli effetti
@@ -33529,65 +33633,444 @@ window.SG_SIPERO = {
       ctx.restore();
     }
 
-    // ---- fine del livello ----
+    // ---- le finestre sopra il tavolo: fine partita, domande, "tocca a…" ----
+    function svuota() { while (sopra.firstChild) sopra.removeChild(sopra.firstChild); }
+    function chiudiSopra() { sopra.classList.remove("su"); }
+    function finestra(o) {   // o: { titolo, sotto, stelle, righe: [[testo, valore, classe]], nodi, tasti: [{ testo, cls, fn }] }
+      svuota();
+      var box = el("div", { class: "pm-fine" }, [el("h2", { text: o.titolo })]);
+      if (o.sotto) box.appendChild(el("div", { class: "pm-stelle" + (o.stelle ? "" : " msg"), text: o.sotto }));
+      (o.righe || []).forEach(function (r) { box.appendChild(el("div", { class: "pm-rig" + (r[2] ? " " + r[2] : "") }, [el("span", { text: r[0] }), el("b", { text: r[1] })])); });
+      (o.nodi || []).forEach(function (n) { if (n) box.appendChild(n); });
+      var bt = el("div", { class: "pm-tasti" });
+      (o.tasti || []).forEach(function (x) { bt.appendChild(el("button", { class: "btn " + (x.cls || "btn-fantasma"), text: x.testo, onclick: x.fn })); });
+      box.appendChild(bt); sopra.appendChild(box); sopra.classList.add("su");
+      return box;
+    }
+    function chiedi(titolo, testo, siTesto, si) {   // a partita cominciata si chiede prima di uscire (un tocco sbagliato non butta la partita)
+      finestra({ titolo: titolo, sotto: testo, tasti: [{ testo: "▶ Continua a giocare", cls: "btn-primario", fn: chiudiSopra }, { testo: siTesto, fn: si }] });
+    }
+    function passa(g, scegli, poi) {   // sullo stesso telefono: tocca a qualcun altro (la prima volta sceglie anche l'aiutante)
+      var nodi = [];
+      if (scegli) {
+        var nomeP = el("div", { class: "pm-pot-nome centro", text: POTERI[g.potere].nome + ": " + POTERI[g.potere].sotto.toLowerCase() });
+        var r = el("div", { class: "pm-aiutanti centro" });
+        ORDINE_POTERI.forEach(function (k) {
+          var b = el("button", { class: "pm-aiu" + (g.potere === k ? " attiva" : ""), text: POTERI[k].icona, "aria-label": POTERI[k].nome, onclick: function () {
+            g.potere = k; [].forEach.call(r.children, function (x) { x.classList.remove("attiva"); }); b.classList.add("attiva");
+            nomeP.textContent = POTERI[k].nome + ": " + POTERI[k].sotto.toLowerCase(); aggTesta(); vibra(6);
+          } });
+          r.appendChild(b);
+        });
+        nodi = [el("div", { class: "pm-rig-t", text: "Scegli il tuo aiutante" }), r, nomeP];
+      }
+      finestra({ titolo: "Tocca a " + g.nome + " 🎯", sotto: "Passagli il telefono", nodi: nodi, tasti: [{ testo: "▶ Gioca", cls: "btn-primario", fn: function () { chiudiSopra(); poi(); } }] });
+    }
+    function chiudi() { cancelAnimationFrame(anim); window.removeEventListener("resize", misura); clearTimeout(ui.tTieni); }
+
+    aggTesta(); misura();   // (prima i punti di tutti: il tavolo si mette sotto)
+    anim = requestAnimationFrame(function (o) { ult = o; giro(o); });
+    var api = { st: st, riproduci: riproduci, salta: salta, aggTesta: aggTesta, dimmi: dimmi, finestra: finestra, chiedi: chiedi, passa: passa, chiudiSopra: chiudiSopra, chiudi: chiudi, vivo: vivo,
+      mira: function (a) { ui.angVuole = Math.max(0.06, Math.min(PI - 0.06, +a || PI / 2)); },
+      occupato: function () { return st.fase === "volo" || st.fase === "pulizia"; },
+      nuovoTurno: function () { ui.angVuole = null; aggTesta(); } };
+    window.__PMpartita = { st: function () { return st; }, tira: function () { if (st.fase === "mira") { st.fase = "attesa"; cfg.onTiro(st.ang); } }, mira: function (a) { st.ang = a; }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); }, tav: api };   // (per le prove)
+    return api;
+  }
+
+  // =========================================================
+  //  DA SOLO: un livello (stelle, record, livelli che si aprono)
+  // =========================================================
+  function partita(t, lv, potere) {
+    var io = nomeIo(t), g = { nome: io, potere: potere };
+    var st = nuovoStato(lv, [g]); nuovoViola(st);
+    var tav = tavolo(t, { st: st, mio: function () { return st.fase === "mira"; }, onTiro: tira, onEsci: esci, faccia: function () { return t.mioOmino ? t.mioOmino(io) : null; } });
+    function tira(ang) { tav.riproduci(simulaTiro(st, ang, g), dopo); }
+    function dopo() {
+      if (st.febbre) return vinto();
+      if (g.palline <= 0) return perso();
+      nuovoViola(st); st.fase = "mira"; tav.aggTesta();
+    }
     function salva(vinto, stelle) {
-      var p = progressi(), k = lv + 1, nuovoRec = st.punti > (p.rec[k] || 0);
-      if (vinto) { if (nuovoRec) p.rec[k] = st.punti; if (stelle > (p.stelle[k] || 0)) p.stelle[k] = stelle; }
-      salvaProgressi(p);
+      var p = progressi(), k = lv + 1, nuovoRec = g.punti > (p.rec[k] || 0);
+      if (vinto) { if (nuovoRec) p.rec[k] = g.punti; if (stelle > (p.stelle[k] || 0)) p.stelle[k] = stelle; }
+      p.potere = g.potere; salvaProgressi(p);
       if (profiloOk() && SGNube.salvaProgressi) {   // nel profilo: per i trofei e per ritrovare i livelli su un altro telefono
-        var incr = [["partite", 1], ["arancioni", st.arPresi], ["secchi", st.secchiPresi], ["verdi", st.verdiPresi]];
-        if (vinto) { incr.push(["livelliFiniti", 1]); incr.push(["febbri", 1]); if (st.palline >= PALLINE) incr.push(["senzaPerdere", 1]); }
-        var rec = [["colpoMax", st.colpoMax], ["puntiMax", st.punti]];
-        if (vinto) { rec.push(["livelloMax", k]); rec.push(["l" + k, st.punti]); rec.push(["t" + k, stelle]); }
+        var incr = [["partite", 1], ["arancioni", st.arPresi], ["secchi", g.secchi], ["verdi", g.verdi]];
+        if (vinto) { incr.push(["livelliFiniti", 1]); incr.push(["febbri", 1]); if (g.palline >= PALLINE) incr.push(["senzaPerdere", 1]); }
+        var rec = [["colpoMax", g.colpoMax], ["puntiMax", g.punti]];
+        if (vinto) { rec.push(["livelloMax", k]); rec.push(["l" + k, g.punti]); rec.push(["t" + k, stelle]); }
         try { SGNube.salvaProgressi(null, ID, incr.filter(function (x) { return x[1]; }), rec); } catch (e) {}
       }
-      if (t.risultato) t.risultato([{ nome: io, pos: vinto ? 1 : 2, punti: st.punti }]);   // XP e statistiche (record del punteggio)
+      if (t.risultato) t.risultato([{ nome: io, pos: vinto ? 1 : 2, punti: g.punti }]);   // XP e statistiche (record del punteggio)
       return nuovoRec;
+    }
+    function tasti(vinto) {
+      var l = [];
+      if ((vinto || tuttiAperti(t)) && lv + 1 < LIVELLI.length) l.push({ testo: "▶ " + (LIVELLI[lv + 1].cap !== LIVELLI[lv].cap ? CAPITOLI[LIVELLI[lv + 1].cap].icona + " Capitolo " + (LIVELLI[lv + 1].cap + 1) : "Avanti: " + LIVELLI[lv + 1].nome), cls: "btn-primario", fn: function () { tav.chiudi(); partita(t, lv + 1, g.potere); } });
+      l.push({ testo: "↻ " + (vinto ? "Rigioca" : "Riprova"), cls: vinto ? "btn-fantasma" : "btn-primario", fn: function () { tav.chiudi(); partita(t, lv, g.potere); } });
+      l.push({ testo: "☰ Livelli", fn: function () { tav.chiudi(); schermataLivelli(t); } });
+      return l;
     }
     function vinto() {
       st.fase = "fine";
-      var bonus = st.palline * 10000, totale0 = st.punti; st.punti += bonus;
-      var stelle = st.palline >= 5 ? 3 : st.palline >= 3 ? 2 : 1;
+      var bonus = g.palline * 10000, totale0 = g.punti; g.punti += bonus;
+      var stelle = g.palline >= 5 ? 3 : g.palline >= 3 ? 2 : 1;
       var nuovoRec = salva(true, stelle);
       [0, 4, 7, 12].forEach(function (k, i) { tono(523 * Math.pow(2, k / 12), i * 0.12, 0.3, "triangle", 0.1); });
-      fuochi(30, 60, 40); fuochi(70, 60, 40);
-      finestra("Livello superato! 🎉", [
-        ["Punti del livello", cifre(totale0)], ["Palline rimaste: " + st.palline + " × 10.000", "+" + cifre(bonus)], ["Totale", cifre(st.punti)]
-      ], "★★★".slice(0, stelle) + "☆☆☆".slice(0, 3 - stelle), nuovoRec, true);
+      tav.finestra({ titolo: "Livello superato! 🎉", sotto: "★★★".slice(0, stelle) + "☆☆☆".slice(0, 3 - stelle), stelle: true,
+        righe: [["Punti del livello", cifre(totale0)], ["Palline rimaste: " + g.palline + " × 10.000", "+" + cifre(bonus)], ["Totale", cifre(g.punti)]],
+        nodi: [nuovoRec ? t.el("div", { class: "pm-rec", text: "🏅 Nuovo record del livello!" }) : null], tasti: tasti(true) });
     }
     function perso() {
       st.fase = "fine"; salva(false, 0); suonoPerso();
       var rim = st.arTot - st.arPresi;
-      finestra("Palline finite!", [["Arancioni rimasti", String(rim)], ["Punti", cifre(st.punti)]], rim <= 3 ? "Per un pelo! Riprova 💪" : "Riprova, ce la fai!", false, false);
+      tav.finestra({ titolo: "Palline finite!", sotto: rim <= 3 ? "Per un pelo! Riprova 💪" : "Riprova, ce la fai!", righe: [["Arancioni rimasti", String(rim)], ["Punti", cifre(g.punti)]], tasti: tasti(false) });
     }
-    function finestra(titolo, righe, stelle, nuovoRec, vinto) {
-      while (sopra.firstChild) sopra.removeChild(sopra.firstChild);
-      var box = el("div", { class: "pm-fine" }, [el("h2", { text: titolo }), el("div", { class: "pm-stelle" + (vinto ? "" : " msg"), text: stelle })]);
-      righe.forEach(function (r) { box.appendChild(el("div", { class: "pm-rig" }, [el("span", { text: r[0] }), el("b", { text: r[1] })])); });
-      if (nuovoRec) box.appendChild(el("div", { class: "pm-rec", text: "🏅 Nuovo record del livello!" }));
-      var tasti = el("div", { class: "pm-tasti" });
-      if ((vinto || tuttiAperti(t)) && lv + 1 < LIVELLI.length) tasti.appendChild(el("button", { class: "btn btn-primario", text: "▶ " + (LIVELLI[lv + 1].cap !== LIVELLI[lv].cap ? CAPITOLI[LIVELLI[lv + 1].cap].icona + " Capitolo " + (LIVELLI[lv + 1].cap + 1) : "Avanti: " + LIVELLI[lv + 1].nome), onclick: function () { chiudi(); partita(t, lv + 1, st.potere); } }));
-      tasti.appendChild(el("button", { class: "btn " + (vinto ? "btn-fantasma" : "btn-primario"), text: "↻ " + (vinto ? "Rigioca" : "Riprova"), onclick: function () { chiudi(); partita(t, lv, st.potere); } }));
-      tasti.appendChild(el("button", { class: "btn btn-fantasma", text: "☰ Livelli", onclick: function () { chiudi(); schermataLivelli(t); } }));
-      box.appendChild(tasti);
-      sopra.appendChild(box); sopra.classList.add("su");
+    function esci() {
+      if (st.fase === "fine" || (g.palline >= PALLINE && st.fase === "mira")) { tav.chiudi(); return schermataLivelli(t); }
+      tav.chiedi("Lasciare il livello?", "I punti di questa partita si perdono.", "☰ Torna ai livelli", function () { tav.chiudi(); schermataLivelli(t); });
     }
-    function chiudi() { cancelAnimationFrame(anim); window.removeEventListener("resize", misura); }
-    function esci() {   // a livello cominciato chiede prima (un tocco sbagliato non butta la partita)
-      if (st.fase === "fine" || (st.palline >= PALLINE && st.fase === "mira")) { chiudi(); return schermataLivelli(t); }
-      while (sopra.firstChild) sopra.removeChild(sopra.firstChild);
-      sopra.appendChild(el("div", { class: "pm-fine" }, [el("h2", { text: "Lasciare il livello?" }), el("div", { class: "pm-stelle msg", text: "I punti di questa partita si perdono." }),
-        el("div", { class: "pm-tasti" }, [
-          el("button", { class: "btn btn-primario", text: "▶ Continua a giocare", onclick: function () { sopra.classList.remove("su"); } }),
-          el("button", { class: "btn btn-fantasma", text: "☰ Torna ai livelli", onclick: function () { chiudi(); schermataLivelli(t); } }) ])]));
-      sopra.classList.add("su");
+    tav.dimmi(nomeLivello(lv) + " · prendi tutti i 🟠");
+    if (lv < 2) setTimeout(function () { if (tav.vivo() && st.fase === "mira") tav.dimmi("Trascina il dito per girare il cannone · tocca per tirare"); }, 2500);
+  }
+
+  // la fine di una sfida (sullo stesso telefono e online): chi ha vinto e i punti di tutti
+  function righeFine(cl, mioId) {
+    var med = ["🥇", "🥈", "🥉"];
+    return cl.map(function (r) { return [(med[r.pos - 1] || r.pos + "°") + " " + r.nome + (mioId && r.id === mioId ? " (tu)" : ""), cifre(r.punti), r.pos === 1 ? "primo" : ""]; });
+  }
+  function titoloFine(cl, mioId) {
+    var primi = cl.filter(function (r) { return r.pos === 1; });
+    if (primi.length !== 1) return "Pareggio! 🤝";
+    return mioId && primi[0].id === mioId ? "Hai vinto! 🏆" : "Vince " + primi[0].nome + "! 🏆";
+  }
+  function suonoFine() { [0, 4, 7, 12].forEach(function (k, i) { tono(523 * Math.pow(2, k / 12), i * 0.12, 0.3, "triangle", 0.1); }); }
+  function vittorie(gioc) {   // più partite di fila: quante ne ha vinte ognuno
+    if (!gioc.some(function (p) { return p.vinte > 0; })) return null;
+    return "🏆 Vittorie: " + gioc.map(function (p) { return p.nome + " " + (p.vinte || 0); }).join(" · ");
+  }
+
+  // =========================================================
+  //  SFIDA SULLO STESSO TELEFONO: da 2 a 4, un tiro a testa, vi passate il telefono
+  // =========================================================
+  function giocaAmici(t) {
+    var imp = t.impostazioni || {}, nomi = (t.giocatori && t.giocatori.length ? t.giocatori : ["Giocatore 1", "Giocatore 2"]).slice(0, 4);
+    var prof = t.nomeProfilo && t.nomeProfilo();
+    var gioc = nomi.map(function (n, i) { return { id: "g" + i, nome: n, potere: n === prof ? poterePreferito() : "bomba", vinte: 0, scelto: false }; });
+    var ultimo = -1, partite = 0, st = null, tav = null;
+    function nuova() {
+      if (tav) tav.chiudi();
+      var lv = scegliLivello(imp.lv, ultimo); ultimo = lv;
+      st = nuovoStato(lv, gioc); st.turno = partite % gioc.length; partite++; nuovoViola(st);   // a ogni partita comincia uno diverso
+      tav = tavolo(t, { st: st, multi: true, mio: function () { return st.fase === "mira"; }, onTiro: tira, onEsci: esci,
+        faccia: function (g) { return g.nome === prof && t.mioOmino ? t.mioOmino(g.nome) : (window.SGOmino ? SGOmino.casuale(g.nome) : null); } });
+      turno();
+    }
+    function turno() {
+      var g = st.gioc[st.turno]; st.fase = "attesa"; tav.nuovoTurno();
+      tav.passa(g, !g.scelto, function () { g.scelto = true; st.fase = "mira"; tav.aggTesta(); tav.dimmi(nomeLivello(st.lv) + " · tocca a " + g.nome); });
+    }
+    function tira(ang) { tav.riproduci(simulaTiro(st, ang, st.gioc[st.turno]), dopo); }
+    function dopo() {
+      if (st.febbre || !gioc.some(function (p) { return p.palline > 0; })) return fine();
+      prossimo(st); nuovoViola(st); turno();
+    }
+    function fine() {
+      st.fase = "fine";
+      var cl = classifica(gioc).map(function (r) { return { id: r.g.id, nome: r.g.nome, punti: r.g.punti, pos: r.pos, g: r.g }; });
+      cl.forEach(function (r) { if (r.pos === 1) r.g.vinte++; });
+      var esito = cl.map(function (r) { return { nome: r.nome, pos: r.pos, punti: r.punti }; });
+      if (t.risultato) t.risultato(esito);
+      if (imp.torneo) { tav.chiudi(); return t.fine(esito); }
+      suonoFine(); vibra([30, 40, 30]);
+      var v = vittorie(gioc);
+      tav.finestra({ titolo: titoloFine(cl), sotto: st.febbre ? "Tutti gli arancioni presi!" : "Palline finite per tutti", righe: righeFine(cl),
+        nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null],
+        tasti: [{ testo: "↻ Altra partita" + (imp.lv == null || imp.lv === "caso" ? " (livello a caso)" : ""), cls: "btn-primario", fn: nuova },
+          { testo: "🏠 Esci", fn: function () { tav.chiudi(); t.esci(); } }] });
+    }
+    function esci() {
+      if (st.fase === "fine") { tav.chiudi(); return t.esci(); }
+      tav.chiedi("Lasciare la sfida?", "La partita finisce qui.", "🏠 Esci", function () { tav.chiudi(); t.esci(); });
+    }
+    nuova();
+  }
+
+  // =========================================================
+  //  ONLINE: ognuno dal suo telefono (da 2 a 4). L'host tiene la partita vera,
+  //  calcola ogni tiro (simulaTiro) e lo manda a tutti; gli altri mandano solo la mira e il tiro.
+  // =========================================================
+  var MIN_ON = 2, MAX_ON = 4;
+  function lobbyPM(t, vm, cb) {   // la saletta: livello, il tuo aiutante, le vittorie delle partite di prima
+    stile();
+    var el = t.el, extra = [el("p", { class: "modulo-nota", text: "Livello: " + (vm.lvSc == null || vm.lvSc === "caso" ? "🎲 a caso" : nomeLivello(vm.lvSc)) + " · un tiro a testa, vince chi fa più punti." })];
+    var me = vm.players.filter(function (p) { return p.id === cb.myId; })[0];
+    if (me) {
+      var riga = el("div", { class: "pm-aiutanti centro" }, [el("span", { class: "pm-aiu-et", text: "Il tuo aiutante:" })]);
+      ORDINE_POTERI.forEach(function (k) { riga.appendChild(el("button", { class: "pm-aiu" + (me.potere === k ? " attiva" : ""), text: POTERI[k].icona, "aria-label": POTERI[k].nome, onclick: function () { vibra(6); cb.onPotere(k); } })); });
+      riga.appendChild(el("span", { class: "pm-pot-nome", text: (POTERI[me.potere] || POTERI.bomba).nome }));
+      extra.push(riga);
+    }
+    var v = vittorie(vm.players); if (v) extra.push(el("p", { class: "modulo-nota", text: v }));
+    t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN_ON, vuoti: Math.max(0, MIN_ON - vm.players.length),
+      giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
+      extra: extra, attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
+  }
+  function ominoDi(g) { return g.omino || (window.SGOmino ? SGOmino.casuale(g.nome) : null); }
+
+  function host(t) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var imp = t.impostazioni || {}, nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
+    var H = { fase: "lobby", codice: "…", pronta: false, lvSc: imp.lv == null ? "caso" : imp.lv, partita: 0, seq: 0, ultimo: -1, st: null, tav: null, classifica: null, tF: null, tA: null, mira: { t: 0, to: null },
+      players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost), potere: poterePreferito(), vinte: 0 }] };
+    function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
+    function presenti() { return H.players.filter(function (p) { return !p.via; }); }
+    function fermaTimer() { clearTimeout(H.tF); clearTimeout(H.tA); H.tF = H.tA = null; }
+
+    // "⚙️ Regole" nella saletta: l'host cambia il livello quando vuole
+    t.onRegole = function (im) { if (H.fase !== "lobby") return; H.lvSc = im.lv == null ? "caso" : im.lv; bd(); };
+
+    var rete = SGNet.ospita(ID, {
+      onCodice: function (c) { H.codice = c; bd(); },
+      onConnesso: function () { H.pronta = true; bd(); },
+      onAddio: function (id) {
+        var p = pById(id); if (!p) return;
+        if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
+        p.via = true;   // a partita iniziata resta in classifica, ma i suoi turni si saltano
+        if (H.fase === "gioco") {
+          if (presenti().length < MIN_ON) return fine();
+          if (H.st.gioc[H.st.turno] === p && H.st.fase === "mira") return cambiaTurno();
+        }
+        bd();
+      },
+      onMsg: function (id, m) {
+        if (!m || !m.t) return;
+        var p = pById(id);
+        if (m.t === "join") {
+          if (!p && H.fase === "lobby" && H.players.length < MAX_ON)
+            H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino), potere: POTERI[m.potere] ? m.potere : "bomba", vinte: 0 });
+          else if (p && p.via && H.fase === "gioco") p.via = false;   // è tornato (stesso id): riprende a giocare
+          bd();   // anche se c'era già: rimanda la foto (serve a chi si ricollega)
+          return;
+        }
+        if (!p) return;
+        if (m.t === "potere") { if (H.fase === "lobby" && POTERI[m.k]) { p.potere = m.k; bd(); } return; }
+        if (H.fase !== "gioco") return;
+        if (m.t === "mira") altraMira(id, m.a, m.seq);
+        else if (m.t === "tira") tiro(id, m.a, m.seq);
+      }
+    });
+    // la "foto" per tutti: SEMPRE con gli id dei giocatori; nel gioco anche il tavolo (tipi e pezzi già scoppiati)
+    function vm() {
+      var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, lvSc: H.lvSc, partita: H.partita, classifica: H.classifica,
+        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, potere: p.potere, vinte: p.vinte || 0, via: !!p.via, punti: p.punti || 0, palline: p.palline || 0, mira: p.mira || 0, fuoco: p.fuoco || 0 }; }) };
+      if (H.fase !== "lobby" && H.st) {
+        var st = H.st;
+        v.lv = st.lv; v.seq = H.seq; v.turno = st.turno; v.n = st.pioli.length; v.ar = st.arPresi; v.feb = st.febbre; v.fs = st.fase === "mira" ? "mira" : "volo";
+        v.tipi = st.pioli.map(function (q) { return SIGLA[q.tipo]; }).join("");
+        v.via = st.pioli.map(function (q) { return q.via || q.acceso ? 1 : 0; }).join("");   // (quelli accesi stanno per scoppiare)
+      }
+      return v;
+    }
+    function bd() { rete.invia({ t: "vm", vm: vm() }); mostra(); }
+    function mostra() {
+      if (H.fase === "lobby") { if (H.tav) { H.tav.chiudi(); H.tav = null; } return lobbyPM(t, vm(), cbHost); }
+      if (!H.tav) {
+        H.tav = tavolo(t, { st: H.st, multi: true, mio: function () { return H.st.fase === "mira" && H.st.gioc[H.st.turno].id === "host"; }, sonoIo: function (g) { return g.id === "host"; },
+          onTiro: function (a) { tiro("host", a, H.seq); }, onMira: miaMira, onEsci: cbHost.onEsci, faccia: ominoDi });
+        H.tav.dimmi(nomeLivello(H.st.lv) + " · un tiro a testa!");
+      } else H.tav.nuovoTurno();
+      if (H.fase === "fine") finePM();
     }
 
-    misura(); aggTesta();
-    window.__PMpartita = { st: function () { return st; }, evento: evento, tira: tira, mira: function (a) { st.ang = a; }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); } };   // (per le prove)
-    dimmi(CAPITOLI[LIVELLI[lv].cap].icona + " " + LIVELLI[lv].nome + " · prendi tutti i 🟠");
-    if (lv < 2) setTimeout(function () { if (vivo() && st.fase === "mira") dimmi("Tieni premuto per mirare · tocca per tirare"); }, 2500);
-    anim = requestAnimationFrame(function (o) { ult = o; giro(o); });
+    // ----- la partita -----
+    function comincia() {
+      if (H.fase !== "lobby" || presenti().length < MIN_ON) return;
+      var lv = scegliLivello(H.lvSc, H.ultimo); H.ultimo = lv;
+      H.players = presenti(); H.partita++; H.seq = 0; H.classifica = null;
+      H.st = nuovoStato(lv, H.players); H.st.turno = (H.partita - 1) % H.players.length; nuovoViola(H.st);   // a ogni partita comincia uno diverso
+      H.fase = "gioco"; bd(); avvisaTurno(); timerTurno();
+    }
+    function tiro(id, a, seq) {
+      var st = H.st; if (H.fase !== "gioco" || !st || st.fase === "volo" || st.fase === "pulizia") return;
+      var g = st.gioc[st.turno];
+      if (!g || g.id !== id || g.palline <= 0 || (seq != null && seq !== H.seq)) { if (id === "host" && st.fase === "attesa") st.fase = "mira"; return; }
+      fermaTimer();
+      a = Math.max(0.06, Math.min(PI - 0.06, +a || PI / 2));
+      var rec = simulaTiro(st, a, g);
+      rete.inviaVeloce({ t: "rec", seq: H.seq, rec: rec });   // il tiro a tutti (non resta in stanza)
+      H.tav.riproduci(rec, dopoTiro);
+    }
+    function dopoTiro() {
+      if (H.fase === "fine") { H.st.fase = "fine"; return finePM(); }   // (finita mentre si guardava il tiro: è uscito qualcuno)
+      if (H.fase !== "gioco") return;
+      if (H.st.febbre || !presenti().some(function (p) { return p.palline > 0; })) return fine();
+      cambiaTurno();
+    }
+    function cambiaTurno() {
+      var st = H.st; if (st.fase === "volo" || st.fase === "pulizia") return;
+      prossimo(st); nuovoViola(st); H.seq++; st.fase = "mira"; bd(); avvisaTurno(); timerTurno();
+    }
+    function avvisaTurno() { var g = H.st.gioc[H.st.turno]; if (H.tav) H.tav.dimmi(g.id === "host" ? "🎯 Tocca a te!" : "🎯 Tocca a " + g.nome); if (g.id === "host") vibra([15, 40, 15]); }
+    function timerTurno() {   // chi non tira: dopo 35 secondi un avviso, dopo 45 la pallina parte da sola
+      fermaTimer(); var seq = H.seq;
+      H.tF = setTimeout(function () {
+        if (H.seq !== seq || H.fase !== "gioco") return; var g = H.st.gioc[H.st.turno];
+        rete.inviaVeloce({ t: "fretta", seq: seq }); if (H.tav) H.tav.dimmi(g.id === "host" ? "⏱️ 10 secondi per tirare!" : "⏱️ " + g.nome + " ha 10 secondi");
+      }, 35000);
+      H.tA = setTimeout(function () { if (H.seq !== seq || H.fase !== "gioco" || H.st.fase !== "mira") return; tiro(H.st.gioc[H.st.turno].id, H.st.ang, seq); }, 45000);
+    }
+    function altraMira(id, a, seq) {   // la mira di chi tira dall'altro telefono: la vedo e la giro agli altri
+      var st = H.st, g = st.gioc[st.turno]; if (!g || g.id !== id || seq !== H.seq || st.fase !== "mira") return;
+      st.ang = Math.max(0.06, Math.min(PI - 0.06, +a || PI / 2)); H.tav.mira(st.ang);
+      rete.inviaVeloce({ t: "mira", a: Math.round(st.ang * 1000) / 1000, seq: H.seq });
+    }
+    function miaMira(a) {   // la mia mira agli altri: al massimo 10 volte al secondo (e l'ultima sempre)
+      var M = H.mira, ora = performance.now(); clearTimeout(M.to);
+      function manda() { M.t = performance.now(); rete.inviaVeloce({ t: "mira", a: Math.round(H.st.ang * 1000) / 1000, seq: H.seq }); }
+      if (ora - M.t > 100) manda(); else M.to = setTimeout(manda, 110);
+    }
+    function fine() {
+      fermaTimer();
+      var cl = classifica(H.players);
+      H.classifica = cl.map(function (r) { return { id: r.g.id, nome: r.g.nome, punti: r.g.punti || 0, pos: r.pos }; });
+      cl.forEach(function (r) { if (r.pos === 1) r.g.vinte = (r.g.vinte || 0) + 1; });
+      H.fase = "fine"; if (H.st && H.st.fase !== "volo" && H.st.fase !== "pulizia") H.st.fase = "fine";
+      bd();
+      // torneo online e XP: i NOMI dei giocatori col loro posto (pari merito = stesso posto)
+      if (t.risultato) t.risultato(H.classifica.map(function (r) { return { nome: r.nome, pos: r.pos, punti: r.punti }; }));
+    }
+    function finePM() {
+      if (!H.tav || H.st.fase === "volo" || H.st.fase === "pulizia") return;   // (si vede prima la fine del tiro)
+      suonoFine(); var v = vittorie(H.players);
+      H.tav.finestra({ titolo: titoloFine(H.classifica, "host"), sotto: H.st.febbre ? "Tutti gli arancioni presi!" : "Palline finite", righe: righeFine(H.classifica, "host"),
+        nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null],
+        tasti: [{ testo: "↻ Altra partita (stessi amici)", cls: "btn-primario", fn: nuova }, { testo: "🏠 Esci", fn: cbHost.onEsci }] });
+    }
+    // "Altra partita": stessa stanza, stessi amici, tutti tornano nella saletta (MAI chiudere e riaprire la stanza)
+    function nuova() { fermaTimer(); H.fase = "lobby"; H.classifica = null; H.players = presenti(); bd(); }
+
+    var cbHost = { sonoHost: true, myId: "host", onComincia: comincia,
+      onPotere: function (k) { var p = pById("host"); if (p) p.potere = k; salvaPotere(k); bd(); },
+      onEsci: function () {
+        function via() { fermaTimer(); rete.chiudi(); if (H.tav) H.tav.chiudi(); t.esci(); }
+        if (H.fase === "gioco" && H.tav) return H.tav.chiedi("Chiudere la partita per tutti?", "Gli amici escono dalla partita.", "🏠 Chiudi ed esci", via);   // un tocco sbagliato non chiude il gioco a tutti
+        via();
+      } };
+    bd();
+  }
+
+  function ospite(t, codice) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var S = { rete: null, myId: null, nome: "", vm: null, tav: null, st: null, partita: -1, coda: null, tAtt: null, mira: { t: 0, to: null } };
+    var cb = { sonoHost: false, myId: null,
+      onPotere: function (k) { salvaPotere(k); if (S.rete) S.rete.invia({ t: "potere", k: k }); },
+      onEsci: function () {
+        function via() { if (S.rete) S.rete.chiudi(); if (S.tav) S.tav.chiudi(); t.esci(); }
+        if (S.vm && S.vm.fase === "gioco" && S.tav) return S.tav.chiedi("Uscire dalla partita?", "Gli altri continuano senza di te.", "🏠 Esci", via);
+        via();
+      } };
+    if (t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
+    function chiediNome() {
+      var s = t.schermata({ icona: "🔴", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var input = t.el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
+      s._contenuto.appendChild(input);
+      s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+        try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
+        S.nome = (input.value || "").trim().slice(0, 16) || "Amico"; collega();
+      } }));
+      t.mostra(s);
+    }
+    function collega() {
+      attesa("Collegamento in corso…");
+      S.rete = SGNet.entra(codice, {
+        onAperto: function (id) { S.myId = id; cb.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome), potere: poterePreferito() }); },
+        onMsg: function (m) {
+          if (!m || !m.t) return;
+          if (m.to && m.to !== S.myId) return;          // era per un altro telefono
+          if (m.t === "vm") { S.vm = m.vm; ricevi(m.vm); }
+          else if (m.t === "rec") tiroArrivato(m);
+          else if (m.t === "mira") { if (S.tav && S.st && m.seq === S.st.seq && S.st.fase === "mira" && !mioTurno()) S.tav.mira(m.a); }
+          else if (m.t === "fretta") { if (S.tav && S.st && m.seq === S.st.seq) S.tav.dimmi(mioTurno() ? "⏱️ 10 secondi per tirare!" : "⏱️ " + S.st.gioc[S.st.turno].nome + " ha 10 secondi"); }
+        },
+        onChiuso: function () { if (S.tav) S.tav.chiudi(); errore(t, "La partita è stata chiusa dall'host."); },
+        onErrore: function () { if (S.tav) S.tav.chiudi(); errore(t, "Problema di collegamento. Riprova."); }
+      });
+    }
+    function attesa(testo) {
+      var s = t.schermata({ icona: "🔴", titolo: "Palla Matta", sotto: "Stanza " + String(codice).toUpperCase(), indietro: cb.onEsci });
+      s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: testo }));
+      t.mostra(s);
+    }
+    function mioTurno() { var st = S.st, g = st && st.gioc[st.turno]; return !!g && g.id === S.myId; }
+    function ricevi(vm) {
+      if (vm.fase === "lobby") { if (S.tav) { S.tav.chiudi(); S.tav = null; S.st = null; } S.coda = null; return lobbyPM(t, vm, cb); }
+      if (!vm.players.some(function (p) { return p.id === S.myId; })) { if (S.tav) { S.tav.chiudi(); S.tav = null; } return attesa("La partita è già cominciata: aspetta la prossima, entri da solo nella saletta."); }
+      if (!S.tav || vm.partita !== S.partita) { if (!creaTavolo(vm)) return; }
+      else if (S.tav.occupato()) { S.coda = vm; return; }   // sto ancora guardando il tiro: la foto dopo
+      sincronizza(vm);
+    }
+    function creaTavolo(vm) {
+      var pioli = creaLivello(vm.lv, false);
+      if (pioli.length !== vm.n) { if (S.tav) S.tav.chiudi(); S.tav = null; errore(t, "La tua app è di una versione diversa da quella dell'host: chiudila e riaprila per aggiornarla."); return false; }
+      pioli.forEach(function (q, i) { q.tipo = TIPO[vm.tipi.charAt(i)] || q.tipo; });
+      var gioc = vm.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino, potere: p.potere }; });
+      if (S.tav) S.tav.chiudi();
+      S.st = nuovoStato(vm.lv, gioc, pioli); S.st.seq = -1; S.partita = vm.partita; S.coda = null;
+      S.tav = tavolo(t, { st: S.st, multi: true, mio: function () { return S.st.fase === "mira" && mioTurno(); }, sonoIo: function (g) { return g.id === S.myId; },
+        onTiro: tira, onMira: mandaMira, onEsci: cb.onEsci, faccia: ominoDi });
+      S.tav.dimmi(nomeLivello(vm.lv) + " · un tiro a testa!");
+      return true;
+    }
+    function sincronizza(vm) {   // la foto dell'host è quella giusta: punti, palline, turno e pezzi rimasti
+      var st = S.st, nuovoT = vm.seq !== st.seq;
+      st.seq = vm.seq; st.turno = vm.turno; st.arPresi = vm.ar; st.febbre = !!vm.feb;
+      vm.players.forEach(function (p, i) {
+        var g = st.gioc[i] || (st.gioc[i] = {});
+        g.id = p.id; g.nome = p.nome; g.omino = p.omino; g.potere = p.potere; g.punti = p.punti; g.palline = p.palline; g.mira = p.mira; g.fuoco = p.fuoco; g.via = p.via; g.vinte = p.vinte;
+      });
+      st.pioli.forEach(function (q, i) { q.tipo = TIPO[vm.tipi.charAt(i)] || q.tipo; q.via = vm.via.charAt(i) === "1"; q.acceso = false; });
+      if (vm.fase === "fine") { st.fase = "fine"; S.tav.nuovoTurno(); return fineOspite(vm); }
+      st.fase = vm.fs === "mira" ? "mira" : "attesa";
+      S.tav.nuovoTurno();
+      if (nuovoT && st.fase === "mira") { S.tav.dimmi(mioTurno() ? "🎯 Tocca a te!" : "🎯 Tocca a " + st.gioc[st.turno].nome); if (mioTurno()) vibra([15, 40, 15]); }
+    }
+    function tiroArrivato(m) {
+      if (!S.tav || !S.st) return;
+      if (S.tav.occupato()) S.tav.salta();   // ero rimasto indietro: finisco subito il tiro di prima
+      if (m.seq !== S.st.seq || !m.rec) return;   // vecchio (o mi manca un pezzo: la prossima foto rimette a posto)
+      clearTimeout(S.tAtt);
+      S.tav.riproduci(m.rec, function () { var v = S.coda; S.coda = null; if (v) ricevi(v); });
+    }
+    function tira(a) {
+      if (!S.rete) return;
+      S.rete.invia({ t: "tira", a: Math.round(a * 1000) / 1000, seq: S.st.seq });
+      clearTimeout(S.tAtt); S.tAtt = setTimeout(function () { if (S.st && S.st.fase === "attesa" && mioTurno()) S.st.fase = "mira"; }, 4000);   // se il tiro si è perso per strada, si può ritirare
+    }
+    function mandaMira(a) {   // la mia mira all'host: al massimo 10 volte al secondo (e l'ultima sempre)
+      var M = S.mira, ora = performance.now(); clearTimeout(M.to);
+      function manda() { M.t = performance.now(); if (S.rete && S.st) S.rete.invia({ t: "mira", a: Math.round(S.st.ang * 1000) / 1000, seq: S.st.seq }); }
+      if (ora - M.t > 100) manda(); else M.to = setTimeout(manda, 110);
+    }
+    function fineOspite(vm) {
+      suonoFine(); var cl = vm.classifica || [], v = vittorie(vm.players);
+      S.tav.finestra({ titolo: titoloFine(cl, S.myId), sotto: vm.feb ? "Tutti gli arancioni presi!" : "Palline finite", righe: righeFine(cl, S.myId),
+        nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null, t.el("p", { class: "pm-nota", text: "Se l'host fa un'altra partita, torni da solo nella saletta." })],
+        tasti: [{ testo: "🏠 Esci", fn: cb.onEsci }] });
+    }
+  }
+  function errore(t, testo) {
+    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
+    t.mostra(s);
+  }
+  function senzaRete(t) {
+    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "L'online funziona quando l'app è aperta dal sito pubblicato." }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
+    t.mostra(s);
   }
 
   // ---------- lo stile (una volta sola, col prefisso pm-) ----------
@@ -33647,7 +34130,26 @@ window.SG_SIPERO = {
       ".pm-cap small{font-weight:800;color:#ffe066}",
       ".pm-cap-spazio{background:linear-gradient(90deg,#2d2275,#4c3ba8)}", ".pm-cap-natura{background:linear-gradient(90deg,#2b8a3e,#69b34c)}", ".pm-cap-mare{background:linear-gradient(90deg,#0b4f7a,#1c8fc7)}",
       ".pm-lv-natura{background:linear-gradient(180deg,#5aa95f,#2b6e34)}", ".pm-lv-mare{background:linear-gradient(180deg,#1c8fc7,#0b4f7a)}",
-      ".pm-lv.fatto{box-shadow:var(--ombra),inset 0 0 0 2px rgba(255,212,59,.55)}"
+      ".pm-lv.fatto{box-shadow:var(--ombra),inset 0 0 0 2px rgba(255,212,59,.55)}",
+      // le sfide: i punti di tutti sotto la testa, chi tira si accende
+      ".pm-gioc{position:absolute;left:8px;right:8px;top:calc(50px + env(safe-area-inset-top));z-index:3;display:flex;gap:5px;justify-content:center;pointer-events:none}",
+      ".pm-chip{flex:1 1 0;min-width:0;max-width:150px;display:flex;flex-direction:column;align-items:center;padding:3px 6px;border-radius:12px;background:rgba(18,12,48,.72);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);color:#fff;line-height:1.15;transition:background .2s,box-shadow .2s}",
+      ".pm-chip b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.74rem}",
+      ".pm-chip span{font-size:.7rem;font-weight:800;color:#ffe066;white-space:nowrap}",
+      ".pm-chip.turno{background:rgba(92,70,10,.85);box-shadow:inset 0 0 0 2px #ffd43b}",
+      ".pm-chip.via{opacity:.4}",
+      ".pm-punti.nome{font-size:1.02rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".pm-multi .pm-avviso{top:calc(104px + env(safe-area-inset-top))}",
+      ".pm-aiutanti.centro{justify-content:center;margin:6px 0}",
+      ".pm-pot-nome.centro{text-align:center;font-size:.82rem;margin-bottom:4px}",
+      ".pm-rig-t{margin-top:10px;font-weight:900;font-size:.9rem;color:#d0bfff}",
+      ".pm-rig.primo b,.pm-rig.primo span{color:#ffd43b;font-weight:900}",
+      ".pm-nota{margin:10px 0 0;font-size:.82rem;color:#d0bfff}",
+      // la scelta del livello nelle impostazioni delle sfide: due colonne strette
+      ".modo-griglia.pm-sceltalv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}",
+      ".modo-chip.pm-chiplv{justify-content:center;gap:0;padding:9px 6px;min-height:0;text-align:center}",
+      ".modo-chip.pm-chiplv .mt{font-size:.8rem;line-height:1.2}",
+      ".modo-chip.pm-chiplv.largo{grid-column:1/-1}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -33655,18 +34157,35 @@ window.SG_SIPERO = {
   SG.registra({
     id: ID, nome: "Palla Matta", icona: "🔴",
     descrizione: "Spara la pallina dall'alto e falla rimbalzare sui pioli: fai scoppiare tutti gli arancioni con 10 palline. Livelli, poteri e la febbre finale!",
-    giocatoriMin: 1, giocatoriMax: 1, difficolta: 2,
-    modi: [{ modo: "solo", icona: "🎯", nome: "Da solo", sotto: "I livelli, uno dopo l'altro" }],
+    giocatoriMin: 1, giocatoriMax: 4, difficolta: 2,
+    modi: [{ modo: "solo", icona: "🎯", nome: "Da solo", sotto: "I livelli, uno dopo l'altro" },
+      { modo: "amici", icona: "📱", nome: "Sfida su questo telefono", sotto: "Da 2 a 4: un tiro a testa, vi passate il telefono", amici: true }],
     regole: [
-      "Tieni premuto (o trascina) per <b>mirare</b>: i puntini mostrano dove va la pallina. Lasciando il dito non parte niente: dai un <b>tocco veloce</b> per tirare.",
+      "<b>Mirare</b>: trascina il dito, da qualsiasi punto dello schermo, e il cannone gira con lui (a destra gira a destra). Piano piano per i ritocchi, veloce per girarlo tanto. I puntini mostrano dove va la pallina. Lasciando il dito non parte niente: dai un <b>tocco veloce</b> per tirare.",
       "La pallina rimbalza sui pioli e li <b>accende</b>; quando esce, i pioli accesi scoppiano.",
       "Fai scoppiare tutti i pioli <b>arancioni</b> con <b>10 palline</b>. Più arancioni prendi, più vale ogni piolo: <b>x2, x3, x5, x10</b>.",
       "Il piolo <b>viola</b> vale 500 punti e cambia posto a ogni tiro. I pioli <b>verdi</b> attivano il potere del tuo <b>aiutante</b> (bomba, multipalla, mira lunga o palla di fuoco).",
       "Se la pallina entra nel <b>secchio</b> che si muove in fondo, la riprendi. Tanti punti in un tiro regalano palline.",
-      "Con l'ultimo arancione parte la <b>Febbre Matta</b>: in fondo ci sono i secchi da 10.000, 25.000 e 50.000 punti. Ogni pallina avanzata vale 10.000 punti."
+      "Con l'ultimo arancione parte la <b>Febbre Matta</b>: in fondo ci sono i secchi da 10.000, 25.000 e 50.000 punti. Ogni pallina avanzata vale 10.000 punti.",
+      "<b>Sfida</b> (sullo stesso telefono o online, da 2 a 4): stesso tavolo per tutti, <b>un tiro a testa</b>. I pezzi presi spariscono per tutti, ma <b>i punti vanno a chi ha tirato</b>. Ognuno ha il suo aiutante. Chi prende l'ultimo arancione fa la Febbre Matta. Alla fine <b>vince chi ha più punti</b>."
     ],
-    impostazioni: function (box, dove, aiuti) {   // prima di cominciare: il tuo aiutante (lo ritrovi anche nei livelli)
-      var el = aiuti.el, p = progressi(); dove.modo = aiuti.modo || "solo";
+    impostazioni: function (box, dove, aiuti) {   // da solo: il tuo aiutante; nelle sfide: il livello (o a caso)
+      var el = aiuti.el, p = progressi(); dove.modo = aiuti.modo || (aiuti.torneo || aiuti.sala ? "amici" : "solo");
+      if (dove.modo !== "solo") {
+        if (dove.lv == null) dove.lv = "caso";
+        box.appendChild(el("div", { class: "etichetta", text: "Il livello" }));
+        stile();
+        var gl = el("div", { class: "modo-griglia pm-sceltalv" });
+        [["caso", "🎲 A caso"]].concat(LIVELLI.map(function (L, i) { return [i, nomeLivello(i)]; })).forEach(function (x) {
+          var b = el("button", { class: "modo-chip pm-chiplv" + (x[0] === "caso" ? " largo" : "") + (String(dove.lv) === String(x[0]) ? " attiva" : ""), onclick: function () {
+            dove.lv = x[0]; [].forEach.call(gl.children, function (c) { c.classList.remove("attiva"); }); b.classList.add("attiva"); vibra(6);
+          } }, [el("div", { class: "mt", text: x[1] })]);
+          gl.appendChild(b);
+        });
+        box.appendChild(gl);
+        box.appendChild(el("p", { class: "modulo-nota", text: "Il tuo aiutante lo scegli prima del tuo primo tiro (online: nella saletta)." }));
+        return;
+      }
       if (!POTERI[p.potere]) p.potere = "bomba";
       box.appendChild(el("div", { class: "etichetta", text: "Il tuo aiutante: il potere dei pioli verdi" }));
       var g = el("div", { class: "modo-griglia", style: "grid-template-columns:1fr" });
@@ -33678,11 +34197,17 @@ window.SG_SIPERO = {
       });
       box.appendChild(g);
     },
-    avvia: function (t) { schermataLivelli(t); }
+    avvia: function (t) {
+      var imp = t.impostazioni || {};
+      if (t.linkParams && t.linkParams.stanza) return ospite(t, t.linkParams.stanza);   // entrato da un invito
+      if (imp.modo === "online") return host(t);
+      if (imp.modo === "amici" || imp.torneo) return giocaAmici(t);
+      schermataLivelli(t);
+    }
   });
 
   // per le prove: la fisica e i livelli, senza disegno
-  window.__PM = { LIVELLI: LIVELLI, creaLivello: creaLivello, nuovoStato: nuovoStato, passo: passo, strada: strada, molt: molt, W: W, H: H, DT: DT, V0: V0, CX: CX, CY: CY };
+  window.__PM = { LIVELLI: LIVELLI, creaLivello: creaLivello, nuovoStato: nuovoStato, nuovoViola: nuovoViola, passo: passo, strada: strada, molt: molt, simulaTiro: simulaTiro, W: W, H: H, DT: DT, V0: V0, CX: CX, CY: CY };
 })();
 
 /* =========================================================
