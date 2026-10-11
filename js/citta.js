@@ -12,7 +12,7 @@
   "use strict";
 
   var A = 25, uid = 0, nf = 0;
-  var ALTO = 790;   // quanto è lunga la città (si scorre col dito): quattro file di edifici
+  var ALTO = 880;   // quanto è lunga la città (si scorre col dito): quattro file di edifici e in fondo il laghetto del parco
   var P, S, ET;   // proiezione, luce ed etichette del disegno in corso
 
   // ---------- attrezzi ----------
@@ -391,8 +391,28 @@
     return s + vaso(u + .82, vf + .2) + vaso(u + 1.68, vf + .2);
   }
 
+  // il laghetto del parco col pontile e un pescatore: si tocca per andare a pescare
+  function laghetto(uc, vc) {
+    var s = ell(uc, vc, 0, 1.18, F("#e9d8a6", "t"), L("#cbbd9c"));   // la riva di sabbia
+    s += ell(uc, vc, 0, 1.02, S.notte ? "#1c4f80" : T("#4dabf7"), " stroke='" + F("#1c7ed6", "l") + "' stroke-width='1.2'");
+    s += ell(uc - .2, vc - .15, 0, .55, "none", " stroke='rgba(255,255,255,.5)' stroke-width='1' stroke-dasharray='5 6'") + ell(uc + .15, vc + .25, 0, .3, "none", " stroke='rgba(255,255,255,.35)' stroke-width='1' stroke-dasharray='3 5'");   // i riflessi
+    [[uc - .5, vc + .3], [uc + .2, vc - .6], [uc - .6, vc - .35]].forEach(function (n) { s += ell(n[0], n[1], .2, .13, F("#40c057", "t")) + pallino(P(n[0], n[1], .2), 1.6, T("#f783ac")); });   // le ninfee
+    for (var i = 0; i < 6; i++) {   // le canne sulla riva di dietro
+      var a = 3.5 + i * .32, b = P(uc + Math.cos(a) * 1.05, vc + Math.sin(a) * 1.05, 0), dx = i % 2 ? 2 : -1, h = 13 + (i % 3) * 3;
+      s += linea(b, [b[0] + dx, b[1] - h], F("#5c7a2a", "l"), 1.3) + "<ellipse cx='" + f1(b[0] + dx) + "' cy='" + f1(b[1] - h + 3) + "' rx='1.4' ry='3.2' fill='" + T("#7a4a1f") + "'/>";
+    }
+    // il pontile di legno, dall'acqua verso il prato, col pescatore e la sua canna
+    s += box(uc + .35, vc - .14, .8, .28, 1.6, 1.4, "#a0652b") + box(uc + .4, vc + .1, .05, .05, 0, 1.6, "#6b4220") + box(uc + 1.05, vc + .1, .05, .05, 0, 1.6, "#6b4220");
+    var pb = P(uc + .55, vc, 3), pc = window.SGOmino.casuale("Pescatore");
+    s += S.notte ? "<g filter='url(#ctnp" + S.id + ")'>" + figura(pc, pb[0], pb[1], 20) + "</g>" : figura(pc, pb[0], pb[1], 20);
+    var m = [pb[0] - 5, pb[1] - 13], t = [pb[0] - 24, pb[1] - 30], g = P(uc - .25, vc - .05, 0);
+    s += linea(m, t, F("#6b4220", "l"), 1.6) + "<path d='M" + f1(t[0]) + "," + f1(t[1]) + " Q" + f1(g[0] - 2) + "," + f1(t[1] + 6) + " " + f1(g[0]) + "," + f1(g[1]) + "' stroke='rgba(255,255,255,.7)' stroke-width='.6' fill='none'/>";
+    s += pallino([g[0], g[1]], 1.6, "#fa5252", " stroke='#ffffff' stroke-width='.8'");   // il galleggiante
+    return s;
+  }
+
   // ---------- la città ----------
-  var LOTTI = { casino: [4.15, 6.95], studio: [6.95, 4.15], circolo: [23.35, 26.15], giochi: [10.55, 13.35], arena: [13.35, 10.55], locale: [16.95, 19.75], trofei: [19.75, 16.95] };
+  var LOTTI ={ casino: [4.15, 6.95], studio: [6.95, 4.15], circolo: [23.35, 26.15], giochi: [10.55, 13.35], arena: [13.35, 10.55], locale: [16.95, 19.75], trofei: [19.75, 16.95] };
   // i nomi: subito sopra il tetto di ogni edificio (altezza scelta a mano, così toccano l'edificio)
   var NOMI = { casino: ["🃏 Casinò", "#e03131", 95, 0], studio: ["📺 Studio TV", "#7048e8", 76, 0], circolo: ["🎲 Circolo", "#2f9e44", 70, 0], giochi: ["🕹️ Sala giochi", "#f08c00", 78, -4], arena: ["⚔️ Arena", "#1c7ed6", 46, 0], locale: ["🎉 Locale", "#d6336c", 64, 0], trofei: ["🏆 Trofei", "#f59f00", 74, 0] };
   var DISEGNA = { casino: casino, studio: studio, circolo: circolo, giochi: arcade, locale: locale, trofei: trofei };
@@ -425,6 +445,7 @@
     [[14.2, 18.6], [18.6, 14.2], [20.9, 20.9]].forEach(function (t) { og.push({ d: t[0] + t[1], s: pino(t[0], t[1], 1) }); });
     [[7.5, 10.55], [10.55, 7.5], [20.3, 23.35], [23.35, 20.3]].forEach(function (l) { og.push({ d: l[0] + l[1], s: lampione(l[0], l[1]) }); });
     og.push({ d: 51.4, s: panchina(25.8, 25.6) });   // il parco accanto al Circolo
+    og.push({ d: 55.6, s: tocco("pesca", laghetto(28.4, 28.4)) });   // il laghetto del parco: si pesca
     og.push({ d: 23.2, s: auto(12.6, 9.55, "#fa5252") }, { d: 29, s: auto(12.4, 15.98, "#4dabf7") }, { d: 41.6, s: auto(18.9, 22.38, "#fcc419") });
     // (il cantiere dell'anteprima, gru, transenne e birilli, è finito: la città è aperta; le funzioni restano per i lavori futuri)
     // la gente: in piazza a leggere le novità, al bar, per strada
@@ -437,6 +458,7 @@
     var pb = P(16.4, 16.4, 40);
     etichetta(pb[0], pb[1] - 12, "☕ Bar", "#e03131", null, "bar");
     etichetta(150, 292, "📰 Novità", "#4c6ef5", null, "piazza");
+    var pl = P(28.4, 28.4, 34); etichetta(pl[0], pl[1] - 6, "🎣 Laghetto", "#1c7ed6", null, "pesca");
     s += ET.join("");
     return io ? s + tu(145, 222) : s;
   }

@@ -577,6 +577,31 @@
     clearTimeout(tCasaNube); tCasaNube = setTimeout(function () { if (window.SGNube && SGNube.salvaCasa) SGNube.salvaCasa(pulita); }, 1500);   // nel profilo: un attimo dopo (non a ogni spostamento)
   }
   function soldiCasa() { return { monete: function () { return SGNube.monete(); }, spendi: function (n) { SGNube.cambiaMonete(-n); } }; }
+  // ---- la pesca al laghetto (js/pesca.js): album, cesto ed esche nel profilo e su questo telefono (come la casa) ----
+  var tPescaNube = null;
+  function chiavePesca() { var N = window.SGNube, u = N && N.utente && N.utente(); return u ? "sg-pesca|" + u.uid : null; }
+  function datiPesca() {
+    var N = window.SGNube, k = chiavePesca(); if (!k) return null;
+    var nube = N.pesca && N.pesca(), qui = null;
+    try { qui = JSON.parse(localStorage.getItem(k) || "null"); } catch (e) {}
+    var d = nube && (!qui || (nube.agg || 0) >= (qui.agg || 0)) ? JSON.parse(JSON.stringify(nube)) : qui;   // la più recente
+    return d && d.v ? d : null;
+  }
+  function salvaPesca(d) {
+    var k = chiavePesca(); if (!k || !d) return;
+    d.agg = Date.now();
+    try { localStorage.setItem(k, JSON.stringify(d)); } catch (e) {}
+    clearTimeout(tPescaNube); tPescaNube = setTimeout(function () { if (window.SGNube && SGNube.salvaPesca) SGNube.salvaPesca(JSON.parse(JSON.stringify(d))); }, 1200);
+  }
+  function schermataPesca() {
+    if (!window.SGPesca) return schermataCitta();
+    if (serveProfilo()) return;
+    var io = profiloAttivo();
+    var s = SGPesca.crea({ omino: io && io.omino, dati: datiPesca(), salva: salvaPesca, audio: audioCtx,
+      monete: function () { return SGNube.monete(); }, cambia: function (n) { SGNube.cambiaMonete(n); },
+      indietro: function () { schermataCitta(); } });
+    mostra(s); s._monta();
+  }
   function serveProfilo() {   // casa e negozio vogliono il profilo (le monete e i mobili sono tuoi)
     var N = window.SGNube; if (N && N.profilo && N.profilo()) return false;
     schermataAccesso(schermataCitta); return true;
@@ -719,6 +744,7 @@
   };
   function entraEdificio(k) {
     if (k === "piazza") { rientro = schermataCitta; return schermataNovita(); }   // la piazza: le novità
+    if (k === "pesca") return schermataPesca();   // il laghetto col pontile: si pesca
     if (INTERNI[k]) percorsoInterno[k] = [];   // entrando dalla città si comincia dall'ingresso
     schermataEdificio(k);
   }

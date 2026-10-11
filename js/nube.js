@@ -231,6 +231,13 @@
       profilo.casa = dati;
       return db.collection("profili").doc(utente.uid).update({ casa: dati }).catch(function () {});
     },
+    // ---- la pesca (js/pesca.js): album, cesto ed esche in un campo del profilo ----
+    pesca: function () { return (profilo && profilo.pesca) || null; },
+    salvaPesca: function (dati) {
+      if (!auth || !utente || !profilo || !dati) return Promise.resolve();
+      profilo.pesca = dati;
+      return db.collection("profili").doc(utente.uid).update({ pesca: dati }).catch(function () {});
+    },
     salvaLista: function (nome, lista) {
       if (!auth || !utente || !profilo) return Promise.resolve();
       profilo.liste = profilo.liste || {}; profilo.liste[nome] = lista;

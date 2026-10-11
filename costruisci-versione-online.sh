@@ -49,6 +49,8 @@ OUT=dist/index.html
   cat js/casino.js  # il Casinò dentro: una sala per ogni gioco di carte
   cat js/casa.js    # la casa: tre stanze da arredare
   echo ''
+  cat js/pesca.js   # la pesca al laghetto
+  echo ''
   cat js/core.js
   echo ''
   cat js/net.js

@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 184,
+    data: "11 ottobre 2026",
+    titolo: "Si pesca al laghetto! 🎣",
+    descrizione: [
+      "In fondo alla città, nel parco, c'è il laghetto col pontile: toccalo per andare a pescare con il tuo avatar.",
+      "Tieni premuto per caricare il lancio e lascia: più lontano lanci, più l'acqua è profonda e i pesci sono rari. Sott'acqua vedi le ombre dei pesci.",
+      "Il galleggiante trema quando un pesce assaggia: tocca solo quando va giù davvero! Poi la lotta: tieni premuto per tirare e molla quando il filo diventa rosso o vedi ❗.",
+      "19 pesci da collezionare nell'album, dai comuni ai leggendari. Alcuni escono solo di giorno, al tramonto o di notte, con l'ora vera. E ogni tanto peschi uno scarpone, una bottiglia col messaggio o un forziere!",
+      "Ogni pesce lo vendi per Speed Coins o lo tieni nel cesto. Hai 10 esche al giorno; altre si comprano."
+    ]
+  },
+  {
     v: 183,
     data: "11 ottobre 2026",
     titolo: "Palla Matta: la sfida con gli amici 🔴👥",
