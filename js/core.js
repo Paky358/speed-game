@@ -45,7 +45,7 @@
     tris: "sfida", drop4: "sfida", hockey: "sfida", navale: "sfida", calciobiliardo: "sfida",
     asta: "festa", impostore: "festa", sipero: "festa", scarabocchio: "festa",
     scalinata: "mini", horto: "mini", pendolo: "mini", pallamatta: "mini", garapesca: "mini",
-    timeline: "parole", nomicose: "parole", patata: "parole", taboo: "parole"
+    timeline: "parole", nomicose: "parole", patata: "parole", taboo: "parole", balla: "parole"
   };
   var catAttiva = "tutti";
   function catDi(g) { return CAT_GIOCO[g.id] || null; }
