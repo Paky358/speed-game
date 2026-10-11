@@ -14,8 +14,10 @@ window.SG_NOVITA = [
     titolo: "Nuovo gioco: La Balla Colossale 🤥",
     descrizione: [
       "Nello Studio TV c'è un nuovo game show: sul maxischermo esce una notizia vera ma incredibile, con un pezzo mancante.",
-      "Passandovi il telefono, ognuno scrive in segreto una balla per completarla: deve sembrare vera! Poi tutte le balle e la risposta vera si mescolano e ognuno vota quella che crede vera (la propria non si può votare).",
-      "+2 punti a chi trova la verità, +1 a chi ha scritto una balla per ogni amico che ci è cascato. Alla rivelazione il timbro dice BALLA! o VERO!, e si scopre chi l'ha scritta.",
+      "Ognuno scrive in segreto una balla per completarla: deve sembrare vera! Poi sul tabellone compaiono tutte le risposte, una alla volta, e ognuno vota quella che crede vera (la propria non si può votare).",
+      "Sul tabellone appaiono gli avatar di chi ha votato cosa, poi si scopre tutto: dalle balle meno votate alla più votata, e la verità per ultima. Il timbro dice BALLA! o VERO! e si vede chi l'ha scritta.",
+      "+2 punti a chi trova la verità, +1 a chi ha scritto una balla per ogni amico che ci è cascato.",
+      "Si gioca sullo stesso telefono passandolo di mano, oppure online: ognuno scrive e vota dal suo telefono, tutti insieme, col tempo che scorre.",
       "Da 3 a 8 giocatori, 3, 5 o 7 notizie a partita. Le notizie non si ripetono finché non le avete viste tutte."
     ]
   },
