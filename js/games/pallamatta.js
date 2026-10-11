@@ -402,7 +402,8 @@
     return p;
   }
   function salvaProgressi(p) { try { localStorage.setItem(CHIAVE, JSON.stringify({ rec: p.rec, stelle: p.stelle, potere: p.potere })); } catch (e) {} }
-  function sbloccato(p, i) { return i === 0 || (p.stelle[i] || 0) > 0; }
+  function sbloccato(p, i, t) { return i === 0 || (p.stelle[i] || 0) > 0 || tuttiAperti(t); }
+  function tuttiAperti(t) { return !!(t && t.nomeProfilo && String(t.nomeProfilo() || "").trim().toUpperCase() === "IL PAPPONE"); }   // il proprietario prova i livelli in ordine sparso
 
   // =========================================================
   //  LA SCHERMATA DEI LIVELLI (prima di giocare): scegli il livello e il tuo aiutante
@@ -427,7 +428,7 @@
       s._contenuto.appendChild(el("div", { class: "pm-cap pm-cap-" + C.sfondo }, [el("span", { text: C.icona + " Capitolo " + (c + 1) + " · " + C.nome }), el("small", { text: "★ " + stelleCap + "/" + mie.length * 3 })]));
       var lv = el("div", { class: "pm-livelli" });
       mie.forEach(function (i, n) {
-        var L = LIVELLI[i], ok = sbloccato(p, i), st = p.stelle[i + 1] || 0;
+        var L = LIVELLI[i], ok = sbloccato(p, i, t), st = p.stelle[i + 1] || 0;
         lv.appendChild(el("button", { class: "pm-lv pm-lv-" + C.sfondo + (ok ? "" : " chiuso") + (st ? " fatto" : ""), onclick: function () {
           if (!ok) return; vibra(8); partita(t, i, p.potere);
         } }, [
@@ -831,7 +832,7 @@
       righe.forEach(function (r) { box.appendChild(el("div", { class: "pm-rig" }, [el("span", { text: r[0] }), el("b", { text: r[1] })])); });
       if (nuovoRec) box.appendChild(el("div", { class: "pm-rec", text: "🏅 Nuovo record del livello!" }));
       var tasti = el("div", { class: "pm-tasti" });
-      if (vinto && lv + 1 < LIVELLI.length) tasti.appendChild(el("button", { class: "btn btn-primario", text: "▶ " + (LIVELLI[lv + 1].cap !== LIVELLI[lv].cap ? CAPITOLI[LIVELLI[lv + 1].cap].icona + " Capitolo " + (LIVELLI[lv + 1].cap + 1) : "Avanti: " + LIVELLI[lv + 1].nome), onclick: function () { chiudi(); partita(t, lv + 1, st.potere); } }));
+      if ((vinto || tuttiAperti(t)) && lv + 1 < LIVELLI.length) tasti.appendChild(el("button", { class: "btn btn-primario", text: "▶ " + (LIVELLI[lv + 1].cap !== LIVELLI[lv].cap ? CAPITOLI[LIVELLI[lv + 1].cap].icona + " Capitolo " + (LIVELLI[lv + 1].cap + 1) : "Avanti: " + LIVELLI[lv + 1].nome), onclick: function () { chiudi(); partita(t, lv + 1, st.potere); } }));
       tasti.appendChild(el("button", { class: "btn " + (vinto ? "btn-fantasma" : "btn-primario"), text: "↻ " + (vinto ? "Rigioca" : "Riprova"), onclick: function () { chiudi(); partita(t, lv, st.potere); } }));
       tasti.appendChild(el("button", { class: "btn btn-fantasma", text: "☰ Livelli", onclick: function () { chiudi(); schermataLivelli(t); } }));
       box.appendChild(tasti);

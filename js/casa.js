@@ -1434,7 +1434,7 @@
   }
 
   function negozio(opts) {
-    var casa = opts.dati && opts.dati.v ? opts.dati : casaIniziale(), tSalva = null, sezioni = [], pezzi = [];
+    var casa = opts.dati && opts.dati.v ? opts.dati : casaIniziale(), tSalva = null, sezioni = [], pezzi = [], cfgCommessa = opts.commessa || null;
     function salva() { clearTimeout(tSalva); tSalva = setTimeout(function () { if (opts.salva) opts.salva(casa); }, 300); }
     function suono(t) { suonaCasa(opts.audio, t); }
     var s = el("div", "schermata ne-vista"), strada = el("div", "ne-strada"), dentro = el("div", "ne-dentro");
@@ -1481,9 +1481,13 @@
       // l'ingresso: il bancone con la commessa che saluta
       var lIng = Math.max(250, cw * 0.8), muroIng = metti("ne-sezione", 0, 0, lIng, pav); muroIng.style.background = "repeating-linear-gradient(90deg,#fff1d6 0 26px,#fbe7c2 26px 52px)";
       metti("ne-insegna grande", lIng / 2, Math.max(70, pav * 0.16), null, null, "🛍️ Negozio");
-      if (window.SGOmino) {
-        var cfg = SGOmino.casuale("commessa del negozio"), bw = 150 * k, im = metti("img", lIng / 2 - bw / 2 - 20 * k, pav - 92 * k - bw * 0.97, bw, bw); im.className = "ne-commessa";
+      if (window.SGOmino) {   // la commessa: quella disegnata dal proprietario (uguale per tutti), se no una a caso ma sempre la stessa
+        var cfg = cfgCommessa || SGOmino.casuale("commessa del negozio"), bw = 150 * k, cl = lIng / 2 - bw / 2 - 20 * k, ct = pav - 92 * k - bw * 0.97, im = metti("img", cl, ct, bw, bw); im.className = "ne-commessa";
         try { im.src = datauri(SGOmino.svg(cfg, { busto: true })); } catch (e) {}
+        if (opts.modificaCommessa) {   // solo il proprietario: la matita per cambiarla
+          var mat = el("button", "ne-matita", "✏️"); mat.setAttribute("aria-label", "Cambia la commessa"); mat.style.left = (cl + 6).toFixed(1) + "px"; mat.style.top = (ct + 10).toFixed(1) + "px";
+          mat.onclick = im.onclick = function () { chiudi(); opts.modificaCommessa(cfgCommessa || cfg); }; dentro.appendChild(mat);
+        }
       }
       metti("ne-banco", lIng / 2 - 110 * k, pav - 92 * k, 220 * k, 92 * k + 6);
       metti("ne-cassa", lIng / 2 + 40 * k, pav - 92 * k - 30 * k, 44 * k, 30 * k);
@@ -1571,6 +1575,10 @@
     strada.addEventListener("scroll", function () { if (!tScroll) tScroll = requestAnimationFrame(doveSei); }, { passive: true });
     strada.addEventListener("wheel", function (e) { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { strada.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });   // col computer: la rotellina scorre di lato
 
+    s._commessa = function (c) {   // è arrivata la commessa del proprietario: si cambia solo lei
+      cfgCommessa = c; var im = dentro.querySelector(".ne-commessa");
+      if (im && window.SGOmino) try { im.src = datauri(SGOmino.svg(c, { busto: true })); } catch (e) {}
+    };
     s._monta = function () {
       aggMonete();
       (function prova() { if (!document.body.contains(s)) return; if (!costruisci()) return requestAnimationFrame(prova); if (opts.reparto) vaiReparto(opts.reparto); doveSei(); })();

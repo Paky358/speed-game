@@ -594,11 +594,32 @@
   function schermataNegozio(daStanza) {   // daStanza: si arriva dalla casa (e indietro si torna lì), altrimenti dalla città
     if (!window.SGCasa) return schermataCitta();
     if (serveProfilo()) return;
-    var m = soldiCasa();
+    var m = soldiCasa(), cm = commessaSalvata();
     var s = SGCasa.negozio({ dati: datiCasa(), salva: salvaCasa, monete: m.monete, spendi: m.spendi, audio: audioCtx, reparto: daStanza || null,
       indietro: function () { if (daStanza) schermataCasa(daStanza); else schermataCitta(); },
-      aCasa: daStanza ? null : function () { schermataCasa(); } });
+      aCasa: daStanza ? null : function () { schermataCasa(); },
+      commessa: cm, modificaCommessa: eProprietario() ? function (cfg) { modificaCommessa(cfg, daStanza); } : null });
     mostra(s); s._monta();
+    // la commessa vera la prende dalla scheda del proprietario (la prossima volta si vede subito)
+    if (window.SGNube && SGNube.commessa) SGNube.commessa(PROPRIETARIO).then(function (c) {
+      if (!c || JSON.stringify(c) === JSON.stringify(cm)) return;
+      try { localStorage.setItem("sg-commessa", JSON.stringify(c)); } catch (e) {}
+      if (document.body.contains(s) && s._commessa) s._commessa(c);
+    }).catch(function () {});
+  }
+  // la commessa del negozio: la disegna il proprietario con l'editor degli avatar, e la vedono tutti uguale
+  var PROPRIETARIO = "IL PAPPONE";
+  function eProprietario() { var io = profiloAttivo(); return String((io && io.nome) || "").trim().toUpperCase() === PROPRIETARIO; }
+  function commessaSalvata() { try { return JSON.parse(localStorage.getItem("sg-commessa") || "null"); } catch (e) { return null; } }
+  function modificaCommessa(cfg, daStanza) {
+    var bozza = { nome: "Commessa", omino: cfg, omini: null }, prima = JSON.stringify(cfg);
+    schermataOmino(function () {
+      if (bozza.omino && JSON.stringify(bozza.omino) !== prima) {
+        try { localStorage.setItem("sg-commessa", JSON.stringify(bozza.omino)); } catch (e) {}
+        if (window.SGNube && SGNube.salvaCommessa) SGNube.salvaCommessa(bozza.omino);
+      }
+      schermataNegozio(daStanza);
+    }, bozza);
   }
   var scrollCitta = 0;   // fin dove avevi scorso la città: uscendo da un edificio si torna lì (dalla home si riparte dall'alto)
   function schermataCitta() {

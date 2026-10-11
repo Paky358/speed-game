@@ -292,11 +292,23 @@
       var sch = { uid: utente.uid, nome: profilo.nome, chiave: SGNube.chiaveNome(profilo.nome), omino: profilo.omino || null, emoji: profilo.emoji || "🙂",
         livello: profilo.level || 1, prestigio: profilo.prestige || 0 };   // il livello lo vedono anche gli amici
       for (var k in dati) sch[k] = dati[k];
+      if (profilo.commessa) sch.commessa = profilo.commessa;   // (solo il proprietario: la commessa del negozio)
       var firma = JSON.stringify(sch);
       if (firma === ultimaScheda) return Promise.resolve();   // niente di nuovo: non riscrive
       ultimaScheda = firma;
       sch.agg = Date.now();
       return db.collection("pubblici").doc(utente.uid).set(sch).catch(function () { ultimaScheda = null; });
+    },
+    // la commessa del negozio: il proprietario la salva nel suo profilo e nella sua scheda pubblica, tutti la leggono da lì
+    salvaCommessa: function (cfg) {
+      if (!auth || !utente || !profilo) return Promise.resolve();
+      profilo.commessa = cfg; ultimaScheda = null;
+      db.collection("profili").doc(utente.uid).update({ commessa: cfg }).catch(function () {});
+      return db.collection("pubblici").doc(utente.uid).set({ commessa: cfg }, { merge: true }).catch(function () {});
+    },
+    commessa: function (nome) {
+      if (!auth || !utente) return Promise.resolve(null);
+      return SGNube.cercaNome(nome).then(function (sch) { return (sch && sch.commessa) || null; });
     },
     amici: function () { return (profilo && profilo.amici) || []; },
     // cerca un giocatore col nome esatto (maiuscole e spazi non contano)
