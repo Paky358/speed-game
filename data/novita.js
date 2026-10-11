@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 187,
+    data: "11 ottobre 2026",
+    titolo: "Il laghetto tutto nuovo 🌅🎣",
+    descrizione: [
+      "Il laghetto è rifatto da capo: nuvole che scorrono, uccelli di giorno, stelle e stelle cadenti di notte, montagne nella foschia e il bosco sulla riva.",
+      "Sott'acqua i raggi di luce oscillano, i riflessi danzano sul fondo, passano i banchi di pesciolini e le alghe si muovono. Sul fondo trovi sassi, conchiglie, un tronco e un'anfora.",
+      "Il tuo avatar si piega indietro per caricare il lancio e la canna si piega davvero quando il pesce tira. Mentre carichi vedi dove arriverà il lancio.",
+      "Quando abbocca compare il ❗ sopra la testa. Il pesce vicino al pontile si scopre coi suoi colori e salta fuori dall'acqua al rallentatore. La carta si gira, e quelle dei pesci epici e leggendari brillano.",
+      "Di sera si accende la lanterna del pontile. A volte piove, e i pesci abboccano più spesso. Uccellini di giorno e grilli di notte, con il tasto 🔊 per spegnerli."
+    ]
+  },
+  {
     v: 186,
     data: "11 ottobre 2026",
     titolo: "Nuovo gioco: Gara di pesca 🎣👥",

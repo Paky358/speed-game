@@ -79,6 +79,7 @@
   function adesso(sp, fase) { return sp.quando === "sempre" || sp.quando === fase || (fase === "tramonto" && sp.quando !== "tramonto" ? Math.random() < .5 : false); }   // al tramonto escono un po' quelli del giorno e un po' quelli della notte
   function valore(sp, cm) { var k = (cm - sp.cm[0]) / Math.max(1, sp.cm[1] - sp.cm[0]); return Math.round(sp.prezzo * (0.7 + 0.6 * k)); }   // i più grossi valgono di più
   function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  function rnd(seme) { var s = (seme >>> 0) || 1; return function () { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return (s % 1000003) / 1000003; }; }   // numeri a caso ma sempre uguali (stelle, sassi, alghe)
   // quanto pesa un pesce (per la gara): cresce col cubo della lunghezza, i pesci alti pesano di più di quelli lunghi e stretti
   var FORMA_KG = { snello: .7, normale: 1, alto: 1.35, lungo: .75, anguilla: .3, baffi: 1.05, storione: .95, gambero: 3 };
   function pesoKg(sp, cm) { return Math.max(.01, Math.round(.000012 * cm * cm * cm * (FORMA_KG[sp.forma] || 1) * 100) / 100); }
@@ -197,8 +198,10 @@
 
   // ---------- suoni (fatti al volo) ----------
   var AUDIO = null;
+  var CHIAVE_SUONI = "sg-pe-suoni";   // i suoni del laghetto (anche gli uccellini e i grilli) si spengono col tasto 🔊
+  function suoniOn() { try { return localStorage.getItem(CHIAVE_SUONI) !== "0"; } catch (e) { return true; } }
   function tono(f, quando, dur, tipo, vol, fine) {
-    var c = AUDIO && AUDIO(); if (!c) return;
+    if (!suoniOn()) return; var c = AUDIO && AUDIO(); if (!c) return;
     try {
       var o = c.createOscillator(), g = c.createGain(), a = c.currentTime + (quando || 0);
       o.type = tipo || "sine"; o.frequency.setValueAtTime(f, a); if (fine) o.frequency.exponentialRampToValueAtTime(fine, a + dur);
@@ -249,7 +252,9 @@
     var s = el("div", "schermata pe-vista" + (GARA ? " pe-in-gara" : "")), cv = el("canvas", "pe-tela"), ctx = cv.getContext("2d");
     var testa = el("div", "pe-testa"), bInd = el("button", "pe-tasto", "‹"), nome = el("div", "pe-nome"), cEsche = el("div", "pe-chip"), cMonete = el("div", "pe-chip");
     bInd.setAttribute("aria-label", "Indietro"); bInd.onclick = function () { esci(); };
-    [bInd, nome, cEsche, cMonete].forEach(function (n) { testa.appendChild(n); });
+    var bSuoni = el("button", "pe-tasto", suoniOn() ? "🔊" : "🔇"); bSuoni.setAttribute("aria-label", "Suoni");
+    bSuoni.onclick = function () { var on = !suoniOn(); try { localStorage.setItem(CHIAVE_SUONI, on ? "1" : "0"); } catch (e) {} bSuoni.textContent = on ? "🔊" : "🔇"; };
+    [bInd, bSuoni, nome, cEsche, cMonete].forEach(function (n) { testa.appendChild(n); });
     var giu = el("div", "pe-giu"), bAlbum = el("button", "pe-bott", "📖 Album"), bCesto = el("button", "pe-bott"), bAttr = el("button", "pe-bott", "🎒 Attrezzi");
     bAlbum.onclick = function () { album(); }; bCesto.onclick = function () { cesto(); }; bAttr.onclick = function () { attrezzi(); };
     giu.appendChild(bAlbum); giu.appendChild(bCesto); giu.appendChild(bAttr);
@@ -278,73 +283,116 @@
     function suggerisci(t) { if (aiuto.textContent !== t) aiuto.textContent = t; aiuto.style.opacity = t ? "1" : "0"; }
     function vivo() { return document.body.contains(cv); }
 
-    // ---- misure ----
-    var S = 3, ox = 0, oy = 0, cw = 360, ch = 640, dpr = 1, sfondo = null, figura = null;
+    // ---- misure e telecamera: si disegna tutto in unità del lago, la telecamera si avvicina e trema ----
+    var S = 3, ox = 0, oy = 0, cw = 360, ch = 640, dpr = 1, paesaggio = null, vignetta = null, figura = null;
+    var R = { x0: -30, y0: -55, x1: 130, y1: 186 };   // il pezzo di mondo disegnato (più largo del lago: si vede anche ai lati)
+    var cam = { z: 1, fx: 50, fy: 90, scossa: 0 };
     function misura() {
       if (!vivo()) { window.removeEventListener("resize", misura); return; }
       cw = s.clientWidth || 360; ch = s.clientHeight || 640; dpr = Math.min(2, window.devicePixelRatio || 1);
       cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
       S = Math.min(cw / W, ch / 165); ox = (cw - W * S) / 2; oy = ch - H * S;
-      sfondo = null;
+      paesaggio = null; vignetta = null;
     }
     window.addEventListener("resize", misura);
-    function X(x) { return ox + x * S; } function Y(y) { return oy + y * S; }
+    function mondo(c) {   // da qui si disegna in unità del lago, con la telecamera
+      var z = cam.z, k = S * z, sh = cam.scossa > 0 ? cam.scossa : 0;
+      var tx = ox + cam.fx * S * (1 - z) + (Math.random() - .5) * sh * S, ty = oy + cam.fy * S * (1 - z) + (Math.random() - .5) * sh * S;
+      c.setTransform(dpr * k, 0, 0, dpr * k, dpr * tx, dpr * ty);
+    }
+    function schermo(c) { c.setTransform(dpr, 0, 0, dpr, 0, 0); }   // da qui si disegna in pixel dello schermo (la testa)
+    function aSchermo(x, y) { return { x: ox + (cam.fx + (x - cam.fx) * cam.z) * S, y: oy + (cam.fy + (y - cam.fy) * cam.z) * S }; }
     // l'avatar sul pontile (un'immagine: si disegna una volta)
     if (opts.omino && window.SGOmino) try { figura = new Image(); figura.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGOmino.svg(opts.omino)); } catch (e) { figura = null; }
 
-    // ---- lo sfondo: cielo, colline, acqua, fondo, pontile (disegnato una volta sola) ----
-    function disegnaSfondo() {
-      var c = document.createElement("canvas"); c.width = cv.width; c.height = cv.height; var x = c.getContext("2d"), i, g;
-      x.scale(dpr, dpr);
-      var notte = FASE === "notte", tram = FASE === "tramonto", ys = Y(SUP);
-      g = x.createLinearGradient(0, 0, 0, ys);
-      if (notte) { g.addColorStop(0, "#070a24"); g.addColorStop(1, "#28306b"); } else if (tram) { g.addColorStop(0, "#5f3c8f"); g.addColorStop(.6, "#ff8f5c"); g.addColorStop(1, "#ffd29a"); } else { g.addColorStop(0, "#5cb5ee"); g.addColorStop(1, "#d6f0ff"); }
-      x.fillStyle = g; x.fillRect(0, 0, cw, ys + 2);
-      if (notte) { for (i = 0; i < 70; i++) { x.fillStyle = "rgba(255,255,255," + (.3 + (i * 37 % 10) / 15) + ")"; x.beginPath(); x.arc((i * 97) % cw, ((i * 53) % Math.max(10, ys - 30)), (i % 3) * .5 + .6, 0, 7); x.fill(); } x.fillStyle = "#f1f3f5"; x.beginPath(); x.arc(X(80), Y(18), 6 * S, 0, 7); x.fill(); x.fillStyle = "#28306b"; x.beginPath(); x.arc(X(82.5), Y(16.5), 5.5 * S, 0, 7); x.fill(); }
-      else if (tram) { var gs = x.createRadialGradient(X(70), Y(52), 0, X(70), Y(52), 30 * S); gs.addColorStop(0, "rgba(255,240,180,.95)"); gs.addColorStop(1, "rgba(255,200,120,0)"); x.fillStyle = gs; x.fillRect(0, 0, cw, ys); x.fillStyle = "#ffd43b"; x.beginPath(); x.arc(X(70), Y(54), 8 * S, Math.PI, 0); x.fill(); }
-      else { var gl = x.createRadialGradient(X(82), Y(14), 0, X(82), Y(14), 22 * S); gl.addColorStop(0, "rgba(255,250,210,.95)"); gl.addColorStop(1, "rgba(255,250,210,0)"); x.fillStyle = gl; x.fillRect(0, 0, cw, ys); x.fillStyle = "#fff3b0"; x.beginPath(); x.arc(X(82), Y(14), 6 * S, 0, 7); x.fill(); }
-      // le colline e gli alberi lontani
-      [["#6aa84f", 46, 4, .9], ["#4f8a3c", 52, 3, 1.4]].forEach(function (h, k) {
-        var col = notte ? (k ? "#1c2a3a" : "#24364a") : tram ? (k ? "#5e6e3a" : "#7a8a4a") : h[0];
-        x.fillStyle = col; x.beginPath(); x.moveTo(0, ys + 1);
-        for (var xx = -10; xx <= W + 10; xx += 2) x.lineTo(X(xx), Y(h[1] + Math.sin(xx / 9 * h[3] + k * 2) * h[2] + Math.sin(xx / 4.1 + k) * .8));
-        x.lineTo(cw, ys + 1); x.lineTo(cw, ys + 1); x.closePath(); x.fill();
-        if (k) for (var ti = 0; ti < 9; ti++) { var tx = 30 + ti * 8 + (ti % 3) * 2, ty = h[1] + Math.sin(tx / 9 * h[3] + 2) * h[2] - 2; x.fillStyle = mix(col, "#000000", .15); x.beginPath(); x.moveTo(X(tx - 2), Y(ty + 2)); x.lineTo(X(tx), Y(ty - 5 - (ti % 2) * 2)); x.lineTo(X(tx + 2), Y(ty + 2)); x.fill(); }
-      });
-      // l'acqua: più scura in fondo, coi raggi di luce di giorno
-      g = x.createLinearGradient(0, ys, 0, ch);
-      if (notte) { g.addColorStop(0, "#1b3a5c"); g.addColorStop(1, "#06121f"); } else if (tram) { g.addColorStop(0, "#c27b5a"); g.addColorStop(.08, "#3f7a8c"); g.addColorStop(1, "#0c2a3a"); } else { g.addColorStop(0, "#58b4d6"); g.addColorStop(1, "#0d4a66"); }
-      x.fillStyle = g; x.fillRect(0, ys, cw, ch - ys);
-      if (!notte) { x.globalAlpha = tram ? .08 : .12; x.fillStyle = "#ffffff"; for (i = 0; i < 5; i++) { var rx = X(30 + i * 16); x.beginPath(); x.moveTo(rx - 3 * S, ys); x.lineTo(rx + 2 * S, ys); x.lineTo(rx + 14 * S, ys + 70 * S); x.lineTo(rx + 4 * S, ys + 70 * S); x.closePath(); x.fill(); } x.globalAlpha = 1; }
-      // il fondo del lago: sabbia e fango, sassi e alghe
-      x.fillStyle = notte ? "#2a2416" : "#8a7444"; x.beginPath(); x.moveTo(0, ch); x.lineTo(0, Y(yFondo(0)));
-      for (var fx = 0; fx <= W + 20; fx += 2) x.lineTo(X(fx), Y(yFondo(fx) + Math.sin(fx * 1.7) * .6));
-      x.lineTo(cw, ch); x.closePath(); x.fill();
-      x.fillStyle = notte ? "#3a3220" : "#a38d58"; for (fx = 0; fx < W + 20; fx += 2) x.fillRect(X(fx), Y(yFondo(fx) + .4), S * 1.4, S * .5);
-      for (i = 0; i < 18; i++) { var px = 6 + (i * 41) % 96, py = yFondo(px); x.fillStyle = notte ? "#4a4a4a" : ["#9e9e9e", "#7d7d7d", "#b0a58a"][i % 3]; x.beginPath(); x.ellipse(X(px), Y(py), S * (.8 + (i % 3) * .4), S * .55, 0, 0, 7); x.fill(); }
-      for (i = 0; i < 9; i++) {   // le alghe
-        var ax = 8 + i * 11 + (i % 2) * 3, ay = yFondo(ax), ah = 7 + (i * 7) % 9;
-        x.strokeStyle = notte ? "#1f4a2a" : (i % 2 ? "#2f9e44" : "#37b24d"); x.lineWidth = S * .9; x.lineCap = "round"; x.beginPath(); x.moveTo(X(ax), Y(ay));
-        for (var k = 1; k <= 5; k++) x.lineTo(X(ax + Math.sin(k * 1.4 + i) * 1.4), Y(ay - ah * k / 5)); x.stroke();
-      }
-      // le canne vicino al pontile
-      for (i = 0; i < 7; i++) { var cx = 23 + i * 1.6, ch2 = 10 + (i % 3) * 3; x.strokeStyle = notte ? "#2b3a1f" : "#5c7a2a"; x.lineWidth = S * .5; x.beginPath(); x.moveTo(X(cx), Y(SUP + 3)); x.quadraticCurveTo(X(cx + .5), Y(SUP - ch2 / 2), X(cx + (i % 2 ? 1 : -.6)), Y(SUP - ch2)); x.stroke(); if (i % 2) { x.fillStyle = notte ? "#3b2f1f" : "#7a4a1f"; x.beginPath(); x.ellipse(X(cx + 1), Y(SUP - ch2 + 1.5), S * .45, S * 1.4, .1, 0, 7); x.fill(); } }
-      // il pontile di legno: i pali nell'acqua e le assi
-      var legno = notte ? "#4a3624" : "#a0652b", scuro = notte ? "#2e2216" : "#6b4220";
-      [3, 11, 19].forEach(function (px2) { x.fillStyle = scuro; x.fillRect(X(px2 - .7), Y(SUP - 5), S * 1.4, Y(yFondo(px2)) - Y(SUP - 5)); });
-      x.fillStyle = legno; x.fillRect(X(-10), Y(SUP - 6), X(PONTE) - X(-10), S * 2.2);
-      x.fillStyle = scuro; for (var ax2 = -8; ax2 < PONTE; ax2 += 3) x.fillRect(X(ax2), Y(SUP - 6), S * .25, S * 2.2);
-      x.fillStyle = mix(legno, "#ffffff", .2); x.fillRect(X(-10), Y(SUP - 6), X(PONTE) - X(-10), S * .4);
-      sfondo = c;
-    }
+    // ---- i colori di ogni ora (e un po' più grigi se piove) ----
+    var PAL = {
+      giorno:   { c0: "#2f86dc", c1: "#8fd0ff", c2: "#e4f5ff", lon: "#a8c4dc", mon: "#7fa8b0", col: "#6aab4f", col2: "#4f8e3c", alb: "#2f6b34", alb2: "#3e8a3f", a0: "#5ec2e8", a1: "#1b80ae", a2: "#082f4b", f0: "#dcc286", f1: "#b39257", f2: "#6e5432", luce: "255,250,220", nuvola: "255,255,255", astro: [83, 9] },
+      tramonto: { c0: "#241b5c", c1: "#c4577a", c2: "#ffbf85", lon: "#b07a90", mon: "#7f5576", col: "#6e6a40", col2: "#575132", alb: "#3a3424", alb2: "#4a4430", a0: "#e69a74", a1: "#3d6b8a", a2: "#0d1f33", f0: "#ad895c", f1: "#866640", f2: "#4f3a24", luce: "255,205,160", nuvola: "255,190,170", astro: [66, 31] },
+      notte:    { c0: "#02051a", c1: "#121c46", c2: "#2b3b74", lon: "#26355c", mon: "#1c2847", col: "#15213b", col2: "#101b31", alb: "#0b1424", alb2: "#0f1a2c", a0: "#1f4d80", a1: "#0d2648", a2: "#020812", f0: "#4d4434", f1: "#3b3528", f2: "#221e17", luce: "190,210,255", nuvola: "120,140,190", astro: [80, 11] }
+    };
+    var PIOVE = !GARA && Math.random() < .15;   // a volte piove: i pesci abboccano di più
+    function pal() { return PAL[FASE] || PAL.giorno; }
     function mix(a, b, t) { var p = function (h) { var n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }, A = p(a), B = p(b); return "rgb(" + A.map(function (v, i) { return Math.round(v + (B[i] - v) * t); }).join(",") + ")"; }
+    function grigio(c) { return PIOVE ? mix(c, "#6b7480", .35) : c; }
+
+    // ---- il paesaggio fermo (montagne, colline, acqua, fondo, pontile): disegnato una volta sola, in unità del lago ----
+    function disegnaPaesaggio() {
+      var k = S * dpr, c = document.createElement("canvas"), P = pal(), r = rnd(4242), i, g, xx;
+      c.width = Math.ceil((R.x1 - R.x0) * k); c.height = Math.ceil((R.y1 - R.y0) * k);
+      var x = c.getContext("2d"); x.setTransform(k, 0, 0, k, -R.x0 * k, -R.y0 * k); x.lineJoin = "round"; x.lineCap = "round";
+      function crinale(y0, amp, f1, f2, ph, col) { x.fillStyle = col; x.beginPath(); x.moveTo(R.x0, SUP + 1); for (xx = R.x0; xx <= R.x1; xx += 1.5) x.lineTo(xx, y0 - Math.abs(Math.sin(xx / f1 + ph)) * amp - Math.sin(xx / f2 + ph * 2) * amp * .35); x.lineTo(R.x1, SUP + 1); x.closePath(); x.fill(); }
+      // le montagne lontane nella foschia, poi quelle medie
+      crinale(44, 13, 17, 7, .4, grigio(P.lon));
+      g = x.createLinearGradient(0, 28, 0, SUP); g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(1, PIOVE ? "rgba(200,205,215,.55)" : "rgba(" + (FASE === "notte" ? "60,80,140" : "255,255,255") + ",.35)"); x.fillStyle = g; x.fillRect(R.x0, 28, R.x1 - R.x0, SUP - 28);
+      crinale(51, 8, 11, 5, 2.1, grigio(P.mon));
+      // le colline col bosco: alberi tondi e pini, più scuri in basso
+      crinale(56, 4, 9, 4, 4.2, grigio(P.col));
+      for (i = 0; i < 46; i++) {
+        var tx = R.x0 + 4 + i * 3.6 + r() * 2, ty = 56 - Math.abs(Math.sin(tx / 9 + 4.2)) * 4 - Math.sin(tx / 4 + 8.4) * 1.4 + 1.2, hh = 2.6 + r() * 2.4;
+        if (tx > -2 && tx < 26) continue;   // (dietro al pontile lasciamo l'aria)
+        x.fillStyle = grigio(i % 3 ? P.alb : P.alb2);
+        if (i % 4 === 0) { x.beginPath(); x.moveTo(tx - 1.4, ty); x.lineTo(tx, ty - hh * 1.5); x.lineTo(tx + 1.4, ty); x.closePath(); x.fill(); }
+        else { x.beginPath(); x.arc(tx, ty - hh * .6, hh * .6, 0, 7); x.fill(); x.beginPath(); x.arc(tx + hh * .5, ty - hh * .35, hh * .45, 0, 7); x.fill(); }
+      }
+      crinale(59.4, 1.2, 6, 3, 1.3, grigio(P.col2));
+      // l'acqua: chiara in alto, buia in fondo
+      g = x.createLinearGradient(0, SUP, 0, R.y1); g.addColorStop(0, grigio(P.a0)); g.addColorStop(.32, grigio(P.a1)); g.addColorStop(1, grigio(P.a2));
+      x.fillStyle = g; x.fillRect(R.x0, SUP, R.x1 - R.x0, R.y1 - SUP);
+      // il fondo: sabbia a strati, più scura dove è profondo, con le increspature
+      g = x.createLinearGradient(0, 78, 0, 170); g.addColorStop(0, P.f0); g.addColorStop(.45, P.f1); g.addColorStop(1, P.f2);
+      x.fillStyle = g; x.beginPath(); x.moveTo(R.x0, R.y1); x.lineTo(R.x0, yFondo(0));
+      for (xx = R.x0; xx <= R.x1; xx += 1) x.lineTo(xx, yFondo(Math.max(0, xx)) + Math.sin(xx * 1.3) * .35);
+      x.lineTo(R.x1, R.y1); x.closePath(); x.fill();
+      x.strokeStyle = "rgba(255,255,255,.12)"; x.lineWidth = .25;
+      for (i = 0; i < 40; i++) { var sx = 18 + r() * 86, sy = yFondo(sx) + 1 + r() * 6; x.beginPath(); x.moveTo(sx - 1.6, sy); x.quadraticCurveTo(sx, sy - .5, sx + 1.6, sy); x.stroke(); }
+      x.fillStyle = "rgba(0,0,0,.1)"; for (i = 0; i < 120; i++) { var gx = 16 + r() * 90, gy = yFondo(gx) + .6 + r() * 16; x.fillRect(gx, gy, .25, .25); }
+      // i sassi (con la luce sopra), le conchiglie, un tronco e un'anfora affondati
+      for (i = 0; i < 16; i++) {
+        var px = 20 + r() * 82, py = yFondo(px) + .2, rw = .9 + r() * 1.8, rh = rw * (.5 + r() * .25), sg = x.createLinearGradient(0, py - rh, 0, py + rh);
+        sg.addColorStop(0, FASE === "notte" ? "#5a5f6a" : "#b9bec4"); sg.addColorStop(1, FASE === "notte" ? "#2a2e36" : "#6d737c");
+        x.fillStyle = sg; x.beginPath(); x.ellipse(px, py, rw, rh, (r() - .5) * .3, 0, 7); x.fill();
+        x.fillStyle = "rgba(60,120,60,.35)"; x.beginPath(); x.ellipse(px - rw * .3, py - rh * .5, rw * .4, rh * .25, 0, 0, 7); x.fill();   // un po' di muschio
+      }
+      [[34, 1], [61, -1], [88, 1]].forEach(function (q) { var py = yFondo(q[0]) + .3; x.fillStyle = FASE === "notte" ? "#8a7f75" : "#f8e1d0"; x.beginPath(); x.moveTo(q[0] - .9, py); x.quadraticCurveTo(q[0], py - 1.6, q[0] + .9, py); x.closePath(); x.fill(); x.strokeStyle = "rgba(160,110,90,.6)"; x.lineWidth = .12; for (var j = -2; j <= 2; j++) { x.beginPath(); x.moveTo(q[0], py); x.lineTo(q[0] + j * .35, py - 1.2); x.stroke(); } });
+      var lx = 52, ly = yFondo(lx) - .6;   // il tronco
+      x.save(); x.translate(lx, ly); x.rotate(.62); x.fillStyle = FASE === "notte" ? "#3a2c1f" : "#6b4a2c"; x.fillRect(-7, -1.1, 14, 2.2); x.fillStyle = FASE === "notte" ? "#2a2016" : "#4e3520"; x.beginPath(); x.ellipse(7, 0, .6, 1.1, 0, 0, 7); x.fill(); x.strokeStyle = "rgba(0,0,0,.25)"; x.lineWidth = .15; for (i = -6; i < 6; i += 2.5) { x.beginPath(); x.moveTo(i, -.9); x.lineTo(i + 1.2, -.2); x.stroke(); } x.restore();
+      var ax = 76, ay = yFondo(ax) - 1.2;   // l'anfora (un pezzo d'Italia anche sott'acqua)
+      x.save(); x.translate(ax, ay); x.rotate(-1.15); x.fillStyle = FASE === "notte" ? "#5a3a2a" : "#b5623a";
+      x.beginPath(); x.moveTo(-.6, -3.2); x.quadraticCurveTo(-1.8, -1.5, -1.6, .8); x.quadraticCurveTo(-1, 2.6, 0, 2.8); x.quadraticCurveTo(1, 2.6, 1.6, .8); x.quadraticCurveTo(1.8, -1.5, .6, -3.2); x.closePath(); x.fill();
+      x.strokeStyle = x.fillStyle; x.lineWidth = .35; x.beginPath(); x.moveTo(-.6, -2.6); x.quadraticCurveTo(-1.8, -2.8, -1.3, -1.3); x.moveTo(.6, -2.6); x.quadraticCurveTo(1.8, -2.8, 1.3, -1.3); x.stroke();
+      x.fillStyle = "rgba(255,255,255,.18)"; x.beginPath(); x.ellipse(-.6, 0, .35, 1.4, 0, 0, 7); x.fill(); x.restore();
+      // tutto quello che sta sott'acqua prende il colore dell'acqua, sempre più buio in profondità
+      function rgba(h, a) { var n = parseInt(h.slice(1), 16); return "rgba(" + (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255) + "," + a + ")"; }
+      g = x.createLinearGradient(0, SUP, 0, R.y1); g.addColorStop(0, rgba(P.a0, 0)); g.addColorStop(.18, rgba(P.a1, .3)); g.addColorStop(.6, rgba(P.a1, .45)); g.addColorStop(1, rgba(P.a2, .78));
+      x.fillStyle = g; x.fillRect(R.x0, SUP, R.x1 - R.x0, R.y1 - SUP);
+      // il pontile: i pali nell'acqua (con le alghe attaccate), le assi, la cassetta, la corda e il palo della lanterna
+      var legno = FASE === "notte" ? "#4a3624" : "#a8692e", scuro = FASE === "notte" ? "#2a1e14" : "#6b4220";
+      [3, 11, 19].forEach(function (px2) {
+        var pg = x.createLinearGradient(px2 - .8, 0, px2 + .8, 0); pg.addColorStop(0, scuro); pg.addColorStop(.5, legno); pg.addColorStop(1, scuro);
+        x.fillStyle = pg; x.fillRect(px2 - .8, SUP - 5, 1.6, yFondo(px2) - SUP + 6);
+        x.fillStyle = "rgba(47,110,60,.55)"; x.fillRect(px2 - .85, SUP + .5, 1.7, 2.4);   // le alghe sul palo
+      });
+      x.fillStyle = scuro; x.fillRect(-12, SUP - 5.2, PONTE + 12, 1.6);
+      for (var ab = -12; ab < PONTE; ab += 2.4) { var lg = x.createLinearGradient(0, SUP - 7.4, 0, SUP - 5.2); lg.addColorStop(0, mix(legno, "#ffffff", .18)); lg.addColorStop(1, legno); x.fillStyle = lg; x.fillRect(ab + .08, SUP - 7.4, 2.24, 2.2); }
+      x.fillStyle = scuro; x.fillRect(PONTE - 1.2, SUP - 17, 1, 10);   // il palo della lanterna
+      x.fillRect(PONTE - 1.2, SUP - 17, 3.2, .7);
+      x.fillStyle = FASE === "notte" ? "#3a4a6a" : "#2b8a3e"; x.fillRect(1.5, SUP - 9.6, 4.4, 2.2); x.fillStyle = "rgba(255,255,255,.25)"; x.fillRect(1.5, SUP - 9.6, 4.4, .5);   // la cassetta degli attrezzi
+      x.strokeStyle = FASE === "notte" ? "#6a5a40" : "#d9c08a"; x.lineWidth = .35; for (i = 0; i < 3; i++) { x.beginPath(); x.ellipse(-4, SUP - 7.8, 1.6 - i * .4, .5 - i * .1, 0, 0, 7); x.stroke(); }   // la corda arrotolata
+      paesaggio = c;
+    }
+    function disegnaVignetta() {   // i bordi un po' più scuri: l'occhio va al centro
+      var c = document.createElement("canvas"); c.width = cv.width; c.height = cv.height; var x = c.getContext("2d");
+      var g = x.createRadialGradient(cv.width / 2, cv.height * .48, Math.min(cv.width, cv.height) * .35, cv.width / 2, cv.height * .48, Math.max(cv.width, cv.height) * .75);
+      g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0," + (FASE === "notte" ? .45 : .28) + ")"); x.fillStyle = g; x.fillRect(0, 0, c.width, c.height);
+      vignetta = c;
+    }
 
     // =========================================================
     //  LO STATO DELLA PESCA
     // =========================================================
     var st = { fase: "pronto", t: 0, carica: 0, caricaDir: 1, hx: 0, hy: 0, gal: { x: 0, y: 0, dip: 0 }, volo: null, attesa: 0, cerca: 0, pesce: null, lotta: null, salto: null, punta: 0 };
     var pesci = [], fx = [], lucciole = [];
-    var PUNTA = { x: 33, y: 33 };   // la punta della canna (a riposo)
     function nuovoPesce(daFuori, vicinoA, pesi) {   // vicinoA: un pesce adatto a quel punto del lago, che arriva lì vicino; pesi: le rarità dell'esca speciale
       var cur = null, sp = null, fv = vicinoA != null ? fracDi(vicinoA) : null;
       pesi = pesi || PESO_R;
@@ -394,7 +442,7 @@
     // ---- 1. il lancio ----
     function lancia() {
       var p = st.carica, tx = 27 + p * 68;
-      st.fase = "volo"; st.volo = { t: 0, dur: .55 + p * .45, x0: PUNTA.x, y0: PUNTA.y, x1: tx, y1: SUP };
+      st.fase = "volo"; var pt0 = geo().punta; st.volo = { t: 0, dur: .55 + p * .45, x0: pt0.x, y0: pt0.y, x1: tx, y1: SUP };
       suonoLancio(); vibra(8);
     }
     // ---- 2. l'attesa: i pesci vicini si accorgono dell'esca ----
@@ -407,8 +455,8 @@
       st.cerca -= dt; if (st.cerca > 0 || st.pesce) return; st.cerca = .6;
       var vicini = pesci.filter(function (p) { return p.stato === "gira" && Math.abs(p.x - st.hx) < 18 && Math.abs(p.y - st.hy) < 24; });
       var scelto = null, spec = D.escaUso !== "lombrico" && D.escheSp[D.escaUso] > 0 ? ESCHE[D.escaUso].pesi : null;   // l'esca speciale richiama i pesci rari dal fondo
-      if (vicini.length && Math.random() < .45 && !(spec && Math.random() < .75)) scelto = vicini[Math.floor(Math.random() * vicini.length)];
-      else if (st.attesa > (spec ? 1.5 : 2.5) + Math.random() * 1.5) {   // nessuno si è accorto: ne arriva uno dal buio lì vicino (non si aspetta troppo)
+      if (vicini.length && Math.random() < (PIOVE ? .65 : .45) && !(spec && Math.random() < .75)) scelto = vicini[Math.floor(Math.random() * vicini.length)];
+      else if (st.attesa > (spec || PIOVE ? 1.5 : 2.5) + Math.random() * 1.5) {   // nessuno si è accorto: ne arriva uno dal buio lì vicino (non si aspetta troppo)
         scelto = nuovoPesce(false, st.hx, spec);
         if (pesci.length >= 9) { var lontano = pesci.filter(function (p) { return p.stato === "gira"; }).sort(function (a, b) { return Math.abs(b.x - st.hx) - Math.abs(a.x - st.hx); })[0]; pesci = pesci.filter(function (p) { return p !== lontano; }); }   // (non troppi pesci nel lago)
         pesci.push(scelto);
@@ -418,7 +466,7 @@
     function ferra() {   // il tocco durante l'attesa
       var p = st.pesce;
       if (p && p.stato === "abbocca") {   // preso all'amo!
-        p.stato = "amo"; usaEsca(); vibra(20); suonoAbbocca();
+        p.stato = "amo"; usaEsca(); vibra(20); suonoAbbocca(); cam.scossa = .5;
         var forza = p.cur ? .45 : p.sp.forza;
         st.fase = "lotta"; st.lotta = { d: 1, tens: .15, forza: forza, strappo: 0, prossimo: 1 + Math.random() * 1.2, avviso: 0, mul: 0, t: 0 };
         goccia(st.gal.x, SUP, 8); onda(st.gal.x, SUP);
@@ -450,7 +498,7 @@
       L.tens = Math.max(0, L.tens);
       if (L.tens >= 1 || L.d >= 1.3) {   // il filo si spezza, o il pesce si slaccia: scappa da dov'è
         var q = posPesce(); st.pesce.x = q.x; st.pesce.y = q.y; st.pesce.stato = "fugge";
-        if (L.tens >= 1) { suonoSpezza(); dimmi("Il filo si è spezzato! 💥"); } else dimmi("Si è slacciato ed è scappato… 🐟💨");
+        if (L.tens >= 1) { suonoSpezza(); cam.scossa = .9; dimmi("Il filo si è spezzato! 💥"); } else dimmi("Si è slacciato ed è scappato… 🐟💨");
         return fine(false);
       }
       if (L.d <= 0) return preso();
@@ -464,7 +512,7 @@
     // ---- 4. preso! ----
     function preso() {
       var p = st.pesce, q = posPesce();
-      st.fase = "salto"; st.salto = { t: 0, x0: q.x, y0: q.y, p: p };
+      st.fase = "salto"; st.salto = { t: 0, x0: q.x, y0: q.y, p: p }; premuto = false; suggerisci("");
       goccia(q.x, SUP, 14); onda(q.x, SUP); suonoSplash();
       p.stato = "preso"; pesci = pesci.filter(function (x) { return x !== p; });
       setTimeout(function () { if (vivo()) pesci.push(nuovoPesce(true)); }, 2500);
@@ -479,8 +527,8 @@
 
     // ---- la carta del pesce preso ----
     function carta(p) {
-      svuota(); st.fase = "carta"; suggerisci("");
-      var box = el("div", "pe-carta"), sp = p.sp, cur = p.cur;
+      svuota(); st.fase = "carta"; suggerisci(""); st.festa = p.sp && p.sp.r >= 2 ? 1.4 : .6;
+      var box = el("div", "pe-carta pe-presa" + (p.sp ? " r" + p.sp.r : "")), sp = p.sp, cur = p.cur;   // (la carta si gira; quelle rare hanno i raggi dietro)
       D.tot++;
       if (cur) {
         var a = D.album["c:" + cur.id] || { n: 0 }, nuovo = !a.n; a.n++; D.album["c:" + cur.id] = a;
@@ -512,7 +560,7 @@
       sopra.appendChild(box); sopra.classList.add("su");
     }
     function garaPreso(p) {   // in gara: niente carta, il pesce va in classifica e si ripesca subito
-      st.fase = "carta";
+      st.fase = "carta"; st.festa = .6;
       if (p.sp && !gara.finita) {
         var w = pesoKg(p.sp, p.cm); gara.kg += w;
         dimmi("+" + kg(w) + " · " + p.sp.nome + " " + p.cm + " cm" + (p.sp.r >= 3 ? " 🤩" : " 🎉")); suonoPreso(p.sp.r); vibra(12);
@@ -617,11 +665,12 @@
     function giro(ora) {
       if (!vivo()) return;
       var dt = Math.min(.05, (ora - ult) / 1000); ult = ora;
-      aggiorna(dt); disegna();
+      aggiorna(st.fase === "salto" && st.salto.t < .55 ? dt * .45 : dt); disegna();   // (il salto del pesce al rallentatore)
       anim = requestAnimationFrame(giro);
     }
     function aggiorna(dt) {
       st.t += dt;
+      ambiente(dt);
       if (st.fase === "carica") { st.carica += st.caricaDir * dt / .9; if (st.carica >= 1) { st.carica = 1; st.caricaDir = -1; } if (st.carica <= 0) { st.carica = 0; st.caricaDir = 1; } }
       if (st.fase === "volo") { st.volo.t += dt; if (st.volo.t >= st.volo.dur) inAcqua(); }
       if (st.fase === "attesa") { st.attesa += dt; cercaPesce(dt); }
@@ -643,7 +692,7 @@
           p.tAss -= dt;
           if (p.tAss <= 0) {
             if (p.assaggi > 0) { p.assaggi--; st.gal.dip = .55; suonoTic(); p.tAss = .6 + Math.random() * 1.1; p.x += (st.hx - p.x) * .3; onda(st.gal.x, SUP); }
-            else { p.stato = "abbocca"; p.tAbb = (p.sp && p.sp.r >= 3 ? .45 : .62) + laCanna().fin; st.gal.dip = 1; suonoAbbocca(); goccia(st.gal.x, SUP, 6); onda(st.gal.x, SUP); }
+            else { p.stato = "abbocca"; p.tAbb = p.tAbb0 = (p.sp && p.sp.r >= 3 ? .45 : .62) + laCanna().fin; st.gal.dip = 1; suonoAbbocca(); goccia(st.gal.x, SUP, 6); onda(st.gal.x, SUP); }
           }
         } else if (p.stato === "abbocca") {
           p.tAbb -= dt;
@@ -660,102 +709,283 @@
       if (st.fase === "attesa" || st.fase === "lotta") suggerisci(st.fase === "lotta" ? (st.lotta.tens > .8 ? "Molla! Il filo sta per spezzarsi" : st.lotta.avviso || st.lotta.strappo ? "❗ Strattone: molla!" : "Tieni premuto per tirare") : aiuto.textContent);
     }
 
+    // =========================================================
+    //  LA SCENA CHE SI MUOVE: cielo, acqua, fondale, il pescatore, la telecamera
+    // =========================================================
+    var amb = { nuvole: [], stelle: [], uccelli: null, tUcc: 3 + Math.random() * 5, cadente: null, tCad: 6, pulv: [], banchi: [], alghe: [], davanti: [], pioggia: [], tSalto: 5 + Math.random() * 6, tCanto: 1.5 };
+    (function () {
+      var r = rnd(77), i;
+      for (i = 0; i < 6; i++) amb.nuvole.push({ x: R.x0 + i * 30 + r() * 12, y: -38 + r() * 52, s: .7 + r() * .8, v: .5 + r() * .9 });
+      for (i = 0; i < 95; i++) amb.stelle.push({ x: R.x0 + r() * (R.x1 - R.x0), y: R.y0 + r() * (SUP - 12 - R.y0), s: .12 + r() * .3, f: r() * 6, v: .8 + r() * 2.2 });
+      for (i = 0; i < 46; i++) { var px = 4 + r() * 98; amb.pulv.push({ x: px, y: SUP + 3 + r() * (yFondo(px) - SUP - 4), v: (r() - .5) * .8, f: r() * 6, a: .12 + r() * .22, s: .12 + r() * .18 }); }
+      for (i = 0; i < 2; i++) amb.banchi.push({ x: r() * 100, y: SUP + 12 + r() * 36, vx: (r() < .5 ? -1 : 1) * (4 + r() * 3), n: 5 + Math.floor(r() * 3), f: r() * 6 });
+      for (i = 0; i < 13; i++) { var ax = 21 + i * 6.4 + r() * 3; amb.alghe.push({ x: ax, b: yFondo(ax) + .6, h: 6 + r() * 11, f: r() * 6, w: .9 + r() * .5, c: i % 3 }); }
+      for (i = 0; i < 3; i++) amb.davanti.push({ x: 1 + i * 4.5 + r() * 2, h: 26 + r() * 16, f: r() * 6 });
+      if (PIOVE) for (i = 0; i < 80; i++) amb.pioggia.push({ x: R.x0 + r() * (R.x1 - R.x0), y: R.y0 + r() * (SUP - R.y0), v: 70 + r() * 30 });
+    })();
+    function ambiente(dt) {
+      amb.nuvole.forEach(function (n) { n.x += n.v * dt * (PIOVE ? 2 : 1); if (n.x > R.x1 + 14) { n.x = R.x0 - 14; } });
+      if (FASE !== "notte" && !PIOVE) {   // ogni tanto passano gli uccelli
+        if (amb.uccelli) { amb.uccelli.x += amb.uccelli.vx * dt; if (amb.uccelli.x > R.x1 + 10) amb.uccelli = null; }
+        else if ((amb.tUcc -= dt) <= 0) { amb.tUcc = 9 + Math.random() * 12; amb.uccelli = { x: R.x0, y: -24 + Math.random() * 34, vx: 8 + Math.random() * 5, n: 3 + Math.floor(Math.random() * 3) }; }
+      }
+      if (FASE === "notte" && !PIOVE) {   // e di notte le stelle cadenti
+        if (amb.cadente) { amb.cadente.t += dt; if (amb.cadente.t > .9) amb.cadente = null; }
+        else if ((amb.tCad -= dt) <= 0) { amb.tCad = 10 + Math.random() * 14; amb.cadente = { x: 10 + Math.random() * 70, y: -45 + Math.random() * 30, t: 0 }; }
+      }
+      amb.pulv.forEach(function (p) { p.x += (p.v + Math.sin(st.t * .5 + p.f) * .25) * dt; if (p.x < 2) p.x = 100; if (p.x > 101) p.x = 3; });
+      amb.banchi.forEach(function (b) { b.x += b.vx * dt; if (b.x < -14 || b.x > 114) { b.vx = -b.vx; b.y = SUP + 12 + Math.random() * 36; } });
+      amb.pioggia.forEach(function (g) { g.y += g.v * dt; g.x -= g.v * .18 * dt; if (g.y > SUP) { if (Math.random() < .35 && g.x > PONTE) onda(g.x, SUP); g.y = R.y0 + Math.random() * 20; g.x = R.x0 + Math.random() * (R.x1 - R.x0 + 20); } });
+      if ((amb.tSalto -= dt) <= 0) {   // un pesciolino che salta fuori dall'acqua, laggiù
+        amb.tSalto = 7 + Math.random() * 9; var jx = 40 + Math.random() * 55;
+        fx.push({ t: "salta", x: jx, y: SUP, vita: .7, d: Math.random() < .5 ? -1 : 1 }); onda(jx, SUP); tono(900, 0, .08, "sine", .025, 300);
+      }
+      if ((amb.tCanto -= dt) <= 0) {   // gli uccellini di giorno, i grilli di notte (piano piano)
+        if (FASE === "notte") { amb.tCanto = .9 + Math.random() * .9; for (var k = 0; k < 3; k++) tono(4300, k * .06, .025, "triangle", .01); }
+        else if (!PIOVE) { amb.tCanto = 2.5 + Math.random() * 5; var f0 = 2500 + Math.random() * 700; tono(f0, 0, .07, "sine", .02, f0 + 800); tono(f0 + 300, .1, .06, "sine", .016, f0 - 300); }
+        else amb.tCanto = 3;
+      }
+      // la telecamera: si avvicina mentre aspetti e mentre lotti, poi torna indietro
+      var tz = 1, tfx = 50, tfy = 90;
+      if (st.fase === "volo") { tz = 1.04; tfx = 50 + (st.volo.x1 - 50) * .25; tfy = 84; }
+      else if (st.fase === "attesa") { tz = 1.13; tfx = Math.max(30, Math.min(70, (14 + st.hx) / 2 + 4)); tfy = (SUP - 18 + st.hy) / 2; }
+      else if (st.fase === "lotta") { var q = posPesce(); tz = 1.18; tfx = Math.max(30, Math.min(70, (14 + q.x) / 2 + 3)); tfy = (SUP - 16 + q.y) / 2; }
+      else if (st.fase === "salto") { tz = 1.12; tfx = 32; tfy = SUP - 8; }
+      var kc = Math.min(1, dt * 1.8); cam.z += (tz - cam.z) * kc; cam.fx += (tfx - cam.fx) * kc; cam.fy += (tfy - cam.fy) * kc;
+      cam.scossa = Math.max(0, cam.scossa - dt * 3);
+      // la posa del pescatore: si piega indietro caricando, scatta avanti lanciando, tira all'indietro nella lotta
+      var tl = 0, ta = -.95;
+      if (st.fase === "carica") { tl = -.18 * st.carica; ta = -.95 - 1.15 * st.carica; }
+      else if (st.fase === "volo") { var kv = Math.min(1, st.volo.t / .3); tl = .1 * (1 - kv); ta = -.45 - .5 * kv; }
+      else if (st.fase === "lotta") { tl = -.05 - .09 * st.lotta.tens + (st.lotta.strappo ? Math.sin(st.t * 40) * .025 : 0); ta = -1.2 - .25 * st.lotta.tens; }
+      else if (st.fase === "salto") { tl = -.12; ta = -1.35; }
+      var kp = Math.min(1, dt * (st.fase === "volo" ? 16 : 7));
+      st.lean = (st.lean || 0) + (tl - (st.lean || 0)) * kp; st.rodA = (st.rodA == null ? -.95 : st.rodA) + (ta - (st.rodA == null ? -.95 : st.rodA)) * kp;
+      if (st.festa > 0) st.festa -= dt;
+    }
+    function geo() {   // dove sono i piedi, la mano e la punta della canna (e quanto si piega)
+      var Fx = 12, Fy = SUP - 6.6 - (st.festa > 0 ? Math.abs(Math.sin(st.t * 10)) * 1.4 : 0), a = st.lean || 0, ca = Math.cos(a), sa = Math.sin(a), hx = 2.7, hy = -9.4;
+      var mano = { x: Fx + hx * ca - hy * sa, y: Fy + hx * sa + hy * ca }, A = st.rodA == null ? -.95 : st.rodA, L = 21;
+      var bend = st.fase === "lotta" ? 2.2 + 4 * Math.min(1, st.lotta.tens) + (st.lotta.strappo ? 1.6 : 0) : st.fase === "carica" ? -1.4 * st.carica : .5;
+      var tx = mano.x + Math.cos(A) * L, ty = mano.y + Math.sin(A) * L + bend * .55;
+      var mx = (mano.x + tx) / 2, my = (mano.y + ty) / 2, nx = -Math.sin(A), ny = Math.cos(A);
+      return { piedi: { x: Fx, y: Fy }, mano: mano, punta: { x: tx, y: ty }, ctrl: { x: mx + nx * bend * .55, y: my + ny * bend * .55 } };
+    }
+
     // ---- il disegno ----
     function disegna() {
-      if (!sfondo) disegnaSfondo();
-      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(sfondo, 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      var notte = FASE === "notte";
-      // le ombre dei pesci (di che pesce si tratta lo scopri solo quando lo prendi)
+      if (!paesaggio) disegnaPaesaggio();
+      if (!vignetta) disegnaVignetta();
+      var P = pal(), notte = FASE === "notte", t = st.t, i;
+      schermo(ctx); ctx.fillStyle = grigio(P.a2); ctx.fillRect(0, 0, cw, ch);   // (ai lati, sui telefoni larghi)
+      mondo(ctx); ctx.lineCap = "round"; ctx.lineJoin = "round";
+      // il cielo
+      var g = ctx.createLinearGradient(0, R.y0, 0, SUP); g.addColorStop(0, grigio(P.c0)); g.addColorStop(.55, grigio(P.c1)); g.addColorStop(1, grigio(P.c2));
+      ctx.fillStyle = g; ctx.fillRect(R.x0, R.y0, R.x1 - R.x0, SUP - R.y0 + .5);
+      if (notte && !PIOVE) amb.stelle.forEach(function (s2) { var a = .35 + .65 * Math.abs(Math.sin(t * s2.v + s2.f)); ctx.globalAlpha = a; ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(s2.x, s2.y, s2.s, 0, 7); ctx.fill(); });
+      ctx.globalAlpha = 1;
+      if (!PIOVE) {   // il sole, il tramonto o la luna, con l'alone
+        var ax = P.astro[0], ay = P.astro[1], ga = ctx.createRadialGradient(ax, ay, 0, ax, ay, FASE === "tramonto" ? 42 : 24);
+        ga.addColorStop(0, "rgba(" + P.luce + ",.85)"); ga.addColorStop(.25, "rgba(" + P.luce + ",.35)"); ga.addColorStop(1, "rgba(" + P.luce + ",0)");
+        ctx.fillStyle = ga; ctx.fillRect(ax - 44, ay - 44, 88, 88);
+        if (notte) { ctx.fillStyle = "#eef1f6"; ctx.beginPath(); ctx.arc(ax, ay, 4.6, 0, 7); ctx.fill(); ctx.fillStyle = "rgba(160,170,190,.55)"; [[-1.4, -1, .9], [1.2, .8, .7], [.3, -2, .5], [-.6, 1.8, .6]].forEach(function (c) { ctx.beginPath(); ctx.arc(ax + c[0], ay + c[1], c[2], 0, 7); ctx.fill(); }); }
+        else { ctx.fillStyle = FASE === "tramonto" ? "#ffcf6b" : "#fff6c4"; ctx.beginPath(); ctx.arc(ax, ay, FASE === "tramonto" ? 8.5 : 5.2, 0, 7); ctx.fill(); ctx.fillStyle = "rgba(255,255,255,.6)"; ctx.beginPath(); ctx.arc(ax - 1.2, ay - 1.2, FASE === "tramonto" ? 4 : 2.4, 0, 7); ctx.fill(); }
+      }
+      if (amb.cadente) { var cs = amb.cadente, k = cs.t / .9, sx = cs.x + k * 26, sy = cs.y + k * 12, gc = ctx.createLinearGradient(sx - 9, sy - 4, sx, sy); gc.addColorStop(0, "rgba(255,255,255,0)"); gc.addColorStop(1, "rgba(255,255,255," + (1 - k) + ")"); ctx.strokeStyle = gc; ctx.lineWidth = .35; ctx.beginPath(); ctx.moveTo(sx - 9, sy - 4); ctx.lineTo(sx, sy); ctx.stroke(); }
+      if (PIOVE) { ctx.fillStyle = "rgba(70,78,92,.35)"; ctx.fillRect(R.x0, R.y0, R.x1 - R.x0, SUP - R.y0); }
+      // le nuvole che scorrono
+      amb.nuvole.forEach(function (n) {
+        var a = notte ? .22 : FASE === "tramonto" ? .6 : .85; if (PIOVE) a = .9;
+        var col = PIOVE ? "120,128,140" : P.nuvola;
+        [[0, 0, 4], [4, -1.6, 3.4], [-4, -.8, 3], [7.6, .6, 2.6], [-7, .8, 2.2], [2, 1.4, 3.2]].forEach(function (c, j) {
+          ctx.fillStyle = "rgba(" + col + "," + a + ")"; ctx.beginPath(); ctx.arc(n.x + c[0] * n.s, n.y + c[1] * n.s, c[2] * n.s, 0, 7); ctx.fill();
+        });
+        ctx.fillStyle = "rgba(" + (notte ? "10,15,40" : PIOVE ? "60,66,78" : "120,140,170") + "," + a * .22 + ")"; ctx.beginPath(); ctx.ellipse(n.x, n.y + 2.4 * n.s, 8.5 * n.s, 1.6 * n.s, 0, 0, 7); ctx.fill();   // la pancia più scura
+      });
+      if (amb.uccelli) { var u = amb.uccelli; ctx.strokeStyle = notte ? "#9aa" : "rgba(30,35,45,.8)"; ctx.lineWidth = .3; for (i = 0; i < u.n; i++) { var bx = u.x - i * 3.2, by = u.y + (i % 2) * 1.6 + i * .5, fl = Math.sin(t * 11 + i) * .9; ctx.beginPath(); ctx.moveTo(bx - 1.3, by - fl); ctx.quadraticCurveTo(bx - .6, by - .4, bx, by); ctx.quadraticCurveTo(bx + .6, by - .4, bx + 1.3, by - fl); ctx.stroke(); } }
+      // il paesaggio fermo (montagne, colline, acqua, fondo, pontile)
+      ctx.drawImage(paesaggio, R.x0, R.y0, R.x1 - R.x0, R.y1 - R.y0);
+      // sott'acqua: i raggi di luce che oscillano
+      if (!PIOVE) for (i = 0; i < 5; i++) {
+        var rx = 24 + i * 16 + Math.sin(t * .22 + i * 1.3) * 3, lg = ctx.createLinearGradient(0, SUP, 0, SUP + 72), al = notte ? (i === 3 ? .07 : 0) : FASE === "tramonto" ? .09 : .14;
+        if (!al) continue;
+        lg.addColorStop(0, "rgba(" + P.luce + "," + al + ")"); lg.addColorStop(1, "rgba(" + P.luce + ",0)");
+        ctx.fillStyle = lg; ctx.beginPath(); ctx.moveTo(rx - 1.8, SUP); ctx.lineTo(rx + 2.4, SUP); ctx.lineTo(rx + 15, SUP + 72); ctx.lineTo(rx + 6, SUP + 72); ctx.closePath(); ctx.fill();
+      }
+      // i riflessi di luce che danzano sul fondo
+      if (!notte) { ctx.lineWidth = .18; for (i = 0; i < 28; i++) { var cx = 20 + i * 3 + Math.sin(t * .9 + i * 1.7) * 1.3, cy = yFondo(cx) + .15, ca = .14 + .12 * Math.sin(t * 1.6 + i); ctx.strokeStyle = "rgba(" + P.luce + "," + Math.max(0, ca) * (PIOVE ? .4 : 1) + ")"; ctx.beginPath(); ctx.moveTo(cx - .9, cy); ctx.quadraticCurveTo(cx, cy - .45 - Math.sin(t + i) * .2, cx + .9, cy); ctx.stroke(); } }
+      // il pulviscolo che fluttua
+      amb.pulv.forEach(function (p) { ctx.globalAlpha = p.a * (.6 + .4 * Math.sin(t + p.f)); ctx.fillStyle = notte ? "#9fc3ff" : "#ffffff"; ctx.beginPath(); ctx.arc(p.x, p.y + Math.sin(t * .7 + p.f) * .5, p.s, 0, 7); ctx.fill(); });
+      ctx.globalAlpha = 1;
+      // i banchi di pesciolini di passaggio (si guardano e basta)
+      amb.banchi.forEach(function (b) {
+        var d = b.vx >= 0 ? 1 : -1;
+        for (var j = 0; j < b.n; j++) {
+          var fx2 = b.x - d * (j % 3) * 1.7 - d * Math.floor(j / 3) * .8, fy = b.y + (j % 3 - 1) * 1.1 + Math.floor(j / 3) * 1.2 + Math.sin(t * 3 + j + b.f) * .35;
+          ctx.save(); ctx.translate(fx2, fy); ctx.scale(d, 1); ctx.fillStyle = notte ? "rgba(140,170,210,.55)" : "rgba(220,235,245,.85)";
+          ctx.beginPath(); ctx.ellipse(0, 0, .75, .26, 0, 0, 7); ctx.fill(); ctx.beginPath(); ctx.moveTo(-.6, 0); ctx.lineTo(-1.05, -.3 + Math.sin(t * 14 + j) * .1); ctx.lineTo(-1.05, .3); ctx.closePath(); ctx.fill(); ctx.restore();
+        }
+      });
+      // le ombre dei pesci: muovono la coda (di che pesce si tratta lo scopri quando lo prendi, o quando arriva vicino)
       pesci.forEach(function (p) {
         if (p.stato === "preso") return;
-        var pos = st.fase === "lotta" && p === st.pesce ? posPesce() : p, dir = p.vx >= 0 ? 1 : -1;
-        if (st.fase === "lotta" && p === st.pesce) dir = st.lotta.strappo ? (Math.sin(st.t * 20) > 0 ? 1 : -1) : 1;
-        ombra(pos.x, pos.y, p.L, dir, notte ? "rgba(0,4,16,.6)" : "rgba(8,30,48,.42)");
+        var pos = p, dir = p.vx >= 0 ? 1 : -1, vel = p.stato === "fugge" ? 28 : p.stato === "va" ? 14 : 8;
+        if (st.fase === "lotta" && p === st.pesce) { pos = posPesce(); dir = st.lotta.strappo ? (Math.sin(t * 20) > 0 ? 1 : -1) : -1; vel = st.lotta.strappo ? 30 : 16; }
+        ombraPesce(p.L, pos.x, pos.y, dir, t * vel + p.t, notte);
       });
-      // la superficie che si muove
-      ctx.strokeStyle = notte ? "rgba(150,180,255,.35)" : "rgba(255,255,255,.55)"; ctx.lineWidth = 1.5; ctx.beginPath();
-      for (var x = PONTE; x <= W + 10; x += 2) { var yy = SUP + Math.sin(x * .5 + st.t * 2) * .25; if (x === PONTE) ctx.moveTo(X(x), Y(yy)); else ctx.lineTo(X(x), Y(yy)); }
+      // le alghe che ondeggiano
+      amb.alghe.forEach(function (a) {
+        var n = 6, px = a.x, py = a.b, cols = notte ? ["#16402a", "#1d4d32", "#12361f"] : ["#2f9e44", "#37b24d", "#2b8a3e"];
+        ctx.strokeStyle = PIOVE ? mix(cols[a.c], "#5a6a60", .25) : cols[a.c];
+        for (var j = 1; j <= n; j++) {
+          var nx = a.x + Math.sin(t * 1.1 + a.f + j * .45) * j * .32, ny = a.b - a.h * j / n;
+          ctx.lineWidth = a.w * (1.15 - j / n); ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(nx, ny); ctx.stroke(); px = nx; py = ny;
+        }
+      });
+      // le bolle e gli altri effetti sott'acqua
+      fx.forEach(function (f) { if (f.t === "b") { ctx.globalAlpha = .55; ctx.strokeStyle = "#e7f5ff"; ctx.lineWidth = .14; ctx.beginPath(); ctx.arc(f.x + Math.sin(f.y * .8) * .4, f.y, .42, 0, 7); ctx.stroke(); } });
+      ctx.globalAlpha = 1;
+      // la superficie: la fascia chiara, la scia di luce del sole (o della luna), le onde e i luccichii
+      var fs = ctx.createLinearGradient(0, SUP - .3, 0, SUP + 3.5); fs.addColorStop(0, "rgba(255,255,255," + (notte ? .18 : .4) + ")"); fs.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = fs; ctx.fillRect(R.x0, SUP - .3, R.x1 - R.x0, 3.8);
+      if (!PIOVE) { var ax2 = P.astro[0]; for (i = 0; i < 9; i++) { var yy = SUP + .5 + i * .75, ww = (4.5 - i * .4) * (.75 + .25 * Math.sin(t * 3 + i * 1.7)); ctx.fillStyle = "rgba(" + P.luce + "," + (.55 - i * .05) + ")"; ctx.fillRect(ax2 - ww / 2 + Math.sin(t * 2 + i) * .6, yy, ww, .3); } }
+      ctx.strokeStyle = notte ? "rgba(160,190,255,.4)" : "rgba(255,255,255,.7)"; ctx.lineWidth = .32; ctx.beginPath();
+      for (var x = R.x0; x <= R.x1; x += 1) { var y = onde(x); if (x === R.x0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
       ctx.stroke();
-      // gli effetti nell'acqua e sopra
+      for (i = 0; i < 16; i++) { var lx2 = ((i * 13.7 + t * 1.6) % 112) - 6, la = Math.sin(t * 3.1 + i * 2.3); if (la < .4) continue; stellina(lx2, onde(lx2) - .15, .55 * la, "rgba(" + P.luce + "," + la + ")"); }
+      // gli schizzi, le increspature e i pesciolini che saltano
       fx.forEach(function (f) {
-        if (f.t === "o") { ctx.globalAlpha = Math.max(0, f.vita) * .7; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(X(f.x), Y(f.y), f.r * S, f.r * S * .25, 0, 0, 7); ctx.stroke(); }
-        else if (f.t === "g") { ctx.globalAlpha = Math.min(1, f.vita * 2); ctx.fillStyle = f.col; ctx.beginPath(); ctx.arc(X(f.x), Y(f.y), S * .35, 0, 7); ctx.fill(); }
-        else if (f.t === "b") { ctx.globalAlpha = .5; ctx.strokeStyle = "#e7f5ff"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(X(f.x), Y(f.y), S * .45, 0, 7); ctx.stroke(); }
+        if (f.t === "o") { ctx.globalAlpha = Math.max(0, f.vita) * .75; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = .2; ctx.beginPath(); ctx.ellipse(f.x, f.y, f.r, f.r * .22, 0, 0, 7); ctx.stroke(); }
+        else if (f.t === "g") { ctx.globalAlpha = Math.min(1, f.vita * 2); ctx.fillStyle = f.col; ctx.beginPath(); ctx.arc(f.x, f.y, .32, 0, 7); ctx.fill(); }
+        else if (f.t === "salta") { var k2 = 1 - f.vita / .7; ctx.globalAlpha = 1; ctx.save(); ctx.translate(f.x + f.d * k2 * 4, SUP - Math.sin(k2 * Math.PI) * 3.2); ctx.rotate(f.d * (-.9 + k2 * 1.8)); ctx.scale(f.d, 1); ctx.fillStyle = notte ? "#9fb6d8" : "#dfe8ee"; ctx.beginPath(); ctx.ellipse(0, 0, 1.1, .4, 0, 0, 7); ctx.fill(); ctx.beginPath(); ctx.moveTo(-.9, 0); ctx.lineTo(-1.5, -.4); ctx.lineTo(-1.5, .4); ctx.closePath(); ctx.fill(); ctx.restore(); }
       });
       ctx.globalAlpha = 1;
-      // l'avatar sul pontile e la canna
-      var fw = 16 * S, fh = fw * 1.32, fx0 = X(12) - fw / 2, fy0 = Y(SUP - 6) - fh * .96;
-      if (figura && figura.complete && figura.naturalWidth) ctx.drawImage(figura, fx0, fy0, fw, fh);
-      else { ctx.fillStyle = "#4c6ef5"; ctx.fillRect(X(10), Y(SUP - 24), S * 4, S * 18); }
-      var mano = { x: 15.2, y: SUP - 15.5 }, punta = puntaCanna();
-      ctx.strokeStyle = laCanna().col; ctx.lineWidth = Math.max(2, S * .7); ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(X(mano.x - 2), Y(mano.y + 2.5)); ctx.quadraticCurveTo(X((mano.x + punta.x) / 2), Y(Math.min(mano.y, punta.y) - 1 - piega() * 3), X(punta.x), Y(punta.y)); ctx.stroke();
-      ctx.fillStyle = "#adb5bd"; ctx.beginPath(); ctx.arc(X(mano.x - .3), Y(mano.y + 1.2), S * .9, 0, 7); ctx.fill();   // il mulinello
-      // il filo e il galleggiante
-      ctx.strokeStyle = "rgba(255,255,255,.75)"; ctx.lineWidth = 1;
-      if (st.fase === "volo") {
-        var v = st.volo, k = v.t / v.dur, bx = v.x0 + (v.x1 - v.x0) * k, by = v.y0 + (v.y1 - v.y0) * k - Math.sin(k * Math.PI) * (12 + (v.x1 - v.x0) * .25);
-        ctx.beginPath(); ctx.moveTo(X(punta.x), Y(punta.y)); ctx.quadraticCurveTo(X((punta.x + bx) / 2), Y(Math.min(punta.y, by) - 3), X(bx), Y(by)); ctx.stroke();
-        galleggiante(bx, by);
-      } else if (st.fase === "attesa") {
-        var gy = SUP + st.gal.dip * 1.6;
-        ctx.beginPath(); ctx.moveTo(X(punta.x), Y(punta.y)); ctx.quadraticCurveTo(X((punta.x + st.gal.x) / 2), Y(SUP - 2), X(st.gal.x), Y(gy)); ctx.stroke();
-        ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.beginPath(); ctx.moveTo(X(st.gal.x), Y(gy)); ctx.lineTo(X(st.hx), Y(st.hy)); ctx.stroke();
-        amo(st.hx, st.hy); galleggiante(st.gal.x, gy);
-      } else if (st.fase === "lotta") {
-        var q = posPesce(), teso = st.lotta.tens;
-        ctx.strokeStyle = teso > .8 ? "#ff6b6b" : teso > .55 ? "#ffd43b" : "rgba(255,255,255,.85)"; ctx.lineWidth = 1.4;
-        ctx.beginPath(); ctx.moveTo(X(punta.x), Y(punta.y)); ctx.lineTo(X(q.x), Y(q.y)); ctx.stroke();
-        if (st.lotta.avviso || st.lotta.strappo) { ctx.font = "900 " + Math.round(5 * S) + "px system-ui,sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = "#ff6b6b"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 3; ctx.strokeText("❗", X(q.x), Y(q.y - 4)); ctx.fillText("❗", X(q.x), Y(q.y - 4)); }
-        tensione(teso, st.lotta.d);
-      } else if (st.fase === "salto") {
-        var sl = st.salto, kk = Math.min(1, sl.t / .75), sx = sl.x0 + (12 - sl.x0) * kk, sy = sl.y0 + (SUP - 22 - sl.y0) * kk - Math.sin(kk * Math.PI) * 18;
-        ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.beginPath(); ctx.moveTo(X(punta.x), Y(punta.y)); ctx.lineTo(X(sx), Y(sy)); ctx.stroke();
-        ctx.save(); ctx.translate(X(sx), Y(sy)); ctx.rotate(-.6 + kk * 1.4);
-        if (sl.p.sp) disegnaPesce(ctx, sl.p.sp, Math.max(6, sl.p.L * 1.3) * S); else { ctx.font = Math.round(7 * S) + "px system-ui"; ctx.textAlign = "center"; ctx.fillText(sl.p.cur.ico, 0, 0); }
-        ctx.restore();
-      }
-      // la forza del lancio
-      if (st.fase === "carica") {
-        var bx2 = X(4), by2 = Y(SUP - 40), bw = S * 3, bh = S * 22;
-        ctx.fillStyle = "rgba(0,0,0,.45)"; arrot(ctx, bx2, by2, bw, bh, bw / 2); ctx.fill();
-        var gk = ctx.createLinearGradient(0, by2 + bh, 0, by2); gk.addColorStop(0, "#51cf66"); gk.addColorStop(.6, "#ffd43b"); gk.addColorStop(1, "#ff6b6b");
-        ctx.fillStyle = gk; arrot(ctx, bx2 + 2, by2 + 2 + (bh - 4) * (1 - st.carica), bw - 4, (bh - 4) * st.carica, (bw - 4) / 2); ctx.fill();
-        // dove arriva, più o meno
-        var tx2 = 27 + st.carica * 68; ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.beginPath(); ctx.ellipse(X(tx2), Y(SUP), S * 2.2, S * .6, 0, 0, 7); ctx.fill();
-      }
+      // la lanterna del pontile: di sera e di notte (e quando piove) si accende
+      var lumX = PONTE + 1.6, lumY = SUP - 15.6, accesa = notte || FASE === "tramonto" || PIOVE;
+      if (accesa) { var fl2 = .85 + .15 * Math.sin(t * 7) * Math.sin(t * 3.3), gl = ctx.createRadialGradient(lumX, lumY, 0, lumX, lumY, 9); gl.addColorStop(0, "rgba(255,214,120," + .6 * fl2 + ")"); gl.addColorStop(1, "rgba(255,214,120,0)"); ctx.fillStyle = gl; ctx.fillRect(lumX - 9, lumY - 9, 18, 18); ctx.fillStyle = "rgba(255,214,120," + .25 * fl2 + ")"; ctx.fillRect(lumX - 3, SUP + .4, 6, .35); }
+      ctx.fillStyle = "#343a40"; ctx.fillRect(lumX - .8, lumY - 1.2, 1.6, .5); ctx.fillStyle = accesa ? "#ffd875" : "#cfd8dc"; ctx.fillRect(lumX - .65, lumY - .7, 1.3, 1.6); ctx.fillStyle = "#343a40"; ctx.fillRect(lumX - .8, lumY + .9, 1.6, .4);
+      // il pescatore, la canna e il filo
+      disegnaPescatore(t);
       // le lucciole (sera e notte)
-      lucciole.forEach(function (l) { var a = .4 + .6 * Math.abs(Math.sin(st.t * 1.7 + l.t)); ctx.globalAlpha = a; ctx.fillStyle = "#fff59d"; ctx.beginPath(); ctx.arc(X(l.x + Math.sin(st.t * .6 + l.t) * 3), Y(l.y + Math.cos(st.t * .8 + l.t) * 2), S * .45, 0, 7); ctx.fill(); });
+      lucciole.forEach(function (l) { var a = .4 + .6 * Math.abs(Math.sin(t * 1.7 + l.t)); ctx.globalAlpha = a; var gx = l.x + Math.sin(t * .6 + l.t) * 3, gy = l.y + Math.cos(t * .8 + l.t) * 2, gg = ctx.createRadialGradient(gx, gy, 0, gx, gy, 1.4); gg.addColorStop(0, "rgba(255,245,160,1)"); gg.addColorStop(1, "rgba(255,245,160,0)"); ctx.fillStyle = gg; ctx.fillRect(gx - 1.4, gy - 1.4, 2.8, 2.8); });
       ctx.globalAlpha = 1;
+      // davanti: le grandi alghe scure in primo piano e la pioggia
+      amb.davanti.forEach(function (a) {
+        var px = a.x, py = R.y1 + 2; ctx.strokeStyle = notte ? "rgba(4,16,12,.9)" : "rgba(14,52,34,.82)";
+        for (var j = 1; j <= 7; j++) { var nx = a.x + Math.sin(t * .8 + a.f + j * .5) * j * .45, ny = R.y1 + 2 - a.h * j / 7; ctx.lineWidth = 2.6 * (1.1 - j / 7); ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(nx, ny); ctx.stroke(); px = nx; py = ny; }
+      });
+      if (PIOVE) { ctx.strokeStyle = "rgba(220,230,245,.38)"; ctx.lineWidth = .14; amb.pioggia.forEach(function (gp) { ctx.beginPath(); ctx.moveTo(gp.x, gp.y); ctx.lineTo(gp.x - .55, gp.y + 3); ctx.stroke(); }); }
+      // la strada del lancio mentre carichi (dove arriva, più o meno)
+      if (st.fase === "carica") {
+        var G0 = geo(), x1 = 27 + st.carica * 68, h = 12 + (x1 - G0.punta.x) * .25;
+        for (i = 1; i <= 14; i++) { var kk = i / 14, px3 = G0.punta.x + (x1 - G0.punta.x) * kk, py3 = G0.punta.y + (SUP - G0.punta.y) * kk - Math.sin(kk * Math.PI) * h; ctx.globalAlpha = .25 + .55 * (1 - kk); ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(px3, py3, .32, 0, 7); ctx.fill(); }
+        ctx.globalAlpha = .6; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = .25; ctx.beginPath(); ctx.ellipse(x1, SUP, 2.2, .55, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
+      }
+      // in pixel: il pesce che salta fuori, il "❗", la forza del lancio, il filo, la vignetta
+      schermo(ctx);
+      if (st.fase === "salto") disegnaSalto();
+      if (st.pesce && st.pesce.stato === "abbocca") esclamativo();
+      ctx.drawImage(vignetta, 0, 0, cw, ch);
+      if (st.fase === "carica") misuraForza();
+      if (st.fase === "lotta") tensione(st.lotta.tens, st.lotta.d);
     }
-    function piega() { return st.fase === "lotta" ? Math.min(1.4, st.lotta.tens * 1.2 + (st.lotta.strappo ? .5 : 0)) : st.fase === "carica" ? -st.carica * .6 : 0; }
-    function puntaCanna() {
-      if (st.fase === "carica") return { x: PUNTA.x - st.carica * 14, y: PUNTA.y - 6 - st.carica * 4 };   // la canna va indietro mentre carichi
-      if (st.fase === "lotta") { var b = piega(); return { x: PUNTA.x - 2 - b * 3, y: PUNTA.y + 4 + b * 7 }; }
-      return PUNTA;
-    }
-    function ombra(x, y, L, dir, col) {
-      ctx.save(); ctx.translate(X(x), Y(y)); ctx.scale(dir, 1); var l = L * S, h = l * .32;
-      ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(0, 0, l / 2, h / 2, 0, 0, 7); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(-l * .42, 0); ctx.lineTo(-l * .7, -h * .5); ctx.lineTo(-l * .7, h * .5); ctx.closePath(); ctx.fill();
+    function onde(x) { return SUP + Math.sin(x * .45 + st.t * 1.7) * .26 + Math.sin(x * 1.05 - st.t * 2.4) * .13; }
+    function stellina(x, y, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x, y - r); ctx.lineTo(x + r * .25, y - r * .25); ctx.lineTo(x + r, y); ctx.lineTo(x + r * .25, y + r * .25); ctx.lineTo(x, y + r); ctx.lineTo(x - r * .25, y + r * .25); ctx.lineTo(x - r, y); ctx.lineTo(x - r * .25, y - r * .25); ctx.closePath(); ctx.fill(); }
+    function ombraPesce(L, x, y, dir, fase2, notte) {
+      var h = L * .34; ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+      ctx.fillStyle = notte ? "rgba(0,4,14,.28)" : "rgba(6,26,44,.16)"; ctx.beginPath(); ctx.ellipse(0, 0, L * .62, h * .72, 0, 0, 7); ctx.fill();   // il bordo sfumato
+      ctx.fillStyle = notte ? "rgba(0,4,14,.55)" : "rgba(6,26,44,.36)";
+      ctx.beginPath(); ctx.ellipse(0, 0, L * .5, h * .5, 0, 0, 7); ctx.fill();
+      ctx.save(); ctx.translate(-L * .42, 0); ctx.rotate(Math.sin(fase2) * .45); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-L * .32, -h * .58); ctx.quadraticCurveTo(-L * .22, 0, -L * .32, h * .58); ctx.closePath(); ctx.fill(); ctx.restore();
       ctx.restore();
     }
-    function galleggiante(x, y) {
-      ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(X(x), Y(y), S * .9, 0, Math.PI); ctx.fill();
-      ctx.fillStyle = "#fa5252"; ctx.beginPath(); ctx.arc(X(x), Y(y), S * .9, Math.PI, 0); ctx.fill();
-      ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(X(x), Y(y), S * .9, 0, 7); ctx.stroke();
+    function disegnaPescatore(t) {
+      var G = geo(), P = G.piedi, fw = 16, fh = fw * 1.32, resp = 1 + Math.sin(t * 2) * .008;
+      // il filo (prima della canna, così parte dalla punta)
+      if (st.fase === "volo") {
+        var v = st.volo, k = v.t / v.dur, bx = v.x0 + (v.x1 - v.x0) * k, by = v.y0 + (v.y1 - v.y0) * k - Math.sin(k * Math.PI) * (12 + (v.x1 - v.x0) * .25);
+        filo(G.punta, { x: bx, y: by }, 2); galleggiante(bx, by, 0);
+      } else if (st.fase === "attesa") {
+        var gy = SUP + st.gal.dip * 1.6 + Math.sin(t * 2.2) * .12;
+        filo(G.punta, { x: st.gal.x, y: gy }, 3 + Math.abs(st.gal.x - G.punta.x) * .05);
+        ctx.strokeStyle = "rgba(255,255,255,.3)"; ctx.lineWidth = .1; ctx.beginPath(); ctx.moveTo(st.gal.x, gy + .8); ctx.lineTo(st.hx, st.hy); ctx.stroke();
+        amo(st.hx, st.hy); galleggiante(st.gal.x, gy, st.gal.dip);
+      } else if (st.fase === "lotta") {
+        var q = posPesce(), teso = st.lotta.tens;
+        ctx.strokeStyle = teso > .8 ? "#ff6b6b" : teso > .55 ? "#ffd43b" : "rgba(255,255,255,.9)"; ctx.lineWidth = .2;
+        ctx.beginPath(); ctx.moveTo(G.punta.x, G.punta.y); ctx.lineTo(q.x + (st.lotta.strappo ? Math.sin(t * 50) * .15 : 0), q.y); ctx.stroke();
+        if (q.y < SUP + 6) { if (Math.random() < .3) goccia(q.x, SUP, 1); }   // vicino alla superficie fa gli schizzi
+        if (st.lotta.d < .25) rivela(st.pesce, q, (.25 - st.lotta.d) / .25);
+      } else if (st.fase === "salto") {
+        var sl = st.salto, kk = Math.min(1, sl.t / .75), sx = sl.x0 + (12 - sl.x0) * kk, sy = sl.y0 + (SUP - 22 - sl.y0) * kk - Math.sin(kk * Math.PI) * 18;
+        ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = .18; ctx.beginPath(); ctx.moveTo(G.punta.x, G.punta.y); ctx.lineTo(sx, sy); ctx.stroke();
+      }
+      // l'avatar: respira, si piega, salta di gioia
+      ctx.save(); ctx.translate(P.x, P.y); ctx.rotate(st.lean || 0); ctx.scale(1, resp);
+      if (figura && figura.complete && figura.naturalWidth) ctx.drawImage(figura, -fw / 2, -fh * .96 + .6, fw, fh);
+      else { ctx.fillStyle = "#4c6ef5"; ctx.fillRect(-2, -18, 4, 18); }
+      ctx.restore();
+      // la canna: grossa vicino alla mano e sottile in punta, si piega quando il filo tira
+      var M = G.mano, C = G.ctrl, T = G.punta, col = laCanna().col, n = 8, px = M.x - (T.x - M.x) * .1, py = M.y - (T.y - M.y) * .1;
+      ctx.strokeStyle = col;
+      for (var j = 1; j <= n; j++) {
+        var u = j / n, a1 = (1 - u) * (1 - u), b1 = 2 * (1 - u) * u, c1 = u * u, qx = a1 * M.x + b1 * C.x + c1 * T.x, qy = a1 * M.y + b1 * C.y + c1 * T.y;
+        ctx.lineWidth = .62 * (1 - u) + .14; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(qx, qy); ctx.stroke(); px = qx; py = qy;
+      }
+      ctx.fillStyle = "#adb5bd"; ctx.beginPath(); ctx.arc(M.x + .3, M.y + .9, .85, 0, 7); ctx.fill(); ctx.strokeStyle = "#495057"; ctx.lineWidth = .15; ctx.stroke();   // il mulinello
+      if (st.fase === "lotta" && premuto) { ctx.strokeStyle = "#495057"; ctx.lineWidth = .14; var ang = t * 25; ctx.beginPath(); ctx.moveTo(M.x + .3, M.y + .9); ctx.lineTo(M.x + .3 + Math.cos(ang) * .8, M.y + .9 + Math.sin(ang) * .8); ctx.stroke(); }   // la manovella che gira
+      st.punta = T;
     }
-    function amo(x, y) { ctx.strokeStyle = "#ced4da"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(X(x), Y(y + .6), S * .5, -1.2, Math.PI * .9); ctx.stroke(); ctx.fillStyle = "#e599f7"; ctx.beginPath(); ctx.arc(X(x + .3), Y(y + 1.1), S * .35, 0, 7); ctx.fill(); }
-    function tensione(t, d) {   // a destra: quanto è teso il filo e quanto manca
-      var bx = cw - S * 6, by = Y(SUP + 6), bw = S * 3, bh = Math.min(S * 60, ch - by - 80);
-      ctx.fillStyle = "rgba(0,0,0,.45)"; arrot(ctx, bx, by, bw, bh, bw / 2); ctx.fill();
-      ctx.fillStyle = "rgba(255,107,107,.35)"; ctx.fillRect(bx + 2, by + 2, bw - 4, (bh - 4) * .2);
-      var col = t > .8 ? "#ff6b6b" : t > .55 ? "#ffd43b" : "#51cf66";
-      ctx.fillStyle = col; arrot(ctx, bx + 2, by + 2 + (bh - 4) * (1 - Math.min(1, t)), bw - 4, (bh - 4) * Math.min(1, t), (bw - 4) / 2); ctx.fill();
-      ctx.font = "900 " + Math.round(2.6 * S) + "px system-ui,sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = "#fff"; ctx.fillText("filo", bx + bw / 2, by - S * 1.2);
-      // quanto manca al pontile
-      var px = X(PONTE + 4), pw = X(W - 6) - px, py = Y(SUP + 2.5);
-      ctx.fillStyle = "rgba(0,0,0,.35)"; arrot(ctx, px, py - S * .6, pw, S * 1.2, S * .6); ctx.fill();
-      ctx.fillStyle = "#74c0fc"; arrot(ctx, px, py - S * .6, pw * Math.max(0, Math.min(1, 1 - d)), S * 1.2, S * .6); ctx.fill();
+    function filo(a, b, cala) { ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.lineWidth = .12; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo((a.x + b.x) / 2, Math.max(a.y, b.y) + cala, b.x, b.y); ctx.stroke(); }
+    function galleggiante(x, y, dip) {
+      ctx.save(); ctx.translate(x, y);
+      ctx.strokeStyle = "#343a40"; ctx.lineWidth = .14; ctx.beginPath(); ctx.moveTo(0, -.9); ctx.lineTo(0, -2.2); ctx.stroke(); ctx.fillStyle = "#fa5252"; ctx.beginPath(); ctx.arc(0, -2.3, .22, 0, 7); ctx.fill();
+      var gb = ctx.createRadialGradient(-.35, -.4, .1, 0, 0, 1); gb.addColorStop(0, "#ffffff"); gb.addColorStop(1, "#dee2e6");
+      ctx.fillStyle = gb; ctx.beginPath(); ctx.arc(0, 0, .95, 0, Math.PI); ctx.fill();
+      var gr = ctx.createRadialGradient(-.35, -.5, .1, 0, 0, 1); gr.addColorStop(0, "#ff8787"); gr.addColorStop(1, "#c92a2a");
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, .95, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.7)"; ctx.beginPath(); ctx.ellipse(-.35, -.45, .25, .15, -.5, 0, 7); ctx.fill();
+      ctx.restore();
+    }
+    function amo(x, y) { ctx.strokeStyle = "#ced4da"; ctx.lineWidth = .14; ctx.beginPath(); ctx.arc(x, y + .5, .45, -1.2, Math.PI * .9); ctx.stroke(); ctx.fillStyle = "#e599f7"; ctx.beginPath(); ctx.ellipse(x + .25, y + 1, .4, .22, .6, 0, 7); ctx.fill(); }
+    function rivela(p, q, a) {   // il pesce che arriva vicino si vede coi suoi colori
+      if (!p.sp) return; var o = aSchermo(q.x, q.y);
+      ctx.save(); schermo(ctx); ctx.globalAlpha = Math.min(1, a * 1.2); ctx.translate(o.x, o.y); ctx.scale(-1, 1); ctx.rotate(Math.sin(st.t * 12) * .08); disegnaPesce(ctx, p.sp, p.L * 1.5 * S * cam.z); ctx.restore(); mondo(ctx);
+    }
+    function disegnaSalto() {   // il pesce che salta fuori dall'acqua, al rallentatore, coi raggi se è raro
+      var sl = st.salto, kk = Math.min(1, sl.t / .75), sx = sl.x0 + (12 - sl.x0) * kk, sy = sl.y0 + (SUP - 22 - sl.y0) * kk - Math.sin(kk * Math.PI) * 18, o = aSchermo(sx, sy), r = sl.p.sp ? sl.p.sp.r : 1;
+      if (r >= 2) { ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(st.t * 1.5); var rr = (6 + r * 3) * S * cam.z; ctx.fillStyle = r >= 4 ? "rgba(255,212,59,.35)" : r >= 3 ? "rgba(204,93,232,.3)" : "rgba(116,192,252,.28)"; for (var i = 0; i < 10; i++) { ctx.rotate(Math.PI / 5); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(rr, -rr * .12); ctx.lineTo(rr, rr * .12); ctx.closePath(); ctx.fill(); } ctx.restore(); }
+      ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(-.6 + kk * 1.4);
+      if (sl.p.sp) disegnaPesce(ctx, sl.p.sp, Math.max(8, sl.p.L * 2) * S * cam.z); else { ctx.font = Math.round(7 * S) + "px system-ui"; ctx.textAlign = "center"; ctx.fillText(sl.p.cur.ico, 0, 0); }
+      ctx.restore();
+    }
+    function esclamativo() {   // il "❗" sopra la testa: tocca adesso!
+      var p = st.pesce, k = Math.min(1, ((p.tAbb0 || .6) - p.tAbb) / .12), o = aSchermo(12, SUP - 31), sc = (.6 + .4 * k) * S * cam.z;
+      ctx.save(); ctx.translate(o.x, o.y); ctx.scale(sc, sc);
+      ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "rgba(0,0,0,.25)"; ctx.lineWidth = .15; arrot(ctx, -2, -2.6, 4, 4.2, 1.2); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-.6, 1.5); ctx.lineTo(0, 2.6); ctx.lineTo(.6, 1.5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#f03e3e"; ctx.font = "900 3.4px system-ui,sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("!", 0, -.4);
+      ctx.restore();
+    }
+    function misuraForza() {   // la forza del lancio: una colonnina accanto al pescatore
+      var o = aSchermo(3.5, SUP - 38), bw = Math.max(10, S * 2.6), bh = S * 20;
+      ctx.fillStyle = "rgba(0,0,0,.45)"; arrot(ctx, o.x, o.y, bw, bh, bw / 2); ctx.fill(); ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 1.5; ctx.stroke();
+      var gk = ctx.createLinearGradient(0, o.y + bh, 0, o.y); gk.addColorStop(0, "#51cf66"); gk.addColorStop(.6, "#ffd43b"); gk.addColorStop(1, "#ff6b6b");
+      ctx.fillStyle = gk; arrot(ctx, o.x + 2, o.y + 2 + (bh - 4) * (1 - st.carica), bw - 4, (bh - 4) * st.carica, (bw - 4) / 2); ctx.fill();
+    }
+    function tensione(t, d) {   // a destra quanto è teso il filo; in alto quanto manca al pontile
+      var bx = cw - Math.max(16, S * 4.6), bw = Math.max(12, S * 3), top = Math.max(110, ch * .22), bh = Math.min(S * 55, ch * .5);
+      ctx.fillStyle = "rgba(0,0,0,.5)"; arrot(ctx, bx, top, bw, bh, bw / 2); ctx.fill(); ctx.strokeStyle = "rgba(255,255,255,.45)"; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = "rgba(255,107,107,.32)"; ctx.fillRect(bx + 2, top + 2, bw - 4, (bh - 4) * .2);
+      var col = t > .8 ? "#ff6b6b" : t > .55 ? "#ffd43b" : "#51cf66", tt = Math.min(1, t);
+      if (t > .8) { ctx.shadowColor = "#ff6b6b"; ctx.shadowBlur = 12 + Math.sin(st.t * 20) * 6; }
+      ctx.fillStyle = col; arrot(ctx, bx + 2, top + 2 + (bh - 4) * (1 - tt), bw - 4, (bh - 4) * tt, (bw - 4) / 2); ctx.fill(); ctx.shadowBlur = 0;
+      ctx.font = "900 " + Math.max(10, Math.round(2.4 * S)) + "px system-ui,sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = "#fff"; ctx.fillText("FILO", bx + bw / 2, top - 6);
+      // quanto manca: dal pesce al pontile
+      var px = cw * .2, pw = cw * .56, py = Math.max(96, ch * .17), pf = px + pw * Math.max(0, Math.min(1, d / 1.3));   // il pesce si avvicina al pontile (a sinistra)
+      ctx.fillStyle = "rgba(0,0,0,.45)"; arrot(ctx, px, py - 6, pw, 12, 6); ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px + 6, py); ctx.lineTo(pf, py); ctx.stroke();
+      ctx.font = Math.round(13 + S) + "px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("🎣", px - 10, py); ctx.save(); ctx.translate(pf, py); ctx.scale(-1, 1); ctx.fillText("🐟", 0, 0); ctx.restore(); ctx.textBaseline = "alphabetic";
     }
     function arrot(x, a, b, w, h, r) { r = Math.max(0, Math.min(r, w / 2, h / 2)); x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
     function chiudi() { cancelAnimationFrame(anim); window.removeEventListener("resize", misura); }
@@ -776,11 +1006,12 @@
     s._monta = function () {
       misura(); aggTesta();
       suggerisci(GARA ? "Tieni premuto per lanciare: vince chi pesca più chili!" : eschePronte() > 0 ? "Tieni premuto per caricare il lancio, poi lascia" : "Esche finite per oggi");
-      if (!D.tot && !GARA) dimmi("Benvenuto al laghetto! 🎣");
+      if (PIOVE) { dimmi("🌧️ Piove: i pesci abboccano più spesso!"); nome.textContent = "🎣 Laghetto 🌧️"; }
+      else if (!D.tot && !GARA) dimmi("Benvenuto al laghetto! 🎣");
       anim = requestAnimationFrame(function (o) { ult = o; giro(o); });
     };
     s._chiudi = chiudi;
-    window.__pesca = { st: st, pesci: function () { return pesci; }, D: D, lascia: lascia, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); }, premi: function (v) { premuto = v; } };   // (per le prove)
+    window.__pesca = { st: st, disegna: function () { disegna(); }, pesci: function () { return pesci; }, D: D, lascia: lascia, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); }, premi: function (v) { premuto = v; } };   // (per le prove)
     return s;
   }
 
@@ -845,6 +1076,18 @@
       ".pe-cl{padding:3px 9px;border-radius:999px;font-weight:900;font-size:.78rem;color:#fff;background:rgba(0,0,0,.45);white-space:nowrap}",
       ".pe-cl.tu{color:#1a1440;background:#ffe066}",
       ".pe-in-gara .pe-avviso{top:calc(158px + env(safe-area-inset-top))}",
+      // la carta del pesce preso: si gira entrando, una luce ci passa sopra, il pesce dondola; epici e leggendari coi raggi che girano
+      ".pe-presa{position:relative;isolation:isolate;overflow:hidden;animation:peGira .55s cubic-bezier(.3,1.3,.5,1)}",
+      "@keyframes peGira{from{transform:perspective(700px) rotateY(90deg) scale(.85);opacity:0}}",
+      ".pe-presa::after{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 40%,rgba(255,255,255,.28) 50%,transparent 60%);transform:translateX(-130%);animation:peLuccica 1.1s .45s ease-out forwards;pointer-events:none}",
+      "@keyframes peLuccica{to{transform:translateX(130%)}}",
+      ".pe-presa.r3::before,.pe-presa.r4::before{content:'';position:absolute;left:50%;top:25%;width:170%;height:170%;margin:-85% 0 0 -85%;background:repeating-conic-gradient(rgba(204,93,232,.24) 0 9deg,transparent 9deg 18deg);animation:peRaggi 9s linear infinite;z-index:-1;pointer-events:none}",
+      ".pe-presa.r4::before{background:repeating-conic-gradient(rgba(255,212,59,.32) 0 9deg,transparent 9deg 18deg)}",
+      ".pe-presa.r4{box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 44px rgba(255,212,59,.5),inset 0 0 0 2px rgba(255,212,59,.7)}",
+      ".pe-presa.r3{box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 36px rgba(204,93,232,.45),inset 0 0 0 2px rgba(204,93,232,.6)}",
+      "@keyframes peRaggi{to{transform:rotate(360deg)}}",
+      ".pe-presa .pe-fig canvas{animation:peDondola 1.4s ease-in-out infinite alternate}",
+      "@keyframes peDondola{from{transform:rotate(-4deg)}to{transform:rotate(4deg) translateY(-3px)}}",
       ".pe-nome.pe-poco{color:#ff6b6b;animation:pePoco .5s ease-in-out infinite alternate}",
       "@keyframes pePoco{to{transform:scale(1.08)}}"
     ].join("");
