@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 185,
+    data: "11 ottobre 2026",
+    titolo: "Pesca: attrezzi e acquari 🎒🐠",
+    descrizione: [
+      "Al laghetto c'è il tasto 🎒 Attrezzi: canne migliori (da lago, in carbonio, d'oro) che reggono di più gli strattoni e ti danno più tempo quando il pesce abbocca.",
+      "Esche speciali: quella colorata attira più pesci rari, quella luminosa gli epici e i leggendari. Scegli tu quale usare.",
+      "Nel negozio, tra le decorazioni, ci sono due acquari nuovi: quello del pescatore (5 pesci fino a 80 cm) e quello gigante (10 pesci di qualsiasi misura).",
+      "Mettilo in casa e toccalo: il tuo avatar ci va vicino e scegli quali pesci del cesto metterci dentro. Nuotano davvero, ognuno col suo disegno!"
+    ]
+  },
+  {
     v: 184,
     data: "11 ottobre 2026",
     titolo: "Si pesca al laghetto! 🎣",

@@ -60,6 +60,20 @@
   ];
   var RARITA = { 1: ["Comune", "#868e96"], 2: ["Raro", "#1c7ed6"], 3: ["Epico", "#9c36b5"], 4: ["Leggendario", "#f08c00"] };
   var PESO_R = { 1: 60, 2: 24, 3: 9, 4: 2.6 };
+  // l'attrezzatura (si compra al laghetto): le canne reggono di più gli strattoni, le esche speciali attirano i pesci rari
+  var CANNE = [
+    { id: "bambu", nome: "Canna di bambù", prezzo: 0, tens: 1, tira: 1, fin: 0, col: "#5c3d1e", sotto: "Quella di partenza" },
+    { id: "lago", nome: "Canna da lago", prezzo: 1500, tens: .85, tira: 1.1, fin: .05, col: "#1c7ed6", sotto: "Il filo si spezza meno e tira un po' più svelta" },
+    { id: "carbonio", nome: "Canna in carbonio", prezzo: 5000, tens: .72, tira: 1.2, fin: .1, col: "#343a40", sotto: "Regge gli strattoni e ti dà più tempo quando abbocca" },
+    { id: "oro", nome: "Canna d'oro", prezzo: 15000, tens: .6, tira: 1.3, fin: .15, col: "#f2b705", sotto: "La migliore: il filo quasi non si spezza" }
+  ];
+  var ESCHE = {
+    lombrico: { nome: "Lombrico", ico: "🪱", sotto: "10 al giorno gratis", prezzo: 400 },
+    colorata: { nome: "Esca colorata", ico: "🎏", sotto: "Attira più pesci rari", prezzo: 600, pesi: { 1: 40, 2: 40, 3: 14, 4: 4 } },
+    luminosa: { nome: "Esca luminosa", ico: "✨", sotto: "Attira epici e leggendari", prezzo: 1800, pesi: { 1: 18, 2: 38, 3: 30, 4: 12 } }
+  };
+  var ORDINE_ESCHE = ["lombrico", "colorata", "luminosa"];
+  function canna(id) { for (var i = 0; i < CANNE.length; i++) if (CANNE[i].id === id) return CANNE[i]; return CANNE[0]; }
   function pesce(id) { for (var i = 0; i < PESCI.length; i++) if (PESCI[i].id === id) return PESCI[i]; return null; }
   function curiosita(id) { for (var i = 0; i < CURIOSITA.length; i++) if (CURIOSITA[i].id === id) return CURIOSITA[i]; return null; }
   function adesso(sp, fase) { return sp.quando === "sempre" || sp.quando === fase || (fase === "tramonto" && sp.quando !== "tramonto" ? Math.random() < .5 : false); }   // al tramonto escono un po' quelli del giorno e un po' quelli della notte
@@ -129,6 +143,47 @@
     c.beginPath(); c.moveTo(L * .35, -h * .2); c.quadraticCurveTo(L * .6, -h * 1.5, L * .7, -h * 1.8); c.moveTo(L * .35, -h * .1); c.quadraticCurveTo(L * .65, -h * .9, L * .8, -h * 1.2); c.stroke();   // le antenne
     c.fillStyle = "#111"; c.beginPath(); c.arc(L * .3, -h * .25, Math.max(1.5, L * .025), 0, 7); c.fill();
   }
+  // lo stesso pesce in SVG (per l'acquario di casa, dove nuota da solo): centrato in 0,0, guarda a destra, lungo L
+  function svgPesce(id, L, pref) {
+    var sp = pesce(id); if (!sp) return "";
+    pref = pref || "pf";
+    function n(v) { return Math.round(v * 10) / 10; }
+    var col = sp.col, s = "", i;
+    if (sp.forma === "gambero") {
+      var hg = L * .22;
+      for (i = 0; i < 6; i++) s += "<ellipse cx='" + n(-L * .32 + i * L * .09) + "' cy='0' rx='" + n(L * .07) + "' ry='" + n(hg * (.55 - i * .03)) + "' fill='" + col[0] + "' stroke='" + col[2] + "' stroke-width='" + n(Math.max(.4, L * .012)) + "'/>";
+      s += "<path d='M" + n(-L * .38) + " 0 L" + n(-L * .5) + " " + n(-hg * .5) + " L" + n(-L * .5) + " " + n(hg * .5) + " Z' fill='" + col[0] + "'/>";
+      s += "<ellipse cx='" + n(L * .2) + "' cy='0' rx='" + n(L * .17) + "' ry='" + n(hg * .62) + "' fill='" + col[0] + "' stroke='" + col[2] + "' stroke-width='" + n(Math.max(.4, L * .012)) + "'/>";
+      s += "<ellipse cx='" + n(L * .5) + "' cy='" + n(-hg * .75) + "' rx='" + n(L * .07) + "' ry='" + n(hg * .3) + "' fill='" + col[1] + "'/><ellipse cx='" + n(L * .5) + "' cy='" + n(hg * .75) + "' rx='" + n(L * .07) + "' ry='" + n(hg * .3) + "' fill='" + col[1] + "'/>";
+      return "<g>" + s + "<circle cx='" + n(L * .3) + "' cy='" + n(-hg * .25) + "' r='" + n(Math.max(.6, L * .025)) + "' fill='#111'/></g>";
+    }
+    var h = L * ({ snello: .26, alto: .48, lungo: .2, anguilla: .11, baffi: .3, storione: .2, normale: .34 }[sp.forma] || .34), x0 = -L / 2, x1 = L / 2, coda = sp.forma === "anguilla" ? L * .08 : L * .2;
+    var corpo;
+    if (sp.forma === "anguilla") corpo = "M" + n(x0 + coda * .5) + " 0 C" + n(x0 + L * .3) + " " + n(-h * 1.2) + " " + n(x1 - L * .2) + " " + n(-h * .9) + " " + n(x1) + " 0 C" + n(x1 - L * .2) + " " + n(h * .9) + " " + n(x0 + L * .3) + " " + n(h * 1.2) + " " + n(x0 + coda * .5) + " 0 Z";
+    else if (sp.forma === "lungo" || sp.forma === "storione") corpo = "M" + n(x0 + coda * .5) + " 0 C" + n(x0 + L * .25) + " " + n(-h * .75) + " " + n(x1 - L * .25) + " " + n(-h * .7) + " " + n(x1) + " " + n(-h * .05) + " L" + n(x1) + " " + n(h * .05) + " C" + n(x1 - L * .25) + " " + n(h * .7) + " " + n(x0 + L * .25) + " " + n(h * .75) + " " + n(x0 + coda * .5) + " 0 Z";
+    else corpo = "M" + n(x0 + coda * .5) + " 0 C" + n(x0 + L * .2) + " " + n(-h * .62) + " " + n(x1 - L * .18) + " " + n(-h * .68) + " " + n(x1) + " 0 C" + n(x1 - L * .18) + " " + n(h * .68) + " " + n(x0 + L * .2) + " " + n(h * .62) + " " + n(x0 + coda * .5) + " 0 Z";
+    s += "<linearGradient id='" + pref + "g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='" + col[0] + "'/><stop offset='.55' stop-color='" + col[0] + "'/><stop offset='1' stop-color='" + col[1] + "'/></linearGradient>";
+    s += "<clipPath id='" + pref + "c'><path d='" + corpo + "'/></clipPath>";
+    s += "<path d='M" + n(x0 + coda * .6) + " 0 L" + n(x0 - coda * .5) + " " + n(-h * .55) + " Q" + n(x0 - coda * .1) + " 0 " + n(x0 - coda * .5) + " " + n(h * .55) + " Z' fill='" + col[2] + "'/>";   // la coda
+    s += "<path d='M" + n(-L * .12) + " " + n(-h * .42) + " Q" + n(L * .02) + " " + n(-h * .95) + " " + n(L * .14) + " " + n(-h * .4) + " Z' fill='" + col[2] + "'/>";   // le pinne
+    s += "<path d='M" + n(-L * .05) + " " + n(h * .4) + " Q" + n(L * .04) + " " + n(h * .78) + " " + n(L * .12) + " " + n(h * .38) + " Z' fill='" + col[2] + "'/>";
+    s += "<path d='" + corpo + "' fill='url(#" + pref + "g)' stroke='rgba(0,0,0,.25)' stroke-width='" + n(Math.max(.4, L * .01)) + "'/>";
+    var dis = "";
+    if (sp.disegno === "strisce") for (i = 0; i < 6; i++) dis += "<rect x='" + n(-L * .3 + i * L * .1) + "' y='" + n(-h) + "' width='" + n(L * .04) + "' height='" + n(h * 1.3) + "' fill='rgba(20,30,10,.38)'/>";
+    else if (sp.disegno === "puntini") for (i = 0; i < 14; i++) dis += "<circle cx='" + n(-L * .32 + ((i * 37) % 60) / 60 * L * .65) + "' cy='" + n(-h * .35 + ((i * 53) % 40) / 40 * h * .55) + "' r='" + n(L * .018) + "' fill='" + (sp.id === "trota" ? "#c92a2a" : "rgba(255,255,230,.55)") + "'/>";
+    else if (sp.disegno === "macchie") for (i = 0; i < 5; i++) dis += "<circle cx='" + n(-L * .25 + i * L * .12) + "' cy='" + n(-h * .1 + (i % 2) * h * .12) + "' r='" + n(L * .05) + "' fill='rgba(28,126,214,.45)'/>";
+    else if (sp.disegno === "squame") for (i = 0; i < 24; i++) { var qx = -L * .3 + (i % 8) * L * .08, qy = -h * .3 + Math.floor(i / 8) * h * .25, rq = L * .045; dis += "<path d='M" + n(qx + rq * Math.cos(-1.2)) + " " + n(qy + rq * Math.sin(-1.2)) + " A" + n(rq) + " " + n(rq) + " 0 0 1 " + n(qx + rq * Math.cos(1.2)) + " " + n(qy + rq * Math.sin(1.2)) + "' fill='none' stroke='rgba(0,0,0,.18)' stroke-width='" + n(Math.max(.4, L * .008)) + "'/>"; }
+    else if (sp.disegno === "koi") [[-.2, -.2, .12], [.05, -.25, .1], [.18, .02, .07], [-.05, .05, .06]].forEach(function (m) { dis += "<ellipse cx='" + n(m[0] * L) + "' cy='" + n(m[1] * h * 2) + "' rx='" + n(m[2] * L) + "' ry='" + n(m[2] * L * .7) + "' fill='#f03e3e'/>"; });
+    else if (sp.disegno === "arcobaleno") dis += "<rect x='" + n(-L / 2) + "' y='" + n(-h * .12) + "' width='" + n(L) + "' height='" + n(h * .24) + "' fill='rgba(230,73,128,.55)'/>";
+    if (sp.forma === "storione") for (i = 0; i < 7; i++) dis += "<circle cx='" + n(-L * .3 + i * L * .1) + "' cy='" + n(-h * .32) + "' r='" + n(L * .016) + "' fill='rgba(255,255,255,.55)'/>";
+    if (dis) s += "<g clip-path='url(#" + pref + "c)'>" + dis + "</g>";
+    s += "<ellipse cx='" + n(L * .02) + "' cy='" + n(-h * .22) + "' rx='" + n(L * .28) + "' ry='" + n(h * .08) + "' fill='rgba(255,255,255,.25)'/>";
+    var ex = x1 - L * (sp.forma === "anguilla" ? .06 : .14), ey = -h * (sp.forma === "anguilla" ? .1 : .12), er = Math.max(.7, L * (sp.forma === "anguilla" ? .022 : .035));
+    s += "<circle cx='" + n(ex) + "' cy='" + n(ey) + "' r='" + n(er) + "' fill='#fff'/><circle cx='" + n(ex + er * .25) + "' cy='" + n(ey) + "' r='" + n(er * .55) + "' fill='#111'/>";
+    if (sp.forma === "baffi") [[-.5, .5], [.2, .9], [.6, 1.2]].forEach(function (b) { s += "<path d='M" + n(x1 - L * .03) + " " + n(h * .08) + " Q" + n(x1 + L * .08) + " " + n(h * b[0]) + " " + n(x1 + L * .02) + " " + n(h * b[1]) + "' fill='none' stroke='" + col[2] + "' stroke-width='" + n(Math.max(.4, L * .012)) + "'/>"; });
+    if (sp.disegno === "corona") { var cx = ex - L * .02, cy = -h * .6, cw = L * .1; s += "<path d='M" + n(cx - cw / 2) + " " + n(cy) + " L" + n(cx - cw / 2) + " " + n(cy - cw * .55) + " L" + n(cx - cw / 4) + " " + n(cy - cw * .25) + " L" + n(cx) + " " + n(cy - cw * .7) + " L" + n(cx + cw / 4) + " " + n(cy - cw * .25) + " L" + n(cx + cw / 2) + " " + n(cy - cw * .55) + " L" + n(cx + cw / 2) + " " + n(cy) + " Z' fill='#ffd43b' stroke='#e67700' stroke-width='" + n(Math.max(.4, L * .008)) + "'/>"; }
+    return "<g>" + s + "</g>";
+  }
   function immaginePesce(sp, L, alto) {   // una tela col pesce disegnato (per le carte e l'album)
     var dpr = Math.min(2, window.devicePixelRatio || 1), c = document.createElement("canvas"); c.width = Math.round(L * 1.25 * dpr); c.height = Math.round((alto || L * .7) * dpr);
     c.style.width = L * 1.25 + "px"; c.style.height = (alto || L * .7) + "px";
@@ -167,24 +222,34 @@
     AUDIO = opts.audio || null;
     var D = opts.dati && opts.dati.v ? opts.dati : datiIniziali();
     D.album = D.album || {}; D.cesto = D.cesto || []; D.esche = D.esche || { g: oggi(), usate: 0 }; D.extra = D.extra || 0; D.tot = D.tot || 0;
+    D.canne = D.canne || ["bambu"]; D.canna = D.canna || "bambu"; D.escheSp = D.escheSp || { colorata: 0, luminosa: 0 }; D.escaUso = ESCHE[D.escaUso] ? D.escaUso : "lombrico";
     function salva() { if (opts.salva) opts.salva(D); }
-    function eschePronte() { if (D.esche.g !== oggi()) D.esche = { g: oggi(), usate: 0 }; return Math.max(0, ESCHE_GIORNO - D.esche.usate) + D.extra; }
-    function usaEsca() { if (D.esche.g !== oggi()) D.esche = { g: oggi(), usate: 0 }; if (D.esche.usate < ESCHE_GIORNO) D.esche.usate++; else D.extra = Math.max(0, D.extra - 1); salva(); aggTesta(); }
+    function lombrichi() { if (D.esche.g !== oggi()) D.esche = { g: oggi(), usate: 0 }; return Math.max(0, ESCHE_GIORNO - D.esche.usate) + D.extra; }
+    function eschePronte() {   // quante ne hai di quella che stai usando (finita una speciale, si torna ai lombrichi)
+      if (D.escaUso !== "lombrico" && !(D.escheSp[D.escaUso] > 0)) D.escaUso = "lombrico";
+      return D.escaUso === "lombrico" ? lombrichi() : D.escheSp[D.escaUso];
+    }
+    function usaEsca() {
+      if (D.escaUso !== "lombrico" && D.escheSp[D.escaUso] > 0) { D.escheSp[D.escaUso]--; if (!D.escheSp[D.escaUso]) dimmi("Finite le esche speciali: si torna ai lombrichi 🪱"); }
+      else { lombrichi(); if (D.esche.usate < ESCHE_GIORNO) D.esche.usate++; else D.extra = Math.max(0, D.extra - 1); }
+      salva(); aggTesta();
+    }
+    function laCanna() { return canna(D.canna); }
     function monete() { return opts.monete ? opts.monete() : 0; }
 
     var s = el("div", "schermata pe-vista"), cv = el("canvas", "pe-tela"), ctx = cv.getContext("2d");
     var testa = el("div", "pe-testa"), bInd = el("button", "pe-tasto", "‹"), nome = el("div", "pe-nome"), cEsche = el("div", "pe-chip"), cMonete = el("div", "pe-chip");
     bInd.setAttribute("aria-label", "Indietro"); bInd.onclick = function () { esci(); };
     [bInd, nome, cEsche, cMonete].forEach(function (n) { testa.appendChild(n); });
-    var giu = el("div", "pe-giu"), bAlbum = el("button", "pe-bott", "📖 Album"), bCesto = el("button", "pe-bott");
-    bAlbum.onclick = function () { album(); }; bCesto.onclick = function () { cesto(); };
-    giu.appendChild(bAlbum); giu.appendChild(bCesto);
+    var giu = el("div", "pe-giu"), bAlbum = el("button", "pe-bott", "📖 Album"), bCesto = el("button", "pe-bott"), bAttr = el("button", "pe-bott", "🎒 Attrezzi");
+    bAlbum.onclick = function () { album(); }; bCesto.onclick = function () { cesto(); }; bAttr.onclick = function () { attrezzi(); };
+    giu.appendChild(bAlbum); giu.appendChild(bCesto); giu.appendChild(bAttr);
     var aiuto = el("div", "pe-aiuto"), avviso = el("div", "pe-avviso"), sopra = el("div", "pe-sopra");
     [cv, testa, giu, aiuto, avviso, sopra].forEach(function (n) { s.appendChild(n); });
     var FASE = fase();
     nome.textContent = "🎣 Laghetto " + (FASE === "notte" ? "🌙" : FASE === "tramonto" ? "🌅" : "☀️");
     function aggTesta() {
-      cEsche.textContent = "🪱 " + eschePronte(); cMonete.textContent = "🪙 " + cifre(monete());
+      var n = eschePronte(); cEsche.textContent = ESCHE[D.escaUso].ico + " " + n; cMonete.textContent = "🪙 " + cifre(monete());
       bCesto.textContent = "🧺 Cesto" + (D.cesto.length ? " (" + D.cesto.length + ")" : "");
     }
     function dimmi(t) { avviso.textContent = t; avviso.classList.remove("su"); void avviso.offsetWidth; avviso.classList.add("su"); }
@@ -258,14 +323,15 @@
     var st = { fase: "pronto", t: 0, carica: 0, caricaDir: 1, hx: 0, hy: 0, gal: { x: 0, y: 0, dip: 0 }, volo: null, attesa: 0, cerca: 0, pesce: null, lotta: null, salto: null, punta: 0 };
     var pesci = [], fx = [], lucciole = [];
     var PUNTA = { x: 33, y: 33 };   // la punta della canna (a riposo)
-    function nuovoPesce(daFuori, vicinoA) {   // vicinoA: un pesce adatto a quel punto del lago, che arriva lì vicino
+    function nuovoPesce(daFuori, vicinoA, pesi) {   // vicinoA: un pesce adatto a quel punto del lago, che arriva lì vicino; pesi: le rarità dell'esca speciale
       var cur = null, sp = null, fv = vicinoA != null ? fracDi(vicinoA) : null;
-      if (Math.random() < .07) { var tot = 0; CURIOSITA.forEach(function (q) { tot += q.peso; }); var r = Math.random() * tot; for (var i = 0; i < CURIOSITA.length; i++) { r -= CURIOSITA[i].peso; if (r <= 0) { cur = CURIOSITA[i]; break; } } }
+      pesi = pesi || PESO_R;
+      if (Math.random() < (pesi === PESO_R ? .07 : .02)) { var tot = 0; CURIOSITA.forEach(function (q) { tot += q.peso; }); var r = Math.random() * tot; for (var i = 0; i < CURIOSITA.length; i++) { r -= CURIOSITA[i].peso; if (r <= 0) { cur = CURIOSITA[i]; break; } } }
       if (!cur) {
         var ok = PESCI.filter(function (p) { return adesso(p, FASE) && (fv == null || (fv >= p.dove[0] - .08 && fv <= p.dove[1] + .08)); }), totp = 0;
         if (!ok.length) ok = PESCI.filter(function (p) { return p.r === 1 && p.quando === "sempre"; });
-        ok.forEach(function (p) { totp += PESO_R[p.r]; });
-        var rr = Math.random() * totp; for (var j = 0; j < ok.length; j++) { rr -= PESO_R[ok[j].r]; if (rr <= 0) { sp = ok[j]; break; } }
+        ok.forEach(function (p) { totp += pesi[p.r]; });
+        var rr = Math.random() * totp; for (var j = 0; j < ok.length; j++) { rr -= pesi[ok[j].r]; if (rr <= 0) { sp = ok[j]; break; } }
         sp = sp || ok[0];
       }
       var dove = cur ? [0, 1] : sp.dove, frac = dove[0] + Math.random() * (dove[1] - dove[0]);
@@ -317,10 +383,10 @@
     function cercaPesce(dt) {
       st.cerca -= dt; if (st.cerca > 0 || st.pesce) return; st.cerca = .6;
       var vicini = pesci.filter(function (p) { return p.stato === "gira" && Math.abs(p.x - st.hx) < 18 && Math.abs(p.y - st.hy) < 24; });
-      var scelto = null;
-      if (vicini.length && Math.random() < .45) scelto = vicini[Math.floor(Math.random() * vicini.length)];
-      else if (st.attesa > 2.5 + Math.random() * 1.5) {   // nessuno si è accorto: ne arriva uno dal buio lì vicino (non si aspetta troppo)
-        scelto = nuovoPesce(false, st.hx);
+      var scelto = null, spec = D.escaUso !== "lombrico" && D.escheSp[D.escaUso] > 0 ? ESCHE[D.escaUso].pesi : null;   // l'esca speciale richiama i pesci rari dal fondo
+      if (vicini.length && Math.random() < .45 && !(spec && Math.random() < .75)) scelto = vicini[Math.floor(Math.random() * vicini.length)];
+      else if (st.attesa > (spec ? 1.5 : 2.5) + Math.random() * 1.5) {   // nessuno si è accorto: ne arriva uno dal buio lì vicino (non si aspetta troppo)
+        scelto = nuovoPesce(false, st.hx, spec);
         if (pesci.length >= 9) { var lontano = pesci.filter(function (p) { return p.stato === "gira"; }).sort(function (a, b) { return Math.abs(b.x - st.hx) - Math.abs(a.x - st.hx); })[0]; pesci = pesci.filter(function (p) { return p !== lontano; }); }   // (non troppi pesci nel lago)
         pesci.push(scelto);
       }
@@ -351,8 +417,8 @@
       if (L.strappo) { L.strappo -= dt; if (L.strappo <= 0) { L.strappo = 0; L.prossimo = (2.4 - .25 * f) * (.7 + Math.random() * .6); } }
       var fatica = .6 + .4 * L.d;   // più è vicino, meno tira
       if (premuto) {
-        L.d -= .3 / (.7 + .25 * f) * dt;   // i pesci forti si tirano su più piano
-        L.tens += (.14 * f * fatica + (L.strappo ? .6 * f : 0)) * dt;
+        L.d -= .3 / (.7 + .25 * f) * laCanna().tira * dt;   // i pesci forti si tirano su più piano (le canne buone tirano più svelte)
+        L.tens += (.14 * f * fatica + (L.strappo ? .6 * f : 0)) * laCanna().tens * dt;   // (le canne buone reggono di più)
         L.mul -= dt; if (L.mul <= 0) { L.mul = .08; suonoMulinello(); }
       } else {
         L.tens -= 1.0 * dt;
@@ -431,10 +497,46 @@
       sopra.appendChild(box); sopra.classList.add("su");
     }
     function finiteEsche() {
-      var ok = monete() >= PACCO.prezzo;
-      finestra("Esche finite 🪱", [el("p", "pe-frase", "Le 10 esche gratis tornano domani. Intanto puoi comprarne altre.")],
-        [{ testo: "Compra " + PACCO.n + " esche · 🪙 " + cifre(PACCO.prezzo), cls: "btn-primario", off: !ok, fn: function () { if (monete() < PACCO.prezzo) return; if (opts.cambia) opts.cambia(-PACCO.prezzo); D.extra += PACCO.n; salva(); suonoMonete(); vibra(10); chiudiSopra(); aggTesta(); suggerisci("Tieni premuto per caricare il lancio, poi lascia"); } },
-          { testo: "Va bene", fn: chiudiSopra }]);
+      var ok = monete() >= PACCO.prezzo, altre = ORDINE_ESCHE.filter(function (k) { return k !== "lombrico" && D.escheSp[k] > 0; });
+      finestra("Esche finite 🪱", [el("p", "pe-frase", "I 10 lombrichi gratis tornano domani a mezzanotte." + (altre.length ? " Hai ancora delle esche speciali negli attrezzi." : " Intanto puoi comprarne altri."))],
+        [{ testo: "Compra " + PACCO.n + " lombrichi · 🪙 " + cifre(PACCO.prezzo), cls: "btn-primario", off: !ok, fn: function () { if (monete() < PACCO.prezzo) return; if (opts.cambia) opts.cambia(-PACCO.prezzo); D.extra += PACCO.n; salva(); suonoMonete(); vibra(10); chiudiSopra(); aggTesta(); suggerisci("Tieni premuto per caricare il lancio, poi lascia"); } },
+          { testo: "🎒 Attrezzi", fn: attrezzi }, { testo: "Va bene", fn: chiudiSopra }]);
+    }
+    // ---- gli attrezzi: le canne (le compri una volta) e le esche (a pacchetti da 5), con quella che stai usando ----
+    function attrezzi() {
+      if (st.fase !== "pronto" && st.fase !== "carta") return dimmi("Finisci prima la pescata");
+      var lc = el("div", "pe-attr");
+      CANNE.forEach(function (c) {
+        var tua = D.canne.indexOf(c.id) >= 0, inUso = D.canna === c.id, r = el("div", "pe-oggetto" + (inUso ? " uso" : ""));
+        var seg = el("i", "pe-canna"); seg.style.background = c.col; r.appendChild(seg);
+        var t = el("div", "pe-testo"); t.appendChild(el("b", null, c.nome)); t.appendChild(el("small", null, c.sotto)); r.appendChild(t);
+        var b = el("button", "pe-vendi", inUso ? "In uso" : tua ? "Usa" : "🪙 " + cifre(c.prezzo));
+        b.disabled = inUso || (!tua && monete() < c.prezzo);
+        b.onclick = function () {
+          if (!tua) { if (monete() < c.prezzo) return; if (opts.cambia) opts.cambia(-c.prezzo); D.canne.push(c.id); suonoMonete(); dimmi("Nuova canna! 🎣"); }
+          D.canna = c.id; vibra(8); salva(); aggTesta(); attrezzi();
+        };
+        r.appendChild(b); lc.appendChild(r);
+      });
+      var le = el("div", "pe-attr");
+      ORDINE_ESCHE.forEach(function (k) {
+        var E = ESCHE[k], n = k === "lombrico" ? lombrichi() : (D.escheSp[k] || 0), inUso = D.escaUso === k, r = el("div", "pe-oggetto" + (inUso ? " uso" : ""));
+        r.appendChild(el("i", "pe-esca", E.ico));
+        var t = el("div", "pe-testo"); t.appendChild(el("b", null, E.nome + " · ne hai " + n)); t.appendChild(el("small", null, E.sotto)); r.appendChild(t);
+        var col = el("div", "pe-due");
+        var bc = el("button", "pe-vendi", "+5 · 🪙 " + cifre(E.prezzo)); bc.disabled = monete() < E.prezzo;
+        bc.onclick = function () {
+          if (monete() < E.prezzo) return; if (opts.cambia) opts.cambia(-E.prezzo);
+          if (k === "lombrico") D.extra += 5; else { D.escheSp[k] = (D.escheSp[k] || 0) + 5; D.escaUso = k; }
+          suonoMonete(); vibra(8); salva(); aggTesta(); attrezzi();
+        };
+        col.appendChild(bc);
+        if (!inUso && n > 0) { var bu = el("button", "pe-usa", "Usa"); bu.onclick = function () { D.escaUso = k; vibra(8); salva(); aggTesta(); attrezzi(); }; col.appendChild(bu); }
+        else if (inUso) col.appendChild(el("span", "pe-inuso", "In uso"));
+        r.appendChild(col); le.appendChild(r);
+      });
+      finestra("🎒 Attrezzi", [el("div", "pe-sottot", "Le canne"), lc, el("div", "pe-sottot", "Le esche"), le, el("p", "pe-nota", "🪙 " + cifre(monete()) + " · un'esca si usa solo quando un pesce abbocca")],
+        [{ testo: "Chiudi", cls: "btn-primario", fn: function () { chiudiSopra(); suggerisci(eschePronte() > 0 ? "Tieni premuto per caricare il lancio, poi lascia" : "Esche finite: le trovi negli attrezzi"); } }]);
     }
     // ---- l'album: tutti i pesci (quelli presi col disegno, gli altri in ombra con un indizio) ----
     function album() {
@@ -466,7 +568,7 @@
         var b = el("button", "pe-vendi", "🪙 " + cifre(v)); b.onclick = function () { D.cesto.splice(i, 1); if (opts.cambia) opts.cambia(v); suonoMonete(); vibra(8); salva(); aggTesta(); cesto(); };
         r.appendChild(b); lista.appendChild(r);
       });
-      finestra("🧺 Il cesto · " + D.cesto.length + "/" + CESTO_MAX, [lista, el("p", "pe-nota", "Presto potrai metterli nell'acquario di casa.")],
+      finestra("🧺 Il cesto · " + D.cesto.length + "/" + CESTO_MAX, [lista, el("p", "pe-nota", "Li puoi mettere in un acquario di casa: lo trovi nel negozio, tra le decorazioni.")],
         [{ testo: "Vendi tutto · 🪙 " + cifre(tot), cls: "btn-primario", off: !D.cesto.length, fn: function () { if (opts.cambia) opts.cambia(tot); D.cesto = []; suonoMonete(); vibra(10); salva(); aggTesta(); chiudiSopra(); } },
           { testo: "Chiudi", fn: chiudiSopra }]);
     }
@@ -507,7 +609,7 @@
           p.tAss -= dt;
           if (p.tAss <= 0) {
             if (p.assaggi > 0) { p.assaggi--; st.gal.dip = .55; suonoTic(); p.tAss = .6 + Math.random() * 1.1; p.x += (st.hx - p.x) * .3; onda(st.gal.x, SUP); }
-            else { p.stato = "abbocca"; p.tAbb = p.sp && p.sp.r >= 3 ? .45 : .62; st.gal.dip = 1; suonoAbbocca(); goccia(st.gal.x, SUP, 6); onda(st.gal.x, SUP); }
+            else { p.stato = "abbocca"; p.tAbb = (p.sp && p.sp.r >= 3 ? .45 : .62) + laCanna().fin; st.gal.dip = 1; suonoAbbocca(); goccia(st.gal.x, SUP, 6); onda(st.gal.x, SUP); }
           }
         } else if (p.stato === "abbocca") {
           p.tAbb -= dt;
@@ -552,7 +654,7 @@
       if (figura && figura.complete && figura.naturalWidth) ctx.drawImage(figura, fx0, fy0, fw, fh);
       else { ctx.fillStyle = "#4c6ef5"; ctx.fillRect(X(10), Y(SUP - 24), S * 4, S * 18); }
       var mano = { x: 15.2, y: SUP - 15.5 }, punta = puntaCanna();
-      ctx.strokeStyle = "#5c3d1e"; ctx.lineWidth = Math.max(2, S * .7); ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(X(mano.x - 2), Y(mano.y + 2.5)); ctx.quadraticCurveTo(X((mano.x + punta.x) / 2), Y(Math.min(mano.y, punta.y) - 1 - piega() * 3), X(punta.x), Y(punta.y)); ctx.stroke();
+      ctx.strokeStyle = laCanna().col; ctx.lineWidth = Math.max(2, S * .7); ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(X(mano.x - 2), Y(mano.y + 2.5)); ctx.quadraticCurveTo(X((mano.x + punta.x) / 2), Y(Math.min(mano.y, punta.y) - 1 - piega() * 3), X(punta.x), Y(punta.y)); ctx.stroke();
       ctx.fillStyle = "#adb5bd"; ctx.beginPath(); ctx.arc(X(mano.x - .3), Y(mano.y + 1.2), S * .9, 0, 7); ctx.fill();   // il mulinello
       // il filo e il galleggiante
       ctx.strokeStyle = "rgba(255,255,255,.75)"; ctx.lineWidth = 1;
@@ -678,10 +780,21 @@
       ".pe-cesto{display:flex;flex-direction:column;gap:6px;margin-top:8px;text-align:left}",
       ".pe-riga{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:12px;background:rgba(255,255,255,.08);font-size:.85rem;font-weight:800}",
       ".pe-riga span{flex:1;min-width:0}",
-      ".pe-vendi{flex:none;height:32px;padding:0 10px;border:0;border-radius:10px;cursor:pointer;font:inherit;font-weight:900;font-size:.8rem;color:#1a1440;background:#ffe066}"
+      ".pe-vendi{flex:none;height:32px;padding:0 10px;border:0;border-radius:10px;cursor:pointer;font:inherit;font-weight:900;font-size:.8rem;color:#1a1440;background:#ffe066}",
+      ".pe-vendi:disabled{opacity:.45;cursor:default}",
+      ".pe-attr{display:flex;flex-direction:column;gap:6px;text-align:left}",
+      ".pe-oggetto{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:12px;background:rgba(255,255,255,.08)}",
+      ".pe-oggetto.uso{box-shadow:inset 0 0 0 2px #8ce99a}",
+      ".pe-canna{flex:none;width:8px;height:38px;border-radius:4px;transform:rotate(18deg);box-shadow:0 0 0 1px rgba(255,255,255,.3)}",
+      ".pe-esca{flex:none;width:30px;font-style:normal;font-size:1.5rem;text-align:center}",
+      ".pe-testo{flex:1;min-width:0;display:flex;flex-direction:column}.pe-testo b{font-size:.85rem}.pe-testo small{font-size:.72rem;color:#a5d8ff}",
+      ".pe-due{flex:none;display:flex;flex-direction:column;gap:4px;align-items:stretch}",
+      ".pe-usa{height:26px;border:0;border-radius:8px;cursor:pointer;font:inherit;font-weight:900;font-size:.75rem;color:#fff;background:rgba(140,233,154,.35)}",
+      ".pe-inuso{font-size:.72rem;font-weight:900;color:#8ce99a;text-align:center}",
+      ".pe-giu .pe-bott{font-size:.86rem;padding:0 4px}"
     ].join("");
     document.head.appendChild(st);
   }
 
-  window.SGPesca = { crea: crea, PESCI: PESCI, CURIOSITA: CURIOSITA, disegnaPesce: disegnaPesce, immaginePesce: immaginePesce };
+  window.SGPesca = { crea: crea, PESCI: PESCI, CURIOSITA: CURIOSITA, disegnaPesce: disegnaPesce, immaginePesce: immaginePesce, svgPesce: svgPesce, pesce: pesce };
 })();

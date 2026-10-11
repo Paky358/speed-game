@@ -507,6 +507,39 @@
       R(5, 7, 3, 22, "#fff", 1.5, "opacity='.35'") + R(3, 36, 50, 5, "#495057", 1.5, bordo(1)));
   } });
 
+  // ---- gli acquari per i pesci pescati al laghetto (js/pesca.js): ogni acquario ha i suoi pesci (d.pesci), che nuotano davvero ----
+  // vasca: quanti pesci ci stanno, il pesce più lungo che entra (cm), la zona dove nuotano e quanto si rimpiccioliscono
+  function nuotano(pesci, V) {
+    if (!pesci || !pesci.length || !window.SGPesca || !SGPesca.svgPesce) return "";
+    var a = V.area, n = pesci.length, s = "";
+    pesci.forEach(function (f, i) {
+      var L = Math.max(12, Math.min(V.maxL, f.cm * V.k)), y = a[1] + (i + 0.5) * (a[3] - a[1]) / n + ((i * 7) % 5 - 2), xa = a[0] + L * 0.6, xb = a[2] - L * 0.6, dur = 9 + (i * 3.7) % 7, b = -((i * 2.3) % dur);
+      if (xb < xa) xb = xa + 1;
+      s += "<g transform='translate(0 " + r1(y) + ")'><g><animateTransform attributeName='transform' type='translate' values='" + r1(xa) + " 0;" + r1(xb) + " 0;" + r1(xa) + " 0' dur='" + r1(dur) + "s' begin='" + r1(b) + "s' repeatCount='indefinite'/>" +
+        "<g><animateTransform attributeName='transform' type='translate' values='0 0;0 2;0 0' dur='" + r1(2.6 + i % 3) + "s' repeatCount='indefinite'/>" +
+        "<g><animateTransform attributeName='transform' type='scale' values='1 1;-1 1' keyTimes='0;0.5' calcMode='discrete' dur='" + r1(dur) + "s' begin='" + r1(b) + "s' repeatCount='indefinite'/>" +
+        SGPesca.svgPesce(f.id, L, "f" + i) + "</g></g></g></g>";
+    });
+    return s;
+  }
+  function vascaDisegno(w, h, V, piedi, pesci) {   // la vasca col mobile sotto, l'acqua, la ghiaia, le piante, le bolle e i pesci
+    var a = V.area, tx = a[0] - 8, ty = a[1] - 12, tw = a[2] - a[0] + 16, th = a[3] - a[1] + 26, s = "";
+    s += R(4, ty + th, w - 8, h - ty - th - 4, "url(#mob)", 4, bordo()) + R(10, ty + th + 8, w / 2 - 14, h - ty - th - 20, "url(#mob2)", 3, bordo(1.2)) + R(w / 2 + 4, ty + th + 8, w / 2 - 14, h - ty - th - 20, "url(#mob2)", 3, bordo(1.2));   // il mobile con le ante
+    s += C(w / 2 - 8, ty + th + (h - ty - th) / 2, 2.2, "#e0c070") + C(w / 2 + 8, ty + th + (h - ty - th) / 2, 2.2, "#e0c070");
+    s += R(tx, ty, tw, th, "url(#acqua)", 4, bordo(2.4));   // la vasca
+    s += Pth("M" + (tx + 2) + " " + (ty + th - 10) + " Q" + (tx + tw * 0.3) + " " + (ty + th - 16) + " " + (tx + tw * 0.55) + " " + (ty + th - 11) + " T" + (tx + tw - 2) + " " + (ty + th - 12) + " L" + (tx + tw - 2) + " " + (ty + th - 2) + " L" + (tx + 2) + " " + (ty + th - 2) + " Z", "#e9c46a");   // la ghiaia
+    for (var i = 0; i < 9; i++) s += C(tx + 8 + i * (tw - 16) / 8, ty + th - 6 - (i % 2) * 2, 2 + (i % 3), ["#f4a261", "#e76f51", "#adb5bd"][i % 3], "opacity='.85'");
+    s += Pth("M" + (tx + 12) + " " + (ty + th - 8) + " Q" + (tx + 6) + " " + (ty + th - 30) + " " + (tx + 14) + " " + (ty + th - 50) + " M" + (tx + 20) + " " + (ty + th - 8) + " Q" + (tx + 26) + " " + (ty + th - 26) + " " + (tx + 18) + " " + (ty + th - 40) + " M" + (tx + tw - 16) + " " + (ty + th - 8) + " Q" + (tx + tw - 8) + " " + (ty + th - 34) + " " + (tx + tw - 18) + " " + (ty + th - 56), "none", "stroke='#2f9e44' stroke-width='3.2' stroke-linecap='round'");   // le piante
+    s += nuotano(pesci, V);
+    for (i = 0; i < 4; i++) s += "<circle cx='" + r1(tx + tw * (0.3 + i * 0.13)) + "' cy='" + r1(ty + th - 12) + "' r='" + (1.4 + i % 2) + "' fill='none' stroke='#fff' stroke-width='.8' opacity='.8'><animate attributeName='cy' values='" + r1(ty + th - 12) + ";" + r1(ty + 4) + "' dur='" + (3 + i) + "s' begin='" + (-i * 0.9) + "s' repeatCount='indefinite'/></circle>";   // le bolle
+    s += R(tx + 6, ty + 6, 5, th - 20, "#fff", 2.5, "opacity='.3'") + R(tx - 2, ty - 6, tw + 4, 8, "#343a40", 3, bordo(1.2)) + R(tx + tw * 0.15, ty - 9, tw * 0.25, 4, "#ffe066", 2, "opacity='.9'");   // il riflesso, il coperchio con la luce
+    return svg(w, h, lin("acqua", "#a5d8ff", "#1c7ed6", true) + morbido("mob", "#8b5a2b") + morbido("mob2", "#a0652b"), s);
+  }
+  ogg("acquario_pescatore", { nome: "Acquario del pescatore", stanza: "tutte", reparto: "deco", tipo: "pav", w: 150, h: 150, prof: 0.5, qual: 2, prezzo: 4000,
+    vasca: { posti: 5, maxCm: 80, area: [18, 22, 132, 82], k: 0.55, maxL: 46 }, disegno: function (on, parte, pesci) { return vascaDisegno(150, 150, OGG.acquario_pescatore.vasca, true, pesci); } });
+  ogg("acquario_gigante", { nome: "Acquario gigante", stanza: "tutte", reparto: "deco", tipo: "pav", w: 230, h: 170, prof: 0.6, qual: 2, prezzo: 12000,
+    vasca: { posti: 10, maxCm: 999, area: [18, 22, 212, 108], k: 0.36, maxL: 92 }, disegno: function (on, parte, pesci) { return vascaDisegno(230, 170, OGG.acquario_gigante.vasca, true, pesci); } });
+
   // la roba di partenza si trova anche al Mercatino dell'usato del negozio, a poco
   var PREZZI_USATO = { divano_toppa: 400, tavolino_cassetta: 50, tv_tubo: 300, sedia_plastica: 80, pianta_secca: 60, frigo_ammaccato: 500, fornello_vecchio: 350,
     tappeto_liso: 120, quadro_storto: 60, lampadina: 40, letto_semplice: 450, comodino_cartone: 30, armadio_storto: 400, sveglia: 50, lampada_storta: 90,
@@ -516,6 +549,8 @@
   var FRASI = {
     vasca: "Una vasca vera, coi piedini dorati: ci entri, ti riempi di schiuma e le bolle volano per tutto il bagno. Il massimo del relax.",
     acquario: "Due pesciolini che nuotano avanti e indietro tutto il giorno. E non c'è nemmeno da dargli da mangiare!",
+    acquario_pescatore: "Ci metti i pesci che hai pescato al laghetto (fino a 5, lunghi fino a 80 cm): toccalo in casa e scegli dal cesto. Nuotano davvero!",
+    acquario_gigante: "Il più grande che ci sia: 10 pesci di qualsiasi misura, anche il siluro gigante. La tua collezione da far vedere a tutti.",
     frigo_moderno: "Il frigo dei sogni: dentro c'è di tutto, dalla torta con la ciliegina alle carote. Aprilo e scegli cosa mangiare.",
     cucina_moderna: "Accendila e nel forno si cuoce una torta. Il profumo arriva fino in camera.",
     armadio_bianco: "Tre ante piene di vestiti, scarpe e scatole. Aprilo e cambi look quando vuoi.",
@@ -746,6 +781,11 @@
 
   var cacheImg = {};
   function datauri(s) { return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s); }
+  function imgDi(d, on) {   // l'immagine di un mobile messo in casa: gli acquari hanno i loro pesci, gli altri sono uguali per tipo
+    var o = OGG[d.t];
+    if (o && o.vasca) { var k = "v|" + d.t + "|" + JSON.stringify(d.pesci || []); if (!cacheImg[k]) cacheImg[k] = datauri(o.disegno(false, null, d.pesci || [])); return cacheImg[k]; }
+    return imgOggetto(d.t, on, null, d.vista);
+  }
   function imgOggetto(t, on, parte, vista) {   // vista "fianco": il mobile girato di fianco (se ha quel disegno)
     var d = OGG[t]; if (!d) return ""; var f = vista === "fianco" && d.fianco ? d.fianco : d.disegno, k = t + (on ? "|on" : "") + (parte ? "|" + parte : "") + (f === d.fianco ? "|fianco" : "");
     if (!cacheImg[k]) cacheImg[k] = datauri(f(!!on, parte)); return cacheImg[k];
@@ -926,7 +966,7 @@
     function nodo(d) {
       var n = nodi[d.u];
       if (!n) {
-        n = el("div", "ca-ogg"); n.dataset.t = d.t; var im = el("img"); im.alt = ""; im.draggable = false; im.src = imgOggetto(d.t, false, null, d.vista); n.appendChild(im); n._img = im;
+        n = el("div", "ca-ogg"); n.dataset.t = d.t; var im = el("img"); im.alt = ""; im.draggable = false; im.src = imgDi(d, false); n.appendChild(im); n._img = im;
         n.addEventListener("pointerdown", function (e) { tocco(e, d); });
         nodi[d.u] = n; strato.appendChild(n);
       }
@@ -934,7 +974,7 @@
     }
     function posa(d) {
       var n = nodo(d), g = geo(d), o = OGG[d.t], on = !!d.on;
-      var kk = (on ? 1 : 0) + "|" + (d.vista || ""); if (n._k !== kk) { n._k = kk; n._on = on; n._img.src = imgOggetto(d.t, on, null, d.vista); }   // acceso/spento, aperto/chiuso: cambia solo il disegno
+      var kk = (on ? 1 : 0) + "|" + (d.vista || "") + (o.vasca ? "|" + JSON.stringify(d.pesci || []) : ""); if (n._k !== kk) { n._k = kk; n._on = on; n._img.src = imgDi(d, on); }   // acceso/spento, aperto/chiuso, i pesci dell'acquario: cambia solo il disegno
       n.style.left = g.l.toFixed(1) + "px"; n.style.top = g.t.toFixed(1) + "px"; n.style.width = g.w.toFixed(1) + "px"; n.style.height = g.h.toFixed(1) + "px"; n.style.zIndex = g.zi;
       if (g.quad) {   // sulla parete di lato l'immagine si stende sui quattro angoli
         var mq = misura(d.t); n.classList.add("lato");
@@ -1140,8 +1180,51 @@
       }
       if (o.uso === "wc" || o.uso === "acqua") { d.on = true; posa(d); suono(o.uso === "wc" ? "sciacquone" : "acqua"); finche(o.uso === "wc" ? 1500 : 2100, spegni); return; }
       if (o.uso === "suona") { n.classList.remove("trema"); void n.offsetWidth; n.classList.add("trema"); suono("dring"); aspetta(); return; }
+      if (o.vasca) { apriVasca(d); aspetta(); return; }   // l'acquario: si mettono e si tolgono i pesci del cesto
       n.classList.remove("rimbalza"); void n.offsetWidth; n.classList.add("rimbalza"); saluta(); aspetta();   // il resto: lo tocca e lo guarda
     }
+    // ---- l'acquario: i pesci dentro (si tolgono) e quelli del cesto della pesca (si mettono) ----
+    var pannello = el("div", "ca-vasca");
+    function pesca() { return opts.pesca && opts.pesca.dati ? opts.pesca.dati() : null; }
+    function apriVasca(d) {
+      var o = OGG[d.t], V = o.vasca, P = pesca(), S = window.SGPesca;
+      d.pesci = d.pesci || [];
+      while (pannello.firstChild) pannello.removeChild(pannello.firstChild);
+      var x = el("button", "ca-vasca-x", "✕"); x.onclick = chiudiVasca; pannello.appendChild(x);
+      pannello.appendChild(el("h3", null, "🐠 " + o.nome + " · " + d.pesci.length + "/" + V.posti));
+      function riga(f, testo, azione, off) {
+        var sp = S && S.pesce(f.id), r = el("div", "ca-vasca-riga");
+        if (sp && S.immaginePesce) r.appendChild(S.immaginePesce(sp, 46, 30));
+        r.appendChild(el("span", null, (sp ? sp.nome : "?") + " · " + f.cm + " cm"));
+        var b = el("button", "ca-vasca-b", testo); b.disabled = !!off; b.onclick = azione; r.appendChild(b);
+        return r;
+      }
+      var dentro = el("div", "ca-vasca-lista");
+      if (!d.pesci.length) dentro.appendChild(el("p", "ca-vasca-nota", "L'acquario è vuoto: mettici i pesci del cesto!"));
+      d.pesci.forEach(function (f, i) {
+        dentro.appendChild(riga(f, "Togli", function () {   // torna nel cesto
+          var Q = pesca(); if (!Q) return; d.pesci.splice(i, 1); Q.cesto = Q.cesto || []; Q.cesto.push(f); opts.pesca.salva(Q);
+          posa(d); salva(); suono("baule"); apriVasca(d);
+        }));
+      });
+      pannello.appendChild(dentro);
+      pannello.appendChild(el("div", "ca-vasca-sotto", "🧺 Dal cesto della pesca"));
+      var cesto = el("div", "ca-vasca-lista"), lista = P && P.cesto ? P.cesto : [];
+      if (!lista.length) cesto.appendChild(el("p", "ca-vasca-nota", "Il cesto è vuoto. Vai al laghetto nel parco 🎣 e quando prendi un pesce scegli \"Tienilo nel cesto\"."));
+      lista.forEach(function (f, i) {
+        var pieno = d.pesci.length >= V.posti, grosso = f.cm > V.maxCm;
+        cesto.appendChild(riga(f, grosso ? "Troppo grosso" : pieno ? "Pieno" : "Metti", function () {
+          var Q = pesca(); if (!Q || !Q.cesto[i] || d.pesci.length >= V.posti) return;
+          var g = Q.cesto.splice(i, 1)[0]; d.pesci.push(g); opts.pesca.salva(Q);
+          posa(d); salva(); suono("compra"); apriVasca(d);
+          var nn = nodi[d.u]; if (nn) { nn.classList.remove("rimbalza"); void nn.offsetWidth; nn.classList.add("rimbalza"); }
+        }, pieno || grosso));
+      });
+      pannello.appendChild(cesto);
+      if (pannello.parentNode !== s) s.appendChild(pannello);
+      pannello.classList.add("su");
+    }
+    function chiudiVasca() { pannello.classList.remove("su"); }
     var meta = el("i", "ca-meta");   // il segno sul pavimento dove hai toccato
     function segno(x, z) {
       var a = P(x, 0, z), k = scala(0, z), w = 0.6 * k, h = Math.abs(P(x, 0, z - 0.3)[1] - P(x, 0, z + 0.3)[1]);
@@ -1175,6 +1258,9 @@
     tVia.onclick = function () { if (!sel) return; metiVia(sel); };
     function metiVia(d) {
       var lista = [d].concat(figliDi(d)), sz = stanza();
+      lista.forEach(function (x) {   // l'acquario va nel baule vuoto: i suoi pesci tornano nel cesto
+        if (x.pesci && x.pesci.length) { var Q = pesca(); if (Q) { Q.cesto = (Q.cesto || []).concat(x.pesci); opts.pesca.salva(Q); x.pesci = []; dimmi("I pesci sono tornati nel cesto 🧺"); } }
+      });
       lista.forEach(function (x) {
         var n = nodi[x.u]; if (n) { n.classList.add("via"); if (n._luce && n._luce.parentNode) n._luce.parentNode.removeChild(n._luce); (function (n) { setTimeout(function () { if (n.parentNode) n.parentNode.removeChild(n); }, 320); })(n); delete nodi[x.u]; }
         sz.oggetti = sz.oggetti.filter(function (y) { return y !== x; }); casa.baule.push(x.t);
@@ -1420,6 +1506,7 @@
     if (o.uso === "wc") return "Si tira l'acqua";
     if (o.uso === "acqua") return "Esce l'acqua 💧";
     if (o.uso === "suona") return "Suona! ⏰";
+    if (o.vasca) return "Ci metti i pesci che peschi al laghetto 🐠";
     if (o.piano) return "Ci si appoggiano sopra le cose";
     if (o.tipo === "muro") return "Si appende al muro";
     if (o.tipo === "tappeto") return "Si stende sul pavimento";

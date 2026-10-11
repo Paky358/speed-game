@@ -612,6 +612,7 @@
     var io = profiloAttivo(), m = soldiCasa();
     var s = SGCasa.crea({ avatar: io && io.omino, nome: io && io.nome, dati: datiCasa(), audio: audioCtx, stanza: stanza, monete: m.monete, spendi: m.spendi, salva: salvaCasa,
       vestiti: function () { schermataOmino(function () { schermataCasa("camera"); }); },   // dall'armadio aperto: si cambia il look e si torna in camera
+      pesca: { dati: function () { return datiPesca() || (window.SGPesca ? { v: 1, album: {}, cesto: [], esche: {}, extra: 0, tot: 0 } : null); }, salva: salvaPesca },   // gli acquari prendono i pesci dal cesto della pesca
       negozio: function (st) { schermataNegozio(st); },   // dal cassetto dell'Arreda
       indietro: function () { schermataCitta(); } });
     mostra(s); s._monta();

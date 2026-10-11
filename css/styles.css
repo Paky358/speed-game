@@ -1323,6 +1323,20 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .ne-banco{ z-index:3; border-radius:10px 10px 0 0; background:linear-gradient(180deg,#b5824f,#8a5a35); box-shadow:inset 0 8px 0 #d39a63, 0 6px 10px rgba(0,0,0,.25); }
 .ne-cassa{ z-index:4; border-radius:6px 6px 2px 2px; background:linear-gradient(180deg,#495057,#212529); box-shadow:inset 0 4px 0 #69db7c; }
 .ne-commessa{ z-index:2; }
+/* l'acquario coi pesci della pesca: il pannello per metterli e toglierli */
+.ca-vasca{ position:absolute; left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); z-index:60; max-height:70%; overflow:auto; padding:14px 12px 12px; border-radius:20px;
+  color:#fff; background:linear-gradient(180deg,#1e5a7a,#123247); box-shadow:0 12px 40px rgba(0,0,0,.45), inset 0 0 0 2px rgba(165,216,255,.35);
+  transform:translateY(120%); transition:transform .3s cubic-bezier(.3,1.2,.5,1); }
+.ca-vasca.su{ transform:none; }
+.ca-vasca h3{ margin:0 30px 8px 2px; font-size:1.05rem; }
+.ca-vasca-x{ position:absolute; right:10px; top:10px; width:30px; height:30px; border:0; border-radius:50%; cursor:pointer; font:inherit; font-weight:900; color:#fff; background:rgba(255,255,255,.18); }
+.ca-vasca-lista{ display:flex; flex-direction:column; gap:6px; }
+.ca-vasca-riga{ display:flex; align-items:center; gap:8px; padding:4px 6px; border-radius:12px; background:rgba(255,255,255,.08); font-size:.85rem; font-weight:800; }
+.ca-vasca-riga span{ flex:1; min-width:0; }
+.ca-vasca-b{ flex:none; height:30px; padding:0 10px; border:0; border-radius:10px; cursor:pointer; font:inherit; font-weight:900; font-size:.78rem; color:#1a1440; background:#ffe066; }
+.ca-vasca-b:disabled{ opacity:.45; cursor:default; }
+.ca-vasca-sotto{ margin:12px 0 6px; font-weight:900; font-size:.85rem; color:#a5d8ff; }
+.ca-vasca-nota{ margin:2px 0; font-size:.85rem; line-height:1.35; color:#d0ebff; }
 .ne-matita{ z-index:6; width:40px; height:40px; border-radius:50%; border:2px solid #f59f00; background:#fff; font-size:1.1rem; line-height:1; box-shadow:0 4px 10px rgba(0,0,0,.25); cursor:pointer; }
 .ne-fumetto{ z-index:5; max-width:170px; padding:9px 12px; border-radius:16px; background:#fff; color:#3b2b22; font-style:normal; font-weight:800; font-size:.82rem; line-height:1.25; box-shadow:0 4px 12px rgba(0,0,0,.2); }
 .ne-fumetto::after{ content:""; position:absolute; left:16px; bottom:-8px; border:8px solid transparent; border-top-color:#fff; border-bottom:0; }
