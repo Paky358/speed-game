@@ -647,6 +647,31 @@
       indietro: function () { schermataCitta(); } });
     mostra(s); s._monta();
   }
+  // ---- il giardino fuori casa (js/giardino.js): piante, orto, decorazioni e cesto nel profilo e su questo telefono ----
+  var tGiardinoNube = null;
+  function chiaveGiardino() { var N = window.SGNube, u = N && N.utente && N.utente(); return u ? "sg-giardino|" + u.uid : null; }
+  function datiGiardino() {
+    var N = window.SGNube, k = chiaveGiardino(); if (!k) return null;
+    var nube = N.giardino && N.giardino(), qui = null;
+    try { qui = JSON.parse(localStorage.getItem(k) || "null"); } catch (e) {}
+    var d = nube && (!qui || (nube.agg || 0) >= (qui.agg || 0)) ? JSON.parse(JSON.stringify(nube)) : qui;   // la più recente
+    return d && d.v ? d : null;
+  }
+  function salvaGiardino(d) {
+    var k = chiaveGiardino(); if (!k || !d) return;
+    d.agg = Date.now();
+    try { localStorage.setItem(k, JSON.stringify(d)); } catch (e) {}
+    clearTimeout(tGiardinoNube); tGiardinoNube = setTimeout(function () { if (window.SGNube && SGNube.salvaGiardino) SGNube.salvaGiardino(JSON.parse(JSON.stringify(d))); }, 1200);
+  }
+  function schermataGiardino() {   // dalla città si arriva qui, davanti a casa: la porta porta dentro
+    if (!window.SGGiardino) return schermataCasa();
+    if (serveProfilo()) return;
+    var io = profiloAttivo(), m = soldiCasa();
+    var s = SGGiardino.crea({ omino: io && io.omino, nome: io && io.nome, dati: datiGiardino(), salva: salvaGiardino, audio: audioCtx,
+      monete: m.monete, spendi: m.spendi, guadagna: m.guadagna,
+      entraInCasa: function () { schermataCasa(); }, indietro: function () { schermataCitta(); } });
+    mostra(s); s._monta();
+  }
   function serveProfilo() {   // casa e negozio vogliono il profilo (le monete e i mobili sono tuoi)
     var N = window.SGNube; if (N && N.profilo && N.profilo()) return false;
     schermataAccesso(schermataCitta); return true;
@@ -659,7 +684,7 @@
       vestiti: function () { schermataOmino(function () { schermataCasa("camera"); }); },   // dall'armadio aperto: si cambia il look e si torna in camera
       pesca: { dati: function () { return datiPesca() || (window.SGPesca ? { v: 1, album: {}, cesto: [], esche: {}, extra: 0, tot: 0 } : null); }, salva: salvaPesca },   // gli acquari prendono i pesci dal cesto della pesca
       negozio: function (st) { schermataNegozio(st); },   // dal cassetto dell'Arreda
-      indietro: function () { schermataCitta(); } });
+      indietro: function () { if (window.SGGiardino) schermataGiardino(); else schermataCitta(); } });   // uscendo di casa si va in giardino
     mostra(s); s._monta();
   }
   function schermataNegozio(daStanza) {   // daStanza: si arriva dalla casa (e indietro si torna lì), altrimenti dalla città
@@ -745,7 +770,7 @@
       ]),
       avviso,
       el("div", { class: "citta-giu" }, [
-        el("button", { class: "citta-tasto", onclick: function () { if (!cloud) return presto("Crea il tuo profilo per avere la tua casa 🏠"); schermataCasa(); } }, [ el("span", { class: "ct-ico", text: "🏠" }), el("span", { text: "Casa" }), el("small", { text: cloud ? "arreda" : "col profilo" }) ]),
+        el("button", { class: "citta-tasto", onclick: function () { if (!cloud) return presto("Crea il tuo profilo per avere la tua casa 🏠"); schermataGiardino(); } }, [ el("span", { class: "ct-ico", text: "🏠" }), el("span", { text: "Casa" }), el("small", { text: cloud ? "arreda" : "col profilo" }) ]),
         tastoPresto("🛡️", "Clan", "I quartieri-clan arrivano presto 🛡️"),
         el("button", { class: "citta-tasto", onclick: function () { if (!cloud) return presto("Crea il tuo profilo per fare acquisti 🛍️"); schermataNegozio(); } }, [ el("span", { class: "ct-ico", text: "🛍️" }), el("span", { text: "Negozio" }), el("small", { text: cloud ? "compra" : "col profilo" }) ]),
         regalo

@@ -247,6 +247,13 @@
       profilo.pesca = dati;
       return db.collection("profili").doc(utente.uid).update({ pesca: dati }).catch(function () {});
     },
+    // ---- il giardino (js/giardino.js): piante, orto, decorazioni e cesto in un campo del profilo ----
+    giardino: function () { return (profilo && profilo.giardino) || null; },
+    salvaGiardino: function (dati) {
+      if (!auth || !utente || !profilo || !dati) return Promise.resolve();
+      profilo.giardino = dati;
+      return db.collection("profili").doc(utente.uid).update({ giardino: dati }).catch(function () {});
+    },
     // ---- gli scavi (js/scavi.js): museo, zaino, colpi e il campo del giorno in un campo del profilo ----
     scavi: function () { return (profilo && profilo.scavi) || null; },
     salvaScavi: function (dati) {
