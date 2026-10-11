@@ -648,6 +648,7 @@
     mostra(s); s._monta();
   }
   // ---- il giardino fuori casa (js/giardino.js): piante, orto, decorazioni e cesto nel profilo e su questo telefono ----
+  var GIARDINO_PRONTO = false;   // il giardino è in costruzione (mancano i disegni): finché è false, "Casa" porta dentro casa come prima
   var tGiardinoNube = null;
   function chiaveGiardino() { var N = window.SGNube, u = N && N.utente && N.utente(); return u ? "sg-giardino|" + u.uid : null; }
   function datiGiardino() {
@@ -664,7 +665,7 @@
     clearTimeout(tGiardinoNube); tGiardinoNube = setTimeout(function () { if (window.SGNube && SGNube.salvaGiardino) SGNube.salvaGiardino(JSON.parse(JSON.stringify(d))); }, 1200);
   }
   function schermataGiardino() {   // dalla città si arriva qui, davanti a casa: la porta porta dentro
-    if (!window.SGGiardino) return schermataCasa();
+    if (!window.SGGiardino || !GIARDINO_PRONTO) return schermataCasa();
     if (serveProfilo()) return;
     var io = profiloAttivo(), m = soldiCasa();
     var s = SGGiardino.crea({ omino: io && io.omino, nome: io && io.nome, dati: datiGiardino(), salva: salvaGiardino, audio: audioCtx,
@@ -684,7 +685,7 @@
       vestiti: function () { schermataOmino(function () { schermataCasa("camera"); }); },   // dall'armadio aperto: si cambia il look e si torna in camera
       pesca: { dati: function () { return datiPesca() || (window.SGPesca ? { v: 1, album: {}, cesto: [], esche: {}, extra: 0, tot: 0 } : null); }, salva: salvaPesca },   // gli acquari prendono i pesci dal cesto della pesca
       negozio: function (st) { schermataNegozio(st); },   // dal cassetto dell'Arreda
-      indietro: function () { if (window.SGGiardino) schermataGiardino(); else schermataCitta(); } });   // uscendo di casa si va in giardino
+      indietro: function () { if (window.SGGiardino && GIARDINO_PRONTO) schermataGiardino(); else schermataCitta(); } });   // uscendo di casa si va in giardino
     mostra(s); s._monta();
   }
   function schermataNegozio(daStanza) {   // daStanza: si arriva dalla casa (e indietro si torna lì), altrimenti dalla città
