@@ -1563,6 +1563,26 @@
     { gioco: "scarabocchio", livello: "diamante", icona: "👑", nome: "Maestro del Tavolo",     desc: "Arriva al primo posto in 10 partite",                                          stat: "vittorie",                  meta: 10 },
     { gioco: "scarabocchio", livello: "diamante", icona: "🌐", nome: "Tutta la Stanza",        desc: "Vinci 3 partite con almeno 6 giocatori rimasti",                                stat: "vittorieGruppo",            meta: 3 },
     { gioco: "scarabocchio", livello: "diamante", icona: "💎", nome: "Maestro delle Parole",   desc: "Fai indovinare 10 parole difficili mentre disegni",                                                  stat: "paroleDifficiliIndovinate", meta: 10 },
+    // ---- Palla Matta ----
+    { gioco: "pallamatta", livello: "bronzo",   icona: "🔴", nome: "Primo Rimbalzo",       desc: "Gioca il tuo primo livello",                                      stat: "partite",        meta: 1 },
+    { gioco: "pallamatta", livello: "bronzo",   icona: "🟠", nome: "Pallina Arancione",    desc: "Accendi 10 pioli arancioni",                                      stat: "arancioni",      meta: 10 },
+    { gioco: "pallamatta", livello: "bronzo",   icona: "🪣", nome: "Un Colpo di Secchio",  desc: "Riprendi una pallina col secchio",                                stat: "secchi",         meta: 1 },
+    { gioco: "pallamatta", livello: "bronzo",   icona: "🟢", nome: "Aiutante in Campo",    desc: "Attiva una volta il potere di un piolo verde",                    stat: "verdi",          meta: 1 },
+    { gioco: "pallamatta", livello: "bronzo",   icona: "🎉", nome: "Febbre Matta",         desc: "Completa il tuo primo livello",                                   stat: "livelliFiniti",  meta: 1 },
+    { gioco: "pallamatta", livello: "bronzo",   icona: "👥", nome: "Sfida al Tavolo",      desc: "Concludi la tua prima sfida con gli amici",                       stat: "sfide",          meta: 1 },
+    { gioco: "pallamatta", livello: "argento",  icona: "🧲", nome: "Pioggia Arancione",    desc: "Accendi 100 pioli arancioni",                                     stat: "arancioni",      meta: 100 },
+    { gioco: "pallamatta", livello: "argento",  icona: "🪣", nome: "Secchio Instancabile", desc: "Riprendi 20 palline col secchio",                                 stat: "secchi",         meta: 20 },
+    { gioco: "pallamatta", livello: "argento",  icona: "🚀", nome: "Sei Livelli in Tasca", desc: "Completa 6 livelli",                                               stat: "livelliFiniti",  meta: 6 },
+    { gioco: "pallamatta", livello: "argento",  icona: "📱", nome: "Serata di Sfide",      desc: "Concludi 5 sfide con gli amici",                                  stat: "sfide",          meta: 5 },
+    { gioco: "pallamatta", livello: "argento",  icona: "🏆", nome: "La Prima Vittoria",    desc: "Vinci una sfida con gli amici",                                  stat: "sfideVinte",     meta: 1 },
+    { gioco: "pallamatta", livello: "oro",      icona: "⭐", nome: "Mirino Preciso",       desc: "Ottieni 3 stelle in 3 livelli",                                   stat: "stelle3",        meta: 3 },
+    { gioco: "pallamatta", livello: "oro",      icona: "💥", nome: "Bomba Verde",          desc: "Attiva il potere Bomba in 3 livelli o sfide",                     stat: "potere_bomba",   meta: 3 },
+    { gioco: "pallamatta", livello: "oro",      icona: "⚽", nome: "Multipalla",            desc: "Attiva il potere Multipalla in 3 livelli o sfide",                stat: "potere_multi",   meta: 3 },
+    { gioco: "pallamatta", livello: "oro",      icona: "🎯", nome: "Mira Lunga",            desc: "Attiva il potere Mira lunga in 3 livelli o sfide",                stat: "potere_mira",    meta: 3 },
+    { gioco: "pallamatta", livello: "oro",      icona: "🔥", nome: "Palla di Fuoco",       desc: "Attiva il potere Palla di fuoco in 3 livelli o sfide",           stat: "potere_fuoco",   meta: 3 },
+    { gioco: "pallamatta", livello: "diamante", icona: "🗺️", nome: "Tre Capitoli",         desc: "Completa 9 livelli e raggiungi il capitolo del mare",            stat: "livelliUnici",   meta: 9 },
+    { gioco: "pallamatta", livello: "diamante", icona: "👑", nome: "Re della Sfida",       desc: "Vinci 10 sfide con gli amici",                                    stat: "sfideVinte",     meta: 10 },
+    { gioco: "pallamatta", livello: "diamante", icona: "💎", nome: "Febbre da Record",      desc: "Fai almeno 100.000 punti in una sfida",                          stat: "puntiSfidaMax",  meta: 100000 },
   ];
 
   function valoreStat(prof, gioco, chiave) {
