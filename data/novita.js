@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 194,
+    data: "11 ottobre 2026",
+    titolo: "La Preistoria agli scavi, e ogni reperto ha la sua storia 📜",
+    descrizione: [
+      "Il campo degli scavi non sparisce più a mezzanotte: lo ritrovi com'era anche il giorno dopo. Quando trovi tutti e 3 i reperti nascosti, la professoressa Ida te ne prepara subito uno nuovo.",
+      "La Preistoria ha 4 reperti nuovi: l'amigdala (la prima ascia di pietra), la zanna di mammut, l'ambra con dentro una zanzara e la pittura delle caverne col bisonte e l'impronta della mano.",
+      "Ridisegnati da capo la punta di freccia (ora è pietra scheggiata vera), il molare di mammut e l'ammonite. Le crepe dei reperti rovinati ora sono sottili e frastagliate, come crepe vere.",
+      "Ogni reperto ha una breve storia vera da leggere: la trovi sulla carta quando lo tiri fuori, e nel museo basta toccarlo per riaprirla."
+    ]
+  },
+  {
     v: 193,
     data: "11 ottobre 2026",
     titolo: "Il T-rex è sepolto agli scavi 🦖",
