@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 182,
+    data: "11 ottobre 2026",
+    titolo: "Palla Matta: tre capitoli e i mattoncini 🚀🌳🐠",
+    descrizione: [
+      "18 livelli nuovi in tre capitoli: lo spazio (pianeti, razzo, galassia, disco volante), la natura (montagne, albero, fiore, arcobaleno) e il mare (pesce, medusa, polpo, forziere). Ogni capitolo ha il suo sfondo.",
+      "Come in Peggle, oltre ai pioli ci sono i mattoncini, messi in fila e in curva a formare le figure. Anche i mattoncini possono essere arancioni.",
+      "Tavoli molto più pieni: quasi 100 pezzi per livello. Gli arancioni partono da 12 nel primo livello e arrivano a 25 negli ultimi.",
+      "Se la pallina resta incastrata, dopo un attimo si rompono i pezzi già accesi che la bloccano e lei riparte.",
+      "Il tavolo è uguale su tutti i telefoni: serve per la sfida online con gli amici, che arriva presto."
+    ]
+  },
+  {
     v: 181,
     data: "11 ottobre 2026",
     titolo: "Palla Matta: mira più comoda 🎯",

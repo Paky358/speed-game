@@ -13,8 +13,8 @@
   "use strict";
   var ID = "pallamatta";
 
-  // ---------- il tavolo (in unità: 100 di larghezza, 150 di altezza) e la fisica ----------
-  var W = 100, H = 150, RB = 1.25, RP = 1.55, G = 58, V0 = 80, DT = 1 / 240;
+  // ---------- il tavolo (in unità: 100 di larghezza, 180 di altezza, uguale su tutti i telefoni: online si gioca sullo stesso tavolo) e la fisica ----------
+  var W = 100, H = 180, RB = 1.25, RP = 1.55, G = 58, V0 = 80, DT = 1 / 240;
   var E_PIOLO = 0.72, E_MURO = 0.82, VMAX = 120;
   var CX = 50, CY = 7;                       // il cannone
   var PALLINE = 10;
@@ -33,41 +33,248 @@
 
   function rnd(seme) { var s = (seme >>> 0) || 1; return function () { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return (s % 1000003) / 1000003; }; }
 
-  // ---------- i livelli: disegni fatti di pioli ----------
-  function riga(l, x0, y0, x1, y1, n) { for (var i = 0; i < n; i++) { var k = n === 1 ? 0.5 : i / (n - 1); l.push([x0 + (x1 - x0) * k, y0 + (y1 - y0) * k]); } }
-  function arco(l, cx, cy, r, a0, a1, n) { for (var i = 0; i < n; i++) { var a = a0 + (a1 - a0) * (n === 1 ? 0.5 : i / (n - 1)); l.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); } }
-  function cerchio(l, cx, cy, r, n) { for (var i = 0; i < n; i++) { var a = Math.PI * 2 * i / n - Math.PI / 2; l.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); } }
-  function griglia(l, x0, y0, col, rig, dx, dy, sfalsa) { for (var j = 0; j < rig; j++) for (var i = 0; i < col - (sfalsa && j % 2 ? 1 : 0); i++) l.push([x0 + i * dx + (sfalsa && j % 2 ? dx / 2 : 0), y0 + j * dy]); }
-  var PI = Math.PI;
-  // (i pioli di una conca stanno larghi: la pallina deve poter passare, sennò resta incastrata)
-  var LIVELLI = [
-    { nome: "Il primo tiro", arancioni: 10, fa: function (l) { griglia(l, 14, 40, 9, 7, 9, 12, true); } },
-    { nome: "Le onde", arancioni: 13, fa: function (l) { for (var j = 0; j < 5; j++) for (var i = 0; i < 13; i++) l.push([10 + i * 6.7, 46 + j * 18 + Math.sin(i * 0.9 + j) * 5]); } },
-    { nome: "L'arcobaleno", fa: function (l) { [44, 36, 28, 20].forEach(function (r, i) { arco(l, 50, 112, r, PI * 1.08, PI * 1.92, 13 - i * 2); }); riga(l, 16, 125, 84, 125, 9); } },
-    { nome: "Occhioni", fa: function (l) { cerchio(l, 30, 58, 13, 12); cerchio(l, 70, 58, 13, 12); cerchio(l, 30, 58, 5, 5); cerchio(l, 70, 58, 5, 5); arco(l, 50, 88, 30, PI * 0.15, PI * 0.85, 9); riga(l, 20, 128, 80, 128, 8); griglia(l, 18, 104, 8, 1, 9, 10, false); } },
-    { nome: "La scala", fa: function (l) { for (var j = 0; j < 7; j++) { var x0 = j % 2 ? 46 : 12; riga(l, x0, 42 + j * 13, x0 + 42, 48 + j * 13, 7); } } },
-    { nome: "Il cuore", fa: function (l) { for (var i = 0; i < 30; i++) { var t = PI * 2 * i / 30, x = 16 * Math.pow(Math.sin(t), 3), y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t); l.push([50 + x * 2.3, 78 - y * 2.3]); } griglia(l, 36, 66, 4, 3, 9.5, 10, true); riga(l, 14, 128, 86, 128, 9); griglia(l, 8, 44, 2, 3, 84, 14, false); } },
-    { nome: "La clessidra", fa: function (l) { riga(l, 14, 40, 46, 82, 8); riga(l, 86, 40, 54, 82, 8); riga(l, 46, 92, 14, 132, 8); riga(l, 54, 92, 86, 132, 8); riga(l, 24, 40, 76, 40, 7); riga(l, 24, 132, 76, 132, 7); cerchio(l, 50, 87, 5, 6); } },
-    { nome: "Il diamante", fa: function (l) { for (var j = 0; j < 11; j++) { var n = j < 6 ? j + 1 : 11 - j; riga(l, 50 - (n - 1) * 4.4, 36 + j * 8.6, 50 + (n - 1) * 4.4, 36 + j * 8.6, n); } riga(l, 10, 60, 10, 120, 6); riga(l, 90, 60, 90, 120, 6); } },
-    { nome: "I fiori", fa: function (l) { [[28, 56], [72, 56], [50, 84], [28, 112], [72, 112]].forEach(function (c) { cerchio(l, c[0], c[1], 9.5, 9); l.push([c[0], c[1]]); }); griglia(l, 12, 40, 5, 1, 19, 10, false); } },
-    { nome: "La spirale", fa: function (l) { for (var i = 0; i < 64; i++) { var a = i * 0.36, r = 3 + i * 0.66; l.push([50 + Math.cos(a) * r, 82 + Math.sin(a) * r * 1.15]); } } },
-    { nome: "La piramide", fa: function (l) { for (var j = 0; j < 10; j++) riga(l, 50 - j * 3.7, 40 + j * 9.4, 50 + j * 3.7, 40 + j * 9.4, j + 1); } },
-    { nome: "Gran finale", fa: function (l) { cerchio(l, 50, 62, 22, 16); cerchio(l, 50, 62, 12, 9); griglia(l, 12, 96, 10, 4, 8.4, 10, true); arco(l, 50, 40, 36, PI * 0.1, PI * 0.9, 9); } }
-  ];
-  function creaLivello(i, scegliVerdi, hh) {   // hh: l'altezza del tavolo (sui telefoni lunghi è più alto: i pioli si allargano in giù)
-    var l = []; LIVELLI[i].fa(l);
-    var p = [];
-    l.forEach(function (q) {   // dentro il tavolo e mai troppo vicini (la pallina deve passare)
-      var x = Math.max(4, Math.min(W - 4, q[0])), y = Math.max(26, Math.min(136, q[1])); y = 26 + (y - 26) * ((hh || H) - 40) / 110;
-      for (var k = 0; k < p.length; k++) if (Math.hypot(p[k].x - x, p[k].y - y) < RP * 2 + RB * 1.3) return;
-      p.push({ x: x, y: y, tipo: "blu", acceso: false, via: false, n: p.length });
+  // ---------- i livelli: figure fatte di pioli e di mattoncini (i rettangolini di Peggle), divise in capitoli ----------
+  var PI = Math.PI, RM = 0.95;   // RM: mezzo spessore di un mattoncino
+  // sui telefoni lunghi il tavolo si allunga in giù: le righe si allargano, ma le figure tonde si spostano senza schiacciarsi
+  // (anc: l'altezza del centro della figura che si sta disegnando; ogni punto se lo porta dietro)
+  var anc = null;
+  function pt(l, x, y) { l.push(anc == null ? [x, y] : [x, y, anc]); }
+  function tonda(cy, fn) { if (anc != null) return fn(); anc = cy; try { fn(); } finally { anc = null; } }
+  function riga(l, x0, y0, x1, y1, n) { for (var i = 0; i < n; i++) { var k = n === 1 ? 0.5 : i / (n - 1); pt(l, x0 + (x1 - x0) * k, y0 + (y1 - y0) * k); } }
+  function arco(l, cx, cy, r, a0, a1, n) { tonda(cy, function () { for (var i = 0; i < n; i++) { var a = a0 + (a1 - a0) * (n === 1 ? 0.5 : i / (n - 1)); pt(l, cx + Math.cos(a) * r, cy + Math.sin(a) * r); } }); }
+  function cerchio(l, cx, cy, r, n) { tonda(cy, function () { for (var i = 0; i < n; i++) { var a = PI * 2 * i / n - PI / 2; pt(l, cx + Math.cos(a) * r, cy + Math.sin(a) * r); } }); }
+  function ellisse(l, cx, cy, rx, ry, n) { tonda(cy, function () { for (var i = 0; i < n; i++) { var a = PI * 2 * i / n; pt(l, cx + Math.cos(a) * rx, cy + Math.sin(a) * ry); } }); }
+  function griglia(l, x0, y0, col, rig, dx, dy, sfalsa) { for (var j = 0; j < rig; j++) for (var i = 0; i < col - (sfalsa && j % 2 ? 1 : 0); i++) pt(l, x0 + i * dx + (sfalsa && j % 2 ? dx / 2 : 0), y0 + j * dy); }
+  function stellina(l, cx, cy, r) { tonda(cy, function () { for (var i = 0; i < 5; i++) { var a = -PI / 2 + i * PI * 2 / 5; pt(l, cx + Math.cos(a) * r, cy + Math.sin(a) * r); } }); }
+  function abete(l, x, y) { tonda(y, function () { pt(l, x, y); riga(l, x - 3.5, y + 6, x + 3.5, y + 6, 2); riga(l, x - 7, y + 12, x + 7, y + 12, 3); riga(l, x - 10.5, y + 18, x + 10.5, y + 18, 4); mattone(l, x, y + 22, x, y + 28); }); }
+  function mattone(l, x0, y0, x1, y1) { l.push({ m: [x0, y0, x1, y1], a: anc }); }
+  function mattoni(l, x0, y0, x1, y1, n, gap) {   // n mattoncini in fila (gap: lo spazio tra uno e l'altro)
+    gap = gap == null ? 0.9 : gap; var dx = (x1 - x0) / n, dy = (y1 - y0) / n, L = Math.hypot(dx, dy), k = Math.max(0.2, (L - gap) / L);
+    for (var i = 0; i < n; i++) { var cx = x0 + dx * (i + 0.5), cy = y0 + dy * (i + 0.5); mattone(l, cx - dx * k / 2, cy - dy * k / 2, cx + dx * k / 2, cy + dy * k / 2); }
+  }
+  function mattoniArco(l, cx, cy, rx, ry, a0, a1, n, gap) {   // mattoncini lungo un arco (o un pezzo d'ellisse)
+    gap = gap == null ? 0.9 : gap;
+    tonda(cy, function () {
+      for (var i = 0; i < n; i++) {
+        var aa = a0 + (a1 - a0) * i / n, ab = a0 + (a1 - a0) * (i + 1) / n;
+        var x0 = cx + Math.cos(aa) * rx, y0 = cy + Math.sin(aa) * ry, x1 = cx + Math.cos(ab) * rx, y1 = cy + Math.sin(ab) * ry, L = Math.hypot(x1 - x0, y1 - y0), k = Math.max(0.2, (L - gap) / L), mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+        mattone(l, mx - (x1 - x0) * k / 2, my - (y1 - y0) * k / 2, mx + (x1 - x0) * k / 2, my + (y1 - y0) * k / 2);
+      }
     });
+  }
+  function curva(l, cx, cy, rx, ry, a0, a1, gap) {   // un arco di mattoncini corti, come in Peggle (quanti ne servono per la sua lunghezza)
+    var n = Math.max(1, Math.round(Math.abs(a1 - a0) * Math.sqrt((rx * rx + ry * ry) / 2) / 5.6));
+    mattoniArco(l, cx, cy, rx, ry, a0, a1, n, gap == null ? 1.0 : gap);
+  }
+  function spezzata(l, pt, perLato, gap) { for (var i = 0; i < pt.length - 1; i++) mattoni(l, pt[i][0], pt[i][1], pt[i + 1][0], pt[i + 1][1], perLato, gap); }
+  // (regole per giocare bene: niente pioli chiusi dentro le figure di mattoncini; le conche hanno spazi da 4,6 da cui la pallina passa)
+  var CAPITOLI = [
+    { nome: "Lo spazio", icona: "🚀", sfondo: "spazio" },
+    { nome: "La natura", icona: "🌳", sfondo: "natura" },
+    { nome: "Il mare", icona: "🐠", sfondo: "mare" }
+  ];
+  var LIVELLI = [
+    // ---- 🚀 lo spazio ----
+    { cap: 0, nome: "Stelle cadenti", arancioni: 12, fa: function (l) {
+      griglia(l, 10, 36, 10, 5, 8.9, 8, true);   // il cielo pieno di stelline
+      [[26, 100], [56, 116], [84, 96]].forEach(function (s) { stellina(l, s[0], s[1], 4.6); mattoni(l, s[0] - 6, s[1] - 7, s[0] - 21, s[1] - 24, 3, 1.0); });   // le stelle cadenti con la scia
+      riga(l, 22, 80, 78, 80, 8);
+      curva(l, 50, 136, 46, 12, PI * 1.08, PI * 1.36, 4.6); curva(l, 50, 136, 46, 12, PI * 1.64, PI * 1.92, 4.6);
+    } },
+    { cap: 0, nome: "Il pianeta con l'anello", arancioni: 14, fa: function (l) {
+      cerchio(l, 50, 70, 16, 15); cerchio(l, 50, 70, 10, 10); cerchio(l, 50, 70, 4.4, 5);   // il pianeta (la pallina passa tra i pioli)
+      curva(l, 50, 74, 38, 10, PI * 0.04, PI * 0.96, 4.6);   // l'anello davanti
+      curva(l, 50, 74, 38, 10, PI * 1.0, PI * 1.3); curva(l, 50, 74, 38, 10, PI * 1.7, PI * 2.0);   // l'anello dietro
+      curva(l, 16, 112, 9, 9, PI * 1.0, PI * 2.0); arco(l, 16, 112, 9, PI * 0.15, PI * 0.85, 4); l.push([16, 112]);   // le lune
+      curva(l, 84, 112, 9, 9, PI * 1.0, PI * 2.0); arco(l, 84, 112, 9, PI * 0.15, PI * 0.85, 4); l.push([84, 112]);
+      griglia(l, 28, 36, 6, 2, 8.8, 8, true); stellina(l, 12, 42, 4.4); stellina(l, 88, 42, 4.4);
+      griglia(l, 34, 102, 4, 3, 10.6, 9, true); riga(l, 10, 132, 90, 132, 11);
+    } },
+    { cap: 0, nome: "Il razzo", arancioni: 16, fa: function (l) {
+      curva(l, 50, 62, 11, 26, PI * 1.0, PI * 1.5); curva(l, 50, 62, 11, 26, PI * 1.5, PI * 2.0);   // la punta
+      mattoni(l, 39, 66, 39, 102, 4, 4.8); mattoni(l, 61, 66, 61, 102, 4, 4.8);   // il corpo (con gli oblò per passare)
+      cerchio(l, 50, 76, 5.6, 6); l.push([50, 76]); riga(l, 45, 90, 55, 90, 2); riga(l, 45, 98, 55, 98, 2);
+      mattoni(l, 38, 92, 26, 110, 3, 1.0); mattoni(l, 62, 92, 74, 110, 3, 1.0);   // le alette
+      riga(l, 42, 110, 58, 110, 3); riga(l, 46, 117, 54, 117, 2); l.push([50, 124]);   // le fiamme
+      griglia(l, 8, 36, 3, 4, 9, 8, true); griglia(l, 74, 36, 3, 4, 9, 8, true);
+      stellina(l, 14, 80, 4.4); stellina(l, 86, 80, 4.4); stellina(l, 16, 120, 4.4); stellina(l, 84, 120, 4.4);
+      riga(l, 8, 134, 92, 134, 12);
+    } },
+    { cap: 0, nome: "La luna e le stelle", arancioni: 16, fa: function (l) {
+      curva(l, 58, 82, 32, 32, PI * 0.6, PI * 1.45);   // il bordo della luna
+      arco(l, 64, 82, 25, PI * 0.62, PI * 1.38, 12); arco(l, 72, 82, 19, PI * 0.66, PI * 1.34, 8);   // la falce piena di pioli
+      [[62, 36], [68, 40], [75, 40], [81, 44], [80, 51], [88, 52], [89, 45]].forEach(function (p) { l.push(p); });   // il Grande Carro
+      stellina(l, 86, 74, 4.4); stellina(l, 76, 124, 4.4); stellina(l, 22, 126, 4.4); stellina(l, 14, 44, 4.4);
+      mattoni(l, 66, 68, 84, 62, 2, 1.0); mattoni(l, 8, 102, 22, 110, 2, 1.0);   // le comete
+      griglia(l, 66, 92, 3, 3, 9, 9, true); griglia(l, 8, 58, 2, 4, 9, 8, true);
+      curva(l, 50, 140, 30, 10, PI * 1.15, PI * 1.85, 4.6);
+    } },
+    { cap: 0, nome: "La galassia", arancioni: 18, fa: function (l) {
+      var a = 0, r, pt = [];
+      while (a < 9.4) { r = 8 + a * 3.7; l.push([50 + Math.cos(a) * r, 82 + Math.sin(a) * r * 1.05]); a += 5.8 / r; }   // un braccio di pioli
+      for (a = 0.6; a < 9.6; a += 9.5 / (8 + a * 3.7)) { r = 8 + a * 3.7; pt.push([50 + Math.cos(a + PI) * r, 82 + Math.sin(a + PI) * r * 1.05]); }
+      spezzata(l, pt, 1, 4.6);   // l'altro braccio di mattoncini
+      curva(l, 50, 82, 4.5, 4.5, 0, PI * 2);   // il centro luminoso
+      stellina(l, 12, 40, 4.4); stellina(l, 88, 128, 4.4); stellina(l, 88, 40, 4.4); stellina(l, 12, 128, 4.4);
+    } },
+    { cap: 0, nome: "Il disco volante", arancioni: 20, fa: function (l) {
+      arco(l, 50, 66, 15, PI * 1.05, PI * 1.95, 9);   // la cupola
+      curva(l, 50, 70, 32, 7.5, 0, PI * 2);   // il disco
+      riga(l, 30, 82, 70, 82, 6);   // le luci
+      mattoni(l, 42, 88, 28, 126, 4, 4.6); mattoni(l, 58, 88, 72, 126, 4, 4.6);   // il raggio
+      griglia(l, 44, 100, 3, 3, 6.5, 8, true);   // la mucca rapita
+      griglia(l, 26, 36, 6, 2, 9.6, 8, true);
+      stellina(l, 12, 42, 4.4); stellina(l, 88, 42, 4.4); stellina(l, 12, 96, 4.4); stellina(l, 88, 96, 4.4); stellina(l, 14, 126, 4.4); stellina(l, 86, 126, 4.4);
+      riga(l, 40, 134, 60, 134, 3);
+    } },
+    // ---- 🌳 la natura ----
+    { cap: 1, nome: "Le montagne", arancioni: 18, fa: function (l) {
+      spezzata(l, [[4, 104], [24, 70], [40, 92], [60, 54], [78, 86], [96, 68]], 3, 4.6);   // le cime (si passa tra un mattoncino e l'altro)
+      abete(l, 17, 98); abete(l, 50, 88); abete(l, 83, 94);   // il bosco
+      curva(l, 82, 40, 6.5, 6.5, 0, PI * 2);   // il sole
+      cerchio(l, 22, 40, 5, 5); cerchio(l, 32, 40, 5, 5); cerchio(l, 27, 34, 5, 5);   // la nuvola
+      riga(l, 44, 38, 49, 41, 2); riga(l, 54, 38, 49, 41, 1);   // l'uccello
+      riga(l, 6, 128, 94, 128, 12); curva(l, 50, 140, 26, 8, PI * 1.15, PI * 1.85, 4.6);
+    } },
+    { cap: 1, nome: "L'albero", arancioni: 20, fa: function (l) {
+      [[32, 72, 13], [68, 72, 13], [50, 54, 14]].forEach(function (c) {   // la chioma: le foglie sopra, i frutti dentro
+        curva(l, c[0], c[1], c[2], c[2], PI * 1.0, PI * 2.0);
+        arco(l, c[0], c[1], c[2], PI * 0.12, PI * 0.88, 5); cerchio(l, c[0], c[1], c[2] - 6.5, 6); l.push([c[0], c[1]]);
+      });
+      mattoni(l, 45, 90, 45, 124, 4, 1.0); mattoni(l, 55, 90, 55, 124, 4, 1.0);   // il tronco
+      mattoni(l, 4, 131, 96, 131, 8, 4.6);   // il prato
+      griglia(l, 8, 100, 4, 3, 9, 8, true); griglia(l, 66, 100, 4, 3, 9, 8, true);   // i fiori
+      stellina(l, 88, 38, 4.4); stellina(l, 12, 38, 4.4);
+    } },
+    { cap: 1, nome: "Il fiore", arancioni: 20, fa: function (l) {
+      tonda(62, function () {
+        cerchio(l, 50, 62, 5, 6);
+        for (var k = 0; k < 6; k++) {   // i petali: il bordo di mattoncini, dentro i pioli
+          var a = k * PI / 3 - PI / 2, px = 50 + Math.cos(a) * 17, py = 62 + Math.sin(a) * 17;
+          curva(l, px, py, 7, 7, a - PI * 0.55, a + PI * 0.55, Math.sin(a) > 0.1 ? 4.6 : 1.0); pt(l, px, py); pt(l, 50 + Math.cos(a) * 11, 62 + Math.sin(a) * 11);
+        }
+      });
+      stellina(l, 14, 80, 4.4); stellina(l, 86, 78, 4.4); riga(l, 10, 124, 30, 124, 3); riga(l, 70, 124, 90, 124, 3);   // le farfalle e l'erba
+      mattoni(l, 50, 88, 50, 132, 5, 1.0);   // il gambo
+      curva(l, 40, 106, 10, 5, PI * 0.9, PI * 1.9); curva(l, 60, 116, 10, 5, PI * 1.1, PI * 2.1);   // le foglie
+      [[16, 108], [84, 100]].forEach(function (f) { cerchio(l, f[0], f[1], 5.2, 5); l.push(f); });   // i fiorellini
+      stellina(l, 14, 42, 4.4); stellina(l, 86, 42, 4.4); riga(l, 8, 132, 38, 132, 4); riga(l, 62, 132, 92, 132, 4);
+    } },
+    { cap: 1, nome: "Sole e nuvole", arancioni: 22, fa: function (l) {
+      tonda(52, function () {
+        curva(l, 50, 52, 8, 8, 0, PI * 2);   // il sole
+        for (var k = 0; k < 8; k++) { var a = k * PI / 4 + PI / 8; mattone(l, 50 + Math.cos(a) * 12, 52 + Math.sin(a) * 12, 50 + Math.cos(a) * 18, 52 + Math.sin(a) * 18); pt(l, 50 + Math.cos(a - PI / 8) * 14, 52 + Math.sin(a - PI / 8) * 14); }   // i raggi
+      });
+      [[20, 84], [80, 90], [48, 112], [16, 40]].forEach(function (n, j) {   // le nuvole: sopra i mattoncini, sotto la pioggia
+        tonda(n[1], function () { curva(l, n[0] - 6, n[1], 5.5, 5.5, PI, PI * 2); curva(l, n[0] + 6, n[1], 5.5, 5.5, PI, PI * 2); riga(l, n[0] - 9, n[1] + 4, n[0] + 9, n[1] + 4, 4); });
+        if (j < 3) { riga(l, n[0] - 6, n[1] + 12, n[0] - 6, n[1] + 24, 3); riga(l, n[0] + 6, n[1] + 14, n[0] + 6, n[1] + 26, 3); }
+      });
+      riga(l, 78, 38, 83, 41, 2); riga(l, 88, 38, 83, 41, 1);
+    } },
+    { cap: 1, nome: "Le colline", arancioni: 22, fa: function (l) {
+      var c1 = [], c2 = []; for (var i = 0; i < 10; i++) { var x = 4 + i * 10.2; c1.push([x, 82 + Math.sin(i * 0.8) * 8]); c2.push([x, 116 + Math.sin(i * 0.8 + 2) * 7]); }
+      spezzata(l, c1, 1, 4.6); spezzata(l, c2, 1, 4.6);   // le colline (si passa tra un mattoncino e l'altro)
+      griglia(l, 12, 36, 8, 5, 10.8, 8, true);   // i fiori sui prati
+      [[22, 100], [50, 96], [78, 102]].forEach(function (p) { cerchio(l, p[0], p[1], 5, 5); l.push([p[0] + 8.5, p[1] - 3]); });   // le pecore
+      stellina(l, 36, 101, 4.4); stellina(l, 64, 104, 4.4);   // le farfalle
+      riga(l, 10, 132, 90, 132, 11);
+    } },
+    { cap: 1, nome: "L'arcobaleno", arancioni: 22, fa: function (l) {
+      [44, 37, 30].forEach(function (r) { curva(l, 50, 114, r, r, PI * 1.06, PI * 1.94, 1.4); });   // l'arcobaleno
+      arco(l, 50, 114, 23, PI * 1.08, PI * 1.92, 10);   // l'ultimo colore, coi pioli
+      [[12, 118], [88, 118]].forEach(function (n) { curva(l, n[0], n[1] - 3, 7, 6, PI, PI * 2); riga(l, n[0] - 7, n[1] + 4, n[0] + 7, n[1] + 4, 3); l.push([n[0], n[1] + 11]); });   // le nuvole ai piedi
+      griglia(l, 12, 36, 9, 3, 9.5, 8, true);   // la pioggia di luce
+      griglia(l, 39, 100, 4, 2, 7.4, 8, true); curva(l, 50, 122, 9, 6, PI * 0.1, PI * 0.9, 4.6);   // la pentola d'oro
+      riga(l, 12, 66, 12, 92, 4); riga(l, 88, 66, 88, 92, 4);
+    } },
+    // ---- 🐠 il mare ----
+    { cap: 2, nome: "Il pesce", arancioni: 20, fa: function (l) {
+      tonda(76, function () {
+        curva(l, 44, 76, 24, 14, PI * 1.04, PI * 1.96); arco(l, 44, 76, 24, PI * 0.04, PI * 0.96, 10);   // il corpo: sopra mattoncini, sotto pioli
+        pt(l, 30, 72); riga(l, 44, 67, 44, 83, 3); riga(l, 54, 68, 54, 84, 3);   // l'occhio e le strisce
+        mattoni(l, 69, 76, 84, 64, 2, 1.0); mattoni(l, 69, 76, 84, 88, 2, 1.0); mattoni(l, 86, 62, 86, 90, 3, 1.0);   // la coda
+      });
+      [[24, 110, 1], [68, 120, -1]].forEach(function (f) { tonda(f[1], function () { ellisse(l, f[0], f[1], 8, 5, 7); mattoni(l, f[0] + 9 * f[2], f[1], f[0] + 14 * f[2], f[1] - 5, 1); mattoni(l, f[0] + 9 * f[2], f[1], f[0] + 14 * f[2], f[1] + 5, 1); }); });   // i pesciolini
+      riga(l, 16, 62, 12, 54, 2); l.push([16, 46]); l.push([11, 38]);   // le bollicine
+      cerchio(l, 86, 42, 5, 5); cerchio(l, 70, 38, 4.4, 4); griglia(l, 38, 36, 3, 2, 8, 8, true);
+      for (var j = 0; j < 5; j++) { l.push([7 + Math.sin(j) * 2.5, 92 + j * 8]); l.push([93 + Math.sin(j + 1) * 2.5, 96 + j * 8]); }   // le alghe
+      mattoni(l, 30, 134, 70, 134, 4, 4.6); stellina(l, 44, 126, 4.4);
+    } },
+    { cap: 2, nome: "La medusa", arancioni: 22, fa: function (l) {
+      tonda(62, function () { curva(l, 50, 62, 20, 15, PI, PI * 2); riga(l, 31, 66, 69, 66, 6); riga(l, 43, 56, 57, 56, 3); });   // la testa, l'orlo e le macchie
+      [33, 41.5, 50, 58.5, 67].forEach(function (x) { for (var j = 0; j < 7; j++) l.push([x + Math.sin(j * 0.9) * 2.4, 76 + j * 8]); });   // i tentacoli
+      [[16, 96], [84, 104]].forEach(function (m) { tonda(m[1], function () { curva(l, m[0], m[1], 8, 7, PI, PI * 2); riga(l, m[0] - 6, m[1] + 4, m[0] + 6, m[1] + 4, 3); }); riga(l, m[0] - 4, m[1] + 12, m[0] - 4, m[1] + 24, 3); riga(l, m[0] + 4, m[1] + 14, m[0] + 4, m[1] + 26, 3); });   // le meduse piccole
+      riga(l, 14, 36, 10, 46, 2); l.push([14, 56]); riga(l, 86, 34, 90, 44, 2); l.push([86, 54]); l.push([90, 64]);   // le bolle
+    } },
+    { cap: 2, nome: "Il polpo", arancioni: 22, fa: function (l) {
+      curva(l, 50, 54, 16, 16, PI * 1.0, PI * 2.0); arco(l, 50, 54, 16, PI * 0.1, PI * 0.9, 6); cerchio(l, 50, 54, 9, 9); l.push([50, 54]);   // la testa
+      for (var k = 0; k < 8; k++) { var bx = 18.5 + k * 9; for (var j = 0; j < 6; j++) l.push([bx + Math.sin(j * 0.9 + k * 0.6) * 3, 78 + j * 10]); }   // gli otto tentacoli
+      curva(l, 14, 44, 6, 6, 0, PI * 2, 4.6); curva(l, 86, 40, 6, 6, 0, PI * 2, 4.6); l.push([14, 44]); l.push([86, 40]);   // le bolle
+      mattoni(l, 6, 136, 30, 136, 2, 4.6); mattoni(l, 70, 136, 94, 136, 2, 4.6);
+    } },
+    { cap: 2, nome: "La conchiglia", arancioni: 22, fa: function (l) {
+      tonda(124, function () {
+        for (var k = 0; k < 7; k++) { var a = PI * (1.1 + k * 0.8 / 6); mattoni(l, 50 + Math.cos(a) * 16, 124 + Math.sin(a) * 16, 50 + Math.cos(a) * 38, 124 + Math.sin(a) * 38, 3, 1.0); }   // le righe (non arrivano in fondo: si esce)
+        for (k = 0; k < 6; k++) { var b2 = PI * (1.1 + (k + 0.5) * 0.8 / 6); pt(l, 50 + Math.cos(b2) * 31, 124 + Math.sin(b2) * 31); pt(l, 50 + Math.cos(b2) * 22, 124 + Math.sin(b2) * 22); }   // le perle tra le righe
+        arco(l, 50, 124, 44, PI * 1.06, PI * 1.94, 20);   // il bordo
+      });
+      griglia(l, 10, 36, 9, 3, 10, 8, true);
+      [[20, 68], [80, 68]].forEach(function (s) { stellina(l, s[0], s[1], 5.5); l.push(s); });   // le stelle marine
+      tonda(60, function () { curva(l, 50, 60, 12, 6, PI * 1.0, PI * 2.0); riga(l, 42, 66, 58, 66, 3); });
+    } },
+    { cap: 2, nome: "Le bolle", arancioni: 25, fa: function (l) {
+      [[30, 50, 11], [72, 54, 9], [50, 88, 14], [18, 104, 8], [82, 106, 9], [36, 126, 7], [66, 128, 7]].forEach(function (b) {   // le bolle: un giro di mattoncini con gli spazi, dentro i pioli
+        curva(l, b[0], b[1], b[2], b[2], -PI / 2, PI * 1.5, 4.6);
+        if (b[2] >= 11) { cerchio(l, b[0], b[1], b[2] - 5.6, Math.round((b[2] - 5.6) * 2 * PI / 6.3)); } l.push([b[0], b[1]]);
+      });
+      riga(l, 8, 36, 8, 76, 5); riga(l, 92, 36, 92, 76, 5); riga(l, 46, 40, 54, 40, 2); l.push([50, 66]);
+    } },
+    { cap: 2, nome: "Il forziere", arancioni: 25, fa: function (l) {
+      tonda(116, function () {
+        mattoni(l, 34, 104, 34, 126, 3, 1.0); mattoni(l, 66, 104, 66, 126, 3, 1.0); mattoni(l, 34, 129, 66, 129, 4, 1.0);   // la cassa (aperta sopra)
+        curva(l, 25, 100, 12, 6, PI * 0.95, PI * 1.85);   // il coperchio aperto
+        griglia(l, 39, 108, 4, 3, 7.4, 7, true);   // le monete dentro
+        arco(l, 50, 104, 19, PI * 1.12, PI * 1.88, 7);   // le monete che saltano fuori
+      });
+      griglia(l, 12, 36, 8, 4, 10.8, 8, true);
+      riga(l, 12, 76, 88, 76, 10); stellina(l, 14, 114, 4.4); stellina(l, 86, 114, 4.4);
+      mattoni(l, 4, 134, 26, 134, 2, 4.6); mattoni(l, 74, 134, 96, 134, 2, 4.6);
+    } }
+  ];
+  function distSeg(px, py, m) {   // quanto è lontano un punto da un mattoncino
+    var ex = m[2] - m[0], ey = m[3] - m[1], L2 = ex * ex + ey * ey, t = L2 ? Math.max(0, Math.min(1, ((px - m[0]) * ex + (py - m[1]) * ey) / L2)) : 0;
+    return Math.hypot(px - (m[0] + ex * t), py - (m[1] + ey * t));
+  }
+  function creaLivello(i, scegliVerdi, hh) {   // hh: l'altezza del tavolo (sui telefoni lunghi è più alto: tutto si allarga in giù)
+    var l = []; LIVELLI[i].fa(l);
+    var k2 = ((hh || H) - 40) / 110;
+    function sy(y, a) { return a == null ? 26 + (Math.max(26, Math.min(136, y)) - 26) * k2 : sy(a) + y - a; }   // (a: il centro della figura tonda, che si sposta e basta)
+    function sx(x) { return Math.max(3, Math.min(W - 3, x)); }
+    var p = [], mat = [];
+    l.forEach(function (q) {
+      if (!q.m) return;
+      var m = [sx(q.m[0]), sy(q.m[1], q.a), sx(q.m[2]), sy(q.m[3], q.a)];
+      if (Math.abs(m[3] - m[1]) < 0.1 * Math.hypot(m[2] - m[0], m[3] - m[1])) {   // i mattoncini piatti si inclinano un filo verso fuori: la pallina non ci resta sopra ferma
+        if (m[2] < m[0]) m = [m[2], m[3], m[0], m[1]];
+        var mx = (m[0] + m[2]) / 2, my = (m[1] + m[3]) / 2, hl = Math.hypot(m[2] - m[0], m[3] - m[1]) / 2, an = Math.atan2(m[3] - m[1], m[2] - m[0]) + (mx < 50 ? -0.13 : 0.13);
+        m = [mx - Math.cos(an) * hl, my - Math.sin(an) * hl, mx + Math.cos(an) * hl, my + Math.sin(an) * hl];
+      }
+      mat.push({ m: m, x: (m[0] + m[2]) / 2, y: (m[1] + m[3]) / 2, ang: Math.atan2(m[3] - m[1], m[2] - m[0]), len: Math.hypot(m[2] - m[0], m[3] - m[1]), tipo: "blu", acceso: false, via: false });
+    });
+    l.forEach(function (q) {   // i pioli: dentro il tavolo e mai troppo vicini (la pallina deve passare)
+      if (q.m) return;
+      var x = Math.max(4, Math.min(W - 4, q[0])), y = sy(q[1], q[2]), k;
+      for (k = 0; k < p.length; k++) if (Math.hypot(p[k].x - x, p[k].y - y) < RP * 2 + RB * 1.3) return;
+      for (k = 0; k < mat.length; k++) if (distSeg(x, y, mat[k].m) < RP + RM + 1.1) return;
+      p.push({ x: x, y: y, tipo: "blu", acceso: false, via: false });
+    });
+    p = p.concat(mat);
     var r = rnd(7919 * (i + 1)), idx = p.map(function (_, k) { return k; });
     for (var k = idx.length - 1; k > 0; k--) { var j = Math.floor(r() * (k + 1)), tt = idx[k]; idx[k] = idx[j]; idx[j] = tt; }   // gli arancioni: sempre gli stessi per ogni livello
-    var nA = LIVELLI[i].arancioni || Math.min(20, Math.max(8, Math.round(p.length * 0.25)));   // (i primi livelli ne hanno meno)
+    var nA = Math.min(LIVELLI[i].arancioni || 25, Math.round(p.length * 0.3));   // 25 come in Peggle (i primi livelli ne hanno meno)
     for (k = 0; k < nA; k++) p[idx[k]].tipo = "arancio";
-    if (scegliVerdi !== false) {   // i due verdi: a caso ogni volta
-      var blu = p.filter(function (q) { return q.tipo === "blu"; });
+    if (scegliVerdi !== false) {   // i due verdi (solo pioli tondi): a caso ogni volta
+      var blu = p.filter(function (q) { return q.tipo === "blu" && !q.m; });
       for (k = 0; k < 2 && blu.length; k++) { var c = Math.floor(Math.random() * blu.length); blu[c].tipo = "verde"; blu.splice(c, 1); }
     }
     return p;
@@ -101,13 +308,20 @@
     var pp = st.pioli;
     for (var i = 0; i < pp.length; i++) {
       var q = pp[i]; if (q.via) continue;
-      var dx = b.x - q.x, dy = b.y - q.y, d2 = dx * dx + dy * dy, rr = RB + RP;
+      var cx = q.x, cy = q.y, rr = RB + RP;
+      if (q.m) {   // il mattoncino: un segmento spesso, la pallina urta il suo punto più vicino
+        if (Math.abs(b.x - q.x) > q.len / 2 + 3 || Math.abs(b.y - q.y) > q.len / 2 + 3) continue;
+        var m = q.m, ex = m[2] - m[0], ey = m[3] - m[1], L2 = ex * ex + ey * ey, tt = L2 ? Math.max(0, Math.min(1, ((b.x - m[0]) * ex + (b.y - m[1]) * ey) / L2)) : 0;
+        cx = m[0] + ex * tt; cy = m[1] + ey * tt; rr = RB + RM;
+      }
+      var dx = b.x - cx, dy = b.y - cy, d2 = dx * dx + dy * dy;
       if (d2 >= rr * rr) continue;
       var d = Math.sqrt(d2) || 0.001, nx = dx / d, ny = dy / d;
       if (!q.acceso) ev.push({ t: "piolo", q: q, b: b });
       if (b.fuoco) continue;   // la palla di fuoco passa attraverso
-      b.x = q.x + nx * rr; b.y = q.y + ny * rr;
+      b.x = cx + nx * rr; b.y = cy + ny * rr;
       var vn = b.vx * nx + b.vy * ny;
+      if (vn < -4 && q.acceso && (q.urti = (q.urti || 0) + 1) >= 5) ev.push({ t: "rotto", q: q });   // un pezzo già acceso colpito tante volte (la pallina è in gabbia): scoppia subito
       if (vn < 0) { b.vx -= (1 + E_PIOLO) * vn * nx; b.vy -= (1 + E_PIOLO) * vn * ny; b.vx *= 0.985; b.vy *= 0.985; b.vx += (((q.x * 7.31 + q.y * 3.17) % 1) - 0.5) * 1.2; }   // (una piccola deviazione, sempre la stessa per ogni piolo: niente rimbalzi su e giù all'infinito)
     }
     // in fondo: il secchio che si muove (o, nella febbre, i 5 secchi fissi)
@@ -131,7 +345,7 @@
   function strada(st, ang, lunga, fuoco) {   // (fuoco: la pallina passerà attraverso i pioli, si vede tutta la parabola)
     var b = { x: CX + Math.cos(ang) * 6, y: CY + Math.sin(ang) * 6, vx: Math.cos(ang) * V0, vy: Math.sin(ang) * V0 }, pts = [], ev = [], urti = 0;
     if (fuoco) { b.fuoco = true; lunga = true; }
-    var finto = { pioli: st.pioli.map(function (q) { return { x: q.x, y: q.y, via: q.via, acceso: true }; }), febbre: st.febbre, t: st.t, H: st.H };
+    var finto = { pioli: st.pioli.map(function (q) { return { x: q.x, y: q.y, m: q.m, len: q.len, via: q.via, acceso: true }; }), febbre: st.febbre, t: st.t, H: st.H };
     for (var i = 0; i < 240 * (lunga ? 2.6 : 1.4); i++) {
       ev.length = 0; var vx = b.vx, vy = b.vy;
       passo(finto, b, DT, ev);
@@ -176,14 +390,14 @@
   function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
 
   // ---------- i progressi: livelli sbloccati, record e stelle (sul telefono e nel profilo) ----------
-  var CHIAVE = "sg-pm-progressi";
+  var CHIAVE = "sg-pm-progressi2";   // (dai capitoli: i livelli sono nuovi, i progressi ripartono)
   function profiloOk() { return !!(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo()); }
   function progressi() {
     var p = {}; try { p = JSON.parse(localStorage.getItem(CHIAVE) || "{}") || {}; } catch (e) {}
     p.rec = p.rec || {}; p.stelle = p.stelle || {};
     if (profiloOk() && SGNube.statGioco) {   // dal profilo: quello che hai fatto su un altro telefono
       var s = SGNube.statGioco(ID) || {};
-      LIVELLI.forEach(function (_, i) { var k = i + 1; if ((s["p" + k] || 0) > (p.rec[k] || 0)) p.rec[k] = s["p" + k]; if ((s["s" + k] || 0) > (p.stelle[k] || 0)) p.stelle[k] = s["s" + k]; });
+      LIVELLI.forEach(function (_, i) { var k = i + 1; if ((s["l" + k] || 0) > (p.rec[k] || 0)) p.rec[k] = s["l" + k]; if ((s["t" + k] || 0) > (p.stelle[k] || 0)) p.stelle[k] = s["t" + k]; });   // (l = record, t = stelle)
     }
     return p;
   }
@@ -207,20 +421,24 @@
     });
     riga.appendChild(nomePot);
     s._contenuto.appendChild(riga);
-    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Livelli" }));
-    var lv = el("div", { class: "pm-livelli" });
-    LIVELLI.forEach(function (L, i) {
-      var ok = sbloccato(p, i), st = p.stelle[i + 1] || 0;
-      lv.appendChild(el("button", { class: "pm-lv" + (ok ? "" : " chiuso") + (st ? " fatto" : ""), onclick: function () {
-        if (!ok) return; vibra(8); partita(t, i, p.potere);
-      } }, [
-        el("b", { text: ok ? String(i + 1) : "🔒" }),
-        el("span", { class: "pm-lv-nome", text: L.nome }),
-        el("span", { class: "pm-lv-stelle", text: ok ? "★★★".slice(0, st) + "☆☆☆".slice(0, 3 - st) : "" }),
-        el("small", { text: p.rec[i + 1] ? cifre(p.rec[i + 1]) : "" })
-      ]));
+    CAPITOLI.forEach(function (C, c) {   // i livelli divisi per capitolo, ognuno col suo colore
+      var mie = [], stelleCap = 0;
+      LIVELLI.forEach(function (L, i) { if (L.cap === c) { mie.push(i); stelleCap += p.stelle[i + 1] || 0; } });
+      s._contenuto.appendChild(el("div", { class: "pm-cap pm-cap-" + C.sfondo }, [el("span", { text: C.icona + " Capitolo " + (c + 1) + " · " + C.nome }), el("small", { text: "★ " + stelleCap + "/" + mie.length * 3 })]));
+      var lv = el("div", { class: "pm-livelli" });
+      mie.forEach(function (i, n) {
+        var L = LIVELLI[i], ok = sbloccato(p, i), st = p.stelle[i + 1] || 0;
+        lv.appendChild(el("button", { class: "pm-lv pm-lv-" + C.sfondo + (ok ? "" : " chiuso") + (st ? " fatto" : ""), onclick: function () {
+          if (!ok) return; vibra(8); partita(t, i, p.potere);
+        } }, [
+          el("b", { text: ok ? String(n + 1) : "🔒" }),
+          el("span", { class: "pm-lv-nome", text: L.nome }),
+          el("span", { class: "pm-lv-stelle", text: ok ? "★★★".slice(0, st) + "☆☆☆".slice(0, 3 - st) : "" }),
+          el("small", { text: p.rec[i + 1] ? cifre(p.rec[i + 1]) : "" })
+        ]));
+      });
+      s._contenuto.appendChild(lv);
     });
-    s._contenuto.appendChild(lv);
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "‹ Esci", onclick: function () { t.esci(); } }));
     t.mostra(s);
   }
@@ -248,11 +466,6 @@
     s._contenuto.appendChild(scena);
     t.mostra(s);
     function vivo() { return document.body.contains(cv); }
-    (function () {   // sui telefoni lunghi il tavolo si allunga in giù (fino a un certo punto): niente spazio vuoto
-      var w0 = scena.clientWidth || 360, h0 = scena.clientHeight || 640, top0 = testa.offsetHeight + 6, s0 = (w0 - 8) / W;
-      var hh = Math.max(H, Math.min(205, (h0 - top0 - 6) / s0));
-      if (hh > H + 0.5) st = nuovoStato(lv, potere, hh);
-    })();
 
     // ---- misure: il tavolo più grande possibile sotto la testa ----
     var S = 3, ox = 0, oy = 0, cw = 360, ch = 640, dpr = 1, sprite = {}, sfondo = null;
@@ -280,18 +493,53 @@
       x.beginPath(); x.ellipse(m - r * 0.3, m - r * 0.38, r * 0.34, r * 0.22, -0.5, 0, PI * 2); x.fillStyle = "rgba(255,255,255,.65)"; x.fill();
       sprite[k] = c; return c;
     }
-    function disegnaSfondo() {
-      var c = document.createElement("canvas"); c.width = cv.width; c.height = cv.height; var x = c.getContext("2d");
+    function disegnaSfondo() {   // lo sfondo del capitolo (spazio, natura, mare), disegnato una volta sola
+      var c = document.createElement("canvas"); c.width = cv.width; c.height = cv.height; var x = c.getContext("2d"), tema = CAPITOLI[LIVELLI[lv].cap].sfondo, i, r2, g;
       x.scale(dpr, dpr);
-      var g = x.createLinearGradient(0, 0, 0, ch); g.addColorStop(0, "#1a1440"); g.addColorStop(0.6, "#2b1f63"); g.addColorStop(1, "#3c2a7a"); x.fillStyle = g; x.fillRect(0, 0, cw, ch);
-      for (var i = 0; i < 70; i++) { var r2 = rnd(31 + i * 7); x.fillStyle = "rgba(255,255,255," + (0.15 + r2() * 0.5).toFixed(2) + ")"; x.beginPath(); x.arc(r2() * cw, r2() * ch, r2() * 1.4 + 0.3, 0, PI * 2); x.fill(); }
-      // il tavolo: una lastra un po' più chiara coi bordi
+      function tondo(cx, cy, r, col) { x.beginPath(); x.arc(cx, cy, r, 0, PI * 2); x.fillStyle = col; x.fill(); }
+      function alone(cx, cy, r, col) { var a = x.createRadialGradient(cx, cy, 0, cx, cy, r); a.addColorStop(0, col); a.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = a; x.fillRect(cx - r, cy - r, r * 2, r * 2); }
+      if (tema === "natura") {   // il cielo, il sole, le nuvole e le colline lontane
+        g = x.createLinearGradient(0, 0, 0, ch); g.addColorStop(0, "#5fb4ec"); g.addColorStop(0.65, "#a9dcf7"); g.addColorStop(1, "#d8f1d0"); x.fillStyle = g; x.fillRect(0, 0, cw, ch);
+        alone(cw * 0.82, ch * 0.12, cw * 0.45, "rgba(255,244,190,.85)"); tondo(cw * 0.82, ch * 0.12, cw * 0.09, "#fff3b0");
+        for (i = 0; i < 6; i++) { r2 = rnd(57 + i * 13); var nx = r2() * cw, ny = ch * (0.08 + r2() * 0.5), nr = 14 + r2() * 18; x.globalAlpha = 0.75; tondo(nx, ny, nr, "#ffffff"); tondo(nx + nr * 0.9, ny + 4, nr * 0.75, "#ffffff"); tondo(nx - nr * 0.9, ny + 5, nr * 0.7, "#ffffff"); x.globalAlpha = 1; }
+        [["#9fd59a", 0.8, 0.07], ["#79c27a", 0.88, 0.06], ["#5aa95f", 0.95, 0.05]].forEach(function (h, k) {
+          x.fillStyle = h[0]; x.beginPath(); x.moveTo(0, ch); for (var xx = 0; xx <= cw + 10; xx += 10) x.lineTo(xx, ch * h[1] + Math.sin(xx / cw * PI * (2 + k) + k) * ch * h[2]); x.lineTo(cw, ch); x.closePath(); x.fill();
+        });
+      } else if (tema === "mare") {   // il blu che si scurisce, i raggi di luce, le bolle, le alghe e la sabbia
+        g = x.createLinearGradient(0, 0, 0, ch); g.addColorStop(0, "#1c8fc7"); g.addColorStop(0.55, "#0d5c8f"); g.addColorStop(1, "#073a5e"); x.fillStyle = g; x.fillRect(0, 0, cw, ch);
+        x.globalAlpha = 0.12; x.fillStyle = "#ffffff";
+        for (i = 0; i < 5; i++) { var rx = cw * (0.1 + i * 0.2); x.beginPath(); x.moveTo(rx - 12, 0); x.lineTo(rx + 18, 0); x.lineTo(rx + 70, ch * 0.75); x.lineTo(rx + 20, ch * 0.75); x.closePath(); x.fill(); }
+        x.globalAlpha = 1;
+        for (i = 0; i < 30; i++) { r2 = rnd(91 + i * 5); var br = 1.5 + r2() * 4, bx = r2() * cw, by = r2() * ch; x.beginPath(); x.arc(bx, by, br, 0, PI * 2); x.strokeStyle = "rgba(255,255,255,.35)"; x.lineWidth = 1; x.stroke(); }
+        x.fillStyle = "#e3c88a"; x.beginPath(); x.moveTo(0, ch); for (var sx = 0; sx <= cw + 10; sx += 10) x.lineTo(sx, ch * 0.94 + Math.sin(sx / 40) * 5); x.lineTo(cw, ch); x.closePath(); x.fill();
+        for (i = 0; i < 7; i++) { r2 = rnd(13 + i * 29); var ax = r2() * cw, ah = ch * (0.12 + r2() * 0.14); x.strokeStyle = i % 2 ? "#2f9e44" : "#37b24d"; x.lineWidth = 4; x.lineCap = "round"; x.beginPath(); x.moveTo(ax, ch); for (var k = 0; k < 6; k++) x.lineTo(ax + Math.sin(k * 1.3 + i) * 7, ch - ah * k / 5); x.stroke(); }
+      } else {   // lo spazio: stelle, una nebulosa, un pianeta e la luna
+        g = x.createLinearGradient(0, 0, 0, ch); g.addColorStop(0, "#0d0a2b"); g.addColorStop(0.6, "#1f1652"); g.addColorStop(1, "#33205f"); x.fillStyle = g; x.fillRect(0, 0, cw, ch);
+        alone(cw * 0.2, ch * 0.35, cw * 0.6, "rgba(156,54,181,.28)"); alone(cw * 0.85, ch * 0.7, cw * 0.55, "rgba(28,126,214,.25)");
+        for (i = 0; i < 110; i++) { r2 = rnd(31 + i * 7); x.fillStyle = "rgba(255,255,255," + (0.2 + r2() * 0.6).toFixed(2) + ")"; x.beginPath(); x.arc(r2() * cw, r2() * ch, r2() * 1.5 + 0.3, 0, PI * 2); x.fill(); }
+        tondo(cw * 0.06, ch * 0.92, cw * 0.2, "#e8590c"); x.globalAlpha = 0.35; tondo(cw * 0.02, ch * 0.9, cw * 0.17, "#ffa94d"); x.globalAlpha = 1;   // il pianeta arancione nell'angolo
+        x.strokeStyle = "rgba(255,212,59,.55)"; x.lineWidth = 3; x.beginPath(); x.ellipse(cw * 0.06, ch * 0.92, cw * 0.3, cw * 0.06, -0.3, 0, PI * 2); x.stroke();
+        tondo(cw * 0.93, ch * 0.08, cw * 0.07, "#e9ecef"); tondo(cw * 0.91, ch * 0.07, cw * 0.015, "#ced4da"); tondo(cw * 0.95, ch * 0.1, cw * 0.012, "#ced4da");   // la luna
+      }
+      // il tavolo: una lastra appena più scura, così pioli e mattoncini si vedono bene su ogni sfondo
       x.save(); x.translate(ox, oy);
-      var tg = x.createLinearGradient(0, 0, 0, st.H * S); tg.addColorStop(0, "rgba(120,100,220,.18)"); tg.addColorStop(1, "rgba(80,60,180,.32)");
+      var tg = x.createLinearGradient(0, 0, 0, st.H * S);
+      if (tema === "spazio") { tg.addColorStop(0, "rgba(120,100,220,.16)"); tg.addColorStop(1, "rgba(80,60,180,.3)"); } else { tg.addColorStop(0, "rgba(10,25,60,.22)"); tg.addColorStop(1, "rgba(10,25,60,.4)"); }
       x.fillStyle = tg; arrot(x, 0, 0, W * S, st.H * S, 14); x.fill();
-      x.lineWidth = 3; x.strokeStyle = "rgba(190,170,255,.45)"; arrot(x, 0, 0, W * S, st.H * S, 14); x.stroke();
+      x.lineWidth = 3; x.strokeStyle = tema === "natura" ? "rgba(255,255,255,.7)" : tema === "mare" ? "rgba(165,216,255,.55)" : "rgba(190,170,255,.45)"; arrot(x, 0, 0, W * S, st.H * S, 14); x.stroke();
       x.restore();
       sfondo = c;
+    }
+    function disegnaMattone(q) {   // il mattoncino: un rettangolo coi bordi tondi, girato come la sua figura
+      var col = COL[q.tipo], L = q.len * S, th = RM * 2 * S;
+      ctx.save(); ctx.translate(ox + q.x * S, oy + q.y * S); ctx.rotate(q.ang);
+      if (q.acceso) { ctx.globalAlpha = 0.45; ctx.fillStyle = col[0]; arrot(ctx, -L / 2 - th * 0.6, -th * 1.1, L + th * 1.2, th * 2.2, th); ctx.fill(); ctx.globalAlpha = 1; }
+      var g = ctx.createLinearGradient(0, -th / 2, 0, th / 2);
+      g.addColorStop(0, q.acceso ? "#ffffff" : col[0]); g.addColorStop(0.5, q.acceso ? col[0] : col[1]); g.addColorStop(1, col[q.acceso ? 1 : 2]);
+      ctx.fillStyle = g; arrot(ctx, -L / 2, -th / 2, L, th, th / 2); ctx.fill();
+      ctx.lineWidth = 1; ctx.strokeStyle = q.acceso ? "#ffffff" : "rgba(0,0,0,.45)"; ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,.45)"; ctx.fillRect(-L / 2 + th * 0.5, -th * 0.32, L - th, th * 0.18);
+      ctx.restore();
     }
     function arrot(x, a, b, w, h, r) { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
 
@@ -327,7 +575,7 @@
       if (st.palline <= 0) return;
       st.palline--; st.fase = "volo";
       st.colpo = { punti: 0, colpiti: [], nota: 0, extra: 0, verde: false, t0: st.t };
-      var b = { x: CX + Math.cos(st.ang) * 6, y: CY + Math.sin(st.ang) * 6, vx: Math.cos(st.ang) * V0, vy: Math.sin(st.ang) * V0, scia: [], fermo: { x: CX, y: CY, t: 0 } };
+      var b = { x: CX + Math.cos(st.ang) * 6, y: CY + Math.sin(st.ang) * 6, vx: Math.cos(st.ang) * V0, vy: Math.sin(st.ang) * V0, scia: [], fermo: { x: CX, y: CY, t: 0 }, nuovo: st.t };
       st.palle = [b];
       if (st.mira > 0) st.mira--;
       if (st.fuoco > 0) { st.fuoco--; b.fuoco = Infinity; dimmi("🔥 Palla di fuoco!"); }   // il potere caricato: tutto il tiro attraverso i pioli
@@ -338,7 +586,7 @@
     function evento(e) {
       if (e.t === "piolo") {
         var q = e.q; if (q.acceso) return;
-        q.acceso = true; st.colpo.colpiti.push(q);
+        q.acceso = true; st.colpo.colpiti.push(q); if (e.b) e.b.nuovo = st.t;
         if (q.tipo === "arancio") { st.arPresi++; }
         var pts = PUNTI[q.tipo] * molt(st); st.colpo.punti += pts; st.punti += pts;
         scritta(q.x, q.y - 3, "+" + cifre(pts), q.tipo);
@@ -354,7 +602,8 @@
         var v = FEBBRE[e.slot]; st.punti += v; st.colpo.punti += v; scritta(e.slot * 20 + 10, st.H - 10, "+" + cifre(v), "febbre"); e.b.esce = true;
         [0, 4, 7, 12, 16].forEach(function (k, i) { tono(523 * Math.pow(2, k / 12), i * 0.06, 0.25, "triangle", 0.09); });
         fuochi(e.slot * 20 + 10, st.H - 15, 40); aggTesta();
-      } else if (e.t === "fuori") e.b.esce = true;
+      } else if (e.t === "rotto") { if (!e.q.via) { e.q.via = true; scintille(e.q.x, e.q.y, COL[e.q.tipo][0], 8); suonoScoppio(6); } }
+      else if (e.t === "fuori") e.b.esce = true;
     }
     function controllaExtra() {   // tanti punti in un tiro: una pallina in più
       while (st.colpo.extra < EXTRA.length && st.colpo.punti >= EXTRA[st.colpo.extra]) { st.colpo.extra++; st.palline++; dimmi("Pallina in più! " + cifre(EXTRA[st.colpo.extra - 1]) + " punti in un tiro 🎉"); suonoSecchio(); }
@@ -367,7 +616,7 @@
         st.pioli.forEach(function (o) { if (!o.via && !o.acceso && Math.hypot(o.x - q.x, o.y - q.y) < 15) evento({ t: "piolo", q: o, b: b }); });
         var dx = b.x - q.x, dy = b.y - q.y, d = Math.hypot(dx, dy) || 1; b.vx += dx / d * 25; b.vy += dy / d * 25 - 10;
       } else if (st.potere === "multi") {
-        st.palle.push({ x: q.x, y: q.y - RP - RB - 0.2, vx: -b.vx * 0.8 + (Math.random() - 0.5) * 20, vy: -Math.abs(b.vy) * 0.6 - 15, scia: [], fermo: { x: q.x, y: q.y, t: st.t } });
+        st.palle.push({ x: q.x, y: q.y - RP - RB - 0.2, vx: -b.vx * 0.8 + (Math.random() - 0.5) * 20, vy: -Math.abs(b.vy) * 0.6 - 15, scia: [], fermo: { x: q.x, y: q.y, t: st.t }, nuovo: st.t });
       } else if (st.potere === "mira") { st.mira += 3; }
       else if (st.potere === "fuoco") { st.fuoco = (st.fuoco || 0) + 1; }   // come in Peggle: la palla di fuoco parte al tiro dopo
     }
@@ -419,12 +668,13 @@
         }
         st.palle.forEach(function (b) {
           b.scia.push([b.x, b.y]); if (b.scia.length > 14) b.scia.shift();
-          // la pallina incastrata: dopo un po' scoppiano i pioli accesi lì vicino (o una spintarella)
-          if (Math.hypot(b.x - b.fermo.x, b.y - b.fermo.y) > 3) { b.fermo = { x: b.x, y: b.y, t: st.t }; }
-          else if (st.t - b.fermo.t > 2.2) {
-            var vicini = st.pioli.filter(function (q) { return q.acceso && !q.via && Math.hypot(q.x - b.x, q.y - b.y) < 7; });
-            if (vicini.length) vicini.forEach(function (q) { q.via = true; scintille(q.x, q.y, COL[q.tipo][0], 6); }); else { b.vx += (Math.random() - 0.5) * 30; b.vy -= 20; }
-            b.fermo = { x: b.x, y: b.y, t: st.t };
+          // la pallina incastrata (come in Peggle): ferma da 1,5 secondi, o da 4 secondi senza accendere niente di nuovo, si rompono i pezzi accesi lì intorno
+          if (Math.hypot(b.x - b.fermo.x, b.y - b.fermo.y) > 3) b.fermo = { x: b.x, y: b.y, t: st.t };
+          var ferma = st.t - b.fermo.t > 1.5, gira = st.t - (b.nuovo || 0) > 4;
+          if (ferma || gira) {
+            var vicini = st.pioli.filter(function (q) { return q.acceso && !q.via && Math.hypot(q.x - b.x, q.y - b.y) < (ferma ? 7 : 11); });
+            if (vicini.length) { vicini.forEach(function (q) { q.via = true; scintille(q.x, q.y, COL[q.tipo][0], 6); }); suonoScoppio(5); } else if (ferma) { b.vx += (Math.random() - 0.5) * 30; b.vy -= 20; }
+            b.fermo = { x: b.x, y: b.y, t: st.t }; b.nuovo = st.t;
           }
         });
         st.palle = st.palle.filter(function (b) { return !b.esce; });
@@ -474,11 +724,12 @@
       }
       if (st.febbre) {   // l'arcobaleno della febbre
         var cols = ["#ff6b6b", "#ffa94d", "#ffd43b", "#8ce99a", "#74c0fc", "#b197fc"];
-        ctx.globalAlpha = 0.16; for (var i = 0; i < 6; i++) { ctx.fillStyle = cols[i]; ctx.fillRect(ox, oy + ((i * 25 + st.t * 30) % (H + 25) - 25) * S, W * S, 25 * S * 0.5); } ctx.globalAlpha = 1;
+        ctx.globalAlpha = 0.16; for (var i = 0; i < 6; i++) { ctx.fillStyle = cols[i]; ctx.fillRect(ox, oy + ((i * 25 + st.t * 30) % (st.H + 25) - 25) * S, W * S, 25 * S * 0.5); } ctx.globalAlpha = 1;
       }
-      // i pioli
+      // i pioli e i mattoncini
       st.pioli.forEach(function (q) {
         if (q.via) return;
+        if (q.m) return disegnaMattone(q);
         var sp = spritePiolo(q.tipo, q.acceso), m = sp.width / dpr / 2;
         ctx.drawImage(sp, ox + q.x * S - m, oy + q.y * S - m, m * 2, m * 2);
       });
@@ -552,7 +803,7 @@
         var incr = [["partite", 1], ["arancioni", st.arPresi], ["secchi", st.secchiPresi], ["verdi", st.verdiPresi]];
         if (vinto) { incr.push(["livelliFiniti", 1]); incr.push(["febbri", 1]); if (st.palline >= PALLINE) incr.push(["senzaPerdere", 1]); }
         var rec = [["colpoMax", st.colpoMax], ["puntiMax", st.punti]];
-        if (vinto) { rec.push(["livelloMax", k]); rec.push(["p" + k, st.punti]); rec.push(["s" + k, stelle]); }
+        if (vinto) { rec.push(["livelloMax", k]); rec.push(["l" + k, st.punti]); rec.push(["t" + k, stelle]); }
         try { SGNube.salvaProgressi(null, ID, incr.filter(function (x) { return x[1]; }), rec); } catch (e) {}
       }
       if (t.risultato) t.risultato([{ nome: io, pos: vinto ? 1 : 2, punti: st.punti }]);   // XP e statistiche (record del punteggio)
@@ -580,7 +831,7 @@
       righe.forEach(function (r) { box.appendChild(el("div", { class: "pm-rig" }, [el("span", { text: r[0] }), el("b", { text: r[1] })])); });
       if (nuovoRec) box.appendChild(el("div", { class: "pm-rec", text: "🏅 Nuovo record del livello!" }));
       var tasti = el("div", { class: "pm-tasti" });
-      if (vinto && lv + 1 < LIVELLI.length) tasti.appendChild(el("button", { class: "btn btn-primario", text: "▶ Livello " + (lv + 2), onclick: function () { chiudi(); partita(t, lv + 1, st.potere); } }));
+      if (vinto && lv + 1 < LIVELLI.length) tasti.appendChild(el("button", { class: "btn btn-primario", text: "▶ " + (LIVELLI[lv + 1].cap !== LIVELLI[lv].cap ? CAPITOLI[LIVELLI[lv + 1].cap].icona + " Capitolo " + (LIVELLI[lv + 1].cap + 1) : "Avanti: " + LIVELLI[lv + 1].nome), onclick: function () { chiudi(); partita(t, lv + 1, st.potere); } }));
       tasti.appendChild(el("button", { class: "btn " + (vinto ? "btn-fantasma" : "btn-primario"), text: "↻ " + (vinto ? "Rigioca" : "Riprova"), onclick: function () { chiudi(); partita(t, lv, st.potere); } }));
       tasti.appendChild(el("button", { class: "btn btn-fantasma", text: "☰ Livelli", onclick: function () { chiudi(); schermataLivelli(t); } }));
       box.appendChild(tasti);
@@ -599,7 +850,7 @@
 
     misura(); aggTesta();
     window.__PMpartita = { st: function () { return st; }, evento: evento, tira: tira, mira: function (a) { st.ang = a; }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); } };   // (per le prove)
-    dimmi("Livello " + (lv + 1) + ": " + LIVELLI[lv].nome + " · prendi tutti i 🟠");
+    dimmi(CAPITOLI[LIVELLI[lv].cap].icona + " " + LIVELLI[lv].nome + " · prendi tutti i 🟠");
     if (lv < 2) setTimeout(function () { if (vivo() && st.fase === "mira") dimmi("Tieni premuto per mirare · tocca per tirare"); }, 2500);
     anim = requestAnimationFrame(function (o) { ult = o; giro(o); });
   }
@@ -657,6 +908,10 @@
       ".pm-lv-stelle{font-size:.9rem;color:#ffd43b;letter-spacing:.05em}",
       ".pm-lv small{font-size:.66rem;color:#d0bfff;min-height:1em}",
       ".pm-lv.chiuso{opacity:.45;cursor:default}",
+      ".pm-cap{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:14px 0 8px;padding:8px 12px;border-radius:14px;font-weight:900;font-size:.95rem;color:#fff}",
+      ".pm-cap small{font-weight:800;color:#ffe066}",
+      ".pm-cap-spazio{background:linear-gradient(90deg,#2d2275,#4c3ba8)}", ".pm-cap-natura{background:linear-gradient(90deg,#2b8a3e,#69b34c)}", ".pm-cap-mare{background:linear-gradient(90deg,#0b4f7a,#1c8fc7)}",
+      ".pm-lv-natura{background:linear-gradient(180deg,#5aa95f,#2b6e34)}", ".pm-lv-mare{background:linear-gradient(180deg,#1c8fc7,#0b4f7a)}",
       ".pm-lv.fatto{box-shadow:var(--ombra),inset 0 0 0 2px rgba(255,212,59,.55)}"
     ].join("");
     document.head.appendChild(st);
