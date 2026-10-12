@@ -551,8 +551,9 @@
     sopra.addEventListener("pointerdown", function (e) { if (e.target === sopra) chiudiSopra(); });
     function figura(nome, px) {   // un disegno (giardino o mobile) come immagine, per le schede
       var i = el("img", "gd-fig"), M = window.SGMobiliArte, A = window.SGGiardinoArte; i.alt = ""; i.style.width = i.style.height = px + "px";
-      try { if (M && M.info && M.info(nome) && M.info(nome).tipo === "parete") { i.style.width = Math.round(px * .62) + "px"; i.style.objectFit = "cover"; } } catch (e) {}   // le cose da parete: si vede solo la fascia dove stanno
-      try { var src = M && M.info && M.info(nome) ? M.svg(nome, {}) : A && A.info && A.info(nome) ? A.svg(nome, {}) : null; if (src) i.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(src); } catch (e) {}
+      var parete = false; try { parete = !!(M && M.info && M.info(nome) && M.info(nome).tipo === "parete"); } catch (e) {}
+      try { var src = M && M.info && M.info(nome) ? M.svg(nome, {}) : A && A.info && A.info(nome) ? A.svg(nome, {}) : null; if (src && parete) src = src.replace(/viewBox=(["'])0 0 (\d+) 200\1/, "viewBox='0 22 $2 128'").replace(/(<svg[^>]*?)height=(["'])200\2/, "$1height='128'");   // le cose da parete: solo la fascia dove stanno, non tutto il muro
+      if (src) i.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(src); } catch (e) {}
       return i;
     }
     function scheda(o) {   // una pianta che sta crescendo: a che punto è
@@ -877,7 +878,11 @@
       });
       return { c: c, o0: o0, L: L, A: A };
     }
-    function dietroA(A, B) { return (A.c1 <= B.c0 + 1e-6 && A.r0 < B.r1 - 1e-6 && B.r0 < A.r1 + 1e-6) || (A.r1 <= B.r0 + 1e-6 && A.c0 < B.c1 - 1e-6 && B.c0 < A.c1 + 1e-6); }
+    function dietroA(A, B) {   // A sta dietro B? (scatole a terra nella vista): dietro lungo un asse e non davanti lungo l'altro; se tutte e due, decide la profondità
+      var e = 1e-6, a = A.c1 <= B.c0 + e || A.r1 <= B.r0 + e, b = B.c1 <= A.c0 + e || B.r1 <= A.r0 + e;
+      if (a && !b) return true; if (!a) return false;
+      return A.c0 + A.c1 + A.r0 + A.r1 < B.c0 + B.c1 + B.r0 + B.r1;
+    }
     function prima(A, B) {   // A si disegna prima di B? (i muri della casa sempre prima del suo tetto)
       if (A.muro && B.tetto && A.casa) return true;
       if (A.tetto && B.muro && B.casa) return false;
