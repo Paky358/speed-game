@@ -142,7 +142,7 @@
   // =========================================================
   //  WC: la cassetta col tasto, il coperchio alzato, la tazza col sedile e l'acqua
   // =========================================================
-  def("wc", { tipo: "piedi", nome: "Gabinetto", fp: [1, 1], box: [-37, -81, 44, 26], dietro: true }, function () {
+  def("wc_moderno", { tipo: "piedi", nome: "Gabinetto moderno", fp: [1, 1], box: [-37, -81, 44, 26], dietro: true }, function () {
     var s = ombra(5, 7, 36, 16), girato = G < 0;
     var cas = forma(0, -.37, .225, .095, .095, 5), cop = forma(0, -.37, .243, .112, .112, 5);
     var taz = forma(0, -.03, .185, .25, .2), sed = forma(0, -.03, .2, .27, .215), bu = forma(0, -.01, .12, .175, .105), acq = forma(0, .025, .095, .11, .085);
@@ -186,7 +186,7 @@
   // =========================================================
   //  LAVANDINO col mobiletto a due ante, il piano di ceramica, la vaschetta, il rubinetto e la saponetta
   // =========================================================
-  def("lavandino", { tipo: "piedi", nome: "Lavandino col mobiletto", fp: [1, 1], box: [-46, -83, 56, 32], dietro: true, colori: COL_MOBILE }, function (o) {
+  def("lavandino_mobile", { tipo: "piedi", nome: "Lavandino col mobiletto", fp: [1, 1], box: [-46, -83, 56, 32], dietro: true, colori: COL_MOBILE }, function (o) {
     var c = colore(COL_MOBILE, o), s = ombra(7, 9, 46, 20);
     s += blocco(-.31, .31, -.44, .02, 0, 4.5, scuro(c, .45), null, 1.6);   // lo zoccolo, rientrato
     s += blocco(-.36, .36, -.46, .06, 4.5, 46, c, {
@@ -355,7 +355,7 @@
   // =========================================================
   //  CESTO della biancheria di vimini, coi panni che escono
   // =========================================================
-  def("cesto", { tipo: "piedi", nome: "Cesto della biancheria", fp: [1, 1], box: [-30, -56, 33, 19], dietro: true }, function () {
+  def("cesto_bucato", { tipo: "piedi", nome: "Cesto della biancheria", fp: [1, 1], box: [-30, -56, 33, 19], dietro: true }, function () {
     var s = ombra(4, 5, 26, 11), ca = 0, cb = -.18, R0 = .185, Z = 37, r = rnd(91), i, j;
     function el(z, k) { var c = P(ca, cb, z), rr = R0 * k; return { x: c[0], y: c[1], rx: rr * 70.71, ry: rr * 35.36 }; }   // un cerchio in pianta, sullo schermo
     function kz(z) { return .8 + .2 * z / Z; }   // il cesto si allarga verso l'alto
@@ -468,7 +468,7 @@
     return s + tratto("M8," + (Y + 3.4) + " L56," + (Y + 3.4), "#ffffff", .8, "opacity='.6'");
   });
 
-  def("asciugamano", { tipo: "parete", nome: "Portasciugamani", w: 62, h: 200, colori: COL_STOFFA }, function (o) {
+  def("porta_asciugamani", { tipo: "parete", nome: "Portasciugamani", w: 62, h: 200, colori: COL_STOFFA }, function (o) {
     var c = colore(COL_STOFFA, o), Y = 94, s = "", r = rnd(5), i;
     var dav = "M13," + (Y + 1) + " Q13," + (Y - 5.5) + " 19," + (Y - 5.5) + " L43," + (Y - 5.5) + " Q49," + (Y - 5.5) + " 49," + (Y + 1) + " L49.5," + (Y + 52) + " Q44," + (Y + 55) + " 38," + (Y + 53) + " Q31," + (Y + 51) + " 24," + (Y + 54) + " Q18," + (Y + 56) + " 12.5," + (Y + 52) + " Z";
     s += pth(dav, "#000", "opacity='.14' transform='translate(2.6 3.4)'");   // l'ombra sul muro
@@ -500,17 +500,23 @@
 
   // =========================================================
   function misure(d) { if (d.tipo !== "piedi") return { w: d.w, h: d.h }; var b = d.box; return { w: Math.ceil(b[2] - b[0]), h: Math.ceil(b[3] - b[1]), ax: Math.ceil(-b[0]), ay: Math.ceil(-b[1]) }; }
+  // prezzi e qualità (0 = roba scadente di partenza, 2 = roba bella): gli stessi nomi e prezzi dei mobili della casa (js/casa.js)
+  var PREZZI = { wc_moderno: 900, lavandino_mobile: 1200, vasca: 2500, doccia: 1800, mobiletto: 600, lavatrice: 1400, cesto_bucato: 200, pianta_bagno: 400, specchio: 500, mensola: 300, porta_asciugamani: 300, tappetino: 150 };
+  // gli altri gruppi di mobili (js/mobili-*.js) si aggiungono con SGMobiliArte.aggiungi({ nomi(), info(nome), svg(nome, opz) })
+  var ALTRI = [];
+  function chi(nome) { for (var i = 0; i < ALTRI.length; i++) { try { if (ALTRI[i].info(nome)) return ALTRI[i]; } catch (e) {} } return null; }
   window.SGMobiliArte = {
-    nomi: function () { return Object.keys(DIS); },
+    aggiungi: function (pacchetto) { if (pacchetto && pacchetto.nomi && pacchetto.info && pacchetto.svg) ALTRI.push(pacchetto); },
+    nomi: function () { var l = Object.keys(DIS); ALTRI.forEach(function (p) { try { l = l.concat(p.nomi()); } catch (e) {} }); return l; },
     info: function (nome) {
-      var d = DIS[nome]; if (!d) return null;
-      var m = misure(d), o = { tipo: d.tipo, nome: d.nome, stanza: "bagno", w: m.w, h: m.h, fp: d.fp ? d.fp.slice() : [1, 1] };
+      var d = DIS[nome]; if (!d) { var a = chi(nome); return a ? a.info(nome) : null; }
+      var m = misure(d), o = { tipo: d.tipo, nome: d.nome, stanza: "bagno", w: m.w, h: m.h, fp: d.fp ? d.fp.slice() : [1, 1], prezzo: PREZZI[nome] || 300, qual: 2 };
       if (d.tipo === "piedi") { o.ax = m.ax; o.ay = m.ay; o.dietro = !!d.dietro; }
       if (d.colori) o.colori = d.colori.map(function (k) { return { id: k.id, nome: k.nome, c: k.c }; });
       return o;
     },
     svg: function (nome, opz) {
-      var d = DIS[nome]; if (!d) return "";
+      var d = DIS[nome]; if (!d) { var a = chi(nome); return a ? a.svg(nome, opz || {}) : ""; }
       opz = opz || {};
       var m = misure(d);
       p = "mb" + (++nId) + "_"; DEFS = []; FATTI = {}; nC = 0; G = opz.dietro && d.dietro ? -1 : 1;

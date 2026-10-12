@@ -90,6 +90,15 @@
       l.forEach(function (t, i) { var z = zona(t[0], t[1]); if (z && PARETI[z]) D.muri[k].s[i] = PARETI[z]; }); });
     for (c = 2; c <= 10; c++) for (r = 2; r <= 8; r++) { var z = zona(c, r); if (PAV[z]) D.pav[c + "," + r] = PAV[z]; }
     D.tetto = "tegole_rosse";
+    // si parte con la roba scadente (come nella casa di prima): il bello si compra
+    metti("frigo_ammaccato", 2, 2); metti("fornello_vecchio", 3, 2); metti("pianta_secca", 6, 2);
+    metti("tappeto_liso", 3, 4, { d: 3 }); metti("divano_toppa", 2, 4, { d: 3 }); metti("sedia_plastica", 2, 7, { d: 3 });
+    metti("tavolino_cassetta", 4, 5); var cassetta = D.ultimo; metti("tv_tubo", 4, 5, { d: 1, su: cassetta });
+    metti("armadio_storto", 7, 2); metti("letto_semplice", 9, 2); metti("comodino_cartone", 10, 2); var comodino = D.ultimo;
+    metti("lampada_storta", 10, 2, { su: comodino }); metti("sveglia", 8, 2);
+    metti("lavandino_colonna", 8, 6); metti("wc_vecchio", 9, 6); metti("doccia_tenda", 10, 6);
+    function appendi(t, k, lato) { D.ogg.push({ k: ++D.ultimo, t: t, muro: k, lato: lato }); }
+    appendi("lampadina", "b,4,2", 1); appendi("quadro_storto", "a,2,5", 1); appendi("poster_strappato", "a,7,3", 1); appendi("specchio_scheggiato", "b,8,6", 1);
     for (r = 9; r < 16; r++) { metti("vialetto", 5, r); metti("vialetto", 6, r); }
     metti("melo", 1, 12, { cresci: 0, fr: 0, acqua: 0, agg: Date.now() });
     metti("orto", 12, 12);
@@ -193,11 +202,18 @@
     function fpMondo(o) { var f = fpDi(o.t); return (o.d || 0) % 2 ? [f[1], f[0]] : f; }
     function box(o) { var f = fpMondo(o); return { c0: o.c, c1: o.c + f[0], r0: o.r, r1: o.r + f[1] }; }
     function appeso(o) { return !!o.muro; }
+    function inPiedi(o) { var t = tipoDi(o.t); return !appeso(o) && !o.su && (t === "piedi" || t === "sopra"); }   // le cose che stanno per terra e non si calpestano
     function occupato(c, r, salta) {   // c'è qualcosa che non si calpesta?
       if (fuoriLotto(c, r)) return true;
-      for (var i = 0; i < D.ogg.length; i++) { var o = D.ogg[i]; if (o === salta || appeso(o) || tipoDi(o.t) !== "piedi") continue; var b = box(o); if (c >= b.c0 && c < b.c1 && r >= b.r0 && r < b.r1) return true; }
+      for (var i = 0; i < D.ogg.length; i++) { var o = D.ogg[i]; if (o === salta || !inPiedi(o)) continue; var b = box(o); if (c >= b.c0 && c < b.c1 && r >= b.r0 && r < b.r1) return true; }
       return false;
     }
+    // le cose piccole "sopra" (TV, lampade, sveglia…) si appoggiano sui mobili che hanno un ripiano, o per terra
+    function pianoDi(o) { var m = infoMobile(o.t); return m && m.piano ? m.piano : 0; }
+    function ripianoIn(c, r, salta) { for (var i = 0; i < D.ogg.length; i++) { var o = D.ogg[i]; if (o === salta || !inPiedi(o) || tipoDi(o.t) !== "piedi" || !pianoDi(o)) continue; var b = box(o); if (c >= b.c0 && c < b.c1 && r >= b.r0 && r < b.r1) return o; } return null; }
+    function sopraIn(c, r, salta) { for (var i = 0; i < D.ogg.length; i++) { var o = D.ogg[i]; if (o !== salta && o.su && o.c === c && o.r === r) return o; } return null; }
+    function figliDi(h) { return D.ogg.filter(function (o) { return o.su && o.su === h.k; }); }
+    function ospite(t, c, r, salta) { return tipoDi(t) === "sopra" ? ripianoIn(c, r, salta) : null; }
     function aTerraIn(c, r, salta) { for (var i = 0; i < D.ogg.length; i++) { var o = D.ogg[i]; if (o === salta || appeso(o) || tipoDi(o.t) !== "terra") continue; var b = box(o); if (c >= b.c0 && c < b.c1 && r >= b.r0 && r < b.r1) return o; } return null; }
     function chiave(t, c, r) { return t + "," + c + "," + r; }
     function muro(t, c, r) { return D.muri[chiave(t, c, r)]; }
@@ -241,6 +257,7 @@
     function libero(t, c, r, d, salta) {   // si può mettere lì (oggetto in piedi o a terra)?
       var f = fpDi(t); if ((d || 0) % 2) f = [f[1], f[0]];
       var tipo = tipoDi(t), daFuori = DEL_GIARDINO[t];
+      if (tipo === "sopra" && ripianoIn(c, r, salta)) return !sopraIn(c, r, salta);   // sopra un mobile: basta che il posto sul ripiano sia libero
       for (var a = 0; a < f[0]; a++) for (var b = 0; b < f[1]; b++) {
         var cc = c + a, rr = r + b;
         if (fuoriLotto(cc, rr)) return false;
@@ -249,10 +266,10 @@
         if (a && muroTra(cc - 1, rr, cc, rr)) return false;   // niente muri in mezzo a un mobile
         if (b && muroTra(cc, rr - 1, cc, rr)) return false;
       }
-      if (tipo === "piedi" && Math.floor(av.u) >= c && Math.floor(av.u) < c + f[0] && Math.floor(av.v) >= r && Math.floor(av.v) < r + f[1]) return false;   // non sopra l'avatar
+      if ((tipo === "piedi" || tipo === "sopra") && Math.floor(av.u) >= c && Math.floor(av.u) < c + f[0] && Math.floor(av.v) >= r && Math.floor(av.v) < r + f[1]) return false;   // non sopra l'avatar
       return true;
     }
-    function oggettoIn(c, r) { for (var i = D.ogg.length - 1; i >= 0; i--) { var o = D.ogg[i]; if (appeso(o) || tipoDi(o.t) !== "piedi") continue; var b = box(o); if (c >= b.c0 && c < b.c1 && r >= b.r0 && r < b.r1) return o; } return null; }
+    function oggettoIn(c, r) { for (var i = D.ogg.length - 1; i >= 0; i--) { var o = D.ogg[i]; if (!inPiedi(o)) continue; var b = box(o); if (c >= b.c0 && c < b.c1 && r >= b.r0 && r < b.r1) return o; } return null; }
     function defMuro(dentroLato) { var v = primoKit("muri", dentroLato ? "dentro" : "fuori"); return v ? v.id : null; }
     function defPav() { var v = primoKit("pavimenti", "dentro"); return v ? v.id : null; }
 
@@ -347,6 +364,7 @@
       return null;
     }
     function vaiA(lista, poi) {
+      if (av.siede) alzati();
       var da = { c: Math.max(0, Math.min(D.w - 1, Math.floor(av.u))), r: Math.max(0, Math.min(D.h - 1, Math.floor(av.v))) };
       var p = strada(da, lista.filter(function (q) { return !occupato(q.c, q.r); }));
       if (!p) { dimmi("Da qui non ci arrivo 🤔"); return false; }
@@ -420,7 +438,12 @@
         var o = t.trascina.o;
         if (t.mosso && fantasma) {
           if (o.muro) { var fz = fantasma.fz; if (fz && !appesoSu(fz) && !(D.muri[fz.k] && D.muri[fz.k].ap)) { o.muro = fz.k; o.lato = fz.sv; suonoPosa(); salva(); } else dimmi("Lì non ci sta 🚫"); }
-          else if (libero(fantasma.t, fantasma.c, fantasma.r, fantasma.d, o)) { o.c = fantasma.c; o.r = fantasma.r; suonoPosa(); vibra(12); salva(); sfondo = tipoDi(o.t) === "terra" ? null : sfondo; }
+          else if (libero(fantasma.t, fantasma.c, fantasma.r, fantasma.d, o)) {
+            var dc = fantasma.c - o.c, dr = fantasma.r - o.r, h2 = ospite(o.t, fantasma.c, fantasma.r, o);
+            figliDi(o).forEach(function (f) { f.c += dc; f.r += dr; });   // le cose appoggiate sopra viaggiano col mobile
+            o.c = fantasma.c; o.r = fantasma.r; if (h2) o.su = h2.k; else delete o.su;
+            suonoPosa(); vibra(12); salva(); sfondo = tipoDi(o.t) === "terra" ? null : sfondo;
+          }
           else dimmi("Lì non ci sta 🚫");
         }
         fantasma = null; sporco = true; if (t.mosso) return;
@@ -431,6 +454,7 @@
     cv.addEventListener("wheel", function (e) { e.preventDefault(); var p = punto(e); zooma(zoom * (e.deltaY < 0 ? 1.1 : .9), p.x, p.y); }, { passive: false });
 
     function cosaQui(x, y) {   // la cosa toccata: prima quella davanti (anche la chioma degli alberi)
+      for (var j = figliRet.length - 1; j >= 0; j--) { var F2 = figliRet[j].ret; if (F2 && x >= F2.x + F2.w * .15 && x <= F2.x + F2.w * .85 && y >= F2.y && y <= F2.y + F2.h) return figliRet[j].o; }   // prima le cose sopra i mobili
       for (var i = ordinati.length - 1; i >= 0; i--) {
         var q = ordinati[i], o = q.o; if (!o || q.fantasma) continue;
         var R = q.ret; if (!R) continue;
@@ -449,6 +473,7 @@
     function tocca(x, y) {
       if (modo === "costruisci") return toccaCostruisci(x, y);
       if (posa) return posaQui(x, y);
+      if (av.siede && modo === "vivi") { vibra(8); return alzati(); }   // seduto o a letto: un tocco e si alza
       var o = cosaQui(x, y);
       if (modo === "sistema") { if (!o) { var fz = facciaIn(x, y); o = fz ? appesoSu(fz) : null; } scegli(o); return; }
       if (o) { vibra(10); return vaiAOggetto(o); }
@@ -476,6 +501,9 @@
       if (o.t === "fontana") { suonoAcqua(); return dimmi("Che bel rumore d'acqua 💦"); }
       if (o.t === "altalena") { av.fa = "dondola"; av.ft = 0; return dimmi("Wiiii! 🎠"); }
       if (o.t === "cassetta_posta") return dimmi("Nessuna lettera, per ora 📭");
+      var mi = infoMobile(o.t);
+      if (mi && mi.azione === "siedi" && !o.su) return siedi(o);
+      if (mi && mi.azione === "dormi") return dormi(o);
       dimmi(nomeDi(o.t));
     }
     function annaffia(o) {
@@ -607,10 +635,16 @@
       [bM, bV].forEach(function (b) { barra.appendChild(b); });
     }
     function giraOggetto(o) {
-      for (var i = 1; i <= 3; i++) { var d = ((o.d || 0) + i) % 4; if (libero(o.t, o.c, o.r, d, o)) { o.d = d; salva(); suonoPosa(); sporco = true; return; } }
+      for (var i = 1; i <= 3; i++) { var d = ((o.d || 0) + i) % 4; if (o.su || libero(o.t, o.c, o.r, d, o)) {
+        o.d = d; var b = box(o);
+        figliDi(o).forEach(function (f) { if (f.c < b.c0 || f.c >= b.c1 || f.r < b.r0 || f.r >= b.r1) { f.c = b.c0; f.r = b.r0; } });   // le cose sopra restano sul ripiano
+        salva(); suonoPosa(); sporco = true; return; } }
       dimmi("Non c'è spazio per girarlo 🚫");
     }
-    function togli(o) { D.ogg = D.ogg.filter(function (x) { return x !== o; }); sfondo = null; sporco = true; }
+    function togli(o) {   // (le cose appoggiate sopra tornano nel baule)
+      figliDi(o).forEach(function (f) { D.baule[f.t] = (D.baule[f.t] || 0) + 1; });
+      D.ogg = D.ogg.filter(function (x) { return x !== o && !(x.su && x.su === o.k); }); if (av.siede && av.siede.o === o) av.siede = null; sfondo = null; sporco = true;
+    }
     function contaBaule() { var n = 0; for (var k in D.baule) n += D.baule[k]; return n; }
     function baule() {
       var lista = el("div", "gd-griglia");
@@ -634,6 +668,7 @@
         var c = Math.floor(g[0]) - Math.floor((f[0] - 1) / 2), r = Math.floor(g[1]) - Math.floor((f[1] - 1) / 2);
         if (!libero(t, c, r, posa.d)) { fantasma = { t: t, c: c, r: r, d: posa.d }; sporco = true; dimmi("Lì non ci sta 🚫"); vibra(30); return; }
         o = { k: ++D.ultimo, t: t, c: c, r: r, d: posa.d };
+        var h = ospite(t, c, r); if (h) o.su = h.k;   // appoggiato sopra un mobile
         if (ALBERI[t]) { o.cresci = 0; o.fr = 0; o.acqua = 0; o.agg = Date.now(); }
       }
       D.ogg.push(o); D.baule[t]--; if (!D.baule[t]) delete D.baule[t];
@@ -908,9 +943,18 @@
       });
       ctx.lineCap = "butt";
     }
+    var FIGLI = {}, figliRet = [];
     function disegnaOgg(x) {
+      var o = x.o, dv = ((o.d || 0) + VR) % 4, siede = av.siede && av.siede.o === o, verso = dv === 0 || dv === 3;   // verso: il davanti guarda verso di te
+      if (siede && !av.siede.dorme && !verso) disegnaSeduto(o, false);   // seduto di spalle: lo schienale gli passa davanti
+      disegnaPezzo(x);
+      (FIGLI[o.k] || []).slice().sort(function (a, b) { var p = rv(a.c + .5, a.r + .5), q = rv(b.c + .5, b.r + .5); return p[0] + p[1] - q[0] - q[1]; })
+        .forEach(function (f) { var y = { o: f, alza: pianoDi(o) }; disegnaPezzo(y); figliRet.push(y); });
+      if (siede) { if (av.siede.dorme) disegnaDorme(o); else if (verso) disegnaSeduto(o, true); }
+    }
+    function disegnaPezzo(x) {   // un oggetto in piedi (alza = sollevato sopra un ripiano)
       var o = x.o, f = fpMondo(o), dv = ((o.d || 0) + VR) % 4, dietro = dv === 1 || dv === 2, specchio = dv === 1 || dv === 3;
-      var ce = pw(o.c + f[0] / 2, o.r + f[1] / 2), k = TW / 100;
+      var ce = pw(o.c + f[0] / 2, o.r + f[1] / 2), k = TW / 100; if (x.alza) ce.y -= x.alza * k;
       var a = arteOgg(nomeArte(o), dietro, FASE === "notte" && o.t === "lampione", o.col);
       if (x.fantasma) ctx.globalAlpha = x.ok ? .65 : .3;
       if (modo === "sistema" && scelto === o) poligono(ctx, [pw(o.c, o.r), pw(o.c + f[0], o.r), pw(o.c + f[0], o.r + f[1]), pw(o.c, o.r + f[1])], "rgba(255,224,102,.45)");
@@ -1000,15 +1044,18 @@
       vicini(); recinto(true);
       // le cose in piedi, i muri, l'avatar e i tetti: dal più lontano al più vicino
       var lista = pezziMuro(dV), appesi = {};
+      FIGLI = {}; figliRet = [];
       D.ogg.forEach(function (o) {
         if (appeso(o)) { if (!(fantasma && fantasma.muroDi === o)) appesi[o.muro + "|" + o.lato] = o; return; }
-        if (tipoDi(o.t) !== "piedi" || (fantasma && fantasma.o === o)) return;
+        if (fantasma && fantasma.o === o) return;
+        if (o.su) { (FIGLI[o.su] = FIGLI[o.su] || []).push(o); return; }   // le cose sopra i mobili le disegna il mobile
+        if (!inPiedi(o)) return;
         var b = box(o); if (!dV && dentro(b.c0, b.r0)) return;   // da fuori i mobili non si vedono (c'è il tetto)
         lista.push({ b: boxV(b), o: o });
       });
       if (fantasma && fantasma.muroDi) appesi[fantasma.fz.k + "|" + fantasma.fz.sv] = fantasma.muroDi;
-      if (fantasma && !fantasma.muroDi && tipoDi(fantasma.t) === "piedi") { var fo = { t: fantasma.t, c: fantasma.c, r: fantasma.r, d: fantasma.d, k: 0, col: fantasma.col }; lista.push({ b: boxV(box(fo)), o: fo, fantasma: true, ok: libero(fo.t, fo.c, fo.r, fo.d, fantasma.salta) }); }
-      var pa = rv(av.u, av.v); lista.push({ b: { c0: pa[0], c1: pa[0], r0: pa[1], r1: pa[1] }, avatar: true });
+      if (fantasma && !fantasma.muroDi && tipoDi(fantasma.t) !== "terra" && tipoDi(fantasma.t) !== "parete") { var fo = { t: fantasma.t, c: fantasma.c, r: fantasma.r, d: fantasma.d, k: 0, col: fantasma.col }, fh = ospite(fo.t, fo.c, fo.r, fantasma.salta); lista.push({ b: boxV(box(fo)), o: fo, fantasma: true, alza: fh ? pianoDi(fh) : 0, ok: libero(fo.t, fo.c, fo.r, fo.d, fantasma.salta) }); }
+      var pa = rv(av.u, av.v); if (!av.siede) lista.push({ b: { c0: pa[0], c1: pa[0], r0: pa[1], r1: pa[1] }, avatar: true });   // (seduto o a letto lo disegna il mobile)
       if (!dV) CASE.forEach(function (cs) { lista.push({ b: boxV(cs.b), tetto: true, casa: cs }); });
       ordinati = ordina(lista); facce = [];
       ordinati.forEach(function (x) {
@@ -1040,6 +1087,42 @@
           ctx.globalCompositeOperation = "source-over";
         }
       }
+    }
+    function disegnaSeduto(o, davanti) {   // seduto: le anche all'altezza del sedile; se guarda verso di te le gambe restano "dentro" il mobile
+      if (!IM) return;
+      var mi = infoMobile(o.t) || {}, k = TW / 100, p = pw(av.u, av.v), h = TW * 1.3, w = h / 1.3, fv = vecV(av.fw[0], av.fw[1]);
+      var dietro = fv[0] + fv[1] < -1e-3, specchio = fv[0] - fv[1] < -1e-3, im = (dietro ? IM.dietro : IM.davanti)[0];
+      if (!pronta(im)) return;
+      var anca = p.y - (mi.seduta || 26) * k, cima = anca - h * .6;
+      ctx.save();
+      if (davanti) { ctx.beginPath(); ctx.rect(p.x - w, cima - h, w * 2, anca - cima + h + 3 * k); ctx.clip(); }
+      ctx.translate(p.x, cima); if (specchio) ctx.scale(-1, 1); ctx.drawImage(im, -w / 2, 0, w, h); ctx.restore();
+    }
+    function disegnaDorme(o) {   // a letto: la testa sul cuscino (dal lato dei piedi del letto si vede la nuca), e le "z"
+      if (!IM) return;
+      var mi = infoMobile(o.t) || {}, k = TW / 100, p = pw(av.u, av.v), h = TW * 1.3, w = h / 1.3, dv = ((o.d || 0) + VR) % 4;
+      var im = (dv === 1 || dv === 2 ? IM.dietro : IM.davanti)[0]; if (!pronta(im)) return;
+      var mento = p.y - ((mi.piano || 30) + 4) * k;
+      ctx.save(); ctx.beginPath(); ctx.rect(p.x - w, mento - h * .6, w * 2, h * .6); ctx.clip();
+      ctx.translate(p.x, mento - h * .45); ctx.rotate(dv === 0 || dv === 2 ? -.18 : .18); ctx.drawImage(im, -w / 2, 0, w, h); ctx.restore();
+      ctx.font = "900 " + Math.round(TW * .2) + "px sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = "#4dabf7";
+      for (var i = 0; i < 3; i++) { var t = (tAnim * .6 + i / 3) % 1; ctx.globalAlpha = 1 - t; ctx.fillText("z", p.x + w * (.25 + t * .3), mento - h * (.5 + t * .4)); }
+      ctx.globalAlpha = 1;
+    }
+    var DIR = [[0, 1], [-1, 0], [0, -1], [1, 0]];   // dove guarda un mobile (d: 0 verso +r, 1 verso -c, 2 verso -r, 3 verso +c)
+    function siedi(o) {   // sul posto del mobile più vicino all'avatar
+      var b = box(o), F = DIR[o.d || 0], best = null, dmin = 1e9, c, r;
+      for (c = b.c0; c < b.c1; c++) for (r = b.r0; r < b.r1; r++) { var dd = Math.hypot(c + .5 - av.u, r + .5 - av.v); if (dd < dmin) { dmin = dd; best = [c + .5 - F[0] * .12, r + .5 - F[1] * .12]; } }
+      av.siede = { o: o, dorme: false, da: [av.u, av.v] }; av.u = best[0]; av.v = best[1]; av.fw = F.slice(); av.strada = [];
+      suona([260, 200], "sine", .1, .07); sporco = true;
+    }
+    function dormi(o) {   // la testa dalla parte della testiera (la schiena del letto)
+      var b = box(o), F = DIR[o.d || 0], cx = (b.c0 + b.c1) / 2, cy = (b.r0 + b.r1) / 2, prof = F[0] ? (b.c1 - b.c0) : (b.r1 - b.r0);
+      av.siede = { o: o, dorme: true, da: [av.u, av.v] }; av.u = cx - F[0] * (prof / 2 - .38); av.v = cy - F[1] * (prof / 2 - .38); av.fw = F.slice(); av.strada = [];
+      suona([392, 330, 262], "sine", .08, .14); dimmi("Buonanotte… 😴"); sporco = true;
+    }
+    function alzati() {   // si alza e torna dove era prima di sedersi
+      var s0 = av.siede; if (!s0) return; av.siede = null; av.u = s0.da[0]; av.v = s0.da[1]; sporco = true;
     }
     function disegnaAvatar() {
       if (!IM) return;
@@ -1085,7 +1168,7 @@
       if (!vivo()) return chiudi();
       var dt = Math.min(.05, (o - ult) / 1000 || 0); ult = o;
       aggiorna(dt); tBolle += dt;
-      if (tBolle > .08) { tBolle = 0; if (modo === "vivi" && D.ogg.some(function (x) { return maturo(x) || sete(x); })) sporco = true; }
+      if (tBolle > .08) { tBolle = 0; if ((av.siede && av.siede.dorme) || (modo === "vivi" && D.ogg.some(function (x) { return maturo(x) || sete(x); }))) sporco = true; }
       if (sporco) {
         sporco = false; disegna();
         if (giroAnim) {   // la vista che gira: la foto di prima si stringe, quella nuova si allarga
