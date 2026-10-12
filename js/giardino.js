@@ -383,10 +383,11 @@
     var modo = "vivi", scelto = null, fantasma = null, posa = null, attrezzo = "muro", sceltaKit = {}, tuttaStanza = false;
     function cambiaModo(m) {
       modo = m; scelto = null; fantasma = null; posa = null; tracciato = null;
-      s.classList.toggle("gd-costr", m === "costruisci"); s.classList.toggle("gd-sistema", m === "sistema");
-      bCostr.textContent = m === "costruisci" ? "✅ Fatto" : "🔨 Costruisci"; bSistema.textContent = m === "sistema" ? "✅ Fatto" : "✏️ Sistema";
+      if (av.siede && m !== "vivi") alzati();
+      s.classList.toggle("gd-costr", m === "costruisci"); s.classList.toggle("gd-sistema", m === "sistema"); s.classList.toggle("gd-compra", m === "compra");
+      bCostr.textContent = m === "costruisci" ? "✅ Fatto" : "🔨 Costruisci"; bSistema.textContent = m === "sistema" ? "✅ Fatto" : "✏️ Sistema"; bCompra.textContent = m === "compra" ? "✅ Fatto" : "🛒 Compra";
       if (m === "costruisci" && !cambiaModo.detto) { cambiaModo.detto = 1; dimmi("Muri: trascina il dito sul terreno. Due dita per spostare la vista"); }
-      barraSistema(); pannelloCostruisci(); sporco = true;
+      barraSistema(); aggiornaPannello(); sporco = true;
     }
     function vistaDentro() { return modo !== "vivi" || !!posa || dentro(Math.floor(av.u), Math.floor(av.v)); }
 
@@ -401,6 +402,7 @@
       if (ids.length === 2) { var a = dita[ids[0]], b = dita[ids[1]]; pinza = { d: Math.hypot(a.x - b.x, a.y - b.y), z: zoom, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; tocco = null; tracciato = null; pennellata = null; sporco = true; return; }
       var p = punto(e);
       tocco = { x0: e.clientX, y0: e.clientY, x: p.x, y: p.y, mosso: false, ox: ox, oy: oy, trascina: null };
+      if (modo === "compra" && posa) { tocco.posa = true; muoviFantasma(p.x, p.y); return; }   // la cosa da comprare segue il dito
       if (modo === "costruisci" && attrezzo === "muro") { var g = schermoW(p.x, p.y); tracciato = { a: [Math.round(g[0]), Math.round(g[1])], b: [Math.round(g[0]), Math.round(g[1])] }; sporco = true; }
       if (modo === "costruisci" && attrezzo === "pavimento" && !tuttaStanza) { pennellata = { fatte: {}, speso: 0, salvato: false }; dipingiTerra(p.x, p.y); }
       if (modo === "sistema" && scelto) { var o = scelto.muro ? (facciaIn(p.x, p.y) && appesoSu(facciaIn(p.x, p.y)) === scelto ? scelto : null) : cosaQui(p.x, p.y); if (o === scelto) tocco.trascina = { o: o }; }
@@ -416,6 +418,7 @@
       }
       if (!tocco) return;
       var dx = e.clientX - tocco.x0, dy = e.clientY - tocco.y0, p = punto(e);
+      if (tocco.posa) { muoviFantasma(p.x, p.y); return; }
       if (!tocco.mosso && Math.hypot(dx, dy) < 9) return;
       tocco.mosso = true;
       if (tracciato) { var g = schermoW(p.x, p.y); tracciato.b = [Math.round(g[0]), Math.round(g[1])]; sporco = true; return; }
@@ -433,6 +436,7 @@
       delete dita[e.pointerId];
       if (pinza) { if (Object.keys(dita).length < 2) pinza = null; tocco = null; return; }
       var t = tocco; tocco = null; if (!t) return;
+      if (t.posa) return;
       if (tracciato) { var tr = tracciato; tracciato = null; if (t.mosso) costruisciMuri(tr); else dimmi("Trascina il dito per tracciare il muro 🧱"); sporco = true; return; }
       if (pennellata) { pennellata = null; return; }
       if (t.trascina) {
@@ -473,7 +477,7 @@
     function appesoSu(fz) { for (var i = 0; i < D.ogg.length; i++) { var o = D.ogg[i]; if (o.muro === fz.k && o.lato === fz.sv) return o; } return null; }
     function tocca(x, y) {
       if (modo === "costruisci") return toccaCostruisci(x, y);
-      if (posa) return posaQui(x, y);
+      if (modo === "compra") return;   // (la cosa scelta si sposta già col dito)
       if (av.siede && modo === "vivi") { vibra(8); return alzati(); }   // seduto o a letto: un tocco e si alza
       var o = cosaQui(x, y);
       if (modo === "sistema") { if (!o) { var fz = facciaIn(x, y); o = fz ? appesoSu(fz) : null; } scegli(o); return; }
@@ -582,48 +586,101 @@
       l.push({ cat: "Terreno", terreno: true });
       return l;
     }
+    // ---- "Compra" come in The Sims: il catalogo resta in basso, la cosa scelta compare nella stanza (trasparente),
+    //      la sposti col dito, la giri, e si paga solo quando confermi ✅. Nel baule le cose già tue (gratis).
     var catNegozio = 0;
-    function negozio() {
-      if (modo !== "vivi") cambiaModo("vivi");
-      var R = reparti(), schede = el("div", "gd-schede"), lista = el("div", "gd-griglia"), nodi = [schede, lista];
-      if (catNegozio >= R.length) catNegozio = 0;
-      R.forEach(function (g, i) { var b = el("button", "gd-scheda" + (i === catNegozio ? " on" : ""), g.cat); b.onclick = function () { vibra(8); catNegozio = i; negozio(); }; schede.appendChild(b); });
-      var g = R[catNegozio];
-      if (!g.terreno) g.voci.forEach(function (v) {
-        var b = el("button", "gd-voce"), nm = ALBERI[v.t] ? "albero_" + v.t + "_2" : v.t === "orto" ? "orto_carota_2" : v.t;
-        b.appendChild(figura(nm, 64)); b.appendChild(el("b", null, v.nome)); b.appendChild(el("small", null, "🪙 " + cifre(v.prezzo) + (v.sotto ? " · " + v.sotto : "")));
-        if (monete() < v.prezzo) b.classList.add("caro");
-        b.onclick = function () {
-          if (monete() < v.prezzo) { dimmi("Ti mancano 🪙 " + cifre(v.prezzo - monete())); return; }
-          vibra(12); paga(v.prezzo); D.baule[v.t] = (D.baule[v.t] || 0) + 1; salva(); suonoMonete();
-          chiudiSopra(); iniziaPosa(v.t);
-        };
-        lista.appendChild(b);
-      });
-      else {   // allargare il terreno
-        var prossimo = ALLARGA.filter(function (a) { return a.a > D.w; })[0];
-        nodi = [schede, el("p", "gd-frase", "Il tuo terreno è di " + D.w + " × " + D.h + " mattonelle."),
-          prossimo ? el("p", "gd-nota", "Allargandolo diventa " + prossimo.a + " × " + prossimo.a + ": più spazio per la casa, gli alberi e l'orto.") : el("p", "gd-nota", "È già il più grande che c'è! 🏞️")];
-        if (prossimo) return finestra("🛒 Compra", nodi, [{ testo: "Allarga · 🪙 " + cifre(prossimo.prezzo), cls: "btn-primario", off: monete() < prossimo.prezzo, fn: function () {
-          if (monete() < prossimo.prezzo) return; paga(prossimo.prezzo); D.w = D.h = prossimo.a; calcolaStanze(); VICINI = null; salva(); suonoMonete(); chiudiSopra(); sfondo = null; sporco = true; dimmi("Terreno allargato! 🏞️"); } }, { testo: "Chiudi", fn: chiudiSopra }], "gd-larga");
-      }
-      finestra("🛒 Compra", nodi, [{ testo: "Chiudi", fn: chiudiSopra }], "gd-larga");
+    function negozio() { cambiaModo(modo === "compra" ? "vivi" : "compra"); }
+    function allarga() {
+      var prossimo = ALLARGA.filter(function (a) { return a.a > D.w; })[0];
+      var nodi = [el("p", "gd-frase", "Il tuo terreno è di " + D.w + " × " + D.h + " mattonelle."),
+        prossimo ? el("p", "gd-nota", "Allargandolo diventa " + prossimo.a + " × " + prossimo.a + ": più spazio per la casa, gli alberi e l'orto.") : el("p", "gd-nota", "È già il più grande che c'è! 🏞️")];
+      if (!prossimo) return finestra("🏞️ Terreno", nodi, [{ testo: "Chiudi", fn: chiudiSopra }]);
+      finestra("🏞️ Terreno", nodi, [{ testo: "Allarga · 🪙 " + cifre(prossimo.prezzo), cls: "btn-primario", off: monete() < prossimo.prezzo, fn: function () {
+        if (monete() < prossimo.prezzo) return; paga(prossimo.prezzo); D.w = D.h = prossimo.a; calcolaStanze(); VICINI = null; salva(); suonoMonete(); chiudiSopra(); sfondo = null; sporco = true; dimmi("Terreno allargato! 🏞️"); } }, { testo: "Chiudi", fn: chiudiSopra }]);
     }
+    function catalogo() {   // le schede (giardino, stanze, usato, baule, terreno) e le cose della scheda scelta
+      var R = reparti(); R.splice(R.length - 1, 0, { cat: "🎒 Baule" + (contaBaule() ? " (" + contaBaule() + ")" : ""), baule: true });
+      return R;
+    }
+    function pannelloCompra() {
+      var R = catalogo(); if (catNegozio >= R.length) catNegozio = 0;
+      var riga = el("div", "gd-strum"), sc = el("div", "gd-scelte"), g = R[catNegozio];
+      R.forEach(function (x, i) { var b = el("button", "gd-str" + (i === catNegozio ? " on" : ""), x.cat); b.onclick = function () { vibra(8); catNegozio = i; aggiornaPannello(); }; riga.appendChild(b); });
+      var voci = g.baule ? Object.keys(D.baule).filter(function (t) { return D.baule[t] > 0; }).map(function (t) { return { t: t, nome: nomeDi(t), gratis: true, n: D.baule[t] }; }) : g.terreno ? [{ terreno: true, nome: "Allarga il terreno" }] : g.voci;
+      if (!voci.length) sc.appendChild(el("p", "gd-sc-t", g.baule ? "Il baule è vuoto: qui finiscono le cose che togli dalla casa e dal giardino." : "Niente qui, per ora."));
+      voci.forEach(function (v) {
+        var b = el("button", "gd-sc gd-sc-art" + (posa && posa.t === v.t ? " on" : "")), nm = v.terreno ? null : ALBERI[v.t] ? "albero_" + v.t + "_2" : v.t === "orto" ? "orto_carota_2" : v.t;
+        if (nm) b.appendChild(figura(nm, 48)); else b.appendChild(el("span", "gd-sc-emo", "🏞️"));
+        b.appendChild(el("span", null, v.nome)); b.appendChild(el("small", null, v.gratis ? "× " + v.n : v.terreno ? "" : "🪙 " + cifre(v.prezzo)));
+        if (!v.gratis && v.prezzo > monete()) b.classList.add("caro");
+        b.onclick = function () { vibra(10); if (v.terreno) return allarga(); scegliArticolo(v.t, !!v.gratis); };
+        sc.appendChild(b);
+      });
+      attrezzi.appendChild(riga); attrezzi.appendChild(sc);
+    }
+    function aggiornaPannello() {   // il pannello in basso: gli attrezzi per costruire o il catalogo (nascosto mentre metti una cosa)
+      while (attrezzi.firstChild) attrezzi.removeChild(attrezzi.firstChild);
+      attrezzi.classList.toggle("su", modo === "costruisci" || (modo === "compra" && !posa));
+      if (modo === "costruisci") pannelloCostruisci(); else if (modo === "compra" && !posa) pannelloCompra();
+    }
+    function scegliArticolo(t, gratis) {   // la cosa compare nella stanza, nel primo posto libero vicino al centro dello schermo
+      posa = { t: t, d: 0, gratis: gratis }; scelto = null; fantasma = null;
+      var g = schermoW(cw / 2, ch * .45), c0 = Math.floor(g[0]), r0 = Math.floor(g[1]), tp = tipoDi(t);
+      if (tp === "parete") {
+        disegna(); var fu = stanzaFuoco(), libere = facce.filter(function (fz) { return !fz.basso && !appesoSu(fz) && !(D.muri[fz.k] && D.muri[fz.k].ap); });   // prima un muro alto della stanza che guardi
+        var fz0 = libere.filter(function (fz) { return fz.st && fz.st === fu; })[0] || libere.filter(function (fz) { return fz.st; })[0] || libere[0]; if (fz0) fantasma = { muroDi: { t: t }, fz: fz0 };
+      } else {
+        for (var rag = 0; rag <= 6 && !fantasma; rag++) for (var dc = -rag; dc <= rag && !fantasma; dc++) for (var dr = -rag; dr <= rag && !fantasma; dr++) {
+          if (Math.max(Math.abs(dc), Math.abs(dr)) !== rag) continue;
+          if (libero(t, c0 + dc, r0 + dr, 0)) fantasma = { t: t, c: c0 + dc, r: r0 + dr, d: 0 };
+        }
+        if (!fantasma) fantasma = { t: t, c: c0, r: r0, d: 0 };
+      }
+      aggiornaPannello(); barraSistema(); sporco = true;
+      dimmi(tp === "parete" ? "Trascina sul muro dove appenderlo, poi ✅" : "Trascinalo dove vuoi, poi ✅");
+    }
+    function muoviFantasma(x, y) {   // la cosa scelta segue il dito (un po' sopra, così non lo copri)
+      var yy = y - TW * .5, t = posa.t;
+      if (tipoDi(t) === "parete") { var fz = facciaIn(x, yy); if (fz) fantasma = { muroDi: { t: t }, fz: fz }; }
+      else { var g = schermoW(x, yy), f = fpDi(t); if (posa.d % 2) f = [f[1], f[0]]; fantasma = { t: t, c: Math.floor(g[0] - f[0] / 2 + .5), r: Math.floor(g[1] - f[1] / 2 + .5), d: posa.d }; }
+      sporco = true;
+    }
+    function compraQui() {   // ✅: si paga (o si prende dal baule) e la cosa resta lì
+      var t = posa.t, tp = tipoDi(t), o;
+      if (!fantasma) return dimmi("Scegli dove metterlo 👇");
+      if (tp === "parete") {
+        var fz = fantasma.fz; if (!fz || appesoSu(fz) || (D.muri[fz.k] && D.muri[fz.k].ap)) { vibra(30); return dimmi("Scegli un pezzo di muro libero 🚫"); }
+        o = { t: t, muro: fz.k, lato: fz.sv };
+      } else {
+        if (!libero(t, fantasma.c, fantasma.r, posa.d)) { vibra(30); return dimmi("Lì non ci sta 🚫"); }
+        o = { t: t, c: fantasma.c, r: fantasma.r, d: posa.d };
+        var h = ospite(t, o.c, o.r); if (h) o.su = h.k;   // appoggiato sopra un mobile
+        if (ALBERI[t]) { o.cresci = 0; o.fr = 0; o.acqua = 0; o.agg = Date.now(); }
+      }
+      if (posa.gratis) { if (!D.baule[t]) return lasciaPosa(); D.baule[t]--; if (!D.baule[t]) delete D.baule[t]; }
+      else { var p = prezzoDi(t); if (monete() < p) { vibra(30); return dimmi("Ti mancano 🪙 " + cifre(p - monete())); } paga(p); suonoMonete(); }
+      o.k = ++D.ultimo; D.ogg.push(o);
+      suonoPosa(); vibra(15); salva(); if (tp === "terra") sfondo = null; sporco = true;
+      dimmi(ALBERI[t] ? "Piantato! Annaffialo per farlo crescere 💧" : posa.gratis ? "Messo! 👍" : "Comprato! 🎉");
+      if (posa.gratis && !D.baule[t]) return lasciaPosa();
+      barraSistema();
+    }
+    function lasciaPosa() { posa = null; fantasma = null; aggiornaPannello(); barraSistema(); sporco = true; }
 
     // ---- "Sistema": scegli, sposti col dito, giri, metti nel baule o rivendi; il baule per rimettere le cose ----
-    var posaDaSis = false;
     function scegli(o) { scelto = o; sporco = true; barraSistema(); if (o) vibra(10); }
     function barraSistema() {
       while (barra.firstChild) barra.removeChild(barra.firstChild);
       barra.classList.toggle("su", modo === "sistema" || !!posa);
-      if (posa) {
+      if (posa) {   // mentre metti una cosa: il nome col prezzo, gira, compra, lascia stare
         var tp = tipoDi(posa.t);
-        barra.appendChild(el("span", "gd-sis-t", tp === "parete" ? "Tocca un muro per appendere: " + nomeDi(posa.t).toLowerCase() : TERRA[posa.t] ? "Tocca le mattonelle: " + nomeDi(posa.t).toLowerCase() : "Tocca dove mettere: " + nomeDi(posa.t).toLowerCase()));
-        if (tp === "piedi") { var bG = el("button", "gd-sis-b", "↻"); bG.setAttribute("aria-label", "Gira"); bG.onclick = function () { vibra(8); posa.d = ((posa.d || 0) + 1) % 4; dimmi("Girato ↻"); }; barra.appendChild(bG); }
-        var bF = el("button", "gd-sis-b", TERRA[posa.t] ? "✅ Fatto" : "✖"); bF.setAttribute("aria-label", "Basta"); bF.onclick = function () { vibra(8); finePosa(); }; barra.appendChild(bF); return;
+        barra.appendChild(el("span", "gd-sis-t", nomeDi(posa.t) + (posa.gratis ? " · dal baule" : " · 🪙 " + cifre(prezzoDi(posa.t)))));
+        if (tp !== "parete") { var bG = el("button", "gd-sis-b", "↻"); bG.setAttribute("aria-label", "Gira"); bG.onclick = function () { vibra(8); posa.d = ((posa.d || 0) + 1) % 4; if (fantasma && !fantasma.fz) fantasma.d = posa.d; sporco = true; }; barra.appendChild(bG); }
+        var bOk = el("button", "gd-sis-b gd-sis-ok", posa.gratis ? "✅ Metti" : "✅ Compra"); bOk.onclick = function () { compraQui(); }; barra.appendChild(bOk);
+        var bF = el("button", "gd-sis-b gd-sis-no", "✖"); bF.setAttribute("aria-label", "Lascia stare"); bF.onclick = function () { vibra(8); lasciaPosa(); }; barra.appendChild(bF); return;
       }
       if (modo !== "sistema") return;
-      if (!scelto) { barra.appendChild(el("span", "gd-sis-t", "Tocca una cosa per spostarla")); var bB = el("button", "gd-sis-b", "🎒 Baule" + (contaBaule() ? " (" + contaBaule() + ")" : "")); bB.onclick = function () { vibra(8); baule(); }; barra.appendChild(bB); return; }
+      if (!scelto) { barra.appendChild(el("span", "gd-sis-t", "Tocca una cosa per spostarla")); var bB = el("button", "gd-sis-b", "🎒 Baule" + (contaBaule() ? " (" + contaBaule() + ")" : "")); bB.onclick = function () { vibra(8); cambiaModo("compra"); catNegozio = catalogo().length - 2; aggiornaPannello(); }; barra.appendChild(bB); return; }
       barra.appendChild(el("span", "gd-sis-t", nomeDi(scelto.t) + " · trascinala col dito"));
       if (!scelto.muro && tipoDi(scelto.t) === "piedi") { var bR = el("button", "gd-sis-b", "↻"); bR.setAttribute("aria-label", "Gira"); bR.onclick = function () { vibra(8); giraOggetto(scelto); }; barra.appendChild(bR); }
       var bM = el("button", "gd-sis-b", "🎒"); bM.setAttribute("aria-label", "Nel baule");
@@ -647,37 +704,6 @@
       D.ogg = D.ogg.filter(function (x) { return x !== o && !(x.su && x.su === o.k); }); if (av.siede && av.siede.o === o) av.siede = null; sfondo = null; sporco = true;
     }
     function contaBaule() { var n = 0; for (var k in D.baule) n += D.baule[k]; return n; }
-    function baule() {
-      var lista = el("div", "gd-griglia");
-      Object.keys(D.baule).forEach(function (t) {
-        var n = D.baule[t]; if (!n) return;
-        var b = el("button", "gd-voce"); b.appendChild(figura(ALBERI[t] ? "albero_" + t + "_0" : t, 64)); b.appendChild(el("b", null, nomeDi(t))); b.appendChild(el("small", null, "× " + n));
-        b.onclick = function () { vibra(10); chiudiSopra(); iniziaPosa(t); }; lista.appendChild(b);
-      });
-      finestra("🎒 Il baule", [contaBaule() ? lista : el("p", "gd-frase", "Il baule è vuoto. Le cose che compri o che togli finiscono qui.")], [{ testo: "Chiudi", fn: chiudiSopra }], "gd-larga");
-    }
-    function finePosa() { var tornaSis = posaDaSis; posa = null; fantasma = null; posaDaSis = false; sporco = true; if (tornaSis) cambiaModo("sistema"); else barraSistema(); }
-    function iniziaPosa(t) { if (!D.baule[t]) return; posaDaSis = modo === "sistema"; modo = "vivi"; s.classList.remove("gd-sistema", "gd-costr"); bSistema.textContent = "✏️ Sistema"; bCostr.textContent = "🔨 Costruisci"; pannelloCostruisci(); posa = { t: t, d: 0 }; scelto = null; barraSistema(); sporco = true; dimmi(tipoDi(t) === "parete" ? "Tocca un muro 👇" : "Tocca dove metterlo 👇"); }
-    function posaQui(x, y) {
-      var t = posa.t, o;
-      if (tipoDi(t) === "parete") {
-        var fz = facciaIn(x, y);
-        if (!fz || appesoSu(fz) || (D.muri[fz.k] && D.muri[fz.k].ap)) { dimmi("Scegli un pezzo di muro libero 🚫"); vibra(30); return; }
-        o = { k: ++D.ultimo, t: t, muro: fz.k, lato: fz.sv };
-      } else {
-        var g = schermoW(x, y), f = fpDi(t); if (posa.d % 2) f = [f[1], f[0]];
-        var c = Math.floor(g[0]) - Math.floor((f[0] - 1) / 2), r = Math.floor(g[1]) - Math.floor((f[1] - 1) / 2);
-        if (!libero(t, c, r, posa.d)) { fantasma = { t: t, c: c, r: r, d: posa.d }; sporco = true; dimmi("Lì non ci sta 🚫"); vibra(30); return; }
-        o = { k: ++D.ultimo, t: t, c: c, r: r, d: posa.d };
-        var h = ospite(t, c, r); if (h) o.su = h.k;   // appoggiato sopra un mobile
-        if (ALBERI[t]) { o.cresci = 0; o.fr = 0; o.acqua = 0; o.agg = Date.now(); }
-      }
-      D.ogg.push(o); D.baule[t]--; if (!D.baule[t]) delete D.baule[t];
-      suonoPosa(); vibra(15); salva(); fantasma = null; if (tipoDi(t) === "terra") sfondo = null; sporco = true;
-      if (ALBERI[t]) dimmi("Piantato! Annaffialo per farlo crescere 💧");
-      if (!TERRA[t] || !D.baule[t]) return finePosa();
-      barraSistema();
-    }
 
     // ---- "Costruisci": muri, porte, finestre, pareti, pavimenti, tetto, demolisci (e annulla) ----
     var ATTREZZI = [["muro", "🧱 Muri"], ["porta", "🚪 Porte"], ["finestra", "🪟 Finestre"], ["pareti", "🎨 Pareti"], ["pavimento", "🟫 Pavimenti"], ["tetto", "🏠 Tetto"], ["demolisci", "💥 Togli"]];
@@ -870,7 +896,7 @@
         var sv = (vt === "a" ? cen[0] > vx : cen[1] > vy) ? 1 : 0, fa = ll[sv], re = ll[1 - sv];
         var faD = dentro(fa[0], fa[1]), reD = dentro(re[0], re[1]);
         if (!dentroV && faD) return;   // da fuori le facce di dentro stanno sotto il tetto
-        l.push({ muro: true, k: k, m: m, vt: vt, vx: vx, vy: vy, sv: sv, faD: faD, basso: dentroV && reD && !(fuoco && stanza(fa[0], fa[1]) === fuoco), casa: faD || reD,   // i muri di fondo della stanza che guardi restano alti
+        l.push({ muro: true, k: k, m: m, vt: vt, vx: vx, vy: vy, sv: sv, faD: faD, st: stanza(fa[0], fa[1]), basso: dentroV && reD && !(fuoco && stanza(fa[0], fa[1]) === fuoco), casa: faD || reD,   // i muri di fondo della stanza che guardi restano alti
           b: vt === "a" ? { c0: vx, c1: vx, r0: vy, r1: vy + 1 } : { c0: vx, c1: vx + 1, r0: vy, r1: vy } });
       });
       l.forEach(function (x) { x.fine = x.vt === "a" ? !tutti["a," + x.vx + "," + (x.vy + 1)] && !tutti["b," + (x.vx - 1) + "," + (x.vy + 1)] : !tutti["b," + (x.vx + 1) + "," + x.vy] && !tutti["a," + (x.vx + 1) + "," + (x.vy - 1)]; });
@@ -909,7 +935,7 @@
       poligono(ctx, cima, x.basso ? "#e7dccb" : "#f6f0e6", "rgba(90,60,30,.35)", .8);
       if (x.fine) { var E = x.vt === "a" ? L : R, Et = x.vt === "a" ? Lt : Rt; poligono(ctx, [E, { x: E.x + off.x, y: E.y + off.y }, { x: Et.x + off.x, y: Et.y + off.y }, Et], x.vt === "a" ? "#ece2d2" : "#d9cdb9", "rgba(90,60,30,.35)", .8); }
       ctx.strokeStyle = "rgba(90,60,30,.4)"; ctx.lineWidth = .8; ctx.beginPath(); ctx.moveTo(L.x, L.y); ctx.lineTo(R.x, R.y); ctx.stroke();
-      facce.push({ k: x.k, sv: x.sv, poly: faccia });
+      facce.push({ k: x.k, sv: x.sv, poly: faccia, basso: x.basso, st: x.st });
     }
     function rgb(hex) { var n = parseInt((hex || "#c4523a").slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
     function disegnaTetto(casa) {   // il tetto a padiglione: per ogni mattonella due triangoli, più chiari quelli che guardano la luce
@@ -1055,6 +1081,11 @@
         lista.push({ b: boxV(b), o: o });
       });
       if (fantasma && fantasma.muroDi) appesi[fantasma.fz.k + "|" + fantasma.fz.sv] = fantasma.muroDi;
+      if (fantasma && !fantasma.muroDi && tipoDi(fantasma.t) === "terra") {   // un tappeto o un vialetto da mettere: trasparente sul pavimento, rosso se non ci sta
+        var ft = fantasma, ff = fpDi(ft.t), okT = libero(ft.t, ft.c, ft.r, ft.d, ft.salta); if (ft.d % 2) ff = [ff[1], ff[0]];
+        var aT = arteOgg(ft.t, false, false, ft.col); ctx.globalAlpha = .75; if (aT && pronta(aT.im) && !TERRA[ft.t]) stendi(ctx, aT.im, pw, ft.c, ft.r, ff[0], ff[1]); ctx.globalAlpha = 1;
+        poligono(ctx, [pw(ft.c, ft.r), pw(ft.c + ff[0], ft.r), pw(ft.c + ff[0], ft.r + ff[1]), pw(ft.c, ft.r + ff[1])], okT ? "rgba(120,220,120,.3)" : "rgba(224,49,49,.4)", okT ? "rgba(40,120,40,.8)" : "rgba(160,20,20,.8)", 2);
+      }
       if (fantasma && !fantasma.muroDi && tipoDi(fantasma.t) !== "terra" && tipoDi(fantasma.t) !== "parete") { var fo = { t: fantasma.t, c: fantasma.c, r: fantasma.r, d: fantasma.d, k: 0, col: fantasma.col }, fh = ospite(fo.t, fo.c, fo.r, fantasma.salta); lista.push({ b: boxV(box(fo)), o: fo, fantasma: true, alza: fh ? pianoDi(fh) : 0, ok: libero(fo.t, fo.c, fo.r, fo.d, fantasma.salta) }); }
       var pa = rv(av.u, av.v); if (!av.siede) lista.push({ b: { c0: pa[0], c1: pa[0], r0: pa[1], r1: pa[1] }, avatar: true });   // (seduto o a letto lo disegna il mobile)
       if (!dV) CASE.forEach(function (cs) { lista.push({ b: boxV(cs.b), tetto: true, casa: cs }); });
@@ -1236,6 +1267,10 @@
       ".gd-sc.on{box-shadow:inset 0 0 0 3px #3f7a2e;background:#e2f0d4}",
       ".gd-sc-tutta{width:auto;padding:0 10px;justify-content:center;font-weight:900;font-size:.72rem}",
       ".gd-sc-t{margin:2px 4px;font-size:.78rem;font-weight:800;line-height:1.3;color:#2b4a1f}",
+      ".gd-sc-art{width:70px}.gd-sc-art img{width:56px!important;height:56px!important;object-fit:contain!important;object-position:50% 50%!important;background:#fffdf6;box-shadow:inset 0 0 0 1px #e2e8d6}",
+      ".gd-sc.caro{opacity:.55}.gd-sc-emo{font-size:2rem;line-height:56px}",
+      ".gd-sis-ok{background:#2f9e44}.gd-sis-no{background:#868e96}",
+      ".gd-compra .gd-bott:not(:first-child){opacity:.45}",
       ".gd-avviso{position:absolute;left:50%;top:calc(54px + env(safe-area-inset-top));z-index:5;transform:translateX(-50%);max-width:92%;padding:8px 14px;border-radius:999px;text-align:center;font-weight:900;font-size:.88rem;color:#2b2200;background:#ffe066;box-shadow:0 6px 16px rgba(0,0,0,.3);opacity:0;pointer-events:none}",
       ".gd-avviso.su{animation:gdAvv 2.6s ease forwards}@keyframes gdAvv{0%{opacity:0;transform:translate(-50%,8px) scale(.9)}10%{opacity:1;transform:translate(-50%,0) scale(1)}82%{opacity:1}100%{opacity:0}}",
       ".gd-sopra{position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(15,30,10,.5);opacity:0;pointer-events:none;transition:opacity .25s}",
