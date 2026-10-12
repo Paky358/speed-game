@@ -9,7 +9,7 @@
    - "Sistema": sposti, metti nel baule o rivendi a metà prezzo. "Vivaio": compri.
    - Tocchi la porta ed entri in casa (js/casa.js). Di notte le finestre e i lampioni si accendono.
    I disegni sono in js/giardino-arte.js (SGGiardinoArte): una mattonella è un rombo 100×50.
-   SGGiardino.crea({ omino, nome, dati, salva(dati), monete(), spendi(n), guadagna(n), audio, entraInCasa(), indietro() })
+   SGGiardino.crea({ omino, nome, dati, daCasa, salva(dati), monete(), spendi(n), guadagna(n), audio, entraInCasa(), indietro() })
    ========================================================= */
 (function () {
   "use strict";
@@ -92,13 +92,13 @@
   }
 
   // ---------- i disegni: dall'arte (SVG) a immagini pronte per il canvas ----------
-  var cacheArte = {};
+  var cacheArte = {}, quandoPronta = null;   // quandoPronta: il giardino aperto si ridisegna quando arriva un disegno
   function arte(nome, opz) {
     var A = window.SGGiardinoArte, k = nome + (opz && opz.notte ? "|n" : "");
     if (cacheArte[k] !== undefined) return cacheArte[k];
     var inf = A && A.info ? A.info(nome) : null;
     if (!inf) { cacheArte[k] = null; return null; }
-    var im = new Image(); try { im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(A.svg(nome, opz || {})); } catch (e) { cacheArte[k] = null; return null; }
+    var im = new Image(); im.onload = function () { if (quandoPronta) quandoPronta(); }; try { im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(A.svg(nome, opz || {})); } catch (e) { cacheArte[k] = null; return null; }
     return (cacheArte[k] = { im: im, info: inf });
   }
 
@@ -174,8 +174,8 @@
     var giu = el("div", "gd-giu"), bCasa = el("button", "gd-bott", "🏠 Casa"), bVivaio = el("button", "gd-bott", "🌱 Vivaio"), bSistema = el("button", "gd-bott", "✏️ Sistema"), bCesto = el("button", "gd-bott");
     bCasa.onclick = function () { vibra(10); vaiAllaPorta(); }; bVivaio.onclick = function () { vibra(10); vivaio(); }; bSistema.onclick = function () { vibra(10); modoSistema(!sistema); }; bCesto.onclick = function () { vibra(10); cesto(); };
     [bCasa, bVivaio, bSistema, bCesto].forEach(function (b) { giu.appendChild(b); });
-    var barraSis = el("div", "gd-sis"), avviso = el("div", "gd-avviso"), sopra = el("div", "gd-sopra"), fumetto = el("div", "gd-fumetto");
-    [cv, testa, giu, barraSis, fumetto, avviso, sopra].forEach(function (n) { s.appendChild(n); });
+    var barraSis = el("div", "gd-sis"), avviso = el("div", "gd-avviso"), sopra = el("div", "gd-sopra");
+    [cv, testa, giu, barraSis, avviso, sopra].forEach(function (n) { s.appendChild(n); });
     function aggTesta() {
       cMonete.textContent = "🪙 " + cifre(monete());
       var n = 0; for (var k in D.cesto) n += D.cesto[k]; bCesto.textContent = "🧺 Cesto" + (n ? " (" + n + ")" : "");
@@ -213,7 +213,9 @@
     function immagine(cfg, o) { var im = new Image(); try { im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGOmino.svg(cfg, o || {})); } catch (e) {} im.onload = function () { sporco = true; }; return im; }
     var mio = opts.omino && window.SGOmino ? opts.omino : (window.SGOmino ? SGOmino.casuale(opts.nome || "Io") : null);
     var IM = mio ? { davanti: [immagine(mio), immagine(mio, { cammina: true })], dietro: [immagine(mio, { spalle: true }), immagine(mio, { spalle: true, cammina: true })] } : null;
-    var av = { u: PORTA.u, v: PORTA.v + .6, strada: [], t: 0, dietro: false, specchio: false, fa: null, ft: 0, poi: null };
+    var av = { u: PORTA.u, v: PORTA.v, strada: [], t: 0, dietro: false, specchio: false, fa: null, ft: 0, poi: null };
+    if (opts.daCasa) { av.fa = "esce"; av.strada = [{ u: PORTA.u, v: PORTA.v + .9 }]; }   // esci dalla porta e fai un passo nel giardino
+    else { av.u = 5.9; av.v = D.h + .6; av.strada = [{ u: 5.9, v: D.h - 1.4 }]; }       // dalla città: arrivi dal marciapiede ed entri dal cancello
 
     // la strada più corta tra le mattonelle (anche in diagonale, senza tagliare gli angoli)
     function strada(da, versoLista) {
@@ -429,7 +431,7 @@
     }
 
     // ---- "Sistema": scegli, sposti col dito, metti nel baule o rivendi; e il baule per rimettere le cose ----
-    var sistema = false, scelto = null, fantasma = null, posa = null;
+    var sistema = false, scelto = null, fantasma = null, posa = null, posaDaSis = false;   // posaDaSis: finito di posare si torna a "Sistema"
     function modoSistema(on) {
       sistema = on; scelto = null; posa = null; fantasma = null; sporco = true;
       s.classList.toggle("gd-sistema", on); bSistema.textContent = on ? "✅ Fatto" : "✏️ Sistema"; barraSistema();
@@ -439,10 +441,10 @@
       while (barraSis.firstChild) barraSis.removeChild(barraSis.firstChild);
       barraSis.classList.toggle("su", sistema || !!posa);
       if (posa) { barraSis.appendChild(el("span", "gd-sis-t", TERRA[posa] ? "Tocca le mattonelle dove mettere: " + NOME[posa].toLowerCase() : "Tocca dove mettere: " + (NOME[posa] || "").toLowerCase()));
-        var bF = el("button", "gd-sis-b", TERRA[posa] ? "✅ Fatto" : "✖ Annulla"); bF.onclick = function () { vibra(8); posa = null; fantasma = null; barraSistema(); sporco = true; }; barraSis.appendChild(bF); return; }
+        var bF = el("button", "gd-sis-b", TERRA[posa] ? "✅ Fatto" : "✖ Annulla"); bF.onclick = function () { vibra(8); finePosa(); }; barraSis.appendChild(bF); return; }
       if (!sistema) return;
       if (!scelto) { barraSis.appendChild(el("span", "gd-sis-t", "Tocca una cosa per spostarla")); var bB = el("button", "gd-sis-b", "🎒 Baule" + (contaBaule() ? " (" + contaBaule() + ")" : "")); bB.onclick = function () { vibra(8); baule(); }; barraSis.appendChild(bB); return; }
-      barraSis.appendChild(el("span", "gd-sis-t", (NOME[scelto.t] || "") + ": trascinala"));
+      barraSis.appendChild(el("span", "gd-sis-t", (NOME[scelto.t] || "") + " · trascina col dito per spostare"));
       var bM = el("button", "gd-sis-b", "🎒"); bM.setAttribute("aria-label", "Nel baule");
       bM.onclick = function () { vibra(10); if (scelto.t === "orto" && scelto.pianta) { dimmi("Prima raccogli quello che c'è 🌱"); return; } togli(scelto); D.baule[scelto.t] = (D.baule[scelto.t] || 0) + 1; scegli(null); salva(); };
       var bV = el("button", "gd-sis-b", "🪙 " + cifre(Math.floor((PREZZO[scelto.t] || 0) / 2)));
@@ -463,7 +465,8 @@
       });
       finestra("🎒 Il baule", [contaBaule() ? lista : el("p", "gd-frase", "Il baule è vuoto. Le cose che compri o che togli dal giardino finiscono qui.")], [{ testo: "Chiudi", fn: chiudiSopra }], "gd-larga");
     }
-    function iniziaPosa(t) { if (!D.baule[t]) return; posa = t; scelto = null; sistema = false; s.classList.remove("gd-sistema"); bSistema.textContent = "✏️ Sistema"; barraSistema(); sporco = true; dimmi("Tocca dove metterlo 👇"); }
+    function finePosa() { posa = null; fantasma = null; sporco = true; if (posaDaSis) { posaDaSis = false; modoSistema(true); } else barraSistema(); }
+    function iniziaPosa(t) { if (!D.baule[t]) return; posaDaSis = sistema; posa = t; scelto = null; sistema = false; s.classList.remove("gd-sistema"); bSistema.textContent = "✏️ Sistema"; barraSistema(); sporco = true; dimmi("Tocca dove metterlo 👇"); }
     function posaQui(c, r) {
       var f = fpDi(posa); c = c - Math.floor((f[0] - 1) / 2); r = r - Math.floor((f[1] - 1) / 2);
       if (!libero(posa, c, r)) { fantasma = { t: posa, c: c, r: r }; sporco = true; dimmi("Lì non ci sta 🚫"); vibra(30); return; }
@@ -472,15 +475,15 @@
       D.ogg.push(o); D.baule[posa]--; if (!D.baule[posa]) delete D.baule[posa];
       suonoPosa(); vibra(15); salva(); fantasma = null; sfondo = TERRA[posa] ? null : sfondo; sporco = true;
       if (ALBERI[posa]) dimmi("Piantato! Annaffialo per farlo crescere 💧");
-      if (!TERRA[posa] || !D.baule[posa]) posa = null;
+      if (!TERRA[posa] || !D.baule[posa]) return finePosa();
       barraSistema();
     }
 
     // ---- il disegno: il prato (fermo, in una tela a parte), poi le cose in piedi dalla più lontana ----
     var FASE = fase(), volano = [], tAnim = 0, ordinati = [];
-    var PAL = { giorno: { fuori: "#7fb35a", fuori2: "#6fa34c", prato: "#95c962", prato2: "#8bbf58", buio: 0 },
-      tramonto: { fuori: "#8a8a50", fuori2: "#7a7a44", prato: "#a3a85a", prato2: "#979c52", buio: .18 },
-      notte: { fuori: "#2c4a3a", fuori2: "#264234", prato: "#3c5e44", prato2: "#36573f", buio: .42 } };
+    var PAL = { giorno: { fuori: "#7fb35a", fuori2: "#6fa34c", prato: "#95c962", prato2: "#8bbf58", buio: 0 },   // velo: il colore che si stende sopra a tutto la sera
+      tramonto: { fuori: "#86a352", fuori2: "#7a9649", prato: "#9cbf5c", prato2: "#93b655", buio: .16, velo: "120,60,50" },
+      notte: { fuori: "#557d4c", fuori2: "#4e7446", prato: "#6f9c57", prato2: "#689452", buio: .4, velo: "12,18,48" } };
     function pal() { return PAL[FASE] || PAL.giorno; }
     function disegnaSfondo() {
       var c = document.createElement("canvas"), W = D.w, H = D.h, pad = TW * 2;
@@ -526,8 +529,11 @@
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       // il prato intorno (fuori dal terreno), a strisce morbide
       ctx.fillStyle = P.fuori; ctx.fillRect(0, 0, cw, ch);
+      strada();   // fuori dal cancello: marciapiede e strada del quartiere
       if (!sfondo) sfondo = disegnaSfondo();
       ctx.drawImage(sfondo.c, ox - sfondo.o0.x, oy - sfondo.o0.y, sfondo.L, sfondo.A);
+      vicini();   // dietro al recinto: gli alberi e le siepi dei vicini
+      recinto(true);   // il recinto dietro (prima di tutto: davanti ci sono le cose)
       // le cose in piedi
       var lista = [], k = TW / 100;
       lista.push({ b: { c0: CASA.c, c1: CASA.c + CASA.n, r0: CASA.r, r1: CASA.r + CASA.m }, o: { t: "casa", c: CASA.c, r: CASA.r } });
@@ -546,14 +552,15 @@
         if (x.fantasma) { ctx.globalAlpha = 1; if (!libero(o.t, o.c, o.r, o.salta)) { ctx.fillStyle = "rgba(224,49,49,.35)"; romboSchermo(o.c, o.r, f[0], f[1]); ctx.fill(); } }
         if (!sistema && !x.fantasma && o.t !== "casa") bollina(o, ce, x.ret);
       });
-      // il recinto davanti (dietro c'è già: è disegnato nel prato? no: si disegna qui, sopra a tutto, perché davanti non c'è niente)
-      recinto();
+      // il recinto davanti: sopra a tutto, perché davanti non c'è niente
+      recinto(false);
       // i frutti che volano nel cesto
       volano.forEach(function (p) { ctx.globalAlpha = Math.max(0, 1 - p.t / 1.1); ctx.font = Math.round(TW * .3) + "px sans-serif"; ctx.textAlign = "center"; ctx.fillText(p.e, p.x, p.y); });
       ctx.globalAlpha = 1;
       // la sera e la notte: tutto un po' più scuro, poi le luci calde sopra
       if (P.buio) {
-        ctx.fillStyle = "rgba(12,18,48," + P.buio + ")"; ctx.fillRect(0, 0, cw, ch);
+        ctx.fillStyle = "rgba(" + P.velo + "," + P.buio + ")"; ctx.fillRect(0, 0, cw, ch);
+        if (FASE !== "notte") return;   // le luci si accendono solo col buio
         ctx.globalCompositeOperation = "lighter";
         var luci = D.ogg.filter(function (o) { return o.t === "lampione"; }).map(function (o) { var p = proj(o.c + .5, o.r + .5); return { x: p.x, y: p.y - TW * .9, r: TW * 1.6 }; });
         var porta = proj(PORTA.u - .4, PORTA.v - .45); luci.push({ x: porta.x, y: porta.y - TW * .5, r: TW * 1.3 });
@@ -579,22 +586,52 @@
       ctx.font = Math.round(rr * 1.15) + "px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.fillText(tipo === "pronto" ? FRUTTI[ALBERI[o.t] ? ALBERI[o.t].frutto : o.pianta][2] : "💧", x, y + 1); ctx.textBaseline = "alphabetic";
     }
-    function recinto() {   // la staccionata tutto intorno al terreno (dietro e davanti)
-      var A = arte("staccionata_a"), B = arte("staccionata_b"), k = TW / 100, i;
-      function pezzo(a, c, r) { var ce = proj(c + .5, r + .5); if (a && a.im.complete && a.im.naturalWidth) ctx.drawImage(a.im, ce.x - a.info.ax * k, ce.y - a.info.ay * k, a.info.w * k, a.info.h * k); }
-      // (dietro: sul bordo in alto a sinistra delle mattonelle c=0 e in alto a destra di quelle r=0; davanti: delle mattonelle "fuori" c=w e r=h)
-      if (!A || !B) { ctx.strokeStyle = "#f4ead2"; ctx.lineWidth = Math.max(2, TW * .05); ctx.beginPath(); var p0 = proj(0, D.h), p1 = proj(D.w, D.h), p2 = proj(D.w, 0); ctx.moveTo(p0.x, p0.y - TW * .15); ctx.lineTo(p1.x, p1.y - TW * .15); ctx.lineTo(p2.x, p2.y - TW * .15); ctx.stroke(); return; }
-      for (i = 0; i < D.h; i++) pezzo(A, D.w, i);
-      for (i = 0; i < D.w; i++) if (!(i >= 5 && i <= 6)) pezzo(B, i, D.h);   // il cancello aperto davanti al vialetto
+    function striscia(r0, r1, col) {   // una fascia lungo il davanti del terreno (marciapiede, strada), lunga fino a fuori dallo schermo
+      var a = proj(-60, r0), b = proj(D.w + 60, r0), c2 = proj(D.w + 60, r1), d = proj(-60, r1);
+      ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(d.x, d.y); ctx.closePath(); ctx.fill();
     }
-    function recintoDietro(x2) { }   // (il recinto dietro è nel prato fermo: vedi disegnaSfondo)
+    function strada() {
+      var H = D.h;
+      striscia(H + .08, H + .85, "#ddd7c8"); striscia(H + .85, H + .97, "#b3ab98");   // marciapiede e cordolo
+      striscia(H + .97, H + 2.97, "#6d727a");                                          // l'asfalto
+      striscia(H + 2.97, H + 3.09, "#b3ab98"); striscia(H + 3.09, H + 3.85, "#ddd7c8");
+      for (var c = -60; c < D.w + 60; c += 1) { var a = proj(c, H + .08), b = proj(c, H + .85); ctx.strokeStyle = "rgba(120,110,95,.35)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }   // le lastre del marciapiede
+      var p0 = proj(-60, H + 1.97), p1 = proj(D.w + 60, H + 1.97);
+      ctx.strokeStyle = "rgba(255,255,255,.75)"; ctx.lineWidth = Math.max(1.5, TW * .035); ctx.setLineDash([TW * .4, TW * .35]);   // la riga tratteggiata in mezzo
+      ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.stroke(); ctx.setLineDash([]);
+    }
+    var VICINI = null;
+    function vicini() {   // alberi e cespugli dei giardini accanto, dietro al recinto (sempre gli stessi: seme fisso)
+      if (!VICINI || VICINI.w !== D.w) {
+        var r = rnd(911), l = [], i, specie = ["albero_melo_2", "cespuglio", "albero_ciliegio_2", "albero_limone_2", "cespuglio", "albero_arancio_2"];
+        for (i = -1; i < D.h - .5; i += 1.3 + r() * .9) l.push({ c: -1.4 - r() * .8, r: i, n: specie[Math.floor(r() * specie.length)] });
+        for (i = .2; i < D.w - .5; i += 1.3 + r() * .9) l.push({ c: i, r: -1.4 - r() * .8, n: specie[Math.floor(r() * specie.length)] });
+        l.sort(function (a, b) { return a.c + a.r - b.c - b.r; }); VICINI = { w: D.w, l: l };
+      }
+      var k = TW / 100;
+      VICINI.l.forEach(function (v) { var a = arte(v.n), ce = proj(v.c, v.r); if (a && a.im.complete && a.im.naturalWidth) ctx.drawImage(a.im, ce.x - a.info.ax * k, ce.y - a.info.ay * k, a.info.w * k, a.info.h * k); });
+    }
+    function recinto(dietro) {   // la staccionata tutto intorno al terreno: i due lati in fondo (dietro) e i due lati davanti
+      var A = arte("staccionata_a"), B = arte("staccionata_b"), k = TW / 100, i, l = [];
+      // a = bordo in alto a sinistra di una mattonella, b = bordo in alto a destra. Dietro: le mattonelle c=0 (a) e r=0 (b); davanti: quelle appena fuori, c=w (a) e r=h (b)
+      if (dietro) { for (i = 0; i < D.h; i++) l.push([A, 0, i, 1]); for (i = 0; i < D.w; i++) l.push([B, i, 0, 0]); }
+      else { for (i = 0; i < D.h; i++) l.push([A, D.w, i, 1]); for (i = 0; i < D.w; i++) if (!(i >= 5 && i <= 6)) l.push([B, i, D.h, 0]); }   // davanti al vialetto il cancello è aperto
+      l.sort(function (p, q) { return p[1] + p[2] - q[1] - q[2]; });   // dal più lontano
+      l.forEach(function (p) {
+        var a = p[0], ce = proj(p[1] + .5, p[2] + .5);
+        if (a && a.im.complete && a.im.naturalWidth) return ctx.drawImage(a.im, ce.x - a.info.ax * k, ce.y - a.info.ay * k, a.info.w * k, a.info.h * k);
+        var s0 = p[3] ? proj(p[1], p[2] + 1) : proj(p[1], p[2]), s1 = p[3] ? proj(p[1], p[2]) : proj(p[1] + 1, p[2]);   // senza disegno: due assi chiare
+        ctx.strokeStyle = "#f4ead2"; ctx.lineWidth = Math.max(2, TW * .04);
+        [.12, .26].forEach(function (h) { ctx.beginPath(); ctx.moveTo(s0.x, s0.y - TW * h); ctx.lineTo(s1.x, s1.y - TW * h); ctx.stroke(); });
+      });
+    }
     function disegnaAvatar() {
       if (!IM) return;
       var p = proj(av.u, av.v), h = TW * 1.42, w = h / 1.3, cammina = av.strada.length > 0, set = av.dietro ? IM.dietro : IM.davanti;
       var im = cammina && Math.floor(av.t * 6) % 2 ? set[1] : set[0];
       if (!im.complete || !im.naturalWidth) return;
       var alza = cammina ? Math.abs(Math.sin(av.t * 18)) * h * .02 : 0, piega = 0, al = 1;
-      if (av.fa === "entra") { al = Math.max(0, 1 - av.ft / .6); }
+      if (av.fa === "entra") { al = Math.max(0, 1 - av.ft / .6); } else if (av.fa === "esce") al = Math.min(1, av.ft / .45);
       if (av.fa === "raccogli") piega = Math.sin(Math.min(1, av.ft / .5) * Math.PI) * .05;
       if (av.fa === "dondola") alza += Math.abs(Math.sin(av.ft * 5)) * h * .08;
       ctx.globalAlpha = al;
@@ -641,6 +678,7 @@
     function chiudi() { cancelAnimationFrame(anim); clearInterval(tCresci); clearInterval(tFase); window.removeEventListener("resize", misura); }
     function esci() { chiudi(); clearTimeout(tSalva); if (opts.salva) opts.salva(D); if (opts.indietro) opts.indietro(); }
     s._monta = function () {
+      quandoPronta = function () { if (vivo()) { sfondo = null; sporco = true; } };   // un disegno è arrivato: si rifà il prato (coi vialetti) e si ridisegna
       cresciTutto(); misura(); aggTesta();
       // l'arte arriva un po' dopo (immagini): quando è pronta si ridisegna
       setTimeout(function () { sfondo = null; sporco = true; }, 300); setTimeout(function () { sfondo = null; sporco = true; }, 1200);
@@ -650,7 +688,7 @@
       anim = requestAnimationFrame(function (o) { ult = o; giro(o); });
     };
     s._chiudi = chiudi;
-    window.__giardino = { D: D, av: av, proj: function (c, r) { return proj(c, r); }, tap: function (x, y) { tocca(x, y); }, vai: function (c, r) { vaiA([{ c: c, r: r }]); }, tocca: function (o) { vaiAOggetto(o); }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); sporco = true; }, cresciTutto: cresciTutto, foto: function () { disegna(); return cv.toDataURL("image/png"); } };   // (per le prove)
+    window.__giardino = { D: D, av: av, disegna: function () { disegna(); }, fase: function (f) { FASE = f; cacheArte = {}; sfondo = null; sporco = true; }, proj: function (c, r) { return proj(c, r); }, tap: function (x, y) { tocca(x, y); }, vai: function (c, r) { vaiA([{ c: c, r: r }]); }, tocca: function (o) { vaiAOggetto(o); }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); sporco = true; }, cresciTutto: cresciTutto, foto: function () { disegna(); return cv.toDataURL("image/png"); } };   // (per le prove)
     return s;
   }
 
@@ -675,7 +713,6 @@
       ".gd-sis-b{flex:none;height:36px;padding:0 10px;border:0;border-radius:10px;cursor:pointer;font:inherit;font-weight:900;font-size:.85rem;color:#fff;background:#3f7a2e}",
       ".gd-avviso{position:absolute;left:50%;top:calc(54px + env(safe-area-inset-top));z-index:5;transform:translateX(-50%);max-width:92%;padding:8px 14px;border-radius:999px;text-align:center;font-weight:900;font-size:.88rem;color:#2b2200;background:#ffe066;box-shadow:0 6px 16px rgba(0,0,0,.3);opacity:0;pointer-events:none}",
       ".gd-avviso.su{animation:gdAvv 2.6s ease forwards}@keyframes gdAvv{0%{opacity:0;transform:translate(-50%,8px) scale(.9)}10%{opacity:1;transform:translate(-50%,0) scale(1)}82%{opacity:1}100%{opacity:0}}",
-      ".gd-fumetto{display:none}",
       ".gd-sopra{position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(15,30,10,.5);opacity:0;pointer-events:none;transition:opacity .25s}",
       ".gd-sopra.su{opacity:1;pointer-events:auto}",
       ".gd-carta{width:100%;max-width:340px;max-height:calc(var(--alt,100dvh) - 40px);overflow:auto;padding:16px 14px;border-radius:20px;text-align:center;color:#2b3a1f;background:#fbfaf2;box-shadow:0 10px 0 #3f6a2a,0 18px 40px rgba(0,0,0,.4),inset 0 0 0 3px #a9c98a;animation:gdSu .35s cubic-bezier(.3,1.4,.5,1)}",
