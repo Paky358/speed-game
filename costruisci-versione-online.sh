@@ -52,6 +52,7 @@ OUT=dist/index.html
   cat js/pesca.js   # la pesca al laghetto
   cat js/scavi.js   # gli scavi antichi
   cat js/giardino-arte.js   # i disegni del giardino
+  cat js/mobili-arte.js     # i mobili visti dall'alto (casa come The Sims)
   cat js/giardino.js        # il giardino fuori casa
   echo ''
   cat js/core.js

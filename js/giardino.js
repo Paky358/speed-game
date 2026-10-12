@@ -491,6 +491,7 @@
     sopra.addEventListener("pointerdown", function (e) { if (e.target === sopra) chiudiSopra(); });
     function figura(nome, px) {   // un disegno (giardino o mobile) come immagine, per le schede
       var i = el("img", "gd-fig"), M = window.SGMobiliArte, A = window.SGGiardinoArte; i.alt = ""; i.style.width = i.style.height = px + "px";
+      try { if (M && M.info && M.info(nome) && M.info(nome).tipo === "parete") { i.style.width = Math.round(px * .62) + "px"; i.style.objectFit = "cover"; } } catch (e) {}   // le cose da parete: si vede solo la fascia dove stanno
       try { var src = M && M.info && M.info(nome) ? M.svg(nome, {}) : A && A.info && A.info(nome) ? A.svg(nome, {}) : null; if (src) i.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(src); } catch (e) {}
       return i;
     }
@@ -805,8 +806,12 @@
       if (out.length < n) lista.forEach(function (x) { if (out.indexOf(x) < 0) out.push(x); });   // per sicurezza (se ci fosse un giro)
       return out;
     }
+    function stanzaFuoco() {   // la stanza che stai guardando: quella dell'avatar, o (quando arredi o costruisci) quella in mezzo allo schermo
+      if (modo === "vivi" && !posa) return stanza(Math.floor(av.u), Math.floor(av.v));
+      var g = schermoW(cw / 2, ch * .5); return stanza(Math.floor(g[0]), Math.floor(g[1]));
+    }
     function pezziMuro(dentroV) {   // i muri visti da qui: quale lato si vede, se sono abbassati
-      var l = [], tutti = {};
+      var l = [], tutti = {}, fuoco = dentroV ? stanzaFuoco() : 0;
       Object.keys(D.muri).forEach(function (k) {
         var m = D.muri[k], p = k.split(","), t = p[0], c = +p[1], r = +p[2];
         var q0 = rv(c, r), q1 = t === "a" ? rv(c, r + 1) : rv(c + 1, r), vt = q0[0] === q1[0] ? "a" : "b";
@@ -815,7 +820,7 @@
         var sv = (vt === "a" ? cen[0] > vx : cen[1] > vy) ? 1 : 0, fa = ll[sv], re = ll[1 - sv];
         var faD = dentro(fa[0], fa[1]), reD = dentro(re[0], re[1]);
         if (!dentroV && faD) return;   // da fuori le facce di dentro stanno sotto il tetto
-        l.push({ muro: true, k: k, m: m, vt: vt, vx: vx, vy: vy, sv: sv, faD: faD, basso: dentroV && reD, casa: faD || reD,
+        l.push({ muro: true, k: k, m: m, vt: vt, vx: vx, vy: vy, sv: sv, faD: faD, basso: dentroV && reD && !(fuoco && stanza(fa[0], fa[1]) === fuoco), casa: faD || reD,   // i muri di fondo della stanza che guardi restano alti
           b: vt === "a" ? { c0: vx, c1: vx, r0: vy, r1: vy + 1 } : { c0: vx, c1: vx + 1, r0: vy, r1: vy } });
       });
       l.forEach(function (x) { x.fine = x.vt === "a" ? !tutti["a," + x.vx + "," + (x.vy + 1)] && !tutti["b," + (x.vx - 1) + "," + (x.vy + 1)] : !tutti["b," + (x.vx + 1) + "," + x.vy] && !tutti["a," + (x.vx + 1) + "," + (x.vy - 1)]; });
