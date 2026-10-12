@@ -532,15 +532,15 @@
   //  FORNELLO VECCHIO: il fornelletto di smalto crema coi due fuochi, sopra un mobiletto di legno con un'anta storta;
   //  una manopola manca, lo smalto è scheggiato; dietro il tubo del gas arancione
   // =========================================================
-  def("fornello_vecchio", { tipo: "piedi", nome: "Fornello vecchio", fp: [1, 1], box: [-41, -69, 49, 28], dietro: true, piano: 51 }, function () {
+  def("fornello_vecchio", { tipo: "piedi", nome: "Fornello vecchio", fp: [1, 1], box: [-41, -74, 49, 28], dietro: true, piano: 56 }, function () {
     var legno = "#9b7650", sm = "#d9cfb6", girato = G < 0, s = ombra(5, 8, 42, 18);
     function tubo() {   // il tubo del gas arancione, con la fascetta
-      var a = [P(.2, -.29, 40.5), P(.2, -.37, 38), P(.14, -.35, 22), P(.14, -.34, 9), P(.13, -.42, .8), P(-.04, -.45, .8)], d = "M" + q(a[0]) + " C" + q(a[1]) + " " + q(a[2]) + " " + q(a[3]) + " S" + q(a[4]) + " " + q(a[5]);
-      var fc = P(.208, -.315, 40.2);
+      var a = [P(.2, -.29, 45.5), P(.2, -.37, 43), P(.14, -.35, 25), P(.14, -.34, 9), P(.13, -.42, .8), P(-.04, -.45, .8)], d = "M" + q(a[0]) + " C" + q(a[1]) + " " + q(a[2]) + " " + q(a[3]) + " S" + q(a[4]) + " " + q(a[5]);
+      var fc = P(.208, -.315, 45.2);
       return tratto(d, L, 4.2) + tratto(d, "#ef8a35", 2.6) + tratto(d, "#ffc58a", .8, "opacity='.75' transform='translate(-.5 -.4)'") + cer(fc[0], fc[1], 2.2, lin("fs", CROMO, 0, 0, 1, 1), bordo(L, .7));
     }
     function mobiletto() {
-      return blocco(-.29, .29, -.27, .25, 0, 33, legno, {
+      return blocco(-.29, .29, -.27, .25, 0, 38, legno, {   // il mobiletto: il piano dei fuochi viene all'altezza degli altri piani della cucina (55)
         davanti: function (W, H) {   // le due ante: quella di destra storta, si vede il buio dietro
           var o = rett(0, H - 2.6, W, 2.6, 0, scuro(legno, .5)), w2 = W / 2 - 1.8;
           o += pannello(legno, w2, H - 4.4, [1.2, 1.4]) + venature(1.6, 2, w2 - 1, H - 6, legno, rnd(2), 4, true) + cer(w2 - 1.4, 12, 1.1, "#3b2b22") + cer(w2 - 1.7, 11.7, .4, "#a08060");
@@ -553,7 +553,7 @@
       }, 2.2);
     }
     function fornello() {
-      var x = tondo(forma(0, -.01, .31, .28, .28, 10), [[33, 1], [46.5, 1], [48.5, [.985, .97]]], sm, 2.2, { lt: 1, lo: .6 });
+      var x = tondo(forma(0, -.01, .31, .28, .28, 10), [[38, 1], [51.5, 1], [53.5, [.985, .97]]], sm, 2.2, { lt: 1, lo: .6 });
       if (!girato) {
         var d = rett(1, 1, 35.8, 1.3, .6, lin("cs", CROMO, 0, 0, 0, 1), bordo(L, .5));   // il bordino cromato
         [5.8, 14.4, 23.4, 32].forEach(function (k, i) {
@@ -561,18 +561,18 @@
           else d += cer(k + .4, 8.1, 2.6, "#000", "opacity='.2'") + cer(k, 7.6, 2.6, rad("mf", [[0, "#6b6b6b"], [.55, "#2b2b2b"], [1, "#111111"]], .38, .32, .8), bordo(L, .8)) + tratto("M" + q(k, 7.6) + " L" + q(k + (i % 2 ? 1.4 : -.6), 5.4), "#f1ebdc", .7);
         });
         d += tratto("M10.6,1 Q11,5 10.2,9.6", "#8a6a3a", 1, "opacity='.3'") + pth(liscio([[33.6, 11.4], [35.6, 10.8], [36.2, 12.6], [34.2, 13]]), "#1d1d1d", bordo(L, .4));   // la colatura e la scheggiatura dello smalto
-        x += faccia(P(-.31, .27, 46.5), 1, d);
+        x += faccia(P(-.31, .27, 51.5), 1, d);
       } else {
-        x += faccia(P(.31, -.29, 46.5), 1, rett(4.6, 4.4, 4.4, 3.6, 1, lin("ot", OTTONE, 0, 0, 1, 1), bordo(L, .7)) + rett(20, 3, 9, 5, .4, "#efe9da", bordo(L, .5)) + tratto("M21,4.6 L27.6,4.6 M21,6 L26,6", "#8a8274", .4));   // il bocchettone d'ottone e l'etichetta
+        x += faccia(P(.31, -.29, 51.5), 1, rett(4.6, 4.4, 4.4, 3.6, 1, lin("ot", OTTONE, 0, 0, 1, 1), bordo(L, .7)) + rett(20, 3, 9, 5, .4, "#efe9da", bordo(L, .5)) + tratto("M21,4.6 L27.6,4.6 M21,6 L26,6", "#8a8274", .4));   // il bocchettone d'ottone e l'etichetta
       }
       return x;
     }
     function fuoco(a) {   // un fuoco: l'unto tutt'intorno, la coppa, lo spartifiamma nero e le quattro razze della griglia
-      var c0 = P(a, -.01, 48.5), o = ell(c0[0], c0[1] + .3, 10.6, 5.3, rad("un", [[0, "#6b4a2a", .6], [.62, "#6b4a2a", .42], [1, "#6b4a2a", 0]], .5, .5, .5));
-      var gc = P(a + .07, .1, 48.5); o += ell(gc[0], gc[1], 1.8, .8, "#7a5530", "opacity='.45'") + ell(gc[0] + 2.6, gc[1] + .6, .9, .45, "#7a5530", "opacity='.4'");   // le gocce d'unto
+      var c0 = P(a, -.01, 53.5), o = ell(c0[0], c0[1] + .3, 10.6, 5.3, rad("un", [[0, "#6b4a2a", .6], [.62, "#6b4a2a", .42], [1, "#6b4a2a", 0]], .5, .5, .5));
+      var gc = P(a + .07, .1, 53.5); o += ell(gc[0], gc[1], 1.8, .8, "#7a5530", "opacity='.45'") + ell(gc[0] + 2.6, gc[1] + .6, .9, .45, "#7a5530", "opacity='.4'");   // le gocce d'unto
       o += ell(c0[0], c0[1] + .3, 6.4, 3.2, "#2b2b2b", bordo(L, .9)) + ell(c0[0], c0[1] - .5, 4.6, 2.3, "#141414") + ell(c0[0], c0[1] - 1.3, 4.4, 2.2, rad("cp", [[0, "#6a6a6a"], [.55, "#2a2a2a"], [1, "#141414"]], .4, .35, .7), bordo(L, .8)) + ell(c0[0] - .2, c0[1] - 1.4, 1.5, .75, "#8a8a8a");
       var razze = [45, 135, 225, 315].map(function (g) {
-        var cg = Math.cos(g / 57.3), sg = Math.sin(g / 57.3), d = "M" + q(P(a + .052 * cg, -.01 + .052 * sg, 51)) + " L" + q(P(a + .118 * cg, -.01 + .118 * sg, 51)) + " L" + q(P(a + .118 * cg, -.01 + .118 * sg, 48.5));
+        var cg = Math.cos(g / 57.3), sg = Math.sin(g / 57.3), d = "M" + q(P(a + .052 * cg, -.01 + .052 * sg, 56)) + " L" + q(P(a + .118 * cg, -.01 + .118 * sg, 56)) + " L" + q(P(a + .118 * cg, -.01 + .118 * sg, 53.5));
         return [vicino(cg, sg), tratto(d, L, 3) + tratto(d, "#333333", 1.5) + tratto(d, "#8a8a8a", .45, "opacity='.7' transform='translate(-.3 -.3)'")];
       });
       return razze.filter(function (x) { return x[0] < 0; }).map(function (x) { return x[1]; }).join("") + o + razze.filter(function (x) { return x[0] >= 0; }).map(function (x) { return x[1]; }).join("");

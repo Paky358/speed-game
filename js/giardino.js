@@ -52,6 +52,7 @@
   var PREZZO = {}, NOME = {}, DEL_GIARDINO = {};
   NEGOZIO.forEach(function (g) { g.voci.forEach(function (v) { PREZZO[v.t] = v.prezzo; NOME[v.t] = v.nome; DEL_GIARDINO[v.t] = 1; }); });
   var STANZE = { bagno: "🛁 Bagno", soggiorno: "🛋️ Soggiorno", cucina: "🍳 Cucina", camera: "🛏️ Camera", casa: "🏠 Casa", usato: "♻️ Usato" };
+  var REPARTI = [["divani", "🛋️ Divani"], ["sedie", "🪑 Sedie"], ["tavoli", "🍽️ Tavoli"], ["mobili", "🗄️ Armadi"], ["letti", "🛏️ Letti"], ["luci", "💡 Luci"], ["elettronica", "🕹️ Giochi"], ["cucina", "🍳 Cucina"], ["bagno", "🛁 Bagno"], ["piante", "🪴 Piante"], ["quadri", "🖼️ Quadri"], ["deco", "🧸 Deco"], ["bar", "🍦 Bar"], ["acquari", "🐠 Acquari"], ["halloween", "🎃 Halloween"], ["usato", "♻️ Usato"]];   // i reparti dei mobili, come nel negozio della casa
   var FP = { fontana: [2, 2], altalena: [2, 1] };
   var TERRA = { vialetto: 1, ghiaia: 1 };
   var ALLARGA = [{ a: 20, prezzo: 3000 }, { a: 24, prezzo: 7000 }, { a: 28, prezzo: 12000 }];   // il terreno si allarga verso di te
@@ -581,8 +582,8 @@
     }
     function reparti() {   // le schede del negozio: il giardino, poi i mobili per stanza, poi il terreno
       var l = NEGOZIO.slice(), M = window.SGMobiliArte, per = {};
-      try { (M && M.nomi ? M.nomi() : []).forEach(function (t) { var i = M.info(t); if (!i) return; var st = i.qual === 0 ? "usato" : (i.stanza || "casa"); (per[st] = per[st] || []).push({ t: t, nome: i.nome || t, prezzo: prezzoDi(t) }); }); } catch (e) {}   // la roba scadente va nel mercatino dell'usato
-      ["soggiorno", "cucina", "camera", "bagno", "casa", "usato"].concat(Object.keys(per)).forEach(function (st, i, tutte) { if (!per[st] || tutte.indexOf(st) < i) return; l.push({ cat: STANZE[st] || st, voci: per[st].sort(function (a, b) { return a.prezzo - b.prezzo; }) }); });
+      try { (M && M.nomi ? M.nomi() : []).forEach(function (t) { var i = M.info(t); if (!i) return; var st = i.qual === 0 ? "usato" : (i.reparto || "deco"); (per[st] = per[st] || []).push({ t: t, nome: i.nome || t, prezzo: prezzoDi(t) }); }); } catch (e) {}   // la roba scadente va nel mercatino dell'usato
+      REPARTI.map(function (r) { return r[0]; }).concat(Object.keys(per)).forEach(function (st, i, tutte) { if (!per[st] || tutte.indexOf(st) < i) return; l.push({ cat: (REPARTI.filter(function (r) { return r[0] === st; })[0] || [0, st])[1], voci: per[st].sort(function (a, b) { return a.prezzo - b.prezzo; }) }); });
       l.push({ cat: "Terreno", terreno: true });
       return l;
     }
