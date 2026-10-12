@@ -401,7 +401,7 @@
       var ids = Object.keys(dita);
       if (ids.length === 2) { var a = dita[ids[0]], b = dita[ids[1]]; pinza = { d: Math.hypot(a.x - b.x, a.y - b.y), z: zoom, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; tocco = null; tracciato = null; pennellata = null; sporco = true; return; }
       var p = punto(e);
-      tocco = { x0: e.clientX, y0: e.clientY, x: p.x, y: p.y, mosso: false, ox: ox, oy: oy, trascina: null };
+      tocco = { x0: e.clientX, y0: e.clientY, x: p.x, y: p.y, mosso: false, ox: ox, oy: oy, trascina: null }; av.segui = false;
       if (modo === "compra" && posa) { tocco.posa = true; muoviFantasma(p.x, p.y); return; }   // la cosa da comprare segue il dito
       if (modo === "costruisci" && attrezzo === "muro") { var g = schermoW(p.x, p.y); tracciato = { a: [Math.round(g[0]), Math.round(g[1])], b: [Math.round(g[0]), Math.round(g[1])] }; sporco = true; }
       if (modo === "costruisci" && attrezzo === "pavimento" && !tuttaStanza) { pennellata = { fatte: {}, speso: 0, salvato: false }; dipingiTerra(p.x, p.y); }
@@ -1145,12 +1145,12 @@
     function siedi(o) {   // sul posto del mobile più vicino all'avatar
       var b = box(o), F = DIR[o.d || 0], best = null, dmin = 1e9, c, r;
       for (c = b.c0; c < b.c1; c++) for (r = b.r0; r < b.r1; r++) { var dd = Math.hypot(c + .5 - av.u, r + .5 - av.v); if (dd < dmin) { dmin = dd; best = [c + .5 - F[0] * .12, r + .5 - F[1] * .12]; } }
-      av.siede = { o: o, dorme: false, da: [av.u, av.v] }; av.u = best[0]; av.v = best[1]; av.fw = F.slice(); av.strada = [];
+      av.siede = { o: o, dorme: false, da: [av.u, av.v] }; av.segui = true; av.u = best[0]; av.v = best[1]; av.fw = F.slice(); av.strada = [];
       suona([260, 200], "sine", .1, .07); sporco = true;
     }
     function dormi(o) {   // la testa dalla parte della testiera (la schiena del letto)
       var b = box(o), F = DIR[o.d || 0], cx = (b.c0 + b.c1) / 2, cy = (b.r0 + b.r1) / 2, prof = F[0] ? (b.c1 - b.c0) : (b.r1 - b.r0);
-      av.siede = { o: o, dorme: true, da: [av.u, av.v] }; av.u = cx - F[0] * (prof / 2 - .38); av.v = cy - F[1] * (prof / 2 - .38); av.fw = F.slice(); av.strada = [];
+      av.siede = { o: o, dorme: true, da: [av.u, av.v] }; av.segui = true; av.u = cx - F[0] * (prof / 2 - .38); av.v = cy - F[1] * (prof / 2 - .38); av.fw = F.slice(); av.strada = [];
       suona([392, 330, 262], "sine", .08, .14); dimmi("Buonanotte… 😴"); sporco = true;
     }
     function alzati() {   // si alza e torna dove era prima di sedersi
@@ -1188,6 +1188,12 @@
         if (d <= passo) { av.u = t.u; av.v = t.v; av.strada.shift(); if (!av.strada.length && av.poi) { var f = av.poi; av.poi = null; f(); } }
         else { av.u += du / d * passo; av.v += dv / d * passo; }
         mosso = true;
+      }
+      if ((av.strada.length || av.segui) && modo === "vivi" && !tocco && !pinza) {   // la vista segue l'avatar quando cammina verso il bordo dello schermo
+        var pa = pw(av.u, av.v), sx = 0, sy = 0;
+        if (pa.x < cw * .18) sx = cw * .18 - pa.x; else if (pa.x > cw * .82) sx = cw * .82 - pa.x;
+        if (pa.y < ch * .3) sy = ch * .3 - pa.y; else if (pa.y > ch * .7) sy = ch * .7 - pa.y;
+        if (sx || sy) { var kk = Math.min(1, dt * 4); ox += sx * kk; oy += sy * kk; limita(); mosso = true; } else av.segui = false;
       }
       if (av.fa) { av.ft += dt; mosso = true; if (av.ft > (av.fa === "acqua" ? 1.1 : av.fa === "dondola" ? 2.4 : .8)) { av.fa = null; av.su = null; } }
       volano.forEach(function (p) { p.t += dt; p.x += p.vx; p.y += p.vy; p.vy += .25; }); volano = volano.filter(function (p) { return p.t < 1.1; });

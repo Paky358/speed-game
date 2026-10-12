@@ -53,6 +53,7 @@ OUT=dist/index.html
   cat js/scavi.js   # gli scavi antichi
   cat js/giardino-arte.js   # i disegni del giardino
   cat js/mobili-arte.js     # i mobili visti dall'alto (casa come The Sims)
+  cat js/mobili-soggiorno-scadente.js js/mobili-soggiorno.js js/mobili-cucina.js js/mobili-camera-scadente.js js/mobili-camera.js   # gli altri mobili, stanza per stanza
   cat js/costruzioni-arte.js   # muri, pavimenti, porte, finestre e tetti per costruire la casa
   cat js/giardino.js        # il giardino fuori casa
   echo ''
