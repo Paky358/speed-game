@@ -79,8 +79,17 @@
     for (r = 2; r < 9; r++) { muro("a", 2, r); muro("a", 7, r); muro("a", 11, r); }
     for (c = 2; c < 11; c++) { muro("b", c, 2); muro("b", c, 9); }
     for (c = 7; c < 11; c++) muro("b", c, 6);
-    ["b,5,9", "a,7,4", "a,7,7"].forEach(function (k) { D.muri[k].ap = { t: "porta", id: null }; });   // id null = la prima del catalogo
-    ["b,3,2", "b,5,2", "b,9,2", "a,2,4", "a,2,7", "a,11,3", "a,11,7", "b,3,9", "b,9,9"].forEach(function (k) { D.muri[k].ap = { t: "finestra", id: null }; });
+    D.muri["b,5,9"].ap = { t: "porta", id: "elegante" };   // la porta di casa
+    ["a,7,4", "a,7,7"].forEach(function (k) { D.muri[k].ap = { t: "porta", id: "legno" }; });
+    ["b,3,2", "b,5,2", "b,9,2", "a,2,4", "a,2,7", "a,11,3", "b,3,9"].forEach(function (k) { D.muri[k].ap = { t: "finestra", id: "persiane" }; });
+    ["a,11,7", "b,9,9"].forEach(function (k) { D.muri[k].ap = { t: "finestra", id: "bagno" }; });
+    // dentro: la camera azzurra con la moquette, il bagno con le piastrelle (il soggiorno coi colori di base: latte e parquet chiaro)
+    function zona(c, r) { return c < 2 || c > 10 || r < 2 || r > 8 ? null : c >= 7 ? (r <= 5 ? "camera" : "bagno") : "soggiorno"; }
+    var PARETI = { camera: "pittura_azzurro", bagno: "piastrelle_bagno" }, PAV = { camera: "moquette_beige", bagno: "bagno_azzurro" };
+    Object.keys(D.muri).forEach(function (k) { var p = k.split(","), c = +p[1], r = +p[2], l = p[0] === "a" ? [[c - 1, r], [c, r]] : [[c, r - 1], [c, r]];
+      l.forEach(function (t, i) { var z = zona(t[0], t[1]); if (z && PARETI[z]) D.muri[k].s[i] = PARETI[z]; }); });
+    for (c = 2; c <= 10; c++) for (r = 2; r <= 8; r++) { var z = zona(c, r); if (PAV[z]) D.pav[c + "," + r] = PAV[z]; }
+    D.tetto = "tegole_rosse";
     for (r = 9; r < 16; r++) { metti("vialetto", 5, r); metti("vialetto", 6, r); }
     metti("melo", 1, 12, { cresci: 0, fr: 0, acqua: 0, agg: Date.now() });
     metti("orto", 12, 12);
@@ -112,7 +121,12 @@
     if (cacheArte[k] !== undefined) return cacheArte[k];
     var s = null; try { s = fn(); } catch (e) {}
     if (!s) return (cacheArte[k] = null);
-    var im = new Image(); im.onload = function () { if (quandoPronta) quandoPronta(); }; im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s);
+    var im = new Image();
+    im.onload = function () {   // pronto: lo trasformo una volta sola in un'immagine fatta di pixel (il doppio della misura), così ridisegnarlo è leggero
+      try { var c = document.createElement("canvas"); c.width = im.naturalWidth * 2; c.height = im.naturalHeight * 2; c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); c.complete = true; c.naturalWidth = c.width; c.naturalHeight = c.height; cacheArte[k] = c; } catch (e) {}
+      if (quandoPronta) quandoPronta();
+    };
+    im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s);
     return (cacheArte[k] = im);
   }
   function arteOgg(nome, dietro, notte, col) {   // un oggetto in piedi (mobili o giardino) → { im, info }
@@ -751,7 +765,7 @@
     function poligono(c, pts, fill, stroke, lw) { c.beginPath(); pts.forEach(function (p, i) { if (i) c.lineTo(p.x, p.y); else c.moveTo(p.x, p.y); }); c.closePath(); if (fill) { c.fillStyle = fill; c.fill(); } if (stroke) { c.strokeStyle = stroke; c.lineWidth = lw || 1; c.stroke(); } }
     function stendi(c, im, P, x0, y0, n, m) {   // un disegno piatto (100 per mattonella) steso a terra sulle mattonelle x0…x0+n, y0…y0+m del mondo
       var a = P(x0, y0), b = P(x0 + n, y0), d = P(x0, y0 + m);
-      c.save(); c.transform((b.x - a.x) / (100 * n), (b.y - a.y) / (100 * n), (d.x - a.x) / (100 * m), (d.y - a.y) / (100 * m), a.x, a.y); c.drawImage(im, 0, 0, 100 * n, 100 * m); c.restore();
+      c.save(); c.transform((b.x - a.x) / (100 * n), (b.y - a.y) / (100 * n), (d.x - a.x) / (100 * m), (d.y - a.y) / (100 * m), a.x, a.y); c.drawImage(im, -.5, -.5, 100 * n + 1, 100 * m + 1); c.restore();
     }
     function disegnaSfondo() {   // il prato, i pavimenti e le cose piatte: fermi, in una tela a parte (si rifà quando cambiano)
       var c = document.createElement("canvas"), W = D.w, H = D.h, pad = TW * 2;
@@ -829,7 +843,7 @@
     function piega(im, L, R, h) {   // un disegno piatto 62×200 piegato sul muro (da L a R), tagliato all'altezza h
       var kz = TW / 100, sw = im.naturalWidth, sh = im.naturalHeight;
       ctx.save(); ctx.setTransform(dpr * (R.x - L.x) / 62, dpr * (R.y - L.y) / 62, 0, dpr * kz, dpr * L.x, dpr * (L.y - ALTO * kz));
-      ctx.drawImage(im, 0, sh * (1 - h / ALTO), sw, sh * h / ALTO, 0, ALTO - h, 62, h); ctx.restore();
+      ctx.drawImage(im, 0, sh * (1 - h / ALTO), sw, sh * h / ALTO, -.6, ALTO - h, 63.2, h); ctx.restore();   // (un filo più largo: niente righine tra un pezzo e l'altro)
     }
     function disegnaMuro(x, appesi) {
       var kz = TW / 100, h = x.basso ? BASSO : ALTO, H = h * kz, L, R, off, notte = FASE === "notte";
