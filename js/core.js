@@ -1019,6 +1019,7 @@
     window.addEventListener("resize", ridim);
   }
   function schermataEdificio(k) {
+    if (k === "casino" && window.SGGiardino && eProprietario()) return schermataCasinoSala();   // il Casinò nuovo, visto dall'alto (per ora solo per il proprietario)
     if (INTERNI[k] && window.SGCasino) return schermataInterno(k);   // Casinò e Circolo: gli interni in prima persona
     var E = EDIFICI_CITTA[k]; if (!E) return schermataCitta();
     rientro = function () { schermataEdificio(k); };   // finita la partita (o "indietro") si torna qui
@@ -1042,6 +1043,14 @@
     });
     s.appendChild(griglia);
     mostra(s);
+  }
+  function schermataCasinoSala() {   // il salone del Casinò visto dall'alto, come la casa: si cammina tra i tavoli e ci si siede a giocare
+    rientro = function () { schermataCasinoSala(); };   // finita la partita si torna nel salone
+    var io = profiloAttivo(), m = soldiCasa();
+    var s = SGGiardino.crea({ luogo: "casino", omino: io && io.omino, nome: io && io.nome, audio: audioCtx, monete: m.monete, spendi: m.spendi, guadagna: m.guadagna,
+      gioca: function (id) { var g = giocoDa(id); if (g) scegliModoEdificio(g, "casino"); },
+      indietro: function () { rientro = null; schermataCitta(); } });
+    mostra(s); s._monta();
   }
   // toccato un gioco: "Come giocate?" in una finestra sopra la sala, coi modi veri del gioco
   function scegliModoEdificio(g, k) {

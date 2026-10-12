@@ -109,6 +109,70 @@
     return D;
   }
 
+  // ---------- il Casinò: una sala enorme già arredata (Monte-Carlo per l'eleganza, Las Vegas per le slot) ----------
+  var GIOCHI_CASINO = { tavolo_blackjack: "blackjack", tavolo_poker: "poker" };   // i tavoli che si giocano già; gli altri "in arrivo"
+  function datiCasino() {
+    var D = { v: 2, w: 26, h: 22, ogg: [], muri: {}, pav: {}, tetto: null, baule: {}, cesto: {}, ultimo: 0, vista: 0, gente: [], ingresso: [12.5, 20.4] }, c, r, k = 0;
+    var giaKit = function (g, id) { return listaKit(g).some(function (v) { return v.id === id; }) ? id : null; };
+    var CARTA = giaKit("muri", "damascato_rosso"), VIPM = giaKit("muri", "boiserie_oro") || CARTA, MOQ = giaKit("pavimenti", "moquette_casino"), MARMO = giaKit("pavimenti", "marmo_scacchi"), INT = giaKit("pavimenti", "parquet_intarsio") || MOQ;
+    function muro(t, c, r, dentroLato, mat) { var m = { s: [null, null], ap: null }; m.s[dentroLato] = mat || CARTA; D.muri[t + "," + c + "," + r] = m; return m; }
+    // il salone: dentro c 1…24, r 1…20; la sala VIP in fondo a destra (c 19…24, r 1…6)
+    for (r = 1; r <= 20; r++) { muro("a", 1, r, 1); muro("a", 25, r, 0); }
+    for (c = 1; c <= 24; c++) { muro("b", c, 1, 1); muro("b", c, 21, 0); }
+    for (r = 1; r <= 6; r++) muro("a", 19, r, 0).s[1] = VIPM;
+    for (c = 19; c <= 24; c++) muro("b", c, 7, 1).s[0] = VIPM;
+    D.muri["b,12,21"].ap = { t: "porta", id: giaKit("porte", "portone_casino") }; D.muri["b,13,21"].ap = { t: "porta", id: giaKit("porte", "portone_casino") };   // l'ingresso, a due battenti
+    D.muri["b,21,7"].ap = { t: "porta", id: giaKit("porte", "portone_casino") };   // la porta della sala VIP
+    for (c = 1; c <= 24; c++) for (r = 1; r <= 20; r++) D.pav[c + "," + r] = c >= 19 && r <= 6 ? INT : (r >= 17 && c >= 9 && c <= 16 ? MARMO : MOQ);
+    function metti(t, c, r, d, x) { var o = { k: ++D.ultimo, t: t, c: c, r: r, d: d || 0 }; for (var q in x || {}) o[q] = x[q]; D.ogg.push(o); return o; }
+    function appendi(t, kk, lato, pezzi) { var o = { k: ++D.ultimo, t: t, muro: kk, lato: lato }; if (pezzi) o.pezzi = pezzi; D.ogg.push(o); }
+    var rnd2 = rnd(1866);   // (il casinò di Monte-Carlo apre nel 1863: seme fisso, la sala è sempre uguale)
+    function persona(seme, ruolo) {   // un avatar della sala: giocatori a caso, croupier e baristi in gilet e papillon
+      var cfg = window.SGOmino ? SGOmino.casuale("casino" + seme) : null;
+      if (cfg && ruolo) { cfg.capo = "gilet"; cfg.collo = "papillon"; cfg.mano = "nessuno"; cfg.schiena = "nessuno"; cfg.animale = "nessuno"; try { cfg = SGOmino.norm(cfg); } catch (e) {} }
+      return cfg;
+    }
+    function tavolo(t, c0, r0, d, giocatori) {   // il tavolo, gli sgabelli ai posti, un po' di gente seduta e il croupier dietro
+      var o = metti(t, c0, r0, d), inf = infoMobile(t) || {}, f = (inf.fp || [2, 1]).slice(), posti = inf.posti, cr = inf.croupier;
+      if (!posti) { posti = []; for (var i = 0; i < f[0]; i++) posti.push([i, f[1]]); }
+      function giro(p) { return d === 2 ? [c0 + f[0] - 1 - p[0], r0 + f[1] - 1 - p[1]] : [c0 + p[0], r0 + p[1]]; }
+      var cx = c0 + f[0] / 2, cy = r0 + f[1] / 2;
+      posti.forEach(function (p) {
+        var q = giro(p), dx = cx - (q[0] + .5), dy = cy - (q[1] + .5), dd = Math.abs(dy) >= Math.abs(dx) ? (dy > 0 ? 0 : 2) : (dx > 0 ? 3 : 1);
+        var sg = metti("sgabello_casino", q[0], q[1], dd);
+        if (giocatori && rnd2() < giocatori) D.gente.push({ cfg: persona(++k), siede: sg.k, fw: [[0, 1], [-1, 0], [0, -1], [1, 0]][dd] });
+      });
+      if (cr) { var qc = giro(cr); D.gente.push({ cfg: persona(++k, "croupier"), u: qc[0] + .5, v: qc[1] + .5, fw: [cx - qc[0] - .5, cy - qc[1] - .5] }); }
+      return o;
+    }
+    // la cassa e il bar contro il muro di fondo (dietro c'è chi lavora), la ruota della fortuna
+    metti("cassa_casino", 3, 3); D.gente.push({ cfg: persona(++k, "cassa"), u: 4.5, v: 2.5, fw: [0, 1] });
+    metti("bancone_casino", 13, 3); D.gente.push({ cfg: persona(++k, "bar"), u: 14.5, v: 2.5, fw: [0, 1] });
+    metti("ruota_fortuna", 8, 2);
+    // le slot lungo il muro di sinistra, e l'isola delle slot col montepremi
+    for (r = 4; r <= 9; r++) metti(r % 3 ? "slot_classica" : "slot_jackpot", 1, r, 3);
+    for (r = 12; r <= 17; r++) metti(r % 2 ? "slot_video" : "video_poker", 1, r, 3);
+    for (r = 11; r <= 14; r++) { metti("slot_video", 4, r, 1); metti(r === 12 ? "slot_jackpot" : "slot_classica", 5, r, 3); }
+    metti("slot_gigante", 3, 18, 0);
+    appendi("insegna_jackpot", "a,1,11", 1, ["a,1,11", "a,1,10"]);
+    // al centro le roulette sotto i lampadari, poi Black Jack, Poker, Craps e Sic Bo
+    tavolo("tavolo_roulette", 9, 6, 0, .6); metti("lampadario_gigante", 10, 6);
+    tavolo("tavolo_roulette", 9, 12, 0, .5); metti("lampadario_gigante", 10, 12);
+    tavolo("tavolo_blackjack", 14, 6, 0, .6); tavolo("tavolo_poker", 14, 12, 0, .7); metti("lampadario_gigante", 14, 12);
+    tavolo("tavolo_craps", 19, 10, 0, .5); tavolo("tavolo_sicbo", 20, 15, 0, .4);
+    // la sala VIP: baccarat, divanetti, statua, lampadario
+    tavolo("tavolo_baccarat", 20, 3, 0, .5); metti("lampadario_gigante", 21, 3); metti("statua", 24, 1); metti("divanetto_velluto", 19, 1, 0);
+    // colonne di marmo, la fontana e le statue all'ingresso, il tappeto rosso, il pianoforte, piante dorate e i cordoni
+    [[7, 4], [7, 15], [17, 4], [17, 15]].forEach(function (p) { metti("colonna_marmo", p[0], p[1]); });
+    metti("fontana_casino", 9, 17); metti("fontana_casino", 15, 17); metti("statua", 11, 17); metti("statua", 14, 17);
+    for (r = 13; r <= 20; r++) { metti("tappeto_rosso", 12, r, 1); metti("tappeto_rosso", 13, r, 1); }
+    metti("pianoforte_coda", 22, 18); metti("divanetto_velluto", 21, 20, 2);
+    [[2, 2], [24, 9], [24, 20], [2, 20]].forEach(function (p) { metti("vaso_dorato", p[0], p[1]); });
+    [[19, 8], [23, 8]].forEach(function (p) { metti("cordone", p[0], p[1]); });
+    appendi("maxischermo", "b,17,1", 1, ["b,17,1", "b,18,1"]);
+    return D;
+  }
+
   // ---------- i suoni (piccoli, fatti col WebAudio) ----------
   var AUDIO = null;
   function suona(note, tipo, vol, dur) {
@@ -161,11 +225,12 @@
   function crea(opts) {
     stile();
     AUDIO = opts.audio || null;
-    var D = opts.dati && opts.dati.v >= 2 ? opts.dati : datiIniziali();
+    var LUOGO = opts.luogo || null;   // "casino": un posto pubblico già arredato (niente giardino, niente compra e costruisci, non si salva)
+    var D = LUOGO === "casino" ? datiCasino() : (opts.dati && opts.dati.v >= 2 ? opts.dati : datiIniziali());
     D.ogg = D.ogg || []; D.muri = D.muri || {}; D.pav = D.pav || {}; D.baule = D.baule || {}; D.cesto = D.cesto || {}; D.ultimo = D.ultimo || D.ogg.length;
     var VR = D.vista || 0;   // la vista: girata di 90° ogni volta (0…3)
     var tSalva = null;
-    function salva() { clearTimeout(tSalva); tSalva = setTimeout(function () { if (opts.salva) opts.salva(D); }, 400); }
+    function salva() { if (LUOGO) return; clearTimeout(tSalva); tSalva = setTimeout(function () { if (opts.salva) opts.salva(D); }, 400); }
     function monete() { return opts.monete ? opts.monete() : 0; }
     function paga(n) { if (n > 0 && opts.spendi) opts.spendi(n); else if (n < 0 && opts.guadagna) opts.guadagna(-n); aggTesta(); }
 
@@ -208,6 +273,7 @@
     function inPiedi(o) { var t = tipoDi(o.t); return !appeso(o) && !o.su && (t === "piedi" || t === "sopra"); }   // le cose che stanno per terra e non si calpestano
     function occupato(c, r, salta) {   // c'è qualcosa che non si calpesta?
       if (fuoriLotto(c, r)) return true;
+      if (GENTE && GENTE.some(function (g) { return !g.siede && Math.floor(g.u) === c && Math.floor(g.v) === r; })) return true;   // (nel casinò: chi lavora in piedi)
       for (var i = 0; i < D.ogg.length; i++) { var o = D.ogg[i]; if (o === salta || !inPiedi(o)) continue; var b = box(o); if (c >= b.c0 && c < b.c1 && r >= b.r0 && r < b.r1) return true; }
       return false;
     }
@@ -282,6 +348,7 @@
     bInd.setAttribute("aria-label", "Torna in città"); bInd.onclick = function () { esci(); };
     bGira.setAttribute("aria-label", "Gira la vista"); bGira.onclick = function () { vibra(10); gira(); };
     [bInd, titolo, bGira, cMonete].forEach(function (n) { testa.appendChild(n); });
+    if (LUOGO === "casino") titolo.textContent = "🎰 Casinò";
     var giu = el("div", "gd-giu"), bCompra = el("button", "gd-bott", "🛒 Compra"), bCostr = el("button", "gd-bott", "🔨 Costruisci"), bSistema = el("button", "gd-bott", "✏️ Sistema"), bCesto = el("button", "gd-bott");
     bCompra.onclick = function () { vibra(10); negozio(); };
     bCostr.onclick = function () { vibra(10); cambiaModo(modo === "costruisci" ? "vivi" : "costruisci"); };
@@ -290,6 +357,7 @@
     [bCompra, bCostr, bSistema, bCesto].forEach(function (b) { giu.appendChild(b); });
     var barra = el("div", "gd-sis"), attrezzi = el("div", "gd-attrezzi"), avviso = el("div", "gd-avviso"), sopra = el("div", "gd-sopra");
     [cv, testa, giu, attrezzi, barra, avviso, sopra].forEach(function (n) { s.appendChild(n); });
+    if (LUOGO) giu.style.display = "none";   // (nel casinò non si compra e non si costruisce)
     function aggTesta() {
       cMonete.textContent = "🪙 " + cifre(monete());
       var n = 0; for (var k in D.cesto) n += D.cesto[k]; bCesto.textContent = "🧺 Cesto" + (n ? " (" + n + ")" : "");
@@ -347,6 +415,7 @@
     var av = { u: 5.5, v: 9.6, fw: [0, 1], strada: [], t: 0, fa: null, ft: 0, poi: null };   // fw: dove guarda (direzione nel mondo)
     if (opts.daCasa) { av.fa = "esce"; av.strada = [{ u: 5.5, v: 10.3 }]; }          // esci dalla porta di casa
     else { av.u = 5.9; av.v = D.h + .6; av.strada = [{ u: 5.9, v: D.h - 1.4 }]; }   // dalla città: arrivi dal marciapiede ed entri dal cancello
+    if (D.ingresso) { av.fa = null; av.u = D.ingresso[0]; av.v = D.ingresso[1]; av.strada = [{ u: D.ingresso[0], v: D.ingresso[1] - 2.5 }]; }   // nel casinò si entra dal portone
 
     // la strada più corta tra le mattonelle (anche in diagonale, senza tagliare angoli né attraversare i muri: solo le porte)
     function strada(da, versoLista) {
@@ -391,7 +460,7 @@
       if (m === "costruisci" && !cambiaModo.detto) { cambiaModo.detto = 1; dimmi("Muri: trascina il dito sul terreno. Due dita per spostare la vista"); }
       barraSistema(); aggiornaPannello(); sporco = true;
     }
-    function vistaDentro() { return modo !== "vivi" || !!posa || dentro(Math.floor(av.u), Math.floor(av.v)); }
+    function vistaDentro() { return !!LUOGO || modo !== "vivi" || !!posa || dentro(Math.floor(av.u), Math.floor(av.v)); }
 
     // ---- toccare: col dito si sposta la vista (o si costruisce); un tocco fermo sceglie ----
     var dita = {}, tocco = null, pinza = null, tracciato = null, pennellata = null;
@@ -403,7 +472,7 @@
       var ids = Object.keys(dita);
       if (ids.length === 2) { var a = dita[ids[0]], b = dita[ids[1]]; pinza = { d: Math.hypot(a.x - b.x, a.y - b.y), z: zoom, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; tocco = null; tracciato = null; pennellata = null; sporco = true; return; }
       var p = punto(e);
-      tocco = { x0: e.clientX, y0: e.clientY, x: p.x, y: p.y, mosso: false, ox: ox, oy: oy, trascina: null }; av.segui = false;
+      tocco = { x0: e.clientX, y0: e.clientY, x: p.x, y: p.y, mosso: false, ox: ox, oy: oy, trascina: null };  av.segui = false;
       if (modo === "compra" && posa) { tocco.posa = true; muoviFantasma(p.x, p.y); return; }   // la cosa da comprare segue il dito
       if (modo === "costruisci" && attrezzo === "muro") { var g = schermoW(p.x, p.y); tracciato = { a: [Math.round(g[0]), Math.round(g[1])], b: [Math.round(g[0]), Math.round(g[1])] }; sporco = true; }
       if (modo === "costruisci" && attrezzo === "pavimento" && !tuttaStanza) { pennellata = { fatte: {}, speso: 0, salvato: false }; dipingiTerra(p.x, p.y); }
@@ -508,7 +577,30 @@
     function girati(o) { var b = box(o); av.fw = [(b.c0 + b.c1) / 2 - av.u, (b.r0 + b.r1) / 2 - av.v]; sporco = true; }
 
     // ---- cosa si fa con le piante (e coi mobili) ----
+    function sgabelloLibero(t) {   // uno sgabello libero attorno a quel tavolo, il più vicino
+      var b = box(t), l = D.ogg.filter(function (o) { return o.t === "sgabello_casino" && o.c >= b.c0 - 1 && o.c <= b.c1 && o.r >= b.r0 - 1 && o.r <= b.r1 && !(SEDUTI[o.k] || []).length; });
+      l.sort(function (a, c) { return Math.hypot(a.c + .5 - av.u, a.r + .5 - av.v) - Math.hypot(c.c + .5 - av.u, c.r + .5 - av.v); });
+      return l[0] || null;
+    }
+    function tavoloAccanto(s) { for (var i = 0; i < D.ogg.length; i++) { var o = D.ogg[i]; if (!GIOCHI_CASINO[o.t]) continue; var b = box(o); if (s.c >= b.c0 - 1 && s.c <= b.c1 && s.r >= b.r0 - 1 && s.r <= b.r1) return o; } return null; }
+    function azioneCasino(o) {   // nel casinò: i tavoli aperti fanno giocare, gli altri arrivano presto
+      var mi = infoMobile(o.t) || {}, gi = GIOCHI_CASINO[o.t];
+      if (gi) { var sg = sgabelloLibero(o); if (sg) return vaiAOggetto(sg); if (opts.gioca) opts.gioca(gi); return; }
+      if (o.t === "sgabello_casino") {
+        if ((SEDUTI[o.k] || []).length) return dimmi("Questo posto è occupato 🙂");
+        var tv = tavoloAccanto(o); siedi(o); var g2 = tv && GIOCHI_CASINO[tv.t];
+        if (g2) { dimmi("Si gioca! 🃏"); setTimeout(function () { if (vivo() && av.siede && opts.gioca) opts.gioca(g2); }, 900); }
+        else if (tv === null) { var tv2 = D.ogg.filter(function (x) { var b = box(x); return /^tavolo_/.test(x.t) && o.c >= b.c0 - 1 && o.c <= b.c1 && o.r >= b.r0 - 1 && o.r <= b.r1; })[0]; if (tv2) dimmi("🎲 " + nomeDi(tv2.t) + ": in arrivo!"); }
+        return;
+      }
+      if (mi.azione === "siedi") return siedi(o);
+      if (/^(tavolo_|slot_|video_poker|ruota_fortuna)/.test(o.t)) return dimmi("🎰 " + nomeDi(o.t) + ": in arrivo!");
+      if (o.t === "cassa_casino") return dimmi("💰 La cassa: presto qui cambierai le fiches");
+      if (o.t === "bancone_casino") return dimmi("🍹 Il bar del Casinò: in arrivo!");
+      dimmi(nomeDi(o.t));
+    }
     function azione(o) {
+      if (LUOGO) return azioneCasino(o);
       cresciTutto();
       if (ALBERI[o.t] || (o.t === "orto" && o.pianta)) {
         if (maturo(o)) return raccogli(o);
@@ -834,15 +926,16 @@
     // =========================================================
     //  IL DISEGNO
     // =========================================================
-    var FASE = fase(), volano = [], tAnim = 0, ordinati = [], facce = [];
+    var FASE = LUOGO ? "notte" : fase(), volano = [], tAnim = 0, ordinati = [], facce = [];
     var PAL = { giorno: { fuori: "#7fb35a", prato: "#95c962", prato2: "#8bbf58", buio: 0 },
       tramonto: { fuori: "#86a352", prato: "#9cbf5c", prato2: "#93b655", buio: .16, velo: "120,60,50" },
-      notte: { fuori: "#557d4c", prato: "#6f9c57", prato2: "#689452", buio: .4, velo: "12,18,48" } };
-    function pal() { return PAL[FASE] || PAL.giorno; }
+      notte: { fuori: "#557d4c", prato: "#6f9c57", prato2: "#689452", buio: .4, velo: "12,18,48" },
+      casino: { fuori: "#1c1018", prato: "#2a1822", prato2: "#2a1822", buio: .16, velo: "40,12,30" } };
+    function pal() { if (LUOGO) return PAL.casino; return PAL[FASE] || PAL.giorno; }
     function poligono(c, pts, fill, stroke, lw) { c.beginPath(); pts.forEach(function (p, i) { if (i) c.lineTo(p.x, p.y); else c.moveTo(p.x, p.y); }); c.closePath(); if (fill) { c.fillStyle = fill; c.fill(); } if (stroke) { c.strokeStyle = stroke; c.lineWidth = lw || 1; c.stroke(); } }
-    function stendi(c, im, P, x0, y0, n, m) {   // un disegno piatto (100 per mattonella) steso a terra sulle mattonelle x0…x0+n, y0…y0+m del mondo
-      var a = P(x0, y0), b = P(x0 + n, y0), d = P(x0, y0 + m);
-      c.save(); c.transform((b.x - a.x) / (100 * n), (b.y - a.y) / (100 * n), (d.x - a.x) / (100 * m), (d.y - a.y) / (100 * m), a.x, a.y); c.drawImage(im, -.5, -.5, 100 * n + 1, 100 * m + 1); c.restore();
+    function stendi(c, im, P, x0, y0, n, m, gira) {   // un disegno piatto (100 per mattonella) steso a terra sulle mattonelle x0…x0+n, y0…y0+m del mondo    (gira: un tappeto girato di 90°, il disegno va lungo l'altro lato)
+      var a = P(x0, y0), b = gira ? P(x0, y0 + m) : P(x0 + n, y0), d = gira ? P(x0 + n, y0) : P(x0, y0 + m), un = gira ? m : n, vn = gira ? n : m;
+      c.save(); c.transform((b.x - a.x) / (100 * un), (b.y - a.y) / (100 * un), (d.x - a.x) / (100 * vn), (d.y - a.y) / (100 * vn), a.x, a.y); c.drawImage(im, -.5, -.5, 100 * un + 1, 100 * vn + 1); c.restore();
     }
     function disegnaSfondo() {   // il prato, i pavimenti e le cose piatte: fermi, in una tela a parte (si rifà quando cambiano)
       var c = document.createElement("canvas"), W = D.w, H = D.h, pad = TW * 2;
@@ -852,6 +945,7 @@
       function pS(a, b) { var v = rv(a, b); return { x: o0.x + (v[0] - v[1]) * TW / 2, y: o0.y + (v[0] + v[1]) * TW / 4 }; }
       function rombo(a, b, n, m) { return [pS(a, b), pS(a + n, b), pS(a + n, b + m), pS(a, b + m)]; }
       // il bordo (un gradino di terra) e il prato tagliato a righe
+      if (!LUOGO) {   // (nel casinò niente prato: solo i pavimenti)
       x.save(); x.translate(0, TW * .12); poligono(x, rombo(0, 0, W, H), "rgba(60,40,20,.35)"); x.restore();
       poligono(x, rombo(0, 0, W, H), P.prato);
       for (rr = 0; rr < H; rr++) if (rr % 2) poligono(x, rombo(0, rr, W, 1), P.prato2);
@@ -860,6 +954,7 @@
         if (dentro(Math.floor(gx), Math.floor(gy))) continue;
         if (fiore) { x.fillStyle = ["#fff", "#ffe066", "#f783ac"][col]; x.globalAlpha = FASE === "notte" ? .35 : .85; x.beginPath(); x.arc(q.x, q.y, TW * .018 + .6, 0, 6.29); x.fill(); x.globalAlpha = 1; }
         else { x.strokeStyle = dx > 0 ? "rgba(40,90,30,.35)" : "rgba(220,255,180,.3)"; x.lineWidth = 1; x.beginPath(); x.moveTo(q.x, q.y); x.lineTo(q.x + dx, q.y - TW * .05); x.stroke(); }
+      }
       }
       // i pavimenti (dentro sempre, fuori se messi apposta)
       for (cc = 0; cc < W; cc++) for (rr = 0; rr < H; rr++) {
@@ -874,7 +969,7 @@
         if (appeso(o) || tipoDi(o.t) !== "terra") return;
         var f = fpMondo(o);
         if (TERRA[o.t]) { var a = arteOgg(o.t), ce = pS(o.c + .5, o.r + .5), kk = TW / 100; if (a && pronta(a.im)) x.drawImage(a.im, ce.x - a.info.ax * kk, ce.y - a.info.ay * kk, a.info.w * kk, a.info.h * kk); else poligono(x, rombo(o.c + .06, o.r + .06, .88, .88), o.t === "ghiaia" ? "#d8d2c4" : "#c9c2b4"); return; }
-        var am = arteOgg(o.t, false, false, o.col); if (am && pronta(am.im)) stendi(x, am.im, pS, o.c, o.r, f[0], f[1]); else poligono(x, rombo(o.c + .1, o.r + .1, f[0] - .2, f[1] - .2), "#e8789a");
+        var am = arteOgg(o.t, false, false, o.col); if (am && pronta(am.im)) stendi(x, am.im, pS, o.c, o.r, f[0], f[1], (o.d || 0) % 2); else poligono(x, rombo(o.c + .1, o.r + .1, f[0] - .2, f[1] - .2), "#e8789a");
       });
       return { c: c, o0: o0, L: L, A: A };
     }
@@ -994,14 +1089,17 @@
       });
       ctx.lineCap = "butt";
     }
-    var FIGLI = {}, figliRet = [], luciOgg = [];   // luciOgg: le luci dei mobili da accendere di notte (si rifà a ogni disegno)
+    var FIGLI = {}, figliRet = [], luciOgg = [], sospesi = [];   // luciOgg: le luci dei mobili da accendere di notte (si rifà a ogni disegno)
     function disegnaOgg(x) {
       var o = x.o, dv = ((o.d || 0) + VR) % 4, siede = av.siede && av.siede.o === o, verso = dv === 0 || dv === 3;   // verso: il davanti guarda verso di te
+      var su = SEDUTI[o.k] || [];   // la gente del casinò seduta qui
+      if (!verso) su.forEach(function (g) { disegnaSeduto(o, g); });
       if (siede && !av.siede.dorme && !verso) disegnaSeduto(o);   // seduto di spalle: lo schienale gli passa davanti
       disegnaPezzo(x);
       (FIGLI[o.k] || []).slice().sort(function (a, b) { var p = rv(a.c + .5, a.r + .5), q = rv(b.c + .5, b.r + .5); return p[0] + p[1] - q[0] - q[1]; })
         .forEach(function (f) { var y = { o: f, alza: pianoDi(o) }; disegnaPezzo(y); figliRet.push(y); });
       if (siede) { if (av.siede.dorme) disegnaDorme(o); else if (verso) disegnaSeduto(o); }
+      if (verso) su.forEach(function (g) { disegnaSeduto(o, g); });
     }
     function disegnaPezzo(x) {   // un oggetto in piedi (alza = sollevato sopra un ripiano)
       var o = x.o, f = fpMondo(o), dv = ((o.d || 0) + VR) % 4, dietro = dv === 1 || dv === 2, specchio = dv === 1 || dv === 3;
@@ -1085,8 +1183,8 @@
     function disegna() {
       var P = pal(), dV = vistaDentro(), i;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.fillStyle = P.fuori; ctx.fillRect(0, 0, cw, ch);
-      stradaFuori();
+      ctx.fillStyle = LUOGO ? "#1c1018" : P.fuori; ctx.fillRect(0, 0, cw, ch);
+      if (!LUOGO) stradaFuori();
       if (!sfondo) sfondo = disegnaSfondo();
       ctx.drawImage(sfondo.c, ox - sfondo.o0.x, oy - sfondo.o0.y, sfondo.L, sfondo.A);
       if (modo === "costruisci") {   // la griglia per costruire
@@ -1094,14 +1192,15 @@
         for (i = 0; i <= VW(); i++) { var a = pv(i, 0), b = pv(i, VH()); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
         for (i = 0; i <= VH(); i++) { var c2 = pv(0, i), d2 = pv(VW(), i); ctx.beginPath(); ctx.moveTo(c2.x, c2.y); ctx.lineTo(d2.x, d2.y); ctx.stroke(); }
       }
-      vicini(); recinto(true);
+      if (!LUOGO) { vicini(); recinto(true); }
       // le cose in piedi, i muri, l'avatar e i tetti: dal più lontano al più vicino
       var lista = pezziMuro(dV), appesi = {};
-      FIGLI = {}; figliRet = []; luciOgg = [];
+      FIGLI = {}; figliRet = []; luciOgg = []; sospesi = [];
       D.ogg.forEach(function (o) {
         if (appeso(o)) { if (!(fantasma && fantasma.muroDi === o)) (o.pezzi || [o.muro]).forEach(function (k, i, l) { appesi[k + "|" + o.lato] = { o: o, i: i, n: l.length }; }); return; }
         if (fantasma && fantasma.o === o) return;
         if (o.su) { (FIGLI[o.su] = FIGLI[o.su] || []).push(o); return; }   // le cose sopra i mobili le disegna il mobile
+        if (tipoDi(o.t) === "sospeso") { sospesi.push(o); return; }   // i lampadari appesi: si disegnano alla fine, in alto
         if (!inPiedi(o)) return;
         var b = box(o); if (!dV && dentro(b.c0, b.r0)) return;   // da fuori i mobili non si vedono (c'è il tetto)
         lista.push({ b: boxV(b), o: o });
@@ -1114,15 +1213,18 @@
       }
       if (fantasma && !fantasma.muroDi && tipoDi(fantasma.t) !== "terra" && tipoDi(fantasma.t) !== "parete") { var fo = { t: fantasma.t, c: fantasma.c, r: fantasma.r, d: fantasma.d, k: 0, col: fantasma.col }, fh = ospite(fo.t, fo.c, fo.r, fantasma.salta); lista.push({ b: boxV(box(fo)), o: fo, fantasma: true, alza: fh ? pianoDi(fh) : 0, ok: libero(fo.t, fo.c, fo.r, fo.d, fantasma.salta) }); }
       var pa = rv(av.u, av.v); if (!av.siede) lista.push({ b: { c0: pa[0], c1: pa[0], r0: pa[1], r1: pa[1] }, avatar: true });   // (seduto o a letto lo disegna il mobile)
+      GENTE.forEach(function (g) { if (g.siede) return; var pg = rv(g.u, g.v); lista.push({ b: { c0: pg[0], c1: pg[0], r0: pg[1], r1: pg[1] }, persona: g }); });   // croupier, cassiere, barista
       if (!dV) CASE.forEach(function (cs) { lista.push({ b: boxV(cs.b), tetto: true, casa: cs }); });
       ordinati = ordina(lista); facce = [];
       ordinati.forEach(function (x) {
         if (x.avatar) return disegnaAvatar();
+        if (x.persona) return disegnaPersona(x.persona);
         if (x.muro) return disegnaMuro(x, appesi);
         if (x.tetto) return disegnaTetto(x.casa);
         disegnaOgg(x);
       });
-      recinto(false);
+      sospesi.sort(function (a, b) { var p = rv(a.c, a.r), q = rv(b.c, b.r); return p[0] + p[1] - q[0] - q[1]; }).forEach(function (o) { disegnaPezzo({ o: o }); });   // i lampadari, sopra a tutto
+      if (!LUOGO) recinto(false);
       if (tracciato) {   // il muro che stai tracciando: trasparente, col prezzo
         var pz = pezziTracciato(tracciato), kz = TW / 100;
         pz.forEach(function (p) { var A2 = p[0] === "a" ? pw(p[1], p[2] + 1) : pw(p[1], p[2]), B2 = p[0] === "a" ? pw(p[1], p[2]) : pw(p[1] + 1, p[2]); poligono(ctx, [A2, B2, { x: B2.x, y: B2.y - ALTO * kz }, { x: A2.x, y: A2.y - ALTO * kz }], "rgba(255,248,230,.55)", "rgba(63,122,46,.9)", 1.5); });
@@ -1146,11 +1248,23 @@
         }
       }
     }
-    function disegnaSeduto(o) {   // seduto davvero (a corpo intero): nel disegno dell'avatar seduto la seduta tocca a y=198 su 264
-      if (!IM) return;
-      var mi = infoMobile(o.t) || {}, k = TW / 100, p = pw(av.u, av.v), h = TW * 1.3, w = h / 1.3, fv = vecV(av.fw[0], av.fw[1]);
-      var dietro = fv[0] + fv[1] < -1e-3, specchio = fv[0] - fv[1] < -1e-3, im = IM.seduto[dietro ? 1 : 0];
-      if (!pronta(im)) im = (dietro ? IM.dietro : IM.davanti)[0];
+    function imPersona(g) {   // le immagini di un avatar della sala (fatte la prima volta che serve)
+      if (!g.IM && g.cfg && window.SGOmino) g.IM = { davanti: [immagine(g.cfg)], dietro: [immagine(g.cfg, { spalle: true })], seduto: [immagine(g.cfg, { seduto: true }), immagine(g.cfg, { seduto: true, spalle: true })] };
+      return g.IM || null;
+    }
+    function disegnaPersona(g) {   // un avatar della sala in piedi (croupier, cassiere, barista)
+      var I = imPersona(g); if (!I) return;
+      var p = pw(g.u, g.v), h = TW * 1.3, w = h / 1.3, fv = vecV(g.fw[0], g.fw[1]), dietro = fv[0] + fv[1] < -1e-3, specchio = fv[0] - fv[1] < -1e-3, im = (dietro ? I.dietro : I.davanti)[0];
+      if (!pronta(im)) return;
+      ctx.fillStyle = "rgba(20,10,10,.28)"; ctx.beginPath(); ctx.ellipse(p.x, p.y, w * .3, w * .1, 0, 0, 6.29); ctx.fill();
+      ctx.save(); ctx.translate(p.x, p.y); if (specchio) ctx.scale(-1, 1); ctx.drawImage(im, -w / 2, -h * .96, w, h); ctx.restore();
+    }
+    function disegnaSeduto(o, chi) {   // (chi: un altro avatar, la gente del casinò) seduto davvero (a corpo intero): nel disegno dell'avatar seduto la seduta tocca a y=198 su 264
+      var IMx = chi ? imPersona(chi) : IM; if (!IMx) return;
+      var uu = chi ? chi.u : av.u, vv = chi ? chi.v : av.v, fw0 = chi ? chi.fw : av.fw;
+      var mi = infoMobile(o.t) || {}, k = TW / 100, p = pw(uu, vv), h = TW * 1.3, w = h / 1.3, fv = vecV(fw0[0], fw0[1]);
+      var dietro = fv[0] + fv[1] < -1e-3, specchio = fv[0] - fv[1] < -1e-3, im = IMx.seduto[dietro ? 1 : 0];
+      if (!pronta(im)) im = (dietro ? IMx.dietro : IMx.davanti)[0];
       if (!pronta(im)) return;
       var sed = p.y - (mi.seduta || 26) * k;
       ctx.save(); ctx.translate(p.x, sed - h * 198 / 264); if (specchio) ctx.scale(-1, 1); ctx.drawImage(im, -w / 2, 0, w, h); ctx.restore();
@@ -1167,6 +1281,14 @@
       ctx.globalAlpha = 1;
     }
     var DIR = [[0, 1], [-1, 0], [0, -1], [1, 0]];   // dove guarda un mobile (d: 0 verso +r, 1 verso -c, 2 verso -r, 3 verso +c)
+    // la gente del casinò: chi sta seduto prende il posto dello sgabello, gli altri stanno in piedi (e non ci si passa sopra)
+    var GENTE = (D.gente || []).map(function (g) {
+      var x = { cfg: g.cfg, u: g.u, v: g.v, fw: g.fw || [0, 1], siede: g.siede || null };
+      if (x.siede) { var h = D.ogg.filter(function (o) { return o.k === x.siede; })[0]; if (!h) x.siede = null; else { var F = DIR[h.d || 0]; x.u = h.c + .5 - F[0] * .12; x.v = h.r + .5 - F[1] * .12; x.fw = F.slice(); } }
+      return x;
+    }).filter(function (x) { return x.cfg && x.u != null; });
+    var SEDUTI = {};
+    GENTE.forEach(function (g) { if (g.siede) (SEDUTI[g.siede] = SEDUTI[g.siede] || []).push(g); });
     function siedi(o) {   // sul posto del mobile più vicino all'avatar
       var b = box(o), F = DIR[o.d || 0], best = null, dmin = 1e9, c, r;
       for (c = b.c0; c < b.c1; c++) for (r = b.r0; r < b.r1; r++) { var dd = Math.hypot(c + .5 - av.u, r + .5 - av.v); if (dd < dmin) { dmin = dd; best = [c + .5 - F[0] * .12, r + .5 - F[1] * .12]; } }
@@ -1244,14 +1366,15 @@
       anim = requestAnimationFrame(giro);
     }
     var tCresci = setInterval(function () { if (!vivo()) return; cresciTutto(); sporco = true; }, 30000);
-    var tFase = setInterval(function () { var f = fase(); if (f !== FASE) { FASE = f; sfondo = null; sporco = true; } }, 60000);
+    var tFase = setInterval(function () { if (LUOGO) return; var f = fase(); if (f !== FASE) { FASE = f; sfondo = null; sporco = true; } }, 60000);
 
     function chiudi() { cancelAnimationFrame(anim); clearInterval(tCresci); clearInterval(tFase); window.removeEventListener("resize", misura); quandoPronta = null; }
     function esci() { chiudi(); clearTimeout(tSalva); if (opts.salva) opts.salva(D); if (opts.indietro) opts.indietro(); }
     s._monta = function () {
       quandoPronta = function () { if (vivo()) { sfondo = null; sporco = true; } };   // un disegno è arrivato: si ridisegna
       calcolaStanze(); cresciTutto(); misura(); aggTesta();
-      if (!D.visto) { D.visto = 1; salva(); dimmi("Benvenuto a casa! Tocca il germoglio per annaffiarlo 💧"); }
+      if (LUOGO) dimmi("Benvenuto al Casinò! Tocca un tavolo: Black Jack e Poker sono aperti 🎰");
+      else if (!D.visto) { D.visto = 1; salva(); dimmi("Benvenuto a casa! Tocca il germoglio per annaffiarlo 💧"); }
       else { var pronti = D.ogg.filter(maturo).length, assetati = D.ogg.filter(sete).length;
         if (pronti) dimmi("Ci sono " + pronti + (pronti === 1 ? " pianta pronta" : " piante pronte") + " da raccogliere! 🧺");
         else if (assetati) dimmi("💧 " + assetati + (assetati === 1 ? " pianta ha" : " piante hanno") + " sete"); }
