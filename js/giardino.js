@@ -54,7 +54,7 @@
   var STANZE = { bagno: "🛁 Bagno", soggiorno: "🛋️ Soggiorno", cucina: "🍳 Cucina", camera: "🛏️ Camera" };
   var FP = { fontana: [2, 2], altalena: [2, 1] };
   var TERRA = { vialetto: 1, ghiaia: 1 };
-  var ALLARGA = [{ a: 18, prezzo: 3000 }, { a: 22, prezzo: 7000 }, { a: 26, prezzo: 12000 }];   // il terreno si allarga verso di te
+  var ALLARGA = [{ a: 20, prezzo: 3000 }, { a: 24, prezzo: 7000 }, { a: 28, prezzo: 12000 }];   // il terreno si allarga verso di te
   var ALTO = 200, BASSO = 42, SPESS = .09, PEND = 52, TETTO_MAX = 3;   // muro alto e abbassato (unità del disegno), spessore (mattonelle), pendenza del tetto
   var COSTO = { muro: 40, porta: 400, finestra: 300, pittura: 15, carta: 30, pavimento: 20, tetto: 1500, mobile: 350 };
   var CANCELLO = [5, 6];   // sul bordo davanti del terreno, dove arriva il vialetto
@@ -72,19 +72,19 @@
   function nomeDi(t) { var m = infoMobile(t); return NOME[t] || (m && m.nome) || t; }
   function prezzoDi(t) { var m = infoMobile(t); return PREZZO[t] || (m && m.prezzo) || COSTO.mobile; }
 
-  function datiIniziali() {   // si parte con una casetta (soggiorno con la cucina, camera, bagno), un germoglio e un'aiuola
-    var D = { v: 2, w: 14, h: 14, ogg: [], muri: {}, pav: {}, tetto: null, baule: {}, cesto: {}, ultimo: 0, vista: 0 }, c, r;
+  function datiIniziali() {   // si parte con una casetta di 9×7 (soggiorno con la cucina 5×7, camera 4×4, bagno 4×3), un germoglio e un'aiuola
+    var D = { v: 2, w: 16, h: 16, ogg: [], muri: {}, pav: {}, tetto: null, baule: {}, cesto: {}, ultimo: 0, vista: 0 }, c, r;
     function metti(t, c, r, x) { var o = { k: ++D.ultimo, t: t, c: c, r: r, d: 0 }; for (var q in x || {}) o[q] = x[q]; D.ogg.push(o); }
     function muro(t, c, r) { D.muri[t + "," + c + "," + r] = { s: [null, null], ap: null }; }
-    for (r = 2; r < 8; r++) { muro("a", 3, r); muro("a", 7, r); muro("a", 10, r); }
-    for (c = 3; c < 10; c++) { muro("b", c, 2); muro("b", c, 8); }
-    for (c = 7; c < 10; c++) muro("b", c, 5);
-    ["b,5,8", "a,7,3", "a,7,6"].forEach(function (k) { D.muri[k].ap = { t: "porta", id: null }; });   // id null = la prima del catalogo
-    ["b,4,2", "b,8,2", "a,3,4", "a,10,3", "a,10,6", "b,3,8", "b,8,8"].forEach(function (k) { D.muri[k].ap = { t: "finestra", id: null }; });
-    for (r = 8; r < 14; r++) { metti("vialetto", 5, r); metti("vialetto", 6, r); }
-    metti("melo", 1, 10, { cresci: 0, fr: 0, acqua: 0, agg: Date.now() });
-    metti("orto", 11, 10);
-    metti("cassetta_posta", 7, 13);
+    for (r = 2; r < 9; r++) { muro("a", 2, r); muro("a", 7, r); muro("a", 11, r); }
+    for (c = 2; c < 11; c++) { muro("b", c, 2); muro("b", c, 9); }
+    for (c = 7; c < 11; c++) muro("b", c, 6);
+    ["b,5,9", "a,7,4", "a,7,7"].forEach(function (k) { D.muri[k].ap = { t: "porta", id: null }; });   // id null = la prima del catalogo
+    ["b,3,2", "b,5,2", "b,9,2", "a,2,4", "a,2,7", "a,11,3", "a,11,7", "b,3,9", "b,9,9"].forEach(function (k) { D.muri[k].ap = { t: "finestra", id: null }; });
+    for (r = 9; r < 16; r++) { metti("vialetto", 5, r); metti("vialetto", 6, r); }
+    metti("melo", 1, 12, { cresci: 0, fr: 0, acqua: 0, agg: Date.now() });
+    metti("orto", 12, 12);
+    metti("cassetta_posta", 7, 15);
     return D;
   }
 
@@ -281,7 +281,7 @@
       cw = s.clientWidth || 360; ch = s.clientHeight || 640; dpr = Math.min(2, window.devicePixelRatio || 1);
       cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
       TW = Math.round(Math.min(cw / 6.2, 76) * zoom);
-      if (!misura.fatta) { misura.fatta = true; centra(6.5, 7.5); } else { ox += (cw - pw0) / 2; oy += (ch - ph0) / 2; }
+      if (!misura.fatta) { misura.fatta = true; centra(6.5, 8.5); } else { ox += (cw - pw0) / 2; oy += (ch - ph0) / 2; }
       sfondo = null; sporco = true;
     }
     window.addEventListener("resize", misura);
@@ -310,8 +310,8 @@
     function immagine(cfg, o) { var im = new Image(); try { im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGOmino.svg(cfg, o || {})); } catch (e) {} im.onload = function () { sporco = true; }; return im; }
     var mio = opts.omino && window.SGOmino ? opts.omino : (window.SGOmino ? SGOmino.casuale(opts.nome || "Io") : null);
     var IM = mio ? { davanti: [immagine(mio), immagine(mio, { cammina: true })], dietro: [immagine(mio, { spalle: true }), immagine(mio, { spalle: true, cammina: true })] } : null;
-    var av = { u: 5.5, v: 8.6, fw: [0, 1], strada: [], t: 0, fa: null, ft: 0, poi: null };   // fw: dove guarda (direzione nel mondo)
-    if (opts.daCasa) { av.fa = "esce"; av.strada = [{ u: 5.5, v: 9.3 }]; }          // esci dalla porta di casa
+    var av = { u: 5.5, v: 9.6, fw: [0, 1], strada: [], t: 0, fa: null, ft: 0, poi: null };   // fw: dove guarda (direzione nel mondo)
+    if (opts.daCasa) { av.fa = "esce"; av.strada = [{ u: 5.5, v: 10.3 }]; }          // esci dalla porta di casa
     else { av.u = 5.9; av.v = D.h + .6; av.strada = [{ u: 5.9, v: D.h - 1.4 }]; }   // dalla città: arrivi dal marciapiede ed entri dal cancello
 
     // la strada più corta tra le mattonelle (anche in diagonale, senza tagliare angoli né attraversare i muri: solo le porte)
