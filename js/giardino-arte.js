@@ -4,7 +4,9 @@
    Visti dall'alto e inclinati come la città: una mattonella è un rombo largo 100 e alto 50.
    Stile dei reperti degli scavi: sfumature (chiaro in alto a sinistra, scuro in basso a destra), contorno caldo scuro,
    ombra morbida a terra, riflessi, dettagli dentro la sagoma (clipPath), trame con un seme fisso (mai Math.random).
-   SGGiardinoArte = { nomi(), info(nome) -> { w, h, ax, ay, fp }, svg(nome, opz) }   (opz.notte: finestre e lampade accese)
+   SGGiardinoArte = { nomi(), info(nome) -> { w, h, ax, ay, fp, dietro? }, svg(nome, opz) }
+   opz.notte: finestre e lampade accese; opz.dietro: l'oggetto girato di mezzo giro (solo per chi ha info().dietro: panchina,
+   nano, casetta degli uccellini, cassetta della posta, barbecue). Gli altri due versi il motore li fa con lo specchio.
    ========================================================= */
 (function () {
   "use strict";
@@ -82,7 +84,7 @@
 
   // il registro dei disegni: box = [x0, y0, x1, y1] attorno al punto d'appoggio (centro dell'impronta)
   var DIS = {};
-  function def(nome, box, fp, fn) { DIS[nome] = { box: box, fp: fp, fn: fn }; }
+  function def(nome, box, fp, fn, dietro) { DIS[nome] = { box: box, fp: fp, fn: fn, dietro: !!dietro }; }   // dietro: ha anche il disegno girato di mezzo giro (svg(nome, { dietro: true }))
   function misure(d) { var b = d.box; return { w: Math.ceil(b[2] - b[0]), h: Math.ceil(b[3] - b[1]), ax: Math.ceil(-b[0]), ay: Math.ceil(-b[1]) }; }
 
   // =========================================================
@@ -112,8 +114,8 @@
       var u = r() * tot; j = 0; while (j < cs.length - 1 && u > aree[j]) { u -= aree[j]; j++; }
       var b = cs[j], an = r() * 6.2832, dd = Math.sqrt(r()) * b[2] * .9, x = b[0] + Math.cos(an) * dd, y = b[1] + Math.sin(an) * dd;
       var lum = (y - y0) / (y1 - y0) * .55 + (x - x0) / (x1 - x0) * .45 + (r() - .5) * .45;
-      if (r() < .12) t += tratto("M" + q(x - 3 * sc, y - sc) + " Q" + q(x, y + 2.2 * sc) + " " + q(x + 3 * sc, y - sc), col[2], 1.1 * sc, "opacity='.55'");
-      else t += ell(x, y, 3.3 * sc, 1.5 * sc, lum < .5 ? col[0] : col[2], "opacity='" + (lum < .5 ? .65 : .45) + "' " + ruota(r() * 180, x, y));
+      var ch = r() < .12 ? 2 : lum < .5 ? 0 : 1;   // ogni tanto una foglia più scura e più grande
+      t += ell(x, y, (ch === 2 ? 4 : 3.3) * sc, (ch === 2 ? 1.8 : 1.5) * sc, ch ? col[2] : col[0], "opacity='" + (ch === 0 ? .65 : ch === 1 ? .45 : .6) + "' " + ruota(r() * 180, x, y));
     }
     for (i = 0; i < (o.lucido || 0); i++) {   // le foglie lucide (arancio): puntini di luce
       var x2 = x0 + r() * (x1 - x0) * .7, y2 = y0 + r() * (y1 - y0) * .8;
@@ -402,7 +404,7 @@
   var POSTI_CAROTE = [[-21, -6], [0, -6], [21, -6], [-31, 1], [31, 1], [-10.5, 7], [10.5, 7]].map(function (a) { return dalloSchermo(a[0], a[1]); });   // sfalsate: le teste arancioni si vedono tutte
   var POSTI3 = [[-.3, .02], [.02, -.3], [.2, .2]];   // tre piante a triangolo (due dietro, una davanti in mezzo)
   var POSTI = { carota: POSTI_CAROTE, pomodoro: POSTI3, insalata: POSTI4, zucca: [[0, 0]], fragola: POSTI4 };
-  var ALTO_ORTO = { carota: 42, pomodoro: 84, insalata: 40, zucca: 48, fragola: 40 };
+  var ALTO_ORTO = { carota: 42, pomodoro: 84, insalata: 40, zucca: 54, fragola: 40 };
   function orto(pianta, st) {
     var s = aiuolaOrto();
     if (!pianta) return s;
@@ -410,7 +412,7 @@
     inOrdine(POSTI[pianta]).forEach(function (a) { var b = P(a[0], a[1], OT + 2); s += PIANTE[pianta](b[0], b[1], st); });
     return s;
   }
-  def("orto", [-54, -30, 60, 34], [1, 1], function () { return orto(null); });
+  def("orto", [-54, -38, 60, 34], [1, 1], function () { return orto(null); });
   Object.keys(PIANTE).forEach(function (k) { [0, 1, 2].forEach(function (st) { def("orto_" + k + "_" + st, [-54, -ALTO_ORTO[k], 60, 34], [1, 1], function () { return orto(k, st); }); }); });
 
   // =========================================================
@@ -467,14 +469,15 @@
   }
   Object.keys(FIORI).forEach(function (k) { def("fiori_" + k, [-48, -58, 52, 26], [1, 1], function () { return aiuolaFiori(FIORI[k]); }); });
 
-  var CESPUGLIO = [[-19, -46, 15], [5, -51, 16], [24, -42, 13], [-29, -30, 14], [-7, -33, 17], [17, -30, 16], [33, -22, 10], [-20, -15, 13], [4, -13, 15], [24, -13, 11]];
-  def("cespuglio", [-48, -72, 54, 22], [1, 1], function () {
+  var CESPUGLIO = [[-14, -52, 11], [6, -55, 12], [24, -47, 10], [-30, -40, 10], [-12, -42, 13], [9, -43, 13], [29, -35, 10], [-36, -24, 10], [-20, -28, 12],
+    [0, -30, 13], [20, -28, 12], [36, -20, 8], [-26, -12, 10], [-8, -13, 12], [12, -12, 12], [28, -10, 9]];   // tanti ciuffi piccoli: un cespuglio fitto
+  def("cespuglio", [-52, -72, 56, 22], [1, 1], function () {
     return ombra(10, 4, 42, 15) + chioma(CESPUGLIO, ["#93d063", "#4c9634", "#22561a"], "#1c3a14", 51, { lw: 2.4, sc: .8 });
   });
 
   // la siepe: un blocco squadrato che riempie la mattonella; senza contorni sui lati che toccano le altre siepi,
   // così più siepi in fila fanno un muro verde unico
-  def("siepe", [-54, -80, 60, 32], [1, 1], function () {
+  def("siepe", [-58, -76, 62, 32], [1, 1], function () {
     var r = rnd(61), H = 40, s = "", i, piede = [P(-.5, -.5, 0), P(.5, -.5, 0), P(.5, .5, 0), P(-.5, .5, 0)];
     s += poly(sposta(piede, 5, 2.5), "#000", "opacity='.08'") + poly(sposta(piede, 10, 5), "#000", "opacity='.08'");
     var sx = [P(-.5, .5, 0), P(.5, .5, 0), P(.5, .5, H), P(-.5, .5, H)], dx = [P(.5, .5, 0), P(.5, -.5, 0), P(.5, -.5, H), P(.5, .5, H)], so = [P(-.5, -.5, H), P(.5, -.5, H), P(.5, .5, H), P(-.5, .5, H)];
@@ -533,26 +536,27 @@
     return s;
   });
 
-  def("panchina", [-54, -60, 60, 28], [1, 1], function () {   // panchina di legno (lunga e bassa) con i fianchi di ferro battuto
-    var s = ombra(8, 6, 48, 16), L = "#3b2615", U0 = -.48, U1 = .48, Z = 17, i;
-    function fianco(u) {   // il fianco di ferro: due gambe, il bracciolo col ricciolo, lo schienale
-      var d = "M" + q(P(u, .13, 0)) + " Q" + q(P(u, .16, 9)) + " " + q(P(u, .12, Z)) + " M" + q(P(u, -.2, 0)) + " Q" + q(P(u, -.14, 10)) + " " + q(P(u, -.16, Z)) + " L" + q(P(u, -.2, 44)) +
-        " M" + q(P(u, -.17, 30)) + " Q" + q(P(u, 0, 33)) + " " + q(P(u, .15, 27)) + " M" + q(P(u, .12, Z)) + " L" + q(P(u, -.16, Z));
-      var cur = P(u, .15, 27);
+  def("panchina", [-54, -66, 60, 28], [1, 1], function (o) {   // panchina di legno (lunga e bassa) con i fianchi di ferro battuto; da dietro lo schienale sta davanti
+    var g = o.dietro ? -1 : 1, s = ombra(8, 6, 48, 16), L = "#3b2615", U0 = -.48, U1 = .48, Z = 17, i;
+    function fianco(u) {   // il fianco di ferro: due gambe, il bracciolo col ricciolo, lo schienale (g: davanti o girato)
+      var d = "M" + q(P(u, .13 * g, 0)) + " Q" + q(P(u, .16 * g, 9)) + " " + q(P(u, .12 * g, Z)) + " M" + q(P(u, -.2 * g, 0)) + " Q" + q(P(u, -.14 * g, 10)) + " " + q(P(u, -.16 * g, Z)) + " L" + q(P(u, -.2 * g, 44)) +
+        " M" + q(P(u, -.17 * g, 30)) + " Q" + q(P(u, 0, 33)) + " " + q(P(u, .15 * g, 27)) + " M" + q(P(u, .12 * g, Z)) + " L" + q(P(u, -.16 * g, Z));
+      var cur = P(u, .15 * g, 27), ric = g > 0 ? " c-1,3 2,5 4,3 c1.6,-1.6 0,-3.6 -1.6,-2.6" : " c1,-3 -2,-5 -4,-3 c-1.6,1.6 0,3.6 1.6,2.6";
       return tratto(d, "#141210", 5) + tratto(d, "#3a3634", 3) + tratto(d, "#7a746e", .9, "opacity='.7' transform='translate(-.8 -.6)'") +
-        tratto("M" + q(cur) + " c-1,3 2,5 4,3 c1.6,-1.6 0,-3.6 -1.6,-2.6", "#141210", 2.6) + tratto("M" + q(cur) + " c-1,3 2,5 4,3 c1.6,-1.6 0,-3.6 -1.6,-2.6", "#3a3634", 1.4);
+        tratto("M" + q(cur) + ric, "#141210", 2.6) + tratto("M" + q(cur) + ric, "#3a3634", 1.4);
     }
-    var lg = [lin("ls", [[0, "#e8b37a"], [1, "#c48a50"]], 0, 0, 1, 1), lin("lf", [[0, "#b77a40"], [1, "#8a5528"]], 0, 0, 1, 1), lin("ld", [[0, "#8a5a30"], [1, "#5e3a1c"]], 0, 0, 1, 1)];
-    s += fianco(U0 + .05);
-    [24, 33].forEach(function (z, j) {   // lo schienale: due assi lunghe
-      var v = -.18 - j * .006, a = [P(U0, v, z), P(U1, v, z), P(U1, v, z + 7), P(U0, v, z + 7)];
-      s += poly(a, lg[1], bordo(L, 1.5)) + poly([a[3], a[2], P(U1, v - .03, z + 7), P(U0, v - .03, z + 7)], lg[0], bordo(L, 1.2)) + tratto(linea(P(U0 + .03, v, z + 3.5), P(U1 - .03, v, z + 3.5)), "#7a4a22", .7, "opacity='.5'");
+    var lg = [lin("ls", [[0, "#e8b37a"], [1, "#c48a50"]], 0, 0, 1, 1), lin("lf", [[0, "#b77a40"], [1, "#8a5528"]], 0, 0, 1, 1), lin("ld", [[0, "#8a5a30"], [1, "#5e3a1c"]], 0, 0, 1, 1)], schienale = "", seduta = "";
+    [24, 33].forEach(function (z, j) {   // lo schienale: due assi lunghe (da dietro se ne vede la schiena, un po' più scura)
+      var v = g * (-.18 - j * .006), a = [P(U0, v, z), P(U1, v, z), P(U1, v, z + 7), P(U0, v, z + 7)];
+      schienale += poly(a, g > 0 ? lg[1] : lin("lr", [[0, "#a86e38"], [1, "#7a4a22"]], 0, 0, 1, 1), bordo(L, 1.5)) + poly([a[3], a[2], P(U1, v - g * .03, z + 7), P(U0, v - g * .03, z + 7)], lg[0], bordo(L, 1.2)) + tratto(linea(P(U0 + .03, v, z + 3.5), P(U1 - .03, v, z + 3.5)), "#7a4a22", .7, "opacity='.5'");
     });
-    [-.15, -.06, .03].forEach(function (v) { s += scatola(U0, v, U1 - U0, .085, Z - 3.5, 3.5, lg, L, 1.4); });   // la seduta: tre assi
-    for (i = 0; i < 3; i++) { var c = P(U0 + .06, -.11 + i * .09, Z), c2 = P(U1 - .06, -.11 + i * .09, Z); s += cer(c[0], c[1], .7, "#3a2a1c") + cer(c2[0], c2[1], .7, "#3a2a1c"); }   // le viti
-    s += tratto(linea(P(U0 + .04, -.14, Z), P(U1 - .04, -.14, Z)), "#fff6e0", 1, "opacity='.45'");
+    var vs = g > 0 ? [-.15, -.06, .03] : [-.115, -.025, .065];
+    vs.forEach(function (v) { seduta += scatola(U0, v, U1 - U0, .085, Z - 3.5, 3.5, lg, L, 1.4); });   // la seduta: tre assi
+    for (i = 0; i < 3; i++) { var vv = g * (-.11 + i * .09), c = P(U0 + .06, vv, Z), c2 = P(U1 - .06, vv, Z); seduta += cer(c[0], c[1], .7, "#3a2a1c") + cer(c2[0], c2[1], .7, "#3a2a1c"); }   // le viti
+    seduta += tratto(linea(P(U0 + .04, vs[0] + .01, Z), P(U1 - .04, vs[0] + .01, Z)), "#fff6e0", 1, "opacity='.45'");
+    s += fianco(U0 + .05) + (g > 0 ? schienale + seduta : seduta + schienale);
     return s + fianco(U1 - .05);
-  });
+  }, true);
 
   def("lampione", [-26, -184, 36, 16], [1, 1], function (o) {   // lampione da giardino in ferro con la lanterna di vetro
     var notte = o && o.notte, s = ombra(8, 4, 20, 7.5), L = "#141a17", fe = ["#56685e", "#2c3832", "#161d19"], i;
@@ -594,40 +598,56 @@
     return s + cavalletto(.86, true);
   });
 
-  def("casetta_uccelli", [-28, -176, 36, 14], [1, 1], function () {   // palo con la casetta per gli uccellini (e un uccellino sul tetto)
-    var s = ombra(7, 4, 18, 6.5), L = "#4a2c17", lg = [lin("cu0", [[0, "#f0c690"], [1, "#d39f62"]], 0, 0, 1, 1), lin("cu1", [[0, "#d9a466"], [1, "#b07a42"]], 0, 0, 1, 1), lin("cu2", [[0, "#a06c3a"], [1, "#734a25"]], 0, 0, 1, 1)];
+  def("casetta_uccelli", [-28, -176, 36, 14], [1, 1], function (o) {   // palo con la casetta per gli uccellini (e un uccellino sul tetto); da dietro: niente buco
+    var g = o.dietro ? -1 : 1, s = ombra(7, 4, 18, 6.5), L = "#4a2c17", lg = [lin("cu0", [[0, "#f0c690"], [1, "#d39f62"]], 0, 0, 1, 1), lin("cu1", [[0, "#d9a466"], [1, "#b07a42"]], 0, 0, 1, 1), lin("cu2", [[0, "#a06c3a"], [1, "#734a25"]], 0, 0, 1, 1)];
+    var pu = linea(P(-.03 * g, .04 * g, 84), P(-.03 * g, .12 * g, 102)), puntello = tratto(pu, L, 3.4) + tratto(pu, "#b07a42", 1.8);
+    if (g < 0) s += puntello;   // da dietro il puntello sta dietro al palo
     s += scatola(-.04, -.04, .08, .08, 0, 102, lg, L, 1.6);
-    s += tratto(linea(P(-.03, .04, 84), P(-.03, .12, 102)), L, 3.4) + tratto(linea(P(-.03, .04, 84), P(-.03, .12, 102)), "#b07a42", 1.8);   // il puntello
-    var a = .13, z0 = 102, z1 = 130, zc = 146;
+    if (g > 0) s += puntello;
+    var a = .13, z0 = 102, z1 = 130, zc = 146, i;
     s += scatola(-a - .02, -a - .02, 2 * a + .04, 2 * a + .04, z0 - 4, 4, lg, L, 1.5);
     s += poly([P(a, a, z0), P(a, -a, z0), P(a, -a, z1), P(a, a, z1)], lg[2], bordo(L, 1.8));
     var fr = [P(-a, a, z0), P(a, a, z0), P(a, a, z1), P(0, a, zc), P(-a, a, z1)];
     s += poly(fr, lg[1], bordo(L, 1.8));
-    var buco = [], i; for (i = 0; i < 14; i++) { var t = i / 14 * 6.2832; buco.push(P(Math.cos(t) * .05, a, 120 + Math.sin(t) * 5.5)); }
-    s += poly(buco, "#2a1a0e", bordo(L, 1.2)) + tratto(linea(P(0, a, 109), P(0, a + .08, 109)), L, 3) + tratto(linea(P(0, a, 109), P(0, a + .08, 109)), "#d9a466", 1.4);
+    if (g > 0) {   // il buco tondo e il posatoio
+      var buco = []; for (i = 0; i < 14; i++) { var t = i / 14 * 6.2832; buco.push(P(Math.cos(t) * .05, a, 120 + Math.sin(t) * 5.5)); }
+      s += poly(buco, "#2a1a0e", bordo(L, 1.2)) + tratto(linea(P(0, a, 109), P(0, a + .08, 109)), L, 3) + tratto(linea(P(0, a, 109), P(0, a + .08, 109)), "#d9a466", 1.4);
+    } else [110, 118, 126].forEach(function (z) { s += tratto(linea(P(-a + .01, a, z), P(a - .01, a, z)), "#7a4e28", 1, "opacity='.6'"); });   // da dietro: le assi della parete
     var e = .03, r1 = [P(-a - e, a + e + .02, z1 - 1), P(0, a + e + .02, zc + 2), P(0, -a - e, zc + 2), P(-a - e, -a - e, z1 - 1)], r2 = [P(0, a + e + .02, zc + 2), P(a + e, a + e + .02, z1 - 1), P(a + e, -a - e, z1 - 1), P(0, -a - e, zc + 2)];
     s += poly(r2, lin("tt", [[0, "#e8664a"], [1, "#a33b26"]], 0, 0, 1, 1), bordo("#4a1a10", 1.8));
     s += tratto(linea(P(a * .5, a + .03, (z1 + zc) / 2 + 1), P(a * .5, -a - e, (z1 + zc) / 2 + 1)), "#7a2a1a", 1, "opacity='.6'");
     s += poly([r1[0], r1[1], P(0, a + e + .02, zc - 2), P(-a - e, a + e + .02, z1 - 5)], "#c4553a", bordo("#4a1a10", 1.4)) + poly([r2[0], r2[1], P(a + e, a + e + .02, z1 - 5), P(0, a + e + .02, zc - 2)], "#9c3c26", bordo("#4a1a10", 1.4));
-    // l'uccellino (una cinciallegra) sul colmo
-    var b = P(0, -.02, zc + 4);
-    s += pth("M" + q(b[0] + 4, b[1] - 3) + " l7,-2 l-1,4 Z", "#3f5f8a", bordo("#1c2a3d", 1));
-    s += ell(b[0], b[1] - 4, 5.6, 4.4, lin("uc", [[0, "#fff176"], [1, "#e0b800"]], 0, 0, .5, 1), bordo("#3d3410", 1.2));
-    s += pth("M" + q(b[0] - 1, b[1] - 6.5) + " q4,-2 6,2 q-3,2 -6,-2 Z", "#5b86c4", bordo("#1c2a3d", .8));
-    s += cer(b[0] - 4.2, b[1] - 9, 3.4, "#2b3a55", bordo("#111a28", 1)) + ell(b[0] - 4.8, b[1] - 8.4, 1.9, 1.3, "#ffffff");
-    s += cer(b[0] - 5.4, b[1] - 9.6, .8, "#111") + pth("M" + q(b[0] - 7.4, b[1] - 9) + " l-2.4,.8 l2.3,.8 Z", "#f08c00", bordo("#6b3a00", .5));
-    return s;
-  });
+    // l'uccellino (una cinciallegra) sul colmo: si gira insieme alla casetta
+    var b = P(0, -.02 * g, zc + 4), u = "";
+    u += pth("M" + q(b[0] + 4, b[1] - 3) + " l7,-2 l-1,4 Z", "#3f5f8a", bordo("#1c2a3d", 1));
+    u += ell(b[0], b[1] - 4, 5.6, 4.4, lin("uc", [[0, "#fff176"], [1, "#e0b800"]], 0, 0, .5, 1), bordo("#3d3410", 1.2));
+    u += pth("M" + q(b[0] - 1, b[1] - 6.5) + " q4,-2 6,2 q-3,2 -6,-2 Z", "#5b86c4", bordo("#1c2a3d", .8));
+    u += cer(b[0] - 4.2, b[1] - 9, 3.4, "#2b3a55", bordo("#111a28", 1)) + ell(b[0] - 4.8, b[1] - 8.4, 1.9, 1.3, "#ffffff");
+    u += cer(b[0] - 5.4, b[1] - 9.6, .8, "#111") + pth("M" + q(b[0] - 7.4, b[1] - 9) + " l-2.4,.8 l2.3,.8 Z", "#f08c00", bordo("#6b3a00", .5));
+    return s + (g > 0 ? u : "<g transform='translate(" + f1(2 * b[0]) + " 0) scale(-1 1)'>" + u + "</g>");
+  }, true);
 
-  def("gnomo", [-24, -78, 30, 12], [1, 1], function () {   // il nano da giardino: cappello rosso a punta, barba bianca, giacca blu, una paletta
-    var s = ombra(4, 3, 17, 6.5), L = "#3b2414";
+  def("gnomo", [-24, -78, 30, 12], [1, 1], function (o) {   // il nano da giardino: cappello rosso a punta, barba bianca, giacca blu, una paletta
+    var s = ombra(4, 3, 17, 6.5), L = "#3b2414", gs = lin("st", [[0, "#8a5a32"], [1, "#4a2c16"]], 0, 0, 1, 1), giacca = "M-12,-4 C-13,-14 -11,-24 -8,-30 L8,-30 C11,-24 13,-14 12,-4 C6,-1 -6,-1 -12,-4 Z";
+    function braccio(d, c, mx, my) { return pth(d, "none", bordo(L, 5.4)) + pth(d, "none", "stroke='" + c + "' stroke-width='3.4' stroke-linecap='round'") + cer(mx, my, 2.6, "#ffcfb0", bordo(L, 1.2)); }
+    var cintura = pth("M-12.4,-11 C-6,-8.4 6,-8.4 12.4,-11 L12.6,-14.6 C6,-12 -6,-12 -12.6,-14.6 Z", "#5a3a1e", bordo(L, 1.2)), tesa = pth("M-11,-39.5 C-4,-36.6 4,-36.6 11,-39.5 L10.6,-42.4 C4,-40 -4,-40 -10.6,-42.4 Z", "#b71c1c", bordo(L, 1.2));
+    if (o.dietro) {   // da dietro: la schiena della giacca, i capelli bianchi sotto il cappello, la paletta dall'altra parte
+      s += palo([-15, -4], [-12, -30], 2, "#a0703e", L) + pth("M-10,-34 L-16,-34 L-17,-27 Q-13,-24 -9,-27 Z", "#adb5bd", bordo(L, 1.4));
+      s += ell(5, -2.6, 6, 3.4, gs, bordo(L, 1.8)) + ell(-6, -1.6, 6, 3.4, gs, bordo(L, 1.8));   // i talloni
+      s += pth(giacca, lin("gi", tre("#3b5bdb", .2, .4), 0, 0, 1, 1), bordo(L, 2.2)) + tratto("M0,-29 L0,-8", "#22348a", 1.2, "opacity='.7'") + tratto("M-2.6,-3 L0,-8 L2.6,-3", "#22348a", 1.1);   // la cucitura e lo spacco
+      s += cintura + braccio("M-11,-24 C-14,-22 -14,-18 -12,-17", "#3b5bdb", -12.4, -17.5) + braccio("M11,-24 C15,-20 15,-14 12,-12", "#2f4ac4", 11.5, -11.5);
+      var bi = lin("ba", [[0, "#ffffff"], [1, "#ced4da"]], 0, 0, .6, 1);
+      s += pth("M-9.6,-32 C-12.4,-27 -11.4,-22 -8.4,-19.6 C-8.6,-24 -7.6,-28 -6,-30.6 Z", bi, bordo(L, 1.3)) + pth("M9.6,-32 C12.4,-27 11.4,-22 8.4,-19.6 C8.6,-24 7.6,-28 6,-30.6 Z", bi, bordo(L, 1.3));   // la barba che spunta ai lati
+      s += ell(-7.8, -36, 1.7, 2.5, "#ffc4a3", bordo(L, 1)) + ell(7.8, -36, 1.7, 2.5, "#ffc4a3", bordo(L, 1));   // le orecchie
+      s += pth("M-8.6,-39 C-9.6,-33 -6,-29.4 0,-29 C6,-29.4 9.6,-33 8.6,-39 Z", bi, bordo(L, 1.5)) + tratto("M-4,-37 Q-3,-33 -1,-31 M3,-37 Q3,-33 1,-31", "#adb5bd", .9, "opacity='.8'");   // i capelli
+      s += pth("M10,-39 C8,-51 2,-63 -8,-72 C-6,-61 -7,-49 -10,-39 C-4,-37 4,-37 10,-39 Z", lin("ca", tre("#e03131", .3, .35), 0, 0, 1, .6), bordo(L, 2.2)) + tratto("M-7,-42 C-6.4,-50 -6,-56 -6.6,-63", "#ffffff", 1.4, "opacity='.4'");
+      return s + tesa;
+    }
     s += palo([15, -4], [12, -30], 2, "#a0703e", L) + pth("M10,-34 L16,-34 L17,-27 Q13,-24 9,-27 Z", "#adb5bd", bordo(L, 1.4));   // la paletta
-    var gs = lin("st", [[0, "#8a5a32"], [1, "#4a2c16"]], 0, 0, 1, 1);
     s += ell(-5, -2, 6.2, 3.5, gs, bordo(L, 1.8)) + ell(6, -1, 6.2, 3.5, gs, bordo(L, 1.8));
-    s += pth("M-12,-4 C-13,-14 -11,-24 -8,-30 L8,-30 C11,-24 13,-14 12,-4 C6,-1 -6,-1 -12,-4 Z", lin("gi", tre("#3b5bdb", .25, .35), 0, 0, 1, 1), bordo(L, 2.2));
-    s += pth("M-12.4,-11 C-6,-8.4 6,-8.4 12.4,-11 L12.6,-14.6 C6,-12 -6,-12 -12.6,-14.6 Z", "#5a3a1e", bordo(L, 1.2)) + "<rect x='-2.6' y='-13.2' width='5.2' height='4.6' rx='1' fill='none' stroke='#fcc419' stroke-width='1.4'/>";
-    s += pth("M-11,-24 C-15,-20 -15,-14 -12,-12", "none", bordo(L, 5.4)) + pth("M-11,-24 C-15,-20 -15,-14 -12,-12", "none", "stroke='#3b5bdb' stroke-width='3.4' stroke-linecap='round'") + cer(-11.5, -11.5, 2.6, "#ffcfb0", bordo(L, 1.2));
-    s += pth("M11,-24 C14,-22 14,-18 12,-17", "none", bordo(L, 5.4)) + pth("M11,-24 C14,-22 14,-18 12,-17", "none", "stroke='#2f4ac4' stroke-width='3.4' stroke-linecap='round'") + cer(12.4, -17.5, 2.6, "#ffcfb0", bordo(L, 1.2));
+    s += pth(giacca, lin("gi", tre("#3b5bdb", .25, .35), 0, 0, 1, 1), bordo(L, 2.2));
+    s += cintura + "<rect x='-2.6' y='-13.2' width='5.2' height='4.6' rx='1' fill='none' stroke='#fcc419' stroke-width='1.4'/>";
+    s += braccio("M-11,-24 C-15,-20 -15,-14 -12,-12", "#3b5bdb", -11.5, -11.5) + braccio("M11,-24 C14,-22 14,-18 12,-17", "#2f4ac4", 12.4, -17.5);
     var barba = "M-9.5,-33 C-11,-25 -7,-16 0,-11 C7,-16 11,-25 9.5,-33 Z";
     s += pth(barba, lin("ba", [[0, "#ffffff"], [1, "#ced4da"]], 0, 0, .6, 1), bordo(L, 1.6)) + tratto("M-5,-26 Q-3,-21 -1,-17 M4,-27 Q3,-21 1,-16", "#adb5bd", 1, "opacity='.8'");
     s += ell(0, -36, 7.4, 5.8, "#ffd2b4", bordo(L, 1.6)) + ell(-4.6, -34.6, 1.8, 1.1, "#ff9f9f", "opacity='.7'") + ell(4.6, -34.6, 1.8, 1.1, "#ff9f9f", "opacity='.7'");
@@ -636,27 +656,32 @@
     s += cer(0, -34.6, 2.7, rad("na", [[0, "#ffb3a3"], [1, "#e8726a"]], .35, .3, .8), bordo(L, 1));
     var cap = "M-10,-39 C-8,-51 -2,-63 8,-72 C6,-61 7,-49 10,-39 C4,-37 -4,-37 -10,-39 Z";
     s += pth(cap, lin("ca", tre("#e03131", .3, .35), 0, 0, 1, .6), bordo(L, 2.2)) + tratto("M-6,-42 C-4,-52 0,-60 5,-66", "#ffffff", 1.4, "opacity='.4'");
-    return s + pth("M-11,-39.5 C-4,-36.6 4,-36.6 11,-39.5 L10.6,-42.4 C4,-40 -4,-40 -10.6,-42.4 Z", "#b71c1c", bordo(L, 1.2));
-  });
+    return s + tesa;
+  }, true);
 
-  def("barbecue", [-34, -98, 40, 18], [1, 1], function () {   // il barbecue tondo: la griglia con salsicce e hamburger, il fumo
-    var s = ombra(5, 4, 26, 9), L = "#1a1414", i, r = rnd(17);
-    s += palo([3, -30], [3, -9], 2.2, "#3a3a40", L);   // la gamba dietro
-    s += ell(2, -14, 14, 5, "#2e2e33", bordo(L, 1.4)) + ell(2, -15, 10, 3.2, "#47474e");   // il ripiano in basso
-    s += palo([-12, -34], [-17, 0], 2.4, "#4a4a52", L) + palo([14, -33], [18, 1], 2.4, "#4a4a52", L);
-    s += cer(-17, 0, 3.6, "#2a2a2e", bordo(L, 1.4)) + cer(-17, 0, 1.3, "#9a9aa2") + cer(18, 1, 3.6, "#2a2a2e", bordo(L, 1.4)) + cer(18, 1, 1.3, "#9a9aa2");   // le ruote
+  def("barbecue", [-34, -98, 40, 18], [1, 1], function (o) {   // il barbecue tondo: la griglia con salsicce e hamburger, il fumo; da dietro le ruote stanno dietro
+    var g = o.dietro ? -1 : 1, s = ombra(5, 4, 26, 9), L = "#1a1414", i;
+    function gamba(a, b, ruota) { return palo(a, b, 2.4, "#4a4a52", L) + (ruota ? cer(b[0], b[1], 3.6, "#2a2a2e", bordo(L, 1.4)) + cer(b[0], b[1], 1.3, "#9a9aa2") : ""); }
+    if (g > 0) s += palo([3, -30], [3, -9], 2.2, "#3a3a40", L);   // la gamba dietro
+    else s += gamba([12, -36], [17, -10], true) + gamba([-12, -37], [-18, -11], true);   // girato: le due gambe con le ruote sono dietro
+    s += ell(2 * g, -14, 14, 5, "#2e2e33", bordo(L, 1.4)) + ell(2 * g, -15, 10, 3.2, "#47474e");   // il ripiano in basso
+    if (g > 0) s += gamba([-12, -34], [-17, 0], true) + gamba([14, -33], [18, 1], true);
+    else s += palo([-3, -30], [-3, -1], 2.4, "#4a4a52", L);   // ... e quella sola davanti
     var conca = "M-23,-46 C-23,-30 -11,-23 0,-23 C11,-23 23,-30 23,-46 Z";
     s += pth(conca, lin("cb", [[0, "#ff6b5b"], [.45, "#c92a2a"], [1, "#6e1010"]], 0, 0, 1, .5), bordo(L, 2.2));
-    s += tratto("M-17,-38 Q-12,-30 -3,-28", "#ffffff", 2, "opacity='.4'") + ell(18, -36, 2.6, 1.6, "#9a9aa2", bordo(L, 1)) + ell(0, -28, 3, 1.4, "#9a9aa2", bordo(L, .8));   // il riflesso, la maniglia, lo sfiato
+    s += tratto("M-17,-38 Q-12,-30 -3,-28", "#ffffff", 2, "opacity='.4'") + ell(18 * g, -36, 2.6, 1.6, "#9a9aa2", bordo(L, 1));   // il riflesso e la maniglia
+    if (g > 0) s += ell(0, -28, 3, 1.4, "#9a9aa2", bordo(L, .8));   // lo sfiato (sta davanti)
     s += ell(0, -46, 23, 10.5, "#9e1f1f", bordo(L, 2));
     var bocca = ell(0, -46, 20.5, 8.6, "#000"), t = ell(0, -46, 20.5, 8.6, "#1c1210") + ell(0, -44, 15, 5, rad("br", [[0, "#ffb347"], [.5, "#e8590c", .8], [1, "#e8590c", 0]], .5, .5, .5));
     for (i = -4; i <= 4; i++) t += tratto(linea([i * 5 - 4, -53], [i * 5 + 4, -39]), "#c9c9cf", 1, "opacity='.9'");
     s += dentro("bo", bocca, t);
-    [[-10, -48, 20], [-6, -43, 20]].forEach(function (z) { s += "<rect x='" + (z[0] - 5) + "' y='" + (z[1] - 1.8) + "' width='11' height='3.6' rx='1.8' fill='" + lin("sa", [[0, "#d2774a"], [1, "#7a3214"]], 0, 0, 0, 1) + "' " + bordo("#3a1408", .9) + " " + ruota(z[2], z[0], z[1]) + "/>"; });   // le salsicce
-    s += ell(9, -47, 6.4, 3.2, lin("ha", [[0, "#a0643c"], [1, "#4a2412"]], 0, 0, 0, 1), bordo("#2a1208", .9)) + tratto("M5,-47 L13,-47 M6,-45 L12,-45", "#2a1208", .7, "opacity='.7'");   // l'hamburger
+    // la griglia, girata di mezzo giro intorno al centro (0,-46) quando si guarda da dietro
+    [[-10, -48], [-6, -43]].forEach(function (z) { var x = z[0] * g, y = -46 + (z[1] + 46) * g; s += "<rect x='" + f1(x - 5) + "' y='" + f1(y - 1.8) + "' width='11' height='3.6' rx='1.8' fill='" + lin("sa", [[0, "#d2774a"], [1, "#7a3214"]], 0, 0, 0, 1) + "' " + bordo("#3a1408", .9) + " " + ruota(20, x, y) + "/>"; });   // le salsicce
+    var hx2 = 9 * g, hy = -46 + (-47 + 46) * g;
+    s += ell(hx2, hy, 6.4, 3.2, lin("ha", [[0, "#a0643c"], [1, "#4a2412"]], 0, 0, 0, 1), bordo("#2a1208", .9)) + tratto("M" + q(hx2 - 4, hy) + " L" + q(hx2 + 4, hy) + " M" + q(hx2 - 3, hy + 2) + " L" + q(hx2 + 3, hy + 2), "#2a1208", .7, "opacity='.7'");   // l'hamburger
     [[-3, -64, 4.5, .6], [3, -76, 6, .5], [-2, -90, 7.5, .38]].forEach(function (f) { s += cer(f[0], f[1], f[2], rad("fu", [[0, "#ffffff", .95], [.7, "#dee2e6", .7], [1, "#ced4da", 0]], .4, .4, .6), "opacity='" + f[3] + "'"); });   // il fumo
     return s;
-  });
+  }, true);
 
   def("vaso", [-26, -72, 32, 14], [1, 1], function () {   // vaso di terracotta con un geranio rosso
     var s = ombra(5, 3, 21, 8), L = "#5a2a16", r = rnd(23), i;
@@ -675,10 +700,12 @@
     return s;
   });
 
-  def("cassetta_posta", [-30, -112, 38, 16], [1, 1], function () {   // cassetta della posta rossa su un palo, con la bandierina e una lettera
-    var s = ombra(7, 4, 18, 6.5), L = "#4a1414", lg = [lin("cp0", [[0, "#f0c690"], [1, "#d39f62"]], 0, 0, 1, 1), lin("cp1", [[0, "#d9a466"], [1, "#b07a42"]], 0, 0, 1, 1), lin("cp2", [[0, "#a06c3a"], [1, "#734a25"]], 0, 0, 1, 1)], i;
+  def("cassetta_posta", [-30, -112, 38, 16], [1, 1], function (o) {   // cassetta della posta rossa su un palo, con la bandierina e una lettera; da dietro: il fondo chiuso
+    var g = o.dietro ? -1 : 1, s = ombra(7, 4, 18, 6.5), L = "#4a1414", lg = [lin("cp0", [[0, "#f0c690"], [1, "#d39f62"]], 0, 0, 1, 1), lin("cp1", [[0, "#d9a466"], [1, "#b07a42"]], 0, 0, 1, 1), lin("cp2", [[0, "#a06c3a"], [1, "#734a25"]], 0, 0, 1, 1)], i;
+    var U = .22, V = .1, z0 = 66, z1 = 80, n = 8, arco = [], fv = (V + .01) * g;
+    var bandiera = tratto(linea(P(-.1 * g, fv, z0 + 6), P(-.1 * g, fv, z1 + 22)), "#2b2b2b", 1.8) + poly([P(-.1 * g, fv, z1 + 22), P(.06 * g, fv, z1 + 22), P(.06 * g, fv, z1 + 14), P(-.1 * g, fv, z1 + 14)], "#fcc419", bordo("#7a5a00", 1.2));
+    if (g < 0) s += bandiera;   // da dietro la bandierina è dall'altra parte: se ne vede la cima, dietro alla cassetta
     s += scatola(-.045, -.045, .09, .09, 0, 66, lg, "#4a2c17", 1.6);
-    var U = .22, V = .1, z0 = 66, z1 = 80, n = 8, arco = [];
     for (i = 0; i <= n; i++) { var t = Math.PI * i / n; arco.push([-Math.cos(t) * V, z1 + Math.sin(t) * 13]); }   // il tetto tondo: da v=-V a v=+V passando in alto
     s += poly([P(-U, V, z0), P(U, V, z0), P(U, V, z1), P(-U, V, z1)], lin("cs", [[0, "#ff6b6b"], [1, "#c92a2a"]], 0, 0, 1, 1), bordo(L, 1.8));
     for (i = 0; i < n; i++) {   // il tetto tondo a strisce, ognuna con la sua luce
@@ -686,14 +713,19 @@
       s += poly([P(-U, a[0], a[1]), P(U, a[0], a[1]), P(U, b[0], b[1]), P(-U, b[0], b[1])], mix("#9c1c1c", "#ff8a8a", lum), "stroke='" + mix("#9c1c1c", "#ff8a8a", lum) + "' stroke-width='.6'");
     }
     s += tratto("M" + arco.map(function (a) { return q(P(-U, a[0], a[1])); }).join(" L") + " L" + arco.slice().reverse().map(function (a) { return q(P(U, a[0], a[1])); }).join(" L"), L, 1.8);
-    var porta = [P(U, -V, z0)].concat(arco.map(function (a) { return P(U, a[0], a[1]); })).concat([P(U, V, z0)]);
-    s += poly(porta, lin("cd", [[0, "#d63a3a"], [1, "#8f1b1b"]], 0, 0, 1, 1), bordo(L, 1.8));
-    var lp = [P(U, .05, z1 + 2), P(U, -.06, z1 + 2), P(U, -.06, z1 + 13), P(U, .05, z1 + 13)];
-    s += poly(sposta(lp, 3, -2), "#ffffff", bordo("#6c757d", 1)) + tratto(linea(P(U, .05, z1 + 13), P(U, -.005, z1 + 8)) + " L" + q(P(U, -.06, z1 + 13)), "#adb5bd", .8);   // la lettera che spunta
-    s += cer(P(U, 0, z1 - 4)[0], P(U, 0, z1 - 4)[1], 1.6, "#ffe066", bordo(L, .8));
-    s += tratto(linea(P(-.1, V + .01, z0 + 6), P(-.1, V + .01, z1 + 22)), "#2b2b2b", 1.8) + poly([P(-.1, V + .01, z1 + 22), P(.06, V + .01, z1 + 22), P(.06, V + .01, z1 + 14), P(-.1, V + .01, z1 + 14)], "#fcc419", bordo("#7a5a00", 1.2));   // la bandierina alzata
+    var fondo = [P(U, -V, z0)].concat(arco.map(function (a) { return P(U, a[0], a[1]); })).concat([P(U, V, z0)]);
+    if (g > 0) {   // lo sportello, la maniglia e la lettera che spunta
+      s += poly(fondo, lin("cd", [[0, "#d63a3a"], [1, "#8f1b1b"]], 0, 0, 1, 1), bordo(L, 1.8));
+      var lp = [P(U, .05, z1 + 2), P(U, -.06, z1 + 2), P(U, -.06, z1 + 13), P(U, .05, z1 + 13)];
+      s += poly(sposta(lp, 3, -2), "#ffffff", bordo("#6c757d", 1)) + tratto(linea(P(U, .05, z1 + 13), P(U, -.005, z1 + 8)) + " L" + q(P(U, -.06, z1 + 13)), "#adb5bd", .8);
+      s += cer(P(U, 0, z1 - 4)[0], P(U, 0, z1 - 4)[1], 1.6, "#ffe066", bordo(L, .8));
+    } else {   // il fondo chiuso, con due ribattini
+      s += poly(fondo, lin("cf", [[0, "#c92a2a"], [1, "#7a1414"]], 0, 0, 1, 1), bordo(L, 1.8));
+      [[-.05, z1 - 6], [.05, z1 - 6]].forEach(function (c) { var pp = P(U, c[0], c[1]); s += cer(pp[0], pp[1], 1, "#5c1010"); });
+    }
+    if (g > 0) s += bandiera;
     return s + tratto(linea(P(-U + .03, V, z1 + 1), P(U - .03, V, z1 + 1)), "#ffffff", 1.2, "opacity='.4'");
-  });
+  }, true);
 
   // =========================================================
   //  TERRENO: vialetto di lastre e ghiaia. Le trame si ripetono uguali in ogni mattonella,
@@ -854,7 +886,7 @@
   // =========================================================
   window.SGGiardinoArte = {
     nomi: function () { return Object.keys(DIS); },
-    info: function (nome) { var d = DIS[nome]; if (!d) return null; var m = misure(d); return { w: m.w, h: m.h, ax: m.ax, ay: m.ay, fp: d.fp.slice() }; },
+    info: function (nome) { var d = DIS[nome]; if (!d) return null; var m = misure(d), o = { w: m.w, h: m.h, ax: m.ax, ay: m.ay, fp: d.fp.slice() }; if (d.dietro) o.dietro = true; return o; },
     svg: function (nome, opz) {
       var d = DIS[nome]; if (!d) return "";
       var m = misure(d);
