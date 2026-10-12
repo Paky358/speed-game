@@ -304,6 +304,18 @@
     function aSchermo(x, y) { return { x: ox + (cam.fx + (x - cam.fx) * cam.z) * S, y: oy + (cam.fy + (y - cam.fy) * cam.z) * S }; }
     // l'avatar sul pontile (un'immagine: si disegna una volta)
     if (opts.omino && window.SGOmino) try { figura = new Image(); figura.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGOmino.svg(opts.omino)); } catch (e) { figura = null; }
+    // l'avatar con le braccia che tengono la canna: un disegno ogni 5 gradi (fatti una volta sola) e dove sta il pugno
+    var poseCanna = {};
+    function posaCanna(th) {
+      if (!opts.omino || !window.SGOmino || !SGOmino.mano) return null;
+      var a = Math.max(30, Math.min(140, Math.round(th / 5) * 5));
+      if (poseCanna[a]) return poseCanna[a];
+      var p = { im: new Image(), mano: null };
+      try { p.mano = SGOmino.mano(opts.omino, { braccia: "canna", angolo: a }); p.im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGOmino.svg(opts.omino, { braccia: "canna", angolo: a })); } catch (e) { p = null; }
+      return (poseCanna[a] = p);
+    }
+    function angoloBraccio() { var al = -(st.rodA == null ? -.95 : st.rodA) * 180 / Math.PI; return 60 + al * .7; }   // la canna più alta, il braccio più alto
+    for (var aPosa = 30; aPosa <= 140; aPosa += 5) posaCanna(aPosa);   // pronti subito, così non scatta
 
     // ---- i colori di ogni ora (e un po' più grigi se piove) ----
     var PAL = {
@@ -765,6 +777,8 @@
     }
     function geo() {   // dove sono i piedi, la mano e la punta della canna (e quanto si piega)
       var Fx = 12, Fy = SUP - 6.6 - (st.festa > 0 ? Math.abs(Math.sin(st.t * 10)) * 1.4 : 0), a = st.lean || 0, ca = Math.cos(a), sa = Math.sin(a), hx = 2.7, hy = -9.4;
+      var pc = posaCanna(angoloBraccio()), fw0 = 16, fh0 = fw0 * 1.32;
+      if (pc && pc.mano) { hx = (pc.mano.x / 200 - .5) * fw0; hy = pc.mano.y / 264 * fh0 - fh0 * .96 + .6; }   // la canna parte dal pugno dell'avatar
       var mano = { x: Fx + hx * ca - hy * sa, y: Fy + hx * sa + hy * ca }, A = st.rodA == null ? -.95 : st.rodA, L = 21;
       var bend = st.fase === "lotta" ? 2.2 + 4 * Math.min(1, st.lotta.tens) + (st.lotta.strappo ? 1.6 : 0) : st.fase === "carica" ? -1.4 * st.carica : .5;
       var tx = mano.x + Math.cos(A) * L, ty = mano.y + Math.sin(A) * L + bend * .55;
@@ -920,12 +934,7 @@
         var sl = st.salto, kk = Math.min(1, sl.t / .75), sx = sl.x0 + (12 - sl.x0) * kk, sy = sl.y0 + (SUP - 22 - sl.y0) * kk - Math.sin(kk * Math.PI) * 18;
         ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = .18; ctx.beginPath(); ctx.moveTo(G.punta.x, G.punta.y); ctx.lineTo(sx, sy); ctx.stroke();
       }
-      // l'avatar: respira, si piega, salta di gioia
-      ctx.save(); ctx.translate(P.x, P.y); ctx.rotate(st.lean || 0); ctx.scale(1, resp);
-      if (figura && figura.complete && figura.naturalWidth) ctx.drawImage(figura, -fw / 2, -fh * .96 + .6, fw, fh);
-      else { ctx.fillStyle = "#4c6ef5"; ctx.fillRect(-2, -18, 4, 18); }
-      ctx.restore();
-      // la canna: grossa vicino alla mano e sottile in punta, si piega quando il filo tira
+      // la canna (prima dell'avatar, così il pugno la stringe): grossa vicino alla mano e sottile in punta, si piega quando il filo tira
       var M = G.mano, C = G.ctrl, T = G.punta, col = laCanna().col, n = 8, px = M.x - (T.x - M.x) * .1, py = M.y - (T.y - M.y) * .1;
       ctx.strokeStyle = col;
       for (var j = 1; j <= n; j++) {
@@ -935,6 +944,12 @@
       ctx.fillStyle = "#adb5bd"; ctx.beginPath(); ctx.arc(M.x + .3, M.y + .9, .85, 0, 7); ctx.fill(); ctx.strokeStyle = "#495057"; ctx.lineWidth = .15; ctx.stroke();   // il mulinello
       if (st.fase === "lotta" && premuto) { ctx.strokeStyle = "#495057"; ctx.lineWidth = .14; var ang = t * 25; ctx.beginPath(); ctx.moveTo(M.x + .3, M.y + .9); ctx.lineTo(M.x + .3 + Math.cos(ang) * .8, M.y + .9 + Math.sin(ang) * .8); ctx.stroke(); }   // la manovella che gira
       st.punta = T;
+      // l'avatar: respira, si piega, salta di gioia; le braccia tengono la canna e la seguono
+      var pc = posaCanna(angoloBraccio()), fig = pc && pc.im.complete && pc.im.naturalWidth ? pc.im : figura;
+      ctx.save(); ctx.translate(P.x, P.y); ctx.rotate(st.lean || 0); ctx.scale(1, resp);
+      if (fig && fig.complete && fig.naturalWidth) ctx.drawImage(fig, -fw / 2, -fh * .96 + .6, fw, fh);
+      else { ctx.fillStyle = "#4c6ef5"; ctx.fillRect(-2, -18, 4, 18); }
+      ctx.restore();
     }
     function filo(a, b, cala) { ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.lineWidth = .12; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo((a.x + b.x) / 2, Math.max(a.y, b.y) + cala, b.x, b.y); ctx.stroke(); }
     function galleggiante(x, y, dip) {

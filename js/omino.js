@@ -3,6 +3,9 @@
    Disegnati in SVG col codice: niente immagini, leggerissimi.
    Volume con sfumature morbide, ciocche, pieghe dei vestiti.
    SGOmino.svg(cfg, {busto, px, braccia, spalle})  -> stringa SVG (braccia: "uno" o "su" = alzate per esultare; spalle = visto da dietro)
+     seduto: true          -> seduto, piedi a terra (y 250) e sedere sulla seduta a y 198 (anche con spalle)
+     braccia: "canna", angolo: gradi -> il braccio a destra nel disegno tiene la canna (0 giù, 90 orizzontale)
+   SGOmino.mano(cfg, {braccia: "canna", angolo}) -> {x, y} dove il pugno stringe la canna (coordinate del disegno 200×264)
    SGOmino.el(cfg, opts)          -> elemento pronto
    SGOmino.casuale(seme)          -> omino a caso (sempre uguale per lo stesso seme)
    ========================================================= */
@@ -344,9 +347,36 @@
   function cerchioPunti(cx, cy, r, n) { var p = []; for (var i = 0; i < n; i++) { var a = Math.PI * 2 * i / n; p.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); } return p; }
   function chiaro(h) { var c = rgb(h); return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255 > 0.62; }
 
+  // misure del corpo (corporatura + forma): le stesse per il disegno e per SGOmino.mano
+  function misure(c) {
+    var donna = c.forma === "donna", B = { snello: [27, 22, 24, 15, 12], medio: [34, 31, 33, 20, 17], robusto: [40, 46, 44, 25, 21] }[c.corpo] || [34, 31, 33, 20, 17];
+    // uomo "a V": spalle larghe, fianchi stretti, braccia e collo robusti.
+    // donna "a clessidra": spalle strette, vita sottile, fianchi morbidi, braccia e collo sottili.
+    var sh = B[0] + (donna ? -6 : 3), wa = donna ? Math.round(B[1] * 0.72) : B[1], he = B[2] + (donna ? 1 : -2), lw = B[3] - (donna ? 2 : 0), aw = B[4] + (donna ? -3 : 1);
+    return { sh: sh, wa: wa, he: he, lw: lw, aw: aw, ax: 100 - (sh - 6), hx: 100 - (Math.max(sh, wa, he) + 12) };
+  }
+  // seduto: il sedere tocca la seduta a y 198 (52 sopra i piedi). Le gambe dell'avatar sono corte (in piedi il cavallo è a 222):
+  // una seduta così gli arriva quasi in vita, quindi busto e testa salgono un poco (6) invece di scendere
+  var SED_Y = 198, SED_SU = -6;
+  function geoSeduto(m) {   // ginocchia davanti (centro, mezza larghezza, altezza della faccia tonda), piedi sotto; gomito di fianco alla pancia e mano sulla coscia
+    var kx = 3 + m.lw / 2 + 2.5, rkx = m.lw / 2 + 2.5, ex = m.wa + m.aw * 0.3 + 1;
+    return { kx: kx, ky: SED_Y + 13, rkx: rkx, rky: rkx * 0.6, fx: kx + 0.5, ex: ex, ey: 182, mx: ex - 10, my: 200 };
+  }
+  // canna da pesca: il braccio a destra nel disegno gira dalla spalla. A riposo è già un po' aperto (fr gradi):
+  // sotto fr resta giù lungo il fianco (con un raccordo morbido), sopra segue l'angolo. Il pugno è dove stava la mano.
+  function geoCanna(m, angolo) {
+    var a = 200 - m.ax, dx = m.ax - m.hx, dy = 38, fr = Math.atan2(dx, dy) * 180 / Math.PI;
+    var t = Math.max(-30, Math.min(175, +angolo || 0)), f = t >= fr + 8 ? t : (t <= fr - 8 ? fr : fr + (t - fr + 8) * (t - fr + 8) / 32);
+    var rot = f - fr, al = -rot * Math.PI / 180;
+    return { rot: rot, a: a, x: a + dx * Math.cos(al) - dy * Math.sin(al), y: 166 + dx * Math.sin(al) + dy * Math.cos(al) };
+  }
+
   function svg(cfg, opts) {
     opts = opts || {};
     var c = norm(cfg), id = PREF + (++uid) + "_";
+    var sed = !!opts.seduto && !opts.busto && !opts.gambe && !opts.viso, canna = opts.braccia === "canna";   // le due pose nuove
+    if ((sed || canna) && opts.cammina) { var o2 = {}; for (var k2 in opts) o2[k2] = opts[k2]; o2.cammina = false; opts = o2; }   // seduto o con la canna non si cammina
+    if (canna) c.mano = "nessuno";   // con la canna l'oggetto in mano non c'è
     function u(n) { return "url(#" + id + n + ")"; }
     var P = col(OPZ.pelle, c.pelle), H = col(OPZ.colCap, c.colCap), M = col(OPZ.maglia, c.maglia),
         T = col(OPZ.pantaloni, c.pantaloni), I = col(OPZ.iride, c.iride), A = col(OPZ.colAcc, c.colAcc), S = col(OPZ.scarpe, c.scarpe);
@@ -405,6 +435,7 @@
     // ombra morbida a terra
     if (!opts.busto) o.push("<ellipse cx='100' cy='253' rx='52' ry='9' fill='" + u("ter") + "'/>");
     o.push("<g class='om-tutto'>");
+    if (sed) o.push("<g transform='translate(0," + SED_SU + ")'>");   // seduto: busto e testa salgono; gambe e animaletto restano giù (rimessi a posto più sotto)
     var iDietro = o.length;   // qui finiscono le cose sulla schiena (mantello, ali…), dietro a tutto
     var kT = opts.scalaTesta || SCALA_TESTA, gT = "<g transform='translate(100,150) scale(" + kT + ") translate(-100,-150)'>";   // grandezza della testa (col collo fermo)
     var kCapD = o.length;   // di qui i capelli dietro la testa (di spalle li rimetto davanti)
@@ -553,11 +584,8 @@
     o.push("</g>");   // fine capelli dietro (scala testa)
     var capDietro = opts.spalle ? o.splice(kCapD) : null;
 
-    // ---------- corpo: corporatura + forma ----------
-    var B = { snello: [27, 22, 24, 15, 12], medio: [34, 31, 33, 20, 17], robusto: [40, 46, 44, 25, 21] }[c.corpo] || [34, 31, 33, 20, 17];
-    // uomo "a V": spalle larghe, fianchi stretti, braccia e collo robusti.
-    // donna "a clessidra": spalle strette, vita sottile, fianchi morbidi, braccia e collo sottili.
-    var sh = B[0] + (donna ? -6 : 3), wa = donna ? Math.round(B[1] * 0.72) : B[1], he = B[2] + (donna ? 1 : -2), lw = B[3] - (donna ? 2 : 0), aw = B[4] + (donna ? -3 : 1);
+    // ---------- corpo: corporatura + forma (vedi misure) ----------
+    var Mi = misure(c), sh = Mi.sh, wa = Mi.wa, he = Mi.he, lw = Mi.lw, aw = Mi.aw;
     var bu = Math.max(wa + 4, sh + 1);   // seno (solo donna): mezza larghezza all'altezza del petto
     var Y = 202;   // orlo della maglia: sotto si vedono bene i pantaloni
     function x(v) { return (100 + v).toFixed(1); }
@@ -567,7 +595,182 @@
     var corti = sotto === "pantaloncini" || sotto === "shortsjeans" || sotto === "bermuda";
     var gambeNude = abito || !!gonnaT || corti;
     var hp = he - 2, inkT = chiaro(T) ? tono(T, -0.55) : "#ffffff";
+    // ---------- seduto: stinchi, grembo, ginocchia e gonne (coordinate vere: il busto invece sta un po' più su, vedi SED_SU) ----------
+    // davanti gli stinchi vanno subito nel disegno (sotto alle scarpe), il resto torna in "su" e va sopra alle scarpe;
+    // di spalle si vede il sedere appoggiato sulla seduta: le gambe vanno avanti e non si vedono.
+    function sedutoSotto() {
+      var g = geoSeduto(Mi), ys = SED_Y, Yh = Y + SED_SU, yw = Yh - 8, kx = g.kx, ky = g.ky, rkx = g.rkx, rky = g.rky, fx = g.fx;
+      var gN = abito || !!gonnaT, lunghi = !gambeNude, zampa = lunghi && sotto === "zampa", nudeG = gN || sotto === "pantaloncini" || sotto === "shortsjeans";   // nudeG: ginocchia scoperte
+      var hw = lw / 2 + 0.5 + (sotto === "leggings" ? -1 : 0), hb = hw + (zampa ? 4 : 0), hn = (lw - 2) / 2;   // mezza larghezza dello stinco: coi pantaloni, in fondo (a zampa), nudo
+      var jn = /^(jeans|strappati|shortsjeans)$/.test(sotto), su = [], nGs = 0;
+      var Lg = abito ? (c.capo === "vestitolungo" ? 40 : 24) : (gonnaT ? gonnaT[0] : 0), svG = abito ? (c.capo === "vestitolungo" ? 12 : 10) : (gonnaT ? gonnaT[1] : 0);   // lunghezza e svasatura
+      var fG = abito ? u("m") : u("t"), bG = abito ? bM : bT, cG = abito ? M : T;   // il vestito ha il colore della maglia
+      function f(n) { return (+n).toFixed(1); }
+      function macchie(forme, dove) {   // mimetici: macchie ritagliate dentro le forme
+        var mid = id + "sm" + (++nGs);
+        dove.push("<clipPath id='" + mid + "'>" + forme.map(function (d0) { return "<path d='" + d0 + "'/>"; }).join("") + "</clipPath>", "<g clip-path='url(#" + mid + ")'>");
+        [[78, 186, 8, 4.5, -0.35], [108, 184, 9, 4, 0.25], [90, 196, 7, 4.5, "#5c4a2e"], [120, 195, 8, 4, -0.35], [66, 199, 6, 3.5, 0.25], [101, 203, 7, 4, "#5c4a2e"], [83, 209, 6, 3, -0.35],
+          [117, 210, 6, 3.5, 0.25], [86, 222, 5, 3.5, "#5c4a2e"], [113, 226, 5, 3, -0.35], [84, 237, 4.5, 3, 0.25], [115, 238, 5, 3, "#5c4a2e"], [89, 230, 4, 2.5, -0.35], [111, 217, 4, 2.5, 0.25]].forEach(function (m) {
+          dove.push("<ellipse cx='" + m[0] + "' cy='" + m[1] + "' rx='" + m[2] + "' ry='" + m[3] + "' transform='rotate(" + ((m[0] * 7) % 50 - 25) + " " + m[0] + " " + m[1] + ")' fill='" + (typeof m[4] === "string" ? m[4] : tono(T, m[4])) + "' opacity='.85'/>");
+        });
+        dove.push("</g>");
+      }
+      // gonna, vestito o grembiule sul grembo: dai fianchi scende sulle ginocchia (corta, al ginocchio, a tubino o lunga fino alle caviglie)
+      function gonnaDav(L0, sv0, fill, bordo, col, tipo) {
+        var grem = tipo === "grembiule", kO = kx + rkx + 1.5;
+        var wT = grem ? he - 3 : he - 1, wS = grem ? he - 1 : he + 1 + sv0 * 0.35, yTop = Yh - 2;
+        var cat = L0 <= 14 ? "corta" : (L0 <= 26 ? "ginocchio" : (L0 <= 33 ? "tubino" : "lunga"));
+        if (grem) kO = Math.min(kO, wS - 2);
+        var yK = ky + rky + 1.5, yS = yK + 1.5, yB = ky - rky * 0.35, yT = ky + rky + 4, yL = 239;
+        function orlo(i) {   // il bordo di sotto, da sinistra a destra (i: rientro, per la cucitura)
+          var k = kO - i, w = wS - i, yE = f(ys - i * 0.5);
+          if (cat === "corta") return " Q" + x(-w + 1) + "," + f(yB + 1 - i) + " " + x(-kx) + "," + f(yB - i) + " Q" + x(-3) + "," + f(yB - 0.5 - i) + " 100," + f(yB - 2 - i) + " Q" + x(3) + "," + f(yB - 0.5 - i) + " " + x(kx) + "," + f(yB - i) + " Q" + x(w - 1) + "," + f(yB + 1 - i) + " " + x(w) + "," + yE;
+          if (cat === "ginocchio") return " Q" + x(-w) + "," + f(ys + 5 - i) + " " + x(-k) + "," + f(ky + 0.5) + " C" + x(-k) + "," + f(yK - 1 - i) + " " + x(-kx - rkx * 0.4) + "," + f(yK - i) + " " + x(-kx + rkx * 0.2) + "," + f(yK - i) +
+            " Q" + x(-2.5) + "," + f(yK - 0.5 - i) + " 100," + f(yS - i) + " Q" + x(2.5) + "," + f(yK - 0.5 - i) + " " + x(kx - rkx * 0.2) + "," + f(yK - i) +
+            " C" + x(kx + rkx * 0.4) + "," + f(yK - i) + " " + x(k) + "," + f(yK - 1 - i) + " " + x(k) + "," + f(ky + 0.5) + " Q" + x(w) + "," + f(ys + 5 - i) + " " + x(w) + "," + yE;
+          if (cat === "tubino") return " Q" + x(-w) + "," + f(ys + 5 - i) + " " + x(-k + 0.5) + "," + f(ky + 1) + " L" + x(-k + 1) + "," + f(yT - i) + " Q100," + f(yT + 2.5 - i) + " " + x(k - 1) + "," + f(yT - i) + " L" + x(k - 0.5) + "," + f(ky + 1) + " Q" + x(w) + "," + f(ys + 5 - i) + " " + x(w) + "," + yE;
+          return " Q" + x(-w) + "," + f(ys + 5 - i) + " " + x(-k) + "," + f(ky + 1) + " L" + x(-k - 3) + "," + f(yL - i) + " Q" + x(-kx) + "," + f(yL + 2.5 - i) + " 100," + f(yL + 1 - i) + " Q" + x(kx) + "," + f(yL + 2.5 - i) + " " + x(k + 3) + "," + f(yL - i) + " L" + x(k) + "," + f(ky + 1) + " Q" + x(w) + "," + f(ys + 5 - i) + " " + x(w) + "," + yE;
+        }
+        var d = "M" + x(-wT) + "," + yTop + " C" + x(-wT - 1) + "," + (Yh + 3) + " " + x(-wS) + "," + (ys - 5) + " " + x(-wS) + "," + ys + orlo(0) +
+          " C" + x(wS) + "," + (ys - 5) + " " + x(wT + 1) + "," + (Yh + 3) + " " + x(wT) + "," + yTop + " Z", gid = id + "sg" + (++nGs);
+        su.push("<path d='" + d + "' fill='" + fill + "' stroke='" + bordo + "' stroke-width='" + (grem ? 1.3 : 1.8) + "' stroke-linejoin='round'/>",
+          "<clipPath id='" + gid + "'><path d='" + d + "'/></clipPath>", "<g clip-path='url(#" + gid + ")'>");
+        if (cat !== "corta") {   // la stoffa che cade davanti alle ginocchia è più in ombra; sulle ginocchia la luce
+          su.push("<rect x='0' y='" + f(ky + rky * 0.35) + "' width='200' height='60' fill='#000' opacity='.07'/>");
+          [-1, 1].forEach(function (s) { su.push("<ellipse cx='" + f(100 + s * kx - rkx * 0.25) + "' cy='" + f(ky - rky * 0.3) + "' rx='" + f(rkx * 0.55) + "' ry='" + f(rky * 0.45) + "' fill='" + u("lu") + "' opacity='.3'/>"); });
+        }
+        if (tipo === "pieghe") for (var pq = -3; pq <= 3; pq++) su.push("<path d='M" + x(pq * wT / 4) + "," + (Yh + 1) + " L" + x(pq * kO / 3.3) + "," + f(cat === "corta" ? yB : ky + rky) + "' stroke='" + bordo + "' stroke-width='1.2' opacity='.45'/>");   // pieghe fitte
+        else if (cat === "tubino") su.push("<path d='M100," + f(yT - 9) + " L100," + f(yT + 2) + "' stroke='" + bordo + "' stroke-width='1.3' opacity='.5'/>");   // lo spacco del tubino
+        else if (!grem) su.push("<path d='M" + x(-wT * 0.5) + "," + (Yh + 3) + " Q" + x(-kx - 2) + "," + ys + " " + x(-kx - rkx * 0.3) + "," + f(ky - 1) + " M" + x(wT * 0.5) + "," + (Yh + 3) + " Q" + x(kx + 2) + "," + ys + " " + x(kx + rkx * 0.3) + "," + f(ky - 1) +
+          (cat === "corta" ? "" : " M" + x(-kx + rkx * 0.35) + "," + f(ky + 1) + " Q" + x(-3) + "," + f(ky + 3) + " 100," + f((cat === "lunga" ? ky + rky + 3 : yS - 1)) + " M" + x(kx - rkx * 0.35) + "," + f(ky + 1) + " Q" + x(3) + "," + f(ky + 3) + " 100," + f((cat === "lunga" ? ky + rky + 3 : yS - 1))) +
+          (cat === "lunga" ? " M" + x(-kx) + "," + f(ky + rky) + " L" + x(-kx - 1.5) + "," + (yL - 1) + " M100," + f(ky + rky + 3) + " L100," + yL + " M" + x(kx) + "," + f(ky + rky) + " L" + x(kx + 1.5) + "," + (yL - 1) : "") +
+          "' stroke='" + bordo + "' stroke-width='1.3' opacity='.33' fill='none' stroke-linecap='round'/>");   // pieghe: dai fianchi alle ginocchia, e in mezzo dove la stoffa si affloscia
+        su.push("</g>");
+        if (!grem) su.push("<path d='M" + x(-wS + 2) + "," + (ys - 1) + orlo(2) + "' stroke='" + tono(col, 0.3) + "' stroke-width='1.3' stroke-dasharray='2.5 2' opacity='.6' fill='none'/>");   // la cucitura dell'orlo
+        if (grem) su.push("<path d='M" + x(-wS + 2) + "," + (ys - 1) + orlo(3) + "' stroke='#dfe3ea' stroke-width='1.2' fill='none'/>");
+        su.push("<path d='M" + x(-wT + 3) + "," + (Yh + 2) + " Q" + x(-wS + 2.5) + "," + (ys - 3) + " " + x(-kO + 3) + "," + f(ky) + "' stroke='#fff' stroke-width='3' opacity='.18' fill='none' stroke-linecap='round'/>");
+      }
+      function cappottoDav() {   // il cappotto seduto si apre: i due lembi coprono i fianchi e il fuori delle cosce, in mezzo si vedono pantaloni e ginocchia
+        var wT = he + 0.5, wS = he + 4, yTop = Yh - 4, kO = kx + rkx + 1.5;
+        [-1, 1].forEach(function (s) {
+          var X = function (v) { return f(100 + s * v); }, sw = s > 0 ? 1 : 0, pB = [kx + (rkx + 1.5) * 0.17, ky + (rky + 1.5) * 0.98];   // pB: dove il lembo finisce, sotto il ginocchio
+          var d = "M" + X(1.5) + "," + yTop + " L" + X(wT) + "," + yTop + " C" + X(wT + 1) + "," + (Yh + 3) + " " + X(wS) + "," + (ys - 5) + " " + X(wS) + "," + ys +
+            " L" + X(kO) + "," + f(ky + 0.5) + " A" + f(rkx + 1.5) + "," + f(rky + 1.5) + " 0 0," + sw + " " + X(pB[0]) + "," + f(pB[1]) + " Q" + X(kx * 0.45) + "," + (ys + 2) + " " + X(1.5) + "," + (Yh + 4) + " Z";
+          su.push("<path d='" + d + "' fill='" + u("m") + "' stroke='" + bM + "' stroke-width='1.8' stroke-linejoin='round'/>",
+            "<path d='M" + X(wS - 1.5) + "," + (ys - 1) + " L" + X(kO - 1) + "," + f(ky + 0.5) + " A" + f(rkx + 0.5) + "," + f(rky + 0.5) + " 0 0," + sw + " " + X(pB[0] + 0.5) + "," + f(pB[1] - 1) + "' stroke='" + tono(M, -0.3) + "' stroke-width='1.2' fill='none' opacity='.7'/>",   // l'orlo
+            "<path d='M" + X(kx * 0.45 + 2) + "," + (ys + 1) + " Q" + X(kx * 0.3 + 1.5) + "," + (Yh + 10) + " " + X(3) + "," + (Yh + 5) + "' stroke='" + tono(M, 0.3) + "' stroke-width='1.3' fill='none' opacity='.5'/>");   // il bordo del lembo, in luce
+        });
+        su.push("<path d='M" + x(-wT + 3) + "," + (Yh + 2) + " Q" + x(-wS + 2.5) + "," + (ys - 3) + " " + x(-kO + 3) + "," + f(ky) + "' stroke='#fff' stroke-width='3' opacity='.16' fill='none' stroke-linecap='round'/>",
+          "<circle cx='" + x(-6.5) + "' cy='" + (Yh + 5) + "' r='1.9' fill='" + tono(M, -0.35) + "' stroke='" + bM + "' stroke-width='.6'/>", "<circle cx='" + x(6.5) + "' cy='" + (Yh + 5) + "' r='1.9' fill='" + tono(M, -0.35) + "' stroke='" + bM + "' stroke-width='.6'/>");
+      }
+      function gonnaDietro(sv0, fill, bordo, col, capp) {   // di spalle: la gonna (o il cappotto) aperta sulla seduta
+        var wT = he - 1 + (capp ? 1.5 : 0), wS = he + 1.5 + sv0 * 0.35 + (capp ? 1.5 : 0), yb = ys + 1.5, yTop = Yh - (capp ? 4 : 2);
+        var d = "M" + x(-wT) + "," + yTop + " C" + x(-wT - 1) + "," + (Yh + 3) + " " + x(-wS) + "," + (ys - 6) + " " + x(-wS) + "," + (yb - 1) +
+          " Q100," + (yb + 3) + " " + x(wS) + "," + (yb - 1) + " C" + x(wS) + "," + (ys - 6) + " " + x(wT + 1) + "," + (Yh + 3) + " " + x(wT) + "," + yTop + " Z";
+        su.push("<path d='" + d + "' fill='" + fill + "' stroke='" + bordo + "' stroke-width='1.8' stroke-linejoin='round'/>");
+        if (capp) su.push("<path d='M100," + (ys - 9) + " L100," + (yb + 1) + "' stroke='" + bordo + "' stroke-width='1.3'/>");   // lo spacco dietro
+        else if (sotto === "gonnapieghe" && !abito) for (var pq = -3; pq <= 3; pq++) su.push("<path d='M" + x(pq * he / 4) + "," + (Yh + 1) + " L" + x(pq * wS / 4) + "," + (yb + 1) + "' stroke='" + bordo + "' stroke-width='1.2' opacity='.45'/>");
+        else su.push("<path d='M" + x(-he / 2) + "," + (Yh + 3) + " L" + x(-wS / 2 - 1) + "," + yb + " M" + x(he / 2) + "," + (Yh + 3) + " L" + x(wS / 2 + 1) + "," + yb + "' stroke='" + bordo + "' stroke-width='1.3' opacity='.35'/>");
+        if (!capp) su.push("<path d='M" + x(-wS + 2) + "," + (yb - 2) + " Q100," + (yb + 1.5) + " " + x(wS - 2) + "," + (yb - 2) + "' stroke='" + tono(col, 0.3) + "' stroke-width='1.3' stroke-dasharray='2.5 2' opacity='.6' fill='none'/>");
+        su.push("<path d='M" + x(-wT + 3) + "," + (Yh + 2) + " Q" + x(-wS + 2.5) + "," + (ys - 4) + " " + x(-wS + 3) + "," + (yb - 3) + "' stroke='#fff' stroke-width='3' opacity='.18' fill='none' stroke-linecap='round'/>");
+      }
+      basso = 246;   // i pantaloni lunghi arrivano alle scarpe (per i gambali degli stivali)
+      if (opts.spalle) {   // ---- di spalle ----
+        if (!gN) {
+          var wB = hp + 1.5, dB = "M" + x(-hp) + "," + yw + " C" + x(-hp - 1) + "," + (yw + 6) + " " + x(-wB - 0.5) + "," + (ys - 8) + " " + x(-wB) + "," + (ys - 3) +
+            " Q" + x(-wB + 0.5) + "," + (ys + 0.5) + " " + x(-hp * 0.5) + "," + (ys + 0.5) + " Q" + x(-2.5) + "," + (ys + 0.5) + " 100," + (ys - 2) +
+            " Q" + x(2.5) + "," + (ys + 0.5) + " " + x(hp * 0.5) + "," + (ys + 0.5) + " Q" + x(wB - 0.5) + "," + (ys + 0.5) + " " + x(wB) + "," + (ys - 3) +
+            " C" + x(wB + 0.5) + "," + (ys - 8) + " " + x(hp + 1) + "," + (yw + 6) + " " + x(hp) + "," + yw + " Z";
+          su.push("<path d='" + dB + "' fill='" + u("t") + "' stroke='" + bT + "' stroke-width='1.6' stroke-linejoin='round'/>");
+          if (sotto === "mimetici") macchie([dB], su);
+          su.push("<path d='M100," + (Yh + 2) + " L100," + (ys - 3) + "' stroke='" + bT + "' stroke-width='1.2' opacity='.45'/>",   // la cucitura in mezzo e le pieghe dove il sedere si appoggia
+            "<path d='M" + x(-hp * 0.5 - 5) + "," + (ys - 1.5) + " Q" + x(-hp * 0.5) + "," + (ys - 3.5) + " " + x(-hp * 0.5 + 5) + "," + (ys - 1.5) + " M" + x(hp * 0.5 - 5) + "," + (ys - 1.5) + " Q" + x(hp * 0.5) + "," + (ys - 3.5) + " " + x(hp * 0.5 + 5) + "," + (ys - 1.5) + "' stroke='" + bT + "' stroke-width='1' opacity='.3' fill='none'/>");
+        } else gonnaDietro(svG, fG, bG, cG, false);   // (le tasche dietro restano sotto la maglia)
+        if (c.capo === "cappotto") gonnaDietro(6, u("m"), bM, M, true);
+        return { piedi: [], yAlti: 0, bordo: 0, su: su };
+      }
+      // ---- davanti: gli stinchi (sotto alle scarpe) ----
+      var stinchi = [];
+      [-1, 1].forEach(function (s) {
+        var X = function (v) { return f(100 + s * v); };
+        if (lunghi) { var dS = "M" + X(kx - hw) + "," + ky + " L" + X(fx - hb) + ",245 Q" + X(fx) + ",248 " + X(fx + hb) + ",245 L" + X(kx + hw) + "," + ky + " Z";
+          stinchi.push(dS); o.push("<path d='" + dS + "' fill='" + u("t") + "' stroke='" + bT + "' stroke-width='1.6' stroke-linejoin='round'/>"); }
+        else o.push("<path d='M" + X(kx - hn) + "," + ky + " L" + X(fx - hn) + ",242.5 Q" + X(fx) + ",245 " + X(fx + hn) + ",242.5 L" + X(kx + hn) + "," + ky + " Z' fill='" + u("pl") + "' stroke='" + bP + "' stroke-width='.9'/>");
+      });
+      if (lunghi && sotto === "mimetici") macchie(stinchi, o);
+      [-1, 1].forEach(function (s) {
+        var X = function (v) { return f(100 + s * v); }, cB = 100 + s * fx;   // cB: il centro dello stinco in fondo
+        if (lunghi) {
+          if (jn) o.push("<path d='M" + X(kx + hw - 2.5) + "," + f(ky + rky) + " L" + X(fx + hw - 2.5) + ",236' stroke='#e8a33c' stroke-width='1' stroke-dasharray='2 1.6' opacity='.85' fill='none'/>",   // cucitura e risvolto
+            "<rect x='" + f(cB - hw - 0.25) + "' y='235' width='" + f(2 * hw + 0.5) + "' height='6' rx='2' fill='" + tono(T, 0.18) + "' stroke='" + bT + "' stroke-width='1'/>");
+          if (sotto === "strappati") o.push("<ellipse cx='" + X(kx + 0.7) + "' cy='" + f(ky + rky + 10) + "' rx='" + f(hw / 2.4) + "' ry='2.2' fill='" + u("pl") + "' stroke='" + tono(T, 0.2) + "' stroke-width='.8'/>",
+            "<path d='M" + X(kx + 0.7 - hw / 2.4) + "," + f(ky + rky + 9.3) + " L" + X(kx + 0.7 + hw / 2.4) + "," + f(ky + rky + 9.3) + "' stroke='#f4f1ea' stroke-width='.9' opacity='.9'/>");
+          if (sotto === "pantaloni") o.push("<path d='M" + X(kx) + "," + f(ky + rky) + " L" + X(fx) + ",244' stroke='" + tono(T, 0.3) + "' stroke-width='1.2' opacity='.45'/>");   // la piega
+          if (sotto === "cargo" || sotto === "mimetici") o.push("<path d='M" + X(kx + 1) + "," + f(ky + rky) + " L" + X(fx + 1) + ",244' stroke='" + tono(T, 0.25) + "' stroke-width='1' opacity='.3'/>");
+          if (sotto === "tuta") o.push("<path d='M" + X(kx + hw - 1.5) + "," + ky + " L" + X(fx + hw - 1.5) + ",238 M" + X(kx + hw - 4) + "," + ky + " L" + X(fx + hw - 4) + ",238' stroke='" + inkT + "' stroke-width='1.6' opacity='.85' fill='none'/>",   // due righe e il polsino
+            "<rect x='" + f(cB - hw + 0.5) + "' y='237' width='" + f(2 * hw - 1) + "' height='6' rx='3' fill='" + tono(T, -0.22) + "'/>",
+            "<path d='M" + f(cB - hw / 2) + ",237.5 L" + f(cB - hw / 2) + ",242.5 M" + f(cB) + ",237.5 L" + f(cB) + ",242.5 M" + f(cB + hw / 2) + ",237.5 L" + f(cB + hw / 2) + ",242.5' stroke='" + bT + "' stroke-width='.9' opacity='.5'/>");
+          if (sotto === "leggings") o.push("<path d='M" + X(kx + 1) + "," + f(ky + rky + 2) + " Q" + X(kx + 1.6) + ",226 " + X(fx + 0.6) + ",242' stroke='#fff' stroke-width='2.2' opacity='.22' fill='none' stroke-linecap='round'/>");   // lucidi
+          if (zampa) o.push("<path d='M" + X(kx) + "," + f(ky + rky) + " Q" + X(kx - 0.3) + ",228 " + X(fx + 1.5) + ",245' stroke='" + tono(T, 0.3) + "' stroke-width='1.1' opacity='.45' fill='none'/>",
+            "<path d='M" + X(fx - hb + 0.8) + ",243.5 L" + X(fx + hb - 0.8) + ",243.5' stroke='" + tono(T, -0.3) + "' stroke-width='2' opacity='.6'/>");
+        }
+        o.push("<ellipse cx='" + X(kx + 0.4) + "' cy='" + f(ky + rky + 0.5) + "' rx='" + f((lunghi ? hw : hn) - 0.8) + "' ry='5.5' fill='#000' opacity='.3'/>");   // l'ombra del ginocchio sullo stinco
+      });
+      // ---- il grembo: le cosce viste di scorcio (sopra in luce, dal fianco fino al ginocchio) e davanti la faccia tonda del ginocchio, più in ombra ----
+      var ryT = rky * 0.6;   // l'arco di sopra della faccia del ginocchio: la piega tra coscia e ginocchio
+      function coscia(s) {
+        var X = function (v) { return f(100 + s * v); };
+        return "M" + X(0.5) + "," + yw + " L" + X(hp) + "," + yw + " C" + X(hp + 1.5) + "," + (yw + 6) + " " + X(hp + 1.5) + "," + (ys - 4) + " " + X(hp + 1) + "," + ys +
+          " Q" + X(kx + rkx + 0.5) + "," + (ys + 2) + " " + X(kx + rkx) + "," + f(ky) + " A" + f(rkx) + "," + f(rky) + " 0 0," + (s > 0 ? 1 : 0) + " " + X(kx - rkx) + "," + f(ky) +
+          " Q" + X(Math.max(0.5, kx - rkx - 0.5)) + "," + ys + " " + X(0.5) + "," + (ys - 6) + " Z";
+      }
+      function faccia(s, k0) {   // la faccia davanti del ginocchio (k0: un po' più piccola, per i bordi)
+        var X = function (v) { return f(100 + s * v); }, sw = s > 0 ? 0 : 1, rx0 = rkx - (k0 || 0);
+        return "M" + X(kx + rx0) + "," + f(ky) + " A" + f(rx0) + "," + f(ryT) + " 0 0," + sw + " " + X(kx - rx0) + "," + f(ky) + " A" + f(rx0) + "," + f(rky - (k0 || 0)) + " 0 0," + sw + " " + X(kx + rx0) + "," + f(ky) + " Z";
+      }
+      function piega(s, k0) { var X = function (v) { return f(100 + s * v); }, rx0 = rkx - (k0 || 0); return "M" + X(kx + rx0) + "," + f(ky) + " A" + f(rx0) + "," + f(ryT) + " 0 0," + (s > 0 ? 0 : 1) + " " + X(kx - rx0) + "," + f(ky); }
+      var fC = gN ? u("pl") : u("t"), bC = gN ? bP : bT;
+      [-1, 1].forEach(function (s) { su.push("<path d='" + coscia(s) + "' fill='" + fC + "' stroke='" + bC + "' stroke-width='" + (gN ? 0.9 : 1.6) + "' stroke-linejoin='round'/>"); });
+      if (!gN && sotto === "mimetici") macchie([coscia(-1), coscia(1)], su);
+      [-1, 1].forEach(function (s) {
+        var X = function (v) { return f(100 + s * v); };
+        su.push("<ellipse cx='" + X(kx - rkx * 0.12) + "' cy='" + f((Yh + ky - ryT) / 2 + 1) + "' rx='" + f(rkx * 0.5) + "' ry='" + f(Math.max(2, (ky - ryT - Yh) * 0.28)) + "' fill='" + u("lu") + "' opacity='" + (sotto === "leggings" && !gN ? 0.45 : 0.28) + "'/>");   // la luce sopra la coscia
+        if (nudeG) su.push("<path d='" + faccia(s) + "' fill='" + u("pl") + "' stroke='" + bP + "' stroke-width='.9'/>");   // ginocchio scoperto
+        su.push("<path d='" + faccia(s) + "' fill='#000' opacity='.12'/>",   // la faccia davanti del ginocchio: più in ombra
+          "<path d='" + piega(s, 1) + "' fill='none' stroke='" + (nudeG ? bP : bT) + "' stroke-width='1.1' opacity='.4'/>",
+          "<ellipse cx='" + X(kx - rkx * 0.3) + "' cy='" + f(ky + rky * 0.15) + "' rx='" + f(rkx * 0.3) + "' ry='" + f(rky * 0.28) + "' fill='" + u("lu") + "' opacity='" + (sotto === "leggings" && !gN ? 0.5 : 0.25) + "'/>");
+      });
+      if (!gN) {
+        su.push("<ellipse cx='100' cy='" + (Yh + 4) + "' rx='" + f(hp) + "' ry='4.5' fill='#000' opacity='.12'/>");   // l'ombra della maglia sul grembo
+        [1, -1].forEach(function (s) {
+          var X = function (v) { return f(100 + s * v); };
+          if (jn) su.push("<path d='M" + X(hp - 1) + "," + (Yh + 6) + " Q" + X(hp - 7) + "," + (Yh + 5) + " " + X(hp - 10) + "," + (Yh - 1) + "' stroke='#e8a33c' stroke-width='1' stroke-dasharray='2 1.6' opacity='.85' fill='none'/>");   // le tasche
+          if (sotto === "jeans" || sotto === "strappati") su.push("<path d='M" + X(hp - 2) + "," + (Yh + 2) + " Q" + X(hp - 1.5) + "," + ys + " " + X(kx + rkx - 2) + "," + f(ky) + "' stroke='#e8a33c' stroke-width='1' stroke-dasharray='2 1.6' opacity='.85' fill='none'/>");   // la cucitura di fianco
+          if (/^(pantaloni|bermuda|pantaloncini|zampa)$/.test(sotto)) su.push("<path d='M" + X(hp - 1) + "," + (Yh + 5) + " L" + X(hp - 7) + "," + (Yh - 2) + "' stroke='" + bT + "' stroke-width='1.3' opacity='.55'/>");
+          if (sotto === "pantaloni") su.push("<path d='M" + X(hp * 0.5) + "," + (Yh + 3) + " L" + X(kx) + "," + f(ky - ryT) + "' stroke='" + tono(T, 0.3) + "' stroke-width='1.2' opacity='.45'/>");   // la piega
+          if (sotto === "tuta") su.push("<path d='M" + X(hp - 1.5) + "," + Yh + " Q" + X(hp - 1) + "," + ys + " " + X(kx + rkx - 1.5) + "," + f(ky) + " M" + X(hp - 4) + "," + Yh + " Q" + X(hp - 3.5) + "," + ys + " " + X(kx + rkx - 4) + "," + f(ky + 1) + "' stroke='" + inkT + "' stroke-width='1.6' opacity='.85' fill='none'/>");
+          if (sotto === "cargo" || sotto === "mimetici") su.push(   // la tasca sul fianco della coscia
+            "<rect x='" + f(s > 0 ? 100 + kx + rkx - 9 : 100 - kx - rkx + 1.5) + "' y='" + (ys - 5) + "' width='7.5' height='8' rx='1.5' fill='" + tono(T, -0.06) + "' stroke='" + bT + "' stroke-width='1'/>",
+            "<path d='M" + f(s > 0 ? 100 + kx + rkx - 9.5 : 100 - kx - rkx + 1) + "," + (ys - 5) + " l8.5,0 l0,3 l-8.5,0 Z' fill='" + tono(T, 0.1) + "' stroke='" + bT + "' stroke-width='.9'/>");
+          if (sotto === "strappati") su.push("<ellipse cx='" + X(kx) + "' cy='" + f(ky + 1.5) + "' rx='" + f(rkx * 0.42) + "' ry='2.8' fill='" + u("pl") + "' stroke='" + tono(T, 0.2) + "' stroke-width='.8'/>",   // lo strappo sul ginocchio
+            "<path d='M" + X(kx - rkx * 0.42) + "," + f(ky + 0.7) + " L" + X(kx + rkx * 0.42) + "," + f(ky + 0.7) + " M" + X(kx - rkx * 0.32) + "," + f(ky + 2.8) + " L" + X(kx + rkx * 0.32) + "," + f(ky + 2.8) + "' stroke='#f4f1ea' stroke-width='.9' opacity='.9'/>");
+          if (sotto === "pantaloncini" || sotto === "shortsjeans") {   // i pantaloni corti finiscono dove comincia il ginocchio
+            su.push("<path d='" + piega(s) + "' fill='none' stroke='" + tono(T, -0.3) + "' stroke-width='2.4' opacity='.75'/>");
+            if (sotto === "shortsjeans") for (var fz = 0; fz < 5; fz++) { var af = Math.PI * (1.15 + 0.7 * fz / 4), px0 = 100 + s * kx + rkx * Math.cos(af), py0 = ky + ryT * Math.sin(af);
+              su.push("<path d='M" + f(px0) + "," + f(py0) + " l" + (s * 0.4) + ",2.4' stroke='#e9eef7' stroke-width='.9' opacity='.8' stroke-linecap='round'/>"); }   // l'orlo sfilacciato
+          }
+          if (sotto === "bermuda") su.push("<path d='M" + X(kx + rkx - 1.5) + "," + f(ky + 0.5) + " A" + f(rkx - 1.5) + "," + f(rky - 1.5) + " 0 0," + (s > 0 ? 1 : 0) + " " + X(kx - rkx + 1.5) + "," + f(ky + 0.5) + "' fill='none' stroke='" + tono(T, -0.3) + "' stroke-width='3.5' opacity='.55'/>");   // il risvolto sotto il ginocchio
+        });
+      }
+      if (gN) gonnaDav(Lg, svG, fG, bG, cG, sotto === "gonnapieghe" && !abito ? "pieghe" : "");
+      if (c.capo === "cappotto") cappottoDav();
+      if (c.capo === "grembiule") gonnaDav(18, 0, "#fbfbfd", "#c9ccd6", "#fbfbfd", "grembiule");
+      return { piedi: [100 - fx, 100 + fx], yAlti: ky + rky - 1, bordo: fx + hw + 1, su: su };
+    }
     if (!opts.busto) {
+      if (sed) o.push("<g transform='translate(0," + (-SED_SU) + ")'>");   // seduto: le gambe restano giù, coi piedi a terra
+      var SG = sed ? sedutoSotto() : null;   // seduto: gli stinchi sono già disegnati; grembo, ginocchia e gonne vanno sopra alle scarpe
+      if (!SG) {
       // gambe nude (sotto gonne, vestiti e pantaloncini)
       if (gambeNude) [97 - lw + 1.5, 103.5].forEach(function (lx) {
         o.push("<rect x='" + lx + "' y='" + (Y + 4) + "' width='" + (lw - 2) + "' height='" + (244 - Y - 4) + "' rx='" + ((lw - 2) / 2) + "' fill='" + u("pl") + "' stroke='" + bP + "' stroke-width='.9'/>");
@@ -645,11 +848,13 @@
         });
         if (corti) gonnaPezzo = o.splice(iPz);   // i pantaloni corti vanno sopra agli stivali, non dentro
       }
+      }   // fine gambe in piedi
       // i gambali degli stivali: larghi almeno quanto la gamba; i pantaloni lunghi ci finiscono dentro, quindi in alto si allargano come loro.
       // A zampa invece coprono il gambale: dello stivale si vede solo il piede
       var infila = !gambeNude && sotto !== "zampa", gamb = sotto !== "zampa" || abito || !!gonnaT;
-      var yAlti = infila ? 220 : 212;   // gli stivali alti sopra i pantaloni arrivano al ginocchio (sotto le gonne salgono di più, tanto l'orlo li copre)
+      var yAlti = SG ? SG.yAlti : (infila ? 220 : 212);   // gli stivali alti sopra i pantaloni arrivano al ginocchio (sotto le gonne salgono di più, tanto l'orlo li copre)
       function bordoP(yy) {   // mezza larghezza dei pantaloni (dal centro) all'altezza yy, lungo la curva del fianco
+        if (SG) return SG.bordo;   // seduto: lo stinco scende dritto
         function bz(a, b, c2, d, t) { var v = 1 - t; return v * v * v * a + 3 * v * v * t * b + 3 * v * t * t * c2 + t * t * t * d; }
         var lo = 0, hi = 1; for (var i = 0; i < 24; i++) { var m = (lo + hi) / 2; if (bz(Y - 8, Y + 10, ky, basso, m) < yy) lo = m; else hi = m; }
         return bz(hp, hp + 1, kx, oxB, lo);
@@ -668,7 +873,7 @@
             (tallone ? " Q" + cx + "," + (y1 + 5) + " " : " L") + xi.toFixed(1) + "," + y1 + " Z" };
       }
       // scarpe: suola, punta rinforzata, lacci incrociati
-      [97 - lw / 2, 103 + lw / 2].forEach(function (cx, ip) { o.push("<g class='om-piede om-p" + (ip + 1) + "'>"); (function () {   // ogni piede nel suo gruppo: camminando si alza
+      (SG ? SG.piedi : [97 - lw / 2, 103 + lw / 2]).forEach(function (cx, ip) { o.push("<g class='om-piede om-p" + (ip + 1) + "'>"); (function () {   // ogni piede nel suo gruppo: camminando si alza
         var rx = lw / 2 + 5, lacci = rgb(S)[0] > 200 && rgb(S)[1] > 200 ? "#9a9aa6" : "#e6e6ee", mod = c.modScarpe;
         function G(s) { return gamb ? s : ""; }   // i pezzi del gambale (sotto i pantaloni a zampa non si vedono)
         if (opts.spalle) {   // di spalle si vedono i talloni: niente punte né lacci
@@ -773,6 +978,8 @@
           "<ellipse cx='" + (cx - 4) + "' cy='243.5' rx='5' ry='2.2' fill='" + u("lu") + "'/>",
           "<path d='M" + (cx - 3) + ",241 L" + (cx + 3) + ",244.2 M" + (cx + 3) + ",241 L" + (cx - 3) + ",244.2 M" + (cx - 2.5) + ",245.5 L" + (cx + 2.5) + ",245.5' stroke='" + lacci + "' stroke-width='1' opacity='.85' stroke-linecap='round'/>");
       })(); o.push("</g>"); });
+      if (SG) o.push.apply(o, SG.su);   // seduto: grembo, ginocchia, gonne, cappotto e grembiule (sopra alle scarpe)
+      else {
       if (gonnaPezzo) o.push.apply(o, gonnaPezzo);
       // cappotto e grembiule scendono sopra le gambe (disegnati dopo le scarpe)
       var kCappotto = o.length;   // di spalle niente abbottonatura del cappotto
@@ -784,6 +991,8 @@
       if (opts.spalle) o.splice(kCappotto).forEach(function (s0) { if (!/M104,|<circle/.test(s0)) o.push(s0); });
       if (c.capo === "grembiule" && !opts.spalle) o.push("<path d='M" + x(-he + 3) + "," + (Y - 2) + " L" + x(-he + 1) + "," + (Y + 27) + " Q100," + (Y + 31) + " " + x(he - 1) + "," + (Y + 27) + " L" + x(he - 3) + "," + (Y - 2) + " Z' fill='#fbfbfd' stroke='#c9ccd6' stroke-width='1.3' stroke-linejoin='round'/>",
         "<path d='M" + x(-he + 2) + "," + (Y + 23) + " Q100," + (Y + 27) + " " + x(he - 2) + "," + (Y + 23) + "' stroke='#dfe3ea' stroke-width='1.2' fill='none'/>");
+      }
+      if (sed) o.push("</g>");
     }
     // braccia (maniche con polsino, piega al gomito) + mani col pollice e le dita
     var ax = 100 - (sh - 6), hx = 100 - (Math.max(sh, wa, he) + 12);
@@ -791,27 +1000,77 @@
     var gilet = c.capo === "gilet", MS = gilet ? "#f4f4f6" : M, bMS = gilet ? "#b9bcc6" : bM;   // col gilet le maniche sono della camicia bianca
     if (gilet) o.push("<defs>" + lin("ms", 0.35, 1, [[0, "#ffffff"], [0.5, "#eef0f4"], [1, "#c6c9d3"]]) + "</defs>");   // quanta parte del braccio copre la manica
     var bracciaSopra = [];   // le braccia alzate si disegnano per ultime, davanti alla testa e al corpo
+    var avambracci = [], sopraTutto = [], gC = canna ? geoCanna(Mi, opts.angolo) : null, giroSx = canna ? 2 + 0.06 * gC.rot : 0, manoSx = null;   // seduto: gli avambracci vanno sopra al busto; canna: l'altro braccio si apre un poco (equilibrio)
+    function scosta(P, dd) {   // la curva spostata di lato (dd > 0: a sinistra di chi la percorre)
+      function n(p, q) { var vx = q[0] - p[0], vy = q[1] - p[1], l = Math.hypot(vx, vy) || 1; return [vy / l * dd, -vx / l * dd]; }
+      var n0 = n(P[0], P[1]), n1 = n(P[2], P[3]);
+      return [[P[0][0] + n0[0], P[0][1] + n0[1]], [P[1][0] + n0[0], P[1][1] + n0[1]], [P[2][0] + n1[0], P[2][1] + n1[1]], [P[3][0] + n1[0], P[3][1] + n1[1]]];
+    }
+    function tangente(P, t) { var v = 1 - t; return [3 * (v * v * (P[1][0] - P[0][0]) + 2 * v * t * (P[2][0] - P[1][0]) + t * t * (P[3][0] - P[2][0])), 3 * (v * v * (P[1][1] - P[0][1]) + 2 * v * t * (P[2][1] - P[1][1]) + t * t * (P[3][1] - P[2][1]))]; }
+    function pugno(cx, cy) {   // canna: il pugno chiuso attorno all'impugnatura (le nocche lungo la canna, il pollice sopra)
+      var r = aw / 2 + 0.5, ps = Math.max(46, Math.min(80, 46 + 0.22 * (+opts.angolo || 0)));   // ps: quanto sale la canna (gradi), più alta col braccio alzato
+      function f(n) { return n.toFixed(1); }
+      return "<circle cx='" + f(cx) + "' cy='" + f(cy) + "' r='" + r + "' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1.3'/>" +
+        "<g transform='translate(" + f(cx) + "," + f(cy) + ") rotate(" + (-ps).toFixed(1) + ")'>" +
+        "<path d='M" + f(-r * 0.5) + "," + f(r * 0.18) + " L" + f(-r * 0.56) + "," + f(r * 0.78) + " M0," + f(r * 0.24) + " L0," + f(r * 0.86) + " M" + f(r * 0.5) + "," + f(r * 0.18) + " L" + f(r * 0.56) + "," + f(r * 0.78) + "' stroke='" + bP + "' stroke-width='.9' opacity='.5' stroke-linecap='round'/>" +
+        "<ellipse cx='" + f(r * 0.32) + "' cy='" + f(-r * 0.5) + "' rx='" + f(r * 0.56) + "' ry='" + f(r * 0.33) + "' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1'/></g>" +
+        "<ellipse cx='" + f(cx - r * 0.4) + "' cy='" + f(cy - r * 0.38) + "' rx='" + f(r * 0.28) + "' ry='" + f(r * 0.18) + "' fill='#fff' opacity='.3'/>";
+    }
     [1, -1].forEach(function (s) {
       var a = 100 + s * (ax - 100), h = 100 + s * (hx - 100), Pb = [[a, 166], [a - s * 12, 172], [h, 184], [h, 197]], d = curva(Pb);
       var alza = opts.braccia === "su" || (opts.braccia === "uno" && s === -1) ? (s === 1 ? 128 : -128) : 0, inizio = o.length;   // esulta: braccio (o braccia) in alto, un po' in fuori
-      o.push("<g class='om-braccio om-b" + (s === 1 ? 1 : 2) + "'" + (alza ? " transform='rotate(" + alza + " " + a.toFixed(1) + " 166)'" : "") + ">");   // gruppo a parte: nell'editor l'omino saluta
+      var giro = alza, posa = "", hc = h, hy = 204, E = null;   // posa "canna": il pugno tiene la canna; "seduto": la mano sul ginocchio (hc, hy), il gomito in E
+      if (canna && !alza && s === -1) { var u1 = Math.min(1, gC.rot / 90); posa = "canna"; giro = -gC.rot;   // alzandosi, il gomito passa sotto
+        Pb = [[a, 166], [a - s * (12 - 20 * u1), 172], [h + s * 6 * u1, 184], [h, 197]]; d = curva(Pb);
+      } else if (canna && !alza && !sed) giro = giroSx;
+      else if (sed && !alza) {   // seduto: dalla spalla scende al gomito, di fianco alla pancia, poi l'avambraccio viene avanti (di scorcio) e la mano si appoggia sulla coscia
+        var gs = geoSeduto(Mi), Hm = opts.spalle ? [100 - s * wa * 0.35, 190] : [100 - s * gs.mx, gs.my - SED_SU];   // di spalle la mano sta davanti alla pancia (non si vede)
+        E = opts.spalle ? [100 - s * (gs.ex - 2), 184] : [100 - s * gs.ex, gs.ey - SED_SU];   // di spalle il gomito un po' più su: sotto la maglia non deve spuntare niente
+        var vx = Hm[0] - E[0], vy = Hm[1] - E[1], vl = Math.hypot(vx, vy) || 1, P3 = [Hm[0] - vx / vl * 6.5, Hm[1] - vy / vl * 6.5], P1 = [a - s * 3, 180];
+        Pb = [[a, 166], P1, [(8 * E[0] - a - P3[0]) / 3 - P1[0], (8 * E[1] - 166 - P3[1]) / 3 - P1[1]], P3];   // passa dal gomito a metà
+        d = curva(Pb); posa = "seduto"; hc = Hm[0]; hy = Hm[1]; if (s === 1) manoSx = Hm;
+      }
+      o.push("<g class='om-braccio om-b" + (s === 1 ? 1 : 2) + "'" + (giro ? " transform='rotate(" + (+giro.toFixed(2)) + " " + a.toFixed(1) + " 166)'" : "") + ">");   // gruppo a parte: nell'editor l'omino saluta
       if (manica < 1) o.push("<path d='" + d + "' stroke='" + bP + "' stroke-width='" + (aw + 2) + "' stroke-linecap='round' fill='none'/>",
         "<path d='" + d + "' stroke='" + u("pl") + "' stroke-width='" + (aw - 1.5) + "' stroke-linecap='round' fill='none'/>");
       if (manica > 0) {
         var dm = curva(tratto(Pb, 0, manica)), orlo = curva(tratto(Pb, manica - 0.07, manica));
         o.push("<path d='" + dm + "' stroke='" + bMS + "' stroke-width='" + (aw + 3.5) + "' stroke-linecap='round' fill='none'/>",
           "<path d='" + dm + "' stroke='" + u(gilet ? "ms" : "m") + "' stroke-width='" + aw + "' stroke-linecap='round' fill='none'/>",
-          "<path d='" + curva(tratto([[Pb[0][0] - s * 4, 170], [Pb[1][0], 176], [h + s * 3, 184], [h + s * 3, 193]], 0, manica * 0.95)) + "' stroke='#fff' stroke-width='2.5' opacity='.16' fill='none' stroke-linecap='round'/>",
+          "<path d='" + curva(tratto(posa === "seduto" ? scosta(Pb, -aw * 0.22) : [[Pb[0][0] - s * 4, 170], [Pb[1][0], 176], [h + s * 3, 184], [h + s * 3, 193]], 0, manica * 0.95)) + "' stroke='#fff' stroke-width='2.5' opacity='.16' fill='none' stroke-linecap='round'/>",
           "<path d='" + orlo + "' stroke='" + tono(MS, -0.28) + "' stroke-width='" + (aw + 1) + "' stroke-linecap='round' fill='none'/>");
         if (c.capo === "sportiva") { var rs = chiaro(M) ? tono(M, -0.55) : "#ffffff";   // due righe lungo la manica, sul lato esterno
-          o.push("<path d='" + curva(tratto(Pb, 0.04, 0.9)) + "' transform='translate(" + (-s * aw * 0.3).toFixed(1) + ",0)' stroke='" + rs + "' stroke-width='1.6' fill='none' stroke-linecap='round'/>",
+          if (posa === "seduto") o.push("<path d='" + curva(tratto(scosta(Pb, -s * aw * 0.3), 0.04, 0.9)) + "' stroke='" + rs + "' stroke-width='1.6' fill='none' stroke-linecap='round'/>",
+            "<path d='" + curva(tratto(scosta(Pb, -s * aw * 0.1), 0.04, 0.9)) + "' stroke='" + rs + "' stroke-width='1.6' fill='none' stroke-linecap='round'/>");
+          else o.push("<path d='" + curva(tratto(Pb, 0.04, 0.9)) + "' transform='translate(" + (-s * aw * 0.3).toFixed(1) + ",0)' stroke='" + rs + "' stroke-width='1.6' fill='none' stroke-linecap='round'/>",
             "<path d='" + curva(tratto(Pb, 0.04, 0.9)) + "' transform='translate(" + (-s * aw * 0.1).toFixed(1) + ",0)' stroke='" + rs + "' stroke-width='1.6' fill='none' stroke-linecap='round'/>"); }
-        if (manica > 0.6) { var pe = dividi(Pb, 0.55)[0][3];
-          o.push("<path d='M" + (pe[0] - aw * 0.32).toFixed(1) + "," + (pe[1] - 1).toFixed(1) + " Q" + pe[0].toFixed(1) + "," + (pe[1] + 2.2).toFixed(1) + " " + (pe[0] + aw * 0.32).toFixed(1) + "," + (pe[1] - 1.5).toFixed(1) + "' stroke='" + bM + "' stroke-width='1.1' opacity='.4' fill='none' stroke-linecap='round'/>"); }
+        if (manica > 0.6) { var pe = dividi(Pb, posa === "seduto" ? 0.5 : 0.55)[0][3], tg = posa === "seduto" ? tangente(Pb, 0.5) : null;   // la piega al gomito (seduto: girata col braccio)
+          o.push("<path d='M" + (pe[0] - aw * 0.32).toFixed(1) + "," + (pe[1] - 1).toFixed(1) + " Q" + pe[0].toFixed(1) + "," + (pe[1] + 2.2).toFixed(1) + " " + (pe[0] + aw * 0.32).toFixed(1) + "," + (pe[1] - 1.5).toFixed(1) + "'" +
+            (tg ? " transform='rotate(" + (Math.atan2(tg[1], tg[0]) * 180 / Math.PI - 90).toFixed(1) + " " + pe[0].toFixed(1) + " " + pe[1].toFixed(1) + ")'" : "") + " stroke='" + bM + "' stroke-width='1.1' opacity='.4' fill='none' stroke-linecap='round'/>"); }
       }
-      o.push("<circle cx='" + h + "' cy='204' r='" + (aw / 2 + 0.5) + "' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1.3'/>",
+      if (posa === "canna" || (posa === "seduto" && opts.spalle)) o.push("</g>");   // canna: il pugno va disegnato dritto, fuori dal giro; seduto di spalle: le mani sono davanti, non si vedono
+      else if (posa === "seduto") { var f1 = function (n) { return n.toFixed(1); };
+        o.push("<circle cx='" + f1(hc) + "' cy='" + f1(hy) + "' r='" + (aw / 2 + 0.5) + "' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1.3'/>",
+          "<circle cx='" + f1(hc + s * (aw / 2 - 1)) + "' cy='" + f1(hy - 3) + "' r='" + (aw / 5 + 0.8) + "' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1'/>",
+          "<path d='M" + f1(hc - 2.2) + "," + f1(hy + 2.5) + " L" + f1(hc - 2.2) + "," + f1(hy + 4.5) + " M" + f1(hc + 0.8) + "," + f1(hy + 2.8) + " L" + f1(hc + 0.8) + "," + f1(hy + 4.8) + "' stroke='" + bP + "' stroke-width='.9' opacity='.55' stroke-linecap='round'/>", "</g>");
+      }
+      else o.push("<circle cx='" + h + "' cy='204' r='" + (aw / 2 + 0.5) + "' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1.3'/>",
         "<circle cx='" + (h + s * (aw / 2 - 1)) + "' cy='201' r='" + (aw / 5 + 0.8) + "' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1'/>",
         "<path d='M" + (h - 2.2) + ",206.5 L" + (h - 2.2) + ",208.5 M" + (h + 0.8) + ",206.8 L" + (h + 0.8) + ",208.8' stroke='" + bP + "' stroke-width='.9' opacity='.55' stroke-linecap='round'/>", "</g>");
+      if (posa === "canna") {   // il pugno; poi avambraccio e pugno ridisegnati sopra a tutto (capelli lunghi compresi), tagliati a metà braccio
+        o.push(pugno(gC.x, gC.y));
+        var tg0 = tangente(Pb, 0.5), pm = dividi(Pb, 0.5)[0][3], ar = -gC.rot * Math.PI / 180, cr = Math.cos(ar), sr = Math.sin(ar);
+        var Pm = [a + (pm[0] - a) * cr - (pm[1] - 166) * sr, 166 + (pm[0] - a) * sr + (pm[1] - 166) * cr], tl0 = Math.hypot(tg0[0], tg0[1]) || 1, Tc = [(tg0[0] * cr - tg0[1] * sr) / tl0, (tg0[0] * sr + tg0[1] * cr) / tl0], Nc = [-Tc[1], Tc[0]];
+        var qc = function (a0, b0) { return (Pm[0] + Nc[0] * a0 + Tc[0] * b0).toFixed(1) + "," + (Pm[1] + Nc[1] * a0 + Tc[1] * b0).toFixed(1); }, cid2 = id + "cn";
+        sopraTutto.push("<clipPath id='" + cid2 + "'><path d='M" + qc(300, 0) + " L" + qc(300, 300) + " L" + qc(-300, 300) + " L" + qc(-300, 0) + " Z'/></clipPath>", "<g clip-path='url(#" + cid2 + ")'>");
+        Array.prototype.push.apply(sopraTutto, o.slice(inizio)); sopraTutto.push("</g>");
+      }
+      if (posa === "seduto" && !opts.spalle) {   // l'avambraccio passa davanti alla pancia: lo ridisegno sopra al busto, tagliato al gomito
+        var tE = tangente(Pb, 0.5), tl = Math.hypot(tE[0], tE[1]) || 1, T0 = [tE[0] / tl, tE[1] / tl], N0 = [-T0[1], T0[0]], cid = id + "av" + (s === 1 ? 1 : 2);
+        var q = function (a0, b0) { return (E[0] + N0[0] * a0 + T0[0] * b0).toFixed(1) + "," + (E[1] + N0[1] * a0 + T0[1] * b0).toFixed(1); };
+        avambracci.push("<clipPath id='" + cid + "'><path d='M" + q(300, 0) + " L" + q(300, 300) + " L" + q(-300, 300) + " L" + q(-300, 0) + " Z'/></clipPath>", "<g clip-path='url(#" + cid + ")'>");
+        Array.prototype.push.apply(avambracci, o.slice(inizio)); avambracci.push("</g>");
+      }
       if (alza) Array.prototype.push.apply(bracciaSopra, o.splice(inizio));   // alzato: lo tolgo da qui, va disegnato per ultimo
     });
     // quello che si tiene in mano (a sinistra nel disegno) va nel gruppo del braccio: dondola con lui camminando e sale se il braccio è alzato
@@ -819,8 +1078,10 @@
     var manoSu = [ax + mdx * Math.cos(aR) - mdy * Math.sin(aR), 166 + mdx * Math.sin(aR) + mdy * Math.cos(aR)];   // dove arriva la mano alzata
     function inMano(k, alto) {   // alto: quanto sale l'oggetto sopra la mano (il palloncino col filo: se serve si accorcia, per restare nel disegno)
       var pz = o.splice(k), kv = alto ? Math.min(1, (manoSu[1] - (opts.busto ? 20 : 6)) / alto) : 1;
-      pz.unshift("<g class='om-b1'" + (alzaMano ? " transform='translate(" + manoSu[0].toFixed(1) + "," + manoSu[1].toFixed(1) + ") scale(1," + kv.toFixed(3) + ") translate(" + (-hx) + ",-204)'" : "") + ">"); pz.push("</g>");
-      Array.prototype.push.apply(alzaMano ? bracciaSopra : o, pz);
+      var sp = alzaMano ? "" : (manoSx ? " transform='translate(" + (manoSx[0] - hx).toFixed(1) + "," + (manoSx[1] - 204).toFixed(1) + ")'" : (giroSx ? " transform='rotate(" + giroSx.toFixed(2) + " " + ax.toFixed(1) + " 166)'" : ""));   // seduto: sulla mano al ginocchio; canna: col braccio che si apre
+      pz.unshift("<g class='om-b1'" + (alzaMano ? " transform='translate(" + manoSu[0].toFixed(1) + "," + manoSu[1].toFixed(1) + ") scale(1," + kv.toFixed(3) + ") translate(" + (-hx) + ",-204)'" : sp) + ">"); pz.push("</g>");
+      if (sed && opts.spalle && !alzaMano) o.splice.apply(o, [iDietro, 0].concat(pz));   // seduto di spalle: la mano è davanti alla pancia, l'oggetto spunta (se spunta) da dietro al corpo
+      else Array.prototype.push.apply(alzaMano ? bracciaSopra : o, pz);
     }
     // busto: maglia con scollo, pieghe, cuciture e orlo
     var tor = donna
@@ -1101,7 +1362,7 @@
       opts.spalle ? "" : "<path d='M" + x(he - 7) + "," + (Y - 7) + " L" + x(he + 10) + "," + (Y - 7) + "' stroke='" + bB + "' stroke-width='1' opacity='.6'/>",   // patta e chiusura: solo davanti
       opts.spalle ? "" : "<circle cx='" + x(he + 1.5) + "' cy='" + (Y - 5) + "' r='1.2' fill='" + u("oro") + "'/>", "<rect x='" + x(he - 5.5) + "' y='" + (Y - 10.5) + "' width='5' height='2' rx='1' fill='#fff' opacity='.3'/>");
     var iBs = o.length;
-    if (c.borsa === "borsetta" && !opts.busto && (c.mano === "nessuno" || c.mano === "pallone")) o.push("<path d='M" + (hR - 5) + ",212 Q" + (hR - 5) + ",200 " + hR + ",200 Q" + (hR + 5) + ",200 " + (hR + 5) + ",212' stroke='" + bB + "' stroke-width='1.8' fill='none'/>",   // borsetta tenuta in mano
+    if (c.borsa === "borsetta" && !opts.busto && (c.mano === "nessuno" || c.mano === "pallone") && !(sed && opts.spalle)) o.push("<path d='M" + (hR - 5) + ",212 Q" + (hR - 5) + ",200 " + hR + ",200 Q" + (hR + 5) + ",200 " + (hR + 5) + ",212' stroke='" + bB + "' stroke-width='1.8' fill='none'/>",   // borsetta tenuta in mano
       "<path d='M" + (hR - 9) + ",211 L" + (hR + 9) + ",211 L" + (hR + 10.5) + ",225 Q" + hR + ",227.5 " + (hR - 10.5) + ",225 Z' fill='" + CB + "' stroke='" + bB + "' stroke-width='1.1' stroke-linejoin='round'/>",
       "<path d='M" + (hR - 9) + ",215 Q" + hR + ",219 " + (hR + 9) + ",215' stroke='" + bB + "' stroke-width='1' fill='none' opacity='.6'/>",
       "<circle cx='" + hR + "' cy='217.5' r='1.3' fill='" + u("oro") + "'/>", "<path d='M" + (hR - 7) + ",213 L" + (hR - 7.5) + ",222' stroke='#fff' stroke-width='1.5' opacity='.3' stroke-linecap='round'/>",
@@ -1761,7 +2022,7 @@
     function Xs(s, v) { return (100 - s * (100 - v)).toFixed(1); }   // s = 1 lato sinistro del disegno, -1 destro (specchiato)
     if (sch !== "nessuna") dietro.push("<defs>" + lin("csch", 0.2, 1, [[0, tono(CS, 0.2)], [0.5, CS], [1, tono(CS, -0.38)]]) + "</defs>");
     if (sch === "mantello") {   // mantello che scende dalle spalle, con le pieghe
-      var mL = 100 - sh + 3, mR = 100 + sh - 3, cL = 100 - he - 24, cR = 100 + he + 24, fm = opts.busto ? 200 : 238;
+      var mL = 100 - sh + 3, mR = 100 + sh - 3, cL = 100 - he - 24, cR = 100 + he + 24, fm = opts.busto ? 200 : (sed ? SED_Y + 4 - SED_SU : 238);   // seduto: si appoggia sulla seduta
       dietro.push("<path d='M" + mL + ",156 Q100,146 " + mR + ",156 C" + (mR + 14) + ",180 " + (cR - 2) + ",210 " + cR + "," + fm +
         " Q" + (100 + (he + 24) * 0.5) + "," + (fm - 6) + " 100," + fm + " Q" + (100 - (he + 24) * 0.5) + "," + (fm - 6) + " " + cL + "," + fm +
         " C" + (cL + 2) + ",210 " + (mL - 14) + ",180 " + mL + ",156 Z' fill='" + u("csch") + "' stroke='" + bCS + "' stroke-width='1.6' stroke-linejoin='round'/>",
@@ -1789,7 +2050,7 @@
     });
     if (sch === "zaino") dietro.push("<rect x='" + (100 - sh - 12) + "' y='138' width='" + (2 * sh + 24) + "' height='70' rx='16' fill='" + u("csch") + "' stroke='" + bCS + "' stroke-width='1.6'/>",   // lo zaino spunta dietro alle spalle
       "<path d='M" + (100 - sh + 2) + ",150 Q100,143 " + (100 + sh - 2) + ",150' stroke='" + tono(CS, -0.25) + "' stroke-width='3.5' fill='none' stroke-linecap='round'/>");
-    if (sch === "chitarra") dietro.push("<g transform='rotate(38 100 190)'>",   // chitarra a tracolla: manico dietro la spalla, cassa sul fianco
+    if (sch === "chitarra") dietro.push("<g transform='" + (sed ? (opts.spalle ? "translate(0,-26) " : "translate(0,-14) ") : "") + "rotate(38 100 190)'>",   // chitarra a tracolla: manico dietro la spalla, cassa sul fianco (seduto: più su, sopra la seduta; di spalle la cassa non deve scendere sotto il sedere)
       "<rect x='95.5' y='112' width='9' height='92' rx='2' fill='#5a3a22' stroke='#2e1c0f' stroke-width='1'/>",
       "<path d='M97.5,116 L97.5,200 M100,116 L100,200 M102.5,116 L102.5,200' stroke='#e6dcc8' stroke-width='.5' opacity='.8'/>",
       "<path d='M93,96 L107,96 L106,116 L94,116 Z' fill='#2e1c0f'/>", "<circle cx='92' cy='101' r='1.8' fill='#d0d4da'/><circle cx='92' cy='109' r='1.8' fill='#d0d4da'/><circle cx='108' cy='101' r='1.8' fill='#d0d4da'/><circle cx='108' cy='109' r='1.8' fill='#d0d4da'/>",
@@ -1807,6 +2068,8 @@
     });
     if (sch === "chitarra" && !opts.spalle) o.push("<path d='M" + (100 + sh - 7) + ",158 L" + (100 - he + 5) + "," + (Y - 2) + "' stroke='#4a2a12' stroke-width='4.5' stroke-linecap='round'/>",
       "<path d='M" + (100 + sh - 7) + ",158 L" + (100 - he + 5) + "," + (Y - 2) + "' stroke='#c77a3a' stroke-width='1.3' stroke-dasharray='3 3' stroke-linecap='round'/>");
+
+    if (avambracci.length) o.push.apply(o, avambracci);   // seduto: gli avambracci sopra alla pancia, alla tracolla e agli spallacci
 
     // ---------- in mano (la mano a sinistra del disegno; l'altra saluta nell'editor) ----------
     var mn = c.mano, hH = hx, hr = aw / 2 + 0.5, strinto = true;
@@ -1873,7 +2136,7 @@
     if (strinto) o.push("<circle cx='" + hH + "' cy='204' r='" + hr + "' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1.3'/>",   // le dita chiuse sopra l'oggetto
       "<circle cx='" + (hH + (aw / 2 - 1)) + "' cy='201' r='" + (aw / 5 + 0.8) + "' fill='" + u("p") + "' stroke='" + bP + "' stroke-width='1'/>");
     if (o.length > iM) inMano(iM, mn === "palloncino" ? 148 : 0);   // l'oggetto segue la mano quando il braccio dondola (o si alza)
-    if (mn === "pallone" && !opts.busto) o.push("<g transform='translate(" + (hH - 12) + ",243) scale(1.3) translate(" + (12 - hH) + ",-243)'>","<circle cx='" + (hH - 12) + "' cy='243' r='10.5' fill='#ffffff' stroke='#2b2b33' stroke-width='1.2'/>",   // il pallone appoggiato a terra, vicino ai piedi
+    if (mn === "pallone" && !opts.busto) o.push("<g transform='" + (sed ? "translate(0," + (-SED_SU) + ") " : "") + "translate(" + (hH - 12) + ",243) scale(1.3) translate(" + (12 - hH) + ",-243)'>","<circle cx='" + (hH - 12) + "' cy='243' r='10.5' fill='#ffffff' stroke='#2b2b33' stroke-width='1.2'/>",   // il pallone appoggiato a terra, vicino ai piedi
       "<path d='M" + (hH - 12) + ",238.5 L" + (hH - 7.7) + ",241.6 L" + (hH - 9.4) + ",246.6 L" + (hH - 14.6) + ",246.6 L" + (hH - 16.3) + ",241.6 Z' fill='#2b2b33'/>",
       "<path d='M" + (hH - 12) + ",238.5 L" + (hH - 12) + ",233 M" + (hH - 7.7) + ",241.6 L" + (hH - 2.5) + ",240 M" + (hH - 9.4) + ",246.6 L" + (hH - 6.2) + ",251 M" + (hH - 14.6) + ",246.6 L" + (hH - 17.8) + ",251 M" + (hH - 16.3) + ",241.6 L" + (hH - 21.5) + ",240' stroke='#2b2b33' stroke-width='1'/>",
       "<ellipse cx='" + (hH - 15.5) + "' cy='237.5' rx='3.2' ry='2' fill='#fff' opacity='.8'/>", "</g>");
@@ -1944,7 +2207,7 @@
       "<path d='M170,234 Q169,229 172,227 M172,234 Q173,229 176,229' stroke='#e0a800' stroke-width='1.2' fill='none' stroke-linecap='round'/>",
       "<circle cx='168.5' cy='241' r='1.6' fill='#2a1a12'/>", "<circle cx='175.5' cy='241' r='1.6' fill='#2a1a12'/>", "<circle cx='168' cy='240.5' r='.5' fill='#fff'/>", "<circle cx='175' cy='240.5' r='.5' fill='#fff'/>",
       "<path d='M170,244 L174,244 L172,247 Z' fill='#f76707'/>", "<ellipse cx='167' cy='245.5' rx='2' ry='1.2' fill='#ff8787' opacity='.5'/><ellipse cx='177' cy='245.5' rx='2' ry='1.2' fill='#ff8787' opacity='.5'/>");
-    if (an !== "nessuno" && an !== "pappagallo" && !opts.busto) { var kA = an === "pulcino" ? 1.5 : 1.2; o.splice(iA, 0, "<g transform='translate(172,255) scale(" + kA + ") translate(-172,-255)'>"); o.push("</g>"); }
+    if (an !== "nessuno" && an !== "pappagallo" && !opts.busto) { var kA = an === "pulcino" ? 1.5 : 1.2; o.splice(iA, 0, "<g transform='" + (sed ? "translate(0," + (-SED_SU) + ") " : "") + "translate(172,255) scale(" + kA + ") translate(-172,-255)'>"); o.push("</g>"); }   // seduto: resta a terra
     if (an === "pappagallo") {   // pappagallo sulla spalla destra del disegno
       var qx = Math.max(100 + sh + 4, 140), qy = 164;
       o.push("<path d='M" + (qx + 1) + "," + (qy - 8) + " Q" + (qx + 6) + "," + (qy + 12) + " " + (qx + 4) + "," + (qy + 30) + " L" + (qx + 9) + "," + (qy + 28) + " Q" + (qx + 10) + "," + (qy + 10) + " " + (qx + 5) + "," + (qy - 8) + " Z' fill='#1c7ed6' stroke='#0b4a8b' stroke-width='1'/>",
@@ -1956,6 +2219,8 @@
         opts.spalle ? "" : "<path d='M" + (qx - 6) + "," + (qy - 33) + " Q" + (qx - 14) + "," + (qy - 32) + " " + (qx - 12) + "," + (qy - 24) + " Q" + (qx - 10) + "," + (qy - 28) + " " + (qx - 6) + "," + (qy - 27) + " Z' fill='#495057' stroke='#212529' stroke-width='.8' stroke-linejoin='round'/>",
         "<path d='M" + (qx - 3) + "," + qy + " l-2,2 M" + (qx + 3) + "," + qy + " l2,2' stroke='#868e96' stroke-width='1.6' stroke-linecap='round'/>");
     }
+    if (sopraTutto.length) o.push.apply(o, sopraTutto);   // canna: avambraccio e pugno davanti a tutto
+    if (sed) { o.push("</g>"); if (bracciaSopra.length) { bracciaSopra.unshift("<g transform='translate(0," + SED_SU + ")'>"); bracciaSopra.push("</g>"); } }   // fine spostamento del seduto (anche le braccia alzate)
     o.push("</g>");   // fine om-tutto
     // busto (tondini): inquadratura che segue la grandezza della testa, così la faccia resta grande
     var vb = opts.busto ? [100 - 89 * kT, 150 - 156 * kT, 178 * kT, 182 * kT].map(function (n) { return n.toFixed(1); }).join(" ") : (opts.gambe ? "40 150 120 112" : (opts.viso ? "60 74 80 80" : "0 0 200 264"));   // gambe: inquadratura sui pantaloni; viso: primo piano (per il trucco)
@@ -1976,6 +2241,15 @@
   }
 
   function el(cfg, opts) { var s = document.createElement("span"); s.className = "omino-box"; s.innerHTML = svg(cfg, opts); return s; }
+  // dove sta la mano a destra nel disegno (coordinate 200×264): con { braccia: "canna", angolo } è il centro del pugno, dove si attacca la canna
+  function mano(cfg, opts) {
+    opts = opts || {};
+    var c = norm(cfg), m = misure(c), sed = !!opts.seduto && !opts.busto && !opts.gambe && !opts.viso, p;
+    if (opts.braccia === "canna") { var g = geoCanna(m, opts.angolo); p = [g.x, g.y + (sed ? SED_SU : 0)]; }
+    else if (sed && !opts.spalle && opts.braccia !== "su" && opts.braccia !== "uno") { var gs = geoSeduto(m); p = [100 + gs.mx, gs.my]; }
+    else p = [200 - m.hx, 204 + (sed ? SED_SU : 0)];
+    return { x: +p[0].toFixed(2), y: +p[1].toFixed(2) };
+  }
 
   // ---- maschio / femmina ben distinti ----
   // tagli tipici: gli avatar a caso li rispettano, e cambiando forma nell'editor il taglio si adatta
@@ -2057,6 +2331,6 @@
       colCollo: pick(OPZ.colCollo) };
   }
 
-  window.SGOmino = { svg: svg, el: el, casuale: casuale, norm: norm, OPZ: OPZ, BASE: BASE, NOMI: NOMI, NOMI_K: NOMI_K, LIBERI: LIBERI, BLOCCATI: BLOCCATI, SOLO_DONNA: SOLO_DONNA, GRUPPI_CAPELLI: GRUPPI_CAPELLI,
+  window.SGOmino = { svg: svg, el: el, mano: mano, casuale: casuale, norm: norm, OPZ: OPZ, BASE: BASE, NOMI: NOMI, NOMI_K: NOMI_K, LIBERI: LIBERI, BLOCCATI: BLOCCATI, SOLO_DONNA: SOLO_DONNA, GRUPPI_CAPELLI: GRUPPI_CAPELLI,
     adattaForma: adattaForma, formaDaNome: formaDaNome, CAPELLI_UOMO: CAPELLI_UOMO };
 })();

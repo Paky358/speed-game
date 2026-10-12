@@ -343,7 +343,7 @@
     // ---- l'avatar: davanti quando viene verso di te, di spalle quando va verso il fondo ----
     function immagine(cfg, o) { var im = new Image(); try { im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGOmino.svg(cfg, o || {})); } catch (e) {} im.onload = function () { sporco = true; }; return im; }
     var mio = opts.omino && window.SGOmino ? opts.omino : (window.SGOmino ? SGOmino.casuale(opts.nome || "Io") : null);
-    var IM = mio ? { davanti: [immagine(mio), immagine(mio, { cammina: true })], dietro: [immagine(mio, { spalle: true }), immagine(mio, { spalle: true, cammina: true })] } : null;
+    var IM = mio ? { davanti: [immagine(mio), immagine(mio, { cammina: true })], dietro: [immagine(mio, { spalle: true }), immagine(mio, { spalle: true, cammina: true })], seduto: [immagine(mio, { seduto: true }), immagine(mio, { seduto: true, spalle: true })] } : null;
     var av = { u: 5.5, v: 9.6, fw: [0, 1], strada: [], t: 0, fa: null, ft: 0, poi: null };   // fw: dove guarda (direzione nel mondo)
     if (opts.daCasa) { av.fa = "esce"; av.strada = [{ u: 5.5, v: 10.3 }]; }          // esci dalla porta di casa
     else { av.u = 5.9; av.v = D.h + .6; av.strada = [{ u: 5.9, v: D.h - 1.4 }]; }   // dalla città: arrivi dal marciapiede ed entri dal cancello
@@ -992,11 +992,11 @@
     var FIGLI = {}, figliRet = [], luciOgg = [];   // luciOgg: le luci dei mobili da accendere di notte (si rifà a ogni disegno)
     function disegnaOgg(x) {
       var o = x.o, dv = ((o.d || 0) + VR) % 4, siede = av.siede && av.siede.o === o, verso = dv === 0 || dv === 3;   // verso: il davanti guarda verso di te
-      if (siede && !av.siede.dorme && !verso) disegnaSeduto(o, false);   // seduto di spalle: lo schienale gli passa davanti
+      if (siede && !av.siede.dorme && !verso) disegnaSeduto(o);   // seduto di spalle: lo schienale gli passa davanti
       disegnaPezzo(x);
       (FIGLI[o.k] || []).slice().sort(function (a, b) { var p = rv(a.c + .5, a.r + .5), q = rv(b.c + .5, b.r + .5); return p[0] + p[1] - q[0] - q[1]; })
         .forEach(function (f) { var y = { o: f, alza: pianoDi(o) }; disegnaPezzo(y); figliRet.push(y); });
-      if (siede) { if (av.siede.dorme) disegnaDorme(o); else if (verso) disegnaSeduto(o, true); }
+      if (siede) { if (av.siede.dorme) disegnaDorme(o); else if (verso) disegnaSeduto(o); }
     }
     function disegnaPezzo(x) {   // un oggetto in piedi (alza = sollevato sopra un ripiano)
       var o = x.o, f = fpMondo(o), dv = ((o.d || 0) + VR) % 4, dietro = dv === 1 || dv === 2, specchio = dv === 1 || dv === 3;
@@ -1141,15 +1141,14 @@
         }
       }
     }
-    function disegnaSeduto(o, davanti) {   // seduto: le anche all'altezza del sedile; se guarda verso di te le gambe restano "dentro" il mobile
+    function disegnaSeduto(o) {   // seduto davvero (a corpo intero): nel disegno dell'avatar seduto la seduta tocca a y=198 su 264
       if (!IM) return;
       var mi = infoMobile(o.t) || {}, k = TW / 100, p = pw(av.u, av.v), h = TW * 1.3, w = h / 1.3, fv = vecV(av.fw[0], av.fw[1]);
-      var dietro = fv[0] + fv[1] < -1e-3, specchio = fv[0] - fv[1] < -1e-3, im = (dietro ? IM.dietro : IM.davanti)[0];
+      var dietro = fv[0] + fv[1] < -1e-3, specchio = fv[0] - fv[1] < -1e-3, im = IM.seduto[dietro ? 1 : 0];
+      if (!pronta(im)) im = (dietro ? IM.dietro : IM.davanti)[0];
       if (!pronta(im)) return;
-      var anca = p.y - (mi.seduta || 26) * k, cima = anca - h * .6;
-      ctx.save();
-      if (davanti) { ctx.beginPath(); ctx.rect(p.x - w, cima - h, w * 2, anca - cima + h + 3 * k); ctx.clip(); }
-      ctx.translate(p.x, cima); if (specchio) ctx.scale(-1, 1); ctx.drawImage(im, -w / 2, 0, w, h); ctx.restore();
+      var sed = p.y - (mi.seduta || 26) * k;
+      ctx.save(); ctx.translate(p.x, sed - h * 198 / 264); if (specchio) ctx.scale(-1, 1); ctx.drawImage(im, -w / 2, 0, w, h); ctx.restore();
     }
     function disegnaDorme(o) {   // a letto: la testa sul cuscino (dal lato dei piedi del letto si vede la nuca), e le "z"
       if (!IM) return;
