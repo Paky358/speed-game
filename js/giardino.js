@@ -55,6 +55,8 @@
   var FP = { fontana: [2, 2], altalena: [2, 1], casa: [4, 4] };
   var TERRA = { vialetto: 1, ghiaia: 1 };
   var ALLARGA = [{ a: 16, prezzo: 2000 }, { a: 20, prezzo: 5000 }, { a: 24, prezzo: 10000 }];   // il terreno si allarga verso di te
+  var STILI_PREZZO = { casetta: 0, cottage: 6000, baita: 9000, mediterranea: 12000, moderna: 16000, villa: 25000 };   // le case (disegni in js/case-arte.js)
+  var PREZZO_COLORE = { muri: 600, tetto: 500, infissi: 300 };   // ridipingere la casa: si paga ogni cambio
 
   // ---------- attrezzi ----------
   function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
@@ -102,6 +104,16 @@
     return (cacheArte[k] = { im: im, info: inf });
   }
 
+  function arteCasa(cs, notte) {   // la casa del giocatore: stile e colori scelti (js/case-arte.js); se manca, la casa di riserva
+    var C = window.SGCaseArte, st = (cs && cs.stile) || "casetta", inf = C && C.info ? C.info(st) : null;
+    if (!inf) return arte("casa", { notte: notte });
+    var k = "casa|" + st + "|" + (cs.muri || "") + "|" + (cs.tetto || "") + "|" + (cs.infissi || "") + (notte ? "|n" : "");
+    if (cacheArte[k] !== undefined) return cacheArte[k];
+    var im = new Image(); im.onload = function () { if (quandoPronta) quandoPronta(); };
+    try { im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(C.svg(st, { notte: !!notte, muri: cs.muri || null, tetto: cs.tetto || null, infissi: cs.infissi || null })); } catch (e) { cacheArte[k] = null; return null; }
+    return (cacheArte[k] = { im: im, info: inf });
+  }
+
   // =========================================================
   //  LA SCHERMATA DEL GIARDINO
   // =========================================================
@@ -110,6 +122,7 @@
     AUDIO = opts.audio || null;
     var D = opts.dati && opts.dati.v ? opts.dati : datiIniziali();
     D.ogg = D.ogg || []; D.baule = D.baule || {}; D.cesto = D.cesto || {}; D.w = D.w || 12; D.h = D.h || 12; D.ultimo = D.ultimo || D.ogg.length;
+    D.casa = D.casa || { stile: "casetta", stili: ["casetta"] };   // la casa vista da fuori: stile in uso, stili comprati, colori (null = quelli originali)
     var tSalva = null;
     function salva() { clearTimeout(tSalva); tSalva = setTimeout(function () { if (opts.salva) opts.salva(D); }, 400); }
     function monete() { return opts.monete ? opts.monete() : 0; }
@@ -307,7 +320,7 @@
       var g = griglia(x, y), c = Math.floor(g.c), r = Math.floor(g.r);
       if (posa) return posaQui(c, r);
       var o = cosaQui(x, y);
-      if (sistema) { scegli(o && o.t !== "casa" ? o : null); return; }
+      if (sistema) { if (o && o.t === "casa") { scegli(null); provaCasa = null; return facciata("stile"); } scegli(o); return; }
       if (o && o.t === "casa") { vibra(10); return vaiAllaPorta(); }
       if (o) { vibra(10); return vaiAOggetto(o); }
       if (c >= CASA.c && c < CASA.c + CASA.n && r >= CASA.r && r < CASA.r + CASA.m) { vibra(10); return vaiAllaPorta(); }
@@ -407,7 +420,7 @@
     function vivaio() {
       if (sistema) modoSistema(false);
       var schede = el("div", "gd-schede"), lista = el("div", "gd-griglia"), nodi = [schede, lista];
-      NEGOZIO.concat([{ cat: "Terreno" }]).forEach(function (g, i) { var b = el("button", "gd-scheda" + (i === catVivaio ? " on" : ""), g.cat); b.onclick = function () { vibra(8); catVivaio = i; vivaio(); }; schede.appendChild(b); });
+      NEGOZIO.concat([{ cat: "Terreno" }, { cat: "🏠 Casa", casa: true }]).forEach(function (g, i) { var b = el("button", "gd-scheda" + (i === catVivaio ? " on" : ""), g.cat); b.onclick = function () { vibra(8); if (g.casa) { provaCasa = null; return facciata("stile"); } catVivaio = i; vivaio(); }; schede.appendChild(b); });
       var g = NEGOZIO[catVivaio];
       if (g) g.voci.forEach(function (v) {
         var b = el("button", "gd-voce"), nm = ALBERI[v.t] ? "albero_" + v.t + "_2" : v.t === "orto" ? "orto_carota_2" : v.t;
@@ -430,6 +443,59 @@
       finestra("🌱 Vivaio", nodi, [{ testo: "Chiudi", fn: chiudiSopra }], "gd-larga");
     }
 
+    // ---- "La tua casa": cambiare stile (si compra una volta, poi si cambia gratis) e ridipingere muri, tetto e infissi ----
+    var provaCasa = null;   // la scelta che stai guardando, non ancora comprata: { campo: "stile"|"muri"|"tetto"|"infissi", val }
+    function figuraCasa(cs, cls) {
+      var C = window.SGCaseArte, i = el("img", cls || "gd-casa-fig"); i.alt = "";
+      try { if (C && C.info(cs.stile)) i.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(C.svg(cs.stile, { muri: cs.muri || null, tetto: cs.tetto || null, infissi: cs.infissi || null })); } catch (e) {}
+      return i;
+    }
+    function facciata(tab) {
+      var C = window.SGCaseArte, cs = D.casa, nodi = [], tasti = [];
+      if (!C) return finestra("🏠 La tua casa", [el("p", "gd-frase", "Le case nuove arrivano presto! 🏗️")], [{ testo: "Chiudi", fn: chiudiSopra }]);
+      if (tab && tab !== facciata.tab) provaCasa = null;
+      facciata.tab = tab = tab || facciata.tab || "stile";
+      var vista = { stile: cs.stile, muri: cs.muri || null, tetto: cs.tetto || null, infissi: cs.infissi || null };
+      if (provaCasa) vista[provaCasa.campo] = provaCasa.val;
+      nodi.push(figuraCasa(vista));
+      var schede = el("div", "gd-schede"); nodi.push(schede);
+      [["stile", "Stile"], ["muri", "Muri"], ["tetto", "Tetto"], ["infissi", "Infissi"]].forEach(function (t) {
+        var b = el("button", "gd-scheda" + (t[0] === tab ? " on" : ""), t[1]); b.onclick = function () { vibra(8); facciata(t[0]); }; schede.appendChild(b);
+      });
+      if (tab === "stile") {
+        var lista = el("div", "gd-griglia"); nodi.push(lista);
+        C.stili().forEach(function (s) {
+          var mio = cs.stili.indexOf(s.id) >= 0, b = el("button", "gd-voce" + (vista.stile === s.id ? " on" : ""));
+          b.appendChild(figuraCasa({ stile: s.id, muri: cs.muri, tetto: cs.tetto, infissi: cs.infissi }, "gd-fig")); b.lastChild.style.width = "72px"; b.lastChild.style.height = "60px";
+          b.appendChild(el("b", null, s.nome)); b.appendChild(el("small", null, cs.stile === s.id ? "✓ in uso" : mio ? "è tua" : "🪙 " + cifre(STILI_PREZZO[s.id] || 0)));
+          b.onclick = function () { vibra(8); provaCasa = s.id === cs.stile ? null : { campo: "stile", val: s.id }; facciata(); };
+          lista.appendChild(b);
+        });
+      } else {
+        var tinte = el("div", "gd-tinte"), scelta = vista[tab], nomeT = "originale";
+        [{ id: null, nome: "originale" }].concat(C.colori[tab] || []).forEach(function (t) {
+          var b = el("button", "gd-tinta" + (t.id ? "" : " orig") + (scelta === t.id ? " on" : "")); b.setAttribute("aria-label", t.nome);
+          if (t.id) b.style.background = t.c; if (scelta === t.id) nomeT = t.nome;
+          b.onclick = function () { vibra(8); provaCasa = t.id === (cs[tab] || null) ? null : { campo: tab, val: t.id }; facciata(); };
+          tinte.appendChild(b);
+        });
+        nodi.push(tinte, el("p", "gd-nota", { muri: "Muri", tetto: "Tetto", infissi: "Porta e finestre" }[tab] + ": " + nomeT));
+      }
+      if (provaCasa) {   // il tasto per comprare quello che stai guardando
+        var p = provaCasa, prezzo = p.campo === "stile" ? (cs.stili.indexOf(p.val) >= 0 ? 0 : STILI_PREZZO[p.val] || 0) : PREZZO_COLORE[p.campo], ok = monete() >= prezzo;
+        var testo = p.campo === "stile" ? (prezzo ? "Compra questa casa · 🪙 " + cifre(prezzo) : "Torna a questa casa") : "Ridipingi · 🪙 " + cifre(prezzo);
+        tasti.push({ testo: ok ? testo : "Ti mancano 🪙 " + cifre(prezzo - monete()), cls: "btn-primario", off: !ok, fn: function () {
+          if (monete() < prezzo) return;
+          if (prezzo && opts.spendi) opts.spendi(prezzo);
+          if (p.campo === "stile") { if (cs.stili.indexOf(p.val) < 0) cs.stili.push(p.val); cs.stile = p.val; } else cs[p.campo] = p.val;
+          provaCasa = null; salva(); aggTesta(); if (prezzo) suonoMonete(); else suonoPosa(); sporco = true;
+          dimmi(p.campo === "stile" ? (prezzo ? "Che bella casa nuova! 🏡" : "Fatto! 🏡") : "Ridipinta! 🎨"); facciata();
+        } });
+      }
+      tasti.push({ testo: "Chiudi", fn: function () { provaCasa = null; chiudiSopra(); } });
+      finestra("🏠 La tua casa", nodi, tasti, "gd-larga");
+    }
+
     // ---- "Sistema": scegli, sposti col dito, metti nel baule o rivendi; e il baule per rimettere le cose ----
     var sistema = false, scelto = null, fantasma = null, posa = null, posaDaSis = false;   // posaDaSis: finito di posare si torna a "Sistema"
     function modoSistema(on) {
@@ -443,7 +509,7 @@
       if (posa) { barraSis.appendChild(el("span", "gd-sis-t", TERRA[posa] ? "Tocca le mattonelle dove mettere: " + NOME[posa].toLowerCase() : "Tocca dove mettere: " + (NOME[posa] || "").toLowerCase()));
         var bF = el("button", "gd-sis-b", TERRA[posa] ? "✅ Fatto" : "✖ Annulla"); bF.onclick = function () { vibra(8); finePosa(); }; barraSis.appendChild(bF); return; }
       if (!sistema) return;
-      if (!scelto) { barraSis.appendChild(el("span", "gd-sis-t", "Tocca una cosa per spostarla")); var bB = el("button", "gd-sis-b", "🎒 Baule" + (contaBaule() ? " (" + contaBaule() + ")" : "")); bB.onclick = function () { vibra(8); baule(); }; barraSis.appendChild(bB); return; }
+      if (!scelto) { barraSis.appendChild(el("span", "gd-sis-t", "Tocca una cosa per spostarla, o la casa per abbellirla")); var bB = el("button", "gd-sis-b", "🎒 Baule" + (contaBaule() ? " (" + contaBaule() + ")" : "")); bB.onclick = function () { vibra(8); baule(); }; barraSis.appendChild(bB); return; }
       barraSis.appendChild(el("span", "gd-sis-t", (NOME[scelto.t] || "") + " · trascina col dito per spostare"));
       var bM = el("button", "gd-sis-b", "🎒"); bM.setAttribute("aria-label", "Nel baule");
       bM.onclick = function () { vibra(10); if (scelto.t === "orto" && scelto.pianta) { dimmi("Prima raccogli quello che c'è 🌱"); return; } togli(scelto); D.baule[scelto.t] = (D.baule[scelto.t] || 0) + 1; scegli(null); salva(); };
@@ -544,7 +610,7 @@
       ordinati.forEach(function (x) {
         if (x.avatar) return disegnaAvatar();
         var o = x.o, f = fpDi(o.t), ce = proj(o.c + f[0] / 2, o.r + f[1] / 2), nome = o.t === "casa" ? "casa" : nomeArte(o);
-        var a = arte(nome, { notte: FASE === "notte" && (o.t === "casa" || o.t === "lampione") });
+        var a = o.t === "casa" ? arteCasa(D.casa, FASE === "notte") : arte(nome, { notte: FASE === "notte" && o.t === "lampione" });
         if (x.fantasma) ctx.globalAlpha = libero(o.t, o.c, o.r, o.salta) ? .65 : .3;
         if (sistema && scelto === o) { ctx.fillStyle = "rgba(255,224,102,.45)"; romboSchermo(o.c, o.r, f[0], f[1]); ctx.fill(); }
         if (a && a.im.complete && a.im.naturalWidth) { x.ret = { x: ce.x - a.info.ax * k, y: ce.y - a.info.ay * k, w: a.info.w * k, h: a.info.h * k }; ctx.drawImage(a.im, x.ret.x, x.ret.y, x.ret.w, x.ret.h); }
@@ -683,7 +749,8 @@
       // l'arte arriva un po' dopo (immagini): quando è pronta si ridisegna
       setTimeout(function () { sfondo = null; sporco = true; }, 300); setTimeout(function () { sfondo = null; sporco = true; }, 1200);
       var pronti = D.ogg.filter(maturo).length, assetati = D.ogg.filter(sete).length;
-      if (pronti) dimmi("Ci sono " + pronti + (pronti === 1 ? " pianta pronta" : " piante pronte") + " da raccogliere! 🧺");
+      if (!D.visto) { D.visto = 1; salva(); dimmi("Benvenuto nel tuo giardino! Tocca il germoglio per annaffiarlo 💧"); }
+      else if (pronti) dimmi("Ci sono " + pronti + (pronti === 1 ? " pianta pronta" : " piante pronte") + " da raccogliere! 🧺");
       else if (assetati) dimmi("💧 " + assetati + (assetati === 1 ? " pianta ha" : " piante hanno") + " sete");
       anim = requestAnimationFrame(function (o) { ult = o; giro(o); });
     };
@@ -730,6 +797,12 @@
       ".gd-griglia{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}",
       ".gd-voce{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 8px;border:0;border-radius:14px;cursor:pointer;font:inherit;color:#2b3a1f;background:#eef5e4}",
       ".gd-voce:disabled,.gd-voce.caro{opacity:.5}",
+      ".gd-voce.on{box-shadow:inset 0 0 0 3px #3f7a2e;background:#e2f0d4}",
+      ".gd-casa-fig{display:block;width:100%;max-width:260px;height:150px;margin:0 auto 6px;object-fit:contain}",
+      ".gd-tinte{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:4px 0}",
+      ".gd-tinta{width:42px;height:42px;border:3px solid #fff;border-radius:50%;cursor:pointer;box-shadow:0 0 0 2px #c9dcb6,0 3px 6px rgba(0,0,0,.18)}",
+      ".gd-tinta.on{box-shadow:0 0 0 3px #3f7a2e,0 3px 6px rgba(0,0,0,.18);transform:scale(1.08)}",
+      ".gd-tinta.orig{background:conic-gradient(#f3d9b1 0 25%,#c4452f 0 50%,#8a5a3a 0 75%,#f4ead2 0)}",
       ".gd-voce b{font-size:.74rem;line-height:1.15}.gd-voce small{font-size:.66rem;font-weight:800;color:#5f7a45;line-height:1.2}",
       ".gd-righe{display:flex;flex-direction:column;gap:6px;text-align:left}",
       ".gd-riga{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:12px;background:#eef5e4;font-weight:800}",
