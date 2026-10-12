@@ -51,7 +51,7 @@
   ];
   var PREZZO = {}, NOME = {}, DEL_GIARDINO = {};
   NEGOZIO.forEach(function (g) { g.voci.forEach(function (v) { PREZZO[v.t] = v.prezzo; NOME[v.t] = v.nome; DEL_GIARDINO[v.t] = 1; }); });
-  var STANZE = { bagno: "🛁 Bagno", soggiorno: "🛋️ Soggiorno", cucina: "🍳 Cucina", camera: "🛏️ Camera" };
+  var STANZE = { bagno: "🛁 Bagno", soggiorno: "🛋️ Soggiorno", cucina: "🍳 Cucina", camera: "🛏️ Camera", casa: "🏠 Casa", usato: "♻️ Usato" };
   var FP = { fontana: [2, 2], altalena: [2, 1] };
   var TERRA = { vialetto: 1, ghiaia: 1 };
   var ALLARGA = [{ a: 20, prezzo: 3000 }, { a: 24, prezzo: 7000 }, { a: 28, prezzo: 12000 }];   // il terreno si allarga verso di te
@@ -70,7 +70,8 @@
   function fpDi(t) { var m = infoMobile(t); return FP[t] || (m && m.fp) || [1, 1]; }
   function tipoDi(t) { if (TERRA[t]) return "terra"; var m = infoMobile(t); return (m && m.tipo) || "piedi"; }
   function nomeDi(t) { var m = infoMobile(t); return NOME[t] || (m && m.nome) || t; }
-  function prezzoDi(t) { var m = infoMobile(t); return PREZZO[t] || (m && m.prezzo) || COSTO.mobile; }
+  var USATO = 50;   // la roba scadente (qualità 0) si ricompra al mercatino dell'usato per poco
+  function prezzoDi(t) { var m = infoMobile(t); if (PREZZO[t]) return PREZZO[t]; if (m && m.qual === 0) return USATO; return (m && m.prezzo) || COSTO.mobile; }
 
   function datiIniziali() {   // si parte con una casetta di 9×7 (soggiorno con la cucina 5×7, camera 4×4, bagno 4×3), un germoglio e un'aiuola
     var D = { v: 2, w: 16, h: 16, ogg: [], muri: {}, pav: {}, tetto: null, baule: {}, cesto: {}, ultimo: 0, vista: 0 }, c, r;
@@ -576,8 +577,8 @@
     }
     function reparti() {   // le schede del negozio: il giardino, poi i mobili per stanza, poi il terreno
       var l = NEGOZIO.slice(), M = window.SGMobiliArte, per = {};
-      try { (M && M.nomi ? M.nomi() : []).forEach(function (t) { var i = M.info(t); if (!i) return; var st = i.stanza || "casa"; (per[st] = per[st] || []).push({ t: t, nome: i.nome || t, prezzo: i.prezzo || COSTO.mobile }); }); } catch (e) {}
-      Object.keys(per).forEach(function (st) { l.push({ cat: STANZE[st] || st, voci: per[st] }); });
+      try { (M && M.nomi ? M.nomi() : []).forEach(function (t) { var i = M.info(t); if (!i) return; var st = i.qual === 0 ? "usato" : (i.stanza || "casa"); (per[st] = per[st] || []).push({ t: t, nome: i.nome || t, prezzo: prezzoDi(t) }); }); } catch (e) {}   // la roba scadente va nel mercatino dell'usato
+      ["soggiorno", "cucina", "camera", "bagno", "casa", "usato"].concat(Object.keys(per)).forEach(function (st, i, tutte) { if (!per[st] || tutte.indexOf(st) < i) return; l.push({ cat: STANZE[st] || st, voci: per[st].sort(function (a, b) { return a.prezzo - b.prezzo; }) }); });
       l.push({ cat: "Terreno", terreno: true });
       return l;
     }
