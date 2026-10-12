@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 196,
+    data: "13 ottobre 2026",
+    titolo: "Avatar più curati, e al laghetto le mani tengono la canna 🎣",
+    descrizione: [
+      "Al laghetto il tuo avatar impugna davvero la canna: il pugno la stringe e il braccio la segue, si alza quando carichi il lancio e quando tiri il pesce.",
+      "Avatar ritoccati in tutti i dettagli: stivali e stivaletti larghi come le gambe in ogni corporatura, scarpe col tacco giuste anche per chi è robusto, l'oggetto in mano che segue la mano quando cammini."
+    ]
+  },
+  {
     v: 195,
     data: "11 ottobre 2026",
     titolo: "Nuovo gioco: La Balla Colossale 🤥",
