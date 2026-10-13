@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 202,
+    data: "13 ottobre 2026",
+    titolo: "L'Asta tutta nuova: la sala d'aste e lo stadio del fantacalcio 🔨⚽",
+    descrizione: [
+      "L'asta normale si vede dalle spalle del banditore: davanti a lui il pubblico seduto in file, chi più avanti e chi più indietro, e chi offre alza la paletta col suo numero. Sulla parete il pannello con l'oggetto e il prezzo.",
+      "Negli ultimi 3 secondi il banditore conta \"5 e uno… 5 e due… 5 e tre…\" e poi batte il martello: aggiudicato!",
+      "Il fantacalcio si gioca in uno stadio di sera: sul maxischermo esce il calciatore con la maglia e i colori della sua squadra, in tribuna gli avatar alzano la paletta, e sotto c'è il tuo campetto con la formazione. Quando compri un calciatore la sua maglia vola al suo posto in campo.",
+      "Niente più voti con le stelle nel fantacalcio: alla fine si scoprono le quotazioni vere dei calciatori e vince la rosa che vale di più. Le rose si svelano una alla volta, dalla meno preziosa alla più preziosa, col contatore che sale. A pari valore vince chi ha più crediti avanzati.",
+      "Online, se il telefono di qualcuno si spegne a metà partita non perde la squadra: intanto passa da solo, e quando rientra riprende a giocare. Chi ha già l'offerta più alta non può più rilanciare contro se stesso, e passare non fa ripartire il tempo."
+    ]
+  },
+  {
     v: 201,
     data: "13 ottobre 2026",
     titolo: "Le sfide del giorno 🎯",

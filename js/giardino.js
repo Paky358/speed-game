@@ -925,7 +925,7 @@
     }
     function reparti() {   // le schede del negozio: il giardino, poi i mobili per stanza, poi il terreno
       var l = NEGOZIO.slice(), M = window.SGMobiliArte, per = {};
-      try { (M && M.nomi ? M.nomi() : []).forEach(function (t) { var i = M.info(t); if (!i || i.reparto === "casino" || i.reparto === "citta") return; var st = i.qual === 0 ? "usato" : (i.reparto || "deco"); (per[st] = per[st] || []).push({ t: t, nome: i.nome || t, prezzo: prezzoDi(t) }); }); } catch (e) {}   // la roba scadente va nel mercatino dell'usato
+      try { (M && M.nomi ? M.nomi() : []).forEach(function (t) { var i = M.info(t); if (!i || i.reparto === "casino" || i.reparto === "citta" || i.reparto === "circolo") return; var st = i.qual === 0 ? "usato" : (i.reparto || "deco"); (per[st] = per[st] || []).push({ t: t, nome: i.nome || t, prezzo: prezzoDi(t) }); }); } catch (e) {}   // la roba scadente va nel mercatino dell'usato
       REPARTI.map(function (r) { return r[0]; }).concat(Object.keys(per)).forEach(function (st, i, tutte) { if (!per[st] || tutte.indexOf(st) < i || (st === "halloween" && !halloween())) return; l.push({ cat: (REPARTI.filter(function (r) { return r[0] === st; })[0] || [0, st])[1], voci: per[st].sort(function (a, b) { return a.prezzo - b.prezzo; }) }); });
       l.push({ cat: "Terreno", terreno: true });
       return l;

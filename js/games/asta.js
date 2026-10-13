@@ -29,7 +29,7 @@
       var chiaveLocale = "sg-asta-ultima-partita-" + profiloId;
       try { if (window.localStorage && localStorage.getItem(chiaveLocale) === String(vm.sessione)) { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
       var classifica = vm.classifica || [], posizione = classifica.findIndex(function (g) { return online ? g.id === idGiocatore : String(g.nome || "").trim().toLowerCase() === String(me.nome || "").trim().toLowerCase(); });
-      var vinta = posizione === 0, formato = vm.formato === "fanta" ? "Fanta" : "Temi";
+      var vinta = posizione >= 0 && (classifica[posizione].pos || posizione + 1) === 1, formato = vm.formato === "fanta" ? "Fanta" : "Temi";
       var incr = [["partite", 1], ["partite" + formato, 1], ["asteVinte", Math.max(0, +me.asteVinte || 0)],
         ["creditiSpesi", Math.max(0, +me.creditiSpesi || 0)], ["stelleRicevute", Math.max(0, +me.stelle || 0)]];
       if (online) incr.push(["partiteOnline", 1]);
@@ -144,7 +144,167 @@
     ".as-palio .pr{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid rgba(255,255,255,.08);font-size:.95rem;}",
     ".as-palio .pr .em{font-size:1.25rem;width:32px;text-align:center;flex:0 0 auto;}",
     ".as-palio .pr .nm{flex:1;min-width:0;}",
-    ".as-palio .pr.ora-c{color:var(--accento);font-weight:800;}"
+    ".as-palio .pr.ora-c{color:var(--accento);font-weight:800;}",
+    // ---- la sala d'asta vista dalle spalle del banditore, e lo stadio del fantacalcio (tutto a schermo, niente scorrimento) ----
+    ".schermata.sa-sala{position:fixed;inset:0;z-index:5;padding:0;min-height:0;height:var(--alt,100dvh);overflow:hidden;display:flex;flex-direction:column;color:#fff;animation:none;background:linear-gradient(180deg,#3d1620 0%,#5c2331 36%,#5a3218 37.5%,#2c160b 100%);}",
+    ".sa-sfondo{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;}",
+    ".sa-sala::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 50% 42%,rgba(0,0,0,0) 48%,rgba(0,0,0,.42) 100%);}",
+    ".sa-testa,.sa-pannello,.st-board,.sa-avviso,.sa-tempo,.sa-platea,.st-tribuna,.st-campo-box,.st-podio,.sa-basso,.sa-piede{position:relative;z-index:2;}",
+    ".sa-testa{flex:none;display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 10px 2px;}",
+    ".sa-tasto{border:0;height:38px;min-width:38px;padding:0 12px;border-radius:19px;background:rgba(255,255,255,.93);color:#2b1a10;font-weight:900;font-size:15px;font-family:inherit;box-shadow:0 3px 10px rgba(0,0,0,.3);}",
+    ".sa-info{flex:1;min-width:0;text-align:center;font-weight:800;font-size:.8rem;text-shadow:0 1px 3px rgba(0,0,0,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+    ".sa-vuoto{min-width:38px;}",
+    // il pannello del lotto appeso alla parete: l'oggetto a sinistra, l'offerta a destra
+    ".sa-pannello{flex:none;margin:6px 16px 0;display:flex;align-items:stretch;gap:8px;padding:7px;border-radius:12px;background:linear-gradient(180deg,#23302a,#101813);border:3px solid #d4af37;box-shadow:0 0 0 2px #6e5420,0 12px 26px rgba(0,0,0,.55),inset 0 0 16px rgba(0,0,0,.6);}",
+    ".sa-lotto{flex:1;min-width:0;background:linear-gradient(180deg,#fffdf6,#f1e6cc);color:#2b2b2b;border-radius:8px;padding:6px 6px 5px;text-align:center;display:flex;flex-direction:column;justify-content:center;}",
+    ".sa-carta-in .em{font-size:2.2rem;line-height:1.1;display:inline-flex;align-items:center;justify-content:center;}",
+    ".sa-carta-in .em svg{width:50px;height:50px;}",
+    ".sa-carta-in .nm{font-weight:900;font-size:1rem;line-height:1.18;margin-top:2px;}",
+    ".sa-sotto{margin-top:2px;font-size:.68rem;font-weight:800;opacity:.6;}",
+    ".sa-prezzo{flex:0 0 34%;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}",
+    ".sa-prezzo small{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:#d4af37;font-weight:900;}",
+    ".sa-prezzo b{font-size:2.05rem;line-height:1.05;font-weight:900;color:#ffe08a;}",
+    ".sa-prezzo span{font-size:.72rem;font-weight:800;opacity:.92;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+    ".sa-avviso{flex:none;margin:6px 12px 0;padding:6px 10px;border-radius:10px;background:rgba(255,212,59,.95);color:#3a2200;font-weight:800;font-size:.78rem;text-align:center;}",
+    ".sa-tempo{flex:none;height:8px;margin:8px 18px 0;border-radius:6px;background:rgba(255,255,255,.22);overflow:hidden;}",
+    ".sa-tempo i{display:block;height:100%;transform-origin:left center;background:linear-gradient(90deg,#ff6b6b,#ffd43b,#51cf66);}",
+    ".sa-sala.ultimi .sa-tempo i{background:#ff6b6b;animation:saUltimi .5s ease-in-out infinite alternate;}",
+    "@keyframes saUltimi{from{opacity:1}to{opacity:.4}}",
+    // il pubblico seduto: due file, quella dietro più piccola; davanti i primi numeri
+    ".sa-platea{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:6px 4px 0;}",
+    ".sa-fila{display:flex;justify-content:center;align-items:flex-end;gap:0 2%;}",
+    ".sa-fila1{margin-bottom:-3%;}",
+    ".sa-pers{position:relative;display:flex;flex-direction:column;align-items:center;width:22%;max-width:112px;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .2s;user-select:none;-webkit-user-select:none;}",
+    ".sa-fila0.n1 .sa-pers,.sa-fila0.n2 .sa-pers{width:31%;max-width:156px;}.sa-fila0.n3 .sa-pers{width:27%;max-width:136px;}.sa-fila0.n4 .sa-pers{width:22%;max-width:114px;}.sa-fila0.n5 .sa-pers{width:18.5%;max-width:98px;}",
+    ".sa-fila1.n1 .sa-pers,.sa-fila1.n2 .sa-pers{width:23%;max-width:116px;}.sa-fila1.n3 .sa-pers{width:20%;max-width:100px;}.sa-fila1.n4 .sa-pers{width:17%;max-width:86px;}.sa-fila1.n5 .sa-pers{width:15%;max-width:76px;}",
+    ".sa-figura{position:relative;width:100%;aspect-ratio:200/264;}",
+    ".sa-sedia,.sa-av{position:absolute;left:0;top:0;width:100%;height:100%;}",
+    ".sa-av{transition:opacity .12s;}",
+    ".sa-av.sa-su{opacity:0;}",
+    ".sa-pers.guida .sa-av{opacity:0;}.sa-pers.guida .sa-av.sa-su{opacity:1;}",
+    ".sa-paletta{position:absolute;width:44%;aspect-ratio:1;transform:translate(-50%,-118%) rotate(8deg) scale(.5);opacity:0;transition:transform .22s cubic-bezier(.3,1.6,.5,1),opacity .15s;pointer-events:none;}",
+    ".sa-paletta span{position:absolute;inset:0;border-radius:50%;background:#fff;border:3px solid #c92a2a;color:#c92a2a;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 3px 6px rgba(0,0,0,.35);}",
+    ".sa-paletta::after{content:'';position:absolute;left:50%;top:94%;width:10%;height:62%;margin-left:-5%;border-radius:3px;background:#8b5a2b;z-index:-1;}",
+    ".sa-pers.guida .sa-paletta{opacity:1;transform:translate(-50%,-118%) rotate(8deg) scale(1);}",
+    ".sa-pers.salta .sa-figura{animation:saSalta .45s ease-out;}",
+    "@keyframes saSalta{0%{transform:translateY(0)}35%{transform:translateY(-9%)}100%{transform:translateY(0)}}",
+    ".sa-nuvola{position:absolute;left:50%;top:-6%;transform:translate(-50%,-100%);padding:3px 8px;border-radius:10px;background:#2f9e44;color:#fff;font-weight:900;font-size:.82rem;white-space:nowrap;opacity:0;box-shadow:0 3px 8px rgba(0,0,0,.35);pointer-events:none;z-index:3;}",
+    ".sa-nuvola.via{animation:saNuvola 1.7s ease-out forwards;}",
+    "@keyframes saNuvola{0%{opacity:0;transform:translate(-50%,-70%)}15%{opacity:1;transform:translate(-50%,-100%)}75%{opacity:1;transform:translate(-50%,-110%)}100%{opacity:0;transform:translate(-50%,-150%)}}",
+    ".sa-num{position:absolute;left:2%;bottom:4%;min-width:20px;height:20px;padding:0 4px;border-radius:10px;background:#fff;color:#c92a2a;font-weight:900;font-size:.72rem;line-height:20px;text-align:center;font-style:normal;box-shadow:0 2px 4px rgba(0,0,0,.35);}",
+    ".sa-pers b{font-size:.72rem;line-height:1.1;text-shadow:0 1px 3px rgba(0,0,0,.8);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+    ".sa-pers small{font-size:.62rem;font-weight:800;opacity:.88;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.8);}",
+    ".sa-pers.fuori{opacity:.42;}.sa-pers.via{opacity:.3;}",
+    ".sa-pers.puo .sa-figura::before{content:'';position:absolute;left:8%;right:8%;bottom:-2%;height:12%;border-radius:50%;background:radial-gradient(ellipse,rgba(255,224,102,.8),rgba(255,224,102,0) 70%);}",
+    ".sa-pers.mio b{color:#ffe066;}.sa-pers.mio .sa-num{background:#ffe066;color:#3a2200;}",
+    ".sa-passo{margin-top:2px;border:0;border-radius:8px;padding:2px 9px;font-size:.66rem;font-weight:900;font-family:inherit;background:rgba(255,255,255,.22);color:#fff;}",
+    // in basso: il banditore di spalle dietro il leggio, e a destra la riga d'aiuto e i tasti
+    ".sa-basso{flex:none;display:flex;align-items:flex-end;gap:4px;}",
+    ".sa-ban{position:relative;flex:none;width:min(42%,calc(var(--alt,100dvh)*.21));max-width:190px;margin-left:-5%;aspect-ratio:200/236;align-self:flex-end;}",
+    ".sa-ban-img{position:absolute;left:0;top:0;width:100%;}",
+    ".sa-leggio{position:absolute;left:-4%;width:110%;top:77%;}",
+    ".sa-ban.batte .sa-ban-img{animation:saBatte .45s ease-in-out 2;}",
+    "@keyframes saBatte{0%,100%{transform:none}40%{transform:translateY(-4%) rotate(-3deg)}70%{transform:translateY(2%)}}",
+    ".sa-martello{position:absolute;z-index:3;right:0;top:50%;font-size:28px;transform-origin:85% 85%;transform:rotate(-20deg);}",
+    ".sa-martello.batte{animation:saMartello .45s ease-in 2;}",
+    "@keyframes saMartello{0%{transform:rotate(-20deg)}40%{transform:rotate(-75deg)}70%{transform:rotate(25deg)}100%{transform:rotate(-20deg)}}",
+    ".sa-bolla{position:absolute;z-index:4;left:42%;bottom:96%;width:max-content;max-width:180%;padding:7px 11px;border-radius:14px;background:#fff;color:#2b1a10;font-weight:900;font-size:.8rem;box-shadow:0 4px 12px rgba(0,0,0,.35);opacity:0;pointer-events:none;}",
+    ".sa-bolla::after{content:'';position:absolute;left:18px;bottom:-7px;border:7px solid transparent;border-top-color:#fff;border-bottom:0;}",
+    ".sa-bolla.conta{background:#c92a2a;color:#fff;font-size:1rem;}.sa-bolla.conta::after{border-top-color:#c92a2a;}",
+    ".sa-bolla.via{animation:saBolla 2.6s ease-out forwards;}",
+    "@keyframes saBolla{0%{opacity:0;transform:translateY(12%) scale(.92)}10%{opacity:1;transform:none}80%{opacity:1;transform:none}100%{opacity:0;transform:none}}",
+    ".sa-piede{flex:1;min-width:0;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;gap:6px;padding:4px 12px calc(10px + env(safe-area-inset-bottom)) 0;}",
+    ".sa-piede .btn{width:100%;max-width:none;min-height:46px;margin:0;}",
+    ".sa-nota{margin:0;text-align:center;font-size:.74rem;font-weight:700;opacity:.92;text-shadow:0 1px 3px rgba(0,0,0,.7);}",
+    ".sa-aggiudicato{position:absolute;z-index:8;left:50%;top:15%;transform:translate(-50%,-50%) rotate(-6deg);padding:10px 20px;border-radius:14px;border:4px solid #fff;background:#e03131;color:#fff;font-weight:900;font-size:1.8rem;letter-spacing:.06em;white-space:nowrap;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:saTimbro .35s cubic-bezier(.2,1.6,.4,1);pointer-events:none;}",
+    "@keyframes saTimbro{from{transform:translate(-50%,-50%) rotate(-6deg) scale(2.2);opacity:0}to{transform:translate(-50%,-50%) rotate(-6deg) scale(1);opacity:1}}",
+    ".sa-sala.chiusa .sa-pers,.sa-sala.chiusa .sa-piede .btn{pointer-events:none;}",
+    // il foglio che sale dal basso (carte prese, formazioni)
+    ".sa-foglio-velo{position:absolute;inset:0;z-index:9;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;}",
+    ".sa-foglio{width:100%;max-height:84%;overflow-y:auto;overscroll-behavior:contain;background:#fff8e6;color:#2b2b2b;border-radius:20px 20px 0 0;padding:12px 12px calc(16px + env(safe-area-inset-bottom));animation:saFoglio .22s ease-out;}",
+    "@keyframes saFoglio{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}",
+    ".sa-foglio-testa{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:1.15rem;}",
+    ".sa-formazioni{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}",
+    ".sa-squadra{background:#fff;border-radius:12px;padding:6px;box-shadow:0 2px 8px rgba(0,0,0,.12);}",
+    ".sa-sq-nome{font-weight:900;font-size:.8rem;text-align:center;margin-bottom:4px;}",
+    ".sa-campo{position:relative;height:150px;border-radius:8px;background:repeating-linear-gradient(180deg,#3fa34d 0 15px,#37944a 15px 30px);box-shadow:inset 0 0 0 2px rgba(255,255,255,.6);}",
+    ".sa-gioc{position:absolute;display:flex;flex-direction:column;align-items:center;width:30%;transform:translate(-50%,-50%);}",
+    ".sa-maglia{width:30px;height:30px;font-style:normal;font-size:8px;font-weight:900;color:#fff;display:flex;align-items:center;justify-content:center;}",
+    ".sa-gioc.vuoto .sa-maglia{border:2px dashed rgba(255,255,255,.75);border-radius:50%;width:24px;height:24px;}",
+    ".sa-gioc span{font-size:9px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+    // ---- lo stadio: maxischermo, tribuna, campetto ----
+    ".schermata.st-stadio{background:linear-gradient(180deg,#06112b 0%,#0c2150 30%,#1a2f3e 52%,#1d5a2b 60%,#226b31 100%);}",
+    ".st-board{flex:none;margin:4px 12px 0;padding:5px;border-radius:12px;background:linear-gradient(180deg,#444a54,#1d2026);box-shadow:0 0 0 2px #0b0c0f,0 14px 30px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.2);}",
+    ".st-schermo{position:relative;overflow:hidden;border-radius:7px;height:clamp(104px,19vh,176px);background:#0c1424;}",
+    ".st-colori{position:absolute;inset:0;}",
+    ".st-led{position:absolute;inset:0;pointer-events:none;z-index:3;background-image:radial-gradient(circle,rgba(0,0,0,0) 52%,rgba(0,0,0,.26) 56%);background-size:4px 4px;}",
+    ".st-dentro{position:absolute;z-index:2;left:0;right:0;top:0;bottom:24px;display:flex;align-items:center;gap:8px;padding:6px 10px;transition:opacity .2s;}",
+    ".st-schermo.vuoto .st-dentro{opacity:0;}",
+    ".st-schermo.entra .st-dentro{animation:stEntra .5s cubic-bezier(.2,1.3,.4,1);}",
+    "@keyframes stEntra{from{transform:translateX(26%);opacity:0}to{transform:none;opacity:1}}",
+    ".st-magliabox{flex:0 0 27%;height:100%;display:flex;align-items:center;justify-content:center;}",
+    ".st-maglia{max-height:100%;max-width:100%;}",
+    ".st-dati{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding:4px 8px;border-radius:8px;background:rgba(0,0,0,.34);text-shadow:0 2px 4px rgba(0,0,0,.7);}",
+    ".st-riga{display:flex;align-items:center;gap:6px;min-width:0;}",
+    ".st-ruolo{flex:none;font-size:.62rem;font-weight:900;letter-spacing:.04em;padding:3px 7px;border-radius:6px;color:#0d1230;text-shadow:none;}",
+    ".st-ruolo-classifica{background:#ffd43b;color:#3a2200;}",
+    ".st-squadra{font-size:.76rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+    ".st-nome{font-size:clamp(1.2rem,6vw,1.75rem);font-weight:900;line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+    ".st-prezzo{display:flex;align-items:baseline;gap:8px;min-width:0;}",
+    ".st-prezzo b{font-size:clamp(1.45rem,7vw,2rem);color:#ffe066;line-height:1;white-space:nowrap;}",
+    ".st-prezzo span{font-size:.72rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+    ".st-contatore b{font-size:clamp(2rem,10vw,2.9rem);font-variant-numeric:tabular-nums;}",
+    ".st-ticker{position:absolute;z-index:2;left:0;right:0;bottom:0;height:24px;line-height:24px;padding:0 10px;background:rgba(0,0,0,.6);color:#ffd43b;font-weight:900;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.02em;}",
+    ".st-ticker.via{animation:stTicker .35s ease-out;}",
+    "@keyframes stTicker{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}",
+    ".st-ticker.conta{color:#fff;background:#c92a2a;font-size:.95rem;text-align:center;}",
+    ".st-stadio.ultimi .st-board{animation:stBordo .5s ease-in-out infinite alternate;}",
+    "@keyframes stBordo{from{box-shadow:0 0 0 2px #0b0c0f,0 14px 30px rgba(0,0,0,.6)}to{box-shadow:0 0 0 3px #ff6b6b,0 14px 30px rgba(0,0,0,.6)}}",
+    ".st-tribuna{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:4px 4px 0;}",
+    ".st-tribuna .sa-fila0 .sa-pers{width:18%;max-width:84px;}.st-tribuna .sa-fila0.n1 .sa-pers,.st-tribuna .sa-fila0.n2 .sa-pers{width:22%;max-width:100px;}",
+    // due file in tribuna (6-10 giocatori): più piccoli sugli schermi bassi, così non toccano il maxischermo né il campetto
+    ".st-tribuna .sa-fila1 ~ .sa-fila0 .sa-pers{max-width:min(84px,calc(var(--alt,100dvh)*.09));}",
+    ".st-tribuna .sa-fila1 .sa-pers{width:14.5%;max-width:min(66px,calc(var(--alt,100dvh)*.075));}",
+    ".st-tribuna .sa-fila1 .sa-pers b,.st-tribuna .sa-fila1 ~ .sa-fila0 .sa-pers b{font-size:.64rem;}.st-tribuna .sa-fila1 .sa-pers small,.st-tribuna .sa-fila1 ~ .sa-fila0 .sa-pers small{font-size:.56rem;}",
+    ".st-campo-box{flex:none;margin:2px 10px 0;padding:5px;border-radius:12px;background:rgba(0,0,0,.28);}",
+    ".st-campo-testa{display:flex;align-items:center;gap:6px;margin-bottom:4px;}",
+    ".st-freccia{flex:none;border:0;width:36px;height:28px;border-radius:14px;background:rgba(255,255,255,.92);color:#16351f;font-weight:900;font-size:18px;line-height:1;font-family:inherit;}",
+    ".st-campo-nome{flex:1;min-width:0;text-align:center;font-weight:900;font-size:.8rem;text-shadow:0 1px 3px rgba(0,0,0,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+    ".st-campo{position:relative;height:clamp(128px,23vh,230px);border-radius:8px;background:repeating-linear-gradient(180deg,#3d9b49 0 18px,#358a41 18px 36px);box-shadow:inset 0 0 0 2px rgba(255,255,255,.7);overflow:hidden;}",
+    ".st-campo.dipinto{background-size:100% 100%;box-shadow:none;}",
+    ".st-slot{position:absolute;width:21%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;}",
+    ".st-slot-maglia{display:block;width:clamp(30px,58%,52px);aspect-ratio:1;transition:opacity .2s;}",
+    ".st-slot.vuoto .st-slot-maglia{opacity:0;}",
+    ".st-slot-vuoto{position:absolute;top:0;left:50%;width:clamp(30px,58%,52px);aspect-ratio:1;transform:translateX(-50%);box-sizing:border-box;border:2px dashed rgba(255,255,255,.75);border-radius:50%;font-style:normal;font-size:.6rem;font-weight:900;color:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;}",
+    ".st-slot:not(.vuoto) .st-slot-vuoto{display:none;}",
+    ".st-slot.cerca .st-slot-vuoto{border-color:#ffe066;color:#ffe066;background:rgba(255,224,102,.16);animation:stCerca .8s ease-in-out infinite alternate;}",
+    "@keyframes stCerca{from{transform:translateX(-50%) scale(.9)}to{transform:translateX(-50%) scale(1.08)}}",
+    ".st-slot span{font-size:.62rem;font-weight:900;line-height:1.1;text-shadow:0 1px 2px rgba(0,0,0,.9);white-space:nowrap;max-width:150%;overflow:hidden;text-overflow:ellipsis;}",
+    ".st-slot.arriva .st-slot-maglia{animation:stArriva .45s cubic-bezier(.2,1.6,.4,1);}",
+    "@keyframes stArriva{from{transform:scale(1.5)}to{transform:none}}",
+    ".st-val{position:absolute;top:-10%;right:2%;min-width:24px;padding:1px 5px;border-radius:9px;background:#ffd43b;color:#3a2200;font-style:normal;font-weight:900;font-size:.74rem;text-align:center;box-shadow:0 2px 5px rgba(0,0,0,.4);opacity:0;transform:scale(.4);transition:transform .25s cubic-bezier(.2,1.6,.4,1),opacity .15s;}",
+    ".st-val.su{opacity:1;transform:none;}",
+    ".st-mister{position:absolute;left:1%;bottom:3%;height:44%;pointer-events:none;}",
+    ".st-volo{position:absolute;z-index:7;pointer-events:none;}",
+    ".st-piede{flex:none;flex-direction:row;flex-wrap:wrap;justify-content:center;padding:6px 12px calc(8px + env(safe-area-inset-bottom));}",
+    ".st-piede .sa-nota{width:100%;}.st-piede .btn{flex:1;width:auto;}",
+    ".st-stadio .sa-aggiudicato{top:14%;font-size:1.6rem;}",
+    // la classifica finale del fantacalcio: il contatore che sale, poi il podio
+    ".st-rivela .st-campo-box.st-grande{flex:1;min-height:0;display:flex;flex-direction:column;margin-top:10px;}",
+    ".st-rivela .st-grande .st-campo{flex:1;height:auto;min-height:180px;}",
+    ".st-rivela .st-mister{height:40%;}",
+    ".st-podio{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:8px 12px 0;}",
+    ".st-gradini{display:flex;align-items:flex-end;justify-content:center;gap:6px;}",
+    ".st-gradino{display:flex;flex-direction:column;align-items:center;width:31%;max-width:130px;animation:stSale .6s cubic-bezier(.2,1.3,.4,1) both;}",
+    "@keyframes stSale{from{transform:translateY(60%);opacity:0}to{transform:none;opacity:1}}",
+    ".st-gradino img{width:82%;margin-bottom:-6%;}",
+    ".st-gradino b{font-size:.8rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.8);}",
+    ".st-gradino small{font-size:.72rem;font-weight:900;color:#ffe066;text-shadow:0 1px 3px rgba(0,0,0,.8);}",
+    ".st-gradino .blocco{width:100%;margin-top:3px;border-radius:8px 8px 0 0;display:flex;justify-content:center;padding-top:6px;font-weight:900;font-size:1.6rem;color:#3a2200;box-shadow:inset 0 2px 0 rgba(255,255,255,.5);}",
+    ".st-gradino.p1 .blocco{height:96px;background:linear-gradient(180deg,#ffe066,#e0a90a);}",
+    ".st-gradino.p2 .blocco{height:70px;background:linear-gradient(180deg,#f1f3f5,#adb5bd);}",
+    ".st-gradino.p3 .blocco{height:52px;background:linear-gradient(180deg,#f3b886,#b5651d);}",
+    ".st-altri{margin-top:6px;padding:6px 10px;border-radius:10px;background:rgba(0,0,0,.35);font-size:.76rem;font-weight:800;line-height:1.5;text-align:center;}"
   ].join("");
   document.head.appendChild(stile);
 
@@ -169,7 +329,12 @@
     rilancio: function () { beep([740], 0.09, "square"); vibra(25); },
     aggiudicato: function () { beep([660, 880, 1180], 0.16, "triangle"); vibra([70, 50, 90]); },
     round: function () { beep([520, 780], 0.14, "sine"); vibra(60); },
-    fine: function () { beep([660, 880, 1046, 1318], 0.2, "triangle"); vibra([120, 60, 120, 60, 200]); }
+    fine: function () { beep([660, 880, 1046, 1318], 0.2, "triangle"); vibra([120, 60, 120, 60, 200]); },
+    conta: function (i) { beep([i === 2 ? 1175 : 880], 0.08, "square"); },          // "5 e uno… 5 e due… 5 e tre…"
+    tic: function (p) { beep([520 + Math.round(p * 700)], 0.035, "square"); },      // il contatore del valore delle rose (sale di tono)
+    pop: function () { beep([880, 1320], 0.08, "triangle"); },                       // la maglia arriva nel campetto (solo suono: niente vibrazione senza tocco)
+    posto: function () { beep([660, 990], 0.14, "triangle"); },
+    festa: function () { beep([660, 880, 1046, 1318], 0.2, "triangle"); }
   };
 
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
@@ -239,16 +404,6 @@
     }
     segnaVisti(temaId, scelte.map(function (c) { return c.nome; }));
     return mischia(scelte);
-  }
-
-  function barraTimer(el, ms, onFine) {
-    var wrap = el("div", { class: "as-timer" });
-    var fill = el("div", { class: "as-timer-fill" });
-    wrap.appendChild(fill);
-    requestAnimationFrame(function () { fill.style.transition = "width " + ms + "ms linear"; fill.style.width = "0%"; });
-    var to = setTimeout(onFine, ms);
-    wrap._stop = function () { clearTimeout(to); };
-    return wrap;
   }
 
   // Quanto può puntare al massimo: deve tenere 1 credito per ogni round futuro
@@ -327,7 +482,9 @@
       "A turno uno sceglie quale carta mettere all'asta: parte da <b>1 credito</b>. Gli altri possono <b>rilanciare</b> (+1) o <b>passare</b>.",
       "Dopo ogni rilancio partono <b>10 secondi</b>: allo scadere la carta va a chi ha l'offerta più alta. <b>Paga solo il vincitore.</b>",
       "Attenzione: devi tenere <b>almeno 1 credito per ogni round che resta</b>, altrimenti rimani a piedi.",
-      "Alla fine ognuno vota i kit degli altri da <b>1 a 5 stelle</b> (non il proprio): vince chi ne raccoglie di più."
+      "Alla fine ognuno vota i kit degli altri con le <b>stelle</b> (non il proprio): vince chi ne raccoglie di più.",
+      "<b>Mini asta Fantacalcio</b>: 20 crediti a testa per una rosa da 5 (1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante). I calciatori escono a caso uno alla volta e partono da <b>1 credito</b>: chi offre di più se lo prende.",
+      "Nel fantacalcio alla fine si scoprono le <b>quotazioni vere</b> dei calciatori: vince la rosa che <b>vale di più</b>. A pari valore vince chi ha <b>più crediti avanzati</b>."
     ],
 
     impostazioni: function (box, dove, aiuti) {
@@ -345,6 +502,7 @@
       var bTemi, bFanta;
       function scegliFormato(f) {
         dove.formato = f;
+        try { localStorage.setItem("sg_asta_formato", f); } catch (e) {}   // la prossima volta riparte dalla stessa modalità
         bTemi.className = "modo-chip" + (f === "temi" ? " attiva" : "");
         bFanta.className = "modo-chip" + (f === "fanta" ? " attiva" : "");
         wrapCrediti.hidden = (f !== "temi");
@@ -425,8 +583,10 @@
 
       // --- Nota Fantacalcio (solo modalità Fantacalcio) ---
       wrapFanta.appendChild(el("div", { class: "link-avviso",
-        text: "⚽ 20 crediti a testa · rosa da 5 (1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante). I calciatori escono dal mazzo uno alla volta, in ordine tutto a caso." }));
+        text: "⚽ 20 crediti a testa · rosa da 5 (1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante). I calciatori escono dal mazzo uno alla volta, in ordine tutto a caso. Alla fine vince la rosa che vale di più." }));
       box.appendChild(wrapFanta);
+      var ultimo = null; try { ultimo = localStorage.getItem("sg_asta_formato"); } catch (e) {}
+      if (ultimo === "fanta") scegliFormato("fanta");
     },
 
     avvia: function (t) {
@@ -565,66 +725,605 @@
       offerta: 1, leader: chooser,
       passati: {}, bar: null
     };
+    tempoAsta(st.asta, function () { chiudiAsta(t, st); });
     disegnaAsta(t, st);
   }
 
-  function disegnaAsta(t, st) {
-    var el = t.el, a = st.asta;
-    var s = t.schermata({ indietro: function () { if (window.confirm("Uscire dalla partita?")) { if (a.bar) a.bar._stop(); t.esci(); } } });
-    s._contenuto.appendChild(intestazioneRound(el, st));
-    s._contenuto.appendChild(strisciaCrediti(el, st, a.leader));
-    s._contenuto.appendChild(el("div", { class: "as-big" }, [
-      el("div", icoAttr("em", a.carta.emoji)),
-      el("div", { class: "nm", text: a.carta.nome }),
-      el("div", { class: "as-fascia-x", text: "Fascia ancora segreta 🤫" })
-    ]));
-    s._contenuto.appendChild(el("div", { class: "as-offerta" }, [
-      el("div", { class: "v", text: a.offerta + " 💰" }),
-      el("div", { class: "chi", text: "offerta di " + st.giocatori[a.leader].nome })
-    ]));
+  // =========================================================
+  //  LA SALA D'ASTA (asta a temi, sullo stesso telefono e online) — vista dalle spalle del banditore.
+  //  In alto sulla parete il pannello col lotto e il prezzo; in mezzo il pubblico seduto in file (quella dietro più
+  //  piccola) che guarda verso di noi e alza la paletta numerata; in basso a sinistra il banditore di spalle dietro il
+  //  leggio, che parla e negli ultimi 3 secondi conta "5 e uno… 5 e due… 5 e tre…".
+  //  Si costruisce una volta per ogni carta e poi si aggiorna solo quello che cambia (niente lampeggio).
+  //  Il fantacalcio ha il suo stadio (più sotto, STADIO).
+  // =========================================================
+  var SALA = null, BANDITORE = null, ANG_PALETTA = 145, CACHE_AV = {};
+  var COLORI_SQUADRE = {   // i colori delle maglie: lo sfondo del maxischermo del fantacalcio
+    Napoli: ["#12a0d7", "#075d8c"], Juventus: ["#202020", "#d9d9d9"], Inter: ["#0b4ea2", "#0d0d1a"], Atalanta: ["#1d6fc0", "#111111"],
+    Roma: ["#8e1f2f", "#f0b323"], Milan: ["#d0161c", "#141414"], Como: ["#0b4ea2", "#7fb3ea"], Lazio: ["#7dc8ec", "#e8f6ff"],
+    Torino: ["#7a1c13", "#b5651d"], Sassuolo: ["#0b8a47", "#111111"], Fiorentina: ["#5b2a86", "#a77fd6"], Bologna: ["#a2142a", "#1b2f5c"],
+    Cagliari: ["#a6192e", "#0b2559"], Parma: ["#e9e6dc", "#1a1a1a"], Venezia: ["#f26522", "#0b6b3a"], Udinese: ["#202020", "#d9d9d9"],
+    Monza: ["#d7141f", "#f4f4f4"], Genoa: ["#ae1e2e", "#0a2240"], Lecce: ["#f2d200", "#d9001a"], Frosinone: ["#ffd400", "#0b46a6"]
+  };
+  function coloriSquadra(sq) { return COLORI_SQUADRE[sq] || null; }
+  function cfgDi(nome, omino) { return omino || (window.SGOmino ? SGOmino.casuale(nome || "Giocatore") : null); }
+  function srcSvg(k, fn) {   // un disegno SVG come immagine (fatto una volta e tenuto da parte)
+    if (CACHE_AV[k] !== undefined) return CACHE_AV[k];
+    var s = ""; try { s = fn() || ""; } catch (e) {}
+    return (CACHE_AV[k] = s ? "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s) : "");
+  }
+  function srcAv(cfg, o) {   // l'avatar in una posa: seduto, col braccio alzato (la paletta), di spalle…
+    if (!cfg || !window.SGOmino) return "";
+    return srcSvg(JSON.stringify(cfg) + "|" + JSON.stringify(o || {}), function () { return SGOmino.svg(cfg, o || {}); });
+  }
+  var GIU = { seduto: true }, SU = { seduto: true, braccia: "canna", angolo: ANG_PALETTA };
+  function manoAlzata(cfg) { try { return SGOmino.mano(cfg, SU); } catch (e) { return { x: 155, y: 126 }; } }
+  // i disegni fissi (js/asta-sala-arte.js, js/asta-stadio-arte.js, js/asta-maglie.js); finché mancano, uno semplice di riserva
+  function arte(nome, riserva, arg) {
+    var A = window.SGAstaArte, f = A && typeof A[nome] === "function" ? A[nome] : null;
+    return srcSvg("arte|" + nome + "|" + (arg || "") + (f ? "" : "|riserva"), function () { return f ? f(arg) : riserva; });
+  }
+  var SVG0 = "<svg xmlns='http://www.w3.org/2000/svg' ";
+  var SEDIA_RIS = SVG0 + "viewBox='0 0 200 264'><rect x='54' y='98' width='92' height='104' rx='22' fill='#9b2335' stroke='#c99a3b' stroke-width='6'/><rect x='44' y='190' width='112' height='16' rx='7' fill='#b02a3e' stroke='#c99a3b' stroke-width='4'/><path d='M56 206v44M144 206v44' stroke='#b8862f' stroke-width='7' stroke-linecap='round'/></svg>";
+  var SEGG_RIS = SVG0 + "viewBox='0 0 200 264'><path d='M58 198V138q0-18 18-18h48q18 0 18 18v60z' fill='#1c6fd1' stroke='#0b3f80' stroke-width='5'/><rect x='50' y='192' width='100' height='14' rx='7' fill='#2a84ea' stroke='#0b3f80' stroke-width='4'/><path d='M100 206v44' stroke='#5c6670' stroke-width='9'/></svg>";
+  var LEGGIO_RIS = SVG0 + "viewBox='0 0 200 150'><path d='M10 20h180l-8 130H18z' fill='#5a2e16' stroke='#2e160a' stroke-width='5'/><rect x='4' y='6' width='192' height='18' rx='5' fill='#7a4423' stroke='#2e160a' stroke-width='4'/><rect x='30' y='44' width='140' height='70' rx='6' fill='#3e1f0e'/></svg>";
+  function magliaRis(sq) {   // la maglia di riserva: i due colori della squadra
+    var c = coloriSquadra(sq) || ["#adb5bd", "#868e96"];
+    return SVG0 + "viewBox='0 0 100 100'><defs><linearGradient id='mr' x1='0' x2='1'><stop offset='.5' stop-color='" + c[0] + "'/><stop offset='.5' stop-color='" + c[1] + "'/></linearGradient></defs>" +
+      "<path d='M35 12L10 26l8 19 10-5v50h44V40l10 5 8-19-25-14q-6 8-15 8t-15-8z' fill='url(#mr)' stroke='#1b1b1b' stroke-width='3.5' stroke-linejoin='round'/></svg>";
+  }
+  function maglia(sq) { return arte("maglia", magliaRis(sq), sq || "?"); }
+  function banditore() {
+    if (BANDITORE || !window.SGOmino) return BANDITORE;
+    var c = SGOmino.casuale("Banditore d'asta");
+    c.forma = "uomo"; c.capelli = "corti"; c.colCap = 1; c.capo = "giacca"; c.maglia = 7; c.collo = "papillon"; c.colCollo = 0; c.cappello = "nessuno"; c.occhiali = "tondi"; c.barba = "baffi";
+    c.mano = "nessuno"; c.schiena = "nessuna"; c.animale = "nessuno"; c.stampa = "nessuna";
+    try { c = SGOmino.norm(c); } catch (e) {}
+    return (BANDITORE = c);
+  }
+  function trova(lista, id) { if (id == null) return null; for (var i = 0; i < (lista || []).length; i++) if (lista[i].id === id) return lista[i]; return null; }
+  function rianima(n, cls, testo) { if (testo != null) n.textContent = testo; n.classList.remove(cls); void n.offsetWidth; n.classList.add(cls); }
+  function svuotaNodo(n) { while (n.firstChild) n.removeChild(n.firstChild); }
 
-    // timer: riparte a ogni rilancio
-    if (a.bar && a.bar._stop) a.bar._stop();
-    a.bar = barraTimer(el, SECONDI * 1000, function () { chiudiAsta(t, st); });
-    s._contenuto.appendChild(a.bar);
-
-    // un tasto per ogni giocatore ancora in gara nel round
-    var attivi = 0;
-    st.senzaCarta.forEach(function (i) {
-      var fuori = !!a.passati[i];
-      if (!fuori) attivi++;
-      var max = maxPuntata(st, i);
-      var puo = !fuori && max >= a.offerta + 1;
-      var riga = el("div", { class: "as-bid" + (i === a.leader ? " leader" : "") + (fuori ? " as-fuori" : "") }, [
-        el("div", { class: "who" }, [
-          el("b", { text: (i === a.leader ? "👑 " : "") + st.giocatori[i].nome }),
-          el("span", { text: fuori ? "ha passato" : (st.giocatori[i].crediti + " crediti · max " + Math.max(0, max)) })
-        ]),
-        el("button", { class: "su", text: "+1 → " + (a.offerta + 1), disabled: puo ? null : "disabled",
-          onclick: function () { rilancia(t, st, i); } }),
-        (fuori || i === a.leader) ? null : el("button", { class: "no", text: "Passa", onclick: function () { passa(t, st, i); } })
-      ]);
-      s._contenuto.appendChild(riga);
+  // ---- pezzi in comune tra la sala e lo stadio ----
+  // quanti nella fila davanti e in quella dietro: nella sala dai 3 in su c'è chi sta più avanti e chi più indietro; nello stadio una fila sola fino a 5
+  function fileSala(n, unaFila) { if (n <= (unaFila || 2)) return [n]; var d = Math.ceil(n / 2); return [d, n - d]; }
+  // una persona del pubblico: la sedia (o il seggiolino) dietro, l'avatar seduto, la paletta col numero, la nuvoletta dell'offerta
+  function personaAsta(el, S, p, sedia) {
+    var cfg = cfgDi(p.nome, p.omino), m = manoAlzata(cfg);
+    var paletta = el("div", { class: "sa-paletta", style: "left:" + (m.x / 2) + "%;top:" + (m.y / 2.64) + "%" }, [ el("span", { text: String(p.num) }) ]);
+    var nuvola = el("div", { class: "sa-nuvola" }), nota = el("small");
+    var passo = el("button", { class: "sa-passo", text: "passo", onclick: function (e) { e.stopPropagation(); S.ultimiDati.onPassa(p.id); } });
+    var nodo = el("div", { class: "sa-pers", role: "button", onclick: function () {
+      var dd = S.ultimiDati, q = S.pers[p.id]; if ((dd.io == null || dd.io === p.id) && q && q.puo) dd.onRilancia(p.id); } }, [
+      el("div", { class: "sa-figura" }, [ el("img", { class: "sa-sedia", src: sedia, alt: "" }), el("img", { class: "sa-av", src: srcAv(cfg, GIU), alt: "" }),
+        el("img", { class: "sa-av sa-su", src: srcAv(cfg, SU), alt: "" }), paletta, nuvola, el("i", { class: "sa-num", text: String(p.num) }) ]),
+      el("b", { text: p.nome.length > 9 ? p.nome.slice(0, 9) + "…" : p.nome }), nota, passo
+    ]);
+    S.pers[p.id] = { nodo: nodo, nota: nota, passo: passo, nuvola: nuvola, puo: false };
+    return nodo;
+  }
+  function pubblico(el, S, persone, sedia, cls, unaFila) {   // le file del pubblico: davanti i primi numeri, dietro (più piccoli) gli altri
+    var box = el("div", { class: cls }), k = 0;
+    fileSala(persone.length, unaFila).map(function (quanti, r) {
+      var fila = el("div", { class: "sa-fila sa-fila" + r + " n" + quanti });
+      for (var i = 0; i < quanti; i++) fila.appendChild(personaAsta(el, S, persone[k++], sedia));
+      return fila;
+    }).reverse().forEach(function (f) { box.appendChild(f); });
+    return box;
+  }
+  function testaAsta(el, S, d) {
+    return el("div", { class: "sa-testa" }, [
+      el("button", { class: "sa-tasto", text: "‹", "aria-label": "Esci", onclick: function () { S.ultimiDati.onIndietro(); } }),
+      S.info = el("div", { class: "sa-info" }),
+      d.extra ? el("button", { class: "sa-tasto sa-extra", text: d.extra.testo, onclick: function () { var e = S.ultimiDati.extra; if (e) e.apri(); } }) : el("span", { class: "sa-vuoto" })
+    ]);
+  }
+  function aggiornaPubblico(S, d) {   // chi guida tiene su la paletta; chi può rilanciare ha la luce sotto; chi ha già il ruolo (o la carta) è in ombra
+    d.persone.forEach(function (p) {
+      var q = S.pers[p.id]; if (!q) return;
+      var guida = p.id === d.leader, fuori = p.stato !== "gara", mio = d.io != null && p.id === d.io;
+      q.puo = !fuori && !guida && !!p.puo;
+      q.nodo.className = "sa-pers" + (guida ? " guida" : "") + (fuori ? " fuori" : "") + (p.via ? " via" : "") + (mio ? " mio" : "") + (q.puo && (d.io == null || mio) ? " puo" : "");
+      q.nota.textContent = p.via ? "non c'è" : (p.nota || "");
+      var conPasso = !fuori && !guida && d.puoPassare !== false;   // (stesso telefono: il posto del tasto resta, così le file non ballano)
+      if (d.io == null) { q.passo.style.display = ""; q.passo.style.visibility = conPasso ? "" : "hidden"; } else q.passo.style.display = "none";
     });
+  }
+  function nuovaOfferta(S, d, dice) {   // chi ha appena rilanciato salta con la nuvoletta, e il banditore (o lo speaker) lo dice
+    var capo = trova(d.persone, d.leader), chi = capo ? capo.nome : "";
+    if (S.prezzo === undefined) dice(capo ? chi + " parte da " + d.prezzo + "! Chi offre di più?" : "Si parte da " + d.prezzo + "! Chi offre?");
+    else if (d.leader != null && (d.leader !== S.leader || d.prezzo !== S.prezzo)) {
+      var q = S.pers[d.leader];
+      if (q) { rianima(q.nuvola, "via", d.prezzo + "!"); rianima(q.nodo, "salta"); }
+      dice(S.leader == null ? chi + " lo prende a " + d.prezzo + "! Chi offre di più?"
+        : [d.prezzo + " a " + chi + "!", d.prezzo + " da " + chi + "! Chi offre di più?", "Ho " + d.prezzo + " da " + chi + "!", d.prezzo + " a " + chi + ", e chi rilancia?"][d.prezzo % 4]);
+    }
+    S.leader = d.leader; S.prezzo = d.prezzo;
+  }
+  // il tempo: la barra riparte a ogni rilancio; negli ultimi 3 secondi "5 e uno… 5 e due… 5 e tre…"
+  function avviaConta(S, resta, tot, dice) {
+    fermaConta(S);
+    resta = Math.max(0, +resta || 0); tot = tot || SECONDI * 1000;
+    S.tempo.style.transition = "none"; S.tempo.style.transform = "scaleX(" + Math.min(1, resta / tot) + ")"; void S.tempo.offsetWidth;
+    S.tempo.style.transition = "transform " + resta + "ms linear"; S.tempo.style.transform = "scaleX(0)";
+    S.radice.classList.remove("ultimi");
+    ["uno", "due", "tre"].forEach(function (parola, i) {
+      var quando = resta - (3 - i) * 1000; if (quando < 0) return;
+      S.conta.push(setTimeout(function () {
+        if (!document.body.contains(S.radice)) return;
+        S.radice.classList.add("ultimi");
+        dice(S.prezzo + " e " + parola + "…", true); FX.conta(i);
+      }, quando));
+    });
+  }
+  function fermaConta(S) {
+    if (!S || !S.conta) return;
+    S.conta.forEach(function (x) { clearTimeout(x); }); S.conta = [];
+    if (S.tempo) { var w = S.tempo.getBoundingClientRect().width, tw = S.tempo.parentNode ? S.tempo.parentNode.getBoundingClientRect().width : 0; S.tempo.style.transition = "none"; S.tempo.style.transform = "scaleX(" + (tw ? Math.min(1, w / tw) : 0) + ")"; }
+    if (S.radice) S.radice.classList.remove("ultimi");
+  }
+  function piedeAsta(S, d) {   // la riga d'aiuto e i tasti (online solo per chi gioca da questo telefono)
+    svuotaNodo(S.piede);
+    if (d.nota) { var n = document.createElement("p"); n.className = "sa-nota"; n.textContent = d.nota; S.piede.appendChild(n); }
+    if (d.io != null && d.mie) d.mie.forEach(function (b) { S.piede.appendChild(b); });
+  }
+  function timbro(scritta) { var b = document.createElement("div"); b.className = "sa-aggiudicato"; b.textContent = scritta; return b; }
 
-    s._contenuto.appendChild(el("p", { class: "as-msg", style: "margin-top:10px",
-      text: "Allo scadere del tempo la carta va a chi offre di più. Paga solo il vincitore." }));
-    var pal = dettaglioPalio(el, st.tavolo, a.carta.nome);
-    if (pal) s._contenuto.appendChild(pal);
-    t.mostra(s);
+  // ---- la sala (temi) ----
+  // dati: { chiave, info, carta (nodo), sotto, prezzo, leader (id o null), persone: [{ id, nome, omino, num, stato: "gara"|"passato"|"fuori", via, nota, puo }],
+  //         io (online: il mio id; null = stesso telefono, tutti toccabili), giro + resta (il conto alla rovescia: riparte quando cambia giro), durata,
+  //         avviso, nota, mie (i miei tasti, online), puoPassare, onRilancia(id), onPassa(id), onIndietro, extra: { testo, apri } }
+  function salaAsta(t, d) {
+    if (SALA && SALA.chiave === d.chiave && document.body.contains(SALA.radice)) return aggiornaSala(d);
+    fermaConta(SALA);
+    var el = t.el, S = { chiave: d.chiave, pers: {}, conta: [] }, sfondo = el("div", { class: "sa-sfondo" }), quadro = arte("sala", "");
+    if (quadro) sfondo.style.backgroundImage = "url(\"" + quadro + "\")";
+    S.bolla = el("div", { class: "sa-bolla" });
+    S.martello = el("div", { class: "sa-martello", text: "🔨" });
+    S.pannello = el("div", { class: "sa-pannello" }, [
+      el("div", { class: "sa-lotto" }, [ d.carta, el("div", { class: "sa-sotto", text: d.sotto || "" }) ]),
+      el("div", { class: "sa-prezzo" }, [ el("small", { text: "Offerta" }), S.prezzoN = el("b"), S.chi = el("span") ])
+    ]);
+    S.avviso = el("div", { class: "sa-avviso" });
+    S.tempo = el("i");
+    S.piede = el("div", { class: "sa-piede" });
+    S.ban = el("div", { class: "sa-ban" }, [ el("img", { class: "sa-ban-img", src: srcAv(banditore(), { spalle: true }), alt: "" }),
+      el("img", { class: "sa-leggio", src: arte("leggio", LEGGIO_RIS), alt: "" }), S.martello, S.bolla ]);
+    S.radice = el("div", { class: "schermata sa-sala" }, [ sfondo, testaAsta(el, S, d), S.pannello, S.avviso, el("div", { class: "sa-tempo" }, [ S.tempo ]),
+      pubblico(el, S, d.persone, arte("sedia", SEDIA_RIS), "sa-platea"), el("div", { class: "sa-basso" }, [ S.ban, S.piede ]) ]);
+    S.ultimiDati = d; SALA = S;
+    t.mostra(S.radice);
+    aggiornaSala(d);
+  }
+  function aggiornaSala(d) {
+    var S = SALA; if (!S) return; S.ultimiDati = d;
+    S.info.textContent = d.info || "";
+    S.prezzoN.textContent = d.prezzo + " 💰";
+    var capo = trova(d.persone, d.leader);
+    S.chi.textContent = capo ? (d.io != null && capo.id === d.io ? "👑 è tua" : "di " + capo.nome) : "nessuna offerta";
+    S.avviso.textContent = d.avviso || ""; S.avviso.style.display = d.avviso ? "" : "none";
+    aggiornaPubblico(S, d);
+    nuovaOfferta(S, d, parlaBanditore);
+    if (d.giro !== S.giro) { S.giro = d.giro; avviaConta(S, d.resta, d.durata, parlaBanditore); }
+    piedeAsta(S, d);
+  }
+  function parlaBanditore(testo, conta) {
+    var S = SALA; if (!S) return;
+    S.bolla.classList.toggle("conta", !!conta); rianima(S.bolla, "via", testo);
+  }
+  function aggiudica(testo, poi, scritta) {   // il martello batte: "Aggiudicato!" (o un'altra scritta), poi si va avanti
+    var S = SALA; if (!S || !document.body.contains(S.radice)) return poi();
+    fermaConta(S); S.martello.classList.add("batte"); rianima(S.ban, "batte"); parlaBanditore(testo);
+    S.radice.appendChild(timbro(scritta || "AGGIUDICATO!")); S.radice.classList.add("chiusa");
+    SALA = null;
+    setTimeout(poi, 1500);
+  }
+
+  // =========================================================
+  //  LO STADIO (asta del fantacalcio, sullo stesso telefono e online).
+  //  In alto il maxischermo col calciatore all'asta (lo sfondo prende i colori della sua squadra, la maglia, il prezzo, e lo
+  //  speaker che conta "12 e uno… 12 e due…"); in mezzo la tribuna coi giocatori seduti che alzano la paletta; in basso il
+  //  campetto con la formazione: quando un calciatore è aggiudicato la sua maglia vola dal maxischermo al suo posto.
+  //  Si costruisce una volta per partita: poi cambia solo quello che serve (niente lampeggio).
+  // =========================================================
+  var STADIO = null;
+  var POSTI_CAMPO = [ { r: "A", x: 50, y: 18 }, { r: "C", x: 26, y: 42 }, { r: "C", x: 74, y: 42 }, { r: "D", x: 50, y: 59 }, { r: "P", x: 50, y: 85 } ];
+  function nomeCampo(n) {   // "Martinez L." → "Martinez" (via le iniziali)
+    var s = String(n || ""), p = s.split(" ").filter(function (x) { return !/^[A-Za-zÀ-ÿ]{1,3}\.$/.test(x); });
+    return p.join(" ") || s;
+  }
+  function slotRosa(kit) {   // i 5 posti del campetto (nell'ordine di POSTI_CAMPO) col calciatore che ci va, o null
+    var per = { P: [], D: [], C: [], A: [] }, usati = { P: 0, D: 0, C: 0, A: 0 };
+    (kit || []).forEach(function (c) { if (per[c.ruolo]) per[c.ruolo].push(c); });
+    return POSTI_CAMPO.map(function (p) { return per[p.r][usati[p.r]++] || null; });
+  }
+  // la parte del campetto (anche alla fine, per svelare i valori): 5 posti in formazione e il mister a bordo campo
+  function campetto(el, S) {
+    S.slot = POSTI_CAMPO.map(function (p) {
+      var img = el("img", { class: "st-slot-maglia", alt: "" }), nm = el("span"), val = el("em", { class: "st-val" });
+      var n = el("div", { class: "st-slot vuoto", style: "left:" + p.x + "%;top:" + p.y + "%" }, [ el("i", { class: "st-slot-vuoto", text: (FANTA_RUOLI[p.r] || {}).breve }), img, nm, val ]);
+      return { nodo: n, img: img, nome: nm, val: val, ruolo: p.r, k: null };
+    });
+    S.mister = el("img", { class: "st-mister", alt: "" });
+    S.campo = el("div", { class: "st-campo" }, S.slot.map(function (s) { return s.nodo; }).concat([ S.mister ]));
+    var fondo = arte("campo", ""); if (fondo) { S.campo.style.backgroundImage = "url(\"" + fondo + "\")"; S.campo.classList.add("dipinto"); }
+    S.campoNome = el("div", { class: "st-campo-nome" });
+    return S.campo;
+  }
+  function riempiSlot(s, c, valore) {   // un posto del campetto: la maglia e il nome del calciatore (o vuoto col ruolo)
+    var k = c ? c.nome + "|" + c.squadra : "";
+    if (k !== s.k) {
+      s.k = k; s.nodo.classList.toggle("vuoto", !c);
+      if (c) { s.img.src = maglia(c.squadra); s.nome.textContent = nomeCampo(c.nome); } else { s.img.removeAttribute("src"); s.nome.textContent = ""; }
+      s.val.classList.remove("su"); s.val.textContent = "";
+    }
+    if (valore != null) { s.val.textContent = valore; s.val.classList.add("su"); }
+  }
+  function mostraMister(S, g) { var k = g ? g.nome + JSON.stringify(g.omino || "") : ""; if (k !== S.misterK) { S.misterK = k; S.mister.src = g ? srcAv(cfgDi(g.nome, g.omino), {}) : ""; } }
+  function maxischermo(el, S, conContatore) {   // il maxischermo: due strati di colore che sfumano, la maglia, i dati, lo speaker in basso
+    S.colA = el("div", { class: "st-colori" }); S.colB = el("div", { class: "st-colori" });
+    S.magliaImg = el("img", { class: "st-maglia", alt: "" });
+    S.ruolo = el("span", { class: "st-ruolo" }); S.squadra = el("span", { class: "st-squadra" });
+    S.nome = el("div", { class: "st-nome" });
+    S.prezzoN = el("b"); S.chi = el("span");
+    S.ticker = el("div", { class: "st-ticker" });
+    S.schermo = el("div", { class: "st-schermo vuoto" }, [ S.colA, S.colB,
+      el("div", { class: "st-dentro" }, [
+        el("div", { class: "st-magliabox" }, [ S.magliaImg ]),
+        el("div", { class: "st-dati" }, [ el("div", { class: "st-riga" }, [ S.ruolo, S.squadra ]), S.nome, el("div", { class: conContatore ? "st-prezzo st-contatore" : "st-prezzo" }, [ S.prezzoN, S.chi ]) ])
+      ]), S.ticker, el("div", { class: "st-led" }) ]);
+    return el("div", { class: "st-board" }, [ S.schermo ]);
+  }
+  function coloriSchermo(S, col) {   // lo sfondo del maxischermo prende i colori della squadra (sfumando da quelli di prima)
+    var grad = col ? "linear-gradient(135deg," + col[0] + " 0%," + col[0] + " 50%," + col[1] + " 100%)" : "linear-gradient(135deg,#1b2a4a,#0c1424)";
+    if (grad === S.grad) return; S.grad = grad;
+    var sopra = S.colSopra === S.colA ? S.colB : S.colA, sotto = sopra === S.colA ? S.colB : S.colA;
+    sotto.style.zIndex = "0"; sopra.style.zIndex = "1";
+    sopra.style.transition = "none"; sopra.style.opacity = "0"; sopra.style.backgroundImage = grad; void sopra.offsetWidth;
+    sopra.style.transition = "opacity .6s"; sopra.style.opacity = "1"; S.colSopra = sopra;
+  }
+  function speaker(testo, conta) { var S = STADIO; if (!S) return; S.ticker.className = "st-ticker" + (conta ? " conta" : ""); rianima(S.ticker, "via", testo); }
+
+  // dati: come la sala, più { fase: "asta"|"esito", carta: { nome, squadra, ruolo }, base, persone[i].crediti/.kit,
+  //         esito: { n, tipo: "vinta"|"forzata"|"accollo", chiId, chiNome, carta, prezzo } }
+  function stadio(t, d) {
+    if (STADIO && STADIO.chiave === d.chiave && document.body.contains(STADIO.radice)) return aggiornaStadio(d);
+    fermaConta(STADIO);
+    var el = t.el, S = { chiave: d.chiave, pers: {}, conta: [], squadre: {}, vista: null, esitoN: null, carta: null }, sfondo = el("div", { class: "sa-sfondo" }), quadro = arte("stadio", "");
+    if (quadro) sfondo.style.backgroundImage = "url(\"" + quadro + "\")";
+    S.avviso = el("div", { class: "sa-avviso" });
+    S.tempo = el("i");
+    S.piede = el("div", { class: "sa-piede st-piede" });
+    var board = maxischermo(el, S, false), campo = campetto(el, S);
+    S.radice = el("div", { class: "schermata sa-sala st-stadio" }, [ sfondo, testaAsta(el, S, d), board, S.avviso, el("div", { class: "sa-tempo" }, [ S.tempo ]),
+      pubblico(el, S, d.persone, arte("seggiolino", SEGG_RIS), "st-tribuna", 5),
+      el("div", { class: "st-campo-box" }, [
+        el("div", { class: "st-campo-testa" }, [
+          el("button", { class: "st-freccia", text: "‹", "aria-label": "La squadra prima", onclick: function () { giraSquadra(S, -1); } }), S.campoNome,
+          el("button", { class: "st-freccia", text: "›", "aria-label": "La squadra dopo", onclick: function () { giraSquadra(S, 1); } }) ]),
+        campo ]),
+      S.piede ]);
+    S.ultimiDati = d; STADIO = S;
+    t.mostra(S.radice);
+    aggiornaStadio(d);
+  }
+  function aggiornaStadio(d) {
+    var S = STADIO; if (!S) return; S.ultimiDati = d;
+    S.info.textContent = d.info || "";
+    d.persone.forEach(function (p) { S.squadre[p.id] = p; });
+    // il calciatore sul maxischermo: cambia solo quando ne esce uno nuovo
+    var c = d.carta, k = c ? c.nome + "|" + c.squadra + "|" + (d.giroCarta || "") : "";
+    if (k !== S.carta) {
+      S.carta = k; S.prezzo = undefined; S.leader = undefined; S.giro = undefined;   // calciatore nuovo: il conto alla rovescia riparte comunque
+      if (d.io != null && d.fase === "asta") { S.vista = d.io; S.ultimoLeader = null; }   // (online) si torna a guardare la propria squadra
+      var vecchio = S.radice.querySelector(".sa-aggiudicato"); if (vecchio) vecchio.parentNode.removeChild(vecchio);
+      S.radice.classList.remove("chiusa");
+      coloriSchermo(S, c ? coloriSquadra(c.squadra) : null);
+      S.schermo.classList.toggle("vuoto", !c);
+      if (c) {
+        var ru = FANTA_RUOLI[c.ruolo] || {};
+        S.magliaImg.src = maglia(c.squadra); S.ruolo.textContent = ru.breve || ""; S.ruolo.className = "st-ruolo as-rb-" + c.ruolo;
+        S.squadra.textContent = c.squadra || ""; S.nome.textContent = c.nome; rianima(S.schermo, "entra");
+      }
+    }
+    S.prezzoN.textContent = c ? d.prezzo + " 💰" : "";
+    var capo = trova(d.persone, d.leader);
+    S.chi.textContent = !c ? "" : capo ? (d.io != null && capo.id === d.io ? "👑 l'offerta è tua" : "offerta di " + capo.nome) : (d.base ? "prezzo di partenza" : "");
+    S.avviso.textContent = d.avviso || ""; S.avviso.style.display = d.avviso ? "" : "none";
+    aggiornaPubblico(S, d);
+    // il campetto: online la tua squadra; sullo stesso telefono quella di chi ha appena offerto (con le frecce si guardano le altre)
+    if (S.vista == null || !S.squadre[S.vista]) S.vista = d.io != null && S.squadre[d.io] ? d.io : d.persone[0].id;
+    if (d.io == null && d.fase === "asta" && d.leader != null && d.leader !== S.ultimoLeader) S.vista = d.leader;
+    S.ultimoLeader = d.leader;
+    if (d.fase === "asta") {
+      nuovaOfferta(S, d, speaker);
+      if (d.giro !== S.giro) { S.giro = d.giro; avviaConta(S, d.resta, d.durata, speaker); }
+    } else fermaConta(S);
+    if (d.esito && d.esito.n !== S.esitoN) { S.esitoN = d.esito.n; return esitoStadio(S, d); }
+    disegnaCampo(S, d);
+    piedeAsta(S, d);
+  }
+  function disegnaCampo(S, d, salta) {   // la formazione della squadra che si guarda (salta: un posto lasciato vuoto, ci arriva la maglia in volo)
+    var g = S.squadre[S.vista]; if (!g) return;
+    S.campoNome.textContent = (d.io != null && g.id === d.io ? "La tua squadra" : "Squadra di " + g.nome) + " · " + g.crediti + " 💰";
+    mostraMister(S, g);
+    var posti = slotRosa(g.kit), cerca = d.fase === "asta" && d.carta ? d.carta.ruolo : null, segnato = false;
+    S.slot.forEach(function (s, i) {
+      var c = i === salta ? null : posti[i], qui = !c && !segnato && cerca === s.ruolo;
+      riempiSlot(s, c);
+      if (qui) segnato = true;
+      s.nodo.classList.toggle("cerca", qui);   // il posto dove andrebbe il calciatore all'asta
+    });
+  }
+  function giraSquadra(S, dir) {
+    var d = S.ultimiDati, n = d.persone.length, i = 0;
+    d.persone.forEach(function (p, j) { if (p.id === S.vista) i = j; });
+    S.vista = d.persone[(i + dir + n) % n].id;
+    S.ultimoLeader = d.leader;
+    disegnaCampo(S, d);
+  }
+  function esitoStadio(S, d) {   // aggiudicato: timbro sul maxischermo e la maglia vola nel campetto di chi l'ha preso; nessuno: torna in fondo al mazzo
+    var e = d.esito;
+    S.radice.appendChild(timbro(e.tipo === "accollo" ? "NESSUNO!" : "AGGIUDICATO!")); S.radice.classList.add("chiusa");
+    piedeAsta(S, d);
+    if (e.tipo === "accollo") { speaker("Nessuno lo vuole! Torna in fondo al mazzo"); disegnaCampo(S, d); return; }
+    speaker(e.tipo === "forzata" ? "Solo " + e.chiNome + " cerca un " + ((FANTA_RUOLI[e.carta.ruolo] || {}).nome || "").toLowerCase() + ": è suo per " + e.prezzo + "!"
+      : "Aggiudicato a " + e.chiNome + " per " + e.prezzo + "!");
+    S.vista = e.chiId;
+    var g = S.squadre[e.chiId], posti = g ? slotRosa(g.kit) : [], i = -1;
+    posti.forEach(function (c, j) { if (c && c.nome === e.carta.nome && c.squadra === e.carta.squadra) i = j; });
+    disegnaCampo(S, d, i);
+    if (i < 0) return;
+    var n = S.esitoN;
+    setTimeout(function () {
+      if (STADIO !== S || S.esitoN !== n) return;
+      volo(S, i, function () { if (STADIO !== S) return; disegnaCampo(S, S.ultimiDati); rianima(S.slot[i].nodo, "arriva"); FX.pop(); });
+    }, 450);
+  }
+  function volo(S, i, poi) {   // la maglia vola dal maxischermo al suo posto nel campetto (solo transform: niente scatti)
+    var s = S.slot[i], da = S.magliaImg.getBoundingClientRect(), a = s.img.getBoundingClientRect(), base = S.radice.getBoundingClientRect();
+    if (!da.width || !a.width) return poi();
+    var img = document.createElement("img"); img.className = "st-volo"; img.src = S.magliaImg.src; img.alt = "";
+    img.style.left = (da.left - base.left) + "px"; img.style.top = (da.top - base.top) + "px"; img.style.width = da.width + "px"; img.style.height = da.height + "px";
+    S.radice.appendChild(img);
+    var dx = (a.left + a.width / 2) - (da.left + da.width / 2), dy = (a.top + a.height / 2) - (da.top + da.height / 2), sc = a.width / da.width;
+    var finito = false, fine = function () { if (finito) return; finito = true; if (img.parentNode) img.parentNode.removeChild(img); poi(); };
+    if (img.animate) {
+      var an = img.animate([
+        { transform: "translate(0px,0px) scale(1) rotate(0deg)" },
+        { transform: "translate(" + (dx * 0.45) + "px," + (dy * 0.45 - 50) + "px) scale(" + ((1 + sc) / 1.7) + ") rotate(-190deg)", offset: 0.5 },
+        { transform: "translate(" + dx + "px," + dy + "px) scale(" + sc + ") rotate(-360deg)" }
+      ], { duration: 850, easing: "ease-in-out", fill: "forwards" });
+      an.onfinish = fine;
+    }
+    setTimeout(fine, 1050);
+  }
+
+  // il foglio che sale dal basso sopra la sala (le carte prese, le formazioni)
+  function foglioSala(t, titolo, contenuto) {
+    var el = t.el, velo = el("div", { class: "sa-foglio-velo" }), chiudi = function () { if (velo.parentNode) velo.parentNode.removeChild(velo); };
+    velo.addEventListener("click", function (e) { if (e.target === velo) chiudi(); });
+    velo.appendChild(el("div", { class: "sa-foglio" }, [ el("div", { class: "sa-foglio-testa" }, [ el("b", { text: titolo }), el("button", { class: "sa-tasto", text: "✕", onclick: chiudi }) ]), contenuto ]));
+    ((SALA && SALA.radice) || (STADIO && STADIO.radice) || document.body).appendChild(velo);
+  }
+  // tutte le formazioni del fantacalcio: la rosa di ognuno su un campetto, con le maglie delle squadre
+  function formazioni(t, giocatori) {
+    var el = t.el, box = el("div", { class: "sa-formazioni" });
+    (giocatori || []).forEach(function (g) {
+      var posti = slotRosa(g.kit), campo = el("div", { class: "sa-campo" });
+      posti.forEach(function (c, i) {
+        var p = POSTI_CAMPO[i];
+        campo.appendChild(el("div", { class: "sa-gioc" + (c ? "" : " vuoto"), style: "left:" + p.x + "%;top:" + p.y + "%" }, [
+          c ? el("img", { class: "sa-maglia", src: maglia(c.squadra), alt: "" }) : el("i", { class: "sa-maglia", text: (FANTA_RUOLI[p.r] || {}).breve }),
+          el("span", { text: c ? nomeCampo(c.nome) : "" })
+        ]));
+      });
+      box.appendChild(el("div", { class: "sa-squadra" }, [ el("div", { class: "sa-sq-nome", text: g.nome + " · " + g.crediti + " 💰" }), campo ]));
+    });
+    foglioSala(t, "👕 Le formazioni", box);
+  }
+  function esciAsta(t, st) {
+    if (!window.confirm("Uscire dalla partita?")) return;
+    if (st) { st.finita = true; if (st.asta && st.asta.bar && st.asta.bar._stop) st.asta.bar._stop(); if (st.pausa) clearTimeout(st.pausa); }
+    fermaConta(SALA); fermaConta(STADIO); SALA = null; STADIO = null; t.esci();
+  }
+  function tempoAsta(a, quando) {   // (stesso telefono) il conto alla rovescia riparte: allo scadere, quando()
+    if (a.bar && a.bar._stop) a.bar._stop();
+    a.giro = (a.giro || 0) + 1; a.scadenza = Date.now() + SECONDI * 1000;
+    var to = setTimeout(quando, SECONDI * 1000); a.bar = { _stop: function () { clearTimeout(to); } };
+  }
+  function cartaSala(el, emoji, nome, ico) { return el("div", { class: "sa-carta-in" }, [ ico ? el("div", icoAttr("em", emoji)) : el("div", { class: "em", text: emoji }), el("div", { class: "nm", text: nome }) ]); }
+  function chiaveVM(vm, carta) { return "vm|" + (vm.codice || "") + "|" + (vm.roundIdx != null ? vm.roundIdx : "") + "|" + (carta ? carta.nome : ""); }
+  // (online, temi) la sala d'asta vista da questo telefono: il tuo avatar ha il numero giallo, i tuoi tasti in basso
+  function salaAstaVM(t, vm, cb) {
+    var el = t.el, myId = cb.myId, a = vm.asta, io = trova(vm.giocatori, myId);
+    var hoPassato = a.passati.indexOf(myId) >= 0, guido = a.leaderId === myId, prezzo = a.offerta + 1;
+    var inGara = io && !io.haCarta, max = io ? io.crediti - ((vm.totRound - 1) - vm.roundIdx) : 0, mie = [];
+    if (inGara && !hoPassato && !guido) {
+      var bSu = el("button", { class: "btn btn-verde sa-grande", text: "🙋 Rilancio: " + prezzo + " 💰", onclick: cb.onRilancia });
+      if (max < prezzo) bSu.disabled = true;
+      mie.push(bSu, el("button", { class: "btn btn-rosso", text: "Passo", onclick: cb.onPassa }));
+    }
+    var persone = vm.giocatori.map(function (g, i) {
+      var pass = a.passati.indexOf(g.id) >= 0;
+      return { id: g.id, nome: g.nome, omino: g.omino || null, num: i + 1, via: !!g.via, stato: g.haCarta ? "fuori" : pass ? "passato" : "gara",
+        nota: g.haCarta ? "✔ ha la carta" : pass ? "ha passato" : g.crediti + " 💰", puo: g.id === myId && inGara && !hoPassato && max >= prezzo };
+    });
+    salaAsta(t, {
+      chiave: chiaveVM(vm, a.carta), info: "Round " + (vm.roundIdx + 1) + " di " + vm.totRound + " · stanza " + (vm.codice || ""),
+      carta: cartaSala(el, a.carta.emoji, a.carta.nome, true), sotto: "Fascia ancora segreta 🤫",
+      prezzo: a.offerta, leader: a.leaderId || null, persone: persone, io: myId || "—", mie: mie,
+      giro: a.giro, resta: a.resta, durata: SECONDI * 1000,
+      nota: !io ? "Stai guardando la partita" : !inGara ? "Hai già la tua carta di questo round" : hoPassato ? "Hai passato: aspetti il risultato" : guido ? "👑 L'offerta più alta è tua" : "Hai " + io.crediti + " 💰 · puoi arrivare a " + Math.max(0, max),
+      onRilancia: function () { cb.onRilancia(); }, onPassa: function () { cb.onPassa(); },
+      onIndietro: function () { if (window.confirm("Uscire dalla partita?")) { fermaConta(SALA); SALA = null; cb.onEsci(); } },
+      extra: { testo: "🃏 Carte", apri: function () { var b = el("div", {}), pal = dettaglioPalio(el, vm.tavolo, a.carta.nome); if (pal) b.appendChild(pal); b.appendChild(pannelloKit(el, vm.giocatori)); foglioSala(t, "🃏 Le carte", b); } }
+    });
+  }
+  // (online, fantacalcio) lo stadio visto da questo telefono
+  function stadioVM(t, vm, cb) {
+    var el = t.el, myId = cb.myId, a = vm.fase === "asta" ? vm.asta : null, e = vm.fase === "esito" ? vm.esito : null, io = trova(vm.giocatori, myId);
+    var carta = a ? a.carta : e ? e.carta : null; if (!carta) return;
+    var ru = FANTA_RUOLI[carta.ruolo] || {};
+    var hoPassato = !!a && a.passati.indexOf(myId) >= 0, guido = !!a && a.leaderId === myId, prezzo = a ? (!a.leaderId ? a.offerta : a.offerta + 1) : 0;
+    var inGara = !!(a && io && (io.conta[a.ruolo] || 0) < FANTA_SLOT[a.ruolo]), max = io ? io.max : 0, mie = [];
+    if (inGara && !hoPassato && !guido) {
+      var bSu = el("button", { class: "btn btn-verde sa-grande", text: !a.leaderId ? "🙋 Lo prendo a " + a.offerta + " 💰" : "🙋 Rilancio: " + prezzo + " 💰", onclick: cb.onRilancia });
+      if (max < prezzo) bSu.disabled = true;
+      mie.push(bSu, el("button", { class: "btn btn-rosso", text: "Passo", onclick: cb.onPassa }));
+    }
+    var persone = vm.giocatori.map(function (g, i) {
+      var pieno = a ? (g.conta[a.ruolo] || 0) >= FANTA_SLOT[a.ruolo] : false, pass = !!a && a.passati.indexOf(g.id) >= 0;
+      return { id: g.id, nome: g.nome, omino: g.omino || null, num: i + 1, crediti: g.crediti, kit: g.kit || [], via: !!g.via, stato: pieno ? "fuori" : pass ? "passato" : "gara",
+        nota: pieno ? "ha già il " + (ru.breve || "") : pass ? "ha passato" : g.crediti + " 💰", puo: g.id === myId && inGara && !hoPassato && max >= prezzo };
+    });
+    stadio(t, {
+      chiave: "fo|" + (vm.codice || "") + "|" + (vm.sessione || ""), fase: a ? "asta" : "esito",
+      info: (a ? ru.nome + " all'asta" : "Mercato") + " · " + vm.restano + " in mazzo · stanza " + (vm.codice || ""),
+      carta: carta, giroCarta: a ? a.nCarta : e.nCarta, prezzo: a ? a.offerta : e.prezzo, base: !!a && !a.leaderId, leader: a ? (a.leaderId || null) : (e.chiId || null),
+      persone: persone, io: myId || "—", mie: mie, giro: a ? a.giro : null, resta: a ? a.resta : 0, durata: SECONDI * 1000, puoPassare: false,
+      esito: e ? { n: e.n, nCarta: e.nCarta, tipo: e.tipo, chiId: e.chiId, chiNome: e.chiNome, carta: e.carta, prezzo: e.prezzo } : null,
+      avviso: a && a.ultimoDuello ? "⚠️ Ultimo duello: chi NON se lo aggiudica si accolla l'altro rimasto!" : "",
+      nota: !a ? "" : !io ? "Stai guardando la partita" : !inGara ? "Hai già il " + ru.nome.toLowerCase() + " in rosa" : hoPassato ? "Hai passato: aspetti il risultato" : guido ? "👑 L'offerta più alta è tua" : "Hai " + io.crediti + " 💰 · puoi arrivare a " + Math.max(0, max),
+      onRilancia: function () { cb.onRilancia(); }, onPassa: function () { cb.onPassa(); },
+      onIndietro: function () { if (window.confirm("Uscire dalla partita?")) { fermaConta(STADIO); STADIO = null; cb.onEsci(); } },
+      extra: { testo: "👕 Tutte", apri: function () { formazioni(t, vm.giocatori); } }
+    });
+  }
+
+  // =========================================================
+  //  FINE DEL FANTACALCIO: si scoprono i valori. Le rose si svelano una alla volta, dalla meno preziosa alla più preziosa:
+  //  il contatore sale (ti-ti-ti) fino al valore della rosa (la somma delle quotazioni ufficiali) e a ogni calciatore che passa
+  //  spunta il suo valore sulla maglia. Poi il podio. A pari valore vince chi ha più crediti avanzati.
+  // =========================================================
+  var RIVELA = null;
+  function valoreCalc(c) { var V = (window.SG_FANTA_QUOTAZIONI || {}).valori || {}, v = +V[c.nome + " (" + c.squadra + ")"]; return v > 0 ? v : 1; }
+  function classificaFanta(giocatori) {
+    var righe = giocatori.map(function (g, i) {
+      var kit = ordinaRosa(g.kit || []).map(function (c) { return { nome: c.nome, squadra: c.squadra, ruolo: c.ruolo, valore: valoreCalc(c) }; }), tot = 0;
+      kit.forEach(function (c) { tot += c.valore; });
+      return { id: g.id != null ? g.id : i, nome: g.nome, omino: g.omino || null, crediti: g.crediti, kit: kit, totale: tot };
+    });
+    righe.sort(function (a, b) { return (b.totale - a.totale) || (b.crediti - a.crediti); });
+    righe.forEach(function (r, i) { var p = righe[i - 1]; r.pos = p && p.totale === r.totale && p.crediti === r.crediti ? p.pos : i + 1; r.punti = "valore " + r.totale; });
+    return righe;
+  }
+  // opz: { chiave, onEsci, bottoni: function () → i tasti da mettere in fondo quando appare il podio }
+  function rivelaFanta(t, righe, opz) {
+    if (RIVELA && RIVELA.chiave === opz.chiave && document.body.contains(RIVELA.radice)) { RIVELA.opz = opz; if (RIVELA.finito) piedeRivela(RIVELA); return; }
+    fermaRivela(RIVELA);
+    var el = t.el, R = { chiave: opz.chiave, opz: opz, righe: righe, timer: [], iv: null, finito: false, conta: [] }, sfondo = el("div", { class: "sa-sfondo" }), quadro = arte("stadio", "");
+    if (quadro) sfondo.style.backgroundImage = "url(\"" + quadro + "\")";
+    var board = maxischermo(el, R, true), campo = campetto(el, R);
+    R.campoBox = el("div", { class: "st-campo-box st-grande" }, [ el("div", { class: "st-campo-testa" }, [ R.campoNome ]), campo ]);
+    R.podio = el("div", { class: "st-podio", style: "display:none" });
+    R.piede = el("div", { class: "sa-piede st-piede" });
+    R.salta = el("button", { class: "sa-tasto", text: "Salta ⏭", onclick: function () { podioRivela(R); } });
+    R.radice = el("div", { class: "schermata sa-sala st-stadio st-rivela" }, [ sfondo,
+      el("div", { class: "sa-testa" }, [ el("button", { class: "sa-tasto", text: "‹", "aria-label": "Esci", onclick: function () { R.opz.onEsci(); } }),
+        el("div", { class: "sa-info", text: "La classifica delle rose" }), R.salta ]),
+      board, R.campoBox, R.podio, R.piede ]);
+    R.ruolo.className = "st-ruolo st-ruolo-classifica"; R.ruolo.textContent = "CLASSIFICA";
+    coloriSchermo(R, ["#1b2a4a", "#0c1424"]);
+    RIVELA = R; t.mostra(R.radice);
+    var ordine = righe.slice().reverse(), j = 0;
+    rianima(R.ticker, "via", "Si scoprono le quotazioni vere: dalla rosa che vale meno a quella che vale di più!");
+    function avanti() {
+      if (!vivoRivela(R)) return;
+      if (j >= ordine.length) return podioRivela(R);
+      svelaRosa(R, ordine[j], j === ordine.length - 1, function () { j++; R.timer.push(setTimeout(avanti, 700)); });
+    }
+    R.timer.push(setTimeout(avanti, 1400));
+  }
+  function vivoRivela(R) { return R && RIVELA === R && document.body.contains(R.radice); }
+  function fermaRivela(R) { if (!R) return; R.timer.forEach(function (x) { clearTimeout(x); }); R.timer = []; if (R.iv) { clearInterval(R.iv); R.iv = null; } }
+  function svelaRosa(R, r, ultima, poi) {
+    R.campoNome.textContent = "La rosa di " + r.nome + " · " + r.crediti + " 💰 avanzati";
+    mostraMister(R, r);
+    var posti = slotRosa(r.kit);
+    R.slot.forEach(function (s, i) { riempiSlot(s, posti[i]); s.nodo.classList.remove("cerca"); });
+    R.magliaImg.src = srcAv(cfgDi(r.nome, r.omino), {}); R.squadra.textContent = ""; R.nome.textContent = r.nome; R.prezzoN.textContent = "0"; R.chi.textContent = "valore della rosa";
+    R.schermo.classList.remove("vuoto"); rianima(R.schermo, "entra");
+    var pari = R.righe.filter(function (o) { return o !== r && o.totale === r.totale; });
+    rianima(R.ticker, "via", "La rosa di " + r.nome + "…");
+    // le soglie: portiere, difensore, centrocampisti, attaccante; quando il contatore le passa, spunta il valore sulla maglia
+    var soglie = [], somma = 0;
+    r.kit.forEach(function (c) { somma += c.valore; soglie.push({ fino: somma, i: posti.indexOf(c), v: c.valore }); });
+    var durata = Math.max(1800, Math.min(4200, 1200 + r.totale * 26)), t0 = 0, ultimoTic = 0, mostrato = -1, k = 0;
+    R.timer.push(setTimeout(function () {
+      if (!vivoRivela(R)) return;
+      t0 = Date.now();
+      R.iv = setInterval(function () {
+        if (!vivoRivela(R)) { clearInterval(R.iv); return; }
+        var p = Math.min(1, (Date.now() - t0) / durata), v = Math.round(r.totale * (1 - (1 - p) * (1 - p)));
+        if (v !== mostrato) { mostrato = v; R.prezzoN.textContent = v; var ora = Date.now(); if (ora - ultimoTic > 55) { ultimoTic = ora; FX.tic(p); } }
+        while (k < soglie.length && v >= soglie[k].fino) { var s = R.slot[soglie[k].i]; if (s) { s.val.textContent = soglie[k].v; s.val.classList.add("su"); } k++; }
+        if (p >= 1) {
+          clearInterval(R.iv); R.iv = null;
+          R.chi.textContent = r.pos + "° posto" + (r.pos === 1 ? "! 🏆" : "");
+          rianima(R.ticker, "via", pari.length ? "Stesso valore di " + pari.map(function (o) { return o.nome; }).join(", ") + ": conta chi ha più crediti avanzati" : r.nome + ": " + r.totale + " punti di valore");
+          if (ultima) FX.festa(); else FX.posto();
+          R.timer.push(setTimeout(poi, ultima ? 1700 : 1300));
+        }
+      }, 40);
+    }, 600));
+  }
+  function podioRivela(R) {   // il podio: i primi tre sui gradini (il primo con le braccia alzate), sotto gli altri
+    if (!vivoRivela(R) || R.finito) return;
+    fermaRivela(R); R.finito = true; R.salta.style.visibility = "hidden";
+    var el = document.createElement.bind(document), w = R.righe[0];
+    R.campoBox.style.display = "none"; R.podio.style.display = "";
+    if (w) { R.magliaImg.src = srcAv(cfgDi(w.nome, w.omino), {}); R.nome.textContent = w.nome; R.prezzoN.textContent = w.totale; R.chi.textContent = "vince! 🏆"; R.squadra.textContent = ""; rianima(R.schermo, "entra"); }
+    rianima(R.ticker, "via", "Vince la rosa che vale di più! A pari valore, chi ha più crediti avanzati.");
+    var gradini = el("div"); gradini.className = "st-gradini";
+    [1, 0, 2].forEach(function (i) {
+      var r = R.righe[i]; if (!r) return;
+      var g = el("div"); g.className = "st-gradino p" + (i + 1); g.style.animationDelay = (i === 0 ? 0.5 : i === 1 ? 0.25 : 0) + "s";
+      var img = el("img"); img.src = srcAv(cfgDi(r.nome, r.omino), i === 0 ? { braccia: "su" } : {}); img.alt = "";
+      var b = el("b"); b.textContent = r.nome; var sm = el("small"); sm.textContent = r.totale + " · " + r.crediti + " 💰";
+      var blocco = el("div"); blocco.className = "blocco"; blocco.textContent = r.pos;
+      g.appendChild(img); g.appendChild(b); g.appendChild(sm); g.appendChild(blocco);
+      gradini.appendChild(g);
+    });
+    R.podio.appendChild(gradini);
+    if (R.righe.length > 3) {
+      var altri = el("div"); altri.className = "st-altri";
+      R.righe.slice(3).forEach(function (r) { var riga = el("div"); riga.textContent = r.pos + "° " + r.nome + " · valore " + r.totale + " · " + r.crediti + " 💰"; altri.appendChild(riga); });
+      R.podio.appendChild(altri);
+    }
+    FX.festa();
+    piedeRivela(R);
+  }
+  function piedeRivela(R) { svuotaNodo(R.piede); (R.opz.bottoni ? R.opz.bottoni() : []).forEach(function (b) { if (b) R.piede.appendChild(b); }); }
+  function disegnaAsta(t, st) {   // (stesso telefono) l'asta nella sala: tocchi il tuo avatar per rilanciare (il tempo riparte solo coi rilanci)
+    var el = t.el, a = st.asta;
+    var persone = st.giocatori.map(function (g, i) {
+      var inGara = st.senzaCarta.indexOf(i) >= 0, pass = !!a.passati[i];
+      return { id: i, nome: g.nome, omino: g.omino || null, num: i + 1, stato: !inGara ? "fuori" : pass ? "passato" : "gara",
+        nota: !inGara ? "✔ ha la carta" : pass ? "ha passato" : g.crediti + " 💰", puo: inGara && !pass && a.leader !== i && maxPuntata(st, i) >= a.offerta + 1 };
+    });
+    salaAsta(t, { chiave: "t|" + st.sessione + "|" + st.roundIdx + "|" + a.idxCarta + "|" + a.carta.nome, info: "Round " + (st.roundIdx + 1) + " di " + TOT_ROUND,
+      carta: cartaSala(el, a.carta.emoji, a.carta.nome, true), sotto: "Fascia ancora segreta 🤫", prezzo: a.offerta, base: false, leader: a.leader,
+      persone: persone, io: null, giro: a.giro, resta: a.scadenza - Date.now(), durata: SECONDI * 1000,
+      nota: "Tocca il tuo avatar per rilanciare di 1. Allo scadere del tempo la carta va a chi offre di più.",
+      onRilancia: function (i) { rilancia(t, st, i); }, onPassa: function (i) { passa(t, st, i); }, onIndietro: function () { esciAsta(t, st); },
+      extra: { testo: "🃏 Carte", apri: function () { var b = el("div", {}), pal = dettaglioPalio(el, st.tavolo, a.carta.nome); if (pal) b.appendChild(pal); b.appendChild(pannelloKit(el, st.giocatori)); foglioSala(t, "🃏 Le carte", b); } } });
   }
 
   function rilancia(t, st, i) {
     var a = st.asta;
-    if (maxPuntata(st, i) < a.offerta + 1) return;
+    if (!a || a.leader === i || st.senzaCarta.indexOf(i) < 0 || maxPuntata(st, i) < a.offerta + 1) return;   // chi ha già l'offerta più alta non rilancia contro se stesso
     a.offerta += 1; a.leader = i;
     delete a.passati[i];
     FX.rilancio();
+    tempoAsta(a, function () { chiudiAsta(t, st); });
     disegnaAsta(t, st);
   }
 
   function passa(t, st, i) {
     var a = st.asta;
+    if (!a || a.leader === i) return;
     a.passati[i] = true;
     // se resta solo chi ha l'offerta più alta, l'asta si chiude subito
     var restano = st.senzaCarta.filter(function (x) { return !a.passati[x]; });
@@ -647,7 +1346,9 @@
     esitoAsta(t, st, vincitore, carta, prezzo, false);
   }
 
-  function esitoAsta(t, st, chi, carta, prezzo, automatica) {
+  function esitoAsta(t, st, chi, carta, prezzo, automatica, dopo) {
+    if (st.finita) return;
+    if (!dopo) return aggiudica("Aggiudicato a " + st.giocatori[chi].nome + " per " + prezzo + "!", function () { esitoAsta(t, st, chi, carta, prezzo, automatica, true); });   // prima il martello
     var el = t.el;
     FX.aggiudicato();
     var s = t.schermata({});
@@ -732,11 +1433,16 @@
   function nomeBreve(n) { return n.length > 12 ? n.slice(0, 12) + "…" : n; }
 
   function finePartita(t, st) {
+    if (st && st.formato === "fanta") {   // fantacalcio: si scoprono le quotazioni, dalla rosa che vale meno a quella che vale di più
+      var righe = classificaFanta(st.giocatori);
+      return rivelaFanta(t, righe, { chiave: "rl|" + st.sessione, onEsci: function () { esciAsta(t, st); },
+        bottoni: function () { return [t.el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: function () { classificaFinale(t, st, righe); } })]; } });
+    }
     FX.fine();
-    // Le fasce restano nascoste per tutta la partita: si svelano solo ORA.
-    if (st && st.formato === "fanta") return classificaFinale(t, st);
-    svelaFasce(t, st);
+    svelaFasce(t, st);   // le fasce restano nascoste per tutta la partita: si svelano solo ORA
   }
+  // le posizioni in classifica: a pari punti, stessa posizione
+  function conPosizioni(righe, uguali) { righe.forEach(function (r, i) { r.pos = i > 0 && uguali(righe[i - 1], r) ? righe[i - 1].pos : i + 1; }); return righe; }
 
   function svelaFasce(t, st) {
     var el = t.el;
@@ -747,9 +1453,11 @@
     t.mostra(s);
   }
 
-  function classificaFinale(t, st) {
-    var classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
-      .map(function (g) { return { nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐" }; });
+  function classificaFinale(t, st, righe) {
+    var classifica = st.formato === "fanta" && righe
+      ? righe.map(function (r) { return { nome: r.nome, punti: "valore " + r.totale + " · " + r.crediti + " 💰", pos: r.pos }; })
+      : conPosizioni(st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
+          .map(function (g) { return { nome: g.nome, stelle: g.stelle, punti: fmtMezzi(g.stelle) + " ⭐" }; }), function (a, b) { return a.stelle === b.stelle; });
     var profilo = window.SGNube && SGNube.profilo ? SGNube.profilo() : null;
     var me = profilo && st.giocatori.filter(function (g) { return String(g.nome).trim().toLowerCase() === String(profilo.nome || "").trim().toLowerCase(); })[0];
     if (me) salvaTrofeiAsta(t, { fase: "fine", sessione: st.sessione, formato: st.formato,
@@ -783,14 +1491,14 @@
       rounds: (st.tema.round || []).map(function (x) { return { nome: x.nome, icona: x.icona }; }),
       giocatori: st.giocatori.map(function (g) {
         return { id: g.id, nome: g.nome, omino: g.omino || null, crediti: g.crediti, creditiSpesi: st.crediti - g.crediti,
-          asteVinte: g.asteVinte || 0, stelle: g.stelle || 0, haCarta: st.senzaCarta.indexOf(g.id) < 0, kit: g.kit.slice() };
+          asteVinte: g.asteVinte || 0, stelle: g.stelle || 0, haCarta: st.senzaCarta.indexOf(g.id) < 0, via: !!g.via, kit: g.kit.slice() };
       }),
       tavolo: st.tavolo.map(function (c) { return { nome: c.nome, emoji: c.emoji, tier: c.tier }; }),
       sceglieId: sceglie, sceglieNome: sceglie ? nomeDi(st, sceglie) : "",
       asta: st.asta ? {
         carta: st.asta.carta, offerta: st.asta.offerta,
         leaderId: st.asta.leader, leaderNome: nomeDi(st, st.asta.leader),
-        passati: Object.keys(st.asta.passati), scadenza: st.scadenza || null
+        passati: Object.keys(st.asta.passati), giro: st.giro, resta: st.scadenza ? st.scadenza - Date.now() : 0   // il tempo che resta (non l'ora: gli orologi dei telefoni non sono uguali)
       } : null,
       esito: st.esito || null,
       hannoVotato: Object.keys(st.voti || {}),
@@ -804,7 +1512,7 @@
     var st = {
       tema: tema, crediti: crediti, sessione: null, roundIdx: 0, chooserPtr: 0,
       tavolo: [], senzaCarta: [], asta: null, esito: null, classifica: null,
-      fase: "lobby", iniziata: false, codice: "…", scadenza: null, _to: null, voti: {},
+      fase: "lobby", iniziata: false, codice: "…", scadenza: null, _to: null, voti: {}, giro: 0,
       giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: crediti, kit: [], stelle: 0, asteVinte: 0, omino: t.mioOmino ? t.mioOmino() : null }]
     };
     function stopTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
@@ -823,21 +1531,21 @@
       onCodice: function (c) { st.codice = c; bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
       onAddio: function (id) {
-        if (!perId(st, id)) return;
-        st.giocatori = st.giocatori.filter(function (x) { return x.id !== id; });
-        st.senzaCarta = st.senzaCarta.filter(function (x) { return x !== id; });
-        delete st.voti[id];
-        if (st.asta) delete st.asta.passati[id];
-        if (st.iniziata && st.giocatori.length === 0) { stopTo(); rete.chiudi(); return t.esci(); }
-        if (st.fase === "asta") { if (st.asta && st.asta.leader === id) return chiudi(); if (verificaPassati()) return; }
-        if (st.fase === "voto") { verificaVoti(); return; }
-        if (st.fase === "scelta" && st.senzaCarta.length === 0) return prossima();
+        var g = perId(st, id); if (!g) return;
+        if (!st.iniziata) { st.giocatori = st.giocatori.filter(function (x) { return x.id !== id; }); return bd(); }   // in saletta chi esce se ne va davvero
+        // a partita cominciata chi perde la connessione resta al suo posto ("non c'è"): passa da solo, tiene le sue carte, e se rientra riprende a giocare
+        g.via = true;
+        if (st.fase === "asta" && verificaPassati()) return;
+        if (st.fase === "voto") { bd(); return verificaVoti(); }
+        if (st.fase === "scelta") sceltaAssente();
         bd();
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          if (!st.iniziata && !perId(st, id) && st.giocatori.length < MAX_GIOCATORI)
+          var gj = perId(st, id);
+          if (gj) gj.via = false;   // chi rientra (stesso id) riprende il suo posto
+          else if (!st.iniziata && st.giocatori.length < MAX_GIOCATORI)
             st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: st.crediti, kit: [], stelle: 0, asteVinte: 0, omino: avatarOk(m.omino) });
           bd();
         }
@@ -878,26 +1586,34 @@
         FX.aggiudicato(); return bd();
       }
       st.fase = "scelta"; st.asta = null; st.esito = null; st.scadenza = null; bd();
+      sceltaAssente();
+    }
+    function sceltaAssente() {   // se tocca scegliere a chi non c'è, dopo un attimo va all'asta una carta a caso (parte da lui a 1)
+      if (st.fase !== "scelta" || !st.senzaCarta.length) return;
+      var ch = perId(st, st.senzaCarta[st.chooserPtr % st.senzaCarta.length]);
+      if (!ch || !ch.via) return;
+      stopTo(); st._to = setTimeout(function () { if (st.fase === "scelta" && ch.via) scegli(ch.id, Math.floor(Math.random() * st.tavolo.length)); }, 2500);
     }
     function scegli(id, idx) {
       if (st.fase !== "scelta" || !st.senzaCarta.length) return;
       var sceglie = st.senzaCarta[st.chooserPtr % st.senzaCarta.length];
       if (id !== sceglie) return;
       if (idx == null || idx < 0 || idx >= st.tavolo.length) return;
+      stopTo();
       st.asta = { carta: st.tavolo[idx], idx: idx, offerta: 1, leader: id, passati: {} };
       st.fase = "asta";
-      riparti();
+      if (!verificaPassati()) riparti();   // se nessun altro può rilanciare, è subito sua
     }
     function riparti() {
       stopTo();
-      st.scadenza = Date.now() + SECONDI * 1000;
+      st.giro++; st.scadenza = Date.now() + SECONDI * 1000;
       st._to = setTimeout(function () { chiudi(); }, SECONDI * 1000);
       bd();
     }
     function rilanciaO(id) {
       if (st.fase !== "asta" || !st.asta) return;
       var g = perId(st, id); if (!g) return;
-      if (st.senzaCarta.indexOf(id) < 0) return;
+      if (st.senzaCarta.indexOf(id) < 0 || st.asta.leader === id) return;   // chi ha già l'offerta più alta non rilancia contro se stesso
       if (maxPuntataG(st, g) < st.asta.offerta + 1) return;
       st.asta.offerta += 1; st.asta.leader = id;
       delete st.asta.passati[id];
@@ -913,7 +1629,7 @@
     }
     function verificaPassati() {
       if (!st.asta) return false;
-      var restano = st.senzaCarta.filter(function (x) { return !st.asta.passati[x]; });
+      var restano = st.senzaCarta.filter(function (x) { var g = perId(st, x); return !st.asta.passati[x] && (x === st.asta.leader || (g && !g.via)); });   // chi non c'è conta come passato
       if (restano.length <= 1) { chiudi(); return true; }
       return false;
     }
@@ -948,7 +1664,7 @@
     }
     function verificaVoti() {
       if (st.fase !== "voto") return;
-      var tutti = st.giocatori.every(function (g) { return st.voti[g.id]; });
+      var tutti = st.giocatori.every(function (g) { return st.voti[g.id] || g.via; });   // chi non c'è non blocca la votazione
       if (!tutti) return;
       st.giocatori.forEach(function (g) { g.stelle = 0; });
       Object.keys(st.voti).forEach(function (chi) {
@@ -958,8 +1674,8 @@
           if (g && target !== chi) { var vv = mezzo(+v[target] || 0); if (vv >= 0.5) g.stelle = mezzo(g.stelle + Math.max(0.5, Math.min(5, vv))); }
         });
       });
-      st.classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
-        .map(function (g, i) { return { id: g.id, nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐", pos: i + 1 }; });
+      st.classifica = conPosizioni(st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
+        .map(function (g) { return { id: g.id, nome: g.nome, stelle: g.stelle, punti: fmtMezzi(g.stelle) + " ⭐" }; }), function (a, b) { return a.stelle === b.stelle; });
       st.fase = "fine"; FX.fine(); bd();
       if (t.risultato) t.risultato(st.classifica);   // per il torneo online
     }
@@ -973,6 +1689,7 @@
       stopTo();
       st.iniziata = false; st.fase = "lobby"; st.sessione = null; st.roundIdx = 0; st.chooserPtr = 0;
       st.tavolo = []; st.senzaCarta = []; st.asta = null; st.esito = null; st.classifica = null; st.voti = {}; st.scadenza = null;
+      st.giocatori = st.giocatori.filter(function (g) { return !g.via; });   // chi non c'è più esce dalla stanza
       st.giocatori.forEach(function (g) { g.crediti = st.crediti; g.kit = []; g.stelle = 0; g.asteVinte = 0; });
       bd();
     }
@@ -1052,24 +1769,6 @@
   }
 
   // ---------- DISEGNO CONDIVISO (host e ospiti) ----------
-  function barraRimasta(el, rimasti) {
-    // Aggiornata a ogni frame in base al tempo reale: si muove su tutti i
-    // dispositivi (su Android la transition CSS a volte non partiva) e si
-    // ferma da sola quando la schermata cambia (elemento staccato dal DOM).
-    var wrap = el("div", { class: "as-timer" });
-    var fill = el("div", { class: "as-timer-fill" });
-    wrap.appendChild(fill);
-    var tot = SECONDI * 1000, fine = Date.now() + Math.max(0, rimasti);
-    fill.style.width = (Math.max(0, Math.min(1, rimasti / tot)) * 100) + "%";
-    function tick() {
-      if (!fill.isConnected) return;
-      var r = fine - Date.now();
-      fill.style.width = (Math.max(0, Math.min(1, r / tot)) * 100) + "%";
-      if (r > 0) requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-    return wrap;
-  }
   // Conserva i voti che sto mettendo finché resto in fase "voto":
   // così se un altro giocatore conferma (arriva una nuova foto) le mie
   // stelle non si azzerano. Si ripuliscono solo quando entro nel voto.
@@ -1084,7 +1783,7 @@
   // TUTTO. Ogni voto da 0,5 a 5 (mezze stelle, mai 0). Con 2 giocatori è libero.
   function budgetVoti(n) { return n <= 2 ? null : Math.round(3.5 * (n - 1) * 2) / 2; }
   function mezzo(x) { return Math.round((x || 0) * 2) / 2; }
-  function fmtMezzi(x) { x = mezzo(x); return (x % 1 === 0) ? String(x) : x.toFixed(1); }
+  function fmtMezzi(x) { x = mezzo(x); return (x % 1 === 0) ? String(x) : x.toFixed(1).replace(".", ","); }
 
   // Costruisce la sezione di voto (banner budget + per ogni avversario il suo
   // nodo kit/rosa e uno stepper − valore +). Ritorna { nodi, valido, aggiorna }.
@@ -1177,6 +1876,13 @@
     ricordaVoti(cb, vm);   // i voti in corso non si azzerano quando un altro conferma
     if (vm.fase === "lobby") return lobbyAsta(t, vm, cb);
     if (vm.fase === "fine") return schermataFineAsta(t, vm, cb);
+    // (online) l'asta si gioca nella sala; finita, il martello batte prima di mostrare chi l'ha presa
+    var ver = cb._ver = (cb._ver || 0) + 1;
+    if (vm.fase === "asta") return salaAstaVM(t, vm, cb);
+    if (vm.fase === "esito" && vm.esito && vm.esito.carta && SALA && SALA.chiave === chiaveVM(vm, vm.esito.carta)) {
+      var e0 = vm.esito, nessuno = e0.tipo === "accollo";
+      return aggiudica(nessuno ? "Nessuno lo vuole!" : "Aggiudicato a " + e0.chiNome + " per " + e0.prezzo + "!", function () { if (cb._ver === ver) disegnaAstaVM(t, vm, cb); }, nessuno ? "NESSUNO!" : "AGGIUDICATO!");
+    }
 
     var s = t.schermata({ sotto: "Stanza " + (vm.codice || ""), icona: "🔨",
       titolo: titoloFaseAsta(vm, myId),
@@ -1207,44 +1913,6 @@
         g1.appendChild(nodo);
       });
       s._contenuto.appendChild(g1);
-    }
-
-    else if (vm.fase === "asta") {
-      var a = vm.asta;
-      s._contenuto.appendChild(el("div", { class: "as-big" }, [
-        el("div", icoAttr("em", a.carta.emoji)),
-        el("div", { class: "nm", text: a.carta.nome }),
-        el("div", { class: "as-fascia-x", text: "Fascia ancora segreta 🤫" })
-      ]));
-      s._contenuto.appendChild(el("div", { class: "as-offerta" }, [
-        el("div", { class: "v", text: a.offerta + " 💰" }),
-        el("div", { class: "chi", text: "offerta di " + a.leaderNome })
-      ]));
-      s._contenuto.appendChild(barraRimasta(el, (a.scadenza || 0) - Date.now()));
-
-      var io = null;
-      vm.giocatori.forEach(function (g) { if (g.id === myId) io = g; });
-      var inGara = io && !io.haCarta;
-      var hoPassato = a.passati.indexOf(myId) >= 0;
-      var guido = a.leaderId === myId;
-      var max = io ? io.crediti - ((vm.totRound - 1) - vm.roundIdx) : 0;
-      if (inGara && !hoPassato) {
-        var riga = el("div", { class: "tl-vota" });
-        var bSu = el("button", { class: "btn btn-verde", text: "+1 → " + (a.offerta + 1), onclick: cb.onRilancia });
-        if (max < a.offerta + 1) bSu.disabled = true;
-        riga.appendChild(bSu);
-        if (!guido) riga.appendChild(el("button", { class: "btn btn-rosso", text: "Passa", onclick: cb.onPassa }));
-        s._piede.appendChild(riga);
-        s._piede.classList.add("piede-fisso");
-        s._contenuto.appendChild(el("p", { class: "as-msg",
-          text: guido ? "👑 Stai guidando l'offerta" : ("Hai " + io.crediti + " crediti · puoi arrivare a " + Math.max(0, max)) }));
-      } else {
-        s._contenuto.appendChild(el("p", { class: "as-msg",
-          text: !io ? "Stai guardando la partita" : (io.haCarta ? "Hai già la tua carta di questo round" : "Hai passato: aspetti il risultato") }));
-      }
-      var pal2 = dettaglioPalio(el, vm.tavolo, a.carta.nome);
-      if (pal2) s._contenuto.appendChild(pal2);
-      s._contenuto.appendChild(pannelloKit(el, vm.giocatori));
     }
 
     else if (vm.fase === "esito") {
@@ -1305,7 +1973,7 @@
     var el = t.el, info = el("div");
     if (vm.formato === "fanta") {
       info.appendChild(el("div", { class: "etichetta", text: "Modalità" }));
-      info.appendChild(el("p", { class: "as-msg", text: "⚽ Mini asta Fantacalcio — rosa da 5 (1 P, 1 D, 2 C, 1 A), 20 crediti a testa." }));
+      info.appendChild(el("p", { class: "as-msg", text: "⚽ Mini asta Fantacalcio — rosa da 5 (1 P, 1 D, 2 C, 1 A), 20 crediti a testa. Vince la rosa che vale di più (quotazioni vere, svelate alla fine)." }));
     } else {   // tutte le regole si cambiano da "⚙️ Regole" (l'host); qui tutti vedono come si gioca
       var cr = (vm.giocatori && vm.giocatori[0] && vm.giocatori[0].crediti) || 15;
       info.appendChild(el("div", { class: "etichetta", text: "Si gioca così" }));
@@ -1326,8 +1994,8 @@
     var ol = el("ol", { class: "classifica" });
     var med = ["🥇", "🥈", "🥉"];
     (vm.classifica || []).forEach(function (r, i) {
-      var li = el("li", { class: i === 0 ? "vincitore" : "" }, [
-        el("span", { class: "pos", text: med[i] || (i + 1) + "°" }),
+      var li = el("li", { class: (r.pos || i + 1) === 1 ? "vincitore" : "" }, [
+        el("span", { class: "pos", text: med[(r.pos || i + 1) - 1] || (r.pos || i + 1) + "°" }),   // a pari punti, stessa medaglia
         el("span", { class: "nome", text: r.nome }),
         el("span", { class: "punti", text: r.punti })
       ]);
@@ -1418,38 +2086,6 @@
   function assegnaFanta(g, carta, prezzo) {
     g.crediti -= prezzo; g.kit.push(carta); g.conta[carta.ruolo] = (g.conta[carta.ruolo] || 0) + 1;
   }
-  function cartaGrande(el, carta, sotto) {
-    return el("div", { class: "as-big" }, [
-      el("div", { class: "em", text: (FANTA_RUOLI[carta.ruolo] || {}).emoji }),
-      el("div", { class: "nm", text: carta.nome }),
-      el("div", { style: "margin-top:6px;font-weight:900;opacity:.8", text: sotto })
-    ]);
-  }
-
-  // pannello IN LINEA con le rose di tutti (scorrendo verso il basso):
-  // solo i calciatori PRESI, ordinati per ruolo, col nome di ogni giocatore.
-  function pannelloRose(el, giocatori) {
-    var box = el("div", { class: "as-rose" });
-    box.appendChild(el("div", { class: "etichetta", style: "margin-top:6px", text: "Le rose finora" }));
-    (giocatori || []).forEach(function (g) {
-      var card = el("div", { class: "as-rose-p" });
-      card.appendChild(el("div", { class: "as-rose-nome", text: g.nome + " · " + g.crediti + "💰 · " + (g.kit ? g.kit.length : 0) + "/5" }));
-      if (!g.kit || !g.kit.length) {
-        card.appendChild(el("div", { class: "as-rose-vuota", text: "ancora nessun acquisto" }));
-      } else {
-        ordinaRosa(g.kit).forEach(function (c) {
-          var ru = FANTA_RUOLI[c.ruolo] || {};
-          card.appendChild(el("div", { class: "as-rose-riga" }, [
-            el("span", { class: "as-rose-em", text: ru.emoji }),
-            el("span", { class: "as-rose-txt", text: c.nome + (c.squadra ? " · " + c.squadra : "") }),
-            el("span", { class: "as-rb as-rb-" + c.ruolo, text: ru.breve })
-          ]));
-        });
-      }
-      box.appendChild(card);
-    });
-    return box;
-  }
 
   // ---------- SINGOLO TELEFONO ----------
   function avviaFanta(t) {
@@ -1482,95 +2118,58 @@
   }
 
   function prossimaFanta(t, st) {
-    if (!st.mazzo.length) return riepilogo(t, st);
+    if (st.finita) return;
+    if (!st.mazzo.length) return finePartita(t, st);   // finito il mazzo: si scoprono i valori delle rose
     var carta = st.mazzo[0], elegg = eleggibiliFanta(st, carta.ruolo);
-    if (!elegg.length) { st.mazzo.shift(); return prossimaFanta(t, st); }        // carta di troppo (giocatore uscito): la salto
-    if (elegg.length === 1 || st.giriVuoti > st.mazzo.length) {                   // uno solo può prenderla, oppure giro a vuoto: assegno d'ufficio a 1
-      var i = elegg[0]; st.mazzo.shift(); assegnaFanta(st.giocatori[i], carta, 1);
+    if (!elegg.length) { st.mazzo.shift(); return prossimaFanta(t, st); }        // carta di troppo: la salto
+    st.nCarta = (st.nCarta || 0) + 1;
+    if (elegg.length === 1 || st.giriVuoti > st.mazzo.length) {                   // uno solo può prenderla, oppure giro a vuoto: d'ufficio a 1 (a caso tra chi ne ha bisogno)
+      var i = elegg[Math.floor(Math.random() * elegg.length)]; st.mazzo.shift(); assegnaFanta(st.giocatori[i], carta, 1);
       st.giriVuoti = 0; FX.aggiudicato();
       return esitoFanta(t, st, i, carta, 1, "forzata");
     }
     st.asta = { carta: carta, ruolo: carta.ruolo, offerta: 1, leader: null, passati: {}, bar: null };
+    tempoAsta(st.asta, function () { scadeFanta(t, st); });
     disegnaAstaFanta(t, st);
   }
 
-  function strisciaFanta(el, st, attivoIdx) {
-    var top = el("div", { class: "as-top" });
-    st.giocatori.forEach(function (g, i) {
-      top.appendChild(el("div", { class: "as-pt" + (i === attivoIdx ? " attivo" : "") }, [
-        el("div", { class: "n", text: g.nome }),
-        el("div", { class: "c", text: g.crediti + "💰 · " + (5 - slotVuoti(g)) + "/5" })
-      ]));
+  // (stesso telefono) lo stadio: tocchi il tuo avatar per offrire; il campetto mostra la squadra di chi ha appena offerto
+  function disegnaAstaFanta(t, st, esito) {
+    var a = st.asta, carta = a ? a.carta : esito.carta, ru = FANTA_RUOLI[carta.ruolo] || {};
+    var prezzo = a ? (a.leader === null ? a.offerta : a.offerta + 1) : 0;
+    var eleggN = eleggibiliFanta(st, carta.ruolo).length, carteRuolo = st.mazzo.filter(function (c) { return c.ruolo === carta.ruolo; }).length;
+    var persone = st.giocatori.map(function (g, i) {
+      var pieno = !!a && ruoloPieno(g, a.ruolo), pass = !!a && !!a.passati[i];
+      return { id: i, nome: g.nome, omino: g.omino || null, num: i + 1, crediti: g.crediti, kit: g.kit, stato: pieno ? "fuori" : pass ? "passato" : "gara",
+        nota: pieno ? "ha già il " + (ru.breve || "") : pass ? "ha passato" : g.crediti + " 💰", puo: !!a && !pieno && !pass && a.leader !== i && maxFanta(g) >= prezzo };
     });
-    return top;
-  }
-
-  function disegnaAstaFanta(t, st) {
-    var el = t.el, a = st.asta, ru = FANTA_RUOLI[a.ruolo] || {};
-    var s = t.schermata({ icona: "⚽", titolo: ru.nome + " all'asta",
-      indietro: function () { if (window.confirm("Uscire dalla partita?")) { if (a.bar) a.bar._stop(); t.esci(); } } });
-    s._contenuto.appendChild(strisciaFanta(el, st, a.leader));
-    s._contenuto.appendChild(cartaGrande(el, a.carta, ru.nome + (a.carta.squadra ? " · " + a.carta.squadra : "")));
-    s._contenuto.appendChild(el("div", { class: "as-offerta" }, a.leader === null ? [
-      el("div", { class: "v", text: "base " + a.offerta + " 💰" }),
-      el("div", { class: "chi", text: "nessuna offerta ancora" })
-    ] : [
-      el("div", { class: "v", text: a.offerta + " 💰" }),
-      el("div", { class: "chi", text: "offerta di " + st.giocatori[a.leader].nome })
-    ]));
-    // ultimo duello: 2 giocatori in gara e restano 2 carte di questo ruolo → chi perde si accolla l'altra
-    var eleggN = eleggibiliFanta(st, a.ruolo).length;
-    var carteRuolo = st.mazzo.filter(function (c) { return c.ruolo === a.ruolo; }).length;
-    if (eleggN === 2 && carteRuolo === 2) {
-      var artD = /^[aeiou]/i.test(ru.nome) ? "l'" : "il ";
-      s._contenuto.appendChild(el("div", { class: "as-duello",
-        text: "⚠️ Ultimo duello per " + artD + ru.nome.toLowerCase() + ": chi NON se lo aggiudica si accolla l'altro rimasto!" }));
-    }
-
-    if (a.bar && a.bar._stop) a.bar._stop();
-    a.bar = barraTimer(el, SECONDI * 1000, function () { scadeFanta(t, st); });
-    s._contenuto.appendChild(a.bar);
-
-    st.giocatori.forEach(function (g, i) {
-      if (ruoloPieno(g, a.ruolo)) {
-        s._contenuto.appendChild(el("div", { class: "as-bid as-fuori" }, [
-          el("div", { class: "who" }, [ el("b", { text: g.nome }), el("span", { text: "ha già il " + ru.nome.toLowerCase() } ) ])
-        ]));
-        return;
-      }
-      var fuori = !!a.passati[i];
-      var prezzo = (a.leader === null) ? a.offerta : a.offerta + 1;
-      var puo = !fuori && maxFanta(g) >= prezzo;
-      s._contenuto.appendChild(el("div", { class: "as-bid" + (i === a.leader ? " leader" : "") + (fuori ? " as-fuori" : "") }, [
-        el("div", { class: "who" }, [
-          el("b", { text: (i === a.leader ? "👑 " : "") + g.nome }),
-          el("span", { text: fuori ? "ha passato" : (g.crediti + " crediti · max " + Math.max(0, maxFanta(g))) })
-        ]),
-        el("button", { class: "su", text: (a.leader === null ? "Prendi a " + a.offerta : "+1 → " + prezzo), disabled: puo ? null : "disabled",
-          onclick: function () { rilanciaFanta(t, st, i); } }),
-        (fuori || i === a.leader) ? null : el("button", { class: "no", text: "Passa", onclick: function () { passaFanta(t, st, i); } })
-      ]));
-    });
-    s._contenuto.appendChild(el("p", { class: "as-msg", style: "margin-top:10px",
-      text: "Allo scadere del tempo la carta va a chi offre di più. Se nessuno offre, va in fondo al mazzo." }));
-    s._contenuto.appendChild(pannelloRose(el, st.giocatori));
-    t.mostra(s);
+    stadio(t, { chiave: "f|" + st.sessione, fase: a ? "asta" : "esito",
+      info: (a ? ru.nome + " all'asta · " : "") + st.mazzo.length + " calciatori nel mazzo",
+      carta: { nome: carta.nome, squadra: carta.squadra, ruolo: carta.ruolo }, giroCarta: st.nCarta, prezzo: a ? a.offerta : esito.prezzo, base: !!a && a.leader === null,
+      leader: a ? a.leader : esito.chiId, persone: persone, io: null, giro: a ? a.giro : null, resta: a ? a.scadenza - Date.now() : 0, durata: SECONDI * 1000, puoPassare: !!a,
+      esito: esito || null,
+      avviso: a && eleggN === 2 && carteRuolo === 2 ? "⚠️ Ultimo duello: chi NON se lo aggiudica si accolla l'altro rimasto!" : "",
+      nota: !a ? "" : a.leader === null ? "Tocca il tuo avatar per prenderlo a " + a.offerta + ". Se nessuno lo vuole torna in fondo al mazzo." : "Tocca il tuo avatar per rilanciare di 1.",
+      onRilancia: function (i) { rilanciaFanta(t, st, i); }, onPassa: function (i) { passaFanta(t, st, i); }, onIndietro: function () { esciAsta(t, st); },
+      extra: { testo: "👕 Tutte", apri: function () { formazioni(t, st.giocatori); } } });
   }
 
   function rilanciaFanta(t, st, i) {
-    var a = st.asta; if (!a) return;
+    var a = st.asta; if (!a || a.leader === i) return;   // chi ha già l'offerta più alta non rilancia contro se stesso
     var g = st.giocatori[i];
     if (ruoloPieno(g, a.ruolo)) return;
     var prezzo = (a.leader === null) ? a.offerta : a.offerta + 1;
     if (maxFanta(g) < prezzo) return;
     a.offerta = prezzo; a.leader = i; delete a.passati[i];
     FX.rilancio();
-    if (!verificaFanta(t, st)) disegnaAstaFanta(t, st);   // se sono già tutti passati, chiudo subito
+    if (verificaFanta(t, st)) return;   // se sono già tutti passati, chiudo subito
+    tempoAsta(a, function () { scadeFanta(t, st); });
+    disegnaAstaFanta(t, st);
   }
   function passaFanta(t, st, i) {
     var a = st.asta; if (!a || a.leader === i) return;
     a.passati[i] = true;
-    if (!verificaFanta(t, st)) disegnaAstaFanta(t, st);
+    if (!verificaFanta(t, st)) disegnaAstaFanta(t, st);   // passare non fa ripartire il tempo
   }
   function verificaFanta(t, st) {
     var a = st.asta; if (!a) return true;
@@ -1584,7 +2183,7 @@
     return false;
   }
   function scadeFanta(t, st) {
-    var a = st.asta; if (!a) return;
+    var a = st.asta; if (!a || st.finita) return;
     if (a.leader !== null) chiudiFanta(t, st, a.leader, a.offerta);
     else accolloFanta(t, st);
   }
@@ -1601,44 +2200,23 @@
     var a = st.asta; if (a && a.bar && a.bar._stop) a.bar._stop();
     var carta = st.mazzo.shift(); st.mazzo.push(carta); st.giriVuoti++;
     st.asta = null;
-    esitoAccolloFanta(t, st, carta);
+    esitoFanta(t, st, null, carta, 0, "accollo");
   }
-
+  // l'esito resta nello stadio: timbro sul maxischermo, la maglia che vola nel campetto; poi da solo il prossimo calciatore
   function esitoFanta(t, st, chi, carta, prezzo, tipo) {
-    var el = t.el, g = st.giocatori[chi], ru = FANTA_RUOLI[carta.ruolo] || {};
-    var s = t.schermata({});
-    s._contenuto.appendChild(el("div", { style: "flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;gap:8px" }, [
-      el("div", { style: "font-size:3.4rem;line-height:1", text: "🔨" }),
-      el("div", { style: "font-size:1.6rem;font-weight:900", text: g.nome + " prende" }),
-      cartaGrande(el, carta, ru.nome + (carta.squadra ? " · " + carta.squadra : "")),
-      el("div", { style: "font-size:1.3rem;font-weight:900;color:var(--accento)", text: "per " + prezzo + " 💰" }),
-      tipo === "forzata" ? el("p", { class: "as-msg", text: "Se lo accolla: era l'unico a cui mancava questo ruolo." }) : null,
-      el("p", { class: "as-msg", text: "Gli restano " + g.crediti + " 💰 · rosa " + (5 - slotVuoti(g)) + "/5." })
-    ]));
-    s._contenuto.appendChild(pannelloRose(el, st.giocatori));
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: function () { prossimaFanta(t, st); } }));
-    t.mostra(s);
-  }
-  function esitoAccolloFanta(t, st, carta) {
-    var el = t.el, ru = FANTA_RUOLI[carta.ruolo] || {};
-    var s = t.schermata({});
-    s._contenuto.appendChild(el("div", { style: "flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;gap:8px" }, [
-      el("div", { style: "font-size:3.4rem;line-height:1", text: "😅" }),
-      el("div", { style: "font-size:1.5rem;font-weight:900", text: "Nessuno lo vuole!" }),
-      cartaGrande(el, carta, ru.nome + (carta.squadra ? " · " + carta.squadra : "")),
-      el("p", { class: "as-msg", text: "Torna in fondo al mazzo: prima o poi qualcuno se lo accolla…" })
-    ]));
-    s._contenuto.appendChild(pannelloRose(el, st.giocatori));
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: function () { prossimaFanta(t, st); } }));
-    t.mostra(s);
+    if (st.finita) return;
+    st.nEsiti = (st.nEsiti || 0) + 1;
+    disegnaAstaFanta(t, st, { n: st.nEsiti, tipo: tipo, chiId: chi, chiNome: chi != null ? st.giocatori[chi].nome : "", carta: carta, prezzo: prezzo });
+    st.pausa = setTimeout(function () { prossimaFanta(t, st); }, tipo === "accollo" ? 2300 : 3100);
   }
 
   // ---------- ONLINE — L'HOST ----------
+  var ESITO_MS = 3100, ACCOLLO_MS = 2300;   // quanto resta a schermo l'esito prima del prossimo calciatore
   function hostFanta(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var st = {
       formato: "fanta", crediti: FANTA_BUDGET, sessione: null, mazzo: [], asta: null, esito: null, classifica: null,
-      fase: "lobby", iniziata: false, codice: "…", scadenza: null, _to: null, voti: {}, giriVuoti: 0,
+      fase: "lobby", iniziata: false, codice: "…", scadenza: null, _to: null, giriVuoti: 0, giro: 0, nCarta: 0, nEsiti: 0,
       giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, omino: t.mioOmino ? t.mioOmino() : null }]
     };
     function stopTo() { if (st._to) { clearTimeout(st._to); st._to = null; } }
@@ -1649,25 +2227,24 @@
       onCodice: function (c) { st.codice = c; bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
       onAddio: function (id) {
-        if (!perId(st, id)) return;
-        st.giocatori = st.giocatori.filter(function (x) { return x.id !== id; });
-        delete st.voti[id];
-        if (st.asta) { if (st.asta.leader === id) st.asta.leader = null; delete st.asta.passati[id]; }
-        if (st.iniziata && st.giocatori.length === 0) { stopTo(); rete.chiudi(); return t.esci(); }
-        if (st.fase === "asta") { if (!verifica()) bd(); return; }
-        if (st.fase === "voto") { verificaVoti(); return; }
+        var g = perId(st, id); if (!g) return;
+        if (!st.iniziata) { st.giocatori = st.giocatori.filter(function (x) { return x.id !== id; }); return bd(); }
+        // a partita cominciata chi perde la connessione tiene la sua rosa: passa da solo finché non rientra
+        g.via = true;
+        if (st.fase === "asta" && verifica()) return;
         bd();
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          if (!st.iniziata && !perId(st, id) && st.giocatori.length < MAX_GIOCATORI)
+          var gj = perId(st, id);
+          if (gj) gj.via = false;   // chi rientra (stesso id) riprende il suo posto e la sua rosa
+          else if (!st.iniziata && st.giocatori.length < MAX_GIOCATORI)
             st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, omino: avatarOk(m.omino) });
           bd();
         }
         else if (m.t === "rilancia") rilanciaO(id);
         else if (m.t === "passa") passaO(id);
-        else if (m.t === "voto") voto(id, m.voti);
       },
       onErrore: function () { senzaRete(t); }
     });
@@ -1681,22 +2258,23 @@
     }
     function prossima() {
       stopTo();
-      if (!st.mazzo.length) { st.fase = "kit"; st.asta = null; st.esito = null; st.scadenza = null; return bd(); }
+      if (!st.mazzo.length) return fine();
       var carta = st.mazzo[0];
       var elegg = st.giocatori.filter(function (g) { return !ruoloPieno(g, carta.ruolo); });
       if (!elegg.length) { st.mazzo.shift(); return prossima(); }
-      if (elegg.length === 1 || st.giriVuoti > st.mazzo.length) {
-        var g = elegg[0]; st.mazzo.shift(); assegnaFanta(g, carta, 1); st.giriVuoti = 0;
-        st.esito = { chiId: g.id, chiNome: g.nome, carta: carta, prezzo: 1, tipo: "forzata" };
-        st.asta = null; st.scadenza = null; st.fase = "esito"; FX.aggiudicato(); return bd();
+      st.nCarta++;
+      if (elegg.length === 1 || st.giriVuoti > st.mazzo.length) {   // uno solo può prenderlo, o giro a vuoto: d'ufficio a 1 (a caso tra chi ne ha bisogno)
+        var g = elegg[Math.floor(Math.random() * elegg.length)]; st.mazzo.shift(); assegnaFanta(g, carta, 1); st.giriVuoti = 0;
+        FX.aggiudicato(); return esito({ chiId: g.id, chiNome: g.nome, carta: carta, prezzo: 1, tipo: "forzata" });
       }
       st.asta = { carta: carta, ruolo: carta.ruolo, offerta: 1, leader: null, passati: {} };
-      st.fase = "asta"; riparti();
+      st.esito = null; st.fase = "asta";
+      if (!verifica()) riparti();   // (se nessuno può offrire si chiude subito)
     }
-    function riparti() { stopTo(); st.scadenza = Date.now() + SECONDI * 1000; st._to = setTimeout(function () { scade(); }, SECONDI * 1000); bd(); }
-    function scade() { if (st.asta && st.asta.leader !== null) chiudi(); else accollo(); }
+    function riparti() { stopTo(); st.giro++; st.scadenza = Date.now() + SECONDI * 1000; st._to = setTimeout(scade, SECONDI * 1000); bd(); }
+    function scade() { if (st.fase !== "asta" || !st.asta) return; if (st.asta.leader !== null) chiudi(); else accollo(); }
     function rilanciaO(id) {
-      if (st.fase !== "asta" || !st.asta) return;
+      if (st.fase !== "asta" || !st.asta || st.asta.leader === id) return;   // chi ha già l'offerta più alta non rilancia contro se stesso
       var g = perId(st, id); if (!g || ruoloPieno(g, st.asta.ruolo)) return;
       var prezzo = (st.asta.leader === null) ? st.asta.offerta : st.asta.offerta + 1;
       if (maxFanta(g) < prezzo) return;
@@ -1708,14 +2286,13 @@
       if (st.fase !== "asta" || !st.asta || st.asta.leader === id) return;
       var g = perId(st, id); if (!g || ruoloPieno(g, st.asta.ruolo)) return;
       st.asta.passati[id] = true;
-      if (!verifica()) bd();
+      if (!verifica()) bd();   // passare non fa ripartire il tempo
     }
-    function verifica() {
+    function verifica() {   // si chiude subito se non resta nessuno che possa offrire (chi non c'è conta come passato)
       var a = st.asta; if (!a) return false;
-      var attivi = st.giocatori.filter(function (g) { return !ruoloPieno(g, a.ruolo) && !a.passati[g.id]; });
+      var attivi = st.giocatori.filter(function (g) { return !ruoloPieno(g, a.ruolo) && !a.passati[g.id] && (!g.via || g.id === a.leader); });
       if (a.leader === null) { if (attivi.length === 0) { accollo(); return true; } return false; }
-      var altri = attivi.filter(function (g) { return g.id !== a.leader; });
-      if (altri.length === 0) { chiudi(); return true; }
+      if (!attivi.some(function (g) { return g.id !== a.leader; })) { chiudi(); return true; }
       return false;
     }
     function chiudi() {
@@ -1724,44 +2301,36 @@
       var a = st.asta; if (a.leader === null) return accollo();
       var g = perId(st, a.leader); if (!g) { st.asta = null; return prossima(); }
       var carta = st.mazzo.shift(); assegnaFanta(g, carta, a.offerta); g.asteVinte = (g.asteVinte || 0) + 1; st.giriVuoti = 0;
-      st.esito = { chiId: g.id, chiNome: g.nome, carta: carta, prezzo: a.offerta, tipo: "vinta" };
-      st.asta = null; st.scadenza = null; st.fase = "esito"; FX.aggiudicato(); bd();
+      FX.aggiudicato(); esito({ chiId: g.id, chiNome: g.nome, carta: carta, prezzo: a.offerta, tipo: "vinta" });
     }
     function accollo() {
       stopTo();
       var carta = st.mazzo.shift(); st.mazzo.push(carta); st.giriVuoti++;
-      st.esito = { chiId: null, chiNome: "", carta: carta, prezzo: 0, tipo: "accollo" };
-      st.asta = null; st.scadenza = null; st.fase = "esito"; bd();
+      esito({ chiId: null, chiNome: "", carta: carta, prezzo: 0, tipo: "accollo" });
     }
-    function avanti() { if (st.fase === "esito") return prossima(); if (st.fase === "kit") { st.fase = "voto"; st.voti = {}; return bd(); } }
-    function voto(id, voti) { if (st.fase !== "voto" || !perId(st, id) || st.voti[id]) return; st.voti[id] = voti || {}; bd(); verificaVoti(); }
-    function verificaVoti() {
-      if (st.fase !== "voto") return;
-      if (!st.giocatori.every(function (g) { return st.voti[g.id]; })) return;
-      st.giocatori.forEach(function (g) { g.stelle = 0; });
-      Object.keys(st.voti).forEach(function (chi) {
-        var v = st.voti[chi] || {};
-        Object.keys(v).forEach(function (target) {
-          var g = perId(st, target);
-          if (g && target !== chi) { var vv = mezzo(+v[target] || 0); if (vv >= 0.5) g.stelle = mezzo(g.stelle + Math.max(0.5, Math.min(5, vv))); }
-        });
-      });
-      st.classifica = st.giocatori.slice().sort(function (a, b) { return b.stelle - a.stelle; })
-        .map(function (g, i) { return { id: g.id, nome: g.nome, punti: fmtMezzi(g.stelle) + " ⭐", pos: i + 1 }; });
-      st.fase = "fine"; FX.fine(); bd();
-      if (t.risultato) t.risultato(st.classifica);   // per il torneo online
+    function esito(e) {   // l'esito resta a schermo un attimo (la maglia vola nel campetto), poi da solo il prossimo calciatore
+      e.n = ++st.nEsiti; e.nCarta = st.nCarta;
+      st.esito = e; st.asta = null; st.scadenza = null; st.fase = "esito";
+      bd();
+      st._to = setTimeout(prossima, e.tipo === "accollo" ? ACCOLLO_MS : ESITO_MS);
+    }
+    function fine() {   // finito il mazzo: la classifica per valore delle rose (le quotazioni si scoprono solo ora)
+      st.asta = null; st.esito = null; st.scadenza = null;
+      st.classifica = classificaFanta(st.giocatori);
+      st.fase = "fine"; bd();
+      if (t.risultato) t.risultato(st.classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }));   // per il torneo online
     }
     function nuovaInLobby() {
       stopTo();
-      st.iniziata = false; st.fase = "lobby"; st.mazzo = []; st.asta = null; st.esito = null; st.classifica = null; st.voti = {}; st.scadenza = null; st.giriVuoti = 0;
+      st.iniziata = false; st.fase = "lobby"; st.mazzo = []; st.asta = null; st.esito = null; st.classifica = null; st.scadenza = null; st.giriVuoti = 0;
+      st.giocatori = st.giocatori.filter(function (g) { return !g.via; });   // chi non c'è più esce dalla stanza
       st.giocatori.forEach(function (g) { g.crediti = FANTA_BUDGET; g.kit = []; g.conta = { P: 0, D: 0, C: 0, A: 0 }; g.stelle = 0; g.asteVinte = 0; });
       bd();
     }
     var cb = {
       myId: "host", sonoHost: true,
-      onComincia: comincia, onTema: function () {}, onNuova: nuovaInLobby,
-      onScegli: function () {}, onRilancia: function () { rilanciaO("host"); }, onPassa: function () { passaO("host"); },
-      onAvanti: avanti, onVoto: function (v) { voto("host", v); },
+      onComincia: comincia, onNuova: nuovaInLobby,
+      onRilancia: function () { rilanciaO("host"); }, onPassa: function () { passaO("host"); },
       onEsci: function () { stopTo(); rete.chiudi(); t.esci(); }
     };
     function disegna() { disegnaFantaVM(t, vmFanta(st), cb); }
@@ -1769,150 +2338,41 @@
   }
 
   function vmFanta(st) {
+    var a = st.asta, e = st.esito;
     return {
       formato: "fanta", fase: st.fase, codice: st.codice, sessione: st.sessione,
       giocatori: st.giocatori.map(function (g) {
         return { id: g.id, nome: g.nome, omino: g.omino || null, crediti: g.crediti, conta: { P: g.conta.P, D: g.conta.D, C: g.conta.C, A: g.conta.A },
-          vuoti: slotVuoti(g), max: maxFanta(g), asteVinte: g.asteVinte || 0,
-          creditiSpesi: FANTA_BUDGET - g.crediti, stelle: g.stelle || 0, kit: g.kit.slice() };
+          vuoti: slotVuoti(g), max: maxFanta(g), asteVinte: g.asteVinte || 0, via: !!g.via, creditiSpesi: FANTA_BUDGET - g.crediti, stelle: 0,
+          kit: g.kit.map(function (c) { return { nome: c.nome, squadra: c.squadra, ruolo: c.ruolo }; }) };   // (i valori restano nascosti fino alla fine)
       }),
-      asta: st.asta ? {
-        carta: { nome: st.asta.carta.nome, squadra: st.asta.carta.squadra, ruolo: st.asta.carta.ruolo },
-        ruolo: st.asta.ruolo, offerta: st.asta.offerta,
-        leaderId: st.asta.leader, leaderNome: st.asta.leader ? nomeDi(st, st.asta.leader) : "",
-        passati: Object.keys(st.asta.passati || {}), scadenza: st.scadenza || null,
-        ultimoDuello: (st.giocatori.filter(function (g) { return !ruoloPieno(g, st.asta.ruolo); }).length === 2 &&
-          st.mazzo.filter(function (c) { return c.ruolo === st.asta.ruolo; }).length === 2)
+      asta: a ? {
+        carta: { nome: a.carta.nome, squadra: a.carta.squadra, ruolo: a.carta.ruolo }, nCarta: st.nCarta,
+        ruolo: a.ruolo, offerta: a.offerta, leaderId: a.leader, leaderNome: a.leader ? nomeDi(st, a.leader) : "",
+        passati: Object.keys(a.passati || {}), giro: st.giro, resta: st.scadenza ? st.scadenza - Date.now() : 0,   // il tempo che resta (non l'ora: gli orologi dei telefoni non sono uguali)
+        ultimoDuello: (st.giocatori.filter(function (g) { return !ruoloPieno(g, a.ruolo); }).length === 2 &&
+          st.mazzo.filter(function (c) { return c.ruolo === a.ruolo; }).length === 2)
       } : null,
-      esito: st.esito || null,
+      esito: e ? { n: e.n, nCarta: e.nCarta, tipo: e.tipo, chiId: e.chiId, chiNome: e.chiNome, prezzo: e.prezzo, carta: { nome: e.carta.nome, squadra: e.carta.squadra, ruolo: e.carta.ruolo } } : null,
       restano: st.mazzo ? st.mazzo.length : 0,
-      hannoVotato: Object.keys(st.voti || {}),
       classifica: st.classifica || null
     };
   }
 
   // ---------- DISEGNO CONDIVISO FANTACALCIO (host e ospiti) ----------
-  function titoloFaseFanta(vm) {
-    if (vm.fase === "asta") return (FANTA_RUOLI[vm.asta ? vm.asta.ruolo : ""] || {}).nome + " all'asta";
-    if (vm.fase === "esito") return vm.esito && vm.esito.tipo === "accollo" ? "Accollo!" : "Aggiudicato!";
-    if (vm.fase === "kit") return "Le rose";
-    if (vm.fase === "voto") return "Vota le rose";
-    return "Fantacalcio";
-  }
-  function strisciaFantaVm(el, vm, myId) {
-    var top = el("div", { class: "as-top" });
-    vm.giocatori.forEach(function (g) {
-      top.appendChild(el("div", { class: "as-pt" + (g.id === myId ? " attivo" : "") }, [
-        el("div", { class: "n", text: g.nome }),
-        el("div", { class: "c", text: g.crediti + "💰 · " + (5 - g.vuoti) + "/5" })
-      ]));
-    });
-    return top;
-  }
-  function nodoRosaVm(el, g) {
-    var box = el("div", { class: "as-kit" });
-    box.appendChild(el("h3", { text: g.nome + " · " + g.crediti + " 💰 avanzati" }));
-    ordinaRosa(g.kit).forEach(function (c) {
-      box.appendChild(el("div", { class: "riga" }, [
-        el("span", { class: "em", text: (FANTA_RUOLI[c.ruolo] || {}).emoji }),
-        el("span", { style: "flex:1", text: c.nome + (c.squadra ? " · " + c.squadra : "") }),
-        el("span", { class: "as-rb as-rb-" + c.ruolo, text: (FANTA_RUOLI[c.ruolo] || {}).breve })
-      ]));
-    });
-    return box;
-  }
-
   function disegnaFantaVM(t, vm, cb) {
-    var el = t.el, myId = cb.myId;
-    ricordaVoti(cb, vm);   // i voti in corso non si azzerano quando un altro conferma
-    if (vm.fase === "lobby") return lobbyAsta(t, vm, cb);
-    if (vm.fase === "fine") return schermataFineAsta(t, vm, cb);
-
-    var s = t.schermata({ sotto: "Stanza " + (vm.codice || ""), icona: "⚽",
-      titolo: titoloFaseFanta(vm),
-      indietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
-
-    if (vm.fase !== "kit" && vm.fase !== "voto") s._contenuto.appendChild(strisciaFantaVm(el, vm, myId));
-
-    if (vm.fase === "asta") {
-      var a = vm.asta, ru = FANTA_RUOLI[a.ruolo] || {};
-      s._contenuto.appendChild(cartaGrande(el, a.carta, ru.nome + (a.carta.squadra ? " · " + a.carta.squadra : "")));
-      s._contenuto.appendChild(el("div", { class: "as-offerta" }, a.leaderId ? [
-        el("div", { class: "v", text: a.offerta + " 💰" }),
-        el("div", { class: "chi", text: "offerta di " + a.leaderNome })
-      ] : [
-        el("div", { class: "v", text: "base " + a.offerta + " 💰" }),
-        el("div", { class: "chi", text: "nessuna offerta ancora" })
-      ]));
-      if (a.ultimoDuello) s._contenuto.appendChild(el("div", { class: "as-duello",
-        text: "⚠️ Ultimo duello per " + (/^[aeiou]/i.test(ru.nome) ? "l'" : "il ") + ru.nome.toLowerCase() + ": chi NON se lo aggiudica si accolla l'altro rimasto!" }));
-      s._contenuto.appendChild(barraRimasta(el, (a.scadenza || 0) - Date.now()));
-
-      var io = null; vm.giocatori.forEach(function (g) { if (g.id === myId) io = g; });
-      var pieno = io && (io.conta[a.ruolo] || 0) >= FANTA_SLOT[a.ruolo];
-      var hoPassato = a.passati.indexOf(myId) >= 0;
-      var guido = a.leaderId === myId;
-      var prezzo = a.leaderId ? a.offerta + 1 : a.offerta;
-      if (io && !pieno && !hoPassato) {
-        var riga = el("div", { class: "tl-vota" });
-        var bSu = el("button", { class: "btn btn-verde", text: (a.leaderId ? "+1 → " + prezzo : "Prendi a " + a.offerta), onclick: cb.onRilancia });
-        if (io.max < prezzo) bSu.disabled = true;
-        riga.appendChild(bSu);
-        if (!guido) riga.appendChild(el("button", { class: "btn btn-rosso", text: "Passa", onclick: cb.onPassa }));
-        s._piede.appendChild(riga);
-        s._piede.classList.add("piede-fisso");
-        s._contenuto.appendChild(el("p", { class: "as-msg",
-          text: guido ? "👑 Stai guidando l'offerta" : ("Hai " + io.crediti + " 💰 · puoi arrivare a " + Math.max(0, io.max)) }));
-      } else {
-        s._contenuto.appendChild(el("p", { class: "as-msg",
-          text: !io ? "Stai guardando la partita" : (pieno ? ("Hai già il " + ru.nome.toLowerCase() + " in rosa") : "Hai passato: aspetti il risultato") }));
-      }
-      s._contenuto.appendChild(pannelloRose(el, vm.giocatori));
+    if (vm.fase === "lobby") { fermaConta(STADIO); STADIO = null; return lobbyAsta(t, vm, cb); }
+    if (vm.fase === "fine") {
+      salvaTrofeiAsta(t, vm, cb.myId, true);
+      return rivelaFanta(t, vm.classifica || [], { chiave: "ro|" + (vm.codice || "") + "|" + vm.sessione,
+        onEsci: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); },
+        bottoni: function () {
+          var el = t.el;
+          return cb.sonoHost ? [ el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }), el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }) ]
+            : [ el("p", { class: "sa-nota", text: "In attesa dell'host per un'altra partita…" }), el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }) ];
+        } });
     }
-
-    else if (vm.fase === "esito") {
-      var e2 = vm.esito || {}, rux = FANTA_RUOLI[e2.carta ? e2.carta.ruolo : ""] || {};
-      if (e2.tipo === "accollo") {
-        s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:3rem;line-height:1;margin:6px 0", text: "😅" }));
-        s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:1.4rem;font-weight:900", text: "Nessuno lo vuole!" }));
-        s._contenuto.appendChild(cartaGrande(el, e2.carta, rux.nome + (e2.carta.squadra ? " · " + e2.carta.squadra : "")));
-        s._contenuto.appendChild(el("p", { class: "as-msg", text: "Torna in fondo al mazzo." }));
-      } else {
-        s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:3rem;line-height:1;margin:6px 0", text: "🔨" }));
-        s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:1.4rem;font-weight:900", text: e2.chiNome + " prende" }));
-        s._contenuto.appendChild(cartaGrande(el, e2.carta, rux.nome + (e2.carta.squadra ? " · " + e2.carta.squadra : "")));
-        s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:1.3rem;font-weight:900;color:var(--accento);margin-top:8px", text: "per " + e2.prezzo + " 💰" }));
-        if (e2.tipo === "forzata") s._contenuto.appendChild(el("p", { class: "as-msg", text: "Se lo accolla: era l'unico a cui mancava questo ruolo." }));
-      }
-      s._contenuto.appendChild(pannelloRose(el, vm.giocatori));
-      if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: cb.onAvanti }));
-      else s._piede.appendChild(el("p", { class: "as-msg", text: "In attesa dell'host…" }));
-    }
-
-    else if (vm.fase === "kit") {
-      vm.giocatori.forEach(function (g) { s._contenuto.appendChild(nodoRosaVm(el, g)); });
-      if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Si vota ⭐", onclick: cb.onAvanti }));
-      else s._piede.appendChild(el("p", { class: "as-msg", text: "In attesa che l'host apra la votazione…" }));
-    }
-
-    else if (vm.fase === "voto") {
-      var hoVotato = vm.hannoVotato.indexOf(myId) >= 0;
-      var dentro = vm.giocatori.some(function (g) { return g.id === myId; });
-      if (hoVotato || !dentro) {
-        s._contenuto.appendChild(el("p", { class: "as-msg", style: "margin-top:20px",
-          text: hoVotato ? ("Hai votato. Aspetta gli altri… (" + vm.hannoVotato.length + " su " + vm.giocatori.length + ")") : "Stai guardando la partita" }));
-      } else {
-        var voti = cb._voti;
-        var conferma = el("button", { class: "btn btn-primario", text: "Conferma i voti", onclick: function () { if (!conferma.disabled) cb.onVoto(voti); } });
-        var opp = [];
-        vm.giocatori.forEach(function (g) { if (g.id !== myId) opp.push({ key: g.id, nodo: nodoRosaVm(el, g) }); });
-        var sez = sezioneVoto(el, opp, budgetVoti(vm.giocatori.length), voti, function (ok) { conferma.disabled = !ok; });
-        sez.nodi.forEach(function (n) { s._contenuto.appendChild(n); });
-        s._piede.appendChild(conferma);
-      }
-    }
-
-    t.mostra(s);
+    stadioVM(t, vm, cb);   // asta ed esito: lo stadio
   }
 
   SG.registra(gioco);

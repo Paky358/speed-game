@@ -76,6 +76,8 @@ VER=$(md5sum "$EXTRA" | cut -c1-10)
   [ -e js/net-p2p.js ] && { cat js/net-p2p.js; echo ''; }
   cat js/studio.js   # lo studio del game show, condiviso dai giochi (prima dei giochi)
   echo ''
+  cat js/asta-sala-arte.js js/asta-stadio-arte.js js/asta-maglie.js   # i disegni dell'Asta: la sala vista dal banditore, lo stadio del fantacalcio, le maglie
+  echo ''
   for f in data/*.js; do [ -e "$f" ] && { cat "$f"; echo ''; }; done
   for f in js/games/*.js; do [ -e "$f" ] && { cat "$f"; echo ''; }; done
   echo 'SG.avviaApp();'
