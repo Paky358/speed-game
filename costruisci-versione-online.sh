@@ -53,8 +53,8 @@ OUT=dist/index.html
   cat js/scavi.js   # gli scavi antichi
   cat js/giardino-arte.js   # i disegni del giardino
   cat js/mobili-arte.js     # i mobili visti dall'alto (casa come The Sims)
-  cat js/mobili-soggiorno-scadente.js js/mobili-soggiorno.js js/mobili-cucina.js js/mobili-camera-scadente.js js/mobili-camera.js js/mobili-bar.js js/mobili-quadri.js js/mobili-piccole.js js/mobili-salotto2.js js/mobili-giochi.js js/mobili-halloween.js js/mobili-acquari.js js/casino-tavoli.js js/casino-slot.js js/casino-giochi.js   # gli altri mobili, stanza per stanza
-  cat js/costruzioni-arte.js   # muri, pavimenti, porte, finestre e tetti per costruire la casa
+  cat js/mobili-soggiorno-scadente.js js/mobili-soggiorno.js js/mobili-cucina.js js/mobili-camera-scadente.js js/mobili-camera.js js/mobili-bar.js js/mobili-quadri.js js/mobili-piccole.js js/mobili-salotto2.js js/mobili-giochi.js js/mobili-halloween.js js/mobili-acquari.js js/casino-tavoli.js js/casino-slot.js js/casino-giochi.js js/casino-salone.js js/casino-locali.js js/casino-macchine.js   # gli altri mobili, stanza per stanza
+  cat js/costruzioni-arte.js js/costruzioni-casino.js js/costruzioni-casino2.js   # muri, pavimenti, porte, finestre e tetti per costruire la casa
   cat js/giardino.js        # il giardino fuori casa
   echo ''
   cat js/core.js

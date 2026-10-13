@@ -672,7 +672,7 @@
   //  in cima la pigna d'oro col getto. Di notte le luci sott'acqua e l'acqua che brilla
   // =========================================================
   var MARMO_B = [[0, "#e6e8e7"], [.16, "#ffffff"], [.45, "#f1efea"], [.76, "#d3cdc2"], [1, "#958c7f"]];   // il marmo bianco
-  def("fontana_casino", { nome: "Fontana", fp: [2, 2], box: [-80, -160, 82, 44], luce: [0, 0, 66, 175, "#86e6ff"] }, function () {
+  def("fontana_casino", { nome: "Fontana", fp: [2, 2], box: [-80, -160, 82, 44], luce: [0, 0, 60, 125, "#86e6ff"] }, function () {
     var s = ombraPianta(-.98, .98, -.98, .98, 1.1, .08), r = rnd(1878), i;
     var ACQ = NOTTE ? [[0, "#f4fffe"], [.3, "#a6f2ff"], [.72, "#3cc8ec"], [1, "#168fc0"]] : [[0, "#d6f6ff"], [.4, "#86d8f0"], [.8, "#3ea8d2"], [1, "#2580b0"]];
     function acqua(e, rr, seme, cadute) {   // il pelo dell'acqua (un ovale): i riflessi, le increspature dove cade il velo
@@ -985,7 +985,7 @@
     for (k = 0; k < 8; k++) { var an = k / 8 * 6.2832; o += "<rect x='" + f2(cx - .9) + "' y='" + f2(cy - r) + "' width='1.8' height='" + f2(r * .32) + "' fill='#ffffff' transform='rotate(" + f2(an * 57.3) + " " + f2(cx) + " " + f2(cy) + ")'/>"; }
     return o + cer(cx, cy, r * .52, "#f6d572", bordo("#7a5614", .35)) + cer(cx - r * .2, cy - r * .2, r * .16, "#fffbe6", op(.8));
   }
-  def("cassa_casino", { nome: "Cassa delle fiches", fp: [3, 1], box: [-100, -234, 100, 50], dietro: true, luce: [0, 0, 180, 135, "#ffd27a"] }, function () {
+  def("cassa_casino", { nome: "Cassa delle fiches", fp: [3, 1], box: [-100, -234, 100, 50], dietro: true, luce: [0, 0, 120, 130, "#ffd27a"] }, function () {
     var s = ombraPianta(-1.5, 1.5, -.38, .38, 1.1, .08), i, BG = -.2, AW = [-.96, 0, .96];
     var nero = [lin("pts", [[0, "#3e3a40"], [1, "#1c1a1d"]], 0, 0, 1, 1), lin("ptl", [[0, "#2c292e"], [1, "#151316"]], 0, 0, 0, 1), lin("ptd", [[0, "#141215"], [1, "#09080a"]], 0, 0, 0, 1)];
     function veneOro(W, H, seme) { return venato(W, H, seme, "#d9b25a", 4, .7) + venato(W, H, seme + 7, "#efe2bf", 3, .4); }
@@ -1269,8 +1269,8 @@
     }
     return s;
   }
-  def("lampadario_gigante", { tipo: "sospeso", nome: "Lampadario di cristallo gigante", fp: [2, 2], box: [-66, -249, 66, -148], luce: [0, 0, 200, 230, "#ffe6a8"] }, function () {
-    return lampadario({ seme: 1863, top: 249, zc: 233, rc: .2, punte: 14, zu: 210, ru: .42, zuc: 217, nu: 8, zp: 191, rl: .8, zl: 199, nl: 12, perle: 30, sacco: 16, k: 1, lampi: 30 });
+  def("lampadario_gigante", { tipo: "sospeso", nome: "Lampadario di cristallo gigante", fp: [2, 2], box: [-86, -258, 86, -142], luce: [0, 0, 200, 230, "#ffe6a8"] }, function () {
+    return lampadario({ seme: 1863, top: 258, zc: 234, rc: .24, punte: 16, zu: 211, ru: .55, zuc: 218, nu: 10, zp: 191, rl: 1.02, zl: 199, nl: 14, perle: 36, sacco: 18, k: 1.15, lampi: 38 });
   });
   def("lampadario_piccolo", { tipo: "sospeso", nome: "Lampadario di cristallo", fp: [1, 1], box: [-40, -249, 40, -168], luce: [0, 0, 204, 140, "#ffe6a8"] }, function () {
     return lampadario({ seme: 1910, top: 249, zc: 226, rc: .11, punte: 9, zu: 0, zp: 198, rl: .43, zl: 205, nl: 8, perle: 18, sacco: 10, k: .78, lampi: 14 });

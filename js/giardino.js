@@ -121,8 +121,8 @@
     var kit = function (g, id, alt) { return listaKit(g).some(function (v) { return v.id === id; }) ? id : (alt || null); };
     var CARTA = kit("muri", "damascato_rosso"), VERDE = kit("muri", "damascato_verde", CARTA), ORO = kit("muri", "boiserie_oro", CARTA), STUC = kit("muri", "stucchi", CARTA),
       NEON = kit("muri", "muro_neon", CARTA), SPORT = kit("muri", "muro_sport", CARTA), LEGNO = kit("muri", "muro_legno_scuro", ORO), SPEC = kit("muri", "muro_specchi", STUC), MARM = kit("muri", "marmo_crema", STUC);
-    var MOQ = kit("pavimenti", "moquette_casino"), VEGAS = kit("pavimenti", "moquette_vegas", MOQ), PVER = kit("pavimenti", "moquette_verde", MOQ), PBLU = kit("pavimenti", "moquette_blu", kit("pavimenti", "moquette_casino_blu", MOQ)),
-      INT = kit("pavimenti", "parquet_intarsio", MOQ), PSCU = kit("pavimenti", "parquet_scuro", INT), MARMO = kit("pavimenti", "marmo_lucido", kit("pavimenti", "marmo_scacchi", MOQ)), SCACCHI = kit("pavimenti", "marmo_scacchi", MARMO);
+    var MOQ = kit("pavimenti", "moquette_casino"), VEGAS = kit("pavimenti", "moquette_vegas", MOQ), PVER = kit("pavimenti", "moquette_verde", MOQ), PBLU = kit("pavimenti", "moquette_blu_reale", kit("pavimenti", "moquette_casino_blu", MOQ)),
+      INT = kit("pavimenti", "parquet_intarsio", MOQ), PSCU = kit("pavimenti", "parquet_spina", INT), MARMO = kit("pavimenti", "marmo_lucido", kit("pavimenti", "marmo_scacchi", MOQ)), SCACCHI = kit("pavimenti", "marmo_scacchi", MARMO);
     var PORTONE = kit("porte", "portone_casino");
     function zona(c, r) {   // che zona è questa mattonella
       var x = c <= 13 ? 0 : c <= 37 ? 1 : 2, y = r <= 8 ? 0 : r <= 28 ? 1 : 2;
@@ -208,7 +208,7 @@
     tavolo("tavolo_trente", 16, 21, .5); tavolo("tavolo_caribbean", 22, 21, .5); tavolo("tavolo_blackjack", 28, 21, .6); tavolo("tavolo_poker", 33, 21, .7);
     metti("ruota_fortuna", 17, 26, 0); tavolo("roulette_elettronica", 33, 26, .5, "sgabello_slot");
     metti("colonna_marmo", 23, 26); metti("colonna_marmo", 28, 26);
-    [[16, 11], [22, 11], [28, 11], [33, 11], [16, 16], [22, 16], [28, 16], [33, 16], [16, 21], [22, 21], [28, 21], [33, 21]].forEach(function (p) { lampadario(p[0], p[1]); });
+    [[19, 13], [30, 13], [19, 18], [30, 18], [19, 23], [30, 23]].forEach(function (p) { lampadario(p[0], p[1]); });   // sopra gli incroci dei corridoi, così i tavoli si vedono
     lampadario(25, 14, true); lampadario(25, 19, true); lampadario(25, 24, true);
     appendi("neon_carte", "b,16,9", 1); appendi2("insegna_jackpot", "b", 19, 9); appendi("neon_dadi", "b,22,9", 1);
     appendi("neon_dadi", "b,29,9", 1); appendi2("insegna_jackpot", "b", 31, 9); appendi("neon_carte", "b,35,9", 1);
@@ -1208,7 +1208,7 @@
       if (x.vt === "a") { L = pv(x.vx, x.vy + 1); R = pv(x.vx, x.vy); off = { x: -SPESS * TW / 2, y: -SPESS * TW / 4 }; }
       else { L = pv(x.vx, x.vy); R = pv(x.vx + 1, x.vy); off = { x: SPESS * TW / 2, y: -SPESS * TW / 4 }; }
       var Lt = { x: L.x, y: L.y - H }, Rt = { x: R.x, y: R.y - H }, faccia = [L, R, Rt, Lt];
-      var mat = x.m.s[x.sv] || defMuro(x.faD), im = mat ? texKit("muri", mat) : null;
+      var mat = x.m.s[x.sv] || defMuro(x.faD), im = mat ? texKit("muri", mat, LUOGO === "casino") : null;   // (nel casinò è sempre sera: i muri al neon brillano)
       if (pronta(im)) piega(im, L, R, h); else poligono(ctx, faccia, x.faD ? "#f4efe6" : "#f3e3c3");
       var ap = x.m.ap;
       if (ap) {
@@ -1638,7 +1638,7 @@
       (function guarda() {
         if (!vivo()) return;
         var n = subito.filter(pronta).length, q = subito.length ? n / subito.length : 1; barra2.style.width = Math.round(q * 100) + "%";
-        if (q < .98 && Date.now() - t0 < 10000) return setTimeout(guarda, 120);
+        if (q < .85 && Date.now() - t0 < 8000) return setTimeout(guarda, 120);
         sporco = true; vela.classList.add("via"); setTimeout(function () { if (vela.parentNode) vela.parentNode.removeChild(vela); }, 400);
         if (!CIT) dimmi("Benvenuto al Casinò! 🎰 Black Jack e Poker sono aperti; allarga con due dita per vedere tutta la sala"); else if (!opts.da) dimmi("Tocca un punto per camminare, tocca un edificio per entrare 🚶");
         setTimeout(scalda, 600);
