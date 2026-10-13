@@ -23935,6 +23935,7 @@
       quandoPronta = function () { if (vivo()) { sfondo = null; sporco = true; } };   // un disegno è arrivato: si ridisegna
       calcolaStanze(); cresciTutto(); misura(); aggTesta();
       if (LUOGO) attesa();
+      if (opts.apri === "compra" && !LUOGO) setTimeout(function () { if (vivo()) cambiaModo("compra"); }, 0);   // (dal Negozio della città: si apre già il catalogo)
       if (!LUOGO && !D.visto) { D.visto = 1; salva(); dimmi("Benvenuto a casa! Tocca il germoglio per annaffiarlo 💧"); }
       else if (!LUOGO) { var pronti = D.ogg.filter(maturo).length, assetati = D.ogg.filter(sete).length;
         if (pronti) dimmi("Ci sono " + pronti + (pronti === 1 ? " pianta pronta" : " piante pronte") + " da raccogliere! 🧺");

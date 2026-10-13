@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 200,
+    data: "13 ottobre 2026",
+    titolo: "La città si gira a piedi, il Casinò nuovo e la casa come The Sims 🏙️🎰🏡",
+    descrizione: [
+      "In città adesso cammini col tuo avatar: tocca un punto e ci va, tocca un edificio e ci entra. Tocca due o tre volte lo stesso punto e va più veloce, fino a correre.",
+      "Il Casinò è un salone enorme visto dall'alto: roulette, slot, poker, sala VIP, bingo, scommesse, bar col palco, ristorante e tanta gente. Ti siedi al tavolo di Black Jack o di Poker e si gioca; col tasto \"Tutti i giochi\" scegli e l'avatar ci corre da solo. Le altre attrazioni arrivano presto.",
+      "La tua casa è nuova, come The Sims: la vedi dall'alto, costruisci i muri dove vuoi, scegli pavimenti e carta da parati, compri i mobili e li metti nella stanza, e la giri da tutti e quattro i lati. Fuori c'è il giardino con l'orto e gli alberi da frutto da annaffiare.",
+      "Il Negozio della città apre il catalogo della casa: scegli il mobile, lo provi nella stanza e paghi solo quando confermi."
+    ]
+  },
+  {
     v: 199,
     data: "13 ottobre 2026",
     titolo: "In città, le cose da fare oggi ❗",

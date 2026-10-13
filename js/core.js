@@ -663,7 +663,7 @@
     sc.onload = sc.onerror = function () { var l = attesaExtra; attesaExtra = null; if (!window.SGGiardino) window.SG_EXTRA = null; l.forEach(function (f) { try { f(); } catch (e) {} }); };   // (se non arriva si usano la casa e la città di prima)
     document.head.appendChild(sc);
   }
-  var GIARDINO_PRONTO = false;   // la casa nuova (come The Sims) è in costruzione: finché è false la vede solo il proprietario, gli altri hanno la casa di prima
+  var GIARDINO_PRONTO = true;   // la casa nuova (come The Sims): dal 13 ott 2026 per tutti (false = la vede solo il proprietario, gli altri hanno la casa di prima)
   function giardinoPronto() { return !!window.SGGiardino && (GIARDINO_PRONTO || eProprietario()); }
   var tGiardinoNube = null;
   function chiaveGiardino() { var N = window.SGNube, u = N && N.utente && N.utente(); return u ? "sg-giardino|" + u.uid : null; }
@@ -680,12 +680,12 @@
     try { localStorage.setItem(k, JSON.stringify(d)); } catch (e) {}
     clearTimeout(tGiardinoNube); tGiardinoNube = setTimeout(function () { if (window.SGNube && SGNube.salvaGiardino) SGNube.salvaGiardino(JSON.parse(JSON.stringify(d))); }, 1200);
   }
-  function schermataGiardino(daCasa) {   // dalla città si arriva qui, davanti a casa: la porta porta dentro
-    if (serveExtra()) return caricaExtra(function () { schermataGiardino(daCasa); }, "🏡");
+  function schermataGiardino(daCasa, apri) {   // dalla città si arriva qui, davanti a casa: la porta porta dentro
+    if (serveExtra()) return caricaExtra(function () { schermataGiardino(daCasa, apri); }, "🏡");
     if (!giardinoPronto()) return schermataCasa();
     if (serveProfilo()) return;
     var io = profiloAttivo(), m = soldiCasa();
-    var s = SGGiardino.crea({ omino: io && io.omino, nome: io && io.nome, dati: datiGiardino(), daCasa: !!daCasa, salva: salvaGiardino, audio: audioCtx,
+    var s = SGGiardino.crea({ omino: io && io.omino, nome: io && io.nome, dati: datiGiardino(), daCasa: !!daCasa, apri: apri || null, salva: salvaGiardino, audio: audioCtx,
       monete: m.monete, spendi: m.spendi, guadagna: m.guadagna,
       entraInCasa: function () { schermataCasa(); }, indietro: function () { schermataCitta(); } });
     mostra(s); s._monta();
@@ -736,7 +736,7 @@
     }, bozza);
   }
   var scrollCitta = 0;   // fin dove avevi scorso la città: uscendo da un edificio si torna lì (dalla home si riparte dall'alto)
-  var CITTA_A_PIEDI = false, ultimoEdificio = null;
+  var CITTA_A_PIEDI = true, ultimoEdificio = null;   // (dal 13 ott 2026 per tutti)
   var fotoCitta = null;   // la città com'era quando hai toccato la bacheca (fa da sfondo sfocato alle novità)   // la città dove si cammina (come la casa): finché è false la vede solo il proprietario; ultimoEdificio: da dove si esce tornando in città
   function cittaAPiedi() { return !!(window.SGGiardino && window.SGCitta && SGCitta.arte) && (CITTA_A_PIEDI || eProprietario()); }
   function schermataCitta() {
@@ -835,7 +835,7 @@
       el("div", { class: "citta-giu" }, [
         el("button", { class: "citta-tasto", onclick: function () { if (!cloud) return presto("Crea il tuo profilo per avere la tua casa 🏠"); schermataGiardino(); } }, [ el("span", { class: "ct-ico", text: "🏠" }), el("span", { text: "Casa" }), el("small", { text: cloud ? "arreda" : "col profilo" }) ]),
         tastoPresto("🛡️", "Clan", "I quartieri-clan arrivano presto 🛡️"),
-        el("button", { class: "citta-tasto", onclick: function () { if (!cloud) return presto("Crea il tuo profilo per fare acquisti 🛍️"); schermataNegozio(); } }, [ el("span", { class: "ct-ico", text: "🛍️" }), el("span", { text: "Negozio" }), el("small", { text: cloud ? "compra" : "col profilo" }) ]),
+        el("button", { class: "citta-tasto", onclick: function () { if (!cloud) return presto("Crea il tuo profilo per fare acquisti 🛍️"); if (giardinoPronto() || serveExtra()) return schermataGiardino(false, "compra"); schermataNegozio(); } }, [ el("span", { class: "ct-ico", text: "🛍️" }), el("span", { text: "Negozio" }), el("small", { text: cloud ? "compra" : "col profilo" }) ]),
         regalo
       ])
     ]);
@@ -1083,7 +1083,7 @@
     window.addEventListener("resize", ridim);
   }
   function schermataEdificio(k) {
-    if (k === "casino" && eProprietario()) { if (serveExtra()) return caricaExtra(function () { schermataEdificio(k); }, "🎰"); if (window.SGGiardino) return schermataCasinoSala(); }   // il Casinò nuovo, visto dall'alto (per ora solo per il proprietario)
+    if (k === "casino") { if (serveExtra()) return caricaExtra(function () { schermataEdificio(k); }, "🎰"); if (window.SGGiardino) return schermataCasinoSala(); }   // il Casinò nuovo, visto dall'alto (per ora solo per il proprietario)
     if (INTERNI[k] && window.SGCasino) return schermataInterno(k);   // Casinò e Circolo: gli interni in prima persona
     var E = EDIFICI_CITTA[k]; if (!E) return schermataCitta();
     rientro = function () { schermataEdificio(k); };   // finita la partita (o "indietro") si torna qui
