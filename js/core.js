@@ -1048,11 +1048,12 @@
     s.appendChild(griglia);
     mostra(s);
   }
-  function schermataCasinoSala() {   // il salone del Casinò visto dall'alto, come la casa: si cammina tra i tavoli e ci si siede a giocare
-    rientro = function () { schermataCasinoSala(); };   // finita la partita si torna nel salone
+  var posCasino = null;   // dove eri nel casinò quando hai cominciato una partita: finita, si torna lì
+  function schermataCasinoSala(pos) {   // il salone del Casinò visto dall'alto, come la casa: si cammina tra i tavoli e ci si siede a giocare
+    rientro = function () { schermataCasinoSala(posCasino); };   // finita la partita si torna nel salone, dove eri
     var io = profiloAttivo(), m = soldiCasa();
-    var s = SGGiardino.crea({ luogo: "casino", omino: io && io.omino, nome: io && io.nome, audio: audioCtx, monete: m.monete, spendi: m.spendi, guadagna: m.guadagna,
-      gioca: function (id) { var g = giocoDa(id); if (g) scegliModoEdificio(g, "casino"); },
+    var s = SGGiardino.crea({ luogo: "casino", pos: pos || null, omino: io && io.omino, nome: io && io.nome, audio: audioCtx, monete: m.monete, spendi: m.spendi, guadagna: m.guadagna,
+      gioca: function (id, dove) { posCasino = dove || null; var g = giocoDa(id); if (g) scegliModoEdificio(g, "casino"); },
       indietro: function () { rientro = null; schermataCitta(); } });
     mostra(s); s._monta();
   }

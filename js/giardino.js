@@ -322,13 +322,13 @@
 
   // ---------- i disegni: dall'arte (SVG) a immagini pronte per il canvas, una volta sola ----------
   var cacheArte = {}, quandoPronta = null;   // quandoPronta: la schermata aperta si ridisegna quando arriva un disegno
-  function immagineSvg(k, fn) {
+  function immagineSvg(k, fn, scala) {   // scala: quante volte la misura vera (di solito 2; il casinò e la città 1,5: sono tanti disegni e occupano meno)
     if (cacheArte[k] !== undefined) return cacheArte[k];
     var s = null; try { s = fn(); } catch (e) {}
     if (!s) return (cacheArte[k] = null);
     var im = new Image();
     im.onload = function () {   // pronto: lo trasformo una volta sola in un'immagine fatta di pixel (il doppio della misura), così ridisegnarlo è leggero
-      try { var c = document.createElement("canvas"); c.width = im.naturalWidth * 2; c.height = im.naturalHeight * 2; c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); c.complete = true; c.naturalWidth = c.width; c.naturalHeight = c.height; cacheArte[k] = c; } catch (e) {}
+      try { var c = document.createElement("canvas"); c.width = Math.round(im.naturalWidth * (scala || 2)); c.height = Math.round(im.naturalHeight * (scala || 2)); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); c.complete = true; c.naturalWidth = c.width; c.naturalHeight = c.height; cacheArte[k] = c; } catch (e) {}
       if (quandoPronta) quandoPronta();
     };
     im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s);
@@ -339,7 +339,7 @@
     try { inf = M && M.info ? M.info(nome) : null; fonte = M; if (!inf) { inf = A && A.info ? A.info(nome) : null; fonte = A; } } catch (e) {}
     if (!inf) return null;
     var dt = !!(dietro && inf.dietro);
-    var im = immagineSvg("o|" + nome + (dt ? "|d" : "") + (notte ? "|n" : "") + (col ? "|" + col : ""), function () { return fonte.svg(nome, { dietro: dt, notte: !!notte, col: col || null }); });
+    var im = immagineSvg("o|" + nome + (dt ? "|d" : "") + (notte ? "|n" : "") + (col ? "|" + col : ""), function () { return fonte.svg(nome, { dietro: dt, notte: !!notte, col: col || null }); }, inf.reparto === "casino" || inf.reparto === "citta" ? 1.5 : 2);
     return im ? { im: im, info: inf } : null;
   }
   function listaKit(gruppo) { var K = window.SGKit; return (K && K[gruppo]) || []; }
@@ -524,7 +524,7 @@
       cw = s.clientWidth || 360; ch = s.clientHeight || 640; dpr = Math.min(2, window.devicePixelRatio || 1);
       cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
       TW = Math.round(Math.min(cw / 6.2, 76) * zoom);
-      if (!misura.fatta) { misura.fatta = true; if (D.ingresso) centra(D.ingresso[0], D.ingresso[1] - 3.5); else centra(6.5, 8.5); } else { ox += (cw - pw0) / 2; oy += (ch - ph0) / 2; }
+      if (!misura.fatta) { misura.fatta = true; if (opts.pos) centra(opts.pos.u, opts.pos.v); else if (D.ingresso) centra(D.ingresso[0], D.ingresso[1] - 3.5); else centra(6.5, 8.5); } else { ox += (cw - pw0) / 2; oy += (ch - ph0) / 2; }
       sfondo = null; sporco = true;
     }
     window.addEventListener("resize", misura);
@@ -573,6 +573,7 @@
     if (opts.daCasa) { av.fa = "esce"; av.strada = [{ u: 5.5, v: 10.3 }]; }          // esci dalla porta di casa
     else { av.u = 5.9; av.v = D.h + .6; av.strada = [{ u: 5.9, v: D.h - 1.4 }]; }   // dalla città: arrivi dal marciapiede ed entri dal cancello
     if (D.ingresso) { av.fa = null; av.u = D.ingresso[0]; av.v = D.ingresso[1]; av.strada = [D.uscita ? { u: D.uscita[0], v: D.uscita[1] } : { u: D.ingresso[0], v: D.ingresso[1] - 2.5 }]; }   // nel casinò si entra dal portone
+    if (opts.pos) { av.fa = null; av.u = opts.pos.u; av.v = opts.pos.v; av.strada = []; }   // (si torna dove si era, per esempio finita una partita al casinò)
 
     // la strada più corta tra le mattonelle (anche in diagonale, senza tagliare angoli né attraversare i muri: solo le porte)
     function strada(da, versoLista) {
@@ -717,7 +718,7 @@
     function tocca(x, y) {
       if (modo === "costruisci") return toccaCostruisci(x, y);
       if (modo === "compra") return;   // (la cosa scelta si sposta già col dito)
-      if (av.siede && modo === "vivi") { vibra(8); return alzati(); }   // seduto o a letto: un tocco e si alza
+      if (av.siede && modo === "vivi") { var era = av.siede.o; vibra(8); alzati(); var o2 = cosaQui(x, y); if (!o2 || o2 === era) return; }   // seduto o a letto: un tocco e si alza (e se hai toccato un'altra cosa ci va)
       var o = cosaQui(x, y);
       if (modo === "sistema") { if (!o) { var fz = facciaIn(x, y); o = fz ? appesoSu(fz) : null; } scegli(o); return; }
       if (o) { vibra(10); if (LUOGO === "casino" && toccaCasino(o)) return; return vaiAOggetto(o); }
@@ -749,7 +750,7 @@
     ];
     function dimmiPresto(o) { for (var i = 0; i < PRESTO.length; i++) if (PRESTO[i][0].test(o.t)) { dimmi(PRESTO[i][1] + " " + nomeDi(o.t) + PRESTO[i][2]); return true; } return false; }
     function toccaCasino(o) {   // toccata una cosa che ha dei posti davanti: si va al posto libero più vicino (true se ci pensa lui)
-      if (SEDILE.test(o.t)) return false;
+      if (SEDILE.test(o.t)) { if ((SEDUTI[o.k] || []).length) { dimmi("Questo posto è occupato 🙂"); return true; } return false; }
       var p = postoLibero(o); if (!p.posti) return false;
       if (p.libero) { vaiAOggetto(p.libero); return true; }
       dimmi("È tutto occupato: prova un altro posto 🙂"); return true;
@@ -758,7 +759,7 @@
       if ((SEDUTI[o.k] || []).length) return dimmi("Questo posto è occupato 🙂");
       if (SEDILE.test(o.t)) {
         var tv = davantiA(o), gi = tv && GIOCHI_CASINO[tv.t]; siedi(o);
-        if (gi) { dimmi("Si gioca! 🃏"); setTimeout(function () { if (vivo() && av.siede && av.siede.o === o && opts.gioca) opts.gioca(gi); }, 900); }
+        if (gi) { dimmi("Si gioca! 🃏"); setTimeout(function () { if (vivo() && av.siede && av.siede.o === o && opts.gioca) opts.gioca(gi, { u: av.siede.da[0], v: av.siede.da[1] }); }, 900); }   // (dove eri: finita la partita si torna lì)
         else if (tv) dimmiPresto(tv);
         return;
       }
@@ -1639,8 +1640,9 @@
         if (!vivo()) return;
         var n = subito.filter(pronta).length, q = subito.length ? n / subito.length : 1; barra2.style.width = Math.round(q * 100) + "%";
         if (q < .85 && Date.now() - t0 < 8000) return setTimeout(guarda, 120);
+        subito = null;   // (non serve più: i disegni li tiene la cache)
         sporco = true; vela.classList.add("via"); setTimeout(function () { if (vela.parentNode) vela.parentNode.removeChild(vela); }, 400);
-        if (!CIT) dimmi("Benvenuto al Casinò! 🎰 Black Jack e Poker sono aperti; allarga con due dita per vedere tutta la sala"); else if (!opts.da) dimmi("Tocca un punto per camminare, tocca un edificio per entrare 🚶");
+        if (!CIT && !opts.pos) dimmi("Benvenuto al Casinò! 🎰 Black Jack e Poker sono aperti; allarga con due dita per vedere tutta la sala"); else if (!opts.da) dimmi("Tocca un punto per camminare, tocca un edificio per entrare 🚶");
         setTimeout(scalda, 600);
       })();
     }
