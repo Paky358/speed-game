@@ -64,6 +64,39 @@
   function segna(h, tieni) { if (!tieni) aperte.push(h); return h; }
   function togli(h) { aperte = aperte.filter(function (x) { return x !== h; }); }
 
+  // ---- il collegamento al broker ----
+  // Il broker pubblico a volte tarda (circa 1 volta su 4 ci mette 7 secondi invece di 0,15): se dopo un secondo e mezzo
+  // non ha ancora risposto si apre un secondo collegamento e si tiene il primo che risponde (l'altro si chiude).
+  // pronto(client) arriva una volta sola, al primo collegamento; poi i ricollegamenti li fa mqtt da solo.
+  var GARA = 1500;
+  function collega(opzioni, pronto, errore) {
+    var tutti = [], vinto = null, finito = false;
+    function apri() {
+      var c = mqtt.connect(BROKER, opzioni); tutti.push(c);
+      c.on("error", function (e) { if (!vinto && !finito && errore) errore(e); });
+      c.on("connect", function () {
+        if (vinto || finito) return;
+        vinto = c; clearTimeout(tGara);
+        tutti.forEach(function (x) { if (x !== c) try { x.end(); } catch (e) {} });   // (uscita educata: il broker non manda il "testamento")
+        pronto(c);
+      });
+      return c;
+    }
+    apri();
+    var tGara = setTimeout(function () { if (!vinto && !finito) apri(); }, GARA);
+    return { chiudi: function () { finito = true; clearTimeout(tGara); tutti.forEach(function (x) { if (x !== vinto) try { x.end(true); } catch (e) {} }); } };
+  }
+  // tornando nell'app (schermo sbloccato, di nuovo in rete) chi ha perso il collegamento si ricollega subito,
+  // senza aspettare il prossimo tentativo
+  var vivi = [];
+  function ravviva() { vivi.forEach(function (c) { try { if (!c.connected && !c.disconnecting && typeof c.reconnect === "function") c.reconnect(); } catch (e) {} }); }
+  try {
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) ravviva(); });
+    window.addEventListener("online", ravviva); window.addEventListener("pageshow", ravviva);
+  } catch (e) {}
+  var KEEPALIVE = 20;   // ogni quanti secondi si dice al broker "ci sono": un collegamento morto si scopre in 20-40 secondi (non 2 minuti)
+  var CODA_MAX = 40, CODA_VITA = 30000;   // quello che si manda mentre la rete è giù: parte appena torna (al massimo 40 messaggi, di non più di 30 secondi fa)
+
   window.SGNet = {
     disponibile: function () { return typeof mqtt !== "undefined"; },
 
@@ -98,29 +131,33 @@
       SGNet._forza = null;
       var T = topics(codice);
       var META = BASE + codice + "/meta";
-      var chiusa = false, primaVolta = true;
+      var chiusa = false, primaVolta = true, client = null;
       var inForse = {};   // chi è sparito all'improvviso: id -> timer (se si rifà vivo in tempo, resta dentro)
+      var coda = [], ultimo = null;   // coda: quello mandato con la rete giù (parte appena torna); ultimo: l'ultima foto della partita
       // Il codice si conosce SUBITO (non dipende dal collegamento): mostralo subito,
       // così la stanza dà sempre il codice anche se la rete è lenta a collegarsi.
       // (un tick dopo, così chi ci chiama ha già ricevuto l'oggetto "rete")
       setTimeout(function () { if (!chiusa) cb.onCodice && cb.onCodice(codice); }, 0);
-      var client = mqtt.connect(BROKER, {
-        clean: true, reconnectPeriod: 2000, keepalive: opz.keepalive || 60,
-        // Se l'host sparisce all'improvviso, avvisa gli altri (che però lo aspettano un po')
-        will: { topic: T.stato, payload: JSON.stringify({ t: "__hostgone" }), retain: false }
-      });
-      client.on("connect", function () {
+      function manda(msg, trattieni) {
+        if (client && client.connected) { try { client.publish(T.stato, JSON.stringify(msg), { retain: !!trattieni }); return; } catch (e) {} }
+        coda.push({ m: msg, r: !!trattieni, t: Date.now() }); if (coda.length > CODA_MAX) coda.shift();   // la rete è giù: la mossa non si perde
+      }
+      function svuota() { var ora = Date.now(), l = coda; coda = []; l.forEach(function (x) { if (x.r || ora - x.t < CODA_VITA) manda(x.m, x.r); }); }
+      function collegato() {
         if (chiusa) return;
         // quando è davvero collegato la stanza è "pronta": lo comunichiamo al gioco
         client.subscribe(T.azioni, function () { if (!chiusa) cb.onConnesso && cb.onConnesso(); });
         if (opz.ascoltaStato) client.subscribe(T.stato);
         // annuncia QUALE gioco è questa stanza, così chi entra col codice apre quello giusto
         try { client.publish(META, JSON.stringify({ g: giocoId || "" }), { retain: true }); } catch (e) {}
-        // tornato dopo un buco (schermo bloccato, cambio app): lo dico a chi aspetta, così nessuno se ne va
-        if (!primaVolta) try { client.publish(T.stato, JSON.stringify({ t: "__hostqui" }), { retain: false }); } catch (e) {}
+        if (!primaVolta) {   // tornato dopo un buco (schermo bloccato, cambio app): lo dico a chi aspetta, così nessuno se ne va,
+          try { client.publish(T.stato, JSON.stringify({ t: "__hostqui" }), { retain: false }); } catch (e) {}
+          if (ultimo && !coda.some(function (x) { return x.r; })) manda(ultimo, true);   // e rimando l'ultima foto della partita
+        }
+        svuota();   // quello che ho fatto mentre la rete era giù
         primaVolta = false;
-      });
-      client.on("message", function (topic, payload, pacchetto) {
+      }
+      function messaggio(topic, payload, pacchetto) {
         if (chiusa) return;
         if (topic === T.stato) {   // (solo con ascoltaStato) quello che mandano gli host: anche uno che ha preso il nostro posto
           var s; try { s = JSON.parse(payload.toString() || "null"); } catch (e) { return; }
@@ -138,28 +175,37 @@
         }
         if (m.data && m.data.t === "__ci") return;   // "ci sono": serve solo a non toglierlo (qui sopra), il gioco non lo vede
         cb.onMsg && cb.onMsg(m.from, m.data);
-      });
-      client.on("error", function (e) { if (!chiusa) cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message }); });
+      }
+      function errore(e) { if (!chiusa) cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message }); }
+      var collegamento = collega({
+        clean: true, reconnectPeriod: 2000, keepalive: opz.keepalive || KEEPALIVE,
+        // Se l'host sparisce all'improvviso, avvisa gli altri (che però lo aspettano un po')
+        will: { topic: T.stato, payload: JSON.stringify({ t: "__hostgone" }), retain: false }
+      }, function (c) {
+        client = c; vivi.push(c);
+        c.on("connect", collegato); c.on("message", messaggio); c.on("error", errore);
+        collegato();
+      }, errore);
+      function fine() { chiusa = true; togli(h); collegamento.chiudi(); vivi = vivi.filter(function (x) { return x !== client; }); Object.keys(inForse).forEach(function (k) { clearTimeout(inForse[k]); }); inForse = {}; coda = []; }
 
       var h = {
         // la partita (vm) viene mandata a tutti e "trattenuta" (retain) così
         // chi entra dopo riceve subito lo stato attuale
-        invia: function (msg) { try { if (!chiusa && client.connected) client.publish(T.stato, JSON.stringify(msg), { retain: true }); } catch (e) {} },
+        invia: function (msg) { if (chiusa) return; ultimo = msg; manda(msg, true); },
         // invio ad alta frequenza (streaming di gioco): NON trattenuto, per non intasare il broker
-        inviaVeloce: function (msg) { try { if (!chiusa && client.connected) client.publish(T.stato, JSON.stringify(msg), { retain: false }); } catch (e) {} },
+        inviaVeloce: function (msg) { if (!chiusa) manda(msg, false); },
         inviaA: function (id, msg) { this.invia(msg); },
         // se ne va in silenzio SENZA chiudere la stanza: un altro telefono ha preso il posto di host
         lascia: function () {
           if (chiusa) return;
-          chiusa = true; togli(h);
-          Object.keys(inForse).forEach(function (k) { clearTimeout(inForse[k]); }); inForse = {};
-          try { client.end(); } catch (e) {}   // uscita "educata": il broker non manda l'avviso "host sparito"
+          fine();
+          try { if (client) client.end(); } catch (e) {}   // uscita "educata": il broker non manda l'avviso "host sparito"
         },
         chiudi: function () {
           if (chiusa) return;
-          chiusa = true; togli(h);
-          Object.keys(inForse).forEach(function (k) { clearTimeout(inForse[k]); }); inForse = {};
+          fine();
           try {
+            if (!client) return;
             client.publish(T.stato, JSON.stringify({ t: "__hostgone", voluto: 1 }), { retain: false });   // chiusa apposta: gli altri escono subito
             client.publish(T.stato, "", { retain: true }); // pulisce lo stato trattenuto
             client.publish(META, "", { retain: true });    // pulisce l'annuncio del gioco
@@ -175,13 +221,14 @@
     entra: function (codice, cb, opz) {
       if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
       var myId = idPerStanza(codice);   // rientrando nella stessa stanza si torna "la stessa persona"
-      var T = topics(codice);
-      var client = mqtt.connect(BROKER, {
-        clean: true, reconnectPeriod: 2000,
-        will: { topic: T.azioni, payload: JSON.stringify({ from: myId, data: { t: "__leave" } }), retain: false }
-      });
+      var T = topics(codice), client = null, coda = [];
       var aperto = false, chiusa = false, entrata = null, dentro = false, tRipeti = null, tAddio = null, tCi = null, ultimoInvio = 0;
-      function pubblica(msg) { try { if (client.connected) { client.publish(T.azioni, JSON.stringify({ from: myId, data: msg }), { retain: false }); ultimoInvio = Date.now(); } } catch (e) {} }
+      function pubblica(msg) {
+        if (client && client.connected) { try { client.publish(T.azioni, JSON.stringify({ from: myId, data: msg }), { retain: false }); ultimoInvio = Date.now(); return; } catch (e) {} }
+        if (!msg || msg.t === "join" || msg.t === "__ci") return;   // ("sono entrato" e "ci sono" li ripeto comunque appena torna la rete)
+        coda.push({ m: msg, t: Date.now() }); if (coda.length > CODA_MAX) coda.shift();   // la rete è giù: la mossa parte appena torna
+      }
+      function svuota() { var ora = Date.now(), l = coda; coda = []; l.forEach(function (x) { if (ora - x.t < CODA_VITA) pubblica(x.m); }); }
       function smetti() { if (tRipeti) { clearInterval(tRipeti); tRipeti = null; } }
       // "sono entrato" può perdersi (stanza non ancora pronta, host via un attimo):
       // lo ripeto finché l'host non mi mette dentro (il mio codice compare nei suoi messaggi)
@@ -189,15 +236,16 @@
         smetti(); var n = 0;
         tRipeti = setInterval(function () { if (dentro || chiusa || ++n > MAX_RIPETI) return smetti(); pubblica(entrata); }, RIPETI_ENTRATA);
       }
-      client.on("connect", function () {
+      function collegato() {
         if (chiusa) return;
         client.subscribe(T.stato, function () {
           if (chiusa) return;
           if (!aperto) { aperto = true; cb.onAperto && cb.onAperto(myId); }
           else if (entrata) pubblica(entrata);   // ricollegato dopo un buco: ripeto che ci sono (l'host non mi toglie)
+          svuota();   // e mando le mosse fatte mentre la rete era giù
         });
-      });
-      client.on("message", function (_t, payload, pacchetto) {
+      }
+      function messaggio(_t, payload, pacchetto) {
         if (chiusa) return;
         var testo = payload.toString(); if (!testo) return;
         var m; try { m = JSON.parse(testo); } catch (e) { return; }
@@ -213,8 +261,17 @@
           return;
         }
         cb.onMsg && cb.onMsg(m);
-      });
-      client.on("error", function (e) { if (!chiusa) cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message }); });
+      }
+      function errore(e) { if (!chiusa) cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message }); }
+      var collegamento = collega({
+        clean: true, reconnectPeriod: 2000, keepalive: KEEPALIVE,
+        will: { topic: T.azioni, payload: JSON.stringify({ from: myId, data: { t: "__leave" } }), retain: false }
+      }, function (c) {
+        client = c; vivi.push(c);
+        c.on("connect", collegato); c.on("message", messaggio); c.on("error", errore);
+        collegato();
+      }, errore);
+      function fine() { chiusa = true; togli(h); smetti(); collegamento.chiudi(); vivi = vivi.filter(function (x) { return x !== client; }); coda = []; if (tAddio) { clearTimeout(tAddio); tAddio = null; avvisaHost(T.stato, false); } if (tCi) { clearInterval(tCi); tCi = null; } }
 
       var h = {
         invia: function (msg) {
@@ -229,13 +286,13 @@
         // se ne va in silenzio (senza dire "esco"): serve all'host di riserva che sta per prendere il posto dell'host
         lascia: function () {
           if (chiusa) return;
-          chiusa = true; togli(h); smetti(); if (tAddio) { clearTimeout(tAddio); tAddio = null; avvisaHost(T.stato, false); } if (tCi) { clearInterval(tCi); tCi = null; }
-          try { client.end(); } catch (e) {}
+          fine();
+          try { if (client) client.end(); } catch (e) {}
         },
         chiudi: function () {
           if (chiusa) return;
-          chiusa = true; togli(h); smetti(); if (tAddio) { clearTimeout(tAddio); tAddio = null; avvisaHost(T.stato, false); } if (tCi) { clearInterval(tCi); tCi = null; }
-          try { client.publish(T.azioni, JSON.stringify({ from: myId, data: { t: "__leave", voluto: 1 } }), { retain: false }); client.end(); } catch (e) {}
+          fine();
+          try { if (client) { client.publish(T.azioni, JSON.stringify({ from: myId, data: { t: "__leave", voluto: 1 } }), { retain: false }); client.end(); } } catch (e) {}
         }
       };
       return segna(h, opz && opz.tieni);
@@ -247,15 +304,16 @@
     scopriGioco: function (codice, cb) {
       if (!this.disponibile()) { cb(null); return; }
       var META = BASE + String(codice).toUpperCase() + "/meta";
-      var client = mqtt.connect(BROKER, { clean: true, reconnectPeriod: 0 });
-      var fatto = false;
-      function fine(g) { if (fatto) return; fatto = true; try { client.end(true); } catch (e) {} cb(g || null); }
-      client.on("connect", function () { client.subscribe(META); });
-      client.on("message", function (_t, payload) {
-        var m; try { m = JSON.parse(payload.toString()); } catch (e) {}
-        fine(m && m.g);
-      });
-      client.on("error", function () { fine(null); });
+      var fatto = false, client = null;
+      function fine(g) { if (fatto) return; fatto = true; collegamento.chiudi(); try { if (client) client.end(true); } catch (e) {} cb(g || null); }
+      var collegamento = collega({ clean: true, reconnectPeriod: 0 }, function (c) {
+        client = c;
+        c.on("message", function (_t, payload) {
+          var m; try { m = JSON.parse(payload.toString()); } catch (e) {}
+          fine(m && m.g);
+        });
+        c.subscribe(META);
+      }, function () {});
       setTimeout(function () { fine(null); }, 10000);
     }
   };
