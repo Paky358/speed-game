@@ -20182,6 +20182,2994 @@
   if (window.SGMobiliArte) window.SGMobiliArte.aggiungi(pacco);
 })();
 /* =========================================================
+   SPeeD GAME — IL CIRCOLO: TAVOLI DA GIOCO, SEDIE, BILIARDO E FRECCETTE (visti dall'alto, come i mobili della casa)
+   Il circolo ricreativo di paese, anni '60-'80 ma tenuto bene: noce e faggio a cera, sedie impagliate,
+   il panno verde, le carte napoletane e il bicchiere di rosso. Caldo e familiare, non di lusso come il casinò.
+   Una mattonella è un rombo largo 100 e alto 50 (circa 1 metro); in altezza 61 unità ≈ 1 metro.
+   - Tavoli (piano a 46-47): da carte (panno verde, carte napoletane, vino), quadrato con la tovaglia a quadretti,
+     rotondo col centrino all'uncinetto, lungo da 6, tavolino per due; i tavolini del tris (lavagna e gesso),
+     del Forza 4 e della battaglia navale. In info "posti" = le mattonelle dove ci si siede (relative all'angolo
+     dell'impronta nel disegno davanti, fuori dall'impronta). Le sedie sono un mobile a parte: "sedia_circolo".
+   - La sedia impagliata da osteria, il biliardo all'italiana coi cinque birilli, la lampada verde appesa ("sospeso":
+     in alto, sotto si cammina) e due cose da muro ("parete", 62 × 200): le freccette con la lavagnetta, le stecche.
+   Il davanti guarda in basso a sinistra; con { dietro: true } lo stesso oggetto girato; con { notte: true } la lampada accesa.
+   Non si vendono nel negozio: reparto "circolo", prezzo 0. Si aggiungono con SGMobiliArte.aggiungi({ nomi, info, svg }).
+   ========================================================= */
+(function () {
+  "use strict";
+  if (!window.SGMobiliArte || !window.SGMobiliArte.aggiungi) return;
+
+  // ---------- attrezzi (gli stessi degli altri mobili) ----------
+  var nId = 0, p = "", DEFS = [], FATTI = {}, nC = 0, G = 1, NOTTE = false;   // il disegno in corso: prefisso degli id, definizioni; G = 1 davanti, -1 girato; NOTTE = luce accesa
+  var L = "#3d2b22";   // il contorno caldo e scuro
+  function rnd(seme) { var s = (seme >>> 0) || 1; return function () { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return (s % 1000003) / 1000003; }; }
+  function f1(n) { return Math.round(n * 100) / 100; }
+  function f2(n) { return Math.round(n * 1000) / 1000; }
+  function q(x, y) { if (typeof x === "object") { y = x[1]; x = x[0]; } return f1(x) + "," + f1(y); }
+  function q2(x, y) { if (typeof x === "object") { y = x[1]; x = x[0]; } return f2(x) + "," + f2(y); }
+  function pts(a) { return a.map(function (x) { return q(x); }).join(" "); }
+  function attr(x) { return x ? " " + x : ""; }
+  function op(k) { return "opacity='" + f2(k) + "'"; }
+  function poly(a, fill, x) { return "<polygon points='" + pts(a) + "' fill='" + fill + "'" + attr(x) + "/>"; }
+  function pth(d, fill, x) { return "<path d='" + d + "' fill='" + fill + "'" + attr(x) + "/>"; }
+  function cer(x, y, r, fill, x2) { return "<circle cx='" + f2(x) + "' cy='" + f2(y) + "' r='" + f2(r) + "' fill='" + fill + "'" + attr(x2) + "/>"; }
+  function ell(x, y, rx, ry, fill, x2) { return "<ellipse cx='" + f2(x) + "' cy='" + f2(y) + "' rx='" + f2(rx) + "' ry='" + f2(ry) + "' fill='" + fill + "'" + attr(x2) + "/>"; }
+  function rett(x, y, w, h, r, fill, x2) { return "<rect x='" + f2(x) + "' y='" + f2(y) + "' width='" + f2(w) + "' height='" + f2(h) + "'" + (r ? " rx='" + f2(r) + "'" : "") + " fill='" + fill + "'" + attr(x2) + "/>"; }
+  function bordo(c, w) { return "stroke='" + c + "' stroke-width='" + f2(w == null ? 2.4 : w) + "' stroke-linejoin='round' stroke-linecap='round'"; }
+  function tratto(d, c, w, x) { return "<path d='" + d + "' fill='none' stroke='" + c + "' stroke-width='" + f2(w) + "' stroke-linecap='round' stroke-linejoin='round'" + attr(x) + "/>"; }
+  function linea(a, b) { return "M" + q(a) + " L" + q(b); }
+  function chiuso(a) { return "M" + a.map(function (x) { return q(x); }).join(" L") + " Z"; }
+  function aperto(a) { return "M" + a.map(function (x) { return q(x); }).join(" L"); }
+  function limiti(a) { var b = [1e9, 1e9, -1e9, -1e9]; a.forEach(function (x) { b[0] = Math.min(b[0], x[0]); b[1] = Math.min(b[1], x[1]); b[2] = Math.max(b[2], x[0]); b[3] = Math.max(b[3], x[1]); }); return b; }
+  function lerp(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; }
+  function cerD(x, y, r) { return "M" + q(x - r, y) + " A" + f2(r) + "," + f2(r) + " 0 1,0 " + q(x + r, y) + " A" + f2(r) + "," + f2(r) + " 0 1,0 " + q(x - r, y) + " Z"; }
+  function rettD(x, y, w, h, r) {
+    if (!r) return "M" + q(x, y) + " H" + f1(x + w) + " V" + f1(y + h) + " H" + f1(x) + " Z";
+    return "M" + q(x + r, y) + " H" + f1(x + w - r) + " Q" + q(x + w, y) + " " + q(x + w, y + r) + " V" + f1(y + h - r) + " Q" + q(x + w, y + h) + " " + q(x + w - r, y + h) + " H" + f1(x + r) + " Q" + q(x, y + h) + " " + q(x, y + h - r) + " V" + f1(y + r) + " Q" + q(x, y) + " " + q(x + r, y) + " Z";
+  }
+  function gruppo(t, c) { return "<g transform='" + t + "'>" + c + "</g>"; }
+  // i colori
+  function hx(c) { var n = parseInt(c.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function mix(a, b, t) { var x = hx(a), y = hx(b); return "#" + x.map(function (v, i) { var r = Math.round(v + (y[i] - v) * t); return (r < 16 ? "0" : "") + r.toString(16); }).join(""); }
+  function chiaro(c, t) { return mix(c, "#ffffff", t); }
+  function scuro(c, t) { return mix(c, "#000000", t); }
+  function tono(c, t) { return t >= 0 ? chiaro(c, Math.min(.85, t)) : scuro(c, Math.min(.85, -t)); }
+  // sfumature, motivi e ritagli (gli id col prefisso del disegno)
+  function sfum(tag, nome, stops, a) {
+    var id = p + nome;
+    if (!FATTI[id]) {
+      FATTI[id] = 1;
+      DEFS.push("<" + tag + " id='" + id + "' " + a + ">" + stops.map(function (s) { return "<stop offset='" + s[0] + "' stop-color='" + s[1] + "'" + (s[2] != null ? " stop-opacity='" + s[2] + "'" : "") + "/>"; }).join("") + "</" + tag + ">");
+    }
+    return "url(#" + id + ")";
+  }
+  function lin(nome, stops, x1, y1, x2, y2, user) { return sfum("linearGradient", user ? nome + (++nC) : nome, stops, "x1='" + f2(x1) + "' y1='" + f2(y1) + "' x2='" + f2(x2) + "' y2='" + f2(y2) + "'" + (user ? " gradientUnits='userSpaceOnUse'" : "")); }
+  function rad(nome, stops, cx, cy, r) { return sfum("radialGradient", nome, stops, "cx='" + cx + "' cy='" + cy + "' r='" + r + "'"); }
+  function nuova(stops, x1, y1, x2, y2, user) { return sfum("linearGradient", "g" + (++nC), stops, "x1='" + f2(x1) + "' y1='" + f2(y1) + "' x2='" + f2(x2) + "' y2='" + f2(y2) + "'" + (user ? " gradientUnits='userSpaceOnUse'" : "")); }
+  function nuovaR(stops, cx, cy, r) { return sfum("radialGradient", "g" + (++nC), stops, "cx='" + f2(cx) + "' cy='" + f2(cy) + "' r='" + f2(r) + "'"); }
+  function motivo(nome, w, h, corpo) {   // un motivo che si ripete (la tovaglia, il dorso delle carte)
+    var id = p + nome;
+    if (!FATTI[id]) { FATTI[id] = 1; DEFS.push("<pattern id='" + id + "' patternUnits='userSpaceOnUse' width='" + f2(w) + "' height='" + f2(h) + "'>" + corpo + "</pattern>"); }
+    return "url(#" + id + ")";
+  }
+  function dentro(forma, corpo, pari) {   // corpo ritagliato dentro la forma (un tracciato "d"); pari = la forma ha dei buchi
+    var id = p + "r" + (++nC);
+    DEFS.push("<clipPath id='" + id + "'><path d='" + forma + "'" + (pari ? " clip-rule='evenodd'" : "") + "/></clipPath>");
+    return "<g clip-path='url(#" + id + ")'>" + corpo + "</g>";
+  }
+
+  // ---------- la vista: dal mobile (a = larghezza, b = profondità con b+ = davanti, z = altezza) allo schermo ----------
+  function Puv(u, v, z) { return [(u - v) * 50, (u + v) * 25 - (z || 0)]; }
+  function P(a, b, z) { return Puv(a * G, b * G, z); }
+  function vicino(a, b) { return G * (a + b); }   // più è grande, più la cosa è vicina a chi guarda
+  function perVicino(x, y) { return vicino(x[0], x[1]) - vicino(y[0], y[1]); }
+  function ordina(l) { return l.sort(function (x, y) { return x[0] - y[0]; }).map(function (x) { return x[1]; }).join(""); }
+  function forma(ca, cb, ra, rf, rr, e) { return { ca: ca, cb: cb, ra: ra, rf: rf == null ? ra : rf, rr: rr == null ? (rf == null ? ra : rf) : rr, e: e || 2 }; }
+  function giro(F, z, k, n) {
+    var ka = k == null ? 1 : (k.length ? k[0] : k), kb = k == null ? 1 : (k.length ? k[1] : k), out = [], i; n = n || 60;
+    for (i = 0; i < n; i++) {
+      var t = i / n * 6.2832, c = Math.cos(t), s = Math.sin(t), x = (c < 0 ? -1 : 1) * Math.pow(Math.abs(c), 2 / F.e), y = (s < 0 ? -1 : 1) * Math.pow(Math.abs(s), 2 / F.e);
+      out.push(P(F.ca + x * F.ra * ka, F.cb + y * (y > 0 ? F.rf : F.rr) * kb, z));
+    }
+    return out;
+  }
+  function inviluppo(pp) {   // il contorno esterno di tanti punti
+    var a = pp.slice().sort(function (m, n) { return m[0] - n[0] || m[1] - n[1]; }), lo = [], hi = [], i;
+    function cr(o, m, n) { return (m[0] - o[0]) * (n[1] - o[1]) - (m[1] - o[1]) * (n[0] - o[0]); }
+    for (i = 0; i < a.length; i++) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], a[i]) <= 0) lo.pop(); lo.push(a[i]); }
+    for (i = a.length - 1; i >= 0; i--) { while (hi.length >= 2 && cr(hi[hi.length - 2], hi[hi.length - 1], a[i]) <= 0) hi.pop(); hi.push(a[i]); }
+    return lo.slice(0, -1).concat(hi.slice(0, -1));
+  }
+  function corpo(livelli, stops, lw) {   // un pezzo tondo pieno: la sagoma sfumata da sinistra a destra
+    var pp = inviluppo([].concat.apply([], livelli)), b = limiti(pp);
+    return pth(chiuso(pp), lin("cx", stops, b[0], 0, b[2], 0, true), bordo(L, lw || 2.4));
+  }
+  // ---------- i blocchi squadrati (come nel bagno) ----------
+  function faccia(o, dir, c) { return "<g transform='matrix(.8197 " + (dir > 0 ? ".4098" : "-.4098") + " 0 1 " + f1(o[0]) + " " + f1(o[1]) + ")'>" + c + "</g>"; }
+  function tinte(c) {   // i tre colori: sopra, la faccia di sinistra (alla luce), quella di destra (in ombra)
+    if (typeof c !== "string") return c;
+    var k = c.slice(1);
+    return [lin("ts" + k, [[0, chiaro(c, .32)], [1, chiaro(c, .1)]], 0, 0, 1, 1), lin("tl" + k, [[0, chiaro(c, .12)], [1, scuro(c, .06)]], 0, 0, 0, 1), lin("td" + k, [[0, scuro(c, .2)], [1, scuro(c, .34)]], 0, 0, 0, 1)];
+  }
+  // un blocco da a0..a1, b0..b1 (b1 = davanti), z0..z1; f = { davanti, dietro, fianco, sopra }: disegni piatti (W, H) per le facce
+  function blocco(a0, a1, b0, b1, z0, z1, col, f, lw) {
+    f = f || {};
+    var u0 = G > 0 ? a0 : -a1, u1 = G > 0 ? a1 : -a0, v0 = G > 0 ? b0 : -b1, v1 = G > 0 ? b1 : -b0, c = tinte(col);
+    var A = Puv(u0, v0, z1), B = Puv(u1, v0, z1), C = Puv(u1, v1, z1), D = Puv(u0, v1, z1), Bb = Puv(u1, v0, z0), Cb = Puv(u1, v1, z0), Db = Puv(u0, v1, z0);
+    var Ws = (u1 - u0) * 61, Wd = (v1 - v0) * 61, H = z1 - z0, fs = G > 0 ? f.davanti : f.dietro;
+    var s = faccia(D, 1, rett(0, 0, Ws, H, 0, c[1]) + (fs ? fs(Ws, H) : "")) + faccia(C, -1, rett(0, 0, Wd, H, 0, c[2]) + (f.fianco ? f.fianco(Wd, H) : "")) + poly([A, B, C, D], c[0]);
+    if (f.sopra) s += f.sopra(A, B, C, D, (u1 - u0) * 100, (v1 - v0) * 100);
+    s += tratto("M" + q(D) + " L" + q(C) + " L" + q(B) + " M" + q(C) + " L" + q(Cb), L, .7, "opacity='.7'");   // gli spigoli di dentro, sottili
+    if (H > 4) s += tratto("M" + q(D[0] + 1, D[1] + .9) + " L" + q(C[0] - .5, C[1] + .8), "#ffffff", .8, "opacity='.5'");   // il filo di luce sullo spigolo davanti
+    return s + poly([A, B, Bb, Cb, Db, D], "none", bordo(L, lw || 1.6));
+  }
+  function stesa(O, X, Y, W, H, c) {   // un disegno piatto W × H steso su un piano qualsiasi: O = il suo angolo in alto a sinistra, X = la fine della riga di sopra, Y = la fine del lato di sinistra
+    var m = [(X[0] - O[0]) / W, (X[1] - O[1]) / W, (Y[0] - O[0]) / H, (Y[1] - O[1]) / H, O[0], O[1]];
+    return "<g transform='matrix(" + m.map(function (v) { return Math.round(v * 10000) / 10000; }).join(" ") + ")'>" + c + "</g>";
+  }
+  // un disegno piatto steso su un piano dritto: in pianta a z fisso (X = a·61, Y = b·61), su un fianco a b fisso o ad a fisso (X lungo il fianco, Y = −z)
+  function mat(m, c) { return "<g transform='matrix(" + m.map(function (v) { return Math.round(v * 10000) / 10000; }).join(" ") + ")'>" + c + "</g>"; }
+  function suZ(z, c) { return mat([.8197 * G, .4098 * G, -.8197 * G, .4098 * G, 0, -z], c); }
+  function suB(b, c) { return mat([.8197 * G, .4098 * G, 0, 1, -50 * G * b, 25 * G * b], c); }
+  function suA(a, c) { return mat([-.8197 * G, .4098 * G, 0, 1, 50 * G * a, 25 * G * a], c); }
+
+  // ---------- la luce: viene da in alto a sinistra ----------
+  function norma(v) { var l = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; }
+  function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+  var LUCE = norma([-.3, .5, .8]), VISTA = norma([1, 1, .82]), MEZZO = norma([LUCE[0] + VISTA[0], LUCE[1] + VISTA[1], LUCE[2] + VISTA[2]]);
+  function tinta(c, n, m) {   // il colore di una superficie con la normale n (nella vista: u, v, z) fatta del materiale m
+    m = m || {};
+    var B = dot(n, LUCE), t = B >= .5 ? (B - .5) / .3 * .2 : (B - .5) / .8 * .27;
+    var col = tono(c, t * (m.forza || 1));
+    if (m.lucido) { var sp = Math.pow(Math.max(0, dot(n, MEZZO)), m.esp || 24) * m.lucido; if (sp > .01) col = mix(col, m.riflesso ? chiaro(c, m.riflesso) : "#fff8ec", Math.min(.85, sp)); }
+    return col;
+  }
+  var CERA = { lucido: .26, esp: 7 };   // il legno a cera: lucido piano
+
+  // ---------- i pezzi torniti (gambe, bicchieri, birilli): il profilo [[z, raggio in mattonelle], ...] ----------
+  function dTornito(a, b, prof) {
+    var c = P(a, b, 0), n = prof.length, sx = [], dx = [], i;
+    for (i = 0; i < n; i++) { var rx = prof[i][1] * 70.71, y = c[1] - prof[i][0]; sx.push([c[0] - rx, y]); dx.push([c[0] + rx, y]); }
+    var rt = prof[n - 1][1] * 70.71, rb = prof[0][1] * 70.71;
+    var d = "M" + sx.map(function (x) { return q(x); }).join(" L") + " A" + f1(rt) + "," + f1(rt / 2) + " 0 0,1 " + q(dx[n - 1]);
+    for (i = n - 2; i >= 0; i--) d += " L" + q(dx[i]);
+    return d + " A" + f1(rb) + "," + f1(rb / 2) + " 0 0,1 " + q(sx[0]) + " Z";
+  }
+  function tornito(a, b, prof, stops, lw, anelli, luce) {   // anelli = i livelli dove si vede un anello; luce = il filo chiaro a sinistra
+    var c = P(a, b, 0), n = prof.length, rm = 0;
+    prof.forEach(function (x) { rm = Math.max(rm, x[1] * 70.71); });
+    var o = pth(dTornito(a, b, prof), lin("tn", stops, c[0] - rm, 0, c[0] + rm, 0, true), lw ? bordo(L, lw) : "");
+    (anelli || []).forEach(function (k) { var rx = prof[k][1] * 70.71, y = c[1] - prof[k][0]; o += pth("M" + q(c[0] - rx, y) + " A" + f1(rx) + "," + f1(rx / 2) + " 0 0,0 " + q(c[0] + rx, y), "none", "stroke='" + L + "' stroke-width='.5' opacity='.5'"); });
+    if (luce) o += tratto("M" + prof.slice(1, n - 1).map(function (x) { return q(c[0] - x[1] * 70.71 * .5, c[1] - x[0]); }).join(" L"), "#ffffff", luce, "opacity='.5'");
+    return o;
+  }
+  function pallina(c, r, col, k) {   // una pallina lucida: c = il centro sullo schermo
+    return cer(c[0], c[1], r, nuovaR([[0, chiaro(col, .75)], [.32, col], [1, scuro(col, .5)]], .35, .3, .8), bordo(L, k || .6)) + ell(c[0] - r * .34, c[1] - r * .4, r * .34, r * .22, "#ffffff", op(.9));
+  }
+  function anello(a, b, z, r) { var c = P(a, b, z); return { x: c[0], y: c[1], rx: r * 70.71, ry: r * 35.36 }; }   // un cerchio in pianta, visto (un'ellisse)
+
+  // ---------- le ombre a terra (la luce viene da in alto a sinistra: l'ombra scivola un po' a destra) ----------
+  function aTerra(c) { return "<g transform='matrix(50 25 -50 25 0 0)'>" + c + "</g>"; }
+  function ombraPianta(a0, a1, b0, b1, k, pad) {
+    pad = pad == null ? .1 : pad;
+    var cu = G * (a0 + a1) / 2 + .05, cv = G * (b0 + b1) / 2 - .01;
+    return aTerra("<ellipse cx='" + f2(cu) + "' cy='" + f2(cv) + "' rx='" + f2((a1 - a0) / 2 + pad) + "' ry='" + f2((b1 - b0) / 2 + pad) + "' fill='" + rad("omp", [[0, "#000", .26], [.6, "#000", .17], [1, "#000", 0]], .5, .5, .5) + "'" + (k ? " " + op(k) : "") + "/>");
+  }
+  function ombraForma(pp, k) {   // l'ombra morbida sotto un tavolo: la sua forma, a strati sempre più scuri verso il centro
+    k = k || 1;
+    var bb = limiti(pp), m = Math.min(1, Math.min(bb[2] - bb[0], bb[3] - bb[1]) / 1.6);   // sotto i tavoli piccoli gli strati di dentro si stringono meno
+    function g2(d) { return chiuso(allarga(pp, d < 0 ? d * m : d).map(function (x) { return Puv(G * x[0] + .06, G * x[1] - .02, 0); })); }
+    return pth(g2(.13), "#000", op(.05 * k)) + pth(g2(.06), "#000", op(.06 * k)) + pth(g2(-.02), "#000", op(.07 * k)) + pth(g2(-.14), "#000", op(.08 * k)) + pth(g2(-.3), "#000", op(.06 * k));
+  }
+  function ombraMuro(d, dx, dy, k) {   // l'ombra sul muro: la stessa forma spostata in basso a destra, in due velature
+    k = k == null ? 1 : k;
+    return pth(d, "#000", op(.07 * k) + " transform='translate(" + f2(dx * 1.7) + " " + f2(dy * 1.7) + ")'") + pth(d, "#000", op(.14 * k) + " transform='translate(" + f2(dx) + " " + f2(dy) + ")'");
+  }
+
+  // ---------- le forme in pianta (punti [a, b], tutte girate nello stesso verso) ----------
+  function pulisci(a) { return a.filter(function (x, i) { var y = a[(i + a.length - 1) % a.length]; return Math.abs(x[0] - y[0]) > 1e-4 || Math.abs(x[1] - y[1]) > 1e-4; }); }
+  function nrm(A, B) { var dx = B[0] - A[0], dy = B[1] - A[1], l = Math.sqrt(dx * dx + dy * dy) || 1; return [dy / l, -dx / l]; }   // la normale verso fuori di un lato
+  function allarga(pp, d) {   // la stessa forma spostata in fuori di d (in dentro se d < 0)
+    var n = pp.length, out = [], i;
+    for (i = 0; i < n; i++) {
+      var n1 = nrm(pp[(i + n - 1) % n], pp[i]), n2 = nrm(pp[i], pp[(i + 1) % n]), m = [n1[0] + n2[0], n1[1] + n2[1]], lm = Math.sqrt(m[0] * m[0] + m[1] * m[1]) || 1;
+      m = [m[0] / lm, m[1] / lm];
+      var k = 1 / Math.max(.5, m[0] * n1[0] + m[1] * n1[1]);
+      out.push([pp[i][0] + m[0] * d * k, pp[i][1] + m[1] * d * k]);
+    }
+    return out;
+  }
+  function pRett(a0, a1, b0, b1, r, n) {   // un rettangolo con gli angoli tondi
+    n = n || 6; var o = [], cs = [[a1 - r, b1 - r], [a0 + r, b1 - r], [a0 + r, b0 + r], [a1 - r, b0 + r]], k, i;
+    for (k = 0; k < 4; k++) for (i = 0; i <= n; i++) { var t = (k + i / n) * Math.PI / 2; o.push([cs[k][0] + r * Math.cos(t), cs[k][1] + r * Math.sin(t)]); }
+    return pulisci(o);
+  }
+  function pOvale(ca, cb, ra, rb, e, n) {   // un ovale (e = 2 ellisse, di più = più squadrato)
+    var o = [], i; n = n || 96;
+    for (i = 0; i < n; i++) {
+      var t = i / n * 2 * Math.PI, c = Math.cos(t), s = Math.sin(t);
+      o.push([ca + (c < 0 ? -1 : 1) * Math.pow(Math.abs(c), 2 / e) * ra, cb + (s < 0 ? -1 : 1) * Math.pow(Math.abs(s), 2 / e) * rb]);
+    }
+    return o;
+  }
+  function rettRuotato(a, b, w, h, ang) {   // il rettangolo w × h (mattonelle) centrato in (a, b), girato di ang gradi
+    var c = Math.cos(ang * Math.PI / 180), s = Math.sin(ang * Math.PI / 180);
+    return [[w / 2, h / 2], [-w / 2, h / 2], [-w / 2, -h / 2], [w / 2, -h / 2]].map(function (v) { return [a + v[0] * c - v[1] * s, b + v[0] * s + v[1] * c]; });
+  }
+  function aSchermo(pp, z) { return pp.map(function (x) { return P(x[0], x[1], z); }); }
+  function lungoCorsa(vv, passo, fn) {   // dei punti lungo una fila di vertici (in pianta), ogni "passo" mattonelle
+    var o = "", acc = passo / 2, i;
+    for (i = 0; i < vv.length - 1; i++) {
+      var A = vv[i], B = vv[i + 1], l = Math.sqrt((B[0] - A[0]) * (B[0] - A[0]) + (B[1] - A[1]) * (B[1] - A[1]));
+      while (acc <= l) { var t = acc / l; o += fn(A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t); acc += passo; }
+      acc -= l;
+    }
+    return o;
+  }
+  // il fianco dritto di una forma (da z0 a z1): si vedono solo i pezzi girati verso chi guarda, ognuno col colore della sua luce.
+  // o = { righe: [[z, colore, spessore, opacità]], extra(fila), cima, lw, lati }
+  function fianco(pp, z0, z1, col, m, o) {
+    o = o || {};
+    var n = pp.length, s = "", vis = [], i, k;
+    function nv(i) { var nn = nrm(pp[i], pp[(i + 1) % n]); return [G * nn[0], G * nn[1], 0]; }
+    for (i = 0; i < n; i++) vis.push(dot(nv(i), VISTA) > .003);
+    var file = [], parti = -1, cur = null;
+    for (i = 0; i < n; i++) if (!vis[i]) { parti = i; break; }
+    if (parti < 0) { cur = []; for (i = 0; i < n; i++) cur.push(i); file.push(cur); }
+    else for (k = 1; k <= n; k++) { i = (parti + k) % n; if (vis[i]) { if (!cur) { cur = [i]; file.push(cur); } else cur.push(i); } else cur = null; }
+    file.forEach(function (fl) {
+      fl.forEach(function (i) {
+        var A = pp[i], B = pp[(i + 1) % n], c = tinta(col, nv(i), m);
+        s += poly([P(A[0], A[1], z1), P(B[0], B[1], z1), P(B[0], B[1], z0), P(A[0], A[1], z0)], c, "stroke='" + c + "' stroke-width='.6' stroke-linejoin='round'");
+      });
+      var vv = fl.map(function (i) { return pp[i]; }).concat([pp[(fl[fl.length - 1] + 1) % n]]);
+      if (o.extra) s += o.extra(vv);
+      (o.righe || []).forEach(function (r) { s += tratto(aperto(vv.map(function (x) { return P(x[0], x[1], r[0]); })), r[1], r[2], r[3] ? op(r[3]) : ""); });
+      var lw = o.lw || 1.5;
+      s += tratto(aperto(vv.map(function (x) { return P(x[0], x[1], z0); })), L, lw);
+      if (o.cima) s += tratto(aperto(vv.map(function (x) { return P(x[0], x[1], z1); })), L, o.cima);
+      if (o.lati !== false) [vv[0], vv[vv.length - 1]].forEach(function (x) { s += tratto(linea(P(x[0], x[1], z0), P(x[0], x[1], z1)), L, lw * .8); });
+    });
+    return s;
+  }
+  function anelloP(est, int, z, fill, x) {   // un anello piatto tra due contorni (in pianta), all'altezza z
+    return pth(chiuso(aSchermo(est, z)) + " " + chiuso(aSchermo(int, z).reverse()), fill, "fill-rule='evenodd'" + attr(x));
+  }
+  // il panno teso, col disegno (in pianta) e la pozza di luce della lampada
+  function panno(pp, z, col, disegno, luce) {
+    var sp = aSchermo(pp, z), d = chiuso(sp), b = limiti(sp), w = b[2] - b[0], h = b[3] - b[1];
+    var s = pth(d, nuova([[0, chiaro(col, .14)], [.5, col], [1, scuro(col, .24)]], b[0], b[1], b[2], b[3], true));
+    var c = (disegno ? suZ(z, disegno) : "") +
+      ell(b[0] + w * .46, b[1] + h * .45, w * .36, h * .36, nuovaR([[0, "#fff3cf", luce || .17], [.55, "#fff3cf", (luce || .17) * .35], [1, "#fff3cf", 0]], .5, .5, .5)) +   // la luce dall'alto
+      tratto(d, "#000000", 6, op(.12)) + tratto(d, "#000000", 2.4, op(.16));   // l'ombra del bordo sul panno
+    return s + dentro(d, c);
+  }
+
+  // ---------- i legni del circolo ----------
+  var NOCE = "#8c5634", NOCE_SC = "#6c3c20", CASTAGNO = "#9a6036", FAGGIO = "#d4a066", SEDIA = "#7a4527", PAGLIA = "#d6ad5c";
+  var VERDE = "#1f7d48", VERDE_BIL = "#21844b";   // i panni
+  var OTTONE = [[0, "#fff6cf"], [.3, "#f3d27a"], [.62, "#c99a36"], [1, "#7a5614"]];
+  function legno(c) { return [[0, chiaro(c, .42)], [.3, chiaro(c, .14)], [.65, scuro(c, .26)], [1, scuro(c, .58)]]; }   // il legno tondo, girato verso la luce
+  // le venature (in pianta, lungo X), col seme fisso; qualche nodo
+  function venePiano(x0, x1, y0, y1, col, seme, o) {
+    o = o || {};
+    var r = rnd(seme), s = "", y = y0 + 1, passo = o.passo || 2.4;
+    while (y < y1 - .5) {
+      var d = "M" + q(x0, y), x = x0, yy = y;
+      while (x < x1) { var nx = Math.min(x1, x + 9 + r() * 12), ny = y + (r() - .5) * 1.6; d += " Q" + q((x + nx) / 2, (yy + ny) / 2 + (r() - .5) * 2) + " " + q(nx, ny); x = nx; yy = ny; }
+      s += "<path d='" + d + "' fill='none' stroke='" + scuro(col, .3 + r() * .2) + "' stroke-width='" + f2(.25 + r() * .55) + "' opacity='" + f2(.2 + r() * .26) + "'/>";
+      y += passo * (.55 + r() * .9);
+    }
+    var nn = o.nodi == null ? 1 : o.nodi, i;
+    for (i = 0; i < nn; i++) {
+      var cx = x0 + (x1 - x0) * (.2 + r() * .6), cy = y0 + (y1 - y0) * (.2 + r() * .6);
+      s += ell(cx, cy, 3.4, 1.4, "none", "stroke='" + scuro(col, .35) + "' stroke-width='.4' opacity='.45'") + ell(cx, cy, 1.7, .7, scuro(col, .4), op(.5));
+    }
+    return s;
+  }
+  function assi(bp, col, seme, n) {   // il piano fatto di n assi lungo X, con le fughe scure
+    var x0 = bp[0] * 61, x1 = bp[2] * 61, y0 = bp[1] * 61, y1 = bp[3] * 61, h = (y1 - y0) / n, s = "", r = rnd(seme + 3), i;
+    for (i = 0; i < n; i++) {
+      var ya = y0 + i * h;
+      s += rett(x0, ya, x1 - x0, h, 0, tono(col, (r() - .5) * .14), op(.55)) + venePiano(x0, x1, ya, ya + h, col, seme + i * 17, { nodi: r() < .6 ? 1 : 0, passo: 2.1 });
+      if (i) s += "<path d='M" + q(x0, ya) + " H" + f1(x1) + "' stroke='" + scuro(col, .58) + "' stroke-width='.85' opacity='.75'/><path d='M" + q(x0, ya + .8) + " H" + f1(x1) + "' stroke='" + chiaro(col, .35) + "' stroke-width='.4' opacity='.4'/>";
+    }
+    [-1, 1].forEach(function (sg) { for (i = 0; i < n; i++) s += cer(sg * (x1 - 7), y0 + (i + .5) * h, .55, scuro(col, .55), op(.7)); });   // i chiodini delle traverse sotto
+    return s;
+  }
+  // una gamba tornita da tavolo (il piedino, la pancia a vaso, il collarino), da terra a z1, nel punto (a, b); k = quanto è grossa
+  function gambaTavolo(a, b, z1, col, k) {
+    k = k || 1; var h = z1 / 44, c = P(a, b, 0);
+    var pr = [[0, .03], [1.4, .034], [2.6, .029], [5 * h, .024], [9 * h, .026], [13 * h, .034], [16.5 * h, .041], [19.5 * h, .038], [22.5 * h, .029], [25 * h, .025], [26.6 * h, .034], [28 * h, .034], [29.4 * h, .028], [31 * h, .031], [z1, .031]].map(function (x) { return [x[0], x[1] * k]; });
+    return ell(c[0] + 1.2, c[1] + .5, 4.2 * k, 2 * k, "#000", op(.24)) + tornito(a, b, pr, legno(col), 1.1, [2, 10, 12], .55);
+  }
+  // la gamba squadrata che si stringe in basso: s0 = mezzo lato in basso, s1 in alto
+  function gambaQuadra(a, b, s0, s1, z0, z1, col) {
+    var u = a * G, v = b * G;
+    function Q(du, dv, s, z) { return Puv(u + du * s, v + dv * s, z); }
+    var sx = [Q(-1, 1, s0, z0), Q(1, 1, s0, z0), Q(1, 1, s1, z1), Q(-1, 1, s1, z1)], dx = [Q(1, 1, s0, z0), Q(1, -1, s0, z0), Q(1, -1, s1, z1), Q(1, 1, s1, z1)];
+    var c = Q(0, 0, 0, z0);
+    var o = z0 < .5 ? ell(c[0] + 1.2, c[1] + .6, s0 * 90 + 2, s0 * 45 + 1.2, "#000", op(.24)) : "";
+    o += poly(sx, nuova([[0, chiaro(col, .14)], [1, scuro(col, .06)]], 0, sx[3][1], 0, sx[0][1], true)) + poly(dx, nuova([[0, scuro(col, .2)], [1, scuro(col, .36)]], 0, dx[3][1], 0, dx[0][1], true));
+    o += tratto(linea(lerp(sx[0], sx[1], .25), lerp(sx[3], sx[2], .25)), "#ffffff", .5, op(.3)) + tratto(linea(sx[1], sx[2]), "#fff3df", .5, op(.45));   // il lucido sullo spigolo
+    return o + poly([sx[0], sx[1], dx[1], dx[2], sx[2], sx[3]], "none", bordo(L, 1.1)) + tratto(linea(sx[1], sx[2]), L, .5, op(.6));
+  }
+  function fascia(pp, z0, z1, col) {   // la fascia sotto il piano, col filo in basso
+    return fianco(pp, z0, z1, col, CERA, { lw: 1.2, righe: [[z0 + 1.2, scuro(col, .35), .5, .5], [z0 + 1.6, chiaro(col, .3), .45, .5], [z1 - 1, scuro(col, .3), .45, .45]] });
+  }
+  // le 4 gambe in (±ga, ±gb) e la fascia tra loro (da za a zs): tornite (grosse k) o squadrate (mezzo lato rs)
+  function gambeEFascia(ga, gb, za, zs, col, k, rs) {
+    var gg = [[-ga, -gb], [ga, -gb], [ga, gb], [-ga, gb]].sort(perVicino);
+    function g(x) { return rs ? gambaQuadra(x[0], x[1], rs * .72, rs, 0, zs, col) : gambaTavolo(x[0], x[1], zs, col, k); }
+    var e = rs ? rs - .006 : .02;
+    return g(gg[0]) + fascia(pRett(-ga - e, ga + e, -gb - e, gb + e, 0), za, zs, col) + gg.slice(1).map(g).join("");
+  }
+  // il piano di un tavolo (forma in pianta pp, da z0 a z1): il bordo coi lati verso chi guarda, sopra il legno a cera con le venature
+  function ripiano(pp, z0, z1, col, o) {
+    o = o || {};
+    var s = fianco(pp, z0, z1, col, CERA, { lw: 1.3, righe: [[z1 - .7, chiaro(col, .4), .55, .55], [z0 + .6, scuro(col, .4), .5, .5]] });
+    var sp = aSchermo(pp, z1), d = chiuso(sp), b = limiti(sp), bp = limiti(pp);
+    s += pth(d, nuova([[0, chiaro(col, .26)], [.55, chiaro(col, .1)], [1, scuro(col, .08)]], b[0], b[1], b[2], b[3], true));
+    var c = "";
+    if (o.vene !== false) c += suZ(z1, o.assi ? assi(bp, col, o.seme || 7, o.assi) : venePiano(bp[0] * 61, bp[2] * 61, bp[1] * 61, bp[3] * 61, col, o.seme || 7, o));
+    if (o.disegno) c += suZ(z1, o.disegno);
+    c += ell(b[0] + (b[2] - b[0]) * .38, b[1] + (b[3] - b[1]) * .36, (b[2] - b[0]) * .3, (b[3] - b[1]) * .25, nuovaR([[0, "#fff8e8", .22], [1, "#fff8e8", 0]], .5, .5, .5));   // il lucido della cera
+    return s + dentro(d, c) + tratto(d, L, o.lw || 1.5);
+  }
+
+  // ---------- le carte napoletane (in pianta: X = a·61) ----------
+  var CW = .12 * 61, CH = .2 * 61;   // la carta, stretta e alta come le napoletane
+  function simbolo(seme, x, y, k) {   // denari, coppe, bastoni, spade: centrati in (x, y), grandi k (1 = alti circa 2,4)
+    var t = "translate(" + f2(x) + " " + f2(y) + ") scale(" + f2(k) + ")";
+    if (seme === "denari") return "<g transform='" + t + "'><circle r='1.12' fill='#f2c33a' stroke='#a8481f' stroke-width='.3'/><circle r='.66' fill='none' stroke='#d9480f' stroke-width='.22'/><circle r='.3' fill='#c92a2a'/><circle cx='-.4' cy='-.45' r='.22' fill='#fff6cf'/></g>";
+    if (seme === "coppe") return "<g transform='" + t + "'><path d='M-.95,-1.1 H.95 C.95,-.15 .5,.3 .2,.38 V.78 H.62 C.7,.9 .7,1.05 .62,1.12 H-.62 C-.7,1.05 -.7,.9 -.62,.78 H-.2 V.38 C-.5,.3 -.95,-.15 -.95,-1.1 Z' fill='#f0b429' stroke='#9c4a1a' stroke-width='.2'/><path d='M-.9,-.68 H.9' stroke='#c92a2a' stroke-width='.36'/><path d='M-.55,-1 C-.6,-.4 -.4,-.05 -.15,.15' fill='none' stroke='#fff3c4' stroke-width='.18'/></g>";
+    if (seme === "bastoni") return "<g transform='" + t + " rotate(-22)'><path d='M-.34,1.2 C-.4,.25 -.5,-.55 -.62,-1 C-.4,-1.32 .38,-1.32 .58,-1 C.46,-.55 .38,.25 .3,1.2 Z' fill='#6aa84f' stroke='#2f5a1c' stroke-width='.2'/><path d='M-.52,-.5 H.48 M-.42,.25 H.36' stroke='#c92a2a' stroke-width='.24'/><circle cx='-.18' cy='-.85' r='.14' fill='#2f5a1c'/></g>";
+    return "<g transform='" + t + "'><path d='M-.1,-1.28 C.6,-.72 .5,.15 .14,.55 L-.12,.55 C.16,.1 .22,-.6 -.1,-1.28 Z' fill='#4c7fd6' stroke='#1f3f7a' stroke-width='.18'/><path d='M-.62,.6 H.58' stroke='#e8a917' stroke-width='.36' stroke-linecap='round'/><path d='M0,.62 V1.18' stroke='#8a5a2b' stroke-width='.3' stroke-linecap='round'/></g>";
+  }
+  var DISP = {   // dove stanno i semi sulla carta (in frazioni della carta) e quanto sono grandi
+    1: [[0, 0, 2.2]], 2: [[0, -.25, 1.25], [0, .25, 1.25]], 3: [[0, -.3, 1.1], [0, 0, 1.1], [0, .3, 1.1]],
+    4: [[-.2, -.25, 1.05], [.2, -.25, 1.05], [-.2, .25, 1.05], [.2, .25, 1.05]],
+    5: [[-.2, -.27, 1], [.2, -.27, 1], [0, 0, 1], [-.2, .27, 1], [.2, .27, 1]],
+    7: [[-.2, -.32, .9], [.2, -.32, .9], [0, -.16, .9], [-.2, 0, .9], [.2, 0, .9], [-.2, .32, .9], [.2, .32, .9]]
+  };
+  function dorso(w, h) {   // il dorso rosso col reticolo d'oro e il medaglione
+    var m = motivo("dr", 1.5, 1.5, "<rect width='1.5' height='1.5' fill='#b3342b'/><path d='M.75,.12 L1.38,.75 .75,1.38 .12,.75Z' fill='none' stroke='#e6a94a' stroke-width='.2'/>");
+    return rett(-w / 2 + .55, -h / 2 + .55, w - 1.1, h - 1.1, .4, m) + rett(-w / 2 + .55, -h / 2 + .55, w - 1.1, h - 1.1, .4, "none", "stroke='#7e1d16' stroke-width='.3'") +
+      ell(0, 0, w * .2, h * .13, "#f3d58a", "stroke='#7e1d16' stroke-width='.25'") + ell(0, 0, w * .08, h * .055, "#c0392b");
+  }
+  function cartaN(a, b, ang, seme, n, coperta, senzaOmbra) {   // una carta stesa (in pianta), scoperta col seme o coperta col dorso
+    var w = CW, h = CH, o = "<g transform='translate(" + f2(a * 61) + " " + f2(b * 61) + ") rotate(" + f2(ang) + ")'>";
+    if (!senzaOmbra) o += rett(-w / 2 + .45, -h / 2 + .65, w, h, .8, "#000000", op(.3));
+    o += rett(-w / 2, -h / 2, w, h, .8, coperta ? "#f6f1e4" : "#fcf8ec", "stroke='#8f8573' stroke-width='.3'");
+    if (coperta) o += dorso(w, h);
+    else (DISP[n] || DISP[1]).forEach(function (d) { o += simbolo(seme, d[0] * w, d[1] * h, d[2]); });
+    return o + "</g>";
+  }
+  function mazzo(a, b, z, ang, h) {   // un mazzo di carte coperte, girato di ang gradi, alto h
+    var pp = rettRuotato(a, b, CW / 61, CH / 61, ang), top = aSchermo(pp, z + h);
+    var s = pth(chiuso(aSchermo(pp, z).map(function (x) { return [x[0] + 1.3, x[1] + .7]; })), "#000", op(.26));   // l'ombra
+    s += fianco(pp, z, z + h, "#efe7d3", null, { lw: .5, righe: h > 1.6 ? [[z + h * .35, "#c9bc9c", .25, .9], [z + h * .7, "#c9bc9c", .25, .9]] : [] });
+    s += suZ(z + h, cartaN(a, b, ang, null, 0, true, true));
+    return s + pth(chiuso(top), "none", bordo(L, .45));
+  }
+  function prese(a, b, z, ang, h, seme, n) {   // il mucchietto delle carte prese, coperto, con la "scopa" girata di traverso in mezzo
+    return mazzo(a, b, z, ang, h * .5) + suZ(z + h * .5 + .05, cartaN(a + .01, b, ang + 90, seme, n, false, true)) + mazzo(a, b, z + h * .5 + .1, ang + 4, h * .5);
+  }
+  function foglietto(a, b, ang) {   // il foglietto dei punti: due colonne di stanghette a matita, e la matita gialla
+    var w = .16 * 61, h = .21 * 61, o = "<g transform='translate(" + f2(a * 61) + " " + f2(b * 61) + ") rotate(" + f2(ang) + ")'>", i;
+    o += rett(-w / 2 + .5, -h / 2 + .7, w, h, .3, "#000", op(.28)) + rett(-w / 2, -h / 2, w, h, .3, "#fdfbf3", "stroke='#b8b09d' stroke-width='.3'");
+    for (i = 1; i < 7; i++) o += "<path d='M" + q(-w / 2 + .6, -h / 2 + i * h / 7) + " H" + f1(w / 2 - .6) + "' stroke='#a5c8e8' stroke-width='.2'/>";   // le righe del quaderno
+    o += "<path d='M0," + f1(-h / 2 + 1) + " V" + f1(h / 2 - 1) + " M" + f1(-w / 2 + .8) + "," + f1(-h / 2 + 2.3) + " H" + f1(w / 2 - .8) + "' stroke='#555' stroke-width='.3'/>";
+    function cinque(x, y, quante) { var g = "", k; for (k = 0; k < Math.min(4, quante); k++) g += "M" + q(x + k * .55, y) + " l.1,1.7 "; return g + (quante > 4 ? "M" + q(x - .3, y + 1.35) + " L" + q(x + 2, y + .3) + " " : ""); }
+    var d = cinque(-w / 2 + 1.1, -h / 2 + 3.2, 5) + cinque(-w / 2 + 1.1, -h / 2 + 5.8, 5) + cinque(-w / 2 + 1.1, -h / 2 + 8.4, 3) + cinque(1, -h / 2 + 3.2, 5) + cinque(1, -h / 2 + 5.8, 4);
+    o += "<path d='" + d + "' fill='none' stroke='#4a4a4a' stroke-width='.28' stroke-linecap='round'/>";
+    o += "<g transform='translate(" + f2(w * .16) + " " + f2(h * .24) + ") rotate(-35)'>" + rett(-4.6, -.55, 8.2, 1.1, .2, "#f5c518", "stroke='#8a6a0a' stroke-width='.2'") + rett(3.6, -.55, 1, 1.1, 0, "#c0c4c8") + rett(4.6, -.55, 1.1, 1.1, .3, "#f08ca0") +
+      "<path d='M-4.6,-.55 L-6.2,0 -4.6,.55 Z' fill='#f1d9b5' stroke='#8a6a0a' stroke-width='.15'/><path d='M-5.7,-.18 L-6.2,0 -5.7,.18 Z' fill='#333'/><path d='M-4.4,-.2 H3.4' stroke='#fff2a8' stroke-width='.25'/></g>";   // la matita
+    return o + "</g>";
+  }
+  // il bicchiere da osteria (vetro spesso, un po' svasato) col rosso fino a "pieno"
+  var VETRO = [[0, "#ffffff", .62], [.3, "#eef8fb", .2], [.75, "#d6ebf2", .24], [1, "#86b3c4", .6]];
+  function bicchiere(a, b, z, pieno) {
+    var r0 = .042, r1 = .052, h = 9.5, s = "", c = P(a, b, z), zv = z + 1.2 + (h - 1.6) * pieno, rv = r0 + (r1 - r0) * (zv - z) / h - .005;
+    s += ell(c[0] + 2.3, c[1] + 1, r1 * 70.71 + 1.6, r1 * 35.36 + .9, "#000", op(.24)) + ell(c[0] + 3.6, c[1] + 1.6, 3, 1.3, "#b0202f", op(.22));   // l'ombra, e il riflesso rosso del vino sul panno
+    s += tornito(a, b, [[z + 1.2, r0 - .005], [zv, rv]], [[0, "#a3263a"], [.45, "#7d1023"], [1, "#3d0510"]], 0);
+    s += tornito(a, b, [[z, r0], [z + 1.2, r0], [z + h, r1]], VETRO, .8);
+    var w = anello(a, b, zv, rv), t = anello(a, b, z + h, r1);
+    s += ell(w.x, w.y, w.rx, w.ry, nuovaR([[0, "#c94a5c"], [1, "#6e0c1d"]], .4, .35, .8)) + ell(w.x - w.rx * .3, w.y - w.ry * .3, w.rx * .3, w.ry * .3, "#ffffff", op(.35));
+    s += ell(t.x, t.y, t.rx, t.ry, "none", "stroke='#ffffff' stroke-width='.9' opacity='.85'") + ell(t.x, t.y, t.rx, t.ry, "none", bordo(L, .5));
+    return s + tratto(linea([t.x - t.rx * .55, t.y + 1.5], [c[0] - r0 * 70.71 * .55, c[1] - 1.6]), "#ffffff", .9, op(.75)) + ell(c[0], c[1], r0 * 70.71 * .85, r0 * 35.36 * .85, "none", "stroke='#ffffff' stroke-width='.6' opacity='.5'");
+  }
+  // la caraffa del vino: la pancia tonda, il collo lungo, il rosso fino a metà; sul panno l'ombra e il riflesso rosso
+  function caraffa(a, b, z) {
+    var c = P(a, b, z), s = "";
+    s += ell(c[0] + 4, c[1] + 1.6, 9.5, 4.6, "#000", op(.22)) + ell(c[0] + 6, c[1] + 2.4, 6, 2.6, "#b0202f", op(.2));
+    var vino = [[z + .9, .068], [z + 3, .088], [z + 6, .094], [z + 9, .091], [z + 10, .087]];
+    s += tornito(a, b, vino, [[0, "#a3263a"], [.45, "#7a0f22"], [1, "#35040d"]], 0);
+    s += tornito(a, b, [[z, .066], [z + .8, .075], [z + 3, .093], [z + 6, .1], [z + 9, .097], [z + 12, .082], [z + 14.5, .056], [z + 16.5, .042], [z + 19.5, .038], [z + 21.2, .043], [z + 22, .048]], VETRO, .9, [10]);
+    var w = anello(a, b, z + 10, .087), t = anello(a, b, z + 22, .048);
+    s += ell(w.x, w.y, w.rx, w.ry, nuovaR([[0, "#c94a5c"], [1, "#6e0c1d"]], .4, .35, .8)) + ell(w.x - w.rx * .3, w.y - w.ry * .25, w.rx * .32, w.ry * .3, "#ffffff", op(.3));
+    s += ell(t.x, t.y, t.rx, t.ry, "#2a1a1a", op(.35)) + ell(t.x, t.y, t.rx, t.ry, "none", "stroke='#ffffff' stroke-width='.9' opacity='.85'") + ell(t.x, t.y, t.rx, t.ry, "none", bordo(L, .5));
+    s += tratto("M" + q(c[0] - 4.4, c[1] - 14) + " Q" + q(c[0] - 5.6, c[1] - 9) + " " + q(c[0] - 4, c[1] - 4), "#ffffff", 1.2, op(.8)) + tratto(linea([c[0] - 1.6, c[1] - 20.5], [c[0] - 1.8, c[1] - 16]), "#ffffff", .8, op(.75));   // i riflessi sul vetro
+    return s;
+  }
+
+  // il cassettino nella fascia (su un fianco piatto: X lungo il fianco, Y = −z): il frontalino incassato e il pomolo d'ottone
+  function cassettino(X0, X1, Y0, Y1, xLuce) {
+    var xl = xLuce > 0 ? X0 : X1, xs = xLuce > 0 ? X1 : X0, cx = (X0 + X1) / 2, cy = (Y0 + Y1) / 2;
+    return rett(X0, Y0, X1 - X0, Y1 - Y0, .5, "#000", op(.14)) +
+      "<path d='M" + q(xl, Y1) + " V" + f1(Y0) + " H" + f1(xs) + "' fill='none' stroke='#000' stroke-width='.7' opacity='.4'/><path d='M" + q(xs, Y0) + " V" + f1(Y1) + " H" + f1(xl) + "' fill='none' stroke='#fff3df' stroke-width='.6' opacity='.35'/>" +
+      cer(cx + .5, cy + .7, 1.5, "#000", op(.3)) + cer(cx, cy, 1.5, lin("pm", OTTONE, 0, 0, 1, 1), bordo(L, .4)) + cer(cx - .45, cy - .5, .5, "#fffbe6", op(.9));
+  }
+
+  // ---------- il registro ----------
+  var DIS = {};
+  function def(nome, d, fn) { d.fn = fn; DIS[nome] = d; }
+  var POSTI4 = [[-1, 0], [2, 1], [1, -1], [0, 2]], POSTI2 = [[-1, 0], [1, 0]];
+
+  // =========================================================
+  //  TAVOLO DA CARTE: il quadrato di noce scuro sulle gambe tornite, il panno verde incassato nel bordo di legno;
+  //  sul panno la partita a scopa: le quattro carte in tavola (c'è il settebello), il mazzo, le prese davanti a due
+  //  giocatori con la scopa girata di traverso, le tre carte coperte di chi è andato al bancone, il foglietto dei punti,
+  //  due bicchieri di rosso e la caraffa
+  // =========================================================
+  def("tavolo_carte", { nome: "Tavolo da carte", fp: [2, 2], box: [-100, -98, 108, 54], dietro: true, piano: 47, posti: POSTI4 }, function () {
+    var col = NOCE_SC, H = .9, HP = .73, ZT = 47, ZS = 44.4, ZA = 34.8, GA = .78, l = [];
+    var O = pRett(-H, H, -H, H, .05, 4), Pn = pRett(-HP, HP, -HP, HP, .035, 3);
+    var s = ombraForma(pRett(-H, H, -H, H, 0), 1) + gambeEFascia(GA, GA, ZA, ZS, col, 1.55), BA = GA + .02;
+    s += suB(G * BA, cassettino(-15, 15, -ZS + 1.5, -ZA - 1.8, G)) + suA(G * BA, cassettino(-15, 15, -ZS + 1.5, -ZA - 1.8, -G));   // i cassettini delle carte nella fascia
+    s += ripiano(O, ZS, ZT, col, { seme: 21 });
+    var tap = "";
+    [[-.3, .03, -8, "denari", 7], [-.1, -.04, 5, "coppe", 3], [.1, .05, -3, "bastoni", 5], [.3, -.02, 9, "spade", 2]].forEach(function (c) { tap += cartaN(c[0], c[1], c[2], c[3], c[4]); });   // le carte in tavola
+    [[.5, .42, 28], [.56, .45, 40], [.62, .47, 52]].forEach(function (c) { tap += cartaN(c[0], c[1], c[2], null, 0, true); });   // le tre carte coperte di chi si è alzato
+    tap += foglietto(-.5, -.44, 18);
+    s += panno(Pn, ZT - .25, VERDE, tap);
+    s += tratto(chiuso(aSchermo(Pn, ZT)), "#24130a", 1.1, op(.85)) + tratto(chiuso(aSchermo(allarga(Pn, .014), ZT)), chiaro(col, .5), .55, op(.55));   // l'orlo del legno attorno al panno
+    l.push([vicino(.6, -.26), mazzo(.6, -.26, ZT, 22, 3.4)]);
+    l.push([vicino(-.48, .5), prese(-.48, .5, ZT, 8, 1.6, "denari", 1)]);
+    l.push([vicino(.47, -.54), prese(.47, -.54, ZT, -10, 2.2, "coppe", 7)]);
+    l.push([vicino(-.32, -.62), caraffa(-.32, -.62, ZT)]);
+    l.push([vicino(.24, .62), bicchiere(.24, .62, ZT, .62)]);
+    l.push([vicino(-.62, .26), bicchiere(-.62, .26, ZT, .4)]);
+    return s + ordina(l);
+  });
+
+  // =========================================================
+  //  TAVOLO QUADRATO (generico): il tavolo di noce sotto la tovaglia a quadretti verdi e bianchi stirata,
+  //  coi lati che cadono a onde e gli angoli a punta; sotto si vedono le gambe tornite. Sopra niente: ci si appoggia quello che serve
+  // =========================================================
+  function quadretti(Q) {   // il motivo della tovaglia (si ripete ogni due quadretti): le strisce verdi che si incrociano
+    return motivo("qd", 2 * Q, 2 * Q, "<rect width='" + f2(2 * Q) + "' height='" + f2(2 * Q) + "' fill='#fbfaf3'/><rect width='" + f2(Q) + "' height='" + f2(2 * Q) + "' fill='#2c9a58' opacity='.52'/><rect width='" + f2(2 * Q) + "' height='" + f2(Q) + "' fill='#2c9a58' opacity='.52'/>" +
+      "<path d='M0," + f2(Q * .5) + " H" + f2(2 * Q) + " M0," + f2(Q * 1.5) + " H" + f2(2 * Q) + " M" + f2(Q * .5) + ",0 V" + f2(2 * Q) + " M" + f2(Q * 1.5) + ",0 V" + f2(2 * Q) + "' stroke='#ffffff' stroke-width='.18' opacity='.35'/>");
+  }
+  function tovaglia(HC, ZC, cad) {
+    var Q = .085 * 61, pat = quadretti(Q), Lf = 2 * HC * 61, X0 = HC * 61, s = "", i;
+    function caduta(x) { var e = Math.max(0, 1 - x / 15), f = Math.max(0, 1 - (Lf - x) / 15); return cad + 1.2 * Math.sin(x / Lf * Math.PI * 6) + 9.5 * (e * e + f * f); }
+    function lato(o, dir, girato, buio) {   // un lato che cade, disegnato piatto (x lungo il bordo, y in giù) e piegato sul suo piano
+      var d = "M0,0 H" + f1(Lf), giu = "M0,0", n = 48;
+      for (i = n; i >= 0; i--) { var x = Lf * i / n; d += " L" + q(x, caduta(x)); }
+      for (i = 0; i <= n; i++) { var x2 = Lf * i / n; giu += " L" + q(x2, caduta(x2)); }
+      giu += " L" + q(Lf, 0);
+      var tr = girato ? "translate(" + f2(X0) + " " + f2(-X0) + ") scale(-1 1)" : "translate(" + f2(X0) + " " + f2(-X0) + ")";
+      var c = gruppo(tr, rett(-X0 - 3, X0 - 3, Lf + 6, cad + 26, 0, pat));
+      var st = [], k;
+      for (k = 0; k <= 12; k++) st.push([k / 12, k % 2 ? "#000000" : "#ffffff", k % 2 ? .12 : .16]);   // le pieghe morbide
+      c += rett(0, 0, Lf, cad + 22, 0, lin("pg", st, 0, 0, Lf, 0, true));
+      c += rett(0, 0, Lf, 3, 0, lin("bt", [[0, "#000", .16], [1, "#000", 0]], 0, 0, 0, 1)) + (buio ? rett(0, 0, Lf, cad + 22, 0, "#000", op(buio)) : "");
+      var orlo = "";
+      for (i = 0; i <= n; i++) { var x3 = Lf * i / n; orlo += (i ? " L" : "M") + q(x3, caduta(x3) - 1.6); }
+      c += tratto(orlo, "#ffffff", .4, "stroke-dasharray='1 .9' opacity='.6'");   // la cucitura dell'orlo
+      return faccia(o, dir, dentro(d, c) + tratto(giu, L, 1.2) + tratto("M0,.4 H" + f1(Lf), "#ffffff", .7, op(.55)));
+    }
+    s += lato(P(-HC, HC, ZC), 1, false, 0) + lato(P(HC, HC, ZC), -1, true, .16);
+    // il piano: i quadretti, le due pieghe della stiratura, la luce
+    var top = pRett(-HC, HC, -HC, HC, .012, 2), sp = aSchermo(top, ZC), d = chiuso(sp), b = limiti(sp);
+    var c = suZ(ZC, rett(-X0 - 3, -X0 - 3, Lf + 6, Lf + 6, 0, pat) +
+      "<path d='M" + q(-X0, 0) + " H" + f1(X0) + " M" + q(0, -X0) + " V" + f1(X0) + "' stroke='#000' stroke-width='.9' opacity='.08'/><path d='M" + q(-X0, .7) + " H" + f1(X0) + " M" + q(.7, -X0) + " V" + f1(X0) + "' stroke='#ffffff' stroke-width='.7' opacity='.35'/>");
+    c += ell(b[0] + (b[2] - b[0]) * .4, b[1] + (b[3] - b[1]) * .38, (b[2] - b[0]) * .34, (b[3] - b[1]) * .3, nuovaR([[0, "#ffffff", .2], [1, "#ffffff", 0]], .5, .5, .5));
+    c += pth(d, nuova([[0, "#000", 0], [.6, "#000", 0], [1, "#000", .1]], b[0], b[1], b[2], b[3], true));
+    s += pth(d, "#fbfaf3") + dentro(d, c);
+    var A =P(-HC, -HC, ZC), B = P(HC, -HC, ZC), Cc = P(HC, HC, ZC), D = P(-HC, HC, ZC);
+    return s + tratto("M" + q(D) + " L" + q(A) + " L" + q(B), L, 1.4) + tratto("M" + q(D[0] + 1, D[1] + .4) + " L" + q(Cc[0], Cc[1] - .3) + " L" + q(B[0] - 1, B[1] + .4), "#ffffff", .9, op(.7));
+  }
+  def("tavolo_quadrato", { nome: "Tavolo quadrato", fp: [2, 2], box: [-100, -96, 108, 54], piano: 47, posti: POSTI4 }, function () {
+    var col = NOCE, HC = .9, ZC = 47, ZS = 44.6, ZA = 37.5, GA = .74;
+    return ombraForma(pRett(-HC, HC, -HC, HC, 0), 1) + gambeEFascia(GA, GA, ZA, ZS, col, 1.45) + tovaglia(HC, ZC, 12.5);
+  });
+
+  // =========================================================
+  //  TAVOLO ROTONDO (generico): il piano tondo di noce a cera sulle quattro gambe tornite e la fascia tonda,
+  //  in mezzo il centrino bianco all'uncinetto (il bordo a smerli, i giri di buchetti, i ventagli, il fiore)
+  // =========================================================
+  function centrino(R) {   // in pianta, centrato; i buchi lasciano vedere il legno
+    var o = "", n = 22, i, j, BUCO = "#4a2a16", FILO = "#e6dcc5", d = "";
+    for (i = 0; i < n; i++) {
+      var t0 = i / n * 2 * Math.PI, t1 = (i + 1) / n * 2 * Math.PI, tm = (t0 + t1) / 2;
+      if (!i) d += "M" + q(R * Math.cos(t0), R * Math.sin(t0));
+      d += " Q" + q((R + 4.6) * Math.cos(tm), (R + 4.6) * Math.sin(tm)) + " " + q(R * Math.cos(t1), R * Math.sin(t1));
+    }
+    d += " Z";
+    o += pth(d, "#000", op(.2) + " transform='translate(.7 .9)'") + pth(d, "#fbf8ef", "stroke='#cfc6ae' stroke-width='.35'");
+    for (i = 0; i < n; i++) { var tp = (i + .5) / n * 2 * Math.PI; o += cer((R + 1.4) * Math.cos(tp), (R + 1.4) * Math.sin(tp), .75, BUCO, op(.55)); }   // i buchetti negli smerli
+    [[R - 2.6, 44, .62, 0], [R * .84, 30, .95, 0], [R * .75, 30, .95, .5]].forEach(function (g) {   // i giri di buchetti e la rete
+      for (j = 0; j < g[1]; j++) { var tt = (j + g[3]) / g[1] * 2 * Math.PI; o += cer(g[0] * Math.cos(tt), g[0] * Math.sin(tt), g[2], BUCO, op(.5)); }
+    });
+    [R * .9, R * .68, R * .4].forEach(function (rr) { o += cer(0, 0, rr, "none", "stroke='" + FILO + "' stroke-width='.5'"); });
+    for (i = 0; i < 8; i++) {   // gli otto ventagli
+      var ta = i / 8 * 2 * Math.PI, ca = Math.cos(ta), sa = Math.sin(ta), vv = "";
+      for (j = -3; j <= 3; j++) { var tj = ta + j * .075; vv += "M" + q(R * .42 * ca, R * .42 * sa) + " L" + q(R * .66 * Math.cos(tj), R * .66 * Math.sin(tj)) + " "; }
+      o += "<path d='" + vv + "' stroke='" + FILO + "' stroke-width='.45' fill='none'/>";
+      var tb = ta + Math.PI / 8; o += cer(R * .55 * Math.cos(tb), R * .55 * Math.sin(tb), 1.7, BUCO, op(.5)) + cer(R * .55 * Math.cos(tb), R * .55 * Math.sin(tb), 1.7, "none", "stroke='" + FILO + "' stroke-width='.4'");
+    }
+    for (i = 0; i < 8; i++) { var tf = i / 8 * 360; o += "<ellipse cx='" + f2(R * .2) + "' cy='0' rx='" + f2(R * .14) + "' ry='" + f2(R * .065) + "' transform='rotate(" + tf + ")' fill='#fffdf6' stroke='" + FILO + "' stroke-width='.45'/>"; }   // il fiore in mezzo
+    o += cer(0, 0, R * .08, "#fffdf6", "stroke='" + FILO + "' stroke-width='.45'") + cer(0, 0, R * .035, BUCO, op(.45));
+    return o + cer(0, 0, R + 2.4, nuovaR([[0, "#ffffff", 0], [.7, "#ffffff", 0], [1, "#8a7a5a", .12]], .5, .5, .5));
+  }
+  def("tavolo_rotondo", { nome: "Tavolo rotondo", fp: [2, 2], box: [-74, -84, 82, 41], piano: 47, posti: POSTI4 }, function () {
+    var col = NOCE, R = .94, ZT = 47, ZS = 44.4, ZA = 37.4, O = pOvale(0, 0, R, R, 2, 120), s = ombraForma(O, 1);
+    var gg = [[-.52, -.52], [.52, -.52], [.52, .52], [-.52, .52]].sort(perVicino);
+    s += gambaTavolo(gg[0][0], gg[0][1], ZS, col, 1.5) + fascia(pOvale(0, 0, .77, .77, 2, 80), ZA, ZS, col) + gg.slice(1).map(function (g) { return gambaTavolo(g[0], g[1], ZS, col, 1.5); }).join("");
+    return s + ripiano(O, ZS, ZT, col, { seme: 33, disegno: centrino(.52 * 61) });
+  });
+
+  // =========================================================
+  //  TAVOLO LUNGO da sei (generico): le assi di castagno coi chiodini, le gambe squadrate e robuste,
+  //  il traverso basso ad H come i tavoloni delle feste
+  // =========================================================
+  def("tavolo_lungo", { nome: "Tavolo lungo", fp: [3, 1], box: [-104, -97, 112, 56], piano: 47, posti: [[0, -1], [1, -1], [2, -1], [0, 1], [1, 1], [2, 1]] }, function () {
+    var col = CASTAGNO, HA = 1.44, HB = .43, ZT = 47, ZS = 44, ZA = 37, GA = 1.28, GB = .31, RS = .053;
+    var O = pRett(-HA, HA, -HB, HB, .03, 3), s = ombraForma(pRett(-HA, HA, -HB, HB, 0), 1);
+    function gamba(a, b) { return gambaQuadra(a, b, RS * .78, RS, 0, ZS, col); }
+    s += gamba(-GA, -GB) + gamba(GA, -GB);
+    s += blocco(-GA - .022, -GA + .022, -GB, GB, 7.5, 10.5, col, null, 1) + blocco(-GA, GA, -.022, .022, 9, 12, col, null, 1) + blocco(GA - .022, GA + .022, -GB, GB, 7.5, 10.5, col, null, 1);
+    s += fascia(pRett(-GA - RS + .006, GA + RS - .006, -GB - RS + .006, GB + RS - .006, 0), ZA, ZS, col);
+    s += gamba(-GA, GB) + gamba(GA, GB);
+    return s + ripiano(O, ZS, ZT, col, { seme: 41, assi: 4 });
+  });
+
+  // =========================================================
+  //  TAVOLINO PER DUE (generico, per i giochi da tavolo): faggio chiaro a cera, il filetto scuro intarsiato
+  //  tutto intorno, quattro gambe squadrate che si stringono in basso. Sopra niente
+  // =========================================================
+  function filetto(h, col) { var X = h * 61; return rett(-X, -X, 2 * X, 2 * X, 1.2, "none", "stroke='" + scuro(col, .5) + "' stroke-width='1.1'") + rett(-X + 1, -X + 1, 2 * X - 2, 2 * X - 2, .8, "none", "stroke='" + chiaro(col, .4) + "' stroke-width='.35' opacity='.8'"); }
+  function tavolinoBase(col, o) {
+    o = o || {};
+    var H = .41, ZT = 46, ZS = 43.5, ZA = 37.2, GA = .34, RS = .038;
+    var O = pRett(-H, H, -H, H, .03, 3), s = ombraForma(pRett(-H, H, -H, H, 0), 1) + gambeEFascia(GA, GA, ZA, ZS, col, 1, RS);
+    return s + ripiano(O, ZS, ZT, col, { seme: o.seme || 51, nodi: 0, disegno: (o.filetto === false ? "" : filetto(H - .05, col)) + (o.disegno || "") });
+  }
+  def("tavolino_due", { nome: "Tavolino per due", fp: [1, 1], box: [-51, -70, 59, 30], piano: 46, posti: POSTI2 }, function () {
+    return tavolinoBase(FAGGIO, { seme: 52 });
+  });
+
+  // =========================================================
+  //  TAVOLINO DEL TRIS: nel piano di faggio è incassata una lavagna; col gesso la griglia, le X e le O,
+  //  la riga gialla di chi ha vinto, gli aloni delle partite cancellate; sul bordo il gessetto e il cancellino
+  // =========================================================
+  function gesso(d, w, col) { col = col || "#f3f1e7"; return "<path d='" + d + "' fill='none' stroke='" + col + "' stroke-width='" + f2(w * 2.3) + "' stroke-linecap='round' opacity='.2'/><path d='" + d + "' fill='none' stroke='" + col + "' stroke-width='" + f2(w) + "' stroke-linecap='round' stroke-dasharray='3.5 .35 2.2 .3' opacity='.93'/>"; }
+  function lavagnaTris(S) {   // in pianta, lato 2S
+    var o = "", r = rnd(909), c = 2 * S / 3, i, j;
+    o += rett(-S - 1.3, -S - 1.3, 2 * S + 2.6, 2 * S + 2.6, 1, "#3a2818") + rett(-S, -S, 2 * S, 2 * S, .6, lin("lv", [[0, "#4b5852"], [1, "#27302d"]], 0, 0, 1, 1));
+    for (i = 0; i < 6; i++) o += "<ellipse cx='" + f2(-S + 3 + r() * (2 * S - 6)) + "' cy='" + f2(-S + 3 + r() * (2 * S - 6)) + "' rx='" + f2(3 + r() * 4) + "' ry='" + f2(1.6 + r() * 2) + "' fill='#e9efe9' opacity='" + f2(.05 + r() * .05) + "'/>";   // gli aloni del cancellino
+    [-c / 2, c / 2].forEach(function (x) {
+      o += gesso("M" + q(x + (r() - .5), -S + 2.2) + " Q" + q(x + (r() - .5) * 1.6, 0) + " " + q(x + (r() - .5), S - 2.2), .8);
+      o += gesso("M" + q(-S + 2.2, x + (r() - .5)) + " Q" + q(0, x + (r() - .5) * 1.6) + " " + q(S - 2.2, x + (r() - .5)), .8);
+    });
+    var celle = [["X", "O", "X"], ["", "X", "O"], ["O", "", "X"]], k = c * .27;
+    for (j = 0; j < 3; j++) for (i = 0; i < 3; i++) {
+      var x = (i - 1) * c + (r() - .5), y = (j - 1) * c + (r() - .5), v = celle[j][i];
+      if (v === "X") o += gesso("M" + q(x - k, y - k) + " L" + q(x + k, y + k) + " M" + q(x + k * .95, y - k) + " L" + q(x - k * .9, y + k * 1.05), .85);
+      else if (v === "O") o += gesso("M" + q(x + k * .2, y - k) + " C" + q(x + k * 1.25, y - k * .9) + " " + q(x + k * 1.2, y + k) + " " + q(x, y + k * 1.02) + " C" + q(x - k * 1.25, y + k * .95) + " " + q(x - k * 1.1, y - k * 1.05) + " " + q(x + k * .4, y - k * .92), .85);
+    }
+    return o + gesso("M" + q(-c * 1.4, -c * 1.36) + " L" + q(c * 1.38, c * 1.42), 1, "#ffe066");   // la riga di chi ha vinto
+  }
+  function gessetto(a0, b0, a1, b1, z) {   // il gessetto bianco steso
+    var A = P(a0, b0, z + 1), B = P(a1, b1, z + 1), sh = "M" + q(A[0] + 1, A[1] + 1) + " L" + q(B[0] + 1, B[1] + 1);
+    return tratto(sh, "#000", 2.4, op(.25)) + tratto(linea(A, B), L, 3) + tratto(linea(A, B), "#efece2", 2.2) + tratto(linea([A[0], A[1] - .5], [B[0], B[1] - .5]), "#ffffff", .7) + ell(B[0], B[1], 1.1, 1, "#e2ddd0", bordo(L, .4));
+  }
+  function cancellino(a, b, z) {   // il cancellino: il feltro grigio sotto, il dorso di legno sopra
+    return ombraPianta(a - .06, a + .06, b - .035, b + .035, 1, .02) + blocco(a - .06, a + .06, b - .035, b + .035, z, z + 1.1, "#8e949a", null, .7) + blocco(a - .058, a + .058, b - .033, b + .033, z + 1.1, z + 3.3, "#c99058", { sopra: function (A, B, C, D, W, H) { return stesa(A, B, D, W, H, rett(W * .15, H * .3, W * .7, H * .4, H * .2, scuro("#c99058", .2), op(.5))); } }, .8);
+  }
+  def("tavolo_tris", { nome: "Tavolino del tris", fp: [1, 1], box: [-51, -70, 59, 30], dietro: true, piano: 46, posti: POSTI2 }, function () {
+    var ZT = 46, l = [];
+    var s = tavolinoBase(FAGGIO, { seme: 61, filetto: false, disegno: lavagnaTris(.29 * 61) });
+    l.push([vicino(-.01, .355), gessetto(-.07, .35, .04, .362, ZT)]);
+    l.push([vicino(.355, -.2), cancellino(.355, -.2, ZT)]);
+    return s + ordina(l);
+  });
+
+  // =========================================================
+  //  TAVOLINO DEL FORZA 4: in mezzo la griglia blu in piedi coi piedini e la sbarra in basso, le pedine rosse e gialle
+  //  cadute nelle colonne; sul tavolo le pedine che restano: rosse dalla parte di uno, gialle dalla parte dell'altro
+  // =========================================================
+  var BLU4 = "#1f5fd0", ROSSA = "#e03131", GIALLA = "#fcc419";
+  var STATO4 = [["R"], ["G", "R"], ["R", "G", "G"], ["G", "R", "R", "G"], ["R", "G", "R"], ["G"], []];   // le colonne (dal davanti), dal basso
+  function pedina(a, b, z, col) {   // una pedina stesa
+    var F = forma(a, b, .034), c = P(a, b, z), s = ell(c[0] + 1.2, c[1] + .6, 3.2, 1.7, "#000", op(.22));
+    s += corpo([giro(F, z, 1, 28), giro(F, z + 1.3, 1, 28)], [[0, chiaro(col, .3)], [.5, col], [1, scuro(col, .4)]], .55);
+    var tp = giro(F, z + 1.3, 1, 28);
+    return s + pth(chiuso(tp), nuovaR([[0, chiaro(col, .4)], [.6, col], [1, scuro(col, .12)]], .4, .35, .8), bordo(L, .5)) + pth(chiuso(giro(F, z + 1.35, .6, 22)), "none", "stroke='" + scuro(col, .28) + "' stroke-width='.45' opacity='.7'");
+  }
+  function griglia4(z) {
+    var B0 = .275, Z0 = z + 2.4, Z1 = z + 31, s = "";
+    function faccia4(W, H) {   // la faccia con i 42 buchi: le pedine dove ci sono (si vedono da tutte e due le parti)
+      var o = rett(0, 0, W, H, 0, lin("bl", [[0, chiaro(BLU4, .16)], [1, scuro(BLU4, .15)]], 0, 0, 0, 1)), cw = W / 7, ch = (H - 2.4) / 6, i, j;
+      for (i = 0; i < 7; i++) for (j = 0; j < 6; j++) {
+        var x = cw * (i + .5), y = 1.2 + ch * (j + .5), col = STATO4[G > 0 ? i : 6 - i][5 - j];
+        if (col) {
+          var cc = col === "R" ? ROSSA : GIALLA;
+          o += cer(x, y, 1.95, nuovaR([[0, chiaro(cc, .38)], [.6, cc], [1, scuro(cc, .25)]], .4, .35, .8)) + cer(x, y, 1.2, "none", "stroke='" + scuro(cc, .25) + "' stroke-width='.35' opacity='.7'");
+          o += pth("M" + q(x - 1.95, y) + " A1.95,1.95 0 0,1 " + q(x + 1.95, y), "none", "stroke='#0a2050' stroke-width='.7' opacity='.45'");   // l'ombra del bordo del buco
+        } else o += cer(x, y, 1.95, "#0d2a63") + pth("M" + q(x - 1.6, y + .9) + " A1.95,1.95 0 0,0 " + q(x + 1.6, y + .9), "none", "stroke='" + chiaro(BLU4, .3) + "' stroke-width='.5'");
+        o += cer(x, y, 2.05, "none", "stroke='" + scuro(BLU4, .4) + "' stroke-width='.35'");
+      }
+      return o + rett(0, 0, W, .9, 0, "#ffffff", op(.25));
+    }
+    function fessure(A, B, C, D, W, H) { var o = "", k; for (k = 0; k < 7; k++) o += rett(W * .25, H * (k + .2) / 7, W * .5, H * .6 / 7, .3, "#0b2152"); return stesa(A, B, D, W, H, o); }
+    var lato = function (W, H) { return rett(0, 0, W, H, 0, "#ffffff", op(.1)); };
+    var piedi = [-1, 1].map(function (sg) { return [vicino(0, sg * (B0 + .012)), blocco(-.1, .1, sg * (B0 + .012) - .016, sg * (B0 + .012) + .016, z, z + 2.6, BLU4, null, .9)]; });
+    s += ordina(piedi.filter(function (x) { return x[0] < 0; }));
+    s += blocco(-.034, .034, -B0, B0, z, Z0, "#173f8f", null, .9);   // la sbarra in basso che fa cadere le pedine
+    s += blocco(-.022, .022, -B0, B0, Z0, Z1, BLU4, { fianco: faccia4, davanti: lato, dietro: lato, sopra: fessure }, 1.2);
+    return s + ordina(piedi.filter(function (x) { return x[0] >= 0; }));
+  }
+  def("tavolo_forza4", { nome: "Tavolino del Forza 4", fp: [1, 1], box: [-51, -88, 59, 30], dietro: true, posti: POSTI2 }, function () {
+    var ZT = 46, l = [], s = tavolinoBase(FAGGIO, { seme: 71 });
+    [[-.28, .14, ROSSA, 3], [-.24, -.06, ROSSA, 1], [-.3, -.22, ROSSA, 2], [.27, -.16, GIALLA, 3], [.24, .06, GIALLA, 1], [.3, .22, GIALLA, 2]].forEach(function (x) {
+      var o = "", k; for (k = 0; k < x[3]; k++) o += pedina(x[0] + k * .004, x[1] - k * .003, ZT + k * 1.35, x[2]);
+      l.push([vicino(x[0], x[1]), o]);
+    });
+    l.push([vicino(0, 0), griglia4(ZT)]);
+    return s + ordina(l);
+  });
+
+  // =========================================================
+  //  TAVOLINO DELLA BATTAGLIA NAVALE: le due valigette (rossa e blu) aperte, ognuna davanti al suo giocatore:
+  //  sotto il mare a quadretti con le navi grigie e i pioli, il coperchio in piedi con la griglia dei colpi;
+  //  in mezzo il separatore alto (il cielo e la nave da guerra stampati) che non fa vedere le navi dell'altro
+  // =========================================================
+  function valigetta(sg, col, z) {   // sg = da che parte del tavolo (−1 a sinistra, +1 a destra)
+    var a0 = sg * .065, a1 = sg * .37, A0 = Math.min(a0, a1), A1 = Math.max(a0, a1), r = rnd(sg > 0 ? 55 : 77), l = [];
+    function mare(A, B, C, D, W, H) {   // il vassoio: la cornice, il mare a quadretti, le navi, i pioli
+      var o = rett(W * .06, H * .05, W * .88, H * .9, 1, "#1c7ed6") + rett(W * .06, H * .05, W * .88, H * .9, 1, lin("mr", [[0, "#74c0fc", .6], [1, "#1864ab", .4]], 0, 0, 1, 1)), i, n = 10, cw = W * .88 / n, ch = H * .9 / n;
+      var g = ""; for (i = 1; i < n; i++) g += "M" + q(W * .06 + i * cw, H * .05) + " V" + f1(H * .95) + " M" + q(W * .06, H * .05 + i * ch) + " H" + f1(W * .94) + " ";
+      o += "<path d='" + g + "' stroke='#d0ebff' stroke-width='.25' opacity='.7'/>";
+      [[1, 1, 1, 4], [4, 7, 4, 1], [7, 2, 1, 3], [3, 3, 3, 1], [8, 7, 1, 2]].forEach(function (nv) {   // le navi: [colonna, riga, larga, lunga]
+        var x = W * .06 + nv[0] * cw + cw * .15, y = H * .05 + nv[1] * ch + ch * .15, w = nv[2] * cw - cw * .3, h = nv[3] * ch - ch * .3;
+        o += rett(x + .4, y + .5, w, h, Math.min(w, h) / 2, "#000", op(.3)) + rett(x, y, w, h, Math.min(w, h) / 2, "#adb5bd", "stroke='#495057' stroke-width='.3'") + rett(x + w * .25, y + h * .25, w * .5, h * .5, Math.min(w, h) * .2, "#ced4da");
+      });
+      for (i = 0; i < 7; i++) { var px = W * .06 + (Math.floor(r() * n) + .5) * cw, py = H * .05 + (Math.floor(r() * n) + .5) * ch; o += cer(px, py, Math.min(cw, ch) * .28, i < 3 ? "#e03131" : "#f8f9fa", "stroke='#343a40' stroke-width='.2'"); }
+      return stesa(A, B, D, W, H, o);
+    }
+    function colpi(W, H) {   // il coperchio dalla parte del giocatore: la griglia dei colpi coi pioli rossi e bianchi
+      var o = rett(W * .07, H * .08, W * .86, H * .84, .8, "#2b3036"), i, j, n = 10, cw = W * .86 / n, ch = H * .84 / n;
+      for (i = 0; i < n; i++) for (j = 0; j < n; j++) { var x = W * .07 + (i + .5) * cw, y = H * .08 + (j + .5) * ch, v = r(); o += v < .1 ? cer(x, y, cw * .34, "#e03131") + cer(x - .15, y - .15, cw * .12, "#ffc9c9") : v < .26 ? cer(x, y, cw * .3, "#f8f9fa") : cer(x, y, cw * .14, "#0d0f12"); }
+      return o + rett(0, 0, W, H, 0, lin("cp", [[0, "#ffffff", .14], [1, "#ffffff", 0]], 0, 0, 1, 1));
+    }
+    function schiena(W, H) { return rett(W * .18, H * .25, W * .64, H * .5, 2, scuro(col, .15)) + rett(W * .22, H * .3, W * .56, H * .4, 1.6, "none", "stroke='" + chiaro(col, .3) + "' stroke-width='.5'"); }
+    var verso = sg * G > 0;   // il coperchio guarda chi lo vede (la faccia dei colpi) o gli dà la schiena
+    l.push([vicino((A0 + A1) / 2, 0) - .05, blocco(A0, A1, -.225, .225, z, z + 2.2, col, { sopra: mare }, 1.1)]);
+    var b0 = sg * .052, b1 = sg * .068;
+    l.push([vicino(sg * .06, 0), blocco(Math.min(b0, b1), Math.max(b0, b1), -.225, .225, z + 1.4, z + 20.5, col, { fianco: verso ? colpi : schiena }, 1.1)]);
+    return l;
+  }
+  function separatore(z) {   // il pannello in mezzo: il cielo, la nave da guerra in controluce, le onde
+    function stampa(W, H) {
+      var o = rett(0, 0, W, H, 0, lin("cl", [[0, "#9fd3ff"], [.55, "#e7f5ff"], [1, "#4dabf7"]], 0, 0, 0, 1)), x = W * .18, y = H * .25, k = W / 40;
+      o += pth("M" + q(x, y + 2.4 * k) + " L" + q(x + 26 * k, y + 2.4 * k) + " L" + q(x + 29 * k, y) + " L" + q(x + 21 * k, y) + " L" + q(x + 20 * k, y - 2 * k) + " L" + q(x + 16 * k, y - 2 * k) + " L" + q(x + 15 * k, y - 5.5 * k) + " L" + q(x + 14 * k, y - 5.5 * k) + " L" + q(x + 13 * k, y - 2 * k) + " L" + q(x + 9 * k, y - 2 * k) + " L" + q(x + 8 * k, y) + " L" + q(x - 1 * k, y) + " Z", "#1b2a4a");
+      o += tratto(linea([x + 21 * k, y - 1 * k], [x + 25 * k, y - 1.8 * k]), "#1b2a4a", .6) + tratto(linea([x + 4 * k, y - .6 * k], [x - .5 * k, y - 1.4 * k]), "#1b2a4a", .6);   // i cannoni
+      var d = "M0," + f1(y + 3 * k); for (var i = 0; i <= 10; i++) d += " Q" + q(W * (i + .5) / 10, y + (i % 2 ? 1.6 : 4.4) * k) + " " + q(W * (i + 1) / 10, y + 3 * k);
+      o += pth(d + " V" + f1(H) + " H0 Z", "#1864ab") + tratto(d, "#ffffff", .5, op(.8));
+      return o + rett(0, 0, W, 1, 0, "#ffffff", op(.4));
+    }
+    var lato = function (W, H) { return rett(0, 0, W, H, 0, "#ffffff", op(.15)); };
+    return blocco(-.008, .008, -.262, .262, z, z + 31, "#5c7cfa", { fianco: stampa, davanti: lato, dietro: lato, sopra: function (A, B, C, D, W, H) { return stesa(A, B, D, W, H, rett(0, 0, W, H, 0, "#dbe4ff")); } }, 1.1);
+  }
+  def("tavolo_navale", { nome: "Tavolino della battaglia navale", fp: [1, 1], box: [-51, -88, 59, 30], dietro: true, posti: POSTI2 }, function () {
+    var ZT = 46, s = tavolinoBase(FAGGIO, { seme: 81 }), l = [];
+    l = l.concat(valigetta(-1, "#c92a2a", ZT), valigetta(1, "#1864ab", ZT));
+    l.push([vicino(0, 0), separatore(ZT)]);
+    return s + ordina(l);
+  });
+
+  // =========================================================
+  //  SEDIA IMPAGLIATA da osteria: faggio tinto noce a cera, le gambe davanti tornite col pomello che spunta,
+  //  i pioli (due davanti, due per lato, uno dietro), lo schienale coi montanti un po' all'indietro, le tre stecche curve
+  //  e i pomelli in cima; il sedile di paglia intrecciata a quattro spicchi (si vede la croce dell'intreccio).
+  //  Da dietro: lo schienale davanti al sedile
+  // =========================================================
+  def("sedia_circolo", { nome: "Sedia impagliata", fp: [1, 1], box: [-26, -76, 27, 14], dietro: true, azione: "siedi", seduta: 30 }, function () {
+    var W = SEDIA, ZR = 26.2, ZP = 29.3, ZM = 57.5, i;
+    var FL = [-.215, .195], FR = [.215, .195], BR = [.185, -.205], BL = [-.185, -.205];
+    var s = ombraPianta(-.23, .23, -.25, .23, .95, .06);
+    function bPost(z) { return z <= 27.5 ? -.215 + .025 * z / 27.5 : -.19 - .045 * (z - 27.5) / (ZM - 27.5); }
+    function piolo(A, B, w) {   // un piolo tondo da A a B (punti [a, b, z])
+      var a = P(A[0], A[1], A[2]), b = P(B[0], B[1], B[2]);
+      return tratto(linea(a, b), L, w + 1.3) + tratto(linea(a, b), W, w) + tratto(linea([a[0], a[1] - w * .25], [b[0], b[1] - w * .25]), chiaro(W, .4), w * .35, op(.8));
+    }
+    function montante(a) {   // la gamba di dietro che sale a fare lo schienale, col pomello in cima
+      var p0 = P(a, -.215, 0), p1 = P(a, -.19, 27.5), p2 = P(a, bPost(ZM), ZM), d = "M" + q(p0) + " L" + q(p1) + " L" + q(p2);
+      var o = ell(p0[0] + 1, p0[1] + .5, 3.2, 1.6, "#000", op(.24)) + tratto(d, L, 4.6) + tratto(d, nuova(legno(W), p1[0] - 2, 0, p1[0] + 2, 0, true), 3.1) + tratto("M" + q(p0[0] - .7, p0[1]) + " L" + q(p1[0] - .7, p1[1]) + " L" + q(p2[0] - .7, p2[1]), "#ffffff", .55, op(.35));
+      return o + tornito(a, bPost(ZM), [[ZM - 1, .022], [ZM + .6, .028], [ZM + 2.2, .027], [ZM + 3.2, .016], [ZM + 3.7, .009]], legno(W), .9, [1]);
+    }
+    function gambaDav(a, b) { return tornito(a, b, [[0, .021], [1.6, .023], [5, .019], [8, .024], [9.4, .029], [10.6, .024], [14, .021], [19, .025], [21.2, .03], [22.6, .025], [ZP + .2, .027]], legno(W), 1, [4, 8], .45) + (function () { var c = P(a, b, 0); return ell(c[0] + 1, c[1] + .5, 3, 1.5, "#000", op(.24)); })(); }
+    function pomello(a, b) { var t = anello(a, b, ZP + 1, .027); return pth("M" + q(t.x - t.rx, t.y + 1) + " L" + q(t.x - t.rx, t.y) + " A" + f1(t.rx) + "," + f1(t.rx) + " 0 0,1 " + q(t.x + t.rx, t.y) + " L" + q(t.x + t.rx, t.y + 1) + " Z", nuova(legno(W), t.x - t.rx, 0, t.x + t.rx, 0, true), bordo(L, .8)) + ell(t.x - .6, t.y - 1.2, .8, .5, "#ffffff", op(.5)); }
+    function stecca(z0, z1, arco) {   // una stecca dello schienale, curva (incavata verso chi si siede)
+      var fr = [], ba = [], tp1 = [], tp2 = [], n = 12, k;
+      for (k = 0; k <= n; k++) {
+        var a = -.168 + .336 * k / n, t = a / .168, bc = bPost((z0 + z1) / 2) - .03 * (1 - t * t), zt = z1 + arco * (1 - t * t);
+        fr.push(P(a, bc, zt)); ba.push(P(a, bc, z0)); tp1.push(P(a, bc - .01, zt)); tp2.push(P(a, bc + .01, zt));
+      }
+      var pp = fr.concat(ba.slice().reverse()), bb = limiti(pp);
+      return pth(chiuso(pp), nuova([[0, chiaro(W, .28)], [.45, chiaro(W, .08)], [1, scuro(W, .3)]], bb[0], 0, bb[2], 0, true), bordo(L, 1)) +
+        pth(chiuso(tp1.concat(tp2.slice().reverse())), chiaro(W, .3), bordo(L, .5)) + tratto(aperto(fr.map(function (x) { return [x[0], x[1] + .9]; })), "#ffffff", .5, op(.35));
+    }
+    function schienale() { return stecca(35.4, 38.6, .4) + stecca(42.2, 45.6, .6) + stecca(49.2, 55, 1.6); }
+    function gambeDietro() { return montante(-.17) + montante(.17) + piolo([-.17, -.205, 11.5], [.17, -.205, 11.5], 1.6); }
+    function lati() { return piolo([-.2, .175, 9], [-.17, -.2, 9], 1.6) + piolo([-.2, .175, 16.5], [-.17, -.198, 16.5], 1.6) + piolo([.2, .175, 9], [.17, -.2, 9], 1.6) + piolo([.2, .175, 16.5], [.17, -.198, 16.5], 1.6); }
+    function davanti() { return piolo([-.2, .178, 7], [.2, .178, 7], 1.7) + piolo([-.2, .178, 14.5], [.2, .178, 14.5], 1.7) + gambaDav(-.2, .175) + gambaDav(.2, .175); }
+    // il sedile di paglia: il bordo che fascia i regoli, sopra l'intreccio a quattro spicchi
+    function sedile() {
+      var pp = [FR, FL, BL, BR], o = "";
+      o += fianco(pp, ZR, ZP, PAGLIA, null, { lw: 1.1, extra: function (vv) { return lungoCorsa(vv, .021, function (a, b) { return tratto(linea(P(a, b, ZR + .4), P(a, b, ZP - .2)), scuro(PAGLIA, .32), .45, op(.7)); }); } });
+      var top = aSchermo(pp, ZP), d = chiuso(top), t = "", C = [0, -.005], tri = [[FL, FR], [FR, BR], [BR, BL], [BL, FL]], k, j, n = 11;
+      tri.forEach(function (e, ti) {
+        for (j = 0; j < n; j++) {
+          var t0 = j / n, t1 = (j + 1) / n, A = lerp(e[0], C, t0), B = lerp(e[1], C, t0), A1 = lerp(e[0], C, t1), B1 = lerp(e[1], C, t1);
+          var cc = (j % 2 ? "#cfa450" : "#e0bb68");
+          t += "<path d='M" + q(A[0] * 61, A[1] * 61) + " L" + q(B[0] * 61, B[1] * 61) + " L" + q(B1[0] * 61, B1[1] * 61) + " L" + q(A1[0] * 61, A1[1] * 61) + " Z' fill='" + cc + "'/>";
+          var m0 = lerp(A, A1, .35), m1 = lerp(B, B1, .35);
+          t += "<path d='M" + q(m0[0] * 61, m0[1] * 61) + " L" + q(m1[0] * 61, m1[1] * 61) + "' stroke='#f6dc98' stroke-width='.35' opacity='.8'/><path d='M" + q(A1[0] * 61, A1[1] * 61) + " L" + q(B1[0] * 61, B1[1] * 61) + "' stroke='#8a6428' stroke-width='.3' opacity='.75'/>";
+        }
+        if (ti === 1 || ti === 2) t += "<path d='M" + q(e[0][0] * 61, e[0][1] * 61) + " L" + q(e[1][0] * 61, e[1][1] * 61) + " L" + q(C[0] * 61, C[1] * 61) + " Z' fill='#000' opacity='.07'/>";   // gli spicchi in ombra
+      });
+      [FL, FR, BR, BL].forEach(function (v) { t += "<path d='M" + q(v[0] * 61, v[1] * 61) + " L" + q(C[0] * 61, C[1] * 61) + "' stroke='#6e4c1c' stroke-width='.7' opacity='.8'/>"; });   // la croce dell'intreccio
+      var b = limiti(top);
+      t = suZ(ZP, t) + ell(b[0] + (b[2] - b[0]) * .4, b[1] + (b[3] - b[1]) * .4, (b[2] - b[0]) * .34, (b[3] - b[1]) * .3, nuovaR([[0, "#fff6d8", .32], [1, "#fff6d8", 0]], .5, .5, .5));
+      return o + dentro(d, t) + pth(d, "none", bordo(L, 1.1));
+    }
+    if (G > 0) s += gambeDietro() + schienale() + lati() + davanti() + sedile() + pomello(-.2, .175) + pomello(.2, .175);
+    else s += davanti() + lati() + sedile() + pomello(-.2, .175) + pomello(.2, .175) + gambeDietro() + schienale();
+    return s;
+  });
+
+  // =========================================================
+  //  BILIARDO ALL'ITALIANA: la cassa di noce coi pannelli e le sei gambe a balaustro, le sponde lucide coi rombetti
+  //  di madreperla, le gomme e il panno verde, le sei buche col bordo cromato; in mezzo il "castello" dei cinque birilli
+  //  (il rosso al centro), le tre bilie (bianca, gialla e il pallino rosso), le due stecche appoggiate e il gessetto blu
+  // =========================================================
+  function gambaBiliardo(a, b, z1) {
+    var c = P(a, b, 0), pr = [[0, .085], [1.8, .088], [3.2, .075], [5, .062], [8, .07], [12, .094], [15.5, .1], [19, .088], [22, .066], [24, .06], [25.6, .07], [27.2, .08], [z1, .08]];
+    return ell(c[0] + 2, c[1] + 1, 9, 4.2, "#000", op(.26)) + tornito(a, b, pr, legno(NOCE_SC), 1.3, [2, 9, 11], .9);
+  }
+  function pannelli(segm, y0, y1, xLuce) {   // sui fianchi della cassa: i pannelli in rilievo (cornice chiara dalla parte della luce) col rombo intarsiato
+    var o = "";
+    segm.forEach(function (sg) {
+      var x0 = sg[0], x1 = sg[1], w = x1 - x0, h = y1 - y0, xl = xLuce > 0 ? x0 : x1, xs = xLuce > 0 ? x1 : x0, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      o += rett(x0, y0, w, h, .6, "#000", op(.1));
+      o += "<path d='M" + q(xl, y1) + " V" + f1(y0) + " H" + f1(xs) + "' fill='none' stroke='#fff3df' stroke-width='.8' opacity='.35'/><path d='M" + q(xs, y0) + " V" + f1(y1) + " H" + f1(xl) + "' fill='none' stroke='#000' stroke-width='.8' opacity='.35'/>";
+      o += rett(x0 + 1.8, y0 + 1.8, w - 3.6, h - 3.6, .4, "none", "stroke='#000' stroke-width='.5' opacity='.25'");
+      o += "<path d='M" + q(cx - Math.min(w * .16, 9), cy) + " L" + q(cx, cy - h * .27) + " L" + q(cx + Math.min(w * .16, 9), cy) + " L" + q(cx, cy + h * .27) + " Z' fill='#e9b880' opacity='.55' stroke='#3d2414' stroke-width='.4'/>";
+    });
+    return o;
+  }
+  function steccaDistesa(a0, b0, a1, b1, z, giro2) {   // una stecca stesa: dal calcio (a0, b0) alla punta (a1, b1), appoggiata all'altezza z
+    var A = P(a0, b0, z + 1.6), B = P(a1, b1, z + .8), dx = B[0] - A[0], dy = B[1] - A[1], ln = Math.sqrt(dx * dx + dy * dy), nx = -dy / ln, ny = dx / ln;
+    if (ny > 0) { nx = -nx; ny = -ny; }   // n: il lato verso la luce (in alto)
+    function W(t) { return (3.3 - 1.8 * t) / 2; }
+    function pz(t0, t1, fill) { return poly([[A[0] + dx * t0 + nx * W(t0), A[1] + dy * t0 + ny * W(t0)], [A[0] + dx * t1 + nx * W(t1), A[1] + dy * t1 + ny * W(t1)], [A[0] + dx * t1 - nx * W(t1), A[1] + dy * t1 - ny * W(t1)], [A[0] + dx * t0 - nx * W(t0), A[1] + dy * t0 - ny * W(t0)]], fill); }
+    var sag = [[A[0] + nx * W(0), A[1] + ny * W(0)], [B[0] + nx * W(1), B[1] + ny * W(1)], [B[0] - nx * W(1), B[1] - ny * W(1)], [A[0] - nx * W(0), A[1] - ny * W(0)]];
+    var s = poly(sag.map(function (x) { return [x[0] + 1.4, x[1] + 2.2]; }), "#000", op(.24));   // l'ombra sul panno
+    s += poly(sag, "none", bordo(L, 1.6));
+    s += pz(0, .025, "#1d1d1f") + pz(.025, .2, "#3a1f14") + pz(.2, .205, "#e8e4da") + pz(.205, .37, giro2) + pz(.37, .52, "#e6c58f");
+    [[.37, .5], [.37, .47]].forEach(function (pt, i) { var t0 = pt[0], t1 = pt[1], m = W(t0) * (i ? -.55 : .55); s += poly([[A[0] + dx * t0 + nx * (m - .9), A[1] + dy * t0 + ny * (m - .9)], [A[0] + dx * t0 + nx * (m + .9), A[1] + dy * t0 + ny * (m + .9)], [A[0] + dx * t1 + nx * m, A[1] + dy * t1 + ny * m]], "#2a1710"); });   // le punte d'ebano
+    s += pz(.52, .53, "#f4f1e8") + pz(.53, .985, "#efd6a2") + pz(.985, .996, "#fbfaf5") + pz(.996, 1, "#3b6fb0");
+    for (var k = 0; k < 9; k++) { var t = .22 + k * .016; s += tratto(linea([A[0] + dx * t + nx * W(t), A[1] + dy * t + ny * W(t)], [A[0] + dx * (t + .008) - nx * W(t), A[1] + dy * (t + .008) - ny * W(t)]), "#000", .25, op(.35)); }   // la fasciatura
+    return s + tratto(linea([A[0] + nx * W(0) * .45, A[1] + ny * W(0) * .45], [B[0] + nx * W(1) * .45, B[1] + ny * W(1) * .45]), "#ffffff", .5, op(.5));
+  }
+  def("biliardo", { nome: "Biliardo", fp: [3, 2], box: [-124, -110, 131, 66], dietro: true }, function () {
+    var A0 = 1.47, B0 = .8, AR = 1.36, BR = .69, AC = 1.32, BC = .65, ZT = 49.5, ZG = 49.1, ZN = 48.3, ZP = 47.3, ZK = 45, ZB = 30, l = [];
+    var O = pRett(-A0, A0, -B0, B0, .045, 4), Oc = pRett(-A0 + .05, A0 - .05, -B0 + .05, B0 - .05, .03, 3), Inn = pRett(-AR, AR, -BR, BR, 0);
+    var s = ombraForma(pRett(-A0, A0, -B0, B0, 0), 1.15);
+    var gg = [[-1.22, -.58], [0, -.58], [1.22, -.58], [-1.22, .58], [0, .58], [1.22, .58]].sort(perVicino);
+    s += gg.map(function (g) { return gambaBiliardo(g[0], g[1], ZB + .5); }).join("");
+    // la cassa coi pannelli e le cornici
+    s += fianco(Oc, ZB, ZK, NOCE_SC, CERA, { lw: 1.5, righe: [[ZB + 1.4, "#000", .8, .35], [ZB + 2.6, "#fff3df", .6, .3], [ZK - 1.4, "#000", .7, .3]] });
+    var Ac = A0 - .05, Bc = B0 - .05;
+    s += suB(G * Bc, pannelli([[-Ac * 61 + 7, -Ac * 61 + 7 + 54], [-27, 27], [Ac * 61 - 61, Ac * 61 - 7]], -ZK + 3, -ZB - 4, G));
+    s += suA(G * Ac, pannelli([[-Bc * 61 + 6, Bc * 61 - 6]], -ZK + 3, -ZB - 4, -G));
+    // le sponde: il bordo di noce lucido e sopra il legno con le venature
+    s += fianco(O, ZK, ZT, NOCE, CERA, { lw: 1.5, righe: [[ZK + .7, "#000", .6, .4], [ZT - .7, "#fff3df", .55, .5]] });
+    var bs = limiti(aSchermo(O, ZT)), ring = chiuso(aSchermo(O, ZT)) + " " + chiuso(aSchermo(Inn, ZT).reverse());
+    s += pth(ring, nuova([[0, chiaro(NOCE, .3)], [.5, NOCE], [1, scuro(NOCE, .2)]], bs[0], bs[1], bs[2], bs[3], true), "fill-rule='evenodd'");
+    s += dentro(ring, suZ(ZT, venePiano(-A0 * 61, A0 * 61, -B0 * 61, B0 * 61, NOCE, 91, { nodi: 0, passo: 2 })) + ell(bs[0] + (bs[2] - bs[0]) * .35, bs[1] + (bs[3] - bs[1]) * .3, (bs[2] - bs[0]) * .3, (bs[3] - bs[1]) * .25, nuovaR([[0, "#fff8e8", .3], [1, "#fff8e8", 0]], .5, .5, .5)), true);
+    s += pth(ring, "none", "fill-rule='evenodd' " + bordo(L, 1.4));
+    // il panno, le gomme
+    var dis = "";
+    [[0, 0], [-.07, 0], [.07, 0], [0, -.07], [0, .07], [-.66, 0], [.66, 0]].forEach(function (x, i) { dis += cer(x[0] * 61, x[1] * 61, i < 5 ? .55 : .7, "#ffffff", op(.55)); });   // i segni dei birilli e delle bilie
+    s += panno(pRett(-AC, AC, -BC, BC, 0), ZP, VERDE_BIL, dis, .22);
+    var cus = [
+      [[[-AR, -BR, ZG], [AR, -BR, ZG], [AC, -BC, ZN], [-AC, -BC, ZN]], [0, G * .3, .95]], [[[-AR, BR, ZG], [AR, BR, ZG], [AC, BC, ZN], [-AC, BC, ZN]], [0, -G * .3, .95]],
+      [[[-AR, -BR, ZG], [-AR, BR, ZG], [-AC, BC, ZN], [-AC, -BC, ZN]], [G * .3, 0, .95]], [[[AR, -BR, ZG], [AR, BR, ZG], [AC, BC, ZN], [AC, -BC, ZN]], [-G * .3, 0, .95]]
+    ];
+    cus.forEach(function (c) { var pp = c[0].map(function (x) { return P(x[0], x[1], x[2]); }); s += poly(pp, tinta(scuro(VERDE_BIL, .08), norma(c[1])), "stroke='" + scuro(VERDE_BIL, .4) + "' stroke-width='.4'"); });
+    s += tratto(chiuso(aSchermo(pRett(-AC, AC, -BC, BC, 0), ZN)), scuro(VERDE_BIL, .45), .6, op(.8));
+    // le buche: il buco nel panno e nella sponda, il bordo cromato verso fuori
+    var buche = "";
+    [[1, 1], [-1, 1], [-1, -1], [1, -1]].forEach(function (k) { buche += buca((AC + .02) * k[0], (BC + .02) * k[1], .075, Math.atan2(k[1], k[0]) * 180 / Math.PI, 80); });
+    [1, -1].forEach(function (k) { buche += buca(0, (BC + .035) * k, .066, k > 0 ? 90 : -90, 68); });
+    s += suZ(ZG, buche);
+    // i rombetti di madreperla sulle sponde
+    var mo = "", mb = (BR + B0) / 2, ma = (AR + A0) / 2;
+    [-.99, -.66, -.33, .33, .66, .99].forEach(function (a) { [-1, 1].forEach(function (k) { mo += rombetto(a * 61, mb * 61 * k); }); });
+    [-.33, 0, .33].forEach(function (b) { [-1, 1].forEach(function (k) { mo += rombetto(ma * 61 * k, b * 61); }); });
+    s += suZ(ZT, mo);
+    // sul panno: il castello dei birilli, le bilie, le stecche; sulla sponda il gessetto
+    [[0, 0, true], [-.07, 0], [.07, 0], [0, -.07], [0, .07]].forEach(function (x) { l.push([vicino(x[0], x[1]), birillo(x[0], x[1], ZP, !!x[2])]); });
+    [[-.72, .22, "#f8f6ef"], [.78, -.26, "#f4c020"], [.42, .1, "#d6283b"]].forEach(function (x) { l.push([vicino(x[0], x[1]), bilia(x[0], x[1], ZP, x[2])]); });
+    l.push([vicino(-.3, -.5) + .5, steccaDistesa(-1.12, -.5, .36, -.47, ZP, "#2b5f3a")]);
+    l.push([vicino(.2, .4) + .5, steccaDistesa(1.16, .53, -.24, .2, ZP, "#7a1f1f")]);
+    l.push([vicino(.86, .745) + 1, blocco(.835, .885, .72, .77, ZT, ZT + 3, "#2f6fd0", { sopra: function (A, B, C, D, W, H) { return stesa(A, B, D, W, H, ell(W / 2, H / 2, W * .28, H * .28, "#1f4f9c")); } }, .8)]);
+    return s + ordina(l);
+  });
+  function buca(X, Y, r, verso, ampio) {   // in pianta (mattonelle): il buco scuro e la piastra cromata attorno (dalla parte di fuori)
+    var x = X * 61, y = Y * 61, R = r * 61, t0 = (verso - ampio) * Math.PI / 180, t1 = (verso + ampio) * Math.PI / 180, R2 = R + 2.8;
+    var o = cer(x + .5, y + .7, R + 1.2, "#000", op(.3));
+    o += "<path d='M" + q(x + R * Math.cos(t0), y + R * Math.sin(t0)) + " A" + f2(R) + "," + f2(R) + " 0 0,1 " + q(x + R * Math.cos(t1), y + R * Math.sin(t1)) + " L" + q(x + R2 * Math.cos(t1), y + R2 * Math.sin(t1)) + " A" + f2(R2) + "," + f2(R2) + " 0 0,0 " + q(x + R2 * Math.cos(t0), y + R2 * Math.sin(t0)) + " Z' fill='" + lin("cr", [[0, "#ffffff"], [.35, "#d9dee2"], [.7, "#8f9aa3"], [1, "#5b6670"]], 0, 0, 1, 1) + "' stroke='" + L + "' stroke-width='.5'/>";
+    o += cer(x, y, R, nuovaR([[0, "#040404"], [.65, "#14110f"], [1, "#3a2d24"]], .45, .42, .62), "stroke='" + L + "' stroke-width='.6'");
+    return o + cer(x - R * .25, y - R * .3, R * .3, "#5a4636", op(.25));
+  }
+  function rombetto(x, y) { return "<path d='M" + q(x - 1.4, y) + " L" + q(x, y - .8) + " L" + q(x + 1.4, y) + " L" + q(x, y + .8) + " Z' fill='#f4efe2' stroke='#7a6650' stroke-width='.25'/>"; }
+  function bilia(a, b, z, col) { var r = 2.9, c = P(a, b, z); return ell(c[0] + 2, c[1] + .6, 3.4, 1.5, "#000", op(.3)) + pallina([c[0], c[1] - r], r, col, .5); }
+  function birillo(a, b, z, rosso) {   // un birillo (piccolo come quelli veri, ma un po' più alto per vederlo)
+    var col = rosso ? "#d6283b" : "#f7f4ec", c = P(a, b, z);
+    return ell(c[0] + 1.3, c[1] + .4, 1.6, .7, "#000", op(.3)) + tornito(a, b, [[z, .011], [z + .7, .015], [z + 2.4, .018], [z + 3.8, .011], [z + 4.6, .008], [z + 5.4, .012], [z + 6.2, .006]], [[0, "#ffffff"], [.4, col], [1, scuro(col, .35)]], .4);
+  }
+
+  // =========================================================
+  //  LAMPADA DEL BILIARDO (appesa in alto, sotto si cammina): il paralume lungo di metallo smaltato verde a tetto,
+  //  le testate e il bordo d'ottone, la sbarra d'ottone coi pomelli in cima, le due catenelle che salgono al soffitto.
+  //  Di notte sotto il bordo esce la luce calda. L'impronta è quella del biliardo (3 × 2): messa nella stessa mattonella
+  //  del biliardo gli sta centrata sopra (con un'impronta più piccola resterebbe sempre spostata di mezza mattonella)
+  // =========================================================
+  def("lampada_biliardo", { tipo: "sospeso", nome: "Lampada del biliardo", fp: [3, 2], box: [-60, -262, 61, -66], luce: [0, 0, 112, 175, "#ffe3a0"] }, function () {
+    var A = .86, B0 = .19, B1 = .075, Z0 = 118, Z1 = 131, Z2 = 133.4, VL = "#21703f", s = "", i;
+    var OT = [[0, "#fff6cf"], [.3, "#f3d27a"], [.62, "#c99a36"], [1, "#7a5614"]];
+    // le catenelle (salgono fuori dal disegno, fino al soffitto)
+    [-.52, .52].forEach(function (a) {
+      var c = P(a, 0, Z2 + 2), y, k = 0;
+      for (y = c[1] - 2; y > -258; y -= 2.6, k++) s += k % 2 ? rett(c[0] - .5, y - 2.6, 1, 2.6, .4, nuova(OT, c[0] - .5, 0, c[0] + .5, 0, true), bordo(L, .3)) : ell(c[0], y - 1.3, 1, 1.5, "none", "stroke='" + L + "' stroke-width='.9'") + ell(c[0], y - 1.3, 1, 1.5, "none", "stroke='#e0b54a' stroke-width='.45'");
+      s += ell(c[0], c[1] - .6, 1.8, 1.2, "none", bordo(L, .9)) + ell(c[0], c[1] - .6, 1.8, 1.2, "none", "stroke='#e0b54a' stroke-width='.5'");
+    });
+    var u = function (a, b, z) { return P(a, b, z); };
+    var F = [u(-A, B0, Z0), u(A, B0, Z0), u(A, B1, Z1), u(-A, B1, Z1)], E = [u(A, B0, Z0), u(A, -B0, Z0), u(A, -B1, Z1), u(A, B1, Z1)], T = [u(-A, -B1, Z1), u(A, -B1, Z1), u(A, B1, Z1), u(-A, B1, Z1)];
+    var bf = limiti(F);
+    // la falda davanti (lucida, col riflesso lungo), la testata, il tetto
+    s += poly(F, nuova([[0, chiaro(VL, .3)], [.45, VL], [1, scuro(VL, .3)]], 0, bf[1], 0, bf[3], true));
+    s += dentro(chiuso(F), poly([lerp(F[3], F[2], .05), lerp(F[3], F[2], .7), lerp(F[0], F[1], .66), lerp(F[0], F[1], .02)].map(function (x, j) { return [x[0], x[1] + (j < 2 ? 2.6 : -4.6)]; }), "#ffffff", op(.16)) +
+      tratto(linea([F[3][0] + 6, F[3][1] + 3.2], [F[2][0] - 18, F[2][1] + 3.2]), "#ffffff", 1.1, op(.55)));
+    for (i = 1; i < 6; i++) s += tratto(linea(lerp(F[0], F[1], i / 6), lerp(F[3], F[2], i / 6)), scuro(VL, .4), .5, op(.45));   // le nervature della lamiera
+    s += poly(E, nuova([[0, scuro(VL, .1)], [1, scuro(VL, .42)]], 0, limiti(E)[1], 0, limiti(E)[3], true)) + poly(E, "none", bordo(L, 1.1));
+    s += poly(T, nuova([[0, chiaro(VL, .38)], [1, chiaro(VL, .12)]], limiti(T)[0], 0, limiti(T)[2], 0, true)) + poly(F, "none", bordo(L, 1.3)) + poly(T, "none", bordo(L, 1.1));
+    // l'ottone: il bordo in basso, gli spigoli della testata, la sbarra e i pomelli
+    var bordoB = "M" + q(F[0]) + " L" + q(F[1]) + " L" + q(E[1]);
+    s += tratto(bordoB, L, 3.4) + tratto(bordoB, nuova(OT, bf[0], 0, bf[2], 0, true), 2) + tratto(bordoB, "#fff6cf", .6, op(.8) + " transform='translate(0 -.5)'");
+    s += tratto("M" + q(E[3]) + " L" + q(E[0]) + " M" + q(E[2]) + " L" + q(E[1]), "#c99a36", 1.2) + tratto("M" + q(F[3]) + " L" + q(F[0]), "#c99a36", 1.2);
+    var r0 = P(-A - .05, 0, Z2), r1 = P(A + .05, 0, Z2);
+    s += blocco(-A + .02, A - .02, -B1 + .012, B1 - .012, Z1, Z2, scuro(VL, .1), null, .9);
+    s += tratto(linea(r0, r1), L, 3.4) + tratto(linea(r0, r1), nuova(OT, r0[0], r0[1] - 2, r0[0], r0[1] + 2, true), 2) + pallina(r0, 1.9, "#e2b444", .6) + pallina(r1, 1.9, "#e2b444", .6);
+    [-.66, 0, .66].forEach(function (a) { s += tornito(a, 0, [[Z2 - .4, .034], [Z2 + 1.2, .031], [Z2 + 2.3, .017], [Z2 + 3, .007]], OT, .7, null, .5); });   // i tre cappellotti delle lampadine
+    if (NOTTE) {   // la luce che esce sotto il bordo e scende verso il tavolo
+      var g0 = u(-A, B0, Z0 - .5), g1 = u(A, B0, Z0 - .5), g2 = u(A, -B0, Z0 - .5), dz = 26;
+      s += poly([g0, g1, g2, [g2[0] + 6, g2[1] + dz], [g1[0] + 4, g1[1] + dz], [g0[0] - 4, g0[1] + dz]], nuova([[0, "#ffe9b0", .34], [.45, "#ffe9b0", .1], [1, "#ffe9b0", 0]], 0, g1[1], 0, g1[1] + dz, true));
+      s += tratto("M" + q(g0) + " L" + q(g1) + " L" + q(g2), "#fffbe6", 1.4) + tratto("M" + q(g0) + " L" + q(g1) + " L" + q(g2), "#ffe9a0", 3.2, op(.5));
+    }
+    return s;
+  });
+
+  // =========================================================
+  //  FRECCETTE (sul muro): il bersaglio di sisal coi venti spicchi neri e crema, i doppi e i tripli rossi e verdi,
+  //  il centro, i fili e i numeri; dietro il tondo di legno coi buchetti dei tiri sbagliati; tre freccette piantate
+  //  (alette tricolori); sotto la lavagnetta col punteggio a gesso (si parte da 501), il gessetto appeso allo spago
+  // =========================================================
+  var CIFRE = {
+    "0": "M2,0C3.9,0 4,2 4,3S3.9,6 2,6S0,4 0,3S.1,0 2,0Z", "1": "M.9,1.3L2.5,0V6", "2": "M.3,1.3C.6,-.3 3.7,-.4 3.7,1.6C3.7,3.2 .9,4.2 .2,6H3.8",
+    "3": "M.4,.6C1.4,-.3 3.6,0 3.5,1.5C3.4,2.6 2.4,2.8 1.5,2.8C2.6,2.8 3.9,3.2 3.8,4.5C3.6,6.3 1,6.4 .2,5.3", "4": "M3,6V0L.1,4.3H3.9",
+    "5": "M3.6,0H.9L.6,2.6C1.6,2 3.8,2.2 3.8,4.1C3.8,6.3 1,6.4 .3,5.2", "6": "M3.4,.6C1.6,-.6 .2,1.4 .3,3.6C.4,6.3 3.7,6.4 3.7,4.1C3.7,2.3 1,2 .4,3.6",
+    "7": "M.2,0H3.8L1.5,6", "8": "M2,2.9C.5,2.9 .4,0 2,0S3.5,2.9 2,2.9C.2,2.9 .1,6 2,6S3.8,2.9 2,2.9Z", "9": "M3.6,2.4C3,4 .3,3.8 .3,1.9S1.3,0 2,0S3.7,.4 3.7,2.4C3.7,4.4 2.8,6.6 .6,5.6"
+  };
+  function numero(str, x, y, h, col, w, x2) {   // i numeri a tratti: centrati in (x, y), alti h
+    var k = h / 6, cw = 4 * k, gap = 1.2 * k, n = str.length, tot = n * cw + (n - 1) * gap, o = "", i;
+    for (i = 0; i < n; i++) o += "<path d='" + CIFRE[str[i]] + "' transform='translate(" + f2(x - tot / 2 + i * (cw + gap)) + " " + f2(y - h / 2) + ") scale(" + f2(k) + ")' fill='none' stroke='" + col + "' stroke-width='" + f2(w / k) + "' stroke-linecap='round' stroke-linejoin='round'" + attr(x2) + "/>";
+    return o;
+  }
+  function spicchio(cx, cy, r0, r1, a0, a1, fill) {
+    var c0 = Math.cos(a0), s0 = Math.sin(a0), c1 = Math.cos(a1), s1 = Math.sin(a1);
+    return "<path d='M" + q(cx + r1 * c0, cy + r1 * s0) + " A" + f2(r1) + "," + f2(r1) + " 0 0,1 " + q(cx + r1 * c1, cy + r1 * s1) + " L" + q(cx + r0 * c1, cy + r0 * s1) + (r0 > 0 ? " A" + f2(r0) + "," + f2(r0) + " 0 0,0 " + q(cx + r0 * c0, cy + r0 * s0) : "") + " Z' fill='" + fill + "'/>";
+  }
+  function bersaglio(cx, cy, R) {
+    var NUM = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5], k = R / 20, i, o = "";
+    var rD1 = 15.4 * k, rD0 = 14 * k, rT1 = 9.8 * k, rT0 = 8.5 * k, rB = 2 * k, rBB = .9 * k, NERO = "#1f1c1d", CREMA = "#efe1bd", ROSSO = "#d6312f", VERDE2 = "#1e8a4c";
+    o += cer(cx + 1, cy + 1.3, R, "#0e0b0b") + cer(cx, cy, R, "#262224", bordo(L, 1.2));   // lo spessore del sisal e il cerchio nero dei numeri
+    for (i = 0; i < 20; i++) {
+      var a0 = (-99 + i * 18) * Math.PI / 180, a1 = a0 + 18 * Math.PI / 180, nero = i % 2 === 0;
+      o += spicchio(cx, cy, rD0, rD1, a0, a1, nero ? ROSSO : VERDE2) + spicchio(cx, cy, rT1, rD0, a0, a1, nero ? NERO : CREMA) + spicchio(cx, cy, rT0, rT1, a0, a1, nero ? ROSSO : VERDE2) + spicchio(cx, cy, rB, rT0, a0, a1, nero ? NERO : CREMA);
+    }
+    o += cer(cx, cy, rB, VERDE2) + cer(cx, cy, rBB, ROSSO);
+    var fili = "";   // la ragnatela di fili d'acciaio
+    [rD1, rD0, rT1, rT0, rB, rBB].forEach(function (rr) { fili += cerD(cx, cy, rr) + " "; });
+    for (i = 0; i < 20; i++) { var t = (-99 + i * 18) * Math.PI / 180; fili += "M" + q(cx + rB * Math.cos(t), cy + rB * Math.sin(t)) + " L" + q(cx + rD1 * Math.cos(t), cy + rD1 * Math.sin(t)) + " "; }
+    o += "<path d='" + fili + "' fill='none' stroke='#c9ced3' stroke-width='.28'/>";
+    for (i = 0; i < 20; i++) { var tn = (-90 + i * 18) * Math.PI / 180, rn = (rD1 + R) / 2 + .2 * k; o += numero(String(NUM[i]), cx + rn * Math.cos(tn), cy + rn * Math.sin(tn), 2.5 * k, "#f3efe6", .42); }
+    o += cer(cx, cy, R, nuovaR([[0, "#ffffff", .14], [.45, "#ffffff", 0], [1, "#000000", .2]], .32, .28, .85));   // il volume
+    return o + pth("M" + q(cx - R * .78, cy - R * .38) + " A" + f2(R * .86) + "," + f2(R * .86) + " 0 0,1 " + q(cx - R * .3, cy - R * .82), "none", "stroke='#ffffff' stroke-width='.7' opacity='.35' stroke-linecap='round'");
+  }
+  function freccetta(x, y, ang, l, cA, cB) {   // piantata in (x, y): esce verso di noi e un po' in basso a sinistra (ang = verso del corpo), lunga l; cA, cB = i colori delle alette
+    var o = "<g transform='translate(" + f2(x) + " " + f2(y) + ")'>" + tratto("M0,0 L" + q(l * .42, l * .5), "#000", 1.6, op(.22)) + tratto("M" + q(l * .3, l * .45) + " L" + q(l * .6, l * .62), "#000", 4, op(.08)) + "</g>";   // l'ombra sul bersaglio
+    o += "<g transform='translate(" + f2(x) + " " + f2(y) + ") rotate(" + f2(ang) + ")'>";
+    var b1 = l * .38, s1 = l * .6, x0 = l * .55, x1 = l, i;
+    o += "<path d='M0,-.5 L" + f2(b1 * .2) + ",-1.2 L" + f2(b1) + ",-1.15 L" + f2(b1) + ",1.15 L" + f2(b1 * .2) + ",1.2 L0,.5 Z' fill='" + lin("bar", [[0, "#ffffff"], [.4, "#c9ced3"], [1, "#4f5a62"]], 0, 0, 0, 1) + "' " + bordo(L, .4) + "/>";   // il fusto d'acciaio zigrinato
+    for (i = 1; i < 7; i++) o += "<path d='M" + f2(b1 * (.25 + .7 * i / 7)) + ",-1.1 V1.1' stroke='#4f5a62' stroke-width='.3'/>";
+    o += rett(b1, -.55, s1 - b1, 1.1, .4, "#1d1d22", bordo(L, .3)) + rett(b1 + (s1 - b1) * .5, -.6, 1, 1.2, .2, "#e8b923");
+    o += "<path d='M" + f2(x0) + ",-.4 L" + f2(x0 + (x1 - x0) * .25) + ",-4.6 L" + f2(x1) + ",-5 L" + f2(x1) + ",-.4 Z' fill='" + cA + "' stroke='" + L + "' stroke-width='.4' stroke-linejoin='round'/>";   // le alette: due aperte e una di taglio
+    o += "<path d='M" + f2(x0) + ",.4 L" + f2(x0 + (x1 - x0) * .25) + ",4.6 L" + f2(x1) + ",5 L" + f2(x1) + ",.4 Z' fill='" + cB + "' stroke='" + L + "' stroke-width='.4' stroke-linejoin='round'/>";
+    o += "<path d='M" + f2(x0 + 1.2) + ",-2.6 L" + f2(x1 - .4) + ",-2.9 M" + f2(x0 + 1.2) + ",2.6 L" + f2(x1 - .4) + ",2.9' stroke='#ffffff' stroke-width='.9' opacity='.85'/>";   // la riga bianca in mezzo (il tricolore)
+    o += "<path d='M" + f2(x0 + .6) + ",0 H" + f2(x1 + .3) + "' stroke='" + L + "' stroke-width='1.9'/><path d='M" + f2(x0 + .6) + ",0 H" + f2(x1 + .3) + "' stroke='#ffffff' stroke-width='1.1'/>";
+    return o + "</g>";
+  }
+  def("freccette", { tipo: "parete", nome: "Bersaglio delle freccette" }, function () {
+    var cx = 31, cy = 74, R = 19.5, s = "", r = rnd(180), i;
+    s += ombraMuro(cerD(cx, cy, 25.5), 1.6, 2.2);
+    s += cer(cx, cy, 25.5, nuovaR([[0, "#c98c55"], [.7, "#8f5a30"], [1, "#5e3618"]], .38, .32, .85), bordo(L, 1.5));   // il tondo di legno
+    for (i = 0; i < 3; i++) s += cer(cx, cy, 21.5 + i * 1.3, "none", "stroke='#5e3618' stroke-width='.3' opacity='.35'");
+    for (i = 0; i < 30; i++) { var t = r() * 6.283, rr = 20.6 + r() * 4.2; s += cer(cx + Math.cos(t) * rr, cy + Math.sin(t) * rr, .3 + r() * .25, "#2b1a10", op(.75)); }   // i buchetti dei tiri sbagliati
+    s += bersaglio(cx, cy, R);
+    var k = R / 20;
+    s += freccetta(cx + .3, cy - 9.15 * k, 124, 15, "#2b9348", "#e03131") + freccetta(cx + 1.1, cy + .5, 112, 15.5, "#2b9348", "#e03131");
+    var tt = (-90 - 18 * 1.05) * Math.PI / 180;   // la terza nel 5, accanto al 20
+    s += freccetta(cx + 12 * k * Math.cos(tt), cy + 12 * k * Math.sin(tt), 138, 14.5, "#2b9348", "#e03131");
+    // la lavagnetta del punteggio
+    var x = 13, y = 111, w = 36, h = 38, f = 3.2;
+    s += tratto("M" + q(x + 5, y + 1) + " L" + q(x + w / 2, y - 7.5) + " L" + q(x + w - 5, y + 1), "#8a6d4a", .55) + cer(x + w / 2, y - 7.5, 1, "#9aa3aa", bordo(L, .4));   // lo spago e il chiodo
+    s += ombraMuro(rettD(x, y, w, h + 3, 1.3), 1.4, 2);
+    s += rett(x, y, w, h, 1.3, lin("cf", [[0, "#b07a45"], [1, "#6e4322"]], 0, 0, 1, 1), bordo(L, 1.3));
+    s += rett(x + f, y + f, w - 2 * f, h - 2 * f, .6, lin("sl", [[0, "#3f4a45"], [1, "#222a27"]], 0, 0, 1, 1));
+    s += ell(x + w * .4, y + h * .45, w * .3, h * .25, "#e9efe9", op(.06)) + ell(x + w * .7, y + h * .7, w * .2, h * .12, "#e9efe9", op(.05));   // gli aloni del gesso
+    var g = "", C = "#f2efe6";
+    g += "<path d='M" + q(x + w / 2, y + f + 2) + " V" + f1(y + h - f - 2) + " M" + q(x + f + 1.5, y + f + 6.4) + " H" + f1(x + w - f - 1.5) + "' stroke='" + C + "' stroke-width='.5' opacity='.85'/>";
+    g += "<path d='M" + q(x + 8, y + f + 3.8) + " l1.2,-2 1.2,2 M" + q(x + 8.5, y + f + 3) + " h1.4 M" + q(x + 24.5, y + f + 1.8) + " v2 M" + q(x + 24.5, y + f + 1.8) + " h1.6 M" + q(x + 24.5, y + f + 2.8) + " h1.2' fill='none' stroke='" + C + "' stroke-width='.45' stroke-linecap='round' opacity='.85'/>";   // le iniziali dei due giocatori
+    [["501", 1], ["441", 1], ["380", 0]].forEach(function (v, j) { var yy = y + f + 10 + j * 6.8; g += numero(v[0], x + w * .27, yy, 4, C, .6, op(.88)); if (v[1]) g += "<path d='M" + q(x + w * .27 - 6, yy + 1.8) + " L" + q(x + w * .27 + 6, yy - 1.6) + "' stroke='" + C + "' stroke-width='.45' opacity='.8'/>"; });
+    [["501", 1], ["455", 0]].forEach(function (v, j) { var yy = y + f + 10 + j * 6.8; g += numero(v[0], x + w * .73, yy, 4, C, .6, op(.88)); if (v[1]) g += "<path d='M" + q(x + w * .73 - 6, yy + 1.8) + " L" + q(x + w * .73 + 6, yy - 1.6) + "' stroke='" + C + "' stroke-width='.45' opacity='.8'/>"; });
+    s += g;
+    // il gessetto sul bordino in basso e quello appeso allo spago
+    s += rett(x + w * .55, y + h - 2.6, 6, 1.6, .8, "#f4f1e6", bordo(L, .4)) + tratto("M" + q(x + w + .5, y + 6) + " Q" + q(x + w + 3, y + 16) + " " + q(x + w + 2.2, y + 24), "#d8cfc0", .4) + rett(x + w + 1.4, y + 24, 1.7, 5.2, .7, "#f4f1e6", bordo(L, .4));
+    return s;
+  });
+
+  // =========================================================
+  //  RASTRELLIERA DELLE STECCHE (sul muro): la cornice di noce col fregio a volute e la targhetta d'ottone,
+  //  la sbarra in alto con gli incavi e quella in basso con le coppette; quattro stecche (punta blu, ghiera bianca,
+  //  fusto d'acero, punte d'ebano, fasciatura colorata, calcio scuro) e un posto vuoto: quella è sul biliardo
+  // =========================================================
+  function steccaRitta(x, yT, yB, giro2) {
+    var Lh = yB - yT, s = "";
+    function wd(y) { var t = (y - yT) / Lh; return 1.5 + 1.9 * Math.pow(Math.max(0, t), 1.2); }
+    function pz(y0, y1, fill) { var w0 = wd(y0) / 2, w1 = wd(y1) / 2; return poly([[x - w0, y0], [x + w0, y0], [x + w1, y1], [x - w1, y1]], fill); }
+    function cil(c) { return lin("st" + c.slice(1), [[0, chiaro(c, .35)], [.35, c], [1, scuro(c, .45)]], 0, 0, 1, 0); }
+    var yJ = yT + Lh * .5, yF = yT + Lh * .7, yW = yT + Lh * .88, sag = [[x - wd(yT) / 2, yT], [x + wd(yT) / 2, yT], [x + wd(yB) / 2, yB], [x - wd(yB) / 2, yB]];
+    s += poly(sag.map(function (p2) { return [p2[0] + 1.5, p2[1] + 1.2]; }), "#000", op(.16));   // l'ombra sul muro
+    s += poly(sag, "none", bordo(L, 1.3));
+    s += pz(yT, yT + 1.1, cil("#3b6fb0")) + pz(yT + 1.1, yT + 2.7, cil("#f4f1e8")) + pz(yT + 2.7, yJ, cil("#efd6a2")) + pz(yJ, yJ + 1.3, cil("#f4f1e8")) + pz(yJ + 1.3, yF, cil("#e3bf86"));
+    var w = wd(yF);
+    s += poly([[x - w * .3, yF], [x + w * .3, yF], [x, yJ + 5]], "#2a1710") + poly([[x - w / 2, yF], [x - w * .38, yF], [x - wd(yJ + 6) / 2, yJ + 6]], "#2a1710") + poly([[x + w * .38, yF], [x + w / 2, yF], [x + wd(yJ + 6) / 2, yJ + 6]], "#2a1710");   // le punte d'ebano
+    s += pz(yF, yW, cil(giro2));
+    for (var y = yF + 1; y < yW; y += 1.3) s += "<path d='M" + q(x - wd(y) / 2, y) + " L" + q(x + wd(y) / 2, y + .7) + "' stroke='#000' stroke-width='.25' opacity='.35'/>";   // la fasciatura
+    s += pz(yW, yW + .8, cil("#d9dde0")) + pz(yW + .8, yB - 1.5, cil("#3a1f14")) + pz(yB - 1.5, yB, cil("#1d1d1f"));
+    return s + "<path d='M" + q(x - wd(yT + 3) * .2, yT + 3) + " L" + q(x - wd(yB - 3) * .2, yB - 3) + "' stroke='#ffffff' stroke-width='.5' opacity='.45'/>";
+  }
+  def("rastrelliera_stecche", { tipo: "parete", nome: "Rastrelliera delle stecche" }, function () {
+    var s = "", LG = "#6e3e22", X = [14.5, 23, 31.5, 40, 48.5], yT = 80, yB = 175;
+    function legnoP(nome) { return lin(nome, [[0, chiaro(LG, .3)], [.5, LG], [1, scuro(LG, .3)]], 0, 0, 0, 1); }
+    // l'ombra sul muro, i montanti, il fregio, le due sbarre
+    var sag = rettD(6, 96, 4.2, 82, 1) + " " + rettD(51.8, 96, 4.2, 82, 1) + " " + rettD(4.5, 98, 53, 8, 1.2) + " " + rettD(4.5, 168, 53, 8, 1.2) + " M10,99 C10,92 16,87.5 23,87 C26,86.8 27,84.5 31,84.5 C35,84.5 36,86.8 39,87 C46,87.5 52,92 52,99 Z";
+    s += ombraMuro(sag, 1.6, 2.2);
+    s += rett(6, 96, 4.2, 82, 1, lin("mt", [[0, chiaro(LG, .25)], [1, scuro(LG, .35)]], 0, 0, 1, 0), bordo(L, 1.1)) + rett(51.8, 96, 4.2, 82, 1, lin("mt2", [[0, chiaro(LG, .2)], [1, scuro(LG, .4)]], 0, 0, 1, 0), bordo(L, 1.1));
+    s += pth("M10,99 C10,92 16,87.5 23,87 C26,86.8 27,84.5 31,84.5 C35,84.5 36,86.8 39,87 C46,87.5 52,92 52,99 Z", legnoP("fr"), bordo(L, 1.2));   // il fregio
+    s += pth("M14,97 C15,92 19,90.5 22,92 C24,93 23,95.5 21,95.2", "none", "stroke='" + scuro(LG, .45) + "' stroke-width='.7'") + pth("M48,97 C47,92 43,90.5 40,92 C38,93 39,95.5 41,95.2", "none", "stroke='" + scuro(LG, .45) + "' stroke-width='.7'");   // le volute
+    s += ell(31, 91.5, 4.6, 2.8, lin("tg", [[0, "#fff3c2"], [.5, "#e2b444"], [1, "#8a5c12"]], 0, 0, 1, 1), bordo(L, .6)) + ell(30, 90.6, 1.8, .8, "#ffffff", op(.6));   // la targhetta d'ottone
+    s += rett(4.5, 98, 53, 8, 1.2, legnoP("sb"), bordo(L, 1.3)) + rett(5.5, 99, 51, 1.2, .6, "#ffffff", op(.22));
+    X.forEach(function (x, i) { if (i === 3) s += pth("M" + q(x - 2.4, 98.2) + " Q" + q(x, 103) + " " + q(x + 2.4, 98.2) + " Z", "#1e100a", op(.85)); });   // l'incavo vuoto
+    s += rett(4.5, 168, 53, 8, 1.2, legnoP("sb2"), bordo(L, 1.3)) + rett(5.5, 169, 51, 1.2, .6, "#ffffff", op(.22));
+    X.forEach(function (x) { s += ell(x, 169.5, 3.4, 1.3, "#1e100a", op(.85)); });   // le coppette
+    // le stecche (la quarta manca: è sul biliardo)
+    var giri = ["#2b5f3a", "#1f2b4a", "#7a1f1f", null, "#2d2d30"];
+    X.forEach(function (x, i) {
+      if (!giri[i]) return;
+      s += steccaRitta(x, yT + (i % 2) * 1.6, yB - 3.5, giri[i]);
+      s += ell(x, 102.2, 2.6, 1, "#000", op(.25));   // l'incavo dove sta appoggiata
+    });
+    X.forEach(function (x) { s += pth("M" + q(x - 3.4, 169.5) + " A3.4,1.3 0 0,0 " + q(x + 3.4, 169.5) + " L" + q(x + 3, 171.2) + " A3,1.1 0 0,1 " + q(x - 3, 171.2) + " Z", lin("cp", [[0, "#fff3c2"], [.5, "#d9a83a"], [1, "#7a5614"]], 0, 0, 1, 0), bordo(L, .5)); });   // il labbro d'ottone delle coppette
+    // i gessetti blu sulla sbarra in basso
+    [[8.6, 1], [53.4, 0]].forEach(function (g) { s += rett(g[0] - 2.2, 163.6, 4.4, 4.4, .6, lin("gs" + g[1], [[0, "#5c8fe6"], [1, "#1f4f9c"]], 0, 0, 1, 1), bordo(L, .5)) + rett(g[0] - 1.2, 163.6, 2.4, 1.2, .4, "#a9c4f2"); });
+    return s;
+  });
+
+  // =========================================================
+  function misure(d) { if (d.tipo === "parete") return { w: 62, h: 200 }; var b = d.box; return { w: Math.ceil(b[2] - b[0]), h: Math.ceil(b[3] - b[1]), ax: Math.ceil(-b[0]), ay: Math.ceil(-b[1]) }; }
+  SGMobiliArte.aggiungi({
+    nomi: function () { return Object.keys(DIS); },
+    info: function (nome) {
+      var d = DIS[nome]; if (!d) return null;
+      var m = misure(d), tipo = d.tipo || "piedi", o = { tipo: tipo, nome: d.nome, stanza: "circolo", reparto: "circolo", w: m.w, h: m.h, fp: (d.fp || [1, 1]).slice(), prezzo: 0, qual: 2 };
+      if (tipo !== "parete") { o.ax = m.ax; o.ay = m.ay; o.dietro = !!d.dietro; }
+      if (d.piano) o.piano = d.piano;
+      if (d.posti) o.posti = d.posti.map(function (x) { return x.slice(); });
+      if (d.azione) { o.azione = d.azione; o.seduta = d.seduta; }
+      if (d.luce) { var l = d.luce, pt = Puv(l[0], l[1], l[2]); o.luce = [Math.round(pt[0] + m.ax), Math.round(pt[1] + m.ay), l[3], l[4]]; }   // il punto della luce nel disegno davanti
+      return o;
+    },
+    svg: function (nome, opz) {
+      var d = DIS[nome]; if (!d) return "";
+      opz = opz || {};
+      var m = misure(d);
+      p = "ctav" + (++nId) + "_"; DEFS = []; FATTI = {}; nC = 0; G = opz.dietro && d.dietro ? -1 : 1; NOTTE = !!opz.notte;
+      var c; try { c = d.fn(opz); } finally { G = 1; NOTTE = false; }
+      var corpoSvg = d.tipo === "parete" ? c : "<g transform='translate(" + m.ax + " " + m.ay + ")'>" + c + "</g>";
+      return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 " + m.w + " " + m.h + "' width='" + m.w + "' height='" + m.h + "'>" + (DEFS.length ? "<defs>" + DEFS.join("") + "</defs>" : "") + corpoSvg + "</svg>";
+    }
+  });
+})();
+/* =========================================================
+   SPeeD GAME — IL CIRCOLO: IL BAR, LA TV, LE COPPE E IL SALOTTO (visti dall'alto, come i mobili della casa)
+   Il circolo ricreativo di paese, anni '60-'80 ma tenuto bene: il bancone di legno col piano di marmo e la macchina
+   dell'espresso a leva, gli sgabelli di legno e ottone, la vetrina delle coppe coi gagliardetti, la TV con la partita,
+   il ventilatore al soffitto, la foto in bianco e nero della squadra, la bandiera, il calendario col torneo di scopa,
+   la vecchia poltrona di pelle, il tavolino coi giornali rosa e l'attaccapanni. Caldo e familiare, non di lusso.
+   Una mattonella è un rombo largo 100 e alto 50 (circa 1 metro); in altezza 61 unità ≈ 1 metro.
+   - "piedi": il davanti guarda in basso a sinistra; con { dietro: true } lo stesso oggetto girato (si vede la schiena).
+   - "sospeso": come i "piedi" ma appeso in alto (il ventilatore): sotto si cammina.
+   - "parete": disegno piatto di fronte, 62 × 200 per ogni pezzo di muro (quelli larghi 124 × 200, fp [2, 1]).
+   Con { notte: true } le cose che fanno luce sono accese; info().luce = [x, y, raggio, colore] dice da dove esce la luce.
+   Non si vendono nel negozio: reparto "circolo", prezzo 0. Si aggiungono con SGMobiliArte.aggiungi({ nomi, info, svg }).
+   ========================================================= */
+(function () {
+  "use strict";
+  if (!window.SGMobiliArte || !window.SGMobiliArte.aggiungi) return;
+
+  // ---------- attrezzi (gli stessi degli altri mobili) ----------
+  var nId = 0, p = "", DEFS = [], FATTI = {}, nC = 0, G = 1, NOTTE = false;   // il disegno in corso: prefisso degli id, definizioni; G = 1 davanti, -1 girato; NOTTE = luci accese
+  var L = "#3d2b22";   // il contorno caldo e scuro
+  function rnd(seme) { var s = (seme >>> 0) || 1; return function () { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return (s % 1000003) / 1000003; }; }
+  function f1(n) { return Math.round(n * 100) / 100; }
+  function f2(n) { return Math.round(n * 1000) / 1000; }
+  function q(x, y) { if (typeof x === "object") { y = x[1]; x = x[0]; } return f1(x) + "," + f1(y); }
+  function pts(a) { return a.map(function (x) { return q(x); }).join(" "); }
+  function attr(x) { return x ? " " + x : ""; }
+  function op(k) { return "opacity='" + f2(k) + "'"; }
+  function poly(a, fill, x) { return "<polygon points='" + pts(a) + "' fill='" + fill + "'" + attr(x) + "/>"; }
+  function pth(d, fill, x) { return "<path d='" + d + "' fill='" + fill + "'" + attr(x) + "/>"; }
+  function cer(x, y, r, fill, x2) { return "<circle cx='" + f1(x) + "' cy='" + f1(y) + "' r='" + f2(r) + "' fill='" + fill + "'" + attr(x2) + "/>"; }
+  function ell(x, y, rx, ry, fill, x2) { return "<ellipse cx='" + f1(x) + "' cy='" + f1(y) + "' rx='" + f2(rx) + "' ry='" + f2(ry) + "' fill='" + fill + "'" + attr(x2) + "/>"; }
+  function rett(x, y, w, h, r, fill, x2) { return "<rect x='" + f1(x) + "' y='" + f1(y) + "' width='" + f1(w) + "' height='" + f1(h) + "'" + (r ? " rx='" + f1(r) + "'" : "") + " fill='" + fill + "'" + attr(x2) + "/>"; }
+  function bordo(c, w) { return "stroke='" + c + "' stroke-width='" + f2(w == null ? 2.4 : w) + "' stroke-linejoin='round' stroke-linecap='round'"; }
+  function tratto(d, c, w, x) { return "<path d='" + d + "' fill='none' stroke='" + c + "' stroke-width='" + f2(w) + "' stroke-linecap='round' stroke-linejoin='round'" + attr(x) + "/>"; }
+  function linea(a, b) { return "M" + q(a) + " L" + q(b); }
+  function chiuso(a) { return "M" + a.map(function (x) { return q(x); }).join(" L") + " Z"; }
+  function aperto(a) { return "M" + a.map(function (x) { return q(x); }).join(" L"); }
+  function limiti(a) { var b = [1e9, 1e9, -1e9, -1e9]; a.forEach(function (x) { b[0] = Math.min(b[0], x[0]); b[1] = Math.min(b[1], x[1]); b[2] = Math.max(b[2], x[0]); b[3] = Math.max(b[3], x[1]); }); return b; }
+  function lerp(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; }
+  function curva(pp) {   // una linea morbida che passa vicino ai punti
+    var d = "M" + q(pp[0]), i;
+    for (i = 1; i < pp.length - 1; i++) d += " Q" + q(pp[i]) + " " + q([(pp[i][0] + pp[i + 1][0]) / 2, (pp[i][1] + pp[i + 1][1]) / 2]);
+    return d + " L" + q(pp[pp.length - 1]);
+  }
+  function cerD(x, y, r) { return "M" + q(x - r, y) + " A" + f2(r) + "," + f2(r) + " 0 1,0 " + q(x + r, y) + " A" + f2(r) + "," + f2(r) + " 0 1,0 " + q(x - r, y) + " Z"; }
+  function rettD(x, y, w, h, r) {
+    if (!r) return "M" + q(x, y) + " H" + f1(x + w) + " V" + f1(y + h) + " H" + f1(x) + " Z";
+    return "M" + q(x + r, y) + " H" + f1(x + w - r) + " Q" + q(x + w, y) + " " + q(x + w, y + r) + " V" + f1(y + h - r) + " Q" + q(x + w, y + h) + " " + q(x + w - r, y + h) + " H" + f1(x + r) + " Q" + q(x, y + h) + " " + q(x, y + h - r) + " V" + f1(y + r) + " Q" + q(x, y) + " " + q(x + r, y) + " Z";
+  }
+  function rientra(a, d) {   // la stessa forma, più stretta di d tutto attorno
+    var cx = 0, cy = 0; a.forEach(function (x) { cx += x[0]; cy += x[1]; }); cx /= a.length; cy /= a.length;
+    return a.map(function (x) { var dx = x[0] - cx, dy = x[1] - cy, l = Math.sqrt(dx * dx + dy * dy) || 1; return [x[0] - dx / l * d, x[1] - dy / l * d]; });
+  }
+  // i colori
+  function hx(c) { var n = parseInt(c.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function mix(a, b, t) { var x = hx(a), y = hx(b); return "#" + x.map(function (v, i) { var r = Math.round(v + (y[i] - v) * t); return (r < 16 ? "0" : "") + r.toString(16); }).join(""); }
+  function chiaro(c, t) { return mix(c, "#ffffff", t); }
+  function scuro(c, t) { return mix(c, "#000000", t); }
+  function tono(c, t) { return t >= 0 ? chiaro(c, Math.min(.85, t)) : scuro(c, Math.min(.85, -t)); }
+  function vivo(c) { return NOTTE ? chiaro(c, .15) : c; }   // di notte, dentro la vetrinetta illuminata, i colori brillano
+  // sfumature, motivi e ritagli (gli id col prefisso del disegno)
+  function sfum(tag, nome, stops, a) {
+    var id = p + nome;
+    if (!FATTI[id]) {
+      FATTI[id] = 1;
+      DEFS.push("<" + tag + " id='" + id + "' " + a + ">" + stops.map(function (s) { return "<stop offset='" + s[0] + "' stop-color='" + s[1] + "'" + (s[2] != null ? " stop-opacity='" + s[2] + "'" : "") + "/>"; }).join("") + "</" + tag + ">");
+    }
+    return "url(#" + id + ")";
+  }
+  function lin(nome, stops, x1, y1, x2, y2, user) { return sfum("linearGradient", user ? nome + (++nC) : nome, stops, "x1='" + f2(x1) + "' y1='" + f2(y1) + "' x2='" + f2(x2) + "' y2='" + f2(y2) + "'" + (user ? " gradientUnits='userSpaceOnUse'" : "")); }
+  function rad(nome, stops, cx, cy, r) { return sfum("radialGradient", nome, stops, "cx='" + cx + "' cy='" + cy + "' r='" + r + "'"); }
+  function nuova(stops, x1, y1, x2, y2, user) { return sfum("linearGradient", "g" + (++nC), stops, "x1='" + f2(x1) + "' y1='" + f2(y1) + "' x2='" + f2(x2) + "' y2='" + f2(y2) + "'" + (user ? " gradientUnits='userSpaceOnUse'" : "")); }
+  function nuovaR(stops, cx, cy, r) { return sfum("radialGradient", "g" + (++nC), stops, "cx='" + f2(cx) + "' cy='" + f2(cy) + "' r='" + f2(r) + "'"); }
+  function dentro(forma, corpo, pari) {   // corpo ritagliato dentro la forma (un tracciato "d"); pari = la forma ha dei buchi
+    var id = p + "r" + (++nC);
+    DEFS.push("<clipPath id='" + id + "'><path d='" + forma + "'" + (pari ? " clip-rule='evenodd'" : "") + "/></clipPath>");
+    return "<g clip-path='url(#" + id + ")'>" + corpo + "</g>";
+  }
+  function ruota(x, y, ang, c) { return "<g transform='rotate(" + f1(ang) + " " + f1(x) + " " + f1(y) + ")'>" + c + "</g>"; }
+  var CROMO = [[0, "#ffffff"], [.3, "#e4e9ec"], [.66, "#9ca8b0"], [1, "#65717a"]];
+  var OTTONE = [[0, "#fff6cf"], [.3, "#f3d27a"], [.62, "#c99a36"], [1, "#7a5614"]];
+  var ORO = [[0, "#fff1b8"], [.4, "#f2c94c"], [1, "#a8781a"]];
+  var CER = [[0, "#ffffff"], [.4, "#f4f8fa"], [.78, "#d5dee4"], [1, "#adbac3"]];   // la ceramica bianca
+  var NERO = [[0, "#6c737a"], [.3, "#2e3236"], [1, "#0d0f11"]];                     // la bachelite nera
+  function cromo(d, w) { return tratto(d, L, w + 2.2) + tratto(d, "#a7b2ba", w) + tratto(d, "#ffffff", Math.max(.5, w * .38), "opacity='.95' transform='translate(-.35 -.45)'"); }   // un tubo cromato
+  function ottone(d, w) { return tratto(d, L, w + 2.2) + tratto(d, "#c99a36", w) + tratto(d, "#fff3c4", Math.max(.5, w * .36), "opacity='.95' transform='translate(-.35 -.45)'"); }   // un tubo d'ottone
+  function tinteDi(stops, k) { return [nuova([[0, stops[0][1]], [1, stops[1][1]]], 0, 0, 1, 1), nuova([[0, stops[1][1]], [1, stops[2][1]]], 0, 0, 0, 1), nuova([[0, stops[2][1]], [1, stops[3][1]]], 0, 0, 0, 1)]; }   // le tre facce di un blocco di metallo
+
+  // ---------- la vista: dal mobile (a = larghezza, b = profondità con b+ = davanti, z = altezza) allo schermo ----------
+  function Puv(u, v, z) { return [(u - v) * 50, (u + v) * 25 - (z || 0)]; }
+  function P(a, b, z) { return Puv(a * G, b * G, z); }
+  function vicino(a, b) { return G * (a + b); }   // più è grande, più la cosa è vicina a chi guarda
+  function ordina(l) { return l.sort(function (x, y) { return x[0] - y[0]; }).map(function (x) { return x[1]; }).join(""); }
+  function forma(ca, cb, ra, rf, rr, e) { return { ca: ca, cb: cb, ra: ra, rf: rf == null ? ra : rf, rr: rr == null ? (rf == null ? ra : rf) : rr, e: e || 2 }; }
+  function giro(F, z, k, n) {   // i punti sullo schermo del bordo della forma all'altezza z (k = grandezza, anche [ka, kb])
+    var ka = k == null ? 1 : (k.length ? k[0] : k), kb = k == null ? 1 : (k.length ? k[1] : k), out = [], i; n = n || 60;
+    for (i = 0; i < n; i++) {
+      var t = i / n * 6.2832, c = Math.cos(t), s = Math.sin(t), x = (c < 0 ? -1 : 1) * Math.pow(Math.abs(c), 2 / F.e), y = (s < 0 ? -1 : 1) * Math.pow(Math.abs(s), 2 / F.e);
+      out.push(P(F.ca + x * F.ra * ka, F.cb + y * (y > 0 ? F.rf : F.rr) * kb, z));
+    }
+    return out;
+  }
+  function inviluppo(pp) {   // il contorno esterno di tanti punti
+    var a = pp.slice().sort(function (m, n) { return m[0] - n[0] || m[1] - n[1]; }), lo = [], hi = [], i;
+    function cr(o, m, n) { return (m[0] - o[0]) * (n[1] - o[1]) - (m[1] - o[1]) * (n[0] - o[0]); }
+    for (i = 0; i < a.length; i++) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], a[i]) <= 0) lo.pop(); lo.push(a[i]); }
+    for (i = a.length - 1; i >= 0; i--) { while (hi.length >= 2 && cr(hi[hi.length - 2], hi[hi.length - 1], a[i]) <= 0) hi.pop(); hi.push(a[i]); }
+    return lo.slice(0, -1).concat(hi.slice(0, -1));
+  }
+  function corpo(livelli, stops, lw) {   // un pezzo tondo pieno: la sagoma sfumata da sinistra a destra
+    var pp = inviluppo([].concat.apply([], livelli)), b = limiti(pp);
+    return pth(chiuso(pp), lin("cx", stops, b[0], 0, b[2], 0, true), bordo(L, lw == null ? 2.4 : lw));
+  }
+
+  // ---------- i blocchi squadrati (come nel bagno) ----------
+  function faccia(o, dir, c) { return "<g transform='matrix(.8197 " + (dir > 0 ? ".4098" : "-.4098") + " 0 1 " + f1(o[0]) + " " + f1(o[1]) + ")'>" + c + "</g>"; }
+  function tinte(c) {   // i tre colori: sopra, la faccia di sinistra (alla luce), quella di destra (in ombra)
+    if (typeof c !== "string") return c;
+    var k = c.slice(1);
+    return [lin("ts" + k, [[0, chiaro(c, .32)], [1, chiaro(c, .1)]], 0, 0, 1, 1), lin("tl" + k, [[0, chiaro(c, .12)], [1, scuro(c, .06)]], 0, 0, 0, 1), lin("td" + k, [[0, scuro(c, .2)], [1, scuro(c, .34)]], 0, 0, 0, 1)];
+  }
+  // un blocco da a0..a1, b0..b1 (b1 = davanti), z0..z1; f = { davanti, dietro, fianco, sopra }: disegni piatti (W, H) per le facce
+  function blocco(a0, a1, b0, b1, z0, z1, col, f, lw) {
+    f = f || {};
+    var u0 = G > 0 ? a0 : -a1, u1 = G > 0 ? a1 : -a0, v0 = G > 0 ? b0 : -b1, v1 = G > 0 ? b1 : -b0, c = tinte(col);
+    var A = Puv(u0, v0, z1), B = Puv(u1, v0, z1), C = Puv(u1, v1, z1), D = Puv(u0, v1, z1), Bb = Puv(u1, v0, z0), Cb = Puv(u1, v1, z0), Db = Puv(u0, v1, z0);
+    var Ws = (u1 - u0) * 61, Wd = (v1 - v0) * 61, H = z1 - z0, fs = G > 0 ? f.davanti : f.dietro;
+    var s = faccia(D, 1, (f.vuoto && G > 0 ? "" : rett(0, 0, Ws, H, 0, c[1])) + (fs ? fs(Ws, H) : "")) + faccia(C, -1, rett(0, 0, Wd, H, 0, c[2]) + (f.fianco ? f.fianco(Wd, H) : "")) + poly([A, B, C, D], c[0]);   // vuoto: il davanti si disegna da sé (la vetrina)
+    if (f.sopra) s += f.sopra(A, B, C, D);
+    s += tratto("M" + q(D) + " L" + q(C) + " L" + q(B) + " M" + q(C) + " L" + q(Cb), L, .8, op(.75));   // gli spigoli di dentro, sottili
+    if (H > 4) s += tratto("M" + q(D[0] + 1.2, D[1] + 1) + " L" + q(C[0] - .5, C[1] + .9), "#ffffff", .9, op(.55));   // il filo di luce sullo spigolo davanti
+    return s + poly([A, B, Bb, Cb, Db, D], "none", bordo(L, lw || 1.8));
+  }
+  function piano(O, X, Y, W, H, c) {   // un disegno piatto W × H steso su un piano qualsiasi: O = il suo angolo in alto a sinistra, X = la fine della riga di sopra, Y = la fine del lato di sinistra
+    var m = [(X[0] - O[0]) / W, (X[1] - O[1]) / W, (Y[0] - O[0]) / H, (Y[1] - O[1]) / H, O[0], O[1]];
+    return "<g transform='matrix(" + m.map(function (v) { return Math.round(v * 10000) / 10000; }).join(" ") + ")'>" + c + "</g>";
+  }
+  // un disegno piatto su un piano dritto, girato verso chi guarda: asse "a" = il piano a b fisso (largo lungo a), asse "b" = il piano ad a fisso; y piatta = z1 - z
+  function pianoV(asse, fisso, t0, t1, z0, z1, cont) {
+    var W = Math.abs(t1 - t0) * 61, H = z1 - z0, lo = Math.min(t0, t1), hi = Math.max(t0, t1), s, e;
+    if (asse === "a") { s = G > 0 ? lo : hi; e = G > 0 ? hi : lo; return piano(P(s, fisso, z1), P(e, fisso, z1), P(s, fisso, z0), W, H, cont); }
+    s = G > 0 ? hi : lo; e = G > 0 ? lo : hi; return piano(P(fisso, s, z1), P(fisso, e, z1), P(fisso, s, z0), W, H, cont);
+  }
+  function buio(W, H, k, su) {   // l'ombra morbida in un angolo: un rettangolo che sfuma (su = scuro in alto)
+    return rett(0, 0, W, H, 0, nuova(su ? [[0, "#000", k], [1, "#000", 0]] : [[0, "#000", 0], [1, "#000", k]], 0, 0, 0, 1));
+  }
+
+  // ---------- la luce: viene da in alto a sinistra ----------
+  function norma(v) { var l = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; }
+  function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+  var LUCE = norma([-.3, .5, .8]), VISTA = norma([1, 1, .82]), MEZZO = norma([LUCE[0] + VISTA[0], LUCE[1] + VISTA[1], LUCE[2] + VISTA[2]]);
+  function tinta(c, n, m) {   // il colore di una superficie con la normale n (nella vista: u, v, z) fatta del materiale m
+    m = m || {};
+    var B = dot(n, LUCE), t = B >= .5 ? (B - .5) / .3 * .2 : (B - .5) / .8 * .27;
+    var col = tono(c, t * (m.forza || 1));
+    if (m.lucido) { var sp = Math.pow(Math.max(0, dot(n, MEZZO)), m.esp || 24) * m.lucido; if (sp > .01) col = mix(col, m.riflesso ? chiaro(c, m.riflesso) : "#fff8ec", Math.min(.85, sp)); }
+    return col;
+  }
+  var PELLE = { lucido: .45, esp: 12 }, MARMO_L = { lucido: .55, esp: 20 }, CROMATO = { lucido: 1, esp: 5, forza: 1.7 }, LEGNO_L = { lucido: .35, esp: 16 };
+
+  // ---------- i pezzi tirati: una sezione tirata lungo un asse ----------
+  // asse "a": la sezione è fatta di punti [b, z] e va da a = t0 ad a = t1; asse "b": punti [a, z], da b = t0 a b = t1.
+  // o = { mat, fascia(H) = disegni sulla parte tirata, tappo(T) = disegni sul tappo che si vede (piatto), tappoCol, lw, ao, aoH }
+  function arcoS(cx, cz, rx, rz, a0, a1, n) { var o = [], i; for (i = 0; i <= n; i++) { var t = a0 + (a1 - a0) * i / n; o.push([cx + rx * Math.cos(t), cz + rz * Math.sin(t)]); } return o; }
+  function pulisci(a) { return a.filter(function (x, i) { var y = a[(i + a.length - 1) % a.length]; return Math.abs(x[0] - y[0]) > 1e-4 || Math.abs(x[1] - y[1]) > 1e-3; }); }
+  function tondo(x0, x1, z0, z1, r, pancia, rb) {   // la sezione di un cuscino: r = raggio degli spigoli di sopra (mattonelle); pancia = quanto si gonfia sopra (unità)
+    var rz = r * 61, b = rb == null ? r * .5 : rb, bz = b * 61, top = [], k;
+    for (k = 1; k < 8; k++) { var s = k / 8; top.push([x1 - r - (x1 - x0 - 2 * r) * s, z1 + (pancia || 0) * Math.sin(Math.PI * s)]); }
+    return pulisci([].concat(arcoS(x0 + b, z0 + bz, b, bz, Math.PI, Math.PI * 1.5, 3), arcoS(x1 - b, z0 + bz, b, bz, Math.PI * 1.5, Math.PI * 2, 3),
+      arcoS(x1 - r, z1 - rz, r, rz, 0, Math.PI / 2, 9), top, arcoS(x0 + r, z1 - rz, r, rz, Math.PI / 2, Math.PI, 9)));
+  }
+  function estruso(asse, prof, t0, t1, c, o) {
+    o = o || {};
+    var A = asse === "a", tv = G > 0 ? t1 : t0, tn = G > 0 ? t0 : t1, n = prof.length, m = o.mat, i;
+    function p3(pt, t) { return A ? P(t, pt[0], pt[1]) : P(pt[0], t, pt[1]); }
+    var capV = prof.map(function (x) { return p3(x, tv); }), capN = prof.map(function (x) { return p3(x, tn); });
+    var sil = inviluppo(capV.concat(capN)), dSil = chiuso(sil), dCap = chiuso(capV);
+    var nn = A ? [-.4472, .8944] : [.4472, .8944];   // sullo schermo, di traverso all'asse
+    function sp(w) { return w[0] * nn[0] + w[1] * nn[1]; }
+    var area = 0, en = [];
+    for (i = 0; i < n; i++) { var u1 = prof[i], u2 = prof[(i + 1) % n]; area += (u1[0] * u2[1] - u2[0] * u1[1]) / 61; }
+    var sg = area > 0 ? 1 : -1, zb = Math.min.apply(null, prof.map(function (x) { return x[1]; }));
+    function tv2(nrm, z) { var col = tinta(c, nrm, m), f = o.ao ? Math.max(0, 1 - (z - zb) / (o.aoH || 8)) : 0; return f > 0 ? mix(col, "#000000", o.ao * f * f) : col; }
+    for (i = 0; i < n; i++) {   // la normale di ogni lato della sezione, nella vista
+      var e1 = prof[i], e2 = prof[(i + 1) % n], dx = e2[0] - e1[0], dz = (e2[1] - e1[1]) / 61, l = Math.sqrt(dx * dx + dz * dz) || 1, mx = sg * dz / l, mz = -sg * dx / l;
+      en.push(A ? [0, G * mx, mz] : [G * mx, 0, mz]);
+    }
+    var voci = [], vis = [], luMax = -2, kLuce = 0;
+    for (i = 0; i < n; i++) {
+      var ea = en[(i + n - 1) % n], eb = en[i], va = dot(ea, VISTA) > .001, vb = dot(eb, VISTA) > .001, s = sp(capV[i]);
+      if (!va && !vb) continue;
+      vis.push({ k: i, s: s });
+      var zz = prof[i][1], nm = va && vb ? norma([ea[0] + eb[0], ea[1] + eb[1], ea[2] + eb[2]]) : (va ? ea : eb), lu = dot(nm, MEZZO);
+      if (lu > luMax) { luMax = lu; kLuce = i; }
+      if (va && vb && dot(ea, eb) < .8) { var prima = sp(capV[(i + n - 1) % n]) < s; voci.push({ s: s, c: [tv2(prima ? ea : eb, zz), tv2(prima ? eb : ea, zz)] }); }   // uno spigolo vivo: due colori nello stesso punto
+      else voci.push({ s: s, c: [tv2(nm, zz)] });
+    }
+    voci.sort(function (x, y) { return x.s - y.s; }); vis.sort(function (x, y) { return x.s - y.s; });
+    var smin = 1e9, smax = -1e9; sil.forEach(function (w) { var v = sp(w); if (v < smin) smin = v; if (v > smax) smax = v; });
+    var st = []; voci.forEach(function (v) { v.c.forEach(function (cc) { st.push([f2(Math.max(0, Math.min(1, (v.s - smin) / (smax - smin || 1)))), cc]); }); });
+    if (!st.length) st = [[0, c], [1, c]];
+    var r = pth(dSil, nuova(st, nn[0] * smin, nn[1] * smin, nn[0] * smax, nn[1] * smax, true));
+    var xs = prof.map(function (x) { return x[0]; }), zs = prof.map(function (x) { return x[1]; }), x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), z0 = Math.min.apply(null, zs), z1 = Math.max.apply(null, zs);
+    var H = {   // gli aiuti per decorare
+      p3: p3, sil: sil, capV: capV, kLuce: kLuce, tv: tv,
+      luccica: function (k, a, b) { var pp = this.lungo(kLuce, t0 + (t1 - t0) * (a || .06), t0 + (t1 - t0) * (b || .94)); return tratto(aperto(pp), "#ffffff", 1.2, op(k || .5)) + tratto(aperto(pp), "#ffffff", 3, op((k || .5) * .25)); },
+      sez: function (t, filtro) { return vis.filter(function (v) { return !filtro || filtro(prof[v.k]); }).map(function (v) { return p3(prof[v.k], t); }); },
+      lungo: function (k, ta, tb) { return [p3(prof[k], ta == null ? t0 : ta), p3(prof[k], tb == null ? t1 : tb)]; },
+      vicinoA: function (x, z) { var bi = 0, bd = 1e9; prof.forEach(function (w, j) { var d = Math.abs(w[0] - x) + Math.abs(w[1] - z) / 61; if (d < bd) { bd = d; bi = j; } }); return bi; }
+    };
+    if (o.fascia) r += dentro(dSil, o.fascia(H));
+    var ct = o.tappoCol || tinta(c, A ? [1, 0, 0] : [0, 1, 0], m);
+    r += pth(dCap, nuova([[0, chiaro(ct, .07)], [1, scuro(ct, .1)]], 0, 0, 0, 1));
+    if (o.tappo) {
+      var T;
+      if (A) T = { O: P(tv, G > 0 ? x1 : x0, z1), X: P(tv, G > 0 ? x0 : x1, z1), Y: P(tv, G > 0 ? x1 : x0, z0), W: (x1 - x0) * 61, H: z1 - z0, x: function (b) { return (G > 0 ? x1 - b : b - x0) * 61; } };
+      else T = { O: P(G > 0 ? x0 : x1, tv, z1), X: P(G > 0 ? x1 : x0, tv, z1), Y: P(G > 0 ? x0 : x1, tv, z0), W: (x1 - x0) * 61, H: z1 - z0, x: function (a) { return (G > 0 ? a - x0 : x1 - a) * 61; } };
+      T.y = function (z) { return z1 - z; };
+      T.su = function (cont) { return piano(T.O, T.X, T.Y, T.W, T.H, cont); };
+      r += dentro(dCap, o.tappo(T));
+    }
+    r += pth(dCap, "none", "stroke='" + L + "' stroke-width='.9' stroke-linejoin='round' opacity='.7'");
+    return r + pth(dSil, "none", bordo(L, o.lw || 2));
+  }
+  function cordone(d, c, w) { w = w || 1.3; return tratto(d, scuro(c, .42), w + .5, op(.85)) + tratto(d, chiaro(c, .32), w * .45, "opacity='.75' transform='translate(-.3 -.4)'"); }   // il cordoncino della pelle
+
+  // ---------- i pezzi torniti (colonne, bottiglie, tazzine): prof = [[z, raggio in mattonelle], ...] dal basso in alto ----------
+  function dTornito(a, b, prof) {
+    var c = P(a, b, 0), n = prof.length, sx = [], dx = [], i;
+    for (i = 0; i < n; i++) { var rx = prof[i][1] * 70.71, y = c[1] - prof[i][0]; sx.push([c[0] - rx, y]); dx.push([c[0] + rx, y]); }
+    var rt = prof[n - 1][1] * 70.71, rb = prof[0][1] * 70.71;
+    var d = "M" + sx.map(function (x) { return q(x); }).join(" L") + " A" + f1(rt) + "," + f1(rt / 2) + " 0 0,1 " + q(dx[n - 1]);
+    for (i = n - 2; i >= 0; i--) d += " L" + q(dx[i]);
+    return d + " A" + f1(rb) + "," + f1(rb / 2) + " 0 0,1 " + q(sx[0]) + " Z";
+  }
+  function tornito(a, b, prof, stops, lw, anelli, luce) {   // anelli = i livelli dove si vede un anello; luce = il filo chiaro a sinistra
+    var c = P(a, b, 0), n = prof.length, rm = 0;
+    prof.forEach(function (x) { rm = Math.max(rm, x[1] * 70.71); });
+    var o = pth(dTornito(a, b, prof), lin("tn", stops, c[0] - rm, 0, c[0] + rm, 0, true), bordo(L, lw == null ? 1.2 : lw));
+    (anelli || []).forEach(function (k) { var rx = prof[k][1] * 70.71, y = c[1] - prof[k][0]; o += pth("M" + q(c[0] - rx, y) + " A" + f1(rx) + "," + f1(rx / 2) + " 0 0,0 " + q(c[0] + rx, y), "none", "stroke='" + L + "' stroke-width='.5' opacity='.5'"); });
+    if (luce) o += tratto("M" + prof.slice(1, n - 1).map(function (x) { return q(c[0] - x[1] * 70.71 * .5, c[1] - x[0]); }).join(" L"), "#ffffff", luce, op(.5));
+    return o;
+  }
+  function bocca(a, b, z, r, fill, x2) { var c = P(a, b, z); return ell(c[0], c[1], r * 70.71, r * 35.36, fill, x2); }   // il cerchio orizzontale (la bocca, il tappo) visto dall'alto
+  function fasciaT(a, b, z0, z1, r) {   // la fascia attorno a un pezzo tornito dritto (l'etichetta): il tracciato
+    var c = P(a, b, 0), rx = r * 70.71, ry = rx / 2, y0 = c[1] - z0, y1 = c[1] - z1;
+    return "M" + q(c[0] - rx, y1) + " A" + f1(rx) + "," + f1(ry) + " 0 0,0 " + q(c[0] + rx, y1) + " L" + q(c[0] + rx, y0) + " A" + f1(rx) + "," + f1(ry) + " 0 0,1 " + q(c[0] - rx, y0) + " Z";
+  }
+  function anello(a, b, z, R, w, vicina, ott) {   // un anello orizzontale (poggiapiedi): la metà lontana o quella vicina
+    var c = P(a, b, z), rx = R * 70.71, ry = R * 35.36, pp = [], i;
+    for (i = 0; i <= 28; i++) { var t = (vicina ? 0 : Math.PI) + Math.PI * i / 28; pp.push([c[0] + rx * Math.cos(t), c[1] + ry * Math.sin(t)]); }
+    return ott ? ottone(aperto(pp), w) : cromo(aperto(pp), w);
+  }
+
+  // ---------- le gambe, le ombre, l'ordine dei pezzi ----------
+  function gambaTonda(T, F, w0, w1, stops, puntale) {   // una gamba tonda e affusolata da T (in alto) a F (il piede), punti [a, b, z]
+    var t = P(T[0], T[1], T[2]), f = P(F[0], F[1], F[2]), dx = f[0] - t[0], dy = f[1] - t[1], l = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / l, ny = dx / l;
+    if (nx > 0) { nx = -nx; ny = -ny; }
+    var a = [t[0] + nx * w0, t[1] + ny * w0], b = [t[0] - nx * w0, t[1] - ny * w0], c = [f[0] - nx * w1, f[1] - ny * w1], d = [f[0] + nx * w1, f[1] + ny * w1];
+    var s = poly([a, b, c, d], nuova(stops, a[0], a[1], b[0], b[1], true), bordo(L, 1));
+    if (puntale) { var k = .22, pa = lerp(d, a, k), pb = lerp(c, b, k); s += poly([pa, pb, c, d], nuova(puntale, pa[0], pa[1], pb[0], pb[1], true), bordo(L, .8)); }
+    return s + tratto(linea([t[0] + nx * w0 * .4, t[1] + ny * w0 * .4], [f[0] + nx * w1 * .4, f[1] + ny * w1 * .4]), "#ffffff", .6, op(.5));
+  }
+  function aTerra(c) { return "<g transform='matrix(50 25 -50 25 0 0)'>" + c + "</g>"; }
+  function ombraSotto(a0, a1, b0, b1, k) {   // il buio sotto un mobile alzato sui piedini
+    var u0 = Math.min(G * a0, G * a1), v0 = Math.min(G * b0, G * b1);
+    return aTerra("<rect x='" + f2(u0 + .02) + "' y='" + f2(v0) + "' width='" + f2(Math.abs(a1 - a0)) + "' height='" + f2(Math.abs(b1 - b0)) + "' rx='.06' fill='" + rad("oms", [[0, "#000", .5], [.7, "#000", .35], [1, "#000", 0]], .5, .5, .55) + "' " + op(k || .3) + "/>");
+  }
+  function ombraPianta(a0, a1, b0, b1, k, pad) {   // l'ombra morbida stesa sul pavimento (un po' a destra: la luce viene da sinistra)
+    pad = pad == null ? .1 : pad;
+    var cu = G * (a0 + a1) / 2 + .05, cv = G * (b0 + b1) / 2 - .01;
+    return aTerra("<ellipse cx='" + f2(cu) + "' cy='" + f2(cv) + "' rx='" + f2((a1 - a0) / 2 + pad) + "' ry='" + f2((b1 - b0) / 2 + pad) + "' fill='" + rad("omp", [[0, "#000", .24], [.6, "#000", .15], [1, "#000", 0]], .5, .5, .5) + "'" + (k ? " " + op(k) : "") + "/>");
+  }
+  function ombraTonda(a, b, r, k) { return aTerra("<circle cx='" + f2(G * a + .04) + "' cy='" + f2(G * b) + "' r='" + f2(r) + "' fill='" + rad("omt", [[0, "#000", .26], [.55, "#000", .15], [1, "#000", 0]], .5, .5, .5) + "'" + (k ? " " + op(k) : "") + "/>"); }
+  function inOrdine(l) {   // i pezzi dal più lontano al più vicino: box = [a0, a1, b0, b1, z0, z1]
+    var n = l.length, fatto = [], out = "", k, i, j;
+    function sov(x0, x1, y0, y1) { return x0 < y1 - 1e-6 && y0 < x1 - 1e-6; }
+    function prima(A, B) {
+      var a = A.box, b = B.box, sa = sov(a[0], a[1], b[0], b[1]), sb = sov(a[2], a[3], b[2], b[3]);
+      if (sa && sb) return a[4] < b[4] - 1e-6 || (Math.abs(a[4] - b[4]) < 1e-6 && (A.ord || 0) < (B.ord || 0));
+      if (sb && !sa) return G * (a[0] + a[1]) < G * (b[0] + b[1]);
+      if (sa && !sb) return G * (a[2] + a[3]) < G * (b[2] + b[3]);
+      return G * (a[0] + a[1] + a[2] + a[3]) < G * (b[0] + b[1] + b[2] + b[3]);
+    }
+    for (k = 0; k < n; k++) {
+      for (i = 0; i < n; i++) { if (fatto[i]) continue; for (j = 0; j < n; j++) if (j !== i && !fatto[j] && prima(l[j], l[i])) break; if (j === n) break; }
+      if (i === n) for (i = 0; fatto[i]; i++);
+      fatto[i] = true; out += l[i].s;
+    }
+    return out;
+  }
+  function chiodi(pp, r) {   // i chiodini d'ottone
+    var g = rad("chd", [[0, "#fffbe0"], [.35, "#f1cf6e"], [.75, "#b5862a"], [1, "#6e4c10"]], .38, .32, .7);
+    return pp.map(function (w) { return cer(w[0] + .25, w[1] + .35, r || .7, "#000", op(.3)) + cer(w[0], w[1], r || .7, g, "stroke='#5a3c0c' stroke-width='.25'"); }).join("");
+  }
+  function venature(W, H, n, seme, c, k, x0, y0) {   // le venature del legno, quasi dritte (in verticale)
+    var o = "", rr = rnd(seme), i; x0 = x0 || 0; y0 = y0 || 0;
+    for (i = 0; i < n; i++) { var x = x0 + rr() * W, w = .3 + rr() * .55; o += pth("M" + q(x, y0) + " Q" + q(x + (rr() - .5) * 3, y0 + H * .5) + " " + q(x + (rr() - .5) * 2, y0 + H), "none", "stroke='" + (rr() < .5 ? chiaro(c, .25) : scuro(c, .3)) + "' stroke-width='" + f1(w) + "' " + op(k || .35)); }
+    return o;
+  }
+  function venatureO(W, H, n, seme, c, k, x0, y0) {   // le venature in orizzontale
+    var o = "", rr = rnd(seme), i; x0 = x0 || 0; y0 = y0 || 0;
+    for (i = 0; i < n; i++) { var y = y0 + rr() * H, w = .3 + rr() * .5; o += pth("M" + q(x0, y) + " Q" + q(x0 + W * .5, y + (rr() - .5) * 2.4) + " " + q(x0 + W, y + (rr() - .5) * 1.6), "none", "stroke='" + (rr() < .5 ? chiaro(c, .25) : scuro(c, .3)) + "' stroke-width='" + f1(w) + "' " + op(k || .35)); }
+    return o;
+  }
+  function riquadro(x, y, w, h, c, seme, r) {   // il riquadro in rilievo col filetto chiaro (l'intarsio)
+    r = r == null ? 2.4 : r;
+    var o = rett(x + .7, y + .9, w, h, r, "#000", op(.2));
+    o += rett(x, y, w, h, r, lin("rq" + c.slice(1), [[0, chiaro(c, .18)], [1, scuro(c, .05)]], 0, 0, 1, 1), "stroke='" + scuro(c, .5) + "' stroke-width='.6'");
+    o += dentro(rettD(x, y, w, h, r), venature(w, h, Math.max(3, Math.round(w / 5)), seme, c, .4, x, y));
+    if (w > 9 && h > 9) o += rett(x + 2.6, y + 2.6, w - 5.2, h - 5.2, Math.max(.6, r - 1), "none", "stroke='" + chiaro(c, .52) + "' stroke-width='.7' opacity='.9'");
+    return o + tratto("M" + q(x + .9, y + h - 1.2) + " L" + q(x + .9, y + .9) + " L" + q(x + w - 1.2, y + .9), "#ffffff", .6, op(.45));
+  }
+
+  // ---------- il registro ----------
+  var DIS = {};
+  function def(nome, d, fn) { d.fn = fn; DIS[nome] = d; }
+  var NOCE = "#8e5a32", NOCE_SC = "#5a3519", MIELE = "#b07a45";
+
+  // =========================================================
+  //  IL BANCONE DEL BAR (anni '60): il davanti di noce a riquadri con l'intarsio chiaro, le fasce e il poggiapiedi d'ottone,
+  //  il piano di marmo bianco di Carrara col bordo tondo. Sopra: la vetrinetta delle paste (cornetti, bomboloni, cannoli, bignè),
+  //  le bottiglie di amaro coi dosatori, le tazzine col piattino, il bicchiere d'acqua e lo zucchero, la radio di legno
+  //  e la macchina dell'espresso a leva, cromata, coi due gruppi e le leve col pomello nero.
+  //  Da dietro (la parte del barista): le nicchie con le tazzine impilate, i bicchieri, la cassetta delle bibite,
+  //  i gruppi della macchina coi portafiltri e la tazzina sotto il beccuccio.
+  // =========================================================
+  def("bancone_circolo", { nome: "Bancone del bar", fp: [3, 1], box: [-93, -132, 93, 48], dietro: true, piano: 64, luce: [0, -.01, 72, 100, "#ffe2a8"] }, function () {
+    var A0 = -1.42, A1 = 1.42, B0 = -.3, B1 = .22, ZP = 6, ZB = 58.5, ZT = 64, r = rnd(6401);
+    var s = ombraPianta(A0, A1, -.34, .34, .9, .12);
+    // ---- il mobile: lo zoccolo scuro, il corpo di noce, il poggiapiedi d'ottone ----
+    function davanti(W, H) {
+      var o = venature(W, H, 50, 3, NOCE, .28), n = 4, m = 6, gap = 7, pw = (W - 2 * m - gap * (n - 1)) / n, i;
+      for (i = 0; i < n; i++) o += riquadro(m + i * (pw + gap), 7.5, pw, H - 17.5, MIELE, 20 + i);
+      for (i = 0; i <= n; i++) {   // le lesene tra un riquadro e l'altro, un po' in rilievo
+        var xl = i === 0 ? 1.2 : i === n ? W - 4.4 : m + i * (pw + gap) - gap / 2 - 1.6;
+        o += rett(xl, 4, 3.2, H - 7, .8, lin("ls", [[0, chiaro(NOCE, .2)], [.5, NOCE], [1, scuro(NOCE, .3)]], 0, 0, 1, 0), "stroke='" + scuro(NOCE, .5) + "' stroke-width='.4'");
+      }
+      o += rett(0, 0, W, 2.6, 0, lin("fo", OTTONE, 0, 0, 0, 1), "stroke='" + L + "' stroke-width='.4'") + rett(0, 2.6, W, 1, 0, "#000", op(.25));   // la fascia d'ottone sotto il marmo
+      o += rett(0, H - 3.2, W, 3.2, 0, lin("fz", OTTONE, 0, 0, 0, 1), "stroke='" + L + "' stroke-width='.4'");   // la fascia d'ottone in basso
+      for (i = 0; i < 9; i++) o += cer(8 + i * (W - 16) / 8, H - 1.6, .45, "#7a5614");   // le viti della fascia
+      return o + buio(W, 9, .42, true);   // l'ombra del marmo che sporge
+    }
+    function fianco(W, H) { return venature(W, H, 12, 9, NOCE, .28) + riquadro(4, 7.5, W - 8, H - 17.5, MIELE, 31) + rett(0, 0, W, 2.6, 0, lin("fo", OTTONE, 0, 0, 0, 1), "stroke='" + L + "' stroke-width='.4'") + rett(0, H - 3.2, W, 3.2, 0, lin("fz", OTTONE, 0, 0, 0, 1), "stroke='" + L + "' stroke-width='.4'") + buio(W, 7, .38, true); }
+    function dietro(W, H) {   // dalla parte del barista: tre nicchie con le mensole
+      var o = venature(W, H, 36, 11, NOCE, .28), xs = [3, 60.4, 117.8], bw = 54.4, k, j;
+      xs.forEach(function (x) {
+        o += rett(x, 5, bw, H - 10, 1, lin("ni", [[0, "#22160e"], [1, "#3d2a1c"]], 0, 0, 0, 1), "stroke='" + L + "' stroke-width='.8'") + rett(x, 5, bw, 3, 0, "#000", op(.35)) + rett(x, 5, 2.2, H - 10, 0, "#000", op(.25));
+        o += rett(x + .6, 24.5, bw - 1.2, 2, .4, lin("mn", [[0, chiaro(NOCE, .3)], [1, scuro(NOCE, .25)]], 0, 0, 0, 1), "stroke='" + L + "' stroke-width='.4'");   // la mensola in mezzo
+      });
+      // prima nicchia: sopra le tazzine capovolte in fila, sotto le pile di piattini
+      for (k = 0; k < 7; k++) { var cx = 7 + k * 7.2, yb = 24.5; o += pth("M" + q(cx - 2.6, yb) + " L" + q(cx - 2, yb - 3.6) + " Q" + q(cx, yb - 4.4) + " " + q(cx + 2, yb - 3.6) + " L" + q(cx + 2.6, yb) + " Z", "#f8f9fa", "stroke='#8a96a0' stroke-width='.35'") + rett(cx - 2.6, yb - .7, 5.2, .7, .3, "#c92a2a", op(.85)) + rett(cx - 1.6, yb - 3.2, .8, 2.4, .3, "#ffffff"); }
+      for (j = 0; j < 4; j++) for (k = 0; k < 6; k++) { var px = 9 + j * 12.4, py = 49 - k * 1.25; o += ell(px, py, 5.2, 1.1, k % 2 ? "#eef1f3" : "#ffffff", "stroke='#8a96a0' stroke-width='.3'"); }
+      // seconda nicchia: i bicchieri capovolti sullo strofinaccio, sotto la cassetta delle bibite
+      o += rett(62, 23.2, 50, 1.6, .3, "#f8f9fa") + rett(62, 23.6, 50, .4, 0, "#e03131", op(.8));
+      for (k = 0; k < 7; k++) { var gx = 65.5 + k * 6.6, gy = 23.2; o += pth("M" + q(gx - 2.4, gy) + " L" + q(gx - 1.9, gy - 7.6) + " L" + q(gx + 1.9, gy - 7.6) + " L" + q(gx + 2.4, gy) + " Z", "#d0ebff", "stroke='#8fb3c9' stroke-width='.4' fill-opacity='.65'") + rett(gx - 1.9, gy - 7.6, 3.8, 1.2, .3, "#a5d8ff", op(.7)) + rett(gx - 1.4, gy - 6.6, .5, 5, .25, "#ffffff", op(.8)); }
+      o += rett(65, 34.5, 44, 13, .8, lin("cs", [[0, "#d9a066"], [1, "#9c6230"]], 0, 0, 0, 1), "stroke='" + L + "' stroke-width='.6'") + rett(65, 38.5, 44, 1, 0, "#000", op(.2));   // la cassetta di legno
+      for (k = 0; k < 6; k++) { var bx = 68.5 + k * 7.2, cc = k % 2 ? "#e8590c" : "#2f2a26"; o += rett(bx - 1.6, 27.5, 3.2, 8, 1.2, cc, "stroke='" + L + "' stroke-width='.35'") + rett(bx - .7, 24.6, 1.4, 3.4, .5, cc, "stroke='" + L + "' stroke-width='.3'") + rett(bx - .8, 24, 1.6, .9, .3, "#fab005", "stroke='" + L + "' stroke-width='.25'") + rett(bx - 1.1, 29, .6, 5, .3, "#ffffff", op(.5)); }
+      // terza nicchia: sopra i sacchetti del caffè, sotto il portabottiglie del vino
+      [[124, 0], [139, 1]].forEach(function (g) { o += pth("M" + q(g[0], 24.4) + " L" + q(g[0] + .6, 12) + " Q" + q(g[0] + 6, 10.4) + " " + q(g[0] + 11.4, 12) + " L" + q(g[0] + 12, 24.4) + " Z", g[1] ? "#c08a4a" : "#8a5a2b", "stroke='" + L + "' stroke-width='.45'") + rett(g[0] + 2.4, 15.4, 7.2, 5, .6, g[1] ? "#c92a2a" : "#2b8a3e", op(.85)) + cer(g[0] + 6, 17.9, 1.3, "#fff4d6"); });
+      o += rett(154, 15, 8, 9.4, .6, "#1d1d1f", "stroke='" + L + "' stroke-width='.4'") + rett(154.6, 17.6, 6.8, .7, 0, "#868e96");   // il battifondi
+      for (j = 0; j < 2; j++) for (k = 0; k < 7; k++) { var vx = 123.5 + k * 7.1, vy = 33 + j * 7.4; o += cer(vx, vy, 3.1, "#2a1d14") + cer(vx, vy, 2.5, nuovaR([[0, "#4b7a3a"], [1, "#132b12"]], .4, .35, .7), "stroke='" + L + "' stroke-width='.35'") + cer(vx - .7, vy - .8, .7, "#ffffff", op(.6)); }
+      return o + buio(W, 9, .5, true);
+    }
+    function poggiapiedi() {   // il tubo d'ottone sulle staffe, e la sua ombra a terra
+      var bb = B1 + .085, zz = 11, e0 = A0 + .12, e1 = A1 - .12, o = tratto(linea(P(e0, bb + .05, 0), P(e1, bb + .05, 0)), "#000", 5, op(.07));
+      [-1.05, -.35, .35, 1.05].forEach(function (a) { o += ottone("M" + q(P(a, B1, zz + 4.4)) + " L" + q(P(a, bb, zz + .6)), 1.2); });
+      o += ottone(linea(P(e0, bb, zz), P(e1, bb, zz)), 2.4);
+      [e0, e1].forEach(function (a) { var c = P(a, bb, zz); o += cer(c[0], c[1], 1.8, lin("pt", OTTONE, 0, 0, 1, 1), bordo(L, .7)); });
+      return o;
+    }
+    if (G < 0) s += poggiapiedi();
+    s += blocco(A0 + .03, A1 - .03, B0 + .03, B1 - .04, 0, ZP, "#3a2a20", null, 1.4);
+    s += blocco(A0, A1, B0, B1, ZP, ZB, NOCE, { davanti: davanti, dietro: dietro, fianco: fianco }, 2.2);
+    if (G > 0) s += poggiapiedi();
+    // ---- il piano di marmo bianco, spesso, col bordo tondo dalla parte dei clienti; le venature grigie ----
+    var prof = [[-.34, ZB], [.27, ZB]].concat(arcoS(.27, (ZB + ZT) / 2, .03, (ZT - ZB) / 2, -Math.PI / 2, Math.PI / 2, 8).slice(1), [[-.34, ZT]]);
+    s += estruso("a", pulisci(prof), A0 - .015, A1 + .015, "#e9e6df", {
+      mat: MARMO_L, lw: 2.1,
+      fascia: function (H) {
+        var o = "", k, i;
+        for (k = 0; k < 11; k++) {   // le venature: linee grigie che vagano, qualcuna si divide
+          var b = -.3 + r() * .56, a = A0 + r() * .3, pp = [];
+          for (i = 0; i < 9 && a < A1; i++) { pp.push(P(a, b, ZT)); a += .12 + r() * .28; b += (r() - .5) * .16; b = Math.max(-.32, Math.min(.27, b)); }
+          if (pp.length > 2) o += tratto(curva(pp), r() < .4 ? "#8f969c" : "#b4b9bd", .3 + r() * .5, op(.75)) + tratto(curva(pp), "#c9cdd0", 2.4, op(.12));
+        }
+        var t0 = P(A0, -.34, ZT), t1 = P(A1, .3, ZT);
+        for (k = 0; k < 3; k++) { var x0 = t0[0] + 34 + k * 46, w = k === 1 ? 14 : 8; o += poly([[x0, t0[1] - 6], [x0 + w, t0[1] - 6], [x0 + w - 44, t1[1] + 6], [x0 - 44, t1[1] + 6]], "#ffffff", op(k === 1 ? .22 : .14)); }   // i riflessi del marmo lucido
+        return o + H.luccica(.7, .02, .98);
+      }
+    });
+    // ---- le cose sopra il banco ----
+    var sopra = [];
+    // la vetrinetta delle paste: la base cromata, i ripiani coi pasticcini, il vetro coi riflessi, gli spigoli cromati
+    (function () {
+      var a0 = -1.36, a1 = -.8, b0 = -.2, b1 = .17, zb = ZT + 2.6, zm = ZT + 12.6, zv = ZT + 23;
+      var o = blocco(a0, a1, b0, b1, ZT, zb, tinteDi(CROMO), null, 1.2);
+      var u0 = G > 0 ? a0 : -a1, u1 = G > 0 ? a1 : -a0, v0 = G > 0 ? b0 : -b1, v1 = G > 0 ? b1 : -b0;
+      function C(u, v, z) { return Puv(u, v, z); }
+      var sil = [C(u0, v0, zv), C(u1, v0, zv), C(u1, v0, zb), C(u1, v1, zb), C(u0, v1, zb), C(u0, v1, zv)];
+      var dentroV = "";
+      if (NOTTE) dentroV += pth(chiuso(sil), nuovaR([[0, "#fff1c4", .78], [.6, "#ffd98a", .42], [1, "#ffc56b", .18]], .45, .5, .7));   // la lucina dentro la vetrinetta, morbida
+      else dentroV += pth(chiuso(sil), nuova([[0, "#eaf6fb", .35], [1, "#cfe6ef", .25]], 0, 0, 0, 1));
+      dentroV += poly([C(u0, v0, zb), C(u1, v0, zb), C(u1, v1, zb), C(u0, v1, zb)], NOTTE ? "#fff3d6" : "#f6f1e6");   // il fondo bianco
+      dentroV += tratto(linea(C(u0, v0, zb), C(u0, v0, zv)) + " " + linea(C(u0, v0, zv), C(u1, v0, zv)) + " " + linea(C(u0, v0, zv), C(u0, v1, zv)), "#9aa5ad", .6, op(.8));   // gli spigoli lontani, sottili
+      // i pasticcini: in basso i cornetti e i bomboloni sul vassoio d'argento, in alto i cannoli e i bignè nei pirottini
+      function vassoio(z) { var pp = [P(a0 + .03, b0 + .03, z), P(a1 - .03, b0 + .03, z), P(a1 - .03, b1 - .03, z), P(a0 + .03, b1 - .03, z)]; return poly(pp, lin("vs", [[0, "#ffffff"], [.5, "#dfe5e9"], [1, "#aab5be"]], 0, 0, 1, 1), "stroke='#8a96a0' stroke-width='.4'") + poly(rientra(pp, 1.6), "none", "stroke='#ffffff' stroke-width='.5' opacity='.8'"); }
+      function cornetto(a, b, z) {
+        var c = P(a, b, z + 1.8), g = nuova([[0, vivo("#ffd27a")], [.45, vivo("#e39a3b")], [1, vivo("#9a5418")]], c[0] - 4, c[1] - 3, c[0] + 4, c[1] + 2, true);
+        var d = "M" + q(c[0] - 4.4, c[1] + 1) + " Q" + q(c[0] - 3.4, c[1] - 2.9) + " " + q(c[0], c[1] - 2.8) + " Q" + q(c[0] + 3.4, c[1] - 2.9) + " " + q(c[0] + 4.4, c[1] + 1) + " Q" + q(c[0] + 2, c[1] - .2) + " " + q(c[0], c[1] + .4) + " Q" + q(c[0] - 2, c[1] - .2) + " " + q(c[0] - 4.4, c[1] + 1) + " Z";
+        return pth(d, g, bordo(L, .5)) + tratto("M" + q(c[0] - 2.1, c[1] - 2.5) + " Q" + q(c[0] - 1.5, c[1] - .8) + " " + q(c[0] - 2.1, c[1] + .1) + " M" + q(c[0], c[1] - 2.8) + " L" + q(c[0], c[1] + .3) + " M" + q(c[0] + 2.1, c[1] - 2.5) + " Q" + q(c[0] + 1.5, c[1] - .8) + " " + q(c[0] + 2.1, c[1] + .1), "#8a4a14", .4, op(.85)) + ell(c[0] - 1, c[1] - 1.9, 1.3, .5, "#ffffff", op(.6));
+      }
+      function bombolone(a, b, z) { var c = P(a, b, z + 2.2); return cer(c[0], c[1], 2.6, nuovaR([[0, vivo("#ffe6b0")], [.55, vivo("#e5a452")], [1, vivo("#a8641e")]], .38, .32, .75), bordo(L, .45)) + [[-1, -.8], [.6, -1.3], [1.2, .3], [-.3, .8], [-1.3, .5], [.2, -.2]].map(function (w) { return cer(c[0] + w[0], c[1] + w[1], .36, "#ffffff", op(.95)); }).join("") + ell(c[0] - .9, c[1] - 1.2, .8, .45, "#ffffff", op(.55)); }
+      function cannolo(a, b, z) {
+        var c0 = P(a - .055, b, z + 1.7), c1 = P(a + .055, b, z + 1.7);
+        return tratto(linea(c0, c1), L, 4.6) + tratto(linea(c0, c1), vivo("#b8732a"), 3.6) + tratto(linea([c0[0], c0[1] - .8], [c1[0], c1[1] - .8]), vivo("#e6ae63"), 1.1) +
+          cer(c0[0], c0[1], 1.8, "#fffaf0", bordo(L, .4)) + cer(c1[0], c1[1], 1.8, "#fffaf0", bordo(L, .4)) + cer(c0[0] - .4, c0[1] - .3, .6, "#e03131") + cer(c1[0] + .4, c1[1] - .4, .6, "#2f9e44");
+      }
+      function bigne(a, b, z) {
+        var c = P(a, b, z), o = pth("M" + q(c[0] - 2.6, c[1] - 1.1) + " L" + q(c[0] - 2.1, c[1] + .6) + " L" + q(c[0] + 2.1, c[1] + .6) + " L" + q(c[0] + 2.6, c[1] - 1.1) + " Z", "#ffffff", "stroke='#c9b99a' stroke-width='.35'");   // il pirottino di carta
+        return o + pth("M" + q(c[0] - 2.4, c[1] - 1) + " Q" + q(c[0] - 2.4, c[1] - 4.4) + " " + q(c[0], c[1] - 4.5) + " Q" + q(c[0] + 2.4, c[1] - 4.4) + " " + q(c[0] + 2.4, c[1] - 1) + " Z", vivo("#e7b066"), bordo(L, .45)) + pth("M" + q(c[0] - 2.2, c[1] - 2.4) + " Q" + q(c[0], c[1] - 5.6) + " " + q(c[0] + 2.2, c[1] - 2.4) + " Q" + q(c[0], c[1] - 3.4) + " " + q(c[0] - 2.2, c[1] - 2.4) + " Z", vivo("#5a2e14")) + ell(c[0] - .8, c[1] - 3.7, .7, .3, "#ffffff", op(.6));
+      }
+      var basso = [[-1.26, -.11, cornetto], [-1.1, -.12, cornetto], [-.95, -.11, cornetto], [-1.22, .07, bombolone], [-1.07, .08, bombolone], [-.92, .07, bombolone]];
+      var alto = [[-1.24, -.08, cannolo], [-1.08, -.07, cannolo], [-.93, -.09, bigne], [-1.23, .08, bigne], [-1.08, .08, bigne], [-.93, .07, bigne]];
+      function fila(l, z) { return ordina(l.map(function (x) { return [vicino(x[0], x[1]), x[2](x[0], x[1], z)]; })); }
+      dentroV += vassoio(zb + .3) + fila(basso, zb + .3);
+      dentroV += poly([C(u0, v0, zm), C(u1, v0, zm), C(u1, v1, zm), C(u0, v1, zm)], "#e3f4fa", op(.55)) + tratto(linea(C(u0, v1, zm), C(u1, v1, zm)) + " " + linea(C(u1, v1, zm), C(u1, v0, zm)), "#ffffff", .7, op(.9));   // il ripiano di vetro
+      dentroV += fila(alto, zm);
+      o += dentroV;
+      // i vetri vicini (davanti e fianco) coi riflessi, e il coperchio
+      var fv = [C(u0, v1, zv), C(u1, v1, zv), C(u1, v1, zb), C(u0, v1, zb)], fd = [C(u1, v1, zv), C(u1, v0, zv), C(u1, v0, zb), C(u1, v1, zb)], top = [C(u0, v0, zv), C(u1, v0, zv), C(u1, v1, zv), C(u0, v1, zv)];
+      o += poly(fv, "#e7f5ff", op(NOTTE ? .08 : .2)) + poly(fd, "#c5dce6", op(NOTTE ? .12 : .3)) + poly(top, "#f1f9ff", op(NOTTE ? .15 : .35));
+      o += dentro(chiuso(fv), poly([lerp(fv[0], fv[1], .12), lerp(fv[0], fv[1], .3), lerp(fv[3], fv[2], .05), lerp(fv[3], fv[2], -.13)], "#ffffff", op(.4)) + poly([lerp(fv[0], fv[1], .38), lerp(fv[0], fv[1], .44), lerp(fv[3], fv[2], .25), lerp(fv[3], fv[2], .19)], "#ffffff", op(.3)));
+      o += dentro(chiuso(fd), poly([lerp(fd[0], fd[1], .2), lerp(fd[0], fd[1], .45), lerp(fd[3], fd[2], .3), lerp(fd[3], fd[2], .05)], "#ffffff", op(.22)));
+      o += dentro(chiuso(top), poly([lerp(top[0], top[1], .1), lerp(top[0], top[1], .35), lerp(top[3], top[2], .35), lerp(top[3], top[2], .1)], "#ffffff", op(.35)));
+      if (G < 0) {   // dalla parte del barista: le due ante scorrevoli coi buchi per le dita
+        o += tratto(linea(lerp(fv[0], fv[1], .5), lerp(fv[3], fv[2], .5)), "#9aa5ad", .9) + [.38, .62].map(function (t) { var m = lerp(lerp(fv[0], fv[3], .55), lerp(fv[1], fv[2], .55), t); return ell(m[0], m[1], .9, 1.2, "#ffffff", "stroke='#8a96a0' stroke-width='.35'"); }).join("");
+      }
+      function filo(d, w) { return tratto(d, "#59636b", w + .9) + tratto(d, "#eef2f5", w) + tratto(d, "#ffffff", w * .4, op(.9) + " transform='translate(-.2 -.3)'"); }   // gli spigoli cromati, sottili
+      o += filo(linea(C(u0, v0, zv), C(u1, v0, zv)) + " " + linea(C(u0, v0, zv), C(u0, v1, zv)), .6);
+      o += filo(linea(C(u0, v1, zv), C(u0, v1, zb)) + " " + linea(C(u1, v0, zv), C(u1, v0, zb)), .7) + filo(linea(C(u1, v1, zv), C(u1, v1, zb)), .8);
+      o += filo(linea(C(u0, v1, zv), C(u1, v1, zv)) + " " + linea(C(u1, v1, zv), C(u1, v0, zv)), .9);
+      var pm = P((a0 + a1) / 2, (b0 + b1) / 2, zv);   // il pomello del coperchio
+      o += ell(pm[0], pm[1] - .5, 2.2, 1.2, lin("pv", CROMO, 0, 0, 1, 1), bordo(L, .45)) + ell(pm[0] - .6, pm[1] - .9, .7, .35, "#ffffff");
+      sopra.push({ box: [a0, a1, b0, b1, ZT, zv + 2], s: o });
+    })();
+    // le bottiglie di amaro in fila contro il bordo di dietro, coi dosatori cromati
+    var BOTT = [
+      { a: -.69, h: 19, r: .043, v: "#3a2414", et: "#efe3c4", fa: "#b02a1e", tp: "#1d1d1f" },             // amaro scuro, l'etichetta crema col sigillo rosso
+      { a: -.57, h: 21, r: .036, v: "#c81e2b", vetro: 1, et: "#f8f4ea", fa: "#c81e2b", dos: 1 },          // il bitter rosso, nel vetro chiaro
+      { a: -.45, h: 23, r: .034, v: "#f2c230", vetro: 1, et: "#f7d860", fa: "#2a2a2a", dos: 1 },          // il liquore giallo, alto e stretto
+      { a: -.33, h: 20, r: .046, v: "#8a4a1a", vetro: 1, et: "#f3e7c8", fa: "#7a3d14", tp: "#1d1d1f" },  // l'amaro ambrato con le spalle larghe
+      { a: -.21, h: 19, r: .04, v: "#1f4a2a", et: "#cfe8c0", fa: "#2b6a3a", dos: 1 },                     // la bottiglia verde
+      { a: -.09, h: 20, r: .041, v: "#2a1c14", et: "#f6e6a8", fa: "#3a2a1a", tp: "#1d1d1f" }              // l'amaro amaro, l'etichetta gialla con l'aquila
+    ];
+    function bottiglia(k, b) {
+      var a = k.a, h = k.h, R = k.r, z = ZT, prof = [[z, R * .92], [z + .6, R], [z + h * .58, R], [z + h * .68, R * .72], [z + h * .76, R * .38], [z + h * .93, R * .34], [z + h * .97, R * .4], [z + h, R * .38]];
+      var vc = vivo(k.v), st = k.vetro ? [[0, chiaro(vc, .5)], [.3, chiaro(vc, .1)], [.75, scuro(vc, .25)], [1, scuro(vc, .55)]] : [[0, chiaro(vc, .35)], [.3, vc], [1, scuro(vc, .55)]];
+      var o = tornito(a, b, prof, st, 1, null, null), c = P(a, b, 0);
+      if (k.vetro) o += pth(fasciaT(a, b, z + h * .62, z + h * .9, R * .5), "#ffffff", op(.18));   // il collo vuoto, più chiaro
+      o += pth(fasciaT(a, b, z + h * .16, z + h * .46, R * 1.01), lin("et" + k.et.slice(1), [[0, chiaro(k.et, .4)], [.45, k.et], [1, scuro(k.et, .25)]], 0, 0, 1, 0), "stroke='" + L + "' stroke-width='.3'");   // l'etichetta
+      o += pth(fasciaT(a, b, z + h * .38, z + h * .43, R * 1.012), k.fa, op(.9)) + cer(c[0] - .4, c[1] - z - h * .3, R * 22, k.fa, op(.85));   // la fascia e lo stemmino
+      o += tratto(linea([c[0] - R * 70.71 * .45, c[1] - z - h * .08], [c[0] - R * 70.71 * .45, c[1] - z - h * .55]), "#ffffff", .7, op(.55));   // il riflesso sul vetro
+      if (k.dos) {   // il dosatore cromato col beccuccio
+        var t = P(a, b, z + h + 1.6), t2 = [t[0] + 1.6 * G, t[1] - 1.5];
+        o += tornito(a, b, [[z + h - .4, R * .4], [z + h + 1.6, R * .36]], CROMO, .6) + tratto(linea(t, t2), L, 1.6) + tratto(linea(t, t2), "#d9dee2", .8);
+      } else o += tornito(a, b, [[z + h - .5, R * .42], [z + h + 1.4, R * .42]], [[0, chiaro(k.tp, .3)], [1, k.tp]], .6) + bocca(a, b, z + h + 1.4, R * .42, scuro(k.tp, .2));   // il tappo
+      return o;
+    }
+    BOTT.forEach(function (k, i) { var b = -.22 + (i % 2 ? .015 : -.01); sopra.push({ box: [k.a - k.r, k.a + k.r, b - k.r, b + k.r, ZT, ZT + k.h], s: bottiglia(k, b) }); });
+    // le tazzine col piattino e il cucchiaino (una ancora piena), il bicchiere d'acqua, il dosatore dello zucchero
+    function tazzina(a, b, piena) {
+      var z = ZT, o = "", sp = forma(a, b, .058), tz = forma(a, b, .03);
+      o += corpo([giro(sp, z, 1, 32), giro(sp, z + .9, 1, 32)], CER, .7) + pth(chiuso(giro(sp, z + .9, 1, 32)), "#f6f9fa", "stroke='#9aa5ad' stroke-width='.35'") + pth(chiuso(giro(sp, z + .95, .55, 24)), "none", "stroke='#c92a2a' stroke-width='.35' opacity='.7'");
+      var cu = P(a, b, 0), mh = P(a + .042, b + .01, z + 3.4);
+      o += tratto("M" + q(mh[0] - .6, mh[1] - 1.1) + " Q" + q(mh[0] + 1.3, mh[1] - .6) + " " + q(mh[0] - .4, mh[1] + .9), L, 1.3) + tratto("M" + q(mh[0] - .6, mh[1] - 1.1) + " Q" + q(mh[0] + 1.3, mh[1] - .6) + " " + q(mh[0] - .4, mh[1] + .9), "#f4f6f8", .6);   // il manico
+      o += tornito(a, b, [[z + .9, .019], [z + 2.1, .026], [z + 4, .031], [z + 4.6, .032]], CER, .7);
+      o += bocca(a, b, z + 4.6, .028, piena ? nuovaR([[0, "#e9b47d"], [.5, "#b8743d"], [1, "#5e3317"]], .45, .45, .6) : "#f1f3f5", "stroke='" + L + "' stroke-width='.35'");
+      var s0 = P(a - .045, b + .045, z + 1.1), s1 = P(a + .005, b + .05, z + 1.2);   // il cucchiaino
+      o += tratto(linea(s0, s1), "#7d8991", 1) + tratto(linea(s0, s1), "#e9ecef", .45) + ell(s0[0], s0[1], .9, .5, "#dee2e6", "stroke='#7d8991' stroke-width='.3'");
+      return { box: [a - .058, a + .058, b - .058, b + .058, z, z + 5], s: o };
+    }
+    sopra.push(tazzina(-.53, .12, true), tazzina(-.27, .16, false), tazzina(.39, .15, true));
+    (function () {   // il bicchiere d'acqua
+      var a = -.4, b = .05, z = ZT, prof = [[z, .022], [z + 7.5, .027]];
+      var o = tornito(a, b, prof, [[0, "#ffffff"], [.4, "#e3f2fb"], [1, "#9cc3d6"]], .6) + pth(fasciaT(a, b, z + .4, z + 5.2, .0235), "#a5d8ff", op(.5)) + bocca(a, b, z + 5.2, .0235, "#d0ebff", "stroke='#8fb3c9' stroke-width='.25'") + bocca(a, b, z + 7.5, .027, "none", "stroke='#8fb3c9' stroke-width='.35'");
+      var c = P(a, b, z); o += tratto(linea([c[0] - .9, c[1] - 1.2], [c[0] - 1.1, c[1] - 6.4]), "#ffffff", .5, op(.9));
+      sopra.push({ box: [a - .027, a + .027, b - .027, b + .027, z, z + 7.5], s: o });
+    })();
+    (function () {   // il dosatore dello zucchero: il vetro pieno e il coperchio cromato col beccuccio
+      var a = .1, b = .07, z = ZT, o = tornito(a, b, [[z, .03], [z + 6.6, .03], [z + 7, .028]], [[0, "#ffffff"], [.4, "#f1f3f5"], [1, "#b9c4cc"]], .7);
+      o += pth(fasciaT(a, b, z + .3, z + 4.8, .029), "#ffffff", op(.9)) + bocca(a, b, z + 4.8, .029, "#f8f9fa");
+      o += tornito(a, b, [[z + 7, .03], [z + 8.2, .028], [z + 9.4, .016]], CROMO, .6);
+      var t = P(a, b, z + 9.4); o += tratto(linea(t, [t[0] + 1.2 * G, t[1] - 1.8]), L, 1.5) + tratto(linea(t, [t[0] + 1.2 * G, t[1] - 1.8]), "#e9ecef", .7);
+      var c = P(a, b, z); o += tratto(linea([c[0] - 1.2, c[1] - 1], [c[0] - 1.2, c[1] - 6]), "#ffffff", .5, op(.9));
+      sopra.push({ box: [a - .03, a + .03, b - .03, b + .03, z, z + 10], s: o });
+    })();
+    // la radio di legno degli anni '50: la tela dell'altoparlante coi listelli d'ottone, la scala delle stazioni, le due manopole
+    (function () {
+      var a0 = .04, a1 = .4, b0 = -.31, b1 = -.14, z1 = ZT + 13.6, RL = "#7b4423";
+      function fronte(W, H) {
+        var o = venatureO(W, H, 6, 41, RL, .3) + rett(1.4, 1.4, W - 2.8, H - 2.8, 1.6, "none", "stroke='" + chiaro(RL, .35) + "' stroke-width='.5'");
+        o += rett(2.4, 2.4, 11.6, H - 4.8, 1.2, lin("tl", [[0, "#e9d8b0"], [1, "#b89a62"]], 0, 0, 1, 1), "stroke='" + L + "' stroke-width='.4'");   // la tela
+        for (var i = 0; i < 4; i++) o += rett(3.8 + i * 2.7, 2.4, .7, H - 4.8, .3, lin("lo", OTTONE, 0, 0, 1, 0));   // i listelli
+        o += rett(15.2, 2.6, 5.6, 4.6, .8, NOTTE ? "#ffd27a" : "#f3e6c4", "stroke='" + L + "' stroke-width='.4'");   // la scala delle stazioni
+        for (i = 0; i < 6; i++) o += rett(15.9 + i * .85, 3.4, .25, 1.4 + (i % 2) * .8, 0, "#6b4a2a");
+        o += rett(17.6, 2.8, .35, 4.2, 0, "#e03131") + (NOTTE ? rett(15.2, 2.6, 5.6, 4.6, .8, "#fff3c4", op(.35)) : "");
+        [16.6, 19.6].forEach(function (x) { o += cer(x + .2, H - 3, 1.5, "#000", op(.25)) + cer(x, H - 3.3, 1.5, nuovaR([[0, "#a0673a"], [1, "#3d2010"]], .35, .3, .8), bordo(L, .35)) + cer(x - .45, H - 3.8, .4, "#ffffff", op(.6)); });
+        return o;
+      }
+      function retro(W, H) { var o = rett(1.4, 1.4, W - 2.8, H - 2.8, .6, "#5a3c22", "stroke='" + L + "' stroke-width='.4'"); for (var i = 0; i < 5; i++) for (var j = 0; j < 3; j++) o += cer(4 + i * 3.6, 3.6 + j * 3, .75, "#1d140c"); return o + tratto("M" + q(W - 4, H - 2) + " C" + q(W - 4, H + 2) + " " + q(W - 9, H + 2.6) + " " + q(W - 12, H + 3), "#1d1d1f", .8); }
+      var o = blocco(a0, a1, b0, b1, ZT + .8, z1 - 2.2, RL, { davanti: fronte, dietro: retro, fianco: function (W, H) { return venatureO(W, H, 4, 43, RL, .3); } }, 1.3);
+      o += estruso("a", pulisci(arcoS(b0 + .085, z1 - 2.2, .085, 2.2, 0, Math.PI, 12)), a0, a1, RL, { mat: LEGNO_L, lw: 1.3, tappoCol: scuro(RL, .2) });   // il coperchio tondo
+      [[a0 + .03, b0 + .03], [a1 - .03, b0 + .03], [a0 + .03, b1 - .03], [a1 - .03, b1 - .03]].forEach(function (g) { if (vicino(g[0], g[1]) > vicino((a0 + a1) / 2, (b0 + b1) / 2) - .05) { var c = P(g[0], g[1], ZT); o = ell(c[0], c[1] - .3, 1.2, .6, "#2a1a10") + o; } });   // i piedini
+      sopra.push({ box: [a0, a1, b0, b1, ZT, z1], s: o });
+    })();
+    // la macchina dell'espresso a leva (anni '60): due gruppi, la carrozzeria cromata coi fianchi smaltati di rosso,
+    // dalla parte dei clienti la fascia crema col marchio ovale e il manometro; sopra lo scaldatazze con la ringhiera e le tazzine;
+    // dalla parte del barista i gruppi coi portafiltri e le grandi leve inclinate col pomello nero
+    (function () {
+      var a0 = .57, a1 = 1.31, b0 = -.19, b1 = .1, zt = ZT + 27, GR = [.77, 1.11], bg = b0 - .05, RO = "#c4302b";
+      var CRF = [[0, "#ffffff"], [.2, "#eef2f5"], [.44, "#aab5be"], [.52, "#4d5962"], [.62, "#7f8b94"], [.84, "#e2e8ec"], [1, "#a3aeb6"]];   // il cromo che riflette la stanza (la riga scura dell'orizzonte)
+      function vasca() {   // la vaschetta con la griglia dalla parte del barista
+        return blocco(a0 + .04, a1 - .04, -.36, b0 + .01, ZT, ZT + 3.4, tinteDi(CROMO), { sopra: function (A, B, C, D) { var o = "", k; for (k = 1; k < 15; k++) { var t = k / 15; o += tratto(linea(lerp(A, B, t), lerp(D, C, t)), "#4d5962", .45, op(.85)); } return o; } }, 1.1);
+      }
+      function gruppo(a) {   // il gruppo, il portafiltro col manico nero, i beccucci, la tazzina sotto; la leva col pomello
+        var o = "", zg = ZT + 8.4;
+        o += tornito(a, bg, [[zg, .044], [zg + 1.2, .053], [zg + 10.4, .053], [zg + 11.6, .046]], CROMO, 1, [1, 2], .8);   // la campana del gruppo
+        o += tornito(a, bg, [[zg - 2.6, .038], [zg - 1.8, .047], [zg, .047]], CROMO, .8);   // il portafiltro
+        var m0 = P(a, bg - .045, zg - 1.4), m1 = P(a + .015, bg - .19, zg - 2.6);
+        o += tratto(linea(m0, m1), L, 4.2) + tratto(linea(m0, m1), "#1d1f22", 2.8) + tratto(linea([m0[0] - .3, m0[1] - .7], [m1[0] - .3, m1[1] - .7]), "#6c757d", .6);   // il manico nero
+        [-.013, .013].forEach(function (d) { o += tratto(linea(P(a + d, bg, zg - 2.6), P(a + d, bg, zg - 3.7)), "#868e96", .6); });
+        var tz = forma(a, bg, .046), zc = ZT + 3.4;   // la tazzina col piattino sulla griglia, sotto i beccucci
+        o += corpo([giro(tz, zc, 1, 28), giro(tz, zc + .7, 1, 28)], CER, .6) + tornito(a, bg, [[zc + .7, .021], [zc + 1.9, .026], [zc + 3.6, .03]], CER, .6) + bocca(a, bg, zc + 3.6, .027, nuovaR([[0, "#e9b47d"], [.6, "#a8642f"], [1, "#5e3317"]], .45, .45, .6), "stroke='" + L + "' stroke-width='.3'");
+        // la leva: le due guance del perno sopra il gruppo, il braccio cromato che sale inclinato verso il barista, il pomello nero
+        var pv = P(a, bg - .01, zg + 12.6), tp = P(a, bg - .25, ZT + 45.5);   // leva corta e robusta, non un'antenna
+        o += pth("M" + q(pv[0] - 2.6, pv[1] + 2.4) + " L" + q(pv[0] - 2, pv[1] - 2.6) + " L" + q(pv[0] + 2, pv[1] - 2.6) + " L" + q(pv[0] + 2.6, pv[1] + 2.4) + " Z", lin("pv", CROMO, 0, 0, 1, 1), bordo(L, .6));
+        var dx = tp[0] - pv[0], dy = tp[1] - pv[1], l = Math.sqrt(dx * dx + dy * dy), nx = -dy / l, ny = dx / l, w0 = 2.2, w1 = 1.5;
+        var br = [[pv[0] + nx * w0, pv[1] + ny * w0], [tp[0] + nx * w1, tp[1] + ny * w1], [tp[0] - nx * w1, tp[1] - ny * w1], [pv[0] - nx * w0, pv[1] - ny * w0]];
+        o += poly(br, nuova(CROMO, br[0][0], br[0][1], br[3][0], br[3][1], true), bordo(L, .9)) + tratto(linea(lerp(br[0], br[3], .35), lerp(br[1], br[2], .35)), "#ffffff", .7, op(.9));
+        o += cer(pv[0], pv[1], 1.1, lin("pc", CROMO, 0, 0, 1, 1), bordo(L, .45));   // il perno
+        o += cer(tp[0] + .4, tp[1] + .6, 3.3, "#000", op(.2)) + cer(tp[0], tp[1], 3.3, nuovaR(NERO, .35, .3, .8), bordo(L, .7)) + cer(tp[0] - 1.1, tp[1] - 1.2, 1, "#ffffff", op(.75));
+        return o;
+      }
+      function rubinetto(a, dw) {   // la lancia del vapore (o dell'acqua calda) col pomello nero
+        var t0 = P(a, b0 - .02, zt - 7), t1 = P(a + dw, b0 - .11, zt - 10), t2 = P(a + dw * 1.3, b0 - .12, ZT + 7), mp = P(a, b0 - .02, zt - 4);
+        return cromo("M" + q(t0) + " Q" + q(t1) + " " + q(t2), 1.1) + ell(mp[0], mp[1], 2.1, 1.6, nuovaR(NERO, .35, .3, .8), bordo(L, .5)) + ell(mp[0] - .5, mp[1] - .5, .6, .3, "#ffffff", op(.7));
+      }
+      function retroMacchina() { return vasca() + rubinetto(a0 + .05, -.02) + GR.slice().sort(function (x, y) { return vicino(x, bg) - vicino(y, bg); }).map(gruppo).join("") + rubinetto(a1 - .05, .02); }
+      function strisce(W, H, k) { return [.12, .3, .66, .8].map(function (t, i) { return poly([[W * t, 0], [W * t + (i % 2 ? 1.6 : 3.4), 0], [W * t + (i % 2 ? 1.6 : 3.4) - 4, H], [W * t - 4, H]], "#ffffff", op(k * (i % 2 ? .5 : .8))); }).join(""); }   // i riflessi del cromo
+      function clienti(W, H) {   // dalla parte dei clienti: il cromo, la fascia crema con le righe rosse, il marchio ovale con le ali, il manometro, le costole in basso
+        var o = rett(0, 0, W, H, 0, lin("crf", CRF, 0, 0, 0, 1)) + strisce(W, H, .45);
+        o += rett(0, 9, W, 8.4, 0, lin("fc", [[0, "#fdf6e3"], [1, "#e8d5a8"]], 0, 0, 0, 1)) + rett(0, 9, W, 1, 0, RO) + rett(0, 16.4, W, 1, 0, RO) + rett(0, 17.4, W, .8, 0, "#000", op(.2));
+        [[W / 2 - 7.6, -1], [W / 2 + 7.6, 1]].forEach(function (g) { for (var k = 0; k < 3; k++) { var w = 10 - k * 2.6; o += rett(g[1] < 0 ? g[0] - w : g[0], 10.9 + k * 1.75, w, .8, .4, lin("al", CROMO, 0, 0, 0, 1), "stroke='" + L + "' stroke-width='.22'"); } });   // le ali cromate
+        o += ell(W / 2, 13.2, 6.8, 3.7, lin("mo", ORO, 0, 0, 1, 1), "stroke='" + L + "' stroke-width='.55'") + ell(W / 2, 13.2, 5, 2.5, RO, "stroke='#7a1515' stroke-width='.3'") + ell(W / 2, 13.2, 2.6, 1.1, "#fdf6e3", op(.9)) + ell(W / 2 - 1.6, 12.2, 1.6, .55, "#ffffff", op(.55));
+        var gx = W / 2, gy = 4.4;   // il manometro
+        o += cer(gx + .3, gy + .4, 3.3, "#000", op(.25)) + cer(gx, gy, 3.3, lin("mb", CROMO, 0, 0, 1, 1), bordo(L, .5)) + cer(gx, gy, 2.5, "#fffdf5", "stroke='#495057' stroke-width='.25'");
+        for (var k = 0; k < 7; k++) { var t = Math.PI * (.8 + 1.4 * k / 6); o += tratto(linea([gx + Math.cos(t) * 1.8, gy + Math.sin(t) * 1.8], [gx + Math.cos(t) * 2.3, gy + Math.sin(t) * 2.3]), "#495057", .25); }
+        o += tratto(linea([gx, gy], [gx + 1.5, gy - 1.2]), "#e03131", .45) + cer(gx, gy, .4, "#343a40") + ell(gx - 1.2, gy - 1.4, 1.1, .5, "#ffffff", op(.7));
+        for (k = 0; k < 4; k++) o += rett(2, 20 + k * 1.6, W - 4, .7, .35, "#ffffff", op(.75)) + rett(2, 20.7 + k * 1.6, W - 4, .4, 0, "#4d5962", op(.5));   // le costole cromate in basso
+        o += cer(5, 4.6, 1.1, NOTTE ? "#ffc9c9" : "#e03131", "stroke='#7a1515' stroke-width='.3'") + cer(4.7, 4.3, .4, "#ffffff", op(.8));   // la lucina rossa
+        return o;
+      }
+      function barista(W, H) {   // dalla parte del barista: il cromo, il vetrino del livello dell'acqua, i rubinetti
+        var o = rett(0, 0, W, H, 0, lin("crf", CRF, 0, 0, 0, 1)) + strisce(W, H, .4);
+        o += rett(W / 2 - 1.4, 3, 2.8, 9, 1.2, lin("lv", [[0, "#ffffff"], [.5, "#a5d8ff"], [1, "#4dabf7"]], 0, 0, 1, 0), "stroke='" + L + "' stroke-width='.4'") + rett(W / 2 - 1.4, 3, 2.8, 3.6, 1.2, "#f1f3f5", op(.9));
+        return o + rett(0, 0, W, 1.6, 0, "#ffffff", op(.6));
+      }
+      function fianco(W, H) {   // il fianco smaltato di rosso, col bordo cromato e il rubinetto tondo
+        var o = rett(0, 0, W, H, 0, lin("fr", [[0, "#dfe5e9"], [1, "#8d99a2"]], 0, 0, 1, 1)) + rett(1.6, 1.6, W - 3.2, H - 3.2, 2, lin("sm", [[0, chiaro(RO, .25)], [.6, RO], [1, scuro(RO, .3)]], 0, 0, 1, 1), "stroke='" + scuro(RO, .5) + "' stroke-width='.5'");
+        o += poly([[3, 2], [7, 2], [3, H * .6]], "#ffffff", op(.25));
+        var cx = W / 2, cy = H * .48;
+        return o + cer(cx, cy, 3.6, lin("tr", CROMO, 0, 0, 1, 1), bordo(L, .5)) + cer(cx, cy, 2.2, nuovaR(NERO, .35, .3, .8), "stroke='" + L + "' stroke-width='.3'") + rett(cx - .55, cy - 2.9, 1.1, 5.8, .45, "#343a40") + cer(cx - .9, cy - 1, .55, "#ffffff", op(.7));
+      }
+      var CT = [lin("cts", [[0, "#ffffff"], [1, "#c9d1d7"]], 0, 0, 1, 1), lin("ctl", CRF, 0, 0, 0, 1), lin("ctd", [[0, "#aab5be"], [.5, "#59646d"], [1, "#8d99a2"]], 0, 0, 0, 1)];
+      var carr = blocco(a0, a1, b0, b1, ZT + .6, zt, CT, { davanti: clienti, dietro: barista, fianco: fianco }, 1.9);
+      carr += tratto(linea(P(a0, G > 0 ? b1 : b0, zt - .8), P(a1, G > 0 ? b1 : b0, zt - .8)), "#ffffff", 1.1, op(.85));   // il bordo lucido in alto
+      // sopra: lo scaldatazze con la ringhiera e le tazzine capovolte
+      var ra0 = a0 + .05, ra1 = a1 - .05, rb0 = b0 + .035, rb1 = b1 - .04, zr = zt + 3.6, ang = [[ra0, rb0], [ra1, rb0], [ra1, rb1], [ra0, rb1]];
+      function lato(i) { return cromo(linea(P(ang[i][0], ang[i][1], zr), P(ang[(i + 1) % 4][0], ang[(i + 1) % 4][1], zr)), .7); }
+      function palo(v) { return cromo(linea(P(v[0], v[1], zt), P(v[0], v[1], zr)), .6); }
+      var lati = [0, 1, 2, 3].map(function (i) { var m = [(ang[i][0] + ang[(i + 1) % 4][0]) / 2, (ang[i][1] + ang[(i + 1) % 4][1]) / 2]; return [vicino(m[0], m[1]), lato(i)]; }).sort(function (x, y) { return x[0] - y[0]; });
+      var pali = ang.slice().sort(function (x, y) { return vicino(x[0], x[1]) - vicino(y[0], y[1]); });
+      var tazze = [];
+      [.68, .83, .98, 1.13].forEach(function (a, i) { [-.1, .01].forEach(function (b, j) { var aa = a + (j ? .07 : 0); if (aa < ra1 - .03) tazze.push([vicino(aa, b), tornito(aa, b, [[zt, .036], [zt + 2.8, .032], [zt + 3.5, .024]], CER, .65) + bocca(aa, b, zt + 3.5, .024, "#eef2f5", "stroke='" + L + "' stroke-width='.25'") + pth(fasciaT(aa, b, zt + .5, zt + 1.1, .0355), "#c4302b", op(.8))]); }); });
+      var top = lati[0][1] + lati[1][1] + pali.slice(0, 2).map(palo).join("") + ordina(tazze) + pali.slice(2).map(palo).join("") + lati[2][1] + lati[3][1];
+      var o = G > 0 ? retroMacchina() + carr + top : carr + top + retroMacchina();
+      sopra.push({ box: [a0, a1, -.36, b1, ZT, ZT + 56], s: o });
+    })();
+    return s + inOrdine(sopra);
+  });
+
+  // =========================================================
+  //  LO SGABELLO DEL BAR: il sedile tondo di noce col cuscino di pelle rossa e i chiodini d'ottone, le quattro gambe tornite
+  //  un po' aperte coi puntali d'ottone, l'anello poggiapiedi d'ottone (dove arrivano i piedi di chi è seduto)
+  //  e lo schienalino basso di legno curvato, dietro. Da dietro lo schienalino sta davanti.
+  // =========================================================
+  def("sgabello_circolo", { nome: "Sgabello del bar", fp: [1, 1], box: [-20, -63, 22, 14], dietro: true, azione: "siedi", seduta: 42 }, function () {
+    var ZS = 38.6, ZC = 42.2, RS = .19, ZA = 15.5, CU = "#8f2626", i;
+    var s = ombraTonda(0, 0, .28, 1);
+    var gambe = [0, 1, 2, 3].map(function (k) { var t = k * Math.PI / 2; return [Math.cos(t), Math.sin(t)]; });
+    function rg(z) { return .185 - (.185 - .124) * z / ZS; }   // dove sta la gamba all'altezza z
+    function gamba(v) {
+      var T = [v[0] * .124, v[1] * .124, ZS - .4], F = [v[0] * .185, v[1] * .185, 0], o = gambaTonda(T, F, 2.1, 1.6, [[0, chiaro(NOCE, .45)], [.4, NOCE], [1, scuro(NOCE, .5)]], OTTONE);
+      [27, 6].forEach(function (z) { var c = P(v[0] * rg(z), v[1] * rg(z), z); o += ell(c[0], c[1], 2.4, 1.1, lin("ag", [[0, chiaro(NOCE, .4)], [1, scuro(NOCE, .4)]], 0, 0, 1, 0), bordo(L, .45)); });   // gli anelli torniti
+      return o;
+    }
+    var lontane = gambe.filter(function (v) { return vicino(v[0], v[1]) < -.01; }), vicine = gambe.filter(function (v) { return vicino(v[0], v[1]) >= -.01; });
+    var schiena = "";
+    // lo schienalino: il listello curvo e le due colonnine, dietro (b-)
+    (function () {
+      var t0 = 1.16 * Math.PI, t1 = 1.84 * Math.PI, R = .172, z0 = ZC + 6, z1 = ZC + 10.5, su = [], giu = [], k;
+      for (k = 0; k <= 20; k++) { var t = t0 + (t1 - t0) * k / 20; su.push(P(R * Math.cos(t), R * Math.sin(t), z1)); giu.push(P(R * Math.cos(t), R * Math.sin(t), z0)); }
+      var pp = su.concat(giu.slice().reverse()), b = limiti(pp);
+      var col = [.25, .75].map(function (f) { var t = t0 + (t1 - t0) * f, a = R * Math.cos(t), bb = R * Math.sin(t); return [vicino(a, bb), gambaTonda([a, bb, z0 + .5], [a * .97, bb * .97, ZC - 1], 1.2, 1.3, [[0, chiaro(NOCE, .4)], [1, scuro(NOCE, .4)]])]; });
+      [1.08, 1.92].forEach(function (f) { var t = f * Math.PI, a = R * Math.cos(t), bb = R * Math.sin(t); col.push([vicino(a, bb), gambaTonda([a, bb, z1 - .5], [a * .99, bb * .99, ZC - 1.5], 1.5, 1.6, [[0, chiaro(NOCE, .4)], [1, scuro(NOCE, .4)]])]); });   // i due montanti che scendono al sedile
+      schiena = ordina(col) + pth(chiuso(pp), nuova([[0, chiaro(NOCE, .4)], [.5, NOCE], [1, scuro(NOCE, .35)]], b[0], 0, b[2], 0, true), bordo(L, 1.2)) + tratto(aperto(su.slice(3, 15)), "#ffffff", .6, op(.5));
+    })();
+    var dietroVicino = G < 0;   // da dietro lo schienalino è dalla parte di chi guarda
+    // l'anello poggiapiedi: la metà lontana, le gambe lontane, la metà vicina
+    s += anello(0, 0, ZA, rg(ZA) + .006, 1.6, false, true);
+    s += lontane.map(gamba).join("");
+    s += anello(0, 0, ZA, rg(ZA) + .006, 1.6, true, true);
+    s += vicine.map(gamba).join("");
+    // il sedile di noce, il cuscino di pelle coi chiodini
+    var S = forma(0, 0, RS);
+    if (!dietroVicino) s += schiena;
+    s += corpo([giro(S, ZS - 3.2, .96, 56), giro(S, ZS - 2.2, 1, 56), giro(S, ZS, 1, 56)], [[0, chiaro(NOCE, .4)], [.4, NOCE], [1, scuro(NOCE, .5)]], 1.4);
+    s += pth(chiuso(giro(S, ZS, 1, 56)), nuova([[0, chiaro(NOCE, .3)], [1, NOCE]], 0, 0, 1, 1), bordo(L, 1));
+    var K = forma(0, 0, RS * .93), lv = [giro(K, ZS, 1, 56), giro(K, ZS + 1.8, 1.01, 56), giro(K, ZC - .6, .96, 56)];
+    s += corpo(lv, [[0, chiaro(CU, .3)], [.4, CU], [1, scuro(CU, .5)]], 1.3);
+    var top = giro(K, ZC, .9, 56);
+    s += pth(chiuso(top), nuovaR([[0, chiaro(CU, .45)], [.5, chiaro(CU, .1)], [1, scuro(CU, .2)]], .38, .3, .8), bordo(L, 1));
+    var nails = []; for (i = 0; i < 26; i++) { var t = i / 26 * 6.2832; if (vicino(Math.cos(t), Math.sin(t)) > -.35) nails.push(P(Math.cos(t) * RS * .935, Math.sin(t) * RS * .935, ZS + 1)); }
+    s += chiodi(nails, .55);
+    var hl = []; for (i = 0; i <= 12; i++) { var t2 = Math.PI * (.85 + .45 * i / 12); hl.push(P(Math.cos(t2) * RS * .7, Math.sin(t2) * RS * .7, ZC)); }
+    s += tratto(aperto(hl), "#ffffff", 1, op(.7)) + ell(P(-.05, -.03, ZC)[0], P(-.05, -.03, ZC)[1], 2.6, 1, "#ffffff", op(.3));
+    if (dietroVicino) s += schiena;
+    return s;
+  });
+
+  // ---------- le coppe, i trofei, i gagliardetti e le medaglie ----------
+  var ORO_C = [[0, "#fff6cf"], [.3, "#f5cf55"], [.7, "#c08a1c"], [1, "#6e4a0c"]], ARG_C = [[0, "#ffffff"], [.3, "#e3e8eb"], [.68, "#9aa6ae"], [1, "#58636b"]], BRO_C = [[0, "#ffe0c0"], [.3, "#e0975a"], [.7, "#a2521f"], [1, "#5a2a0c"]];
+  var MARMO_N = [[0, "#6b7178"], [.35, "#2c3034"], [1, "#0e1012"]];
+  function stella(x, y, r1, r2, fill, x2) { var d = "", j; for (j = 0; j < 10; j++) { var rr = j % 2 ? r2 : r1, an = -Math.PI / 2 + j * Math.PI / 5; d += (j ? " L" : "M") + q(x + Math.cos(an) * rr, y + Math.sin(an) * rr); } return pth(d + " Z", fill, x2); }
+  function coppa(a, b, z, k, met, manici) {   // la coppa: la base di marmo nero con la targhetta, il fusto coi nodi, la coppa che si allarga, i manici grandi
+    var o = "", c0 = P(a, b, 0), x = c0[0], y0 = c0[1];
+    o += tornito(a, b, [[z, .062 * k], [z + .8 * k, .062 * k], [z + 1.1 * k, .054 * k], [z + 3.3 * k, .054 * k], [z + 3.7 * k, .048 * k]], MARMO_N, .8);
+    var ty = y0 - z - 2.2 * k + .054 * k * 35.36;
+    o += rett(x - 2.3 * k, ty - .65 * k, 4.6 * k, 1.3 * k, .3, lin("tg", ORO, 0, 0, 0, 1), "stroke='" + L + "' stroke-width='.2'");
+    var zz = z + 3.7 * k, zt = zz + 15 * k, rt = .08 * k * 70.71, ytop = y0 - zt, ymid = y0 - (zz + 10.5 * k);
+    var prof = [[zz, .042 * k], [zz + .9 * k, .036 * k], [zz + 1.6 * k, .015 * k], [zz + 4.6 * k, .013 * k], [zz + 5.3 * k, .026 * k], [zz + 6 * k, .015 * k], [zz + 6.8 * k, .02 * k], [zz + 9 * k, .046 * k], [zz + 11.6 * k, .066 * k], [zz + 14 * k, .077 * k], [zz + 15 * k, .08 * k]];
+    if (manici) [-1, 1].forEach(function (sx) {
+      var d = "M" + q(x + sx * rt * .9, ytop + 1.8 * k) + " C" + q(x + sx * (rt + 5.6 * k), ytop + .2 * k) + " " + q(x + sx * (rt + 5.8 * k), ymid + 2 * k) + " " + q(x + sx * rt * .45, ymid + 3.6 * k);
+      o += tratto(d, L, 2.5 * k) + tratto(d, nuova(met, x + sx * rt, 0, x + sx * (rt + 5 * k), 0, true), 1.35 * k) + tratto(d, "#ffffff", .4 * k, op(.7));
+    });
+    o += tornito(a, b, prof, met, 1, [4, 5, 6], 1.1 * k);
+    o += bocca(a, b, zt, .08 * k, nuova([[0, met[3][1]], [.55, met[2][1]], [1, met[1][1]]], x - rt, 0, x + rt, 0, true), bordo(L, .6)) + bocca(a, b, zt + .15, .068 * k, "none", "stroke='#ffffff' stroke-width='.4' opacity='.45'");
+    return o + ell(x - rt * .5, y0 - zz - 10.8 * k, .9 * k, 2.4 * k, "#ffffff", op(.7));
+  }
+  function statuina(a, b, z, k) {   // la statuetta d'oro del calciatore che tira, sulla colonnina di marmo bianco
+    var o = tornito(a, b, [[z, .052 * k], [z + 1 * k, .052 * k], [z + 1.4 * k, .036 * k], [z + 7 * k, .032 * k], [z + 7.6 * k, .044 * k], [z + 8.4 * k, .044 * k]], [[0, "#ffffff"], [.5, "#ddd8cc"], [1, "#8f897c"]], .8, [2, 4]);
+    var c = P(a, b, z + 8.4 * k), x = c[0], y = c[1], g = nuova(ORO_C, x - 4 * k, 0, x + 4 * k, 0, true);
+    function arto(d, w) { return tratto(d, L, w + 1) + tratto(d, g, w); }
+    o += ell(x, y, 2.7 * k, 1.1 * k, g, bordo(L, .4));
+    o += arto("M" + q(x - 1.5 * k, y - 8.6 * k) + " L" + q(x - 3.3 * k, y - 6.6 * k), 1.1 * k);   // il braccio dietro
+    o += arto("M" + q(x - .3 * k, y - .3 * k) + " L" + q(x - .1 * k, y - 4.6 * k), 1.4 * k);   // la gamba d'appoggio
+    o += arto("M" + q(x + .3 * k, y - 4.8 * k) + " L" + q(x + 2.4 * k, y - 3.3 * k) + " L" + q(x + 3.9 * k, y - 4.6 * k), 1.3 * k);   // la gamba che tira
+    o += pth("M" + q(x - 1.4 * k, y - 9.2 * k) + " Q" + q(x + 1.6 * k, y - 9.6 * k) + " " + q(x + 1.2 * k, y - 7 * k) + " L" + q(x + .9 * k, y - 4.6 * k) + " L" + q(x - .9 * k, y - 4.4 * k) + " Q" + q(x - 1.8 * k, y - 7 * k) + " " + q(x - 1.4 * k, y - 9.2 * k) + " Z", g, bordo(L, .5));   // il busto
+    o += arto("M" + q(x + 1 * k, y - 8.8 * k) + " L" + q(x + 3.1 * k, y - 10.3 * k), 1 * k);   // il braccio alzato
+    o += cer(x + .1 * k, y - 10.7 * k, 1.35 * k, nuovaR(ORO_C, .35, .3, .8), bordo(L, .5));   // la testa
+    o += cer(x + 4.9 * k, y - 4.4 * k, 1.1 * k, nuovaR(ORO_C, .35, .3, .8), bordo(L, .45));   // il pallone
+    return o + tratto("M" + q(x - .9 * k, y - 8.6 * k) + " L" + q(x - .7 * k, y - 5.6 * k), "#fffbe6", .5 * k, op(.8));
+  }
+  function bocciaT(a, b, z, k) {   // la coppa delle bocce: la colonnina nera, la boccia d'argento con le righe incise, il pallino rosso sulla base
+    var o = tornito(a, b, [[z, .056 * k], [z + 1 * k, .056 * k], [z + 1.4 * k, .028 * k], [z + 6 * k, .024 * k], [z + 6.6 * k, .038 * k], [z + 7.2 * k, .03 * k]], MARMO_N, .8, [2]);
+    var bt = P(a, b, z + 1 * k), c = P(a, b, z + 7.2 * k + 3.4 * k), R = 3.6 * k, d = cerD(c[0], c[1], R);
+    o += cer(bt[0] + 2.1 * k, bt[1] - .7 * k, .95 * k, nuovaR([[0, "#ffb3b3"], [.5, "#e03131"], [1, "#7a1515"]], .35, .3, .8), bordo(L, .35));
+    o += pth(d, nuovaR([[0, "#ffffff"], [.35, "#dfe4e8"], [.8, "#7d8991"], [1, "#4a545c"]], .35, .3, .75), bordo(L, .7));
+    o += dentro(d, tratto("M" + q(c[0] - R, c[1] - .6 * k) + " Q" + q(c[0], c[1] + 1.8 * k) + " " + q(c[0] + R, c[1] - .6 * k), "#5c6770", .45 * k, op(.7)) + tratto("M" + q(c[0] - R, c[1] + .9 * k) + " Q" + q(c[0], c[1] + 3.2 * k) + " " + q(c[0] + R, c[1] + .9 * k), "#5c6770", .45 * k, op(.7)));
+    return o + cer(c[0] - 1.3 * k, c[1] - 1.4 * k, .9 * k, "#ffffff", op(.85));
+  }
+  function pallone(a, b, z, R) {   // il vecchio pallone di cuoio a spicchi, con la stringa
+    var c = P(a, b, z + R), x = c[0], y = c[1], d = cerD(x, y, R), base = P(a, b, z);
+    var o = ell(base[0] + .8, base[1] - .2, R * .95, R * .38, "#000", op(.28));
+    o += pth(d, nuovaR([[0, "#f0c08a"], [.45, "#b56f30"], [1, "#5a2e10"]], .36, .32, .8), bordo(L, .8));
+    var cuc = "M" + q(x - R, y - R * .1) + " Q" + q(x, y + R * .35) + " " + q(x + R, y - R * .1) + " M" + q(x - R * .9, y - R * .5) + " Q" + q(x, y - R * .15) + " " + q(x + R * .9, y - R * .5) + " M" + q(x - R * .35, y - R) + " Q" + q(x - R * .55, y) + " " + q(x - R * .3, y + R) + " M" + q(x + R * .35, y - R) + " Q" + q(x + R * .15, y) + " " + q(x + R * .35, y + R);
+    o += dentro(d, tratto(cuc, "#4a2410", .45, op(.75)));
+    o += tratto("M" + q(x - R * .25, y - R * .72) + " L" + q(x + R * .25, y - R * .72), "#3a1c0a", .9) + [-.18, -.06, .06, .18].map(function (t) { return tratto(linea([x + R * t - .4, y - R * .8], [x + R * t + .4, y - R * .64]), "#fff3d6", .35); }).join("");   // la stringa
+    return o + ell(x - R * .38, y - R * .4, R * .28, R * .16, "#ffffff", op(.5));
+  }
+  function targa(a, b, z, k) {   // la targa di legno a scudo, sul leggio, con la piastra d'ottone e il pallone in rilievo
+    var c = P(a, b, z), x = c[0], y = c[1] - .5, w = 7.4 * k, h = 9.6 * k, cy = y - h * .45;
+    var d = "M" + q(x - w / 2, y - h) + " L" + q(x + w / 2, y - h) + " L" + q(x + w / 2, y - h * .42) + " Q" + q(x + w / 2, y - h * .08) + " " + q(x, y) + " Q" + q(x - w / 2, y - h * .08) + " " + q(x - w / 2, y - h * .42) + " Z";
+    var o = tratto(linea([x + 1.4 * k, y - h * .5], [x + 3 * k, y + .2]), L, 1.4) + tratto(linea([x + 1.4 * k, y - h * .5], [x + 3 * k, y + .2]), NOCE_SC, .7);   // il leggio dietro
+    o += pth(d, "#000", op(.2) + " transform='translate(.7 .6)'") + pth(d, nuova([[0, chiaro(NOCE, .25)], [1, scuro(NOCE, .25)]], x - w / 2, 0, x + w / 2, 0, true), bordo(L, .7));
+    o += pth(d, "none", "stroke='#d9a530' stroke-width='.45' transform='translate(" + f1(x * .16) + " " + f1(cy * .16) + ") scale(.84)'");   // il filetto d'oro
+    o += rett(x - 2.4 * k, y - h * .8, 4.8 * k, 2.4 * k, .3, lin("tp", ORO, 0, 0, 0, 1), "stroke='" + L + "' stroke-width='.25'") + rett(x - 1.6 * k, y - h * .72, 3.2 * k, .3, 0, "#7a5614") + rett(x - 1.2 * k, y - h * .66, 2.4 * k, .3, 0, "#7a5614");
+    return o + cer(x, y - h * .38, 1.4 * k, nuovaR(ORO_C, .35, .3, .8), bordo(L, .35)) + cer(x - .4 * k, y - h * .42, .4 * k, "#ffffff", op(.7));
+  }
+  function gagliardetto(x, y, w, h, c1, c2, tipo) {   // il gagliardetto a triangolo (piatto): x, y = l'angolo in alto a sinistra; lo stemma, la frangia d'oro, la nappina
+    var d = "M" + q(x, y) + " L" + q(x + w, y) + " L" + q(x + w / 2, y + h) + " Z", o = "";
+    o += tratto("M" + q(x + .6, y) + " L" + q(x + w / 2, y - 2.6) + " L" + q(x + w - .6, y), "#d9a530", .4) + cer(x + w / 2, y - 2.6, .45, "#7d8991");   // il cordino al chiodo
+    o += pth(d, "#000", op(.28) + " transform='translate(.9 1.1)'");
+    var campo = tipo === 1 ? rett(x, y, w, h * .36, 0, c1) + rett(x, y + h * .36, w, h, 0, c2) : tipo === 2 ? rett(x, y, w, h, 0, c2) + pth("M" + q(x, y) + " L" + q(x + w * .34, y) + " L" + q(x + w * .62, y + h) + " L" + q(x + w * .38, y + h) + " Z", c1) : rett(x, y, w / 2, h, 0, c1) + rett(x + w / 2, y, w / 2, h, 0, c2);
+    o += pth(d, c2) + dentro(d, campo + rett(x, y, w, h, 0, nuova([[0, "#fff", .22], [.6, "#fff", 0], [1, "#000", .18]], x, y, x + w, y + h, true)));
+    var sx = x + w / 2, sy = y + h * .3, rs = w * .17;
+    o += cer(sx, sy, rs, "#ffffff", bordo(L, .3)) + cer(sx, sy, rs * .62, c1 === "#ffffff" ? c2 : c1) + stella(sx, sy, rs * .45, rs * .2, "#fff3bf") + cer(sx - rs * .3, sy - rs * .3, rs * .18, "#ffffff", op(.7));   // lo stemma
+    o += tratto("M" + q(x, y) + " L" + q(x + w / 2, y + h) + " L" + q(x + w, y), "#e0b54a", 1.3, "stroke-dasharray='.3 .4'") + pth(d, "none", bordo(L, .4));   // la frangia d'oro
+    o += rett(x - .6, y - .7, w + 1.2, 1.2, .5, lin("ba", ORO, 0, 0, 0, 1), bordo(L, .3));   // l'asticciola
+    return o + pth("M" + q(x + w / 2 - .7, y + h) + " L" + q(x + w / 2 + .7, y + h) + " L" + q(x + w / 2 + 1, y + h + 2.6) + " L" + q(x + w / 2 - 1, y + h + 2.6) + " Z", "#e0b54a", bordo("#7a5614", .25));   // la nappina
+  }
+  function medaglia(x, y, r, met) {   // la medaglia col nastro tricolore che scende dall'alto (piatta): x, y = il centro
+    var t = y - r - 7.5, w = 2.6, o = pth("M" + q(x - w / 2, t) + " L" + q(x + w / 2, t) + " L" + q(x + w / 2, y - r + .6) + " L" + q(x - w / 2, y - r + .6) + " Z", "#000", op(.22) + " transform='translate(.6 .8)'");
+    o += rett(x - w / 2, t, w / 3, 8.1, 0, "#2b8a3e") + rett(x - w / 6, t, w / 3, 8.1, 0, "#f8f9fa") + rett(x + w / 6, t, w / 3, 8.1, 0, "#e03131") + rett(x - w / 2, t, w, 8.1, 0, "none", "stroke='" + L + "' stroke-width='.25'");
+    o += cer(x + .5, y + .7, r, "#000", op(.25)) + cer(x, y, r, nuovaR(met, .35, .3, .8), bordo(L, .4)) + cer(x, y, r * .72, "none", "stroke='" + met[2][1] + "' stroke-width='.3'") + stella(x, y, r * .45, r * .2, met[2][1]);
+    return o + cer(x - r * .35, y - r * .35, r * .22, "#ffffff", op(.8));
+  }
+
+  // =========================================================
+  //  LA VETRINA DELLE COPPE: il mobile di noce col cassettone a tre ante sotto e la vetrina a tre ante sopra,
+  //  il fondo di velluto verde e i ripiani di vetro. Dentro: la coppa d'oro grande, le coppe d'argento, la statuetta
+  //  del calciatore, la coppa delle bocce col pallino, il vecchio pallone di cuoio, la targa, le medaglie col nastro tricolore
+  //  e i gagliardetti delle altre squadre appesi al fondo; sopra il mobile la coppa più grande, che dentro non ci stava.
+  //  Da dietro: la schiena di assi coi chiodini e l'etichetta del mobilificio.
+  // =========================================================
+  def("vetrina_coppe", { nome: "Vetrina delle coppe", fp: [2, 1], box: [-74, -157, 74, 36], dietro: true }, function () {
+    var A0 = -.92, A1 = .92, B0 = -.44, B1 = .02, Z1 = 38, Z2 = 41, Z3 = 112, S1 = 62, S2 = 85, VEL = "#2f6a4d", NC = NOCE;
+    var s = ombraPianta(A0, A1, B0, B1 + .04, 1, .1);
+    function pomolo(x, y) { return cer(x + .3, y + .4, 1.1, "#000", op(.3)) + cer(x, y, 1.1, nuovaR(ORO_C, .35, .3, .8), bordo(L, .35)) + cer(x - .35, y - .35, .35, "#ffffff", op(.8)); }
+    function bocchetta(x, y) { return ell(x, y, .9, 1.4, lin("bo", ORO, 0, 0, 1, 1), bordo(L, .3)) + cer(x, y - .3, .3, "#1d140c") + rett(x - .12, y - .2, .24, .8, 0, "#1d140c"); }
+    function ante(W, H) {   // le tre ante di sotto, col riquadro, la bocchetta della chiave e il pomolo
+      var o = venature(W, H, 30, 21, NC, .25), n = 3, w = (W - 2.4) / n, i;
+      for (i = 0; i < n; i++) { var x = 1.2 + i * w; o += riquadro(x + .7, 1.8, w - 1.4, H - 3.6, MIELE, 60 + i, 1.6) + rett(x + w - .3, 1, .6, H - 2, 0, "#000", op(.35)); }
+      o += bocchetta(1.2 + w - 3.4, H * .42) + pomolo(1.2 + w - 3.4, H * .62) + bocchetta(1.2 + 2 * w - 3.4, H * .42) + pomolo(1.2 + 2 * w - 3.4, H * .62) + bocchetta(1.2 + 2 * w + 3.4, H * .42) + pomolo(1.2 + 2 * w + 3.4, H * .62);
+      return o + buio(W, 4, .45, true);
+    }
+    function telaio(W, H) {   // il davanti della vetrina: il vetro coi riflessi e il telaio di noce a tre ante, coi pomoli
+      var st = 3.4, tr = 4, br = 4.4, n = 3, wo = (W - (n + 1) * st) / n, i, buchi = "", o = "", d = "M0,0 H" + f1(W) + " V" + f1(H) + " H0 Z";
+      for (i = 0; i < n; i++) {
+        var x = st + i * (wo + st), hv = H - tr - br, dv = rettD(x, tr, wo, hv, 0);
+        buchi += " " + dv;
+        o += pth(dv, "#dff1f8", op(.1)) + dentro(dv, poly([[x + wo * .12, tr], [x + wo * .44, tr], [x + wo * .04, tr + hv * .6], [x - wo * .28, tr + hv * .6]], "#ffffff", op(.22)) + poly([[x + wo * .56, tr], [x + wo * .67, tr], [x + wo * .12, tr + hv], [x + wo * .01, tr + hv]], "#ffffff", op(.13)));
+      }
+      o += pth(d + buchi, lin("tv", [[0, chiaro(NC, .16)], [1, scuro(NC, .1)]], 0, 0, 0, 1), "fill-rule='evenodd' stroke='" + scuro(NC, .5) + "' stroke-width='.5'");
+      o += dentro(d + buchi, venature(W, H, 40, 23, NC, .3), true);
+      for (i = 0; i < n; i++) { var x2 = st + i * (wo + st); o += tratto("M" + q(x2 - .5, H - br + .5) + " L" + q(x2 - .5, tr - .5) + " L" + q(x2 + wo + .5, tr - .5), scuro(NC, .45), .7, op(.85)) + tratto("M" + q(x2 + wo + .5, tr - .5) + " L" + q(x2 + wo + .5, H - br + .5) + " L" + q(x2 - .5, H - br + .5), chiaro(NC, .45), .6, op(.85)); }   // la cornicetta attorno ai vetri
+      for (i = 1; i < n; i++) { var xm = i * (wo + st) + st / 2; o += bocchetta(xm, H * .5 - 2.6) + pomolo(xm, H * .5 + 1); }
+      return o;
+    }
+    function assi(W, H) {   // la schiena: le assi in piedi coi chiodini; l'etichetta del mobilificio
+      var o = "", n = Math.round(W / 9), i;
+      for (i = 0; i < n; i++) { var x = i * W / n; o += rett(x, 0, W / n, H, 0, i % 2 ? scuro(NC, .1) : chiaro(NC, .03)) + rett(x, 0, .6, H, 0, "#000", op(.3)) + cer(x + W / n / 2, 2.2, .45, "#3a2a1a") + cer(x + W / n / 2, H - 2.2, .45, "#3a2a1a"); }
+      o += venature(W, H, Math.round(W / 3), 31, NC, .22);
+      if (H > 50) o += rett(W * .6, H * .3, 15, 9.6, .5, "#f3ead2", "stroke='#b8a88a' stroke-width='.3'") + [0, 1, 2].map(function (k) { return rett(W * .6 + 2, H * .3 + 2.4 + k * 2.3, 11 - k * 3, .7, 0, "#8a7a5a"); }).join("");
+      return o;
+    }
+    function fiancoSu(W, H) { return venature(W, H, 8, 25, NC, .3) + riquadro(3, 4, W - 6, H - 8.4, MIELE, 27, 1.8); }
+    function fiancoGiu(W, H) { return venature(W, H, 6, 26, NC, .3) + riquadro(3, 2, W - 6, H - 4, MIELE, 28, 1.6) + buio(W, 4, .45, true); }
+    function interno() {   // dentro la vetrina (si vede solo da davanti)
+      var a0 = A0 + .035, a1 = A1 - .035, b0 = B0 + .03, b1 = B1 - .005, W = (a1 - a0) * 61, H = Z3 - Z2, o = "", i, rr = rnd(4141);
+      function X(a) { return (a - a0) * 61; }
+      function Y(z) { return Z3 - z; }
+      var fondo = rett(0, 0, W, H, 0, lin("vel", [[0, chiaro(VEL, .08)], [1, scuro(VEL, .2)]], 0, 0, 0, 1));
+      for (i = 0; i < 170; i++) fondo += cer(rr() * W, rr() * H, .35 + rr() * .3, rr() < .6 ? chiaro(VEL, .22) : scuro(VEL, .25), op(.25));   // il pelo del velluto
+      fondo += gagliardetto(X(-.66) - 7, Y(108.6), 14, 17, "#f6c21a", "#c62828", 0) + gagliardetto(X(0) - 7, Y(108.6), 14, 17, "#1e4fa8", "#ffffff", 1) + gagliardetto(X(.66) - 7, Y(108.6), 14, 17, "#2b2b2b", "#ffffff", 2);
+      fondo += gagliardetto(X(-.44) - 6, Y(83), 12, 14.5, "#2b8a3e", "#ffffff", 0) + gagliardetto(X(.44) - 6, Y(83), 12, 14.5, "#7a1f6e", "#f6c21a", 1);
+      fondo += medaglia(X(.12), Y(50.6), 2.4, ORO_C) + medaglia(X(.28), Y(51.6), 2.2, ARG_C) + medaglia(X(.43), Y(50.6), 2.1, BRO_C);
+      fondo += buio(W, 12, .38, true) + [S1, S2].map(function (z) { return rett(0, Y(z) - 5, W, 5, 0, nuova([[0, "#000", 0], [1, "#000", .2]], 0, 0, 0, 1)); }).join("") + ell(W * .5, H * .35, W * .45, H * .4, nuovaR([[0, "#fff8e0", .16], [1, "#fff8e0", 0]], .5, .5, .5));   // l'ombra in alto e sopra i ripiani; un po' di luce in mezzo
+      o += pianoV("a", b0, a0, a1, Z2, Z3, fondo);
+      o += poly([P(a0, b0, Z2), P(a0, b1, Z2), P(a0, b1, Z3), P(a0, b0, Z3)], lin("fi", [[0, scuro(NC, .35)], [1, scuro(NC, .55)]], 0, 0, 0, 1));   // il fianco di dentro, in ombra
+      o += poly([P(a0, b0, Z2), P(a1, b0, Z2), P(a1, b1, Z2), P(a0, b1, Z2)], scuro(VEL, .05));
+      function ripiano(z) { var pp = [P(a0, b0, z), P(a1, b0, z), P(a1, b1, z), P(a0, b1, z)]; return poly(pp, "#dff3fa", op(.35)) + tratto(linea(pp[3], pp[2]), "#ffffff", .9, op(.95)) + tratto(linea([pp[3][0], pp[3][1] + 1], [pp[2][0], pp[2][1] + 1]), "#7fa8b8", .5, op(.8)); }
+      function liv(l) { return ordina(l.map(function (x) { return [vicino(x[0], x[1]), x[2]]; })); }
+      o += liv([[-.62, -.16, pallone(-.62, -.16, Z2, 5.2)], [-.27, -.2, targa(-.27, -.2, Z2, 1)], [.66, -.16, coppa(.66, -.16, Z2, .55, BRO_C, true)]]);
+      o += ripiano(S1);
+      o += liv([[-.62, -.18, coppa(-.62, -.18, S1, .7, ARG_C, true)], [-.3, -.2, statuina(-.3, -.2, S1, 1)], [0, -.17, coppa(0, -.17, S1, 1, ORO_C, true)], [.3, -.2, bocciaT(.3, -.2, S1, 1)], [.62, -.18, coppa(.62, -.18, S1, .72, ARG_C, true)]]);
+      o += ripiano(S2);
+      o += liv([[-.33, -.13, coppa(-.33, -.13, S2, .6, ORO_C, true)], [.33, -.13, coppa(.33, -.13, S2, .58, ARG_C, false)]]);
+      return o;
+    }
+    s += blocco(A0 + .04, A1 - .04, B0 + .02, B1 - .03, 0, 5, NOCE_SC, null, 1.4);   // lo zoccolo
+    s += blocco(A0, A1, B0, B1, 5, Z1, NC, { davanti: ante, dietro: assi, fianco: fiancoGiu }, 2);
+    s += blocco(A0 - .015, A1 + .015, B0, B1 + .03, Z1, Z2, scuro(NC, .08), null, 1.5);   // il ripiano che sporge
+    if (G > 0) s += interno();
+    s += blocco(A0, A1, B0, B1, Z2, Z3, NC, { vuoto: true, davanti: telaio, dietro: assi, fianco: fiancoSu }, 2);
+    var cor = [[B0, Z3], [B1 + .004, Z3], [B1 + .014, Z3 + 1.4], [B1 + .032, Z3 + 3.2], [B1 + .046, Z3 + 4.4], [B1 + .05, Z3 + 6.2], [B0, Z3 + 6.2]];   // la cornice sagomata in cima
+    s += estruso("a", cor, A0 - .05, A1 + .05, NC, { mat: LEGNO_L, lw: 1.9, fascia: function (H) { return H.luccica(.35, .02, .98); } });
+    return s + coppa(.45, -.2, Z3 + 6.2, 1.15, ARG_C, true);   // sopra: la coppa più grande
+  });
+
+  // =========================================================
+  //  LA TV CON LA PARTITA (larga due pezzi di muro): il televisore a tubo degli anni '80 sulla mensola di legno
+  //  con le squadrette di ferro, l'antenna a baffo, i tasti e la grata dell'altoparlante; sullo schermo la partita
+  //  (il pubblico, i cartelloni, il campo a strisce, i giocatori rossoblù e bianchi, l'arbitro, il pallone, il punteggio);
+  //  la sciarpa rossoblù appesa alla mensola con la frangia. Di notte lo schermo è acceso e fa luce.
+  // =========================================================
+  def("tv_partita", { tipo: "parete", nome: "TV con la partita", fp: [2, 1], luce: [54, 70, 118, "#d3e6ff"] }, function () {
+    var s = "", X0 = 24, X1 = 96, Y0 = 46.5, Y1 = 93.5, SX0 = 29.5, SX1 = 78.5, SY0 = 51.5, SY1 = 88.5, r = rnd(1982), i, RO = "#c62828", BL = "#1f3a93";
+    s += rett(X0 + 2.6, Y0 - 2, X1 - X0, Y1 - Y0 + 4, 5, "#000", op(.15)) + rett(16 + 2.4, 92 + 3.4, 99, 8, 1, "#000", op(.12));   // le ombre sul muro
+    [30, 102].forEach(function (x) {   // le squadrette di ferro sotto la mensola
+      s += rett(x - 1.3 + 1.5, 99 + 1.5, 2.6, 14, .4, "#000", op(.15)) + rett(x - 1.3, 98.6, 2.6, 14, .5, lin("sq", [[0, "#5c636a"], [1, "#24282c"]], 0, 0, 1, 0), bordo(L, .5)) + cer(x, 104, .45, "#adb5bd") + cer(x, 109.5, .45, "#adb5bd");
+    });
+    s += poly([[16, 91.6], [113, 91.6], [114.5, 95.2], [14.5, 95.2]], lin("mt", [[0, chiaro(MIELE, .25)], [1, MIELE]], 0, 0, 0, 1), bordo(L, .6)) + rett(14.5, 95.2, 100, 3.6, .6, lin("mf", [[0, NOCE], [1, scuro(NOCE, .3)]], 0, 0, 0, 1), bordo(L, .8)) + tratto("M15.5,95.7 H113.5", "#ffffff", .5, op(.4));   // la mensola
+    // il pezzo di sciarpa che sta sopra la mensola
+    s += pth("M99.4,95.4 Q99.2,90 105.4,89.6 Q111.6,90 111.4,95.4 Z", RO, bordo(L, .6)) + dentro("M99.4,95.4 Q99.2,90 105.4,89.6 Q111.6,90 111.4,95.4 Z", rett(103.2, 88, 1.8, 8, 0, BL) + rett(107.6, 88, 1.8, 8, 0, BL) + rett(102.4, 88, .5, 8, 0, "#f8f9fa") + rett(106.8, 88, .5, 8, 0, "#f8f9fa") + rett(99, 88, 13, 3, 0, "#ffffff", op(.2)));
+    // il televisore: il sopra della scatola, la scatola, la cornice dello schermo, lo schermo con la partita
+    function schermo() {
+      var w = SX1 - SX0, h = SY1 - SY0, o = "", x0 = SX0, y0 = SY0, yc = y0 + h * .19, cy = yc + 2.3, Hc = SY1 - cy, k;
+      o += rett(x0, y0, w, h, 0, "#2c3446");
+      for (k = 0; k < 95; k++) o += cer(x0 + r() * w, y0 + r() * (yc - y0), .5 + r() * .4, ["#e9ecef", "#ffd43b", "#ff6b6b", "#74c0fc", "#ffa94d", "#ced4da"][Math.floor(r() * 6)], op(.75));   // il pubblico
+      var cart = ["#e03131", "#1c7ed6", "#fab005", "#f8f9fa", "#2f9e44", "#e03131"];
+      for (k = 0; k < 6; k++) o += rett(x0 + k * w / 6, yc, w / 6 - .3, 2.3, 0, cart[k]) + rett(x0 + k * w / 6 + 1.6, yc + .85, w / 6 - 3.5, .6, 0, "#ffffff", op(.7));   // i cartelloni
+      o += rett(x0, cy, w, Hc, 0, "#3f9b3a");
+      var mx = x0 + w / 2;
+      for (k = -2; k < 10; k++) { var xa = x0 + k * w / 7, xb = xa + w / 14; o += poly([[mx + (xa - mx) * .92, cy], [mx + (xb - mx) * .92, cy], [mx + (xb - mx) * 1.1, SY1], [mx + (xa - mx) * 1.1, SY1]], "#56b44c", op(.9)); }   // le strisce del prato
+      var hx = x0 + w * .52;
+      o += tratto("M" + q(x0, cy + 1.3) + " L" + q(x0 + w, cy + 1.3), "#f8f9fa", .5) + tratto("M" + q(hx, cy + 1.3) + " L" + q(hx + 1, SY1), "#f8f9fa", .5) + ell(hx + .5, cy + Hc * .52, 9.4, 3.8, "none", "stroke='#f8f9fa' stroke-width='.5'") + cer(hx + .5, cy + Hc * .52, .5, "#f8f9fa");
+      function omino(x, y, maglia, calz, kk) {   // un giocatorino visto da lontano
+        return ell(x, y + .2, 1.2 * kk, .4 * kk, "#000", op(.3)) + tratto("M" + q(x - .5 * kk, y) + " L" + q(x - .3 * kk, y - 1.6 * kk) + " M" + q(x + .5 * kk, y) + " L" + q(x + .3 * kk, y - 1.6 * kk), calz, .6 * kk) + rett(x - .75 * kk, y - 2.4 * kk, 1.5 * kk, 1 * kk, .2, "#f8f9fa") + rett(x - .85 * kk, y - 4.5 * kk, 1.7 * kk, 2.2 * kk, .4, maglia) + cer(x, y - 5.1 * kk, .62 * kk, "#f1c9a5");
+      }
+      var gente = [[.16, .42, RO, BL], [.29, .72, "#f8f9fa", "#212529"], [.4, .36, RO, BL], [.47, .6, "#f8f9fa", "#212529"], [.57, .48, RO, BL], [.66, .8, "#212529", "#212529"], [.74, .34, "#f8f9fa", "#212529"], [.84, .62, RO, BL], [.9, .28, "#f8f9fa", "#212529"]];
+      gente.sort(function (m, n) { return m[1] - n[1]; }).forEach(function (g) { o += omino(x0 + w * g[0], cy + Hc * g[1], g[2], g[3], .85 + g[1] * .5); });
+      o += cer(x0 + w * .53, cy + Hc * .66, .6, "#ffffff", "stroke='#212529' stroke-width='.15'");   // il pallone
+      o += rett(x0 + 1.6, y0 + 1.4, 12.4, 3.6, .6, "#111418", op(.85)) + rett(x0 + 2.3, y0 + 2.1, 2.2, 2.2, .3, RO) + rett(x0 + 8.3, y0 + 2.1, 2.2, 2.2, .3, "#f8f9fa") + rett(x0 + 5.2, y0 + 2.3, 1.4, 1.8, .2, "#f8f9fa") + rett(x0 + 11.2, y0 + 2.3, 1.4, 1.8, .2, "#f8f9fa");   // il punteggio (solo colori e numerini)
+      o += rett(x0, y0, w, h, 0, nuovaR([[0, "#000", 0], [.72, "#000", .05], [1, "#000", .45]], .5, .5, .72));   // il vetro bombato, più scuro ai bordi
+      for (k = 1; k < h; k += 1.3) o += rett(x0, y0 + k, w, .35, 0, "#000", op(.07));   // le righe del tubo
+      if (NOTTE) o += rett(x0, y0, w, h, 0, "#ffffff", op(.12));
+      return o + pth("M" + q(x0, y0) + " L" + q(x0 + w * .52, y0) + " Q" + q(x0 + w * .2, y0 + h * .22) + " " + q(x0, y0 + h * .58) + " Z", "#ffffff", op(.17));   // il riflesso
+    }
+    s += poly([[X0 + 3, Y0 - 4], [X1 - 3, Y0 - 4], [X1 - .4, Y0 + 1.2], [X0 + .4, Y0 + 1.2]], lin("tt", [[0, "#61666d"], [1, "#33363b"]], 0, 0, 0, 1), bordo(L, 1));   // il sopra della scatola
+    [36, 84].forEach(function (x) { s += rett(x - 2, Y1 - .4, 4, 1.6, .5, "#16181b", bordo(L, .4)); });   // i piedini
+    var dC = rettD(X0, Y0, X1 - X0, Y1 - Y0, 5), dS = rettD(SX0, SY0, SX1 - SX0, SY1 - SY0, 4);
+    s += pth(dC, lin("tc", [[0, "#41454b"], [.55, "#26292d"], [1, "#16181b"]], 0, 0, 1, 1), bordo(L, 1.5)) + tratto("M" + q(X0 + 4, Y0 + 1.3) + " L" + q(X1 - 4, Y0 + 1.3), "#ffffff", .6, op(.35));
+    s += rett(SX0 - 2.2, SY0 - 2.2, SX1 - SX0 + 4.4, SY1 - SY0 + 4.4, 5.5, lin("bz", [[0, "#aeb5bc"], [1, "#5c636a"]], 0, 0, 1, 1), bordo(L, .6));   // la cornice d'argento
+    if (NOTTE) s += rett(SX0 - 1.4, SY0 - 1.4, SX1 - SX0 + 2.8, SY1 - SY0 + 2.8, 5, "none", "stroke='#dbeaff' stroke-width='2' opacity='.45'");
+    s += dentro(dS, schermo()) + pth(dS, "none", bordo(L, .8));
+    for (i = 0; i < 9; i++) s += rett(82.6, 53 + i * 1.9, 11, .9, .45, "#0b0c0e") + rett(82.6, 53.9 + i * 1.9, 11, .3, 0, "#ffffff", op(.12));   // la grata dell'altoparlante
+    for (i = 0; i < 6; i++) s += rett(83 + (i % 2) * 5.6, 73 + Math.floor(i / 2) * 3.6, 4.4, 2.4, .5, lin("pu", [[0, "#e9ecef"], [1, "#868e96"]], 0, 0, 0, 1), bordo(L, .3));   // i tasti dei canali
+    s += cer(88, 88.4, .8, NOTTE ? "#ffb3b3" : "#c92a2a", bordo(L, .25)) + (NOTTE ? cer(88, 88.4, 2.2, "#ff6b6b", op(.3)) : "") + rett(47, 90.4, 14, 1.5, .6, "#868e96", op(.9));   // la lucina e la targhetta
+    // l'antenna a baffo
+    var ab = [60, Y0 - 2.6];
+    [[46.5, 17.5], [76, 19]].forEach(function (t) { s += tratto(linea(ab, t), L, 1.5) + tratto(linea(ab, t), "#ced4da", .7) + cer(t[0], t[1], .9, lin("pa", CROMO, 0, 0, 1, 1), bordo(L, .3)); });
+    s += pth("M" + q(ab[0] - 3.6, ab[1] + 1.4) + " Q" + q(ab[0] - 3.4, ab[1] - 2.4) + " " + q(ab[0], ab[1] - 2.6) + " Q" + q(ab[0] + 3.4, ab[1] - 2.4) + " " + q(ab[0] + 3.6, ab[1] + 1.4) + " Z", lin("ba", [[0, "#5c636a"], [1, "#1d1f22"]], 0, 0, 1, 1), bordo(L, .6));
+    // le due code della sciarpa rossoblù che scendono dalla mensola, con la frangia
+    function coda(x, y0, y1, w) {
+      var d = "M" + q(x, y0) + " L" + q(x + w, y0) + " L" + q(x + w + .4, y1) + " L" + q(x + .2, y1) + " Z", f = "", yy, j = 0, k;
+      for (yy = y0; yy < y1; yy += 3.6) { f += rett(x - 1, yy, w + 2, 3.6, 0, j % 2 ? BL : RO) + rett(x - 1, yy + 3.1, w + 2, .5, 0, "#f8f9fa", op(.9)); j++; }
+      for (k = 1; k < w; k += 1.1) f += rett(x + k, y0, .25, y1 - y0, 0, "#000", op(.12));   // la maglia
+      f += rett(x, y0, w, y1 - y0, 0, nuova([[0, "#fff", .18], [.5, "#fff", 0], [1, "#000", .2]], 0, 0, 1, 0));
+      var o = pth(d, "#000", op(.2) + " transform='translate(1 1.2)'") + pth(d, RO) + dentro(d, f) + pth(d, "none", bordo(L, .6));
+      for (k = 0; k <= w; k += .9) o += tratto(linea([x + .3 + k, y1], [x + .4 + k, y1 + 3]), j % 2 ? BL : RO, .5);   // la frangia
+      return o;
+    }
+    return s + coda(104.6, 96.6, 133, 6.6) + coda(99.6, 95.6, 141, 6.8);
+  });
+
+  // =========================================================
+  //  IL VENTILATORE A PALE (appeso in alto, sotto si cammina): il rosone e l'asta d'ottone, il motore a campana
+  //  con le fasce, le cinque pale di noce sulle staffe d'ottone, la catenella, la lampada a globo di vetro smerigliato.
+  //  Di notte la lampada è accesa.
+  // =========================================================
+  def("ventilatore", { tipo: "sospeso", nome: "Ventilatore a pale", fp: [1, 1], box: [-44, -256, 44, -178], luce: [0, 0, 193, 130, "#ffe6b0"] }, function () {
+    var ZC = 251, ZR = 222, ZM = 208, ZP = 209.4, s = "";
+    s += tornito(0, 0, [[ZC - 6, .03], [ZC - 4.6, .055], [ZC - 1.6, .066], [ZC, .068]], OTTONE, 1, [1]);   // il rosone al soffitto
+    s += tornito(0, 0, [[ZR - 1, .014], [ZC - 6, .014]], OTTONE, .8, null, .5);   // l'asta
+    var pale = [0, 1, 2, 3, 4].map(function (k) { var t = (9 + 72 * k) * Math.PI / 180; return { t: t, v: vicino(Math.cos(t), Math.sin(t)) }; }).sort(function (x, y) { return x.v - y.v; });
+    function pala(pp) {
+      var t = pp.t, c = Math.cos(t), sn = Math.sin(t), r0 = .12, r1 = .6, w0 = .032, w1 = .056, k, o = "";
+      function pt(rr, w, z) { return P(c * rr - sn * w, sn * rr + c * w, z); }
+      var top = [pt(r0, -w0, ZP), pt(r1 - .056, -w1, ZP)];
+      for (k = 1; k < 8; k++) { var an = -Math.PI / 2 + Math.PI * k / 8; top.push(pt(r1 - .056 + .056 * Math.cos(an), w1 * Math.sin(an), ZP)); }
+      top.push(pt(r1 - .056, w1, ZP), pt(r0, w0, ZP));
+      var sotto = top.map(function (w) { return [w[0], w[1] + 1.4]; }), m0 = pt(r0, 0, ZP), m1 = pt(r1, 0, ZP);
+      o += pth(chiuso(sotto), scuro(NOCE, .45), bordo(L, 1)) + pth(chiuso(top), nuova([[0, chiaro(NOCE, .5)], [.5, chiaro(NOCE, .12)], [1, scuro(NOCE, .15)]], m0[0], m0[1], m1[0], m1[1], true), bordo(L, 1));
+      o += tratto(linea(pt(r0 + .03, -.012, ZP), pt(r1 - .07, -.02, ZP)), chiaro(NOCE, .35), .45, op(.65)) + tratto(linea(pt(r0 + .05, .014, ZP), pt(r1 - .09, .022, ZP)), scuro(NOCE, .35), .4, op(.5));   // le venature
+      o += ottone(linea(pt(.07, 0, ZM + 1), pt(.21, 0, ZP + .5)), 1.9) + cer(pt(.18, -.012, ZP + .7)[0], pt(.18, -.012, ZP + .7)[1], .45, "#5a3c0c") + cer(pt(.18, .012, ZP + .7)[0], pt(.18, .012, ZP + .7)[1], .45, "#5a3c0c");   // la staffa d'ottone con le viti
+      return o;
+    }
+    s += pale.filter(function (x) { return x.v < 0; }).map(pala).join("");
+    s += tornito(0, 0, [[ZM - 1.2, .07], [ZM, .095], [ZM + 2, .106], [ZM + 9.4, .106], [ZM + 11.6, .09], [ZM + 13, .055], [ZR, .03]], OTTONE, 1.3, [2, 3, 4], 1.1);   // il motore a campana
+    s += tornito(0, 0, [[ZM - 7.2, .045], [ZM - 5.6, .053], [ZM - 1.2, .062]], OTTONE, 1, [1]);   // la scatolina dell'interruttore
+    var ca = P(.03, .03, ZM - 6), cb = [ca[0] + .6, ca[1] + 17];
+    s += tratto(linea(ca, cb), "#8a6a2a", .55, "stroke-dasharray='.55 .45'") + pth("M" + q(cb[0] - .9, cb[1] + .4) + " Q" + q(cb[0], cb[1] - .8) + " " + q(cb[0] + .9, cb[1] + .4) + " L" + q(cb[0], cb[1] + 2.4) + " Z", nuovaR(ORO_C, .35, .3, .8), bordo(L, .3));   // la catenella col pomellino
+    s += tornito(0, 0, [[ZM - 9, .03], [ZM - 7.2, .036]], OTTONE, .8);
+    var gl = [[ZM - 22.4, .018], [ZM - 21.6, .042], [ZM - 19.6, .064], [ZM - 16, .078], [ZM - 12.4, .074], [ZM - 10, .056], [ZM - 9, .034]];
+    s += tornito(0, 0, gl, NOTTE ? [[0, "#fffef6"], [.5, "#fff3c8"], [1, "#f5c870"]] : [[0, "#ffffff"], [.45, "#f4f1ea"], [1, "#c9c2b2"]], 1, null, NOTTE ? 0 : 1.2);   // il globo di vetro smerigliato
+    if (NOTTE) { var lc = P(0, 0, ZM - 15); s += cer(lc[0], lc[1], 9, nuovaR([[0, "#fffbe6", .9], [.5, "#ffe8a8", .35], [1, "#ffe8a8", 0]], .5, .5, .5)); }
+    else { var lr = P(0, 0, ZM - 13); s += ell(lr[0] - 2.2, lr[1] - 1, 1, 2.4, "#ffffff", op(.75)); }
+    return s + pale.filter(function (x) { return x.v >= 0; }).map(pala).join("");
+  });
+
+  // =========================================================
+  //  LA FOTO DELLA SQUADRA (larga due pezzi di muro): in bianco e nero, un po' color seppia, nella cornice di noce
+  //  col filetto d'oro e il passe-partout; dietro in piedi l'allenatore col cappello, i giocatori e il presidente,
+  //  il portiere col maglione scuro; davanti accovacciati gli altri, in mezzo la coppa vinta e il pallone.
+  //  La targhetta d'ottone sotto, il filo e il chiodo.
+  // =========================================================
+  def("foto_squadra", { tipo: "parete", nome: "Foto della squadra", fp: [2, 1] }, function () {
+    var s = "", X0 = 15, Y0 = 50, W = 94, H = 64, fr = 5.2, pp = 4, px = X0 + fr + pp, py = Y0 + fr + pp, pw = W - 2 * (fr + pp), ph = H - 2 * (fr + pp), r = rnd(1968), i;
+    var PEL = "#cdbfa6", CAP = "#2f2922", MAG = "#4b443a", BIA = "#ebe4d3", SC = "#2a251f";
+    function inPiedi(x, yp, tipo) {   // in piedi (i piedi a yp)
+      var o = "", maglia = tipo === "portiere" ? "#1e1b17" : tipo ? "#3a352d" : MAG;
+      if (!tipo || tipo === "portiere") {
+        o += tratto("M" + q(x - 1, yp - 7.4) + " L" + q(x - 1.1, yp - .4) + " M" + q(x + 1, yp - 7.4) + " L" + q(x + 1.1, yp - .4), SC, 1.5) + rett(x - 1.9, yp - 5.2, 3.8, .7, 0, BIA, op(.9)) + ell(x - 1.4, yp - .2, 1.2, .55, "#141210") + ell(x + 1.4, yp - .2, 1.2, .55, "#141210");
+        o += rett(x - 2.6, yp - 10.6, 5.2, 3.5, .7, tipo === "portiere" ? "#2a251f" : BIA);   // i calzoncini
+      } else o += rett(x - 2.2, yp - 10.8, 4.4, 10.4, .6, maglia) + ell(x - 1.3, yp - .2, 1.3, .55, "#141210") + ell(x + 1.3, yp - .2, 1.3, .55, "#141210") + rett(x - .15, yp - 9, .3, 8, 0, "#000", op(.3));   // i pantaloni del vestito
+      o += pth("M" + q(x - 3.3, yp - 17) + " L" + q(x + 3.3, yp - 17) + " L" + q(x + 2.7, yp - 10.4) + " L" + q(x - 2.7, yp - 10.4) + " Z", maglia);
+      o += tratto("M" + q(x - 3.1, yp - 16.6) + " L" + q(x - 3.5, yp - 11) + " M" + q(x + 3.1, yp - 16.6) + " L" + q(x + 3.5, yp - 11), maglia, 1.5);   // le braccia
+      o += pth("M" + q(x - 1.2, yp - 17) + " L" + q(x, yp - 15.3) + " L" + q(x + 1.2, yp - 17) + " Z", BIA);   // il colletto
+      if (tipo === "allenatore" || tipo === "presidente") o += tratto("M" + q(x - .2, yp - 16.6) + " L" + q(x - .2, yp - 13), "#1a1714", .5);   // la cravatta
+      o += cer(x, yp - 19, 1.9, PEL) + pth("M" + q(x - 1.9, yp - 19.2) + " Q" + q(x - 1.8, yp - 21.2) + " " + q(x, yp - 21.1) + " Q" + q(x + 1.8, yp - 21.2) + " " + q(x + 1.9, yp - 19.2) + " Q" + q(x, yp - 20.2) + " " + q(x - 1.9, yp - 19.2) + " Z", CAP);
+      if (tipo === "allenatore") o += ell(x, yp - 20.6, 3, .7, "#25211c") + pth("M" + q(x - 1.8, yp - 20.6) + " Q" + q(x - 1.7, yp - 23) + " " + q(x, yp - 23) + " Q" + q(x + 1.7, yp - 23) + " " + q(x + 1.8, yp - 20.6) + " Z", "#25211c");   // il cappello
+      if (tipo === "portiere") o += pth("M" + q(x - 2, yp - 19.8) + " Q" + q(x, yp - 22.2) + " " + q(x + 2, yp - 19.8) + " L" + q(x + 3, yp - 19.6) + " Z", "#1a1714");   // il berretto
+      return o;
+    }
+    function accovacciato(x, yp) {   // accovacciato davanti, con un ginocchio a terra
+      var o = tratto("M" + q(x - 1.6, yp - 4.4) + " L" + q(x - 2.8, yp - .8) + " L" + q(x - 4.4, yp - .4) + " M" + q(x + 1.4, yp - 4.6) + " L" + q(x + 2.6, yp - 4.2) + " L" + q(x + 2.9, yp - .4), SC, 1.5);
+      o += ell(x - 4.8, yp - .3, 1.1, .5, "#141210") + ell(x + 3.3, yp - .2, 1.2, .55, "#141210");
+      o += rett(x - 2.8, yp - 7.2, 5.6, 3, .8, BIA) + pth("M" + q(x - 3.2, yp - 12.8) + " L" + q(x + 3.2, yp - 12.8) + " L" + q(x + 2.8, yp - 7) + " L" + q(x - 2.8, yp - 7) + " Z", MAG);
+      o += tratto("M" + q(x - 3, yp - 12.4) + " L" + q(x - 2.2, yp - 6.8) + " M" + q(x + 3, yp - 12.4) + " L" + q(x + 2.6, yp - 6.6), MAG, 1.4) + pth("M" + q(x - 1.2, yp - 12.8) + " L" + q(x, yp - 11.2) + " L" + q(x + 1.2, yp - 12.8) + " Z", BIA);
+      return o + cer(x, yp - 14.8, 1.9, PEL) + pth("M" + q(x - 1.9, yp - 15) + " Q" + q(x - 1.8, yp - 17) + " " + q(x, yp - 16.9) + " Q" + q(x + 1.8, yp - 17) + " " + q(x + 1.9, yp - 15) + " Q" + q(x, yp - 16) + " " + q(x - 1.9, yp - 15) + " Z", CAP);
+    }
+    function foto() {
+      var o = rett(px, py, pw, ph * .46, 0, lin("ci", [[0, "#d9d1c0"], [1, "#bfb5a2"]], 0, 0, 0, 1)), k;
+      for (k = 0; k < 16; k++) o += ell(px + r() * pw, py + ph * .34 + r() * 2.5, 3 + r() * 4, 2.4 + r() * 2.2, "#8d8473", op(.9));   // gli alberi lontani
+      o += rett(px, py + ph * .4, pw, ph * .6, 0, lin("pr", [[0, "#a49b88"], [1, "#857c6b"]], 0, 0, 0, 1)) + rett(px, py + ph * .38, pw, 1.8, 0, "#6e6658");   // il prato e il muretto
+      var dietro = [[.07, "allenatore"], [.19, 0], [.3, 0], [.41, 0], [.52, "portiere"], [.63, 0], [.74, 0], [.88, "presidente"]], yb = py + ph * .77;
+      dietro.forEach(function (g) { o += inPiedi(px + pw * g[0], yb, g[1]); });
+      [.17, .29, .41, .73, .85].forEach(function (t) { o += accovacciato(px + pw * t, py + ph * .97); });
+      // la coppa vinta, in mezzo davanti, e il pallone
+      var cx = px + pw * .57, cy = py + ph * .975;
+      o += rett(cx - 2.6, cy - 1.8, 5.2, 1.8, .3, "#2a251f") + pth("M" + q(cx - .7, cy - 1.8) + " L" + q(cx - .4, cy - 4.4) + " L" + q(cx + .4, cy - 4.4) + " L" + q(cx + .7, cy - 1.8) + " Z", "#d9d2c4");
+      o += pth("M" + q(cx - 3.4, cy - 9.6) + " Q" + q(cx - 3.2, cy - 5) + " " + q(cx, cy - 4.4) + " Q" + q(cx + 3.2, cy - 5) + " " + q(cx + 3.4, cy - 9.6) + " Z", lin("cp", [[0, "#ffffff"], [.5, "#cfc8ba"], [1, "#7a7366"]], 0, 0, 1, 0), "stroke='#2a251f' stroke-width='.3'") + tratto("M" + q(cx - 3.3, cy - 8.8) + " C" + q(cx - 6, cy - 9.4) + " " + q(cx - 5.6, cy - 6) + " " + q(cx - 2.4, cy - 5.6) + " M" + q(cx + 3.3, cy - 8.8) + " C" + q(cx + 6, cy - 9.4) + " " + q(cx + 5.6, cy - 6) + " " + q(cx + 2.4, cy - 5.6), "#bdb6a8", .6);
+      o += ell(cx, cy - 9.6, 3.4, .8, "#6e675b") + ell(cx - 1.6, cy - 7.4, .5, 1.4, "#ffffff", op(.8));
+      var bx = px + pw * .65, by = py + ph * .955;
+      o += cer(bx, by, 2.2, "#e2dccd", "stroke='#2a251f' stroke-width='.3'") + tratto("M" + q(bx - 2.1, by - .4) + " Q" + q(bx, by + .8) + " " + q(bx + 2.1, by - .4) + " M" + q(bx - .8, by - 2) + " Q" + q(bx - 1.3, by) + " " + q(bx - .7, by + 2), "#6e675b", .3);
+      // il viraggio seppia, l'alone scuro ai bordi, i graffi
+      o += rett(px, py, pw, ph, 0, nuovaR([[0, "#000", 0], [.68, "#000", .06], [1, "#3a2a10", .42]], .5, .5, .72)) + rett(px, py, pw, ph, 0, "#a5793d", op(.1));
+      return o + tratto("M" + q(px + pw * .62, py + 1) + " L" + q(px + pw * .66, py + ph * .45), "#ffffff", .3, op(.5)) + tratto("M" + q(px + pw * .2, py + ph * .55) + " Q" + q(px + pw * .26, py + ph * .7) + " " + q(px + pw * .23, py + ph * .86), "#ffffff", .25, op(.4));
+    }
+    s += tratto("M" + q(X0 + 14, Y0 + 3) + " L" + q(X0 + W / 2, Y0 - 9) + " L" + q(X0 + W - 14, Y0 + 3), "#6b6258", .45) + cer(X0 + W / 2, Y0 - 9.4, .9, "#868e96", bordo(L, .3));   // il filo e il chiodo
+    s += rett(X0 + 2.6, Y0 + 3.4, W, H, 1.5, "#000", op(.16));   // l'ombra sul muro
+    s += rett(X0, Y0, W, H, 1.2, lin("cf", [[0, chiaro(NOCE_SC, .3)], [1, scuro(NOCE_SC, .3)]], 0, 0, 1, 1), bordo(L, 1.2));   // la cornice di noce
+    s += tratto("M" + q(X0 + 1.2, Y0 + H - 1.2) + " L" + q(X0 + 1.2, Y0 + 1.2) + " L" + q(X0 + W - 1.2, Y0 + 1.2), chiaro(NOCE_SC, .5), .7, op(.8)) + tratto("M" + q(X0 + fr, Y0 + H - fr) + " L" + q(X0 + W - fr, Y0 + H - fr) + " L" + q(X0 + W - fr, Y0 + fr), chiaro(NOCE_SC, .4), .6, op(.7));
+    s += venatureO(W, fr, 6, 71, NOCE_SC, .35, X0, Y0) + venatureO(W, fr, 6, 72, NOCE_SC, .35, X0, Y0 + H - fr);
+    s += rett(X0 + fr - .8, Y0 + fr - .8, W - 2 * fr + 1.6, H - 2 * fr + 1.6, 0, "none", "stroke='#d9a530' stroke-width='.8'");   // il filetto d'oro
+    s += rett(X0 + fr, Y0 + fr, W - 2 * fr, H - 2 * fr, 0, "#efe6d0") + tratto("M" + q(X0 + fr, Y0 + H - fr) + " L" + q(X0 + fr, Y0 + fr) + " L" + q(X0 + W - fr, Y0 + fr), "#000", 1.2, op(.18));   // il passe-partout
+    s += dentro(rettD(px, py, pw, ph, 0), foto()) + rett(px, py, pw, ph, 0, "none", "stroke='#7d7466' stroke-width='.45'");
+    s += dentro(rettD(X0 + fr, Y0 + fr, W - 2 * fr, H - 2 * fr, 0), poly([[X0 + 20, Y0], [X0 + 34, Y0], [X0 + 12, Y0 + H], [X0 - 2, Y0 + H]], "#ffffff", op(.13)) + poly([[X0 + 40, Y0], [X0 + 44, Y0], [X0 + 22, Y0 + H], [X0 + 18, Y0 + H]], "#ffffff", op(.09)));   // il vetro
+    s += rett(X0 + W / 2 - 9, Y0 + H - fr + .7, 18, 3.6, .5, lin("tg", ORO, 0, 0, 0, 1), bordo(L, .35)) + rett(X0 + W / 2 - 6, Y0 + H - fr + 1.9, 12, .4, 0, "#7a5614") + rett(X0 + W / 2 - 4, Y0 + H - fr + 2.9, 8, .4, 0, "#7a5614");   // la targhetta incisa
+    return s;
+  });
+
+  // =========================================================
+  //  LA BANDIERA ITALIANA: il drappo verde, bianco e rosso con le pieghe morbide e la frangia d'oro,
+  //  appeso con gli anellini all'asta di legno con le punte di lancia d'ottone, sulle due staffe; le nappine d'oro
+  // =========================================================
+  def("bandiera_italia", { tipo: "parete", nome: "Bandiera italiana" }, function () {
+    var s = "", x0 = 9, x1 = 53, y0 = 52.4, h = 30, VE = "#009246", BI = "#f4f5f0", RS = "#ce2b37", i, w = x1 - x0;
+    function yb(x) { return y0 + h + Math.sin((x - x0) / w * Math.PI * 4 - .4) * 1.3; }   // l'orlo in basso, ondulato dalle pieghe
+    var d = "M" + q(x0, y0) + " L" + q(x1, y0) + " Q" + q(x1 + 1, y0 + h * .5) + " " + q(x1 + .3, yb(x1));
+    for (i = 15; i >= 0; i--) d += " L" + q(x0 + w * i / 16, yb(x0 + w * i / 16));
+    d += " Q" + q(x0 - .8, y0 + h * .5) + " " + q(x0, y0) + " Z";
+    s += pth(d, "#000", op(.14) + " transform='translate(2.4 3.2)'");   // l'ombra sul muro
+    var pieghe = nuova([[0, "#000", .14], [.12, "#fff", .16], [.25, "#000", .14], [.37, "#fff", .14], [.5, "#000", .15], [.62, "#fff", .16], [.75, "#000", .13], [.87, "#fff", .13], [1, "#000", .16]], x0, 0, x1, 0, true);
+    s += dentro(d, rett(x0 - 2, y0 - 2, w / 3 + 2, h + 6, 0, VE) + rett(x0 + w / 3, y0 - 2, w / 3, h + 6, 0, BI) + rett(x0 + 2 * w / 3, y0 - 2, w / 3 + 3, h + 6, 0, RS) + rett(x0 - 2, y0 - 2, w + 4, h + 6, 0, pieghe) + rett(x0 - 2, y0 - 2, w + 4, 6, 0, nuova([[0, "#000", .2], [1, "#000", 0]], 0, 0, 0, 1)));
+    s += pth(d, "none", bordo(L, .7));
+    for (i = 0; i <= 55; i++) { var x = x0 + w * i / 55, y = yb(x); s += tratto(linea([x, y + .2], [x + .1, y + 2.6]), i % 2 ? "#e9b949" : "#b8861f", .55); }   // la frangia d'oro
+    s += tratto("M" + q(x0, yb(x0) + 2.4) + " " + Array.apply(null, Array(17)).map(function (_, k) { var x = x0 + w * k / 16; return "L" + q(x, yb(x) + 2.5); }).join(" "), "#8a6514", .4, op(.6));
+    // l'asta di legno, le staffe, gli anellini, le punte d'ottone e le nappine
+    [14, 48].forEach(function (x) { s += rett(x - 1, 47.6, 2, 3.4, .5, lin("st", OTTONE, 0, 0, 1, 0), bordo(L, .35)); });
+    s += rett(5, 49.6, 52, 2.4, 1.2, lin("as", [[0, "#a0673a"], [.5, "#6b3f22"], [1, "#3e2412"]], 0, 0, 0, 1), bordo(L, .6)) + rett(6, 50, 50, .5, 0, "#ffffff", op(.3));
+    for (i = 0; i < 7; i++) s += ell(x0 + 2 + i * (w - 4) / 6, 51.6, 1, 1.4, "none", "stroke='#c99a36' stroke-width='.55'");
+    [[5, -1], [57, 1]].forEach(function (g) {
+      var x = g[0], k = g[1];
+      s += pth("M" + q(x, 49.4) + " L" + q(x + k * 3.6, 50.8) + " L" + q(x, 52.2) + " Q" + q(x + k * .9, 50.8) + " " + q(x, 49.4) + " Z", lin("pn", OTTONE, 0, 0, 1, 1), bordo(L, .4));   // la punta di lancia
+      s += tratto("M" + q(x + k * -.6, 52) + " Q" + q(x + k * -.2, 58) + " " + q(x + k * -.8, 63), "#c99a36", .55) + pth("M" + q(x + k * -.8, 62.6) + " L" + q(x + k * -.8 - 1.1, 67.4) + " L" + q(x + k * -.8 + 1.1, 67.4) + " Z", lin("nap", OTTONE, 0, 0, 1, 0), bordo("#7a5614", .3));   // il cordone e la nappina
+    });
+    return s;
+  });
+
+  // =========================================================
+  //  IL CALENDARIO E IL CARTELLO DEL TORNEO DI SCOPA: il cartello di carta appeso con le puntine colorate, col nastro rosso
+  //  in alto, il ventaglio di carte napoletane (l'asso di denari, l'asso di coppe, il tre di spade, il settebello)
+  //  e la coppa, le righe scritte piccole (da lontano, niente lettere) e il tricolore in fondo; sotto, appeso al chiodo,
+  //  il calendario col paesaggio di campagna toscana, i giorni del mese e la data del torneo cerchiata di rosso.
+  // =========================================================
+  def("calendario_parete", { tipo: "parete", nome: "Calendario e torneo di scopa" }, function () {
+    var s = "", i, j;
+    function carta(cx, cy, ang, tipo) {   // una carta napoletana: il bordo, il disegno del seme
+      var w = 9, h = 14, x = cx - w / 2, y = cy - h / 2, o = rett(x + .5, y + .6, w, h, 1, "#000", op(.2)) + rett(x, y, w, h, 1, "#fffdf6", bordo(L, .4)) + rett(x + .8, y + .8, w - 1.6, h - 1.6, .6, "none", "stroke='#c92a2a' stroke-width='.3'");
+      function moneta(mx, my, rr) { return cer(mx, my, rr, nuovaR([[0, "#fff1a8"], [.5, "#f2b824"], [1, "#a8641e"]], .35, .3, .8), "stroke='#7a4a10' stroke-width='.25'") + cer(mx, my, rr * .45, "#c92a2a"); }
+      if (tipo === "denari") o += moneta(cx, cy, 3.3) + [0, 1, 2, 3, 4, 5, 6, 7].map(function (k) { var an = k * Math.PI / 4; return tratto(linea([cx + Math.cos(an) * 1.7, cy + Math.sin(an) * 1.7], [cx + Math.cos(an) * 2.8, cy + Math.sin(an) * 2.8]), "#a8641e", .3); }).join("");
+      if (tipo === "settebello") [[-2.1, -4.2], [2.1, -4.2], [0, -2.1], [-2.1, 0], [2.1, 0], [-2.1, 4.2], [2.1, 4.2]].forEach(function (m) { o += moneta(cx + m[0], cy + m[1], 1.25); });
+      if (tipo === "coppe") o += pth("M" + q(cx - 3, cy - 4.6) + " Q" + q(cx - 3, cy - .6) + " " + q(cx, cy) + " Q" + q(cx + 3, cy - .6) + " " + q(cx + 3, cy - 4.6) + " Z", lin("cc", [[0, "#ffd43b"], [1, "#c97a14"]], 0, 0, 1, 0), "stroke='#7a4a10' stroke-width='.3'") + rett(cx - .5, cy, 1, 2.6, 0, "#e0a020") + ell(cx, cy + 3, 2.4, .9, "#c92a2a", "stroke='#7a1515' stroke-width='.25'") + ell(cx, cy - 4.6, 3, .8, "#c92a2a");
+      if (tipo === "spade") [-2.2, 0, 2.2].forEach(function (dx, k) { var a0 = [cx + dx - 1.2, cy + 4.6], a1 = [cx + dx + 1.2, cy - 4.6]; o += tratto(linea(a0, a1), "#1c4f9c", .9) + tratto(linea(lerp(a0, a1, .78), [lerp(a0, a1, .78)[0] - 1.3, lerp(a0, a1, .78)[1] - .3]), "#d9a530", .6) + tratto(linea(lerp(a0, a1, .78), [lerp(a0, a1, .78)[0] + 1.3, lerp(a0, a1, .78)[1] + .3]), "#d9a530", .6); });
+      return ruota(cx, cy + 6, ang, o);
+    }
+    // il cartello del torneo, un po' storto
+    var poster = rett(9.6, 38.8, 44, 46, .6, "#000", op(.18)) + rett(9, 38, 44, 46, .6, lin("pa", [[0, "#fffaf0"], [1, "#efe4cc"]], 0, 0, 1, 1), bordo("#8a7a5a", .45));
+    poster += pth("M10,42.4 L14,41.8 L14,48 L10,47.6 L11.6,45 Z", "#8f1d1d") + pth("M52,42.4 L48,41.8 L48,48 L52,47.6 L50.4,45 Z", "#8f1d1d") + rett(13, 40.8, 36, 6.4, .6, lin("na", [[0, "#ef4444"], [1, "#b91c1c"]], 0, 0, 0, 1), bordo("#6b1010", .35));   // il nastro rosso
+    poster += stella(17, 44, 1.5, .6, "#ffe066") + stella(45, 44, 1.5, .6, "#ffe066") + [22, 26.5, 31, 35.5, 40].map(function (x, k) { return rett(x - 1.4, 43.2 - (k % 2) * .3, 2.8 + (k % 2), 1.6, .6, "#ffffff", op(.85)); }).join("");   // (da lontano sembra scritto)
+    poster += carta(17.6, 62, -26, "denari") + carta(22.2, 61, -9, "coppe") + carta(26.8, 61, 9, "spade") + carta(31.4, 62, 26, "settebello");
+    var cx = 44.4, cy = 62;   // la coppa del torneo
+    poster += pth("M" + q(cx - 4, cy - 6) + " Q" + q(cx - 3.8, cy - .4) + " " + q(cx, cy + .4) + " Q" + q(cx + 3.8, cy - .4) + " " + q(cx + 4, cy - 6) + " Z", lin("ct", ORO_C, 0, 0, 1, 0), bordo(L, .4)) + tratto("M" + q(cx - 3.8, cy - 5) + " C" + q(cx - 7, cy - 5.6) + " " + q(cx - 6.4, cy - 1.6) + " " + q(cx - 2.6, cy - 1) + " M" + q(cx + 3.8, cy - 5) + " C" + q(cx + 7, cy - 5.6) + " " + q(cx + 6.4, cy - 1.6) + " " + q(cx + 2.6, cy - 1), "#c08a1c", .8);
+    poster += rett(cx - .7, cy + .4, 1.4, 3, 0, "#c08a1c") + rett(cx - 3, cy + 3.4, 6, 1.6, .4, "#3a3f45") + ell(cx, cy - 6, 4, 1, "#a8781a") + ell(cx - 1.8, cy - 3.6, .6, 1.6, "#ffffff", op(.75));
+    poster += [[16, 46, 76.4], [19, 43, 78.6], [22, 40, 80.6]].map(function (g) { return rett(g[0], g[2], g[1] - g[0], .9, .45, "#6b6258", op(.75)); }).join("");   // le righe piccole
+    poster += rett(9.6, 82.4, 14.27, 1.3, 0, "#009246") + rett(23.87, 82.4, 14.27, 1.3, 0, "#f4f5f0") + rett(38.13, 82.4, 14.27, 1.3, 0, "#ce2b37");
+    [[11.4, 40.2, "#e03131"], [50.6, 40.2, "#1c7ed6"], [11.4, 81.6, "#f59f00"], [50.6, 81.6, "#2f9e44"]].forEach(function (pn) { poster += cer(pn[0] + .5, pn[1] + .6, 1.3, "#000", op(.25)) + cer(pn[0], pn[1], 1.3, pn[2], bordo(L, .3)) + cer(pn[0] - .4, pn[1] - .4, .4, "#ffffff", op(.8)); });   // le puntine
+    s += ruota(31, 61, -2.2, poster);
+    // il calendario appeso al chiodo
+    s += tratto("M31,89 L23.5,96.2 M31,89 L38.5,96.2", "#6b6258", .45) + cer(31, 88.6, .9, "#868e96", bordo(L, .3));
+    s += rett(14.8, 96.8, 34, 55, .5, "#000", op(.17)) + rett(14, 95.8, 34, 55, .5, "#fbfaf6", bordo("#8a7a5a", .45)) + rett(14, 95.8, 34, 2.6, .5, lin("me", CROMO, 0, 0, 0, 1), bordo(L, .3)) + cer(31, 97.1, .6, "#495057");
+    var px = 15.6, py = 99.2, pw = 30.8, ph = 21.4, pd = rettD(px, py, pw, ph, 0), pae = rett(px, py, pw, ph, 0, lin("cl", [[0, "#8ec5ff"], [.7, "#d6ecff"], [1, "#fff3d6"]], 0, 0, 0, 1));
+    pae += cer(px + pw * .78, py + ph * .3, 2.6, "#ffe066") + pth("M" + q(px, py + ph * .62) + " Q" + q(px + pw * .3, py + ph * .4) + " " + q(px + pw * .6, py + ph * .58) + " T" + q(px + pw, py + ph * .5) + " V" + f1(py + ph) + " H" + f1(px) + " Z", "#9bc46a");
+    pae += pth("M" + q(px, py + ph * .78) + " Q" + q(px + pw * .4, py + ph * .55) + " " + q(px + pw, py + ph * .74) + " V" + f1(py + ph) + " H" + f1(px) + " Z", "#6fa94a") + pth("M" + q(px + pw * .45, py + ph) + " Q" + q(px + pw * .5, py + ph * .8) + " " + q(px + pw * .66, py + ph * .66), "none", "stroke='#f3e3b3' stroke-width='1'");
+    [[.18, .55, 6.4], [.24, .58, 5.2], [.86, .52, 6]].forEach(function (c) { pae += ell(px + pw * c[0], py + ph * c[1] - c[2] / 2, 1, c[2] / 2, "#2f5d2a"); });   // i cipressi
+    var cx2 = px + pw * .62, cy2 = py + ph * .56;   // il casolare col tetto rosso
+    pae += rett(cx2 - 3, cy2 - 3, 6, 3.4, 0, "#f1e2c2", "stroke='#8a6a4a' stroke-width='.25'") + pth("M" + q(cx2 - 3.6, cy2 - 2.8) + " L" + q(cx2, cy2 - 5.2) + " L" + q(cx2 + 3.6, cy2 - 2.8) + " Z", "#c4512b") + rett(cx2 - .5, cy2 - 1.6, 1, 2, 0, "#8a5a3a");
+    s += dentro(pd, pae) + rett(px, py, pw, ph, 0, "none", "stroke='#8a7a5a' stroke-width='.3'");
+    s += rett(15.6, 121.6, 30.8, 3.4, .3, "#d62f2f") + rett(25, 122.6, 12, 1.4, .6, "#ffffff", op(.85));   // il mese
+    for (j = 0; j < 7; j++) s += rett(16.6 + j * 4.3, 126.2, 2.2, .7, .3, j === 6 ? "#d62f2f" : "#868e96");
+    for (i = 0; i < 5; i++) for (j = 0; j < 7; j++) { var n = i * 7 + j - 2; if (n < 0 || n > 30) continue; var gx = 16.4 + j * 4.3, gy = 128.4 + i * 4.2, cc = j === 6 ? "#d62f2f" : "#343a40"; s += rett(gx, gy, n >= 9 ? 1 : .9, 1.8, .2, cc) + (n >= 9 ? rett(gx + 1.4, gy, 1, 1.8, .2, cc) : ""); }
+    s += ell(16.4 + 5 * 4.3 + 1.2, 128.4 + 2 * 4.2 + .9, 2.6, 2, "none", "stroke='#e03131' stroke-width='.55' transform='rotate(-8 " + f1(16.4 + 5 * 4.3 + 1.2) + " " + f1(128.4 + 2 * 4.2 + .9) + ")'");   // il giorno del torneo, cerchiato
+    s += rett(14, 147.4, 34, 3.4, 0, "#2f7a3a", op(.9));
+    return s;
+  });
+
+  // =========================================================
+  //  LA VECCHIA POLTRONA DI PELLE (la poltrona club): lo schienale tondo che scende sui braccioli a rullo,
+  //  il cuscino gonfio, il cordoncino lungo i bordi, i piedini a cipolla. La pelle marrone è vissuta:
+  //  schiarita dove si appoggiano le mani e dove ci si siede, con le crepette, le macchie della patina.
+  // =========================================================
+  function patina(b, seme, n) { var r = rnd(seme), s = "", i; for (i = 0; i < (n || 8); i++) { var x = b[0] + r() * (b[2] - b[0]), y = b[1] + r() * (b[3] - b[1]); s += ell(x, y, 3 + r() * 6, 1.5 + r() * 2.5, r() < .5 ? "#fff" : "#000", op(.025 + r() * .035)); } return s; }
+  function consumato(x, y, rx, ry, c) { return ell(x, y, rx, ry, nuovaR([[0, chiaro(c, .4), .8], [.55, chiaro(c, .28), .4], [1, chiaro(c, .2), 0]], .5, .5, .5)); }   // la pelle schiarita dall'uso
+  function crepe(cx, cy, n, seme, c, larga) {   // le crepette della pelle vecchia
+    var r = rnd(seme), s = "", i; larga = larga || 10;
+    for (i = 0; i < Math.ceil(n * .6); i++) { var x = cx + (r() - .5) * larga, y = cy + (r() - .5) * larga * .4, l = 1 + r() * 1.6, an = (r() - .5) * .8; s += tratto("M" + q(x, y) + " l" + f1(Math.cos(an) * l) + "," + f1(Math.sin(an) * l) + " l" + f1(Math.cos(an + .7) * l * .45) + "," + f1(Math.sin(an + .7) * l * .45), scuro(c, .4), .22, op(.45)); }
+    return s;
+  }
+  def("poltrona_circolo", { nome: "Vecchia poltrona di pelle", fp: [1, 1], box: [-48, -69, 48, 24], dietro: true, azione: "siedi", seduta: 26 }, function () {
+    var PE = "#7a4529", pz = [];
+    var s = ombraPianta(-.45, .45, -.45, .41, 1) + ombraSotto(-.4, .4, -.4, .36, .32);
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (g) {   // i piedini a cipolla di noce scuro
+      var a = .36 * g[0], b = g[1] < 0 ? -.37 : .33;
+      pz.push({ box: [a - .04, a + .04, b - .04, b + .04, 0, 5], s: tornito(a, b, [[0, .026], [1.2, .04], [3.2, .045], [5.2, .036]], [[0, chiaro(NOCE_SC, .45)], [.4, NOCE_SC], [1, scuro(NOCE_SC, .5)]], .9) });
+    });
+    // il basamento: la fascia di pelle tutto attorno, sotto la seduta
+    pz.push({ box: [-.43, .43, -.43, .41, 5, 15], s: estruso("a", tondo(-.43, .41, 5, 15.2, .03, 0, .02), -.43, .43, scuro(PE, .08), { mat: PELLE, ao: .35, aoH: 5, fascia: function (H) { return patina(limiti(H.sil), 201, 8); } }) });
+    // lo schienale tondo, a ferro di cavallo
+    var sch = pulisci([[-.43, 15], [.43, 15]].concat(arcoS(0, 35, .43, 15, 0, Math.PI, 22)));
+    pz.push({ box: [-.43, .43, -.43, -.2, 15, 50], s: estruso("b", sch, -.43, -.2, PE, { mat: PELLE, ao: .25, aoH: 10, lw: 2.2,
+      fascia: function (H) { var b = limiti(H.sil), t = H.p3([0, 49], G > 0 ? -.3 : -.33); return patina(b, 211, 14) + consumato(t[0], t[1] + 2, 12, 3.4, PE) + crepe(t[0] - 2, t[1] + 2, 6, 213, PE) + H.luccica(.35); },
+      tappo: function (T) {
+        if (G < 0) return T.su(tratto("M" + f1(T.x(0)) + "," + f1(T.y(49)) + " L" + f1(T.x(0)) + "," + f1(T.y(16)), scuro(PE, .4), .6, op(.6)) + patina([0, 0, T.W, T.H], 215, 10));   // dietro: liscio, con la cucitura
+        var o = buio(T.W, 10, .38).replace("<rect ", "<rect transform='translate(0 " + f1(T.H - 10) + ")' ") + consumato(T.x(0), T.y(41), 14, 5, PE) + crepe(T.x(0), T.y(40), 7, 217, PE, 14);
+        [-.2, 0, .2].forEach(function (a) { o += tratto("M" + f1(T.x(a)) + "," + f1(T.y(46)) + " Q" + f1(T.x(a) + 1.2) + "," + f1(T.y(31)) + " " + f1(T.x(a) - .4) + "," + f1(T.y(17)), scuro(PE, .4), .7, op(.5)); });   // le pieghe morbide
+        return T.su(o);
+      } }) + cordone(chiuso(rientra(sch.map(function (w) { return P(w[0], G > 0 ? -.2 : -.43, w[1]); }), 1.6)), PE, 1.2) });
+    // i braccioli a rullo, larghi e bassi
+    function bracciolo(x0, x1) {
+      var pr = pulisci([[x0, 15], [x1, 15], [x1, 33]].concat(arcoS((x0 + x1) / 2, 33, (x1 - x0) / 2, 5.6, 0, Math.PI, 14), [[x0, 33]])), xm = (x0 + x1) / 2;
+      return estruso("b", pr, -.3, .41, PE, { mat: PELLE, ao: .25, aoH: 9,
+        fascia: function (H) { var b = limiti(H.sil), t = H.p3([xm, 38.6], G > 0 ? .3 : -.2); return patina(b, 221 + Math.round(x0 * 10), 7) + consumato(t[0], t[1], 7, 2.6, PE) + crepe(t[0], t[1], 4, 223 + Math.round(x0 * 10), PE, 7) + H.luccica(.45); },
+        tappo: function (T) { return T.su(consumato(T.x(xm), T.y(35), 5, 3, PE) + crepe(T.x(xm), T.y(34), 4, 225, PE, 6)); }
+      }) + cordone(chiuso(rientra(pr.map(function (w) { return P(w[0], G > 0 ? .41 : -.3, w[1]); }), 1.3)), PE, 1.1);
+    }
+    pz.push({ box: [-.43, -.271, -.3, .41, 15, 38.6], s: bracciolo(-.43, -.27) }, { box: [.271, .43, -.3, .41, 15, 38.6], s: bracciolo(.27, .43) });
+    // il cuscino gonfio, consumato davanti
+    pz.push({ box: [-.27, .27, -.2, .42, 15, 27.6], s: estruso("a", tondo(-.22, .42, 15, 26.4, .06, 1.2, .03), -.27, .27, PE, { mat: PELLE, ao: .3, aoH: 8, fascia: function (H) {
+      var k = H.vicinoA(.42 - .02, 26.4 - 1.4), b = limiti(H.sil), m = H.p3([G > 0 ? .3 : -.1, 27], 0);
+      return patina(b, 231, 10) + consumato(m[0], m[1], 10, 3.6, PE) + crepe(m[0], m[1], 6, 233, PE, 12) + cordone(aperto(H.lungo(k, -.255, .255)), PE, 1.1) + H.luccica(.3, .1, .9);
+    } }) });
+    return s + inOrdine(pz);
+  });
+
+  // =========================================================
+  //  IL TAVOLINO DEI GIORNALI: tondo, di noce, col ripiano di sotto; sopra la Gazzetta rosa piegata e un'altra aperta,
+  //  il portacenere di vetro ambrato (pulito); sotto la pila dei giornali rosa dei giorni prima
+  // =========================================================
+  def("tavolino_giornali", { nome: "Tavolino coi giornali", fp: [1, 1], box: [-25, -50, 28, 16], dietro: true, piano: 34 }, function () {
+    var ZT = 34, RT = .31, ZS = 10.6, RS = .24, s = ombraTonda(0, 0, .36, 1);
+    var gambe = [0, 1, 2, 3].map(function (k) { var t = k * Math.PI / 2; return [Math.cos(t), Math.sin(t)]; });
+    function gamba(v) {
+      var T = [v[0] * .21, v[1] * .21, ZT - 2.4], F = [v[0] * .23, v[1] * .23, 0], o = gambaTonda(T, F, 2, 1.5, [[0, chiaro(NOCE, .45)], [.4, NOCE], [1, scuro(NOCE, .5)]]);
+      [ZT - 8, 4].forEach(function (z) { var c = P(v[0] * .22, v[1] * .22, z); o += ell(c[0], c[1], 2.3, 1, lin("ag", [[0, chiaro(NOCE, .4)], [1, scuro(NOCE, .4)]], 0, 0, 1, 0), bordo(L, .4)); });
+      return o;
+    }
+    function giornale(ca, cb, z, ang, w, h, seme, aperto) {   // un giornale rosa steso in pianta: la testata, i titoli, la foto, le colonne
+      var c = Math.cos(ang), sn = Math.sin(ang);
+      function pt(x, y) { return P(ca + c * x - sn * y, cb + sn * x + c * y, z); }
+      var O = pt(-w / 2, -h / 2), X = pt(w / 2, -h / 2), Y = pt(-w / 2, h / 2), Zp = pt(w / 2, h / 2), W = w * 61, H = h * 61, rr = rnd(seme), k;
+      var pag = rett(0, 0, W, H, 0, lin("rosa", [[0, "#fbd6db"], [1, "#efb7c0"]], 0, 0, 1, 1));
+      pag += rett(1, .9, W - 2, 2.6, .3, "#e7909e") + rett(W * .22, 1.5, W * .56, 1.3, .6, "#3a2f31");   // la testata (da lontano)
+      pag += rett(1, 4.4, W - 2, .9, .4, "#5a4a4d") + rett(1, 5.9, W * .7, .9, .4, "#5a4a4d");   // i titoloni
+      pag += rett(1, 7.8, W * .42, H - 9.6, .2, "#8f8a85") + pth("M" + q(W * .18, H - 2.4) + " l1,-3.4 l1,3.4 Z", "#3a3633");   // la foto
+      for (k = 0; k < Math.floor((H - 9) / 1.3); k++) { pag += rett(W * .46, 8 + k * 1.3, W * .5 - 1 - rr() * 2, .45, 0, "#9a8a8d"); }   // le colonne
+      if (aperto) pag += rett(W / 2 - .2, 0, .4, H, 0, "#c98f98", op(.8));   // la piega in mezzo
+      var o = poly([O, X, Zp, Y].map(function (p) { return [p[0], p[1] + .8]; }), "#c98f98") + piano(O, X, Y, W, H, pag) + poly([O, X, Zp, Y], "none", bordo(L, .5));
+      return o + poly([O, X, lerp(X, Zp, .4), lerp(O, Y, .4)], "#ffffff", op(.1));
+    }
+    function portacenere(a, b, z) {   // il portacenere di vetro ambrato, pulito, con le tre tacche
+      var o = tornito(a, b, [[z, .046], [z + .9, .053], [z + 2.4, .058]], [[0, "#ffe8b8"], [.4, "#e0a24a"], [1, "#8a5a1a"]], .7);
+      o += bocca(a, b, z + 2.4, .058, lin("pc", [[0, "#f6c97a"], [1, "#b97a2a"]], 0, 0, 1, 1), bordo(L, .5)) + bocca(a, b, z + 1.3, .037, nuovaR([[0, "#fff0cc"], [1, "#d89a40"]], .4, .4, .7), "stroke='#8a5a1a' stroke-width='.3'");
+      [Math.PI / 2, Math.PI * 7 / 6, Math.PI * 11 / 6].forEach(function (an) { var t = P(a + Math.cos(an) * .056, b + Math.sin(an) * .056, z + 2.4); o += ell(t[0], t[1], 1, .5, "#8a5a1a"); });
+      var h = P(a - .03, b - .01, z + 2.4); return o + ell(h[0], h[1], 1.4, .5, "#ffffff", op(.7));
+    }
+    var lont = gambe.filter(function (v) { return vicino(v[0], v[1]) < 0; }), vic = gambe.filter(function (v) { return vicino(v[0], v[1]) >= 0; });
+    s += lont.map(gamba).join("");
+    var Sf = forma(0, 0, RS);   // il ripiano di sotto, coi giornali vecchi
+    s += corpo([giro(Sf, ZS - 1.6, 1, 48), giro(Sf, ZS, 1, 48)], [[0, chiaro(NOCE, .35)], [.5, NOCE], [1, scuro(NOCE, .45)]], 1.1) + pth(chiuso(giro(Sf, ZS, 1, 48)), nuova([[0, chiaro(NOCE, .25)], [1, NOCE]], 0, 0, 1, 1), bordo(L, .8));
+    s += giornale(.01, .01, ZS + .2, .25, .28, .2, 81, false) + giornale(-.01, 0, ZS + .9, -.15, .28, .2, 82, false) + giornale(.02, -.01, ZS + 1.6, .05, .28, .2, 83, false);
+    s += vic.map(gamba).join("");
+    var Tf = forma(0, 0, RT);   // il piano
+    s += corpo([giro(Tf, ZT - 2.6, .98, 60), giro(Tf, ZT - 2, 1, 60), giro(Tf, ZT, 1, 60)], [[0, chiaro(NOCE, .4)], [.4, NOCE], [1, scuro(NOCE, .5)]], 1.4);
+    var top = giro(Tf, ZT, 1, 60);
+    s += pth(chiuso(top), nuovaR([[0, chiaro(NOCE, .35)], [.7, NOCE], [1, scuro(NOCE, .15)]], .4, .35, .75), bordo(L, 1.1));
+    s += dentro(chiuso(top), [0, 1, 2, 3, 4].map(function (k) { return pth(chiuso(giro(forma(.02, -.02, RT * (.25 + k * .17)), ZT, 1, 40)), "none", "stroke='" + scuro(NOCE, .25) + "' stroke-width='.35' opacity='.4'"); }).join("") + tratto(aperto(giro(Tf, ZT, .9, 60).slice(30, 46)), "#ffffff", .9, op(.5)));   // gli anelli del legno, il lucido
+    s += giornale(-.05, -.04, ZT + .2, .35, .3, .21, 91, true) + giornale(-.08, .05, ZT + .8, -.3, .26, .18, 92, false) + portacenere(.16, .12, ZT);
+    return s;
+  });
+
+  // =========================================================
+  //  L'ATTACCAPANNI DI LEGNO CURVATO (alla Thonet): le quattro gambe curve che passano dall'anello porta ombrelli,
+  //  l'asta tornita, i ganci grandi che salgono e quelli piccoli che scendono, il pomo in cima.
+  //  Appesi: la giacca di tweed marrone col fazzoletto rosso nel taschino e il cappello grigio col nastro nero.
+  //  Da dietro la giacca mostra la schiena con lo spacco.
+  // =========================================================
+  def("appendiabiti", { nome: "Attaccapanni", fp: [1, 1], box: [-22, -123, 23, 14], dietro: true }, function () {
+    var s = ombraTonda(0, 0, .28, 1), LG = NOCE;
+    function curvo(pp, w) { var d = curva(pp); return tratto(d, L, w + 1.8) + tratto(d, LG, w) + tratto(d, chiaro(LG, .45), w * .35, op(.75) + " transform='translate(-.3 -.4)'"); }   // il legno curvato a vapore
+    var dirs = [0, 1, 2, 3].map(function (k) { var t = k * Math.PI / 2; return [Math.cos(t), Math.sin(t)]; });
+    var diag = dirs.map(function (v) { return [(v[0] - v[1]) * .7071, (v[0] + v[1]) * .7071]; });
+    function gamba(v) { return curvo([[.03, 62], [.07, 52], [.11, 41], [.135, 31], [.16, 20], [.205, 9], [.245, 2.4], [.272, 1.4], [.282, 3.4]].map(function (w) { return P(v[0] * w[0], v[1] * w[0], w[1]); }), 2); }
+    function gancio(v, alto) {   // i ganci grandi salgono e si arricciano, quelli piccoli scendono
+      var l = alto ? [[.02, 99], [.06, 101.5], [.105, 104.6], [.138, 108.6], [.136, 112], [.118, 113.2]] : [[.02, 93], [.06, 91.4], [.095, 88.8], [.11, 85.4], [.1, 83.4]];
+      var e = l[l.length - 1], t = P(v[0] * e[0], v[1] * e[0], e[1]);
+      return curvo(l.map(function (w) { return P(v[0] * w[0], v[1] * w[0], w[1]); }), alto ? 1.9 : 1.5) + cer(t[0], t[1], alto ? 1.5 : 1.2, nuovaR([[0, chiaro(LG, .5)], [1, scuro(LG, .3)]], .35, .3, .8), bordo(L, .45));
+    }
+    function giacca(hx, hy, davanti) {   // la giacca appesa per il passante del collo (le spalle cadono): davanti i revers, i bottoni, le tasche e il fazzoletto; dietro la schiena con lo spacco
+      var TW = "#7d5c3e", w = 9.6, sp = 6.4, lu = 41, o = "", k;
+      var corpoD = "M" + q(hx - 2.4, hy + .2) + " Q" + q(hx - 6, hy + 2.2) + " " + q(hx - w, hy + sp) + " Q" + q(hx - w - 1.4, hy + sp + 14) + " " + q(hx - w - .4, hy + lu) + " Q" + q(hx, hy + lu + 1.4) + " " + q(hx + w + .4, hy + lu) + " Q" + q(hx + w + 1.4, hy + sp + 14) + " " + q(hx + w, hy + sp) + " Q" + q(hx + 6, hy + 2.2) + " " + q(hx + 2.4, hy + .2) + " Z";
+      var trama = ""; for (k = 0; k < 30; k++) trama += rett(hx - w - 3, hy + k * 1.5, 2 * w + 6, .35, 0, k % 2 ? "#000" : "#fff", op(.06));
+      for (k = 0; k < 9; k++) trama += rett(hx - w + k * 2.4, hy, .3, lu + 2, 0, "#000", op(.05));   // il quadrettino del tweed
+      var maniche = [-1, 1].map(function (sx) {   // le maniche che scendono dalle spalle, un po' davanti ai fianchi
+        var x0 = hx + sx * w, d = "M" + q(x0 + sx * .4, hy + sp - .6) + " Q" + q(x0 + sx * 2.8, hy + sp + 8) + " " + q(x0 + sx * 2.2, hy + lu - 6) + " L" + q(x0 - sx * 2.6, hy + lu - 5.2) + " Q" + q(x0 - sx * 2.2, hy + sp + 12) + " " + q(x0 - sx * 2.6, hy + sp + 2.4) + " Z";
+        return pth(d, nuova([[0, chiaro(TW, .14)], [1, scuro(TW, .28)]], x0 - 3, 0, x0 + 3, 0, true), bordo(L, .8)) + tratto("M" + q(x0 - sx * 2.4, hy + lu - 7.4) + " L" + q(x0 + sx * 2.2, hy + lu - 8.2), scuro(TW, .4), .5, op(.7)) + tratto("M" + q(x0 + sx * .6, hy + sp + 2) + " Q" + q(x0 + sx * 1.6, hy + sp + 12) + " " + q(x0 + sx * .9, hy + lu - 9), chiaro(TW, .3), .5, op(.5));
+      }).join("");
+      o += pth(corpoD, "#000", op(.18) + " transform='translate(1.2 1.4)'") + pth(corpoD, lin("gi", [[0, chiaro(TW, .18)], [.55, TW], [1, scuro(TW, .25)]], 0, 0, 1, 0), bordo(L, 1)) + dentro(corpoD, trama);
+      if (davanti) {
+        o += pth("M" + q(hx - 2.4, hy + .2) + " L" + q(hx - 4.8, hy + 3.6) + " L" + q(hx - 3, hy + 7.2) + " L" + q(hx - .5, hy + 18.6) + " L" + q(hx, hy + 6) + " Z", chiaro(TW, .1), bordo(L, .6)) + pth("M" + q(hx + 2.4, hy + .2) + " L" + q(hx + 4.8, hy + 3.6) + " L" + q(hx + 3, hy + 7.2) + " L" + q(hx + .5, hy + 18.6) + " L" + q(hx, hy + 6) + " Z", scuro(TW, .06), bordo(L, .6));   // i revers
+        o += pth("M" + q(hx - 2, hy + .5) + " L" + q(hx, hy + 6) + " L" + q(hx + 2, hy + .5) + " Z", "#3a2a1c");   // il dentro, scuro
+        o += tratto("M" + q(hx, hy + 18.6) + " Q" + q(hx + .4, hy + 31) + " " + q(hx - 2.4, hy + lu + .6), L, .7, op(.8));   // l'apertura davanti
+        [22, 28].forEach(function (y) { o += cer(hx - .9, hy + y, .85, "#3a2a1c", bordo(L, .3)) + cer(hx - 1.1, hy + y - .2, .3, "#ffffff", op(.4)); });   // i bottoni
+        [[-5.4, 30], [4.6, 30]].forEach(function (t) { o += rett(hx + t[0] - 2.6, hy + t[1], 5.4, 1.7, .4, scuro(TW, .12), bordo(L, .45)); });   // le tasche
+        o += rett(hx + 3, hy + 11.2, 3.8, .9, .3, scuro(TW, .15), bordo(L, .35)) + pth("M" + q(hx + 3.5, hy + 11.3) + " L" + q(hx + 4.2, hy + 9) + " L" + q(hx + 5, hy + 10.4) + " L" + q(hx + 5.9, hy + 9.2) + " L" + q(hx + 6.4, hy + 11.3) + " Z", "#d63c3c", bordo("#7a1515", .3));   // il fazzoletto rosso nel taschino
+      } else {
+        o += pth("M" + q(hx - 3, hy + .2) + " Q" + q(hx, hy + 2.8) + " " + q(hx + 3, hy + .2) + " L" + q(hx + 2.6, hy - .6) + " Q" + q(hx, hy + 1.4) + " " + q(hx - 2.6, hy - .6) + " Z", scuro(TW, .1), bordo(L, .5));   // il colletto
+        o += tratto("M" + q(hx, hy + 2.6) + " L" + q(hx, hy + lu - 7) + " L" + q(hx + .2, hy + lu + .6), scuro(TW, .45), .6, op(.85)) + pth("M" + q(hx - .8, hy + lu - 7) + " L" + q(hx + 1.2, hy + lu - 7) + " L" + q(hx + 1.4, hy + lu + .6) + " L" + q(hx - 1, hy + lu + .6) + " Z", scuro(TW, .2), op(.6));   // la cucitura e lo spacco
+      }
+      return o + maniche + tratto("M" + q(hx - 1, hy + .6) + " Q" + q(hx, hy - 1.6) + " " + q(hx + 1, hy + .6), "#3a2a1c", .6);   // il passante sul gancio
+    }
+    function cappello(cx, cy) {   // il borsalino grigio col nastro nero, un po' storto sul gancio
+      var GR = "#6f747a", o = ell(cx + .8, cy + 5.4, 8.6, 2.2, "#000", op(.2));
+      o += ell(cx, cy + 4.6, 9, 2.4, lin("te", [[0, chiaro(GR, .25)], [1, scuro(GR, .3)]], 0, 0, 1, 0), bordo(L, .7)) + ell(cx, cy + 4.1, 6.2, 1.3, scuro(GR, .35));   // la tesa
+      o += pth("M" + q(cx - 5.6, cy + 4.2) + " L" + q(cx - 4.8, cy - 3.4) + " Q" + q(cx - 2.6, cy - 6.2) + " " + q(cx, cy - 4.6) + " Q" + q(cx + 2.6, cy - 6.2) + " " + q(cx + 4.8, cy - 3.4) + " L" + q(cx + 5.6, cy + 4.2) + " Z", lin("cu", [[0, chiaro(GR, .3)], [.5, GR], [1, scuro(GR, .3)]], 0, 0, 1, 0), bordo(L, .8));   // la cupola con la piega
+      o += tratto("M" + q(cx, cy - 4.4) + " Q" + q(cx - .4, cy - 1.8) + " " + q(cx, cy), scuro(GR, .45), .6, op(.8));
+      o += pth("M" + q(cx - 5.5, cy + 3.8) + " L" + q(cx - 5.2, cy + 1.4) + " L" + q(cx + 5.2, cy + 1.4) + " L" + q(cx + 5.5, cy + 3.8) + " Z", "#1d1d1f") + pth("M" + q(cx + 2.6, cy + 1.6) + " l1.6,-.8 l.2,2.6 Z", "#2b2b2b");   // il nastro e il fiocco
+      return ruota(cx, cy - 4, -12, o + ell(cx - 3, cy - 2.4, .8, 2, "#ffffff", op(.3)));
+    }
+    var lontG = dirs.filter(function (v) { return vicino(v[0], v[1]) < -.01; }), vicG = dirs.filter(function (v) { return vicino(v[0], v[1]) >= -.01; });
+    var ganciL = [], ganciV = [];
+    dirs.forEach(function (v) { (vicino(v[0], v[1]) < -.01 ? ganciL : ganciV).push(gancio(v, true)); });
+    diag.forEach(function (v) { (vicino(v[0], v[1]) < -.01 ? ganciL : ganciV).push(gancio(v, false)); });
+    var hj = P(0, .128, 106.2), hh = P(.128, 0, 106.4), giaccaL = vicino(0, 1) < 0, capL = vicino(1, 0) < 0;
+    var gi = giacca(hj[0], hj[1], !giaccaL), ca = cappello(hh[0] + .4 * G, hh[1] + 4.6);
+    s += lontG.map(gamba).join("") + anello(0, 0, 31, .135, 1.6, false, false).replace(/#a7b2ba/g, LG).replace(/#ffffff/g, chiaro(LG, .45));
+    s += ganciL.join("") + (giaccaL ? gi : "") + (capL ? ca : "");
+    s += tornito(0, 0, [[0, .03], [1.6, .034], [3, .026], [56, .021], [58, .03], [60, .021], [96, .019], [98, .027], [100, .019], [114, .019], [115.5, .027], [117.6, .025], [119, .012]], [[0, chiaro(LG, .45)], [.4, LG], [1, scuro(LG, .5)]], 1, [1, 4, 7, 10], .8);   // l'asta tornita col pomo
+    s += anello(0, 0, 31, .135, 1.6, true, false).replace(/#a7b2ba/g, LG).replace(/#ffffff/g, chiaro(LG, .45));
+    s += vicG.map(gamba).join("") + ganciV.join("") + (giaccaL ? "" : gi) + (capL ? "" : ca);
+    return s;
+  });
+
+  // =========================================================
+  function misure(d) { if (d.tipo === "parete") { var n = d.fp ? d.fp[0] : 1; return { w: 62 * n, h: 200 }; } var b = d.box; return { w: Math.ceil(b[2] - b[0]), h: Math.ceil(b[3] - b[1]), ax: Math.ceil(-b[0]), ay: Math.ceil(-b[1]) }; }
+  SGMobiliArte.aggiungi({
+    nomi: function () { return Object.keys(DIS); },
+    info: function (nome) {
+      var d = DIS[nome]; if (!d) return null;
+      var m = misure(d), tipo = d.tipo || "piedi", o = { tipo: tipo, nome: d.nome, stanza: "circolo", reparto: "circolo", w: m.w, h: m.h, fp: (d.fp || [1, 1]).slice(), prezzo: 0, qual: 2 };
+      if (tipo !== "parete") { o.ax = m.ax; o.ay = m.ay; o.dietro = !!d.dietro; }
+      if (d.piano) o.piano = d.piano;
+      if (d.posti) o.posti = d.posti.map(function (x) { return x.slice(); });
+      if (d.azione) { o.azione = d.azione; o.seduta = d.seduta; }
+      if (d.luce) {
+        if (tipo === "parete") o.luce = d.luce.slice();
+        else { var l = d.luce, pt = Puv(l[0], l[1], l[2]); o.luce = [Math.round(pt[0] + m.ax), Math.round(pt[1] + m.ay), l[3], l[4]]; }   // il punto della luce nel disegno davanti
+      }
+      return o;
+    },
+    svg: function (nome, opz) {
+      var d = DIS[nome]; if (!d) return "";
+      opz = opz || {};
+      var m = misure(d);
+      p = "cbar" + (++nId) + "_"; DEFS = []; FATTI = {}; nC = 0; G = opz.dietro && d.dietro ? -1 : 1; NOTTE = !!(opz.notte && d.luce);
+      var c; try { c = d.fn(opz); } finally { G = 1; NOTTE = false; }
+      var corpoSvg = d.tipo === "parete" ? c : "<g transform='translate(" + m.ax + " " + m.ay + ")'>" + c + "</g>";
+      return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 " + m.w + " " + m.h + "' width='" + m.w + "' height='" + m.h + "'>" + (DEFS.length ? "<defs>" + DEFS.join("") + "</defs>" : "") + corpoSvg + "</svg>";
+    }
+  });
+})();
+/* =========================================================
+   SPeeD GAME — IL CIRCOLO: IL CORTILE (visto dall'alto, come i mobili della casa)
+   Il cortile del circolo di paese, d'estate: il campo da bocce di terra battuta con le sponde di legno,
+   la pergola coperta dalla vite con l'uva e le lucine colorate, il tavolo da osteria con la tovaglia a quadri,
+   il fiasco e il pane, la panca di legno, il vaso di gerani rossi, il lampione di ferro battuto e il "nasone".
+   Una mattonella è un rombo largo 100 e alto 50 (circa 1 metro); in altezza 61 unità ≈ 1 metro.
+   Tipi: "terra" (il campo da bocce: 100 × 100 visto da sopra; lungo x si ripete senza giunte),
+   "sospeso" (la pergola: in alto, sotto si cammina), "piedi" (gli altri: il davanti guarda in basso a sinistra,
+   con { dietro: true } lo stesso pezzo girato). Con { notte: true } le lucine e il lampione accesi.
+   Il tavolo ha i "posti" (le mattonelle dove ci si siede, relative all'angolo dell'impronta nel disegno davanti).
+   Non si vendono nel negozio: reparto "circolo", prezzo 0. Si aggiungono con SGMobiliArte.aggiungi({ nomi, info, svg }).
+   ========================================================= */
+(function () {
+  "use strict";
+  if (!window.SGMobiliArte || !window.SGMobiliArte.aggiungi) return;
+
+  // ---------- attrezzi (gli stessi degli altri mobili) ----------
+  var nId = 0, p = "", DEFS = [], FATTI = {}, nC = 0, G = 1, NOTTE = false;   // il disegno in corso: prefisso degli id, definizioni; G = 1 davanti, -1 girato; NOTTE = luce accesa
+  var L = "#3d2b22";   // il contorno caldo e scuro
+  function rnd(seme) { var s = (seme >>> 0) || 1; return function () { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return (s % 1000003) / 1000003; }; }
+  function f1(n) { return Math.round(n * 100) / 100; }
+  function f2(n) { return Math.round(n * 1000) / 1000; }
+  function q(x, y) { if (typeof x === "object") { y = x[1]; x = x[0]; } return f1(x) + "," + f1(y); }
+  function pts(a) { return a.map(function (x) { return q(x); }).join(" "); }
+  function attr(x) { return x ? " " + x : ""; }
+  function op(k) { return "opacity='" + f2(k) + "'"; }
+  function poly(a, fill, x) { return "<polygon points='" + pts(a) + "' fill='" + fill + "'" + attr(x) + "/>"; }
+  function pth(d, fill, x) { return "<path d='" + d + "' fill='" + fill + "'" + attr(x) + "/>"; }
+  function cer(x, y, r, fill, x2) { return "<circle cx='" + f2(x) + "' cy='" + f2(y) + "' r='" + f2(r) + "' fill='" + fill + "'" + attr(x2) + "/>"; }
+  function ell(x, y, rx, ry, fill, x2) { return "<ellipse cx='" + f2(x) + "' cy='" + f2(y) + "' rx='" + f2(rx) + "' ry='" + f2(ry) + "' fill='" + fill + "'" + attr(x2) + "/>"; }
+  function rett(x, y, w, h, r, fill, x2) { return "<rect x='" + f2(x) + "' y='" + f2(y) + "' width='" + f2(w) + "' height='" + f2(h) + "'" + (r ? " rx='" + f2(r) + "'" : "") + " fill='" + fill + "'" + attr(x2) + "/>"; }
+  function bordo(c, w) { return "stroke='" + c + "' stroke-width='" + f2(w == null ? 2.4 : w) + "' stroke-linejoin='round' stroke-linecap='round'"; }
+  function tratto(d, c, w, x) { return "<path d='" + d + "' fill='none' stroke='" + c + "' stroke-width='" + f2(w) + "' stroke-linecap='round' stroke-linejoin='round'" + attr(x) + "/>"; }
+  function linea(a, b) { return "M" + q(a) + " L" + q(b); }
+  function chiuso(a) { return "M" + a.map(function (x) { return q(x); }).join(" L") + " Z"; }
+  function aperto(a) { return "M" + a.map(function (x) { return q(x); }).join(" L"); }
+  function limiti(a) { var b = [1e9, 1e9, -1e9, -1e9]; a.forEach(function (x) { b[0] = Math.min(b[0], x[0]); b[1] = Math.min(b[1], x[1]); b[2] = Math.max(b[2], x[0]); b[3] = Math.max(b[3], x[1]); }); return b; }
+  function lerp(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; }
+  function gruppo(t, c) { return "<g transform='" + t + "'>" + c + "</g>"; }
+  // i colori
+  function hx(c) { var n = parseInt(c.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function mix(a, b, t) { var x = hx(a), y = hx(b); return "#" + x.map(function (v, i) { var r = Math.round(v + (y[i] - v) * t); return (r < 16 ? "0" : "") + r.toString(16); }).join(""); }
+  function chiaro(c, t) { return mix(c, "#ffffff", t); }
+  function scuro(c, t) { return mix(c, "#000000", t); }
+  // sfumature, motivi e ritagli (gli id col prefisso del disegno)
+  function sfum(tag, nome, stops, a) {
+    var id = p + nome;
+    if (!FATTI[id]) {
+      FATTI[id] = 1;
+      DEFS.push("<" + tag + " id='" + id + "' " + a + ">" + stops.map(function (s) { return "<stop offset='" + s[0] + "' stop-color='" + s[1] + "'" + (s[2] != null ? " stop-opacity='" + s[2] + "'" : "") + "/>"; }).join("") + "</" + tag + ">");
+    }
+    return "url(#" + id + ")";
+  }
+  function lin(nome, stops, x1, y1, x2, y2, user) { return sfum("linearGradient", user ? nome + (++nC) : nome, stops, "x1='" + f2(x1) + "' y1='" + f2(y1) + "' x2='" + f2(x2) + "' y2='" + f2(y2) + "'" + (user ? " gradientUnits='userSpaceOnUse'" : "")); }
+  function rad(nome, stops, cx, cy, r) { return sfum("radialGradient", nome, stops, "cx='" + cx + "' cy='" + cy + "' r='" + r + "'"); }
+  function nuova(stops, x1, y1, x2, y2, user) { return sfum("linearGradient", "g" + (++nC), stops, "x1='" + f2(x1) + "' y1='" + f2(y1) + "' x2='" + f2(x2) + "' y2='" + f2(y2) + "'" + (user ? " gradientUnits='userSpaceOnUse'" : "")); }
+  function nuovaR(stops, cx, cy, r) { return sfum("radialGradient", "g" + (++nC), stops, "cx='" + f2(cx) + "' cy='" + f2(cy) + "' r='" + f2(r) + "'"); }
+  function motivo(nome, w, h, corpo) {   // un motivo che si ripete (la tovaglia, il dorso delle carte)
+    var id = p + nome;
+    if (!FATTI[id]) { FATTI[id] = 1; DEFS.push("<pattern id='" + id + "' patternUnits='userSpaceOnUse' width='" + f2(w) + "' height='" + f2(h) + "'>" + corpo + "</pattern>"); }
+    return "url(#" + id + ")";
+  }
+  function dentro(forma, corpo, pari) {   // corpo ritagliato dentro la forma (un tracciato "d"); pari = la forma ha dei buchi
+    var id = p + "r" + (++nC);
+    DEFS.push("<clipPath id='" + id + "'><path d='" + forma + "'" + (pari ? " clip-rule='evenodd'" : "") + "/></clipPath>");
+    return "<g clip-path='url(#" + id + ")'>" + corpo + "</g>";
+  }
+
+  // ---------- la vista: dal mobile (a = larghezza, b = profondità con b+ = davanti, z = altezza) allo schermo ----------
+  function Puv(u, v, z) { return [(u - v) * 50, (u + v) * 25 - (z || 0)]; }
+  function P(a, b, z) { return Puv(a * G, b * G, z); }
+  function vicino(a, b) { return G * (a + b); }   // più è grande, più la cosa è vicina a chi guarda
+  function ordina(l) { return l.sort(function (x, y) { return x[0] - y[0]; }).map(function (x) { return x[1]; }).join(""); }
+  // ---------- i blocchi squadrati (come nel bagno) ----------
+  function faccia(o, dir, c) { return "<g transform='matrix(.8197 " + (dir > 0 ? ".4098" : "-.4098") + " 0 1 " + f1(o[0]) + " " + f1(o[1]) + ")'>" + c + "</g>"; }
+  function tinte(c) {   // i tre colori: sopra, la faccia di sinistra (alla luce), quella di destra (in ombra)
+    if (typeof c !== "string") return c;
+    var k = c.slice(1);
+    return [lin("ts" + k, [[0, chiaro(c, .32)], [1, chiaro(c, .1)]], 0, 0, 1, 1), lin("tl" + k, [[0, chiaro(c, .12)], [1, scuro(c, .06)]], 0, 0, 0, 1), lin("td" + k, [[0, scuro(c, .2)], [1, scuro(c, .34)]], 0, 0, 0, 1)];
+  }
+  // un blocco da a0..a1, b0..b1 (b1 = davanti), z0..z1; f = { davanti, dietro, fianco, sopra }: disegni piatti (W, H) per le facce
+  function blocco(a0, a1, b0, b1, z0, z1, col, f, lw) {
+    f = f || {};
+    var u0 = G > 0 ? a0 : -a1, u1 = G > 0 ? a1 : -a0, v0 = G > 0 ? b0 : -b1, v1 = G > 0 ? b1 : -b0, c = tinte(col);
+    var A = Puv(u0, v0, z1), B = Puv(u1, v0, z1), C = Puv(u1, v1, z1), D = Puv(u0, v1, z1), Bb = Puv(u1, v0, z0), Cb = Puv(u1, v1, z0), Db = Puv(u0, v1, z0);
+    var Ws = (u1 - u0) * 61, Wd = (v1 - v0) * 61, H = z1 - z0, fs = G > 0 ? f.davanti : f.dietro;
+    var s = faccia(D, 1, rett(0, 0, Ws, H, 0, c[1]) + (fs ? fs(Ws, H) : "")) + faccia(C, -1, rett(0, 0, Wd, H, 0, c[2]) + (f.fianco ? f.fianco(Wd, H) : "")) + poly([A, B, C, D], c[0]);
+    if (f.sopra) s += f.sopra(A, B, C, D, (u1 - u0) * 100, (v1 - v0) * 100);
+    s += tratto("M" + q(D) + " L" + q(C) + " L" + q(B) + " M" + q(C) + " L" + q(Cb), L, .7, "opacity='.7'");   // gli spigoli di dentro, sottili
+    if (H > 4) s += tratto("M" + q(D[0] + 1, D[1] + .9) + " L" + q(C[0] - .5, C[1] + .8), "#ffffff", .8, "opacity='.5'");   // il filo di luce sullo spigolo davanti
+    return s + poly([A, B, Bb, Cb, Db, D], "none", bordo(L, lw || 1.6));
+  }
+  // un disegno piatto steso in pianta all'altezza z (X = a·61, Y = b·61)
+  function mat(m, c) { return "<g transform='matrix(" + m.map(function (v) { return Math.round(v * 10000) / 10000; }).join(" ") + ")'>" + c + "</g>"; }
+  function suZ(z, c) { return mat([.8197 * G, .4098 * G, -.8197 * G, .4098 * G, 0, -z], c); }
+
+  // ---------- i pezzi torniti (gambe, bicchieri, birilli): il profilo [[z, raggio in mattonelle], ...] ----------
+  function dTornito(a, b, prof) {
+    var c = P(a, b, 0), n = prof.length, sx = [], dx = [], i;
+    for (i = 0; i < n; i++) { var rx = prof[i][1] * 70.71, y = c[1] - prof[i][0]; sx.push([c[0] - rx, y]); dx.push([c[0] + rx, y]); }
+    var rt = prof[n - 1][1] * 70.71, rb = prof[0][1] * 70.71;
+    var d = "M" + sx.map(function (x) { return q(x); }).join(" L") + " A" + f1(rt) + "," + f1(rt / 2) + " 0 0,1 " + q(dx[n - 1]);
+    for (i = n - 2; i >= 0; i--) d += " L" + q(dx[i]);
+    return d + " A" + f1(rb) + "," + f1(rb / 2) + " 0 0,1 " + q(sx[0]) + " Z";
+  }
+  function tornito(a, b, prof, stops, lw, anelli, luce) {   // anelli = i livelli dove si vede un anello; luce = il filo chiaro a sinistra
+    var c = P(a, b, 0), n = prof.length, rm = 0;
+    prof.forEach(function (x) { rm = Math.max(rm, x[1] * 70.71); });
+    var o = pth(dTornito(a, b, prof), lin("tn", stops, c[0] - rm, 0, c[0] + rm, 0, true), lw ? bordo(L, lw) : "");
+    (anelli || []).forEach(function (k) { var rx = prof[k][1] * 70.71, y = c[1] - prof[k][0]; o += pth("M" + q(c[0] - rx, y) + " A" + f1(rx) + "," + f1(rx / 2) + " 0 0,0 " + q(c[0] + rx, y), "none", "stroke='" + L + "' stroke-width='.5' opacity='.5'"); });
+    if (luce) o += tratto("M" + prof.slice(1, n - 1).map(function (x) { return q(c[0] - x[1] * 70.71 * .5, c[1] - x[0]); }).join(" L"), "#ffffff", luce, "opacity='.5'");
+    return o;
+  }
+  function anello(a, b, z, r) { var c = P(a, b, z); return { x: c[0], y: c[1], rx: r * 70.71, ry: r * 35.36 }; }   // un cerchio in pianta, visto (un'ellisse)
+
+  // ---------- le ombre a terra (la luce viene da in alto a sinistra: l'ombra scivola un po' a destra) ----------
+  function aTerra(c) { return "<g transform='matrix(50 25 -50 25 0 0)'>" + c + "</g>"; }
+  function ombraPianta(a0, a1, b0, b1, k, pad) {
+    pad = pad == null ? .1 : pad;
+    var cu = G * (a0 + a1) / 2 + .05, cv = G * (b0 + b1) / 2 - .01;
+    return aTerra("<ellipse cx='" + f2(cu) + "' cy='" + f2(cv) + "' rx='" + f2((a1 - a0) / 2 + pad) + "' ry='" + f2((b1 - b0) / 2 + pad) + "' fill='" + rad("omp", [[0, "#000", .26], [.6, "#000", .17], [1, "#000", 0]], .5, .5, .5) + "'" + (k ? " " + op(k) : "") + "/>");
+  }
+  function ombraForma(pp, k) {   // l'ombra morbida sotto un tavolo: la sua forma, a strati sempre più scuri verso il centro
+    k = k || 1;
+    var bb = limiti(pp), m = Math.min(1, Math.min(bb[2] - bb[0], bb[3] - bb[1]) / 1.6);   // sotto i tavoli piccoli gli strati di dentro si stringono meno
+    function g2(d) { return chiuso(allarga(pp, d < 0 ? d * m : d).map(function (x) { return Puv(G * x[0] + .06, G * x[1] - .02, 0); })); }
+    return pth(g2(.13), "#000", op(.05 * k)) + pth(g2(.06), "#000", op(.06 * k)) + pth(g2(-.02), "#000", op(.07 * k)) + pth(g2(-.14), "#000", op(.08 * k)) + pth(g2(-.3), "#000", op(.06 * k));
+  }
+
+  // ---------- le forme in pianta (punti [a, b], tutte girate nello stesso verso) ----------
+  function pulisci(a) { return a.filter(function (x, i) { var y = a[(i + a.length - 1) % a.length]; return Math.abs(x[0] - y[0]) > 1e-4 || Math.abs(x[1] - y[1]) > 1e-4; }); }
+  function nrm(A, B) { var dx = B[0] - A[0], dy = B[1] - A[1], l = Math.sqrt(dx * dx + dy * dy) || 1; return [dy / l, -dx / l]; }   // la normale verso fuori di un lato
+  function allarga(pp, d) {   // la stessa forma spostata in fuori di d (in dentro se d < 0)
+    var n = pp.length, out = [], i;
+    for (i = 0; i < n; i++) {
+      var n1 = nrm(pp[(i + n - 1) % n], pp[i]), n2 = nrm(pp[i], pp[(i + 1) % n]), m = [n1[0] + n2[0], n1[1] + n2[1]], lm = Math.sqrt(m[0] * m[0] + m[1] * m[1]) || 1;
+      m = [m[0] / lm, m[1] / lm];
+      var k = 1 / Math.max(.5, m[0] * n1[0] + m[1] * n1[1]);
+      out.push([pp[i][0] + m[0] * d * k, pp[i][1] + m[1] * d * k]);
+    }
+    return out;
+  }
+  function pRett(a0, a1, b0, b1, r, n) {   // un rettangolo con gli angoli tondi
+    n = n || 6; var o = [], cs = [[a1 - r, b1 - r], [a0 + r, b1 - r], [a0 + r, b0 + r], [a1 - r, b0 + r]], k, i;
+    for (k = 0; k < 4; k++) for (i = 0; i <= n; i++) { var t = (k + i / n) * Math.PI / 2; o.push([cs[k][0] + r * Math.cos(t), cs[k][1] + r * Math.sin(t)]); }
+    return pulisci(o);
+  }
+
+  // ---------- i legni del circolo ----------
+  var CASTAGNO = "#9a6036";   // il castagno dei tavoli del circolo
+  function legno(c) { return [[0, chiaro(c, .42)], [.3, chiaro(c, .14)], [.65, scuro(c, .26)], [1, scuro(c, .58)]]; }   // il legno tondo, girato verso la luce
+  // la gamba squadrata che si stringe in basso: s0 = mezzo lato in basso, s1 in alto
+  function gambaQuadra(a, b, s0, s1, z0, z1, col) {
+    var u = a * G, v = b * G;
+    function Q(du, dv, s, z) { return Puv(u + du * s, v + dv * s, z); }
+    var sx = [Q(-1, 1, s0, z0), Q(1, 1, s0, z0), Q(1, 1, s1, z1), Q(-1, 1, s1, z1)], dx = [Q(1, 1, s0, z0), Q(1, -1, s0, z0), Q(1, -1, s1, z1), Q(1, 1, s1, z1)];
+    var c = Q(0, 0, 0, z0);
+    var o = z0 < .5 ? ell(c[0] + 1.2, c[1] + .6, s0 * 90 + 2, s0 * 45 + 1.2, "#000", op(.24)) : "";
+    o += poly(sx, nuova([[0, chiaro(col, .14)], [1, scuro(col, .06)]], 0, sx[3][1], 0, sx[0][1], true)) + poly(dx, nuova([[0, scuro(col, .2)], [1, scuro(col, .36)]], 0, dx[3][1], 0, dx[0][1], true));
+    o += tratto(linea(lerp(sx[0], sx[1], .25), lerp(sx[3], sx[2], .25)), "#ffffff", .5, op(.3)) + tratto(linea(sx[1], sx[2]), "#fff3df", .5, op(.45));   // il lucido sullo spigolo
+    return o + poly([sx[0], sx[1], dx[1], dx[2], sx[2], sx[3]], "none", bordo(L, 1.1)) + tratto(linea(sx[1], sx[2]), L, .5, op(.6));
+  }
+  // il bicchiere da osteria (vetro spesso, un po' svasato) col rosso fino a "pieno"
+  var VETRO = [[0, "#ffffff", .62], [.3, "#eef8fb", .2], [.75, "#d6ebf2", .24], [1, "#86b3c4", .6]];
+  function bicchiere(a, b, z, pieno) {
+    var r0 = .042, r1 = .052, h = 9.5, s = "", c = P(a, b, z), zv = z + 1.2 + (h - 1.6) * pieno, rv = r0 + (r1 - r0) * (zv - z) / h - .005;
+    s += ell(c[0] + 2.3, c[1] + 1, r1 * 70.71 + 1.6, r1 * 35.36 + .9, "#000", op(.24)) + ell(c[0] + 3.6, c[1] + 1.6, 3, 1.3, "#b0202f", op(.22));   // l'ombra, e il riflesso rosso del vino sul panno
+    s += tornito(a, b, [[z + 1.2, r0 - .005], [zv, rv]], [[0, "#a3263a"], [.45, "#7d1023"], [1, "#3d0510"]], 0);
+    s += tornito(a, b, [[z, r0], [z + 1.2, r0], [z + h, r1]], VETRO, .8);
+    var w = anello(a, b, zv, rv), t = anello(a, b, z + h, r1);
+    s += ell(w.x, w.y, w.rx, w.ry, nuovaR([[0, "#c94a5c"], [1, "#6e0c1d"]], .4, .35, .8)) + ell(w.x - w.rx * .3, w.y - w.ry * .3, w.rx * .3, w.ry * .3, "#ffffff", op(.35));
+    s += ell(t.x, t.y, t.rx, t.ry, "none", "stroke='#ffffff' stroke-width='.9' opacity='.85'") + ell(t.x, t.y, t.rx, t.ry, "none", bordo(L, .5));
+    return s + tratto(linea([t.x - t.rx * .55, t.y + 1.5], [c[0] - r0 * 70.71 * .55, c[1] - 1.6]), "#ffffff", .9, op(.75)) + ell(c[0], c[1], r0 * 70.71 * .85, r0 * 35.36 * .85, "none", "stroke='#ffffff' stroke-width='.6' opacity='.5'");
+  }
+
+  // =========================================================
+  //  IL CORTILE: i materiali
+  // =========================================================
+  var LEGNO_P = "#8e5a34", LEGNO_PANCA = "#a96d3e", TRAV = "#e2d6b6", GHISA = "#2f6343", COTTO = "#c66b3c";
+  var COTTO_ST = [[0, "#f4ad7e"], [.3, "#dc834e"], [.68, "#b25b2c"], [1, "#6f3015"]];   // la terracotta, girata verso la luce
+  var FE_ST = [[0, "#8c8688"], [.28, "#4e4749"], [.66, "#252022"], [1, "#0b0909"]];      // il ferro battuto
+  var GH_ST = [[0, "#86bb93"], [.26, "#4c8b5d"], [.62, "#2a5b3b"], [1, "#0e2818"]];      // la ghisa verde del nasone
+  var DIS = {};
+  function def(nome, d, fn) { d.fn = fn; DIS[nome] = d; }
+  function liscio(pp) {   // un tracciato morbido che passa per tutti i punti (sullo schermo)
+    var d = "M" + q(pp[0]), i;
+    for (i = 0; i < pp.length - 1; i++) {
+      var p0 = pp[Math.max(0, i - 1)], p1 = pp[i], p2 = pp[i + 1], p3 = pp[Math.min(pp.length - 1, i + 2)];
+      d += " C" + q(p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6) + " " + q(p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6) + " " + q(p2);
+    }
+    return d;
+  }
+  function usa(id, t, x) { return "<use xlink:href='#" + p + id + "' transform='" + t + "'" + attr(x) + "/>"; }
+  function simbolo(id, corpo) { var k = p + id; if (!FATTI[k]) { FATTI[k] = 1; DEFS.push("<g id='" + k + "'>" + corpo + "</g>"); } }
+
+  // =========================================================
+  //  CAMPO DA BOCCE (a terra, 100 × 100 visto da sopra): x lungo il campo, y di traverso.
+  //  La terra battuta chiara, lisciata per il lungo, coi granelli e qualche sassolino; le sponde di legno in alto
+  //  e in basso (la cima dell'asse, il fianco di dentro in ombra, le viti). Lungo x tutto si ripete con passo 100:
+  //  messi in fila (anche girati di 90°) fanno un campo lungo senza giunte
+  // =========================================================
+  var T0 = 15, T1 = 85;   // la terra tra le due sponde
+  function ondaX(y, amp, k, fase) {   // una riga lungo x, mossa ma uguale a x = 0 e a x = 100
+    var d = "", i;
+    for (i = -1; i <= 21; i++) { var x = i * 5; d += (i > -1 ? " L" : "M") + f1(x) + "," + f1(y + amp * Math.sin(x / 100 * 2 * Math.PI * k + fase)); }
+    return d;
+  }
+  function granelli(lista) {   // tanti puntini in un tracciato solo; quelli vicino ai bordi si ripetono dall'altra parte
+    var d = "";
+    lista.forEach(function (g) {
+      [0, 100, -100].forEach(function (dx) {
+        var x = g[0] + dx; if (x < -g[2] || x > 100 + g[2]) return;
+        d += "M" + q(x - g[2], g[1]) + " a" + f2(g[2]) + "," + f2(g[2]) + " 0 1,0 " + f2(2 * g[2]) + ",0 a" + f2(g[2]) + "," + f2(g[2]) + " 0 1,0 " + f2(-2 * g[2]) + ",0 ";
+      });
+    });
+    return d;
+  }
+  function sassolino(x, y, rx, ry, ang, c) {
+    return "<g transform='translate(" + f2(x) + " " + f2(y) + ") rotate(" + f1(ang) + ")'>" + ell(0, 0, rx * 1.35, ry * 1.4, "#5a4228", op(.16)) +
+      ell(0, 0, rx, ry, lin("ss" + c.slice(1), [[0, chiaro(c, .5)], [1, scuro(c, .28)]], 0, 0, 1, 1), "stroke='#5e4a33' stroke-width='.3'") + ell(-rx * .28, -ry * .34, rx * .36, ry * .26, "#ffffff", op(.6)) + "</g>";
+  }
+  function sponda(alto) {   // la sponda di legno: alto = quella in alto (da y = 0), se no quella in basso (fino a 100)
+    var s = "", d = alto ? 1 : -1, y0 = alto ? 0 : 100, LG = "#b57c45", k = alto ? 0 : 1;
+    function Y(t) { return y0 + d * t; }
+    function fascia(t0, t1, fill, x) { var a = Y(t0), b = Y(t1); return rett(-1, Math.min(a, b), 102, Math.abs(b - a), 0, fill, x); }
+    s += fascia(14.6, 23, lin("om", [[0, "#4a2c12", .36], [.4, "#4a2c12", .13], [1, "#4a2c12", 0]], 0, Y(14.6), 0, Y(23), true));   // l'ombra della sponda sulla terra
+    s += fascia(10, 14.8, lin("fi", [[0, "#7c4e2b"], [.6, "#64401f"], [1, "#4e3018"]], 0, Y(10), 0, Y(14.8), true));                // il fianco di dentro, in ombra
+    s += fascia(2.2, 10.2, lin("so", [[0, chiaro(LG, .02)], [.45, chiaro(LG, .2)], [1, chiaro(LG, .08)]], 0, Y(2.2), 0, Y(10.2), true));   // la cima dell'asse
+    s += fascia(.9, 2.3, "#8a5a32");   // lo spigolo di fuori
+    s += tratto(ondaX(Y(3.6), .3, 1, .4 + k * 2) + " " + ondaX(Y(5.8), .35, 2, 1.9 + k) + " " + ondaX(Y(7.9), .3, 1, 3.1 + k * .7), scuro(LG, .4), .4, op(.5));   // le venature
+    s += tratto(ondaX(Y(4.7), .3, 3, .8 + k * 1.6) + " " + ondaX(Y(6.9), .25, 2, 2.6 + k), scuro(LG, .25), .28, op(.45));
+    s += tratto("M-1," + f2(Y(2.5)) + " H101", "#fff1d6", .5, op(.45)) + tratto("M-1," + f2(Y(9.4)) + " H101", "#fff1d6", .7, op(.65)) + tratto("M-1," + f2(Y(10.2)) + " H101", "#3d2414", .6, op(.7)) + tratto("M-1," + f2(Y(14.75)) + " H101", L, .6, op(.55));
+    [12.5, 37.5, 62.5, 87.5].forEach(function (x) { s += cer(x, Y(6), .8, "#4a3424") + cer(x - .25, Y(6) - .25, .32, "#e2cfae", op(.85)); });   // le viti
+    return s + fascia(0, 1, L);
+  }
+  function campo() {
+    var r = rnd(731), s = "", i, y;
+    s += rett(-1, -1, 102, 102, 0, lin("ter", [[0, "#bb9a68"], [.2, "#cfb07f"], [.5, "#dbc193"], [.8, "#cfb07f"], [1, "#bb9a68"]], 0, 0, 0, 1));
+    var mac = [];   // le zone più battute (più scure) e quelle più asciutte (più chiare), morbide
+    for (i = 0; i < 9; i++) mac.push([r() * 100, T0 + 8 + r() * (T1 - T0 - 16), 6 + r() * 10, 2.5 + r() * 4, i % 2]);
+    mac.forEach(function (m) { [0, 100, -100].forEach(function (dx) { if (m[0] + dx > -m[2] && m[0] + dx < 100 + m[2]) s += ell(m[0] + dx, m[1], m[2], m[3], rad(m[4] ? "mcc" : "mcs", [[0, m[4] ? "#f1e0b8" : "#9c7e50", .34], [1, m[4] ? "#f1e0b8" : "#9c7e50", 0]], .5, .5, .5)); }); });
+    var scure = "", chiare = "";   // la terra lisciata per il lungo: righe appena accennate
+    for (y = T0 + 5; y < T1 - 4; y += 4.6) { var k = 1 + Math.floor(r() * 3), f = r() * 6.28, a = .22 + r() * .25; scure += ondaX(y, a, k, f) + " "; chiare += ondaX(y + .8, a, k, f) + " "; }
+    s += tratto(scure, "#8c6e44", .5, op(.13)) + tratto(chiare, "#fff8e6", .45, op(.18));
+    var cl = [["#a0814f", .55], ["#b8996a", .5], ["#f3e5c4", .65], ["#7f6238", .5], ["#fff2d6", .5], ["#6e5330", .45]], gg = cl.map(function () { return []; });   // i granelli
+    for (i = 0; i < 460; i++) gg[Math.floor(r() * cl.length)].push([r() * 100, T0 + 2 + r() * (T1 - T0 - 4), .16 + r() * .32]);
+    cl.forEach(function (c, j) { s += pth(granelli(gg[j]), c[0], op(c[1])); });
+    var buche = "", bordi = "";   // le piccole buche lasciate dalle bocce cadute: l'ombra dentro e il bordino chiaro
+    for (i = 0; i < 6; i++) { var bx = 6 + r() * 88, by = T0 + 9 + r() * (T1 - T0 - 18), br = 1.6 + r() * 1.2; buche += "M" + q(bx - br, by) + " a" + f2(br) + "," + f2(br * .8) + " 0 0,1 " + f2(2 * br) + ",0"; bordi += "M" + q(bx - br, by + .4) + " a" + f2(br) + "," + f2(br * .8) + " 0 0,0 " + f2(2 * br) + ",0"; }
+    s += tratto(buche, "#6e5330", .8, op(.4)) + tratto(bordi, "#fff4dc", .6, op(.5));
+    var SAS = ["#d9d2c3", "#bfb3a0", "#ebe3d3", "#a89a86", "#d3c3a6"];   // i sassolini
+    for (i = 0; i < 15; i++) {
+      var x = r() * 100, yy = T0 + 4 + r() * (T1 - T0 - 8), rx = .7 + r() * 1.1, ry = rx * (.6 + r() * .3), an = r() * 180, c = SAS[Math.floor(r() * SAS.length)];
+      [0, 100, -100].forEach(function (dx) { if (x + dx > -3 && x + dx < 103) s += sassolino(x + dx, yy, rx, ry, an, c); });
+    }
+    return s + sponda(true) + sponda(false);
+  }
+  def("campo_bocce", { tipo: "terra", nome: "Campo da bocce", w: 100, h: 100 }, function () { return campo(); });
+
+  // =========================================================
+  //  BOCCE IN PARTITA: lo stesso pezzo di campo, con le bocce rosse e verdi strette attorno al pallino bianco
+  //  (lisce e rigate, per distinguere i due giocatori della coppia), le scie lasciate rotolando e i segni dove sono cadute
+  // =========================================================
+  function boccia(x, y, R, col, rigata) {
+    var s = cer(x, y, R * 1.55, rad("ob", [[0, "#3a2410", .38], [.6, "#3a2410", .14], [1, "#3a2410", 0]], .5, .5, .5));   // l'ombra tutto intorno (il sole è alto)
+    s += cer(x, y, R, rad("bc" + col.slice(1), [[0, chiaro(col, .62)], [.28, chiaro(col, .16)], [.7, col], [1, scuro(col, .52)]], .4, .38, .68), bordo(L, .6));
+    if (rigata) s += tratto("M" + q(x - R * .8, y - R * .12) + " Q" + q(x, y + R * .62) + " " + q(x + R * .8, y - R * .12) + " M" + q(x - R * .66, y - R * .46) + " Q" + q(x, y + R * .2) + " " + q(x + R * .66, y - R * .46), scuro(col, .55), .38, op(.7));
+    return s + ell(x - R * .28, y - R * .32, R * .36, R * .24, "#ffffff", op(.85)) + cer(x - R * .5, y - R * .5, R * .1, "#ffffff");
+  }
+  function scia(x, y, R, lung) {   // la scia nella terra (la boccia è arrivata da sinistra): sfuma all'indietro
+    var x0 = x - lung;
+    return pth("M" + q(x0, y - R * .2) + " L" + q(x - R * .5, y - R * .72) + " L" + q(x - R * .5, y + R * .72) + " L" + q(x0, y + R * .2) + " Z", lin("sc", [[0, "#7a5c34", 0], [1, "#7a5c34", .2]], x0, 0, x, 0, true)) +
+      tratto("M" + q(x0 + lung * .3, y - R * .62) + " L" + q(x - R * .6, y - R * .82), "#fff6e0", .45, op(.4)) + tratto("M" + q(x0 + lung * .3, y + R * .62) + " L" + q(x - R * .6, y + R * .82), "#fff6e0", .45, op(.4));
+  }
+  def("bocce_partita", { tipo: "terra", nome: "Bocce in partita", w: 100, h: 100 }, function () {
+    var R = 7, ROSSA = "#d8322c", VERDE_B = "#2e9a4c", s = campo();   // (un po' più grandi del vero: si devono vedere da lontano)
+    var BB = [[22, 45, ROSSA, 0], [52, 32, VERDE_B, 1], [46, 57, ROSSA, 1], [66, 42, VERDE_B, 0], [73, 64, ROSSA, 0], [85, 31, VERDE_B, 1]];
+    BB.forEach(function (b) { s += scia(b[0], b[1], R, b[0] > 60 ? 22 : 16); });
+    s += ell(57.5, 48.5, 3.8, 2.6, "#8a6a3e", op(.16)) + scia(57, 48.5, 3.1, 10);   // dove è caduto il pallino
+    BB.forEach(function (b) { s += boccia(b[0], b[1], R, b[2], b[3]); });
+    return s + boccia(57, 48.5, 3.1, "#f6f1e2", 0);
+  });
+
+  // =========================================================
+  //  PERGOLA (sospesa: in alto, sotto si cammina): i pali di castagno (si vedono in alto e sfumano scendendo),
+  //  le due travi lunghe, i sette travicelli e i fili di ferro; sopra la vite fitta con le foglie a cinque lobi,
+  //  qualche foglia che ingiallisce, i grappoli neri (e qualcuno di uva bianca) che pendono dai bordi e dai buchi tra le foglie,
+  //  il tronco nodoso che sale da un palo; sotto i bordi davanti il filo delle lucine colorate (di notte accese)
+  // =========================================================
+  var FOGLIA_VITE = (function () {   // la foglia della vite: cinque lobi dentellati, il seno del picciolo in basso; centrata, la punta in su
+    var pts = [], v = "M0,.4 L0,.98 ", i;
+    function g(t, m, w) { var d = (t - m) / w; return Math.exp(-d * d); }
+    function R(t) { var at = Math.abs(t), k = (at / 9.5) % 1; return .5 + .5 * g(at, 0, 17) + .42 * g(at, 50, 15) + .27 * g(at, 103, 16) + .08 * g(at, 145, 12) + .065 * (k < .72 ? k / .72 : (1 - k) / .28); }
+    for (i = 0; i <= 120; i++) { var t = -160 + 320 * i / 120, a = t * Math.PI / 180, r = R(t); pts.push(f2(Math.sin(a) * r) + "," + f2(-Math.cos(a) * r)); }
+    [0, 50, -50, 103, -103].forEach(function (t) { var a = t * Math.PI / 180, r = R(t) * .84, x = Math.sin(a) * r, y = -Math.cos(a) * r; v += "M0,.4 Q" + f2(x * .42) + "," + f2(.4 + (y - .4) * .5) + " " + f2(x) + "," + f2(y) + " "; });
+    return { d: "M0,.4 L" + pts.join(" L") + " Z", v: v };
+  })();
+  var VERDI = [   // le foglie della vite: [chiaro, scuro, nervature]
+    ["#2f5d25", "#1c3b16", "#163010"],   // sotto, in ombra
+    ["#4f8b30", "#2f6121", "#224a16"],
+    ["#79b23e", "#4b8a2a", "#376a1e"],
+    ["#a7cf57", "#6ca237", "#4c7c25"],   // in cima, al sole
+    ["#dcc24e", "#a7842a", "#76591a"]    // qualche foglia che ingiallisce
+  ];
+  function d1(v) { return Math.round(v * 10) / 10; }
+  function matrice(x, y, sq, ang, sx, sy) {   // = translate(x y) scale(1 sq) rotate(ang) scale(sx sy), scritto corto
+    var c = Math.cos(ang * Math.PI / 180), s = Math.sin(ang * Math.PI / 180);
+    return "matrix(" + [c * sx, sq * s * sx, -s * sy, sq * c * sy].map(function (v) { return Math.round(v * 100) / 100; }).join(" ") + " " + d1(x) + " " + d1(y) + ")";
+  }
+  function fogliaVite(x, y, sc, sq, ang, cl, flip) {   // (una foglia per colore: il disegno sta una volta sola nelle definizioni)
+    var V = VERDI[cl];
+    simbolo("fv" + cl, "<path d='" + FOGLIA_VITE.d + "' fill='" + lin("fg" + cl, [[0, V[0]], [1, V[1]]], 0, 0, 1, 1) + "' stroke='" + L + "' stroke-width='.08' stroke-linejoin='round'/><path d='" + FOGLIA_VITE.v + "' fill='none' stroke='" + V[2] + "' stroke-width='.07' stroke-linecap='round' opacity='.85'/>");
+    return usa("fv" + cl, matrice(x, y, sq, ang, flip ? -sc : sc, sc));
+  }
+  function grappolo(x, y, k, seme, bianca) {   // un grappolo che pende da (x, y): il raspo, gli acini a cono
+    var r = rnd(seme), s = "", ac = [], righe = [4, 5, 5, 4, 4, 3, 3, 2, 1], i, j;
+    for (i = 0; i < righe.length; i++) {
+      var n = righe[i], w = (n - 1) * 1.6 * k;
+      for (j = 0; j < n; j++) ac.push([x - w / 2 + j * 1.6 * k + (i % 2 ? .45 : -.2) * k + (r() - .5) * .7 * k, y + 2.6 * k + i * 2.05 * k + (r() - .5) * .6 * k, (1.25 + r() * .3) * k]);
+    }
+    var fa = bianca ? rad("acb", [[0, "#fffbd2"], [.3, "#e5d47c"], [.75, "#b49b36"], [1, "#6f5c16"]], .36, .3, .75) : rad("acn", [[0, "#bba6de"], [.25, "#6d4b9a"], [.7, "#3a1d5a"], [1, "#1c0a2c"]], .36, .3, .75);
+    s += tratto("M" + q(x, y) + " Q" + q(x + 1.3 * k, y + 1.4 * k) + " " + q(x + .2 * k, y + 3 * k), "#5f4a22", .9 * k);
+    var g = "", lu = "";
+    ac.forEach(function (a, n) { g += "<circle cx='" + f1(a[0]) + "' cy='" + f1(a[1]) + "' r='" + f2(a[2]) + "'/>"; if (n % 3 === 0) lu += "M" + q(a[0] - a[2] * .57, a[1] - a[2] * .38) + "a" + f2(a[2] * .22) + "," + f2(a[2] * .22) + " 0 1,0 " + f2(a[2] * .44) + ",0a" + f2(a[2] * .22) + "," + f2(a[2] * .22) + " 0 1,0 " + f2(-a[2] * .44) + ",0"; });
+    return s + "<g fill='" + fa + "' stroke='" + (bianca ? "#5a4a12" : "#170722") + "' stroke-width='" + f2(.3 * k) + "'>" + g + "</g>" + pth(lu, "#ffffff", op(bianca ? .75 : .5));   // gli acini e i riflessi
+  }
+  var LUCI_COL = ["#ff5544", "#ffd23a", "#4fc46a", "#4f8ff2", "#ff9a2a"];
+  function lampadina(x, y, c) {   // la lampadina a goccia col portalampada nero
+    var s = rett(x - .75, y - 1.5, 1.5, 1.5, .3, "#2a2321");
+    if (NOTTE) return cer(x, y + 1.5, 11, rad("la" + c.slice(1), [[0, chiaro(c, .45), .95], [.3, c, .42], [1, c, 0]], .5, .5, .5)) + s + ell(x, y + 1.5, 2, 2.4, rad("ln" + c.slice(1), [[0, "#ffffff"], [.5, chiaro(c, .7)], [1, chiaro(c, .2)]], .45, .4, .75));
+    return s + ell(x, y + 1.5, 1.42, 1.78, rad("lg" + c.slice(1), [[0, chiaro(c, .72)], [.55, c], [1, scuro(c, .35)]], .38, .32, .8), bordo(L, .35)) + cer(x - .45, y + .9, .38, "#ffffff", op(.9));
+  }
+  function filoLucine(pp, pancia, ogni, k0) {   // il filo appeso ai punti pp (sullo schermo) con la pancia in mezzo; una lampadina ogni "ogni"
+    var s = "", lamp = "", k = k0 || 0, i, j;
+    for (i = 0; i < pp.length - 1; i++) {
+      var A = pp[i], B = pp[i + 1], C = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2 + pancia * 2];
+      s += tratto("M" + q(A) + " Q" + q(C) + " " + q(B), "#241c1a", .7);
+      var lun = Math.sqrt((B[0] - A[0]) * (B[0] - A[0]) + (B[1] - A[1]) * (B[1] - A[1])), n = Math.max(1, Math.round(lun / ogni));
+      for (j = 0; j < n; j++) { var t = (j + .5) / n, x = (1 - t) * (1 - t) * A[0] + 2 * t * (1 - t) * C[0] + t * t * B[0], y = (1 - t) * (1 - t) * A[1] + 2 * t * (1 - t) * C[1] + t * t * B[1]; lamp += lampadina(x, y + .3, LUCI_COL[k++ % LUCI_COL.length]); }
+    }
+    pp.forEach(function (a) { s += cer(a[0], a[1], .75, "#3a3434"); });   // i gancetti
+    return s + lamp;
+  }
+  def("pergola", { tipo: "sospeso", nome: "Pergola con la vite", fp: [3, 2], box: [-143, -290, 140, -50], luce: [.2, 1, 184, 165, "#ffd98a"] }, function () {
+    var r = rnd(1958), s = "", i, PA = 1.36, PB = .86, Z0 = 191, Z1 = 200, ZR = 207, W = .045, WR = .03, col = LEGNO_P, RA = [];
+    for (i = 0; i < 7; i++) RA.push(-PA + i * PA / 3);
+    // i pali: pieni in alto, poi sfumano (sotto si cammina e si vede chi passa)
+    function palo(a, b, vite) {
+      var c = P(a, b, 0), gid = p + "sg" + (++nC), mid = p + "sm" + nC, x0 = c[0] - 30, y0 = c[1] - Z1 - 6, hh = Z1 - 96;
+      DEFS.push("<linearGradient id='" + gid + "' gradientUnits='userSpaceOnUse' x1='0' y1='" + f1(c[1] - 162) + "' x2='0' y2='" + f1(c[1] - 108) + "'><stop offset='0' stop-color='#fff'/><stop offset='1' stop-color='#000'/></linearGradient>");
+      DEFS.push("<mask id='" + mid + "' maskUnits='userSpaceOnUse' x='" + f1(x0) + "' y='" + f1(y0) + "' width='60' height='" + f1(hh) + "'><rect x='" + f1(x0) + "' y='" + f1(y0) + "' width='60' height='" + f1(hh) + "' fill='url(#" + gid + ")'/></mask>");
+      var o = blocco(a - .05, a + .05, b - .05, b + .05, 104, Z0, col, null, 1.3);
+      o += tratto(linea(P(a - .05, b + .05, Z0 - 6), P(a - .05, b + .05, 112)), "#fff1dc", .6, op(.35));
+      if (vite) {   // il tronco della vite, nodoso, che sale girando attorno al palo
+        var tr = [P(a - .03, b + .07, 104), P(a + .06, b + .06, 122), P(a - .05, b + .075, 140), P(a + .04, b + .07, 156), P(a - .04, b + .07, 172), P(a + .02, b + .065, 186), P(a - .08, b + .04, Z0 + 3)];
+        var dT = liscio(tr);
+        o += tratto(dT, "#2a1d14", 5.2) + tratto(dT, "#6c5240", 3.8) + tratto(dT, "#a88a6c", 1.1, "transform='translate(-.8 -.3)' opacity='.7'") + tratto(dT, "#3a2a1e", .5, "transform='translate(.9 .2)' stroke-dasharray='2 3' opacity='.7'");
+        [[1, 0], [3, 1], [5, 0]].forEach(function (k) { var n = tr[k[0]]; o += ell(n[0] + (k[1] ? 1.4 : -1.2), n[1], 1.7, 1.3, "#5a4232", bordo("#2a1d14", .5)); });   // i nodi
+      }
+      return "<g mask='url(#" + mid + ")'>" + o + "</g>";
+    }
+    s += palo(-PA, -PB) + palo(PA, -PB) + palo(-PA, PB) + palo(PA, PB, true);
+    // le due travi lunghe (sui pali) e i travicelli di traverso (sulle travi)
+    s += blocco(-1.54, 1.54, -PB - W, -PB + W, Z0, Z1, col, null, 1.3) + blocco(-1.54, 1.54, PB - W, PB + W, Z0, Z1, col, null, 1.3);
+    RA.forEach(function (a) { s += blocco(a - WR, a + WR, -1.07, 1.07, Z1, ZR, col, null, 1.1); var e = P(a - WR, 1.07, ZR - 1.5); s += tratto(linea(e, P(a + WR, 1.07, ZR - 1.5)), "#fff1dc", .5, op(.4)); });
+    [-.43, 0, .43].forEach(function (b) { s += tratto(linea(P(-1.5, b, ZR + .4), P(1.5, b, ZR + .4)), "#6d6a66", .55, op(.85)); });   // i fili di ferro per la vite
+    // la vite: le foglie lungo i travicelli e in mezzo (con qualche buco da cui si vede sotto), quelle che pendono dai bordi davanti
+    var BUCHI = [[-.62, -.32, .17], [.52, .36, .14], [-.12, .64, .11], [.98, -.5, .14], [-1.02, .46, .12], [.1, -.62, .1]], FO = [];
+    function buco(a, b) { for (var k = 0; k < BUCHI.length; k++) { var h = BUCHI[k], da = a - h[0], db = b - h[1]; if (da * da + db * db < h[2] * h[2]) return true; } return false; }
+    function tinta5(z, ombra) { var x = r(); if (x < .025) return 4; if (ombra) return x < .4 ? 0 : (x < .85 ? 1 : 2); return z > ZR + 6.5 ? (x < .5 ? 3 : 2) : (x < .3 ? 1 : (x < .75 ? 2 : 3)); }
+    RA.forEach(function (a0) {
+      for (var b = -1.04; b <= 1.05; b += .085 + r() * .05) {
+        var a = a0 + (r() < .5 ? -1 : 1) * (.03 + r() * .15), bb = b + (r() - .5) * .05, z = ZR + 1.5 + r() * 8;
+        if (buco(a, bb) && r() < .9) continue;
+        FO.push({ a: a, b: bb, z: z, sc: 7.2 + r() * 2.8, ang: r() * 360, cl: tinta5(z), f: r() < .5 });
+      }
+    });
+    for (i = 0; i < 170; i++) { var a1 = -1.52 + r() * 3.04, b1 = -1.05 + r() * 2.1, z1 = ZR + 1 + r() * 9; if (buco(a1, b1)) continue; FO.push({ a: a1, b: b1, z: z1, sc: 7 + r() * 3, ang: r() * 360, cl: tinta5(z1), f: r() < .5 }); }
+    var a2, b2;
+    for (a2 = -1.55; a2 <= 1.5; a2 += .13 + r() * .1) FO.push({ a: a2, b: -1.1 - r() * .05, z: ZR + 2 + r() * 6, sc: 6.5 + r() * 2.5, ang: r() * 360, cl: tinta5(ZR + 7), f: r() < .5 });   // quelle che sporgono dietro e a sinistra
+    for (b2 = -1.05; b2 <= 1.05; b2 += .13 + r() * .1) FO.push({ a: -1.58 - r() * .05, b: b2, z: ZR + 2 + r() * 6, sc: 6.5 + r() * 2.5, ang: r() * 360, cl: tinta5(ZR + 7), f: r() < .5 });
+    for (a2 = -1.52; a2 <= 1.5; a2 += .12 + r() * .1) FO.push({ a: a2, b: 1.06 + r() * .05, z: Z1 + 3 - r() * 13, sc: 6 + r() * 2.2, ang: 180 + (r() - .5) * 80, cl: tinta5(0, true), f: r() < .5, giu: true });
+    for (b2 = -1.04; b2 <= 1.04; b2 += .13 + r() * .1) FO.push({ a: 1.53 + r() * .05, b: b2, z: Z1 + 3 - r() * 13, sc: 6 + r() * 2.2, ang: 180 + (r() - .5) * 80, cl: tinta5(0, true), f: r() < .5, giu: true });
+    // i grappoli: sotto i bordi davanti e dentro i buchi
+    [[-1.14, PB + .06, 0, 1], [-.6, PB + .07, 1, 1.05], [.08, PB + .06, 0, .95], [.6, PB + .07, 0, 1.1], [1.13, PB + .06, 1, 1], [1.43, .42, 0, 1], [1.43, -.36, 0, .95], [-.54, -.38, 0, .85], [.46, .3, 1, .85], [-1.0, .4, 0, .8], [.94, -.56, 0, .85]].forEach(function (g, k) {
+      FO.push({ a: g[0], b: g[1], z: k < 7 ? Z0 + 1 : ZR - 2, uva: g, k: k });
+    });
+    FO.sort(function (m, n) { return (m.a + m.b + (m.z - ZR) / 40) - (n.a + n.b + (n.z - ZR) / 40); });
+    var sotto = "", foglie = "";
+    FO.forEach(function (f) {
+      var c = P(f.a, f.b, f.z);
+      if (f.uva) { foglie += grappolo(c[0], c[1], f.uva[3] * .95, 300 + f.k * 17, f.uva[2]); return; }
+      if (!f.giu) { var rx = d1(f.sc * .78), ry = d1(f.sc * .44); sotto += "M" + d1(c[0] - rx) + "," + d1(c[1] + 2.6) + "a" + rx + "," + ry + " 0 1,0 " + d1(2 * rx) + ",0a" + rx + "," + ry + " 0 1,0 " + d1(-2 * rx) + ",0"; }   // il verde scuro sotto le foglie
+      foglie += f.giu ? fogliaVite(c[0], c[1] + f.sc * .55, f.sc, .92, f.ang, f.cl, f.f) : fogliaVite(c[0], c[1], f.sc, .62, f.ang, f.cl, f.f);
+    });
+    s += pth(sotto, "#1b3313", op(.9)) + foglie;
+    // qualche viticcio arricciato
+    [[-1.3, .95], [.35, 1.02], [1.5, .1], [-.2, -.9]].forEach(function (v) { var c = P(v[0], v[1], ZR + 4); s += tratto("M" + q(c) + " c2,-3 5,-2 4,1 c-1,2 -3,1 -2,-1", "#6f8d2c", .6); });
+    // le lucine sotto i bordi davanti: lungo la trave lunga e poi sotto l'ultimo travicello
+    var pp = RA.map(function (a) { return P(a, PB + W + .005, Z0 - .5); });
+    pp.push(P(PA + WR + .005, 0, Z1 - .5), P(PA + WR + .005, -PB, Z1 - .5));
+    s += filoLucine(pp, 4.2, 6.2, 0);
+    return s;
+  });
+
+  // =========================================================
+  //  TAVOLO DA OSTERIA all'aperto: le gambe squadrate di castagno col traverso basso ad H, la tovaglia a quadri
+  //  rossi e bianchi che cade sui lati con le pieghe e l'orlo cucito; sopra il fiasco impagliato, il tagliere
+  //  con la pagnotta e due fette, il piatto col salame e il formaggio, quattro bicchieri di rosso (uno per posto)
+  // =========================================================
+  function tovagliaQ(HA, HB, Z, cad) {   // la tovaglia (nella vista: è uguale girata di mezzo giro)
+    var Q = .095 * 61, X0 = HA * 61, Y0 = HB * 61, s = "", i;
+    var pat = motivo("vichy", 2 * Q, 2 * Q, rett(0, 0, 2 * Q, 2 * Q, 0, "#fbf7ee") + rett(0, 0, Q, 2 * Q, 0, "#d22f2b", op(.62)) + rett(0, 0, 2 * Q, Q, 0, "#d22f2b", op(.62)) + rett(0, 0, Q, Q, 0, "#a81a1a", op(.2)));
+    function lato(o, dir, Lf, fase, buio) {   // un lato che cade (piatto: x lungo il bordo, y in giù), piegato sul suo piano
+      var np = Math.max(2, Math.round(Lf / 16));
+      function caduta(x) { var e = Math.max(0, 1 - x / 12), f = Math.max(0, 1 - (Lf - x) / 12); return cad + 1.1 * Math.sin(x / Lf * Math.PI * np * 2 + fase) + 7.5 * (e * e + f * f); }
+      var d = "M0,0 H" + f1(Lf), giu = "", orlo = "", n = 44;
+      for (i = n; i >= 0; i--) d += " L" + q(Lf * i / n, caduta(Lf * i / n));
+      for (i = 0; i <= n; i++) { var x2 = Lf * i / n; giu += (i ? " L" : "M") + q(x2, caduta(x2)); orlo += (i ? " L" : "M") + q(x2, caduta(x2) - 1.5); }
+      var st = [], k, ns = np * 2;
+      for (k = 0; k <= ns; k++) st.push([k / ns, k % 2 ? "#000000" : "#ffffff", k % 2 ? .14 : .13]);   // le pieghe morbide
+      var c = rett(-2, -2, Lf + 4, cad + 22, 0, pat) + rett(-1, 0, Lf + 2, cad + 22, 0, lin("pg", st, 0, 0, Lf, 0, true)) +
+        rett(-1, 0, Lf + 2, 3, 0, lin("bt", [[0, "#000", .2], [1, "#000", 0]], 0, 0, 0, 1)) + (buio ? rett(-1, 0, Lf + 2, cad + 22, 0, "#000", op(buio)) : "") +
+        tratto(orlo, "#ffffff", .4, "stroke-dasharray='1 .9' opacity='.55'");
+      return faccia(o, dir, dentro(d + " Z", c) + tratto(giu, L, 1.2) + tratto("M0,.4 H" + f1(Lf), "#ffffff", .7, op(.5)));
+    }
+    s += lato(Puv(-HA, HB, Z), 1, 2 * HA * 61, 0, 0) + lato(Puv(HA, HB, Z), -1, 2 * HB * 61, 1.3, .17);
+    var sp = pRett(-HA, HA, -HB, HB, .015, 2).map(function (x) { return Puv(x[0], x[1], Z); }), d = chiuso(sp), b = limiti(sp);
+    var c = suZ(Z, rett(-X0 - 3, -Y0 - 3, 2 * X0 + 6, 2 * Y0 + 6, 0, pat) +
+      "<path d='M" + q(-X0, 0) + " H" + f1(X0) + " M" + q(0, -Y0) + " V" + f1(Y0) + "' stroke='#000' stroke-width='.9' opacity='.08'/><path d='M" + q(-X0, .7) + " H" + f1(X0) + " M" + q(.7, -Y0) + " V" + f1(Y0) + "' stroke='#ffffff' stroke-width='.7' opacity='.35'/>");
+    c += ell(b[0] + (b[2] - b[0]) * .4, b[1] + (b[3] - b[1]) * .38, (b[2] - b[0]) * .34, (b[3] - b[1]) * .3, nuovaR([[0, "#ffffff", .2], [1, "#ffffff", 0]], .5, .5, .5));
+    c += pth(d, nuova([[0, "#000", 0], [.6, "#000", 0], [1, "#000", .1]], b[0], b[1], b[2], b[3], true));
+    s += pth(d, "#fbfaf3") + dentro(d, c);
+    var A = Puv(-HA, -HB, Z), B = Puv(HA, -HB, Z), Cc = Puv(HA, HB, Z), D = Puv(-HA, HB, Z);
+    return s + tratto("M" + q(D) + " L" + q(A) + " L" + q(B), L, 1.4) + tratto("M" + q(D[0] + 1, D[1] + .4) + " L" + q(Cc[0], Cc[1] - .3) + " L" + q(B[0] - 1, B[1] + .4), "#ffffff", .9, op(.7));
+  }
+  function fiasco(a, b, z) {   // il fiasco di Chianti: la pancia vestita di paglia intrecciata, il collo lungo di vetro verde, la capsula rossa
+    var c = P(a, b, 0), s = "", j, K = 1.22;   // un po' più grande del vero, come tutte le cose sui tavoli
+    s += ell(c[0] + 4.4, c[1] - z + 1.8, 11, 5.2, "#000", op(.22));
+    var pan = [[0, .058], [1.6, .082], [4.2, .098], [7.5, .101], [10.5, .092], [12.8, .072], [14.4, .05], [15.4, .036]].map(function (x) { return [z + x[0] * K, x[1] * K]; });
+    s += tornito(a, b, pan, [[0, "#f8e5ab"], [.28, "#e7c674"], [.65, "#c09345"], [1, "#7d5622"]], 1.1);
+    var fili = "", scuri = "";   // la paglia: i fili in verticale (la metà davanti) e i due giri che la legano
+    for (j = 1; j < 20; j++) {
+      var t = j / 20 * Math.PI, d = "";
+      pan.forEach(function (x, k) { d += (k ? " L" : "M") + q(c[0] + 70.71 * x[1] * Math.cos(t), c[1] - x[0] + 35.36 * x[1] * Math.sin(t)); });
+      if (j % 2) fili += d + " "; else scuri += d + " ";
+    }
+    s += tratto(scuri, "#8a6228", .55, op(.55)) + tratto(fili, "#fff3c8", .45, op(.5));
+    [[2.4, .086], [13.2, .068]].forEach(function (g) {
+      var d = "", k, zz = z + g[0] * K, rr = g[1] * K;
+      for (k = 0; k <= 16; k++) { var t = k / 16 * Math.PI; d += (k ? " L" : "M") + q(c[0] + 70.71 * rr * Math.cos(t), c[1] - zz + 35.36 * rr * Math.sin(t)); }
+      s += tratto(d, "#6e4a1c", 2.5) + tratto(d, "#d9ad5c", 1.6) + tratto(d, "#fff0c0", .5, "transform='translate(0 -.45)' opacity='.8'");
+    });
+    s += tornito(a, b, [[14.8, .034], [17.5, .025], [26, .021], [27, .023]].map(function (x) { return [z + x[0] * K, x[1] * K]; }), [[0, "#d6efc8", .95], [.35, "#5ea35b", .9], [1, "#1d4a22", .95]], .8);
+    s += tornito(a, b, [[25.6, .025], [30, .025], [30.8, .021], [31.2, .012]].map(function (x) { return [z + x[0] * K, x[1] * K]; }), [[0, "#ff8c80"], [.4, "#c81f2b"], [1, "#650812"]], .7);
+    return s + tratto(linea([c[0] - .9, c[1] - z - 25 * K], [c[0] - 1.1, c[1] - z - 17.5 * K]), "#ffffff", .8, op(.8));
+  }
+  function tagliere(a, b, z) {   // il tagliere di legno con la pagnotta (la croce incisa e la farina), due fette e il coltello
+    var s = "", c = P(a, b, 0), k;
+    s += ell(c[0] + 3.4, c[1] - z + 1.6, 19, 7.6, "#000", op(.17));
+    s += blocco(a - .2, a + .2, b - .12, b + .12, z, z + 1.8, "#c99257", null, .9);
+    var zt = z + 1.8;
+    s += suZ(zt, gruppo("translate(" + f2(a * 61) + " " + f2(b * 61) + ")",   // sul tagliere: le venature, due fette e il coltello
+      "<path d='M-11.5,-5 H11.5 M-11.5,-1.6 H11.5 M-11.5,2 H11.5 M-11.5,5.2 H11.5' stroke='#8a5a2c' stroke-width='.35' opacity='.4'/>" +
+      [[6.4, -2.4, 20], [8, 2.6, -12]].map(function (f) {
+        return "<g transform='translate(" + f[0] + " " + f[1] + ") rotate(" + f[2] + ")'>" + ell(.5, .6, 4.6, 3.6, "#000", op(.18)) + ell(0, 0, 4.6, 3.6, "#a8642a", bordo(L, .45)) + ell(-.2, -.1, 3.7, 2.8, "#f6e3b8") +
+          cer(-1.1, -.7, .5, "#d9be8c") + cer(.9, .5, .4, "#d9be8c") + cer(-.2, 1.1, .35, "#d9be8c") + cer(1.6, -.9, .35, "#d9be8c") + cer(-2, .5, .3, "#d9be8c") + "</g>";
+      }).join("") +
+      "<g transform='translate(-2.4 5.6) rotate(-6)'>" + rett(-1, -.8, 9, 1.6, .7, lin("lama", [[0, "#ffffff"], [.5, "#c9d0d6"], [1, "#7d878f"]], 0, 0, 0, 1), bordo(L, .35)) + rett(-7.2, -1, 6.2, 2, .9, "#5a3420", bordo(L, .4)) + cer(-5.8, 0, .32, "#e2c27a") + cer(-2.9, 0, .32, "#e2c27a") + "</g>"));
+    // la pagnotta di pane casereccio: bassa e larga, la crosta dorata, la croce aperta, la farina
+    var pa = a - .07, pb = b - .012;
+    s += tornito(pa, pb, [[zt, .1], [zt + 1.4, .11], [zt + 3.6, .106], [zt + 5.6, .09], [zt + 7.1, .064], [zt + 7.9, .034], [zt + 8.2, .006]], [[0, "#f2cd8a"], [.3, "#d29848"], [.72, "#97561f"], [1, "#5b2f10"]], .95);
+    var cp = P(pa, pb, 0), cx = cp[0], cy = cp[1] - zt - 7.1, r = rnd(55);
+    [[-1, 1], [1, 1]].forEach(function (v) {   // la croce: due tagli che seguono la cupola
+      var d = "M" + q(cx - 4.6 * v[0], cy - 2.2) + " Q" + q(cx, cy - 1.4) + " " + q(cx + 4.6 * v[0], cy + 2.4);
+      s += tratto(d, "#5e2e0e", 2.2, op(.55)) + tratto(d, "#f4d79c", 1.2) + tratto(d, "#fff2d0", .4, "transform='translate(0 -.35)'");
+    });
+    for (k = 0; k < 18; k++) s += cer(cx - 6 + r() * 11, cy - 2.4 + r() * 5.8, .25 + r() * .35, "#fffaf0", op(.45 + r() * .4));   // la farina
+    for (k = 0; k < 10; k++) s += cer(cx - 7 + r() * 13, cy + 1 + r() * 5, .3, "#5e2e0e", op(.35));   // la crosta che scrocchia
+    return s + ell(cx - 3.2, cy - .6, 2.4, 1, "#ffffff", op(.25));
+  }
+  function piattoSalame(a, b, z) {   // il piatto bianco col salame a fette (il grasso a puntini) e i pezzi di formaggio
+    var o = anello(a, b, z + .5, .125), s = ell(o.x + 2.2, o.y + 1.1, o.rx + .8, o.ry + .7, "#000", op(.18)), r = rnd(91), k;
+    s += ell(o.x, o.y, o.rx, o.ry, "#f4f1e8", bordo(L, .8)) + ell(o.x + .3, o.y + .4, o.rx * .7, o.ry * .66, "#e2ddcf") + ell(o.x - o.rx * .45, o.y - o.ry * .4, o.rx * .3, o.ry * .2, "#ffffff", op(.7));
+    var fette = "";
+    [[-3, -1.6], [.7, -3], [3.3, -.5], [-.7, 1.5], [-3.7, 1.8]].forEach(function (f) {
+      fette += "<g transform='translate(" + f[0] + " " + f[1] + ")'>" + cer(.35, .4, 2.45, "#000", op(.2)) + cer(0, 0, 2.45, "#b3303d", bordo("#5a1018", .4));
+      for (k = 0; k < 7; k++) fette += cer(-1.5 + r() * 3, -1.5 + r() * 3, .28 + r() * .22, "#f6dfe0");
+      fette += cer(0, 0, 2.45, "none", "stroke='#e8c9a8' stroke-width='.4' opacity='.6'") + "</g>";
+    });
+    fette += "<path d='M2.8,1.8 L6.7,3 L3.5,5.3 Z' fill='#f3d27a' stroke='#8a6a1c' stroke-width='.4' stroke-linejoin='round'/><path d='M2.8,1.8 L6.7,3' stroke='#c9a04a' stroke-width='.9'/>" +
+      "<path d='M-1.8,3.4 L1.9,3.8 L.2,6.4 Z' fill='#f6dc8c' stroke='#8a6a1c' stroke-width='.4' stroke-linejoin='round'/>";
+    return s + suZ(z + 1, gruppo("translate(" + f2(a * 61) + " " + f2(b * 61) + ")", fette));
+  }
+  def("tavolo_esterno", { nome: "Tavolo da osteria", fp: [2, 1], box: [-78, -96, 86, 44], dietro: true, piano: 48, posti: [[0, -1], [1, -1], [0, 1], [1, 1]] }, function () {
+    var col = CASTAGNO, HA = .92, HB = .4, ZT = 47, ZS = 43.4, GA = .79, GB = .28, RS = .052, ZP = ZT + .6, g0 = G, s = "";
+    G = 1;   // le gambe e la tovaglia sono uguali girate di mezzo giro: si disegnano sempre nello stesso verso
+    s += ombraForma(pRett(-HA, HA, -HB, HB, 0), 1.1);
+    function gamba(a, b) { return gambaQuadra(a, b, RS * .8, RS, 0, ZS, col); }
+    s += gamba(-GA, -GB) + gamba(GA, -GB);
+    s += blocco(-GA - .022, -GA + .022, -GB, GB, 8, 11.5, col, null, 1) + blocco(-GA, GA, -.024, .024, 9.5, 13, col, null, 1) + blocco(GA - .022, GA + .022, -GB, GB, 8, 11.5, col, null, 1);
+    s += gamba(-GA, GB) + gamba(GA, GB);
+    s += tovagliaQ(HA + .05, HB + .05, ZP, 10.5);
+    G = g0;
+    var cose = [];   // sopra: ognuno al suo posto, dal più lontano al più vicino
+    cose.push([vicino(-.14, -.06), fiasco(-.14, -.06, ZP)]);
+    cose.push([vicino(.34, .02), tagliere(.34, .02, ZP)]);
+    cose.push([vicino(-.58, .02), piattoSalame(-.58, .02, ZP)]);
+    [[-.5, .27, .7], [.5, .28, .45], [-.5, -.27, .55], [.52, -.26, .8]].forEach(function (g) { cose.push([vicino(g[0], g[1]), bicchiere(g[0], g[1], ZP, g[2])]); });
+    var mc = P(.12, .25, ZP);   // una macchia di vino sulla tovaglia
+    s += ell(mc[0], mc[1], 3.6, 1.7, "none", "stroke='#8a1426' stroke-width='.6' opacity='.35'");
+    return s + ordina(cose);
+  });
+
+  // =========================================================
+  //  PANCA DI LEGNO da giardino: castagno chiaro a olio, cinque stecche nella seduta, lo schienale con due assi
+  //  e la traversa curva in cima, i montanti col pomolo, i braccioli larghi, la gamba di mezzo (è lunga due metri)
+  // =========================================================
+  def("panca_legno", { nome: "Panca di legno", fp: [2, 1], box: [-71, -102, 79, 41], dietro: true, azione: "siedi", seduta: 28 }, function () {
+    var col = LEGNO_PANCA, A = .86, BF = .14, BP = -.29, W = .034, ZS = 28, t = tinte(col);
+    var s = ombraForma(pRett(-.92, .92, -.34, .2, .03, 3), 1);
+    function trave(a0, a1, b0, b1, z0, z1, lw) { return blocco(a0, a1, b0, b1, z0, z1, col, null, lw || 1.1); }
+    function arco(a0, a1, bA, bB, z0, z1, fr) {   // la traversa in cima allo schienale, curva verso l'alto in mezzo
+      var n = 16, fa = [], top = [], i, bn = G > 0 ? bB : bA, bf = G > 0 ? bA : bB;
+      function zt(a) { var k = (a - (a0 + a1) / 2) / ((a1 - a0) / 2); return z1 + fr * (1 - k * k); }
+      for (i = 0; i <= n; i++) { var a = a0 + (a1 - a0) * i / n; fa.push(P(a, bn, zt(a))); top.push(P(a, bf, zt(a))); }
+      return poly(fa.concat(top.slice().reverse()), t[0], bordo(L, .9)) + poly(fa.concat([P(a1, bn, z0), P(a0, bn, z0)]), t[1], bordo(L, 1.1)) + tratto(aperto(fa), "#fff3df", .6, op(.55));
+    }
+    function stecca(b0, b1) {   // un'asse della seduta con le venature e il filo di luce davanti
+      var bm = (b0 + b1) / 2, bv = G > 0 ? b1 : b0;
+      return trave(-A + W, A - W, b0, b1, 25, ZS, 1) + tratto(linea(P(-A + W + .03, bm - .012, ZS), P(A - W - .03, bm + .006, ZS)), scuro(col, .45), .4, op(.4)) +
+        tratto(linea(P(-A + W + .02, bv - G * .006, ZS), P(A - W - .02, bv - G * .006, ZS)), "#fff1d8", .55, op(.55));
+    }
+    function pomolo(a) { return tornito(a, BP, [[63, .03], [64.4, .037], [66.4, .031], [67.8, .016], [68.3, 0]], legno(col), .8); }
+    function bullone(a, b, z) { var c = P(a, b, z); return cer(c[0], c[1], .9, "#2d2420") + cer(c[0] - .25, c[1] - .25, .35, "#cfc4b4", op(.8)); }
+    var montanti = trave(-A - W, -A + W, BP - W, BP + W, 0, 63) + trave(A - W, A + W, BP - W, BP + W, 0, 63) + pomolo(-A) + pomolo(A);
+    var bf = BP + G * .017, vena = "";   // le venature sulle assi dello schienale (sulla faccia che si vede)
+    [[34, 39.5], [43.5, 49]].forEach(function (z, j) { vena += tratto(linea(P(-A + W + .04, bf, z[0] + 1.8), P(A - W - .05, bf, z[0] + 2.3 - j * .4)) + " " + linea(P(-A + W + .2, bf, z[0] + 3.7), P(A - W - .3, bf, z[0] + 3.4)), scuro(col, .42), .35, op(.4)); });
+    vena += tratto(linea(P(-A + W + .1, bf - G * .004, 55.2), P(0, bf - G * .004, 58.6)) + " " + linea(P(0, bf - G * .004, 58.6), P(A - W - .1, bf - G * .004, 55.4)), scuro(col, .42), .35, op(.35));
+    var schienale = trave(-A + W, A - W, BP - .016, BP + .016, 34, 39.5, 1) + trave(-A + W, A - W, BP - .016, BP + .016, 43.5, 49, 1) + arco(-A + W, A - W, BP - .02, BP + .02, 53, 58.5, 4) + vena;
+    [-A, A].forEach(function (a) { var bv = BP + G * .04; [36.7, 46.2, 56].forEach(function (z) { schienale += bullone(a, bv, z); }); });
+    var gambeDav = trave(-A - W, -A + W, BF - W, BF + W, 0, 41) + trave(A - W, A + W, BF - W, BF + W, 0, 41);
+    var centro = trave(-W, W, BP - W, BP + W, 0, 23) + trave(-W, W, BF - W, BF + W, 0, 23);
+    var telaio = trave(-A - .024, -A + .024, BP, BF, 20.5, 25) + trave(A - .024, A + .024, BP, BF, 20.5, 25) + trave(-A + W, A - W, BP - .018, BP + .018, 19.5, 25) + trave(-A + W, A - W, BF - .02, BF + .02, 19.5, 25);
+    var SL = [[-.285, -.2], [-.19, -.105], [-.095, -.01], [0, .085], [.095, .175]], stecche = SL.map(function (b) { return stecca(b[0], b[1]); });
+    var braccioli = "";
+    [-A, A].forEach(function (a) { braccioli += trave(a - .045, a + .045, BP - .02, BF + .05, 41, 44.6) + tratto(linea(P(a - .012, BP + .01, 44.6), P(a - .006, BF + .03, 44.6)), scuro(col, .4), .35, op(.4)) + tratto(linea(P(a + G * .03, BP, 44.6), P(a + G * .03, BF + .04, 44.6)), "#fff1d8", .5, op(.5)); });
+    if (G > 0) s += montanti + schienale + centro + telaio + stecche.join("") + gambeDav + braccioli;
+    else s += gambeDav + centro + telaio + stecche.reverse().join("") + braccioli + schienale + montanti;
+    return s;
+  });
+
+  // =========================================================
+  //  VASO DI GERANI: il vaso di terracotta a campana (quello dell'Impruneta) col festone in rilievo e le rosette,
+  //  l'orlo arrotolato e il sottovaso; dentro il geranio fitto: le foglie tonde e smerlate col cerchio scuro,
+  //  i mazzetti di fiori rossi tondi come palline sui gambi
+  // =========================================================
+  var FOGLIA_GER = (function () {   // tonda e smerlata, il seno del picciolo in basso; il cerchio scuro e le nervature a ventaglio
+    var pts = [], i, zona, v = "";
+    for (i = 0; i <= 96; i++) { var t = -162 + 324 * i / 96, a = t * Math.PI / 180, k = (Math.abs(t) / 27) % 1, r = .88 + .12 * Math.sin(k * Math.PI); pts.push(f2(Math.sin(a) * r) + "," + f2(-Math.cos(a) * r)); }
+    var z0 = -138 * Math.PI / 180, z1 = 138 * Math.PI / 180;
+    zona = "M" + f2(Math.sin(z0) * .58) + "," + f2(-Math.cos(z0) * .58) + " A.58,.58 0 1,1 " + f2(Math.sin(z1) * .58) + "," + f2(-Math.cos(z1) * .58);
+    [-135, -90, -45, 0, 45, 90, 135].forEach(function (t) { var a = t * Math.PI / 180; v += "M0,.42 L" + f2(Math.sin(a) * .8) + "," + f2(-Math.cos(a) * .8) + " "; });
+    return { d: "M0,.45 L" + pts.join(" L") + " Z", z: zona, v: v };
+  })();
+  var VERDI_G = [["#5c9a3e", "#386e26"], ["#78b14f", "#4a8431"], ["#93c560", "#5c9a3a"], ["#46803a", "#285a1e"]];
+  var FIORE = (function () { var d = "", i; for (i = 0; i < 5; i++) { var a = (i * 72 - 90) * Math.PI / 180, x = Math.cos(a) * .56, y = Math.sin(a) * .56; d += "M" + f2(x - .52) + "," + f2(y) + " a.52,.52 0 1,0 1.04,0 a.52,.52 0 1,0 -1.04,0 "; } return d; })();
+  var ROSSI = ["#ff6b5d", "#e8232e", "#b0121e"];
+  function ombrella(x, y, k, seme) {   // il mazzetto di fiori del geranio: tanti fiorellini a cinque petali, tondo come una pallina
+    var r = rnd(seme), s = "", fl = [], i;
+    for (i = 0; i < 13; i++) { var t = r() * 6.283, rr = Math.sqrt(r()) * 3.7 * k; fl.push([x + Math.cos(t) * rr, y + Math.sin(t) * rr * .82 - (1 - rr / (3.7 * k)) * 1.3 * k]); }
+    fl.sort(function (m, n) { return m[1] - n[1]; });
+    s += cer(x + .4, y + .6, 3.9 * k, "#6e0a14", op(.35));   // l'ombra dentro il mazzetto
+    fl.forEach(function (f) { var dd = (f[0] - x) + (f[1] - y), cl = dd < -1.4 * k ? 0 : (dd > 1.6 * k ? 2 : 1); s += usa("fi", "translate(" + f1(f[0]) + " " + f1(f[1]) + ") rotate(" + f1(r() * 72) + ") scale(" + f2(1.3 * k) + ")", "fill='" + ROSSI[cl] + "' stroke='#6e0a14' stroke-width='.1'"); });
+    [[-3.4, 2.8], [3.6, 2.2]].forEach(function (b) { if (r() < .7) s += tratto("M" + q(x + b[0] * .6 * k, y + b[1] * .5 * k) + " L" + q(x + b[0] * k, y + b[1] * k), "#4d7f2b", .5) + ell(x + b[0] * k, y + b[1] * k + .6, .75 * k, 1.05 * k, "#9a1420", bordo("#5a0810", .3)); });   // i boccioli
+    return s;
+  }
+  function festone(prof) {   // le ghirlande in rilievo sulla pancia del vaso e le rosette (la metà davanti)
+    function raggio(z) { for (var i = 1; i < prof.length; i++) if (z <= prof[i][0]) { var a = prof[i - 1], b = prof[i]; return a[1] + (b[1] - a[1]) * (z - a[0]) / (b[0] - a[0]); } return prof[prof.length - 1][1]; }
+    var c = P(0, 0, 0), s = "", i, j, n = 6, sc = scuro(COTTO, .42);
+    function pt(t, z, dr) { var rr = raggio(z) + (dr || 0); return [c[0] + 70.71 * rr * Math.cos(t), c[1] - z + 35.36 * rr * Math.sin(t)]; }
+    var anelli = "";
+    [[31.2, .006], [17.5, .004]].forEach(function (g) { var d = ""; for (j = 0; j <= 24; j++) d += (j ? " L" : "M") + q(pt(j / 24 * Math.PI, g[0], g[1])); anelli += d + " "; });
+    s += tratto(anelli, sc, 1.6, op(.5)) + tratto(anelli, "#f0a777", .7, "transform='translate(0 -.6)' opacity='.8'");
+    for (i = 0; i < n; i++) {
+      var t0 = i / n * Math.PI, t1 = (i + 1) / n * Math.PI, d = "";
+      for (j = 0; j <= 12; j++) { var k = j / 12; d += (j ? " L" : "M") + q(pt(t0 + (t1 - t0) * k, 28.2 - 5.2 * Math.sin(Math.PI * k), .012)); }
+      s += tratto(d, sc, 3.3, op(.5)) + tratto(d, "#d98a55", 2.2) + tratto(d, "#c66b3c", .5, "stroke-dasharray='.8 1.1'") + tratto(d, "#f8c096", .7, "transform='translate(-.3 -.65)' opacity='.75'");
+    }
+    for (i = 0; i <= n; i++) { var ro = pt(i / n * Math.PI, 28.6, .015); s += cer(ro[0] + .3, ro[1] + .4, 1.6, sc, op(.45)) + cer(ro[0], ro[1], 1.55, "#dd8f5a", bordo(sc, .45)) + cer(ro[0] - .45, ro[1] - .45, .55, "#ffd6b3"); }
+    return s;
+  }
+  def("vaso_gerani", { nome: "Vaso di gerani", fp: [1, 1], box: [-33, -80, 32, 15] }, function () {
+    var r = rnd(4242), s = ombraPianta(-.27, .27, -.27, .27, 1, .04), i;
+    simbolo("fg", "<path d='" + FOGLIA_GER.d + "'/><path d='" + FOGLIA_GER.z + "' fill='none' stroke='#5a3f12' stroke-width='.17' opacity='.32'/><path d='" + FOGLIA_GER.v + "' fill='none' stroke='#2a5a1c' stroke-width='.05' opacity='.5'/>");
+    simbolo("fi", "<path d='" + FIORE + "'/><circle r='.2' fill='#ffe3cf'/>");
+    s += tornito(0, 0, [[0, .205], [2.6, .23], [3.4, .226]], COTTO_ST, 1.2);   // il sottovaso
+    var prof = [[3, .148], [5.5, .156], [12, .17], [20, .188], [27, .204], [32, .213], [33.4, .232], [36, .24], [38.6, .236], [40, .224]];
+    s += tornito(0, 0, prof, COTTO_ST, 1.6, [1, 6], .7);
+    s += festone(prof);
+    var o = anello(0, 0, 40, .232), t = anello(0, 0, 39.6, .196);
+    s += ell(o.x, o.y, o.rx, o.ry, "#e59a68", bordo(L, 1.1)) + ell(t.x, t.y + .5, t.rx, t.ry, "#4a2f1c", bordo(scuro(COTTO, .5), .5));
+    for (i = 0; i < 9; i++) s += cer(o.x - o.rx * .8 + r() * o.rx * 1.6, o.y + o.ry * (.75 + r() * .2), .3, "#fff3e6", op(.35));   // il calcare sull'orlo
+    // la pianta: foglie (a cupola) e fiori, dal fondo al davanti
+    var FG = [];
+    for (i = 0; i < 78; i++) { var tt = r() * 6.283, rr = Math.pow(r(), .45) * .34, a = Math.cos(tt) * rr, b = Math.sin(tt) * rr; FG.push({ a: a, b: b, z: 38.5 + (1 - Math.pow(rr / .34, 2)) * 17 + r() * 4, sc: 4.6 + r() * 1.8, ang: (r() - .5) * 120 + (Math.atan2(b - a, a + b) * 57.3 + 90) * .4, cl: Math.floor(r() * 3), f: r() < .5 }); }
+    for (i = 0; i < 11; i++) { var t2 = i / 10 * 6.283 + r() * .4, r2 = i === 10 ? .02 : .1 + r() * .15; FG.push({ a: Math.cos(t2) * r2, b: Math.sin(t2) * r2, z: 61 + r() * 7 + (i === 10 ? 6 : 0), fiore: true, k: .95 + r() * .22, seme: 600 + i * 31 }); }
+    FG.sort(function (m, n) { return (m.a + m.b) * 25 + m.z * .3 - ((n.a + n.b) * 25 + n.z * .3); });
+    FG.forEach(function (f) {
+      var c = P(f.a, f.b, f.z);
+      if (f.fiore) { var gb = P(f.a * .45, f.b * .45, 51), dg = "M" + q(gb) + " Q" + q(gb[0] + (c[0] - gb[0]) * .2, (gb[1] + c[1]) / 2) + " " + q(c[0], c[1] + 3); s += tratto(dg, "#3e6e22", 1.6) + tratto(dg, "#79a845", .7); s += ombrella(c[0], c[1], f.k, f.seme); return; }
+      var V = VERDI_G[f.b + f.a < -.12 ? 2 : f.cl];
+      s += usa("fg", "translate(" + f1(c[0]) + " " + f1(c[1]) + ") scale(1 .74) rotate(" + f1(f.ang) + ") scale(" + f2(f.f ? -f.sc : f.sc) + " " + f2(f.sc) + ")", "fill='" + lin("fg" + f.cl + (f.b + f.a < -.12 ? "s" : ""), [[0, V[0]], [1, V[1]]], 0, 0, 1, 1) + "' stroke='" + L + "' stroke-width='" + f2(.55 / f.sc) + "'");
+    });
+    return s;
+  });
+
+  // =========================================================
+  //  LAMPIONE DI FERRO BATTUTO: il plinto di pietra, il piede a gradini, il palo col tortiglione e gli anelli,
+  //  la punta di lancia in cima; il braccio a pastorale col ricciolo e la staffa a ricci, la lanterna quadrata
+  //  appesa (vetri, tetto a punta col pomolo). Il braccio va verso il davanti; di notte la lanterna è accesa
+  // =========================================================
+  function ferro(d, w) { return tratto(d, "#0d0b0b", w + 1.3) + tratto(d, "#3a3436", w) + tratto(d, "#9a9496", w * .3, "transform='translate(-.35 -.45)' opacity='.7'"); }
+  function lanterna(a, b, zA) {   // appesa al gancio in zA: quadrata, più larga in alto (nella vista: è uguale girata)
+    var o = P(a, b, 0), s = "";
+    function V(du, dv, z) { return [o[0] + (du - dv) * 50, o[1] + (du + dv) * 25 - z]; }
+    var z1 = zA - 14, z0 = z1 - 23, r0 = .052, r1 = .074, re = .098, zc = z1 + 11;
+    // il fondo a punta col pallino
+    s += poly([V(-r0, r0, z0), V(r0, r0, z0), V(0, 0, z0 - 5.5)], "#4a4446", bordo("#0d0b0b", .8)) + poly([V(r0, r0, z0), V(r0, -r0, z0), V(0, 0, z0 - 5.5)], "#1e1a1b", bordo("#0d0b0b", .8));
+    var pb = V(0, 0, z0 - 6.2); s += cer(pb[0], pb[1], 1.3, "#2a2526", bordo("#0d0b0b", .5));
+    // i due vetri che si vedono, col telaio
+    var F = [V(-r0, r0, z0), V(r0, r0, z0), V(r1, r1, z1), V(-r1, r1, z1)], E = [V(r0, r0, z0), V(r0, -r0, z0), V(r1, -r1, z1), V(r1, r1, z1)];
+    function dentroF(q4, k) { var cx = (q4[0][0] + q4[1][0] + q4[2][0] + q4[3][0]) / 4, cy = (q4[0][1] + q4[1][1] + q4[2][1] + q4[3][1]) / 4; return q4.map(function (x) { return [cx + (x[0] - cx) * k, cy + (x[1] - cy) * k]; }); }
+    var vF = dentroF(F, .78), vE = dentroF(E, .78), bF = limiti(F);
+    s += poly(F, "#3a3436") + poly(E, "#1c1819");
+    if (NOTTE) {
+      s += poly(vF, nuova([[0, "#fffdf0"], [.45, "#ffe9a0"], [1, "#ffb84a"]], 0, bF[1], 0, bF[3], true)) + poly(vE, nuova([[0, "#fff3c4"], [.5, "#ffcf6a"], [1, "#f09a2e"]], 0, bF[1], 0, bF[3], true));
+      var cl = V(0, 0, (z0 + z1) / 2 + 1); s += ell(cl[0] - 1.4, cl[1], 2.6, 3.4, "#ffffff", op(.9)) + cer(cl[0] - 1.4, cl[1], 6, nuovaR([[0, "#fff8d8", .7], [1, "#ffd27a", 0]], .5, .5, .5));
+    } else {
+      s += poly(vF, nuova([[0, "#f2f8fb"], [1, "#a9c2cf"]], 0, bF[1], 0, bF[3], true)) + poly(vE, nuova([[0, "#c9dbe4"], [1, "#7f9aa8"]], 0, bF[1], 0, bF[3], true));
+      s += pth(chiuso([lerp(vF[3], vF[2], .18), lerp(vF[3], vF[2], .42), lerp(vF[0], vF[1], .3), lerp(vF[0], vF[1], .1)]), "#ffffff", op(.55));   // il riflesso sul vetro
+    }
+    var mF = [lerp(F[0], F[3], .5), lerp(F[1], F[2], .5)], mE = [lerp(E[0], E[3], .5), lerp(E[1], E[2], .5)];
+    s += tratto(linea(mF[0], mF[1]) + " " + linea(mE[0], mE[1]), "#1a1617", .8) + tratto(linea(F[1], F[2]), "#0d0b0b", 1.1);
+    s += poly([F[0], F[1], E[1], E[2], F[2], F[3]], "none", bordo("#0d0b0b", 1.1));
+    // il tetto: la gronda, la piramide, il pomolo e l'anello
+    var g = [V(-re, re, z1), V(re, re, z1), V(re, -re, z1)], g2 = [V(-re, re, z1 + 1.6), V(re, re, z1 + 1.6), V(re, -re, z1 + 1.6)], ap = V(0, 0, zc);
+    s += poly([g[0], g[1], g2[1], g2[0]], "#2e292a", bordo("#0d0b0b", .7)) + poly([g[1], g[2], g2[2], g2[1]], "#161314", bordo("#0d0b0b", .7));
+    s += poly([g2[0], g2[1], ap], nuova([[0, "#6a6466"], [1, "#2c2729"]], ap[0], ap[1], ap[0], g2[0][1], true), bordo("#0d0b0b", .9)) + poly([g2[1], g2[2], ap], "#1d191a", bordo("#0d0b0b", .9));
+    s += tratto(linea([g2[0][0] + 2, g2[0][1] - 1.2], [ap[0] - .6, ap[1] + 2.6]), "#b8b2b4", .5, op(.6));
+    s += cer(ap[0], ap[1] - 1.2, 1.5, nuovaR([[0, "#9a9496"], [.5, "#3a3436"], [1, "#0d0b0b"]], .35, .3, .8), bordo("#0d0b0b", .5));
+    var an = V(0, 0, zA - .5); s += ell(an[0], an[1] + 1.8, 1.3, 2, "none", "stroke='#0d0b0b' stroke-width='1.6'") + ell(an[0], an[1] + 1.8, 1.3, 2, "none", "stroke='#5a5456' stroke-width='.6'");
+    return s;
+  }
+  def("lampione_cortile", { nome: "Lampione di ferro battuto", fp: [1, 1], box: [-32, -197, 32, 12], dietro: true, luce: [0, .17, 142, 125, "#ffd27a"] }, function () {   // (la luce a metà tra il palo e la lanterna: il gioco usa lo stesso punto anche girato)
+    var BL = .34, s = ombraPianta(-.17, .17, -.17, .17, .95, .05);
+    s += blocco(-.15, .15, -.15, .15, 0, 8, TRAV, null, 1.3);   // il plinto di pietra
+    var palo = tornito(0, 0, [[8, .102], [10, .102], [11, .09], [14, .075], [17.5, .06], [20.5, .048], [23.5, .04], [25.5, .036]], FE_ST, 1.3, [1, 2, 4]);   // il piede a campana
+    palo += tornito(0, 0, [[25, .034], [176, .029]], FE_ST, 1.2, null, .6);
+    [[29, .048, 3.4], [62, .045, 3], [110, .045, 3], [152, .047, 3.4]].forEach(function (g) { palo += tornito(0, 0, [[g[0] - g[2] / 2, .03], [g[0] - g[2] / 4, g[1]], [g[0] + g[2] / 4, g[1]], [g[0] + g[2] / 2, .03]], FE_ST, .8); });
+    var c = P(0, 0, 0), k;   // il tortiglione: la sbarra ritorta
+    for (k = 66; k < 107; k += 3.4) palo += tratto(linea([c[0] - 2.2, c[1] - k + 1.4], [c[0] + 2.2, c[1] - k - 1.4]), "#a8a2a4", .6, op(.6)) + tratto(linea([c[0] - 2.2, c[1] - k - .4], [c[0] + 2.2, c[1] - k - 3.2]), "#000000", .55, op(.6));
+    palo += tornito(0, 0, [[175, .034], [177, .048], [179.5, .05], [182, .034], [186.5, .019], [192, .004]], FE_ST, .9);   // la punta di lancia
+    function pz(l) { return l.map(function (x) { return P(0, x[0] * 1.1, x[1]); }); }
+    var braccio = ferro(liscio(pz([[.01, 162], [.05, 168.5], [.12, 172.2], [.2, 173.6], [.27, 172.4], [.33, 169.6], [.375, 171.4], [.372, 175], [.34, 176], [.326, 173.8], [.344, 172.6]])), 2.6);   // il pastorale col ricciolo
+    braccio += ferro(liscio(pz([[.02, 141], [.024, 148], [.05, 155], [.1, 161], [.15, 166.5], [.19, 172.4]])), 1.6) + ferro(liscio(pz([[.02, 141], [.05, 138.4], [.074, 140.6], [.062, 143.6], [.045, 141.6]])), 1.4);   // la staffa a ricci
+    braccio += ferro(liscio(pz([[.1, 161], [.14, 158.4], [.165, 160.6], [.15, 163.2]])), 1.1);
+    var gancio = P(0, BL, 171.8); braccio += tratto(linea(gancio, [gancio[0], gancio[1] + 3]), "#0d0b0b", 1.4);
+    var lant = lanterna(0, BL, 168.2);
+    s += vicino(0, BL) > 0 ? palo + braccio + lant : lant + braccio + palo;
+    return s;
+  });
+
+  // =========================================================
+  //  FONTANELLA (il "nasone" romano): la colonnina di ghisa verde col basamento modanato, il collare e la cupoletta
+  //  col pomolo, lo stemma in rilievo, il "naso" ricurvo col buchino sopra; l'acqua che scende sempre nella grata,
+  //  la lastra di travertino coi buchetti e la pietra bagnata intorno
+  // =========================================================
+  def("fontanella", { nome: "Fontanella (il nasone)", fp: [1, 1], box: [-42, -81, 42, 24], dietro: true }, function () {
+    var BC = -.08, ZL = 3.6, GR = .2, r = rnd(1874), s = ombraPianta(-.34, .34, -.37, .41, 1, .03), k;
+    s += blocco(-.33, .33, -.37, .41, 0, ZL, TRAV, null, 1.4);   // la lastra di travertino
+    var buchi = "";
+    for (k = 0; k < 22; k++) { var x = (-.3 + r() * .6) * 61, y = (-.34 + r() * .72) * 61; if (Math.abs(x) < 8 && Math.abs(y - GR * 61) < 8) continue; buchi += ell(x, y, .5 + r() * 1.1, .3 + r() * .5, "#9d8d6c", op(.55)); }
+    var grata = rett(-6.4, GR * 61 - 6.4, 12.8, 12.8, .8, "#5a5050", bordo("#1a1514", .6)) + rett(-5.4, GR * 61 - 5.4, 10.8, 10.8, .4, "#16110f");
+    for (k = 0; k < 5; k++) grata += rett(-5.4, GR * 61 - 4.6 + k * 2.2, 10.8, .9, 0, "#6b6363") + rett(-5.4, GR * 61 - 4.6 + k * 2.2, 10.8, .3, 0, "#a39a96", op(.8));
+    var bagnato = ell(0, GR * 61 + .5, 11, 9.5, "#5a4a30", op(.18)) + ell(1.5, GR * 61 + 1.5, 8.5, 7, "#4a3a22", op(.16)) + ell(-6, GR * 61 + 7, 2.4, 1.6, "#4a3a22", op(.14));
+    s += suZ(ZL, bagnato + buchi + grata);
+    // l'acqua: esce dal naso e cade nella grata, con gli spruzzi
+    var acqua = "", w0 = P(0, BC + .272, 42.8), w1 = P(0, BC + .279, 25), w2 = P(0, GR - .005, ZL + .3), dA = "M" + q(w0) + " Q" + q(w1) + " " + q(w2);
+    acqua += tratto(dA, "#2f7fb0", 2.4, op(.35)) + tratto(dA, "#9fd8f6", 1.7, op(.75)) + tratto(dA, "#ffffff", .6, op(.9));
+    acqua += ell(w2[0], w2[1], 4, 1.8, "none", "stroke='#d8f2ff' stroke-width='.6' opacity='.8'") + ell(w2[0], w2[1], 6.4, 2.9, "none", "stroke='#d8f2ff' stroke-width='.45' opacity='.45'");
+    [[-2.4, -2.6], [2, -3.4], [-3.6, -1], [3.2, -1.2], [.4, -4.4]].forEach(function (g) { acqua += cer(w2[0] + g[0], w2[1] + g[1], .45, "#e8f8ff", op(.9)); });
+    // il naso: il tubo ricurvo che esce dalla colonna e piega in giù, col buchino sopra la curva
+    var nas = [[BC + .13, 50], [BC + .2, 50.4], [BC + .246, 49.2], [BC + .268, 46.4], [BC + .272, 43.4]].map(function (x) { return P(0, x[0], x[1]); }), dN = liscio(nas);
+    var naso = tratto(dN, "#0c2214", 6.4) + tratto(dN, "#2f6343", 4.9) + tratto(dN, "#8cc49a", 1.3, "transform='translate(-.45 -.7)' opacity='.8'");
+    var bo = P(0, BC + .272, 43.2), bu = P(0, BC + .242, 51);
+    naso += ell(bo[0], bo[1], 2.3, 1.15, "#0c1a10", bordo("#0c2214", .4)) + ell(bu[0], bu[1], .75, .42, "#0a140c");
+    // la colonnina di ghisa: tozza, col basamento, il collare e la cupoletta bassa col pomolo
+    var prof = [[ZL, .19], [6.4, .19], [7.4, .176], [9.4, .166], [11, .16], [54, .15], [55.5, .158], [58, .162], [59.6, .153], [61, .146], [63.5, .13], [66, .1], [67.8, .062], [68.8, .03], [69.2, .022]];
+    var col = tornito(0, BC, prof, GH_ST, 1.6, [1, 3, 6, 8], .9) + tornito(0, BC, [[69, .022], [70.2, .031], [72, .029], [73.2, .016], [73.6, .002]], GH_ST, .9);
+    var ci = P(0, BC, 0);
+    col += tratto(linea([ci[0] - 4.8, ci[1] - 14], [ci[0] - 4.5, ci[1] - 50]), "#c5e6cc", 1, op(.35));   // la luce lunga sulla ghisa
+    if (G > 0) {   // lo stemma in rilievo, sul davanti sotto il naso
+      var sm = P(0, BC + .15, 31);
+      col += "<g transform='translate(" + f2(sm[0] + 1.2) + " " + f2(sm[1]) + ") scale(.85 1.1)'>" + pth("M-3.4,-4.6 H3.4 V.8 Q3.4,4.4 0,6 Q-3.4,4.4 -3.4,.8 Z", "#3d7a52", bordo("#0c2214", .7)) +
+        pth("M-2.2,-3.4 H2.2 V.6 Q2.2,3 0,4.2 Q-2.2,3 -2.2,.6 Z", "none", "stroke='#8cc49a' stroke-width='.5' opacity='.7'") + tratto("M-1.8,2.4 L1.8,-2.6", "#8cc49a", .7, op(.8)) +
+        pth("M-2.6,-4.6 L-2.6,-6.6 L-1.3,-5.4 L0,-7.2 L1.3,-5.4 L2.6,-6.6 L2.6,-4.6 Z", "#4c8b5d", bordo("#0c2214", .5)) + "</g>";
+    }
+    s += G > 0 ? col + naso + acqua : acqua + naso + col;
+    return s;
+  });
+
+  // =========================================================
+  function misure(d) { if (d.tipo === "terra") return { w: d.w, h: d.h }; var b = d.box; return { w: Math.ceil(b[2] - b[0]), h: Math.ceil(b[3] - b[1]), ax: Math.ceil(-b[0]), ay: Math.ceil(-b[1]) }; }
+  SGMobiliArte.aggiungi({
+    nomi: function () { return Object.keys(DIS); },
+    info: function (nome) {
+      var d = DIS[nome]; if (!d) return null;
+      var m = misure(d), tipo = d.tipo || "piedi", o = { tipo: tipo, nome: d.nome, stanza: "circolo", reparto: "circolo", w: m.w, h: m.h, fp: (d.fp || [1, 1]).slice(), prezzo: 0, qual: 2 };
+      if (tipo !== "terra") { o.ax = m.ax; o.ay = m.ay; o.dietro = !!d.dietro; }
+      if (d.piano) o.piano = d.piano;
+      if (d.posti) o.posti = d.posti.map(function (x) { return x.slice(); });
+      if (d.azione) { o.azione = d.azione; o.seduta = d.seduta; }
+      if (d.luce) { var l = d.luce, pt = Puv(l[0], l[1], l[2]); o.luce = [Math.round(pt[0] + m.ax), Math.round(pt[1] + m.ay), l[3], l[4]]; }   // il punto della luce nel disegno davanti
+      return o;
+    },
+    svg: function (nome, opz) {
+      var d = DIS[nome]; if (!d) return "";
+      opz = opz || {};
+      var m = misure(d);
+      p = "ccor" + (++nId) + "_"; DEFS = []; FATTI = {}; nC = 0; G = opz.dietro && d.dietro ? -1 : 1; NOTTE = !!(opz.notte && d.luce);
+      var c; try { c = d.fn(opz); } finally { G = 1; NOTTE = false; }
+      var testa = "<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 " + m.w + " " + m.h + "' width='" + m.w + "' height='" + m.h + "'>" + (DEFS.length ? "<defs>" + DEFS.join("") + "</defs>" : "");
+      if (d.tipo === "terra") return testa + c + "</svg>";
+      return testa + "<g transform='translate(" + m.ax + " " + m.ay + ")'>" + c + "</g></svg>";
+    }
+  });
+})();
+/* =========================================================
    SPeeD GAME — IL KIT DEI MATERIALI PER COSTRUIRE LA CASA (SGKit)
    Disegni PIATTI, visti di fronte con una luce neutra: il motore (giardino.js) li piega sui muri,
    sul pavimento e sul tetto, e mette lui luci e ombre delle facce.
@@ -22209,6 +25197,495 @@
   PAV_Z.forEach(function (v) { K.pavimenti.push({ id: v[0], nome: v[1], dove: "dentro", prezzo: v[2], svg: function () { return svg("zv_" + v[0], 100, 100, v[3]); } }); });
 })();
 /* =========================================================
+   SPeeD GAME — I MATERIALI DEL CIRCOLO (si aggiungono a SGKit)
+   Stesso contratto di js/costruzioni-arte.js (va caricato dopo):
+   - muri: pezzo 62 × 200 che si ripete in orizzontale (le giunte tra un pezzo e l'altro cadono a metà
+     di una perlina, di una piastrella o di una pietra, così in fila non si vedono)
+   - pavimenti: quadrato 100 × 100 che si ripete nei due versi (quello che esce da un bordo rientra dall'altro)
+   - porte: 62 × 200 trasparente attorno; opz.notte: vetri accesi
+   Modello: il circolo ricreativo di paese (anni '60-'80, tenuto bene): perline e intonaco crema, il giallo
+   caldo con la fascia dipinta, le piastrelle verdi del bar, la pietra del cortile; la graniglia a disegni,
+   il cotto a spina di pesce, le assi consumate, la ghiaia chiara; la porta di noce coi vetri stampati.
+   Attenzione ai nomi: "cotto" c'è già nel kit della casa (e il gioco prende il primo con quel nome),
+   per questo qui si chiama "cotto_toscano".
+   ========================================================= */
+(function () {
+  "use strict";
+  var K = window.SGKit;
+  if (!K) return;
+
+  // ---------- attrezzi (come nel kit; gli id hanno un prefisso tutto loro) ----------
+  var nId = 0, P = "", DEFS = [], FATTI = {}, PRONTI = {};
+  var SEGNO = "§r§";
+  var L = "#5a3a22", MW = 62, MH = 200;
+  function rnd(seme) { var s = (seme >>> 0) || 1; return function () { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return (s % 1000003) / 1000003; }; }
+  function f2(n) { return Math.round(n * 100) / 100; }
+  function q(x, y) { return f2(x) + "," + f2(y); }
+  function hx(c) { var n = parseInt(c.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function mix(a, b, t) { var x = hx(a), y = hx(b); return "#" + x.map(function (v, i) { var r = Math.round(v + (y[i] - v) * t); return (r < 16 ? "0" : "") + r.toString(16); }).join(""); }
+  function chiaro(c, t) { return mix(c, "#ffffff", t); }
+  function scuro(c, t) { return mix(c, "#000000", t); }
+  function scegli(r, a) { return a[Math.floor(r() * a.length) % a.length]; }
+  function at(x) { return x ? " " + x : ""; }
+  function op(o) { return "opacity='" + f2(o) + "'"; }
+  function rett(x, y, w, h, fill, x2) { return "<rect x='" + f2(x) + "' y='" + f2(y) + "' width='" + f2(w) + "' height='" + f2(h) + "' fill='" + fill + "'" + at(x2) + "/>"; }
+  function pth(d, fill, x2) { return "<path d='" + d + "' fill='" + fill + "'" + at(x2) + "/>"; }
+  function cer(x, y, r, fill, x2) { return "<circle cx='" + f2(x) + "' cy='" + f2(y) + "' r='" + f2(r) + "' fill='" + fill + "'" + at(x2) + "/>"; }
+  function ell(x, y, rx, ry, fill, x2) { return "<ellipse cx='" + f2(x) + "' cy='" + f2(y) + "' rx='" + f2(rx) + "' ry='" + f2(ry) + "' fill='" + fill + "'" + at(x2) + "/>"; }
+  function tratto(d, c, w, x2) { return "<path d='" + d + "' fill='none' stroke='" + c + "' stroke-width='" + f2(w) + "' stroke-linecap='round' stroke-linejoin='round'" + at(x2) + "/>"; }
+  function bordo(c, w) { return "stroke='" + c + "' stroke-width='" + (w || 2.5) + "' stroke-linejoin='round'"; }
+  function sposta(dx, dy, corpo) { return "<g transform='translate(" + f2(dx) + " " + f2(dy) + ")'>" + corpo + "</g>"; }
+  function gira(a, cx, cy, corpo) { return "<g transform='rotate(" + f2(a) + " " + f2(cx) + " " + f2(cy) + ")'>" + corpo + "</g>"; }
+  function rq(x, y, w, h) { return "<rect x='" + f2(x) + "' y='" + f2(y) + "' width='" + f2(w) + "' height='" + f2(h) + "'/>"; }
+  function tondo(a, k) {   // un poligono con gli angoli smussati
+    var n = a.length, d = "", i;
+    for (i = 0; i < n; i++) {
+      var p0 = a[(i + n - 1) % n], p1 = a[i], p2 = a[(i + 1) % n];
+      var l1 = Math.hypot(p0[0] - p1[0], p0[1] - p1[1]) || 1, l2 = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) || 1;
+      var k1 = Math.min(k, l1 * .45) / l1, k2 = Math.min(k, l2 * .45) / l2;
+      d += (i ? " L" : "M") + q(p1[0] + (p0[0] - p1[0]) * k1, p1[1] + (p0[1] - p1[1]) * k1) + " Q" + q(p1[0], p1[1]) + " " + q(p1[0] + (p2[0] - p1[0]) * k2, p1[1] + (p2[1] - p1[1]) * k2);
+    }
+    return d + " Z";
+  }
+  function sfum(tag, nome, stops, a) {
+    var id = P + nome;
+    if (!FATTI[id]) {
+      FATTI[id] = 1;
+      DEFS.push("<" + tag + " id='" + id + "' " + a + ">" + stops.map(function (s) { return "<stop offset='" + s[0] + "' stop-color='" + s[1] + "'" + (s[2] != null ? " stop-opacity='" + s[2] + "'" : "") + "/>"; }).join("") + "</" + tag + ">");
+    }
+    return "url(#" + id + ")";
+  }
+  function lin(nome, stops, x1, y1, x2, y2) { return sfum("linearGradient", nome, stops, "x1='" + x1 + "' y1='" + y1 + "' x2='" + x2 + "' y2='" + y2 + "'"); }
+  function rad(nome, stops, cx, cy, r) { return sfum("radialGradient", nome, stops, "cx='" + cx + "' cy='" + cy + "' r='" + r + "'"); }
+  function clip(nome, forme) { var id = P + nome; if (!FATTI[id]) { FATTI[id] = 1; DEFS.push("<clipPath id='" + id + "'>" + forme + "</clipPath>"); } return "clip-path='url(#" + id + ")'"; }
+  function dentro(nome, forma, corpo) { return "<g " + clip(nome, forma) + ">" + corpo + "</g>"; }
+  // il disegno pronto: si fa una volta sola, poi a ogni chiamata cambia solo il prefisso degli id
+  function svg(chiave, w, h, corpo) {
+    if (!PRONTI[chiave]) {
+      DEFS = []; FATTI = {}; P = SEGNO;
+      var b = corpo();
+      PRONTI[chiave] = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 " + w + " " + h + "' width='" + w + "' height='" + h + "'>" + (DEFS.length ? "<defs>" + DEFS.join("") + "</defs>" : "") + b + "</svg>";
+    }
+    return PRONTI[chiave].split(SEGNO).join("kcr" + (++nId) + "_");
+  }
+  // una cosa vicino al bordo si ridisegna anche dall'altra parte (così la giunta non si vede); H = 0: solo in orizzontale
+  function giro(x, y, r, W, H, fn) {
+    var xs = [x], ys = [y], s = "";
+    if (x - r < 0) xs.push(x + W); if (x + r > W) xs.push(x - W);
+    if (H) { if (y - r < 0) ys.push(y + H); if (y + r > H) ys.push(y - H); }
+    xs.forEach(function (a) { ys.forEach(function (b) { s += fn(a, b); }); });
+    return s;
+  }
+  function puntini(a, col, w, o) {   // tanti puntini in un tratto solo
+    if (!a.length) return "";
+    return "<path d='" + a.map(function (v) { return "M" + q(v[0], v[1]) + "h.01"; }).join("") + "' fill='none' stroke='" + col + "' stroke-width='" + w + "' stroke-linecap='round'" + (o != null ? " " + op(o) : "") + "/>";
+  }
+  function granelli(n, W, H, seme, col, w, o, dueVersi) {
+    var r = rnd(seme), a = [], i;
+    for (i = 0; i < n; i++) {
+      var x = r() * W, y = r() * H;
+      a.push([x, y]);
+      if (x < w) a.push([x + W, y]); if (x > W - w) a.push([x - W, y]);
+      if (dueVersi) { if (y < w) a.push([x, y + H]); if (y > H - w) a.push([x, y - H]); }
+    }
+    return puntini(a, col, w, o);
+  }
+  function macchieMorbide(n, W, H, seme, cC, cS, rMin, rMax, o, dueVersi) {   // macchie morbide chiare e scure
+    var r = rnd(seme), gC = rad("cz" + cC.slice(1), [[0, cC, 1], [1, cC, 0]], .5, .5, .5), gS = rad("cz" + cS.slice(1), [[0, cS, 1], [1, cS, 0]], .5, .5, .5), s = "", i;
+    for (i = 0; i < n; i++) (function (x, y, rx, k, g, oo) {
+      s += giro(x, y, rx, W, dueVersi ? H : 0, function (a, b) { return ell(a, b, rx, rx * k, g, op(oo)); });
+    })(r() * W, r() * H, rMin + r() * (rMax - rMin), .45 + r() * .5, r() < .5 ? gC : gS, o * (.5 + r() * .5));
+    return s;
+  }
+  // la sfumatura sopra un mattone, una pietra: chiaro in alto a sinistra, scuro in basso a destra
+  function luce(k) { k = k || 1; return lin("lu" + Math.round(k * 10), [[0, "#fff", .32 * k], [.4, "#fff", 0], [.62, "#000", 0], [1, "#000", .26 * k]], 0, 0, .3, 1); }
+  function venature(x, y, w, h, c, seme, n, vert, forza) {   // le linee del legno dentro un riquadro
+    var r = rnd(seme), s = "", i, f = forza || 1;
+    for (i = 0; i < n; i++) {
+      var a = (r() - .5) * 2.6, b = (r() - .5) * 2.6, t = r(), o = (.18 + r() * .2) * f, w2 = .45 + r() * .4, scur = r() < .75;
+      var col = scur ? scuro(c, .32) : chiaro(c, .3);
+      if (vert) { var xx = x + 1 + t * (w - 2); s += tratto("M" + q(xx, y + 1) + " C" + q(xx + a, y + h * .33) + " " + q(xx + b, y + h * .66) + " " + q(xx + (a + b) * .3, y + h - 1), col, w2, op(o)); }
+      else { var yy = y + 1 + t * (h - 2); s += tratto("M" + q(x + 1, yy) + " C" + q(x + w * .33, yy + a * .5) + " " + q(x + w * .66, yy + b * .5) + " " + q(x + w - 1, yy + (a + b) * .15), col, w2, op(o)); }
+    }
+    return s;
+  }
+  function nodo(x, y, c, k) {   // un nodo del legno
+    k = k || 1;
+    return ell(x, y, 5.2 * k, 3.2 * k, "none", "stroke='" + scuro(c, .35) + "' stroke-width='.6' opacity='.4'") + ell(x, y, 3.4 * k, 2.2 * k, scuro(c, .25), "stroke='" + scuro(c, .45) + "' stroke-width='.6'") + ell(x - .3 * k, y - .2 * k, 1.5 * k, .9 * k, scuro(c, .55));
+  }
+  function riquadro(x, y, w, h, c, b) {   // un pannello in rilievo: smussi chiari in alto a sinistra, scuri in basso a destra
+    b = b || 2.4;
+    return rett(x, y, w, h, scuro(c, .2), bordo(scuro(c, .5), .8)) +
+      pth("M" + q(x, y) + " L" + q(x + w, y) + " L" + q(x + w - b, y + b) + " L" + q(x + b, y + b) + " Z", chiaro(c, .3)) +
+      pth("M" + q(x, y) + " L" + q(x + b, y + b) + " L" + q(x + b, y + h - b) + " L" + q(x, y + h) + " Z", chiaro(c, .16)) +
+      pth("M" + q(x, y + h) + " L" + q(x + b, y + h - b) + " L" + q(x + w - b, y + h - b) + " L" + q(x + w, y + h) + " Z", scuro(c, .3)) +
+      pth("M" + q(x + w, y) + " L" + q(x + w, y + h) + " L" + q(x + w - b, y + h - b) + " L" + q(x + w - b, y + b) + " Z", scuro(c, .18)) +
+      rett(x + b, y + b, w - 2 * b, h - 2 * b, c);
+  }
+  // una pietra: bordo scuro sotto, faccia chiara un po' in alto a sinistra, puntini e qualche crepa
+  function sasso(pts, c, seme, k) {
+    var cx = 0, cy = 0, x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, r = rnd(seme), s, i;
+    pts.forEach(function (p) { cx += p[0]; cy += p[1]; x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); });
+    cx /= pts.length; cy /= pts.length;
+    var fac = pts.map(function (p) { return [cx + (p[0] - cx) * .9 - .45, cy + (p[1] - cy) * .86 - .65]; }), d = tondo(fac, k * .9);
+    s = pth(tondo(pts, k), scuro(c, .32), "stroke='" + L + "' stroke-width='.8' stroke-opacity='.45' stroke-linejoin='round'") + pth(d, c) + pth(d, luce(1));
+    for (i = 0; i < 6; i++) s += cer(cx + (r() - .5) * (x1 - x0) * .6, cy + (r() - .5) * (y1 - y0) * .55, .35 + r() * .5, r() < .65 ? scuro(c, .3) : chiaro(c, .45), op(.6));
+    if (r() < .3) { var ax = cx + (r() - .5) * (x1 - x0) * .4, ay = y0 + (y1 - y0) * (.3 + r() * .3); s += tratto("M" + q(ax, ay) + " l" + q(2 + r() * 3, 1 + r() * 2) + " l" + q(2 + r() * 2, -1 + r() * 2), scuro(c, .4), .5, op(.6)); }
+    return s + tratto("M" + q(fac[0][0] + 1.4, fac[0][1] + .9) + " L" + q(fac[1][0], fac[1][1] + .9), "#fff", .8, op(.32));
+  }
+
+  // =========================================================
+  //  I MURI (62 × 200)
+  // =========================================================
+  // l'intonaco liscio di dentro, da y = 0 a y1, con la patina del fumo sotto il soffitto (anni di sigarette e di stufa)
+  function intonacoCasa(col, seme, y1, fumo) {
+    var s = rett(0, 0, MW, y1, lin("ic" + col.slice(1), [[0, scuro(col, .05)], [.45, col], [1, chiaro(col, .05)]], 0, 0, 0, 1));
+    s += macchieMorbide(10, MW, y1, seme, chiaro(col, .55), scuro(col, .12), 9, 22, .2, false);
+    s += granelli(Math.round(y1 * .55), MW, y1, seme + 1, scuro(col, .3), .8, .14) + granelli(Math.round(y1 * .4), MW, y1, seme + 2, chiaro(col, .65), .8, .35);
+    if (fumo !== false) s += rett(0, 0, MW, Math.min(y1, 80), lin("fumo", [[0, "#8a5a2a", .13], [.45, "#8a5a2a", .04], [1, "#8a5a2a", 0]], 0, 0, 0, 1));   // (leggera e calda: il circolo è tenuto bene)
+    return s;
+  }
+  // il battiscopa di legno: l'ombra sul muro, il bordo tondo in luce, le venature
+  function battiscopaLegno(c, seme, alto) {
+    var y = 200 - (alto || 13);
+    return rett(0, y - 5, MW, 5, lin("bso", [[0, "#000", 0], [1, "#000", .16]], 0, 0, 0, 1)) +
+      rett(0, y, MW, 200 - y, lin("bl" + c.slice(1), [[0, chiaro(c, .45)], [.12, chiaro(c, .18)], [.3, c], [1, scuro(c, .32)]], 0, 0, 0, 1)) +
+      venature(0, y + 2.4, MW, 200 - y - 3.4, c, seme, 6, false, 1) +
+      rett(0, y - .4, MW, .8, L, op(.65)) + rett(0, y + .6, MW, .7, "#fff", op(.5)) + rett(0, y + 3, MW, .6, scuro(c, .45), op(.55)) + rett(0, 199, MW, 1, scuro(c, .6));
+  }
+
+  // ---- perline di abete chiaro fino a metà, la cimasa di legno e l'intonaco crema sopra ----
+  function perlineCircolo() {
+    var Y0 = 106.4, Y1 = 187, bw = MW / 6, h = Y1 - Y0, k;
+    var s = intonacoCasa("#efe1c3", 1101, Y0);
+    var cols = ["#e4bd82", "#d9b075", "#e8c58d", "#d4a96d", "#e0b87c", "#d2a76a"];   // abete chiaro con la vernice un po' ambrata
+    s += rett(0, Y0, MW, h, "#3a2412");   // il fondo delle scanalature
+    for (k = 0; k < 6; k++) (function (x, c, r) {
+      var t = rett(x + .35, Y0, bw - .7, h, lin("pc" + k, [[0, chiaro(c, .22)], [.12, chiaro(c, .06)], [.55, c], [.88, scuro(c, .06)], [1, scuro(c, .2)]], 0, 0, 1, 0));
+      t += venature(x + .8, Y0, bw - 1.6, h, c, 1103 + k * 7, 7, true, 1.45);
+      // la "fiamma" dell'abete: archi morbidi uno dentro l'altro, storti e sfumati (non in tutte le perline)
+      var fy = Y0 + 8 + r() * (h - 40), fx = x + bw * (.36 + r() * .28), j, nf = r() < .3 ? 0 : 2 + Math.floor(r() * 3), sb = (r() - .5) * 1.6;
+      for (j = 0; j < nf; j++) { var hw = 1.1 + j * (.8 + r() * .3), hh = 9 + j * (5 + r() * 3), y2 = fy + j * 1.6; t += tratto("M" + q(fx - hw + sb, y2 + hh) + " C" + q(fx - hw * 1.05, y2 + hh * .3) + " " + q(fx - hw * .3, y2) + " " + q(fx + sb * .2, y2) + " C" + q(fx + hw * .3, y2) + " " + q(fx + hw * .95, y2 + hh * .35) + " " + q(fx + hw - sb * .5, y2 + hh * 1.1), scuro(c, .22), .5, op(.26 - j * .04)); }
+      if (r() < .55) t += nodo(x + 3 + r() * (bw - 6), Y0 + 8 + r() * (h - 16), c, .42);
+      // la vernice: una striscia di lucido lungo la perlina
+      t += rett(x + bw * .22, Y0, bw * .16, h, lin("pv", [[0, "#fff", 0], [.5, "#fff", .22], [1, "#fff", 0]], 0, 0, 1, 0));
+      // la scanalatura a V: il lato in luce a sinistra, quello in ombra a destra
+      t += rett(x + .35, Y0, .9, h, chiaro(c, .45), op(.85)) + rett(x + bw - 1.25, Y0, .9, h, scuro(c, .3), op(.8));
+      s += t; if (x + bw > MW) s += sposta(-MW, 0, t);
+    })(bw / 2 + k * bw, cols[k], rnd(1105 + k * 3));
+    // i segni delle sedie e delle scarpe, leggeri, e il legno un po' più scuro in basso
+    s += rett(0, Y0, MW, h, lin("pg", [[0, "#000", 0], [.7, "#000", 0], [1, "#3a2412", .14]], 0, 0, 0, 1));
+    var r2 = rnd(1107), i;
+    for (i = 0; i < 7; i++) (function (x, y, l, dy, cc, o) { s += giro(x, y, l / 2 + 1, MW, 0, function (a) { return tratto("M" + q(a - l / 2, y) + " L" + q(a + l / 2, y + dy), cc, .7, op(o)); }); })(r2() * MW, 150 + r2() * 24, 3 + r2() * 6, (r2() - .5) * .8, r2() < .5 ? "#fff8e6" : "#6b4423", .14 + r2() * .12);
+    // la cimasa: il piano in luce, il toro tondo, l'ombra sulle perline
+    var cc = "#9c6838", yc = Y0 - 9.4;
+    s += rett(0, Y0, MW, 5.5, lin("cso", [[0, "#000", .34], [1, "#000", 0]], 0, 0, 0, 1));
+    s += rett(0, yc, MW, 2.6, lin("csp", [[0, chiaro(cc, .5)], [1, chiaro(cc, .3)]], 0, 0, 0, 1)) + rett(0, yc - .5, MW, .8, L, op(.55));
+    s += rett(0, yc + 2.6, MW, 6.8, lin("cst", [[0, chiaro(cc, .28)], [.3, chiaro(cc, .08)], [.7, cc], [1, scuro(cc, .4)]], 0, 0, 0, 1)) + venature(0, yc + 3, MW, 6, cc, 1109, 5, false, .9);
+    s += rett(0, yc + 2.5, MW, .5, scuro(cc, .35), op(.7)) + rett(0, yc + 3.6, MW, .8, "#fff", op(.4)) + rett(0, yc + 9.1, MW, .7, L, op(.75));
+    return s + battiscopaLegno("#8a5630", 1111);
+  }
+
+  // ---- intonaco giallo caldo (a calce, con le pennellate), la fascia dipinta in alto e il battiscopa scuro ----
+  function intonacoGiallo() {
+    var col = "#f0c56c", s = intonacoCasa(col, 1201, 188), r = rnd(1203), i;
+    s += macchieMorbide(16, MW, 188, 1204, chiaro(col, .45), scuro(col, .1), 8, 20, .3, false);   // la calce data a nuvole
+    for (i = 0; i < 18; i++) (function (x, y, l, a, cv, cc, o, w) {   // le pennellate larghe, appena si vedono
+      var dx = Math.cos(a) * l / 2, dy = Math.sin(a) * l / 2;
+      s += giro(x, y, l / 2 + 5, MW, 0, function (X) { return tratto("M" + q(X - dx, y - dy) + " Q" + q(X - Math.sin(a) * cv, y + Math.cos(a) * cv) + " " + q(X + dx, y + dy), cc, w, op(o)); });
+    })(r() * MW, 24 + r() * 150, 12 + r() * 16, (r() - .5) * 1.6, (r() - .5) * 5, r() < .55 ? chiaro(col, .4) : scuro(col, .08), .05 + r() * .05, 5 + r() * 4);
+    // la fascia dipinta sotto il soffitto: ocra più scuro, il filo marrone e il filetto rosso
+    var oc = mix(col, "#9a4a18", .5);   // ocra rossa (non mescolata col nero: verrebbe color fango)
+    s += rett(0, 0, MW, 10.5, lin("fa", [[0, scuro(oc, .1)], [1, oc]], 0, 0, 0, 1)) + granelli(40, MW, 10, 1205, scuro(oc, .35), .7, .25);
+    s += rett(0, 10.5, MW, 1.2, "#6e3a16", op(.8)) + rett(0, 11.7, MW, .6, "#fff3cf", op(.5)) + rett(0, 14.2, MW, .8, "#a33b22", op(.65));
+    return s + battiscopaLegno("#4c2c1a", 1207, 14);
+  }
+
+  // ---- piastrelle verdi lucide da bar fino a metà, il torello in cima, intonaco crema sopra ----
+  function piastrelleVerdi() {
+    var tl = MW / 6, Y0 = 105.6, Y1 = 188, j, k;
+    var s = intonacoCasa("#f3e8d0", 1301, Y0);
+    s += rett(0, Y0, MW, Y1 - Y0, "#d3ccb8") + sposta(0, Y0, granelli(110, MW, Y1 - Y0, 1303, "#a39b85", .6, .5));   // la fuga
+    var cols = ["#2f7f5c", "#2b7656", "#368a63", "#287152", "#327d5b", "#2c7a5e", "#3a8b67", "#2a7a59", "#41936d", "#256a4d"];   // lo smalto fatto a mano: ogni piastrella un po' diversa
+    var cusc = lin("vp", [[0, "#fff", .34], [.38, "#fff", .05], [.7, "#000", 0], [1, "#000", .22]], 0, 0, 1, 1);
+    for (j = 0; j < 8; j++) for (k = 0; k < 6; k++) (function (x, y, r) {
+      var c = scegli(r, cols), g = .5, l = tl - 2 * g, t;
+      t = rett(x + g, y + g, l, l, c, "rx='1'") + rett(x + g, y + g, l, l, cusc, "rx='1'");   // lo smalto col cuscinetto
+      t += rett(x + g + .5, y + g + .5, l - 1, l - 1, "none", "rx='.8' stroke='" + scuro(c, .4) + "' stroke-width='.9' opacity='.45'");   // lo smalto più scuro sui bordi
+      t += rett(x + g + 1.4, y + g + 1.3, l * .34, l * .2, "#fff", op(.32) + " rx='.8'") + rett(x + g + 1.4, y + g + 1.3, l * .62, .6, "#fff", op(.45));   // il riflesso della luce, piccolo
+      if (r() < .3) t += cer(x + g + 2.5 + r() * (l - 5), y + g + 2.5 + r() * (l - 5), .32, scuro(c, .45), op(.7));   // un forellino nello smalto
+      s += t; if (x + tl > MW) s += sposta(-MW, 0, t);
+    })(tl / 2 + k * tl, Y0 + j * tl, rnd(1305 + j * 7 + k * 3));
+    // un riflesso largo e morbido che scorre sulle piastrelle
+    s += pth("M" + q(20, Y0) + " L" + q(34, Y0) + " L" + q(4, Y1) + " L" + q(-10, Y1) + " Z", "#fff", op(.07)) + pth("M" + q(82, Y0) + " L" + q(96, Y0) + " L" + q(66, Y1) + " L" + q(52, Y1) + " Z", "#fff", op(.07));
+    // il torello: la piastrella tonda che chiude in cima, verde più scuro
+    var tv = "#21604a", yt = Y0 - 7.6;
+    s += rett(0, yt - .5, MW, .8, L, op(.5)) + rett(0, yt, MW, 7.6, "#c9c2ad");
+    for (k = 0; k < 3; k++) (function (x) {
+      var t = rett(x + .3, yt, 2 * tl - .6, 7.6, lin("tor", [[0, chiaro(tv, .55)], [.22, chiaro(tv, .22)], [.5, tv], [1, scuro(tv, .38)]], 0, 0, 0, 1), "rx='1.4'") + rett(x + 1.4, yt + 1.3, 2 * tl - 2.8, .9, "#fff", op(.65));
+      s += t; if (x + 2 * tl > MW) s += sposta(-MW, 0, t);
+    })(tl / 2 + k * 2 * tl);
+    s += rett(0, Y0, MW, 1.6, "#000", op(.18));
+    // il battiscopa di piastrella, tondo in cima
+    var yb = Y1, bv = "#1f5a43";
+    s += rett(0, yb - .2, MW, 12.2, "#c9c2ad");
+    for (k = 0; k < 3; k++) (function (x) {
+      var t = rett(x + .3, yb + .2, 2 * tl - .6, 11.6, lin("bat", [[0, chiaro(bv, .45)], [.18, chiaro(bv, .12)], [.45, bv], [1, scuro(bv, .4)]], 0, 0, 0, 1), "rx='1'") + rett(x + 1.4, yb + 1.3, 2 * tl - 2.8, .7, "#fff", op(.55));
+      s += t; if (x + 2 * tl > MW) s += sposta(-MW, 0, t);
+    })(tl / 2 + k * 2 * tl);
+    return s + rett(0, 199, MW, 1, scuro(bv, .5));
+  }
+
+  // ---- il muro di pietra del cortile: pietre di calcare con le file di mattoni (muratura listata), il coronamento di mattoni di taglio ----
+  var MATTONI = ["#b65a3a", "#a94f33", "#c2663f", "#9e4730", "#bb6040", "#ad5637", "#c86f48", "#b8613f"];
+  var PIETRE = ["#cdbb98", "#bea883", "#d8c7a6", "#ad9672", "#c6ad88", "#b79f7b", "#d1b88f", "#a08c70", "#dccbaa", "#bba383", "#c4a58c", "#a9a294"];
+  function pietre(y0, y1, seme) {   // file di pietre irregolari tra y0 e y1 (la malta di calce si vede in mezzo)
+    var s = "", r = rnd(seme), y = y0, n = 0, g = 1.25;
+    while (y < y1 - .5) {
+      var h = 10.5 + r() * 6.5; if (y1 - y - h < 8) h = y1 - y;
+      var x = r() * MW, fine = x + MW;
+      while (x < fine - .1) {
+        var w = 11 + r() * 13; if (fine - x - w < 8) w = fine - x;
+        var j = function () { return r() * 1.5; };
+        var pts = [[x + g + j(), y + g + j()], [x + w * (.3 + r() * .4), y + g + j() * .6 - .4], [x + w - g - j(), y + g + j()], [x + w - g - j() * .8, y + h * (.3 + r() * .4)],
+          [x + w - g - j(), y + h - g - j()], [x + w * (.3 + r() * .4), y + h - g - j() * .6 + .4], [x + g + j(), y + h - g - j()], [x + g + j() * .8, y + h * (.3 + r() * .4)]];
+        var t = rett(x + g + .6, y + h - g - .2, w - 2 * g, 1.3, "#5a4a36", op(.25)) + sasso(pts, scegli(r, PIETRE), seme * 31 + (++n), 3.4);   // l'ombra sotto la pietra e la pietra
+        if (x < MW) s += t; if (x + w > MW) s += sposta(-MW, 0, t);
+        x += w;
+      }
+      y += h;
+    }
+    return s;
+  }
+  function mattoncino(x, y, w, h, c, r) {   // un mattone pieno con la sua luce e qualche puntino
+    var t = rett(x + .5, y + .5, w - 1, h - 1, c, "rx='.6'") + rett(x + .5, y + .5, w - 1, h - 1, luce(1), "rx='.6'") + rett(x + 1.1, y + .9, w - 2.2, .5, "#fff", op(.25)), i;
+    for (i = 0; i < 3; i++) t += cer(x + 1.5 + r() * (w - 3), y + 1.2 + r() * (h - 2.4), .3 + r() * .3, r() < .6 ? scuro(c, .35) : chiaro(c, .35), op(.6));
+    if (r() < .25) t += rett(x + .5 + r() * (w - 4), y + .5, 3, h - 1, scuro(c, .25), op(.35));   // la bruciatura
+    return t;
+  }
+  function corsoMattoni(y, righe, seme) {   // la listatura: file di mattoni sfalsate di mezzo
+    var s = "", f, k, hm = 4.8, lm = 15.5;
+    for (f = 0; f < righe; f++) for (k = 0; k < 4; k++) (function (yy, x, r) {
+      var t = mattoncino(x, yy, lm, hm, scegli(r, MATTONI), r);
+      s += t; if (x + lm > MW) s += sposta(-MW, 0, t);
+    })(y + f * hm, 3.1 + (f % 2 ? lm / 2 : 0) + k * lm, rnd(seme * 7 + f * 5 + k));
+    return s + rett(0, y + righe * hm, MW, 1.2, "#5a4a36", op(.2));
+  }
+  function pietraCortile() {
+    var malta = "#d8ccb1", s = rett(0, 0, MW, MH, malta) + granelli(300, MW, MH, 1401, "#9e9177", .9, .45) + granelli(180, MW, MH, 1402, "#f1e9d6", .9, .55), k;
+    // il coronamento: mattoni messi di taglio, con l'ombra sotto
+    var cw = MW / 10;
+    for (k = 0; k < 10; k++) (function (x, r) {
+      var t = mattoncino(x, .2, cw, 9.4, scegli(r, MATTONI), r);
+      s += t; if (x + cw > MW) s += sposta(-MW, 0, t);
+    })(cw / 2 + k * cw, rnd(1411 + k));
+    s += rett(0, 9.6, MW, 3, lin("cco", [[0, "#000", .3], [1, "#000", 0]], 0, 0, 0, 1));
+    s += pietre(10.6, 62, 1403) + corsoMattoni(62.4, 2, 1404) + pietre(73, 128, 1405) + corsoMattoni(128.4, 2, 1406) + pietre(139, 200, 1407);
+    // i licheni chiari sulle pietre, a ciuffetti
+    var r = rnd(1409), lic = [], i, m;
+    for (i = 0; i < 9; i++) { var lx = r() * MW, ly = 14 + r() * 150; for (m = 0; m < 9; m++) { var px = lx + (r() - .5) * 5, py = ly + (r() - .5) * 3.5; lic.push([px, py]); if (px < 1) lic.push([px + MW, py]); if (px > MW - 1) lic.push([px - MW, py]); } }
+    s += puntini(lic, "#d9d49a", 1.1, .45) + puntini(lic.filter(function (v, x) { return x % 2; }), "#a9ad78", .7, .5);
+    // l'umidità che sale da terra e il muschio nelle fughe in basso
+    s += rett(0, 160, MW, 40, lin("um", [[0, "#3d4a26", 0], [.6, "#3d4a26", .14], [1, "#2f3a1c", .34]], 0, 0, 0, 1));
+    var mu = [];
+    for (i = 0; i < 16; i++) { var mx = r() * MW, my = 176 + r() * 23; for (m = 0; m < 7; m++) { var qx = mx + (r() - .5) * 4.5, qy = my + (r() - .5) * 2.4; mu.push([qx, qy]); if (qx < 1.2) mu.push([qx + MW, qy]); if (qx > MW - 1.2) mu.push([qx - MW, qy]); } }
+    return s + puntini(mu, "#55702f", 1.8, .7) + puntini(mu.filter(function (v, x) { return x % 3 === 0; }), "#8aa34c", 1.1, .8);
+  }
+
+  var MURI_R = [
+    ["perline_circolo", "Perline e intonaco crema", "dentro", 40, perlineCircolo],
+    ["intonaco_giallo", "Intonaco giallo caldo", "dentro", 20, intonacoGiallo],
+    ["piastrelle_verdi", "Piastrelle verdi da bar", "dentro", 45, piastrelleVerdi],
+    ["pietra_cortile", "Pietra del cortile", "fuori", 40, pietraCortile]
+  ];
+  MURI_R.forEach(function (v) { K.muri.push({ id: v[0], nome: v[1], dove: v[2], prezzo: v[3], svg: function () { return svg("rm_" + v[0], MW, MH, v[4]); } }); });
+
+  // =========================================================
+  //  I PAVIMENTI (100 × 100)
+  // =========================================================
+  // ---- la graniglia anni '60: mattonelle da 25 coi rosoni (ognuno sta su quattro mattonelle), le stelline e le scaglie di marmo ----
+  function graniglia() {
+    var T = 25, s = "", i, j, a;
+    var NERO = "#5a4a3d", ROSSO = "#b25a3f", SALVIA = "#7f9486", OCRA = "#d3a24c", CREMA = "#f1e7d1";   // colori di cemento, un po' spenti
+    var FONDI = ["#e2d4b7", "#ded0b2", "#e6d9be", "#dacbad", "#e0d3b8"];
+    for (j = 0; j < 4; j++) for (i = 0; i < 4; i++) s += rett(i * T, j * T, T, T, scegli(rnd(1501 + j * 4 + i), FONDI));
+    function ovunque(x, y, rr, fn) { return giro(x, y, rr, 100, 100, fn); }
+    function petalo(cx, cy, r0, r1, w, c, ang) {
+      var m = (r0 + r1) / 2, d = "M" + q(cx, cy - r0) + " Q" + q(cx + w, cy - m) + " " + q(cx, cy - r1) + " Q" + q(cx - w, cy - m) + " " + q(cx, cy - r0) + " Z";
+      return gira(ang, cx, cy, pth(d, c, "stroke='" + NERO + "' stroke-width='.55' stroke-linejoin='round'") + tratto("M" + q(cx, cy - r0 - 1.2) + " L" + q(cx, cy - r1 + 2.2), CREMA, .55, op(.8)));
+    }
+    // i rosoni
+    [[25, 25], [75, 25], [25, 75], [75, 75]].forEach(function (p) {
+      var cx = p[0], cy = p[1], R = 18.6;
+      s += cer(cx, cy, R + .5, NERO) + cer(cx, cy, R, ROSSO) + cer(cx, cy, R - 1.3, NERO) + cer(cx, cy, R - 1.8, CREMA);   // il cerchio sottile
+      s += cer(cx, cy, R - 4.2, "none", "stroke='" + OCRA + "' stroke-width='.7' stroke-dasharray='.8 1.6' opacity='.9'");   // la coroncina di puntini ocra
+      for (a = 0; a < 8; a++) s += petalo(cx, cy, 3.2, a % 2 ? 12.2 : 14.8, a % 2 ? 2.2 : 2.8, a % 2 ? SALVIA : ROSSO, a * 45);
+      for (a = 0; a < 8; a++) { var b = a * Math.PI / 4 + Math.PI / 8; s += cer(cx + Math.sin(b) * 12.4, cy - Math.cos(b) * 12.4, .9, OCRA, "stroke='" + NERO + "' stroke-width='.4'"); }
+      s += cer(cx, cy, 3.6, OCRA, "stroke='" + NERO + "' stroke-width='.6'") + cer(cx, cy, 1.4, ROSSO) + cer(cx - .9, cy - .9, .5, "#fff", op(.7));
+    });
+    // le stelline dove si toccano quattro rosoni
+    var stella = function (x, y) {
+      var d = "M" + q(x, y - 7.4) + " L" + q(x + 2, y - 2) + " L" + q(x + 7.4, y) + " L" + q(x + 2, y + 2) + " L" + q(x, y + 7.4) + " L" + q(x - 2, y + 2) + " L" + q(x - 7.4, y) + " L" + q(x - 2, y - 2) + " Z";
+      return pth(d, OCRA, "stroke='" + NERO + "' stroke-width='.55' stroke-linejoin='round'") + cer(x, y, 1.8, ROSSO, "stroke='" + NERO + "' stroke-width='.4'") +
+        [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(function (v) { return cer(x + v[0] * 4.6, y + v[1] * 4.6, .9, SALVIA, "stroke='" + NERO + "' stroke-width='.35'"); }).join("");
+    };
+    [[0, 0], [50, 0], [0, 50], [50, 50]].forEach(function (p) { s += ovunque(p[0], p[1], 9, stella); });
+    // i rombetti tra due rosoni
+    var rombo = function (x, y) { return pth("M" + q(x, y - 3.4) + " L" + q(x + 3.4, y) + " L" + q(x, y + 3.4) + " L" + q(x - 3.4, y) + " Z", SALVIA, "stroke='" + NERO + "' stroke-width='.5' stroke-linejoin='round'") + cer(x, y, .9, CREMA); };
+    [[25, 0], [75, 0], [0, 25], [50, 25], [0, 75], [50, 75], [25, 50], [75, 50]].forEach(function (p) { s += ovunque(p[0], p[1], 4, rombo); });
+    // le scaglie di marmo della graniglia (bianche, nere, grigie, ocra, rosse) su tutto
+    s += granelli(520, 100, 100, 1511, "#2f2a25", .75, .5, true) + granelli(420, 100, 100, 1512, "#7a7064", .9, .45, true) + granelli(520, 100, 100, 1513, "#fbf8f0", .95, .65, true) +
+      granelli(160, 100, 100, 1514, "#c38f4e", 1, .45, true) + granelli(120, 100, 100, 1515, "#9b4e3b", .9, .4, true) + granelli(70, 100, 100, 1516, "#fffdf6", 1.6, .55, true) + granelli(50, 100, 100, 1517, "#4a433b", 1.4, .4, true);
+    // la cera consumata a chiazze e le fughe sottili tra le mattonelle
+    s += macchieMorbide(10, 100, 100, 1519, "#fffaf0", "#b9a988", 14, 30, .2, true);
+    for (i = 0; i < 4; i++) {
+      var z = i * T;
+      s += rett(z - .3, 0, .6, 100, "#8f8169", op(.55)) + rett(z + .3, 0, .4, 100, "#fff", op(.35)) + rett(0, z - .3, 100, .6, "#8f8169", op(.55)) + rett(0, z + .3, 100, .4, "#fff", op(.35));
+      if (!i) s += rett(99.7, 0, .3, 100, "#8f8169", op(.55)) + rett(0, 99.7, 100, .3, "#8f8169", op(.55));
+    }
+    return s;
+  }
+
+  // ---- il cotto toscano: mezzane a spina di pesce (12,5 × 25), fatte a mano, con la fiammatura del forno e la cera ----
+  function cottoToscano() {
+    var u = 12.5, s = rett(0, 0, 100, 100, "#cdbc9c") + granelli(380, 100, 100, 1601, "#9a8768", .85, .55, true) + granelli(200, 100, 100, 1602, "#ede3cc", .8, .6, true), b, k;
+    var cols = ["#c9714a", "#bf6640", "#d27c52", "#b65c38", "#cc774d", "#c26c45", "#d8885d", "#ad5634", "#c97650", "#d0835a"];
+    function mezzana(x, y, w, h, r, cl) {
+      var c = scegli(r, cols), g = .75, j = function () { return (r() - .5) * .7; };
+      var pts = [[x + g + j(), y + g + j()], [x + w - g + j(), y + g + j()], [x + w - g + j(), y + h - g + j()], [x + g + j(), y + h - g + j()]], d = tondo(pts, 1.3), t = "", i;
+      t += pth(d, c) + pth(d, luce(1.1));
+      var corpo = "";
+      if (r() < .45) { var fx = r() < .5 ? x + w * .2 : x + w * .8, fy = r() < .5 ? y + h * .2 : y + h * .8; corpo += ell(fx, fy, w * .45, h * .45, rad("fia", [[0, "#5a2410", .42], [.6, "#5a2410", .12], [1, "#5a2410", 0]], .5, .5, .5)); }   // la fiammatura del forno
+      if (r() < .35) corpo += ell(x + w * (.3 + r() * .4), y + h * (.3 + r() * .4), w * .32, h * .32, rad("sal", [[0, "#fff1d8", .35], [1, "#fff1d8", 0]], .5, .5, .5));   // la cera più chiara
+      for (i = 0; i < 6; i++) corpo += cer(x + 1.6 + r() * (w - 3.2), y + 1.6 + r() * (h - 3.2), .28 + r() * .38, r() < .7 ? scuro(c, .4) : chiaro(c, .35), op(.6));   // i forellini
+      t += dentro(cl, "<path d='" + d + "'/>", corpo);
+      t += pth(d, "none", "stroke='" + scuro(c, .32) + "' stroke-width='.9' opacity='.45'") + tratto("M" + q(pts[0][0] + 1.4, pts[0][1] + .9) + " L" + q(pts[1][0] - 1.4, pts[1][1] + .9), "#fff", .55, op(.4));
+      return t;
+    }
+    function metti(x, y, w, h, seme) {   // la mezzana al suo posto, e di nuovo dall'altra parte se esce dal quadrato
+      var t = mezzana(x, y, w, h, rnd(seme), "fm" + seme), out = t;
+      if (x + w > 100) out += sposta(-100, 0, t);
+      if (y + h > 100) out += sposta(0, -100, t);
+      if (x + w > 100 && y + h > 100) out += sposta(-100, -100, t);
+      return out;
+    }
+    // la spina: in ogni fila a scala una mezzana distesa e una in piedi, le file spostate di 4 moduli
+    for (b = 0; b < 2; b++) for (k = 0; k < 8; k++) {
+      var x = ((k + 4 * b) % 8) * u;
+      s += metti(x, k * u, 2 * u, u, 1611 + b * 97 + k * 13) + metti(x, ((k + 1) % 8) * u, u, 2 * u, 2611 + b * 89 + k * 17);   // (semi tutti diversi: fanno anche il nome del ritaglio)
+    }
+    // la cera: una lucentezza leggera
+    return s + macchieMorbide(6, 100, 100, 1621, "#fff4dc", "#7a3a1a", 16, 30, .14, true);
+  }
+
+  // ---- le assi di legno vecchie: larghe, consumate dove si cammina, con le fessure, i chiodi sulle travi e i graffi ----
+  function legnoVecchio() {
+    var n = 5, h = 100 / n, s = rett(0, 0, 100, 100, "#22140b"), j;
+    var cols = ["#ad7746", "#a26c3e", "#b9834f", "#97643a", "#b07d4c", "#9e6e43", "#8f6037", "#b48450"];
+    var travi = [22, 72];   // i chiodi in fila sulle travi sotto il pavimento
+    function asse(x, y, w, c, seme, lw) {
+      var r = rnd(seme), t = rett(x + .35, y + .65, w - .7, h - 1.3, c, "rx='.5'"), i;
+      t += venature(x + .8, y + 1.2, w - 1.6, h - 2.4, c, seme + 1, 9, false, 1.5);
+      if (r() < .4) t += nodo(x + 5 + r() * (w - 10), y + 4 + r() * (h - 8), c, .6);
+      t += rett(x + .35, y + .65, w - .7, h - 1.3, lin("cup", [[0, "#fff", .16], [.18, "#fff", 0], [.8, "#000", 0], [1, "#000", .24]], 0, 0, 0, 1), "rx='.5'");   // le assi un po' imbarcate
+      if (r() < .4) { var cy = y + 3 + r() * (h - 6), cl = 6 + r() * 12, cx = r() < .5 ? x + .8 : x + w - .8 - cl; t += tratto("M" + q(cx, cy) + " L" + q(cx + cl * .5, cy + (r() - .5)) + " L" + q(cx + cl, cy + (r() - .5) * .6), "#2a170b", .55, op(.6)); }   // una crepa
+      // i chiodi alle due teste
+      [x + 2.4, x + w - 2.4].forEach(function (nx) { [y + h * .3, y + h * .7].forEach(function (ny) { t += cer(nx, ny, .75, "#2b2622", op(.85)) + cer(nx - .25, ny - .25, .28, "#b9b0a2", op(.8)); }); });
+      travi.forEach(function (tx) { [tx, tx + 100, tx - 100].forEach(function (xx) { if (xx > x + 4 && xx < x + w - 4) [y + h * .3, y + h * .7].forEach(function (ny) { t += cer(xx, ny, .7, "#2b2622", op(.8)) + cer(xx - .25, ny - .25, .26, "#b9b0a2", op(.75)); }); }); });
+      return t + rett(x + .35, y + .65, .5, h - 1.3, "#1a0e06", op(.5)) + rett(x + 1, y + 1.1, w - 2, .55, "#fff", op(.2));
+    }
+    var TESTE = [8, 56, 30, 82, 44];   // dove finisce l'asse in ogni fila (una sola giunta per metro, sfalsate)
+    for (j = 0; j < n; j++) (function (y, x0, c, seme) {
+      [x0, x0 - 100].forEach(function (xx) { s += asse(xx, y, 100, c, seme); if (y + h > 100) s += asse(xx, y - 100, 100, c, seme); });
+    })(h / 2 + j * h, TESTE[j], cols[(j * 3 + 1) % cols.length], 1703 + j * 31);
+    // consumate dove si cammina: chiazze chiare e grigie (la vernice andata via) e i graffi
+    s += macchieMorbide(8, 100, 100, 1711, "#e8d6b2", "#5a3a1e", 16, 34, .2, true) + macchieMorbide(6, 100, 100, 1712, "#d9cdb8", "#d9cdb8", 18, 30, .3, true);   // (le ultime grigie: il legno senza più vernice)
+    var rg = rnd(1713), gr = "", i2;
+    for (i2 = 0; i2 < 22; i2++) (function (x, yy, l, aa, o) {
+      gr += giro(x, yy, l, 100, 100, function (X, Y) { return tratto("M" + q(X, Y) + " l" + q(Math.cos(aa) * l, Math.sin(aa) * l * .4), "#f3e3c4", .4, op(o)); });
+    })(rg() * 100, rg() * 100, 2 + rg() * 6, rg() * 6.28, .1 + rg() * .1);
+    return s + gr + granelli(140, 100, 100, 1715, "#2a170b", .8, .35, true);
+  }
+
+  // ---- la ghiaia chiara del cortile: sassolini bianchi e crema sulla terra battuta ----
+  function ghiaiaCortile() {
+    var cols = ["#f3eee3", "#e9e2d2", "#ded4c0", "#f8f5ee", "#d8ccb4", "#cfc3ab", "#e6dac4", "#c9bca3", "#efe7d6", "#e2cfa9", "#d9c39c", "#bdb6a8", "#c9ad7c", "#a9a69b", "#b8a68a"];
+    var s = rett(0, 0, 100, 100, "#cdbf9f") + granelli(500, 100, 100, 1801, "#a69576", 1, .55, true) + granelli(320, 100, 100, 1802, "#efe6d2", 1, .6, true);
+    var r = rnd(1803), i, hl = [], g = rad("gc", [[0, "#fff", .6], [.45, "#fff", .08], [.8, "#000", .03], [1, "#000", .2]], .32, .3, .85), N = 15;
+    for (i = 0; i < N * N + 150; i++) (function (x, y, rx, k, a, c) {   // i sassolini grossi su una griglia mossa, poi quelli piccoli sparsi
+      var ry = rx * k;
+      s += giro(x, y, rx + 1, 100, 100, function (X, Y) {
+        hl.push([X - ry * .35, Y - ry * .42]);
+        return "<g transform='translate(" + q(X, Y) + ") rotate(" + f2(a) + ")'>" + ell(.7, .85, rx, ry, "#6b5a40", op(.32)) + ell(0, 0, rx, ry, c) + ell(0, 0, rx, ry, g) + "</g>";
+      });
+    })(i < N * N ? (i % N + .12 + r() * .76) * 100 / N : r() * 100, i < N * N ? (Math.floor(i / N) + .12 + r() * .76) * 100 / N : r() * 100, i < N * N ? 2.2 + r() * 1.5 : 1.1 + r() * 1, .62 + r() * .3, r() * 180, scegli(r, cols));
+    return s + puntini(hl, "#fff", .8, .5);
+  }
+
+  var PAV_R = [
+    ["graniglia", "Graniglia anni '60", "dentro", 45, graniglia],
+    ["cotto_toscano", "Cotto toscano a spina", "tutti", 35, cottoToscano],
+    ["legno_vecchio", "Assi di legno vecchie", "dentro", 30, legnoVecchio],
+    ["ghiaia_cortile", "Ghiaia chiara del cortile", "fuori", 15, ghiaiaCortile]
+  ];
+  PAV_R.forEach(function (v) { K.pavimenti.push({ id: v[0], nome: v[1], dove: v[2], prezzo: v[3], svg: function () { return svg("rv_" + v[0], 100, 100, v[4]); } }); });
+
+  // =========================================================
+  //  LA PORTA: noce coi vetri stampati, il sopraluce e la maniglia d'ottone
+  // =========================================================
+  function ottone(n) { return rad("ot" + (n || ""), [[0, "#fff6cf"], [.35, "#f0c75a"], [1, "#9c7114"]], .35, .3, .75); }
+  function vetroStampato(nome, b, notte) {   // b = [x, y, w, h]; il vetro stampato "martellato": di giorno chiaro coi riflessi, di notte acceso
+    var x = b[0], y = b[1], w = b[2], h = b[3], c, i, j;
+    if (notte) c = rett(x, y, w, h, lin("vn", [[0, "#fff8dc"], [.45, "#ffe39a"], [1, "#ffbf55"]], 0, 0, .3, 1)) + ell(x + w * .5, y + h * .4, w * .6, h * .5, rad("vl", [[0, "#fff", .6], [1, "#fff", 0]], .5, .5, .5));
+    else c = rett(x, y, w, h, lin("vg", [[0, "#eef5f2"], [.5, "#c3d6d3"], [1, "#93afb0"]], 0, 0, .35, 1)) + rett(x, y + h * .55, w, h * .45, "#4f6c6e", op(.16));
+    var pt = [], ps = [];   // le bolle del vetro martellato, in file sfalsate
+    for (j = 0; j * 2.2 < h + 2; j++) for (i = 0; i * 2.4 < w + 2; i++) { var px = x + i * 2.4 + (j % 2) * 1.2, py = y + j * 2.2; pt.push([px - .35, py - .35]); ps.push([px + .3, py + .35]); }
+    c += puntini(ps, notte ? "#c98a2a" : "#5d7b7c", 1.2, notte ? .22 : .2) + puntini(pt, "#fff", 1, notte ? .45 : .5);
+    if (!notte) c += pth("M" + q(x + w * .45, y) + " L" + q(x + w * .72, y) + " L" + q(x + w * .3, y + h) + " L" + q(x + w * .03, y + h) + " Z", "#fff", op(.26)) + pth("M" + q(x + w * .82, y) + " L" + q(x + w * .9, y) + " L" + q(x + w * .48, y + h) + " L" + q(x + w * .4, y + h) + " Z", "#fff", op(.2));
+    return dentro(nome, rq(x, y, w, h), c) + rett(x, y, w, 1.2, "#000", op(.22)) + rett(x, y, 1, h, "#000", op(.14));
+  }
+  function portaCircolo(notte) {
+    var c = "#8b5a34", cs = "#6e4325", s = "", i;
+    var legno = lin("pn", [[0, chiaro(c, .2)], [.5, c], [1, scuro(c, .22)]], 0, 0, 1, 1);
+    // il coprifilo intorno al vano (col sopraluce), il cappello in cima e l'ombra sul muro
+    s += rett(6.4, 22.6, 52, 177.4, "#000", op(.17)) + rett(3.4, 19.4, 55.2, 4.4, "#000", op(.12));
+    s += rett(5, 21.5, 52, 178.5, lin("cf", [[0, chiaro(cs, .3)], [.5, cs], [1, scuro(cs, .25)]], 0, 0, 1, 0), bordo(L, 1.6));
+    s += rett(7.2, 23.7, 47.6, 176.3, "none", "stroke='" + scuro(cs, .35) + "' stroke-width='.7' opacity='.7'") + rett(5.8, 22.3, .8, 177, "#fff", op(.3));
+    s += rett(3, 17.6, 56, 4.6, lin("cap", [[0, chiaro(cs, .45)], [.4, chiaro(cs, .1)], [1, scuro(cs, .35)]], 0, 0, 0, 1), bordo(L, 1.3) + " rx='.8'") + rett(4, 18.3, 54, .7, "#fff", op(.45));
+    // il sopraluce: tre vetri e due listelli
+    s += rett(9.5, 26, 43, 22, scuro(cs, .45));
+    s += vetroStampato("vs", [10.3, 26.8, 41.4, 19.4], notte);
+    [23.6, 38.4].forEach(function (x) { s += rett(x - .8, 26.8, 1.6, 19.4, legno, bordo(L, .5)); });
+    s += rett(9.5, 46.2, 43, 3.8, legno, bordo(L, .8)) + rett(10, 46.7, 42, .6, "#fff", op(.35));   // la traversa
+    // l'anta di noce
+    s += rett(10, 50, 42, 146, legno, bordo(L, 1.4));
+    s += dentro("an", rq(10, 50, 42, 146), venature(10, 50, 42, 146, c, 1901, 16, true, 1.15));
+    // i vetri in alto: sei riquadri col fermavetro
+    s += rett(14.6, 55, 32.8, 62, scuro(c, .4)) + vetroStampato("va", [15.4, 55.8, 31.2, 60.4], notte);
+    s += rett(30.2, 55.8, 1.6, 60.4, legno, bordo(L, .5)) + rett(15.4, 75.2, 31.2, 1.6, legno, bordo(L, .5)) + rett(15.4, 95.2, 31.2, 1.6, legno, bordo(L, .5));
+    s += rett(14.6, 55, 32.8, 62, "none", "stroke='" + chiaro(c, .25) + "' stroke-width='1.3'") + rett(14.6, 55, 32.8, 62, "none", bordo(L, .6));
+    // la traversa di mezzo e i due pannelli in rilievo sotto
+    s += rett(10.6, 118.6, 40.8, .6, "#fff", op(.25));
+    s += riquadro(14.6, 125, 15.2, 54, chiaro(c, .04), 2.6) + riquadro(32.2, 125, 15.2, 54, chiaro(c, .04), 2.6);
+    s += dentro("p1", rq(17.2, 127.6, 10, 48.8), venature(17.2, 127.6, 10, 48.8, chiaro(c, .04), 1903, 4, true, 1)) + dentro("p2", rq(34.8, 127.6, 10, 48.8), venature(34.8, 127.6, 10, 48.8, chiaro(c, .04), 1905, 4, true, 1));
+    // la lamina d'ottone in basso, con le viti
+    s += rett(10.8, 184.5, 40.4, 10, ottone("l"), bordo("#6b4a00", .8)) + rett(11.6, 185.3, 38.8, .8, "#fff", op(.6));
+    [13.2, 31, 48.8].forEach(function (x) { s += cer(x, 189.5, .7, "#8a6a1e") + cer(x - .2, 189.3, .25, "#fff", op(.7)); });
+    s += pth("M12,52 L18,52 L13,180 L12,180 Z", "#fff", op(.08));   // la luce sul legno lucido
+    // le cerniere d'ottone
+    [66, 172].forEach(function (y) { s += rett(9.2, y - 4.2, 2.8, 8.4, ottone("c"), bordo("#6b4a00", .6) + " rx='.8'") + rett(9.7, y - 3.6, .7, 7.2, "#fff", op(.6)); });
+    // la maniglia d'ottone: la placca lunga con la leva e la toppa della chiave
+    s += sposta(.8, 1, rett(44.6, 127, 4.4, 24, "#000", op(.25) + " rx='2'"));
+    s += rett(44.6, 127, 4.4, 24, lin("pl", [[0, "#fff4c4"], [.4, "#e2b84e"], [1, "#94690f"]], 0, 0, 1, 0), bordo("#6b4a00", .7) + " rx='2'") + rett(45.3, 128.4, .8, 21, "#fff", op(.6));
+    s += pth("M46.8,143.4 a1,1 0 1 1 .01,0 Z", "#2a1d0c") + pth("M46.3,144 L47.3,144 L47.7,147.2 L45.9,147.2 Z", "#2a1d0c");   // la toppa
+    s += cer(46.8, 133, 2, ottone("p"), bordo("#6b4a00", .6));
+    s += sposta(.7, 1, tratto("M46.8,133 L37.6,133.6", "#000", 2.8, op(.25))) + tratto("M46.8,133 L37.6,133.6", "#6b4a00", 3.4) + tratto("M46.8,133 L37.6,133.6", "#e8c050", 2.2) + tratto("M45.4,132.3 L38.6,132.8", "#fff", .7, op(.75));
+    // la soglia di pietra
+    return s + rett(4, 196, 54, 4, lin("sg", [[0, "#efe8da"], [1, "#b3a792"]], 0, 0, 0, 1), bordo(L, 1.2)) + rett(5, 196.8, 52, .7, "#fff", op(.6));
+  }
+  K.porte.push({ id: "porta_circolo", nome: "Porta del Circolo", dove: "dentro", prezzo: 600, svg: function (opz) { var notte = !!(opz && opz.notte); return svg("rp_porta" + (notte ? "_n" : ""), MW, MH, function () { return portaCircolo(notte); }); } });
+})();
+/* =========================================================
    SPeeD GAME — CASA E GIARDINO (il tuo terreno visto dall'alto e inclinato, come in The Sims)
    - La casa si COSTRUISCE: muri tracciati col dito sui bordi delle mattonelle, porte, finestre,
      pavimenti, pitture e carte da parati; il tetto lo calcola il gioco (a padiglione, da qualsiasi forma).
@@ -22494,6 +25971,95 @@
     return D;
   }
 
+  // ---------- il Circolo: il circolo ricreativo di paese (le carte, i tavolini per i giochi a due, il biliardo, il bar, la TV; fuori il cortile con le bocce) ----------
+  var GIOCHI_CIRCOLO = { tavolo_carte: "scopa", tavolo_tris: "tris", tavolo_forza4: "drop4", tavolo_navale: "navale", biliardo: "calciobiliardo" };   // dove ci si siede e si gioca già
+  function datiCircolo() {
+    //   salone (c 1…22): in fondo il bar, la vetrina delle coppe e l'angolo della TV; in mezzo i tavoli delle carte e i tavolini per i giochi a due;
+    //                    a sinistra il biliardo; davanti tavoli liberi e TANTO spazio vuoto per i giochi che verranno
+    //   cortile (c 24…34): il campo da bocce, la pergola col tavolo all'aperto, la fontanella (anche qui spazio libero in fondo)
+    var D = { v: 2, w: 36, h: 30, ogg: [], muri: {}, pav: {}, tetto: null, baule: {}, cesto: {}, ultimo: 0, vista: 0, gente: [], ingresso: [12, 28.4] }, c, r, k = 0;
+    var kit = function (g, id, alt) { return listaKit(g).some(function (v) { return v.id === id; }) ? id : (alt || null); };
+    var PERL = kit("muri", "perline_circolo"), VERDI = kit("muri", "piastrelle_verdi", PERL), GIALLO = kit("muri", "intonaco_giallo", PERL), PIETRA = kit("muri", "pietra_cortile", PERL);
+    var GRAN = kit("pavimenti", "graniglia"), COTTO = kit("pavimenti", "cotto_toscano", GRAN), ASSI = kit("pavimenti", "legno_vecchio", GRAN), GHIAIA = kit("pavimenti", "ghiaia_cortile", COTTO);
+    var PORTA = kit("porte", "porta_circolo");
+    function zona(c, r) { return c >= 24 ? "cortile" : c <= 6 && r <= 6 ? "bar" : c <= 7 && r >= 9 && r <= 17 ? "biliardo" : r <= 6 && c >= 13 ? "tv" : "salone"; }
+    var MURI_ZONA = { bar: VERDI, salone: PERL, biliardo: PERL, tv: GIALLO, cortile: PIETRA };
+    var PAV_ZONA = { bar: COTTO, salone: GRAN, biliardo: ASSI, tv: ASSI, cortile: GHIAIA };
+    function muro(t, c, r) {
+      var ll = t === "a" ? [[c - 1, r], [c, r]] : [[c, r - 1], [c, r]], m = { s: [null, null], ap: null };
+      ll.forEach(function (q, i) { if (q[0] >= 1 && q[0] <= 34 && q[1] >= 1 && q[1] <= 28) m.s[i] = MURI_ZONA[zona(q[0], q[1])]; });
+      D.muri[t + "," + c + "," + r] = m; return m;
+    }
+    function porta(t, c, r) { D.muri[t + "," + c + "," + r].ap = { t: "porta", id: PORTA }; }
+    for (r = 1; r <= 28; r++) { muro("a", 1, r); muro("a", 35, r); muro("a", 24, r); }   // (il muro tra salone e cortile)
+    for (c = 1; c <= 34; c++) { muro("b", c, 1); muro("b", c, 29); }
+    [11, 12].forEach(function (c) { porta("b", c, 29); });   // l'ingresso, dalla piazza
+    [12, 13].forEach(function (r) { porta("a", 24, r); });   // la porta del cortile
+    for (c = 1; c <= 34; c++) for (r = 1; r <= 28; r++) D.pav[c + "," + r] = PAV_ZONA[zona(c, r)];
+    function metti(t, c, r, d, x) { var o = { k: ++D.ultimo, t: t, c: c, r: r, d: d || 0 }; for (var q in x || {}) o[q] = x[q]; D.ogg.push(o); return o; }
+    function appendi(t, kk, lato, pezzi) { var o = { k: ++D.ultimo, t: t, muro: kk, lato: lato }; if (pezzi) o.pezzi = pezzi; D.ogg.push(o); }
+    function appendi2(t, tipo, c, r) { appendi(t, tipo + "," + c + "," + r, 1, tipo === "a" ? [tipo + "," + c + "," + r, tipo + "," + c + "," + (r - 1)] : [tipo + "," + c + "," + r, tipo + "," + (c + 1) + "," + r]); }
+    var rnd2 = rnd(1946);   // (seme fisso: la sala è sempre uguale)
+    function persona(ruolo) {
+      if (!window.SGOmino) return null;
+      var cfg = SGOmino.casuale("circolo" + (++k)); cfg.animale = "nessuno"; cfg.mano = "nessuno"; cfg.schiena = "nessuna";
+      if (ruolo === "barista") { cfg.capo = "gilet"; cfg.maglia = 8; cfg.collo = "papillon"; cfg.colCollo = 0; cfg.cappello = "nessuno"; cfg.occhiali = "nessuno"; cfg.borsa = "nessuna"; cfg.stampa = "nessuna"; }
+      try { cfg = SGOmino.norm(cfg); } catch (e) {}
+      return cfg;
+    }
+    function lavora(ruolo, u, v, fw) { D.gente.push({ cfg: persona(ruolo), u: u, v: v, fw: fw || [0, 1] }); }
+    function siedeSu(o, prob) { if (rnd2() < prob) { D.gente.push({ cfg: persona(), siede: o.k }); return true; } return false; }
+    function passeggia(zona, u, v) { D.gente.push({ cfg: persona(), u: u, v: v, gira: zona, fw: [0, 1] }); }
+    function tavolo(t, c0, r0, gente, sedia) {   // il tavolo con le sedie ai suoi posti (girate verso il tavolo) e un po' di gente seduta
+      var o = metti(t, c0, r0, 0), inf = infoMobile(t) || {}, f = (inf.fp || [1, 1]).slice(), cx = c0 + f[0] / 2, cy = r0 + f[1] / 2, posti = inf.posti || [], seduti = 0;
+      posti.forEach(function (p) {
+        var q = [c0 + p[0], r0 + p[1]], dx = cx - (q[0] + .5), dy = cy - (q[1] + .5), dd = Math.abs(dy) >= Math.abs(dx) ? (dy > 0 ? 0 : 2) : (dx > 0 ? 3 : 1);
+        if (siedeSu(metti(sedia || "sedia_circolo", q[0], q[1], dd), gente)) seduti++;
+      });
+      if (posti.length && seduti === posti.length) D.gente.pop();   // un posto resta sempre libero: ci si può sedere a giocare
+      return o;
+    }
+
+    // ---- il bar (in fondo a sinistra): il bancone col barista, gli sgabelli, la vetrina delle coppe ----
+    metti("bancone_circolo", 2, 3, 0); lavora("barista", 3.5, 2.5, [0, 1]);
+    [2, 3, 4].forEach(function (c) { siedeSu(metti("sgabello_circolo", c, 4, 2), .55); });
+    metti("vetrina_coppe", 8, 1, 0);
+    appendi2("foto_squadra", "b", 5, 1); appendi("bandiera_italia", "b,11,1", 1); appendi("calendario_parete", "b,12,1", 1);
+    metti("ventilatore", 4, 4);
+
+    // ---- l'angolo della TV (in fondo a destra): la partita, le poltrone, i giornali ----
+    appendi2("tv_partita", "b", 17, 1);
+    [15, 16, 18, 19].forEach(function (c) { siedeSu(metti("poltrona_circolo", c, 4, 2), .6); });
+    metti("tavolino_giornali", 17, 4); metti("ventilatore", 17, 3);
+
+    // ---- i tavoli delle carte (Scopa) in mezzo al salone ----
+    tavolo("tavolo_carte", 7, 9, .75); tavolo("tavolo_carte", 12, 9, .75); tavolo("tavolo_carte", 17, 9, .7);
+    metti("ventilatore", 9, 10); metti("ventilatore", 15, 10);
+
+    // ---- i tavolini dei giochi a due: Tris, Drop 4, Battaglia Navale ----
+    tavolo("tavolo_tris", 10, 15, .5); tavolo("tavolo_forza4", 14, 15, .5); tavolo("tavolo_navale", 18, 15, .5);
+
+    // ---- il biliardo (a sinistra) con la sua lampada, le stecche e le freccette al muro ----
+    metti("biliardo", 2, 12, 0); metti("lampada_biliardo", 2, 12);
+    lavora(null, 3.5, 11.5, [0, 1]); lavora(null, 5.5, 14.5, [-1, -1]);
+    appendi("rastrelliera_stecche", "a,1,10", 1); appendi("freccette", "a,1,16", 1);
+
+    // ---- davanti: tavoli liberi per i giochi che arriveranno, l'attaccapanni all'ingresso (e tanto spazio vuoto) ----
+    tavolo("tavolo_quadrato", 4, 21, .25); tavolo("tavolo_rotondo", 17, 21, .25); tavolo("tavolino_due", 20, 25, 0);
+    metti("appendiabiti", 9, 28); metti("ventilatore", 6, 22); metti("ventilatore", 18, 22);
+    passeggia([5, 18, 21, 27], 12.5, 22.5); passeggia([5, 6, 21, 18], 11.5, 13.5);
+
+    // ---- il cortile: il campo da bocce, la pergola col tavolo all'aperto, la fontanella, i gerani ----
+    for (c = 25; c <= 33; c++) metti(c === 28 || c === 31 ? "bocce_partita" : "campo_bocce", c, 4);
+    lavora(null, 25.5, 5.5, [1, 0]); lavora(null, 26.5, 5.5, [1, 0]);
+    siedeSu(metti("panca_legno", 27, 7, 2), .5); siedeSu(metti("panca_legno", 30, 7, 2), .5);
+    tavolo("tavolo_esterno", 28, 15, .5); metti("pergola", 28, 14);
+    metti("fontanella", 33, 2); metti("lampione_cortile", 25, 11); metti("lampione_cortile", 33, 19);
+    [[25, 1], [34, 1], [34, 10], [25, 28], [34, 28], [29, 28]].forEach(function (p) { metti("vaso_gerani", p[0], p[1]); });
+    passeggia([25, 9, 34, 27], 30.5, 22.5);
+    return D;
+  }
+
   // la città a piedi: gli edifici e le cose della città (js/citta.js) come mobili del motore, la gente che passeggia
   function datiCitta(opts) {
     var C = window.SGCitta, D = { v: 2, w: 74, h: 74, ogg: [], muri: {}, pav: {}, tetto: null, baule: {}, cesto: {}, ultimo: 0, vista: 0, gente: [] };
@@ -22549,7 +26115,7 @@
     try { inf = M && M.info ? M.info(nome) : null; fonte = M; if (!inf) { inf = A && A.info ? A.info(nome) : null; fonte = A; } } catch (e) {}
     if (!inf) return null;
     var dt = !!(dietro && inf.dietro);
-    var im = immagineSvg("o|" + nome + (dt ? "|d" : "") + (notte ? "|n" : "") + (col ? "|" + col : ""), function () { return fonte.svg(nome, { dietro: dt, notte: !!notte, col: col || null }); }, inf.reparto === "casino" || inf.reparto === "citta" ? 1.5 : 2);
+    var im = immagineSvg("o|" + nome + (dt ? "|d" : "") + (notte ? "|n" : "") + (col ? "|" + col : ""), function () { return fonte.svg(nome, { dietro: dt, notte: !!notte, col: col || null }); }, inf.reparto === "casino" || inf.reparto === "citta" || inf.reparto === "circolo" ? 1.5 : 2);
     return im ? { im: im, info: inf } : null;
   }
   function listaKit(gruppo) { var K = window.SGKit; return (K && K[gruppo]) || []; }
@@ -22572,7 +26138,9 @@
     stile();
     AUDIO = opts.audio || null;
     var LUOGO = opts.luogo || null;   // "casino": un posto pubblico già arredato (niente giardino, niente compra e costruisci, non si salva)
-    var D = LUOGO === "casino" ? datiCasino() : LUOGO === "citta" ? datiCitta(opts) : (opts.dati && opts.dati.v >= 2 ? opts.dati : datiIniziali());
+    var D = LUOGO === "casino" ? datiCasino() : LUOGO === "circolo" ? datiCircolo() : LUOGO === "citta" ? datiCitta(opts) : (opts.dati && opts.dati.v >= 2 ? opts.dati : datiIniziali());
+    var SALA = LUOGO === "casino" || LUOGO === "circolo";   // i posti coi tavoli dove ci si siede a giocare
+    var GIOCHI_QUI = LUOGO === "circolo" ? GIOCHI_CIRCOLO : GIOCHI_CASINO;
     D.ogg = D.ogg || []; D.muri = D.muri || {}; D.pav = D.pav || {}; D.baule = D.baule || {}; D.cesto = D.cesto || {}; D.ultimo = D.ultimo || D.ogg.length;
     var VR = D.vista || 0;   // la vista: girata di 90° ogni volta (0…3)
     var tSalva = null;
@@ -22704,6 +26272,7 @@
     bGira.setAttribute("aria-label", "Gira la vista"); bGira.onclick = function () { vibra(10); gira(); };
     [bInd, titolo, bGira, cMonete].forEach(function (n) { testa.appendChild(n); });
     if (LUOGO === "casino") titolo.textContent = "🎰 Casinò";
+    if (LUOGO === "circolo") titolo.textContent = "🎲 Circolo";
     if (LUOGO === "citta") bGira.style.visibility = "hidden";   // (la città si guarda solo da davanti)
     if (opts.incassata) { s.classList.add("gd-incassata"); testa.style.display = "none"; }   // (dentro un'altra schermata, che ha già la sua testa)
     var giu = el("div", "gd-giu"), bCompra = el("button", "gd-bott", "🛒 Compra"), bCostr = el("button", "gd-bott", "🔨 Costruisci"), bSistema = el("button", "gd-bott", "✏️ Sistema"), bCesto = el("button", "gd-bott");
@@ -22715,7 +26284,7 @@
     var barra = el("div", "gd-sis"), attrezzi = el("div", "gd-attrezzi"), avviso = el("div", "gd-avviso"), sopra = el("div", "gd-sopra");
     [cv, testa, giu, attrezzi, barra, avviso, sopra].forEach(function (n) { s.appendChild(n); });
     if (LUOGO) giu.style.display = "none";   // (nel casinò non si compra e non si costruisce)
-    if (LUOGO === "casino") { var bGiochi = el("button", "gd-giochi-tasto", "🎲 Tutti i giochi"); bGiochi.onclick = function () { vibra(10); menuGiochi(); }; s.appendChild(bGiochi); }   // (chi non sa dove andare: l'elenco dei giochi)
+    if (SALA) { var bGiochi = el("button", "gd-giochi-tasto", "🎲 Tutti i giochi"); bGiochi.onclick = function () { vibra(10); menuGiochi(); }; s.appendChild(bGiochi); }   // (chi non sa dove andare: l'elenco dei giochi)
     function aggTesta() {
       cMonete.textContent = "🪙 " + cifre(monete());
       var n = 0; for (var k in D.cesto) n += D.cesto[k]; bCesto.textContent = "🧺 Cesto" + (n ? " (" + n + ")" : "");
@@ -22939,7 +26508,7 @@
       if (av.siede && modo === "vivi") { var era = av.siede.o; vibra(8); alzati(); var o2 = cosaQui(x, y); if (!o2 || o2 === era) return; }   // seduto o a letto: un tocco e si alza (e se hai toccato un'altra cosa ci va)
       var o = cosaQui(x, y);
       if (modo === "sistema") { if (!o) { var fz = facciaIn(x, y); o = fz ? appesoSu(fz) : null; } scegli(o); return; }
-      if (o) { vibra(10); var m0 = marcia({ k: o.k }); if (LUOGO === "casino" && toccaCasino(o)) { av.marcia = m0; return; } vaiAOggetto(o); av.marcia = m0; return; }
+      if (o) { vibra(10); var m0 = marcia({ k: o.k }); if (SALA && toccaCasino(o)) { av.marcia = m0; return; } vaiAOggetto(o); av.marcia = m0; return; }
       var g = schermoW(x, y), c = Math.floor(g[0]), r = Math.floor(g[1]);
       if (fuoriLotto(c, r)) return;
       vibra(8); var m1 = marcia({ c: c, r: r }); vaiA([{ c: c, r: r }], null); av.marcia = m1;
@@ -22968,11 +26537,24 @@
       [/^(slot_|video_poker|pachinko)/, "🎰", ": presto si gioca!"], [/^(gru_peluche|spingimonete)/, "🧸", ": presto si gioca!"], [/^gratta_vinci/, "🍀", ": presto si gratta!"],
       [/^(tavolo_|roulette_|ruota_fortuna|corsa_cavalli)/, "🎲", ": presto si gioca!"], [/bingo|keno/, "🔢", ": presto si gioca!"],
       [/scommesse|quote|maxischermo/, "⚽", ": presto si scommette!"], [/^(bancone_casino|torre_champagne)/, "🍹", ": presto si ordina!"], [/^buffet/, "🍽️", ": presto si mangia!"],
-      [/^palco/, "🎤", ": presto lo spettacolo!"], [/^cassa_casino|bancomat/, "💰", ": presto qui cambierai le fiches"], [/^auto_premio/, "🏎️", ": presto in palio!"]
+      [/^palco/, "🎤", ": presto lo spettacolo!"], [/^cassa_casino|bancomat/, "💰", ": presto qui cambierai le fiches"], [/^auto_premio/, "🏎️", ": presto in palio!"],
+      // il Circolo
+      [/^(tavolo_quadrato|tavolo_rotondo|tavolo_lungo|tavolino_due)$/, "🎲", ": qui arriveranno giochi nuovi!"], [/bocce/, "⚪", ": presto si gioca a bocce!"],
+      [/^freccette/, "🎯", ": presto si tira!"], [/^bancone_circolo/, "☕", ": presto un caffè!"], [/^tavolo_esterno/, "🍷", ": presto si gioca anche qui fuori!"]
     ];
     function dimmiPresto(o) { for (var i = 0; i < PRESTO.length; i++) if (PRESTO[i][0].test(o.t)) { dimmi(PRESTO[i][1] + " " + nomeDi(o.t) + PRESTO[i][2]); return true; } return false; }
     // ---- "Tutti i giochi": chi non conosce il casinò sceglie dall'elenco e l'avatar ci corre da solo (al posto libero più vicino) ----
-    var ATTIVITA = [
+    var ATTIVITA_CIRCOLO = [
+      { nome: "Scopa", icona: "🃏", tipi: ["tavolo_carte"], gioca: true },
+      { nome: "Tris", icona: "⭕", tipi: ["tavolo_tris"], gioca: true },
+      { nome: "Drop 4", icona: "🟡", tipi: ["tavolo_forza4"], gioca: true },
+      { nome: "Battaglia Navale", icona: "🚢", tipi: ["tavolo_navale"], gioca: true },
+      { nome: "Calcio Biliardo", icona: "🎱", tipi: ["biliardo"], gioca: true },
+      { nome: "Bocce", icona: "⚪", tipi: ["bocce_partita"] },
+      { nome: "La partita in TV", icona: "📺", tipi: ["poltrona_circolo"] },
+      { nome: "Bar", icona: "☕", tipi: ["bancone_circolo"] }
+    ];
+    var ATTIVITA = LUOGO === "circolo" ? ATTIVITA_CIRCOLO : [
       { nome: "Black Jack", icona: "🃏", tipi: ["tavolo_blackjack"], gioca: true },
       { nome: "Poker", icona: "♠️", tipi: ["tavolo_poker"], gioca: true },
       { nome: "Roulette", icona: "🎡", tipi: ["tavolo_roulette", "roulette_elettronica"] },
@@ -23014,7 +26596,7 @@
       function via() { if (velo.parentNode) velo.parentNode.removeChild(velo); }
       velo.onclick = function (e) { if (e.target === velo) via(); };
       chiudi2.setAttribute("aria-label", "Chiudi"); chiudi2.onclick = function () { vibra(8); via(); };
-      testa2.appendChild(el("b", "", "🎰 Giochi del Casinò")); testa2.appendChild(chiudi2);
+      testa2.appendChild(el("b", "", LUOGO === "circolo" ? "🎲 Giochi del Circolo" : "🎰 Giochi del Casinò")); testa2.appendChild(chiudi2);
       ATTIVITA.forEach(function (a) {
         if (!D.ogg.some(function (o) { return a.tipi.indexOf(o.t) >= 0; })) return;
         var b = el("button", "gd-menu-voce" + (a.gioca ? " aperta" : ""));
@@ -23033,18 +26615,18 @@
     function azioneCasino(o) {   // nel casinò: seduti davanti a un tavolo aperto si gioca, il resto arriva presto
       if ((SEDUTI[o.k] || []).length) return dimmi("Questo posto è occupato 🙂");
       if (SEDILE.test(o.t)) {
-        var tv = davantiA(o), gi = tv && GIOCHI_CASINO[tv.t]; siedi(o);
+        var tv = davantiA(o), gi = tv && GIOCHI_QUI[tv.t]; siedi(o);
         if (gi) { dimmi("Si gioca! 🃏"); setTimeout(function () { if (vivo() && av.siede && av.siede.o === o && opts.gioca) opts.gioca(gi, { u: av.siede.da[0], v: av.siede.da[1] }); }, 900); }   // (dove eri: finita la partita si torna lì)
         else if (tv) dimmiPresto(tv);
         return;
       }
       var mi = infoMobile(o.t) || {};
-      if (GIOCHI_CASINO[o.t] && opts.gioca) return opts.gioca(GIOCHI_CASINO[o.t]);
+      if (GIOCHI_QUI[o.t] && opts.gioca) { dimmi("Si gioca! 🎱"); return opts.gioca(GIOCHI_QUI[o.t], { u: av.u, v: av.v }); }   // (il biliardo: niente sedie, si gioca in piedi)
       if (mi.azione === "siedi") return siedi(o);
       if (!dimmiPresto(o)) dimmi(nomeDi(o.t));
     }
     function azione(o) {
-      if (LUOGO === "casino") return azioneCasino(o);
+      if (SALA) return azioneCasino(o);
       if (LUOGO === "citta") {   // in città: si entra (e si dice dove stava sullo schermo la cosa toccata, per partire da lì)
         var mc = infoMobile(o.t) || {}, punto = null; ordinati.forEach(function (x) { if (x.o === o && x.ret) punto = { x: x.ret.x + x.ret.w / 2, y: x.ret.y + x.ret.h * .45 }; });
         if (mc.vai && opts.entra) return opts.entra(mc.vai, punto, cv); return dimmi(nomeDi(o.t));
@@ -23865,7 +27447,7 @@
     function aggiorna(dt) {
       tAnim += dt; var mosso = false;
       if (av.strada.length) {
-        var t = av.strada[0], du = t.u - av.u, dv = t.v - av.v, d = Math.hypot(du, dv), passo = (LUOGO === "casino" ? 5 : LUOGO === "citta" ? 4.5 : 3) * [1, 1.8, 2.8][(av.marcia || 1) - 1] * dt;   // (tre andature: cammina, svelto, di corsa)   // (nel casinò, che è grande, si cammina più svelti)
+        var t = av.strada[0], du = t.u - av.u, dv = t.v - av.v, d = Math.hypot(du, dv), passo = (LUOGO === "casino" ? 5 : LUOGO === "citta" ? 4.5 : LUOGO === "circolo" ? 4 : 3) * [1, 1.8, 2.8][(av.marcia || 1) - 1] * dt;   // (tre andature: cammina, svelto, di corsa)   // (nel casinò, che è grande, si cammina più svelti)
         av.t += dt; if (d > 1e-3) av.fw = [du, dv];
         if (d <= passo) { av.u = t.u; av.v = t.v; av.strada.shift(); if (!av.strada.length) av.marcia = 1; if (!av.strada.length && av.poi) { var f = av.poi; av.poi = null; f(); } }
         else { av.u += du / d * passo; av.v += dv / d * passo; }
@@ -23908,7 +27490,7 @@
     function esci() { chiudi(); clearTimeout(tSalva); if (opts.salva) opts.salva(D); if (opts.indietro) opts.indietro(); }
     function attesa() {   // nei posti grandi: prima si preparano i disegni di quello che si vede (intanto una schermata d'attesa), poi il resto un po' alla volta
       var t0 = Date.now(), vela = el("div", "gd-attesa"), barra2 = el("i"), bb = el("div", "gd-attesa-b");
-      var CIT = LUOGO === "citta"; if (CIT) vela.classList.add("citta"); vela.appendChild(el("b", "", CIT ? "🏙️" : "🎰")); vela.appendChild(el("span", "", CIT ? "La città si sveglia…" : "Il Casinò apre le porte…")); bb.appendChild(barra2); vela.appendChild(bb); s.appendChild(vela);
+      var CIT = LUOGO === "citta", CIR = LUOGO === "circolo"; if (CIT) vela.classList.add("citta"); vela.appendChild(el("b", "", CIT ? "🏙️" : CIR ? "🎲" : "🎰")); vela.appendChild(el("span", "", CIT ? "La città si sveglia…" : CIR ? "Il Circolo apre le porte…" : "Il Casinò apre le porte…")); bb.appendChild(barra2); vela.appendChild(bb); s.appendChild(vela);
       function vicino(u, v) { var p = pw(u, v); return p.x > -cw * .4 && p.x < cw * 1.4 && p.y > -ch * .3 && p.y < ch * 1.5; }
       function arteDi(o) { var mi = infoMobile(o.t), nome = nomeArte(o), l = []; [false, true].forEach(function (dt) { var a = arteOgg(nome, dt, !!(mi && mi.luce), o.col); if (a && l.indexOf(a.im) < 0) l.push(a.im); }); return l; }
       function dellaPersona(g) { var I = imPersona(g); return I ? (I.seduto || []).concat(I.davanti, I.dietro) : []; }
@@ -23927,7 +27509,8 @@
         if (q < .85 && Date.now() - t0 < 8000) return setTimeout(guarda, 120);
         subito = null;   // (non serve più: i disegni li tiene la cache)
         sporco = true; vela.classList.add("via"); setTimeout(function () { if (vela.parentNode) vela.parentNode.removeChild(vela); }, 400);
-        if (!CIT && !opts.pos) dimmi("Benvenuto al Casinò! 🎰 Black Jack e Poker sono aperti; allarga con due dita per vedere tutta la sala"); else if (!opts.da) dimmi("Tocca un punto per camminare, tocca un edificio per entrare 🚶");
+        if (CIR && !opts.pos) dimmi("Benvenuto al Circolo! 🎲 Siediti a un tavolo: carte, Tris, Drop 4, Battaglia Navale; o vai al biliardo");
+        else if (!CIT && !CIR && !opts.pos) dimmi("Benvenuto al Casinò! 🎰 Black Jack e Poker sono aperti; allarga con due dita per vedere tutta la sala"); else if (CIT && !opts.da) dimmi("Tocca un punto per camminare, tocca un edificio per entrare 🚶");
         setTimeout(scalda, 600);
       })();
     }
@@ -23951,7 +27534,7 @@
     window.__giardino = { D: D, av: av, disegna: function () { disegna(); }, fase: function (f) { FASE = f; sfondo = null; sporco = true; }, pw: pw, tap: function (x, y) { tocca(x, y); },
       gira: gira, modo: cambiaModo, attrezzo: function (a, id) { attrezzo = a; if (id) sceltaKit[GRUPPO[a]] = id; pannelloCostruisci(); }, muri: function (a, b) { costruisciMuri({ a: a, b: b }); },
       faccia: function (k, sv) { for (var i = 0; i < facce.length; i++) if (facce[i].k === k && (sv == null || facce[i].sv === sv)) return facce[i]; return null; },
-      dentro: dentro, stanza: stanza, vai: function (c, r) { vaiA([{ c: c, r: r }]); }, tocca: function (o) { if (LUOGO === "casino" && toccaCasino(o)) return; vaiAOggetto(o); }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); sporco = true; },
+      dentro: dentro, stanza: stanza, vai: function (c, r) { vaiA([{ c: c, r: r }]); }, tocca: function (o) { if (SALA && toccaCasino(o)) return; vaiAOggetto(o); }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); sporco = true; },
       arte: function (n, d, nt) { return arteOgg(n, d, nt); }, cresciTutto: cresciTutto, foto: function () { disegna(); return cv.toDataURL("image/png"); } };   // (per le prove)
     return s;
   }
