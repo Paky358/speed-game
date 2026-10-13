@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 198,
+    data: "13 ottobre 2026",
+    titolo: "Le novità si leggono sulla bacheca della piazza 📌",
+    descrizione: [
+      "Toccando Novità ti avvicini alla bacheca della piazza: le novità sono foglietti appuntati sul sughero, con la città sfocata dietro.",
+      "I foglietti che non hai ancora letto hanno l'etichetta rossa NUOVO."
+    ]
+  },
+  {
     v: 197,
     data: "13 ottobre 2026",
     titolo: "Partite online più solide e app più veloce 📶",

@@ -498,6 +498,7 @@
     var barra = el("div", "gd-sis"), attrezzi = el("div", "gd-attrezzi"), avviso = el("div", "gd-avviso"), sopra = el("div", "gd-sopra");
     [cv, testa, giu, attrezzi, barra, avviso, sopra].forEach(function (n) { s.appendChild(n); });
     if (LUOGO) giu.style.display = "none";   // (nel casinò non si compra e non si costruisce)
+    if (LUOGO === "casino") { var bGiochi = el("button", "gd-giochi-tasto", "🎲 Tutti i giochi"); bGiochi.onclick = function () { vibra(10); menuGiochi(); }; s.appendChild(bGiochi); }   // (chi non sa dove andare: l'elenco dei giochi)
     function aggTesta() {
       cMonete.textContent = "🪙 " + cifre(monete());
       var n = 0; for (var k in D.cesto) n += D.cesto[k]; bCesto.textContent = "🧺 Cesto" + (n ? " (" + n + ")" : "");
@@ -721,10 +722,14 @@
       if (av.siede && modo === "vivi") { var era = av.siede.o; vibra(8); alzati(); var o2 = cosaQui(x, y); if (!o2 || o2 === era) return; }   // seduto o a letto: un tocco e si alza (e se hai toccato un'altra cosa ci va)
       var o = cosaQui(x, y);
       if (modo === "sistema") { if (!o) { var fz = facciaIn(x, y); o = fz ? appesoSu(fz) : null; } scegli(o); return; }
-      if (o) { vibra(10); if (LUOGO === "casino" && toccaCasino(o)) return; return vaiAOggetto(o); }
+      if (o) { vibra(10); var m0 = marcia({ k: o.k }); if (LUOGO === "casino" && toccaCasino(o)) { av.marcia = m0; return; } vaiAOggetto(o); av.marcia = m0; return; }
       var g = schermoW(x, y), c = Math.floor(g[0]), r = Math.floor(g[1]);
       if (fuoriLotto(c, r)) return;
-      vibra(8); vaiA([{ c: c, r: r }], null);
+      vibra(8); var m1 = marcia({ c: c, r: r }); vaiA([{ c: c, r: r }], null); av.marcia = m1;
+    }
+    function marcia(dove) {   // toccare di nuovo lo stesso punto mentre l'avatar ci sta andando: più veloce (tre andature)
+      var m = av.meta, stesso = av.strada.length > 0 && m && (dove.k != null ? m.k === dove.k : m.c != null && Math.abs(m.c - dove.c) <= 1 && Math.abs(m.r - dove.r) <= 1);
+      av.meta = dove; return stesso ? Math.min(3, (av.marcia || 1) + 1) : 1;
     }
     function vaiAOggetto(o) {
       var l = intorno(o);
@@ -749,6 +754,59 @@
       [/^palco/, "🎤", ": presto lo spettacolo!"], [/^cassa_casino|bancomat/, "💰", ": presto qui cambierai le fiches"], [/^auto_premio/, "🏎️", ": presto in palio!"]
     ];
     function dimmiPresto(o) { for (var i = 0; i < PRESTO.length; i++) if (PRESTO[i][0].test(o.t)) { dimmi(PRESTO[i][1] + " " + nomeDi(o.t) + PRESTO[i][2]); return true; } return false; }
+    // ---- "Tutti i giochi": chi non conosce il casinò sceglie dall'elenco e l'avatar ci corre da solo (al posto libero più vicino) ----
+    var ATTIVITA = [
+      { nome: "Black Jack", icona: "🃏", tipi: ["tavolo_blackjack"], gioca: true },
+      { nome: "Poker", icona: "♠️", tipi: ["tavolo_poker"], gioca: true },
+      { nome: "Roulette", icona: "🎡", tipi: ["tavolo_roulette", "roulette_elettronica"] },
+      { nome: "Slot machine", icona: "🎰", tipi: ["slot_classica", "slot_video", "slot_jackpot", "slot_ruota", "video_poker", "slot_gigante"] },
+      { nome: "Baccarat", icona: "💎", tipi: ["tavolo_baccarat"] },
+      { nome: "Craps", icona: "🎲", tipi: ["tavolo_craps"] },
+      { nome: "Sic Bo", icona: "🀄", tipi: ["tavolo_sicbo"] },
+      { nome: "Caribbean", icona: "🏝️", tipi: ["tavolo_caribbean"] },
+      { nome: "Pai Gow", icona: "🐉", tipi: ["tavolo_paigow"] },
+      { nome: "Trente et Quarante", icona: "♦️", tipi: ["tavolo_trente"] },
+      { nome: "Ruota della fortuna", icona: "🎯", tipi: ["ruota_fortuna"] },
+      { nome: "Bingo", icona: "🔢", tipi: ["tavolo_bingo"] },
+      { nome: "Keno", icona: "🎱", tipi: ["postazione_keno"] },
+      { nome: "Corsa dei cavalli", icona: "🏇", tipi: ["corsa_cavalli"] },
+      { nome: "Pachinko", icona: "⚪", tipi: ["pachinko"] },
+      { nome: "Gru dei peluche", icona: "🧸", tipi: ["gru_peluche"] },
+      { nome: "Spingimonete", icona: "💰", tipi: ["spingimonete"] },
+      { nome: "Gratta e vinci", icona: "🍀", tipi: ["gratta_vinci"] },
+      { nome: "Scommesse", icona: "⚽", tipi: ["poltrona_scommesse"] },
+      { nome: "Bar", icona: "🍹", tipi: ["bancone_casino"] },
+      { nome: "Ristorante", icona: "🍽️", tipi: ["buffet"] },
+      { nome: "Spettacolo", icona: "🎤", tipi: ["palco_show"] },
+      { nome: "Cassa", icona: "🏦", tipi: ["cassa_casino"] }
+    ];
+    function vaiAttivita(a) {   // il posto (o la cosa) più vicino per quell'attività, e ci si va di corsa
+      var meglio = null, dmin = 1e9;
+      function prova(x) { var dd = Math.hypot(x.c + .5 - av.u, x.r + .5 - av.v); if (dd < dmin) { dmin = dd; meglio = x; } }
+      D.ogg.forEach(function (o) {
+        if (a.tipi.indexOf(o.t) < 0) return;
+        if (SEDILE.test(o.t)) { if (!(SEDUTI[o.k] || []).length) prova(o); return; }   // (le poltrone delle scommesse sono già posti)
+        var p = postoLibero(o); if (p.posti) { if (p.libero) prova(p.libero); } else prova(o);
+      });
+      if (!meglio) return dimmi("È tutto occupato: riprova tra poco 🙂");
+      vaiAOggetto(meglio); av.marcia = 3; av.meta = { k: meglio.k };
+      if (av.strada.length) dimmi(a.icona + " " + a.nome + ": ci vado!");
+    }
+    function menuGiochi() {
+      var velo = el("div", "gd-menu-velo"), foglio = el("div", "gd-menu"), testa2 = el("div", "gd-menu-testa"), chiudi2 = el("button", "gd-menu-x", "✕"), griglia = el("div", "gd-menu-griglia");
+      function via() { if (velo.parentNode) velo.parentNode.removeChild(velo); }
+      velo.onclick = function (e) { if (e.target === velo) via(); };
+      chiudi2.setAttribute("aria-label", "Chiudi"); chiudi2.onclick = function () { vibra(8); via(); };
+      testa2.appendChild(el("b", "", "🎰 Giochi del Casinò")); testa2.appendChild(chiudi2);
+      ATTIVITA.forEach(function (a) {
+        if (!D.ogg.some(function (o) { return a.tipi.indexOf(o.t) >= 0; })) return;
+        var b = el("button", "gd-menu-voce" + (a.gioca ? " aperta" : ""));
+        b.appendChild(el("span", "ico", a.icona)); b.appendChild(el("span", "nome", a.nome)); b.appendChild(el("small", "", a.gioca ? "Gioca!" : "presto"));
+        b.onclick = function () { vibra(10); via(); vaiAttivita(a); };
+        griglia.appendChild(b);
+      });
+      foglio.appendChild(testa2); foglio.appendChild(griglia); velo.appendChild(foglio); s.appendChild(velo);
+    }
     function toccaCasino(o) {   // toccata una cosa che ha dei posti davanti: si va al posto libero più vicino (true se ci pensa lui)
       if (SEDILE.test(o.t)) { if ((SEDUTI[o.k] || []).length) { dimmi("Questo posto è occupato 🙂"); return true; } return false; }
       var p = postoLibero(o); if (!p.posti) return false;
@@ -1433,7 +1491,7 @@
           ctx.globalCompositeOperation = "lighter";
           var luci = D.ogg.filter(function (o) { return o.t === "lampione"; }).map(function (o) { var p = pw(o.c + .5, o.r + .5); return { x: p.x, y: p.y - TW * 1.5, r: TW * 1.7 }; }).concat(luciOgg);   // + le lampade, i neon, gli acquari…
           Object.keys(D.muri).forEach(function (k) { var m = D.muri[k]; if (!porta(m)) return; var ll = lati(k), d0 = dentro(ll[0][0], ll[0][1]), d1 = dentro(ll[1][0], ll[1][1]); if (d0 === d1) return; var t = d0 ? ll[1] : ll[0], q = k.split(","), mx = q[0] === "a" ? +q[1] : +q[1] + .5, my = q[0] === "a" ? +q[2] + .5 : +q[2]; var p = pw(mx + (t[0] + .5 - mx) * .5, my + (t[1] + .5 - my) * .5); luci.push({ x: p.x, y: p.y - TW * .6, r: TW * 1.3 }); });
-          luci.forEach(function (l) { var cc = rgb(l.c || "#ffbe5a").join(","), gg = ctx.createRadialGradient(l.x, l.y, 2, l.x, l.y, l.r), al = LUOGO ? (.3 + .12 * Math.sin(tAnim * 3.2 + l.x * .07 + l.y * .05)).toFixed(3) : ".4"; gg.addColorStop(0, "rgba(" + cc + "," + al + ")"); gg.addColorStop(1, "rgba(" + cc + ",0)"); ctx.fillStyle = gg; ctx.fillRect(l.x - l.r, l.y - l.r, l.r * 2, l.r * 2); });
+          luci.forEach(function (l) { var cc = rgb(l.c || "#ffbe5a").join(","), gg = ctx.createRadialGradient(l.x, l.y, 2, l.x, l.y, l.r), al = LUOGO ? ".32" : ".4"; gg.addColorStop(0, "rgba(" + cc + "," + al + ")"); gg.addColorStop(1, "rgba(" + cc + ",0)"); ctx.fillStyle = gg; ctx.fillRect(l.x - l.r, l.y - l.r, l.r * 2, l.r * 2); });
           ctx.globalCompositeOperation = "source-over";
         }
       }
@@ -1536,9 +1594,13 @@
       if (!IM) return;
       var p = pw(av.u, av.v), h = TW * 1.3, w = h / 1.3, cammina = av.strada.length > 0, fv = vecV(av.fw[0], av.fw[1]);
       var dietro = fv[0] + fv[1] < -1e-3, specchio = fv[0] - fv[1] < -1e-3, set = dietro ? IM.dietro : IM.davanti;
-      var im = cammina && Math.floor(av.t * 6) % 2 ? set[1] : set[0];
+      var mg = [1, 1.5, 2.1][(av.marcia || 1) - 1], im = cammina && Math.floor(av.t * 6 * mg) % 2 ? set[1] : set[0];   // (più va veloce, più svelte le gambe)
       if (!pronta(im)) return;
-      var alza = cammina ? Math.abs(Math.sin(av.t * 18)) * h * .02 : 0, piega2 = 0, al = 1;
+      if (cammina && av.marcia > 1) {   // di corsa: gli sbuffi di polvere dietro ai piedi
+        var q = pw(av.strada[0].u, av.strada[0].v), lx = q.x - p.x, ly = q.y - p.y, ll = Math.hypot(lx, ly) || 1;
+        for (var sb = 0; sb < (av.marcia === 3 ? 3 : 2); sb++) { var fz = (av.t * 3 + sb / 3) % 1; ctx.fillStyle = "rgba(235,225,205," + (.5 * (1 - fz)).toFixed(2) + ")"; ctx.beginPath(); ctx.arc(p.x - lx / ll * TW * (.15 + fz * .35), p.y - ly / ll * TW * (.08 + fz * .18) - TW * .03, TW * (.05 + fz * .07), 0, 6.29); ctx.fill(); }
+      }
+      var alza = cammina ? Math.abs(Math.sin(av.t * 18 * mg)) * h * (av.marcia === 3 ? .035 : .02) : 0, piega2 = 0, al = 1;
       if (av.fa === "esce") al = Math.min(1, av.ft / .45);
       if (av.fa === "raccogli") piega2 = Math.sin(Math.min(1, av.ft / .5) * Math.PI) * .05;
       if (av.fa === "dondola") alza += Math.abs(Math.sin(av.ft * 5)) * h * .08;
@@ -1584,9 +1646,9 @@
     function aggiorna(dt) {
       tAnim += dt; var mosso = false;
       if (av.strada.length) {
-        var t = av.strada[0], du = t.u - av.u, dv = t.v - av.v, d = Math.hypot(du, dv), passo = (LUOGO ? 4.2 : 3) * dt;   // (nel casinò, che è grande, si cammina più svelti)
+        var t = av.strada[0], du = t.u - av.u, dv = t.v - av.v, d = Math.hypot(du, dv), passo = (LUOGO === "casino" ? 5 : LUOGO === "citta" ? 4.5 : 3) * [1, 1.8, 2.8][(av.marcia || 1) - 1] * dt;   // (tre andature: cammina, svelto, di corsa)   // (nel casinò, che è grande, si cammina più svelti)
         av.t += dt; if (d > 1e-3) av.fw = [du, dv];
-        if (d <= passo) { av.u = t.u; av.v = t.v; av.strada.shift(); if (!av.strada.length && av.poi) { var f = av.poi; av.poi = null; f(); } }
+        if (d <= passo) { av.u = t.u; av.v = t.v; av.strada.shift(); if (!av.strada.length) av.marcia = 1; if (!av.strada.length && av.poi) { var f = av.poi; av.poi = null; f(); } }
         else { av.u += du / d * passo; av.v += dv / d * passo; }
         mosso = true;
       }
@@ -1608,7 +1670,7 @@
       if (!vivo()) return chiudi();
       var dt = Math.min(.05, (o - ult) / 1000 || 0); ult = o;
       aggiorna(dt); tBolle += dt;
-      if (tBolle > .08) { tBolle = 0; if (LUOGO) sporco = true; if ((av.siede && av.siede.dorme) || (modo === "vivi" && D.ogg.some(function (x) { return maturo(x) || sete(x); }))) sporco = true; }
+      if (tBolle > .08) { tBolle = 0; if ((av.siede && av.siede.dorme) || (modo === "vivi" && D.ogg.some(function (x) { return maturo(x) || sete(x); }))) sporco = true; }
       if (sporco) {
         sporco = false; disegna();
         if (giroAnim) {   // la vista che gira: la foto di prima si stringe, quella nuova si allarga
@@ -1707,6 +1769,18 @@
       ".schermata.gd-vista.gd-incassata{position:absolute;inset:0;height:auto;min-height:0;background:transparent}",
       ".gd-incassata .gd-avviso{top:calc(78px + env(safe-area-inset-top))}",
       ".gd-attesa.citta{background:radial-gradient(circle at 50% 45%,#7bc25a,#3f7d3a 75%);color:#fff}",
+      ".gd-giochi-tasto{position:absolute;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:4;border:0;border-radius:999px;padding:13px 24px;font:900 16px system-ui,sans-serif;color:#3a2200;background:linear-gradient(180deg,#ffe066,#fab005);box-shadow:0 6px 16px rgba(0,0,0,.45);white-space:nowrap}",
+      ".gd-menu-velo{position:absolute;inset:0;z-index:7;background:rgba(10,4,12,.55);display:flex;align-items:flex-end}",
+      ".gd-menu{width:100%;max-height:80%;overflow-y:auto;overscroll-behavior:contain;background:linear-gradient(180deg,#3a1424,#22101a);border-radius:22px 22px 0 0;padding:14px 12px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(0,0,0,.5);color:#ffe8a3;animation:gd-su .22s ease-out}",
+      "@keyframes gd-su{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}",
+      ".gd-menu-testa{display:flex;align-items:center;justify-content:space-between;font:900 18px system-ui,sans-serif;margin:2px 4px 12px}",
+      ".gd-menu-x{border:0;background:rgba(255,255,255,.14);color:#fff;width:38px;height:38px;border-radius:50%;font-size:16px}",
+      ".gd-menu-griglia{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}",
+      ".gd-menu-voce{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;border-radius:14px;padding:10px 4px 8px;background:rgba(255,255,255,.08);color:#fff;font:800 12.5px system-ui,sans-serif;text-align:center;line-height:1.15}",
+      ".gd-menu-voce .ico{font-size:27px;line-height:1.2}",
+      ".gd-menu-voce small{font-size:10.5px;font-weight:800;color:rgba(255,255,255,.5)}",
+      ".gd-menu-voce.aperta{background:linear-gradient(180deg,#2f9e44,#1b6e2e);box-shadow:inset 0 0 0 2px #ffd43b}",
+      ".gd-menu-voce.aperta small{color:#ffe066}",
       ".gd-attesa{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(circle at 50% 45%,#5a1a2a,#1c1018 70%);color:#ffe8a3;font:800 18px system-ui,sans-serif;transition:opacity .4s}",
       ".gd-attesa b{font-size:54px;filter:drop-shadow(0 0 14px rgba(255,200,80,.6))}",
       ".gd-attesa-b{width:min(240px,60%);height:8px;border-radius:99px;background:rgba(255,255,255,.15);overflow:hidden}",
