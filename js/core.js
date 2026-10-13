@@ -4098,8 +4098,9 @@
     var ol = el("ol", { class: "classifica" });
     var medaglie = ["🥇", "🥈", "🥉"];
     classifica.forEach(function (r, i) {
-      ol.appendChild(el("li", { class: i === 0 ? "vincitore" : "" }, [
-        el("span", { class: "pos", text: medaglie[i] || (i + 1) + "°" }),
+      var pos = r.pos || i + 1;   // a pari merito il gioco dà la stessa posizione: stessa medaglia
+      ol.appendChild(el("li", { class: pos === 1 ? "vincitore" : "" }, [
+        el("span", { class: "pos", text: medaglie[pos - 1] || pos + "°" }),
         el("span", { class: "nome", text: r.nome }),
         r.punti != null ? el("span", { class: "punti", text: r.punti }) : null
       ]));

@@ -173,7 +173,8 @@
     // il pubblico seduto: due file, quella dietro più piccola; davanti i primi numeri
     ".sa-platea{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:6px 4px 0;}",
     ".sa-fila{display:flex;justify-content:center;align-items:flex-end;gap:0 2%;}",
-    ".sa-fila1{margin-bottom:-3%;}",
+    ".sa-file{display:flex;flex-direction:column;gap:2px;transform-origin:50% 50%;}",
+    ".sa-figura img{pointer-events:none;}",
     ".sa-pers{position:relative;display:flex;flex-direction:column;align-items:center;width:22%;max-width:112px;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .2s;user-select:none;-webkit-user-select:none;}",
     ".sa-fila0.n1 .sa-pers,.sa-fila0.n2 .sa-pers{width:31%;max-width:156px;}.sa-fila0.n3 .sa-pers{width:27%;max-width:136px;}.sa-fila0.n4 .sa-pers{width:22%;max-width:114px;}.sa-fila0.n5 .sa-pers{width:18.5%;max-width:98px;}",
     ".sa-fila1.n1 .sa-pers,.sa-fila1.n2 .sa-pers{width:23%;max-width:116px;}.sa-fila1.n3 .sa-pers{width:20%;max-width:100px;}.sa-fila1.n4 .sa-pers{width:17%;max-width:86px;}.sa-fila1.n5 .sa-pers{width:15%;max-width:76px;}",
@@ -197,9 +198,9 @@
     ".sa-pers.fuori{opacity:.42;}.sa-pers.via{opacity:.3;}",
     ".sa-pers.puo .sa-figura::before{content:'';position:absolute;left:8%;right:8%;bottom:-2%;height:12%;border-radius:50%;background:radial-gradient(ellipse,rgba(255,224,102,.8),rgba(255,224,102,0) 70%);}",
     ".sa-pers.mio b{color:#ffe066;}.sa-pers.mio .sa-num{background:#ffe066;color:#3a2200;}",
-    ".sa-passo{margin-top:2px;border:0;border-radius:8px;padding:2px 9px;font-size:.66rem;font-weight:900;font-family:inherit;background:rgba(255,255,255,.22);color:#fff;}",
+    ".sa-passo{position:relative;z-index:6;margin-top:2px;border:0;border-radius:8px;padding:2px 9px;font-size:.66rem;font-weight:900;font-family:inherit;background:rgba(255,255,255,.22);color:#fff;}",
     // in basso: il banditore di spalle dietro il leggio, e a destra la riga d'aiuto e i tasti
-    ".sa-basso{flex:none;display:flex;align-items:flex-end;gap:4px;}",
+    ".sa-basso{flex:none;display:flex;align-items:flex-end;gap:4px;pointer-events:none;}.sa-basso .sa-piede>*{pointer-events:auto;}",
     ".sa-ban{position:relative;flex:none;width:min(42%,calc(var(--alt,100dvh)*.21));max-width:190px;margin-left:-5%;aspect-ratio:200/236;align-self:flex-end;}",
     ".sa-ban-img{position:absolute;left:0;top:0;width:100%;}",
     ".sa-leggio{position:absolute;left:-4%;width:110%;top:77%;}",
@@ -218,7 +219,17 @@
     ".sa-nota{margin:0;text-align:center;font-size:.74rem;font-weight:700;opacity:.92;text-shadow:0 1px 3px rgba(0,0,0,.7);}",
     ".sa-aggiudicato{position:absolute;z-index:8;left:50%;top:15%;transform:translate(-50%,-50%) rotate(-6deg);padding:10px 20px;border-radius:14px;border:4px solid #fff;background:#e03131;color:#fff;font-weight:900;font-size:1.8rem;letter-spacing:.06em;white-space:nowrap;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:saTimbro .35s cubic-bezier(.2,1.6,.4,1);pointer-events:none;}",
     "@keyframes saTimbro{from{transform:translate(-50%,-50%) rotate(-6deg) scale(2.2);opacity:0}to{transform:translate(-50%,-50%) rotate(-6deg) scale(1);opacity:1}}",
-    ".sa-sala.chiusa .sa-pers,.sa-sala.chiusa .sa-piede .btn{pointer-events:none;}",
+    ".sa-sala.chiusa .sa-pers,.sa-sala.chiusa .sa-piede .btn,.sa-sala.chiusa:not(.st-stadio) .sa-extra{pointer-events:none;}",
+    // la scelta della carta: con tante carte, due o tre colonne (niente scorrimento)
+    ".as-griglia.tante{display:grid;grid-template-columns:1fr 1fr;gap:8px;}",
+    ".as-griglia.tante .as-carta{flex-direction:column;justify-content:center;text-align:center;gap:6px;padding:10px 8px;border-radius:16px;}",
+    ".as-griglia.tante .as-carta .em{width:50px;height:50px;font-size:1.8rem;border-radius:14px;}",
+    ".as-griglia.tante .as-carta .em svg{width:72%;height:72%;}",
+    ".as-griglia.tante .as-carta .nm{flex:none;font-size:.92rem;}",
+    ".as-griglia.molte{grid-template-columns:1fr 1fr 1fr;gap:6px;}",
+    ".as-griglia.molte .as-carta{padding:8px 4px;gap:4px;}",
+    ".as-griglia.molte .as-carta .em{width:42px;height:42px;font-size:1.5rem;}",
+    ".as-griglia.molte .as-carta .nm{font-size:.78rem;}",
     // il foglio che sale dal basso (carte prese, formazioni)
     ".sa-foglio-velo{position:absolute;inset:0;z-index:9;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;}",
     ".sa-foglio{width:100%;max-height:84%;overflow-y:auto;overscroll-behavior:contain;background:#fff8e6;color:#2b2b2b;border-radius:20px 20px 0 0;padding:12px 12px calc(16px + env(safe-area-inset-bottom));animation:saFoglio .22s ease-out;}",
@@ -235,7 +246,7 @@
     // ---- lo stadio: maxischermo, tribuna, campetto ----
     ".schermata.st-stadio{background:linear-gradient(180deg,#06112b 0%,#0c2150 30%,#1a2f3e 52%,#1d5a2b 60%,#226b31 100%);}",
     ".st-board{flex:none;margin:4px 12px 0;padding:5px;border-radius:12px;background:linear-gradient(180deg,#444a54,#1d2026);box-shadow:0 0 0 2px #0b0c0f,0 14px 30px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.2);}",
-    ".st-schermo{position:relative;overflow:hidden;border-radius:7px;height:clamp(104px,19vh,176px);background:#0c1424;}",
+    ".st-schermo{position:relative;overflow:hidden;border-radius:7px;height:clamp(104px,calc(var(--alt,100dvh)*.19),176px);background:#0c1424;}",
     ".st-colori{position:absolute;inset:0;}",
     ".st-led{position:absolute;inset:0;pointer-events:none;z-index:3;background-image:radial-gradient(circle,rgba(0,0,0,0) 52%,rgba(0,0,0,.26) 56%);background-size:4px 4px;}",
     ".st-dentro{position:absolute;z-index:2;left:0;right:0;top:0;bottom:24px;display:flex;align-items:center;gap:8px;padding:6px 10px;transition:opacity .2s;}",
@@ -270,7 +281,7 @@
     ".st-campo-testa{display:flex;align-items:center;gap:6px;margin-bottom:4px;}",
     ".st-freccia{flex:none;border:0;width:36px;height:28px;border-radius:14px;background:rgba(255,255,255,.92);color:#16351f;font-weight:900;font-size:18px;line-height:1;font-family:inherit;}",
     ".st-campo-nome{flex:1;min-width:0;text-align:center;font-weight:900;font-size:.8rem;text-shadow:0 1px 3px rgba(0,0,0,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
-    ".st-campo{position:relative;height:clamp(128px,23vh,230px);border-radius:8px;background:repeating-linear-gradient(180deg,#3d9b49 0 18px,#358a41 18px 36px);box-shadow:inset 0 0 0 2px rgba(255,255,255,.7);overflow:hidden;}",
+    ".st-campo{position:relative;height:clamp(118px,calc(var(--alt,100dvh)*.23),230px);border-radius:8px;background:repeating-linear-gradient(180deg,#3d9b49 0 18px,#358a41 18px 36px);box-shadow:inset 0 0 0 2px rgba(255,255,255,.7);overflow:hidden;}",
     ".st-campo.dipinto{background-size:100% 100%;box-shadow:none;}",
     ".st-slot{position:absolute;width:21%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;}",
     ".st-slot-maglia{display:block;width:clamp(30px,58%,52px);aspect-ratio:1;transition:opacity .2s;}",
@@ -326,10 +337,10 @@
   }
   function vibra(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
   var FX = {
-    rilancio: function () { beep([740], 0.09, "square"); vibra(25); },
-    aggiudicato: function () { beep([660, 880, 1180], 0.16, "triangle"); vibra([70, 50, 90]); },
-    round: function () { beep([520, 780], 0.14, "sine"); vibra(60); },
-    fine: function () { beep([660, 880, 1046, 1318], 0.2, "triangle"); vibra([120, 60, 120, 60, 200]); },
+    rilancio: function (vibrare) { beep([740], 0.09, "square"); if (vibrare !== false) vibra(25); },   // vibra solo chi ha toccato
+    aggiudicato: function () { beep([660, 880, 1180], 0.16, "triangle"); },   // (solo suono: questi arrivano anche senza tocco)
+    round: function () { beep([520, 780], 0.14, "sine"); },
+    fine: function () { beep([660, 880, 1046, 1318], 0.2, "triangle"); },
     conta: function (i) { beep([i === 2 ? 1175 : 880], 0.08, "square"); },          // "5 e uno… 5 e due… 5 e tre…"
     tic: function (p) { beep([520 + Math.round(p * 700)], 0.035, "square"); },      // il contatore del valore delle rose (sale di tono)
     pop: function () { beep([880, 1320], 0.08, "triangle"); },                       // la maglia arriva nel campetto (solo suono: niente vibrazione senza tocco)
@@ -635,6 +646,7 @@
   }
 
   function avviaAsta(t) {
+      pulisciCache();
       var formato = (t.impostazioni && t.impostazioni.formato) || "temi";
       if (formato === "fanta") {
         if (t.impostazioni && t.impostazioni.modo === "online") return hostFanta(t);
@@ -706,7 +718,7 @@
     s._contenuto.appendChild(strisciaCrediti(el, st, chi));
     s._contenuto.appendChild(el("p", { class: "as-msg", style: "margin-bottom:10px",
       text: "🔨 " + st.giocatori[chi].nome + ", scegli la carta da mettere all'asta" }));
-    var g = el("div", { class: "as-griglia" });
+    var g = el("div", { class: "as-griglia" + (st.tavolo.length > 6 ? " tante molte" : st.tavolo.length > 3 ? " tante" : "") });
     st.tavolo.forEach(function (c, idx) {
       g.appendChild(el("button", { class: "as-carta", onclick: function () { apriAsta(t, st, chi, idx); } }, [
         el("span", icoAttr("em", c.emoji)),
@@ -804,14 +816,24 @@
     return nodo;
   }
   function pubblico(el, S, persone, sedia, cls, unaFila) {   // le file del pubblico: davanti i primi numeri, dietro (più piccoli) gli altri
-    var box = el("div", { class: cls }), k = 0;
+    var file = el("div", { class: "sa-file" }), box = el("div", { class: cls }, [ file ]), k = 0;
     fileSala(persone.length, unaFila).map(function (quanti, r) {
       var fila = el("div", { class: "sa-fila sa-fila" + r + " n" + quanti });
       for (var i = 0; i < quanti; i++) fila.appendChild(personaAsta(el, S, persone[k++], sedia));
       return fila;
-    }).reverse().forEach(function (f) { box.appendChild(f); });
-    return box;
+    }).reverse().forEach(function (f) { file.appendChild(f); });
+    return (S.pubblico = box);
   }
+  // se il pubblico non ci sta (schermo basso, tanti giocatori) lo rimpicciolisco tutto insieme: così niente finisce sotto altri pezzi
+  function adattaPubblico(box) {
+    var f = box && box.firstChild; if (!f || !document.body.contains(box)) return;
+    f.style.transform = "";
+    var h = box.clientHeight, c = f.offsetHeight;
+    if (h > 0 && c > h) f.style.transform = "scale(" + Math.max(0.5, (h - 2) / c).toFixed(3) + ")";
+  }
+  window.addEventListener("resize", function () { if (SALA) adattaPubblico(SALA.pubblico); if (STADIO) adattaPubblico(STADIO.pubblico); });
+  function pulisciCache() { Object.keys(CACHE_AV).forEach(function (k) { if (k.indexOf("arte|") !== 0) delete CACHE_AV[k]; }); }   // le pose degli avatar della partita prima (i disegni fissi restano)
+  function fermaTutto() { fermaConta(SALA); fermaConta(STADIO); fermaRivela(RIVELA); SALA = null; STADIO = null; RIVELA = null; }   // si esce dalla partita: niente più timer che ridisegnano
   function testaAsta(el, S, d) {
     return el("div", { class: "sa-testa" }, [
       el("button", { class: "sa-tasto", text: "‹", "aria-label": "Esci", onclick: function () { S.ultimiDati.onIndietro(); } }),
@@ -823,7 +845,7 @@
     d.persone.forEach(function (p) {
       var q = S.pers[p.id]; if (!q) return;
       var guida = p.id === d.leader, fuori = p.stato !== "gara", mio = d.io != null && p.id === d.io;
-      q.puo = !fuori && !guida && !!p.puo;
+      q.puo = !fuori && !!p.puo;   // chi guida può rialzare toccandosi di nuovo
       q.nodo.className = "sa-pers" + (guida ? " guida" : "") + (fuori ? " fuori" : "") + (p.via ? " via" : "") + (mio ? " mio" : "") + (q.puo && (d.io == null || mio) ? " puo" : "");
       q.nota.textContent = p.via ? "non c'è" : (p.nota || "");
       var conPasso = !fuori && !guida && d.puoPassare !== false;   // (stesso telefono: il posto del tasto resta, così le file non ballano)
@@ -856,6 +878,10 @@
         dice(S.prezzo + " e " + parola + "…", true); FX.conta(i);
       }, quando));
     });
+  }
+  function tempoDa(S, d, dice) {   // il conto alla rovescia riparte a ogni rilancio (giro nuovo); se arriva una foto più fresca con meno tempo si accorcia (mai si allunga)
+    var fine = Date.now() + Math.max(0, +d.resta || 0);
+    if (d.giro !== S.giro || fine < (S.fine || 0) - 700) { S.giro = d.giro; S.fine = fine; avviaConta(S, d.resta, d.durata, dice); }
   }
   function fermaConta(S) {
     if (!S || !S.conta) return;
@@ -895,6 +921,7 @@
     S.ultimiDati = d; SALA = S;
     t.mostra(S.radice);
     aggiornaSala(d);
+    adattaPubblico(S.pubblico);   // (dopo aver scritto nomi e crediti: così so quanto è alto davvero)
   }
   function aggiornaSala(d) {
     var S = SALA; if (!S) return; S.ultimiDati = d;
@@ -905,7 +932,7 @@
     S.avviso.textContent = d.avviso || ""; S.avviso.style.display = d.avviso ? "" : "none";
     aggiornaPubblico(S, d);
     nuovaOfferta(S, d, parlaBanditore);
-    if (d.giro !== S.giro) { S.giro = d.giro; avviaConta(S, d.resta, d.durata, parlaBanditore); }
+    tempoDa(S, d, parlaBanditore);
     piedeAsta(S, d);
   }
   function parlaBanditore(testo, conta) {
@@ -1007,6 +1034,7 @@
     S.ultimiDati = d; STADIO = S;
     t.mostra(S.radice);
     aggiornaStadio(d);
+    adattaPubblico(S.pubblico);
   }
   function aggiornaStadio(d) {
     var S = STADIO; if (!S) return; S.ultimiDati = d;
@@ -1015,7 +1043,7 @@
     // il calciatore sul maxischermo: cambia solo quando ne esce uno nuovo
     var c = d.carta, k = c ? c.nome + "|" + c.squadra + "|" + (d.giroCarta || "") : "";
     if (k !== S.carta) {
-      S.carta = k; S.prezzo = undefined; S.leader = undefined; S.giro = undefined;   // calciatore nuovo: il conto alla rovescia riparte comunque
+      S.carta = k; S.prezzo = undefined; S.leader = undefined; S.giro = undefined; S.fine = 0;   // calciatore nuovo: il conto alla rovescia riparte comunque
       if (d.io != null && d.fase === "asta") { S.vista = d.io; S.ultimoLeader = null; }   // (online) si torna a guardare la propria squadra
       var vecchio = S.radice.querySelector(".sa-aggiudicato"); if (vecchio) vecchio.parentNode.removeChild(vecchio);
       S.radice.classList.remove("chiusa");
@@ -1038,10 +1066,10 @@
     S.ultimoLeader = d.leader;
     if (d.fase === "asta") {
       nuovaOfferta(S, d, speaker);
-      if (d.giro !== S.giro) { S.giro = d.giro; avviaConta(S, d.resta, d.durata, speaker); }
+      tempoDa(S, d, speaker);
     } else fermaConta(S);
     if (d.esito && d.esito.n !== S.esitoN) { S.esitoN = d.esito.n; return esitoStadio(S, d); }
-    disegnaCampo(S, d);
+    disegnaCampo(S, d, S.volo && S.vista === S.volo.chi ? S.volo.slot : undefined);   // (se la maglia sta ancora volando, il suo posto resta vuoto)
     piedeAsta(S, d);
   }
   function disegnaCampo(S, d, salta) {   // la formazione della squadra che si guarda (salta: un posto lasciato vuoto, ci arriva la maglia in volo)
@@ -1068,17 +1096,18 @@
     S.radice.appendChild(timbro(e.tipo === "accollo" ? "NESSUNO!" : "AGGIUDICATO!")); S.radice.classList.add("chiusa");
     piedeAsta(S, d);
     if (e.tipo === "accollo") { speaker("Nessuno lo vuole! Torna in fondo al mazzo"); disegnaCampo(S, d); return; }
-    speaker(e.tipo === "forzata" ? "Solo " + e.chiNome + " cerca un " + ((FANTA_RUOLI[e.carta.ruolo] || {}).nome || "").toLowerCase() + ": è suo per " + e.prezzo + "!"
-      : "Aggiudicato a " + e.chiNome + " per " + e.prezzo + "!");
+    speaker(e.tipo !== "forzata" ? "Aggiudicato a " + e.chiNome + " per " + e.prezzo + "!"
+      : e.motivo === "ufficio" ? "Nessuno lo voleva: va d'ufficio a " + e.chiNome + " per " + e.prezzo
+      : "Solo " + e.chiNome + " cerca un " + ((FANTA_RUOLI[e.carta.ruolo] || {}).nome || "").toLowerCase() + ": è suo per " + e.prezzo + "!");
     S.vista = e.chiId;
     var g = S.squadre[e.chiId], posti = g ? slotRosa(g.kit) : [], i = -1;
     posti.forEach(function (c, j) { if (c && c.nome === e.carta.nome && c.squadra === e.carta.squadra) i = j; });
     disegnaCampo(S, d, i);
     if (i < 0) return;
-    var n = S.esitoN;
+    var n = S.esitoN; S.volo = { slot: i, chi: e.chiId };
     setTimeout(function () {
       if (STADIO !== S || S.esitoN !== n) return;
-      volo(S, i, function () { if (STADIO !== S) return; disegnaCampo(S, S.ultimiDati); rianima(S.slot[i].nodo, "arriva"); FX.pop(); });
+      volo(S, i, function () { if (STADIO !== S) return; S.volo = null; disegnaCampo(S, S.ultimiDati); rianima(S.slot[i].nodo, "arriva"); FX.pop(); });
     }, 450);
   }
   function volo(S, i, poi) {   // la maglia vola dal maxischermo al suo posto nel campetto (solo transform: niente scatti)
@@ -1105,7 +1134,8 @@
     var el = t.el, velo = el("div", { class: "sa-foglio-velo" }), chiudi = function () { if (velo.parentNode) velo.parentNode.removeChild(velo); };
     velo.addEventListener("click", function (e) { if (e.target === velo) chiudi(); });
     velo.appendChild(el("div", { class: "sa-foglio" }, [ el("div", { class: "sa-foglio-testa" }, [ el("b", { text: titolo }), el("button", { class: "sa-tasto", text: "✕", onclick: chiudi }) ]), contenuto ]));
-    ((SALA && SALA.radice) || (STADIO && STADIO.radice) || document.body).appendChild(velo);
+    var dove = SALA && document.body.contains(SALA.radice) ? SALA.radice : STADIO && document.body.contains(STADIO.radice) ? STADIO.radice : null;
+    if (dove) dove.appendChild(velo);   // (a sala chiusa non si apre: resterebbe appeso sopra la schermata dopo)
   }
   // tutte le formazioni del fantacalcio: la rosa di ognuno su un campetto, con le maglie delle squadre
   function formazioni(t, giocatori) {
@@ -1126,7 +1156,7 @@
   function esciAsta(t, st) {
     if (!window.confirm("Uscire dalla partita?")) return;
     if (st) { st.finita = true; if (st.asta && st.asta.bar && st.asta.bar._stop) st.asta.bar._stop(); if (st.pausa) clearTimeout(st.pausa); }
-    fermaConta(SALA); fermaConta(STADIO); SALA = null; STADIO = null; t.esci();
+    fermaTutto(); t.esci();
   }
   function tempoAsta(a, quando) {   // (stesso telefono) il conto alla rovescia riparte: allo scadere, quando()
     if (a.bar && a.bar._stop) a.bar._stop();
@@ -1140,10 +1170,11 @@
     var el = t.el, myId = cb.myId, a = vm.asta, io = trova(vm.giocatori, myId);
     var hoPassato = a.passati.indexOf(myId) >= 0, guido = a.leaderId === myId, prezzo = a.offerta + 1;
     var inGara = io && !io.haCarta, max = io ? io.crediti - ((vm.totRound - 1) - vm.roundIdx) : 0, mie = [];
-    if (inGara && !hoPassato && !guido) {
-      var bSu = el("button", { class: "btn btn-verde sa-grande", text: "🙋 Rilancio: " + prezzo + " 💰", onclick: cb.onRilancia });
+    if (inGara && !hoPassato) {   // chi guida può rialzare (più veloce che aspettare); passare no
+      var bSu = el("button", { class: "btn btn-verde sa-grande", text: (guido ? "🙋 Rialzo: " : "🙋 Rilancio: ") + prezzo + " 💰", onclick: cb.onRilancia });
       if (max < prezzo) bSu.disabled = true;
-      mie.push(bSu, el("button", { class: "btn btn-rosso", text: "Passo", onclick: cb.onPassa }));
+      mie.push(bSu);
+      if (!guido) mie.push(el("button", { class: "btn btn-rosso", text: "Passo", onclick: cb.onPassa }));
     }
     var persone = vm.giocatori.map(function (g, i) {
       var pass = a.passati.indexOf(g.id) >= 0;
@@ -1157,7 +1188,7 @@
       giro: a.giro, resta: a.resta, durata: SECONDI * 1000,
       nota: !io ? "Stai guardando la partita" : !inGara ? "Hai già la tua carta di questo round" : hoPassato ? "Hai passato: aspetti il risultato" : guido ? "👑 L'offerta più alta è tua" : "Hai " + io.crediti + " 💰 · puoi arrivare a " + Math.max(0, max),
       onRilancia: function () { cb.onRilancia(); }, onPassa: function () { cb.onPassa(); },
-      onIndietro: function () { if (window.confirm("Uscire dalla partita?")) { fermaConta(SALA); SALA = null; cb.onEsci(); } },
+      onIndietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); },
       extra: { testo: "🃏 Carte", apri: function () { var b = el("div", {}), pal = dettaglioPalio(el, vm.tavolo, a.carta.nome); if (pal) b.appendChild(pal); b.appendChild(pannelloKit(el, vm.giocatori)); foglioSala(t, "🃏 Le carte", b); } }
     });
   }
@@ -1168,10 +1199,11 @@
     var ru = FANTA_RUOLI[carta.ruolo] || {};
     var hoPassato = !!a && a.passati.indexOf(myId) >= 0, guido = !!a && a.leaderId === myId, prezzo = a ? (!a.leaderId ? a.offerta : a.offerta + 1) : 0;
     var inGara = !!(a && io && (io.conta[a.ruolo] || 0) < FANTA_SLOT[a.ruolo]), max = io ? io.max : 0, mie = [];
-    if (inGara && !hoPassato && !guido) {
-      var bSu = el("button", { class: "btn btn-verde sa-grande", text: !a.leaderId ? "🙋 Lo prendo a " + a.offerta + " 💰" : "🙋 Rilancio: " + prezzo + " 💰", onclick: cb.onRilancia });
+    if (inGara && !hoPassato) {   // chi guida può rialzare (più veloce che aspettare); passare no
+      var bSu = el("button", { class: "btn btn-verde sa-grande", text: !a.leaderId ? "🙋 Lo prendo a " + a.offerta + " 💰" : (guido ? "🙋 Rialzo: " : "🙋 Rilancio: ") + prezzo + " 💰", onclick: cb.onRilancia });
       if (max < prezzo) bSu.disabled = true;
-      mie.push(bSu, el("button", { class: "btn btn-rosso", text: "Passo", onclick: cb.onPassa }));
+      mie.push(bSu);
+      if (!guido) mie.push(el("button", { class: "btn btn-rosso", text: "Passo", onclick: cb.onPassa }));
     }
     var persone = vm.giocatori.map(function (g, i) {
       var pieno = a ? (g.conta[a.ruolo] || 0) >= FANTA_SLOT[a.ruolo] : false, pass = !!a && a.passati.indexOf(g.id) >= 0;
@@ -1183,11 +1215,11 @@
       info: (a ? ru.nome + " all'asta" : "Mercato") + " · " + vm.restano + " in mazzo · stanza " + (vm.codice || ""),
       carta: carta, giroCarta: a ? a.nCarta : e.nCarta, prezzo: a ? a.offerta : e.prezzo, base: !!a && !a.leaderId, leader: a ? (a.leaderId || null) : (e.chiId || null),
       persone: persone, io: myId || "—", mie: mie, giro: a ? a.giro : null, resta: a ? a.resta : 0, durata: SECONDI * 1000, puoPassare: false,
-      esito: e ? { n: e.n, nCarta: e.nCarta, tipo: e.tipo, chiId: e.chiId, chiNome: e.chiNome, carta: e.carta, prezzo: e.prezzo } : null,
+      esito: e ? { n: e.n, nCarta: e.nCarta, tipo: e.tipo, motivo: e.motivo || "", chiId: e.chiId, chiNome: e.chiNome, carta: e.carta, prezzo: e.prezzo } : null,
       avviso: a && a.ultimoDuello ? "⚠️ Ultimo duello: chi NON se lo aggiudica si accolla l'altro rimasto!" : "",
       nota: !a ? "" : !io ? "Stai guardando la partita" : !inGara ? "Hai già il " + ru.nome.toLowerCase() + " in rosa" : hoPassato ? "Hai passato: aspetti il risultato" : guido ? "👑 L'offerta più alta è tua" : "Hai " + io.crediti + " 💰 · puoi arrivare a " + Math.max(0, max),
       onRilancia: function () { cb.onRilancia(); }, onPassa: function () { cb.onPassa(); },
-      onIndietro: function () { if (window.confirm("Uscire dalla partita?")) { fermaConta(STADIO); STADIO = null; cb.onEsci(); } },
+      onIndietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); },
       extra: { testo: "👕 Tutte", apri: function () { formazioni(t, vm.giocatori); } }
     });
   }
@@ -1274,7 +1306,8 @@
     fermaRivela(R); R.finito = true; R.salta.style.visibility = "hidden";
     var el = document.createElement.bind(document), w = R.righe[0];
     R.campoBox.style.display = "none"; R.podio.style.display = "";
-    if (w) { R.magliaImg.src = srcAv(cfgDi(w.nome, w.omino), {}); R.nome.textContent = w.nome; R.prezzoN.textContent = w.totale; R.chi.textContent = "vince! 🏆"; R.squadra.textContent = ""; rianima(R.schermo, "entra"); }
+    var primi = R.righe.filter(function (r) { return r.pos === 1; });   // (a pari valore e pari crediti vincono insieme)
+    if (w) { R.magliaImg.src = srcAv(cfgDi(w.nome, w.omino), {}); R.nome.textContent = primi.map(function (r) { return r.nome; }).join(" e "); R.prezzoN.textContent = w.totale; R.chi.textContent = primi.length > 1 ? "pari merito! 🏆" : "vince! 🏆"; R.squadra.textContent = ""; rianima(R.schermo, "entra"); }
     rianima(R.ticker, "via", "Vince la rosa che vale di più! A pari valore, chi ha più crediti avanzati.");
     var gradini = el("div"); gradini.className = "st-gradini";
     [1, 0, 2].forEach(function (i) {
@@ -1301,7 +1334,7 @@
     var persone = st.giocatori.map(function (g, i) {
       var inGara = st.senzaCarta.indexOf(i) >= 0, pass = !!a.passati[i];
       return { id: i, nome: g.nome, omino: g.omino || null, num: i + 1, stato: !inGara ? "fuori" : pass ? "passato" : "gara",
-        nota: !inGara ? "✔ ha la carta" : pass ? "ha passato" : g.crediti + " 💰", puo: inGara && !pass && a.leader !== i && maxPuntata(st, i) >= a.offerta + 1 };
+        nota: !inGara ? "✔ ha la carta" : pass ? "ha passato" : g.crediti + " 💰", puo: inGara && !pass && maxPuntata(st, i) >= a.offerta + 1 };
     });
     salaAsta(t, { chiave: "t|" + st.sessione + "|" + st.roundIdx + "|" + a.idxCarta + "|" + a.carta.nome, info: "Round " + (st.roundIdx + 1) + " di " + TOT_ROUND,
       carta: cartaSala(el, a.carta.emoji, a.carta.nome, true), sotto: "Fascia ancora segreta 🤫", prezzo: a.offerta, base: false, leader: a.leader,
@@ -1313,7 +1346,7 @@
 
   function rilancia(t, st, i) {
     var a = st.asta;
-    if (!a || a.leader === i || st.senzaCarta.indexOf(i) < 0 || maxPuntata(st, i) < a.offerta + 1) return;   // chi ha già l'offerta più alta non rilancia contro se stesso
+    if (!a || st.senzaCarta.indexOf(i) < 0 || maxPuntata(st, i) < a.offerta + 1) return;   // (anche chi ha già l'offerta più alta può rialzare: si sale più in fretta)
     a.offerta += 1; a.leader = i;
     delete a.passati[i];
     FX.rilancio();
@@ -1362,7 +1395,7 @@
       ]),
       el("div", { style: "font-size:1.3rem;font-weight:900;color:var(--accento)", text: "per " + prezzo + " 💰" }),
       automatica ? el("p", { class: "as-msg", text: "Ultima carta rimasta: assegnata automaticamente." }) : null,
-      el("p", { class: "as-msg", text: "Gli restano " + st.giocatori[chi].crediti + " crediti." })
+      el("p", { class: "as-msg", text: st.giocatori[chi].crediti === 1 ? "Gli resta 1 credito." : "Gli restano " + st.giocatori[chi].crediti + " crediti." })
     ]));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: function () { prossimaAsta(t, st); } }));
     t.mostra(s);
@@ -1554,7 +1587,10 @@
         else if (m.t === "passa") passaO(id);
         else if (m.t === "voto") voto(id, m.voti);
       },
-      onErrore: function (e) { senzaRete(t, e); }
+      onErrore: function (e) {   // a partita cominciata: si ferma tutto e si dice che il collegamento è perso
+        if (!st.iniziata) return senzaRete(t, e);
+        stopTo(); st.morto = true; cb._uscito = true; fermaTutto(); erroreSchermo(t, "Collegamento perso: la partita si è fermata. Controlla la connessione e riapri la stanza.");
+      }
     });
 
     function invia() { rete.invia({ t: "vm", vm: vmAsta(st) }); }
@@ -1613,12 +1649,12 @@
     function rilanciaO(id) {
       if (st.fase !== "asta" || !st.asta) return;
       var g = perId(st, id); if (!g) return;
-      if (st.senzaCarta.indexOf(id) < 0 || st.asta.leader === id) return;   // chi ha già l'offerta più alta non rilancia contro se stesso
+      if (st.senzaCarta.indexOf(id) < 0) return;   // (anche chi ha già l'offerta più alta può rialzare)
       if (maxPuntataG(st, g) < st.asta.offerta + 1) return;
       st.asta.offerta += 1; st.asta.leader = id;
       delete st.asta.passati[id];
-      FX.rilancio();
-      riparti();
+      FX.rilancio(id === "host");
+      if (!verificaPassati()) riparti();   // se nessun altro può più offrire, è subito sua
     }
     function passaO(id) {
       if (st.fase !== "asta" || !st.asta) return;
@@ -1703,14 +1739,15 @@
       onPassa: function () { passaO("host"); },
       onAvanti: avanti,
       onVoto: function (v) { voto("host", v); },
-      onEsci: function () { stopTo(); rete.chiudi(); t.esci(); }
+      onEsci: function () { stopTo(); cb._uscito = true; fermaTutto(); rete.chiudi(); t.esci(); }
     };
-    function disegna() { disegnaAstaVM(t, vmAsta(st), cb); }
+    function disegna() { if (!st.morto) disegnaAstaVM(t, vmAsta(st), cb); }
     disegna();
   }
 
   // ---------- UN OSPITE ----------
   function ospiteAsta(t, codice) {
+    pulisciCache();
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var el = t.el, S = { myId: null, vm: null, rete: null, nome: "", msg: null };
     var cb = {
@@ -1720,7 +1757,7 @@
       onPassa: function () { S.rete && S.rete.invia({ t: "passa" }); },
       onAvanti: function () {},
       onVoto: function (v) { S.rete && S.rete.invia({ t: "voto", voti: v }); },
-      onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); }
+      onEsci: function () { cb._uscito = true; fermaTutto(); if (S.rete) S.rete.chiudi(); t.esci(); }
     };
     function disegna() {
       if (!S.vm) return;
@@ -1748,8 +1785,8 @@
         onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : null });
           setTimeout(function () { if (!S.vm && S.msg) S.msg.textContent = "Non trovo la partita. Controlla il codice, o l'host non ha ancora aperto la stanza…"; }, 8000); },
         onMsg: function (m) { if (m && m.t === "vm") { S.vm = m.vm; disegna(); } },
-        onChiuso: function () { erroreSchermo(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
-        onErrore: function () { erroreSchermo(t, "Problema di collegamento. Controlla la connessione e riprova."); }
+        onChiuso: function () { cb._uscito = true; fermaTutto(); erroreSchermo(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
+        onErrore: function () { cb._uscito = true; fermaTutto(); erroreSchermo(t, "Problema di collegamento. Controlla la connessione e riprova."); }
       });
     }
   }
@@ -1877,11 +1914,13 @@
     if (vm.fase === "lobby") return lobbyAsta(t, vm, cb);
     if (vm.fase === "fine") return schermataFineAsta(t, vm, cb);
     // (online) l'asta si gioca nella sala; finita, il martello batte prima di mostrare chi l'ha presa
+    var M = cb._martello;   // la stessa foto rimandata mentre batte il martello (qualcuno rientra): la tengo per dopo, il martello finisce
+    if (M && Date.now() < M.fino && vm.fase === "esito" && vm.esito && vm.esito.carta && chiaveVM(vm, vm.esito.carta) === M.k) { M.vm = vm; return; }
     var ver = cb._ver = (cb._ver || 0) + 1;
     if (vm.fase === "asta") return salaAstaVM(t, vm, cb);
     if (vm.fase === "esito" && vm.esito && vm.esito.carta && SALA && SALA.chiave === chiaveVM(vm, vm.esito.carta)) {
-      var e0 = vm.esito, nessuno = e0.tipo === "accollo";
-      return aggiudica(nessuno ? "Nessuno lo vuole!" : "Aggiudicato a " + e0.chiNome + " per " + e0.prezzo + "!", function () { if (cb._ver === ver) disegnaAstaVM(t, vm, cb); }, nessuno ? "NESSUNO!" : "AGGIUDICATO!");
+      var e0 = vm.esito, nessuno = e0.tipo === "accollo", m = cb._martello = { k: chiaveVM(vm, e0.carta), fino: Date.now() + 1600, vm: vm };
+      return aggiudica(nessuno ? "Nessuno lo vuole!" : "Aggiudicato a " + e0.chiNome + " per " + e0.prezzo + "!", function () { cb._martello = null; if (cb._ver === ver && !cb._uscito) disegnaAstaVM(t, m.vm, cb); }, nessuno ? "NESSUNO!" : "AGGIUDICATO!");
     }
 
     var s = t.schermata({ sotto: "Stanza " + (vm.codice || ""), icona: "🔨",
@@ -1902,7 +1941,7 @@
       var mio = vm.sceglieId === myId;
       s._contenuto.appendChild(el("p", { class: "as-msg", style: "margin-bottom:10px",
         text: mio ? "🔨 Scegli tu la carta da mettere all'asta" : ("🔨 " + vm.sceglieNome + " sta scegliendo la carta") }));
-      var g1 = el("div", { class: "as-griglia" });
+      var g1 = el("div", { class: "as-griglia" + (vm.tavolo.length > 6 ? " tante molte" : vm.tavolo.length > 3 ? " tante" : "") });
       vm.tavolo.forEach(function (c, idx) {
         var nodo = el("button", { class: "as-carta", onclick: mio ? function () { cb.onScegli(idx); } : null }, [
           el("span", icoAttr("em", c.emoji)),
@@ -1927,7 +1966,6 @@
       s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:1.3rem;font-weight:900;color:var(--accento);margin-top:8px",
         text: "per " + e2.prezzo + " 💰" }));
       if (e2.automatica) s._contenuto.appendChild(el("p", { class: "as-msg", text: "Ultima carta rimasta: assegnata automaticamente." }));
-      s._contenuto.appendChild(pannelloKit(el, vm.giocatori));
       if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: cb.onAvanti }));
       else s._piede.appendChild(el("p", { class: "as-msg", text: "In attesa dell'host…" }));
     }
@@ -2126,7 +2164,7 @@
     if (elegg.length === 1 || st.giriVuoti > st.mazzo.length) {                   // uno solo può prenderla, oppure giro a vuoto: d'ufficio a 1 (a caso tra chi ne ha bisogno)
       var i = elegg[Math.floor(Math.random() * elegg.length)]; st.mazzo.shift(); assegnaFanta(st.giocatori[i], carta, 1);
       st.giriVuoti = 0; FX.aggiudicato();
-      return esitoFanta(t, st, i, carta, 1, "forzata");
+      return esitoFanta(t, st, i, carta, 1, "forzata", elegg.length === 1 ? "unico" : "ufficio");
     }
     st.asta = { carta: carta, ruolo: carta.ruolo, offerta: 1, leader: null, passati: {}, bar: null };
     tempoAsta(st.asta, function () { scadeFanta(t, st); });
@@ -2141,7 +2179,7 @@
     var persone = st.giocatori.map(function (g, i) {
       var pieno = !!a && ruoloPieno(g, a.ruolo), pass = !!a && !!a.passati[i];
       return { id: i, nome: g.nome, omino: g.omino || null, num: i + 1, crediti: g.crediti, kit: g.kit, stato: pieno ? "fuori" : pass ? "passato" : "gara",
-        nota: pieno ? "ha già il " + (ru.breve || "") : pass ? "ha passato" : g.crediti + " 💰", puo: !!a && !pieno && !pass && a.leader !== i && maxFanta(g) >= prezzo };
+        nota: pieno ? "ha già il " + (ru.breve || "") : pass ? "ha passato" : g.crediti + " 💰", puo: !!a && !pieno && !pass && maxFanta(g) >= prezzo };
     });
     stadio(t, { chiave: "f|" + st.sessione, fase: a ? "asta" : "esito",
       info: (a ? ru.nome + " all'asta · " : "") + st.mazzo.length + " calciatori nel mazzo",
@@ -2155,7 +2193,7 @@
   }
 
   function rilanciaFanta(t, st, i) {
-    var a = st.asta; if (!a || a.leader === i) return;   // chi ha già l'offerta più alta non rilancia contro se stesso
+    var a = st.asta; if (!a) return;   // (anche chi ha già l'offerta più alta può rialzare: si sale più in fretta)
     var g = st.giocatori[i];
     if (ruoloPieno(g, a.ruolo)) return;
     var prezzo = (a.leader === null) ? a.offerta : a.offerta + 1;
@@ -2203,10 +2241,10 @@
     esitoFanta(t, st, null, carta, 0, "accollo");
   }
   // l'esito resta nello stadio: timbro sul maxischermo, la maglia che vola nel campetto; poi da solo il prossimo calciatore
-  function esitoFanta(t, st, chi, carta, prezzo, tipo) {
+  function esitoFanta(t, st, chi, carta, prezzo, tipo, motivo) {
     if (st.finita) return;
     st.nEsiti = (st.nEsiti || 0) + 1;
-    disegnaAstaFanta(t, st, { n: st.nEsiti, tipo: tipo, chiId: chi, chiNome: chi != null ? st.giocatori[chi].nome : "", carta: carta, prezzo: prezzo });
+    disegnaAstaFanta(t, st, { n: st.nEsiti, tipo: tipo, motivo: motivo || "", chiId: chi, chiNome: chi != null ? st.giocatori[chi].nome : "", carta: carta, prezzo: prezzo });
     st.pausa = setTimeout(function () { prossimaFanta(t, st); }, tipo === "accollo" ? 2300 : 3100);
   }
 
@@ -2246,7 +2284,10 @@
         else if (m.t === "rilancia") rilanciaO(id);
         else if (m.t === "passa") passaO(id);
       },
-      onErrore: function () { senzaRete(t); }
+      onErrore: function () {   // a partita cominciata: si ferma tutto e si dice che il collegamento è perso
+        if (!st.iniziata) return senzaRete(t);
+        stopTo(); st.morto = true; cb._uscito = true; fermaTutto(); erroreSchermo(t, "Collegamento perso: la partita si è fermata. Controlla la connessione e riapri la stanza.");
+      }
     });
 
     function invia() { rete.invia({ t: "vm", vm: vmFanta(st) }); }
@@ -2263,9 +2304,11 @@
       var elegg = st.giocatori.filter(function (g) { return !ruoloPieno(g, carta.ruolo); });
       if (!elegg.length) { st.mazzo.shift(); return prossima(); }
       st.nCarta++;
-      if (elegg.length === 1 || st.giriVuoti > st.mazzo.length) {   // uno solo può prenderlo, o giro a vuoto: d'ufficio a 1 (a caso tra chi ne ha bisogno)
+      var presenti = elegg.filter(function (g) { return !g.via; });
+      // uno solo può prenderlo, o a chi serve non c'è nessuno collegato, o giro a vuoto: d'ufficio a 1 (a caso tra chi ne ha bisogno)
+      if (elegg.length === 1 || !presenti.length || st.giriVuoti > st.mazzo.length) {
         var g = elegg[Math.floor(Math.random() * elegg.length)]; st.mazzo.shift(); assegnaFanta(g, carta, 1); st.giriVuoti = 0;
-        FX.aggiudicato(); return esito({ chiId: g.id, chiNome: g.nome, carta: carta, prezzo: 1, tipo: "forzata" });
+        FX.aggiudicato(); return esito({ chiId: g.id, chiNome: g.nome, carta: carta, prezzo: 1, tipo: "forzata", motivo: elegg.length === 1 ? "unico" : "ufficio" });
       }
       st.asta = { carta: carta, ruolo: carta.ruolo, offerta: 1, leader: null, passati: {} };
       st.esito = null; st.fase = "asta";
@@ -2274,12 +2317,12 @@
     function riparti() { stopTo(); st.giro++; st.scadenza = Date.now() + SECONDI * 1000; st._to = setTimeout(scade, SECONDI * 1000); bd(); }
     function scade() { if (st.fase !== "asta" || !st.asta) return; if (st.asta.leader !== null) chiudi(); else accollo(); }
     function rilanciaO(id) {
-      if (st.fase !== "asta" || !st.asta || st.asta.leader === id) return;   // chi ha già l'offerta più alta non rilancia contro se stesso
+      if (st.fase !== "asta" || !st.asta) return;   // (anche chi ha già l'offerta più alta può rialzare)
       var g = perId(st, id); if (!g || ruoloPieno(g, st.asta.ruolo)) return;
       var prezzo = (st.asta.leader === null) ? st.asta.offerta : st.asta.offerta + 1;
       if (maxFanta(g) < prezzo) return;
       st.asta.offerta = prezzo; st.asta.leader = id; delete st.asta.passati[id];
-      FX.rilancio();
+      FX.rilancio(id === "host");
       if (!verifica()) riparti();   // se sono già tutti passati, aggiudico subito (niente attesa dei 10s)
     }
     function passaO(id) {
@@ -2331,9 +2374,9 @@
       myId: "host", sonoHost: true,
       onComincia: comincia, onNuova: nuovaInLobby,
       onRilancia: function () { rilanciaO("host"); }, onPassa: function () { passaO("host"); },
-      onEsci: function () { stopTo(); rete.chiudi(); t.esci(); }
+      onEsci: function () { stopTo(); cb._uscito = true; fermaTutto(); rete.chiudi(); t.esci(); }
     };
-    function disegna() { disegnaFantaVM(t, vmFanta(st), cb); }
+    function disegna() { if (!st.morto) disegnaFantaVM(t, vmFanta(st), cb); }
     disegna();
   }
 
@@ -2353,7 +2396,7 @@
         ultimoDuello: (st.giocatori.filter(function (g) { return !ruoloPieno(g, a.ruolo); }).length === 2 &&
           st.mazzo.filter(function (c) { return c.ruolo === a.ruolo; }).length === 2)
       } : null,
-      esito: e ? { n: e.n, nCarta: e.nCarta, tipo: e.tipo, chiId: e.chiId, chiNome: e.chiNome, prezzo: e.prezzo, carta: { nome: e.carta.nome, squadra: e.carta.squadra, ruolo: e.carta.ruolo } } : null,
+      esito: e ? { n: e.n, nCarta: e.nCarta, tipo: e.tipo, motivo: e.motivo || "", chiId: e.chiId, chiNome: e.chiNome, prezzo: e.prezzo, carta: { nome: e.carta.nome, squadra: e.carta.squadra, ruolo: e.carta.ruolo } } : null,
       restano: st.mazzo ? st.mazzo.length : 0,
       classifica: st.classifica || null
     };
