@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 203,
+    data: "13 ottobre 2026",
+    titolo: "Fantacalcio: il calciatore che nessuno vuole torna nel mazzo 🔁",
+    descrizione: [
+      "Se nessuno offre per un calciatore, torna in fondo al mazzo e intanto escono gli altri: puoi rischiare e aspettare quello dopo. Non viene mai dato a caso la prima volta.",
+      "Solo quando tutti quelli rimasti di un ruolo sono stati rifiutati 2 volte, vanno a caso, per 1 credito, a chi ne ha ancora bisogno. Prima il maxischermo avvisa: \"Ultima chiamata\"."
+    ]
+  },
+  {
     v: 202,
     data: "13 ottobre 2026",
     titolo: "L'Asta tutta nuova: la sala d'aste e lo stadio del fantacalcio 🔨⚽",
