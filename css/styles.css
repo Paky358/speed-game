@@ -1515,3 +1515,19 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 .nb-ok{ position:absolute; left:50%; bottom:calc(20px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:5; white-space:nowrap; border:0;
   padding:13px 26px; border-radius:999px; background:linear-gradient(180deg,#ffe066,#fab005); color:#3a2200; font-weight:900; font-size:1rem; box-shadow:0 6px 16px rgba(0,0,0,.35); }
 .nb-altre{ display:block; margin:6px auto 4px; border:0; padding:11px 18px; border-radius:999px; background:#fffdf6; color:#7a4a22; font-weight:900; box-shadow:0 5px 12px rgba(0,0,0,.3); }
+
+/* ---- città: a sinistra le cose da fare oggi (pesca, scavi, orto, novità, bonus, trofeo), con l'avviso che salta ---- */
+.citta-avvisi{ position:absolute; z-index:2; left:8px; top:calc(84px + env(safe-area-inset-top)); display:flex; flex-direction:column; gap:7px; pointer-events:none; }
+.citta-av{ pointer-events:auto; position:relative; display:flex; flex-direction:column; align-items:center; width:66px; padding:0; border:0; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.ca-tondo{ position:relative; width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:3px solid #fff;
+  background-image:radial-gradient(circle at 34% 26%, rgba(255,255,255,.6) 0 16%, rgba(255,255,255,0) 46%), linear-gradient(180deg, rgba(255,255,255,.12), rgba(0,0,0,.18));
+  box-shadow:0 4px 0 rgba(0,0,0,.2), 0 7px 14px rgba(0,0,0,.32); }
+.ca-ico{ font-size:26px; line-height:1; filter:drop-shadow(0 2px 1px rgba(0,0,0,.28)); }
+.citta-av.spento .ca-tondo{ filter:saturate(.3) brightness(.95); }
+.ca-badge{ position:absolute; top:-6px; right:-6px; min-width:22px; height:22px; padding:0 6px; border-radius:11px; background:#fa5252; color:#fff; font-weight:900; font-size:13px; line-height:18px; text-align:center; border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.35); }
+.citta-av.acceso .ca-badge{ animation:caSalta 1.5s ease-in-out infinite; }
+.citta-av.acceso .ca-tondo{ animation:caPulsa 2.4s ease-in-out infinite; }
+.citta-av:active .ca-tondo{ transform:scale(.92); }
+@keyframes caSalta{ 0%,58%,100%{ transform:translateY(0) scale(1); } 68%{ transform:translateY(-6px) scale(1.12); } 78%{ transform:translateY(0) scale(1); } 86%{ transform:translateY(-2px); } }
+@keyframes caPulsa{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.07); } }
+.ca-nome{ margin-top:3px; max-width:70px; padding:2px 6px; border-radius:8px; background:rgba(20,24,40,.74); color:#fff; font-weight:800; font-size:10.5px; line-height:1.25; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }

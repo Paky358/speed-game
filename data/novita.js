@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 199,
+    data: "13 ottobre 2026",
+    titolo: "In città, le cose da fare oggi ❗",
+    descrizione: [
+      "A sinistra nella città ci sono i pulsanti delle attività del giorno: la pesca con le esche che ti restano, gli scavi coi colpi, le novità da leggere e il bonus di XP della prima partita.",
+      "Quando c'è qualcosa da fare il pulsante pulsa e il numero rosso salta; quando hai finito vedi tra quanto tornano le esche e i colpi (a mezzanotte).",
+      "E se un trofeo è quasi tuo, compare anche lui: ti dice quanto ti manca."
+    ]
+  },
+  {
     v: 198,
     data: "13 ottobre 2026",
     titolo: "Le novità si leggono sulla bacheca della piazza 📌",

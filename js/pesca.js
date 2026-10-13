@@ -1109,5 +1109,8 @@
     document.head.appendChild(st);
   }
 
-  window.SGPesca = { crea: crea, PESCI: PESCI, CURIOSITA: CURIOSITA, disegnaPesce: disegnaPesce, immaginePesce: immaginePesce, svgPesce: svgPesce, pesce: pesce, pesoKg: pesoKg, kg: kg };
+  function stato(d) {   // le esche gratis di oggi, solo dai dati salvati (per gli avvisi in città, senza aprire la pesca)
+    var e = d && d.esche; return { max: ESCHE_GIORNO, gratis: e && e.g === oggi() ? Math.max(0, ESCHE_GIORNO - (e.usate || 0)) : ESCHE_GIORNO, extra: (d && d.extra) || 0 };
+  }
+  window.SGPesca = { crea: crea, stato: stato, PESCI: PESCI, CURIOSITA: CURIOSITA, disegnaPesce: disegnaPesce, immaginePesce: immaginePesce, svgPesce: svgPesce, pesce: pesce, pesoKg: pesoKg, kg: kg };
 })();

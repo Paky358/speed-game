@@ -788,8 +788,43 @@
       ruotaDelGiorno(aggTesta);
     };
     aggRegalo();
+    // ---- a sinistra, come nei giochi che vanno forte: le cose da fare oggi, con l'avviso che salta e il conto alla rovescia ----
+    var colonna = el("div", { class: "citta-avvisi" }), ultimaColonna = "";
+    function finoMezzanotte() { var d = new Date(); d.setHours(24, 0, 0, 0); return d - Date.now(); }
+    function portaA(k, altrimenti) { if (vista && vista._vai && vista._vai(k)) return; altrimenti(); }   // in città a piedi l'avatar ci corre; se no si entra subito
+    function trofeoVicino() {   // il trofeo che ti manca di meno (non quelli che premiano le sconfitte)
+      var prof = cloud && N.profilo && N.profilo(), vic = null; if (!prof) return null;
+      TROFEI.forEach(function (t) {
+        if (/sconfitt|sball|perse/i.test(t.stat) || trofeoFatto(prof, t)) return;
+        var v = valoreStat(prof, t.gioco, t.stat), q = v / t.meta; if (!v) return;
+        if (q >= .6 && (!vic || q > vic.q)) vic = { q: q, t: t, manca: t.meta - v };
+      });
+      return vic;
+    }
+    function vociAvvisi() {
+      var l = [], ps, sc, gs, tv;
+      if (cloud && window.SGPesca && SGPesca.stato) { ps = SGPesca.stato(datiPesca());
+        l.push({ id: "pesca", icona: "🎣", col: "#1c7ed6", acceso: ps.gratis > 0, badge: ps.gratis > 0 ? String(ps.gratis) : "", sotto: ps.gratis > 0 ? ps.gratis + " esche" : "tra " + tempoBreve(finoMezzanotte()), tocca: function () { portaA("pesca", schermataPesca); } }); }
+      if (cloud && window.SGScavi && SGScavi.stato) { sc = SGScavi.stato(datiScavi()); var inf = eProprietario();
+        l.push({ id: "scavi", icona: "🏺", col: "#c0702f", acceso: inf || sc.gratis > 0, badge: inf ? "∞" : sc.gratis > 0 ? String(sc.gratis) : "", sotto: inf ? "scava!" : sc.gratis > 0 ? sc.gratis + " colpi" : "tra " + tempoBreve(finoMezzanotte()), tocca: function () { portaA("scavi", schermataScavi); } }); }
+      if (cloud && giardinoPronto() && SGGiardino.stato) { gs = SGGiardino.stato(datiGiardino()); var da = gs.pronte + gs.sete;
+        l.push({ id: "orto", icona: gs.pronte ? "🧺" : gs.sete ? "💧" : "🌱", col: "#2f9e44", acceso: da > 0, badge: da > 0 ? String(da) : "", sotto: gs.pronte ? "raccogli" : gs.sete ? "ha sete" : gs.tra != null ? "tra " + tempoBreve(gs.tra) : "pianta!", tocca: function () { schermataGiardino(); } }); }
+      if (!novitaTutteViste()) l.push({ id: "novita", icona: "📰", col: "#4c6ef5", acceso: true, badge: "!", sotto: "Novità", tocca: function () { portaA("piazza", function () { rientro = schermataCitta; schermataNovita(); }); } });
+      if (prog && N.progressione().xpGiorno !== oggiStr()) l.push({ id: "xp", icona: "⭐", col: "#f59f00", acceso: true, badge: "!", sotto: "+" + SGLivelli.BONUS_GIORNO + " XP", tocca: function () { scrollCitta = 0; ultimoEdificio = null; schermataHome(); } });
+      if ((tv = trofeoVicino())) l.push({ id: "trofeo", icona: tv.t.icona || "🏆", col: "#7048e8", acceso: tv.q >= .9, badge: tv.q >= .9 ? "!" : "", sotto: "ne mancano " + cifre(tv.manca), tocca: function () { schermataSfideGioco(tv.t.gioco); } });
+      return l.slice(0, window.innerHeight < 700 ? 5 : 6);
+    }
+    function aggiornaAvvisi() {   // si rifà solo la colonna, e solo se è cambiato qualcosa (niente lampeggio)
+      var l = vociAvvisi(), chiave = JSON.stringify(l.map(function (v) { return [v.id, v.icona, v.acceso, v.badge, v.sotto]; }));
+      if (chiave === ultimaColonna) return; ultimaColonna = chiave; svuota(colonna);
+      l.forEach(function (v) {
+        var tondo = el("span", { class: "ca-tondo", style: "background-color:" + v.col }, [ el("span", { class: "ca-ico", text: v.icona }) ]);
+        if (v.badge) tondo.appendChild(el("span", { class: "ca-badge", text: v.badge }));
+        colonna.appendChild(el("button", { class: "citta-av " + (v.acceso ? "acceso" : "spento"), "aria-label": v.sotto, onclick: function () { if (!via) v.tocca(); } }, [ tondo, el("span", { class: "ca-nome", text: v.sotto }) ]));
+      });
+    }
     var s = el("div", { class: "schermata citta-vista" + (fase === "notte" ? " notte" : ""), style: "background:" + SGCitta.colorePrato(fase) }, [
-      mappa,
+      mappa, colonna,
       el("div", { class: "citta-testa" }, [
         el("button", { class: "citta-indietro", text: "‹", "aria-label": "Indietro", onclick: function () { scrollCitta = 0; ultimoEdificio = null; schermataHome(); } }),
         el("button", { class: "citta-io", "aria-label": "Il tuo profilo", onclick: function () { schermataAccesso(schermataCitta); } }, [ faccia, testoIo ]),
@@ -817,8 +852,10 @@
       suonoEdificio(k);
       setTimeout(function () { entraEdificio(k); }, 400);
     });
+    aggiornaAvvisi();
     mostra(s);
     if (vista) vista._monta(); else if (scrollCitta) mappa.scrollTop = scrollCitta;
+    var tAvvisi = setInterval(function () { if (!document.body.contains(s)) return clearInterval(tAvvisi); aggiornaAvvisi(); }, 30000);   // (a mezzanotte tornano esche e colpi, le piante maturano)
   }
 
   // ---- Dentro gli edifici della città: le sale coi giochi della categoria (stesso modello per tutti) ----

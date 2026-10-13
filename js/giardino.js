@@ -1722,6 +1722,11 @@
       anim = requestAnimationFrame(function (o) { ult = o; giro(o); });
     };
     s._chiudi = chiudi;
+    s._vai = function (vai) {   // (in città: un avviso a sinistra porta di corsa all'attività, e si entra)
+      var o = D.ogg.filter(function (x) { var mi = infoMobile(x.t); return mi && mi.vai === vai; })[0]; if (!o) return false;
+      vaiAOggetto(o); if (av.strada.length > 16) { av.strada = []; av.poi = null; return false; }   // (lontano: si entra subito, senza la lunga corsa)
+      av.marcia = 3; av.meta = { k: o.k }; return true;
+    };
     window.__giardino = { D: D, av: av, disegna: function () { disegna(); }, fase: function (f) { FASE = f; sfondo = null; sporco = true; }, pw: pw, tap: function (x, y) { tocca(x, y); },
       gira: gira, modo: cambiaModo, attrezzo: function (a, id) { attrezzo = a; if (id) sceltaKit[GRUPPO[a]] = id; pannelloCostruisci(); }, muri: function (a, b) { costruisciMuri({ a: a, b: b }); },
       faccia: function (k, sv) { for (var i = 0; i < facce.length; i++) if (facce[i].k === k && (sv == null || facce[i].sv === sv)) return facce[i]; return null; },
@@ -1814,5 +1819,22 @@
     document.head.appendChild(st);
   }
 
-  window.SGGiardino = { crea: crea, ALBERI: ALBERI, SEMI: SEMI };
+  // quante piante sono pronte da raccogliere o hanno sete, solo dai dati salvati (per gli avvisi in città, senza aprire la casa);
+  // tra: fra quanti millisecondi succede la prossima cosa da sola (una pianta matura, o le finisce l'acqua). Rifà i conti di cresci/maturo/sete su una copia.
+  function stato(d, ora) {
+    var r = { pronte: 0, sete: 0, tra: null }; if (!d || !(d.v >= 2) || !d.ogg) return r; ora = ora || Date.now();
+    d.ogg.forEach(function (x) {
+      var A = ALBERI[x.t], S = x.t === "orto" && x.pianta ? SEMI[x.pianta] : null; if (!A && !S) return;
+      var cr = x.cresci || 0, fr = x.fr || 0, acqua = x.acqua || 0, agg = x.agg || ora, pronta;
+      var dt = acqua && ora > agg ? Math.max(0, Math.min(ora, acqua + ACQUA) - Math.max(agg, acqua)) : 0;
+      if (A) { if (cr < A.tot) { var sv = A.tot - cr; if (dt <= sv) cr += dt; else { cr = A.tot; fr = Math.min(A.periodo, fr + dt - sv); } } else fr = Math.min(A.periodo, fr + dt); pronta = cr >= A.tot && fr >= A.periodo; }
+      else { cr = Math.min(S.tot, cr + dt); pronta = cr >= S.tot; }
+      if (pronta) { r.pronte++; return; }
+      if (!acqua || ora > acqua + ACQUA) { r.sete++; return; }
+      var t = Math.min(A ? Math.max(0, A.tot - cr) + (A.periodo - fr) : S.tot - cr, acqua + ACQUA - ora);
+      if (r.tra == null || t < r.tra) r.tra = t;
+    });
+    return r;
+  }
+  window.SGGiardino = { crea: crea, ALBERI: ALBERI, SEMI: SEMI, stato: stato };
 })();

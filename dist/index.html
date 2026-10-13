@@ -1529,9 +1529,25 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 .nb-ok{ position:absolute; left:50%; bottom:calc(20px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:5; white-space:nowrap; border:0;
   padding:13px 26px; border-radius:999px; background:linear-gradient(180deg,#ffe066,#fab005); color:#3a2200; font-weight:900; font-size:1rem; box-shadow:0 6px 16px rgba(0,0,0,.35); }
 .nb-altre{ display:block; margin:6px auto 4px; border:0; padding:11px 18px; border-radius:999px; background:#fffdf6; color:#7a4a22; font-weight:900; box-shadow:0 5px 12px rgba(0,0,0,.3); }
+
+/* ---- città: a sinistra le cose da fare oggi (pesca, scavi, orto, novità, bonus, trofeo), con l'avviso che salta ---- */
+.citta-avvisi{ position:absolute; z-index:2; left:8px; top:calc(84px + env(safe-area-inset-top)); display:flex; flex-direction:column; gap:7px; pointer-events:none; }
+.citta-av{ pointer-events:auto; position:relative; display:flex; flex-direction:column; align-items:center; width:66px; padding:0; border:0; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.ca-tondo{ position:relative; width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:3px solid #fff;
+  background-image:radial-gradient(circle at 34% 26%, rgba(255,255,255,.6) 0 16%, rgba(255,255,255,0) 46%), linear-gradient(180deg, rgba(255,255,255,.12), rgba(0,0,0,.18));
+  box-shadow:0 4px 0 rgba(0,0,0,.2), 0 7px 14px rgba(0,0,0,.32); }
+.ca-ico{ font-size:26px; line-height:1; filter:drop-shadow(0 2px 1px rgba(0,0,0,.28)); }
+.citta-av.spento .ca-tondo{ filter:saturate(.3) brightness(.95); }
+.ca-badge{ position:absolute; top:-6px; right:-6px; min-width:22px; height:22px; padding:0 6px; border-radius:11px; background:#fa5252; color:#fff; font-weight:900; font-size:13px; line-height:18px; text-align:center; border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.35); }
+.citta-av.acceso .ca-badge{ animation:caSalta 1.5s ease-in-out infinite; }
+.citta-av.acceso .ca-tondo{ animation:caPulsa 2.4s ease-in-out infinite; }
+.citta-av:active .ca-tondo{ transform:scale(.92); }
+@keyframes caSalta{ 0%,58%,100%{ transform:translateY(0) scale(1); } 68%{ transform:translateY(-6px) scale(1.12); } 78%{ transform:translateY(0) scale(1); } 86%{ transform:translateY(-2px); } }
+@keyframes caPulsa{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.07); } }
+.ca-nome{ margin-top:3px; max-width:70px; padding:2px 6px; border-radius:8px; background:rgba(20,24,40,.74); color:#fff; font-weight:800; font-size:10.5px; line-height:1.25; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 </style>
 <div id="app"></div>
-<script>window.SG_EXTRA = 'extra.js?v=9ac7d3a47e';</script>
+<script>window.SG_EXTRA = 'extra.js?v=a934e0018a';</script>
 <script>window.SG_FOTO = {"asta":1,"blackjack":1,};</script>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
 <form name="bug" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea><input type="text" name="contesto" /></form>
@@ -9411,7 +9427,10 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
     document.head.appendChild(st);
   }
 
-  window.SGPesca = { crea: crea, PESCI: PESCI, CURIOSITA: CURIOSITA, disegnaPesce: disegnaPesce, immaginePesce: immaginePesce, svgPesce: svgPesce, pesce: pesce, pesoKg: pesoKg, kg: kg };
+  function stato(d) {   // le esche gratis di oggi, solo dai dati salvati (per gli avvisi in città, senza aprire la pesca)
+    var e = d && d.esche; return { max: ESCHE_GIORNO, gratis: e && e.g === oggi() ? Math.max(0, ESCHE_GIORNO - (e.usate || 0)) : ESCHE_GIORNO, extra: (d && d.extra) || 0 };
+  }
+  window.SGPesca = { crea: crea, stato: stato, PESCI: PESCI, CURIOSITA: CURIOSITA, disegnaPesce: disegnaPesce, immaginePesce: immaginePesce, svgPesce: svgPesce, pesce: pesce, pesoKg: pesoKg, kg: kg };
 })();
 /* =========================================================
    SPeeD GAME — GLI SCAVI ANTICHI (fuori città, oltre il parco)
@@ -10511,7 +10530,10 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
     document.head.appendChild(st);
   }
 
-  window.SGScavi = { crea: crea, REPERTI: REPERTI, disegnaReperto: disegnaReperto, tela: tela };
+  function stato(d) {   // i colpi gratis di oggi, solo dai dati salvati (per gli avvisi in città, senza aprire gli scavi)
+    var c = d && d.colpi; return { max: COLPI_GIORNO, gratis: c && c.g === oggi() ? Math.max(0, COLPI_GIORNO - (c.usati || 0)) : COLPI_GIORNO, extra: (d && d.extra) || 0 };
+  }
+  window.SGScavi = { crea: crea, stato: stato, REPERTI: REPERTI, disegnaReperto: disegnaReperto, tela: tela };
 })();
 
 /* =========================================================
@@ -11304,8 +11326,43 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
       ruotaDelGiorno(aggTesta);
     };
     aggRegalo();
+    // ---- a sinistra, come nei giochi che vanno forte: le cose da fare oggi, con l'avviso che salta e il conto alla rovescia ----
+    var colonna = el("div", { class: "citta-avvisi" }), ultimaColonna = "";
+    function finoMezzanotte() { var d = new Date(); d.setHours(24, 0, 0, 0); return d - Date.now(); }
+    function portaA(k, altrimenti) { if (vista && vista._vai && vista._vai(k)) return; altrimenti(); }   // in città a piedi l'avatar ci corre; se no si entra subito
+    function trofeoVicino() {   // il trofeo che ti manca di meno (non quelli che premiano le sconfitte)
+      var prof = cloud && N.profilo && N.profilo(), vic = null; if (!prof) return null;
+      TROFEI.forEach(function (t) {
+        if (/sconfitt|sball|perse/i.test(t.stat) || trofeoFatto(prof, t)) return;
+        var v = valoreStat(prof, t.gioco, t.stat), q = v / t.meta; if (!v) return;
+        if (q >= .6 && (!vic || q > vic.q)) vic = { q: q, t: t, manca: t.meta - v };
+      });
+      return vic;
+    }
+    function vociAvvisi() {
+      var l = [], ps, sc, gs, tv;
+      if (cloud && window.SGPesca && SGPesca.stato) { ps = SGPesca.stato(datiPesca());
+        l.push({ id: "pesca", icona: "🎣", col: "#1c7ed6", acceso: ps.gratis > 0, badge: ps.gratis > 0 ? String(ps.gratis) : "", sotto: ps.gratis > 0 ? ps.gratis + " esche" : "tra " + tempoBreve(finoMezzanotte()), tocca: function () { portaA("pesca", schermataPesca); } }); }
+      if (cloud && window.SGScavi && SGScavi.stato) { sc = SGScavi.stato(datiScavi()); var inf = eProprietario();
+        l.push({ id: "scavi", icona: "🏺", col: "#c0702f", acceso: inf || sc.gratis > 0, badge: inf ? "∞" : sc.gratis > 0 ? String(sc.gratis) : "", sotto: inf ? "scava!" : sc.gratis > 0 ? sc.gratis + " colpi" : "tra " + tempoBreve(finoMezzanotte()), tocca: function () { portaA("scavi", schermataScavi); } }); }
+      if (cloud && giardinoPronto() && SGGiardino.stato) { gs = SGGiardino.stato(datiGiardino()); var da = gs.pronte + gs.sete;
+        l.push({ id: "orto", icona: gs.pronte ? "🧺" : gs.sete ? "💧" : "🌱", col: "#2f9e44", acceso: da > 0, badge: da > 0 ? String(da) : "", sotto: gs.pronte ? "raccogli" : gs.sete ? "ha sete" : gs.tra != null ? "tra " + tempoBreve(gs.tra) : "pianta!", tocca: function () { schermataGiardino(); } }); }
+      if (!novitaTutteViste()) l.push({ id: "novita", icona: "📰", col: "#4c6ef5", acceso: true, badge: "!", sotto: "Novità", tocca: function () { portaA("piazza", function () { rientro = schermataCitta; schermataNovita(); }); } });
+      if (prog && N.progressione().xpGiorno !== oggiStr()) l.push({ id: "xp", icona: "⭐", col: "#f59f00", acceso: true, badge: "!", sotto: "+" + SGLivelli.BONUS_GIORNO + " XP", tocca: function () { scrollCitta = 0; ultimoEdificio = null; schermataHome(); } });
+      if ((tv = trofeoVicino())) l.push({ id: "trofeo", icona: tv.t.icona || "🏆", col: "#7048e8", acceso: tv.q >= .9, badge: tv.q >= .9 ? "!" : "", sotto: "ne mancano " + cifre(tv.manca), tocca: function () { schermataSfideGioco(tv.t.gioco); } });
+      return l.slice(0, window.innerHeight < 700 ? 5 : 6);
+    }
+    function aggiornaAvvisi() {   // si rifà solo la colonna, e solo se è cambiato qualcosa (niente lampeggio)
+      var l = vociAvvisi(), chiave = JSON.stringify(l.map(function (v) { return [v.id, v.icona, v.acceso, v.badge, v.sotto]; }));
+      if (chiave === ultimaColonna) return; ultimaColonna = chiave; svuota(colonna);
+      l.forEach(function (v) {
+        var tondo = el("span", { class: "ca-tondo", style: "background-color:" + v.col }, [ el("span", { class: "ca-ico", text: v.icona }) ]);
+        if (v.badge) tondo.appendChild(el("span", { class: "ca-badge", text: v.badge }));
+        colonna.appendChild(el("button", { class: "citta-av " + (v.acceso ? "acceso" : "spento"), "aria-label": v.sotto, onclick: function () { if (!via) v.tocca(); } }, [ tondo, el("span", { class: "ca-nome", text: v.sotto }) ]));
+      });
+    }
     var s = el("div", { class: "schermata citta-vista" + (fase === "notte" ? " notte" : ""), style: "background:" + SGCitta.colorePrato(fase) }, [
-      mappa,
+      mappa, colonna,
       el("div", { class: "citta-testa" }, [
         el("button", { class: "citta-indietro", text: "‹", "aria-label": "Indietro", onclick: function () { scrollCitta = 0; ultimoEdificio = null; schermataHome(); } }),
         el("button", { class: "citta-io", "aria-label": "Il tuo profilo", onclick: function () { schermataAccesso(schermataCitta); } }, [ faccia, testoIo ]),
@@ -11333,8 +11390,10 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
       suonoEdificio(k);
       setTimeout(function () { entraEdificio(k); }, 400);
     });
+    aggiornaAvvisi();
     mostra(s);
     if (vista) vista._monta(); else if (scrollCitta) mappa.scrollTop = scrollCitta;
+    var tAvvisi = setInterval(function () { if (!document.body.contains(s)) return clearInterval(tAvvisi); aggiornaAvvisi(); }, 30000);   // (a mezzanotte tornano esche e colpi, le piante maturano)
   }
 
   // ---- Dentro gli edifici della città: le sale coi giochi della categoria (stesso modello per tutti) ----
@@ -23072,6 +23131,16 @@ window.SG_NCC_CATEGORIE = {
      descrizione-> elenco di righe: cosa cambia per chi gioca
    ========================================================= */
 window.SG_NOVITA = [
+  {
+    v: 199,
+    data: "13 ottobre 2026",
+    titolo: "In città, le cose da fare oggi ❗",
+    descrizione: [
+      "A sinistra nella città ci sono i pulsanti delle attività del giorno: la pesca con le esche che ti restano, gli scavi coi colpi, le novità da leggere e il bonus di XP della prima partita.",
+      "Quando c'è qualcosa da fare il pulsante pulsa e il numero rosso salta; quando hai finito vedi tra quanto tornano le esche e i colpi (a mezzanotte).",
+      "E se un trofeo è quasi tuo, compare anche lui: ti dice quanto ti manca."
+    ]
+  },
   {
     v: 198,
     data: "13 ottobre 2026",

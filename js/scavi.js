@@ -1096,5 +1096,8 @@
     document.head.appendChild(st);
   }
 
-  window.SGScavi = { crea: crea, REPERTI: REPERTI, disegnaReperto: disegnaReperto, tela: tela };
+  function stato(d) {   // i colpi gratis di oggi, solo dai dati salvati (per gli avvisi in città, senza aprire gli scavi)
+    var c = d && d.colpi; return { max: COLPI_GIORNO, gratis: c && c.g === oggi() ? Math.max(0, COLPI_GIORNO - (c.usati || 0)) : COLPI_GIORNO, extra: (d && d.extra) || 0 };
+  }
+  window.SGScavi = { crea: crea, stato: stato, REPERTI: REPERTI, disegnaReperto: disegnaReperto, tela: tela };
 })();
