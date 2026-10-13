@@ -346,6 +346,13 @@
   function voceKit(gruppo, id) { var l = listaKit(gruppo); for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
   function primoKit(gruppo, dove) { var l = listaKit(gruppo); for (var i = 0; i < l.length; i++) if (!dove || !l[i].dove || l[i].dove === dove || l[i].dove === "tutti") return l[i]; return l[0] || null; }
   function texKit(gruppo, id, notte) { var v = voceKit(gruppo, id); if (!v) return null; return immagineSvg("k|" + gruppo + "|" + id + (notte ? "|n" : ""), function () { return v.svg({ notte: !!notte }); }); }
+  var ALONI = {};
+  function alone(col) {   // l'alone di una luce: disegnato una volta per colore, poi si usa come immagine
+    if (ALONI[col]) return ALONI[col];
+    var c = document.createElement("canvas"); c.width = c.height = 128; var n = parseInt(String(col).slice(1), 16), x = c.getContext("2d"), cc = [n >> 16 & 255, n >> 8 & 255, n & 255].join(","), g = x.createRadialGradient(64, 64, 1, 64, 64, 64);
+    g.addColorStop(0, "rgba(" + cc + ",1)"); g.addColorStop(1, "rgba(" + cc + ",0)"); x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+    return (ALONI[col] = c);
+  }
   function pronta(im) { return !!(im && im.complete && im.naturalWidth); }
 
   // =========================================================
@@ -1491,7 +1498,9 @@
           ctx.globalCompositeOperation = "lighter";
           var luci = D.ogg.filter(function (o) { return o.t === "lampione"; }).map(function (o) { var p = pw(o.c + .5, o.r + .5); return { x: p.x, y: p.y - TW * 1.5, r: TW * 1.7 }; }).concat(luciOgg);   // + le lampade, i neon, gli acquari…
           Object.keys(D.muri).forEach(function (k) { var m = D.muri[k]; if (!porta(m)) return; var ll = lati(k), d0 = dentro(ll[0][0], ll[0][1]), d1 = dentro(ll[1][0], ll[1][1]); if (d0 === d1) return; var t = d0 ? ll[1] : ll[0], q = k.split(","), mx = q[0] === "a" ? +q[1] : +q[1] + .5, my = q[0] === "a" ? +q[2] + .5 : +q[2]; var p = pw(mx + (t[0] + .5 - mx) * .5, my + (t[1] + .5 - my) * .5); luci.push({ x: p.x, y: p.y - TW * .6, r: TW * 1.3 }); });
-          luci.forEach(function (l) { var cc = rgb(l.c || "#ffbe5a").join(","), gg = ctx.createRadialGradient(l.x, l.y, 2, l.x, l.y, l.r), al = LUOGO ? ".32" : ".4"; gg.addColorStop(0, "rgba(" + cc + "," + al + ")"); gg.addColorStop(1, "rgba(" + cc + ",0)"); ctx.fillStyle = gg; ctx.fillRect(l.x - l.r, l.y - l.r, l.r * 2, l.r * 2); });
+          ctx.globalAlpha = LUOGO ? .32 : .4;   // (ogni alone è un'immagine fatta una volta per colore: molto più leggero che ricalcolarlo a ogni fotogramma)
+          luci.forEach(function (l) { if (l.x + l.r < 0 || l.x - l.r > cw || l.y + l.r < 0 || l.y - l.r > ch) return; ctx.drawImage(alone(l.c || "#ffbe5a"), l.x - l.r, l.y - l.r, l.r * 2, l.r * 2); });
+          ctx.globalAlpha = 1;
           ctx.globalCompositeOperation = "source-over";
         }
       }
@@ -1696,10 +1705,11 @@
       var subito = [], dopo = [];
       D.ogg.forEach(function (o) { var b = appeso(o) ? null : box(o); if (!b || vicino((b.c0 + b.c1) / 2, (b.r0 + b.r1) / 2)) subito = subito.concat(arteDi(o)); else dopo.push(o); });
       GENTE.forEach(function (g) { if (vicino(g.u, g.v)) subito = subito.concat(dellaPersona(g)); else dopo.push(g); });
-      function scalda() {   // il resto: due cose ogni tanto, così la sala resta fluida mentre cammini
+      function scalda() {   // il resto: una cosa alla volta e solo quando il telefono è libero (mai mentre cammini o muovi la vista: resta fluido)
         if (!vivo() || !dopo.length) return;
-        dopo.splice(0, 2).forEach(function (x) { if (x.cfg) dellaPersona(x); else arteDi(x); });
-        setTimeout(scalda, 90);
+        if (av.strada.length || pinza || tocco || giroAnim) return setTimeout(scalda, 350);
+        var fai = function () { if (!vivo()) return; var x = dopo.shift(); if (x) { if (x.cfg) dellaPersona(x); else arteDi(x); } setTimeout(scalda, 70); };
+        if (window.requestIdleCallback) requestIdleCallback(fai, { timeout: 600 }); else fai();
       }
       (function guarda() {
         if (!vivo()) return;

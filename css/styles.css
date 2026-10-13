@@ -1471,13 +1471,16 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 
 /* ---- Novità: la bacheca della piazza vista da vicino, con la città sfocata dietro ---- */
 .schermata.nb-vista{ position:fixed; inset:0; z-index:5; padding:0; min-height:0; overflow:hidden; background:#6a9a52; animation:none; }
-.nb-sfondo{ position:absolute; inset:-40px; background-size:cover; background-position:center 40%; filter:blur(9px) saturate(1.15) brightness(.92); transform:scale(1.06); }
+.nb-sfondo{ position:absolute; inset:-40px; background-size:cover; background-position:center 40%; filter:blur(9px) saturate(1.15) brightness(.92); transform:scale(1.06); will-change:transform; }
 .nb-sfondo.svg{ background-size:190% auto; background-position:center 22%; background-repeat:no-repeat; background-color:#9bd36d; }
 .nb-vista.tramonto .nb-sfondo{ filter:blur(9px) saturate(1.2) brightness(.82) sepia(.2); }
 .nb-vista.notte .nb-sfondo{ filter:blur(9px) brightness(.5) saturate(.9); }
 .nb-velo{ position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at 50% 42%, rgba(0,0,0,0) 38%, rgba(12,18,10,.5) 100%); }
 .nb-vista.notte .nb-velo{ background:radial-gradient(ellipse at 50% 18%, rgba(255,214,140,.28) 0%, rgba(255,214,140,0) 42%), radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 30%, rgba(5,8,22,.65) 100%); }
-.nb-scatto{ position:absolute; inset:0; z-index:6; background-size:100% 100%; pointer-events:none; }
+.nb-scatto{ position:absolute; left:0; top:0; width:100%; height:100%; z-index:6; pointer-events:none; }
+.nb-sfondo-c{ position:absolute; left:-24px; top:-24px; width:calc(100% + 48px); height:calc(100% + 48px); }
+.nb-vista.notte{ background:#0b0f22; } .nb-vista.notte .nb-sfondo-c{ opacity:.5; }
+.nb-vista.tramonto .nb-sfondo-c{ opacity:.85; } .nb-vista.tramonto{ background:#5a2a1a; }
 .nb-bacheca{ position:absolute; left:50%; top:calc(12px + env(safe-area-inset-top)); bottom:-40px; width:min(86vw, 460px); transform:translateX(-50%); z-index:2; }
 .nb-palo{ position:absolute; top:40px; bottom:0; width:24px; border-radius:7px 7px 0 0;
   background:linear-gradient(90deg,#5a3518 0%,#9a6233 35%,#b07440 50%,#7a4a22 75%,#5a3518 100%); box-shadow:6px 0 14px rgba(0,0,0,.3); }

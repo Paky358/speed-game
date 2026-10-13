@@ -747,7 +747,8 @@
     var vista = cittaAPiedi() ? SGGiardino.crea({ luogo: "citta", incassata: true, omino: io && io.omino, nome: io && io.nome, audio: audioCtx, da: ultimoEdificio,   // la città a piedi (per ora solo per il proprietario)
       entra: function (k, punto, tela) {
         if (via) return; via = true; ultimoEdificio = k; suonoEdificio(k);
-        if (k === "piazza") { var foto = null; try { foto = tela.toDataURL("image/jpeg", .72); } catch (e) {} fotoCitta = { src: foto, punto: punto, t: Date.now() }; return entraEdificio(k); }   // la bacheca delle novità: la si legge da vicino, con la città dietro
+        if (k === "piazza") { var foto = null; try { foto = document.createElement("canvas"); foto.width = tela.width; foto.height = tela.height; foto.getContext("2d").drawImage(tela, 0, 0); } catch (e) { foto = null; } fotoCitta = { tela: foto, punto: punto, t: Date.now() }; return entraEdificio(k); }   // (una copia al volo della città: niente immagine da comprimere)   // la bacheca delle novità: la si legge da vicino, con la città dietro
+        try { vista.style.transition = "opacity .2s ease-in"; vista.style.opacity = "0"; } catch (e) {}   // (la città sfuma, poi si entra: niente cambio secco)
         setTimeout(function () { entraEdificio(k); }, 200); } }) : null;
     var mappa = vista || el("div", { class: "citta-mappa", html: SGCitta.svg({ fase: fase, io: io && io.omino, sopra: 80 }) });
     // in alto: tu (tocca per il profilo) e le monete
@@ -1170,13 +1171,25 @@
   function segnaNovitaViste() {
     try { localStorage.setItem(CHIAVE_NOVITA, String(ultimaVersioneNovita())); } catch (e) {}
   }
+  function cittaSfocata(src) {   // la città sfocata, fatta una volta sola: rimpicciolita e ringrandita (niente filtri da ricalcolare mentre si anima)
+    var a = document.createElement("canvas"), b = document.createElement("canvas"), x, y;
+    a.width = Math.max(8, Math.round(src.width / 14)); a.height = Math.max(8, Math.round(src.height / 14));
+    x = a.getContext("2d"); x.imageSmoothingQuality = "high"; x.drawImage(src, 0, 0, a.width, a.height);
+    b.width = a.width * 3; b.height = a.height * 3; y = b.getContext("2d"); y.imageSmoothingQuality = "high"; y.drawImage(a, 0, 0, b.width, b.height);
+    return b;
+  }
   function schermataNovita() {   // le novità si leggono sulla bacheca della piazza, da vicino, con la città sfocata dietro
     var f = fotoCitta && Date.now() - fotoCitta.t < 8000 ? fotoCitta : null; fotoCitta = null;
     var fase = window.SGCitta ? SGCitta.fase(new Date()) : "giorno", visto = 0;
     try { visto = Number(localStorage.getItem(CHIAVE_NOVITA)) || 0; } catch (e) {}
-    var fondo = f && f.src ? f.src : (window.SGCitta ? "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGCitta.svg({ fase: fase })) : null);
-    var sfondo = el("div", { class: "nb-sfondo" + (f && f.src ? "" : " svg") }), scatto = f && f.src ? el("div", { class: "nb-scatto" }) : null;
-    if (fondo) { sfondo.style.backgroundImage = "url(\"" + fondo + "\")"; if (scatto) scatto.style.backgroundImage = "url(\"" + fondo + "\")"; }
+    var sfondo, scatto = null;
+    if (f && f.tela) {   // dalla città a piedi: la copia della città, sfocata una volta (sfondo) e nitida (la vista che ci entra)
+      try { sfondo = cittaSfocata(f.tela); sfondo.className = "nb-sfondo-c"; scatto = f.tela; scatto.className = "nb-scatto"; } catch (e) { sfondo = null; scatto = null; }
+    }
+    if (!sfondo) {   // dalla home (o dalla città da scorrere): la città disegnata, sfocata
+      sfondo = el("div", { class: "nb-sfondo svg" });
+      if (window.SGCitta) sfondo.style.backgroundImage = "url(\"data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGCitta.svg({ fase: fase })) + "\")";
+    }
     // i foglietti: uno per novità, appuntati sul sughero, un po' storti; quelli che non hai ancora letto hanno l'etichetta NUOVO
     var sughero = el("div", { class: "nb-sughero" });
     var tutte = window.SG_NOVITA || [], messe = 0;
@@ -1193,11 +1206,12 @@
       if (n.v > visto) foglio.appendChild(el("span", { class: "nb-nuovo", text: "NUOVO" }));
       sughero.appendChild(foglio);
     }
-    function altre() {   // 25 alla volta (sono tante: tutte insieme lo scorrimento sui telefoni rallenta)
-      var fine = Math.min(tutte.length, messe + 25); for (; messe < fine; messe++) foglietto(tutte[messe], messe);
-      if (messe < tutte.length) { var b = el("button", { class: "nb-altre", text: "📜 Le novità più vecchie", onclick: function () { b.parentNode.removeChild(b); altre(); } }); sughero.appendChild(b); }
+    function altre(quante) {   // a gruppi (sono tante: tutte insieme lo scorrimento sui telefoni rallenta)
+      var vecchio = sughero.querySelector(".nb-altre"); if (vecchio) vecchio.parentNode.removeChild(vecchio);
+      var fine = Math.min(tutte.length, messe + quante); for (; messe < fine; messe++) foglietto(tutte[messe], messe);
+      if (messe < tutte.length) { var b = el("button", { class: "nb-altre", text: "📜 Le novità più vecchie", onclick: function () { altre(25); } }); sughero.appendChild(b); }
     }
-    altre();
+    altre(3);   // mentre la bacheca arriva ne bastano tre (le altre si appuntano appena è ferma: l'animazione resta fluida)
     var bacheca = el("div", { class: "nb-bacheca" }, [
       el("i", { class: "nb-palo sx" }), el("i", { class: "nb-palo dx" }),
       el("div", { class: "nb-tetto" }),
@@ -1207,7 +1221,7 @@
     var uscito = false;
     function esci() {   // la bacheca si allontana, e si torna dove si era (la piazza o la home)
       if (uscito) return; uscito = true;
-      try { bacheca.animate([{ transform: "translateX(-50%) scale(1)", opacity: 1 }, { transform: "translateX(-50%) scale(.82)", opacity: 0 }], { duration: 200, easing: "ease-in", fill: "forwards" }); } catch (e) {}
+      try { bacheca.style.willChange = "transform, opacity"; bacheca.animate([{ transform: "translateX(-50%) scale(1)", opacity: 1 }, { transform: "translateX(-50%) scale(.82)", opacity: 0 }], { duration: 200, easing: "ease-in", fill: "forwards" }); } catch (e) {}
       setTimeout(tornaHome, 180);
     }
     var s = el("div", { class: "schermata nb-vista" + (fase === "notte" ? " notte" : fase === "tramonto" ? " tramonto" : "") }, [
@@ -1218,21 +1232,24 @@
     if (scatto) s.appendChild(scatto);
     segnaNovitaViste();   // aperto = visto
     mostra(s);
-    // l'arrivo: dalla città la vista "entra" verso la bacheca (solo spostamenti e trasparenza: niente scatti)
+    // l'arrivo: dalla città la vista "entra" verso la bacheca (solo spostamenti e trasparenza, sul livello già pronto: niente scatti)
     var W = window.innerWidth, H = window.innerHeight, p = f && f.punto ? f.punto : { x: W / 2, y: H * .5 }, dx = Math.round(p.x - W / 2), dy = Math.round(p.y - H * .45);
+    var fatto = false;
+    function fermo() { if (fatto) return; fatto = true; bacheca.style.willChange = ""; if (scatto && scatto.parentNode) scatto.parentNode.removeChild(scatto); altre(22); }
+    setTimeout(fermo, 1000);   // (per sicurezza, se l'animazione non finisce: app in sottofondo)
     try {
-      bacheca.animate([
+      bacheca.style.willChange = "transform, opacity";
+      var a1 = bacheca.animate([
         { transform: "translate(calc(-50% + " + dx + "px), " + dy + "px) scale(.14)", opacity: 0 },
         { transform: "translate(calc(-50% + " + Math.round(dx * .6) + "px), " + Math.round(dy * .6) + "px) scale(.4)", opacity: 1, offset: .3 },
         { transform: "translate(-50%, 0) scale(1)", opacity: 1 }
-      ], { duration: 700, easing: "cubic-bezier(.25,.7,.25,1)" });
-      sfondo.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, easing: "ease-out" });
+      ], { duration: 650, easing: "cubic-bezier(.25,.7,.25,1)" });
+      a1.onfinish = fermo;
       if (scatto) {
-        scatto.style.transformOrigin = p.x + "px " + p.y + "px";
-        var a = scatto.animate([{ transform: "scale(1)", opacity: 1 }, { transform: "scale(3)", opacity: 0 }], { duration: 650, easing: "cubic-bezier(.45,0,.75,1)", fill: "forwards" });
-        a.onfinish = function () { if (scatto.parentNode) scatto.parentNode.removeChild(scatto); };
+        scatto.style.transformOrigin = p.x + "px " + p.y + "px"; scatto.style.willChange = "transform, opacity";
+        scatto.animate([{ transform: "scale(1)", opacity: 1 }, { transform: "scale(3)", opacity: 0 }], { duration: 600, easing: "cubic-bezier(.45,0,.75,1)", fill: "forwards" });
       }
-    } catch (e) { if (scatto && scatto.parentNode) scatto.parentNode.removeChild(scatto); }
+    } catch (e) { fermo(); }
   }
 
   // ---- Sfide e Trofei (stile PlayStation: bronzo/argento/oro/diamante + platino) ----
