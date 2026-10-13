@@ -2608,6 +2608,17 @@
     { nome: "Extra", icona: "🎈", voci: [["mano", "In mano"], ["colMano", "Colore"], ["schiena", "Sulla schiena"], ["colSchiena", "Colore"], ["animale", "Animaletto"], ["colAnimale", "Colore del pelo"], ["pittura", "Pittura sul viso"]],
       sotto: [["In mano", ["mano", "colMano"]], ["Sulla schiena", ["schiena", "colSchiena"]], ["Animaletto", ["animale", "colAnimale"]], ["Pittura sul viso", ["pittura"]]] }
   ];
+  // IL CAMERINO (l'editor nuovo): l'avatar resta grande, le scelte sono file da scorrere di lato, e i colori stanno insieme
+  // alla cosa che colorano (taglio e colore dei capelli nella stessa pagina). Tirando su la maniglia si vedono tutte le scelte.
+  var EDITOR_CAMERINO = false;   // false = per ora lo vede solo il proprietario (gli altri hanno l'editor di prima)
+  var SOTTO_CAMERINO = {   // i colori sempre presenti stanno sopra (non spostano niente); quelli che compaiono solo con certe scelte stanno sotto
+    Corpo: [["Maschio o femmina", ["forma"]], ["Corporatura e pelle", ["pelle", "corpo"]]],
+    Capelli: [["Taglio e colore", ["colCap", "capelli"]], ["Barba e baffi", ["barba"]]],
+    Vestiti: [["Look pronti", ["look"]], ["Sopra", ["maglia", "capo", "stampa"]], ["Sotto", ["pantaloni", "sotto"]], ["Scarpe", ["scarpe", "modScarpe"]]],
+    Accessori: [["In testa", ["cappello", "colAcc"]], ["Occhiali", ["occhiali"]], ["Orecchini", ["orecchini"]], ["Al collo", ["collo", "colCollo"]], ["Borsa", ["borsa", "colBorsa"]]],
+    Extra: [["In mano", ["mano", "colMano"]], ["Sulla schiena", ["schiena", "colSchiena"]], ["Animaletto", ["animale", "colAnimale"]], ["Pittura sul viso", ["pittura"]]]
+  };
+  var SEZ_CAMERINO = SEZ_OMINO.map(function (sz) { var c = {}, k; for (k in sz) c[k] = sz[k]; if (SOTTO_CAMERINO[sz.nome]) c.sotto = SOTTO_CAMERINO[sz.nome]; return c; });
   var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1, colMano: 1, colSchiena: 1, colAnimale: 1 };
   var TRUCCO_COL = { colOmbretto: "ombretto", colEyeliner: "eyeliner", colRossetto: "rossetto", colBlush: "blush", colBorsa: "borsa" };   // il colore si vede solo se quel trucco c'è
   var TRUCCO_VOCI = /^(ombretto|eyeliner|mascara|rossetto|blush|pittura|col(Ombretto|Eyeliner|Rossetto|Blush))$/;   // anteprime in primo piano sul viso
@@ -2700,6 +2711,8 @@
     if (!bozze[1 - slot]) bozze[1 - slot] = secondoOmino(cfg, io.nome);
     var s = schermata({});
     s.classList.add("editor-avatar");   // tutto in uno schermo, senza titolo: sul palco indietro, A caso e Salva; sotto scorrono solo le scelte
+    var camerino = EDITOR_CAMERINO || eProprietario(), SEZ = camerino ? SEZ_CAMERINO : SEZ_OMINO;
+    if (camerino) s.classList.add("camerino");
     var iniziali = bozze.map(function (b) { return O.norm(b); });   // com'erano all'ingresso (se esci senza salvare)
     // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre (toccalo: reagisce!)
     var figura = el("div", { class: "om-figura", title: "Toccami!" });
@@ -2737,7 +2750,28 @@
     var schede = el("div", { class: "omino-schede" });
     var pannello = el("div", { class: "omino-pannello" });
     var sottoschede = el("div", { class: "omino-sotto" });   // le sottocategorie della scheda aperta (es. Vestiti: Parti superiori, Parti inferiori, Scarpe)
-    s._contenuto.appendChild(palco); s._contenuto.appendChild(schede); s._contenuto.appendChild(sottoschede); s._contenuto.appendChild(pannello);
+    s._contenuto.appendChild(palco);
+    if (camerino) {   // la maniglia: tirata su (o toccata) si vedono tutte le scelte e l'avatar si fa piccolo; giù torna grande
+      var maniglia = el("button", { class: "om-maniglia", onclick: function () { apriTutto(!s.classList.contains("aperto")); } });
+      var apriTutto = function (si) {
+        s.classList.toggle("aperto", si); maniglia.textContent = si ? "⌄ Avatar grande" : "⌃ Vedi tutte le scelte";
+        if (!si) setTimeout(centraScelte, 50);
+      };
+      var yM = null;
+      [maniglia, schede, sottoschede].forEach(function (n) {
+        n.addEventListener("touchstart", function (e) { yM = e.touches[0].clientY; }, { passive: true });
+        n.addEventListener("touchend", function (e) { if (yM == null) return; var dy = e.changedTouches[0].clientY - yM; yM = null; if (Math.abs(dy) > 40) apriTutto(dy < 0); });
+      });
+      apriTutto(false);
+      s._contenuto.appendChild(maniglia);
+    }
+    s._contenuto.appendChild(schede); s._contenuto.appendChild(sottoschede); s._contenuto.appendChild(pannello);
+    function centraScelte() {   // nelle file da scorrere: la scelta di adesso in vista
+      if (!camerino || s.classList.contains("aperto")) return;
+      [].forEach.call(pannello.querySelectorAll(".om-griglia"), function (riga) {
+        var a = riga.querySelector(".attiva"); if (a) riga.scrollLeft = Math.max(0, a.offsetLeft - riga.offsetLeft - (riga.clientWidth - a.offsetWidth) / 2);
+      });
+    }
     function unisci(k, v) {
       if (k === "forma") return O.adattaForma(cfg, v);   // maschio/femmina: cambiano anche capelli, barba, trucco
       var c = {}; for (var x in cfg) c[x] = cfg[x]; c[k] = v; return c;
@@ -2778,19 +2812,19 @@
     function aggAnnulla() { bAnnulla.classList.toggle("spento", !storia.length); }
     // le schede: il trucco c'è solo per lei; la telecamera va sul viso per viso, trucco e capelli
     function visibile(i) {   // (se lui ha già del trucco salvato, la scheda resta per poterlo togliere)
-      var sz = SEZ_OMINO[i], trucco = ["ombretto", "eyeliner", "mascara", "rossetto", "blush"].some(function (k) { return cfg[k] && !/^nessun/.test(cfg[k]); });
+      var sz = SEZ[i], trucco = ["ombretto", "eyeliner", "mascara", "rossetto", "blush"].some(function (k) { return cfg[k] && !/^nessun/.test(cfg[k]); });
       return sz && (!sz.solo || sz.solo === cfg.forma || (sz.nome === "Trucco" && trucco)) ? i : -1;
     }
     function disegnaSchede() {
       schede.innerHTML = ""; var n = 0;
-      SEZ_OMINO.forEach(function (sz, i) {
+      SEZ.forEach(function (sz, i) {
         if (visibile(i) < 0) return; n++;
         schede.appendChild(el("button", { class: "cat-tab" + (i === tab ? " attiva" : ""),
           onclick: function () { tab = i; disegnaSchede(); disegnaPannello(); pannello.scrollTop = 0; } }, [el("span", { class: "ci", text: sz.icona }), el("span", { text: sz.nome })]));
       });
       schede.style.gridTemplateColumns = "repeat(" + n + ",minmax(0,1fr))";
       schede.classList.toggle("sette", n > 6);
-      var z = SEZ_OMINO[tab].zoom;
+      var z = SEZ[tab].zoom;
       figura.classList.toggle("zoom-viso", z === "viso"); palco.classList.toggle("zoomato", !!z);
     }
     function nomeDi(k, val) {
@@ -2855,7 +2889,7 @@
       return true;
     }
     function sottoVisibili() {
-      var sz = SEZ_OMINO[tab], lista = sz.sotto || [[sz.nome, sz.voci.map(function (vc) { return vc[0]; })]];
+      var sz = SEZ[tab], lista = sz.sotto || [[sz.nome, sz.voci.map(function (vc) { return vc[0]; })]];
       return lista.map(function (x, j) { return { nome: x[0], chiavi: x[1], j: j }; })
         .filter(function (x) { return x.chiavi.some(voceVisibile); });
     }
@@ -2899,7 +2933,7 @@
     function disegnaPannello() {
       var st = pannello.scrollTop;   // ridisegnando non si torna in cima
       pannello.innerHTML = "";
-      var sz = SEZ_OMINO[tab], lista = sottoVisibili(), cur = sottoAttuale();
+      var sz = SEZ[tab], lista = sottoVisibili(), cur = sottoAttuale();
       disegnaSotto(lista, cur);
       var etichette = cur.chiavi.filter(voceVisibile).length > 1;   // con una voce sola il nome c'è già nella sottocategoria
       if (sz.nome !== "Corpo") pannello.appendChild(el("button", { class: "om-acaso", text: "🎲 " + (lista.length > 1 ? cur.nome : sz.nome) + " a caso", onclick: acasoScheda }));
@@ -2964,6 +2998,7 @@
       });
       aggiornaPannello();
       pannello.scrollTop = st;
+      centraScelte();
     }
     palco.appendChild(el("button", { class: "om-azione caso", text: "🎲", "aria-label": "Personaggio a caso", onclick: function () {
       ricorda(); cfg = O.norm(O.casuale()); if (visibile(tab) < 0) tab = 0;

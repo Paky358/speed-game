@@ -1561,3 +1561,18 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 .sf-bonus .sf-ico{ background:rgba(255,255,255,.18); }
 .sf-bonus .sf-testo{ color:#fff; } .sf-bonus .sf-premio{ color:#e5dbff; }
 .sf-bonus.fatta{ opacity:.65; }
+/* ---- il CAMERINO (editor nuovo dell'avatar): avatar grande, scelte in file da scorrere di lato; tirando su la maniglia si vedono tutte e l'avatar si fa piccolo ---- */
+.editor-avatar.camerino .omino-palco.editor{ height:clamp(230px, calc(var(--alt, 100dvh) * .46), 440px); margin-bottom:2px; }
+.editor-avatar.camerino.aperto .omino-palco.editor{ height:clamp(120px, calc(var(--alt, 100dvh) * .2), 170px); }
+.editor-avatar.camerino.aperto .om-freccia{ display:none; }
+.om-maniglia{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; width:100%; min-height:30px; margin:0 0 4px; border:0; background:none; color:#cfd8ff; font:inherit; font-size:.76rem; font-weight:800; cursor:pointer; touch-action:none; }
+.om-maniglia::before{ content:""; width:46px; height:5px; border-radius:3px; background:rgba(255,255,255,.4); }
+.editor-avatar.camerino:not(.aperto) .om-griglia{ display:flex; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; gap:8px; margin:0 -16px 8px; padding:3px 16px 5px; scroll-snap-type:x proximity; scrollbar-width:none; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; }
+.editor-avatar.camerino:not(.aperto) .om-griglia::-webkit-scrollbar{ display:none; }
+.editor-avatar.camerino:not(.aperto) .om-griglia > .om-opz{ flex:0 0 calc((100% - 24px) / 3.35); min-width:0; scroll-snap-align:start; }
+.editor-avatar.camerino:not(.aperto) .om-griglia.colori > .om-opz{ flex:0 0 42px; width:42px; height:42px; }
+.editor-avatar.camerino:not(.aperto) .om-mini{ height:70px; }
+.editor-avatar.camerino:not(.aperto) .om-mini.intero{ height:86px; }
+.editor-avatar.camerino:not(.aperto) .om-nome{ font-size:.82rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+.editor-avatar.camerino .omino-pannello .etichetta{ font-size:.95rem; margin:2px 0 0; }
+.editor-avatar.camerino .om-acaso{ min-height:34px; font-size:.88rem; margin:2px 0 4px; border-radius:12px; }
