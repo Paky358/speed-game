@@ -13,6 +13,13 @@ Una web app di party game da telefono (tanti giochi, uno per file), in JavaScrip
 - `js/games/*.js`: un gioco per file, si registra con `SG.registra({...})` (vedi `docs/COME-SI-AGGIUNGE-UN-GIOCO.md`).
 - `data/`: liste di contenuti e **`data/novita.js`** (il diario delle novità). `parole/`: vocabolario di Nomi, Cose e Città. `css/styles.css`.
 
+## La direzione del progetto (decisa il 13 ott 2026)
+- SPeeD GAME è prima di tutto una **raccolta di party game per le serate con gli amici** (stesso telefono e online). Non deve diventare una copia di Habbo.
+- Il "mondo" (città a piedi, casa, casinò, circolo, negozio, attività come pesca e scavi) è un **contorno**: si cura e si sistema, ma **non si allarga**. Niente edifici, negozi, mobili o attività nuove, a meno che il proprietario lo chieda espressamente.
+- **Ogni gioco si avvia dalla prima schermata in al massimo due tocchi**, senza camminare né aspettare.
+- Il lavoro nuovo va sui **giochi**: giochi nuovi, entrare in una partita online più in fretta, tornei, partite belle da guardare.
+- In futuro la casa diventa la **vetrina dei successi** (trofei e cose vinte nei giochi): così spinge a giocare invece di essere un gioco a parte.
+
 ## Pubblicare = mettere su `master`
 - `bash costruisci-versione-online.sh` crea `dist/index.html` (un file unico). Ogni push su `master` fa partire la pubblicazione su GitHub Pages: https://paky358.github.io/speed-game/
 - Quindi **mettere qualcosa su `master` vuol dire metterlo online per tutti**: fallo solo quando il proprietario lo chiede ("pubblica").
