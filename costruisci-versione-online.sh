@@ -42,6 +42,8 @@ VER=$(md5sum "$EXTRA" | cut -c1-10)
   echo '</style>'
   echo '<div id="app"></div>'
   echo "<script>window.SG_EXTRA = 'extra.js?v=$VER';</script>"
+  # le foto dei giochi che ci sono davvero (carte/giochi/<id>.jpg): la home chiede solo quelle
+  echo "<script>window.SG_FOTO = {$(for f in carte/giochi/*.jpg; do [ -e "$f" ] && printf '"%s":1,' "$(basename "$f" .jpg)"; done)};</script>"
   # caselle di posta del sito (Netlify le riconosce alla pubblicazione)
   echo '<form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>'
   echo '<form name="bug" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea><input type="text" name="contesto" /></form>'

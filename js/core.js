@@ -158,9 +158,11 @@
     // L'icona fa da "banner": mostra la foto carte/giochi/<id>.jpg se esiste,
     // altrimenti resta l'emoji del gioco (l'immagine si toglie da sola se manca).
     var icona = el("span", { class: "icona" }, [ el("span", { class: "emoji", text: g.icona || "🎲" }) ]);
-    var img = el("img", { class: "illustr", src: "carte/giochi/" + g.id + ".jpg", alt: "", loading: "lazy" });
-    img.onerror = function () { if (img.parentNode) img.parentNode.removeChild(img); };
-    icona.appendChild(img);
+    if (!window.SG_FOTO || SG_FOTO[g.id]) {   // (la versione online sa già quali foto ci sono: non chiede quelle che mancano)
+      var img = el("img", { class: "illustr", src: "carte/giochi/" + g.id + ".jpg", alt: "", loading: "lazy" });
+      img.onerror = function () { if (img.parentNode) img.parentNode.removeChild(img); };
+      icona.appendChild(img);
+    }
     return el("button", { class: "tessera", onclick: onclick }, [
       icona,
       el("div", { class: "info" }, [

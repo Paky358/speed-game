@@ -1485,6 +1485,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 </style>
 <div id="app"></div>
 <script>window.SG_EXTRA = 'extra.js?v=140e5d51ef';</script>
+<script>window.SG_FOTO = {"asta":1,"blackjack":1,};</script>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
 <form name="bug" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea><input type="text" name="contesto" /></form>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
@@ -10626,9 +10627,11 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
     // L'icona fa da "banner": mostra la foto carte/giochi/<id>.jpg se esiste,
     // altrimenti resta l'emoji del gioco (l'immagine si toglie da sola se manca).
     var icona = el("span", { class: "icona" }, [ el("span", { class: "emoji", text: g.icona || "🎲" }) ]);
-    var img = el("img", { class: "illustr", src: "carte/giochi/" + g.id + ".jpg", alt: "", loading: "lazy" });
-    img.onerror = function () { if (img.parentNode) img.parentNode.removeChild(img); };
-    icona.appendChild(img);
+    if (!window.SG_FOTO || SG_FOTO[g.id]) {   // (la versione online sa già quali foto ci sono: non chiede quelle che mancano)
+      var img = el("img", { class: "illustr", src: "carte/giochi/" + g.id + ".jpg", alt: "", loading: "lazy" });
+      img.onerror = function () { if (img.parentNode) img.parentNode.removeChild(img); };
+      icona.appendChild(img);
+    }
     return el("button", { class: "tessera", onclick: onclick }, [
       icona,
       el("div", { class: "info" }, [
