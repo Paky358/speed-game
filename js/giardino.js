@@ -284,6 +284,24 @@
     return D;
   }
 
+  // la città a piedi: gli edifici e le cose della città (js/citta.js) come mobili del motore, la gente che passeggia
+  function datiCitta(opts) {
+    var C = window.SGCitta, D = { v: 2, w: 74, h: 74, ogg: [], muri: {}, pav: {}, tetto: null, baule: {}, cesto: {}, ultimo: 0, vista: 0, gente: [] };
+    if (!C || !C.arte || !window.SGMobiliArte) return D;
+    if (!datiCitta.fatto) { datiCitta.fatto = true; SGMobiliArte.aggiungi(C.arte); }
+    var T = C.terreno, K = T.K, P = C.pezzi();
+    P.forEach(function (p) { D.ogg.push({ k: ++D.ultimo, t: p.nome, c: p.c, r: p.r, d: 0 }); });
+    D.chiuso = function (c, r) { return !T.dentro((c + .5) / K, (r + .5) / K); };
+    var da = opts.da && P.filter(function (p) { return p.vai === opts.da; })[0];   // si esce dall'edificio da cui si torna, se no si parte dalla piazza
+    if (da) { D.ingresso = [da.c + da.fw / 2, da.r + da.fd + .4]; D.uscita = [D.ingresso[0], D.ingresso[1] + 1.6]; }
+    else { D.ingresso = [T.piazza[0] * K, T.piazza[1] * K]; D.uscita = [D.ingresso[0] + .3, D.ingresso[1] + .3]; }
+    if (window.SGOmino) ["Sara", "Marco", "Giulia", "Luca", "Chiara", "Dario", "Elena", "Paolo", "Marta", "Gino", "Rita", "Ugo"].forEach(function (n, i) {   // i cittadini a spasso, ognuno nel suo quartiere
+      var z = [[14, 14, 28, 28], [26, 26, 40, 40], [12, 26, 26, 40], [26, 12, 40, 26], [38, 38, 52, 52], [44, 44, 58, 58], [6, 6, 20, 20], [30, 30, 46, 46], [48, 50, 62, 66], [20, 36, 34, 50], [36, 20, 50, 34], [16, 16, 34, 34]][i];
+      D.gente.push({ cfg: SGOmino.casuale(n), u: (z[0] + z[2]) / 2 + .5, v: (z[1] + z[3]) / 2 + .5, gira: z });
+    });
+    return D;
+  }
+
   // ---------- i suoni (piccoli, fatti col WebAudio) ----------
   var AUDIO = null;
   function suona(note, tipo, vol, dur) {
@@ -337,7 +355,7 @@
     stile();
     AUDIO = opts.audio || null;
     var LUOGO = opts.luogo || null;   // "casino": un posto pubblico già arredato (niente giardino, niente compra e costruisci, non si salva)
-    var D = LUOGO === "casino" ? datiCasino() : (opts.dati && opts.dati.v >= 2 ? opts.dati : datiIniziali());
+    var D = LUOGO === "casino" ? datiCasino() : LUOGO === "citta" ? datiCitta(opts) : (opts.dati && opts.dati.v >= 2 ? opts.dati : datiIniziali());
     D.ogg = D.ogg || []; D.muri = D.muri || {}; D.pav = D.pav || {}; D.baule = D.baule || {}; D.cesto = D.cesto || {}; D.ultimo = D.ultimo || D.ogg.length;
     var VR = D.vista || 0;   // la vista: girata di 90° ogni volta (0…3)
     var tSalva = null;
@@ -394,6 +412,7 @@
       var g = new Uint8Array(D.w * D.h), c, r;
       D.ogg.forEach(function (o) { if (!inPiedi(o)) return; var b = box(o); for (c = b.c0; c < b.c1; c++) for (r = b.r0; r < b.r1; r++) if (!fuoriLotto(c, r)) g[r * D.w + c] = 1; });
       GENTE.forEach(function (x) { if (!x.siede && !x.gira) g[Math.floor(x.v) * D.w + Math.floor(x.u)] = 1; });
+      if (D.chiuso) for (c = 0; c < D.w; c++) for (r = 0; r < D.h; r++) if (D.chiuso(c, r)) g[r * D.w + c] = 1;   // (in città: fuori dalla striscia di città disegnata non si va)
       return g;
     }
     // le cose piccole "sopra" (TV, lampade, sveglia…) si appoggiano sui mobili che hanno un ripiano, o per terra
@@ -468,6 +487,8 @@
     bGira.setAttribute("aria-label", "Gira la vista"); bGira.onclick = function () { vibra(10); gira(); };
     [bInd, titolo, bGira, cMonete].forEach(function (n) { testa.appendChild(n); });
     if (LUOGO === "casino") titolo.textContent = "🎰 Casinò";
+    if (LUOGO === "citta") bGira.style.visibility = "hidden";   // (la città si guarda solo da davanti)
+    if (opts.incassata) { s.classList.add("gd-incassata"); testa.style.display = "none"; }   // (dentro un'altra schermata, che ha già la sua testa)
     var giu = el("div", "gd-giu"), bCompra = el("button", "gd-bott", "🛒 Compra"), bCostr = el("button", "gd-bott", "🔨 Costruisci"), bSistema = el("button", "gd-bott", "✏️ Sistema"), bCesto = el("button", "gd-bott");
     bCompra.onclick = function () { vibra(10); negozio(); };
     bCostr.onclick = function () { vibra(10); cambiaModo(modo === "costruisci" ? "vivi" : "costruisci"); };
@@ -486,6 +507,7 @@
 
     // ---- la vista: il terreno girato (0…3), spostato col dito, ingrandito con due dita ----
     var cw = 360, ch = 640, dpr = 1, zoom = 1, TW = 64, ox = 0, oy = 0, sfondo = null, sporco = true;
+    if (LUOGO === "citta") zoom = .6;   // (la città si guarda più dall'alto)
     function VW() { return VR % 2 ? D.h : D.w; }
     function VH() { return VR % 2 ? D.w : D.h; }
     function rv(x, y) { var W = D.w, H = D.h; return VR === 1 ? [H - y, x] : VR === 2 ? [W - x, H - y] : VR === 3 ? [y, W - x] : [x, y]; }   // dal mondo alla vista
@@ -519,6 +541,7 @@
     }
     function zoomMin() {   // quanto si può allargare la vista: nei posti grandi fino a vedere tutto dall'alto
       if (!LUOGO) return .6;
+      if (LUOGO === "citta") return .3;
       var base = Math.min(cw / 6.2, 76), n = VW() + VH();
       return Math.min(.6, cw * .95 * 2 / (n * base), ch * .9 / ((n / 4 + 2.2) * base));
     }
@@ -549,7 +572,7 @@
     var av = { u: 5.5, v: 9.6, fw: [0, 1], strada: [], t: 0, fa: null, ft: 0, poi: null };   // fw: dove guarda (direzione nel mondo)
     if (opts.daCasa) { av.fa = "esce"; av.strada = [{ u: 5.5, v: 10.3 }]; }          // esci dalla porta di casa
     else { av.u = 5.9; av.v = D.h + .6; av.strada = [{ u: 5.9, v: D.h - 1.4 }]; }   // dalla città: arrivi dal marciapiede ed entri dal cancello
-    if (D.ingresso) { av.fa = null; av.u = D.ingresso[0]; av.v = D.ingresso[1]; av.strada = [{ u: D.ingresso[0], v: D.ingresso[1] - 2.5 }]; }   // nel casinò si entra dal portone
+    if (D.ingresso) { av.fa = null; av.u = D.ingresso[0]; av.v = D.ingresso[1]; av.strada = [D.uscita ? { u: D.uscita[0], v: D.uscita[1] } : { u: D.ingresso[0], v: D.ingresso[1] - 2.5 }]; }   // nel casinò si entra dal portone
 
     // la strada più corta tra le mattonelle (anche in diagonale, senza tagliare angoli né attraversare i muri: solo le porte)
     function strada(da, versoLista) {
@@ -697,7 +720,7 @@
       if (av.siede && modo === "vivi") { vibra(8); return alzati(); }   // seduto o a letto: un tocco e si alza
       var o = cosaQui(x, y);
       if (modo === "sistema") { if (!o) { var fz = facciaIn(x, y); o = fz ? appesoSu(fz) : null; } scegli(o); return; }
-      if (o) { vibra(10); if (LUOGO && toccaCasino(o)) return; return vaiAOggetto(o); }
+      if (o) { vibra(10); if (LUOGO === "casino" && toccaCasino(o)) return; return vaiAOggetto(o); }
       var g = schermoW(x, y), c = Math.floor(g[0]), r = Math.floor(g[1]);
       if (fuoriLotto(c, r)) return;
       vibra(8); vaiA([{ c: c, r: r }], null);
@@ -745,7 +768,8 @@
       if (!dimmiPresto(o)) dimmi(nomeDi(o.t));
     }
     function azione(o) {
-      if (LUOGO) return azioneCasino(o);
+      if (LUOGO === "casino") return azioneCasino(o);
+      if (LUOGO === "citta") { var mc = infoMobile(o.t) || {}; if (mc.vai && opts.entra) return opts.entra(mc.vai); return dimmi(nomeDi(o.t)); }
       cresciTutto();
       if (ALBERI[o.t] || (o.t === "orto" && o.pianta)) {
         if (maturo(o)) return raccogli(o);
@@ -832,7 +856,7 @@
     }
     function reparti() {   // le schede del negozio: il giardino, poi i mobili per stanza, poi il terreno
       var l = NEGOZIO.slice(), M = window.SGMobiliArte, per = {};
-      try { (M && M.nomi ? M.nomi() : []).forEach(function (t) { var i = M.info(t); if (!i) return; var st = i.qual === 0 ? "usato" : (i.reparto || "deco"); (per[st] = per[st] || []).push({ t: t, nome: i.nome || t, prezzo: prezzoDi(t) }); }); } catch (e) {}   // la roba scadente va nel mercatino dell'usato
+      try { (M && M.nomi ? M.nomi() : []).forEach(function (t) { var i = M.info(t); if (!i || i.reparto === "casino" || i.reparto === "citta") return; var st = i.qual === 0 ? "usato" : (i.reparto || "deco"); (per[st] = per[st] || []).push({ t: t, nome: i.nome || t, prezzo: prezzoDi(t) }); }); } catch (e) {}   // la roba scadente va nel mercatino dell'usato
       REPARTI.map(function (r) { return r[0]; }).concat(Object.keys(per)).forEach(function (st, i, tutte) { if (!per[st] || tutte.indexOf(st) < i || (st === "halloween" && !halloween())) return; l.push({ cat: (REPARTI.filter(function (r) { return r[0] === st; })[0] || [0, st])[1], voci: per[st].sort(function (a, b) { return a.prezzo - b.prezzo; }) }); });
       l.push({ cat: "Terreno", terreno: true });
       return l;
@@ -1071,12 +1095,12 @@
     // =========================================================
     //  IL DISEGNO
     // =========================================================
-    var FASE = LUOGO ? "notte" : fase(), volano = [], tAnim = 0, ordinati = [], facce = [];
+    var FASE = LUOGO === "casino" ? "notte" : fase(), volano = [], tAnim = 0, ordinati = [], facce = [];
     var PAL = { giorno: { fuori: "#7fb35a", prato: "#95c962", prato2: "#8bbf58", buio: 0 },
       tramonto: { fuori: "#86a352", prato: "#9cbf5c", prato2: "#93b655", buio: .16, velo: "120,60,50" },
       notte: { fuori: "#557d4c", prato: "#6f9c57", prato2: "#689452", buio: .4, velo: "12,18,48" },
       casino: { fuori: "#1c1018", prato: "#2a1822", prato2: "#2a1822", buio: .16, velo: "40,12,30" } };
-    function pal() { if (LUOGO) return PAL.casino; return PAL[FASE] || PAL.giorno; }
+    function pal() { if (LUOGO === "casino") return PAL.casino; return PAL[FASE] || PAL.giorno; }
     function poligono(c, pts, fill, stroke, lw) { c.beginPath(); pts.forEach(function (p, i) { if (i) c.lineTo(p.x, p.y); else c.moveTo(p.x, p.y); }); c.closePath(); if (fill) { c.fillStyle = fill; c.fill(); } if (stroke) { c.strokeStyle = stroke; c.lineWidth = lw || 1; c.stroke(); } }
     function stendi(c, im, P, x0, y0, n, m, gira) {   // un disegno piatto (100 per mattonella) steso a terra sulle mattonelle x0…x0+n, y0…y0+m del mondo    (gira: un tappeto girato di 90°, il disegno va lungo l'altro lato)
       var a = P(x0, y0), b = gira ? P(x0, y0 + m) : P(x0 + n, y0), d = gira ? P(x0 + n, y0) : P(x0, y0 + m), un = gira ? m : n, vn = gira ? n : m;
@@ -1341,10 +1365,10 @@
     function disegna() {
       var P = pal(), dV = vistaDentro(), i;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.fillStyle = LUOGO ? "#1c1018" : P.fuori; ctx.fillRect(0, 0, cw, ch);
+      ctx.fillStyle = LUOGO === "casino" ? "#1c1018" : LUOGO === "citta" ? SGCitta.terreno.prato : P.fuori; ctx.fillRect(0, 0, cw, ch);
       if (!LUOGO) stradaFuori();
-      if (!sfondo) sfondo = disegnaSfondo();
-      ctx.drawImage(sfondo.c, ox - sfondo.o0.x, oy - sfondo.o0.y, sfondo.L, sfondo.A);
+      if (LUOGO === "citta") terrenoCitta();   // (la città: il prato e i viali, poche forme disegnate ogni volta)
+      else { if (!sfondo) sfondo = disegnaSfondo(); ctx.drawImage(sfondo.c, ox - sfondo.o0.x, oy - sfondo.o0.y, sfondo.L, sfondo.A); }
       if (modo === "costruisci") {   // la griglia per costruire
         ctx.strokeStyle = "rgba(255,255,255,.45)"; ctx.lineWidth = 1.2;
         for (i = 0; i <= VW(); i++) { var a = pv(i, 0), b = pv(i, VH()); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
@@ -1385,6 +1409,7 @@
         disegnaOgg(x);
       });
       sospesi.sort(function (a, b) { var p = rv(a.c, a.r), q = rv(b.c, b.r); return p[0] + p[1] - q[0] - q[1]; }).forEach(function (o) { disegnaPezzo({ o: o }); });   // i lampadari, sopra a tutto
+      if (LUOGO === "citta") etichette();
       if (!LUOGO) recinto(false);
       if (tracciato) {   // il muro che stai tracciando: trasparente, col prezzo
         var pz = pezziTracciato(tracciato), kz = TW / 100;
@@ -1409,6 +1434,44 @@
         }
       }
     }
+    function terrenoCitta() {   // la città: il prato coi ciuffi, i viali col bordo e la riga, la piazza e l'aiuola della rotonda (in unità della città, K mattonelle l'una)
+      var T = SGCitta.terreno, K = T.K, sc = K * TW / 50, i;
+      function Q(u, v) { return pw(u * K, v * K); }
+      function banda(s, w) { var c = s[1]; return s[0] ? [Q(c - w, -14), Q(c + w, -14), Q(c + w, 52), Q(c - w, 52)] : [Q(-14, c - w), Q(52, c - w), Q(52, c + w), Q(-14, c + w)]; }
+      ctx.strokeStyle = T.ciuffo; ctx.lineWidth = 1.5 * sc; ctx.beginPath();
+      for (i = 0; i < 260; i++) {   // i ciuffi d'erba, sparsi sulla striscia di città (sempre negli stessi posti)
+        var x = (i * 67) % 300, y = (i * 113) % 1700 - 300, u = (x - 150) / 50 + y / 25, v = y / 25 - (x - 150) / 50, p = Q(u, v);
+        if (p.x < -20 || p.x > cw + 20 || p.y < -20 || p.y > ch + 20) continue;
+        ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + 2 * sc, p.y - 5 * sc); ctx.lineTo(p.x + 4 * sc, p.y);
+      }
+      ctx.stroke();
+      T.strade.forEach(function (s) { poligono(ctx, banda(s, T.larg + .1), T.bordo); });
+      T.strade.forEach(function (s) { poligono(ctx, banda(s, T.larg), T.viale); });
+      ctx.save(); ctx.strokeStyle = T.riga; ctx.lineWidth = 2.2 * sc; ctx.setLineDash([9 * sc, 9 * sc]);
+      T.strade.forEach(function (s) { var a = s[0] ? Q(s[1], -14) : Q(-14, s[1]), b = s[0] ? Q(s[1], 52) : Q(52, s[1]); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); });
+      ctx.restore();
+      T.cerchi.forEach(function (e) {
+        var C = Q(e.u, e.v), rx = e.r * 25 * Math.SQRT2 * sc;
+        ctx.save(); ctx.beginPath(); ctx.ellipse(C.x, C.y, rx, rx / 2, 0, 0, 6.29);
+        if (e.fill) { ctx.fillStyle = e.fill; ctx.fill(); }
+        if (e.stroke) { ctx.strokeStyle = e.stroke; ctx.lineWidth = e.lw * sc; if (e.dash) ctx.setLineDash(e.dash.map(function (d) { return d * sc; })); ctx.stroke(); }
+        ctx.restore();
+      });
+    }
+    function etichette() {   // in città: il nome sopra gli edifici (come nella città di prima)
+      var fs = Math.round(Math.max(10, Math.min(15, TW * .3)));
+      ctx.save(); ctx.font = "900 " + fs + "px Nunito, system-ui, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ordinati.forEach(function (x) {
+        if (!x.o || !x.ret) return; var mi = infoMobile(x.o.t); if (!mi || !mi.etichetta) return;
+        var t = mi.etichetta[0], w = ctx.measureText(t).width + fs * 1.3, h = fs * 1.75, cx = x.ret.x + x.ret.w / 2, cy = x.ret.y + h * .1, r = h / 2;
+        ctx.fillStyle = "rgba(0,0,0,.25)"; tondo(cx - w / 2, cy - h / 2 + 2, w, h, r); ctx.fill();
+        ctx.fillStyle = mi.etichetta[1]; tondo(cx - w / 2, cy - h / 2, w, h, r); ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = "#ffffff"; ctx.stroke();
+        ctx.fillStyle = "#ffffff"; ctx.fillText(t, cx, cy + 1);
+      });
+      ctx.restore();
+    }
+    function tondo(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
     function imPersona(g) {   // le immagini di un avatar della sala (fatte la prima volta che serve)
       if (!g.IM && g.cfg && window.SGOmino) g.IM = g.gira ? { davanti: [immagine(g.cfg), immagine(g.cfg, { cammina: true })], dietro: [immagine(g.cfg, { spalle: true }), immagine(g.cfg, { spalle: true, cammina: true })] }
         : g.siede ? { seduto: [immagine(g.cfg, { seduto: true }), immagine(g.cfg, { seduto: true, spalle: true })], davanti: [], dietro: [] } : { davanti: [immagine(g.cfg)], dietro: [immagine(g.cfg, { spalle: true })] };   // (solo le pose che servono: chi è seduto resta seduto)
@@ -1553,13 +1616,13 @@
       anim = requestAnimationFrame(giro);
     }
     var tCresci = setInterval(function () { if (!vivo()) return; cresciTutto(); sporco = true; }, 30000);
-    var tFase = setInterval(function () { if (LUOGO) return; var f = fase(); if (f !== FASE) { FASE = f; sfondo = null; sporco = true; } }, 60000);
+    var tFase = setInterval(function () { if (LUOGO === "casino") return; var f = fase(); if (f !== FASE) { FASE = f; sfondo = null; sporco = true; } }, 60000);
 
     function chiudi() { cancelAnimationFrame(anim); clearInterval(tCresci); clearInterval(tFase); window.removeEventListener("resize", misura); quandoPronta = null; }
     function esci() { chiudi(); clearTimeout(tSalva); if (opts.salva) opts.salva(D); if (opts.indietro) opts.indietro(); }
     function attesa() {   // nei posti grandi: prima si preparano i disegni di quello che si vede (intanto una schermata d'attesa), poi il resto un po' alla volta
       var t0 = Date.now(), vela = el("div", "gd-attesa"), barra2 = el("i"), bb = el("div", "gd-attesa-b");
-      vela.appendChild(el("b", "", "🎰")); vela.appendChild(el("span", "", "Il Casinò apre le porte…")); bb.appendChild(barra2); vela.appendChild(bb); s.appendChild(vela);
+      var CIT = LUOGO === "citta"; if (CIT) vela.classList.add("citta"); vela.appendChild(el("b", "", CIT ? "🏙️" : "🎰")); vela.appendChild(el("span", "", CIT ? "La città si sveglia…" : "Il Casinò apre le porte…")); bb.appendChild(barra2); vela.appendChild(bb); s.appendChild(vela);
       function vicino(u, v) { var p = pw(u, v); return p.x > -cw * .4 && p.x < cw * 1.4 && p.y > -ch * .3 && p.y < ch * 1.5; }
       function arteDi(o) { var mi = infoMobile(o.t), nome = nomeArte(o), l = []; [false, true].forEach(function (dt) { var a = arteOgg(nome, dt, !!(mi && mi.luce), o.col); if (a && l.indexOf(a.im) < 0) l.push(a.im); }); return l; }
       function dellaPersona(g) { var I = imPersona(g); return I ? (I.seduto || []).concat(I.davanti, I.dietro) : []; }
@@ -1576,7 +1639,7 @@
         var n = subito.filter(pronta).length, q = subito.length ? n / subito.length : 1; barra2.style.width = Math.round(q * 100) + "%";
         if (q < .98 && Date.now() - t0 < 10000) return setTimeout(guarda, 120);
         sporco = true; vela.classList.add("via"); setTimeout(function () { if (vela.parentNode) vela.parentNode.removeChild(vela); }, 400);
-        dimmi("Benvenuto al Casinò! 🎰 Black Jack e Poker sono aperti; allarga con due dita per vedere tutta la sala");
+        if (!CIT) dimmi("Benvenuto al Casinò! 🎰 Black Jack e Poker sono aperti; allarga con due dita per vedere tutta la sala"); else if (!opts.da) dimmi("Tocca un punto per camminare, tocca un edificio per entrare 🚶");
         setTimeout(scalda, 600);
       })();
     }
@@ -1594,8 +1657,8 @@
     window.__giardino = { D: D, av: av, disegna: function () { disegna(); }, fase: function (f) { FASE = f; sfondo = null; sporco = true; }, pw: pw, tap: function (x, y) { tocca(x, y); },
       gira: gira, modo: cambiaModo, attrezzo: function (a, id) { attrezzo = a; if (id) sceltaKit[GRUPPO[a]] = id; pannelloCostruisci(); }, muri: function (a, b) { costruisciMuri({ a: a, b: b }); },
       faccia: function (k, sv) { for (var i = 0; i < facce.length; i++) if (facce[i].k === k && (sv == null || facce[i].sv === sv)) return facce[i]; return null; },
-      dentro: dentro, stanza: stanza, vai: function (c, r) { vaiA([{ c: c, r: r }]); }, tocca: function (o) { if (LUOGO && toccaCasino(o)) return; vaiAOggetto(o); }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); sporco = true; },
-      cresciTutto: cresciTutto, foto: function () { disegna(); return cv.toDataURL("image/png"); } };   // (per le prove)
+      dentro: dentro, stanza: stanza, vai: function (c, r) { vaiA([{ c: c, r: r }]); }, tocca: function (o) { if (LUOGO === "casino" && toccaCasino(o)) return; vaiAOggetto(o); }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); sporco = true; },
+      arte: function (n, d, nt) { return arteOgg(n, d, nt); }, cresciTutto: cresciTutto, foto: function () { disegna(); return cv.toDataURL("image/png"); } };   // (per le prove)
     return s;
   }
 
@@ -1635,6 +1698,9 @@
       ".gd-sc.caro{opacity:.55}.gd-sc-emo{font-size:2rem;line-height:56px}",
       ".gd-sis-ok{background:#2f9e44}.gd-sis-no{background:#868e96}",
       ".gd-compra .gd-bott:not(:first-child){opacity:.45}",
+      ".schermata.gd-vista.gd-incassata{position:absolute;inset:0;height:auto;min-height:0;background:transparent}",
+      ".gd-incassata .gd-avviso{top:calc(78px + env(safe-area-inset-top))}",
+      ".gd-attesa.citta{background:radial-gradient(circle at 50% 45%,#7bc25a,#3f7d3a 75%);color:#fff}",
       ".gd-attesa{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(circle at 50% 45%,#5a1a2a,#1c1018 70%);color:#ffe8a3;font:800 18px system-ui,sans-serif;transition:opacity .4s}",
       ".gd-attesa b{font-size:54px;filter:drop-shadow(0 0 14px rgba(255,200,80,.6))}",
       ".gd-attesa-b{width:min(240px,60%);height:8px;border-radius:99px;background:rgba(255,255,255,.15);overflow:hidden}",

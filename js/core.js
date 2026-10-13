@@ -720,11 +720,15 @@
     }, bozza);
   }
   var scrollCitta = 0;   // fin dove avevi scorso la città: uscendo da un edificio si torna lì (dalla home si riparte dall'alto)
+  var CITTA_A_PIEDI = false, ultimoEdificio = null;   // la città dove si cammina (come la casa): finché è false la vede solo il proprietario; ultimoEdificio: da dove si esce tornando in città
+  function cittaAPiedi() { return !!(window.SGGiardino && window.SGCitta && SGCitta.arte) && (CITTA_A_PIEDI || eProprietario()); }
   function schermataCitta() {
     controllaGiorno();   // (se l'app è rimasta aperta da ieri)
     var io = profiloAttivo(), N = window.SGNube, fase = SGCitta.fase(new Date()), via = false;
     var cloud = !!(N && N.profilo && N.profilo()), prog = window.SGLivelli && cloud && N.progressione ? N.progressione() : null;
-    var mappa = el("div", { class: "citta-mappa", html: SGCitta.svg({ fase: fase, io: io && io.omino, sopra: 80 }) });
+    var vista = cittaAPiedi() ? SGGiardino.crea({ luogo: "citta", incassata: true, omino: io && io.omino, nome: io && io.nome, audio: audioCtx, da: ultimoEdificio,   // la città a piedi (per ora solo per il proprietario)
+      entra: function (k) { if (via) return; via = true; ultimoEdificio = k; suonoEdificio(k); setTimeout(function () { entraEdificio(k); }, 200); } }) : null;
+    var mappa = vista || el("div", { class: "citta-mappa", html: SGCitta.svg({ fase: fase, io: io && io.omino, sopra: 80 }) });
     // in alto: tu (tocca per il profilo) e le monete
     var testoIo = el("span", { class: "citta-io-testo" }, [ el("b", { text: io ? io.nome : "Entra" }) ]);
     if (prog) {
@@ -766,7 +770,7 @@
     var s = el("div", { class: "schermata citta-vista" + (fase === "notte" ? " notte" : ""), style: "background:" + SGCitta.colorePrato(fase) }, [
       mappa,
       el("div", { class: "citta-testa" }, [
-        el("button", { class: "citta-indietro", text: "‹", "aria-label": "Indietro", onclick: function () { scrollCitta = 0; schermataHome(); } }),
+        el("button", { class: "citta-indietro", text: "‹", "aria-label": "Indietro", onclick: function () { scrollCitta = 0; ultimoEdificio = null; schermataHome(); } }),
         el("button", { class: "citta-io", "aria-label": "Il tuo profilo", onclick: function () { schermataAccesso(schermataCitta); } }, [ faccia, testoIo ]),
         el("div", { class: "citta-monete", "aria-label": "Speed Coins" }, [ el("span", { class: "citta-moneta" }), monete ])
       ]),
@@ -778,7 +782,7 @@
         regalo
       ])
     ]);
-    mappa.addEventListener("click", function (e) {
+    if (!vista) mappa.addEventListener("click", function (e) {
       var t = e.target && e.target.closest && e.target.closest("[data-vai]");
       if (!t || via) return;
       via = true;
@@ -792,7 +796,7 @@
       setTimeout(function () { entraEdificio(k); }, 400);
     });
     mostra(s);
-    if (scrollCitta) mappa.scrollTop = scrollCitta;
+    if (vista) vista._monta(); else if (scrollCitta) mappa.scrollTop = scrollCitta;
   }
 
   // ---- Dentro gli edifici della città: le sale coi giochi della categoria (stesso modello per tutti) ----

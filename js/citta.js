@@ -487,6 +487,75 @@
     return io ? s + tu(145, 222) : s;
   }
 
+  // ---------- la città a piedi: ogni cosa della città diventa un "pezzo" per il motore della casa (js/giardino.js, luogo "citta") ----------
+  //   K mattonelle per ogni unità della città; i disegni sono gli stessi della città, in pixel della città × 4 (= le unità dei mobili).
+  var K = 2, PEZZI = null, PER_NOME = {};
+  var FASE_LUCI = { id: "m", top: .22, dx: .17, linea: .4, luci: true, notte: true };   // la notte senza la tinta blu (il buio lo mette il motore)
+  function misuraSvg(s) {   // il riquadro vero di un pezzo di disegno (lo disegna nascosto e lo misura)
+    var NS = "http://www.w3.org/2000/svg", sv = document.createElementNS(NS, "svg"), g = document.createElementNS(NS, "g");
+    sv.setAttribute("width", "10"); sv.setAttribute("height", "10"); sv.style.cssText = "position:absolute;left:-9999px;top:0;visibility:hidden";
+    g.innerHTML = s; sv.appendChild(g); document.body.appendChild(sv);
+    var b = null; try { b = g.getBBox(); } catch (e) {}
+    document.body.removeChild(sv);
+    return b ? { x0: b.x, y0: b.y, x1: b.x + b.width, y1: b.y + b.height } : null;
+  }
+  function disegnaPezzo(pz, notte) { S = notte ? FASE_LUCI : FASI.giorno; P = proiezione(150, 0); ET = []; nf = 0; return pz.fn(); }
+  function pezzi() {
+    if (PEZZI) return PEZZI;
+    var l = [];
+    function metti(nome, vai, u0, v0, w, d, fn, x) {
+      var pz = { nome: "citta_" + nome, vai: vai || null, c: Math.round(u0 * K), r: Math.round(v0 * K), fw: Math.max(1, Math.round(w * K)), fd: Math.max(1, Math.round(d * K)), fn: fn, x: x || {} };
+      l.push(pz); PER_NOME[pz.nome] = pz;
+    }
+    Object.keys(LOTTI).forEach(function (k) {
+      var u = LOTTI[k][0], v = LOTTI[k][1];
+      metti(k, k, u, v, 2.5, 2.5, function () { return k === "arena" ? arena(u + 1.25, v + 1.25) : DISEGNA[k](u, v); }, { etichetta: NOMI[k], luce: true, nomeVero: NOMI[k][0] });
+    });
+    metti("fontana", "piazza", 9.4, 9.4, 1.2, 1.2, function () { return fontana(10, 10); }, { nomeVero: "⛲ Fontana" });
+    metti("bacheca", "piazza", 10, 8.9, .8, .3, function () { return bacheca(10, 9); }, { etichetta: ["📰 Novità", "#4c6ef5"], nomeVero: "📰 Novità" });
+    metti("bar", "bar", 15.35, 15.35, 2.1, 2.1, function () { return bar(16.4, 16.4); }, { etichetta: ["☕ Bar", "#e03131"], luce: true, nomeVero: "☕ Bar" });
+    [[7.6, 12.4, 1], [12.4, 7.6, 1], [2.6, 7.4, .9], [4.9, 4.6, 1.1], [3.6, 5.6, .9], [5.7, 3.5, .95], [26.4, 23.8, 1.15], [27.9, 24.9, 1], [26.9, 25.6, .9], [24.2, 20.9, .9], [20.9, 24.2, .9]].forEach(function (t, i) {
+      metti("albero" + i, null, t[0] - .25, t[1] - .25, .5, .5, function () { return albero(t[0], t[1], t[2]); }, { nomeVero: "🌳 Albero" });
+    });
+    [[14.2, 18.6], [18.6, 14.2], [20.9, 20.9]].forEach(function (t, i) { metti("pino" + i, null, t[0] - .25, t[1] - .25, .5, .5, function () { return pino(t[0], t[1], 1); }, { nomeVero: "🌲 Pino" }); });
+    [[7.5, 10.55], [10.55, 7.5], [20.3, 23.35], [23.35, 20.3]].forEach(function (t, i) { metti("lampione" + i, null, t[0] - .25, t[1] - .25, .5, .5, function () { return lampione(t[0], t[1]); }, { lampione: [t[0], t[1]], nomeVero: "💡 Lampione" }); });
+    [[8.4, 12.9], [12.9, 8.4], [21.2, 25.6], [25.6, 21.2]].forEach(function (t, i) { metti("fiori" + i, null, t[0] - .3, t[1] - .3, .6, .6, function () { return fiori(t[0], t[1]); }, { nomeVero: "🌷 Aiuola" }); });
+    metti("panchina", null, 25.75, 25.45, .8, .3, function () { return panchina(25.8, 25.6); }, { nomeVero: "🪑 Panchina" });
+    metti("laghetto", "pesca", 27.2, 27.2, 2.4, 2.4, function () { return laghetto(28.4, 28.4); }, { etichetta: ["🎣 Laghetto", "#1c7ed6"], nomeVero: "🎣 Laghetto" });
+    metti("scavi", "scavi", 27.9, 31.7, 3.4, 3.4, function () { return scavi(29.6, 33.4); }, { etichetta: ["🏺 Scavi", "#b5651d"], nomeVero: "🏺 Scavi" });
+    [[12.6, 9.55, "#fa5252"], [12.4, 15.98, "#4dabf7"], [18.9, 22.38, "#fcc419"]].forEach(function (t, i) { metti("auto" + i, null, t[0], t[1], .82, .42, function () { return auto(t[0], t[1], t[2]); }, { nomeVero: "🚗 Macchina" }); });
+    l.forEach(function (pz) {   // il riquadro (di giorno e di notte, le luci allargano) e dove sta il centro dell'impronta
+      var a = misuraSvg(disegnaPezzo(pz, false)) || { x0: 0, y0: 0, x1: 10, y1: 10 }, b = misuraSvg(disegnaPezzo(pz, true)) || a, m = 3;
+      pz.bx = Math.floor(Math.min(a.x0, b.x0) - m); pz.by = Math.floor(Math.min(a.y0, b.y0) - m);
+      pz.bw = Math.ceil(Math.max(a.x1, b.x1) + m) - pz.bx; pz.bh = Math.ceil(Math.max(a.y1, b.y1) + m) - pz.by;
+      var cen = proiezione(150, 0)((pz.c + pz.fw / 2) / K, (pz.r + pz.fd / 2) / K, 0); pz.ax = cen[0]; pz.ay = cen[1];
+    });
+    return (PEZZI = l);
+  }
+  var arte = {   // per SGMobiliArte.aggiungi: il motore della casa li disegna come i mobili
+    nomi: function () { return pezzi().map(function (p) { return p.nome; }); },
+    info: function (nome) {
+      if (!PER_NOME[nome] && !PEZZI) pezzi();
+      var pz = PER_NOME[nome]; if (!pz) return null;
+      var o = { tipo: "piedi", nome: pz.x.nomeVero || nome, fp: [pz.fw, pz.fd], w: pz.bw * 4, h: pz.bh * 4, ax: (pz.ax - pz.bx) * 4, ay: (pz.ay - pz.by) * 4, reparto: "citta", qual: 2, prezzo: 0, vai: pz.vai };
+      if (pz.x.etichetta) o.etichetta = [pz.x.etichetta[0], pz.x.etichetta[1]];
+      if (pz.x.luce) o.luce = [o.ax, o.ay - 50, 150, "#ffcf7a"];
+      if (pz.x.lampione) { var t = proiezione(150, 0)(pz.x.lampione[0], pz.x.lampione[1], 30); o.luce = [(t[0] - pz.bx) * 4, (t[1] - pz.by) * 4, 170, "#ffe8a3"]; }
+      return o;
+    },
+    svg: function (nome, opz) {
+      var pz = PER_NOME[nome]; if (!pz) return "";
+      var notte = !!(opz && opz.notte), corpo = disegnaPezzo(pz, notte);
+      return "<svg xmlns='http://www.w3.org/2000/svg' width='" + pz.bw * 4 + "' height='" + pz.bh * 4 + "' viewBox='" + pz.bx + " " + pz.by + " " + pz.bw + " " + pz.bh + "'>" + defs() + corpo + "</svg>";
+    }
+  };
+  // il terreno della città (prato, viali, piazza, rotonda): lo disegna il motore, in unità della città
+  var TERRENO = { K: K, prato: "#9bd36d", ciuffo: "#86c25a", strade: [[true, 10], [true, 16.4], [true, 22.8], [false, 10], [false, 16.4], [false, 22.8]], larg: .54, bordo: "#cbbd9c", viale: "#efe7d4", riga: "#ffffff",
+    cerchi: [{ u: 10, v: 10, r: 1.4, fill: "#f1e7d0", stroke: "#cbbd9c", lw: 2.5 }, { u: 10, v: 10, r: 1.1, stroke: "#e2d3b0", lw: 1.6, dash: [5, 4] },
+      { u: 22.8, v: 22.8, r: 1.0, fill: "#8ce99a", stroke: "#69db7c", lw: .8 }, { u: 22.8, v: 22.8, r: .72, stroke: "#ffffff", lw: 1.4, dash: [4, 4] }],
+    dentro: function (u, v) { return Math.abs(u - v) <= 7.2 && u + v >= 2 && u + v <= 70; },   // dove si può camminare (la striscia di città disegnata)
+    piazza: [10.7, 10.9] };
+
   // ---------- il sole vero in Italia (Roma), con l'ora legale ----------
   function italia(d) {
     var y = d.getUTCFullYear();
@@ -517,6 +586,7 @@
       return "<svg viewBox='0 " + (-m) + " 300 " + (ALTO + m) + "' width='300' height='" + (ALTO + m) + "' preserveAspectRatio='xMidYMid meet' xmlns='http://www.w3.org/2000/svg'>" + corpo + "</svg>";
     },
     fase: fase,
+    arte: arte, terreno: TERRENO, pezzi: function () { return pezzi().map(function (p) { return { nome: p.nome, vai: p.vai, c: p.c, r: p.r, fw: p.fw, fd: p.fd }; }); },
     colorePrato: function (f) { S = FASI[f] || FASI.giorno; return T("#9bd36d"); }
   };
 })();
