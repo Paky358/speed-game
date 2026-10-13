@@ -1556,6 +1556,7 @@
       var vede = false;
       GENTE.forEach(function (g) {
         if (!g.gira) return;
+        if (!g.messo) { g.messo = true; var z0 = g.gira; for (var t0 = 0; t0 < 40 && occupato(Math.floor(g.u), Math.floor(g.v)); t0++) { g.u = z0[0] + Math.floor(Math.random() * (z0[2] - z0[0] + 1)) + .5; g.v = z0[1] + Math.floor(Math.random() * (z0[3] - z0[1] + 1)) + .5; } }   // (se parte sopra una cosa, si sposta in un posto libero)
         if (g.strada.length) {
           var t = g.strada[0], du = t.u - g.u, dv = t.v - g.v, d = Math.hypot(du, dv), passo = 1.7 * dt;
           g.t += dt; if (d > 1e-3) g.fw = [du, dv];
