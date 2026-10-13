@@ -736,7 +736,8 @@
     }, bozza);
   }
   var scrollCitta = 0;   // fin dove avevi scorso la città: uscendo da un edificio si torna lì (dalla home si riparte dall'alto)
-  var CITTA_A_PIEDI = false, ultimoEdificio = null;   // la città dove si cammina (come la casa): finché è false la vede solo il proprietario; ultimoEdificio: da dove si esce tornando in città
+  var CITTA_A_PIEDI = false, ultimoEdificio = null;
+  var fotoCitta = null;   // la città com'era quando hai toccato la bacheca (fa da sfondo sfocato alle novità)   // la città dove si cammina (come la casa): finché è false la vede solo il proprietario; ultimoEdificio: da dove si esce tornando in città
   function cittaAPiedi() { return !!(window.SGGiardino && window.SGCitta && SGCitta.arte) && (CITTA_A_PIEDI || eProprietario()); }
   function schermataCitta() {
     if (serveExtra()) return caricaExtra(schermataCitta, "🏙️");
@@ -744,7 +745,10 @@
     var io = profiloAttivo(), N = window.SGNube, fase = SGCitta.fase(new Date()), via = false;
     var cloud = !!(N && N.profilo && N.profilo()), prog = window.SGLivelli && cloud && N.progressione ? N.progressione() : null;
     var vista = cittaAPiedi() ? SGGiardino.crea({ luogo: "citta", incassata: true, omino: io && io.omino, nome: io && io.nome, audio: audioCtx, da: ultimoEdificio,   // la città a piedi (per ora solo per il proprietario)
-      entra: function (k) { if (via) return; via = true; ultimoEdificio = k; suonoEdificio(k); setTimeout(function () { entraEdificio(k); }, 200); } }) : null;
+      entra: function (k, punto, tela) {
+        if (via) return; via = true; ultimoEdificio = k; suonoEdificio(k);
+        if (k === "piazza") { var foto = null; try { foto = tela.toDataURL("image/jpeg", .72); } catch (e) {} fotoCitta = { src: foto, punto: punto, t: Date.now() }; return entraEdificio(k); }   // la bacheca delle novità: la si legge da vicino, con la città dietro
+        setTimeout(function () { entraEdificio(k); }, 200); } }) : null;
     var mappa = vista || el("div", { class: "citta-mappa", html: SGCitta.svg({ fase: fase, io: io && io.omino, sopra: 80 }) });
     // in alto: tu (tocca per il profilo) e le monete
     var testoIo = el("span", { class: "citta-io-testo" }, [ el("b", { text: io ? io.nome : "Entra" }) ]);
@@ -804,6 +808,7 @@
       if (!t || via) return;
       via = true;
       var k = t.getAttribute("data-vai"), r = t.getBoundingClientRect(), R = mappa.getBoundingClientRect();
+      if (k === "piazza") fotoCitta = { src: null, punto: { x: r.left + r.width / 2, y: r.top + r.height / 2 }, t: Date.now() };   // (le novità partono dalla bacheca toccata)
       scrollCitta = mappa.scrollTop;
       // zoom verso l'edificio toccato e dissolvenza (solo transform e opacity: niente scatti)
       mappa.style.transformOrigin = Math.round(r.left + r.width / 2 - R.left) + "px " + Math.round(r.top + r.height / 2 - R.top) + "px";
@@ -1128,20 +1133,69 @@
   function segnaNovitaViste() {
     try { localStorage.setItem(CHIAVE_NOVITA, String(ultimaVersioneNovita())); } catch (e) {}
   }
-  function schermataNovita() {
-    var s = schermata({ icona: "🆕", titolo: "Novità", sotto: "Cosa è stato aggiunto", indietro: tornaHome });
-    (window.SG_NOVITA || []).forEach(function (n) {
-      var punti = el("ul", { class: "novita-punti" });
+  function schermataNovita() {   // le novità si leggono sulla bacheca della piazza, da vicino, con la città sfocata dietro
+    var f = fotoCitta && Date.now() - fotoCitta.t < 8000 ? fotoCitta : null; fotoCitta = null;
+    var fase = window.SGCitta ? SGCitta.fase(new Date()) : "giorno", visto = 0;
+    try { visto = Number(localStorage.getItem(CHIAVE_NOVITA)) || 0; } catch (e) {}
+    var fondo = f && f.src ? f.src : (window.SGCitta ? "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGCitta.svg({ fase: fase })) : null);
+    var sfondo = el("div", { class: "nb-sfondo" + (f && f.src ? "" : " svg") }), scatto = f && f.src ? el("div", { class: "nb-scatto" }) : null;
+    if (fondo) { sfondo.style.backgroundImage = "url(\"" + fondo + "\")"; if (scatto) scatto.style.backgroundImage = "url(\"" + fondo + "\")"; }
+    // i foglietti: uno per novità, appuntati sul sughero, un po' storti; quelli che non hai ancora letto hanno l'etichetta NUOVO
+    var sughero = el("div", { class: "nb-sughero" });
+    var tutte = window.SG_NOVITA || [], messe = 0;
+    function foglietto(n, i) {
+      var punti = el("ul", { class: "nb-punti" });
       (n.descrizione || []).forEach(function (r) { punti.appendChild(el("li", { text: r })); });
-      s._contenuto.appendChild(el("div", { class: "novita-card" }, [
-        el("div", { class: "novita-data", text: n.data }),
-        el("h2", { class: "novita-titolo", text: n.titolo }),
+      var foglio = el("div", { class: "nb-foglio" + ["", " giallo", " azzurro", " giallo", ""][i % 5] }, [
+        el("i", { class: "nb-puntina c" + (i % 4) }),
+        el("div", { class: "nb-data", text: n.data }),
+        el("h2", { class: "nb-titolo", text: n.titolo }),
         punti
-      ]));
-    });
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Ho capito", onclick: tornaHome }));
-    segnaNovitaViste(); // aperto = visto
+      ]);
+      foglio.style.transform = "rotate(" + [-1.1, .8, -.5, 1.2, -.8][i % 5] + "deg)";
+      if (n.v > visto) foglio.appendChild(el("span", { class: "nb-nuovo", text: "NUOVO" }));
+      sughero.appendChild(foglio);
+    }
+    function altre() {   // 25 alla volta (sono tante: tutte insieme lo scorrimento sui telefoni rallenta)
+      var fine = Math.min(tutte.length, messe + 25); for (; messe < fine; messe++) foglietto(tutte[messe], messe);
+      if (messe < tutte.length) { var b = el("button", { class: "nb-altre", text: "📜 Le novità più vecchie", onclick: function () { b.parentNode.removeChild(b); altre(); } }); sughero.appendChild(b); }
+    }
+    altre();
+    var bacheca = el("div", { class: "nb-bacheca" }, [
+      el("i", { class: "nb-palo sx" }), el("i", { class: "nb-palo dx" }),
+      el("div", { class: "nb-tetto" }),
+      el("div", { class: "nb-insegna", text: "NOVITÀ" }),
+      el("div", { class: "nb-cornice" }, [ sughero ])
+    ]);
+    var uscito = false;
+    function esci() {   // la bacheca si allontana, e si torna dove si era (la piazza o la home)
+      if (uscito) return; uscito = true;
+      try { bacheca.animate([{ transform: "translateX(-50%) scale(1)", opacity: 1 }, { transform: "translateX(-50%) scale(.82)", opacity: 0 }], { duration: 200, easing: "ease-in", fill: "forwards" }); } catch (e) {}
+      setTimeout(tornaHome, 180);
+    }
+    var s = el("div", { class: "schermata nb-vista" + (fase === "notte" ? " notte" : fase === "tramonto" ? " tramonto" : "") }, [
+      sfondo, el("div", { class: "nb-velo" }), bacheca,
+      el("button", { class: "nb-indietro", text: "‹", "aria-label": "Torna indietro", onclick: esci }),
+      el("button", { class: "nb-ok", text: rientro === schermataCitta ? "Torna in piazza" : "Ho capito", onclick: esci })
+    ]);
+    if (scatto) s.appendChild(scatto);
+    segnaNovitaViste();   // aperto = visto
     mostra(s);
+    // l'arrivo: dalla città la vista "entra" verso la bacheca (solo spostamenti e trasparenza: niente scatti)
+    var W = window.innerWidth, H = window.innerHeight, p = f && f.punto ? f.punto : { x: W / 2, y: H * .5 }, dx = Math.round(p.x - W / 2), dy = Math.round(p.y - H * .45);
+    try {
+      bacheca.animate([
+        { transform: "translate(calc(-50% + " + dx + "px), " + dy + "px) scale(.14)", opacity: 0 },
+        { transform: "translate(calc(-50% + " + Math.round(dx * .6) + "px), " + Math.round(dy * .6) + "px) scale(.4)", opacity: 1, offset: .3 },
+        { transform: "translate(-50%, 0) scale(1)", opacity: 1 }
+      ], { duration: 700, easing: "cubic-bezier(.25,.7,.25,1)" });
+      sfondo.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, easing: "ease-out" });
+      if (scatto) {
+        scatto.style.transformOrigin = p.x + "px " + p.y + "px";
+        var a = scatto.animate([{ transform: "scale(1)", opacity: 1 }, { transform: "scale(3)", opacity: 0 }], { duration: 650, easing: "cubic-bezier(.45,0,.75,1)", fill: "forwards" });
+        a.onfinish = function () { if (scatto.parentNode) scatto.parentNode.removeChild(scatto); };
+      }
+    } catch (e) { if (scatto && scatto.parentNode) scatto.parentNode.removeChild(scatto); }
   }
 
   // ---- Sfide e Trofei (stile PlayStation: bronzo/argento/oro/diamante + platino) ----

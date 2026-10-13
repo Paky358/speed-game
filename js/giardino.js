@@ -770,7 +770,10 @@
     }
     function azione(o) {
       if (LUOGO === "casino") return azioneCasino(o);
-      if (LUOGO === "citta") { var mc = infoMobile(o.t) || {}; if (mc.vai && opts.entra) return opts.entra(mc.vai); return dimmi(nomeDi(o.t)); }
+      if (LUOGO === "citta") {   // in città: si entra (e si dice dove stava sullo schermo la cosa toccata, per partire da lì)
+        var mc = infoMobile(o.t) || {}, punto = null; ordinati.forEach(function (x) { if (x.o === o && x.ret) punto = { x: x.ret.x + x.ret.w / 2, y: x.ret.y + x.ret.h * .45 }; });
+        if (mc.vai && opts.entra) return opts.entra(mc.vai, punto, cv); return dimmi(nomeDi(o.t));
+      }
       cresciTutto();
       if (ALBERI[o.t] || (o.t === "orto" && o.pianta)) {
         if (maturo(o)) return raccogli(o);
