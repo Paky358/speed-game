@@ -739,6 +739,109 @@
   var CITTA_A_PIEDI = true, ultimoEdificio = null;   // (dal 13 ott 2026 per tutti)
   var fotoCitta = null;   // la città com'era quando hai toccato la bacheca (fa da sfondo sfocato alle novità)   // la città dove si cammina (come la casa): finché è false la vede solo il proprietario; ultimoEdificio: da dove si esce tornando in città
   function cittaAPiedi() { return !!(window.SGGiardino && window.SGCitta && SGCitta.arte) && (CITTA_A_PIEDI || eProprietario()); }
+  // ---- 🎯 le sfide del giorno: 3 al giorno (una tra pesca e scavi, due tra i giochi che si fanno anche contro il computer),
+  //      uguali per tutti e diverse ogni giorno. Si misurano coi contatori che i giochi tengono già (quelli dei trofei):
+  //      la prima volta che le guardi oggi si segna da dove parti, e il progresso è quanto sei salito da lì ----
+  var SFIDE_VITA = [
+    { id: "pesca3", icona: "🎣", testo: "Pesca 3 pesci al laghetto", fonte: "pesca", meta: 3, monete: 300, xp: 60 },
+    { id: "pesca6", icona: "🎣", testo: "Pesca 6 pesci al laghetto", fonte: "pesca", meta: 6, monete: 500, xp: 100 },
+    { id: "scavi1", icona: "🏺", testo: "Trova un reperto agli scavi", fonte: "scavi", meta: 1, monete: 300, xp: 60 },
+    { id: "scavi2", icona: "🏺", testo: "Trova 2 reperti agli scavi", fonte: "scavi", meta: 2, monete: 500, xp: 100 }
+  ];
+  var SFIDE_GIOCHI = [
+    { id: "bj-mani", icona: "🃏", testo: "Vinci 3 mani a Black Jack", gioco: "blackjack", stat: "maniVinte", meta: 3, monete: 300, xp: 60 },
+    { id: "bj-21", icona: "🃏", testo: "Fai un Black Jack", gioco: "blackjack", stat: "blackjackFatti", meta: 1, monete: 400, xp: 80 },
+    { id: "scopa-v", icona: "🂡", testo: "Vinci una partita a Scopa", gioco: "scopa", stat: "vinte", meta: 1, monete: 400, xp: 100 },
+    { id: "scopa-s", icona: "🧹", testo: "Fai 3 scope a Scopa", gioco: "scopa", stat: "scope", meta: 3, monete: 400, xp: 80 },
+    { id: "scopa-7", icona: "7️⃣", testo: "Prendi il Settebello a Scopa", gioco: "scopa", stat: "settebello", meta: 1, monete: 300, xp: 60 },
+    { id: "hockey-v", icona: "🏒", testo: "Vinci una partita a Glow Hockey", gioco: "hockey", stat: "vittorie", meta: 1, monete: 400, xp: 100 },
+    { id: "hockey-g", icona: "🏒", testo: "Segna 10 gol a Glow Hockey", gioco: "hockey", stat: "golFatti", meta: 10, monete: 300, xp: 60 },
+    { id: "calcio-v", icona: "⚽", testo: "Vinci una partita a Calcio Biliardo", gioco: "calciobiliardo", stat: "vittorie", meta: 1, monete: 400, xp: 100 },
+    { id: "calcio-g", icona: "⚽", testo: "Segna 5 gol a Calcio Biliardo", gioco: "calciobiliardo", stat: "golFatti", meta: 5, monete: 300, xp: 60 },
+    { id: "drop4-v", icona: "🟡", testo: "Vinci una partita a Drop 4", gioco: "drop4", stat: "vinte", meta: 1, monete: 300, xp: 60 },
+    { id: "navale-n", icona: "🚢", testo: "Affonda 3 navi a Battaglia Navale", gioco: "navale", stat: "naviAffondate", meta: 3, monete: 300, xp: 60 },
+    { id: "navale-v", icona: "🚢", testo: "Vinci a Battaglia Navale", gioco: "navale", stat: "vittorie", meta: 1, monete: 400, xp: 100 },
+    { id: "poker-v", icona: "♠️", testo: "Vinci una mano di Texas Hold'em", gioco: "poker", stat: "vittorieTexas", meta: 1, monete: 300, xp: 60 },
+    { id: "ruota-p", icona: "🎡", testo: "Gioca alla Ruota della Fortuna", gioco: "ruota", stat: "partite", meta: 1, monete: 250, xp: 50 },
+    { id: "pendolo-p", icona: "🎯", testo: "Gioca 2 partite a Palla a Pendolo", gioco: "pendolo", stat: "partite", meta: 2, monete: 250, xp: 50 }
+  ];
+  var BONUS_SFIDE = { monete: 1000, xp: 200 };   // tutte e 3 fatte: il forziere
+  function sfideDiOggi() {   // scelte dal giorno: oggi le stesse per tutti, domani altre
+    var g = oggiStr(), h = 2166136261, i; for (i = 0; i < g.length; i++) { h ^= g.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    function rnd() { h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0; return h / 4294967296; }
+    var vita = SFIDE_VITA.filter(function (s) { return s.fonte === "pesca" ? !!window.SGPesca : !!window.SGScavi; }), giochiOk = SFIDE_GIOCHI.filter(function (s) { return !!giocoDa(s.gioco); });
+    var l = vita.length ? [vita[Math.floor(rnd() * vita.length)]] : [], usati = {}, prove = 0;
+    while (l.length < 3 && prove++ < 200) { var s = giochiOk[Math.floor(rnd() * giochiOk.length)]; if (!s || usati[s.gioco]) continue; usati[s.gioco] = 1; l.push(s); }
+    return l;
+  }
+  function valoreSfida(s) {   // il contatore che sale giocando
+    if (s.fonte === "pesca") { var p = datiPesca(); return (p && p.tot) || 0; }
+    if (s.fonte === "scavi") { var d = datiScavi(); return (d && d.tot) || 0; }
+    var prof = window.SGNube && SGNube.profilo && SGNube.profilo(); return prof ? valoreStat(prof, s.gioco, s.stat) || 0 : 0;
+  }
+  function statoSfide() {   // { g, base: { id: da dove parti }, presi: { id: true }, bonus }: si segna la prima volta che le guardi oggi
+    if (!profiloAttivo()) return null;
+    var st = listaProfilo("sfide")[0];
+    if (!st || st.g !== oggiStr() || !st.base) {
+      st = { g: oggiStr(), base: {}, presi: {}, bonus: false };
+      sfideDiOggi().forEach(function (s) { st.base[s.id] = valoreSfida(s); });
+      salvaListaProfilo("sfide", [st]);
+    }
+    return st;
+  }
+  function progressoSfida(s, st) { return Math.max(0, Math.min(s.meta, valoreSfida(s) - ((st && st.base[s.id]) || 0))); }
+  function riassuntoSfide() {   // per l'avviso in città: quante fatte, quante da ritirare
+    var st = statoSfide(); if (!st) return null;
+    var l = sfideDiOggi(), fatte = 0, ritira = 0;
+    l.forEach(function (s) { if (st.presi[s.id]) fatte++; else if (progressoSfida(s, st) >= s.meta) ritira++; });
+    if (fatte === l.length && !st.bonus) ritira++;
+    return { tot: l.length, fatte: fatte, ritira: ritira };
+  }
+  function premia(monete, xp) { try { if (monete && window.SGNube && SGNube.cambiaMonete) SGNube.cambiaMonete(monete); if (xp && SGNube.aggiungiXp) SGNube.aggiungiXp(xp); } catch (e) {} }
+  // il pannello delle sfide (sopra la città): le 3 sfide con la barra, "Vai" per andarci, "Ritira!" quando è fatta, e il forziere se le fai tutte
+  function pannelloSfide(vai, poi) {
+    var st = statoSfide(); if (!st) return;
+    var velo = el("div", { class: "sf-velo" }), foglio = el("div", { class: "sf-foglio" }), lista = el("div", {}), tempo = el("div", { class: "sf-tempo" });
+    function chiudi() { if (velo.parentNode) velo.parentNode.removeChild(velo); if (poi) poi(); }
+    velo.addEventListener("click", function (e) { if (e.target === velo) chiudi(); });
+    var tFesta = null;
+    function festa(msg) { clearTimeout(tFesta); tempo.textContent = msg; tempo.classList.add("festa"); tFesta = setTimeout(function () { tempo.classList.remove("festa"); if (velo.parentNode) disegna(); }, 2600); }   // il premio, scritto in grande per un attimo
+    function finoMezzanotte() { var d = new Date(); d.setHours(24, 0, 0, 0); return d - Date.now(); }
+    function disegna() {
+      svuota(lista); tempo.textContent = "⏳ Nuove sfide tra " + tempoBreve(finoMezzanotte());
+      var l = sfideDiOggi(), fatte = 0;
+      l.forEach(function (s) {
+        var p = progressoSfida(s, st), preso = !!st.presi[s.id], pronta = !preso && p >= s.meta; if (preso) fatte++;
+        var tasto = el("button", { class: "sf-tasto" + (pronta ? " ritira" : preso ? " fatto" : ""), text: pronta ? "Ritira!" : preso ? "✔" : "Vai" });
+        tasto.onclick = function () {
+          if (preso) return;
+          if (pronta) { st.presi[s.id] = true; salvaListaProfilo("sfide", [st]); premia(s.monete, s.xp); disegna(); festa("🎉 +" + cifre(s.monete) + " monete e +" + s.xp + " XP"); return; }
+          chiudi(); vai(s);
+        };
+        lista.appendChild(el("div", { class: "sf-carta" + (preso ? " fatta" : "") }, [
+          el("div", { class: "sf-ico", text: s.icona }),
+          el("div", { class: "sf-corpo" }, [
+            el("div", { class: "sf-testo", text: s.testo }),
+            el("div", { class: "sf-barra" }, [ el("i", { style: "width:" + Math.round(p * 100 / s.meta) + "%" }) ]),
+            el("div", { class: "sf-premio", text: p + "/" + s.meta + "  ·  🪙 " + cifre(s.monete) + "  ·  ⭐ " + s.xp + " XP" })
+          ]),
+          tasto
+        ]));
+      });
+      var tutte = fatte === l.length, bTasto = el("button", { class: "sf-tasto" + (tutte && !st.bonus ? " ritira" : st.bonus ? " fatto" : ""), text: st.bonus ? "✔" : tutte ? "Apri!" : fatte + "/" + l.length });
+      bTasto.onclick = function () { if (!tutte || st.bonus) return; st.bonus = true; salvaListaProfilo("sfide", [st]); premia(BONUS_SFIDE.monete, BONUS_SFIDE.xp); disegna(); festa("🎁 Forziere: +" + cifre(BONUS_SFIDE.monete) + " monete e +" + BONUS_SFIDE.xp + " XP!"); };
+      lista.appendChild(el("div", { class: "sf-bonus" + (st.bonus ? " fatta" : "") }, [
+        el("div", { class: "sf-ico", text: "🎁" }),
+        el("div", { class: "sf-corpo" }, [ el("div", { class: "sf-testo", text: "Fai tutte e 3 le sfide" }), el("div", { class: "sf-premio", text: "Il forziere: 🪙 " + cifre(BONUS_SFIDE.monete) + "  ·  ⭐ " + BONUS_SFIDE.xp + " XP" }) ]),
+        bTasto
+      ]));
+    }
+    var x = el("button", { class: "sf-x", text: "✕", "aria-label": "Chiudi", onclick: chiudi });
+    foglio.appendChild(el("div", { class: "sf-testa" }, [ el("b", { text: "🎯 Sfide del giorno" }), x ]));
+    foglio.appendChild(tempo); foglio.appendChild(lista); velo.appendChild(foglio);
+    disegna();
+    return velo;
+  }
   function schermataCitta() {
     if (serveExtra()) return caricaExtra(schermataCitta, "🏙️");
     controllaGiorno();   // (se l'app è rimasta aperta da ieri)
@@ -804,6 +907,8 @@
     }
     function vociAvvisi() {
       var l = [], ps, sc, gs, tv;
+      var sf = cloud ? riassuntoSfide() : null;   // 🎯 per prime le sfide del giorno
+      if (sf && sf.tot) l.push({ id: "sfide", icona: "🎯", col: "#e8590c", acceso: sf.ritira > 0 || sf.fatte < sf.tot, badge: sf.ritira > 0 ? String(sf.ritira) : sf.fatte < sf.tot ? String(sf.tot - sf.fatte) : "", sotto: sf.ritira > 0 ? "Ritira!" : sf.fatte + "/" + sf.tot + " sfide", tocca: apriSfide });
       if (cloud && window.SGPesca && SGPesca.stato) { ps = SGPesca.stato(datiPesca());
         l.push({ id: "pesca", icona: "🎣", col: "#1c7ed6", acceso: ps.gratis > 0, badge: ps.gratis > 0 ? String(ps.gratis) : "", sotto: ps.gratis > 0 ? ps.gratis + " esche" : "tra " + tempoBreve(finoMezzanotte()), tocca: function () { portaA("pesca", schermataPesca); } }); }
       if (cloud && window.SGScavi && SGScavi.stato) { sc = SGScavi.stato(datiScavi()); var inf = eProprietario();
@@ -814,6 +919,14 @@
       if (prog && N.progressione().xpGiorno !== oggiStr()) l.push({ id: "xp", icona: "⭐", col: "#f59f00", acceso: true, badge: "!", sotto: "+" + SGLivelli.BONUS_GIORNO + " XP", tocca: function () { scrollCitta = 0; ultimoEdificio = null; schermataHome(); } });
       if ((tv = trofeoVicino())) l.push({ id: "trofeo", icona: tv.t.icona || "🏆", col: "#7048e8", acceso: tv.q >= .9, badge: tv.q >= .9 ? "!" : "", sotto: "ne mancano " + cifre(tv.manca), tocca: function () { schermataSfideGioco(tv.t.gioco); } });
       return l.slice(0, window.innerHeight < 700 ? 5 : 6);
+    }
+    function apriSfide() {   // il pannello delle sfide: "Vai" porta al gioco (o al laghetto, agli scavi), chiudendo si aggiornano monete e avvisi
+      var v = pannelloSfide(function (sfida) {
+        if (sfida.fonte === "pesca") return portaA("pesca", schermataPesca);
+        if (sfida.fonte === "scavi") return portaA("scavi", schermataScavi);
+        var g = giocoDa(sfida.gioco); if (g) { rientro = schermataCitta; apriGioco(g); }
+      }, function () { ultimaColonna = ""; aggiornaAvvisi(); if (prog) aggTesta(); });
+      if (v) s.appendChild(v);
     }
     function aggiornaAvvisi() {   // si rifà solo la colonna, e solo se è cambiato qualcosa (niente lampeggio)
       var l = vociAvvisi(), chiave = JSON.stringify(l.map(function (v) { return [v.id, v.icona, v.acceso, v.badge, v.sotto]; }));
@@ -4338,7 +4451,7 @@
         else if (g) apriGioco(g);
         else schermataHome();
       }
-      [3000, 9000].forEach(function (ms) { setTimeout(function () { if (serveExtra()) caricaExtra(); }, ms); });   // chi usa la casa nuova, il casinò o la città a piedi: i loro disegni arrivano in sottofondo
+      [3000, 9000].forEach(function (ms) { setTimeout(function () { if (serveExtra()) caricaExtra(); try { var io0 = profiloAttivo(); if (io0 && io0.cloud) statoSfide(); } catch (e) {} }, ms); });   // chi usa la casa nuova, il casinò o la città a piedi: i loro disegni arrivano in sottofondo
       // col cloud, aspetta che Firebase ripristini la sessione (login automatico)
       if (window.SGNube && SGNube.disponibile() && !SGNube.pronto()) {
         schermataCaricamento();

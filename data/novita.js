@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 201,
+    data: "13 ottobre 2026",
+    titolo: "Le sfide del giorno 🎯",
+    descrizione: [
+      "Ogni giorno 3 sfide nuove, uguali per tutti: una al laghetto o agli scavi e due nei giochi che puoi fare anche contro il computer (Scopa, Black Jack, Glow Hockey, Calcio Biliardo, Battaglia Navale, Drop 4, Poker…).",
+      "Ogni sfida fatta vale monete e XP: tocca \"Ritira!\". Se le fai tutte e 3 si apre anche il forziere con 1.000 monete e 200 XP.",
+      "Le trovi in città, nel primo pulsante a sinistra: il numero rosso ti dice quante ne mancano. A mezzanotte arrivano quelle nuove."
+    ]
+  },
+  {
     v: 200,
     data: "13 ottobre 2026",
     titolo: "La città si gira a piedi, il Casinò nuovo e la casa come The Sims 🏙️🎰🏡",

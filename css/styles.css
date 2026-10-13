@@ -1534,3 +1534,30 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 @keyframes caSalta{ 0%,58%,100%{ transform:translateY(0) scale(1); } 68%{ transform:translateY(-6px) scale(1.12); } 78%{ transform:translateY(0) scale(1); } 86%{ transform:translateY(-2px); } }
 @keyframes caPulsa{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.07); } }
 .ca-nome{ margin-top:3px; max-width:70px; padding:2px 6px; border-radius:8px; background:rgba(20,24,40,.74); color:#fff; font-weight:800; font-size:10.5px; line-height:1.25; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* ---- 🎯 le sfide del giorno (pannello sopra la città) ---- */
+.sf-velo{ position:absolute; inset:0; z-index:6; background:rgba(10,20,40,.5); display:flex; align-items:flex-end; }
+.sf-foglio{ width:100%; max-width:560px; margin:0 auto; max-height:86%; overflow-y:auto; overscroll-behavior:contain; background:linear-gradient(180deg,#fff8e6,#ffefc7);
+  border-radius:22px 22px 0 0; padding:14px 14px calc(18px + env(safe-area-inset-bottom)); box-shadow:0 -10px 30px rgba(0,0,0,.35); animation:sfSu .24s ease-out; }
+@keyframes sfSu{ from{ transform:translateY(40px); opacity:0; } to{ transform:none; opacity:1; } }
+.sf-testa{ display:flex; align-items:center; justify-content:space-between; margin:0 2px 2px; }
+.sf-testa b{ font-size:1.3rem; color:#7a3b00; }
+.sf-x{ border:0; width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,.08); color:#5a3a1a; font-size:16px; }
+.sf-tempo{ font-size:.85rem; font-weight:800; color:#a0652b; margin:0 2px 12px; transition:transform .2s; }
+.sf-tempo.festa{ color:#2b8a3e; font-size:1.05rem; transform:scale(1.03); transform-origin:left center; }
+.sf-carta, .sf-bonus{ display:flex; align-items:center; gap:10px; border-radius:16px; padding:12px; margin-bottom:10px; }
+.sf-carta{ background:#fff; box-shadow:0 3px 0 rgba(0,0,0,.08), 0 6px 14px rgba(0,0,0,.08); }
+.sf-carta.fatta{ opacity:.62; }
+.sf-ico{ width:46px; height:46px; flex:none; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:26px; background:#ffe8cc; }
+.sf-corpo{ flex:1; min-width:0; }
+.sf-testo{ font-weight:800; color:#2b2b2b; line-height:1.25; }
+.sf-barra{ height:10px; border-radius:6px; background:#f1e3c6; margin:7px 0 5px; overflow:hidden; }
+.sf-barra i{ display:block; height:100%; border-radius:6px; background:linear-gradient(90deg,#51cf66,#2f9e44); }
+.sf-premio{ font-size:.8rem; font-weight:800; color:#7a5a2b; }
+.sf-tasto{ flex:none; min-width:64px; border:0; border-radius:12px; padding:10px 12px; font-weight:900; font-size:.92rem; background:#4c6ef5; color:#fff; box-shadow:0 3px 0 rgba(0,0,0,.2); }
+.sf-tasto.ritira{ background:linear-gradient(180deg,#ffe066,#fab005); color:#3a2200; animation:caPulsa 1.2s ease-in-out infinite; }
+.sf-tasto.fatto{ background:#d3f9d8; color:#2b8a3e; box-shadow:none; }
+.sf-bonus{ margin-top:4px; background:linear-gradient(180deg,#7048e8,#5f3dc4); color:#fff; box-shadow:0 6px 14px rgba(95,61,196,.35); }
+.sf-bonus .sf-ico{ background:rgba(255,255,255,.18); }
+.sf-bonus .sf-testo{ color:#fff; } .sf-bonus .sf-premio{ color:#e5dbff; }
+.sf-bonus.fatta{ opacity:.65; }
