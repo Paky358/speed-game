@@ -913,6 +913,136 @@
   });
   function cromo(d, w) { return tratto(d, L, w + 2.4) + tratto(d, "#a7b2ba", w) + tratto(d, "#ffffff", Math.max(.7, w * .38), "opacity='.95' transform='translate(-.4 -.5)'"); }
 
+  // =========================================================
+  //  CORSA DEI CAVALLINI (il gioco meccanico): il mobile a forma di pista laccato di rosso con l'oro e la fila di lampadine,
+  //  il piano di mogano con le pulsantiere colorate davanti a ogni posto (un bottone per cavallo), il bracciolo di cuoio;
+  //  dentro, la pista ovale d'erba verde con le corsie, la staccionata bianca di dentro e di fuori, il traguardo a scacchi
+  //  col palo; sei cavallini al galoppo (baio, sauro, morello, grigio, palomino, baio scuro) coi fantini e le casacche colorate,
+  //  il numero sulla gualdrappa; in mezzo al prato, coi fiori, il tabellone basso coi numeri, le quote e il ferro di cavallo d'oro
+  // =========================================================
+  var CASACCHE = [["#e03131", "#ffffff"], ["#1c7ed6", "#ffd43b"], ["#fcc419", "#1c7ed6"], ["#2f9e44", "#e03131"], ["#f8f9fa", "#212529"], ["#7048e8", "#ff922b"]];
+  var MANTI = [["#8b4a24", "#2b1a14"], ["#b8622a", "#7a3510"], ["#2d2320", "#141010"], ["#cfcbc4", "#8e8a85"], ["#dcab55", "#f6e7bf"], ["#5e301a", "#1d120d"]];
+  function cavallo(k) {   // un cavallino al galoppo col fantino, di profilo (guarda verso +X; i piedi a Y = 0, in su Y < 0)
+    var m = MANTI[k], c = CASACCHE[k], o = "", sc = scuro(m[0], .35);
+    var corpo2 = "M-10.5,-20 C-13.5,-20 -14.2,-15.5 -12,-13.2 C-9,-11.4 -3,-11.6 2,-11.6 C6,-11.6 9.5,-12 11,-14.2 C12,-15.6 13.2,-18 14.4,-20.2 L18.8,-21.2 C20.2,-21.4 20.6,-22.8 19.8,-23.8 L15.8,-27.6 C14.8,-28.6 13.6,-28.8 12.6,-28.4 C10.6,-27.6 9.4,-25.6 7.6,-22.8 C3,-21.6 -6,-21.4 -10.5,-20 Z";
+    var g = "id1", gamba = function (d, col, w) { return tratto(d, L, w + 1.3) + tratto(d, col, w); };
+    // le zampe di là (più scure), la coda, il corpo, le zampe di qua
+    o += gamba("M6.6,-13 L10.6,-9.2 L12.6,-5.6", sc, 1.9) + gamba("M-7.4,-13.2 L-11.8,-9.6 L-15,-6.8", sc, 2.1);
+    o += cer(12.6, -5.6, 1.1, "#1d1714") + cer(-15, -6.8, 1.1, "#1d1714");
+    o += pth("M-11.6,-18.6 C-15,-19.6 -18.6,-18.6 -20.4,-16 C-18.6,-16.4 -17,-15.8 -16,-14.4 C-15,-15.8 -13.6,-16.8 -11.8,-16.6 Z", m[1], bordo(L, .8));   // la coda al vento
+    o += pth(corpo2, lin("mt" + k, [[0, chiaro(m[0], .3)], [.55, m[0]], [1, scuro(m[0], .3)]], 0, 0, 0, 1), bordo(L, .9));
+    o += pth("M13,-28.4 L12.1,-31.2 L14.3,-28.6 Z", m[0], bordo(L, .6));   // l'orecchio
+    o += pth("M12.2,-28.4 C10,-27.6 8.6,-25.2 6.8,-22.6 L8.6,-22.4 C10,-24.6 11.4,-26.4 13.2,-27.2 Z", m[1]);   // la criniera
+    o += cer(15.6, -25.6, .55, "#120d0b") + cer(19.2, -22.3, .35, "#120d0b", op(.7));   // l'occhio e la narice
+    o += pth("M-8,-19.6 C-2,-20.6 4,-20.8 8,-21.4", "none", "stroke='#ffffff' stroke-width='.9' stroke-linecap='round' opacity='.3'");   // il lucido del mantello
+    o += gamba("M8.2,-13 L12.6,-9.6 L16.2,-7.2", m[0], 2.1) + gamba("M-8.6,-13.8 L-13.4,-10.6 L-17.6,-8.6", m[0], 2.3);
+    o += cer(16.2, -7.2, 1.15, "#1d1714") + cer(-17.6, -8.6, 1.2, "#1d1714");
+    // la gualdrappa col numero
+    o += pth("M-3.6,-20.4 L4.4,-20.8 L4.6,-14.2 L-3.4,-14 Z", "#f8f9fa", bordo(L, .6)) + numero(String(k + 1), .5, -17.3, 4, "#212529", .8);
+    // il fantino accucciato: la gamba piegata (calzoni bianchi, stivale nero), il busto con la casacca, il braccio, la testa col berretto
+    o += tratto("M-.6,-22.6 L4.6,-21.4 L2.6,-17.4", L, 3.6) + tratto("M-.6,-22.6 L4.6,-21.4", "#f4f1ea", 2.4) + tratto("M4.6,-21.4 L2.6,-17.4", "#1d1d22", 2.3);
+    o += pth("M-2.4,-22.2 C-2.2,-25.4 1.6,-28.4 5.8,-28.6 C7.4,-28.6 7.8,-26.8 6.6,-25.4 C4.4,-23.4 1.4,-21.6 -1.6,-21.4 Z", lin("cs" + k, [[0, chiaro(c[0], .3)], [1, scuro(c[0], .2)]], 0, 0, 0, 1), bordo(L, .8));
+    o += tratto("M5.6,-26.8 L10.6,-24.6", L, 2.6) + tratto("M5.6,-26.8 L10.6,-24.6", c[0], 1.5) + cer(10.8, -24.5, .9, "#f1c9a5", bordo(L, .4));
+    o += tratto("M10.8,-24.5 L18.6,-22.6", "#4a2e1a", .4);   // le redini
+    o += cer(7.8, -29.6, 2.2, "#f1c9a5", bordo(L, .7)) + pth("M5.6,-29.8 C5.6,-32.4 9.8,-32.6 10,-29.8 L11.6,-29.6 L10,-29 L5.6,-29.4 Z", c[1], bordo(L, .6));
+    return o;
+  }
+  def("corsa_cavalli", { nome: "Corsa dei cavallini", fp: [3, 2], box: [-130, -110, 128, 68], dietro: true,
+    posti: [[-1, 0], [-1, 1], [0, 2], [1, 2], [2, 2], [3, 1], [3, 0], [2, -1], [1, -1], [0, -1]], luce: [0, 0, 64, 170, "#ffd27a"] }, function () {
+    var RA = 1.46, RB = .94, LG = RA - RB, ZP = 40, ZL = 42.4, s = "", l = [], M = 61, i, ROSSO_L = "#8a1424";
+    var O = pStadio(RA, RB, 48);
+    s += ombraForma(O, 1.1);
+    // il mobile: lo zoccolo d'oro, la lacca rossa coi filetti, le lampadine
+    s += fianco(allarga(O, -.02), 0, 4, "#2a1a14", LACCA, { righe: [[3.2, ORO, 1, .9]] });
+    s += fianco(O, 4, ZL, ROSSO_L, LACCA, { righe: [[ZL - 1.4, ORO_S, 1.4, .9], [ZL - 1.5, ORO, .8, 1], [5.4, ORO, 1, .9], [ZL - 9.5, ORO, .6, .8]],
+      extra: function (vv) { return lungoCorsa(vv, .085, function (a, b) { var c = P(a, b, ZL - 5.4); return lampadina(c[0], c[1], 1, "#ffd36b"); }) + lungoCorsa(vv, .34, function (a, b) { var c = P(a, b, 18); return pth("M" + q(c[0] - 4, c[1] + 2) + " C" + q(c[0] - 4, c[1] - 5) + " " + q(c[0] + 4, c[1] - 5) + " " + q(c[0] + 4, c[1] + 2), "none", "stroke='" + ORO + "' stroke-width='1.3' stroke-linecap='round'") + cer(c[0] - 3.3, c[1] - .6, .35, "#7a5214") + cer(c[0] + 3.3, c[1] - .6, .35, "#7a5214"); }); } });   // e i ferri di cavallo d'oro
+    // il piano di mogano (fino alla pista), il gradino giù verso la pista
+    var Pi = allarga(O, -.17), bs = limiti(aSchermo(O, ZL));
+    s += anelloP(O, Pi, ZL, nuova([[0, "#c8834f"], [.45, "#8c3e1c"], [1, "#4e1c0a"]], bs[0], 0, bs[2], 0, true), bordo(L, 1.1));
+    s += fianco(Pi, ZP, ZL, "#5a2410", LACCA, { dentro: true, lati: false, lw: .7 });
+    // la pista d'erba con le corsie, il prato in mezzo con le righe del tosaerba e i fiori
+    var Ti = allarga(O, -.53), prato = "", r2 = rnd(4242);
+    prato += pth(chiusoP(Pi) + " " + chiusoP(Ti.slice().reverse()), nuova([[0, "#5cc761"], [1, "#2f9a3e"]], 0, -50, 0, 50, true), "fill-rule='evenodd'");
+    [-.235, -.3, -.365, -.43, -.495].forEach(function (d) { prato += pth(chiusoP(allarga(O, d)), "none", "stroke='#c3f0b8' stroke-width='.35' stroke-dasharray='2.4 2' opacity='.6'"); });
+    prato += pth(chiusoP(Ti), nuova([[0, "#3e9d48"], [1, "#25763a"]], 0, -40, 0, 40, true));
+    for (i = -6; i <= 6; i++) prato += rett(i * .13 * M - .065 * M / 2, -.5 * M, .065 * M, M, 0, "#ffffff", op(.06));
+    [[-.62, .1], [.62, -.1], [-.3, .24], [.3, -.24]].forEach(function (f) { var j; prato += ell(f[0] * M, f[1] * M, 4.6, 3, "#6b4a2a"); for (j = 0; j < 9; j++) prato += cer(f[0] * M + (r2() - .5) * 7, f[1] * M + (r2() - .5) * 4.4, .9, ["#ff6b9a", "#ffd43b", "#ffffff", "#ff922b"][j % 4]); });   // le aiuole fiorite
+    // il traguardo: la riga a scacchi di traverso sulla pista dritta davanti
+    var AT = .4, j2, qd = (RB - .17 - (RB - .53)) / 8;
+    for (j2 = 0; j2 < 8; j2++) for (i = 0; i < 2; i++) prato += rett((AT + i * .025) * M, (RB - .53 + j2 * qd) * M, .025 * M, qd * M, 0, (i + j2) % 2 ? "#1d1d22" : "#ffffff");
+    s += pth(chiuso(aSchermo(Pi, ZP)), "#2f9a3e") + suZ(ZP, prato);
+    // le staccionate bianche (pezzi corti, così stanno nell'ordine giusto coi cavallini)
+    function staccionata(pp) {
+      var n = pp.length, k;
+      for (k = 0; k < n; k++) {
+        var A = pp[k], B = pp[(k + 1) % n], lg = Math.sqrt((B[0] - A[0]) * (B[0] - A[0]) + (B[1] - A[1]) * (B[1] - A[1])), pz = Math.max(1, Math.round(lg / .075)), m;
+        for (m = 0; m < pz; m++) {
+          var t0 = m / pz, t1 = (m + 1) / pz, a0 = A[0] + (B[0] - A[0]) * t0, b0 = A[1] + (B[1] - A[1]) * t0, a1 = A[0] + (B[0] - A[0]) * t1, b1 = A[1] + (B[1] - A[1]) * t1, o = "";
+          [ZP + 2.6, ZP + 5].forEach(function (z) { var d = linea(P(a0, b0, z), P(a1, b1, z)); o += tratto(d, "#6d665c", 1.6) + tratto(d, "#ffffff", .9); });
+          var c0 = P(a0, b0, ZP), c1 = P(a0, b0, ZP + 6);
+          o += tratto(linea(c0, c1), "#6d665c", 1.8) + tratto(linea(c0, c1), "#ffffff", 1);
+          l.push([vicino((a0 + a1) / 2, (b0 + b1) / 2), o]);
+        }
+      }
+    }
+    staccionata(pStadio(RA - .185, RB - .185, 14));
+    staccionata(pStadio(RA - .515, RB - .515, 10));
+    // il palo del traguardo, sulla staccionata di dentro: bianco e rosso, col disco in cima
+    var pt0 = P(AT + .025, RB - .53, ZP), pt1 = P(AT + .025, RB - .53, ZP + 17), pal = "";
+    pal += tratto(linea(pt0, pt1), L, 3) + tratto(linea(pt0, pt1), "#ffffff", 1.8);
+    for (i = 0; i < 4; i++) pal += tratto(linea([pt0[0], pt0[1] - 2 - i * 4], [pt0[0], pt0[1] - 4 - i * 4]), "#e03131", 1.8);
+    pal += cer(pt1[0], pt1[1] - 2.4, 3.2, "#ffffff", bordo(L, .8)) + pth("M" + q(pt1[0] - 3.2, pt1[1] - 2.4) + " A3.2,3.2 0 0,1 " + q(pt1[0] + 3.2, pt1[1] - 2.4) + " Z", "#e03131") + cer(pt1[0], pt1[1] - 2.4, 3.2, "none", bordo(L, .8));
+    l.push([vicino(AT, RB - .5), pal]);
+    // i cavallini: dove sono sulla pista (il dritto davanti, la curva di sinistra, il dritto dietro) e dove vanno
+    function suPista(seg, par, rl) {
+      if (seg === "davanti") return { a: par, b: rl, ta: 1, tb: 0 };
+      if (seg === "dietro") return { a: par, b: -rl, ta: -1, tb: 0 };
+      var f = par * Math.PI / 180, cx = seg === "destra" ? LG : -LG;
+      return { a: cx + rl * Math.cos(f), b: rl * Math.sin(f), ta: Math.sin(f), tb: -Math.cos(f) };
+    }
+    [["davanti", .26, .52, 0], ["davanti", .1, .66, 3], ["davanti", -.2, .57, 1], ["sinistra", -195, .62, 5], ["sinistra", -158, .52, 2], ["dietro", .3, .6, 4]].forEach(function (h) {
+      var q2p = suPista(h[0], h[1], h[2]), c = P(q2p.a, q2p.b, ZP), mx = 50 * G * (q2p.ta - q2p.tb) / 61, my = 25 * G * (q2p.ta + q2p.tb) / 61, k = .62;
+      var o = ell(c[0] + 1, c[1] + .4, 7.5, 2.4, "#000000", op(.22));
+      o += "<g transform='matrix(" + [mx * k, my * k, 0, k, c[0], c[1] - 2].map(function (v) { return Math.round(v * 1000) / 1000; }).join(" ") + ")'>" + cavallo(h[3]) + "</g>";
+      l.push([vicino(q2p.a, q2p.b) + .001, o]);
+    });
+    // il tabellone basso in mezzo al prato (si legge dai due lati): i sei numeri coi colori delle casacche, le quote, il ferro di cavallo d'oro
+    var TB = function (W, H) {
+      var o = rett(0, 0, W, H, 1.6, "#13182b", "stroke='" + ORO + "' stroke-width='1.2'"), cw = (W - 6) / 6, k;
+      for (k = 0; k < 6; k++) {
+        var x = 3 + k * cw, cc = CASACCHE[k][0];
+        o += rett(x + .8, 3, cw - 1.6, 7.2, 1, NOTTE ? chiaro(cc, .25) : cc, "stroke='#ffffff' stroke-width='.4'") + numero(String(k + 1), x + cw / 2, 6.6, 4.4, k === 4 ? "#212529" : "#ffffff", .9);
+        o += rett(x + .8, 11.4, cw - 1.6, 4.6, .6, "#050608") + led(["3", "5", "8", "2", "6", "9"][k], x + cw / 2 - 1.2, 12.1, 3.2, "#ff4a3a", NOTTE);
+      }
+      for (k = 0; k < 11; k++) o += lampadina(3 + k * (W - 6) / 10, 1.2, .8, k % 2 ? "#ffd36b" : "#fff3bf");
+      return o + rett(0, 0, W, H * .4, 1.6, "#ffffff", op(NOTTE ? .05 : .08));
+    };
+    var tab = "";
+    [[-.42, 0], [.42, 0]].forEach(function (g2) { tab += blocco(g2[0] - .02, g2[0] + .02, -.02, .02, ZP, ZP + 6, "#d9a83a", null, .8); });
+    tab += blocco(-.5, .5, -.045, .045, ZP + 6, ZP + 23.5, "#2a2f45", { davanti: TB, dietro: TB, fianco: function (W, H) { return rett(0, 0, W, H, 0, ORO, op(.5)); } }, 1.4);
+    var fz = ZP + 25.5, fc = P(0, 0, fz), ferro = "";
+    ferro += pth("M" + q(fc[0] - 4.6, fc[1] + 2.4) + " C" + q(fc[0] - 5.6, fc[1] - 6.4) + " " + q(fc[0] + 5.6, fc[1] - 6.4) + " " + q(fc[0] + 4.6, fc[1] + 2.4), "none", "stroke='" + L + "' stroke-width='4.2' stroke-linecap='round'");
+    ferro += pth("M" + q(fc[0] - 4.6, fc[1] + 2.4) + " C" + q(fc[0] - 5.6, fc[1] - 6.4) + " " + q(fc[0] + 5.6, fc[1] - 6.4) + " " + q(fc[0] + 4.6, fc[1] + 2.4), "none", "stroke='" + (NOTTE ? "#ffe066" : ORO) + "' stroke-width='2.6' stroke-linecap='round'");
+    ferro += pth("M" + q(fc[0] - 3.9, fc[1] - 1) + " C" + q(fc[0] - 3.6, fc[1] - 4.2) + " " + q(fc[0] - 1, fc[1] - 4.6) + " " + q(fc[0] + 1.6, fc[1] - 4.4), "none", "stroke='#fff8d6' stroke-width='.7' stroke-linecap='round'");
+    [[-4, -.6], [-3.4, -3.2], [3.4, -3.2], [4, -.6]].forEach(function (v) { ferro += cer(fc[0] + v[0], fc[1] + v[1], .4, "#7a5214"); });
+    if (NOTTE) ferro = cer(fc[0], fc[1] - 2, 7, "#ffe066", op(.25)) + ferro;
+    l.push([vicino(0, 0), tab + ferro]);
+    // le pulsantiere davanti ai posti: un bottone per cavallo, coi colori delle casacche
+    var RM = RB - .085;
+    [[-2, -.5], [-2, .5], [-1, 1.5], [0, 1.5], [1, 1.5], [2, .5], [2, -.5], [1, -1.5], [0, -1.5], [-1, -1.5]].forEach(function (pp) {
+      var x, y, an;
+      if (Math.abs(pp[0]) <= LG) { x = pp[0]; y = (pp[1] > 0 ? 1 : -1) * RM; an = 0; }
+      else { var cx = (pp[0] > 0 ? 1 : -1) * LG, th = Math.atan2(pp[1], pp[0] - cx); x = cx + RM * Math.cos(th); y = RM * Math.sin(th); an = th * 180 / Math.PI + 90; }
+      var o = rett(-6.4, -1.9, 12.8, 3.8, 1.6, "#1a1416", "stroke='" + ORO + "' stroke-width='.5'"), k;
+      for (k = 0; k < 6; k++) { var bc = CASACCHE[k][0]; o += (NOTTE ? cer(-5.1 + k * 2.04, 0, 1.6, bc, op(.45)) : "") + cer(-5.1 + k * 2.04, 0, .82, NOTTE ? chiaro(bc, .35) : bc, "stroke='" + scuro(bc, .5) + "' stroke-width='.25'") + cer(-5.35 + k * 2.04, -.25, .25, "#ffffff", op(.8)); }
+      s += suZ(ZL, "<g transform='translate(" + q2(x * M, y * M) + ") rotate(" + f1(an) + ")'>" + o + "</g>");
+    });
+    // il bracciolo di cuoio: tutto il giro, poi di nuovo la metà davanti sopra a tutto
+    var anello = tubo(allarga(O, -.045), ZL + 2, 3.4, "#3a2016", { cucitura: true });
+    s += anello + ordina(l) + dentro("M-300," + f1(-(ZL + 2)) + " H300 V300 H-300 Z", anello);
+    return s;
+  });
+
   // @@QUI@@
 
   // =========================================================
