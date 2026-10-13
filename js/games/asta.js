@@ -281,7 +281,7 @@
     ".st-campo-testa{display:flex;align-items:center;gap:6px;margin-bottom:4px;}",
     ".st-freccia{flex:none;border:0;width:36px;height:28px;border-radius:14px;background:rgba(255,255,255,.92);color:#16351f;font-weight:900;font-size:18px;line-height:1;font-family:inherit;}",
     ".st-campo-nome{flex:1;min-width:0;text-align:center;font-weight:900;font-size:.8rem;text-shadow:0 1px 3px rgba(0,0,0,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
-    ".st-campo{position:relative;height:clamp(118px,calc(var(--alt,100dvh)*.23),230px);border-radius:8px;background:repeating-linear-gradient(180deg,#3d9b49 0 18px,#358a41 18px 36px);box-shadow:inset 0 0 0 2px rgba(255,255,255,.7);overflow:hidden;}",
+    ".st-campo{position:relative;height:min(clamp(118px,calc(var(--alt,100dvh)*.23),230px),calc((100vw - 44px) / 1.44));aspect-ratio:36/25;margin:0 auto;border-radius:8px;background:repeating-linear-gradient(180deg,#3d9b49 0 18px,#358a41 18px 36px);box-shadow:inset 0 0 0 2px rgba(255,255,255,.7);overflow:hidden;}",
     ".st-campo.dipinto{background-size:100% 100%;box-shadow:none;}",
     ".st-slot{position:absolute;width:21%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;}",
     ".st-slot-maglia{display:block;width:clamp(30px,58%,52px);aspect-ratio:1;transition:opacity .2s;}",
@@ -295,15 +295,15 @@
     "@keyframes stArriva{from{transform:scale(1.5)}to{transform:none}}",
     ".st-val{position:absolute;top:-10%;right:2%;min-width:24px;padding:1px 5px;border-radius:9px;background:#ffd43b;color:#3a2200;font-style:normal;font-weight:900;font-size:.74rem;text-align:center;box-shadow:0 2px 5px rgba(0,0,0,.4);opacity:0;transform:scale(.4);transition:transform .25s cubic-bezier(.2,1.6,.4,1),opacity .15s;}",
     ".st-val.su{opacity:1;transform:none;}",
-    ".st-mister{position:absolute;left:1%;bottom:3%;height:44%;pointer-events:none;}",
+    ".st-mister{position:absolute;z-index:3;left:4px;bottom:6px;width:14%;max-width:66px;pointer-events:none;}",   // l'allenatore a bordo campo, fuori dalle linee
     ".st-volo{position:absolute;z-index:7;pointer-events:none;}",
     ".st-piede{flex:none;flex-direction:row;flex-wrap:wrap;justify-content:center;padding:6px 12px calc(8px + env(safe-area-inset-bottom));}",
     ".st-piede .sa-nota{width:100%;}.st-piede .btn{flex:1;width:auto;}",
     ".st-stadio .sa-aggiudicato{top:14%;font-size:1.6rem;}",
     // la classifica finale del fantacalcio: il contatore che sale, poi il podio
     ".st-rivela .st-campo-box.st-grande{flex:1;min-height:0;display:flex;flex-direction:column;margin-top:10px;}",
-    ".st-rivela .st-grande .st-campo{flex:1;height:auto;min-height:180px;}",
-    ".st-rivela .st-mister{height:40%;}",
+    ".st-rivela .st-grande{justify-content:center;}.st-rivela .st-grande .st-campo{flex:none;height:min(calc(var(--alt,100dvh) * .36),calc((100vw - 44px) / 1.44));}",
+    ".st-rivela .st-mister{width:16%;}",
     ".st-podio{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:8px 12px 0;}",
     ".st-gradini{display:flex;align-items:flex-end;justify-content:center;gap:6px;}",
     ".st-gradino{display:flex;flex-direction:column;align-items:center;width:31%;max-width:130px;animation:stSale .6s cubic-bezier(.2,1.3,.4,1) both;}",
@@ -973,7 +973,7 @@
       return { nodo: n, img: img, nome: nm, val: val, ruolo: p.r, k: null };
     });
     S.mister = el("img", { class: "st-mister", alt: "" });
-    S.campo = el("div", { class: "st-campo" }, S.slot.map(function (s) { return s.nodo; }).concat([ S.mister ]));
+    S.campo = el("div", { class: "st-campo" }, S.slot.map(function (s) { return s.nodo; }));   // (il mister sta fuori, a bordo campo)
     var fondo = arte("campo", ""); if (fondo) { S.campo.style.backgroundImage = "url(\"" + fondo + "\")"; S.campo.classList.add("dipinto"); }
     S.campoNome = el("div", { class: "st-campo-nome" });
     return S.campo;
@@ -1029,7 +1029,7 @@
         el("div", { class: "st-campo-testa" }, [
           el("button", { class: "st-freccia", text: "‹", "aria-label": "La squadra prima", onclick: function () { giraSquadra(S, -1); } }), S.campoNome,
           el("button", { class: "st-freccia", text: "›", "aria-label": "La squadra dopo", onclick: function () { giraSquadra(S, 1); } }) ]),
-        campo ]),
+        campo, S.mister ]),
       S.piede ]);
     S.ultimiDati = d; STADIO = S;
     t.mostra(S.radice);
@@ -1248,7 +1248,7 @@
     var el = t.el, R = { chiave: opz.chiave, opz: opz, righe: righe, timer: [], iv: null, finito: false, conta: [] }, sfondo = el("div", { class: "sa-sfondo" }), quadro = arte("stadio", "");
     if (quadro) sfondo.style.backgroundImage = "url(\"" + quadro + "\")";
     var board = maxischermo(el, R, true), campo = campetto(el, R);
-    R.campoBox = el("div", { class: "st-campo-box st-grande" }, [ el("div", { class: "st-campo-testa" }, [ R.campoNome ]), campo ]);
+    R.campoBox = el("div", { class: "st-campo-box st-grande" }, [ el("div", { class: "st-campo-testa" }, [ R.campoNome ]), campo, R.mister ]);
     R.podio = el("div", { class: "st-podio", style: "display:none" });
     R.piede = el("div", { class: "sa-piede st-piede" });
     R.salta = el("button", { class: "sa-tasto", text: "Salta ⏭", onclick: function () { podioRivela(R); } });
