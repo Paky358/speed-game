@@ -32,7 +32,9 @@ SG.avviaApp();
 - Un amico entra: `__cbHost.onMsg("g1", { t: "join", nome: "Luca", omino: null })`. Poi manda le sue mosse con `__cbHost.onMsg("g1", { t: "...", ... })`.
 - Quello che vedrebbero gli altri telefoni: `__inviati.filter(m => m.t === "vm").pop().vm`.
 - Per provare il lato di chi entra: sostituisci `SGNet.entra = (codice, cb) => { window.__cbOsp = cb; setTimeout(() => cb.onAperto("g1"), 30); return { invia: m => ..., chiudi: () => {} }; }`, apri `#gioco=<id>&stanza=ABCD` e passagli le foto con `__cbOsp.onMsg({ t: "vm", vm: {...} })`.
-- Più telefoni insieme (host + ospiti collegati da un finto broker MQTT, anche telefoni che si spengono e tornano): `telefoni-finti.js` qui accanto.
+- Più telefoni insieme (host + ospiti collegati da un finto broker MQTT): `telefoni-finti.js` qui accanto. Ogni telefono è un iframe con memoria sua (localStorage e sessionStorage separati) e profilo finto (`{ profilo: false }` = senza profilo). Si aprono con `apriTel(nome, { hash })`, si guidano con `clicca(w, /testo/)` e `aspetta(...)`; le cose dei telefoni veri: `spegni`/`riaccendi` (schermo bloccato, rete persa: parte il "testamento"), `inciampa` (la rete salta un attimo), `ricarica` (pagina ricaricata), `chiudiApp` (app chiusa e riaperta).
+- **Copione di prova** (`copione-prova.js` qui accanto): ripete da solo gli scenari dell'online (host che ricarica, stanza ferma, chi arriva tardi, nomi doppi, rete che salta, Sala, partite intere di Tris, Scalinata e Linea del tempo…) e scrive OK o NO. Da una pagina qualsiasi del sito, nello strumento javascript:
+  `const s = await (await fetch("/.agents/skills/prova-nel-browser/copione-prova.js?" + Date.now())).text(); (0, eval)(s); await COPIONE.prova(3)` (oppure `await COPIONE.tutti()`, qualche minuto). Dopo ogni modifica all'online rilancialo; gli scenari nuovi si aggiungono in fondo.
 - Il collegamento vero (`js/net.js`) si prova solo se serve, sul broker pubblico: un host e un ospite nella stessa pagina funzionano.
 
 ## Cosa controllare sempre

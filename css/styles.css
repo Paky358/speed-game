@@ -1173,8 +1173,30 @@ button.am-riga:active{ transform:scale(.985); }
 .home-rientra .btn{ flex:1; margin:0; display:flex; flex-direction:column; align-items:center; gap:2px; }
 .home-rientra small{ font-size:.75rem; font-weight:700; opacity:.85; }
 .home-rientra-x{ flex:0 0 46px; border:0; border-radius:14px; background:rgba(255,255,255,.1); color:inherit; font:inherit; font-size:1rem; font-weight:900; cursor:pointer; }
-/* "⏳ Aspettiamo l'host…": l'host è uscito un attimo dall'app */
-.host-via{ position:fixed; left:50%; top:calc(8px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:9999; max-width:calc(100% - 24px); box-sizing:border-box; padding:8px 14px; border-radius:999px; background:#e67700; color:#fff; font-weight:800; font-size:.88rem; text-align:center; box-shadow:0 6px 18px rgba(0,0,0,.4); pointer-events:none; }
+/* gli avvisi della rete in alto, uno sotto l'altro: "⏳ Aspettiamo l'host…", "📶 Mi ricollego…", "👀 entri alla prossima"…
+   (non si toccano: il gioco sotto resta usabile; entrano solo con trasparenza e spostamento) */
+.sg-pillole{ position:fixed; left:50%; top:calc(8px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:9999; width:max-content; max-width:calc(100% - 24px); display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none; }
+.sg-pillola{ box-sizing:border-box; max-width:100%; padding:8px 14px; border-radius:999px; background:#e67700; color:#fff; font-weight:800; font-size:.88rem; line-height:1.25; text-align:center; box-shadow:0 6px 18px rgba(0,0,0,.4); animation:sgPillola .28s ease-out; }
+.sg-pillola.blu{ background:#1c7ed6; } .sg-pillola.verde{ background:#2f9e44; } .sg-pillola.grigia{ background:rgba(20,26,58,.94); box-shadow:0 6px 18px rgba(0,0,0,.4), inset 0 0 0 1.5px rgba(255,255,255,.2); }
+@keyframes sgPillola{ from{ opacity:0; transform:translateY(-8px); } to{ opacity:1; transform:none; } }
+/* "😴 La stanza è ferma": chi l'ha aperta è uscito dall'app (copre la partita congelata; se torna, sparisce da solo) */
+.sg-ferma{ position:fixed; inset:0; z-index:9998; display:flex; align-items:center; justify-content:center; padding:16px; box-sizing:border-box; background:rgba(12,18,46,.94); animation:sgFermaVia .3s ease-out; }
+.sg-ferma-box{ width:min(100%, 380px); text-align:center; }
+.sg-ferma-ico{ font-size:4rem; line-height:1.1; margin-bottom:8px; animation:sgDorme 3s ease-in-out infinite; }
+.sg-ferma h2{ margin:0 0 8px; font-size:1.35rem; }
+.sg-ferma p{ margin:0 0 18px; font-size:1.02rem; line-height:1.45; color:var(--testo-tenue); }
+@keyframes sgFermaVia{ from{ opacity:0; } }
+@keyframes sgDorme{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
+/* la saletta di chi entra: "⏳ Sto entrando…" finché l'host non l'ha messo nella lista */
+.sl-attesa.entrando{ box-shadow:inset 0 0 0 2px rgba(255,212,59,.45); }
+.sl-attesa.entrando .sl-att-tit{ color:#ffd43b; }
+/* nella Sala, per chi è uscito dal gioco in corso: "🎮 Stanno giocando a Tris · Rientra" */
+.sl-incorso{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 8px 8px 14px; border-radius:16px; background:rgba(255,255,255,.08); box-shadow:inset 0 0 0 2px rgba(255,202,58,.45); font-weight:800; margin-bottom:8px; }
+.sl-incorso .btn{ margin:0; flex:0 0 auto; }
+/* nella Sala, i giochi a due: "⚔️ In 2: gli altri guardano" */
+.tessera .info .tess-adue{ margin-top:4px; font-size:.78rem; font-weight:800; color:#ffa8a8; }
+/* il conto alla rovescia dentro un tasto che va avanti da solo ("Avanti ▶ 12") */
+.conto-avanti{ display:inline-block; min-width:1.5em; margin-left:.45em; padding:0 .35em; border-radius:999px; background:rgba(0,0,0,.22); font-variant-numeric:tabular-nums; text-align:center; }
 /* batteria: a riposo (20 s senza tocchi) gli avatar non respirano e non sbattono le palpebre; al primo tocco ripartono */
 body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, body.sg-riposo .sl-camp-cor{ animation:none !important; }
 
