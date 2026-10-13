@@ -509,8 +509,8 @@
   //  Dalla parte del croupier: le fiches, la mescolatrice, le carte del banco. Sul bordo, sul palo d'ottone, la ruota luminosa
   //  del jackpot progressivo (le lampadine, gli spicchi colorati e il contatore rosso)
   // =========================================================
-  def("tavolo_caribbean", { nome: "Tavolo del Caribbean Stud Poker", fp: [2, 2], box: [-108, -165, 108, 64], dietro: true, piano: 45,
-    posti: [[-1, 0], [-1, 1], [0, 2], [1, 2], [2, 1]], croupier: [1, -1], luce: [-.6, -.74, 104, 70, "#ffd36b"] }, function () {
+  def("tavolo_caribbean", { nome: "Tavolo del Caribbean Stud Poker", fp: [2, 2], box: [-95, -168, 103, 52], dietro: true, piano: 45,
+    posti: [[-1, 0], [-1, 1], [0, 2], [1, 2], [2, 1]], croupier: [1, -1], luce: [-.3, -.37, 80, 95, "#ffd36b"] }, function () {   // la luce a metà tra la ruota e il panno: il gioco la tiene uguale anche da dietro
     var O = pMezzaluna(-.95, .95, -.82, -.2, .9, .1), ZF = 45, Z0 = 32, Z1 = 45.2, s = ombraForma(O, 1), l = [], CB = [0, -.2], RA = .95, RB = 1.1, M = 61, i;
     s += per([[-.5, -.38], [.5, -.38], [0, .1]]).map(function (g) { return gambaTornita(g[0], g[1], Z0 + .5, "#3a2f34"); }).join("");
     s += grembiule(allarga(O, -.035), Z0, Z1, LACCA_NERA, { passo: .055 });
@@ -599,7 +599,7 @@
     o += "<path d='M" + f2(-w / 2 + .45) + ",0 H" + f2(w / 2 - .45) + "' stroke='#c9a227' stroke-width='.3'/>";
     return o + puntiTessera(n1, 0, -h / 4, w) + puntiTessera(n2, 0, h / 4, w) + "</g>";
   }
-  def("tavolo_paigow", { nome: "Tavolo del Pai Gow", fp: [2, 2], box: [-106, -100, 106, 64], dietro: true, piano: 45,
+  def("tavolo_paigow", { nome: "Tavolo del Pai Gow", fp: [2, 2], box: [-85, -92, 93, 47], dietro: true, piano: 45,
     posti: [[-1, 0], [-1, 1], [0, 2], [1, 2], [2, 1], [2, 0]], croupier: [0, -1] }, function () {
     var O = pRene(.95, .88, .86, 3.6, .1, .4, 160), ZF = 45, Z0 = 32, Z1 = 44.6, s = ombraForma(O, 1), l = [], M = 61, i, j;
     var LAC = "#8e1a1f";
@@ -665,7 +665,7 @@
   //  la grande losanga nera e la grande losanga rossa, le zone del colore e dell'inverso (col triangolo); in mezzo le due file
   //  di carte stese dal croupier (prima il nero, poi il rosso), la cassetta delle carte di mogano e le fiches del banco, il rastrello
   // =========================================================
-  def("tavolo_trente", { nome: "Tavolo del Trente et Quarante", fp: [3, 2], box: [-130, -110, 128, 68], dietro: true, piano: 45,
+  def("tavolo_trente", { nome: "Tavolo del Trente et Quarante", fp: [3, 2], box: [-107, -103, 115, 59], dietro: true, piano: 45,
     posti: [[0, 2], [1, 2], [2, 2], [0, -1], [2, -1]], croupier: [1, -1] }, function () {
     var O = pRene(1.45, .9, .86, 3.6, .12, .45, 200), ZF = 45, Z0 = 33, Z1 = 44.4, s = ombraForma(O, 1), l = [], M = 61, i, GI = "#f2d16b";
     s += per([[-1.2, -.56], [0, -.56], [1.2, -.56], [-1.2, .62], [0, .66], [1.2, .62]]).map(function (g) { return gambaTornita(g[0], g[1], Z0 + .5); }).join("");
@@ -727,7 +727,7 @@
       for (i = 0; i < 9; i++) {
         var cx = -w / 2 + .8 + (i + .5) * cw, cy = -h / 2 + .8 + (j + .5) * ch;
         if (cols.indexOf(i) < 0) { o += rett(cx - cw / 2 + .15, cy - ch / 2 + .15, cw - .3, ch - .3, .15, chiaro(col, .55)); continue; }
-        o += numero(String(i * 10 + 1 + Math.floor(r() * 9)), cx, cy, 1.3, "#26262e", .32);
+        o += numero(String(i * 10 + 1 + Math.floor(r() * 9)), cx, cy, 1.12, "#26262e", .27);
         if (segno && r() < .42) o += cer(cx, cy, 1.25, segno, op(.65));
       }
     }
@@ -740,7 +740,7 @@
     var c = P(a, b, z + 2.3);
     return o + rett(c[0] - 2.4, c[1] - 1.4, 4.8, 2.4, .5, "#ffffff", op(.85)) + cer(c[0], c[1] - .2, .7, col, op(.85));   // l'etichetta
   }
-  def("tavolo_bingo", { nome: "Tavolo del bingo", fp: [2, 1], box: [-90, -90, 90, 52], dietro: true, piano: 46,
+  def("tavolo_bingo", { nome: "Tavolo del bingo", fp: [2, 1], box: [-75, -84, 83, 43], dietro: true, piano: 46,
     posti: [[0, -1], [1, -1], [0, 1], [1, 1]] }, function () {
     var A0 = -.94, A1 = .94, B0 = -.42, B1 = .42, ZT = 46, ZA = 41.5, s = "", l = [], M = 61, i;
     var Pt = pRett(A0, A1, B0, B1, .06, 4), Pi = pRett(A0 + .075, A1 - .075, B0 + .075, B1 - .075, .03, 3);
@@ -840,9 +840,9 @@
     if (NOTTE) o += rett(x0, y0, w, h, 1.2, nuovaR([[0, "#ffffff", .25], [1, "#ffffff", 0]], .5, .4, .7));
     return o;
   }
-  def("roulette_elettronica", { nome: "Roulette elettronica", fp: [3, 3], box: [-160, -150, 160, 90],
+  def("roulette_elettronica", { nome: "Roulette elettronica", fp: [3, 3], box: [-121, -100, 124, 63],
     posti: [[3, 2], [3, 0], [2, 3], [0, 3], [-1, 2], [-1, 0], [0, -1], [2, -1]], luce: [0, 0, 74, 165, "#ff9ad8"] }, function () {
-    var Rb = 1.4, Rc = 1.32, ZB = 5, ZT = 40, s = "", i, VIOLA = "#2b1c3a";
+    var Rb = 1.5, Rc = 1.42, ZB = 5, ZT = 40, s = "", i, VIOLA = "#2b1c3a";   // largo fino al bordo dell'impronta: chi siede ai posti ci arriva
     var Ob = pOvale(0, 0, Rb, Rb, 2, 128), Oc = pOvale(0, 0, Rc, Rc, 2, 128), Op = pOvale(0, 0, .66, .66, 2, 96);
     var ANG = [[2, 1], [2, -1], [1, 2], [-1, 2], [-2, 1], [-2, -1], [-1, -2], [1, -2]].map(function (v) { return Math.atan2(v[1], v[0]); });
     s += ombraForma(Ob, 1.1);
@@ -864,14 +864,14 @@
       s += stella(cc[0], cc[1], 3, 1.3, 4, NOTTE ? "#fff6d8" : ORO, "stroke='" + ORO_S + "' stroke-width='.3'");
     });
     // il poggiapiedi cromato (si vede la metà davanti) coi suoi sostegni
-    var Rf = 1.5, t0 = G > 0 ? .75 * Math.PI : -.25 * Math.PI;
+    var Rf = 1.6, t0 = G > 0 ? .75 * Math.PI : -.25 * Math.PI;
     function arco(R, ta, tb, z) { var o = [], j; for (j = 0; j <= 48; j++) { var t = ta + (tb - ta) * j / 48; o.push(P(R * Math.cos(t), R * Math.sin(t), z)); } return o; }
     var fr = aperto(arco(Rf, t0 + Math.PI - .2, t0 + 2 * Math.PI + .2, 9));
     for (i = 0; i < 6; i++) { var ts = t0 + Math.PI + (i + .5) / 6 * Math.PI; s += cromo(linea(P(Rc * Math.cos(ts), Rc * Math.sin(ts), 9), P(Rf * Math.cos(ts), Rf * Math.sin(ts), 9)), 1); }
     s += tratto(fr, L, 4.4) + tratto(fr, "#9aa6ae", 2.6) + tratto(fr, "#ffffff", .9, "transform='translate(-.3 -.6)' opacity='.9'");
     // il piano di vetro nero coi cerchi d'oro
     s += anelloP(Oc, Op, ZT, nuova([[0, "#4d3a60"], [.5, "#1d1428"], [1, "#0b0710"]], 0, 0, 1, 1), bordo(L, 1.2));
-    s += tratto(chiuso(aSchermo(pOvale(0, 0, 1.25, 1.25, 2, 110), ZT)), ORO, .7, op(.9)) + tratto(chiuso(aSchermo(pOvale(0, 0, .76, .76, 2, 90), ZT)), ORO, .7, op(.9));
+    s += tratto(chiuso(aSchermo(pOvale(0, 0, 1.35, 1.35, 2, 110), ZT)), ORO, .7, op(.9)) + tratto(chiuso(aSchermo(pOvale(0, 0, .76, .76, 2, 90), ZT)), ORO, .7, op(.9));
     // il bracciolo: la metà lontana
     var Rr = Rc - .03;
     var anello = tubo(pOvale(0, 0, Rr, Rr, 2, 128), ZT + 2.3, 3.4, "#7a1035", { cucitura: true });
@@ -880,7 +880,7 @@
     function postazione(t) {
       var ca = Math.cos(t), sa = Math.sin(t), ta = -sa, tb2 = ca;
       function V(r, u, z) { return [ca * r + ta * u, sa * r + tb2 * u, z]; }
-      var r0 = .84, r1 = 1.2, h0 = .17, h1 = .25, zl = ZT, zo = ZT + 5, zi = ZT + 19;
+      var r0 = .92, r1 = 1.3, h0 = .18, h1 = .27, zl = ZT, zo = ZT + 5, zi = ZT + 19;
       var Vv = [V(r1, -h1, zl), V(r1, h1, zl), V(r0, h0, zl), V(r0, -h0, zl), V(r1, -h1, zo), V(r1, h1, zo), V(r0, h0, zi), V(r0, -h0, zi)];
       return solido(Vv, [[4, 5, 6, 7], [0, 1, 5, 4], [3, 2, 6, 7], [0, 4, 7, 3], [1, 5, 6, 2]], "#2a2232", LACCA, {
         dec: {
@@ -947,15 +947,15 @@
     o += cer(7.8, -29.6, 2.2, "#f1c9a5", bordo(L, .7)) + pth("M5.6,-29.8 C5.6,-32.4 9.8,-32.6 10,-29.8 L11.6,-29.6 L10,-29 L5.6,-29.4 Z", c[1], bordo(L, .6));
     return o;
   }
-  def("corsa_cavalli", { nome: "Corsa dei cavallini", fp: [3, 2], box: [-130, -110, 128, 68], dietro: true,
+  def("corsa_cavalli", { nome: "Corsa dei cavallini", fp: [3, 2], box: [-106, -98, 110, 56], dietro: true,
     posti: [[-1, 0], [-1, 1], [0, 2], [1, 2], [2, 2], [3, 1], [3, 0], [2, -1], [1, -1], [0, -1]], luce: [0, 0, 64, 170, "#ffd27a"] }, function () {
     var RA = 1.46, RB = .94, LG = RA - RB, ZP = 40, ZL = 42.4, s = "", l = [], M = 61, i, ROSSO_L = "#8a1424";
     var O = pStadio(RA, RB, 48);
     s += ombraForma(O, 1.1);
     // il mobile: lo zoccolo d'oro, la lacca rossa coi filetti, le lampadine
-    s += fianco(allarga(O, -.02), 0, 4, "#2a1a14", LACCA, { righe: [[3.2, ORO, 1, .9]] });
-    s += fianco(O, 4, ZL, ROSSO_L, LACCA, { righe: [[ZL - 1.4, ORO_S, 1.4, .9], [ZL - 1.5, ORO, .8, 1], [5.4, ORO, 1, .9], [ZL - 9.5, ORO, .6, .8]],
-      extra: function (vv) { return lungoCorsa(vv, .085, function (a, b) { var c = P(a, b, ZL - 5.4); return lampadina(c[0], c[1], 1, "#ffd36b"); }) + lungoCorsa(vv, .34, function (a, b) { var c = P(a, b, 18); return pth("M" + q(c[0] - 4, c[1] + 2) + " C" + q(c[0] - 4, c[1] - 5) + " " + q(c[0] + 4, c[1] - 5) + " " + q(c[0] + 4, c[1] + 2), "none", "stroke='" + ORO + "' stroke-width='1.3' stroke-linecap='round'") + cer(c[0] - 3.3, c[1] - .6, .35, "#7a5214") + cer(c[0] + 3.3, c[1] - .6, .35, "#7a5214"); }); } });   // e i ferri di cavallo d'oro
+    s += fianco(allarga(O, -.045), 0, 11, "#1f1416", LACCA, { righe: [[1.4, ORO_S, 1.2, .9], [1.5, ORO, .6, .9], [10.2, "#000000", 1.6, .35]] });   // lo zoccolo nero, un po' rientrato
+    s += fianco(O, 11, ZL, ROSSO_L, LACCA, { righe: [[ZL - 1.4, ORO_S, 1.4, .9], [ZL - 1.5, ORO, .8, 1], [12.4, ORO_S, 1.2, .9], [12.5, ORO, .7, 1], [ZL - 9.5, ORO, .6, .8]],
+      extra: function (vv) { return lungoCorsa(vv, .085, function (a, b) { var c = P(a, b, ZL - 5.4); return lampadina(c[0], c[1], 1, "#ffd36b"); }) + lungoCorsa(vv, .44, function (a, b) { var c = P(a, b, 22), d = "M" + q(c[0] - 3.4, c[1] - 3.4) + " C" + q(c[0] - 4.6, c[1] + 4.4) + " " + q(c[0] + 4.6, c[1] + 4.4) + " " + q(c[0] + 3.4, c[1] - 3.4); return tratto(d, L, 3.2) + tratto(d, ORO, 2) + tratto(d, "#fff3c4", .5, "transform='translate(-.3 -.3)'") + [[-3.3, -.6], [-2.4, 2], [2.4, 2], [3.3, -.6]].map(function (v) { return cer(c[0] + v[0], c[1] + v[1], .32, "#7a5214"); }).join(""); }); } });   // e i ferri di cavallo d'oro
     // il piano di mogano (fino alla pista), il gradino giù verso la pista
     var Pi = allarga(O, -.17), bs = limiti(aSchermo(O, ZL));
     s += anelloP(O, Pi, ZL, nuova([[0, "#c8834f"], [.45, "#8c3e1c"], [1, "#4e1c0a"]], bs[0], 0, bs[2], 0, true), bordo(L, 1.1));
@@ -965,7 +965,8 @@
     prato += pth(chiusoP(Pi) + " " + chiusoP(Ti.slice().reverse()), nuova([[0, "#5cc761"], [1, "#2f9a3e"]], 0, -50, 0, 50, true), "fill-rule='evenodd'");
     [-.235, -.3, -.365, -.43, -.495].forEach(function (d) { prato += pth(chiusoP(allarga(O, d)), "none", "stroke='#c3f0b8' stroke-width='.35' stroke-dasharray='2.4 2' opacity='.6'"); });
     prato += pth(chiusoP(Ti), nuova([[0, "#3e9d48"], [1, "#25763a"]], 0, -40, 0, 40, true));
-    for (i = -6; i <= 6; i++) prato += rett(i * .13 * M - .065 * M / 2, -.5 * M, .065 * M, M, 0, "#ffffff", op(.06));
+    var righe = ""; for (i = -8; i <= 8; i++) righe += rett(i * .13 * M - .065 * M / 2, -.5 * M, .065 * M, M, 0, "#ffffff", op(.07));
+    prato += dentro(chiusoP(Ti), righe);
     [[-.62, .1], [.62, -.1], [-.3, .24], [.3, -.24]].forEach(function (f) { var j; prato += ell(f[0] * M, f[1] * M, 4.6, 3, "#6b4a2a"); for (j = 0; j < 9; j++) prato += cer(f[0] * M + (r2() - .5) * 7, f[1] * M + (r2() - .5) * 4.4, .9, ["#ff6b9a", "#ffd43b", "#ffffff", "#ff922b"][j % 4]); });   // le aiuole fiorite
     // il traguardo: la riga a scacchi di traverso sulla pista dritta davanti
     var AT = .4, j2, qd = (RB - .17 - (RB - .53)) / 8;
@@ -978,9 +979,8 @@
         var A = pp[k], B = pp[(k + 1) % n], lg = Math.sqrt((B[0] - A[0]) * (B[0] - A[0]) + (B[1] - A[1]) * (B[1] - A[1])), pz = Math.max(1, Math.round(lg / .075)), m;
         for (m = 0; m < pz; m++) {
           var t0 = m / pz, t1 = (m + 1) / pz, a0 = A[0] + (B[0] - A[0]) * t0, b0 = A[1] + (B[1] - A[1]) * t0, a1 = A[0] + (B[0] - A[0]) * t1, b1 = A[1] + (B[1] - A[1]) * t1, o = "";
-          [ZP + 2.6, ZP + 5].forEach(function (z) { var d = linea(P(a0, b0, z), P(a1, b1, z)); o += tratto(d, "#6d665c", 1.6) + tratto(d, "#ffffff", .9); });
-          var c0 = P(a0, b0, ZP), c1 = P(a0, b0, ZP + 6);
-          o += tratto(linea(c0, c1), "#6d665c", 1.8) + tratto(linea(c0, c1), "#ffffff", 1);
+          var c0 = P(a0, b0, ZP), c1 = P(a0, b0, ZP + 6), dr = linea(P(a0, b0, ZP + 2.6), P(a1, b1, ZP + 2.6)) + " " + linea(P(a0, b0, ZP + 5), P(a1, b1, ZP + 5));   // le due traverse e il paletto
+          o += tratto(dr, "#6d665c", 1.6) + tratto(dr, "#ffffff", .9) + tratto(linea(c0, c1), "#6d665c", 1.8) + tratto(linea(c0, c1), "#ffffff", 1);
           l.push([vicino((a0 + a1) / 2, (b0 + b1) / 2), o]);
         }
       }
@@ -1027,23 +1027,264 @@
     [[-4, -.6], [-3.4, -3.2], [3.4, -3.2], [4, -.6]].forEach(function (v) { ferro += cer(fc[0] + v[0], fc[1] + v[1], .4, "#7a5214"); });
     if (NOTTE) ferro = cer(fc[0], fc[1] - 2, 7, "#ffe066", op(.25)) + ferro;
     l.push([vicino(0, 0), tab + ferro]);
-    // le pulsantiere davanti ai posti: un bottone per cavallo, coi colori delle casacche
-    var RM = RB - .085;
+    // le pulsantiere davanti ai posti: un bottone per cavallo, coi colori delle casacche; stanno sul bracciolo
+    // (quelle lontane prima dei cavalli, quelle vicine sopra a tutto: se no il bracciolo davanti le copre)
+    var RM = RB - .045, pulL = "", pulV = "";
     [[-2, -.5], [-2, .5], [-1, 1.5], [0, 1.5], [1, 1.5], [2, .5], [2, -.5], [1, -1.5], [0, -1.5], [-1, -1.5]].forEach(function (pp) {
       var x, y, an;
       if (Math.abs(pp[0]) <= LG) { x = pp[0]; y = (pp[1] > 0 ? 1 : -1) * RM; an = 0; }
       else { var cx = (pp[0] > 0 ? 1 : -1) * LG, th = Math.atan2(pp[1], pp[0] - cx); x = cx + RM * Math.cos(th); y = RM * Math.sin(th); an = th * 180 / Math.PI + 90; }
       var o = rett(-6.4, -1.9, 12.8, 3.8, 1.6, "#1a1416", "stroke='" + ORO + "' stroke-width='.5'"), k;
       for (k = 0; k < 6; k++) { var bc = CASACCHE[k][0]; o += (NOTTE ? cer(-5.1 + k * 2.04, 0, 1.6, bc, op(.45)) : "") + cer(-5.1 + k * 2.04, 0, .82, NOTTE ? chiaro(bc, .35) : bc, "stroke='" + scuro(bc, .5) + "' stroke-width='.25'") + cer(-5.35 + k * 2.04, -.25, .25, "#ffffff", op(.8)); }
-      s += suZ(ZL, "<g transform='translate(" + q2(x * M, y * M) + ") rotate(" + f1(an) + ")'>" + o + "</g>");
+      var pz = suZ(ZL + 5.2, "<g transform='translate(" + q2(x * M, y * M) + ") rotate(" + f1(an) + ")'>" + o + "</g>");
+      if (vicino(x, y) < 0) pulL += pz; else pulV += pz;
     });
     // il bracciolo di cuoio: tutto il giro, poi di nuovo la metà davanti sopra a tutto
     var anello = tubo(allarga(O, -.045), ZL + 2, 3.4, "#3a2016", { cucitura: true });
-    s += anello + ordina(l) + dentro("M-300," + f1(-(ZL + 2)) + " H300 V300 H-300 Z", anello);
+    s += anello + pulL + ordina(l) + dentro("M-300," + f1(-(ZL + 2)) + " H300 V300 H-300 Z", anello) + pulV;
     return s;
   });
 
-  // @@QUI@@
+  // =========================================================
+  //  URNA DEL BINGO: il podio tondo d'oro col velluto rosso, le colonnine e la corona di lampadine; sopra, sulle due forcelle
+  //  d'ottone, la gabbia di vetro che gira (gli anelli d'ottone, i mozzi, la manovella col pomello di legno), piena di palline
+  //  colorate coi numeri; davanti, la canaletta d'oro con le palline appena uscite. Di notte la gabbia si accende da dentro
+  // =========================================================
+  var COL_PALLE = ["#e03131", "#1c7ed6", "#fcc419", "#2f9e44", "#f76707", "#7048e8", "#e64980", "#15aabf", "#f8f9fa"];
+  function pallaBingo(c, r, col, n) {   // una pallina del bingo col tondino bianco del numero
+    var o = pallina(c, r, NOTTE ? chiaro(col, .15) : col, .45);
+    if (n) o += ell(c[0] + r * .12, c[1] + r * .1, r * .48, r * .44, "#ffffff", op(.95)) + numero(String(n), c[0] + r * .12, c[1] + r * .1, r * .5, "#1d1d22", r * .09);
+    return o;
+  }
+  def("urna_bingo", { nome: "Urna del bingo", fp: [1, 1], box: [-43, -92, 49, 25], dietro: true, luce: [0, 0, 66, 85, "#ffe08a"] }, function () {
+    var s = ombraPianta(-.42, .42, -.42, .42, 1, .02), i, RS = .3, ZT = 40, ZC = 66;
+    var F0 = forma(0, 0, .43), F1 = forma(0, 0, .35), F2 = forma(0, 0, .4);
+    // il podio: la base d'oro a gradino, il tamburo di velluto, le colonnine d'oro, il cappello d'oro con le lampadine
+    s += corpo([giro(F0, 0, 1, 72), giro(F0, 4.5, 1, 72)], DORATO, 1.4) + pth(chiuso(giro(F0, 4.5, 1, 72)), nuovaR([[0, "#fff3c2"], [1, "#c99a36"]], .4, .35, .8), bordo(L, 1));
+    s += corpo([giro(F1, 4.5, 1, 72), giro(F1, 34, 1, 72)], [[0, "#e8566a"], [.3, "#b0122c"], [.72, "#6e0a1a"], [1, "#3a0510"]], 1.4);
+    s += tratto(aperto(giro(F1, 19, 1.005, 72).slice(0, 37)), ORO, 1.1, op(.9));
+    for (i = 0; i < 16; i++) {
+      var t = i / 16 * 2 * Math.PI, ca = .35 * Math.cos(t), cb = .35 * Math.sin(t);
+      if (vicino(Math.cos(t), Math.sin(t)) < -.25) continue;
+      var p0 = P(ca, cb, 6), p1 = P(ca, cb, 32.5);
+      s += tratto(linea(p0, p1), ORO_S, 2.2) + tratto(linea(p0, p1), ORO, 1.3) + tratto(linea([p0[0] - .4, p0[1]], [p1[0] - .4, p1[1]]), "#fff3c4", .4, op(.8));
+    }
+    s += corpo([giro(F2, 34, 1, 72), giro(forma(0, 0, .43), 37, 1, 72), giro(forma(0, 0, .36), ZT, 1, 72)], DORATO, 1.4);
+    s += pth(chiuso(giro(forma(0, 0, .36), ZT, 1, 72)), nuovaR([[0, "#fff6d6"], [.6, "#e2b444"], [1, "#9c6f1c"]], .4, .35, .8), bordo(L, 1));
+    s += pth(chiuso(giro(forma(0, 0, .3), ZT, 1, 72)), nuovaR([[0, "#e8566a"], [.6, "#a0102a"], [1, "#5e0816"]], .4, .35, .8), "stroke='" + ORO_S + "' stroke-width='.8'");   // il cuscino di velluto sotto la gabbia
+    giro(forma(0, 0, .33), ZT, 1, 24).forEach(function (c) { s += cer(c[0], c[1], .8, ORO_C, "stroke='" + ORO_S + "' stroke-width='.3'"); });   // le borchie d'oro
+    giro(forma(0, 0, .42), 36.6, 1, 22).forEach(function (c, j) { var t2 = j / 22 * 2 * Math.PI; if (vicino(Math.cos(t2), Math.sin(t2)) > -.3) s += lampadina(c[0], c[1], 1.25, j % 2 ? "#ffd36b" : "#ff8a5c"); });
+    // le forcelle d'ottone che reggono l'asse (lungo a); la canaletta d'oro davanti con le palline appena uscite
+    function forcella(a) { return tornito(a, 0, [[ZT - .5, .05], [ZT + 1.5, .05], [ZT + 2.5, .024], [ZC - 2.5, .022], [ZC - .5, .034], [ZC + 2.5, .034]], OTTONE, 1, [1, 4], .6) + pallina(P(a, 0, ZC + 3.6), 2, ORO, .6); }
+    var cana = blocco(-.21, .21, .21, .34, ZT, ZT + 2.4, "#d9a83a", { davanti: function (W, H) { return rett(0, H * .55, W, H * .45, 0, ORO_S, op(.6)); }, sopra: function (A, B, C, D, W, H) { return piano(A, B, D, W, H, rett(W * .05, H * .2, W * .9, H * .6, H * .3, "#6e4a10")); } }, 1);
+    [[-.13, 32], [0, 7], [.13, 61]].forEach(function (x, j) { cana += pallaBingo(P(x[0], .275, ZT + 3.7), 2.7, COL_PALLE[(j * 3 + 1) % 9], x[1]); });
+    // la gabbia che gira: gli anelli d'ottone (di traverso all'asse e lungo l'asse), divisi in pezzetti lontani e vicini
+    function anello(fn) {
+      var lon = "", vic = "", n = 56, j;
+      for (j = 0; j < n; j++) {
+        var A = fn(j / n * 2 * Math.PI), B = fn((j + 1) / n * 2 * Math.PI), dd = G * ((A[0] + B[0]) / 2 + (A[1] + B[1]) / 2) + ((A[2] + B[2]) / 2 - ZC) / 61 * .82, d = linea(P(A[0], A[1], A[2]), P(B[0], B[1], B[2])) + " ";
+        if (dd < 0) lon += d; else vic += d;
+      }
+      return [lon, vic];
+    }
+    // l'anello grande in mezzo (di traverso all'asse) e quattro meridiani che passano per i due mozzi, come un mappamondo
+    var anelli = [anello(function (t) { return [0, RS * Math.cos(t), ZC + RS * 61 * Math.sin(t)]; })];
+    [0, 1, 2, 3].forEach(function (k) { var fi = k * Math.PI / 4; anelli.push(anello(function (t) { return [RS * Math.cos(t), RS * Math.sin(t) * Math.cos(fi), ZC + RS * 61 * Math.sin(t) * Math.sin(fi)]; })); });
+    function fil(d, w) { return tratto(d, L, w + 1.2) + tratto(d, "#d9a83a", w) + tratto(d, "#fff3c4", w * .35, "transform='translate(-.25 -.35)' opacity='.9'"); }
+    var cc = P(0, 0, ZC), RR = RS * 70.6 + 1.6, gab = "";   // il vetro appena più grande della gabbia
+    gab += cer(cc[0], cc[1], RR, NOTTE ? nuovaR([[0, "#fff6d0", .55], [.7, "#ffe9a8", .3], [1, "#f5c86a", .5]], .5, .55, .6) : nuovaR([[0, "#ffffff", .06], [.75, "#cfe8f7", .18], [1, "#8fc4e0", .42]], .5, .55, .6));
+    anelli.forEach(function (x, j) { gab += tratto(x[0], "#5e3f0c", j ? 1.3 : 1.7, op(.75)) + tratto(x[0], "#c99a36", j ? .7 : 1, op(.85)); });
+    // le palline dentro: il mucchio in fondo e qualcuna in aria (sempre le stesse)
+    var r3 = rnd(9090), palle = [];
+    for (i = 0; i < 58; i++) {
+      var u = r3() * 2 - 1, v = r3() * 2 - 1, w = -r3(), L2 = Math.sqrt(u * u + v * v + w * w) || 1, rr = (RS - .04) * Math.pow(r3(), .35);
+      var pa = u / L2 * rr, pb = v / L2 * rr, pz = w / L2 * rr;
+      if (pz > -.07) pz = -.07 - r3() * .1;
+      if (Math.sqrt(pa * pa + pb * pb + pz * pz) > RS - .035) continue;
+      palle.push([pa, pb, ZC + pz * 61, i]);
+    }
+    [[.07, -.05, .12], [-.12, .06, .07], [.02, .13, .16], [-.04, -.12, .03], [.15, .08, -.01]].forEach(function (x, j) { palle.push([x[0], x[1], ZC + x[2] * 61, 100 + j]); });
+    palle.sort(function (x, y) { return (G * (x[0] + x[1]) + (x[2] - ZC) / 61 * .82) - (G * (y[0] + y[1]) + (y[2] - ZC) / 61 * .82); });
+    var dent = "";
+    palle.forEach(function (x) { dent += pallaBingo(P(x[0], x[1], x[2]), 2.8, COL_PALLE[x[3] % 9], (x[3] * 7) % 3 ? 0 : 1 + (x[3] * 37) % 90); });
+    gab += dentro(dEll(cc[0], cc[1], RR - .6, RR - .6), dent);
+    gab += cer(cc[0], cc[1], RR, nuovaR([[0, "#ffffff", 0], [.8, "#ffffff", .05], [1, "#d8efff", .35]], .5, .5, .5), bordo("#5c7f96", 1.2));
+    gab += ell(cc[0] - RR * .38, cc[1] - RR * .44, RR * .3, RR * .17, "#ffffff", op(.75)) + tratto("M" + q(cc[0] + RR * .5, cc[1] - RR * .55) + " A" + f1(RR * .8) + "," + f1(RR * .8) + " 0 0,1 " + q(cc[0] + RR * .78, cc[1] + RR * .1), "#ffffff", 1.2, op(.5));
+    anelli.forEach(function (x, j) { gab += fil(x[1], j ? 1.1 : 1.6); });
+    // i mozzi ai due capi dell'asse e la manovella col pomello di legno (dalla parte di a+)
+    function mozzo(a) { var o = corpo([giro(forma(a, 0, .055), ZC - 3.4, 1, 24), giro(forma(a, 0, .055), ZC + 3.4, 1, 24)], OTTONE, .9); return o + pallina(P(a, 0, ZC), 1.3, ORO, .5); }
+    var h0 = P(RS + .06, 0, ZC), h1 = P(RS + .08, 0, ZC - 13), h2 = P(RS + .17, 0, ZC - 13);
+    var man = ottone(linea(h0, h1), 1.8) + ottone(linea(h1, h2), 1.5) + pallina(h2, 2.3, "#a8401c", .7);
+    var dietroP = vicino(1, 0) < 0;   // la manovella sta dalla parte di a+: girata, finisce dietro la gabbia
+    s += forcella(dietroP ? RS + .05 : -RS - .05);
+    s += dietroP ? man + mozzo(RS + .05) : mozzo(-RS - .05);
+    s += cana + gab;
+    s += dietroP ? mozzo(-RS - .05) : mozzo(RS + .05) + man;
+    s += forcella(dietroP ? -RS - .05 : RS + .05);
+    return s;
+  });
+
+  // =========================================================
+  //  POSTAZIONE DEL KENO: il banchetto alto di mogano col pannello intarsiato (la medaglia d'oro con la griglia del keno),
+  //  il piano inclinato per scrivere con la schedina compilata e la matitina, il bordino d'ottone; dietro, il portaschedine
+  //  con le schedine bianche, rosa e gialle, il bicchierino d'ottone con le matitine e lo schermino col tabellone dei numeri
+  // =========================================================
+  function schedina(W, H, segni, seme) {   // la schedina del keno: le 80 caselline (8 × 10) e qualche segno rosso
+    var o = rett(0, 0, W, H, .6, "#fffdf4", "stroke='#c9bfa6' stroke-width='.3'"), r = rnd(seme), i, j, cw = (W - 3) / 10, ch = (H - 5) / 8;
+    o += rett(1.5, .8, W - 3, 1.2, .3, "#e8590c", op(.85));
+    for (j = 0; j < 8; j++) for (i = 0; i < 10; i++) {
+      var x = 1.5 + i * cw, y = 2.8 + j * ch + (j >= 4 ? .4 : 0);
+      o += rett(x + .15, y + .15, cw - .3, ch - .3, .1, "none", "stroke='#e8590c' stroke-width='.18' opacity='.7'");
+      if (segni && r() < .12) o += "<path d='M" + q2(x + .3, y + .3) + " L" + q2(x + cw - .3, y + ch - .3) + " M" + q2(x + cw - .3, y + .3) + " L" + q2(x + .3, y + ch - .3) + "' stroke='#c92a2a' stroke-width='.35'/>";
+    }
+    return o;
+  }
+  function schermoKeno(W, H) {   // lo schermino: il tabellone degli 80 numeri con quelli usciti accesi
+    var o = rett(0, 0, W, H, 1.4, "#0b0a10"), x0 = 1.6, y0 = 1.6, w = W - 3.2, h = H - 3.2, i, j, r = rnd(808), cw = w / 10, ch = (h - 4) / 8;
+    o += rett(x0, y0, w, h, .8, NOTTE ? "#22164a" : "#150f30");
+    o += rett(x0, y0, w, 3.2, .8, NOTTE ? "#5f3dc4" : "#3b2a8a") + led("20", x0 + w - 6.4, y0 + .6, 2, "#ffe066", NOTTE);
+    for (j = 0; j < 8; j++) for (i = 0; i < 10; i++) { var on = r() < .25; o += rett(x0 + i * cw + .25, y0 + 4 + j * ch + .25, cw - .5, ch - .5, .3, on ? (NOTTE ? "#ff7be3" : "#d6338f") : (NOTTE ? "#2c2160" : "#211a48")); }
+    o += pth("M" + q2(x0 + w * .1, y0) + " L" + q2(x0 + w * .32, y0) + " L" + q2(x0 + w * .12, y0 + h) + " L" + q2(x0 - w * .1, y0 + h) + " Z", "#ffffff", op(NOTTE ? .05 : .12));
+    if (NOTTE) o += rett(x0, y0, w, h, .8, nuovaR([[0, "#ffffff", .2], [1, "#ffffff", 0]], .5, .45, .7));
+    return o;
+  }
+  def("postazione_keno", { nome: "Postazione del keno", fp: [1, 1], box: [-34, -110, 40, 21], dietro: true, luce: [.07, -.19, 88, 48, "#9fd8ff"] }, function () {
+    var A0 = -.3, A1 = .3, B0 = -.22, B1 = .22, s = ombraPianta(-.34, .34, -.26, .26, 1, .04), l = [], ZF = 61, ZB = 67;
+    // lo zoccolo d'ottone
+    s += blocco(A0 - .015, A1 + .015, B0 - .015, B1 + .015, 0, 4, "#d9a83a", { davanti: function (W, H) { return rett(0, H * .6, W, H * .4, 0, ORO_S, op(.6)); } }, 1.2);
+    // il mobile di mogano col piano inclinato (più basso davanti), coi pannelli intarsiati
+    function pann(medaglia) {
+      return function (W, H) {
+        var o = rett(4, 6, W - 8, H - 12, 1.2, "#000000", "opacity='.12' stroke='" + ORO + "' stroke-width='1'") + rett(6, 8, W - 12, H - 16, 1, "none", "stroke='" + ORO_C + "' stroke-width='.4' opacity='.8'");
+        if (medaglia) {
+          var cx = W / 2, cy = H * .42, k, j;
+          o += cer(cx, cy, 8.6, nuovaR(DORATO, .35, .3, .9), "stroke='" + ORO_S + "' stroke-width='.8'") + cer(cx, cy, 6.6, "#5a1f0c");
+          for (j = 0; j < 4; j++) for (k = 0; k < 4; k++) o += rett(cx - 4.4 + k * 2.3, cy - 4.4 + j * 2.3, 1.7, 1.7, .3, (j * 4 + k) % 5 === 1 ? "#ff5c8a" : ORO_C);
+        }
+        return o + rett(0, H - 3, W, 1.2, 0, ORO, op(.8));
+      };
+    }
+    var V = [[A0, B1, 4], [A1, B1, 4], [A1, B0, 4], [A0, B0, 4], [A0, B1, ZF], [A1, B1, ZF], [A1, B0, ZB], [A0, B0, ZB]];
+    s += solido(V, [[0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7], [4, 5, 6, 7]], MOGANO, LACCA, { dec: {
+      0: function (pp) { return piano(pp[3], pp[2], pp[0], 36.6, ZF - 4, pann(true)(36.6, ZF - 4)); },
+      1: function (pp) { return piano(pp[3], pp[2], pp[0], 26.8, ZF - 4, pann(false)(26.8, ZF - 4)); },
+      2: function (pp) { return piano(pp[3], pp[2], pp[0], 36.6, ZB - 4, pann(false)(36.6, ZB - 4)); },
+      3: function (pp) { return piano(pp[3], pp[2], pp[0], 26.8, ZF - 4, pann(false)(26.8, ZF - 4)); } }, lw: 1.6 });
+    // il piano per scrivere: un poco più largo, col bordo di mogano, la pelle verde, la schedina con la matitina, il bordino d'ottone davanti
+    var e = .025, T = [[A0 - e, B1 + e, ZF], [A1 + e, B1 + e, ZF], [A1 + e, B0 - e, ZB], [A0 - e, B0 - e, ZB], [A0 - e, B1 + e, ZF + 2.6], [A1 + e, B1 + e, ZF + 2.6], [A1 + e, B0 - e, ZB + 2.6], [A0 - e, B0 - e, ZB + 2.6]];
+    s += solido(T, [[0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7], [4, 5, 6, 7]], "#8a3c1c", LACCA, { dec: {
+      4: function (pp) {   // sopra: pp = davanti-sinistra, davanti-destra, dietro-destra, dietro-sinistra
+        var W = 40, H = 30, o = rett(0, 0, W, H, 1, "#7a3517") + rett(2.4, 2.4, W - 4.8, H - 4.8, .8, "#1f5a3a", "stroke='" + ORO + "' stroke-width='.5'");
+        o += "<g transform='translate(9 5) rotate(-4)'>" + schedina(14, 18, true, 11) + "</g>" + "<path d='M27,21 L35,10' stroke='" + L + "' stroke-width='2.2' stroke-linecap='round'/><path d='M27,21 L35,10' stroke='#f2c230' stroke-width='1.3' stroke-linecap='round'/><path d='M27,21 L28.2,19.4' stroke='#f1c9a5' stroke-width='1.3'/>";
+        return piano(pp[3], pp[2], pp[0], W, H, o);
+      } }, lw: 1.4 });
+    var lb = [P(A0 - e, B1 + e, ZF + 2.8), P(A1 + e, B1 + e, ZF + 2.8)];
+    s += ottone(linea(lb[0], lb[1]), 1.2);
+    // il portaschedine dietro (mogano), con le tre pile di schedine
+    var zr = ZB + 2.2;
+    s += blocco(A0, A1, B0 - e, B0 + .09, zr - 1.4, zr + 5, "#7d3519", { davanti: function (W, H) { return rett(0, 0, W, 1, 0, ORO, op(.9)) + rett(W * .06, H * .35, W * .88, H * .4, .5, "#000000", op(.2)); } }, 1.2);
+    [[-.235, "#fffdf4"], [-.13, "#ffc9de"]].forEach(function (x) {
+      s += blocco(x[0] - .045, x[0] + .045, B0 + .005, B0 + .07, zr + 5, zr + 8.6, x[1], { sopra: function (A, B, C, D, W, H) { return piano(A, B, D, W, H, rett(W * .1, H * .2, W * .8, H * .15, .2, "#e8590c", op(.6))); }, davanti: function (W, H) { var o = "", j; for (j = 1; j < 5; j++) o += rett(0, H * j / 5, W, .25, 0, "#a8a08f", op(.7)); return o; } }, .8);
+    });
+    // il bicchierino d'ottone con le matitine
+    var bp = [.25, B0 + .04], mat = "";
+    [[-.012, -.01, 9.5, "#f2c230"], [.01, .006, 11, "#e03131"], [-.004, .014, 8.5, "#1d1d22"], [.014, -.012, 10, "#f2c230"]].forEach(function (x) { var a = P(bp[0] + x[0], bp[1] + x[1], zr + 6), b = P(bp[0] + x[0] * 2.4, bp[1] + x[1] * 2.4, zr + 5 + x[2]); mat += tratto(linea(a, b), L, 1.9) + tratto(linea(a, b), x[3], 1) + tratto(linea([b[0], b[1]], [b[0], b[1] - .1]), "#f1c9a5", 1.1); });
+    s += mat + corpo([giro(forma(bp[0], bp[1], .03), zr + 5, 1, 24), giro(forma(bp[0], bp[1], .034), zr + 10, 1, 24)], OTTONE, .8) + pth(chiuso(giro(forma(bp[0], bp[1], .034), zr + 10, 1, 24)), "#5e3f0c", bordo(L, .6));
+    // lo schermino sul suo piedino (guarda davanti), coi numeri del keno; da dietro la scocca nera con le feritoie
+    var sm = "", zs = zr + 9;
+    sm += tornito(.07, B0 + .03, [[zr + 5, .03], [zr + 6, .03], [zr + 7, .012], [zs + 1, .012]], [[0, "#6b7380"], [.5, "#2b2f36"], [1, "#0d0f12"]], .8);
+    sm += blocco(-.065, .205, B0 + .01, B0 + .05, zs, zs + 19, "#22252c", {
+      davanti: function (W, H) { return rett(1.2, 1.2, W - 2.4, H - 2.4, 1, "#000000") + "<g transform='translate(1.8 1.8)'>" + schermoKeno(W - 3.6, H - 3.6) + "</g>"; },
+      dietro: function (W, H) { var o = "", j; for (j = 0; j < 5; j++) o += rett(W * .25, H * .3 + j * 2, W * .5, .8, .3, "#0b0c0f"); return o; } }, 1.2);
+    s += sm;
+    return s;
+  });
+
+  // =========================================================
+  //  TABELLONE DEL BINGO (da parete, largo due pezzi di muro): la cornice d'oro con le lampadine, il cimiero ad arco
+  //  con la pallina grande dell'ultimo numero uscito; i 90 numeri in 9 file da 10 (quelli usciti accesi), e sotto
+  //  le ultime cinque palline uscite. Di notte si accendono le lampadine e i numeri usciti
+  // =========================================================
+  function lungoRett(x, y, w, h, passo) {   // dei punti lungo il bordo di un rettangolo
+    var o = [], per = 2 * (w + h), n = Math.round(per / passo), i;
+    for (i = 0; i < n; i++) { var d = i / n * per; if (d < w) o.push([x + d, y]); else if (d < w + h) o.push([x + w, y + d - w]); else if (d < 2 * w + h) o.push([x + w - (d - w - h), y + h]); else o.push([x, y + h - (d - 2 * w - h)]); }
+    return o;
+  }
+  def("tabellone_bingo", { tipo: "parete", nome: "Tabellone del bingo", largo: 2, luce: [62, 82, 150, "#ffd27a"] }, function () {
+    var x = 6, y = 28, w = 112, h = 118, cx = 62, s = "", i, j, r = rnd(1990), usciti = {}, ult = [27, 61, 8, 45, 83];
+    for (i = 0; i < 26; i++) usciti[1 + Math.floor(r() * 90)] = 1;
+    ult.forEach(function (n) { usciti[n] = 1; });
+    var cre = "M" + q(cx - 21, y + 2) + " A21,19 0 0 1 " + q(cx + 21, y + 2) + " Z";
+    // l'ombra sul muro, i due sostegni d'ottone sotto
+    s += rett(x + 2.5, y + 3.5, w, h, 7, "#000000", op(.22)) + pth(cre, "#000000", "transform='translate(2.5 3.5)' opacity='.22'");
+    [28, 96].forEach(function (bx) { s += rett(bx - 2.4, y + h - 2, 4.8, 8, 1, "#3a2f2a", bordo(L, .6)) + cer(bx, y + h + 4.4, .9, "#c9a227"); });
+    // il cimiero: l'arco d'oro con la pallina grande dell'ultimo numero
+    s += pth(cre, rad("bcr", [[0, "#fff3c4"], [.6, "#e0a92e"], [1, "#9a6a14"]], .5, .9, .9), bordo(L, 1.5));
+    s += cer(cx, y - 4, 12.4, NOTTE ? "#ffe066" : "#7a1020", NOTTE ? op(.35) : op(0));
+    s += cer(cx, y - 4, 11, "#5c0810", "stroke='" + ORO_S + "' stroke-width='.8'");
+    s += cer(cx, y - 4, 9.4, rad("bpl", NOTTE ? [[0, "#ffffff"], [.55, "#ff9a9a"], [1, "#e03131"]] : [[0, "#ff8a8a"], [.6, "#e03131"], [1, "#8a1018"]], .38, .32, .8), bordo(L, .8));
+    s += cer(cx, y - 4, 5.8, "#ffffff") + numero("27", cx, y - 4, 5.2, "#1d1d22", 1) + ell(cx - 3.4, y - 8.6, 3, 1.4, "#ffffff", op(.6));
+    for (i = 0; i < 9; i++) { var ab = Math.PI + (i + .5) / 9 * Math.PI; s += lampadina(cx + 17.5 * Math.cos(ab), y + 1 + 15.8 * Math.sin(ab), 1.15, i % 2 ? "#ffd36b" : "#ff8a5c"); }
+    // la cornice d'oro e il pannello blu notte
+    var pann = "M" + q(x + 7, y) + " H" + f1(x + w - 7) + " Q" + q(x + w, y) + " " + q(x + w, y + 7) + " V" + f1(y + h - 7) + " Q" + q(x + w, y + h) + " " + q(x + w - 7, y + h) + " H" + f1(x + 7) + " Q" + q(x, y + h) + " " + q(x, y + h - 7) + " V" + f1(y + 7) + " Q" + q(x, y) + " " + q(x + 7, y) + " Z";
+    s += pth(pann, rad("bcn", [[0, "#fff3c4"], [.55, "#e0a92e"], [1, "#9a6a14"]], .35, .3, .95), bordo(L, 1.6));
+    var ix = x + 5, iy = y + 5, iw = w - 10, ih = h - 10;
+    s += rett(ix, iy, iw, ih, 4, lin("bfo", NOTTE ? [[0, "#1e2a6e"], [1, "#0b1238"]] : [[0, "#18225a"], [1, "#090e2c"]], 0, 0, 0, 1), "stroke='#4a0a0f' stroke-width='.8'");
+    // i 90 numeri: 9 file da 10; quelli usciti nel tondino acceso
+    var gx = ix + 2, gy = iy + 2.5, cw = (iw - 4) / 10, ch = 9.4;
+    for (j = 0; j < 9; j++) for (i = 0; i < 10; i++) {
+      var n = j * 10 + i + 1, px = gx + (i + .5) * cw, py = gy + (j + .5) * ch;
+      if (usciti[n]) {
+        if (NOTTE) s += cer(px, py, 5.4, "#ffd43b", op(.3));
+        s += cer(px, py, 4.3, rad("bcl", NOTTE ? [[0, "#ffffff"], [.5, "#fff3a0"], [1, "#ffc21a"]] : [[0, "#fff6c2"], [.6, "#ffd43b"], [1, "#e8a400"]], .4, .35, .8), "stroke='#7a4a00' stroke-width='.4'") + numero(String(n), px, py + .1, 3.6, "#8a1018", .75);
+      } else s += numero(String(n), px, py + .1, 3.6, NOTTE ? "#5a6cb8" : "#4a5aa0", .65);
+    }
+    for (j = 1; j < 9; j++) s += rett(gx, gy + j * ch - .15, iw - 4, .3, 0, "#3a4a9a", op(.5));
+    // sotto: le ultime cinque palline uscite, su una fascia scura
+    var by = iy + ih - 13;
+    s += rett(ix + 2, by, iw - 4, 11, 3, "#060a24", "stroke='" + ORO + "' stroke-width='.6'");
+    ult.forEach(function (n2, k) { var bx = cx - 34 + k * 17, col = COL_PALLE[k * 2 % 9]; s += pallaBingo([bx, by + 5.5], 4.6, col, n2); });
+    // le lampadine tutto intorno alla cornice
+    lungoRett(x + 2.6, y + 2.6, w - 5.2, h - 5.2, 8.6).forEach(function (pt, k) { s += lampadina(pt[0], pt[1], 1.15, k % 2 ? "#ffd36b" : "#fff3bf"); });
+    return s + rett(ix, iy, iw, ih * .45, 4, lin("bvt", [[0, "#ffffff", NOTTE ? .06 : .1], [1, "#ffffff", 0]], 0, 0, 0, 1));
+  });
+
+  // =========================================================
+  //  TABELLONE DEL KENO (da parete, largo due pezzi di muro): il pannello nero col neon azzurro e rosa, il tubo di vetro
+  //  con le ultime palline estratte e il contatore; gli 80 numeri in 8 file da 10 (da 1 a 40 sopra, da 41 a 80 sotto),
+  //  i venti usciti accesi di rosa. Di notte il neon e i numeri brillano
+  // =========================================================
+  def("tabellone_keno", { tipo: "parete", nome: "Tabellone del keno", largo: 2, luce: [62, 90, 145, "#d08cff"] }, function () {
+    var x = 6, y = 34, w = 112, h = 112, cx = 62, s = "", i, j, r = rnd(8080), usciti = {}, nU = 0, ult = [];
+    while (nU < 20) { var u = 1 + Math.floor(r() * 80); if (!usciti[u]) { usciti[u] = 1; nU++; ult.push(u); } }
+    var pann = "M" + q(x + 9, y) + " H" + f1(x + w - 9) + " Q" + q(x + w, y) + " " + q(x + w, y + 9) + " V" + f1(y + h - 9) + " Q" + q(x + w, y + h) + " " + q(x + w - 9, y + h) + " H" + f1(x + 9) + " Q" + q(x, y + h) + " " + q(x, y + h - 9) + " V" + f1(y + 9) + " Q" + q(x, y) + " " + q(x + 9, y) + " Z";
+    s += pth(pann, "#000000", "transform='translate(2.5 3.5)' opacity='.25'");
+    s += pth(pann, lin("kfo", NOTTE ? [[0, "#2a1650"], [1, "#0c0618"]] : [[0, "#24133f"], [1, "#0a0514"]], 0, 0, 0, 1), bordo(L, 1.8));
+    // il neon: azzurro fuori, rosa dentro
+    if (NOTTE) s += pth(pann, "none", "stroke='#3bc9db' stroke-width='5' opacity='.35'");
+    s += pth(pann, "none", "stroke='" + (NOTTE ? "#c5f6fa" : "#22b8cf") + "' stroke-width='1.4' transform='translate(0 0)'");
+    var inn = "M" + q(x + 11, y + 3.4) + " H" + f1(x + w - 11) + " Q" + q(x + w - 3.4, y + 3.4) + " " + q(x + w - 3.4, y + 11) + " V" + f1(y + h - 11) + " Q" + q(x + w - 3.4, y + h - 3.4) + " " + q(x + w - 11, y + h - 3.4) + " H" + f1(x + 11) + " Q" + q(x + 3.4, y + h - 3.4) + " " + q(x + 3.4, y + h - 11) + " V" + f1(y + 11) + " Q" + q(x + 3.4, y + 3.4) + " " + q(x + 11, y + 3.4) + " Z";
+    if (NOTTE) s += pth(inn, "none", "stroke='#f06595' stroke-width='3.6' opacity='.35'");
+    s += pth(inn, "none", "stroke='" + (NOTTE ? "#ffdeeb" : "#e64980") + "' stroke-width='1'");
+    // il tubo di vetro con le ultime palline e il contatore delle palline uscite
+    var ty = y + 8, tx = x + 7;
+    s += rett(tx, ty, 80, 13, 6.5, NOTTE ? "#3a2a6a" : "#1a1030", "stroke='#8f7fc4' stroke-width='.8'");
+    ult.slice(-9).forEach(function (n, k) { s += pallaBingo([tx + 7 + k * 8.4, ty + 6.5], 3.7, COL_PALLE[(n * 5) % 9], n); });
+    s += rett(tx, ty, 80, 5, 4, "#ffffff", op(NOTTE ? .1 : .16));
+    s += rett(tx + 84, ty, 15, 13, 2, "#050208", "stroke='#8f7fc4' stroke-width='.8'") + led("20", tx + 86.2, ty + 3, 7, "#ffe066", NOTTE);
+    // gli 80 numeri: da 1 a 40 sopra, da 41 a 80 sotto (divisi dal filo)
+    var gx = x + 6, gy = ty + 17, cw = (w - 12) / 10, ch = 9.2;
+    for (j = 0; j < 8; j++) for (i = 0; i < 10; i++) {
+      var n2 = j * 10 + i + 1, px = gx + i * cw, py = gy + j * ch + (j >= 4 ? 3 : 0), on = usciti[n2];
+      if (on && NOTTE) s += rett(px - .6, py - .6, cw + 1.2, ch + .2, 2.4, "#ff4fd8", op(.35));
+      s += rett(px + .4, py + .4, cw - .8, ch - 1, 1.6, on ? (NOTTE ? "#ff6be0" : "#d6338f") : (NOTTE ? "#2c1f58" : "#21173f"), on ? "stroke='" + (NOTTE ? "#ffe3f8" : "#ff8ad8") + "' stroke-width='.4'" : "");
+      s += numero(String(n2), px + cw / 2, py + ch / 2 - .2, 3.5, on ? "#ffffff" : (NOTTE ? "#9d8ff0" : "#7f72c8"), .6);
+    }
+    s += rett(gx, gy + 4 * ch + .6, w - 12, .8, .4, ORO, op(.9));
+    // le lucine azzurre sotto il pannello
+    for (i = 0; i < 12; i++) s += lampadina(x + 10 + i * 8.5, y + h + 4, .9, i % 2 ? "#74e0f0" : "#ff8ad8");
+    return s + dentro(pann, pth("M" + q(x + 14, y) + " L" + q(x + 40, y) + " L" + q(x + 18, y + h) + " L" + q(x - 6, y + h) + " Z", "#ffffff", op(NOTTE ? .03 : .06)));
+  });
 
   // =========================================================
   function misure(d) { var b = d.box; return { w: Math.ceil(b[2] - b[0]), h: Math.ceil(b[3] - b[1]), ax: Math.ceil(-b[0]), ay: Math.ceil(-b[1]) }; }

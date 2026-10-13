@@ -1270,7 +1270,8 @@
         var w = a.info.w * k, h = a.info.h * k, ax = a.info.ax * k, ay = a.info.ay * k;
         ctx.save(); ctx.translate(ce.x, ce.y); if (specchio) ctx.scale(-1, 1); ctx.drawImage(a.im, -ax, -ay, w, h); ctx.restore();
         x.ret = { x: ce.x - (specchio ? w - ax : ax), y: ce.y - ay, w: w, h: h };
-      } else x.ret = segnaposto(o, ce, f);
+      } else if (LUOGO && a) x.ret = { x: ce.x - a.info.ax * k, y: ce.y - a.info.ay * k, w: a.info.w * k, h: a.info.h * k };   // (nel casinò: il disegno si sta preparando, per un attimo non si vede)
+      else x.ret = segnaposto(o, ce, f);
       if (x.fantasma) { ctx.globalAlpha = 1; if (!x.ok) poligono(ctx, [pw(o.c, o.r), pw(o.c + f[0], o.r), pw(o.c + f[0], o.r + f[1]), pw(o.c, o.r + f[1])], "rgba(224,49,49,.35)"); }
       if (modo === "vivi" && !x.fantasma && !posa) bollina(o, ce, x.ret);
     }
@@ -1409,7 +1410,8 @@
       }
     }
     function imPersona(g) {   // le immagini di un avatar della sala (fatte la prima volta che serve)
-      if (!g.IM && g.cfg && window.SGOmino) g.IM = g.gira ? { davanti: [immagine(g.cfg), immagine(g.cfg, { cammina: true })], dietro: [immagine(g.cfg, { spalle: true }), immagine(g.cfg, { spalle: true, cammina: true })] } : { davanti: [immagine(g.cfg)], dietro: [immagine(g.cfg, { spalle: true })], seduto: [immagine(g.cfg, { seduto: true }), immagine(g.cfg, { seduto: true, spalle: true })] };
+      if (!g.IM && g.cfg && window.SGOmino) g.IM = g.gira ? { davanti: [immagine(g.cfg), immagine(g.cfg, { cammina: true })], dietro: [immagine(g.cfg, { spalle: true }), immagine(g.cfg, { spalle: true, cammina: true })] }
+        : g.siede ? { seduto: [immagine(g.cfg, { seduto: true }), immagine(g.cfg, { seduto: true, spalle: true })], davanti: [], dietro: [] } : { davanti: [immagine(g.cfg)], dietro: [immagine(g.cfg, { spalle: true })] };   // (solo le pose che servono: chi è seduto resta seduto)
       return g.IM || null;
     }
     function disegnaPersona(g) {   // un avatar della sala in piedi (croupier, cassiere, barista)
@@ -1555,12 +1557,35 @@
 
     function chiudi() { cancelAnimationFrame(anim); clearInterval(tCresci); clearInterval(tFase); window.removeEventListener("resize", misura); quandoPronta = null; }
     function esci() { chiudi(); clearTimeout(tSalva); if (opts.salva) opts.salva(D); if (opts.indietro) opts.indietro(); }
+    function attesa() {   // nei posti grandi: prima si preparano i disegni di quello che si vede (intanto una schermata d'attesa), poi il resto un po' alla volta
+      var t0 = Date.now(), vela = el("div", "gd-attesa"), barra2 = el("i"), bb = el("div", "gd-attesa-b");
+      vela.appendChild(el("b", "", "🎰")); vela.appendChild(el("span", "", "Il Casinò apre le porte…")); bb.appendChild(barra2); vela.appendChild(bb); s.appendChild(vela);
+      function vicino(u, v) { var p = pw(u, v); return p.x > -cw * .4 && p.x < cw * 1.4 && p.y > -ch * .3 && p.y < ch * 1.5; }
+      function arteDi(o) { var mi = infoMobile(o.t), nome = nomeArte(o), l = []; [false, true].forEach(function (dt) { var a = arteOgg(nome, dt, !!(mi && mi.luce), o.col); if (a && l.indexOf(a.im) < 0) l.push(a.im); }); return l; }
+      function dellaPersona(g) { var I = imPersona(g); return I ? (I.seduto || []).concat(I.davanti, I.dietro) : []; }
+      var subito = [], dopo = [];
+      D.ogg.forEach(function (o) { var b = appeso(o) ? null : box(o); if (!b || vicino((b.c0 + b.c1) / 2, (b.r0 + b.r1) / 2)) subito = subito.concat(arteDi(o)); else dopo.push(o); });
+      GENTE.forEach(function (g) { if (vicino(g.u, g.v)) subito = subito.concat(dellaPersona(g)); else dopo.push(g); });
+      function scalda() {   // il resto: due cose ogni tanto, così la sala resta fluida mentre cammini
+        if (!vivo() || !dopo.length) return;
+        dopo.splice(0, 2).forEach(function (x) { if (x.cfg) dellaPersona(x); else arteDi(x); });
+        setTimeout(scalda, 90);
+      }
+      (function guarda() {
+        if (!vivo()) return;
+        var n = subito.filter(pronta).length, q = subito.length ? n / subito.length : 1; barra2.style.width = Math.round(q * 100) + "%";
+        if (q < .98 && Date.now() - t0 < 10000) return setTimeout(guarda, 120);
+        sporco = true; vela.classList.add("via"); setTimeout(function () { if (vela.parentNode) vela.parentNode.removeChild(vela); }, 400);
+        dimmi("Benvenuto al Casinò! 🎰 Black Jack e Poker sono aperti; allarga con due dita per vedere tutta la sala");
+        setTimeout(scalda, 600);
+      })();
+    }
     s._monta = function () {
       quandoPronta = function () { if (vivo()) { sfondo = null; sporco = true; } };   // un disegno è arrivato: si ridisegna
       calcolaStanze(); cresciTutto(); misura(); aggTesta();
-      if (LUOGO) dimmi("Benvenuto al Casinò! 🎰 Black Jack e Poker sono aperti; allarga con due dita per vedere tutta la sala");
-      else if (!D.visto) { D.visto = 1; salva(); dimmi("Benvenuto a casa! Tocca il germoglio per annaffiarlo 💧"); }
-      else { var pronti = D.ogg.filter(maturo).length, assetati = D.ogg.filter(sete).length;
+      if (LUOGO) attesa();
+      if (!LUOGO && !D.visto) { D.visto = 1; salva(); dimmi("Benvenuto a casa! Tocca il germoglio per annaffiarlo 💧"); }
+      else if (!LUOGO) { var pronti = D.ogg.filter(maturo).length, assetati = D.ogg.filter(sete).length;
         if (pronti) dimmi("Ci sono " + pronti + (pronti === 1 ? " pianta pronta" : " piante pronte") + " da raccogliere! 🧺");
         else if (assetati) dimmi("💧 " + assetati + (assetati === 1 ? " pianta ha" : " piante hanno") + " sete"); }
       anim = requestAnimationFrame(function (o) { ult = o; giro(o); });
@@ -1610,6 +1635,11 @@
       ".gd-sc.caro{opacity:.55}.gd-sc-emo{font-size:2rem;line-height:56px}",
       ".gd-sis-ok{background:#2f9e44}.gd-sis-no{background:#868e96}",
       ".gd-compra .gd-bott:not(:first-child){opacity:.45}",
+      ".gd-attesa{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(circle at 50% 45%,#5a1a2a,#1c1018 70%);color:#ffe8a3;font:800 18px system-ui,sans-serif;transition:opacity .4s}",
+      ".gd-attesa b{font-size:54px;filter:drop-shadow(0 0 14px rgba(255,200,80,.6))}",
+      ".gd-attesa-b{width:min(240px,60%);height:8px;border-radius:99px;background:rgba(255,255,255,.15);overflow:hidden}",
+      ".gd-attesa-b i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f5c542,#ff8a3d);transition:width .15s}",
+      ".gd-attesa.via{opacity:0;pointer-events:none}",
       ".gd-avviso{position:absolute;left:50%;top:calc(54px + env(safe-area-inset-top));z-index:5;transform:translateX(-50%);max-width:92%;padding:8px 14px;border-radius:999px;text-align:center;font-weight:900;font-size:.88rem;color:#2b2200;background:#ffe066;box-shadow:0 6px 16px rgba(0,0,0,.3);opacity:0;pointer-events:none}",
       ".gd-avviso.su{animation:gdAvv 2.6s ease forwards}@keyframes gdAvv{0%{opacity:0;transform:translate(-50%,8px) scale(.9)}10%{opacity:1;transform:translate(-50%,0) scale(1)}82%{opacity:1}100%{opacity:0}}",
       ".gd-sopra{position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(15,30,10,.5);opacity:0;pointer-events:none;transition:opacity .25s}",
