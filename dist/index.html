@@ -24392,6 +24392,15 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 203,
+    data: "13 ottobre 2026",
+    titolo: "Fantacalcio: il calciatore che nessuno vuole torna nel mazzo 🔁",
+    descrizione: [
+      "Se nessuno offre per un calciatore, torna in fondo al mazzo e intanto escono gli altri: puoi rischiare e aspettare quello dopo. Non viene mai dato a caso la prima volta.",
+      "Solo quando tutti quelli rimasti di un ruolo sono stati rifiutati 2 volte, vanno a caso, per 1 credito, a chi ne ha ancora bisogno. Prima il maxischermo avvisa: \"Ultima chiamata\"."
+    ]
+  },
+  {
     v: 202,
     data: "13 ottobre 2026",
     titolo: "L'Asta tutta nuova: la sala d'aste e lo stadio del fantacalcio 🔨⚽",
@@ -28622,7 +28631,7 @@ window.SG_SIPERO = {
       "Dopo ogni rilancio partono <b>10 secondi</b>: allo scadere la carta va a chi ha l'offerta più alta. <b>Paga solo il vincitore.</b>",
       "Attenzione: devi tenere <b>almeno 1 credito per ogni round che resta</b>, altrimenti rimani a piedi.",
       "Alla fine ognuno vota i kit degli altri con le <b>stelle</b> (non il proprio): vince chi ne raccoglie di più.",
-      "<b>Mini asta Fantacalcio</b>: 20 crediti a testa per una rosa da 5 (1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante). I calciatori escono a caso uno alla volta e partono da <b>1 credito</b>: chi offre di più se lo prende.",
+      "<b>Mini asta Fantacalcio</b>: 20 crediti a testa per una rosa da 5 (1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante). I calciatori escono a caso uno alla volta e partono da <b>1 credito</b>: chi offre di più se lo prende. Se nessuno lo vuole <b>torna in fondo al mazzo</b> e si va avanti; solo quando tutti quelli rimasti di un ruolo sono stati rifiutati <b>2 volte</b>, vanno a caso a chi ne ha ancora bisogno.",
       "Nel fantacalcio alla fine si scoprono le <b>quotazioni vere</b> dei calciatori: vince la rosa che <b>vale di più</b>. A pari valore vince chi ha <b>più crediti avanzati</b>."
     ],
 
@@ -29223,9 +29232,9 @@ window.SG_SIPERO = {
     var e = d.esito;
     S.radice.appendChild(timbro(e.tipo === "accollo" ? "NESSUNO!" : "AGGIUDICATO!")); S.radice.classList.add("chiusa");
     piedeAsta(S, d);
-    if (e.tipo === "accollo") { speaker("Nessuno lo vuole! Torna in fondo al mazzo"); disegnaCampo(S, d); return; }
+    if (e.tipo === "accollo") { speaker("Nessuno lo vuole" + (e.carta && e.carta.rifiuti ? " (" + e.carta.rifiuti + "ª volta)" : "") + ": torna in fondo al mazzo"); disegnaCampo(S, d); return; }
     speaker(e.tipo !== "forzata" ? "Aggiudicato a " + e.chiNome + " per " + e.prezzo + "!"
-      : e.motivo === "ufficio" ? "Nessuno lo voleva: va d'ufficio a " + e.chiNome + " per " + e.prezzo
+      : e.motivo === "ufficio" ? "Nessuno li ha voluti per 2 volte: questo va a caso a " + e.chiNome + " per " + e.prezzo
       : "Solo " + e.chiNome + " cerca un " + ((FANTA_RUOLI[e.carta.ruolo] || {}).nome || "").toLowerCase() + ": è suo per " + e.prezzo + "!");
     S.vista = e.chiId;
     var g = S.squadre[e.chiId], posti = g ? slotRosa(g.kit) : [], i = -1;
@@ -29344,7 +29353,7 @@ window.SG_SIPERO = {
       carta: carta, giroCarta: a ? a.nCarta : e.nCarta, prezzo: a ? a.offerta : e.prezzo, base: !!a && !a.leaderId, leader: a ? (a.leaderId || null) : (e.chiId || null),
       persone: persone, io: myId || "—", mie: mie, giro: a ? a.giro : null, resta: a ? a.resta : 0, durata: SECONDI * 1000, puoPassare: false,
       esito: e ? { n: e.n, nCarta: e.nCarta, tipo: e.tipo, motivo: e.motivo || "", chiId: e.chiId, chiNome: e.chiNome, carta: e.carta, prezzo: e.prezzo } : null,
-      avviso: a && a.ultimoDuello ? "⚠️ Ultimo duello: chi NON se lo aggiudica si accolla l'altro rimasto!" : "",
+      avviso: a ? avvisoFanta(a.ultimoDuello, a.ultimaChiamata, a.ruolo) : "",
       nota: !a ? "" : !io ? "Stai guardando la partita" : !inGara ? "Hai già il " + ru.nome.toLowerCase() + " in rosa" : hoPassato ? "Hai passato: aspetti il risultato" : guido ? "👑 L'offerta più alta è tua" : "Hai " + io.crediti + " 💰 · puoi arrivare a " + Math.max(0, max),
       onRilancia: function () { cb.onRilancia(); }, onPassa: function () { cb.onPassa(); },
       onIndietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); },
@@ -30195,11 +30204,28 @@ window.SG_SIPERO = {
   var FANTA_SLOT = { P: 1, D: 1, C: 2, A: 1 };
   var FANTA_ORD = ["P", "D", "C", "A"];
   var FANTA_RUOLI = {
-    P: { nome: "Portiere", breve: "POR", emoji: "🧤" },
-    D: { nome: "Difensore", breve: "DIF", emoji: "🛡️" },
-    C: { nome: "Centrocampista", breve: "CEN", emoji: "🎽" },
-    A: { nome: "Attaccante", breve: "ATT", emoji: "⚽" }
+    P: { nome: "Portiere", plurale: "portieri", breve: "POR", emoji: "🧤" },
+    D: { nome: "Difensore", plurale: "difensori", breve: "DIF", emoji: "🛡️" },
+    C: { nome: "Centrocampista", plurale: "centrocampisti", breve: "CEN", emoji: "🎽" },
+    A: { nome: "Attaccante", plurale: "attaccanti", breve: "ATT", emoji: "⚽" }
   };
+  // Chi nessuno vuole torna in fondo al mazzo e intanto escono gli altri: MAI a caso al primo giro (magari aspetti quello dopo).
+  // Solo quando TUTTI i calciatori rimasti di quel ruolo sono stati rifiutati 2 volte, quello che esce va a caso, per 1 credito,
+  // a uno di quelli che ne hanno ancora bisogno (se no l'asta non finirebbe mai). Prima c'è l'avviso "ultima chiamata".
+  var RIFIUTI_MAX = 2;
+  function rifiutatiTutti(mazzo, ruolo) {
+    var l = mazzo.filter(function (c) { return c.ruolo === ruolo; });
+    return l.length > 0 && l.every(function (c) { return (c.rifiuti || 0) >= RIFIUTI_MAX; });
+  }
+  function ultimaChiamata(mazzo, carta) {   // se nessuno prende questo, la prossima volta decide il caso
+    return (carta.rifiuti || 0) + 1 >= RIFIUTI_MAX && mazzo.every(function (c) { return c === carta || c.ruolo !== carta.ruolo || (c.rifiuti || 0) >= RIFIUTI_MAX; });
+  }
+  function avvisoFanta(duello, ultima, ruolo) {
+    if (duello && ultima) return "⚠️ Ultimo duello e ultima chiamata: se nessuno lo prende, decide il caso!";
+    if (duello) return "⚠️ Ultimo duello: chi NON se lo aggiudica si accolla l'altro rimasto!";
+    if (ultima) return "⚠️ Ultima chiamata: se nessuno lo prende, i " + ((FANTA_RUOLI[ruolo] || {}).plurale || "calciatori") + " rimasti andranno a caso a chi ne ha bisogno";
+    return "";
+  }
 
   function splitCalc(s) {
     var m = /^(.*?)\s*\(([^)]+)\)\s*$/.exec(String(s || ""));
@@ -30273,7 +30299,7 @@ window.SG_SIPERO = {
         el("div", { class: "t", text: "Costruisci la rosa" })
       ]),
       el("p", { class: "as-msg", text: "Ognuno parte con " + FANTA_BUDGET + " 💰. Rosa da 5: 1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante." }),
-      el("p", { class: "as-msg", text: "I calciatori escono uno alla volta dal mazzo. Chi ha quel ruolo già pieno non punta. Se nessuno offre, la carta torna in fondo (accollo)." })
+      el("p", { class: "as-msg", text: "I calciatori escono uno alla volta dal mazzo. Chi ha quel ruolo già pieno non punta. Se nessuno offre, la carta torna in fondo al mazzo e ripasserà: decide il caso solo se tutti quelli rimasti di un ruolo vengono rifiutati 2 volte." })
     ]));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Comincia l'asta ▶", onclick: function () { prossimaFanta(t, st); } }));
     t.mostra(s);
@@ -30289,7 +30315,7 @@ window.SG_SIPERO = {
     var carta = st.mazzo[0], elegg = eleggibiliFanta(st, carta.ruolo);
     if (!elegg.length) { st.mazzo.shift(); return prossimaFanta(t, st); }        // carta di troppo: la salto
     st.nCarta = (st.nCarta || 0) + 1;
-    if (elegg.length === 1 || st.giriVuoti > st.mazzo.length) {                   // uno solo può prenderla, oppure giro a vuoto: d'ufficio a 1 (a caso tra chi ne ha bisogno)
+    if (elegg.length === 1 || rifiutatiTutti(st.mazzo, carta.ruolo)) {           // uno solo ne ha bisogno, o tutti quelli del ruolo rifiutati 2 volte: d'ufficio a 1
       var i = elegg[Math.floor(Math.random() * elegg.length)]; st.mazzo.shift(); assegnaFanta(st.giocatori[i], carta, 1);
       st.giriVuoti = 0; FX.aggiudicato();
       return esitoFanta(t, st, i, carta, 1, "forzata", elegg.length === 1 ? "unico" : "ufficio");
@@ -30314,7 +30340,7 @@ window.SG_SIPERO = {
       carta: { nome: carta.nome, squadra: carta.squadra, ruolo: carta.ruolo }, giroCarta: st.nCarta, prezzo: a ? a.offerta : esito.prezzo, base: !!a && a.leader === null,
       leader: a ? a.leader : esito.chiId, persone: persone, io: null, giro: a ? a.giro : null, resta: a ? a.scadenza - Date.now() : 0, durata: SECONDI * 1000, puoPassare: !!a,
       esito: esito || null,
-      avviso: a && eleggN === 2 && carteRuolo === 2 ? "⚠️ Ultimo duello: chi NON se lo aggiudica si accolla l'altro rimasto!" : "",
+      avviso: a ? avvisoFanta(eleggN === 2 && carteRuolo === 2, ultimaChiamata(st.mazzo, carta), carta.ruolo) : "",
       nota: !a ? "" : a.leader === null ? "Tocca il tuo avatar per prenderlo a " + a.offerta + ". Se nessuno lo vuole torna in fondo al mazzo." : "Tocca il tuo avatar per rilanciare di 1.",
       onRilancia: function (i) { rilanciaFanta(t, st, i); }, onPassa: function (i) { passaFanta(t, st, i); }, onIndietro: function () { esciAsta(t, st); },
       extra: { testo: "👕 Tutte", apri: function () { formazioni(t, st.giocatori); } } });
@@ -30364,7 +30390,7 @@ window.SG_SIPERO = {
   }
   function accolloFanta(t, st) {
     var a = st.asta; if (a && a.bar && a.bar._stop) a.bar._stop();
-    var carta = st.mazzo.shift(); st.mazzo.push(carta); st.giriVuoti++;
+    var carta = st.mazzo.shift(); carta.rifiuti = (carta.rifiuti || 0) + 1; st.mazzo.push(carta); st.giriVuoti++;   // torna in fondo: conta quante volte è stato rifiutato
     st.asta = null;
     esitoFanta(t, st, null, carta, 0, "accollo");
   }
@@ -30432,9 +30458,8 @@ window.SG_SIPERO = {
       var elegg = st.giocatori.filter(function (g) { return !ruoloPieno(g, carta.ruolo); });
       if (!elegg.length) { st.mazzo.shift(); return prossima(); }
       st.nCarta++;
-      var presenti = elegg.filter(function (g) { return !g.via; });
-      // uno solo può prenderlo, o a chi serve non c'è nessuno collegato, o giro a vuoto: d'ufficio a 1 (a caso tra chi ne ha bisogno)
-      if (elegg.length === 1 || !presenti.length || st.giriVuoti > st.mazzo.length) {
+      // uno solo ne ha bisogno, o tutti i rimasti del ruolo sono stati rifiutati 2 volte: d'ufficio a 1 (a caso tra chi ne ha bisogno)
+      if (elegg.length === 1 || rifiutatiTutti(st.mazzo, carta.ruolo)) {
         var g = elegg[Math.floor(Math.random() * elegg.length)]; st.mazzo.shift(); assegnaFanta(g, carta, 1); st.giriVuoti = 0;
         FX.aggiudicato(); return esito({ chiId: g.id, chiNome: g.nome, carta: carta, prezzo: 1, tipo: "forzata", motivo: elegg.length === 1 ? "unico" : "ufficio" });
       }
@@ -30476,7 +30501,7 @@ window.SG_SIPERO = {
     }
     function accollo() {
       stopTo();
-      var carta = st.mazzo.shift(); st.mazzo.push(carta); st.giriVuoti++;
+      var carta = st.mazzo.shift(); carta.rifiuti = (carta.rifiuti || 0) + 1; st.mazzo.push(carta); st.giriVuoti++;   // torna in fondo: conta quante volte è stato rifiutato
       esito({ chiId: null, chiNome: "", carta: carta, prezzo: 0, tipo: "accollo" });
     }
     function esito(e) {   // l'esito resta a schermo un attimo (la maglia vola nel campetto), poi da solo il prossimo calciatore
@@ -30521,10 +30546,11 @@ window.SG_SIPERO = {
         carta: { nome: a.carta.nome, squadra: a.carta.squadra, ruolo: a.carta.ruolo }, nCarta: st.nCarta,
         ruolo: a.ruolo, offerta: a.offerta, leaderId: a.leader, leaderNome: a.leader ? nomeDi(st, a.leader) : "",
         passati: Object.keys(a.passati || {}), giro: st.giro, resta: st.scadenza ? st.scadenza - Date.now() : 0,   // il tempo che resta (non l'ora: gli orologi dei telefoni non sono uguali)
+        ultimaChiamata: ultimaChiamata(st.mazzo, a.carta),
         ultimoDuello: (st.giocatori.filter(function (g) { return !ruoloPieno(g, a.ruolo); }).length === 2 &&
           st.mazzo.filter(function (c) { return c.ruolo === a.ruolo; }).length === 2)
       } : null,
-      esito: e ? { n: e.n, nCarta: e.nCarta, tipo: e.tipo, motivo: e.motivo || "", chiId: e.chiId, chiNome: e.chiNome, prezzo: e.prezzo, carta: { nome: e.carta.nome, squadra: e.carta.squadra, ruolo: e.carta.ruolo } } : null,
+      esito: e ? { n: e.n, nCarta: e.nCarta, tipo: e.tipo, motivo: e.motivo || "", chiId: e.chiId, chiNome: e.chiNome, prezzo: e.prezzo, carta: { nome: e.carta.nome, squadra: e.carta.squadra, ruolo: e.carta.ruolo, rifiuti: e.carta.rifiuti || 0 } } : null,
       restano: st.mazzo ? st.mazzo.length : 0,
       classifica: st.classifica || null
     };
