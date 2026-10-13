@@ -1197,6 +1197,7 @@
   }
   function schermataEdificio(k) {
     if (k === "casino") { if (serveExtra()) return caricaExtra(function () { schermataEdificio(k); }, "🎰"); if (window.SGGiardino) return schermataCasinoSala(); }   // il Casinò nuovo, visto dall'alto (per ora solo per il proprietario)
+    if (k === "circolo" && (CIRCOLO_PRONTO || eProprietario())) { if (serveExtra()) return caricaExtra(function () { schermataEdificio(k); }, "🎲"); if (window.SGGiardino) return schermataCircoloSala(); }   // il Circolo visto dall'alto
     if (INTERNI[k] && window.SGCasino) return schermataInterno(k);   // Casinò e Circolo: gli interni in prima persona
     var E = EDIFICI_CITTA[k]; if (!E) return schermataCitta();
     rientro = function () { schermataEdificio(k); };   // finita la partita (o "indietro") si torna qui
@@ -1227,6 +1228,17 @@
     var io = profiloAttivo(), m = soldiCasa();
     var s = SGGiardino.crea({ luogo: "casino", pos: pos || null, omino: io && io.omino, nome: io && io.nome, audio: audioCtx, monete: m.monete, spendi: m.spendi, guadagna: m.guadagna,
       gioca: function (id, dove) { posCasino = dove || null; var g = giocoDa(id); if (g) scegliModoEdificio(g, "casino"); },
+      indietro: function () { rientro = null; schermataCitta(); } });
+    mostra(s); s._monta();
+  }
+  // il Circolo visto dall'alto: si cammina tra i tavoli, ci si siede e si gioca (carte, giochi a due, biliardo); fuori il cortile con le bocce
+  var CIRCOLO_PRONTO = false;   // false = per ora lo vede solo il proprietario (gli altri hanno il Circolo di prima)
+  var posCircolo = null;
+  function schermataCircoloSala(pos) {
+    rientro = function () { schermataCircoloSala(posCircolo); };   // finita la partita si torna nel Circolo, dove eri
+    var io = profiloAttivo(), m = soldiCasa();
+    var s = SGGiardino.crea({ luogo: "circolo", pos: pos || null, omino: io && io.omino, nome: io && io.nome, audio: audioCtx, monete: m.monete, spendi: m.spendi, guadagna: m.guadagna,
+      gioca: function (id, dove) { posCircolo = dove || null; var g = giocoDa(id); if (g) scegliModoEdificio(g, "circolo"); },
       indietro: function () { rientro = null; schermataCitta(); } });
     mostra(s); s._monta();
   }

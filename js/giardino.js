@@ -284,6 +284,95 @@
     return D;
   }
 
+  // ---------- il Circolo: il circolo ricreativo di paese (le carte, i tavolini per i giochi a due, il biliardo, il bar, la TV; fuori il cortile con le bocce) ----------
+  var GIOCHI_CIRCOLO = { tavolo_carte: "scopa", tavolo_tris: "tris", tavolo_forza4: "drop4", tavolo_navale: "navale", biliardo: "calciobiliardo" };   // dove ci si siede e si gioca già
+  function datiCircolo() {
+    //   salone (c 1…22): in fondo il bar, la vetrina delle coppe e l'angolo della TV; in mezzo i tavoli delle carte e i tavolini per i giochi a due;
+    //                    a sinistra il biliardo; davanti tavoli liberi e TANTO spazio vuoto per i giochi che verranno
+    //   cortile (c 24…34): il campo da bocce, la pergola col tavolo all'aperto, la fontanella (anche qui spazio libero in fondo)
+    var D = { v: 2, w: 36, h: 30, ogg: [], muri: {}, pav: {}, tetto: null, baule: {}, cesto: {}, ultimo: 0, vista: 0, gente: [], ingresso: [12, 28.4] }, c, r, k = 0;
+    var kit = function (g, id, alt) { return listaKit(g).some(function (v) { return v.id === id; }) ? id : (alt || null); };
+    var PERL = kit("muri", "perline_circolo"), VERDI = kit("muri", "piastrelle_verdi", PERL), GIALLO = kit("muri", "intonaco_giallo", PERL), PIETRA = kit("muri", "pietra_cortile", PERL);
+    var GRAN = kit("pavimenti", "graniglia"), COTTO = kit("pavimenti", "cotto_toscano", GRAN), ASSI = kit("pavimenti", "legno_vecchio", GRAN), GHIAIA = kit("pavimenti", "ghiaia_cortile", COTTO);
+    var PORTA = kit("porte", "porta_circolo");
+    function zona(c, r) { return c >= 24 ? "cortile" : c <= 6 && r <= 6 ? "bar" : c <= 7 && r >= 9 && r <= 17 ? "biliardo" : r <= 6 && c >= 13 ? "tv" : "salone"; }
+    var MURI_ZONA = { bar: VERDI, salone: PERL, biliardo: PERL, tv: GIALLO, cortile: PIETRA };
+    var PAV_ZONA = { bar: COTTO, salone: GRAN, biliardo: ASSI, tv: ASSI, cortile: GHIAIA };
+    function muro(t, c, r) {
+      var ll = t === "a" ? [[c - 1, r], [c, r]] : [[c, r - 1], [c, r]], m = { s: [null, null], ap: null };
+      ll.forEach(function (q, i) { if (q[0] >= 1 && q[0] <= 34 && q[1] >= 1 && q[1] <= 28) m.s[i] = MURI_ZONA[zona(q[0], q[1])]; });
+      D.muri[t + "," + c + "," + r] = m; return m;
+    }
+    function porta(t, c, r) { D.muri[t + "," + c + "," + r].ap = { t: "porta", id: PORTA }; }
+    for (r = 1; r <= 28; r++) { muro("a", 1, r); muro("a", 35, r); muro("a", 24, r); }   // (il muro tra salone e cortile)
+    for (c = 1; c <= 34; c++) { muro("b", c, 1); muro("b", c, 29); }
+    [11, 12].forEach(function (c) { porta("b", c, 29); });   // l'ingresso, dalla piazza
+    [12, 13].forEach(function (r) { porta("a", 24, r); });   // la porta del cortile
+    for (c = 1; c <= 34; c++) for (r = 1; r <= 28; r++) D.pav[c + "," + r] = PAV_ZONA[zona(c, r)];
+    function metti(t, c, r, d, x) { var o = { k: ++D.ultimo, t: t, c: c, r: r, d: d || 0 }; for (var q in x || {}) o[q] = x[q]; D.ogg.push(o); return o; }
+    function appendi(t, kk, lato, pezzi) { var o = { k: ++D.ultimo, t: t, muro: kk, lato: lato }; if (pezzi) o.pezzi = pezzi; D.ogg.push(o); }
+    function appendi2(t, tipo, c, r) { appendi(t, tipo + "," + c + "," + r, 1, tipo === "a" ? [tipo + "," + c + "," + r, tipo + "," + c + "," + (r - 1)] : [tipo + "," + c + "," + r, tipo + "," + (c + 1) + "," + r]); }
+    var rnd2 = rnd(1946);   // (seme fisso: la sala è sempre uguale)
+    function persona(ruolo) {
+      if (!window.SGOmino) return null;
+      var cfg = SGOmino.casuale("circolo" + (++k)); cfg.animale = "nessuno"; cfg.mano = "nessuno"; cfg.schiena = "nessuna";
+      if (ruolo === "barista") { cfg.capo = "gilet"; cfg.maglia = 8; cfg.collo = "papillon"; cfg.colCollo = 0; cfg.cappello = "nessuno"; cfg.occhiali = "nessuno"; cfg.borsa = "nessuna"; cfg.stampa = "nessuna"; }
+      try { cfg = SGOmino.norm(cfg); } catch (e) {}
+      return cfg;
+    }
+    function lavora(ruolo, u, v, fw) { D.gente.push({ cfg: persona(ruolo), u: u, v: v, fw: fw || [0, 1] }); }
+    function siedeSu(o, prob) { if (rnd2() < prob) { D.gente.push({ cfg: persona(), siede: o.k }); return true; } return false; }
+    function passeggia(zona, u, v) { D.gente.push({ cfg: persona(), u: u, v: v, gira: zona, fw: [0, 1] }); }
+    function tavolo(t, c0, r0, gente, sedia) {   // il tavolo con le sedie ai suoi posti (girate verso il tavolo) e un po' di gente seduta
+      var o = metti(t, c0, r0, 0), inf = infoMobile(t) || {}, f = (inf.fp || [1, 1]).slice(), cx = c0 + f[0] / 2, cy = r0 + f[1] / 2, posti = inf.posti || [], seduti = 0;
+      posti.forEach(function (p) {
+        var q = [c0 + p[0], r0 + p[1]], dx = cx - (q[0] + .5), dy = cy - (q[1] + .5), dd = Math.abs(dy) >= Math.abs(dx) ? (dy > 0 ? 0 : 2) : (dx > 0 ? 3 : 1);
+        if (siedeSu(metti(sedia || "sedia_circolo", q[0], q[1], dd), gente)) seduti++;
+      });
+      if (posti.length && seduti === posti.length) D.gente.pop();   // un posto resta sempre libero: ci si può sedere a giocare
+      return o;
+    }
+
+    // ---- il bar (in fondo a sinistra): il bancone col barista, gli sgabelli, la vetrina delle coppe ----
+    metti("bancone_circolo", 2, 3, 0); lavora("barista", 3.5, 2.5, [0, 1]);
+    [2, 3, 4].forEach(function (c) { siedeSu(metti("sgabello_circolo", c, 4, 2), .55); });
+    metti("vetrina_coppe", 8, 1, 0);
+    appendi2("foto_squadra", "b", 5, 1); appendi("bandiera_italia", "b,11,1", 1); appendi("calendario_parete", "b,12,1", 1);
+    metti("ventilatore", 4, 4);
+
+    // ---- l'angolo della TV (in fondo a destra): la partita, le poltrone, i giornali ----
+    appendi2("tv_partita", "b", 17, 1);
+    [15, 16, 18, 19].forEach(function (c) { siedeSu(metti("poltrona_circolo", c, 4, 2), .6); });
+    metti("tavolino_giornali", 17, 4); metti("ventilatore", 17, 3);
+
+    // ---- i tavoli delle carte (Scopa) in mezzo al salone ----
+    tavolo("tavolo_carte", 7, 9, .75); tavolo("tavolo_carte", 12, 9, .75); tavolo("tavolo_carte", 17, 9, .7);
+    metti("ventilatore", 9, 10); metti("ventilatore", 15, 10);
+
+    // ---- i tavolini dei giochi a due: Tris, Drop 4, Battaglia Navale ----
+    tavolo("tavolo_tris", 10, 15, .5); tavolo("tavolo_forza4", 14, 15, .5); tavolo("tavolo_navale", 18, 15, .5);
+
+    // ---- il biliardo (a sinistra) con la sua lampada, le stecche e le freccette al muro ----
+    metti("biliardo", 2, 12, 0); metti("lampada_biliardo", 2, 12);
+    lavora(null, 3.5, 11.5, [0, 1]); lavora(null, 5.5, 14.5, [-1, -1]);
+    appendi("rastrelliera_stecche", "a,1,10", 1); appendi("freccette", "a,1,16", 1);
+
+    // ---- davanti: tavoli liberi per i giochi che arriveranno, l'attaccapanni all'ingresso (e tanto spazio vuoto) ----
+    tavolo("tavolo_quadrato", 4, 21, .25); tavolo("tavolo_rotondo", 17, 21, .25); tavolo("tavolino_due", 20, 25, 0);
+    metti("appendiabiti", 9, 28); metti("ventilatore", 6, 22); metti("ventilatore", 18, 22);
+    passeggia([5, 18, 21, 27], 12.5, 22.5); passeggia([5, 6, 21, 18], 11.5, 13.5);
+
+    // ---- il cortile: il campo da bocce, la pergola col tavolo all'aperto, la fontanella, i gerani ----
+    for (c = 25; c <= 33; c++) metti(c === 28 || c === 31 ? "bocce_partita" : "campo_bocce", c, 4);
+    lavora(null, 25.5, 5.5, [1, 0]); lavora(null, 26.5, 5.5, [1, 0]);
+    siedeSu(metti("panca_legno", 27, 7, 2), .5); siedeSu(metti("panca_legno", 30, 7, 2), .5);
+    tavolo("tavolo_esterno", 28, 15, .5); metti("pergola", 28, 14);
+    metti("fontanella", 33, 2); metti("lampione_cortile", 25, 11); metti("lampione_cortile", 33, 19);
+    [[25, 1], [34, 1], [34, 10], [25, 28], [34, 28], [29, 28]].forEach(function (p) { metti("vaso_gerani", p[0], p[1]); });
+    passeggia([25, 9, 34, 27], 30.5, 22.5);
+    return D;
+  }
+
   // la città a piedi: gli edifici e le cose della città (js/citta.js) come mobili del motore, la gente che passeggia
   function datiCitta(opts) {
     var C = window.SGCitta, D = { v: 2, w: 74, h: 74, ogg: [], muri: {}, pav: {}, tetto: null, baule: {}, cesto: {}, ultimo: 0, vista: 0, gente: [] };
@@ -339,7 +428,7 @@
     try { inf = M && M.info ? M.info(nome) : null; fonte = M; if (!inf) { inf = A && A.info ? A.info(nome) : null; fonte = A; } } catch (e) {}
     if (!inf) return null;
     var dt = !!(dietro && inf.dietro);
-    var im = immagineSvg("o|" + nome + (dt ? "|d" : "") + (notte ? "|n" : "") + (col ? "|" + col : ""), function () { return fonte.svg(nome, { dietro: dt, notte: !!notte, col: col || null }); }, inf.reparto === "casino" || inf.reparto === "citta" ? 1.5 : 2);
+    var im = immagineSvg("o|" + nome + (dt ? "|d" : "") + (notte ? "|n" : "") + (col ? "|" + col : ""), function () { return fonte.svg(nome, { dietro: dt, notte: !!notte, col: col || null }); }, inf.reparto === "casino" || inf.reparto === "citta" || inf.reparto === "circolo" ? 1.5 : 2);
     return im ? { im: im, info: inf } : null;
   }
   function listaKit(gruppo) { var K = window.SGKit; return (K && K[gruppo]) || []; }
@@ -362,7 +451,9 @@
     stile();
     AUDIO = opts.audio || null;
     var LUOGO = opts.luogo || null;   // "casino": un posto pubblico già arredato (niente giardino, niente compra e costruisci, non si salva)
-    var D = LUOGO === "casino" ? datiCasino() : LUOGO === "citta" ? datiCitta(opts) : (opts.dati && opts.dati.v >= 2 ? opts.dati : datiIniziali());
+    var D = LUOGO === "casino" ? datiCasino() : LUOGO === "circolo" ? datiCircolo() : LUOGO === "citta" ? datiCitta(opts) : (opts.dati && opts.dati.v >= 2 ? opts.dati : datiIniziali());
+    var SALA = LUOGO === "casino" || LUOGO === "circolo";   // i posti coi tavoli dove ci si siede a giocare
+    var GIOCHI_QUI = LUOGO === "circolo" ? GIOCHI_CIRCOLO : GIOCHI_CASINO;
     D.ogg = D.ogg || []; D.muri = D.muri || {}; D.pav = D.pav || {}; D.baule = D.baule || {}; D.cesto = D.cesto || {}; D.ultimo = D.ultimo || D.ogg.length;
     var VR = D.vista || 0;   // la vista: girata di 90° ogni volta (0…3)
     var tSalva = null;
@@ -494,6 +585,7 @@
     bGira.setAttribute("aria-label", "Gira la vista"); bGira.onclick = function () { vibra(10); gira(); };
     [bInd, titolo, bGira, cMonete].forEach(function (n) { testa.appendChild(n); });
     if (LUOGO === "casino") titolo.textContent = "🎰 Casinò";
+    if (LUOGO === "circolo") titolo.textContent = "🎲 Circolo";
     if (LUOGO === "citta") bGira.style.visibility = "hidden";   // (la città si guarda solo da davanti)
     if (opts.incassata) { s.classList.add("gd-incassata"); testa.style.display = "none"; }   // (dentro un'altra schermata, che ha già la sua testa)
     var giu = el("div", "gd-giu"), bCompra = el("button", "gd-bott", "🛒 Compra"), bCostr = el("button", "gd-bott", "🔨 Costruisci"), bSistema = el("button", "gd-bott", "✏️ Sistema"), bCesto = el("button", "gd-bott");
@@ -505,7 +597,7 @@
     var barra = el("div", "gd-sis"), attrezzi = el("div", "gd-attrezzi"), avviso = el("div", "gd-avviso"), sopra = el("div", "gd-sopra");
     [cv, testa, giu, attrezzi, barra, avviso, sopra].forEach(function (n) { s.appendChild(n); });
     if (LUOGO) giu.style.display = "none";   // (nel casinò non si compra e non si costruisce)
-    if (LUOGO === "casino") { var bGiochi = el("button", "gd-giochi-tasto", "🎲 Tutti i giochi"); bGiochi.onclick = function () { vibra(10); menuGiochi(); }; s.appendChild(bGiochi); }   // (chi non sa dove andare: l'elenco dei giochi)
+    if (SALA) { var bGiochi = el("button", "gd-giochi-tasto", "🎲 Tutti i giochi"); bGiochi.onclick = function () { vibra(10); menuGiochi(); }; s.appendChild(bGiochi); }   // (chi non sa dove andare: l'elenco dei giochi)
     function aggTesta() {
       cMonete.textContent = "🪙 " + cifre(monete());
       var n = 0; for (var k in D.cesto) n += D.cesto[k]; bCesto.textContent = "🧺 Cesto" + (n ? " (" + n + ")" : "");
@@ -729,7 +821,7 @@
       if (av.siede && modo === "vivi") { var era = av.siede.o; vibra(8); alzati(); var o2 = cosaQui(x, y); if (!o2 || o2 === era) return; }   // seduto o a letto: un tocco e si alza (e se hai toccato un'altra cosa ci va)
       var o = cosaQui(x, y);
       if (modo === "sistema") { if (!o) { var fz = facciaIn(x, y); o = fz ? appesoSu(fz) : null; } scegli(o); return; }
-      if (o) { vibra(10); var m0 = marcia({ k: o.k }); if (LUOGO === "casino" && toccaCasino(o)) { av.marcia = m0; return; } vaiAOggetto(o); av.marcia = m0; return; }
+      if (o) { vibra(10); var m0 = marcia({ k: o.k }); if (SALA && toccaCasino(o)) { av.marcia = m0; return; } vaiAOggetto(o); av.marcia = m0; return; }
       var g = schermoW(x, y), c = Math.floor(g[0]), r = Math.floor(g[1]);
       if (fuoriLotto(c, r)) return;
       vibra(8); var m1 = marcia({ c: c, r: r }); vaiA([{ c: c, r: r }], null); av.marcia = m1;
@@ -758,11 +850,24 @@
       [/^(slot_|video_poker|pachinko)/, "🎰", ": presto si gioca!"], [/^(gru_peluche|spingimonete)/, "🧸", ": presto si gioca!"], [/^gratta_vinci/, "🍀", ": presto si gratta!"],
       [/^(tavolo_|roulette_|ruota_fortuna|corsa_cavalli)/, "🎲", ": presto si gioca!"], [/bingo|keno/, "🔢", ": presto si gioca!"],
       [/scommesse|quote|maxischermo/, "⚽", ": presto si scommette!"], [/^(bancone_casino|torre_champagne)/, "🍹", ": presto si ordina!"], [/^buffet/, "🍽️", ": presto si mangia!"],
-      [/^palco/, "🎤", ": presto lo spettacolo!"], [/^cassa_casino|bancomat/, "💰", ": presto qui cambierai le fiches"], [/^auto_premio/, "🏎️", ": presto in palio!"]
+      [/^palco/, "🎤", ": presto lo spettacolo!"], [/^cassa_casino|bancomat/, "💰", ": presto qui cambierai le fiches"], [/^auto_premio/, "🏎️", ": presto in palio!"],
+      // il Circolo
+      [/^(tavolo_quadrato|tavolo_rotondo|tavolo_lungo|tavolino_due)$/, "🎲", ": qui arriveranno giochi nuovi!"], [/bocce/, "⚪", ": presto si gioca a bocce!"],
+      [/^freccette/, "🎯", ": presto si tira!"], [/^bancone_circolo/, "☕", ": presto un caffè!"], [/^tavolo_esterno/, "🍷", ": presto si gioca anche qui fuori!"]
     ];
     function dimmiPresto(o) { for (var i = 0; i < PRESTO.length; i++) if (PRESTO[i][0].test(o.t)) { dimmi(PRESTO[i][1] + " " + nomeDi(o.t) + PRESTO[i][2]); return true; } return false; }
     // ---- "Tutti i giochi": chi non conosce il casinò sceglie dall'elenco e l'avatar ci corre da solo (al posto libero più vicino) ----
-    var ATTIVITA = [
+    var ATTIVITA_CIRCOLO = [
+      { nome: "Scopa", icona: "🃏", tipi: ["tavolo_carte"], gioca: true },
+      { nome: "Tris", icona: "⭕", tipi: ["tavolo_tris"], gioca: true },
+      { nome: "Drop 4", icona: "🟡", tipi: ["tavolo_forza4"], gioca: true },
+      { nome: "Battaglia Navale", icona: "🚢", tipi: ["tavolo_navale"], gioca: true },
+      { nome: "Calcio Biliardo", icona: "🎱", tipi: ["biliardo"], gioca: true },
+      { nome: "Bocce", icona: "⚪", tipi: ["bocce_partita"] },
+      { nome: "La partita in TV", icona: "📺", tipi: ["poltrona_circolo"] },
+      { nome: "Bar", icona: "☕", tipi: ["bancone_circolo"] }
+    ];
+    var ATTIVITA = LUOGO === "circolo" ? ATTIVITA_CIRCOLO : [
       { nome: "Black Jack", icona: "🃏", tipi: ["tavolo_blackjack"], gioca: true },
       { nome: "Poker", icona: "♠️", tipi: ["tavolo_poker"], gioca: true },
       { nome: "Roulette", icona: "🎡", tipi: ["tavolo_roulette", "roulette_elettronica"] },
@@ -804,7 +909,7 @@
       function via() { if (velo.parentNode) velo.parentNode.removeChild(velo); }
       velo.onclick = function (e) { if (e.target === velo) via(); };
       chiudi2.setAttribute("aria-label", "Chiudi"); chiudi2.onclick = function () { vibra(8); via(); };
-      testa2.appendChild(el("b", "", "🎰 Giochi del Casinò")); testa2.appendChild(chiudi2);
+      testa2.appendChild(el("b", "", LUOGO === "circolo" ? "🎲 Giochi del Circolo" : "🎰 Giochi del Casinò")); testa2.appendChild(chiudi2);
       ATTIVITA.forEach(function (a) {
         if (!D.ogg.some(function (o) { return a.tipi.indexOf(o.t) >= 0; })) return;
         var b = el("button", "gd-menu-voce" + (a.gioca ? " aperta" : ""));
@@ -823,18 +928,18 @@
     function azioneCasino(o) {   // nel casinò: seduti davanti a un tavolo aperto si gioca, il resto arriva presto
       if ((SEDUTI[o.k] || []).length) return dimmi("Questo posto è occupato 🙂");
       if (SEDILE.test(o.t)) {
-        var tv = davantiA(o), gi = tv && GIOCHI_CASINO[tv.t]; siedi(o);
+        var tv = davantiA(o), gi = tv && GIOCHI_QUI[tv.t]; siedi(o);
         if (gi) { dimmi("Si gioca! 🃏"); setTimeout(function () { if (vivo() && av.siede && av.siede.o === o && opts.gioca) opts.gioca(gi, { u: av.siede.da[0], v: av.siede.da[1] }); }, 900); }   // (dove eri: finita la partita si torna lì)
         else if (tv) dimmiPresto(tv);
         return;
       }
       var mi = infoMobile(o.t) || {};
-      if (GIOCHI_CASINO[o.t] && opts.gioca) return opts.gioca(GIOCHI_CASINO[o.t]);
+      if (GIOCHI_QUI[o.t] && opts.gioca) { dimmi("Si gioca! 🎱"); return opts.gioca(GIOCHI_QUI[o.t], { u: av.u, v: av.v }); }   // (il biliardo: niente sedie, si gioca in piedi)
       if (mi.azione === "siedi") return siedi(o);
       if (!dimmiPresto(o)) dimmi(nomeDi(o.t));
     }
     function azione(o) {
-      if (LUOGO === "casino") return azioneCasino(o);
+      if (SALA) return azioneCasino(o);
       if (LUOGO === "citta") {   // in città: si entra (e si dice dove stava sullo schermo la cosa toccata, per partire da lì)
         var mc = infoMobile(o.t) || {}, punto = null; ordinati.forEach(function (x) { if (x.o === o && x.ret) punto = { x: x.ret.x + x.ret.w / 2, y: x.ret.y + x.ret.h * .45 }; });
         if (mc.vai && opts.entra) return opts.entra(mc.vai, punto, cv); return dimmi(nomeDi(o.t));
@@ -1655,7 +1760,7 @@
     function aggiorna(dt) {
       tAnim += dt; var mosso = false;
       if (av.strada.length) {
-        var t = av.strada[0], du = t.u - av.u, dv = t.v - av.v, d = Math.hypot(du, dv), passo = (LUOGO === "casino" ? 5 : LUOGO === "citta" ? 4.5 : 3) * [1, 1.8, 2.8][(av.marcia || 1) - 1] * dt;   // (tre andature: cammina, svelto, di corsa)   // (nel casinò, che è grande, si cammina più svelti)
+        var t = av.strada[0], du = t.u - av.u, dv = t.v - av.v, d = Math.hypot(du, dv), passo = (LUOGO === "casino" ? 5 : LUOGO === "citta" ? 4.5 : LUOGO === "circolo" ? 4 : 3) * [1, 1.8, 2.8][(av.marcia || 1) - 1] * dt;   // (tre andature: cammina, svelto, di corsa)   // (nel casinò, che è grande, si cammina più svelti)
         av.t += dt; if (d > 1e-3) av.fw = [du, dv];
         if (d <= passo) { av.u = t.u; av.v = t.v; av.strada.shift(); if (!av.strada.length) av.marcia = 1; if (!av.strada.length && av.poi) { var f = av.poi; av.poi = null; f(); } }
         else { av.u += du / d * passo; av.v += dv / d * passo; }
@@ -1698,7 +1803,7 @@
     function esci() { chiudi(); clearTimeout(tSalva); if (opts.salva) opts.salva(D); if (opts.indietro) opts.indietro(); }
     function attesa() {   // nei posti grandi: prima si preparano i disegni di quello che si vede (intanto una schermata d'attesa), poi il resto un po' alla volta
       var t0 = Date.now(), vela = el("div", "gd-attesa"), barra2 = el("i"), bb = el("div", "gd-attesa-b");
-      var CIT = LUOGO === "citta"; if (CIT) vela.classList.add("citta"); vela.appendChild(el("b", "", CIT ? "🏙️" : "🎰")); vela.appendChild(el("span", "", CIT ? "La città si sveglia…" : "Il Casinò apre le porte…")); bb.appendChild(barra2); vela.appendChild(bb); s.appendChild(vela);
+      var CIT = LUOGO === "citta", CIR = LUOGO === "circolo"; if (CIT) vela.classList.add("citta"); vela.appendChild(el("b", "", CIT ? "🏙️" : CIR ? "🎲" : "🎰")); vela.appendChild(el("span", "", CIT ? "La città si sveglia…" : CIR ? "Il Circolo apre le porte…" : "Il Casinò apre le porte…")); bb.appendChild(barra2); vela.appendChild(bb); s.appendChild(vela);
       function vicino(u, v) { var p = pw(u, v); return p.x > -cw * .4 && p.x < cw * 1.4 && p.y > -ch * .3 && p.y < ch * 1.5; }
       function arteDi(o) { var mi = infoMobile(o.t), nome = nomeArte(o), l = []; [false, true].forEach(function (dt) { var a = arteOgg(nome, dt, !!(mi && mi.luce), o.col); if (a && l.indexOf(a.im) < 0) l.push(a.im); }); return l; }
       function dellaPersona(g) { var I = imPersona(g); return I ? (I.seduto || []).concat(I.davanti, I.dietro) : []; }
@@ -1717,7 +1822,8 @@
         if (q < .85 && Date.now() - t0 < 8000) return setTimeout(guarda, 120);
         subito = null;   // (non serve più: i disegni li tiene la cache)
         sporco = true; vela.classList.add("via"); setTimeout(function () { if (vela.parentNode) vela.parentNode.removeChild(vela); }, 400);
-        if (!CIT && !opts.pos) dimmi("Benvenuto al Casinò! 🎰 Black Jack e Poker sono aperti; allarga con due dita per vedere tutta la sala"); else if (!opts.da) dimmi("Tocca un punto per camminare, tocca un edificio per entrare 🚶");
+        if (CIR && !opts.pos) dimmi("Benvenuto al Circolo! 🎲 Siediti a un tavolo: carte, Tris, Drop 4, Battaglia Navale; o vai al biliardo");
+        else if (!CIT && !CIR && !opts.pos) dimmi("Benvenuto al Casinò! 🎰 Black Jack e Poker sono aperti; allarga con due dita per vedere tutta la sala"); else if (CIT && !opts.da) dimmi("Tocca un punto per camminare, tocca un edificio per entrare 🚶");
         setTimeout(scalda, 600);
       })();
     }
@@ -1741,7 +1847,7 @@
     window.__giardino = { D: D, av: av, disegna: function () { disegna(); }, fase: function (f) { FASE = f; sfondo = null; sporco = true; }, pw: pw, tap: function (x, y) { tocca(x, y); },
       gira: gira, modo: cambiaModo, attrezzo: function (a, id) { attrezzo = a; if (id) sceltaKit[GRUPPO[a]] = id; pannelloCostruisci(); }, muri: function (a, b) { costruisciMuri({ a: a, b: b }); },
       faccia: function (k, sv) { for (var i = 0; i < facce.length; i++) if (facce[i].k === k && (sv == null || facce[i].sv === sv)) return facce[i]; return null; },
-      dentro: dentro, stanza: stanza, vai: function (c, r) { vaiA([{ c: c, r: r }]); }, tocca: function (o) { if (LUOGO === "casino" && toccaCasino(o)) return; vaiAOggetto(o); }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); sporco = true; },
+      dentro: dentro, stanza: stanza, vai: function (c, r) { vaiA([{ c: c, r: r }]); }, tocca: function (o) { if (SALA && toccaCasino(o)) return; vaiAOggetto(o); }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); sporco = true; },
       arte: function (n, d, nt) { return arteOgg(n, d, nt); }, cresciTutto: cresciTutto, foto: function () { disegna(); return cv.toDataURL("image/png"); } };   // (per le prove)
     return s;
   }
