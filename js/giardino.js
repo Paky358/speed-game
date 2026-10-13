@@ -112,11 +112,12 @@
   // ---------- il Casinò: una sala enorme già arredata (Monte-Carlo per l'eleganza, Las Vegas per le slot) ----------
   var GIOCHI_CASINO = { tavolo_blackjack: "blackjack", tavolo_poker: "poker" };   // i tavoli che si giocano già; gli altri "in arrivo"
   function datiCasino() {
-    // il Casinò: un salone enorme (dentro c 1…44, r 1…36) diviso in zone, come i casinò veri (Monte-Carlo per l'eleganza, Las Vegas e Macao per le attrazioni)
-    //   in fondo:  sala Poker (c 1…13)   | Scommesse sportive (c 14…31) | sala VIP (c 32…44)        (stanze chiuse, r 1…8)
-    //   in mezzo:  slot e sala giochi    | sala dei tavoli               | bingo, keno e angolo d'Oriente   (r 10…26)
-    //   davanti:   ristorante e buffet   | atrio con le fontane          | bar e palco dello spettacolo    (r 27…36)
-    var D = { v: 2, w: 46, h: 38, ogg: [], muri: {}, pav: {}, tetto: null, baule: {}, cesto: {}, ultimo: 0, vista: 0, gente: [], ingresso: [22.5, 36.4] }, c, r, k = 0;
+    // il Casinò: un salone enorme (dentro c 1…50, r 1…38) diviso in zone, come i casinò veri (Monte-Carlo per l'eleganza, Las Vegas e Macao per le attrazioni)
+    //   in fondo (r 1…8):     sala Poker (c 1…13)   | Scommesse sportive (c 14…37) | sala VIP (c 38…50)      (stanze chiuse)
+    //   in mezzo (r 9…28):    slot e sala giochi    | sala dei tavoli               | bingo, keno e Oriente
+    //   davanti (r 29…38):    ristorante e buffet   | atrio con le fontane          | bar e palco dello spettacolo
+    // Ogni tavolo ha intorno i suoi posti (e dietro il croupier), e intorno ancora un corridoio: così ci si arriva sempre.
+    var D = { v: 2, w: 52, h: 40, ogg: [], muri: {}, pav: {}, tetto: null, baule: {}, cesto: {}, ultimo: 0, vista: 0, gente: [], ingresso: [26, 38.4] }, c, r, k = 0;
     var kit = function (g, id, alt) { return listaKit(g).some(function (v) { return v.id === id; }) ? id : (alt || null); };
     var CARTA = kit("muri", "damascato_rosso"), VERDE = kit("muri", "damascato_verde", CARTA), ORO = kit("muri", "boiserie_oro", CARTA), STUC = kit("muri", "stucchi", CARTA),
       NEON = kit("muri", "muro_neon", CARTA), SPORT = kit("muri", "muro_sport", CARTA), LEGNO = kit("muri", "muro_legno_scuro", ORO), SPEC = kit("muri", "muro_specchi", STUC), MARM = kit("muri", "marmo_crema", STUC);
@@ -124,28 +125,29 @@
       INT = kit("pavimenti", "parquet_intarsio", MOQ), PSCU = kit("pavimenti", "parquet_scuro", INT), MARMO = kit("pavimenti", "marmo_lucido", kit("pavimenti", "marmo_scacchi", MOQ)), SCACCHI = kit("pavimenti", "marmo_scacchi", MARMO);
     var PORTONE = kit("porte", "portone_casino");
     function zona(c, r) {   // che zona è questa mattonella
-      var x = c <= 13 ? 0 : c <= 31 ? 1 : 2, y = r <= 8 ? 0 : r <= 26 ? 1 : 2;
+      var x = c <= 13 ? 0 : c <= 37 ? 1 : 2, y = r <= 8 ? 0 : r <= 28 ? 1 : 2;
       return ["poker", "scommesse", "vip", "slot", "tavoli", "bingo", "ristorante", "atrio", "bar"][y * 3 + x];
     }
     var MURI_ZONA = { poker: LEGNO, scommesse: SPORT, vip: ORO, slot: NEON, tavoli: CARTA, bingo: VERDE, ristorante: SPEC, atrio: MARM, bar: SPEC };
     var PAV_ZONA = { poker: PVER, scommesse: PBLU, vip: INT, slot: VEGAS, tavoli: MOQ, bingo: PBLU, ristorante: PSCU, atrio: MARMO, bar: PSCU };
     function muro(t, c, r) {   // il muro, coi colori della zona da tutti e due i lati
       var ll = t === "a" ? [[c - 1, r], [c, r]] : [[c, r - 1], [c, r]], m = { s: [null, null], ap: null };
-      ll.forEach(function (q, i) { if (q[0] >= 1 && q[0] <= 44 && q[1] >= 1 && q[1] <= 36) m.s[i] = MURI_ZONA[zona(q[0], q[1])]; });
+      ll.forEach(function (q, i) { if (q[0] >= 1 && q[0] <= 50 && q[1] >= 1 && q[1] <= 38) m.s[i] = MURI_ZONA[zona(q[0], q[1])]; });
       D.muri[t + "," + c + "," + r] = m; return m;
     }
     function porta(t, c, r) { D.muri[t + "," + c + "," + r].ap = { t: "porta", id: PORTONE }; }
-    for (r = 1; r <= 36; r++) { muro("a", 1, r); muro("a", 45, r); }
-    for (c = 1; c <= 44; c++) { muro("b", c, 1); muro("b", c, 37); muro("b", c, 9); }
-    for (r = 1; r <= 8; r++) { muro("a", 14, r); muro("a", 32, r); }
-    [21, 22, 23].forEach(function (c) { porta("b", c, 37); porta("b", c, 9); });   // il portone d'ingresso e la porta delle Scommesse, a tre battenti sull'asse del tappeto rosso
+    for (r = 1; r <= 38; r++) { muro("a", 1, r); muro("a", 51, r); }
+    for (c = 1; c <= 50; c++) { muro("b", c, 1); muro("b", c, 39); muro("b", c, 9); }
+    for (r = 1; r <= 8; r++) { muro("a", 14, r); muro("a", 38, r); }
+    [25, 26].forEach(function (c) { porta("b", c, 39); porta("b", c, 9); });   // il portone d'ingresso e la porta delle Scommesse, sull'asse del tappeto rosso
     [6, 7].forEach(function (c) { porta("b", c, 9); });     // la sala Poker
-    [37, 38].forEach(function (c) { porta("b", c, 9); });   // la sala VIP
-    for (c = 1; c <= 44; c++) for (r = 1; r <= 36; r++) D.pav[c + "," + r] = PAV_ZONA[zona(c, r)];
-    for (c = 17; c <= 28; c++) for (r = 28; r <= 36; r++) D.pav[c + "," + r] = SCACCHI;   // il cuore dell'atrio a scacchi
+    [43, 44].forEach(function (c) { porta("b", c, 9); });   // la sala VIP
+    for (c = 1; c <= 50; c++) for (r = 1; r <= 38; r++) D.pav[c + "," + r] = PAV_ZONA[zona(c, r)];
+    for (c = 19; c <= 32; c++) for (r = 30; r <= 38; r++) D.pav[c + "," + r] = SCACCHI;   // il cuore dell'atrio a scacchi
 
     function metti(t, c, r, d, x) { var o = { k: ++D.ultimo, t: t, c: c, r: r, d: d || 0 }; for (var q in x || {}) o[q] = x[q]; D.ogg.push(o); return o; }
     function appendi(t, kk, lato, pezzi) { var o = { k: ++D.ultimo, t: t, muro: kk, lato: lato }; if (pezzi) o.pezzi = pezzi; D.ogg.push(o); }
+    function appendi2(t, tipo, c, r) { appendi(t, tipo + "," + c + "," + r, 1, tipo === "a" ? [tipo + "," + c + "," + r, tipo + "," + c + "," + (r - 1)] : [tipo + "," + c + "," + r, tipo + "," + (c + 1) + "," + r]); }   // le cose larghe due pezzi di muro
     var rnd2 = rnd(1863);   // (il Casinò di Monte-Carlo apre nel 1863: seme fisso, la sala è sempre uguale)
     var DIVISE = {   // chi lavora: i vestiti del mestiere
       croupier: { capo: "gilet", maglia: 7, collo: "papillon", colCollo: 0 },
@@ -184,99 +186,101 @@
     }
     function lampadario(c, r, piccolo) { metti(piccolo ? "lampadario_piccolo" : "lampadario_gigante", c, r); }
 
-    // ---- l'atrio: il portone, il tappeto rosso, le fontane, l'auto in palio e la cassa ----
-    for (r = 20; r <= 36; r++) [21, 22, 23].forEach(function (c) { metti("tappeto_rosso", c, r, 1); });
-    metti("fontana_casino", 16, 29); metti("fontana_casino", 28, 29);
-    metti("statua", 19, 32); metti("statua", 26, 32);
-    metti("auto_premio", 15, 33, 0);
-    metti("gatto_fortuna", 19, 35); metti("gatto_fortuna", 26, 35);
-    metti("cassa_casino", 27, 33, 0); lavora("cassa", 28.5, 32.5, [0, 1]);
-    metti("bancomat", 30, 35, 3); metti("bancomat", 30, 34, 3);
-    [[14, 27], [31, 27], [14, 36], [31, 36]].forEach(function (p) { metti("vaso_dorato", p[0], p[1]); });
-    metti("colonna_marmo", 20, 25); metti("colonna_marmo", 25, 25); metti("colonna_marmo", 20, 20); metti("colonna_marmo", 25, 20);
-    lampadario(21, 30);
-    lavora("guardia", 20.5, 35.5, [0, 1]); lavora("guardia", 24.5, 35.5, [0, 1]);
-    passeggia(null, [15, 27, 30, 36], 18.5, 33.5); passeggia(null, [15, 27, 30, 36], 24.5, 30.5); passeggia("cameriere", [14, 20, 31, 26], 22.5, 24.5);
+    // ---- il viale col tappeto rosso: dal portone fino alla porta delle Scommesse ----
+    for (r = 9; r <= 38; r++) [25, 26].forEach(function (c) { metti("tappeto_rosso", c, r, 1); });
 
-    // ---- la sala dei tavoli: roulette, Black Jack, Baccarat, Craps, Caribbean, Trente et Quarante, la ruota della fortuna e la roulette elettronica al centro ----
-    tavolo("tavolo_roulette", 15, 11, .6); tavolo("tavolo_blackjack", 19, 11, .6);
-    tavolo("tavolo_blackjack", 25, 11, .6); tavolo("tavolo_roulette", 28, 11, .6);
-    tavolo("tavolo_baccarat", 14, 16, .5); metti("ruota_fortuna", 18, 16, 0);
-    tavolo("roulette_elettronica", 21, 16, .5, "sgabello_slot");
-    tavolo("tavolo_trente", 27, 16, .5);
-    tavolo("tavolo_caribbean", 15, 21, .5); tavolo("tavolo_blackjack", 18, 21, .6);
-    tavolo("tavolo_craps", 25, 21, .6); tavolo("tavolo_poker", 28, 21, .7);
-    [[15, 11], [28, 11], [14, 16], [21, 16], [27, 16], [15, 21], [26, 21]].forEach(function (p) { lampadario(p[0], p[1]); });
-    appendi("neon_carte", "b,17,9", 1); appendi("neon_dadi", "b,27,9", 1);
-    appendi("insegna_jackpot", "b,25,9", 1, ["b,25,9", "b,26,9"]); appendi("insegna_jackpot", "b,19,9", 1, ["b,19,9", "b,20,9"]);
-    passeggia("cameriere", [14, 10, 31, 26], 20.5, 14.5); passeggia(null, [14, 10, 31, 26], 24.5, 19.5); passeggia(null, [14, 10, 31, 26], 17.5, 19.5);
+    // ---- l'atrio: le fontane, le statue, l'auto in palio, la cassa, le guardie ----
+    metti("fontana_casino", 19, 31); metti("fontana_casino", 30, 31);
+    metti("statua", 22, 34); metti("statua", 28, 34);
+    metti("auto_premio", 16, 35, 0);
+    metti("cassa_casino", 32, 35, 0); lavora("cassa", 33.5, 34.5, [0, 1]);
+    metti("bancomat", 36, 36, 3); metti("bancomat", 36, 37, 3);
+    metti("gatto_fortuna", 21, 37); metti("gatto_fortuna", 29, 37);
+    [[14, 29], [37, 29], [14, 38], [37, 38]].forEach(function (p) { metti("vaso_dorato", p[0], p[1]); });
+    metti("colonna_marmo", 23, 29); metti("colonna_marmo", 28, 29);
+    lampadario(25, 32);
+    lavora("guardia", 24.5, 37.5, [0, 1]); lavora("guardia", 27.5, 37.5, [0, 1]);
+    passeggia(null, [15, 30, 36, 38], 18.5, 33.5); passeggia(null, [15, 30, 36, 38], 31.5, 33.5);
+
+    // ---- la sala dei tavoli: tre file di quattro tavoli ai lati del viale, la ruota della fortuna e la roulette elettronica in fondo ----
+    tavolo("tavolo_baccarat", 16, 11, .5); tavolo("tavolo_roulette", 22, 11, .6); tavolo("tavolo_roulette", 28, 11, .6); tavolo("tavolo_craps", 33, 11, .6);
+    tavolo("tavolo_craps", 16, 16, .5); tavolo("tavolo_blackjack", 22, 16, .6); tavolo("tavolo_blackjack", 28, 16, .6); tavolo("tavolo_baccarat", 33, 16, .5);
+    tavolo("tavolo_trente", 16, 21, .5); tavolo("tavolo_caribbean", 22, 21, .5); tavolo("tavolo_blackjack", 28, 21, .6); tavolo("tavolo_poker", 33, 21, .7);
+    metti("ruota_fortuna", 17, 26, 0); tavolo("roulette_elettronica", 33, 26, .5, "sgabello_slot");
+    metti("colonna_marmo", 23, 26); metti("colonna_marmo", 28, 26);
+    [[16, 11], [22, 11], [28, 11], [33, 11], [16, 16], [22, 16], [28, 16], [33, 16], [16, 21], [22, 21], [28, 21], [33, 21]].forEach(function (p) { lampadario(p[0], p[1]); });
+    lampadario(25, 14, true); lampadario(25, 19, true); lampadario(25, 24, true);
+    appendi("neon_carte", "b,16,9", 1); appendi2("insegna_jackpot", "b", 19, 9); appendi("neon_dadi", "b,22,9", 1);
+    appendi("neon_dadi", "b,29,9", 1); appendi2("insegna_jackpot", "b", 31, 9); appendi("neon_carte", "b,35,9", 1);
+    passeggia("cameriere", [14, 9, 37, 28], 25.5, 15.5); passeggia(null, [14, 9, 37, 28], 20.5, 19.5); passeggia(null, [14, 9, 37, 28], 31.5, 24.5); passeggia("cameriere", [14, 9, 37, 28], 26.5, 27.5);
 
     // ---- slot e sala giochi (Las Vegas): le file di slot coi loro sgabelli, il pachinko, le gru, gli spingimonete, la corsa dei cavallini ----
     var SLOT = ["slot_classica", "slot_jackpot", "slot_ruota", "slot_video", "slot_classica", "video_poker"];
-    for (r = 10; r <= 20; r++) macchina(SLOT[r % SLOT.length], 1, r, 3, .45);
-    for (r = 21; r <= 25; r++) macchina("pachinko", 1, r, 3, .35);
-    for (r = 11; r <= 16; r++) { macchina(SLOT[(r + 2) % SLOT.length], 5, r, 1, .45); macchina(SLOT[(r + 3) % SLOT.length], 6, r, 3, .45); }
-    for (r = 11; r <= 16; r++) { macchina(r === 13 ? "slot_jackpot" : "slot_video", 10, r, 1, .45); macchina(r === 14 ? "slot_ruota" : "slot_classica", 11, r, 3, .45); }
-    metti("gru_peluche", 5, 20, 0); metti("gru_peluche", 6, 20, 0); metti("spingimonete", 8, 20, 0); metti("gratta_vinci", 11, 20, 0); metti("gratta_vinci", 12, 20, 0);
-    metti("spingimonete", 4, 23, 0); tavolo("corsa_cavalli", 7, 23, .5, "sgabello_slot"); metti("slot_gigante", 11, 24, 0);
-    appendi("insegna_jackpot", "a,1,13", 1, ["a,1,13", "a,1,12"]); appendi("neon_777", "a,1,16", 1); appendi("neon_ciliegie", "a,1,19", 1); appendi("neon_dadi", "a,1,23", 1);
+    for (r = 10; r <= 21; r++) macchina(SLOT[r % SLOT.length], 1, r, 3, .45);
+    for (r = 22; r <= 27; r++) macchina("pachinko", 1, r, 3, .35);
+    for (r = 11; r <= 17; r++) { macchina(SLOT[(r + 2) % SLOT.length], 5, r, 1, .45); macchina(SLOT[(r + 3) % SLOT.length], 6, r, 3, .45); }
+    for (r = 11; r <= 17; r++) { macchina(r === 14 ? "slot_jackpot" : "slot_video", 10, r, 1, .45); macchina(r === 15 ? "slot_ruota" : "slot_classica", 11, r, 3, .45); }
+    metti("gru_peluche", 5, 20, 0); metti("gru_peluche", 6, 20, 0); metti("spingimonete", 9, 20, 0); metti("gratta_vinci", 12, 20, 0);
+    tavolo("corsa_cavalli", 5, 24, .5, "sgabello_slot"); metti("spingimonete", 10, 23, 0); metti("slot_gigante", 10, 26, 0);
+    appendi2("insegna_jackpot", "a", 1, 14); appendi("neon_777", "a,1,17", 1); appendi("neon_ciliegie", "a,1,20", 1); appendi("neon_dadi", "a,1,24", 1);
     appendi("neon_777", "b,3,9", 1); appendi("neon_ciliegie", "b,11,9", 1);
-    [3, 8, 13].forEach(function (c) { lampadario(c, 13, true); });
-    passeggia(null, [2, 10, 13, 26], 8.5, 18.5); passeggia("cameriere", [2, 10, 13, 26], 3.5, 12.5);
+    [[3, 13], [8, 13], [13, 13], [8, 22]].forEach(function (p) { lampadario(p[0], p[1], true); });
+    passeggia(null, [2, 9, 13, 28], 8.5, 18.5); passeggia("cameriere", [2, 9, 13, 28], 3.5, 12.5);
 
-    // ---- la sala Poker (in fondo a sinistra): quattro tavoli sotto le lampade ----
-    tavolo("tavolo_poker", 2, 2, .8); tavolo("tavolo_poker", 8, 2, .7); tavolo("tavolo_poker", 2, 6, .7); tavolo("tavolo_poker", 8, 6, .8);
-    appendi("neon_carte", "b,6,1", 1); appendi("neon_carte", "b,12,1", 1);
-    [[3, 2], [9, 2], [3, 6], [9, 6]].forEach(function (p) { lampadario(p[0], p[1], true); });
+    // ---- la sala Poker (in fondo a sinistra): due tavoli sotto le lampade e il salottino ----
+    tavolo("tavolo_poker", 2, 3, .8); tavolo("tavolo_poker", 8, 3, .8);
+    metti("divanetto_velluto", 2, 7, 0); metti("tavolino_lounge", 4, 7); metti("divanetto_velluto", 10, 7, 0);
+    appendi("neon_carte", "b,4,1", 1); appendi("neon_carte", "b,10,1", 1);
+    lampadario(3, 3, true); lampadario(9, 3, true);
 
     // ---- le Scommesse sportive (in fondo al centro): i maxischermi, le poltrone e il banco ----
-    appendi("maxischermo", "b,15,1", 1, ["b,15,1", "b,16,1"]); appendi("tabellone_quote", "b,18,1", 1, ["b,18,1", "b,19,1"]);
-    appendi("maxischermo", "b,21,1", 1, ["b,21,1", "b,22,1"]); appendi("maxischermo", "b,23,1", 1, ["b,23,1", "b,24,1"]);
-    appendi("tabellone_quote", "b,26,1", 1, ["b,26,1", "b,27,1"]); appendi("maxischermo", "b,29,1", 1, ["b,29,1", "b,30,1"]);
-    [3, 5].forEach(function (r) { for (c = 15; c <= 30; c++) if (c < 21 || c > 23) siedeSu(metti("poltrona_scommesse", c, r, 2), .4); });
-    metti("banco_scommesse", 26, 7, 0); lavora("allibratore", 27.5, 6.5, [0, 1]);
-    metti("tavolino_lounge", 15, 7); metti("tavolino_lounge", 18, 7);
-    lampadario(16, 3, true); lampadario(28, 3, true);
+    appendi2("maxischermo", "b", 16, 1); appendi2("tabellone_quote", "b", 19, 1); appendi2("maxischermo", "b", 22, 1); appendi2("maxischermo", "b", 24, 1);
+    appendi2("maxischermo", "b", 26, 1); appendi2("maxischermo", "b", 28, 1); appendi2("tabellone_quote", "b", 31, 1); appendi2("maxischermo", "b", 34, 1);
+    [3, 5].forEach(function (r) { for (c = 15; c <= 36; c++) if (c < 25 || c > 26) siedeSu(metti("poltrona_scommesse", c, r, 2), .4); });
+    metti("banco_scommesse", 33, 7, 0); lavora("allibratore", 34.5, 6.5, [0, 1]);
+    metti("tavolino_lounge", 16, 7); metti("tavolino_lounge", 19, 7);
+    lampadario(19, 3, true); lampadario(31, 3, true);
 
-    // ---- la sala VIP (in fondo a destra): Baccarat, roulette e Black Jack privati, il pianoforte, lo champagne ----
-    tavolo("tavolo_baccarat", 33, 2, .6); tavolo("tavolo_roulette", 38, 2, .5); tavolo("tavolo_blackjack", 34, 6, .5);
-    metti("pianoforte_coda", 42, 2, 0); metti("statua", 44, 1); metti("divanetto_velluto", 40, 7, 0); metti("torre_champagne", 43, 6);
-    lampadario(33, 2); lampadario(38, 2); lampadario(34, 6, true);
-    metti("cordone", 36, 10); metti("cordone", 39, 10); lavora("guardia", 39.5, 11.5, [0, 1]);
+    // ---- la sala VIP (in fondo a destra): Baccarat e roulette privati, il pianoforte, lo champagne ----
+    tavolo("tavolo_baccarat", 40, 3, .6); tavolo("tavolo_roulette", 46, 3, .5);
+    metti("pianoforte_coda", 48, 6, 0); metti("statua", 50, 1); metti("divanetto_velluto", 39, 7, 0); metti("tavolino_lounge", 41, 7); metti("torre_champagne", 46, 7);
+    lampadario(40, 3); lampadario(46, 3);
+    metti("cordone", 42, 9); metti("cordone", 45, 9); lavora("guardia", 42.5, 8.5, [0, 1]);
 
     // ---- bingo e keno, e l'angolo d'Oriente (Sic Bo, Pai Gow, il drago e il gatto della fortuna) ----
-    appendi("tabellone_bingo", "b,33,9", 1, ["b,33,9", "b,34,9"]); appendi("tabellone_keno", "b,42,9", 1, ["b,42,9", "b,43,9"]);
-    metti("urna_bingo", 35, 10);
-    [13, 17].forEach(function (r) { [33, 36, 39].forEach(function (c) { tavolo("tavolo_bingo", c, r, .6, "sgabello_casino"); }); });
-    [42, 43, 44].forEach(function (c) { metti("postazione_keno", c, 12, 0); });
-    for (r = 10; r <= 26; r++) if (r !== 14 && r !== 15 && r !== 21 && r !== 22) metti("balaustra", 32, r, 1);
-    tavolo("tavolo_sicbo", 34, 21, .6); tavolo("tavolo_paigow", 38, 21, .5);
-    metti("drago_dorato", 42, 25, 0); metti("gatto_fortuna", 44, 20); lampadario(34, 21, true); lampadario(38, 21, true);
-    passeggia(null, [33, 10, 44, 26], 41.5, 15.5);
+    appendi2("tabellone_bingo", "b", 39, 9); appendi2("tabellone_keno", "b", 48, 9);
+    metti("urna_bingo", 50, 10);
+    [11, 15].forEach(function (r) { [39, 42, 45, 48].forEach(function (c) { tavolo("tavolo_bingo", c, r, .6); }); });
+    [45, 46, 47, 48, 49].forEach(function (c) { metti("postazione_keno", c, 18, 0); });
+    for (r = 9; r <= 28; r++) if ([12, 13, 19, 20, 26, 27].indexOf(r) < 0) metti("balaustra", 38, r, 1);
+    tavolo("tavolo_sicbo", 40, 22, .6); tavolo("tavolo_paigow", 45, 22, .5);
+    metti("drago_dorato", 48, 26, 0); metti("gatto_fortuna", 40, 27); metti("gatto_fortuna", 50, 20);
+    lampadario(40, 22, true); lampadario(45, 22, true);
+    passeggia(null, [39, 9, 50, 28], 47.5, 13.5);
 
     // ---- il ristorante col buffet (davanti a sinistra) ----
-    for (c = 1; c <= 13; c++) if (c !== 3 && c !== 4 && c !== 11 && c !== 12) metti("fioriera", c, 27, 0);
-    metti("buffet", 2, 29, 0); metti("buffet", 6, 29, 0); lavora("cuoco", 3.5, 28.5, [0, 1]); lavora("cuoco", 7.5, 28.5, [0, 1]);
-    [[3, 32], [7, 32], [11, 32], [3, 35], [7, 35], [11, 35]].forEach(function (p) {
+    for (c = 1; c <= 13; c++) if ([3, 4, 11, 12].indexOf(c) < 0) metti("fioriera", c, 29, 0);
+    metti("buffet", 2, 31, 0); metti("buffet", 6, 31, 0); lavora("cuoco", 3.5, 30.5, [0, 1]); lavora("cuoco", 7.5, 30.5, [0, 1]);
+    [[3, 34], [7, 34], [11, 34], [3, 37], [7, 37], [11, 37]].forEach(function (p) {
       metti("tavolo_ristorante", p[0], p[1]);
       siedeSu(metti("sedia_ristorante", p[0] - 1, p[1], 3), .5); siedeSu(metti("sedia_ristorante", p[0] + 1, p[1], 1), .5);
     });
-    metti("acquario_cilindro", 12, 29); metti("acquario_cilindro", 1, 36);
-    passeggia("cameriere", [1, 30, 13, 36], 5.5, 33.5);
+    metti("acquario_cilindro", 12, 31); metti("acquario_cilindro", 1, 38);
+    passeggia("cameriere", [1, 32, 13, 38], 5.5, 35.5);
 
     // ---- il bar e il palco dello spettacolo (davanti a destra) ----
-    for (r = 27; r <= 36; r++) if (r < 29 || r > 31) metti("fioriera", 32, r, 1);
-    metti("bancone_casino", 34, 28, 0); lavora("barista", 35.5, 27.5, [0, 1]);
-    [34, 35, 36].forEach(function (c) { siedeSu(metti("sgabello_casino", c, 29, 2), .5); });
-    metti("torre_champagne", 37, 28);
-    metti("palco_show", 40, 27, 0);
-    [[38, 32], [41, 32], [38, 35], [41, 35]].forEach(function (p) {
+    for (r = 29; r <= 38; r++) if (r < 31 || r > 33) metti("fioriera", 38, r, 1);
+    metti("bancone_casino", 40, 30, 0); lavora("barista", 41.5, 29.5, [0, 1]);
+    [40, 41, 42].forEach(function (c) { siedeSu(metti("sgabello_casino", c, 31, 2), .5); });
+    metti("torre_champagne", 43, 30);
+    metti("palco_show", 46, 29, 0);
+    [[44, 34], [47, 34], [44, 37], [47, 37]].forEach(function (p) {
       metti("tavolino_lounge", p[0], p[1]);
       siedeSu(metti("poltrona_club", p[0] - 1, p[1], 3), .5); siedeSu(metti("poltrona_club", p[0] + 1, p[1], 1), .5);
     });
-    metti("pianoforte_coda", 34, 33, 0); metti("acquario_cilindro", 44, 36); metti("acquario_cilindro", 33, 36);
-    lampadario(35, 31, true); lampadario(40, 33, true);
-    passeggia("cameriere", [33, 30, 44, 36], 37.5, 33.5); passeggia(null, [33, 30, 44, 36], 43.5, 31.5);
+    metti("pianoforte_coda", 40, 34, 0); metti("acquario_cilindro", 50, 38); metti("acquario_cilindro", 39, 38);
+    lampadario(41, 32, true); lampadario(46, 35, true);
+    passeggia("cameriere", [39, 32, 50, 38], 43.5, 35.5); passeggia(null, [39, 32, 50, 38], 49.5, 33.5);
     return D;
   }
 
@@ -693,7 +697,7 @@
       if (av.siede && modo === "vivi") { vibra(8); return alzati(); }   // seduto o a letto: un tocco e si alza
       var o = cosaQui(x, y);
       if (modo === "sistema") { if (!o) { var fz = facciaIn(x, y); o = fz ? appesoSu(fz) : null; } scegli(o); return; }
-      if (o) { vibra(10); return vaiAOggetto(o); }
+      if (o) { vibra(10); if (LUOGO && toccaCasino(o)) return; return vaiAOggetto(o); }
       var g = schermoW(x, y), c = Math.floor(g[0]), r = Math.floor(g[1]);
       if (fuoriLotto(c, r)) return;
       vibra(8); vaiA([{ c: c, r: r }], null);
@@ -707,32 +711,39 @@
     function girati(o) { var b = box(o); av.fw = [(b.c0 + b.c1) / 2 - av.u, (b.r0 + b.r1) / 2 - av.v]; sporco = true; }
 
     // ---- cosa si fa con le piante (e coi mobili) ----
-    function sgabelloLibero(t) {   // uno sgabello libero attorno a quel tavolo, il più vicino
-      var b = box(t), l = D.ogg.filter(function (o) { return o.t === "sgabello_casino" && o.c >= b.c0 - 1 && o.c <= b.c1 && o.r >= b.r0 - 1 && o.r <= b.r1 && !(SEDUTI[o.k] || []).length; });
+    var SEDILE = /^(sgabello|sedia_|poltrona_)/;   // nel casinò: i posti davanti ai tavoli e alle macchine
+    function davantiA(s) { var F = DIR[s.d || 0]; return oggettoIn(s.c + F[0], s.r + F[1]); }   // la cosa che quel posto guarda
+    function postoLibero(o) {   // il posto libero più vicino davanti a quella cosa (un tavolo, una slot…), o null
+      var l = D.ogg.filter(function (s) { return SEDILE.test(s.t) && !(SEDUTI[s.k] || []).length && davantiA(s) === o; });
       l.sort(function (a, c) { return Math.hypot(a.c + .5 - av.u, a.r + .5 - av.v) - Math.hypot(c.c + .5 - av.u, c.r + .5 - av.v); });
-      return l[0] || null;
+      return { libero: l[0] || null, posti: D.ogg.some(function (s) { return SEDILE.test(s.t) && davantiA(s) === o; }) };
     }
-    function tavoloAccanto(s) { for (var i = 0; i < D.ogg.length; i++) { var o = D.ogg[i]; if (!GIOCHI_CASINO[o.t]) continue; var b = box(o); if (s.c >= b.c0 - 1 && s.c <= b.c1 && s.r >= b.r0 - 1 && s.r <= b.r1) return o; } return null; }
     var PRESTO = [   // nel casinò: quello che non si usa ancora dice cos'è e che arriva presto
       [/^(slot_|video_poker|pachinko)/, "🎰", ": presto si gioca!"], [/^(gru_peluche|spingimonete)/, "🧸", ": presto si gioca!"], [/^gratta_vinci/, "🍀", ": presto si gratta!"],
       [/^(tavolo_|roulette_|ruota_fortuna|corsa_cavalli)/, "🎲", ": presto si gioca!"], [/bingo|keno/, "🔢", ": presto si gioca!"],
       [/scommesse|quote|maxischermo/, "⚽", ": presto si scommette!"], [/^(bancone_casino|torre_champagne)/, "🍹", ": presto si ordina!"], [/^buffet/, "🍽️", ": presto si mangia!"],
       [/^palco/, "🎤", ": presto lo spettacolo!"], [/^cassa_casino|bancomat/, "💰", ": presto qui cambierai le fiches"], [/^auto_premio/, "🏎️", ": presto in palio!"]
     ];
-    function azioneCasino(o) {   // nel casinò: i tavoli aperti fanno giocare, gli altri arrivano presto
-      var mi = infoMobile(o.t) || {}, gi = GIOCHI_CASINO[o.t];
-      if (gi) { var sg = sgabelloLibero(o); if (sg) return vaiAOggetto(sg); if (opts.gioca) opts.gioca(gi); return; }
+    function dimmiPresto(o) { for (var i = 0; i < PRESTO.length; i++) if (PRESTO[i][0].test(o.t)) { dimmi(PRESTO[i][1] + " " + nomeDi(o.t) + PRESTO[i][2]); return true; } return false; }
+    function toccaCasino(o) {   // toccata una cosa che ha dei posti davanti: si va al posto libero più vicino (true se ci pensa lui)
+      if (SEDILE.test(o.t)) return false;
+      var p = postoLibero(o); if (!p.posti) return false;
+      if (p.libero) { vaiAOggetto(p.libero); return true; }
+      dimmi("È tutto occupato: prova un altro posto 🙂"); return true;
+    }
+    function azioneCasino(o) {   // nel casinò: seduti davanti a un tavolo aperto si gioca, il resto arriva presto
       if ((SEDUTI[o.k] || []).length) return dimmi("Questo posto è occupato 🙂");
-      if (o.t === "sgabello_casino") {
-        var tv = tavoloAccanto(o); siedi(o); var g2 = tv && GIOCHI_CASINO[tv.t];
-        if (g2) { dimmi("Si gioca! 🃏"); setTimeout(function () { if (vivo() && av.siede && opts.gioca) opts.gioca(g2); }, 900); }
-        else { var tv2 = D.ogg.filter(function (x) { var b = box(x); return x !== o && !/^sgabello|^tappeto/.test(x.t) && o.c >= b.c0 - 1 && o.c <= b.c1 && o.r >= b.r0 - 1 && o.r <= b.r1; })[0]; if (tv2) dimmiPresto(tv2); }
+      if (SEDILE.test(o.t)) {
+        var tv = davantiA(o), gi = tv && GIOCHI_CASINO[tv.t]; siedi(o);
+        if (gi) { dimmi("Si gioca! 🃏"); setTimeout(function () { if (vivo() && av.siede && av.siede.o === o && opts.gioca) opts.gioca(gi); }, 900); }
+        else if (tv) dimmiPresto(tv);
         return;
       }
-      if (mi.azione === "siedi") { siedi(o); if (o.t === "sgabello_slot") { var F = DIR[o.d || 0], m = oggettoIn(o.c + F[0], o.r + F[1]); if (m) dimmiPresto(m); } return; }
+      var mi = infoMobile(o.t) || {};
+      if (GIOCHI_CASINO[o.t] && opts.gioca) return opts.gioca(GIOCHI_CASINO[o.t]);
+      if (mi.azione === "siedi") return siedi(o);
       if (!dimmiPresto(o)) dimmi(nomeDi(o.t));
     }
-    function dimmiPresto(o) { for (var i = 0; i < PRESTO.length; i++) if (PRESTO[i][0].test(o.t)) { dimmi(PRESTO[i][1] + " " + nomeDi(o.t) + PRESTO[i][2]); return true; } return false; }
     function azione(o) {
       if (LUOGO) return azioneCasino(o);
       cresciTutto();
@@ -1392,7 +1403,7 @@
           ctx.globalCompositeOperation = "lighter";
           var luci = D.ogg.filter(function (o) { return o.t === "lampione"; }).map(function (o) { var p = pw(o.c + .5, o.r + .5); return { x: p.x, y: p.y - TW * 1.5, r: TW * 1.7 }; }).concat(luciOgg);   // + le lampade, i neon, gli acquari…
           Object.keys(D.muri).forEach(function (k) { var m = D.muri[k]; if (!porta(m)) return; var ll = lati(k), d0 = dentro(ll[0][0], ll[0][1]), d1 = dentro(ll[1][0], ll[1][1]); if (d0 === d1) return; var t = d0 ? ll[1] : ll[0], q = k.split(","), mx = q[0] === "a" ? +q[1] : +q[1] + .5, my = q[0] === "a" ? +q[2] + .5 : +q[2]; var p = pw(mx + (t[0] + .5 - mx) * .5, my + (t[1] + .5 - my) * .5); luci.push({ x: p.x, y: p.y - TW * .6, r: TW * 1.3 }); });
-          luci.forEach(function (l) { var cc = rgb(l.c || "#ffbe5a").join(","), gg = ctx.createRadialGradient(l.x, l.y, 2, l.x, l.y, l.r); gg.addColorStop(0, "rgba(" + cc + ",.4)"); gg.addColorStop(1, "rgba(" + cc + ",0)"); ctx.fillStyle = gg; ctx.fillRect(l.x - l.r, l.y - l.r, l.r * 2, l.r * 2); });
+          luci.forEach(function (l) { var cc = rgb(l.c || "#ffbe5a").join(","), gg = ctx.createRadialGradient(l.x, l.y, 2, l.x, l.y, l.r), al = LUOGO ? (.3 + .12 * Math.sin(tAnim * 3.2 + l.x * .07 + l.y * .05)).toFixed(3) : ".4"; gg.addColorStop(0, "rgba(" + cc + "," + al + ")"); gg.addColorStop(1, "rgba(" + cc + ",0)"); ctx.fillStyle = gg; ctx.fillRect(l.x - l.r, l.y - l.r, l.r * 2, l.r * 2); });
           ctx.globalCompositeOperation = "source-over";
         }
       }
@@ -1527,7 +1538,7 @@
       if (!vivo()) return chiudi();
       var dt = Math.min(.05, (o - ult) / 1000 || 0); ult = o;
       aggiorna(dt); tBolle += dt;
-      if (tBolle > .08) { tBolle = 0; if ((av.siede && av.siede.dorme) || (modo === "vivi" && D.ogg.some(function (x) { return maturo(x) || sete(x); }))) sporco = true; }
+      if (tBolle > .08) { tBolle = 0; if (LUOGO) sporco = true; if ((av.siede && av.siede.dorme) || (modo === "vivi" && D.ogg.some(function (x) { return maturo(x) || sete(x); }))) sporco = true; }
       if (sporco) {
         sporco = false; disegna();
         if (giroAnim) {   // la vista che gira: la foto di prima si stringe, quella nuova si allarga
@@ -1558,7 +1569,7 @@
     window.__giardino = { D: D, av: av, disegna: function () { disegna(); }, fase: function (f) { FASE = f; sfondo = null; sporco = true; }, pw: pw, tap: function (x, y) { tocca(x, y); },
       gira: gira, modo: cambiaModo, attrezzo: function (a, id) { attrezzo = a; if (id) sceltaKit[GRUPPO[a]] = id; pannelloCostruisci(); }, muri: function (a, b) { costruisciMuri({ a: a, b: b }); },
       faccia: function (k, sv) { for (var i = 0; i < facce.length; i++) if (facce[i].k === k && (sv == null || facce[i].sv === sv)) return facce[i]; return null; },
-      dentro: dentro, stanza: stanza, vai: function (c, r) { vaiA([{ c: c, r: r }]); }, tocca: function (o) { vaiAOggetto(o); }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); sporco = true; },
+      dentro: dentro, stanza: stanza, vai: function (c, r) { vaiA([{ c: c, r: r }]); }, tocca: function (o) { if (LUOGO && toccaCasino(o)) return; vaiAOggetto(o); }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); sporco = true; },
       cresciTutto: cresciTutto, foto: function () { disegna(); return cv.toDataURL("image/png"); } };   // (per le prove)
     return s;
   }
