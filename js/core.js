@@ -648,6 +648,19 @@
     mostra(s); s._monta();
   }
   // ---- il giardino fuori casa (js/giardino.js): piante, orto, decorazioni e cesto nel profilo e su questo telefono ----
+  // ---- i disegni della casa nuova, del casinò e della città a piedi: nella versione online stanno in un file a parte (extra.js),
+  //      scaricato solo da chi li usa (così l'app si apre più in fretta per tutti); nella cartella di lavoro ci sono già ----
+  var attesaExtra = null;
+  function serveExtra() { return !window.SGGiardino && !!window.SG_EXTRA && (GIARDINO_PRONTO || CITTA_A_PIEDI || eProprietario()); }
+  function caricaExtra(poi, attesa) {
+    if (window.SGGiardino || !window.SG_EXTRA) { if (poi) poi(); return; }
+    if (attesa) mostra(el("div", { class: "schermata carica-extra" }, [ el("div", { class: "ce-ico", text: attesa }), el("p", { text: "Un attimo…" }) ]));
+    if (attesaExtra) { if (poi) attesaExtra.push(poi); return; }
+    attesaExtra = poi ? [poi] : [];
+    var sc = document.createElement("script"); sc.src = window.SG_EXTRA; sc.async = true;
+    sc.onload = sc.onerror = function () { var l = attesaExtra; attesaExtra = null; if (!window.SGGiardino) window.SG_EXTRA = null; l.forEach(function (f) { try { f(); } catch (e) {} }); };   // (se non arriva si usano la casa e la città di prima)
+    document.head.appendChild(sc);
+  }
   var GIARDINO_PRONTO = false;   // la casa nuova (come The Sims) è in costruzione: finché è false la vede solo il proprietario, gli altri hanno la casa di prima
   function giardinoPronto() { return !!window.SGGiardino && (GIARDINO_PRONTO || eProprietario()); }
   var tGiardinoNube = null;
@@ -666,6 +679,7 @@
     clearTimeout(tGiardinoNube); tGiardinoNube = setTimeout(function () { if (window.SGNube && SGNube.salvaGiardino) SGNube.salvaGiardino(JSON.parse(JSON.stringify(d))); }, 1200);
   }
   function schermataGiardino(daCasa) {   // dalla città si arriva qui, davanti a casa: la porta porta dentro
+    if (serveExtra()) return caricaExtra(function () { schermataGiardino(daCasa); }, "🏡");
     if (!giardinoPronto()) return schermataCasa();
     if (serveProfilo()) return;
     var io = profiloAttivo(), m = soldiCasa();
@@ -723,6 +737,7 @@
   var CITTA_A_PIEDI = false, ultimoEdificio = null;   // la città dove si cammina (come la casa): finché è false la vede solo il proprietario; ultimoEdificio: da dove si esce tornando in città
   function cittaAPiedi() { return !!(window.SGGiardino && window.SGCitta && SGCitta.arte) && (CITTA_A_PIEDI || eProprietario()); }
   function schermataCitta() {
+    if (serveExtra()) return caricaExtra(schermataCitta, "🏙️");
     controllaGiorno();   // (se l'app è rimasta aperta da ieri)
     var io = profiloAttivo(), N = window.SGNube, fase = SGCitta.fase(new Date()), via = false;
     var cloud = !!(N && N.profilo && N.profilo()), prog = window.SGLivelli && cloud && N.progressione ? N.progressione() : null;
@@ -1023,7 +1038,7 @@
     window.addEventListener("resize", ridim);
   }
   function schermataEdificio(k) {
-    if (k === "casino" && window.SGGiardino && eProprietario()) return schermataCasinoSala();   // il Casinò nuovo, visto dall'alto (per ora solo per il proprietario)
+    if (k === "casino" && eProprietario()) { if (serveExtra()) return caricaExtra(function () { schermataEdificio(k); }, "🎰"); if (window.SGGiardino) return schermataCasinoSala(); }   // il Casinò nuovo, visto dall'alto (per ora solo per il proprietario)
     if (INTERNI[k] && window.SGCasino) return schermataInterno(k);   // Casinò e Circolo: gli interni in prima persona
     var E = EDIFICI_CITTA[k]; if (!E) return schermataCitta();
     rientro = function () { schermataEdificio(k); };   // finita la partita (o "indietro") si torna qui
@@ -4213,6 +4228,7 @@
         else if (g) apriGioco(g);
         else schermataHome();
       }
+      [3000, 9000].forEach(function (ms) { setTimeout(function () { if (serveExtra()) caricaExtra(); }, ms); });   // chi usa la casa nuova, il casinò o la città a piedi: i loro disegni arrivano in sottofondo
       // col cloud, aspetta che Firebase ripristini la sessione (login automatico)
       if (window.SGNube && SGNube.disponibile() && !SGNube.pronto()) {
         schermataCaricamento();

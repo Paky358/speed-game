@@ -1462,3 +1462,9 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 .cs-so .cs-insegna b{ border-color:#8a5a32; box-shadow:inset 0 0 0 3px #8a5a32, inset 0 0 14px rgba(0,0,0,.4), 0 12px 24px rgba(0,0,0,.55); }
 .cs-f4 .cs-insegna b{ box-shadow:inset 0 0 0 3px #1849a9, 0 12px 24px rgba(0,0,0,.5); }
 .cs-nv .cs-insegna b{ border-color:#d9b36c; box-shadow:inset 0 0 0 3px #0a2f52, inset 0 0 0 4px #d9b36c, 0 12px 24px rgba(0,0,0,.5); }
+
+/* la versione online: i disegni della casa nuova, del casinò e della città arrivano da un file a parte (un attimo d'attesa) */
+.schermata.carica-extra{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-height:var(--alt,100dvh); }
+.carica-extra .ce-ico{ font-size:56px; animation:ce-su 1s ease-in-out infinite alternate; }
+.carica-extra p{ font-weight:800; opacity:.8; }
+@keyframes ce-su{ from{ transform:translateY(0); } to{ transform:translateY(-8px); } }

@@ -9,6 +9,18 @@ set -e
 cd "$(dirname "$0")"
 mkdir -p dist
 OUT=dist/index.html
+EXTRA=dist/extra.js
+
+# I disegni della casa nuova (come The Sims), del casinò e della città a piedi: un file a parte, scaricato solo da chi li usa
+# (così l'app si apre più in fretta). Il nome porta un pezzo dell'impronta del contenuto: cambia a ogni versione e il telefono non usa quella vecchia.
+{
+  cat js/giardino-arte.js   # i disegni del giardino
+  cat js/mobili-arte.js     # i mobili visti dall'alto (casa come The Sims)
+  cat js/mobili-soggiorno-scadente.js js/mobili-soggiorno.js js/mobili-cucina.js js/mobili-camera-scadente.js js/mobili-camera.js js/mobili-bar.js js/mobili-quadri.js js/mobili-piccole.js js/mobili-salotto2.js js/mobili-giochi.js js/mobili-halloween.js js/mobili-acquari.js js/casino-tavoli.js js/casino-slot.js js/casino-giochi.js js/casino-salone.js js/casino-locali.js js/casino-macchine.js
+  cat js/costruzioni-arte.js js/costruzioni-casino.js js/costruzioni-casino2.js   # muri, pavimenti, porte, finestre e tetti
+  cat js/giardino.js        # il motore: casa e giardino, casinò, città a piedi
+} > "$EXTRA"
+VER=$(md5sum "$EXTRA" | cut -c1-10)
 
 {
   echo '<!doctype html>'
@@ -29,6 +41,7 @@ OUT=dist/index.html
   cat css/styles.css
   echo '</style>'
   echo '<div id="app"></div>'
+  echo "<script>window.SG_EXTRA = 'extra.js?v=$VER';</script>"
   # caselle di posta del sito (Netlify le riconosce alla pubblicazione)
   echo '<form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>'
   echo '<form name="bug" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea><input type="text" name="contesto" /></form>'
@@ -51,11 +64,6 @@ OUT=dist/index.html
   echo ''
   cat js/pesca.js   # la pesca al laghetto
   cat js/scavi.js   # gli scavi antichi
-  cat js/giardino-arte.js   # i disegni del giardino
-  cat js/mobili-arte.js     # i mobili visti dall'alto (casa come The Sims)
-  cat js/mobili-soggiorno-scadente.js js/mobili-soggiorno.js js/mobili-cucina.js js/mobili-camera-scadente.js js/mobili-camera.js js/mobili-bar.js js/mobili-quadri.js js/mobili-piccole.js js/mobili-salotto2.js js/mobili-giochi.js js/mobili-halloween.js js/mobili-acquari.js js/casino-tavoli.js js/casino-slot.js js/casino-giochi.js js/casino-salone.js js/casino-locali.js js/casino-macchine.js   # gli altri mobili, stanza per stanza
-  cat js/costruzioni-arte.js js/costruzioni-casino.js js/costruzioni-casino2.js   # muri, pavimenti, porte, finestre e tetti per costruire la casa
-  cat js/giardino.js        # il giardino fuori casa
   echo ''
   cat js/core.js
   echo ''
@@ -82,4 +90,5 @@ if [ -d parole ]; then rm -rf dist/parole && cp -r parole dist/parole; fi
 # Suoni registrati (es. lo stadio di Calcio Biliardo): file a parte, scaricati solo quando servono
 if [ -d suoni ]; then rm -rf dist/suoni && cp -r suoni dist/suoni; fi
 
+echo "Creato $EXTRA ($VER)"
 echo "Creato $OUT"
