@@ -4252,6 +4252,8 @@
       // oppure c'ero e l'host mi ha tolto). Negli aggiornamenti normali ci pensa il collegamento, senza fretta.
       // (chi è nella foto ma non tra i giocatori guarda soltanto: niente da chiedere)
       if (!dentro && st && !st.presente && (nuova || st.dentro)) rete.riprova();
+      // in saletta il titolo dice già tutto: la pillola "entri alla prossima" sparisce subito (non un secondo dopo)
+      if (rete) pillola("prossima", null);
     }
     // i nodi del gioco sotto la saletta (es. scelta del posto): si rimettono solo se sono cambiati
     var ex = (o.extra || []).filter(Boolean);
@@ -4648,11 +4650,18 @@
       else if (P && !P.salaCtx && !guarda && !hostDiRiserva(P.g)) {
         cb.onChiuso = function (perche) {
           if (perche && perche.sparito && P.viva()) return stanzaChiusa(C);
+          // chiusa apposta dall'host: ricaricando la pagina non si prova a rientrare, e in home niente "Rientra"
+          if (perche && perche.voluto) {
+            R.finita = true;
+            var ls = linkSessione(), rs = stanzaRecente();
+            if (ls && ls.stanza === C) dimenticaLinkSessione();
+            if (rs && rs.stanza === C) try { localStorage.removeItem("sg-ultima-stanza"); } catch (e) {}
+          }
           return onChiuso ? onChiuso.apply(this, arguments) : undefined;
         };
       }
       var onHN = cb.onHostNuovo;
-      cb.onHostNuovo = function (eraDentro) { if (onHN) try { onHN.apply(this, arguments); } catch (e) {} hostTornato(R, eraDentro); };
+      cb.onHostNuovo = function (eraDentro, eraVivo) { if (onHN) try { onHN.apply(this, arguments); } catch (e) {} hostTornato(R, eraDentro, eraVivo); };
       var h = entra.call(SGNet, codice, cb, guarda ? Object.assign({}, opz || {}, { guarda: true }) : opz);
       if (!h) return h;
       R.h = h;
@@ -4669,7 +4678,7 @@
       var marca = sala ? { sala: C } : (P && !P.salaCtx && !guarda ? { gioco: P.g.id, stanza: C } : null);
       if (marca) var tMarca = setInterval(function () {
         var st = h.stato ? h.stato() : null;
-        if (!st || st.chiusa) return clearInterval(tMarca);
+        if (!st || st.chiusa || R.finita) return clearInterval(tMarca);
         if (st.dentro) { ricordaStanza(Object.assign({}, marca)); segnaLinkSessione(marca); }
       }, 60000);
       if (!sala) { reteOsp = R; avviaControlloRete(); }
@@ -4686,15 +4695,19 @@
   }
   // l'host ha riaperto la stanza (la sua pagina si è ricaricata, l'app si è riaperta): chi era dentro riparte pulito
   // dalla saletta, con lo stesso posto (stesso id). Il gioco vecchio non disegna più (partitaN).
-  function hostTornato(R, eraDentro) {
-    if (R.sala || R.guarda || !eraDentro) return;   // (la Sala si rimette a posto da sola; chi non era dentro rientra col join)
+  function hostTornato(R, eraDentro, eraVivo) {
+    // (la Sala si rimette a posto da sola; chi non aveva ancora chiesto di entrare rientra col join)
+    // Anche chi per il collegamento non era "dentro" ma stava già giocando riparte: es. ricaricato a metà partita
+    // in un gioco che nelle foto non mette gli id (l'host non l'ha riconosciuto), altrimenti resterebbe sul tavolo vecchio
+    var st = R.h && R.h.stato ? R.h.stato() : null;
+    if (R.sala || R.guarda || !(eraDentro || (eraVivo && st && st.entrato))) return;
     var P = R.P;
     if (!P || !P.viva() || hostDiRiserva(P.g)) return;
+    var U = SL.ultimo, inSaletta = !!(U && !U.host && U.o && U.o._rete === R.h && document.body.contains(U.s));
     var nh = nomeStanza(R.codice, true);
-    pillola("tornato", "🎉 " + (nh || "L'host") + " è tornato: si riparte dalla saletta", "verde", 3500);
+    if (eraDentro || !inSaletta) pillola("tornato", "🎉 " + (nh || "L'host") + " è tornato: si riparte dalla saletta", "verde", 3500);
     // ero già in saletta: basta rientrare (il collegamento ha già ripetuto "sono entrato"), niente da rifare sullo schermo
-    var U = SL.ultimo;
-    if (U && !U.host && U.o && U.o._rete === R.h && document.body.contains(U.s)) return;
+    if (inSaletta) return;
     try { R.h.lascia(); } catch (e) {}
     linkParams = Object.assign({}, P.tavolo.linkParams);
     avviaPartita(P.g, P.giocatori, P.impostazioni, P.opts, P.salaCtx);

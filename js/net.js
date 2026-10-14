@@ -276,7 +276,7 @@
       return segna(h, giocoId === "__sala");   // la sala resta aperta tra un gioco e l'altro
     },
 
-    // Un ospite entra con il codice. cb: { onAperto(id), onMsg(msg), onChiuso(perché: { voluto } o { sparito }), onErrore(e), onHostVia(sparito), onHostNuovo(eraDentro) }
+    // Un ospite entra con il codice. cb: { onAperto(id), onMsg(msg), onChiuso(perché: { voluto } o { sparito }), onErrore(e), onHostVia(sparito), onHostNuovo(eraDentro, eraVivo) }
     // opz.tieni = non chiuderla quando si cambia gioco (è la connessione della sala);
     // opz.guarda = guarda soltanto (non entra: niente "stanza ferma", aspetta l'host come chi è dentro)
     entra: function (codice, cb, opz) {
@@ -334,7 +334,7 @@
         var testo = payload.toString(); if (!testo) return;
         var m; try { m = JSON.parse(testo); } catch (e) { return; }
         if (!m) return;
-        var trattenuto = !!(pacchetto && pacchetto.retain), sparito = m.t === "__hostgone";
+        var trattenuto = !!(pacchetto && pacchetto.retain), sparito = m.t === "__hostgone", eraVivo = vivo;   // (eraVivo: avevo già sentito l'host dal vivo)
         var s = m._s || ((m.t === "__hostqui" || sparito) ? m.s : null);
         // un "host sparito" di una sessione vecchia (il broker se n'è accorto tardi e l'host intanto ha riaperto): non conta
         if (sparito && !m.voluto && s && sessione && s < sessione) return;
@@ -349,7 +349,7 @@
             var eraDentro = dentro;
             dentro = false; foto = false; presente = false;
             if (entrata) { pubblica(entrata); insisti(); }
-            if (cb.onHostNuovo) cb.onHostNuovo(eraDentro);
+            if (cb.onHostNuovo) cb.onHostNuovo(eraDentro, eraVivo);
             if (chiusa) return;   // (l'app ha riavviato il gioco con un collegamento nuovo)
           }
         }
@@ -360,7 +360,8 @@
         if (sparito) {
           if (m.voluto) { cb.onChiuso && cb.onChiuso({ voluto: true }); return; }   // chiusa apposta
           // non ero ancora dentro (sono appena arrivato): la stanza è ferma, lo dico subito e aspetto che torni
-          if (!dentro && !opz.guarda) return fermaStanza(false);
+          // (chi aveva già sentito l'host dal vivo, anche se non è ancora "dentro", lo aspetta come gli altri)
+          if (!dentro && !eraVivo && !opz.guarda) return fermaStanza(false);
           // ero dentro, sparito all'improvviso (schermo bloccato, cambio app): gli do tempo di tornare (e lo dico sullo schermo)
           if (!tAddio) { avvisaHost(T.stato, true); tAddio = setTimeout(function () { tAddio = null; avvisaHost(T.stato, false); if (!chiusa) cb.onChiuso && cb.onChiuso({ sparito: true }); }, ATTESA_HOST); }
           cb.onHostVia && cb.onHostVia(true);   // un gioco con l'host di riserva può prendere il suo posto
