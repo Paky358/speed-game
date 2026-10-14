@@ -1208,7 +1208,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .saletta-schermo > .contenuto::-webkit-scrollbar{ display:none; }
 .saletta-schermo > .contenuto > *{ flex:0 0 auto; }
 .saletta-schermo > .piede{ margin-top:10px; gap:8px; }
-.saletta-schermo .sl-stanza{ flex:1000 0 auto; height:auto; min-height:150px; max-height:calc((min(100vw, 600px) - 32px) * 1.2); margin:0; }
+.saletta-schermo .sl-stanza{ flex:1000 0 auto; height:auto; min-height:150px; max-height:calc((min(100vw, 600px) - 32px) * 1.6); margin:0; }   /* (sui telefoni alti la stanza riempie lo schermo: niente buchi sopra e sotto) */
 /* su un telefono alto quello che avanza va metà sopra e metà sotto (se invece manca spazio, niente si nasconde: scorre il centro) */
 .saletta-schermo > .contenuto::before, .saletta-schermo > .contenuto::after{ content:""; flex:1 1 0; }   /* (la stanza cresce per prima: flex 1000) */
 .saletta-schermo > .contenuto::before{ margin-bottom:-8px; } .saletta-schermo > .contenuto::after{ margin-top:-8px; }   /* (senza lo spazio tra i pezzi) */
@@ -1263,15 +1263,14 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .sl-av.forse .sl-bollo{ background:#1c7ed6; font-size:.72rem; animation:slForse 1.6s ease-in-out infinite; }
 @keyframes slForse{ 50%{ opacity:.45; } }
 .sl-av.forse .sl-fig{ opacity:.5; filter:grayscale(1); transition:opacity .4s ease; }
-.sl-nome.forse{ opacity:.75; }
+.sl-nome.forse{ background:rgba(16,40,84,.92); color:#e7f5ff; box-shadow:inset 0 0 0 1.5px rgba(116,192,252,.55); }
 .sl-nome.entra{ animation:slTarga .6s ease-out; }
 @keyframes slTarga{ 0%,40%{ opacity:0; } }
 .sl-nome.esce{ opacity:0; }
 .sl-nome.vuoto{ opacity:.6; }
-.sl-ricollega{ position:absolute; left:50%; top:-2px; z-index:5; transform:translate(-50%,-100%); padding:2px 7px; border-radius:8px; white-space:nowrap; pointer-events:none;
-  font-size:.62rem; font-weight:800; color:#d0d8ff; background:rgba(20,26,58,.88); opacity:0; transition:opacity .3s ease; }
-.sl-av.forse .sl-ricollega{ opacity:1; }
-.sl-av.forse.parla .sl-ricollega{ opacity:0; }
+/* "si ricollega…" sta nella targa, sopra il nome (la targa cresce verso l'alto, sul suo avatar): non copre i nomi degli altri */
+.sl-ricollega{ display:block; font-size:.8em; font-weight:800; line-height:1.25; color:#a5d8ff; overflow:hidden; text-overflow:ellipsis; }
+.sl-ricollega:empty{ display:none; }
 
 /* i fumetti sopra la testa: "Ciao Luca! 👋" (chi arriva) e "Ciao ciao! 👋" (chi esce); stanno con le faccine in un velo sopra gli avatar
    (left e bottom li mette la saletta: sulla testa di chi parla) */

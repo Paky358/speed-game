@@ -4318,11 +4318,11 @@
       var k = chiavePers(p, i), f = U.figure[k], cfg = p.omino || (window.SGOmino ? SGOmino.casuale(p.nome || k) : null), sig = JSON.stringify(cfg) + "|" + p.nome + "|" + !!p.tu + "|" + !!p.host + "|" + !!p.bot;
       if (!f) {
         // l'avatar ha i suoi pezzi fissi: il disegno (con l'anello verde sul pavimento quando è pronto), il nome sotto i piedi,
-        // il bollino (✓ o 📶) e "si ricollega…"; quando cambia qualcosa si rifà solo il disegno o il nome
+        // il bollino (✓ o 📶) e "si ricollega…" (nella targa, sopra il nome: non copre i nomi degli altri); quando cambia qualcosa si rifà solo il disegno o il nome
         f = { nodo: el("div", { class: "sl-av entra" }), sig: "", k: k, manoSu: false };
         f.anello = el("i", { class: "sl-anello", "aria-hidden": "true" }); f.fig = el("div", { class: "sl-fig" });
-        f.bollo = el("b", { class: "sl-bollo", "aria-hidden": "true" }); f.ricollega = el("span", { class: "sl-ricollega" });
-        f.nodo.appendChild(el("div", { class: "sl-av-in" }, [f.fig, f.bollo, f.ricollega]));
+        f.bollo = el("b", { class: "sl-bollo", "aria-hidden": "true" }); f.ricollega = el("small", { class: "sl-ricollega" });   // (sta nella targa, sopra il nome)
+        f.nodo.appendChild(el("div", { class: "sl-av-in" }, [f.fig, f.bollo]));
         // il nome sta nel velo delle targhe, sopra gli avatar: i capelli di chi è davanti non lo coprono mai
         f.targa = f.nodo._targa = el("div", { class: "sl-nome entra" }); U.targhe.appendChild(f.targa);
         toccoAvatar(U, f);
@@ -4335,7 +4335,7 @@
         f.sig = sig; f.tu = !!p.tu; f.cfg = cfg;
         disegnaFigura(f);
         svuota(f.targa); f.targa.classList.toggle("tu", !!p.tu);
-        [ p.host ? el("span", { class: "sl-cor", text: "👑" }) : null, document.createTextNode(p.tu ? "Tu" : (p.nome || "…")), p.bot ? el("span", { text: " 🤖" }) : null ].forEach(function (x) { if (x) f.targa.appendChild(x); });
+        [ f.ricollega, p.host ? el("span", { class: "sl-cor", text: "👑" }) : null, document.createTextNode(p.tu ? "Tu" : (p.nome || "…")), p.bot ? el("span", { text: " 🤖" }) : null ].forEach(function (x) { if (x) f.targa.appendChild(x); });
       }
       f.nodo.classList.toggle("tu", !!p.tu); f.nodo.classList.toggle("bot", !!p.bot);
       ordine.push(f.nodo); tieni[k] = true;
@@ -4547,7 +4547,7 @@
     if (U.host) {
       // sotto il titolo lo stato ("🟡 Sto aprendo…", "🔒 Porta chiusa"), il pallino del codice, la porta nella testa (🔒 Chiudi / 🔓 Riapri)
       var porta = !!(SV && SV.porta), cosa = U.gid === "__sala" ? "Sala" : "stanza";
-      var st = !U.aperta ? "🟡 Sto aprendo la " + cosa + "…" : (porta ? "🔒 Porta chiusa: non entra nessun altro" : U.sottoBase);
+      var st = !U.aperta ? "🟡 Sto aprendo la " + cosa + "…" : (porta ? "🔒 Porta chiusa" : U.sottoBase);
       if (U.statoT && U.statoT.textContent !== st) U.statoT.textContent = st;
       U.codBox.classList.toggle("apre", !U.aperta); U.codBox.classList.toggle("chiusa", porta);
       U.s.classList.toggle("porta-chiusa", porta);

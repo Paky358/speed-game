@@ -91,7 +91,9 @@
     w.AudioContext = Finto; w.webkitAudioContext = Finto;
   }
   // la targa col nome e l'avatar di qualcuno nella saletta di un telefono ("Tu" per il proprio)
-  function targaDi(w, nome) { return [].find.call(w.document.querySelectorAll(".sl-targhe .sl-nome"), function (x) { return x.textContent.replace("👑", "").replace("🤖", "").trim() === nome && !x.classList.contains("esce"); }) || null; }
+  // (il nome senza "si ricollega…", che sta nella targa sopra il nome)
+  function nomeTarga(x) { var r = x.querySelector(".sl-ricollega"); return x.textContent.replace(r ? r.textContent : "", "").replace("👑", "").replace("🤖", "").trim(); }
+  function targaDi(w, nome) { return [].find.call(w.document.querySelectorAll(".sl-targhe .sl-nome"), function (x) { return nomeTarga(x) === nome && !x.classList.contains("esce"); }) || null; }
   function avatarDi(w, nome) { var t = targaDi(w, nome); return t ? ([].find.call(w.document.querySelectorAll(".sl-av:not(.sl-vuoto)"), function (a) { return a._targa === t; }) || null) : null; }
   function pronto(w, nome) { var t = targaDi(w, nome); return !!(t && t.classList.contains("pronto")); }
   // lo stato della stanza scritto sotto il titolo della saletta dell'host ("🟡 Sto aprendo…", "🔒 Porta chiusa…")
@@ -118,7 +120,7 @@
     if (d.documentElement.scrollHeight > alt + 1) return "la pagina scorre (" + d.documentElement.scrollHeight + " px)";
     if (c.scrollHeight > c.clientHeight + 1) return "il centro scorre (" + c.scrollHeight + " su " + c.clientHeight + ")";
     if (sc.querySelector(".piede").getBoundingClientRect().bottom > alt + 1) return "i tasti in fondo escono dallo schermo";
-    var targhe = [].filter.call(d.querySelectorAll(".sl-targhe .sl-nome"), function (t) { return !t.classList.contains("esce"); }).map(function (t) { return { n: t.textContent, r: t.getBoundingClientRect() }; });
+    var targhe = [].filter.call(d.querySelectorAll(".sl-targhe .sl-nome"), function (t) { return !t.classList.contains("esce"); }).map(function (t) { return { n: nomeTarga(t), r: t.getBoundingClientRect() }; });
     if (targhe.length < 6) return "nella saletta ci sono " + targhe.length + " nomi invece di 6";
     for (var i = 0; i < targhe.length; i++) {
       var a = targhe[i].r;
@@ -774,7 +776,7 @@
       var L = await W.apriTel("Luca", { hash: "gioco=timeline&stanza=" + C, x: 370 });
       if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 3 && dentro(G) && dentro(L); }, 8000)) no("non sono entrati in 3");
       W.spegni("Luca");
-      var grigio = function (w, nome) { var a = avatarDi(w, nome); return !!(a && a.classList.contains("forse") && (a.querySelector(".sl-bollo") || {}).textContent === "📶" && /si ricollega/.test((a.querySelector(".sl-ricollega") || {}).textContent)); };
+      var grigio = function (w, nome) { var a = avatarDi(w, nome); return !!(a && a.classList.contains("forse") && (a.querySelector(".sl-bollo") || {}).textContent === "📶" && /si ricollega/.test((a._targa.querySelector(".sl-ricollega") || {}).textContent)); };
       if (!await W.aspetta(function () { return grigio(P, "Luca") && grigio(G, "Luca"); }, 4000)) no("l'avatar di Luca non diventa grigio con 📶 sui telefoni degli altri");
       if (!await W.aspetta(function () { return grigio(L, "Tu") && /Mi ricollego/.test(pill(L)); }, 4000)) no("sul telefono di Luca il suo avatar non è grigio (o manca «📶 Mi ricollego…»)");
       W.riaccendi("Luca");
