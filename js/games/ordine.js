@@ -1187,12 +1187,15 @@
     var el = ui.el, box = ui.sotto;
     while (box.firstChild) box.removeChild(box.firstChild);
     function stato(tx) { var d = el("div", { class: "or-stato", text: tx }); box.appendChild(d); return d; }
+    // la fila delle faccine (online), dove si aspetta: il turno degli altri, la squadra fuori, la fine
+    function faccine() { var f = ui.t.faccine ? ui.t.faccine() : null; if (f) { f.classList.add("or-faccine"); box.appendChild(f); } }
     if (vm.fase === "fine") {
       var vinti = vm.players.filter(function (p) { return p.team === vm.vince; }).map(function (p) { return p.nome; }).join(", ");
       if (r.prossimo) stato("Sei dentro! Giochi dalla prossima partita, appena l'host la fa partire.");
       else if (r.team === vm.vince) stato("🎉 Avete vinto! Ora vedete di chi era ogni parola.");
       else if (r.team >= 0) stato("Peccato! La prossima è vostra. Vincono: " + vinti + ".");
       else stato("Vincono: " + vinti + ". Ora vedete di chi era ogni parola.");
+      faccine();
       var riga = el("div", { class: "or-riga" });
       if (cb.sonoHost) riga.appendChild(el("button", { class: "or-btn", text: "↻ Nuova partita", onclick: cb.onNuova }));
       riga.appendChild(el("button", { class: "or-btn chiaro", text: "🏠 Esci", onclick: function () { cb.onEsci(); } }));
@@ -1207,7 +1210,7 @@
       if (window.confirm("Chiudere la partita? Vince la squadra che ha meno parole da trovare.")) cb.manda({ t: "chiudi" });
     } }));
     function fineServizio() { if (servizio.firstChild) box.appendChild(servizio); }
-    if (r.team >= 0 && vm.fuori.indexOf(r.team) >= 0) { stato("La vostra squadra è fuori: guardate come va a finire."); return fineServizio(); }
+    if (r.team >= 0 && vm.fuori.indexOf(r.team) >= 0) { stato("La vostra squadra è fuori: guardate come va a finire."); faccine(); return fineServizio(); }
     if (vm.sospeso) { stato("🥁 Vediamo se è giusta…"); return; }
     // manca qualcuno: tutti vedono chi aspettiamo e per quanto
     if (vm.attesa) {
@@ -1217,7 +1220,7 @@
       return fineServizio();
     }
     if (r.capoVia && r.altri) { stato("Il vostro capo è uscito: uno di voi può prendere il suo posto."); return fineServizio(); }
-    if (!r.mioTurno) { stato("Tocca ai " + SQ[vm.turno].nome + "…" + (r.capo ? " Intanto pensa al prossimo indizio." : "")); return fineServizio(); }
+    if (!r.mioTurno) { stato("Tocca ai " + SQ[vm.turno].nome + "…" + (r.capo ? " Intanto pensa al prossimo indizio." : "")); faccine(); return fineServizio(); }
     if (vm.passo === "indizio") {
       if (!r.capo) { stato("Il vostro capo sta pensando all'indizio…"); return fineServizio(); }
       var input = el("input", { type: "text", class: "or-input", placeholder: "Una parola sola", maxlength: "20", autocomplete: "off", autocapitalize: "characters" });
@@ -1348,6 +1351,7 @@
       ".or-sotto{flex:none;display:flex;flex-direction:column;gap:6px}",
       ".or-stato{text-align:center;font-weight:800;font-size:.85rem;line-height:1.3;padding:2px 0;color:#6b6658}",
       ".or-riga{display:flex;gap:6px}",
+      ".or-sotto .or-faccine{flex:none}",
       ".or-btn{flex:1;min-height:46px;border:0;border-radius:14px;font:inherit;font-weight:900;font-size:.92rem;color:#fff;background:#1f1f1f;cursor:pointer;touch-action:manipulation}.or-btn.chiaro{background:#ebe7da;color:#1f1f1f}.or-btn.corto{flex:0 0 auto;padding:0 18px}.or-btn:disabled{opacity:.3}",
       ".or-input{flex:1;min-width:0;height:46px;border:1.5px solid #e4e0d4;border-radius:14px;padding:0 14px;font:inherit;font-size:1.05rem;font-weight:800;text-transform:uppercase;color:#1f1f1f;background:#fff}",
       ".or-numeri{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}",
@@ -1410,6 +1414,7 @@
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 4–12 giocatori",
     // "Prova da solo" la vede solo il proprietario (account IL PAPPONE): per vedere com'è il gioco anche senza amici
     modi: [ { modo: "prova", icona: "🧪", nome: "Prova da solo", sotto: "Solo per te: tu e Bot contro due bot", soloPer: "IL PAPPONE" } ], soloOnline: true,
+    hostDiRiserva: true,   // se l'host sparisce, un amico porta avanti la partita (il core non la riavvia)
     regole: [
       "Si gioca a <b>2 o 3 squadre</b>. Sul tabellone ci sono 25 parole (o 20, se l'host sceglie così): alcune sono di una squadra, alcune di nessuno e una è la <b>parola nera</b>.",
       "Solo il <b>capo</b> di ogni squadra (👑) vede di chi è ogni parola. Nel suo turno dà un <b>indizio di una parola sola</b> e un numero: quante parole sue c'entrano (es. «Caldo, 2»).",

@@ -212,6 +212,7 @@
     icona: "🟡",
     descrizione: "Quattro in fila a gravità: fai cadere le pedine in colonna e allinea quattro dello stesso colore. Contro il Bot, in due o online.",
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 2,
+    postiOnline: 2,   // online si gioca in due: gli altri guardano
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il Bot" },
       { modo: "telefono", icona: "📱", nome: "In due su questo telefono", sotto: "Vi passate il telefono a ogni mossa", amici: true }],
     regole: [
@@ -301,6 +302,8 @@
       "@keyframes d4Pulsa{0%{transform:scale(1)}100%{transform:scale(.86)}}",
       ".d4-piede{width:var(--d4w);min-height:52px;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}",
       ".d4-piede .btn{flex:1 1 0;min-width:0;margin:0}",
+      ".d4-piede .sl-faccine{flex:1 1 100%}",
+      ".d4-scena.con-fa{--d4w:min(96vw,calc(var(--alt,100dvh) - 290px),540px)}",
       ".d4-nota{flex:1 1 100%;margin:0;text-align:center;font-weight:700;font-size:.92rem;color:var(--testo-tenue,#cdd6ff)}",
       ".d4-chiedi{position:absolute;inset:0;z-index:20;background:rgba(10,14,40,.6);display:flex;align-items:center;justify-content:center;padding:20px}",
       ".d4-chiedi-box{background:var(--carta,#34479a);border-radius:18px;padding:18px;max-width:320px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.45);text-align:center}",
@@ -502,7 +505,7 @@
       nodi = function () { return vm.fase === "fine" ? [nota(vm.fine && vm.fine.vincitore ? "Tra poco si torna al tabellone…" : "Pareggio: si rigioca!")] : []; };
     } else if (cb.spettatore) {
       f = "spett";
-      nodi = function () { return [nota("👀 La partita è già piena: la guardi.")]; };
+      nodi = function () { return [nota("👀 Giocano in due: tu guardi la partita."), "fa"]; };
     } else if (cb.torneo) {
       f = "torneo|" + vm.fase;
       nodi = function () { return vm.fase === "fine" ? [nota("Tra poco i punti del torneo…")] : []; };
@@ -515,15 +518,26 @@
       };
     } else if (vm.fase === "fine" && (cb.locale || cb.sonoHost)) {
       f = "fine";
-      nodi = function () { return [tasto("🔄 Rivincita", "btn-primario", cb.onRivincita), tasto("🏠 Esci", "btn-fantasma", cb.esciSubito || cb.onEsci)]; };
+      nodi = function () {
+        var riv = tasto("🔄 Rivincita", "btn-primario", cb.onRivincita);
+        // torneo a eliminazione: col pareggio si rigioca da soli (la rivincita ha il conto)
+        if (ui.t.eliminazione && vm.fine && !vm.fine.vincitore && ui.t.contoAvanti) ui.t.contoAvanti(riv, 8, function () { if (cb.onRivincita) cb.onRivincita(); });
+        return ["fa", riv, tasto("🏠 Esci", "btn-fantasma", cb.esciSubito || cb.onEsci)];
+      };
     } else if (vm.fase === "fine") {
       f = "attesa";
-      nodi = function () { return [nota("In attesa dell'host per la rivincita…")]; };
+      nodi = function () { return [nota("In attesa dell'host per la rivincita…"), "fa"]; };
     } else { f = "vuoto"; nodi = function () { return []; }; }
     if (ui.firme.piede === f) return;
     ui.firme.piede = f;
     ui.piede.innerHTML = "";
-    nodi().forEach(function (n) { ui.piede.appendChild(n); });
+    // "fa" = la fila delle faccine (solo online: il mio avatar le fa sui telefoni di tutti)
+    var conFa = false;
+    nodi().forEach(function (n) {
+      if (n === "fa") { var fa = !cb.locale && ui.t.faccine ? ui.t.faccine() : null; if (fa) { ui.piede.appendChild(fa); conFa = true; } return; }
+      ui.piede.appendChild(n);
+    });
+    if (ui.scena.classList.contains("con-fa") !== conFa) ui.scena.classList.toggle("con-fa", conFa);   // la griglia un po' più piccola: niente scorre
   }
 
   // ---- aggiorna solo quello che è cambiato ----
@@ -768,7 +782,11 @@
     function promuovi() { if (!st.avv && st.guardano.length) nuovoAvv(st.guardano[0]); }
 
     var rete = SGNet.ospita("drop4", {
-      onCodice: function (c) { st.codice = c; bd(); },
+      onCodice: function (c) {
+        st.codice = c; st.riserva = riservaAvv("drop4", c);
+        if (st.riserva) setTimeout(function () { if (!uscito && !st.avv && st.fase === "lobby") { promuovi(); bd(); } }, 15100);   // non è tornato: tocca a chi guardava
+        bd();
+      },
       onConnesso: function () { st.pronta = true; bd(); },
       onAddio: function (id) {
         if (st.avv && id === st.avv.id) {
@@ -788,7 +806,7 @@
         if (m.t === "join") {
           var p = { id: id, nome: String(m.nome || "Avversario").slice(0, 16), omino: avatarOk(m.omino) };
           if (st.avv && id === st.avv.id) { /* c'era già: gli rimando la foto */ }
-          else if (!st.avv && st.fase === "lobby") nuovoAvv(p);
+          else if (!st.avv && st.fase === "lobby" && !postoRiservato(st.riserva, id)) nuovoAvv(p);
           else if (st.avv && st.assente && stessoNome(p.nome, st.avv.nome)) { st.avv.id = id; st.assente = null; togliGuarda(id); }   // rientrato con un id nuovo
           else if (guardaDi(id) < 0 && st.guardano.length < 12) st.guardano.push(p);   // stanza piena: guarda
           bd(); return;
@@ -811,7 +829,11 @@
         omini: { G: st.ominoG, B: st.avv ? st.avv.omino : null }, serie: st.serie, assente: st.assente,
         guardano: st.guardano.map(function (g) { return g.id; }), nomiGuardano: st.guardano.map(function (g) { return g.nome; }) };
     }
-    function bd() { if (uscito) return; var v = vm(); rete.invia({ t: "vm", vm: v }); disegna(v); }
+    function bd() {
+      if (uscito) return;
+      ricordaAvv("drop4", st.codice, st.avv ? st.avv.id : (st.riserva && Date.now() < st.riserva.fino ? st.riserva.id : null));
+      var v = vm(); rete.invia({ t: "vm", vm: v }); disegna(v);
+    }
     function applica(c) {
       if (st.fase !== "gioco" || st.fine || !colonnaLibera(st.board, c)) return;
       var r = cadi(st.board, c, st.turno);
@@ -935,6 +957,14 @@
   }
 
   function avatarOk(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  // l'avversario di questa stanza, ricordato sul telefono dell'host: se la pagina dell'host si ricarica (la stanza si
+  // riapre con lo stesso codice), per 15 secondi il posto resta a chi giocava, non a chi guardava ed è stato più svelto
+  function ricordaAvv(gioco, codice, id) { try { if (codice && codice !== "…") localStorage.setItem("sg-avv-" + gioco, JSON.stringify({ c: codice, id: id || null, t: Date.now() })); } catch (e) {} }
+  function riservaAvv(gioco, codice) {
+    try { var x = JSON.parse(localStorage.getItem("sg-avv-" + gioco) || "null"); if (x && x.c === codice && x.id && Date.now() - x.t < 20 * 60000) return { id: x.id, fino: Date.now() + 15000 }; } catch (e) {}
+    return null;
+  }
+  function postoRiservato(r, id) { return !!(r && r.id !== id && Date.now() < r.fino); }   // true = questo posto non è (ancora) per lui
   // la saletta d'attesa (uguale per tutti i giochi): l'host, l'avversario e chi guarda
   var EXTRA = { testo: null, nodo: null };
   function lobbyDrop(t, vm, o) {
@@ -948,8 +978,8 @@
     var testo = righe.join("\n");
     if (EXTRA.testo !== testo) { EXTRA.testo = testo; EXTRA.nodo = t.el("p", { class: "modulo-nota", style: "text-align:center;white-space:pre-line", text: testo }); }
     t.lobby({ host: !!o.host, codice: vm.codice, pronta: vm.pronta, min: 2, vuoti: vm.avversario ? 0 : 1, giocatori: gio, extra: [EXTRA.nodo],
-      nota: o.host ? (vm.avversario ? "✅ Avversario collegato! Quando vuoi, comincia." : "Manda il link: aspettiamo il tuo avversario.") : null,
-      attesa: io ? "Aspetta che l'host cominci: tu hai le pedine bianche." : (guardo ? "La partita è già piena: quando comincia, la guardi da qui." : "Entro nella partita…"),
+      nota: o.host ? (vm.avversario ? "✅ Avversario collegato! Quando vuoi, comincia." : "Invita il tuo avversario col tasto 📤.") : null,
+      attesa: io ? "Aspetta che l'host cominci: tu hai le pedine bianche." : (guardo || (vm.avversario && !o.host) ? "👀 Giocano " + vm.nomi.G + " e " + vm.nomi.B + ": tu guardi." : "Entro nella partita…"),
       onComincia: o.onComincia, onEsci: o.onEsci });
   }
 

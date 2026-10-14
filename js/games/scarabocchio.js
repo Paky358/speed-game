@@ -342,6 +342,8 @@
       ".sb-msg.sa b{color:#8ce99a!important}",
       ".sb-basso{flex:0 0 auto;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:rgba(0,0,0,.25)}",
       ".sb-basso[hidden],.sb-scrivi[hidden]{display:none}",
+      ".sb-sopra .sb-faccine{width:min(320px,92%);flex:0 0 auto}",
+      ".sb-riga .sb-faccine{margin-top:4px}",
       ".sb-podio{font-size:2rem;text-align:center;margin:0 0 6px}",
       ".sb-perche{text-align:center;font-weight:800;margin:0 0 8px;color:#ffa94d}",
       ".sb-gal-tit{font-weight:900;margin:14px 0 6px}",
@@ -354,6 +356,8 @@
       ".sb-grande{position:fixed;inset:0;z-index:50;background:rgba(10,8,30,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px}",
       ".sb-grande img{max-width:100%;max-height:calc(var(--alt,100dvh) - 120px);border-radius:14px;background:#fff}",
       ".sb-grande div{font-weight:900;font-size:1.2rem;text-align:center}",
+      // schermi bassi: la classifica finale (con le faccine e la galleria) sta in uno schermo
+      "@media (max-height:760px){.sb-podio{font-size:1.4rem;margin:0 0 2px}.sb-gal-tit{margin:8px 0 4px}.sb-gal button{width:66px}.sb-gal img{width:66px;height:80px}.sb-gal span{font-size:.66rem}}",
       "@keyframes sbPulsa{to{transform:scale(1.08)}}",
       "@keyframes sbPop{0%{transform:translate(-50%,-50%) scale(.5);opacity:0}14%{transform:translate(-50%,-50%) scale(1.08);opacity:1}80%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-70%) scale(1);opacity:0}}"
     ].join("");
@@ -691,7 +695,11 @@
         else { riga.appendChild(gente); form.hidden = false; basso.hidden = true; }
       }
       strumenti.hidden = !puoi; gente.hidden = false;
-      if (puoi !== primaPuoi || cambiato) misura();   // gli strumenti prendono più posto delle figurine: rifaccio le misure
+      // chi aspetta mentre gli altri indovinano (ha già indovinato, o è appena arrivato): sotto chi gioca, le faccine
+      var conFac = vm.fase === "disegno" && !dis && (ok || !me), fRiga = conFac ? faccine() : null, faccineMosse = false;
+      if (fRiga && fRiga.parentNode !== riga) { riga.appendChild(fRiga); faccineMosse = true; }
+      else if (!conFac && fac && fac.parentNode === riga) { riga.removeChild(fac); faccineMosse = true; }
+      if (puoi !== primaPuoi || cambiato || faccineMosse) misura();   // gli strumenti (o le faccine) prendono più posto delle figurine: rifaccio le misure
       aggGente(vm);
       // sopra la lavagna
       var chiaveS = vm.fase + "|" + vm.turno + "|" + (dis ? (priv.opzioni || []).join(",") : "") + "|" + (vm.fase === "punti" ? JSON.stringify(vm.ultimo) : "");
@@ -735,7 +743,12 @@
         sopra.appendChild(el("div", { class: "sb-righe", html: righe.length ? righe.join(" · ") : "Nessuno l'ha indovinata 😅" }));
         if (vm.ultimo.prossimo) sopra.appendChild(el("div", { class: "sb-righe", html: "Adesso disegna: <b>" + esc(vm.ultimo.prossimo === io ? "tu!" : vm.ultimo.prossimoNome) + "</b>" }));
       } else sopra.hidden = true;
+      // mentre si aspetta (chi disegna sceglie la parola, i punti del turno): le faccine sulla lavagna
+      if ((vm.fase === "scelta" && !dis) || (vm.fase === "punti" && vm.ultimo)) { var f = faccine(); if (f) sopra.appendChild(f); }
     }
+    // la fila delle faccine (una sola, si sposta dove serve)
+    var fac;
+    function faccine() { if (fac === undefined) { fac = t.faccine ? t.faccine() : null; if (fac) fac.classList.add("sb-faccine"); } return fac; }
     function esc(x) { return String(x == null ? "" : x).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
 
     return {
@@ -800,7 +813,10 @@
     var s = t.schermata({ icona: "🏆", titolo: "Classifica finale" });
     s._contenuto.appendChild(el("div", { class: "sb-podio", text: "🎨🏆🎨" }));
     if (vm.perche === "soli") s._contenuto.appendChild(el("div", { class: "sb-perche", text: "Sono usciti tutti gli altri: partita finita." }));
-    var ol = el("ol", { class: "classifica" }), med = ["🥇", "🥈", "🥉"];
+    // classifica, faccine e galleria in uno schermo: con tanti giocatori (o schermo basso) righe basse su due colonne
+    var conGal = GALLERIA.id === vm.partitaId && GALLERIA.lista.length > 0;
+    var fitta = cl.length > 6 || cl.length * 71 + 262 + (t.faccine ? 56 : 0) + (conGal ? 170 : 0) > (window.innerHeight || 640);
+    var ol = el("ol", { class: "classifica" + (fitta ? " fitta" : "") }), med = ["🥇", "🥈", "🥉"];
     cl.forEach(function (r) {
       ol.appendChild(el("li", { class: r.pos === 1 ? "vincitore" : "" }, [
         el("span", { class: "pos", text: med[r.pos - 1] || (r.pos + "°") }),
@@ -808,6 +824,8 @@
         el("span", { class: "punti", text: fmtN(r.punti) }) ]));
     });
     s._contenuto.appendChild(ol);
+    var fac = t.faccine ? t.faccine() : null;   // le faccine della saletta: si festeggia (o si sfotte) tutti insieme
+    if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }
     // la galleria degli scarabocchi della partita: si tocca per vederli grandi
     var gal = GALLERIA.id === vm.partitaId ? GALLERIA.lista : [];
     if (gal.length) {
@@ -824,7 +842,7 @@
       s._contenuto.appendChild(riga);
     }
     if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
-    else s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: gioco ? "Se l'host fa un'altra partita, torni da solo nella saletta." : "La partita è appena finita: entri nella prossima! 🎨" }));
+    else s._contenuto.appendChild(cb._notaFine = el("p", { class: "modulo-nota", style: "text-align:center", text: gioco ? "Se l'host fa un'altra partita, torni da solo nella saletta." : "La partita è appena finita: entri nella prossima! 🎨" }));
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     t.mostra(s);
   }
@@ -1313,7 +1331,12 @@
           }
           else if (m.t === "quasi") S.vista.quasi(m.x);
         },
-        onChiuso: function () { chiudiVista(); errore(t, "La partita è stata chiusa dall'host."); },
+        // chiusa apposta dall'host (se sparisce lo dice il core): sulla classifica finale la classifica resta
+        onChiuso: function () {
+          if (S.vm && S.vm.fase === "fine" && cb._notaFine && document.body.contains(cb._notaFine)) { cb._notaFine.textContent = "🚪 L'host ha chiuso la stanza."; return; }
+          chiudiVista(); errore(t, "La partita è stata chiusa dall'host.");
+        },
+        // (arriva solo se il primo collegamento non riesce: a partita cominciata la rete si ricollega da sola)
         onErrore: function () { chiudiVista(); errore(t, "Problema di collegamento. Riprova."); }
       });
     }

@@ -1735,9 +1735,9 @@
     { gioco: "drop4", livello: "oro",      icona: "📐", nome: "Geometria Letale",       desc: "Vinci 10 partite con 4 pedine in diagonale",                   stat: "vinteDiagonale",  meta: 10 },
     { gioco: "drop4", livello: "oro",      icona: "🏆", nome: "Leggenda della Griglia", desc: "Vinci 20 partite online",                                      stat: "vinteOnline",     meta: 20 },
     { gioco: "drop4", livello: "oro",      icona: "🌧️", nome: "Pioggia di Gettoni",     desc: "Fai cadere 300 pedine in tutto",                               stat: "gettoni",         meta: 300 },
-    { gioco: "drop4", livello: "diamante", icona: "✨", nome: "Partita Perfetta",       desc: "Vinci mettendo solo 4 pedine (non vale contro il bot Facile)", stat: "vinteIn4",        meta: 1 },
+    { gioco: "drop4", livello: "diamante", icona: "✨", nome: "Partita Perfetta",       desc: "Vinci mettendo solo 4 pedine (online o contro il Bot Difficile)", stat: "vinteIn4",        meta: 1 },
     { gioco: "drop4", livello: "diamante", icona: "💻", nome: "Dominio Cibernetico",    desc: "Batti il bot Difficile 5 volte",                               stat: "vinteDifficile",  meta: 5 },
-    { gioco: "drop4", livello: "diamante", icona: "🧊", nome: "Stallo Architettonico",  desc: "Pareggia una partita: griglia piena e nessuno fa 4",           stat: "pareggi",         meta: 1 },
+    { gioco: "drop4", livello: "diamante", icona: "🧊", nome: "Stallo Architettonico",  desc: "Pareggia online o contro il Bot Medio o Difficile: griglia piena, nessuno fa 4",stat: "pareggi",         meta: 1 },
 
     // ---- BATTAGLIA NAVALE ----
     { gioco: "navale", livello: "bronzo",   icona: "🚢", nome: "Prima Salva",             desc: "Gioca la tua prima partita",                                  stat: "partite",             meta: 1 },
@@ -1826,7 +1826,7 @@
     { gioco: "pendolo", livello: "oro",      icona: "🎪", nome: "Lanciatore Esperto",    desc: "Vinci 10 sfide da lanciatore",                                stat: "vittorieLanciatore",           meta: 10 },
     { gioco: "pendolo", livello: "oro",      icona: "🦾", nome: "Bot in Acqua",         desc: "Batti 3 volte il bot Difficile giocando da lanciatore",     stat: "vittorieLanciatoreDifficile",   meta: 3 },
     { gioco: "pendolo", livello: "oro",      icona: "🛡️", nome: "Sempre in Piedi",      desc: "Resisti al bot Difficile sulla trave",                      stat: "vittorieTraveDifficile",        meta: 1 },
-    { gioco: "pendolo", livello: "diamante", icona: "⚡", nome: "Lancio Lampo",          desc: "Batti il bot Difficile buttando giù tutti in 6 secondi",   stat: "triplettaDifficileVeloce",      meta: 1 },
+    { gioco: "pendolo", livello: "diamante", icona: "⚡", nome: "Lancio Lampo",          desc: "Batti il bot Difficile buttando giù tutti in 10 secondi",  stat: "triplettaDifficileVeloce",      meta: 1 },
     { gioco: "pendolo", livello: "diamante", icona: "🧿", nome: "Mira da Campione",      desc: "Batti 20 volte il bot Difficile da lanciatore",           stat: "vittorieLanciatoreDifficile",   meta: 20 },
     { gioco: "pendolo", livello: "diamante", icona: "🌊", nome: "Trave Impossibile",     desc: "Resisti 3 volte al bot Difficile sulla trave",            stat: "vittorieTraveDifficile",        meta: 3 },
 
@@ -1904,13 +1904,13 @@
     { gioco: "patata", livello: "argento",  icona: "↩️", nome: "Non Era Valida",      desc: "Rimanda indietro la bomba 5 volte",                                 stat: "rimandi",             meta: 5 },
     { gioco: "patata", livello: "argento",  icona: "🧍", nome: "Duro a Morire",       desc: "Sopravvivi a 25 esplosioni",                                        stat: "roundSopravvissuti",  meta: 25 },
     { gioco: "patata", livello: "argento",  icona: "🎲", nome: "La Ruota Decide",     desc: "Gioca 3 partite con una categoria a sorpresa",                      stat: "partiteSorpresa",     meta: 3 },
-    { gioco: "patata", livello: "oro",      icona: "🏆", nome: "Ultimo Rimasto",      desc: "Vinci 5 partite",                                                    stat: "vittorie",            meta: 5 },
+    { gioco: "patata", livello: "argento",  icona: "🏆", nome: "Ultimo Rimasto",      desc: "Vinci la tua prima partita online (almeno in 3)",                    stat: "vittorie",            meta: 1 },
     { gioco: "patata", livello: "oro",      icona: "⚡", nome: "Passaggi Fulminei",   desc: "Passa la bomba 100 volte",                                          stat: "passaggi",            meta: 100 },
     { gioco: "patata", livello: "oro",      icona: "🌋", nome: "Sopravvissuto",       desc: "Sopravvivi a 60 esplosioni",                                        stat: "roundSopravvissuti",  meta: 60 },
-    { gioco: "patata", livello: "oro",      icona: "🌐", nome: "Ultimo Online",       desc: "Vinci 5 partite online",                                            stat: "vittorieOnline",      meta: 5 },
+    { gioco: "patata", livello: "oro",      icona: "🌐", nome: "Ultimo Online",       desc: "Vinci 5 partite online (almeno in 3)",                              stat: "vittorieOnline",      meta: 5 },
     { gioco: "patata", livello: "oro",      icona: "🎰", nome: "Amante del Rischio",  desc: "Gioca 10 partite con una categoria a sorpresa",                     stat: "partiteSorpresa",     meta: 10 },
-    { gioco: "patata", livello: "diamante", icona: "👑", nome: "Re della Patata",     desc: "Vinci 15 partite online",                                           stat: "vittorieOnline",      meta: 15 },
-    { gioco: "patata", livello: "diamante", icona: "🔥", nome: "Serie Bollente",      desc: "Vinci 3 partite di fila",                                           stat: "serieVittorieMax",    meta: 3 },
+    { gioco: "patata", livello: "diamante", icona: "👑", nome: "Re della Patata",     desc: "Vinci 15 partite online (almeno in 3)",                             stat: "vittorieOnline",      meta: 15 },
+    { gioco: "patata", livello: "diamante", icona: "🔥", nome: "Serie Bollente",      desc: "Vinci 3 partite online di fila (almeno in 3)",                      stat: "serieVittorieMax",    meta: 3 },
     { gioco: "patata", livello: "diamante", icona: "💎", nome: "Giro Infinito",       desc: "Passa la bomba 200 volte",                                          stat: "passaggi",            meta: 200 },
 
     // ---- Sì... però ----
@@ -3286,10 +3286,14 @@
 
   function nomiGruppo() { return gruppo.map(function (p, i) { return (p.nome || "").trim() || ("Giocatore " + (i + 1)); }); }
 
+  // quanti giocatori servono almeno: quelli del modo scelto (modi[].min, es. Palla Matta: 1 da solo, 2 nella sfida), se no quelli del gioco
+  function minDi(g, modo) { var M = g && modo ? modoDi(g, modo) : null; return (M && M.min) || (g && g.giocatoriMin) || 2; }
   function schermataSala(g, opts) {
     var torn = !!(opts && opts.torneo);
-    var min = g ? (g.giocatoriMin || 2) : 2;
+    var min = g ? minDi(g, opts && opts.modo) : 2;
     var max = g ? (g.giocatoriMax || 10) : 10;
+    // (un modo "diretto" parte appena si tocca Avanti: servono già tutti quelli che servono)
+    var Mg = g && opts && opts.modo ? modoDi(g, opts.modo) : null, minAvanti = (torn || (Mg && Mg.diretto)) ? min : 1;
     if (!gruppo.length) {
       var io = profiloAttivo();
       if (io) gruppo.push({ nome: io.nome, emoji: io.emoji });
@@ -3298,10 +3302,11 @@
       sotto: torn ? "Chi partecipa al torneo" : (g ? ("Si gioca a " + g.nome) : "Chi partecipa"),
       indietro: function () { if (!torn && g && modiDi(g).length > 1) schermataModo(g); else tornaHome(); } });   // tornaHome: torna anche nell'edificio da cui si è entrati
 
+    s.classList.add("prima-fissa");   // "Avanti" sempre a vista: con tanti giocatori scorre solo la lista
     var conta = el("p", { class: "modulo-nota" });
     var lista = el("div");
     var avanti = el("button", { class: "btn btn-primario", text: torn ? "Comincia il torneo ▶" : "Avanti ▶", onclick: function () {
-      if (gruppo.length < (torn ? min : 1)) return;
+      if (gruppo.length < minAvanti) return;
       if (torn) return iniziaTorneo();
       if (g) schermataPreGioco(g, opts && opts.modo ? { modo: opts.modo } : null); else schermataScegliGioco();
     }});
@@ -3319,7 +3324,7 @@
       });
       conta.textContent = gruppo.length + (gruppo.length === 1 ? " partecipante" : " partecipanti")
         + (gruppo.length < min ? " · ne servono almeno " + min : "");
-      if (gruppo.length < (torn ? min : 1)) avanti.disabled = true; else avanti.removeAttribute("disabled");
+      if (gruppo.length < minAvanti) avanti.disabled = true; else avanti.removeAttribute("disabled");
     }
 
     s._contenuto.appendChild(conta);
@@ -3355,8 +3360,9 @@
     var s = schermata({ icona: g.icona, titolo: g.nome,
       sotto: torn ? ("Torneo · " + nomeDifficolta(pesoGioco(g))) : (inSala ? "Sala · impostazioni" : (M ? M.icona + " " + M.nome + " · impostazioni" : "Impostazioni della partita")),
       indietro: function () { if (torn) schermataTorneoHub(); else if (inSala) salaScegliGioco(); else if (conAmici) schermataSala(g, modo ? { modo: modo } : null); else if (modiDi(g).length > 1) schermataModo(g); else tornaHome(); } });
+    s.classList.add("prima-fissa");   // "Comincia" sempre a vista: se le scelte sono tante scorre solo il centro
     if (!conAmici && !torn && !inSala) {
-      if (online) s._contenuto.appendChild(el("p", { class: "modulo-nota sl-prima", text: "Scegli come giocare, poi apri la stanza: ti do il link da mandare agli amici e vi aspettate insieme nella saletta." }));
+      if (online) s._contenuto.appendChild(el("p", { class: "modulo-nota sl-prima", text: "Scegli come giocare, poi apri la stanza: inviti gli amici col tasto 📤 e vi aspettate insieme nella saletta." }));
     } else if (inSala) {
       s._contenuto.appendChild(el("div", { class: "sala-sommario" }, [
         el("span", { class: "chi", text: "👥 Sala · " + (sala ? sala.membri.length : 1) + " in gioco" }) ]));
@@ -3368,25 +3374,31 @@
       ]));
     }
     var impostazioni = {}, box = null;
+    // chi gioca (es. "Formazione di Paky"): sullo stesso telefono e nel torneo il gruppo, nella Sala chi c'è, se no tu
+    var io0 = profiloAttivo();
+    var chiGioca = (conAmici || torn) ? nomiGruppo() : (inSala ? ((sala && sala.membri) || []).map(function (m) { return m.nome; }) : [(io0 && io0.nome) || nomiGruppo()[0] || "Giocatore 1"]);
     if (typeof g.impostazioni === "function") {
       box = el("div");
-      g.impostazioni(box, impostazioni, { el: el, torneo: torn, sala: inSala, modo: modo });
+      g.impostazioni(box, impostazioni, { el: el, torneo: torn, sala: inSala, modo: modo, giocatori: chiGioca.slice() });
       if (modo) impostazioni.modo = modo;   // il modo l'avete scelto prima: qui non si cambia
       s._contenuto.appendChild(box);
     }
     if (inSala) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "In una sala si gioca sempre online: appena cominci, gli altri entrano da soli." }));
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca",
       onclick: function () { schermataRegole(g, function () { schermataPreGioco(g, opts); }); } }));
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: inSala ? "Comincia per tutti ▶" : (online ? "🔗 Apri la stanza ▶" : "Comincia ▶"), onclick: function () {
+    function comincia() {
       if (inSala) { impostazioni.modo = "online"; return salaLancia(g, impostazioni, box); }
       if (modo) impostazioni.modo = modo;
       // online: le stesse impostazioni restano a portata dell'host nella saletta (tasto "⚙️ Regole")
       if (!conAmici && !torn) { var io = profiloAttivo(), soloIo = [(io && io.nome) || nomiGruppo()[0] || "Giocatore 1"]; ultimaPartita = { gioco: g, impostazioni: impostazioni }; return avviaPartita(g, soloIo, impostazioni, online ? Object.assign({}, opts, { regole: box }) : opts); }   // online o contro il computer: ci sei solo tu (gli altri entrano dal link o sono bot)
       // online: l'host apre la stanza da solo, gli altri entrano via rete → niente vincolo di minimo qui
-      if (!(impostazioni && impostazioni.modo === "online") && gruppo.length < (g.giocatoriMin || 2)) return schermataSala(g, opts);
+      if (!(impostazioni && impostazioni.modo === "online") && gruppo.length < minDi(g, modo)) return schermataSala(g, opts);
       ultimaPartita = { gioco: g, impostazioni: impostazioni };
       avviaPartita(g, nomiGruppo(), impostazioni, opts);
-    }}));
+    }
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: inSala ? "Comincia per tutti ▶" : (online ? "🔗 Apri la stanza ▶" : "Comincia ▶"), onclick: comincia }));
+    // modi[].diretto: quel modo non ha niente da scegliere qui (es. Palla Matta "Da solo": il livello si sceglie dopo) → si parte subito
+    if (M && M.diretto && !torn && !inSala && !online) return comincia();
     mostra(s);
   }
 
@@ -3920,7 +3932,7 @@
     if (!g || !g.impostazioni) return null;
     if (!sala.regoleElim) {
       var imp = {}, box = el("div", {});
-      g.impostazioni(box, imp, { el: el, sala: true, modo: "online" });
+      g.impostazioni(box, imp, { el: el, sala: true, modo: "online", giocatori: sala.membri.map(function (m) { return m.nome; }) });
       E.imp = imp; sala.regoleElim = { box: box, imp: imp };
     }
     return haRegole(sala.regoleElim.box) ? sala.regoleElim : null;
@@ -4073,7 +4085,7 @@
   //  amici: true = poi si aggiungono gli amici (solo per chi gioca sullo stesso telefono).
   // =========================================================
   var MODO_ELIMINAZIONE = { modo: "eliminazione", icona: "🏆", nome: "Torneo a eliminazione", sotto: "Fino a 10 amici: sfide a due, chi vince va avanti" };
-  var MODO_ONLINE = { modo: "online", icona: "🔗", nome: "Online: apro io la stanza", sotto: "Ognuno dal suo telefono: mandi il link agli amici" };
+  var MODO_ONLINE = { modo: "online", icona: "🔗", nome: "Online: apro io la stanza", sotto: "Ognuno dal suo telefono: inviti gli amici col tasto 📤" };
   var MODO_CODICE = { modo: "codice", icona: "🔑", nome: "Online: ho un codice", sotto: "Ti hanno invitato? Entra nella loro stanza" };
   function modiDi(g) {
     var io = profiloAttivo(), mioNome = String((io && io.nome) || "").trim().toUpperCase();
@@ -4087,12 +4099,14 @@
   function schermataModo(g) {
     var s = schermata({ icona: g.icona, titolo: g.nome, sotto: "Come giocate?", indietro: tornaHome });
     var io = profiloAttivo(), griglia = el("div", { class: "modo-scelta" });
-    var modi = modiDi(g);
+    var modi = modiDi(g), ultimo = ultimoModo(g);
     if (giocoOnline(g)) modi.splice(modi.indexOf(MODO_ONLINE) + 1, 0, MODO_CODICE);   // subito sotto "Online": chi è invitato entra col codice
     modi.forEach(function (m) {
-      griglia.appendChild(el("button", { class: "modo-grande" + (m.modo === "online" ? " online" : ""), onclick: function () { sceltoModo(g, m); } }, [
+      var tit = el("div", { class: "mg-tit", text: m.nome });
+      if (m.modo === ultimo && modi.length > 1) tit.appendChild(el("span", { class: "mg-ultimo", text: "l'ultima volta" }));   // si ritrova subito come avete giocato
+      griglia.appendChild(el("button", { class: "modo-grande" + (m.modo === "online" ? " online" : ""), onclick: function () { if (m.modo !== "codice") ricordaModo(g, m.modo); sceltoModo(g, m); } }, [
         el("div", { class: "mg-ico", text: m.icona }),
-        el("div", { class: "mg-testo" }, [ el("div", { class: "mg-tit", text: m.nome }), el("div", { class: "mg-sotto", text: m.sotto || "" }) ]),
+        el("div", { class: "mg-testo" }, [ tit, el("div", { class: "mg-sotto", text: m.sotto || "" }) ]),
         el("div", { class: "mg-freccia", text: "›" })
       ]));
     });
@@ -4101,6 +4115,9 @@
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca", onclick: function () { schermataRegole(g, function () { schermataModo(g); }); } }));
     mostra(s);
   }
+  // l'ultimo modo scelto per ogni gioco (su questo telefono): nella prima schermata ha la scritta "l'ultima volta"
+  function ultimoModo(g) { var o = leggiL("sg-ultimo-modo", {}); return (o && typeof o === "object" && o[g.id]) || null; }
+  function ricordaModo(g, modo) { var o = leggiL("sg-ultimo-modo", {}); if (!o || typeof o !== "object") o = {}; o[g.id] = modo; scriviL("sg-ultimo-modo", o); }
   function sceltoModo(g, m) {
     if (m.modo === "codice") return entraConCodice(function () { schermataModo(g); });   // invitato: si entra nella stanza di un altro
     if (m.modo === "eliminazione") return creaSala({ eliminazione: g.id });   // un link solo, coppie sorteggiate, chi vince va avanti
@@ -4118,7 +4135,8 @@
   //  Sta tutta in uno schermo (anche 360x640): la stanza prende lo spazio che resta.
   //  o: { host, codice, pronta (false = sto aprendo), giocatori: [{ id, nome, omino, bot, host, tu }],
   //       min, vuoti (posti liberi da mostrare), onComincia, onEsci, attesa (testo per chi aspetta),
-  //       extra: [nodi del gioco, es. scelta dei posti], nota, testoComincia,
+  //       extra: [nodi del gioco, es. scelta dei posti], nota, testoComincia, confermaEsci (la domanda all'host che esce),
+  //       spettatore (chi entra ma guarda soltanto, es. partita piena: true = "👀 Guardi questa partita", oppure il testo da scrivere),
   //       _rete (il collegamento della stanza: lo mette il core) }
   //  Si aggiorna al suo posto (niente lampeggio): i personaggi già dentro restano, i nuovi entrano.
   // =========================================================
@@ -4177,7 +4195,12 @@
     if (U && U.gid === g.id && U.host === !!o.host && document.body.contains(U.s)) { if (R) U.R = R; aggiornaSaletta(U, o, false); return U.s; }
     if (U && U.ro) try { U.ro.disconnect(); } catch (e) {}   // (la saletta di prima non serve più)
     var s = schermata({ titolo: g.nome, sotto: o.sotto || (o.host ? "Online · la stanza è tua" : ("Online · stanza " + String(o.codice || "").toUpperCase())),
-      indietro: function () { if (o.host && !window.confirm(o.confermaEsci || "Chiudere la stanza per tutti?")) return; SL.ultimo = null; if (o.onEsci) o.onEsci(); } });
+      indietro: function () {
+        // (l'host prima conferma, con la finestra al centro dell'app: la stanza si chiude per tutti)
+        function esci() { SL.ultimo = null; var oo = U2 && U2.o && U2.o.onEsci ? U2.o : o; if (oo.onEsci) oo.onEsci(); }
+        if (!o.host) return esci();
+        chiediConferma((U2 && U2.o && U2.o.confermaEsci) || o.confermaEsci || "Chiudere la stanza per tutti?", null, "Chiudi", function () { if (document.body.contains(s)) esci(); });
+      } });
     s.classList.add("saletta-schermo");
     // il primo tocco nella saletta accende i suoni (i telefoni li tengono spenti finché non si tocca): "pling", musichetta…
     ["pointerup", "touchend", "click"].forEach(function (ev) { s.addEventListener(ev, function () { audioCtx(); }, true); });   // (iPhone: serve un tocco vero)
@@ -4265,13 +4288,17 @@
     var io = gio.filter(function (p) { return p.tu; })[0], dentro = !!io && (!st || st.presente);
     var altri = gio.filter(function (p) { return !p.bot && !p.tu; }).length;
     var guardi = !dentro && !!st && st.vivo && st.foto && altri >= 2 && aDue(giocoDa(U.gid)) && (st.presente || Date.now() - (st.entrato || 0) > 2500);
-    var k = dentro ? "dentro" : (guardi ? "guardi" : "entrando");
-    if (U.statoTit !== k) {
+    // il gioco dice che questo telefono guarda soltanto (t.lobby({ spettatore: true }), es. partita piena): "👀 Guardi questa partita"
+    var spett = !!(U.o && U.o.spettatore);
+    var k = spett ? "spett" : (dentro ? "dentro" : (guardi ? "guardi" : "entrando"));
+    var tx = k === "spett" ? (typeof U.o.spettatore === "string" ? U.o.spettatore : "👀 Guardi questa partita")
+      : k === "dentro" ? "✅ Sei dentro!" : (k === "guardi" ? "👀 Giocano in due: tu guardi" : "⏳ Sto entrando…");
+    if (U.statoTit !== k || U.titolo.textContent !== tx) {
       U.statoTit = k;
-      U.titolo.textContent = k === "dentro" ? "✅ Sei dentro!" : (k === "guardi" ? "👀 Giocano in due: tu guardi" : "⏳ Sto entrando…");
+      U.titolo.textContent = tx;
       U.box.classList.toggle("entrando", k === "entrando");
     }
-    return dentro;
+    return dentro && !spett;
   }
   function aggiornaSaletta(U, o, nuova) {
     U.o = o;
@@ -4291,11 +4318,13 @@
     } else {
       var chiHost = gio.filter(function (p) { return p.host; })[0];
       U.attesa.textContent = o.attesa || ("Aspetta che " + (chiHost ? chiHost.nome : "l'host") + " faccia partire la partita…");
-      if (!U.consiglio.textContent) U.consiglio.textContent = CONSIGLI_SL[Math.floor(Math.random() * CONSIGLI_SL.length)];
       // sono davvero dentro? Nella lista c'è "tu" E l'ultima foto dell'host ha il mio id (lo sa il collegamento)
       var rete = o._rete && o._rete.stato ? o._rete : null, st = rete ? rete.stato() : null;
       gio = senzaTuFalso(gio, st);
       var io = gio.filter(function (p) { return p.tu; })[0], dentro = titoloSaletta(U, gio, st);
+      // il consiglio (scelto una volta): chi guarda soltanto non ha il suo avatar nella stanza, niente "Tocca il tuo avatar"
+      var adatti = io && !o.spettatore ? CONSIGLI_SL : CONSIGLI_SL.filter(function (c) { return !/il tuo avatar/.test(c); });
+      if (adatti.indexOf(U.consiglio.textContent) < 0) U.consiglio.textContent = adatti[Math.floor(Math.random() * adatti.length)];
       if (dentro && rete && rete.codice) {
         // il nome che ho in questa stanza (se l'host l'ha cambiato: "Luca 2") e quello dell'host: servono se la pagina si ricarica
         var chiave = io.nome + "|" + (chiHost ? chiHost.nome : "");
@@ -4304,7 +4333,7 @@
       // non sono nella foto dell'host: chiedo di nuovo di entrare (la saletta è appena comparsa, es. "Nuova partita",
       // oppure c'ero e l'host mi ha tolto). Negli aggiornamenti normali ci pensa il collegamento, senza fretta.
       // (chi è nella foto ma non tra i giocatori guarda soltanto: niente da chiedere)
-      if (!dentro && st && !st.presente && (nuova || st.dentro)) rete.riprova();
+      if (!dentro && !o.spettatore && st && !st.presente && (nuova || st.dentro)) rete.riprova();
       // in saletta il titolo dice già tutto: la pillola "entri alla prossima" sparisce subito (non un secondo dopo)
       if (rete) pillola("prossima", null);
     }
@@ -4473,7 +4502,7 @@
   //    __fuori { to, perche: "fuori" (fatto uscire) o "porta" (porta chiusa) }
   //  Lo stato di ogni stanza (SV) sta sul suo collegamento: h._sv (host e ospiti).
   // =========================================================
-  var FACCINE = ["👋", "😂", "😱", "🔥", "👏", "😴"];
+  var FACCINE_SL = ["👋", "😂", "😱", "🔥", "👏", "😴"];
   var GESTO_FACCINA = { "👋": "saluta", "😂": "ride", "😱": "trema", "🔥": "salta", "👏": "applaude", "😴": "dorme" };
   var VIA_MS = 2400;   // il 3-2-1: 0,8 secondi per numero, poi "Via!"
   var SVH = {};        // le stanze aperte da questo telefono (codice → SV): per chi si ricollega (evento sg-forse)
@@ -4582,7 +4611,7 @@
     } else if (U.bPronto) {
       // "✋ Sono pronto!" solo per chi è davvero dentro; chi guarda (giochi a due già pieni) non ce l'ha
       var dentro = U.statoTit === "dentro", mio = mioPronto(U, SV);
-      U.bPronto.hidden = !SV || U.statoTit === "guardi";
+      U.bPronto.hidden = !SV || U.statoTit === "guardi" || U.statoTit === "spett";
       var fp = (dentro ? 1 : 0) + "|" + (mio ? 1 : 0);
       if (U.prFirma !== fp) {
         U.prFirma = fp; svuota(U.bPronto);
@@ -4633,7 +4662,7 @@
     if (m.t === "__pronto") {
       if (m.si) SV.pronti[id] = 1; else delete SV.pronti[id];
       svRiassunto(SV);   // (anche se non cambia niente: così il suo telefono è sicuro)
-    } else if (m.t === "__faccina" && FACCINE.indexOf(m.f) >= 0) {
+    } else if (m.t === "__faccina" && FACCINE_SL.indexOf(m.f) >= 0) {
       var ora = Date.now(); if (ora - (SV.ultFa[id] || 0) < 900) return;
       SV.ultFa[id] = ora;
       var nome = SV.nomi[id] || "";
@@ -4763,7 +4792,7 @@
   function vassoioFaccine(svFn) {
     var box = el("div", { class: "sl-faccine", role: "group", "aria-label": "Faccine: il tuo avatar le fa sui telefoni di tutti" });
     var carica = el("i", { class: "sl-fa-carica", "aria-hidden": "true" }), tasti = [];
-    FACCINE.forEach(function (emoji) {
+    FACCINE_SL.forEach(function (emoji) {
       var b = el("button", { class: "sl-fa", type: "button", "aria-label": "Faccina " + emoji, text: emoji });
       b.addEventListener("click", function () {
         if (!mandaFaccina(svFn(), emoji)) return;
@@ -5140,8 +5169,10 @@
   }
 
   // ---- Passaggio del telefono (interstiziale tra un turno e l'altro) ----
-  function passaIlTelefono(nomeProssimo, quando) {
-    var s = schermata({});
+  // esci (facoltativo): il tasto ‹ in alto per lasciare il gioco anche da qui (prima chiede "Uscire dalla partita?")
+  function passaIlTelefono(nomeProssimo, quando, esci) {
+    var s = schermata({ indietro: esci ? function () { chiediConferma("Uscire dalla partita?", "La partita in corso si perde.", "Esci", esci); } : null });
+    if (esci) s.classList.add("senza-testa");   // (solo la freccia piccola nell'angolo: la schermata resta quella di prima)
     var box = el("div", { class: "passa" }, [
       el("div", { class: "emoji", text: "🤝" }),
       el("p", { class: "tenue", text: "Passa il telefono a" }),
@@ -5154,19 +5185,33 @@
 
   // ---- Tabellone finale (uguale per tutti i giochi) ----
   // classifica: array ordinato dal 1° all'ultimo, ognuno { nome, punti (facolt.) }
-  function schermataFine(g, classifica, giocatori, impostazioni) {
+  // le medaglie a pari merito: oro, oro, poi ARGENTO per il gruppo dopo (non bronzo). posti = [1, 1, 3, 4] → 🥇🥇🥈🥉
+  // (dal quarto gruppo in giù si scrive il posto vero: "5°")
+  var MEDAGLIE = ["🥇", "🥈", "🥉"];
+  function medaglieAPari(posti) {
+    var gruppi = 0, prec = null;
+    return posti.map(function (p) {
+      if (p !== prec) { gruppi++; prec = p; }
+      return MEDAGLIE[gruppi - 1] || p + "°";
+    });
+  }
+  // tanti giocatori (più di 6), o righe che non starebbero nello schermo coi tasti sotto (es. 6 su un 360x640):
+  // righe basse su due colonne, così i tasti restano sempre a vista. extra = altro spazio sotto la classifica (le faccine)
+  function classificaFitta(n, extra) { return n > 6 || n * 71 + 262 + (extra || 0) > (window.innerHeight || 640); }
+  function schermataFine(g, classifica, giocatori, impostazioni, faccine) {
     var s = schermata({ icona: "🏆", titolo: "Fine partita", sotto: g.nome });
-    var ol = el("ol", { class: "classifica" });
-    var medaglie = ["🥇", "🥈", "🥉"];
+    var ol = el("ol", { class: "classifica" + (classificaFitta(classifica.length, faccine ? 56 : 0) ? " fitta" : "") });
+    var posti = classifica.map(function (r, i) { return r.pos || i + 1; });   // a pari merito il gioco dà la stessa posizione: stessa medaglia
+    var medaglie = medaglieAPari(posti);
     classifica.forEach(function (r, i) {
-      var pos = r.pos || i + 1;   // a pari merito il gioco dà la stessa posizione: stessa medaglia
-      ol.appendChild(el("li", { class: pos === 1 ? "vincitore" : "" }, [
-        el("span", { class: "pos", text: medaglie[pos - 1] || pos + "°" }),
+      ol.appendChild(el("li", { class: posti[i] === 1 ? "vincitore" : "" }, [
+        el("span", { class: "pos", text: medaglie[i] }),
         el("span", { class: "nome", text: r.nome }),
-        r.punti != null ? el("span", { class: "punti", text: r.punti }) : null
+        r.punti != null ? el("span", { class: "punti", text: typeof r.punti === "number" && r.punti % 1 === 0 ? cifre(r.punti) : r.punti }) : null
       ]));
     });
     s._contenuto.appendChild(ol);
+    if (faccine) { faccine.classList.add("fine-faccine"); s._contenuto.appendChild(faccine); }   // partita online: le faccine anche qui
 
     // Dalla fine partita si resta nella stessa sala: rigioca, cambia gioco o modifica il gruppo
     s._piede.appendChild(el("button", {
@@ -5198,7 +5243,7 @@
     return classifica.map(function (r, i) {
       var k = (r.pos ? r.pos : i + 1) - 1;   // pos = il posto (a pari merito lo stesso posto, gli stessi punti)
       var perc = k < CURVA_TORNEO.length ? CURVA_TORNEO[k] : 6;
-      return { nome: r.nome, punti: Math.round(perc * peso) };
+      return { nome: r.nome, punti: Math.round(perc * peso), pos: k + 1 };
     });
   }
 
@@ -5208,13 +5253,16 @@
   }
 
   function podio(cl, evidenziaPrimo) {
-    var ol = el("ol", { class: "classifica" });
-    var medaglie = ["🥇", "🥈", "🥉"];
+    var ol = el("ol", { class: "classifica" + (classificaFitta(cl.length) ? " fitta" : "") });
+    // a pari punti lo stesso posto e la stessa medaglia (prima della prima partita sono tutti a 0: i posti in fila)
+    var posti = [], medaglie;
+    cl.forEach(function (r, i) { posti.push(evidenziaPrimo && i && r.punti === cl[i - 1].punti ? posti[i - 1] : i + 1); });
+    medaglie = medaglieAPari(posti);
     cl.forEach(function (r, i) {
-      ol.appendChild(el("li", { class: (i === 0 && evidenziaPrimo) ? "vincitore" : "" }, [
-        el("span", { class: "pos", text: medaglie[i] || (i + 1) + "°" }),
+      ol.appendChild(el("li", { class: (posti[i] === 1 && evidenziaPrimo) ? "vincitore" : "" }, [
+        el("span", { class: "pos", text: medaglie[i] }),
         el("span", { class: "nome", text: (torneo && torneo.emoji[r.nome] ? torneo.emoji[r.nome] + " " : "") + r.nome }),
-        el("span", { class: "punti", text: r.punti })
+        el("span", { class: "punti", text: cifre(r.punti) })
       ]));
     });
     return ol;
@@ -5268,8 +5316,17 @@
   function torneoScegliGioco() {
     var s = schermata({ icona: "🎮", titolo: "Quale gioco?", sotto: "Più è difficile, più punti vale",
       indietro: schermataTorneoHub });
-    var griglia = el("div", { class: "griglia-giochi" });
-    giochi.forEach(function (g) { if (!g.soloOnline) griglia.appendChild(tesseraGioco(g, function () { schermataPreGioco(g, { torneo: true }); })); });   // sullo stesso telefono: niente giochi solo online
+    var griglia = el("div", { class: "griglia-giochi" }), n = torneo.giocatori.length, tolti = 0;
+    // sullo stesso telefono: niente giochi solo online, e solo i giochi dove giocate TUTTI (in 3 niente giochi a due:
+    // giocherebbero solo i primi due della lista e gli altri resterebbero senza punti)
+    giochi.forEach(function (g) {
+      if (g.soloOnline) return;
+      if ((g.giocatoriMax || 10) < n || (g.giocatoriMin || 1) > n) { tolti++; return; }
+      // (i giochi a due, postiOnline: 2: nel torneo si fa una partita sola, es. il Tris "chi vince resta" vale solo fuori dal torneo)
+      if (g.postiOnline && g.postiOnline < n) { tolti++; return; }
+      griglia.appendChild(tesseraGioco(g, function () { schermataPreGioco(g, { torneo: true }); }));
+    });
+    if (tolti) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Qui trovi i giochi dove giocate tutti e " + n + " insieme." }));
     s._contenuto.appendChild(griglia);
     mostra(s);
   }
@@ -5281,13 +5338,13 @@
     torneo.storia.push({ gioco: g.nome, assegnati: assegnati });
 
     var s = schermata({ icona: g.icona, titolo: "Punti di questa partita", sotto: g.nome + " · " + nomeDifficolta(pesoGioco(g)) });
-    var ol = el("ol", { class: "classifica" });
-    var medaglie = ["🥇", "🥈", "🥉"];
+    var ol = el("ol", { class: "classifica" + (classificaFitta(assegnati.length) ? " fitta" : "") });
+    var medaglie = medaglieAPari(assegnati.map(function (r) { return r.pos; }));   // a pari merito (r.pos uguale) la stessa medaglia
     assegnati.forEach(function (r, i) {
-      ol.appendChild(el("li", { class: i === 0 ? "vincitore" : "" }, [
-        el("span", { class: "pos", text: medaglie[i] || (i + 1) + "°" }),
+      ol.appendChild(el("li", { class: r.pos === 1 ? "vincitore" : "" }, [
+        el("span", { class: "pos", text: medaglie[i] }),
         el("span", { class: "nome", text: r.nome }),
-        el("span", { class: "punti", text: "+" + r.punti })
+        el("span", { class: "punti", text: "+" + cifre(r.punti) })
       ]));
     });
     s._contenuto.appendChild(ol);
@@ -5330,25 +5387,30 @@
     var sec = (ora - xpOrologio.t0) / 1000;
     xpOrologio.t0 = ora;   // la prossima partita parte da qui
     if (!(window.SGLivelli && window.SGNube && SGNube.aggiungiXp && SGNube.profilo())) return;   // solo coi profili
-    var p = SGNube.profilo(), lista = classifica || [], mio = null, nomeQui = codice ? nomeStanza(codice) : "";
+    var p = SGNube.profilo(), lista = (classifica || []).filter(Boolean), mio = null, nomeQui = codice ? nomeStanza(codice) : "";
+    // (le righe dei bot, bot: true, non sono mai io: nemmeno se il bot si chiama come me)
+    var persone = lista.filter(function (r) { return !r.bot; });
     // prima il nome che ho in questa stanza (se un altro senza profilo era già "Luca", io sono "Luca 2"), poi quello del profilo
-    if (nomeQui) lista.forEach(function (r) { if (!mio && r && stessoNome(r.nome, nomeQui)) mio = r; });
-    lista.forEach(function (r) { if (!mio && r && stessoNome(r.nome, p.nome)) mio = r; });
-    if (!mio) lista.forEach(function (r) { if (!mio && r && sonoIo(r.nome)) mio = r; });
+    if (nomeQui) persone.forEach(function (r) { if (!mio && stessoNome(r.nome, nomeQui)) mio = r; });
+    persone.forEach(function (r) { if (!mio && stessoNome(r.nome, p.nome)) mio = r; });
+    if (!mio) persone.forEach(function (r) { if (!mio && sonoIo(r.nome)) mio = r; });
     if (soloSeCi && !mio) return;
-    var primo = lista[0], vinto = !!mio && (mio.pos != null ? mio.pos === 1 : (mio === primo || (mio.punti != null && primo && mio.punti === primo.punti)));
-    if (giocoXp && SGNube.contaPartita) SGNube.contaPartita(giocoXp, mio ? (vinto ? "vinta" : "persa") : null, sec, mio && typeof mio.punti === "number" ? mio.punti : null);   // le statistiche del gioco (📊 nel profilo)
+    // pareggio: tutti primi (Tris e Drop 4 danno pos 1 a tutti e due) o tutti con gli stessi punti: non è una vittoria
+    var primo = lista[0], pari = lista.length > 1 && lista.every(function (r) { return r.pos != null ? r.pos === 1 : (r.punti != null && primo && r.punti === primo.punti); });
+    var vinto = !!mio && !pari && (mio.pos != null ? mio.pos === 1 : (mio === primo || (mio.punti != null && primo && mio.punti === primo.punti)));
+    if (giocoXp && SGNube.contaPartita) SGNube.contaPartita(giocoXp, mio && !pari ? (vinto ? "vinta" : "persa") : null, sec, mio && typeof mio.punti === "number" ? mio.punti : null);   // le statistiche del gioco (📊 nel profilo; il pareggio conta solo come partita)
     var giorno = oggiStr(), prima = SGNube.progressione().xpGiorno !== giorno;
     var xp = SGLivelli.xpPartita({ secondi: sec, vinto: vinto, primaDelGiorno: prima });
     if (!xp) return;
     xpOrologio.ultimo = ora;
     var r = SGNube.aggiungiXp(xp, prima ? giorno : null);
-    if (r) avvisoXp(xp, r, vinto, prima);
+    if (r && r.stato) try { avvisoXp(xp, r, vinto, prima); } catch (e) {}   // (un avviso che non riesce non blocca mai la fine partita)
   }
   // l'avviso in alto (lo stesso dei trofei): XP presi, livello salito con le monete, Prestigio
   function avvisoXp(xp, r, vinto, prima) {
-    var s = r.stato, monete = 0, lv = 0, pr = 0;
-    r.eventi.forEach(function (e) { monete += e.monete; if (e.tipo === "livello") lv = e.livello; if (e.tipo === "prestigio") pr = e.prestigio; });
+    var s = r && r.stato, monete = 0, lv = 0, pr = 0;
+    if (!s) return;
+    (r.eventi || []).forEach(function (e) { if (!e) return; monete += e.monete || 0; if (e.tipo === "livello") lv = e.livello; if (e.tipo === "prestigio") pr = e.prestigio; });
     var su = "+" + cifre(xp) + " XP" + (vinto ? " · hai vinto" : "") + (prima ? " · prima del giorno" : "");
     if (pr) codaTrofei.push({ tipo: "xp", cls: "tl-platino", icona: "🌟", su: "PRESTIGIO " + pr + "!", nome: "Si riparte dal livello 1", sotto: "+" + cifre(monete) + " Speed Coins 🪙" });
     else if (lv) codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🆙", su: su, nome: "Livello " + lv + "!", sotto: "+" + cifre(monete) + " Speed Coins 🪙" });
@@ -5461,7 +5523,7 @@
         if (m && m.t === "__esito") { premiaPartita(m.c, true, C); return; }   // gli XP: ognuno si dà i suoi
         if (delCore(m)) {
           if (m.t === "__sl") svArrivato(SV, m);
-          else if (m.t === "__fa") { if (R.h && m.id !== R.h.mioId && FACCINE.indexOf(m.f) >= 0) mostraFaccina(SV, m.id, String(m.n || "").slice(0, 16), m.f); }
+          else if (m.t === "__fa") { if (R.h && m.id !== R.h.mioId && FACCINE_SL.indexOf(m.f) >= 0) mostraFaccina(SV, m.id, String(m.n || "").slice(0, 16), m.f); }
           else if (m.t === "__via") { if (!guarda) contoVia(SV, m); }
           else if (m.t === "__fuori") { if (R.h && m.to === R.h.mioId && !guarda) fuoriDallaStanza(R, m.perche); }
           return;
@@ -5534,7 +5596,8 @@
     if (!P || !P.viva() || hostDiRiserva(P.g)) return;
     var U = SL.ultimo, inSaletta = !!(U && !U.host && U.o && U.o._rete === R.h && document.body.contains(U.s));
     var nh = nomeStanza(R.codice, true);
-    if (eraDentro || !inSaletta) pillola("tornato", "🎉 " + (nh || "L'host") + " è tornato: si riparte dalla saletta", "verde", 3500);
+    // (i giochi con riprende: true, come Linea del tempo e Scalinata, all'host che ricarica riprendono la partita da dove era)
+    if (eraDentro || !inSaletta) pillola("tornato", "🎉 " + (nh || "L'host") + " è tornato: " + (P.g.riprende && !inSaletta ? "si riprende la partita" : "si riparte dalla saletta"), "verde", 3500);
     // ero già in saletta: basta rientrare (il collegamento ha già ripetuto "sono entrato"), niente da rifare sullo schermo
     if (inSaletta) return;
     try { R.h.lascia(); } catch (e) {}
@@ -5554,7 +5617,7 @@
       pillola("prossima", null); return;
     }
     var U = SL.ultimo, inSaletta = !!(U && !U.host && document.body.contains(U.s));
-    var guardi = inSaletta && U.o && U.o._rete === R.h && titoloSaletta(U, senzaTuFalso(U.o.giocatori || [], st), st) === false && U.statoTit === "guardi";
+    var guardi = inSaletta && U.o && U.o._rete === R.h && titoloSaletta(U, senzaTuFalso(U.o.giocatori || [], st), st) === false && (U.statoTit === "guardi" || U.statoTit === "spett");
     var fuori = !R.guarda && st.entrato && Date.now() - st.entrato > 2500 && !st.dentro && st.vivo && !st.ferma && !inSaletta;
     pillola("prossima", fuori ? (aDue(R.P.g) ? "👀 Giocano in due: tu guardi" : "👀 Partita in corso: la guardi ed entri alla prossima") : null, "grigia");
     if ((guardi || (fuori && aDue(R.P.g))) && R.h.calma) R.h.calma();   // gioco a due già pieno: chiedo di entrare solo ogni tanto
@@ -5625,8 +5688,9 @@
       // Restano i titoli che dicono qualcosa ("Hai vinto!", "Fine smazzata"…).
       schermata: function (o) {
         o = o || {};
-        var nomeG = String(g.nome || "").toLowerCase();
-        if (o.titolo && nomeG && String(o.titolo).toLowerCase().indexOf(nomeG) >= 0) o = Object.assign({}, o, { titolo: null });
+        // (solo il titolo UGUALE al nome del gioco: "Chi è l'impostore?" resta, col suo sottotitolo)
+        var nomeG = String(g.nome || "").trim().toLowerCase();
+        if (o.titolo && nomeG && String(o.titolo).trim().toLowerCase() === nomeG) o = Object.assign({}, o, { titolo: null });
         if (!o.titolo) o = Object.assign({}, o, { icona: null, sotto: null });
         var s = schermata(o);
         if (!o.titolo) s.classList.add("senza-testa");
@@ -5669,6 +5733,8 @@
       },
       // torneo a eliminazione: la partita col bot si trasmette, così gli altri la guardano (msg come quelli dell'host online)
       trasmetti: (salaCtx && salaCtx.trasmetti) ? function (msg) { if (viva()) salaCtx.trasmetti(msg); } : null,
+      // true nelle partite del torneo a eliminazione (online o col bot): col pareggio si rigioca da soli (conto sulla rivincita)
+      eliminazione: !!(salaCtx && salaCtx.tabellone),
       // la fila delle faccine della saletta, da mettere dove si aspetta o si guarda (es. la classifica finale, chi guarda
       // una partita a due): il mio avatar le fa sui telefoni di tutti. null se la partita non è online
       faccine: function () {
@@ -5682,8 +5748,17 @@
       // chiave: lo stesso conto anche se il tasto viene ridisegnato (es. "esito|" + numero del turno)
       contoAvanti: function (nodo, secondi, fn, chiave) { return contoAvanti(nodo, secondi, fn ? function () { if (viva()) fn(); } : null, chiave); },
 
-      // passaggio del telefono, poi esegue "quando"
-      passaA: function (nome, quando) { passaIlTelefono(nome, quando); },
+      // passaggio del telefono, poi esegue "quando" (in alto c'è ‹ per uscire dal gioco, con la conferma)
+      passaA: function (nome, quando) { if (!viva()) return; passaIlTelefono(nome, function () { if (viva() && quando) quando.apply(this, arguments); }, function () { tavolo.esci(); }); },
+
+      // la finestra di conferma al centro (la stessa dell'app): t.conferma("Uscire dalla partita?", "nota o null", "Esci", fn).
+      // Anche t.conferma(domanda, fn). "Resta" chiude e basta; il tasto del sì si attiva dopo un attimo (niente tocchi doppi)
+      conferma: function (domanda, nota, siTesto, siFn) {
+        if (typeof nota === "function") { siFn = nota; nota = null; siTesto = null; }
+        else if (typeof siTesto === "function") { siFn = siTesto; siTesto = null; }
+        if (!viva() || typeof siFn !== "function") return;
+        chiediConferma(domanda, nota, siTesto, function () { if (viva()) siFn(); });
+      },
 
       // i giochi online dicono com'è finita ogni partita, senza lasciare la loro schermata finale:
       // serve al torneo online per sommare i punti. classifica = [{ nome, pos? }] dal primo all'ultimo
@@ -5691,7 +5766,7 @@
       risultato: function (classifica) {
         if (!viva() || !classifica || !classifica.length) return;
         premiaPartita(classifica, false);   // questo telefono ha giocato davvero (host o contro il computer): XP anche se il nome è diverso
-        if (reteXp && reteXp.inviaVeloce) try { reteXp.inviaVeloce({ t: "__esito", c: classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }) }); } catch (e) {}
+        if (reteXp && reteXp.inviaVeloce) try { reteXp.inviaVeloce({ t: "__esito", c: classifica.map(function (r) { var x = { nome: r.nome, pos: r.pos }; if (r.bot) x.bot = true; return x; }) }); } catch (e) {}
         if (salaCtx && salaCtx.risultato) salaCtx.risultato(g, classifica);
       },
 
@@ -5701,7 +5776,8 @@
         premiaPartita(classifica, false);
         if (salaCtx) return salaCtx.fine(g, classifica, giocatori, impostazioni);
         if (opts && opts.torneo && torneo) return torneoRisultato(g, classifica);
-        schermataFine(g, classifica, giocatori, impostazioni);
+        var fac = null; try { fac = tavolo.faccine(); } catch (e) {}   // partita online: la fila delle faccine anche nella classifica
+        schermataFine(g, classifica, giocatori, impostazioni, fac);
       },
 
       // uscite comuni
@@ -5744,7 +5820,7 @@
     var imp = {}, box = null;
     if (typeof g.impostazioni === "function") {
       box = el("div");
-      try { g.impostazioni(box, imp, { el: el, modo: "online" }); } catch (e) {}
+      try { g.impostazioni(box, imp, { el: el, modo: "online", giocatori: [io.nome] }); } catch (e) {}
     }
     Object.keys(o.imp || {}).forEach(function (k) { imp[k] = o.imp[k]; });   // le regole scelte prima (il foglio ⚙️ mostra le scelte di partenza)
     imp.modo = "online";
@@ -5829,6 +5905,8 @@
     cambiaGioco: function () { lasciaPartita(); if (window.SGNet) SGNet.chiudiGiochi(); schermataScegliGioco(); },
     // la ruota del giorno (monete o XP, un giro al giorno): la apre anche il Black Jack quando restano poche monete
     ruotaDelGiorno: ruotaDelGiorno,
+    // la finestra di conferma al centro (per chi non ha il tavolo, es. lo studio): SG.conferma(domanda, nota, siTesto, siFn)
+    conferma: function (domanda, nota, siTesto, siFn) { chiediConferma(domanda, nota, siTesto, siFn); },
     sala: function () { lasciaPartita(); if (window.SGNet) SGNet.chiudiGiochi(); schermataSala(null); },
     // impostazioni arrivate da un link (le legge il gioco per i valori di partenza)
     parametriLink: function () { return linkParams; },

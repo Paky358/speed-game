@@ -215,17 +215,20 @@
           W.clicca(W.finestra("Paky"), /Comincia/);
           if (!await W.aspetta(function () { return vm(C).fase === "scelta"; }, 5000)) no("la partita non comincia");
         }
-        var t0 = Date.now();
+        var t0 = Date.now(), idG = mioId("Giulia"), idL = mioId("Luca"), pg = "";
         P = await W.ricarica("Paky");
+        // in saletta: tutti di nuovo in saletta. A metà partita la Scalinata (riprende: true) riprende la partita da dove era:
+        // tutti e 3 di nuovo al loro posto e Giulia legge "si riprende la partita"
         var ok = await W.aspetta(function () {
-          var w = W.finestra("Paky");
+          var w = W.finestra("Paky"), p = pill(W.finestra("Giulia"));
+          if (/tornato/.test(p)) pg = p;
+          if (giro) return (vm(C).fase === "scelta" || vm(C).fase === "rivela") && ids(C).indexOf(idG) >= 0 && ids(C).indexOf(idL) >= 0 && /si riprende la partita/.test(pg);
           return codiceSaletta(w) === C && vm(C).fase === "lobby" && ids(C).length === 3 && dentro(W.finestra("Giulia")) && dentro(W.finestra("Luca"));
         }, 10000);
-        if (!ok) no((giro ? "a metà partita" : "in saletta") + ": dopo 10 s non sono tutti in saletta (" + ids(C).join(",") + ", Paky: " + codiceSaletta(W.finestra("Paky")) + ")");
+        if (!ok) no((giro ? "a metà partita: dopo 10 s la partita non è ripresa con tutti dentro" : "in saletta: dopo 10 s non sono tutti in saletta") + " (fase " + vm(C).fase + ", " + ids(C).join(",") + ", Paky: " + codiceSaletta(W.finestra("Paky")) + ", Giulia legge: " + (pg || pill(W.finestra("Giulia")) || "niente") + ")");
         tempi.push(((Date.now() - t0) / 1000).toFixed(1) + " s");
       }
-      var pg = pill(W.finestra("Giulia"));
-      return "tutti di nuovo in saletta in " + tempi.join(" e ") + " · Giulia legge: " + (pg || "(niente)");
+      return "in saletta tutti di nuovo in saletta in " + tempi[0] + "; a metà partita la partita riprende con tutti dentro in " + tempi[1] + " · Giulia legge: " + pg;
     } },
 
     // 5. Un nuovo arrivato su una stanza morta legge "stanza ferma" in meno di 2 secondi (e se l'host torna entra da solo)
@@ -268,7 +271,7 @@
       W.clicca(W.finestra("Paky"), /Comincia/);
       await W.aspetta(function () { return vm(C).fase === "gioco"; }, 4000);
       // Paky fa la prima mossa (se tocca a lui): ora tocca al cerchio
-      if (vm(C).turno === "X") { var c0 = [].filter.call(W.finestra("Paky").document.querySelectorAll(".schermata button"), function (b) { return b.style && b.style.aspectRatio; })[4]; if (c0) c0.click(); }
+      if (vm(C).turno === "X") { var c0 = W.finestra("Paky").document.querySelectorAll(".tr-cella")[4]; if (c0) c0.click(); }
       await W.aspetta(function () { return vm(C).turno === "O"; }, 3000);
       await W.dorme(600);
       amici.forEach(function (n) {
@@ -287,7 +290,9 @@
       W.clicca(P, /Comincia/);
       if (!await W.aspetta(function () { return vm(C).fase === "scelta"; }, 5000)) no("la partita non comincia");
       var M = await W.apriTel("Marco", { hash: "gioco=scalinata&stanza=" + C, x: 370 });
-      var p = await W.aspetta(function () { return /entri alla prossima/.test(pill(M)); }, 8000);
+      // la Scalinata tiene da sé chi guarda (nella foto, "👀 Stai guardando · La scala ha 4 posti: entri alla prossima
+      // partita", al round dopo): vale come la scritta comune "entri alla prossima"
+      var p = await W.aspetta(function () { return /entri alla prossima/.test(pill(M)) || /Stai guardando[\s\S]*entri alla prossima/.test(W.testo(M)); }, 20000);
       if (!p) no("Marco non legge 'entri alla prossima' (" + (pill(M) || T(M).slice(0, 60)) + ")");
       if (dentro(M)) no("Marco legge 'Sei dentro' a partita in corso");
       if (!await scalinataFinoAllaFine(C, ["Giulia"], "Paky")) no("la Scalinata non è finita");
@@ -313,7 +318,7 @@
       if (!await W.aspetta(function () { return vm(C).fase === "scelta"; }, 5000)) no("la partita non comincia");
       // Luca esce dal gioco
       var Lw = W.finestra("Luca");
-      await W.aspetta(function () { return W.clicca(Lw, /‹/, ".testa button"); }, 3000);
+      await W.aspetta(function () { return W.clicca(Lw, /‹/, ".testa button, .sc-esci"); }, 3000);
       if (!await W.aspetta(function () { return Lw.document.querySelector(".sl-incorso"); }, 4000)) no("Luca non vede 'Stanno giocando… Rientra' nella Sala (" + T(Lw).slice(0, 80) + ")");
       // entra Sara nella Sala: Luca non deve essere riportato nel gioco
       await W.apriTel("Sara", { hash: "sala=" + S, x: 555 });
@@ -323,7 +328,7 @@
       // l'host chiude il gioco: Giulia non deve vedere "Collegamento perso"
       var Gw = W.finestra("Giulia"), visto = "";
       var guarda = setInterval(function () { var tx = W.testo(Gw); if (/Collegamento perso|Ops/.test(tx)) visto = tx.slice(0, 60); }, 30);
-      W.clicca(W.finestra("Paky"), /‹/, ".testa button");
+      W.clicca(W.finestra("Paky"), /‹/, ".testa button, .sc-esci");
       var inSala = await W.aspetta(function () { return /Sala online/.test(W.testo(Gw)) && Gw.document.querySelector(".saletta-schermo"); }, 6000);
       await W.dorme(1200); clearInterval(guarda);
       if (visto) no("Giulia ha visto «" + visto + "»");
@@ -367,9 +372,9 @@
       if (!await W.aspetta(function () { return vm(C).avvId; }, 6000)) no("Giulia non entra");
       W.clicca(P, /Comincia/);
       if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 4000)) no("il Tris non comincia");
-      var cella = function (w, i) { return [].filter.call(w.document.querySelectorAll(".schermata button"), function (b) { return b.style && b.style.aspectRatio; })[i]; };
+      var cella = function (w, i) { return w.document.querySelectorAll(".tr-cella")[i]; };
       var chi = vm(C).turno === "X" ? P : G;
-      cella(chi, 4).click();
+      if (!await W.aspetta(function () { var c = cella(chi, 4); if (c && !c.disabled) { c.click(); return true; } return false; }, 4000)) no("la prima casella non si tocca");
       await W.aspetta(function () { return (vm(C).board || []).filter(Boolean).length === 1; }, 3000);
       // la rete salta a tutti e due
       var visto = "", guarda = setInterval(function () { [P, G].forEach(function (w) { var tx = W.testo(w); if (/Problema di collegamento|Collegamento perso|Ops/.test(tx)) visto = tx.slice(0, 60); }); }, 50);
@@ -467,12 +472,12 @@
       if (!await W.aspetta(function () { return vm(C).avvId; }, 6000)) no("Giulia non entra");
       W.clicca(P, /Comincia/);
       if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 4000)) no("il Tris non comincia");
-      var cella = function (w, i) { return [].filter.call(w.document.querySelectorAll(".schermata button"), function (b) { return b.style && b.style.aspectRatio; })[i]; };
+      var cella = function (w, i) { return w.document.querySelectorAll(".tr-cella")[i]; };
       // X fa la riga in alto (0, 1, 2), O mette 3 e 4
       var mosse = [[P, 0], [G, 3], [P, 1], [G, 4], [P, 2]];
       for (var i = 0; i < mosse.length; i++) {
         var w = mosse[i][0], k = mosse[i][1], n = i + 1;
-        if (!await W.aspetta(function () { var c = cella(w, k); if (c && c.style.cursor === "pointer") { c.click(); return true; } return false; }, 4000)) no("mossa " + n + ": la casella non si tocca");
+        if (!await W.aspetta(function () { var c = cella(w, k); if (c && !c.disabled) { c.click(); return true; } return false; }, 4000)) no("mossa " + n + ": la casella non si tocca");
         if (!await W.aspetta(function () { return (vm(C).board || []).filter(Boolean).length === n; }, 4000)) no("mossa " + n + " non arrivata");
       }
       if (!await W.aspetta(function () { return vm(C).fase === "fine" && vm(C).fine && vm(C).fine.vincitore === "X"; }, 4000)) no("la partita non finisce con la vittoria di X");
@@ -499,8 +504,8 @@
         await W.dorme(400);
       }
       if (vm(C).fase !== "fine") no("la Scalinata non è finita (fase " + vm(C).fase + ")");
-      var vinc = vm(C).vincitore;
-      if (!await W.aspetta(function () { return /Vince/.test(W.testo(W.finestra("Giulia"))); }, 3000)) no("Giulia non vede il podio");
+      var vinc = (vm(C).posti || []).filter(function (p) { return p.passi >= 15; }).map(function (p) { return p.nome; }).join(" e ");
+      if (!await W.aspetta(function () { return /Vince|Hai vinto/.test(W.testo(W.finestra("Giulia"))); }, 3000)) no("Giulia non vede il podio");
       W.clicca(P, /Nuova partita/);
       if (!await W.aspetta(function () { return vm(C).fase === "lobby" && ids(C).length === 3 && dentro(W.finestra("Giulia")) && dentro(W.finestra("Luca")); }, 6000)) no("alla «Nuova partita» non sono tutti in saletta (" + ids(C).join(",") + ")");
       return "vince " + vinc + "; con «Nuova partita» tutti e tre di nuovo in saletta";
@@ -550,7 +555,7 @@
       if (!await W.aspetta(function () { return vm(C).fase === "lobby"; }, 5000)) no("la saletta del gioco non arriva");
       W.clicca(P, /Comincia/);
       if (!await W.aspetta(function () { return vm(C).fase === "scelta"; }, 4000)) no("la partita non comincia");
-      W.clicca(P, /‹/, ".testa button");   // esce subito: i 3 bot stanno ancora scegliendo
+      W.clicca(P, /‹/, ".testa button, .sc-esci");   // esce subito: i 3 bot stanno ancora scegliendo
       await W.dorme(3500);
       if (!(/Sala online/.test(W.testo(P)) && P.document.querySelector(".saletta-schermo"))) no("l'host non vede più la Sala: " + T(P).slice(0, 60));
       return "l'host resta nella Sala " + S;
@@ -665,11 +670,11 @@
       var A = W.finestra(chiA), B = W.finestra(chiB);
       await W.aspetta(function () { return W.clicca(A, /Comincia/); }, 4000);
       if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 4000)) no("la partita non comincia");
-      var cella = function (w, i) { return [].filter.call(w.document.querySelectorAll(".schermata button"), function (b) { return b.style && b.style.aspectRatio; })[i]; };
+      var cella = function (w, i) { return w.document.querySelectorAll(".tr-cella")[i]; };
       var mosse = vm(C).turno === "X" ? [[A, 0], [B, 3], [A, 1], [B, 4], [A, 2]] : [[B, 3], [A, 0], [B, 4], [A, 1], [B, 6], [A, 2]];
       for (var i = 0; i < mosse.length; i++) {
         var w = mosse[i][0], k = mosse[i][1], n = i + 1;
-        if (!await W.aspetta(function () { var c = cella(w, k); if (c && c.style.cursor === "pointer") { c.click(); return true; } return false; }, 4000)) no("mossa " + n + ": la casella non si tocca");
+        if (!await W.aspetta(function () { var c = cella(w, k); if (c && !c.disabled) { c.click(); return true; } return false; }, 4000)) no("mossa " + n + ": la casella non si tocca");
         if (!await W.aspetta(function () { return (vm(C).board || []).filter(Boolean).length === n; }, 4000)) no("mossa " + n + " non arrivata");
       }
       var camp = await W.aspetta(function () { var e = vm(S).elim; return e && e.finito && e.campione; }, 8000);

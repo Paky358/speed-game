@@ -101,12 +101,16 @@
       function salva() { scrivi(CHIAVE_REGOLE, { aiuto: dove.aiuto, spia: dove.spia, mani: dove.mani, tempo: dove.tempo, cat: dove.cat }); }
 
       var CHIP = "padding:9px 12px;min-height:44px;font-size:.95rem";
+      // le scelte principali: tre tasti su una riga (icona sopra, scritta sotto), così stanno in alto senza scorrere
+      var CHIP3 = "flex-direction:column;justify-content:center;gap:2px;padding:7px 4px;min-height:54px;min-width:0;font-size:.86rem;line-height:1.15;text-align:center";
       var gruppi = {}, forzato = false;
-      function riga(titolo, chiave, opzioni) {
-        box.appendChild(el("div", { class: "etichetta", text: titolo }));
-        var g = el("div", { class: "cat-griglia", style: "gap:8px" });
+      function riga(titolo, chiave, opzioni, dove2) {   // (dove2: la parte che si apre; se no in alto)
+        var su = dove2 || box;
+        su.appendChild(el("div", { class: "etichetta", text: titolo }));
+        var tre = opzioni.length === 3;
+        var g = el("div", { class: "cat-griglia", style: "gap:8px" + (tre ? ";display:grid;grid-template-columns:repeat(3,minmax(0,1fr))" : "") });
         gruppi[chiave] = opzioni.map(function (o) {
-          var b = el("button", { class: "cat-chip", style: CHIP, onclick: function () {
+          var b = el("button", { class: "cat-chip", style: tre ? CHIP3 : CHIP, onclick: function () {
             if (b.disabled) return;
             dove[chiave] = o.v;
             if (chiave === "spia" && o.v !== "no" && dove.aiuto === "simile") { dove.aiuto = "categoria"; forzato = true; }   // la parola simile ce l'ha la spia
@@ -116,19 +120,34 @@
           } }, [ o.i ? el("span", { class: "ci", text: o.i }) : null, el("span", { text: o.t }) ]);
           b._v = o.v; g.appendChild(b); return b;
         });
-        box.appendChild(g);
+        su.appendChild(g);
       }
       riga("Cosa sa l'impostore", "aiuto", [
         { v: "simile", i: "💡", t: "Parola simile" }, { v: "categoria", i: "🏷️", t: "La categoria" }, { v: "buio", i: "🙈", t: "Niente" }]);
       riga("La spia", "spia", [
         { v: "no", i: "🚫", t: "Niente spia" }, { v: "sa", i: "🎭", t: "Sa di esserlo" }, { v: "nonsa", i: "🤫", t: "Non lo sa" }]);
-      var nota = el("p", { class: "modulo-nota", style: "margin:10px 0 0" });
+      var nota = el("p", { class: "modulo-nota", style: "margin:8px 0 0" });
       box.appendChild(nota);
-      riga("Mani", "mani", [{ v: 1, t: "1 mano" }, { v: 3, t: "3 mani" }, { v: 5, t: "5 mani" }]);
-      riga("Tempo per parlare", "tempo", [{ v: 0, i: "♾️", t: "Libero" }, { v: 60, t: "1 min" }, { v: 120, t: "2 min" }, { v: 180, t: "3 min" }]);
+
+      // il resto (mani, tempo e categorie) sta in una parte che si apre: in alto restano le scelte principali
+      var altro = el("div", { hidden: "hidden" }), riassunto = el("span", { class: "imp-altro-r" });
+      var apri = el("button", { class: "imp-altro", type: "button", "aria-expanded": "false", onclick: function () {
+        var su = altro.hidden; altro.hidden = !su; apri.setAttribute("aria-expanded", su ? "true" : "false");
+        freccia.textContent = su ? "▴" : "▾";
+      } }), freccia = el("b", { text: "▾" });
+      apri.appendChild(el("b", { text: "Altre scelte", style: "flex:none" }));
+      apri.appendChild(riassunto);
+      apri.appendChild(freccia);
+      apri.style.cssText = "display:flex;align-items:center;gap:10px;width:100%;margin-top:12px;padding:12px 14px;border:0;border-radius:14px;" +
+        "background:var(--carta);color:inherit;font:inherit;text-align:left;cursor:pointer";
+      riassunto.style.cssText = "flex:1;min-width:0;font-size:.85rem;opacity:.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+      box.appendChild(apri);
+      box.appendChild(altro);
+      riga("Mani", "mani", [{ v: 1, t: "1 mano" }, { v: 3, t: "3 mani" }, { v: 5, t: "5 mani" }], altro);
+      riga("Tempo per parlare", "tempo", [{ v: 0, i: "♾️", t: "Libero" }, { v: 60, t: "1 min" }, { v: 120, t: "2 min" }, { v: 180, t: "3 min" }], altro);
 
       // categorie: tocca per togliere o rimettere (almeno una resta)
-      box.appendChild(el("div", { class: "etichetta", text: "Categorie" }));
+      altro.appendChild(el("div", { class: "etichetta", text: "Categorie" }));
       var gc = el("div", { class: "cat-griglia", style: "gap:8px" }), chipCat = [];
       var tutte = el("button", { class: "cat-chip", style: CHIP, onclick: function () { dove.cat = null; aggiorna(); salva(); } },
         [el("span", { class: "ci", text: "🎲" }), el("span", { text: "Tutte" })]);
@@ -144,9 +163,9 @@
         } }, [el("span", { class: "ci", text: c.icona }), el("span", { text: c.nome })]);
         b._id = c.id; chipCat.push(b); gc.appendChild(b);
       });
-      box.appendChild(gc);
+      altro.appendChild(gc);
       var contaCat = el("p", { class: "modulo-nota", style: "margin:8px 0 0" });
-      box.appendChild(contaCat);
+      altro.appendChild(contaCat);
 
       function aggiorna() {
         for (var ch in gruppi) gruppi[ch].forEach(function (b) {
@@ -168,6 +187,9 @@
         chipCat.forEach(function (b) { b.className = "cat-chip" + (dove.cat && dove.cat.indexOf(b._id) >= 0 ? " attiva" : ""); });
         var n = 0; cats.forEach(function (c) { if (!dove.cat || dove.cat.indexOf(c.id) >= 0) n += c.coppie.length; });
         contaCat.textContent = n + " coppie di parole in gioco";
+        var nc = dove.cat ? dove.cat.length : 0;
+        riassunto.textContent = (dove.mani > 1 ? dove.mani + " mani" : "1 mano") + " · " + (dove.tempo ? "⏱️ " + Math.round(dove.tempo / 60) + " min" : "⏱️ libero") + " · " +
+          (nc ? nc + (nc === 1 ? " categoria" : " categorie") : "tutte le categorie");
       }
       aggiorna();
     },

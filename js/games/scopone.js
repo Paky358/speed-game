@@ -548,6 +548,8 @@
       mont.nuoveTav = [];
       aggiorna(st, sel);
       mont.costruendo = false;
+      // con le carte in mano la mensola può crescere un poco: se la schermata esce dallo schermo, si rifà più bassa (una volta)
+      if (C().ricontrollaStanza4 && C().ricontrollaStanza4(M, mont.cont.parentNode)) return costruisci(st, sel, misure(), deal);
       if (deal) {
         var manoEls = [].slice.call(manoW.children);
         dealFino = Date.now() + C().animaDistribuzione4(mont.nuoveTav, manoEls,

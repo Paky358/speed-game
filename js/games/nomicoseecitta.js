@@ -836,8 +836,8 @@
       onPronto: function (ci) { pronto("host", ci); },
       onAvanti: function () { if (H.fase === "tabellone") prossimaCat(); },
       onProssimo: prossimoGiro, onNuova: nuova,
-      onEsci: function () {
-        if (H.fase !== "lobby" && H.fase !== "fine" && !window.confirm("Chiudere la partita per tutti?")) return;   // un tocco sbagliato non chiude il gioco a tutti
+      onEsci: function (ok) {
+        if (ok !== true && H.fase !== "lobby" && H.fase !== "fine") return t.conferma("Chiudere la partita per tutti?", null, "Esci", function () { cb.onEsci(true); });   // un tocco sbagliato non chiude il gioco a tutti
         clearTo(); rete.chiudi(); t.esci();
       } };
     var rete = SGNet.ospita("nomicose", {
@@ -861,16 +861,18 @@
         else if (m.t === "voto") voto(id, m.a, m.ci, m.si);
         else if (m.t === "pronto") pronto(id, m.ci);
       },
-      onErrore: function () { senzaReteN(t); }
+      // (arriva solo se il primo collegamento non riesce: a partita cominciata la rete si ricollega da sola)
+      onErrore: function () { if (!H.pronta) { clearTo(); erroreN(t, "Non riesco ad aprire la stanza. Controlla la connessione e riprova."); } }
     });
+    if (!rete) return senzaReteN(t);
     function vm() {
       var o = { sessioneTrofei: H.sessioneTrofei, fase: H.fase, codice: H.codice, pronta: H.pronta, giro: H.giro, giri: H.giri, lettera: H.lettera, secondi: H.secondi, cats: H.cats,
         difficili: H.difficili, interrotta: H.interrotta, giriFatti: H.giriFatti,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, punti: p.punti, via: !!p.via, trofei: p._trofei || null }; }),
         fatti: Object.keys(H.fatti) };
-      if (H.fase === "scrittura") o.rimMs = Math.max(0, H.scadenza - Date.now());
+      if (H.fase === "scrittura" || H.fase === "punti") o.rimMs = Math.max(0, H.scadenza - Date.now());
       if (H.fase === "tabellone") {
-        o.ci = H.ci; o.pronti = Object.keys(H.pronti); o.corto = H.corto;
+        o.ci = H.ci; o.pronti = Object.keys(H.pronti); o.corto = H.corto; o.resta = Math.max(0, H.votoScade - Date.now());
         o.tab = H.players.map(function (p) { return { id: p.id, parola: (H.risposte[p.id] || [])[H.ci] || "", no: Object.keys(((H.voti[p.id] || {})[H.ci]) || {}) }; });
       }
       if (H.fase === "punti" || H.fase === "fine") o.ultimo = H.ultimo;
@@ -983,7 +985,10 @@
         registraProgresso(p, H.cats, H.risposte[p.id] || [], validPer[p.id] || [], esitoPer[p.id] || []);
       });
       H.ultimo = { tot: tot }; H.giriFatti++;
-      H.fase = (H.giro + 1 >= H.giri) ? "fine" : "punti"; bd();
+      H.fase = (H.giro + 1 >= H.giri) ? "fine" : "punti";
+      // la classifica del giro: l'host tocca "Prossimo giro ▶" (che conta) oppure si va avanti da soli
+      if (H.fase === "punti") { var dur = 4000 + H.players.length * 320 + 12000; H.scadenza = Date.now() + dur; H.to = setTimeout(prossimoGiro, dur); }
+      bd();
       if (H.fase === "fine") daiRisultato();
     }
     // a fine partita: i nomi col loro posto (pari punti = stesso posto; chi è uscito in fondo). Serve al torneo e dà gli XP a tutti
@@ -994,7 +999,7 @@
       H.players.forEach(function (p) { if (p.via) cl.push({ nome: p.nome, punti: p.punti, pos: ord.length + 1 }); });
       t.risultato(cl);
     }
-    function prossimoGiro() { if (H.fase === "punti") { H.giro++; nuovoGiro(); } }
+    function prossimoGiro() { if (H.fase === "punti") { clearTo(); H.giro++; nuovoGiro(); } }
     function nuova() {   // "Nuova partita": stessa stanza, si torna nella saletta (chi è uscito non c'è più, chi aspettava entra)
       if (H.fase !== "fine") return;
       clearTo();
@@ -1016,9 +1021,9 @@
       onBozza: function (r) { G.rete && G.rete.invia({ t: "bozza", r: r }); },
       onVoto: function (a, ci, si) { G.rete && G.rete.invia({ t: "voto", a: a, ci: ci, si: si }); },
       onPronto: function (ci) { G.rete && G.rete.invia({ t: "pronto", ci: ci }); },
-      onEsci: function () {
+      onEsci: function (ok) {
         var f = G.vm && G.vm.fase;
-        if (f && f !== "lobby" && f !== "fine" && idxN(G.vm, G.myId) >= 0 && !window.confirm("Uscire dalla partita?")) return;
+        if (ok !== true && f && f !== "lobby" && f !== "fine" && idxN(G.vm, G.myId) >= 0) return t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(true); });
         if (G.rete) G.rete.chiudi(); t.esci();
       } };
     function disegna() { if (G.vm) { cb.myId = G.myId; disegnaNccVM(t, G.vm, cb); } }
@@ -1045,14 +1050,19 @@
           if (!m || !m.t) return;
           if (m.to && m.to !== G.myId) return;   // era per un altro telefono
           if (m.t === "vm") {
+            // (in saletta senza di me: "sono entrato" lo ripete da solo il collegamento)
             G.vm = m.vm;
-            // in saletta e non ci sono (arrivato a partita iniziata, o la stanza era piena): chiedo di nuovo di entrare
-            if (G.vm.fase === "lobby" && G.myId && idxN(G.vm, G.myId) < 0 && G.vm.players.length < 10 && Date.now() - G.ultimoJoin > 2000) entra();
             disegna();
           }
           else if (m.t === "tardi") avvisoTardi(RN, m.bozza);
         },
-        onChiuso: function () { if (G.vm && G.vm.fase === "fine") return; erroreN(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
+        // l'host ha chiuso la stanza apposta (se sparisce e non torna, "La stanza è chiusa" lo dice il core):
+        // sulla classifica finale resta la classifica, con la scritta giusta
+        onChiuso: function () {
+          if (G.vm && G.vm.fase === "fine") { cb.chiusa = true; if (RN && RN.notaFine) RN.notaFine.textContent = NOTA_CHIUSA_N; return; }
+          erroreN(t, "🚪 L'host ha chiuso la partita.");
+        },
+        // (solo se il primo collegamento non riesce)
         onErrore: function () { erroreN(t, "Problema di collegamento. Controlla la connessione e riprova."); }
       });
     }
@@ -1080,8 +1090,7 @@
       RN = { t: t, cb: cb, usciti: {} };
       RN.S = ST.crea(t, vm.players, { io: idxN(vm, cb.myId), esci: function () { cb.onEsci(); }, titolo: "Nomi, Cose e Città", logo: ["NOMI, COSE", "E CITTÀ"] });
       vm.players.forEach(function (p, i) { ST.puntiLeggio(RN.S, i, p.punti, 0); });
-      // arrivato a partita iniziata (o stanza piena): guarda, e lo sa
-      if (idxN(vm, cb.myId) < 0) RN.S.vista.appendChild(t.el("div", { class: "nc-guardi", text: "👀 Partita già cominciata: la guardi, entri alla prossima" }));
+      // (chi è arrivato a partita iniziata guarda: "👀 Partita in corso: la guardi ed entri alla prossima" lo scrive il core)
     }
     RN.vm = vm; RN.cb = cb; RN.vmTs = Date.now();
     if (vm.fase !== "scrittura" && RN.S._chiudiFoglio) RN.S._chiudiFoglio();   // il tempo è finito per tutti: il foglio si chiude
@@ -1152,7 +1161,11 @@
   async function scriviOnline(R) {
     var S = R.S, el = R.t.el, cb = R.cb, vm = R.vm, io = idxN(vm, cb.myId), me = vm.players[io];
     schermoScritturaOnline(R, vm);
-    if (io < 0 || !me || me.via || (vm.fatti || []).indexOf(cb.myId) >= 0) { await ST.suSchermo(S, 800); return; }
+    if (io < 0 || !me || me.via || (vm.fatti || []).indexOf(cb.myId) >= 0) {   // guarda, o ha già consegnato: le faccine mentre gli altri scrivono
+      await ST.suSchermo(S, 800);
+      if (S.vivo() && R.vm.fase === "scrittura") ST.barra(S, [ el("p", { class: "nc-attesa", text: io < 0 || !me || me.via ? "👀 Stai guardando: alla prossima partita giochi anche tu." : "Fatto! Aspettiamo gli altri…" }), R.t.faccine() ]);
+      return;
+    }
     R.foglioGiro = vm.giro;
     ST.accendiSolo(S, io); ST.testoLeggio(S, io, "✍️ scrive");
     ST.terzo(S, io, "Si scrive tutti insieme!", "Parole con la " + vm.lettera, "✍️");
@@ -1177,7 +1190,7 @@
     fogliettoS(S, io, true); ST.testoLeggio(S, io, "✅ fatto"); ST.faccia(S, io, "esulta");
     await ST.suSchermo(S, 800);
     ST.faccia(S, io, null);
-    if (R.vm.fase === "scrittura") ST.barra(S, [ el("p", { class: "nc-attesa", text: "Fatto! Aspettiamo gli altri…" }) ]);
+    if (R.vm.fase === "scrittura") ST.barra(S, [ el("p", { class: "nc-attesa", text: "Fatto! Aspettiamo gli altri…" }), R.t.faccine() ]);
   }
   function schermoScritturaOnline(R, vm) {
     var S = R.S, el = R.t.el;
@@ -1275,12 +1288,23 @@
     if (R.kBarra === k) return;
     R.kBarra = k;
     var ultima = vm.ci === vm.cats.length - 1;
-    if (gioco && !sonoPronto) ST.barra(S, [ el("button", { class: "btn btn-primario", text: ultima ? "✅ Ho votato: i punti!" : "✅ Ho votato, avanti ▶",
-      onclick: function () { R.prontoCi = vm.giro + "|" + vm.ci; cb.onPronto(vm.ci); aggiornaTab(R, R.vm); } }) ]);
-    else ST.barra(S, [
-      el("p", { class: "nc-attesa", text: mancano.length ? "Aspettiamo: " + mancano.join(", ") + (vm.corto ? " · si va avanti tra poco" : "") : "Si va avanti…" }),
-      avanti ? el("button", { class: "btn btn-fantasma", text: "⏭ Avanti senza aspettare", onclick: function () { ST.viaBarra(S); cb.onAvanti && cb.onAvanti(); } }) : null
-    ]);
+    // il tempo del tabellone lo tiene l'host (90 secondi, 20 quando più della metà ha votato): il conto si vede sul tasto o sotto
+    var sec = Math.max(1, Math.round(((vm.resta != null ? vm.resta : 90000) - (Date.now() - R.vmTs)) / 1000));
+    var kC = "nc-tab|" + vm.sessioneTrofei + "|" + vm.giro + "|" + vm.ci + "|" + (vm.corto ? 1 : 0);
+    if (gioco && !sonoPronto) {
+      var bV = el("button", { class: "btn btn-primario", text: ultima ? "✅ Ho votato: i punti!" : "✅ Ho votato, avanti ▶",
+        onclick: function () { R.prontoCi = vm.giro + "|" + vm.ci; cb.onPronto(vm.ci); aggiornaTab(R, R.vm); } });
+      ST.barra(S, [ bV ]);
+      R.t.contoAvanti(bV, sec, null, kC);
+    } else {
+      var conto = mancano.length ? el("span", { class: "nc-conto" }) : null;
+      ST.barra(S, [
+        el("p", { class: "nc-attesa" }, [ document.createTextNode(mancano.length ? "Aspettiamo: " + mancano.join(", ") + " · " : "Si va avanti…"), conto ]),
+        avanti ? el("button", { class: "btn btn-fantasma", text: "⏭ Avanti senza aspettare", onclick: function () { ST.viaBarra(S); cb.onAvanti && cb.onAvanti(); } }) : null,
+        R.t.faccine()
+      ]);
+      if (conto) R.t.contoAvanti(conto, sec, null, kC);
+    }
   }
   // i punti del giro scorrono sui leggii
   async function puntiOnline(R, vm) {
@@ -1313,8 +1337,12 @@
       box.appendChild(r);
     });
     S.sch.appendChild(box);
-    if (cb.sonoHost) ST.barra(S, [ el("button", { class: "btn btn-primario", text: "Prossimo giro ▶", onclick: function () { ST.viaBarra(S); cb.onProssimo(); } }) ]);
-    else ST.barra(S, [ el("p", { class: "nc-attesa", text: "Il prossimo giro lo fa partire l'host…" }) ]);
+    // l'host: "Prossimo giro ▶ 12" (conta e a zero si va avanti); gli altri: "Si va avanti tra 12…" (il tempo lo tiene l'host)
+    var sec = Math.max(1, Math.round(((R.vm.rimMs || 12000) - (Date.now() - R.vmTs)) / 1000)), k = "nc-giro|" + vm.sessioneTrofei + "|" + vm.giro;
+    var nodo = cb.sonoHost ? el("button", { class: "btn btn-primario", text: "Prossimo giro ▶", onclick: function () { ST.viaBarra(S); cb.onProssimo(); } })
+      : el("p", { class: "nc-attesa" });
+    ST.barra(S, [ nodo, R.t.faccine() ]);
+    R.t.contoAvanti(nodo, sec, cb.sonoHost ? function () { ST.viaBarra(S); cb.onProssimo(); } : null, k);
   }
   async function finaleOnline(R, vm) {
     var S = R.S, ordine = ordineN(vm), primi = ordine.filter(function (o) { return o.pos === 1; }).map(function (o) { return idxN(vm, o.p.id); });
@@ -1330,9 +1358,9 @@
       await ST.dorme(2400); ST.viaTerzo(S);
     } else await finaleStudio(S, primi, (ordine[0] ? ordine[0].p.punti : 0) + " punti");
     if (RN !== R) return;   // intanto l'host ha già fatto ripartire (siamo nella saletta)
-    fineN(R.t, vm, R.cb, ordine);
+    fineN(R.t, vm, R.cb, ordine, R);
   }
-  function fineN(t, vm, cb, ordine) {
+  function fineN(t, vm, cb, ordine, R) {
     var el = t.el, primi = ordine.filter(function (o) { return o.pos === 1; }).map(function (o) { return o.p.nome; });
     var titolo = vm.interrotta ? "Partita interrotta" : primi.length > 1 ? "Pareggio tra " + nomiInsieme(primi) + "!" : primi.length ? "Vince " + primi[0] + "!" : "Fine partita";
     var s = t.schermata({ icona: vm.interrotta ? "👋" : primi.length > 1 ? "🤝" : "🏆", titolo: titolo, sotto: vm.interrotta ? "Sono usciti gli altri giocatori" : "Nomi, Cose e Città" });
@@ -1345,24 +1373,28 @@
       ]));
     });
     s._contenuto.appendChild(box);
+    var fa = t.faccine();   // le faccine mentre si guarda la classifica
+    if (fa) { fa.style.marginTop = "10px"; s._contenuto.appendChild(fa); }
     if (cb.sonoHost) {
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏁 Fine", onclick: cb.onEsci }));
     } else {
-      s._piede.appendChild(el("p", { class: "modulo-nota", text: "Se l'host fa un'altra partita, tornerai nella saletta senza fare niente." }));
+      var nota = el("p", { class: "modulo-nota", style: "text-align:center", text: cb.chiusa ? NOTA_CHIUSA_N : "⏳ Aspetta l'host: se fa un'altra partita, torni da solo nella saletta." });
+      if (R) R.notaFine = nota;
+      s._piede.appendChild(nota);
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     }
     t.mostra(s);
   }
+  var NOTA_CHIUSA_N = "🚪 L'host ha chiuso la stanza.";
   // la saletta d'attesa (uguale per tutti i giochi): sotto, le categorie e il tempo scelti dall'host
   function lobbyN(t, vm, cb) {
     var el = t.el, cc = el("div", { class: "nc-cats nc-cats-lobby" });
     (vm.cats || []).forEach(function (c) { cc.appendChild(el("span", { text: c.emoji + " " + c.testo })); });
     var info = el("div", {}, [ el("div", { class: "etichetta", text: "Categorie · " + vm.secondi + " secondi · " + (vm.giri === 1 ? "1 giro" : vm.giri + " giri") + (vm.difficili ? " · anche U e Z" : "") }), cc ]);
     var extra = [info];
-    if (!cb.sonoHost && idxN(vm, cb.myId) < 0) extra.unshift(el("p", { class: "link-avviso", text: vm.players.length >= 10
-      ? "La stanza è piena (10 giocatori): se qualcuno esce entri tu."
-      : "Ti sto facendo entrare…" }));
+    // ("Sto entrando…" lo scrive già la saletta: qui solo la stanza piena)
+    if (!cb.sonoHost && idxN(vm, cb.myId) < 0 && vm.players.length >= 10) extra.unshift(el("p", { class: "link-avviso", text: "La stanza è piena (10 giocatori): se qualcuno esce entri tu." }));
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2, testoComincia: "Via ▶",
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
       extra: extra, attesa: "Aspetta che l'host dia il via: poi scrivete tutti insieme!",

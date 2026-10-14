@@ -91,6 +91,7 @@
     var rete = SGNet.ospita(ID, {
       onCodice: function (c) { H.codice = c; bd(); },
       onConnesso: function () { H.pronta = true; bd(); },
+      onErrore: function () { ferma(); chiudiSchermo(); errore(t, "Problema di collegamento: la stanza non si apre. Riprova."); },   // (solo se il primo collegamento non riesce)
       onAddio: function (id) {
         var p = pById(id);
         if (!p) { var n0 = H.coda.length; H.coda = H.coda.filter(function (c) { return c.id !== id; }); if (H.coda.length !== n0) bd(); return; }
@@ -247,12 +248,12 @@
           if (m.to && m.to !== S.myId) return;          // era per un altro telefono
           if (m.t === "vm") { S.vm = m.vm; controllaPrese(m.vm); disegna(t, m.vm, cb); }
         },
-        onChiuso: function () { chiudiSchermo(); errore(t, "La gara è stata chiusa dall'host."); },
-        onErrore: function () { chiudiSchermo(); errore(t, "Problema di collegamento. Riprova."); }
+        onChiuso: function () { chiudiSchermo(); errore(t, "La gara è stata chiusa dall'host."); },   // (chiusa apposta: se l'host sparisce, "La stanza è chiusa" lo dice il core)
+        onErrore: function () { chiudiSchermo(); errore(t, "Problema di collegamento. Riprova."); }   // (solo se il primo collegamento non riesce)
       });
     }
     function attesa(testo) {
-      var s = t.schermata({ icona: "🎣", titolo: "Entro nella gara…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ icona: "🎣", titolo: "⏳ Sto entrando…", sotto: "Gara di pesca · stanza " + String(codice).toUpperCase(), indietro: t.esci });
       s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: testo }));
       t.mostra(s);
     }
@@ -264,14 +265,14 @@
   // lo schermo della pesca si crea UNA volta e poi si aggiorna (tempo, classifica, avvisi);
   // "vista" ricorda cosa c'è sullo schermo, così le foto uguali non rifanno niente (niente lampeggio)
   var UI = null, finale0 = null, vista = null, ultimoVm = null, ultimoCb = null, FINE_AT = 0, TIC = null;
-  function chiudiSchermo() { if (UI && UI._chiudi) UI._chiudi(); UI = null; clearTimeout(finale0); finale0 = null; clearInterval(TIC); TIC = null; vista = null; }
+  function chiudiSchermo() { if (UI && UI._chiudi) UI._chiudi(); UI = null; clearTimeout(finale0); finale0 = null; clearInterval(TIC); TIC = null; vista = null; FU = null; }
   function disegna(t, vm, cb) {
     ultimoVm = vm; ultimoCb = cb;
     var io = null; vm.players.forEach(function (p) { if (p.id === cb.myId) io = p; });
     var inCoda = (vm.coda || []).indexOf(cb.myId) >= 0;
     if (vm.fase === "lobby") {
-      if (UI || finale0) chiudiSchermo();
-      if (!io && !cb.sonoHost) return fuori(t, inCoda ? "pieno" : "entro");
+      if (UI || finale0 || FU) chiudiSchermo();
+      if (!io && !cb.sonoHost) return fuori(t, inCoda ? "pieno" : "entro", vm, cb);
       vista = "lobby"; return lobby(t, vm, cb);
     }
     if (vm.fase === "fine") {
@@ -285,7 +286,7 @@
       if (finale0) return;
       return finale(t, vm, cb);
     }
-    if (!io) return fuori(t, "gara");   // arrivato a gara iniziata: aspetta la prossima (è nella lista dell'host)
+    if (!io) return fuori(t, "gara", vm, cb);   // arrivato a gara iniziata: aspetta la prossima (è nella lista dell'host)
     if (!UI) {
       if (!window.SGPesca) return errore(t, "Manca il laghetto: aggiorna l'app.");
       UI = SGPesca.crea({ omino: t.mioOmino(io.nome), audio: audio, indietro: cb.onEsci, gara: { onPreso: cb.onPreso } });
@@ -330,16 +331,47 @@
       extra: [t.el("p", { class: "modulo-nota", text: "🎣 Gara di " + minuti(vm.durata) + " nel laghetto: vince chi pesca più chili. Canna e lombrichi uguali per tutti." + (n ? " (Stanza piena: " + n + (n === 1 ? " aspetta" : " aspettano") + " un posto.)" : "") })],
       attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
-  function fuori(t, tipo) {   // chi non è (ancora) nella gara: un cartello, rifatto solo se cambia
-    if (UI || vista === "fuori-" + tipo) return;
-    chiudiSchermo(); vista = "fuori-" + tipo;
-    var T = { gara: ["Gara in corso", "Aspetta la prossima", "La gara è già cominciata: quando l'host ne fa un'altra, entri da solo nella saletta."],
+  // chi non è (ancora) nella gara: un cartello, rifatto solo se cambia. Le parole sono quelle della saletta del core
+  // ("⏳ Sto entrando…", "👀 … la guardi ed entri alla prossima"). Chi arriva a gara cominciata la guarda:
+  // tempo e classifica dal vivo (si aggiorna solo il testo) e la fila delle faccine
+  var FU = null;   // il cartello "gara in corso": { tempo, lista }
+  function fuori(t, tipo, vm, cb) {
+    if (UI) return;
+    if (vista === "fuori-" + tipo) return aggFuori(vm, cb);
+    chiudiSchermo(); vista = "fuori-" + tipo; FU = null;
+    var T = { gara: ["👀 Gara in corso", "La guardi ed entri alla prossima", "Quando l'host fa un'altra gara entri da solo nella saletta."],
       pieno: ["Stanza piena", "Al massimo " + MAX + " pescatori", "Ci sono già " + MAX + " pescatori: appena si libera un posto entri da solo."],
-      entro: ["Entro nella gara…", "Un attimo", "Collegamento in corso…"] }[tipo];
+      entro: ["⏳ Sto entrando…", "Gara di pesca", "Un attimo: l'host ti sta facendo entrare."] }[tipo];
     var s = t.schermata({ icona: "🎣", titolo: T[0], sotto: T[1] });
-    s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: T[2] }));
+    if (tipo === "gara") {
+      stile();
+      FU = { tempo: t.el("div", { class: "gp-guarda-tempo" }), lista: t.el("ol", { class: "gp-resto gp-guarda" }) };
+      s._contenuto.appendChild(FU.tempo); s._contenuto.appendChild(FU.lista);
+      TIC = setInterval(function () { if (FU) scriviTempo(); }, 1000);
+    }
+    s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:" + (tipo === "gara" ? "10px" : "24px"), text: T[2] }));
+    if (tipo !== "entro") { var f = t.faccine && t.faccine(); if (f) { f.style.margin = "12px auto 0"; f.style.maxWidth = "320px"; s._contenuto.appendChild(f); } }   // si aspetta a lungo: le faccine
     s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: ultimoCb && ultimoCb.onEsci || t.esci }));
     t.mostra(s);
+    aggFuori(vm, cb);
+  }
+  function scriviTempo() {
+    var r = Math.max(0, Math.ceil((FINE_AT - Date.now()) / 1000)), tx = "⏱️ " + Math.floor(r / 60) + ":" + ("0" + r % 60).slice(-2);
+    if (FU.tempo.textContent !== tx) FU.tempo.textContent = tx;
+  }
+  function aggFuori(vm, cb) {   // chi guarda: solo i testi che cambiano (niente lampeggio)
+    if (!FU || !vm || !cb) return;
+    FINE_AT = Date.now() + (vm.resta || 0); scriviTempo();
+    var r = righe(vm.players, cb.myId).slice(0, 8), li = FU.lista.children;
+    while (li.length > r.length) FU.lista.removeChild(FU.lista.lastChild);
+    r.forEach(function (x, i) {
+      var riga = li[i];
+      if (!riga) { riga = document.createElement("li"); riga.appendChild(document.createElement("span")); riga.appendChild(document.createElement("b")); riga.appendChild(document.createElement("span")); FU.lista.appendChild(riga); }
+      var c = riga.children, a = (i + 1) + "°", k = kg(x.kg);
+      if (c[0].textContent !== a) c[0].textContent = a;
+      if (c[1].textContent !== x.nome) c[1].textContent = x.nome;
+      if (c[2].textContent !== k) c[2].textContent = k;
+    });
   }
   function stile() {
     if (document.getElementById("gp-stile")) return;
@@ -361,7 +393,11 @@
       ".gp-premi{display:flex;flex-direction:column;gap:4px}",
       ".gp-premio{display:flex;align-items:center;gap:8px;background:var(--carta);border-radius:12px;padding:4px 10px;font-size:.85rem;line-height:1.2}",
       ".gp-premio .ico{font-size:1.3rem}.gp-premio .tx{flex:1;min-width:0}.gp-premio small{display:block;opacity:.8}",
-      ".gp-premio canvas{flex:none}"
+      ".gp-premio canvas{flex:none}",
+      ".gp-guarda-tempo{text-align:center;font-weight:900;font-size:1.6rem;margin:6px 0 10px;font-variant-numeric:tabular-nums}",
+      ".gp-guarda li span:last-child{font-weight:800}",
+      ".gp-piede2{display:flex;gap:8px}.gp-piede2>.btn{flex:1;min-width:0}",
+      ".gp-fin.tanti .gp-av{width:40px;height:52px}.gp-fin.tanti .gp-gr.p1 .gp-av{width:50px;height:64px}"
     ].join("\n");
     document.head.appendChild(st);
   }
@@ -370,9 +406,10 @@
     var cl = vm.classifica || [], fuoriGara = !cl.some(function (r) { return r.id === cb.myId; });
     var firma = "fine:" + vm.gara + ":" + fuoriGara;
     if (vista === firma) return;   // la stessa classifica è già sullo schermo: non si rifà
+    clearInterval(TIC); TIC = null; FU = null;   // (chi guardava la gara: il suo orologio si ferma)
     vista = firma; stile();
     var s = t.schermata({ icona: "🏆", titolo: "Classifica della gara", sotto: vm.motivo === "soli" ? "Gli altri sono usciti" : null });
-    var box = t.el("div", { class: "gp-fin" }), med = ["🥇", "🥈", "🥉"];
+    var box = t.el("div", { class: "gp-fin" + (cl.length > 6 ? " tanti" : "") }), med = ["🥇", "🥈", "🥉"];
     function chi(r) { return r.id === cb.myId ? r.nome + " (tu)" : r.nome; }
     // il podio: i primi tre sui gradini (il primo al centro, con le braccia alzate)
     var pod = t.el("div", { class: "gp-podio" }), tre = cl.slice(0, 3);
@@ -403,9 +440,10 @@
     });
     if (pr.children.length) box.appendChild(pr);
     s._contenuto.appendChild(box);
-    if (cb.sonoHost) s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Nuova gara (stessi amici)", onclick: cb.onNuova }));
-    else s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin:0", text: fuoriGara ? "Sei in lista: alla prossima gara entri anche tu!" : "Se l'host fa un'altra gara, torni da solo nella saletta." }));
-    s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    var fac = t.faccine && t.faccine(); if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }   // le faccine anche sulla classifica
+    var esci = t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci });
+    if (cb.sonoHost) s._piede.appendChild(t.el("div", { class: "gp-piede2" }, [t.el("button", { class: "btn btn-primario", text: "↻ Nuova gara", onclick: cb.onNuova }), esci]));   // in una riga: con 8 pescatori la classifica sta nello schermo
+    else { s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin:0", text: fuoriGara ? "Sei in lista: alla prossima gara entri anche tu!" : "Se l'host fa un'altra gara, torni da solo nella saletta." })); s._piede.appendChild(esci); }
     t.mostra(s);
   }
   function errore(t, testo) {

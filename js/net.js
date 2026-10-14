@@ -154,7 +154,8 @@
       try { localStorage.setItem("sg-id-" + String(codice).toUpperCase(), JSON.stringify({ id: id, t: Date.now() })); } catch (e) {}
     },
 
-    // L'host apre una stanza. cb: { onCodice, onConnesso, onAddio(id), onMsg(id,msg), onErrore(e), onStato(msg) }
+    // L'host apre una stanza. cb: { onCodice, onConnesso, onAddio(id), onMsg(id,msg), onErrore(e), onStato(msg),
+    //   onForse(id) / onTornato(id) (facoltativi: un ospite sparito senza salutare, e tornato in tempo) }
     // opz (facoltative): codice = la stanza ha già il suo codice (host di riserva, stanza riaperta dopo una ricarica);
     // ascoltaStato = riceve anche quello che mandano gli host (onStato), così si accorge se un altro ha preso il posto;
     // keepalive = ogni quanti secondi dice al broker "ci sono" (più basso = se sparisce ce ne si accorge prima)
@@ -188,7 +189,12 @@
         coda.push({ m: msg, r: !!trattieni, t: Date.now() }); if (coda.length > CODA_MAX) coda.shift();   // la rete è giù: la mossa non si perde
       }
       // chi è sparito all'improvviso e ha ancora tempo per tornare: l'app lo mostra grigio con 📶 ("si sta ricollegando…")
-      function forse(id, si) { evento("sg-forse", { stanza: codice, id: id, forse: !!si }); }
+      // Anche il gioco lo sa subito, se vuole: cb.onForse(id) quando sparisce senza salutare, cb.onTornato(id) quando
+      // si rifà vivo in tempo (es. "📶…" sulla sua targa). Se non torna, dopo 20 secondi arriva onAddio(id) come sempre
+      function forse(id, si, tornato) {
+        evento("sg-forse", { stanza: codice, id: id, forse: !!si });
+        try { if (si) { if (cb.onForse) cb.onForse(id); } else if (tornato && cb.onTornato) cb.onTornato(id); } catch (e) {}
+      }
       function svuota() { var ora = Date.now(), l = coda; coda = []; l.forEach(function (x) { if (x.r || ora - x.t < CODA_VITA) manda(x.m, x.r); }); }
       function ciSono() { try { if (client && client.connected) client.publish(T.stato, JSON.stringify({ t: "__hostqui", s: sid }), { retain: false }); } catch (e) {} }
       // il testamento di un mio collegamento di prima arriva in ritardo (rete cambiata, telefono che si riprende:
@@ -229,7 +235,7 @@
         }
         var m; try { m = JSON.parse(payload.toString()); } catch (e) { return; }
         if (!m || !m.from) return;
-        if (inForse[m.from]) { clearTimeout(inForse[m.from]); delete inForse[m.from]; forse(m.from, false); }   // si è rifatto vivo in tempo
+        if (inForse[m.from]) { clearTimeout(inForse[m.from]); delete inForse[m.from]; forse(m.from, false, true); }   // si è rifatto vivo in tempo
         if (m.data && m.data.t === "__leave") {
           if (m.data.voluto) { cb.onAddio && cb.onAddio(m.from); return; }   // è uscito apposta
           // sparito all'improvviso: lo aspetto un po' prima di toglierlo dalla partita
@@ -262,7 +268,9 @@
         invia: function (msg) { if (chiusa) return; ultimo = msg; manda(msg, true); },
         // invio ad alta frequenza (streaming di gioco): NON trattenuto, per non intasare il broker
         inviaVeloce: function (msg) { if (!chiusa) manda(msg, false); },
-        inviaA: function (id, msg) { this.invia(msg); },
+        // un messaggio per uno solo (il gioco ci mette dentro a chi va): NON trattenuto, così non prende il posto
+        // dell'ultima foto della partita (chi arriva dopo deve trovare la foto, non il messaggio privato di un altro)
+        inviaA: function (id, msg) { if (!chiusa) manda(msg, false); },
         // se ne va in silenzio SENZA chiudere la stanza: un altro telefono ha preso il posto di host
         lascia: function () {
           if (chiusa) return;

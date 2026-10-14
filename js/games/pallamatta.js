@@ -1200,8 +1200,7 @@
   //  SFIDA SULLO STESSO TELEFONO: da 2 a 4, un tiro a testa, vi passate il telefono
   // =========================================================
   function giocaAmici(t) {
-    var imp = t.impostazioni || {}, nomi = (t.giocatori && t.giocatori.length ? t.giocatori : ["Giocatore 1", "Giocatore 2"]).slice(0, 4);
-    if (nomi.length < 2) nomi = nomi.concat([nomi[0] === "Giocatore 2" ? "Giocatore 1" : "Giocatore 2"]);   // una sfida da soli non esiste: serve almeno un avversario
+    var imp = t.impostazioni || {}, nomi = (t.giocatori || []).slice(0, 4);   // (almeno in 2: lo chiede il core prima di cominciare, modi[].min)
     var prof = t.nomeProfilo && t.nomeProfilo();
     var gioc = nomi.map(function (n, i) { return { id: "g" + i, nome: n, potere: n === prof ? poterePreferito() : "bomba", vinte: 0, scelto: false }; });
     var ultimo = -1, partite = 0, st = null, tav = null, inPassa = false;
@@ -1287,6 +1286,7 @@
     var rete = SGNet.ospita(ID, {
       onCodice: function (c) { H.codice = c; bd(); },
       onConnesso: function () { H.pronta = true; bd(); },
+      onErrore: function () { fermaTimer(); fermaPausa(); if (H.tav) H.tav.chiudi(); errore(t, "Problema di collegamento: la stanza non si apre. Riprova."); },   // (solo se il primo collegamento non riesce)
       onAddio: function (id) {
         var prima = H.attesa.length;
         H.attesa = H.attesa.filter(function (a) { return a.id !== id; });
@@ -1445,7 +1445,7 @@
       H.fineFatta = H.partita;
       suonoFine(); var v = vittorie(H.players);
       H.tav.finestra({ titolo: titoloFine(H.classifica, "host"), sotto: H.st.febbre ? "Tutti gli arancioni presi!" : H.players.some(function (p) { return !p.via && p.palline > 0; }) ? "Partita chiusa prima della fine" : "Palline finite", righe: righeFine(H.classifica, "host"),
-        nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null],
+        nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null, faccineFine(t)],
         tasti: [{ testo: "↻ Altra partita (stessi amici)", cls: "btn-primario", fn: nuova }, { testo: "🏠 Esci", fn: cbHost.onEsci }] });
     }
     // "Altra partita": stessa stanza, stessi amici, tutti tornano nella saletta (MAI chiudere e riaprire la stanza); entra anche chi aspettava
@@ -1494,20 +1494,25 @@
           else if (m.t === "mira") { if (S.tav && S.st && m.seq === S.st.seq) { S.tav.orologio(m.ts); if (S.st.fase === "mira" && !mioTurno()) S.tav.mira(m.a); } }
           else if (m.t === "fretta") { if (S.tav && S.st && m.seq === S.st.seq) S.tav.dimmi(mioTurno() ? "⏱️ 10 secondi per tirare!" : "⏱️ " + S.st.gioc[S.st.turno].nome + " ha 10 secondi"); }
         },
-        onChiuso: function () { if (S.tav) S.tav.chiudi(); errore(t, "La partita è stata chiusa dall'host."); },
-        onErrore: function () { if (S.tav) S.tav.chiudi(); errore(t, "Problema di collegamento. Riprova."); }
+        onChiuso: function () { if (S.tav) S.tav.chiudi(); errore(t, "La partita è stata chiusa dall'host."); },   // (chiusa apposta: se l'host sparisce, "La stanza è chiusa" lo dice il core)
+        onErrore: function () { if (S.tav) S.tav.chiudi(); errore(t, "Problema di collegamento. Riprova."); }   // (solo se il primo collegamento non riesce)
       });
     }
     function msgJoin() { return { t: "join", nome: S.nome, omino: t.mioOmino(S.nome), potere: poterePreferito() }; }
-    function attesa(testo) {   // la schermata d'attesa: se è già lì cambio solo la scritta (niente lampeggio a ogni foto)
+    function attesa(testo, faccine) {   // la schermata d'attesa: se è già lì cambio solo la scritta (niente lampeggio a ogni foto)
       var A = S.att;
-      if (A && document.body.contains(A.s)) { if (A.p.textContent !== testo) A.p.textContent = testo; return; }
+      if (A && document.body.contains(A.s)) { if (A.p.textContent !== testo) A.p.textContent = testo; if (faccine) metti(A); return; }
       var s = t.schermata({ icona: "🔴", titolo: "Palla Matta", sotto: "Stanza " + String(codice).toUpperCase(), indietro: cb.onEsci });
       var p = t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: testo });
       s._contenuto.appendChild(t.el("div", { style: "text-align:center;margin-top:56px;font-size:3rem;line-height:1", text: "🔴" }));   // (nei giochi la testa non ha il titolo: lo metto qui)
       s._contenuto.appendChild(t.el("div", { style: "text-align:center;margin-top:8px;font-weight:900;font-size:1.2rem", text: "Palla Matta · stanza " + String(codice).toUpperCase() }));
       s._contenuto.appendChild(p); S.att = { s: s, p: p };
+      if (faccine) metti(S.att);
       t.mostra(s);
+    }
+    function metti(A) {   // chi aspetta di entrare (stanza piena, partita in corso) manda le faccine a chi gioca
+      if (A.fac) return; var f = t.faccine && t.faccine(); if (!f) return;
+      A.fac = f; f.style.cssText = "margin:18px auto 0;max-width:320px"; A.s._contenuto.appendChild(f);
     }
     function mioTurno() { var st = S.st, g = st && st.gioc[st.turno]; return !!g && g.id === S.myId; }
     function ricevi(vm) {
@@ -1515,11 +1520,11 @@
         if (S.tav) { S.tav.chiudi(); S.tav = null; S.st = null; } S.coda = null;
         if ((vm.attesa || []).indexOf(S.myId) < 0) {   // l'host non mi ha ancora (o non più): richiedo di entrare, con calma
           if (S.rete && S.myId && Date.now() - (S.tJoin || 0) > 3000) { S.tJoin = Date.now(); S.rete.invia(msgJoin()); }
-          return attesa("Entro nella stanza…");
+          return attesa("⏳ Sto entrando…");
         }
         return attesa(vm.fase === "lobby" ? "La stanza è piena (" + vm.players.length + " su " + MAX_ON + "): entri appena si libera un posto."
           : vm.fase === "fine" ? "La partita è appena finita: entri nella saletta quando l'host ne prepara un'altra. Resta qui!"
-          : "C'è una partita in corso: entri nella saletta appena finisce. Resta qui!");
+          : "👀 C'è una partita in corso: entri nella saletta appena finisce. Resta qui!", true);
       }
       if (vm.fase === "lobby") { if (S.tav) { S.tav.chiudi(); S.tav = null; S.st = null; } S.coda = null; return lobbyPM(t, vm, cb); }
       if (!S.tav || vm.partita !== S.partita) { if (!creaTavolo(vm)) return; }
@@ -1574,9 +1579,13 @@
       S.fineDi = S.tav;
       suonoFine(); var cl = vm.classifica || [], v = vittorie(vm.players);
       S.tav.finestra({ titolo: titoloFine(cl, S.myId), sotto: vm.feb ? "Tutti gli arancioni presi!" : (vm.players || []).some(function (p) { return !p.via && p.palline > 0; }) ? "Partita chiusa prima della fine" : "Palline finite", righe: righeFine(cl, S.myId),
-        nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null, t.el("p", { class: "pm-nota", text: "Se l'host fa un'altra partita, torni da solo nella saletta." })],
+        nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null, t.el("p", { class: "pm-nota", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }), faccineFine(t)],
         tasti: [{ testo: "🏠 Esci", fn: cb.onEsci }] });
     }
+  }
+  function faccineFine(t) {   // online: la fila delle faccine anche sulla classifica (il mio avatar le fa sui telefoni di tutti)
+    var f = t.faccine && t.faccine(); if (f) f.style.marginTop = "12px";
+    return f;
   }
   function errore(t, testo) {
     var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
@@ -1691,8 +1700,8 @@
     id: ID, nome: "Palla Matta", icona: "🔴",
     descrizione: "Spara la pallina dall'alto e falla rimbalzare sui pioli: fai scoppiare tutti gli arancioni con 10 palline. Livelli, poteri e la febbre finale!",
     giocatoriMin: 1, giocatoriMax: 4, difficolta: 2,
-    modi: [{ modo: "solo", icona: "🎯", nome: "Da solo", sotto: "I livelli, uno dopo l'altro" },
-      { modo: "amici", icona: "📱", nome: "Sfida su questo telefono", sotto: "Da 2 a 4: un tiro a testa, vi passate il telefono", amici: true }],
+    modi: [{ modo: "solo", icona: "🎯", nome: "Da solo", sotto: "I livelli, uno dopo l'altro", diretto: true, min: 1 },   // diretto: niente impostazioni, si va ai livelli
+      { modo: "amici", icona: "📱", nome: "Sfida su questo telefono", sotto: "Da 2 a 4: un tiro a testa, vi passate il telefono", amici: true, min: 2 }],
     regole: [
       "<b>Mirare</b>: trascina il dito, da qualsiasi punto dello schermo, e il cannone gira con lui (a destra gira a destra). Piano piano per i ritocchi, veloce per girarlo tanto. I puntini mostrano dove va la pallina. Lasciando il dito non parte niente: dai un <b>tocco veloce</b> per tirare.",
       "La pallina rimbalza sui pioli e li <b>accende</b>; quando esce, i pioli accesi scoppiano. Per far <b>correre</b> la pallina, tieni premuto lo schermo mentre vola.",
@@ -1702,8 +1711,8 @@
       "Con l'ultimo arancione parte la <b>Febbre Matta</b>: in fondo ci sono i secchi da 10.000, 25.000 e 50.000 punti. Ogni pallina avanzata vale 10.000 punti.",
       "<b>Sfida</b> (sullo stesso telefono o online, da 2 a 4): stesso tavolo per tutti, <b>un tiro a testa</b>. I pezzi presi spariscono per tutti, ma <b>i punti vanno a chi ha tirato</b>. Ognuno ha il suo aiutante. Chi prende l'ultimo arancione fa la Febbre Matta. Alla fine <b>vince chi ha più punti</b>."
     ],
-    impostazioni: function (box, dove, aiuti) {   // da solo: il tuo aiutante; nelle sfide: il livello (o a caso)
-      var el = aiuti.el, p = progressi(); dove.modo = aiuti.modo || (aiuti.torneo || aiuti.sala ? "amici" : "solo");
+    impostazioni: function (box, dove, aiuti) {   // nelle sfide: il livello (o a caso); da solo niente (si va dritti ai livelli)
+      var el = aiuti.el; dove.modo = aiuti.modo || (aiuti.torneo || aiuti.sala ? "amici" : "solo");
       if (dove.modo !== "solo") {
         if (dove.lv == null) dove.lv = "caso";
         box.appendChild(el("div", { class: "etichetta", text: "Il livello" }));
@@ -1719,10 +1728,7 @@
         box.appendChild(el("p", { class: "modulo-nota", text: "Il tuo aiutante lo scegli prima del tuo primo tiro (online: nella saletta)." }));
         return;
       }
-      // da solo: il livello e l'aiutante si scelgono nella schermata dei livelli (una volta sola, non due)
-      var fatti = 0; LIVELLI.forEach(function (_, i) { if ((p.stelle[i + 1] || 0) > 0) fatti++; });
-      box.appendChild(el("p", { class: "modulo-nota", text: "Nella schermata dopo scegli il livello e il tuo aiutante (il potere dei pioli verdi). " +
-        (fatti ? "Hai finito " + (fatti === 1 ? "1 livello" : fatti + " livelli") + " su " + LIVELLI.length + "." : "Ci sono " + LIVELLI.length + " livelli in " + CAPITOLI.length + " capitoli: si comincia dal primo!") }));
+      // da solo non c'è niente da scegliere qui (modo "diretto"): livello e aiutante si scelgono nella schermata dei livelli
     },
     avvia: function (t) {
       var imp = t.impostazioni || {};

@@ -39,7 +39,8 @@ Il proprietario lavora con Claude da due computer, tenuti allineati da GitHub. Q
 - **Niente scorrimento per giocare** e niente titolo in alto nei giochi: il tavolo prima di tutto. I giochi a tutto schermo usano `height: var(--alt)` (l'altezza vera dello schermo, misurata da core.js).
 - **Niente lampeggio**: a ogni mossa si aggiorna solo la parte che cambia, mai tutta la schermata.
 - Account del proprietario: **IL PAPPONE**. Solo lui vede "Prova da solo" (Parola d'ordine), ha tutti i livelli di Palla Matta aperti, i colpi illimitati agli scavi e nel negozio ha la matita per disegnare la commessa (si salva nella sua scheda pubblica e la vedono tutti uguale).
-- Vibrazione solo quando si tocca per scegliere, mai mentre si scorre. I bot non si chiamano mai Matt: il primo si chiama sempre **Bot** (deciso il 10 ott 2026).
+- Vibrazione solo quando si tocca per scegliere, mai mentre si scorre.
+- Bot: nei tasti, nelle regole e nei menu si scrive sempre **"Bot"** ("🤖 Gioca col Bot", "Contro il Bot"), MAI "gioca con Matt" o un altro nome. In partita invece i bot hanno nomi e avatar fissi, presi da un gruppo fisso di bot sempre uguali (Matt compreso), così si riconoscono e nascono i tormentoni. Il proprietario (IL PAPPONE) può decidere dal suo account come sono fatti (chiarito il 15 ott 2026: il "togli Matt" del 10 ott valeva solo per i tasti).
 - Scene animate grandi: animare solo transform/opacity, sfondi e luci su canvas.
 - Insegne di Casinò e Circolo: tutte della stessa misura (stessa targa e stessa scritta, al centro); ogni gioco cambia solo i colori, e gli ornamenti stanno dentro la targa. Due insegne ai lati alla stessa altezza, quella del tavolo in fondo al centro più in alto (deciso l'11 ott 2026; regola in styles.css e casino.js).
 
@@ -54,6 +55,21 @@ Il proprietario lavora con Claude da due computer, tenuti allineati da GitHub. Q
 - Regole cambiabili dall'host in saletta: il gioco implementa `t.onRegole(impostazioni)` se legge le impostazioni all'avvio.
 - A fine partita: `t.risultato([{ nome, pos }])` (serve al torneo online). Nei giochi a due va chiamato anche nella partita contro il bot: serve al torneo a eliminazione (`GIOCHI_ELIMINAZIONE` in core.js).
 - Un gioco a due nel torneo a eliminazione deve anche: mostrare la partita a chi guarda (`t.linkParams.guarda`: si collega con `SGNet.entra` senza mandare "join", non può toccare, niente trofei né suoni; esempio `guardaTris` in tris.js) e, nella partita contro il bot, mandare lo stato con `t.trasmetti(msg)` (gli stessi messaggi dell'host online).
+
+### Regole nuove dell'online (dal 14 ott 2026, saletta nuova)
+- **Nessuna schermata resta ferma**: ogni attesa di un tocco (Avanti, Prossimo giro, Continua…) ha un tempo e usa `t.contoAvanti(nodo, secondi, fn, chiave)`. L'host lo mette sul suo tasto con `fn` (a zero va avanti da solo); gli altri su una scritta con `fn = null` ("Si va avanti tra 8…"). Nella foto si mandano i **secondi che mancano**, non l'ora (gli orologi dei telefoni sono diversi). La `chiave` (es. `"esito|" + turno`) fa continuare il conto se il tasto viene ridisegnato. Il conto chiama la funzione: mai `bottone.click()` (fa vibrare).
+- **`onErrore` arriva solo se il primo collegamento non riesce** (15 secondi di tentativi): lì si offre "Riprova". Dopo, la rete che salta non arriva al gioco: il core mostra "📶 Mi ricollego…" e il collegamento riprova da solo. **Mai chiudere la partita su `onErrore`.**
+- `onChiuso(perché)` per chi entra: `{ voluto: true }` = l'host ha chiuso apposta; `{ sparito: true }` = l'host non è tornato in 2 minuti (fuori dalla Sala il core mostra già "La stanza è chiusa").
+- Per l'host, facoltativi: `onForse(id)` quando un amico sparisce senza salutare (es. 📶 accanto al nome) e `onTornato(id)` quando torna in tempo; dopo 20 secondi arriva `onAddio(id)` come prima. Chi torna dopo `onAddio` manda di nuovo "join" con lo stesso id: rimettilo in partita col suo posto.
+- I messaggi che cominciano con **"__"** sono del core (faccine, pronti, 3-2-1, XP): i giochi non li ricevono e non devono usarli.
+- Nella foto ci va sempre `fase` ("lobby", "gioco", "fine"…): il core la usa per riaprire la stanza se l'host ricarica la pagina (si riparte dalla saletta con lo stesso codice e le stesse regole).
+- **Giochi a due**: `postiOnline: 2` in `SG.registra`. Gioca solo l'avversario scelto dall'host (il suo id nella foto, es. `avvId`); chi è in più guarda, senza "Tu" né "Tocca a te". Chi arriva a partita cominciata la guarda ed entra alla prossima (l'host non lo mette in partita).
+- **Faccine**: `t.faccine()` dà la fila delle faccine della saletta (o `null` se la partita non è online): mettila dove si aspetta o si guarda (classifica finale, chi guarda una partita a due, attese lunghe).
+- **Conferme**: `t.conferma(domanda, nota, testoSì, fn)` (anche `t.conferma(domanda, fn)`), la finestra al centro dell'app: mai `window.confirm`. Dalla saletta il core chiede già all'host "Chiudere la stanza per tutti?".
+- `t.lobby` accetta anche `spettatore: true` (o il testo da mostrare, es. partita piena: "👀 Guardi questa partita"), `confermaEsci`, `nota`, `testoComincia`.
+- Giochi con l'host di riserva (come Parola d'ordine): `hostDiRiserva: true` in `SG.registra` (il core non li riavvia quando cambia l'host).
+- Per arrivare a un gioco in due tocchi: nei `modi`, `diretto: true` salta le impostazioni e parte subito; `min` è il minimo di giocatori di quel modo. `g.impostazioni` riceve anche `aiuti.giocatori` (i nomi di chi gioca).
+- `t.schermata` toglie il titolo solo se è uguale al nome del gioco; `t.esci()` ferma il gioco (dopo, i suoi timer non disegnano più).
 
 ## Trofei
 Lista `TROFEI` in core.js (`{ gioco, livello, icona, nome, desc, stat, meta }`) più i contatori nei giochi, salvati con `SGNube.salvaProgressi(...)`. Le liste arrivano dal proprietario: prima di aggiungerle, controllare che si possano davvero ottenere e che i numeri non siano esagerati.

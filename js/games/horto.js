@@ -763,6 +763,7 @@
       });
       s._contenuto.appendChild(box);
     }
+    if (!cb.locale) { var fac = t.faccine && t.faccine(); if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); } }   // online: le faccine anche sulla classifica
     if (cb.sonoHost) {
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rigioca", onclick: cb.onRigioca }));
       s._piede.appendChild(el("div", { class: "ho-piede2" }, [
@@ -913,7 +914,7 @@
           var sm = seatDi(id); if (sm > 0 && cav[sm] && cav[sm].umano) frusta(cav[sm], performance.now());
         }
       },
-      onErrore: function () { senzaRete(t); }
+      onErrore: function () { chiudi(); errore(t, "Problema di collegamento: la stanza non si apre. Riprova."); }   // (solo se il primo collegamento non riesce)
     });
 
     function inizia() {
@@ -995,7 +996,7 @@
 
   function ospiteHorto(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var el = t.el, S = { rete: null, myId: null, nome: "", mySeat: -1, ref: null, fase: null, nomi: null, N: 0, msg2: null, garaId: null, diff: "medio", umani: 1,
+    var el = t.el, S = { rete: null, myId: null, nome: "", mySeat: -1, ref: null, fase: null, nomi: null, N: 0, garaId: null, diff: "medio", umani: 1,
       av: null, cn: null, ff: null, contoTimer: null, buf: [], raf: null, lastP: [], delayMs: 120 };   // buf: le posizioni ricevute, per un movimento liscio
     if (t.nomeProfilo && t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else schermaNome();   // col profilo si entra da soli
 
@@ -1051,8 +1052,7 @@
     function collega() {
       attesa();
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: mioAvatar(t, S.nome) });
-          setTimeout(function () { if (!S.ref && S.fase === null && S.msg2) S.msg2.textContent = "Non trovo la partita: controlla il codice o attendi l'host…"; }, 8000); },
+        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: mioAvatar(t, S.nome) }); },   // (se la stanza non risponde lo dice il core)
         onMsg: function (m) {
           if (!m || !m.t) return;
           if (m.to && m.to !== S.myId) return;   // era per un altro telefono
@@ -1086,8 +1086,8 @@
             if (!S.ref && S.fase !== "fine") schermaAspetta(m.pieno);
           }
         },
-        onChiuso: function () { chiudiCorsa(); errore(t, "Collegamento perso. L'host potrebbe aver chiuso la corsa."); },
-        onErrore: function () { chiudiCorsa(); errore(t, "Problema di collegamento. Riprova."); }
+        onChiuso: function () { chiudiCorsa(); errore(t, "La corsa è stata chiusa dall'host."); },   // (chiusa apposta: se l'host sparisce, "La stanza è chiusa" lo dice il core)
+        onErrore: function () { chiudiCorsa(); errore(t, "Problema di collegamento. Riprova."); }   // (solo se il primo collegamento non riesce)
       });
     }
     function build(sn) {
@@ -1120,14 +1120,15 @@
       renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi }, { onEsci: esci });
     }
     function attesa() {   // finché non arriva la saletta dall'host
-      var s = t.schermata({ icona: "🐎", titolo: "Entro nella corsa…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: esci });
-      S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" });
-      s._contenuto.appendChild(S.msg2); t.mostra(s);
+      var s = t.schermata({ icona: "🐎", titolo: "⏳ Sto entrando…", sotto: "Horto Muso · stanza " + String(codice).toUpperCase(), indietro: esci });
+      s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
+      t.mostra(s);
     }
     function schermaAspetta(pieno) {
-      var s = t.schermata({ icona: "🐎", titolo: pieno ? "La corsa è piena" : "Corsa già partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: esci });
+      var s = t.schermata({ icona: "🐎", titolo: pieno ? "La corsa è piena" : "👀 Corsa già partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: esci });
       s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px",
-        text: pieno ? "Ci sono già 8 cavalli: entri appena si libera un posto." : "Sei dentro: entri alla prossima corsa! 🐎" }));
+        text: pieno ? "Ci sono già 8 cavalli: entri appena si libera un posto." : "Entri alla prossima corsa! 🐎" }));
+      var f = t.faccine && t.faccine(); if (f) { f.style.margin = "16px auto 0"; f.style.maxWidth = "320px"; s._contenuto.appendChild(f); }   // si aspetta: le faccine
       t.mostra(s);
     }
   }
@@ -1214,7 +1215,7 @@
       box.appendChild(wD);
       notaOnline = el("div", { class: "link-avviso", hidden: "hidden" });
       notaOnline.textContent = (window.SGNet && SGNet.disponibile())
-        ? "Apri una stanza e manda il codice: gli altri corrono dal loro telefono. I posti liberi li giocano i bot."
+        ? "Apri la stanza e invita gli amici col tasto 📤: gli altri corrono dal loro telefono. I posti liberi li corrono i bot."
         : "Qui il collegamento non è disponibile: funziona quando il gioco è aperto dal sito pubblicato online.";
       box.appendChild(notaOnline);
       selM(aiuti.sala ? "online" : dove.modo);

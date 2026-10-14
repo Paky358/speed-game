@@ -194,6 +194,7 @@
 
   SG.registra({
     id: "scalinata",
+    riprende: true,   // se l'host ricarica a metà partita, la partita riprende da dove era (il core lo dice agli amici)
     nome: "La Scalinata",
     icona: "🪜",
     descrizione: "In quattro sulla scala: scegli 1, 3 o 5. Avanza solo chi sceglie un numero che nessun altro ha scelto. Primo in cima, vince.",
@@ -440,7 +441,7 @@
     var el = t.el;
     var s = t.schermata({}); s.classList.add("sc-piena");
     var eRound = el("div", { class: "sc-round" }), eTempo = el("div", { class: "sc-tempo" }), barra = el("i");
-    var bEsci = el("button", { class: "sc-esci", text: "‹", "aria-label": "Esci", onclick: function () { if (window.confirm(o.conferma || "Uscire dalla partita?")) o.onEsci(); } });
+    var bEsci = el("button", { class: "sc-esci", text: "‹", "aria-label": "Esci", onclick: function () { chiediUscita(t, o.conferma || "Uscire dalla partita?", o.onEsci); } });
     var scala = el("div", { class: "sc-scala" });
     var righello = el("div", { class: "sc-righello" });
     for (var k = 5; k <= TRAGUARDO; k += 5) righello.appendChild(el("span", { style: "bottom:" + (k / TRAGUARDO * 100) + "%", text: k === TRAGUARDO ? "🏁" : String(k) }));
@@ -687,7 +688,8 @@
     var vm = { fase: st.fase, codice: st.codice, pronta: st.pronta, partita: st.partita, nRound: st.nRound, traguardo: TRAGUARDO,
       posti: st.posti.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, passi: p.passi, bot: !!p.bot, via: !!p.via, chosen: p.scelta != null, omino: p.omino || null }; }),
       guarda: st.guarda.map(function (p) { return { id: p.id, nome: p.nome }; }),
-      resta: st.fase === "scelta" ? Math.max(0, st.deadline - Date.now()) : 0,   // il tempo che resta (non l'ora: gli orologi dei telefoni non sono uguali)
+      resta: st.fase === "scelta" || st.fase === "rivela" ? Math.max(0, st.deadline - Date.now()) : 0,   // il tempo che resta (non l'ora: gli orologi dei telefoni non sono uguali)
+      ripresa: st.ripresa || 0,   // il round in cui la partita è ripresa (l'host aveva ricaricato)
       scelte: null, avanza: null, prev: null, caso: null, commento: "", vincitori: st.vincitori || [] };
     if (st.fase === "rivela") { vm.scelte = st.scelte; vm.avanza = st.avanza; vm.prev = st.prev; vm.caso = st.caso; vm.commento = st.commento; }
     return vm;
@@ -701,30 +703,21 @@
   }
   function togliSalvata() { try { localStorage.removeItem(CHIAVE_HOST); } catch (e) {} }
 
+  // la partita lasciata a metà (pagina ricaricata, app chiusa) riparte da sola quando l'app riapre la STESSA stanza
+  // (lo fa il core, con lo stesso codice): gradini e round restano, gli amici rientrano da soli.
+  // Una stanza nuova (o la Sala, che dà sempre un codice nuovo) parte da zero.
   function hostScala(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteScala(t);
-    var inSala = !!SGNet._forza;   // lanciato da una Sala online: la stanza la decide la Sala (niente ripresa)
-    var salvata = inSala ? null : leggiSalvata();
-    if (!salvata) return apriHost(t, null, inSala);
-    // la pagina si era chiusa a metà partita: si può riprendere la stessa stanza
-    var s = t.schermata({ icona: "🪜", titolo: "Partita a metà", indietro: t.esci });
-    var vs = salvata.st, amici = vs.posti.filter(function (p) { return !p.bot && p.id !== "host"; }).map(function (p) { return p.nome; });
-    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5",
-      text: "Hai lasciato una partita a metà nella stanza " + String(vs.codice).toUpperCase() + (vs.fase === "fine" ? " (la partita era finita: potete farne un'altra)" : vs.fase !== "lobby" ? " (round " + vs.nRound + ")" : "") + "." +
-        (amici.length ? " Con te c'erano " + elenco(amici) + ": se sono ancora collegati, rientrano da soli." : "") }));
-    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "▶ Riprendi la partita", onclick: function () { apriHost(t, salvata, false); } }));
-    s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "Apri una stanza nuova", onclick: function () { togliSalvata(); apriHost(t, null, false); } }));
-    t.mostra(s);
+    apriHost(t, leggiSalvata());
   }
 
-  function apriHost(t, salvata, inSala) {
-    var st = salvata ? salvata.st : {
+  function apriHost(t, salvata) {
+    var st = {
       fase: "lobby", codice: "…", pronta: false, partita: 0, nRound: 0, vincitori: [],
       posti: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", colore: COLORI[0], bot: false, passi: 0, scelta: null, omino: t.mioOmino ? t.mioOmino() : null }],
-      guarda: [], deadline: 0, scelte: null, avanza: null, prev: null, caso: null, commento: ""
+      guarda: [], deadline: 0, scelte: null, avanza: null, prev: null, caso: null, commento: "", ripresa: 0
     };
-    st.pronta = false; st.guarda = st.guarda || [];
-    var T = (salvata && salvata.T) || nuovaTracciaScala();
+    var T = nuovaTracciaScala();
     var chiusa = false, tScelta = null, tAuto = null, tBot = [];
     var V = nuovaVista();
     function trova(id, lista) { var r = null; (lista || st.posti).forEach(function (p) { if (p.id === id) r = p; }); return r; }
@@ -748,13 +741,22 @@
         if (m.t === "join") entra(id, m);
         else if (m.t === "scegli") registraScelta(id, m.n, m.r);
       },
-      onErrore: function () { if (!st.pronta && !chiusa) { chiusa = true; fermaTimer(); erroreScala(t, "Non riesco ad aprire la stanza. Controlla la connessione e riprova."); } }
-    }, salvata ? { codice: st.codice } : undefined);
+      // (arriva solo se il primo collegamento non riesce: a partita cominciata la rete si ricollega da sola)
+      onErrore: function () { if (!st.pronta && !chiusa) { chiusa = true; fermaTimer(); togliSalvata(); erroreScala(t, "Non riesco ad aprire la stanza. Controlla la connessione e riprova."); } }
+    });
     if (!rete) return senzaReteScala(t);
+    // la stanza riaperta è quella della partita salvata (e la partita era a metà): si riprende da lì
+    var ripresa = !!(salvata && salvata.st && String(rete.codice || "").toUpperCase() === String(salvata.st.codice).toUpperCase() &&
+      (salvata.st.fase === "scelta" || salvata.st.fase === "rivela"));
+    if (ripresa) {
+      st = salvata.st; T = salvata.T || T;
+      st.pronta = false; st.guarda = st.guarda || [];
+      // gli amici sono "via" finché non rientrano (lo fanno da soli in un attimo); chi non torna in tempo, per lui sceglie il bot
+      st.posti.forEach(function (p) { if (!p.bot && p.id !== "host") p.via = true; });
+    } else togliSalvata();
 
     function invia() { if (!chiusa) rete.invia({ t: "vm", vm: vmScala(st) }); }
     function salva() {
-      if (inSala) return;
       try {
         if (st.fase === "lobby" && st.posti.length < 2 && !st.guarda.length) localStorage.removeItem(CHIAVE_HOST);
         else localStorage.setItem(CHIAVE_HOST, JSON.stringify({ t: Date.now(), st: st, T: T }));
@@ -781,25 +783,27 @@
       if (chiusa || st.fase !== "lobby") return;
       var b = 0;
       while (st.posti.length < 4) { st.posti.push({ id: "bot" + b, nome: NOMI_BOT[b] || ("Bot " + (b + 1)), colore: COLORI[st.posti.length], bot: true, passi: 0, scelta: null, omino: null }); b++; }
-      st.partita += 1; st.nRound = 0; st.vincitori = [];
+      st.partita += 1; st.nRound = 0; st.vincitori = []; st.ripresa = 0;
       st.posti.forEach(function (p) { p.passi = 0; });
       nuovaScelta();
     }
     function sceltaAutomatica(p, ms) {
       tBot.push(setTimeout(function () {
-        var k = st.posti.indexOf(p); if (k < 0 || chiusa) return;
+        var k = st.posti.indexOf(p); if (k < 0 || chiusa || p.scelta != null || !(p.bot || p.via)) return;   // (è rientrato in tempo: sceglie lui)
         registraScelta(p.id, sceltaBot(k, st.posti.map(function (x) { return x.passi; }), st.posti.map(function (x) { return x.storia || []; }), st.posti.map(function (x) { return x.bot || x.via; })), st.nRound);
       }, ms));
     }
-    function nuovaScelta() {
+    // extra: tempo in più (partita ripresa: gli amici intanto rientrano)
+    function nuovaScelta(extra) {
       fermaTimer();
+      extra = extra || 0;
       st.nRound += 1; st.fase = "scelta"; st.vincitori = [];
       st.scelte = st.avanza = st.prev = st.caso = null; st.commento = "";
       st.posti.forEach(function (p) { p.scelta = null; p.caso = false; });
-      st.deadline = Date.now() + SECONDI * 1000;
+      st.deadline = Date.now() + SECONDI * 1000 + extra;
       bd();
-      st.posti.forEach(function (p) { if (p.bot || p.via) sceltaAutomatica(p, 700 + Math.floor(Math.random() * 2200)); });
-      tScelta = setTimeout(chiudiScelte, SECONDI * 1000 + MARGINE_RETE);
+      st.posti.forEach(function (p) { if (p.bot || p.via) sceltaAutomatica(p, extra + 700 + Math.floor(Math.random() * 2200)); });
+      tScelta = setTimeout(chiudiScelte, SECONDI * 1000 + extra + MARGINE_RETE);
     }
     function registraScelta(id, n, r) {
       if (chiusa || st.fase !== "scelta" || SCELTE.indexOf(n) < 0) return;
@@ -827,9 +831,10 @@
       st.commento = commentoRound(st.posti.map(function (p) { return p.nome; }), scelte, st.avanza, passi, st.posti.map(function (p) { return p.bot || p.via; }), storie, vinc);
       storie.forEach(function (h, i) { h.push(scelte[i]); if (h.length > 30) h.shift(); });   // abitudini per i bot
       tracciaScala(T, 0, st.partita + ":" + st.nRound, st.nRound, scelte, st.avanza, st.prev, passi);   // l'host è sempre il posto 0
-      st.fase = "rivela"; bd();
-      // il round dopo (o il podio) parte da solo; l'host può andare avanti prima col tasto
-      tAuto = setTimeout(prossimo, durataRivela(st.posti.length) + (vinc.length ? PAUSA_FINE : PAUSA_AUTO));
+      // il round dopo (o il podio) parte da solo; l'host può andare avanti prima col tasto (che conta)
+      var dur = durataRivela(st.posti.length) + (vinc.length ? PAUSA_FINE : PAUSA_AUTO);
+      st.fase = "rivela"; st.deadline = Date.now() + dur; bd();
+      tAuto = setTimeout(prossimo, dur);
     }
     function prossimo() {
       if (chiusa || st.fase !== "rivela") return;
@@ -851,7 +856,7 @@
       st.posti = fila.slice(0, 4); st.guarda = fila.slice(4);
       st.posti.concat(st.guarda).forEach(function (p) { p.passi = 0; p.scelta = null; p.caso = false; });
       ricolora();
-      st.fase = "lobby"; st.nRound = 0; st.vincitori = []; st.scelte = st.avanza = st.prev = st.caso = null; st.commento = "";
+      st.fase = "lobby"; st.nRound = 0; st.vincitori = []; st.ripresa = 0; st.scelte = st.avanza = st.prev = st.caso = null; st.commento = "";
       bd();
     }
     // esce l'host: prima si torna indietro (nella Sala gli altri vengono avvisati), poi si chiude la stanza
@@ -867,10 +872,9 @@
       onComincia: comincia, onProssimo: prossimo, onNuova: nuova, onEsci: esci };
     function disegna() { if (!chiusa) disegnaVM(t, vmScala(st), cb, V); }
 
-    if (salvata) {   // ripresa: il round a metà riparte da capo
-      if (st.fase === "scelta") nuovaScelta();
-      else if (st.fase === "rivela") { bd(); tAuto = setTimeout(prossimo, durataRivela(st.posti.length) + PAUSA_AUTO); }
-      else bd();
+    if (ripresa) {   // il round a metà riparte da capo (con 3 secondi in più); dopo il risultato si va al round dopo
+      if (st.fase === "scelta") { st.nRound -= 1; st.ripresa = st.nRound + 1; nuovaScelta(3000); }
+      else { st.ripresa = st.nRound + 1; st.deadline = Date.now() + 3000; bd(); tAuto = setTimeout(prossimo, 3000); }
     } else disegna();
   }
 
@@ -925,7 +929,16 @@
           }
           cb.myId = S.myId; disegnaVM(t, vm, cb, V);
         },
-        onChiuso: function () { if (!S.chiuso) { S.chiuso = true; if (V.tav) V.tav.ferma(); erroreScala(t, "La partita è finita: l'host l'ha chiusa o non è più collegato."); } },
+        // l'host ha chiuso la stanza apposta (se sparisce e non torna, "La stanza è chiusa" lo dice il core):
+        // sul podio resta il podio, con la scritta giusta
+        onChiuso: function () {
+          if (S.chiuso) return;
+          S.chiuso = true;
+          if (S.vm && S.vm.fase === "fine") { V.chiusa = true; if (V.notaFine) V.notaFine.textContent = NOTA_CHIUSA; return; }
+          if (V.tav) V.tav.ferma();
+          erroreScala(t, "🚪 L'host ha chiuso la partita.");
+        },
+        // (solo se il primo collegamento non riesce)
         onErrore: function () { if (!S.chiuso && !S.vm) erroreScala(t, "Problema di collegamento. Controlla la connessione e riprova."); }
       });
     }
@@ -961,7 +974,7 @@
     if (vm.fase === "fine") {
       V.tav = null; V.fase = null;
       if (V.fine === vm.partita && V.fineS && document.body.contains(V.fineS)) return;   // il podio c'è già
-      V.fine = vm.partita; V.fineS = podioVM(t, vm, cb, io);
+      V.fine = vm.partita; V.fineS = podioVM(t, vm, cb, io, V);
       return;
     }
     V.fine = null;
@@ -985,7 +998,8 @@
       }
       V.fase = "scelta"; V.round = vm.nRound; V.bip = {};
       tav.nuovoRound(vm.posti.map(function (p) { return p.passi; }));
-      tav.voce(vm.nRound === 1 ? "Scegli in segreto 1, 3 o 5. Se un altro sceglie il tuo stesso numero, restate fermi!" : "");
+      tav.voce(vm.ripresa && vm.ripresa === vm.nRound ? "🔁 Partita ripresa: si continua da qui!"
+        : vm.nRound === 1 ? "Scegli in segreto 1, 3 o 5. Se un altro sceglie il tuo stesso numero, restate fermi!" : "");
       tav.tempo(vm.resta);
       var mio = io >= 0 ? vm.posti[io] : null, giaMia = V.mia && V.mia.r === vm.nRound && V.mia.p === vm.partita;
       if (mio && !mio.bot && !mio.via && !mio.chosen && !giaMia) {
@@ -997,7 +1011,7 @@
           cb.onScegli(n, nR);
         })]);
       } else if (mio && !mio.bot && !mio.via) tav.pannello([pMsg(t, giaMia ? "Hai scelto " + V.mia.n + " ✓" : "Hai scelto ✓", "Aspetta gli altri…")]);
-      else tav.pannello([pMsg(t, "👀 Stai guardando", guardo ? "La scala ha 4 posti: alla prossima partita si dà il cambio." : null)]);
+      else tav.pannello([pMsg(t, "👀 Stai guardando", guardo ? "La scala ha 4 posti: entri alla prossima partita." : null), t.faccine ? t.faccine() : null]);
       vm.posti.forEach(function (p, i) { if (p.chosen || (i === io && giaMia)) { V.bip[p.id] = 1; tav.scelto(i, true); } });
       return;
     }
@@ -1013,14 +1027,14 @@
       var mandata = V.mia && V.mia.r === vm.nRound && V.mia.p === vm.partita;
       nota = (mandata ? "⏰ Troppo tardi: " : "⏰ Tempo scaduto: ") + "il caso ha scelto " + ilNum(vm.scelte[io]) + " per te.";
     }
+    // la fine del conto la decide l'host (vm.resta): l'ora di fine col MIO orologio
+    var fino = Date.now() + (vm.resta || 0), kR = "sc-rivela|" + vm.partita + "|" + vm.nRound;
     tav.rivela({ scelte: vm.scelte, avanza: vm.avanza, prev: vm.prev, passi: vm.posti.map(function (p) { return p.passi; }), commento: vm.commento, vincitori: vinc }, function () {
-      var finita = vinc.length > 0;
-      tav.pannello([
-        nota ? pMsg(t, nota, null, "piccolo") : null,
-        pAuto(t, finita ? PAUSA_FINE : PAUSA_AUTO),
-        cb.sonoHost ? pBottone(t, finita ? "Vedi il podio 🏆" : "Prossimo round ▶", cb.onProssimo)
-          : pMsg(t, finita ? "Tra poco il podio…" : "Il prossimo round parte da solo…", null, "piccolo")
-      ]);
+      var finita = vinc.length > 0, sec = Math.max(1, Math.round((fino - Date.now()) / 1000));
+      // l'host: "Prossimo round ▶ 3" (conta e a zero si va avanti); gli altri: "Si va avanti tra 3…"
+      var tasto = cb.sonoHost ? pBottone(t, finita ? "Vedi il podio 🏆" : "Prossimo round ▶", cb.onProssimo) : pMsg(t, "", null, "piccolo");
+      tav.pannello([ nota ? pMsg(t, nota, null, "piccolo") : null, tasto ]);
+      t.contoAvanti(tasto, sec, cb.sonoHost ? function () { cb.onProssimo(); } : null, kR);
     });
   }
 
@@ -1043,13 +1057,14 @@
       onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
-  function podioVM(t, vm, cb, io) {
+  function podioVM(t, vm, cb, io, V) {
     var el = t.el, pz = piazzamenti(vm.posti), med = ["🥇", "🥈", "🥉"];
     var primi = pz.filter(function (r) { return r.pos === 1; });
     var hoVinto = primi.some(function (r) { return r.p.id === cb.myId; });
     var titolo = primi.length > 1 ? "Vincono " + elenco(primi.map(function (r) { return r.p.id === cb.myId ? "tu" : r.nome; })) + "!"
       : hoVinto ? "Hai vinto!" : "Vince " + (primi[0] ? primi[0].nome : "") + "!";
-    var s = t.schermata({ icona: "🏆", titolo: titolo, sotto: "In cima alla scalinata" });
+    var s = t.schermata({ icona: "🏆", titolo: titolo, sotto: "In cima alla scalinata",
+      indietro: function () { chiediUscita(t, cb.sonoHost ? "Chiudere la stanza per tutti?" : "Uscire dalla partita?", cb.onEsci); } });
     var ol = el("ol", { class: "classifica" });
     pz.forEach(function (r) {
       ol.appendChild(el("li", { class: r.pos === 1 ? "vincitore" : "" }, [
@@ -1065,14 +1080,19 @@
       text: hoGuardato ? "👀 Hai guardato: alla prossima partita sali tu sulla scala!"
         : (guarda.length === 1 ? "👀 Ha guardato " : "👀 Hanno guardato ") + elenco(guarda.map(function (g) { return g.nome; })) +
           (guarda.length === 1 ? ": alla prossima partita sale sulla scala" : ": alla prossima partita salgono sulla scala") + (cambio ? " e dà il cambio chi è arrivato più in basso." : ".") }));
+    var fa = t.faccine ? t.faccine() : null;   // le faccine mentre si guarda la classifica
+    if (fa) { fa.style.marginTop = "12px"; s._contenuto.appendChild(fa); }
     if (cb.sonoHost) {
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Chiudi", onclick: cb.onEsci }));
     } else {
-      s._piede.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "In attesa dell'host per un'altra partita…" }));
+      s._piede.appendChild(V.notaFine = el("p", { class: "modulo-nota", style: "text-align:center", text: V.chiusa ? NOTA_CHIUSA : "⏳ Aspetta l'host: se fa un'altra partita, torni da solo nella saletta." }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     }
     t.mostra(s);
     return s;
   }
+  var NOTA_CHIUSA = "🚪 L'host ha chiuso la stanza.";
+  // uscire (o chiudere la stanza) chiede conferma: la finestra al centro dell'app (window.confirm se manca)
+  function chiediUscita(t, domanda, fn) { if (t.conferma) t.conferma(domanda, null, "Esci", fn); else if (window.confirm(domanda)) fn(); }
 })();

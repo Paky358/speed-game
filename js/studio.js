@@ -520,7 +520,11 @@
     S.fumetto = pezzo("div", "st-fumetto");
     S.zonaLeggii = el("div"); S.zonaLeggii.style.cssText = "position:absolute;left:0;top:0;width:0;height:0"; mondo.appendChild(S.zonaLeggii);
     // --- sovrimpressioni ---
-    vista.appendChild(el("button", { class: "st-esci", text: "‹", "aria-label": "Esci", onclick: function () { if (window.confirm("Uscire dalla partita?")) { fermaTimer(S); opz.esci(); } } }));
+    vista.appendChild(el("button", { class: "st-esci", text: "‹", "aria-label": "Esci", onclick: function () {
+      function via() { if (!document.body.contains(vista)) return; fermaTimer(S); opz.esci(); }
+      if (window.SG && SG.conferma) SG.conferma("Uscire dalla partita?", null, "Esci", via);   // la finestra al centro, come nel resto dell'app
+      else if (window.confirm("Uscire dalla partita?")) via();
+    } }));
     // la musichetta di sottofondo si accende e si spegne da qui (e il telefono se lo ricorda)
     var bMus = el("button", { class: "st-musica", "aria-label": "Musica", text: Musica.accesa() ? "🎵" : "🔇", onclick: function () { var on = !Musica.accesa(); Musica.attiva(on); bMus.textContent = on ? "🎵" : "🔇"; } });
     vista.appendChild(bMus);

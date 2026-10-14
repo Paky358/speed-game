@@ -1,7 +1,7 @@
 // COPIONE DEI GIOCHI: partite online intere con ricariche e telefoni spenti (101 Tris, 102 Scalinata, 103 Linea del tempo,
 // 104 Black Jack) e casi in più dell'online (105 host che chiude apposta, 106 host di riserva di Parola d'ordine,
 // 108 host che ricarica due volte, 109 amico che ricarica nella Sala, 110 Linea del tempo con l'host che ricarica
-// durante il voto, 111 Tris con l'avversario spento più di 20 s). Rispondono OK o NO come copione-prova.js.
+// durante il voto: la partita riprende, 111 Tris con l'avversario spento più di 20 s). Rispondono OK o NO come copione-prova.js.
 // Uso (dopo aver caricato copione-prova.js): const g = await (await fetch("/.agents/skills/prova-nel-browser/copione-giochi.js?" + Date.now())).text(); (0, eval)(g); await COPIONE.prova(101)
 (function () {
   var W = window, S = COPIONE.scenari;
@@ -27,8 +27,8 @@
     await W.apriTel("Giulia", { hash: "gioco=tris&stanza=" + C, x: 185 });
     if (!await W.aspetta(function () { return vm(C).avvId && dentro(W.finestra("Giulia")); }, 6000)) no("Giulia non entra");
     var sent = sentinella(["Paky", "Giulia"]);
-    var cella = function (w, i) { return [].filter.call(w.document.querySelectorAll(".schermata button"), function (b) { return b.style && b.style.aspectRatio; })[i]; };
-    var tocca = async function (i) { var chi = vm(C).turno === "X" ? "Paky" : "Giulia"; var ok = await W.aspetta(function () { var c = cella(W.finestra(chi), i); if (c && c.style.cursor === "pointer") { c.click(); return true; } return false; }, 5000); if (!ok) no("la casella " + i + " non si tocca per " + chi + " (" + T(W.finestra(chi)).slice(0, 80) + ")"); return chi; };
+    var cella = function (w, i) { return w.document.querySelectorAll(".tr-cella")[i]; };
+    var tocca = async function (i) { var chi = vm(C).turno === "X" ? "Paky" : "Giulia"; var ok = await W.aspetta(function () { var c = cella(W.finestra(chi), i); if (c && !c.disabled) { c.click(); return true; } return false; }, 5000); if (!ok) no("la casella " + i + " non si tocca per " + chi + " (" + T(W.finestra(chi)).slice(0, 80) + ")"); return chi; };
     var n = function () { return (vm(C).board || []).filter(Boolean).length; };
     W.clicca(P, /Comincia/);
     if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 4000)) no("non comincia");
@@ -36,7 +36,7 @@
     // Giulia ricarica: torna al suo posto, stesso id, vede la mossa
     var id0 = mioId("Giulia");
     var G = await W.ricarica("Giulia");
-    var ok = await W.aspetta(function () { var c = cella(W.finestra("Giulia"), 4); return c && c.textContent.trim() && mioId("Giulia") === id0; }, 8000);
+    var ok = await W.aspetta(function () { var c = cella(W.finestra("Giulia"), 4); return c && c.querySelector("svg") && mioId("Giulia") === id0; }, 8000);
     if (!ok) no("dopo la ricarica Giulia non ritrova la partita (" + T(W.finestra("Giulia")).slice(0, 80) + ", id " + mioId("Giulia") + " / " + id0 + ")");
     nota("Giulia ricarica: ritrova il tavolo, stesso id");
     await tocca(0); if (!await W.aspetta(function () { return n() === 2; }, 4000)) no("mossa 2 dopo la ricarica");
@@ -249,7 +249,7 @@
     if (!await W.aspetta(function () { return (vm(C).players || []).length === 4; }, 8000)) no("non entrano in 4");
     W.clicca(P, /Squadre a caso/); await W.dorme(600);
     if (!await W.aspetta(function () { return W.clicca(W.finestra("Paky"), /Comincia/); }, 4000)) no("niente Comincia");
-    if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 5000)) no("non comincia (" + vm(C).fase + ")");
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 9000)) no("non comincia (" + vm(C).fase + ")");   // (c'è il 3-2-1-Via!)
     await W.dorme(3000);
     var gen0 = vm(C).gen, host0 = vm(C).hostId;
     W.spegni("Paky");
@@ -279,7 +279,7 @@
   } };
 
   // ---------- 110 Linea del tempo: l'host ricarica durante il voto ----------
-  S[110] = { nome: "Linea del tempo: l'host ricarica durante il voto, si riparte dalla saletta e si gioca", fai: async function () {
+  S[110] = { nome: "Linea del tempo: l'host ricarica durante il voto, la partita riprende (stessi punti, tutti dentro) e si gioca", fai: async function () {
     var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "La linea del tempo");
     await W.apriTel("Giulia", { hash: "gioco=timeline&stanza=" + C, x: 185 });
     await W.apriTel("Luca", { hash: "gioco=timeline&stanza=" + C, x: 370 });
@@ -290,19 +290,32 @@
     if (!slot) no("il primo turno non arriva");
     slot.click(); await W.dorme(200); var conf = P.document.querySelector(".tl-conferma"); if (conf) conf.click();
     if (!await W.aspetta(function () { return vm(C).fase === "votazione"; }, 8000)) no("niente votazione");
-    var t0 = Date.now();
+    var punti = function () { return (vm(C).giocatori || []).map(function (g) { return g.nome + g.punti; }).join(","); };
+    var prima = punti(), t0 = Date.now(), pg = "";
     P = await W.ricarica("Paky");
-    var ok = await W.aspetta(function () { return codS(W.finestra("Paky")) === C && vm(C).fase === "lobby" && (vm(C).giocatori || []).length === 3 && dentro(W.finestra("Giulia")) && dentro(W.finestra("Luca")); }, 10000);
-    if (!ok) no("dopo la ricarica non sono tutti in saletta (" + T(W.finestra("Giulia")).slice(0, 80) + ")");
+    // la Linea del tempo (riprende: true) riprende la partita: "🔁 Partita ripresa!", poi lo stesso turno con tutti dentro
+    var okR = await W.aspetta(function () { var p = pill(W.finestra("Giulia")); if (/tornato/.test(p)) pg = p; return vm(C).fase === "ripresa"; }, 10000);
+    if (!okR) no("dopo la ricarica la partita non riprende (fase " + vm(C).fase + ", Giulia: " + T(W.finestra("Giulia")).slice(0, 80) + ")");
+    var ok = await W.aspetta(function () { var p = pill(W.finestra("Giulia")); if (/tornato/.test(p)) pg = p; var x = vm(C); return (x.fase === "turno" || x.fase === "votazione") && (x.giocatori || []).length === 3 && x.giocatori.every(function (g) { return !g.via; }); }, 15000);
+    if (!ok) no("dopo la ripresa non sono tutti di nuovo in gioco (fase " + vm(C).fase + ", " + (vm(C).giocatori || []).map(function (g) { return g.nome + (g.via ? " via" : ""); }).join(",") + ")");
     var dt = ((Date.now() - t0) / 1000).toFixed(1);
-    W.clicca(W.finestra("Paky"), /Comincia/);
-    if (!await W.aspetta(function () { return vm(C).fase === "turno"; }, 30000)) no("la partita nuova non comincia");
-    await W.dorme(1500);
+    if (punti() !== prima) no("punti cambiati: " + prima + " → " + punti());
+    if (!/si riprende la partita/.test(pg)) no("Giulia non legge «si riprende la partita» (" + (pg || "niente") + ")");
+    // si gioca: il turno dopo la ripresa arriva fino all'esito
+    var fine = Date.now() + 40000, visto = false;
+    while (Date.now() < fine && !visto) {
+      var v = vm(C), Pw = W.finestra("Paky");
+      if (v.fase === "esito") visto = true;
+      else if (v.fase === "turno") { if (v.turnoId === "host") { var sl = Pw.document.querySelector(".tl-slot"); if (sl) { sl.click(); await W.dorme(150); var cf = Pw.document.querySelector(".tl-conferma"); if (cf && !cf.disabled) cf.click(); } } else ["Giulia", "Luca"].forEach(function (n) { if (mioId(n) === v.turnoId) W.reteDi(n).invia({ t: "scelta", gap: 0, n: v.n }); }); }
+      else if (v.fase === "votazione") { ["Giulia", "Luca"].forEach(function (n) { if (mioId(n) !== v.turnoId) W.reteDi(n).invia({ t: "voto", d: true, n: v.n }); }); if (v.turnoId !== "host") W.clicca(Pw, /Giusto/); }
+      await W.dorme(400);
+    }
+    if (!visto) no("dopo la ripresa il turno non arriva all'esito (fase " + vm(C).fase + ")");
     var sbagli = ["Giulia", "Luca"].filter(function (n) { var w = W.finestra(n); return w.document.querySelector(".saletta-schermo") || /prossima|guardi/.test(pill(w)); });
     var vv = sent.stop();
-    if (sbagli.length) no("nella partita nuova " + sbagli.join(", ") + " non giocano (" + sbagli.map(function (n) { return pill(W.finestra(n)) || T(W.finestra(n)).slice(0, 50); }).join("; ") + ")");
+    if (sbagli.length) no("dopo la ripresa " + sbagli.join(", ") + " non giocano (" + sbagli.map(function (n) { return pill(W.finestra(n)) || T(W.finestra(n)).slice(0, 50); }).join("; ") + ")");
     if (vv.length) no("schermate viste: " + vv.join("; "));
-    return "tutti in saletta " + C + " in " + dt + " s, la partita nuova parte con tutti e tre";
+    return "partita ripresa in " + dt + " s con gli stessi punti e tutti dentro, Giulia legge «" + pg + "»; il turno arriva all'esito";
   } };
 
   // ---------- 111 Tris: l'avversario ha il telefono spento più di 20 s ----------

@@ -636,8 +636,9 @@
         if (H.fase !== "lobby" || seduti().length < MIN || seduti().length > MAX[M.variante]) return;
         H.fase = "gioco"; H.classifica = null; mandaOmini(); prossimaMano();
       },
-      onFine: function () {   // solo online: chiude la partita e fa la classifica (fiches guadagnate)
-        if (!window.confirm("Chiudere il tavolo e vedere la classifica?")) return;
+      onFine: function (ok) {   // solo online: chiude la partita e fa la classifica (fiches guadagnate)
+        if (ok !== true) return t.conferma("Chiudere il tavolo e vedere la classifica?", null, "Sì", function () { cb.onFine(true); });   // la finestra dell'app
+        if (H.fase !== "gioco") return;
         ferma(); clearTimeout(tMano); tMano = null; M.annulla();
         var umani = M.giocatori.filter(function (p) { return !p.bot; });
         var ord = umani.map(function (p) { return { id: p.id, nome: p.nome, punti: p.stack - p.buyin }; }).sort(function (a, b) { return b.punti - a.punti; });
@@ -650,9 +651,9 @@
         M.giocatori.forEach(function (p) { p.buyin = p.stack; p.seduto = p.stack > 0; p.pausa = false; });
         M.azzera(); M.dealer = -1; H.fase = "lobby"; H.classifica = null; bd();
       },
-      onEsci: function () {
-        if (online && H.fase === "gioco" && !window.confirm("Chiudere il tavolo per tutti?")) return;
-        if (!online && M.inCorso() && io.inMano && !io.lascia && !window.confirm("Lasciare il tavolo? Le fiches già puntate in questa mano restano sul tavolo.")) return;
+      onEsci: function (ok) {   // (ok === true: già confermato nella finestra dell'app)
+        if (ok !== true && online && H.fase === "gioco") return t.conferma("Chiudere il tavolo per tutti?", null, "Esci", function () { cb.onEsci(true); });
+        if (ok !== true && !online && M.inCorso() && io.inMano && !io.lascia) return t.conferma("Lasciare il tavolo? Le fiches già puntate in questa mano restano sul tavolo.", null, "Esci", function () { cb.onEsci(true); });
         ferma(); clearTimeout(tMano); tMano = null;
         // online: la mano a metà si annulla (ognuno si riprende le fiches puntate) e tutti ricevono il conto giusto prima della chiusura
         if (online && M.inCorso()) { M.annulla(); if (rete) rete.invia({ t: "vm", vm: vm() }); }
@@ -705,7 +706,7 @@
             if (H.fase === "gioco" && M.stato === "attesa") prossimaMano(); else bd();
           }
         },
-        onErrore: function () { senzaRete(t); }
+        onErrore: function () { ferma(); clearTimeout(tMano); tMano = null; errore(t, "Problema di collegamento: la stanza non si apre. Riprova."); }   // (solo se il primo collegamento non riesce)
       });
       bd();
     } else {
@@ -790,8 +791,8 @@
         disegna(t, S.vm, cb);
       },
       onBonus: function (nuovo, piu) { var b = piu || 0; S.fuori += b; if (S.salvato != null) S.salvato += b; ricorda(); if (S.vm) disegna(t, S.vm, cb); },   // monete della ruota già aggiunte al profilo
-      onEsci: function () {
-        if (S.vm && S.vm.fase === "gioco" && !window.confirm("Lasciare il tavolo? Le fiches già puntate in questa mano restano sul tavolo.")) return;
+      onEsci: function (ok) {
+        if (ok !== true && S.vm && S.vm.fase === "gioco") return t.conferma("Lasciare il tavolo? Le fiches già puntate in questa mano restano sul tavolo.", null, "Esci", function () { cb.onEsci(true); });
         salva(true); if (S.rete) S.rete.chiudi(); t.esci();
       } };
     if (t.nomeProfilo && t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
@@ -816,12 +817,12 @@
           else if (m.t === "mie") { S.mie = { n: m.n, carte: m.carte || [] }; if (S.vm) disegna(t, S.vm, cb); }
           else if (m.t === "omini") { S.omini = m.omini || {}; if (S.vm) disegna(t, S.vm, cb); }
         },
-        onChiuso: function () { salva(true); errore(t, "Il tavolo è stato chiuso dall'host."); },
-        onErrore: function () { errore(t, "Problema di collegamento. Riprova."); }
+        onChiuso: function () { salva(true); errore(t, "Il tavolo è stato chiuso dall'host."); },   // (chiuso apposta: se l'host sparisce, "La stanza è chiusa" lo dice il core)
+        onErrore: function () { errore(t, "Problema di collegamento. Riprova."); }   // (solo se il primo collegamento non riesce)
       });
     }
     function attesa() {
-      var s = t.schermata({ icona: "🃏", titolo: "Mi siedo al tavolo…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ icona: "🃏", titolo: "⏳ Sto entrando…", sotto: "Poker · stanza " + String(codice).toUpperCase(), indietro: t.esci });
       s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
       t.mostra(s);
     }
@@ -831,10 +832,17 @@
   //  DISEGNO (uguale per tutti): saletta, tavolo, classifica
   // =========================================================
   var UI = null;   // la schermata del tavolo si costruisce UNA volta e poi si aggiorna a pezzi
+  var FINE = null;   // la classifica sullo schermo: { k, s } (la stessa foto non la rifà: niente lampeggio)
   function disegna(t, vm, cb) {
     salvaTrofeiMano(vm, cb);
-    if (vm.fase === "lobby") { UI = null; return lobby(t, vm, cb); }
-    if (vm.fase === "fine") { UI = null; return finale(t, vm, cb); }
+    if (vm.fase === "lobby") { UI = null; FINE = null; return lobby(t, vm, cb); }
+    if (vm.fase === "fine") {
+      UI = null;
+      var k = vm.partitaId + "|" + cb.myId + "|" + JSON.stringify(vm.classifica || []);
+      if (FINE && FINE.k === k && document.body.contains(FINE.s)) return;
+      FINE = { k: k, s: finale(t, vm, cb) }; return;
+    }
+    FINE = null;
     if (!UI || !document.body.contains(UI.s)) UI = creaSchermo(t, cb);
     UI.cb = cb;
     aggiorna(UI, vm);
@@ -1005,7 +1013,7 @@
     }
     ui.nodiMie.forEach(function (d) { d.classList.toggle("conta", !!(evidenzia && vincenti[d._k])); });
     // la mia riga: fiches, puntata, che mano ho
-    var testo = "Tu · " + (io ? fmtN(io.stack) : "0") + " fiches";
+    var testo = io ? "Tu · " + fmtN(io.stack) + " fiches" : "👀 Guardi il tavolo";   // (chi guarda non ha fiches al tavolo)
     if (io && io.inGiro > 0) testo += " · puntata " + fmtN(io.inGiro);
     if (vm.dealer === cb.myId) testo += " · Ⓓ";
     var nomeMano = "";
@@ -1132,8 +1140,11 @@
     // una mossa: dopo il tocco i tasti restano fermi un attimo (un doppio tocco non vale per il giro dopo)
     function mossa(fn) { return function () { if (Date.now() < ui.blocco) return; ui.blocco = Date.now() + 600; fn(); }; }
     if (!io) {
-      if ((vm.guardano || []).indexOf(cb.myId) >= 0) { ui.azioni.appendChild(boxPieno(ui.t, cb, vm)); return; }
-      return stato("Stai guardando il tavolo");
+      if ((vm.guardano || []).indexOf(cb.myId) >= 0) ui.azioni.appendChild(boxPieno(ui.t, cb, vm));
+      else stato("Stai guardando il tavolo");
+      if (ui.fac === undefined) ui.fac = (ui.t.faccine && ui.t.faccine()) || null;   // chi guarda manda le faccine a chi gioca
+      if (ui.fac) ui.azioni.appendChild(ui.fac);
+      return;
     }
     if (!io.inMano && io.stack < GRANDE && vm.stato !== "finemano") {   // fiches finite: ci si risiede col portafoglio o col bonus
       stato("Hai finito le fiches sul tavolo.");
@@ -1217,7 +1228,7 @@
   }
   function finale(t, vm, cb) {
     var s = t.schermata({ icona: "🏆", titolo: "Classifica del tavolo", sotto: "Fiches guadagnate o perse" });
-    var ol = t.el("ol", { class: "classifica" }), med = ["🥇", "🥈", "🥉"];
+    var ol = t.el("ol", { class: "classifica" + ((vm.classifica || []).length > 4 ? " fitta" : "") }), med = ["🥇", "🥈", "🥉"];   // (fitta: righe basse su due colonne, così fino a 10 giocatori sta nello schermo)
     (vm.classifica || []).forEach(function (r) {
       ol.appendChild(t.el("li", { class: r.pos === 1 ? "vincitore" : "" }, [
         t.el("span", { class: "pos", text: med[r.pos - 1] || (r.pos + "°") }),
@@ -1225,10 +1236,12 @@
         t.el("span", { class: "punti", text: (r.punti > 0 ? "+" : "") + fmtN(r.punti) }) ]));
     });
     s._contenuto.appendChild(ol);
+    var fac = t.faccine && t.faccine(); if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }   // le faccine anche sulla classifica
     if (cb.sonoHost) s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
     else s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     t.mostra(s);
+    return s;
   }
   function senzaFiches(t, riprova) {
     var s = t.schermata({ icona: "🪙", titolo: "Ti servono delle monete", indietro: t.esci });

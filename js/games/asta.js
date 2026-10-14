@@ -13,6 +13,10 @@
   var FANTA_VUOTO_MS = 6000, FANTA_RILANCIO_MS = 8000;   // fantacalcio: 6 secondi finché nessuno offre, 8 dopo ogni offerta
   var SCELTA_MS = 20000;  // (online) tempo per scegliere la carta da mettere all'asta: poi ne esce una a caso
   var AUTO_ESITO_MS = 4000, AUTO_ROUND_MS = 4500;   // temi: l'esito e l'inizio round vanno avanti da soli (c'è anche il tasto)
+  var AUTO_KIT_MS = 15000;   // (online) i kit completi restano a schermo 15 secondi, poi si vota da soli
+  // (online) il voto ha un tempo per tutti: 60 secondi fino a 4 giocatori, 10 in più per ognuno dopo (al massimo 2 minuti);
+  // poco prima della fine i voti messi partono da soli, e chi non ha votato dà 3,5 ⭐ a testa
+  function votoMs(n) { return Math.min(120000, 60000 + Math.max(0, n - 4) * 10000); }
   var MAX_GIOCATORI = 10;
   var PARTITE_SALVATE = Object.create(null);
 
@@ -121,6 +125,9 @@
     ".as-bid .no{background:var(--carta-2);color:var(--testo-tenue);font-size:.9rem;}",
     ".as-bid button:disabled{opacity:.35;}",
     ".as-fuori{opacity:.45;}",
+    // (online) classifica finale alta come lo schermo: i tasti in fondo si vedono sempre, se serve scorre solo il centro
+    ".schermata.as-fissa{flex:0 0 auto;height:var(--alt,100dvh);max-height:var(--alt,100dvh);min-height:0;}",
+    ".schermata.as-fissa>.contenuto{min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}",
     ".as-kit{background:var(--carta);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:var(--ombra);}",
     ".as-kit h3{margin:0 0 8px;font-size:1.15rem;}",
     ".as-kit .riga{display:flex;align-items:center;gap:10px;padding:4px 0;font-size:.98rem;}",
@@ -764,7 +771,7 @@
   function schermataScelta(t, st) {
     var el = t.el;
     var chi = st.senzaCarta[st.chooserPtr % st.senzaCarta.length];
-    var s = t.schermata({ indietro: function () { if (window.confirm("Uscire dalla partita?")) t.esci(); } });
+    var s = t.schermata({ indietro: function () { t.conferma("Uscire dalla partita?", null, "Esci", t.esci); } });
     s._contenuto.appendChild(intestazioneRound(el, st));
     s._contenuto.appendChild(strisciaCrediti(el, st, chi));
     s._contenuto.appendChild(el("p", { class: "as-msg", style: "margin-bottom:10px",
@@ -1211,8 +1218,8 @@
     });
     foglioSala(t, "👕 Le formazioni", box);
   }
-  function esciAsta(t, st) {
-    if (!window.confirm("Uscire dalla partita?")) return;
+  function esciAsta(t, st) { t.conferma("Uscire dalla partita?", null, "Esci", function () { esciAstaOra(t, st); }); }   // la finestra dell'app
+  function esciAstaOra(t, st) {
     if (st) { st.finita = true; if (st.asta && st.asta.bar && st.asta.bar._stop) st.asta.bar._stop(); if (st.pausa) clearTimeout(st.pausa); }
     fermaTutto(); t.esci();
   }
@@ -1258,7 +1265,7 @@
       nota: !io ? "Stai guardando la partita" : !inGara ? "Hai già la tua carta di questo round" : hoPassato ? "Hai passato: aspetti il risultato" : guido ? "👑 L'offerta più alta è tua"
         : tardi ? "⏱ Troppo tardi: qualcuno ha offerto prima di te. Ora è " + a.offerta + " 💰" : "Hai " + io.crediti + " 💰 · puoi arrivare a " + Math.max(0, max),
       onRilancia: rilancio, onPassa: function () { cb.onPassa({ n: a.n }); },
-      onIndietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); },
+      onIndietro: function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); },
       extra: { testo: "🃏 Carte", apri: function () { var b = el("div", {}), pal = dettaglioPalio(el, vm.tavolo, a.carta.nome); if (pal) b.appendChild(pal); b.appendChild(pannelloKit(el, vm.giocatori)); foglioSala(t, "🃏 Le carte", b); } }
     });
   }
@@ -1296,7 +1303,7 @@
       nota: !a ? "" : !io ? "Stai guardando la partita" : !inGara ? "Hai già " + (a.ruolo === "C" ? "i 2 centrocampisti" : "il " + ru.nome.toLowerCase()) + " in rosa" : hoPassato ? "Hai passato: aspetti il risultato" : guido ? "👑 L'offerta più alta è tua"
         : tardi ? "⏱ Troppo tardi: qualcuno ha offerto prima di te. Ora è " + a.offerta + " 💰" : "Hai " + io.crediti + " 💰 · puoi arrivare a " + Math.max(0, max),
       onRilancia: rilancio, onPassa: function () { if (a) cb.onPassa({ n: a.nCarta }); },
-      onIndietro: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); },
+      onIndietro: function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); },
       extra: { testo: "👕 Tutte", apri: function () { formazioni(t, vm.giocatori); } }
     });
   }
@@ -1617,7 +1624,8 @@
       tavolo: st.tavolo.map(function (c) { return { nome: c.nome, emoji: c.emoji, tier: c.tier }; }),
       sceglieId: sceglie, sceglieNome: sceglie ? nomeDi(st, sceglie) : "",
       nScelta: st.nScelta, restaScelta: st.fineScelta ? Math.max(0, st.fineScelta - ora) : 0, durataScelta: st.durataScelta || SCELTA_MS,
-      restaAuto: st.fineAuto ? Math.max(0, st.fineAuto - ora) : 0, durataAuto: st.durataAuto || 0,   // (esito e inizio round vanno avanti da soli)
+      restaAuto: st.fineAuto ? Math.max(0, st.fineAuto - ora) : 0, durataAuto: st.durataAuto || 0,   // (esito, inizio round e kit vanno avanti da soli)
+      restaVoto: st.fase === "voto" && st.fineVoto ? Math.max(0, st.fineVoto - ora) : 0,                // (il voto si chiude da solo)
       asta: st.asta ? {
         n: st.nAsta, carta: st.asta.carta, offerta: st.asta.offerta,
         leaderId: st.asta.leader, leaderNome: nomeDi(st, st.asta.leader),
@@ -1719,9 +1727,9 @@
       if (st.iniziata || st.giocatori.length < 2) return;
       st.iniziata = true; st.sessione = nuovaSessione(); st.roundIdx = 0; nuovoRound();
     }
-    function avantiDaSolo(ms) {   // l'esito e l'inizio del round restano un attimo, poi si va avanti da soli
+    function avantiDaSolo(ms, fn) {   // l'esito, l'inizio del round e i kit restano un attimo, poi si va avanti da soli
       st.fineAuto = Date.now() + ms; st.durataAuto = ms;
-      TM.dopo(prossima, ms);
+      TM.dopo(fn || prossima, ms);
     }
     function nuovoRound() {
       stopTo();
@@ -1764,7 +1772,7 @@
       var ch = chiSceglie(); if (!ch || id !== ch.id) return;
       var idx = aCaso != null ? aCaso : (m ? m.idx : null);
       if (idx == null || idx < 0 || idx >= st.tavolo.length) return;
-      if (aCaso == null && (!m || m.n !== st.nScelta || st.tavolo[idx].nome !== m.nome)) return;
+      if (aCaso == null && (!m || (m.n != null && (m.n !== st.nScelta || st.tavolo[idx].nome !== m.nome)))) return;
       stopTo(); st.fineScelta = null;
       st.nAsta++;
       st.asta = { carta: st.tavolo[idx], idx: idx, offerta: 1, leader: id, passati: {} };
@@ -1782,7 +1790,7 @@
     }
     // m: { n (quale asta), prezzo (quello che ha visto) }: un'offerta vecchia o doppia non conta
     function rilanciaO(id, m) {
-      if (st.fase !== "asta" || !st.asta || !m || m.n !== st.nAsta) return;
+      if (st.fase !== "asta" || !st.asta || !m || (m.n != null && m.n !== st.nAsta)) return;
       var g = perId(st, id); if (!g) return;
       if (st.senzaCarta.indexOf(id) < 0 || st.asta.leader === id) return;   // chi ha già l'offerta più alta non rilancia contro sé stesso
       if (m.prezzo !== st.asta.offerta + 1) return tardi(id);
@@ -1793,7 +1801,7 @@
       if (!verificaPassati()) riparti();   // se nessun altro può più offrire, è subito sua
     }
     function passaO(id, m) {
-      if (st.fase !== "asta" || !st.asta || !m || m.n !== st.nAsta) return;
+      if (st.fase !== "asta" || !st.asta || !m || (m.n != null && m.n !== st.nAsta)) return;
       if (st.senzaCarta.indexOf(id) < 0) return;
       if (st.asta.leader === id) return;
       st.asta.passati[id] = true;
@@ -1825,15 +1833,21 @@
     }
     function avanti() {
       if (st.fase === "esito" || st.fase === "round") return prossima();
-      if (st.fase === "kit") { st.fase = "voto"; st.voti = {}; return bd(); }
+      if (st.fase === "kit") {   // si vota: il voto ha un tempo per tutti, poi si chiude da solo
+        stopTo(); st.fineAuto = null;
+        var ms = votoMs(st.giocatori.length);
+        st.fase = "voto"; st.voti = {}; st.fineVoto = Date.now() + ms;
+        TM.dopo(function () { verificaVoti(true); }, ms);
+        return bd();
+      }
     }
     function fineRoundO() {
       st.roundIdx++;
       if (st.roundIdx < TOT_ROUND) return nuovoRound();
-      st.fase = "kit"; bd();
+      st.fase = "kit"; avantiDaSolo(AUTO_KIT_MS, avanti); bd();
     }
     function voto(id, voti, sessione) {
-      if (st.fase !== "voto" || sessione !== st.sessione) return;   // (un voto rimasto indietro dalla partita prima non conta)
+      if (st.fase !== "voto" || (sessione != null && sessione !== st.sessione)) return;   // (un voto rimasto indietro dalla partita prima non conta; senza numero: vale per questa)
       if (!perId(st, id) || st.voti[id]) return;
       st.voti[id] = voti || {};
       bd(); verificaVoti();
@@ -1844,6 +1858,7 @@
       if (st.fase !== "voto") return;
       var tutti = st.giocatori.every(function (g) { return st.voti[g.id] || g.via; });   // chi non c'è non blocca la votazione
       if (!tutti && !forza) return;
+      stopTo(); st.fineVoto = null;
       st.giocatori.forEach(function (g) { g.stelle = 0; });
       st.giocatori.forEach(function (chi) {
         var v = st.voti[chi.id];
@@ -1867,7 +1882,7 @@
       stopTo();
       st.iniziata = false; st.fase = "lobby"; st.sessione = null; st.roundIdx = 0; st.chooserPtr = 0;
       st.tavolo = []; st.senzaCarta = []; st.asta = null; st.esito = null; st.classifica = null; st.voti = {}; st.scadenza = null;
-      st.fineScelta = null; st.fineAuto = null;
+      st.fineScelta = null; st.fineAuto = null; st.fineVoto = null;
       st.giocatori = st.giocatori.filter(function (g) { return !g.via; });   // chi non c'è più esce dalla stanza
       st.giocatori.forEach(function (g) { g.crediti = st.crediti; g.kit = []; g.stelle = 0; g.asteVinte = 0; });
       bd();
@@ -1882,7 +1897,7 @@
       onPassa: function (x) { passaO("host", x); },
       onAvanti: avanti,
       onVoto: function (v) { voto("host", v, st.sessione); },
-      onChiudiVoti: function () { if (window.confirm("Chiudere la votazione? Chi non ha votato dà 3,5 ⭐ a testa.")) verificaVoti(true); },
+      onChiudiVoti: function () { if (st.fase === "voto") t.conferma("Chiudere il voto?", "Chi non ha votato dà 3,5 ⭐ a testa.", "Chiudi", function () { if (st.fase === "voto") verificaVoti(true); }); },
       onEsci: function () { stopTo(); TM.smetti(); cb._uscito = true; fermaTutto(); rete.chiudi(); t.esci(); }
     };
     function disegna() { if (!st.morto && !cb._uscito) disegnaAstaVM(t, vmAsta(st), cb); }
@@ -1935,11 +1950,22 @@
           if (m.t === "vm") { S.vm = m.vm; disegna(); }
           else if (m.t === "tardi" && m.a === S.myId) { cb._tardi = Date.now(); disegna(); }   // il mio rilancio è arrivato quando il prezzo era già salito
         },
-        onChiuso: function () { cb._uscito = true; fermaTutto(); erroreSchermo(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
+        onChiuso: function (perche) {
+          cb._uscito = true; fermaTutto();
+          // sulla classifica finale resta la classifica: cambia solo la scritta d'attesa
+          if (S.vm && S.vm.fase === "fine") {
+            cb._chiusa = true;
+            [].forEach.call(document.querySelectorAll(".as-msg, .sa-nota"), function (p) { if (/In attesa dell'host/.test(p.textContent)) p.textContent = "🚪 L'host ha chiuso la stanza"; });
+            return;
+          }
+          erroreSchermo(t, perche && perche.voluto ? "L'host ha chiuso la partita." : "Collegamento perso. L'host potrebbe aver chiuso la partita.");
+        },
+        // (arriva solo se il primo collegamento non riesce: dopo, se la rete salta, il core mostra «📶 Mi ricollego…» e si continua)
         onErrore: function (e) {
-          if (S.vm) return;   // già in partita: un errore passeggero non ferma niente (la rete si ricollega da sola e l'host rimanda la foto)
+          if (S.vm || cb._uscito) return;
           if (e && e.type === "no-mqtt") return senzaRete(t);
-          if (S.msg) S.msg.textContent = "Problema di collegamento: riprovo…";
+          cb._uscito = true; fermaTutto(); try { S.rete.chiudi(); } catch (x) {}
+          erroreSchermo(t, "Non riesco a collegarmi alla stanza. Controlla la connessione e riprova.");
         }
       });
     }
@@ -2092,19 +2118,20 @@
 
     // (votazione) mentre voto, le foto che arrivano quando un altro conferma non mi ridisegnano la schermata (niente lampeggio, i voti restano)
     var kVoto = vm.fase === "voto" ? "voto|" + vm.sessione + "|" + vm.giocatori.map(function (g) { return g.id; }).join(",") : null;
-    if (kVoto && vm.hannoVotato.indexOf(myId) < 0 && cb._voto && cb._voto.k === kVoto && document.body.contains(cb._voto.s)) return;
+    if (kVoto && vm.hannoVotato.indexOf(myId) < 0 && cb._voto && cb._voto.k === kVoto && document.body.contains(cb._voto.s)) { if (cb._voto.agg) cb._voto.agg(vm); return; }
     cb._voto = null;
-    var esci = function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); };
+    var esci = function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); };
     var s = vm.fase === "scelta" ? t.schermata({ indietro: esci })   // la scelta della carta: il tavolo prima di tutto (niente titolo)
       : t.schermata({ sotto: "Stanza " + (vm.codice || ""), icona: "🔨", titolo: titoloFaseAsta(vm, myId), indietro: esci });
 
     if (vm.fase !== "kit" && vm.fase !== "voto") s._contenuto.appendChild(testaRound(el, vm));
-    if (vm.fase !== "voto") s._contenuto.appendChild(strisciaOnline(el, vm, myId));   // (nella votazione i crediti non servono: più posto ai kit)
+    if (vm.fase !== "voto" && vm.fase !== "kit") s._contenuto.appendChild(strisciaOnline(el, vm, myId));   // (nei kit i crediti avanzati sono già scritti, nella votazione non servono: più posto ai kit)
+    if (vm.fase === "kit" || vm.fase === "voto") s.classList.add("as-fissa");   // (i tasti in fondo si vedono sempre)
 
     if (vm.fase === "round") {
       s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:3.4rem;line-height:1;margin:10px 0", text: vm.roundIcona }));
       s._contenuto.appendChild(el("p", { class: "as-msg", text: "Sul tavolo " + vm.giocatori.length + " carte: ognuno se ne aggiudica una." }));
-      piedeAuto(el, s, vm, cb, "Vedi le carte ▶", "Tra poco le carte…");
+      piedeAuto(t, s, vm, cb, "Vedi le carte ▶", "Tra poco le carte…");
     }
 
     else if (vm.fase === "scelta") {
@@ -2138,26 +2165,40 @@
       s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:1.3rem;font-weight:900;color:var(--accento);margin-top:8px",
         text: "per " + e2.prezzo + " 💰" }));
       if (e2.automatica) s._contenuto.appendChild(el("p", { class: "as-msg", text: "Ultima carta rimasta: assegnata automaticamente." }));
-      piedeAuto(el, s, vm, cb, "Avanti ▶", "Si va avanti da soli…");
+      piedeAuto(t, s, vm, cb, "Avanti ▶", "Si va avanti da soli…");
     }
 
     else if (vm.fase === "kit") {
       if (vm.giocatori.length > 2) s.classList.add("as-kits");
       vm.giocatori.forEach(function (g) { s._contenuto.appendChild(nodoKitVm(el, g)); });
-      if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Si vota ⭐", onclick: cb.onAvanti }));
-      else s._piede.appendChild(el("p", { class: "as-msg", text: "In attesa che l'host apra la votazione…" }));
+      piedeAuto(t, s, vm, cb, "Si vota ⭐", "Tra poco si vota…");
     }
 
     else if (vm.fase === "voto") {
       var hoVotato = vm.hannoVotato.indexOf(myId) >= 0;
       var dentro = vm.giocatori.some(function (g) { return g.id === myId; });
+      var secVoto = Math.max(1, Math.ceil((vm.restaVoto || 0) / 1000)), kConto = kVoto + "|conto";
+      // l'host può chiudere il voto prima, quando ha votato almeno uno (chi manca dà 3,5 ⭐ a testa)
+      var bChiudi = cb.sonoHost && cb.onChiudiVoti ? el("button", { class: "btn btn-fantasma", onclick: cb.onChiudiVoti }) : null;
+      var aggChiudi = function (v) {
+        if (!bChiudi) return;
+        var n = v.hannoVotato.length, tot = v.giocatori.filter(function (g) { return !g.via; }).length;
+        bChiudi.textContent = "Chiudi il voto (" + n + " su " + tot + ")";
+        if (n < 1) { if (bChiudi.parentNode) bChiudi.parentNode.removeChild(bChiudi); } else if (!bChiudi.parentNode) s._piede.appendChild(bChiudi);   // (compare solo quando ha votato qualcuno)
+      };
       if (hoVotato || !dentro) {
         s._contenuto.appendChild(el("p", { class: "as-msg", style: "margin-top:20px",
           text: hoVotato ? ("Hai votato. Aspetta gli altri… (" + vm.hannoVotato.length + " su " + vm.giocatori.length + ")") : "Stai guardando la partita" }));
         var mancano = vm.giocatori.filter(function (g) { return vm.hannoVotato.indexOf(g.id) < 0 && !g.via; }).map(function (g) { return g.nome; });
         if (mancano.length) s._contenuto.appendChild(el("p", { class: "as-msg", style: "margin-top:8px", text: "Mancano: " + mancano.join(", ") }));
-        // l'host può chiudere la votazione se qualcuno si è distratto (chi manca dà 3,5 ⭐ a testa)
-        if (cb.sonoHost && cb.onChiudiVoti) s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "⏱ Chiudi la votazione", onclick: cb.onChiudiVoti }));
+        if (vm.restaVoto > 0) {   // il voto si chiude da solo: «Si va avanti tra 42…»
+          var pc = el("p", { class: "as-msg", style: "margin-top:8px" });
+          s._contenuto.appendChild(pc);
+          if (t.contoAvanti) t.contoAvanti(pc, secVoto, null, kConto);
+        }
+        var fa = t.faccine ? t.faccine() : null;   // intanto si fanno le faccine agli altri
+        if (fa) s._contenuto.appendChild(el("div", { style: "display:flex;justify-content:center;margin-top:14px" }, [ fa ]));
+        if (bChiudi) aggChiudi(vm);
       } else {
         var voti = cb._voti;
         var conferma = el("button", { class: "btn btn-primario", text: "Conferma i voti", onclick: function () { if (!conferma.disabled) cb.onVoto(voti); } });
@@ -2166,7 +2207,12 @@
         var sez = sezioneVoto(el, opp, budgetVoti(vm.giocatori.length), voti, function (ok) { conferma.disabled = !ok; });
         sez.nodi.forEach(function (n) { s._contenuto.appendChild(n); });
         s._piede.appendChild(conferma);
-        cb._voto = { k: kVoto, s: s };
+        if (bChiudi) aggChiudi(vm);
+        // il tempo del voto sul tasto: poco prima che l'host chiuda, le stelle messe partono da sole (se sono tutte date)
+        if (vm.restaVoto > 0 && t.contoAvanti) t.contoAvanti(conferma, Math.max(1, secVoto - 3), function () {
+          if (!cb._uscito && sez.valido() && document.body.contains(conferma)) cb.onVoto(voti);
+        }, kConto + "|tasto");
+        cb._voto = { k: kVoto, s: s, agg: aggChiudi };
       }
     }
 
@@ -2179,17 +2225,19 @@
     i.style.animation = "asAuto " + durata + "ms linear " + (resta - durata) + "ms forwards";
     return el("div", { class: "as-tbar" }, [ i ]);
   }
-  // (online, temi) esito e inizio round vanno avanti da soli: l'host ha anche il tasto per andare subito
-  function piedeAuto(el, s, vm, cb, testo, attesa) {
-    var resta = vm.restaAuto || 0, durata = Math.max(resta, vm.durataAuto || resta);
+  // (online, temi) inizio round, esito e kit vanno avanti da soli (il tempo lo tiene l'host): l'host ha il tasto col numero
+  // che conta (toccandolo si va subito), gli altri leggono «Si va avanti tra N…». La chiave tiene il conto se si ridisegna.
+  function piedeAuto(t, s, vm, cb, testo, attesa) {
+    var el = t.el, resta = vm.restaAuto || 0, sec = Math.max(1, Math.ceil(resta / 1000));
+    var k = ["asta", vm.codice, vm.sessione, vm.fase, vm.roundIdx, vm.nScelta, vm.esito && vm.esito.carta ? vm.esito.chiNome + "|" + vm.esito.carta.nome : ""].join("|");
     if (cb.sonoHost) {
-      var b = tastoAuto(el, testo, durata, cb.onAvanti);
-      b.style.setProperty("--rit", (resta - durata) + "ms");
-      if (!resta) b.classList.remove("as-auto");
+      var b = el("button", { class: "btn btn-primario", text: testo, onclick: cb.onAvanti });
       s._piede.appendChild(b);
+      if (resta > 0 && t.contoAvanti) t.contoAvanti(b, sec, null, k);   // (a zero va avanti il tempo dell'host)
     } else {
-      s._piede.appendChild(el("p", { class: "as-msg", text: attesa }));
-      if (resta > 0) s._piede.appendChild(barraTempo(el, resta, durata));
+      var p = el("p", { class: "as-msg", text: attesa });
+      s._piede.appendChild(p);
+      if (resta > 0 && t.contoAvanti) t.contoAvanti(p, sec, null, k);
     }
   }
 
@@ -2225,6 +2273,7 @@
     salvaTrofeiAsta(t, vm, cb && cb.myId, true);
     var etichetta = vm.formato === "fanta" ? "Mini asta Fantacalcio" : ("L'Asta · " + (vm.temaNome || ""));
     var s = t.schermata({ icona: "🏆", titolo: "Classifica finale", sotto: etichetta });
+    s.classList.add("as-fissa");   // (alta come lo schermo: "Nuova partita" si vede sempre, le fasce svelate scorrono nel centro)
     s._contenuto.appendChild(el("div", { class: "tl-coriandoli", text: "🎉🥳🎉" }));
     var ol = el("ol", { class: "classifica" });
     var med = ["🥇", "🥈", "🥉"], gruppo = 0, ultimaPos = null;
@@ -2246,6 +2295,8 @@
       if (vm.giocatori.length > 2) s.classList.add("as-kits");
       vm.giocatori.forEach(function (g) { s._contenuto.appendChild(nodoKitVm(el, g, true)); });
     }
+    var fa = t.faccine ? t.faccine() : null;   // le faccine della saletta: si festeggia (o si sfotte) tutti insieme
+    if (fa) s._piede.appendChild(el("div", { style: "display:flex;justify-content:center" }, [ fa ]));
     if (cb.sonoHost) {
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: vm.formato === "fanta" ? "🔄 Nuova partita" : "🔄 Nuova partita (cambia argomento)", onclick: cb.onNuova }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
@@ -2636,11 +2687,12 @@
     if (vm.fase === "fine") {
       salvaTrofeiAsta(t, vm, cb.myId, true);
       return rivelaFanta(t, vm.classifica || [], { chiave: "ro|" + (vm.codice || "") + "|" + vm.sessione,
-        onEsci: function () { if (window.confirm("Uscire dalla partita?")) cb.onEsci(); },
+        onEsci: function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); },
         bottoni: function () {
-          var el = t.el;
-          return cb.sonoHost ? [ el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }), el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }) ]
-            : [ el("p", { class: "sa-nota", text: "In attesa dell'host per un'altra partita…" }), el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }) ];
+          var el = t.el, fa = t.faccine ? t.faccine() : null;   // (le faccine della saletta, sul podio)
+          fa = fa ? el("div", { style: "width:100%;display:flex;justify-content:center" }, [ fa ]) : null;
+          return [ fa ].concat(cb.sonoHost ? [ el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }), el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }) ]
+            : [ el("p", { class: "sa-nota", text: cb._chiusa ? "🚪 L'host ha chiuso la stanza" : "In attesa dell'host per un'altra partita…" }), el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }) ]);
         } });
     }
     stadioVM(t, vm, cb);   // asta ed esito: lo stadio

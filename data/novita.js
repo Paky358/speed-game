@@ -9,6 +9,61 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 207,
+    data: "15 ottobre 2026",
+    titolo: "Tutti i giochi controllati uno per uno 🛠️",
+    descrizione: [
+      "Abbiamo giocato e controllato a fondo tutti i 26 giochi: centinaia di errori corretti e tantissime parole, carte e domande in più.",
+      "L'Impostore: c'è la SPIA, che riceve una parola simile a quella degli altri (mare/lago). Chi apre la partita sceglie se la spia sa di esserlo oppure no. 653 coppie di parole in 14 categorie.",
+      "La linea del tempo: 5 categorie nuove (Musica italiana, TV e cartoni, Videogiochi, Sport e campioni, Vita all'italiana), più di 1.300 avvenimenti.",
+      "L'Asta: due temi nuovi, La Notte di Halloween 🎃 e Il Natale in Famiglia 🎄, e tante carte nuove negli altri.",
+      "Taboo: le carte sono passate da 300 a 1.372, divise per difficoltà. La Patata Bollente: da 72 a 345 categorie, con quelle difficili da accendere.",
+      "La Balla Colossale: 401 notizie, ultimo round a punti doppi e premi a fine serata. Nomi, Cose e Città: categorie da serata, 4 pacchetti a tema e più di 1.000 parole riconosciute.",
+      "Parola d'ordine: 4 mazzi a tema, molte più parole e «👑 Faccio io il capo» se il capo esce. Palla Matta: 2 capitoli nuovi (I dolci e Il luna park).",
+      "Glow Hockey si gioca anche in due sullo stesso telefono, e scegli a quanti gol si vince. Calcio Biliardo: due formazioni nuove, Rombo e Muro. Tris: arriva il «Tris che sparisce».",
+      "Black Jack e Poker: online c'è il tempo per decidere, e chi ricarica la pagina ritrova il suo posto al tavolo. Scopa: Bot ha tante battute nuove.",
+      "Fine partita: un pareggio non conta più come vittoria, le medaglie a pari merito sono giuste e con tanti giocatori la classifica sta tutta nello schermo.",
+      "Il telefono non vibra più da solo (pesce preso alla gara, fanfara della vittoria): vibra solo quando tocchi tu."
+    ]
+  },
+  {
+    v: 206,
+    data: "15 ottobre 2026",
+    titolo: "La Ruota della Fortuna come in TV 🎡",
+    descrizione: [
+      "🔔 Prenota: ogni manche comincia con la frase lampo. Le lettere compaiono da sole e chi la sa preme «Prenoto!». Chi indovina prende 1.000 e comincia la manche. Online vince chi è più veloce sul suo telefono, non chi ha internet migliore.",
+      "🚂 Express: uno spicchio nuovo. Puoi prenderlo e chiamare consonanti senza girare, 1.000 l'una… ma se sbagli una lettera è Bancarotta! Quando vuoi: «✋ Mi fermo e risolvo».",
+      "⚡ Round veloce: l'ultima manche. La ruota gira una volta sola, ognuno chiama una lettera e ha 5 secondi per dire «Risolvo!».",
+      "🏆 Finale del campione: chi vince gioca da solo per una busta di Speed Coins. Ci sono già R S T L N E, scegli 3 consonanti e una vocale e hai 10 secondi per risolvere.",
+      "Le frasi sono più di 1.500 in 20 categorie. I round nuovi si accendono e si spengono nelle regole."
+    ]
+  },
+  {
+    v: 205,
+    data: "15 ottobre 2026",
+    titolo: "La saletta viva: ci si diverte già prima di cominciare 🎉",
+    descrizione: [
+      "Chi arriva fa «pling» e compare il fumetto «Ciao Luca! 👋». Chi esce saluta.",
+      "«✋ Sono pronto!» accende la spunta verde. Chi ha aperto la stanza vede «Pronti 3 su 4» e può far partire la partita da sola quando sono tutti pronti.",
+      "Faccine 👋 😂 😱 🔥 👏 😴: il tuo avatar le fa su tutti i telefoni, anche mentre guardate una partita e sulla classifica finale.",
+      "Chi perde la rete diventa grigio con 📶. Chi ha aperto la stanza può far uscire qualcuno (tocco lungo sull'avatar) e chiudere la porta 🔒.",
+      "Si parte tutti insieme col 3-2-1-Via!, uguale su tutti i telefoni. In saletta c'è una musichetta (🎵 / 🔇)."
+    ]
+  },
+  {
+    v: 204,
+    data: "15 ottobre 2026",
+    titolo: "Online: niente più partite bloccate 📶",
+    descrizione: [
+      "Se nessuno tocca «Avanti», dopo pochi secondi si va avanti da soli: il numero sul tasto fa il conto alla rovescia (Linea del tempo, Scalinata, Asta, Balla, Nomi Cose e Città, Scopa e gli altri).",
+      "Chi blocca lo schermo o risponde su WhatsApp non viene più buttato fuori: quando torna ritrova il suo posto, i punti e le carte.",
+      "Se a chi ha aperto la stanza si ricarica la pagina o si chiude l'app, la stanza si riapre con lo stesso codice e gli amici rientrano da soli. Nella Linea del tempo e nella Scalinata la partita riprende proprio da dove era.",
+      "Se la rete salta un attimo compare «📶 Mi ricollego…» invece di chiudere la partita.",
+      "Il link di un amico vale una volta sola: niente più stanze vecchie. «✅ Sei dentro!» compare solo quando sei entrato davvero.",
+      "Nei giochi a due (Tris, Drop 4, Scopa, Battaglia Navale, Calcio Biliardo) chi è in più guarda la partita, e lo sa. Nella Sala chi esce da un gioco non viene più risucchiato dentro."
+    ]
+  },
+  {
     v: 203,
     data: "13 ottobre 2026",
     titolo: "Fantacalcio: il calciatore che nessuno vuole torna nel mazzo 🔁",

@@ -45,6 +45,14 @@
   var RIGORI = 3;   // rigori a testa (poi a oltranza)
 
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  // l'avversario di questa stanza, ricordato sul telefono dell'host: se la pagina dell'host si ricarica (la stanza si
+  // riapre con lo stesso codice), per 15 secondi il posto resta a chi giocava, non a chi guardava ed è stato più svelto
+  function ricordaAvv(gioco, codice, id) { try { if (codice && codice !== "…") localStorage.setItem("sg-avv-" + gioco, JSON.stringify({ c: codice, id: id || null, t: Date.now() })); } catch (e) {} }
+  function riservaAvv(gioco, codice) {
+    try { var x = JSON.parse(localStorage.getItem("sg-avv-" + gioco) || "null"); if (x && x.c === codice && x.id && Date.now() - x.t < 20 * 60000) return { id: x.id, fino: Date.now() + 15000 }; } catch (e) {}
+    return null;
+  }
+  function postoRiservato(r, id) { return !!(r && r.id !== id && Date.now() < r.fino); }   // true = questo posto non è (ancora) per lui
   function r4(v) { return Math.round(v * 10000) / 10000; }
 
   // =========================================================
@@ -912,7 +920,9 @@
     // in saletta, se un posto è libero, il primo che guardava diventa giocatore
     function riempi() {
       while (H.fase === "lobby" && H.players.length < MAX && H.spett.length) {
-        var x = H.spett.shift(); H.players.push({ id: x.id, nome: x.nome, omino: x.omino || null });
+        var k = 0;   // (la stanza appena riaperta: il posto resta per un po' a chi giocava)
+        if (H.riserva && Date.now() < H.riserva.fino) { k = -1; for (var j = 0; j < H.spett.length; j++) if (H.spett[j].id === H.riserva.id) k = j; if (k < 0) break; }
+        var x = H.spett.splice(k, 1)[0]; H.players.push({ id: x.id, nome: x.nome, omino: x.omino || null });
       }
     }
 
@@ -924,21 +934,38 @@
       bd();
     };
     var rete = SGNet.ospita(ID, {
-      onCodice: function (c) { H.codice = c; bd(); },
+      onCodice: function (c) {
+        H.codice = c; H.riserva = riservaAvv(ID, c);
+        if (H.riserva) setTimeout(function () { if (H.fase === "lobby") { riempi(); bd(); } }, 15100);   // non è tornato: tocca a chi guardava
+        bd();
+      },
       onConnesso: function () { H.pronta = true; bd(); },
+      onErrore: function () { if (!H.pronta) errore(t, "Problema di collegamento. Controlla la connessione e riprova."); },   // (solo se il primo collegamento non riesce)
       onAddio: function (id) {
         if (guarda(id)) { H.spett = H.spett.filter(function (x) { return x.id !== id; }); bd(); return; }
         var p = pById(id); if (!p) return;
         if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); riempi(); bd(); return; }
         p.via = true;
-        if (H.fase === "gioco") return fineRitiro();   // l'avversario se n'è andato: vince l'host
+        // a metà partita (telefono spento, app chiusa): il posto resta suo per un altro minuto (i suoi turni passano da
+        // soli col tempo); se torna (stesso id) riprende a giocare, se no vince l'host
+        if (H.fase === "gioco") { clearTimeout(p.viaT); p.viaT = setTimeout(function () { if (p.via && H.fase === "gioco" && pById(id) === p) fineRitiro(); }, 60000); }
         bd();
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
+        var pt = pById(id);
+        if (pt && pt.via && m.t !== "esco") { pt.via = false; clearTimeout(pt.viaT); if (m.t !== "join") bd(); }   // è tornato in tempo
+        if (m.t === "esco") {   // uscito apposta (tasto Esci): niente minuto di attesa
+          if (guarda(id)) { H.spett = H.spett.filter(function (x) { return x.id !== id; }); bd(); return; }
+          if (!pt || pt.id === "host") return;
+          if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); riempi(); bd(); return; }
+          pt.via = true; clearTimeout(pt.viaT);
+          if (H.fase === "gioco") return fineRitiro();
+          bd(); return;
+        }
         if (m.t === "join") {
           if (!pById(id) && !guarda(id)) {
-            if (H.fase === "lobby" && H.players.length < MAX) H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino) });
+            if (H.fase === "lobby" && H.players.length < MAX && !postoRiservato(H.riserva, id)) H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino) });
             else if (H.spett.length < 12) H.spett.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino) });   // posti presi: guarda
           }
           riempi();   // chi guardava e trova un posto libero in saletta, gioca
@@ -966,6 +993,7 @@
     function bd() {
       // è cambiato chi ha i blu (uno è uscito, uno che guardava ha preso il posto): riparte dalla formazione Classica
       var blu = H.players[1] ? H.players[1].id : null;
+      ricordaAvv(ID, H.codice, blu || (H.riserva && Date.now() < H.riserva.fino ? H.riserva.id : null));
       if (blu !== H.formDi) { H.formDi = blu; H.form[1] = "classica"; }
       var v = vm(); rete.invia({ t: "vm", vm: v }); disegnaOnline(t, v, cbHost); }
 
@@ -1046,7 +1074,9 @@
       onForm: function (f) { if (S.rete) S.rete.invia({ t: "form", f: f }); },
       onEsci: function () {
         if (S.vm && S.vm.fase === "gioco" && miaSquadra(S.vm, cb) >= 0 && !window.confirm("Uscire dalla partita?")) return;
-        follaFerma(); if (S.rete) S.rete.chiudi(); t.esci();
+        follaFerma();
+        if (S.rete) { try { S.rete.invia({ t: "esco" }); } catch (e) {} S.rete.chiudi(); }   // (l'host sa che sono uscito apposta)
+        t.esci();
       } };
     if (t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
     function chiediNome() {
@@ -1065,7 +1095,7 @@
         onAperto: function (id) { S.myId = id; cb.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome) }); },
         onMsg: function (m) { riceviOnline(t, S, cb, m); },
         onChiuso: function () { errore(t, "La partita è stata chiusa dall'host."); },
-        onErrore: function () { errore(t, "Problema di collegamento. Riprova."); }
+        onErrore: function () { if (!S.vm) errore(t, "Problema di collegamento. Riprova."); }   // (solo se il primo collegamento non riesce)
       });
     }
   }
@@ -1124,8 +1154,11 @@
       UI = null;
       var chiave = codiceDi(vm);
       if (me >= 0 && !cb.sonoHost && vm.stat && !giaSalvata(chiave)) salvaStat(vm, me, { modo: "online" });   // i miei trofei (una volta sola, anche se ricarico la pagina)
-      var nota = vm.ritiro ? "L'avversario è uscito dalla partita." : (cb.guarda ? "Tra poco si torna al tabellone…" : (cb.sonoHost ? "" : "Se l'host fa un'altra partita, torni da solo nella saletta."));
+      var nota = vm.ritiro ? (me >= 0 ? "L'avversario ha lasciato la partita." : (nomi[1 - (vm.vincitore || 0)] || "L'avversario") + " ha lasciato la partita.") : (cb.guarda ? "Tra poco si torna al tabellone…" : (cb.sonoHost ? "" : "Se l'host fa un'altra partita, torni da solo nella saletta."));
+      var fa = t.faccine ? t.faccine() : null;   // la fila delle faccine (stanza online; nel torneo chi guarda non l'ha)
+      if (fa) fa.style.margin = "0 0 8px";
       return finale(t, { vincitore: vm.vincitore, nomi: nomi, gol: vm.gol, mia: me >= 0 ? me : null, rig: vm.rig, rigVinto: vm.rigVinto }, [
+        fa,
         cb.sonoHost ? t.el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }) : null,
         t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci })], nota);
     }
@@ -1147,25 +1180,30 @@
     return false;
   }
   function lobby(t, vm, cb) {
-    var el = t.el, me = miaSquadra(vm, cb), o = vm.opz || {}, extra = [];
-    extra.push(el("p", { class: "modulo-nota", text: "In due: chi apre la stanza ha i gialli, chi entra i blu. " +
-      (o.vince === "tempo" ? "Si gioca " + o.minuti + " minuti (se è pari, rigori)." : "Vince chi arriva per primo a " + (o.gol || 3) + " gol.") }));
-    if (me >= 0) {   // ognuno sceglie la sua formazione
-      extra.push(el("div", { class: "etichetta", text: "La tua formazione" }));
-      var g = el("div", { class: "modo-griglia", style: "grid-template-columns:repeat(3,1fr)" });
+    // (compatto: con la saletta e i tasti deve stare tutto in uno schermo da 360x640, senza scorrere)
+    var el = t.el, me = miaSquadra(vm, cb), o = vm.opz || {}, extra = [], piccola = "margin:0 0 4px;text-align:center;font-size:.82rem;line-height:1.35";
+    extra.push(el("p", { class: "modulo-nota", style: piccola, text: "🟡 Gialli chi apre la stanza, 🔵 blu chi entra · " +
+      (o.vince === "tempo" ? "si gioca " + o.minuti + " minuti (se è pari, rigori)" : "vince chi arriva per primo a " + (o.gol || 3) + " gol") }));
+    if (me >= 0) {   // ognuno sceglie la sua formazione: cinque tasti piccoli su una riga
+      extra.push(el("div", { class: "etichetta", style: "margin:2px 0 3px", text: "La tua formazione" }));
+      var g = el("div", { style: "display:flex;gap:4px;margin:0 0 4px" });
       NOMI_FORM.forEach(function (k) {
         var F = FORMAZIONI[k];
-        g.appendChild(el("button", { class: "modo-chip" + ((vm.form || [])[me] === k ? " attiva" : ""), style: "justify-content:center;text-align:center", onclick: function () { if (cb.onForm) cb.onForm(k); } },
-          [el("div", { class: "mt", text: F.icona + " " + F.nome })]));
+        g.appendChild(el("button", { class: "modo-chip" + ((vm.form || [])[me] === k ? " attiva" : ""), "aria-label": F.nome,
+          style: "flex:1 1 0;min-width:0;width:auto;min-height:0;padding:5px 2px;gap:1px;flex-direction:column;justify-content:center;text-align:center;font-size:.64rem;line-height:1.15;border-radius:10px",
+          onclick: function () { if (cb.onForm) cb.onForm(k); } },
+          [el("span", { style: "font-size:1.15rem", text: F.icona }), el("span", { style: "font-weight:800", text: F.nome })]));
       });
       extra.push(g);
     }
-    if (vm.players[1] && vm.form) extra.push(el("p", { class: "modulo-nota", text: "Formazioni: " + vm.players[0].nome + " " + FORMAZIONI[formOk(vm.form[0])].nome + " · " + vm.players[1].nome + " " + FORMAZIONI[formOk(vm.form[1])].nome }));
-    if (vm.spett && vm.spett.length) extra.push(el("p", { class: "modulo-nota", text: "👀 Guardano: " + vm.spett.map(function (x) { return x.nome; }).join(", ") }));
+    var info = [];
+    if (vm.players[1] && vm.form) info.push(vm.players[0].nome + " " + FORMAZIONI[formOk(vm.form[0])].icona + " " + FORMAZIONI[formOk(vm.form[0])].nome + " · " + vm.players[1].nome + " " + FORMAZIONI[formOk(vm.form[1])].icona + " " + FORMAZIONI[formOk(vm.form[1])].nome);
+    if (vm.spett && vm.spett.length) info.push("👀 Guardano: " + vm.spett.map(function (x) { return x.nome; }).join(", "));
+    if (info.length) extra.push(el("p", { class: "modulo-nota", style: piccola + ";white-space:pre-line", text: info.join("\n") }));
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN,
       vuoti: Math.max(0, MIN - vm.players.length),
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
-      extra: extra, attesa: me >= 0 ? "Aspetta che l'host cominci!" : (vm.players.length >= MAX ? "👀 I due posti sono presi: guarderai la partita in diretta." : "Entro nella partita…"),
+      extra: extra, attesa: me >= 0 ? "Aspetta che l'host cominci!" : (vm.players.length >= MAX ? "👀 Giocano " + vm.players[0].nome + " e " + vm.players[1].nome + ": tu guardi." : "Entro nella partita…"),
       onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
   function errore(t, testo) {
@@ -1250,6 +1288,7 @@
     id: ID, nome: "Calcio Biliardo", icona: "⚽",
     descrizione: "Il calcio coi dischi: tiri indietro un calciatore come una fionda, colpisci la palla e fai gol. Contro Bot, in due sullo stesso telefono o online.",
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 2,
+    postiOnline: 2,   // online si gioca in due: gli altri guardano
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Sfidi Bot" },
       { modo: "telefono", icona: "📱", nome: "In due su questo telefono", sotto: "Uno per lato, il telefono in mezzo", amici: true }],
     regole: [

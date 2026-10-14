@@ -797,11 +797,12 @@
   }
   // riquadro con saldo fiches + tasto per la ruota del giorno (monete o XP, un giro al giorno: torna a mezzanotte)
   // dopo(nuovo, piu) = facoltativo, avvisa chi lo usa (es. la saletta online) del nuovo saldo e di quante monete sono arrivate
-  function riquadroBonus(el, dopo) {
-    var box = el("div", { style: "background:var(--carta,#1b1836);border-radius:14px;padding:12px;margin-bottom:12px;text-align:center;box-shadow:var(--ombra,0 6px 16px rgba(0,0,0,.3))" });
+  // compatto: la versione bassa per la saletta online (così la saletta sta in uno schermo da 360x640 senza scorrere)
+  function riquadroBonus(el, dopo, compatto) {
+    var box = el("div", { style: "background:var(--carta,#1b1836);border-radius:14px;text-align:center;box-shadow:var(--ombra,0 6px 16px rgba(0,0,0,.3));" + (compatto ? "padding:7px 10px;margin-bottom:0" : "padding:12px;margin-bottom:12px") });
     var saldo = SGNube.monete ? SGNube.monete() : 0;   // le fiches sono le Speed Coins del profilo
-    var testoSaldo = el("div", { style: "font-size:1.1rem;margin-bottom:8px;color:#ffe58a;font-weight:800", html: "🪙 Hai <b>" + fmt(saldo) + "</b> monete" });
-    var b = el("button", { class: "btn btn-primario", style: "margin:0" });
+    var testoSaldo = el("div", { style: "color:#ffe58a;font-weight:800;" + (compatto ? "font-size:.95rem;margin-bottom:5px" : "font-size:1.1rem;margin-bottom:8px"), html: "🪙 Hai <b>" + fmt(saldo) + "</b> monete" });
+    var b = el("button", { class: "btn btn-primario", style: "margin:0" + (compatto ? ";min-height:0;padding:8px 12px;font-size:.92rem" : "") });
     function agg() {
       if (SGNube.puoRitirareBonus()) { b.disabled = false; b.textContent = "🎡 Gira la ruota del giorno: monete o XP"; }
       else { b.disabled = true; b.textContent = "⏳ Nuovo giro della ruota tra " + fmtTempo(SGNube.prossimoBonusMs()) + " (a mezzanotte)"; }
@@ -1606,16 +1607,24 @@
       });
       zHero.appendChild(riga);
       if (vm.rimescolato) zHero.appendChild(el("div", { class: "bj-hmini", text: "🔀 Mazzo rimescolato" }));
+      // online con gli amici al tavolo la mano nuova parte da sola dopo 12 secondi (l'host la può far partire prima):
+      // nessuno resta ad aspettare un host distratto
+      var conto = drv.contoMano && drv.contoMano(vm) && t.contoAvanti, kConto = "bj|" + (drv.stanza || "") + "|" + vm.giro + "|" + vm.mano;
       if (drv.puoNuova && drv.puoNuova()) {
-        var az = el("div", { class: "bj-azioni" }), finita = vm.maniTot && vm.mano >= vm.maniTot;
-        if (finita) az.appendChild(tasto("🏁 Classifica ▶", "bj-b-carta", function () { bloccaTasti(); drv.onFine(); }));
+        var az = el("div", { class: "bj-azioni" }), finita = vm.maniTot && vm.mano >= vm.maniTot, vai;
+        if (finita) az.appendChild(vai = tasto("🏁 Classifica ▶", "bj-b-carta", function () { bloccaTasti(); drv.onFine(); }));
         else {
-          az.appendChild(tasto("Nuova mano ▶", "bj-b-carta", function () { bloccaTasti(); drv.onNuova(); }));
+          az.appendChild(vai = tasto("Nuova mano ▶", "bj-b-carta", function () { bloccaTasti(); drv.onNuova(); }));
           if (!drv.mioIdx && vm.giocatori.some(function (g) { return g.fiches <= 0; })) az.appendChild(tasto("♻️ 500 a chi è a zero", "bj-b-dividi", function () { drv.onRicarica(-1); }));
           az.appendChild(tasto("🏁 Basta così", "bj-b-no", function () { bloccaTasti(); drv.onFine(); }));
         }
         zHero.appendChild(az);
-      } else zHero.appendChild(el("div", { class: "bj-hfiches", text: "Aspettiamo l'host per la mano nuova…" }));
+        if (conto) t.contoAvanti(vai, 12, function () { if (chiuso || !vm || vm.fase !== "esito") return; bloccaTasti(); if (finita) drv.onFine(); else drv.onNuova(); }, kConto);
+      } else {
+        var asp = el("div", { class: "bj-hfiches", text: "Aspettiamo l'host per la mano nuova…" });
+        zHero.appendChild(asp);
+        if (conto) t.contoAvanti(asp, 12, null, kConto);
+      }
     }
     // fine partita: la classifica è sul tavolo; qui si riparte o ci si alza
     function heroFine() {
@@ -1626,6 +1635,8 @@
       } else zHero.appendChild(el("div", { class: "bj-hfiches", text: "Aspettiamo l'host: si gioca ancora?" }));
       az.appendChild(tasto("🚪 Mi alzo", "bj-b-no", function () { chiediUscita(); }));
       zHero.appendChild(az);
+      var fa = drv.stanza && t.faccine ? t.faccine() : null;   // (online) le faccine della saletta sulla classifica
+      if (fa) zHero.appendChild(el("div", { style: "display:flex;justify-content:center;margin-top:6px" }, [ fa ]));
     }
 
     return {
@@ -1657,6 +1668,8 @@
   }
   // le monete di un giocatore ancora sul tavolo in questa mano (puntata, raddoppi, mani divise)
   function puntataInGioco(g) { return g.mani && g.mani.length ? g.mani.reduce(function (a, m) { return a + m.puntata; }, 0) : (g.puntata || 0); }
+  // (online) al tavolo c'è almeno un amico oltre all'host: allora la mano nuova parte anche da sola
+  function conAmici(vm) { return !!vm && vm.giocatori.some(function (g, i) { return i > 0 && !g.via; }); }
   function puoRuotaProfilo(prof) { return !!(prof && window.SGNube && SGNube.puoRitirareBonus && SGNube.puoRitirareBonus()); }
 
   // ---------- MODALITÀ "UN TELEFONO SOLO" ----------
@@ -1750,7 +1763,7 @@
     var boxBonus = prof ? riquadroBonus(t.el, function (nuovo, piu) {
       if (M) { bonusHost(nuovo, piu); return; }
       if (nuovo > 0) { provaHost = false; seats[0].fiches = nuovo; seats[0].prova = false; salvato = nuovo; }
-    }) : null;
+    }, true) : null;
     function bonusHost(nuovo, piu) {
       var g = M.st.giocatori[0];
       if (g.prova) { g.prova = false; M.aggiungiFiches(0, nuovo - g.fiches); } else M.aggiungiFiches(0, piu);
@@ -1820,7 +1833,7 @@
     }
     function avviaTavoloHost() {
       tav = tavoloBJ(t, {
-        sotto: "Online · sei l'host", stanza: codice,
+        sotto: "Online · sei l'host", stanza: codice, contoMano: conAmici,
         domandaUscita: "Chiudi il tavolo per tutti?",
         avvisoUscita: function (vm) { var g = vm.giocatori[0]; return (g && g.puntata > 0 && vm.fase !== "esito" && vm.fase !== "fine" ? "Perdi la puntata di questa mano. " : "") + "Gli amici vedranno com'è finita."; },
         avatari: listaAvatari,
@@ -1910,7 +1923,12 @@
           bcast();
         }
       },
-      onErrore: function () { if (tav) tav.chiudi(); finito = true; fermaTempo(); localeBJ(t); }
+      // (arriva solo se il primo collegamento non riesce: a tavolo aperto, se la rete salta, il core mostra «📶 Mi ricollego…»)
+      onErrore: function () {
+        if (M || finito) return;
+        finito = true; fermaTempo(); try { rete.chiudi(); } catch (e) {}
+        erroreBJ(t, "Non riesco ad aprire il tavolo online. Controlla la connessione e riprova.");
+      }
     });
     lobbyOut();
   }
@@ -1922,7 +1940,7 @@
     var S = { rete: null, nome: "", mioId: null, mioSeat: -1, tav: null, avatari: [], fiches: null, prova: false, vm: null, salvato: null, finito: false, ultimoJoin: 0 };
     var nota = el("p", { class: "modulo-nota", style: "text-align:center" });
     // anche chi entra da invito gira la ruota in saletta: l'host si segna le monete nuove
-    var boxBonus = prof ? riquadroBonus(el, function (nuovo, piu) { mandaBonus(nuovo, piu); }) : null;
+    var boxBonus = prof ? riquadroBonus(el, function (nuovo, piu) { mandaBonus(nuovo, piu); }, true) : null;
     function mandaBonus(nuovo, piu) {
       if (!S.rete) return;
       if (!S.tav) {
@@ -1962,7 +1980,7 @@
     function assicuraTavolo() {
       if (S.tav) return;
       S.tav = tavoloBJ(t, {
-        sotto: "Online", stanza: codice,
+        sotto: "Online", stanza: codice, contoMano: conAmici,
         avvisoUscita: function (vm) { var me = vm.giocatori[S.mioSeat]; return me && me.puntata > 0 && vm.fase !== "esito" && vm.fase !== "fine" ? "Perdi la puntata di questa mano." : ""; },
         avatari: function () { return S.avatari || []; },
         mioIdx: function () { return S.mioSeat; },
@@ -2022,7 +2040,12 @@
           var aMeta = !!S.vm && ["esito", "fine"].indexOf(S.vm.fase) < 0;
           finisci("L'host ha lasciato il tavolo" + (aMeta ? ": la puntata di questa mano ti torna indietro" : ""), null, aMeta);
         },
-        onErrore: function () { if (S.tav) S.tav.chiudi(); S.finito = true; erroreBJ(t, "Problema di collegamento. Riprova."); }
+        // (arriva solo se il primo collegamento non riesce: dopo, se la rete salta, il core mostra «📶 Mi ricollego…» e si continua)
+        onErrore: function () {
+          if (S.vm || S.finito) return;
+          if (S.tav) S.tav.chiudi(); S.finito = true; try { S.rete.chiudi(); } catch (e) {}
+          erroreBJ(t, "Non riesco a collegarmi al tavolo. Controlla la connessione e riprova.");
+        }
       });
     }
   }

@@ -30,6 +30,7 @@
   // Pause dello spettacolo (il tempo della bomba NON scende): rivelazione della categoria con la bomba
   // che vola sul primo, bomba che passa al nuovo dopo un'esplosione, e l'esplosione stessa.
   var ATTESA_INIZIO = 4600, ATTESA_ROUND = 1800, DURATA_BOOM = 3400;
+  var TEMPO_VOTO = 25;   // online: secondi per votare la categoria, poi si parte da soli
   var ATTESA_SORPRESA = 2600;   // in più quando la categoria è a sorpresa: gira la ruota delle categorie
   var BLOCCO_PASSAGGIO = 600;   // dopo un passaggio, per un attimo nessuno si può toccare (niente doppio tocco)
 
@@ -469,7 +470,12 @@
       ".pt-riga .pos{width:28px;text-align:center;font-weight:900}",
       ".pt-riga .nm{flex:1;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".pt-riga .et{font-size:.8rem;opacity:.8}",
-      ".pt-riga.via{opacity:.6}"
+      ".pt-riga.via{opacity:.6}",
+      // classifica finale su schermi bassi (o con tanti giocatori): podio e righe più basse, poi su due colonne
+      ".pt-corta .pt-podio{margin:2px 0 8px}.pt-corta .pt-gradino .fac{width:50px;height:50px}.pt-corta .pt-gradino.p1 .fac{width:62px;height:62px}",
+      ".pt-corta .pt-gradino .blocco{font-size:1.2rem;padding-top:3px}.pt-corta .pt-gradino.p1 .blocco{height:44px}.pt-corta .pt-gradino.p2 .blocco{height:32px}.pt-corta .pt-gradino.p3 .blocco{height:24px}",
+      ".pt-corta .pt-righe{gap:4px!important}.pt-corta .pt-riga{padding:3px 10px 3px 4px;gap:8px}.pt-corta .pt-riga .fac{width:28px;height:28px}",
+      ".pt-due .pt-righe{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}.pt-due .pt-riga{gap:5px;padding:3px 6px 3px 3px}.pt-due .pt-riga .pos{width:auto}.pt-due .pt-riga .et{display:none}"
     ].join("");
     document.head.appendChild(s);
   }
@@ -783,9 +789,19 @@
     var kB = "v|" + (cb.locale ? "l" : cb.sonoHost ? "h" : cb.guardo ? "g" : "o");
     if (R.barraK !== kB) {
       R.barraK = kB;
-      if (!cb.locale && cb.sonoHost) ST.barra(S, [ el("button", { class: "btn btn-primario", text: "Via! ▶", onclick: function () { ST.viaBarra(S); R.barraK = null; cb.onVia(); } }) ]);
-      else if (cb.guardo) ST.barra(S, [ el("p", { class: "tl-attesa pt-guardi", text: "👀 Stai guardando: entri nella prossima partita" }) ]);
-      else if (!cb.locale) ST.barra(S, [ el("p", { class: "tl-attesa", text: "Vota pure: parte quando l'host dà il via" }) ]);
+      // online il voto non resta aperto per sempre: dopo un po' si parte da soli (l'host può anche dare il via prima)
+      var kConto = "pt-voto|" + vm.partitaId + "|" + vm.cats.join("|");
+      if (!cb.locale && cb.sonoHost) {
+        var bVia = el("button", { class: "btn btn-primario", text: "Via! ▶", onclick: function () { ST.viaBarra(S); R.barraK = null; cb.onVia(); } });
+        ST.barra(S, [ bVia ]);
+        if (R.t.contoAvanti) R.t.contoAvanti(bVia, TEMPO_VOTO, function () { if (RP === R && R.vm.fase === "voto") { ST.viaBarra(S); R.barraK = null; cb.onVia(); } }, kConto);
+      }
+      else if (cb.guardo) ST.barra(S, [ el("p", { class: "tl-attesa pt-guardi", text: "👀 Stai guardando: entri nella prossima partita" }), R.t.faccine ? R.t.faccine() : null ]);
+      else if (!cb.locale) {
+        var conto = el("p", { class: "tl-attesa" });
+        ST.barra(S, [ el("p", { class: "tl-attesa", text: "Vota pure: parte quando l'host dà il via" }), conto ]);
+        if (R.t.contoAvanti) R.t.contoAvanti(conto, TEMPO_VOTO, null, kConto); else conto.remove();
+      }
       else ST.viaBarra(S);
     }
   }
@@ -906,13 +922,15 @@
     ST.tocca(S, lista);
     // la barra sotto: "Non valeva!" / suggerimento (non dipende dalla pausa: così non lampeggia)
     var prevP = null; vm.players.forEach(function (p) { if (p.id === vm.prev) prevP = p; });
-    var chiave = "b|" + vm.holder + "|" + (mia ? 1 : 0) + "|" + (prevP && !prevP.eliminato ? prevP.id : "") + "|" + (vm.soloDare || "") + "|" + (cb.guardo ? 1 : 0);
+    var ioFuori = !cb.locale && !cb.guardo && vm.players.some(function (p) { return p.id === cb.myId && p.eliminato; });   // online: sono già esploso
+    var chiave = "b|" + vm.holder + "|" + (mia ? 1 : 0) + "|" + (prevP && !prevP.eliminato ? prevP.id : "") + "|" + (vm.soloDare || "") + "|" + (cb.guardo ? 1 : 0) + "|" + (ioFuori ? 1 : 0);
     if (R.barraK !== chiave) {
       R.barraK = chiave;
       var nodi = [];
       if (mia && vm.soloDare) { var chiRi = null; vm.players.forEach(function (p) { if (p.id === vm.soloDare) chiRi = p; }); nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Te l'hanno rimandata: di' la parola e ridàlla a " + (chiRi ? chiRi.nome : "chi te l'ha rimandata") + " 👇" })); }
       else if (mia) nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Di' una parola su «" + vm.categoria + "» e tocca chi la riceve 👇" }));
-      else if (cb.guardo) nodi.push(el("p", { class: "tl-attesa pt-guardi", text: "👀 Stai guardando: entri nella prossima partita" }));
+      else if (cb.guardo) nodi.push(el("p", { class: "tl-attesa pt-guardi", text: "👀 Stai guardando: entri nella prossima partita" }), R.t.faccine ? R.t.faccine() : null);
+      else if (ioFuori) nodi.push(el("p", { class: "tl-attesa pt-guardi", text: "💀 Sei fuori: guarda chi resta in piedi!" }), R.t.faccine ? R.t.faccine() : null);
       else if (!cb.locale && hi >= 0) nodi.push(el("p", { class: "tl-attesa pt-hint", text: "💣 Ce l'ha " + vm.players[hi].nome + "… occhio che può toccare a te!" }));
       if (mia && prevP && !prevP.eliminato) nodi.push(el("button", { class: "pt-indietro", html: "↩️ Non valeva! <b>Ridalla a " + escP(prevP.nome) + "</b>", onclick: function () { swishP(); cb.onIndietro(); } }));
       if (nodi.length) ST.barra(S, nodi); else ST.viaBarra(S);
@@ -1025,7 +1043,12 @@
       ]));
     });
     sf._contenuto.appendChild(podio);
-    var box = el("div", { style: "display:flex;flex-direction:column;gap:6px" });
+    var box = el("div", { class: "pt-righe", style: "display:flex;flex-direction:column;gap:6px" });
+    // che tutto stia in uno schermo: podio, righe, faccine e tasti
+    var conFac = !cb.locale && !!t.faccine, alto = window.innerHeight || 640;
+    var serve = 300 + cl.length * 56 + (conFac ? 56 : 0) + (cb.sonoHost ? 120 : 110);
+    if (serve > alto) sf.classList.add("pt-corta");
+    if (300 - 95 + cl.length * 38 + (conFac ? 56 : 0) + 120 > alto) sf.classList.add("pt-due");
     cl.forEach(function (p, i) {
       var et = i === 0 ? "🏆 vincitore" : p.via ? "🚪 uscito" : (i === ultimoEsploso ? "💥 primo esploso" : "");
       box.appendChild(el("div", { class: "pt-riga" + (i === 0 ? " primo" : "") + (p.via ? " via" : "") }, [
@@ -1036,6 +1059,8 @@
       ]));
     });
     sf._contenuto.appendChild(box);
+    var fac = !cb.locale && t.faccine ? t.faccine() : null;   // online: le faccine della saletta, si festeggia tutti insieme
+    if (fac) { fac.classList.add("fine-faccine"); sf._contenuto.appendChild(fac); }
     if (cb.locale && cb.torneo) {
       sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏆 Avanti nel torneo ▶", onclick: function () { cb.onTorneo(risultato); } }));
     } else if (cb.sonoHost) {

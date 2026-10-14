@@ -410,6 +410,7 @@
     icona: "🚢",
     descrizione: "La battaglia navale classica: sistemi la tua flotta e affondi quella dell'avversario. Contro il Bot o online, uno contro uno.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 2, etichettaGiocatori: "👥 1–2 giocatori",   // (sullo stesso telefono: contro il Bot; online in due)
+    postiOnline: 2,   // online si gioca in due: gli altri guardano
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il Bot", sotto: "Giochi da solo contro il Bot" }],
     regole: [
       "Ognuno ha una griglia <b>10×10</b> e una <b>flotta</b>: Portaerei (5), Corazzata (4), Incrociatore (3), Sommergibile (3), Cacciatorpediniere (2).",
@@ -462,7 +463,7 @@
 
       notaOnline = el("div", { class: "link-avviso", hidden: "hidden" });
       notaOnline.textContent = (window.SGNet && SGNet.disponibile())
-        ? "Apri una stanza e manda il codice: l'altro entra dal suo telefono."
+        ? "Apri la stanza e invita l'altro col tasto 📤: entra dal suo telefono (gli altri guardano)."
         : "Qui il collegamento non è disponibile: funziona quando il gioco è aperto dal sito pubblicato online.";
       box.appendChild(notaOnline);
       sel(aiuti.modo || "bot");
@@ -757,20 +758,48 @@
     t.onRegole = function () { if (L.fase === "lobby") { lobby(); mandaVm(); } };
 
     rete = SGNet.ospita("navale", {
-      onCodice: function (c) { L.codice = c; if (L.fase === "lobby") lobby(); mandaVm(); },
+      onCodice: function (c) { L.codice = c; L.riserva = riservaAvv("navale", c); if (L.fase === "lobby") lobby(); mandaVm(); },
       onConnesso: function () { L.pronta = true; if (L.fase === "lobby") lobby(); },
       onAddio: function (id) {
         if (id !== L.avvId) return;
         var chi = L.nomeAvv || "L'avversario";
+        // a metà partita (telefono spento, app chiusa): il posto resta suo per un altro minuto; se torna (stesso id) si
+        // riprende da dove era rimasta, se no vinci a tavolino
+        if (L.fase !== "lobby" && P && P.fase !== "fine") {
+          if (L.assente) return;
+          L.assente = setTimeout(function () {
+            L.assente = null;
+            if (L.avvId !== id) return;
+            L.avvId = null; L.ominoAvv = null;
+            if (P && P.fase !== "fine") { P.fase = "fine"; P.vince = 0; P.tavolino = chi; }   // non è tornato: vinci a tavolino
+            if (P && ui) aggiorna(true); else mandaVm(true);
+          }, 60000);
+          if (ui) ui.reteAvviso("📶 " + chi + " ha perso il collegamento: se non torna entro un minuto, vinci a tavolino.");
+          return;
+        }
         L.avvId = null; L.ominoAvv = null;
         if (L.fase === "lobby") { L.nomeAvv = null; lobby(); mandaVm(); return; }
-        if (P && P.fase !== "fine") { P.fase = "fine"; P.vince = 0; P.tavolino = chi; }   // se ne è andato a metà: vinci a tavolino
         aggiorna(true);
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
+        if (L.assente && id === L.avvId) {   // è tornato in tempo
+          clearTimeout(L.assente); L.assente = null;
+          if (ui && P && P.fase === "piazza") ui.reteAvviso(P.flotte[1] ? "✅ " + nomeAvv() + " ha già sistemato le navi" : "");
+          else if (ui) ui.reteAvviso("");
+        }
+        if (m.t === "esco") {   // l'avversario è uscito apposta (tasto Esci): niente minuto di attesa
+          if (id !== L.avvId) return;
+          clearTimeout(L.assente); L.assente = null;
+          var chiE = L.nomeAvv || "L'avversario";
+          L.avvId = null; L.ominoAvv = null;
+          if (L.fase === "lobby") { L.nomeAvv = null; lobby(); mandaVm(); return; }
+          if (P && P.fase !== "fine") { P.fase = "fine"; P.vince = 0; P.tavolino = chiE; }
+          if (P && ui) aggiorna(true);
+          return;
+        }
         if (m.t === "join") {
-          if (!L.avvId && L.fase === "lobby") { L.avvId = id; L.nomeAvv = String(m.nome || "Avversario").slice(0, 16); L.ominoAvv = avatarOk(m.omino); if (L.fase === "lobby") lobby(); }
+          if (!L.avvId && L.fase === "lobby" && !postoRiservato(L.riserva, id)) { L.avvId = id; L.nomeAvv = String(m.nome || "Avversario").slice(0, 16); L.ominoAvv = avatarOk(m.omino); if (L.fase === "lobby") lobby(); }
           if (id === L.avvId) { mandaVm(true); mandaFlotta(); }   // anche se c'era già (si è ricollegato o ha ricaricato): rimando foto e navi
           else mandaVm();
           return;
@@ -784,7 +813,8 @@
           mandaVm(true);   // colpo vecchio o doppio: gli rimando com'è la partita
         } else if (m.t === "flotta?") mandaFlotta();
       },
-      onErrore: function () { if (L.fase === "lobby" && !L.pronta) senzaRete(t); }   // a partita iniziata un errore passeggero non chiude niente
+      // (arriva solo se il primo collegamento non riesce: a partita iniziata la rete si ricollega da sola)
+      onErrore: function () { if (L.fase === "lobby" && !L.pronta) erroreNav(t, "Problema di collegamento. Controlla la connessione e riprova."); }
     });
     function vmPub() {
       var v = P && L.fase === "gioco" ? vmPartita(P) : { fase: "lobby", regole: regole() };
@@ -794,6 +824,7 @@
       return v;
     }
     function mandaVm(forza) {
+      ricordaAvv("navale", L.codice, L.avvId || (L.riserva && Date.now() < L.riserva.fino ? L.riserva.id : null));
       var v = vmPub(), j = JSON.stringify(v);
       if (!forza && j === ultimoVm) return;
       ultimoVm = j; rete.invia({ t: "vm", vm: v });
@@ -804,11 +835,11 @@
       var gio = [{ id: "host", nome: nomeIo, omino: L.ominoIo || null, host: true, tu: true }];
       if (L.avvId) gio.push({ id: L.avvId, nome: L.nomeAvv, omino: L.ominoAvv || null });
       t.lobby({ host: true, codice: L.codice, pronta: L.pronta, min: 2, vuoti: L.avvId ? 0 : 1, giocatori: gio,
-        nota: L.avvId ? "✅ Avversario collegato! Quando vuoi, comincia." : "Manda il link: aspettiamo il tuo avversario.",
+        nota: L.avvId ? "✅ Avversario collegato! Quando vuoi, comincia." : "Invita il tuo avversario col tasto 📤.",
         extra: [el("p", { class: "modulo-nota", style: "text-align:center", text: testoRegole(regole()) })],
         onComincia: comincia, onEsci: function () { chiudi(); } });
     }
-    function chiudi() { if (ui) ui.spegni(); clearTimeout(tTurno); rete.chiudi(); t.esci(); }
+    function chiudi() { if (ui) ui.spegni(); clearTimeout(tTurno); clearTimeout(L.assente); L.assente = null; rete.chiudi(); t.esci(); }
     function comincia() {
       if (!L.avvId) return;
       L.fase = "gioco"; P = nuovaPartita(regole()); chiaveFine = null;
@@ -854,7 +885,8 @@
         // per il torneo online: chi ha vinto
         if (t.risultato) t.risultato(vinto ? [{ nome: nomeIo, pos: 1 }, { nome: L.nomeAvv || "Avversario", pos: 2 }] : [{ nome: L.nomeAvv || "Avversario", pos: 1 }, { nome: nomeIo, pos: 2 }]);
       }
-      var tasti = [];
+      var tasti = [], fa = t.faccine ? t.faccine() : null;   // la fila delle faccine (il mio avatar le fa sui telefoni di tutti)
+      if (fa) { fa.style.margin = "0 0 8px"; tasti.push(fa); }
       if (L.avvId) tasti.push(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: rivincita }));
       else tasti.push(el("button", { class: "btn btn-primario", text: "👥 Torna alla saletta", onclick: allaSaletta }));
       tasti.push(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: chiudi }));
@@ -864,11 +896,13 @@
         tasti: tasti });
     }
     function rivincita() {   // stessa stanza, stesso avversario: si risistemano le navi
-      if (!L.avvId) return allaSaletta();
+      if (!L.avvId || L.assente) return allaSaletta();   // (l'avversario è uscito e non è ancora tornato: si torna in saletta)
       P = nuovaPartita(regole()); chiaveFine = null; clearTimeout(tTurno);
       piazzaIo(); mandaVm();
     }
-    function allaSaletta() { if (ui) ui.spegni(); ui = null; P = null; clearTimeout(tTurno); L.nomeAvv = L.avvId ? L.nomeAvv : null; lobby(); mandaVm(); }
+    function allaSaletta() {
+      if (L.assente) { clearTimeout(L.assente); L.assente = null; L.avvId = null; L.ominoAvv = null; }   // chi era uscito un attimo e non è tornato: il posto si libera
+      if (ui) ui.spegni(); ui = null; P = null; clearTimeout(tTurno); L.nomeAvv = L.avvId ? L.nomeAvv : null; lobby(); mandaVm(); }
     lobby();
   }
 
@@ -894,7 +928,7 @@
       s._contenuto.appendChild(S.msg);
       t.mostra(s);
     }
-    function esci() { if (ui) ui.spegni(); clearInterval(tRipeti); if (S.rete) S.rete.chiudi(); t.esci(); }
+    function esci() { if (ui) ui.spegni(); clearInterval(tRipeti); if (S.rete) { try { if (!S.spett) S.rete.invia({ t: "esco" }); } catch (e) {} S.rete.chiudi(); } t.esci(); }   // (l'host sa che sono uscito apposta)
     function join() { if (S.rete) S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : null }); }
     function collega() {
       attesa("Collegamento in corso…");
@@ -925,9 +959,18 @@
       S.vm = vm;
       var ids = vm.ids || {};
       // la stanza è di un altro avversario: questo telefono può solo guardare
+      if (ids.avv && ids.avv !== S.myId && vm.fase === "lobby") {   // in saletta: si gioca in due, io guardo (niente "Tu")
+        if (ui) { ui.spegni(); ui = null; }
+        if (S.spett) { S.spett.spegni(); S.spett = null; }
+        t.lobby({ host: false, codice: codice, pronta: true, min: 2, giocatori: [{ id: "host", nome: vm.nomi[0], omino: (vm.omini && vm.omini[0]) || null, host: true },
+          { id: ids.avv, nome: vm.nomi[1], omino: (vm.omini && vm.omini[1]) || null }],
+          extra: [el("p", { class: "modulo-nota", style: "text-align:center", text: testoRegole(vm.regole) })],
+          attesa: "👀 Giocano " + vm.nomi[0] + " e " + vm.nomi[1] + ": tu guardi.", onEsci: esci });
+        return;
+      }
       if (ids.avv !== S.myId && (ids.avv || vm.fase !== "lobby")) {
         if (ui) { ui.spegni(); ui = null; }
-        if (!S.spett) S.spett = Spettatore(t, esci, "🚢 La stanza è piena: puoi guardare la partita.");
+        if (!S.spett) S.spett = Spettatore(t, esci, "👀 Si gioca in due: tu guardi la partita.");
         S.spett.disegna(vm);
         return;
       }
@@ -935,7 +978,7 @@
       if (vm.fase === "lobby") {
         if (ui) { ui.spegni(); ui = null; }
         if (!ids.avv) { join(); attesa("Entro nella stanza…"); return; }   // non sono (più) dentro: richiedo di entrare
-        var gio = [{ id: "host", nome: vm.nomi[0], omino: (vm.omini && vm.omini[0]) || null, host: true }, { id: S.myId, nome: vm.nomi[1], omino: (vm.omini && vm.omini[1]) || null, tu: true }];
+        var gio = [{ id: "host", nome: vm.nomi[0], omino: (vm.omini && vm.omini[0]) || null, host: true }, { id: ids.avv, nome: vm.nomi[1], omino: (vm.omini && vm.omini[1]) || null, tu: true }];
         t.lobby({ host: false, codice: codice, pronta: true, min: 2, giocatori: gio,
           extra: [el("p", { class: "modulo-nota", style: "text-align:center", text: testoRegole(vm.regole) })],
           attesa: "Aspetta che l'host cominci: poi sistemate le navi. 🚢", onEsci: esci });
@@ -970,9 +1013,11 @@
       // fine
       var vinto = vm.vince === 1, k = "navale-" + vm.g + "-" + S.myId;
       if (!S.salvata[vm.g]) { S.salvata[vm.g] = true; if (vm.stat) salvaStatNavale(t, vinto, vm.stat[1], "online", null, k); }
+      var fa = t.faccine ? t.faccine() : null;   // la fila delle faccine (se la schermata c'è già, non si usa)
+      if (fa) fa.style.margin = "0 0 8px";
       ui.fine({ key: vm.g, vinto: vinto, nomeAvv: nomeHost, suAvv: vm.campi[0], naviAvv: vm.svela && vm.svela[0], statTxt: testoStat(vm.stat && vm.stat[1]),
         sotto: vinto ? "Hai affondato tutta la flotta di " + nomeHost + "." : nomeHost + " ha affondato la tua flotta.",
-        tasti: [el("p", { class: "modulo-nota", style: "text-align:center", text: "In attesa dell'host per la rivincita…" }), el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: esci })] });
+        tasti: [el("p", { class: "modulo-nota", style: "text-align:center;margin:0 0 6px", text: "In attesa dell'host per la rivincita…" }), fa, el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: esci })].filter(Boolean) });
     }
     function disegnaBattaglia() {
       var vm = S.vm, V = vista(vm, 1, S.stato, vm.nomi[0]);
@@ -995,6 +1040,8 @@
       if (spento || scritta === txt) return; scritta = txt; mont = null;
       var s = t.schermata({ indietro: esci });
       s._contenuto.appendChild(el("p", { class: "modulo-nota guarda-attesa", text: txt }));
+      var fa = t.faccine ? t.faccine() : null;   // (stanza online: intanto le faccine)
+      if (fa) s._piede.appendChild(fa);
       t.mostra(s);
     }
     function costruisci() {
@@ -1008,7 +1055,10 @@
         mont.lati.push(lato); due.appendChild(lato.nodo);
       }
       mont.nota = el("p", { class: "modulo-nota", style: "text-align:center" });
-      s._contenuto.appendChild(el("div", { class: "nav-scena" }, [mont.riga, mont.tit, due, mont.nota]));
+      // in una stanza online (non nel torneo): la fila delle faccine, il mio avatar le fa sui telefoni di tutti
+      var fa = t.faccine ? t.faccine() : null;
+      if (fa) fa.style.cssText += ";width:100%;max-width:380px;box-sizing:border-box";
+      s._contenuto.appendChild(el("div", { class: "nav-scena" }, [mont.riga, mont.tit, due, mont.nota, fa].filter(Boolean)));
       t.mostra(s);
     }
     function disegna(vm) {
@@ -1048,6 +1098,14 @@
   }
 
   function avatarOk(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  // l'avversario di questa stanza, ricordato sul telefono dell'host: se la pagina dell'host si ricarica (la stanza si
+  // riapre con lo stesso codice), per 15 secondi il posto resta a chi giocava, non a chi guardava ed è stato più svelto
+  function ricordaAvv(gioco, codice, id) { try { if (codice && codice !== "…") localStorage.setItem("sg-avv-" + gioco, JSON.stringify({ c: codice, id: id || null, t: Date.now() })); } catch (e) {} }
+  function riservaAvv(gioco, codice) {
+    try { var x = JSON.parse(localStorage.getItem("sg-avv-" + gioco) || "null"); if (x && x.c === codice && x.id && Date.now() - x.t < 20 * 60000) return { id: x.id, fino: Date.now() + 15000 }; } catch (e) {}
+    return null;
+  }
+  function postoRiservato(r, id) { return !!(r && r.id !== id && Date.now() < r.fino); }   // true = questo posto non è (ancora) per lui
 
   function erroreNav(t, txt) {
     var s = t.schermata({ icona: "⚠️", titolo: "Ops" });

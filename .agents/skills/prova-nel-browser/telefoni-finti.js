@@ -19,6 +19,11 @@
 //   chiudiApp(nome)                 = l'app si chiude e si riapre (memoria sì, sessionStorage no)
 document.open(); document.write('<!doctype html><body style="margin:0;background:#333;position:relative"></body>'); document.close();
 window.BR = { clients: [], retained: {}, log: [], perNome: {}, mem: {}, tel: {}, ritardo: 4 };
+// la finestra di conferma dell'app ("Uscire dalla partita?", "Chiudere la stanza per tutti?") risponde sì da sola,
+// come window.confirm: il tasto rosso si accende dopo un attimo e qui viene toccato appena si può, su ogni telefono
+if (!window.__autoConferma) window.__autoConferma = setInterval(() => {
+  document.querySelectorAll("iframe").forEach(f => { try { const b = f.contentWindow.document.querySelector(".conferma-sfondo .btn-rosso:not([disabled])"); if (b) b.click(); } catch (e) {} });
+}, 100);
 window.creaClient = function (nome, opts) {
   const c = { nome, opts, h: {}, subs: new Set(), connected: false, frozen: false, morto: false,
     on(ev, fn) { (this.h[ev] = this.h[ev] || []).push(fn); return this; },
