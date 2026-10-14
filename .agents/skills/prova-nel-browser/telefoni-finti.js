@@ -1,58 +1,189 @@
 // Telefoni finti collegati tra loro (finto broker MQTT), per provare i giochi online in una pagina sola.
-// Uso: servi la cartella (es. http://localhost:8972), apri una pagina del sito e incolla questo nella console
-// (o nello strumento javascript del browser, che accetta "await"). Apre l'host "Paky" su Parola d'ordine
-// e fa entrare Giulia, Luca e Sara; per un altro gioco cambia il nome cercato e "gioco=ordine".
-// Poi: window.CODICE = codice stanza; la partita = JSON.parse(BR.retained["seratagiochi/v1/" + CODICE + "/stato"]).vm
-// Profili finti, mai account veri. Per provare gli XP aggiungi in prepara() SGNube.progressione e SGNube.aggiungiXp finti.
+// Uso: servi la cartella (es. http://localhost:8973), apri una pagina del sito e incolla questo file nella console
+// (o nello strumento javascript del browser, che accetta "await"): prendi la parte PRIMA della riga "===== ESEMPIO =====".
+// Poi apri i telefoni con apriTel(nome, { hash, x }) e guidali con clicca(w, /testo/), aspetta(...), testo(w)...
+// Profili finti, mai account veri.
+//
+// Ogni telefono è un iframe con TUTTO finto fin dal primo script della pagina (prima che parta l'app):
+// - il broker: BR.retained (messaggi trattenuti), BR.log, BR.perNome[nome] = i suoi collegamenti;
+//   il "testamento" (will) parte quando il telefono sparisce, ed è trattenuto se lo chiede il collegamento;
+// - la memoria: ogni telefono ha il suo localStorage e il suo sessionStorage (BR.mem[nome]), che restano
+//   quando la pagina si ricarica (ricarica) e il sessionStorage si svuota quando l'app si chiude (chiudiApp);
+// - il profilo: SGNube finto (nome del telefono), oppure niente profilo con { profilo: false };
+// - i fotogrammi delle animazioni arrivano anche con la finestra del browser nascosta (requestAnimationFrame a tempo)
+//   e i suoni che non partono non lanciano errori.
+// Cose che succedono ai telefoni veri:
+//   spegni(nome) / riaccendi(nome)  = schermo bloccato, rete persa (il broker manda il testamento)
+//   inciampa(nome, ms)              = la rete salta un attimo: errore + testamento, poi si ricollega da solo
+//   ricarica(nome)                  = la pagina si ricarica (stessa scheda: stessa memoria)
+//   chiudiApp(nome)                 = l'app si chiude e si riapre (memoria sì, sessionStorage no)
 document.open(); document.write('<!doctype html><body style="margin:0;background:#333;position:relative"></body>'); document.close();
-window.BR = { clients: [], retained: {}, log: [], perNome: {} };
+window.BR = { clients: [], retained: {}, log: [], perNome: {}, mem: {}, tel: {}, ritardo: 4 };
 window.creaClient = function (nome, opts) {
-  const c = { nome, opts, h: {}, subs: new Set(), connected: false, frozen: false,
+  const c = { nome, opts, h: {}, subs: new Set(), connected: false, frozen: false, morto: false,
     on(ev, fn) { (this.h[ev] = this.h[ev] || []).push(fn); return this; },
     emit(ev, ...a) { (this.h[ev] || []).forEach(f => { try { f(...a); } catch (e) { BR.log.push("ERR " + nome + ": " + e.message); } }); },
-    subscribe(topic, cb) { this.subs.add(topic); setTimeout(() => { if (cb) cb(); const r = BR.retained[topic]; if (r) this.deliver(topic, r, true); }, 5); },
-    publish(topic, payload, o) { if (!this.connected || this.frozen) return; if (o && o.retain) BR.retained[topic] = payload;
-      BR.clients.forEach(k => { if (k.connected && !k.frozen && k.subs.has(topic)) k.deliver(topic, payload, false); }); },
-    deliver(topic, payload, ret) { setTimeout(() => { if (this.connected && !this.frozen) this.emit("message", topic, { toString: () => payload }, { retain: ret }); }, 4); },
-    end() { this.connected = false; BR.clients = BR.clients.filter(x => x !== this); },
+    subscribe(topic, cb) {
+      const lista = Array.isArray(topic) ? topic : [topic];
+      lista.forEach(t => this.subs.add(t));
+      setTimeout(() => { if (cb) cb(null, lista.map(t => ({ topic: t, qos: 0 }))); lista.forEach(t => { const r = BR.retained[t]; if (r != null) this.deliver(t, r, true); }); }, 5);
+      return this;
+    },
+    unsubscribe(topic) { (Array.isArray(topic) ? topic : [topic]).forEach(t => this.subs.delete(t)); return this; },
+    publish(topic, payload, o) {
+      if (!this.connected || this.frozen) return this;
+      if (o && o.retain) { if (payload === "") delete BR.retained[topic]; else BR.retained[topic] = payload; }
+      BR.log.push(nome + " → " + topic.split("/").slice(2).join("/") + " " + String(payload).slice(0, 80));
+      if (BR.log.length > 400) BR.log.splice(0, 100);
+      BR.clients.forEach(k => { if (k.connected && !k.frozen && k.subs.has(topic)) k.deliver(topic, payload, false); });
+      return this;
+    },
+    deliver(topic, payload, ret) { setTimeout(() => { if (this.connected && !this.frozen) this.emit("message", topic, { toString: () => payload }, { retain: ret }); }, BR.ritardo); },
+    // uscita educata (come mqtt.end): niente testamento
+    end() { if (!this.connected && this.morto) return this; this.connected = false; this.morto = true; BR.clients = BR.clients.filter(x => x !== this); setTimeout(() => { this.emit("close"); this.emit("end"); }, 1); return this; },
+    reconnect() { if (this.morto || this.connected) return; this.frozen = false; this.connected = true; this.subs = new Set(); if (!BR.clients.includes(this)) BR.clients.push(this); this.emit("connect"); },
+    testamento() {
+      const w = this.opts && this.opts.will; if (!w) return;
+      if (w.retain) { if (w.payload === "") delete BR.retained[w.topic]; else BR.retained[w.topic] = w.payload; }
+      BR.log.push(nome + " ✝ " + w.topic.split("/").slice(2).join("/") + " " + String(w.payload).slice(0, 60));
+      BR.clients.forEach(k => { if (k.connected && !k.frozen && k.subs.has(w.topic)) k.deliver(w.topic, w.payload, false); });
+    },
     // sparisci() = telefono che si spegne all'improvviso (il broker manda il "testamento"); torna() = si riaccende
-    sparisci() { this.connected = false; this.frozen = true; BR.clients = BR.clients.filter(x => x !== this);
-      const w = this.opts && this.opts.will; if (w) BR.clients.forEach(k => { if (k.connected && k.subs.has(w.topic)) k.deliver(w.topic, w.payload, false); }); },
-    torna() { this.frozen = false; this.connected = true; this.subs = new Set(); BR.clients.push(this); this.emit("connect"); }
+    sparisci() { if (!this.connected) return; this.connected = false; this.frozen = true; BR.clients = BR.clients.filter(x => x !== this); this.testamento(); this.emit("close"); this.emit("offline"); },
+    torna() { if (this.morto) return; this.frozen = false; this.connected = true; this.subs = new Set(); if (!BR.clients.includes(this)) BR.clients.push(this); this.emit("connect"); },
+    // la rete salta un attimo: errore, il broker manda il testamento, poi mqtt si ricollega da solo dopo ms
+    inciampa(ms) { if (!this.connected) return; this.emit("error", new Error("rete saltata (finta)")); this.sparisci(); setTimeout(() => this.torna(), ms || 2500); }
   };
   BR.clients.push(c); (BR.perNome[nome] = BR.perNome[nome] || []).push(c);
-  setTimeout(() => { c.connected = true; c.emit("connect"); }, 10);
+  setTimeout(() => { if (c.morto) return; c.connected = true; c.emit("connect"); }, 10);
   return c;
 };
-window.nuovoTel = function (nome, src, x) { const f = document.createElement("iframe"); f.id = nome; f.src = src;
-  f.style.cssText = "position:absolute;top:0;left:" + x + "px;width:360px;height:740px;border:0;background:#000;transform-origin:0 0;transform:scale(.5)"; document.body.appendChild(f); return f; };
-window.prepara = function (w, nome) {
-  w.__fp = { nome, fiches: {}, omino: w.SGOmino.casuale(nome) };
-  w.SGNube.disponibile = () => true; w.SGNube.pronto = () => true; w.SGNube.profilo = () => w.__fp;
-  w.SGNube.salvaProgressi = () => {}; w.SGNube.statGioco = () => ({}); w.SGNube.salvaFiches = () => {}; w.SGNube.salvaOmino = () => {};
-  w.SGNube.lista = () => []; w.SGNube.salvaLista = () => {};
-  w.mqtt = { connect: (url, opts) => window.creaClient(nome, opts) };
-  w.__err = []; w.addEventListener("error", e => w.__err.push(e.message + " @" + (e.filename || "").split("/").pop() + ":" + e.lineno));
+// una memoria finta (localStorage o sessionStorage) che resta nella pagina dei telefoni
+window.memoriaFinta = function (d) {
+  return { getItem: k => (Object.prototype.hasOwnProperty.call(d, k) ? d[k] : null), setItem: (k, v) => { d[k] = String(v); },
+    removeItem: k => { delete d[k]; }, clear: () => { Object.keys(d).forEach(k => delete d[k]); }, key: i => Object.keys(d)[i] || null, get length() { return Object.keys(d).length; } };
 };
-nuovoTel("Paky", "/index.html?v=prova", 0);
-await new Promise(r => setTimeout(r, 2800));
-const w = document.getElementById("Paky").contentWindow;
-prepara(w, "Paky"); w.SG.avviaApp(); await new Promise(r => setTimeout(r, 700));
-const d = w.document;
-[...d.querySelectorAll("h1,h2,h3,h4")].find(x => /Parola d'ordine/.test(x.textContent)).closest("button,.card,[onclick],div").click();
-await new Promise(r => setTimeout(r, 500));
-[...d.querySelectorAll(".modo-grande")].find(b => /apro io/.test(b.innerText)).click();
-await new Promise(r => setTimeout(r, 500));
-[...d.querySelectorAll("button")].find(b => /Apri la stanza/.test(b.innerText)).click();
-await new Promise(r => setTimeout(r, 600));
-window.CODICE = Object.keys(BR.retained).find(k => k.endsWith("/meta")).split("/")[2];
-const nomi = ["Giulia", "Luca", "Sara"];
-for (let i = 0; i < nomi.length; i++) {
-  nuovoTel(nomi[i], "/index.html?v=prova#gioco=ordine&stanza=" + CODICE, 185 * (i + 1));
-  await new Promise(r => setTimeout(r, 2500));
-  const g = document.getElementById(nomi[i]).contentWindow;
-  try { g.localStorage.removeItem("sg-id-" + CODICE); } catch (e) {}
-  prepara(g, nomi[i]); g.SG.avviaApp();
-  await new Promise(r => setTimeout(r, 1100));
-}
-"pronti " + CODICE;
+// tutto finto nella finestra del telefono PRIMA che parta qualsiasi script della pagina
+// (la finestra iniziale dell'iframe viene riusata dalla pagina che si carica)
+window.preparaFinestra = function (w, nome, opz) {
+  opz = opz || {};
+  const mem = BR.mem[nome] = BR.mem[nome] || { l: {}, s: {} };
+  const def = (k, get, set) => Object.defineProperty(w, k, { configurable: true, get, set: set || (() => {}) });
+  def("localStorage", () => memoriaFinta(mem.l));
+  def("sessionStorage", () => memoriaFinta(mem.s));
+  const finto = { connect: (url, o) => creaClient(nome, o), finto: true };
+  def("mqtt", () => finto);   // (lo script vero di mqtt prova a mettersi qui: viene ignorato)
+  let sg = null;
+  def("SG", () => sg, v => { sg = v; const avvia = v.avviaApp; v.avviaApp = function () { if (!w.__permesso) return; return avvia.apply(v, arguments); }; });   // l'app parte quando lo dico io
+  const fp = opz.profilo === false ? null : Object.assign({ nome, fiches: {}, omino: null, coins: 5000, level: 1, xp: 0 }, typeof opz.profilo === "object" ? opz.profilo : {});
+  w.__fp = fp;
+  let nube = null;
+  def("SGNube", () => nube, v => {
+    nube = v;
+    v.disponibile = () => true; v.pronto = () => true; v.utente = () => (fp ? { uid: "finto-" + nome } : null);
+    v.profilo = () => { if (fp && !fp.omino && w.SGOmino) fp.omino = w.SGOmino.casuale(nome); return fp; };
+    v.onCambio = cb => { try { cb(v.profilo()); } catch (e) {} };
+    v.salvaProgressi = () => {}; v.statGioco = () => ({}); v.salvaFiches = () => {}; v.salvaOmino = () => {}; v.fiches = () => 1000;
+    v.lista = () => []; v.salvaLista = () => {}; v.monete = () => 5000; v.cambiaMonete = () => Promise.resolve(5000);
+    v.contaPartita = () => {}; v.aggiungiXp = () => null; v.pubblica = () => {};
+  });
+  w.__err = [];
+  w.addEventListener("error", e => w.__err.push((e.message || "errore") + " @" + (e.filename || "").split("/").pop() + ":" + e.lineno));
+  w.confirm = () => true; w.alert = () => {};   // le domande "Sei sicuro?" rispondono sì da sole
+  // con la finestra del browser nascosta i fotogrammi (requestAnimationFrame) non arrivano e le animazioni dei giochi
+  // (es. la regia dello studio) restano ferme: qui arrivano comunque, ogni 16 ms
+  w.requestAnimationFrame = cb => w.setTimeout(() => cb(w.performance.now()), 16);
+  w.cancelAnimationFrame = id => w.clearTimeout(id);
+  // nelle prove i suoni possono non partire (es. spenti apposta su localhost) e allora stop() di un suono lancia un errore:
+  // qui l'errore non esce, così non ferma lo spettacolo dello studio (es. la fanfara della classifica finale)
+  try {
+    const AS = w.AudioScheduledSourceNode && w.AudioScheduledSourceNode.prototype, stop = AS && AS.stop;
+    if (stop) AS.stop = function () { try { return stop.apply(this, arguments); } catch (e) {} };
+  } catch (e) {}
+};
+// apre un telefono: opz = { hash: "gioco=tris&stanza=ABCD", x: posizione, profilo: false|{...}, prima: w => {...} }
+// (prima: si fa prima che parta l'app, anche dopo una ricarica). Restituisce la finestra.
+window.apriTel = async function (nome, opz) {
+  opz = Object.assign({}, BR.tel[nome] ? BR.tel[nome].opz : {}, opz || {});
+  const vecchio = document.getElementById("tel-" + nome); if (vecchio) vecchio.remove();
+  const f = document.createElement("iframe"); f.id = "tel-" + nome;
+  f.src = "/index.html?v=prova" + (opz.hash ? "#" + opz.hash : "");
+  const x = opz.x != null ? opz.x : 185 * Object.keys(BR.tel).length;
+  f.style.cssText = "position:absolute;top:0;left:" + x + "px;width:360px;height:740px;border:0;background:#000;transform-origin:0 0;transform:scale(.5)";
+  document.body.appendChild(f);
+  preparaFinestra(f.contentWindow, nome, opz);
+  BR.tel[nome] = { f, opz: Object.assign({}, opz, { hash: null, x }) };
+  await new Promise(r => { f.onload = r; });
+  const w = f.contentWindow;
+  // i collegamenti da ospite di questo telefono (per mandare mosse a mano: reteDi(nome).invia({...}))
+  const ent = w.SGNet && w.SGNet.entra;
+  if (ent) w.SGNet.entra = function (cod, cb, o) { const h = ent.apply(this, arguments); if (h) { h.__sala = !!(o && o.tieni); (w.__reti = w.__reti || []).push(h); } return h; };
+  if (opz.prima) opz.prima(w);   // (per le prove: es. un gioco finto registrato prima che parta l'app)
+  w.__permesso = true; w.SG.avviaApp();
+  await dorme(300);
+  return w;
+};
+// l'ultimo collegamento da ospite (non la Sala) ancora aperto di un telefono
+window.reteDi = nome => { const w = finestra(nome); return ((w && w.__reti) || []).filter(h => !h.__sala && !(h.stato && h.stato().chiusa)).pop() || null; };
+window.vmDi = cod => { const s = statoStanza(cod); return s && (s.vm || s); };
+window.finestra = nome => { const f = document.getElementById("tel-" + nome); return f && f.contentWindow; };
+window.dorme = ms => new Promise(r => setTimeout(r, ms));
+// aspetta che cond() sia vera (ogni 100 ms, al massimo ms); restituisce il valore o null
+window.aspetta = async function (cond, ms, passo) {
+  const fine = Date.now() + (ms || 5000);
+  while (Date.now() < fine) { let v = null; try { v = cond(); } catch (e) {} if (v) return v; await dorme(passo || 100); }
+  return null;
+};
+window.testo = w => (w && w.document && w.document.body ? w.document.body.innerText : "");
+// tocca il primo tasto (o tessera) che contiene il testo (o la regex); true se l'ha trovato
+window.clicca = function (w, cerca, sel) {
+  const re = cerca instanceof RegExp ? cerca : new RegExp(String(cerca).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const n = [...w.document.querySelectorAll(sel || "button, .tessera, .modo-grande, [role=button]")].find(b => re.test(b.innerText || b.textContent || "") && !b.disabled);
+  if (!n) return false;
+  n.click(); return true;
+};
+// i collegamenti vivi di un telefono
+window.viviDi = nome => (BR.perNome[nome] || []).filter(c => c.connected && !c.morto);
+window.spegni = nome => viviDi(nome).forEach(c => c.sparisci());
+window.riaccendi = nome => (BR.perNome[nome] || []).filter(c => c.frozen && !c.morto).forEach(c => c.torna());
+window.inciampa = (nome, ms) => viviDi(nome).forEach(c => c.inciampa(ms));
+// la pagina si ricarica: i collegamenti cadono di colpo (il broker manda i testamenti), poi la pagina riparte
+// senza il "#..." (l'app l'ha già tolto dall'indirizzo) e con la stessa memoria
+window.ricarica = async function (nome, opz) {
+  (BR.perNome[nome] || []).forEach(c => { if (c.connected) c.sparisci(); c.morto = true; });
+  await dorme(50);
+  return apriTel(nome, Object.assign({ hash: null }, opz || {}));
+};
+// l'app si chiude (il sessionStorage si perde) e poi si riapre
+window.chiudiApp = async function (nome, opz) {
+  (BR.perNome[nome] || []).forEach(c => { if (c.connected) c.sparisci(); c.morto = true; });
+  if (BR.mem[nome]) BR.mem[nome].s = {};
+  await dorme(50);
+  return apriTel(nome, Object.assign({ hash: null }, opz || {}));
+};
+// il codice dell'ultima stanza aperta (dall'annuncio trattenuto "meta") e la sua foto trattenuta
+window.codici = () => Object.keys(BR.retained).filter(k => k.endsWith("/meta")).map(k => k.split("/")[2]);
+window.statoStanza = cod => { try { return JSON.parse(BR.retained["seratagiochi/v1/" + cod + "/stato"] || "null"); } catch (e) { return null; } };
+// l'host apre una stanza online di un gioco (nome come nella tessera, es. "Tris"): restituisce il codice
+window.apriStanza = async function (w, nomeGioco) {
+  const tess = await aspetta(() => [...w.document.querySelectorAll(".tessera")].find(t => (t.querySelector("h2") || {}).textContent === nomeGioco), 5000);
+  if (!tess) throw new Error("non trovo la tessera " + nomeGioco);
+  tess.click(); await dorme(200);
+  if (!clicca(w, /apro io/)) throw new Error("non trovo 'Online: apro io la stanza'");
+  await dorme(200);
+  if (!clicca(w, /Apri la stanza/)) throw new Error("non trovo 'Apri la stanza'");
+  const cod = await aspetta(() => { const b = w.document.querySelector(".sl-cod b"); return b && /^[A-Z0-9]{4}$/.test(b.textContent) ? b.textContent : null; }, 5000);
+  if (!cod) throw new Error("la stanza non ha il codice");
+  return cod;
+};
+// gli errori di tutti i telefoni (script e broker)
+window.erroriTel = () => Object.keys(BR.tel).flatMap(n => ((finestra(n) || {}).__err || []).map(e => n + ": " + e)).concat(BR.log.filter(l => l.startsWith("ERR")));
+
+// ===== ESEMPIO =====
+// L'host "Paky" apre Parola d'ordine e fanno entrare Giulia, Luca e Sara dal link.
+// (per un altro gioco cambia "Parola d'ordine" e "gioco=ordine")
+const host = await apriTel("Paky", { x: 0 });
+window.CODICE = await apriStanza(host, "Parola d'ordine");
+for (const [i, n] of ["Giulia", "Luca", "Sara"].entries()) await apriTel(n, { hash: "gioco=ordine&stanza=" + CODICE, x: 185 * (i + 1) });
+await aspetta(() => (statoStanza(CODICE) || { vm: { players: [] } }).vm.players.length === 4, 8000);
+"pronti " + CODICE + " · errori: " + erroriTel().length;

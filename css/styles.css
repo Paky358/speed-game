@@ -1069,38 +1069,38 @@ button.am-riga:active{ transform:scale(.985); }
 .sl-cod small{ font-size:.7rem; opacity:.7; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
 .sl-cod b{ font-size:1.55rem; letter-spacing:3px; font-weight:900; }
 .sl-invito .sl-link{ flex:1; margin:0; min-height:60px; font-size:1.02rem; }
-.sl-stato{ margin:8px 0 10px; font-size:.9rem; font-weight:800; color:#69db7c; text-align:center; }
-.sl-stato.giallo{ color:#ffd43b; }
 .sl-stanza{ position:relative; height:clamp(250px, 44vh, 400px); border-radius:22px; overflow:hidden; margin:0 0 12px; box-shadow:0 10px 26px rgba(0,0,0,.35), inset 0 0 0 2px rgba(255,255,255,.08); }
 .sl-muro{ position:absolute; inset:0; background:radial-gradient(60% 45% at 50% 16%, rgba(255,214,140,.32), rgba(255,214,140,0) 70%), repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 16px, transparent 16px 32px), linear-gradient(#5b3f8f, #33245f 72%); }
-.sl-pavimento{ position:absolute; left:0; right:0; bottom:0; height:30%; background:repeating-linear-gradient(90deg, rgba(0,0,0,.13) 0 2px, transparent 2px 48px), linear-gradient(#9a6644, #6b4428); box-shadow:inset 0 7px 12px rgba(0,0,0,.35); }
+.sl-pavimento{ position:absolute; left:0; right:0; bottom:0; height:var(--pav, 30%); background:repeating-linear-gradient(90deg, rgba(0,0,0,.13) 0 2px, transparent 2px 48px), linear-gradient(#9a6644, #6b4428); box-shadow:inset 0 7px 12px rgba(0,0,0,.35); }
 .sl-insegna{ position:absolute; left:50%; top:10px; transform:translateX(-50%); z-index:1; padding:4px 14px; border-radius:10px; white-space:nowrap; font-weight:900; font-size:.78rem; letter-spacing:.14em; text-transform:uppercase; color:#fff3bf;
   background:rgba(0,0,0,.35); box-shadow:0 0 14px rgba(255,212,59,.45), inset 0 0 0 2px rgba(255,212,59,.75); text-shadow:0 0 8px rgba(255,212,59,.9); animation:slNeon 4s infinite; }
 @keyframes slNeon{ 0%,90%,100%{ opacity:1; } 92%{ opacity:.45; } 94%{ opacity:1; } 96%{ opacity:.6; } }
 .sl-finestra{ position:absolute; right:6%; top:17%; width:17%; height:28%; border-radius:8px; box-shadow:inset 0 0 0 4px #e9d8b5, 0 4px 10px rgba(0,0,0,.25);
   background:linear-gradient(90deg, transparent 47%, #e9d8b5 47% 53%, transparent 53%), linear-gradient(transparent 47%, #e9d8b5 47% 53%, transparent 53%), linear-gradient(#7fc3ff, #d3ecff); }
-.sl-pianta{ position:absolute; left:2%; bottom:22%; width:15%; max-width:62px; z-index:1; filter:drop-shadow(0 4px 4px rgba(0,0,0,.35)); } .sl-pianta svg, .sl-orologio svg{ display:block; width:100%; height:auto; }
+.sl-pianta{ position:absolute; left:2%; bottom:calc(var(--pav, 30%) - 8%); width:15%; max-width:62px; z-index:1; filter:drop-shadow(0 4px 4px rgba(0,0,0,.35)); } .sl-pianta svg, .sl-orologio svg{ display:block; width:100%; height:auto; }
 .sl-conta{ position:absolute; left:10px; top:12px; z-index:5; font-size:.74rem; font-weight:800; background:rgba(0,0,0,.42); padding:2px 9px; border-radius:10px; }
-.sl-av{ position:absolute; bottom:5%; width:clamp(62px, 19%, 96px); transform:translateX(-50%); z-index:3; transition:left .5s cubic-bezier(.3,.9,.3,1), opacity .4s, transform .4s; cursor:pointer; text-align:center; -webkit-tap-highlight-color:transparent; }
-.sl-stanza.piena .sl-av.dietro{ bottom:31%; width:clamp(50px, 15%, 78px); z-index:2; filter:brightness(.93); }
+/* posto e misura di ogni avatar li decide la saletta (disponiSaletta: left, bottom e width in px, --w): chi cambia posto ci scivola (solo transform) */
+.sl-av{ position:absolute; left:40%; bottom:6%; width:84px; z-index:3; transform-origin:50% 100%; transition:transform .55s cubic-bezier(.25,.9,.3,1), opacity .4s ease; cursor:pointer; text-align:center; -webkit-tap-highlight-color:transparent; }
+.sl-av-in{ position:relative; }
 .sl-fig svg{ display:block; width:100%; height:auto; overflow:visible; filter:drop-shadow(0 5px 6px rgba(0,0,0,.35)); }
 .sl-emo{ font-size:3rem; line-height:1.4; }
 .sl-av .om-tutto{ transform-box:fill-box; transform-origin:50% 100%; animation:omRespiro 3.2s ease-in-out infinite; }
 .sl-av .om-occhi{ transform-box:fill-box; transform-origin:50% 50%; animation:omBatti 4.6s infinite; }
 .sl-av:nth-of-type(2n) .om-tutto{ animation-delay:-1.3s; } .sl-av:nth-of-type(3n) .om-tutto{ animation-delay:-2.2s; }
 .sl-av:nth-of-type(2n) .om-occhi{ animation-delay:-1.9s; } .sl-av:nth-of-type(3n) .om-occhi{ animation-delay:-3.3s; }
-.sl-av.entra{ animation:slEntra .65s cubic-bezier(.3,1.5,.5,1); }
-@keyframes slEntra{ from{ transform:translate(-50%,-70px) scale(.6); opacity:0; } }
-.sl-av.esce{ opacity:0; transform:translate(-50%,12px) scale(.8); }
-.sl-av.salta .sl-fig{ animation:omSalta .6s cubic-bezier(.3,1.5,.5,1); }
+.sl-av.entra > .sl-av-in{ animation:slEntra .65s cubic-bezier(.3,1.5,.5,1); }
+@keyframes slEntra{ from{ transform:translateY(-60px) scale(.6); opacity:0; } }
+.sl-av.esce{ opacity:0; transform:translateY(12px) scale(.8); }
+.sl-av.salta .sl-fig > :not(.sl-anello){ animation:omSalta .6s cubic-bezier(.3,1.5,.5,1); }
 .sl-av.saluta .om-b2{ transform-box:fill-box; transform-origin:18% 4%; animation:omSaluta 1s ease-in-out; }
-.sl-nome{ position:relative; margin-top:-5px; display:inline-block; max-width:100%; padding:1px 7px; border-radius:9px; background:rgba(10,18,50,.82); font-size:.68rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14); }
+/* i nomi: in un velo sopra gli avatar (left e bottom li mette la saletta: sotto i piedi di ognuno) */
+.sl-targhe{ position:absolute; inset:0; z-index:6; pointer-events:none; }
+.sl-nome{ position:absolute; left:50%; bottom:6%; transform:translateX(-50%); transition:transform .55s cubic-bezier(.25,.9,.3,1), opacity .4s ease; max-width:96px; padding:1px 7px; border-radius:9px; background:rgba(10,18,50,.86); font-size:clamp(.62rem, calc(var(--w, 80px) * .115), .9rem); line-height:1.35; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14); }
 .sl-nome.tu{ background:linear-gradient(135deg,#ffe066,#f4b011); color:#3a2a00; }
 .sl-cor{ margin-right:2px; }
-.sl-ciao{ position:absolute; left:50%; top:-4px; z-index:6; transform:translate(-50%,-100%); background:#fff; color:#12233a; font-weight:900; font-size:.72rem; padding:3px 8px; border-radius:10px; white-space:nowrap; box-shadow:0 3px 8px rgba(0,0,0,.35); animation:slCiao 2.2s ease forwards; pointer-events:none; }
-@keyframes slCiao{ 0%{ opacity:0; transform:translate(-50%,-80%) scale(.6); } 12%{ opacity:1; transform:translate(-50%,-100%) scale(1); } 80%{ opacity:1; } 100%{ opacity:0; } }
 .sl-vuoto{ cursor:default; opacity:.55; }
-.sl-sagoma{ height:0; padding-bottom:128%; border:2px dashed rgba(255,255,255,.45); border-radius:42% 42% 12px 12px; }
+.sl-vuoto .sl-av-in{ height:calc(var(--w, 80px) * 1.32); }
+.sl-sagoma{ position:absolute; left:19%; right:19%; top:9%; bottom:5%; border:2px dashed rgba(255,255,255,.5); border-radius:46% 46% 14px 14px / 34% 34% 14px 14px; background:rgba(255,255,255,.04); }   /* (grande come un avatar) */
 .sl-attesa{ text-align:center; padding:12px 14px; border-radius:18px; background:rgba(255,255,255,.06); box-shadow:inset 0 0 0 2px rgba(105,219,124,.35); }
 .sl-att-tit{ font-size:1.15rem; font-weight:900; color:#69db7c; margin-bottom:4px; }
 .sl-att-testo{ font-size:1rem; font-weight:700; line-height:1.35; }
@@ -1121,15 +1121,12 @@ button.am-riga:active{ transform:scale(.985); }
 .sl-foglio > .btn{ margin:0; }
 /* crea profilo: il personaggio sotto la faccina */
 .omino-profilo.crea .omino-palco{ width:120px; }
-@media (prefers-reduced-motion: reduce){ .sl-av .om-tutto, .sl-av .om-occhi, .sl-insegna, .modo-avatar, .modo-avatar .om-tutto{ animation:none; } }
-.sl-stanza.pochi .sl-av{ width:clamp(88px, 28%, 132px); }
-.sl-stanza.medi .sl-av{ width:clamp(66px, 19%, 104px); }
-.sl-stanza.pochi .sl-nome{ font-size:.8rem; }
+@media (prefers-reduced-motion: reduce){ .sl-av .om-tutto, .sl-av .om-occhi, .sl-insegna, .modo-avatar, .modo-avatar .om-tutto, .sl-anteprima .om-tutto, .sl-anteprima .om-occhi{ animation:none; } }
 .sl-quadro{ position:absolute; left:9%; top:20%; width:15%; aspect-ratio:1/1.15; display:flex; align-items:center; justify-content:center; border-radius:4px; background:linear-gradient(135deg,#fff3d6,#f1dcae); box-shadow:inset 0 0 0 5px #b07a3c, inset 0 0 0 7px #7a5226, 0 5px 10px rgba(0,0,0,.3); }
 .sl-quadro span{ font-size:clamp(1.3rem, 6vw, 2.1rem); line-height:1; }
 .sl-orologio{ position:absolute; left:46%; top:24%; width:9%; max-width:40px; transform:translateX(-50%); filter:drop-shadow(0 3px 4px rgba(0,0,0,.3)); }
 .sl-tappeto{ position:absolute; left:50%; bottom:3%; width:84%; height:15%; transform:translateX(-50%); border-radius:50%; background:radial-gradient(closest-side, #e8595a 0 55%, #c92a2a 56% 70%, #f4d35e 71% 76%, #c92a2a 77% 100%); opacity:.85; }
-.sl-divano{ position:absolute; left:50%; bottom:25%; width:74%; height:17%; transform:translateX(-50%); border-radius:18px 18px 8px 8px; z-index:1;
+.sl-divano{ position:absolute; left:50%; bottom:calc(var(--pav, 30%) - 5%); width:74%; height:17%; transform:translateX(-50%); border-radius:18px 18px 8px 8px; z-index:1;
   background:linear-gradient(90deg, #2b8a7e 0 9%, transparent 9% 91%, #2b8a7e 91%), linear-gradient(#3fb3a4 0 45%, #2f9e8f 45% 100%); box-shadow:0 8px 12px rgba(0,0,0,.28), inset 0 3px 0 rgba(255,255,255,.18); }
 /* torneo online: classifica nella saletta e campione sul podio */
 .sl-torneo{ background:rgba(255,255,255,.05); border-radius:16px; padding:10px 12px 8px; }
@@ -1173,10 +1170,244 @@ button.am-riga:active{ transform:scale(.985); }
 .home-rientra .btn{ flex:1; margin:0; display:flex; flex-direction:column; align-items:center; gap:2px; }
 .home-rientra small{ font-size:.75rem; font-weight:700; opacity:.85; }
 .home-rientra-x{ flex:0 0 46px; border:0; border-radius:14px; background:rgba(255,255,255,.1); color:inherit; font:inherit; font-size:1rem; font-weight:900; cursor:pointer; }
-/* "⏳ Aspettiamo l'host…": l'host è uscito un attimo dall'app */
-.host-via{ position:fixed; left:50%; top:calc(8px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:9999; max-width:calc(100% - 24px); box-sizing:border-box; padding:8px 14px; border-radius:999px; background:#e67700; color:#fff; font-weight:800; font-size:.88rem; text-align:center; box-shadow:0 6px 18px rgba(0,0,0,.4); pointer-events:none; }
+/* gli avvisi della rete in alto, uno sotto l'altro: "⏳ Aspettiamo l'host…", "📶 Mi ricollego…", "👀 entri alla prossima"…
+   (non si toccano: il gioco sotto resta usabile; entrano solo con trasparenza e spostamento) */
+.sg-pillole{ position:fixed; left:50%; top:calc(8px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:9999; width:max-content; max-width:calc(100% - 24px); display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none; }
+.sg-pillola{ box-sizing:border-box; max-width:100%; padding:8px 14px; border-radius:999px; background:#e67700; color:#fff; font-weight:800; font-size:.88rem; line-height:1.25; text-align:center; box-shadow:0 6px 18px rgba(0,0,0,.4); animation:sgPillola .28s ease-out; }
+.sg-pillola.blu{ background:#1c7ed6; } .sg-pillola.verde{ background:#2f9e44; } .sg-pillola.grigia{ background:rgba(20,26,58,.94); box-shadow:0 6px 18px rgba(0,0,0,.4), inset 0 0 0 1.5px rgba(255,255,255,.2); }
+@keyframes sgPillola{ from{ opacity:0; transform:translateY(-8px); } to{ opacity:1; transform:none; } }
+/* "😴 La stanza è ferma": chi l'ha aperta è uscito dall'app (copre la partita congelata; se torna, sparisce da solo) */
+.sg-ferma{ position:fixed; inset:0; z-index:9998; display:flex; align-items:center; justify-content:center; padding:16px; box-sizing:border-box; background:rgba(12,18,46,.94); animation:sgFermaVia .3s ease-out; }
+.sg-ferma-box{ width:min(100%, 380px); text-align:center; }
+.sg-ferma-ico{ font-size:4rem; line-height:1.1; margin-bottom:8px; animation:sgDorme 3s ease-in-out infinite; }
+.sg-ferma h2{ margin:0 0 8px; font-size:1.35rem; }
+.sg-ferma p{ margin:0 0 18px; font-size:1.02rem; line-height:1.45; color:var(--testo-tenue); }
+@keyframes sgFermaVia{ from{ opacity:0; } }
+@keyframes sgDorme{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
+/* la saletta di chi entra: "⏳ Sto entrando…" finché l'host non l'ha messo nella lista */
+.sl-attesa.entrando{ box-shadow:inset 0 0 0 2px rgba(255,212,59,.45); }
+.sl-attesa.entrando .sl-att-tit{ color:#ffd43b; }
+/* nella Sala, per chi è uscito dal gioco in corso: "🎮 Stanno giocando a Tris · Rientra" */
+.sl-incorso{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 8px 8px 14px; border-radius:16px; background:rgba(255,255,255,.08); box-shadow:inset 0 0 0 2px rgba(255,202,58,.45); font-weight:800; margin-bottom:8px; }
+.sl-incorso .btn{ margin:0; flex:0 0 auto; }
+/* nella Sala, i giochi a due: "⚔️ In 2: gli altri guardano" */
+.tessera .info .tess-adue{ margin-top:4px; font-size:.78rem; font-weight:800; color:#ffa8a8; }
+/* il conto alla rovescia dentro un tasto che va avanti da solo ("Avanti ▶ 12") */
+.conto-avanti{ display:inline-block; min-width:1.5em; margin-left:.45em; padding:0 .35em; border-radius:999px; background:rgba(0,0,0,.22); font-variant-numeric:tabular-nums; text-align:center; }
 /* batteria: a riposo (20 s senza tocchi) gli avatar non respirano e non sbattono le palpebre; al primo tocco ripartono */
 body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, body.sg-riposo .sl-camp-cor{ animation:none !important; }
+
+/* =========================================================
+   SALETTA VIVA — pronti, faccine, chi arriva e chi esce, chi si ricollega, la porta, il 3-2-1.
+   Tutto in uno schermo (anche 360x640): testa e piede fermi, la stanza prende lo spazio che resta;
+   se un gioco mette tanta roba sotto, scorre solo il centro. Si animano solo transform e opacity.
+   ========================================================= */
+.schermata.saletta-schermo{ flex:0 0 auto; height:var(--alt, 100dvh); max-height:var(--alt, 100dvh); min-height:0; }   /* (alta come lo schermo, mai di più: se manca spazio scorre il centro) */
+.saletta-schermo > .testa{ margin-bottom:10px; }
+.saletta-schermo > .contenuto{ display:flex; flex-direction:column; gap:8px; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.saletta-schermo > .contenuto::-webkit-scrollbar{ display:none; }
+.saletta-schermo > .contenuto > *{ flex:0 0 auto; }
+.saletta-schermo > .piede{ margin-top:10px; gap:8px; }
+.saletta-schermo .sl-stanza{ flex:1000 0 auto; height:auto; min-height:150px; max-height:calc((min(100vw, 600px) - 32px) * 1.6); margin:0; }   /* (sui telefoni alti la stanza riempie lo schermo: niente buchi sopra e sotto) */
+/* su un telefono alto quello che avanza va metà sopra e metà sotto (se invece manca spazio, niente si nasconde: scorre il centro) */
+.saletta-schermo > .contenuto::before, .saletta-schermo > .contenuto::after{ content:""; flex:1 1 0; }   /* (la stanza cresce per prima: flex 1000) */
+.saletta-schermo > .contenuto::before{ margin-bottom:-8px; } .saletta-schermo > .contenuto::after{ margin-top:-8px; }   /* (senza lo spazio tra i pezzi) */
+.saletta-schermo .sl-extra{ margin:0; }
+.saletta-schermo .sl-nota{ margin:0; font-size:.88rem; line-height:1.35; }
+.saletta-schermo .sl-nota:empty{ display:none; }
+.saletta-schermo .sl-invito .sl-link{ min-height:52px; padding:10px 14px; }
+.saletta-schermo .sl-cod{ padding:4px 12px; }
+.saletta-schermo .sl-cod b{ font-size:1.45rem; }
+.saletta-schermo .sl-attesa{ padding:9px 12px; }
+.saletta-schermo .sl-att-tit{ font-size:1.05rem; margin-bottom:2px; }
+.saletta-schermo .sl-att-testo{ font-size:.92rem; }
+@media (max-height:720px){ .saletta-schermo .sl-consiglio{ display:none; } }
+
+/* la testa della saletta: titolo e stato ("🟡 Sto aprendo…", "🔒 Porta chiusa") a sinistra, "🔒 Chiudi" (la porta) a destra */
+.saletta-schermo > .testa > div{ flex:1 1 auto; min-width:0; }
+.saletta-schermo > .testa h1{ font-size:1.3rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.saletta-schermo > .testa .sotto{ font-size:.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.saletta-schermo.porta-chiusa > .testa .sotto{ color:#ffd8a8; font-weight:800; }
+/* il codice: un pallino verde quando la stanza è aperta (giallo mentre si apre, 🔒 con la porta chiusa) */
+.sl-cod small::before{ content:""; display:inline-block; width:7px; height:7px; margin-right:5px; border-radius:50%; background:#69db7c; vertical-align:1px; box-shadow:0 0 6px rgba(105,219,124,.8); }
+.sl-cod.apre small::before{ background:#ffd43b; box-shadow:0 0 6px rgba(255,212,59,.8); }
+.sl-cod.chiusa small::before{ content:"🔒"; width:auto; height:auto; background:none; box-shadow:none; }
+.sl-porta{ flex:0 0 auto; border:0; border-radius:999px; padding:5px 11px; min-height:30px; background:rgba(255,255,255,.1); color:#fff; font:inherit; font-size:.8rem; font-weight:800; white-space:nowrap; cursor:pointer;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18); -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.sl-porta:active{ transform:scale(.95); }
+.saletta-schermo.porta-chiusa .sl-porta{ background:rgba(255,216,168,.16); color:#ffd8a8; box-shadow:inset 0 0 0 1.5px rgba(255,216,168,.6); }
+.sl-porta[hidden]{ display:none; }
+.saletta-schermo .sl-tasti .sl-regole{ min-width:56px; background:rgba(255,255,255,.1); color:#fff; font-weight:800; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.16); }
+
+/* 🎵/🔇 nell'angolo della stanza */
+.sl-suono{ position:absolute; right:8px; top:8px; z-index:5; width:34px; height:34px; padding:0; border:0; border-radius:50%; background:rgba(0,0,0,.42); color:#fff; font-size:1rem; line-height:1; cursor:pointer;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18); -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.sl-suono:active{ transform:scale(.9); }
+.sl-conta.salta{ animation:slConta .5s cubic-bezier(.3,1.6,.5,1); }
+@keyframes slConta{ 0%{ transform:scale(1); } 40%{ transform:scale(1.32); } 100%{ transform:scale(1); } }
+.sl-conta{ transform-origin:0 50%; }
+
+/* l'avatar: anello verde sul pavimento e mano alzata (pronto), bollino ✓ o 📶, grigio se si ricollega */
+.sl-av{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+.sl-av.va{ pointer-events:none; }
+.sl-av.esce{ transition:opacity .45s ease, transform .45s ease; }
+.sl-fig{ position:relative; }
+.sl-anello{ position:absolute; left:-10%; right:-10%; bottom:-2%; height:14%; border-radius:50%; z-index:-1; pointer-events:none;
+  background:radial-gradient(closest-side, rgba(178,255,190,1), rgba(81,207,102,.85) 45%, rgba(81,207,102,0)); opacity:0; transform:scale(.3); transition:opacity .3s ease, transform .4s cubic-bezier(.3,1.5,.5,1); }
+.sl-av.pronto .sl-anello{ opacity:1; transform:scale(1); }
+.sl-nome.pronto{ background:#2f9e44; color:#fff; }
+.sl-nome.tu.pronto{ background:linear-gradient(135deg,#ffe066,#f4b011); color:#3a2a00; box-shadow:inset 0 0 0 2px #2f9e44; }
+.sl-bollo{ position:absolute; right:15%; top:3%; z-index:4; width:clamp(18px, calc(var(--w, 80px) * .21), 28px); height:clamp(18px, calc(var(--w, 80px) * .21), 28px); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.82rem; font-weight:900; line-height:1; color:#fff; pointer-events:none;
+  background:#2f9e44; box-shadow:0 3px 8px rgba(0,0,0,.35), inset 0 0 0 2px rgba(255,255,255,.85); opacity:0; transform:scale(.3); transition:opacity .25s ease, transform .35s cubic-bezier(.3,1.6,.5,1); }
+.sl-av.pronto .sl-bollo, .sl-av.forse .sl-bollo{ opacity:1; transform:scale(1); }
+.sl-av.forse .sl-bollo{ background:#1c7ed6; font-size:.72rem; animation:slForse 1.6s ease-in-out infinite; }
+@keyframes slForse{ 50%{ opacity:.45; } }
+.sl-av.forse .sl-fig{ opacity:.5; filter:grayscale(1); transition:opacity .4s ease; }
+.sl-nome.forse{ background:rgba(16,40,84,.92); color:#e7f5ff; box-shadow:inset 0 0 0 1.5px rgba(116,192,252,.55); }
+.sl-nome.entra{ animation:slTarga .6s ease-out; }
+@keyframes slTarga{ 0%,40%{ opacity:0; } }
+.sl-nome.esce{ opacity:0; }
+.sl-nome.vuoto{ opacity:.6; }
+/* "si ricollega…" sta nella targa, sopra il nome (la targa cresce verso l'alto, sul suo avatar): non copre i nomi degli altri */
+.sl-ricollega{ display:block; font-size:.8em; font-weight:800; line-height:1.25; color:#a5d8ff; overflow:hidden; text-overflow:ellipsis; }
+.sl-ricollega:empty{ display:none; }
+
+/* i fumetti sopra la testa: "Ciao Luca! 👋" (chi arriva) e "Ciao ciao! 👋" (chi esce); stanno con le faccine in un velo sopra gli avatar
+   (left e bottom li mette la saletta: sulla testa di chi parla) */
+.sl-bolle{ position:absolute; inset:0; z-index:8; pointer-events:none; }
+.sl-fumetto{ position:absolute; transform:translateX(-50%); transform-origin:50% 100%; padding:6px 11px; border-radius:14px; white-space:nowrap; pointer-events:none;
+  background:#fff8e8; color:#1d2348; font-weight:900; font-size:clamp(.8rem, calc(var(--w, 90px) * .11), 1rem); line-height:1.15; box-shadow:0 6px 14px rgba(0,0,0,.35); animation:slFumetto 2.6s cubic-bezier(.3,1.5,.5,1) forwards; }
+.sl-fumetto::after{ content:""; position:absolute; left:calc(50% + var(--coda, 0px)); top:100%; margin-left:-7px; border:7px solid transparent; border-top-color:#fff8e8; border-bottom:0; }
+.sl-fumetto.va{ background:#dfe5ff; font-size:.8rem; animation-duration:1.3s; }
+.sl-fumetto.va::after{ border-top-color:#dfe5ff; }
+@keyframes slFumetto{ 0%{ opacity:0; transform:translateX(-50%) scale(.4); } 12%{ opacity:1; transform:translateX(-50%) scale(1.07); } 20%{ transform:translateX(-50%) scale(1); }
+  82%{ opacity:1; transform:translateX(-50%) scale(1); } 100%{ opacity:0; transform:translateX(-50%) translateY(-6px) scale(.96); } }
+
+/* la faccina: grande sopra la testa, sale e sfuma; intanto l'avatar fa il gesto */
+.sl-faccia{ position:absolute; font-size:clamp(1.5rem, calc(var(--w, 90px) * .3), 2.8rem); line-height:1; pointer-events:none; text-shadow:0 4px 8px rgba(0,0,0,.35); transform:translateX(-50%);
+  opacity:0; animation:slFaccia 1.85s cubic-bezier(.2,.9,.3,1) forwards; }
+@keyframes slFaccia{ 0%{ opacity:0; transform:translate(-50%,0) scale(.2); } 14%{ opacity:1; transform:translate(-50%,-70%) scale(1.25); } 24%{ transform:translate(-50%,-62%) scale(1); }
+  74%{ opacity:1; transform:translate(-50%,-100%) scale(1); } 100%{ opacity:0; transform:translate(-50%,-135%) scale(.92); } }
+.sl-av.ride .sl-fig > :not(.sl-anello){ animation:slRide .9s ease-in-out; }
+@keyframes slRide{ 0%,100%{ transform:none; } 15%,45%,75%{ transform:translateY(-5px) rotate(-3deg); } 30%,60%,90%{ transform:translateY(0) rotate(3deg); } }
+.sl-av.trema .sl-fig > :not(.sl-anello){ animation:slTrema .6s linear; }
+@keyframes slTrema{ 0%,100%{ transform:none; } 10%,30%,50%,70%,90%{ transform:translateX(-3px); } 20%,40%,60%,80%{ transform:translateX(3px); } }
+.sl-av.applaude .sl-fig > :not(.sl-anello){ animation:slApplaude .85s ease-in-out; }
+@keyframes slApplaude{ 0%,100%{ transform:none; } 20%,60%{ transform:translateY(-4px) scale(1.03,.97); } 40%,80%{ transform:translateY(0) scale(.98,1.02); } }
+.sl-av.dorme .sl-fig > :not(.sl-anello){ transform-origin:50% 100%; animation:slDorme 1.7s ease-in-out; }
+@keyframes slDorme{ 0%,100%{ transform:none; } 30%,70%{ transform:rotate(-7deg) translateY(2px); } }
+.sl-av.saluta.pronto .om-b2{ animation:none; }
+
+/* chi manda una faccina senza avatar in saletta (es. chi guarda), e le faccine fuori dalla saletta */
+.sl-fa-volanti{ position:absolute; left:8px; top:42px; z-index:7; display:flex; flex-direction:column; align-items:flex-start; gap:4px; pointer-events:none; }
+.sg-fa-volanti{ position:fixed; left:12px; bottom:calc(96px + env(safe-area-inset-bottom)); z-index:9997; display:flex; flex-direction:column; align-items:flex-start; gap:4px; pointer-events:none; }
+.sg-fa-volante{ display:flex; align-items:center; gap:6px; padding:3px 10px 3px 5px; border-radius:999px; background:rgba(12,16,44,.88); color:#fff; font-weight:800; font-size:.78rem;
+  box-shadow:0 6px 14px rgba(0,0,0,.4); animation:slVolante 2.5s ease-out forwards; }
+.sg-fa-volante b{ font-size:1.45rem; line-height:1; }
+@keyframes slVolante{ 0%{ opacity:0; transform:translateY(14px) scale(.7); } 12%{ opacity:1; transform:translateY(0) scale(1.06); } 20%{ transform:scale(1); } 80%{ opacity:1; transform:translateY(-8px); } 100%{ opacity:0; transform:translateY(-24px); } }
+
+/* la fila delle faccine: tocchi e il tuo avatar la fa su tutti i telefoni (poi un secondo di pausa) */
+.sl-faccine{ position:relative; display:flex; gap:2px; padding:3px; border-radius:999px; background:rgba(255,255,255,.07); box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1); overflow:hidden; }
+.sl-faccine[hidden]{ display:none; }
+.sl-fa{ flex:1 1 0; min-width:0; height:38px; padding:0; border:0; border-radius:999px; background:transparent; color:inherit; font-size:1.45rem; line-height:1; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation; transition:opacity .2s ease; }
+.sl-fa:active{ transform:scale(.86); }
+.sl-fa:disabled{ opacity:.4; cursor:default; }
+.sl-fa.boing{ animation:slBoing .45s cubic-bezier(.3,1.6,.5,1); }
+@keyframes slBoing{ 0%{ transform:scale(.8); } 45%{ transform:scale(1.35); } 100%{ transform:scale(1); } }
+.sl-fa-carica{ position:absolute; left:14px; right:14px; bottom:2px; height:3px; border-radius:2px; background:#ffca3a; transform-origin:0 50%; transform:scaleX(0); opacity:0; pointer-events:none; }
+.sl-fa-carica.va{ animation:slCarica 1s linear forwards; }
+@keyframes slCarica{ 0%{ opacity:1; transform:scaleX(0); } 94%{ opacity:1; transform:scaleX(1); } 100%{ opacity:0; transform:scaleX(1); } }
+
+/* host: "✋ Pronti 2 su 3" con un pallino per amico; "Comincia" che chiama quando sono tutti pronti */
+.sl-chip{ align-self:center; display:flex; align-items:center; gap:8px; padding:5px 12px; border-radius:999px; font-weight:800; font-size:.86rem;
+  background:rgba(255,255,255,.08); box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12); }
+.sl-chip[hidden]{ display:none; }
+.sl-chip.tutti{ background:rgba(47,158,68,.24); color:#c3fac8; box-shadow:inset 0 0 0 1.5px rgba(105,219,124,.7); }
+.sl-pallini{ display:flex; gap:3px; }
+.sl-pallini i{ width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.25); }
+.sl-pallini i.si{ background:#69db7c; }
+.sl-go{ position:relative; }
+.sl-go.invita::after{ content:""; position:absolute; inset:-4px; border-radius:20px; pointer-events:none; box-shadow:0 0 0 3px rgba(255,214,90,.85), 0 0 24px rgba(255,214,90,.7); opacity:0; animation:slInvita 1.4s ease-in-out infinite; }
+@keyframes slInvita{ 50%{ opacity:1; } }
+
+/* chi entra: "✋ Sono pronto!" (poi "✅ Sei pronto!", si tocca di nuovo per tornare indietro) */
+.sl-pronto{ flex-direction:column; gap:0; min-height:56px; padding-top:8px; padding-bottom:8px; }
+.sl-pronto[hidden]{ display:none; }
+.sl-pronto small{ font-size:.74rem; font-weight:700; opacity:.85; }
+.sl-pronto.fatto{ background:rgba(47,158,68,.18); color:#c3fac8; box-shadow:inset 0 0 0 2px rgba(105,219,124,.75); }
+
+/* host, tenendo premuto su un avatar: "🚪 Fai uscire Luca" */
+.sl-menu{ position:absolute; z-index:10; display:flex; align-items:center; gap:4px; max-width:calc(100% - 12px); padding:4px; border-radius:16px; background:rgba(12,16,44,.95);
+  box-shadow:0 10px 24px rgba(0,0,0,.5), inset 0 0 0 1.5px rgba(255,255,255,.14); transform:translate(-50%,-100%); animation:slMenu .18s ease-out; }
+.sl-menu.sx{ transform:translate(0,-100%); } .sl-menu.dx{ transform:translate(-100%,-100%); }
+@keyframes slMenu{ from{ opacity:0; } }
+.sl-menu-fuori{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; border:0; border-radius:12px; padding:9px 12px; min-height:38px; cursor:pointer;
+  background:linear-gradient(135deg,#ff7a86,#e83c4c); color:#fff; font:inherit; font-weight:900; font-size:.86rem; }
+.sl-menu-x{ flex:0 0 auto; width:36px; height:36px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.12); color:#fff; font:inherit; font-weight:900; cursor:pointer; }
+
+/* ⚙️: "Parti da solo quando tutti sono pronti" */
+.sl-viva-opz{ display:flex; flex-direction:column; gap:6px; padding:10px 12px; margin-bottom:12px; border-radius:14px; background:rgba(255,255,255,.06); }
+.sl-viva-opz small{ font-size:.82rem; line-height:1.35; color:var(--testo-tenue); }
+.sl-interruttore{ display:flex; align-items:center; justify-content:space-between; gap:12px; font-weight:800; font-size:.95rem; cursor:pointer; }
+.sl-interruttore input{ -webkit-appearance:none; appearance:none; position:relative; flex:0 0 auto; width:50px; height:30px; margin:0; border-radius:999px; cursor:pointer; background:rgba(255,255,255,.22); }
+.sl-interruttore input::after{ content:""; position:absolute; left:3px; top:3px; width:24px; height:24px; border-radius:50%; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.3); transition:transform .22s cubic-bezier(.3,1.4,.5,1); }
+.sl-interruttore input:checked{ background:#2f9e44; }
+.sl-interruttore input:checked::after{ transform:translateX(20px); }
+
+/* 3-2-1-Via! uguale su tutti i telefoni (non si tocca: sotto resta tutto com'è) */
+.sl-via{ position:fixed; inset:0; z-index:9996; display:flex; align-items:center; justify-content:center; pointer-events:none; overflow:hidden;
+  background:radial-gradient(circle at 50% 48%, rgba(20,34,84,.6), rgba(6,10,30,.84)); animation:slViaSfondo .25s ease-out; transition:opacity .35s ease; }
+.sl-via.fine{ opacity:0; }
+@keyframes slViaSfondo{ from{ opacity:0; } }
+.sl-via-num{ position:relative; font-size:clamp(7rem, 44vw, 12rem); font-weight:900; line-height:1; letter-spacing:-.04em; color:#fff; opacity:0;
+  -webkit-text-stroke:5px #1d2348; paint-order:stroke fill; text-shadow:0 9px 0 #1d2348, 0 18px 34px rgba(0,0,0,.5); }
+.sl-via-num.su{ animation:slViaNum .8s cubic-bezier(.2,1.4,.4,1) forwards; }
+@keyframes slViaNum{ 0%{ opacity:0; transform:scale(2.3); } 22%{ opacity:1; transform:scale(.93); } 34%{ transform:scale(1.04); } 46%{ transform:scale(1); } 82%{ opacity:1; transform:scale(1); } 100%{ opacity:0; transform:scale(.7); } }
+.sl-via-num.n3{ color:#ff8a8a; } .sl-via-num.n2{ color:#ffb35c; } .sl-via-num.n1{ color:#ffe066; }   /* come i semafori di una gara */
+.sl-via-num.via{ color:#7cf29a; font-size:clamp(5rem, 30vw, 8.5rem); letter-spacing:-.02em; }
+.sl-via-num.via.su{ animation:slViaVia .7s cubic-bezier(.2,1.4,.4,1) forwards; }
+@keyframes slViaVia{ 0%{ opacity:0; transform:scale(.3) rotate(-8deg); } 30%{ opacity:1; transform:scale(1.15) rotate(3deg); } 52%{ transform:scale(1) rotate(0); } 100%{ opacity:1; transform:scale(1); } }
+.sl-via-anello{ position:absolute; left:50%; top:50%; width:300px; height:300px; margin:-150px 0 0 -150px; border-radius:50%; border:6px solid #ffca3a; opacity:0; }
+.sl-via-anello.n3{ border-color:#ff8a8a; } .sl-via-anello.n2{ border-color:#ffb35c; } .sl-via-anello.via{ border-color:#7cf29a; }
+/* in alto, il gioco che parte */
+.sl-via-tit{ position:absolute; left:50%; bottom:calc(50% + clamp(96px, 30vw, 132px)); transform:translateX(-50%); max-width:calc(100% - 32px); padding:8px 16px; border-radius:999px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  background:rgba(255,255,255,.12); box-shadow:inset 0 0 0 2px rgba(255,255,255,.22); color:#fff; font-weight:900; font-size:1.05rem; letter-spacing:.01em; animation:slViaTit .5s cubic-bezier(.3,1.4,.5,1); }
+.sl-via-tit span{ font-size:1.25rem; vertical-align:-2px; }
+@keyframes slViaTit{ from{ opacity:0; transform:translate(-50%,14px) scale(.9); } }
+.sl-via-anello.su{ animation:slAnello .8s ease-out; }
+@keyframes slAnello{ 0%{ opacity:.9; transform:scale(.3); } 100%{ opacity:0; transform:scale(1.3); } }
+.sl-scintilla{ position:absolute; left:50%; top:50%; font-size:1.7rem; line-height:1; animation:slScintilla .95s cubic-bezier(.15,.8,.3,1) forwards; }
+@keyframes slScintilla{ from{ opacity:1; transform:translate(-50%,-50%) scale(.4); } to{ opacity:0; transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--r)) scale(1); } }
+
+/* chi apre il link senza profilo: il benvenuto con l'avatar che avrà (nasce dal nome: col 🎲 cambiano tutti e due) */
+.sl-benvenuto{ display:flex; flex-direction:column; align-items:center; text-align:center; gap:4px; margin:4px 0 6px; padding:14px 14px 12px; border-radius:22px;
+  background:radial-gradient(120% 85% at 50% 0%, rgba(255,214,90,.2), rgba(255,255,255,.04) 70%); box-shadow:inset 0 0 0 2px rgba(255,214,90,.28); }
+.sl-benv-tit{ font-size:1.2rem; font-weight:900; letter-spacing:-.01em; }
+.sl-benv-sotto{ font-size:.92rem; line-height:1.4; color:var(--testo-tenue); max-width:300px; }
+.sl-anteprima{ width:clamp(100px, 36vw, 150px); margin:2px auto 0; transition:opacity .3s ease; }
+.sl-anteprima svg{ display:block; width:100%; height:auto; overflow:visible; filter:drop-shadow(0 6px 8px rgba(0,0,0,.35)); }
+.sl-anteprima .om-tutto{ transform-box:fill-box; transform-origin:50% 100%; animation:omRespiro 3.2s ease-in-out infinite; }
+.sl-anteprima .om-occhi{ transform-box:fill-box; transform-origin:50% 50%; animation:omBatti 4.6s infinite; }
+.sl-anteprima.vuota{ opacity:.35; }
+.sl-anteprima.salta svg{ animation:omSalta .6s cubic-bezier(.3,1.5,.5,1); }
+@media (max-height:620px){ .sl-anteprima{ width:80px; } }
+
+/* 🎲 accanto al nome, per chi entra senza profilo */
+.sl-nome-campo{ position:relative; margin-top:10px; }
+.sl-nome-campo > .link-campo{ margin-top:0; padding-right:60px; }
+.sl-dado{ position:absolute; right:6px; top:50%; width:44px; height:44px; margin-top:-22px; padding:0; border:0; border-radius:12px; background:rgba(255,255,255,.12); font-size:1.4rem; line-height:1; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.sl-dado.gira{ animation:slDado .5s cubic-bezier(.3,1.4,.5,1); }
+@keyframes slDado{ 0%{ transform:rotate(0) scale(1); } 50%{ transform:rotate(200deg) scale(1.2); } 100%{ transform:rotate(360deg) scale(1); } }
+
+@media (prefers-reduced-motion: reduce){
+  .sl-av.ride .sl-fig > :not(.sl-anello), .sl-av.trema .sl-fig > :not(.sl-anello), .sl-av.applaude .sl-fig > :not(.sl-anello), .sl-av.dorme .sl-fig > :not(.sl-anello), .sl-conta.salta, .sl-fa.boing, .sl-dado.gira, .sl-go.invita::after, .sl-av.forse .sl-bollo, .sl-via-tit, .sl-nome.entra, .sl-av.entra > .sl-av-in{ animation:none; }
+  .sl-av, .sl-nome{ transition-duration:.01s; }   /* (chi cambia posto ci va subito) */
+  .sl-fumetto, .sl-faccia, .sg-fa-volante, .sl-via-num.su, .sl-via-num.via.su{ animation-name:slSoloSfuma; }
+  .sl-via-anello.su, .sl-scintilla{ display:none; }
+}
+@keyframes slSoloSfuma{ 0%{ opacity:0; } 15%,80%{ opacity:1; } 100%{ opacity:0; } }
 
 /* =========================================================
    LA CASA (js/casa.js): tre stanze da arredare, la stanza di fronte con la profondità;

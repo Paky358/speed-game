@@ -179,7 +179,7 @@
   //      resta ricordata per un po' e in home compare "🔁 Rientra nella partita" (si torna la stessa persona: vedi SGNet.entra) ----
   var DURATA_RIENTRO = 3 * 3600 * 1000;
   function ricordaStanza(o) { try { o.t = Date.now(); localStorage.setItem("sg-ultima-stanza", JSON.stringify(o)); } catch (e) {} }
-  function dimenticaStanza() { try { localStorage.removeItem("sg-ultima-stanza"); } catch (e) {} }
+  function dimenticaStanza() { try { localStorage.removeItem("sg-ultima-stanza"); } catch (e) {} dimenticaLinkSessione(); }
   function stanzaRecente() {
     try {
       var o = JSON.parse(localStorage.getItem("sg-ultima-stanza") || "null");
@@ -187,10 +187,49 @@
     } catch (e) {}
     return null;
   }
+  // si rientra subito, senza ricaricare la pagina (come fa la Sala quando lancia un gioco)
   function rientraStanza(o) {
-    location.hash = o.sala ? "sala=" + encodeURIComponent(o.sala) : "gioco=" + o.gioco + "&stanza=" + encodeURIComponent(o.stanza);
-    location.reload();
+    if (o.sala) return salaOspite(o.sala);
+    var g = giocoDa(o.gioco);
+    if (!g) { dimenticaStanza(); return schermataHome(); }
+    linkParams = { gioco: g.id, stanza: String(o.stanza).toUpperCase() };
+    avviaPartita(g, [], {});
   }
+
+  // ---- memoria delle stanze online (per non perdersi quando la pagina si ricarica) ----
+  function leggiM(st, k) { try { return JSON.parse(st.getItem(k) || "null"); } catch (e) { return null; } }
+  function scriviM(st, k, v) { try { if (v == null) st.removeItem(k); else st.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function sessione() { try { return window.sessionStorage; } catch (e) { return null; } }
+  // il link con cui sono entrato (o la stanza in cui sono entrato col codice): resta solo in questa scheda,
+  // così se la pagina si ricarica si torna da soli al proprio posto (il link non resta nell'indirizzo)
+  function segnaLinkSessione(o) {
+    var s = sessione(); if (!s) return;
+    scriviM(s, "sg-link", o.sala ? { sala: String(o.sala).toUpperCase(), t: Date.now() } : { gioco: o.gioco, stanza: String(o.stanza).toUpperCase(), t: Date.now() });
+  }
+  function dimenticaLinkSessione() { var s = sessione(); if (s) scriviM(s, "sg-link", null); }
+  // (finché si è dentro la stanza resta "recente": vedi agganciaRete; un link di ieri in una scheda riaperta non vale più)
+  function linkSessione() { var s = sessione(), o = s && leggiM(s, "sg-link"); return o && (o.sala || (o.gioco && o.stanza)) && Date.now() - (o.t || 0) < DURATA_RIENTRO ? o : null; }
+  // la stanza che ho aperto io (gioco, codice, regole, nomi): se la pagina si ricarica o l'app si chiude, entro 20 minuti la riapro
+  // con lo stesso codice e gli amici rientrano da soli. Si dimentica quando la chiudo apposta.
+  var DURATA_MIA = 20 * 60 * 1000;
+  function ricordaMiaStanza(o) { o.t = Date.now(); scriviM(localStorage, "sg-mia-stanza", o); }
+  function dimenticaMiaStanza(codice) { var o = leggiM(localStorage, "sg-mia-stanza"); if (o && (!codice || o.codice === codice)) scriviM(localStorage, "sg-mia-stanza", null); }
+  function miaStanzaRecente() { var o = leggiM(localStorage, "sg-mia-stanza"); return o && o.gioco && o.codice && Date.now() - o.t < DURATA_MIA ? o : null; }
+  // la Sala che ho aperto io: si salva a ogni invio a tutti e si riapre con lo stesso codice
+  function ricordaMiaSala(o) { o.t = Date.now(); scriviM(localStorage, "sg-mia-sala", o); }
+  function dimenticaMiaSala() { scriviM(localStorage, "sg-mia-sala", null); }
+  function miaSalaRecente() { var o = leggiM(localStorage, "sg-mia-sala"); return o && o.codice && o.membri && Date.now() - o.t < DURATA_MIA ? o : null; }
+  // il nome usato in ogni stanza (chi non ha il profilo non lo riscrive ricaricando) e il nome dell'host
+  function nomiStanze() { var o = leggiM(localStorage, "sg-nomi-stanze"); return o && typeof o === "object" ? o : {}; }
+  function ricordaNomeStanza(codice, nome, host) {
+    nome = String(nome || "").trim().slice(0, 16); if (!codice || !nome) return;
+    var o = nomiStanze(), C = String(codice).toUpperCase(), ora = Date.now(), r = o[C] || {};
+    if (host) r.h = nome; else r.n = nome;
+    r.t = ora; o[C] = r;
+    Object.keys(o).forEach(function (k) { if (!o[k] || ora - o[k].t > DURATA_RIENTRO * 4) delete o[k]; });   // si tiene solo l'ultima mezza giornata
+    scriviM(localStorage, "sg-nomi-stanze", o);
+  }
+  function nomeStanza(codice, host) { var r = codice && nomiStanze()[String(codice).toUpperCase()]; return (r && (host ? r.h : r.n)) || ""; }
 
   // ---- schermo sempre acceso nelle partite online e nella Sala: se il telefono si blocca, il collegamento si ferma ----
   var schermoLock = null, schermoVoluto = false;
@@ -217,15 +256,72 @@
   ["pointerdown", "keydown"].forEach(function (ev) { document.addEventListener(ev, svegliaAnimazioni, { capture: true, passive: true }); });
   svegliaAnimazioni();
 
-  // ---- "⏳ Aspettiamo l'host…": l'host è uscito un attimo dall'app (gli altri lo aspettano 2 minuti) ----
-  var hostVia = {}, avvisoHost = null;
+  // ---- gli avvisi della rete, in alto (pillole una sotto l'altra, non si toccano: il gioco sotto resta usabile) ----
+  //  "📶 Mi ricollego…", "⏳ Aspettiamo l'host…", "👀 entri alla prossima", "🎉 è tornato", "🔁 Riapro la tua stanza"
+  var PILLOLE = { box: null, n: {}, t: {} }, ORDINE_PILLOLE = ["rete", "host", "prossima", "tornato", "riapro", "sala", "saletta"];
+  function pillola(k, testo, colore, durata) {
+    var n = PILLOLE.n[k];
+    clearTimeout(PILLOLE.t[k]); delete PILLOLE.t[k];
+    if (!testo) { if (n && n.parentNode) n.parentNode.removeChild(n); delete PILLOLE.n[k]; return; }
+    if (!PILLOLE.box || !document.body.contains(PILLOLE.box)) { PILLOLE.box = el("div", { class: "sg-pillole", "aria-live": "polite" }); document.body.appendChild(PILLOLE.box); }
+    if (!n) {
+      n = PILLOLE.n[k] = el("div", { class: "sg-pillola" });
+      var dopo = null;   // l'ordine è sempre lo stesso, qualunque arrivi prima
+      ORDINE_PILLOLE.slice(ORDINE_PILLOLE.indexOf(k) + 1).forEach(function (j) { if (!dopo && PILLOLE.n[j] && PILLOLE.n[j].parentNode === PILLOLE.box) dopo = PILLOLE.n[j]; });
+      PILLOLE.box.insertBefore(n, dopo);
+    }
+    if (n.textContent !== testo) n.textContent = testo;   // (stessa scritta: niente da rifare)
+    n.className = "sg-pillola" + (colore ? " " + colore : "");
+    if (durata) PILLOLE.t[k] = setTimeout(function () { pillola(k, null); }, durata);
+  }
+  // "⏳ Aspettiamo l'host…": l'host è uscito un attimo dall'app (chi è dentro lo aspetta 2 minuti)
+  var hostVia = {};
   window.addEventListener("sg-host", function (e) {
     var d = e.detail || {};
     if (d.via) hostVia[d.stanza] = 1; else delete hostVia[d.stanza];
-    var serve = Object.keys(hostVia).length > 0;
-    if (serve && !avvisoHost) { avvisoHost = el("div", { class: "host-via", text: "⏳ Aspettiamo l'host: è uscito un attimo dall'app…" }); document.body.appendChild(avvisoHost); }
-    else if (!serve && avvisoHost) { if (avvisoHost.parentNode) avvisoHost.parentNode.removeChild(avvisoHost); avvisoHost = null; }
+    pillola("host", Object.keys(hostVia).length ? "⏳ Aspettiamo l'host: è uscito un attimo dall'app…" : null);
+    vivaOra();   // in saletta l'avatar dell'host diventa grigio con 📶
   });
+  // "📶 Mi ricollego…": la rete è saltata dopo il collegamento (la partita non si chiude: mqtt riprova da solo).
+  // Compare solo se dura più di un secondo e mezzo, così un buco piccolissimo non fa lampeggiare niente
+  var reteGiu = {}, tReteGiu = null;
+  window.addEventListener("sg-rete", function (e) {
+    var d = e.detail || {};
+    if (d.giu) reteGiu[d.id] = 1; else delete reteGiu[d.id];
+    if (!Object.keys(reteGiu).length) { clearTimeout(tReteGiu); tReteGiu = null; pillola("rete", null); vivaOra(); return; }
+    if (!tReteGiu && !PILLOLE.n.rete) tReteGiu = setTimeout(function () { tReteGiu = null; if (Object.keys(reteGiu).length) { pillola("rete", "📶 Mi ricollego…", "blu"); vivaOra(); } }, 1500);
+  });
+  // "😴 La stanza è ferma": chi l'ha aperta è uscito dall'app (l'ha detto il broker) o non risponde.
+  // Copre tutto (niente partita congelata sotto); se l'host torna si sparisce da soli e si entra.
+  var FERMA = null;
+  window.addEventListener("sg-stanza-ferma", function (e) {
+    var d = e.detail || {}, R = reteOsp;
+    if (!d.ferma) { if (FERMA && FERMA.codice === d.stanza) togliFerma(); return; }
+    var gioco = R && R.codice === d.stanza && !R.guarda && R.P && R.P.viva() && !R.P.salaCtx;
+    var inSala = salaG && salaG.codice === d.stanza && !salaG.membri.length;   // la Sala: solo chi non c'era ancora (chi c'era aspetta l'host)
+    if (gioco || inSala) mostraFerma(d.stanza, !!d.muta, !!inSala);
+  });
+  function mostraFerma(codice, muta, sala) {
+    var cosa = sala ? "La Sala " : "La stanza ";
+    var tit = cosa + codice + (muta ? " non risponde" : " è ferma");
+    var sotto = muta ? "Forse chi l'ha aperta è uscito un attimo dall'app. Se torna, entri da solo." : "Chi l'ha aperta è uscito dall'app. Se torna, entri da solo.";
+    if (FERMA && FERMA.codice === codice) { FERMA.tit.textContent = tit; FERMA.sotto.textContent = sotto; return; }
+    togliFerma();
+    var t = el("h2", { text: tit }), s = el("p", { text: sotto });
+    var nodo = el("div", { class: "sg-ferma", role: "dialog", "aria-modal": "true" }, [
+      el("div", { class: "sg-ferma-box" }, [
+        el("div", { class: "sg-ferma-ico", text: "😴" }), t, s,
+        el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: function () {
+          togliFerma();
+          if (sala) { chiudiSalaOspite(); return schermataHome(); }
+          lasciaPartita(); dimenticaStanza(); SGNet.chiudiGiochi(); tornaHome();
+        } })
+      ])
+    ]);
+    document.body.appendChild(nodo);
+    FERMA = { nodo: nodo, codice: codice, tit: t, sotto: s };
+  }
+  function togliFerma() { if (!FERMA) return; if (FERMA.nodo.parentNode) FERMA.nodo.parentNode.removeChild(FERMA.nodo); FERMA = null; }
 
   // 🔑 "Ho un codice": per chi è stato invitato e ha già l'app aperta (o il codice gliel'hanno detto a voce).
   // Si può anche incollare tutto il link: il codice lo trovo io.
@@ -257,8 +353,9 @@
     s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Cerco la partita in corso… un attimo." }));
     mostra(s);
     SGNet.scopriGioco(c, function (gid) {
+      if (!document.body.contains(s)) return;   // intanto si è andati altrove
       if (gid === "__sala") return salaOspite(c);   // è una Sala, non un singolo gioco
-      var g = gid && giochi.filter(function (x) { return x.id === gid; })[0];
+      var g = gid && giocoDa(gid);
       if (!g) {
         svuota(s._contenuto); svuota(s._piede);
         s._contenuto.appendChild(el("p", { class: "link-avviso",
@@ -268,8 +365,9 @@
         mostra(s);
         return;
       }
-      location.hash = "gioco=" + g.id + "&stanza=" + encodeURIComponent(c);
-      location.reload();
+      // si entra subito, senza ricaricare l'app (se la stanza è ferma lo dice la schermata del gioco, e se l'host torna si entra da soli)
+      linkParams = { gioco: g.id, stanza: c };
+      avviaPartita(g, [], {});
     });
   }
 
@@ -325,13 +423,14 @@
       rigaProfilo
     ]));
     // stavi giocando da ospite e la pagina si è ricaricata (o hai riaperto l'app)? Si rientra al proprio posto
-    var rientro = stanzaRecente();
-    if (rientro) {
-      var gR = rientro.gioco ? giochi.filter(function (x) { return x.id === rientro.gioco; })[0] : null;
+    // (rStanza: non "rientro", che è il ritorno all'edificio della città e qui sopra si azzera)
+    var rStanza = stanzaRecente();
+    if (rStanza) {
+      var gR = rStanza.gioco ? giocoDa(rStanza.gioco) : null;
       s._contenuto.appendChild(el("div", { class: "home-rientra" }, [
-        el("button", { class: "btn btn-primario", onclick: function () { rientraStanza(rientro); } }, [
+        el("button", { class: "btn btn-primario", onclick: function () { rientraStanza(rStanza); } }, [
           el("span", { text: "🔁 Rientra nella partita" }),
-          el("small", { text: rientro.sala ? "👥 Sala online · stanza " + rientro.sala : (gR ? gR.icona + " " + gR.nome : "Partita") + " · stanza " + rientro.stanza }) ]),
+          el("small", { text: rStanza.sala ? "👥 Sala online · stanza " + rStanza.sala : (gR ? gR.icona + " " + gR.nome : "Partita") + " · stanza " + rStanza.stanza }) ]),
         el("button", { class: "home-rientra-x", "aria-label": "Non rientrare", text: "✕", onclick: function () { dimenticaStanza(); schermataHome(); } })
       ]));
     }
@@ -3381,31 +3480,59 @@
 
   // ---------- HOST ----------
   // opz.torneo = torneo online: la stessa sala, con la classifica che si somma
+  // opz.riapri = la Sala salvata (la pagina si è ricaricata o l'app si è chiusa): si riapre con lo stesso codice,
+  //   gli stessi amici e lo stesso torneo; chi non torna entro 30 secondi viene tolto
   function creaSala(opz) {
-    var torn = !!(opz && opz.torneo === true), elimG = (opz && typeof opz.eliminazione === "string") ? opz.eliminazione : null;
+    var R0 = (opz && opz.riapri) || null;
+    var torn = R0 ? !!R0.torneo : !!(opz && opz.torneo === true);
+    var elimG = R0 ? ((R0.elim && R0.elim.gioco) || null) : ((opz && typeof opz.eliminazione === "string") ? opz.eliminazione : null);
     if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete();
     if (!profiloAttivo()) return schermataAccesso(function () { creaSala(opz); });
     var io = profiloAttivo();
     tieniAcceso(true);   // la Sala: lo schermo resta acceso finché si gioca
-    sala = { rete: null, codice: "…", pronta: false, membri: [{ id: "host", nome: io.nome, emoji: io.emoji, omino: io.omino || null }], gioco: null, stanza: null, inGioco: false,
-      torneo: torn ? { punti: {}, nomi: [io.nome], n: 0, ultima: null, finito: false } : null,
-      elim: elimG ? { gioco: elimG, iniziato: false, finito: false, turni: [], nomi: {}, campione: null, gironi: {} } : null, inPartitaK: null };
-    function bcast() { if (sala && sala.rete) sala.rete.invia({ t: "sala", codice: sala.codice, membri: sala.membri, gioco: sala.gioco, stanza: sala.stanza, torneo: sala.torneo, elim: sala.elim }); }
+    if (sala && sala.tVivo) clearInterval(sala.tVivo);
+    var membri = [{ id: "host", nome: io.nome, emoji: io.emoji, omino: io.omino || null }];
+    if (R0) (R0.membri || []).forEach(function (m) { if (m && m.id && m.id !== "host") membri.push(m); });
+    sala = { rete: null, codice: R0 ? R0.codice : "…", pronta: false, membri: membri, gioco: null, stanza: null, inGioco: false,
+      torneo: R0 ? (R0.torneo || null) : (torn ? { punti: {}, nomi: [io.nome], n: 0, ultima: null, finito: false } : null),
+      elim: R0 ? (R0.elim || null) : (elimG ? { gioco: elimG, iniziato: false, finito: false, turni: [], nomi: {}, campione: null, gironi: {} } : null), inPartitaK: null, attesi: null };
+    var S0 = sala;
+    // ogni volta che la Sala cambia la mando a tutti e me la segno (per riaprirla se la pagina si ricarica)
+    function salva() { if (sala === S0 && sala.codice && sala.codice !== "…") ricordaMiaSala({ codice: sala.codice, membri: sala.membri, torneo: sala.torneo, elim: sala.elim, porta: sala.rete && sala.rete._sv && sala.rete._sv.porta ? 1 : 0 }); }
+    function bcast() { if (sala && sala.rete) sala.rete.invia({ t: "sala", codice: sala.codice, membri: sala.membri, gioco: sala.gioco, stanza: sala.stanza, torneo: sala.torneo, elim: sala.elim }); salva(); }
     function agg() {
       bcast(); if (!sala) return;
       if (sala.elim) return seguiHost();   // torneo a eliminazione: la sala si vede solo quando non sto giocando
       if (!sala.inGioco && !(sala.torneo && sala.torneo.finito)) disegnaSalaHost();
     }
     sala._bcast = bcast;
+    sala.tVivo = setInterval(function () { if (sala !== S0) return clearInterval(S0.tVivo); salva(); }, 60000);   // anche se non succede niente: "è ancora aperta"
+    if (R0) {
+      // chi c'era ha 30 secondi per tornare (rientra da solo appena vede la Sala riaperta)
+      sala.attesi = {}; membri.forEach(function (m) { if (m.id !== "host") sala.attesi[m.id] = 1; });
+      setTimeout(function () {
+        if (sala !== S0 || !sala.attesi) return;
+        var via = Object.keys(sala.attesi); sala.attesi = null;
+        if (!via.length) return;
+        sala.membri = sala.membri.filter(function (m) { return via.indexOf(m.id) < 0; });
+        if (sala.elim) via.forEach(function (id) { if (sala.elim.gironi) delete sala.elim.gironi[id]; elimUscito(id); });
+        agg();
+      }, 30000);
+      NOMI_SEME = {}; membri.forEach(function (m) { NOMI_SEME[m.id] = m.nome; });   // i nomi già dati ("Luca 2") restano a chi li aveva
+      PORTA_SALA_SEME = !!R0.porta;   // la porta resta com'era (chiusa: rientra solo chi c'era)
+      pillola("riapro", "🔁 Riapro la tua Sala (" + R0.codice + ")…", "blu", 4000);
+    }
     sala.rete = SGNet.ospita("__sala", {
       onCodice: function (c) { sala.codice = c; agg(); },
       onConnesso: function () { sala.pronta = true; agg(); },
-      onAddio: function (id) { sala.membri = sala.membri.filter(function (m) { return m.id !== id; }); if (sala.elim) { if (sala.elim.gironi) delete sala.elim.gironi[id]; elimUscito(id); } agg(); },
+      onAddio: function (id) { sala.membri = sala.membri.filter(function (m) { return m.id !== id; }); if (sala.attesi) delete sala.attesi[id]; if (sala.elim) { if (sala.elim.gironi) delete sala.elim.gironi[id]; elimUscito(id); } agg(); },
       onMsg: function (id, m) {
         if (m && m.t === "esito" && sala.elim) return esitoPartita(m.k, !!m.vinto, id);   // torneo a eliminazione: com'è finita una partita
         if (m && m.t === "girone" && sala.elim) return scegliGironeElim(id, m.g);   // torneo a eliminazione: dove si siede
         if (!m || m.t !== "join") return;
+        if (sala.attesi) delete sala.attesi[id];   // è tornato (Sala riaperta)
         if (!sala.membri.some(function (x) { return x.id === id; })) {
+          // (i nomi doppi li ha già sistemati lo strato comune della rete: il secondo "Luca" arriva come "Luca 2")
           var nome = String(m.nome || "Amico").slice(0, 16);
           sala.membri.push({ id: id, nome: nome, emoji: m.emoji || "🙂", omino: ominoOk(m.omino) });
           segnaNomeT(sala.torneo, nome);
@@ -3413,11 +3540,12 @@
         agg();
       },
       onErrore: function () { salaSenzaRete(); }
-    });
+    }, R0 ? { codice: R0.codice } : undefined);
+    if (sala.rete && sala.rete._sv) sala.rete._sv.salva = salva;   // (la porta chiusa o aperta si ricorda subito)
     disegnaSalaHost();
   }
 
-  function chiudiSala() { try { if (sala && sala.rete) sala.rete.chiudi(); } catch (e) {} sala = null; }
+  function chiudiSala() { try { if (sala && sala.rete) sala.rete.chiudi(); } catch (e) {} if (sala && sala.tVivo) clearInterval(sala.tVivo); sala = null; dimenticaMiaSala(); }
 
   function disegnaSalaHost() {
     if (!sala) return;
@@ -3425,9 +3553,9 @@
     if (T && T.finito) return schermataPodioT(T, true);
     var pronto = sala.codice && sala.codice !== "…", gE = E ? giocoDa(E.gioco) : null;
     saletta(gSala(!!T, E), {
-      host: true, codice: sala.codice, pronta: sala.pronta, min: E ? 2 : 1, puoiDaSolo: !E,
+      host: true, codice: sala.codice, pronta: sala.pronta, min: E ? 2 : 1, puoiDaSolo: !E, _rete: sala.rete,
       link: pronto ? SG.creaLink({ sala: sala.codice }) : "",
-      sotto: E ? "Torneo a eliminazione · " + (gE ? gE.nome : "") : (T ? "Torneo online · un link per tutti i giochi" : "Sala online · un link per tutti i giochi"),
+      sotto: E ? "Torneo a eliminazione · " + (gE ? gE.nome : "") : "Un link per tutti i giochi",   // (il titolo dice già "Sala online" o "Torneo")
       confermaEsci: (T || E) ? "Chiudere il torneo per tutti?" : "Chiudere la sala per tutti?",
       giocatori: sala.membri.map(function (m) { return { id: m.id, nome: m.nome, omino: m.omino || null, host: m.id === "host", tu: m.id === "host" }; }),
       extra: E ? [boxElim(E, "host", true, sala, seguiHost)] : (T ? [boxTorneo(T, true)] : []),
@@ -3445,10 +3573,17 @@
     var T = sala && sala.torneo;
     var s = schermata({ icona: "🎮", titolo: T ? "Quale gioco?" : "Scegli un gioco", sotto: T ? "Parte per tutti · più è difficile, più punti vale" : "Parte per tutta la sala", indietro: disegnaSalaHost });
     var griglia = el("div", { class: "griglia-giochi" });
-    giochi.forEach(function (g) { if (giocoOnline(g)) griglia.appendChild(tesseraGioco(g, function () { schermataPreGioco(g, { sala: true }); })); });
+    giochi.forEach(function (g) {
+      if (!giocoOnline(g)) return;
+      var tess = tesseraGioco(g, function () { schermataPreGioco(g, { sala: true }); });
+      // i giochi a due: giocano in due, gli altri guardano (meglio saperlo prima di sceglierlo)
+      if (aDue(g)) tess.querySelector(".info").appendChild(el("div", { class: "tess-adue", text: "⚔️ In 2: gli altri guardano" }));
+      griglia.appendChild(tess);
+    });
     s._contenuto.appendChild(griglia);
     mostra(s);
   }
+  function aDue(g) { return !!(g && (g.postiOnline === 2 || GIOCHI_ELIMINAZIONE[g.id])); }
 
   function salaLancia(g, impostazioni, box) {
     if (!sala) return schermataHome();
@@ -3464,9 +3599,8 @@
       risultato: function (g2, classifica) { salaRisultato(g2, classifica); },
       fine: function (g2, classifica) { salaRisultato(g2, classifica); salaFine(g2, classifica, ctx); }
     };
-    var vecchio = linkParams; linkParams = {};      // l'host apre da host, non da ospite
+    linkParams = {};      // l'host apre da host, non da ospite
     avviaPartita(g, [sala.membri[0].nome], impostazioni, { regole: box }, ctx);
-    linkParams = vecchio;
   }
 
   function salaFine(g, classifica, ctx) {
@@ -3488,10 +3622,16 @@
   // ---------- OSPITE ----------
   function salaOspite(codice) {
     if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete();
-    ricordaStanza({ sala: String(codice).toUpperCase() });   // se la pagina si ricarica, si rientra nella sala
+    codice = String(codice).toUpperCase();
+    ricordaStanza({ sala: codice });   // se l'app si riapre, in home c'è "Rientra"
+    segnaLinkSessione({ sala: codice });   // se la pagina si ricarica, si rientra da soli
     tieniAcceso(true);
     var io = profiloAttivo();
-    if (!io) return nomeOspiteSala(codice);   // senza profilo si entra lo stesso: basta il nome
+    if (!io) {   // senza profilo si entra lo stesso: basta il nome (scritto una volta: ricaricando si rientra col nome di prima)
+      var n = nomeStanza(codice);
+      if (n) return entraInSala(codice, n, "🙂", window.SGOmino ? SGOmino.casuale(n) : null);
+      return nomeOspiteSala(codice);
+    }
     entraInSala(codice, io.nome, io.emoji, io.omino || null);
   }
   // chi apre il link della sala (o del torneo) senza profilo: scrive il nome ed entra subito
@@ -3501,8 +3641,13 @@
     var input = el("input", { class: "link-campo", type: "text", maxlength: "16", placeholder: "Come ti chiami?" });
     input.value = ultimo;
     var avviso = el("div", { class: "link-avviso" });
-    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Scrivi il tuo nome ed entri subito, il profilo non serve. Se ce l'hai, accedi: avrai il tuo personaggio e i trofei." }));
+    var anteprima = el("div", { class: "sl-anteprima", "aria-hidden": "true" });   // l'avatar che avrai con quel nome
+    s._contenuto.appendChild(el("div", { class: "sl-benvenuto" }, [
+      el("b", { class: "sl-benv-tit", text: "Ti aspettano per giocare! 🎉" }), anteprima,
+      el("span", { class: "sl-benv-sotto", text: "Scrivi il tuo nome ed entri subito, il profilo non serve. Tocca 🎲 per un nome buffo." })
+    ]));
     s._contenuto.appendChild(input); s._contenuto.appendChild(avviso);
+    dadoNome(input, anteprima);   // 🎲 un nome buffo a caso
     function entra() {
       var n = (input.value || "").trim().slice(0, 16);
       if (n.length < 2) { avviso.textContent = "Scrivi il tuo nome."; return; }
@@ -3516,26 +3661,45 @@
     mostra(s);
   }
   function entraInSala(codice, nome, emoji, omino) {
-    salaG = { rete: null, codice: String(codice).toUpperCase(), myId: null, nome: nome, emoji: emoji, omino: omino, membri: [], inGioco: null, torneo: null, podio: false, _msg: null };
+    if (salaG && salaG.rete) try { salaG.rete.chiudi(); } catch (e) {}
+    salaG = { rete: null, codice: String(codice).toUpperCase(), myId: null, nome: nome, emoji: emoji, omino: omino, membri: [], inGioco: null, torneo: null, podio: false, _msg: null,
+      uscitoDa: null, finitoDa: null, giocoSala: null, nomeHost: "" };   // uscitoDa / finitoDa: la stanza del gioco da cui sono uscito o che per me è finita (non mi ci riporta dentro da sola)
+    var S = salaG;
+    if (!profiloAttivo()) ricordaNomeStanza(S.codice, nome);
     attendiSala();
-    salaG.rete = SGNet.entra(salaG.codice, {
-      onAperto: function (id) { salaG.myId = id; salaG.rete.invia({ t: "join", nome: salaG.nome, emoji: salaG.emoji, omino: salaG.omino || null });
-        setTimeout(function () { if (salaG && !salaG.membri.length && salaG._msg) salaG._msg.textContent = "Non trovo la sala: controlla il codice o attendi l'host…"; }, 8000); },
+    S.rete = SGNet.entra(S.codice, {
+      onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, emoji: S.emoji, omino: S.omino || null });
+        setTimeout(function () { if (salaG === S && !S.membri.length && S._msg) S._msg.textContent = "Non trovo la sala: controlla il codice o attendi l'host…"; }, 8000); },
       onMsg: function (m) {
-        if (!salaG || !m || m.t !== "sala") return;
-        salaG.membri = m.membri || []; salaG.torneo = m.torneo || null; salaG.elim = m.elim || null;
-        if (salaG.elim) return seguiOspite();   // torneo a eliminazione: si apre da sola la mia partita
+        if (salaG !== S || !m || m.t !== "sala") return;
+        S.membri = m.membri || []; S.torneo = m.torneo || null; S.elim = m.elim || null;
+        // il mio nome nella Sala: se c'era già un altro con lo stesso nome, l'host me l'ha cambiato ("Luca 2") e nei giochi uso quello
+        S.membri.forEach(function (x) {
+          if (x.id === S.myId && x.nome && x.nome !== S.nome) { S.nome = x.nome; if (!profiloAttivo()) ricordaNomeStanza(S.codice, x.nome); }
+          if (x.id === "host") S.nomeHost = x.nome;
+        });
+        if (S.elim) return seguiOspite();   // torneo a eliminazione: si apre da sola la mia partita
         if (m.gioco && m.stanza) {
-          if (salaG.inGioco !== m.stanza) { salaG.inGioco = m.stanza; salaG.podio = false; salaLanciaOspite(m.gioco, m.stanza); }
+          S.giocoSala = { gioco: m.gioco, stanza: m.stanza };
+          // ne sono uscito (c'è "Rientra") o per me è finita: resto nella Sala
+          if (S.uscitoDa === m.stanza || S.finitoDa === m.stanza) { if (S.inGioco === null) disegnaSalaOspite(); return; }
+          if (S.inGioco !== m.stanza) { S.inGioco = m.stanza; S.podio = false; salaLanciaOspite(m.gioco, m.stanza); }
           return;
         }
-        if (salaG.inGioco !== null) { salaG.inGioco = null; SGNet.chiudiGiochi(); }   // tornati in sala: il collegamento del gioco si chiude
-        if (salaG.torneo && salaG.torneo.finito) { if (!salaG.podio) { salaG.podio = true; schermataPodioT(salaG.torneo, false); } return; }
-        salaG.podio = false;
+        S.giocoSala = null; S.uscitoDa = null; S.finitoDa = null;
+        if (S.inGioco !== null) { S.inGioco = null; lasciaPartita(); SGNet.chiudiGiochi(); }   // tornati in sala: il gioco non disegna più e il suo collegamento si chiude
+        if (S.torneo && S.torneo.finito) { if (!S.podio) { S.podio = true; schermataPodioT(S.torneo, false); } return; }
+        S.podio = false;
         disegnaSalaOspite();
       },
-      onChiuso: function () { chiudiSalaOspite(); errore(schermataHome, "La sala è stata chiusa dall'host."); },
-      onErrore: function () { chiudiSalaOspite(); errore(schermataHome, "Problema di collegamento con la sala. Riprova."); }
+      // l'host ha riaperto la Sala (la sua pagina si è ricaricata): il join riparte da solo, qui solo l'avviso
+      onHostNuovo: function (eraDentro) { if (eraDentro && salaG === S) pillola("tornato", "🎉 " + (S.nomeHost || "L'host") + " è tornato: si riparte dalla Sala", "verde", 3500); },
+      onChiuso: function (perche) {
+        if (salaG !== S) return;
+        lasciaPartita(); chiudiSalaOspite();
+        errore(schermataHome, perche && perche.sparito ? "La Sala è chiusa: chi l'ha aperta non è tornato in tempo." : "La Sala è stata chiusa dall'host.");
+      },
+      onErrore: function () { if (salaG !== S) return; chiudiSalaOspite(); errore(schermataHome, "Problema di collegamento con la sala. Riprova."); }
     }, { tieni: true });   // resta aperta tra un gioco e l'altro
   }
 
@@ -3552,29 +3716,54 @@
   function disegnaSalaOspite() {
     if (!salaG) return;
     var T = salaG.torneo, E = salaG.elim;
+    var extra = E ? [boxElim(E, salaG.myId, false, salaG, seguiOspite)] : (T ? [boxTorneo(T, false)] : []);
+    var inCorso = !E && salaG.giocoSala && salaG.uscitoDa === salaG.giocoSala.stanza ? boxInCorso(salaG.giocoSala) : null;
+    if (inCorso) extra.unshift(inCorso);
     saletta(gSala(!!T, E), {
-      host: false, codice: salaG.codice,
-      sotto: (E ? "Torneo a eliminazione" : (T ? "Torneo online" : "Sala online")) + " · codice " + salaG.codice,
+      host: false, codice: salaG.codice, _rete: salaG.rete,
+      sotto: (E ? "Torneo a eliminazione · codice " : "Codice ") + salaG.codice,
       giocatori: salaG.membri.map(function (m) { return { id: m.id, nome: m.nome, omino: m.omino || null, host: m.id === "host", tu: m.id === salaG.myId }; }),
-      extra: E ? [boxElim(E, salaG.myId, false, salaG, seguiOspite)] : (T ? [boxTorneo(T, false)] : []),
-      attesa: E ? (E.iniziato ? "Quando tocca a te, la partita si apre da sola." : "Tocca il girone in cui vuoi giocare, poi aspetta che l'host faccia partire il torneo.") : "Aspetta che l'host scelga un gioco: parte da solo sul tuo telefono.",
+      extra: extra,
+      attesa: E ? (E.iniziato ? "Quando tocca a te, la partita si apre da sola." : "Tocca il girone in cui vuoi giocare, poi aspetta che l'host faccia partire il torneo.")
+        : (inCorso ? "Gli altri stanno giocando: rientra quando vuoi, oppure aspetta qui il prossimo gioco." : "Aspetta che l'host scelga un gioco: parte da solo sul tuo telefono."),
       onEsci: function () { chiudiSalaOspite(); schermataHome(); }
     });
     salaG._msg = null;
   }
+  // nella Sala, per chi è uscito dal gioco in corso: "🎮 Stanno giocando a Tris · Rientra" (sempre lo stesso riquadro: niente lampeggio)
+  function boxInCorso(gs) {
+    if (salaG._inCorso && salaG._inCorso.k === gs.stanza) return salaG._inCorso.nodo;
+    var g = giocoDa(gs.gioco);
+    var nodo = el("div", { class: "sl-incorso" }, [
+      el("span", { text: "🎮 Stanno giocando a " + (g ? g.nome : "un gioco") }),
+      el("button", { class: "btn btn-primario btn-piccolo", text: "Rientra ▶", onclick: function () {
+        var S = salaG; if (!S || !S.giocoSala) return;
+        S.uscitoDa = null; S.inGioco = S.giocoSala.stanza; S.podio = false;
+        salaLanciaOspite(S.giocoSala.gioco, S.giocoSala.stanza);
+      } })
+    ]);
+    salaG._inCorso = { k: gs.stanza, nodo: nodo };
+    return nodo;
+  }
 
   function salaLanciaOspite(gid, code) {
     SGNet.chiudiGiochi();   // il collegamento del gioco di prima (se c'è) si chiude: niente errori a sorpresa
-    var g = giochi.filter(function (x) { return x.id === gid; })[0];
+    var g = giocoDa(gid);
     if (!g) { disegnaSalaOspite(); return; }
-    var vecchio = linkParams;
+    // si torna nella Sala e la Sala non mi riporta dentro da sola: se ne sono uscito io c'è "Rientra" (uscitoDa),
+    // se la partita è finita no (finitoDa)
+    function torna(finita) {
+      lasciaPartita(); SGNet.chiudiGiochi();
+      if (salaG) { salaG.inGioco = null; if (finita) salaG.finitoDa = code; else salaG.uscitoDa = code; }
+      disegnaSalaOspite();
+    }
     linkParams = { gioco: gid, stanza: code };   // il gioco lo legge subito (t.linkParams)
     var ctx = {
-      esci: function () { SGNet.chiudiGiochi(); if (salaG) salaG.inGioco = null; disegnaSalaOspite(); },
-      fine: function () { SGNet.chiudiGiochi(); if (salaG) salaG.inGioco = null; disegnaSalaOspite(); }
+      esci: function () { torna(false); }, fine: function () { torna(true); },
+      // il gioco ha chiuso la sua stanza (partita finita): niente "Collegamento perso", si torna nella Sala
+      chiusa: function () { torna(true); pillola("sala", "🏁 Partita finita: si torna in Sala", "verde", 2600); }
     };
     avviaPartita(g, [], {}, null, ctx);
-    linkParams = vecchio;
   }
 
   // =========================================================
@@ -3750,7 +3939,7 @@
         if (primi.length === 1) diEsito(p.k, primi[0].nome === mioNome);
       }
     };
-    var vecchio = linkParams;
+    // (il link vale per una partita sola: avviaPartita lo prende e lo azzera)
     if (p.b === "bot") {
       // la partita col bot la possono guardare anche gli altri: questo telefono la trasmette nella stanza della partita
       var rete = null, ultimo = null;
@@ -3763,7 +3952,6 @@
     }
     else if (p.a === mioId) { linkParams = {}; SGNet._forza = p.stanza; avviaPartita(g, [mioNome], Object.assign({}, S.elim.imp || {}, { modo: "online" }), null, ctx); }
     else { linkParams = { gioco: g.id, stanza: p.stanza }; avviaPartita(g, [], {}, null, ctx); }
-    linkParams = vecchio;
   }
   // chi non sta giocando guarda in diretta la partita di altri (anche quella col bot), senza poter toccare
   function guardaPartitaElim(S, p) {
@@ -3774,10 +3962,8 @@
     var attivo = true;
     function via() { if (!attivo) return; attivo = false; if (S.guardaK === p.k) S.guardaK = null; clearTimeout(S.tTorna); S.tTorna = null; tornaTabelloneElim(S); }
     var ctx = { esci: via, fine: via, risultato: function () {}, tabellone: function (s) { tastoTabellone(s, S); } };
-    var vecchio = linkParams;
     linkParams = { gioco: g.id, stanza: p.stanza, guarda: 1 };
     avviaPartita(g, [], {}, null, ctx);
-    linkParams = vecchio;
   }
   // il tabellone sopra la partita (tasto 🏆 in alto): si aggiorna da solo finché resta aperto
   var FT = null;
@@ -3925,11 +4111,15 @@
   // =========================================================
   //  SALETTA D'ATTESA ONLINE — uguale per tutti i giochi (t.lobby).
   //  Chi è entrato aspetta coi personaggi in una saletta: respirano, sbattono le palpebre,
-  //  ogni tanto salutano o saltano; chi arriva entra con un saltello e dice "Ciao!".
-  //  Chi ospita vede in alto codice e "Manda il link", in fondo "Comincia".
+  //  ogni tanto salutano o saltano; chi arriva entra con un saltello, "pling" e il fumetto "Ciao Luca! 👋".
+  //  È viva (vedi SALETTA VIVA più sotto): "✋ Sono pronto!", le faccine, chi si ricollega in grigio con 📶,
+  //  "Fai uscire" e "🔒 Chiudi la porta" per l'host, il 3-2-1-Via! su tutti i telefoni, la musichetta.
+  //  Chi ospita vede in alto codice e "📤 Invita gli amici" (manda il link), in fondo "Comincia".
+  //  Sta tutta in uno schermo (anche 360x640): la stanza prende lo spazio che resta.
   //  o: { host, codice, pronta (false = sto aprendo), giocatori: [{ id, nome, omino, bot, host, tu }],
   //       min, vuoti (posti liberi da mostrare), onComincia, onEsci, attesa (testo per chi aspetta),
-  //       extra: [nodi del gioco, es. scelta dei posti], nota, testoComincia }
+  //       extra: [nodi del gioco, es. scelta dei posti], nota, testoComincia,
+  //       _rete (il collegamento della stanza: lo mette il core) }
   //  Si aggiorna al suo posto (niente lampeggio): i personaggi già dentro restano, i nuovi entrano.
   // =========================================================
   var SL = { ultimo: null, timer: null };
@@ -3954,21 +4144,28 @@
   }
   function firmaImp(imp) { try { return JSON.stringify(imp); } catch (e) { return ""; } }
   // il foglio "Regole" della saletta: dentro ci sono le stesse impostazioni di prima (restano come le avevi lasciate)
+  // e, nelle salette dei giochi, la scelta della saletta: "Parti da solo quando tutti sono pronti"
   function foglioRegole(U) {
-    var R = U.R; if (!R || document.querySelector(".sl-velo")) return;
-    var prima = firmaImp(R.imp), velo;
+    var R = U.R; if (document.querySelector(".sl-velo")) return;
+    var conGioco = !!(R && haRegole(R.box)), conSaletta = U.gid !== "__sala";
+    if (!conGioco && !conSaletta) return;
+    var prima = conGioco ? firmaImp(R.imp) : "", velo;
     function chiudi() {
-      if (R.box.parentNode) R.box.parentNode.removeChild(R.box);
+      if (conGioco && R.box.parentNode) R.box.parentNode.removeChild(R.box);
       if (velo.parentNode) velo.parentNode.removeChild(velo);
-      if (firmaImp(R.imp) === prima) return;
+      applicaViva(U);   // (tutti pronti e "parti da solo" appena acceso: si parte)
+      if (!conGioco || firmaImp(R.imp) === prima) return;
       var fn = (U.o && U.o.onRegole) || (R.tavolo && R.tavolo.onRegole);
       if (fn) fn(R.imp);
-      if (U.bRegole) { U.bRegole.textContent = "✅ Fatto"; setTimeout(function () { if (U.bRegole) U.bRegole.textContent = "⚙️ Regole"; }, 1600); }
+      if (U.bRegole) { var t0 = U.bRegole.textContent; U.bRegole.textContent = "✅ Fatto"; setTimeout(function () { if (U.bRegole) U.bRegole.textContent = t0; }, 1600); }
     }
+    var corpo = el("div", { class: "sl-foglio-corpo" });
+    if (conSaletta) corpo.appendChild(opzioniSaletta());
+    if (conGioco) corpo.appendChild(R.box);
     velo = el("div", { class: "sl-velo", onclick: function (e) { if (e.target === velo) chiudi(); } }, [
       el("div", { class: "sl-foglio" }, [
-        el("div", { class: "sl-foglio-testa" }, [ el("b", { text: "⚙️ Regole della partita" }), el("button", { class: "sl-foglio-x", "aria-label": "Chiudi", text: "✕", onclick: chiudi }) ]),
-        el("div", { class: "sl-foglio-corpo" }, [ R.box ]),
+        el("div", { class: "sl-foglio-testa" }, [ el("b", { text: conGioco ? "⚙️ Regole della partita" : "⚙️ La saletta" }), el("button", { class: "sl-foglio-x", "aria-label": "Chiudi", text: "✕", onclick: chiudi }) ]),
+        corpo,
         el("button", { class: "btn btn-primario", text: "✅ Fatto", onclick: chiudi })
       ])
     ]);
@@ -3977,17 +4174,25 @@
   function saletta(g, o, R) {
     o = o || {};
     var U = SL.ultimo;
-    if (U && U.gid === g.id && U.host === !!o.host && document.body.contains(U.s)) { if (R) U.R = R; aggiornaSaletta(U, o); return U.s; }
-    var s = schermata({ icona: g.icona, titolo: g.nome, sotto: o.sotto || (o.host ? "Online · la stanza è tua" : ("Online · stanza " + String(o.codice || "").toUpperCase())),
+    if (U && U.gid === g.id && U.host === !!o.host && document.body.contains(U.s)) { if (R) U.R = R; aggiornaSaletta(U, o, false); return U.s; }
+    if (U && U.ro) try { U.ro.disconnect(); } catch (e) {}   // (la saletta di prima non serve più)
+    var s = schermata({ titolo: g.nome, sotto: o.sotto || (o.host ? "Online · la stanza è tua" : ("Online · stanza " + String(o.codice || "").toUpperCase())),
       indietro: function () { if (o.host && !window.confirm(o.confermaEsci || "Chiudere la stanza per tutti?")) return; SL.ultimo = null; if (o.onEsci) o.onEsci(); } });
     s.classList.add("saletta-schermo");
-    var U2 = { gid: g.id, host: !!o.host, s: s, figure: {}, o: o };
+    // il primo tocco nella saletta accende i suoni (i telefoni li tengono spenti finché non si tocca): "pling", musichetta…
+    ["pointerup", "touchend", "click"].forEach(function (ev) { s.addEventListener(ev, function () { audioCtx(); }, true); });   // (iPhone: serve un tocco vero)
+    var U2 = { gid: g.id, host: !!o.host, s: s, figure: {}, o: o, rete: o._rete || null };
     if (o.host) {
       U2.cod = el("b", { text: "…" });
-      U2.link = el("button", { class: "btn btn-primario sl-link", html: "📤 Manda il link agli amici", onclick: function () { if (U2.linkUrl) condividiLink(U2.linkUrl, g, U2.link); } });
-      U2.stato = el("div", { class: "sl-stato" });
-      s._contenuto.appendChild(el("div", { class: "sl-invito" }, [ el("div", { class: "sl-cod" }, [ el("small", { text: "Codice" }), U2.cod ]), U2.link ]));
-      s._contenuto.appendChild(U2.stato);
+      U2.link = el("button", { class: "btn btn-primario sl-link", html: "📤 Invita gli amici", onclick: function () { if (U2.linkUrl) condividiLink(U2.linkUrl, g, U2.link); } });
+      U2.codBox = el("div", { class: "sl-cod" }, [ el("small", { text: "Codice" }), U2.cod ]);   // (il pallino dice se la stanza è aperta)
+      s._contenuto.appendChild(el("div", { class: "sl-invito" }, [ U2.codBox, U2.link ]));
+      // nella testa, a destra, "🔒 Chiudi la porta" (chi non è già dentro legge "La stanza è chiusa"); sotto il titolo lo stato:
+      // "🟡 Sto aprendo la stanza…", "🔒 Porta chiusa" (così non ruba spazio alla saletta)
+      var testa = s.querySelector(".testa");
+      U2.porta = el("button", { class: "sl-porta", type: "button", hidden: "hidden", onclick: function () { portaSaletta(U2); } });
+      testa.appendChild(U2.porta);
+      U2.statoT = testa.querySelector(".sotto"); U2.sottoBase = U2.statoT ? U2.statoT.textContent : "";
     }
     // la saletta: muro, finestra, quadro col simbolo del gioco, orologio, pianta, divano e tappeto (uguale per tutti i giochi)
     U2.stanza = el("div", { class: "sl-stanza" }, [ el("div", { class: "sl-muro" }), el("div", { class: "sl-insegna", text: "Sala d'attesa" }),
@@ -3996,101 +4201,251 @@
       el("div", { class: "sl-pavimento" }), el("div", { class: "sl-tappeto" }), el("div", { class: "sl-divano" }),
       el("div", { class: "sl-pianta", html: "<svg viewBox='0 0 60 80'><path d='M30 50 C18 40 8 30 10 14 C20 22 26 34 30 50 Z' fill='#40c057'/><path d='M30 50 C42 40 52 30 50 12 C40 22 34 34 30 50 Z' fill='#2f9e44'/><path d='M30 52 C26 36 28 18 34 4 C38 20 36 36 30 52 Z' fill='#51cf66'/><path d='M16 50 L44 50 L40 78 L20 78 Z' fill='#c9713a' stroke='#8a4a22' stroke-width='2' stroke-linejoin='round'/><rect x='14' y='47' width='32' height='7' rx='2' fill='#d9854a' stroke='#8a4a22' stroke-width='2'/></svg>" }) ]);
     U2.conta = el("div", { class: "sl-conta" });
-    U2.stanza.appendChild(U2.conta);
+    // 🎵/🔇 nell'angolo: la musichetta (sul telefono dell'host) e i suoni della saletta; la scelta resta ricordata
+    U2.bSuono = el("button", { class: "sl-suono", type: "button", "aria-label": "Musica e suoni della saletta", onclick: function () { suonoSaletta(!SUONO_SL.on); } });
+    // sopra gli avatar due veli: i nomi (sempre leggibili, anche di chi sta dietro) e poi i fumetti e le faccine
+    U2.targhe = el("div", { class: "sl-targhe" });
+    U2.bolle = el("div", { class: "sl-bolle", "aria-hidden": "true" });
+    [U2.conta, U2.bSuono, U2.targhe, U2.bolle].forEach(function (x) { U2.stanza.appendChild(x); });
     s._contenuto.appendChild(U2.stanza);
+    // la stanza cambia misura (telefono girato, tastiera, barra del browser): gli avatar si rimettono a misura
+    if (window.ResizeObserver) {
+      U2.ro = new ResizeObserver(function () { if (!document.body.contains(U2.s)) { U2.ro.disconnect(); return; } disponiSaletta(U2, false); });
+      U2.ro.observe(U2.stanza);
+    }
+    // le faccine: il mio avatar le fa sui telefoni di tutti (al massimo una al secondo)
+    U2.faccine = vassoioFaccine(function () { return U2.rete && U2.rete._sv; });
+    U2.faccine.hidden = true;
+    s._contenuto.appendChild(U2.faccine);
     U2.extra = el("div", { class: "sl-extra" });
     s._contenuto.appendChild(U2.extra);
     if (!o.host) {
+      // "✅ Sei dentro!" solo quando l'host mi ha davvero messo nella lista; prima "⏳ Sto entrando…"
+      U2.titolo = el("div", { class: "sl-att-tit" });
       U2.attesa = el("div", { class: "sl-att-testo" });
       U2.consiglio = el("div", { class: "sl-consiglio" });
-      s._contenuto.appendChild(el("div", { class: "sl-attesa" }, [ el("div", { class: "sl-att-tit", text: "✅ Sei dentro!" }), U2.attesa, U2.consiglio ]));
+      U2.box = el("div", { class: "sl-attesa" }, [ U2.titolo, U2.attesa, U2.consiglio ]);
+      s._contenuto.appendChild(U2.box);
+      // "✋ Sono pronto!" (nelle salette dei giochi; nella Sala si aspetta che l'host scelga)
+      if (g.id !== "__sala") {
+        U2.bPronto = el("button", { class: "btn btn-verde sl-pronto", type: "button", onclick: function () { prontoSaletta(U2); } });
+        s._piede.appendChild(U2.bPronto);
+      }
     } else {
-      U2.go = el("button", { class: "btn btn-primario", onclick: function () { if (!U2.go.disabled && U2.o.onComincia) U2.o.onComincia(); } });
+      U2.go = el("button", { class: "btn btn-primario sl-go", onclick: function () { partenza(U2); } });
+      U2.chip = el("div", { class: "sl-chip", hidden: "hidden", "aria-live": "polite" });   // "✋ Pronti 2 su 3"
       U2.nota = el("p", { class: "modulo-nota sl-nota" });
       U2.R = R || null;
-      // l'host può sempre cambiare le regole, anche con gli amici già dentro
-      if (R && haRegole(R.box)) {
-        U2.bRegole = el("button", { class: "btn btn-fantasma sl-regole", text: "⚙️ Regole", onclick: function () { foglioRegole(U2); } });
+      s._piede.appendChild(U2.chip);
+      // l'host può sempre cambiare le regole, anche con gli amici già dentro (e nel ⚙️ c'è "Parti da solo quando tutti sono pronti")
+      var regoleGioco = !!(R && haRegole(R.box));
+      if (regoleGioco || g.id !== "__sala") {
+        U2.bRegole = el("button", { class: "btn btn-fantasma sl-regole", text: regoleGioco ? "⚙️ Regole" : "⚙️", "aria-label": regoleGioco ? "Regole della partita" : "La saletta", onclick: function () { foglioRegole(U2); } });
         s._piede.appendChild(el("div", { class: "sl-tasti" }, [ U2.bRegole, U2.go ]));
       } else s._piede.appendChild(U2.go);
       s._piede.appendChild(U2.nota);
     }
     SL.ultimo = U2;
-    aggiornaSaletta(U2, o);
+    nuovoGiroSaletta(U2);   // una saletta nuova (es. "Nuova partita"): i "pronto" ripartono da zero
+    aggiornaSaletta(U2, o, true);
     mostra(s);
+    disponiSaletta(U2, false);   // (ora la stanza ha le sue misure)
+    if (!window.ResizeObserver) window.addEventListener("resize", function rimisura() { if (!document.body.contains(U2.s)) return window.removeEventListener("resize", rimisura); disponiSaletta(U2, false); });
     avviaAnimeSaletta();
+    musicaSaletta();
     return s;
   }
-  var CONSIGLI_SL = ["Tocca il tuo personaggio: ti saluta! 👋", "Mentre aspetti puoi cambiare avatar dal profilo, la prossima volta.", "Tocca gli altri personaggi: saltano! 🤸", "Appena l'host fa partire, il gioco si apre da solo."];
-  function aggiornaSaletta(U, o) {
+  var CONSIGLI_SL = ["Tocca una faccina: il tuo avatar la fa sui telefoni di tutti! 😂", "Tocca il tuo avatar: ti saluta! 👋", "Tocca gli altri avatar: saltano! 🤸", "Appena l'host fa partire, il gioco si apre da solo."];
+  // l'host non mi ha messo nella sua foto: nessuno nella lista sono io (niente "Tu" sbagliato, anche se il gioco lo crede)
+  function senzaTuFalso(gio, st) { return st && st.foto && !st.presente ? gio.map(function (p) { return p.tu ? Object.assign({}, p, { tu: false }) : p; }) : gio; }
+  // il titolo della saletta di chi entra (dice sempre la verità): "✅ Sei dentro!" solo se l'host mi ha messo nella lista;
+  // "⏳ Sto entrando…" finché non succede; nei giochi a due, se giocano già in due: "👀 Giocano in due: tu guardi".
+  // Si cambia solo se è diverso (niente lampeggio). true = sono dentro
+  function titoloSaletta(U, gio, st) {
+    var io = gio.filter(function (p) { return p.tu; })[0], dentro = !!io && (!st || st.presente);
+    var altri = gio.filter(function (p) { return !p.bot && !p.tu; }).length;
+    var guardi = !dentro && !!st && st.vivo && st.foto && altri >= 2 && aDue(giocoDa(U.gid)) && (st.presente || Date.now() - (st.entrato || 0) > 2500);
+    var k = dentro ? "dentro" : (guardi ? "guardi" : "entrando");
+    if (U.statoTit !== k) {
+      U.statoTit = k;
+      U.titolo.textContent = k === "dentro" ? "✅ Sei dentro!" : (k === "guardi" ? "👀 Giocano in due: tu guardi" : "⏳ Sto entrando…");
+      U.box.classList.toggle("entrando", k === "entrando");
+    }
+    return dentro;
+  }
+  function aggiornaSaletta(U, o, nuova) {
     U.o = o;
+    if (o._rete) U.rete = o._rete;
     var gio = (o.giocatori || []).slice();
     if (U.host) {
       var pronto = o.codice && o.codice !== "…";
       U.cod.textContent = pronto ? String(o.codice).toUpperCase() : "…";
       U.linkUrl = pronto ? (o.link || SG.creaLink({ gioco: U.gid, stanza: o.codice })) : "";   // o.link: la sala/torneo ha il suo
       if (pronto) U.link.removeAttribute("disabled"); else U.link.setAttribute("disabled", "disabled");
-      var aperta = pronto && o.pronta !== false;
-      U.stato.className = "sl-stato" + (aperta ? "" : " giallo");
-      U.stato.textContent = aperta ? "🟢 Stanza aperta: chi apre il link entra qui sotto" : "🟡 Sto aprendo la stanza…";
+      U.aperta = pronto && o.pronta !== false;   // (lo stato sotto il titolo, il pallino del codice e la porta: vedi applicaViva)
       var veri = gio.filter(function (p) { return !p.bot; }).length, min = o.min || 2;
-      U.go.textContent = o.testoComincia || "Comincia ▶";
-      if ((veri < min && !o.puoiDaSolo) || o.puoComincia === false) U.go.setAttribute("disabled", "disabled"); else U.go.removeAttribute("disabled");   // puoComincia: il gioco può chiedere altro (es. le squadre fatte)
-      U.nota.textContent = o.nota || (veri < min && !o.puoiDaSolo ? "Aspettiamo gli amici: " + (veri === 1 ? "per ora ci sei solo tu." : "servono almeno " + min + " giocatori.") : "Quando ci siete tutti, fai partire la partita.");
+      U.goOk = !((veri < min && !o.puoiDaSolo) || o.puoComincia === false);   // puoComincia: il gioco può chiedere altro (es. le squadre fatte)
+      tastoGo(U);
+      // con gli amici dentro, "✋ Pronti 2 su 3" dice già tutto: la nota resta solo se il gioco ha qualcosa da dire
+      U.nota.textContent = o.nota || (veri < min && !o.puoiDaSolo ? "Aspettiamo gli amici: " + (veri === 1 ? "per ora ci sei solo tu." : "servono almeno " + min + " giocatori.") : (veri > 1 && U.gid !== "__sala" ? "" : "Quando ci siete tutti, fai partire la partita."));
     } else {
       var chiHost = gio.filter(function (p) { return p.host; })[0];
       U.attesa.textContent = o.attesa || ("Aspetta che " + (chiHost ? chiHost.nome : "l'host") + " faccia partire la partita…");
       if (!U.consiglio.textContent) U.consiglio.textContent = CONSIGLI_SL[Math.floor(Math.random() * CONSIGLI_SL.length)];
+      // sono davvero dentro? Nella lista c'è "tu" E l'ultima foto dell'host ha il mio id (lo sa il collegamento)
+      var rete = o._rete && o._rete.stato ? o._rete : null, st = rete ? rete.stato() : null;
+      gio = senzaTuFalso(gio, st);
+      var io = gio.filter(function (p) { return p.tu; })[0], dentro = titoloSaletta(U, gio, st);
+      if (dentro && rete && rete.codice) {
+        // il nome che ho in questa stanza (se l'host l'ha cambiato: "Luca 2") e quello dell'host: servono se la pagina si ricarica
+        var chiave = io.nome + "|" + (chiHost ? chiHost.nome : "");
+        if (U.nomiVisti !== chiave) { U.nomiVisti = chiave; ricordaNomeStanza(rete.codice, io.nome); if (chiHost) ricordaNomeStanza(rete.codice, chiHost.nome, true); }
+      }
+      // non sono nella foto dell'host: chiedo di nuovo di entrare (la saletta è appena comparsa, es. "Nuova partita",
+      // oppure c'ero e l'host mi ha tolto). Negli aggiornamenti normali ci pensa il collegamento, senza fretta.
+      // (chi è nella foto ma non tra i giocatori guarda soltanto: niente da chiedere)
+      if (!dentro && st && !st.presente && (nuova || st.dentro)) rete.riprova();
+      // in saletta il titolo dice già tutto: la pillola "entri alla prossima" sparisce subito (non un secondo dopo)
+      if (rete) pillola("prossima", null);
     }
     // i nodi del gioco sotto la saletta (es. scelta del posto): si rimettono solo se sono cambiati
     var ex = (o.extra || []).filter(Boolean);
     if (ex.length !== U.extra.childNodes.length || ex.some(function (n, i) { return U.extra.childNodes[i] !== n; })) { svuota(U.extra); ex.forEach(function (n) { U.extra.appendChild(n); }); }
-    // i personaggi: chi c'è già resta (niente lampeggio), chi arriva entra col saltello, chi esce sparisce
-    var tieni = {}, n = gio.length, vuoti = Math.max(0, o.vuoti || 0), tot = n + vuoti, due = tot > 5;
-    var primaFila = due ? Math.ceil(tot / 2) : tot;
-    function posto(i) {   // due file: dietro (più piccoli e più in alto) e davanti
-      var dietro = due && i < primaFila, fila = dietro ? primaFila : tot - (due ? primaFila : 0), k = dietro || !due ? i : i - primaFila;
-      return { x: ((k + 0.5) / fila) * 100, dietro: dietro };
-    }
+    // i personaggi: chi c'è già resta (niente lampeggio), chi arriva entra col saltello e "Ciao Luca! 👋",
+    // chi esce saluta e sfuma. Dove sta ognuno (e quanto è grande) lo decide disponiSaletta, qui sotto
+    var tieni = {}, n = gio.length, vuoti = Math.max(0, o.vuoti || 0), arrivati = [], usciti = 0, ordine = [];
     gio.forEach(function (p, i) {
       var k = chiavePers(p, i), f = U.figure[k], cfg = p.omino || (window.SGOmino ? SGOmino.casuale(p.nome || k) : null), sig = JSON.stringify(cfg) + "|" + p.nome + "|" + !!p.tu + "|" + !!p.host + "|" + !!p.bot;
       if (!f) {
-        f = { nodo: el("div", { class: "sl-av entra" }), sig: "" };
-        f.nodo.addEventListener("click", function () { animaAv(f.nodo, f.tu ? "saluta" : "salta"); });
-        U.figure[k] = f; U.stanza.appendChild(f.nodo);
-        (function (nodo) { setTimeout(function () { nodo.classList.remove("entra"); }, 700); })(f.nodo);
-        if (!p.tu && U.visti) { var ciao = el("div", { class: "sl-ciao", text: "Ciao! 👋" }); f.nodo.appendChild(ciao); setTimeout(function () { if (ciao.parentNode) ciao.parentNode.removeChild(ciao); }, 2200); }
+        // l'avatar ha i suoi pezzi fissi: il disegno (con l'anello verde sul pavimento quando è pronto), il nome sotto i piedi,
+        // il bollino (✓ o 📶) e "si ricollega…" (nella targa, sopra il nome: non copre i nomi degli altri); quando cambia qualcosa si rifà solo il disegno o il nome
+        f = { nodo: el("div", { class: "sl-av entra" }), sig: "", k: k, manoSu: false };
+        f.anello = el("i", { class: "sl-anello", "aria-hidden": "true" }); f.fig = el("div", { class: "sl-fig" });
+        f.bollo = el("b", { class: "sl-bollo", "aria-hidden": "true" }); f.ricollega = el("small", { class: "sl-ricollega" });   // (sta nella targa, sopra il nome)
+        f.nodo.appendChild(el("div", { class: "sl-av-in" }, [f.fig, f.bollo]));
+        // il nome sta nel velo delle targhe, sopra gli avatar: i capelli di chi è davanti non lo coprono mai
+        f.targa = f.nodo._targa = el("div", { class: "sl-nome entra" }); U.targhe.appendChild(f.targa);
+        toccoAvatar(U, f);
+        U.figure[k] = f; U.stanza.insertBefore(f.nodo, U.targhe);
+        (function (nodo, targa) { setTimeout(function () { nodo.classList.remove("entra"); targa.classList.remove("entra"); }, 700); })(f.nodo, f.targa);
+        if (!p.tu && U.visti) arrivati.push(f);   // (il fumetto quando è al suo posto, qui sotto)
       }
+      f.p = p;
       if (f.sig !== sig) {
-        f.sig = sig; f.tu = !!p.tu;
-        var vecchiaCiao = f.nodo.querySelector(".sl-ciao");
-        f.nodo.innerHTML = "";
-        f.nodo.appendChild(el("div", { class: "sl-fig", html: cfg && window.SGOmino ? SGOmino.svg(cfg) : "<div class='sl-emo'>🙂</div>" }));
-        f.nodo.appendChild(el("div", { class: "sl-nome" + (p.tu ? " tu" : "") }, [ p.host ? el("span", { class: "sl-cor", text: "👑" }) : null, document.createTextNode(p.tu ? "Tu" : (p.nome || "…")), p.bot ? el("span", { text: " 🤖" }) : null ]));
-        if (vecchiaCiao) f.nodo.appendChild(vecchiaCiao);
+        f.sig = sig; f.tu = !!p.tu; f.cfg = cfg;
+        disegnaFigura(f);
+        svuota(f.targa); f.targa.classList.toggle("tu", !!p.tu);
+        [ f.ricollega, p.host ? el("span", { class: "sl-cor", text: "👑" }) : null, document.createTextNode(p.tu ? "Tu" : (p.nome || "…")), p.bot ? el("span", { text: " 🤖" }) : null ].forEach(function (x) { if (x) f.targa.appendChild(x); });
       }
-      var ps = posto(i);
-      f.nodo.classList.toggle("dietro", ps.dietro); f.nodo.classList.toggle("tu", !!p.tu); f.nodo.classList.toggle("bot", !!p.bot);
-      f.nodo.style.left = ps.x.toFixed(2) + "%";
-      f.nodo.style.animationDelay = (-(i * 0.7) % 3).toFixed(2) + "s";
-      tieni[k] = true;
+      f.nodo.classList.toggle("tu", !!p.tu); f.nodo.classList.toggle("bot", !!p.bot);
+      ordine.push(f.nodo); tieni[k] = true;
     });
-    Object.keys(U.figure).forEach(function (k) {
-      if (tieni[k]) return;
-      var nodo = U.figure[k].nodo; delete U.figure[k];
-      nodo.classList.add("esce"); setTimeout(function () { if (nodo.parentNode) nodo.parentNode.removeChild(nodo); }, 450);
+    var via = Object.keys(U.figure).filter(function (k) { return !tieni[k]; });
+    via.forEach(function (k) {
+      var f = U.figure[k], nodo = f.nodo; delete U.figure[k];
+      if (MENU_AV && MENU_AV.f === f) chiudiMenuAvatar();
+      // saluta con la mano e sfuma (resta dov'era: gli altri intanto si sistemano). Il fumetto solo se escono in pochi
+      nodo.classList.add("va"); usciti++;
+      if (via.length <= 2) fumetto(U, f, "Ciao ciao! 👋", "va", 1300);
+      gesto(nodo, nodo.classList.contains("pronto") ? "salta" : "saluta");
+      setTimeout(function () { nodo.classList.add("esce"); f.targa.classList.add("esce"); }, 650);
+      setTimeout(function () { togliNodo(nodo); togliNodo(f.targa); }, 1150);
     });
-    // i posti liberi: sagome tratteggiate
-    [].slice.call(U.stanza.querySelectorAll(".sl-vuoto")).forEach(function (v) { v.parentNode.removeChild(v); });
-    for (var v = 0; v < vuoti; v++) { var pv = posto(n + v); U.stanza.appendChild(el("div", { class: "sl-av sl-vuoto" + (pv.dietro ? " dietro" : ""), style: "left:" + pv.x.toFixed(2) + "%" }, [ el("div", { class: "sl-sagoma" }), el("div", { class: "sl-nome", text: "posto libero" }) ])); }
-    U.stanza.classList.toggle("piena", due); U.stanza.classList.toggle("pochi", tot <= 3); U.stanza.classList.toggle("medi", tot > 3 && tot <= 5);
-    U.conta.textContent = n === 1 ? "1 in sala" : n + " in sala";
+    // i posti liberi: sagome tratteggiate (sempre le stesse finché servono: niente lampeggio)
+    U.vuoti = U.vuoti || [];
+    while (U.vuoti.length > vuoti) { var vv = U.vuoti.pop(); vv.classList.add("esce"); vv._targa.classList.add("esce"); (function (x) { setTimeout(function () { togliNodo(x); togliNodo(x._targa); }, 450); })(vv); }
+    while (U.vuoti.length < vuoti) {
+      var nv = el("div", { class: "sl-av sl-vuoto" }, [ el("div", { class: "sl-av-in" }, [ el("div", { class: "sl-sagoma" }) ]) ]);
+      nv._targa = el("div", { class: "sl-nome vuoto", text: "posto libero" }); U.targhe.appendChild(nv._targa);
+      U.stanza.insertBefore(nv, U.targhe); U.vuoti.push(nv);
+    }
+    U.ordine = ordine.concat(U.vuoti);
+    disponiSaletta(U, !nuova);
+    var conta = n === 1 ? "1 in sala" : n + " in sala";
+    if (U.conta.textContent !== conta) { U.conta.textContent = conta; if (U.visti) rianima(U.conta, "salta"); }   // il contatore fa un saltello
+    // "Ciao Luca! 👋" a chi arriva (uno o due alla volta; se rientrano in tanti insieme, es. l'host ha riaperto la stanza,
+    // bastano il saltello e il "pling": niente muro di fumetti)
+    if (arrivati.length <= 2) arrivati.forEach(function (f, i) {
+      setTimeout(function () { if (f.nodo.parentNode && !f.nodo.classList.contains("va")) fumetto(U, f, "Ciao " + ((f.p && f.p.nome) || "") + "! 👋", "ciao", 2600); }, i * 500);
+    });
+    if (arrivati.length) suonoSl("pling"); else if (usciti && U.visti) suonoSl("va");
     U.visti = true;
+    applicaViva(U);
   }
+  // ---- dove sta ognuno nella stanza (le misure seguono la stanza: anche su un telefono alto gli avatar vengono grandi) ----
+  //  tre modi, vince quello con gli avatar più grandi (a pari misura il zig-zag, più allegro):
+  //  - in fila;
+  //  - a zig-zag: uno davanti e uno dietro (quelli dietro un po' più piccoli e più in alto), col nome di chi sta dietro
+  //    tra le teste di chi sta davanti;
+  //  - a zig-zag "alto": chi sta dietro sale sopra le teste (quando sono tanti: si stringono di più).
+  //  Si vedono tutti i visi e tutti i nomi, anche in 10. Chi cambia posto ci scivola da dov'era (solo transform: niente scatti).
+  //  (w è la larghezza del disegno dell'avatar: la persona ne occupa circa i due terzi)
+  var SL_SOPRA = 46;   // sopra la testa più alta: lo spazio per i fumetti e l'insegna
+  function disponiSaletta(U, anima) {
+    var st = U.stanza, W = st.clientWidth, H = st.clientHeight, nodi = U.ordine || [], tot = nodi.length;
+    if (!W || !H || !tot) return;   // (la saletta non è ancora sullo schermo: ci pensa l'osservatore della stanza)
+    var piedi = Math.max(20, Math.round(H * 0.055)), alto = Math.max(60, H - piedi - SL_SOPRA);   // piedi: c'è la targa col nome sotto
+    var w1 = Math.min(W / tot * 1.12, alto / 1.32, 190);
+    var wA = tot >= 3 ? Math.min(1.6 * (W - 8) / (tot + 0.216), (alto - 8) / 1.93, 170) : 0;
+    var wB = tot >= 3 ? Math.min(2.3 * (W - 8) / (tot + 0.748), (alto - 10) / 2.335, 170) : 0;
+    var zz = Math.max(wA, wB) >= w1 * 0.9, pos = [], pav = 0.3;
+    if (!zz) nodi.forEach(function (nd, i) { pos.push({ x: (i + 0.5) * W / tot, b: piedi, w: w1, z: 4, tmax: W / tot - 6 }); });
+    else {
+      var alzati = wB > wA, w = alzati ? wB : wA, m = w * 0.38 + 4, passo = (W - 2 * m) / (tot - 1), wb = w * 0.86;
+      var bb = alzati ? piedi + 1.2 * w + 10 : piedi + 0.78 * w + 8;
+      nodi.forEach(function (nd, i) {
+        var d = i % 2 === 1;
+        pos.push({ x: m + i * passo, b: d ? bb : piedi, w: d ? wb : w, z: d ? 3 : 4, dietro: d,
+          tmax: Math.min(w * 1.24, 2 * passo - 8, d && !alzati ? 2 * passo - 0.62 * w : 999) });   // (il nome non va sotto un altro nome)
+      });
+      pav = Math.max(0.3, Math.min(0.55, (bb + 10) / H));   // il pavimento arriva fin dietro a chi sta dietro
+    }
+    st.style.setProperty("--pav", (pav * 100).toFixed(1) + "%");
+    st.classList.toggle("zz", zz);
+    // ognuno al suo posto (e il suo nome sotto i piedi); chi si è spostato parte da dov'era (transform) e ci scivola
+    var mossi = [];
+    nodi.forEach(function (nd, i) {
+      var p = pos[i], v = nd._pos, t = nd._targa; nd._pos = p;
+      nd.style.left = (p.x - p.w / 2).toFixed(1) + "px"; nd.style.bottom = p.b.toFixed(1) + "px"; nd.style.width = p.w.toFixed(1) + "px";
+      nd.style.zIndex = p.z; nd.style.setProperty("--w", p.w.toFixed(1) + "px");
+      nd.classList.toggle("dietro", !!p.dietro);
+      if (t) { t.style.left = p.x.toFixed(1) + "px"; t.style.bottom = (p.b - 9).toFixed(1) + "px"; t.style.maxWidth = Math.max(40, Math.round(p.tmax)) + "px"; t.style.setProperty("--w", p.w.toFixed(1) + "px"); }
+      if (anima && v && (Math.abs(v.x - p.x) > 0.5 || Math.abs(v.b - p.b) > 0.5 || Math.abs(v.w - p.w) > 0.5)) mossi.push([nd, v, p]);
+    });
+    if (mossi.length) {
+      mossi.forEach(function (x) {
+        var nd = x[0], v = x[1], p = x[2], dx = (v.x - p.x).toFixed(1) + "px", dy = (p.b - v.b).toFixed(1) + "px";
+        nd.style.transition = "none"; nd.style.transform = "translate(" + dx + "," + dy + ") scale(" + (v.w / p.w).toFixed(3) + ")";
+        if (nd._targa) { nd._targa.style.transition = "none"; nd._targa.style.transform = "translate(calc(-50% + " + dx + ")," + dy + ")"; }
+      });
+      void st.offsetWidth;
+      mossi.forEach(function (x) { var nd = x[0]; nd.style.transition = ""; nd.style.transform = ""; if (nd._targa) { nd._targa.style.transition = ""; nd._targa.style.transform = ""; } });
+    }
+    [].forEach.call(U.bolle.childNodes, function (b) { mettiBolla(U, b); });   // i fumetti seguono chi parla
+  }
+  function togliNodo(n) { if (n && n.parentNode) n.parentNode.removeChild(n); }
+  // il disegno dell'avatar: con la mano alzata quando è pronto (il braccio passa davanti ai capelli), l'anello sotto i piedi
+  function disegnaFigura(f) {
+    f.fig.innerHTML = f.cfg && window.SGOmino ? SGOmino.svg(f.cfg, f.manoSu ? { braccia: "uno" } : null) : "<div class='sl-emo'>🙂</div>";
+    f.fig.insertBefore(f.anello, f.fig.firstChild);
+  }
+  // un'animazione dell'avatar (saltello, saluto…) quando è libero: i tocchi e l'orologio della saletta
   function animaAv(nodo, cosa) {
-    if (!nodo || nodo.classList.contains("salta") || nodo.classList.contains("saluta")) return;
-    nodo.classList.add(cosa); setTimeout(function () { nodo.classList.remove(cosa); }, cosa === "saluta" ? 1100 : 650);
+    if (!nodo || nodo._gesto) return;
+    if (cosa === "saluta" && nodo.classList.contains("pronto")) cosa = "salta";   // con la mano già alzata: un saltello
+    gesto(nodo, cosa);
   }
+  // un gesto dell'avatar (anche sopra a un altro: la faccina arriva sempre). Solo transform, nel CSS
+  var DURATA_GESTO = { salta: 650, saluta: 1100, ride: 900, trema: 650, applaude: 850, dorme: 1700 };
+  function gesto(nodo, cosa) {
+    if (!nodo) return;
+    Object.keys(DURATA_GESTO).forEach(function (c) { nodo.classList.remove(c); });
+    void nodo.offsetWidth;   // (così la stessa animazione riparte da capo)
+    nodo.classList.add(cosa); nodo._gesto = cosa;
+    clearTimeout(nodo._tGesto);
+    nodo._tGesto = setTimeout(function () { nodo.classList.remove(cosa); nodo._gesto = null; }, DURATA_GESTO[cosa] || 700);
+  }
+  function rianima(n, cls) { if (!n) return; n.classList.remove(cls); void n.offsetWidth; n.classList.add(cls); }
   // ogni tanto qualcuno saluta o fa un saltello (un solo orologio per tutte le salette)
   function avviaAnimeSaletta() {
     if (SL.timer) return;
@@ -4098,9 +4453,668 @@
       var U = SL.ultimo;
       if (!U || !document.body.contains(U.s)) { clearInterval(SL.timer); SL.timer = null; return; }
       if (document.hidden) return;
-      var nodi = [].slice.call(U.stanza.querySelectorAll(".sl-av:not(.sl-vuoto)"));
+      var nodi = [].slice.call(U.stanza.querySelectorAll(".sl-av:not(.sl-vuoto):not(.va):not(.forse)"));
       if (nodi.length) animaAv(nodi[Math.floor(Math.random() * nodi.length)], Math.random() < 0.45 ? "saluta" : "salta");
     }, 2600);
+  }
+
+  // =========================================================
+  //  SALETTA VIVA — ci si diverte già prima di cominciare (uguale per tutti i giochi: i giochi non fanno niente)
+  //  - chi arriva fa "pling" e il fumetto "Ciao Luca! 👋", il contatore fa un saltello; chi esce saluta e sfuma;
+  //  - "✋ Sono pronto!": l'avatar alza la mano e si accende la spunta; l'host legge "Pronti 2 su 3" e nel ⚙️
+  //    trova "Parti da solo quando tutti sono pronti";
+  //  - le faccine 👋 😂 😱 🔥 👏 😴: il mio avatar le fa su tutti i telefoni (al massimo una al secondo);
+  //  - chi si sta ricollegando è grigio con 📶; l'host fa uscire (tocco lungo sull'avatar) e chiude la porta (🔒);
+  //  - "Comincia": 3-2-1-Via! con suono su tutti i telefoni; la musichetta sul telefono dell'host (🎵/🔇).
+  //  I messaggi passano dallo strato comune della rete (agganciaRete), i giochi non li vedono mai:
+  //    ospite → host: __pronto { si }, __faccina { f }
+  //    host → tutti (inviaVeloce: non restano nella stanza): __sl { p: chi è pronto, f: chi si ricollega,
+  //    n: id → nome, porta }, __fa { id, n, f } (una faccina), __via { ms } o { stop } (il 3-2-1),
+  //    __fuori { to, perche: "fuori" (fatto uscire) o "porta" (porta chiusa) }
+  //  Lo stato di ogni stanza (SV) sta sul suo collegamento: h._sv (host e ospiti).
+  // =========================================================
+  var FACCINE = ["👋", "😂", "😱", "🔥", "👏", "😴"];
+  var GESTO_FACCINA = { "👋": "saluta", "😂": "ride", "😱": "trema", "🔥": "salta", "👏": "applaude", "😴": "dorme" };
+  var VIA_MS = 2400;   // il 3-2-1: 0,8 secondi per numero, poi "Via!"
+  var SVH = {};        // le stanze aperte da questo telefono (codice → SV): per chi si ricollega (evento sg-forse)
+  var MENU_AV = null;  // il menu "Fai uscire" aperto: { nodo, f }
+  var VIA = null;      // il 3-2-1 sullo schermo: { nodo, U, host, timer }
+  // chi si sta ricollegando (lo dice net.js, sul telefono dell'host): grigio con 📶 su tutti i telefoni
+  window.addEventListener("sg-forse", function (e) {
+    var d = e.detail || {}, SV = SVH[String(d.stanza || "").toUpperCase()];
+    if (!SV || !d.id) return;
+    if (d.forse && SV.dentro[d.id]) SV.forse[d.id] = 1; else delete SV.forse[d.id];
+    svRiassunto(SV);
+  });
+  function nuovoSV(host, codice, sala) {
+    return { host: host, codice: String(codice || "").toUpperCase(), sala: !!sala, h: null, pronti: {}, forse: {}, nomi: {}, dentro: {}, andati: {},
+      fuori: {}, avvisati: {}, ultFa: {}, porta: false, tSl: null, ultMia: 0, addio: null, salva: null };
+  }
+  function insieme(a) { var o = {}; (Array.isArray(a) ? a : []).forEach(function (k) { o[k] = 1; }); return o; }
+  function mioIdSV(SV) { return SV.host ? "host" : (SV.h && SV.h.mioId); }
+  function hostViaDi(codice) { var c = "/" + String(codice || "").toUpperCase() + "/"; return Object.keys(hostVia).some(function (k) { return k.indexOf(c) >= 0; }); }
+  // l'id (del collegamento) di un avatar della saletta. Certi giochi usano id loro ("X" e "O" nel Tris):
+  // allora si cerca per nome (nella stessa stanza i nomi sono tutti diversi: "Luca" e "Luca 2")
+  function idDiFigura(SV, k, p) {
+    if (!SV || !p || p.bot) return null;
+    if (p.host) return "host";
+    if (p.tu) return mioIdSV(SV);
+    if (k !== "__io" && k !== "host" && SV.nomi[k] != null) return k;
+    var trovato = null;
+    Object.keys(SV.nomi).forEach(function (id) { if (!trovato && id !== "__io" && id !== "host" && stessoNome(SV.nomi[id], p.nome)) trovato = id; });
+    return trovato;
+  }
+  function figuraDi(U, SV, id, nome) {
+    var trovata = null, mio = mioIdSV(SV);
+    Object.keys(U.figure).forEach(function (k) {
+      var f = U.figure[k], p = f.p || {};
+      if (!trovata && ((id === mio && p.tu) || (id === "host" && p.host) || (k === id && !p.host && !p.tu))) trovata = f;
+    });
+    if (!trovata && nome) Object.keys(U.figure).forEach(function (k) { var f = U.figure[k]; if (!trovata && f.p && !f.p.bot && stessoNome(f.p.nome, nome)) trovata = f; });
+    return trovata;
+  }
+  // la saletta sullo schermo è quella di questa stanza?
+  function vivaDi(SV) { var U = SL.ultimo; return SV && U && U.rete && U.rete._sv === SV && document.body.contains(U.s) ? U : null; }
+  function aggiornaViva(SV) { var U = vivaDi(SV); if (U) applicaViva(U); }
+  function vivaOra() { var U = SL.ultimo; if (U && U.figure && document.body.contains(U.s)) applicaViva(U); }
+
+  // ---- la saletta si rimette in pari con lo stato: spunte, avatar grigi, "Pronti 2 su 3", la porta, "Sono pronto".
+  //      Tocca solo quello che cambia (classi e scritte). Se tutti sono pronti e l'host ha acceso "Parti da solo", si parte ----
+  function applicaViva(U) {
+    if (!U || !U.figure) return;
+    var SV = U.rete && U.rete._sv ? U.rete._sv : null;
+    var giuIo = !!PILLOLE.n.rete;   // la mia rete è giù ("📶 Mi ricollego…"): il mio avatar è grigio anche da me
+    var hostGiu = !!(SV && !SV.host && hostViaDi(SV.codice));
+    var tot = 0, pronti = 0, pallini = [];
+    Object.keys(U.figure).forEach(function (k) {
+      var f = U.figure[k], p = f.p || {}, id = idDiFigura(SV, k, p);
+      var pr = !!(SV && id && SV.pronti[id]);
+      if (p.tu && !U.host && U.mioPronto != null) pr = U.mioPronto;
+      if (p.host || p.bot) pr = false;   // l'host fa partire lui; i bot sono sempre pronti (niente spunta)
+      var fo = !!(SV && id && SV.forse[id]) || (!!p.tu && giuIo) || (!!p.host && hostGiu);
+      f.nodo.classList.toggle("pronto", pr && !fo); f.targa.classList.toggle("pronto", pr && !fo);
+      f.nodo.classList.toggle("forse", fo); f.targa.classList.toggle("forse", fo);
+      // pronto: alza la mano (si ridisegna solo lui) con un saltello; non più pronto: la abbassa
+      if ((pr && !fo) !== f.manoSu) { f.manoSu = pr && !fo; disegnaFigura(f); if (f.manoSu && U.visti) gesto(f.nodo, "salta"); }
+      var b = fo ? "📶" : (pr ? "✓" : "");
+      var rt = fo ? "si ricollega…" : "";   // (la scritta c'è solo quando serve: niente testo nascosto per chi legge lo schermo)
+      if (f.ricollega.textContent !== rt) f.ricollega.textContent = rt;
+      if (f.bollo.textContent !== b) f.bollo.textContent = b;
+      if (!p.host && !p.bot) { tot++; if (pr && !fo) pronti++; pallini.push(pr && !fo); }   // (chi si sta ricollegando non conta come pronto)
+    });
+    U.faccine.hidden = !SV;
+    if (U.bSuono) { var ts = SUONO_SL.on ? "🎵" : "🔇"; if (U.bSuono.textContent !== ts) { U.bSuono.textContent = ts; U.bSuono.setAttribute("aria-pressed", SUONO_SL.on ? "true" : "false"); } }
+    if (U.host) {
+      // sotto il titolo lo stato ("🟡 Sto aprendo…", "🔒 Porta chiusa"), il pallino del codice, la porta nella testa (🔒 Chiudi / 🔓 Riapri)
+      var porta = !!(SV && SV.porta), cosa = U.gid === "__sala" ? "Sala" : "stanza";
+      var st = !U.aperta ? "🟡 Sto aprendo la " + cosa + "…" : (porta ? "🔒 Porta chiusa" : U.sottoBase);
+      if (U.statoT && U.statoT.textContent !== st) U.statoT.textContent = st;
+      U.codBox.classList.toggle("apre", !U.aperta); U.codBox.classList.toggle("chiusa", porta);
+      U.s.classList.toggle("porta-chiusa", porta);
+      var tp = porta ? "🔓 Riapri" : "🔒 Chiudi";
+      if (U.porta.textContent !== tp) { U.porta.textContent = tp; U.porta.setAttribute("aria-label", porta ? "Riapri la porta della " + cosa : "Chiudi la porta della " + cosa + ": non entra nessun altro"); }
+      U.porta.hidden = !(SV && U.aperta);
+      U.porta.setAttribute("aria-pressed", porta ? "true" : "false");
+      // "✋ Pronti 2 su 3" con un pallino per amico (nelle salette dei giochi, con almeno un amico)
+      var conChip = U.gid !== "__sala" && tot > 0, tutti = conChip && pronti === tot;
+      U.chip.hidden = !conChip;
+      if (conChip) {
+        var firma = pronti + "/" + tot + "|" + pallini.join(",");
+        if (U.chipFirma !== firma) {
+          U.chipFirma = firma; svuota(U.chip);
+          U.chip.appendChild(el("span", { text: tutti ? "🎉 Tutti pronti!" : "✋ Pronti " + pronti + " su " + tot }));
+          var pa = el("span", { class: "sl-pallini", "aria-hidden": "true" });
+          pallini.forEach(function (x) { pa.appendChild(el("i", { class: x ? "si" : null })); });
+          U.chip.appendChild(pa);
+        }
+        U.chip.classList.toggle("tutti", tutti);
+      }
+      U.go.classList.toggle("invita", tutti && !!U.goOk && !U.via);
+      // tutti pronti e "Parti da solo" acceso: si parte da soli (una volta; se qualcuno torna "non pronto", si riarma)
+      if (!tutti) U.autoFatto = false;
+      else if (autoParti() && U.goOk && !U.via && !U.autoFatto) {
+        U.autoFatto = true;
+        setTimeout(function () {
+          if (SL.ultimo === U && document.body.contains(U.s) && U.chip.classList.contains("tutti") && !document.querySelector(".sl-velo")) partenza(U, true);
+          else U.autoFatto = false;   // (il foglio ⚙️ è aperto: si riprova quando si chiude)
+        }, 700);
+      }
+    } else if (U.bPronto) {
+      // "✋ Sono pronto!" solo per chi è davvero dentro; chi guarda (giochi a due già pieni) non ce l'ha
+      var dentro = U.statoTit === "dentro", mio = mioPronto(U, SV);
+      U.bPronto.hidden = !SV || U.statoTit === "guardi";
+      var fp = (dentro ? 1 : 0) + "|" + (mio ? 1 : 0);
+      if (U.prFirma !== fp) {
+        U.prFirma = fp; svuota(U.bPronto);
+        U.bPronto.appendChild(el("span", { text: mio ? "✅ Sei pronto!" : "✋ Sono pronto!" }));
+        if (mio) U.bPronto.appendChild(el("small", { text: "Tocca se non lo sei più" }));
+        U.bPronto.classList.toggle("fatto", !!mio);
+        U.bPronto.setAttribute("aria-pressed", mio ? "true" : "false");
+        if (dentro) U.bPronto.removeAttribute("disabled"); else U.bPronto.setAttribute("disabled", "disabled");
+      }
+    }
+  }
+  function mioPronto(U, SV) {
+    if (U.mioPronto != null) return U.mioPronto;
+    var id = SV && mioIdSV(SV); return !!(SV && id && SV.pronti[id]);
+  }
+  // una saletta nuova (prima apertura o "Nuova partita"): i "pronto" ripartono da zero
+  function nuovoGiroSaletta(U) {
+    var SV = U.rete && U.rete._sv; if (!SV) return;
+    SV.pronti = {}; U.mioPronto = null;
+    if (SV.host) svRiassunto(SV);
+  }
+  // ✋ "Sono pronto!" (ospite): l'avatar alza subito la mano; l'host lo dice a tutti
+  function prontoSaletta(U) {
+    var SV = U.rete && U.rete._sv; if (!SV || SV.host || U.statoTit !== "dentro") return;
+    var ora = !mioPronto(U, SV);
+    U.mioPronto = ora; U.toccoPronto = Date.now();
+    try { SV.h.invia({ t: "__pronto", si: ora }); } catch (e) {}
+    if (ora) suonoSl("pronto");
+    applicaViva(U);
+  }
+
+  // ---- HOST: chi entra, chi è pronto, le faccine, chi esce o viene fatto uscire, la porta ----
+  // il riassunto per tutti (dopo un attimo, così più cambi vanno insieme)
+  function svRiassunto(SV) {
+    if (!SV || !SV.host) return;
+    clearTimeout(SV.tSl);
+    SV.tSl = setTimeout(function () {
+      SV.tSl = null;
+      var n = { host: SV.nomi.__io || "" };
+      Object.keys(SV.dentro).forEach(function (id) { if (SV.nomi[id]) n[id] = SV.nomi[id]; });
+      try { if (SV.h) SV.h.inviaVeloce({ t: "__sl", p: Object.keys(SV.pronti), f: Object.keys(SV.forse), n: n, porta: SV.porta ? 1 : 0 }); } catch (e) {}
+      aggiornaViva(SV);
+    }, 120);
+  }
+  // "sono pronto" e le faccine degli ospiti (solo da chi è dentro; una faccina al secondo a testa)
+  function svDaOspite(SV, id, m) {
+    if (!SV.dentro[id]) return;
+    if (m.t === "__pronto") {
+      if (m.si) SV.pronti[id] = 1; else delete SV.pronti[id];
+      svRiassunto(SV);   // (anche se non cambia niente: così il suo telefono è sicuro)
+    } else if (m.t === "__faccina" && FACCINE.indexOf(m.f) >= 0) {
+      var ora = Date.now(); if (ora - (SV.ultFa[id] || 0) < 900) return;
+      SV.ultFa[id] = ora;
+      var nome = SV.nomi[id] || "";
+      try { SV.h.inviaVeloce({ t: "__fa", id: id, n: nome, f: m.f }); } catch (e) {}
+      mostraFaccina(SV, id, nome, m.f);
+    }
+  }
+  // chi è stato fatto uscire, o chi è nuovo con la porta chiusa: non entra (il gioco non lo vede) e gli si dice perché
+  function svRifiuta(SV, id) {
+    var ora = Date.now(), k = SV.fuori[id];
+    if (k && !SV.porta && ora - k > 60000) { delete SV.fuori[id]; k = 0; }   // porta aperta: dopo un minuto chi era stato fatto uscire può tornare
+    var perche = k ? "fuori" : (SV.porta && !SV.dentro[id] ? "porta" : null);
+    if (!perche) return false;
+    if (ora - (SV.avvisati[id] || 0) > 2000) { SV.avvisati[id] = ora; try { SV.h.inviaVeloce({ t: "__fuori", to: id, perche: perche }); } catch (e) {} }
+    return true;
+  }
+  // per il gioco qualcuno è uscito: una volta sola (uscito da sé, sparito, fatto uscire)
+  function svAddio(SV, id) {
+    if (!id || SV.andati[id]) return;
+    SV.andati[id] = 1;
+    delete SV.dentro[id]; delete SV.pronti[id]; delete SV.forse[id];
+    if (SV.addio) try { SV.addio(id); } catch (e) {}
+    svRiassunto(SV);
+  }
+  // 🚪 "Fai uscire": il suo telefono torna alla home e per il gioco è uscito
+  function svFuori(SV, id, nome) {
+    if (!SV || !SV.host || !id || id === "host") return;
+    SV.fuori[id] = Date.now(); SV.avvisati[id] = Date.now();
+    try { SV.h.inviaVeloce({ t: "__fuori", to: id, perche: "fuori" }); } catch (e) {}
+    svAddio(SV, id);
+    pillola("saletta", "🚪 " + (nome || "L'amico") + " è fuori dalla stanza", "grigia", 3000);
+  }
+  // 🔒 la porta: chiusa, chi non è già dentro legge "La stanza è chiusa" (chi è dentro può sempre ricaricare e rientrare)
+  function portaSaletta(U) {
+    var SV = U.rete && U.rete._sv; if (!SV || !SV.host) return;
+    SV.porta = !SV.porta;
+    if (SV.salva) SV.salva();   // (se la pagina si ricarica, la stanza riapre con la porta com'era)
+    svRiassunto(SV); applicaViva(U);
+    pillola("saletta", SV.porta ? "🔒 Porta chiusa: non entra nessun altro" : "🔓 Porta aperta: chi ha il link può entrare", SV.porta ? "grigia" : "verde", 2600);
+  }
+
+  // ---- OSPITE: il riassunto dell'host, il 3-2-1, "sei fuori" ----
+  function svArrivato(SV, m) {
+    SV.pronti = insieme(m.p); SV.forse = insieme(m.f); SV.nomi = m.n && typeof m.n === "object" ? m.n : {}; SV.porta = !!m.porta;
+    var U = vivaDi(SV);
+    if (!U) return;
+    // il mio "pronto" toccato adesso vale finché l'host non lo conferma (o dopo un secondo e mezzo vale il suo)
+    if (U.mioPronto != null && (!!SV.pronti[mioIdSV(SV)] === U.mioPronto || Date.now() - (U.toccoPronto || 0) > 1500)) U.mioPronto = null;
+    applicaViva(U);
+  }
+  function contoVia(SV, m) {
+    if (m.stop) { if (VIA && !VIA.host) togliVia(); return; }
+    var U = vivaDi(SV); if (!U || U.host) return;   // solo nella saletta (chi è già in partita non lo vede)
+    mostraVia(Math.max(900, Math.min(4000, +m.ms || VIA_MS)), U, false, null);
+  }
+  // l'host mi ha fatto uscire (o la porta è chiusa e io sono nuovo): via dalla stanza, niente "Rientra"
+  function fuoriDallaStanza(R, perche) {
+    if (R.finita) return;
+    R.finita = true;
+    var porta = perche === "porta", C = R.codice;
+    try { R.h.chiudi(); } catch (e) {}
+    var ls = linkSessione(), rs = stanzaRecente();
+    if (ls && (ls.stanza === C || ls.sala === C)) dimenticaLinkSessione();
+    if (rs && (rs.stanza === C || rs.sala === C)) try { localStorage.removeItem("sg-ultima-stanza"); } catch (e) {}
+    togliVia(); togliFerma();
+    var P = R.P;
+    // un gioco lanciato dalla Sala: si torna nella Sala
+    if (!R.sala && P && P.salaCtx && P.viva() && P.salaCtx.fine) {
+      lasciaPartita(); P.salaCtx.fine();
+      pillola("saletta", porta ? "🔒 La partita ha la porta chiusa" : "🚪 L'host ti ha fatto uscire dalla partita", "grigia", 3500);
+      return;
+    }
+    if (R.sala) { if (salaG && salaG.rete === R.h) salaG = null; }
+    lasciaPartita(); SGNet.chiudiGiochi(); tieniAcceso(false);
+    var g = P && P.g, riprova = porta ? function () { if (R.sala) return salaOspite(C); if (g) { linkParams = { gioco: g.id, stanza: C }; avviaPartita(g, [], {}); } } : null;
+    var s = schermata({ icona: porta ? "🔒" : "🚪", titolo: porta ? (R.sala ? "La Sala è chiusa" : "La stanza è chiusa") : (R.sala ? "Sei fuori dalla Sala" : "Sei fuori dalla stanza"), sotto: (R.sala ? "Sala " : "Stanza ") + C });
+    s._contenuto.appendChild(el("p", { style: "font-size:1.05rem;line-height:1.5", text: porta ? "Chi l'ha aperta ha chiuso la porta: per ora non entra nessun altro." : "Chi ha aperto la stanza ti ha fatto uscire." }));
+    if (riprova) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Riprova", onclick: riprova }));
+    s._piede.appendChild(el("button", { class: "btn " + (riprova ? "btn-fantasma" : "btn-primario"), text: "🏠 Torna alla home", onclick: tornaHome }));
+    mostra(s);
+  }
+
+  // ---- LE FACCINE ----
+  function mostraFaccina(SV, id, nome, emoji) {
+    var U = vivaDi(SV);
+    if (U) {
+      var f = figuraDi(U, SV, id, nome);
+      if (f && !f.nodo.classList.contains("va")) faccinaSuAvatar(U, f, emoji);
+      else faccinaVolante(U.stanza, nome, emoji);   // chi non ha un avatar qui (es. chi guarda una partita a due)
+      return;
+    }
+    // fuori dalla saletta (si guarda la partita, la classifica): se è la stanza del gioco aperto, in basso a sinistra
+    if (stanzaInVista(SV)) faccinaVolante(null, nome, emoji);
+  }
+  function stanzaInVista(SV) {
+    var P = partitaCorrente; if (!SV || !SV.h || !P || !P.viva()) return false;
+    if (SV.host) return reteXp === SV.h;
+    return !!(reteOsp && reteOsp.h === SV.h && reteOsp.P === P);
+  }
+  function faccinaSuAvatar(U, f, emoji) {
+    bolla(U, f, el("span", { class: "sl-faccia", text: emoji }), "faccia", 1900);
+    var g = GESTO_FACCINA[emoji] || "salta";
+    if (g === "saluta" && f.nodo.classList.contains("pronto")) g = "salta";   // con la mano già alzata: un saltello
+    gesto(f.nodo, g);
+    suonoSl("pop");
+  }
+  function faccinaVolante(stanza, nome, emoji) {
+    var box = stanza ? stanza.querySelector(".sl-fa-volanti") : document.querySelector("body > .sg-fa-volanti");
+    if (!box) { box = el("div", { class: stanza ? "sl-fa-volanti" : "sg-fa-volanti", "aria-hidden": "true" }); (stanza || document.body).appendChild(box); }
+    while (box.childNodes.length >= 4) box.removeChild(box.firstChild);
+    var x = el("div", { class: "sg-fa-volante" }, [ el("b", { text: emoji }), nome ? el("span", { text: nome }) : null ]);
+    box.appendChild(x);
+    setTimeout(function () { if (x.parentNode) x.parentNode.removeChild(x); }, 2500);
+    suonoSl("pop");
+  }
+  // la mia faccina: subito sul mio avatar, poi a tutti (con la rete giù si perde: vale solo adesso)
+  function mandaFaccina(SV, emoji) {
+    var ora = Date.now();
+    if (!SV || !SV.h || ora - SV.ultMia < 1000) return false;   // al massimo una al secondo
+    SV.ultMia = ora;
+    var io = mioIdSV(SV), nome = SV.host ? (SV.nomi.__io || "") : (SV.nomi[io] || "");
+    mostraFaccina(SV, io, nome, emoji);
+    try { if (SV.host) SV.h.inviaVeloce({ t: "__fa", id: "host", n: nome, f: emoji }); else SV.h.invia({ t: "__faccina", f: emoji }); } catch (e) {}
+    return true;
+  }
+  // la fila delle faccine (svFn: la stanza a cui mandarle). Dopo un tocco aspetta un secondo (la barretta si riempie)
+  function vassoioFaccine(svFn) {
+    var box = el("div", { class: "sl-faccine", role: "group", "aria-label": "Faccine: il tuo avatar le fa sui telefoni di tutti" });
+    var carica = el("i", { class: "sl-fa-carica", "aria-hidden": "true" }), tasti = [];
+    FACCINE.forEach(function (emoji) {
+      var b = el("button", { class: "sl-fa", type: "button", "aria-label": "Faccina " + emoji, text: emoji });
+      b.addEventListener("click", function () {
+        if (!mandaFaccina(svFn(), emoji)) return;
+        rianima(b, "boing"); rianima(carica, "va");
+        box.classList.add("attesa"); tasti.forEach(function (x) { x.disabled = true; });
+        clearTimeout(box._t); box._t = setTimeout(function () { box.classList.remove("attesa"); tasti.forEach(function (x) { x.disabled = false; }); }, 1000);
+      });
+      tasti.push(b); box.appendChild(b);
+    });
+    box.appendChild(carica);
+    return box;
+  }
+
+  // ---- I FUMETTI E I TOCCHI SUGLI AVATAR ----
+  // un fumetto sopra la testa ("Ciao Luca! 👋", "Ciao ciao! 👋")
+  function fumetto(U, f, testo, cls, durata) {
+    bolla(U, f, el("div", { class: "sl-fumetto" + (cls ? " " + cls : ""), text: testo }), "fumetto", durata || 2400);
+  }
+  // fumetti e faccine stanno nel velo sopra la stanza, sulla testa di chi parla (uno per tipo alla volta)
+  function bolla(U, f, nodo, tipo, durata) {
+    [].slice.call(U.bolle.childNodes).forEach(function (b) { if (b._f === f && b._tipo === tipo) U.bolle.removeChild(b); });
+    nodo._f = f; nodo._tipo = tipo;
+    U.bolle.appendChild(nodo); mettiBolla(U, nodo);
+    f.nodo.classList.add("parla");   // (intanto "si ricollega…" si nasconde)
+    setTimeout(function () {
+      if (nodo.parentNode) nodo.parentNode.removeChild(nodo);
+      if (![].some.call(U.bolle.childNodes, function (b) { return b._f === f; })) f.nodo.classList.remove("parla");
+    }, durata);
+  }
+  // al suo posto: sopra la testa; il fumetto che uscirebbe dai lati si sposta dentro, con la punta sempre su chi parla
+  function mettiBolla(U, b) {
+    var p = b._f && b._f.nodo._pos; if (!p) return;
+    var W = U.stanza.clientWidth, H = U.stanza.clientHeight, testa = p.b + p.w * 1.32, x = p.x;
+    b.style.setProperty("--w", p.w.toFixed(1) + "px");   // (più grande sopra un avatar grande)
+    if (b._tipo === "faccia") { b.style.left = x.toFixed(1) + "px"; b.style.bottom = (testa - p.w * 0.42).toFixed(1) + "px"; return; }
+    var mezzo = b.offsetWidth / 2, alto = b.offsetHeight, giu = Math.max(0, Math.min(testa - 2, H - alto - 6));
+    if (W && mezzo) x = Math.max(mezzo + 6, Math.min(W - mezzo - 6, x));
+    // due fumetti insieme (arrivano in due) non si coprono: questo si mette sopra o sotto all'altro
+    [].forEach.call(U.bolle.childNodes, function (o) {
+      if (o === b || o._tipo !== "fumetto" || !o._x) return;
+      var ox = o._x, ob = o._b, oh = o.offsetHeight, om = o.offsetWidth / 2;
+      if (Math.abs(ox - x) < om + mezzo + 4 && giu < ob + oh + 4 && ob < giu + alto + 4) giu = ob + oh + 6 + alto <= H - 4 ? ob + oh + 6 : Math.max(0, ob - alto - 6);
+    });
+    b._x = x; b._b = giu;
+    b.style.left = x.toFixed(1) + "px";
+    b.style.bottom = giu.toFixed(1) + "px";
+    b.style.setProperty("--coda", (p.x - x).toFixed(1) + "px");
+  }
+  // tocco: l'avatar salta (il mio saluta). L'host, tenendo premuto sull'avatar di un amico: "🚪 Fai uscire"
+  function toccoAvatar(U, f) {
+    var t = null, x0 = 0, y0 = 0, lungo = false;
+    function annulla() { if (t) { clearTimeout(t); t = null; } }
+    f.nodo.addEventListener("pointerdown", function (e) {
+      lungo = false; annulla();
+      var p = f.p || {};
+      if (!U.host || p.tu || p.host || p.bot || f.nodo.classList.contains("va")) return;
+      x0 = e.clientX; y0 = e.clientY;
+      t = setTimeout(function () { t = null; lungo = true; menuAvatar(U, f); }, 550);
+    });
+    f.nodo.addEventListener("pointermove", function (e) { if (t && Math.abs(e.clientX - x0) + Math.abs(e.clientY - y0) > 14) annulla(); });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(function (ev) { f.nodo.addEventListener(ev, annulla); });
+    f.nodo.addEventListener("click", function () { if (lungo) { lungo = false; return; } animaAv(f.nodo, f.tu ? "saluta" : "salta"); });
+  }
+  function menuAvatar(U, f) {
+    chiudiMenuAvatar();
+    var SV = U.rete && U.rete._sv; if (!SV || !SV.host || !document.body.contains(f.nodo)) return;
+    var id = idDiFigura(SV, f.k, f.p); if (!id || id === "host") return;
+    var nome = (f.p && f.p.nome) || "", W = U.stanza.clientWidth || 1, H = U.stanza.clientHeight || 1, p = f.nodo._pos || { x: W / 2, b: 0, w: 0 };
+    var cx = p.x, lato = cx < W * 0.3 ? " sx" : (cx > W * 0.7 ? " dx" : "");
+    var m = el("div", { class: "sl-menu" + lato, role: "dialog", "aria-label": nome }, [
+      el("button", { class: "sl-menu-fuori", type: "button", text: "🚪 Fai uscire " + nome, onclick: function () { chiudiMenuAvatar(); svFuori(SV, id, nome); } }),
+      el("button", { class: "sl-menu-x", type: "button", "aria-label": "Annulla", text: "✕", onclick: chiudiMenuAvatar })
+    ]);
+    m.style.left = Math.round(lato === " sx" ? Math.max(6, cx - 34) : (lato === " dx" ? Math.min(W - 6, cx + 34) : cx)) + "px";
+    m.style.top = Math.round(Math.max(52, H - (p.b + p.w * 1.32) + 14)) + "px";   // (sulla testa)
+    U.stanza.appendChild(m);
+    MENU_AV = { nodo: m, f: f };
+    setTimeout(function () { if (MENU_AV && MENU_AV.nodo === m) document.addEventListener("pointerdown", fuoriMenu, true); }, 0);
+  }
+  function fuoriMenu(e) { if (MENU_AV && !MENU_AV.nodo.contains(e.target)) chiudiMenuAvatar(); }
+  function chiudiMenuAvatar() {
+    document.removeEventListener("pointerdown", fuoriMenu, true);
+    if (MENU_AV && MENU_AV.nodo.parentNode) MENU_AV.nodo.parentNode.removeChild(MENU_AV.nodo);
+    MENU_AV = null;
+  }
+
+  // ---- 3-2-1-VIA! ----
+  // "Comincia": il 3-2-1 su tutti i telefoni (ognuno conta da sé da quando gli arriva), poi parte il gioco.
+  // Senza amici (o nella Sala, dove "Comincia" sceglie il gioco) si parte subito
+  function partenza(U, auto) {
+    if (!U || U.via || !U.goOk || !U.o || !U.o.onComincia) return;
+    var SV = U.rete && U.rete._sv;
+    var amici = (U.o.giocatori || []).filter(function (p) { return !p.bot && !p.tu; }).length;
+    chiudiMenuAvatar();
+    if (!SV || !SV.h || U.gid === "__sala" || !amici) return U.o.onComincia();
+    U.via = true; tastoGo(U); applicaViva(U);
+    try { SV.h.inviaVeloce({ t: "__via", ms: VIA_MS }); } catch (e) {}
+    mostraVia(VIA_MS, U, true, function () {
+      U.via = false;
+      if (SL.ultimo !== U || !document.body.contains(U.s)) return;   // intanto si è usciti
+      if (!U.goOk) return annullaVia(U);
+      tastoGo(U);
+      U.o.onComincia();
+    });
+  }
+  // il tasto "Comincia" dell'host: acceso se il gioco può partire e non sta già partendo
+  function tastoGo(U) {
+    if (!U.go) return;
+    if (U.via && !U.goOk) return annullaVia(U);   // qualcuno è uscito durante il 3-2-1 e non si può più partire
+    var dis = !U.goOk || !!U.via, tx = U.via ? "🚀 Si parte…" : ((U.o && U.o.testoComincia) || "Comincia ▶");
+    if (dis) U.go.setAttribute("disabled", "disabled"); else U.go.removeAttribute("disabled");
+    if (U.go.textContent !== tx) U.go.textContent = tx;
+  }
+  function annullaVia(U) {
+    var SV = U.rete && U.rete._sv;
+    U.via = false; togliVia();
+    try { if (SV && SV.h) SV.h.inviaVeloce({ t: "__via", stop: 1 }); } catch (e) {}
+    tastoGo(U); applicaViva(U);
+    pillola("saletta", "✋ Manca qualcuno: non si parte", "grigia", 2600);
+  }
+  // i numeri grandi in mezzo allo schermo (non si toccano: sotto resta tutto com'è). fine() al "Via!"
+  function mostraVia(ms, U, host, fine) {
+    togliVia();
+    // in alto il gioco che parte; i numeri come i semafori di una gara: 3 rosso, 2 arancio, 1 giallo, Via! verde
+    var g = U && giocoDa(U.gid);
+    var num = el("div", { class: "sl-via-num" }), anello = el("div", { class: "sl-via-anello" });
+    var tit = g ? el("div", { class: "sl-via-tit" }, [ el("span", { text: g.icona || "🎲" }), document.createTextNode(" " + g.nome) ]) : null;
+    var nodo = el("div", { class: "sl-via", role: "status", "aria-live": "assertive" }, [ anello, num, tit ]);
+    document.body.appendChild(nodo);
+    var V = VIA = { nodo: nodo, U: U, host: !!host, timer: [] }, passo = ms / 3;
+    if (host) MUSICA_SL.ferma();   // la musichetta lascia spazio al conto
+    function viva() { return VIA === V; }
+    function persa() { return U && (SL.ultimo !== U || !document.body.contains(U.s)); }
+    function mostraN(tx, cls) { num.textContent = tx; num.className = "sl-via-num " + cls; void num.offsetWidth; num.classList.add("su"); anello.className = "sl-via-anello " + cls; void anello.offsetWidth; anello.classList.add("su"); }
+    function via() {
+      if (!viva()) return;
+      mostraN("Via!", "via"); suonoSl("via"); scintille(nodo);
+      V.timer.push(setTimeout(function () { if (!viva()) return; nodo.classList.add("fine"); V.timer.push(setTimeout(function () { if (viva()) togliVia(); }, 380)); }, 560));
+      if (fine) fine();
+    }
+    [3, 2, 1].forEach(function (n, i) {
+      V.timer.push(setTimeout(function () {
+        if (!viva()) return;
+        // la saletta non c'è più: chi fa partire (host) si ferma; chi aspetta (la partita è già cominciata) salta al "Via!"
+        if (persa()) return host ? togliVia() : via();
+        mostraN(String(n), "n" + n); suonoSl("bip" + n);
+      }, i * passo));
+    });
+    V.timer.push(setTimeout(function () { if (!viva()) return; if (host && persa()) return togliVia(); via(); }, ms));
+  }
+  function togliVia() { if (!VIA) return; VIA.timer.forEach(clearTimeout); if (VIA.nodo.parentNode) VIA.nodo.parentNode.removeChild(VIA.nodo); VIA = null; }
+  function scintille(nodo) {
+    ["✨", "🎉", "⭐", "✨", "🎊", "⭐", "✨", "🎉", "⭐", "✨"].forEach(function (s, i, tutte) {
+      var a = (i / tutte.length) * Math.PI * 2 + Math.random() * 0.5, r = 110 + Math.random() * 80;
+      var x = el("span", { class: "sl-scintilla", text: s, "aria-hidden": "true" });
+      x.style.setProperty("--dx", Math.round(Math.cos(a) * r) + "px"); x.style.setProperty("--dy", Math.round(Math.sin(a) * r) + "px");
+      x.style.setProperty("--r", Math.round(Math.random() * 140 - 70) + "deg");
+      nodo.appendChild(x);
+    });
+  }
+  // ⚙️ (host): "Parti da solo quando tutti sono pronti" (la scelta resta su questo telefono)
+  function autoParti() { try { return localStorage.getItem("sg-sl-parti") === "1"; } catch (e) { return false; } }
+  function opzioniSaletta() {
+    var chk = el("input", { type: "checkbox", "aria-label": "Parti da solo quando tutti sono pronti" }); chk.checked = autoParti();
+    chk.addEventListener("change", function () { try { localStorage.setItem("sg-sl-parti", chk.checked ? "1" : "0"); } catch (e) {} });
+    return el("div", { class: "sl-viva-opz" }, [
+      el("label", { class: "sl-interruttore" }, [ el("span", { text: "⚡ Parti da solo quando tutti sono pronti" }), chk ]),
+      el("small", { text: "Per far uscire qualcuno, tieni premuto sul suo avatar. In alto, «🔒 Chiudi» chiude la porta: non entra nessun altro." })
+    ]);
+  }
+
+  // ---- I SUONI DELLA SALETTA (generati, niente file) e la musichetta, solo sul telefono dell'host ----
+  // 🎵/🔇 vale per tutti e due (la scelta resta ricordata). Niente vibrazioni: quelle solo quando si tocca
+  var SUONO_SL = { on: true };
+  try { SUONO_SL.on = localStorage.getItem("sg-sl-suono") !== "off"; } catch (e) {}
+  function suonoSaletta(on) {
+    SUONO_SL.on = !!on;
+    try { localStorage.setItem("sg-sl-suono", on ? "on" : "off"); } catch (e) {}
+    vivaOra();
+    if (on) { audioCtx(); musicaSaletta(); } else MUSICA_SL.ferma();
+  }
+  function suonoSl(tipo) {
+    if (!SUONO_SL.on) return;
+    var ctx = audioCtx(); if (!ctx || ctx.state !== "running") return;   // (prima del primo tocco il telefono non suona)
+    try {
+      var t0 = ctx.currentTime + 0.01;
+      var tono = function (f, t, dur, vol, forma, f2) {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = forma || "sine"; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur * 0.8);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + dur + 0.03);
+      };
+      if (tipo === "pling") { tono(1318.5, t0, 0.25, 0.15); tono(1975.5, t0 + 0.07, 0.4, 0.12); tono(2637, t0 + 0.07, 0.22, 0.035); }   // chi arriva
+      else if (tipo === "va") { tono(784, t0, 0.2, 0.06); tono(587.3, t0 + 0.1, 0.3, 0.05); }                                             // chi esce
+      else if (tipo === "pop") tono(420, t0, 0.11, 0.1, "sine", 980);                                                                       // una faccina
+      else if (tipo === "pronto") { tono(1046.5, t0, 0.22, 0.11); tono(1568, t0 + 0.07, 0.32, 0.09); }
+      else if (/^bip/.test(tipo)) tono({ bip3: 587.3, bip2: 659.3, bip1: 784 }[tipo] || 784, t0, 0.2, 0.13, "triangle");                    // 3, 2, 1 (sempre più acuto)
+      else if (tipo === "via") { [1046.5, 1318.5, 1568, 2093].forEach(function (f, i) { tono(f, t0 + i * 0.035, 0.6, 0.08, "triangle"); }); tono(523.25, t0, 0.45, 0.07, "sine", 1046.5); }
+    } catch (e) {}
+  }
+  function musicaSaletta() {
+    var U = SL.ultimo; if (!(SUONO_SL.on && U && U.host && !U.via && document.body.contains(U.s))) return;
+    // il telefono non suona finché non si tocca lo schermo (e lo schermo spento lo ferma): la musichetta parte da sola appena si può
+    var ctx = audioCtx();
+    if (ctx && !ctx._salettaAscolta && ctx.addEventListener) { ctx._salettaAscolta = true; try { ctx.addEventListener("statechange", function () { if (ctx.state === "running") musicaSaletta(); }); } catch (e) {} }
+    MUSICA_SL.avvia();
+  }
+  // la musichetta: un giro allegro da sala d'attesa (Do · La- · Re- · Sol · Mi- · La · Re- · Sol), marimba, basso,
+  // accordi morbidi e spazzole. Si ferma da sola quando la saletta non c'è più (o lo schermo si spegne)
+  var MUSICA_SL = (function () {
+    var ctx = null, master = null, timer = null, nextT = 0, step = 0, rumore = null;
+    var S = 60 / 112 / 4;   // un sedicesimo a 112 battiti al minuto
+    function hz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+    var GIRO = [
+      { b: 36, a: [60, 64, 67, 71], m: [76, null, 79, 76, 72, null, 74, 76] },
+      { b: 33, a: [57, 60, 64, 67], m: [77, null, 76, 72, 69, null, 72, null] },
+      { b: 38, a: [60, 62, 65, 69], m: [74, null, 77, 74, 69, null, 72, 74] },
+      { b: 31, a: [59, 62, 65, 67], m: [79, 77, 76, 74, 71, null, 74, null] },
+      { b: 40, a: [59, 62, 64, 67], m: [76, null, 79, 83, 79, null, 76, null] },
+      { b: 33, a: [61, 64, 67, 69], m: [73, null, 76, 79, 81, null, 79, 76] },
+      { b: 38, a: [60, 62, 65, 69], m: [77, null, 74, 77, 81, null, 77, 74] },
+      { b: 31, a: [59, 62, 65, 67], m: [79, null, 74, 71, 74, 77, 79, null] }
+    ];
+    function nota(f, t0, dur, forma, vol, att) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = forma; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + (att || 0.006)); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + dur + 0.05);
+    }
+    function marimba(f, t0) { nota(f, t0, 0.42, "sine", 0.16, 0.003); nota(f * 4, t0, 0.07, "sine", 0.025, 0.002); }
+    function spazzola(t0, vol, dur) {
+      if (!rumore) { rumore = ctx.createBuffer(1, Math.round(ctx.sampleRate * 0.12), ctx.sampleRate); var d = rumore.getChannelData(0); for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+      var s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain();
+      s.buffer = rumore; fl.type = "bandpass"; fl.frequency.value = 6200; fl.Q.value = 0.7;
+      g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      s.connect(fl); fl.connect(g); g.connect(master); s.start(t0); s.stop(t0 + dur + 0.02);
+    }
+    function cassa(t0) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.setValueAtTime(120, t0); o.frequency.exponentialRampToValueAtTime(48, t0 + 0.1);
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.32, t0 + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
+      o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + 0.18);
+    }
+    function passo(t0) {
+      var i = step % 16, battuta = Math.floor(step / 16), c = GIRO[battuta % 8], conMelodia = battuta >= 4;
+      if (i === 0 || i === 8) cassa(t0);
+      if (i % 2 === 0) spazzola(t0, i % 4 === 2 ? 0.05 : 0.025, 0.05);
+      if (i === 4 || i === 12) spazzola(t0, 0.07, 0.11);
+      if (i === 0) nota(hz(c.b), t0, S * 5, "triangle", 0.3);                     // il basso: radice, quinta, ottava
+      if (i === 6) nota(hz(c.b + 7), t0, S * 2, "triangle", 0.22);
+      if (i === 8) nota(hz(c.b + 12), t0, S * 3, "triangle", 0.24);
+      if (i === 14) nota(hz(c.b + 7), t0, S * 2, "triangle", 0.18);
+      if (i === 2 || i === 10) c.a.forEach(function (m) { nota(hz(m), t0, S * 2.4, "sine", 0.045, 0.012); nota(hz(m) * 1.003, t0, S * 2.4, "triangle", 0.02, 0.012); });   // accordi morbidi
+      if (conMelodia && i % 2 === 0) { var mm = c.m[i / 2]; if (mm) marimba(hz(mm), t0); }
+      step++;
+    }
+    function viva() { var U = SL.ultimo; return SUONO_SL.on && U && U.host && !U.via && document.body.contains(U.s) && !document.hidden; }
+    function loop() {
+      if (!ctx) return;
+      if (!viva()) return ferma();
+      if (nextT < ctx.currentTime - 0.05) nextT = ctx.currentTime + 0.05;   // il telefono si è inceppato un attimo: le note perse si saltano (niente raffica)
+      while (nextT < ctx.currentTime + 0.3) { passo(nextT); nextT += S; }
+    }
+    function ferma() {
+      if (timer) { clearInterval(timer); timer = null; }
+      if (ctx && master) { try { master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(Math.max(0.0001, master.gain.value || 0.0001), ctx.currentTime); master.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5); } catch (e) {} }
+    }
+    return {
+      avvia: function () {
+        ctx = audioCtx(); if (!ctx || timer || ctx.state !== "running") return;   // (prima del primo tocco no: ripartirebbe tutto insieme)
+        try {
+          if (!master) {
+            master = ctx.createGain(); var fl = ctx.createBiquadFilter(); fl.type = "lowpass"; fl.frequency.value = 4800;
+            var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -12; comp.ratio.value = 8;
+            master.connect(fl); fl.connect(comp); comp.connect(ctx.destination);
+          }
+          master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(0.0001, ctx.currentTime);
+          master.gain.exponentialRampToValueAtTime(0.34, ctx.currentTime + 1.5);
+          nextT = ctx.currentTime + 0.1; step = 0; loop(); timer = setInterval(loop, 100);
+        } catch (e) { timer = null; }
+      },
+      ferma: ferma
+    };
+  })();
+  // tornando nell'app la musichetta riparte (era ferma con lo schermo spento)
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) musicaSaletta(); });
+
+  // ---- 🎲 NOMI BUFFI per chi entra senza profilo ("Tartaruga Veloce"): massimo 16 lettere, come i nomi ----
+  var NOMI_BUFFI = {
+    m: ["Panda", "Gufo", "Pinguino", "Koala", "Riccio", "Criceto", "Bradipo", "Canguro", "Delfino", "Polpo", "Leone", "Gatto", "Orso", "Lupo", "Tucano", "Pavone", "Procione", "Coniglio", "Granchio", "Cammello", "Fagiano", "Pellicano"],
+    f: ["Tartaruga", "Giraffa", "Volpe", "Lontra", "Zebra", "Foca", "Papera", "Gallina", "Lumaca", "Formica", "Farfalla", "Balena", "Capra", "Mucca", "Rana", "Medusa", "Cicogna", "Pecora"],
+    a: [["Veloce", "Veloce"], ["Ballerino", "Ballerina"], ["Distratto", "Distratta"], ["Elegante", "Elegante"], ["Coraggioso", "Coraggiosa"], ["Furbo", "Furba"], ["Felice", "Felice"],
+        ["Spaziale", "Spaziale"], ["Volante", "Volante"], ["Saggio", "Saggia"], ["Goloso", "Golosa"], ["Ninja", "Ninja"], ["Atomico", "Atomica"], ["Magico", "Magica"], ["Allegro", "Allegra"],
+        ["Timido", "Timida"], ["Fortunato", "Fortunata"], ["Gigante", "Gigante"], ["Turbo", "Turbo"], ["Stellare", "Stellare"], ["Canterino", "Canterina"], ["Elettrico", "Elettrica"],
+        ["Rapido", "Rapida"], ["Tranquillo", "Tranquilla"], ["Misterioso", "Misteriosa"], ["Dormiglione", "Dormigliona"], ["Pasticcione", "Pasticciona"]]
+  };
+  function nomeBuffo(prima) {
+    for (var i = 0; i < 40; i++) {
+      var fem = Math.random() < 0.45, lista = fem ? NOMI_BUFFI.f : NOMI_BUFFI.m;
+      var n = lista[Math.floor(Math.random() * lista.length)] + " " + NOMI_BUFFI.a[Math.floor(Math.random() * NOMI_BUFFI.a.length)][fem ? 1 : 0];
+      if (n.length <= 16 && n !== prima) return n;
+    }
+    return "Panda Veloce";
+  }
+  // la casella del nome (giochi e Sala, senza profilo): accanto c'è il 🎲; se è vuota ci metto il nome dell'ultima volta.
+  // anteprima: dove far vedere l'avatar che avrai con quel nome (l'avatar nasce dal nome: col 🎲 cambiano tutti e due)
+  function dadoNome(input, anteprima) {
+    if (!input || input._dado || !input.parentNode) return;
+    input._dado = true;
+    var box = el("div", { class: "sl-nome-campo" }), tAv = null;
+    input.parentNode.insertBefore(box, input); box.appendChild(input);
+    function avatar(salta) {
+      clearTimeout(tAv); if (!anteprima || !window.SGOmino) return;
+      var n = (input.value || "").trim().slice(0, 16);
+      anteprima.innerHTML = SGOmino.svg(SGOmino.casuale(n || "Amico"));
+      anteprima.classList.toggle("vuota", !n);
+      if (salta) rianima(anteprima, "salta");
+    }
+    var b = el("button", { class: "sl-dado", type: "button", "aria-label": "Un nome buffo a caso", text: "🎲", onclick: function () {
+      input.value = nomeBuffo(input.value);
+      try { input.dispatchEvent(new Event("input", { bubbles: true })); } catch (e) {}
+      rianima(b, "gira"); avatar(true);
+    } });
+    box.appendChild(b);
+    if (!input.value) { var u = ""; try { u = localStorage.getItem("sg-nome-ospite") || ""; } catch (e) {} if (u) input.value = u; }
+    if (anteprima) { input.addEventListener("input", function () { clearTimeout(tAv); tAv = setTimeout(function () { avatar(false); }, 300); }); avatar(false); }
+  }
+  // chi apre il link senza profilo: la schermata del nome del gioco diventa un benvenuto (il gioco e la stanza in alto,
+  // l'avatar che avrà, "Come ti chiami?" e il 🎲). I giochi non cambiano: la riconosco dalla casella del nome
+  function dadoNelleSchermate(s, g, codice) {
+    if (!s || !s.querySelectorAll || profiloAttivo()) return;
+    [].forEach.call(s.querySelectorAll("input.link-campo"), function (i) {
+      if (!(/nome/i.test(i.getAttribute("placeholder") || "") && +(i.getAttribute("maxlength") || 99) <= 20) || i._dado) return;
+      var anteprima = null;
+      if (g && i.parentNode && !s.querySelector(".sl-benvenuto")) {
+        if (s.classList.contains("senza-testa")) {   // (il titolo col nome del gioco l'aveva tolto t.schermata: qui serve)
+          var testa = s.querySelector(".testa"), tit = testa && testa.lastElementChild;
+          if (tit && !tit.querySelector("h1")) {
+            s.classList.remove("senza-testa");
+            testa.insertBefore(el("span", { text: g.icona || "🎲", style: "font-size:1.8rem" }), tit);
+            tit.appendChild(el("h1", { text: g.nome })); if (codice) tit.appendChild(el("p", { class: "sotto", text: "Stanza " + String(codice).toUpperCase() }));
+          }
+        }
+        anteprima = el("div", { class: "sl-anteprima", "aria-hidden": "true" });
+        i.parentNode.insertBefore(el("div", { class: "sl-benvenuto" }, [
+          el("b", { class: "sl-benv-tit", text: "Ti aspettano per giocare! 🎉" }), anteprima,
+          el("span", { class: "sl-benv-sotto", text: "Come ti chiami? Tocca 🎲 per un nome buffo: cambia anche il tuo avatar." })
+        ]), i);
+      }
+      dadoNome(i, anteprima);
+    });
   }
   // porta d'ingresso a un gioco dalla home: profilo → come giocate → (amici) → impostazioni
   function apriGioco(g) {
@@ -4309,13 +5323,16 @@
   // contro il computer certi giochi ti chiamano "Tu" (o "Io") invece che col nome del profilo
   function sonoIo(n) { var x = String(n || "").toLowerCase().replace(/[^a-zàèéìòù]/g, ""); return x === "tu" || x === "io"; }
   // classifica = [{ nome, pos? , punti? }] dal primo all'ultimo; soloSeCi = niente XP se il mio nome non c'è (es. chi guarda)
-  function premiaPartita(classifica, soloSeCi) {
+  // codice = la stanza online (online il mio nome può essere stato cambiato dall'host: "Luca 2")
+  function premiaPartita(classifica, soloSeCi, codice) {
     var ora = Date.now();
     if (ora - xpOrologio.ultimo < 4000) return;   // la stessa partita detta due volte (risultato + fine)
     var sec = (ora - xpOrologio.t0) / 1000;
     xpOrologio.t0 = ora;   // la prossima partita parte da qui
     if (!(window.SGLivelli && window.SGNube && SGNube.aggiungiXp && SGNube.profilo())) return;   // solo coi profili
-    var p = SGNube.profilo(), lista = classifica || [], mio = null;
+    var p = SGNube.profilo(), lista = classifica || [], mio = null, nomeQui = codice ? nomeStanza(codice) : "";
+    // prima il nome che ho in questa stanza (se un altro senza profilo era già "Luca", io sono "Luca 2"), poi quello del profilo
+    if (nomeQui) lista.forEach(function (r) { if (!mio && r && stessoNome(r.nome, nomeQui)) mio = r; });
     lista.forEach(function (r) { if (!mio && r && stessoNome(r.nome, p.nome)) mio = r; });
     if (!mio) lista.forEach(function (r) { if (!mio && r && sonoIo(r.nome)) mio = r; });
     if (soloSeCi && !mio) return;
@@ -4338,40 +5355,266 @@
     else codaTrofei.push({ tipo: "xp", cls: "tl-xp", icona: "⭐", su: su, nome: "Livello " + s.level, sotto: "Ancora " + cifre(SGLivelli.xpPerSalire(s.level) - s.xp) + " XP per il livello " + (s.level + 1) });
     prossimoAvviso();
   }
-  // il collegamento: l'host ricorda la sua stanza (per mandare "__esito"), l'ospite lo riceve
-  function agganciaXpRete() {
-    if (!window.SGNet || SGNet.__xp) return;
-    SGNet.__xp = true;
+  // =========================================================
+  //  STRATO COMUNE DELLA RETE — avvolge SGNet.ospita e SGNet.entra per tutti i giochi,
+  //  così i giochi non devono fare niente di nuovo:
+  //  - host: ricorda la stanza aperta (se la pagina si ricarica la riapre con lo stesso codice), cambia i nomi
+  //    doppi ("Luca" e "Luca 2"; chi ha il profilo tiene il suo), manda "__esito" per gli XP;
+  //  - ospite: ricorda il nome usato nella stanza, dice all'host se ha il profilo (pr:1), prende gli XP;
+  //    nella Sala, se il gioco chiude la sua stanza, torna alla Sala senza schermata d'errore;
+  //    se l'host riapre la stanza (pagina ricaricata) il gioco riparte pulito e rientra da solo nella saletta.
+  //  I messaggi del core ("__…") non arrivano mai ai giochi.
+  // =========================================================
+  var reteOsp = null;     // la stanza di un gioco in cui sono entrato da ospite: { h, codice, P, guarda, sala }
+  var NOMI_SEME = null;   // stanza riaperta: i nomi già dati (id -> nome), così ognuno ritrova il suo
+  var PORTA_SEME = false; // stanza riaperta con la porta chiusa
+  var PORTA_SALA_SEME = false;   // (lo stesso per la Sala)
+  var HOST_DI_RISERVA = { ordine: 1 };   // giochi col loro host di riserva (Parola d'ordine): quando cambia l'host non si riavviano
+  function hostDiRiserva(g) { return !!(g && (g.hostDiRiserva || HOST_DI_RISERVA[g.id])); }
+  function delCore(m) { return !!(m && typeof m.t === "string" && m.t.slice(0, 2) === "__"); }
+  function impSalvabili(imp) { try { return JSON.parse(JSON.stringify(imp || {})); } catch (e) { return {}; } }
+  // due con lo stesso nome nella stessa stanza: il secondo diventa "Luca 2". Lo stesso telefono tiene il nome che ha avuto;
+  // due profili con lo stesso nome sono la stessa persona (niente numero). true = nome nuovo da ricordare
+  function nomeUnico(nomi, conPr, id, m) {
+    var n = String(m.nome || "").trim().slice(0, 16);
+    if (!n) return false;
+    if (nomi[id]) { m.nome = nomi[id]; return false; }
+    function preso(x) { for (var k in nomi) if (k !== id && stessoNome(nomi[k], x)) return k; return null; }
+    var k = preso(n);
+    if (k && !(m.pr && conPr[k])) {
+      var base = n.slice(0, 13), i = 2;
+      while (preso(base + " " + i) && i < 99) i++;
+      n = base + " " + i; m.nome = n;
+    }
+    nomi[id] = n; if (m.pr) conPr[id] = 1;
+    return true;
+  }
+  function agganciaRete() {
+    if (!window.SGNet || SGNet.__strato) return;
+    SGNet.__strato = true;
     var ospita = SGNet.ospita, entra = SGNet.entra;
-    if (ospita) SGNet.ospita = function (giocoId) { var h = ospita.apply(SGNet, arguments); if (giocoId !== "__sala" && h) reteXp = h; return h; };
-    if (entra) SGNet.entra = function (codice, cb) {
-      if (cb && typeof cb.onMsg === "function" && !cb.__xp) {
-        var orig = cb.onMsg; cb.__xp = true;
-        cb.onMsg = function (m) { if (m && m.t === "__esito") { premiaPartita(m.c, true); return; } return orig.apply(this, arguments); };
+    SGNet.ospita = function (giocoId, cb, opz) {
+      cb = cb || {};
+      var sala = giocoId === "__sala", P = partitaCorrente && partitaCorrente.viva() ? partitaCorrente : null;
+      // i nomi già dati e il codice imposto valgono per la stanza a cui erano destinati: la Sala riaperta,
+      // oppure la partita appena avviata (stanza riaperta dopo una ricarica, gioco lanciato dalla Sala)
+      var seme = sala ? NOMI_SEME : (P && P.nomiSeme), portaSeme = sala ? PORTA_SALA_SEME : !!(P && P.portaSeme);
+      if (sala) { NOMI_SEME = null; PORTA_SALA_SEME = false; } else if (P) { P.nomiSeme = null; P.portaSeme = null; }
+      if (!sala && P && P.forza) { if (!(opz && opz.codice)) opz = Object.assign({}, opz || {}, { codice: P.forza }); P.forza = null; }
+      var nomi = seme || {}, conPr = {}, salva = null;
+      var io = profiloAttivo(); if (io && io.nome) { nomi.__io = String(io.nome).trim().slice(0, 16); conPr.__io = 1; }   // il nome dell'host è suo
+      // la saletta viva di questa stanza: chi è dentro, chi è pronto, chi si ricollega, chi è stato fatto uscire, la porta
+      var SV = nuovoSV(true, "", sala); SV.nomi = nomi; SV.porta = portaSeme;
+      Object.keys(nomi).forEach(function (k) { if (k !== "__io") SV.dentro[k] = 1; });   // stanza riaperta: chi c'era rientra anche con la porta chiusa
+      var onMsg = cb.onMsg, onAddio = cb.onAddio;
+      SV.addio = function (id) { if (onAddio) onAddio.call(cb, id); };
+      cb.onAddio = function (id) { svAddio(SV, id); };   // (una volta sola per ognuno: uscito, sparito o fatto uscire)
+      cb.onMsg = function (id, m) {
+        if (m && m.t === "join") {
+          if (svRifiuta(SV, id)) return;   // fatto uscire, o nuovo con la porta chiusa: il gioco non lo vede
+          if (nomeUnico(nomi, conPr, id, m) && salva) salva();
+          SV.dentro[id] = 1; delete SV.andati[id];
+          svRiassunto(SV);   // (chi entra riceve subito chi è pronto e chi si ricollega)
+        }
+        else if (SV.fuori[id]) return;   // chi è stato fatto uscire non conta più
+        else if (m && (m.t === "__pronto" || m.t === "__faccina")) svDaOspite(SV, id, m);
+        if (delCore(m)) return;
+        return onMsg ? onMsg.apply(this, arguments) : undefined;
+      };
+      var h = ospita.call(SGNet, giocoId, cb, opz);
+      if (!h) return h;
+      SV.h = h; SV.codice = h.codice; h._sv = SV; h._P = sala ? null : P; SVH[SV.codice] = SV;
+      var chiudiSV = h.chiudi, lasciaSV = h.lascia;
+      function viaSV() { clearTimeout(SV.tSl); if (SVH[SV.codice] === SV) delete SVH[SV.codice]; }
+      h.chiudi = function () { viaSV(); return chiudiSV.apply(h, arguments); };
+      h.lascia = function () { viaSV(); return lasciaSV.apply(h, arguments); };
+      if (!sala) reteXp = h;
+      // la stanza che ho aperto io (non dalla Sala, non la partita col bot trasmessa a chi guarda):
+      // la ricordo (gioco, codice, regole, nomi, fase) finché non la chiudo apposta
+      if (!sala && P && !P.salaCtx && P.g.id === giocoId && (P.impostazioni || {}).modo === "online") {
+        var C = h.codice, fase = "", tVivo = null, salvata = 0;
+        P.miaStanza = C;
+        salva = function () { salvata = Date.now(); ricordaMiaStanza({ gioco: giocoId, codice: C, imp: impSalvabili(P.tavolo ? P.tavolo.impostazioni : P.impostazioni), nomi: nomi, fase: fase, porta: SV.porta ? 1 : 0 }); };
+        SV.salva = salva;
+        salva();
+        tVivo = setInterval(salva, 60000);   // "è ancora aperta" (vale 20 minuti dall'ultima volta)
+        var invia = h.invia, chiudi = h.chiudi, lascia = h.lascia;
+        h.invia = function (msg) {   // a ogni foto (al massimo ogni 3 secondi, e subito se cambia la fase): fase e regole aggiornate
+          var f = msg && msg.vm && typeof msg.vm.fase === "string" ? msg.vm.fase : (msg && msg.t === "lobby" ? "lobby" : null);
+          if (f && f !== fase) { fase = f; salva(); } else if (Date.now() - salvata > 3000) salva();
+          return invia.apply(h, arguments);
+        };
+        h.chiudi = function () { clearInterval(tVivo); dimenticaMiaStanza(C); return chiudi.apply(h, arguments); };
+        h.lascia = function () { clearInterval(tVivo); dimenticaMiaStanza(C); return lascia.apply(h, arguments); };
       }
-      return entra.apply(SGNet, arguments);
+      return h;
     };
+    SGNet.entra = function (codice, cb, opz) {
+      cb = cb || {};
+      var C = String(codice).toUpperCase(), sala = !!(opz && opz.tieni);
+      var P = !sala && partitaCorrente && partitaCorrente.viva() ? partitaCorrente : null;
+      var guarda = !!(P && P.tavolo && P.tavolo.linkParams && P.tavolo.linkParams.guarda);
+      var R = { codice: C, P: P, sala: sala, guarda: guarda, h: null };
+      var SV = nuovoSV(false, C, sala);   // la saletta viva vista da qui: chi è pronto, chi si ricollega, i nomi, la porta
+      var onMsg = cb.onMsg;
+      cb.onMsg = function (m) {
+        if (m && m.t === "__esito") { premiaPartita(m.c, true, C); return; }   // gli XP: ognuno si dà i suoi
+        if (delCore(m)) {
+          if (m.t === "__sl") svArrivato(SV, m);
+          else if (m.t === "__fa") { if (R.h && m.id !== R.h.mioId && FACCINE.indexOf(m.f) >= 0) mostraFaccina(SV, m.id, String(m.n || "").slice(0, 16), m.f); }
+          else if (m.t === "__via") { if (!guarda) contoVia(SV, m); }
+          else if (m.t === "__fuori") { if (R.h && m.to === R.h.mioId && !guarda) fuoriDallaStanza(R, m.perche); }
+          return;
+        }
+        return onMsg ? onMsg.apply(this, arguments) : undefined;
+      };
+      // nella Sala: se il gioco chiude la sua stanza (partita finita) si torna nella Sala, senza "Collegamento perso"
+      var onChiuso = cb.onChiuso;
+      if (P && P.salaCtx && P.salaCtx.chiusa) {
+        cb.onChiuso = function () { if (P.viva()) return P.salaCtx.chiusa(); return onChiuso ? onChiuso.apply(this, arguments) : undefined; };
+      }
+      // fuori dalla Sala (e dal torneo): l'host non è tornato per 2 minuti → "La stanza è chiusa", uguale in tutti i giochi
+      // (chi ha il suo host di riserva e chi guarda restano come sono)
+      else if (P && !P.salaCtx && !guarda && !hostDiRiserva(P.g)) {
+        cb.onChiuso = function (perche) {
+          if (perche && perche.sparito && P.viva()) return stanzaChiusa(C);
+          // chiusa apposta dall'host: ricaricando la pagina non si prova a rientrare, e in home niente "Rientra"
+          if (perche && perche.voluto) {
+            R.finita = true;
+            var ls = linkSessione(), rs = stanzaRecente();
+            if (ls && ls.stanza === C) dimenticaLinkSessione();
+            if (rs && rs.stanza === C) try { localStorage.removeItem("sg-ultima-stanza"); } catch (e) {}
+          }
+          return onChiuso ? onChiuso.apply(this, arguments) : undefined;
+        };
+      }
+      var onHN = cb.onHostNuovo;
+      cb.onHostNuovo = function (eraDentro, eraVivo) { if (onHN) try { onHN.apply(this, arguments); } catch (e) {} hostTornato(R, eraDentro, eraVivo); };
+      var h = entra.call(SGNet, codice, cb, guarda ? Object.assign({}, opz || {}, { guarda: true }) : opz);
+      if (!h) return h;
+      R.h = h; SV.h = h; h._sv = SV;
+      var invia = h.invia;
+      h.invia = function (msg) {
+        if (msg && msg.t === "join") {
+          if (!sala && msg.nome) ricordaNomeStanza(C, msg.nome);   // ricaricando si rientra con lo stesso nome
+          if (profiloAttivo()) msg.pr = 1;   // chi ha il profilo tiene il suo nome
+          else if (msg.nome && msg.nome !== "Amico") try { localStorage.setItem("sg-nome-ospite", String(msg.nome).slice(0, 16)); } catch (e) {}   // la prossima volta è già scritto
+        }
+        return invia.apply(h, arguments);
+      };
+      // finché sono dentro la stanza resta "recente" (se la pagina si ricarica rientro da solo, in home c'è "Rientra"),
+      // anche in una serata lunga
+      var marca = sala ? { sala: C } : (P && !P.salaCtx && !guarda ? { gioco: P.g.id, stanza: C } : null);
+      if (marca) var tMarca = setInterval(function () {
+        var st = h.stato ? h.stato() : null;
+        if (!st || st.chiusa || R.finita) return clearInterval(tMarca);
+        if (st.dentro) { ricordaStanza(Object.assign({}, marca)); segnaLinkSessione(marca); }
+      }, 60000);
+      if (!sala) { reteOsp = R; avviaControlloRete(); }
+      return h;
+    };
+  }
+  // l'host non è tornato in tempo (2 minuti): la stanza è chiusa. In home resta "Rientra": se la riapre, si torna dentro
+  function stanzaChiusa(codice) {
+    lasciaPartita(); SGNet.chiudiGiochi(); togliFerma(); dimenticaLinkSessione(); tieniAcceso(false);
+    var s = schermata({ icona: "🚪", titolo: "La stanza è chiusa", sotto: "Stanza " + codice });
+    s._contenuto.appendChild(el("p", { text: "Chi l'ha aperta non è tornato in tempo.", style: "font-size:1.05rem;line-height:1.5" }));
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: tornaHome }));
+    mostra(s);
+  }
+  // l'host ha riaperto la stanza (la sua pagina si è ricaricata, l'app si è riaperta): chi era dentro riparte pulito
+  // dalla saletta, con lo stesso posto (stesso id). Il gioco vecchio non disegna più (partitaN).
+  function hostTornato(R, eraDentro, eraVivo) {
+    // (la Sala si rimette a posto da sola; chi non aveva ancora chiesto di entrare rientra col join)
+    // Anche chi per il collegamento non era "dentro" ma stava già giocando riparte: es. ricaricato a metà partita
+    // in un gioco che nelle foto non mette gli id (l'host non l'ha riconosciuto), altrimenti resterebbe sul tavolo vecchio
+    var st = R.h && R.h.stato ? R.h.stato() : null;
+    if (R.sala || R.guarda || !(eraDentro || (eraVivo && st && st.entrato))) return;
+    var P = R.P;
+    if (!P || !P.viva() || hostDiRiserva(P.g)) return;
+    var U = SL.ultimo, inSaletta = !!(U && !U.host && U.o && U.o._rete === R.h && document.body.contains(U.s));
+    var nh = nomeStanza(R.codice, true);
+    if (eraDentro || !inSaletta) pillola("tornato", "🎉 " + (nh || "L'host") + " è tornato: si riparte dalla saletta", "verde", 3500);
+    // ero già in saletta: basta rientrare (il collegamento ha già ripetuto "sono entrato"), niente da rifare sullo schermo
+    if (inSaletta) return;
+    try { R.h.lascia(); } catch (e) {}
+    linkParams = Object.assign({}, P.tavolo.linkParams);
+    avviaPartita(P.g, P.giocatori, P.impostazioni, P.opts, P.salaCtx);
+  }
+  // "👀 Partita in corso: la guardi ed entri alla prossima": chi è arrivato a partita cominciata (l'host non l'ha messo dentro).
+  // Si toglie da sola quando compare la saletta (lì si entra) o quando l'host lo mette dentro.
+  // Nei giochi a due (Tris…) chi è in più guarda: "👀 Giocano in due: tu guardi".
+  // Ogni secondo ricontrolla anche il titolo della saletta ("Sto entrando…" → "tu guardi" anche senza foto nuove).
+  var tControlloRete = null;
+  function avviaControlloRete() { if (!tControlloRete) tControlloRete = setInterval(controllaRete, 1000); controllaRete(); }
+  function controllaRete() {
+    var R = reteOsp, st = R && R.h && R.h.stato ? R.h.stato() : null;
+    if (!st || st.chiusa || !R.P || !R.P.viva()) {
+      if (tControlloRete) { clearInterval(tControlloRete); tControlloRete = null; }
+      pillola("prossima", null); return;
+    }
+    var U = SL.ultimo, inSaletta = !!(U && !U.host && document.body.contains(U.s));
+    var guardi = inSaletta && U.o && U.o._rete === R.h && titoloSaletta(U, senzaTuFalso(U.o.giocatori || [], st), st) === false && U.statoTit === "guardi";
+    var fuori = !R.guarda && st.entrato && Date.now() - st.entrato > 2500 && !st.dentro && st.vivo && !st.ferma && !inSaletta;
+    pillola("prossima", fuori ? (aDue(R.P.g) ? "👀 Giocano in due: tu guardi" : "👀 Partita in corso: la guardi ed entri alla prossima") : null, "grigia");
+    if ((guardi || (fuori && aDue(R.P.g))) && R.h.calma) R.h.calma();   // gioco a due già pieno: chiedo di entrare solo ogni tanto
+  }
+
+  // ---- un tasto che va avanti da solo: "Avanti ▶ 8" conta e a zero chiama fn (così nessuna schermata resta ferma) ----
+  // nodo: un <button> (il numero si aggiunge al suo testo) oppure una scritta ("Si va avanti tra 8…" per chi aspetta).
+  // fn = null: si vede solo il conto (gli ospiti; va avanti l'host). chiave: se il tasto viene ridisegnato con la
+  // stessa chiave il conto continua da dov'era, invece di ripartire. Toccare il tasto ferma il conto (fa il tasto).
+  var CONTI = {};
+  function contoAvanti(nodo, secondi, fn, chiave) {
+    if (!nodo) return null;
+    var ora = Date.now(), k = chiave != null ? String(chiave) : null;
+    Object.keys(CONTI).forEach(function (x) { if (CONTI[x] < ora - 60000) delete CONTI[x]; });
+    var scade = k && CONTI[k] && CONTI[k] > ora ? CONTI[k] : ora + Math.max(1, +secondi || 12) * 1000;
+    if (k) CONTI[k] = scade;
+    var tasto = nodo.tagName === "BUTTON", num = null, fatto = false, timer = null;
+    if (tasto) { num = nodo.querySelector(".conto-avanti") || el("span", { class: "conto-avanti" }); if (!num.parentNode) nodo.appendChild(num); }
+    function stop() { if (timer) clearInterval(timer); timer = null; }
+    function tic() {
+      if (fatto) return stop();
+      if (!document.body.contains(nodo) && Date.now() - ora > 1500) { fatto = true; return stop(); }   // il tasto non c'è più
+      var s = Math.max(0, Math.ceil((scade - Date.now()) / 1000));
+      if (tasto) { if (num.textContent !== String(s)) num.textContent = String(s); }
+      else { var tx = "Si va avanti tra " + s + "…"; if (nodo.textContent !== tx) nodo.textContent = tx; }
+      if (s <= 0) { fatto = true; stop(); if (k) delete CONTI[k]; if (fn) fn(); }
+    }
+    if (tasto) nodo.addEventListener("click", function () { fatto = true; stop(); if (k) delete CONTI[k]; }, true);
+    tic(); if (!fatto) timer = setInterval(tic, 250);
+    return { ferma: function () { fatto = true; stop(); }, scadenza: scade };
   }
 
   // il gioco aperto adesso: uno già lasciato (es. si è tornati al tabellone) non può più disegnare, uscire o dare risultati
-  var partitaN = 0;
+  var partitaN = 0, partitaCorrente = null;   // partitaCorrente: { g, giocatori, impostazioni, opts, salaCtx, viva, tavolo, miaStanza }
   function lasciaPartita() { partitaN++; }
   function avviaPartita(g, giocatori, impostazioni, opts, salaCtx) {
     var questa = ++partitaN;
     function viva() { return questa === partitaN; }
+    // il link vale una volta sola: lo prende questa partita (t.linkParams) e poi si azzera,
+    // così la prossima stanza che apri è davvero tua (niente link "attaccato")
+    var lp = linkParams || {}; linkParams = {};
     xpRiparti(); reteXp = null; giocoXp = g.id;   // gli XP contano da qui (e dall'ultima volta in saletta)
-    // entrato da ospite con un invito: se la pagina si ricarica, in home c'è "Rientra nella partita"
-    if (linkParams && linkParams.stanza && !linkParams.guarda && !salaCtx) ricordaStanza({ gioco: g.id, stanza: String(linkParams.stanza).toUpperCase() });
+    // entrato da ospite con un invito: se la pagina si ricarica si rientra da soli; se l'app si riapre, in home c'è "Rientra nella partita"
+    if (lp.stanza && !lp.guarda && !salaCtx) { var st0 = { gioco: g.id, stanza: String(lp.stanza).toUpperCase() }; ricordaStanza(st0); segnaLinkSessione(st0); }
     // online (host, ospite o dalla Sala): lo schermo resta acceso, così il collegamento non si ferma
-    tieniAcceso(!!(salaCtx || (linkParams && linkParams.stanza) || (impostazioni && impostazioni.modo === "online")));
+    tieniAcceso(!!(salaCtx || lp.stanza || (impostazioni && impostazioni.modo === "online")));
     var contenitore = el("div");
     var schermo = el("div");
     schermo.appendChild(contenitore);
+    var P = partitaCorrente = { g: g, giocatori: giocatori, impostazioni: impostazioni, opts: opts, salaCtx: salaCtx, viva: viva, tavolo: null, miaStanza: null,
+      // il codice imposto (stanza riaperta, gioco lanciato dalla Sala) e i nomi già dati valgono solo per questa partita:
+      // li prende la prima stanza che apre (vedi agganciaRete), così non restano "attaccati" a una stanza dopo
+      forza: (window.SGNet && SGNet._forza) || null, nomiSeme: NOMI_SEME, portaSeme: PORTA_SEME };
+    if (window.SGNet) SGNet._forza = null;
+    NOMI_SEME = null; PORTA_SEME = false;
 
     var tavolo = {
       giocatori: giocatori.slice(),
       impostazioni: impostazioni || {},
-      linkParams: linkParams,
+      linkParams: lp,
       radice: contenitore,
 
       // aiuti riusabili (così i giochi non reinventano le stesse cose)
@@ -4389,12 +5632,20 @@
         if (!o.titolo) s.classList.add("senza-testa");
         return s;
       },
-      mostra: function (s) { if (!viva()) return; if (salaCtx && salaCtx.tabellone) salaCtx.tabellone(s); mostra(s); },   // torneo a eliminazione: tasto 🏆 Tabellone
+      mostra: function (s) {
+        if (!viva()) return;
+        if (salaCtx && salaCtx.tabellone) salaCtx.tabellone(s);   // torneo a eliminazione: tasto 🏆 Tabellone
+        if (lp.stanza && !lp.guarda) dadoNelleSchermate(s, g, lp.stanza);   // chi entra senza profilo: il benvenuto, l'avatar e il 🎲
+        mostra(s);
+      },
 
-      // il nome del profilo di questo telefono (chi entra da un invito entra direttamente con questo)
+      // il nome con cui questo telefono entra da solo in una stanza (se c'è, niente schermata del nome):
+      // nella Sala quello della Sala (se c'erano due "Luca", il mio è "Luca 2"), poi il profilo,
+      // poi il nome già usato in questa stanza (chi non ha il profilo non lo riscrive se la pagina si ricarica)
       nomeProfilo: function () {
+        if (salaCtx && salaG && salaG.nome) return salaG.nome;
         var p = profiloAttivo(); if (p && p.nome) return String(p.nome).trim().slice(0, 16);
-        return (salaCtx && salaG && salaG.nome) ? salaG.nome : "";   // in sala senza profilo: il nome scritto entrando
+        return lp.stanza ? nomeStanza(lp.stanza) : "";
       },
       // l'avatar di questo telefono (da mandare quando si entra in una stanza online)
       mioOmino: function (nome) {
@@ -4408,12 +5659,28 @@
       lobby: function (o) {
         if (!viva()) return null;
         xpRiparti();   // in saletta si aspetta: gli XP contano da quando si comincia a giocare
+        // chi entra: la saletta chiede al collegamento se l'host l'ha davvero messo dentro ("Sei dentro!" o "Sto entrando…");
+        // a tutti e due serve la stanza per la saletta viva (pronti, faccine, porta, 3-2-1)
+        if (o && !o.host && !o._rete && reteOsp && reteOsp.P === P) o = Object.assign({}, o, { _rete: reteOsp.h });
+        if (o && o.host && !o._rete && reteXp && reteXp._P === P) o = Object.assign({}, o, { _rete: reteXp });
         var s = saletta(g, o, (opts && opts.regole) ? { box: opts.regole, imp: tavolo.impostazioni, tavolo: tavolo } : null);
         if (s && salaCtx && salaCtx.tabellone) salaCtx.tabellone(s);
         return s;
       },
       // torneo a eliminazione: la partita col bot si trasmette, così gli altri la guardano (msg come quelli dell'host online)
       trasmetti: (salaCtx && salaCtx.trasmetti) ? function (msg) { if (viva()) salaCtx.trasmetti(msg); } : null,
+      // la fila delle faccine della saletta, da mettere dove si aspetta o si guarda (es. la classifica finale, chi guarda
+      // una partita a due): il mio avatar le fa sui telefoni di tutti. null se la partita non è online
+      faccine: function () {
+        var h = reteXp && reteXp._P === P ? reteXp : (reteOsp && reteOsp.P === P && !reteOsp.guarda ? reteOsp.h : null);
+        if (!h || !h._sv) return null;
+        return vassoioFaccine(function () { return viva() ? h._sv : null; });
+      },
+
+      // un tasto che va avanti da solo col conto alla rovescia ("Avanti ▶ 12"): nessuna schermata resta ferma.
+      // L'host passa fn (a zero si va avanti); gli ospiti fn = null e una scritta: "Si va avanti tra 12…".
+      // chiave: lo stesso conto anche se il tasto viene ridisegnato (es. "esito|" + numero del turno)
+      contoAvanti: function (nodo, secondi, fn, chiave) { return contoAvanti(nodo, secondi, fn ? function () { if (viva()) fn(); } : null, chiave); },
 
       // passaggio del telefono, poi esegue "quando"
       passaA: function (nome, quando) { passaIlTelefono(nome, quando); },
@@ -4441,11 +5708,52 @@
       esci: function () {
         if (!viva()) return;
         if (!salaCtx && tavolo.linkParams && tavolo.linkParams.stanza) dimenticaStanza();   // uscito apposta: niente "Rientra"
+        if (P.miaStanza) dimenticaMiaStanza(P.miaStanza);   // l'host è uscito apposta: la sua stanza non si riapre da sola
+        lasciaPartita();   // da qui il gioco non disegna più (un suo timer rimasto acceso non copre la Sala o la home)
         (salaCtx ? salaCtx.esci : tornaHome)();   // entrato da un edificio della città: si torna lì
       }
     };
+    P.tavolo = tavolo;
 
     g.avvia(tavolo);
+  }
+
+  // ---- la pagina si è ricaricata (o l'app si è riaperta): si torna da soli dov'eri ----
+  // la mia Sala o la mia stanza (entro 20 minuti, stesso codice: gli amici rientrano da soli), oppure la stanza
+  // dell'amico in cui ero entrato in questa scheda. Vale la più recente. null = niente da riprendere
+  function rientroAutomatico() {
+    var cand = [], io = profiloAttivo();
+    var ms = miaSalaRecente(), mt = miaStanzaRecente(), ls = linkSessione();
+    if (ms && io) cand.push({ t: ms.t, vai: function () { creaSala({ riapri: ms }); } });
+    if (mt && io && giocoDa(mt.gioco)) cand.push({ t: mt.t, vai: function () { riapriStanza(mt); } });
+    if (ls) cand.push({ t: ls.t || 0, vai: function () { if (ls.sala) return salaOspite(ls.sala); var g = giocoDa(ls.gioco); if (!g) return schermataHome(); linkParams = { gioco: g.id, stanza: ls.stanza }; avviaPartita(g, [], {}); } });
+    if (!cand.length) return null;
+    cand.sort(function (a, b) { return b.t - a.t; });
+    return cand[0].vai;
+  }
+  // l'host riapre la sua stanza: stesso gioco, stesso codice, stesse regole (la partita in corso si perde, il gruppo no)
+  function riapriStanza(o) {
+    var g = giocoDa(o.gioco), io = profiloAttivo();
+    if (!g || !io) return schermataHome();
+    // un gioco con l'host di riserva (Parola d'ordine) a partita iniziata: la porta avanti un amico, io rientro come giocatore
+    if (hostDiRiserva(g) && o.fase && o.fase !== "lobby") {
+      dimenticaMiaStanza(o.codice);
+      linkParams = { gioco: g.id, stanza: o.codice };
+      return avviaPartita(g, [], {});
+    }
+    var imp = {}, box = null;
+    if (typeof g.impostazioni === "function") {
+      box = el("div");
+      try { g.impostazioni(box, imp, { el: el, modo: "online" }); } catch (e) {}
+    }
+    Object.keys(o.imp || {}).forEach(function (k) { imp[k] = o.imp[k]; });   // le regole scelte prima (il foglio ⚙️ mostra le scelte di partenza)
+    imp.modo = "online";
+    pillola("riapro", "🔁 Riapro la tua stanza di " + g.nome + " (" + o.codice + ")…", "blu", 4000);
+    NOMI_SEME = o.nomi && typeof o.nomi === "object" ? o.nomi : null;   // ognuno ritrova il suo nome ("Luca 2" resta "Luca 2")
+    PORTA_SEME = !!o.porta;   // la porta resta com'era (chiusa: entra solo chi c'era)
+    SGNet._forza = o.codice;
+    linkParams = {};
+    avviaPartita(g, [io.nome], imp, { modo: "online", regole: box });
   }
 
   // =========================================================
@@ -4486,14 +5794,22 @@
     audioCtx: audioCtx,
     listaProfilo: listaProfilo, salvaListaProfilo: salvaListaProfilo,   // liste salvate sul profilo di chi gioca
     avviaApp: function () {
-      agganciaXpRete();
+      agganciaRete();   // lo strato comune della rete (stanze ricordate, nomi doppi, XP, host che torna…)
       // niente menu della pressione lunga (copia, salva immagine…) fuori dai campi dove si scrive
       document.addEventListener("contextmenu", function (e) { if (!(e.target && e.target.closest && e.target.closest("input, textarea, [contenteditable='true']"))) e.preventDefault(); });
       app = document.getElementById("app");
+      // il link si legge una volta sola e si toglie dall'indirizzo (così non resta "attaccato" all'app);
+      // quello di una stanza resta segnato solo in questa scheda: se la pagina si ricarica si rientra da soli
       linkParams = leggiParametriLink();
+      var daLink = !!(linkParams.sala || (linkParams.gioco && linkParams.stanza));
+      if (location.hash) try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+      if (daLink) segnaLinkSessione(linkParams.sala ? { sala: linkParams.sala } : { gioco: linkParams.gioco, stanza: linkParams.stanza });
       function parti() {
-        if (linkParams.sala) return salaOspite(linkParams.sala);   // link di una Sala online
-        var g = linkParams.gioco && giochi.filter(function (x) { return x.id === linkParams.gioco; })[0];
+        // pagina ricaricata (o app riaperta) senza link: la mia stanza o la mia Sala si riaprono, o si torna in quella dell'amico
+        var torna = !daLink && rientroAutomatico();
+        if (torna) return torna();
+        if (linkParams.sala) { var cs = linkParams.sala; linkParams = {}; return salaOspite(cs); }   // link di una Sala online
+        var g = linkParams.gioco && giocoDa(linkParams.gioco);
         // Con un codice stanza si entra come OSPITE; altrimenti si apre la preparazione
         if (g && linkParams.stanza) avviaPartita(g, [], {});
         else if (g) apriGioco(g);
@@ -4509,10 +5825,11 @@
       } else parti();
     },
     // la sala: i giochi possono rimandarci dalla loro schermata finale
-    cambiaGioco: function () { schermataScegliGioco(); },
+    // (da una partita online la stanza si chiude: non resta aperta con gli amici dentro)
+    cambiaGioco: function () { lasciaPartita(); if (window.SGNet) SGNet.chiudiGiochi(); schermataScegliGioco(); },
     // la ruota del giorno (monete o XP, un giro al giorno): la apre anche il Black Jack quando restano poche monete
     ruotaDelGiorno: ruotaDelGiorno,
-    sala: function () { schermataSala(null); },
+    sala: function () { lasciaPartita(); if (window.SGNet) SGNet.chiudiGiochi(); schermataSala(null); },
     // impostazioni arrivate da un link (le legge il gioco per i valori di partenza)
     parametriLink: function () { return linkParams; },
     // costruisce un link condivisibile con le impostazioni scelte dall'host
