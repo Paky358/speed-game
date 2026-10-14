@@ -27,27 +27,52 @@
   }
   var V_BASE = 0.055, V_BOOST = 0.165, V_SFIN = 0.018;
   var BOOST_MS = 280, COST = 13, REGEN = 16, REGEN_SFIN = 22, SFIN_MS = 3000, STAM_MAX = 100;
-  function botParam(diff) { return { S: diff === "facile" ? 42 : diff === "difficile" ? 18 : 28, I: diff === "facile" ? 520 : diff === "difficile" ? 290 : 350 }; }
+  function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
 
   // ---------- fantini: gli avatar dei giocatori, i bot con la loro faccia fissa ----------
-  var BOT_NOMI = ["Bot", "Sara", "Leo", "Nina", "Giulia", "Toni", "Rosa"];   // il primo bot è sempre Bot
-  function nomeBot(i) { return BOT_NOMI[(i - 1) % BOT_NOMI.length]; }
+  // il primo bot è sempre Bot; i nomi già usati dalle persone in gara si saltano (sennò XP e vittorie andrebbero alla persona sbagliata)
+  var BOT_NOMI = ["Bot", "Sara", "Leo", "Nina", "Giulia", "Toni", "Rosa", "Marco", "Chiara", "Pietro", "Elena", "Franco",
+    "Lucia", "Dario", "Irene", "Bruno", "Marta", "Gino", "Ada", "Ugo", "Bea", "Teo"];
+  function stessoNome(a, b) { return String(a || "").trim().toLowerCase().slice(0, 16) === String(b || "").trim().toLowerCase().slice(0, 16); }
+  function nomiBot(usati, quanti) {
+    var liberi = BOT_NOMI.filter(function (n) { return !usati.some(function (u) { return stessoNome(u, n); }); }), out = [];
+    for (var i = 0; i < quanti; i++) out.push(liberi[i] || ("Bot " + (i + 2)));
+    return out;
+  }
+  // i nomi dei cavalli (in targa nel photo finish e sul podio)
+  var NOMI_CAVALLI = ["Fulmine", "Tortellino", "Zoccolo d'Oro", "Saetta", "Polpetta", "Uragano", "Biscotto", "Furia", "Cometa",
+    "Brontolo", "Mozzarella", "Tornado", "Peperoncino", "Trottolino", "Bufera", "Cannolo", "Freccia Rossa", "Pistacchio",
+    "Nuvola", "Ciclone", "Gnocco", "Scheggia", "Ravanello", "Lampo Blu", "Tiramisù", "Vento del Sud", "Babà", "Missile",
+    "Crostino", "Pegaso", "Mortadella", "Turbo", "Arancino", "Stella Cadente", "Pandoro", "Razzo", "Ciabatta", "Tempesta",
+    "Meringa", "Bolide"];
+  function nomiCavalli(n) {
+    var a = NOMI_CAVALLI.slice(), out = [];
+    for (var i = 0; i < n; i++) out.push(a.splice(Math.floor(Math.random() * a.length), 1)[0]);
+    return out;
+  }
   var MATT = { forma: "uomo", corpo: "medio", pelle: 2, capelli: "ciuffo", colCap: 1, barba: "corta", capo: "felpa", maglia: 1,
     cappello: "cappellino", colAcc: 0, sopracc: "decise", occhi: "furbi", bocca: "ghigno" };
-  var BOT_DONNA = { Sara: "lunghi", Nina: "caschetto", Giulia: "coda", Rosa: "riccilunghi" }, BOT_UOMO = { Leo: "corti", Toni: "spettinati" };
-  function mioAvatar(nome) {
+  var BOT_DONNA = { Sara: "lunghi", Nina: "caschetto", Giulia: "coda", Rosa: "riccilunghi", Chiara: "lunghi", Elena: "caschetto",
+    Lucia: "coda", Irene: "riccilunghi", Marta: "lunghi", Ada: "caschetto", Bea: "coda" };
+  var BOT_UOMO = { Leo: "corti", Toni: "spettinati", Marco: "corti", Pietro: "spettinati", Franco: "corti", Dario: "spettinati",
+    Bruno: "corti", Gino: "spettinati", Ugo: "corti", Teo: "spettinati" };
+  function mioAvatar(t, nome) {
+    if (t && t.mioOmino) { try { var o = t.mioOmino(nome); if (o) return o; } catch (e) {} }
     var p = window.SGNube && SGNube.profilo && SGNube.profilo();
     if (p && p.omino) return p.omino;
     return window.SGOmino ? SGOmino.casuale(nome || "io") : null;
   }
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  // le corse già contate nei trofei (ricordate anche se la pagina si ricarica: chi rientra non le conta due volte)
   var GARE_SALVATE = [];
+  try { GARE_SALVATE = JSON.parse(localStorage.getItem("sg-horto-gare") || "[]") || []; } catch (e) { GARE_SALVATE = []; }
   function idGara() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
   function salvaTrofeiHorto(t, gara, ord, io) {
     if (!gara || !gara.id || !ord || io == null || io < 0 || io >= ord.length || t.guarda || t.prova ||
         (t.linkParams && t.linkParams.prova) || (t.impostazioni && t.impostazioni.prova)) return;
     if (GARE_SALVATE.indexOf(gara.id) >= 0) return;
     GARE_SALVATE.push(gara.id); if (GARE_SALVATE.length > 32) GARE_SALVATE.shift();
+    try { localStorage.setItem("sg-horto-gare", JSON.stringify(GARE_SALVATE)); } catch (e) {}
     if (!(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo())) return;
     var posizione = ord.indexOf(io) + 1, vinta = posizione === 1, online = !!gara.online, n = gara.n || ord.length, diff = gara.diff || "medio";
     var vittoriaValida = vinta && (diff !== "facile" || (online && gara.umani > 1));
@@ -180,7 +205,9 @@
       "@keyframes hoNuv{from{transform:translateX(640px)}to{transform:translateX(-120px)}}",
       ".ho-tribuna{position:absolute;left:0;right:0;bottom:0;height:46px;background:linear-gradient(#c9483e,#9b2f2a)}",
       ".ho-tribuna:before{content:'';position:absolute;left:-10px;right:-10px;top:-12px;height:14px;background:repeating-linear-gradient(90deg,#fff 0 18px,#e04b3f 18px 36px)}",
-      ".ho-folla{position:absolute;left:0;right:0;top:5px;bottom:6px;background-image:radial-gradient(circle at 6px 7px,#ffd6a8 4px,transparent 5px),",
+      // la folla è uno strato più largo dello schermo, spostato con transform (la telecamera non ridisegna niente)
+      ".ho-folla{position:absolute;left:0;top:5px;bottom:6px;width:calc(100% + 44px);will-change:transform}",
+      ".ho-folla i{position:absolute;inset:0;background-image:radial-gradient(circle at 6px 7px,#ffd6a8 4px,transparent 5px),",
         "radial-gradient(circle at 17px 5px,#6b4a2f 4px,transparent 5px),radial-gradient(circle at 11px 15px,#f0c090 4px,transparent 5px);background-size:22px 19px;animation:hoTifo .5s steps(2) infinite}",
       "@keyframes hoTifo{50%{transform:translateY(-2px)}}",
       ".ho-mappa{position:absolute;left:54px;top:calc(6px + env(safe-area-inset-top));width:128px;height:54px;border-radius:12px;background:rgba(10,30,20,.55);padding:3px;z-index:3}",
@@ -188,9 +215,12 @@
       ".ho-hud{position:absolute;right:10px;top:calc(8px + env(safe-area-inset-top));z-index:3;text-align:right;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.45);line-height:1}",
       ".ho-hud b{display:block;font-size:1.9rem;font-weight:900}",
       ".ho-hud span{font-size:.8rem;font-weight:800}",
-      ".ho-stacc{flex:0 0 auto;height:16px;background:linear-gradient(#fff 0 3px,transparent 3px 8px,#fff 8px 11px,transparent 11px),repeating-linear-gradient(90deg,#fff 0 4px,transparent 4px 44px),#3f8f3a}",
+      ".ho-stacc{position:relative;flex:0 0 auto;height:16px;overflow:hidden;background:#3f8f3a}",
+      ".ho-stacc:after{content:'';position:absolute;inset:0;background:linear-gradient(#fff 0 3px,transparent 3px 8px,#fff 8px 11px,transparent 11px)}",
+      ".ho-pali{position:absolute;left:0;top:0;bottom:0;width:calc(100% + 88px);background:repeating-linear-gradient(90deg,#fff 0 4px,transparent 4px 44px);will-change:transform}",
       // pista
-      ".ho-pista{position:relative;flex:1 1 auto;overflow:hidden;background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 36px,rgba(0,0,0,.05) 36px 72px),linear-gradient(#4aa244,#3c8e37)}",
+      ".ho-pista{position:relative;flex:1 1 auto;overflow:hidden;background:linear-gradient(#4aa244,#3c8e37)}",
+      ".ho-erba{position:absolute;left:0;top:0;bottom:0;width:calc(100% + 144px);background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 36px,rgba(0,0,0,.05) 36px 72px);will-change:transform}",
       ".ho-corsia{position:absolute;left:0;right:0;border-bottom:2px solid rgba(255,255,255,.35)}",
       ".ho-corsia.mia{background:rgba(255,215,60,.13);box-shadow:inset 0 0 0 3px rgba(255,202,58,.85)}",
       ".ho-mondo{position:absolute;left:0;top:0;bottom:0;width:0;will-change:transform}",
@@ -214,8 +244,9 @@
       ".ho-polv b{position:absolute;bottom:0;width:13px;height:13px;border-radius:50%;background:rgba(214,186,140,.75);animation:hoPuf .5s linear infinite}",
       ".ho-polv b:nth-child(2){animation-delay:.17s;left:30%}.ho-polv b:nth-child(3){animation-delay:.33s;left:55%}",
       "@keyframes hoPuf{from{transform:translate(40px,0) scale(.4);opacity:.9}to{transform:translate(-18px,-16px) scale(1.5);opacity:0}}",
-      ".ho-vento{position:absolute;left:-30%;top:22%;width:40%;height:50%;opacity:0;transition:opacity .15s;",
-        "background:repeating-linear-gradient(0deg,transparent 0 7px,rgba(255,255,255,.75) 7px 9px);-webkit-mask:linear-gradient(90deg,transparent,#000);mask:linear-gradient(90deg,transparent,#000)}",
+      // righe del vento: un disegno con la sfumatura già dentro (niente maschere mentre la telecamera si muove)
+      ".ho-vento{position:absolute;left:-30%;top:22%;width:40%;height:50%;opacity:0;transition:opacity .15s;background-size:100% 100%;",
+        "background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'%3E%3ClinearGradient id='v'%3E%3Cstop offset='0' stop-color='%23fff' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%23fff' stop-opacity='.8'/%3E%3C/linearGradient%3E%3Cg fill='url(%23v)'%3E%3Crect y='3' width='100' height='2'/%3E%3Crect y='12' width='100' height='2'/%3E%3Crect y='21' width='100' height='2'/%3E%3Crect y='30' width='100' height='2'/%3E%3Crect y='38' width='100' height='2'/%3E%3C/g%3E%3C/svg%3E\")}",
       ".ho-cav.boost .ho-vento{opacity:1}",
       // galoppo (solo quando si corre; più veloce con la frusta, lento se sfinito)
       ".za-s,.za-i,.zp-s,.zp-i,.ho-corpo,.ho-coda,.ho-fantino{animation:.42s linear infinite;animation-play-state:paused;transform-box:view-box}",
@@ -225,7 +256,8 @@
       ".ho-corre .za-s,.ho-corre .za-i,.ho-corre .zp-s,.ho-corre .zp-i,.ho-corre .ho-corpo,.ho-corre .ho-coda,.ho-corre .ho-fantino{animation-play-state:running}",
       ".ho-cav.boost .za-s,.ho-cav.boost .za-i,.ho-cav.boost .zp-s,.ho-cav.boost .zp-i,.ho-cav.boost .ho-corpo,.ho-cav.boost .ho-coda,.ho-cav.boost .ho-fantino{animation-duration:.28s}",
       ".ho-cav.sfin .za-s,.ho-cav.sfin .za-i,.ho-cav.sfin .zp-s,.ho-cav.sfin .zp-i,.ho-cav.sfin .ho-corpo,.ho-cav.sfin .ho-coda,.ho-cav.sfin .ho-fantino{animation-duration:.8s}",
-      ".ho-cav.sfin .ho-svg{filter:saturate(.4) brightness(.85)}",
+      ".ho-cav.sfin .ho-svg{opacity:.6}",
+      ".ho-cav.sfin:after{content:'😵';position:absolute;left:78%;top:-6%;font-size:1.3rem;z-index:4}",
       ".ho-cav.arr .za-s,.ho-cav.arr .za-i,.ho-cav.arr .zp-s,.ho-cav.arr .zp-i,.ho-cav.arr .ho-corpo,.ho-cav.arr .ho-coda,.ho-cav.arr .ho-fantino{animation-duration:.7s}",
       "@keyframes hoZas{0%{transform:rotate(-30deg)}45%{transform:rotate(24deg)}100%{transform:rotate(-30deg)}}",
       "@keyframes hoZai{0%{transform:rotate(-6deg)}42%{transform:rotate(0deg)}58%{transform:rotate(45deg)}76%{transform:rotate(80deg)}94%{transform:rotate(8deg)}100%{transform:rotate(-6deg)}}",
@@ -243,13 +275,17 @@
       ".ho-sotto{flex:0 0 auto;padding:8px 12px calc(12px + env(safe-area-inset-bottom));background:#16204a;display:flex;flex-direction:column;gap:7px}",
       ".ho-info{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:.95rem;min-height:1.3em}",
       ".ho-stam{height:12px;border-radius:7px;background:rgba(0,0,0,.45);overflow:hidden;border:1px solid rgba(255,255,255,.25)}",
-      ".ho-stam .fill{height:100%;width:100%;border-radius:7px;transition:width .1s linear}",
+      ".ho-stam .fill{height:100%;width:100%;border-radius:7px;transform-origin:0 50%;transition:transform .1s linear}",
+      ".ho-sotto.guardo .ho-stam{visibility:hidden}",
       ".ho-frusta{width:100%;min-height:72px;border:0;border-radius:18px;cursor:pointer;font-family:inherit;font-weight:900;",
         "font-size:1.5rem;color:#241f00;background:linear-gradient(135deg,#ffe58a,var(--accento) 60%,var(--accento-scuro));",
         "box-shadow:0 8px 22px rgba(224,169,10,.35);-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;}",
       ".ho-frusta:active{transform:scale(.98);}",
       ".ho-frusta:disabled{filter:grayscale(.6);opacity:.7;}",
       ".ho-frusta.sfin{background:linear-gradient(135deg,#ff8787,#c92a2a);color:#fff;}",
+      // durante la spinta il tasto si "abbassa": toccare adesso spreca energia (insegna il ritmo)
+      ".ho-frusta.spinta{background:linear-gradient(135deg,#d8c56f,#b8900f);box-shadow:0 3px 8px rgba(0,0,0,.25);color:rgba(36,31,0,.75)}",
+      ".ho-info .presto{color:#ffa94d}",
       // photo-finish (replay zoomato del traguardo prima della classifica)
       ".ho-ff{position:relative;border-radius:16px;overflow:hidden;margin:8px 0 4px;",
         "background:repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 30px,rgba(0,0,0,.05) 30px 60px),linear-gradient(#4aa244,#3c8e37)}",
@@ -260,14 +296,14 @@
       ".ho-ff-num{width:18px;height:18px;border-radius:50%;font-size:.7rem;font-weight:900;color:#111;",
         "display:flex;align-items:center;justify-content:center;flex:0 0 auto;}",
       ".ho-ff-nome{font-size:.8rem;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
-      ".ho-ff-cav{position:absolute;bottom:2%;left:-15%;height:94%;aspect-ratio:220/150;transform:translateX(-50%);z-index:3;",
-        "transition:left 2.6s cubic-bezier(.3,.55,.35,1);will-change:left;}",
+      ".ho-ff-cav{position:absolute;bottom:2%;left:0;height:94%;aspect-ratio:220/150;transform:translate3d(-200%,0,0);z-index:3;will-change:transform}",
       ".ho-ff-cav .ho-svg{width:100%;height:100%;display:block;overflow:visible}",
       ".ho-ff-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:6;transition:opacity .55s ease-out;}",
       ".ho-ff-flash.on{opacity:.92;transition:opacity .05s;}",
       ".ho-ff-big{text-align:center;font-size:1.5rem;font-weight:900;min-height:1.6em;margin-top:4px;",
         "opacity:0;transform:scale(.8);transition:opacity .3s,transform .3s;}",
       ".ho-ff-big.show{opacity:1;transform:scale(1);color:var(--accento);}",
+      ".ho-ff-big small{display:block;font-size:1rem;font-weight:800;color:var(--testo,#fff);opacity:.85}",
       // podio
       ".ho-podio{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:4px 0 14px}",
       ".ho-gradino{flex:1;max-width:120px;display:flex;flex-direction:column;align-items:center}",
@@ -280,28 +316,54 @@
       ".ho-gradino.p1 .blocco{height:84px;background:linear-gradient(#ffd75a,#c99a10)}",
       ".ho-gradino.p2 .blocco{height:62px;background:linear-gradient(#e6ebf2,#98a3b3)}",
       ".ho-gradino.p3 .blocco{height:46px;background:linear-gradient(#e8a866,#a8662a)}",
-      ".ho-riga{display:flex;align-items:center;gap:10px;padding:6px 12px;border-radius:12px;background:rgba(255,255,255,.05)}",
+      ".ho-gradino .cv{font-size:.7rem;font-weight:700;opacity:.75;margin:-3px 0 4px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      // dal 4° in giù: righe basse, su due colonne se sono tante (il tasto Rigioca resta sempre in vista)
+      ".ho-resto{display:grid;grid-template-columns:1fr;gap:5px}",
+      ".ho-resto.due{grid-template-columns:1fr 1fr}",
+      ".ho-riga{display:flex;align-items:center;gap:7px;padding:3px 8px;border-radius:12px;background:rgba(255,255,255,.05);min-width:0}",
       ".ho-riga.mia{background:rgba(255,202,58,.18);border:1px solid var(--accento)}",
-      ".ho-riga .fac{width:40px;height:40px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.1);flex:0 0 auto}",
+      ".ho-riga .pos{font-size:1rem;font-weight:900;width:26px;text-align:center;flex:0 0 auto}",
+      ".ho-riga .nm{flex:1;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".ho-riga .fac{width:32px;height:32px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.1);flex:0 0 auto}",
+      ".ho-piede2{display:flex;gap:8px}.ho-piede2>.btn{flex:1}",
       ".ho-riga .fac svg{width:100%;height:100%;display:block}",
       "@media (prefers-reduced-motion:reduce){.ho-folla,.ho-nuv,.ho-polv b{animation:none}}"
     ].join("");
     document.head.appendChild(s);
   }
 
-  function frustaFX() { try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {}
+  function frustaFX() { try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {}   // parte dal tocco: qui la vibrazione va bene
     var c = SG.audioCtx && SG.audioCtx(); if (!c) return;
     try { var t = c.currentTime, o = c.createOscillator(), g = c.createGain();
       o.type = "square"; o.frequency.setValueAtTime(300, t); o.frequency.exponentialRampToValueAtTime(150, t + 0.05);
       g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
       o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.07); } catch (e) {} }
-  function traguardoFX() { try { if (navigator.vibrate) navigator.vibrate([0, 40, 60, 40]); } catch (e) {}
+  // (i suoni qui sotto partono da soli: niente vibrazione)
+  function traguardoFX() {
     var c = SG.audioCtx && SG.audioCtx(); if (!c) return;
     try { [523, 659, 784, 1046].forEach(function (f, i) { var t = c.currentTime + i * 0.1, o = c.createOscillator(), g = c.createGain();
       o.type = "triangle"; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
       o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.2); }); } catch (e) {} }
+  function bip(f, dur, vol, tipo) {   // i bip del 3-2-1-VIA e la campanella
+    var c = SG.audioCtx && SG.audioCtx(); if (!c) return;
+    try { var t = c.currentTime, o = c.createOscillator(), g = c.createGain();
+      o.type = tipo || "sine"; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol || 0.2, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + 0.02); } catch (e) {} }
+  function campanaFX() { bip(1320, 0.35, 0.16, "triangle"); setTimeout(function () { bip(1320, 0.45, 0.16, "triangle"); }, 220); }
+  function follaFX() {   // il boato della folla che si alza nel finale (un soffio filtrato)
+    var c = SG.audioCtx && SG.audioCtx(); if (!c) return;
+    try {
+      var dur = 2.6, n = Math.floor(c.sampleRate * dur), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
+      for (var i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      var src = c.createBufferSource(); src.buffer = b;
+      var fl = c.createBiquadFilter(); fl.type = "bandpass"; fl.frequency.value = 900; fl.Q.value = 0.7;
+      var g = c.createGain(), t = c.currentTime;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.2, t + dur * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      src.connect(fl); fl.connect(g); g.connect(c.destination); src.start(t); src.stop(t + dur + 0.02);
+    } catch (e) {}
+  }
   function scattoFoto() {   // "clack" dell'otturatore (due click ravvicinati)
-    try { if (navigator.vibrate) navigator.vibrate(35); } catch (e) {}
     var c = SG.audioCtx && SG.audioCtx(); if (!c) return;
     try {
       function click(at, dur, vol) {
@@ -317,20 +379,70 @@
   }
 
   // ---------- fisica pura ----------
-  function nuovoCav(umano, id) { return { pos: 0, stam: STAM_MAX, boostU: 0, sfin: false, sfinU: 0, umano: !!umano, id: id || null, nextClick: 0, arr: false }; }
+  function nuovoCav(umano, id) { return { pos: 0, stam: STAM_MAX, boostU: 0, sfin: false, sfinU: 0, umano: !!umano, id: id || null, nextClick: 0, arr: false, ai: null, prev: 0, v: 0, fr: 0, sorte: 0 }; }
   function frusta(h, now) { if (h.sfin || h.arr) return false; h.stam -= COST; h.boostU = now + BOOST_MS; if (h.stam <= 0) { h.stam = 0; h.sfin = true; h.sfinU = now + SFIN_MS; h.boostU = 0; } return true; }
-  function botPensa(h, now, S, I) { if (h.sfin || h.arr || now < h.nextClick) return; if (h.stam <= S + Math.random() * 8) return; frusta(h, now); h.nextClick = now + I + Math.random() * 120; }
-  function passoTutti(cav, now, dt, S, I, arrivi) {
-    for (var k = 0; k < cav.length; k++) {
-      var h = cav[k]; if (h.arr) continue;
-      if (!h.umano) botPensa(h, now, S, I);
+  // I bot: a ogni corsa ognuno ha un carattere. "razzo" parte forte (da Facile a volte si sfinisce),
+  // "rimonta" tiene l'energia per il finale, "regolare" va del suo passo. La bravura decide quanta energia
+  // lasciano inutilizzata, quanto spesso frustano a vuoto (durante la spinta), lo scatto finale e la forma del cavallo.
+  var BRAVURA = {
+    // (tarati con corse simulate contro 3 bot: chi tocca una volta al secondo batte i Facili circa 1 volta su 2 e mai i Medi;
+    //  chi tocca ogni 0,7 s usando quasi tutta l'energia batte sempre i Medi e 3 volte su 4 i Difficili;
+    //  se si tiene da parte troppa energia (sopra il 30%) i Medi vincono quasi sempre. A raffica non si vince mai)
+    facile:    { S: [45, 65], I: [700, 1100], err: 0.35, sprint: 0.15, forma: [0.91, 0.95] },
+    medio:     { S: [20, 30], I: [380, 520], err: 0.1, sprint: 0.6, forma: [0.945, 0.97] },
+    difficile: { S: [14, 18], I: [270, 340], err: 0.03, sprint: 0.9, forma: [0.975, 0.995] }
+  };
+  function tra(a) { return a[0] + Math.random() * (a[1] - a[0]); }
+  function nuovoBot(diff) {
+    var b = BRAVURA[diff] || BRAVURA.medio, r = Math.random();
+    return { stile: r < 0.3 ? "razzo" : r < 0.6 ? "rimonta" : "regolare", S: tra(b.S), I: tra(b.I), err: b.err, esagera: diff === "facile" && Math.random() < 0.5,
+      sprintDa: Math.random() < b.sprint ? 0.7 + Math.random() * 0.16 : 2, forma: tra(b.forma) };
+  }
+  function botCav(diff) { var h = nuovoCav(false); h.ai = nuovoBot(diff); return h; }
+  function botPensa(h, now) {
+    var a = h.ai; if (!a || h.sfin || h.arr || now < h.nextClick) return;
+    var soglia = a.S, razzo = a.stile === "razzo" && h.pos < (a.esagera ? 0.6 : 0.35) && h.pos < a.sprintDa;
+    if (h.pos >= a.sprintDa) soglia = COST + 1;                                         // scatto finale: quasi tutta l'energia
+    else if (razzo) soglia = a.esagera ? -10 : COST + 3;                                // parte a razzo (il Facile a volte esagera e si sfinisce)
+    else if (a.stile === "rimonta" && h.pos < 0.55) soglia = Math.min(85, a.S * 1.9);   // tiene da parte per il finale
+    if (h.stam <= soglia + Math.random() * 6) { h.nextClick = now + 60; return; }
+    if (now < h.boostU && Math.random() >= a.err) { h.nextClick = h.boostU; return; }   // i bravi aspettano la fine della spinta
+    frusta(h, now); h.nextClick = now + a.I * (razzo ? 0.45 : 1) * (0.8 + Math.random() * 0.4);
+  }
+  // un passo di simulazione. Chi taglia il traguardo nello stesso passo: conta di quanto l'ha superato
+  // (i pari veri, a sorte). Ritorna la "foto": dove sono tutti nell'istante esatto in cui il primo tocca la linea.
+  function passoTutti(cav, now, dt, arrivi) {
+    var nuovi = [], k, h;
+    for (k = 0; k < cav.length; k++) {
+      h = cav[k]; h.prev = h.pos; h.v = 0; if (h.arr) continue;
+      if (!h.umano) botPensa(h, now);
       if (h.sfin && now >= h.sfinU) h.sfin = false;
-      var v = h.sfin ? V_SFIN : (now < h.boostU ? V_BOOST : V_BASE);
-      h.pos += v * dt;
+      var v = (h.sfin ? V_SFIN : (now < h.boostU ? V_BOOST : V_BASE)) * (!h.umano && h.ai ? h.ai.forma : 1);
+      h.v = v; h.pos += v * dt;
       if (h.sfin) h.stam = Math.min(STAM_MAX, h.stam + REGEN_SFIN * dt);
       else if (now >= h.boostU) h.stam = Math.min(STAM_MAX, h.stam + REGEN * dt);
-      if (h.pos >= 1) { h.pos = 1; h.arr = true; arrivi.push(k); }
+      if (h.pos >= 1) { h.fr = (1 - h.prev) / Math.max(1e-9, v * dt); h.sorte = Math.random(); h.pos = 1; h.arr = true; nuovi.push(k); }
     }
+    if (!nuovi.length) return null;
+    nuovi.sort(function (a, b) { return (cav[a].fr - cav[b].fr) || (cav[a].sorte - cav[b].sorte); });
+    var foto = null;
+    if (!arrivi.length) {
+      var fw = cav[nuovi[0]].fr;
+      foto = cav.map(function (x, i) { return i === nuovi[0] ? 1 : Math.min(0.99999, x.prev + x.v * dt * fw); });
+    }
+    for (k = 0; k < nuovi.length; k++) arrivi.push(nuovi[k]);
+    return foto;
+  }
+  // simula da t0 a t1 (ms) a passi piccoli: la corsa è la stessa su un telefono veloce o lento,
+  // e se l'app dell'host torna dal sottofondo recupera il tempo passato (al massimo qualche secondo)
+  var PASSO = 1000 / 60;
+  function avanza(cav, t0, t1, arrivi) {
+    var n = Math.max(1, Math.ceil((t1 - t0) / PASSO - 1e-6)), st = (t1 - t0) / n, foto = null;
+    for (var i = 1; i <= n; i++) {
+      var f = passoTutti(cav, t0 + st * i, st / 1000, arrivi); if (f) foto = f;
+      if (arrivi.length === cav.length) break;
+    }
+    return foto;
   }
   function snap(cav, fase, conto, nomi) {
     var ora = performance.now();   // b = sta frustando (per il galoppo più veloce e le righe del vento)
@@ -353,15 +465,16 @@
   }
 
   // ---------- la corsa: scena a tutto schermo con la telecamera ----------
+  // io = la mia corsia (-1 = guardo soltanto: entro alla prossima corsa)
   function costruisci(t, N, nomi, io, cb, av) {
     assicuraStile(); var el = t.el;
     ultimiAv = av || avatariPer(nomi);
     var s = t.schermata({});
     s.classList.add("ho-piena");
     var scena = el("div", { class: "ho-scena" });
-    scena.appendChild(el("button", { class: "ho-esci", text: "‹", "aria-label": "Esci dalla corsa", onclick: function () { if (window.confirm("Uscire dalla corsa?")) cb.onEsci(); } }));
+    scena.appendChild(el("button", { class: "ho-esci", text: "‹", "aria-label": "Esci dalla corsa", onclick: function () { if (window.confirm(cb.conferma || "Uscire dalla corsa?")) cb.onEsci(); } }));
     // cielo con tribuna, minimappa e posizione
-    var folla = el("div", { class: "ho-folla" });
+    var folla = el("div", { class: "ho-folla" }, [el("i")]);
     var cielo = el("div", { class: "ho-cielo" }, [
       el("div", { class: "ho-sole" }),
       el("div", { class: "ho-nuv", style: "top:40px;width:56px" }),
@@ -373,24 +486,26 @@
       "<path d='" + D + "' fill='none' stroke='#fff' stroke-width='1' stroke-dasharray='3 3' opacity='.55'/>" +
       "<rect x='" + (m.x0 - 1) + "' y='" + (m.yA - 7) + "' width='3' height='14' fill='#51cf66'/>" +
       "<rect x='" + (m.x0 - 1) + "' y='" + (m.yB - 7) + "' width='3' height='14' fill='#fff'/><rect x='" + (m.x0 - 1) + "' y='" + (m.yB - 7) + "' width='3' height='3.5' fill='#111'/><rect x='" + (m.x0 - 1) + "' y='" + (m.yB) + "' width='3' height='3.5' fill='#111'/>";
-    var ordineDisegno = []; for (var k = 0; k < N; k++) if (k !== io) ordineDisegno.push(k); ordineDisegno.push(io);   // il mio pallino sopra
+    var ordineDisegno = []; for (var k = 0; k < N; k++) if (k !== io) ordineDisegno.push(k); if (io >= 0 && io < N) ordineDisegno.push(io);   // il mio pallino sopra
     ordineDisegno.forEach(function (k) {
       svgM += "<circle data-k='" + k + "' cx='" + m.x0 + "' cy='" + m.yA + "' r='" + (k === io ? 4.6 : 3.4) + "' fill='" + COLORI[k % COLORI.length] + "' stroke='" + (k === io ? "#fff" : "rgba(0,0,0,.5)") + "' stroke-width='" + (k === io ? 1.6 : 1) + "'/>";
     });
     var mappa = el("div", { class: "ho-mappa", html: svgM + "</svg>" });
-    var hudB = el("b", { text: "–" }), hudS = el("span", { text: METRI + " m" });
+    var hudB = el("b", { text: "–" }), hudS = el("span", { text: cifre(METRI) + " m" });
     cielo.appendChild(mappa); cielo.appendChild(el("div", { class: "ho-hud" }, [hudB, hudS]));
     scena.appendChild(cielo);
-    var stacc = el("div", { class: "ho-stacc" }); scena.appendChild(stacc);
-    // pista: corsie, "mondo" che scorre (cancelletti, cartelli dei metri, arrivo) e cavalli
+    var pali = el("div", { class: "ho-pali" });
+    scena.appendChild(el("div", { class: "ho-stacc" }, [pali]));
+    // pista: prato a strisce, corsie, "mondo" che scorre (cancelletti, cartelli dei metri, arrivo) e cavalli
     var pista = el("div", { class: "ho-pista" });
+    var erba = el("div", { class: "ho-erba" }); pista.appendChild(erba);
     for (k = 0; k < N; k++) pista.appendChild(el("div", { class: "ho-corsia" + (k === io ? " mia" : ""), style: "top:" + (k * 100 / N) + "%;height:" + (100 / N) + "%" }));
     var mondo = el("div", { class: "ho-mondo" });
     var cancelli = el("div", { class: "ho-cancelli" });
     for (k = 0; k < N; k++) cancelli.appendChild(el("div", { class: "ho-porta" }));
     mondo.appendChild(cancelli);
     var cartelli = [];
-    for (var q = 1; q < 5; q++) { var ct = el("div", { class: "ho-cartello" }, [el("b", { text: (METRI - METRI * q / 5) + " m" })]); cartelli.push(ct); mondo.appendChild(ct); }
+    for (var q = 1; q < 5; q++) { var ct = el("div", { class: "ho-cartello" }, [el("b", { text: cifre(METRI - METRI * q / 5) + " m" })]); cartelli.push(ct); mondo.appendChild(ct); }
     var arrivo = el("div", { class: "ho-arrivo" }, [el("b", { text: "🏁 ARRIVO" })]); mondo.appendChild(arrivo);
     pista.appendChild(mondo);
     var cavEl = [];
@@ -407,17 +522,19 @@
     var fillEl = el("div", { class: "fill", style: "background:#51cf66" });
     var bFr = el("button", { class: "ho-frusta", text: "🚦 Pronti…", disabled: "disabled" });
     bFr.addEventListener("pointerdown", function (e) { e.preventDefault(); cb.onFrusta(); });
-    scena.appendChild(el("div", { class: "ho-sotto" }, [ el("div", { class: "ho-info" }, [info]), el("div", { class: "ho-stam" }, [fillEl]), bFr ]));
+    scena.appendChild(el("div", { class: "ho-sotto" + (io < 0 ? " guardo" : "") }, [ el("div", { class: "ho-info" }, [info]), el("div", { class: "ho-stam" }, [fillEl]), bFr ]));
     s._contenuto.appendChild(scena);
     function suTasto(e) { if (e.code === "Space" || e.key === " ") { e.preventDefault(); cb.onFrusta(); } }
     document.addEventListener("keydown", suTasto);
     t.mostra(s);
     var dots = [].slice.call(mappa.querySelectorAll("circle")).sort(function (a, b) { return a.getAttribute("data-k") - b.getAttribute("data-k"); });
-    return { scena: scena, pista: pista, mondo: mondo, cancelli: cancelli, cartelli: cartelli, arrivo: arrivo, stacc: stacc, folla: folla,
-      cavEl: cavEl, fillEl: fillEl, frusta: bFr, info: info, conto: conto, hudB: hudB, hudS: hudS, dots: dots, io: io, N: N,
-      cam: null, W: 0, hw: 0, nMis: 0, tU: 0, arrT: [],
+    return { scena: scena, pista: pista, mondo: mondo, cancelli: cancelli, cartelli: cartelli, arrivo: arrivo, erba: erba, pali: pali, folla: folla,
+      cavEl: cavEl, fillEl: fillEl, frusta: bFr, info: info, conto: conto, hudB: hudB, hudS: hudS, dots: dots, io: io, N: N, cavallo: cb.cavallo || "",
+      cam: null, W: 0, hw: 0, nMis: 0, tU: 0, arrT: [], prestoU: 0,
       rimuovi: function () { document.removeEventListener("keydown", suTasto); } };
   }
+  // "troppo presto": si è frustato mentre la spinta di prima durava ancora (energia sprecata)
+  function segnalaPresto(ref) { if (ref) ref.prestoU = performance.now() + 900; }
   function misura(ref) {
     ref.W = ref.pista.clientWidth || 360;
     // grandezza dei cavalli: l'altezza della corsia, ma mai più larghi di metà schermo (con 2 cavalli sarebbero enormi)
@@ -428,24 +545,27 @@
     ref.cartelli.forEach(function (c, i) { c.style.left = (L * (i + 1) / 5) + "px"; });
     ref.arrivo.style.left = L + "px";
   }
+  function scrivi(e, txt) { if (e._t !== txt) { e._t = txt; e.textContent = txt; } }   // tocca la pagina solo se il testo cambia
+  function giroDi(x, m) { return ((x % m) + m) % m; }
   function disegna(ref, sn) {
     var now = performance.now(), dt = ref.tU ? Math.min(0.1, (now - ref.tU) / 1000) : 0; ref.tU = now;
     if (!ref.W || ++ref.nMis > 45) { misura(ref); ref.nMis = 0; }
-    var W = ref.W, L = W * LUNGH, hw = ref.hw, k, N = sn.N;
-    var me = sn.cav[ref.io] || sn.cav[0], mx = 0;
-    for (k = 0; k < N; k++) if (sn.cav[k].p > mx) mx = sn.cav[k].p;
+    var W = ref.W, L = W * LUNGH, hw = ref.hw, k, N = Math.min(sn.N, sn.cav.length);
+    var capo = 0; for (k = 1; k < N; k++) if (sn.cav[k].p > sn.cav[capo].p) capo = k;
+    var guardo = !(ref.io >= 0 && sn.cav[ref.io]), me = guardo ? sn.cav[capo] : sn.cav[ref.io], mx = sn.cav[capo].p;
     // TELECAMERA: segue chi è in testa, ma il mio cavallo resta sempre dentro l'inquadratura;
     // alla fine si ferma col traguardo a 3/4 dello schermo
     var target = Math.min(mx * L - 0.72 * W, me.p * L - hw * 1.1);
     target = Math.max(-0.72 * W, Math.min(target, L - 0.78 * W));
     ref.cam = (ref.cam == null || !dt) ? target : ref.cam + (target - ref.cam) * Math.min(1, dt * 5);
     var cam = ref.cam;
+    // tutto si sposta con transform: prato, staccionata e folla sono strati più larghi che "girano"
     ref.mondo.style.transform = "translate3d(" + (-cam).toFixed(1) + "px,0,0)";
-    ref.pista.style.backgroundPosition = (-cam).toFixed(1) + "px 0,0 0";
-    ref.stacc.style.backgroundPosition = "0 0," + (-cam).toFixed(1) + "px 0";
-    ref.folla.style.backgroundPosition = (-cam * 0.3).toFixed(1) + "px 0";
+    ref.erba.style.transform = "translate3d(" + (-giroDi(cam, 72)).toFixed(1) + "px,0,0)";
+    ref.pali.style.transform = "translate3d(" + (-giroDi(cam, 44)).toFixed(1) + "px,0,0)";
+    ref.folla.style.transform = "translate3d(" + (-giroDi(cam * 0.3, 22)).toFixed(1) + "px,0,0)";
     var corre = sn.fase === "corsa";
-    ref.scena.classList.toggle("ho-corre", corre);
+    if (ref.corre !== corre) { ref.corre = corre; ref.scena.classList.toggle("ho-corre", corre); }
     for (k = 0; k < N; k++) {
       var c = sn.cav[k], e = ref.cavEl[k]; if (!e) continue;
       var x = c.p * L - cam - hw * 0.95;
@@ -462,25 +582,44 @@
       var pm = puntoMappa(c.p), d = ref.dots[k];
       if (d) { d.setAttribute("cx", pm[0].toFixed(1)); d.setAttribute("cy", pm[1].toFixed(1)); }
     }
+    // suoni: bip del 3-2-1-VIA, campanella agli ultimi 200 m, folla nel finale
+    if (sn.fase === "via" && sn.conto !== ref.ultConto) { ref.ultConto = sn.conto; if (sn.conto > 0) bip(660, 0.18, 0.18); else bip(990, 0.45, 0.22); }
+    if (corre && !ref.campana && mx >= 0.8) { ref.campana = true; campanaFX(); }
+    if (corre && !ref.boato && mx >= 0.86) { ref.boato = true; follaFX(); }
     // posizione e metri che mancano
     var davanti = 0; for (k = 0; k < N; k++) if (k !== ref.io && sn.cav[k].p > me.p) davanti++;
-    ref.hudB.textContent = (davanti + 1) + "°";
-    ref.hudS.textContent = me.a ? "🏁 arrivato" : "mancano " + Math.max(0, Math.round((1 - me.p) * METRI)) + " m";
-    var fillEl = ref.fillEl, b = ref.frusta;
-    if (fillEl) { fillEl.style.width = me.s + "%"; fillEl.style.background = me.f ? "#ff6b6b" : (me.s > 40 ? "#51cf66" : me.s > 18 ? "#ffd43b" : "#ff922b"); }
+    scrivi(ref.hudB, guardo ? "👀" : (davanti + 1) + "°");
+    scrivi(ref.hudS, me.a ? "🏁 arrivato" : "mancano " + cifre(Math.max(0, Math.round((1 - me.p) * METRI))) + " m");
+    var b = ref.frusta, stato, testo, info, presto = false;
+    if (!guardo) {
+      ref.fillEl.style.transform = "scaleX(" + (Math.max(0, Math.min(100, me.s)) / 100).toFixed(3) + ")";
+      var col = me.f ? "#ff6b6b" : (me.s > 40 ? "#51cf66" : me.s > 18 ? "#ffd43b" : "#ff922b");
+      if (ref.colFill !== col) { ref.colFill = col; ref.fillEl.style.background = col; }
+    }
     if (sn.fase === "via") {
-      b.disabled = true; b.className = "ho-frusta"; b.textContent = "🚦 Pronti…";
-      ref.conto.className = "ho-conto" + (sn.conto > 0 ? "" : " via"); ref.conto.textContent = sn.conto > 0 ? String(sn.conto) : "VIA!";
-      ref.info.textContent = "Ai cancelletti…";
+      stato = "via"; testo = "🚦 Pronti…";
+      if (sn.conto !== ref.contoScritto) { ref.contoScritto = sn.conto; ref.conto.className = "ho-conto" + (sn.conto > 0 ? "" : " via"); ref.conto.textContent = sn.conto > 0 ? String(sn.conto) : "VIA!"; }
+      info = guardo ? "👀 Guardi la corsa: entri alla prossima!" : (ref.cavallo ? "🐴 " + ref.cavallo + " · tocca a ritmo!" : "Tocca a ritmo, non a raffica!");
       if (sn.conto <= 0) ref.cancelli.classList.add("aperti");
     } else if (corre) {
       ref.cancelli.classList.add("aperti");
       if (!ref.viaFatto) { ref.viaFatto = true; ref.conto.className = "ho-conto via"; ref.conto.textContent = "VIA!"; setTimeout(function () { ref.conto.className = "ho-conto via sparisci"; }, 350); }
-      if (me.a) { b.disabled = true; b.className = "ho-frusta"; b.textContent = "🏁 Arrivato!"; }
-      else if (me.f) { b.disabled = true; b.className = "ho-frusta sfin"; b.textContent = "😵 SFINITO!"; }
-      else { b.disabled = false; b.className = "ho-frusta"; b.textContent = "🏇 FRUSTA! (" + me.s + "%)"; }
-      ref.info.textContent = me.a ? "🏁 Traguardo!" : (davanti === 0 ? "🥇 Sei in testa!" : "Dai, frusta! 🏇");
+      presto = !guardo && now < ref.prestoU && !me.a && !me.f;
+      if (guardo) { stato = "guardo"; testo = "👀 Entri alla prossima corsa"; info = "👀 Guardi la corsa"; }
+      else if (me.a) { stato = "arr"; testo = "🏁 Arrivato!"; info = "🏁 Traguardo!"; }
+      else if (me.f) { stato = "sfin"; testo = "😵 SFINITO!"; info = "😵 Sfinito: aspetta che si riprenda"; }
+      else {
+        stato = me.b ? "spinta" : "frusta"; testo = me.b ? "💨 spinta…" : "🏇 FRUSTA!";
+        info = presto ? "⚠️ Troppo presto: aspetta la fine della spinta" : (me.s <= COST ? "⚡ Ancora una frustata e sei sfinito!" : (davanti === 0 ? "🥇 Sei in testa!" : "Dai, frusta! 🏇"));
+      }
     }
+    if (stato && ref.stTasto !== stato) {
+      ref.stTasto = stato;
+      b.disabled = !(stato === "frusta" || stato === "spinta");
+      b.className = "ho-frusta" + (stato === "sfin" ? " sfin" : stato === "spinta" ? " spinta" : "");
+      b.textContent = testo;
+    }
+    if (info) { scrivi(ref.info, info); if (ref.presto !== presto) { ref.presto = presto; ref.info.className = presto ? "presto" : ""; } }
   }
 
   function classificaDa(cav, arrivi) {
@@ -488,8 +627,20 @@
     resto.sort(function (a, b) { return cav[b].pos - cav[a].pos; });
     return arrivi.concat(resto);
   }
-  // "filmatino" zoomato del traguardo: i primi arrivati scivolano oltre la linea,
-  // il vincitore in evidenza; poi si passa alla classifica.
+  // di quanto ha vinto: la distanza vera del secondo nell'istante in cui il primo tocca la linea
+  // (un cavallo è lungo circa 10 m nel disegno)
+  function distaccoTesto(foto, ord) {
+    if (!foto || ord.length < 2 || foto[ord[1]] == null) return "";
+    var m = (1 - Math.min(1, foto[ord[1]])) * METRI;
+    if (m < 1) return "per un muso!";
+    if (m < 5) return "per mezza lunghezza";
+    if (m < 13) return "per una lunghezza";
+    if (m < 45) return "per " + Math.max(2, Math.round(m / 10)) + " lunghezze";
+    return "in solitaria!";
+  }
+  // "filmatino" zoomato del traguardo: i cavalli arrivano alla linea alle distanze VERE dell'istante
+  // in cui il primo la tocca (foto); scatto, fermo immagine, poi tutti tagliano nell'ordine della classifica.
+  // Si muove solo con transform. Ritorna { annulla } (serve se intanto parte un'altra corsa).
   function fotoFinish(t, ord, nomi, io, foto, poi) {
     assicuraStile();
     var el = t.el, fatto = false, scattato = false, tos = [], rafId = 0;
@@ -502,9 +653,9 @@
     var cavs = [], targetX = [];
     for (var k = 0; k < N; k++) {
       var vinc = (k === vincitore), mio = (k === io);
-      // ZOOM sul traguardo: il vincitore sulla linea (86%); gli altri al distacco reale ma con un
-      // distacco MINIMO garantito (max 78%), così si vede chi ha toccato per primo anche in volata.
-      targetX[k] = vinc ? 86 : Math.max(6, Math.min(78, 86 - (1 - Math.min(1, foto[k])) * 280));
+      // il vincitore sulla linea (86%); gli altri al distacco vero (1 m = 3,4% della striscia),
+      // con un minimo di 1,2% così si vede sempre chi ha toccato per primo
+      targetX[k] = vinc ? 86 : Math.max(4, 86 - Math.max(1.2, (1 - Math.min(1, foto[k])) * METRI * 3.4));
       var lane = el("div", { class: "ho-ff-lane" + (vinc ? " win" : ""), style: "top:" + (4 + k * rowH) + "px;height:" + rowH + "px" }, [
         el("div", { class: "ho-ff-label" }, [
           el("span", { class: "ho-ff-num", style: "background:" + COLORI[k % COLORI.length], text: String(k + 1) }),
@@ -520,60 +671,74 @@
     function vai() { if (fatto) return; fatto = true; if (rafId) cancelAnimationFrame(rafId); tos.forEach(clearTimeout); poi(); }
     // niente tasto per saltarlo: il photo finish si guarda sempre tutto, poi la classifica arriva da sola
     t.mostra(s);
+    var W = strip.clientWidth || 340, cw = (cavs[0] && cavs[0].offsetWidth) || rowH * 0.94 * 220 / 150;
+    function posa(c, perc) { c.style.transform = "translate3d(" + (perc * W / 100 - cw / 2).toFixed(1) + "px,0,0)"; }
+    cavs.forEach(function (c) { c.style.transition = "none"; posa(c, -15); });
+    void strip.offsetWidth;
     var winCav = cavs[vincitore];
-    // Tutti partono affiancati e vanno alla STESSA velocità: il distacco che si vede è quello VERO
-    // (in una gara tirata restano testa a testa e il musetto del vincitore emerge solo sulla linea).
-    // Durata lunga = replay lento; ease-out = l'ultimo tratto rallenta (hype).
+    // Tutti partono affiancati e arrivano insieme alla loro posizione: in una gara tirata restano
+    // testa a testa e il musetto del vincitore emerge solo sulla linea. Lento, con l'ultimo tratto che rallenta.
     tos.push(setTimeout(function () {
-      for (var k = 0; k < N; k++) {
-        cavs[k].style.transition = "left 4.0s cubic-bezier(.2,.62,.3,1)";
-        cavs[k].style.left = targetX[k] + "%";
-      }
+      for (var k = 0; k < N; k++) { cavs[k].style.transition = "transform 4s cubic-bezier(.2,.62,.3,1)"; posa(cavs[k], targetX[k]); }
       controlla();
     }, 90));
-    // sicurezza: se rAF non gira (pannello nascosto), scatta quando il vincitore è arrivato alla linea
+    // sicurezza: se il disegno non gira (schermo nascosto), scatta quando il vincitore è arrivato alla linea
     tos.push(setTimeout(function () { if (!scattato) congela(); }, 4300));
 
-    function controlla() {                 // rileva il tocco REALE: il muso del cavallo oltre la linea
+    function controlla() {                 // rileva il tocco VERO: il muso del cavallo oltre la linea
       if (scattato || fatto) return;
       var lr = lineEl.getBoundingClientRect(), hr = winCav.getBoundingClientRect();
       if (hr.width && hr.right - hr.width * 0.05 >= lr.left + 1) { congela(); return; }
       rafId = requestAnimationFrame(controlla);
     }
+    function xAdesso(c) {                   // dove si trova adesso il cavallo (anche a metà della transizione)
+      var m = getComputedStyle(c).transform, v = /matrix(3d)?\(([^)]+)\)/.exec(m || "");
+      if (!v) return 0;
+      var n = v[2].split(","); return parseFloat(n[v[1] ? 12 : 4]) || 0;
+    }
     function congela() {                    // FERMA l'immagine dove sono (zampe comprese), poi la foto
       if (scattato || fatto) return; scattato = true;
       if (rafId) cancelAnimationFrame(rafId);
-      cavs.forEach(function (c) { var L = getComputedStyle(c).left; c.style.transition = "none"; c.style.left = L; });
+      cavs.forEach(function (c) { var x = xAdesso(c); c.style.transition = "none"; c.style.transform = "translate3d(" + x.toFixed(1) + "px,0,0)"; });
       strip.classList.remove("ho-corre");
       void strip.offsetWidth;
       scattoFoto(); flash.classList.add("on"); big.textContent = "📸"; big.classList.add("show");
-      setTimeout(function () { flash.classList.remove("on"); }, 70);
+      tos.push(setTimeout(function () { flash.classList.remove("on"); }, 70));
       tos.push(setTimeout(riprendi, 1500)); // fermo immagine ~1,5s
       tos.push(setTimeout(vai, 7000));      // dallo scatto: max 7s di replay lento, poi la classifica
     }
-    function riprendi() {                   // finisce il replay: TUTTI tagliano il traguardo (nell'ordine)
-      var FINISH = 88, sr = strip.getBoundingClientRect();
+    function riprendi() {                   // finisce il replay: TUTTI tagliano il traguardo, nell'ordine della classifica
+      var FINISH = 88, sr = strip.getBoundingClientRect(), prima = 0;
       strip.classList.add("ho-corre");
-      cavs.forEach(function (c) {
+      ord.forEach(function (k, r) {
+        var c = cavs[k]; if (!c) return;
         var hr = c.getBoundingClientRect();
         var cur = sr.width ? ((hr.left + hr.width / 2) - sr.left) / sr.width * 100 : 80;
-        var dur = Math.min(4.8, Math.max(0.6, (FINISH - cur) * 0.09));  // più lento; stessa velocità: tagliano nell'ordine
-        c.style.transition = "left " + dur.toFixed(2) + "s linear";
-        c.style.left = FINISH + "%";
+        var dur = Math.min(4.8, Math.max(0.6, (FINISH - cur) * 0.09));
+        if (r > 0) dur = Math.max(dur, prima + 0.22);   // chi è dietro in classifica taglia dopo
+        prima = dur;
+        c.style.transition = "transform " + dur.toFixed(2) + "s linear";
+        posa(c, FINISH);
       });
-      tos.push(setTimeout(function () { big.textContent = "🏆 " + nomi[vincitore] + (vincitore === io ? " (tu)" : "") + " vince!"; traguardoFX(); }, 900));
+      tos.push(setTimeout(function () {
+        var d = distaccoTesto(foto, ord);
+        big.textContent = "🏆 " + nomi[vincitore] + (vincitore === io ? " (tu)" : "") + " vince!";
+        if (d) big.appendChild(el("small", { text: d }));
+        traguardoFX();
+      }, 900));
     }
+    return { annulla: function () { fatto = true; if (rafId) cancelAnimationFrame(rafId); tos.forEach(clearTimeout); } };
   }
-  function finale(t, ord, nomi, io, foto, cb) {
-    if (!foto || !foto.length) { foto = []; for (var k = 0; k < nomi.length; k++) foto[k] = (ord.indexOf(k) === 0 ? 1 : 0.9); }
-    fotoFinish(t, ord, nomi, io, foto, function () { renderFine(t, ord, nomi, io, cb); });
+  function finale(t, ord, nomi, io, foto, cn, cb) {
+    if (!foto || !foto.length) { foto = []; for (var k = 0; k < nomi.length; k++) foto[k] = (ord.indexOf(k) === 0 ? 1 : 0.99); }
+    return fotoFinish(t, ord, nomi, io, foto, function () { renderFine(t, ord, nomi, io, cn, cb); });
   }
 
-  // classifica finale: podio con gli avatar dei primi tre, poi tutti in fila
-  function renderFine(t, ord, nomi, io, cb) {
+  // classifica finale: podio con gli avatar dei primi tre, poi gli altri in righe basse (su due colonne se sono tanti)
+  function renderFine(t, ord, nomi, io, cn, cb) {
     assicuraStile();
-    var el = t.el, mioPosto = ord.indexOf(io) + 1, vinto = mioPosto === 1;
-    var s = t.schermata({ icona: vinto ? "🏆" : "🏁", titolo: vinto ? "Hai vinto!" : "Arrivato " + mioPosto + "°", sotto: "Horto Muso" });
+    var el = t.el, guardo = io == null || io < 0, mioPosto = guardo ? 0 : ord.indexOf(io) + 1, vinto = mioPosto === 1;
+    var s = t.schermata({ icona: guardo ? "🏁" : vinto ? "🏆" : "🏁", titolo: guardo ? "Classifica della corsa" : vinto ? "Hai vinto!" : "Arrivato " + mioPosto + "°", sotto: "Horto Muso" });
     function faccia(idx) { return busto(ultimiAv[idx] || facciaDi(nomi[idx])); }
     var podio = el("div", { class: "ho-podio" });
     [1, 0, 2].forEach(function (p) {
@@ -581,60 +746,75 @@
       podio.appendChild(el("div", { class: "ho-gradino p" + (p + 1) }, [
         el("div", { class: "fac", html: faccia(idx) }),
         el("div", { class: "nm", text: nomi[idx] + (idx === io ? " (tu)" : "") }),
+        cn && cn[idx] ? el("div", { class: "cv", text: "🐴 " + cn[idx] }) : null,
         el("div", { class: "blocco", text: ["🥇", "🥈", "🥉"][p] })
       ]));
     });
     s._contenuto.appendChild(podio);
-    var box = el("div", { style: "display:flex;flex-direction:column;gap:6px" });
-    ord.forEach(function (idx, p) {
-      box.appendChild(el("div", { class: "ho-riga" + (idx === io ? " mia" : "") }, [
-        el("span", { style: "font-size:1.2rem;font-weight:900;width:30px;text-align:center", text: p + 1 + "°" }),
-        el("span", { class: "fac", html: faccia(idx) }),
-        el("span", { style: "width:14px;height:14px;border-radius:50%;flex:0 0 auto;background:" + COLORI[idx % COLORI.length] }),
-        el("span", { style: "flex:1;font-weight:800", text: nomi[idx] + (idx === io ? " (tu)" : "") })
-      ]));
-    });
-    s._contenuto.appendChild(box);
-    if (cb.sonoHost || cb.locale) {
+    var resto = ord.slice(3);
+    if (resto.length) {
+      var box = el("div", { class: "ho-resto" + (resto.length > 2 ? " due" : "") });
+      resto.forEach(function (idx, p) {
+        box.appendChild(el("div", { class: "ho-riga" + (idx === io ? " mia" : "") }, [
+          el("span", { class: "pos", text: (p + 4) + "°" }),
+          el("span", { class: "fac", html: faccia(idx) }),
+          el("span", { class: "nm", text: nomi[idx] + (idx === io ? " (tu)" : "") })
+        ]));
+      });
+      s._contenuto.appendChild(box);
+    }
+    if (cb.sonoHost) {
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rigioca", onclick: cb.onRigioca }));
+      s._piede.appendChild(el("div", { class: "ho-piede2" }, [
+        el("button", { class: "btn btn-fantasma", text: "🛋️ Saletta", onclick: cb.onSaletta }),
+        el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }) ]));
+    } else if (cb.locale) {
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rigioca", onclick: cb.onRigioca }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     } else {
-      s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa dell'host per un'altra corsa…" }));
+      s._piede.appendChild(el("p", { class: "modulo-nota", text: guardo ? "Entri alla prossima corsa! 🐎" : "Aspetta l'host: un'altra corsa o di nuovo in saletta…" }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     }
     t.mostra(s);
   }
 
   // ========================================================
-  //  LOCALE — tu (corsia 0) contro 1–3 bot
+  //  CONTRO I BOT — tu (corsia 0) contro 1–7 bot
   // ========================================================
   function corsa(t, nRivali, diff) {
     var N = Math.min(MAXN, 1 + Math.max(1, nRivali));
-    var bp = botParam(diff), nomi = [(t.giocatori && t.giocatori[0]) || "Tu"], cav = [nuovoCav(true, "io")];
-    for (var i = 1; i < N; i++) { cav.push(nuovoCav(false)); nomi.push(nomeBot(i)); }
-    var av = avatariPer(nomi, [mioAvatar(nomi[0])]);
+    var mioNome = (t.giocatori && t.giocatori[0]) || "Tu";
+    var nomi = [mioNome].concat(nomiBot([mioNome], N - 1)), cav = [nuovoCav(true, "io")];
+    for (var i = 1; i < N; i++) cav.push(botCav(diff));
+    var cn = nomiCavalli(N), av = avatariPer(nomi, [mioAvatar(t, mioNome)]);
     var fase = "via", conto = 3, raf = null, toC = null, ultimo = 0, primoArr = 0, finito = false, arrivi = [], foto = null, garaId = idGara();
     var ref = costruisci(t, N, nomi, 0, {
-      onFrusta: function () { if (fase === "corsa" && frusta(cav[0], performance.now())) frustaFX(); },
+      cavallo: cn[0],
+      onFrusta: function () {
+        if (fase !== "corsa") return;
+        var now = performance.now(); if (cav[0].boostU > now && !cav[0].sfin && !cav[0].arr) segnalaPresto(ref);
+        if (frusta(cav[0], now)) frustaFX();
+      },
       onEsci: function () { stop(); t.esci(); }
     }, av);
     function stop() { finito = true; if (raf) cancelAnimationFrame(raf); if (toC) clearInterval(toC); ref.rimuovi(); }
-    function frame(ts) {
+    function frame() {
       if (finito) return;
-      if (!ultimo) ultimo = ts;
-      var dt = Math.min(0.05, (ts - ultimo) / 1000); ultimo = ts; var now = performance.now();
-      passoTutti(cav, now, dt, bp.S, bp.I, arrivi);
-      if (arrivi.length && !primoArr) { primoArr = now; foto = cav.map(function (h) { return Math.min(1, h.pos); }); }
+      var now = performance.now(), da = Math.max(ultimo || now, now - 250); ultimo = now;   // dopo una pausa lunga si riprende da dov'era
+      var f = avanza(cav, da, now, arrivi); if (f && !foto) foto = f;
+      if (arrivi.length && !primoArr) primoArr = now;
       disegna(ref, snap(cav, "corsa", 0, nomi));
-      var tutti = cav.every(function (h) { return h.arr; });
-      if (tutti || (cav[0].arr && now - primoArr > 4000)) return fine();
+      if (arrivi.length === cav.length || (cav[0].arr && now - primoArr > 4000)) return fine();
       raf = requestAnimationFrame(frame);
     }
     function fine() {
       stop();
       var ord = classificaDa(cav, arrivi);
       salvaTrofeiHorto(t, { id: garaId, n: N, diff: diff, online: false, umani: 1 }, ord, 0);
-      finale(t, ord, nomi, 0, foto, { locale: true, onRigioca: function () { corsa(t, nRivali, diff); }, onEsci: t.esci });
+      // XP e statistiche: solo io, col mio posto vero (i bot non vanno in classifica: un loro nome uguale a quello
+      // di una persona le darebbe XP non suoi). Un intoppo qui non deve bloccare la fine
+      try { if (t.risultato) t.risultato([{ nome: mioNome, pos: ord.indexOf(0) + 1 }]); } catch (e) {}
+      finale(t, ord, nomi, 0, foto, cn, { locale: true, onRigioca: function () { corsa(t, nRivali, diff); }, onEsci: t.esci });
     }
     disegna(ref, snap(cav, "via", 3, nomi));
     toC = setInterval(function () {
@@ -646,37 +826,59 @@
   }
 
   // ========================================================
-  //  ONLINE — host = corsia 0; gli ospiti prendono 1..3; i posti
-  //  liberi li giocano i bot. Host-autoritativo: simula e trasmette.
+  //  ONLINE — host = corsia 0; gli amici prendono le altre; i posti
+  //  liberi li corrono i bot. Host-autoritativo: simula e trasmette.
+  //  Chi rientra ritrova il suo cavallo; chi arriva a corsa partita la guarda
+  //  ed entra alla prossima; a fine corsa l'host rigioca o torna in saletta.
   // ========================================================
+  var segnaCavalli = null;   // aggiorna la scelta "Quanti cavalli" nelle Regole (se entrano più amici, i cavalli aumentano)
   function hostHorto(t, diff, N) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var imp = t.impostazioni || {};
     N = Math.max(2, Math.min(MAXN, N || 4));
-    var bp = botParam(diff), codice = "…", pronta = false;
-    var posti = {}, nomiU = {}, ominiU = {};   // ominiU = avatar di chi entra (posto -> cfg)
+    var nomeHost = String((t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Host").slice(0, 16);
+    var codice = "…", pronta = false;
+    var posti = {}, nomiU = {}, ominiU = {}, usciti = {}, attesa = [], visti = [];   // posto -> id/nome/avatar; usciti: andati via a corsa iniziata; visti: i nomi di tutti quelli passati dalla stanza
     for (var _s = 1; _s < N; _s++) { posti[_s] = null; nomiU[_s] = null; }
-    var cav = null, nomi = null, ref = null, fase = "lobby", conto = 3, loop = null, toC = null, ultimo = 0, primoArr = 0, arrivi = [], ord = null, foto = null, rete = null, garaId = null, umaniGara = 1;
+    var cav = null, nomi = null, ids = null, cn = null, ref = null, fase = "lobby", conto = 3, loop = null, toC = null, ultimo = 0, primoArr = 0,
+      arrivi = [], ord = null, foto = null, rete = null, garaId = null, umaniGara = 1, msgVia = null, msgFine = null, nTick = 0;
 
     function seatDi(id) { for (var s = 1; s < N; s++) if (posti[s] === id) return s; return -1; }
     function postoLibero() { for (var s = 1; s < N; s++) if (!posti[s]) return s; return 0; }
     function quanti() { var n = 0; for (var s = 1; s < N; s++) if (posti[s]) n++; return n; }
+    function segnaN(n) { N = n; imp.cavalli = n; if (segnaCavalli) segnaCavalli(n); }
+    function nomiUmani() { var a = [nomeHost]; for (var s = 1; s < N; s++) if (posti[s]) a.push(nomiU[s]); attesa.forEach(function (x) { a.push(x.nome); }); return a; }
+    function nomeLibero(nome) {   // due persone con lo stesso nome: alla seconda un numero (XP e vittorie si danno per nome)
+      var usati = nomiUmani(), n = nome, i = 2;
+      while (usati.some(function (u) { return stessoNome(u, n); })) n = nome.slice(0, 13) + " " + (i++);
+      return n;
+    }
+    function siediti(id, nome, om) {   // un posto libero; se non c'è, un cavallo in più (fino a 8)
+      var p = postoLibero();
+      if (!p && N < MAXN) { p = N; segnaN(N + 1); }
+      if (!p) return false;
+      posti[p] = id; nomiU[p] = nome; ominiU[p] = om; return true;
+    }
+    function inAttesa(id) { for (var i = 0; i < attesa.length; i++) if (attesa[i].id === id) return attesa[i]; return null; }
+    // prima di ogni corsa (e tornando in saletta): chi è uscito lascia il posto, chi aspettava entra
+    function sistemaPosti() {
+      for (var s = 1; s < N; s++) if (posti[s] && usciti[posti[s]]) { delete usciti[posti[s]]; posti[s] = null; nomiU[s] = null; ominiU[s] = null; }
+      attesa = attesa.filter(function (a) { return !siediti(a.id, a.nome, a.om); });
+    }
     // "⚙️ Regole" in saletta: bravura dei bot e cavalli in gara. Chi è dentro resta
-    // (se i cavalli calano, chi era oltre passa a un posto libero; mai meno cavalli di chi gioca).
+    // (se i cavalli calano, chi era oltre passa a un posto libero; mai meno cavalli delle persone)
     t.onRegole = function (im) {
       if (fase !== "lobby") return;
-      bp = botParam(im.difficolta || "medio");
-      var dentro = [];
-      for (var s = 1; s < N; s++) if (posti[s]) dentro.push({ id: posti[s], nome: nomiU[s], om: ominiU[s] });
+      diff = im.difficolta || "medio";
+      var dentro = [], s;
+      for (s = 1; s < N; s++) if (posti[s]) dentro.push({ id: posti[s], nome: nomiU[s], om: ominiU[s], vecchio: s });
       var nuovoN = Math.max(2, dentro.length + 1, Math.min(MAXN, im.cavalli || 4));
       var p2 = {}, n2 = {}, o2 = {};
       for (s = 1; s < nuovoN; s++) { p2[s] = null; n2[s] = null; }
-      dentro.forEach(function (d, i) {   // chi può resta al suo posto; gli altri nei posti liberi
-        var vecchio = seatDi(d.id), dove = vecchio < nuovoN && !p2[vecchio] ? vecchio : 0;
-        if (!dove) for (var k = 1; k < nuovoN; k++) if (!p2[k] && !dentro.some(function (x) { return seatDi(x.id) === k; })) { dove = k; break; }
-        if (!dove) for (k = 1; k < nuovoN; k++) if (!p2[k]) { dove = k; break; }
-        p2[dove] = d.id; n2[dove] = d.nome; o2[dove] = d.om;
-      });
-      posti = p2; nomiU = n2; ominiU = o2; N = nuovoN;
+      dentro.forEach(function (d) { if (d.vecchio < nuovoN) { p2[d.vecchio] = d.id; n2[d.vecchio] = d.nome; o2[d.vecchio] = d.om; d.fatto = true; } });
+      dentro.forEach(function (d) { if (d.fatto) return; for (var k = 1; k < nuovoN; k++) if (!p2[k]) { p2[k] = d.id; n2[k] = d.nome; o2[k] = d.om; return; } });
+      posti = p2; nomiU = n2; ominiU = o2; segnaN(nuovoN);   // la scelta mostra il numero vero
+      attesa = attesa.filter(function (a) { return !siediti(a.id, a.nome, a.om); });
       aggiornaLobby();
     };
 
@@ -684,16 +886,29 @@
       onCodice: function (c) { codice = c; aggiornaLobby(); },
       onConnesso: function () { pronta = true; aggiornaLobby(); },
       onAddio: function (id) {
+        attesa = attesa.filter(function (a) { return a.id !== id; });
         var s = seatDi(id); if (s < 0) return;
-        posti[s] = null;
-        if (fase === "lobby") { nomiU[s] = null; aggiornaLobby(); }
-        else if (cav) { cav[s].umano = false; nomi[s] = nomeBot(s); }   // il posto passa al bot
+        if (fase === "lobby") { posti[s] = null; nomiU[s] = null; ominiU[s] = null; aggiornaLobby(); return; }
+        usciti[id] = true;   // resta in classifica col suo nome; il suo cavallo lo porta al traguardo un bot
+        if (cav && cav[s] && fase !== "fine") { cav[s].umano = false; cav[s].ai = nuovoBot(diff); cav[s].nextClick = 0; }
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          if (fase === "lobby" && seatDi(id) < 0) { var p = postoLibero(); if (p > 0) { posti[p] = id; nomiU[p] = String(m.nome || "Amico").slice(0, 16); ominiU[p] = avatarValido(m.omino); } }
-          aggiornaLobby();   // trasmette la lobby aggiornata a TUTTI (host + ospiti)
+          var s = seatDi(id);
+          if (s >= 0) {   // è già dentro (pagina ricaricata, app riaperta): gli rimando la corsa com'è adesso
+            if (usciti[id]) { delete usciti[id]; if (cav && cav[s] && (fase === "via" || fase === "corsa")) { cav[s].umano = true; cav[s].ai = null; } }
+            if ((fase === "via" || fase === "corsa") && msgVia) rete.inviaVeloce(Object.assign({}, msgVia, { to: id }));
+            else if (fase === "fine" && msgFine) rete.inviaVeloce(Object.assign({}, msgFine, { to: id }));
+            else aggiornaLobby();
+            return;
+          }
+          if (inAttesa(id)) { rete.inviaVeloce({ t: "aspetta", to: id, pieno: fase === "lobby" }); return; }
+          var nome = nomeLibero(String(m.nome || "Amico").trim().slice(0, 16) || "Amico"), om = avatarValido(m.omino);
+          visti.push(nome);   // anche se poi esce, nessun bot prenderà il suo nome (sennò, se rientra, prenderebbe XP non suoi)
+          if (fase === "lobby" && siediti(id, nome, om)) { aggiornaLobby(); return; }
+          attesa.push({ id: id, nome: nome, om: om });   // corsa già partita (o 8 cavalli già pieni): entra alla prossima
+          rete.inviaVeloce({ t: "aspetta", to: id, pieno: fase === "lobby" });
         } else if (m.t === "frusta" && fase === "corsa") {
           var sm = seatDi(id); if (sm > 0 && cav[sm] && cav[sm].umano) frusta(cav[sm], performance.now());
         }
@@ -702,49 +917,66 @@
     });
 
     function inizia() {
-      fase = "via"; conto = 3; arrivi = []; primoArr = 0; ord = null; foto = null; garaId = idGara();
-      nomi = [(t.giocatori && t.giocatori[0]) || "Host"]; cav = [nuovoCav(true, "host")]; var cfgs = [mioAvatar(nomi[0])];
+      if (fase === "via" || fase === "corsa") return;
+      sistemaPosti();
+      fase = "via"; conto = 3; arrivi = []; primoArr = 0; ord = null; foto = null; msgFine = null; garaId = idGara();
+      nomi = [nomeHost]; ids = ["host"]; cav = [nuovoCav(true, "host")];
+      var cfgs = [mioAvatar(t, nomeHost)], liberi = [];
       for (var s = 1; s < N; s++) {
-        if (posti[s]) { cav.push(nuovoCav(true, posti[s])); nomi.push(nomiU[s] || ("Amico " + s)); cfgs[s] = ominiU[s]; rete.invia({ t: "seat", to: posti[s], seat: s }); }
-        else { cav.push(nuovoCav(false)); nomi.push(nomeBot(s)); }
+        if (posti[s]) { cav.push(nuovoCav(true, posti[s])); nomi.push(nomiU[s] || ("Amico " + s)); ids.push(posti[s]); cfgs[s] = ominiU[s]; }
+        else { cav.push(botCav(diff)); nomi.push(null); ids.push(null); liberi.push(s); }
       }
-      umaniGara = 1 + quanti();
+      var nb = nomiBot(nomiUmani().concat(visti), liberi.length); liberi.forEach(function (s, i) { nomi[s] = nb[i]; });
+      umaniGara = 1 + quanti(); cn = nomiCavalli(N);
       var av = avatariPer(nomi, cfgs);
-      rete.invia({ t: "via", nomi: nomi, n: N, av: av, garaId: garaId, diff: diff, umani: umaniGara });   // ogni telefono costruisce la corsa e fa il proprio countdown
+      // ogni telefono costruisce la corsa e fa il suo 3-2-1. Resta in stanza: chi rientra ritrova il suo posto (ids)
+      msgVia = { t: "via", nomi: nomi, n: N, av: av, ids: ids, cn: cn, garaId: garaId, diff: diff, umani: umaniGara };
+      rete.invia(msgVia);
+      if (ref) ref.rimuovi();
       ref = costruisci(t, N, nomi, 0, {
-        onFrusta: function () { if (fase === "corsa" && frusta(cav[0], performance.now())) frustaFX(); },
+        cavallo: cn[0], conferma: "Chiudere la corsa per tutti?",
+        onFrusta: function () {
+          if (fase !== "corsa") return;
+          var now = performance.now(); if (cav[0].boostU > now && !cav[0].sfin && !cav[0].arr) segnalaPresto(ref);
+          if (frusta(cav[0], now)) frustaFX();
+        },
         onEsci: function () { chiudi(); t.esci(); }
       }, av);
-      conto = 3; disegna(ref, snap(cav, "via", 3, nomi));
+      disegna(ref, snap(cav, "via", 3, nomi));
       toC = setInterval(function () {
-        conto--; disegna(ref, snap(cav, "via", Math.max(0, conto), nomi));
+        conto--; if (ref) disegna(ref, snap(cav, "via", Math.max(0, conto), nomi));
         if (conto < 0) { clearInterval(toC); toC = null; fase = "corsa"; ultimo = performance.now(); nTick = 0; loop = setInterval(tick, 16); }
       }, 800);
     }
     function tick() {
-      var now = performance.now(), dt = Math.min(0.1, (now - ultimo) / 1000); ultimo = now;
-      passoTutti(cav, now, dt, bp.S, bp.I, arrivi);
-      if (arrivi.length && !primoArr) { primoArr = now; foto = cav.map(function (h) { return Math.min(1, h.pos); }); }
+      // tutto il tempo passato davvero, a passi piccoli (con l'app in sottofondo il timer rallenta: si recupera, max 3 s)
+      var now = performance.now(), da = Math.max(ultimo, now - 3000); ultimo = now;
+      var f = avanza(cav, da, now, arrivi); if (f && !foto) foto = f;
+      if (arrivi.length && !primoArr) primoArr = now;
       bcast();
-      var tutti = cav.every(function (h) { return h.arr; });
-      if (tutti || (primoArr && now - primoArr > 5000)) { clearInterval(loop); loop = null; fineCorsa(); }
+      if (arrivi.length === cav.length || (primoArr && now - primoArr > 5000)) { clearInterval(loop); loop = null; fineCorsa(); }
     }
     // simula e disegna a ~60 al secondo (la telecamera resta liscia), ma trasmette 1 volta su 4 (~15 al secondo)
-    var nTick = 0;
     function bcast() { var sn = snap(cav, fase, Math.max(0, conto), nomi); if (nTick++ % 4 === 0 || fase !== "corsa") rete.inviaVeloce(sn); if (ref) disegna(ref, sn); }
     function fineCorsa() {
       fase = "fine"; ord = classificaDa(cav, arrivi);
-      salvaTrofeiHorto(t, { id: garaId, n: N, diff: diff, online: true, umani: umaniGara }, ord, 0);
-      if (t.risultato) t.risultato(ord.map(function (s) { return { nome: nomi[s] }; }));   // per il torneo online
       if (!foto) foto = cav.map(function (h) { return Math.min(1, h.pos); });
-      rete.invia({ t: "fine", ord: ord, nomi: nomi, foto: foto, garaId: garaId, diff: diff, n: N, umani: umaniGara });
+      salvaTrofeiHorto(t, { id: garaId, n: N, diff: diff, online: true, umani: umaniGara }, ord, 0);
+      msgFine = { t: "fine", ord: ord, nomi: nomi, ids: ids, cn: cn, foto: foto, garaId: garaId, diff: diff, n: N, umani: umaniGara };
+      rete.invia(msgFine);
+      // XP e torneo: solo le persone, col loro posto vero. I bot restano fuori: chi entra a corsa
+      // partita può chiamarsi come uno di loro, e prenderebbe XP e vittorie non sue
+      var cl = []; ord.forEach(function (s, p) { if (ids[s]) cl.push({ nome: nomi[s], pos: p + 1 }); });
+      try { if (t.risultato) t.risultato(cl); } catch (e) {}
       if (ref) { ref.rimuovi(); ref = null; }
-      finale(t, ord, nomi, 0, foto, { sonoHost: true, onRigioca: function () { inizia(); }, onEsci: function () { chiudi(); t.esci(); } });
+      finale(t, ord, nomi, 0, foto, cn, { sonoHost: true, onRigioca: inizia, onSaletta: tornaInSaletta, onEsci: function () { chiudi(); t.esci(); } });
     }
-    function chiudi() { if (loop) clearInterval(loop); if (toC) clearInterval(toC); if (ref) ref.rimuovi(); if (rete) rete.chiudi(); }
+    // di nuovo in saletta: stessa stanza, stessi amici, l'host può cambiare le regole e chi aspettava entra
+    function tornaInSaletta() { if (fase !== "fine") return; fase = "lobby"; sistemaPosti(); aggiornaLobby(); }
+    function chiudi() { if (loop) clearInterval(loop); if (toC) clearInterval(toC); loop = toC = null; if (ref) ref.rimuovi(); if (rete) rete.chiudi(); }
 
     function seggi() {
-      var nh = (t.giocatori && t.giocatori[0]) || "Host", a = [{ nome: nh, id: "host", omino: mioAvatar(nh) }];
+      var a = [{ nome: nomeHost, id: "host", omino: mioAvatar(t, nomeHost) }];
       for (var s = 1; s < N; s++) a.push(posti[s] ? { nome: nomiU[s], id: posti[s], omino: ominiU[s] || null } : null);
       return a;
     }
@@ -763,13 +995,13 @@
 
   function ospiteHorto(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var el = t.el, S = { rete: null, myId: null, nome: "", mySeat: 0, ref: null, fase: null, nomi: null, N: 0, msg: null, garaId: null, diff: "medio", umani: 1,
-      buf: [], raf: null, lastP: [], delayMs: 120 };   // buffer per interpolare le posizioni (movimento liscio)
-    schermaNome();
+    var el = t.el, S = { rete: null, myId: null, nome: "", mySeat: -1, ref: null, fase: null, nomi: null, N: 0, msg2: null, garaId: null, diff: "medio", umani: 1,
+      av: null, cn: null, ff: null, contoTimer: null, buf: [], raf: null, lastP: [], delayMs: 120 };   // buf: le posizioni ricevute, per un movimento liscio
+    if (t.nomeProfilo && t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else schermaNome();   // col profilo si entra da soli
 
-    // Calcola la vista da disegnare "adesso - delay" interpolando fra gli snapshot ricevuti.
+    // Calcola la vista da disegnare "adesso - delay" interpolando fra le posizioni ricevute.
     // Così, anche se i pacchetti arrivano a intervalli irregolari, il cavallo scorre liscio
-    // invece di fermarsi e scattare. Se un pacchetto tarda, prosegue col suo passo (estrapola).
+    // invece di fermarsi e scattare. Se un pacchetto tarda, prosegue col suo passo.
     function vistaOra(now) {
       var b = S.buf, last = b[b.length - 1];
       var out = { fase: last.fase, conto: last.conto, N: last.N, nomi: last.nomi, cav: [] };
@@ -779,7 +1011,7 @@
       } else if (rt >= last.rt) {                 // pacchetto in ritardo: prosegui col passo attuale (max 100ms)
         var P = b[b.length - 2], span = Math.max(1, last.rt - P.rt), ex = Math.min(rt - last.rt, 100);
         for (k = 0; k < last.cav.length; k++) { var cl = last.cav[k], vp = (cl.p - P.cav[k].p) / span; out.cav[k] = { p: Math.min(1, cl.p + vp * ex), s: cl.s, f: cl.f, a: cl.a, b: cl.b }; }
-      } else {                                    // caso normale: interpola fra i due snapshot che circondano rt
+      } else {                                    // caso normale: interpola fra i due pacchetti che circondano rt
         var i = b.length - 2; while (i > 0 && b[i].rt > rt) i--;
         var A = b[i], B = b[i + 1], f = (rt - A.rt) / Math.max(1, B.rt - A.rt);
         for (k = 0; k < B.cav.length; k++) { var cb = B.cav[k]; out.cav[k] = { p: A.cav[k].p + (cb.p - A.cav[k].p) * f, s: cb.s, f: cb.f, a: cb.a, b: cb.b }; }
@@ -797,68 +1029,85 @@
     }
     function avviaGiro() { if (!S.raf) S.raf = requestAnimationFrame(giro); }
     function fermaGiro() { if (S.raf) cancelAnimationFrame(S.raf); S.raf = null; }
+    function annullaFine() { if (S.ff && S.ff.annulla) S.ff.annulla(); S.ff = null; }
+    function chiudiCorsa() {   // toglie la corsa disegnata (o il photo finish): parte un'altra corsa o si torna in saletta
+      if (S.contoTimer) { clearInterval(S.contoTimer); S.contoTimer = null; }
+      fermaGiro(); S.buf = []; S.lastP = [];
+      if (S.ref) { S.ref.rimuovi(); S.ref = null; }
+      annullaFine();
+    }
+    function esci() { chiudiCorsa(); if (S.rete) S.rete.chiudi(); t.esci(); }
+    function mioCav() { var b = S.buf[S.buf.length - 1]; return b && S.mySeat >= 0 ? b.cav[S.mySeat] : null; }
     function schermaNome() {
-      var s = t.schermata({ icona: "🐎", titolo: "Entra nella corsa", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ icona: "🐎", titolo: "Entra nella corsa", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
-      S.msg = el("div", { class: "link-avviso" });
-      s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
-      var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+      s._contenuto.appendChild(input);
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
         try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
-        S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
-      } });
-      s._piede.appendChild(bEntra);
+        S.nome = (input.value || "").trim().slice(0, 16) || "Amico"; collega();
+      } }));
       t.mostra(s);
-      if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
+      attesa();
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: mioAvatar(S.nome) }); attesa();
+        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: mioAvatar(t, S.nome) });
           setTimeout(function () { if (!S.ref && S.fase === null && S.msg2) S.msg2.textContent = "Non trovo la partita: controlla il codice o attendi l'host…"; }, 8000); },
         onMsg: function (m) {
           if (!m || !m.t) return;
-          if (m.t === "seat") { if (m.to === S.myId) { S.mySeat = m.seat; if (S.ref && S.ref.io !== m.seat) rebuild(); } }
-          else if (m.t === "lobby") {
+          if (m.to && m.to !== S.myId) return;   // era per un altro telefono
+          if (m.t === "lobby") {
+            S.mySeat = -1;
             for (var i = 0; i < (m.seggi || []).length; i++) if (m.seggi[i] && m.seggi[i].id === S.myId) S.mySeat = i;
-            if (!S.ref) mostraLobby(m);   // l'ospite vede la stanza come l'host
-          }
-          else if (m.t === "via") {       // parte la corsa: costruisci e fai il countdown LOCALE (come l'host)
-            S.nomi = m.nomi; S.N = m.n || (m.nomi ? m.nomi.length : 4); S.av = m.av || null; S.garaId = m.garaId; S.diff = m.diff || "medio"; S.umani = m.umani || 1;
-            fermaGiro(); S.buf = []; S.lastP = [];   // corsa nuova (anche rivincita): riparto pulito
+            chiudiCorsa(); S.fase = "lobby"; mostraLobby(m);   // l'ospite vede la stanza come l'host
+          } else if (m.t === "via") {       // parte la corsa: costruisci e fai il 3-2-1 qui (come l'host)
+            var seat = m.ids ? m.ids.indexOf(S.myId) : S.mySeat;   // -1 = non corro: guardo ed entro alla prossima
+            if (m.garaId && m.garaId === S.garaId && (S.fase === "fine" || (S.ref && S.ref.io === seat))) return;   // la stessa corsa, rimandata a chi rientra
+            chiudiCorsa();
+            S.mySeat = seat; S.nomi = m.nomi; S.N = m.n || (m.nomi ? m.nomi.length : 4); S.av = m.av || null; S.cn = m.cn || null;
+            S.garaId = m.garaId; S.diff = m.diff || "medio"; S.umani = m.umani || 1;
             build({ nomi: S.nomi, N: S.N }); S.fase = "via"; contoOspite();
-          }
-          else if (m.t === "snap") {
+          } else if (m.t === "snap") {
+            if (S.fase === "fine" || S.fase === "lobby") return;   // pacchetti in ritardo di una corsa già finita
             if (S.contoTimer) { clearInterval(S.contoTimer); S.contoTimer = null; }
-            if (!S.ref || S.fase === "fine") { build(m); S.buf = []; S.lastP = []; }
+            if (!S.ref) { if (!m.nomi) return; build(m); S.buf = []; S.lastP = []; }
             S.fase = m.fase;
             var now = performance.now();
             S.buf.push({ rt: now, fase: m.fase, conto: m.conto, N: m.N, nomi: m.nomi, cav: m.cav });
             while (S.buf.length > 8 && S.buf[0].rt < now - 1500) S.buf.shift();
             avviaGiro();
           } else if (m.t === "fine") {
-            if (S.contoTimer) { clearInterval(S.contoTimer); S.contoTimer = null; }
-            fermaGiro(); S.buf = [];
-            if (S.ref) { S.ref.rimuovi(); S.ref = null; } S.fase = "fine";
-            salvaTrofeiHorto(t, { id: m.garaId || S.garaId, n: m.n || S.N, diff: m.diff || S.diff, online: true, umani: m.umani || S.umani }, m.ord, S.mySeat);
-            finale(t, m.ord, m.nomi, S.mySeat, m.foto, { sonoHost: false, onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+            if (m.garaId && m.garaId === S.garaId && S.fase === "fine") return;   // già vista
+            var io = m.ids ? m.ids.indexOf(S.myId) : S.mySeat;
+            chiudiCorsa(); S.fase = "fine"; S.garaId = m.garaId || S.garaId;
+            if (io >= 0) salvaTrofeiHorto(t, { id: m.garaId || S.garaId, n: m.n || S.N, diff: m.diff || S.diff, online: true, umani: m.umani || S.umani }, m.ord, io);
+            S.ff = finale(t, m.ord, m.nomi, io, m.foto, m.cn, { sonoHost: false, onEsci: esci });
+          } else if (m.t === "aspetta") {   // la corsa è già partita: entro alla prossima
+            if (!S.ref && S.fase !== "fine") schermaAspetta(m.pieno);
           }
         },
-        onChiuso: function () { fermaGiro(); errore(t, "Collegamento perso. L'host potrebbe aver chiuso la corsa."); },
-        onErrore: function () { fermaGiro(); errore(t, "Problema di collegamento. Riprova."); }
+        onChiuso: function () { chiudiCorsa(); errore(t, "Collegamento perso. L'host potrebbe aver chiuso la corsa."); },
+        onErrore: function () { chiudiCorsa(); errore(t, "Problema di collegamento. Riprova."); }
       });
     }
     function build(sn) {
       if (S.ref) S.ref.rimuovi();
+      annullaFine();
       S.nomi = sn.nomi; S.N = sn.N;
-      S.ref = costruisci(t, sn.N, sn.nomi, S.mySeat || 0, {
-        onFrusta: function () { if (S.fase === "corsa" && S.rete) S.rete.invia({ t: "frusta" }); },
-        onEsci: function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); }
+      S.ref = costruisci(t, sn.N, sn.nomi, S.mySeat, {
+        cavallo: S.cn && S.mySeat >= 0 ? S.cn[S.mySeat] : "",
+        onFrusta: function () {
+          if (S.fase !== "corsa" || !S.rete || S.mySeat < 0) return;
+          var io = mioCav(); if (io && (io.f || io.a)) return;
+          if (io && io.b) segnalaPresto(S.ref);
+          S.rete.invia({ t: "frusta" }); frustaFX();   // lo schiocco subito, senza aspettare la rete
+        },
+        onEsci: esci
       }, avatariPer(sn.nomi, S.av));
       // l'ospite guida il movimento a 60fps con l'interpolazione: niente transizione CSS
-      // (si sommerebbe al ritardo e rifarebbe scattare). L'host invece la tiene, per smussare i suoi 15Hz.
       S.ref.cavEl.forEach(function (c) { c.style.transition = "none"; });
     }
-    function rebuild() { if (S.nomi) build({ nomi: S.nomi, N: S.N }); }
-    function contoOspite() {   // countdown locale dell'ospite (3-2-1-VIA), poi arrivano le posizioni
+    function contoOspite() {   // 3-2-1-VIA dell'ospite, poi arrivano le posizioni
       if (S.contoTimer) clearInterval(S.contoTimer);
       var c = 3; disegna(S.ref, snapFermo(S.nomi, S.N, 3, "via"));
       S.contoTimer = setInterval(function () {
@@ -868,19 +1117,22 @@
       }, 800);
     }
     function mostraLobby(m) {
-      renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi },
-        { onEsci: function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); } });
+      renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi }, { onEsci: esci });
     }
-    function attesa() {   // placeholder finché non arriva la lobby dall'host
-      if (S.ref) return;
-      var s = t.schermata({ icona: "🐎", titolo: "Horto Muso · Sala", sotto: "Stanza " + codice.toUpperCase(),
-        indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
-      S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegato ✅ — sto entrando nella stanza…" });
+    function attesa() {   // finché non arriva la saletta dall'host
+      var s = t.schermata({ icona: "🐎", titolo: "Entro nella corsa…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: esci });
+      S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" });
       s._contenuto.appendChild(S.msg2); t.mostra(s);
+    }
+    function schermaAspetta(pieno) {
+      var s = t.schermata({ icona: "🐎", titolo: pieno ? "La corsa è piena" : "Corsa già partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: esci });
+      s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px",
+        text: pieno ? "Ci sono già 8 cavalli: entri appena si libera un posto." : "Sei dentro: entri alla prossima corsa! 🐎" }));
+      t.mostra(s);
     }
   }
 
-  // lobby uguale per host e ospite: mostra tutti i posti (bot inclusi), evidenzia il proprio.
+  // saletta uguale per host e ospite: mostra chi c'è (i posti liberi li corrono i bot), evidenzia il proprio.
   function renderLobby(t, vm, cb) {
     var gio = [], vuoti = 0;
     (vm.seggi || []).forEach(function (sg, i) { if (sg) gio.push({ id: sg.id, nome: sg.nome, omino: sg.omino || null, host: i === 0, tu: sg.id === vm.myId }); else vuoti++; });
@@ -908,48 +1160,56 @@
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro i bot", sotto: "Corri da solo contro i cavalli dei bot" }],
     nome: "Horto Muso",
     icona: "🐎",
-    descrizione: "Corsa di cavalli: frusta per accelerare, ma occhio all'energia! Contro i bot o online, ognuno dal suo telefono.",
+    descrizione: "Corsa di cavalli: frusta a ritmo per accelerare, ma occhio all'energia! Contro i bot o online, ognuno dal suo telefono.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 1,
-    etichettaGiocatori: "👥 1–8 giocatori",   // 1 da solo vs bot, fino a 8 online (i cavalli in gara)
+    etichettaGiocatori: "👥 1–8 giocatori",   // 1 da solo contro i bot, fino a 8 online (i cavalli in gara)
     regole: [
-      "Si parte dai <b>cancelletti</b>: corsie dritte, stessa distanza per tutti (1000 m). La telecamera segue la corsa e in alto la minimappa mostra dove siete sul percorso.",
-      "In sella c'è il tuo <b>avatar</b>; i bot sono Bot e i suoi amici.",
-      "I cavalli corrono già da soli a una <b>velocità minima</b>. Tu hai il tasto <b>FRUSTA</b>: ogni click dà una spinta.",
-      "Ogni frustata consuma <b>energia</b> (la barra sopra il tuo cavallo). Se non frusti, l'energia si <b>ricarica</b>.",
-      "Se l'energia arriva a <b>zero</b> vai in <b>sfinimento</b>: rallenti e per <b>3 secondi</b> non puoi frustare.",
-      "Vince il <b>primo</b> che taglia il traguardo. Dosa le frustate!",
-      "Da <b>2 a 8 cavalli</b>: <b>contro i bot</b> oppure <b>online</b> (ognuno dal suo telefono; i posti liberi li giocano i bot)."
+      "Si parte dai <b>cancelletti</b>: corsie dritte, 1.000 m per tutti. La telecamera segue la corsa e in alto la minimappa mostra dove siete.",
+      "In sella c'è il tuo <b>avatar</b>; i bot sono Bot e i suoi amici, ognuno col suo carattere: c'è chi parte a razzo e chi rimonta nel finale.",
+      "I cavalli corrono da soli a una <b>velocità minima</b>. Ogni tocco su <b>FRUSTA</b> dà una spinta di un attimo.",
+      "Tocca <b>a ritmo, non a raffica</b>: toccare di nuovo mentre la spinta dura spreca energia (vedi ⚠️ Troppo presto).",
+      "Ogni frustata consuma <b>energia</b> (la barra sopra il tasto). Se non frusti, l'energia si <b>ricarica</b>.",
+      "Se l'energia arriva a <b>zero</b> il cavallo è <b>sfinito</b>: rallenta e per <b>3 secondi</b> non puoi frustare. Tieni qualcosa per lo <b>scatto finale</b>!",
+      "Vince il <b>primo</b> che taglia il traguardo: se è testa a testa decide il <b>photo finish</b>.",
+      "Da <b>2 a 8 cavalli</b>: <b>contro i bot</b> oppure <b>online</b> (ognuno dal suo telefono; i posti liberi li corrono i bot)."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
-      dove.modo = "bot"; dove.cavalli = 4; dove.difficolta = "medio";
-      var bBot, bOnl, notaOnline;
-      function selM(m) { dove.modo = m; bBot.className = "modo-chip" + (m === "bot" ? " attiva" : ""); bOnl.className = "modo-chip" + (m === "online" ? " attiva" : ""); notaOnline.hidden = (m !== "online"); }
-      bBot = el("button", { class: "modo-chip attiva", onclick: function () { selM("bot"); } }, [
-        el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro i bot" }), el("div", { class: "ms", text: "Da solo" })])]);
-      bOnl = el("button", { class: "modo-chip", onclick: function () { selM("online"); } }, [
-        el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online" }), el("div", { class: "ms", text: "Ognuno dal suo" })])]);
-      if (!aiuti.modo) {   // (se "come giocare" l'avete già scelto prima, qui non si sceglie)
+      dove.modo = aiuti.modo || "bot"; dove.cavalli = 4; dove.difficolta = "medio";
+      var bBot = null, bOnl = null, notaOnline, notaPosti;
+      function selM(m) {
+        dove.modo = m;
+        if (bBot) { bBot.className = "modo-chip" + (m === "bot" ? " attiva" : ""); bOnl.className = "modo-chip" + (m === "online" ? " attiva" : ""); }
+        notaPosti.hidden = m !== "online"; notaOnline.hidden = m !== "online" || !!aiuti.modo;
+      }
+      if (!aiuti.modo && !aiuti.sala) {   // (se "Come giocate?" l'avete già scelto prima, qui non si sceglie)
+        bBot = el("button", { class: "modo-chip attiva", onclick: function () { selM("bot"); } }, [
+          el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro i bot" }), el("div", { class: "ms", text: "Da solo" })])]);
+        bOnl = el("button", { class: "modo-chip", onclick: function () { selM("online"); } }, [
+          el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online" }), el("div", { class: "ms", text: "Ognuno dal suo" })])]);
         box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
         box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bBot, bOnl]));
       }
       box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Quanti cavalli in gara" }));
-      var wR = el("div", { style: "display:flex;gap:8px" });
-      [2, 4, 6, 8].forEach(function (n) {
-        var b = el("button", { class: "modo-chip" + (n === 4 ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {
-          dove.cavalli = n; [].forEach.call(wR.children, function (c) { c.className = "modo-chip"; c.style.flex = "1"; }); b.className = "modo-chip attiva";
-        } }, [el("div", { class: "mt", text: String(n) })]);
-        b.style.flex = "1"; wR.appendChild(b);
+      var wR = el("div", { style: "display:flex;gap:5px" }), chip = {};
+      function segna(n) { dove.cavalli = n; for (var k in chip) chip[k].className = "modo-chip" + (+k === n ? " attiva" : ""); }
+      [2, 3, 4, 5, 6, 7, 8].forEach(function (n) {
+        chip[n] = el("button", { class: "modo-chip", style: "flex:1;justify-content:center;text-align:center;padding-left:0;padding-right:0;min-width:0", onclick: function () { segna(n); } },
+          [el("div", { class: "mt", text: String(n) })]);
+        wR.appendChild(chip[n]);
       });
+      segna(4);
+      segnaCavalli = segna;   // online: se entrano più amici dei cavalli scelti, qui si vede il numero vero
       box.appendChild(wR);
-      box.appendChild(el("p", { class: "modulo-nota", style: "margin-top:6px", text: "Online: i posti liberi li riempiono i bot fino a questo numero." }));
+      notaPosti = el("p", { class: "modulo-nota", style: "margin-top:6px", text: "Online: i posti liberi li corrono i bot; se entrano più amici, i cavalli aumentano da soli." });
+      box.appendChild(notaPosti);
       box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei bot" }));
       var wD = el("div", { style: "display:flex;gap:8px" });
       [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]].forEach(function (d) {
         var b = el("button", { class: "modo-chip" + (d[0] === "medio" ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {
-          dove.difficolta = d[0]; [].forEach.call(wD.children, function (c) { c.className = "modo-chip"; c.style.flex = "1"; }); b.className = "modo-chip attiva";
+          dove.difficolta = d[0]; [].forEach.call(wD.children, function (c) { c.className = "modo-chip"; }); b.className = "modo-chip attiva";
         } }, [el("div", { class: "mt", text: d[1] })]);
-        b.style.flex = "1"; wD.appendChild(b);
+        wD.appendChild(b);
       });
       box.appendChild(wD);
       notaOnline = el("div", { class: "link-avviso", hidden: "hidden" });
@@ -957,7 +1217,7 @@
         ? "Apri una stanza e manda il codice: gli altri corrono dal loro telefono. I posti liberi li giocano i bot."
         : "Qui il collegamento non è disponibile: funziona quando il gioco è aperto dal sito pubblicato online.";
       box.appendChild(notaOnline);
-      if (aiuti.modo) { selM(aiuti.modo); notaOnline.hidden = true; }
+      selM(aiuti.sala ? "online" : dove.modo);
     },
     avvia: function (t) {
       var imp = t.impostazioni || {};

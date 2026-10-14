@@ -26,7 +26,15 @@
         { nome: "Scudo di Energia Impenetrabile", emoji: "🛡️" },
         { nome: "Controllo della Mente", emoji: "🕹️" },
         { nome: "Salto Sovrumano", emoji: "🦘" },
-        { nome: "Controllo dei Fulmini", emoji: "🌩️" }
+        { nome: "Controllo dei Fulmini", emoji: "🌩️" },
+        { nome: "Fermare il Tempo", emoji: "⏸️" },
+        { nome: "Viaggiare nel Tempo", emoji: "⌛" },
+        { nome: "Copiare i Poteri degli Altri", emoji: "🪞" },
+        { nome: "Creare Copie di Sé Stesso", emoji: "👥" },
+        { nome: "Attraversare i Muri", emoji: "🧱" },
+        { nome: "Controllo del Fuoco", emoji: "🔥" },
+        { nome: "Guarire gli Altri col Tocco", emoji: "💚" },
+        { nome: "Trasformarsi in Qualsiasi Animale", emoji: "🦁" }
       ],
       B: [
         { nome: "Sputare Fuoco (Ma Poco)", emoji: "🔥" },
@@ -46,7 +54,13 @@
         { nome: "Elasticità Muscolare", emoji: "🤸" },
         { nome: "Attrarre Oggetti Metallici", emoji: "🧲" },
         { nome: "Controllo delle Piante", emoji: "🌱" },
-        { nome: "Camminare sui Muri (Poco)", emoji: "🕷️" }
+        { nome: "Camminare sui Muri (Poco)", emoji: "🕷️" },
+        { nome: "Respirare nello Spazio", emoji: "🌌" },
+        { nome: "Cambiare Faccia per 5 Minuti", emoji: "🎭" },
+        { nome: "Super Agilità", emoji: "🤸" },
+        { nome: "Restringersi come una Formica", emoji: "🐜" },
+        { nome: "Scudo che Dura 3 Secondi", emoji: "🛡️" },
+        { nome: "Capire Quando Qualcuno Mente", emoji: "🤥" }
       ],
       C: [
         { nome: "Sudare Acido", emoji: "🧪" },
@@ -62,7 +76,13 @@
         { nome: "Aprire i Barattoli Più Duri", emoji: "🫙" },
         { nome: "Wifi Pieno Anche in Bagno", emoji: "📶" },
         { nome: "Trovare Sempre il Telecomando", emoji: "📺" },
-        { nome: "Sentire Sempre la Suoneria", emoji: "📳" }
+        { nome: "Sentire Sempre la Suoneria", emoji: "📳" },
+        { nome: "Volare a 10 Centimetri da Terra", emoji: "🪶" },
+        { nome: "Invisibilità Solo se Nessuno Guarda", emoji: "🙈" },
+        { nome: "Teletrasporto Solo in Bagno", emoji: "🚽" },
+        { nome: "Leggere il Pensiero dei Piccioni", emoji: "🐦" },
+        { nome: "Starnutire Coriandoli", emoji: "🎊" },
+        { nome: "Indovinare il Finale dei Film", emoji: "🎬" }
       ]
     },
     {
@@ -81,7 +101,15 @@
         { nome: "Mantello Ignifugo", emoji: "🔥" },
         { nome: "Esoscheletro Volante", emoji: "🚀" },
         { nome: "Armatura Dorata Cerimoniale", emoji: "👑" },
-        { nome: "Tuta in Fibra di Carbonio", emoji: "🖤" }
+        { nome: "Tuta in Fibra di Carbonio", emoji: "🖤" },
+        { nome: "Armatura di Cristallo Indistruttibile", emoji: "💎" },
+        { nome: "Tuta Camaleontica", emoji: "🦎" },
+        { nome: "Mantello dell'Invisibilità", emoji: "🧥" },
+        { nome: "Elmo con Visore Olografico", emoji: "🪖" },
+        { nome: "Tuta Raffreddata per il Deserto", emoji: "🏜️" },
+        { nome: "Guanti Antigravità", emoji: "🧤" },
+        { nome: "Stivali a Reazione", emoji: "🥾" },
+        { nome: "Corazza a Scaglie di Drago", emoji: "🐉" }
       ],
       B: [
         { nome: "Calzamaglia Attillata", emoji: "🩱" },
@@ -101,7 +129,13 @@
         { nome: "Tuta da Ginnastica Anni '80", emoji: "🎧" },
         { nome: "Poncho Messicano", emoji: "🌵" },
         { nome: "Tuta da Pilota", emoji: "🛩️" },
-        { nome: "Tuta Termica da Montagna", emoji: "🏔️" }
+        { nome: "Tuta Termica da Montagna", emoji: "🏔️" },
+        { nome: "Felpa col Cappuccio e Maschera", emoji: "🧢" },
+        { nome: "Kimono da Karate", emoji: "🥋" },
+        { nome: "Mantello Rosso Classico", emoji: "🟥" },
+        { nome: "Tuta da Meccanico", emoji: "🔧" },
+        { nome: "Divisa da Calciatore", emoji: "⚽" },
+        { nome: "Giacca Catarifrangente da Cantiere", emoji: "🦺" }
       ],
       C: [
         { nome: "Sacco dell'Immondizia", emoji: "🗑️" },
@@ -117,7 +151,13 @@
         { nome: "Costume di Carnevale Sbiadito", emoji: "🎊" },
         { nome: "Tuta Intera a Pois", emoji: "🎯" },
         { nome: "Felpa Messa al Contrario", emoji: "🙃" },
-        { nome: "Cappotto della Nonna", emoji: "🧶" }
+        { nome: "Cappotto della Nonna", emoji: "🧶" },
+        { nome: "Accappatoio dell'Hotel", emoji: "🛁" },
+        { nome: "Lenzuolo con Due Buchi", emoji: "👻" },
+        { nome: "Tutina da Neonato Gigante", emoji: "🍼" },
+        { nome: "Costume da Banana", emoji: "🍌" },
+        { nome: "Pigiama di Natale con le Renne", emoji: "🦌" },
+        { nome: "Cappello di Carta Stagnola", emoji: "🎩" }
       ]
     },
     {
@@ -136,7 +176,15 @@
         { nome: "Doppie Lame Retrattili", emoji: "🔱" },
         { nome: "Arco Automatico a Ripetizione", emoji: "🏹" },
         { nome: "Pugno Meccanico Potenziato", emoji: "🦾" },
-        { nome: "Granate EMP", emoji: "🧨" }
+        { nome: "Granate EMP", emoji: "🧨" },
+        { nome: "Bracciale Teletrasportatore", emoji: "💫" },
+        { nome: "Corda che Fa Dire la Verità", emoji: "🪢" },
+        { nome: "Occhiali che Vedono Attraverso i Muri", emoji: "🥽" },
+        { nome: "Orologio che Ferma il Tempo", emoji: "⌚" },
+        { nome: "Anello del Potere Cosmico", emoji: "💍" },
+        { nome: "Zaino Volante", emoji: "🎒" },
+        { nome: "Bastone del Mago Supremo", emoji: "🪄" },
+        { nome: "Robot Assistente Personale", emoji: "🤖" }
       ],
       B: [
         { nome: "Rampino", emoji: "🪝" },
@@ -156,7 +204,13 @@
         { nome: "Pistola a Pallini", emoji: "svg:pistola" },
         { nome: "Rete Cattura-Ladri", emoji: "🕸️" },
         { nome: "Frusta da Cowboy", emoji: "🤠" },
-        { nome: "Visore a Infrarossi", emoji: "🥽" }
+        { nome: "Visore a Infrarossi", emoji: "🥽" },
+        { nome: "Walkie-Talkie Criptato", emoji: "📻" },
+        { nome: "Torcia Potentissima", emoji: "🔦" },
+        { nome: "Moto Truccata", emoji: "🏍️" },
+        { nome: "Grimaldello Universale", emoji: "🗝️" },
+        { nome: "Binocolo Notturno", emoji: "🔭" },
+        { nome: "Corda da Arrampicata", emoji: "🧗" }
       ],
       C: [
         { nome: "Spatola per Fritti", emoji: "🍳" },
@@ -172,7 +226,13 @@
         { nome: "Forbici Spuntate", emoji: "✂️" },
         { nome: "Cerbottana Fatta in Casa", emoji: "🥤" },
         { nome: "Elastico per Capelli", emoji: "🎀" },
-        { nome: "Torcia Scarica", emoji: "🔦" }
+        { nome: "Torcia Scarica", emoji: "🔦" },
+        { nome: "Bastoncino per i Selfie", emoji: "🤳" },
+        { nome: "Colla Stick Secca", emoji: "🧴" },
+        { nome: "Fischietto dell'Arbitro", emoji: "📣" },
+        { nome: "Mestolo della Nonna", emoji: "🥄" },
+        { nome: "Calcolatrice Solare al Buio", emoji: "🧮" },
+        { nome: "Pistola Spara Bolle di Sapone", emoji: "🫧" }
       ]
     },
     {
@@ -191,7 +251,15 @@
         { nome: "Polvere di Stelle Cadute", emoji: "✨" },
         { nome: "Suono di un Corno Leggendario", emoji: "📯" },
         { nome: "Artefatti Sacri Perduti", emoji: "🏺" },
-        { nome: "Energia dei Vulcani", emoji: "🌋" }
+        { nome: "Energia dei Vulcani", emoji: "🌋" },
+        { nome: "Meteorite di una Galassia Lontana", emoji: "☄️" },
+        { nome: "Raggio di Luna Blu", emoji: "🌙" },
+        { nome: "Spada Forgiata da un Re Antico", emoji: "⚔️" },
+        { nome: "Formula Segreta di un Alchimista", emoji: "⚗️" },
+        { nome: "Il Canto delle Balene Bianche", emoji: "🐋" },
+        { nome: "Fiore che Sboccia Ogni Cento Anni", emoji: "🌸" },
+        { nome: "Pietra Caduta da un Altro Pianeta", emoji: "🪨" },
+        { nome: "Sabbia di una Clessidra Magica", emoji: "⏳" }
       ],
       B: [
         { nome: "Il Fuoco", emoji: "🔥" },
@@ -211,7 +279,13 @@
         { nome: "I Colpi alla Testa", emoji: "🥊" },
         { nome: "Il Ghiaccio Sottile", emoji: "🧊" },
         { nome: "Le Alte Temperature", emoji: "🌡️" },
-        { nome: "La Luce Abbagliante", emoji: "💡" }
+        { nome: "La Luce Abbagliante", emoji: "💡" },
+        { nome: "L'Acqua Gelata", emoji: "🧊" },
+        { nome: "Il Sonno Profondo", emoji: "😴" },
+        { nome: "Le Correnti d'Aria", emoji: "🌬️" },
+        { nome: "Il Fumo dei Fuochi d'Artificio", emoji: "🎆" },
+        { nome: "La Fame Prolungata", emoji: "🍽️" },
+        { nome: "Il Mal di Mare", emoji: "🌊" }
       ],
       C: [
         { nome: "Intolleranza al Lattosio", emoji: "🥛" },
@@ -227,7 +301,13 @@
         { nome: "Nostalgia degli Anni '90", emoji: "📼" },
         { nome: "Imbarazzo per gli Applausi", emoji: "👏" },
         { nome: "Bisogno Urgente del Bagno", emoji: "🚽" },
-        { nome: "Sonno Improvviso Dopo Pranzo", emoji: "😴" }
+        { nome: "Sonno Improvviso Dopo Pranzo", emoji: "😴" },
+        { nome: "Il Profumo del Ragù della Domenica", emoji: "🍝" },
+        { nome: "Il Cane del Vicino che Abbaia", emoji: "🐕" },
+        { nome: "Le Scarpe Nuove che Fanno Male", emoji: "👟" },
+        { nome: "Lo Spoiler della Serie TV", emoji: "📺" },
+        { nome: "Il Gelato che Cola", emoji: "🍦" },
+        { nome: "La Mamma che Chiama con Nome e Cognome", emoji: "📞" }
       ]
     }
   ]

@@ -3,6 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    // prove sul computer (localhost): niente suoni, così gli aiutanti che provano i giochi non disturbano. Il sito vero non ha questa riga.
+    (function () {
+      if (!/^(localhost|127\.0\.0\.1)$/.test(location.hostname) || /suono=1/.test(location.search)) return;
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) { var Muto = function (o) { var c = new AC(o); try { c.suspend(); } catch (e) {} c.resume = function () { return Promise.resolve(); }; return c; }; Muto.prototype = AC.prototype; window.AudioContext = Muto; window.webkitAudioContext = Muto; }
+      if (window.AudioScheduledSourceNode) { AudioScheduledSourceNode.prototype.start = function () {}; AudioScheduledSourceNode.prototype.stop = function () {}; }
+      if (window.HTMLMediaElement) HTMLMediaElement.prototype.play = function () { return Promise.resolve(); };
+      if (window.speechSynthesis) try { window.speechSynthesis.speak = function () {}; } catch (e) {}
+    })();
+  </script>
   <meta name="theme-color" content="#0c1636">
   <title>SPeeD GAME</title>
   <link rel="manifest" href="app/manifest.webmanifest?v=2">
@@ -91,6 +102,11 @@
   <script src="data/eventi-calcio.js"></script>
   <script src="data/eventi-rap.js"></script>
   <script src="data/eventi-cinema.js"></script>
+  <script src="data/eventi-musica.js"></script>
+  <script src="data/eventi-tv.js"></script>
+  <script src="data/eventi-giochi.js"></script>
+  <script src="data/eventi-sport.js"></script>
+  <script src="data/eventi-italia.js"></script>
 
   <!-- Dati: carte del gioco "L'Asta" (temi) -->
   <script src="data/asta-carte.js"></script>
@@ -107,6 +123,10 @@
   <script src="data/asta-capodanno.js"></script>
   <script src="data/asta-universita.js"></script>
   <script src="data/asta-roadtrip.js"></script>
+  <script src="data/asta-playstation.js"></script>
+  <script src="data/asta-halloween.js"></script>
+  <script src="data/asta-natale.js"></script>
+  <script src="data/asta-icone.js"></script>
   <script src="data/asta-fanta.js"></script>
   <script src="data/fanta-quotazioni.js"></script>
   <script src="js/asta-sala-arte.js"></script>
@@ -117,6 +137,7 @@
   <script src="data/ncc-categorie.js"></script>
   <script src="data/impostore-parole.js"></script>
   <script src="data/sipero-carte.js"></script>
+  <script src="data/scopa-battute.js"></script>
   <script src="data/patata-categorie.js"></script>
   <script src="data/taboo-carte.js"></script>
   <script src="data/ruota-frasi.js"></script>

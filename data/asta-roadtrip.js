@@ -26,7 +26,15 @@
         { nome: "Pick-up coi Cerchioni Cromati Scintillanti", emoji: "🤠" },
         { nome: "Van Attrezzato con Frigo e Divano Letto", emoji: "🛋️" },
         { nome: "Golf GTI dal Bagagliaio Magicamente Capiente", emoji: "📦" },
-        { nome: "Range Rover con lo Schermo per i Bambini", emoji: "📺" }
+        { nome: "Range Rover con lo Schermo per i Bambini", emoji: "📺" },
+        { nome: "Spider d'Epoca Restaurata", emoji: "🚘" },
+        { nome: "Furgone Hippie Anni '70 Rimesso a Nuovo", emoji: "🌼" },
+        { nome: "Station Wagon col Tetto Panoramico", emoji: "🌅" },
+        { nome: "Cinquecento Cabrio Appena Lucidata", emoji: "🇮🇹" },
+        { nome: "Camper coi Pannelli Solari", emoji: "☀️" },
+        { nome: "SUV Ibrido coi Sedili Massaggianti", emoji: "💆" },
+        { nome: "Auto con la Guida Assistita in Autostrada", emoji: "🤖" },
+        { nome: "Maggiolino Cabrio Tirato a Lucido", emoji: "🐞" }
       ],
       B: [
         { nome: "Utilitaria Affidabile ma Stretta", emoji: "🚗" },
@@ -46,7 +54,13 @@
         { nome: "Macchina con le Gomme da Controllare da un Anno", emoji: "🛞" },
         { nome: "Auto con lo Specchietto Rotto da un Ramo", emoji: "🌿" },
         { nome: "Monovolume coi Sedili che Puzzano di Patatine", emoji: "🍟" },
-        { nome: "Macchina con la Radio che Prende Solo l'AM", emoji: "📻" }
+        { nome: "Macchina con la Radio che Prende Solo l'AM", emoji: "📻" },
+        { nome: "Auto Aziendale con la Scritta sulla Fiancata", emoji: "🏷️" },
+        { nome: "Utilitaria col Ruotino di Scorta", emoji: "🛞" },
+        { nome: "Auto del Nonno coi Coprisedili all'Uncinetto", emoji: "🧶" },
+        { nome: "Elettrica con l'Autonomia Corta", emoji: "🔋" },
+        { nome: "Auto a Gas col Pieno Ogni 200 km", emoji: "⛽" },
+        { nome: "Furgone del Lavoro con Due Posti Davanti", emoji: "🚚" }
       ],
       C: [
         { nome: "Fiat Duna del '99", emoji: "🕰️" },
@@ -62,7 +76,13 @@
         { nome: "Golf Presa in Prestito Senza Permesso", emoji: "🙈" },
         { nome: "Auto col Motore che Fa un Rumore Sospetto", emoji: "😰" },
         { nome: "Trattore del Contadino Prestato per Emergenza", emoji: "🚜" },
-        { nome: "Auto col Serbatoio Quasi Vuoto Fin dalla Partenza", emoji: "⛽" }
+        { nome: "Auto col Serbatoio Quasi Vuoto Fin dalla Partenza", emoji: "⛽" },
+        { nome: "Auto Senza Radio e coi Finestrini a Manovella", emoji: "🪟" },
+        { nome: "Bagagliaio Pieno della Roba dell'Ex", emoji: "📦" },
+        { nome: "Ape Calessino con Quattro Persone", emoji: "🛺" },
+        { nome: "Tergicristallo Rotto Sotto la Pioggia", emoji: "🌧️" },
+        { nome: "Cabrio con la Capote Bloccata Aperta a Gennaio", emoji: "🥶" },
+        { nome: "Utilitaria che Non Supera i 90 all'Ora", emoji: "🐢" }
       ]
     },
     {
@@ -81,7 +101,15 @@
         { nome: "Il Copilota di Google Maps Vivente", emoji: "🧭" },
         { nome: "Quello che Guida come un Pilota di Formula 1", emoji: "🏆" },
         { nome: "L'Amico che Non si Distrae Mai col Telefono", emoji: "📴" },
-        { nome: "Quello che Canta Piano per Non Svegliare Chi Dorme", emoji: "🤫" }
+        { nome: "Quello che Canta Piano per Non Svegliare Chi Dorme", emoji: "🤫" },
+        { nome: "Quello che Guida 8 Ore Senza Lamentarsi", emoji: "💪" },
+        { nome: "L'Amica Ex Tassista di Città", emoji: "🚕" },
+        { nome: "Quello che Conosce Ogni Autogrill d'Italia", emoji: "🥪" },
+        { nome: "Il Guidatore che Evita le Code con le App", emoji: "📲" },
+        { nome: "Quello che Cambia una Gomma in 5 Minuti", emoji: "🛞" },
+        { nome: "L'Amico che Riconosce Ogni Rumore del Motore", emoji: "👂" },
+        { nome: "Quello che Fa Turni di Guida Giusti per Tutti", emoji: "🔄" },
+        { nome: "L'Autista che Rispetta i Limiti e Arriva Puntuale", emoji: "⏱️" }
       ],
       B: [
         { nome: "L'Ansioso che Va ai 60 all'Ora in Corsia di Sorpasso", emoji: "🐢" },
@@ -101,7 +129,13 @@
         { nome: "Quello che Suona il Clacson per Salutare Tutti", emoji: "📯" },
         { nome: "L'Amico che Guida con gli Occhiali da Sole di Notte", emoji: "🕶️" },
         { nome: "Quello che Cambia Corsia Senza Guardare lo Specchietto", emoji: "↔️" },
-        { nome: "Il Guidatore che si Ferma per Autogrill da Instagram", emoji: "📸" }
+        { nome: "Il Guidatore che si Ferma per Autogrill da Instagram", emoji: "📸" },
+        { nome: "Quello che Guida Bene ma Solo con la Sua Musica", emoji: "🎵" },
+        { nome: "L'Amico che Si Ferma per Ogni Foto Panoramica", emoji: "📷" },
+        { nome: "Quello che Mangia Panini Mentre Guida", emoji: "🌯" },
+        { nome: "Il Guidatore che Commenta Ogni Sorpasso", emoji: "🗯️" },
+        { nome: "Quello che Tiene il Riscaldamento a 28 Gradi", emoji: "🌡️" },
+        { nome: "L'Amica che Guida Benissimo ma Solo di Giorno", emoji: "🌞" }
       ],
       C: [
         { nome: "Quello a cui hanno Appena Ritirato la Patente", emoji: "🪪" },
@@ -117,7 +151,13 @@
         { nome: "Quello che Non Ha Mai Preso la Patente", emoji: "🚫" },
         { nome: "L'Amico che Guida a Piedi Nudi sui Pedali", emoji: "🥿" },
         { nome: "Quello che si Addormenta al Semaforo Rosso", emoji: "😴" },
-        { nome: "Il Guidatore che Segue il Navigatore Anche nel Fosso", emoji: "🕳️" }
+        { nome: "Il Guidatore che Segue il Navigatore Anche nel Fosso", emoji: "🕳️" },
+        { nome: "Quello che Ha Perso gli Occhiali e Ci Vede Poco", emoji: "👓" },
+        { nome: "Quello che Gira Sempre a Destra", emoji: "➡️" },
+        { nome: "Il Guidatore che Sbaglia Uscita e Vuole Fare Retromarcia", emoji: "⏪" },
+        { nome: "Quello che Chiede la Strada alle Mucche", emoji: "🐄" },
+        { nome: "L'Amico che Guida Sempre in Seconda", emoji: "🐌" },
+        { nome: "Quello che Si Fida Solo della Cartina del 1990", emoji: "🗺️" }
       ]
     },
     {
@@ -136,7 +176,15 @@
         { nome: "La Playlist ‘Solo Hit Estive’ Trovata per Caso", emoji: "☀️" },
         { nome: "L'Amico DJ che Mixa in Levare col Volante", emoji: "🎚️" },
         { nome: "Radio Deejay con lo Speaker che Vi Fa Ridere", emoji: "📻" },
-        { nome: "Karaoke Improvvisato coi Testi sul Telefono", emoji: "🎤" }
+        { nome: "Karaoke Improvvisato coi Testi sul Telefono", emoji: "🎤" },
+        { nome: "I Cantautori Italiani Cantati da Tutti", emoji: "🎸" },
+        { nome: "I Tormentoni degli Anni 2000", emoji: "💿" },
+        { nome: "Il Concerto Dal Vivo del Vostro Gruppo Preferito", emoji: "🎤" },
+        { nome: "Il Quiz 'Indovina la Canzone'", emoji: "❓" },
+        { nome: "Lo Speaker Radio che Manda Proprio la Vostra Canzone", emoji: "📻" },
+        { nome: "Una Canzone Tipica per Ogni Regione Attraversata", emoji: "🗾" },
+        { nome: "Il Duetto Perfetto tra Guidatore e Passeggero", emoji: "🎶" },
+        { nome: "Le Colonne Sonore dei Film Più Belli", emoji: "🎬" }
       ],
       B: [
         { nome: "CD Masterizzato di Gigi D'Agostino che Salta sui Dossi", emoji: "💿" },
@@ -156,7 +204,13 @@
         { nome: "Musica Classica per Calmare gli Animi in Coda", emoji: "🎻" },
         { nome: "La Playlist di Nozze Riascoltata per Sbaglio", emoji: "💍" },
         { nome: "Audio delle Notizie sul Traffico a Ripetizione", emoji: "🚧" },
-        { nome: "Voce Robotica del Navigatore Usata come Sottofondo", emoji: "🤖" }
+        { nome: "Voce Robotica del Navigatore Usata come Sottofondo", emoji: "🤖" },
+        { nome: "Il Notiziario del Traffico Ogni Dieci Minuti", emoji: "🚦" },
+        { nome: "La Stessa Canzone Chiesta 12 Volte dal Bambino", emoji: "👶" },
+        { nome: "Il Liscio della Radio di Paese", emoji: "💃" },
+        { nome: "La Playlist Metal del Cugino", emoji: "🤘" },
+        { nome: "L'Audiolibro Giallo Interrotto Prima del Finale", emoji: "🔍" },
+        { nome: "Il Telefono di Qualcuno che Suona Ogni Tanto", emoji: "📳" }
       ],
       C: [
         { nome: "Radio Maria col Rosario in Loop per l'Antenna Rotta", emoji: "📿" },
@@ -172,7 +226,13 @@
         { nome: "Cavo Aux Rotto che Fa Sentire Solo un Fischio", emoji: "🔈" },
         { nome: "Podcast Motivazionale Ascoltato Controvoglia", emoji: "😑" },
         { nome: "Sveglia del Telefono che Suona in Loop per Sbaglio", emoji: "⏰" },
-        { nome: "Playlist Creata dall'Algoritmo Completamente a Caso", emoji: "🎲" }
+        { nome: "Playlist Creata dall'Algoritmo Completamente a Caso", emoji: "🎲" },
+        { nome: "Una Sola Stazione, in Lingua Straniera", emoji: "📡" },
+        { nome: "Il Bambino che Canta la Stessa Filastrocca per 300 km", emoji: "🧒" },
+        { nome: "I Vocali di 10 Minuti della Zia", emoji: "🎙️" },
+        { nome: "Lo Stereo Bloccato al Volume Massimo", emoji: "🔊" },
+        { nome: "Il CD Graffiato che Ripete la Stessa Parola", emoji: "💿" },
+        { nome: "Il Silenzio Imbarazzato Dopo una Litigata", emoji: "😶" }
       ]
     },
     {
@@ -191,7 +251,15 @@
         { nome: "Il Semaforo Sempre Verde per Tutta la Città", emoji: "🟢" },
         { nome: "Regalo di Caramelle Gratis alla Cassa dell'Autogrill", emoji: "🍬" },
         { nome: "Wifi Gratis e Velocissimo all'Area di Servizio", emoji: "📶" },
-        { nome: "Un Arcobaleno Perfetto Proprio sopra l'Autostrada", emoji: "🌈" }
+        { nome: "Un Arcobaleno Perfetto Proprio sopra l'Autostrada", emoji: "🌈" },
+        { nome: "L'Autogrill con la Pizza Più Buona del Viaggio", emoji: "🍕" },
+        { nome: "Un Mercatino Bellissimo Trovato per Caso", emoji: "🛍️" },
+        { nome: "Vecchi Amici Incontrati all'Area di Sosta", emoji: "🤗" },
+        { nome: "La Coda Si Scioglie Appena Arrivate", emoji: "🟢" },
+        { nome: "Il Benzinaio Vi Pulisce il Vetro Gratis", emoji: "🧽" },
+        { nome: "Un Panorama sul Mare che Non Vi Aspettavate", emoji: "🌊" },
+        { nome: "Il Telepass Già Montato in Macchina", emoji: "📟" },
+        { nome: "Il Pieno Fatto Proprio Prima dell'Aumento", emoji: "⛽" }
       ],
       B: [
         { nome: "Coda di 2 Ore per Incidente", emoji: "🐌" },
@@ -211,7 +279,13 @@
         { nome: "Nebbia Improvvisa che Blocca la Visuale", emoji: "🌫️" },
         { nome: "Cantiere che Restringe a una Corsia Sola per 10 km", emoji: "🦺" },
         { nome: "Sosta Forzata per un Temporale Violento", emoji: "⛈️" },
-        { nome: "Vespa Impazzita Entra dal Finestrino Aperto", emoji: "🛵" }
+        { nome: "Vespa Impazzita Entra dal Finestrino Aperto", emoji: "🛵" },
+        { nome: "Il Navigatore Vi Fa Uscire per un Giro Inutile", emoji: "🔄" },
+        { nome: "La Fila al Bar dell'Autogrill per un Caffè", emoji: "☕" },
+        { nome: "Il Bambino Deve Fare Pipì Appena Ripartiti", emoji: "🚻" },
+        { nome: "Finiscono gli Snack Dopo Mezz'Ora", emoji: "🍫" },
+        { nome: "Pioggia Fortissima per Dieci Minuti", emoji: "🌧️" },
+        { nome: "Il Telefono Si Scarica e il Cavo Non Funziona", emoji: "🔌" }
       ],
       C: [
         { nome: "Gomma Bucata in Galleria Senza Ruota di Scorta", emoji: "🛞" },
@@ -227,7 +301,13 @@
         { nome: "Serpente Trovato Vicino alle Gomme all'Area di Sosta", emoji: "🐍" },
         { nome: "Carro Attrezzi Chiamato per il Guasto Totale", emoji: "🚛" },
         { nome: "Battibecco con un Camionista Incattivito al Semaforo", emoji: "😠" },
-        { nome: "Un Pazzo in Contromano Ignora il Codice della Strada", emoji: "🙄" }
+        { nome: "Un Pazzo in Contromano Ignora il Codice della Strada", emoji: "🙄" },
+        { nome: "Le Chiavi Chiuse Dentro la Macchina all'Autogrill", emoji: "🔑" },
+        { nome: "Un Gabbiano Ruba il Panino dal Finestrino", emoji: "🐦" },
+        { nome: "La Valigia Dimenticata a Casa, Scoperto al Casello", emoji: "🧳" },
+        { nome: "Il Pieno di Benzina in una Macchina a Gasolio", emoji: "⛔" },
+        { nome: "Il Tappo del Serbatoio Lasciato al Distributore", emoji: "🔩" },
+        { nome: "Un Gregge di Pecore Blocca la Strada per un'Ora", emoji: "🐑" }
       ]
     }
   ]

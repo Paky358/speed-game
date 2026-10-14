@@ -26,7 +26,15 @@
         { nome: "Vagone Letto di Lusso", emoji: "🛏️" },
         { nome: "Idrovolante sull'Atollo", emoji: "🌊" },
         { nome: "Berlina con Champagne Freddo", emoji: "🍾" },
-        { nome: "Catamarano a Vele Spiegate", emoji: "⛴️" }
+        { nome: "Catamarano a Vele Spiegate", emoji: "⛴️" },
+        { nome: "Treno Panoramico tra le Alpi", emoji: "🚞" },
+        { nome: "Volo Diretto in Business", emoji: "💺" },
+        { nome: "Caicco Privato in Turchia", emoji: "⛵" },
+        { nome: "Cabrio d'Epoca in Costiera", emoji: "🚘" },
+        { nome: "Auto Sportiva a Noleggio", emoji: "🏎️" },
+        { nome: "Barca a Vela con Skipper", emoji: "🧭" },
+        { nome: "Moto da Viaggio con le Borse", emoji: "🏍️" },
+        { nome: "Gommone Veloce tra le Calette", emoji: "🚤" }
       ],
       B: [
         { nome: "Volo Low Cost alle 4 AM", emoji: "🌙" },
@@ -46,7 +54,13 @@
         { nome: "Bici a Noleggio in Città", emoji: "🚴" },
         { nome: "Metro all'Ora di Punta", emoji: "🚇" },
         { nome: "Taxi Condiviso all'Aeroporto", emoji: "🛫" },
-        { nome: "Van a Noleggio", emoji: "🚌" }
+        { nome: "Van a Noleggio", emoji: "🚌" },
+        { nome: "Aereo con Due Scali", emoji: "🛫" },
+        { nome: "Pullman Notturno a Due Piani", emoji: "🚌" },
+        { nome: "Auto del Cugino Prestata", emoji: "🚗" },
+        { nome: "Intercity con l'Aria Gelida", emoji: "❄️" },
+        { nome: "Navetta dell'Hotel", emoji: "🚐" },
+        { nome: "Motorino a Noleggio sull'Isola", emoji: "🛵" }
       ],
       C: [
         { nome: "Nel Bagagliaio di una Punto", emoji: "📦" },
@@ -62,7 +76,13 @@
         { nome: "A Nuoto Fino alla Meta", emoji: "🏊" },
         { nome: "Slitta Senza Neve", emoji: "🛷" },
         { nome: "Asino Bizzoso", emoji: "🐴" },
-        { nome: "Pattini a Rotelle Rotti", emoji: "🛼" }
+        { nome: "Pattini a Rotelle Rotti", emoji: "🛼" },
+        { nome: "Volo Cancellato e Rimandato a Domani", emoji: "❌" },
+        { nome: "Corriera di Paese Ogni 3 Ore", emoji: "⏳" },
+        { nome: "Auto Senza Navigatore in Montagna", emoji: "🗺️" },
+        { nome: "Bici con la Catena che Salta", emoji: "⛓️" },
+        { nome: "Pedalò fino all'Isola", emoji: "🦢" },
+        { nome: "Mulo Carico di Valigie", emoji: "🐴" }
       ]
     },
     {
@@ -81,7 +101,15 @@
         { nome: "Rifugio Panoramico in Vetta", emoji: "🏔️" },
         { nome: "Grand Hotel Storico", emoji: "🏛️" },
         { nome: "Loft con Vista Panoramica", emoji: "🌆" },
-        { nome: "Spa Privata con Maggiordomo", emoji: "🛁" }
+        { nome: "Spa Privata con Maggiordomo", emoji: "🛁" },
+        { nome: "Masseria di Lusso in Puglia", emoji: "🫒" },
+        { nome: "Trullo con Piscina", emoji: "🛖" },
+        { nome: "Villa sul Lago di Como", emoji: "🏞️" },
+        { nome: "Agriturismo con Spa nelle Langhe", emoji: "🍇" },
+        { nome: "Palafitta in Polinesia", emoji: "🌺" },
+        { nome: "Casa su una Spiaggia Privata", emoji: "🏖️" },
+        { nome: "Riad a Marrakech", emoji: "🕌" },
+        { nome: "Locanda Giapponese con le Terme", emoji: "♨️" }
       ],
       B: [
         { nome: "B&B Gestito da una Nonnina", emoji: "🍪" },
@@ -101,7 +129,13 @@
         { nome: "Fattoria con Galli all'Alba", emoji: "🐓" },
         { nome: "Camera con Vista Parcheggio", emoji: "🅿️" },
         { nome: "Hotel a Tre Stelle", emoji: "⭐" },
-        { nome: "Bilocale con Vista Cortile", emoji: "🪟" }
+        { nome: "Bilocale con Vista Cortile", emoji: "🪟" },
+        { nome: "Agriturismo con le Galline", emoji: "🐔" },
+        { nome: "Camera in Centro Senza Ascensore", emoji: "🪜" },
+        { nome: "Pensione a Gestione Familiare", emoji: "👪" },
+        { nome: "Monolocale con Divano Letto", emoji: "🛋️" },
+        { nome: "Villaggio Turistico con l'Animazione", emoji: "🎤" },
+        { nome: "Rifugio di Montagna con la Camerata", emoji: "🏔️" }
       ],
       C: [
         { nome: "Dormitorio da 24 Letti", emoji: "🥱" },
@@ -117,7 +151,13 @@
         { nome: "Camera con Vista sul Muro", emoji: "🧱" },
         { nome: "Formiche nel Sacco a Pelo", emoji: "🐜" },
         { nome: "Rete del Letto Rotta", emoji: "💥" },
-        { nome: "Doccia Fredda a Sorpresa", emoji: "🥶" }
+        { nome: "Doccia Fredda a Sorpresa", emoji: "🥶" },
+        { nome: "Stanza Sopra la Discoteca", emoji: "🔊" },
+        { nome: "Hotel con la Piscina Vuota", emoji: "🏊" },
+        { nome: "Appartamento Diverso dalle Foto", emoji: "📸" },
+        { nome: "Camera Accanto all'Ascensore Rumoroso", emoji: "🛗" },
+        { nome: "Tenda in Riva al Mare con l'Alta Marea", emoji: "🌊" },
+        { nome: "Bungalow Pieno di Zanzare", emoji: "🦟" }
       ]
     },
     {
@@ -136,7 +176,15 @@
         { nome: "Il Traduttore Tascabile", emoji: "📖" },
         { nome: "L'Amica Influencer", emoji: "📱" },
         { nome: "Il Sommelier Esperto", emoji: "🍷" },
-        { nome: "Quello Sempre di Buon Umore", emoji: "😄" }
+        { nome: "Quello Sempre di Buon Umore", emoji: "😄" },
+        { nome: "L'Amico che Prenota Tutto", emoji: "📅" },
+        { nome: "Quello che Sa Cucinare con Niente", emoji: "🍳" },
+        { nome: "Quello con la Patente Nautica", emoji: "⚓" },
+        { nome: "L'Amica che Conosce i Posti Segreti", emoji: "🗺️" },
+        { nome: "Quello che Fa Amicizia con Tutti", emoji: "🤝" },
+        { nome: "Il Mago delle Valigie Leggere", emoji: "🎒" },
+        { nome: "L'Amico Mattiniero che Porta i Cornetti", emoji: "🥐" },
+        { nome: "Quello Sempre Calmo nei Ritardi", emoji: "😌" }
       ],
       B: [
         { nome: "L'Amico Tirchio", emoji: "🪙" },
@@ -156,7 +204,13 @@
         { nome: "Quello che Russa Fortissimo", emoji: "💤" },
         { nome: "L'Amico Fissato coi Musei", emoji: "🖼️" },
         { nome: "Quello che Perde i Biglietti", emoji: "🎫" },
-        { nome: "L'Amica che Fa Sempre Foto", emoji: "📹" }
+        { nome: "L'Amica che Fa Sempre Foto", emoji: "📹" },
+        { nome: "Quello che Vuole Vedere Tutto in un Giorno", emoji: "🏃" },
+        { nome: "Quello che All'Estero Mangia Solo Pizza", emoji: "🍕" },
+        { nome: "L'Amica che Cambia Vestito 4 Volte al Giorno", emoji: "👗" },
+        { nome: "Quello che Vuole Solo Dormire in Spiaggia", emoji: "🏝️" },
+        { nome: "L'Amico che Contratta su Tutto", emoji: "💸" },
+        { nome: "Quello che Si Scotta il Primo Giorno", emoji: "🦞" }
       ],
       C: [
         { nome: "Senza Passaporto alla Dogana", emoji: "🛂" },
@@ -172,7 +226,13 @@
         { nome: "Quello Espulso dalla Dogana", emoji: "🚫" },
         { nome: "L'Amico Sonnambulo di Notte", emoji: "🌙" },
         { nome: "Russa come un Orso", emoji: "🐻" },
-        { nome: "L'Amico che Perde il Volo", emoji: "🛫" }
+        { nome: "L'Amico che Perde il Volo", emoji: "🛫" },
+        { nome: "Quello che Ha Dimenticato la Valigia", emoji: "🧳" },
+        { nome: "L'Amico che Litiga al Telefono Tutto il Viaggio", emoji: "💔" },
+        { nome: "Quello che Tiene la Cassa e la Perde", emoji: "👛" },
+        { nome: "Quello che Ha Paura di Tutto", emoji: "😱" },
+        { nome: "Quello che Vuole Tornare a Casa il Secondo Giorno", emoji: "🏠" },
+        { nome: "Quello che Lascia Sempre la Porta Aperta", emoji: "🚪" }
       ]
     },
     {
@@ -191,7 +251,15 @@
         { nome: "Regata in Barca a Vela", emoji: "⛵" },
         { nome: "Escursione in Yacht di Lusso", emoji: "🛥️" },
         { nome: "Concerto Privato in Spiaggia", emoji: "🎶" },
-        { nome: "Cena Romantica in Vetta", emoji: "🕯️" }
+        { nome: "Cena Romantica in Vetta", emoji: "🕯️" },
+        { nome: "Snorkeling tra i Pesci Tropicali", emoji: "🐠" },
+        { nome: "Gita in Barca alle Grotte", emoji: "🛶" },
+        { nome: "Aurora Boreale in Norvegia", emoji: "🌌" },
+        { nome: "Giro dei Vulcani in Islanda", emoji: "🌋" },
+        { nome: "Notte in Tenda nel Deserto", emoji: "🏜️" },
+        { nome: "Cena di Pesce sul Molo", emoji: "🦞" },
+        { nome: "Rafting sul Fiume", emoji: "🌊" },
+        { nome: "Kayak al Tramonto", emoji: "🌅" }
       ],
       B: [
         { nome: "Giro dei Pub", emoji: "🍻" },
@@ -211,7 +279,13 @@
         { nome: "Visita a un Borgo Antico", emoji: "🏘️" },
         { nome: "Serata in Pizzeria", emoji: "🍕" },
         { nome: "Trekking Facile al Lago", emoji: "🥾" },
-        { nome: "Karaoke con gli Amici", emoji: "🎤" }
+        { nome: "Karaoke con gli Amici", emoji: "🎤" },
+        { nome: "Lezione di Surf", emoji: "🏄" },
+        { nome: "Giro del Centro Storico a Piedi", emoji: "🏛️" },
+        { nome: "Partita a Beach Volley", emoji: "🏐" },
+        { nome: "Parco Acquatico", emoji: "🎢" },
+        { nome: "Sagra di Paese", emoji: "🎪" },
+        { nome: "Shopping al Mercato", emoji: "🛍️" }
       ],
       C: [
         { nome: "Intossicato al Chioschetto", emoji: "🤢" },
@@ -227,7 +301,13 @@
         { nome: "Crampi allo Stomaco", emoji: "😖" },
         { nome: "Litigio per l'Ombrellone", emoji: "⛱️" },
         { nome: "Perso il Traghetto", emoji: "🚢" },
-        { nome: "Sabbia Ovunque nello Zaino", emoji: "🏝️" }
+        { nome: "Sabbia Ovunque nello Zaino", emoji: "🏝️" },
+        { nome: "Pioggia per Tutta la Settimana", emoji: "🌧️" },
+        { nome: "Guida Turistica che Parla Solo in Latino", emoji: "📜" },
+        { nome: "Escursione Annullata per il Vento", emoji: "💨" },
+        { nome: "Coda di 3 Ore al Museo", emoji: "⏳" },
+        { nome: "Pullman Turistico in Panne", emoji: "🚧" },
+        { nome: "Tutto Chiuso per Festa Nazionale", emoji: "🔒" }
       ]
     }
   ]

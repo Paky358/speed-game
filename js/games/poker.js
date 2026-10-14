@@ -16,7 +16,18 @@
   var PICCOLO = 10, GRANDE = 20;       // Texas Hold'em: i bui
   var INVITO = 10, PUNTA_IT = 20;      // all'italiana: l'invito di tutti e la puntata più piccola
   var T_MOSSA = 30000;                 // online: tempo per decidere, poi passa (o lascia) da solo
+  var T_PAUSA = 5000;                  // chi è in pausa (non c'era al giro prima): si aspetta poco
   var NOMI_BOT = ["Bot", "Rosa", "Peppe", "Gina", "Tonio", "Lia", "Dino", "Pina", "Ciro", "Nina", "Totò", "Lella"];
+  // le battute dei bot (ogni tanto, nella nuvoletta sopra l'avatar)
+  var FRASI_BOT = {
+    passa: ["Passo, per ora", "Vediamo che succede", "Busso!", "Tocca a voi", "Non mi sbilancio", "Calma e gesso", "Io aspetto", "Piano piano…", "Niente da dire", "Faccio il furbo", "Vado avanti gratis", "Aspetto le vostre mosse", "Prima voi, prego", "Mi godo lo spettacolo", "Zitto zitto…", "Tocco il tavolo"],
+    chiama: ["Vedo!", "Ci sto", "Non mi spaventi", "Voglio vedere", "Pago, va'", "Vediamo 'ste carte", "Ti seguo", "Non mi fai paura", "E va bene…", "Chi ha paura?", "Ci credo", "Secondo me bluffi", "Sono curioso", "Non mi freghi", "Pago e guardo", "Ti vengo dietro", "Hai la faccia di chi bluffa"],
+    punta: ["Ci provo!", "Alziamo un po'", "Chi mi segue?", "Si fa sul serio", "Mi sento fortunato", "Questa è mia", "Coraggio, venite", "Un pensierino…", "Dai che si gioca", "Facciamo sul serio", "Assaggiate questa", "Un caffè e rilancio", "Si alza la posta!", "Pronti? Via!", "Vediamo chi ci crede", "Offro io", "Mettiamo pepe"],
+    allin: ["Tutto dentro!", "O la va o la spacca", "Mi gioco la casa!", "Tutto su questa", "Adesso si balla", "Vediamo chi ha fegato", "Tutto o niente!", "Che Dio me la mandi buona", "Sbanco o torno a casa", "Si va fino in fondo!", "Chi mi ama mi segua", "Ora o mai più", "Tenetevi forte!"],
+    lascia: ["Troppo per me", "Me ne vado, ciao", "Non è serata", "Lascio, per stavolta", "Mi ritiro con onore", "Carte da buttare", "La prossima è mia", "Mannaggia…", "Che mani mi date?", "Tengo famiglia", "Chi mescola, stasera?", "Vado a prendere un gelato", "Le carte non mi amano", "Ritirata strategica", "Meglio vivo che eroe"],
+    cambia: ["Speriamo bene", "Dammi qualcosa di buono", "Cambio tutto!", "Mazzo, aiutami", "Proviamo così", "Vediamo cosa esce", "Fuori le brutte!", "Tentar non nuoce", "Pesco e prego", "Avanti le belle"],
+    servito: ["Servito!", "Mi tengo queste", "Sto bene così", "Non tocco niente", "Mi piacciono queste", "Squadra che vince…", "Non cambio niente, eh", "Le tengo strette"]
+  };
   var SEMI = ["♠", "♥", "♦", "♣"], ROSSO = { 1: 1, 2: 1 };
   var FORZA_SEME = [1, 4, 3, 2];       // all'italiana, a parità: cuori, quadri, fiori, picche
   var FIGURE = { 1: "A", 11: "J", 12: "Q", 13: "K" };
@@ -117,7 +128,7 @@
       cc.forEach(function (c) { if (rango(c) === dopo[0]) semeTop = Math.max(semeTop, FORZA_SEME[c.s]); });
       v.push(semeTop);
     }
-    return { v: v, tipo: tipo, nome: NOMI_MANO[tipo] };
+    return { v: v, tipo: tipo, nome: NOMI_MANO[tipo], carte: cc };
   }
   function confronta(a, b) {
     for (var i = 0; i < Math.max(a.length, b.length); i++) { var x = a[i] || 0, y = b[i] || 0; if (x !== y) return x - y; }
@@ -140,18 +151,28 @@
     var M = { variante: variante, giocatori: [], dealer: -1, mazzo: [], scarti: [], tavolo: [], piatto: 0, daChiamare: 0, rilMin: 0,
       turno: -1, stato: "attesa", n: 0, esito: null, basso: 2, corsa: false, scadenza: null };
     function minimo() { return M.variante === "he" ? GRANDE : PUNTA_IT; }
-    function attivi() { return M.giocatori.filter(function (p) { return p.seduto && !p.via && p.stack > 0; }); }
+    function attivi() { return M.giocatori.filter(function (p) { return p.seduto && !p.via && !p.pausa && p.stack > 0; }); }
     function inMano() { return M.giocatori.filter(function (p) { return p.inMano && !p.lascia; }); }
     function puoMuovere(p) { return p.inMano && !p.lascia && !p.allin; }
     function deveParlare(p) { return puoMuovere(p) && (!p.agito || p.inGiro < M.daChiamare); }
     function dopo(i, ok) { var n = M.giocatori.length; for (var k = 1; k <= n; k++) { var j = ((i + k) % n + n) % n; if (ok(M.giocatori[j])) return j; } return -1; }
     function metti(p, x) { x = Math.max(0, Math.min(Math.floor(x), p.stack)); p.stack -= x; p.inGiro += x; p.messo += x; if (p.stack === 0) p.allin = true; return x; }
     function pesca() { if (!M.mazzo.length) { M.mazzo = mischia(M.scarti); M.scarti = []; } return M.mazzo.pop(); }
+    // la puntata in più che nessuno ha pareggiato torna a chi l'ha messa (non è una vincita)
+    function rendi() {
+      var ord = M.giocatori.slice().sort(function (a, b) { return b.messo - a.messo; }), p = ord[0];
+      if (!p || p.messo <= 0) return;
+      var d = p.messo - (ord[1] ? ord[1].messo : 0); if (d <= 0) return;
+      var daGiro = Math.min(d, p.inGiro);
+      p.inGiro -= daGiro; M.piatto -= d - daGiro; p.messo -= d; p.stack += d;
+      if (p.stack > 0) p.allin = false;
+      if (p.azione === "All-in" && p.stack > 0) p.azione = "Punta";
+    }
 
     M.siedi = function (o) {
       var st = Math.max(0, Math.floor(o.stack || 0));
-      var p = { id: o.id, nome: o.nome, omino: o.omino || null, bot: !!o.bot, stack: st, buyin: st, seduto: st > 0, via: false,
-        inMano: false, lascia: false, allin: false, inGiro: 0, messo: 0, mano: [], agito: false, azione: "", mostra: false, cambio: null, valut: null,
+      var p = { id: o.id, nome: o.nome, omino: o.omino || null, bot: !!o.bot, stack: st, buyin: st, seduto: st > 0, via: false, pausa: false,
+        inMano: false, lascia: false, allin: false, inGiro: 0, messo: 0, mano: [], agito: false, chiuso: false, azione: "", frase: "", mostra: false, cambio: null, valut: null,
         rilanciMano: 0, rilanciVeriMano: 0, carteCambiateMano: 0 };
       M.giocatori.push(p); return p;
     };
@@ -159,9 +180,13 @@
     M.piattoTot = function () { var s = M.piatto; M.giocatori.forEach(function (p) { s += p.inGiro; }); return s; };
     M.inCorso = function () { return M.stato !== "attesa" && M.stato !== "finemano"; };
 
+    // tavolo pulito, nessuna mano in corso
+    M.azzera = function () {
+      M.giocatori.forEach(function (p) { p.inMano = false; p.lascia = false; p.allin = false; p.inGiro = 0; p.messo = 0; p.mano = []; p.agito = false; p.chiuso = false; p.azione = ""; p.frase = ""; p.mostra = false; p.cambio = null; p.valut = null; p.rilanciMano = 0; p.rilanciVeriMano = 0; p.carteCambiateMano = 0; });
+      M.esito = null; M.tavolo = []; M.piatto = 0; M.scarti = []; M.corsa = false; M.turno = -1; M.stato = "attesa";
+    };
     M.nuovaMano = function () {
-      M.giocatori.forEach(function (p) { p.inMano = false; p.lascia = false; p.allin = false; p.inGiro = 0; p.messo = 0; p.mano = []; p.agito = false; p.azione = ""; p.mostra = false; p.cambio = null; p.valut = null; p.rilanciMano = 0; p.rilanciVeriMano = 0; p.carteCambiateMano = 0; });
-      M.esito = null; M.tavolo = []; M.piatto = 0; M.scarti = []; M.corsa = false; M.turno = -1;
+      M.azzera();
       var gioc = attivi();
       if (gioc.length < MIN) { M.stato = "attesa"; return false; }
       M.n++;
@@ -203,7 +228,7 @@
       if (i !== M.turno || !p || !puoMuovere(p) || !PUNTATE[M.stato]) return null;
       var serve = Math.max(0, M.daChiamare - p.inGiro), tutto = p.inGiro + p.stack;
       return { passa: serve === 0, chiama: serve > 0 ? Math.min(serve, p.stack) : 0,
-        punta: tutto > M.daChiamare ? { min: Math.min(M.daChiamare + M.rilMin, tutto), max: tutto } : null };
+        punta: tutto > M.daChiamare && !p.chiuso ? { min: Math.min(M.daChiamare + M.rilMin, tutto), max: tutto } : null };
     };
     // tipo: lascia | passa | chiama | punta (tot = a quanto arriva la mia puntata in questo giro)
     M.azione = function (i, tipo, tot) {
@@ -217,9 +242,11 @@
         tot = Math.max(pos.punta.min, Math.min(pos.punta.max, Math.floor(+tot || 0)));
         metti(p, tot - p.inGiro);
         if (tot > prima) {
-          if (tot - prima >= M.rilMin) M.rilMin = tot - prima;
+          var pieno = tot - prima >= M.rilMin;
+          if (pieno) M.rilMin = tot - prima;
           M.daChiamare = tot;
-          M.giocatori.forEach(function (q) { if (q !== p) q.agito = false; });   // gli altri devono rispondere
+          // gli altri devono rispondere; un all-in più piccolo di un rilancio vero non riapre i rilanci a chi ha già parlato
+          M.giocatori.forEach(function (q) { if (q === p) return; if (pieno || prima === 0) { q.agito = false; q.chiuso = false; } else if (q.agito) q.chiuso = true; });
         }
         p.azione = p.allin ? "All-in" : (prima === 0 ? "Punta" : "Rilancia");
       } else return false;
@@ -229,12 +256,13 @@
       return true;
     };
     function chiudiGiro() {
-      M.giocatori.forEach(function (q) { M.piatto += q.inGiro; q.inGiro = 0; q.agito = false; });
+      rendi();
+      M.giocatori.forEach(function (q) { M.piatto += q.inGiro; q.inGiro = 0; q.agito = false; q.chiuso = false; });
       M.daChiamare = 0; M.rilMin = minimo(); M.turno = -1;
       var conFiches = inMano().filter(function (q) { return !q.allin; }).length;
       if (M.variante === "he") {
         if (M.stato === "river") return showdown();
-        if (conFiches <= 1) { M.corsa = true; return; }   // tutti all-in (o quasi): le carte escono da sole, una strada alla volta
+        if (conFiches <= 1) { M.corsa = true; scopri(); return; }   // tutti all-in (o quasi): carte girate subito, poi escono da sole una strada alla volta
         prossimaStrada();
         M.giocatori.forEach(function (q) { if (puoMuovere(q)) q.azione = ""; });
         M.turno = dopo(M.dealer, puoMuovere);
@@ -256,15 +284,20 @@
     M.corsaPasso = function () {
       if (!M.corsa) return;
       if (M.stato === "river") { M.corsa = false; return showdown(); }
-      prossimaStrada();
+      prossimaStrada(); scopri();
     };
+    // all-in: le carte di chi è rimasto si vedono subito, col nome della mano aggiornato a ogni strada
+    function scopri() { inMano().forEach(function (q) { q.mostra = true; q.valut = miglioreMano(q.mano.concat(M.tavolo), "he", 2); }); }
     // all'italiana: si cambiano da 0 a 4 carte (quali = posizioni nella mano)
     M.cambia = function (i, quali) {
       var p = M.giocatori[i];
       if (M.stato !== "cambio" || !p || !p.inMano || p.lascia || p.cambio != null) return false;
       var visti = {};
       quali = (quali || []).map(Number).filter(function (k) { if (k >= 0 && k < 5 && !visti[k]) { visti[k] = 1; return true; } return false; }).slice(0, 4);
-      quali.forEach(function (k) { M.scarti.push(p.mano[k]); p.mano[k] = pesca(); });
+      // le carte buttate vanno negli scarti DOPO aver pescato: se il mazzo finisce non si ripesca le sue
+      var buttate = quali.map(function (k) { return p.mano[k]; });
+      quali.forEach(function (k) { p.mano[k] = pesca(); });
+      buttate.forEach(function (c) { M.scarti.push(c); });
       p.carteCambiateMano += quali.length;
       p.cambio = quali.length; p.azione = quali.length ? "Cambia " + quali.length : "Servito";
       forseFineCambio();
@@ -312,8 +345,9 @@
     }
     function showdown() {
       M.turno = -1; M.corsa = false;
+      rendi();
       M.giocatori.forEach(function (q) { M.piatto += q.inGiro; q.inGiro = 0; });
-      var rest = inMano(), n = M.giocatori.length, vinti = {};
+      var rest = inMano(), n = M.giocatori.length, vinti = {}, vincenti = {};
       function dist(q) { var d = (M.giocatori.indexOf(q) - M.dealer + n) % n; return d === 0 ? n : d; }   // il primo alla sinistra del mazziere
       rest.forEach(function (q) { q.valut = miglioreMano(M.variante === "he" ? q.mano.concat(M.tavolo) : q.mano, M.variante, M.basso); q.mostra = true; });
       calcolaPiatti().forEach(function (pt) {
@@ -322,12 +356,15 @@
         chi.sort(function (a, b) { return dist(a) - dist(b); });
         var quota = Math.floor(pt.importo / chi.length), resto = pt.importo - quota * chi.length;
         chi.forEach(function (q, k) { var x = quota + (k < resto ? 1 : 0); q.stack += x; vinti[q.id] = (vinti[q.id] || 0) + x; });
+        chi.forEach(function (q) { q.valut.carte.forEach(function (c) { vincenti[c.v + "-" + c.s] = 1; }); });   // le carte che hanno vinto
       });
-      M.piatto = 0; M.stato = "finemano"; M.esito = { vinti: vinti, confronto: true };
+      M.piatto = 0; M.stato = "finemano"; M.esito = { vinti: vinti, confronto: true, vincenti: Object.keys(vincenti) };
     }
     function vinceSolo(p) {   // gli altri hanno lasciato: prende tutto senza far vedere le carte
+      rendi();
       M.giocatori.forEach(function (q) { M.piatto += q.inGiro; q.inGiro = 0; });
       var tot = M.piatto, vinti = {}; M.piatto = 0;
+      M.giocatori.forEach(function (q) { q.mostra = false; q.valut = null; });   // (anche se erano state girate durante un all-in)
       if (p) { p.stack += tot; vinti[p.id] = tot; }
       M.turno = -1; M.corsa = false; M.stato = "finemano"; M.esito = { vinti: vinti, confronto: false };
     }
@@ -384,22 +421,29 @@
     var forza = M.variante === "he" ? equita(p.mano, M.tavolo, avv, 110) : forzaIt(p.mano, M.basso, avv);
     var rumore = { facile: 0.2, medio: 0.08, difficile: 0.03 }[liv]; if (rumore == null) rumore = 0.08;
     forza = Math.max(0, Math.min(1, forza + (Math.random() * 2 - 1) * rumore));
-    var rel = forza * (avv + 1);   // 1 = una mano qualsiasi; 2 = il doppio della media
     var piatto = M.piattoTot(), chiama = pos.chiama || 0;
-    var bluff = Math.random() < (liv === "facile" ? 0.02 : liv === "difficile" ? 0.07 : 0.04);
+    // chi punta forte di solito ha qualcosa: contro una puntata grande la mia mano vale meno (non a Facile)
+    if (liv !== "facile" && chiama > 0 && chiama > (piatto - chiama) * 0.5) forza *= liv === "difficile" ? 0.82 : 0.9;
+    var rel = forza * (avv + 1);   // 1 = una mano qualsiasi; 2 = il doppio della media
+    // ultimo a parlare e tutti hanno passato: un bluff ha più senso
+    var ultimo = !M.giocatori.some(function (q) { return q !== p && q.inMano && !q.lascia && !q.allin && !q.agito; });
+    var bluff = Math.random() < (liv === "facile" ? 0.02 : liv === "difficile" ? (ultimo && pos.passa ? 0.14 : 0.06) : 0.04);
     function punta(fraz) {
       if (!pos.punta) return chiama ? { tipo: "chiama" } : { tipo: "passa" };
       var tot = M.daChiamare + Math.max(M.rilMin, Math.round(piatto * fraz / 10) * 10);
       return { tipo: "punta", tot: Math.min(pos.punta.max, Math.max(pos.punta.min, tot)) };
     }
     if (pos.passa) {
-      if (rel > 1.5 || bluff) return punta(rel > 2 ? 0.8 : 0.6);
+      // a Difficile, se parla per ultimo (la posizione migliore) punta anche con mani un po' meno forti
+      if (rel > (liv === "difficile" && ultimo ? 1.3 : 1.5) || bluff) return punta(rel > 2 ? 0.8 : 0.6);
       if (rel > 1.15 && Math.random() < 0.5) return punta(0.5);
       return { tipo: "passa" };
     }
     var quota = chiama / (piatto + chiama);
     if (rel > 1.9 && Math.random() < 0.6) return punta(0.9);
     if (bluff && Math.random() < 0.4 && chiama < p.stack * 0.2) return punta(1);
+    // un all-in grande non si chiama con una mano media (a Medio e Difficile)
+    if (liv !== "facile" && chiama >= p.stack * 0.6 && rel < 1.6 && forza < quota * 1.3) return { tipo: "lascia" };
     if (forza >= quota * (liv === "facile" ? 0.7 : 1.15) || (chiama <= M.rilMin && rel > 0.9)) return { tipo: "chiama" };
     return { tipo: "lascia" };
   }
@@ -422,6 +466,17 @@
   // =========================================================
   function suono(tipo) {
     var ctx = SG.audioCtx && SG.audioCtx(); if (!ctx) return;
+    if (tipo === "vinci" || tipo === "grande") {   // fiches che arrivano: tre (o cinque, se il piatto è grande) tintinnii che salgono
+      [0, 1, 2, 3, 4].slice(0, tipo === "grande" ? 5 : 3).forEach(function (k) {
+        try {
+          var t1 = ctx.currentTime + k * 0.07, o1 = ctx.createOscillator(), g1 = ctx.createGain();
+          o1.type = "triangle"; o1.frequency.setValueAtTime(880 * Math.pow(1.19, k), t1);
+          g1.gain.setValueAtTime(0.0001, t1); g1.gain.exponentialRampToValueAtTime(0.07, t1 + 0.01); g1.gain.exponentialRampToValueAtTime(0.0001, t1 + 0.16);
+          o1.connect(g1); g1.connect(ctx.destination); o1.start(t1); o1.stop(t1 + 0.18);
+        } catch (e) {}
+      });
+      return;
+    }
     try {
       var t0 = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
       o.type = tipo === "carta" ? "triangle" : "square";
@@ -447,7 +502,7 @@
     var M = creaMotore(V.variante);
     var io = M.siedi({ id: "host", nome: nome, omino: t.mioOmino ? t.mioOmino(nome) : null, stack: Math.min(W, BUYIN) });
     var fuori = W - io.stack;   // quello che resta nel portafoglio, fuori dal tavolo
-    var H = { fase: online ? "lobby" : "gioco", codice: "…", pronta: !online, classifica: null, omini: { host: io.omino } };
+    var H = { fase: online ? "lobby" : "gioco", codice: "…", pronta: !online, classifica: null, omini: { host: io.omino }, guardano: {} };
     var rete = null, tBot = null, tTempo = null, tMano = null, tSalva = null, salvato = W;
 
     function salvaMio(subito) {   // nel profilo: fiches fuori + fiches sul tavolo
@@ -475,12 +530,14 @@
             rilanci: p.rilanciMano || 0, rilanciVeri: p.rilanciVeriMano || 0, carteCambiate: p.carteCambiateMano || 0,
             controUmani: online && M.giocatori.some(function (q) { return q !== p && q.inMano && !q.bot; }) };
         }) : null,
-        tavolo: M.tavolo.slice(), piatto: M.piattoTot(), daChiamare: M.daChiamare, rilMin: M.rilMin,
+        corsa: M.corsa, tavolo: M.tavolo.slice(), piatto: M.piattoTot(), daChiamare: M.daChiamare, rilMin: M.rilMin, basso: M.basso,
         turno: tp ? tp.id : null, dealer: M.dealer >= 0 && M.giocatori[M.dealer] ? M.giocatori[M.dealer].id : null,
-        vinti: M.esito ? M.esito.vinti : null, classifica: H.classifica,
+        tempo: M.scadenza ? Math.max(0, M.scadenza - Date.now()) : null, tempoTot: M.durata || T_MOSSA,   // quanto manca per decidere (online)
+        vinti: M.esito ? M.esito.vinti : null, vincenti: M.esito && M.esito.vincenti ? M.esito.vincenti : null, classifica: H.classifica,
+        guardano: Object.keys(H.guardano),   // chi è entrato a tavolo pieno e guarda
         players: seduti().map(function (p) {
-          return { id: p.id, nome: p.nome, bot: p.bot, stack: p.stack, inGiro: p.inGiro, lascia: p.lascia, allin: p.allin, azione: p.azione,
-            inMano: p.inMano, nCarte: p.mano.length, seduto: p.seduto, cambio: p.cambio,
+          return { id: p.id, nome: p.nome, bot: p.bot, stack: p.stack, buyin: p.buyin, inGiro: p.inGiro, lascia: p.lascia, allin: p.allin, azione: p.azione, frase: p.frase || "",
+            inMano: p.inMano, nCarte: p.mano.length, seduto: p.seduto, pausa: !!p.pausa, chiuso: !!p.chiuso, cambio: p.cambio,
             carte: p.mostra ? p.mano.slice() : null, nomeMano: p.mostra && p.valut ? p.valut.nome : null };
         }) };
     }
@@ -500,19 +557,43 @@
       if (H.fase !== "gioco") return;
       if (M.stato === "finemano") { salvaMio(true); if (!tMano) tMano = setTimeout(function () { tMano = null; prossimaMano(); }, 4300); return; }
       if (M.stato === "attesa") return;
-      if (M.corsa) { tBot = setTimeout(function () { M.corsaPasso(); suono("carta"); bd(); ciclo(); }, 1300); return; }
+      if (M.corsa) { tBot = setTimeout(function () { M.corsaPasso(); suono("carta"); ciclo(); bd(); }, 1300); return; }
       if (M.stato === "cambio") {
         var bots = M.giocatori.filter(function (p) { return p.bot && p.inMano && !p.lascia && p.cambio == null; });
-        if (bots.length) { tBot = setTimeout(function () { bots.forEach(function (p) { M.cambia(M.giocatori.indexOf(p), cambioBot(p.mano, M.basso)); }); dopoMossa(); }, 900); return; }
-        if (online) tTempo = setTimeout(function () { M.giocatori.forEach(function (p, i) { if (p.inMano && !p.lascia && p.cambio == null) M.cambia(i, []); }); mandaCarte(); dopoMossa(); }, T_MOSSA);
+        if (bots.length) { tBot = setTimeout(function () { bots.forEach(function (p) { M.cambia(M.giocatori.indexOf(p), cambioBot(p.mano, M.basso)); frase(p, p.cambio ? "cambia" : "servito"); }); dopoMossa(); }, 900); return; }
+        if (online) {
+          var manca = M.giocatori.filter(function (p) { return p.inMano && !p.lascia && p.cambio == null; });
+          var durC = manca.length && manca.every(function (p) { return p.pausa; }) ? T_PAUSA : T_MOSSA;
+          M.scadenza = Date.now() + durC; M.durata = durC;
+          tTempo = setTimeout(function () {   // chi non ha cambiato in tempo si tiene le sue carte e va in pausa
+            M.giocatori.forEach(function (p, i) { if (p.inMano && !p.lascia && p.cambio == null) { M.cambia(i, []); p.pausa = true; } });
+            mandaCarte(); dopoMossa();
+          }, durC);
+        }
         return;
       }
       if (M.turno < 0) return;
       var i = M.turno, p = M.giocatori[i];
-      if (p.bot) tBot = setTimeout(function () { var d = decidiBot(M, i, V.liv); M.azione(i, d ? d.tipo : "lascia", d && d.tot); dopoMossa(); }, 700 + Math.random() * 900);
-      else if (online) { M.scadenza = Date.now() + T_MOSSA; tTempo = setTimeout(function () { var pos = M.possibili(i); if (pos) M.azione(i, pos.passa ? "passa" : "lascia"); dopoMossa(); }, T_MOSSA); }
+      if (p.bot) tBot = setTimeout(function () {
+        var d = decidiBot(M, i, V.liv);
+        if (M.azione(i, d ? d.tipo : "lascia", d && d.tot)) frase(p, p.allin && d && d.tipo !== "lascia" ? "allin" : d ? d.tipo : "lascia");
+        dopoMossa();
+      }, 700 + Math.random() * 900);
+      else if (online) {
+        var dur = p.pausa ? T_PAUSA : T_MOSSA;   // chi è già in pausa non fa aspettare tutti mezzo minuto
+        M.scadenza = Date.now() + dur; M.durata = dur;
+        tTempo = setTimeout(function () {   // tempo scaduto: passa (o lascia) da solo e va in pausa finché non torna
+          var pos = M.possibili(i); if (pos) M.azione(i, pos.passa ? "passa" : "lascia");
+          p.pausa = true; dopoMossa();
+        }, dur);
+      }
     }
-    function dopoMossa() { bd(); ciclo(); }
+    // ogni tanto un bot dice qualcosa (si vede nella nuvoletta sopra il suo avatar)
+    function frase(p, tipo) {
+      var l = FRASI_BOT[tipo]; p.frase = "";
+      if (p.bot && l && Math.random() < 0.35) p.frase = l[Math.floor(Math.random() * l.length)];
+    }
+    function dopoMossa() { ciclo(); bd(); }   // prima il giro (che fissa il tempo per decidere), poi la foto
     function prossimaMano() {
       if (H.fase !== "gioco") return;
       M.giocatori.forEach(function (p) {
@@ -520,20 +601,28 @@
         if (p.bot && p.stack <= 0) { p.via = true; if (!online || seduti().length < MAX[M.variante]) aggiungiBot(); }   // un bot nuovo al posto di chi ha finito
         else if (!p.bot && p.stack <= 0) p.seduto = false;                                                          // chi è senza fiches aspetta di rientrare
       });
+      // contro il computer, se hai finito le fiches i bot si fermano e aspettano te
+      if (!online && !io.seduto) { M.azzera(); salvaMio(true); ciclo(); bd(); return; }
       if (M.nuovaMano()) { suono("carta"); mandaCarte(); }
-      salvaMio(true); bd(); ciclo();
+      salvaMio(true); ciclo(); bd();
     }
+    // la mossa vale solo se è per la mano, il momento e la puntata che si vedevano quando si è toccato
+    function attuale(rif) { return !rif || (rif.n === M.n && rif.st === M.stato && rif.dc === M.daChiamare); }
 
     // ---- le mie mosse (host o chi gioca contro il computer) ----
     var cb = { sonoHost: true, online: online, myId: "host",
       mie: function () { return { n: M.n, carte: io.inMano ? io.mano.slice() : [] }; },
       omini: function () { return H.omini; },
       fuori: function () { return fuori; },
-      onAzione: function (tipo, tot) { if (M.azione(M.trova("host"), tipo, tot)) { if (tipo !== "lascia" && tipo !== "passa") suono("fiche"); dopoMossa(); } },
-      onCambio: function (quali) { if (M.cambia(M.trova("host"), quali)) { suono("carta"); dopoMossa(); } },
+      puoRientrare: function () { return prof ? Math.min(fuori, BUYIN - io.stack) : BUYIN - io.stack; },   // senza profilo le fiches sono per finta
+      rientroInCorso: function () { return false; },
+      onAzione: function (tipo, tot, rif) { if (attuale(rif) && M.azione(M.trova("host"), tipo, tot)) { io.pausa = false; if (tipo !== "lascia" && tipo !== "passa") suono("fiche"); dopoMossa(); } },
+      onCambio: function (quali, rif) { if ((!rif || rif.n === M.n) && M.cambia(M.trova("host"), quali)) { io.pausa = false; suono("carta"); dopoMossa(); } },
+      onCiSono: function () { io.pausa = false; if (H.fase === "gioco" && M.stato === "attesa") prossimaMano(); else bd(); },
       onRientra: function () {   // si risiede con altre fiches del portafoglio
-        var x = Math.min(fuori, BUYIN - io.stack); if (x < GRANDE || io.stack >= GRANDE || (M.inCorso() && io.inMano)) return;
-        fuori -= x; io.stack += x; io.buyin += x; io.seduto = true; salvaMio(true);
+        var x = cb.puoRientrare(); if (x < GRANDE || io.stack >= GRANDE || (M.inCorso() && io.inMano && !io.lascia)) return;
+        if (prof) fuori -= x;
+        io.stack += x; io.buyin += x; io.seduto = true; io.pausa = false; salvaMio(true);
         if (M.stato === "attesa" && H.fase === "gioco") prossimaMano(); else bd();
       },
       onBonus: function (nuovo, piu) { var b = piu || 0; fuori += b; salvato += b; bd(); },   // monete della ruota del giorno: già aggiunte al profilo
@@ -558,13 +647,16 @@
       },
       onNuova: function () {   // stessa stanza, stessi amici: si torna nella saletta con le fiches che ognuno ha
         M.giocatori = M.giocatori.filter(function (p) { return !p.via; });
-        M.giocatori.forEach(function (p) { p.buyin = p.stack; });
-        M.dealer = -1; H.fase = "lobby"; H.classifica = null; bd();
+        M.giocatori.forEach(function (p) { p.buyin = p.stack; p.seduto = p.stack > 0; p.pausa = false; });
+        M.azzera(); M.dealer = -1; H.fase = "lobby"; H.classifica = null; bd();
       },
       onEsci: function () {
         if (online && H.fase === "gioco" && !window.confirm("Chiudere il tavolo per tutti?")) return;
         if (!online && M.inCorso() && io.inMano && !io.lascia && !window.confirm("Lasciare il tavolo? Le fiches già puntate in questa mano restano sul tavolo.")) return;
-        ferma(); clearTimeout(tMano); salvaMio(true);
+        ferma(); clearTimeout(tMano); tMano = null;
+        // online: la mano a metà si annulla (ognuno si riprende le fiches puntate) e tutti ricevono il conto giusto prima della chiusura
+        if (online && M.inCorso()) { M.annulla(); if (rete) rete.invia({ t: "vm", vm: vm() }); }
+        salvaMio(true);
         // contro il computer: alzandoti dal tavolo dopo almeno una mano prendi gli XP (hai vinto se ti alzi con più fiches)
         if (!online && M.n > 0 && t.risultato) t.risultato([{ nome: io.nome, pos: io.stack - io.buyin > 0 ? 1 : 2 }]);
         if (rete) rete.chiudi();
@@ -579,7 +671,8 @@
         onCodice: function (c) { H.codice = c; bd(); },
         onConnesso: function () { H.pronta = true; bd(); },
         onAddio: function (id) {
-          var i = M.trova(id); if (i < 0) return;
+          delete H.guardano[id];
+          var i = M.trova(id); if (i < 0) { bd(); return; }
           if (H.fase === "lobby") { M.giocatori.splice(i, 1); if (M.dealer >= M.giocatori.length) M.dealer = -1; bd(); return; }
           M.esce(i); dopoMossa();
         },
@@ -587,25 +680,28 @@
           if (!m || !m.t) return;
           var i = M.trova(id), p = i >= 0 ? M.giocatori[i] : null;
           if (m.t === "join") {
-            if (p) { p.via = false; if (H.fase === "lobby") p.seduto = p.stack > 0; }   // si era perso per un attimo: resta al suo posto
-            else if (H.fase !== "fine" && seduti().length < MAX[M.variante]) {
+            var pieno = seduti().length >= MAX[M.variante];
+            if (p && p.via && pieno) p = null;   // era uscito e intanto il suo posto è stato preso: guarda
+            if (p) { p.via = false; p.pausa = false; if (p.stack > 0) p.seduto = true; delete H.guardano[id]; }   // si era perso: torna al suo posto e gioca dalla prossima mano
+            else if (i < 0 && H.fase !== "fine" && !pieno) {
               var nomeG = String(m.nome || "Amico").slice(0, 16), st = Math.max(0, Math.min(BUYIN, Math.floor(+m.fiches || 0)));
               p = M.siedi({ id: id, nome: nomeG, omino: avatarValido(m.omino), stack: st });
-              H.omini[id] = p.omino;
-            }
+              H.omini[id] = p.omino; delete H.guardano[id];
+            } else if (!p) H.guardano[id] = String(m.nome || "Amico").slice(0, 16);   // tavolo pieno: guarda finché non si libera un posto
             mandaOmini();
             if (p && H.fase === "gioco" && M.stato === "attesa") prossimaMano(); else bd();
             if (p) mandaCarte(id);
             return;
           }
-          if (!p) return;
-          if (m.t === "azione" && H.fase === "gioco") { if (M.azione(i, m.tipo, m.tot)) { if (m.tipo !== "lascia" && m.tipo !== "passa") suono("fiche"); dopoMossa(); } }
-          else if (m.t === "cambio" && H.fase === "gioco") { if (M.cambia(i, m.quali)) { mandaCarte(id); dopoMossa(); } }
+          if (!p || p.via) return;
+          if (m.t === "azione" && H.fase === "gioco") { if (attuale(m.n != null ? { n: m.n, st: m.st, dc: m.dc } : null) && M.azione(i, m.tipo, m.tot)) { p.pausa = false; if (m.tipo !== "lascia" && m.tipo !== "passa") suono("fiche"); dopoMossa(); } }
+          else if (m.t === "cambio" && H.fase === "gioco") { if ((m.n == null || m.n === M.n) && M.cambia(i, m.quali)) { p.pausa = false; mandaCarte(id); dopoMossa(); } }
+          else if (m.t === "cisono") { p.pausa = false; if (H.fase === "gioco" && M.stato === "attesa") prossimaMano(); else bd(); }
           else if (m.t === "rientra") {   // si risiede con altre fiches (finite quelle di prima, o in saletta)
-            if (p.stack >= GRANDE || (M.inCorso() && p.inMano)) return;
-            var x = Math.max(0, Math.min(BUYIN, Math.floor(+m.fiches || 0)));
+            if (p.stack >= GRANDE || (M.inCorso() && p.inMano && !p.lascia)) return;
+            var x = Math.max(0, Math.min(BUYIN - p.stack, Math.floor(+m.fiches || 0)));
             if (!x) return;
-            p.stack += x; p.buyin += x; p.seduto = true;
+            p.stack += x; p.buyin += x; p.seduto = true; p.pausa = false;
             if (H.fase === "gioco" && M.stato === "attesa") prossimaMano(); else bd();
           }
         },
@@ -625,29 +721,75 @@
   function ospite(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var prof = conProfilo();
-    var S = { rete: null, myId: null, nome: "", vm: null, mie: null, omini: {}, fuori: 0, tSalva: null, salvato: null };
+    var S = { rete: null, myId: null, nome: "", vm: null, mie: null, omini: {}, fuori: 0, tSalva: null, salvato: null, attesaRientro: null };
     var W = prof ? portafoglio() : BUYIN, buyin = Math.min(W, BUYIN);
     S.fuori = W - buyin;
+    // le monete "fuori dal tavolo" restano scritte su questo telefono (per stanza): chi ricarica la pagina le ritrova giuste
+    function chiave() { return "sg-poker-fuori-" + String(codice).toLowerCase() + "-" + S.myId; }   // per stanza e per giocatore
+    function ricorda() {
+      if (!prof || S.salvato == null) return;
+      try { localStorage.setItem(chiave(), JSON.stringify({ fuori: S.fuori, salvato: S.salvato, t: Date.now() })); } catch (e) {}
+    }
+    try {   // via i ricordi vecchi delle altre stanze (più di 6 ore)
+      Object.keys(localStorage).forEach(function (k) {
+        if (k.indexOf("sg-poker-fuori-") !== 0) return;
+        var x = null; try { x = JSON.parse(localStorage.getItem(k)); } catch (e) {}
+        if (!x || !(Date.now() - x.t < 6 * 3600000)) localStorage.removeItem(k);
+      });
+    } catch (e) {}
+    function ricordato() {
+      try { var r = JSON.parse(localStorage.getItem(chiave()) || "null"); if (r && Date.now() - r.t < 6 * 3600000 && isFinite(r.fuori) && isFinite(r.salvato)) return r; } catch (e) {}
+      return null;
+    }
     function me() { if (!S.vm) return null; for (var i = 0; i < S.vm.players.length; i++) if (S.vm.players[i].id === S.myId) return S.vm.players[i]; return null; }
-    // la prima volta che mi vedo al tavolo: fuori = portafoglio − quelle sul tavolo (giusto anche se rientro dopo aver ricaricato la pagina)
-    function allinea() { var m = me(); if (S.allineato || !prof || !m) return; S.allineato = true; S.fuori = Math.max(0, W - m.stack); }
+    // la prima volta che mi vedo al tavolo: se ero già qui (pagina ricaricata) riprendo le monete fuori che avevo,
+    // più quello che nel frattempo è cambiato nel profilo; se no, fuori = portafoglio − quelle sul tavolo
+    function allinea() {
+      var m = me(); if (S.allineato || !prof || !m) return; S.allineato = true;
+      var r = ricordato();
+      // appena entrato (l'host mi ha seduto con le fiches che ho portato): fuori resta W − buyin anche se ho già pagato un buio
+      var nuovo = m.buyin === buyin && m.stack + (m.inGiro || 0) + GRANDE >= buyin;
+      S.fuori = r ? Math.max(0, r.fuori + (W - r.salvato)) : Math.max(0, W - (nuovo ? buyin : m.stack));
+      S.salvato = W; ricorda();
+    }
     function salva(subito) {   // nel profilo: fiches fuori + fiches sul tavolo (solo quando sono seduto)
-      var m = me(); if (!prof || !m) return;
+      if (!prof || !me()) return;
       clearTimeout(S.tSalva);
-      var fai = function () { var tot = S.fuori + m.stack; if (tot !== S.salvato) { S.salvato = tot; SGNube.salvaFiches("blackjack", tot); } };
+      var fai = function () { var m = me(); if (!m) return; var tot = S.fuori + m.stack; if (tot !== S.salvato) { S.salvato = tot; SGNube.salvaFiches("blackjack", tot); } ricorda(); };
       if (subito) fai(); else S.tSalva = setTimeout(fai, 1500);
     }
+    // mi risiedo: le monete escono dal portafoglio solo quando l'host me le ha messe davvero sul tavolo
+    function controllaRientro() {
+      var R = S.attesaRientro, m = me(); if (!R || !m) return;
+      // quante fiches ha messo davvero l'host: si guarda il totale portato al tavolo (buyin), non lo stack
+      // (se la mano parte subito, il buio è già stato tolto dallo stack)
+      var messe = m.buyin != null && R.primaB != null ? m.buyin - R.primaB : m.stack - R.prima;
+      if (messe <= 0) return;
+      clearTimeout(R.tm); S.attesaRientro = null;
+      if (prof) { S.fuori = Math.max(0, S.fuori - Math.min(R.x, messe)); ricorda(); }
+    }
+    function rif() { return S.vm ? { n: S.vm.n, st: S.vm.stato, dc: S.vm.daChiamare } : {}; }
     var cb = { sonoHost: false, online: true, myId: null,
       mie: function () { return S.mie && S.vm && S.mie.n === S.vm.n ? S.mie : null; },
       omini: function () { return S.omini; },
       fuori: function () { return S.fuori; },
-      onAzione: function (tipo, tot) { if (S.rete) S.rete.invia({ t: "azione", tipo: tipo, tot: tot }); },
-      onCambio: function (quali) { if (S.rete) S.rete.invia({ t: "cambio", quali: quali }); },
+      puoRientrare: function () { var m = me(); return m ? (prof ? Math.min(S.fuori, BUYIN - m.stack) : BUYIN - m.stack) : 0; },
+      rientroInCorso: function () { return !!(S.attesaRientro && !S.attesaRientro.libero); },
+      onAzione: function (tipo, tot, r) { r = r || rif(); if (S.rete) S.rete.invia({ t: "azione", tipo: tipo, tot: tot, n: r.n, st: r.st, dc: r.dc }); },
+      onCambio: function (quali) { if (S.rete) S.rete.invia({ t: "cambio", quali: quali, n: S.vm ? S.vm.n : null }); },
+      onCiSono: function () { if (S.rete) S.rete.invia({ t: "cisono" }); },
+      onSiediti: function () { if (S.rete) S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : null, fiches: buyin }); },
       onRientra: function () {
-        var m = me(), x = Math.min(S.fuori, BUYIN - (m ? m.stack : 0)); if (x < GRANDE || !S.rete) return;
-        S.fuori -= x; S.rete.invia({ t: "rientra", fiches: x });
+        var m = me(), x = cb.puoRientrare(); if (!m || x < GRANDE || !S.rete || cb.rientroInCorso()) return;
+        // dopo 6 secondi senza risposta il tasto torna, ma la richiesta resta: se la foto arriva tardi le monete si tolgono lo stesso (una volta sola)
+        var R = S.attesaRientro || { prima: m.stack, primaB: m.buyin };
+        clearTimeout(R.tm); R.x = x; R.libero = false;
+        R.tm = setTimeout(function () { R.libero = true; if (S.vm) disegna(t, S.vm, cb); }, 6000);
+        S.attesaRientro = R;
+        S.rete.invia({ t: "rientra", fiches: x });
+        disegna(t, S.vm, cb);
       },
-      onBonus: function (nuovo, piu) { var b = piu || 0; S.fuori += b; if (S.salvato != null) S.salvato += b; if (S.vm) disegna(t, S.vm, cb); },   // monete della ruota già aggiunte al profilo
+      onBonus: function (nuovo, piu) { var b = piu || 0; S.fuori += b; if (S.salvato != null) S.salvato += b; ricorda(); if (S.vm) disegna(t, S.vm, cb); },   // monete della ruota già aggiunte al profilo
       onEsci: function () {
         if (S.vm && S.vm.fase === "gioco" && !window.confirm("Lasciare il tavolo? Le fiches già puntate in questa mano restano sul tavolo.")) return;
         salva(true); if (S.rete) S.rete.chiudi(); t.esci();
@@ -670,7 +812,7 @@
         onMsg: function (m) {
           if (!m || !m.t) return;
           if (m.to && m.to !== S.myId) return;   // era per un altro telefono
-          if (m.t === "vm") { S.vm = m.vm; allinea(); salva(); disegna(t, m.vm, cb); }
+          if (m.t === "vm") { S.vm = m.vm; allinea(); controllaRientro(); salva(); disegna(t, m.vm, cb); }
           else if (m.t === "mie") { S.mie = { n: m.n, carte: m.carte || [] }; if (S.vm) disegna(t, S.vm, cb); }
           else if (m.t === "omini") { S.omini = m.omini || {}; if (S.vm) disegna(t, S.vm, cb); }
         },
@@ -711,9 +853,13 @@
         el("span", { text: "🤖 Bot al tavolo: " + nb }),
         el("button", { class: "btn btn-fantasma btn-piccolo", text: "−", disabled: nb ? null : "disabled", onclick: function () { cb.onBot(false); } }),
         el("button", { class: "btn btn-fantasma btn-piccolo", text: "+", disabled: vm.players.length < MAX[vm.variante] ? null : "disabled", onclick: function () { cb.onBot(true); } }) ]));
+      // l'host vede chi non ha fiches (non entra nelle mani finché non si risiede)
+      var senza = vm.players.filter(function (p) { return !p.bot && p.stack < GRANDE; }).map(function (p) { return p.id === cb.myId ? "tu" : p.nome; });
+      if (senza.length) extra.push(el("p", { class: "modulo-nota", style: "color:#ffa94d", text: "Senza fiches: " + senza.join(", ") + ". Non giocano finché non si siedono con delle monete." }));
     }
     var io = null; vm.players.forEach(function (p) { if (p.id === cb.myId) io = p; });
-    if (io) extra.push(fichesBox(t, cb, io));
+    if (io) extra.push(fichesBox(t, cb, io, true));
+    else if ((vm.guardano || []).indexOf(cb.myId) >= 0) extra.push(boxPieno(t, cb, vm));
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN, puoiDaSolo: vm.players.length >= MIN,
       puoComincia: vm.players.length >= MIN && vm.players.length <= MAX[vm.variante],
       vuoti: Math.max(0, MIN - vm.players.length),
@@ -722,34 +868,51 @@
       }),
       extra: extra, attesa: "Aspetta che l'host cominci: si gioca a " + NOME_VAR[vm.variante] + "! 🃏", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
-  // le mie fiches (e, se sono finite, il modo per risedersi con altre monete o la ruota del giorno)
-  function fichesBox(t, cb, io) {
+  // chi è entrato a tavolo pieno: guarda, e si siede appena si libera un posto
+  function boxPieno(t, cb, vm) {
     var el = t.el, box = el("div", { class: "pk-fiches" });
-    if (io.stack >= GRANDE) { box.appendChild(el("div", { text: "🎰 Ti siedi con " + fmtN(io.stack) + " fiches" })); return box; }
-    var x = Math.min(cb.fuori(), BUYIN - io.stack);
-    if (x >= GRANDE) box.appendChild(el("button", { class: "btn btn-primario", text: "🎰 Siediti con " + fmtN(x) + " fiches", onclick: cb.onRientra }));
-    else {
-      box.appendChild(el("div", { text: "Non hai più fiches da mettere sul tavolo." }));
+    box.appendChild(el("div", { text: "🪑 Il tavolo è pieno: guardi la partita e ti siedi quando si libera un posto." }));
+    if (vm.players.length < MAX[vm.variante] && cb.onSiediti) box.appendChild(el("button", { class: "btn btn-primario", text: "🪑 Siediti, c'è un posto!", onclick: cb.onSiediti }));
+    return box;
+  }
+  // le mie fiches (e, se sono finite, il modo per risedersi con altre monete o la ruota del giorno)
+  function fichesBox(t, cb, io, inSaletta) {
+    var el = t.el, box = el("div", { class: "pk-fiches" });
+    if (io.stack >= GRANDE) {
+      box.appendChild(el("div", { text: "🎰 Ti siedi con " + fmtN(io.stack) + " fiches" + (io.stack > BUYIN ? " (le vincite restano sul tavolo)" : "") }));
+      return box;
+    }
+    var x = cb.puoRientrare ? cb.puoRientrare() : 0;
+    if (x >= GRANDE) {
+      var aspetta = cb.rientroInCorso && cb.rientroInCorso();
+      box.appendChild(el("button", { class: "btn btn-primario", text: aspetta ? "⏳ Ti sto facendo sedere…" : "🎰 Siediti con " + fmtN(x) + " fiches", disabled: aspetta ? "disabled" : null, onclick: function () { if (!aspetta) cb.onRientra(); } }));
+    } else {
+      box.appendChild(el("div", { text: inSaletta ? "Ti servono delle monete per sederti al tavolo." : "Non hai più monete da mettere sul tavolo." }));
       if (conProfilo() && BJ() && BJ().riquadroBonus) box.appendChild(BJ().riquadroBonus(el, function (nuovo, piu) { cb.onBonus(nuovo, piu); }));
     }
+    if (!cb.online) box.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Alzati dal tavolo", onclick: cb.onEsci }));
     return box;
   }
   function creaSchermo(t, cb) {
     stile();
     var el = t.el, s = t.schermata({}); s.classList.add("pk-piena");
-    var ui = { t: t, s: s, el: el, cb: cb, posti: {}, chiaveTav: "", chiaveMie: "", chiaveAz: "", sel: {}, rialzo: null, nSel: -1 };
+    var ui = { t: t, s: s, el: el, cb: cb, posti: {}, chiaveMie: "", chiaveAz: "", sel: {}, rialzo: null, nSel: -1, kCom: ["", "", "", "", ""], slotCom: [], nodiMie: [], blocco: 0, chiaveFine: "", kTempo: "", tempoFine: 0 };
     ui.info = el("div", { class: "pk-info" });
     var barra = el("div", { class: "pk-barra" }, [ el("button", { class: "pk-tastino", text: "‹", "aria-label": "Esci", onclick: function () { ui.cb.onEsci(); } }), ui.info,
+      el("button", { class: "pk-tastino", text: "?", "aria-label": "Le combinazioni", onclick: function () { guida(ui); } }),
       cb.sonoHost && cb.online ? el("button", { class: "pk-tastino", text: "🏁", "aria-label": "Fine partita", onclick: function () { ui.cb.onFine(); } }) : null ]);
     ui.tavolo = el("div", { class: "pk-tavolo" }, [ el("div", { class: "pk-feltro" }) ]);
     ui.comuni = el("div", { class: "pk-comuni" });
+    for (var c = 0; c < 5; c++) { ui.slotCom.push(el("div", { class: "pk-slot" })); ui.comuni.appendChild(ui.slotCom[c]); }   // i 5 posti delle carte in mezzo, fatti una volta
     ui.piatto = el("div", { class: "pk-piatto" });
     ui.msg = el("div", { class: "pk-msg" });
     ui.tavolo.appendChild(el("div", { class: "pk-centro" }, [ ui.comuni, ui.piatto, ui.msg ]));
+    ui.tempo = el("div", { class: "pk-tempo" }, [ el("i") ]);
     ui.mioInfo = el("div", { class: "pk-mio-info" });
     ui.mie = el("div", { class: "pk-mie" });
     ui.azioni = el("div", { class: "pk-azioni" });
-    s._contenuto.appendChild(el("div", { class: "pk-scena" }, [ barra, ui.tavolo, el("div", { class: "pk-io" }, [ ui.mioInfo, ui.mie, ui.azioni ]) ]));
+    ui.scena = el("div", { class: "pk-scena" }, [ barra, ui.tavolo, el("div", { class: "pk-io" }, [ ui.tempo, ui.mioInfo, ui.mie, ui.azioni ]) ]);
+    s._contenuto.appendChild(ui.scena);
     t.mostra(s);
     return ui;
   }
@@ -761,81 +924,142 @@
     if (b && b.cartaHTML) return el("div", { class: "pk-carta", html: b.cartaHTML(c, false) });
     var d = cartaPiccola(el, c); d.classList.add("grande"); return d;
   }
+  // la barretta del tempo: parte piena e si svuota da sola (anima solo transform)
+  function barraTempo(box, fine, tot, chiave) {
+    if (box._k === chiave) return; box._k = chiave;
+    var i = box.firstChild;
+    if (!fine) { box.style.visibility = "hidden"; i.style.transition = "none"; return; }
+    var resta = Math.max(0, fine - Date.now());
+    box.style.visibility = "visible";
+    i.style.transition = "none"; i.style.transform = "scaleX(" + Math.min(1, resta / (tot || T_MOSSA)).toFixed(3) + ")";
+    void i.offsetWidth;
+    i.style.transition = "transform " + resta + "ms linear"; i.style.transform = "scaleX(0)";
+  }
   function aggiorna(ui, vm) {
     ui.vm = vm;
     var cb = ui.cb, el = ui.el, io = null;
     vm.players.forEach(function (p) { if (p.id === cb.myId) io = p; });
+    ui.io = io;
     ui.info.textContent = NOME_VAR[vm.variante] + (vm.variante === "he" ? " · bui " + PICCOLO + "/" + GRANDE : " · invito " + INVITO) + (vm.n ? " · mano " + vm.n : "");
+    var fine = vm.stato === "finemano" && vm.vinti, vincenti = {};
+    if (fine && vm.vincenti) vm.vincenti.forEach(function (k) { vincenti[k] = 1; });
+    var evidenzia = !!(fine && vm.vincenti && vm.vincenti.length);
+    var mioTurno = !!(io && vm.turno === io.id && PUNTATE[vm.stato]);
+    var inCambio = vm.stato === "cambio" && io && io.inMano && !io.lascia && io.cambio == null;
 
-    // ---- gli altri, ad arco intorno al tavolo (io sono in basso: le mie cose stanno sotto) ----
+    // il tempo per decidere (online): ricomincia solo quando cambia di chi è il turno
+    var kt = vm.tempo != null ? [vm.n, vm.stato, vm.turno, vm.daChiamare].join("|") : "";
+    if (kt !== ui.kTempo) { ui.kTempo = kt; ui.tempoFine = vm.tempo != null ? Date.now() + vm.tempo : 0; }
+
+    // ---- gli altri intorno al tavolo (io sono in basso: le mie cose stanno sotto) ----
     var k0 = 0; vm.players.forEach(function (p, k) { if (p.id === cb.myId) k0 = k; });
     var altri = vm.players.slice(k0 + 1).concat(vm.players.slice(0, k0)).filter(function (p) { return p.id !== cb.myId; });
-    var visti = {};
+    var n = altri.length, arco = n <= 1 ? 0 : Math.min(300, 64 * (n - 1)), visti = {};
+    ui.tavolo.classList.toggle("stretto", n >= 6);
     altri.forEach(function (p, k) {
-      var ang = altri.length === 1 ? 270 : 165 + k * (210 / (altri.length - 1)), a = ang * Math.PI / 180;
+      // da sinistra, passando per l'alto, fino a destra; con tanti giocatori si scende anche ai lati (libero solo il centro in basso)
+      var ang = n <= 1 ? 270 : 270 - arco / 2 + k * arco / (n - 1), a = ang * Math.PI / 180;
       var P = ui.posti[p.id];
       if (!P) { P = ui.posti[p.id] = creaPosto(ui, p); ui.tavolo.appendChild(P.nodo); }
-      P.nodo.style.left = (50 + 39 * Math.cos(a)).toFixed(1) + "%";
-      P.nodo.style.top = (50 + 35 * Math.sin(a)).toFixed(1) + "%";
-      aggiornaPosto(ui, P, p, vm);
+      P.nodo.style.left = (50 + (n >= 6 ? 41 : 39) * Math.cos(a)).toFixed(1) + "%";
+      P.nodo.style.top = (50 + (n >= 6 ? 40 : 36) * Math.sin(a)).toFixed(1) + "%";
+      aggiornaPosto(ui, P, p, vm, vincenti, kt);
       visti[p.id] = 1;
     });
     Object.keys(ui.posti).forEach(function (id) { if (!visti[id]) { var nd = ui.posti[id].nodo; if (nd.parentNode) nd.parentNode.removeChild(nd); delete ui.posti[id]; } });
 
-    // ---- centro: carte comuni (Hold'em), piatto, cosa succede ----
-    var kt = vm.variante + JSON.stringify(vm.tavolo);
-    if (kt !== ui.chiaveTav) {
-      ui.chiaveTav = kt; svuota(ui.comuni);
-      if (vm.variante === "he") for (var c = 0; c < 5; c++) ui.comuni.appendChild(vm.tavolo[c] ? cartaPiccola(el, vm.tavolo[c]) : el("div", { class: "pk-slot" }));
+    // ---- centro: carte comuni (Hold'em), piatto, cosa succede. Cambia solo il posto della carta nuova ----
+    ui.comuni.style.display = vm.variante === "he" ? "" : "none";
+    for (var c = 0; c < 5; c++) {
+      var cc = vm.variante === "he" ? vm.tavolo[c] : null, kc = cc ? testoCarta(cc) : "";
+      if (kc !== ui.kCom[c]) {
+        var nuovo = cc ? cartaPiccola(el, cc) : el("div", { class: "pk-slot" });
+        ui.comuni.replaceChild(nuovo, ui.slotCom[c]); ui.slotCom[c] = nuovo; ui.kCom[c] = kc;
+      }
+      ui.slotCom[c].classList.toggle("conta", !!(evidenzia && cc && vincenti[cc.v + "-" + cc.s]));
+      ui.slotCom[c].classList.toggle("spenta", !!(evidenzia && cc && !vincenti[cc.v + "-" + cc.s]));
     }
     ui.piatto.textContent = vm.piatto > 0 ? "Piatto " + fmtN(vm.piatto) : "";
     ui.msg.textContent = messaggio(vm, cb);
 
-    // ---- le mie carte ----
-    var mie = cb.mie(), inCambio = vm.stato === "cambio" && io && io.inMano && !io.lascia && io.cambio == null;
+    // ---- le mie carte (nel cambio, toccarle sposta solo quella toccata) ----
+    var mie = cb.mie();
     if (ui.nSel !== vm.n || !inCambio) { if (ui.nSel !== vm.n) ui.rialzo = null; ui.sel = {}; ui.nSel = vm.n; }
-    var km = mie ? vm.n + JSON.stringify(mie.carte) + (inCambio ? "c" + Object.keys(ui.sel).join(",") : "") + (io && io.lascia ? "L" : "") : "";
+    var km = mie ? vm.n + JSON.stringify(mie.carte) + (inCambio ? "c" : "") + (io && io.lascia ? "L" : "") : "";
     if (km !== ui.chiaveMie) {
-      ui.chiaveMie = km; svuota(ui.mie);
+      ui.chiaveMie = km; svuota(ui.mie); ui.nodiMie = [];
       ui.mie.classList.toggle("cinque", !!(mie && mie.carte.length > 2));
       ui.mie.classList.toggle("lascia", !!(io && io.lascia));
       if (mie) mie.carte.forEach(function (cc, k) {
-        var d = cartaGrande(el, cc);
+        var d = cartaGrande(el, cc); d._k = cc.v + "-" + cc.s;
         if (inCambio) {
           d.classList.add("tocca"); if (ui.sel[k]) d.classList.add("via");
           d.addEventListener("click", function () {
-            if (ui.sel[k]) delete ui.sel[k]; else if (Object.keys(ui.sel).length < 4) ui.sel[k] = 1;
-            aggiorna(ui, ui.vm);
+            if (ui.sel[k]) delete ui.sel[k]; else if (Object.keys(ui.sel).length < 4) ui.sel[k] = 1; else return;
+            d.classList.toggle("via", !!ui.sel[k]);
+            disegnaAzioni(ui, ui.vm, ui.io);
           });
         }
-        ui.mie.appendChild(d);
+        ui.mie.appendChild(d); ui.nodiMie.push(d);
       });
     }
+    ui.nodiMie.forEach(function (d) { d.classList.toggle("conta", !!(evidenzia && vincenti[d._k])); });
     // la mia riga: fiches, puntata, che mano ho
     var testo = "Tu · " + (io ? fmtN(io.stack) : "0") + " fiches";
     if (io && io.inGiro > 0) testo += " · puntata " + fmtN(io.inGiro);
     if (vm.dealer === cb.myId) testo += " · Ⓓ";
     var nomeMano = "";
-    if (mie && mie.carte.length && io && io.inMano && !io.lascia) nomeMano = miglioreMano(vm.variante === "he" ? mie.carte.concat(vm.tavolo) : mie.carte, vm.variante, vm.variante === "it" ? bassoIt(vm.players.filter(function (p) { return p.inMano; }).length) : 2).nome;
+    if (mie && mie.carte.length && io && io.inMano && !io.lascia) nomeMano = miglioreMano(vm.variante === "he" ? mie.carte.concat(vm.tavolo) : mie.carte, vm.variante, vm.variante === "it" ? (vm.basso || bassoIt(vm.players.filter(function (p) { return p.inMano; }).length)) : 2).nome;
     if (vm.vinti && vm.vinti[cb.myId]) nomeMano = "+" + fmtN(vm.vinti[cb.myId]) + " 🎉";
-    ui.mioInfo.innerHTML = "";
-    ui.mioInfo.appendChild(el("span", { text: testo }));
-    ui.mioInfo.appendChild(el("span", { class: "pk-mano-nome", text: nomeMano }));
+    var ki = testo + "|" + nomeMano;
+    if (ki !== ui.kInfo) {
+      ui.kInfo = ki; svuota(ui.mioInfo);
+      ui.mioInfo.appendChild(el("span", { text: testo }));
+      ui.mioInfo.appendChild(el("span", { class: "pk-mano-nome", text: nomeMano }));
+    }
+    barraTempo(ui.tempo, ui.tempoFine && (mioTurno || inCambio) ? ui.tempoFine : 0, vm.tempoTot, kt + (mioTurno || inCambio ? "|io" : ""));
 
     disegnaAzioni(ui, vm, io);
+
+    // fine mano: le fiches volano dal piatto a chi ha vinto
+    if (fine) { var kf = vm.n + "|" + Object.keys(vm.vinti).join(","); if (kf !== ui.chiaveFine) { ui.chiaveFine = kf; festa(ui, vm); } }
+  }
+  function festa(ui, vm) {
+    var cb = ui.cb, ids = Object.keys(vm.vinti || {}); if (!ids.length) return;
+    var mio = vm.vinti[cb.myId];
+    if (mio) suono(mio >= 400 ? "grande" : "vinci");
+    var base = ui.scena.getBoundingClientRect(), da = ui.piatto.getBoundingClientRect();
+    if (!base.width) return;
+    var x0 = da.left + da.width / 2 - base.left, y0 = da.top + da.height / 2 - base.top;
+    ids.forEach(function (id, j) {
+      var dove = id === cb.myId ? ui.mioInfo : ui.posti[id] && ui.posti[id].av; if (!dove) return;
+      var r = dove.getBoundingClientRect(), dx = r.left + r.width / 2 - base.left - x0, dy = r.top + r.height / 2 - base.top - y0;
+      var quante = vm.vinti[id] >= 400 ? 6 : 4;
+      for (var k = 0; k < quante; k++) (function (k) {
+        var f = ui.el("div", { class: "pk-volo" });
+        f.style.left = (x0 + (k % 3 - 1) * 6) + "px"; f.style.top = y0 + "px"; f.style.transitionDelay = (j * 150 + k * 70) + "ms";
+        ui.scena.appendChild(f);
+        setTimeout(function () { f.style.transform = "translate(" + dx.toFixed(0) + "px," + dy.toFixed(0) + "px) scale(.75)"; f.style.opacity = "0"; }, 30);
+        setTimeout(function () { if (f.parentNode) f.parentNode.removeChild(f); }, 1600);
+      })(k);
+    });
   }
   function creaPosto(ui, p) {
-    var el = ui.el, P = {};
+    var el = ui.el, P = { kn: null };
     P.av = el("div", { class: "pk-av", html: faccia(ui.cb, p) });
     P.d = el("span", { class: "pk-d", text: "D" });
+    P.nuv = el("div", { class: "pk-nuv" });
+    P.tempo = el("div", { class: "pk-tempo piccolo" }, [ el("i") ]);
     P.carte = el("div", { class: "pk-dorsi" });
     P.nome = el("div", { class: "pk-nome", text: p.nome });
     P.stack = el("div", { class: "pk-stack" });
     P.az = el("div", { class: "pk-az" });
-    P.nodo = el("div", { class: "pk-posto" }, [ el("div", { class: "pk-av-box" }, [ P.av, P.d ]), P.carte, P.nome, P.stack, P.az ]);
+    P.nodo = el("div", { class: "pk-posto" }, [ el("div", { class: "pk-av-box" }, [ P.av, P.d, P.nuv, P.tempo ]), P.carte, P.nome, P.stack, P.az ]);
     return P;
   }
-  function aggiornaPosto(ui, P, p, vm) {
+  // che tipo di mossa è (per il colore della nuvoletta)
+  function tipoAz(a) { return /^Lascia|^Uscito/.test(a) ? "lascia" : /^Passa/.test(a) ? "passa" : /^Chiama/.test(a) ? "chiama" : /^(Punta|Rilancia|All-in)/.test(a) ? "punta" : "cambia"; }
+  function aggiornaPosto(ui, P, p, vm, vincenti, kt) {
     var vinto = vm.vinti && vm.vinti[p.id];
     P.nodo.classList.toggle("turno", vm.turno === p.id);
     P.nodo.classList.toggle("fuori", !!(p.lascia || !p.inMano));
@@ -847,56 +1071,86 @@
     else if (p.carte && p.nomeMano) az = p.nomeMano;
     else if (vm.turno === p.id) az = "🤔";
     else if (p.inGiro > 0) { az = fmtN(p.inGiro); cls += " punta"; }
+    else if (p.pausa && !p.inMano) az = "💤 in pausa";
     else az = p.azione || "";
-    P.az.textContent = az; P.az.className = cls;
+    if (P.az.textContent !== az) P.az.textContent = az;
+    if (P.az.className !== cls) P.az.className = cls;
+    barraTempo(P.tempo, vm.turno === p.id && ui.tempoFine ? ui.tempoFine : 0, vm.tempoTot, kt + "|" + (vm.turno === p.id));
+    // la nuvoletta con l'ultima mossa (e ogni tanto una battuta del bot)
+    var kn = vm.n + "|" + p.azione + "|" + p.inGiro + "|" + (p.frase || "");
+    if (P.kn === null) P.kn = kn;
+    else if (kn !== P.kn) {
+      P.kn = kn;
+      if (p.azione && !/^(Buio|Invito)/.test(p.azione) && vm.stato !== "finemano") {
+        svuota(P.nuv);
+        P.nuv.appendChild(ui.el("span", { text: p.azione + (p.inGiro > 0 && /^(Chiama|Punta|Rilancia|All-in)/.test(p.azione) ? " " + fmtN(p.inGiro) : "") }));
+        if (p.frase) P.nuv.appendChild(ui.el("small", { text: "«" + p.frase + "»" }));
+        P.nuv.className = "pk-nuv " + tipoAz(p.azione) + (p.frase ? " lunga" : "");
+        void P.nuv.offsetWidth; P.nuv.classList.add("su");
+      }
+    }
     // le carte: coperte durante la mano, scoperte alla fine (scritte, così si leggono)
     var kc = p.carte ? p.carte.map(testoCarta).join(" ") : (p.inMano && !p.lascia ? "x" + Math.min(p.nCarte, 5) : "");
     if (P.kc !== kc) {
       P.kc = kc; svuota(P.carte); P.carte.className = "pk-dorsi" + (p.carte ? " scoperte" : "");
-      if (p.carte) p.carte.forEach(function (c) { P.carte.appendChild(ui.el("span", { class: "pk-cartina" + (ROSSO[c.s] ? " rossa" : ""), text: testoCarta(c) })); });
+      if (p.carte) p.carte.forEach(function (c) { P.carte.appendChild(ui.el("span", { class: "pk-cartina" + (ROSSO[c.s] ? " rossa" : "") + (vincenti[c.v + "-" + c.s] ? " conta" : ""), text: testoCarta(c) })); });
       else if (p.inMano && !p.lascia) for (var k = 0; k < Math.min(p.nCarte, 5); k++) P.carte.appendChild(ui.el("span", { class: "pk-dorso" }));
     }
   }
   function nomeDi(vm, cb, id) { if (id === cb.myId) return "Tu"; for (var i = 0; i < vm.players.length; i++) if (vm.players[i].id === id) return vm.players[i].nome; return "?"; }
   function messaggio(vm, cb) {
-    if (vm.stato === "attesa") return vm.players.filter(function (p) { return p.stack > 0 && p.seduto !== false; }).length < MIN ? "Aspettiamo altri giocatori con le fiches…" : "";
+    if (vm.stato === "attesa") return vm.players.filter(function (p) { return p.stack > 0 && p.seduto !== false && !p.pausa; }).length < MIN ? "Aspettiamo altri giocatori con le fiches…" : "";
     if (vm.stato === "cambio") return "🔄 Cambio delle carte…";
+    if (vm.corsa) return "🔥 All-in! Carte scoperte, le altre escono da sole…";
     if (vm.stato === "finemano" && vm.vinti) {
       var ids = Object.keys(vm.vinti); if (!ids.length) return "";
       var chi = ids.map(function (id) { return nomeDi(vm, cb, id); });
       var mano = ""; vm.players.forEach(function (p) { if (p.id === ids[0] && p.nomeMano) mano = p.nomeMano; });
       if (ids.length === 1) return (chi[0] === "Tu" ? "Hai vinto " : chi[0] + " vince ") + fmtN(vm.vinti[ids[0]]) + (mano ? " con " + mano : "");
-      return "Piatto diviso: " + chi.join(", ");
+      var uguali = ids.every(function (id) { return vm.vinti[id] === vm.vinti[ids[0]]; });
+      return (uguali ? "Piatto diviso: " : "Vincono: ") + ids.map(function (id, k) { return chi[k] + " +" + fmtN(vm.vinti[id]); }).join(" · ");
     }
     return "";
   }
   function mossePer(vm, io) {   // le stesse regole del motore, viste dal mio telefono
     var serve = Math.max(0, vm.daChiamare - io.inGiro), tutto = io.inGiro + io.stack;
     return { passa: serve === 0, chiama: serve > 0 ? Math.min(serve, io.stack) : 0,
-      punta: tutto > vm.daChiamare ? { min: Math.min(vm.daChiamare + vm.rilMin, tutto), max: tutto } : null };
+      punta: tutto > vm.daChiamare && !io.chiuso ? { min: Math.min(vm.daChiamare + vm.rilMin, tutto), max: tutto } : null };
   }
   function disegnaAzioni(ui, vm, io) {
     var cb = ui.cb, el = ui.el;
     var mioTurno = io && vm.turno === io.id && PUNTATE[vm.stato];
     var inCambio = vm.stato === "cambio" && io && io.inMano && !io.lascia && io.cambio == null;
-    var chiave = [vm.stato, vm.turno, vm.daChiamare, vm.rilMin, vm.n, io ? [io.inGiro, io.stack, io.seduto, io.lascia, io.cambio, io.inMano].join("/") : "-",
-      ui.rialzo ? "R" : "", inCambio ? Object.keys(ui.sel).length : "", cb.fuori()].join("|");
+    var chiave = [vm.stato, vm.turno, vm.daChiamare, vm.rilMin, vm.n, io ? [io.inGiro, io.stack, io.seduto, io.lascia, io.cambio, io.inMano, io.pausa, io.chiuso, io.allin].join("/") : "-",
+      ui.rialzo ? "R" : "", inCambio ? Object.keys(ui.sel).length : "", cb.fuori(), cb.rientroInCorso && cb.rientroInCorso() ? "A" : "",
+      io ? "" : (vm.guardano || []).indexOf(cb.myId) + "/" + vm.players.length].join("|");
     if (chiave === ui.chiaveAz) return;
     ui.chiaveAz = chiave; svuota(ui.azioni);
+    var rif = { n: vm.n, st: vm.stato, dc: vm.daChiamare };
     function stato(txt) { ui.azioni.appendChild(el("div", { class: "pk-stato", text: txt })); }
     function bottone(cls, txt, fn) { return el("button", { class: "pk-btn " + cls, text: txt, onclick: fn }); }
-    if (!io) return stato("Stai guardando il tavolo");
+    // una mossa: dopo il tocco i tasti restano fermi un attimo (un doppio tocco non vale per il giro dopo)
+    function mossa(fn) { return function () { if (Date.now() < ui.blocco) return; ui.blocco = Date.now() + 600; fn(); }; }
+    if (!io) {
+      if ((vm.guardano || []).indexOf(cb.myId) >= 0) { ui.azioni.appendChild(boxPieno(ui.t, cb, vm)); return; }
+      return stato("Stai guardando il tavolo");
+    }
     if (!io.inMano && io.stack < GRANDE && vm.stato !== "finemano") {   // fiches finite: ci si risiede col portafoglio o col bonus
       stato("Hai finito le fiches sul tavolo.");
       ui.azioni.appendChild(fichesBox(ui.t, cb, io));
+      return;
+    }
+    if (io.pausa && !mioTurno && !inCambio) {   // tempo scaduto: salta le mani finché non dice "ci sono"
+      stato("💤 Sei in pausa: salti le mani finché non torni.");
+      ui.azioni.appendChild(el("div", { class: "pk-riga" }, [ bottone("ok", "✋ Ci sono!", mossa(function () { cb.onCiSono(); })) ]));
       return;
     }
     if (inCambio) {
       var n = Object.keys(ui.sel).length;
       stato(n ? "Cambi " + n + (n === 1 ? " carta" : " carte") + " (massimo 4)" : "Tocca le carte da cambiare (massimo 4)");
       ui.azioni.appendChild(el("div", { class: "pk-riga" }, [
-        bottone("passa", "✋ Servito", function () { cb.onCambio([]); }),
-        bottone("ok", n ? "🔄 Cambia " + n : "🔄 Cambia", function () { if (n) cb.onCambio(Object.keys(ui.sel).map(Number)); }) ]));
+        bottone("passa", "✋ Servito", mossa(function () { cb.onCambio([], rif); })),
+        bottone("ok", n ? "🔄 Cambia " + n : "🔄 Cambia", mossa(function () { if (n) cb.onCambio(Object.keys(ui.sel).map(Number), rif); })) ]));
       return;
     }
     if (!mioTurno) {
@@ -910,38 +1164,56 @@
       return stato(vm.turno ? "Tocca a " + nomeDi(vm, cb, vm.turno) + "…" : "…");
     }
     var pos = mossePer(vm, io);
-    if (ui.rialzo && pos.punta) return pannelloRialzo(ui, vm, pos);
+    if (ui.rialzo && pos.punta) return pannelloRialzo(ui, vm, pos, io, rif);
     ui.rialzo = null;
     var riga = el("div", { class: "pk-riga" });
-    riga.appendChild(bottone("lascia", "Lascia", function () { cb.onAzione("lascia"); }));
-    if (pos.passa) riga.appendChild(bottone("passa", "Passa", function () { cb.onAzione("passa"); }));
-    else riga.appendChild(bottone("passa", (pos.chiama >= io.stack ? "All-in " : "Chiama ") + fmtN(pos.chiama), function () { cb.onAzione("chiama"); }));
+    riga.appendChild(bottone("lascia", "Lascia", mossa(function () { cb.onAzione("lascia", 0, rif); })));
+    if (pos.passa) riga.appendChild(bottone("passa", "Passa", mossa(function () { cb.onAzione("passa", 0, rif); })));
+    else riga.appendChild(bottone("passa", (pos.chiama >= io.stack ? "All-in " : "Chiama ") + fmtN(pos.chiama), mossa(function () { cb.onAzione("chiama", 0, rif); })));
     if (pos.punta) {
-      if (pos.punta.min >= pos.punta.max) riga.appendChild(bottone("punta", "All-in " + fmtN(pos.punta.max - io.inGiro), function () { cb.onAzione("punta", pos.punta.max); }));
-      else riga.appendChild(bottone("punta", vm.daChiamare ? "Rilancia…" : "Punta…", function () { ui.rialzo = { tot: pos.punta.min }; ui.chiaveAz = ""; aggiorna(ui, ui.vm); }));
+      if (pos.punta.min >= pos.punta.max) riga.appendChild(bottone("punta", "All-in " + fmtN(pos.punta.max - io.inGiro), mossa(function () { cb.onAzione("punta", pos.punta.max, rif); })));
+      else riga.appendChild(bottone("punta", vm.daChiamare ? "Rilancia…" : "Punta…", function () { if (Date.now() < ui.blocco) return; ui.rialzo = { tot: pos.punta.min }; ui.chiaveAz = ""; aggiorna(ui, ui.vm); }));
     }
     ui.azioni.appendChild(riga);
   }
-  function pannelloRialzo(ui, vm, pos) {
+  function pannelloRialzo(ui, vm, pos, io, rif) {
     var el = ui.el, cb = ui.cb, R = ui.rialzo, min = pos.punta.min, max = pos.punta.max, passo = 10;
     R.tot = Math.max(min, Math.min(max, R.tot));
     var etichetta = el("div", { class: "pk-stato pk-rialzo-tot" });
     var ok = el("button", { class: "pk-btn ok" });
+    function giusto(v) { v = Math.round(v / passo) * passo; return v >= max || max - v < passo ? max : Math.max(min, v); }   // a passi di 10
     function mostra() {
       etichetta.textContent = (vm.daChiamare ? "Rilanci a " : "Punti ") + fmtN(R.tot) + (R.tot >= max ? " (all-in)" : "");
       ok.textContent = "✓ " + (R.tot >= max ? "All-in" : (vm.daChiamare ? "Rilancia" : "Punta"));
       cursore.value = String(R.tot);
     }
-    var cursore = el("input", { type: "range", class: "pk-slider", min: String(min), max: String(max), step: String(passo), value: String(R.tot) });
-    cursore.addEventListener("input", function () { R.tot = Math.max(min, Math.min(max, +cursore.value)); if (max - R.tot < passo) R.tot = max; mostra(); });
-    var piatto = vm.piatto;
-    function scelta(txt, val) { return el("button", { class: "pk-btn piccolo", text: txt, onclick: function () { R.tot = Math.max(min, Math.min(max, Math.round(val / passo) * passo)); mostra(); } }); }
-    ok.addEventListener("click", function () { ui.rialzo = null; cb.onAzione("punta", R.tot); });
+    var cursore = el("input", { type: "range", class: "pk-slider", min: String(min), max: String(max), step: "1", value: String(R.tot) });
+    cursore.addEventListener("input", function () { R.tot = giusto(+cursore.value); mostra(); });
+    // come nel poker vero: prima pareggio, poi aggiungo metà (o tutto) il piatto che c'è dopo il mio pareggio
+    var dopoChiamata = vm.piatto + Math.max(0, vm.daChiamare - io.inGiro);
+    function scelta(txt, val) { return el("button", { class: "pk-btn piccolo", text: txt, onclick: function () { R.tot = giusto(val); mostra(); } }); }
+    ok.addEventListener("click", function () { if (Date.now() < ui.blocco) return; ui.blocco = Date.now() + 600; ui.rialzo = null; cb.onAzione("punta", R.tot, rif); });
     ui.azioni.appendChild(etichetta);
     ui.azioni.appendChild(cursore);
-    ui.azioni.appendChild(el("div", { class: "pk-riga" }, [ scelta("Minimo", min), scelta("½ piatto", vm.daChiamare + piatto / 2), scelta("Piatto", vm.daChiamare + piatto), scelta("All-in", max) ]));
+    ui.azioni.appendChild(el("div", { class: "pk-riga" }, [ scelta("Minimo", min), scelta("½ piatto", vm.daChiamare + dopoChiamata / 2), scelta("Piatto", vm.daChiamare + dopoChiamata), scelta("All-in", max) ]));
     ui.azioni.appendChild(el("div", { class: "pk-riga" }, [ el("button", { class: "pk-btn lascia", text: "Annulla", onclick: function () { ui.rialzo = null; ui.chiaveAz = ""; aggiorna(ui, ui.vm); } }), ok ]));
     mostra();
+  }
+  // la mini-guida delle combinazioni (tasto "?"): un esempio disegnato per ognuna
+  var ESEMPI = { scalacolore: "9♥ 10♥ J♥ Q♥ K♥", poker: "9♠ 9♥ 9♦ 9♣ K♠", full: "Q♠ Q♥ Q♦ 8♣ 8♥", colore: "8♦ 9♦ J♦ Q♦ A♦", scala: "7♣ 8♦ 9♠ 10♥ J♣",
+    tris: "8♠ 8♥ 8♦ K♣ 10♠", doppia: "J♠ J♦ 9♣ 9♥ A♠", coppia: "10♥ 10♣ K♠ 8♦ 7♣", alta: "A♠ J♦ 10♣ 9♥ 7♦" };
+  function guida(ui) {
+    if (ui.guida && ui.guida.parentNode) { ui.guida.parentNode.removeChild(ui.guida); ui.guida = null; return; }
+    var el = ui.el, v = (ui.vm && ui.vm.variante) || "he";
+    var righe = ORDINE[v].slice().reverse().map(function (tipo, k) {
+      return el("div", { class: "pk-g-riga" }, [ el("b", { text: (k + 1) + ". " + NOMI_MANO[tipo] }),
+        el("span", { class: "pk-g-carte" }, ESEMPI[tipo].split(" ").map(function (x) { return el("span", { class: "pk-cartina" + (/[♥♦]/.test(x) ? " rossa" : ""), text: x }); })) ]);
+    });
+    var nota = v === "it" ? "All'italiana il colore batte il full; a parità vince il seme più forte: cuori, quadri, fiori, picche."
+      : "Conta la combinazione migliore di 5 carte tra le tue 2 e le 5 in mezzo.";
+    ui.guida = el("div", { class: "pk-guida", onclick: function () { guida(ui); } }, [
+      el("div", { class: "pk-g-foglio" }, [ el("div", { class: "pk-g-titolo", text: "Le combinazioni, dalla più forte" }) ].concat(righe).concat([ el("div", { class: "pk-g-nota", text: nota + " Tocca per chiudere." }) ])) ]);
+    ui.scena.appendChild(ui.guida);
   }
   function finale(t, vm, cb) {
     var s = t.schermata({ icona: "🏆", titolo: "Classifica del tavolo", sotto: "Fiches guadagnate o perse" });
@@ -985,7 +1257,7 @@
       ".schermata.pk-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#0b1912}",
       ".schermata.pk-piena>.testa,.schermata.pk-piena>.piede{display:none}",
       ".schermata.pk-piena>.contenuto{height:100%;margin:0;padding:0}",
-      ".pk-scena{height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;padding:calc(6px + env(safe-area-inset-top)) 8px calc(8px + env(safe-area-inset-bottom));overflow:hidden;user-select:none;-webkit-user-select:none;color:#fff;background:radial-gradient(120% 80% at 50% 40%,#1d3b2c,#0b1912)}",
+      ".pk-scena{position:relative;height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;padding:calc(6px + env(safe-area-inset-top)) 8px calc(8px + env(safe-area-inset-bottom));overflow:hidden;user-select:none;-webkit-user-select:none;color:#fff;background:radial-gradient(120% 80% at 50% 40%,#1d3b2c,#0b1912)}",
       ".pk-barra{display:flex;align-items:center;gap:8px;min-height:36px;flex:none}",
       ".pk-tastino{width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:1.1rem;font-weight:900;cursor:pointer;flex:none}",
       ".pk-info{flex:1;min-width:0;font-size:.78rem;font-weight:800;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
@@ -1033,7 +1305,30 @@
       ".pk-stato{text-align:center;font-size:.9rem;font-weight:800;opacity:.85;padding:6px 0}",
       ".pk-rialzo-tot{opacity:1;color:#ffd8a8;padding:0}",
       ".pk-fiches{display:flex;flex-direction:column;gap:8px;align-items:stretch;text-align:center;font-weight:800}",
-      ".pk-bot-riga{display:flex;align-items:center;gap:8px;justify-content:center;font-weight:800}"
+      ".pk-bot-riga{display:flex;align-items:center;gap:8px;justify-content:center;font-weight:800}",
+      // il tempo per decidere
+      ".pk-tempo{height:4px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden;visibility:hidden;flex:none}.pk-tempo i{display:block;height:100%;background:#ffe066;transform-origin:left center;transform:scaleX(1)}",
+      ".pk-tempo.piccolo{position:absolute;left:3px;right:3px;bottom:-6px;height:3px;z-index:1}",
+      // la nuvoletta con l'ultima mossa
+      ".pk-nuv{position:absolute;left:50%;bottom:100%;margin-bottom:4px;transform:translate(-50%,4px) scale(.9);opacity:0;pointer-events:none;z-index:4;background:#fff;color:#111;border-radius:10px;padding:3px 7px;font-size:.68rem;font-weight:900;line-height:1.2;white-space:nowrap;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.45)}",
+      ".pk-nuv small{display:block;font-size:.62rem;font-weight:700;font-style:italic;opacity:.8;max-width:130px;white-space:normal}",
+      ".pk-nuv.passa{background:#d0ebff}.pk-nuv.chiama{background:#d3f9d8}.pk-nuv.punta{background:#ffe8cc}.pk-nuv.lascia{background:#dee2e6;color:#495057}.pk-nuv.cambia{background:#e5dbff}",
+      ".pk-nuv.su{animation:pkNuv 1.8s ease-out forwards}.pk-nuv.su.lunga{animation-duration:2.8s}",
+      "@keyframes pkNuv{0%{opacity:0;transform:translate(-50%,4px) scale(.9)}10%{opacity:1;transform:translate(-50%,0) scale(1)}80%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-4px) scale(1)}}",
+      // le carte che hanno vinto
+      ".pk-cs.conta{transform:translateY(-4px);box-shadow:0 0 0 2px #ffe066,0 4px 10px rgba(0,0,0,.5)}.pk-cs.spenta{opacity:.4}",
+      ".pk-mie .conta{transform:translateY(-8px)}.pk-cartina.conta{box-shadow:0 0 0 2px #ffe066}",
+      // le fiches che volano dal piatto
+      ".pk-volo{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#e67700;border:3px dotted #fff;box-sizing:border-box;z-index:6;pointer-events:none;transition:transform .75s cubic-bezier(.3,.7,.3,1),opacity .75s ease-in}",
+      // con tanti giocatori i posti si fanno più piccoli
+      ".pk-tavolo:not(.stretto) .pk-centro{top:57%}",
+      ".pk-tavolo.stretto .pk-posto{width:62px}.pk-tavolo.stretto .pk-av-box,.pk-tavolo.stretto .pk-av{width:34px;height:34px}",
+      ".pk-tavolo.stretto .pk-nome{font-size:.6rem;max-width:62px}.pk-tavolo.stretto .pk-stack,.pk-tavolo.stretto .pk-az{font-size:.58rem}.pk-tavolo.stretto .pk-dorso{width:10px;height:14px}",
+      // la mini-guida delle combinazioni
+      ".pk-guida{position:absolute;inset:0;z-index:8;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:12px}",
+      ".pk-g-foglio{width:100%;max-width:380px;background:#14301f;border:2px solid #6b3e1f;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:5px}",
+      ".pk-g-titolo{font-weight:900;text-align:center;margin-bottom:2px}.pk-g-riga{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:.78rem}",
+      ".pk-g-carte{display:flex;gap:2px}.pk-g-carte .pk-cartina{font-size:.72rem}.pk-g-nota{font-size:.72rem;opacity:.8;text-align:center;margin-top:4px;line-height:1.3}"
     ].join("");
     document.head.appendChild(st);
   }

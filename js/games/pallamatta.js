@@ -6,7 +6,8 @@
    - pioli: blu 10 punti, arancioni 100, viola 500 (cambia posto a ogni tiro), verdi = il potere del tuo aiutante;
    - più arancioni hai preso, più vale ogni piolo (x2, x3, x5, x10);
    - l'ultimo arancione: rallentatore, poi la FEBBRE MATTA con i secchi da 10.000 a 50.000 punti.
-   Modi: da solo coi livelli; sfida a turni da 2 a 4 sullo stesso telefono o online (ogni tiro lo calcola un telefono solo e tutti lo riguardano uguale).
+   Tenendo premuto mentre la pallina vola, il tiro va più veloce (è già calcolato: non cambia niente).
+   Modi: da solo coi livelli (5 capitoli); sfida a turni da 2 a 4 sullo stesso telefono o online (ogni tiro lo calcola un telefono solo e tutti lo riguardano uguale).
    La fisica e i livelli stanno in funzioni senza disegno (in fondo: window.__PM per le prove).
    ========================================================= */
 (function () {
@@ -71,17 +72,19 @@
   var CAPITOLI = [
     { nome: "Lo spazio", icona: "🚀", sfondo: "spazio" },
     { nome: "La natura", icona: "🌳", sfondo: "natura" },
-    { nome: "Il mare", icona: "🐠", sfondo: "mare" }
+    { nome: "Il mare", icona: "🐠", sfondo: "mare" },
+    { nome: "I dolci", icona: "🍭", sfondo: "dolci" },
+    { nome: "Il luna park", icona: "🎡", sfondo: "festa" }
   ];
   var LIVELLI = [
     // ---- 🚀 lo spazio ----
-    { cap: 0, nome: "Stelle cadenti", arancioni: 12, fa: function (l) {
+    { cap: 0, nome: "Stelle cadenti", arancioni: 9, vista: true, fa: function (l) {
       griglia(l, 10, 36, 10, 5, 8.9, 8, true);   // il cielo pieno di stelline
       [[26, 100], [56, 116], [84, 96]].forEach(function (s) { stellina(l, s[0], s[1], 4.6); mattoni(l, s[0] - 6, s[1] - 7, s[0] - 21, s[1] - 24, 3, 1.0); });   // le stelle cadenti con la scia
       riga(l, 22, 80, 78, 80, 8);
       curva(l, 50, 136, 46, 12, PI * 1.08, PI * 1.36, 4.6); curva(l, 50, 136, 46, 12, PI * 1.64, PI * 1.92, 4.6);
     } },
-    { cap: 0, nome: "Il pianeta con l'anello", arancioni: 14, fa: function (l) {
+    { cap: 0, nome: "Il pianeta con l'anello", arancioni: 10, vista: true, fa: function (l) {
       cerchio(l, 50, 70, 16, 15); cerchio(l, 50, 70, 10, 10); cerchio(l, 50, 70, 4.4, 5);   // il pianeta (la pallina passa tra i pioli)
       curva(l, 50, 74, 38, 10, PI * 0.04, PI * 0.96, 4.6);   // l'anello davanti
       curva(l, 50, 74, 38, 10, PI * 1.0, PI * 1.3); curva(l, 50, 74, 38, 10, PI * 1.7, PI * 2.0);   // l'anello dietro
@@ -90,7 +93,7 @@
       griglia(l, 28, 36, 6, 2, 8.8, 8, true); stellina(l, 12, 42, 4.4); stellina(l, 88, 42, 4.4);
       griglia(l, 34, 102, 4, 3, 10.6, 9, true); riga(l, 10, 132, 90, 132, 11);
     } },
-    { cap: 0, nome: "Il razzo", arancioni: 16, fa: function (l) {
+    { cap: 0, nome: "Il razzo", arancioni: 13, fa: function (l) {
       curva(l, 50, 62, 11, 26, PI * 1.0, PI * 1.5); curva(l, 50, 62, 11, 26, PI * 1.5, PI * 2.0);   // la punta
       mattoni(l, 39, 66, 39, 102, 4, 4.8); mattoni(l, 61, 66, 61, 102, 4, 4.8);   // il corpo (con gli oblò per passare)
       cerchio(l, 50, 76, 5.6, 6); l.push([50, 76]); riga(l, 45, 90, 55, 90, 2); riga(l, 45, 98, 55, 98, 2);
@@ -100,7 +103,7 @@
       stellina(l, 14, 80, 4.4); stellina(l, 86, 80, 4.4); stellina(l, 16, 120, 4.4); stellina(l, 84, 120, 4.4);
       riga(l, 8, 134, 92, 134, 12);
     } },
-    { cap: 0, nome: "La luna e le stelle", arancioni: 16, fa: function (l) {
+    { cap: 0, nome: "La luna e le stelle", arancioni: 15, fa: function (l) {
       curva(l, 58, 82, 32, 32, PI * 0.6, PI * 1.45);   // il bordo della luna
       arco(l, 64, 82, 25, PI * 0.62, PI * 1.38, 12); arco(l, 72, 82, 19, PI * 0.66, PI * 1.34, 8);   // la falce piena di pioli
       [[62, 36], [68, 40], [75, 40], [81, 44], [80, 51], [88, 52], [89, 45]].forEach(function (p) { l.push(p); });   // il Grande Carro
@@ -239,6 +242,121 @@
       griglia(l, 12, 36, 8, 4, 10.8, 8, true);
       riga(l, 12, 76, 88, 76, 10); stellina(l, 14, 114, 4.4); stellina(l, 86, 114, 4.4);
       mattoni(l, 4, 134, 26, 134, 2, 4.6); mattoni(l, 74, 134, 96, 134, 2, 4.6);
+    } },
+    // ---- 🍭 i dolci ----
+    { cap: 3, nome: "Il lecca-lecca", arancioni: 18, fa: function (l) {
+      tonda(66, function () { for (var a = 0.4, r; a < 12.6; a += 5.4 / r) { r = 4 + a * 1.5; pt(l, 50 + Math.cos(a) * r, 66 + Math.sin(a) * r); } });   // la spirale
+      curva(l, 50, 66, 27, 27, PI * 1.12, PI * 1.88, 4.6);   // il bordo di sopra
+      mattoni(l, 50, 98, 50, 130, 4, 1.0);   // il bastoncino
+      [[15, 104], [85, 104]].forEach(function (c) { tonda(c[1], function () {   // le caramelle incartate
+        pt(l, c[0], c[1]); mattone(l, c[0] - 8, c[1] - 3.5, c[0] - 4.5, c[1]); mattone(l, c[0] - 8, c[1] + 3.5, c[0] - 4.5, c[1]); mattone(l, c[0] + 4.5, c[1], c[0] + 8, c[1] - 3.5); mattone(l, c[0] + 4.5, c[1], c[0] + 8, c[1] + 3.5);
+      }); });
+      griglia(l, 8, 36, 3, 3, 9, 8, true); griglia(l, 74, 36, 3, 3, 9, 8, true);   // i confettini
+      riga(l, 10, 126, 36, 126, 4); riga(l, 64, 126, 90, 126, 4);
+    } },
+    { cap: 3, nome: "La torta", arancioni: 20, fa: function (l) {
+      mattoni(l, 20, 120, 80, 120, 6, 4.6); mattoni(l, 27, 100, 73, 100, 5, 4.6); mattoni(l, 34, 80, 66, 80, 4, 4.6);   // i tre piani (con gli spazi per passare)
+      riga(l, 24, 112, 76, 112, 7); riga(l, 31, 92, 69, 92, 5); riga(l, 38, 72, 62, 72, 4);   // la panna
+      [41, 50, 59].forEach(function (x) { mattone(l, x, 56, x, 64); pt(l, x, 49); });   // le candeline accese
+      cerchio(l, 13, 70, 5, 5); cerchio(l, 87, 70, 5, 5); l.push([13, 70]); l.push([87, 70]);   // le ciliegie
+      griglia(l, 10, 36, 3, 2, 9, 8, true); griglia(l, 72, 36, 3, 2, 9, 8, true);
+      curva(l, 50, 126, 42, 8, PI * 0.08, PI * 0.92, 4.6);   // il piatto
+      riga(l, 8, 94, 8, 118, 3); riga(l, 92, 94, 92, 118, 3);
+    } },
+    { cap: 3, nome: "Il gelato", arancioni: 20, fa: function (l) {
+      spezzata(l, [[34, 92], [50, 130], [66, 92]], 4, 4.6);   // il cono
+      riga(l, 44, 100, 56, 100, 3); riga(l, 47, 109, 53, 109, 2);   // la cialda
+      tonda(70, function () { cerchio(l, 39, 76, 9, 9); cerchio(l, 61, 76, 9, 9); cerchio(l, 50, 60, 9, 9); pt(l, 39, 76); pt(l, 61, 76); pt(l, 50, 60); });   // le palline di gelato
+      stellina(l, 50, 42, 4.4);   // la ciliegina
+      griglia(l, 8, 40, 3, 4, 9, 8, true); griglia(l, 74, 40, 3, 4, 9, 8, true);   // le codette
+      riga(l, 8, 118, 24, 128, 3); riga(l, 92, 118, 76, 128, 3);
+      mattoni(l, 6, 92, 18, 104, 2, 1.0); mattoni(l, 94, 92, 82, 104, 2, 1.0);
+    } },
+    { cap: 3, nome: "Le ciambelle", arancioni: 22, fa: function (l) {
+      [[27, 62, 13], [73, 62, 13], [50, 104, 14]].forEach(function (c) {   // la glassa di mattoncini (con gli spazi), dentro i pioli, in mezzo il buco
+        curva(l, c[0], c[1], c[2], c[2], -PI / 2, PI * 1.5, 4.6);
+        cerchio(l, c[0], c[1], c[2] - 6, Math.round((c[2] - 6) * 2 * PI / 6.2));
+      });
+      griglia(l, 14, 36, 8, 1, 10, 8, false);   // le codette colorate
+      stellina(l, 12, 100, 4.4); stellina(l, 88, 100, 4.4); l.push([50, 82]);
+      riga(l, 8, 132, 30, 132, 3); riga(l, 70, 132, 92, 132, 3);
+    } },
+    { cap: 3, nome: "I biscotti", arancioni: 22, fa: function (l) {
+      [[20, 50], [50, 46], [80, 50], [35, 78], [65, 78], [20, 106], [50, 110], [80, 106]].forEach(function (b) { cerchio(l, b[0], b[1], 7, 7); l.push(b); });   // i biscotti con la goccia di cioccolato
+      mattoni(l, 4, 72, 10, 92, 2, 1.0); mattoni(l, 96, 72, 90, 92, 2, 1.0);
+      curva(l, 50, 120, 46, 14, PI * 0.08, PI * 0.92, 4.6);   // il vassoio
+      riga(l, 35, 94, 65, 94, 4);
+    } },
+    { cap: 3, nome: "Il castello di zucchero", arancioni: 25, fa: function (l) {
+      mattoni(l, 12, 74, 12, 124, 4, 1.0); mattoni(l, 26, 74, 26, 124, 4, 1.0); mattoni(l, 74, 74, 74, 124, 4, 1.0); mattoni(l, 88, 74, 88, 124, 4, 1.0);   // le torri (aperte sotto)
+      riga(l, 19, 82, 19, 118, 4); riga(l, 81, 82, 81, 118, 4);   // le finestre
+      spezzata(l, [[10, 68], [19, 52], [28, 68]], 2, 1.0); spezzata(l, [[72, 68], [81, 52], [90, 68]], 2, 1.0);   // i tetti a punta
+      l.push([19, 44]); l.push([81, 44]);   // le bandierine
+      mattoni(l, 34, 86, 66, 86, 4, 4.6); riga(l, 36, 78, 64, 78, 5);   // le mura e i merli
+      curva(l, 50, 120, 10, 14, PI, PI * 2, 4.6);   // il portone
+      riga(l, 36, 96, 64, 96, 5); riga(l, 37, 108, 37, 128, 3); riga(l, 63, 108, 63, 128, 3);
+      griglia(l, 36, 38, 4, 3, 9.5, 8, true);   // le nuvole di zucchero filato
+      riga(l, 5, 80, 5, 122, 5); riga(l, 95, 80, 95, 122, 5); stellina(l, 8, 40, 4.4); stellina(l, 92, 40, 4.4);   // i cespugli di confetti e le stelline
+    } },
+    // ---- 🎡 il luna park ----
+    { cap: 4, nome: "La ruota panoramica", arancioni: 20, fa: function (l) {
+      tonda(74, function () {
+        cerchio(l, 50, 74, 30, 18);   // le cabine
+        for (var k = 0; k < 6; k++) { var a = k * PI / 3 + PI / 6; mattone(l, 50 + Math.cos(a) * 8, 74 + Math.sin(a) * 8, 50 + Math.cos(a) * 20, 74 + Math.sin(a) * 20); }   // i raggi
+        pt(l, 50, 74); for (k = 0; k < 6; k++) pt(l, 50 + Math.cos(k * PI / 3) * 14, 74 + Math.sin(k * PI / 3) * 14);   // il mozzo e le luci tra i raggi
+      });
+      mattoni(l, 43, 110, 33, 132, 2, 1.0); mattoni(l, 57, 110, 67, 132, 2, 1.0);   // le gambe
+      griglia(l, 6, 36, 2, 5, 9, 8, true); griglia(l, 85, 36, 2, 5, 9, 8, true); griglia(l, 32, 36, 4, 1, 12, 8, false);
+      stellina(l, 11, 94, 4.4); stellina(l, 89, 94, 4.4);   // i palloncini venduti al banchetto
+      riga(l, 8, 128, 24, 128, 3); riga(l, 76, 128, 92, 128, 3); riga(l, 10, 114, 26, 114, 3); riga(l, 74, 114, 90, 114, 3);
+    } },
+    { cap: 4, nome: "Le montagne russe", arancioni: 22, fa: function (l) {
+      var bin = [], i;
+      for (i = 0; i <= 10; i++) bin.push([4 + i * 9.2, 80 - Math.sin(i * 0.95) * (i < 6 ? 22 : 13)]);
+      spezzata(l, bin, 1, 4.6);   // il binario (si passa tra un pezzo e l'altro)
+      for (i = 0; i < 10; i++) {
+        var mx = (bin[i][0] + bin[i + 1][0]) / 2, my = (bin[i][1] + bin[i + 1][1]) / 2;
+        l.push([mx, my - 6]);   // i vagoncini
+        riga(l, mx, my + 9, mx, 130, Math.max(1, Math.round((121 - my) / 9)));   // i piloni
+      }
+      griglia(l, 8, 36, 10, 2, 9.4, 8, true); stellina(l, 88, 126, 4.4);   // le stelle sopra la corsa
+    } },
+    { cap: 4, nome: "La giostra", arancioni: 22, fa: function (l) {
+      spezzata(l, [[16, 62], [50, 42], [84, 62]], 3, 1.0); l.push([50, 34]);   // il tetto e la bandierina
+      riga(l, 20, 68, 80, 68, 7);   // le frange
+      [24, 41, 59, 76].forEach(function (x, j) {   // i pali coi cavallini (su e giù)
+        var yc = j % 2 ? 92 : 104; mattone(l, x - 4, yc, x + 4, yc);
+        for (var y = 78; y <= 118; y += 10) if (Math.abs(y - yc) > 5) l.push([x, y]);
+      });
+      [32.5, 50, 67.5].forEach(function (x) { riga(l, x, 84, x, 116, 3); });   // le luci tra i cavallini
+      mattoni(l, 14, 126, 86, 126, 6, 4.6);   // la pedana
+      stellina(l, 8, 84, 4.4); stellina(l, 92, 84, 4.4); griglia(l, 6, 36, 2, 3, 9, 8, true); griglia(l, 85, 36, 2, 3, 9, 8, true);
+      riga(l, 6, 104, 6, 128, 3); riga(l, 94, 104, 94, 128, 3);
+    } },
+    { cap: 4, nome: "I palloncini", arancioni: 22, fa: function (l) {
+      [[20, 52], [42, 44], [64, 52], [84, 44], [30, 80], [55, 82], [78, 78]].forEach(function (b) {   // i palloncini col filo
+        ellisse(l, b[0], b[1], 6, 7, 7); l.push(b);
+        mattone(l, b[0], b[1] + 9.5, b[0] + (50 - b[0]) * 0.12, b[1] + 17);
+      });
+      riga(l, 10, 112, 90, 112, 9);
+      curva(l, 50, 140, 28, 8, PI * 1.15, PI * 1.85, 4.6); riga(l, 8, 128, 20, 128, 2); riga(l, 80, 128, 92, 128, 2);
+    } },
+    { cap: 4, nome: "Il tiro a segno", arancioni: 24, fa: function (l) {
+      [[26, 62, 12], [74, 62, 12], [50, 98, 12]].forEach(function (c) {   // i bersagli: il bordo di mattoncini, dentro i cerchi
+        curva(l, c[0], c[1], c[2], c[2], -PI / 2, PI * 1.5, 4.6);
+        cerchio(l, c[0], c[1], 6.4, 6); l.push([c[0], c[1]]);
+      });
+      riga(l, 8, 36, 92, 36, 10);   // le paperelle
+      griglia(l, 10, 112, 3, 3, 7, 7, true); griglia(l, 76, 112, 3, 3, 7, 7, true);   // le piramidi di barattoli
+      mattoni(l, 30, 128, 70, 128, 3, 4.6); l.push([50, 76]);
+    } },
+    { cap: 4, nome: "I fuochi d'artificio", arancioni: 25, fa: function (l) {
+      [[28, 56, 13], [72, 62, 13], [50, 100, 14]].forEach(function (f) {   // gli scoppi: i raggi di pioli, sotto la scia del razzo
+        tonda(f[1], function () { pt(l, f[0], f[1]); for (var k = 0; k < 8; k++) { var a = k * PI / 4; pt(l, f[0] + Math.cos(a) * 6.5, f[1] + Math.sin(a) * 6.5); pt(l, f[0] + Math.cos(a + PI / 8) * f[2], f[1] + Math.sin(a + PI / 8) * f[2]); } });
+        mattoni(l, f[0] + (f[0] < 50 ? -2 : 2), f[1] + f[2] + 4, f[0] + (f[0] < 50 ? -5 : 5), f[1] + f[2] + 14, 1);
+      });
+      griglia(l, 44, 36, 2, 2, 9, 8, true); stellina(l, 10, 96, 4.4); stellina(l, 90, 100, 4.4);
+      riga(l, 8, 130, 30, 130, 3); riga(l, 70, 130, 92, 130, 3);
     } }
   ];
   function distSeg(px, py, m) {   // quanto è lontano un punto da un mattoncino
@@ -271,6 +389,10 @@
     p = p.concat(mat);
     var r = rnd(7919 * (i + 1)), idx = p.map(function (_, k) { return k; });
     for (var k = idx.length - 1; k > 0; k--) { var j = Math.floor(r() * (k + 1)), tt = idx[k]; idx[k] = idx[j]; idx[j] = tt; }   // gli arancioni: sempre gli stessi per ogni livello
+    if (LIVELLI[i].vista) {   // i primi due livelli: arancioni ben in vista (pioli tondi nella parte alta), per chi gioca la prima volta
+      var alto = function (k2i) { return !p[k2i].m && p[k2i].y < (hh || H) * 0.55; };
+      idx = idx.filter(alto).concat(idx.filter(function (k2i) { return !alto(k2i); }));
+    }
     var nA = Math.min(LIVELLI[i].arancioni || 25, Math.round(p.length * 0.3));   // 25 come in Peggle (i primi livelli ne hanno meno)
     for (k = 0; k < nA; k++) p[idx[k]].tipo = "arancio";
     if (scegliVerdi !== false) {   // i due verdi (solo pioli tondi): a caso ogni volta
@@ -282,11 +404,12 @@
 
   // ---------- lo stato di una partita ----------
   // gioc: chi gioca [{ nome, potere, … }] (da solo uno, nelle sfide da 2 a 4); pioli: il tavolo già fatto (online: quello dell'host)
-  function nuovoStato(lv, gioc, pioli) {
-    var p = pioli || creaLivello(lv, true);
+  function nuovoStato(lv, gioc, pioli, hh) {   // (hh: il tavolo più alto dei telefoni lunghi)
+    hh = pioli ? H : (hh || H);
+    var p = pioli || creaLivello(lv, true, hh);
     gioc = gioc || [{ nome: "Tu" }];
     gioc.forEach(function (g) { g.punti = 0; g.palline = PALLINE; g.mira = 0; g.fuoco = 0; g.verdi = 0; g.secchi = 0; g.colpoMax = 0; if (!POTERI[g.potere]) g.potere = "bomba"; });
-    return { lv: lv, H: H, pioli: p, gioc: gioc, turno: 0, seq: 0, fase: "mira", ang: PI / 2, t: 0, febbre: false, colpo: null,
+    return { lv: lv, H: hh, pioli: p, gioc: gioc, turno: 0, seq: 0, fase: "mira", ang: PI / 2, t: 0, febbre: false, colpo: null,
       arTot: p.filter(function (q) { return q.tipo === "arancio"; }).length, arPresi: 0 };
   }
   function nuovoViola(st) {   // a ogni tiro un piolo blu diventa viola (quello di prima torna blu)
@@ -357,7 +480,8 @@
   }
 
   // ---------- suoni (fatti al volo) ----------
-  var CHIAVE_SUONI = "sg-pm-suoni", NOTE = [0, 2, 4, 5, 7, 9, 11];
+  var CHIAVE_SUONI = "sg-pm-suoni", CHIAVE_VELOCE = "sg-pm-veloce", NOTE = [0, 2, 4, 5, 7, 9, 11];
+  var VELOCE = 2.5;   // tenendo premuto durante il volo: quante volte più veloce
   function suoniOn() { try { return localStorage.getItem(CHIAVE_SUONI) !== "0"; } catch (e) { return true; } }
   function ac() { if (!suoniOn()) return null; try { return (window.SG && SG.audioCtx && SG.audioCtx()) || null; } catch (e) { return null; } }
   function tono(f, quando, dur, tipo, vol, fine) {
@@ -386,7 +510,6 @@
     m.forEach(function (x) { var f = scala[x[0]]; tono(f * 2, t, x[1] * b * 0.95, "triangle", 0.09); tono(f, t, x[1] * b * 0.95, "sine", 0.05); t += x[1] * b; });
     [0, 4, 8, 12, 16, 20, 24, 28].forEach(function (k) { tono(130.8 * (k % 8 < 4 ? 1 : 1.5), k * b, b * 3.6, "sine", 0.05); });
   }
-  function vibra(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
   function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
 
   // ---------- i progressi: livelli sbloccati, record e stelle (sul telefono e nel profilo) ----------
@@ -416,12 +539,13 @@
     var nomePot = el("span", { class: "pm-pot-nome", text: POTERI[p.potere].nome }), riga = el("div", { class: "pm-aiutanti" }, [el("span", { class: "pm-aiu-et", text: "Aiutante:" })]);
     ORDINE_POTERI.forEach(function (k) {
       var b = el("button", { class: "pm-aiu" + (p.potere === k ? " attiva" : ""), text: POTERI[k].icona, "aria-label": POTERI[k].nome, onclick: function () {
-        p.potere = k; salvaProgressi(p); [].forEach.call(riga.querySelectorAll(".pm-aiu"), function (x) { x.classList.remove("attiva"); }); b.classList.add("attiva"); nomePot.textContent = POTERI[k].nome; vibra(6);
+        p.potere = k; salvaProgressi(p); [].forEach.call(riga.querySelectorAll(".pm-aiu"), function (x) { x.classList.remove("attiva"); }); b.classList.add("attiva"); nomePot.textContent = POTERI[k].nome;
       } });
       riga.appendChild(b);
     });
     riga.appendChild(nomePot);
     s._contenuto.appendChild(riga);
+    var msgChiuso = el("div", { class: "pm-msg-chiuso" }), tMsg = null;   // toccando un livello chiuso: cosa fare per aprirlo (sopra a tutto, sparisce da solo)
     CAPITOLI.forEach(function (C, c) {   // i livelli divisi per capitolo, ognuno col suo colore
       var mie = [], stelleCap = 0;
       LIVELLI.forEach(function (L, i) { if (L.cap === c) { mie.push(i); stelleCap += p.stelle[i + 1] || 0; } });
@@ -429,14 +553,20 @@
       var lv = el("div", { class: "pm-livelli" });
       mie.forEach(function (i, n) {
         var L = LIVELLI[i], ok = sbloccato(p, i, t), st = p.stelle[i + 1] || 0;
-        lv.appendChild(el("button", { class: "pm-lv pm-lv-" + C.sfondo + (ok ? "" : " chiuso") + (st ? " fatto" : ""), onclick: function () {
-          if (!ok) return; vibra(8); partita(t, i, p.potere);
+        var bt = el("button", { class: "pm-lv pm-lv-" + C.sfondo + (ok ? "" : " chiuso") + (st ? " fatto" : ""), onclick: function () {
+          if (ok) return partita(t, i, p.potere);
+          var prima = i - 1; while (prima > 0 && !sbloccato(p, prima, t)) prima--;   // il livello aperto da finire per andare avanti
+          msgChiuso.textContent = "🔒 Per aprirlo finisci prima «" + LIVELLI[prima].nome + "»";
+          document.body.appendChild(msgChiuso); msgChiuso.classList.remove("su"); void msgChiuso.offsetWidth; msgChiuso.classList.add("su");
+          clearTimeout(tMsg); tMsg = setTimeout(function () { if (msgChiuso.parentNode) msgChiuso.parentNode.removeChild(msgChiuso); }, 2700);
+          bt.classList.remove("scossa"); void bt.offsetWidth; bt.classList.add("scossa");
         } }, [
           el("b", { text: ok ? String(n + 1) : "🔒" }),
           el("span", { class: "pm-lv-nome", text: L.nome }),
           el("span", { class: "pm-lv-stelle", text: ok ? "★★★".slice(0, st) + "☆☆☆".slice(0, 3 - st) : "" }),
           el("small", { text: p.rec[i + 1] ? cifre(p.rec[i + 1]) : "" })
-        ]));
+        ]);
+        lv.appendChild(bt);
       });
       s._contenuto.appendChild(lv);
     });
@@ -605,6 +735,24 @@
         for (i = 0; i < 30; i++) { r2 = rnd(91 + i * 5); var br = 1.5 + r2() * 4, bx = r2() * cw, by = r2() * ch; x.beginPath(); x.arc(bx, by, br, 0, PI * 2); x.strokeStyle = "rgba(255,255,255,.35)"; x.lineWidth = 1; x.stroke(); }
         x.fillStyle = "#e3c88a"; x.beginPath(); x.moveTo(0, ch); for (var sx = 0; sx <= cw + 10; sx += 10) x.lineTo(sx, ch * 0.94 + Math.sin(sx / 40) * 5); x.lineTo(cw, ch); x.closePath(); x.fill();
         for (i = 0; i < 7; i++) { r2 = rnd(13 + i * 29); var ax = r2() * cw, ah = ch * (0.12 + r2() * 0.14); x.strokeStyle = i % 2 ? "#2f9e44" : "#37b24d"; x.lineWidth = 4; x.lineCap = "round"; x.beginPath(); x.moveTo(ax, ch); for (var k = 0; k < 6; k++) x.lineTo(ax + Math.sin(k * 1.3 + i) * 7, ch - ah * k / 5); x.stroke(); }
+      } else if (tema === "dolci") {   // il rosa (scuro in alto, sotto la testa), i confettini e i lecca-lecca negli angoli
+        g = x.createLinearGradient(0, 0, 0, ch); g.addColorStop(0, "#a61e4d"); g.addColorStop(0.35, "#e64980"); g.addColorStop(1, "#fcc2d7"); x.fillStyle = g; x.fillRect(0, 0, cw, ch);
+        var cc = ["#ff8787", "#ffd43b", "#69db7c", "#74c0fc", "#b197fc", "#ffffff"];
+        for (i = 0; i < 70; i++) { r2 = rnd(71 + i * 11); x.save(); x.translate(r2() * cw, r2() * ch); x.rotate(r2() * PI); x.fillStyle = cc[i % cc.length]; x.globalAlpha = 0.7; x.fillRect(-4, -1.5, 8, 3); x.restore(); }
+        x.globalAlpha = 1;
+        [[cw * 0.08, ch * 0.9, cw * 0.11], [cw * 0.93, ch * 0.82, cw * 0.09]].forEach(function (lp) {   // i lecca-lecca
+          x.fillStyle = "#fff"; x.fillRect(lp[0] - 3, lp[1], 6, ch); tondo(lp[0], lp[1], lp[2], "#f06595");
+          x.strokeStyle = "#fff"; x.lineWidth = lp[2] * 0.22; x.beginPath(); for (var a = 0; a < 14; a += 0.2) { var rr = lp[2] * a / 14; x.lineTo(lp[0] + Math.cos(a) * rr, lp[1] + Math.sin(a) * rr); } x.stroke();
+        });
+      } else if (tema === "festa") {   // il cielo della sera, la ghirlanda di lampadine, la ruota e le tende del luna park
+        g = x.createLinearGradient(0, 0, 0, ch); g.addColorStop(0, "#1b0f45"); g.addColorStop(0.55, "#5f3dc4"); g.addColorStop(0.85, "#d6336c"); g.addColorStop(1, "#ff922b"); x.fillStyle = g; x.fillRect(0, 0, cw, ch);
+        for (i = 0; i < 50; i++) { r2 = rnd(43 + i * 17); x.fillStyle = "rgba(255,255,255," + (0.25 + r2() * 0.5).toFixed(2) + ")"; x.beginPath(); x.arc(r2() * cw, r2() * ch * 0.5, r2() * 1.3 + 0.3, 0, PI * 2); x.fill(); }
+        var rcx = cw * 0.78, rcy = ch * 0.8, rr2 = cw * 0.22;   // la ruota lontana
+        x.strokeStyle = "rgba(255,255,255,.22)"; x.lineWidth = 3; x.beginPath(); x.arc(rcx, rcy, rr2, 0, PI * 2); x.stroke();
+        x.lineWidth = 1.5; for (i = 0; i < 12; i++) { var aa = i * PI / 6; x.beginPath(); x.moveTo(rcx, rcy); x.lineTo(rcx + Math.cos(aa) * rr2, rcy + Math.sin(aa) * rr2); x.stroke(); }
+        x.fillStyle = "rgba(20,8,40,.55)"; x.beginPath(); x.moveTo(cw * 0.02, ch); x.lineTo(cw * 0.02, ch * 0.9); x.lineTo(cw * 0.16, ch * 0.83); x.lineTo(cw * 0.3, ch * 0.9); x.lineTo(cw * 0.3, ch); x.closePath(); x.fill();   // la tenda
+        var lc = ["#ffd43b", "#ff6b6b", "#69db7c", "#74c0fc", "#ffa94d"];
+        for (i = 0; i <= 16; i++) { var lx = cw * i / 16, ly = ch * 0.03 + Math.sin(i / 16 * PI * 4) * ch * 0.012 + ch * 0.012; alone(lx, ly, 10, "rgba(255,230,150,.45)"); tondo(lx, ly, 3, lc[i % lc.length]); }   // le lampadine
       } else {   // lo spazio: stelle, una nebulosa, un pianeta e la luna
         g = x.createLinearGradient(0, 0, 0, ch); g.addColorStop(0, "#0d0a2b"); g.addColorStop(0.6, "#1f1652"); g.addColorStop(1, "#33205f"); x.fillStyle = g; x.fillRect(0, 0, cw, ch);
         alone(cw * 0.2, ch * 0.35, cw * 0.6, "rgba(156,54,181,.28)"); alone(cw * 0.85, ch * 0.7, cw * 0.55, "rgba(28,126,214,.25)");
@@ -616,9 +764,9 @@
       // il tavolo: una lastra appena più scura, così pioli e mattoncini si vedono bene su ogni sfondo
       x.save(); x.translate(ox, oy);
       var tg = x.createLinearGradient(0, 0, 0, st.H * S);
-      if (tema === "spazio") { tg.addColorStop(0, "rgba(120,100,220,.16)"); tg.addColorStop(1, "rgba(80,60,180,.3)"); } else { tg.addColorStop(0, "rgba(10,25,60,.22)"); tg.addColorStop(1, "rgba(10,25,60,.4)"); }
+      if (tema === "spazio" || tema === "festa") { tg.addColorStop(0, "rgba(120,100,220,.16)"); tg.addColorStop(1, "rgba(80,60,180,.3)"); } else if (tema === "dolci") { tg.addColorStop(0, "rgba(90,20,60,.3)"); tg.addColorStop(1, "rgba(90,20,60,.45)"); } else { tg.addColorStop(0, "rgba(10,25,60,.22)"); tg.addColorStop(1, "rgba(10,25,60,.4)"); }
       x.fillStyle = tg; arrot(x, 0, 0, W * S, st.H * S, 14); x.fill();
-      x.lineWidth = 3; x.strokeStyle = tema === "natura" ? "rgba(255,255,255,.7)" : tema === "mare" ? "rgba(165,216,255,.55)" : "rgba(190,170,255,.45)"; arrot(x, 0, 0, W * S, st.H * S, 14); x.stroke();
+      x.lineWidth = 3; x.strokeStyle = tema === "natura" || tema === "dolci" ? "rgba(255,255,255,.7)" : tema === "mare" ? "rgba(165,216,255,.55)" : "rgba(190,170,255,.45)"; arrot(x, 0, 0, W * S, st.H * S, 14); x.stroke();
       x.restore();
       sfondo = c;
     }
@@ -648,6 +796,10 @@
     // tenendo premuto (o trascinando) si mira e lasciando la pallina NON parte;
     // un tocco veloce, senza muovere il dito, fa partire la pallina dove avevi mirato
     cv.addEventListener("pointerdown", function (e) {
+      if (st.fase === "volo" || st.fase === "pulizia") {   // tenendo premuto mentre la pallina vola: va più veloce (il tiro è già deciso, non cambia niente)
+        e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (er0) {}
+        ui.veloce = e.pointerId; return;
+      }
       if (!cfg.mio()) return;
       e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (er) {}
       try { if (window.SG && SG.audioCtx) SG.audioCtx(); } catch (er2) {}
@@ -661,11 +813,19 @@
       if (d.mira) mira(e, d); else { d.lx = e.clientX; d.lt = performance.now(); }
     });
     function lascia(e) {
+      if (ui.veloce === e.pointerId) ui.veloce = null;
       var d = ui.dito; if (!d || d.id !== e.pointerId) return; ui.dito = null; clearTimeout(ui.tTieni);
       if (e.type === "pointerup" && !d.mira && performance.now() - d.t < 260) spara();   // il tocco veloce: tira
     }
     cv.addEventListener("pointerup", lascia); cv.addEventListener("pointercancel", lascia);
-    function spara() { if (!cfg.mio() || G().palline <= 0) return; st.fase = "attesa"; cfg.onTiro(st.ang); }
+    function spara() { if (!cfg.mio() || G().palline <= 0) return; st.fase = "attesa"; togliMano(); cfg.onTiro(st.ang); }
+    // la mano che insegna a mirare (ai primi livelli): resta finché non si tira
+    var mano = null;
+    if (cfg.aiuto) {
+      mano = el("div", { class: "pm-mano" }, [el("span", { class: "pm-mano-dito", text: "👆" }), el("span", { class: "pm-mano-txt", text: "Trascina per mirare, poi un tocco per tirare" })]);
+      scena.appendChild(mano);
+    }
+    function togliMano() { if (mano && mano.parentNode) mano.parentNode.removeChild(mano); mano = null; }
 
     // ---- il tiro, riguardato come un filmato (rec di simulaTiro): le palline si muovono, i pezzi si accendono al momento giusto ----
     function riproduci(rec, poi) {
@@ -673,9 +833,9 @@
       g.palline--; if (g.mira > 0) g.mira--;
       if (rec.fuoco) { g.fuoco = Math.max(0, (g.fuoco || 0) - 1); dimmi("🔥 Palla di fuoco!"); }   // il potere caricato: tutto il tiro attraverso i pioli
       st.fase = "volo"; st.ang = rec.a; st.t = rec.t0; st.colpo = { punti: 0, colpiti: [], nota: 0 };
-      ui.rec = rec; ui.rt = 0; ui.ei = 0; ui.vis = []; ui.poi = poi; ui.angVuole = null; ui.lentoFatto = false; ui.fT = null;
+      ui.rec = rec; ui.rt = 0; ui.ei = 0; ui.vis = []; ui.poi = poi; ui.angVuole = null; ui.lentoFatto = false; ui.fT = null; ui.tHost = null; togliMano();
       for (var i = 0; i < rec.ev.length; i++) if (rec.ev[i].k === "F") { ui.fT = rec.ev[i].t; break; }
-      suonoTiro(); if (!cfg.sonoIo || cfg.sonoIo(g)) vibra(10); aggTesta();
+      suonoTiro(); aggTesta();
     }
     function applica(e, muto) {   // un evento del tiro: cambia lo stato (punti, palline, pezzi) e fa vedere e sentire
       var g = G(), q = e.i != null ? st.pioli[e.i] : null;
@@ -694,10 +854,10 @@
       } else if (e.k === "x") {
         g.palline++; dimmi("Pallina in più! " + cifre(EXTRA[e.n] || 0) + " punti in un tiro 🎉"); if (!muto) suonoSecchio();
       } else if (e.k === "s") {
-        g.palline++; g.secchi = (g.secchi || 0) + 1; ui.salto = 1.2; dimmi("Pallina gratis! 🪣"); if (!muto) { suonoSecchio(); vibra([20, 30, 20]); }
+        g.palline++; g.secchi = (g.secchi || 0) + 1; ui.salto = 1.2; dimmi("Pallina gratis! 🪣"); if (!muto) suonoSecchio();
       } else if (e.k === "F") {   // l'ultimo arancione!
         st.febbre = true;
-        if (!muto) { rullo(0.9); vibra([40, 40, 80]); setTimeout(function () { if (!vivo()) return; innoGioia(); dimmi("FEBBRE MATTA! 🎉"); fuochi(50, 70, 60); }, 950); }
+        if (!muto) { rullo(0.9); setTimeout(function () { if (!vivo()) return; innoGioia(); dimmi("FEBBRE MATTA! 🎉"); fuochi(50, 70, 60); }, 950); }
       } else if (e.k === "fb") {
         g.punti += e.pts; st.colpo.punti += e.pts; scritta(e.slot * 20 + 10, st.H - 10, "+" + cifre(e.pts), "febbre");
         if (!muto) [0, 4, 7, 12, 16].forEach(function (k, i) { tono(523 * Math.pow(2, k / 12), i * 0.06, 0.25, "triangle", 0.09); });
@@ -726,6 +886,10 @@
     function scritta(x, y, txt, tipo) { ui.scritte.push({ x: x, y: y, txt: txt, tipo: tipo, vita: 1 }); if (ui.scritte.length > 30) ui.scritte.shift(); }
     function scintille(x, y, col, n) { for (var i = 0; i < n; i++) { var a = Math.random() * PI * 2, v = 8 + Math.random() * 18; ui.fx.push({ t: "sc", x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 6, col: col, vita: 0.5 + Math.random() * 0.3 }); } }
     function fuochi(x, y, n) { var cols = ["#ffd43b", "#ff6b6b", "#74c0fc", "#b197fc", "#8ce99a", "#ffa94d"]; for (var i = 0; i < n; i++) { var a = Math.random() * PI * 2, v = 15 + Math.random() * 35; ui.fx.push({ t: "sc", x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 10, col: cols[i % cols.length], vita: 0.9 + Math.random() * 0.6 }); } }
+    function consiglioVeloce() {   // una volta sola per telefono: si può far correre la pallina
+      try { if (localStorage.getItem(CHIAVE_VELOCE)) return; localStorage.setItem(CHIAVE_VELOCE, "1"); } catch (e) { return; }
+      dimmi("⏩ Tieni premuto lo schermo: la pallina corre");
+    }
     function dimmi(txt) { avviso.textContent = txt; avviso.classList.remove("su"); void avviso.offsetWidth; avviso.classList.add("su"); }
 
     // ---- la testa: punti (o di chi è il turno), palline, arancioni, moltiplicatore; in più giocatori i punti di tutti ----
@@ -759,19 +923,27 @@
       // il rallentatore della febbre: parte un attimo prima dell'ultimo arancione, poi torna normale
       if (ui.tLento > 0) { ui.tLento -= dt; if (ui.tLento <= 0) ui.lento = 1; }
       var dts = dt * (ui.lento || 1);
+      if (ui.veloce != null && ui.lento >= 1 && (st.fase === "volo" || st.fase === "pulizia")) dts = dt * VELOCE;   // il dito tenuto giù: avanti veloce (mai nel rallentatore)
       if (st.fase === "volo" && ui.rec) {
         var R = ui.rec;
         if (ui.fT != null && !ui.lentoFatto && ui.rt >= ui.fT - 0.35) { ui.lentoFatto = true; ui.lento = 0.22; ui.tLento = 2.7; dts = dt * 0.22; }
         ui.rt += dts;
+        if (!ui.consiglioV && ui.rt > 2.5 && R.dur > 7 && ui.veloce == null && ui.lento >= 1) { ui.consiglioV = true; consiglioVeloce(); }
         while (ui.ei < R.ev.length && R.ev[ui.ei].t <= ui.rt) applica(R.ev[ui.ei++]);
         st.t = R.t0 + Math.min(ui.rt, R.dur);
         posiziona(R, ui.rt);
         if (ui.rt >= R.dur) { while (ui.ei < R.ev.length) applica(R.ev[ui.ei++]); ui.rec = null; ui.vis = []; finisceTiro(); }
-      } else st.t += dts;
+      } else {
+        st.t += dts;
+        if (ui.tHost != null) {   // online: il secchio segue l'orologio dell'host (morbido, senza salti)
+          var dv = ui.tHost + (performance.now() - ui.tHostAt) / 1000 - st.t;
+          if (Math.abs(dv) > 2) st.t += dv; else st.t += dv * Math.min(1, dt * 4);
+        }
+      }
       // la mira di chi tira dall'altro telefono: il cannone lo segue morbido
       if (ui.angVuole != null && !cfg.mio()) st.ang += (ui.angVuole - st.ang) * Math.min(1, dt * 12);
       if (st.fase === "pulizia") {   // i pioli accesi scoppiano uno dopo l'altro
-        ui.pulizia.t -= dt;
+        ui.pulizia.t -= ui.veloce != null ? dt * VELOCE : dt;
         while (ui.pulizia.t <= 0 && ui.pulizia.lista.length) {
           var q = ui.pulizia.lista.shift(); if (!q.via) { q.via = true; scintille(q.x, q.y, COL[q.tipo][0], 7); suonoScoppio(ui.pulizia.k++); }
           ui.pulizia.t += Math.max(0.025, 0.07 - ui.pulizia.k * 0.002);
@@ -828,7 +1000,7 @@
           var xx = ox + k * 20 * S, gy = oy + (st.H - 9) * S;
           ctx.fillStyle = k === 2 ? "rgba(255,212,59,.45)" : "rgba(255,255,255,.18)"; ctx.fillRect(xx + 2, gy, 20 * S - 4, 9 * S);
           ctx.fillStyle = "#fff"; ctx.font = "900 " + Math.round(3.1 * S) + "px system-ui,sans-serif"; ctx.textAlign = "center";
-          ctx.fillText(cifre(FEBBRE[k] / 1000) + "k", xx + 10 * S, gy + 6.2 * S);
+          ctx.fillText(cifre(FEBBRE[k]), xx + 10 * S, gy + 6.2 * S);
         }
         [20, 40, 60, 80].forEach(function (px2) { ctx.beginPath(); ctx.arc(ox + px2 * S, oy + (st.H - 4.5) * S, 1.3 * S, 0, PI * 2); ctx.fillStyle = "#e9ecef"; ctx.fill(); });
       } else {
@@ -841,7 +1013,10 @@
       // la strada per mirare (si vede anche quella di chi tira dall'altro telefono)
       var g = G();
       if (st.fase === "mira") {
-        var pts = strada(st, st.ang, g.mira > 0, g.fuoco > 0);
+        // (ricalcolata solo se il cannone si è mosso, o ogni tanto per il secchio che si sposta)
+        var ora = performance.now(), sk = st.ang + "|" + (g.mira > 0) + "|" + (g.fuoco > 0) + "|" + st.turno, SC = ui.strada;
+        if (!SC || SC.k !== sk || ora - SC.at > 150) SC = ui.strada = { k: sk, at: ora, pts: strada(st, st.ang, g.mira > 0, g.fuoco > 0) };
+        var pts = SC.pts;
         ctx.fillStyle = g.fuoco > 0 ? "rgba(255,146,43,.95)" : g.mira > 0 ? "rgba(140,233,154,.9)" : "rgba(255,255,255,.75)";
         pts.forEach(function (p2, i) { if (i % 2) return; ctx.beginPath(); ctx.arc(ox + p2[0] * S, oy + p2[1] * S, Math.max(1.2, 0.45 * S * (1 - i / pts.length * 0.5)), 0, PI * 2); ctx.fill(); });
       }
@@ -884,6 +1059,10 @@
       });
       ctx.globalAlpha = 1;
       ctx.restore();
+      if (ui.veloce != null && (st.fase === "volo" || st.fase === "pulizia") && ui.lento >= 1) {   // avanti veloce
+        ctx.font = "900 " + Math.round(5 * S) + "px system-ui,sans-serif"; ctx.textAlign = "right"; ctx.globalAlpha = 0.85;
+        ctx.fillStyle = "#ffe066"; ctx.fillText("⏩", ox + (W - 3) * S, oy + 20 * S); ctx.globalAlpha = 1;
+      }
     }
 
     // ---- le finestre sopra il tavolo: fine partita, domande, "tocca a…" ----
@@ -900,10 +1079,10 @@
       box.appendChild(bt); sopra.appendChild(box); sopra.classList.add("su");
       return box;
     }
-    function chiedi(titolo, testo, siTesto, si) {   // a partita cominciata si chiede prima di uscire (un tocco sbagliato non butta la partita)
-      finestra({ titolo: titolo, sotto: testo, tasti: [{ testo: "▶ Continua a giocare", cls: "btn-primario", fn: chiudiSopra }, { testo: siTesto, fn: si }] });
+    function chiedi(titolo, testo, siTesto, si, no) {   // a partita cominciata si chiede prima di uscire (un tocco sbagliato non butta la partita)
+      finestra({ titolo: titolo, sotto: testo, tasti: [{ testo: "▶ Continua a giocare", cls: "btn-primario", fn: function () { chiudiSopra(); if (no) no(); } }, { testo: siTesto, fn: si }] });
     }
-    function passa(g, scegli, poi) {   // sullo stesso telefono: tocca a qualcun altro (la prima volta sceglie anche l'aiutante)
+    function passa(g, scegli, poi) {   // sullo stesso telefono: tocca a qualcun altro (la prima volta sceglie anche l'aiutante); da qui si può anche uscire
       var nodi = [];
       if (scegli) {
         var nomeP = el("div", { class: "pm-pot-nome centro", text: POTERI[g.potere].nome + ": " + POTERI[g.potere].sotto.toLowerCase() });
@@ -911,22 +1090,25 @@
         ORDINE_POTERI.forEach(function (k) {
           var b = el("button", { class: "pm-aiu" + (g.potere === k ? " attiva" : ""), text: POTERI[k].icona, "aria-label": POTERI[k].nome, onclick: function () {
             g.potere = k; [].forEach.call(r.children, function (x) { x.classList.remove("attiva"); }); b.classList.add("attiva");
-            nomeP.textContent = POTERI[k].nome + ": " + POTERI[k].sotto.toLowerCase(); aggTesta(); vibra(6);
+            nomeP.textContent = POTERI[k].nome + ": " + POTERI[k].sotto.toLowerCase(); aggTesta();
           } });
           r.appendChild(b);
         });
         nodi = [el("div", { class: "pm-rig-t", text: "Scegli il tuo aiutante" }), r, nomeP];
       }
-      finestra({ titolo: "Tocca a " + g.nome + " 🎯", sotto: "Passagli il telefono", nodi: nodi, tasti: [{ testo: "▶ Gioca", cls: "btn-primario", fn: function () { chiudiSopra(); poi(); } }] });
+      finestra({ titolo: "Tocca a " + g.nome + " 🎯", sotto: "Passagli il telefono", nodi: nodi, tasti: [{ testo: "▶ Gioca", cls: "btn-primario", fn: function () { chiudiSopra(); poi(); } },
+        { testo: "🏠 Esci", cls: "btn-fantasma pm-piccolo", fn: function () { cfg.onEsci(); } }] });
     }
-    function chiudi() { cancelAnimationFrame(anim); window.removeEventListener("resize", misura); clearTimeout(ui.tTieni); }
+    function chiudi() { cancelAnimationFrame(anim); window.removeEventListener("resize", misura); clearTimeout(ui.tTieni); togliMano(); }
 
     aggTesta(); misura();   // (prima i punti di tutti: il tavolo si mette sotto)
     anim = requestAnimationFrame(function (o) { ult = o; giro(o); });
     var api = { st: st, riproduci: riproduci, salta: salta, aggTesta: aggTesta, dimmi: dimmi, finestra: finestra, chiedi: chiedi, passa: passa, chiudiSopra: chiudiSopra, chiudi: chiudi, vivo: vivo,
       mira: function (a) { ui.angVuole = Math.max(0.06, Math.min(PI - 0.06, +a || PI / 2)); },
       occupato: function () { return st.fase === "volo" || st.fase === "pulizia"; },
-      nuovoTurno: function () { ui.angVuole = null; aggTesta(); } };
+      aperta: function () { return sopra.classList.contains("su"); },   // c'è una finestra sopra il tavolo?
+      orologio: function (ts) { if (typeof ts === "number" && isFinite(ts)) { ui.tHost = ts; ui.tHostAt = performance.now(); } },   // online: l'ora del secchio dell'host
+      nuovoTurno: function (k) { if (k === undefined || k !== ui.kTurno) ui.angVuole = null; ui.kTurno = k; aggTesta(); } };   // (k: il numero del turno; la mira degli altri si azzera solo se cambia)
     window.__PMpartita = { st: function () { return st; }, tira: function () { if (st.fase === "mira") { st.fase = "attesa"; cfg.onTiro(st.ang); } }, mira: function (a) { st.ang = a; }, avanza: function (sec) { for (var i = 0; i < sec * 60; i++) aggiorna(1 / 60); }, tav: api };   // (per le prove)
     return api;
   }
@@ -935,10 +1117,11 @@
   //  DA SOLO: un livello (stelle, record, livelli che si aprono)
   // =========================================================
   function partita(t, lv, potere) {
-    var io = nomeIo(t), g = { nome: io, potere: potere };
-    var st = nuovoStato(lv, [g]); nuovoViola(st);
-    var tav = tavolo(t, { st: st, mio: function () { return st.fase === "mira"; }, onTiro: tira, onEsci: esci, faccia: function () { return t.mioOmino ? t.mioOmino(io) : null; } });
-    function tira(ang) { tav.riproduci(simulaTiro(st, ang, g), dopo); }
+    var io = nomeIo(t), g = { nome: io, potere: potere }, tiri = 0;
+    var st = nuovoStato(lv, [g], null, altezzaTavolo(false)); nuovoViola(st);
+    var aiuto = lv < 2 && !(progressi().stelle[lv + 1] > 0);   // ai primi livelli, finché non li hai finiti: la mano che insegna a mirare
+    var tav = tavolo(t, { st: st, aiuto: aiuto, mio: function () { return st.fase === "mira"; }, onTiro: tira, onEsci: esci, faccia: function () { return t.mioOmino ? t.mioOmino(io) : null; } });
+    function tira(ang) { tiri++; tav.riproduci(simulaTiro(st, ang, g), dopo); }
     function dopo() {
       if (st.febbre) return vinto();
       if (g.palline <= 0) return perso();
@@ -981,11 +1164,20 @@
       tav.finestra({ titolo: "Palline finite!", sotto: rim <= 3 ? "Per un pelo! Riprova 💪" : "Riprova, ce la fai!", righe: [["Arancioni rimasti", String(rim)], ["Punti", cifre(g.punti)]], tasti: tasti(false) });
     }
     function esci() {
-      if (st.fase === "fine" || (g.palline >= PALLINE && st.fase === "mira")) { tav.chiudi(); return schermataLivelli(t); }
+      if (st.fase === "fine" || (!tiri && st.fase === "mira")) { tav.chiudi(); return schermataLivelli(t); }   // (prima del primo tiro non c'è niente da perdere)
       tav.chiedi("Lasciare il livello?", "I punti di questa partita si perdono.", "☰ Torna ai livelli", function () { tav.chiudi(); schermataLivelli(t); });
     }
     tav.dimmi(nomeLivello(lv) + " · prendi tutti i 🟠");
-    if (lv < 2) setTimeout(function () { if (tav.vivo() && st.fase === "mira") tav.dimmi("Trascina il dito per girare il cannone · tocca per tirare"); }, 2500);
+  }
+
+  // sui telefoni lunghi il tavolo si allunga in giù (da solo e sullo stesso telefono; online resta uguale per tutti)
+  function altezzaTavolo(multi) {
+    try {
+      var app = document.getElementById("app"), w = (app && app.clientWidth) || window.innerWidth || 360;
+      var alt = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--alt")) || window.innerHeight || 640;
+      var sopra = multi ? 108 : 60, S = (w - 8) / W;   // (lo spazio della testa e, nelle sfide, dei punti di tutti: un po' abbondante)
+      return Math.max(H, Math.min(212, Math.floor((alt - sopra) / S)));
+    } catch (e) { return H; }
   }
 
   // la fine di una sfida (sullo stesso telefono e online): chi ha vinto e i punti di tutti
@@ -1009,25 +1201,28 @@
   // =========================================================
   function giocaAmici(t) {
     var imp = t.impostazioni || {}, nomi = (t.giocatori && t.giocatori.length ? t.giocatori : ["Giocatore 1", "Giocatore 2"]).slice(0, 4);
+    if (nomi.length < 2) nomi = nomi.concat([nomi[0] === "Giocatore 2" ? "Giocatore 1" : "Giocatore 2"]);   // una sfida da soli non esiste: serve almeno un avversario
     var prof = t.nomeProfilo && t.nomeProfilo();
     var gioc = nomi.map(function (n, i) { return { id: "g" + i, nome: n, potere: n === prof ? poterePreferito() : "bomba", vinte: 0, scelto: false }; });
-    var ultimo = -1, partite = 0, st = null, tav = null;
+    var ultimo = -1, partite = 0, st = null, tav = null, inPassa = false;
     function nuova() {
       if (tav) tav.chiudi();
       var lv = scegliLivello(imp.lv, ultimo); ultimo = lv;
-      st = nuovoStato(lv, gioc); st.turno = partite % gioc.length; partite++; nuovoViola(st);   // a ogni partita comincia uno diverso
+      st = nuovoStato(lv, gioc, null, altezzaTavolo(true)); st.turno = partite % gioc.length; partite++; nuovoViola(st);   // a ogni partita comincia uno diverso
       tav = tavolo(t, { st: st, multi: true, mio: function () { return st.fase === "mira"; }, onTiro: tira, onEsci: esci,
         faccia: function (g) { return g.nome === prof && t.mioOmino ? t.mioOmino(g.nome) : (window.SGOmino ? SGOmino.casuale(g.nome) : null); } });
-      turno();
+      turno(false);
     }
-    function turno() {
+    function turno(ancora) {   // ancora: tocca di nuovo a chi ha appena tirato (gli altri hanno finito le palline): niente "passagli il telefono"
       var g = st.gioc[st.turno]; st.fase = "attesa"; tav.nuovoTurno();
-      tav.passa(g, !g.scelto, function () { g.scelto = true; st.fase = "mira"; tav.aggTesta(); tav.dimmi(nomeLivello(st.lv) + " · tocca a " + g.nome); });
+      if (ancora && g.scelto) { st.fase = "mira"; tav.aggTesta(); tav.dimmi("🎯 Tocca ancora a " + g.nome + " · ⚪ " + g.palline); return; }
+      inPassa = true;
+      tav.passa(g, !g.scelto, function () { inPassa = false; g.scelto = true; st.fase = "mira"; tav.aggTesta(); tav.dimmi(nomeLivello(st.lv) + " · tocca a " + g.nome); });
     }
     function tira(ang) { tav.riproduci(simulaTiro(st, ang, st.gioc[st.turno]), dopo); }
     function dopo() {
       if (st.febbre || !gioc.some(function (p) { return p.palline > 0; })) return fine();
-      prossimo(st); nuovoViola(st); turno();
+      var prima = st.turno; prossimo(st); nuovoViola(st); turno(prima === st.turno);
     }
     function fine() {
       st.fase = "fine";
@@ -1036,7 +1231,7 @@
       var esito = cl.map(function (r) { return { nome: r.nome, pos: r.pos, punti: r.punti }; });
       if (t.risultato) t.risultato(esito);
       if (imp.torneo) { tav.chiudi(); return t.fine(esito); }
-      suonoFine(); vibra([30, 40, 30]);
+      suonoFine();
       var v = vittorie(gioc);
       tav.finestra({ titolo: titoloFine(cl), sotto: st.febbre ? "Tutti gli arancioni presi!" : "Palline finite per tutti", righe: righeFine(cl),
         nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null],
@@ -1045,7 +1240,8 @@
     }
     function esci() {
       if (st.fase === "fine") { tav.chiudi(); return t.esci(); }
-      tav.chiedi("Lasciare la sfida?", "La partita finisce qui.", "🏠 Esci", function () { tav.chiudi(); t.esci(); });
+      // dalla finestra "Tocca a…": se non esci, la finestra torna com'era
+      tav.chiedi("Lasciare la sfida?", "La partita finisce qui.", "🏠 Esci", function () { tav.chiudi(); t.esci(); }, inPassa ? function () { turno(false); } : null);
     }
     nuova();
   }
@@ -1061,7 +1257,7 @@
     var me = vm.players.filter(function (p) { return p.id === cb.myId; })[0];
     if (me) {
       var riga = el("div", { class: "pm-aiutanti centro" }, [el("span", { class: "pm-aiu-et", text: "Il tuo aiutante:" })]);
-      ORDINE_POTERI.forEach(function (k) { riga.appendChild(el("button", { class: "pm-aiu" + (me.potere === k ? " attiva" : ""), text: POTERI[k].icona, "aria-label": POTERI[k].nome, onclick: function () { vibra(6); cb.onPotere(k); } })); });
+      ORDINE_POTERI.forEach(function (k) { riga.appendChild(el("button", { class: "pm-aiu" + (me.potere === k ? " attiva" : ""), text: POTERI[k].icona, "aria-label": POTERI[k].nome, onclick: function () { cb.onPotere(k); } })); });
       riga.appendChild(el("span", { class: "pm-pot-nome", text: (POTERI[me.potere] || POTERI.bomba).nome }));
       extra.push(riga);
     }
@@ -1076,10 +1272,14 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var imp = t.impostazioni || {}, nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
     var H = { fase: "lobby", codice: "…", pronta: false, lvSc: imp.lv == null ? "caso" : imp.lv, partita: 0, seq: 0, ultimo: -1, st: null, tav: null, classifica: null, tF: null, tA: null, mira: { t: 0, to: null },
+      attesa: [], pausa: null, fineFatta: -1,   // attesa: chi ha chiesto di entrare a stanza piena o a partita cominciata (entra dopo, da solo)
       players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost), potere: poterePreferito(), vinte: 0 }] };
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function presenti() { return H.players.filter(function (p) { return !p.via; }); }
     function fermaTimer() { clearTimeout(H.tF); clearTimeout(H.tA); H.tF = H.tA = null; }
+    function accogli() {   // nella saletta: chi aspettava entra, se c'è posto
+      while (H.fase === "lobby" && H.players.length < MAX_ON && H.attesa.length) { var a = H.attesa.shift(); if (!pById(a.id)) H.players.push(a); }
+    }
 
     // "⚙️ Regole" nella saletta: l'host cambia il livello quando vuole
     t.onRegole = function (im) { if (H.fase !== "lobby") return; H.lvSc = im.lv == null ? "caso" : im.lv; bd(); };
@@ -1088,12 +1288,14 @@
       onCodice: function (c) { H.codice = c; bd(); },
       onConnesso: function () { H.pronta = true; bd(); },
       onAddio: function (id) {
-        var p = pById(id); if (!p) return;
-        if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
+        var prima = H.attesa.length;
+        H.attesa = H.attesa.filter(function (a) { return a.id !== id; });
+        var p = pById(id); if (!p) { if (H.attesa.length !== prima) bd(); return; }
+        if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); accogli(); bd(); return; }
         p.via = true;   // a partita iniziata resta in classifica, ma i suoi turni si saltano
         if (H.fase === "gioco") {
-          if (presenti().length < MIN_ON) return fine();
-          if (H.st.gioc[H.st.turno] === p && H.st.fase === "mira") return cambiaTurno();
+          if (presenti().length < MIN_ON) { pausa(); return bd(); }   // è rimasto solo l'host: si aspetta chi è uscito (magari ha solo bloccato lo schermo)
+          if (H.st.gioc[H.st.turno] === p && H.st.fase === "mira") return cambiaTurno();   // (se nessuno ha più palline, finisce lì)
         }
         bd();
       },
@@ -1101,9 +1303,12 @@
         if (!m || !m.t) return;
         var p = pById(id);
         if (m.t === "join") {
-          if (!p && H.fase === "lobby" && H.players.length < MAX_ON)
-            H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino), potere: POTERI[m.potere] ? m.potere : "bomba", vinte: 0 });
-          else if (p && p.via && H.fase === "gioco") p.via = false;   // è tornato (stesso id): riprende a giocare
+          var nuovo = { id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino), potere: POTERI[m.potere] ? m.potere : "bomba", vinte: 0 };
+          if (!p && H.fase === "lobby" && H.players.length < MAX_ON) H.players.push(nuovo);
+          else if (!p) {   // stanza piena o partita cominciata: aspetta di entrare (lo vede scritto sul suo telefono)
+            H.attesa = H.attesa.filter(function (a) { return a.id !== id; });
+            if (H.attesa.length < 8) H.attesa.push(nuovo);
+          } else if (p.via && H.fase !== "lobby") { p.via = false; if (H.fase === "gioco" && H.pausa && presenti().length >= MIN_ON) return riprendi(); }   // è tornato (stesso id): riprende a giocare (o, a partita finita, torna nella saletta con gli altri)
           bd();   // anche se c'era già: rimanda la foto (serve a chi si ricollega)
           return;
         }
@@ -1111,16 +1316,17 @@
         if (m.t === "potere") { if (H.fase === "lobby" && POTERI[m.k]) { p.potere = m.k; bd(); } return; }
         if (H.fase !== "gioco") return;
         if (m.t === "mira") altraMira(id, m.a, m.seq);
-        else if (m.t === "tira") tiro(id, m.a, m.seq);
+        else if (m.t === "tira") tiro(id, m.a, m.seq, m.ts);
       }
     });
-    // la "foto" per tutti: SEMPRE con gli id dei giocatori; nel gioco anche il tavolo (tipi e pezzi già scoppiati)
+    // la "foto" per tutti: SEMPRE con gli id dei giocatori (e di chi aspetta di entrare); nel gioco anche il tavolo (tipi e pezzi già scoppiati)
     function vm() {
-      var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, lvSc: H.lvSc, partita: H.partita, classifica: H.classifica,
+      var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, lvSc: H.lvSc, partita: H.partita, classifica: H.classifica, attesa: H.attesa.map(function (a) { return a.id; }),
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, potere: p.potere, vinte: p.vinte || 0, via: !!p.via, punti: p.punti || 0, palline: p.palline || 0, mira: p.mira || 0, fuoco: p.fuoco || 0 }; }) };
       if (H.fase !== "lobby" && H.st) {
         var st = H.st;
-        v.lv = st.lv; v.seq = H.seq; v.turno = st.turno; v.n = st.pioli.length; v.ar = st.arPresi; v.feb = st.febbre; v.fs = st.fase === "mira" ? "mira" : "volo";
+        v.lv = st.lv; v.seq = H.seq; v.turno = st.turno; v.n = st.pioli.length; v.ar = st.arPresi; v.feb = st.febbre; v.fs = st.fase === "mira" && !H.pausa ? "mira" : "volo";
+        v.ts = Math.round(st.t * 100) / 100;   // l'ora del secchio: gli altri lo vedono dove lo vedo io
         v.tipi = st.pioli.map(function (q) { return SIGLA[q.tipo]; }).join("");
         v.via = st.pioli.map(function (q) { return q.via || q.acceso ? 1 : 0; }).join("");   // (quelli accesi stanno per scoppiare)
       }
@@ -1130,10 +1336,10 @@
     function mostra() {
       if (H.fase === "lobby") { if (H.tav) { H.tav.chiudi(); H.tav = null; } return lobbyPM(t, vm(), cbHost); }
       if (!H.tav) {
-        H.tav = tavolo(t, { st: H.st, multi: true, mio: function () { return H.st.fase === "mira" && H.st.gioc[H.st.turno].id === "host"; }, sonoIo: function (g) { return g.id === "host"; },
+        H.tav = tavolo(t, { st: H.st, multi: true, mio: function () { return H.st.fase === "mira" && !H.pausa && H.st.gioc[H.st.turno].id === "host"; }, sonoIo: function (g) { return g.id === "host"; },
           onTiro: function (a) { tiro("host", a, H.seq); }, onMira: miaMira, onEsci: cbHost.onEsci, faccia: ominoDi });
         H.tav.dimmi(nomeLivello(H.st.lv) + " · un tiro a testa!");
-      } else H.tav.nuovoTurno();
+      } else H.tav.nuovoTurno(H.partita + ":" + H.seq);
       if (H.fase === "fine") finePM();
     }
 
@@ -1145,12 +1351,13 @@
       H.st = nuovoStato(lv, H.players); H.st.turno = (H.partita - 1) % H.players.length; nuovoViola(H.st);   // a ogni partita comincia uno diverso
       H.fase = "gioco"; bd(); avvisaTurno(); timerTurno();
     }
-    function tiro(id, a, seq) {
+    function tiro(id, a, seq, ts) {
       var st = H.st; if (H.fase !== "gioco" || !st || st.fase === "volo" || st.fase === "pulizia") return;
       var g = st.gioc[st.turno];
-      if (!g || g.id !== id || g.palline <= 0 || (seq != null && seq !== H.seq)) { if (id === "host" && st.fase === "attesa") st.fase = "mira"; return; }
+      if (H.pausa || !g || g.via || g.id !== id || g.palline <= 0 || (seq != null && seq !== H.seq)) { if (id === "host" && st.fase === "attesa") st.fase = "mira"; return; }
       fermaTimer();
       a = Math.max(0.06, Math.min(PI - 0.06, +a || PI / 2));
+      if (typeof ts === "number" && Math.abs(ts - st.t) < 3) st.t = ts;   // il secchio dov'era sul telefono di chi ha tirato
       var rec = simulaTiro(st, a, g);
       rete.inviaVeloce({ t: "rec", seq: H.seq, rec: rec });   // il tiro a tutti (non resta in stanza)
       H.tav.riproduci(rec, dopoTiro);
@@ -1158,34 +1365,73 @@
     function dopoTiro() {
       if (H.fase === "fine") { H.st.fase = "fine"; return finePM(); }   // (finita mentre si guardava il tiro: è uscito qualcuno)
       if (H.fase !== "gioco") return;
-      if (H.st.febbre || !presenti().some(function (p) { return p.palline > 0; })) return fine();
+      if (H.st.febbre) return fine();
       cambiaTurno();
     }
-    function cambiaTurno() {
+    function cambiaTurno() {   // al prossimo che c'è e ha palline; se non c'è nessuno la partita finisce (o, in pausa, aspetta chi è uscito)
       var st = H.st; if (st.fase === "volo" || st.fase === "pulizia") return;
-      prossimo(st); nuovoViola(st); H.seq++; st.fase = "mira"; bd(); avvisaTurno(); timerTurno();
+      if (!prossimo(st)) {
+        if (H.pausa && H.players.some(function (p) { return p.via && p.palline > 0; })) { fermaTimer(); st.fase = "attesa"; return bd(); }
+        return fine();
+      }
+      nuovoViola(st); H.seq++; st.fase = "mira"; bd(); avvisaTurno(); timerTurno();
     }
-    function avvisaTurno() { var g = H.st.gioc[H.st.turno]; if (H.tav) H.tav.dimmi(g.id === "host" ? "🎯 Tocca a te!" : "🎯 Tocca a " + g.nome); if (g.id === "host") vibra([15, 40, 15]); }
-    function timerTurno() {   // chi non tira: dopo 35 secondi un avviso, dopo 45 la pallina parte da sola
-      fermaTimer(); var seq = H.seq;
+    function avvisaTurno() { var g = H.st.gioc[H.st.turno]; if (H.tav && !H.pausa) H.tav.dimmi(g.id === "host" ? "🎯 Tocca a te!" : "🎯 Tocca a " + g.nome); }
+    function timerTurno() {   // chi non tira: dopo 35 secondi un avviso, dopo 45 la pallina parte da sola (mai per chi è uscito, mai in pausa)
+      fermaTimer(); if (H.pausa) return; var seq = H.seq;
       H.tF = setTimeout(function () {
-        if (H.seq !== seq || H.fase !== "gioco") return; var g = H.st.gioc[H.st.turno];
+        if (H.seq !== seq || H.fase !== "gioco" || H.pausa) return; var g = H.st.gioc[H.st.turno];
         rete.inviaVeloce({ t: "fretta", seq: seq }); if (H.tav) H.tav.dimmi(g.id === "host" ? "⏱️ 10 secondi per tirare!" : "⏱️ " + g.nome + " ha 10 secondi");
       }, 35000);
-      H.tA = setTimeout(function () { if (H.seq !== seq || H.fase !== "gioco" || H.st.fase !== "mira") return; tiro(H.st.gioc[H.st.turno].id, H.st.ang, seq); }, 45000);
+      H.tA = setTimeout(function () {
+        if (H.seq !== seq || H.fase !== "gioco" || H.pausa || H.st.fase !== "mira") return;
+        var g = H.st.gioc[H.st.turno]; if (!g || g.via) return cambiaTurno();
+        tiro(g.id, H.st.ang, seq);
+      }, 45000);
+    }
+    // ----- la pausa: è rimasto solo l'host (l'amico ha bloccato lo schermo o ha perso la rete) -----
+    var ATTESA_PAUSA = 120000;
+    function pausa() {
+      if (H.pausa) return;
+      fermaTimer();
+      H.pausa = { fino: Date.now() + ATTESA_PAUSA, box: null, txt: null, iv: setInterval(tickPausa, 1000) };
+      tickPausa();
+    }
+    function tickPausa() {
+      var P = H.pausa; if (!P) return;
+      var rest = Math.max(0, Math.ceil((P.fino - Date.now()) / 1000));
+      if (!rest) return finisciPausa();
+      if (!H.tav || H.tav.occupato()) return;   // (prima si vede la fine del tiro)
+      var via = H.players.filter(function (p) { return p.via; }).map(function (p) { return p.nome; });
+      var chi = via.length > 1 ? via.slice(0, -1).join(", ") + " e " + via[via.length - 1] : via[0] || "gli amici";
+      var txt = (via.length > 1 ? "Se nessuno torna entro " : "Se non torna entro ") + Math.floor(rest / 60) + ":" + ("0" + rest % 60).slice(-2) + ", la partita finisce con i punti di adesso.";
+      if (P.box && P.box.parentNode && H.tav.aperta()) { if (P.txt && P.txt.textContent !== txt) P.txt.textContent = txt; return; }   // aggiorno solo il conto alla rovescia
+      if (H.tav.aperta()) return;   // c'è un'altra domanda aperta (es. "chiudere la partita?"): aspetto
+      P.box = H.tav.finestra({ titolo: "Aspettiamo " + chi + "… ⏳", sotto: txt, tasti: [{ testo: "🏁 Finisci ora", cls: "btn-primario", fn: finisciPausa }, { testo: "🏠 Esci", fn: cbHost.onEsci }] });
+      P.txt = P.box.querySelector(".pm-stelle");
+    }
+    function fermaPausa() { if (!H.pausa) return null; clearInterval(H.pausa.iv); var box = H.pausa.box; H.pausa = null; return box; }
+    function finisciPausa() { fermaPausa(); if (H.fase === "gioco") fine(); }
+    function riprendi() {   // è tornato qualcuno: si continua da dove eravamo
+      var box = fermaPausa(); if (box && box.parentNode && H.tav) H.tav.chiudiSopra();
+      var st = H.st, g = st.gioc[st.turno];
+      if (st.fase === "mira" && g && !g.via && g.palline > 0) { bd(); avvisaTurno(); timerTurno(); }
+      else if (st.fase !== "volo" && st.fase !== "pulizia") cambiaTurno();
+      else bd();
+      if (H.tav && H.fase === "gioco") H.tav.dimmi("👋 Si riprende!");
     }
     function altraMira(id, a, seq) {   // la mira di chi tira dall'altro telefono: la vedo e la giro agli altri
       var st = H.st, g = st.gioc[st.turno]; if (!g || g.id !== id || seq !== H.seq || st.fase !== "mira") return;
       st.ang = Math.max(0.06, Math.min(PI - 0.06, +a || PI / 2)); H.tav.mira(st.ang);
-      rete.inviaVeloce({ t: "mira", a: Math.round(st.ang * 1000) / 1000, seq: H.seq });
+      rete.inviaVeloce({ t: "mira", a: Math.round(st.ang * 1000) / 1000, seq: H.seq, ts: Math.round(st.t * 100) / 100 });
     }
     function miaMira(a) {   // la mia mira agli altri: al massimo 10 volte al secondo (e l'ultima sempre)
       var M = H.mira, ora = performance.now(); clearTimeout(M.to);
-      function manda() { M.t = performance.now(); rete.inviaVeloce({ t: "mira", a: Math.round(H.st.ang * 1000) / 1000, seq: H.seq }); }
+      function manda() { M.t = performance.now(); rete.inviaVeloce({ t: "mira", a: Math.round(H.st.ang * 1000) / 1000, seq: H.seq, ts: Math.round(H.st.t * 100) / 100 }); }
       if (ora - M.t > 100) manda(); else M.to = setTimeout(manda, 110);
     }
     function fine() {
-      fermaTimer();
+      fermaTimer(); fermaPausa();
       var cl = classifica(H.players);
       H.classifica = cl.map(function (r) { return { id: r.g.id, nome: r.g.nome, punti: r.g.punti || 0, pos: r.pos }; });
       cl.forEach(function (r) { if (r.pos === 1) r.g.vinte = (r.g.vinte || 0) + 1; });
@@ -1194,20 +1440,21 @@
       // torneo online e XP: i NOMI dei giocatori col loro posto (pari merito = stesso posto)
       if (t.risultato) t.risultato(H.classifica.map(function (r) { return { nome: r.nome, pos: r.pos, punti: r.punti }; }));
     }
-    function finePM() {
-      if (!H.tav || H.st.fase === "volo" || H.st.fase === "pulizia") return;   // (si vede prima la fine del tiro)
+    function finePM() {   // la classifica: una volta sola per partita (chi entra o esce dopo non la fa ripartire)
+      if (!H.tav || H.st.fase === "volo" || H.st.fase === "pulizia" || H.fineFatta === H.partita) return;   // (si vede prima la fine del tiro)
+      H.fineFatta = H.partita;
       suonoFine(); var v = vittorie(H.players);
-      H.tav.finestra({ titolo: titoloFine(H.classifica, "host"), sotto: H.st.febbre ? "Tutti gli arancioni presi!" : "Palline finite", righe: righeFine(H.classifica, "host"),
+      H.tav.finestra({ titolo: titoloFine(H.classifica, "host"), sotto: H.st.febbre ? "Tutti gli arancioni presi!" : H.players.some(function (p) { return !p.via && p.palline > 0; }) ? "Partita chiusa prima della fine" : "Palline finite", righe: righeFine(H.classifica, "host"),
         nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null],
         tasti: [{ testo: "↻ Altra partita (stessi amici)", cls: "btn-primario", fn: nuova }, { testo: "🏠 Esci", fn: cbHost.onEsci }] });
     }
-    // "Altra partita": stessa stanza, stessi amici, tutti tornano nella saletta (MAI chiudere e riaprire la stanza)
-    function nuova() { fermaTimer(); H.fase = "lobby"; H.classifica = null; H.players = presenti(); bd(); }
+    // "Altra partita": stessa stanza, stessi amici, tutti tornano nella saletta (MAI chiudere e riaprire la stanza); entra anche chi aspettava
+    function nuova() { fermaTimer(); fermaPausa(); H.fase = "lobby"; H.classifica = null; H.players = presenti(); accogli(); bd(); }
 
     var cbHost = { sonoHost: true, myId: "host", onComincia: comincia,
       onPotere: function (k) { var p = pById("host"); if (p) p.potere = k; salvaPotere(k); bd(); },
       onEsci: function () {
-        function via() { fermaTimer(); rete.chiudi(); if (H.tav) H.tav.chiudi(); t.esci(); }
+        function via() { fermaTimer(); fermaPausa(); rete.chiudi(); if (H.tav) H.tav.chiudi(); t.esci(); }
         if (H.fase === "gioco" && H.tav) return H.tav.chiedi("Chiudere la partita per tutti?", "Gli amici escono dalla partita.", "🏠 Chiudi ed esci", via);   // un tocco sbagliato non chiude il gioco a tutti
         via();
       } };
@@ -1216,7 +1463,7 @@
 
   function ospite(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var S = { rete: null, myId: null, nome: "", vm: null, tav: null, st: null, partita: -1, coda: null, tAtt: null, mira: { t: 0, to: null } };
+    var S = { rete: null, myId: null, nome: "", vm: null, tav: null, st: null, partita: -1, coda: null, tAtt: null, mira: { t: 0, to: null }, fineDi: null, att: null };
     var cb = { sonoHost: false, myId: null,
       onPotere: function (k) { salvaPotere(k); if (S.rete) S.rete.invia({ t: "potere", k: k }); },
       onEsci: function () {
@@ -1238,34 +1485,49 @@
     function collega() {
       attesa("Collegamento in corso…");
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.myId = id; cb.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome), potere: poterePreferito() }); },
+        onAperto: function (id) { S.myId = id; cb.myId = id; S.tJoin = Date.now(); S.rete.invia(msgJoin()); },
         onMsg: function (m) {
           if (!m || !m.t) return;
           if (m.to && m.to !== S.myId) return;          // era per un altro telefono
           if (m.t === "vm") { S.vm = m.vm; ricevi(m.vm); }
           else if (m.t === "rec") tiroArrivato(m);
-          else if (m.t === "mira") { if (S.tav && S.st && m.seq === S.st.seq && S.st.fase === "mira" && !mioTurno()) S.tav.mira(m.a); }
+          else if (m.t === "mira") { if (S.tav && S.st && m.seq === S.st.seq) { S.tav.orologio(m.ts); if (S.st.fase === "mira" && !mioTurno()) S.tav.mira(m.a); } }
           else if (m.t === "fretta") { if (S.tav && S.st && m.seq === S.st.seq) S.tav.dimmi(mioTurno() ? "⏱️ 10 secondi per tirare!" : "⏱️ " + S.st.gioc[S.st.turno].nome + " ha 10 secondi"); }
         },
         onChiuso: function () { if (S.tav) S.tav.chiudi(); errore(t, "La partita è stata chiusa dall'host."); },
         onErrore: function () { if (S.tav) S.tav.chiudi(); errore(t, "Problema di collegamento. Riprova."); }
       });
     }
-    function attesa(testo) {
+    function msgJoin() { return { t: "join", nome: S.nome, omino: t.mioOmino(S.nome), potere: poterePreferito() }; }
+    function attesa(testo) {   // la schermata d'attesa: se è già lì cambio solo la scritta (niente lampeggio a ogni foto)
+      var A = S.att;
+      if (A && document.body.contains(A.s)) { if (A.p.textContent !== testo) A.p.textContent = testo; return; }
       var s = t.schermata({ icona: "🔴", titolo: "Palla Matta", sotto: "Stanza " + String(codice).toUpperCase(), indietro: cb.onEsci });
-      s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: testo }));
+      var p = t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: testo });
+      s._contenuto.appendChild(t.el("div", { style: "text-align:center;margin-top:56px;font-size:3rem;line-height:1", text: "🔴" }));   // (nei giochi la testa non ha il titolo: lo metto qui)
+      s._contenuto.appendChild(t.el("div", { style: "text-align:center;margin-top:8px;font-weight:900;font-size:1.2rem", text: "Palla Matta · stanza " + String(codice).toUpperCase() }));
+      s._contenuto.appendChild(p); S.att = { s: s, p: p };
       t.mostra(s);
     }
     function mioTurno() { var st = S.st, g = st && st.gioc[st.turno]; return !!g && g.id === S.myId; }
     function ricevi(vm) {
+      if (!vm.players.some(function (p) { return p.id === S.myId; })) {   // non sono (ancora) tra i giocatori
+        if (S.tav) { S.tav.chiudi(); S.tav = null; S.st = null; } S.coda = null;
+        if ((vm.attesa || []).indexOf(S.myId) < 0) {   // l'host non mi ha ancora (o non più): richiedo di entrare, con calma
+          if (S.rete && S.myId && Date.now() - (S.tJoin || 0) > 3000) { S.tJoin = Date.now(); S.rete.invia(msgJoin()); }
+          return attesa("Entro nella stanza…");
+        }
+        return attesa(vm.fase === "lobby" ? "La stanza è piena (" + vm.players.length + " su " + MAX_ON + "): entri appena si libera un posto."
+          : vm.fase === "fine" ? "La partita è appena finita: entri nella saletta quando l'host ne prepara un'altra. Resta qui!"
+          : "C'è una partita in corso: entri nella saletta appena finisce. Resta qui!");
+      }
       if (vm.fase === "lobby") { if (S.tav) { S.tav.chiudi(); S.tav = null; S.st = null; } S.coda = null; return lobbyPM(t, vm, cb); }
-      if (!vm.players.some(function (p) { return p.id === S.myId; })) { if (S.tav) { S.tav.chiudi(); S.tav = null; } return attesa("La partita è già cominciata: aspetta la prossima, entri da solo nella saletta."); }
       if (!S.tav || vm.partita !== S.partita) { if (!creaTavolo(vm)) return; }
       else if (S.tav.occupato()) { S.coda = vm; return; }   // sto ancora guardando il tiro: la foto dopo
       sincronizza(vm);
     }
     function creaTavolo(vm) {
-      var pioli = creaLivello(vm.lv, false);
+      var pioli = LIVELLI[vm.lv] ? creaLivello(vm.lv, false) : [];
       if (pioli.length !== vm.n) { if (S.tav) S.tav.chiudi(); S.tav = null; errore(t, "La tua app è di una versione diversa da quella dell'host: chiudila e riaprila per aggiornarla."); return false; }
       pioli.forEach(function (q, i) { q.tipo = TIPO[vm.tipi.charAt(i)] || q.tipo; });
       var gioc = vm.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino, potere: p.potere }; });
@@ -1284,10 +1546,11 @@
         g.id = p.id; g.nome = p.nome; g.omino = p.omino; g.potere = p.potere; g.punti = p.punti; g.palline = p.palline; g.mira = p.mira; g.fuoco = p.fuoco; g.via = p.via; g.vinte = p.vinte;
       });
       st.pioli.forEach(function (q, i) { q.tipo = TIPO[vm.tipi.charAt(i)] || q.tipo; q.via = vm.via.charAt(i) === "1"; q.acceso = false; });
-      if (vm.fase === "fine") { st.fase = "fine"; S.tav.nuovoTurno(); return fineOspite(vm); }
+      S.tav.orologio(vm.ts);
+      if (vm.fase === "fine") { st.fase = "fine"; S.tav.nuovoTurno(vm.seq); return fineOspite(vm); }
       st.fase = vm.fs === "mira" ? "mira" : "attesa";
-      S.tav.nuovoTurno();
-      if (nuovoT && st.fase === "mira") { S.tav.dimmi(mioTurno() ? "🎯 Tocca a te!" : "🎯 Tocca a " + st.gioc[st.turno].nome); if (mioTurno()) vibra([15, 40, 15]); }
+      S.tav.nuovoTurno(vm.seq);
+      if (nuovoT && st.fase === "mira") S.tav.dimmi(mioTurno() ? "🎯 Tocca a te!" : "🎯 Tocca a " + st.gioc[st.turno].nome);
     }
     function tiroArrivato(m) {
       if (!S.tav || !S.st) return;
@@ -1298,7 +1561,7 @@
     }
     function tira(a) {
       if (!S.rete) return;
-      S.rete.invia({ t: "tira", a: Math.round(a * 1000) / 1000, seq: S.st.seq });
+      S.rete.invia({ t: "tira", a: Math.round(a * 1000) / 1000, seq: S.st.seq, ts: Math.round(S.st.t * 100) / 100 });   // (ts: dov'era il secchio quando ho tirato)
       clearTimeout(S.tAtt); S.tAtt = setTimeout(function () { if (S.st && S.st.fase === "attesa" && mioTurno()) S.st.fase = "mira"; }, 4000);   // se il tiro si è perso per strada, si può ritirare
     }
     function mandaMira(a) {   // la mia mira all'host: al massimo 10 volte al secondo (e l'ultima sempre)
@@ -1306,9 +1569,11 @@
       function manda() { M.t = performance.now(); if (S.rete && S.st) S.rete.invia({ t: "mira", a: Math.round(S.st.ang * 1000) / 1000, seq: S.st.seq }); }
       if (ora - M.t > 100) manda(); else M.to = setTimeout(manda, 110);
     }
-    function fineOspite(vm) {
+    function fineOspite(vm) {   // la classifica: una volta sola per partita (le foto dopo non la fanno ripartire)
+      if (S.fineDi === S.tav) return;
+      S.fineDi = S.tav;
       suonoFine(); var cl = vm.classifica || [], v = vittorie(vm.players);
-      S.tav.finestra({ titolo: titoloFine(cl, S.myId), sotto: vm.feb ? "Tutti gli arancioni presi!" : "Palline finite", righe: righeFine(cl, S.myId),
+      S.tav.finestra({ titolo: titoloFine(cl, S.myId), sotto: vm.feb ? "Tutti gli arancioni presi!" : (vm.players || []).some(function (p) { return !p.via && p.palline > 0; }) ? "Partita chiusa prima della fine" : "Palline finite", righe: righeFine(cl, S.myId),
         nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null, t.el("p", { class: "pm-nota", text: "Se l'host fa un'altra partita, torni da solo nella saletta." })],
         tasti: [{ testo: "🏠 Esci", fn: cb.onEsci }] });
     }
@@ -1352,7 +1617,7 @@
       "@keyframes pmPop{0%{transform:scale(1)}40%{transform:scale(1.5)}100%{transform:scale(1)}}",
       ".pm-pot{flex:none;height:32px;padding:0 8px;border-radius:12px;display:flex;align-items:center;font-weight:900;font-size:.95rem;color:#fff;background:rgba(140,233,154,.18);box-shadow:inset 0 0 0 1.5px rgba(140,233,154,.5)}",
       ".pm-palle{flex:none;height:32px;padding:0 9px;border-radius:12px;display:flex;align-items:center;font-weight:900;font-size:.95rem;color:#fff;background:rgba(255,255,255,.14)}",
-      ".pm-avviso{position:absolute;left:50%;top:calc(76px + env(safe-area-inset-top));z-index:4;transform:translateX(-50%);padding:8px 14px;border-radius:999px;white-space:nowrap;font-weight:900;font-size:.9rem;color:#1a1440;background:#ffe066;box-shadow:0 6px 16px rgba(0,0,0,.35);opacity:0;pointer-events:none}",
+      ".pm-avviso{position:absolute;left:50%;top:calc(76px + env(safe-area-inset-top));z-index:4;transform:translateX(-50%);padding:8px 14px;width:max-content;max-width:calc(100% - 24px);box-sizing:border-box;border-radius:16px;white-space:normal;text-align:center;line-height:1.25;font-weight:900;font-size:.9rem;color:#1a1440;background:#ffe066;box-shadow:0 6px 16px rgba(0,0,0,.35);opacity:0;pointer-events:none}",
       ".pm-avviso.su{animation:pmAvviso 2.2s ease forwards}",
       "@keyframes pmAvviso{0%{opacity:0;transform:translate(-50%,-8px) scale(.9)}12%{opacity:1;transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0}}",
       ".pm-sopra{position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(10,6,30,.55);opacity:0;pointer-events:none;transition:opacity .3s}",
@@ -1402,7 +1667,22 @@
       ".modo-griglia.pm-sceltalv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}",
       ".modo-chip.pm-chiplv{justify-content:center;gap:0;padding:9px 6px;min-height:0;text-align:center}",
       ".modo-chip.pm-chiplv .mt{font-size:.8rem;line-height:1.2}",
-      ".modo-chip.pm-chiplv.largo{grid-column:1/-1}"
+      ".modo-chip.pm-chiplv.largo{grid-column:1/-1}",
+      // la mano che insegna a mirare (si muove solo con transform)
+      ".pm-mano{position:absolute;left:50%;top:44%;z-index:4;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;width:max-content;max-width:calc(100% - 32px)}",
+      ".pm-mano-dito{font-size:2.6rem;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));animation:pmMano 2.4s ease-in-out infinite}",
+      "@keyframes pmMano{0%,100%{transform:translateX(-46px)}40%{transform:translateX(46px)}70%{transform:translateX(0) scale(1)}78%{transform:translateX(0) scale(.82)}86%{transform:translateX(0) scale(1)}}",
+      ".pm-mano-txt{padding:7px 12px;border-radius:14px;text-align:center;font-weight:900;font-size:.88rem;line-height:1.25;color:#fff;background:rgba(18,12,48,.82);box-shadow:inset 0 0 0 1.5px rgba(255,224,102,.6)}",
+      // i livelli chiusi: la scossa e l'avviso
+      ".pm-lv.scossa{animation:pmScossa .4s}",
+      "@keyframes pmScossa{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}",
+      ".pm-msg-chiuso{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));z-index:20;transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);padding:9px 14px;border-radius:16px;text-align:center;font-weight:900;font-size:.9rem;color:#1a1440;background:#ffe066;box-shadow:0 6px 16px rgba(0,0,0,.35);opacity:0;pointer-events:none}",
+      ".pm-msg-chiuso.su{animation:pmMsg 2.6s ease forwards}",
+      "@keyframes pmMsg{0%{opacity:0;transform:translate(-50%,10px)}10%{opacity:1;transform:translate(-50%,0)}82%{opacity:1}100%{opacity:0}}",
+      ".pm-tasti .pm-piccolo{min-height:0;padding:7px 12px;font-size:.85rem;opacity:.85}",
+      // i capitoli nuovi
+      ".pm-cap-dolci{background:linear-gradient(90deg,#c2255c,#f06595)}", ".pm-lv-dolci{background:linear-gradient(180deg,#f06595,#a61e4d)}",
+      ".pm-cap-festa{background:linear-gradient(90deg,#5f3dc4,#e8590c)}", ".pm-lv-festa{background:linear-gradient(180deg,#7048e8,#3b1d8f)}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -1415,7 +1695,7 @@
       { modo: "amici", icona: "📱", nome: "Sfida su questo telefono", sotto: "Da 2 a 4: un tiro a testa, vi passate il telefono", amici: true }],
     regole: [
       "<b>Mirare</b>: trascina il dito, da qualsiasi punto dello schermo, e il cannone gira con lui (a destra gira a destra). Piano piano per i ritocchi, veloce per girarlo tanto. I puntini mostrano dove va la pallina. Lasciando il dito non parte niente: dai un <b>tocco veloce</b> per tirare.",
-      "La pallina rimbalza sui pioli e li <b>accende</b>; quando esce, i pioli accesi scoppiano.",
+      "La pallina rimbalza sui pioli e li <b>accende</b>; quando esce, i pioli accesi scoppiano. Per far <b>correre</b> la pallina, tieni premuto lo schermo mentre vola.",
       "Fai scoppiare tutti i pioli <b>arancioni</b> con <b>10 palline</b>. Più arancioni prendi, più vale ogni piolo: <b>x2, x3, x5, x10</b>.",
       "Il piolo <b>viola</b> vale 500 punti e cambia posto a ogni tiro. I pioli <b>verdi</b> attivano il potere del tuo <b>aiutante</b> (bomba, multipalla, mira lunga o palla di fuoco).",
       "Se la pallina entra nel <b>secchio</b> che si muove in fondo, la riprendi. Tanti punti in un tiro regalano palline.",
@@ -1431,7 +1711,7 @@
         var gl = el("div", { class: "modo-griglia pm-sceltalv" });
         [["caso", "🎲 A caso"]].concat(LIVELLI.map(function (L, i) { return [i, nomeLivello(i)]; })).forEach(function (x) {
           var b = el("button", { class: "modo-chip pm-chiplv" + (x[0] === "caso" ? " largo" : "") + (String(dove.lv) === String(x[0]) ? " attiva" : ""), onclick: function () {
-            dove.lv = x[0]; [].forEach.call(gl.children, function (c) { c.classList.remove("attiva"); }); b.classList.add("attiva"); vibra(6);
+            dove.lv = x[0]; [].forEach.call(gl.children, function (c) { c.classList.remove("attiva"); }); b.classList.add("attiva");
           } }, [el("div", { class: "mt", text: x[1] })]);
           gl.appendChild(b);
         });
@@ -1439,16 +1719,10 @@
         box.appendChild(el("p", { class: "modulo-nota", text: "Il tuo aiutante lo scegli prima del tuo primo tiro (online: nella saletta)." }));
         return;
       }
-      if (!POTERI[p.potere]) p.potere = "bomba";
-      box.appendChild(el("div", { class: "etichetta", text: "Il tuo aiutante: il potere dei pioli verdi" }));
-      var g = el("div", { class: "modo-griglia", style: "grid-template-columns:1fr" });
-      ORDINE_POTERI.forEach(function (k) {
-        var P = POTERI[k], b = el("button", { class: "modo-chip" + (p.potere === k ? " attiva" : ""), onclick: function () {
-          p.potere = k; salvaProgressi(p); [].forEach.call(g.children, function (x) { x.className = "modo-chip"; }); b.className = "modo-chip attiva"; vibra(6);
-        } }, [el("div", { class: "mt", text: P.icona + " " + P.nome }), el("div", { class: "ms", text: P.sotto })]);
-        g.appendChild(b);
-      });
-      box.appendChild(g);
+      // da solo: il livello e l'aiutante si scelgono nella schermata dei livelli (una volta sola, non due)
+      var fatti = 0; LIVELLI.forEach(function (_, i) { if ((p.stelle[i + 1] || 0) > 0) fatti++; });
+      box.appendChild(el("p", { class: "modulo-nota", text: "Nella schermata dopo scegli il livello e il tuo aiutante (il potere dei pioli verdi). " +
+        (fatti ? "Hai finito " + (fatti === 1 ? "1 livello" : fatti + " livelli") + " su " + LIVELLI.length + "." : "Ci sono " + LIVELLI.length + " livelli in " + CAPITOLI.length + " capitoli: si comincia dal primo!") }));
     },
     avvia: function (t) {
       var imp = t.impostazioni || {};

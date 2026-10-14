@@ -33,15 +33,17 @@
   var FORMAZIONI = {
     classica:   { nome: "Classica",    icona: "⚽", pos: [[0.5, 0.075], [0.2, 0.36], [0.5, 0.42], [0.8, 0.36], [0.5, 0]] },
     catenaccio: { nome: "Catenaccio",  icona: "🛡️", pos: [[0.5, 0.075], [0.28, 0.22], [0.72, 0.22], [0.5, 0.38], [0.5, 0]] },
-    attacco:    { nome: "All'attacco", icona: "⚔️", pos: [[0.5, 0.075], [0.5, 0.33], [0.2, 0.58], [0.8, 0.58], [0.5, 0]] }
+    attacco:    { nome: "All'attacco", icona: "⚔️", pos: [[0.5, 0.075], [0.5, 0.33], [0.2, 0.58], [0.8, 0.58], [0.5, 0]] },
+    rombo:      { nome: "Rombo",       icona: "💎", pos: [[0.5, 0.075], [0.5, 0.22], [0.22, 0.42], [0.78, 0.42], [0.5, 0]] },
+    muro:       { nome: "Muro",        icona: "🧱", pos: [[0.5, 0.075], [0.25, 0.21], [0.5, 0.21], [0.75, 0.21], [0.5, 0]] }
   };
-  var NOMI_FORM = ["classica", "catenaccio", "attacco"];
+  var NOMI_FORM = ["classica", "catenaccio", "attacco", "rombo", "muro"];
+  function nomeForm(f) { var F = FORMAZIONI[formOk(f)]; return F.icona + " " + F.nome; }
   function formOk(f) { return FORMAZIONI[f] ? f : "classica"; }
   function attaccante(q) { return q === 0 ? 5 : 10; }   // il corpo dell'attaccante di ogni squadra
   function portiere(q) { return q === 0 ? 1 : 6; }
   var RIGORI = 3;   // rigori a testa (poi a oltranza)
 
-  function fmtN(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   function r4(v) { return Math.round(v * 10000) / 10000; }
 
@@ -129,16 +131,18 @@
     for (i = 0; i < 11; i++) muri(s, i, null);
     if (s.y[0] < -RP) return 0;
     if (s.y[0] > L + RP) return 1;
+    // la palla si è fermata col centro oltre la linea (dentro la porta): è gol lo stesso, "sulla linea"
+    if (!s.vx[0] && !s.vy[0]) { if (s.y[0] < 0) { s.li = 1; return 0; } if (s.y[0] > L) { s.li = 1; return 1; } }
     return -1;
   }
-  function simula(s, sec) {   // fa andare il tiro fino alla fine (per Bot e per le prove)
+  function simula(s, sec) {   // fa andare il tiro fino alla fine (per Bot e per le prove); s.passi = quanti passi è durato
     var n = Math.round((sec || MAX_SEC) / DT);
-    for (var k = 0; k < n; k++) { var g = passo(s, null); if (g >= 0) return g; if (fermo(s)) return -1; }
-    ferma(s); return -1;
+    for (var k = 0; k < n; k++) { var g = passo(s, null); if (g >= 0) { s.passi = k + 1; return g; } if (fermo(s)) { s.passi = k + 1; return -1; } }
+    s.passi = n; ferma(s); return -1;
   }
 
   // =========================================================
-  //  MATT: prova tanti tiri per finta e sceglie quello che gli conviene
+  //  BOT: prova tanti tiri per finta e sceglie quello che gli conviene
   // =========================================================
   function valuta(t, gol, q, prima) {
     if (gol === q) return 100000;
@@ -151,7 +155,8 @@
     v -= Math.abs(t.y[gk] - (q === 0 ? L - 0.075 : 0.075)) * 60;         // il portiere resta in porta
     return v;
   }
-  function sceltaBot(s, q, liv, solo) {   // solo = un calciatore preciso (nei rigori tira l'attaccante)
+  // fatto(scelta): Bot pensa a pezzetti (12 ms per volta) così lo schermo non si blocca; senza fatto ritorna subito la scelta
+  function sceltaBot(s, q, liv, solo, fatto) {   // solo = un calciatore preciso (nei rigori tira l'attaccante)
     var gy = q === 1 ? L + 0.05 : -0.05, cand = [];
     var bersagli = liv === "facile" ? [W / 2] : [W / 2, PL + 0.06, PR - 0.06];
     var forze = liv === "facile" ? [0.75] : (liv === "medio" ? [0.6, 0.9] : [0.5, 0.75, 1]);
@@ -170,17 +175,25 @@
       cand.push({ i: i, a: Math.atan2(s.y[0] - s.y[i], s.x[0] - s.x[i]), p: 1 });   // dritto sulla palla, per spazzarla via
     }
     function prova(i, a, p) { var t = copia(s); t.vx[i] = Math.cos(a) * VMAX * p; t.vy[i] = Math.sin(a) * VMAX * p; return valuta(t, simula(t, 6), q, s); }
-    cand.forEach(function (c) { c.v = prova(c.i, c.a, c.p); });
     var rum = { facile: 0.16, medio: 0.06, difficile: 0.015 }[liv] || 0.06;
-    // i tiri migliori si riprovano con un po' di errore di mira: se sbagliando di poco
-    // finirebbero in autogol, valgono quanto il caso peggiore (così Bot è prudente)
-    cand.sort(function (a, b) { return b.v - a.v; });
-    var best = cand[0], bv = -Infinity;
-    cand.slice(0, 6).forEach(function (c) {
-      var v = Math.min(c.v, prova(c.i, c.a + rum, c.p), prova(c.i, c.a - rum, c.p));
-      if (v > bv) { bv = v; best = c; }
-    });
-    return { i: best.i, a: best.a + (Math.random() * 2 - 1) * rum, p: Math.max(0.3, Math.min(1, best.p + (Math.random() * 2 - 1) * rum)) };
+    // i lavori da fare, in ordine: prima ogni tiro una volta, poi i 6 migliori con un po' di errore di mira
+    var k = 0, top = null, best = null, bv = -Infinity;
+    function unLavoro() {
+      if (k < cand.length) { var c = cand[k++]; c.v = prova(c.i, c.a, c.p); return true; }
+      if (!top) { cand.sort(function (a, b) { return b.v - a.v; }); top = cand.slice(0, 6); best = cand[0]; }
+      // se sbagliando di poco finirebbero in autogol, valgono quanto il caso peggiore (così Bot è prudente)
+      var c2 = top.shift(); if (!c2) return false;
+      var v = Math.min(c2.v, prova(c2.i, c2.a + rum, c2.p), prova(c2.i, c2.a - rum, c2.p));
+      if (v > bv) { bv = v; best = c2; }
+      return true;
+    }
+    function scelta() { return { i: best.i, a: best.a + (Math.random() * 2 - 1) * rum, p: Math.max(0.3, Math.min(1, best.p + (Math.random() * 2 - 1) * rum)) }; }
+    if (!fatto) { while (unLavoro()) {} return scelta(); }
+    (function pezzo() {
+      var t0 = Date.now(), ancora = true;
+      while (ancora && Date.now() - t0 < 12) ancora = unLavoro();
+      if (ancora) setTimeout(pezzo, 0); else fatto(scelta());
+    })();
   }
 
   // =========================================================
@@ -271,10 +284,10 @@
     MUTO = !!o.muto;
     var el = t.el, s = t.schermata({}); s.classList.add("cb-piena");
     var ui = { t: t, cb: cb, o: o, st: null, anim: null, mira: null, zoom: 1, turno: 0, fase: "mira", puoi: false, mie: [], solo: null,
-      eventoVisto: null, scadenza: null, fineTempo: null, testo: { giu: "", su: "" }, facce: [null, null] };
-    var scena = el("div", { class: "cb-scena" });
+      eventoVisto: null, scadenza: null, fineTempo: null, testo: { giu: "", su: "" }, facce: [null, null], avviso: null, stDopo: null };
+    var scena = el("div", { class: "cb-scena" + (o.ruota ? " ruota" : "") });
     ui.cv = el("canvas", { class: "cb-campo" }); ui.ctx = ui.cv.getContext("2d");
-    var esci = el("button", { class: "cb-esci", "aria-label": "Esci", text: "‹", onclick: function () { cb.onEsci(); } });
+    var esci = el("button", { class: "cb-esci", "aria-label": "Esci", text: "‹", onclick: function () { cb.onEsci(); if (!vivo()) follaFerma(); } });
     var audio = el("button", { class: "cb-audio", "aria-label": "Suoni", text: suoniOn() ? "🔊" : "🔇", onclick: function () {
       var on = !suoniOn(); try { localStorage.setItem(CHIAVE_SUONI, on ? "1" : "0"); } catch (e) {}
       audio.textContent = on ? "🔊" : "🔇";
@@ -282,6 +295,8 @@
     } });
     if (o.muto) audio.style.display = "none";
     ui.orologio = el("div", { class: "cb-orologio", hidden: "hidden" });
+    // in due sullo stesso telefono l'orologio c'è anche girato, per chi sta in alto (nel suo angolo in alto a destra)
+    ui.orologio2 = o.ruota ? el("div", { class: "cb-orologio girato", hidden: "hidden" }) : null;
     // la targhetta di ognuno, vicino alla sua porta: avatar piccolo, nome, "tocca a te" e i suoi gol
     function targa(cls, q) {
       var av = el("div", { class: "cb-av" }), msg = el("div", { class: "cb-msg" }), gol = el("div", { class: "cb-golnum", text: "0" });
@@ -291,7 +306,7 @@
       if (cfg && window.SGOmino) {
         var svg = SGOmino.svg(cfg, { busto: true });
         av.innerHTML = svg;
-        var im = new Image(); im.onload = function () { ui.facce[q] = im; if (!ui.anim) disegna(ui); };   // la faccia sull'attaccante
+        var im = new Image(); im.onload = function () { ui.facce[q] = im; if (ui.S) sprites(ui); if (!ui.anim) disegna(ui); };   // la faccia sull'attaccante
         im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
       }
       return { box: box, msg: msg, gol: gol };
@@ -299,7 +314,7 @@
     var qGiu = o.flip ? 1 : 0;
     ui.giu = targa("giu", qGiu); ui.su = targa("su" + (o.ruota ? " ruota" : ""), 1 - qGiu);
     ui.festa = el("div", { class: "cb-festa" });   // l'esultanza: avatar, scritta, coriandoli
-    [ui.cv, ui.su.box, ui.giu.box, esci, audio, ui.orologio, ui.festa].forEach(function (n) { scena.appendChild(n); });
+    [ui.cv, ui.su.box, ui.giu.box, esci, audio, ui.orologio, ui.orologio2, ui.festa].forEach(function (n) { if (n) scena.appendChild(n); });
     s._contenuto.appendChild(scena);
     t.mostra(s);
     if (s.querySelector(".tab-elim")) ui.orologio.classList.add("sotto");   // nel torneo in alto a destra c'è il tasto 🏆
@@ -312,7 +327,7 @@
       ui.cv.width = Math.round(cw * dpr); ui.cv.height = Math.round(ch * dpr); ui.cw = cw; ui.ch = ch; ui.dpr = dpr;
       ui.S = Math.min((cw - 20) / W, (ch - 2 * 62) / (L + 2 * FONDO));   // il campo più grande possibile: restano solo le targhette
       ui.ox = (cw - ui.S * W) / 2; ui.oy = (ch - ui.S * L) / 2;
-      sfondo(ui); disegna(ui);
+      sfondo(ui); sprites(ui); disegna(ui);
     }
     window.addEventListener("resize", misura);
     misura();
@@ -375,7 +390,7 @@
         if (ev.palo > 0.2) sPalo(ev.palo / 2.4);
         if (fine) {
           if (g < 0) ferma(A.s);
-          ui.anim = null; ui.st = A.s; disegna(ui);
+          ui.anim = null; ui.st = ui.stDopo ? daFoto(ui.stDopo) : A.s; ui.stDopo = null; disegna(ui);   // se la foto vera è già arrivata, vale quella
           A.fatto(g, A.s);
           if (ui.zoom !== 1) gira();
           return;
@@ -389,12 +404,12 @@
       var s0 = daFoto(tiro.st);
       s0.vx[tiro.i] = tiro.vx; s0.vy[tiro.i] = tiro.vy;
       (tiro.extra || []).forEach(function (x) { s0.vx[x[0]] = x[1]; s0.vy[x[0]] = x[2]; });
-      ui.mira = null; ui.anim = { s: s0, acc: 0, passi: 0, fatto: fatto || function () {} };
+      ui.mira = null; ui.stDopo = null; ui.anim = { s: s0, acc: 0, passi: 0, fatto: fatto || function () {} };
       gira();
     };
     // aggiorna solo quello che cambia (testi, punti, orologio, posizioni da ferme)
     ui.aggiorna = function (d, testi) {
-      if (d.st && !ui.anim) ui.st = daFoto(d.st);
+      if (d.st) { if (!ui.anim) ui.st = daFoto(d.st); else ui.stDopo = d.st; }   // durante un tiro la foto si tiene per dopo
       ui.turno = d.turno; ui.fase = d.fase; ui.puoi = !!d.puoi; ui.mie = d.mie || []; ui.solo = d.solo || null;
       if (!ui.puoi) ui.mira = null;
       var g = d.gol || [0, 0];
@@ -403,40 +418,60 @@
       ui.testo = testi || { giu: "", su: "" };
       ui.scadenza = d.restoTurno != null ? Date.now() + d.restoTurno * 1000 : null;
       ui.fineTempo = d.restoPartita != null ? Date.now() + d.restoPartita * 1000 : null;
-      ui.orologio.hidden = ui.fineTempo == null;
+      ui.orologio.hidden = ui.fineTempo == null; if (ui.orologio2) ui.orologio2.hidden = ui.fineTempo == null;
+      scena.classList.toggle("tempo", ui.fineTempo != null);
       scriviTesti(); scriviOrologio();
       ui.giu.box.classList.toggle("turno", d.fase === "mira" && d.turno === qGiu);
       ui.su.box.classList.toggle("turno", d.fase === "mira" && d.turno === 1 - qGiu);
-      if (d.evento && ui.eventoVisto !== d.evento.k) { ui.eventoVisto = d.evento.k; ui.festeggia(d.evento); }
+      // la prima foto (anche di chi rientra a metà partita) non rifà festa per un avvenimento già passato
+      if (d.evento && ui.eventoVisto !== d.evento.k) { var vecchio = !ui.giaVista; ui.eventoVisto = d.evento.k; if (!vecchio) ui.festeggia(d.evento); }
+      ui.giaVista = true;
       if (!ui.anim) disegna(ui);
     };
     function scriviTesti() {
-      var giu = ui.testo.giu || "", resto = ui.scadenza ? Math.ceil((ui.scadenza - Date.now()) / 1000) : null;
+      var giu = ui.testo.giu || "", su = ui.testo.su || "", resto = ui.scadenza ? Math.ceil((ui.scadenza - Date.now()) / 1000) : null;
       if (resto != null && resto <= 10 && resto >= 0 && ui.fase === "mira" && ui.puoi) giu += " · " + resto;
+      var av = ui.avviso; if (av && Date.now() >= av.fino) av = ui.avviso = null;   // un avviso che dura poco (tempo scaduto, la formazione di Bot)
+      if (av) { if (av.q === qGiu) giu = av.txt; else su = av.txt; }
       if (ui.giu.msg.textContent !== giu) ui.giu.msg.textContent = giu;
-      if (ui.su.msg.textContent !== (ui.testo.su || "")) ui.su.msg.textContent = ui.testo.su || "";
+      if (ui.su.msg.textContent !== su) ui.su.msg.textContent = su;
     }
+    ui.avvisa = function (q, txt, ms) { ui.avviso = { q: q, txt: txt, fino: Date.now() + (ms || 2500) }; scriviTesti(); };
     function scriviOrologio() {
       if (ui.fineTempo == null) return;
       var sec = Math.max(0, Math.ceil((ui.fineTempo - Date.now()) / 1000)), txt = "⏱ " + Math.floor(sec / 60) + ":" + ("0" + sec % 60).slice(-2);
-      if (ui.orologio.textContent !== txt) ui.orologio.textContent = txt;
-      ui.orologio.classList.toggle("ultimi", sec <= 10);
+      [ui.orologio, ui.orologio2].forEach(function (n) {
+        if (!n) return;
+        if (n.textContent !== txt) n.textContent = txt;
+        n.classList.toggle("ultimi", sec <= 10);
+      });
     }
     ui.timer = setInterval(function () {
       if (!vivo()) { clearInterval(ui.timer); follaFerma(); return; }   // finita la partita: lo stadio si spegne
-      if (ui.scadenza) scriviTesti();
+      if (ui.scadenza || ui.avviso) scriviTesti();
       scriviOrologio();
       if (cb.ogniSecondo) cb.ogniSecondo();   // la partita a tempo controlla se è finito il tempo
     }, 1000);
     // gli avvenimenti grandi: gol (con l'avatar che esulta e i coriandoli), rigore parato o fuori, rigori, fine tempo
     ui.festeggia = function (e) {
+      if (e.tipo === "scaduto") { ui.avvisa(e.q, "⏰ Tempo scaduto!", 2500); return; }   // il turno è passato per tempo: basta la targhetta
       var f = ui.festa, col = e.q != null ? colore(e.q) : "#ffffff";
       while (f.firstChild) f.removeChild(f.firstChild);
-      f.className = "cb-festa";
+      f.className = "cb-festa" + (o.ruota ? " doppia" : "");
       var testo = { gol: "⚡ GOL! ⚡", parato: "PARATO!", fuori: "FUORI!", rigori: "RIGORI!", tempo: "FINE TEMPO" }[e.tipo] || "";
+      var sotto = e.tipo === "gol" && e.li ? "sulla linea!" : "";
+      var cfg = e.tipo === "gol" && e.q != null && o.omini && o.omini[e.q] && window.SGOmino ? SGOmino.svg(o.omini[e.q], { busto: true }) : null;
+      // in due sullo stesso telefono la scritta c'è due volte: una dritta e una girata per chi sta in alto
+      (o.ruota ? [true, false] : [false]).forEach(function (girata) {
+        var b = el("div", { class: "cb-festa-blocco" + (girata ? " girata" : "") });
+        if (cfg) b.appendChild(el("div", { class: "cb-festa-av", html: cfg }));
+        var scritta = el("div", { class: "cb-festa-txt", text: testo });
+        scritta.style.color = col; scritta.style.textShadow = "0 4px 0 " + NOTTE + ", 0 0 28px " + col;
+        b.appendChild(scritta);
+        if (sotto) b.appendChild(el("div", { class: "cb-festa-sotto", text: sotto }));
+        f.appendChild(b);
+      });
       if (e.tipo === "gol" && e.q != null) {
-        var cfg = o.omini && o.omini[e.q];
-        if (cfg && window.SGOmino) f.appendChild(el("div", { class: "cb-festa-av", html: SGOmino.svg(cfg, { busto: true }) }));
         for (var k = 0; k < 26; k++) {   // i coriandoli del colore della squadra
           var c = el("i", { class: "cb-cor" });
           c.style.left = Math.round(Math.random() * 100) + "%";
@@ -448,9 +483,6 @@
         }
         sGol();
       } else if (e.tipo === "parato" || e.tipo === "fuori") sUuuh();
-      var scritta = el("div", { class: "cb-festa-txt", text: testo });
-      scritta.style.color = col; scritta.style.textShadow = "0 4px 0 " + NOTTE + ", 0 0 28px " + col;
-      f.appendChild(scritta);
       void f.offsetWidth; f.classList.add("su");
     };
     return ui;
@@ -519,6 +551,28 @@
     P.forEach(function (p, k) { var px = x + p[0] * r, py = y + p[1] * r; if (k) g.lineTo(px, py); else g.moveTo(px, py); });
     g.closePath(); g.fill();
   }
+  // i calciatori disegnati una volta (per ogni misura) su piccole tele: nel giro di disegno basta incollarli
+  function sprites(ui) {
+    var r = R * ui.S, d = ui.dpr, lato = Math.ceil(r * 2.5), px = Math.ceil(lato * d);
+    function disco(q, faccia) {
+      var c = document.createElement("canvas"); c.width = px; c.height = px;
+      var g = c.getContext("2d"); g.setTransform(px / lato, 0, 0, px / lato, 0, 0);
+      var x = lato / 2, y = lato / 2;
+      g.fillStyle = "rgba(0,0,0,.28)"; g.beginPath(); g.arc(x + r * 0.12, y + r * 0.2, r, 0, Math.PI * 2); g.fill();
+      g.fillStyle = NOTTE; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+      var gd = g.createRadialGradient(x - r * 0.3, y - r * 0.35, r * 0.1, x, y, r * 0.86);
+      gd.addColorStop(0, "#ffffff"); gd.addColorStop(0.28, colore(q)); gd.addColorStop(1, q === 0 ? "#d99a00" : "#1c4fc4");
+      g.fillStyle = gd; g.beginPath(); g.arc(x, y, r * 0.84, 0, Math.PI * 2); g.fill();
+      if (faccia) {   // l'attaccante ha la faccia di chi gioca
+        g.save(); g.beginPath(); g.arc(x, y, r * 0.8, 0, Math.PI * 2); g.clip();
+        var fw = r * 1.75; try { g.drawImage(faccia, x - fw / 2, y - fw * 0.52, fw, fw * 1.022); } catch (e) {}
+        g.restore();
+      } else fulmine(g, x, y, r * 0.5, q === 0 ? NOTTE : "#ffffff");
+      return c;
+    }
+    var dischi = [disco(0, null), disco(1, null)];
+    ui.sp = { lato: lato, disco: dischi, att: [ui.facce[0] ? disco(0, ui.facce[0]) : dischi[0], ui.facce[1] ? disco(1, ui.facce[1]) : dischi[1]] };
+  }
   function disegna(ui) {
     var g = ui.ctx; if (!g || !ui.S) return;
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, ui.cv.width, ui.cv.height);
@@ -549,20 +603,11 @@
         g.beginPath(); g.moveTo(ax + ux * t0, ay + uy * t0); g.lineTo(ax + nx * t0 * 0.8, ay + ny * t0 * 0.8); g.lineTo(ax - nx * t0 * 0.8, ay - ny * t0 * 0.8); g.closePath(); g.fill(); g.stroke();
       }
     }
-    // i calciatori: disco del colore della squadra col fulmine
+    // i calciatori: immagini pronte (disco del colore della squadra col fulmine; l'attaccante con la faccia)
+    var sp = ui.sp, lato = sp ? sp.lato : 0;
     for (i = 1; i <= 10; i++) {
       var x = X(s.x[i]), y = Y(s.y[i]), r = R * S, q = squadraDi(i);
-      g.fillStyle = "rgba(0,0,0,.28)"; g.beginPath(); g.arc(x + r * 0.12, y + r * 0.2, r, 0, Math.PI * 2); g.fill();
-      g.fillStyle = NOTTE; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
-      var gd = g.createRadialGradient(x - r * 0.3, y - r * 0.35, r * 0.1, x, y, r * 0.86);
-      gd.addColorStop(0, "#ffffff"); gd.addColorStop(0.28, colore(q)); gd.addColorStop(1, q === 0 ? "#d99a00" : "#1c4fc4");
-      g.fillStyle = gd; g.beginPath(); g.arc(x, y, r * 0.84, 0, Math.PI * 2); g.fill();
-      var faccia = (i === attaccante(q)) && ui.facce[q];
-      if (faccia) {   // l'attaccante ha la faccia di chi gioca
-        g.save(); g.beginPath(); g.arc(x, y, r * 0.8, 0, Math.PI * 2); g.clip();
-        var fw = r * 1.75; g.drawImage(faccia, x - fw / 2, y - fw * 0.52, fw, fw * 1.022);
-        g.restore();
-      } else fulmine(g, x, y, r * 0.5, q === 0 ? NOTTE : "#ffffff");
+      if (sp) g.drawImage(i === attaccante(q) ? sp.att[q] : sp.disco[q], x - lato / 2, y - lato / 2, lato, lato);
       if (ui.fase === "mira" && q === ui.turno && !ui.anim && (!ui.solo || i === ui.solo)) {   // chi deve tirare: un anello che gira intorno
         g.strokeStyle = colore(q); g.lineWidth = 2.5; g.setLineDash([5, 4]);
         g.beginPath(); g.arc(x, y, r + 5, 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
@@ -613,15 +658,14 @@
     P.s = nuovoStato(P.turno, P.form);
     if (P.vince === "tempo") P.fineTempo = Date.now() + P.minuti * 60000;
     var M = { P: P };
-    function evento(tipo, q) { P.evento = { k: ++P.kEv, tipo: tipo, q: q }; }
+    function evento(tipo, q, li) { P.evento = { k: ++P.kEv, tipo: tipo, q: q }; if (li) P.evento.li = 1; }
     function chiudi(v, aiRigori) { P.fase = "fine"; P.stato = "fine"; P.vincitore = v; P.rigVinto = !!aiRigori; }
     function tempoFinito() { return P.vince === "tempo" && P.fase === "gioco" && P.fineTempo && Date.now() >= P.fineTempo; }
     function fineTempo() {   // finito il tempo: vince chi ha più gol, se è pari si va ai rigori (ritorna quanto aspettare)
       evento("tempo", null);
       if (P.gol[0] !== P.gol[1]) { chiudi(P.gol[0] > P.gol[1] ? 0 : 1); return 0; }
-      P.fase = "rigori"; P.rig = { tiri: [[], []], primo: P.primo }; P.stato = "pausa";
-      evento("rigori", null);
-      return 1800;
+      P.fase = "rigori"; P.rig = { tiri: [[], []], primo: P.primo, via: false }; P.stato = "pausa";
+      return 1800;   // prima si vede "FINE TEMPO", poi (in M.continua) "RIGORI!"
     }
     function prossimoRigore() {
       var a = P.rig.tiri[0].length, b = P.rig.tiri[1].length, q = (a + b) % 2 === 0 ? P.rig.primo : 1 - P.rig.primo;
@@ -652,7 +696,11 @@
         var dentro = g === q;
         P.rig.tiri[q].push(dentro ? 1 : 0);
         if (dentro) { P.stat[q].rigoriSegnati++; evento("gol", q); }
-        else { P.stat[1 - q].rigoriParati++; evento(fin.lt === portiere(1 - q) ? "parato" : "fuori", 1 - q); }
+        else {
+          var parato = fin.lt === portiere(1 - q);   // parato solo se l'ha toccata il portiere; se no è fuori
+          if (parato) P.stat[1 - q].rigoriParati++;
+          evento(parato ? "parato" : "fuori", 1 - q);
+        }
         P.stato = "pausa"; return 1700;
       }
       P.inizioAzione = false;
@@ -668,7 +716,7 @@
           if (u.primo) st.golPrimoTiro++;
         }
         for (var k = 0; k < 2; k++) P.stat[k].maxSotto = Math.max(P.stat[k].maxSotto, P.gol[1 - k] - P.gol[k]);
-        P.golDi = g; evento("gol", g); P.stato = "pausa";
+        P.golDi = g; evento("gol", g, fin.li); P.stato = "pausa";
         return 1800;
       }
       ferma(P.s); P.turno = 1 - P.turno; P.stato = "mira";
@@ -678,6 +726,7 @@
     M.continua = function () {
       if (P.fase === "fine") return 0;
       if (P.fase === "rigori") {
+        if (!P.rig.via) { P.rig.via = true; evento("rigori", null); return 1800; }   // dopo "FINE TEMPO": si annunciano i rigori
         var v = decisoRigori(P.rig.tiri);
         if (v >= 0) { chiudi(v, true); return 0; }
         prossimoRigore(); return 0;
@@ -693,6 +742,7 @@
     M.passa = function () {
       if (P.stato !== "mira") return 0;
       if (P.fase === "rigori") { P.rig.tiri[P.turno].push(0); evento("fuori", 1 - P.turno); P.stato = "pausa"; return 1700; }
+      evento("scaduto", P.turno);   // un avviso piccolo nella targhetta di chi non ha tirato
       P.turno = 1 - P.turno; return tempoFinito() ? fineTempo() : 0;
     };
     // ogni secondo: è finito il tempo mentre si mira? (0 = niente, -1 = chiusa, >0 = attesa prima dei rigori)
@@ -722,12 +772,17 @@
     return parti.join(" · ");
   }
   // i contatori dei trofei, a fine partita, per chi ha il profilo su questo telefono (q = la sua squadra)
-  // P = { stat, vincitore, gol, form, vince, rigVinto }; c = { modo: "bot" | "telefono" | "online", liv }
+  // P = { stat, vincitore, gol, form, vince, rigVinto, ritiro }; c = { modo: "bot" | "telefono" | "online", liv }
   function salvaStat(P, q, c) {
     try {
       if (!(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
       if (!P || !P.stat || !P.stat[q] || P.vincitore == null) return;
+      // in due sullo stesso telefono si potrebbe giocare da soli per tutte e due le squadre: conta solo la partita giocata
+      if (c.modo === "telefono") { SGNube.salvaProgressi(null, ID, [["partite", 1]]); return; }
       var st = P.stat[q], vinto = P.vincitore === q, mie = P.gol[q], loro = P.gol[1 - q], x = { partite: 1 };
+      // l'avversario è uscito: è una vittoria vera solo se eri avanti (niente trofei "a tavolino"); la serie non si rompe
+      var aTavolino = !!P.ritiro && vinto && mie <= loro;
+      if (aTavolino) vinto = false;
       ["golFatti", "golSubiti", "autogol", "golAttaccante", "golSponda", "golPalo", "golLontano", "golPrimoTiro", "pali", "rigoriSegnati", "rigoriParati"].forEach(function (k) { x[k] = st[k] || 0; });
       if (vinto) {
         x.vittorie = 1;
@@ -741,7 +796,7 @@
         if (st.maxSotto >= 2) x.rimonte = 1;
         if (c.modo === "bot" && c.liv === "difficile" && loro === 0 && mie >= 3) x.cappotti_difficile = 1;
       }
-      var s0 = (SGNube.statGioco && SGNube.statGioco(ID)) || {}, serie = vinto ? (s0.serieOra || 0) + 1 : 0;
+      var s0 = (SGNube.statGioco && SGNube.statGioco(ID)) || {}, serie = vinto ? (s0.serieOra || 0) + 1 : (aTavolino ? (s0.serieOra || 0) : 0);
       var incrs = []; for (var k in x) if (x[k]) incrs.push([k, x[k]]);
       SGNube.salvaProgressi(null, ID, incrs, [["serieMax", serie], ["golPartitaMax", mie]], [["serieOra", serie]]);
     } catch (e) {}
@@ -756,12 +811,12 @@
     var nomi = bot ? [g0[0] || "Tu", "Bot"] : [g0[0] || "Giocatore 1", g0[1] || "Giocatore 2"];
     var omini = [t.mioOmino ? t.mioOmino(nomi[0]) : null, window.SGOmino ? SGOmino.casuale(nomi[1]) : null];
     var chi = { mie: bot ? [0] : [0, 1], bot: bot ? 1 : -1 };
-    var primo = 0, M = null, ui = null, tm = null;
-    function via() { if (tm) { clearTimeout(tm); tm = null; } }
+    var primo = 0, M = null, ui = null, tm = null, pensa = 0;
+    function via() { if (tm) { clearTimeout(tm); tm = null; } pensa++; }   // pensa++: se Bot stava pensando, la sua scelta non vale più
     window.__CB.locale = function () { return M && M.P; };   // per le prove
     var cb = {
       onTiro: function (i, vx, vy) { if (M && (!bot || M.P.turno === 0)) tira(i, vx, vy); },
-      onEsci: function () { if (M && M.P.fase !== "fine" && !window.confirm("Uscire dalla partita?")) return; via(); t.esci(); },
+      onEsci: function () { if (M && M.P.fase !== "fine" && !window.confirm("Uscire dalla partita?")) return; via(); follaFerma(); t.esci(); },
       ogniSecondo: function () { if (!M || tm) return; var r = M.controllaTempo(); if (r) avanti(r > 0 ? r : 0); }
     };
     // la foto anche per chi guarda (torneo a eliminazione: gli altri vedono la partita col bot)
@@ -776,7 +831,9 @@
       var form = [imp.form || "classica", bot ? NOMI_FORM[Math.floor(Math.random() * NOMI_FORM.length)] : (imp.form2 || "classica")];   // Bot sceglie a caso
       M = creaMotore({ vince: imp.vince, gol: imp.gol, minuti: imp.minuti, form: form, primo: primo });
       ui = creaSchermo(t, cb, { flip: false, ruota: !bot, nomi: nomi, omini: omini });
-      aggiorna(); segui();
+      aggiorna();
+      if (bot) ui.avvisa(1, "Formazione: " + nomeForm(form[1]), 4000);   // la formazione che ha scelto Bot
+      segui();
     }
     function tira(i, vx, vy) {
       var tiro = M.tira(M.P.turno, i, vx, vy); if (!tiro) return;
@@ -793,11 +850,14 @@
       if (M.P.fase === "fine") return fine();
       if (bot && M.P.turno === 1 && M.P.stato === "mira") {
         via();
+        var mio = pensa, Mb = M;
         tm = setTimeout(function () {
           tm = null;
           if (M.P.stato !== "mira" || M.P.turno !== 1) return;
-          var c = sceltaBot(M.P.s, 1, liv, M.solo());
-          tira(c.i, Math.cos(c.a) * VMAX * c.p, Math.sin(c.a) * VMAX * c.p);
+          sceltaBot(copia(M.P.s), 1, liv, M.solo(), function (c) {   // Bot pensa a pezzetti: lo schermo non si blocca
+            if (mio !== pensa || Mb !== M || M.P.stato !== "mira" || M.P.turno !== 1 || !document.body.contains(ui.cv)) return;
+            tira(c.i, Math.cos(c.a) * VMAX * c.p, Math.sin(c.a) * VMAX * c.p);
+          });
         }, 900);
       }
     }
@@ -814,7 +874,7 @@
         finale(t, { vincitore: v, nomi: nomi, gol: P.gol, mia: bot ? 0 : null, rig: P.rig, rigVinto: P.rigVinto }, [
           t.el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { primo = 1 - primo; inizia(); } }),
           t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: t.esci })]);
-      }, 700);
+      }, P.evento && P.evento.tipo === "tempo" ? 1700 : 700);   // il fischio finale si vede tutto
     }
     inizia();
   }
@@ -843,17 +903,24 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var imp = t.impostazioni || {};
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
-    var H = { fase: "lobby", codice: "…", pronta: false, primo: 0, M: null, ritiro: false, scade: 0, to: null,
-      opz: { vince: imp.vince === "tempo" ? "tempo" : "gol", gol: imp.gol || 3, minuti: imp.minuti || 3 }, form: [formOk(imp.form), "classica"],
+    var H = { fase: "lobby", codice: "…", pronta: false, primo: 0, M: null, ritiro: false, scade: 0, to: null, tiroN: 0, partita: "", formDi: null,
+      opz: { vince: imp.vince === "tempo" ? "tempo" : "gol", gol: imp.gol || 3, minuti: imp.minuti || 3 }, form: [formOk(imp.form), "classica"], formImp: imp.form,
       players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost) }], spett: [] };
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function guarda(id) { return H.spett.some(function (x) { return x.id === id; }); }
     function fermaTimer() { if (H.to) { clearTimeout(H.to); H.to = null; } }
+    // in saletta, se un posto è libero, il primo che guardava diventa giocatore
+    function riempi() {
+      while (H.fase === "lobby" && H.players.length < MAX && H.spett.length) {
+        var x = H.spett.shift(); H.players.push({ id: x.id, nome: x.nome, omino: x.omino || null });
+      }
+    }
 
     t.onRegole = function (im) {
       if (H.fase !== "lobby") return;
       H.opz = { vince: im.vince === "tempo" ? "tempo" : "gol", gol: im.gol || 3, minuti: im.minuti || 3 };
-      if (im.form) H.form[0] = formOk(im.form);
+      // la formazione delle regole vale solo se l'host l'ha cambiata lì (se no resta quella scelta in saletta)
+      if (im.form && im.form !== H.formImp) { H.formImp = im.form; H.form[0] = formOk(im.form); }
       bd();
     };
     var rete = SGNet.ospita(ID, {
@@ -862,7 +929,7 @@
       onAddio: function (id) {
         if (guarda(id)) { H.spett = H.spett.filter(function (x) { return x.id !== id; }); bd(); return; }
         var p = pById(id); if (!p) return;
-        if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
+        if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); riempi(); bd(); return; }
         p.via = true;
         if (H.fase === "gioco") return fineRitiro();   // l'avversario se n'è andato: vince l'host
         bd();
@@ -872,8 +939,9 @@
         if (m.t === "join") {
           if (!pById(id) && !guarda(id)) {
             if (H.fase === "lobby" && H.players.length < MAX) H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino) });
-            else if (H.spett.length < 12) H.spett.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16) });   // posti presi: guarda
+            else if (H.spett.length < 12) H.spett.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino) });   // posti presi: guarda
           }
+          riempi();   // chi guardava e trova un posto libero in saletta, gioca
           bd();   // anche se c'era già: rimanda la foto (serve a chi si ricollega)
           return;
         }
@@ -884,7 +952,7 @@
       }
     });
     function vm() {
-      var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, opz: H.opz, form: H.form.slice(), ritiro: H.ritiro,
+      var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, opz: H.opz, form: H.form.slice(), ritiro: H.ritiro, partita: H.partita,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, via: !!p.via, omino: p.omino || null }; }),
         spett: H.spett.map(function (x) { return { id: x.id, nome: x.nome }; }) };
       if (H.M && H.fase !== "lobby") {
@@ -895,17 +963,26 @@
       }
       return v;
     }
-    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); disegnaOnline(t, v, cbHost); }
+    function bd() {
+      // è cambiato chi ha i blu (uno è uscito, uno che guardava ha preso il posto): riparte dalla formazione Classica
+      var blu = H.players[1] ? H.players[1].id : null;
+      if (blu !== H.formDi) { H.formDi = blu; H.form[1] = "classica"; }
+      var v = vm(); rete.invia({ t: "vm", vm: v }); disegnaOnline(t, v, cbHost); }
 
     function comincia() {
       if (H.fase !== "lobby" || H.players.length < MIN) return;
       H.M = creaMotore({ vince: H.opz.vince, gol: H.opz.gol, minuti: H.opz.minuti, form: H.form, primo: H.primo });
-      H.fase = "gioco"; H.ritiro = false;
+      H.fase = "gioco"; H.ritiro = false; H.fischio = false;
+      H.partita = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);   // un nome che non si ripete: i trofei si salvano una volta sola
       nuovoTurno();
     }
     function nuovoTurno() {   // tocca a qualcuno: 30 secondi per tirare
       fermaTimer();
-      if (H.M.P.fase === "fine") return fine();
+      if (H.M.P.fase === "fine") {
+        var ev = H.M.P.evento;   // finita col fischio: prima si vede "FINE TEMPO", poi il risultato
+        if (ev && ev.tipo === "tempo" && !H.fischio) { H.fischio = true; bd(); H.to = setTimeout(function () { H.to = null; if (H.fase === "gioco") fine(); }, 1700); return; }
+        return fine();
+      }
       if (H.M.P.stato === "mira") {
         H.scade = Date.now() + TEMPO * 1000;
         H.to = setTimeout(function () { H.to = null; if (H.fase === "gioco" && H.M.P.stato === "mira") avanti(H.M.passa()); }, TEMPO * 1000);
@@ -918,12 +995,14 @@
       fermaTimer();
       rete.inviaVeloce(tiro);   // tutti rivedono lo stesso tiro
       bd();
-      if (UI && document.body.contains(UI.cv)) UI.anima(tiro, function (g, fin) { avanti(H.M.dopo(g, fin)); });
-      else {
-        var s1 = daFoto(tiro.st); s1.vx[i] = tiro.vx; s1.vy[i] = tiro.vy;
-        (tiro.extra || []).forEach(function (x) { s1.vx[x[0]] = x[1]; s1.vy[x[0]] = x[2]; });
-        var g1 = simula(s1); avanti(H.M.dopo(g1, s1));
-      }
+      // il risultato vero si calcola subito (anche se l'app va in sottofondo, la partita non si ferma);
+      // l'animazione è solo da guardare. Vale il primo che arriva: la fine dell'animazione o il tempo del tiro
+      var s1 = daFoto(tiro.st); s1.vx[i] = tiro.vx; s1.vy[i] = tiro.vy;
+      (tiro.extra || []).forEach(function (x) { s1.vx[x[0]] = x[1]; s1.vy[x[0]] = x[2]; });
+      var g1 = simula(s1), n = ++H.tiroN, fatto = false, Mt = H.M;
+      function finito() { if (fatto || n !== H.tiroN || Mt !== H.M || H.fase !== "gioco") return; fatto = true; avanti(H.M.dopo(g1, s1)); }
+      if (UI && document.body.contains(UI.cv)) UI.anima(tiro, finito);
+      setTimeout(finito, Math.round(s1.passi * DT * 1000) + 250);
     }
     function avanti(ms) {
       if (ms > 0) { fermaTimer(); bd(); H.to = setTimeout(function () { H.to = null; avanti(H.M.continua() || 0); }, ms); return; }
@@ -937,11 +1016,12 @@
     }
     function fineRitiro() {
       fermaTimer(); if (!H.M) return;
-      var P = H.M.P; P.fase = "fine"; P.stato = "fine"; P.vincitore = 0; H.ritiro = true;
+      var P = H.M.P;
+      if (P.fase !== "fine") { P.fase = "fine"; P.stato = "fine"; P.vincitore = 0; P.ritiro = true; H.ritiro = true; }   // se era già finita (fischio), vale il risultato vero
       fine();
     }
-    // "Nuova partita": stessa stanza, stessi amici, si torna nella saletta (batte l'altro)
-    function nuova() { fermaTimer(); H.fase = "lobby"; H.primo = 1 - H.primo; H.M = null; H.players = H.players.filter(function (p) { return !p.via; }); bd(); }
+    // "Nuova partita": stessa stanza, stessi amici, si torna nella saletta (batte l'altro); chi guardava prende il posto libero
+    function nuova() { fermaTimer(); H.fase = "lobby"; H.primo = 1 - H.primo; H.M = null; H.players = H.players.filter(function (p) { return !p.via; }); riempi(); bd(); }
 
     var cbHost = { sonoHost: true, myId: "host", onComincia: comincia, onNuova: nuova,
       onForm: function (f) { if (H.fase === "lobby") { H.form[0] = formOk(f); bd(); } },
@@ -949,7 +1029,7 @@
       ogniSecondo: function () { if (H.fase !== "gioco" || !H.M || H.to && H.M.P.stato !== "mira") return; var r = H.M.controllaTempo(); if (r) avanti(r > 0 ? r : 0); },
       onEsci: function () {
         if (H.fase === "gioco" && !window.confirm("Chiudere la partita per tutti?")) return;
-        fermaTimer(); rete.chiudi(); t.esci();
+        fermaTimer(); H.tiroN++; follaFerma(); rete.chiudi(); t.esci();
       } };
     bd();
   }
@@ -966,7 +1046,7 @@
       onForm: function (f) { if (S.rete) S.rete.invia({ t: "form", f: f }); },
       onEsci: function () {
         if (S.vm && S.vm.fase === "gioco" && miaSquadra(S.vm, cb) >= 0 && !window.confirm("Uscire dalla partita?")) return;
-        if (S.rete) S.rete.chiudi(); t.esci();
+        follaFerma(); if (S.rete) S.rete.chiudi(); t.esci();
       } };
     if (t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
     function chiediNome() {
@@ -994,7 +1074,7 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var S = { rete: null, myId: null, vm: null, anim: false, attesa: null, ultimoN: 0 };
     var cb = { sonoHost: false, myId: null, guarda: true, onTiro: function () {},
-      onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } };
+      onEsci: function () { follaFerma(); if (S.rete) S.rete.chiudi(); t.esci(); } };
     attesaSchermo(t, "👀 Mi collego alla partita…", codice);
     S.rete = SGNet.entra(codice, {
       onMsg: function (m) {
@@ -1013,10 +1093,17 @@
       if (S.anim) S.attesa = m.vm;
       else { S.vm = m.vm; disegnaOnline(t, m.vm, cb); }
     } else if (m.t === "tiro" && m.n > S.ultimoN && UI && document.body.contains(UI.cv) && S.vm && S.vm.fase === "gioco") {
-      S.ultimoN = m.n; S.anim = true;
+      S.ultimoN = m.n;
+      // il tiro è partito: via "Tocca a te" dalle targhette (prima di animare, così il campo non salta indietro)
+      if (S.vm.stato === "mira") { var vt = {}, k; for (k in S.vm) vt[k] = S.vm[k]; vt.stato = "moto"; vt.st = m.st; disegnaOnline(t, vt, cb); }
+      S.anim = true;
       UI.anima(m, function () {   // finito il tiro: mi allineo alla foto dell'host
         S.anim = false;
-        if (S.attesa) { var v = S.attesa; S.attesa = null; S.vm = v; disegnaOnline(t, v, cb); }
+        if (!S.attesa) return;
+        var v = S.attesa; S.attesa = null; S.vm = v;
+        // la foto di quando il tiro era appena partito non serve: aspetto quella col risultato (niente salto indietro)
+        if (v.fase === "gioco" && v.stato === "moto" && v.n === m.n) return;
+        disegnaOnline(t, v, cb);
       });
     }
   }
@@ -1036,7 +1123,7 @@
     if (vm.fase === "fine") {
       UI = null;
       var chiave = codiceDi(vm);
-      if (me >= 0 && !cb.sonoHost && vm.stat && cb.salvate !== chiave) { cb.salvate = chiave; salvaStat(vm, me, { modo: "online" }); }   // i miei trofei
+      if (me >= 0 && !cb.sonoHost && vm.stat && !giaSalvata(chiave)) salvaStat(vm, me, { modo: "online" });   // i miei trofei (una volta sola, anche se ricarico la pagina)
       var nota = vm.ritiro ? "L'avversario è uscito dalla partita." : (cb.guarda ? "Tra poco si torna al tabellone…" : (cb.sonoHost ? "" : "Se l'host fa un'altra partita, torni da solo nella saletta."));
       return finale(t, { vincitore: vm.vincitore, nomi: nomi, gol: vm.gol, mia: me >= 0 ? me : null, rig: vm.rig, rigVinto: vm.rigVinto }, [
         cb.sonoHost ? t.el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }) : null,
@@ -1048,7 +1135,17 @@
     UI.aggiorna({ st: vm.st, gol: vm.gol, turno: vm.turno, fase: vm.stato, mie: chi.mie, solo: vm.solo, restoTurno: vm.restoTurno, restoPartita: vm.restoPartita,
       evento: vm.evento, puoi: me >= 0 && vm.stato === "mira" && vm.turno === me }, { giu: riga(vm, qGiu, chi), su: riga(vm, 1 - qGiu, chi) });
   }
-  function codiceDi(vm) { return (vm.codice || "") + "-" + vm.n + "-" + (vm.gol || []).join(":"); }
+  function codiceDi(vm) { return (vm.codice || "") + "-" + (vm.partita || "") + "-" + vm.n + "-" + (vm.gol || []).join(":"); }
+  // le partite online già salvate da questo telefono (le ultime 30): ricaricando la pagina sulla fine non si contano due volte
+  var CHIAVE_SALVATE = "sg-cb-salvate", salvateQui = [];
+  function giaSalvata(k) {
+    var l = salvateQui;
+    try { l = JSON.parse(localStorage.getItem(CHIAVE_SALVATE) || "[]"); if (!Array.isArray(l)) l = []; } catch (e) { l = salvateQui; }
+    if (l.indexOf(k) >= 0 || salvateQui.indexOf(k) >= 0) return true;
+    l.push(k); salvateQui.push(k); l = l.slice(-30);
+    try { localStorage.setItem(CHIAVE_SALVATE, JSON.stringify(l)); } catch (e) {}
+    return false;
+  }
   function lobby(t, vm, cb) {
     var el = t.el, me = miaSquadra(vm, cb), o = vm.opz || {}, extra = [];
     extra.push(el("p", { class: "modulo-nota", text: "In due: chi apre la stanza ha i gialli, chi entra i blu. " +
@@ -1068,7 +1165,7 @@
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN,
       vuoti: Math.max(0, MIN - vm.players.length),
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
-      extra: extra, attesa: me >= 0 ? "Aspetta che l'host cominci!" : "👀 I due posti sono presi: guarderai la partita in diretta.",
+      extra: extra, attesa: me >= 0 ? "Aspetta che l'host cominci!" : (vm.players.length >= MAX ? "👀 I due posti sono presi: guarderai la partita in diretta." : "Entro nella partita…"),
       onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
   function errore(t, testo) {
@@ -1103,6 +1200,12 @@
       ".cb-orologio.sotto{top:calc(50px + env(safe-area-inset-top))}",
       ".cb-orologio.ultimi{color:#ffcc1f;box-shadow:0 0 0 2px #ffcc1f,0 0 14px 2px rgba(255,204,31,.6);animation:cbBatte 1s ease infinite}",
       "@keyframes cbBatte{50%{transform:scale(1.08)}}",
+      // l'orologio girato per chi sta in alto (in due sullo stesso telefono): nel suo angolo in alto a destra
+      ".cb-orologio.girato{top:auto;right:auto;bottom:calc(10px + env(safe-area-inset-bottom));left:10px;transform:rotate(180deg)}",
+      ".cb-orologio.girato.ultimi{animation-name:cbBatte2}",
+      "@keyframes cbBatte2{0%,100%{transform:rotate(180deg)}50%{transform:rotate(180deg) scale(1.08)}}",
+      // con l'orologio le targhette lasciano posto ai lati
+      ".cb-scena.tempo .cb-targa.su,.cb-scena.tempo.ruota .cb-targa{max-width:calc(100% - 196px)}",
       // la targhetta di ognuno: avatar piccolo, nome, messaggio e i suoi gol
       ".cb-targa{position:absolute;left:50%;transform:translateX(-50%);max-width:calc(100% - 112px);display:flex;align-items:center;gap:8px;padding:3px 4px 3px 3px;border-radius:999px;pointer-events:none;",
       "background:rgba(8,13,36,.82);box-shadow:0 0 0 2px rgba(255,255,255,.12);transition:box-shadow .25s}",
@@ -1121,6 +1224,13 @@
       ".cb-festa{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0}",
       ".cb-festa.su{animation:cbFesta 1.9s ease forwards}",
       "@keyframes cbFesta{0%{opacity:0}10%{opacity:1}82%{opacity:1}100%{opacity:0}}",
+      ".cb-festa-blocco{display:flex;flex-direction:column;align-items:center;justify-content:center}",
+      ".cb-festa.doppia{justify-content:space-around}",
+      ".cb-festa.doppia .cb-festa-blocco{flex:1;min-height:0}",
+      ".cb-festa-blocco.girata{transform:rotate(180deg)}",
+      ".cb-festa.doppia .cb-festa-av{width:84px;height:86px}",
+      ".cb-festa.doppia .cb-festa-txt{font-size:clamp(2rem,10vw,3.4rem)}",
+      ".cb-festa-sotto{font-weight:900;font-size:1.3rem;color:#fff;text-shadow:0 3px 0 #0d1533;animation:cbScritta .5s cubic-bezier(.2,1.6,.4,1)}",
       ".cb-festa-av{width:120px;height:122px;border-radius:50%;overflow:hidden;background:radial-gradient(circle,rgba(255,255,255,.35),rgba(255,255,255,0) 70%);animation:cbSalta .5s ease-in-out 3 alternate}",
       ".cb-festa-av svg{width:100%;height:100%;display:block}",
       "@keyframes cbSalta{from{transform:translateY(0) scale(1)}to{transform:translateY(-26px) scale(1.06)}}",
@@ -1147,18 +1257,19 @@
       "I calciatori colpiscono la palla e gli altri calciatori e <b>rimbalzano sui bordi</b>. Fai entrare la palla nella porta avversaria! L'<b>attaccante</b> ha la tua faccia.",
       "Dopo un gol si riparte dal centro: batte chi ha preso gol. Si vince arrivando per primi ai <b>gol scelti</b>, oppure nella <b>partita a tempo</b> con più gol allo scadere.",
       "Se la partita a tempo finisce pari si va ai <b>rigori</b>: 3 a testa (poi a oltranza). Tira solo l'attaccante, il portiere si tuffa a caso.",
-      "Prima di cominciare scegli la <b>formazione</b>: Classica, Catenaccio (più difesa) o All'attacco.",
-      "Online hai <b>30 secondi</b> per tirare, poi tocca all'altro. Chi entra quando i due posti sono presi guarda la partita in diretta."
+      "Se la palla si ferma <b>oltre la linea di porta</b> (per più di metà), è gol lo stesso: gol sulla linea!",
+      "Prima di cominciare scegli la <b>formazione</b>: Classica, Catenaccio (più difesa), All'attacco, Rombo o Muro (tre difensori in fila davanti alla porta).",
+      "Online hai <b>30 secondi</b> per tirare, poi tocca all'altro. Chi entra quando i due posti sono presi guarda la partita in diretta (e gioca la prossima, se si libera un posto)."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
       dove.modo = aiuti.modo || "bot"; dove.vince = "gol"; dove.gol = 3; dove.minuti = 3; dove.difficolta = "medio";
       dove.form = "classica"; dove.form2 = "classica"; dove.torneo = !!aiuti.torneo;
       if (aiuti.torneo) { dove.modo = "telefono"; return; }
-      function chips(etichetta, scelte, chiave, val, dentro) {
+      function chips(etichetta, scelte, chiave, val, colonne) {
         var w = el("div", {});
         w.appendChild(el("div", { class: "etichetta", style: "margin-top:8px", text: etichetta }));
-        var g = el("div", { class: "modo-griglia", style: "grid-template-columns:repeat(" + scelte.length + ",1fr)" });
+        var g = el("div", { class: "modo-griglia", style: "grid-template-columns:repeat(" + (colonne || scelte.length) + ",1fr)" });
         scelte.forEach(function (c) {
           var b = el("button", { class: "modo-chip" + (c[0] === val ? " attiva" : ""), style: "justify-content:center;text-align:center", onclick: function () {
             dove[chiave] = c[0]; [].forEach.call(g.children, function (x) { x.className = "modo-chip"; }); b.className = "modo-chip attiva";
@@ -1166,7 +1277,7 @@
           } }, [el("div", { class: "mt", text: c[1] })]);
           g.appendChild(b);
         });
-        w.appendChild(g); (dentro || box).appendChild(w);
+        w.appendChild(g); box.appendChild(w);
         return w;
       }
       var aGol, aTempo;
@@ -1174,9 +1285,12 @@
       aGol = chips("Si gioca fino a", [[1, "1 gol"], [3, "3 gol"], [5, "5 gol"]], "gol", 3);
       aTempo = chips("Quanto dura (se è pari, rigori)", [[2, "2 minuti"], [3, "3 minuti"], [5, "5 minuti"]], "minuti", 3);
       aTempo.hidden = true;
-      var forme = NOMI_FORM.map(function (k) { return [k, FORMAZIONI[k].icona + " " + FORMAZIONI[k].nome]; });
-      if (dove.modo === "telefono") { chips("Formazione dei gialli", forme, "form", "classica"); chips("Formazione dei blu", forme, "form2", "classica"); }
-      else if (!aiuti.sala) chips(dove.modo === "online" ? "La tua formazione (la cambi anche in saletta)" : "La tua formazione", forme, "form", "classica");
+      var forme = NOMI_FORM.map(function (k) { return [k, nomeForm(k)]; });
+      if (dove.modo === "telefono") {   // il primo della lista ha i gialli (sotto), il secondo i blu (in alto)
+        chips("🟡 Gialli: il primo della lista (sta sotto)", forme, "form", "classica", 3);
+        chips("🔵 Blu: il secondo della lista (sta in alto)", forme, "form2", "classica", 3);
+      }
+      else if (!aiuti.sala) chips(dove.modo === "online" ? "La tua formazione (la cambi anche in saletta)" : "La tua formazione", forme, "form", "classica", 3);
       if (dove.modo === "bot") chips("Bravura di Bot", [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]], "difficolta", "medio");
     },
     avvia: function (t) {

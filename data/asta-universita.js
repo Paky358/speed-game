@@ -26,13 +26,21 @@
         { nome: "Flashcard Fatte a Mano per Ogni Capitolo", emoji: "🗂️" },
         { nome: "Sveglia alle Sei per Studiare col Cervello Fresco", emoji: "⏰" },
         { nome: "Tre Fotocopie delle Domande d'Esame degli Anni Prima", emoji: "📄" },
-        { nome: "Il Quaderno degli Errori da Non Ripetere", emoji: "📓" }
+        { nome: "Il Quaderno degli Errori da Non Ripetere", emoji: "📓" },
+        { nome: "Mappa Concettuale Perfetta", emoji: "🗺️" },
+        { nome: "Lezioni Registrate e Riascoltate con Calma", emoji: "🎧" },
+        { nome: "Ripasso a Blocchi di 25 Minuti con le Pause", emoji: "🍅" },
+        { nome: "In Biblioteca Ogni Giorno alla Stessa Ora", emoji: "📚" },
+        { nome: "Esercizi Svolti Tutti Due Volte", emoji: "✅" },
+        { nome: "Le Domande dell'Anno Scorso Ripetute a Voce", emoji: "🗣️" },
+        { nome: "Il Gruppo di Studio Serio e Puntuale", emoji: "👥" },
+        { nome: "Otto Ore di Sonno la Notte Prima", emoji: "🛌" }
       ],
       B: [
         { nome: "Nottata in Bianco a Caffè ed Energy Drink", emoji: "☕" },
         { nome: "Riassunti dei Riassunti Presi Online", emoji: "🌐" },
         { nome: "Audio delle Lezioni Ascoltato a Velocità Doppia", emoji: "⏩" },
-        { nome: "Studiato in Gruppo Cazzeggiando", emoji: "🎲" },
+        { nome: "Studiato in Gruppo Chiacchierando", emoji: "🎲" },
         { nome: "Imparato Solo l'Indice e i Titoli", emoji: "📑" },
         { nome: "Bignami Comprato il Giorno Prima", emoji: "📕" },
         { nome: "Letto il Libro una Sola Volta", emoji: "📖" },
@@ -46,7 +54,13 @@
         { nome: "Gli Appunti Presi da un Compagno Assente Pure Lui", emoji: "🫥" },
         { nome: "Il Riassunto su TikTok di Tre Minuti", emoji: "📱" },
         { nome: "Studiato Solo gli Argomenti che Ti Stavano Simpatici", emoji: "💛" },
-        { nome: "La Sessione di Studio Interrotta dal Gruppo Amici", emoji: "📵" }
+        { nome: "La Sessione di Studio Interrotta dal Gruppo Amici", emoji: "📵" },
+        { nome: "Studiato Solo i Capitoli Più Corti", emoji: "📏" },
+        { nome: "Appunti Scritti di Fretta", emoji: "📝" },
+        { nome: "Ripassato in Treno", emoji: "🚆" },
+        { nome: "Video Spiegazioni Trovate Online", emoji: "💻" },
+        { nome: "Riletto Tutto ma Senza Ripetere", emoji: "👀" },
+        { nome: "Studiato con la Musica Troppo Alta", emoji: "🔊" }
       ],
       C: [
         { nome: "Non hai Aperto Libro", emoji: "📦" },
@@ -62,7 +76,13 @@
         { nome: "Hai Studiato sul Gruppo Sbagliato di WhatsApp", emoji: "💬" },
         { nome: "Il Riassunto Perso per un Telefono Rotto", emoji: "💢" },
         { nome: "Hai Studiato Ubriaco di Fiducia in Te Stesso", emoji: "😎" },
-        { nome: "Ti Sei Addormentato sul Libro Aperto alla Prima Pagina", emoji: "😴" }
+        { nome: "Ti Sei Addormentato sul Libro Aperto alla Prima Pagina", emoji: "😴" },
+        { nome: "Hai Studiato la Materia di un Altro Corso", emoji: "🔀" },
+        { nome: "Il Gatto ha Dormito sul Libro per Tre Giorni", emoji: "🐈" },
+        { nome: "Solo Riassunti Colorati, Mai Riletti", emoji: "🖍️" },
+        { nome: "La Sveglia Non è Suonata", emoji: "⏰" },
+        { nome: "Hai Prestato il Libro e Non Te l'Hanno Ridato", emoji: "📕" },
+        { nome: "Letta Solo la Prima Pagina di Ogni Capitolo", emoji: "1️⃣" }
       ]
     },
     {
@@ -81,7 +101,15 @@
         { nome: "Il Prof in Vacanza con la Testa Altrove", emoji: "🏖️" },
         { nome: "La Commissione che Ride e Scherza tra Loro", emoji: "😄" },
         { nome: "Il Prof che Conosce Tuo Padre", emoji: "👨‍👦" },
-        { nome: "Quello che ti Dà Scelta tra Due Domande", emoji: "🤝" }
+        { nome: "Quello che ti Dà Scelta tra Due Domande", emoji: "🤝" },
+        { nome: "Il Prof che Chiede Solo Quello Spiegato a Lezione", emoji: "🎯" },
+        { nome: "La Prof Simpatica che Fa Battute", emoji: "😄" },
+        { nome: "Il Prof che Premia Chi Ha Frequentato", emoji: "🙋" },
+        { nome: "L'Assistente che Ti Suggerisce con lo Sguardo", emoji: "👀" },
+        { nome: "Il Prof Felice Perché Domani Parte per le Ferie", emoji: "🏖️" },
+        { nome: "Il Prof che Ti Lascia Mezz'Ora per Pensare", emoji: "⏳" },
+        { nome: "La Prof Appena Diventata Nonna", emoji: "👶" },
+        { nome: "Il Prof che Arrotonda Sempre per Eccesso", emoji: "⬆️" }
       ],
       B: [
         { nome: "Il Prof Pignolo ma Giusto", emoji: "🧐" },
@@ -101,7 +129,13 @@
         { nome: "Quello che ti Chiede se Hai Seguito le Lezioni", emoji: "🙋" },
         { nome: "La Prof che Cambia Idea Ogni Cinque Minuti", emoji: "🔄" },
         { nome: "Il Prof Giovane che Vuole Farsi Rispettare", emoji: "💼" },
-        { nome: "Quello che Sospira Dopo Ogni Risposta", emoji: "😮‍💨" }
+        { nome: "Quello che Sospira Dopo Ogni Risposta", emoji: "😮‍💨" },
+        { nome: "Il Prof che Interroga Solo in Inglese", emoji: "🇬🇧" },
+        { nome: "L'Assistente che Legge le Domande dal Foglio", emoji: "📄" },
+        { nome: "L'Esame in Videochiamata con la Linea che Salta", emoji: "📶" },
+        { nome: "La Prof che Vuole le Date Precise", emoji: "📅" },
+        { nome: "Il Prof che Fa Disegnare Grafici alla Lavagna", emoji: "📈" },
+        { nome: "Il Prof che Fa Domande a Tutta l'Aula", emoji: "🗣️" }
       ],
       C: [
         { nome: "Il Barone Intoccabile e Spietato", emoji: "👑" },
@@ -117,7 +151,13 @@
         { nome: "Quello che Ricorda un Torto Ricevuto da un Tuo Compagno", emoji: "😤" },
         { nome: "La Prof Appena Lasciata dal Fidanzato", emoji: "💔" },
         { nome: "Il Prof Esperto Solo della Sua Materia di Nicchia", emoji: "🔬" },
-        { nome: "Quello che ti Guarda come se Avessi Copiato", emoji: "👀" }
+        { nome: "Quello che ti Guarda come se Avessi Copiato", emoji: "👀" },
+        { nome: "Il Prof che Dice 'Il Trenta Non Esiste'", emoji: "🚫" },
+        { nome: "Quello che Boccia il Lunedì Mattina per Principio", emoji: "📆" },
+        { nome: "Il Prof che Ha Perso il Tuo Compito Scritto", emoji: "🗑️" },
+        { nome: "La Commissione Tutta di Cattivo Umore", emoji: "😠" },
+        { nome: "Il Prof che Ti Interroga Mentre Mangia", emoji: "🥪" },
+        { nome: "Il Prof che Non Ti Ha Mai Visto a Lezione", emoji: "🕵️" }
       ]
     },
     {
@@ -136,7 +176,15 @@
         { nome: "Il Discorso Infinito che Sfianca il Prof", emoji: "🥱" },
         { nome: "L'Amica Timida che il Prof Tratta coi Guanti", emoji: "🧤" },
         { nome: "Quello che Fa una Battuta Rompighiaccio Perfetta", emoji: "🧊" },
-        { nome: "Il Compagno Ansioso che Fa Sembrare Tranquillo Anche Te", emoji: "😰" }
+        { nome: "Il Compagno Ansioso che Fa Sembrare Tranquillo Anche Te", emoji: "😰" },
+        { nome: "Quello che Prende 30 e Lode e Mette il Prof di Buon Umore", emoji: "🏆" },
+        { nome: "L'Amica che Ti Presta la Penna Fortunata", emoji: "🖊️" },
+        { nome: "Quello che Ti Dice Esattamente Cosa Chiede", emoji: "📋" },
+        { nome: "Quello che Fa Tardi e il Prof Accorcia gli Esami", emoji: "⏱️" },
+        { nome: "Il Compagno che Ti Offre una Caramella per la Gola", emoji: "🍬" },
+        { nome: "Quello che Si Ritira e Ti Fa Entrare Prima", emoji: "🏃" },
+        { nome: "L'Amico che Ti Fa Ripassare Fino all'Ultimo", emoji: "📚" },
+        { nome: "Quello che Dice al Prof che Sei Bravissimo", emoji: "👍" }
       ],
       B: [
         { nome: "Quello che Esce dall'Aula Piangendo", emoji: "😭" },
@@ -156,10 +204,16 @@
         { nome: "Quello che ti Fa il Resoconto Minuto per Minuto", emoji: "🗒️" },
         { nome: "L'Amico che Fuma a Catena nel Corridoio", emoji: "🚬" },
         { nome: "Quello che Ripete gli Appunti ad Alta Voce nel Corridoio", emoji: "📣" },
-        { nome: "Il Compagno che Porta Sfortuna a Tutti Prima di Lui", emoji: "😨" }
+        { nome: "Il Compagno che Porta Sfortuna a Tutti Prima di Lui", emoji: "😨" },
+        { nome: "Quello che Arriva in Giacca e Cravatta", emoji: "👔" },
+        { nome: "Il Compagno che Mangia Patatine Rumorose in Aula", emoji: "🍟" },
+        { nome: "Quello che Ripete 'Tanto Mi Boccia' a Tutti", emoji: "😩" },
+        { nome: "L'Amica che Ha Studiato un Altro Programma", emoji: "📑" },
+        { nome: "Quello che Chiede Consigli all'Ultimo Secondo", emoji: "❓" },
+        { nome: "Quello con le Cuffie a Tutto Volume", emoji: "🎧" }
       ],
       C: [
-        { nome: "Il Compagno che Fa Incazzare il Prof un Secondo Prima di Te", emoji: "😠" },
+        { nome: "Il Compagno che Fa Arrabbiare il Prof un Secondo Prima di Te", emoji: "😠" },
         { nome: "Quello che Sviene dalla Tensione", emoji: "😵" },
         { nome: "L'Amico Infame che ti Ruba l'Argomento a Piacere", emoji: "🐍" },
         { nome: "Il Raccomandato Sfacciato che Fa Arrabbiare la Commissione", emoji: "🎗️" },
@@ -172,7 +226,13 @@
         { nome: "Quello che Fa Scattare l'Allarme d'Incendio", emoji: "🚒" },
         { nome: "Quello Senza Documento che Blocca Tutta la Fila", emoji: "🪪" },
         { nome: "Quello che Si Addormenta in Aula e Russa", emoji: "💤" },
-        { nome: "Il Compagno che Fa una Scenata di Gelosia in Aula", emoji: "💥" }
+        { nome: "Il Compagno che Fa una Scenata di Gelosia in Aula", emoji: "💥" },
+        { nome: "Quello che Copia col Telefono e Viene Beccato", emoji: "📱" },
+        { nome: "Il Compagno che Dice al Prof 'L'Altra Volta Mi Ha Bocciato Ingiustamente'", emoji: "😤" },
+        { nome: "Quello che Rovescia il Caffè sui Fogli del Prof", emoji: "☕" },
+        { nome: "Quello che Risponde al Telefono Durante l'Esame", emoji: "📞" },
+        { nome: "L'Amico che Ti Chiama ad Alta Voce Mentre Parli", emoji: "📢" },
+        { nome: "Quello che Fa Notare al Prof un Suo Errore", emoji: "☝️" }
       ]
     },
     {
@@ -191,7 +251,15 @@
         { nome: "L'Argomento che Avevi Ripassato Proprio Quella Mattina", emoji: "🌅" },
         { nome: "La Domanda su un Aneddoto Raccontato a Lezione", emoji: "📖" },
         { nome: "‘Le Faccio una Domanda Facile per Iniziare’", emoji: "😌" },
-        { nome: "La Domanda sulla Parte che Ti Piaceva Davvero", emoji: "❤️" }
+        { nome: "La Domanda sulla Parte che Ti Piaceva Davvero", emoji: "❤️" },
+        { nome: "'Mi Racconti il Suo Progetto'", emoji: "📁" },
+        { nome: "La Domanda su Cui Hai Fatto la Tesina", emoji: "📑" },
+        { nome: "La Definizione che Sai a Memoria", emoji: "🧠" },
+        { nome: "La Domanda Uscita Anche al Tuo Amico Ieri", emoji: "🔁" },
+        { nome: "'Commenti Questo Grafico Semplice'", emoji: "📊" },
+        { nome: "La Domanda con la Risposta Scritta sul Muro Dietro al Prof", emoji: "🧱" },
+        { nome: "'Mi Dica Solo i Titoli dei Capitoli'", emoji: "📖" },
+        { nome: "La Domanda a Risposta Sì o No", emoji: "✔️" }
       ],
       B: [
         { nome: "Domanda Super Specifica sul Capitolo 3", emoji: "🔍" },
@@ -211,7 +279,13 @@
         { nome: "La Domanda Riformulata Tre Volte Perché Non Capisci", emoji: "🔄" },
         { nome: "Domanda su un Esperimento Mai Fatto in Laboratorio", emoji: "⚗️" },
         { nome: "La Domanda con la Parola Difficile che Non Conosci", emoji: "🧠" },
-        { nome: "‘Colleghi Questo Argomento con Quello di Prima’", emoji: "⛓️" }
+        { nome: "‘Colleghi Questo Argomento con Quello di Prima’", emoji: "⛓️" },
+        { nome: "'Mi Faccia un Confronto tra Due Autori'", emoji: "⚖️" },
+        { nome: "La Domanda su una Data Precisa", emoji: "📅" },
+        { nome: "'Lo Spieghi come a un Bambino'", emoji: "🧒" },
+        { nome: "Due Domande Fatte in una Sola Frase", emoji: "➗" },
+        { nome: "'Mi Scriva la Formula alla Lavagna'", emoji: "✏️" },
+        { nome: "La Domanda sul Capitolo Letto di Corsa", emoji: "⏩" }
       ],
       C: [
         { nome: "La Nota a Piè di Pagina di Pagina 842", emoji: "📄" },
@@ -227,7 +301,13 @@
         { nome: "La Domanda con un Errore di Stampa nel Testo", emoji: "🖨️" },
         { nome: "‘Mi Dimostri Questo Teorema alla Lavagna Adesso’", emoji: "📐" },
         { nome: "Domanda su un Capitolo che il Libro Nuovo Non Ha Più", emoji: "📗" },
-        { nome: "La Domanda Fatta in un Dialetto Incomprensibile", emoji: "🗺️" }
+        { nome: "La Domanda Fatta in un Dialetto Incomprensibile", emoji: "🗺️" },
+        { nome: "'Mi Dica Cosa Ho Detto il 14 Marzo a Lezione'", emoji: "🗓️" },
+        { nome: "La Domanda su un Libro Esaurito da Anni", emoji: "📕" },
+        { nome: "'Mi Risponda in Tedesco, Grazie'", emoji: "🇩🇪" },
+        { nome: "La Domanda Fatta Mentre Suona l'Allarme Antincendio", emoji: "🚨" },
+        { nome: "'Mi Riassuma Tutto il Corso in Due Minuti'", emoji: "⏱️" },
+        { nome: "La Domanda di Cui Il Prof Non Sa la Risposta", emoji: "🤷" }
       ]
     }
   ]

@@ -309,7 +309,7 @@
         { nome: "La Signora con Venti Gatti Dietro", emoji: "🐈‍⬛" },
         { nome: "Quello che Si Fida degli Zombie", emoji: "🤝" },
         { nome: "Quello Sempre in Ritardo", emoji: "⏰" },
-        { nome: "Il Cugino Sfigato", emoji: "🙄" }
+        { nome: "Il Cugino Sfortunato", emoji: "🙄" }
       ]
     }
   ]

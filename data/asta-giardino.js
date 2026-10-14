@@ -435,7 +435,7 @@
       ],
       C: [
         { nome: "Branco di Cinghiali", emoji: "🐗" },
-        { nome: "Nido di Vespe Incazzate", emoji: "🐝" },
+        { nome: "Nido di Vespe Arrabbiate", emoji: "🐝" },
         { nome: "Il Vicino Guardone", emoji: "👁️" },
         { nome: "Talpe Mutanti", emoji: "☢️" },
         { nome: "Zanzare Come Elicotteri", emoji: "🦟" },

@@ -575,7 +575,7 @@
       st.fase = "carta"; st.festa = .6;
       if (p.sp && !gara.finita) {
         var w = pesoKg(p.sp, p.cm); gara.kg += w;
-        dimmi("+" + kg(w) + " · " + p.sp.nome + " " + p.cm + " cm" + (p.sp.r >= 3 ? " 🤩" : " 🎉")); suonoPreso(p.sp.r); vibra(12);
+        dimmi("+" + kg(w) + " · " + p.sp.nome + " " + p.cm + " cm" + (p.sp.r >= 3 ? " 🤩" : " 🎉")); suonoPreso(p.sp.r);
         if (GARA.onPreso) GARA.onPreso({ id: p.sp.id, cm: p.cm, kg: w, r: p.sp.r });
       }
       aggTesta(); fine(true);

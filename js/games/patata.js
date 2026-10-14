@@ -1,16 +1,15 @@
 /* =========================================================
    GIOCO — "La Patata Bollente"  (ispirato a "Bomba a Tempo")
-   Esce una categoria (la più votata fra 3). Ognuno ha un suo
-   tempo (parte da 15s) che scende SOLO mentre tiene la bomba:
-   dici a voce una parola della categoria e passi la bomba a chi
-   vuoi, toccando il suo pallino nel cerchio. Non puoi ripassare
-   alla stessa persona finché non hai fatto il giro. Se chi te
-   l'ha data non ha detto la parola, usi "Rimanda indietro" e lui
-   riprende col tempo che aveva. A chi finisce il tempo, la bomba
-   esplode: eliminato. Si va avanti finché ne resta uno.
-   Un telefono solo (si passa di mano) oppure ognuno dal suo
-   (online): i nomi in cerchio, ognuno lancia la bomba dal suo
-   telefono. Ogni round il tempo di partenza cala un po'.
+   Esce una categoria (la più votata fra 3, o "a sorpresa").
+   Chi ha la bomba dice a voce una parola della categoria e la
+   passa a chi vuole, toccando il suo leggio. Chi la riceve ha il
+   tempo pieno (15 s, cambiabile nelle regole); ogni 4 passaggi il
+   tempo cala di 2 s, fino a 5 s. Non puoi ripassarla a chi l'ha già
+   avuta finché non ha fatto il giro. Se chi te l'ha data non ha detto
+   la parola, "Non valeva!": torna a lui col tempo che aveva.
+   A chi scade il tempo, la bomba esplode: perde una vita (di solito
+   ne ha una sola: è fuori). Si va avanti finché ne resta uno.
+   Un telefono solo (si passa di mano) oppure ognuno dal suo (online).
    ========================================================= */
 (function () {
   "use strict";
@@ -18,13 +17,21 @@
   var ST = window.SGStudio;   // lo studio del game show (condiviso, js/studio.js)
   var COLORI = ["#ff6b6b", "#4dabf7", "#51cf66", "#ffd43b", "#cc5de8", "#ff922b", "#20c997", "#f783ac", "#a9e34b", "#66d9e8"];
   var PARTITE_SALVATE = Object.create(null);
-  // Il timer riparte a ogni "ricezione". Il tetto parte da 15s e cala di 2s
-  // ogni 4 passaggi, fino a un minimo di 5s: 15, 13, 11, 9, 7, 5.
-  function capMs(passaggi) { return Math.max(5000, 15000 - 2000 * Math.floor(passaggi / 4)); }
+  // Le regole cambiabili (impostazioni e "⚙️ Regole" in saletta)
+  function regoleDa(imp) {
+    imp = imp || {};
+    var tempo = [10, 15, 20].indexOf(+imp.tempo) >= 0 ? +imp.tempo : 15;
+    var vite = [1, 2, 3].indexOf(+imp.vite) >= 0 ? +imp.vite : 1;
+    return { tempo: tempo * 1000, accelera: imp.accelera !== false, vite: vite, difficili: !!imp.difficili };
+  }
+  function testoRegole(r) {
+    return "⏱️ " + (r.tempo / 1000) + " secondi" + (r.accelera ? " (poi cala)" : "") + " · " + (r.vite > 1 ? "❤️ " + r.vite + " vite" : "❤️ 1 vita") + (r.difficili ? " · anche categorie difficili" : "");
+  }
   // Pause dello spettacolo (il tempo della bomba NON scende): rivelazione della categoria con la bomba
   // che vola sul primo, bomba che passa al nuovo dopo un'esplosione, e l'esplosione stessa.
   var ATTESA_INIZIO = 4600, ATTESA_ROUND = 1800, DURATA_BOOM = 3400;
   var ATTESA_SORPRESA = 2600;   // in più quando la categoria è a sorpresa: gira la ruota delle categorie
+  var BLOCCO_PASSAGGIO = 600;   // dopo un passaggio, per un attimo nessuno si può toccare (niente doppio tocco)
 
   function nuovaSessioneP() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
   function creaStatGiocatoriP(players) {
@@ -52,7 +59,10 @@
       if (PARTITE_SALVATE[chiave]) return;
       var chiaveLocale = "sg-patata-ultima-partita-" + profiloId;
       try { if (window.localStorage && localStorage.getItem(chiaveLocale) === String(vm.partitaId)) { PARTITE_SALVATE[chiave] = 1; return; } } catch (e) {}
-      var miei = (vm.statFine || {})[id] || {}, vinta = !!(vm.vincitore && vm.vincitore.id === id);
+      // la vittoria conta solo online, con almeno 3 giocatori e se gli altri non sono usciti (niente partite "finte":
+      // sullo stesso telefono uno da solo potrebbe inventarsi due nomi e vincere quante volte vuole)
+      var valida = !cb.locale && (vm.players || []).length >= 3 && !vm.abbandonata;
+      var miei = (vm.statFine || {})[id] || {}, vinta = valida && !!(vm.vincitore && vm.vincitore.id === id);
       var incr = [["partite", 1], ["votiCategoria", +miei.votiCategoria || 0], ["bombeRicevute", +miei.bombeRicevute || 0],
         ["passaggi", +miei.passaggi || 0], ["rimandi", +miei.rimandi || 0], ["esplosioni", +miei.esplosioni || 0],
         ["roundSopravvissuti", +miei.roundSopravvissuti || 0]];
@@ -61,7 +71,7 @@
       if (vinta) { incr.push(["vittorie", 1]); if (!cb.locale) incr.push(["vittorieOnline", 1]); }
       var s = SGNube.statGioco ? (SGNube.statGioco("patata") || {}) : {};
       if (s.ultimaPartitaTrofei === vm.partitaId) return;
-      var serie = vinta ? (+s.serieVittorieOra || 0) + 1 : 0;
+      var serie = valida ? (vinta ? (+s.serieVittorieOra || 0) + 1 : 0) : (+s.serieVittorieOra || 0);
       PARTITE_SALVATE[chiave] = 1;
       try { if (window.localStorage) localStorage.setItem(chiaveLocale, String(vm.partitaId)); } catch (e) {}
       SGNube.salvaProgressi(null, "patata", incr.filter(function (x) { return x[1] > 0; }),
@@ -70,7 +80,6 @@
   }
 
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
-  function pescaCategorie(n) { var pool = (window.SG_PATATA || []).slice(); return mischia(pool).slice(0, n); }
 
   SG.registra({
     id: "patata",
@@ -83,34 +92,34 @@
     difficolta: 2,
     regole: [
       "Si vota fra <b>3 categorie</b> o <b>🎲 a sorpresa</b> (una a caso, la sceglie la ruota): si gioca la più votata.",
-      "Ognuno ha un suo tempo (parte da <b>15 secondi</b>) che scende <b>solo mentre tiene la bomba</b>. Dici a voce una parola della categoria e <b>passi la bomba</b> toccando un altro giocatore nel cerchio.",
-      "Non puoi ripassare alla <b>stessa persona</b> finché non hai fatto il giro. Se chi te l'ha data <b>non ha detto la parola</b>, usa <b>“Rimanda indietro”</b>: riprende lui, col tempo che aveva.",
-      "A chi <b>finisce il tempo</b> la bomba esplode: eliminato. Ogni round il tempo di partenza cala. Vince l'<b>ultimo rimasto</b>."
+      "Chi ha la bomba dice a voce <b>una parola della categoria</b> e la passa toccando un altro giocatore. Chi la riceve ha <b>15 secondi</b> per fare lo stesso.",
+      "Ogni <b>4 passaggi</b> il tempo cala di 2 secondi, fino a 5. Non puoi ripassarla a chi l'ha già avuta finché non ha fatto il giro.",
+      "Se chi te l'ha data <b>non ha detto la parola</b> (o l'ha ripetuta), tocca <b>“↩️ Non valeva!”</b>: torna a lui, col tempo che aveva.",
+      "A chi <b>finisce il tempo</b> la bomba esplode: perde una vita (di solito ne ha una sola: è fuori). Vince l'<b>ultimo rimasto</b>.",
+      "Tempo, vite e categorie difficili si cambiano nelle regole della partita."
     ],
 
+    // le scelte con bottoni .modo-chip: così l'host le ritrova anche in "⚙️ Regole" nella saletta
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
-      dove.modo = "telefono";
-      if (aiuti.torneo) return;
-      if (aiuti.modo) { dove.modo = aiuti.modo; return; }   // come giocare l'avete già scelto prima
-      box.appendChild(el("div", { class: "etichetta", text: "Come si gioca" }));
-      var nota = el("div", { class: "link-avviso", hidden: "hidden" });
-      var bT, bO;
-      function scegliModo(m) {
-        dove.modo = m;
-        bT.className = "modo-chip" + (m === "telefono" ? " attiva" : "");
-        bO.className = "modo-chip" + (m === "online" ? " attiva" : "");
-        nota.hidden = (m !== "online");
-        nota.textContent = (window.SGNet && SGNet.disponibile())
-          ? "Apri una stanza e manda il codice: ognuno gioca dal suo telefono e lancia la bomba a chi vuole, toccando il cerchio."
-          : "Qui il collegamento non è disponibile. Funziona quando il gioco è aperto dal sito pubblicato online.";
+      dove.modo = aiuti.torneo ? "telefono" : (aiuti.modo || "telefono");
+      if (aiuti.torneo) dove.torneo = true;
+      dove.tempo = 15; dove.accelera = true; dove.vite = 1; dove.difficili = false;
+      function fila(titolo, voci, chiave) {
+        box.appendChild(el("div", { class: "etichetta", text: titolo }));
+        var g = el("div", { class: "modo-griglia", style: "grid-template-columns:repeat(" + voci.length + ",1fr)" });
+        voci.forEach(function (v) {
+          var b = el("button", { class: "modo-chip" + (dove[chiave] === v[0] ? " attiva" : ""), style: "justify-content:center", onclick: function () {
+            dove[chiave] = v[0]; [].forEach.call(g.children, function (c) { c.className = "modo-chip"; }); b.className = "modo-chip attiva";
+          } }, [el("div", { class: "mt", text: v[1] })]);
+          g.appendChild(b);
+        });
+        box.appendChild(g);
       }
-      bT = el("button", { class: "modo-chip attiva", onclick: function () { scegliModo("telefono"); } }, [
-        el("span", { class: "mi", text: "📱" }), el("div", {}, [el("div", { class: "mt", text: "Un telefono solo" }), el("div", { class: "ms", text: "Si passa di mano" })])]);
-      bO = el("button", { class: "modo-chip", onclick: function () { scegliModo("online"); } }, [
-        el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Ognuno dal suo" }), el("div", { class: "ms", text: "La bomba nel cerchio" })])]);
-      box.appendChild(el("div", { class: "modo-griglia" }, [bT, bO]));
-      box.appendChild(nota);
+      fila("⏱️ Tempo per passarla", [[10, "10 s"], [15, "15 s"], [20, "20 s"]], "tempo");
+      fila("⚡ Il tempo cala ogni 4 passaggi", [[true, "Sì"], [false, "No"]], "accelera");
+      fila("❤️ Vite di ognuno", [[1, "1"], [2, "2"], [3, "3"]], "vite");
+      fila("🗂️ Categorie", [[false, "Normali"], [true, "Anche difficili"]], "difficili");
     },
 
     avvia: function (t) {
@@ -125,30 +134,53 @@
   //  MOTORE condiviso (stato + timer + regole). onCambio() viene
   //  chiamato a ogni cambiamento (per ridisegnare / trasmettere).
   // =========================================================
-  function creaMotore(giocatori, onCambio, extraCats) {
-    var deck = (window.SG_PATATA || []);
-    extraCats = extraCats || [];
-    // se l'host ha scritto categorie sue, quelle si giocano direttamente (non finiscono
-    // nel mazzo): riempiamo con categorie casuali solo se sono meno di quante ne servono.
+  // regole: { tempo (ms), accelera, vite, difficili } (vedi regoleDa)
+  // usate: le categorie dell'host già proposte (si alternano fra una partita e l'altra)
+  function creaMotore(giocatori, onCambio, extraCats, regole, usate) {
+    regole = regole || regoleDa({});
+    var deck = (window.SG_PATATA || []).concat(regole.difficili ? (window.SG_PATATA_DIFFICILI || []) : []);
+    extraCats = extraCats || []; usate = usate || [];
+    var chiuso = false, toBoom = null;   // chiuso: la partita è stata lasciata (niente più disegni né timer)
+    function cambia() { if (!chiuso) onCambio(); }
+    // Il timer riparte a ogni "ricezione". Il tetto parte dal tempo scelto e (se "accelera")
+    // cala di 2s ogni 4 passaggi, fino a un minimo di 5s: 15, 13, 11, 9, 7, 5.
+    function capMs(passaggi) { return regole.accelera ? Math.max(Math.min(5000, regole.tempo), regole.tempo - 2000 * Math.floor(passaggi / 4)) : regole.tempo; }
+    // fra le 3 proposte al massimo 2 categorie dell'host, prima quelle non ancora proposte; il resto a caso
     function pesca(n) {
-      var out = mischia(extraCats).slice(0, n);
-      if (out.length < n) out = out.concat(mischia(deck.filter(function (c) { return out.indexOf(c) < 0; })).slice(0, n - out.length));
-      return out;
+      var nuove = extraCats.filter(function (c) { return usate.indexOf(c) < 0; });
+      if (!nuove.length) { usate.length = 0; nuove = extraCats.slice(); }
+      var out = mischia(nuove).slice(0, Math.min(2, n));
+      out.forEach(function (c) { usate.push(c); });
+      out = out.concat(mischia(deck.filter(function (c) { return out.indexOf(c) < 0; })).slice(0, n - out.length));
+      return mischia(out);
     }
     var st = {
       fase: "voto", cats: pesca(3), categoria: null,
-      players: giocatori.map(function (g) { return { id: g.id, nome: g.nome, colore: g.colore, omino: g.omino || null, eliminato: false, voto: null }; }),
-      holder: null, prev: null, ultimo: null, giro: [], round: 0, ts: 0, boom: null, vincitore: null,
-      remaining: 0, cap: 15000, passaggi: 0, remPrima: null, giroPrima: [], eliminati: [], soloDare: null, attesa: 0
+      players: giocatori.map(function (g) { return { id: g.id, nome: g.nome, colore: g.colore, omino: g.omino || null, eliminato: false, via: false, vite: regole.vite, voto: null }; }),
+      holder: null, prev: null, ultimo: null, giro: [], round: 0, ts: 0, boom: null, vincitore: null, abbandonata: false,
+      remaining: 0, cap: regole.tempo, passaggi: 0, remPrima: null, giroPrima: [], eliminati: [], soloDare: null, attesa: 0
     };
     var partitaId = nuovaSessioneP(), statGiocatori = creaStatGiocatoriP(st.players);
     function statP(id) { return statGiocatori[id] || (statGiocatori[id] = { votiCategoria: 0, bombeRicevute: 0, passaggi: 0, rimandi: 0, esplosioni: 0, roundSopravvissuti: 0 }); }
     function pById(id) { for (var i = 0; i < st.players.length; i++) if (st.players[i].id === id) return st.players[i]; return null; }
     function vivi() { return st.players.filter(function (p) { return !p.eliminato; }); }
+    function inGara(id) { var p = pById(id); return !!p && !p.eliminato; }
     function holderObj() { return pById(st.holder); }
+    function finisci(abbandonata) {
+      var v = vivi();
+      st.fase = "fine"; st.boom = null; st.abbandonata = !!abbandonata;
+      st.vincitore = v[0] ? { id: v[0].id, nome: v[0].nome, colore: v[0].colore } : null;
+    }
+    // il giro: chi ha già avuto la bomba. Se chi ce l'ha non ha più nessuno a cui darla, si apre un giro nuovo.
+    function sistemaGiro() {
+      st.giro = st.giro.filter(inGara);
+      if (st.holder && st.giro.indexOf(st.holder) < 0) st.giro.push(st.holder);
+      var liberi = vivi().filter(function (p) { return p.id !== st.holder && st.giro.indexOf(p.id) < 0; });
+      if (!liberi.length) st.giro = st.holder ? [st.holder] : [];
+    }
 
     function aggiorna() {
-      if (st.fase !== "gioco") return;
+      if (chiuso || st.fase !== "gioco") return;
       var now = Date.now(), dt = now - st.ts; st.ts = now;
       if (now < st.attesa) return;   // pausa dello spettacolo: il tempo è fermo
       if (!holderObj()) return;
@@ -165,43 +197,51 @@
     function scegli(idx) { if (idx >= st.cats.length) avviaGioco(sorpresa(), true); else avviaGioco(st.cats[idx], false); }   // l'ultima voce è "a sorpresa"
     function avviaGioco(cat, aCaso) {
       st.sorpresa = !!aCaso; st.categoria = cat; st.round = 0; st.boom = null; st.vincitore = null; st.passaggi = 0; st.remPrima = null; st.eliminati = [];
-      st.players.forEach(function (p) { p.eliminato = false; });
-      var vv = vivi(); st.holder = vv[Math.floor(Math.random() * vv.length)].id;
+      // chi se n'è andato resta fuori (non torna in gara come un fantasma)
+      st.players.forEach(function (p) { p.eliminato = !!p.via; p.vite = regole.vite; if (p.via) st.eliminati.push(p.id); });
+      var vv = vivi();
+      if (vv.length < 2) { finisci(true); cambia(); return; }
+      st.holder = vv[Math.floor(Math.random() * vv.length)].id;
       statP(st.holder).bombeRicevute++;
       st.prev = null; st.ultimo = null; st.soloDare = null; st.giro = [st.holder]; st.cap = capMs(0); st.remaining = st.cap;
-      st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_INIZIO + (st.sorpresa ? ATTESA_SORPRESA : 0); onCambio();
+      st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_INIZIO + (st.sorpresa ? ATTESA_SORPRESA : 0); cambia();
     }
     function esplode() {
       var h = holderObj(); if (!h) return;
       statP(h.id).esplosioni++;
-      h.eliminato = true; st.eliminati.push(h.id); st.boom = { id: h.id, nome: h.nome }; st.fase = "esplosione"; onCambio();
-      setTimeout(function () {
+      h.vite = Math.max(0, (h.vite || 1) - 1);
+      var fuori = h.vite <= 0;
+      if (fuori) { h.eliminato = true; st.eliminati.push(h.id); }
+      st.boom = { id: h.id, nome: h.nome, fuori: fuori, vite: h.vite }; st.fase = "esplosione"; cambia();
+      toBoom = setTimeout(function () {
+        toBoom = null;
+        if (chiuso || st.fase !== "esplosione") return;   // partita lasciata o già finita (es. sono usciti tutti)
         st.boom = null; var v = vivi();
-        v.forEach(function (p) { statP(p.id).roundSopravvissuti++; });
-        if (v.length <= 1) { st.fase = "fine"; st.vincitore = v[0] ? { id: v[0].id, nome: v[0].nome, colore: v[0].colore } : null; onCambio(); return; }
+        v.forEach(function (p) { if (p.id !== h.id) statP(p.id).roundSopravvissuti++; });
+        if (v.length <= 1) { finisci(false); cambia(); return; }
         st.round++;
         // togli gli eliminati dal giro, poi dai la bomba a caso a chi NON è ancora
         // stato scelto in questo giro (così si completa il giro); se hanno già avuto
         // tutti, si apre un giro nuovo.
-        st.giro = st.giro.filter(function (id) { var p = pById(id); return p && !p.eliminato; });
+        st.giro = st.giro.filter(inGara);
         var cand = v.filter(function (p) { return st.giro.indexOf(p.id) < 0; });
         if (!cand.length) { st.giro = []; cand = v; }
         var nh = cand[Math.floor(Math.random() * cand.length)];
-        st.holder = nh.id; st.giro.push(nh.id);
+        st.holder = nh.id; st.giro.push(nh.id); statP(nh.id).bombeRicevute++;
         if (st.giro.length >= v.length) st.giro = [nh.id];
         st.prev = null; st.ultimo = null; st.soloDare = null;
         st.cap = capMs(st.passaggi); st.remaining = st.cap; st.remPrima = null;
-        st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_ROUND; onCambio();
+        st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_ROUND; cambia();
       }, DURATA_BOOM);
     }
 
     return {
       st: st, vivi: vivi,
-      vota: function (id, idx) { var p = pById(id); if (p && st.fase === "voto" && idx >= 0 && idx <= st.cats.length) { if (p.voto == null) statP(id).votiCategoria++; p.voto = idx; onCambio(); } },
+      vota: function (id, idx) { var p = pById(id); if (p && !p.via && st.fase === "voto" && idx >= 0 && idx <= st.cats.length) { if (p.voto == null) statP(id).votiCategoria++; p.voto = idx; cambia(); } },
       via: function () {
         if (st.fase !== "voto") return;
         var conta = st.cats.map(function () { return 0; }); conta.push(0);   // + "a sorpresa"
-        st.players.forEach(function (p) { if (p.voto != null && conta[p.voto] != null) conta[p.voto]++; });
+        st.players.forEach(function (p) { if (!p.via && p.voto != null && conta[p.voto] != null) conta[p.voto]++; });
         var max = Math.max.apply(null, conta), top = [];
         conta.forEach(function (c, i) { if (c === max) top.push(i); });
         scegli(top[Math.floor(Math.random() * top.length)]);
@@ -210,59 +250,84 @@
       passa: function (fromId, targetId) {
         aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder || Date.now() < st.attesa) return;
         var tgt = pById(targetId); if (!tgt || tgt.eliminato || targetId === st.holder) return;
-        if (st.soloDare != null) { var sd = pById(st.soloDare); if (!sd || sd.eliminato) st.soloDare = null; }
+        if (st.soloDare != null && !inGara(st.soloDare)) st.soloDare = null;
         if (st.soloDare != null) {
-          if (targetId !== st.soloDare) return;      // dopo "Rimanda indietro": puoi ridarla SOLO a chi te l'ha rimandata
+          if (targetId !== st.soloDare) return;      // dopo "Non valeva!": puoi ridarla SOLO a chi te l'ha rimandata
         } else if (st.giro.indexOf(targetId) >= 0) {
           return;                                    // regola normale: non a chi ha già avuto la bomba nel giro
         }
         st.soloDare = null;                     // vincolo consumato
-        st.remPrima = st.remaining;             // per l'eventuale "rimanda indietro"
+        st.remPrima = st.remaining;             // per l'eventuale "Non valeva!"
         st.passaggi++; statP(fromId).passaggi++; statP(targetId).bombeRicevute++; st.cap = capMs(st.passaggi); st.remaining = st.cap;  // riceve -> timer riparte
-        st.ultimo = st.holder;                  // tenuto solo come info (il ritorno si fa col pulsante "Rimanda indietro")
-        st.giroPrima = st.giro.slice();         // per ripristinarlo con "rimanda indietro"
+        st.ultimo = st.holder;                  // tenuto solo come info (il ritorno si fa col pulsante "Non valeva!")
+        st.giroPrima = st.giro.slice();         // per ripristinarlo con "Non valeva!"
         st.prev = st.holder; st.holder = targetId; st.giro.push(targetId);
-        if (st.giro.length >= vivi().length) st.giro = [targetId];
-        st.ts = Date.now(); onCambio();
+        sistemaGiro();
+        st.ts = Date.now(); st.attesa = st.ts + BLOCCO_PASSAGGIO;   // un attimo fermi: il secondo tocco non la ripassa subito
+        cambia();
       },
       indietro: function (fromId) {
         aggiorna(); if (st.fase !== "gioco" || fromId !== st.holder || !st.prev || Date.now() < st.attesa) return;
         var p = pById(st.prev); if (!p || p.eliminato) return;
-        statP(fromId).rimandi++;
-        // il passaggio non valeva: torna a chi l'aveva, col tempo che aveva (NIENTE reset)
+        // il passaggio non valeva: non conta nei trofei di chi l'aveva passata (né di chi l'ha ricevuta)
+        var sp = statP(st.prev), sf = statP(fromId);
+        sp.passaggi = Math.max(0, sp.passaggi - 1); sf.bombeRicevute = Math.max(0, sf.bombeRicevute - 1);
+        if (sf.rimandi < 3) sf.rimandi++;        // al massimo 3 a partita (non si gonfia rimandandosela all'infinito)
+        // torna a chi l'aveva, col tempo che aveva (NIENTE reset)
         st.passaggi = Math.max(0, st.passaggi - 1); st.cap = capMs(st.passaggi);
         if (st.remPrima != null) st.remaining = st.remPrima;
         st.ultimo = st.holder;
         st.soloDare = st.holder;                 // chi riprende la bomba potrà ridarla SOLO a chi gliel'ha rimandata
         // NON si resetta il giro: si ripristina com'era prima del passaggio annullato
-        var back = st.prev; st.prev = null; st.holder = back; st.giro = st.giroPrima ? st.giroPrima.slice() : st.giro; st.ts = Date.now(); onCambio();
+        var back = st.prev; st.prev = null; st.holder = back; st.giro = st.giroPrima ? st.giroPrima.slice() : st.giro; sistemaGiro();
+        st.ts = Date.now(); st.attesa = st.ts + BLOCCO_PASSAGGIO; cambia();
       },
+      // chi se ne va (online): fuori da questa partita e da quelle dopo
       rimuovi: function (id) {
-        var p = pById(id); if (!p) return; p.eliminato = true; if (st.eliminati.indexOf(id) < 0) st.eliminati.push(id);
+        var p = pById(id); if (!p || p.via) return;
+        var eraInGara = !p.eliminato;
+        p.via = true; p.eliminato = true; p.voto = null;
+        if (st.eliminati.indexOf(id) < 0) st.eliminati.push(id);
         if (st.soloDare === id) st.soloDare = null;   // il bersaglio del vincolo non c'è più
-        if (st.fase === "gioco" || st.fase === "esplosione") {
+        if (st.fase === "voto") { if (vivi().length <= 1) finisci(true); }
+        else if (eraInGara && (st.fase === "gioco" || st.fase === "esplosione")) {
           var v = vivi();
-          if (v.length <= 1) { st.fase = "fine"; st.vincitore = v[0] ? { id: v[0].id, nome: v[0].nome, colore: v[0].colore } : null; }
-          else if (st.holder === id) { st.holder = v[Math.floor(Math.random() * v.length)].id; st.prev = null; st.soloDare = null; st.giro = [st.holder]; st.cap = capMs(st.passaggi); st.remaining = st.cap; st.ts = Date.now(); }
+          if (v.length <= 1) finisci(true);
+          else if (st.holder === id && st.fase === "gioco") {   // aveva la bomba: passa a un altro a caso, con un attimo per accorgersene
+            st.holder = v[Math.floor(Math.random() * v.length)].id; statP(st.holder).bombeRicevute++;
+            st.prev = null; st.soloDare = null; st.giro = [st.holder]; st.cap = capMs(st.passaggi); st.remaining = st.cap;
+            st.ts = Date.now(); st.attesa = st.ts + ATTESA_ROUND;
+          } else {
+            if (st.prev === id) st.prev = null;
+            sistemaGiro();
+          }
         }
-        onCambio();
+        cambia();
       },
-      nuova: function () { st.players.forEach(function (p) { p.eliminato = false; p.voto = null; }); st.eliminati = []; st.cats = pesca(3); st.fase = "voto"; st.categoria = null; st.sorpresa = false; st.boom = null; st.vincitore = null; partitaId = nuovaSessioneP(); statGiocatori = creaStatGiocatoriP(st.players); onCambio(); },
+      nuova: function () {
+        st.players.forEach(function (p) { p.eliminato = !!p.via; p.vite = regole.vite; p.voto = null; });
+        st.eliminati = []; st.cats = pesca(3); st.fase = "voto"; st.categoria = null; st.sorpresa = false; st.boom = null; st.vincitore = null; st.abbandonata = false;
+        partitaId = nuovaSessioneP(); statGiocatori = creaStatGiocatoriP(st.players); cambia();
+      },
       remaining: function () { return Math.max(0, st.remaining); },
-      distruggi: function () { clearInterval(loop); },
+      chiuso: function () { return chiuso; },
+      distruggi: function () { chiuso = true; clearInterval(loop); if (toBoom) { clearTimeout(toBoom); toBoom = null; } },
       vm: function () {
         var classifica = null;
         if (st.fase === "fine") {
-          // dal vincitore (ultimo rimasto) giù fino al primo esploso
-          var ord = vivi().concat(st.eliminati.slice().reverse().map(function (id) { return pById(id); }).filter(Boolean));
-          classifica = ord.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null }; });
+          // dal vincitore (ultimo rimasto) giù fino al primo esploso; chi è uscito in fondo
+          var esplosi = st.eliminati.slice().reverse().map(pById).filter(function (p) { return p && !p.via; });
+          var usciti = st.players.filter(function (p) { return p.via; });
+          var ord = vivi().concat(esplosi, usciti);
+          classifica = ord.map(function (p, i) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null, via: !!p.via, pos: i + 1 }; });
         }
         return {
           fase: st.fase, categoria: st.categoria, sorpresa: !!st.sorpresa, cats: st.cats, round: st.round,
-          partitaId: partitaId, statFine: st.fase === "fine" ? statGiocatori : null,
-          players: st.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null, eliminato: p.eliminato, voto: p.voto }; }),
+          partitaId: partitaId, statFine: st.fase === "fine" ? statGiocatori : null, abbandonata: !!st.abbandonata,
+          viteMax: regole.vite, tempo: regole.tempo,
+          players: st.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null, eliminato: p.eliminato, via: !!p.via, vite: p.vite, voto: p.voto }; }),
           holder: st.holder, prev: st.prev, ultimo: st.ultimo, giro: st.giro.slice(),
-          soloDare: (function () { if (st.soloDare == null) return null; var s = pById(st.soloDare); return (s && !s.eliminato) ? st.soloDare : null; })(),
+          soloDare: (st.soloDare != null && inGara(st.soloDare)) ? st.soloDare : null,
           remaining: Math.max(0, Math.round(st.remaining)), cap: st.cap, boom: st.boom, vincitore: st.vincitore, classifica: classifica,
           attesaMs: Math.max(0, st.attesa - Date.now())   // quanto manca prima che il tempo della bomba riparta
         };
@@ -302,6 +367,29 @@
     } catch (e) {}
   }
 
+  function cuoreP() {   // battito del cuore negli ultimi 3 secondi (due colpi bassi)
+    var ctx = acP(); if (!ctx) return;
+    try {
+      [0, 0.17].forEach(function (d, k) {
+        var n = ctx.currentTime + d, o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = "sine"; o.frequency.setValueAtTime(k ? 62 : 75, n); o.frequency.exponentialRampToValueAtTime(40, n + 0.14);
+        g.gain.setValueAtTime(0.0001, n); g.gain.exponentialRampToValueAtTime(k ? 0.45 : 0.6, n + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, n + 0.16);
+        o.connect(g); g.connect(ctx.destination); o.start(n); o.stop(n + 0.17);
+      });
+    } catch (e) {}
+  }
+  function allarmeP() {   // "ti è arrivata!" (online, quando la bomba arriva sul tuo telefono)
+    var ctx = acP(); if (!ctx) return;
+    try {
+      [0, 0.12, 0.24].forEach(function (d, k) {
+        var n = ctx.currentTime + d, o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = "square"; o.frequency.setValueAtTime(k % 2 ? 660 : 990, n);
+        g.gain.setValueAtTime(0.0001, n); g.gain.exponentialRampToValueAtTime(0.2, n + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, n + 0.1);
+        o.connect(g); g.connect(ctx.destination); o.start(n); o.stop(n + 0.11);
+      });
+    } catch (e) {}
+  }
+
   var dispTimer = null, tickTimer = null;
   function stopTimers() { if (dispTimer) clearInterval(dispTimer); if (tickTimer) clearTimeout(tickTimer); dispTimer = tickTimer = null; }
   function assicuraStileP() {
@@ -316,7 +404,14 @@
       ".pt-bombona{font-size:110px;line-height:1;will-change:transform;animation:ptPulsa .6s ease-in-out infinite alternate}",
       "@keyframes ptPulsa{from{transform:scale(.94)}to{transform:scale(1.06)}}",
       ".pt-conto{font-family:'Courier New',ui-monospace,monospace;font-size:150px;font-weight:900;line-height:.95;color:#fff;text-shadow:0 0 30px rgba(255,120,60,.6)}",
-      ".pt-conto.poco{color:#ff5d6c}",
+      ".pt-conto.poco{color:#ff5d6c;will-change:transform;animation:ptCuore .5s ease-out infinite}",
+      "@keyframes ptCuore{0%{transform:scale(1)}15%{transform:scale(1.12)}30%{transform:scale(1)}45%{transform:scale(1.07)}100%{transform:scale(1)}}",
+      // la bomba arriva sul tuo telefono (online): lo schermo si colora di rosso un attimo
+      ".pt-allarme{position:absolute;inset:0;z-index:23;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,rgba(255,40,40,0) 35%,rgba(255,30,30,.75) 100%)}",
+      ".pt-allarme.on{animation:ptAllarme 1.1s ease-out}",
+      "@keyframes ptAllarme{0%{opacity:0}12%{opacity:1}35%{opacity:.35}50%{opacity:.9}100%{opacity:0}}",
+      ".pt-guardi{font-size:.98rem;color:#cdd6ff}",
+      ".pt-indietro b{display:block;font-size:1.15rem}",
       ".pt-chi{font-size:34px;font-weight:800;color:#fff}",
       ".pt-chi b{color:#ffd43b}",
       ".pt-regola{font-size:22px;font-weight:700;color:#cdd6ff;opacity:.85}",
@@ -373,7 +468,8 @@
       ".pt-riga.primo{background:rgba(255,212,59,.16);border:1px solid rgba(255,212,59,.5)}",
       ".pt-riga .pos{width:28px;text-align:center;font-weight:900}",
       ".pt-riga .nm{flex:1;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".pt-riga .et{font-size:.8rem;opacity:.8}"
+      ".pt-riga .et{font-size:.8rem;opacity:.8}",
+      ".pt-riga.via{opacity:.6}"
     ].join("");
     document.head.appendChild(s);
   }
@@ -382,18 +478,21 @@
   //  UN TELEFONO SOLO
   // =========================================================
   function singolaPatata(t) {
+    var imp = t.impostazioni || {};
     var giocatori = t.giocatori.map(function (n, i) { return { id: "p" + i, nome: n, colore: COLORI[i % COLORI.length] }; });
-    var motore = creaMotore(giocatori, function () { disegna(); });
+    var motore = creaMotore(giocatori, function () { disegna(); }, [], regoleDa(imp));
     var cb = {
-      locale: true, sonoHost: true, myId: null,
+      locale: true, sonoHost: true, myId: null, torneo: !!imp.torneo, chiuso: false,
       getRemaining: function () { return motore.remaining(); },
       onScegliCat: function (idx) { motore.viaCon(idx); },
       onPassa: function (id) { motore.passa(motore.st.holder, id); },
       onIndietro: function () { motore.indietro(motore.st.holder); },
       onNuova: function () { motore.nuova(); },
-      onEsci: function () { stopTimers(); motore.distruggi(); t.esci(); }
+      // torneo sullo stesso telefono: la classifica di questa partita passa al torneo
+      onTorneo: function (cl) { if (cb.chiuso) return; cb.chiuso = true; stopTimers(); motore.distruggi(); t.fine(cl); },
+      onEsci: function () { cb.chiuso = true; stopTimers(); motore.distruggi(); t.esci(); }
     };
-    function disegna() { disegnaPatataVM(t, motore.vm(), cb); }
+    function disegna() { if (!cb.chiuso) disegnaPatataVM(t, motore.vm(), cb); }
     disegna();
   }
 
@@ -402,49 +501,85 @@
   // =========================================================
   function hostPatata(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteP(t);
-    var H = { fase: "lobby", codice: "…", pronta: false, players: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", colore: COLORI[0], omino: ST.mioAvatar((t.giocatori && t.giocatori[0]) || "Host") }], motore: null, customCats: [] };
+    var nomeHost = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Host";
+    var H = { fase: "lobby", codice: "…", pronta: false, motore: null, customCats: [], usate: [], regole: regoleDa(t.impostazioni),
+      players: [{ id: "host", nome: nomeHost, colore: COLORI[0], omino: t.mioOmino ? t.mioOmino(nomeHost) : ST.mioAvatar(nomeHost) }],
+      attesa: [] };   // attesa: chi è entrato a partita iniziata (guarda, e gioca dalla prossima)
+    function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
+    function presenti() { return H.players.filter(function (p) { return !p.via; }); }
+    function colora() { H.players.forEach(function (p, i) { p.colore = COLORI[i % COLORI.length]; }); }
+    // "⚙️ Regole" nella saletta: l'host cambia tempo, vite e categorie
+    t.onRegole = function (im) { H.regole = regoleDa(im); if (H.fase === "lobby") bd(); };
     var rete = SGNet.ospita("patata", {
       onCodice: function (c) { H.codice = c; bd(); },
       onConnesso: function () { H.pronta = true; bd(); },
       onAddio: function (id) {
-        if (H.fase === "lobby") { H.players = H.players.filter(function (p) { return p.id !== id; }); H.players.forEach(function (p, i) { p.colore = COLORI[i % COLORI.length]; }); bd(); }
-        else if (H.motore) H.motore.rimuovi(id);
+        if (H.fase === "lobby") { H.players = H.players.filter(function (p) { return p.id !== id; }); colora(); bd(); return; }
+        H.attesa = H.attesa.filter(function (a) { return a.id !== id; });
+        var p = pById(id); if (p) p.via = true;   // a partita iniziata resta in classifica come "uscito", ma non gioca più
+        if (H.motore && p) H.motore.rimuovi(id); else bd();
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") { if (H.fase === "lobby" && !H.players.some(function (p) { return p.id === id; }) && H.players.length < 10) H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), colore: COLORI[H.players.length % COLORI.length], omino: ST.avatarValido(m.omino) }); bd(); }
-        else if (!H.motore) return;
-        else if (m.t === "vota") H.motore.vota(id, m.idx);
+        if (m.t === "join") {
+          var nome = String(m.nome || "Amico").slice(0, 16), omino = ST.avatarValido(m.omino), p = pById(id);
+          if (H.fase === "lobby") {
+            if (!p) { if (H.players.length >= 10) return piena(id); H.players.push({ id: id, nome: nome, colore: COLORI[H.players.length % COLORI.length], omino: omino }); }
+          } else if ((!p || p.via) && !H.attesa.some(function (a) { return a.id === id; })) {
+            // entra a partita iniziata (o torna dopo essere stato tolto): guarda e gioca dalla prossima
+            if (presenti().length + H.attesa.length >= 10) return piena(id);
+            H.attesa.push({ id: id, nome: nome, omino: omino });
+          }
+          bd();   // anche se c'era già: rimanda la foto (serve a chi si ricollega)
+          return;
+        }
+        if (!H.motore) return;
+        if (m.t === "vota") H.motore.vota(id, m.idx);
         else if (m.t === "passa") H.motore.passa(id, m.target);
         else if (m.t === "indietro") H.motore.indietro(id);
       },
       onErrore: function () { senzaReteP(t); }
     });
+    function piena(id) { try { rete.inviaVeloce({ t: "piena", to: id }); } catch (e) {} }
     function vmHost() {
-      if (H.fase === "lobby") return { fase: "lobby", codice: H.codice, pronta: H.pronta, players: H.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null }; }), customCats: H.customCats.slice() };
-      var vm = H.motore.vm(); vm.codice = H.codice; vm.pronta = H.pronta; return vm;
+      if (H.fase === "lobby") return { fase: "lobby", codice: H.codice, pronta: H.pronta, regole: testoRegole(H.regole),
+        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null }; }), customCats: H.customCats.slice() };
+      var vm = H.motore.vm(); vm.codice = H.codice; vm.pronta = H.pronta;
+      vm.guardano = H.attesa.map(function (a) { return { id: a.id, nome: a.nome }; });   // con il loro id: così sanno di essere entrati
+      return vm;
     }
-    var detto = false;   // il risultato della partita è già stato dato al torneo online?
+    var detto = null;   // la partita (partitaId) già data al torneo online
     function bd() {
       var v = vmHost();
-      if (v.fase !== "fine") detto = false;
-      else if (!detto && v.classifica && t.risultato) { detto = true; t.risultato(v.classifica.map(function (p) { return { nome: p.nome }; })); }
+      if (v.fase === "fine" && v.classifica && detto !== v.partitaId && t.risultato) {
+        detto = v.partitaId; t.risultato(v.classifica.map(function (p) { return { nome: p.nome, pos: p.pos }; }));
+      }
       rete.invia({ t: "vm", vm: v }); disegna();
     }
     var cb = {
-      locale: false, sonoHost: true, myId: "host",
+      locale: false, sonoHost: true, myId: "host", chiuso: false,
       getRemaining: function () { return H.motore ? H.motore.remaining() : 0; },
       onAggiungiCat: function (txt) { txt = String(txt || "").trim().slice(0, 40); if (H.fase === "lobby" && txt && H.customCats.indexOf(txt) < 0) { H.customCats.push(txt); bd(); } },
       onTogliCat: function (i) { if (H.fase === "lobby") { H.customCats.splice(i, 1); bd(); } },
-      onContinua: function () { if (H.fase === "lobby" && H.players.length >= 2) { H.fase = "gioco"; H.motore = creaMotore(H.players, function () { bd(); }, H.customCats); bd(); } },
+      onContinua: function () {
+        if (H.fase !== "lobby" || presenti().length < 2) return;
+        if (cb._cat && cb._cat.inp.value.trim()) { cb.onAggiungiCat(cb._cat.inp.value); cb._cat.inp.value = ""; }   // la categoria scritta e non aggiunta non si perde
+        H.fase = "gioco"; H.motore = creaMotore(presenti(), function () { bd(); }, H.customCats, H.regole, H.usate); bd();
+      },
       onVota: function (idx) { H.motore && H.motore.vota("host", idx); },
       onVia: function () { H.motore && H.motore.via(); },
       onPassa: function (id) { H.motore && H.motore.passa("host", id); },
       onIndietro: function () { H.motore && H.motore.indietro("host"); },
-      onNuova: function () { H.motore && H.motore.nuova(); },
-      onEsci: function () { stopTimers(); if (H.motore) H.motore.distruggi(); rete.chiudi(); t.esci(); }
+      // "Nuova partita": tutti tornano nella saletta (entra anche chi è arrivato tardi, esce chi se n'è andato)
+      onNuova: function () {
+        if (H.motore) H.motore.distruggi();
+        H.motore = null; H.fase = "lobby";
+        H.players = presenti().concat(H.attesa.map(function (a) { return { id: a.id, nome: a.nome, omino: a.omino }; }));
+        H.attesa = []; colora(); bd();
+      },
+      onEsci: function () { cb.chiuso = true; stopTimers(); if (H.motore) H.motore.distruggi(); rete.chiudi(); t.esci(); }
     };
-    function disegna() { disegnaPatataVM(t, vmHost(), cb); }
+    function disegna() { if (!cb.chiuso) disegnaPatataVM(t, vmHost(), cb); }
     disegna();
   }
 
@@ -452,15 +587,21 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteP(t);
     var el = t.el, S = { myId: null, vm: null, vmTs: 0, rete: null, nome: "", msg: null };
     var cb = {
-      locale: false, sonoHost: false, myId: null,
+      locale: false, sonoHost: false, myId: null, chiuso: false,
       // il tempo scende solo dopo la pausa dello spettacolo (attesaMs)
       getRemaining: function () { if (!S.vm) return 0; return Math.max(0, S.vm.remaining - Math.max(0, (Date.now() - S.vmTs) - (S.vm.attesaMs || 0))); },
       onVota: function (idx) { S.rete && S.rete.invia({ t: "vota", idx: idx }); },
       onPassa: function (id) { S.rete && S.rete.invia({ t: "passa", target: id }); },
       onIndietro: function () { S.rete && S.rete.invia({ t: "indietro" }); },
-      onEsci: function () { stopTimers(); if (S.rete) S.rete.chiudi(); t.esci(); }
+      onEsci: function () { cb.chiuso = true; stopTimers(); if (S.rete) S.rete.chiudi(); t.esci(); }
     };
-    function disegna() { if (S.vm) { cb.myId = S.myId; disegnaPatataVM(t, S.vm, cb); } }
+    function disegna() {
+      if (!S.vm || cb.chiuso) return;
+      cb.myId = S.myId;
+      // guardo soltanto: sono entrato a partita iniziata (o ero uscito): gioco dalla prossima
+      cb.guardo = S.vm.fase !== "lobby" && !S.vm.players.some(function (p) { return p.id === S.myId && !p.via; });
+      disegnaPatataVM(t, S.vm, cb);
+    }
     schermaNome();
     function schermaNome() {
       var s = t.schermata({ icona: "💣", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
@@ -468,19 +609,26 @@
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
       var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
-        S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
+        if (S.rete) return;
+        S.nome = (input.value || "Amico").trim().slice(0, 16) || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
       } });
       s._piede.appendChild(bEntra);
       t.mostra(s);
       if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function collega() {
+      // il "join" lo ripete il collegamento comune finché l'host non mi mette dentro (il mio id compare nella foto)
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: ST.mioAvatar(S.nome) });
+        onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : ST.mioAvatar(S.nome) });
           setTimeout(function () { if (!S.vm && S.msg) S.msg.textContent = "Non trovo la partita. Controlla il codice, o l'host non ha ancora aperto la stanza…"; }, 8000); },
-        onMsg: function (m) { if (m && m.t === "vm") { S.vm = m.vm; S.vmTs = Date.now(); disegna(); } },
-        onChiuso: function () { stopTimers(); erroreP(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
-        onErrore: function () { stopTimers(); erroreP(t, "Problema di collegamento. Controlla la connessione e riprova."); }
+        onMsg: function (m) {
+          if (!m || cb.chiuso) return;
+          if (m.to && m.to !== S.myId) return;   // era per un altro telefono
+          if (m.t === "piena") { cb.chiuso = true; stopTimers(); if (S.rete) S.rete.chiudi(); erroreP(t, "La stanza è piena: ci sono già 10 giocatori."); return; }
+          if (m.t === "vm") { S.vm = m.vm; S.vmTs = Date.now(); disegna(); }
+        },
+        onChiuso: function () { if (cb.chiuso) return; cb.chiuso = true; stopTimers(); erroreP(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
+        onErrore: function () { if (cb.chiuso) return; cb.chiuso = true; stopTimers(); erroreP(t, "Problema di collegamento. Controlla la connessione e riprova."); }
       });
     }
   }
@@ -507,18 +655,26 @@
   // =========================================================
   var RP = null;   // la regia di questo telefono
   function idxP(vm, id) { for (var i = 0; i < vm.players.length; i++) if (vm.players[i].id === id) return i; return -1; }
+  // il testo sul leggio di chi è in gara (con più vite: i cuori che restano)
+  function testoInGara(vm, p) { return (vm.viteMax || 1) > 1 ? new Array((p.vite || 0) + 1).join("❤️") : "IN GARA"; }
+  function testoFuori(p) { return p.via ? "🚪 USCITO" : "💀 OUT"; }
   function disegnaPatataVM(t, vm, cb) {
+    if (cb.chiuso) return;   // partita lasciata: niente più disegni (la home resta la home)
     assicuraStileP();
     if (vm.fase === "lobby") { RP = null; stopTimers(); return disegnaLobbyP(t, vm, cb); }
     var ids = vm.players.map(function (p) { return p.id; }).join("|");
-    if (!RP || RP.ids !== ids || (!RP.S.vivo() && vm.fase !== "fine")) {
-      if (!(RP && RP.fineFatta && vm.fase === "fine")) {
+    if (!RP || RP.cb !== cb || RP.ids !== ids || (!RP.S.vivo() && vm.fase !== "fine")) {
+      if (!(RP && RP.cb === cb && RP.fineFatta && vm.fase === "fine")) {
         stopTimers();
-        RP = { t: t, ids: ids, cb: cb, presentato: !!cb._presentato };
+        // chi rientra a partita iniziata (pagina ricaricata, arrivato tardi): niente sigla né presentazione della categoria
+        var rientro = !cb._presentato && vm.fase !== "voto";
+        RP = { t: t, ids: ids, cb: cb, presentato: !!cb._presentato || rientro, rientro: rientro, rientroFine: rientro && vm.fase === "fine" };
+        if (rientro) { cb._presentato = true; RP.kCat = vm.categoria; }
         RP.S = ST.crea(t, vm.players, { io: cb.locale ? -1 : idxP(vm, cb.myId), esci: function () { cb.onEsci(); }, titolo: "La Patata Bollente", logo: ["LA PATATA", "BOLLENTE"] });
         RP.S.onTocca = function (i) { var p = RP.vm && RP.vm.players[i]; if (p) { swishP(); RP.cb.onPassa(p.id); } };
-        vm.players.forEach(function (p, i) { ST.testoLeggio(RP.S, i, p.eliminato ? "💀 OUT" : "IN GARA", p.eliminato); if (p.eliminato) { ST.fuori(RP.S, i, true); ST.faccia(RP.S, i, "esploso"); } });
+        vm.players.forEach(function (p, i) { ST.testoLeggio(RP.S, i, p.eliminato ? testoFuori(p) : testoInGara(vm, p), p.eliminato); if (p.eliminato) { ST.fuori(RP.S, i, true); if (!p.via) ST.faccia(RP.S, i, "esploso"); } });
         RP.bomba = creaBomba(RP.S);
+        RP.allarme = t.el("div", { class: "pt-allarme" }); RP.S.vista.appendChild(RP.allarme);
       }
     }
     RP.vm = vm; RP.cb = cb; RP.vmTs = Date.now();
@@ -537,12 +693,14 @@
   }
   async function regiaPassoP(R) {
     var vm = R.vm, S = R.S, cb = R.cb;
+    if (cb.chiuso || RP !== R) return false;   // uscito (o c'è già una regia nuova): questa si ferma
     if (vm.fase === "fine") {
       if (R.fineFatta) return false;
-      R.fineFatta = true; stopTimers(); nascondiBomba(R);
+      R.fineFatta = true; stopTimers(); nascondiBomba(R); ST.tocca(S, []); ST.viaBarra(S);
       var vinc = vm.vincitore ? idxP(vm, vm.vincitore.id) : -1;
-      if (S.vivo()) await ST.finale(S, vinc, "Ultimo sopravvissuto! 💣");
-      schermataFineP(R.t, vm, cb);
+      if (S.vivo() && !R.rientroFine) await ST.finale(S, vinc, "Ultimo sopravvissuto! 💣");
+      if (R.cb.chiuso || RP !== R) return false;   // nel frattempo si è usciti o si è tornati in saletta
+      schermataFineP(R.t, vm, R.cb);
       return true;
     }
     if (!S.vivo()) return false;
@@ -574,57 +732,69 @@
   }
 
   // ---- il maxischermo ----
+  function testoCap(vm) { return "Chi la riceve ha " + Math.round(vm.cap / 1000) + " secondi"; }
   function schermoPatata(R) {
     var el = R.t.el, S = R.S, vm = R.vm, h = null;
     ST.fermaTimer(S); ST.vuota(S.sch);
     vm.players.forEach(function (p) { if (p.id === vm.holder) h = p; });
     R.contoEl = el("div", { class: "pt-conto", text: (vm.cap / 1000).toFixed(1) });
     R.chiEl = el("b", { text: h ? h.nome : "" });
+    R.regolaEl = el("div", { class: "pt-regola", text: testoCap(vm) });
     S.sch.appendChild(el("div", { class: "pt-sch" }, [
       el("div", { class: "pt-cat", text: "🗂️ categoria" }),
       el("div", { class: "pt-catnome", text: vm.categoria || "" }),
       el("div", { class: "pt-bombona", text: "💣" }),
       R.contoEl,
       el("div", { class: "pt-chi" }, [ el("span", { text: "Ha la bomba " }), R.chiEl ]),
-      el("div", { class: "pt-regola", text: "Chi la riceve riparte da " + (vm.cap / 1000) + "s" })
+      R.regolaEl
     ]));
   }
+  // il voto: i 4 tasti si creano una volta sola per ogni gruppo di categorie, poi cambiano solo voti e bordo
   function mostraVotoP(R, vm) {
     var S = R.S, el = R.t.el, cb = R.cb;
     stopTimers(); nascondiBomba(R); ST.tocca(S, []); ST.accendiSolo(S, -1);
-    var mio = null; vm.players.forEach(function (p) { if (p.id === cb.myId) mio = p; });
-    var chiave = "voto|" + vm.cats.join("|") + "|" + vm.players.map(function (p) { return p.voto; }).join(",");
+    var mio = null; vm.players.forEach(function (p) { if (p.id === cb.myId && !p.via) mio = p; });
+    var iS = vm.cats.length, chiave = "voto|" + vm.cats.join("|");
     if (R.mostrato !== chiave) {
-      R.mostrato = chiave;
+      R.mostrato = chiave; R.tastiVoto = [];
       ST.fermaTimer(S); ST.vuota(S.sch);
       var box = el("div", { class: "pt-voto" }, [
         el("div", { class: "pt-titolo", text: "🗳️ Che categoria?" }),
         el("div", { class: "pt-sotto", text: cb.locale ? "Toccatene una per iniziare" : "Vota: si gioca la più votata" })
       ]);
-      vm.cats.forEach(function (cat, i) {
-        var voti = vm.players.filter(function (p) { return p.voto === i; }).length, scelto = mio && mio.voto === i;
-        box.appendChild(el("button", { class: "pt-catbtn" + (scelto ? " scelta" : ""), onclick: function () { swishP(); if (cb.locale) cb.onScegliCat(i); else cb.onVota(i); } }, [
-          el("span", { text: cat }), cb.locale ? null : el("small", { text: voti === 1 ? "1 voto" : voti + " voti" })
-        ]));
+      vm.cats.concat(["🎲 A sorpresa"]).forEach(function (cat, i) {
+        var small = el("small"), b = el("button", { class: "pt-catbtn" + (i === iS ? " sorpresa" : ""), onclick: function () {
+          if (R.cb.guardo) return;   // chi guarda soltanto non vota
+          swishP(); if (R.cb.locale) R.cb.onScegliCat(i); else R.cb.onVota(i);
+        } }, [ el("span", { text: cat }), small ]);
+        R.tastiVoto.push({ b: b, small: small, sorpresa: i === iS });
+        box.appendChild(b);
       });
-      // la quarta scelta: una categoria a caso, la sceglie la ruota
-      var iS = vm.cats.length, vS = vm.players.filter(function (p) { return p.voto === iS; }).length, sS = mio && mio.voto === iS;
-      box.appendChild(el("button", { class: "pt-catbtn sorpresa" + (sS ? " scelta" : ""), onclick: function () { swishP(); if (cb.locale) cb.onScegliCat(iS); else cb.onVota(iS); } }, [
-        el("span", { text: "🎲 A sorpresa" }), el("small", { text: (cb.locale ? "" : (vS === 1 ? "1 voto · " : vS + " voti · ")) + "una categoria a caso" })
-      ]));
       S.sch.appendChild(box);
     }
+    R.tastiVoto.forEach(function (x, i) {
+      var voti = vm.players.filter(function (p) { return !p.via && p.voto === i; }).length;
+      var testo = cb.locale ? "" : (voti === 1 ? "1 voto" : voti + " voti");
+      if (x.sorpresa) testo = (testo ? testo + " · " : "") + "una categoria a caso";
+      if (x.small.textContent !== testo) x.small.textContent = testo;
+      x.b.classList.toggle("scelta", !!mio && mio.voto === i);
+    });
     if (R.inq !== "schermo") { R.inq = "schermo"; ST.suSchermo(S, 900); }
-    if (!cb.locale && cb.sonoHost) ST.barra(S, [ el("button", { class: "btn btn-primario", text: "Via! ▶", onclick: function () { ST.viaBarra(S); cb.onVia(); } }) ]);
-    else if (!cb.locale) ST.barra(S, [ el("p", { class: "tl-attesa", text: "Vota pure: parte quando l'host dà il via" }) ]);
-    else ST.viaBarra(S);
+    var kB = "v|" + (cb.locale ? "l" : cb.sonoHost ? "h" : cb.guardo ? "g" : "o");
+    if (R.barraK !== kB) {
+      R.barraK = kB;
+      if (!cb.locale && cb.sonoHost) ST.barra(S, [ el("button", { class: "btn btn-primario", text: "Via! ▶", onclick: function () { ST.viaBarra(S); R.barraK = null; cb.onVia(); } }) ]);
+      else if (cb.guardo) ST.barra(S, [ el("p", { class: "tl-attesa pt-guardi", text: "👀 Stai guardando: entri nella prossima partita" }) ]);
+      else if (!cb.locale) ST.barra(S, [ el("p", { class: "tl-attesa", text: "Vota pure: parte quando l'host dà il via" }) ]);
+      else ST.viaBarra(S);
+    }
   }
   // la categoria esce dal maxischermo, poi la telecamera si allarga e la bomba vola sul primo
   async function rivelaCategoria(R) {
     var S = R.S, el = R.t.el, vm = R.vm;
-    ST.viaBarra(S); ST.tocca(S, []); nascondiBomba(R);
+    ST.viaBarra(S); R.barraK = null; ST.tocca(S, []); nascondiBomba(R);
     if (R.inq !== "schermo") { R.inq = "schermo"; await ST.suSchermo(S, 600); }
-    ST.fermaTimer(S); ST.vuota(S.sch);
+    ST.fermaTimer(S); ST.vuota(S.sch); R.mostrato = null;
     var riv = el("div", { class: "pt-rivela" }, [ el("div", { class: "pt-titolo", text: vm.sorpresa ? "🎲 Categoria a sorpresa…" : "La categoria è…" }) ]);
     S.sch.appendChild(riv);
     if (vm.sorpresa) {
@@ -644,43 +814,63 @@
       ST.FX.applauso();
       await ST.dorme(1000);
     }
+    if (R.cb.chiuso || !S.vivo()) return;
     schermoPatata(R);
     R.inq = "largo"; await ST.largo(S, 800);
     await arrivaBomba(R, true);
   }
   async function nuovoRound(R) {
     var S = R.S;
-    schermoPatata(R);
+    schermoPatata(R); R.mostrato = null;
     if (R.inq !== "largo") { R.inq = "largo"; await ST.largo(S, 600); }
     await arrivaBomba(R, false);
   }
   async function arrivaBomba(R, dalloSchermo) {
-    var S = R.S, vm = R.vm, i = idxP(vm, vm.holder); if (i < 0) return;
+    var S = R.S, vm = R.vm, i = idxP(vm, vm.holder); if (i < 0 || R.cb.chiuso || !S.vivo()) return;
     var p = vm.players[i];
     ST.accendiSolo(S, i); ST.faccia(S, i, "paura");
     var da = dalloSchermo ? { x: S.R.schermo.x + S.R.schermo.w / 2, y: S.R.schermo.y + S.R.schermo.h * 0.45 } : { x: ST.sopraTesta(S, i).x, y: -80 };
     await voloBomba(R, da, puntoBomba(R, i), 650);
+    if (R.cb.chiuso || !S.vivo()) return;
+    vm = R.vm; i = idxP(vm, vm.holder);   // nel frattempo può essere già passata (o chi l'aveva è uscito)
+    if (vm.fase !== "gioco" || i < 0) return;
+    p = vm.players[i];
     R.holder = vm.holder;
+    if (!R.cb.locale && vm.holder === R.cb.myId) allarme(R);
     ST.terzo(S, i, "💣 Ha la bomba " + p.nome, "Di' una parola e passala!", "💣");
     setTimeout(function () { if (R.vm.holder === p.id) ST.viaTerzo(S); }, 1600);
     avviaCronometro(R);
     aggiornaGioco(R);
   }
+  // online: la bomba è arrivata sul MIO telefono (suono e bordo rosso: non sempre si guarda lo schermo)
+  function allarme(R) {
+    allarmeP();
+    var a = R.allarme; if (!a) return;
+    a.classList.remove("on"); void a.offsetWidth; a.classList.add("on");
+  }
   async function esplosione(R) {
-    var S = R.S, vm = R.vm, i = idxP(vm, vm.boom.id), el = R.t.el;
-    stopTimers(); ST.tocca(S, []); ST.viaBarra(S);
+    var S = R.S, vm = R.vm, i = idxP(vm, vm.boom.id), el = R.t.el, fuori = vm.boom.fuori !== false;
+    stopTimers(); ST.tocca(S, []); ST.viaBarra(S); R.barraK = null;
     boomP(); ST.lampo(S); ST.scossa(S);
     var dove = puntoBomba(R, i); nascondiBomba(R);
     var b = el("div", { class: "pt-boom" }, [ el("i"), el("i"), el("i"), el("i"), el("i"), el("i"), el("span", { text: "💥" }) ]);
     b.style.left = dove.x + "px"; b.style.top = dove.y + "px";
     S.mondo.appendChild(b); setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 1800);
     ST.fermaTimer(S); ST.vuota(S.sch);
-    S.sch.appendChild(el("div", { class: "pt-sch" }, [ el("div", { class: "pt-boomtxt", text: "💥 BOOM!" }), el("div", { class: "pt-chi" }, [ el("b", { text: vm.boom.nome }), el("span", { text: " è fuori!" }) ]) ]));
+    var resta = vm.boom.vite === 1 ? "resta con 1 vita ❤️" : "restano " + vm.boom.vite + " vite ❤️";
+    S.sch.appendChild(el("div", { class: "pt-sch" }, [ el("div", { class: "pt-boomtxt", text: "💥 BOOM!" }),
+      el("div", { class: "pt-chi" }, [ el("b", { text: vm.boom.nome }), el("span", { text: fuori ? " è fuori!" : " perde una vita!" }) ]),
+      fuori ? null : el("div", { class: "pt-regola", text: resta }) ]));
     R.inq = "leggio"; await ST.suLeggio(S, i, 450);
-    ST.faccia(S, i, "esploso"); ST.fuori(S, i, true); ST.testoLeggio(S, i, "💀 OUT", true); ST.accendiSolo(S, -1);
+    if (R.cb.chiuso || !S.vivo()) return;
+    ST.faccia(S, i, "esploso"); ST.accendiSolo(S, -1);
+    if (fuori) { ST.fuori(S, i, true); ST.testoLeggio(S, i, "💀 OUT", true); }
+    else ST.testoLeggio(S, i, testoInGara(vm, vm.players[i] || {}), true);
     ST.pubblico(S, "ohh");
-    ST.terzo(S, i, "💥 BOOM! " + vm.boom.nome, "è eliminato!", "💥");
+    ST.terzo(S, i, "💥 BOOM! " + vm.boom.nome, fuori ? "è eliminato!" : resta, "💥");
     await ST.dorme(1500); ST.viaTerzo(S);
+    if (R.cb.chiuso || !S.vivo()) return;
+    if (!fuori) ST.faccia(S, i, null);
     R.inq = "largo"; await ST.largo(S, 700);
     R.holder = null;
   }
@@ -688,50 +878,55 @@
   // ---- durante il gioco: bomba, chi si può toccare, display dei leggii ----
   function aggiornaGioco(R) {
     var S = R.S, vm = R.vm, cb = R.cb, el = R.t.el;
-    if (vm.fase !== "gioco") return;
+    if (vm.fase !== "gioco" || cb.chiuso || !S.vivo()) return;
     var hi = idxP(vm, vm.holder), inAttesa = Date.now() < R.vmTs + (vm.attesaMs || 0);
     if (inAttesa) R.toccaAttivo = false;   // finita la pausa, il cronometro riaccende chi si può toccare
     if (R.holder && R.holder !== vm.holder && hi >= 0) {   // la bomba è passata: vola da un leggio all'altro
       var da = idxP(vm, R.holder);
-      if (da >= 0) { ST.faccia(S, da, vm.players[da].eliminato ? "esploso" : null); voloBomba(R, puntoBomba(R, da), puntoBomba(R, hi), 420); }
+      if (da >= 0) { ST.faccia(S, da, vm.players[da].eliminato && !vm.players[da].via ? "esploso" : null); voloBomba(R, puntoBomba(R, da), puntoBomba(R, hi), 420); }
       else posaBomba(R, hi);
       ST.accendiSolo(S, hi); ST.faccia(S, hi, "paura");
       if (R.chiEl) R.chiEl.textContent = vm.players[hi].nome;
+      if (!cb.locale && vm.holder === cb.myId) allarme(R);
     }
-    if (hi >= 0 && !R.holder) posaBomba(R, hi);
+    if (hi >= 0 && !R.holder) { posaBomba(R, hi); ST.accendiSolo(S, hi); ST.faccia(S, hi, "paura"); if (R.chiEl) R.chiEl.textContent = vm.players[hi].nome; }
     R.holder = vm.holder;
+    if (R.regolaEl) { var tc = testoCap(vm); if (R.regolaEl.textContent !== tc) R.regolaEl.textContent = tc; }
     vm.players.forEach(function (p, i) {
-      if (p.eliminato) { ST.fuori(S, i, true); ST.testoLeggio(S, i, "💀 OUT", true); }
-      else if (i !== hi) ST.testoLeggio(S, i, "IN GARA");
+      if (p.eliminato) { ST.fuori(S, i, true); ST.testoLeggio(S, i, testoFuori(p), true); }
+      else if (i !== hi) ST.testoLeggio(S, i, testoInGara(vm, p));
     });
     // chi si può toccare (solo chi ha la bomba: in locale tutti, online il suo telefono)
-    var puoi = (cb.locale || vm.holder === cb.myId) && !inAttesa, lista = [];
+    // subito dopo un passaggio c'è un attimo di pausa: un secondo tocco veloce non la ripassa
+    var mia = cb.locale || vm.holder === cb.myId, puoi = mia && !inAttesa, lista = [];
     if (puoi) vm.players.forEach(function (p, i) {
       if (p.eliminato || i === hi) return;
       if (vm.soloDare != null ? p.id === vm.soloDare : vm.giro.indexOf(p.id) < 0) lista.push(i);
     });
     ST.tocca(S, lista);
-    // la barra sotto: rimanda indietro / suggerimento
+    // la barra sotto: "Non valeva!" / suggerimento (non dipende dalla pausa: così non lampeggia)
     var prevP = null; vm.players.forEach(function (p) { if (p.id === vm.prev) prevP = p; });
-    var chiave = "b|" + vm.holder + "|" + (puoi ? 1 : 0) + "|" + (prevP && !prevP.eliminato ? prevP.id : "") + "|" + (vm.soloDare || "");
+    var chiave = "b|" + vm.holder + "|" + (mia ? 1 : 0) + "|" + (prevP && !prevP.eliminato ? prevP.id : "") + "|" + (vm.soloDare || "") + "|" + (cb.guardo ? 1 : 0);
     if (R.barraK !== chiave) {
       R.barraK = chiave;
       var nodi = [];
-      if (puoi && vm.soloDare) { var chiRi = null; vm.players.forEach(function (p) { if (p.id === vm.soloDare) chiRi = p; }); nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Te l'hanno rimandata: di' la parola e ridàlla a " + (chiRi ? chiRi.nome : "chi te l'ha rimandata") + " 👇" })); }
-      else if (puoi) nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Di' una parola su «" + vm.categoria + "» e tocca chi la riceve 👇" }));
+      if (mia && vm.soloDare) { var chiRi = null; vm.players.forEach(function (p) { if (p.id === vm.soloDare) chiRi = p; }); nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Te l'hanno rimandata: di' la parola e ridàlla a " + (chiRi ? chiRi.nome : "chi te l'ha rimandata") + " 👇" })); }
+      else if (mia) nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Di' una parola su «" + vm.categoria + "» e tocca chi la riceve 👇" }));
+      else if (cb.guardo) nodi.push(el("p", { class: "tl-attesa pt-guardi", text: "👀 Stai guardando: entri nella prossima partita" }));
       else if (!cb.locale && hi >= 0) nodi.push(el("p", { class: "tl-attesa pt-hint", text: "💣 Ce l'ha " + vm.players[hi].nome + "… occhio che può toccare a te!" }));
-      if (puoi && prevP && !prevP.eliminato) nodi.push(el("button", { class: "pt-indietro", html: "🆘 SOLO se " + prevP.nome + " non ha detto la parola: <b>rimandagliela</b>", onclick: function () { swishP(); cb.onIndietro(); } }));
+      if (mia && prevP && !prevP.eliminato) nodi.push(el("button", { class: "pt-indietro", html: "↩️ Non valeva! <b>Ridalla a " + escP(prevP.nome) + "</b>", onclick: function () { swishP(); cb.onIndietro(); } }));
       if (nodi.length) ST.barra(S, nodi); else ST.viaBarra(S);
     }
     if (R.inq !== "largo" && R.inq !== "leggio") { R.inq = "largo"; ST.largo(S, 700); }
     if (!dispTimer) avviaCronometro(R);
   }
-  // countdown sul maxischermo e sul leggio di chi ha la bomba, ticchettio che accelera
+  function escP(s) { return String(s || "").replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  // countdown sul maxischermo e sul leggio di chi ha la bomba, ticchettio che accelera (e il cuore negli ultimi 3 secondi)
   function avviaCronometro(R) {
     stopTimers();
     var S = R.S;
     dispTimer = setInterval(function () {
-      if (!S.vivo() || R.vm.fase !== "gioco") { stopTimers(); return; }
+      if (!S.vivo() || R.cb.chiuso || R.vm.fase !== "gioco") { stopTimers(); return; }
       var r = Math.max(0, R.cb.getRemaining()), hi = idxP(R.vm, R.vm.holder), txt = (r / 1000).toFixed(1);
       if (R.contoEl) { R.contoEl.textContent = txt; R.contoEl.classList.toggle("poco", r < 3000); }
       if (hi >= 0) ST.testoLeggio(S, hi, "💣 " + txt, r < 3000);
@@ -740,10 +935,10 @@
     }, 100);
     R.toccaAttivo = Date.now() >= R.vmTs + (R.vm.attesaMs || 0);
     (function loopSuono() {
-      if (!S.vivo() || R.vm.fase !== "gioco") { tickTimer = null; return; }
-      var r = R.cb.getRemaining(), inAttesa = Date.now() < R.vmTs + (R.vm.attesaMs || 0);
-      if (r > 0 && !inAttesa) tickP(560 + (1 - Math.min(1, r / 15000)) * 620);
-      tickTimer = setTimeout(loopSuono, Math.max(85, Math.min(620, r / 12)));
+      if (!S.vivo() || R.cb.chiuso || R.vm.fase !== "gioco") { tickTimer = null; return; }
+      var r = R.cb.getRemaining(), inAttesa = Date.now() < R.vmTs + (R.vm.attesaMs || 0), pieno = R.vm.tempo || 15000;
+      if (r > 0 && !inAttesa) { if (r < 3000) cuoreP(); else tickP(560 + (1 - Math.min(1, r / pieno)) * 620); }
+      tickTimer = setTimeout(loopSuono, r < 3000 ? 500 : Math.max(85, Math.min(620, r / 12)));
     })();
   }
 
@@ -754,7 +949,9 @@
     S.mondo.appendChild(b);
     return b;
   }
-  function misuraBomba(R) { var p = R.S.posti[0]; return Math.round((p ? p.w : 120) * 0.5); }
+  // metà del leggio, ma mai troppo piccola: con 10 giocatori deve vedersi bene da lontano
+  // (lo studio intero si vede a metà grandezza: un quarto dello schermo nel mondo = almeno ~44 px sul telefono)
+  function misuraBomba(R) { var p = R.S.posti[0]; return Math.round(Math.max((p ? p.w : 120) * 0.5, (R.S.VW || 360) * 0.25)); }
   function puntoBomba(R, i) { var q = ST.sopraTesta(R.S, i), d = misuraBomba(R); return { x: q.x, y: q.y - d * 0.45 }; }
   function trasfBomba(R, p, giro) { var d = misuraBomba(R); return "translate(" + (p.x - d / 2).toFixed(1) + "px," + (p.y - d / 2).toFixed(1) + "px) rotate(" + (giro || 0) + "deg)"; }
   function posaBomba(R, i) {
@@ -777,20 +974,29 @@
   // la saletta d'attesa (uguale per tutti i giochi); l'host sotto può aggiungere le sue categorie
   function disegnaLobbyP(t, vm, cb) {
     var el = t.el, extra = [];
+    if (vm.regole) {
+      if (!cb._regEl) cb._regEl = el("p", { class: "modulo-nota", style: "text-align:center" });
+      cb._regEl.textContent = vm.regole;
+      extra.push(cb._regEl);
+    }
     if (cb.sonoHost) {
       if (!cb._cat) {   // il riquadro delle categorie si crea una volta sola (così quello che scrivi non si perde quando entra qualcuno)
         var inpCat = el("input", { class: "link-campo", type: "text", maxlength: "40", placeholder: "Scrivi una categoria…" }), lista = el("div");
         var aggiungiCat = function () { if (inpCat.value.trim()) { cb.onAggiungiCat(inpCat.value); inpCat.value = ""; } };
         inpCat.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); aggiungiCat(); } });
-        cb._cat = { lista: lista, box: el("div", {}, [ el("div", { class: "etichetta", text: "Categorie tue (facoltative)" }), inpCat,
+        cb._cat = { inp: inpCat, lista: lista, box: el("div", {}, [ el("div", { class: "etichetta", text: "Categorie tue (facoltative)" }), inpCat,
           el("button", { class: "btn btn-fantasma", style: "margin-top:6px", text: "＋ Aggiungi categoria", onclick: aggiungiCat }), lista ]) };
       }
-      var L = cb._cat.lista; while (L.firstChild) L.removeChild(L.firstChild);
-      (vm.customCats || []).forEach(function (c, i) {
-        L.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;margin-top:6px;background:rgba(255,255,255,.06)" }, [
-          el("span", { style: "flex:1", text: "📝 " + c }), el("button", { class: "togli", text: "×", onclick: function () { cb.onTogliCat(i); } }) ]));
-      });
-      if ((vm.customCats || []).length) L.appendChild(el("p", { class: "modulo-nota", text: "Si giocheranno queste (se sono meno di 3, si completa con categorie a caso)." }));
+      var L = cb._cat.lista, chiave = (vm.customCats || []).join("|");
+      if (cb._cat.k !== chiave) {   // la lista si rifà solo quando cambia
+        cb._cat.k = chiave;
+        while (L.firstChild) L.removeChild(L.firstChild);
+        (vm.customCats || []).forEach(function (c, i) {
+          L.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;margin-top:6px;background:rgba(255,255,255,.06)" }, [
+            el("span", { style: "flex:1", text: "📝 " + c }), el("button", { class: "togli", text: "×", onclick: function () { cb.onTogliCat(i); } }) ]));
+        });
+        if ((vm.customCats || []).length) L.appendChild(el("p", { class: "modulo-nota", text: "A ogni partita ne propongo fino a 2 delle tue (a turno), insieme a quelle a caso." }));
+      }
       extra.push(cb._cat.box);
     }
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2, testoComincia: "Continua ▶",
@@ -803,11 +1009,15 @@
   function schermataFineP(t, vm, cb) {
     salvaTrofeiPatata(t, vm, cb);
     var el = t.el;
-    var sf = t.schermata({ icona: "🏆", titolo: "Vince " + (vm.vincitore ? vm.vincitore.nome : "") + "!", sotto: "La Patata Bollente" });
     var cl = vm.classifica || [];
+    var risultato = cl.map(function (p) { return { nome: p.nome, pos: p.pos }; });
+    // sullo stesso telefono: gli XP (e le statistiche) a fine partita; nel torneo ci pensa "Avanti"
+    if (cb.locale && !cb.torneo && t.risultato && cb._detto !== vm.partitaId) { cb._detto = vm.partitaId; t.risultato(risultato); }
+    var sf = t.schermata({ icona: "🏆", titolo: "Vince " + (vm.vincitore ? vm.vincitore.nome : "") + "!", sotto: "La Patata Bollente" });
+    var ultimoEsploso = -1; cl.forEach(function (p, i) { if (i > 0 && !p.via) ultimoEsploso = i; });
     var podio = el("div", { class: "pt-podio" });
     [1, 0, 2].forEach(function (k) {
-      var p = cl[k]; if (!p) return;
+      var p = cl[k]; if (!p || p.via) return;   // chi è uscito non sale sul podio
       podio.appendChild(el("div", { class: "pt-gradino p" + (k + 1) }, [
         el("div", { class: "fac", html: ST.avatarDi(p, k === 0 ? "esulta" : null) }),
         el("div", { class: "nm", text: p.nome }),
@@ -817,18 +1027,25 @@
     sf._contenuto.appendChild(podio);
     var box = el("div", { style: "display:flex;flex-direction:column;gap:6px" });
     cl.forEach(function (p, i) {
-      box.appendChild(el("div", { class: "pt-riga" + (i === 0 ? " primo" : "") }, [
+      var et = i === 0 ? "🏆 vincitore" : p.via ? "🚪 uscito" : (i === ultimoEsploso ? "💥 primo esploso" : "");
+      box.appendChild(el("div", { class: "pt-riga" + (i === 0 ? " primo" : "") + (p.via ? " via" : "") }, [
         el("span", { class: "pos", text: (i + 1) + "°" }),
-        el("span", { class: "fac", html: ST.avatarDi(p, i === cl.length - 1 && cl.length > 1 ? "esploso" : null) }),
-        el("span", { class: "nm", text: p.nome }),
-        el("span", { class: "et", text: i === 0 ? "🏆 vincitore" : (i === cl.length - 1 ? "💥 primo esploso" : "") })
+        el("span", { class: "fac", html: ST.avatarDi(p, i === ultimoEsploso ? "esploso" : null) }),
+        el("span", { class: "nm", text: p.id === cb.myId ? p.nome + " (tu)" : p.nome }),
+        el("span", { class: "et", text: et })
       ]));
     });
     sf._contenuto.appendChild(box);
-    if (cb.sonoHost) {
-      sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
+    if (cb.locale && cb.torneo) {
+      sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏆 Avanti nel torneo ▶", onclick: function () { cb.onTorneo(risultato); } }));
+    } else if (cb.sonoHost) {
+      sf._piede.appendChild(el("button", { class: "btn btn-primario", text: cb.locale ? "🔄 Nuova partita" : "🔄 Nuova partita (si torna nella saletta)", onclick: cb.onNuova }));
       sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Chiudi", onclick: cb.onEsci }));
-    } else sf._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa dell'host per un'altra partita…" }));
+    } else {
+      sf._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:12px",
+        text: cb.guardo ? "👀 Hai guardato questa partita: se l'host ne fa un'altra, entri anche tu." : "Se l'host fa un'altra partita, torni da solo nella saletta." }));
+      sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    }
     t.mostra(sf);
   }
 })();

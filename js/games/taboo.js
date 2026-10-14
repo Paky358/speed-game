@@ -2,7 +2,12 @@
   "use strict";
 
   var MIN = 4, MAX = 16, SQUADRE = ["A", "B"];
-  var COLORI = ["#e64980", "#4263eb"];
+  var MAX_PASSI = 3;
+  var ATTESA_PRONTO = 20000;   // chi deve spiegare ha 20 s per toccare "Pronti, via!", poi si parte da soli
+  var ANNULLA_MS = 5000;       // per 5 s l'host o chi spiega possono annullare un BUZZ
+  var BLOCCO_MS = 400;         // dopo un tocco i tasti si fermano un attimo (niente doppio tocco)
+  var LIVELLI = { 1: [1], 2: [1, 2, 3], 3: [2, 3] };   // carte: 1 facili, 2 miste, 3 difficili
+  var CHIAVE_VISTE = "sg-taboo-viste";
 
   function avatar(nome) {
     var p = window.SGNube && SGNube.profilo && SGNube.profilo();
@@ -14,6 +19,57 @@
     for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), x = a[i]; a[i] = a[j]; a[j] = x; }
     return a;
   }
+  function puntiTesto(n) { return n + (Math.abs(n) === 1 ? " punto" : " punti"); }
+
+  // ---- il mazzo: le carte già uscite su questo telefono vanno in fondo, così non tornano subito ----
+  function leggiViste() { try { return JSON.parse(localStorage.getItem(CHIAVE_VISTE) || "{}") || {}; } catch (e) { return {}; } }
+  function scriviViste(o) { try { localStorage.setItem(CHIAVE_VISTE, JSON.stringify(o)); } catch (e) {} }
+  function carteDelLivello(liv) {
+    var tutte = window.SG_TABOO_CARTE || [], ok = LIVELLI[liv] || LIVELLI[2];
+    var scelte = tutte.filter(function (c) { return ok.indexOf(c.l || 1) >= 0; });
+    return scelte.length >= 40 ? scelte : tutte.slice();
+  }
+  function mazzo(liv) {
+    var tutte = carteDelLivello(liv), viste = leggiViste(), nuove = [], gia = [];
+    tutte.forEach(function (c) { (viste[c.p] ? gia : nuove).push(c); });
+    if (nuove.length < 60) {   // uscite quasi tutte: si ricomincia il giro
+      tutte.forEach(function (c) { delete viste[c.p]; }); scriviViste(viste);
+      nuove = tutte; gia = [];
+    }
+    return mescola(nuove).concat(mescola(gia));
+  }
+  function segnaViste(parole) {
+    if (!parole.length) return;
+    var viste = leggiViste();
+    if (Object.keys(viste).length > 4000) viste = {};
+    parole.forEach(function (p) { viste[p] = 1; }); scriviViste(viste);
+  }
+
+  // ---- suoni piccoli fatti al volo (niente file) ----
+  var NOTE = {
+    giusta: [[880, 0, 0.09, "sine"], [1320, 0.08, 0.16, "sine"]],
+    buzz: [[150, 0, 0.5, "sawtooth"], [158, 0, 0.5, "square"]],
+    passo: [[560, 0, 0.07, "triangle"], [400, 0.07, 0.1, "triangle"]],
+    tic: [[1100, 0, 0.04, "square"]],
+    via: [[660, 0, 0.1, "triangle"], [990, 0.1, 0.18, "triangle"]],
+    gong: [[196, 0, 1.1, "sine"], [294, 0, 0.8, "sine"]],
+    fanfara: [[523, 0, 0.14, "triangle"], [659, 0.14, 0.14, "triangle"], [784, 0.28, 0.14, "triangle"], [1047, 0.42, 0.5, "triangle"]]
+  };
+  function suono(tipo) {
+    var ac = null; try { ac = SG.audioCtx && SG.audioCtx(); } catch (e) {}
+    if (!ac || !NOTE[tipo]) return;
+    try {
+      var ora = ac.currentTime;
+      NOTE[tipo].forEach(function (n) {
+        var o = ac.createOscillator(), g = ac.createGain(), v = tipo === "buzz" ? 0.09 : (tipo === "tic" ? 0.05 : 0.12);
+        o.type = n[3]; o.frequency.value = n[0];
+        g.gain.setValueAtTime(0.0001, ora + n[1]); g.gain.exponentialRampToValueAtTime(v, ora + n[1] + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.0001, ora + n[1] + n[2]);
+        o.connect(g); g.connect(ac.destination); o.start(ora + n[1]); o.stop(ora + n[1] + n[2] + 0.05);
+      });
+    } catch (e) {}
+  }
+
   function stile() {
     if (document.getElementById("sg-taboo-css")) return;
     var s = document.createElement("style"); s.id = "sg-taboo-css";
@@ -21,30 +77,326 @@
       ".schermata.tb-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#171a2d;color:#fff}",
       ".schermata.tb-piena>.testa,.schermata.tb-piena>.piede{display:none}",
       ".schermata.tb-piena>.contenuto{height:100%;margin:0;padding:0}",
-      ".tb{height:var(--alt,100dvh);box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;gap:clamp(8px,2vh,18px);padding:calc(12px + env(safe-area-inset-top)) 14px calc(12px + env(safe-area-inset-bottom));font-family:inherit}",
-      ".tb-top{display:flex;align-items:center;justify-content:center;gap:10px;font-size:clamp(14px,4vw,18px);font-weight:900}",
-      ".tb-punti{display:flex;justify-content:center;gap:10px}",
-      ".tb-squadra{min-width:90px;text-align:center;border-radius:13px;padding:7px 12px;background:rgba(255,255,255,.1)}.tb-squadra span{display:block;font-size:clamp(11px,3vw,14px)}.tb-squadra b{display:block;font-size:clamp(24px,7vw,34px)}.tb-squadra.a{box-shadow:inset 0 -4px #e64980}.tb-squadra.b{box-shadow:inset 0 -4px #4263eb}",
-      ".tb-timer{font-size:clamp(42px,13vw,68px);font-weight:1000;line-height:1;text-align:center;font-variant-numeric:tabular-nums}",
-      ".tb-turno{font-size:clamp(14px,4vw,18px);font-weight:850;text-align:center;opacity:.88}",
-      ".tb-carta{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,2vh,18px);border-radius:24px;background:#fff;color:#171a2d;padding:14px;box-shadow:0 12px 32px #0004}",
-      ".tb-parola{font-size:clamp(34px,10vw,58px);font-weight:1000;line-height:1.02;text-align:center;overflow-wrap:anywhere}",
-      ".tb-vietate{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}.tb-vietata{border-radius:12px;background:#fff0f0;color:#a61e4d;text-align:center;font-size:clamp(15px,4.6vw,21px);font-weight:900;padding:8px 5px}",
-      ".tb-nascondi{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px}.tb-indovina{font-size:clamp(34px,11vw,62px);font-weight:1000;line-height:1.05}.tb-sub{font-size:clamp(15px,4.5vw,19px);font-weight:750;opacity:.82}",
-      ".tb-tasti{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tb-btn{min-height:72px;padding:10px 8px;border:0;border-radius:18px;background:#51cf66;color:#10200f;font:inherit;font-size:clamp(17px,5vw,23px);font-weight:1000;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-shadow:0 6px 0 #0003}.tb-btn:active{transform:translateY(2px)}.tb-btn:disabled{opacity:.45;box-shadow:none}.tb-btn.pass{background:#ffd43b;color:#332500}.tb-btn.buzz{grid-column:1/-1;background:#fa5252;color:#fff;min-height:92px;font-size:clamp(27px,8vw,38px)}.tb-btn.esci{background:rgba(255,255,255,.14);color:#fff;min-height:50px;font-size:16px;box-shadow:none}",
-      ".tb-esito{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:8px}.tb-liste{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-height:0}.tb-lista{min-height:0;overflow:hidden;border-radius:14px;background:rgba(255,255,255,.1);padding:9px}.tb-lista h3{margin:0 0 5px;font-size:clamp(14px,4vw,18px)}.tb-voci{font-size:clamp(11px,3.2vw,15px);line-height:1.25;overflow-wrap:anywhere}.tb-fine{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;flex:1}.tb-fine h1{font-size:clamp(30px,9vw,48px);margin:0}.tb-fine p{font-size:clamp(20px,6vw,30px);margin:0;font-weight:900}",
-      ".tb-squad-lista{display:flex;gap:8px;margin:6px 0;flex-wrap:wrap}.tb-scelta{border:0;border-radius:12px;padding:9px 12px;color:white;font:inherit;font-weight:850;background:#383d59}.tb-scelta.a{background:#a61e4d}.tb-scelta.b{background:#364fc7}.tb-casuale{border:0;border-radius:14px;padding:12px 16px;background:#ffd43b;color:#332500;font:inherit;font-size:17px;font-weight:950}",
-      "@media(max-height:700px){.tb{gap:7px;padding-top:calc(6px + env(safe-area-inset-top));padding-bottom:calc(6px + env(safe-area-inset-bottom))}.tb-timer{font-size:42px}.tb-btn{min-height:62px}.tb-btn.buzz{min-height:76px}.tb-carta{gap:8px;padding:9px}.tb-vietata{padding:5px}}"
+      ".tb{height:var(--alt,100dvh);box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;gap:clamp(7px,1.6vh,14px);padding:calc(10px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));font-family:inherit}",
+      ".tb-top{display:grid;grid-template-columns:36px minmax(0,1fr) auto minmax(0,1fr) 36px;align-items:center;gap:6px}",
+      ".tb-mini{width:36px;height:36px;border:0;border-radius:50%;background:rgba(255,255,255,.13);color:#fff;font:inherit;font-size:16px;padding:0;touch-action:manipulation}",
+      ".tb-squadra{min-width:0;text-align:center;border-radius:13px;padding:5px 6px;background:rgba(255,255,255,.1)}.tb-squadra span{display:block;font-size:clamp(10px,2.9vw,13px);font-weight:800;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tb-squadra.mia{outline:2px solid #ffd43b;outline-offset:-2px}.tb-squadra b{display:block;font-size:clamp(22px,7vw,32px);line-height:1.1}.tb-squadra.a{box-shadow:inset 0 -4px #e64980}.tb-squadra.b{box-shadow:inset 0 -4px #4263eb}.tb-squadra.mia span::after{content:' · tu'}",
+      ".tb-bump{animation:tbBump .35s ease-out}@keyframes tbBump{0%{transform:scale(1.35)}100%{transform:scale(1)}}",
+      ".tb-timer{min-width:64px;font-size:clamp(32px,10vw,46px);font-weight:1000;line-height:1;text-align:center;font-variant-numeric:tabular-nums}.tb-timer.testo{font-size:clamp(18px,5.5vw,24px)}",
+      ".tb-barra{height:10px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden;flex:none}.tb-barra i{display:block;height:100%;background:#51cf66;transform-origin:left center;transition:transform .2s linear}.tb-barra.rossa i{background:#fa5252}",
+      ".tb-turno{font-size:clamp(13px,3.8vw,17px);font-weight:850;text-align:center;opacity:.88;min-height:1.2em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".tb-centro{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}",
+      ".tb-corpo{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}",
+      ".tb-carta{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,1.8vh,16px);border-radius:24px;background:#fff;color:#171a2d;padding:12px;box-shadow:0 12px 32px #0004}",
+      ".tb-entra{animation:tbEntra .28s ease-out}@keyframes tbEntra{0%{transform:translateX(40px) scale(.96);opacity:0}100%{transform:none;opacity:1}}",
+      ".tb-trema{animation:tbTrema .4s}@keyframes tbTrema{0%,100%{transform:none}20%{transform:translateX(-10px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}",
+      ".tb-parola{font-size:clamp(32px,10vw,56px);font-weight:1000;line-height:1.02;text-align:center;overflow-wrap:anywhere}",
+      ".tb-vietate{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:100%}.tb-vietata{border-radius:12px;background:#fff0f0;color:#a61e4d;text-align:center;font-size:clamp(15px,4.5vw,21px);font-weight:900;padding:7px 5px}.tb-vietata:last-child:nth-child(odd){grid-column:1/-1}",
+      ".tb-promemoria{font-size:clamp(11px,3vw,13px);font-weight:700;color:#868e96;text-align:center}",
+      ".tb-attesa-carta{font-size:clamp(20px,6vw,28px);font-weight:900;color:#868e96}",
+      ".tb-nascondi{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px}.tb-indovina{font-size:clamp(30px,10vw,56px);font-weight:1000;line-height:1.05}.tb-sub{font-size:clamp(14px,4.2vw,18px);font-weight:750;opacity:.85}",
+      ".tb-conto{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.tb-conto span{border-radius:999px;background:rgba(255,255,255,.12);padding:6px 12px;font-weight:900;font-size:clamp(14px,4vw,18px)}.tb-conto .fuoco{background:#ff922b;color:#2b1400}",
+      ".tb-av{display:flex;justify-content:center;align-items:flex-end;height:clamp(90px,20vh,170px)}.tb-av svg{height:100%;width:auto}.tb-av.piccolo{height:44px}",
+      ".tb-tasti{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:none}.tb-btn{min-height:72px;padding:10px 8px;border:0;border-radius:18px;background:#51cf66;color:#10200f;font:inherit;font-size:clamp(17px,5vw,23px);font-weight:1000;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-shadow:0 6px 0 #0003}.tb-btn:active{transform:translateY(2px)}.tb-btn:disabled{opacity:.45;box-shadow:none}.tb-btn.pass{background:#ffd43b;color:#332500}.tb-btn.buzz{grid-column:1/-1;background:#fa5252;color:#fff;min-height:96px;font-size:clamp(27px,8vw,38px)}.tb-btn.largo{grid-column:1/-1}.tb-btn.grigio{background:rgba(255,255,255,.14);color:#fff;box-shadow:none;min-height:56px;font-size:clamp(15px,4.4vw,18px)}.tb-btn.blu{background:#4dabf7;color:#04213a}",
+      ".tb-nota{grid-column:1/-1;text-align:center;font-size:clamp(13px,3.8vw,16px);font-weight:750;opacity:.8;min-height:1.2em}",
+      ".tb-banner{position:absolute;left:8px;right:8px;top:8px;z-index:3;border-radius:16px;background:#c92a2a;color:#fff;padding:10px 12px;text-align:center;box-shadow:0 10px 26px #0006;opacity:0;transform:translateY(-12px);transition:opacity .2s,transform .2s;pointer-events:none}.tb-banner.vis{opacity:1;transform:none;pointer-events:auto}.tb-banner.verde{background:#2b8a3e}.tb-banner b{display:block;font-size:clamp(19px,5.6vw,25px)}.tb-banner small{display:block;font-size:clamp(13px,3.7vw,16px);font-weight:750;opacity:.92}.tb-banner .tb-btn{min-height:44px;margin-top:8px;width:100%;font-size:17px;background:#fff;color:#c92a2a}",
+      ".tb-volo{position:absolute;left:50%;top:42%;z-index:2;pointer-events:none;font-size:clamp(30px,9vw,46px);font-weight:1000;text-shadow:0 3px 10px #0007;animation:tbVolo .9s ease-out forwards}.tb-volo.ok{color:#69db7c}.tb-volo.no{color:#ff6b6b}.tb-volo.pa{color:#ffd43b}@keyframes tbVolo{0%{transform:translate(-50%,10px) scale(.7);opacity:0}25%{transform:translate(-50%,0) scale(1.1);opacity:1}100%{transform:translate(-50%,-70px) scale(1);opacity:0}}",
+      ".tb-riep{flex:1 1 auto;min-height:0;overflow:hidden;border-radius:16px;background:rgba(255,255,255,.08);padding:10px;display:flex;flex-direction:column;gap:6px}.tb-riep h3{margin:0;font-size:clamp(15px,4.3vw,19px);display:flex;justify-content:space-between;gap:8px}.tb-riep h3 em{font-style:normal;white-space:nowrap}",
+      ".tb-chips{min-height:0;overflow:hidden;line-height:1.15}.tb-chip{display:inline-block;border-radius:999px;padding:4px 10px;margin:2px 2px;font-weight:850;font-size:clamp(12px,3.4vw,15px)}.tb-chip.ok{background:#2b8a3e}.tb-chip.no{background:#c92a2a}.tb-chip.pa{background:#e67700}.tb-chip.altre{background:rgba(255,255,255,.18)}",
+      ".tb-prossimo{flex:none;display:flex;align-items:center;gap:12px;border-radius:16px;background:rgba(255,255,255,.1);padding:8px 12px}.tb-prossimo .tb-av{height:clamp(70px,13vh,110px);flex:none}.tb-prossimo b{display:block;font-size:clamp(20px,6vw,28px);line-height:1.1}.tb-prossimo span{display:block;font-size:clamp(13px,3.8vw,16px);font-weight:750;opacity:.85;margin-top:3px}",
+      ".tb-fine{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:clamp(6px,1.4vh,12px);overflow:hidden}.tb-fine h1{font-size:clamp(28px,8.5vw,44px);margin:0;line-height:1.05}.tb-fine p{margin:0;font-size:clamp(14px,4vw,17px);font-weight:750;opacity:.88}",
+      ".tb-colonne{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}.tb-col{border-radius:16px;background:rgba(255,255,255,.08);padding:8px 6px;min-width:0}.tb-col.a{box-shadow:inset 0 -4px #e64980}.tb-col.b{box-shadow:inset 0 -4px #4263eb}.tb-col h3{margin:0 0 4px;font-size:clamp(14px,4vw,18px)}.tb-col .tb-pt{font-size:clamp(26px,8vw,38px);font-weight:1000;line-height:1}",
+      ".tb-gente{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 4px;margin-top:4px}.tb-gente div{display:flex;flex-direction:column;align-items:center;width:52px}.tb-gente small{font-size:11px;font-weight:800;max-width:52px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tb-col.vince .tb-av{animation:tbSalta 1s ease-in-out infinite}.tb-col.vince .tb-gente div:nth-child(2n) .tb-av{animation-delay:-.5s}@keyframes tbSalta{0%,100%{transform:none}50%{transform:translateY(-8px)}}",
+      ".tb-premi{display:flex;flex-direction:column;gap:5px;width:100%}.tb-premi div{border-radius:12px;background:rgba(255,212,59,.14);padding:6px 10px;font-size:clamp(13px,3.8vw,16px);font-weight:800}",
+      ".tb-squad-box{display:flex;flex-direction:column;gap:6px;margin:6px 0}.tb-squad-lista{display:flex;gap:6px;flex-wrap:wrap;align-items:center;border-radius:14px;padding:7px;background:rgba(0,0,0,.05)}.tb-squad-lista.a{border-left:5px solid #e64980}.tb-squad-lista.b{border-left:5px solid #4263eb}.tb-squad-lista b{font-size:15px}.tb-scelta{border:0;border-radius:12px;padding:8px 11px;color:#fff;font:inherit;font-weight:850;background:#383d59}.tb-scelta.a{background:#c2255c}.tb-scelta.b{background:#364fc7}.tb-scelta.tu{outline:3px solid #ffd43b}.tb-entra-sq{border:2px dashed currentColor;border-radius:12px;padding:7px 10px;background:transparent;font:inherit;font-weight:850;color:inherit;opacity:.75}.tb-casuale{border:0;border-radius:14px;padding:11px 16px;background:#ffd43b;color:#332500;font:inherit;font-size:16px;font-weight:950}.tb-sq-nota{font-size:13px;font-weight:700;opacity:.75}",
+      "@media(max-height:700px){.tb{gap:6px;padding-top:calc(6px + env(safe-area-inset-top));padding-bottom:calc(8px + env(safe-area-inset-bottom))}.tb-timer{font-size:34px}.tb-btn{min-height:60px}.tb-btn.buzz{min-height:78px}.tb-carta{gap:7px;padding:9px}.tb-vietata{padding:5px}.tb-av{height:84px}}"
     ].join("");
     document.head.appendChild(s);
   }
+
+  // tasto che risponde al primo tocco (pointerup), senza il ritardo del click
   function bottone(t, classe, testo, fn) {
     var b = t.el("button", { class: "tb-btn " + (classe || ""), type: "button", text: testo });
     var giu = false;
     b.addEventListener("pointerdown", function (e) { if (b.disabled) return; giu = true; e.preventDefault(); });
     b.addEventListener("pointerup", function (e) { if (!giu || b.disabled) return; giu = false; e.preventDefault(); try { SG.audioCtx && SG.audioCtx(); } catch (_) {} fn(); });
     b.addEventListener("pointercancel", function () { giu = false; });
+    b.addEventListener("pointerleave", function () { giu = false; });
     return b;
+  }
+  function avatarNodo(t, cfg, nome, classe) {
+    var d = t.el("div", { class: "tb-av " + (classe || "") });
+    var c = cfg || (window.SGOmino ? SGOmino.casuale(nome || "?") : null);
+    if (c && window.SGOmino) d.innerHTML = SGOmino.svg(c); else d.textContent = "🙂";
+    return d;
+  }
+
+  // ---- le squadre nella saletta: le vedono tutti; ognuno tocca una squadra per cambiarla, l'host sposta chiunque ----
+  function boxSquadre(t, o) {
+    var box = t.el("div", { class: "tb-squad-box" }), firma = "";
+    box.aggiorna = function (giocatori, squadre, mioId) {
+      var f = JSON.stringify([giocatori.map(function (p) { return p.id + ":" + p.nome; }), squadre, mioId]);
+      if (f === firma) return;
+      firma = f; box.innerHTML = "";
+      if (o.host) box.appendChild(t.el("button", { class: "tb-casuale", type: "button", text: "🔀 Squadre a caso", onclick: o.aCaso }));
+      [0, 1].forEach(function (s) {
+        var r = t.el("div", { class: "tb-squad-lista " + (s ? "b" : "a") });
+        var membri = giocatori.filter(function (p) { return (squadre[p.id] === 1 ? 1 : 0) === s; });
+        r.appendChild(t.el("b", { text: "Squadra " + SQUADRE[s] + " (" + membri.length + ")" }));
+        membri.forEach(function (p) {
+          var tu = p.id === mioId;
+          r.appendChild(t.el("button", { class: "tb-scelta " + (s ? "b" : "a") + (tu ? " tu" : ""), type: "button", text: tu ? "Tu" : p.nome,
+            onclick: function () { if (o.host || tu) o.sposta(p.id, 1 - s); } }));
+        });
+        var mia = squadre[mioId] === 1 ? 1 : 0;
+        if (!o.host && mia !== s) r.appendChild(t.el("button", { class: "tb-entra-sq", type: "button", text: "+ Vai qui", onclick: function () { o.sposta(mioId, s); } }));
+        box.appendChild(r);
+      });
+      box.appendChild(t.el("div", { class: "tb-sq-nota", text: o.host ? "Tocca un nome per spostarlo nell'altra squadra." : "Tocca il tuo nome o «Vai qui» per cambiare squadra." }));
+    };
+    return box;
+  }
+
+  // ---- la schermata di gioco, uguale per host e amici: si disegna dalla "foto" (vm) ----
+  // o: { sonoHost, mioId(), azione(tipo, extra), esci(), pausa(), rifai(), chiudiPartita(), nuova() }
+  function creaVista(t, o) {
+    var V = { ui: null, v: null, key: "", seq: null, fineLocale: 0, ultimoSec: -1, omini: Object.create(null), bloccoFino: 0, tBanner: null, festa: "" };
+    function io() { return o.mioId(); }
+    function giocatore(v, id) { return (v.giocatori || []).find(function (p) { return p.id === id; }) || null; }
+    function nomeDi(v, id) { var p = giocatore(v, id); return p ? p.nome : "…"; }
+    function squadraDi(v, id) { return v.squadre && v.squadre[id] === 1 ? 1 : 0; }
+    function ruolo(v) {
+      var me = io();
+      if (!v.attivo) return "nessuno";
+      if (me === v.attivo) return "spiega";
+      return squadraDi(v, me) === v.team ? "compagno" : "avversario";
+    }
+    function tasto(classe, testo, fn) {
+      return bottone(t, classe, testo, function () { if (Date.now() < V.bloccoFino) return; V.bloccoFino = Date.now() + BLOCCO_MS; fn(); });
+    }
+    function esci() {
+      if (V.v && V.v.fase === "fine") return o.esci();
+      if (window.confirm(o.sonoHost ? "Chiudere la partita per tutti?" : "Uscire dalla partita?")) o.esci();
+    }
+    function frame() {
+      stile();
+      var s = t.schermata({}); s.classList.add("tb-piena");
+      var ui = V.ui = { s: s };
+      ui.pausa = t.el("button", { class: "tb-mini", type: "button", text: "⏸️", title: "Pausa", onclick: function () { if (o.pausa) o.pausa(); } });
+      ui.esci = t.el("button", { class: "tb-mini", type: "button", text: "✕", title: "Esci", onclick: esci });
+      ui.box = [0, 1].map(function (q) { var b = t.el("div", { class: "tb-squadra " + (q ? "b" : "a") }, [t.el("span", { text: "Squadra " + SQUADRE[q] }), t.el("b", { text: "0" })]); return b; });
+      ui.score = ui.box.map(function (b) { return b.querySelector("b"); });
+      ui.timer = t.el("div", { class: "tb-timer" });
+      ui.barraI = t.el("i");
+      ui.barra = t.el("div", { class: "tb-barra" }, [ui.barraI]);
+      ui.turno = t.el("div", { class: "tb-turno" });
+      ui.corpo = t.el("div", { class: "tb-corpo" });
+      ui.banner = t.el("div", { class: "tb-banner" });
+      ui.centro = t.el("div", { class: "tb-centro" }, [ui.corpo, ui.banner]);
+      ui.tasti = t.el("div", { class: "tb-tasti" });
+      s._contenuto.appendChild(t.el("div", { class: "tb" }, [t.el("div", { class: "tb-top" }, [ui.pausa, ui.box[0], ui.timer, ui.box[1], ui.esci]), ui.barra, ui.turno, ui.centro, ui.tasti]));
+      t.mostra(s);
+      V.key = ""; V.festa = "";
+    }
+
+    // ---- quello che è appena successo: suono, scritta che vola, avviso del BUZZ ----
+    function vola(testo, classe) {
+      if (!V.ui) return;
+      var n = t.el("div", { class: "tb-volo " + classe, text: testo });
+      V.ui.centro.appendChild(n); setTimeout(function () { if (n.parentNode) n.parentNode.removeChild(n); }, 950);
+    }
+    function banner(titolo, sotto, verde, ms, conAnnulla) {
+      var b = V.ui.banner; b.innerHTML = ""; b.classList.toggle("verde", !!verde);
+      b.appendChild(t.el("b", { text: titolo })); if (sotto) b.appendChild(t.el("small", { text: sotto }));
+      if (conAnnulla) b.appendChild(tasto("", "↩️ Annulla BUZZ", function () { o.azione("annulla", { seq: conAnnulla }); nascondiBanner(); }));
+      b.classList.add("vis");
+      if (V.tBanner) clearTimeout(V.tBanner);
+      V.tBanner = setTimeout(nascondiBanner, ms);
+    }
+    function nascondiBanner() { if (V.tBanner) { clearTimeout(V.tBanner); V.tBanner = null; } if (V.ui) V.ui.banner.classList.remove("vis"); }
+    function evento(ev, v) {
+      var r = ruolo(v);
+      if (ev.tipo === "giusta") { suono("giusta"); vola("✅ +1", "ok"); }
+      else if (ev.tipo === "passo") { if (r !== "compagno") suono("passo"); vola("⏭️ Passata", "pa"); }
+      else if (ev.tipo === "buzz") {
+        suono("buzz"); vola("❌ −1", "no");
+        var c = V.ui.corpo.querySelector(".tb-carta, .tb-nascondi"); if (c) { c.classList.remove("tb-entra"); c.classList.add("tb-trema"); }
+        var puo = (o.sonoHost || io() === v.attivo);
+        banner("🚨 BUZZ di " + (ev.nome || "…") + "!", "Parola vietata detta · carta: " + (ev.parola || ""), false, puo ? ANNULLA_MS : 2400, puo ? ev.seq : 0);
+      } else if (ev.tipo === "annullato") { suono("via"); banner("↩️ BUZZ annullato", "Il punto torna alla squadra " + SQUADRE[v.team], true, 2200); }
+    }
+
+    // ---- la parte che cambia: si rifà solo quando cambia carta, turno o fase ----
+    function chiave(v) {
+      var r = ruolo(v);
+      if (v.fase === "turno") return ["T", v.turno, v.chiaveCarta, r, v.carta ? 1 : 0, v.pausa ? 1 : 0, v.passati].join("|");
+      if (v.fase === "pronto") return ["P", v.turno, v.attivo, r, v.avviso || "", v.pausa ? 1 : 0, (v.riepilogo && v.riepilogo.turno) || 0, o.sonoHost ? v.presenti : 0].join("|");
+      return "F|" + v.partitaId;
+    }
+    function corpo(v) {
+      var ui = V.ui; ui.corpo.innerHTML = ""; ui.tasti.innerHTML = ""; ui.conta = null; nascondiBanner();
+      if (v.fase === "turno") corpoTurno(v, ui);
+      else if (v.fase === "pronto") corpoPronto(v, ui);
+      else corpoFine(v, ui);
+    }
+    function carta(c, conPromemoria) {
+      var box = t.el("div", { class: "tb-carta tb-entra" });
+      if (!c) { box.appendChild(t.el("div", { class: "tb-attesa-carta", text: "Carta in arrivo…" })); return box; }
+      box.appendChild(t.el("div", { class: "tb-parola", text: c.p }));
+      box.appendChild(t.el("div", { class: "tb-vietate" }, (c.v || []).map(function (w) { return t.el("div", { class: "tb-vietata", text: w }); })));
+      if (conPromemoria) box.appendChild(t.el("div", { class: "tb-promemoria", text: "Vietati anche: la parola stessa, un suo pezzo, i gesti" }));
+      return box;
+    }
+    function corpoTurno(v, ui) {
+      var r = ruolo(v);
+      if (v.pausa) {
+        ui.corpo.appendChild(t.el("div", { class: "tb-nascondi" }, [t.el("div", { class: "tb-indovina", text: "⏸️ Pausa" }), t.el("div", { class: "tb-sub", text: o.sonoHost ? "Il tempo è fermo per tutti." : "L'host ha fermato il tempo." })]));
+        if (o.sonoHost) ui.tasti.appendChild(tasto("largo", "▶ Riprendi", function () { o.pausa(); }));
+        return;
+      }
+      if (r === "spiega" || r === "avversario") {
+        ui.corpo.appendChild(carta(v.carta, r === "spiega"));
+        if (r === "spiega") {
+          var ok = tasto("", "✅ Indovinata", function () { o.azione("indovinata"); });
+          var pa = tasto("pass", "⏭️ Passo " + v.passati + "/" + MAX_PASSI, function () { o.azione("passo"); });
+          ok.disabled = !v.carta; pa.disabled = !v.carta || v.passati >= MAX_PASSI;
+          ui.tasti.appendChild(ok); ui.tasti.appendChild(pa);
+        } else {
+          var bz = tasto("buzz", "❌ BUZZ", function () { o.azione("buzz"); }); bz.disabled = !v.carta;
+          ui.tasti.appendChild(bz);
+        }
+      } else {
+        // i compagni di chi spiega: l'avatar di chi spiega, quante ne avete fatte, la serie
+        var conto = t.el("div", { class: "tb-conto" }, [t.el("span", { text: "✅ " + (v.giusteTurno || 0) + (v.giusteTurno === 1 ? " indovinata" : " indovinate") })]);
+        if (v.combo >= 3) conto.appendChild(t.el("span", { class: "fuoco", text: "🔥 " + v.combo + " di fila!" }));
+        ui.corpo.appendChild(t.el("div", { class: "tb-nascondi" }, [
+          avatarNodo(t, V.omini[v.attivo], nomeDi(v, v.attivo)),
+          t.el("div", { class: "tb-indovina", text: "Indovina!" }),
+          t.el("div", { class: "tb-sub", text: "Ascolta " + nomeDi(v, v.attivo) + " e grida la risposta" }), conto]));
+      }
+    }
+    function riepilogo(v, ui) {
+      var r = v.riepilogo; if (!r) return;
+      var delta = r.giuste.length - r.buzz.length;
+      var box = t.el("div", { class: "tb-riep" }, [t.el("h3", {}, [t.el("span", { text: r.nome + (r.uscito ? " (uscito)" : "") + " · Squadra " + SQUADRE[r.team] }), t.el("em", { text: (delta > 0 ? "+" : "") + delta })])]);
+      var chips = t.el("div", { class: "tb-chips" }), voci = [];
+      r.giuste.forEach(function (p) { voci.push(["ok", "✅ " + p]); });
+      r.buzz.forEach(function (p) { voci.push(["no", "❌ " + p]); });
+      r.passate.forEach(function (p) { voci.push(["pa", "⏭️ " + p]); });
+      if (!voci.length) chips.appendChild(t.el("span", { class: "tb-chip altre", text: "Nessuna carta in questo turno" }));
+      var max = window.innerHeight < 700 ? 9 : 14;
+      voci.slice(0, voci.length > max ? max - 1 : max).forEach(function (x) { chips.appendChild(t.el("span", { class: "tb-chip " + x[0], text: x[1] })); });
+      if (voci.length > max) chips.appendChild(t.el("span", { class: "tb-chip altre", text: "+" + (voci.length - max + 1) + " altre" }));
+      box.appendChild(chips); ui.corpo.appendChild(box);
+    }
+    function corpoPronto(v, ui) {
+      riepilogo(v, ui);
+      var me = io();
+      if (v.avviso) {
+        ui.corpo.appendChild(t.el("div", { class: "tb-prossimo" }, [t.el("div", {}, [t.el("b", { text: "⏳ Aspettiamo…" }), t.el("span", { text: v.avviso })])]));
+        if (o.sonoHost) {
+          var rifai = tasto("blu", "🔀 Rifai le squadre", function () { o.rifai(); }); rifai.disabled = (v.presenti || 0) < MIN;
+          ui.tasti.appendChild(rifai);
+          ui.tasti.appendChild(tasto("grigio", "🏁 Chiudi la partita", function () { if (window.confirm("Chiudere la partita? Non conterà né vittorie né trofei.")) o.chiudiPartita(); }));
+          ui.tasti.appendChild(t.el("div", { class: "tb-nota", text: rifai.disabled ? "Per rifare le squadre servono almeno 4 persone collegate." : "Se tornano, si riparte da soli." }));
+        } else ui.tasti.appendChild(t.el("div", { class: "tb-nota", text: "Se tornano, si riparte da soli." }));
+        return;
+      }
+      if (!v.attivo) {   // l'ultimo turno è finito
+        ui.corpo.appendChild(t.el("div", { class: "tb-prossimo" }, [t.el("div", {}, [t.el("b", { text: "🏁 Ultimo turno finito!" }), t.el("span", { text: "Tra un attimo vediamo chi ha vinto…" })])]));
+        return;
+      }
+      var r = ruolo(v), nome = nomeDi(v, v.attivo);
+      var sotto = r === "spiega" ? "Spiega alla tua squadra senza dire le parole vietate." : (r === "compagno" ? "Tu indovini: ascolta " + nome + "." : "Tu controlli: premi BUZZ se dice una parola vietata.");
+      ui.corpo.appendChild(t.el("div", { class: "tb-prossimo" }, [avatarNodo(t, V.omini[v.attivo], nome),
+        t.el("div", {}, [t.el("b", { text: r === "spiega" ? "Tocca a te!" : "Tocca a " + nome }), t.el("span", { text: "Squadra " + SQUADRE[v.team] + " · " + sotto })])]));
+      if (v.pausa) {
+        ui.tasti.appendChild(t.el("div", { class: "tb-nota", text: "⏸️ Pausa: si riparte quando l'host vuole." }));
+        if (o.sonoHost) ui.tasti.appendChild(tasto("largo", "▶ Riprendi", function () { o.pausa(); }));
+        return;
+      }
+      if (r === "spiega") ui.tasti.appendChild(tasto("largo", "▶ Pronti, via!", function () { o.azione("pronto"); }));
+      ui.conta = t.el("div", { class: "tb-nota" }); ui.tasti.appendChild(ui.conta);
+    }
+    function corpoFine(v, ui) {
+      var f = v.fine || {}, win = f.vincitore, me = io();
+      var titolo = f.annullata ? "Partita chiusa" : (win < 0 ? "Pareggio! 🤝" : "Squadra " + SQUADRE[win] + " vince! 🏆");
+      ui.corpo.appendChild(t.el("div", { class: "tb-fine" }, (function () {
+        var x = [t.el("h1", { text: titolo })];
+        if (f.annullata) x.push(t.el("p", { text: (f.motivo || "") + " Questa partita non conta per vittorie e trofei." }));
+        else if (win >= 0) x.push(t.el("p", { text: squadraDi(v, me) === win ? "Bravissimi, avete vinto! 🎉" : "Peccato, sarà per la prossima!" }));
+        var col = t.el("div", { class: "tb-colonne" });
+        [0, 1].forEach(function (s) {
+          var gente = t.el("div", { class: "tb-gente" });
+          (v.giocatori || []).filter(function (p) { return squadraDi(v, p.id) === s; }).forEach(function (p) {
+            gente.appendChild(t.el("div", {}, [avatarNodo(t, V.omini[p.id], p.nome, "piccolo"), t.el("small", { text: p.id === me ? "Tu" : p.nome })]));
+          });
+          col.appendChild(t.el("div", { class: "tb-col " + (s ? "b" : "a") + (!f.annullata && win === s ? " vince" : "") }, [t.el("h3", { text: "Squadra " + SQUADRE[s] }), t.el("div", { class: "tb-pt", text: String(v.punti[s]) }), gente]));
+        });
+        x.push(col);
+        if (f.premi && f.premi.length) x.push(t.el("div", { class: "tb-premi" }, f.premi.map(function (p) { return t.el("div", { text: p }); })));
+        return x;
+      })()));
+      if (o.sonoHost) ui.tasti.appendChild(tasto("largo", "🔁 Nuova partita (stessi amici)", function () { o.nuova(); }));
+      ui.tasti.appendChild(tasto("grigio largo", "Esci", function () { o.esci(); }));
+      if (V.festa !== v.partitaId) { V.festa = v.partitaId; if (!f.annullata) suono("fanfara"); }
+    }
+
+    // ---- ogni 200 ms: tempo, barra e conto alla rovescia (solo testi) ----
+    function tick() {
+      var v = V.v, ui = V.ui; if (!v || !ui || v.fase === "lobby") return;
+      var rest = v.pausa ? (v.restano || 0) : Math.max(0, V.fineLocale - Date.now()), sec = Math.ceil(rest / 1000);
+      if (v.fase === "turno") {
+        ui.timer.className = "tb-timer"; ui.timer.textContent = v.pausa ? "⏸️" : String(sec);
+        ui.barra.style.visibility = "visible";
+        ui.barraI.style.transform = "scaleX(" + Math.max(0, Math.min(1, rest / ((v.durata || 90) * 1000))).toFixed(4) + ")";
+        ui.barra.classList.toggle("rossa", sec <= 10);
+        if (!v.pausa && sec <= 5 && sec > 0 && sec !== V.ultimoSec) suono("tic");
+        V.ultimoSec = sec;
+      } else {
+        ui.barra.style.visibility = "hidden"; ui.timer.className = "tb-timer testo";
+        ui.timer.textContent = v.fase === "fine" ? "Fine" : (v.pausa ? "⏸️" : (v.avviso ? "⏳" : (v.attivo ? "Pronti?" : "🏁")));
+        if (ui.conta) ui.conta.textContent = io() === v.attivo ? "Se non tocchi, si parte da soli tra " + sec + " s" : "Si parte quando " + nomeDi(v, v.attivo) + " tocca «Pronti, via!» (al massimo " + sec + " s)";
+      }
+    }
+    function testi(v) {
+      var ui = V.ui, me = io();
+      [0, 1].forEach(function (q) {
+        var nuovo = String(v.punti[q]);
+        if (ui.score[q].textContent !== nuovo) { ui.score[q].textContent = nuovo; ui.box[q].classList.remove("tb-bump"); void ui.box[q].offsetWidth; ui.box[q].classList.add("tb-bump"); }
+        ui.box[q].classList.toggle("mia", squadraDi(v, me) === q);
+      });
+      if (v.fase === "turno") ui.turno.textContent = "Turno " + v.turno + " di " + v.totale + " · " + (v.attivo === me ? "spieghi tu" : nomeDi(v, v.attivo) + " spiega");
+      else if (v.fase === "pronto") ui.turno.textContent = v.attivo ? "Turno " + v.turno + " di " + v.totale : (v.avviso ? "Partita ferma" : "Turni finiti");
+      else ui.turno.textContent = "";
+      var puoPausa = o.sonoHost && ((v.fase === "turno") || (v.fase === "pronto" && v.attivo && !v.avviso));
+      ui.pausa.style.visibility = puoPausa ? "visible" : "hidden";
+      ui.pausa.textContent = v.pausa ? "▶️" : "⏸️";
+    }
+
+    return {
+      vm: function (v) {
+        var prima = V.v; V.v = v;
+        (v.giocatori || []).forEach(function (p) { if (p.omino) V.omini[p.id] = p.omino; });
+        if (v.fase === "lobby") { V.ui = null; return; }
+        V.fineLocale = Date.now() + (v.restano || 0);   // il tempo si conta da quando arriva la foto (non dall'orologio dell'host)
+        var nuovaSchermata = !V.ui || !document.body.contains(V.ui.s);
+        if (nuovaSchermata) frame();
+        var k = chiave(v);
+        if (k !== V.key) { V.key = k; corpo(v); }
+        testi(v); tick();
+        // suoni dei cambi di fase (non a chi è appena rientrato)
+        if (prima && V.seq != null) {
+          if (prima.fase === "turno" && v.fase === "pronto") suono("gong");
+          else if (prima.fase === "pronto" && v.fase === "turno") suono("via");
+        }
+        var ev = v.ultimo;
+        if (V.seq == null) V.seq = ev ? ev.seq : 0;   // appena arrivato: gli eventi vecchi non si ripetono
+        else if (ev && ev.seq !== V.seq) { V.seq = ev.seq; if (v.fase === "turno") evento(ev, v); }
+      },
+      tick: tick,
+      azzera: function () { V.ui = null; V.key = ""; }
+    };
   }
 
   // chi entra dal link senza profilo scrive il suo nome (con il profilo si entra da soli)
@@ -59,88 +411,112 @@
     t.mostra(s);
   }
 
-  function hostPartita(t) {
-    var G = { rete: null, myId: null, nome: "", vm: null, carta: null, fase: null, ui: null, uiTurno: -1, riepilogo: null, tic: null, statSalvate: Object.create(null) };
+  // i contatori dei trofei (host e amici, ognuno salva i suoi)
+  var statSalvate = Object.create(null);
+  function salvaStatTaboo(t, id, v) {
+    if (!id || !v || !v.partitaId || statSalvate[v.partitaId]) return;
+    if (v.fine && v.fine.annullata) return;   // partita chiusa a metà: non conta
+    statSalvate[v.partitaId] = true;
+    if (t.guarda || (t.linkParams && t.linkParams.prova) || (t.impostazioni && t.impostazioni.prova)) return;
+    if (!(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+    var me = (v.giocatori || []).find(function (p) { return p.id === id; });
+    var miei = v.statGiocatori && v.statGiocatori[id];
+    if (!me || !miei) return;
+    var vincitore = v.fine ? v.fine.vincitore : -1;
+    var x = { partite: 1, partiteOnline: 1, turniSpiegati: miei.turniSpiegati, carteIndovinate: miei.carteIndovinate,
+      cartePassate: miei.cartePassate, buzzFatti: miei.buzzFatti, buzzSubiti: miei.buzzSubiti, turniPositivi: miei.turniPositivi };
+    if (vincitore >= 0 && v.squadre[id] === vincitore) x.vittorie = 1;
+    var s0 = SGNube.statGioco ? (SGNube.statGioco("taboo") || {}) : {};
+    if (s0.ultimaPartitaTrofei === v.partitaId) return;   // partita già contata (es. pagina ricaricata a fine partita)
+    var serie = s0.serieTurniPositiviOra || 0;
+    (miei.esitiTurni || []).forEach(function (buono) { serie = buono ? serie + 1 : 0; });
+    var incr = []; Object.keys(x).forEach(function (k) { if (x[k] > 0) incr.push([k, x[k]]); });
+    SGNube.salvaProgressi(null, "taboo", incr,
+      [["comboCarteMax", miei.comboCarteMax || 0], ["serieTurniPositiviMax", serie]],
+      [["serieTurniPositiviOra", serie], ["ultimaPartitaTrofei", v.partitaId]]);
+  }
+
+  function senzaRete(t) {
+    var s = t.schermata({ titolo: "" }); s._contenuto.appendChild(t.el("p", { class: "modulo-nota", text: "Taboo si gioca online quando il sito è aperto dal web." }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Esci", onclick: t.esci })); t.mostra(s);
+  }
+
+  function avvia(t) {
     stile();
     if (t.linkParams && t.linkParams.stanza) {
-      if (t.nomeProfilo()) { G.nome = t.nomeProfilo(); return ospite(t, t.linkParams.stanza); }
-      return chiediNome(t, t.linkParams.stanza, function (nome) { G.nome = nome; ospite(t, t.linkParams.stanza); });   // senza profilo: si scrive il nome
+      if (t.nomeProfilo()) return ospite(t, t.linkParams.stanza, t.nomeProfilo());
+      return chiediNome(t, t.linkParams.stanza, function (nome) { ospite(t, t.linkParams.stanza, nome); });   // senza profilo: si scrive il nome
     }
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var imp = t.impostazioni || {}, durata = [60, 90, 120].indexOf(Number(imp.tempo)) >= 0 ? Number(imp.tempo) : 90;
-    var giri = Math.max(1, Math.min(4, Number(imp.giri) || 1));
-    var codice = "…", pronta = false, fase = "lobby", rete = null, timer = null, timeoutEsito = null;
-    var giocatori = [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host", omino: avatar(t.nomeProfilo() || "Host"), host: true }];
-    var squadre = { host: 0 }, punti = [0, 0], carte = mescola((window.SG_TABOO_CARTE || []).slice()), indiceCarta = 0;
-    var coda = [], indiceTurno = 0, attivo = null, deadline = 0, passati = 0, riepilogo = null, cartaOra = null;
-    var statTurno = null, chiaveCarta = 0, boxSquadre = null, schermo = null, ui = null;
-    var partitaId = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
-    var statGiocatori = Object.create(null);
+    host(t);
+  }
 
+  // =========================================================
+  //  HOST: tiene la partita e manda a tutti la "foto"
+  // =========================================================
+  function host(t) {
+    var imp = t.impostazioni || {};
+    var durata = [60, 90, 120].indexOf(Number(imp.tempo)) >= 0 ? Number(imp.tempo) : 90;
+    var giri = Math.max(1, Math.min(4, Number(imp.giri) || 1));
+    var livello = [1, 2, 3].indexOf(Number(imp.carte)) >= 0 ? Number(imp.carte) : 2;
+    var codice = "…", pronta = false, fase = "lobby", rete = null, tic = null;
+    var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
+    var giocatori = [{ id: "host", nome: nomeHost, omino: avatar(nomeHost), host: true }];
+    var squadre = { host: 0 }, punti = [0, 0], carte = [], indiceCarta = 0, uscite = [];
+    var coda = [], indiceTurno = 0, puntatore = [0, 0], primaSquadra = 0, sceltoPer = null;
+    var attivo = null, deadline = 0, prontoScade = 0, pausa = false, rimasto = 0, avviso = null;
+    var passati = 0, cartaOra = null, chiaveCarta = 0, statTurno = null, riepilogo = null;
+    var seqEv = 0, ultimo = null, ultimoBuzz = null, fine = null;
+    var partitaId = nuovoId(), statGiocatori = Object.create(null);
+    var box = null;
+    statPersona("host");
+
+    function nuovoId() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
     function statPersona(id) {
       if (!statGiocatori[id]) statGiocatori[id] = { turniSpiegati: 0, carteIndovinate: 0, cartePassate: 0, buzzFatti: 0, buzzSubiti: 0, turniPositivi: 0, comboCarte: 0, comboCarteMax: 0, esitiTurni: [] };
       return statGiocatori[id];
     }
-    function salvaStatTaboo(id, v) {
-      if (!id || !v || !v.partitaId || G.statSalvate[v.partitaId]) return;
-      G.statSalvate[v.partitaId] = true;
-      if (t.guarda || (t.linkParams && t.linkParams.prova) || (t.impostazioni && t.impostazioni.prova)) return;
-      if (!(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
-      var me = (v.giocatori || []).find(function (p) { return p.id === id; });
-      var miei = v.statGiocatori && v.statGiocatori[id];
-      if (!me || !miei) return;
-      var vincitore = v.punti[0] === v.punti[1] ? -1 : (v.punti[0] > v.punti[1] ? 0 : 1);
-      var x = { partite: 1, partiteOnline: 1, turniSpiegati: miei.turniSpiegati, carteIndovinate: miei.carteIndovinate,
-        cartePassate: miei.cartePassate, buzzFatti: miei.buzzFatti, buzzSubiti: miei.buzzSubiti, turniPositivi: miei.turniPositivi };
-      if (vincitore >= 0 && v.squadre[id] === vincitore) x.vittorie = 1;
-      var s0 = SGNube.statGioco ? (SGNube.statGioco("taboo") || {}) : {};
-      if (s0.ultimaPartitaTrofei === v.partitaId) return;   // partita già contata (es. pagina ricaricata a fine partita)
-      var serie = s0.serieTurniPositiviOra || 0;
-      (miei.esitiTurni || []).forEach(function (buono) { serie = buono ? serie + 1 : 0; });
-      var incr = []; Object.keys(x).forEach(function (k) { if (x[k]) incr.push([k, x[k]]); });
-      SGNube.salvaProgressi(null, "taboo", incr,
-        [["comboCarteMax", miei.comboCarteMax || 0], ["serieTurniPositiviMax", serie]],
-        [["serieTurniPositiviOra", serie], ["ultimaPartitaTrofei", v.partitaId]]);
-    }
-
     function indice(id) { return giocatori.findIndex(function (p) { return p.id === id; }); }
+    function gioc(id) { return giocatori[indice(id)] || null; }
     function squadra(id) { return squadre[id] === 1 ? 1 : 0; }
     function membri(s) { return giocatori.filter(function (p) { return squadra(p.id) === s; }); }
-    function distribuisci() {
-      var mesc = mescola(giocatori);
-      mesc.forEach(function (p, i) { squadre[p.id] = i % 2; });
-      aggiornaLobby();
+    function presenti(s) { return membri(s).filter(function (p) { return !p.via; }); }
+
+    var vista = creaVista(t, {
+      sonoHost: true,
+      mioId: function () { return "host"; },
+      azione: function (tipo, extra) { azione("host", tipo, chiaveCarta, extra); },
+      esci: function () { chiudi(); t.esci(); },
+      pausa: cambiaPausa,
+      rifai: rifaiSquadre,
+      chiudiPartita: function () { finePartita("Mancavano giocatori in una squadra."); },
+      nuova: nuovaPartita
+    });
+
+    // ---- saletta ----
+    function distribuisci(lista) {
+      mescola(lista).forEach(function (p, i) { squadre[p.id] = (i + (Math.random() < 0.5 ? 0 : 1)) % 2 === 0 ? 0 : 1; });
+      // in pari: metà e metà (con un giocatore in più a caso)
+      var a = lista.filter(function (p) { return squadre[p.id] === 0; }), b = lista.filter(function (p) { return squadre[p.id] === 1; });
+      while (a.length - b.length > 1) { var x = a.pop(); squadre[x.id] = 1; b.push(x); }
+      while (b.length - a.length > 1) { var y = b.pop(); squadre[y.id] = 0; a.push(y); }
     }
-    function impostaSquadra(id, s) {
-      if (fase !== "lobby" || !giocatori.some(function (p) { return p.id === id; })) return;
-      if (membri(s).length <= 1) return;
-      squadre[id] = 1 - s; aggiornaLobby();
-    }
-    function nodoSquadre() {
-      var box = t.el("div", { class: "tb-squad-box" });
-      var random = t.el("button", { class: "tb-casuale", type: "button", text: "🔀 Squadre a caso", onclick: distribuisci });
-      box.appendChild(random);
-      function lista(s) {
-        var r = t.el("div", { class: "tb-squad-lista" });
-        r.appendChild(t.el("b", { text: "Squadra " + SQUADRE[s] + ": " }));
-        membri(s).forEach(function (p) {
-          var b = t.el("button", { class: "tb-scelta " + (s ? "b" : "a"), type: "button", text: p.nome, title: "Sposta nell'altra squadra", onclick: function () { impostaSquadra(p.id, s); } });
-          r.appendChild(b);
-        });
-        box.appendChild(r);
-      }
-      lista(0); lista(1);
-      return box;
+    function sposta(id, dest) {
+      if (fase !== "lobby" || indice(id) < 0) return;
+      squadre[id] = dest === 1 ? 1 : 0; aggiornaLobby();
     }
     function aggiornaLobby() {
       if (fase !== "lobby") return;
-      if (boxSquadre && boxSquadre.parentNode) boxSquadre.parentNode.removeChild(boxSquadre);
-      boxSquadre = nodoSquadre();
-      var giocatoriLobby = giocatori.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino, host: !!p.host }; });
-      rete && rete.invia({ t: "vm", vm: { fase: "lobby", codice: codice, pronta: pronta, giocatori: giocatoriLobby, squadre: squadre, punti: punti } });
-      t.lobby({ host: true, codice: codice, pronta: pronta, min: MIN, vuoti: Math.max(0, MIN - giocatori.length), giocatori: giocatoriLobby, extra: [boxSquadre],
-        puoComincia: giocatori.length >= MIN && membri(0).length >= 2 && membri(1).length >= 2,
-        testoComincia: "Comincia ▶", nota: giocatori.length < MIN ? "Servono almeno 4 persone. Potete arrivare fino a 16." : "Sposta i giocatori a mano o fai le squadre a caso.",
+      if (!box) box = boxSquadre(t, { host: true, aCaso: function () { distribuisci(giocatori); aggiornaLobby(); }, sposta: sposta });
+      box.aggiorna(giocatori, squadre, "host");
+      var lista = giocatori.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino, host: !!p.host }; });
+      if (rete) rete.invia({ t: "vm", vm: { fase: "lobby", codice: codice, pronta: pronta, giocatori: lista, squadre: squadre, punti: [0, 0] } });
+      vista.vm({ fase: "lobby" });
+      var piccola = membri(0).length < 2 || membri(1).length < 2;
+      t.lobby({ host: true, codice: codice, pronta: pronta, min: MIN, vuoti: Math.max(0, MIN - giocatori.length), giocatori: lista, extra: [box],
+        puoComincia: giocatori.length >= MIN && !piccola,
+        testoComincia: "Comincia ▶",
+        nota: giocatori.length < MIN ? "Servono almeno 4 persone. Potete arrivare fino a 16." : (piccola ? "Ogni squadra deve avere almeno 2 persone: sposta qualcuno o fai le squadre a caso." : "Squadre pronte! Quando volete, si comincia."),
         onComincia: inizia, onEsci: function () { chiudi(); t.esci(); } });
     }
     t.onRegole = function (nuove) {
@@ -148,274 +524,276 @@
       t.impostazioni = t.impostazioni || {};
       if ([60, 90, 120].indexOf(Number(nuove.tempo)) >= 0) { durata = Number(nuove.tempo); t.impostazioni.tempo = durata; }
       giri = Math.max(1, Math.min(4, Number(nuove.giri) || 1)); t.impostazioni.giri = giri;
+      if ([1, 2, 3].indexOf(Number(nuove.carte)) >= 0) { livello = Number(nuove.carte); t.impostazioni.carte = livello; }
       aggiornaLobby();
     };
-    function vm() {
-      return { fase: fase, codice: codice, pronta: pronta, partitaId: partitaId, statGiocatori: fase === "fine" ? statGiocatori : null, giocatori: giocatori.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino, host: !!p.host }; }), squadre: squadre,
-        punti: punti.slice(), durata: durata, giri: giri, turno: indiceTurno, totale: coda.length, attivo: attivo, team: attivo == null ? null : squadra(attivo), deadline: deadline,
-        passati: passati, maxPassi: 3, chiaveCarta: chiaveCarta, riepilogo: riepilogo, vincitore: fase === "fine" ? (punti[0] === punti[1] ? -1 : (punti[0] > punti[1] ? 0 : 1)) : null };
+
+    // ---- la foto della partita (la carta c'è dentro: un solo messaggio per tutti) ----
+    function restano() {
+      if (pausa) return rimasto;
+      if (fase === "turno") return Math.max(0, deadline - Date.now());
+      if (fase === "pronto" && prontoScade) return Math.max(0, prontoScade - Date.now());
+      return 0;
     }
-    function inviaStato() { if (rete) rete.invia({ t: "vm", vm: vm() }); }
-    function inviaCarta(id) {
-      if (fase !== "turno" || !cartaOra || !id) return;
-      var p = indice(id); if (p < 0) return;
-      if (id === attivo || squadra(id) !== squadra(attivo)) rete.inviaVeloce({ t: "priv", to: id, chiave: chiaveCarta, carta: cartaOra });
+    function vm(conOmini) {
+      var omini = conOmini || fase !== "turno";
+      return { fase: fase, codice: codice, pronta: pronta, partitaId: partitaId,
+        giocatori: giocatori.map(function (p) { var x = { id: p.id, nome: p.nome, host: !!p.host, via: !!p.via }; if (omini) x.omino = p.omino; return x; }),
+        squadre: squadre, punti: punti.slice(), durata: durata, giri: giri,
+        turno: fase === "turno" ? indiceTurno : indiceTurno + 1, totale: coda.length,
+        attivo: attivo, team: attivo == null ? null : squadra(attivo),
+        restano: restano(), pausa: pausa, avviso: avviso, presenti: giocatori.filter(function (p) { return !p.via; }).length,
+        chiaveCarta: chiaveCarta, carta: fase === "turno" ? cartaOra : null, passati: passati,
+        giusteTurno: statTurno ? statTurno.giuste.length : 0, combo: attivo ? statPersona(attivo).comboCarte : 0,
+        ultimo: ultimo, riepilogo: fase === "pronto" ? riepilogo : null,
+        fine: fase === "fine" ? fine : null, statGiocatori: fase === "fine" ? statGiocatori : null };
     }
-    function sincronizza(id) {
-      inviaStato();
-      if (fase === "turno") inviaCarta(id);
+    function inviaStato(conOmini) {
+      if (fase === "lobby") return aggiornaLobby();
+      var x = vm(conOmini);
+      if (rete) rete.invia({ t: "vm", vm: x });
+      vista.vm(x);
     }
+
     rete = SGNet.ospita("taboo", {
       onCodice: function (c) { codice = c; aggiornaLobby(); },
-      onConnesso: function () { pronta = true; aggiornaLobby(); },
+      onConnesso: function () { pronta = true; if (fase === "lobby") aggiornaLobby(); else inviaStato(true); },
       onAddio: function (id) {
-        var ix = indice(id); if (ix < 0) return;
-        giocatori.splice(ix, 1); delete squadre[id];
-        if (fase === "lobby") { aggiornaLobby(); return; }
-        var era = id === attivo;
-        coda = coda.slice(0, indiceTurno).concat(coda.slice(indiceTurno).filter(function (x) { return x !== id; }));
-        if (!membri(0).length || !membri(1).length || giocatori.length < MIN) return finePartita();
-        if (era && fase === "turno") fineTurno(); else inviaStato();
+        var p = gioc(id); if (!p) return;
+        if (fase === "lobby") { giocatori.splice(indice(id), 1); delete squadre[id]; delete statGiocatori[id]; aggiornaLobby(); return; }
+        // a partita iniziata non si toglie nessuno: resta "assente" e può rientrare
+        p.via = true;
+        if (fase === "turno" && id === attivo) return fineTurno(true);
+        if (fase === "pronto" && (id === attivo || (!avviso && attivo && (presenti(0).length < 2 || presenti(1).length < 2)))) return preparaPronto();
+        inviaStato();
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          if (fase === "lobby" && indice(id) < 0 && giocatori.length < MAX) {
+          var p = gioc(id);
+          if (p) {   // già dentro (pagina ricaricata, rete tornata): stesso posto, gli rimando la foto
+            var eraVia = p.via; p.via = false;
+            if (fase === "lobby") return aggiornaLobby();
+            if (eraVia && fase === "pronto" && avviso) return preparaPronto();
+            return inviaStato(true);
+          }
+          if (fase === "lobby" && giocatori.length < MAX) {
             var nome = String(m.nome || "Amico").trim().slice(0, 16) || "Amico";
             giocatori.push({ id: id, nome: nome, omino: valido(m.omino) }); statPersona(id);
             squadre[id] = membri(0).length <= membri(1).length ? 0 : 1;
             aggiornaLobby();
-          } else if (indice(id) >= 0) sincronizza(id);
-          else rete.inviaVeloce({ t: "rifiuto", to: id, testo: fase === "lobby" ? "La stanza è piena." : "La partita è già iniziata." });
-        } else if (m.t === "indovinata" && fase === "turno" && m.chiave === chiaveCarta && id === attivo) {
-          registra("giusta", id);
-        } else if (m.t === "passo" && fase === "turno" && m.chiave === chiaveCarta && id === attivo && passati < 3) {
-          registra("passata", id);
-        } else if (m.t === "buzz" && fase === "turno" && m.chiave === chiaveCarta && indice(id) >= 0 && squadra(id) !== squadra(attivo)) {
-          registra("buzz", id);
-        } else if (m.t === "esci") { /* la disconnessione volontaria arriva da SGNet.onAddio */ }
+          } else rete.inviaVeloce({ t: "rifiuto", to: id, testo: fase === "lobby" ? "La stanza è piena." : "La partita è già iniziata." });
+        } else if (m.t === "squadra") {
+          sposta(id, m.s);
+        } else azione(id, m.t, m.chiave, m);
       },
       onErrore: function () { senzaRete(t); }
     });
+    aggiornaLobby();
+
+    // le mosse (dell'host e degli amici): ognuna vale solo per la carta su cui è stata fatta
+    function azione(id, tipo, chiave, extra) {
+      if (fase === "pronto" && tipo === "pronto" && id === attivo && !pausa && !avviso) return avviaTurno();
+      if (tipo === "annulla") { if (id === "host" || id === attivo) annullaBuzz(extra && extra.seq); return; }
+      if (fase !== "turno" || pausa || chiave !== chiaveCarta || !cartaOra) return;
+      if (tipo === "indovinata" && id === attivo) registra("giusta", id);
+      else if (tipo === "passo" && id === attivo && passati < MAX_PASSI) registra("passata", id);
+      else if (tipo === "buzz" && gioc(id) && squadra(id) !== squadra(attivo)) registra("buzz", id);
+    }
+
+    // ---- turni: le due squadre si alternano, ognuna con lo stesso numero di turni; dentro la squadra si va a giro ----
     function inizia() {
       if (fase !== "lobby" || giocatori.length < MIN || membri(0).length < 2 || membri(1).length < 2) return;
-      fase = "turno"; punti = [0, 0]; carte = mescola((window.SG_TABOO_CARTE || []).slice()); indiceCarta = 0; indiceTurno = 0;
-      coda = [];
-      for (var r = 0; r < giri; r++) {
-        var gA = membri(0), gB = membri(1), n = giocatori.length;
-        for (var k = 0; k < n; k++) { var s = k % 2; coda.push((s ? gB : gA)[Math.floor(k / 2) % (s ? gB.length : gA.length)].id); }
+      punti = [0, 0]; carte = mazzo(livello); indiceCarta = 0; indiceTurno = 0; uscite = [];
+      puntatore = [0, 0]; coda = []; sceltoPer = null; ultimo = null; ultimoBuzz = null; fine = null; riepilogo = null; pausa = false;
+      giocatori.forEach(function (p) { statPersona(p.id); });
+      var turniSquadra = Math.max(membri(0).length, membri(1).length) * giri;
+      for (var k = 0; k < turniSquadra * 2; k++) coda.push((primaSquadra + k) % 2);
+      preparaPronto();
+    }
+    function scegli(s) {   // il prossimo della squadra che c'è
+      var m = membri(s); if (!m.length) return null;
+      for (var i = 0; i < m.length; i++) {
+        var p = m[(puntatore[s] + i) % m.length];
+        if (!p.via) { puntatore[s] = (puntatore[s] + i + 1) % m.length; return p.id; }
       }
-      inviaStato(); prossimoTurno();
+      return null;
     }
-    function prossimoTurno() {
-      if (indiceTurno >= coda.length || indiceCarta >= carte.length || !membri(0).length || !membri(1).length) return finePartita();
-      fase = "turno"; attivo = coda[indiceTurno++]; passati = 0; statTurno = { giuste: [], buzz: [], passate: [] }; riepilogo = null;
+    function testoMancano() {
+      var via = giocatori.filter(function (p) { return p.via; }).map(function (p) { return p.nome; });
+      var corta = [0, 1].filter(function (s) { return presenti(s).length < 2; }).map(function (s) { return "Squadra " + SQUADRE[s]; });
+      return (via.length ? (via.length > 1 ? "Si sono scollegati " + via.slice(0, -1).join(", ") + " e " + via[via.length - 1] : "Si è scollegato " + via[0]) + ". " : "") + corta.join(" e ") + (corta.length > 1 ? " hanno" : " ha") + " meno di 2 persone collegate.";
+    }
+    // tra un turno e l'altro: chi spiega dopo si prepara e tocca "Pronti, via!"
+    function preparaPronto() {
+      fase = "pronto"; pausa = false; avviso = null; cartaOra = null; statTurno = null;
+      if (indiceTurno >= coda.length) { attivo = null; prontoScade = Date.now() + 6500; return inviaStato(true); }
+      if (presenti(0).length < 2 || presenti(1).length < 2) { attivo = null; prontoScade = 0; avviso = testoMancano(); return inviaStato(true); }
+      // se per questo turno era già stato scelto qualcuno (e c'è ancora), resta lui: nessuno perde il suo turno
+      var s = coda[indiceTurno], prima = sceltoPer && sceltoPer.turno === indiceTurno ? gioc(sceltoPer.id) : null;
+      attivo = prima && !prima.via && squadra(prima.id) === s ? prima.id : scegli(s);
+      sceltoPer = { turno: indiceTurno, id: attivo };
+      prontoScade = Date.now() + ATTESA_PRONTO;
+      inviaStato(true);
+    }
+    function avviaTurno() {
+      fase = "turno"; indiceTurno++; passati = 0; pausa = false;
+      statTurno = { giuste: [], buzz: [], passate: [] };
       statPersona(attivo).turniSpiegati++; statPersona(attivo).comboCarte = 0;
-      cartaOra = carte[indiceCarta++]; chiaveCarta++; deadline = Date.now() + durata * 1000;
-      inviaStato(); giocatori.forEach(function (p) { inviaCarta(p.id); });
-      mostraPartita(); aggiornaPartita();
-      if (timer) clearInterval(timer);
-      timer = setInterval(function () { aggiornaPartita(); if (Date.now() >= deadline) fineTurno(); }, 200);
+      deadline = Date.now() + durata * 1000;
+      pescaCarta(); inviaStato();
     }
+    function pescaCarta() {
+      if (indiceCarta >= carte.length) { carte = mescola(carteDelLivello(livello)); indiceCarta = 0; }   // mazzo finito: si rimescola
+      cartaOra = carte[indiceCarta++]; chiaveCarta++; uscite.push(cartaOra.p);
+    }
+    function evento(tipo, id, parola) { ultimo = { tipo: tipo, seq: ++seqEv, nome: id ? (gioc(id) || {}).nome : null, parola: parola || null }; }
     function registra(tipo, id) {
-      if (fase !== "turno" || !statTurno) return;
-      id = id || attivo;
-      var speaker = statPersona(attivo);
-      if (tipo === "giusta") { punti[squadra(attivo)]++; statTurno.giuste.push(cartaOra.p); speaker.carteIndovinate++; speaker.comboCarte++; speaker.comboCarteMax = Math.max(speaker.comboCarteMax, speaker.comboCarte); }
-      else if (tipo === "buzz") { punti[squadra(attivo)]--; statTurno.buzz.push(cartaOra.p); speaker.buzzSubiti++; speaker.comboCarte = 0; statPersona(id).buzzFatti++; }
-      else { passati++; statTurno.passate.push(cartaOra.p); speaker.cartePassate++; speaker.comboCarte = 0; }
-      if (tipo === "passata" && passati > 3) return;
-      if (passati >= 3 && tipo === "passata") { prossimaCarta(); return; }
-      prossimaCarta();
+      var speaker = statPersona(attivo), parola = cartaOra.p;
+      if (tipo === "giusta") { punti[squadra(attivo)]++; statTurno.giuste.push(parola); speaker.carteIndovinate++; speaker.comboCarte++; speaker.comboCarteMax = Math.max(speaker.comboCarteMax, speaker.comboCarte); evento("giusta", id, parola); }
+      else if (tipo === "buzz") {
+        punti[squadra(attivo)]--; statTurno.buzz.push(parola); speaker.buzzSubiti++; speaker.comboCarte = 0; statPersona(id).buzzFatti++;
+        evento("buzz", id, parola);
+        ultimoBuzz = { seq: ultimo.seq, ora: Date.now(), da: id, speaker: attivo, team: squadra(attivo), parola: parola, turno: indiceTurno };
+      } else { passati++; statTurno.passate.push(parola); speaker.cartePassate++; speaker.comboCarte = 0; evento("passo", id, parola); }
+      pescaCarta(); inviaStato();
     }
-    function prossimaCarta() {
-      if (indiceCarta >= carte.length) { fineTurno(); return; }
-      cartaOra = carte[indiceCarta++]; chiaveCarta++; inviaStato(); giocatori.forEach(function (p) { inviaCarta(p.id); }); aggiornaPartita();
+    function annullaBuzz(seq) {
+      var b = ultimoBuzz;
+      if (!b || b.seq !== seq || b.annullato || fase !== "turno" || b.turno !== indiceTurno || Date.now() - b.ora > ANNULLA_MS + 1500) return;
+      b.annullato = true; punti[b.team]++;
+      var i = statTurno.buzz.lastIndexOf(b.parola); if (i >= 0) statTurno.buzz.splice(i, 1);
+      statPersona(b.da).buzzFatti = Math.max(0, statPersona(b.da).buzzFatti - 1);
+      statPersona(b.speaker).buzzSubiti = Math.max(0, statPersona(b.speaker).buzzSubiti - 1);
+      evento("annullato", b.da, b.parola); inviaStato();
     }
-    function fineTurno() {
+    function fineTurno(uscito) {
       if (fase !== "turno") return;
-      if (timer) { clearInterval(timer); timer = null; }
-      var esitoPositivo = statTurno.giuste.length > statTurno.buzz.length, statsTurno = statPersona(attivo);
-      if (esitoPositivo) statsTurno.turniPositivi++;
-      statsTurno.esitiTurni.push(esitoPositivo);
-      fase = "riepilogo"; deadline = 0; riepilogo = { id: attivo, nome: (giocatori[indice(attivo)] || {}).nome || "Giocatore", team: squadra(attivo), giuste: statTurno.giuste.slice(), buzz: statTurno.buzz.slice(), passate: statTurno.passate.slice() };
-      inviaStato(); mostraRiepilogo();
-      timeoutEsito = setTimeout(function () { timeoutEsito = null; if (fase === "riepilogo") { if (indiceTurno >= coda.length) finePartita(); else prossimoTurno(); } }, 6500);
+      var buono = statTurno.giuste.length > statTurno.buzz.length, st = statPersona(attivo);
+      if (buono) st.turniPositivi++;
+      st.esitiTurni.push(buono);
+      riepilogo = { turno: indiceTurno, id: attivo, nome: (gioc(attivo) || {}).nome || "…", uscito: !!uscito, team: squadra(attivo),
+        giuste: statTurno.giuste.slice(), buzz: statTurno.buzz.slice(), passate: statTurno.passate.slice() };
+      segnaViste(uscite); uscite = [];
+      preparaPronto();
     }
-    function classifica() {
-      var vinc = punti[0] === punti[1] ? -1 : (punti[0] > punti[1] ? 0 : 1);
-      var arr = [0, 1].map(function (s) { return { nome: "Squadra " + SQUADRE[s] + " · " + punti[s] + (punti[s] === 1 ? " punto" : " punti"), pos: vinc < 0 ? 1 : (s === vinc ? 1 : 2) }; });
-      return arr.sort(function (a, b) { return a.pos - b.pos; });
+    function cambiaPausa() {
+      if (fase !== "turno" && !(fase === "pronto" && attivo && !avviso)) return;
+      if (!pausa) { rimasto = restano(); pausa = true; }
+      else { pausa = false; if (fase === "turno") deadline = Date.now() + rimasto; else prontoScade = Date.now() + Math.max(rimasto, 5000); }
+      inviaStato();
+    }
+    function rifaiSquadre() {
+      if (fase !== "pronto" || !avviso) return;
+      var vivi = giocatori.filter(function (p) { return !p.via; });
+      if (vivi.length < MIN) return;
+      distribuisci(vivi); puntatore = [0, 0];
+      preparaPronto();
+    }
+
+    // ---- fine partita ----
+    function vincitore() { return punti[0] === punti[1] ? -1 : (punti[0] > punti[1] ? 0 : 1); }
+    function premi() {
+      var x = [], best = null, cic = null;
+      giocatori.forEach(function (p) {
+        var s = statGiocatori[p.id]; if (!s) return;
+        if (s.carteIndovinate > 0 && (!best || s.carteIndovinate > best.n)) best = { nome: p.nome, n: s.carteIndovinate };
+        if (s.buzzFatti > 0 && (!cic || s.buzzFatti > cic.n)) cic = { nome: p.nome, n: s.buzzFatti };
+      });
+      if (best) x.push("🎙️ Miglior spiegatore: " + best.nome + " (" + best.n + (best.n === 1 ? " carta" : " carte") + ")");
+      if (cic) x.push("🚨 Cicalino d'oro: " + cic.nome + " (" + cic.n + " BUZZ)");
+      return x;
     }
     function classificaGiocatori() {
-      var vinc = punti[0] === punti[1] ? -1 : (punti[0] > punti[1] ? 0 : 1), primi = vinc < 0 ? giocatori.length : membri(vinc).length;
-      return giocatori.map(function (p) { return { nome: p.nome, pos: (vinc < 0 || squadra(p.id) === vinc) ? 1 : primi + 1 }; })
+      var v = vincitore(), primi = v < 0 ? giocatori.length : membri(v).length;
+      return giocatori.map(function (p) { return { nome: p.nome, pos: (v < 0 || squadra(p.id) === v) ? 1 : primi + 1 }; })
         .sort(function (a, b) { return a.pos - b.pos; });
     }
-    // "Nuova partita": tutti tornano nella saletta con le stesse squadre (la stanza resta la stessa)
+    function finePartita(motivo) {
+      if (fase === "fine") return;
+      if (uscite.length) { segnaViste(uscite); uscite = []; }
+      fase = "fine"; attivo = null; pausa = false; avviso = null; deadline = 0; prontoScade = 0;
+      fine = motivo ? { annullata: true, motivo: motivo, vincitore: -1, premi: [] } : { vincitore: vincitore(), premi: premi() };
+      var x = vm(true);
+      if (rete) rete.invia({ t: "vm", vm: x });
+      if (!motivo) { salvaStatTaboo(t, "host", x); if (t.risultato) t.risultato(classificaGiocatori()); }
+      vista.vm(x);
+    }
+    // "Nuova partita": tutti tornano nella saletta con le stesse squadre (chi se n'è andato esce dalla lista)
     function nuovaPartita() {
-      if (timer) { clearInterval(timer); timer = null; }
-      if (timeoutEsito) { clearTimeout(timeoutEsito); timeoutEsito = null; }
-      fase = "lobby"; partitaId = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); statGiocatori = Object.create(null); giocatori.forEach(function (p) { statPersona(p.id); });
-      punti = [0, 0]; attivo = null; deadline = 0; riepilogo = null; cartaOra = null; coda = []; indiceTurno = 0; ui = null;
+      giocatori = giocatori.filter(function (p) { return !p.via; });
+      Object.keys(squadre).forEach(function (id) { if (indice(id) < 0) delete squadre[id]; });
+      if (giocatori.length >= MIN && (membri(0).length < 2 || membri(1).length < 2)) distribuisci(giocatori);
+      fase = "lobby"; partitaId = nuovoId(); statGiocatori = Object.create(null); giocatori.forEach(function (p) { statPersona(p.id); });
+      punti = [0, 0]; attivo = null; deadline = 0; prontoScade = 0; riepilogo = null; cartaOra = null; coda = []; indiceTurno = 0;
+      ultimo = null; fine = null; pausa = false; avviso = null; primaSquadra = 1 - primaSquadra;   // la prossima volta comincia l'altra squadra
       aggiornaLobby();
     }
-    function finePartita() {
-      if (fase === "fine") return;
-      if (timer) { clearInterval(timer); timer = null; }
-      if (timeoutEsito) { clearTimeout(timeoutEsito); timeoutEsito = null; }
-      fase = "fine"; attivo = null; deadline = 0; salvaStatTaboo("host", vm()); inviaStato();
-      if (t.risultato) t.risultato(classificaGiocatori());
-      mostraFine(true);
-    }
-    function chiudi() { if (timer) clearInterval(timer); if (timeoutEsito) clearTimeout(timeoutEsito); if (rete) rete.chiudi(); }
+    function chiudi() { if (tic) { clearInterval(tic); tic = null; } if (rete) { rete.chiudi(); rete = null; } }
 
-    function frame(elContenuto) {
-      stile(); schermo = t.schermata({}); schermo.classList.add("tb-piena");
-      ui = { timer: t.el("div", { class: "tb-timer" }), punti: t.el("div", { class: "tb-punti" }), turno: t.el("div", { class: "tb-turno" }), corpo: t.el("div", { class: "tb-carta" }), tasti: t.el("div", { class: "tb-tasti" }), key: -1 };
-      ui.score = [0, 1].map(function (s) { var box = t.el("div", { class: "tb-squadra " + (s ? "b" : "a") }); box.appendChild(t.el("span", { text: "Squadra " + SQUADRE[s] })); var n = t.el("b", { text: "0" }); box.appendChild(n); ui.punti.appendChild(box); return n; });
-      var rad = t.el("div", { class: "tb" }, [t.el("div", { class: "tb-top" }, [ui.punti]), ui.timer, ui.turno, ui.corpo, ui.tasti]);
-      schermo._contenuto.appendChild(rad); t.mostra(schermo);
-    }
-    function mostraPartita() { frame(); }
-    function aggiornaPartita() {
-      if (!ui || fase !== "turno") return;
-      [0, 1].forEach(function (s) { ui.score[s].textContent = String(punti[s]); });
-      ui.timer.textContent = String(Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
-      var pMe = "host", sMe = squadra(pMe), idAttivo = attivo, isSpeaker = pMe === idAttivo;
-      ui.turno.textContent = "Turno " + indiceTurno + " di " + coda.length + " · " + (giocatori[indice(idAttivo)] || {}).nome + " spiega";
-      if (ui.key === chiaveCarta) return;
-      ui.key = chiaveCarta;
-      ui.corpo.innerHTML = ""; ui.tasti.innerHTML = "";
-      if (isSpeaker) {
-        ui.corpo.appendChild(t.el("div", { class: "tb-parola", text: cartaOra.p }));
-        ui.corpo.appendChild(t.el("div", { class: "tb-vietate" }, cartaOra.v.map(function (v) { return t.el("div", { class: "tb-vietata", text: v }); })));
-        ui.tasti.appendChild(bottone(t, "", "✅ Indovinata", function () { registra("giusta"); }));
-        ui.tasti.appendChild(bottone(t, "pass", "⏭️ Passo " + passati + "/3", function () { if (passati < 3) registra("passata"); }));
-        ui.tasti.lastChild.disabled = passati >= 3;
-      } else if (sMe !== squadra(idAttivo)) {
-        ui.corpo.appendChild(t.el("div", { class: "tb-parola", text: cartaOra.p }));
-        ui.corpo.appendChild(t.el("div", { class: "tb-vietate" }, cartaOra.v.map(function (v) { return t.el("div", { class: "tb-vietata", text: v }); })));
-        ui.tasti.appendChild(bottone(t, "buzz", "❌ BUZZ", function () { registra("buzz", "host"); }));
-      } else {
-        ui.corpo.className = "tb-nascondi";
-        ui.corpo.appendChild(t.el("div", { class: "tb-indovina", text: "Indovina!" }));
-        ui.corpo.appendChild(t.el("div", { class: "tb-sub", text: "Ascolta chi spiega" }));
+    // l'orologio dell'host: fine del tempo e partenza da soli
+    tic = setInterval(function () {
+      if (!pausa) {
+        if (fase === "turno" && Date.now() >= deadline) fineTurno(false);
+        else if (fase === "pronto" && prontoScade && Date.now() >= prontoScade) { if (attivo) avviaTurno(); else finePartita(); }
       }
-      var esci = bottone(t, "esci", "Esci", function () { if (window.confirm("Chiudere la partita per tutti?")) { chiudi(); t.esci(); } }); esci.style.gridColumn = "1/-1"; ui.tasti.appendChild(esci);
-    }
-    function mostraRiepilogo() {
-      if (!ui) frame();
-      ui.timer.textContent = "Turno finito"; ui.turno.textContent = ""; ui.punti.textContent = ""; ui.corpo.className = "tb-esito"; ui.corpo.innerHTML = ""; ui.tasti.innerHTML = "";
-      ui.punti.appendChild(t.el("div", { class: "tb-squadra a" }, [t.el("span", { text: "Squadra A" }), t.el("b", { text: String(punti[0]) })]));
-      ui.punti.appendChild(t.el("div", { class: "tb-squadra b" }, [t.el("span", { text: "Squadra B" }), t.el("b", { text: String(punti[1]) })]));
-      var voci = t.el("div", { class: "tb-liste" });
-      [["✅ Indovinate", riepilogo.giuste], ["❌ Buzz", riepilogo.buzz], ["⏭️ Passate", riepilogo.passate]].forEach(function (x) {
-        var b = t.el("div", { class: "tb-lista" }, [t.el("h3", { text: x[0] }), t.el("div", { class: "tb-voci", text: x[1].length ? x[1].join(" · ") : "—" })]); voci.appendChild(b);
-      });
-      ui.corpo.appendChild(t.el("div", { class: "tb-turno", text: riepilogo.nome + " — Squadra " + SQUADRE[riepilogo.team] })); ui.corpo.appendChild(voci);
-      ui.tasti.appendChild(t.el("div", { class: "tb-sub", style: "grid-column:1/-1;text-align:center", text: "Il turno successivo parte tra pochi secondi…" }));
-    }
-    function mostraFine(sonoHost) {
-      if (!ui) frame();
-      var ord = classifica(), win = punti[0] === punti[1] ? -1 : (punti[0] > punti[1] ? 0 : 1);
-      ui.punti.textContent = ""; ui.timer.textContent = "Partita finita"; ui.turno.textContent = ""; ui.corpo.className = "tb-fine"; ui.corpo.innerHTML = ""; ui.tasti.innerHTML = "";
-      ui.corpo.appendChild(t.el("h1", { text: win < 0 ? "Pareggio! 🤝" : "Squadra " + SQUADRE[win] + " vince! 🏆" }));
-      [0, 1].forEach(function (s) { ui.corpo.appendChild(t.el("p", { text: "Squadra " + SQUADRE[s] + " · " + punti[s] + (punti[s] === 1 ? " punto" : " punti") })); });
-      var esci = bottone(t, "esci", "Esci", function () { chiudi(); t.esci(); }); esci.style.gridColumn = "1/-1"; ui.tasti.appendChild(esci);
-      if (sonoHost) { var nuovo = bottone(t, "", "🔁 Nuova partita (stessi amici)", nuovaPartita); nuovo.style.gridColumn = "1/-1"; ui.tasti.appendChild(nuovo); }
-    }
+      vista.tick();
+    }, 200);
+  }
 
-    function visualizzaVm(v) {
-      if (G.vm && G.vm.chiaveCarta !== v.chiaveCarta) { G.carta = null; G.uiKey = -1; if (G.ui) G.ui.key = -1; }
-      G.vm = v;
-      if (v.fase === "lobby") return lobbyOspite(v);
-      if (v.fase === "turno") {
-        if (!G.ui || G.uiTurno !== v.turno || G.fase !== "turno") { G.fase = "turno"; G.uiTurno = v.turno; G.uiKey = -1; creaSchermoOspite(); avviaTic(); }
-        aggiornaOspite();
-      } else if (v.fase === "riepilogo") { stopTic(); G.fase = v.fase; G.riepilogo = v.riepilogo; creaSchermoOspite(); mostraRiepilogoOspite(); }
-      else if (v.fase === "fine") { stopTic(); salvaStatTaboo(G.myId, v); G.fase = v.fase; creaSchermoOspite(); mostraFineOspite(); }
+  // =========================================================
+  //  AMICO: riceve la foto e manda solo le sue mosse
+  // =========================================================
+  function ospite(t, codice, nome) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var G = { rete: null, myId: null, vm: null, tic: null, box: null, finito: false };
+    var vista = creaVista(t, {
+      sonoHost: false,
+      mioId: function () { return G.myId; },
+      azione: function (tipo, extra) { if (G.rete && G.vm) G.rete.invia(Object.assign({ t: tipo, chiave: G.vm.chiaveCarta }, extra || {})); },
+      esci: esci
+    });
+    function esci() { G.finito = true; if (G.tic) { clearInterval(G.tic); G.tic = null; } if (G.rete) G.rete.chiudi(); t.esci(); }
+    function avviso(testo) {
+      G.finito = true; if (G.tic) { clearInterval(G.tic); G.tic = null; }
+      stile(); vista.azzera();
+      var s = t.schermata({}); s.classList.add("tb-piena");
+      s._contenuto.appendChild(t.el("div", { class: "tb", style: "justify-content:center;text-align:center" }, [t.el("div", { class: "tb-indovina", style: "font-size:clamp(24px,7vw,36px)", text: testo }), t.el("button", { class: "tb-btn grigio", type: "button", text: "Esci", onclick: function () { if (G.rete) G.rete.chiudi(); t.esci(); } })]));
+      t.mostra(s);
     }
-    function ospite(t, codice) {
-      if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-      avviaTic();
-      G.rete = SGNet.entra(codice, {
-        onAperto: function (id) { G.myId = id; G.rete.invia({ t: "join", nome: G.nome, omino: t.mioOmino(G.nome) }); attesaOspite(t, codice); },
-        onMsg: function (m) {
-          if (m.t === "vm") visualizzaVm(m.vm);
-          else if (m.t === "priv" && m.to === G.myId && G.vm && m.chiave === G.vm.chiaveCarta) { G.carta = m.carta; if (G.ui) G.ui.key = -1; if (G.fase === "turno") aggiornaOspite(); }
-          else if (m.t === "rifiuto" && m.to === G.myId) { stopTic(); if (G.rete) G.rete.chiudi(); avvisoOspite(t, m.testo || "Non puoi entrare in questa partita."); }
-        },
-        onChiuso: function () { stopTic(); G.fase = "fine"; avvisoOspite(t, "La stanza è stata chiusa dall'host."); },
-        onErrore: function () { stopTic(); G.fase = "fine"; avvisoOspite(t, "Problema di collegamento. Riprova più tardi."); }
-      });
-    }
-    function stopTic() { if (G.tic) { clearInterval(G.tic); G.tic = null; } }
-    function avviaTic() { if (!G.tic) G.tic = setInterval(function () { if (G.fase === "turno") aggiornaOspite(); }, 200); }
-    function attesaOspite(t, codice) {
-      if (G.ui) return;
-      stile(); var s = t.schermata({}); s.classList.add("tb-piena"); s._contenuto.appendChild(t.el("div", { class: "tb", style: "justify-content:center;text-align:center" }, [t.el("div", { class: "tb-indovina", text: "Ti stai unendo…" }), t.el("div", { class: "tb-sub", text: "Stanza " + codice.toUpperCase() })])); t.mostra(s);
-    }
-    function avvisoOspite(t, testo) {
-      var s = t.schermata({}); s.classList.add("tb-piena"); s._contenuto.appendChild(t.el("div", { class: "tb", style: "justify-content:center;text-align:center" }, [t.el("div", { class: "tb-indovina", text: testo }), t.el("button", { class: "tb-btn esci", text: "Esci", onclick: function () { if (G.rete) G.rete.chiudi(); t.esci(); } })])); t.mostra(s);
-    }
-    function lobbyOspite(v) {
-      var gio = (v.giocatori || []).map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino, host: !!p.host, tu: p.id === G.myId }; });
-      t.lobby({ host: false, codice: v.codice, pronta: v.pronta, min: MIN, vuoti: Math.max(0, MIN - gio.length), giocatori: gio, attesa: "Aspetta che l'host divida le squadre e dia il via!", onEsci: function () { stopTic(); G.rete.chiudi(); t.esci(); } });
-    }
-    function creaSchermoOspite() {
+    function attesa() {
       stile(); var s = t.schermata({}); s.classList.add("tb-piena");
-      G.ui = { timer: t.el("div", { class: "tb-timer" }), punti: t.el("div", { class: "tb-punti" }), turno: t.el("div", { class: "tb-turno" }), corpo: t.el("div", { class: "tb-carta" }), tasti: t.el("div", { class: "tb-tasti" }), score: [], key: -1 };
-      G.ui.score = [0, 1].map(function (team) { var box = t.el("div", { class: "tb-squadra " + (team ? "b" : "a") }); box.appendChild(t.el("span", { text: "Squadra " + SQUADRE[team] })); var n = t.el("b", { text: "0" }); box.appendChild(n); G.ui.punti.appendChild(box); return n; });
-      s._contenuto.appendChild(t.el("div", { class: "tb" }, [t.el("div", { class: "tb-top" }, [G.ui.punti]), G.ui.timer, G.ui.turno, G.ui.corpo, G.ui.tasti])); G.ui.s = s; t.mostra(s);
+      s._contenuto.appendChild(t.el("div", { class: "tb", style: "justify-content:center;text-align:center" }, [t.el("div", { class: "tb-indovina", text: "Ti stai unendo…" }), t.el("div", { class: "tb-sub", text: "Stanza " + String(codice).toUpperCase() })]));
+      t.mostra(s);
     }
-    function azione(tipo) { if (G.rete && G.vm) G.rete.invia({ t: tipo, chiave: G.vm.chiaveCarta }); }
-    function aggiornaOspite() {
-      var v = G.vm, x = G.ui; if (!v || !x || v.fase !== "turno") return;
-      [0, 1].forEach(function (s) { x.score[s].textContent = String(v.punti[s]); });
-      x.timer.textContent = String(Math.max(0, Math.ceil((v.deadline - Date.now()) / 1000)));
-      var speaker = (v.giocatori || []).find(function (p) { return p.id === v.attivo; }), isSpeaker = G.myId === v.attivo;
-      x.turno.textContent = "Turno " + v.turno + " di " + v.totale + " · " + ((speaker && speaker.nome) || "");
-      if (x.key === v.chiaveCarta) return;
-      x.key = v.chiaveCarta;
-      x.corpo.innerHTML = ""; x.corpo.className = "tb-carta"; x.tasti.innerHTML = "";
-      var sMe = v.squadre[G.myId] === 1 ? 1 : 0, mioTeam = v.team;
-      if (isSpeaker || sMe !== mioTeam) {
-        if (!G.carta || G.carta.p == null) { x.corpo.appendChild(t.el("div", { class: "tb-indovina", text: "" })); }
-        else { x.corpo.appendChild(t.el("div", { class: "tb-parola", text: G.carta.p })); x.corpo.appendChild(t.el("div", { class: "tb-vietate" }, G.carta.v.map(function (w) { return t.el("div", { class: "tb-vietata", text: w }); }))); }
-        if (isSpeaker) {
-          x.tasti.appendChild(bottone(t, "", "✅ Indovinata", function () { azione("indovinata"); }));
-          var pass = bottone(t, "pass", "⏭️ Passo " + v.passati + "/3", function () { azione("passo"); }); pass.disabled = v.passati >= 3; x.tasti.appendChild(pass);
-        } else x.tasti.appendChild(bottone(t, "buzz", "❌ BUZZ", function () { azione("buzz"); }));
-      } else {
-        x.corpo.className = "tb-nascondi"; x.corpo.appendChild(t.el("div", { class: "tb-indovina", text: "Indovina!" }));
-      }
-      var esci = bottone(t, "esci", "Esci", function () { if (window.confirm("Uscire dalla partita?")) { stopTic(); G.rete.chiudi(); t.esci(); } }); esci.style.gridColumn = "1/-1"; x.tasti.appendChild(esci);
+    function lobby(v) {
+      var gio = (v.giocatori || []).map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino, host: !!p.host, tu: p.id === G.myId }; });
+      if (!G.box) G.box = boxSquadre(t, { host: false, sposta: function (id, s) { if (id === G.myId && G.rete) G.rete.invia({ t: "squadra", s: s }); } });
+      G.box.aggiorna(v.giocatori || [], v.squadre || {}, G.myId);
+      t.lobby({ host: false, codice: v.codice, pronta: v.pronta, min: MIN, vuoti: Math.max(0, MIN - gio.length), giocatori: gio, extra: [G.box],
+        attesa: "Scegli la tua squadra. Si parte quando l'host dà il via!", onEsci: esci });
     }
-    function mostraRiepilogoOspite() {
-      var x = G.ui; if (!x) return; var r = G.riepilogo; x.timer.textContent = "Turno finito"; x.turno.textContent = ""; x.punti.innerHTML = ""; x.corpo.className = "tb-esito"; x.corpo.innerHTML = ""; x.tasti.innerHTML = "";
-      [0, 1].forEach(function (s) { x.punti.appendChild(t.el("div", { class: "tb-squadra " + (s ? "b" : "a") }, [t.el("span", { text: "Squadra " + SQUADRE[s] }), t.el("b", { text: String(G.vm.punti[s]) })])); });
-      x.corpo.appendChild(t.el("div", { class: "tb-turno", text: r.nome + " — Squadra " + SQUADRE[r.team] }));
-      var voci = t.el("div", { class: "tb-liste" });
-      [["✅ Indovinate", r.giuste], ["❌ Buzz", r.buzz], ["⏭️ Passate", r.passate]].forEach(function (a) { voci.appendChild(t.el("div", { class: "tb-lista" }, [t.el("h3", { text: a[0] }), t.el("div", { class: "tb-voci", text: a[1].length ? a[1].join(" · ") : "—" })])); });
-      x.corpo.appendChild(voci); x.tasti.appendChild(t.el("div", { class: "tb-sub", style: "grid-column:1/-1;text-align:center", text: "Il turno successivo parte tra pochi secondi…" }));
-    }
-    function mostraFineOspite() {
-      var x = G.ui, v = G.vm; if (!x) return; x.punti.innerHTML = ""; x.timer.textContent = "Partita finita"; x.turno.textContent = ""; x.corpo.className = "tb-fine"; x.corpo.innerHTML = ""; x.tasti.innerHTML = "";
-      var win = v.punti[0] === v.punti[1] ? -1 : (v.punti[0] > v.punti[1] ? 0 : 1);
-      x.corpo.appendChild(t.el("h1", { text: win < 0 ? "Pareggio! 🤝" : "Squadra " + SQUADRE[win] + " vince! 🏆" }));
-      [0, 1].forEach(function (s) { x.corpo.appendChild(t.el("p", { text: "Squadra " + SQUADRE[s] + " · " + v.punti[s] + (v.punti[s] === 1 ? " punto" : " punti") })); });
-      var esci = bottone(t, "esci", "Esci", function () { stopTic(); G.rete.chiudi(); t.esci(); }); esci.style.gridColumn = "1/-1"; x.tasti.appendChild(esci);
-    }
-    function senzaRete(tavolo) {
-      var s = tavolo.schermata({ titolo: "" }); s._contenuto.appendChild(tavolo.el("p", { class: "modulo-nota", text: "Taboo si gioca online quando il sito è aperto dal web." }));
-      s._piede.appendChild(tavolo.el("button", { class: "btn btn-primario", text: "Esci", onclick: tavolo.esci })); tavolo.mostra(s);
-    }
-
+    attesa();
+    G.rete = SGNet.entra(codice, {
+      onAperto: function (id) { G.myId = id; G.rete.invia({ t: "join", nome: nome, omino: t.mioOmino(nome) }); },
+      onMsg: function (m) {
+        if (G.finito || !m) return;
+        if (m.t === "vm" && m.vm) {
+          var v = m.vm; G.vm = v;
+          if (v.fase === "lobby") { vista.vm(v); return lobby(v); }
+          if (G.myId && !(v.giocatori || []).some(function (p) { return p.id === G.myId; })) return;   // non sono (ancora) in questa partita
+          vista.vm(v);
+          if (v.fase === "fine") salvaStatTaboo(t, G.myId, v);
+        } else if (m.t === "rifiuto" && m.to === G.myId) { if (G.rete) G.rete.chiudi(); avviso(m.testo || "Non puoi entrare in questa partita."); }
+      },
+      onChiuso: function () { if (!G.finito) avviso("La stanza è stata chiusa dall'host."); },
+      onErrore: function () { if (!G.finito) avviso("Problema di collegamento. Riprova più tardi."); }
+    });
+    G.tic = setInterval(function () { vista.tick(); }, 200);
   }
 
   function impostazioni(box, dove, aiuti) {
-    dove.tempo = Number(dove.tempo) || 90; dove.giri = Number(dove.giri) || 1;
+    dove.tempo = Number(dove.tempo) || 90; dove.giri = Number(dove.giri) || 1; dove.carte = Number(dove.carte) || 2;
     var el = aiuti.el;
     function gruppo(label, valori, prop, titoli) {
       box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: label }));
@@ -427,7 +805,8 @@
       }); box.appendChild(row);
     }
     gruppo("Tempo del turno", [60, 90, 120], "tempo", ["60 s", "90 s", "120 s"]);
-    gruppo("Quanti giri", [1, 2, 3, 4], "giri", ["1", "2", "3", "4"]);
+    gruppo("Quanti giri (in un giro spiegano tutti)", [1, 2, 3, 4], "giri", ["1", "2", "3", "4"]);
+    gruppo("Carte", [1, 2, 3], "carte", ["Facili", "Miste", "Difficili"]);
   }
 
   SG.registra({
@@ -436,11 +815,13 @@
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1, modi: [], soloOnline: true,
     regole: [
       "Fate due squadre. A turno, una persona spiega la parola alla propria squadra senza pronunciare le cinque parole vietate.",
-      "Chi spiega vede la carta; la squadra avversaria la vede e può premere <b>BUZZ</b>. I compagni vedono solo il tempo, i punti e «Indovina!».",
-      "Ogni parola indovinata vale <b>+1</b>. Ogni BUZZ toglie <b>1 punto</b>. Si possono saltare al massimo <b>3 carte per turno</b>, senza perdere punti.",
-      "L'host sceglie il tempo e quanti giri fare. Vince la squadra con più punti."
+      "Vietati anche la parola stessa o un suo pezzo, i gesti, i suoni («fa bau bau») e le parole in altre lingue.",
+      "Chi spiega vede la carta; la squadra avversaria la vede e può premere <b>BUZZ</b>. I compagni vedono solo il tempo e chi spiega.",
+      "Ogni parola indovinata vale <b>+1</b>. Ogni BUZZ toglie <b>1 punto</b> (chi spiega o l'host possono annullarlo se è sbagliato). Si possono saltare al massimo <b>3 carte per turno</b>, senza perdere punti.",
+      "Le squadre si alternano e ogni squadra ha gli stessi turni. Il tempo parte quando chi spiega tocca «Pronti, via!».",
+      "L'host sceglie il tempo, quanti giri fare e le carte (facili, miste o difficili). Vince la squadra con più punti."
     ],
     impostazioni: impostazioni,
-    avvia: hostPartita
+    avvia: avvia
   });
 })();

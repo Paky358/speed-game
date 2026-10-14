@@ -106,7 +106,7 @@
   // finita una mano, la partita è chiusa? Con una mano sola sì; altrimenti quando qualcuno arriva ai punti
   // (se arrivano tutti e due a pari punti si gioca un'altra mano)
   function partitaFinita(n, a, b) { return !n || ((a >= n || b >= n) && a !== b); }
-  function sceltaTraguardo(el, box, dove) {
+  function sceltaTraguardo(el, box, dove, nota) {   // nota = scritta piccola sotto (facoltativa)
     dove.traguardo = TARGET;
     box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Punti da raggiungere" }));
     var scelte = [[0, "Una mano"], [7, "7"], [11, "11"], [21, "21"]], riga = el("div", { style: "display:flex;gap:6px" }), campo;
@@ -132,6 +132,7 @@
     });
     box.appendChild(el("div", { style: "display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.92rem" }, [
       el("span", { text: "✏️ Oppure scegli tu:" }), campo, el("span", { class: "tenue", text: "punti" }) ]));
+    if (nota) box.appendChild(el("div", { class: "tenue", style: "font-size:.8rem;margin-top:6px", text: nota }));
     segna();
   }
 
@@ -162,16 +163,20 @@
     cards.forEach(function (c) { if (PRIM[c.v] > best[c.s]) best[c.s] = PRIM[c.v]; });
     return best.D + best.C + best.S + best.B;
   }
+  // la primiera vale solo con tutti e quattro i semi
+  function tuttiSemi(cards) { var s = {}; cards.forEach(function (c) { s[c.s] = 1; }); return !!(s.D && s.C && s.S && s.B); }
   function contaPunti(A, B) {
     function den(x) { var n = 0; x.forEach(function (c) { if (c.s === "D") n++; }); return n; }
     var carteA = A.length, carteB = B.length, denA = den(A), denB = den(B);
     var sette = trova(A, "D7") ? "A" : (trova(B, "D7") ? "B" : null);
-    var primA = primiera(A), primB = primiera(B);
+    var primA = primiera(A), primB = primiera(B), okA = tuttiSemi(A), okB = tuttiSemi(B);
+    // a chi manca un seme non prende la primiera; se manca a tutti e due non la prende nessuno
+    var pPrim = okA && okB ? (primA > primB ? "A" : primB > primA ? "B" : null) : okA ? "A" : okB ? "B" : null;
     return {
       carteA: carteA, carteB: carteB, puntoCarte: carteA > carteB ? "A" : carteB > carteA ? "B" : null,
       denA: denA, denB: denB, puntoDenari: denA > denB ? "A" : denB > denA ? "B" : null,
       settebello: sette,
-      primA: primA, primB: primB, puntoPrimiera: primA > primB ? "A" : primB > primA ? "B" : null
+      primA: primA, primB: primB, primOkA: okA, primOkB: okB, puntoPrimiera: pPrim
     };
   }
   function puntiRound(p, scope, chi) {
@@ -183,34 +188,42 @@
   }
 
   // ---------- motore di partita (host-autoritativo / locale) ----------
-  function creaMotore(nomi, mischia, traguardo) {
+  // primo = chi comincia la prima smazzata ("A" o "B"; nelle partite dopo si alterna)
+  function creaMotore(nomi, mischia, traguardo, primo) {
     var st = {
       traguardo: traguardo == null ? TARGET : traguardo,
       mazzo: [], tavolo: [], mani: { A: [], B: [] }, prese: { A: [], B: [] },
       scope: { A: 0, B: 0 }, turno: "A", ultimaPresa: null,
-      fase: "gioco", primo: "A", punti: { A: 0, B: 0 }, nomi: nomi,
-      ultimoRound: null, presa: null, messaGiu: null
+      fase: "gioco", primo: primo || "A", primoPartita: primo || "A", punti: { A: 0, B: 0 }, nomi: nomi,
+      ultimoRound: null, presa: null, messaGiu: null,
+      idPartita: Math.random().toString(36).slice(2, 9), nRound: 0, rifatta: false
     };
     function nuovoRound() {
-      st.mazzo = creaMazzo(mischia);
-      st.tavolo = st.mazzo.splice(0, 4);
+      // tre o quattro Re in tavola: nessuno potrebbe fare scopa, si rimescola e si rifà la mano
+      var giri = 0;
+      do {
+        st.mazzo = creaMazzo(mischia);
+        st.tavolo = st.mazzo.splice(0, 4);
+      } while (st.tavolo.filter(function (c) { return c.v === 10; }).length >= 3 && ++giri < 20);
+      st.rifatta = giri > 0;
       st.mani.A = st.mazzo.splice(0, 3);
       st.mani.B = st.mazzo.splice(0, 3);
-      st.prese.A = []; st.prese.B = []; st.scope.A = 0; st.scope.B = 0;
+      st.prese.A = []; st.prese.B = []; st.scope.A = 0; st.scope.B = 0; st.nRound++;
       st.ultimaPresa = null; st.turno = st.primo; st.fase = "gioco"; st.presa = null; st.messaGiu = null;
     }
     function distribuisci() { // 3 a testa quando le mani sono vuote e il mazzo ha carte
       st.mani.A = st.mazzo.splice(0, 3);
       st.mani.B = st.mazzo.splice(0, 3);
     }
-    // ritorna un evento: {presa:bool, scopa:bool, chi} oppure {errore:true}
+    // ritorna un evento: {presa:bool, scopa:bool, chi, chiudere} oppure {errore:true}
+    // (finite le mani NON si distribuisce subito: prima si guarda la presa, poi chiudiPresa)
     function gioca(pk, cartaId, presaIds) {
-      if (st.fase !== "gioco" || pk !== st.turno) return { errore: true };
+      if (st.fase !== "gioco" || pk !== st.turno || st.presa) return { errore: true };
       var carta = trova(st.mani[pk], cartaId);
       if (!carta) return { errore: true };
       var opts = catture(carta.v, st.tavolo);
       var ev = { presa: false, scopa: false, chi: pk };
-      st.presa = null; st.messaGiu = null;
+      st.presa = null; st.messaGiu = null; st.rifatta = false;
       // togli la carta dalla mano
       st.mani[pk] = st.mani[pk].filter(function (c) { return c.id !== cartaId; });
       if (opts.length) {
@@ -228,12 +241,23 @@
         st.tavolo.push(carta); st.messaGiu = carta.id; // niente presa: la carta si posa sul tavolo (animata)
       }
       st.turno = altro(pk);
-      // fine mano? (mani vuote)
-      if (st.mani.A.length === 0 && st.mani.B.length === 0) {
-        if (st.mazzo.length > 0) distribuisci();
-        else fineRound();
-      }
+      ev.chiudere = st.mani.A.length === 0 && st.mani.B.length === 0;   // mani finite: poi si distribuisce (o finisce la smazzata)
       return ev;
+    }
+    // finita di guardare la presa: si pulisce; a mani vuote si distribuisce. A fine mazzo prima si fanno vedere
+    // le carte rimaste che vanno all'ultimo che ha preso ("resto"), poi la smazzata finisce ("fine").
+    function chiudiPresa() {
+      st.presa = null; st.messaGiu = null;
+      if (st.fase !== "gioco" || st.mani.A.length || st.mani.B.length) return "gioco";
+      if (st.mazzo.length > 0) { distribuisci(); return "gioco"; }
+      if (st.tavolo.length && st.ultimaPresa) {
+        var resto = st.tavolo.slice(), chi = st.ultimaPresa;
+        st.prese[chi] = st.prese[chi].concat(resto); st.tavolo = [];
+        st.presa = { chi: chi, carta: null, presi: resto, scopa: false, tavoloPrima: resto, presiIds: resto.map(function (c) { return c.id; }), resto: true };
+        return "resto";
+      }
+      fineRound();
+      return "fine";
     }
     function fineRound() {
       // le carte rimaste sul tavolo vanno all'ultimo che ha preso
@@ -252,7 +276,7 @@
     }
     nuovoRound();
     return {
-      st: st, gioca: gioca, prossimoRound: prossimoRound,
+      st: st, gioca: gioca, prossimoRound: prossimoRound, chiudiPresa: chiudiPresa,
       catture: function (val) { return catture(val, st.tavolo); }
     };
   }
@@ -509,7 +533,46 @@
       ".sc-scena .sc-targa.turno{border-color:#ffd43b;box-shadow:0 0 14px rgba(255,212,59,.6)}",
       ".sc-targa4.turno{border-color:#ffd43b;box-shadow:0 0 12px rgba(255,212,59,.65)}",
       ".sc-aiuto{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:8;max-width:92%;text-align:center;background:rgba(10,18,50,.88);border:1.5px solid #69db7c;color:#fff;font-weight:800;font-size:.85rem;line-height:1.25;padding:6px 12px;border-radius:12px;pointer-events:none}",
-      ".sc-panno .sc-mazzo{top:14px;left:16px}"
+      ".sc-panno .sc-mazzo{top:14px;left:16px}",
+      // ---- solo Scopa 1 contro 1 ----
+      ".sc-punti1{min-width:0;flex:0 1 auto;font-size:.8rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".sc-destra{display:flex;align-items:center;gap:6px;flex:0 0 auto}",
+      // il mazzo che resta (e "Ultima mano!" quando è finito)
+      ".sc-mazzino{display:flex;align-items:center;gap:5px;background:rgba(10,18,50,.72);border:1.5px solid rgba(255,255,255,.15);border-radius:999px;padding:3px 9px 3px 6px;font-size:.72rem;font-weight:800;color:#eafff1;white-space:nowrap;box-shadow:0 3px 8px rgba(0,0,0,.35)}",
+      ".sc-mazzino i{display:inline-block;width:10px;height:16px;border-radius:2px;background:#b3161d;border:1.5px solid #f2e2be;box-sizing:border-box}",
+      ".sc-mazzino.ultima{border-color:#ffd43b;color:#ffd43b}",
+      ".sc-mazzino.ultima i{display:none}",
+      // tocca a te: la mensola si illumina e le carte salgono un po'
+      ".sc-mensola1{position:relative;transition:box-shadow .3s}",
+      ".sc-mensola1.tuo{box-shadow:inset 0 2px 8px rgba(255,255,255,.07),0 -3px 0 #ffd43b,0 -8px 20px rgba(255,212,59,.45)}",
+      ".sc-mensola1 .sc-carta{transition:transform .2s,opacity .2s}",
+      ".sc-mensola1.tuo .sc-carta{transform:translateY(-4px)}",
+      ".sc-mensola1 .sc-carta.sel,.sc-mensola1.tuo .sc-carta.sel{transform:translateY(-12px)}",
+      ".sc-mensola1 .sc-carta.inviata{transform:translateY(-22px) scale(.94);opacity:.5}",
+      ".sc-tocca{position:absolute;left:50%;top:-12px;transform:translateX(-50%);background:#ffd43b;color:#3b2400;font-weight:900;font-size:.72rem;border-radius:999px;padding:2px 11px;box-shadow:0 2px 6px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .25s;white-space:nowrap;z-index:2}",
+      ".sc-mensola1.tuo .sc-tocca{opacity:1}",
+      // scritte grandi sul tavolo (SCOPA!, carte rimaste, tre Re)
+      ".sc-banner{position:absolute;left:50%;top:52%;z-index:8;transform:translate(-50%,-50%);max-width:88%;text-align:center;background:rgba(10,18,50,.9);border:2px solid #ffd43b;color:#fff;font-weight:900;font-size:.95rem;line-height:1.25;padding:8px 14px;border-radius:14px;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.45);animation:scBanner .35s cubic-bezier(.3,1.5,.5,1)}",
+      ".sc-banner.scopa{background:linear-gradient(135deg,#ffe066,#ffb300);color:#3b2400;font-size:1.5rem;border-color:#fff3bf}",
+      "@keyframes scBanner{from{transform:translate(-50%,-50%) scale(.4);opacity:0}to{transform:translate(-50%,-50%);opacity:1}}",
+      ".sc-fumetto.lungo{white-space:normal;font-size:.76rem;line-height:1.2;font-weight:800;max-width:150px}",
+      // avviso sopra al tavolo (avversario uscito)
+      ".sc-avviso-sf{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}",
+      ".sc-avviso{background:#1d2a5e;border:2px solid rgba(255,255,255,.2);border-radius:18px;padding:18px 16px;max-width:330px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.5)}",
+      ".sc-avviso p{margin:0 0 14px;font-weight:800;font-size:1.02rem;line-height:1.4}",
+      // riepilogo di fine smazzata: le righe arrivano una alla volta
+      ".sc-riep{max-width:440px;margin:0 auto}",
+      ".sc-rg{display:grid;grid-template-columns:1fr 31% 31%;align-items:center;padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.05);margin-bottom:4px;font-size:.92rem;animation:scRiga .35s ease-out backwards}",
+      ".sc-rg > span:not(:first-child){text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".sc-rg.testa{background:none;font-weight:800;font-size:.8rem;padding-top:0;padding-bottom:0}",
+      ".sc-rg .vinto{color:#69db7c;font-weight:900}",
+      ".sc-rg .manca{font-size:.68rem;opacity:.75}",
+      ".sc-piu{display:inline-block;font-size:.66rem;font-weight:900;background:#2b8a3e;color:#fff;border-radius:999px;padding:0 5px;margin-left:4px;vertical-align:1px}",
+      ".sc-rg.tot{background:rgba(255,212,59,.12);font-size:1.25rem;font-weight:900}",
+      ".sc-barra{height:7px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden;margin:0 6px}",
+      ".sc-barra b{display:block;height:100%;transform-origin:0 50%;border-radius:99px;transition:transform .8s ease-out .6s}",
+      ".sc-detto{text-align:center;font-weight:800;font-size:.9rem;margin-top:8px;animation:scRiga .35s ease-out backwards}",
+      "@keyframes scRiga{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -706,46 +769,214 @@
     return (t0 + n * giro * passo) * 1000 + 450;
   }
 
+  // ---------- battute di Bot nei fumetti (la lista lunga è in data/scopa-battute.js; qui poche di riserva) ----------
+  var BATTUTE_BASE = {
+    pensa: ["Mmh… e mo' che butto?", "Aspetta, fammi pensà…"],
+    prende: ["Chesta è 'a mia!", "Vieni a papà!"],
+    settebello: ["Settebello, viene a papà!"],
+    scopa: ["Scopa! Pulito pulito!"],
+    subisce: ["Mannaggia!", "Questa me la lego al dito."],
+    vince: ["Ho vinto! Rivincita?"],
+    perde: ["Complimenti, hai vinto tu!"],
+    pari: ["Pari e patta: nessuno piange!"]
+  };
+  function numeroDa(s) { var h = 7; s = String(s); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); }
+  // la stessa situazione dà sempre la stessa battuta (ridisegnando non cambia, e chi guarda vede la stessa)
+  function battuta(momento, seme) {
+    var L = (window.SG_SCOPA_BATTUTE && window.SG_SCOPA_BATTUTE[momento]) || BATTUTE_BASE[momento] || [];
+    return L.length ? L[numeroDa(momento + seme) % L.length] : null;
+  }
+  function corto(n, max) { n = String(n == null ? "" : n); return n.length > max ? n.slice(0, max - 1) + "…" : n; }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+
   // ---------- vista (uguale per bot/host/ospite) ----------
-  // vm = { fase, io("A"|"B"), turno, nomi, mano:[carte], oppN, tavolo:[carte],
+  // vm = { fase, io("A"|"B"), turno, nomi, mano:[carte], oppN, tavolo:[carte], mazzoN,
   //        preseIo, preseOpp, scopeIo, scopeOpp, settebelloIo, settebelloOpp,
-  //        punti:{io,opp}, ultimoRound, presa:{mio,carta,presi,scopa}|null, vincitoreIo }
-  // C = { vm, sel:{carta,presa}, ridisegna } ; cb = { onMossa(id,presa|null), onAvanti, onEsci, sonoHost, lobby... }
+  //        punti:{io,opp}, ultimoRound, presa:{mio,carta,presi,scopa,resto}|null, vincitoreIo,
+  //        idPartita, nRound, rifatta, bot (contro il computer), idB (id dell'ospite online) }
+  // C = { vm, sel:{carta,presa}, disegna, uscito } ; cb = { onMossa(id,presa|null), onAvanti, onEsci, sonoHost, guarda... }
   var scSlot = {};   // id carta in tavola -> numero del suo posto (resta fermo finché non viene presa)
   var scCorr = { k: null, v: 0 };   // correzione dell'altezza della stanza, misurata sullo schermo vero
-  var scMount = null; // schermata di gioco già montata: la aggiorniamo senza rifarla ogni volta (niente lampeggio)
+  var scMount = null; // la stanza già montata: si aggiorna SOLO quello che cambia (niente lampeggio)
 
-  function renderScopa(t, C, cb) {
-    assicuraStile();
-    if (window.SGMusica) window.SGMusica.avvia();
-    var el = t.el, vm = C.vm;
+  // girato il telefono o cambiata l'altezza dello schermo: la stanza si rifà subito della misura giusta
+  var scGiraT = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(scGiraT);
+    scGiraT = setTimeout(function () {
+      var m = scMount;
+      if (m && m.C && !m.C.uscito && m.C.vm && m.C.vm.fase === "gioco" && document.body.contains(m.s)) m.C.disegna();
+    }, 250);
+  });
+
+  function misureScopa() {
     var wH = larghezza(3, 10, 104);   // mano max 3
-    // misure della stanza: altezza fissa (lo schermo non "salta"), il tavolo è un piano inclinato
     var scW = Math.min(window.innerWidth || 375, 600);   // la stanza va da bordo a bordo
     // altezza della stanza: TUTTO lo spazio che resta sullo schermo vero (--alt), poi corretta misurando dopo il montaggio
     var alt = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--alt")) || window.innerHeight || 700;
-    var chiaveSchermo = alt + "x" + (window.innerWidth || 0);
-    if (scCorr.k !== chiaveSchermo) scCorr = { k: chiaveSchermo, v: 0 };
+    var chiave = alt + "x" + (window.innerWidth || 0);
+    if (scCorr.k !== chiave) scCorr = { k: chiave, v: 0 };
     var scH = Math.max(300, Math.min(900, Math.round(alt - (Math.round(wH * ASP_CARTA) + 52) + scCorr.v)));
     var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * 0.7);
-    var nT = (vm.presa && vm.presa.tavoloPrima ? vm.presa.tavoloPrima : vm.tavolo).length;
-    // carte in tavola: grandezza FISSA, quella con cui 8 carte stanno comode (4 posti per fila, 2 file).
-    // Da 1 a 8 carte non cambia mai; solo con 9 o più si rimpiccioliscono quanto basta.
-    // niente mazzo sul tavolo: le carte usano tutto il panno (ma restano dentro lo schermo, il tavolo è più largo del telefono)
-    var tavAw = Math.min((pianoW - 24) * 0.94 - 4, scW - 22), tavAh = (pianoH - 24) * 0.87;
-    function misuraPer(n) {   // la carta più grande con cui n carte entrano nel tavolo
-      var best = 0;
-      for (var pr = 1; pr <= n; pr++) {
-        var rr = Math.ceil(n / pr), ww = Math.min(110, Math.floor((tavAw - (pr - 1) * 5) / pr), Math.floor((tavAh - (rr - 1) * 5) / rr / ASP_CARTA));
-        if (ww > best) best = ww;
-      }
-      return best;
+    return { wH: wH, scW: scW, alt: alt, scH: scH, pianoW: pianoW, pianoH: pianoH, k: chiave + "|" + scCorr.v,
+      tavAw: Math.min((pianoW - 24) * 0.94 - 4, scW - 22), tavAh: (pianoH - 24) * 0.87 };
+  }
+
+  // la stanza si costruisce UNA volta (avversario, quadri, tavolo, mensola); poi si aggiornano solo i pezzi
+  function montaScopa(t, C, cb, Mi) {
+    var el = t.el, m = { C: C, k: Mi.k, Mi: Mi, tav: {}, mano: {}, prevMano: 0 };
+    var box = el("div", { style: "display:flex;flex-direction:column" });
+    var head = el("div", { class: "sc-testata" });   // punteggio, mazzo e musica DENTRO la stanza (a sinistra c'è il tasto indietro)
+    m.punti = el("div", { class: "sc-punti1" });
+    m.mazzino = el("div", { class: "sc-mazzino" });
+    head.appendChild(m.punti);
+    var destra = el("div", { class: "sc-destra" }, [m.mazzino]);
+    if (window.SGMusica && !cb.guarda) destra.appendChild(window.SGMusica.bottone(el));
+    head.appendChild(destra);
+    var scena = el("div", { class: "sc-scena", style: "height:" + Mi.scH + "px" });
+    scena.appendChild(head);
+    scena.appendChild(el("div", { class: "sc-quadro", style: "left:16px;background:linear-gradient(135deg,#3f6b8f,#9cc4d9 60%,#e7d9a8)" }));
+    scena.appendChild(el("div", { class: "sc-quadro", style: "right:16px;background:linear-gradient(135deg,#8f3f5c,#e3a26b 60%,#f2e3b5)" }));
+    m.targaNome = el("span", { class: "sc-nome" }); m.targaNum = el("span", { class: "sc-num" }); m.targaSc = el("span", { class: "sc-targa-sc" });
+    m.targa = el("div", { class: "sc-targa" }, [m.targaNome, m.targaNum, m.targaSc]);
+    scena.appendChild(m.targa);
+    m.ventaglio = el("div", { class: "sc-avv-carte" }); scena.appendChild(m.ventaglio);
+    m.avv = el("div", { class: "sc-avv" }); m.avvFig = el("div", { class: "sc-avv-fig" }); m.avv.appendChild(m.avvFig); scena.appendChild(m.avv);
+    var prosp = el("div", { class: "sc-prosp", style: "perspective:" + Math.max(600, Math.round(Mi.scH * 1.15)) + "px" });
+    m.piano = el("div", { class: "sc-piano", style: "width:" + Mi.pianoW + "px;height:" + Mi.pianoH + "px;margin-left:" + (-Mi.pianoW / 2) + "px;transform:rotateX(54deg)" });
+    var feltro = el("div", { class: "sc-panno" });
+    m.area = el("div", { class: "sc-terra sc-t3d" });
+    m.griglia = el("div", { style: "display:grid;gap:5px;justify-content:center;align-content:center;height:100%" });
+    m.area.appendChild(m.griglia); feltro.appendChild(m.area);
+    m.piano.appendChild(feltro); prosp.appendChild(m.piano); scena.appendChild(prosp);
+    m.feltro = feltro; m.scena = scena;
+    m.aiuto = el("div", { class: "sc-aiuto" }); m.aiuto.hidden = true; scena.appendChild(m.aiuto);
+    box.appendChild(scena);
+    m.mensola = el("div", { class: "sc-mensola sc-mensola1", style: "min-height:" + (Math.round(Mi.wH * ASP_CARTA) + 34) + "px" });
+    m.tocca = el("div", { class: "sc-tocca" });
+    m.manoRiga = el("div", { class: "sc-mano-riga" });
+    m.prese = el("div", { class: "sc-prese" });
+    m.mensola.appendChild(m.tocca); m.mensola.appendChild(m.manoRiga); m.mensola.appendChild(m.prese);
+    box.appendChild(m.mensola);
+    var s = t.schermata({ indietro: function () { if (cb.guarda || window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
+    s.classList.add("sc-piena");   // stanza da bordo a bordo
+    s._contenuto.appendChild(box);
+    m.s = s;
+    t.mostra(s);
+    // l'avversario seduto: il bordo lontano del tavolo gli arriva in vita
+    var bordo = m.piano.getBoundingClientRect().top - scena.getBoundingClientRect().top;
+    var w = Math.max(90, Math.min(Math.round(Mi.scW * 0.46), 190, Math.round((bordo + 6 - 22) / 0.975)));
+    m.avvW = w; m.cw = Math.round(w * 0.17);
+    m.avv.style.width = w + "px"; m.avv.style.marginLeft = (-w / 2) + "px";
+    m.avv.style.top = Math.round(bordo + 6 - w * 0.975) + "px";
+    m.ventaglio.style.top = Math.round(bordo + 6 - w * 0.975 + w * 0.76) + "px";
+    // tocchi: guardano lo stato di adesso (le carte restano le stesse fra un disegno e l'altro)
+    m.aspetta = function () {   // tocco quando non è il tuo turno
+      var vm = C.vm; if (cb.guarda || !vm || vm.fase !== "gioco") return;
+      m.aiutoTemp = C.inviata ? "Carta giocata, un attimo…" : (vm.turno !== vm.io && vm.oppN ? "Aspetta: tocca a " + vm.nomi.opp : "Aspetta un attimo…");
+      clearTimeout(m.aiutoT); m.aiutoT = setTimeout(function () { m.aiutoTemp = null; aggiornaAiuto(m); }, 1600);
+      aggiornaAiuto(m);
+    };
+    return m;
+  }
+  function aggiornaAiuto(m) {
+    var txt = m.aiutoTemp || m.aiutoFisso || null;
+    if (txt) { if (m.aiuto.textContent !== txt) m.aiuto.textContent = txt; m.aiuto.hidden = false; }
+    else m.aiuto.hidden = true;
+  }
+  function misuraCarta(cel, w) {   // cambia misura solo se serve (9+ carte in tavola)
+    if (cel._w === w) return;
+    cel._w = w; var img = cel.firstChild;
+    if (img) { img.setAttribute("width", w); img.setAttribute("height", Math.round(w * ASP_CARTA)); }
+  }
+  function sceltaBanner(m, txt, cls) {   // le scritte grandi sul tavolo: si rifanno solo quando cambiano
+    if (m.bannerTxt === txt) return;
+    m.bannerTxt = txt;
+    if (m.banner) { m.banner.remove(); m.banner = null; }
+    if (txt) { m.banner = m.C._el("div", { class: "sc-banner" + (cls || ""), text: txt }); m.scena.appendChild(m.banner); }
+  }
+
+  function renderScopa(t, C, cb) {
+    if (C.uscito) return;
+    assicuraStile();
+    if (window.SGMusica && !cb.guarda) window.SGMusica.avvia();   // chi guarda non ha suoni
+    var el = t.el, vm = C.vm, Mi = misureScopa();
+    var chiaveRound = vm.idPartita + ":" + vm.nRound;
+    var m = scMount, nuovo = !(m && m.C === C && m.k === Mi.k && document.body.contains(m.s));
+    if (nuovo) {
+      var vecchio = m;
+      m = scMount = montaScopa(t, C, cb, Mi);
+      if (vecchio && vecchio.C === C && vecchio.round === chiaveRound) m.prevMano = vecchio.prevMano;   // rifatta per un giro del telefono: niente distribuzione
     }
-    var wT = Math.min(110, Math.floor((tavAw - 15) / 4), Math.floor((tavAh - 5) / 2 / ASP_CARTA));   // 8 posti: 4 per fila, 2 file
-    if (nT > 8) wT = Math.min(wT, misuraPer(nT));
-    wT = Math.max(26, wT);
-    // POSTI FISSI in tavola: ogni carta resta nel suo posto finché non viene presa (niente carte che "saltano");
-    // una carta nuova va nel primo posto libero. Griglia fissa da 8 posti (4 x 2); più posti solo con 9+ carte.
+    C._schermo = m.s;
+    var mioTurno = !cb.guarda && vm.turno === vm.io && vm.fase === "gioco" && !vm.presa && !C.inviata && vm.mano.length > 0;
+    var suoTurno = vm.turno === vm.io && vm.fase === "gioco" && !vm.presa && vm.mano.length > 0;   // (anche per chi guarda)
+    var oppTurno = vm.turno !== vm.io && vm.fase === "gioco" && !vm.presa && vm.oppN > 0;
+    m.mioTurno = mioTurno;
+
+    // ---- in alto: punti, mazzo che resta ----
+    var pTxt = (cb.guarda ? "👀 " : "") + "<b>" + esc(corto(vm.nomi.io, 9)) + " " + vm.punti.io + "</b> — " + esc(corto(vm.nomi.opp, 9)) + " " + vm.punti.opp +
+      " <span class='tenue' style='font-weight:600'>(" + testoTraguardo(vm.traguardo) + ")</span>";
+    if (m.pTxt !== pTxt) { m.pTxt = pTxt; m.punti.innerHTML = pTxt; }
+    var ultima = !vm.mazzoN && (vm.mano.length || vm.oppN);
+    var mzTxt = vm.mazzoN ? "<i></i>" + vm.mazzoN : (ultima ? "Ultima mano!" : "<i></i>0");
+    if (m.mzTxt !== mzTxt) { m.mzTxt = mzTxt; m.mazzino.innerHTML = mzTxt; m.mazzino.className = "sc-mazzino" + (ultima ? " ultima" : ""); m.mazzino.title = vm.mazzoN ? "Carte rimaste nel mazzo" : ""; }
+
+    // ---- l'avversario: targa, faccia, fumetto, carte in mano ----
+    m.targaNome.textContent = corto(vm.nomi.opp, 16);
+    m.targaNum.textContent = vm.oppN;
+    m.targaSc.textContent = vm.scopeOpp ? "🧹 " + vm.scopeOpp : "";
+    m.targaSc.hidden = !vm.scopeOpp;
+    m.targa.classList.toggle("turno", oppTurno);
+    var chiavePresa = vm.presa ? (vm.presa.carta ? vm.presa.carta.id : "resto") + ":" + (vm.presa.presiIds || []).join(",") : null;
+    var faccia = "normale", fumetto = null;
+    if (vm.presa && vm.presa.scopa) {
+      faccia = vm.presa.mio ? "triste" : "esulta";
+      if (!vm.presa.mio) fumetto = "🧹 " + (vm.bot ? battuta("scopa", chiavePresa) : "SCOPA!");
+      else if (vm.bot) fumetto = battuta("subisce", chiavePresa);
+    } else if (vm.presa && !vm.presa.resto) {
+      var conSette = vm.presa.carta.id === "D7" || (vm.presa.presi || []).some(function (c) { return c.id === "D7"; });
+      if (!vm.presa.mio && conSette) { faccia = "esulta"; if (vm.bot) fumetto = battuta("settebello", chiavePresa); }
+      else if (vm.presa.mio && conSette) faccia = "triste";
+      else if (!vm.presa.mio && vm.bot && numeroDa(chiavePresa) % 2 === 0) fumetto = battuta("prende", chiavePresa);
+    } else if (oppTurno) {
+      faccia = "pensa";
+      var chiavePensa = chiaveRound + ":" + vm.mazzoN + ":" + vm.oppN + ":" + vm.tavolo.length;
+      fumetto = vm.bot && numeroDa(chiavePensa) % 3 === 0 ? battuta("pensa", chiavePensa) : "🤔";
+    }
+    var cfgAvv = (vm.avatar && vm.avatar.opp) || (window.SGOmino ? SGOmino.casuale(vm.nomi.opp) : null);
+    if (cfgAvv && window.SGOmino) {
+      var kF = JSON.stringify(cfgAvv) + "|" + faccia;
+      if (m.facciaK !== kF) { m.facciaK = kF; m.avvFig.innerHTML = svgAvatar(cfgAvv, faccia); }
+      m.avv.classList.toggle("pensa", faccia === "pensa");
+    }
+    if (m.fumTxt !== fumetto) {
+      m.fumTxt = fumetto;
+      if (m.fum) { m.fum.remove(); m.fum = null; }
+      if (fumetto) {
+        var lungo = fumetto.length > 4;
+        m.fum = el("div", { class: "sc-fumetto" + (faccia === "esulta" && /🧹/.test(fumetto) ? " scopa" : "") + (lungo ? " lungo" : ""), text: fumetto });
+        m.fum.style.left = Math.round(m.avvW * 0.74) + "px"; m.fum.style.top = Math.round(m.avvW * (lungo ? 0.08 : 0.2)) + "px";
+        if (lungo) m.fum.style.maxWidth = Math.max(110, Math.round(Mi.scW / 2 - m.avvW * 0.24 - 10)) + "px";
+        m.avv.appendChild(m.fum);
+      }
+    }
+    // la scopa (o il settebello) dell'avversario: salta dalla gioia (una volta sola per presa)
+    if (faccia === "esulta" && chiavePresa !== m.salto && m.avvFig.animate) {
+      m.salto = chiavePresa;
+      m.avvFig.animate([{ transform: "none" }, { transform: "translateY(-22px)" }, { transform: "none" }, { transform: "translateY(-10px)" }, { transform: "none" }], { duration: 800, easing: "ease-out" });
+    }
+    var nuoviDorsi = [], v = m.ventaglio;
+    while (v.children.length > vm.oppN) v.removeChild(v.lastChild);
+    while (v.children.length < vm.oppN) { var dd = el("div", { class: "sc-dorso" }); v.appendChild(dd); nuoviDorsi.push(dd); }
+    var ch = Math.round(m.cw * ASP_CARTA);
+    [].forEach.call(v.children, function (d, i) {
+      var ang = (i - (vm.oppN - 1) / 2) * 13;
+      d.style.width = m.cw + "px"; d.style.height = ch + "px"; d.style.left = (-m.cw / 2) + "px";
+      d.style.transform = "translateX(" + (ang * 1.1) + "px) rotate(" + ang + "deg)";
+    });
+
+    // ---- il tavolo: POSTI FISSI, ogni carta resta nel suo posto finché non viene presa (niente carte che "saltano") ----
     var carteTav = (vm.presa && vm.presa.tavoloPrima ? vm.presa.tavoloPrima : vm.tavolo), idsTav = {};
     carteTav.forEach(function (c) { idsTav[c.id] = true; });
     for (var sid in scSlot) if (!idsTav[sid]) delete scSlot[sid];   // le carte andate via liberano il posto
@@ -757,254 +988,247 @@
     });
     var maxPosto = 0; for (sid in scSlot) maxPosto = Math.max(maxPosto, scSlot[sid] + 1);
     var nPosti = Math.max(8, maxPosto);
-    var maxFila = Math.max(1, Math.floor((tavAw + 5) / (wT + 5)));
+    // carte in tavola: grandezza FISSA (8 posti, 4 per fila, 2 file); solo con 9 o più si rimpiccioliscono quanto basta
+    var wT = Math.min(110, Math.floor((Mi.tavAw - 15) / 4), Math.floor((Mi.tavAh - 5) / 2 / ASP_CARTA));
+    if (carteTav.length > 8) {
+      for (var pr = 1, best = 0; pr <= carteTav.length; pr++) {
+        var rr = Math.ceil(carteTav.length / pr), ww = Math.min(110, Math.floor((Mi.tavAw - (pr - 1) * 5) / pr), Math.floor((Mi.tavAh - (rr - 1) * 5) / rr / ASP_CARTA));
+        if (ww > best) best = ww;
+      }
+      wT = Math.min(wT, best);
+    }
+    wT = Math.max(26, wT);
+    var maxFila = Math.max(1, Math.floor((Mi.tavAw + 5) / (wT + 5)));
     var colT = nPosti <= 8 ? Math.min(4, maxFila) : Math.min(maxFila, Math.ceil(nPosti / Math.ceil(nPosti / maxFila)));
     var righeT = Math.ceil(nPosti / colT);
-    function grigliaTavolo() {   // le file restano anche vuote: il tavolo non si sposta mai
-      return el("div", { style: "display:grid;grid-template-columns:repeat(" + colT + "," + wT + "px);grid-template-rows:repeat(" + righeT + "," + Math.round(wT * ASP_CARTA) + "px);gap:5px;justify-content:center;align-content:center;height:100%" });
+    var gK = colT + "x" + righeT + "x" + wT;
+    if (m.gK !== gK) {   // le file restano anche vuote: il tavolo non si sposta mai
+      m.gK = gK;
+      m.griglia.style.gridTemplateColumns = "repeat(" + colT + "," + wT + "px)";
+      m.griglia.style.gridTemplateRows = "repeat(" + righeT + "," + Math.round(wT * ASP_CARTA) + "px)";
     }
-    function nelPosto(cel, id) { var p = scSlot[id] || 0; cel.style.gridColumn = (p % colT + 1); cel.style.gridRow = (Math.floor(p / colT) + 1); return cel; }
-    var box = el("div", { style: "display:flex;flex-direction:column" });
-
-    // ---- intestazione: punti (a sinistra) + tasto musica (a destra) ----
-    var mioTurno = !cb.guarda && (vm.turno === vm.io && vm.fase === "gioco" && !vm.presa);   // chi guarda non tocca
-    var head = el("div", { class: "sc-testata" });   // punteggio e musica DENTRO la stanza (in alto; a sinistra c'è il tasto indietro)
-    head.appendChild(el("div", { style: "font-size:.8rem;font-weight:700", html: (cb.guarda ? "👀 " : "") + "<b>" + vm.nomi.io + " " + vm.punti.io + "</b> — " + vm.nomi.opp + " " + vm.punti.opp + " <span class='tenue' style='font-weight:600'>(" + testoTraguardo(vm.traguardo) + ")</span>" }));
-    if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
-
-    // ---- la stanza: l'avversario seduto dietro al tavolo verde in prospettiva ----
-    var oppTurno = vm.turno !== vm.io && vm.fase === "gioco";
-    var scena = el("div", { class: "sc-scena", style: "height:" + scH + "px" });
-    scena.appendChild(head);
-    scena.appendChild(el("div", { class: "sc-quadro", style: "left:16px;background:linear-gradient(135deg,#3f6b8f,#9cc4d9 60%,#e7d9a8)" }));
-    scena.appendChild(el("div", { class: "sc-quadro", style: "right:16px;background:linear-gradient(135deg,#8f3f5c,#e3a26b 60%,#f2e3b5)" }));
-    scena.appendChild(el("div", { class: "sc-targa" + (oppTurno && !vm.presa ? " turno" : "") }, [
-      el("span", { class: "sc-nome", text: vm.nomi.opp }), el("span", { class: "sc-num", text: vm.oppN }),
-      vm.scopeOpp ? el("span", { class: "sc-targa-sc", text: "🧹 " + vm.scopeOpp }) : null ]));
-    // la faccia cambia con quello che succede
-    var faccia = "normale", fumetto = null;
-    if (vm.presa && vm.presa.scopa) { faccia = vm.presa.mio ? "triste" : "esulta"; if (!vm.presa.mio) fumetto = "🧹 SCOPA!"; }
-    else if (oppTurno && !vm.presa) { faccia = "pensa"; fumetto = "🤔"; }
-    var cfgAvv = (vm.avatar && vm.avatar.opp) || (window.SGOmino ? SGOmino.casuale(vm.nomi.opp) : null);
-    var avv = null, avvFig = null;
-    if (cfgAvv && window.SGOmino) {
-      avv = el("div", { class: "sc-avv" + (faccia === "pensa" ? " pensa" : "") });
-      avvFig = el("div", { class: "sc-avv-fig", html: svgAvatar(cfgAvv, faccia) });
-      avv.appendChild(avvFig);
-      var ventaglio = el("div", { class: "sc-avv-carte" });
-      for (var iv = 0; iv < vm.oppN; iv++) {
-        var d = el("div", { class: "sc-dorso" }), ang = (iv - (vm.oppN - 1) / 2) * 13;
-        d.style.transform = "translateX(" + (ang * 1.1) + "px) rotate(" + ang + "deg)";
-        ventaglio.appendChild(d);
-      }
-      scena.appendChild(ventaglio);
-      if (fumetto) avv.appendChild(el("div", { class: "sc-fumetto" + (faccia === "esulta" ? " scopa" : ""), text: fumetto }));
-      scena.appendChild(avv);
-    }
-    var prosp = el("div", { class: "sc-prosp", style: "perspective:" + Math.max(600, Math.round(scH * 1.15)) + "px" });
-    var piano = el("div", { class: "sc-piano", style: "width:" + pianoW + "px;height:" + pianoH + "px;margin-left:" + (-pianoW / 2) + "px;transform:rotateX(54deg)" });
-    var feltro = el("div", { class: "sc-panno" });
-    piano.appendChild(feltro); prosp.appendChild(piano); scena.appendChild(prosp);
-    // dopo il montaggio: siedo l'avversario in modo che il bordo lontano del tavolo gli arrivi in vita
-    function siediAvversario() {
-      if (!avv) return;
-      var bordo = piano.getBoundingClientRect().top - scena.getBoundingClientRect().top;
-      var w = Math.min(Math.round(scW * 0.46), 190, Math.round((bordo + 6 - 22) / 0.975));
-      w = Math.max(90, w);
-      avv.style.width = w + "px"; avv.style.marginLeft = (-w / 2) + "px";
-      avv.style.top = Math.round(bordo + 6 - w * 0.975) + "px";
-      var cw = Math.round(w * 0.17), ch = Math.round(cw * ASP_CARTA);
-      ventaglio.style.top = Math.round(bordo + 6 - w * 0.975 + w * 0.76) + "px";
-      [].forEach.call(ventaglio.children, function (d) { d.style.width = cw + "px"; d.style.height = ch + "px"; d.style.left = (-cw / 2) + "px"; });
-      var fm = avv.querySelector(".sc-fumetto");
-      if (fm) { fm.style.left = Math.round(w * 0.74) + "px"; fm.style.top = Math.round(w * 0.2) + "px"; }
-      // la scopa dell'avversario: salta dalla gioia (una volta sola per presa)
-      var chiave = vm.presa ? vm.presa.carta.id + ":" + (vm.presa.presiIds || []).join(",") : null;
-      if (faccia === "esulta" && chiave !== scMount.salto && avvFig.animate) {
-        scMount.salto = chiave;
-        avvFig.animate([{ transform: "none" }, { transform: "translateY(-22px)" }, { transform: "none" }, { transform: "translateY(-10px)" }, { transform: "none" }], { duration: 800, easing: "ease-out" });
-      }
-    }
-
     var cartaSel = C.sel.carta ? trova(vm.mano, C.sel.carta) : null;
-    var opts = cartaSel ? catture(cartaSel.v, vm.tavolo) : [];
-    var capIds = {}; opts.forEach(function (set) { set.forEach(function (id) { capIds[id] = true; }); });
-    var prevTav = (scMount && scMount.prevTav) || {}, nuoveTav = [];
-    var areaTavolo = el("div", { class: "sc-terra sc-t3d" });
-    var pendingPlace = null;
-    if (vm.presa) {
-      // il tavolo RESTA fermo: rimostro il tavolo com'era e faccio volare via SOLO le carte prese
-      var dir = vm.presa.mio ? "giu" : "su";
-      var tw0 = grigliaTavolo();
-      var presiEls = [];
-      (vm.presa.tavoloPrima || vm.tavolo).forEach(function (c) {
-        var cel = cartaEl(el, c, wT);
-        if (vm.presa.presiIds && vm.presa.presiIds.indexOf(c.id) >= 0) { cel.classList.add("sc-lascia-" + dir); presiEls.push(cel); }
-        tw0.appendChild(nelPosto(cel, c.id));
-      });
-      areaTavolo.appendChild(tw0);
-      // la mia carta giocata: parte dalla mano, va SOPRA la/e carta/e che prende, poi vola via con la presa
-      var gioc = cartaEl(el, vm.presa.carta, wT);
-      gioc.style.cssText += ";position:absolute;z-index:6;opacity:0";
-      areaTavolo.appendChild(gioc);
-      pendingPlace = function () {
-        // posizioni misurate SUL tavolo (non sullo schermo): il tavolo è inclinato
-        if (presiEls.length) {                       // si posa sulla carta presa (o al centro del gruppo preso)
+    var opts = (mioTurno && cartaSel) ? catture(cartaSel.v, vm.tavolo) : [];
+    // verdi solo le carte che, con quelle già scelte, portano ancora a una presa giusta
+    var verdi = {}, cliccabili = {};
+    opts.forEach(function (set) {
+      if (!C.sel.presa.every(function (id) { return set.indexOf(id) >= 0; })) return;
+      set.forEach(function (id) { if (C.sel.presa.indexOf(id) < 0) verdi[id] = true; });
+    });
+    for (var vid in verdi) cliccabili[vid] = true;
+    if (cartaSel) C.sel.presa.forEach(function (id) { cliccabili[id] = true; });   // quelle scelte si possono togliere
+    m.cliccabili = cliccabili;
+    var dir = vm.presa ? (vm.presa.mio ? "giu" : "su") : null;
+    var dealing = !vm.presa && vm.fase === "gioco" && vm.mano.length > m.prevMano;
+    var nuoveTav = [], presiEls = [], vivi = {};
+    carteTav.forEach(function (c) {
+      vivi[c.id] = true;
+      var cel = m.tav[c.id];
+      if (!cel) {
+        cel = cartaEl(el, c, wT); cel._w = wT;
+        cel.addEventListener("click", function () { var mm = scMount; if (mm && mm.C === C && mm.cliccabili && mm.cliccabili[c.id]) C.tapTavolo(c.id); });
+        if (c.id === vm.messaGiu && !vm.presa) {   // appena scartata: si posa sul tavolo
+          cel.classList.add("sc-cade");
+          cel.addEventListener("animationend", function () { cel.classList.remove("sc-cade"); }, { once: true });
+        }
+        m.tav[c.id] = cel; m.griglia.appendChild(cel);
+        nuoveTav.push(cel);
+      }
+      misuraCarta(cel, wT);
+      var p = scSlot[c.id] || 0, gc = String(p % colT + 1), gr = String(Math.floor(p / colT) + 1);
+      if (cel.style.gridColumnStart !== gc || cel.style.gridRowStart !== gr) { cel.style.gridColumn = gc; cel.style.gridRow = gr; }
+      var preso = !!(vm.presa && vm.presa.presiIds && vm.presa.presiIds.indexOf(c.id) >= 0);
+      cel.classList.toggle("sc-lascia-su", preso && dir === "su");
+      cel.classList.toggle("sc-lascia-giu", preso && dir === "giu");
+      if (preso) presiEls.push(cel);
+      cel.classList.toggle("cap", !!verdi[c.id]);
+      cel.classList.toggle("presel", !!cartaSel && C.sel.presa.indexOf(c.id) >= 0);
+    });
+    for (var tid in m.tav) if (!vivi[tid]) { m.tav[tid].remove(); delete m.tav[tid]; }
+    // la carta giocata: parte dalla mano (o dall'avversario), va SOPRA la/e carta/e che prende, poi vola via con la presa
+    if (chiavePresa !== m.giocK) {
+      m.giocK = chiavePresa;
+      if (m.gioc) { m.gioc.remove(); m.gioc = null; }
+      if (vm.presa && vm.presa.carta) {
+        var gioc = m.gioc = cartaEl(el, vm.presa.carta, wT);
+        gioc.style.cssText += ";position:absolute;z-index:6;opacity:0";
+        m.area.appendChild(gioc);
+        if (presiEls.length) {   // posizioni misurate SUL tavolo (non sullo schermo): il tavolo è inclinato
           var cx = 0, cy = 0;
           presiEls.forEach(function (e) { cx += e.offsetLeft + e.offsetWidth / 2; cy += e.offsetTop + e.offsetHeight / 2; });
           cx /= presiEls.length; cy /= presiEls.length;
-          gioc.style.left = (cx - gioc.offsetWidth / 2) + "px";
-          gioc.style.top = (cy - gioc.offsetHeight / 2) + "px";
-        } else {                                      // scopa: tavolo svuotato, si posa al centro
+          gioc.style.left = (cx - gioc.offsetWidth / 2) + "px"; gioc.style.top = (cy - gioc.offsetHeight / 2) + "px";
+        } else {
           gioc.style.left = "50%"; gioc.style.top = "50%"; gioc.style.marginLeft = (-wT / 2) + "px"; gioc.style.marginTop = (-Math.round(wT * ASP_CARTA) / 2) + "px";
         }
         gioc.style.animation = "scGioca" + (dir === "giu" ? "Giu" : "Su") + " .95s ease-in forwards";
-      };
-    } else {
-      var tw = grigliaTavolo();
-      vm.tavolo.forEach(function (c) {
-        var cap = mioTurno && cartaSel && capIds[c.id];
-        var extra = (C.sel.presa.indexOf(c.id) >= 0) ? "presel" : (cap ? "cap" : "");
-        var cel = cartaEl(el, c, wT, extra, cap ? function () { C.tapTavolo(c.id); } : null);
-        if (c.id === vm.messaGiu) cel.classList.add("sc-cade"); // appena scartata: si posa sul tavolo
-        tw.appendChild(nelPosto(cel, c.id));
-        if (!prevTav[c.id]) nuoveTav.push(cel);   // carte appena arrivate in tavola (per la distribuzione animata)
-      });
-      areaTavolo.appendChild(tw);
+      }
     }
-    feltro.appendChild(areaTavolo);
-    // il mazzo sul tavolo + rilevo se in questo giro si è distribuito (la mano è aumentata)
-    var prevMano = scMount ? (scMount.prevMano || 0) : 0;
-    var dealing = !vm.presa && vm.fase === "gioco" && vm.mano.length > prevMano;
-    // (niente mazzo sul tavolo: lascia tutto il panno alle carte)
-    box.appendChild(scena);
 
-    // ---- SCOPA! (solo quando succede; di chi è il turno si vede dal nome col bordo dorato) ----
-    if (vm.presa && vm.presa.scopa && vm.presa.mio) box.appendChild(el("div", { style: "text-align:center;font-weight:900;font-size:1.1rem;margin:3px 0;color:#ffd43b", text: "SCOPA! 🧹" }));
+    // ---- scritte grandi: SCOPA!, le carte rimaste, i tre Re ----
+    if (vm.presa && vm.presa.scopa && vm.presa.mio) sceltaBanner(m, cb.guarda ? "SCOPA di " + vm.nomi.io + "! 🧹" : "SCOPA! 🧹", " scopa");
+    else if (vm.presa && vm.presa.resto) sceltaBanner(m, vm.presa.mio ? (cb.guarda ? "Le carte rimaste vanno a " + vm.nomi.io : "Le carte rimaste sono tue! 🙌") : "Le carte rimaste vanno a " + vm.nomi.opp, "");
+    else if (vm.rifatta && m.rifK !== chiaveRound) {
+      m.rifK = chiaveRound;
+      sceltaBanner(m, "👑 Tre Re in tavola: si rimescola!", "");
+      setTimeout(function () { if (m.bannerTxt && /Tre Re/.test(m.bannerTxt)) sceltaBanner(m, null); }, 2600);
+    } else if (!(m.bannerTxt && /Tre Re/.test(m.bannerTxt) && vm.rifatta)) sceltaBanner(m, null);
 
     // ---- la mia mano (in basso, sulla mensola di legno a dimensione FISSA) ----
-    var mensola = el("div", { class: "sc-mensola", style: "min-height:" + (Math.round(wH * ASP_CARTA) + 34) + "px" });
-    var manoW = el("div", { class: "sc-mano-riga" });
-    var manoEls = [];
-    vm.mano.forEach(function (c, i) {
-      var extra = (C.sel.carta === c.id) ? "sel" : "";
-      var cel = cartaEl(el, c, wH, extra, mioTurno ? function () { C.tapMano(c.id); } : null);
-      manoEls.push(cel);
-      manoW.appendChild(cel);
+    var nuoveMano = [], viviM = {};
+    vm.mano.forEach(function (c) {
+      viviM[c.id] = true;
+      var cel = m.mano[c.id];
+      if (!cel) {
+        cel = cartaEl(el, c, Mi.wH);
+        cel.addEventListener("click", function () { var mm = scMount; if (!mm || mm.C !== C || C.uscito) return; if (mm.mioTurno) C.tapMano(c.id); else mm.aspetta(); });
+        m.mano[c.id] = cel; m.manoRiga.appendChild(cel); nuoveMano.push(cel);
+      }
+      cel.classList.toggle("sel", C.sel.carta === c.id);
+      cel.classList.toggle("inviata", C.inviata === c.id);
     });
-    mensola.appendChild(manoW);
-    mensola.appendChild(el("div", { class: "sc-prese", html: (cb.guarda ? "le carte di " + vm.nomi.io + " · prese" : "le tue prese") + " <b>" + vm.preseIo + "</b>" + (vm.settebelloIo ? " · 7💰" : "") + (vm.scopeIo ? " · scope " + vm.scopeIo : "") }));
-    box.appendChild(mensola);
+    for (var mid in m.mano) if (!viviM[mid]) { m.mano[mid].remove(); delete m.mano[mid]; }
+    m.mensola.classList.toggle("tuo", suoTurno && !C.inviata);
+    var tTxt = cb.guarda ? "Tocca a " + corto(vm.nomi.io, 14) : "Tocca a te!";
+    if (m.tocca.textContent !== tTxt) m.tocca.textContent = tTxt;
+    var prTxt = (cb.guarda ? "le carte di " + esc(corto(vm.nomi.io, 14)) + " · prese" : "le tue prese") + " <b>" + vm.preseIo + "</b>" + (vm.settebelloIo ? " · 7💰" : "") + (vm.scopeIo ? " · scope " + vm.scopeIo : "");
+    if (m.prTxt !== prTxt) { m.prTxt = prTxt; m.prese.innerHTML = prTxt; }
 
-    // ---- suggerimento: in sovrimpressione sul tavolo (non sposta niente e non fa scorrere la pagina) ----
-    var piedeNodi = [];
-    if (mioTurno && cartaSel && opts.length >= 2) {   // solo l'aiuto per scegliere la presa (utile), niente scritte di turno
-      scena.appendChild(el("div", { class: "sc-aiuto", text: opts[0].length === 1 ? "Tocca la carta verde da prendere." : "Tocca le carte verdi che sommano a " + cartaSel.v + "." }));
-    }
+    // ---- aiuto in sovrimpressione sul tavolo (non sposta niente): solo per scegliere la presa ----
+    m.aiutoFisso = (mioTurno && cartaSel && opts.length >= 2) ? (opts[0].length === 1 ? "Tocca la carta verde da prendere." : "Tocca le carte verdi che sommano a " + cartaSel.v + ".") : null;
+    aggiornaAiuto(m);
+    applicaAvviso(C);
 
-    // ---- montaggio: la prima volta creo la schermata, poi aggiorno SOLO il contenuto (schermo fisso, niente lampeggio) ----
-    if (scMount && scMount.cont && document.body.contains(scMount.box)) {
-      scMount.cont.replaceChild(box, scMount.box);
-      scMount.box = box;
-      scMount.piede.innerHTML = "";
-      piedeNodi.forEach(function (n) { scMount.piede.appendChild(n); });
-    } else {
-      var s = t.schermata({ indietro: function () { if (cb.guarda || window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
-      s.classList.add("sc-piena");   // stanza da bordo a bordo
-      s._contenuto.appendChild(box);
-      piedeNodi.forEach(function (n) { s._piede.appendChild(n); });
-      t.mostra(s);
-      scMount = { cont: s._contenuto, box: box, piede: s._piede };
-    }
     // misuro quanto spazio avanza (o manca) sotto la mensola e rifaccio SUBITO la stanza della misura giusta
     // (prima che il telefono disegni: non si vede nessun salto). Una volta sola per schermo.
-    if (!scCorr.fatto) {
-      var sch = scMount.cont.parentNode, rS = sch.getBoundingClientRect(), padB = parseFloat(getComputedStyle(sch).paddingBottom) || 0;
-      var fondo = mensola.getBoundingClientRect().bottom, trabocca = Math.max(0, document.documentElement.scrollHeight - alt);
+    if (nuovo && !scCorr.fatto) {
+      var sch = m.s, rS = sch.getBoundingClientRect(), padB = parseFloat(getComputedStyle(sch).paddingBottom) || 0;
+      // (misure senza l'animazione d'entrata della schermata: quella sposta tutto di qualche pixel e falserebbe il conto)
+      var fondo = m.mensola.getBoundingClientRect().bottom, trabocca = Math.max(0, sch.offsetTop + sch.offsetHeight - Mi.alt);
       var avanza = Math.floor((rS.bottom - padB - fondo) - trabocca);
       scCorr.fatto = true;
-      if (Math.abs(avanza) > 3) { scCorr.v += avanza; renderScopa(t, C, cb); return; }
+      if (rS.height > 0 && Math.abs(avanza) > 3) { scCorr.v += avanza; renderScopa(t, C, cb); return; }
     }
-    scMount.prevMano = vm.mano.length;   // per rilevare la prossima distribuzione
-    scMount.prevTav = {}; vm.tavolo.forEach(function (c) { scMount.prevTav[c.id] = true; });
-    siediAvversario();
-    if (pendingPlace) pendingPlace();
-    if (dealing) animaDistribuzione();
-    // DISTRIBUZIONE come dal vero: prima le carte in tavola una alla volta, poi una a te e una all'avversario, a turno
-    function animaDistribuzione() {
-      var passo = 0.2, t0 = 0;
-      if (!nuoveTav.length) nuoveTav = [];
-      nuoveTav.forEach(function (cel, i) {   // sul tavolo inclinato: arrivano dal centro del panno
+    m.prevMano = vm.mano.length; m.round = chiaveRound;
+    // DISTRIBUZIONE come dal vero: prima le carte nuove in tavola una alla volta, poi una a te e una all'avversario, a turno
+    if (dealing) {
+      var passo = 0.2, t0 = 0, tavNuove = (vm.preseIo + vm.preseOpp === 0 && vm.mazzoN === 30) ? nuoveTav : [];
+      tavNuove.forEach(function (cel, i) {   // sul tavolo inclinato: arrivano dal centro del panno
         if (!cel.animate) return;
         cel.animate([{ translate: "0 -120px", scale: "0.5", opacity: 0 }, { translate: "0 0", scale: "1", opacity: 1 }],
           { duration: 420, delay: i * passo * 1000, easing: "cubic-bezier(.2,.7,.3,1)", fill: "backwards" });
       });
-      if (nuoveTav.length) t0 = nuoveTav.length * passo + 0.2;
-      var fr = feltro.getBoundingClientRect(), ox = fr.left + fr.width / 2, oy = fr.top + fr.height * 0.4;   // da qui partono le carte
-      function vola(elC, ritardo) {
+      if (tavNuove.length) t0 = tavNuove.length * passo + 0.2;
+      var fr = m.feltro.getBoundingClientRect(), ox = fr.left + fr.width / 2, oy = fr.top + fr.height * 0.4;   // da qui partono le carte
+      var vola = function (elC, ritardo) {
         if (!elC || !elC.animate) return;
         var r = elC.getBoundingClientRect();
         elC.animate([{ translate: Math.round(ox - (r.left + r.width / 2)) + "px " + Math.round(oy - (r.top + r.height / 2)) + "px", scale: "0.4", opacity: 0 },
           { opacity: 1, offset: 0.25 }, { translate: "0 0", scale: "1", opacity: 1 }],
           { duration: 460, delay: ritardo * 1000, easing: "cubic-bezier(.2,.7,.3,1)", fill: "backwards" });
-      }
-      var dorsi = ventaglio ? [].slice.call(ventaglio.children) : [];
-      var n = Math.max(manoEls.length, dorsi.length);
-      for (var k = 0; k < n; k++) { vola(manoEls[k], t0 + 2 * k * passo); vola(dorsi[k], t0 + (2 * k + 1) * passo); }
+      };
+      var n = Math.max(nuoveMano.length, nuoviDorsi.length);
+      for (var k = 0; k < n; k++) { vola(nuoveMano[k], t0 + 2 * k * passo); vola(nuoviDorsi[k], t0 + (2 * k + 1) * passo); }
       C._dealFino = Date.now() + (t0 + 2 * n * passo) * 1000 + 450;   // il bot aspetta che la distribuzione finisca
     }
   }
 
-  // riepilogo di fine smazzata / fine partita
-  function renderFine(t, C, cb) {
-    var el = t.el, vm = C.vm, r = vm.ultimoRound;
-    var pari = vm.fase === "fine" && vm.punti && vm.punti.io === vm.punti.opp;
-    var s = t.schermata({ icona: vm.fase === "fine" ? "🏆" : "🧮",
-      titolo: vm.fase === "fine" ? (cb.guarda ? (pari ? "Pareggio!" : "Ha vinto " + (vm.vincitoreIo ? vm.nomi.io : vm.nomi.opp)) : (pari ? "Pareggio!" : (vm.vincitoreIo ? "Hai vinto!" : "Ha vinto " + vm.nomi.opp))) : "Fine smazzata",
-      sotto: "Scopa · " + vm.nomi.io + " vs " + vm.nomi.opp, indietro: cb.guarda ? cb.onEsci : null });
-    function riga(nome, a, b, vinc) {
-      return el("div", { style: "display:flex;justify-content:space-between;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,.05);margin-bottom:5px" }, [
-        el("span", { text: nome }),
-        el("span", { html: "<b style='color:" + (vinc === "io" ? "#69db7c" : "inherit") + "'>" + a + "</b> — <b style='color:" + (vinc === "opp" ? "#69db7c" : "inherit") + "'>" + b + "</b>" })
-      ]);
-    }
-    if (r) {
-      var p = r.p;
-      // "io" = A o B a seconda della prospettiva
-      var io = vm.io, opp = altro(io);
-      function perLato(x) { return x === io ? "io" : x === opp ? "opp" : null; }
-      s._contenuto.appendChild(el("div", { class: "tenue", style: "text-align:center;margin-bottom:6px", text: vm.nomi.io + " — " + vm.nomi.opp }));
-      s._contenuto.appendChild(riga("Carte (" + (io === "A" ? p.carteA : p.carteB) + " vs " + (io === "A" ? p.carteB : p.carteA) + ")", io === "A" ? p.carteA : p.carteB, io === "A" ? p.carteB : p.carteA, perLato(p.puntoCarte)));
-      s._contenuto.appendChild(riga("Denari (" + (io === "A" ? p.denA : p.denB) + " vs " + (io === "A" ? p.denB : p.denA) + ")", io === "A" ? p.denA : p.denB, io === "A" ? p.denB : p.denA, perLato(p.puntoDenari)));
-      s._contenuto.appendChild(riga("Settebello 7💰", p.settebello === io ? "sì" : "—", p.settebello === opp ? "sì" : "—", perLato(p.settebello)));
-      s._contenuto.appendChild(riga("Primiera (" + (io === "A" ? p.primA : p.primB) + " vs " + (io === "A" ? p.primB : p.primA) + ")", io === "A" ? p.primA : p.primB, io === "A" ? p.primB : p.primA, perLato(p.puntoPrimiera)));
-      s._contenuto.appendChild(riga("Scope", io === "A" ? r.scope.A : r.scope.B, io === "A" ? r.scope.B : r.scope.A, null));
-      s._contenuto.appendChild(el("div", { style: "height:1px;background:rgba(255,255,255,.15);margin:8px 0" }));
-      s._contenuto.appendChild(riga("Punti smazzata", io === "A" ? r.guad.A : r.guad.B, io === "A" ? r.guad.B : r.guad.A, null));
-      s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:1.3rem;font-weight:800;margin-top:8px",
-        html: vm.nomi.io + " <span style='color:#ffd43b'>" + (io === "A" ? r.tot.A : r.tot.B) + "</span> — " + (io === "A" ? r.tot.B : r.tot.A) + " " + vm.nomi.opp }));
-    }
-    if (cb.guarda) {   // chi guarda: niente tasti, solo cosa succede
-      s._piede.appendChild(el("p", { class: "modulo-nota", text: vm.fase !== "fine" ? "In attesa della prossima smazzata…" : (pari ? "Pareggio: si rigioca!" : "Tra poco si torna al tabellone…") }));
-    } else if (vm.fase === "fine") {
-      if (cb.sonoHost || cb.locale) {
-        s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
-        s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
-      } else s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa dell'host…" }));
-    } else {
-      if (cb.sonoHost || cb.locale) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Continua ▶", onclick: cb.onAvanti }));
-      else s._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa dell'host per la prossima smazzata…" }));
-    }
-    t.mostra(s);
+  // avviso sopra al tavolo (es. "Luca è uscito"): C.avviso = { testo, tasto, onTasto } oppure null
+  function applicaAvviso(C) {
+    var s = C._schermo; if (!s) return;
+    var vecchio = s.querySelector(".sc-avviso-sf");
+    var k = C.avviso && !C.uscito ? C.avviso.testo + "|" + (C.avviso.tasto || "") : null;
+    if (vecchio && vecchio._k === k) return;
+    if (vecchio) vecchio.remove();
+    if (!k) return;
+    var el = C._el, box = el("div", { class: "sc-avviso" }, [el("p", { text: C.avviso.testo })]);
+    if (C.avviso.tasto) box.appendChild(el("button", { class: "btn btn-primario", text: C.avviso.tasto, onclick: C.avviso.onTasto }));
+    var sf = el("div", { class: "sc-avviso-sf" }, [box]); sf._k = k;
+    s.appendChild(sf);
   }
 
-  // client condiviso: tiene vm + selezione, gestisce i tap, chiama cb.onMossa
+  // riepilogo di fine smazzata / fine partita: le righe arrivano una alla volta, poi il totale e la strada verso il traguardo
+  function renderFine(t, C, cb) {
+    if (C.uscito) return;
+    var el = t.el, vm = C.vm, r = vm.ultimoRound;
+    var chiave = vm.idPartita + ":" + vm.nRound + ":" + vm.fase;
+    if (C._fineK === chiave && C._schermo && document.body.contains(C._schermo)) { applicaAvviso(C); return; }   // già mostrato: niente da rifare
+    C._fineK = chiave;
+    var fine = vm.fase === "fine", pari = fine && vm.punti && vm.punti.io === vm.punti.opp;
+    var titolo = !fine ? "Fine smazzata" : pari ? "Pareggio!" : cb.guarda ? "Ha vinto " + (vm.vincitoreIo ? vm.nomi.io : vm.nomi.opp) : (vm.vincitoreIo ? "Hai vinto!" : "Ha vinto " + vm.nomi.opp);
+    function esci() { if (!fine && !cb.guarda && !window.confirm("Uscire dalla partita?")) return; cb.onEsci(); }
+    var s = t.schermata({ icona: fine ? "🏆" : "🧮", titolo: titolo, indietro: esci });
+    if (r) {
+      var p = r.p, io = vm.io, opp = altro(io), n = 0, cont = el("div", { class: "sc-riep" });
+      var lato = function (x) { return x === io ? "io" : x === opp ? "opp" : null; };
+      var di = function (a, b) { return io === "A" ? [a, b] : [b, a]; };   // [mio, suo]
+      var riga = function (nome, vals, vinc, cls, badge) {
+        var celle = [0, 1].map(function (i) {
+          var mio = (vinc === "io" && i === 0) || (vinc === "opp" && i === 1), b = badge ? badge[i] : (mio ? "+1" : "");
+          return el("span", { class: mio ? "vinto" : "", html: vals[i] + (b ? "<span class='sc-piu'>" + b + "</span>" : "") });
+        });
+        cont.appendChild(el("div", { class: "sc-rg" + (cls ? " " + cls : ""), style: "animation-delay:" + (n++ * 0.2).toFixed(2) + "s" }, [el("span", { text: nome }), celle[0], celle[1]]));
+      };
+      cont.appendChild(el("div", { class: "sc-rg testa" }, [el("span"), el("span", { text: vm.nomi.io }), el("span", { text: vm.nomi.opp })]));
+      riga("Carte", di(p.carteA, p.carteB), lato(p.puntoCarte));
+      riga("Denari", di(p.denA, p.denB), lato(p.puntoDenari));
+      riga("Settebello", di(p.settebello === "A" ? "7💰" : "—", p.settebello === "B" ? "7💰" : "—"), lato(p.settebello));
+      var pr = function (x, ok) { return ok === false ? "<span class='manca'>manca un seme</span>" : x; };
+      riga("Primiera", di(pr(p.primA, p.primOkA), pr(p.primB, p.primOkB)), lato(p.puntoPrimiera));
+      var sc = di(r.scope.A, r.scope.B);
+      riga("Scope", sc, null, "", [sc[0] ? "+" + sc[0] : "", sc[1] ? "+" + sc[1] : ""]);
+      var g = di(r.guad.A, r.guad.B), tt = di(r.tot.A, r.tot.B);
+      riga("Punti", ["+" + g[0], "+" + g[1]], null);
+      riga("Totale", tt, fine && !pari ? (vm.vincitoreIo ? "io" : "opp") : null, "tot", ["", ""]);
+      var barre = [];
+      if (vm.traguardo) {   // la strada verso il traguardo
+        var bb = [0, 1].map(function (i) { var b = el("b", { style: "transform:scaleX(0);background:" + (i ? "#ff8787" : "#69db7c") }); barre.push([b, Math.min(1, tt[i] / vm.traguardo)]); return el("div", { class: "sc-barra" }, [b]); });
+        cont.appendChild(el("div", { class: "sc-rg", style: "animation-delay:" + (n++ * 0.2).toFixed(2) + "s;font-size:.8rem" }, [el("span", { text: "Verso " + vm.traguardo }), bb[0], bb[1]]));
+      }
+      // Bot dice la sua
+      if (vm.bot && !cb.guarda) {
+        var mom = fine ? (pari ? "pari" : vm.vincitoreIo ? "perde" : "vince") : null;
+        var detta = mom ? battuta(mom, chiave) : null;
+        if (detta) cont.appendChild(el("div", { class: "sc-detto", style: "animation-delay:" + (n++ * 0.2).toFixed(2) + "s", text: "💬 " + vm.nomi.opp + ": «" + detta + "»" }));
+      }
+      s._contenuto.appendChild(cont);
+      if (barre.length) setTimeout(function () { barre.forEach(function (x) { x[0].style.transform = "scaleX(" + x[1] + ")"; }); }, 40);
+    }
+    var nota = function (txt) { s._piede.appendChild(el("p", { class: "modulo-nota", style: "margin:0 0 6px;text-align:center", text: txt })); };
+    if (cb.guarda) {   // chi guarda: niente tasti di gioco, solo cosa succede
+      nota(!fine ? "In attesa della prossima smazzata…" : (pari ? "Pareggio: si rigioca!" : "Tra poco si torna al tabellone…"));
+    } else if (fine) {
+      if (cb.sonoHost || cb.locale) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
+      else nota("In attesa dell'host per un'altra partita…");
+      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: esci }));
+    } else {
+      if (cb.sonoHost || cb.locale) {
+        s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Continua ▶", onclick: cb.onAvanti }));
+        if (!cb.locale) nota("Se non tocchi, si riparte da soli tra pochi secondi.");
+      } else nota("La prossima smazzata parte tra pochi secondi…");
+      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: esci }));
+    }
+    C._schermo = s;
+    t.mostra(s);
+    applicaAvviso(C);
+  }
+
   // ---- statistiche per i trofei: il giocatore di QUESTO telefono (vm.io), se ha il profilo.
   //      Funziona uguale contro il bot, da host e da ospite: guarda solo lo stato che arriva. ----
+  // smazzate già contate (anche dopo aver ricaricato la pagina): non si contano due volte
+  function giaContata(k) {
+    try {
+      var l = JSON.parse(localStorage.getItem("sg-scopa-contate") || "[]");
+      if (l.indexOf(k) >= 0) return true;
+      l.push(k); if (l.length > 30) l = l.slice(-30);
+      localStorage.setItem("sg-scopa-contate", JSON.stringify(l));
+    } catch (e) {}
+    return false;
+  }
   function tracciaScopa(T, vm) {
     if (!vm) return;
     // 1) le mosse: una mia scopa fatta con un denaro, o calando un asso
-    if (vm.presa) {
+    if (vm.presa && vm.presa.carta) {
       var key = vm.presa.carta.id + ":" + (vm.presa.presiIds || []).join(",");
       if (key !== T.presaKey) {
         T.presaKey = key;
@@ -1018,6 +1242,7 @@
     // 2) fine smazzata (e fine partita)
     var prima = T.fase; T.fase = vm.fase;
     if (!(vm.fase === "fineround" || vm.fase === "fine") || prima === vm.fase || !vm.ultimoRound) return;
+    if (vm.idPartita && giaContata(vm.idPartita + ":" + vm.nRound + ":" + vm.io)) { T.round = { scopeDenari: 0, scopeAsso: 0 }; return; }
     var r = vm.ultimoRound, p = r.p, io = vm.io, opp = altro(io);
     var tutti4 = p.puntoCarte === io && p.puntoDenari === io && p.settebello === io && p.puntoPrimiera === io;
     var c = { scope: r.scope[io], settebello: p.settebello === io ? 1 : 0, primiera: p.puntoPrimiera === io ? 1 : 0,
@@ -1043,10 +1268,12 @@
     SGNube.salvaProgressi(null, "scopa", incrs, [["scopeRoundMax", r.scope[io]]]);
   }
 
+  // client condiviso: tiene vm + selezione, gestisce i tap, chiama cb.onMossa
   function creaClient(t, cb) {
-    var C = { vm: null, sel: { carta: null, presa: [] } };
+    var C = { vm: null, sel: { carta: null, presa: [] }, uscito: false, inviata: null, avviso: null, _el: t.el };
     var T = { presaKey: null, fase: null, round: { scopeDenari: 0, scopeAsso: 0 }, match: { sette: 0, oppA10: false } };
     C.tapMano = function (id) {
+      if (C.uscito || C.inviata || !C.vm) return;
       var carta = trova(C.vm.mano, id); if (!carta) return;
       var opts = catture(carta.v, C.vm.tavolo);
       if (opts.length === 0) { C.sel = { carta: null, presa: [] }; cb.onMossa(id, null); return; }   // niente presa: metti giù subito
@@ -1055,23 +1282,40 @@
       C.disegna();
     };
     C.tapTavolo = function (id) {
+      if (C.uscito || !C.vm) return;
       var carta = trova(C.vm.mano, C.sel.carta); if (!carta) return;
       var opts = catture(carta.v, C.vm.tavolo);
       var p = C.sel.presa.slice(); var k = p.indexOf(id); if (k >= 0) p.splice(k, 1); else p.push(id);
-      if (validaSet(opts, p)) { cb.onMossa(C.sel.carta, p); C.sel = { carta: null, presa: [] }; return; }
+      if (validaSet(opts, p)) { var cs = C.sel.carta; C.sel = { carta: null, presa: [] }; cb.onMossa(cs, p); return; }
       if (prefisso(opts, p)) C.sel.presa = p; // altrimenti ignora il tap
       C.disegna();
     };
     C.disegna = function () {
-      if (!C.vm) return;
+      if (!C.vm || C.uscito) return;
       if (C.vm.fase === "gioco") renderScopa(t, C, cb);
       else renderFine(t, C, cb);
     };
+    // ospite online: la carta toccata parte subito (in attesa che l'host risponda)
+    C.manda = function (id) {
+      C.inviata = id; C.disegna();
+      clearTimeout(C._invT);
+      C._invT = setTimeout(function () { if (C.inviata === id) { C.inviata = null; C.disegna(); } }, 5000);   // risposta persa: si può ritoccare
+    };
+    C.mostraAvviso = function () { applicaAvviso(C); };
+    // si esce: niente più disegni, attese o musica (anche se un'attesa vecchia scatta dopo)
+    C.esci = function () {
+      C.uscito = true;
+      if (C._pend) { clearTimeout(C._pend); C._pend = null; }
+      clearTimeout(C._invT);
+      if (window.SGMusica) window.SGMusica.ferma();
+    };
     C._presaFino = 0; C._pend = null;
     C.setVm = function (vm) {
+      if (C.uscito) return;
       if (!cb.guarda) tracciaScopa(T, vm);   // trofei (chi guarda non gioca)
+      if (C.inviata && (!vm || !trova(vm.mano || [], C.inviata) || vm.turno !== vm.io)) C.inviata = null;
       // pulisci la selezione se non è più il mio turno
-      if (!vm || vm.turno !== vm.io || vm.fase !== "gioco") C.sel = { carta: null, presa: [] };
+      if (!vm || vm.turno !== vm.io || vm.fase !== "gioco" || vm.presa) C.sel = { carta: null, presa: [] };
       if (C._pend) { clearTimeout(C._pend); C._pend = null; }
       if (vm && vm.presa) {                              // arriva una presa: mostra l'animazione (durata minima garantita)
         C._presaFino = Date.now() + 1050;
@@ -1087,10 +1331,10 @@
     return C;
   }
 
-  // costruisce la vista per il giocatore "io" ("A" o "B") dallo stato del motore
-  function vistaDa(st, io, omini) {
+  // costruisce la vista per il giocatore "io" ("A" o "B") dallo stato del motore (extra: bot, idB…)
+  function vistaDa(st, io, omini, extra) {
     var opp = altro(io);
-    return {
+    var v = {
       fase: st.fase, io: io, turno: st.turno, traguardo: st.traguardo,
       nomi: { io: st.nomi[io], opp: st.nomi[opp] }, avatar: omini ? { opp: omini[opp] || null } : null,
       mano: st.mani[io].slice(), oppN: st.mani[opp].length, tavolo: st.tavolo.slice(), mazzoN: st.mazzo.length,
@@ -1099,9 +1343,12 @@
       settebelloIo: !!trova(st.prese[io], "D7"), settebelloOpp: !!trova(st.prese[opp], "D7"),
       punti: { io: st.punti[io], opp: st.punti[opp] },
       ultimoRound: st.ultimoRound, messaGiu: st.messaGiu,
-      presa: st.presa ? { mio: st.presa.chi === io, carta: st.presa.carta, presi: st.presa.presi, scopa: st.presa.scopa, tavoloPrima: st.presa.tavoloPrima, presiIds: st.presa.presiIds } : null,
-      vincitoreIo: st.fase === "fine" ? (st.punti[io] > st.punti[opp]) : false
+      presa: st.presa ? { mio: st.presa.chi === io, carta: st.presa.carta, presi: st.presa.presi, scopa: st.presa.scopa, tavoloPrima: st.presa.tavoloPrima, presiIds: st.presa.presiIds, resto: !!st.presa.resto } : null,
+      vincitoreIo: st.fase === "fine" ? (st.punti[io] > st.punti[opp]) : false,
+      idPartita: st.idPartita, nRound: st.nRound, rifatta: !!st.rifatta
     };
+    if (extra) for (var k in extra) v[k] = extra[k];
+    return v;
   }
 
   SG.registra({
@@ -1115,8 +1362,8 @@
       "Si gioca <b>in due</b> con le 40 carte napoletane. Tre carte in mano a testa, quattro sul tavolo.",
       "Nel tuo turno giochi una carta: se ha lo <b>stesso valore</b> di una carta sul tavolo la <b>prendi</b>. Se non c'è un valore uguale, puoi prendere <b>più carte che sommano</b> al valore della tua.",
       "Se dopo la presa il tavolo resta <b>vuoto</b> fai <b>Scopa</b> (+1 punto), tranne con l'ultima carta.",
-      "A fine mazzo le carte rimaste sul tavolo vanno all'ultimo che ha preso.",
-      "Punti a fine smazzata: <b>Carte</b> (chi ne prende di più), <b>Denari</b> (più carte di denari), <b>Settebello</b> (il 7 di denari), <b>Primiera</b>, più le <b>Scope</b>. Vince chi arriva per primo ai <b>punti scelti</b> (di solito " + TARGET + "; a pari punti si gioca un'altra mano). Si può giocare anche <b>una mano sola</b>.",
+      "A fine mazzo le carte rimaste sul tavolo vanno all'ultimo che ha preso. Se a inizio smazzata in tavola ci sono <b>tre o quattro Re</b>, si rimescola.",
+      "Punti a fine smazzata: <b>Carte</b> (chi ne prende di più), <b>Denari</b> (più carte di denari), <b>Settebello</b> (il 7 di denari), <b>Primiera</b> (serve almeno una carta per seme), più le <b>Scope</b>. Vince chi arriva per primo ai <b>punti scelti</b> (di solito " + TARGET + "; a pari punti si gioca un'altra mano). Si può giocare anche <b>una mano sola</b>.",
       "Modalità: <b>contro il bot</b> (Facile/Medio/Difficile) oppure <b>online</b>, ognuno dal suo telefono."
     ],
     impostazioni: function (box, dove, aiuti) {
@@ -1150,7 +1397,7 @@
         b.style.flex = "1"; diffWrap.appendChild(b);
       });
       boxDiff.appendChild(diffWrap); box.appendChild(boxDiff);
-      sceltaTraguardo(el, box, dove);
+      sceltaTraguardo(el, box, dove, "Le vittorie contano per i trofei e le sfide del giorno nelle partite da " + TARGET + " punti in su.");
       notaOnline = el("div", { class: "link-avviso", hidden: "hidden" });
       notaOnline.textContent = (window.SGNet && SGNet.disponibile())
         ? "Apri una stanza e manda il codice: l'altro entra dal suo telefono (ognuno vede solo le proprie carte)."
@@ -1166,9 +1413,9 @@
     }
   });
 
-  // suono/vibrazione presa
-  function suonoPresa(scopa) {
-    try { if (navigator.vibrate) navigator.vibrate(scopa ? [0, 20, 40, 30] : 14); } catch (e) {}
+  // suono della presa; la vibrazione solo per le mosse di chi ha il telefono (mai per quelle dell'altro)
+  function suonoPresa(scopa, vibra) {
+    if (vibra) try { if (navigator.vibrate) navigator.vibrate(scopa ? [0, 20, 40, 30] : 14); } catch (e) {}
     var ctx = SG.audioCtx && SG.audioCtx(); if (!ctx) return;
     try {
       var t = ctx.currentTime;
@@ -1179,21 +1426,37 @@
     } catch (e) {}
   }
 
+  // dopo una mossa: si guarda la presa, poi si pulisce il tavolo; a mani vuote si distribuisce, oppure (a fine mazzo)
+  // si vedono le carte rimaste andare a chi ha preso per ultimo e poi arriva il riepilogo.
+  // ridisegna() a ogni passo, pronto() quando si può giocare di nuovo, vivo() = la partita è ancora questa
+  function dopoMossa(M, ev, ridisegna, pronto, vivo) {
+    function passo() {
+      if (!vivo()) return;
+      var r = M.chiudiPresa(); ridisegna();
+      if (r === "resto") setTimeout(passo, 1900); else pronto();
+    }
+    if (ev.presa) setTimeout(passo, ev.scopa ? 1800 : 1200);
+    else if (ev.chiudere) setTimeout(passo, 550);
+    else pronto();
+  }
+
   // ---------- LOCALE (contro il bot) : io = A, bot = B ----------
   function localeScopa(t, difficolta) {
     var nomi = { A: (t.giocatori[0] || "Tu"), B: "Bot" };
     var M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni));
+    var botT = null;
     var C = creaClient(t, {
       locale: true, sonoHost: true,
       onMossa: function (id, presa) { mossaUmano(id, presa); },
-      onAvanti: function () { M.prossimoRound(); aggiorna(); seTuraBot(); },
-      onNuova: function () { M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni)); aggiorna(); seTuraBot(); },
-      onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); t.esci(); }
+      onAvanti: function () { if (M.st.fase !== "fineround") return; M.prossimoRound(); aggiorna(); seTuraBot(); },
+      onNuova: function () { M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni), altro(M.st.primoPartita)); aggiorna(); seTuraBot(); },   // nella partita dopo comincia l'altro
+      onEsci: function () { C.esci(); clearTimeout(botT); t.esci(); }
     });
     var omini = { A: mioAvatar(nomi.A), B: AVATAR_BOT };
     var detto = false;   // il risultato di questa partita è già stato dato? (torneo a eliminazione)
     function aggiorna() {
-      var v = vistaDa(M.st, "A", omini);
+      if (C.uscito) return;
+      var v = vistaDa(M.st, "A", omini, { bot: true });
       if (t.trasmetti) t.trasmetti({ t: "vm", vm: v });   // torneo a eliminazione: chi guarda vede la partita col bot
       C.setVm(v);
       if (M.st.fase !== "fine") { detto = false; return; }
@@ -1203,83 +1466,114 @@
         t.risultato(a >= b ? [{ nome: nomi.A, pos: 1 }, { nome: nomi.B, pos: a === b ? 1 : 2 }] : [{ nome: nomi.B, pos: 1 }, { nome: nomi.A, pos: 2 }]);
       }
     }
-    function continua(ev) {
-      // se ha preso, mostra per un attimo cosa è stato preso, poi prosegue
-      if (ev.presa && M.st.fase === "gioco") {
-        setTimeout(function () { M.st.presa = null; aggiorna(); seTuraBot(); }, ev.scopa ? 1800 : 1200);
-      } else { M.st.presa = null; seTuraBot(); }
-    }
+    function vivo(m0) { return function () { return !C.uscito && M === m0; }; }
     function mossaUmano(id, presa) {
       var ev = M.gioca("A", id, presa); if (ev.errore) return;
-      suonoPresa(ev.scopa); aggiorna(); continua(ev);
+      suonoPresa(ev.scopa, true); aggiorna(); dopoMossa(M, ev, aggiorna, seTuraBot, vivo(M));
     }
     function seTuraBot() {
-      if (M.st.fase === "gioco" && M.st.turno === "B") setTimeout(mossaBot, Math.max(650 + Math.random() * 400, (C._dealFino || 0) - Date.now() + 250));   // dopo la distribuzione
+      if (C.uscito || botT || M.st.fase !== "gioco" || M.st.turno !== "B" || M.st.presa) return;
+      var m0 = M;
+      botT = setTimeout(function () { botT = null; if (!C.uscito && M === m0) mossaBot(); },
+        Math.max(650 + Math.random() * 400, (C._dealFino || 0) - Date.now() + 250));   // dopo la distribuzione
     }
     function mossaBot() {
-      if (M.st.fase !== "gioco" || M.st.turno !== "B") return;
+      if (M.st.fase !== "gioco" || M.st.turno !== "B" || M.st.presa || !M.st.mani.B.length) return;
       var m = scegliMossaBot(M.st.mani.B, M.st.tavolo, difficolta, M.st, "B");
-      var ev = M.gioca("B", m.carta, m.presa);
-      suonoPresa(ev.scopa); aggiorna(); continua(ev);
+      var ev = M.gioca("B", m.carta, m.presa); if (ev.errore) return;
+      suonoPresa(ev.scopa, false); aggiorna(); dopoMossa(M, ev, aggiorna, seTuraBot, vivo(M));
     }
     aggiorna();
-    seTuraBot(); // se per qualche motivo B inizia
+    seTuraBot(); // se comincia il bot
   }
 
   // ---------- ONLINE : host = A, ospite = B ----------
   function hostScopa(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var nomi = { A: (t.giocatori && t.giocatori[0]) || "Host", B: "Avversario" };
-    var M = null, rete = null, avvId = null, pronta = false, codice = "…", omini = { A: mioAvatar(nomi.A), B: null };
+    var M = null, rete = null, avvId = null, avvVia = false, pronta = false, problema = false, codice = "…", omini = { A: mioAvatar(nomi.A), B: null };
+    var avantiT = null, detto = false;   // detto: il risultato della partita è già stato dato al torneo online?
     var C = creaClient(t, {
       sonoHost: true,
-      onMossa: function (id, presa) { if (!M) return; var ev = M.gioca("A", id, presa); dopo(ev); },
-      onAvanti: function () { if (M) { M.prossimoRound(); bcast(); } },
-      onNuova: function () { M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni)); bcast(); },
-      onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
+      onMossa: function (id, presa) { if (M) dopo(M.gioca("A", id, presa), true); },
+      onAvanti: function () { avanti(); },
+      onNuova: function () { if (!M) return; M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni), altro(M.st.primoPartita)); bcast(); },   // nella partita dopo comincia l'altro
+      onEsci: function () { C.esci(); clearTimeout(avantiT); if (rete) rete.chiudi(); t.esci(); }
     });
-    function lobbyVm() { return { lobby: true, codice: codice, pronta: pronta, avversario: !!avvId, sonoHost: true, io: "A", nomi: nomi, omini: omini }; }
-    function aggiornaLobby() { if (M) return; if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, avversario: !!avvId, avvId: avvId, nomi: { A: nomi.A, B: nomi.B }, omini: { A: omini.A, B: avvId ? omini.B : null } }); disegnaLobby(); }
-    var detto = false;   // il risultato della partita è già stato dato al torneo online?
+    function avanti() { clearTimeout(avantiT); avantiT = null; if (M && M.st.fase === "fineround") { M.prossimoRound(); bcast(); } }
+    function vistaB() { return vistaDa(M.st, "B", omini, { idB: avvId }); }
+    function aggiornaLobby() {
+      if (M || C.uscito) return;
+      if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, avversario: !!avvId, avvId: avvId, traguardo: traguardoDa(t.impostazioni),
+        nomi: { A: nomi.A, B: nomi.B }, omini: { A: omini.A, B: avvId ? omini.B : null } });
+      disegnaLobby();
+    }
+    t.onRegole = function () { aggiornaLobby(); };   // l'host ha cambiato i punti in saletta: lo vede anche chi aspetta
     function bcast() {
-      // all'ospite mando la SUA vista (vede solo le proprie carte); io disegno la mia
-      if (M) { if (rete) rete.invia({ t: "vm", vm: vistaDa(M.st, "B", omini) }); C.setVm(vistaDa(M.st, "A", omini)); }
+      if (C.uscito) return;
+      // all'ospite mando la SUA vista (vede solo le proprie carte, e c'è il suo id); io disegno la mia
+      if (M) { if (rete) rete.invia({ t: "vm", vm: vistaB() }); C.setVm(vistaDa(M.st, "A", omini, { idB: avvId })); }
       else disegnaLobby();
-      if (!M || M.st.fase !== "fine") { detto = false; return; }
-      if (!detto && t.risultato) {   // per il torneo online: chi è arrivato prima al traguardo
+      if (!M || M.st.fase !== "fine") detto = false;
+      else if (!detto && t.risultato) {   // per il torneo online: chi è arrivato prima al traguardo
         detto = true;
         var a = M.st.punti.A, b = M.st.punti.B;
         t.risultato(a >= b ? [{ nome: nomi.A, pos: 1 }, { nome: nomi.B, pos: a === b ? 1 : 2 }] : [{ nome: nomi.B, pos: 1 }, { nome: nomi.A, pos: 2 }]);
       }
+      // finita la smazzata: la prossima parte da sola dopo un po' (se l'host non tocca prima)
+      if (M && M.st.fase === "fineround") {
+        if (!avantiT) {
+          var m0 = M, r0 = M.st.nRound;
+          avantiT = setTimeout(function () { avantiT = null; if (!C.uscito && M === m0 && M.st.fase === "fineround" && M.st.nRound === r0 && !avvVia) avanti(); }, 10000);
+        }
+      } else if (avantiT) { clearTimeout(avantiT); avantiT = null; }
     }
-    function dopo(ev) {
+    function dopo(ev, mia) {
       if (!ev || ev.errore) return;
-      suonoPresa(ev.scopa);
-      bcast(); // mostra la presa (se c'è) su entrambi i telefoni
-      if (ev.presa && M.st.fase === "gioco") {
-        setTimeout(function () { M.st.presa = null; bcast(); }, ev.scopa ? 1800 : 1200);
-      } else { M.st.presa = null; }
+      suonoPresa(ev.scopa, mia);
+      bcast();   // mostra la presa (se c'è) su entrambi i telefoni
+      var m0 = M;
+      dopoMossa(M, ev, bcast, function () {}, function () { return !C.uscito && M === m0; });
     }
+    // l'avversario se n'è andato e l'host chiude: si torna in sala (chi abbandona perde a tavolino)
+    function chiudiPartita() {
+      if (M && M.st.fase !== "fine" && !detto && t.risultato) { detto = true; t.risultato([{ nome: nomi.A, pos: 1 }, { nome: nomi.B, pos: 2 }]); }
+      M = null; avvId = null; avvVia = false; nomi.B = "Avversario"; omini.B = null; C.avviso = null; C.vm = null;
+      clearTimeout(avantiT); avantiT = null;
+      aggiornaLobby();
+    }
+    function tornato() { if (!avvVia) return; avvVia = false; C.avviso = null; C.mostraAvviso(); }
     rete = SGNet.ospita("scopa", {
       onCodice: function (c) { codice = c; if (!M) aggiornaLobby(); },
-      onConnesso: function () { pronta = true; if (!M) aggiornaLobby(); },
-      onAddio: function (id) { if (id === avvId) { avvId = null; nomi.B = "Avversario"; omini.B = null; if (M) { M = null; } aggiornaLobby(); } },
-      onMsg: function (id, m) {
-        if (!m || !m.t) return;
-        if (m.t === "join") { if (!avvId) { avvId = id; nomi.B = String(m.nome || "Avversario").slice(0, 16); omini.B = avatarValido(m.omino); } if (M) M.st.nomi.B = nomi.B; aggiornaLobby(); }
-        else if (m.t === "comincia") { /* solo host comincia */ }
-        else if (m.t === "gioca" && M) { if (M.st.turno === "B") dopo(M.gioca("B", m.carta, m.presa)); }
-        else if (m.t === "avanti") { /* ignora: avanza l'host */ }
+      onConnesso: function () { pronta = true; problema = false; if (!M) aggiornaLobby(); },
+      onAddio: function (id) {
+        if (id !== avvId || C.uscito) return;
+        if (!M) { avvId = null; nomi.B = "Avversario"; omini.B = null; aggiornaLobby(); return; }
+        // in partita: la partita NON si butta. Si aspetta che rientri (torna con lo stesso id), oppure l'host chiude
+        avvVia = true;
+        C.avviso = { testo: "🚪 " + nomi.B + " ha lasciato la partita. Se rientra, si riprende da qui.", tasto: "Chiudi la partita", onTasto: chiudiPartita };
+        C.mostraAvviso();
       },
-      onErrore: function () { senzaRete(t); }
+      onMsg: function (id, m) {
+        if (!m || !m.t || C.uscito) return;
+        if (m.t === "join") {
+          if (!avvId) { avvId = id; nomi.B = String(m.nome || "Avversario").slice(0, 16); omini.B = avatarValido(m.omino); }
+          if (id !== avvId) return;   // un terzo telefono: la stanza è piena (lo capisce da solo: l'id nella sala e nella partita non è il suo)
+          tornato();
+          if (M) { if (rete) rete.invia({ t: "vm", vm: vistaB() }); }   // rientrato (pagina ricaricata): gli rimando la sua partita
+          else aggiornaLobby();
+        }
+        else if (m.t === "gioca" && M && id === avvId) { tornato(); dopo(M.gioca("B", m.carta, m.presa), false); }
+      },
+      // un errore di rete momentaneo: si riprova da soli (la sala resta)
+      onErrore: function () { if (M || pronta || C.uscito) return; problema = true; disegnaLobby(); }
     });
-    var lobbyC = { sonoHost: true };
     function disegnaLobby() {
-      if (M) return;
-      renderLobby(t, lobbyVm(), {
+      if (M || C.uscito) return;
+      renderLobby(t, { codice: codice, pronta: pronta, avversario: !!avvId, sonoHost: true, io: "A", nomi: nomi, omini: omini, traguardo: traguardoDa(t.impostazioni), problema: problema }, {
         sonoHost: true,
-        onComincia: function () { if (avvId) { M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni)); bcast(); } },
-        onEsci: function () { if (rete) rete.chiudi(); t.esci(); }
+        onComincia: function () { if (avvId && !M) { M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni)); bcast(); } },
+        onEsci: function () { C.esci(); if (rete) rete.chiudi(); t.esci(); }
       });
     }
     disegnaLobby();
@@ -1287,13 +1581,15 @@
 
   function ospiteScopa(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var el = t.el, S = { rete: null, nome: "", msg: null, entrato: false };
+    var el = t.el, S = { rete: null, nome: "", msg: null, myId: null, pieno: false };
     var C = creaClient(t, {
       sonoHost: false,
-      onMossa: function (id, presa) { if (S.rete) S.rete.invia({ t: "gioca", carta: id, presa: presa }); },
+      onMossa: function (id, presa) { if (!S.rete) return; S.rete.invia({ t: "gioca", carta: id, presa: presa }); C.manda(id); },
       onAvanti: function () {}, onNuova: function () {},
-      onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (S.rete) S.rete.chiudi(); t.esci(); }
+      onEsci: esci
     });
+    function esci() { C.esci(); if (S.rete) S.rete.chiudi(); t.esci(); }
+    function join() { return { t: "join", nome: S.nome, omino: mioAvatar(S.nome) }; }
     schermaNome();
     function schermaNome() {
       var s = t.schermata({ icona: "🃏", titolo: "Entra nella Scopa", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
@@ -1301,6 +1597,7 @@
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
       var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+        if (S.rete) return;
         try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
         S.nome = (input.value || "Amico").trim() || "Amico"; S.msg.textContent = "Collegamento in corso…"; collega();
       } });
@@ -1310,32 +1607,47 @@
     }
     function collega() {
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.entrato = true; S.rete.invia({ t: "join", nome: S.nome, omino: mioAvatar(S.nome) }); mostraAttesa();
-          setTimeout(function () { if (!C.vm && S.msg2) S.msg2.textContent = "Non trovo la partita: controlla il codice o attendi l'host…"; }, 8000); },
+        onAperto: function (id) { S.myId = id; S.rete.invia(join()); mostraAttesa();
+          setTimeout(function () { if (!C.vm && !S.pieno && S.msg2) S.msg2.textContent = "Non trovo la partita: controlla il codice o attendi l'host…"; }, 8000); },
         onMsg: function (m) {
-          if (!m) return;
-          if (m.t === "vm") { suonoSeNuovaPresa(m.vm); C.setVm(m.vm); }
-          else if (m.t === "lobby") { if (!C.vm) mostraLobby(m); }
+          if (!m || C.uscito) return;
+          if (m.t === "vm" && m.vm) {
+            if (m.vm.idB && S.myId && m.vm.idB !== S.myId) return stanzaPiena(m.vm.nomi);   // la partita è di un altro
+            S.pieno = false; suonoSeNuovaPresa(m.vm); C.setVm(m.vm);
+          } else if (m.t === "lobby") {
+            if (m.avvId && S.myId && m.avvId !== S.myId) return stanzaPiena(null);
+            S.pieno = false;
+            if (C.vm) { C.vm = null; C.sel = { carta: null, presa: [] }; C.inviata = null; lastPresaId = null; }   // l'host è tornato in sala: si torna in sala anche qui
+            if (!m.avvId && S.rete) S.rete.invia(join());   // si è liberato il posto (o non mi ha ancora visto): lo ridico
+            mostraLobby(m);
+          }
         },
-        onChiuso: function () { erroreScopa(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
-        onErrore: function () { erroreScopa(t, "Problema di collegamento. Riprova."); }
+        onChiuso: function () { if (!C.uscito) erroreScopa(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
+        onErrore: function () { if (!C.uscito && !S.myId) erroreScopa(t, "Problema di collegamento. Riprova."); }
       });
     }
     var lastPresaId = null;
     function suonoSeNuovaPresa(vm) {
-      var id = vm.presa ? (vm.presa.carta.id + ":" + vm.presa.presi.length) : null;
-      if (id && id !== lastPresaId) suonoPresa(vm.presa.scopa);
+      var id = vm.presa ? ((vm.presa.carta ? vm.presa.carta.id : "resto") + ":" + (vm.presa.presi || []).length) : null;
+      if (id && id !== lastPresaId) suonoPresa(vm.presa.scopa, vm.presa.mio && !!vm.presa.carta);   // vibra solo la mia
       lastPresaId = id;
+    }
+    function stanzaPiena(nomiVm) {   // un terzo telefono: si gioca in due, la stanza è già piena
+      if (S.pieno) return;
+      S.pieno = true; C.vm = null;
+      var s = t.schermata({ icona: "🚪", titolo: "Stanza piena", indietro: esci });
+      s._contenuto.appendChild(el("p", { style: "font-size:1.05rem;line-height:1.5",
+        text: "La Scopa si gioca in due e in questa stanza ci sono già " + (nomiVm ? nomiVm.opp + " e " + nomiVm.io : "due giocatori") + ". Chiedi di aprirne un'altra!" }));
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: esci }));
+      t.mostra(s);
     }
     function mostraLobby(m) {
       if (C.vm) return;
-      renderLobby(t, { codice: m.codice, pronta: m.pronta, avversario: m.avversario, nomi: m.nomi, omini: m.omini, sonoHost: false, io: "B" },
-        { onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (S.rete) S.rete.chiudi(); t.esci(); } });
+      renderLobby(t, { codice: m.codice, pronta: m.pronta, avversario: m.avversario, nomi: m.nomi, omini: m.omini, sonoHost: false, io: "B", traguardo: m.traguardo }, { onEsci: esci });
     }
-    function mostraAttesa() {   // placeholder finché non arriva la sala dall'host
-      if (C.vm) return;
-      var s = t.schermata({ icona: "🃏", titolo: "Scopa · Sala", sotto: "Stanza " + codice.toUpperCase(),
-        indietro: function () { if (window.SGMusica) window.SGMusica.ferma(); if (S.rete) S.rete.chiudi(); t.esci(); } });
+    function mostraAttesa() {   // finché non arriva la sala dall'host
+      if (C.vm || S.pieno) return;
+      var s = t.schermata({ icona: "🃏", titolo: "Scopa · Sala", sotto: "Stanza " + codice.toUpperCase(), indietro: esci });
       S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegato ✅ — sto entrando nella stanza…" });
       s._contenuto.appendChild(S.msg2);
       t.mostra(s);
@@ -1343,31 +1655,31 @@
   }
 
   // chi guarda una partita del torneo a eliminazione: la vede in diretta alle spalle di un giocatore, senza toccare.
-  // (Niente suoni: farebbero vibrare il telefono.)
+  // (Niente suoni né musica: farebbero rumore e vibrare il telefono.)
   function guardaScopa(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var rete = null, scritta = null;
     var C = creaClient(t, {
       guarda: true, sonoHost: false,
       onMossa: function () {}, onAvanti: function () {}, onNuova: function () {},
-      onEsci: function () { if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
+      onEsci: function () { esci(); }
     });
+    function esci() { C.esci(); if (rete) rete.chiudi(); t.esci(); }
     function attesa(txt) {
       if (scritta === txt) return; scritta = txt;
-      var s = t.schermata({ indietro: function () { C.esci(); } });
+      var s = t.schermata({ indietro: esci });
       s._contenuto.appendChild(t.el("p", { class: "modulo-nota guarda-attesa", text: txt }));
       t.mostra(s);
     }
-    C.esci = function () { if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); };
     attesa("👀 Mi collego alla partita…");
     rete = SGNet.entra(codice, {
       onMsg: function (m) {
-        if (!m) return;
+        if (!m || C.uscito) return;
         if (m.t === "vm" && m.vm) { scritta = null; C.setVm(m.vm); }
         else if (m.t === "lobby") { C.vm = null; attesa("👀 La partita sta per cominciare…"); }
       },
-      onChiuso: function () { C.esci(); },   // partita finita e chiusa: si torna al tabellone
-      onErrore: function () { erroreScopa(t, "Problema di collegamento. Riprova."); }
+      onChiuso: function () { if (!C.uscito) esci(); },   // partita finita e chiusa: si torna al tabellone
+      onErrore: function () { if (!C.uscito && !C.vm) erroreScopa(t, "Problema di collegamento. Riprova."); }
     });
   }
 
@@ -1375,9 +1687,10 @@
   function renderLobby(t, vm, cb) {
     var nomi = vm.nomi || {}, om = vm.omini || {}, gio = [{ id: "A", nome: nomi.A || "Host", omino: om.A || null, host: true, tu: vm.io === "A" }];
     if (vm.avversario) gio.push({ id: "B", nome: nomi.B || "Avversario", omino: om.B || null, tu: vm.io === "B" });
+    var punti = vm.traguardo == null ? "" : (vm.traguardo ? "a " + vm.traguardo + " punti" : "una mano sola");
     t.lobby({ host: vm.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2, vuoti: vm.avversario ? 0 : 1, giocatori: gio,
-      nota: vm.sonoHost ? (vm.avversario ? "✅ Avversario collegato! Quando vuoi, comincia." : "Manda il link: aspettiamo il tuo avversario.") : null,
-      attesa: "Aspetta che l'host cominci: si gioca a Scopa! 🃏", onComincia: cb.onComincia, onEsci: cb.onEsci });
+      nota: vm.sonoHost ? (vm.problema ? "⚠️ Problema di collegamento, riprovo…" : vm.avversario ? "✅ Avversario collegato! Quando vuoi, comincia" + (punti ? " (" + punti + ")" : "") + "." : "Manda il link: aspettiamo il tuo avversario.") : null,
+      attesa: "Aspetta che l'host cominci: si gioca a Scopa" + (punti ? ", " + punti : "") + "! 🃏", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
   function erroreScopa(t, txt) {

@@ -26,7 +26,15 @@
         { nome: "Muffin Inglese", emoji: "🧈" },
         { nome: "Panino allo Zafferano", emoji: "💛" },
         { nome: "Bao Bun", emoji: "🥟" },
-        { nome: "Focaccia Pugliese", emoji: "🫒" }
+        { nome: "Focaccia Pugliese", emoji: "🫒" },
+        { nome: "Pane Cafone Napoletano", emoji: "🍞" },
+        { nome: "Pane di Altamura DOP", emoji: "🌾" },
+        { nome: "Pretzel Bavarese", emoji: "🥨" },
+        { nome: "Focaccia di Recco", emoji: "🧀" },
+        { nome: "Brioche Siciliana col Tuppo", emoji: "🥐" },
+        { nome: "Pane alle Olive", emoji: "🫒" },
+        { nome: "Pane Nero di Castelvetrano", emoji: "⚫" },
+        { nome: "Panino al Pistacchio", emoji: "🟢" }
       ],
       B: [
         { nome: "Ciabatta", emoji: "🥖" },
@@ -46,7 +54,13 @@
         { nome: "Bagel", emoji: "🍩" },
         { nome: "Panino Rustico", emoji: "🧺" },
         { nome: "Pane Toscano", emoji: "🇮🇹" },
-        { nome: "Panino Comune", emoji: "🔘" }
+        { nome: "Panino Comune", emoji: "🔘" },
+        { nome: "Tigella", emoji: "⚪" },
+        { nome: "Pane Pugliese a Fette", emoji: "🔪" },
+        { nome: "Panino di Semola", emoji: "🌾" },
+        { nome: "Pane Senza Glutine", emoji: "🚫" },
+        { nome: "Pane al Mais", emoji: "🌽" },
+        { nome: "Schiacciata Toscana", emoji: "🫓" }
       ],
       C: [
         { nome: "Pancarré", emoji: "⬜" },
@@ -62,7 +76,13 @@
         { nome: "Pane Molliccio", emoji: "💦" },
         { nome: "Crosta Dura", emoji: "🧱" },
         { nome: "Pane Scaduto", emoji: "⏰" },
-        { nome: "Panino Sbriciolato", emoji: "💥" }
+        { nome: "Panino Sbriciolato", emoji: "💥" },
+        { nome: "Panino del Distributore Automatico", emoji: "🏧" },
+        { nome: "Pane Schiacciato nello Zaino", emoji: "🎒" },
+        { nome: "Pane Bagnato dalla Pioggia", emoji: "🌧️" },
+        { nome: "Crackers Sbriciolati", emoji: "🍘" },
+        { nome: "Panino Morsicato dal Cane", emoji: "🐶" },
+        { nome: "Fetta di Polenta Fredda", emoji: "🟨" }
       ]
     },
     {
@@ -81,7 +101,15 @@
         { nome: "Gambero in Tempura", emoji: "🦐" },
         { nome: "Petto d'Anatra", emoji: "🦆" },
         { nome: "Tonno Scottato", emoji: "🍣" },
-        { nome: "Costoletta di Agnello", emoji: "🐑" }
+        { nome: "Costoletta di Agnello", emoji: "🐑" },
+        { nome: "Burger di Fassona Piemontese", emoji: "🐂" },
+        { nome: "Bombette Pugliesi", emoji: "🔥" },
+        { nome: "Pastrami Affumicato", emoji: "🥩" },
+        { nome: "Lampredotto Fiorentino", emoji: "🍲" },
+        { nome: "Salsiccia di Bra", emoji: "🌭" },
+        { nome: "Polpo alla Brace", emoji: "🐙" },
+        { nome: "Arrosticini Abruzzesi", emoji: "🍢" },
+        { nome: "Cinghiale Sfilacciato", emoji: "🐗" }
       ],
       B: [
         { nome: "Hamburger Classico", emoji: "🍖" },
@@ -101,7 +129,13 @@
         { nome: "Mortadella", emoji: "🟣" },
         { nome: "Bistecca di Maiale", emoji: "🍽️" },
         { nome: "Pollo alla Griglia", emoji: "🐔" },
-        { nome: "Burger di Soia", emoji: "🫛" }
+        { nome: "Burger di Soia", emoji: "🫛" },
+        { nome: "Wurstel alla Griglia", emoji: "🌭" },
+        { nome: "Petto di Tacchino", emoji: "🦃" },
+        { nome: "Hamburger del Supermercato", emoji: "🛒" },
+        { nome: "Speck a Fette", emoji: "🥓" },
+        { nome: "Crocchette di Pollo", emoji: "🍗" },
+        { nome: "Salame Nostrano", emoji: "🍖" }
       ],
       C: [
         { nome: "Burger Bruciato", emoji: "🔥" },
@@ -117,7 +151,13 @@
         { nome: "Polpetta Fredda", emoji: "🧊" },
         { nome: "Salsiccia Avariata", emoji: "🤢" },
         { nome: "Cotoletta Unta", emoji: "🫗" },
-        { nome: "Kebab Riscaldato", emoji: "🔄" }
+        { nome: "Kebab Riscaldato", emoji: "🔄" },
+        { nome: "Carne in Scatola", emoji: "🥫" },
+        { nome: "Burger Caduto tra le Braci", emoji: "🔥" },
+        { nome: "Fettina Sottile come un Foglio", emoji: "📄" },
+        { nome: "Polpetta di Ieri Scaldata al Microonde", emoji: "📡" },
+        { nome: "Hamburger Mezzo Crudo e Mezzo Bruciato", emoji: "🌗" },
+        { nome: "Pollo che in Realtà è Tofu", emoji: "🤨" }
       ]
     },
     {
@@ -136,7 +176,15 @@
         { nome: "Fontina DOP", emoji: "🏔️" },
         { nome: "Salsa Teriyaki", emoji: "🎌" },
         { nome: "Maionese al Wasabi", emoji: "🟢" },
-        { nome: "Pecorino Stagionato", emoji: "🐑" }
+        { nome: "Pecorino Stagionato", emoji: "🐑" },
+        { nome: "Fonduta di Parmigiano", emoji: "🧀" },
+        { nome: "Salsa Tonnata", emoji: "🐟" },
+        { nome: "Pesto di Pistacchio", emoji: "🟢" },
+        { nome: "Provola Affumicata Filante", emoji: "🔥" },
+        { nome: "Mozzarella di Bufala", emoji: "🐃" },
+        { nome: "Maionese Fatta in Casa", emoji: "🥚" },
+        { nome: "Salsa Verde Piemontese", emoji: "🌿" },
+        { nome: "Caciocavallo Impiccato", emoji: "🪢" }
       ],
       B: [
         { nome: "Provola", emoji: "💨" },
@@ -156,7 +204,13 @@
         { nome: "Groviera", emoji: "🕳️" },
         { nome: "Maionese Piccante", emoji: "🌡️" },
         { nome: "Salsa Aioli", emoji: "🧄" },
-        { nome: "Caciocavallo", emoji: "🐴" }
+        { nome: "Caciocavallo", emoji: "🐴" },
+        { nome: "Salsa Tartara", emoji: "🥒" },
+        { nome: "Formaggio Spalmabile", emoji: "🧈" },
+        { nome: "Salsa Barbecue del Supermercato", emoji: "🛒" },
+        { nome: "Ketchup Piccante", emoji: "🌶️" },
+        { nome: "Senape al Miele", emoji: "🍯" },
+        { nome: "Emmental a Fette", emoji: "🕳️" }
       ],
       C: [
         { nome: "Sottiletta Fredda", emoji: "🟦" },
@@ -172,7 +226,13 @@
         { nome: "Formaggio Plastificato", emoji: "🧴" },
         { nome: "Salsa Grumosa", emoji: "🪨" },
         { nome: "Formaggio Scaduto", emoji: "⏰" },
-        { nome: "Salsa Misteriosa", emoji: "❓" }
+        { nome: "Salsa Misteriosa", emoji: "❓" },
+        { nome: "Bustina di Maionese Esplosa", emoji: "💥" },
+        { nome: "Salsa Dimenticata nel Frigo dell'Ufficio", emoji: "🏢" },
+        { nome: "Ketchup Rimasto sul Tappo", emoji: "🔴" },
+        { nome: "Barattolo di Grattugiato Vuoto", emoji: "🫙" },
+        { nome: "Salsa allo Yogurt Andata a Male", emoji: "🤢" },
+        { nome: "Sottiletta Sciolta sul Cruscotto", emoji: "🚗" }
       ]
     },
     {
@@ -191,7 +251,15 @@
         { nome: "Uovo Poché", emoji: "🥚" },
         { nome: "Funghi Porcini", emoji: "🟤" },
         { nome: "Guanciale Croccante", emoji: "🐷" },
-        { nome: "Asparagi Grigliati", emoji: "🍀" }
+        { nome: "Asparagi Grigliati", emoji: "🍀" },
+        { nome: "Friarielli Saltati", emoji: "🌿" },
+        { nome: "Patate Dolci Fritte", emoji: "🍠" },
+        { nome: "Burrata e Pomodorini", emoji: "🍅" },
+        { nome: "Cipolla di Tropea Caramellata", emoji: "🧅" },
+        { nome: "Melanzane alla Parmigiana", emoji: "🍆" },
+        { nome: "Peperoni Cruschi", emoji: "🌶️" },
+        { nome: "Pomodori Secchi Sott'Olio", emoji: "☀️" },
+        { nome: "Patatine Tagliate a Mano", emoji: "🔪" }
       ],
       B: [
         { nome: "Cetriolini", emoji: "🥒" },
@@ -211,7 +279,13 @@
         { nome: "Nachos", emoji: "🔺" },
         { nome: "Crocchette di Patate", emoji: "🟠" },
         { nome: "Insalata Iceberg", emoji: "🟢" },
-        { nome: "Patatine a Spirale", emoji: "🌀" }
+        { nome: "Patatine a Spirale", emoji: "🌀" },
+        { nome: "Lattuga", emoji: "🥬" },
+        { nome: "Olive Taggiasche", emoji: "🫒" },
+        { nome: "Pomodorini", emoji: "🍒" },
+        { nome: "Carote alla Julienne", emoji: "🥕" },
+        { nome: "Fagiolini", emoji: "🥒" },
+        { nome: "Patate Lesse", emoji: "🥔" }
       ],
       C: [
         { nome: "Insalata Calda", emoji: "🥵" },
@@ -227,7 +301,13 @@
         { nome: "Peperone Indigesto", emoji: "🤢" },
         { nome: "Verdura Scongelata", emoji: "🧊" },
         { nome: "Avanzi di Insalata", emoji: "🗑️" },
-        { nome: "Patata Marcia", emoji: "🦠" }
+        { nome: "Patata Marcia", emoji: "🦠" },
+        { nome: "Foglia di Lattuga Appassita", emoji: "🍂" },
+        { nome: "Patatine del Giorno Prima", emoji: "📆" },
+        { nome: "Olive col Nocciolo a Sorpresa", emoji: "🦷" },
+        { nome: "Peperoncino Troppo Forte", emoji: "🥵" },
+        { nome: "Insalata con la Sabbia", emoji: "🏖️" },
+        { nome: "Carota Cruda Intera", emoji: "🐰" }
       ]
     }
   ]

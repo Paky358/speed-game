@@ -422,7 +422,7 @@
         { nome: "L'Attaccante che Cade al Primo Contatto", emoji: "🍂" },
         { nome: "Quello che Esulta Troppo per un Tap-in", emoji: "🙌" },
         { nome: "Il Finto Ronaldo", emoji: "😎" },
-        { nome: "Quello che Litiga col Portiere Avversario", emoji: "🥊" },
+        { nome: "Quello che Esulta Prima che la Palla Entri", emoji: "🎉" },
         { nome: "L'Attaccante dalla Doppia Faccia", emoji: "🎭" },
         { nome: "Quello che Segna ma Non Torna Mai", emoji: "🛌" },
         { nome: "Il Giocatore da Campetto Estivo", emoji: "🏖️" },

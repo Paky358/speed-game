@@ -26,7 +26,15 @@
         { nome: "L'Amica con la Playlist Perfetta Pronta da Mesi", emoji: "🎵" },
         { nome: "Il Papà che Presta la Casa e Sparisce in Camera", emoji: "🔑" },
         { nome: "Quello che Organizza il Pullman per Tutti", emoji: "🚌" },
-        { nome: "La Coppia che Offre il Cenone a Casa Loro", emoji: "🍽️" }
+        { nome: "La Coppia che Offre il Cenone a Casa Loro", emoji: "🍽️" },
+        { nome: "L'Amica che Prenota la Baita Mesi Prima", emoji: "🏔️" },
+        { nome: "Quello che Porta il Cotechino della Nonna", emoji: "👵" },
+        { nome: "Il Cugino Pasticcere che Porta i Dolci", emoji: "🍰" },
+        { nome: "L'Amico Elettricista che Sistema le Luci", emoji: "💡" },
+        { nome: "Quello che Pensa ai Taxi per il Ritorno", emoji: "🚕" },
+        { nome: "L'Amica coi Giochi da Tavolo per Tutti", emoji: "🎲" },
+        { nome: "Quello che Divide le Spese al Centesimo", emoji: "🧮" },
+        { nome: "Lo Zio che Presta la Taverna Riscaldata", emoji: "🔥" }
       ],
       B: [
         { nome: "Quello del ‘Oh Facciamo Qualcosa Eh’", emoji: "🤷" },
@@ -46,7 +54,13 @@
         { nome: "Quello che Propone di Fare a Metà Ma Paga Meno", emoji: "⚖️" },
         { nome: "Il Fratello che Porta Solo le Casse Audio", emoji: "🔊" },
         { nome: "Quello che Cambia il Locale il 30 Dicembre", emoji: "🔀" },
-        { nome: "L'Amica che Litiga sul Dress Code della Festa", emoji: "👗" }
+        { nome: "L'Amica che Litiga sul Dress Code della Festa", emoji: "👗" },
+        { nome: "Quello che Porta Solo le Patatine", emoji: "🍟" },
+        { nome: "L'Amica che Vuole la Festa a Tema Anni '80", emoji: "🕺" },
+        { nome: "Quello che Prenota il Tavolo per Metà Gruppo", emoji: "🪑" },
+        { nome: "Il Cugino che Porta la Fidanzata Nuova", emoji: "💑" },
+        { nome: "Quello che Organizza il Karaoke Senza Microfono", emoji: "🎤" },
+        { nome: "L'Amico che Vuole Fare Tutto in Casa per Risparmiare", emoji: "🏠" }
       ],
       C: [
         { nome: "Quello che Sparisce fino al 31 Pomeriggio", emoji: "🫥" },
@@ -62,7 +76,13 @@
         { nome: "Quello che Perde la Lista degli Invitati", emoji: "📃" },
         { nome: "L'Amica che Organizza e Si Dimentica il Salato", emoji: "🧂" },
         { nome: "Quello che Cambia Città all'Ultimo Senza Avvisare", emoji: "✈️" },
-        { nome: "Il Parente che Si Offre di Aiutare e Ordina Solo", emoji: "🍕" }
+        { nome: "Il Parente che Si Offre di Aiutare e Ordina Solo", emoji: "🍕" },
+        { nome: "Quello che Si Addormenta Alle 22", emoji: "😴" },
+        { nome: "L'Amico che Porta Petardi Fuorilegge", emoji: "🧨" },
+        { nome: "Quello che Dimentica di Comprare lo Spumante", emoji: "🍾" },
+        { nome: "Il Coinquilino che Chiude Casa a Chiave e Parte", emoji: "🔑" },
+        { nome: "Quello che Invita l'Ex di Tutti", emoji: "😬" },
+        { nome: "L'Amico che Organizza nella Città Sbagliata", emoji: "🗺️" }
       ]
     },
     {
@@ -81,7 +101,15 @@
         { nome: "Il Rifugio di Montagna con Camino Vero", emoji: "🔥" },
         { nome: "La Masseria Tipica con Cucina Stellata", emoji: "🌟" },
         { nome: "Il Roof Garden con Vista sui Grattacieli", emoji: "🌃" },
-        { nome: "La Casa sull'Albero di Lusso", emoji: "🌳" }
+        { nome: "La Casa sull'Albero di Lusso", emoji: "🌳" },
+        { nome: "Il Concertone in Piazza in Prima Fila", emoji: "🎤" },
+        { nome: "Il Rifugio con la Fiaccolata sulla Neve", emoji: "🕯️" },
+        { nome: "La Villa sul Lago coi Fuochi Riflessi sull'Acqua", emoji: "🏞️" },
+        { nome: "Le Terme all'Aperto di Notte", emoji: "♨️" },
+        { nome: "La Casa in Montagna con la Pista Davanti", emoji: "⛷️" },
+        { nome: "Il Ristorante Panoramico sul Mare", emoji: "🌊" },
+        { nome: "La Cena in Barca nel Porto Illuminato", emoji: "⛵" },
+        { nome: "La Baita con l'Igloo per il Brindisi", emoji: "❄️" }
       ],
       B: [
         { nome: "Ristorante con Cenone Infinito e Noioso", emoji: "🍝" },
@@ -101,7 +129,13 @@
         { nome: "Il Giardino Invernale con le Coperte", emoji: "🧣" },
         { nome: "La Casa al Mare Fuori Stagione", emoji: "🌊" },
         { nome: "Il Centro Sociale del Quartiere", emoji: "🪧" },
-        { nome: "Il Garage Trasformato in Sala Party", emoji: "🔧" }
+        { nome: "Il Garage Trasformato in Sala Party", emoji: "🔧" },
+        { nome: "La Casa della Nonna con la Tombola", emoji: "🎱" },
+        { nome: "Il Ristorante Cinese Aperto Fino a Tardi", emoji: "🥡" },
+        { nome: "Il Bowling con la Festa a Tema", emoji: "🎳" },
+        { nome: "Il Pub Irlandese con la Band dal Vivo", emoji: "🍺" },
+        { nome: "La Palestra Comunale Addobbata", emoji: "🏀" },
+        { nome: "Il Campeggio d'Inverno con la Stufetta", emoji: "⛺" }
       ],
       C: [
         { nome: "Seminterrato Abusivo con un Solo Bagno Intasato", emoji: "🚽" },
@@ -117,7 +151,13 @@
         { nome: "Il Sottoscala Buio con una Sedia Sola", emoji: "🪑" },
         { nome: "La Terrazza Aperta con Vento Fortissimo", emoji: "🌬️" },
         { nome: "Il Container da Cantiere Riadattato", emoji: "📦" },
-        { nome: "La Fermata del Bus alle Tre di Notte", emoji: "🚏" }
+        { nome: "La Fermata del Bus alle Tre di Notte", emoji: "🚏" },
+        { nome: "Il Treno Regionale Fermo in Aperta Campagna", emoji: "🚆" },
+        { nome: "La Sala d'Attesa dell'Aeroporto", emoji: "✈️" },
+        { nome: "L'Ufficio Perché Sei di Turno", emoji: "💼" },
+        { nome: "Il Divano di Casa da Solo col Cenone Surgelato", emoji: "🛋️" },
+        { nome: "La Tenda in Giardino a Meno Cinque Gradi", emoji: "🥶" },
+        { nome: "L'Ascensore Bloccato tra Due Piani", emoji: "🛗" }
       ]
     },
     {
@@ -136,7 +176,15 @@
         { nome: "Trovi il Posto Migliore per Vedere i Fuochi", emoji: "🌌" },
         { nome: "Il Gruppo Canta Tutti Insieme a Squarciagola", emoji: "🎶" },
         { nome: "Un Amico Arriva Giusto in Tempo per il Countdown", emoji: "⏰" },
-        { nome: "Il Cotechino è Perfetto al Primo Assaggio", emoji: "🍖" }
+        { nome: "Il Cotechino è Perfetto al Primo Assaggio", emoji: "🍖" },
+        { nome: "Nevica Proprio allo Scoccare della Mezzanotte", emoji: "🌨️" },
+        { nome: "Vinci la Tombolata con Cinquina e Tombola", emoji: "🎱" },
+        { nome: "Il DJ Mette la Tua Canzone Preferita", emoji: "🎶" },
+        { nome: "Gli Amici Lontani Ti Chiamano in Videochiamata", emoji: "📱" },
+        { nome: "Un Amico Annuncia che Si Sposa", emoji: "💍" },
+        { nome: "Il Desiderio Scritto sul Bigliettino Si Avvera Subito", emoji: "✨" },
+        { nome: "Il Vicino Porta un Panettone Artigianale", emoji: "🍞" },
+        { nome: "Brindisi con lo Champagne Vero", emoji: "🥂" }
       ],
       B: [
         { nome: "Finisce il Ghiaccio alle 23", emoji: "🧊" },
@@ -156,7 +204,13 @@
         { nome: "Il Balcone si Riempie di Fumo dei Botti", emoji: "🌫️" },
         { nome: "Qualcuno Perde le Chiavi di Casa nel Buio", emoji: "🗝️" },
         { nome: "Il Video del Bacio Finisce nelle Storie di Tutti", emoji: "📹" },
-        { nome: "La Playlist si Blocca in Loop sulla Stessa Canzone", emoji: "🔁" }
+        { nome: "La Playlist si Blocca in Loop sulla Stessa Canzone", emoji: "🔁" },
+        { nome: "Qualcuno Sbaglia a Contare i Chicchi d'Uva", emoji: "🍇" },
+        { nome: "Lo Spumante Caldo Perché Nessuno l'Ha Messo in Fresco", emoji: "🌡️" },
+        { nome: "Il Countdown della TV Arriva in Ritardo", emoji: "📺" },
+        { nome: "Le Stelle Filanti Finiscono nel Piatto", emoji: "🎊" },
+        { nome: "Il Gioco dei Mimi che Non Finisce Più", emoji: "🙊" },
+        { nome: "Il Selfie di Gruppo Viene Tutto Mosso", emoji: "📸" }
       ],
       C: [
         { nome: "Rissa con Lanci di Bottiglie", emoji: "🥊" },
@@ -172,7 +226,13 @@
         { nome: "Il Brindisi Finisce col Vestito Macchiato di Vino", emoji: "👗" },
         { nome: "Il Vicino Litiga per i Botti Troppo Rumorosi", emoji: "📢" },
         { nome: "Lo Spumante Finisce Tutto Prima della Mezzanotte", emoji: "🫗" },
-        { nome: "Il Petardo Sveglia Tutto il Palazzo", emoji: "😱" }
+        { nome: "Il Petardo Sveglia Tutto il Palazzo", emoji: "😱" },
+        { nome: "Il Botto Fa Scattare Tutti gli Antifurto", emoji: "🚨" },
+        { nome: "Ti Cade il Telefono dal Balcone", emoji: "📵" },
+        { nome: "Il Gatto Si Nasconde Sotto il Letto e Non Esce Più", emoji: "🐈" },
+        { nome: "La Tovaglia Prende Fuoco con le Candele", emoji: "🕯️" },
+        { nome: "Il Tappo dello Spumante Colpisce il Lampadario", emoji: "💡" },
+        { nome: "Ti Accorgi di Avere il Maglione al Contrario", emoji: "👕" }
       ]
     },
     {
@@ -191,7 +251,15 @@
         { nome: "Qualcuno Trova un Coupon Ancora Valido", emoji: "🎟️" },
         { nome: "Il Conto Arriva Più Basso del Previsto", emoji: "📉" },
         { nome: "L'Amico Ricco Insiste per Offrire a Tutti", emoji: "🤑" },
-        { nome: "Il Locale Regala un Giro di Amari per Tutti", emoji: "🥃" }
+        { nome: "Il Locale Regala un Giro di Amari per Tutti", emoji: "🥃" },
+        { nome: "Il Ristorante Vi Offre lo Spumante", emoji: "🍾" },
+        { nome: "Il Conto Costa Meno del Menu Promesso", emoji: "📉" },
+        { nome: "Lo Zio Paga per Tutti e Lascia Pure la Mancia", emoji: "💶" },
+        { nome: "Avanzano Soldi per la Pizza del Primo Gennaio", emoji: "🍕" },
+        { nome: "Lo Sconto per il Gruppo Numeroso", emoji: "🏷️" },
+        { nome: "Vincete la Lotteria della Festa", emoji: "🎟️" },
+        { nome: "Il Taxi del Ritorno lo Offre un Amico", emoji: "🚕" },
+        { nome: "La Spesa Fatta Tutta col Tre per Due", emoji: "🛒" }
       ],
       B: [
         { nome: "Foglio Excel alle 4 del Mattino per Dividere 1,33€", emoji: "📊" },
@@ -211,7 +279,13 @@
         { nome: "Il Conto Diviso Ma Uno Ha Bevuto il Triplo", emoji: "⚖️" },
         { nome: "Quello che Offre e Poi Si Dimentica di Pagare", emoji: "🙃" },
         { nome: "La Colletta Online che Nessuno Completa", emoji: "📲" },
-        { nome: "Il Resto Sbagliato Dato dal Cameriere Distratto", emoji: "🔟" }
+        { nome: "Il Resto Sbagliato Dato dal Cameriere Distratto", emoji: "🔟" },
+        { nome: "Il Conto Scritto a Mano e Illeggibile", emoji: "✍️" },
+        { nome: "Il Gruppo Discute Mezz'Ora sulla Mancia", emoji: "⏳" },
+        { nome: "Quello che Paga Solo il Suo Pezzo di Pizza", emoji: "🍕" },
+        { nome: "La Cassa Comune Tenuta dal Più Distratto", emoji: "🤷" },
+        { nome: "Il Bonifico che Arriva Dopo Due Settimane", emoji: "🏦" },
+        { nome: "Il Supplemento per il Tavolo Vicino alla Finestra", emoji: "🪟" }
       ],
       C: [
         { nome: "Il Cassiere Scappa con la Cassa", emoji: "🏃" },
@@ -227,7 +301,13 @@
         { nome: "La Mancia Finisce per Sbaglio nel Piatto Sbagliato", emoji: "🍽️" },
         { nome: "Il Conto Raddoppia per il Servizio a Sorpresa", emoji: "2️⃣" },
         { nome: "Qualcuno Paga con Assegno che Nessuno Accetta Più", emoji: "📝" },
-        { nome: "Il Rimborso Promesso che Non Arriva Mai", emoji: "🙈" }
+        { nome: "Il Rimborso Promesso che Non Arriva Mai", emoji: "🙈" },
+        { nome: "I Fuochi Comprati all'Ultimo a Prezzo Doppio", emoji: "🎆" },
+        { nome: "Lo Spumante da 200 Euro Ordinato per Sbaglio", emoji: "💸" },
+        { nome: "La Bolletta della Luce del Mese Dopo", emoji: "⚡" },
+        { nome: "Il Divano Rovinato da Ripagare al Padrone di Casa", emoji: "🛋️" },
+        { nome: "Il Coperto Contato Anche per il Cane", emoji: "🐕" },
+        { nome: "Il Pieno di Benzina per Tornare a Casa", emoji: "⛽" }
       ]
     }
   ]

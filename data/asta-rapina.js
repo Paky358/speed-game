@@ -26,7 +26,15 @@
         { nome: "Contabile Forense", emoji: "🧮" },
         { nome: "Esperto di Casseforti", emoji: "🔐" },
         { nome: "Stratega Militare", emoji: "♟️" },
-        { nome: "Architetto degli Impianti", emoji: "📐" }
+        { nome: "Architetto degli Impianti", emoji: "📐" },
+        { nome: "Ex Croupier di Las Vegas", emoji: "🎰" },
+        { nome: "Illusionista Professionista", emoji: "🎩" },
+        { nome: "Ladro Gentiluomo in Pensione", emoji: "🧐" },
+        { nome: "Scassinatore Svizzero", emoji: "🔐" },
+        { nome: "Mago della Logistica", emoji: "📦" },
+        { nome: "Professore di Matematica Geniale", emoji: "🧮" },
+        { nome: "Truccatore del Cinema", emoji: "🎭" },
+        { nome: "Esperto di Allarmi", emoji: "🚨" }
       ],
       B: [
         { nome: "Studente di Ingegneria", emoji: "📘" },
@@ -46,7 +54,13 @@
         { nome: "Cruciverbista Provetto", emoji: "📝" },
         { nome: "Appassionato di Droni", emoji: "🚁" },
         { nome: "Guardia Notturna", emoji: "🔦" },
-        { nome: "Perito Informatico", emoji: "🖨️" }
+        { nome: "Perito Informatico", emoji: "🖨️" },
+        { nome: "Organizzatore di Matrimoni", emoji: "💍" },
+        { nome: "Giocatore di Poker della Domenica", emoji: "🃏" },
+        { nome: "Appassionato di Escape Room", emoji: "🗝️" },
+        { nome: "Fabbro di Paese", emoji: "🔧" },
+        { nome: "Segretaria Super Organizzata", emoji: "🗂️" },
+        { nome: "Ex Militare di Leva", emoji: "🎖️" }
       ],
       C: [
         { nome: "Il Cugino che Formatta i PC", emoji: "🖱️" },
@@ -62,7 +76,13 @@
         { nome: "Quello coi PPT Assurdi", emoji: "📽️" },
         { nome: "Il Fotocopista Distratto", emoji: "📠" },
         { nome: "Quello che Perde le Chiavi", emoji: "🔑" },
-        { nome: "Il Sonnellone in Riunione", emoji: "😴" }
+        { nome: "Il Sonnellone in Riunione", emoji: "😴" },
+        { nome: "Quello che Lascia le Impronte Ovunque", emoji: "🖐️" },
+        { nome: "Il Cugino che Posta Tutto sui Social", emoji: "📱" },
+        { nome: "Quello che Sbaglia Sempre Strada", emoji: "🗺️" },
+        { nome: "Il Sonnambulo", emoji: "😴" },
+        { nome: "Quello che Ride nei Momenti Sbagliati", emoji: "🤭" },
+        { nome: "Quello che Firma col Suo Nome", emoji: "✍️" }
       ]
     },
     {
@@ -81,7 +101,15 @@
         { nome: "Ex Forze Speciali", emoji: "🎗️" },
         { nome: "Culturista Professionista", emoji: "🏋️" },
         { nome: "Cintura Nera di Karate", emoji: "⚫" },
-        { nome: "Vigile del Fuoco", emoji: "🧯" }
+        { nome: "Vigile del Fuoco", emoji: "🧯" },
+        { nome: "Campione di Lotta Greco-Romana", emoji: "🤼" },
+        { nome: "Stuntman del Cinema", emoji: "🎬" },
+        { nome: "Alpinista Estremo", emoji: "🧗" },
+        { nome: "Lanciatore del Martello", emoji: "🔨" },
+        { nome: "Paracadutista Militare", emoji: "🪂" },
+        { nome: "Campione di Parkour", emoji: "🏃" },
+        { nome: "Sommozzatore della Marina", emoji: "🤿" },
+        { nome: "Campione di Braccio di Ferro", emoji: "💪" }
       ],
       B: [
         { nome: "Buttafuori della Discoteca", emoji: "🚫" },
@@ -101,7 +129,13 @@
         { nome: "Boy Scout Adulto", emoji: "🏕️" },
         { nome: "Portalettere in Forma", emoji: "📬" },
         { nome: "Giocatore di Football", emoji: "🏈" },
-        { nome: "Addetto alla Sicurezza", emoji: "🎫" }
+        { nome: "Addetto alla Sicurezza", emoji: "🎫" },
+        { nome: "Facchino dell'Aeroporto", emoji: "🧳" },
+        { nome: "Taglialegna", emoji: "🪓" },
+        { nome: "Istruttore di Spinning", emoji: "🚴" },
+        { nome: "Giocatore di Pallavolo", emoji: "🏐" },
+        { nome: "Ballerino di Breakdance", emoji: "🕺" },
+        { nome: "Pescatore d'Altura", emoji: "🎣" }
       ],
       C: [
         { nome: "Pensionato col Bastone", emoji: "👴" },
@@ -117,7 +151,13 @@
         { nome: "Fan del Fitness da Divano", emoji: "🛌" },
         { nome: "Studente Spaventato", emoji: "😨" },
         { nome: "Barista Distratto", emoji: "☕" },
-        { nome: "Cuoco con Grembiule", emoji: "🍳" }
+        { nome: "Cuoco con Grembiule", emoji: "🍳" },
+        { nome: "Influencer del Benessere", emoji: "🧘" },
+        { nome: "Quello Iscritto in Palestra che Non Ci Va Mai", emoji: "🏋️" },
+        { nome: "Lo Zio col Mal di Schiena", emoji: "🦴" },
+        { nome: "Bambino con la Spada di Plastica", emoji: "🗡️" },
+        { nome: "Il Gatto del Vicino", emoji: "🐈" },
+        { nome: "Fantino in Pensione", emoji: "🏇" }
       ]
     },
     {
@@ -136,7 +176,15 @@
         { nome: "Volante della Polizia Rubata", emoji: "🚓" },
         { nome: "Idrovolante", emoji: "🛩️" },
         { nome: "Auto Elettrica Silenziosa", emoji: "🔋" },
-        { nome: "Berlina con Targa Diplomatica", emoji: "🛂" }
+        { nome: "Berlina con Targa Diplomatica", emoji: "🛂" },
+        { nome: "Sottomarino Privato", emoji: "🌊" },
+        { nome: "Auto da Formula 1", emoji: "🏎️" },
+        { nome: "Zaino a Reazione", emoji: "🚀" },
+        { nome: "Deltaplano a Motore", emoji: "🪁" },
+        { nome: "Hovercraft", emoji: "🛥️" },
+        { nome: "Moto da Gran Premio", emoji: "🏍️" },
+        { nome: "Treno Merci Fuori Orario", emoji: "🚂" },
+        { nome: "Galleria Scavata Fino al Porto", emoji: "🕳️" }
       ],
       B: [
         { nome: "Fiat Panda Rubata", emoji: "🚗" },
@@ -156,7 +204,13 @@
         { nome: "Skateboard Elettrico", emoji: "🛹" },
         { nome: "Auto d'Epoca", emoji: "🕰️" },
         { nome: "Carretto dei Gelati", emoji: "🍦" },
-        { nome: "Quad Fuoristrada", emoji: "🏔️" }
+        { nome: "Quad Fuoristrada", emoji: "🏔️" },
+        { nome: "Barca a Remi Veloce", emoji: "🚣" },
+        { nome: "Camion della Frutta", emoji: "🍉" },
+        { nome: "Pullman di Pellegrini", emoji: "🚌" },
+        { nome: "Motorino del Pizzaiolo", emoji: "🍕" },
+        { nome: "Cavallo da Corsa", emoji: "🐎" },
+        { nome: "Taxi Acqueo di Venezia", emoji: "🛶" }
       ],
       C: [
         { nome: "Bici col Cestino", emoji: "🧺" },
@@ -172,7 +226,13 @@
         { nome: "Zattera di Fortuna", emoji: "🪵" },
         { nome: "Trattorino da Giardino", emoji: "🌱" },
         { nome: "Pattini a Rotelle", emoji: "🛼" },
-        { nome: "Monociclo da Circo", emoji: "🎪" }
+        { nome: "Monociclo da Circo", emoji: "🎪" },
+        { nome: "Gondola Bucata", emoji: "💦" },
+        { nome: "Asino Testardo", emoji: "🐴" },
+        { nome: "Navetta dell'Aeroporto in Ritardo", emoji: "⏰" },
+        { nome: "Ascensore Bloccato", emoji: "🛗" },
+        { nome: "Tandem in Salita", emoji: "🚲" },
+        { nome: "Mongolfiera Sgonfia", emoji: "🎈" }
       ]
     },
     {
@@ -191,7 +251,15 @@
         { nome: "Fortezza in Montagna", emoji: "⛰️" },
         { nome: "Attico a Dubai", emoji: "🌆" },
         { nome: "Bunker Nucleare Dismesso", emoji: "☢️" },
-        { nome: "Isola Segreta nel Pacifico", emoji: "🌊" }
+        { nome: "Isola Segreta nel Pacifico", emoji: "🌊" },
+        { nome: "Grattacielo con la Stanza Segreta", emoji: "🏙️" },
+        { nome: "Faro Abbandonato su un'Isola", emoji: "🗼" },
+        { nome: "Vigna in Toscana con Cantina Segreta", emoji: "🍇" },
+        { nome: "Trullo con Tunnel Sotterraneo", emoji: "🛖" },
+        { nome: "Sottomarino Ormeggiato al Largo", emoji: "⚓" },
+        { nome: "Monastero sulle Montagne del Tibet", emoji: "🏔️" },
+        { nome: "Hotel di Lusso Tutto Prenotato per Voi", emoji: "🏨" },
+        { nome: "Stazione Spaziale", emoji: "🛰️" }
       ],
       B: [
         { nome: "B&B in Periferia", emoji: "🛏️" },
@@ -211,7 +279,13 @@
         { nome: "Ostello per Studenti", emoji: "🎒" },
         { nome: "Casa in Costruzione", emoji: "🏗️" },
         { nome: "Vecchia Fattoria", emoji: "🐓" },
-        { nome: "Fienile Isolato", emoji: "🐴" }
+        { nome: "Fienile Isolato", emoji: "🐴" },
+        { nome: "Camper Parcheggiato in Montagna", emoji: "🚐" },
+        { nome: "Seconda Casa in Campagna", emoji: "🏡" },
+        { nome: "Soffitta della Zia", emoji: "🧓" },
+        { nome: "Barca Ormeggiata al Porto", emoji: "⛵" },
+        { nome: "Rifugio Alpino Chiuso d'Inverno", emoji: "❄️" },
+        { nome: "Retro della Pizzeria del Cugino", emoji: "🍕" }
       ],
       C: [
         { nome: "Casa dei Tuoi Genitori", emoji: "🏠" },
@@ -227,7 +301,13 @@
         { nome: "Nella Cuccia del Cane", emoji: "🐕" },
         { nome: "Roulotte in Campeggio", emoji: "🚐" },
         { nome: "Capanno del Vicino", emoji: "🔨" },
-        { nome: "In Mezzo alla Piazza", emoji: "👀" }
+        { nome: "In Mezzo alla Piazza", emoji: "👀" },
+        { nome: "Spogliatoio della Palestra", emoji: "🧦" },
+        { nome: "Davanti alla Caserma (per Sbaglio)", emoji: "🚓" },
+        { nome: "Sagra di Paese Affollata", emoji: "🎪" },
+        { nome: "Dietro la Tenda della Doccia", emoji: "🚿" },
+        { nome: "Bagno dell'Autogrill", emoji: "🚻" },
+        { nome: "Cassonetto dei Vestiti Usati", emoji: "👕" }
       ]
     }
   ]
