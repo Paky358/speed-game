@@ -13,6 +13,10 @@
 // 1-10: gli scenari del progetto (Passo 1); 11-23: in più (Sala che si riapre, nome senza profilo, testamento in ritardo,
 // host che non torna, partite intere di Tris, Scalinata e Linea del tempo, gioco che non ricopre la Sala, "Ho un codice",
 // t.contoAvanti, Parola d'ordine, stanza che non risponde, torneo a eliminazione).
+// 24-34: la saletta viva (Passo 4): chi arriva e chi esce, "Sono pronto", faccine, chi si ricollega, "Fai uscire" e porta
+// chiusa, 3-2-1 per tutti, si parte da soli, musichetta 🎵/🔇, nomi buffi col 🎲, sei telefoni in uno schermo; 34: lo
+// stesso nella Sala (faccine, "Fai uscire", porta chiusa che resta chiusa se l'host ricarica).
+// I suoni sul computer di prova sono spenti: "pling", bip e musichetta si provano a codice (audioFinto registra le note).
 (function () {
   "use strict";
   var W = window;
@@ -65,6 +69,65 @@
     if (!W.clicca(w, /Comincia per tutti/)) no("non trovo 'Comincia per tutti'");
     var cod = await W.aspetta(function () { return codiceSaletta(w); }, 5000);
     return { cod: cod, etichetta: etichetta };
+  }
+
+  // ---- aiuti per la saletta viva (Passo 4) ----
+  // un motore audio finto (sul computer di prova i suoni sono spenti): registra le note che partono, così il "pling", i bip
+  // del 3-2-1 e la musichetta si provano a codice. Si mette con apriTel(nome, { prima: audioFinto }). w.__note = [{ f: Hz, t }]
+  function audioFinto(w) {
+    var t0 = Date.now(), note = w.__note = [];
+    function par(v) { return { value: v, setValueAtTime: function (x) { this.value = x; return this; }, exponentialRampToValueAtTime: function () { return this; }, linearRampToValueAtTime: function () { return this; }, cancelScheduledValues: function () { return this; } }; }
+    function nodo(o) { o = o || {}; o.connect = function () {}; o.disconnect = function () {}; return o; }
+    function Finto() { this.state = "running"; this.sampleRate = 44100; this.destination = nodo(); Object.defineProperty(this, "currentTime", { get: function () { return (Date.now() - t0) / 1000; } }); }
+    Finto.prototype.createOscillator = function () { var o = nodo({ type: "sine", frequency: par(440), detune: par(0) }); o.start = function (t) { note.push({ f: Math.round(o.frequency.value), t: t }); }; o.stop = function () {}; return o; };
+    Finto.prototype.createGain = function () { return nodo({ gain: par(1) }); };
+    Finto.prototype.createBiquadFilter = function () { return nodo({ type: "lowpass", frequency: par(1000), Q: par(1), gain: par(0) }); };
+    Finto.prototype.createDynamicsCompressor = function () { return nodo({ threshold: par(0), ratio: par(1), knee: par(0), attack: par(0), release: par(0) }); };
+    Finto.prototype.createBuffer = function (c, n) { return { getChannelData: function () { return new Float32Array(n); } }; };
+    Finto.prototype.createBufferSource = function () { return nodo({ buffer: null, start: function () {}, stop: function () {} }); };
+    Finto.prototype.resume = function () { return Promise.resolve(); };
+    Finto.prototype.suspend = function () { return Promise.resolve(); };
+    Finto.prototype.addEventListener = function () {};
+    w.AudioContext = Finto; w.webkitAudioContext = Finto;
+  }
+  // la targa col nome e l'avatar di qualcuno nella saletta di un telefono ("Tu" per il proprio)
+  function targaDi(w, nome) { return [].find.call(w.document.querySelectorAll(".sl-targhe .sl-nome"), function (x) { return x.textContent.replace("👑", "").replace("🤖", "").trim() === nome && !x.classList.contains("esce"); }) || null; }
+  function avatarDi(w, nome) { var t = targaDi(w, nome); return t ? ([].find.call(w.document.querySelectorAll(".sl-av:not(.sl-vuoto)"), function (a) { return a._targa === t; }) || null) : null; }
+  function pronto(w, nome) { var t = targaDi(w, nome); return !!(t && t.classList.contains("pronto")); }
+  // lo stato della stanza scritto sotto il titolo della saletta dell'host ("🟡 Sto aprendo…", "🔒 Porta chiusa…")
+  function statoHost(w) { var s = w.document.querySelector(".saletta-schermo > .testa .sotto"); return s ? s.textContent : ""; }
+  // conta le faccine che compaiono sopra gli avatar di ogni telefono: c.n[i] (si azzera a mano), c.ultima[i]
+  function contaFaccine(tel) {
+    var c = { n: tel.map(function () { return 0; }), ultima: [] };
+    tel.forEach(function (w, i) {
+      new w.MutationObserver(function (lista) { lista.forEach(function (m) { [].forEach.call(m.addedNodes, function (x) { if (x.classList && x.classList.contains("sl-faccia")) { c.n[i]++; c.ultima[i] = x.textContent; } }); }); })
+        .observe(w.document.querySelector(".sl-bolle"), { childList: true });
+    });
+    return c;
+  }
+  // un telefono a misura (larg x alt): niente scorre, i tasti in fondo si vedono, i nomi non si coprono e stanno nella stanza,
+  // gli avatar pure. "" = tutto bene, se no il perché
+  async function controllaSchermo(w, nome, larg, alt) {
+    var f = document.getElementById("tel-" + nome), d = w.document;
+    if (!d.getElementById("senza-entrata")) { var st = d.createElement("style"); st.id = "senza-entrata"; st.textContent = ".schermata{ animation:none !important; } .sl-av, .sl-nome{ transition:none !important; }"; d.head.appendChild(st); }
+    f.style.width = larg + "px"; f.style.height = alt + "px";
+    void d.documentElement.offsetHeight; w.dispatchEvent(new w.Event("resize"));   // (con la finestra nascosta il "resize" arriva tardi)
+    await W.dorme(500);
+    var sc = d.querySelector(".saletta-schermo"); if (!sc) return "non è nella saletta";
+    var c = sc.querySelector(".contenuto"), stz = sc.querySelector(".sl-stanza").getBoundingClientRect();
+    if (d.documentElement.scrollHeight > alt + 1) return "la pagina scorre (" + d.documentElement.scrollHeight + " px)";
+    if (c.scrollHeight > c.clientHeight + 1) return "il centro scorre (" + c.scrollHeight + " su " + c.clientHeight + ")";
+    if (sc.querySelector(".piede").getBoundingClientRect().bottom > alt + 1) return "i tasti in fondo escono dallo schermo";
+    var targhe = [].filter.call(d.querySelectorAll(".sl-targhe .sl-nome"), function (t) { return !t.classList.contains("esce"); }).map(function (t) { return { n: t.textContent, r: t.getBoundingClientRect() }; });
+    if (targhe.length < 6) return "nella saletta ci sono " + targhe.length + " nomi invece di 6";
+    for (var i = 0; i < targhe.length; i++) {
+      var a = targhe[i].r;
+      if (a.left < stz.left - 1 || a.right > stz.right + 1 || a.bottom > stz.bottom + 1) return "il nome «" + targhe[i].n + "» esce dalla stanza";
+      for (var j = i + 1; j < targhe.length; j++) { var b = targhe[j].r; if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) return "i nomi «" + targhe[i].n + "» e «" + targhe[j].n + "» si coprono"; }
+    }
+    var avs = d.querySelectorAll(".sl-av:not(.va)");
+    for (var k = 0; k < avs.length; k++) { var r = avs[k].getBoundingClientRect(), m = r.width * 0.2; if (r.left < stz.left - m || r.right > stz.right + m || r.top < stz.top - 1) return "un avatar esce dalla stanza"; }
+    return "";
   }
 
   var SCENARI = {
@@ -612,6 +675,286 @@
       var nomeC = (vm(S).elim.nomi || {})[camp];
       if (nomeC !== chiA) no("campione sbagliato: " + nomeC + " (doveva vincere " + chiA + ")");
       return "partita " + C + " tra " + chiA + " e " + chiB + ": vince " + nomeC + ", campione del torneo";
+    } },
+
+    // ===== PASSO 4: la saletta viva =====
+    // 24. Chi arriva fa "pling" (a codice: le note del motore audio finto), "Ciao Giulia! 👋" sopra la testa e il contatore
+    //     fa un saltello; chi esce saluta ("Ciao ciao! 👋") e sfuma
+    24: { nome: "Saletta viva: chi arriva fa «pling» e «Ciao Giulia! 👋», chi esce saluta", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0, prima: audioFinto }), C = await W.apriStanza(P, "La Scalinata");
+      var n0 = P.__note.length;
+      var G = await W.apriTel("Giulia", { hash: "gioco=scalinata&stanza=" + C, x: 185 });
+      var fum = await W.aspetta(function () { return [].find.call(P.document.querySelectorAll(".sl-bolle .sl-fumetto"), function (b) { return /Ciao Giulia! 👋/.test(b.textContent); }); }, 5000);
+      if (!fum) no("l'host non vede il fumetto «Ciao Giulia! 👋»");
+      var note = P.__note.slice(n0).map(function (x) { return x.f; });
+      if (note.indexOf(1319) < 0 || note.indexOf(1976) < 0) no("niente «pling» (note dopo l'arrivo: " + note.slice(0, 12).join(",") + ")");
+      var conta = P.document.querySelector(".sl-conta");
+      if (!/^2 in sala$/.test(conta.textContent)) no("il contatore dice «" + conta.textContent + "»");
+      if (!conta.classList.contains("salta")) no("il contatore non fa il saltello");
+      // il fumetto è sopra la testa di Giulia (dentro la stanza)
+      var st = P.document.querySelector(".sl-stanza").getBoundingClientRect(), rf = fum.getBoundingClientRect();
+      if (rf.left < st.left - 1 || rf.right > st.right + 1 || rf.top < st.top - 1) no("il fumetto esce dalla stanza");
+      // Giulia esce con ‹: sull'host saluta e sfuma
+      W.clicca(G, /‹/);
+      var ciao = await W.aspetta(function () { return [].find.call(P.document.querySelectorAll(".sl-bolle .sl-fumetto"), function (b) { return /Ciao ciao! 👋/.test(b.textContent); }); }, 5000);
+      if (!ciao) no("chi esce non saluta");
+      if (!await W.aspetta(function () { return /^1 in sala$/.test(P.document.querySelector(".sl-conta").textContent) && !P.document.querySelector(".sl-av.va"); }, 4000)) no("chi esce non sparisce");
+      return "pling (" + [1319, 1976].join(" + ") + " Hz), «Ciao Giulia! 👋» sopra la testa, contatore 1 → 2 col saltello; uscita con «Ciao ciao! 👋»";
+    } },
+
+    // 25. "✋ Sono pronto!": la spunta (nome verde, ✓, mano alzata) arriva su tutti i telefoni, l'host legge "Pronti 1 su 2";
+    //     ritoccato torna "non pronto"; le regole cambiate dopo i "pronto" non tolgono le spunte
+    25: { nome: "«✋ Sono pronto!»: spunta su tutti i telefoni e «Pronti 1 su 2»", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "La linea del tempo");
+      var G = await W.apriTel("Giulia", { hash: "gioco=timeline&stanza=" + C, x: 185 });
+      var L = await W.apriTel("Luca", { hash: "gioco=timeline&stanza=" + C, x: 370 });
+      if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 3 && dentro(G) && dentro(L); }, 8000)) no("non sono entrati in 3");
+      var b = await W.aspetta(function () { var x = G.document.querySelector(".sl-pronto"); return x && !x.disabled && !x.hidden ? x : null; }, 4000);
+      if (!b) no("Giulia non ha «✋ Sono pronto!»");
+      b.click();
+      if (!await W.aspetta(function () { return pronto(P, "Giulia") && pronto(L, "Giulia") && pronto(G, "Tu"); }, 4000)) no("la spunta di Giulia non arriva su tutti i telefoni");
+      var avG = avatarDi(P, "Giulia");
+      if (!avG || (avG.querySelector(".sl-bollo") || {}).textContent !== "✓") no("sull'avatar di Giulia manca la ✓");
+      if (!/Pronti 1 su 2/.test(P.document.querySelector(".sl-chip").textContent)) no("l'host legge «" + P.document.querySelector(".sl-chip").textContent + "»");
+      if (!/Sei pronto/.test(G.document.querySelector(".sl-pronto").textContent)) no("Giulia non legge «✅ Sei pronto!»");
+      // ritocca: non è più pronta
+      G.document.querySelector(".sl-pronto").click();
+      if (!await W.aspetta(function () { return !pronto(P, "Giulia") && /Pronti 0 su 2/.test(P.document.querySelector(".sl-chip").textContent); }, 4000)) no("tornata «non pronta», l'host non lo vede");
+      // di nuovo pronta, poi l'host cambia le regole: la spunta resta
+      G.document.querySelector(".sl-pronto").click();
+      if (!await W.aspetta(function () { return pronto(P, "Giulia"); }, 4000)) no("la seconda volta la spunta non arriva");
+      if (!W.clicca(P, /Regole/)) no("l'host non ha «⚙️ Regole»");
+      await W.dorme(300);
+      var chip = P.document.querySelector(".sl-velo .cat-chip, .sl-velo .modo-chip"); if (chip) chip.click();
+      W.clicca(P, /Fatto/); await W.dorme(800);
+      if (!pronto(P, "Giulia") || !pronto(L, "Giulia")) no("cambiate le regole, la spunta di Giulia è sparita");
+      return "spunta su tutti e tre i telefoni, «Pronti 1 su 2», ritoccato «Pronti 0 su 2», con le regole cambiate la spunta resta";
+    } },
+
+    // 26. Le faccine: il mio avatar le fa su tutti i telefoni; a raffica ne passa al massimo una al secondo (anche se un
+    //     telefono le manda di nascosto più in fretta, l'host le scarta); con la rete giù si perdono (non restano in coda)
+    26: { nome: "Faccine: su tutti i telefoni, al massimo una al secondo", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "La linea del tempo");
+      var G = await W.apriTel("Giulia", { hash: "gioco=timeline&stanza=" + C, x: 185 });
+      var L = await W.apriTel("Luca", { hash: "gioco=timeline&stanza=" + C, x: 370 });
+      if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 3 && dentro(G) && dentro(L); }, 8000)) no("non sono entrati in 3");
+      var conta = contaFaccine([P, G, L]);
+      // una: 😂 di Luca, sopra il suo avatar su tutti i telefoni
+      L.document.querySelectorAll(".sl-fa")[1].click();
+      if (!await W.aspetta(function () { return conta.n[0] >= 1 && conta.n[1] >= 1 && conta.n[2] >= 1; }, 3000)) no("la faccina di Luca non arriva a tutti (" + conta.n.join("/") + ")");
+      if (conta.ultima[0] !== "😂") no("all'host arriva «" + conta.ultima[0] + "» invece di 😂");
+      await W.dorme(1200);
+      // a raffica dai tasti: 2,5 secondi di tocchi (i tasti si spengono un secondo dopo ogni faccina)
+      conta.n = [0, 0, 0];
+      var t0 = Date.now(), tocchi = 0, fa = L.document.querySelectorAll(".sl-fa");
+      while (Date.now() - t0 < 2500) { fa[tocchi % 6].click(); tocchi++; await W.dorme(120); }
+      await W.dorme(600);
+      var raffica = conta.n[0];
+      if (raffica > 3 || raffica < 2) no("in 2,5 secondi di tocchi all'host ne arrivano " + raffica + " (giusto: 2 o 3)");
+      // di nascosto, 10 in mezzo secondo: l'host ne fa passare al massimo una
+      await W.dorme(1100); conta.n = [0, 0, 0];
+      var h = W.reteDi("Luca"); for (var i = 0; i < 10; i++) { h.invia({ t: "__faccina", f: "🔥" }); await W.dorme(50); }
+      await W.dorme(800);
+      var nascoste = conta.n[1];
+      if (nascoste > 1) no("10 faccine mandate di nascosto: a Giulia ne arrivano " + nascoste);
+      // con la rete giù si perde
+      await W.dorme(1100); conta.n = [0, 0, 0];
+      W.spegni("Luca"); await W.dorme(100);
+      L.document.querySelectorAll(".sl-fa")[3].click();
+      W.riaccendi("Luca"); await W.dorme(1500);
+      if (conta.n[0] > 0) no("la faccina mandata con la rete giù arriva dopo (doveva perdersi)");
+      return "una faccina arriva a tutti (😂), " + tocchi + " tocchi in 2,5 s → " + raffica + " faccine, 10 di nascosto in mezzo secondo → " + nascoste + ", con la rete giù si perde";
+    } },
+
+    // 27. La rete di Luca salta: il suo avatar diventa grigio con 📶 "si ricollega…" su tutti i telefoni (anche sul suo,
+    //     con "📶 Mi ricollego…"); quando torna, torna a colori
+    27: { nome: "Chi si ricollega è grigio con 📶 su tutti i telefoni", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "La linea del tempo");
+      var G = await W.apriTel("Giulia", { hash: "gioco=timeline&stanza=" + C, x: 185 });
+      var L = await W.apriTel("Luca", { hash: "gioco=timeline&stanza=" + C, x: 370 });
+      if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 3 && dentro(G) && dentro(L); }, 8000)) no("non sono entrati in 3");
+      W.spegni("Luca");
+      var grigio = function (w, nome) { var a = avatarDi(w, nome); return !!(a && a.classList.contains("forse") && (a.querySelector(".sl-bollo") || {}).textContent === "📶" && /si ricollega/.test((a.querySelector(".sl-ricollega") || {}).textContent)); };
+      if (!await W.aspetta(function () { return grigio(P, "Luca") && grigio(G, "Luca"); }, 4000)) no("l'avatar di Luca non diventa grigio con 📶 sui telefoni degli altri");
+      if (!await W.aspetta(function () { return grigio(L, "Tu") && /Mi ricollego/.test(pill(L)); }, 4000)) no("sul telefono di Luca il suo avatar non è grigio (o manca «📶 Mi ricollego…»)");
+      W.riaccendi("Luca");
+      if (!await W.aspetta(function () { return !grigio(P, "Luca") && !grigio(G, "Luca") && !grigio(L, "Tu"); }, 5000)) no("tornata la rete, Luca resta grigio");
+      return "grigio con 📶 «si ricollega…» su tutti e tre i telefoni, poi di nuovo a colori";
+    } },
+
+    // 28. L'host fa uscire Luca (tocco lungo sull'avatar → "🚪 Fai uscire Luca") e chiude la porta (🔒): Luca legge
+    //     "Sei fuori dalla stanza" e non rientra nemmeno dal link; chi è nuovo legge "La stanza è chiusa"; con la porta
+    //     riaperta il nuovo entra (Luca, fatto uscire da meno di un minuto, no). La porta resta chiusa anche se l'host ricarica
+    28: { nome: "«Fai uscire» e «🔒 Chiudi la porta»", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "La linea del tempo");
+      var G = await W.apriTel("Giulia", { hash: "gioco=timeline&stanza=" + C, x: 185 });
+      var L = await W.apriTel("Luca", { hash: "gioco=timeline&stanza=" + C, x: 370 });
+      if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 3 && dentro(G) && dentro(L); }, 8000)) no("non sono entrati in 3");
+      // tocco lungo sull'avatar di Luca
+      var av = avatarDi(P, "Luca"), r = av.getBoundingClientRect();
+      var ev = function (t) { av.dispatchEvent(new P.PointerEvent(t, { bubbles: true, clientX: r.left + r.width / 2, clientY: r.top + r.height / 3, pointerId: 1, pointerType: "touch" })); };
+      ev("pointerdown"); await W.dorme(700); ev("pointerup"); av.click();
+      var bFuori = await W.aspetta(function () { return P.document.querySelector(".sl-menu .sl-menu-fuori"); }, 2000);
+      if (!bFuori || !/Fai uscire Luca/.test(bFuori.textContent)) no("tenendo premuto su Luca non compare «🚪 Fai uscire Luca»");
+      bFuori.click();
+      if (!await W.aspetta(function () { return /Sei fuori dalla stanza/.test(T(L)); }, 4000)) no("Luca non legge «Sei fuori dalla stanza»");
+      if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 2 && !avatarDi(G, "Luca"); }, 4000)) no("Luca è ancora nella partita o nella saletta di Giulia");
+      // la porta
+      var porta = P.document.querySelector(".sl-porta");
+      if (!porta || porta.hidden || !/Chiudi/.test(porta.textContent)) no("l'host non ha «🔒 Chiudi» (la porta)");
+      porta.click();
+      if (!await W.aspetta(function () { return /Porta chiusa/.test(statoHost(P)); }, 2000)) no("chiusa la porta, la saletta non lo dice");
+      // Luca riapre il link; Marco è nuovo
+      L = await W.apriTel("Luca", { hash: "gioco=timeline&stanza=" + C, x: 370 });
+      var M = await W.apriTel("Marco", { hash: "gioco=timeline&stanza=" + C, x: 555 });
+      if (!await W.aspetta(function () { return /Sei fuori dalla stanza/.test(T(L)) && /La stanza è chiusa/.test(T(M)); }, 6000)) no("con la porta chiusa: Luca «" + T(L).slice(0, 60) + "», Marco «" + T(M).slice(0, 60) + "»");
+      if ((vm(C).giocatori || []).length !== 2) no("con la porta chiusa qualcuno è entrato");
+      // l'host ricarica: la porta resta chiusa
+      P = await W.ricarica("Paky");
+      if (!await W.aspetta(function () { return /Porta chiusa/.test(statoHost(P)) && (vm(C).giocatori || []).length === 2; }, 8000)) no("dopo la ricarica dell'host la porta non è più chiusa (o Giulia non è rientrata)");
+      // riaperta: Marco ritocca "Riprova" ed entra; Luca no
+      P.document.querySelector(".sl-porta").click();
+      W.clicca(M, /Riprova/); W.clicca(L, /Riprova/);
+      if (!await W.aspetta(function () { return (vm(C).giocatori || []).some(function (g) { return g.nome === "Marco"; }); }, 6000)) no("con la porta riaperta Marco non entra");
+      await W.dorme(1500);
+      if ((vm(C).giocatori || []).some(function (g) { return g.nome === "Luca"; })) no("Luca, fatto uscire da poco, è rientrato");
+      return "«Fai uscire Luca» col tocco lungo, porta chiusa: Luca fuori e Marco «La stanza è chiusa» (anche dopo la ricarica dell'host); riaperta: entra Marco, Luca no";
+    } },
+
+    // 29. "Comincia": 3-2-1-Via! su tutti i telefoni (col nome del gioco), con i bip che salgono, poi parte la partita
+    29: { nome: "3-2-1-Via! uguale su tutti i telefoni", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "La linea del tempo");
+      var G = await W.apriTel("Giulia", { hash: "gioco=timeline&stanza=" + C, x: 185, prima: audioFinto });
+      var L = await W.apriTel("Luca", { hash: "gioco=timeline&stanza=" + C, x: 370 });
+      if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 3 && dentro(G) && dentro(L); }, 8000)) no("non sono entrati in 3");
+      var visti = [[], [], []], tel = [P, G, L], n0 = G.__note.length;
+      var iv = setInterval(function () { tel.forEach(function (w, i) { var x = w.document.querySelector(".sl-via-num"), v = x ? x.textContent : ""; if (v && visti[i][visti[i].length - 1] !== v) visti[i].push(v); }); }, 40);
+      W.clicca(P, /Comincia/);
+      var tit = await W.aspetta(function () { var t = G.document.querySelector(".sl-via-tit"); return t && t.textContent; }, 2000);
+      await W.aspetta(function () { return vm(C).fase && vm(C).fase !== "lobby"; }, 8000);
+      await W.dorme(600); clearInterval(iv);
+      for (var i = 0; i < 3; i++) if (visti[i].join(",") !== "3,2,1,Via!") no(["Paky", "Giulia", "Luca"][i] + " vede «" + visti[i].join(",") + "» invece di 3,2,1,Via!");
+      if (!/linea del tempo/i.test(tit || "")) no("sopra i numeri non c'è il gioco («" + tit + "»)");
+      var bip = G.__note.slice(n0).map(function (x) { return x.f; }).filter(function (f) { return f === 587 || f === 659 || f === 784; });
+      if (bip.join(",") !== "587,659,784") no("i bip del 3-2-1 sul telefono di Giulia: " + bip.join(","));
+      if (!vm(C).fase || vm(C).fase === "lobby") no("dopo il Via! la partita non comincia");
+      return "Paky, Giulia e Luca: 3, 2, 1, Via! (" + tit + "), bip 587-659-784 Hz, poi la partita (" + vm(C).fase + ")";
+    } },
+
+    // 30. Tutti pronti e, nel ⚙️ dell'host, "Parti da solo quando tutti sono pronti": si parte da soli col 3-2-1
+    30: { nome: "Tutti pronti: si parte da soli", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "La linea del tempo");
+      var G = await W.apriTel("Giulia", { hash: "gioco=timeline&stanza=" + C, x: 185 });
+      var L = await W.apriTel("Luca", { hash: "gioco=timeline&stanza=" + C, x: 370 });
+      if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 3 && dentro(G) && dentro(L); }, 8000)) no("non sono entrati in 3");
+      if (!W.clicca(P, /Regole|⚙️/)) no("l'host non ha il ⚙️");
+      var chk = await W.aspetta(function () { return P.document.querySelector(".sl-velo .sl-interruttore input"); }, 2000);
+      if (!chk) no("nel ⚙️ non c'è «Parti da solo quando tutti sono pronti»");
+      chk.click(); W.clicca(P, /Fatto/);
+      await W.aspetta(function () { return W.clicca(G, /Sono pronto/); }, 3000);
+      await W.dorme(1500);
+      if (vm(C).fase !== "lobby" || P.document.querySelector(".sl-via")) no("con uno solo pronto si è partiti");
+      await W.aspetta(function () { return W.clicca(L, /Sono pronto/); }, 3000);
+      if (!await W.aspetta(function () { return P.document.querySelector(".sl-via") || (vm(C).fase && vm(C).fase !== "lobby"); }, 3000)) no("tutti pronti, ma non parte il 3-2-1");
+      if (!await W.aspetta(function () { return vm(C).fase && vm(C).fase !== "lobby"; }, 8000)) no("dopo il 3-2-1 la partita non comincia");
+      return "con «Parti da solo» acceso: Giulia pronta → si aspetta, anche Luca pronto → 3-2-1 e via (" + vm(C).fase + ")";
+    } },
+
+    // 31. La musichetta (solo sul telefono dell'host, a codice: le note del motore audio finto) e il tasto 🎵/🔇:
+    //     suona in saletta, si ferma col 🔇 (scelta ricordata anche dopo una ricarica), riparte col 🎵, tace nel 3-2-1
+    31: { nome: "Musichetta della saletta e 🎵/🔇", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0, prima: audioFinto }), C = await W.apriStanza(P, "La linea del tempo");
+      var G = await W.apriTel("Giulia", { hash: "gioco=timeline&stanza=" + C, x: 185, prima: audioFinto });
+      if (!await W.aspetta(function () { return dentro(G); }, 8000)) no("Giulia non entra");
+      var bassi = function (w, da) { return w.__note.slice(da).filter(function (x) { return x.f < 130; }).length; };   // il basso della musichetta
+      var n0 = P.__note.length; await W.dorme(1500);
+      if (bassi(P, n0) < 2) no("sul telefono dell'host la musichetta non suona");
+      if (bassi(G, 0) > 0) no("la musichetta suona anche sul telefono di chi entra");
+      var b = P.document.querySelector(".sl-suono");
+      if (!b || b.textContent !== "🎵") no("manca il tasto 🎵");
+      b.click(); await W.dorme(600);
+      var n1 = P.__note.length; await W.dorme(1500);
+      if (bassi(P, n1) > 0) no("col 🔇 la musichetta continua");
+      if (b.textContent !== "🔇") no("il tasto non diventa 🔇");
+      P = await W.ricarica("Paky");
+      await W.aspetta(function () { return P.document.querySelector(".sl-suono"); }, 6000);
+      if (P.document.querySelector(".sl-suono").textContent !== "🔇") no("dopo la ricarica il 🔇 non è ricordato");
+      var n2 = P.__note.length; await W.dorme(1200);
+      if (bassi(P, n2) > 0) no("dopo la ricarica (🔇) la musichetta suona");
+      P.document.querySelector(".sl-suono").click(); var n3 = P.__note.length; await W.dorme(1500);
+      if (bassi(P, n3) < 2) no("col 🎵 la musichetta non riparte");
+      await W.aspetta(function () { return dentro(G); }, 8000);
+      W.clicca(P, /Comincia/); await W.dorme(700); var n4 = P.__note.length; await W.dorme(1200);
+      if (bassi(P, n4) > 0) no("durante il 3-2-1 la musichetta continua");
+      return "suona solo dall'host, 🔇 la ferma (ricordato dopo la ricarica), 🎵 la riaccende, tace nel 3-2-1";
+    } },
+
+    // 32. Senza profilo: il benvenuto con l'avatar che avrai, il 🎲 propone un nome buffo (cambia anche l'avatar) e
+    //     l'host lo vede entrare con quel nome
+    32: { nome: "Senza profilo: 🎲 nomi buffi e avatar in anteprima", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "La Scalinata");
+      var L = await W.apriTel("Luca", { hash: "gioco=scalinata&stanza=" + C, x: 185, profilo: false });
+      var dado = await W.aspetta(function () { return L.document.querySelector(".sl-dado"); }, 4000);
+      if (!dado) no("accanto al nome non c'è il 🎲");
+      var input = L.document.querySelector(".sl-nome-campo input"), ant = L.document.querySelector(".sl-anteprima");
+      if (!ant) no("manca l'avatar in anteprima");
+      var visti = {}, svg0 = ant.innerHTML;
+      for (var i = 0; i < 6; i++) { dado.click(); var n = input.value; if (!/^[A-Z][a-zà]+ [A-Z][a-zà]+$/.test(n) || n.length > 16) no("nome buffo strano: «" + n + "»"); visti[n] = 1; }
+      if (Object.keys(visti).length < 4) no("il 🎲 propone sempre gli stessi nomi: " + Object.keys(visti).join(", "));
+      if (ant.innerHTML === svg0) no("col 🎲 l'avatar in anteprima non cambia");
+      var nome = input.value;
+      W.clicca(L, /Entra/);
+      if (!await W.aspetta(function () { return JSON.stringify(vm(C)).indexOf("\"" + nome + "\"") >= 0; }, 6000)) no("l'host non vede entrare «" + nome + "»");
+      if (!await W.aspetta(function () { return avatarDi(P, nome); }, 3000)) no("nella saletta dell'host non c'è «" + nome + "»");
+      var gio = [].concat(vm(C).posti || [], vm(C).giocatori || [], vm(C).players || []).filter(function (g) { return g && g.nome === nome; })[0];
+      if (!gio || JSON.stringify(gio.omino) !== JSON.stringify(L.SGOmino.casuale(nome))) no("l'avatar che vede l'host non è quello dell'anteprima");
+      return "nomi proposti: " + Object.keys(visti).join(", ") + "; è entrato «" + nome + "» con l'avatar dell'anteprima";
+    } },
+
+    // 33. Sei telefoni: tutto in uno schermo da 360x640 e da 412x915 (niente scorre), i nomi non si coprono, gli avatar
+    //     stanno nella stanza; per l'host e per chi entra
+    33: { nome: "Sei telefoni: tutto in uno schermo (360x640 e 412x915)", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "La linea del tempo");
+      var nomi = ["Giulia", "Luca", "Sara", "Marco", "Anna"];
+      for (var i = 0; i < nomi.length; i++) await W.apriTel(nomi[i], { hash: "gioco=timeline&stanza=" + C, x: 185 * (i + 1) });
+      if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 6; }, 12000)) no("non sono entrati in 6");
+      await W.dorme(1500);
+      var esiti = [];
+      for (var k = 0; k < 2; k++) {
+        var M = k ? [412, 915] : [360, 640];
+        for (var j = 0; j < 2; j++) {
+          var nome = j ? "Giulia" : "Paky", e = await controllaSchermo(W.finestra(nome), nome, M[0], M[1]);
+          if (e) no(nome + " a " + M[0] + "x" + M[1] + ": " + e);
+          esiti.push(nome + " " + M[0] + "x" + M[1] + " ok");
+        }
+      }
+      return esiti.join(", ");
+    } },
+
+    // 34. Nella Sala: le faccine arrivano a tutti, l'host fa uscire (tenendo premuto) e chiude la porta: chi è fatto uscire
+    //     legge "Sei fuori dalla Sala", chi è nuovo "La Sala è chiusa"; se l'host ricarica, la Sala riapre con la porta chiusa
+    34: { nome: "Sala: faccine, «Fai uscire» e porta chiusa", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 }), S = await apriSala("Paky");
+      var G = await W.apriTel("Giulia", { hash: "sala=" + S, x: 185 });
+      var L = await W.apriTel("Luca", { hash: "sala=" + S, x: 370 });
+      if (!await W.aspetta(function () { return (vm(S).membri || []).length === 3 && avatarDi(P, "Luca") && avatarDi(G, "Luca"); }, 8000)) no("non sono entrati in 3 nella Sala");
+      var conta = contaFaccine([P, L]);
+      if (!await W.aspetta(function () { var b = G.document.querySelectorAll(".sl-fa")[0]; if (b && !b.disabled && !b.closest("[hidden]")) { b.click(); return true; } return false; }, 3000)) no("nella Sala Giulia non ha le faccine");
+      if (!await W.aspetta(function () { return conta.n[0] >= 1 && conta.n[1] >= 1; }, 3000)) no("nella Sala la faccina di Giulia non arriva a tutti");
+      var av = avatarDi(P, "Luca"), r = av.getBoundingClientRect();
+      var ev = function (t) { av.dispatchEvent(new P.PointerEvent(t, { bubbles: true, clientX: r.left + r.width / 2, clientY: r.top + r.height / 3, pointerId: 1, pointerType: "touch" })); };
+      ev("pointerdown"); await W.dorme(700); ev("pointerup"); av.click();
+      var b = await W.aspetta(function () { return P.document.querySelector(".sl-menu .sl-menu-fuori"); }, 2000);
+      if (!b) no("nella Sala, tenendo premuto su Luca, non compare «Fai uscire»");
+      b.click();
+      if (!await W.aspetta(function () { return /Sei fuori dalla Sala/.test(T(L)); }, 4000)) no("Luca non legge «Sei fuori dalla Sala» («" + T(L).slice(0, 60) + "»)");
+      if (!await W.aspetta(function () { return (vm(S).membri || []).length === 2; }, 4000)) no("Luca è ancora tra i membri della Sala");
+      P.document.querySelector(".sl-porta").click();
+      var M = await W.apriTel("Marco", { hash: "sala=" + S, x: 555 });
+      if (!await W.aspetta(function () { return /La Sala è chiusa/.test(T(M)); }, 6000)) no("con la porta chiusa Marco legge «" + T(M).slice(0, 80) + "»");
+      P = await W.ricarica("Paky");
+      if (!await W.aspetta(function () { return /Porta chiusa/.test(statoHost(P)) && (vm(S).membri || []).length === 2; }, 9000)) no("riaperta la Sala, la porta non è più chiusa (o Giulia non è rientrata)");
+      return "faccina di Giulia a tutti, Luca «Sei fuori dalla Sala», Marco «La Sala è chiusa», la Sala riaperta dall'host ha ancora la porta chiusa";
     } }
   };
 

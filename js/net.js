@@ -17,7 +17,8 @@
    - chi entra ripete "sono entrato" finché l'host non lo vede
      dentro (il primo può perdersi se la stanza non è ancora pronta);
    - chi sparisce all'improvviso non viene tolto subito: ha un po'
-     di tempo per tornare, e quando torna ripete che c'è;
+     di tempo per tornare, e quando torna ripete che c'è (intanto
+     l'app lo mostra grigio con 📶: evento "sg-forse");
    - se sparisce l'host, gli altri lo aspettano prima di arrendersi;
      chi arriva DOPO trova scritto "host sparito" (il testamento
      resta nella stanza) e lo sa subito, invece di vedere una partita ferma;
@@ -57,6 +58,8 @@
   // la rete è giù ("📶 Mi ricollego…"), la stanza è ferma ("😴 La stanza è ferma")
   function evento(nome, dettagli) { try { window.dispatchEvent(new CustomEvent(nome, { detail: dettagli })); } catch (e) {} }
   function avvisaHost(stanza, via) { evento("sg-host", { stanza: stanza, via: !!via }); }
+  // le cose che valgono solo adesso (una faccina, il 3-2-1): con la rete giù si perdono, non aspettano in coda
+  function effimero(msg) { return !!(msg && (msg.t === "__faccina" || msg.t === "__fa" || msg.t === "__via")); }
 
   function codiceACaso(n) {
     var s = "";
@@ -181,8 +184,11 @@
       }
       function manda(msg, trattieni) {
         if (client && client.connected) { try { client.publish(T.stato, JSON.stringify(trattieni ? conSessione(msg) : msg), { retain: !!trattieni }); return; } catch (e) {} }
+        if (!trattieni && effimero(msg)) return;
         coda.push({ m: msg, r: !!trattieni, t: Date.now() }); if (coda.length > CODA_MAX) coda.shift();   // la rete è giù: la mossa non si perde
       }
+      // chi è sparito all'improvviso e ha ancora tempo per tornare: l'app lo mostra grigio con 📶 ("si sta ricollegando…")
+      function forse(id, si) { evento("sg-forse", { stanza: codice, id: id, forse: !!si }); }
       function svuota() { var ora = Date.now(), l = coda; coda = []; l.forEach(function (x) { if (x.r || ora - x.t < CODA_VITA) manda(x.m, x.r); }); }
       function ciSono() { try { if (client && client.connected) client.publish(T.stato, JSON.stringify({ t: "__hostqui", s: sid }), { retain: false }); } catch (e) {} }
       // il testamento di un mio collegamento di prima arriva in ritardo (rete cambiata, telefono che si riprende:
@@ -223,11 +229,13 @@
         }
         var m; try { m = JSON.parse(payload.toString()); } catch (e) { return; }
         if (!m || !m.from) return;
-        if (inForse[m.from]) { clearTimeout(inForse[m.from]); delete inForse[m.from]; }   // si è rifatto vivo in tempo
+        if (inForse[m.from]) { clearTimeout(inForse[m.from]); delete inForse[m.from]; forse(m.from, false); }   // si è rifatto vivo in tempo
         if (m.data && m.data.t === "__leave") {
           if (m.data.voluto) { cb.onAddio && cb.onAddio(m.from); return; }   // è uscito apposta
           // sparito all'improvviso: lo aspetto un po' prima di toglierlo dalla partita
-          inForse[m.from] = setTimeout(function () { delete inForse[m.from]; if (!chiusa) cb.onAddio && cb.onAddio(m.from); }, ATTESA_OSPITE);
+          var chi = m.from;
+          inForse[chi] = setTimeout(function () { delete inForse[chi]; if (!chiusa) cb.onAddio && cb.onAddio(chi); forse(chi, false); }, ATTESA_OSPITE);
+          forse(chi, true);
           return;
         }
         if (m.data && m.data.t === "__ci") return;   // "ci sono": serve solo a non toglierlo (qui sopra), il gioco non lo vede
@@ -296,7 +304,7 @@
         if (client && client.connected) {
           try { client.publish(T.azioni, JSON.stringify({ from: myId, data: msg }), { retain: false }); ultimoInvio = Date.now(); if (msg && msg.t === "join") ultimoJoin = ultimoInvio; return; } catch (e) {}
         }
-        if (!msg || msg.t === "join" || msg.t === "__ci") return;   // ("sono entrato" e "ci sono" li ripeto comunque appena torna la rete)
+        if (!msg || msg.t === "join" || msg.t === "__ci" || effimero(msg)) return;   // ("sono entrato" e "ci sono" li ripeto comunque appena torna la rete; una faccina vale solo adesso)
         coda.push({ m: msg, t: Date.now() }); if (coda.length > CODA_MAX) coda.shift();   // la rete è giù: la mossa parte appena torna
       }
       function svuota() { var ora = Date.now(), l = coda; coda = []; l.forEach(function (x) { if (ora - x.t < CODA_VITA) pubblica(x.m); }); }
