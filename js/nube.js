@@ -64,6 +64,8 @@
         if (u) caricaProfilo(u.uid);
         else { profilo = null; pronto = true; notifica(); }
       });
+      // all'apertura mancava la rete e il profilo non è arrivato: appena torna la rete si rilegge da solo
+      window.addEventListener("online", function () { if (utente && !profilo) caricaProfilo(utente.uid); });
     } catch (e) { auth = null; pronto = true; }
   }
   function caricaProfilo(uid) {
@@ -109,6 +111,8 @@
     messaggioErrore: messaggioErrore,
     // chiamato quando lo stato e' pronto e ad ogni cambio (login/logout/dati)
     onCambio: function (cb) { ascolta.push(cb); if (pronto) cb(profilo); },
+    // "Riprova" (il profilo non era arrivato per la rete): lo rilegge, e pronto() torna vero quando risponde
+    riprova: function () { if (auth && utente && !profilo) { pronto = false; caricaProfilo(utente.uid); } },
 
     crea: function (nome, pwd, emoji) {
       if (!auth) return Promise.reject(new Error("offline"));

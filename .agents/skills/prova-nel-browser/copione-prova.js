@@ -13,6 +13,7 @@
 // 1-10: gli scenari del progetto (Passo 1); 11-23: in più (Sala che si riapre, nome senza profilo, testamento in ritardo,
 // host che non torna, partite intere di Tris, Scalinata e Linea del tempo, gioco che non ricopre la Sala, "Ho un codice",
 // t.contoAvanti, Parola d'ordine, stanza che non risponde, torneo a eliminazione).
+// 90-97: profilo e avatar obbligatori (p0): benvenuto, link, Sala, entrata senza domande, «Entra», «Bentornato», senza rete.
 // 24-34: la saletta viva (Passo 4): chi arriva e chi esce, "Sono pronto", faccine, chi si ricollega, "Fai uscire" e porta
 // chiusa, 3-2-1 per tutti, si parte da soli, musichetta 🎵/🔇, nomi buffi col 🎲, sei telefoni in uno schermo; 34: lo
 // stesso nella Sala (faccine, "Fai uscire", porta chiusa che resta chiusa se l'host ricarica).
@@ -28,7 +29,7 @@
   // si riparte da zero: via i telefoni, broker vuoto, memorie vuote
   function pulisci() {
     Object.keys(W.BR.tel).forEach(function (n) { (W.BR.perNome[n] || []).forEach(function (c) { c.morto = true; c.connected = false; }); var f = document.getElementById("tel-" + n); if (f) f.remove(); });
-    W.BR.clients = []; W.BR.retained = {}; W.BR.log = []; W.BR.perNome = {}; W.BR.mem = {}; W.BR.tel = {};
+    W.BR.clients = []; W.BR.retained = {}; W.BR.log = []; W.BR.perNome = {}; W.BR.mem = {}; W.BR.tel = {}; W.BR.conti = {};
   }
   var T = function (w) { return W.testo(w).replace(/\s+/g, " "); };
   var pill = function (w) { return [].map.call(w.document.querySelectorAll(".sg-pillola"), function (x) { return x.textContent; }).join(" | "); };
@@ -131,6 +132,54 @@
     for (var k = 0; k < avs.length; k++) { var r = avs[k].getBoundingClientRect(), m = r.width * 0.2; if (r.left < stz.left - m || r.right > stz.right + m || r.top < stz.top - 1) return "un avatar esce dalla stanza"; }
     return "";
   }
+
+  // ---- aiuti per il profilo obbligatorio (p0, 15 ott) ----
+  // spiaProfilo: da mettere in apriTel(nome, { prima: spiaProfilo }): w.__visto segna le schermate del profilo comparse
+  // (benvenuto, entra, bentornato, senza rete, editor dell'avatar), anche se sono durate un attimo
+  function spiaProfilo(w) {
+    w.__visto = [];
+    new w.MutationObserver(function () {
+      var d = w.document, segna = function (sel, nome) { if (d.querySelector(sel) && w.__visto.indexOf(nome) < 0) w.__visto.push(nome); };
+      segna(".benvenuto-profilo", "profilo"); segna(".editor-avatar", "editor");
+    }).observe(w.document.documentElement, { childList: true, subtree: true });
+  }
+  // nel benvenuto: scrive nome (se dato) e password, tocca Avanti e poi "✅ Fatto" nell'editor. Restituisce il nome usato
+  async function creaProfilo(w, nome, pwd) {
+    var b = await W.aspetta(function () { return w.document.querySelector(".benvenuto-profilo:not(.bp-entra):not(.bp-bentornato):not(.bp-rete)"); }, 5000);
+    if (!b) no("non c'è il benvenuto del profilo («" + T(w).slice(0, 60) + "»)");
+    var campi = b.querySelectorAll("input.link-campo");
+    if (nome != null) { campi[0].value = nome; campi[0].dispatchEvent(new w.Event("input", { bubbles: true })); }
+    campi[1].value = pwd; var usato = campi[0].value.trim();
+    if (!W.clicca(w, /^Avanti/)) no("nel benvenuto non c'è «Avanti»");
+    var fatto = await W.aspetta(function () { return w.document.querySelector(".editor-avatar .om-azione.salva.fatto"); }, 4000);
+    if (!fatto) no("dopo «Avanti» non si apre l'avatar (" + T(w).slice(0, 80) + ")");
+    if (w.document.querySelector(".editor-avatar .om-indietro")) no("nell'avatar del benvenuto c'è ancora ‹");
+    fatto.click();
+    if (!await W.aspetta(function () { return !w.document.querySelector(".editor-avatar"); }, 4000)) no("toccato «Fatto», l'editor resta aperto");
+    return usato;
+  }
+  // la schermata del profilo a misura (larg x alt; alt piccola = tastiera aperta): niente scorre, il tasto e i campi si
+  // vedono tutti. "" = tutto bene, se no il perché
+  async function misuraProfilo(w, nome, larg, alt) {
+    var f = document.getElementById("tel-" + nome), d = w.document;
+    if (!d.getElementById("senza-entrata")) { var st = d.createElement("style"); st.id = "senza-entrata"; st.textContent = ".schermata{ animation:none !important; } .bp-logo, .om-benv{ animation:none !important; }"; d.head.appendChild(st); }
+    f.style.width = larg + "px"; f.style.height = alt + "px";
+    void d.documentElement.offsetHeight; w.dispatchEvent(new w.Event("resize"));
+    await W.dorme(400);
+    var sc = d.querySelector(".benvenuto-profilo, .editor-avatar"); if (!sc) return "non c'è la schermata del profilo";
+    if (d.documentElement.scrollHeight > alt + 1) return "la pagina scorre (" + d.documentElement.scrollHeight + " px)";
+    var c = sc.querySelector(".contenuto"); if (c.scrollHeight > c.clientHeight + 1 && !sc.classList.contains("editor-avatar")) return "il centro scorre (" + c.scrollHeight + " su " + c.clientHeight + ")";
+    var tasti = [].slice.call(sc.querySelectorAll(".piede .btn-primario, .om-azione.salva, input.link-campo"));
+    for (var i = 0; i < tasti.length; i++) { var r = tasti[i].getBoundingClientRect(); if (r.height && (r.top < -1 || r.bottom > alt + 1 || r.right > larg + 1)) return "«" + (tasti[i].placeholder || tasti[i].textContent) + "» esce dallo schermo"; }
+    return "";
+  }
+  async function misureProfilo(w, nome, tastiera) {
+    var M = [[360, 640], [412, 915]].concat(tastiera ? [[360, 330], [412, 420]] : []), esiti = [];
+    for (var k = 0; k < M.length; k++) { var e = await misuraProfilo(w, nome, M[k][0], M[k][1]); if (e) no(M[k][0] + "x" + M[k][1] + ": " + e); esiti.push(M[k][0] + "x" + M[k][1]); }
+    var f = document.getElementById("tel-" + nome); f.style.width = "360px"; f.style.height = "740px"; w.dispatchEvent(new w.Event("resize"));
+    return esiti.join(", ");
+  }
+  var home = function (w) { return !!w.document.querySelector(".schermata.home"); };
 
   var SCENARI = {
     // 1. Linea del tempo: chi è di turno non tocca "Avanti" e il gioco va avanti lo stesso in meno di 25 secondi
@@ -338,30 +387,31 @@
       return "Luca resta nella Sala con 'Rientra'; a fine gioco Giulia torna nella Sala (" + (pill(Gw) || "") + ")";
     } },
 
-    // 9. Due "Luca" diventano "Luca" e "Luca 2", con punti separati
-    9: { nome: "Due 'Luca': 'Luca' e 'Luca 2', punti separati", fai: async function () {
+    // 9. Due "Luca" nello stesso torneo, punti separati. (Fino al 14 ott: due ospiti SENZA profilo che si chiamavano
+    //    tutti e due "Luca" diventavano "Luca" e "Luca 2". Dal 15 ott il profilo è obbligatorio e i nomi dei profili sono
+    //    unici: due persone diverse sono per forza "Luca" e, per esempio, "Luca B"; due telefoni con lo STESSO profilo sono
+    //    la stessa persona e niente numero, come prima)
+    9: { nome: "Due 'Luca' (Luca e Luca B): nomi giusti e punti separati", fai: async function () {
       await W.apriTel("Paky", { x: 0 });
       var S = await apriSala("Paky", true);
       for (var i = 0; i < 2; i++) {
-        var n = i ? "Luca-bis" : "Luca", w = await W.apriTel(n, { hash: "sala=" + S, x: 185 * (i + 1), profilo: false });
-        var inp = await W.aspetta(function () { return w.document.querySelector("input.link-campo"); }, 4000);
-        if (!inp) no("niente campo del nome per chi non ha il profilo");
-        inp.value = "Luca"; W.clicca(w, /Entra/);
+        var n = i ? "Luca-bis" : "Luca";
+        await W.apriTel(n, { hash: "sala=" + S, x: 185 * (i + 1), profilo: { nome: i ? "Luca B" : "Luca" } });
         await W.aspetta(function () { return ((vm(S).membri) || []).length === 2 + i; }, 6000);
       }
       var nomi = (vm(S).membri || []).map(function (m) { return m.nome; });
-      if (nomi.join("|") !== "Paky|Luca|Luca 2") no("nella Sala: " + nomi.join(", "));
+      if (nomi.join("|") !== "Paky|Luca|Luca B") no("nella Sala: " + nomi.join(", "));
       var L = await salaLanciaGioco("Paky", "La Scalinata"), C = L.cod;
       if (!await W.aspetta(function () { return ids(C).length === 3; }, 8000)) no("i due Luca non entrano nel gioco");
       var nomiG = (vm(C).posti || []).map(function (p) { return p.nome; });
-      if (nomiG.join("|") !== "Paky|Luca|Luca 2") no("nel gioco: " + nomiG.join(", "));
+      if (nomiG.join("|") !== "Paky|Luca|Luca B") no("nel gioco: " + nomiG.join(", "));
       W.clicca(W.finestra("Paky"), /Comincia/);
       if (!await scalinataFinoAllaFine(C, ["Luca", "Luca-bis"], "Paky")) no("la Scalinata non è finita");
       await W.dorme(600);
       W.clicca(W.finestra("Paky"), /Chiudi/);
       var T9 = await W.aspetta(function () { var t = vm(S).torneo; return t && t.n === 1 && t; }, 6000);
       if (!T9) no("il torneo non ha contato la partita");
-      if (T9.punti.Luca == null || T9.punti["Luca 2"] == null) no("punti del torneo: " + JSON.stringify(T9.punti));
+      if (T9.punti.Luca == null || T9.punti["Luca B"] == null) no("punti del torneo: " + JSON.stringify(T9.punti));
       return "Sala: " + nomi.join(", ") + " · punti: " + Object.keys(T9.punti).map(function (k) { return k + " " + T9.punti[k]; }).join(", ");
     } },
 
@@ -412,19 +462,19 @@
       return "Sala " + S + " di nuovo in piedi in " + dt + " s; Luca (spento) tolto dopo circa 30 s";
     } },
 
-    // 12. (in più) Senza profilo il nome si scrive una volta: ricaricando si rientra col nome di prima
-    12: { nome: "Senza profilo: ricaricando si rientra col nome di prima", fai: async function () {
+    // 12. (in più) Col profilo (dal 15 ott obbligatorio) si entra dal link senza domande e, ricaricando, si rientra da soli
+    //     col nome del profilo (prima: "senza profilo il nome si scrive una volta")
+    12: { nome: "Col profilo: dal link dentro senza domande, ricaricando si rientra da soli", fai: async function () {
       var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "Tris");
-      var L = await W.apriTel("Luca", { hash: "gioco=tris&stanza=" + C, x: 185, profilo: false });
-      var inp = await W.aspetta(function () { return L.document.querySelector("input.link-campo"); }, 4000);
-      if (!inp) no("niente campo del nome");
-      inp.value = "Lucone"; W.clicca(L, /Entra/);
+      var L = await W.apriTel("Luca", { hash: "gioco=tris&stanza=" + C, x: 185, profilo: { nome: "Lucone" }, prima: spiaProfilo });
       if (!await W.aspetta(function () { return dentro(L) && vm(C).nomi && vm(C).nomi.O === "Lucone"; }, 6000)) no("Luca non entra");
+      if (L.__visto.length) no("dal link ha visto: " + L.__visto.join(", "));
       L = await W.ricarica("Luca");
       var ok = await W.aspetta(function () { return dentro(L); }, 6000);
       if (!ok) no("dopo la ricarica Luca non è rientrato da solo (" + T(L).slice(0, 80) + ")");
       if (vm(C).nomi.O !== "Lucone") no("nome dopo la ricarica: " + vm(C).nomi.O);
-      return "Luca è rientrato da solo come «Lucone»";
+      if (L.__visto.length) no("ricaricando ha visto: " + L.__visto.join(", "));
+      return "Luca è entrato e rientrato da solo come «Lucone», senza schermate del profilo";
     } },
 
     // 13. (in più) Il "testamento" di un collegamento vecchio dell'host arriva in ritardo (rete cambiata: il broker se ne
@@ -896,13 +946,13 @@
       return "suona solo dall'host, 🔇 la ferma (ricordato dopo la ricarica), 🎵 la riaccende, tace nel 3-2-1";
     } },
 
-    // 32. Senza profilo: il benvenuto con l'avatar che avrai, il 🎲 propone un nome buffo (cambia anche l'avatar) e
-    //     l'host lo vede entrare con quel nome
-    32: { nome: "Senza profilo: 🎲 nomi buffi e avatar in anteprima", fai: async function () {
+    // 32. Senza profilo (dal 15 ott): il benvenuto del profilo con l'avatar che avrai, il 🎲 propone un nome buffo (cambia
+    //     anche l'avatar); creato il profilo e toccato "Fatto", l'host lo vede entrare con quel nome e quell'avatar
+    32: { nome: "Senza profilo: benvenuto col 🎲 (nomi buffi e avatar in anteprima), poi dentro", fai: async function () {
       var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "La Scalinata");
       var L = await W.apriTel("Luca", { hash: "gioco=scalinata&stanza=" + C, x: 185, profilo: false });
-      var dado = await W.aspetta(function () { return L.document.querySelector(".sl-dado"); }, 4000);
-      if (!dado) no("accanto al nome non c'è il 🎲");
+      var dado = await W.aspetta(function () { return L.document.querySelector(".benvenuto-profilo .sl-dado"); }, 4000);
+      if (!dado) no("nel benvenuto, accanto al nome non c'è il 🎲");
       var input = L.document.querySelector(".sl-nome-campo input"), ant = L.document.querySelector(".sl-anteprima");
       if (!ant) no("manca l'avatar in anteprima");
       var visti = {}, svg0 = ant.innerHTML;
@@ -910,12 +960,13 @@
       if (Object.keys(visti).length < 4) no("il 🎲 propone sempre gli stessi nomi: " + Object.keys(visti).join(", "));
       if (ant.innerHTML === svg0) no("col 🎲 l'avatar in anteprima non cambia");
       var nome = input.value;
-      W.clicca(L, /Entra/);
+      await creaProfilo(L, null, "segreto1");
       if (!await W.aspetta(function () { return JSON.stringify(vm(C)).indexOf("\"" + nome + "\"") >= 0; }, 6000)) no("l'host non vede entrare «" + nome + "»");
       if (!await W.aspetta(function () { return avatarDi(P, nome); }, 3000)) no("nella saletta dell'host non c'è «" + nome + "»");
       var gio = [].concat(vm(C).posti || [], vm(C).giocatori || [], vm(C).players || []).filter(function (g) { return g && g.nome === nome; })[0];
-      if (!gio || JSON.stringify(gio.omino) !== JSON.stringify(L.SGOmino.casuale(nome))) no("l'avatar che vede l'host non è quello dell'anteprima");
-      return "nomi proposti: " + Object.keys(visti).join(", ") + "; è entrato «" + nome + "» con l'avatar dell'anteprima";
+      if (JSON.stringify(L.__fp.omino) !== JSON.stringify(L.SGOmino.norm(L.SGOmino.casuale(nome)))) no("l'avatar del profilo non è quello dell'anteprima");
+      if (!gio || JSON.stringify(gio.omino) !== JSON.stringify(L.__fp.omino)) no("l'avatar che vede l'host non è quello del profilo");
+      return "nomi proposti: " + Object.keys(visti).join(", ") + "; è entrato «" + nome + "» col profilo e l'avatar dell'anteprima";
     } },
 
     // 33. Sei telefoni: tutto in uno schermo da 360x640 e da 412x915 (niente scorre), i nomi non si coprono, gli avatar
@@ -962,6 +1013,164 @@
       P = await W.ricarica("Paky");
       if (!await W.aspetta(function () { return /Porta chiusa/.test(statoHost(P)) && (vm(S).membri || []).length === 2; }, 9000)) no("riaperta la Sala, la porta non è più chiusa (o Giulia non è rientrata)");
       return "faccina di Giulia a tutti, Luca «Sei fuori dalla Sala», Marco «La Sala è chiusa», la Sala riaperta dall'host ha ancora la porta chiusa";
+    } },
+
+    // ===== 90-96: PROFILO E AVATAR OBBLIGATORI (p0, 15 ott 2026) =====
+    // 90. Primo avvio senza profilo: benvenuto (prima della home) → nome e password → avatar già pronto → "Fatto" → home.
+    //     Tutto in uno schermo (anche con la tastiera aperta); ricaricando si entra da soli
+    90: { nome: "Primo avvio: benvenuto → profilo → avatar → home", fai: async function () {
+      var N = await W.apriTel("Nina", { x: 0, profilo: false, prima: spiaProfilo });
+      if (!await W.aspetta(function () { return /Benvenuto in SPeeD GAME/.test(T(N)); }, 4000)) no("niente benvenuto all'avvio («" + T(N).slice(0, 60) + "»)");
+      if (home(N)) no("la home si vede senza profilo");
+      var mis = await misureProfilo(N, "Nina", true);
+      var campi = N.document.querySelectorAll(".benvenuto-profilo input.link-campo");
+      campi[0].value = "N"; W.clicca(N, /^Avanti/);
+      if (!/almeno 2 lettere/.test(T(N))) no("nome di una lettera: nessun avviso");
+      campi[0].value = "Nina"; campi[0].dispatchEvent(new N.Event("input", { bubbles: true })); campi[1].value = "abc"; W.clicca(N, /^Avanti/);
+      if (!/almeno 6 caratteri/.test(T(N))) no("password corta: nessun avviso");
+      campi[1].value = "segreto1"; W.clicca(N, /^Avanti/);
+      var ed = await W.aspetta(function () { return N.document.querySelector(".editor-avatar .om-azione.salva.fatto"); }, 4000);
+      if (!ed) no("dopo «Avanti» non si apre l'avatar");
+      if (!W.BR.conti.nina) no("il profilo non è stato creato");
+      if (!N.__fp.omino || JSON.stringify(N.__fp.omino) !== JSON.stringify(N.SGOmino.norm(N.SGOmino.casuale("Nina")))) no("l'avatar pronto non è quello dell'anteprima (o non è salvato)");
+      if (!/Ecco il tuo avatar/.test(T(N))) no("nell'editor manca il saluto del benvenuto");
+      var misE = await misuraProfilo(N, "Nina", 360, 640); if (misE) no("editor a 360x640: " + misE);
+      var f = document.getElementById("tel-Nina"); f.style.width = "360px"; f.style.height = "740px";
+      ed.click();
+      if (!await W.aspetta(function () { return home(N); }, 4000)) no("toccato «Fatto», non si arriva alla home");
+      if (!/Nina/.test(T(N))) no("nella home non c'è il nome del profilo");
+      var ric = JSON.parse(N.localStorage.getItem("sg-ultimo-profilo") || "null");
+      if (!ric || ric.nome !== "Nina") no("il telefono non ricorda il profilo");
+      N = await W.ricarica("Nina");
+      if (!await W.aspetta(function () { return home(N); }, 3000)) no("ricaricando non si torna alla home");
+      if (N.__visto.length) no("ricaricando ha visto: " + N.__visto.join(", "));
+      N = await W.chiudiApp("Nina");
+      if (!await W.aspetta(function () { return home(N); }, 3000) || N.__visto.length) no("riaprendo l'app non si entra da soli");
+      return "benvenuto ok (" + mis + "), avatar pronto, home; ricarica e app riaperta: home senza domande";
+    } },
+
+    // 91. Primo avvio da un link di una stanza: il benvenuto dice chi ti aspetta, poi profilo → avatar → dentro la stanza giusta
+    91: { nome: "Primo avvio da un link: profilo → avatar → dentro la stanza", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "Tris");
+      var G = await W.apriTel("Giulia", { hash: "gioco=tris&stanza=" + C, x: 185, profilo: false });
+      var inv = await W.aspetta(function () { var x = G.document.querySelector(".bp-invito"); return x && x.textContent; }, 4000);
+      if (!inv || !/Tris/.test(inv)) no("nel benvenuto non c'è l'invito al Tris («" + inv + "»)");
+      if (G.location.hash) no("il link resta nell'indirizzo");
+      if (vm(C).avvId) no("Giulia è entrata nella stanza prima di fare il profilo");
+      await creaProfilo(G, "Giulia", "segreto1");
+      if (!await W.aspetta(function () { return vm(C).avvId && dentro(G); }, 6000)) no("fatto il profilo, Giulia non entra nel Tris (" + T(G).slice(0, 80) + ")");
+      var gio = [].concat(vm(C).posti || [], vm(C).giocatori || [], vm(C).players || []).filter(function (g) { return g && g.nome === "Giulia"; })[0];
+      if (gio && gio.omino && JSON.stringify(gio.omino) !== JSON.stringify(G.__fp.omino)) no("nella stanza Giulia non ha l'avatar del profilo");
+      if (!/Giulia/.test(JSON.stringify(vm(C)))) no("nella stanza non c'è il nome del profilo");
+      return "invito «" + inv + "» → profilo → avatar → dentro il Tris " + C;
+    } },
+
+    // 92. Primo avvio dal link di una Sala: profilo → avatar → dentro la Sala, col nome e l'avatar del profilo
+    92: { nome: "Primo avvio dal link di una Sala: profilo → avatar → nella Sala", fai: async function () {
+      await W.apriTel("Paky", { x: 0 });
+      var S = await apriSala("Paky");
+      var R = await W.apriTel("Sara", { hash: "sala=" + S, x: 185, profilo: false });
+      var inv = await W.aspetta(function () { var x = R.document.querySelector(".bp-invito"); return x && x.textContent; }, 4000);
+      if (!inv || inv.indexOf(S) < 0) no("nel benvenuto non c'è l'invito alla Sala («" + inv + "»)");
+      if ((vm(S).membri || []).length !== 1) no("Sara è nella Sala prima di fare il profilo");
+      await creaProfilo(R, "Sara", "segreto1");
+      var m = await W.aspetta(function () { return (vm(S).membri || []).filter(function (x) { return x.nome === "Sara"; })[0]; }, 6000);
+      if (!m) no("fatto il profilo, Sara non entra nella Sala");
+      if (JSON.stringify(m.omino) !== JSON.stringify(R.__fp.omino)) no("nella Sala Sara non ha l'avatar del profilo");
+      if (!await W.aspetta(function () { return R.document.querySelector(".saletta-schermo"); }, 3000)) no("Sara non vede la Sala");
+      return "invito «" + inv + "» → profilo → avatar → nella Sala " + S;
+    } },
+
+    // 93. Telefono col profilo che apre un link: dentro subito, nessuna schermata del profilo nemmeno per un attimo
+    93: { nome: "Col profilo, dal link: dentro subito senza domande", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "La Scalinata");
+      var t0 = Date.now();
+      var L = await W.apriTel("Luca", { hash: "gioco=scalinata&stanza=" + C, x: 185, prima: spiaProfilo });
+      if (!await W.aspetta(function () { return ids(C).length === 2 && dentro(L); }, 5000)) no("Luca non entra");
+      var dt = ((Date.now() - t0) / 1000).toFixed(1);
+      if (L.__visto.length) no("ha visto: " + L.__visto.join(", "));
+      if (L.document.querySelector("input.link-campo")) no("gli chiede il nome");
+      return "dentro in " + dt + " s, nessuna domanda";
+    } },
+
+    // 94. "Hai già un profilo? Entra" (telefono nuovo): password sbagliata → avviso; giusta → dritto nella stanza del link
+    94: { nome: "«Hai già un profilo? Entra»: dritto nella stanza", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "Tris");
+      W.contoFinto("Marco", "segreto9");
+      var M = await W.apriTel("Marco", { hash: "gioco=tris&stanza=" + C, x: 185, profilo: false, prima: spiaProfilo });
+      if (!await W.aspetta(function () { return M.document.querySelector(".bp-gia"); }, 4000)) no("niente «Hai già un profilo? Entra»");
+      W.clicca(M, /Hai già un profilo/);
+      var e = await W.aspetta(function () { return M.document.querySelector(".bp-entra"); }, 2000);
+      if (!e) no("non si apre «Entra col tuo profilo»");
+      var mis = await misureProfilo(M, "Marco", true);
+      var campi = e.querySelectorAll("input.link-campo");
+      campi[0].value = "Marco"; campi[1].value = "sbagliata"; W.clicca(M, /^Entra/);
+      if (!await W.aspetta(function () { return /sbagliat/.test(T(M)); }, 2000)) no("password sbagliata: nessun avviso");
+      campi[1].value = "segreto9"; W.clicca(M, /^Entra/);
+      if (!await W.aspetta(function () { return vm(C).avvId && dentro(M); }, 6000)) no("entrato col profilo, Marco non è nel Tris (" + T(M).slice(0, 80) + ")");
+      if (M.__visto.indexOf("editor") >= 0) no("entrando col profilo gli ha aperto l'editor dell'avatar");
+      return "entra (" + mis + "): password sbagliata avvisata, poi dritto nel Tris " + C;
+    } },
+
+    // 95. La sessione è sparita ma il telefono ricorda il profilo: "Bentornato, Anna!" chiede SOLO la password, poi la home;
+    //     dopo, ricaricando, si entra da soli
+    95: { nome: "Sessione scaduta: «Bentornato» chiede solo la password", fai: async function () {
+      W.contoFinto("Anna", "segreto7");
+      var ricordo = function (w) { if (!w.localStorage.getItem("sg-ultimo-profilo")) w.localStorage.setItem("sg-ultimo-profilo", JSON.stringify({ nome: "Anna", omino: w.SGOmino.casuale("Anna") })); };
+      var A = await W.apriTel("Anna", { x: 0, profilo: false, prima: function (w) { ricordo(w); spiaProfilo(w); } });
+      var b = await W.aspetta(function () { return A.document.querySelector(".bp-bentornato"); }, 4000);
+      if (!b) no("niente «Bentornato» («" + T(A).slice(0, 60) + "»)");
+      if (!/Bentornato, Anna/.test(T(A))) no("il nome non è già scritto");
+      if (b.querySelectorAll("input.link-campo").length !== 1) no("chiede più della password");
+      var mis = await misureProfilo(A, "Anna", true);
+      b.querySelector("input.link-campo").value = "segreto7"; W.clicca(A, /^Entra/);
+      if (!await W.aspetta(function () { return home(A); }, 4000)) no("con la password giusta non si arriva alla home");
+      A = await W.ricarica("Anna", { prima: spiaProfilo });
+      if (!await W.aspetta(function () { return home(A); }, 3000) || A.__visto.length) no("ricaricando richiede qualcosa: " + (A.__visto || []).join(", "));
+      return "bentornato (" + mis + ") → password → home; ricaricando, home senza domande";
+    } },
+
+    // 96. Niente internet alla prima apertura: "Serve internet per creare il profilo" + Riprova; tornata la rete, il benvenuto.
+    //     Rete che cade mentre si crea: avviso chiaro. Chi ha già il profilo, senza rete, entra lo stesso
+    96: { nome: "Senza internet: «Serve internet», Riprova; chi ha il profilo entra lo stesso", fai: async function () {
+      var X = await W.apriTel("Pino", { x: 0, profilo: false, offline: true });
+      if (!await W.aspetta(function () { return /Serve internet per creare il profilo/.test(T(X)); }, 4000)) no("senza rete non dice «Serve internet» («" + T(X).slice(0, 60) + "»)");
+      if (home(X)) no("senza profilo si vede la home");
+      var mis = await misureProfilo(X, "Pino", false);
+      W.clicca(X, /Riprova/); await W.dorme(300);
+      if (!/Serve internet/.test(T(X))) no("Riprova senza rete: è sparito l'avviso");
+      X.__offline = false; W.clicca(X, /Riprova/);
+      if (!await W.aspetta(function () { return /Benvenuto in SPeeD GAME/.test(T(X)); }, 3000)) no("tornata la rete, Riprova non apre il benvenuto");
+      X.__reteGiu = true;
+      var campi = X.document.querySelectorAll(".benvenuto-profilo input.link-campo");
+      campi[0].value = "Pino"; campi[1].value = "segreto1"; W.clicca(X, /^Avanti/);
+      if (!await W.aspetta(function () { return /Serve internet/.test(T(X)); }, 2000)) no("rete giù mentre crea: nessun avviso chiaro");
+      X.__reteGiu = false; W.clicca(X, /^Avanti/);
+      if (!await W.aspetta(function () { return X.document.querySelector(".editor-avatar"); }, 3000)) no("tornata la rete, Avanti non crea il profilo");
+      // chi ha già il profilo (il telefono lo ricorda), senza rete: entra lo stesso, col suo nome
+      var R = await W.apriTel("Rita", { x: 185, profilo: false, offline: true, prima: function (w) { w.localStorage.setItem("sg-ultimo-profilo", JSON.stringify({ nome: "Rita", omino: null })); } });
+      if (!await W.aspetta(function () { return home(R); }, 3000)) no("chi ha il profilo, senza rete, non entra («" + T(R).slice(0, 60) + "»)");
+      if (!/Rita/.test(T(R))) no("senza rete nella home non c'è il suo nome");
+      return "«Serve internet» (" + mis + "), Riprova, avviso se la rete cade; Rita senza rete entra lo stesso";
+    } },
+
+    // 97. (controllo del passo 0) Sessione sparita e niente rete, ma il telefono ricorda il profilo: si entra col nome
+    //     ricordato e i giochi si aprono (prima "Gioca lo stesso" riportava sempre a «Bentornato»)
+    97: { nome: "Sessione sparita e senza rete: si gioca col profilo ricordato", fai: async function () {
+      var O = await W.apriTel("Olga", { x: 0, profilo: false, prima: function (w) { w.localStorage.setItem("sg-ultimo-profilo", JSON.stringify({ nome: "Olga", omino: null })); w.__reteGiu = true; } });
+      if (!await W.aspetta(function () { return home(O) && /Olga/.test(T(O)); }, 3000)) no("senza rete non entra col nome ricordato («" + T(O).slice(0, 60) + "»)");
+      W.clicca(O, /Tris/);
+      if (!await W.aspetta(function () { return /Come giocate/.test(T(O)); }, 2000)) no("senza rete il Tris chiede il profilo («" + T(O).slice(0, 60) + "»)");
+      W.contoFinto("Pia", "segreto1");
+      var Q = await W.apriTel("Pia", { x: 185, profilo: false, prima: function (w) { w.localStorage.setItem("sg-ultimo-profilo", JSON.stringify({ nome: "Pia", omino: null })); } });
+      var b = await W.aspetta(function () { return Q.document.querySelector(".bp-bentornato input.link-campo"); }, 3000);
+      if (!b) no("niente «Bentornato»");
+      Q.__reteGiu = true; b.value = "segreto1"; W.clicca(Q, /^Entra/);
+      if (!await W.aspetta(function () { return W.clicca(Q, /Gioca lo stesso/); }, 2000)) no("rete giù: niente «Gioca lo stesso»");
+      if (!await W.aspetta(function () { return home(Q); }, 2000)) no("«Gioca lo stesso» non porta alla home");
+      W.clicca(Q, /Tris/);
+      if (!await W.aspetta(function () { return /Come giocate/.test(T(Q)); }, 2000)) no("dopo «Gioca lo stesso» il Tris riporta a «Bentornato»");
+      return "Olga entra senza rete e apre il Tris; Pia «Gioca lo stesso» → home → Tris";
     } }
   };
 

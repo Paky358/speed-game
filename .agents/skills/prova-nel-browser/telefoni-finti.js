@@ -9,7 +9,10 @@
 //   il "testamento" (will) parte quando il telefono sparisce, ed è trattenuto se lo chiede il collegamento;
 // - la memoria: ogni telefono ha il suo localStorage e il suo sessionStorage (BR.mem[nome]), che restano
 //   quando la pagina si ricarica (ricarica) e il sessionStorage si svuota quando l'app si chiude (chiudiApp);
-// - il profilo: SGNube finto (nome del telefono), oppure niente profilo con { profilo: false };
+// - il profilo: SGNube finto, già fatto col nome del telefono (il profilo è obbligatorio: senza, l'app apre il benvenuto),
+//   oppure { profilo: false } = telefono mai usato (si crea nel benvenuto: SGNube.crea / accedi finti, conti in BR.conti,
+//   contoFinto(nome, password) ne prepara uno); w.__offline = true = la parte dei profili non si è caricata (niente rete);
+//   il profilo resta nella memoria del telefono quando la pagina si ricarica (come la sessione di Firebase);
 // - i fotogrammi delle animazioni arrivano anche con la finestra del browser nascosta (requestAnimationFrame a tempo)
 //   e i suoni che non partono non lanciano errori.
 // Cose che succedono ai telefoni veri:
@@ -18,7 +21,9 @@
 //   ricarica(nome)                  = la pagina si ricarica (stessa scheda: stessa memoria)
 //   chiudiApp(nome)                 = l'app si chiude e si riapre (memoria sì, sessionStorage no)
 document.open(); document.write('<!doctype html><body style="margin:0;background:#333;position:relative"></body>'); document.close();
-window.BR = { clients: [], retained: {}, log: [], perNome: {}, mem: {}, tel: {}, ritardo: 4 };
+window.BR = { clients: [], retained: {}, log: [], perNome: {}, mem: {}, tel: {}, conti: {}, ritardo: 4 };
+// un profilo finto già fatto (per "Hai già un profilo? Entra" e "Bentornato"): contoFinto("Luca", "segreto1")
+window.contoFinto = (nome, pwd, extra) => { const k = String(nome).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); BR.conti = BR.conti || {}; BR.conti[k] = { pwd: String(pwd), profilo: Object.assign({ uid: "finto-" + k, nome: String(nome).trim(), fiches: {}, omino: null, coins: 5000, level: 1, xp: 0 }, extra || {}) }; return BR.conti[k].profilo; };
 // la finestra di conferma dell'app ("Uscire dalla partita?", "Chiudere la stanza per tutti?") risponde sì da sola,
 // come window.confirm: il tasto rosso si accende dopo un attimo e qui viene toccato appena si può, su ogni telefono
 if (!window.__autoConferma) window.__autoConferma = setInterval(() => {
@@ -73,6 +78,7 @@ window.memoriaFinta = function (d) {
 window.preparaFinestra = function (w, nome, opz) {
   opz = opz || {};
   const mem = BR.mem[nome] = BR.mem[nome] || { l: {}, s: {} };
+  BR.conti = BR.conti || {};
   const def = (k, get, set) => Object.defineProperty(w, k, { configurable: true, get, set: set || (() => {}) });
   def("localStorage", () => memoriaFinta(mem.l));
   def("sessionStorage", () => memoriaFinta(mem.s));
@@ -80,15 +86,40 @@ window.preparaFinestra = function (w, nome, opz) {
   def("mqtt", () => finto);   // (lo script vero di mqtt prova a mettersi qui: viene ignorato)
   let sg = null;
   def("SG", () => sg, v => { sg = v; const avvia = v.avviaApp; v.avviaApp = function () { if (!w.__permesso) return; return avvia.apply(v, arguments); }; });   // l'app parte quando lo dico io
-  const fp = opz.profilo === false ? null : Object.assign({ nome, fiches: {}, omino: null, coins: 5000, level: 1, xp: 0 }, typeof opz.profilo === "object" ? opz.profilo : {});
-  w.__fp = fp;
+  // il profilo finto resta nella memoria del telefono (come la sessione di Firebase): ricaricando c'è ancora.
+  // Di partenza ogni telefono ha già il suo profilo (nome del telefono, con l'avatar); { profilo: false } = mai fatto il profilo
+  if (!("fp" in mem)) mem.fp = opz.profilo === false ? null : Object.assign({ nome, fiches: {}, omino: null, coins: 5000, level: 1, xp: 0 }, typeof opz.profilo === "object" ? opz.profilo : {});
+  Object.defineProperty(w, "__fp", { configurable: true, get: () => mem.fp });
+  if (opz.offline) w.__offline = true;
   let nube = null;
   def("SGNube", () => nube, v => {
     nube = v;
-    v.disponibile = () => true; v.pronto = () => true; v.utente = () => (fp ? { uid: "finto-" + nome } : null);
-    v.profilo = () => { if (fp && !fp.omino && w.SGOmino) fp.omino = w.SGOmino.casuale(nome); return fp; };
-    v.onCambio = cb => { try { cb(v.profilo()); } catch (e) {} };
-    v.salvaProgressi = () => {}; v.statGioco = () => ({}); v.salvaFiches = () => {}; v.salvaOmino = () => {}; v.fiches = () => 1000;
+    const ascolta = [], avvisa = () => ascolta.slice().forEach(cb => { try { cb(v.profilo()); } catch (e) {} });
+    const chiave = n => String(n || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "amico";
+    const errore = code => Promise.reject(Object.assign(new Error(code), { code }));
+    // w.__offline = true: la parte dei profili non si è caricata (niente internet all'apertura)
+    v.disponibile = () => !w.__offline; v.pronto = () => true; v.utente = () => (mem.fp ? { uid: mem.fp.uid || "finto-" + nome } : null);
+    v.profilo = () => { const fp = mem.fp; if (fp && !fp.omino && !fp.__nuovo && w.SGOmino) fp.omino = w.SGOmino.casuale(nome); return fp; };
+    v.onCambio = cb => { ascolta.push(cb); try { cb(v.profilo()); } catch (e) {} };
+    // creare il profilo ed entrare: i conti finti stanno in BR.conti (contoFinto(nome, password) ne prepara uno)
+    v.crea = (n, pwd, emoji) => {
+      if (w.__offline || w.__reteGiu) return errore("auth/network-request-failed");
+      if (BR.conti[chiave(n)]) return errore("auth/email-already-in-use");
+      if (String(pwd || "").length < 6) return errore("auth/weak-password");
+      const p = { uid: "finto-" + chiave(n), nome: String(n).trim().slice(0, 20), emoji: emoji || "🙂", fiches: {}, omino: null, coins: 1000, level: 1, xp: 0, __nuovo: true };
+      BR.conti[chiave(n)] = { pwd: String(pwd), profilo: p };
+      mem.fp = p; BR.log.push("PROFILO creato da " + nome + ": " + p.nome);
+      setTimeout(avvisa, 5); return Promise.resolve(p);
+    };
+    v.accedi = (n, pwd) => {
+      if (w.__offline || w.__reteGiu) return errore("auth/network-request-failed");
+      const c = BR.conti[chiave(n)];
+      if (!c || c.pwd !== String(pwd)) return errore("auth/invalid-credential");
+      mem.fp = c.profilo; setTimeout(avvisa, 5); return Promise.resolve({ user: { uid: c.profilo.uid } });
+    };
+    v.esci = () => { mem.fp = null; setTimeout(avvisa, 5); return Promise.resolve(); };
+    v.salvaOmino = (cfg, omini, n) => { if (!mem.fp) return Promise.resolve(); mem.fp.omino = cfg; if (omini) { mem.fp.omini = omini; mem.fp.ominoN = n || 0; } return Promise.resolve(); };
+    v.salvaProgressi = () => {}; v.statGioco = () => ({}); v.salvaFiches = () => {}; v.fiches = () => 1000;
     v.lista = () => []; v.salvaLista = () => {}; v.monete = () => 5000; v.cambiaMonete = () => Promise.resolve(5000);
     v.contaPartita = () => {}; v.aggiungiXp = () => null; v.pubblica = () => {};
   });
@@ -106,7 +137,8 @@ window.preparaFinestra = function (w, nome, opz) {
     if (stop) AS.stop = function () { try { return stop.apply(this, arguments); } catch (e) {} };
   } catch (e) {}
 };
-// apre un telefono: opz = { hash: "gioco=tris&stanza=ABCD", x: posizione, profilo: false|{...}, prima: w => {...} }
+// apre un telefono: opz = { hash: "gioco=tris&stanza=ABCD", x: posizione, profilo: false|{...}, offline: true, prima: w => {...} }
+// (offline: la parte dei profili non si carica finché nella pagina non si fa w.__offline = false)
 // (prima: si fa prima che parta l'app, anche dopo una ricarica). Restituisce la finestra.
 window.apriTel = async function (nome, opz) {
   opz = Object.assign({}, BR.tel[nome] ? BR.tel[nome].opz : {}, opz || {});
@@ -123,6 +155,8 @@ window.apriTel = async function (nome, opz) {
   // i collegamenti da ospite di questo telefono (per mandare mosse a mano: reteDi(nome).invia({...}))
   const ent = w.SGNet && w.SGNet.entra;
   if (ent) w.SGNet.entra = function (cod, cb, o) { const h = ent.apply(this, arguments); if (h) { h.__sala = !!(o && o.tieni); (w.__reti = w.__reti || []).push(h); } return h; };
+  // la rete del telefono come la vede l'app (navigator.onLine): giù con w.__offline o w.__reteGiu
+  try { Object.defineProperty(w.navigator, "onLine", { configurable: true, get: () => !w.__offline && !w.__reteGiu }); } catch (e) {}
   if (opz.prima) opz.prima(w);   // (per le prove: es. un gioco finto registrato prima che parta l'app)
   w.__permesso = true; w.SG.avviaApp();
   await dorme(300);

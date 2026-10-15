@@ -2606,11 +2606,26 @@
   function profiloAttivo() {
     if (window.SGNube && SGNube.disponibile()) {
       var pc = SGNube.profilo();
-      return pc ? { id: pc.uid, nome: pc.nome, emoji: pc.emoji, omino: pc.omino || null, omini: pc.omini || null, ominoN: pc.ominoN || 0, cloud: true } : null;
+      if (pc) return { id: pc.uid, nome: pc.nome, emoji: pc.emoji, omino: pc.omino || null, omini: pc.omini || null, ominoN: pc.ominoN || 0, cloud: true };
+      // dentro col profilo, ma i suoi dati non arrivano (niente rete): intanto si gioca col nome e l'avatar ricordati
+      return (SGNube.utente && SGNube.utente()) || senzaRete ? profiloRicordato() : null;
     }
     var id = leggiL(K_ATTIVO, null);
-    return profili().filter(function (p) { return p.id === id; })[0] || null;
+    return profili().filter(function (p) { return p.id === id; })[0] || profiloRicordato();   // senza la parte dei profili (niente rete): quello ricordato
   }
+  // ---- l'ultimo profilo usato su questo telefono: { nome, omino } (mai la password). Serve se la sessione scade
+  //      (si chiede solo la password, col nome già scritto) o se all'apertura manca la rete (si entra lo stesso) ----
+  var K_ULTIMO = "sg-ultimo-profilo";
+  var senzaRete = false;   // la sessione è sparita e manca la rete: intanto si gioca col profilo ricordato (nome e avatar)
+  function ricordoProfilo() { var r = leggiL(K_ULTIMO, null); return r && r.nome ? r : null; }
+  function ricordaProfilo() {
+    var io = window.SGNube && SGNube.disponibile() && SGNube.profilo() ? profiloAttivo() : null;
+    if (!io || !io.cloud || !io.nome) return;
+    var r = { nome: io.nome, omino: io.omino || null };
+    if (JSON.stringify(r) !== JSON.stringify(ricordoProfilo())) scriviL(K_ULTIMO, r);
+  }
+  function dimenticaProfilo() { try { localStorage.removeItem(K_ULTIMO); } catch (e) {} }
+  function profiloRicordato() { var r = ricordoProfilo(); return r ? { id: "ricordo", nome: r.nome, emoji: "🙂", omino: r.omino || null, omini: null, ominoN: 0, cloud: false, ricordo: true } : null; }
   function salvaProfilo(p) {
     var lista = profili().filter(function (x) { return x.id !== p.id; });
     lista.unshift(p);
@@ -2797,9 +2812,10 @@
   }
   // bozza (facoltativa) = { nome, omino, omini, ominoN }: l'editor lavora su questa e non sul profilo
   // (serve mentre crei il profilo: il personaggio si salva appena il profilo esiste)
-  function schermataOmino(dopo, bozza) {
-    var io = bozza || profiloAttivo();
-    if (!io) return schermataAccesso(function () { schermataOmino(dopo); });
+  // opz.benvenuto: subito dopo aver creato il profilo (niente ‹: l'avatar pronto c'è già, basta "✅ Fatto")
+  function schermataOmino(dopo, bozza, opz) {
+    var io = bozza || profiloAttivo(), benv = !!(opz && opz.benvenuto);
+    if (!io) return schermataAccesso(function () { schermataOmino(dopo, null, opz); });
     var salvaOminoMio = bozza ? function (c, om, n) { bozza.omino = c; bozza.omini = om; bozza.ominoN = n; } : salvaOminoProfilo;
     var O = SGOmino, cfg = O.norm(io.omino || O.casuale(io.nome));
     var tab = 0;
@@ -2818,7 +2834,8 @@
     var puntini = el("div", { class: "om-puntini" });
     var palco = el("div", { class: "omino-palco editor" }, [el("div", { class: "om-faro" }), el("div", { class: "om-pedana" }), figura,
       puntini,
-      el("button", { class: "om-indietro", "aria-label": "Indietro", text: "‹", onclick: function () { esci(); } }),
+      benv ? el("div", { class: "om-benv", text: "👋 Ecco il tuo avatar! Cambialo come vuoi" })
+           : el("button", { class: "om-indietro", "aria-label": "Indietro", text: "‹", onclick: function () { esci(); } }),
       el("button", { class: "om-freccia sx", "aria-label": "Personaggio precedente", text: "‹", onclick: function () { scorri(-1); } }),
       el("button", { class: "om-freccia dx", "aria-label": "Personaggio successivo", text: "›", onclick: function () { scorri(1); } })]);
     function disegnaCambi() {
@@ -3105,7 +3122,7 @@
     } }));
     palco.appendChild(bAnnulla); aggAnnulla();
     var salvato = false;
-    palco.appendChild(el("button", { class: "om-azione salva", text: "✅ Salva", onclick: function () {
+    palco.appendChild(el("button", { class: "om-azione salva" + (benv ? " fatto" : ""), text: benv ? "✅ Fatto" : "✅ Salva", onclick: function () {
       if (salvato) return; salvato = true;
       this.textContent = "👋 Fatto";   // si vede subito che il tocco è arrivato
       bozze[slot] = cfg; var tutti = bozze.map(function (b) { return O.norm(b); });
@@ -3140,26 +3157,16 @@
       ]));
       sp._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🚪 Esci dal profilo", onclick: function () {
         chiediConferma("Sei sicuro di voler uscire dal profilo?", "Se non ricordi la password non potrai più accedere.", "🚪 Esci", function () {
-          SGNube.esci().then(function () { schermataHome(); });
+          dimenticaProfilo();   // uscito apposta: questo telefono non lo ripropone
+          SGNube.esci().then(function () { schermataBenvenuto(schermataHome); });   // il profilo serve: si crea o si entra con un altro
         });
       } }));
       mostra(sp); return;
     }
-    var s = schermata({ icona: "👤", titolo: "Il tuo profilo", sotto: "Entra o crea il tuo", indietro: schermataHome });
-    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Entra col tuo profilo: fiches e dati ti seguono su ogni telefono." }));
-    var nome = el("input", { class: "link-campo", type: "text", maxlength: "20", placeholder: "Nome" });
-    var pwd = el("input", { class: "link-campo", type: "password", maxlength: "40", placeholder: "Password", style: "margin-top:8px" });
-    var avviso = el("div", { class: "link-avviso" });
-    s._contenuto.appendChild(nome); s._contenuto.appendChild(pwd); s._contenuto.appendChild(avviso);
-    var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
-      var n = (nome.value || "").trim(), pw = pwd.value || "";
-      if (n.length < 2 || pw.length < 1) { avviso.textContent = "Scrivi nome e password."; return; }
-      bEntra.disabled = true; avviso.textContent = "Un attimo…";
-      SGNube.accedi(n, pw).then(function () { attendiProfilo(dopo); }).catch(function (e) { bEntra.disabled = false; avviso.textContent = SGNube.messaggioErrore(e); });
-    } });
-    s._piede.appendChild(bEntra);
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "➕ Non ho un profilo, crealo", onclick: function () { schermataCreaCloud(dopo); } }));
-    mostra(s);
+    // senza profilo: il benvenuto (o, se questo telefono ricorda il profilo, solo la password)
+    var ric = ricordoProfilo();
+    if (ric) return schermataBentornato(dopo || schermataHome, ric, { indietro: dopo || schermataHome });
+    schermataBenvenuto(dopo || schermataHome);
   }
 
   // ---- 📊 le statistiche di ogni gioco: partite, vinte, perse, % di vittorie, tempo giocato, serie migliore ----
@@ -3228,54 +3235,197 @@
     })();
   }
 
-  // scelta = quello che hai già scritto/scelto (si ritrova tornando dall'editor del personaggio)
-  function schermataCreaCloud(dopo, scelta) {
-    scelta = scelta || { emoji: FACCINE[0], nome: "", pwd: "", omino: null, omini: null, ominoN: 0 };
-    var s = schermata({ icona: "👤", titolo: "Crea profilo", sotto: "Nome, password, faccina e personaggio", indietro: function () { schermataAccessoCloud(dopo); } });
-    var nome = el("input", { class: "link-campo", type: "text", maxlength: "20", placeholder: "Come ti chiami?" });
-    var pwd = el("input", { class: "link-campo", type: "password", maxlength: "40", placeholder: "Scegli una password (min 6)", style: "margin-top:8px" });
-    nome.value = scelta.nome || ""; pwd.value = scelta.pwd || "";
-    nome.addEventListener("input", function () { scelta.nome = nome.value; if (!scelta.omino) disegnaPers(); });
-    pwd.addEventListener("input", function () { scelta.pwd = pwd.value; });
-    s._contenuto.appendChild(nome); s._contenuto.appendChild(pwd);
-    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Scegli la faccina" }));
-    var griglia = el("div", { class: "faccine" });
-    FACCINE.forEach(function (e) {
-      griglia.appendChild(el("button", { class: "faccina" + (e === scelta.emoji ? " attiva" : ""), text: e, onclick: function () {
-        scelta.emoji = e; [].forEach.call(griglia.children, function (c) { c.className = "faccina" + (c.textContent === e ? " attiva" : ""); });
-      } }));
-    });
-    s._contenuto.appendChild(griglia);
-    // il personaggio: finché non lo crei è quello "a caso" legato al nome che scrivi
-    var pers = el("div", { class: "omino-palco" + (scelta.omino ? "" : " vuoto") });
-    function disegnaPers() { if (window.SGOmino) pers.innerHTML = SGOmino.svg(scelta.omino || SGOmino.casuale((nome.value || "").trim() || "io")); }
-    if (window.SGOmino) {
-      disegnaPers();
-      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Il tuo personaggio" }));
-      s._contenuto.appendChild(el("div", { class: "omino-profilo crea" }, [ pers,
-        el("button", { class: "btn " + (scelta.omino ? "btn-fantasma" : "btn-primario"), text: scelta.omino ? "✏️ Modifica il personaggio" : "🧍 Crea il tuo personaggio", onclick: function () {
-          var b = { nome: (nome.value || "").trim() || "io", omino: scelta.omino, omini: scelta.omini, ominoN: scelta.ominoN };
-          schermataOmino(function () {
-            if (b.omino) { scelta.omino = b.omino; scelta.omini = b.omini; scelta.ominoN = b.ominoN || 0; }
-            schermataCreaCloud(dopo, scelta);
-          }, b);
-        } }) ]));
+  // =========================================================
+  //  PROFILO E AVATAR OBBLIGATORI (dal 15 ott 2026)
+  //  Chi apre l'app la prima volta crea il profilo (nome + password) e l'avatar prima di tutto, anche se arriva
+  //  dal link di un amico (dopo entra da solo nella stanza o nella Sala del link). Chi ha già usato un profilo su
+  //  questo telefono entra da solo, senza domande (la sessione di Firebase resta salvata).
+  // =========================================================
+  // dopo = dove si va (la home, o la stanza/Sala del link). o = { daLink, invito: "🎉 Ti aspettano…" }
+  function garantisciProfilo(dopo, o) {
+    o = o || {};
+    var io = profiloAttivo(), N = window.SGNube, ric = ricordoProfilo();
+    if (io) {
+      // un profilo di prima senza avatar: lo fa adesso, una volta (non arrivando da un link: lì si entra e basta)
+      if (io.cloud && !io.omino && !o.daLink && window.SGOmino) return schermataOmino(dopo, null, { benvenuto: true });
+      return dopo();
     }
-    var avviso = el("div", { class: "link-avviso" });
-    s._contenuto.appendChild(avviso);
-    var bCrea = el("button", { class: "btn btn-primario", text: "Crea profilo ▶", onclick: function () {
-      var n = (nome.value || "").trim(), pw = pwd.value || "";
-      if (n.length < 2) { avviso.textContent = "Scrivi il tuo nome."; return; }
-      if (pw.length < 6) { avviso.textContent = "La password deve avere almeno 6 caratteri."; return; }
-      bCrea.disabled = true; avviso.textContent = "Creo il profilo…";
-      SGNube.crea(n, pw, scelta.emoji).then(function () {
-        if (!scelta.omino) return dopo();
-        // il personaggio fatto prima si salva appena il profilo c'è
-        attendiProfilo(function () { SGNube.salvaOmino(scelta.omino, scelta.omini, scelta.ominoN || 0); dopo(); });
-      }).catch(function (e) { bCrea.disabled = false; avviso.textContent = SGNube.messaggioErrore(e); });
-    } });
-    s._piede.appendChild(bCrea);
+    if (!N || !N.disponibile()) return ric ? dopo() : senzaInternet(dopo, o);   // la parte dei profili non si è caricata: niente rete
+    if (!N.pronto()) {   // Firebase sta ancora ritrovando la sessione: si aspetta un po', poi chi ha il profilo entra lo stesso
+      schermataCaricamento();
+      var fatto = false;
+      N.onCambio(function () { if (!fatto && N.pronto()) { fatto = true; garantisciProfilo(dopo, o); } });
+      setTimeout(function () { if (!fatto) { fatto = true; if (ric || (N.utente && N.utente())) dopo(); else senzaInternet(dopo, o); } }, 8000);
+      return;
+    }
+    if (N.utente && N.utente()) return dopo();   // dentro, ma il profilo non arriva (rete): si entra lo stesso, arriverà
+    if (ric) return navigator.onLine === false ? (senzaRete = true, dopo()) : schermataBentornato(dopo, ric, o);   // sessione scaduta: basta la password
+    schermataBenvenuto(dopo, o);
+  }
+  // il messaggio giusto per chi crea il profilo o entra
+  function erroreProfilo(e, nome) {
+    var c = (e && e.code) || "";
+    if (c === "auth/email-already-in-use") return "Il nome «" + nome + "» è già preso: scegline un altro (tocca 🎲). Se è il tuo, tocca «Hai già un profilo? Entra».";
+    if (c === "auth/network-request-failed" || (e && e.message === "offline")) return "Serve internet: controlla il Wi-Fi o i dati e riprova.";
+    if (/auth\/(invalid-credential|wrong-password|user-not-found|invalid-login-credentials|invalid-email)/.test(c)) return "Nome o password sbagliati.";
+    if (c === "auth/too-many-requests") return "Troppi tentativi: aspetta un minuto e riprova.";
+    if (c === "auth/weak-password") return "La password deve avere almeno 6 caratteri.";
+    return "Qualcosa è andato storto: riprova.";
+  }
+  // le schermate del profilo: tutto in uno schermo, anche con la tastiera aperta (si stringe l'avatar, mai il tasto)
+  function schermataProfiloBase(cls, indietro) {
+    var s = schermata({ indietro: indietro || null });
+    s.classList.add("benvenuto-profilo"); if (cls) s.classList.add(cls); if (indietro) s.classList.add("con-indietro");
+    function misura() {
+      if (!s.isConnected) { window.removeEventListener("resize", misura); if (window.visualViewport) visualViewport.removeEventListener("resize", misura); return; }
+      var h = window.visualViewport ? visualViewport.height : window.innerHeight;
+      s.classList.toggle("stretta", h < 500); s.classList.toggle("strettissima", h < 380);
+    }
+    window.addEventListener("resize", misura); if (window.visualViewport) visualViewport.addEventListener("resize", misura);
+    setTimeout(misura, 0);
+    return s;
+  }
+  function testaProfilo(titolo, sotto) {
+    return el("div", { class: "bp-testa" }, [ el("div", { class: "bp-logo", "aria-hidden": "true", text: "⚡" }), el("h1", { text: titolo }), sotto ? el("p", { class: "bp-sotto", text: sotto }) : null ]);
+  }
+  // Invio nel primo campo porta al secondo, nel secondo preme il tasto
+  function invioCampi(a, b, fai) {
+    a.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); b.focus(); } });
+    b.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); fai(); } });
+  }
+
+  // PRIMA VOLTA: "Benvenuto in SPeeD GAME!" → nome (col 🎲) + password → l'avatar → dove si doveva andare
+  function schermataBenvenuto(dopo, o) {
+    o = o || {};
+    var s = schermataProfiloBase(), c = s._contenuto;
+    c.appendChild(testaProfilo("Benvenuto in SPeeD GAME!", "Crea il tuo profilo: scegli un nome, una password e poi il tuo avatar."));
+    if (o.invito) c.appendChild(el("div", { class: "bp-invito", text: o.invito }));
+    var ant = el("div", { class: "sl-anteprima bp-anteprima", "aria-hidden": "true" });   // l'avatar che avrai (nasce dal nome: col 🎲 cambiano tutti e due)
+    var nome = el("input", { class: "link-campo", type: "text", maxlength: "16", placeholder: "Come ti chiami?", autocomplete: "username", autocapitalize: "words", enterkeyhint: "next" });
+    var pwd = el("input", { class: "link-campo bp-pwd", type: "password", maxlength: "40", placeholder: "Scegli una password (almeno 6)", autocomplete: "new-password", enterkeyhint: "go" });
+    var avviso = el("div", { class: "link-avviso bp-avviso", "aria-live": "polite" });
+    c.appendChild(ant); c.appendChild(nome); c.appendChild(pwd); c.appendChild(avviso);
+    if (o.nome) nome.value = o.nome;
+    dadoNome(nome, ant);   // 🎲 un nome buffo a caso (se è vuoto mette il nome dell'ultima volta)
+    var bAvanti = el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: avanti });
+    function avanti() {
+      if (bAvanti.disabled) return;
+      var n = (nome.value || "").trim().slice(0, 16), pw = pwd.value || "";
+      if (n.length < 2) { avviso.textContent = "Scrivi il tuo nome (almeno 2 lettere)."; nome.focus(); return; }
+      if (!/[a-z0-9]/i.test(n)) { avviso.textContent = "Nel nome serve almeno una lettera o un numero."; nome.focus(); return; }
+      if (pw.length < 6) { avviso.textContent = "La password deve avere almeno 6 caratteri."; pwd.focus(); return; }
+      bAvanti.disabled = true; avviso.textContent = "Creo il tuo profilo…";
+      audioCtx();   // (il tocco sblocca i suoni per dopo)
+      SGNube.crea(n, pw, "🙂").then(function () {
+        attendiProfilo(function () {
+          if (!SGNube.profilo()) { bAvanti.disabled = false; avviso.textContent = "Il profilo è creato ma non arriva: controlla la rete e tocca «Hai già un profilo? Entra»."; return; }
+          // l'avatar si salva subito (quello dell'anteprima): così nessuno resta senza, anche se chiude l'app adesso
+          if (window.SGOmino && !SGNube.profilo().omino) {
+            var cfg = SGOmino.norm(SGOmino.casuale(n));
+            SGNube.salvaOmino(cfg, [cfg, SGOmino.norm(secondoOmino(cfg, n))], 0);
+          }
+          ricordaProfilo();
+          if (!window.SGOmino) return dopo();
+          schermataOmino(function () { dopo(); pillola("benvenuto", "🎉 Benvenuto, " + n + "!", "verde", 3500); }, null, { benvenuto: true });
+        });
+      }).catch(function (e) { bAvanti.disabled = false; avviso.textContent = erroreProfilo(e, n); });
+    }
+    invioCampi(nome, pwd, avanti);
+    s._piede.appendChild(bAvanti);
+    s._piede.appendChild(el("button", { class: "btn btn-fantasma bp-gia", text: "Hai già un profilo? Entra", onclick: function () {
+      schermataEntraProfilo(dopo, Object.assign({}, o, { nome: (nome.value || "").trim() }));
+    } }));
     mostra(s);
+  }
+
+  // "Hai già un profilo? Entra" (per chi cambia telefono): nome + password, poi dritto dove doveva andare
+  function schermataEntraProfilo(dopo, o) {
+    o = o || {};
+    var s = schermataProfiloBase("bp-entra"), c = s._contenuto;
+    c.appendChild(testaProfilo("Entra col tuo profilo", "Scrivi il nome e la password che hai scelto quando l'hai creato."));
+    if (o.invito) c.appendChild(el("div", { class: "bp-invito", text: o.invito }));
+    var nome = el("input", { class: "link-campo", type: "text", maxlength: "20", placeholder: "Il tuo nome", autocomplete: "username", autocapitalize: "words", enterkeyhint: "next" });
+    var pwd = el("input", { class: "link-campo bp-pwd", type: "password", maxlength: "40", placeholder: "La tua password", autocomplete: "current-password", enterkeyhint: "go" });
+    var avviso = el("div", { class: "link-avviso bp-avviso", "aria-live": "polite" });
+    nome.value = o.nome || "";
+    c.appendChild(nome); c.appendChild(pwd); c.appendChild(avviso);
+    var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: entra });
+    function entra() {
+      if (bEntra.disabled) return;
+      var n = (nome.value || "").trim(), pw = pwd.value || "";
+      if (n.length < 2 || !pw) { avviso.textContent = "Scrivi nome e password."; (n.length < 2 ? nome : pwd).focus(); return; }
+      bEntra.disabled = true; avviso.textContent = "Un attimo…";
+      audioCtx();
+      SGNube.accedi(n, pw).then(function () { attendiProfilo(function () { ricordaProfilo(); dopo(); }); })
+        .catch(function (e) { bEntra.disabled = false; avviso.textContent = erroreProfilo(e, n); });
+    }
+    invioCampi(nome, pwd, entra);
+    s._piede.appendChild(bEntra);
+    s._piede.appendChild(el("button", { class: "btn btn-fantasma bp-gia", text: "‹ Non ho un profilo: lo creo", onclick: function () { schermataBenvenuto(dopo, o); } }));
+    mostra(s);
+  }
+
+  // il telefono ricorda il profilo ma la sessione è sparita: "Bentornato, Luca!", solo la password (una volta)
+  // o.indietro: si può tornare indietro (dalla home, quando si era entrati senza rete)
+  function schermataBentornato(dopo, ric, o) {
+    o = o || {};
+    var s = schermataProfiloBase("bp-bentornato", o.indietro), c = s._contenuto;
+    c.appendChild(testaProfilo("Bentornato, " + ric.nome + "! 👋", "Per sicurezza scrivi la tua password: poi entri da solo."));
+    if (o.invito) c.appendChild(el("div", { class: "bp-invito", text: o.invito }));
+    if (window.SGOmino) c.appendChild(el("div", { class: "sl-anteprima bp-anteprima", "aria-hidden": "true", html: SGOmino.svg(ric.omino || SGOmino.casuale(ric.nome)) }));
+    var nome = el("input", { type: "text", autocomplete: "username", value: ric.nome, hidden: "hidden", "aria-hidden": "true" });   // (per chi salva le password: il nome c'è già)
+    var pwd = el("input", { class: "link-campo bp-pwd", type: "password", maxlength: "40", placeholder: "La tua password", autocomplete: "current-password", enterkeyhint: "go" });
+    var avviso = el("div", { class: "link-avviso bp-avviso", "aria-live": "polite" });
+    c.appendChild(nome); c.appendChild(pwd); c.appendChild(avviso);
+    var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: entra });
+    var bLoStesso = el("button", { class: "btn btn-fantasma bp-gia", text: "▶ Gioca lo stesso (senza rete)", hidden: "hidden", onclick: function () { senzaRete = true; dopo(); } });
+    function entra() {
+      if (bEntra.disabled) return;
+      var pw = pwd.value || "";
+      if (!pw) { avviso.textContent = "Scrivi la tua password."; pwd.focus(); return; }
+      bEntra.disabled = true; avviso.textContent = "Un attimo…";
+      audioCtx();
+      SGNube.accedi(ric.nome, pw).then(function () { attendiProfilo(function () { ricordaProfilo(); dopo(); }); })
+        .catch(function (e) {
+          bEntra.disabled = false; avviso.textContent = erroreProfilo(e, ric.nome);
+          if (e && e.code === "auth/network-request-failed") bLoStesso.hidden = false;   // senza rete si gioca lo stesso
+        });
+    }
+    pwd.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); entra(); } });
+    s._piede.appendChild(bEntra);
+    s._piede.appendChild(bLoStesso);
+    s._piede.appendChild(el("button", { class: "btn btn-fantasma bp-gia", text: "Non sei " + ric.nome + "? Cambia profilo", onclick: function () {
+      dimenticaProfilo(); schermataBenvenuto(dopo, { invito: o.invito, daLink: o.daLink });
+    } }));
+    mostra(s);
+  }
+
+  // prima apertura senza rete (o Firebase che non risponde): il profilo non si può creare
+  function senzaInternet(dopo, o) {
+    var s = schermataProfiloBase("bp-rete"), c = s._contenuto;
+    c.appendChild(el("div", { class: "bp-rete-ico", "aria-hidden": "true", text: "📶" }));
+    c.appendChild(testaProfilo("Serve internet per creare il profilo", "Il profilo ti segue su ogni telefono: per crearlo serve la rete. Controlla il Wi-Fi o i dati e tocca Riprova."));
+    var avviso = el("div", { class: "link-avviso bp-avviso", "aria-live": "polite" });
+    c.appendChild(avviso);
+    function riprova() {
+      window.removeEventListener("online", riprova);
+      if (!s.isConnected) return;
+      var N = window.SGNube;
+      if (N && N.disponibile()) { if (N.riprova) N.riprova(); return garantisciProfilo(dopo, o); }
+      if (navigator.onLine === false) { avviso.textContent = "Ancora niente rete: riprova tra un attimo."; window.addEventListener("online", riprova); return; }
+      avviso.textContent = "Un attimo…";
+      location.reload();   // la parte dei profili non si era caricata: si ricarica (il link aperto resta segnato: dopo si entra lo stesso)
+    }
+    window.addEventListener("online", riprova);   // torna la rete: si riprova da soli
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Riprova", onclick: riprova }));
+    mostra(s);
+  }
+  // il link aperto all'avvio, in parole per chi gioca ("🎉 Ti aspettano per giocare a ❌ Tris!")
+  function invitoDi(L) {
+    if (!L) return "";
+    if (L.sala) return "🎉 I tuoi amici ti aspettano nella Sala " + String(L.sala).toUpperCase() + "!";
+    var g = L.gioco && giocoDa(L.gioco);
+    return g && L.stanza ? "🎉 Ti aspettano per giocare a " + (g.icona ? g.icona + " " : "") + g.nome + "!" : "";
   }
 
   // =========================================================
@@ -3639,38 +3789,9 @@
     segnaLinkSessione({ sala: codice });   // se la pagina si ricarica, si rientra da soli
     tieniAcceso(true);
     var io = profiloAttivo();
-    if (!io) {   // senza profilo si entra lo stesso: basta il nome (scritto una volta: ricaricando si rientra col nome di prima)
-      var n = nomeStanza(codice);
-      if (n) return entraInSala(codice, n, "🙂", window.SGOmino ? SGOmino.casuale(n) : null);
-      return nomeOspiteSala(codice);
-    }
+    // nella Sala si entra sempre col profilo (nome e avatar suoi): chi non ce l'ha lo crea e poi entra da solo
+    if (!io) return schermataAccesso(function () { salaOspite(codice); });
     entraInSala(codice, io.nome, io.emoji, io.omino || null);
-  }
-  // chi apre il link della sala (o del torneo) senza profilo: scrive il nome ed entra subito
-  function nomeOspiteSala(codice) {
-    var s = schermata({ icona: "👥", titolo: "Entra con gli amici", sotto: "Codice " + String(codice).toUpperCase(), indietro: schermataHome });
-    var ultimo = ""; try { ultimo = localStorage.getItem("sg-nome-ospite") || ""; } catch (e) {}
-    var input = el("input", { class: "link-campo", type: "text", maxlength: "16", placeholder: "Come ti chiami?" });
-    input.value = ultimo;
-    var avviso = el("div", { class: "link-avviso" });
-    var anteprima = el("div", { class: "sl-anteprima", "aria-hidden": "true" });   // l'avatar che avrai con quel nome
-    s._contenuto.appendChild(el("div", { class: "sl-benvenuto" }, [
-      el("b", { class: "sl-benv-tit", text: "Ti aspettano per giocare! 🎉" }), anteprima,
-      el("span", { class: "sl-benv-sotto", text: "Scrivi il tuo nome ed entri subito, il profilo non serve. Tocca 🎲 per un nome buffo." })
-    ]));
-    s._contenuto.appendChild(input); s._contenuto.appendChild(avviso);
-    dadoNome(input, anteprima);   // 🎲 un nome buffo a caso
-    function entra() {
-      var n = (input.value || "").trim().slice(0, 16);
-      if (n.length < 2) { avviso.textContent = "Scrivi il tuo nome."; return; }
-      try { localStorage.setItem("sg-nome-ospite", n); } catch (e) {}
-      audioCtx();
-      entraInSala(codice, n, "🙂", window.SGOmino ? SGOmino.casuale(n) : null);
-    }
-    input.addEventListener("keydown", function (e) { if (e.key === "Enter") entra(); });
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: entra }));
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "👤 Ho un profilo: accedi", onclick: function () { schermataAccesso(function () { salaOspite(codice); }); } }));
-    mostra(s);
   }
   function entraInSala(codice, nome, emoji, omino) {
     if (salaG && salaG.rete) try { salaG.rete.chiudi(); } catch (e) {}
@@ -5880,7 +6001,14 @@
       var daLink = !!(linkParams.sala || (linkParams.gioco && linkParams.stanza));
       if (location.hash) try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
       if (daLink) segnaLinkSessione(linkParams.sala ? { sala: linkParams.sala } : { gioco: linkParams.gioco, stanza: linkParams.stanza });
+      if (window.SGNube && SGNube.onCambio) SGNube.onCambio(ricordaProfilo);   // questo telefono ricorda l'ultimo profilo usato
+      // PROFILO OBBLIGATORIO: prima di tutto (home, gioco, stanza o Sala del link) c'è il profilo con l'avatar;
+      // chi l'ha già usato qui entra da solo. Il link letto qui sopra si usa dopo (la pagina ricaricata lo ritrova)
       function parti() {
+        var ls0 = daLink ? linkParams : linkSessione();
+        garantisciProfilo(vai, { daLink: !!(daLink || ls0), invito: invitoDi(ls0) });
+      }
+      function vai() {
         // pagina ricaricata (o app riaperta) senza link: la mia stanza o la mia Sala si riaprono, o si torna in quella dell'amico
         var torna = !daLink && rientroAutomatico();
         if (torna) return torna();

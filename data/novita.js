@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 208,
+    data: "15 ottobre 2026",
+    titolo: "Il tuo profilo e il tuo avatar, per tutti 👋",
+    descrizione: [
+      "La prima volta che apri SPeeD GAME ti accoglie il benvenuto: scegli il nome (tocca 🎲 per uno buffo) e una password, e il tuo avatar è già pronto. Lo cambi come vuoi, poi tocchi «✅ Fatto».",
+      "Se arrivi dal link di un amico, prima ti fai il profilo e poi entri da solo nella sua stanza o nella sua Sala: il benvenuto ti dice già chi ti aspetta.",
+      "Chi ha già il profilo su quel telefono entra e basta, anche aprendo un link: nessuna domanda, dritto nella partita. Così tutti giocano col loro nome e il loro avatar.",
+      "Cambi telefono? Tocca «Hai già un profilo? Entra» e scrivi nome e password. Se il telefono ti riconosce ma serve la password, te la chiede una volta sola, col nome già scritto.",
+      "Senza internet il profilo non si può creare: lo dice chiaro, con «🔄 Riprova». Chi ha già il profilo entra lo stesso."
+    ]
+  },
+  {
     v: 207,
     data: "15 ottobre 2026",
     titolo: "Tutti i giochi controllati uno per uno 🛠️",

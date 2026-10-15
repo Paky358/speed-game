@@ -1821,3 +1821,38 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 .editor-avatar.camerino:not(.aperto) .om-nome{ font-size:.82rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
 .editor-avatar.camerino .omino-pannello .etichetta{ font-size:.95rem; margin:2px 0 0; }
 .editor-avatar.camerino .om-acaso{ min-height:34px; font-size:.88rem; margin:2px 0 4px; border-radius:12px; }
+
+/* ---- PROFILO OBBLIGATORIO (15 ott 2026): benvenuto, "Entra", "Bentornato" e "Serve internet".
+        Tutto in uno schermo, anche con la tastiera aperta: si stringe l'avatar (core.js mette .stretta / .strettissima),
+        mai il tasto per andare avanti. Si animano solo opacità e transform ---- */
+.schermata.benvenuto-profilo{ flex:0 0 auto; height:var(--alt, 100dvh); max-height:var(--alt, 100dvh); min-height:0; overflow:hidden; }
+.benvenuto-profilo > .testa{ display:none; }
+.benvenuto-profilo.con-indietro > .testa{ display:flex; margin-bottom:0; }
+.benvenuto-profilo > .contenuto{ display:flex; flex-direction:column; justify-content:center; min-height:0; }
+.benvenuto-profilo > .piede{ flex:0 0 auto; gap:4px; margin-top:10px; }
+.bp-testa{ flex:0 0 auto; text-align:center; }
+.bp-logo{ font-size:2.3rem; line-height:1; filter:drop-shadow(0 0 10px rgba(255,165,40,.75)); animation:bpLogo .6s cubic-bezier(.3,1.5,.5,1); }
+@keyframes bpLogo{ from{ opacity:0; transform:scale(.4) rotate(-20deg); } }
+.bp-testa h1{ margin:6px 0 0; font-size:1.5rem; font-weight:900; letter-spacing:-.02em; line-height:1.15; }
+.bp-sotto{ margin:6px auto 0; max-width:320px; color:var(--testo-tenue); font-size:.98rem; line-height:1.4; }
+.bp-invito{ flex:0 0 auto; align-self:center; max-width:100%; margin:10px 0 0; padding:8px 14px; border-radius:16px; text-align:center; font-weight:800; font-size:.95rem; line-height:1.3;
+  background:rgba(255,214,90,.14); box-shadow:inset 0 0 0 2px rgba(255,214,90,.38); }
+.benvenuto-profilo .bp-anteprima{ flex:1 1 150px; min-height:0; max-height:170px; width:100%; margin:8px 0 0; display:flex; justify-content:center; align-items:flex-end; }
+.benvenuto-profilo .bp-anteprima svg{ height:100%; width:auto; max-width:100%; }
+.benvenuto-profilo .sl-nome-campo, .benvenuto-profilo .contenuto > .link-campo{ flex:0 0 auto; }
+.benvenuto-profilo .link-campo{ font-size:1.05rem; }   /* (16 px o più: l'iPhone non ingrandisce la pagina quando si scrive) */
+.benvenuto-profilo .bp-pwd{ margin-top:8px; }
+.bp-avviso{ flex:0 0 auto; min-height:1.4em; margin-top:6px; text-align:center; }
+.bp-gia{ min-height:44px; padding:8px 12px; font-size:.98rem; }
+.bp-rete-ico{ flex:0 0 auto; text-align:center; font-size:3.2rem; line-height:1; margin-bottom:6px; }
+/* con la tastiera aperta (o uno schermo basso) restano il titolo, i campi e il tasto */
+.benvenuto-profilo.stretta .bp-sotto, .benvenuto-profilo.stretta .bp-logo{ display:none; }
+.benvenuto-profilo.stretta .bp-testa h1{ font-size:1.25rem; margin:0; }
+.benvenuto-profilo.stretta .bp-invito{ margin-top:6px; padding:5px 12px; font-size:.88rem; }
+.benvenuto-profilo.strettissima .bp-anteprima, .benvenuto-profilo.strettissima .bp-invito{ display:none; }
+.benvenuto-profilo.strettissima{ padding-top:calc(8px + env(safe-area-inset-top)); padding-bottom:calc(8px + env(safe-area-inset-bottom)); }
+@media (prefers-reduced-motion: reduce){ .bp-logo{ animation:none; } }
+/* l'editor dell'avatar subito dopo il profilo: al posto di ‹ un saluto, e "✅ Fatto" che si nota */
+.om-benv{ position:absolute; left:8px; top:8px; z-index:2; max-width:calc(100% - 118px); padding:6px 11px; border-radius:12px; color:#fff; font-weight:800; font-size:.84rem; line-height:1.2;
+  background:rgba(8,16,44,.72); box-shadow:inset 0 0 0 1.5px rgba(255,214,90,.5); animation:bpLogo .5s cubic-bezier(.3,1.5,.5,1); }
+.editor-avatar .om-azione.salva.fatto{ padding:0 16px; font-size:1rem; box-shadow:0 0 0 3px rgba(255,214,90,.35), 0 6px 16px rgba(0,0,0,.35); }
