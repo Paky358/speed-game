@@ -135,14 +135,21 @@
   }
   // false = lettera sbagliata o parola che il gioco non conosce; true = giusta; null = categoria senza elenco (inventata o "black"): conta solo la lettera
   function rispostaGiusta(testo, cat, lettera) {
+    if (!iniziaBene(testo, cat, lettera)) return false;
+    var set = PAROLE && cat && PAROLE[cat.testo];
+    if (!set) return null;
+    return formeP(pulisci(testo)).some(function (k) { return !!set[k]; });
+  }
+  // comincia con la lettera del giro? (con o senza articolo; per le persone vale anche il cognome)
+  function iniziaBene(testo, cat, lettera) {
     var p = pulisci(testo); if (!p) return false;
     var l = pulisci(lettera).charAt(0), senza = p.replace(ARTICOLI, ""), pezzi = senza.split(" ");
     var persona = /personaggio|cantante|calciatore|allenatore|rapper|telecronista|cantautore/i.test((cat && cat.testo) || "");
-    if (!(senza.charAt(0) === l || p.charAt(0) === l || (persona && pezzi[pezzi.length - 1].charAt(0) === l))) return false;   // per le persone vale anche il cognome
-    var set = PAROLE && cat && PAROLE[cat.testo];
-    if (!set) return null;
-    return formeP(p).some(function (k) { return !!set[k]; });
+    return senza.charAt(0) === l || p.charAt(0) === l || (persona && pezzi[pezzi.length - 1].charAt(0) === l);
   }
+  // ✋ STOP: si può fermare tutti solo con TUTTE le caselle piene di parole con la lettera giusta (come sulla carta)
+  function quanteBuone(parole, cats, lettera) { return cats.filter(function (c, k) { return iniziaBene((parole || [])[k], c, lettera); }).length; }
+  var GRAZIA_STOP = 10000;   // dopo lo STOP, agli altri restano 10 secondi
 
   SG.registra({
     id: "nomicose",
@@ -159,6 +166,7 @@
       "Poi si <b>vota</b> al tabellone, una categoria alla volta: il tasto <b>👍 / 👎</b> accanto a ogni parola dice se vale. Si cambia idea toccando di nuovo; con <b>⋯</b> ognuno vota per conto suo.",
       "Le parole <b>giuste</b> (con la lettera giusta e che il gioco conosce) partono già con <b>👍 da tutti</b>; quelle con la lettera sbagliata o che il gioco non conosce partono bocciate: basta un tocco per cambiare voto.",
       "Se <b>più della metà</b> approva la parola vale <b>10 punti</b>; se due hanno scritto la <b>stessa</b> parola (anche con o senza articolo) valgono <b>5</b> a testa; se è bocciata o vuota, <b>0</b>.",
+      "✋ <b>STOP</b> (se l'host lo lascia acceso): come sulla carta, chi riempie <b>tutte le caselle</b> con parole che iniziano con la lettera giusta tocca <b>STOP</b> e agli altri restano <b>10 secondi</b>. Sullo stesso telefono, chi fa STOP decide il tempo di chi scrive dopo di lui: il suo tempo più 10 secondi.",
       "Si gioca un certo numero di giri: alla fine vince chi ha più punti. A pari punti si vince insieme.",
       "<b>Online</b> (ognuno dal suo telefono): si scrive tutti nello stesso momento, poi al tabellone ognuno vota dal suo telefono. Una parola <b>vale</b> se non la boccia almeno metà degli altri."
     ],
@@ -325,6 +333,16 @@
       bL[1] = el("button", { class: "modo-chip", onclick: function () { scegliLett(true); } }, [ el("div", {}, [ el("div", { class: "mt", text: "Anche U e Z" }), el("div", { class: "ms", text: "per esperti" }) ]) ]);
       box.appendChild(el("div", { class: "modo-griglia" }, [bL[0], bL[1]]));
 
+      // ✋ STOP come sulla carta: di partenza acceso, l'host lo può spegnere
+      dove.stop = true;
+      box.appendChild(el("div", { class: "etichetta", text: "✋ STOP" }));
+      var bS = [];
+      function scegliStop(v) { dove.stop = v; bS[0].className = "modo-chip" + (v ? " attiva" : ""); bS[1].className = "modo-chip" + (!v ? " attiva" : ""); }
+      bS[0] = el("button", { class: "modo-chip attiva", onclick: function () { scegliStop(true); } }, [ el("div", {}, [ el("div", { class: "mt", text: "Sì" }) ]) ]);
+      bS[1] = el("button", { class: "modo-chip", onclick: function () { scegliStop(false); } }, [ el("div", {}, [ el("div", { class: "mt", text: "No" }) ]) ]);
+      box.appendChild(el("div", { class: "modo-griglia" }, [bS[0], bS[1]]));
+      box.appendChild(el("p", { class: "modulo-nota", text: "Come sulla carta: chi riempie tutte le caselle con la lettera giusta tocca ✋ STOP e agli altri restano 10 secondi. Sullo stesso telefono, chi fa STOP decide il tempo di chi scrive dopo: il suo tempo più 10 secondi." }));
+
       aggiornaConta();
     },
 
@@ -337,7 +355,7 @@
       var st = {
         sessioneTrofei: sessioneNcc(),
         g: t.giocatori.map(function (n) { return { nome: n, punti: 0, _trofei: nuovoProgresso() }; }),
-        cats: cats, secondi: imp.secondi || 60, giri: imp.round || 2, usate: [], difficili: !!imp.difficili,
+        cats: cats, secondi: imp.secondi || 60, giri: imp.round || 2, usate: [], difficili: !!imp.difficili, stop: imp.stop !== false,
         giro: 0, lettera: null, risposte: [], voti: []
       };
       // si gioca nello studio del game show: sigla, poi il primo giro
@@ -458,6 +476,19 @@
       ".nc-tg.no{background:#ff5d6c;color:#2a0006}",
       ".nc-piu{flex:0 0 auto;border:0;border-radius:99px;width:34px;height:34px;font:inherit;font-size:16px;font-weight:900;cursor:pointer;background:rgba(255,255,255,.12);color:#fff}",
       ".nc-voti[hidden]{display:none}",
+      // ✋ STOP: il tasto (si accende quando tutte le caselle sono piene con la lettera giusta) e la scritta grande in alto
+      ".nc-stop-btn{background:linear-gradient(135deg,#ff6b6b,#e03131)!important;color:#fff!important;font-weight:900;letter-spacing:.04em}",
+      ".nc-stop-btn.grande{font-size:1.25rem;padding-top:14px;padding-bottom:14px;animation:ncStopPulsa .7s ease-in-out infinite alternate}",
+      ".nc-stop-btn:disabled{background:rgba(255,255,255,.14)!important;color:rgba(255,255,255,.75)!important;opacity:1}",
+      "@keyframes ncStopPulsa{to{transform:scale(1.04)}}",
+      ".nc-stop{position:absolute;left:50%;top:calc(8px + env(safe-area-inset-top));z-index:24;transform:translateX(-50%);display:flex;align-items:center;gap:12px;width:max-content;max-width:94%;box-sizing:border-box;",
+        "padding:8px 10px 8px 16px;border-radius:18px;background:linear-gradient(135deg,#ff6b6b,#c92a2a);color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.45);pointer-events:none;animation:ncStopEntra .45s cubic-bezier(.3,1.6,.5,1) both}",
+      ".nc-stop-t{font-weight:900;font-size:19px;line-height:1.15}",
+      ".nc-stop-n{flex:0 0 auto;min-width:54px;height:54px;border-radius:50%;background:#fff;color:#c92a2a;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900}",
+      ".nc-stop-n:empty{display:none}",
+      "@keyframes ncStopEntra{from{transform:translateX(-50%) scale(.4);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}",
+      ".nc-con-stop .nc-foglio{padding-top:calc(84px + env(safe-area-inset-top))}",
+      ".nc-con-stop .nc-conto{display:none}",
       // chi guarda senza giocare
       ".nc-guardi{position:absolute;left:50%;top:calc(8px + env(safe-area-inset-top));transform:translateX(-50%);z-index:22;max-width:92%;text-align:center;",
         "background:rgba(7,4,26,.78);color:#ffe066;font-weight:800;font-size:13px;padding:6px 12px;border-radius:99px;pointer-events:none}"
@@ -477,6 +508,39 @@
     try { var o = c.createOscillator(), g = c.createGain(), n = c.currentTime; o.type = "sawtooth"; o.frequency.setValueAtTime(190, n); o.frequency.linearRampToValueAtTime(150, n + 0.55);
       g.gain.setValueAtTime(0.0001, n); g.gain.exponentialRampToValueAtTime(0.12, n + 0.02); g.gain.setValueAtTime(0.12, n + 0.45); g.gain.exponentialRampToValueAtTime(0.0001, n + 0.6);
       o.connect(g); g.connect(c.destination); o.start(n); o.stop(n + 0.62); } catch (e) {}
+  }
+
+  // "✋ STOP!": due colpi di clacson da quiz (e sui telefoni degli altri una vibrazione: è un momento di gioco)
+  function suonoStop(vibra) {
+    var c = SG.audioCtx && SG.audioCtx();
+    if (c) try {
+      [[0, 523], [0.17, 392]].forEach(function (x) {
+        var o = c.createOscillator(), g = c.createGain(), n = c.currentTime + x[0];
+        o.type = "square"; o.frequency.setValueAtTime(x[1], n);
+        g.gain.setValueAtTime(0.0001, n); g.gain.exponentialRampToValueAtTime(0.13, n + 0.01); g.gain.setValueAtTime(0.13, n + 0.12); g.gain.exponentialRampToValueAtTime(0.0001, n + 0.16);
+        o.connect(g); g.connect(c.destination); o.start(n); o.stop(n + 0.17);
+      });
+    } catch (e) {}
+    if (vibra) try { navigator.vibrate && navigator.vibrate([70, 50, 70]); } catch (e) {}
+  }
+  // la scritta grande "✋ STOP di Paky!" in alto con i secondi che restano (non copre la lettera: il foglio scende un po').
+  // scade = quando finisce il tempo (Date.now()); conta = false: senza secondi (sullo stesso telefono, il tempo lo dice il foglio)
+  function cartelloStop(S, el, testo, scade, conta) {
+    if (!S || !S.vivo()) return null;
+    var vecchio = S.vista.querySelector(".nc-stop"); if (vecchio) vecchio.parentNode.removeChild(vecchio);
+    var num = el("b", { class: "nc-stop-n" }), box = el("div", { class: "nc-stop", role: "status" }, [ el("span", { class: "nc-stop-t", text: testo }), conta === false ? null : num ]);
+    S.vista.appendChild(box); S.vista.classList.add("nc-con-stop");
+    var ultimo = -1, tic = null, finito = false;
+    function via() { clearInterval(tic); if (box.parentNode) box.parentNode.removeChild(box); if (!S.vista.querySelector(".nc-stop")) S.vista.classList.remove("nc-con-stop"); }
+    function passo() {
+      if (!S.vivo() || !box.parentNode) return via();
+      if (conta === false) return;
+      var r = Math.max(0, Math.ceil((scade - Date.now()) / 1000));
+      if (r !== ultimo) { ultimo = r; num.textContent = String(r); if (r > 0 && r <= 10) tick(r <= 3 ? 990 : 760); }
+      if (r <= 0 && !finito) { finito = true; setTimeout(via, 600); }
+    }
+    passo(); tic = setInterval(passo, 200);
+    return { via: via };
   }
 
   // la fine della puntata: un vincitore, oppure il pareggio con tutti i primi accesi insieme
@@ -499,11 +563,14 @@
     st.voti = st.g.map(function () { return st.cats.map(function () { return st.g.map(function () { return false; }); }); });
     st.votiPronti = {};
     st.fatti = st.g.map(function () { return false; });
+    st.stopDi = null; st.stopMs = null;   // ✋ chi ha fatto STOP in questo giro e in quanto tempo
     st.g.forEach(function (g, i) { ST.puntiLeggio(S, i, g.punti, 0); foglietto(st, i, false); });
     await estraiLettera(st);
-    for (var i = 0; i < st.g.length; i++) {
+    // con lo STOP chi scrive per primo non ha mai il tempo accorciato: a ogni giro si comincia da uno diverso
+    var parte = st.stop ? st.giro % st.g.length : 0;
+    for (var k = 0; k < st.g.length; k++) {
       if (!S.vivo()) return;
-      await turnoScrittura(st, i);
+      await turnoScrittura(st, (parte + k) % st.g.length);
     }
     if (!S.vivo()) return;
     ST.accendiSolo(S, -1);
@@ -545,7 +612,7 @@
     var S = st.S, el = st.t.el;
     ST.fermaTimer(S); ST.vuota(S.sch);
     var fatti = el("div", { class: "nc-fatti" });
-    st.g.forEach(function (g, k) { fatti.appendChild(el("span", { class: st.fatti[k] ? "ok" : "" }, [ fac(el, g), el("span", { text: (st.fatti[k] ? "✅ " : "") + g.nome }) ])); });
+    st.g.forEach(function (g, k) { fatti.appendChild(el("span", { class: st.fatti[k] ? "ok" : "" }, [ fac(el, g), el("span", { text: (st.stopDi === k ? "✋ " : st.fatti[k] ? "✅ " : "") + g.nome }) ])); });
     S.sch.appendChild(el("div", { class: "nc-estr" }, [
       el("div", { class: "nc-giro", text: "Giro " + (st.giro + 1) + " di " + st.giri }),
       el("div", { class: "nc-grande", text: st.lettera }),
@@ -569,12 +636,25 @@
     ST.accendiSolo(S, i); ST.testoLeggio(S, i, "✍️ scrive");
     await ST.suLeggio(S, i, 400);
     ST.lampo(S);
-    st.risposte[i] = await apriFoglio(S, st.t.el, g, st.lettera, st.cats, st.secondi * 1000);   // la telecamera "entra" nel foglio: si scrive
+    // ✋ STOP sullo stesso telefono: chi lo fa decide il tempo di chi scrive dopo (il suo tempo + 10 secondi)
+    var ms = st.secondi * 1000, limite = st.stopDi != null, cart = null;
+    if (limite) {
+      ms = Math.min(ms, st.stopMs + GRAZIA_STOP);
+      cart = cartelloStop(S, st.t.el, "✋ " + st.g[st.stopDi].nome + " ha fatto STOP in " + Math.max(1, Math.round(st.stopMs / 1000)) + " secondi: tu ne hai " + Math.round(ms / 1000), 0, false);
+    }
+    st.risposte[i] = await apriFoglio(S, st.t.el, g, st.lettera, st.cats, ms, { stop: st.stop && !limite });   // la telecamera "entra" nel foglio: si scrive
+    if (cart) cart.via();
     if (!S.vivo()) return;
     st.fatti[i] = true; foglietto(st, i, true);
-    ST.testoLeggio(S, i, "✅ fatto"); ST.faccia(S, i, "esulta");
+    var fermati = !!st.risposte[i].stop && !limite;
+    if (fermati) { st.stopDi = i; st.stopMs = st.risposte[i].ms || ms; }
+    ST.testoLeggio(S, i, fermati ? "✋ STOP!" : "✅ fatto"); ST.faccia(S, i, "esulta");
     schermoScrittura(st, i);
-    await ST.dorme(700);
+    if (fermati && st.fatti.some(function (f) { return !f; })) {
+      ST.terzo(S, i, "✋ STOP di " + g.nome + "!", "Chi scrive dopo ha " + Math.round(Math.min(st.secondi * 1000, st.stopMs + GRAZIA_STOP) / 1000) + " secondi", "✋");
+      ST.pubblico(S, "applauso");
+      await ST.dorme(1800); ST.viaTerzo(S);
+    } else await ST.dorme(700);
     ST.faccia(S, i, null);
   }
   // il foglio a righe: la lettera cerchiata, una riga per categoria, il tempo è una matita che si accorcia
@@ -607,37 +687,80 @@
       requestAnimationFrame(function () { foglio.classList.add("on"); });
       setTimeout(function () { foglio.classList.add("on"); }, 90);   // anche se lo schermo non ha ancora ridisegnato
       // il tempo: la barra si accorcia (solo transform), gli ultimi 10 secondi diventa rossa
-      var partita = false, t0 = Date.now();
-      function parti() { if (partita) return; partita = true; var resta = Math.max(0, ms - (Date.now() - t0)); barraT.style.transform = "scaleX(" + (resta / ms).toFixed(4) + ")"; void barraT.offsetWidth; barraT.style.transition = "transform " + resta + "ms linear"; barraT.style.transform = "scaleX(0)"; }
+      // (con lo STOP di un altro il tempo si accorcia: S._tempoFoglio(ms che restano), mai più lungo di prima)
+      var partita = false, t0 = Date.now(), fineAt = t0 + ms, toPoco = null, toFine = null, toConto = [];
+      function parti() { if (partita) return; partita = true; var resta = Math.max(0, fineAt - Date.now()); barraT.style.transform = "scaleX(" + Math.min(1, resta / ms).toFixed(4) + ")"; void barraT.offsetWidth; barraT.style.transition = "transform " + resta + "ms linear"; barraT.style.transform = "scaleX(0)"; }
       requestAnimationFrame(function () { requestAnimationFrame(parti); });
       setTimeout(parti, 120);
-      var toPoco = setTimeout(function () { tempo.classList.add("poco"); }, Math.max(0, ms - 10000));
-      var toFine = setTimeout(function () { tempoScaduto(); chiudi(); }, ms);
-      // gli ultimi 5 secondi: tic-tac e il numero grande 5-4-3-2-1
-      var conto = el("div", { class: "nc-conto" }), toConto = [];
+      // gli ultimi 5 secondi: tic-tac e il numero grande 5-4-3-2-1 (con lo STOP i secondi li dice la scritta grande in alto)
+      var conto = el("div", { class: "nc-conto" });
       S.vista.appendChild(conto);
-      [5, 4, 3, 2, 1].forEach(function (n) {
-        var quando = ms - n * 1000; if (quando < 0) return;
-        toConto.push(setTimeout(function () {
-          if (chiuso) return;
-          conto.textContent = String(n); conto.classList.remove("on"); void conto.offsetWidth; conto.classList.add("on");
-          tick(n === 1 ? 990 : 760);
-        }, quando));
-      });
+      function programma() {
+        clearTimeout(toPoco); clearTimeout(toFine); toConto.forEach(clearTimeout); toConto = [];
+        var resta = Math.max(0, fineAt - Date.now());
+        toPoco = setTimeout(function () { tempo.classList.add("poco"); }, Math.max(0, resta - 10000));
+        toFine = setTimeout(function () { tempoScaduto(); chiudi(); }, resta);
+        [5, 4, 3, 2, 1].forEach(function (n) {
+          var quando = resta - n * 1000; if (quando < 0) return;
+          toConto.push(setTimeout(function () {
+            if (chiuso || S.vista.classList.contains("nc-con-stop")) return;
+            conto.textContent = String(n); conto.classList.remove("on"); void conto.offsetWidth; conto.classList.add("on");
+            tick(n === 1 ? 990 : 760);
+          }, quando));
+        });
+      }
+      programma();
+      S._tempoFoglio = function (resta) {
+        if (chiuso) return;
+        var nuova = Date.now() + Math.max(0, resta);
+        if (nuova >= fineAt - 300) return;   // il tempo non si allunga mai
+        fineAt = nuova;
+        barraT.style.transition = "none"; barraT.style.transform = "scaleX(" + Math.min(1, resta / ms).toFixed(4) + ")"; void barraT.offsetWidth;
+        barraT.style.transition = "transform " + Math.max(0, resta) + "ms linear"; barraT.style.transform = "scaleX(0)";
+        programma();
+      };
+      var fattoStop = false;
       function chiudi() {
         if (chiuso) return; chiuso = true; clearTimeout(toFine); clearTimeout(toPoco); toConto.forEach(clearTimeout);
         if (conto.parentNode) conto.parentNode.removeChild(conto);
-        var scritte = parole(); S._chiudiFoglio = null;
+        var scritte = parole(); S._chiudiFoglio = null; S._tempoFoglio = null; S._spegniStop = null;
+        if (fattoStop) scritte.stop = true;   // (chi l'ha aperto sa che è stato uno STOP)
+        scritte.ms = Date.now() - t0;          // quanto ci ha messo
         try { if (document.activeElement) document.activeElement.blur(); } catch (e) {}
         ST.viaBarra(S);
         foglio.classList.add("via");
         setTimeout(function () { foglio.classList.remove("on"); setTimeout(function () { if (foglio.parentNode) foglio.parentNode.removeChild(foglio); fine(scritte); }, 260); }, 330);
       }
       S._chiudiFoglio = chiudi;
-      // "Ho finito" chiede conferma (con quante caselle mancano): un tocco per sbaglio non chiude il foglio
-      function tastoFinito() { ST.barra(S, [ el("button", { class: "btn btn-primario", text: "Ho finito ▶", onclick: chiediConferma }) ]); }
+      // "Ho finito" chiede conferma (con quante caselle mancano): un tocco per sbaglio non chiude il foglio.
+      // ✋ STOP (opz.stop): accanto c'è "✋ STOP 3/5", che si accende quando tutte le caselle hanno una parola con la lettera giusta;
+      // allora resta solo "✋ STOP!", grande: un tocco ferma tutti (come gridarlo sulla carta)
+      var barraOra = null, bStop = null;
+      function buone() { return quanteBuone(parole(), cats, lettera); }
+      function tastoFinito() {
+        var n = opz.stop ? buone() : 0, piena = opz.stop && n === cats.length;
+        barraOra = piena ? "stop" : "finito";
+        var bFin = el("button", { class: "btn btn-primario", text: "Ho finito ▶", onclick: chiediConferma });
+        if (!opz.stop) { bStop = null; ST.barra(S, [ bFin ]); return; }
+        bStop = el("button", { class: "btn btn-primario nc-stop-btn" + (piena ? " grande" : ""), text: piena ? "✋ STOP!" : "✋ STOP " + n + "/" + cats.length, onclick: faiStop });
+        if (!piena) bStop.disabled = true;
+        ST.barra(S, piena ? [ bStop ] : [ el("div", { class: "nc-conf-riga" }, [ bFin, bStop ]) ]);
+      }
+      function faiStop() { if (chiuso || !opz.stop || buone() < cats.length) return; fattoStop = true; suonoStop(false); chiudi(); }
+      // lo STOP l'ha fatto un altro: il mio tasto STOP sparisce (resta "Ho finito")
+      S._spegniStop = function () { if (chiuso || !opz.stop) return; opz.stop = false; if (barraOra !== "conferma") tastoFinito(); };
+      // a ogni lettera: si cambia solo la scritta del tasto (o il tasto, se lo STOP si accende o si spegne)
+      if (opz.stop) campi.forEach(function (inp) {
+        inp.addEventListener("input", function () {
+          if (chiuso || !opz.stop || barraOra === "conferma") return;
+          var n = buone(), piena = n === cats.length;
+          if (piena !== (barraOra === "stop")) return tastoFinito();
+          if (bStop && !piena) { var tx = "✋ STOP " + n + "/" + cats.length; if (bStop.textContent !== tx) bStop.textContent = tx; }
+        });
+      });
       function chiediConferma() {
         if (chiuso) return;
+        barraOra = "conferma";
         var vuote = campi.filter(function (inp) { return !(inp.value || "").trim(); }).length;
         ST.barra(S, [
           el("div", { class: "nc-conf-testo", text: vuote ? "Ti " + (vuote === 1 ? "manca 1 casella" : "mancano " + vuote + " caselle") + ": hai finito davvero?" : "Hai finito davvero? Dopo non puoi più cambiare." }),
@@ -685,7 +808,7 @@
           if (tg) { tg.className = "nc-tg " + (ok ? "si" : "no"); tg.textContent = ok ? "👍" : "👎"; tg.setAttribute("aria-label", ok ? "Vale: tocca per bocciarla" : "Non vale: tocca per approvarla"); }
           bottoni.forEach(function (p) { p(); });
         });
-        var su = el("div", { class: "nc-tab-su" }, [ fac(el, g), el("div", { class: "chi" }, [ el("span", { class: "nm", text: g.nome }),
+        var su = el("div", { class: "nc-tab-su" }, [ fac(el, g), el("div", { class: "chi" }, [ el("span", { class: "nm", text: g.nome + (st.stopDi === a ? " · ✋ STOP" : "") }),
           el("span", { class: "parola" + (testo ? "" : " vuota"), text: testo || "— vuoto" }) ]), esito ]);
         riga.appendChild(su);
         if (testo && votanti > 0) {
@@ -817,6 +940,8 @@
       giro: 0, lettera: null, usate: [], giriFatti: 0, interrotta: false, sigla: false, risultatoDato: false,
       players: [{ id: "host", nome: nomeHost, omino: ST.mioAvatar(nomeHost), punti: 0, _trofei: nuovoProgresso() }],
       risposte: {}, bozze: {}, fatti: {}, voti: {}, ci: 0, pronti: {}, scadenza: 0, tabT0: 0, votoScade: 0, corto: false, ultimo: null, to: null,
+      stop: imp.stop !== false, stopDi: null,   // ✋ STOP acceso? e chi l'ha fatto in questo giro
+      avanti: {},   // alla classifica del giro: chi ha toccato "⏩ Avanti" (più di metà = si parte subito)
       guarda: [] };   // guarda: nella Sala, chi non è stato scelto per giocare (guarda soltanto)
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function pres() { return H.players.filter(function (p) { return !p.via; }); }
@@ -827,12 +952,14 @@
     t.onRegole = function (im) {
       if (H.fase !== "lobby") return;
       if (im.categorie && im.categorie.length) H.cats = completaCat(im.categorie);
-      H.secondi = im.secondi || 60; H.giri = im.round || 2; H.difficili = !!im.difficili;
+      H.secondi = im.secondi || 60; H.giri = im.round || 2; H.difficili = !!im.difficili; H.stop = im.stop !== false;
       bd();
     };
     var cb = { sonoHost: true, myId: "host",
       onComincia: comincia,
       onRisposte: function (r) { risposte("host", r); },
+      onStop: function (r) { stop("host", r); },
+      onAvantiGiro: function () { avanti("host", H.giro); },
       onBozza: function (r) { bozza("host", r); },
       onVoto: function (a, ci, si) { voto("host", a, ci, si); },
       onPronto: function (ci) { pronto("host", ci); },
@@ -862,6 +989,8 @@
           bd();   // a chi rientra rimando la foto (col tempo che resta, se si scrive)
         }
         else if (m.t === "risposte") risposte(id, m.r);
+        else if (m.t === "stop") stop(id, m.r);
+        else if (m.t === "avanti") avanti(id, m.g);
         else if (m.t === "bozza") bozza(id, m.r);
         else if (m.t === "voto") voto(id, m.a, m.ci, m.si);
         else if (m.t === "pronto") pronto(id, m.ci);
@@ -872,7 +1001,7 @@
     if (!rete) return senzaReteN(t);
     function vm() {
       var o = { sessioneTrofei: H.sessioneTrofei, fase: H.fase, codice: H.codice, pronta: H.pronta, giro: H.giro, giri: H.giri, lettera: H.lettera, secondi: H.secondi, cats: H.cats,
-        difficili: H.difficili, interrotta: H.interrotta, giriFatti: H.giriFatti,
+        difficili: H.difficili, interrotta: H.interrotta, giriFatti: H.giriFatti, stopAcceso: H.stop, stopDi: H.stopDi,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, punti: p.punti, via: !!p.via, trofei: p._trofei || null }; }),
         fatti: Object.keys(H.fatti), guarda: H.guarda.slice() };
       if (H.fase === "scrittura" || H.fase === "punti") o.rimMs = Math.max(0, H.scadenza - Date.now());
@@ -881,6 +1010,7 @@
         o.tab = H.players.map(function (p) { return { id: p.id, parola: (H.risposte[p.id] || [])[H.ci] || "", no: Object.keys(((H.voti[p.id] || {})[H.ci]) || {}) }; });
       }
       if (H.fase === "punti" || H.fase === "fine") o.ultimo = H.ultimo;
+      if (H.fase === "punti") o.avanti = Object.keys(H.avanti);
       return o;
     }
     function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); disegnaNccVM(t, v, cb); }
@@ -895,7 +1025,7 @@
     }
     function nuovoGiro() {
       clearTo();
-      H.lettera = letteraACaso(H.usate, H.difficili); H.risposte = {}; H.bozze = {}; H.fatti = {}; H.voti = {}; H.ci = 0; H.pronti = {}; H.ultimo = null; H.corto = false;
+      H.lettera = letteraACaso(H.usate, H.difficili); H.risposte = {}; H.bozze = {}; H.fatti = {}; H.voti = {}; H.ci = 0; H.pronti = {}; H.ultimo = null; H.corto = false; H.stopDi = null; H.avanti = {};
       H.fase = "lettera"; bd();
       H.to = setTimeout(scrittura, DURATA_LETTERA);
     }
@@ -918,6 +1048,17 @@
       }
       H.fatti[id] = true;
       privato(id, { t: "tardi", bozza: !!H.bozze[id] });   // troppo tardi: glielo dico
+    }
+    // ✋ STOP: le sue parole valgono come consegnate e agli altri restano 10 secondi (mai di più di quelli che avevano).
+    // Se lo STOP non vale (già fatto da un altro, caselle non tutte buone, regola spenta) è un foglio consegnato e basta
+    function stop(id, r) {
+      var p = pById(id); if (H.fase !== "scrittura" || !p || p.via || H.fatti[id]) return;
+      var rr = pulisciR(r);
+      if (!H.stop || H.stopDi || quanteBuone(rr, H.cats, H.lettera) < H.cats.length) return risposte(id, r);
+      H.risposte[id] = rr; H.fatti[id] = true; H.stopDi = id;
+      var nuova = Date.now() + GRAZIA_STOP;
+      if (nuova < H.scadenza) { H.scadenza = nuova; clearTo(); H.to = setTimeout(tabellone, GRAZIA_STOP + GRAZIA); }
+      controlla(); bd();
     }
     function tabellone() {
       clearTo();
@@ -963,6 +1104,10 @@
       }
       if (H.fase === "scrittura" && pres().every(function (p) { return H.fatti[p.id]; })) { clearTo(); H.to = setTimeout(tabellone, 1400); }
       if (H.fase === "tabellone" && pres().every(function (p) { return H.pronti[p.id]; })) { clearTo(); H.to = setTimeout(prossimaCat, 700); }
+      if (H.fase === "punti") {   // è uscito qualcuno: forse "⏩ Avanti" l'ha già toccato più di metà di chi resta
+        var n = pres().filter(function (q) { return H.avanti[q.id]; }).length;
+        if (n && n * 2 > pres().length) prossimoGiro();
+      }
     }
     // i punti del giro: vale se più della metà degli altri non l'ha bocciata; uguale a un'altra valida = 5
     function calcola() {
@@ -989,7 +1134,7 @@
         p.punti += tot[p.id];
         registraProgresso(p, H.cats, H.risposte[p.id] || [], validPer[p.id] || [], esitoPer[p.id] || []);
       });
-      H.ultimo = { tot: tot }; H.giriFatti++;
+      H.ultimo = { tot: tot }; H.giriFatti++; H.avanti = {};
       H.fase = (H.giro + 1 >= H.giri) ? "fine" : "punti";
       // la classifica del giro: l'host tocca "Prossimo giro ▶" (che conta) oppure si va avanti da soli
       if (H.fase === "punti") { var dur = 4000 + H.players.length * 320 + 12000; H.scadenza = Date.now() + dur; H.to = setTimeout(prossimoGiro, dur); }
@@ -1005,6 +1150,14 @@
       t.risultato(cl);
     }
     function prossimoGiro() { if (H.fase === "punti") { clearTo(); H.giro++; nuovoGiro(); } }
+    // "⏩ Avanti" alla classifica del giro: se lo tocca più di metà di chi gioca si parte subito (se no c'è il conto alla rovescia)
+    function avanti(id, g) {
+      var p = pById(id); if (H.fase !== "punti" || g !== H.giro || !p || p.via) return;
+      H.avanti[id] = 1;
+      var pr = pres(), n = pr.filter(function (q) { return H.avanti[q.id]; }).length;
+      if (n * 2 > pr.length) return prossimoGiro();
+      bd();
+    }
     function nuova() {   // "Nuova partita": stessa stanza, si torna nella saletta (chi è uscito non c'è più, chi aspettava entra)
       if (H.fase !== "fine") return;
       clearTo();
@@ -1025,6 +1178,8 @@
     var el = t.el, G = { myId: null, vm: null, rete: null, nome: "", msg: null, ultimoJoin: 0 };
     var cb = { sonoHost: false, myId: null,
       onRisposte: function (r) { G.rete && G.rete.invia({ t: "risposte", r: r }); },
+      onStop: function (r) { G.rete && G.rete.invia({ t: "stop", r: r }); },
+      onAvantiGiro: function (g) { G.rete && G.rete.invia({ t: "avanti", g: g }); },
       onBozza: function (r) { G.rete && G.rete.invia({ t: "bozza", r: r }); },
       onVoto: function (a, ci, si) { G.rete && G.rete.invia({ t: "voto", a: a, ci: ci, si: si }); },
       onPronto: function (ci) { G.rete && G.rete.invia({ t: "pronto", ci: ci }); },
@@ -1101,7 +1256,24 @@
     }
     RN.vm = vm; RN.cb = cb; RN.vmTs = Date.now();
     if (vm.fase !== "scrittura" && RN.S._chiudiFoglio) RN.S._chiudiFoglio();   // il tempo è finito per tutti: il foglio si chiude
+    if (vm.fase === "scrittura" && vm.stopDi) mostraStop(RN, vm);   // (subito, anche mentre la regia è sul foglio)
+    else if (RN.cartStop && vm.fase !== "scrittura") { RN.cartStop.via(); RN.cartStop = null; }
     regiaTickN(RN);
+  }
+  // ✋ qualcuno ha fatto STOP: a chi scrive il tempo si accorcia a 10 secondi, su tutti i telefoni la scritta grande col conto
+  function mostraStop(R, vm) {
+    var k = vm.sessioneTrofei + "|" + vm.giro;
+    if (R.kStop === k || !R.S.vivo()) return;
+    R.kStop = k;
+    var S = R.S, i = idxN(vm, vm.stopDi), chi = vm.players[i], io = vm.stopDi === R.cb.myId;
+    var resta = Math.max(0, (vm.rimMs || 0) - (Date.now() - R.vmTs));
+    if (S._tempoFoglio) S._tempoFoglio(resta);
+    if (S._spegniStop) S._spegniStop();
+    R.cartStop = cartelloStop(S, R.t.el, io ? "✋ Hai fatto STOP!" : "✋ STOP di " + (chi ? chi.nome : "…") + "!", Date.now() + resta);
+    suonoStop(!io);
+    if (i >= 0) { ST.testoLeggio(S, i, "✋ STOP!"); ST.faccia(S, i, "esulta"); setTimeout(function () { if (S.vivo()) ST.faccia(S, i, null); }, 1800); }
+    if (R.chiNodo) R.chiNodo.textContent = io ? "✋ Hai fatto STOP!" : "✋ STOP di " + (chi ? chi.nome : "…") + "!";
+    R.kFatti = null; aggiornaFatti(R, vm);
   }
   async function regiaTickN(R) {
     if (R.corre) { R.ancora = true; return; }
@@ -1144,7 +1316,7 @@
       if (R.kScrivi !== kG || devoScrivere(R, vm)) { R.kScrivi = kG; R.kLettera = kG; await scriviOnline(R); return true; }
       // ho consegnato ma l'host non mi ha ancora tra i "fatti" (messaggio perso, o ero fuori per un attimo): lo rimando
       var mio = vm.players[idxN(vm, R.cb.myId)], inv = R.inviate;
-      if (mio && !mio.via && inv && inv.giro === vm.sessioneTrofei + "|" + vm.giro && (vm.fatti || []).indexOf(R.cb.myId) < 0 && Date.now() - inv.ts > 2000) { inv.ts = Date.now(); R.cb.onRisposte(inv.r); }
+      if (mio && !mio.via && inv && inv.giro === vm.sessioneTrofei + "|" + vm.giro && (vm.fatti || []).indexOf(R.cb.myId) < 0 && Date.now() - inv.ts > 2000) { inv.ts = Date.now(); (inv.stop ? R.cb.onStop : R.cb.onRisposte)(inv.r); }
       aggiornaFatti(R, vm); return false;
     }
     if (vm.fase === "tabellone") {
@@ -1160,6 +1332,7 @@
         R.fineFatta = true; await finaleOnline(R, vm); return true;
       }
       if (R.kClas !== kG) { R.kClas = kG; await classificaOnline(R, vm); return true; }
+      aggiornaAvanti(R, vm);
       return false;
     }
     return false;
@@ -1186,15 +1359,16 @@
     var ora = iniziali, inviata = "", toB = null;
     function mandaBozza() { toB = null; if (!ora || !cb.onBozza) return; var s = JSON.stringify(ora); if (s === inviata) return; inviata = s; cb.onBozza(ora); }
     if (iniziali) mandaBozza();
-    var parole = await apriFoglio(S, el, me, vm.lettera, vm.cats, rim, { iniziali: iniziali, onCambia: function (r, subito) {
+    var parole = await apriFoglio(S, el, me, vm.lettera, vm.cats, rim, { iniziali: iniziali, stop: !!R.vm.stopAcceso && !R.vm.stopDi, onCambia: function (r, subito) {
       ora = r; scriviLS(K_BOZZA, { k: chiave, r: r });
       if (subito) { clearTimeout(toB); mandaBozza(); } else if (!toB) toB = setTimeout(mandaBozza, 2000);
     } });
     clearTimeout(toB);
     if (!S.vivo()) return;
-    cb.onRisposte(parole);
-    R.inviate = { giro: vm.sessioneTrofei + "|" + vm.giro, r: parole, ts: Date.now() };   // se l'host non lo riceve, lo rimando
-    fogliettoS(S, io, true); ST.testoLeggio(S, io, "✅ fatto"); ST.faccia(S, io, "esulta");
+    var fermati = !!parole.stop && !R.vm.stopDi;   // ✋ ho fatto STOP io (se nessuno l'ha fatto prima)
+    (fermati ? cb.onStop : cb.onRisposte)(parole);
+    R.inviate = { giro: vm.sessioneTrofei + "|" + vm.giro, r: parole, ts: Date.now(), stop: fermati };   // se l'host non lo riceve, lo rimando
+    fogliettoS(S, io, true); ST.testoLeggio(S, io, fermati ? "✋ STOP!" : "✅ fatto"); ST.faccia(S, io, "esulta");
     await ST.suSchermo(S, 800);
     ST.faccia(S, io, null);
     if (R.vm.fase === "scrittura") ST.barra(S, [ el("p", { class: "nc-attesa", text: "Fatto! Aspettiamo gli altri…" }), R.t.faccine() ]);
@@ -1206,7 +1380,7 @@
     S.sch.appendChild(el("div", { class: "nc-estr" }, [
       el("div", { class: "nc-giro", text: "Giro " + (vm.giro + 1) + " di " + vm.giri }),
       el("div", { class: "nc-grande", text: vm.lettera }),
-      el("div", { class: "nc-chi", text: "✍️ Scrivono tutti" }),
+      R.chiNodo = el("div", { class: "nc-chi", text: vm.stopDi ? (vm.stopDi === R.cb.myId ? "✋ Hai fatto STOP!" : "✋ STOP di " + ((vm.players[idxN(vm, vm.stopDi)] || {}).nome || "…") + "!") : "✍️ Scrivono tutti" }),
       R.listaFatti
     ]));
     aggiornaFatti(R, vm);
@@ -1218,9 +1392,9 @@
     if (R.listaFatti) {
       ST.vuota(R.listaFatti);
       vm.players.forEach(function (p) { if (p.via) return; var ok = fatti.indexOf(p.id) >= 0;
-        R.listaFatti.appendChild(el("span", { class: ok ? "ok" : "" }, [ fac(el, p), el("span", { text: (ok ? "✅ " : "") + p.nome }) ])); });
+        R.listaFatti.appendChild(el("span", { class: ok ? "ok" : "" }, [ fac(el, p), el("span", { text: (p.id === vm.stopDi ? "✋ " : ok ? "✅ " : "") + p.nome }) ])); });
     }
-    vm.players.forEach(function (p, i) { if (p.via) return; var ok = fatti.indexOf(p.id) >= 0; fogliettoS(S, i, ok); ST.testoLeggio(S, i, ok ? "✅ fatto" : "✍️ scrive"); });
+    vm.players.forEach(function (p, i) { if (p.via) return; var ok = fatti.indexOf(p.id) >= 0; fogliettoS(S, i, ok); ST.testoLeggio(S, i, p.id === vm.stopDi ? "✋ STOP!" : ok ? "✅ fatto" : "✍️ scrive"); });
   }
   // il tabellone: una categoria alla volta, le parole di tutti; io voto le parole degli altri dal mio telefono
   async function tabelloneOnline(R, vm, ridisegna) {
@@ -1246,7 +1420,7 @@
       var p = vm.players[a]; if (!p || p.via) return;
       var riga = el("div", { class: "nc-tab-riga" }), esito = el("span", { class: "nc-esito" });
       riga.style.animationDelay = (a * 0.12) + "s";
-      var su = el("div", { class: "nc-tab-su" }, [ fac(el, p), el("div", { class: "chi" }, [ el("span", { class: "nm", text: p.id === cb.myId ? "Tu" : p.nome }),
+      var su = el("div", { class: "nc-tab-su" }, [ fac(el, p), el("div", { class: "chi" }, [ el("span", { class: "nm", text: (p.id === cb.myId ? "Tu" : p.nome) + (vm.stopDi === p.id ? " · ✋ STOP" : "") }),
         el("span", { class: "parola" + (w.parola ? "" : " vuota"), text: w.parola || "— vuoto" }) ]), esito ]);
       riga.appendChild(su);
       if (w.parola && p.id !== cb.myId && io >= 0 && !vm.players[io].via) {   // il mio voto, sulla stessa riga
@@ -1344,12 +1518,27 @@
       box.appendChild(r);
     });
     S.sch.appendChild(box);
-    // l'host: "Prossimo giro ▶ 12" (conta e a zero si va avanti); gli altri: "Si va avanti tra 12…" (il tempo lo tiene l'host)
-    var sec = Math.max(1, Math.round(((R.vm.rimMs || 12000) - (Date.now() - R.vmTs)) / 1000)), k = "nc-giro|" + vm.sessioneTrofei + "|" + vm.giro;
-    var nodo = cb.sonoHost ? el("button", { class: "btn btn-primario", text: "Prossimo giro ▶", onclick: function () { ST.viaBarra(S); cb.onProssimo(); } })
-      : el("p", { class: "nc-attesa" });
-    ST.barra(S, [ nodo, R.t.faccine() ]);
-    R.t.contoAvanti(nodo, sec, cb.sonoHost ? function () { ST.viaBarra(S); cb.onProssimo(); } : null, k);
+    R.kAvanti = null; aggiornaAvanti(R, R.vm);
+  }
+  // sotto la classifica del giro: "⏩ Avanti 12" (a zero si va avanti da soli; se lo tocca più di metà, subito).
+  // Toccato: "Si va avanti tra 12…" e quanti l'hanno toccato. Chi guarda vede solo il conto. Il tempo lo tiene l'host
+  function aggiornaAvanti(R, vm) {
+    var S = R.S, el = R.t.el, cb = R.cb;
+    if (vm.fase !== "punti" || R.kClas !== vm.giro) return;
+    var io = idxN(vm, cb.myId), gioco = io >= 0 && !vm.players[io].via, giro = vm.sessioneTrofei + "|" + vm.giro;
+    var pres = vm.players.filter(function (p) { return !p.via; }), si = (vm.avanti || []).filter(function (id) { return pres.some(function (p) { return p.id === id; }); });
+    var toccato = gioco && (si.indexOf(cb.myId) >= 0 || R.avantiGiro === giro);
+    var k = giro + "|" + (toccato ? 1 : 0) + "|" + si.length + "|" + pres.length;
+    if (R.kAvanti === k) return;
+    R.kAvanti = k;
+    var sec = Math.max(1, Math.round(((vm.rimMs || 12000) - (Date.now() - R.vmTs)) / 1000)), kC = "nc-giro|" + giro;
+    var fn = cb.sonoHost ? function () { ST.viaBarra(S); cb.onProssimo(); } : null;
+    var quanti = si.length ? el("p", { class: "nc-attesa", text: "⏩ " + si.length + " su " + pres.length + " vogliono andare avanti" }) : null;
+    var nodo;
+    if (gioco && !toccato) nodo = el("button", { class: "btn btn-primario", text: "⏩ Avanti", onclick: function () { R.avantiGiro = giro; cb.onAvantiGiro(vm.giro); aggiornaAvanti(R, R.vm); } });
+    else nodo = el("p", { class: "nc-attesa" });
+    ST.barra(S, [ nodo, quanti, R.t.faccine() ]);
+    R.t.contoAvanti(nodo, sec, fn, kC);
   }
   async function finaleOnline(R, vm) {
     var S = R.S, ordine = ordineN(vm), primi = ordine.filter(function (o) { return o.pos === 1; }).map(function (o) { return idxN(vm, o.p.id); });
@@ -1409,7 +1598,7 @@
   function lobbyN(t, vm, cb) {
     var el = t.el, cc = el("div", { class: "nc-cats nc-cats-lobby" });
     (vm.cats || []).forEach(function (c) { cc.appendChild(el("span", { text: c.emoji + " " + c.testo })); });
-    var info = el("div", {}, [ el("div", { class: "etichetta", text: "Categorie" + (vm.difficili ? " · anche U e Z" : "") }), cc ]);
+    var info = el("div", {}, [ el("div", { class: "etichetta", text: "Categorie" + (vm.difficili ? " · anche U e Z" : "") + (vm.stopAcceso ? " · ✋ STOP" : "") }), cc ]);
     var extra = [info];
     // ("Sto entrando…" lo scrive già la saletta: qui solo la stanza piena)
     var guardo = !cb.sonoHost && (vm.guarda || []).indexOf(cb.myId) >= 0;   // nella Sala: non sono stato scelto, guardo
