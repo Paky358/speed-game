@@ -161,6 +161,7 @@
   //  e per l'online (l'host tiene lo stato e manda le viste).
   // =========================================================
   var FICHES_INIZIALI = 500;
+  var FICHES_TORNEO = 1000;   // il Torneo della serata a fiches uguali: tutti partono con queste (finte)
   var PUNTATA_MIN = 10;
   var PUNTATE_RAPIDE = [10, 25, 50, 100];
 
@@ -466,7 +467,11 @@
       r.forEach(function (x) { x.pos = 1 + r.filter(function (y) { return y.netto > x.netto; }).length; });
       return r;
     }
-    function finita() { return st.maniTot > 0 && st.mano >= st.maniTot; }
+    // finita: le mani sono finite (o, nel torneo a fiches uguali, nessuno ha più fiches)
+    function finita() {
+      if (st.maniTot > 0 && st.mano >= st.maniTot) return true;
+      return !!opz.uguali && st.mano > 0 && st.giocatori.every(function (g) { return g.via || g.fiches <= 0; });
+    }
     // si chiude il tavolo (fine delle mani o scelto da chi guida): classifica sul tavolo
     function fineTavolo() {
       if (st.fase !== "esito" && st.fase !== "punta") return st;
@@ -475,8 +480,9 @@
       return st;
     }
     // "Gioca ancora": una partita nuova, con le monete che avete adesso
-    function nuovaSerie() {
-      st.giocatori.forEach(function (g) { g.inizio = g.fiches; });
+    // (fichesUguali: il torneo a fiches uguali, tutti ripartono con le stesse fiches finte)
+    function nuovaSerie(fichesUguali) {
+      st.giocatori.forEach(function (g) { if (fichesUguali) { g.fiches = fichesUguali; g.prova = false; } g.inizio = g.fiches; });
       st.mano = 0; st.classifica = null;
       return nuovaMano();
     }
@@ -494,6 +500,7 @@
 
   window.__BJ.creaMotore = creaMotoreBJ;
   window.__BJ.FICHES_INIZIALI = FICHES_INIZIALI;
+  window.__BJ.FICHES_TORNEO = FICHES_TORNEO;
   window.__BJ.PUNTATE_RAPIDE = PUNTATE_RAPIDE;
   window.__BJ.PUNTATA_MIN = PUNTATA_MIN;
 })();
@@ -843,6 +850,19 @@
   // a fine mano salva fiches + statistiche (per i trofei) del giocatore col profilo (non in prova)
   function salvaFineMano(g, vm) {
     if (!g || !g.mani || !g.mani.length || !(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;   // mano guardata: niente da salvare
+    if (vm && vm.uguali) {   // torneo a fiches uguali: le fiches sono finte, contano solo le mani (niente monete né record di fiches)
+      var cu = { maniGiocate: 0, maniVinte: 0, blackjackFatti: 0, maniSballate: 0, maniPari: 0 };
+      g.mani.forEach(function (m) {
+        cu.maniGiocate++;
+        if (m.esito === "vince" || m.esito === "blackjack") cu.maniVinte++;
+        if (m.esito === "blackjack") cu.blackjackFatti++;
+        if (BJ.punteggio(m.carte) > 21) cu.maniSballate++;
+        if (m.esito === "pari") cu.maniPari++;
+      });
+      var iu = []; for (var ku in cu) if (cu[ku]) iu.push([ku, cu[ku]]);
+      SGNube.salvaProgressi(null, "blackjack", iu, [], []);
+      return;
+    }
     var s0 = SGNube.statGioco("blackjack") || {};
     var sv = s0.serieVinteOra || 0, ss = s0.serieSconfitteOra || 0, svMax = 0, ssMax = 0;   // serie che continuano tra le sessioni
     var bancoSballa = vm && vm.banco && vm.banco.length ? BJ.punteggio(vm.banco) > 21 : false;
@@ -888,6 +908,7 @@
       fase: st.fase, giro: st.giro, mano: st.mano, maniTot: st.maniTot, rimescolato: st.rimescolato, turno: st.turno,
       annuncio: st.annuncio ? { seat: st.annuncio.seat, testo: st.annuncio.testo, id: st.annuncio.id } : null,
       puntataMin: st.min, consigli: !!(extra && extra.consigli), croupier: st.croupier || null,
+      uguali: !!(extra && extra.uguali),   // il Torneo della serata a fiches uguali (finte: nessun profilo si tocca)
       // la carta coperta del banco non parte finché non si gira (nessuno la può sbirciare)
       banco: st.banco.carte.map(function (c, k) { return (k === 1 && !scoperta) ? { s: 0, v: 0, cop: 1 } : cp(c); }),
       classifica: st.fase === "fine" ? st.classifica : null,
@@ -1325,7 +1346,7 @@
       if (podio && podio.dataset.k === kp) return;
       if (podio) podio.remove();
       var N = vm.classifica.length, md = ["🥇", "🥈", "🥉"];
-      podio = el("div", { class: "bj-podio" + (N > 6 ? " fitto" : ""), "data-k": kp }, [ el("h3", { text: "🏁 Classifica" }) ]);
+      podio = el("div", { class: "bj-podio" + (N > 6 ? " fitto" : ""), "data-k": kp }, [ el("h3", { text: vm.uguali ? "🏆 Classifica del torneo" : "🏁 Classifica" }) ]);
       vm.classifica.forEach(function (r) {
         var n = r.netto;
         podio.appendChild(el("div", { class: "bj-pr" + (r.pos === 1 && n > 0 ? " oro" : "") }, [
@@ -1459,7 +1480,8 @@
     function maniK(g) { return g ? g.mani.map(function (m) { return m.carte.map(function (c) { return c.v + "" + c.s; }).join(",") + (m.chiusa ? "c" : "") + m.puntata + (m.esito || ""); }).join("/") : ""; }
     function chiaveHero() {
       var f = vm.fase, io = drv.mioIdx ? mioIdx() : -1, me = vm.giocatori[io];
-      var base = [f, !!drv.puoAgire(vm), io, me ? [me.fiches, me.puntata, !!me.via, !!me.prova, !!me.salta] : null, !!(drv.puoRuota && drv.puoRuota())];
+      var base = [f, !!drv.puoAgire(vm), io, me ? [me.fiches, me.puntata, !!me.via, !!me.prova, !!me.salta] : null, !!(drv.puoRuota && drv.puoRuota()),
+        drv.guardo ? drv.guardo(vm) : ""];   // (guardo soltanto: la scritta cambia appena l'host mi mette tra chi guarda)
       if (f === "punta") {
         var i = chiDecide(), g = vm.giocatori[i];
         if (g) return JSON.stringify(base.concat(["P", i, g.nome, g.fiches, vm.puntataMin]));
@@ -1477,7 +1499,7 @@
       svuota(zHero);
       var mio = drv.puoAgire(vm);
       if (vm.fase === "fine") return heroFine();
-      if (drv.mioIdx && !vm.giocatori[mioIdx()]) return heroInfo("🪑", "Ti stai sedendo al tavolo…");   // appena arrivato: il posto sta arrivando
+      if (drv.mioIdx && !vm.giocatori[mioIdx()]) return heroInfo(drv.guardo && drv.guardo(vm) ? "👀" : "🪑", (drv.guardo && drv.guardo(vm)) || "Ti stai sedendo al tavolo…");   // appena arrivato: il posto sta arrivando (o guardo e basta)
       if (vm.fase === "distrib") return heroInfo("🂠", nomeBanco(vm) + " distribuisce…");
       if (vm.fase === "punta") return heroPunta(chiDecide());
       if (vm.fase === "assic") return heroAssic(chiDecide());
@@ -1498,6 +1520,11 @@
     }
     // monete finite: si riparte con 500 di prova, si gira la ruota del giorno (o, sullo stesso telefono, si chiude la partita)
     function heroZero() {
+      if (vm.uguali) {   // torneo a fiches uguali: niente ricariche, chi è a zero guarda la fine
+        zHero.appendChild(el("div", { class: "bj-hnome", text: drv.mioIdx ? "🏳️ Fiches finite: guardi come finisce il torneo" : "Fiches finite per tutti! 🏳️" }));
+        if (!drv.mioIdx && drv.onFine) zHero.appendChild(el("div", { class: "bj-azioni" }, [ tasto("🏁 Classifica", "bj-b-carta", function () { bloccaTasti(); drv.onFine(); }) ]));
+        return;
+      }
       zHero.appendChild(el("div", { class: "bj-hnome", text: drv.mioIdx ? "Hai finito le monete 😅" : "Monete finite per tutti! 😅" }));
       var az = el("div", { class: "bj-azioni" });
       if (drv.puoRuota && drv.puoRuota()) az.appendChild(tasto("🎡 Ruota del giorno", "bj-b-dividi", function () { drv.onRuota(); }));
@@ -1624,11 +1651,12 @@
       // nessuno resta ad aspettare un host distratto
       var conto = drv.contoMano && drv.contoMano(vm) && t.contoAvanti, kConto = "bj|" + (drv.stanza || "") + "|" + vm.giro + "|" + vm.mano;
       if (drv.puoNuova && drv.puoNuova()) {
-        var az = el("div", { class: "bj-azioni" }), finita = vm.maniTot && vm.mano >= vm.maniTot, vai;
+        var az = el("div", { class: "bj-azioni" }), vai;
+        var finita = (vm.maniTot && vm.mano >= vm.maniTot) || (vm.uguali && vm.giocatori.every(function (g) { return g.via || g.fiches <= 0; }));   // (torneo: tutti senza fiches)
         if (finita) az.appendChild(vai = tasto("🏁 Classifica ▶", "bj-b-carta", function () { bloccaTasti(); drv.onFine(); }));
         else {
           az.appendChild(vai = tasto("Nuova mano ▶", "bj-b-carta", function () { bloccaTasti(); drv.onNuova(); }));
-          if (!drv.mioIdx && vm.giocatori.some(function (g) { return g.fiches <= 0; })) az.appendChild(tasto("♻️ 500 a chi è a zero", "bj-b-dividi", function () { drv.onRicarica(-1); }));
+          if (!drv.mioIdx && !vm.uguali && vm.giocatori.some(function (g) { return g.fiches <= 0; })) az.appendChild(tasto("♻️ 500 a chi è a zero", "bj-b-dividi", function () { drv.onRicarica(-1); }));
           az.appendChild(tasto("🏁 Basta così", "bj-b-no", function () { bloccaTasti(); drv.onFine(); }));
         }
         zHero.appendChild(az);
@@ -1665,15 +1693,18 @@
   // ---------- LE REGOLE DEL TAVOLO (scelte prima di cominciare; online l'host le cambia in saletta) ----------
   function regoleDa(imp) {
     imp = imp || {};
+    var uguali = !!imp.uguali;   // il Torneo della serata: tutti con le stesse fiches finte (e un numero di mani: senza fine non c'è)
     return {
       min: [10, 50, 100].indexOf(+imp.min) >= 0 ? +imp.min : BJ.PUNTATA_MIN,
-      mani: Math.max(0, Math.floor(+imp.mani) || 0),                    // 0 = senza fine
+      uguali: uguali,
+      mani: Math.max(0, Math.floor(+imp.mani) || 0) || (uguali ? 10 : 0),   // 0 = senza fine
       tempo: imp.tempo == null ? 25 : Math.max(0, Math.floor(+imp.tempo) || 0),   // secondi per decidere (online)
       consigli: imp.consigli == null ? true : !!imp.consigli
     };
   }
   function testoRegole(r, online) {
-    return "Puntata minima " + fmt(r.min) + " 🪙 · " + (r.mani ? r.mani + " mani" : "mani senza fine") +
+    return (r.uguali ? "🏆 Torneo: tutti con " + fmt(BJ.FICHES_TORNEO) + " fiches finte · " : "") +
+      "Puntata minima " + fmt(r.min) + " 🪙 · " + (r.mani ? r.mani + " mani" : "mani senza fine") +
       (online ? " · " + (r.tempo ? r.tempo + " s per decidere" : "tempo libero") : "") + (r.consigli ? " · 💡 consigli" : "");
   }
   // la ruota del giorno girata dal tavolo: cb(saldoNuovo, quanteMoneteInPiu)
@@ -1696,7 +1727,8 @@
     // se c'è un profilo cloud, il primo giocatore usa (e salva) le sue monete
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     var fichesIniz = null, prova = false;
-    if (prof) {
+    if (RG.uguali) fichesIniz = nomi.map(function () { return BJ.FICHES_TORNEO; });   // torneo: tutti uguali, fiches finte
+    else if (prof) {
       var f = SGNube.fiches("blackjack");
       if (f != null && f > 0) { fichesIniz = [f]; }
       else { prova = true; fichesIniz = [BJ.FICHES_INIZIALI]; }   // a zero: gioca di prova, non si salva
@@ -1706,8 +1738,10 @@
     st.croupier = croupierDa(nomi);   // il banco: uno dei bot fissi
     var avatari = nomi.map(function (n, i) { return i === 0 ? mioAvatar(n) : null; });   // gli altri: faccia fissa legata al nome
     var maniFinite = 0, detto = false, salvato = st.giocatori[0].fiches;
-    // il saldo del profilo segue il tavolo: la puntata si toglie subito (uscendo a metà mano non torna indietro)
-    function salva() { var g = st.giocatori[0]; if (prof && !g.prova && g.fiches !== salvato) { salvato = g.fiches; SGNube.salvaFiches("blackjack", salvato); } }
+    // torneo a fiches uguali in due o più sullo stesso telefono: a fine partita i punti vanno nella Classifica della serata
+    function serata() { return RG.uguali && nomi.length >= 2; }
+    // il saldo del profilo segue il tavolo: la puntata si toglie subito (uscendo a metà mano non torna indietro). Nel torneo no: fiches finte
+    function salva() { var g = st.giocatori[0]; if (prof && !RG.uguali && !g.prova && g.fiches !== salvato) { salvato = g.fiches; SGNube.salvaFiches("blackjack", salvato); } }
     function classifica() { return M.classifica().map(function (r) { return { nome: r.nome, pos: r.pos }; }); }
     // com'è andata (dà gli XP; vince chi ha guadagnato di più)
     function risultatoLoc() {
@@ -1717,12 +1751,12 @@
     function refresh() { tav.aggiorna(vistaBJ(st, RG)); salva(); }
     tav = tavoloBJ(t, {
       avatari: function () { return avatari; },
-      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · gira la ruota del giorno!") : ("👤 " + prof.nome + " · gioca con le tue monete")) : "Un telefono · Banco: " + nomeBanco(st),
+      sotto: RG.uguali ? "🏆 Torneo a fiches uguali (finte)" : prof ? (prova ? ("👤 " + prof.nome + " · prova · gira la ruota del giorno!") : ("👤 " + prof.nome + " · gioca con le tue monete")) : "Un telefono · Banco: " + nomeBanco(st),
       avvisoUscita: function (vm) { return vm.fase !== "esito" && vm.fase !== "fine" && vm.giocatori.some(function (g) { return g.puntata > 0; }) ? "Le puntate di questa mano sono perse." : ""; },
       puoAgire: function () { return true; },
       puoNuova: function () { return true; },
       guida: function () { return true; },
-      puoRuota: function () { return puoRuotaProfilo(prof); },
+      puoRuota: function () { return !RG.uguali && puoRuotaProfilo(prof); },
       onRuota: function () {
         ruotaDalTavolo(function (nuovo, piu) {
           var g = st.giocatori[0];
@@ -1730,19 +1764,20 @@
           salvato = g.fiches; refresh();
         });
       },
-      onRicarica: function () { st.giocatori.forEach(function (g, i) { if (g.fiches <= 0) M.ricarica(i); }); refresh(); },
+      onRicarica: function () { if (RG.uguali) return; st.giocatori.forEach(function (g, i) { if (g.fiches <= 0) M.ricarica(i); }); refresh(); },
       onPasso: function (k) { if (k === "distrib") M.passoDistribuzione(); else if (k === "banco") M.passoBanco(); else if (k === "divisa") M.passoDivisa(); else if (k === "avanza") M.avanza(); refresh(); },
       onPunta: function (v) { M.punta(st.turno, v); refresh(); },
       onMossa: function (m) { if (m === "stai") suonoStai(); M.azione(m); refresh(); },
       onAssicura: function (si) { M.assicura(st.turno, si); refresh(); },
-      onFineMano: function (v) { var g = v.giocatori[0]; if (prof && !g.prova) { salvaFineMano(g, v); salvato = g.fiches; } maniFinite++; },
+      onFineMano: function (v) { var g = v.giocatori[0]; if (prof && !g.prova) { salvaFineMano(g, v); if (!RG.uguali) salvato = g.fiches; } maniFinite++; },
       onNuova: function () { M.nuovaMano(); refresh(); },
       onFine: function () { M.fineTavolo(); refresh(); },
-      onFinePartita: function () { if (!torneo) risultatoLoc(); },
-      testoAncora: torneo ? "🏆 Avanti nel torneo ▶" : null,
+      // (il torneo della Serata a punti e quello a fiches uguali in più persone danno i punti con t.fine, dal tasto qui sotto)
+      onFinePartita: function () { if (!torneo && !serata()) risultatoLoc(); },
+      testoAncora: torneo ? "🏆 Avanti nel torneo ▶" : (serata() ? "🏆 Punti della serata ▶" : (RG.uguali ? "🔄 Un altro torneo ▶" : null)),
       onAncora: function () {
-        if (torneo && t.fine) { tav.chiudi(); salva(); detto = true; t.fine(classifica()); return; }   // torneo: i punti di questa partita
-        detto = false; maniFinite = 0; M.nuovaSerie(); refresh();
+        if ((torneo || serata()) && t.fine) { tav.chiudi(); salva(); detto = true; t.fine(classifica()); return; }   // torneo: i punti di questa partita
+        detto = false; maniFinite = 0; M.nuovaSerie(RG.uguali ? BJ.FICHES_TORNEO : 0); refresh();
       },
       onEsci: function () { salva(); risultatoLoc(); t.esci(); }
     });
@@ -1769,7 +1804,18 @@
     // "⚙️ Regole" nella saletta: l'host cambia le regole prima di cominciare
     t.onRegole = function (im) { imp = im || {}; if (!M) { RG = regoleDa(imp); lobbyOut(); } };
     // la Rivincita a fine serie: una serie nuova allo stesso tavolo, ognuno con le monete che ha
-    t.onRivincita = function () { if (!M || finito || M.st.fase !== "fine") return; detto = false; maniFinite = 0; M.nuovaSerie(); bcast(); };
+    t.onRivincita = function () { if (!M || finito || M.st.fase !== "fine") return; serieNuova(); };
+    // una serie nuova allo stesso tavolo (torneo a fiches uguali: tutti di nuovo con le stesse fiches, e si siede chi guardava aspettando)
+    function serieNuova() {
+      detto = false; maniFinite = 0;
+      if (RG.uguali) attesaUguali.splice(0).forEach(function (ns) {
+        if (seatDiId(ns.id) >= 0 || seats.length >= 10) return;
+        var k = guardano.indexOf(ns.id); if (k < 0) return;   // (intanto è andato via)
+        guardano.splice(k, 1); seats.push(ns); M.aggiungi(ns.nome, BJ.FICHES_TORNEO, ns.id, false);
+        rete.inviaVeloce({ t: "avatari", lista: listaAvatari() });
+      });
+      M.nuovaSerie(RG.uguali ? BJ.FICHES_TORNEO : 0); bcast();
+    }
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     var provaHost = false, mieFiches = prof ? SGNube.fiches("blackjack") : null;
     if (prof && (mieFiches == null || mieFiches <= 0)) { provaHost = true; mieFiches = BJ.FICHES_INIZIALI; }
@@ -1777,6 +1823,7 @@
     seats[0].omino = mioAvatar(seats[0].nome);
     var M = null, rete = null, codice = "…", tav = null, pronta = false, finito = false;
     var guardano = [];   // chi è entrato ma non è tra chi gioca (scelti nella Sala): guarda il tavolo senza sedersi
+    var attesaUguali = [];   // torneo a fiches uguali: chi è arrivato a partita iniziata guarda e si siede alla serie dopo
     var maniFinite = 0, detto = false, salvato = mieFiches;
     var TT = { k: "", fine: 0, to: null };   // il conto alla rovescia per decidere (lo tiene l'host)
     // la ruota girata in saletta (o dal tavolo): si gioca con le monete nuove (e se eri a zero non è più di prova)
@@ -1786,6 +1833,7 @@
     }, true) : null;
     function bonusHost(nuovo, piu) {
       var g = M.st.giocatori[0];
+      if (RG.uguali) return;   // (torneo: le fiches sono finte, la ruota resta nel profilo)
       if (g.prova) { g.prova = false; M.aggiungiFiches(0, nuovo - g.fiches); } else M.aggiungiFiches(0, piu);
       salvato = g.fiches; bcast();
     }
@@ -1833,7 +1881,7 @@
       salva();
     }
     // il saldo dell'host segue il tavolo (la puntata si toglie subito)
-    function salva() { var g = M && M.st.giocatori[0]; if (prof && g && !g.prova && g.fiches !== salvato) { salvato = g.fiches; SGNube.salvaFiches("blackjack", salvato); } }
+    function salva() { var g = M && M.st.giocatori[0]; if (prof && g && !RG.uguali && !g.prova && g.fiches !== salvato) { salvato = g.fiches; SGNube.salvaFiches("blackjack", salvato); } }
     function lobbyOut() {
       var rt = testoRegole(RG, true);
       nota.textContent = "🃏 " + rt;
@@ -1847,8 +1895,9 @@
     function comincia() {
       if (M) return;
       RG = regoleDa(imp);
-      M = BJ.creaMotore(seats.map(function (x) { return x.nome; }), t.mischia, seats.map(function (x) { return x.fiches; }), RG);
-      M.st.giocatori.forEach(function (g, i) { g.rid = seats[i].id; g.prova = !!seats[i].prova; });
+      // torneo a fiches uguali: tutti con le stesse fiches finte (le monete del profilo restano dove sono)
+      M = BJ.creaMotore(seats.map(function (x) { return x.nome; }), t.mischia, seats.map(function (x) { return RG.uguali ? BJ.FICHES_TORNEO : x.fiches; }), RG);
+      M.st.giocatori.forEach(function (g, i) { g.rid = seats[i].id; g.prova = !RG.uguali && !!seats[i].prova; });
       M.st.croupier = croupierDa(seats.map(function (x) { return x.nome; }));   // il banco: uno dei bot fissi (va a tutti nel vm)
       maniFinite = 0; detto = false;
       avviaTavoloHost(); M.nuovaMano(); bcast();
@@ -1863,18 +1912,19 @@
         puoAgire: function (vm) { return vm.turno === 0; },
         puoNuova: function () { return true; },
         guida: function () { return true; },
-        puoRuota: function () { return puoRuotaProfilo(prof); },
+        puoRuota: function () { return !RG.uguali && puoRuotaProfilo(prof); },
         onRuota: function () { ruotaDalTavolo(bonusHost); },
-        onRicarica: function () { M.ricarica(0); bcast(); },
+        onRicarica: function () { if (RG.uguali) return; M.ricarica(0); bcast(); },
         onPasso: function (k) { if (k === "distrib") M.passoDistribuzione(); else if (k === "banco") M.passoBanco(); else if (k === "divisa") M.passoDivisa(); else if (k === "avanza") M.avanza(); bcast(); },
         onPunta: function (v) { M.punta(0, v); bcast(); },
         onMossa: function (m, chk) { if (M.st.turno === 0) { if (m === "stai") suonoStai(); M.azione(m, chk); bcast(); } },
         onAssicura: function (si) { M.assicura(0, si); bcast(); },
-        onFineMano: function (vm) { var g = vm.giocatori[0]; if (prof && !g.prova) { salvaFineMano(g, vm); salvato = g.fiches; } maniFinite++; },
+        onFineMano: function (vm) { var g = vm.giocatori[0]; if (prof && !g.prova) { salvaFineMano(g, vm); if (!RG.uguali) salvato = g.fiches; } maniFinite++; },
         onNuova: function () { M.nuovaMano(); bcast(); },
         onFine: function () { M.fineTavolo(); bcast(); },
         onFinePartita: function () { risultatoBJ(); },
-        onAncora: function () { detto = false; maniFinite = 0; M.nuovaSerie(); bcast(); },
+        testoAncora: RG.uguali ? "🔄 Un altro torneo ▶" : null,
+        onAncora: function () { serieNuova(); },
         onEsci: function () {
           risultatoBJ(); salva(); fermaTempo(); finito = true;
           // a metà mano: gli amici si riprendono la loro puntata (il tavolo l'ha chiuso l'host, non loro)
@@ -1917,6 +1967,11 @@
               bcast(); return;
             }
             if (seats.length >= 10) { rete.inviaVeloce({ t: "pieno", to: id }); return; }
+            if (RG.uguali) {   // torneo a fiches uguali già cominciato: guarda, e si siede alla serie dopo
+              if (guardano.indexOf(id) < 0) guardano.push(id);
+              if (!attesaUguali.some(function (x) { return x.id === id; })) attesaUguali.push(nuovoSeat(id, m));
+              rete.inviaVeloce({ t: "avatari", to: id, lista: listaAvatari() }); bcast(); return;
+            }
             // arrivato a partita iniziata: si siede subito, gioca dalla prossima puntata
             var ns = nuovoSeat(id, m); seats.push(ns);
             M.aggiungi(ns.nome, ns.fiches, id, ns.prova);
@@ -1932,13 +1987,13 @@
           var sf = seatDiId(id); if (sf <= 0) return;
           var nuovo = Math.floor(+m.fiches), piu = Math.floor(+m.piu) || 0;
           if (!M) { if (isFinite(nuovo) && nuovo >= 0) { seats[sf].fiches = nuovo; if (nuovo > 0) seats[sf].prova = false; } return; }   // in saletta: è il suo saldo
-          if (seats[sf].bonus || piu <= 0 || !isFinite(nuovo)) return;   // a partita iniziata: una volta sola a testa
+          if (RG.uguali || seats[sf].bonus || piu <= 0 || !isFinite(nuovo)) return;   // a partita iniziata: una volta sola a testa (nel torneo mai)
           seats[sf].bonus = true; piu = Math.min(piu, 10000);            // al massimo il premio grosso della ruota
           var gf = M.st.giocatori[sf];
           if (gf.prova) { gf.prova = false; M.aggiungiFiches(sf, nuovo - gf.fiches); } else M.aggiungiFiches(sf, piu);
           bcast();
         } else if (M && m.t === "ricarica") {
-          var sr = seatDiId(id); if (sr < 0) return;
+          var sr = seatDiId(id); if (sr < 0 || RG.uguali) return;
           M.ricarica(sr); bcast();
         } else if (M && m.t === "mossa") {
           var seat = seatDiId(id); if (seat < 0) return;
@@ -2002,7 +2057,7 @@
     // il saldo del profilo segue il tavolo: la puntata si toglie subito (uscendo a metà mano non torna indietro)
     function salvaMio(vm) {
       var me = vm.giocatori[S.mioSeat];
-      if (!prof || !me || me.prova || me.fiches === S.salvato) return;
+      if (!prof || !me || me.prova || vm.uguali || me.fiches === S.salvato) return;   // (torneo a fiches uguali: fiches finte, il profilo non cambia)
       S.salvato = me.fiches; SGNube.salvaFiches("blackjack", me.fiches);
     }
     function assicuraTavolo() {
@@ -2015,14 +2070,19 @@
         puoAgire: function (vm) { return S.mioSeat >= 0 && vm.turno === S.mioSeat; },
         puoNuova: function () { return false; },
         guida: function () { return false; },
-        puoRuota: function () { return puoRuotaProfilo(prof); },
+        puoRuota: function () { return !(S.vm && S.vm.uguali) && puoRuotaProfilo(prof); },
         onRuota: function () { ruotaDalTavolo(mandaBonus); },
         onRicarica: function () { invia({ t: "ricarica" }); },
+        // non ho un posto: guardo (nella Sala non sono tra chi gioca, o il torneo è già cominciato)
+        guardo: function (vm) {
+          if ((vm.guardano || []).indexOf(S.mioId) < 0) return "";
+          return vm.uguali ? "🏆 Torneo in corso: lo guardi e giochi al prossimo" : "👀 Guardi il tavolo: questa volta giocano gli altri";
+        },
         onPasso: function () {},
         onPunta: function (v) { invia({ t: "mossa", kind: "punta", val: v }); },
         onMossa: function (m, chk) { if (m === "stai") suonoStai(); invia({ t: "mossa", kind: "azione", mossa: m, h: chk ? chk.h : null, n: chk ? chk.n : null }); },
         onAssicura: function (si) { invia({ t: "mossa", kind: "assic", si: si }); },
-        onFineMano: function (vm) { var me = vm.giocatori[S.mioSeat]; if (prof && me && !me.prova) { salvaFineMano(me, vm); S.salvato = me.fiches; } },
+        onFineMano: function (vm) { var me = vm.giocatori[S.mioSeat]; if (prof && me && !me.prova) { salvaFineMano(me, vm); if (!vm.uguali) S.salvato = me.fiches; } },
         onNuova: function () {},
         onEsci: function () { S.finito = true; if (S.rete) S.rete.chiudi(); t.esci(); }
       });
@@ -2032,7 +2092,7 @@
       S.finito = true;
       // il tavolo si è chiuso a metà mano (non per colpa mia): la puntata torna nel mio profilo
       var me = S.vm && S.vm.giocatori[S.mioSeat];
-      if (rimborso && prof && me && !me.prova) {
+      if (rimborso && prof && me && !me.prova && !S.vm.uguali) {
         var torna = puntataInGioco(me) + (me.assicura || 0);
         if (torna > 0) { S.salvato = me.fiches + torna; SGNube.salvaFiches("blackjack", S.salvato); }
       }
@@ -2120,6 +2180,8 @@
     descrizione: "Il 21 contro il banco: punta le monete, chiedi carta o stai, raddoppia e dividi. Carte francesi vere, 6 mazzi. Da 1 a 10 giocatori.",
     giocatoriMin: 1, giocatoriMax: 10, difficolta: 2,
     postiOnline: 10,   // posti al tavolo online
+    // le regole in una riga, per la saletta ("📜 Si gioca così"): col torneo "🏆 Torneo: tutti con 1.000 fiches finte · …"
+    riassunto: function (imp) { return testoRegole(regoleDa(imp || {}), true); },
     modi: [{ modo: "locale", icona: "📱", nome: "Su questo telefono", sotto: "Siete insieme e vi passate il telefono (fino a 10)", amici: true }],
     regole: [
       "Obiettivo: avvicinarti a <b>21</b> più del banco, senza superarlo. Le figure valgono 10, l'Asso 1 o 11.",
@@ -2129,7 +2191,8 @@
       "Se il banco mostra un Asso puoi <b>assicurarti</b> (paga 2 a 1). Se mostra un Asso o un 10 controlla subito la carta coperta: se ha Black Jack la mano finisce lì e perdi solo la puntata.",
       "Il banco pesca fino ad arrivare almeno a 17. Vince chi si avvicina di più a 21. Si gioca con <b>6 mazzi</b>, rimescolati quando restano poche carte.",
       "Online ognuno gioca dal suo telefono: chi non decide in tempo salta la mano o sta. Chi finisce le monete può ripartire con 500 di prova.",
-      "A fine partita vince chi ha guadagnato di più al tavolo. Col 💡 consiglio acceso (lo scegli prima di cominciare) il tasto della mossa giusta brilla."
+      "A fine partita vince chi ha guadagnato di più al tavolo. Col 💡 consiglio acceso (lo scegli prima di cominciare) il tasto della mossa giusta brilla.",
+      "<b>🏆 Torneo della serata</b> (si accende nelle regole): tutti partono con " + BJ.fmtN(BJ.FICHES_TORNEO) + " fiches finte, uguali per tutti, e vince chi ne ha di più all'ultima mano. Chi le finisce guarda; le Speed Coins non si toccano."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el, online = aiuti.modo === "online" || !!aiuti.sala;
@@ -2138,19 +2201,31 @@
       dove.min = 10; dove.mani = (aiuti.torneo || aiuti.sala) ? 10 : 0; dove.tempo = 25; dove.consigli = true;
       // il saldo e la ruota del giorno (online li trovi già nella saletta)
       if (!online && !aiuti.torneo && window.SGNube && SGNube.disponibile() && SGNube.profilo()) box.appendChild(riquadroBonus(el));
-      function gruppo(titolo, chiave, scelte) {
+      function gruppo(titolo, chiave, scelte, dopo) {
         box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: titolo }));
         var riga = el("div", { style: "display:flex;gap:8px" });
         scelte.forEach(function (sc) {
           var b = el("button", { class: "modo-chip" + (dove[chiave] === sc[0] ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {
             dove[chiave] = sc[0]; [].forEach.call(riga.children, function (c) { c.classList.remove("attiva"); }); b.classList.add("attiva");
+            if (dopo) dopo(sc[0]);
           } }, [ el("div", { class: "mt", text: sc[1] }) ]);
           riga.appendChild(b);
         });
         box.appendChild(riga);
+        return riga;
       }
       gruppo("Puntata minima", "min", [[10, "10 🪙"], [50, "50 🪙"], [100, "100 🪙"]]);
-      gruppo("Quante mani", "mani", [[10, "10"], [20, "20"], [0, "Senza fine"]]);
+      var gm = gruppo("Quante mani", "mani", [[10, "10"], [20, "20"], [0, "Senza fine"]]);
+      // il Torneo della serata: tutti con le stesse fiches finte, vince chi ne ha di più alla fine (le monete del profilo non si toccano)
+      dove.uguali = false;
+      gruppo("🏆 Torneo della serata", "uguali", [[false, "No"], [true, "Fiches uguali"]], function (v) {
+        notaU.textContent = v ? "Tutti partono con " + fmt(BJ.FICHES_TORNEO) + " fiches finte e vince chi ne ha di più alla fine. Le Speed Coins non si toccano." : "";
+        notaU.style.display = v ? "" : "none";
+        gm.lastChild.style.display = v ? "none" : "";   // (il torneo ha sempre un numero di mani)
+        if (v && !dove.mani) { dove.mani = 10; [].forEach.call(gm.children, function (c, k) { c.classList.toggle("attiva", k === 0); }); }
+      });
+      var notaU = el("p", { class: "modulo-nota", style: "margin-top:6px;display:none" });
+      box.appendChild(notaU);
       if (online) gruppo("Tempo per decidere", "tempo", [[15, "15 s"], [25, "25 s"], [0, "Senza limite"]]);
       gruppo("💡 Consiglio della mossa giusta", "consigli", [[true, "Sì"], [false, "No"]]);
     },
