@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 210,
+    data: "15 ottobre 2026",
+    titolo: "Gioco nuovo: Stessa Lunghezza d'Onda 📡",
+    descrizione: [
+      "A turno uno fa il sensitivo. Sul quadrante c'è una scala con due estremi (Sopravvalutato ←→ Sottovalutato, Da bambini ←→ Da adulti…) e un punto segreto che vede solo lui. Gli altri spostano la lancetta per trovarlo: centro pieno 4 punti, poi 3, poi 2.",
+      "🤔 «Cosa ne pensi?»: esce una parola (o la scegli tu) e il sensitivo la piazza dove la pensa lui. Gli altri devono capire cosa pensa davvero: la Carbonara è sopravvalutata?! 🎯 «Classico»: il punto esce a caso e il sensitivo inventa un indizio che stia proprio lì.",
+      "Si gioca a squadre, con una lancetta comune che tutti vedono muoversi in diretta e la scommessa dell'altra squadra (più a sinistra o più a destra?), oppure ognuno per sé. Si gioca online, ognuno dal suo telefono, e anche sullo stesso telefono.",
+      "551 scale in 16 temi (li scegli tu prima di cominciare) e 910 parole: mai abbinamenti scontati, solo quelli che fanno discutere."
+    ]
+  },
+  {
     v: 209,
     data: "15 ottobre 2026",
     titolo: "Una Sala per tutta la serata: il link si manda una volta 🎉",

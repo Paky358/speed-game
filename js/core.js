@@ -43,14 +43,14 @@
   var CAT_GIOCO = {
     scopa: "carte", scopa2v2: "carte", scopone: "carte", blackjack: "carte", poker: "carte", ruota: "parole", ordine: "parole",
     tris: "sfida", drop4: "sfida", hockey: "sfida", navale: "sfida", calciobiliardo: "sfida",
-    asta: "festa", impostore: "festa", sipero: "festa", scarabocchio: "festa",
+    asta: "festa", impostore: "festa", sipero: "festa", scarabocchio: "festa", lunghezza: "festa",
     scalinata: "mini", horto: "mini", pendolo: "mini", pallamatta: "mini", garapesca: "mini",
     timeline: "parole", nomicose: "parole", patata: "parole", taboo: "parole", balla: "parole"
   };
   var catAttiva = "tutti";
   function catDi(g) { return CAT_GIOCO[g.id] || null; }
   // Giochi che hanno la modalità "ognuno dal suo telefono" (usabili nella Sala online).
-  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, poker: 1, ruota: 1, ordine: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1, calciobiliardo: 1, pallamatta: 1, garapesca: 1, balla: 1 };
+  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, poker: 1, ruota: 1, ordine: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1, calciobiliardo: 1, pallamatta: 1, garapesca: 1, balla: 1, lunghezza: 1 };
   function giocoOnline(g) { return !!(g && GIOCHI_ONLINE[g.id]); }
   var app;                    // contenitore radice (#app)
   var linkParams = {};        // impostazioni arrivate da un link condiviso
@@ -2270,6 +2270,14 @@
     { gioco: "scarabocchio", livello: "diamante", icona: "👑", nome: "Maestro del Tavolo",     desc: "Arriva al primo posto in 10 partite",                                          stat: "vittorie",                  meta: 10 },
     { gioco: "scarabocchio", livello: "diamante", icona: "🌐", nome: "Tutta la Stanza",        desc: "Vinci 3 partite con almeno 6 giocatori rimasti",                                stat: "vittorieGruppo",            meta: 3 },
     { gioco: "scarabocchio", livello: "diamante", icona: "💎", nome: "Maestro delle Parole",   desc: "Fai indovinare 10 parole difficili mentre disegni",                                                  stat: "paroleDifficiliIndovinate", meta: 10 },
+    { gioco: "lunghezza", livello: "bronzo",  icona: "📡", nome: "Prima Onda",         desc: "Finisci la tua prima partita",                        stat: "partite",         meta: 1 },
+    { gioco: "lunghezza", livello: "bronzo",  icona: "🎯", nome: "Centro!",            desc: "Fai centro (4 punti) indovinando",                    stat: "centri",          meta: 1 },
+    { gioco: "lunghezza", livello: "bronzo",  icona: "🔮", nome: "Sensitivo",          desc: "Fai il sensitivo per la prima volta",                 stat: "turniSensitivo",  meta: 1 },
+    { gioco: "lunghezza", livello: "argento", icona: "⬅️", nome: "Scommettitore",      desc: "Vinci 10 scommesse a sinistra o a destra",            stat: "scommesseGiuste", meta: 10 },
+    { gioco: "lunghezza", livello: "argento", icona: "🧠", nome: "Leggi nel Pensiero", desc: "Da sensitivo, fai fare centro 5 volte",               stat: "centriDati",      meta: 5 },
+    { gioco: "lunghezza", livello: "argento", icona: "📶", nome: "Stessa Frequenza",   desc: "Finisci 10 partite",                                  stat: "partite",         meta: 10 },
+    { gioco: "lunghezza", livello: "oro",     icona: "🏆", nome: "Campioni d'Onda",    desc: "Vinci 15 partite",                                    stat: "vittorie",        meta: 15 },
+    { gioco: "lunghezza", livello: "oro",     icona: "🔭", nome: "Occhio di Lince",    desc: "Fai centro 40 volte",                                 stat: "centri",          meta: 40 },
   ];
 
   function valoreStat(prof, gioco, chiave) {
