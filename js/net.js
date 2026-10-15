@@ -43,6 +43,12 @@
      l'app dice quale sessione seguire (seguiHost); quella di prima
      da lì in poi non conta più, nemmeno il suo "host sparito".
      Un "host sparito" non cambia mai la sessione che si segue.
+
+   La presenza degli amici (SGNet.presenza, fuori dalle stanze):
+   ognuno ha un "indirizzo" fatto con l'impronta del suo profilo
+   (SGNet.impronta) e lì lascia scritto se è nell'app; gli amici
+   lo leggono. Gli inviti restano scritti finché chi li riceve non
+   li toglie: chi ha l'app chiusa li trova riaprendola.
    ========================================================= */
 (function () {
   "use strict";
@@ -102,12 +108,14 @@
   // errore(e) solo se il primo collegamento non arriva entro 15 secondi (mqtt intanto riprova da solo);
   // dopo, la rete che salta è solo un avviso ("sg-rete": "📶 Mi ricollego…").
   // errore = null: collegamento "muto" (la sbirciata): nessun avviso sullo schermo
+  // altro (facoltativo): { url: un altro ufficio postale, muto: true = nessun avviso anche se c'è la funzione errore }
   var GARA = 1500, nCol = 0;
-  function collega(opzioni, pronto, errore) {
+  function collega(opzioni, pronto, errore, altro) {
     var tutti = [], vinto = null, finito = false, ultimoErr = null, id = ++nCol, giu = false;
-    function rete(stato) { if (!errore || stato === giu) return; giu = stato; evento("sg-rete", { id: id, giu: stato }); }
+    var muto = !errore || !!(altro && altro.muto), url = (altro && altro.url) || BROKER;
+    function rete(stato) { if (muto || stato === giu) return; giu = stato; evento("sg-rete", { id: id, giu: stato }); }
     function apri() {
-      var c = mqtt.connect(BROKER, opzioni); tutti.push(c);
+      var c = mqtt.connect(url, opzioni); tutti.push(c);
       c.on("error", function (e) { if (!vinto && !finito) ultimoErr = e; });
       c.on("connect", function () {
         if (finito) return;
@@ -148,6 +156,35 @@
   } catch (e) {}
   var KEEPALIVE = 20;   // ogni quanti secondi si dice al broker "ci sono": un collegamento morto si scopre in 20-40 secondi (non 2 minuti)
   var CODA_MAX = 40, CODA_VITA = 30000;   // quello che si manda mentre la rete è giù: parte appena torna (al massimo 40 messaggi, di non più di 30 secondi fa)
+
+  // ---- la presenza degli amici (fuori dalle stanze: pallino verde e inviti) ----
+  // Sta SEMPRE sul primo ufficio postale (con quello di riserva: il primo di BROKERS), mai su quello scelto da
+  // questo telefono: due amici devono stare sullo stesso per vedersi. Se il primo è giù, niente pallini verdi.
+  function primoUfficio() { return (typeof BROKERS !== "undefined" && BROKERS && BROKERS[0]) || BROKER; }
+  var PRES_KEEPALIVE = 60;            // un collegamento solo e "ci sono" ogni minuto: meno batteria
+  var PRES_RIPROVA = 30000;           // l'ufficio non risponde proprio: riprovo con calma ogni 30 secondi
+  var PRES_RINFRESCA = 3600000;       // chi resta nell'app ripete "ci sono" ogni ora (un "on" vecchio di ore non conta)
+  var PRES_MAX = 200;                 // al massimo 200 amici seguiti
+  var TESTAMENTO_ON = '{"on":0}';     // (senza ora: così si riconosce da un "non mi vedete" detto apposta)
+  function topicU(h, cosa) { return BASE + "u/" + h + "/" + cosa; }
+  function impOk(h) { return typeof h === "string" && /^[0-9a-z]{4,24}$/.test(h); }   // (niente caratteri strani nei topic)
+  // FNV-1a a 64 bit, fatto a pezzi da 16 bit (i numeri di JavaScript non tengono 64 bit interi).
+  // Restituisce le due metà da 32 bit [alta, bassa]
+  function fnv64(s) {
+    var b = unescape(encodeURIComponent(String(s)));   // i byte UTF-8
+    var h0 = 0x2325, h1 = 0x8422, h2 = 0x9ce4, h3 = 0xcbf2;   // 0xcbf29ce484222325
+    for (var i = 0; i < b.length; i++) {
+      h0 ^= b.charCodeAt(i);
+      // × 0x100000001b3 = × 0x1b3 + × 2^40 (2^40 = due pezzi più su e × 256)
+      var t0 = h0 * 0x1b3, t1 = h1 * 0x1b3, t2 = h2 * 0x1b3, t3 = h3 * 0x1b3;
+      t2 += h0 << 8; t3 += h1 << 8;
+      t1 += t0 >>> 16; h0 = t0 & 0xffff;
+      t2 += t1 >>> 16; h1 = t1 & 0xffff;
+      h3 = (t3 + (t2 >>> 16)) & 0xffff; h2 = t2 & 0xffff;
+    }
+    return [((h3 << 16) | h2) >>> 0, ((h1 << 16) | h0) >>> 0];
+  }
+  function sei36(x) { return ("000000" + (x % 2176782336).toString(36)).slice(-6); }   // 36^6: 6 caratteri per metà
 
   window.SGNet = {
     disponibile: function () { return typeof mqtt !== "undefined"; },
@@ -611,6 +648,142 @@
         c.subscribe(Object.keys(perTopic), function () { if (!fatto) tFine = setTimeout(fine, 400); });
       }, null);   // (null = collegamento muto: niente avvisi sullo schermo)
       tMax = setTimeout(fine, 6000);
+    },
+
+    // L'impronta di un profilo (uid): 12 caratteri (cifre e lettere minuscole), sempre uguale per lo stesso uid,
+    // e dall'impronta non si torna all'uid. È l'"indirizzo" della presenza: seratagiochi/v1/u/<impronta>/…
+    impronta: function (uid) { var x = fnv64(uid == null ? "" : uid); return sei36(x[0]) + sei36(x[1]); },
+
+    // La presenza degli amici e gli inviti, su un collegamento suo (non è una stanza: chiudiGiochi non la chiude,
+    // e la sua rete che salta non mostra "📶 Mi ricollego…").
+    // io = { h: la mia impronta, stato: "app" | "gioco" | "sala", nascosto: true = parte senza farsi vedere }
+    // cb = { onAmico(h, dati): un amico seguito è nell'app ({ on: 1, s, t }) o no ({ on: 0 });
+    //        onInvito(dati): un invito per me (anche quello trattenuto trovato collegandosi);
+    //        onMsg(dati): una risposta per me }
+    // Topic: u/<h>/on (trattenuto; testamento trattenuto { on: 0 }), u/<h>/inv (trattenuto), u/<h>/msg (non trattenuto).
+    // Lo stesso messaggio ripetuto (ricollegandosi torna quello trattenuto) arriva una volta sola.
+    // Restituisce null se l'impronta non va o la rete non c'è.
+    presenza: function (io, cb) {
+      io = io || {}; cb = cb || {};
+      var mio = String(io.h || "");
+      if (!impOk(mio) || !this.disponibile()) return null;
+      var stato = String(io.stato || "app"), nascosto = !!io.nascosto, chiusa = false, client = null, collegamento = null;
+      var amici = [], ultimi = {}, attesa = [], togli = false, rimesso = 0, tRiprova = null;
+      var T = { on: topicU(mio, "on"), inv: topicU(mio, "inv"), msg: topicU(mio, "msg") };
+      function su() { return !!(client && client.connected && !chiusa); }
+      function pubblica(topic, tx, trattieni) {
+        if (!su()) return false;
+        try { client.publish(topic, tx, { retain: !!trattieni }); return true; } catch (e) { return false; }
+      }
+      // (con la rete giù: parte appena torna; un invito per amico, l'ultimo; le risposte solo se di meno di 30 secondi fa)
+      function oPoi(topic, tx, trattieni) {
+        if (pubblica(topic, tx, trattieni)) return true;
+        if (trattieni) attesa = attesa.filter(function (x) { return x.topic !== topic; });
+        attesa.push({ topic: topic, tx: tx, r: !!trattieni, t: Date.now() }); if (attesa.length > CODA_MAX) attesa.shift();
+        return false;
+      }
+      function svuota() { var ora = Date.now(), l = attesa; attesa = []; l.forEach(function (x) { if (x.r || ora - x.t < CODA_VITA) oPoi(x.topic, x.tx, x.r); }); }
+      // il mio "on" (trattenuto): l'ora serve a chi lo legge per non credere a un "on" rimasto lì da ieri
+      function dico() { pubblica(T.on, JSON.stringify(nascosto ? { on: 0, t: Date.now() } : { on: 1, s: stato, t: Date.now() }), true); }
+      function iscrivi(lista) { if (su() && lista.length) try { client.subscribe(lista); } catch (e) {} }
+      function onDi(h) { return topicU(h, "on"); }
+      // a ogni collegamento, anche dopo un buco: dico se ci sono, mi iscrivo a inviti, risposte e amici
+      function collegato() {
+        if (chiusa || !client) return;
+        if (togli && pubblica(T.inv, "", true)) togli = false;   // (prima di iscrivermi: l'invito già risposto non torna)
+        dico();
+        iscrivi([T.on, T.inv, T.msg].concat(amici.map(onDi)));
+        svuota();
+      }
+      function messaggio(topic, payload, pacchetto) {
+        if (chiusa) return;
+        var tx = payload.toString(), trat = !!(pacchetto && pacchetto.retain);
+        if (topic === T.on) {
+          // il testamento di un mio collegamento di prima arriva in ritardo (il broker se ne accorge anche 30 secondi
+          // dopo) e copre il mio "on": lo rimetto (al massimo una volta al secondo)
+          if (!trat && tx === TESTAMENTO_ON && !nascosto && Date.now() - rimesso > 1000) { rimesso = Date.now(); dico(); }
+          return;
+        }
+        if (ultimi[topic] === tx) return;
+        ultimi[topic] = tx;
+        if (!tx) return;   // (invito tolto)
+        var d; try { d = JSON.parse(tx); } catch (e) { return; }
+        if (!d || typeof d !== "object") return;
+        if (topic === T.inv) { if (cb.onInvito) cb.onInvito(d); return; }
+        if (topic === T.msg) { if (cb.onMsg) cb.onMsg(d); return; }
+        var p = topic.split("/");   // seratagiochi/v1/u/<h>/on
+        if (p.length === 5 && p[4] === "on" && amici.indexOf(p[3]) >= 0 && cb.onAmico) cb.onAmico(p[3], d);
+      }
+      function avvia() {
+        if (chiusa) return;
+        collegamento = collega({
+          clean: true, reconnectPeriod: 5000, keepalive: PRES_KEEPALIVE,
+          will: { topic: T.on, payload: TESTAMENTO_ON, retain: true }   // sparisco all'improvviso: per gli amici non ci sono più
+        }, function (c) {
+          client = c; vivi.push(c);
+          c.on("connect", collegato); c.on("message", messaggio);
+          collegato();
+        }, function () { if (!chiusa) tRiprova = setTimeout(avvia, PRES_RIPROVA); },   // l'ufficio non risponde: niente pallini, riprovo con calma
+        { url: primoUfficio(), muto: true });
+      }
+      avvia();
+      var tRinfresca = setInterval(function () { if (!nascosto) dico(); }, PRES_RINFRESCA);
+
+      return {
+        h: mio,
+        collegata: function () { return su(); },
+        // gli amici da seguire (impronte; al massimo 200): una lista nuova toglie quelli che non ci sono più
+        segui: function (lista) {
+          if (chiusa) return;
+          var nuovi = [], visto = {};
+          (Array.isArray(lista) ? lista : []).forEach(function (h) {
+            h = String(h == null ? "" : h);
+            if (impOk(h) && h !== mio && !visto[h] && nuovi.length < PRES_MAX) { visto[h] = 1; nuovi.push(h); }
+          });
+          var via = amici.filter(function (h) { return !visto[h]; }).map(onDi);
+          var piu = nuovi.filter(function (h) { return amici.indexOf(h) < 0; }).map(onDi);
+          amici = nuovi;
+          via.forEach(function (t) { delete ultimi[t]; });
+          if (su() && via.length) try { client.unsubscribe(via); } catch (e) {}
+          iscrivi(piu);
+        },
+        // dove sono ("app", "gioco", "sala"): lo ripubblica solo se è cambiato
+        stato: function (s) {
+          s = String(s || "app");
+          if (chiusa || s === stato) return;
+          stato = s; if (!nascosto) dico();
+        },
+        // true = per gli amici non ci sono (app in secondo piano, "non farti vedere"), ma inviti e risposte arrivano lo stesso
+        nascondi: function (si) {
+          si = !!si;
+          if (chiusa || si === nascosto) return;
+          nascosto = si; dico();
+        },
+        // un invito a un amico: resta trattenuto finché lui non lo toglie (o ne arriva un altro). true = partito adesso
+        invita: function (hAmico, invito) {
+          if (chiusa || !impOk(String(hAmico || "")) || !invito) return false;
+          return oPoi(topicU(hAmico, "inv"), JSON.stringify(invito), true);
+        },
+        // una risposta (non trattenuta: vale solo adesso)
+        rispondi: function (hDi, msg) {
+          if (chiusa || !impOk(String(hDi || "")) || !msg) return false;
+          return oPoi(topicU(hDi, "msg"), JSON.stringify(msg), false);
+        },
+        // toglie l'invito trattenuto per me (già risposto): chi si collega dopo non lo trova più
+        togliInvito: function () {
+          if (chiusa) return;
+          if (!pubblica(T.inv, "", true)) togli = true;
+        },
+        // esco (profilo chiuso): per gli amici non ci sono più, poi uscita educata
+        chiudi: function () {
+          if (chiusa) return;
+          pubblica(T.on, JSON.stringify({ on: 0, t: Date.now() }), true);
+          chiusa = true; clearTimeout(tRiprova); clearInterval(tRinfresca); attesa = [];
+          if (collegamento) collegamento.chiudi();
+          vivi = vivi.filter(function (x) { return x !== client; });
+          try { if (client) client.end(); } catch (e) {}
+        }
+      };
     }
   };
 })();
