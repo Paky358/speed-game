@@ -14,6 +14,9 @@
 // 407: l'host ricarica in saletta e le foto tornano; «📸 Rifai» con una foto nuova.
 // 408: l'host spegne le foto («🙂 Solo avatar») e le riaccende.
 // 409: il camerino a 360x640 e 412x915 (scelta, fotocamera, sistema, filtri).
+// IL CONTROLLO SEVERO: 410 punti ricontati a parte (5 tel), 411 provare a romperlo (mosse cattive nel broker), 412 8 tel a tempo scaduto
+//      e finale con uno spento, 413 10 tel con una ricarica a testa, 414 tre partite di fila (domande mai ripetute).
+// Col pannello del browser nascosto, dopo ~5 minuti la pagina rallenta: ricaricala prima di ogni scenario lungo.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no, T = A.T, vm = A.vm, ids = A.ids;
@@ -401,8 +404,26 @@
         var cv = facciaFinta(w, pelle), c = cv.getContext("2d"), n = 0;
         w.__camAccesa = (w.__camAccesa || 0) + 1;
         w.setInterval(function () { n++; c.fillStyle = n % 2 ? "#6a8fbf" : "#6b8fbf"; c.fillRect(0, 0, 3, 3); }, 80);   // (il video finto si muove: così arrivano i fotogrammi)
-        return Promise.resolve(cv.captureStream(15));
+        var st = cv.captureStream(15); st.__cv = cv;
+        return Promise.resolve(st);
       };
+      // con il pannello del browser nascosto il video non parte mai (niente fotogrammi): il <video> finto "vede" il canvas da solo
+      try {
+        var VP = w.HTMLVideoElement.prototype, d0 = Object.getOwnPropertyDescriptor(w.HTMLMediaElement.prototype, "srcObject");
+        if (!VP.__finto) {
+          VP.__finto = true;
+          Object.defineProperty(VP, "srcObject", { configurable: true, get: function () { return d0.get.call(this); }, set: function (s) {
+            d0.set.call(this, s); var el = this;
+            if (s && s.__cv) { el.__cv = s.__cv; w.setTimeout(function () { el.dispatchEvent(new w.Event("loadeddata")); }, 60); }
+          } });
+          ["videoWidth", "videoHeight"].forEach(function (k, i) {
+            var d1 = Object.getOwnPropertyDescriptor(VP, k);
+            Object.defineProperty(VP, k, { configurable: true, get: function () { return this.__cv ? (i ? this.__cv.height : this.__cv.width) : d1.get.call(this); } });
+          });
+          var di = w.CanvasRenderingContext2D.prototype.drawImage;
+          w.CanvasRenderingContext2D.prototype.drawImage = function (im) { var a = [].slice.call(arguments); if (im && im.__cv) a[0] = im.__cv; return di.apply(this, a); };
+        }
+      } catch (e) {}
     };
   }
   // tutto quello che passa dal broker finto (per controllare che una foto non passi MAI in chiaro)
@@ -454,7 +475,7 @@
     if (!sc) no(nome + ": la fotocamera (finta) non parte («" + T(w).slice(0, 80) + "»)");
     if (!w.document.querySelector(".cnf-sagoma ellipse")) no(nome + ": manca la sagoma ovale");
     sc.click();
-    if (!await W.aspetta(function () { return w.document.querySelector(".cnf-filtri"); }, 8000)) no(nome + ": dopo lo scatto non arrivano i filtri");
+    if (!await W.aspetta(function () { return w.document.querySelector(".cnf-filtri"); }, 20000)) no(nome + ": dopo lo scatto non arrivano i filtri");
     if (w.document.querySelectorAll(".cnf-f").length !== 10) no(nome + ": i filtri non sono 10");
     if (filtro && !W.clicca(w, new RegExp(filtro), ".cnf-f")) no(nome + ": non trovo il filtro " + filtro);
     W.clicca(w, /Fatto/, ".cnf-b");
@@ -672,5 +693,262 @@
     if (w.__camAccesa && w.document.querySelector("video") ) no("la fotocamera è rimasta accesa");
     fineSpia(); senzaErrori();
     return "misurati: " + viste.join(", ");
+  } });
+
+  // =========================================================
+  //  IL CONTROLLO SEVERO (410-414): i punti ricontati a parte a ogni svelamento, le mosse "cattive" mandate a mano nel broker
+  //  (doppio voto, voto alla propria battuta, jolly che non ci sono, testi enormi o vuoti, mosse vecchie), il tempo che scade
+  // =========================================================
+  // una mossa mandata a mano da un telefono (come se la mandasse lui): { from: il suo id, data: msg }
+  function forgia(nome, C, msg) {
+    var id = idDi(C, nome), cl = (W.BR.perNome[nome] || []).filter(function (k) { return k.connected && !k.frozen; }).pop();
+    if (!cl || !id) return false;
+    cl.publish("seratagiochi/v1/" + C + "/azioni", JSON.stringify({ from: id, data: msg }), { retain: false });
+    return true;
+  }
+  // i punti ricontati da zero a ogni svelamento, con le regole del proprietario (decisioni-punti):
+  // 100 (×2 nel finale) per ogni ALTRO che ha scelto come te; nello Scrivi e nel Disegna il voto di chi è sotto torchio vale 2;
+  // jolly ×2; +100 all'autore della battuta/disegno più votato (+200 a chi ha lavorato al ritratto più votato del finale);
+  // TUTTI D'ACCORDO (tutti quelli che potevano votarla l'hanno votata) +100 a tutti
+  function spiaPunti(C) {
+    var S = { err: [], n: { i: 0, c: 0, s: 0, d: 0, f: 0, vuoto: 0, tutti: 0, jolly: 0, prot2: 0, autore: 0 }, prima: null, k: null, fatti: {}, esempi: [] };
+    function controlla(v, prima) {
+      var E = v.esito || {}, fin = v.passo === "fsvela", tipo = fin ? "f" : (v.dom || {}).tipo, prot = v.prot;
+      if (E.vuoto) { S.n.vuoto++; return; }
+      var sc = E.scelte || {}, jo = E.jolly || [], vot = Object.keys(sc), m = fin ? 2 : 1;
+      function w(o) { return (tipo === "s" || tipo === "d") && o === prot ? 2 : 1; }
+      var att = {}, pres = (v.players || []).filter(function (p) { return !p.via; }).map(function (p) { return p.id; });
+      (v.players || []).forEach(function (p) { att[p.id] = 0; });
+      var conti = {}; vot.forEach(function (o) { conti[sc[o]] = (conti[sc[o]] || 0) + w(o); });
+      var max = 0; Object.keys(conti).forEach(function (x) { if (conti[x] > max) max = conti[x]; });
+      var vinc = max ? Object.keys(conti).filter(function (x) { return conti[x] === max; }) : [];
+      vot.forEach(function (id) {
+        var b = 0; vot.forEach(function (o) { if (o !== id && String(sc[o]) === String(sc[id])) { b += 100 * m * w(o); if (w(o) === 2) S.n.prot2++; } });
+        if (jo.indexOf(id) >= 0) { b *= 2; S.n.jolly++; }
+        att[id] = (att[id] || 0) + b;
+      });
+      if (tipo === "s" || tipo === "d") vinc.forEach(function (x) { var a = (E.autori || {})[x]; if (a && a !== "casa" && att[a] != null) { att[a] += 100; S.n.autore++; } });
+      if (fin) vinc.forEach(function (x) { ((E.autori || {})[x] || []).forEach(function (a) { if (att[a] != null) att[a] += 200; }); });
+      // tutti d'accordo: Immagini e Chi di noi = tutti (almeno 3) sulla stessa; Scrivi e Disegna = tutti quelli che potevano votarla
+      // (non chi l'ha scritta, che può votare altro) l'hanno votata, almeno 2. Il bonus se hanno votato tutti i collegati che potevano.
+      var att2 = (v.players || []).filter(function (p) { return !p.via && !p.forse; }).map(function (p) { return p.id; }), xT = null, autT = null;
+      if (!fin) Object.keys(conti).forEach(function (x) {
+        var a = (tipo === "s" || tipo === "d") ? (E.autori || {})[x] : null, altri = vot.filter(function (id) { return id !== a; });
+        if (altri.length >= (tipo === "i" || tipo === "c" ? 3 : 2) && altri.every(function (id) { return String(sc[id]) === String(x); })) { xT = x; autT = a; }
+      });
+      if (xT != null && att2.every(function (id) { return id === autT || sc[id] != null; })) { pres.forEach(function (id) { att[id] += 100; }); S.n.tutti++; }
+      var righe = [];
+      (v.players || []).forEach(function (p) {
+        var d = p.punti - (prima[p.id] || 0), g = ((E.guad || {})[p.id] || 0) + ((E.bonus || {})[p.id] || 0);
+        if (d !== att[p.id] || g !== att[p.id]) S.err.push(tipo + " " + (v.dom && v.dom.id || "finale") + ": " + p.nome + " ha preso " + d + " (esito " + g + "), ricontati " + att[p.id] + " · scelte " + JSON.stringify(sc) + " jolly " + JSON.stringify(jo) + " prot " + prot);
+        righe.push(p.nome + (sc[p.id] != null ? "→" + (/^\d+$/.test(String(sc[p.id])) ? sc[p.id] : nomeId(C, sc[p.id]) || sc[p.id]) : "") + (jo.indexOf(p.id) >= 0 ? "🃏" : "") + " +" + d);
+      });
+      S.n[tipo]++;
+      if (S.esempi.filter(function (x) { return x.charAt(0) === tipo; }).length < 3) S.esempi.push(tipo + " " + (v.dom && v.dom.id || "finale") + " [sotto torchio " + nomeId(C, prot) + "]: " + righe.join(", "));
+    }
+    S.t = setInterval(function () {
+      var v = vm(C); if (v.fase !== "gioco") return;
+      if (v.k !== S.k) {
+        if ((v.passo === "svela" || v.passo === "fsvela") && S.prima && !S.fatti[v.k]) { S.fatti[v.k] = 1; try { controlla(v, S.prima); } catch (e) { S.err.push("spia: " + e.message); } }
+        S.k = v.k;
+      }
+      if (v.passo !== "svela" && v.passo !== "fsvela") { var pts = {}; (v.players || []).forEach(function (p) { pts[p.id] = p.punti; }); S.prima = pts; }
+    }, 40);
+    S.ferma = function () { clearInterval(S.t); };
+    return S;
+  }
+  function esitoPunti(S, min) {
+    S.ferma();
+    if (S.err.length) no("PUNTI SBAGLIATI: " + S.err.slice(0, 3).join(" || "));
+    Object.keys(min || {}).forEach(function (k) { if (S.n[k] < min[k]) no("controllati solo " + S.n[k] + " svelamenti di tipo " + k + " (servono " + min[k] + ")"); });
+    return "punti ricontati: " + ["i", "c", "s", "d", "f"].map(function (k) { return k + " " + S.n[k]; }).join(", ") + " (tutti d'accordo " + S.n.tutti + ", jolly " + S.n.jolly + ", voti doppi del protagonista " + S.n.prot2 + ", premi all'autore " + S.n.autore + ")";
+  }
+  async function giocaMisto(C, ms, n0) {
+    var fino = Date.now() + (ms || 600000), n = n0 || 0;
+    while (Date.now() < fino) {
+      if (vm(C).fase === "fine") return true; if (vm(C).fase !== "gioco") return false;
+      n++; await giocaPasso(C, { uguali: n % 3 === 0, jolly: true, veloce: true });
+    }
+    return vm(C).fase === "fine";
+  }
+
+  // (per guardare le schermate a mano: COPIONE.cn.salaFoto(["Giulia","Luca"]), selfie("Paky","Occhioni Anime"), regole(P,3,3), comincia(C)…)
+  Object.assign(COPIONE.cn, { salaFoto: salaFoto, selfie: selfie, galleria: galleria, avatar: avatar, regole: regole, comincia: comincia, spiaPunti: spiaPunti, forgia: forgia, salaECominci: salaECominci });
+
+  COPIONE.aggiungi(410, { nome: "Chi di Noi?: 5 telefoni, i punti ricontati a parte in ogni svelamento (tutti i tipi, jolly, voto doppio, tutti d'accordo)", fai: async function () {
+    var Z = await salaECominci(["Giulia", "Luca", "Sara", "Marco"]), C = Z.C, P = W.finestra("Paky");
+    await regole(P, 3, 5, "⚡ Veloci");
+    await comincia(C);
+    var S = spiaPunti(C);
+    if (!await giocaMisto(C, 700000)) { S.ferma(); no("la partita non finisce (" + vm(C).fase + "/" + vm(C).passo + ")"); }
+    await W.dorme(300);
+    var r = esitoPunti(S, { i: 3, c: 3, s: 3, d: 3, f: 1 });
+    W.__esempi410 = S.esempi;
+    var f = vm(C).fine;
+    senzaErrori();
+    return r + "; classifica " + f.classifica.map(function (x) { return x.nome + " " + x.punti; }).join(", ");
+  } });
+
+  COPIONE.aggiungi(411, { nome: "Chi di Noi?: provare a romperlo (doppi voti, voto alla propria battuta, jolly finti, testi enormi/vuoti/HTML, mosse vecchie, tocchi veloci)", fai: async function () {
+    var Z = await salaECominci(["Giulia", "Luca"]), C = Z.C, P = W.finestra("Paky"), fatti = [];
+    await regole(P, 4, 4);
+    await comincia(C);
+    var S = spiaPunti(C);
+    // 1) Immagini: Giulia tocca due volte «Lancia» e poi manda a mano un'altra scelta: vale la prima
+    if (!await finoA(C, function (x) { return x.passo === "scegli" && x.dom.tipo === "i"; }, 60000)) no("non arriva un'Immagini");
+    var k1 = vm(C).k, wG = W.finestra("Giulia");
+    var c = await W.aspetta(function () { var l = wG.document.querySelectorAll(".cn-carta"); return l.length === 4 ? l : null; }, 5000);
+    tocca(wG, c[1]); W.clicca(wG, /Lancia/, ".cn-btn.vai"); W.clicca(wG, /Lancia/, ".cn-btn.vai"); tocca(wG, c[2]); W.clicca(wG, /Lancia/, ".cn-btn.vai");
+    await W.dorme(300);
+    forgia("Giulia", C, { t: "scelta", k: k1, x: 3, j: true });
+    forgia("Giulia", C, { t: "scelta", k: k1, x: 7 });
+    forgia("Luca", C, { t: "scelta", k: k1, x: 9 });          // carta che non esiste
+    forgia("Luca", C, { t: "scelta", k: "vecchia|1|2|3", x: 0 });   // mossa di un passo vecchio
+    await W.dorme(500);
+    if (vm(C).risposto.indexOf(idDi(C, "Giulia")) < 0) no("la scelta di Giulia non è arrivata");
+    if (vm(C).risposto.indexOf(idDi(C, "Luca")) >= 0) no("una carta che non esiste (o una mossa vecchia) vale come risposta di Luca");
+    if (vm(C).players.filter(function (p) { return p.nome === "Giulia"; })[0].jolly !== 3) no("il jolly mandato dopo la scelta è stato consumato");
+    await giocaPasso(C, { salta: ["Giulia"] });
+    if ((vm(C).esito || {}).scelte && vm(C).esito.scelte[idDi(C, "Giulia")] !== 1) no("vale una scelta di Giulia diversa dalla prima (" + vm(C).esito.scelte[idDi(C, "Giulia")] + ")");
+    fatti.push("doppio Lancia e scelte rimandate: vale la prima");
+    // 2) jolly che non ci sono: Luca li gioca tutti e 3, poi ne manda altri a mano
+    var usati = 0, giri = 0;
+    while (vm(C).fase === "gioco" && giri++ < 40 && usati < 4) {
+      var v = vm(C);
+      if (v.passo === "scegli" || (v.passo === "vota" && (v.voci || v.nGal))) {
+        if (v.passo === "scegli") { var x = v.dom.tipo === "i" ? 0 : idDi(C, "Paky"); forgia("Luca", C, { t: "scelta", k: v.k, x: x, j: true }); usati++; }
+        await W.dorme(300);
+        await giocaPasso(C, { salta: ["Luca"] });
+      } else await giocaPasso(C, { veloce: true });
+      var lj = vm(C).players.filter(function (p) { return p.nome === "Luca"; })[0];
+      if (lj && lj.jolly < 0) no("i jolly di Luca vanno sotto zero (" + lj.jolly + ")");
+    }
+    fatti.push("jolly oltre i 3: mai sotto zero");
+    // 3) Scrivi: testo vuoto, testo enorme con HTML, e il voto alla propria battuta
+    if (!await finoA(C, function (x) { return x.passo === "scrivi"; }, 120000)) no("non arriva uno Scrivi");
+    var ks = vm(C).k;
+    forgia("Luca", C, { t: "testo", k: ks, tx: "    " });
+    await W.dorme(300);
+    if (vm(C).risposto.indexOf(idDi(C, "Luca")) >= 0) no("una battuta vuota vale come risposta");
+    forgia("Luca", C, { t: "testo", k: ks, tx: "<img src=x onerror=\"window.__rotto=1\">" + new Array(300).join("bla ") });
+    forgia("Luca", C, { t: "testo", k: ks, tx: "seconda battuta che non deve valere" });
+    var wG3 = W.finestra("Giulia"), ta = await W.aspetta(function () { return wG3.document.querySelector(".cn-campo"); }, 4000);
+    ta.value = "Battuta di Giulia"; ta.dispatchEvent(new wG3.Event("input", { bubbles: true })); W.clicca(wG3, /Manda/, ".cn-btn.vai");
+    var wP = W.finestra("Paky"), taP = await W.aspetta(function () { return wP.document.querySelector(".cn-campo"); }, 4000);
+    taP.value = "Battuta di Paky"; taP.dispatchEvent(new wP.Event("input", { bubbles: true })); W.clicca(wP, /Manda/, ".cn-btn.vai");
+    if (!await W.aspetta(function () { return vm(C).passo === "vota"; }, 40000)) no("dopo lo Scrivi non arriva il voto (" + vm(C).passo + ")");
+    var voci = vm(C).voci || [];
+    var lucaV = voci.filter(function (x) { return /^<img/.test(x.tx); })[0];
+    if (!lucaV) no("la battuta lunga di Luca non c'è"); else if (lucaV.tx.length > 40) no("la battuta di Luca supera 40 lettere (" + lucaV.tx.length + ")");
+    if (voci.some(function (x) { return /seconda battuta/.test(x.tx); })) no("la seconda battuta di Luca è passata");
+    if (voci.length < 4) no("in 3 non arrivano le battute della casa (" + voci.length + ")");
+    ["Paky", "Giulia", "Luca"].forEach(function (n) { var w = W.finestra(n); if (w.__rotto || w.document.querySelector(".cn img[src='x']")) no("l'HTML di una battuta è stato eseguito su " + n); });
+    var mia = voci.filter(function (x) { return x.tx === "Battuta di Giulia"; })[0], altra = voci.filter(function (x) { return x.tx !== "Battuta di Giulia"; })[0];
+    forgia("Giulia", C, { t: "scelta", k: vm(C).k, x: mia.k });
+    await W.dorme(400);
+    if (vm(C).risposto.indexOf(idDi(C, "Giulia")) >= 0) no("Giulia ha potuto votare la sua battuta");
+    // tutti votano la battuta di Luca (Luca non può: vota una della casa): è TUTTI D'ACCORDO, +100 a tutti
+    var kv = vm(C).k, casaV = voci.filter(function (x) { return x !== lucaV && x !== mia && !/^Battuta di/.test(x.tx); })[0];
+    forgia("Giulia", C, { t: "scelta", k: kv, x: lucaV.k }); forgia("Giulia", C, { t: "scelta", k: kv, x: 99 });
+    forgia("Luca", C, { t: "scelta", k: kv, x: casaV.k });
+    var bP = await W.aspetta(function () { return [].filter.call(wP.document.querySelectorAll(".cn-voce"), function (x) { return /<img/.test(x.textContent); })[0]; }, 5000);
+    tocca(wP, bP); W.clicca(wP, /Vota/, ".cn-azione .cn-btn.vai");
+    if (!await W.aspetta(function () { return vm(C).passo === "svela"; }, 15000)) no("dopo i voti non arriva lo svelamento");
+    var Es = vm(C).esito || {};
+    if (Es.strisc !== "tutti" || !Es.tuttiBonus) no("tutti sulla battuta di Luca (lui su un'altra) non è TUTTI D'ACCORDO (" + Es.strisc + ")");
+    fatti.push("battute: vuota no, lunga tagliata a 40, HTML solo testo, seconda no, la propria non si vota; tutti sulla battuta di Luca = TUTTI D'ACCORDO");
+    // 4) Disegna: 35 adesivi (massimo 30), un foglio pieno di tratti, un disegno finto enorme mandato a mano (scartato)
+    if (!await finoA(C, function (x) { return x.passo === "disegna"; }, 200000)) no("non arriva un Disegna");
+    var kd = vm(C).k, wL = W.finestra("Luca");
+    await W.aspetta(function () { return wL.document.querySelector(".cn-tav-foglio"); }, 5000);
+    var bA = wL.document.querySelector(".cn-ades"); for (var a = 0; a < 35; a++) bA.click();
+    if (wL.document.querySelectorAll(".cn-ad").length !== 30) no("gli adesivi non si fermano a 30 (" + wL.document.querySelectorAll(".cn-ad").length + ")");
+    var f = wL.document.querySelector(".cn-tav-foglio"), rr = f.getBoundingClientRect();
+    for (var tr = 0; tr < 120; tr++) { var x0 = rr.left + 5 + Math.random() * (rr.width - 10), y0 = rr.top + 5 + Math.random() * (rr.height - 10); pt(wL, f, "pointerdown", x0, y0); for (var q = 0; q < 30; q++) pt(wL, f, "pointermove", rr.left + Math.random() * rr.width, rr.top + Math.random() * rr.height); pt(wL, f, "pointerup", x0, y0); }
+    var enorme = { s: [], a: [] }; for (var e = 0; e < 300; e++) enorme.s.push([1, 1, new Array(200).join("123,-45,")]);
+    forgia("Giulia", C, { t: "dis", k: kd, dis: enorme, fine: true });
+    await W.dorme(500);
+    if (vm(C).risposto.indexOf(idDi(C, "Giulia")) >= 0) no("il disegno enorme di Giulia è stato preso");
+    W.clicca(wL, /Fatto/, ".cn-btn.vai");
+    await W.dorme(400);
+    if (vm(C).risposto.indexOf(idDi(C, "Luca")) < 0) no("il disegno pieno di Luca non arriva all'host (troppo grande?)");
+    await giocaPasso(C, { salta: ["Luca"] });
+    if (vm(C).passo === "vota" && (vm(C).nGal || 0) < 1) no("la galleria è vuota");
+    fatti.push("adesivi fermi a 30, foglio pieno arriva, disegno finto enorme scartato");
+    // 5) il tempo che scade: nessuno risponde a una domanda, si va avanti da soli (0 punti)
+    if (!await finoA(C, function (x) { return x.passo === "scegli"; }, 120000)) no("non arriva un'altra scelta");
+    var kt = vm(C).k, t0 = Date.now();
+    if (!await W.aspetta(function () { return vm(C).k !== kt; }, 25000)) no("col tempo scaduto la domanda resta ferma");
+    if (vm(C).passo !== "svela") no("a tempo scaduto non arriva lo svelamento (" + vm(C).passo + ")");
+    fatti.push("tempo scaduto in " + Math.round((Date.now() - t0) / 1000) + " s: si va avanti da soli");
+    if (!await finoAllaFine(C, 500000, { veloce: true })) no("la partita non finisce");
+    var r = esitoPunti(S, {});
+    senzaErrori();
+    return fatti.join("; ") + "; " + r;
+  } });
+
+  COPIONE.aggiungi(412, { nome: "Chi di Noi?: 8 telefoni coi punti ricontati, Scrivi e Disegna a tempo scaduto (nessuno scrive o disegna), uno spento nel finale, arrivo nel finale", fai: async function () {
+    var amici = ["Giulia", "Luca", "Sara", "Marco", "Anna", "Piero", "Ele"];
+    var Z = await salaECominci(amici), C = Z.C, P = W.finestra("Paky"), fatti = [];
+    await regole(P, 3, 3, "⚡ Veloci");
+    await comincia(C);
+    var S = spiaPunti(C);
+    // Scrivi senza nessuno che scrive: solo le battute della casa, si vota lo stesso
+    if (!await finoA(C, function (x) { return x.passo === "scrivi"; }, 200000, { veloce: true })) no("non arriva uno Scrivi");
+    if (!await W.aspetta(function () { return vm(C).passo === "vetrina" || vm(C).passo === "vota"; }, 60000)) no("lo Scrivi a tempo scaduto non va avanti");
+    var vv = vm(C).voci || []; if (!vv.length || vv.some(function (x) { return !x.tx; })) no("a tempo scaduto senza battute la vetrina è vuota");
+    fatti.push("Scrivi senza battute: " + vv.length + " della casa");
+    if (!await finoA(C, function (x) { return x.passo === "disegna"; }, 200000, { veloce: true })) no("non arriva un Disegna");
+    if (!await W.aspetta(function () { return vm(C).passo === "svela" && vm(C).esito && vm(C).esito.vuoto; }, 80000)) no("il Disegna senza disegni non dice «Nessuno ha avuto il coraggio»");
+    fatti.push("Disegna senza disegni: «nessuno ha avuto il coraggio»");
+    // il finale: Marco si spegne durante il primo passaggio, Bea arriva
+    if (!await finoA(C, function (x) { return x.passo === "passa"; }, 300000, { veloce: true })) no("non arriva il finale");
+    W.spegni("Marco");
+    await W.apriTel("Bea", { hash: "sala=" + Z.S, x: 185 * 8, salaSempre: true });
+    await W.aspetta(function () { return W.clicca(W.finestra("Bea"), /Guarda/); }, 15000);
+    if (!await finoAllaFine(C, 400000, { salta: ["Marco"], veloce: true })) no("col telefono di Marco spento il finale non finisce (" + vm(C).passo + ")");
+    if (!(vm(C).guarda || []).some(function (g) { return g.nome === "Bea"; })) no("Bea non guarda");
+    fatti.push("Marco spento nel finale e Bea che arriva: il finale finisce");
+    W.riaccendi("Marco");
+    var r = esitoPunti(S, { i: 3, f: 1 });
+    senzaErrori();
+    return fatti.join("; ") + "; " + r;
+  } });
+
+  COPIONE.aggiungi(413, { nome: "Chi di Noi?: 10 telefoni, partita intera coi punti ricontati e una ricarica a testa (a turno)", fai: async function () {
+    var amici = ["Giulia", "Luca", "Sara", "Marco", "Anna", "Piero", "Ele", "Ugo", "Bea"];
+    var Z = await salaECominci(amici), C = Z.C, P = W.finestra("Paky");
+    await regole(P, 4, 4, "⚡ Veloci");
+    await comincia(C);
+    var S = spiaPunti(C), n = 0, ric = [];
+    var fino = Date.now() + 900000;
+    while (Date.now() < fino && vm(C).fase === "gioco") {
+      n++;
+      if (n % 7 === 0 && ric.length < amici.length) { var chi = amici[ric.length]; ric.push(chi); W.ricarica(chi); }
+      await giocaPasso(C, { uguali: n % 4 === 0, jolly: true, veloce: true });
+    }
+    if (vm(C).fase !== "fine") { S.ferma(); no("la partita in 10 non finisce (" + vm(C).passo + ")"); }
+    var r = esitoPunti(S, { i: 3, c: 3, s: 2, d: 2, f: 1 });
+    if (vm(C).fine.classifica.length !== 10) no("in classifica non sono 10");
+    senzaErrori();
+    return "ricaricati a turno: " + ric.join(", ") + "; " + r;
+  } });
+
+  COPIONE.aggiungi(414, { nome: "Chi di Noi?: 3 telefoni, Rivincita due volte di fila coi punti ricontati (le domande non si ripetono)", fai: async function () {
+    var Z = await salaECominci(["Giulia", "Luca"]), C = Z.C, P = W.finestra("Paky"), viste = {}, doppie = [];
+    await regole(P, 3, 3, "⚡ Veloci");
+    var S = spiaPunti(C);
+    for (var g = 1; g <= 3; g++) {
+      if (g === 1) await comincia(C);
+      else { await W.aspetta(function () { return A.tastiFineDi(P); }, 8000); W.clicca(P, /Rivincita/, ".fine-tasti button"); if (!await W.aspetta(function () { return vm(C).fase === "gioco" && vm(C).partita === g; }, 20000)) no("la rivincita " + g + " non parte"); }
+      var mie = {};
+      var fino = Date.now() + 400000;
+      while (Date.now() < fino && vm(C).fase === "gioco") { var d = vm(C).dom; if (d && d.id && !mie[d.id]) { mie[d.id] = 1; if (viste[d.id]) doppie.push(d.id); viste[d.id] = 1; } await giocaPasso(C, { uguali: Math.random() < 0.3, jolly: true, veloce: true }); }
+      if (vm(C).fase !== "fine") no("la partita " + g + " non finisce");
+    }
+    if (doppie.length) no("domande ripetute tra una partita e l'altra: " + doppie.join(", "));
+    var r = esitoPunti(S, { i: 6 });
+    senzaErrori();
+    return "3 partite di fila, " + Object.keys(viste).length + " domande tutte diverse; " + r;
   } });
 })();

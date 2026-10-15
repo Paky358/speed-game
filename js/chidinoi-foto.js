@@ -452,7 +452,13 @@
         if (!C.vivo || C.stato !== "camera") { s.getTracks().forEach(function (tr) { tr.stop(); }); return; }
         C.stream = s; v.srcObject = s;
         var p = v.play(); if (p && p.catch) p.catch(function () {});
-        scatto.disabled = false;
+        // il tasto rosso si accende quando arrivano davvero le immagini (una fotocamera lenta: niente scatto a vuoto)
+        function pronta() { if (v.videoWidth && C.vivo && C.stato === "camera" && C.stream === s && !C.scatta) scatto.disabled = false; }
+        ["loadeddata", "playing", "resize"].forEach(function (ev) { v.addEventListener(ev, pronta); });
+        pronta();
+        // se il telefono non fa partire il video da solo: un tocco sull'immagine lo fa partire, e dopo un po' si consiglia la galleria
+        v.addEventListener("pointerup", function () { if (!v.videoWidth) { var q = v.play(); if (q && q.catch) q.catch(function () {}); } });
+        dopo(6000, function () { if (C.stato === "camera" && C.stream === s && !v.videoWidth) nota.textContent = "📷 Non vedi la tua faccia? Tocca qui sotto, oppure usa «🖼️ Galleria»."; });
       }).catch(function () { nienteCamera(); });
       var giu = false;
       scatto.addEventListener("pointerdown", function (e) { if (!scatto.disabled) { giu = true; e.preventDefault(); } });
@@ -460,12 +466,13 @@
       scatto.addEventListener("click", function (e) { if (e.detail === 0) scatta(); });
       function scatta() {
         if (scatto.disabled || !C.stream) return;
-        vibra(12); scatto.disabled = true;
+        vibra(12); scatto.disabled = true; C.scatta = true;
         [3, 2, 1].forEach(function (n, i) { dopo(i * 620, function () { conto.textContent = String(n); conto.classList.remove("su"); void conto.offsetWidth; conto.classList.add("su"); }); });
         dopo(3 * 620, function () {
           conto.textContent = ""; lampo.classList.remove("su"); void lampo.offsetWidth; lampo.classList.add("su");
           var R = riquadro(), vw = v.videoWidth, vh = v.videoHeight;
-          if (!vw || !vh) { scatto.disabled = false; return; }
+          C.scatta = false;
+          if (!vw || !vh) { scatto.disabled = false; nota.textContent = "📷 La fotocamera non era pronta: tocca di nuovo il tasto rosso."; return; }
           var s = Math.max(R.W / vw, R.H / vh), ox = (R.W - vw * s) / 2, oy = (R.H - vh * s) / 2;
           // (il video si vede a specchio: la foto resta come la vedi)
           var sx = (R.W - (R.x + R.w) - ox) / s, sy = (R.y - oy) / s, sw = R.w / s, sh = R.h / s;

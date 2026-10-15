@@ -301,7 +301,7 @@
       var bRifai = tasto(t, "cn-fb-b", "📸 Foto", function () { apriCamerino(t, FB.cb); });
       var bFiltro = tasto(t, "cn-fb-b", "🎭 Filtro", function () { apriCamerino(t, FB.cb, true); });
       var tondo = t.el("span", { class: "cn-fb-w" }, [faccina]);
-      var el = t.el("div", { class: "cn-fb" }, [t.el("div", { class: "cn-fb-riga" }, [tondo, t.el("span", { class: "cn-fb-col" }, [testo, sotto]), bRifai, bFiltro])]);
+      var el = t.el("div", { class: "cn-fb" }, [t.el("div", { class: "cn-fb-riga" }, [tondo, t.el("span", { class: "cn-fb-col" }, [testo, sotto]), t.el("span", { class: "cn-fb-btns" }, [bRifai, bFiltro])])]);
       FB = { t: t, my: cb.myId, el: el, cb: cb, vm: vm, agg: function () {
         var v = FB.vm, ok = fotoOk(v), m = FT.mia, foto = !!(m && !m.av && m.cv), f0 = F.FILTRI[(m && m.x) | 0] || F.FILTRI[0];
         stile(); FB.el.style.display = FT.pronta ? "" : "none";
@@ -310,7 +310,7 @@
         if (F.spente) tx0 = "🙂 Stasera foto spente: si gioca con gli avatar";
         else if (!FT.key) tx0 = "📸 Le foto si vedono solo entrando dal link dell'host";
         else if (!ok) tx0 = "📸 Il tuo link è vecchio: le foto non si vedono";
-        else if (foto) { tx0 = "📸 La tua faccia"; sot = f0.e + " " + f0.nome; }
+        else if (foto) { tx0 = f0.e + " " + f0.nome; sot = "📸 La tua faccia per stasera"; }
         else tx0 = "🙂 Giochi con l'avatar";
         var cam = (v.cam || []).filter(function (id) { return id !== cb.myId; }).map(function (id) { return nomeVm(v, id); });
         if (cam.length) sot = (sot ? sot + " · " : "") + "📸 Si fanno la foto: " + cam.join(", ");
@@ -595,7 +595,7 @@
         var m = { t: "gal", k: H.kGal, n: g.n, tot: H.gal.length, dis: g.dis || null, strati: g.strati || null, target: g.target || null, su: g.su || null };
         if (id) privato(id, m); else veloce(m);
       });
-      var mieiDi = function (pid) { return H.gal.filter(function (g) { return g.a === pid || (g.autori && g.autori.indexOf(pid) >= 0); }).map(function (g) { return g.n; }); };
+      var mieiDi = function (pid) { return H.gal.filter(function (g) { return g.autori ? g.target === pid : g.a === pid; }).map(function (g) { return g.n; }); };
       (id ? [id] : H.players.map(function (p) { return p.id; })).forEach(function (pid) { privato(pid, { t: "mio", k: H.kGal, n: mieiDi(pid) }); });
     }
 
@@ -712,7 +712,7 @@
         else if (H.passo === "vota") {
           var voce = H.voci ? H.voci.filter(function (v) { return v.k === x; })[0] : (H.gal || []).filter(function (g) { return g.n === x; })[0];
           if (!voce || voce.a === id) return;
-        } else { var g = (H.gal || []).filter(function (q) { return q.n === x; })[0]; if (!g || g.autori.indexOf(id) >= 0) return; }
+        } else { var g = (H.gal || []).filter(function (q) { return q.n === x; })[0]; if (!g || g.target === id) return; }
         var j = !!m.j && p.jolly > 0;
         if (j) p.jolly--;
         H.risp[id] = { x: x, j: j }; H.fatti[id] = 1;
@@ -743,7 +743,7 @@
       if (H.passo === "passa" && H.fin) return a.filter(function (p) { return H.fin.tiene[p.id] != null; });
       if (H.passo === "vota" && H.voci) return a.filter(function (p) { return H.voci.some(function (v) { return v.a !== p.id; }); });
       if (H.passo === "vota" && H.gal) return a.filter(function (p) { return H.gal.some(function (g) { return g.a !== p.id; }); });
-      if (H.passo === "fvota" && H.gal) return a.filter(function (p) { return H.gal.some(function (g) { return g.autori.indexOf(p.id) < 0; }); });
+      if (H.passo === "fvota" && H.gal) return a.filter(function (p) { return H.gal.some(function (g) { return g.target !== p.id; }); });
       return a;
     }
     var tFatto = null;
@@ -800,9 +800,10 @@
           if (sc && Object.keys(H.risp).filter(function (x) { return H.risp[x].x === sc.x; }).length === 1 && Object.keys(H.risp).length >= 3) E.solo = true;
         }
       } else {
-        // 👆 il più votato vince il titolo (a pari voti tutti e due)
+        // 👆 il più votato vince il titolo (a pari voti tutti i pari), ma solo con almeno 2 voti: un voto a testa = nessun titolo
         Object.keys(H.risp).forEach(function (v) { st(H.risp[v].x).votiChi++; });
-        E.titolo = E.vinc.map(function (id) {
+        var mx = E.vinc.length ? E.conti[E.vinc[0]] || 0 : 0;
+        E.titolo = (mx >= 2 ? E.vinc : []).map(function (id) {
           var w = pById(id), ti = accorda(H.dom.titolo, w ? w.nome : "", w ? eDonna(w.omino) : null);
           (H.titoli[id] || (H.titoli[id] = [])).push({ t: ti, e: (posto(H.scaletta[H.iP].posto) || {}).emoji || "🏷️" });
           return { id: id, t: ti };
@@ -838,7 +839,8 @@
     }
     // i punti in classifica, le statistiche, il passo "svela"
     function chiudi(E, durRiep) {
-      if (E.strisc === "tutti" && E.tuttiOk !== false && Object.keys(E.scelte).length >= presenti().filter(function (p) { return !E.esclusi || E.esclusi.indexOf(p.id) < 0; }).length) {
+      // (il bonus solo se hanno votato davvero tutti quelli collegati che potevano: chi ha scritto la battuta vincente no)
+      if (E.strisc === "tutti" && E.tuttiOk !== false && attivi().every(function (p) { return (E.esclusi && E.esclusi.indexOf(p.id) >= 0) || E.scelte[p.id] != null; })) {
         presenti().forEach(function (p) { E.bonus[p.id] = (E.bonus[p.id] || 0) + 100; });
         E.tuttiBonus = true;
       }
@@ -895,8 +897,13 @@
         var best = E.vinc.length ? E.testi[E.vinc[0]] : null;
         if (best && E.autori[E.vinc[0]] !== "casa") (H.battute[prot] || (H.battute[prot] = [])).push(best);
       }
-      // TUTTI D'ACCORDO: tutti quelli che potevano votarla l'hanno votata
-      if (E.strisc === "tutti") { var x0 = Object.keys(E.conti)[0]; E.esclusi = [E.autori[x0]]; }
+      // TUTTI D'ACCORDO: tutti quelli che potevano votarla l'hanno votata (chi l'ha scritta o disegnata non può votare la sua:
+      // se vota un'altra cosa, gli altri sono d'accordo lo stesso)
+      if (E.strisc !== "tutti") Object.keys(E.conti).forEach(function (x) {
+        var a = E.autori[x], altri = Object.keys(E.scelte).filter(function (id) { return id !== a; });
+        if (altri.length >= 2 && altri.every(function (id) { return String(E.scelte[id]) === String(x); })) { E.strisc = "tutti"; E.tuttiX = x; }
+      });
+      if (E.strisc === "tutti") { var x0 = E.tuttiX != null ? E.tuttiX : Object.keys(E.conti)[0]; E.esclusi = [E.autori[x0]]; delete E.tuttiX; }
       E.voce = voce(E, prot);
       chiudi(E);
     }
@@ -979,8 +986,10 @@
       var b = migliori("votiChi", 0); if (b.length) on.push({ e: "🎯", nome: "Il Bersaglio", ids: b, perche: punti0(st(b[0]).votiChi, "voto", "voti") + " nei «Chi di noi»" });
       var m = migliori("magg", 0); if (m.length) on.push({ e: "🧠", nome: "Mente del Gruppo", ids: m, perche: st(m[0]).magg + " volte con la maggioranza" });
       var c = migliori("jollyOk", 0); if (c.length) on.push({ e: "🃏", nome: "Il Cecchino", ids: c, perche: punti0(st(c[0]).jollyOk, "jolly andato", "jolly andati") + " a segno" });
-      var ti = [];
-      Object.keys(H.titoli).forEach(function (id) { if (pById(id)) H.titoli[id].forEach(function (x) { ti.push({ id: id, t: x.t, e: x.e }); }); });
+      var ti = [], uguali = {};   // (lo stesso titolo vinto a pari voti: una carta sola con tutte le facce)
+      Object.keys(H.titoli).forEach(function (id) { if (pById(id)) H.titoli[id].forEach(function (x) {
+        var k = x.e + "|" + x.t; if (uguali[k]) uguali[k].ids.push(id); else ti.push(uguali[k] = { ids: [id], t: x.t, e: x.e });
+      }); });
       H.premi = { onori: on, titoli: ti.slice(0, 8) };
       H.dom = { tipo: "premi" }; H.esito = null; H.gal = H.gal;   // (la galleria del finale serve alle figurine)
       vai("premi", 4 + 1.3 * (on.length + Math.min(ti.length, 8)) + 6, { anim: 1 + 1.3 * (on.length + Math.min(ti.length, 8)) });
@@ -1001,7 +1010,7 @@
       });
       H.fine = { classifica: cl, figurine: fig, ids: H.usate.slice(), kGal: H.fin ? H.kGal : null };
       H.fase = "fine"; H.passo = null;
-      segnaVisti(H.usate.filter(function (x) { return /^[a-z]{3}-[a-z]\d+$/.test(x); }));
+      segnaVisti(H.usate.filter(function (x) { return /^([a-z]{3}-[a-z]\d+|fin-\d+)$/.test(x); }));   // (anche le missioni del finale)
       H.usate.forEach(function (x) { VISTI[x] = oggi(); });
       bd(true);
       if (t.risultato) t.risultato(cl.map(function (r) { return { nome: r.nome, pos: r.pos }; }));
@@ -1427,7 +1436,7 @@
 
   // la figura di una carta-immagine: cose (emoji), personaggi pronti (avatar vestiti), o lui stesso con la faccia (e la faccina che la dice)
   function figCarta(t, vm, c) {
-    if (c.e) return t.el("div", { class: "fig em" + (spezzaEmoji(c.e).length > 1 ? " due" : ""), text: c.e });
+    if (c.e) return t.el("div", { class: "fig em" + (spezzaEmoji(c.e).length > 2 ? " tre" : spezzaEmoji(c.e).length > 1 ? " due" : ""), text: c.e });
     if (c.chi) return t.el("div", { class: "fig" }, [img(t, ARTE().persona ? ARTE().persona(c, c.s) : "")]);
     return t.el("div", { class: "fig" }, [imgF(t, vm.prot, nomeVm(vm, vm.prot), { posto: vm.posto, faccia: c.lui, piu: c.piu }),
       t.el("span", { class: "smorfia", text: (ARTE().FACCE_EMOJI || {})[c.lui] || "" })]);
@@ -1563,7 +1572,9 @@
     mie();
     var titolo = d.lui ? "Vota la più da " + maiuscolo(nomeVm(vm, vm.prot)) : "Vota la più divertente";
     var nota = vm.prot === io ? "👑 Il tuo voto vale doppio" : "Punti se voti come gli altri";
-    var el = t.el("div", { class: "cn-vota" }, [t.el("div", { class: "cn-vota-tit" }, [t.el("b", { text: titolo }), t.el("small", { text: nota })]), lista, R.el]);
+    // (la domanda resta in alto, piccola: si vota sapendo a cosa rispondevano le battute)
+    var qv = cartaDomanda(t, String(d.q || "").replace(/_{3,}/g, "______")); qv.classList.add("corta");
+    var el = t.el("div", { class: "cn-vota" }, [qv, t.el("div", { class: "cn-vota-tit" }, [t.el("b", { text: titolo }), t.el("small", { text: nota })]), lista, R.el]);
     function agg() { R.agg(sel != null, inviato); el.classList.toggle("inviato", inviato); }
     function tua() { if (TUA.k === vm.k && TUA.x != null) { sel = TUA.x; inviato = true; righe.forEach(function (r) { r.classList.toggle("sel", r._x === sel); }); agg(); } }
     tua(); agg();
@@ -1589,8 +1600,9 @@
     });
     var gr = t.el("div", { class: "cn-gal" });
     var titolo = finale ? "Il ritratto più bello?" : "Il disegno più bello?";
-    var nota = finale ? "Non puoi votare quelli a cui hai lavorato" : (vm.prot === io ? "👑 Il tuo voto vale doppio" : "Tocca per guardarlo da vicino");
-    var el = t.el("div", { class: "cn-vota" }, [t.el("div", { class: "cn-vota-tit" }, [t.el("b", { text: titolo }), t.el("small", { text: nota })]), gr, R.el]);
+    var nota = finale ? "Si vota il più riuscito (non la tua faccia)" : (vm.prot === io ? "👑 Il tuo voto vale doppio" : "Tocca per guardarlo da vicino");
+    var qg = !finale && vm.dom && vm.dom.q ? cartaDomanda(t, vm.dom.q) : null; if (qg) qg.classList.add("corta");
+    var el = t.el("div", { class: "cn-vota" }, [qg, t.el("div", { class: "cn-vota-tit" }, [t.el("b", { text: titolo }), t.el("small", { text: nota })]), gr, R.el]);
     for (var i = 0; i < n; i++) (function (i) {
       var cv = t.el("canvas", { width: "240", height: "320" }), tag = t.el("i", { class: "tag" }), sotto = t.el("small", { class: "sotto" });
       var c = t.el("div", { class: "cn-cella vuota", role: "button" }, [cv, tag, sotto]);
@@ -1605,7 +1617,7 @@
         var c = celle[k], it = GAL.items[k];
         if (it && !c._fatto) { c._fatto = true; c.classList.remove("vuota"); disegnaMini(c._cv, vm, it, finale); }
         if (finale && it) tx(c._sotto, nomeVm(vm, it.target));
-        c.classList.toggle("mia", mia(+k)); tx(c._tag, mia(+k) ? (finale ? "ci hai lavorato" : "il tuo") : "");
+        c.classList.toggle("mia", mia(+k)); tx(c._tag, mia(+k) ? (finale ? "la tua faccia" : "il tuo") : "");
       });
       misura();
     }
@@ -1718,10 +1730,14 @@
         (E.vinc || []).forEach(function (x) { if (celle[x]) celle[x].classList.add("vince"); });
         if (E.titolo && E.titolo.length) {
           svuota(tit);
-          tit.appendChild(t.el("small", { text: E.titolo.length > 1 ? "Il titolo va a tutti e due…" : "Il titolo va a…" }));
-          tit.appendChild(t.el("b", { text: "🏷️ «" + E.titolo[0].t + "» → " + E.titolo.map(function (x) { return x.id === io ? "TE!" : nomeVm(vm, x.id); }).join(" e ") }));
+          var nt = E.titolo.length, nomi = E.titolo.map(function (x) { return x.id === io ? (nt > 1 ? "te" : "TE!") : nomeVm(vm, x.id); });
+          tit.appendChild(t.el("small", { text: nt === 2 ? "Il titolo va a tutti e due…" : nt > 2 ? "Il titolo va a tutti loro…" : "Il titolo va a…" }));
+          tit.appendChild(t.el("b", { text: "🏷️ «" + E.titolo[0].t + "» → " + (nt > 1 ? nomi.slice(0, -1).join(", ") + " e " + nomi[nt - 1] : nomi[0]) }));
           tit.style.opacity = ""; tit.classList.add("su");
           if (!tardi && E.titolo.some(function (x) { return x.id === io; })) vibra([30, 40, 30]);
+        } else if (Object.keys(E.scelte || {}).length) {
+          svuota(tit); tit.appendChild(t.el("small", { text: "🏷️ Nessun titolo: un voto a testa, troppi pareri diversi!" }));
+          tit.style.opacity = ""; tit.classList.add("su");
         }
       });
       box = t.el("div", { class: "cn-svela" }, [cartaDomanda(t, d.q), volti, tit]);
@@ -1805,6 +1821,7 @@
   PASSI.classifica = function (u, vm) {
     var t = u.t, C = vm.classif || { ord: [] }, io = u.cb.myId, av = rigaAvanti(u, vm);
     var prima = C.ord.slice().sort(function (a, b) { return b.prima - a.prima; });
+    var frecce = C.ord.some(function (r) { return r.prima !== (C.ord[0] || {}).prima; });   // (al primo posto partivano tutti pari: niente frecce)
     function pos(l, id, k) { var me = l.filter(function (x) { return x.id === id; })[0]; return 1 + l.filter(function (x) { return x[k] > me[k]; }).length; }
     var lista = t.el("div", { class: "cn-class" + (C.ord.length > 5 ? " due" : "") });
     C.ord.forEach(function (r, i) {
@@ -1813,7 +1830,7 @@
       var riga = t.el("div", { class: "cn-riga" + (r.id === io ? " tu" : "") + (p.via ? " via" : "") }, [
         t.el("b", { text: a + "°" }), miniFaccia(t, r.id, p.nome), t.el("span", { class: "n", text: r.id === io ? "Tu" : p.nome }),
         t.el("span", { class: "pt" }, [t.el("span", { text: fmtN(r.punti) }), d ? t.el("small", { text: " +" + fmtN(d) }) : null]),
-        t.el("i", { class: "fr", text: a < b ? "▲" : a > b ? "▼" : "" })]);
+        t.el("i", { class: "fr", text: !frecce ? "" : a < b ? "▲" : a > b ? "▼" : "" })]);
       riga.style.animationDelay = (i * 80) + "ms";
       lista.appendChild(riga);
     });
@@ -2122,7 +2139,7 @@
       lista.appendChild(c);
     }
     Pm.onori.forEach(function (o) { carta(o.e, o.nome, o.ids, o.perche, true); });
-    Pm.titoli.slice(0, 8).forEach(function (x) { carta(x.e, "«" + x.t + "»", [x.id], null, false); });
+    Pm.titoli.slice(0, 8).forEach(function (x) { carta(x.e, "«" + x.t + "»", x.ids || [x.id], null, false); });
     if (!Pm.onori.length && !Pm.titoli.length) lista.appendChild(t.el("p", { text: "Nessun titolo stasera… si rimedia alla rivincita!" }));
     var el = t.el("div", { class: "cn-premi-box" }, [t.el("div", { class: "cn-vota-tit" }, [t.el("b", { text: "🏅 I titoli della serata" })]), lista, av.el]);
     return { el: el, agg: function (v) { av.agg(v); } };
@@ -2139,7 +2156,7 @@
     stile();
     var F = vm.fine || {}, cl = F.classifica || [], io = cb.myId, el = t.el;
     // le domande uscite: anche gli amici se le segnano (telefono e profilo), così la prossima volta sono nuove
-    if (!cb.sonoHost && F.ids && SEGNATI !== vm.pid) { SEGNATI = vm.pid; segnaVisti(F.ids.filter(function (x) { return /^[a-z]{3}-[a-z]\d+$/.test(x); })); }
+    if (!cb.sonoHost && F.ids && SEGNATI !== vm.pid) { SEGNATI = vm.pid; segnaVisti(F.ids.filter(function (x) { return /^([a-z]{3}-[a-z]\d+|fin-\d+)$/.test(x); })); }
     var s = t.schermata({});
     s.classList.add("cn-fine-s");
     var med = medaglie(cl.map(function (r) { return r.pos; }));
@@ -2313,7 +2330,7 @@
       ".cn-carta{position:relative;min-height:0;background:#fffaf0;color:#2a1458;border-radius:16px;display:flex;flex-direction:column;align-items:center;overflow:hidden;box-shadow:0 5px 0 rgba(0,0,0,.3);transition:transform .15s,box-shadow .15s,opacity .2s;touch-action:none;cursor:pointer}",
       ".cn-carta .fig{flex:1;min-height:0;width:100%;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;background:radial-gradient(circle at 50% 70%,#ffe7a8,#ffc94d)}",
       ".cn-carta .fig img{height:100%;width:auto;max-width:100%;object-fit:contain;pointer-events:none}",
-      ".cn-carta .fig.em{align-items:center;font-size:clamp(36px,12vw,62px);line-height:1}.cn-carta .fig.em.due{font-size:clamp(28px,9.5vw,48px)}",
+      ".cn-carta .fig.em{align-items:center;font-size:clamp(44px,17vw,84px);line-height:1;white-space:nowrap}.cn-carta .fig.em.due{font-size:clamp(34px,13vw,64px)}.cn-carta .fig.em.tre{font-size:clamp(28px,10vw,50px)}",
       ".cn-carta.lui .fig{background:radial-gradient(circle at 50% 70%,#d6efff,#7fc4ff)}",
       ".cn-carta .fig{position:relative}.cn-carta .smorfia{position:absolute;right:6px;top:6px;font-size:24px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}",
       ".cn-carta .cap{flex:none;width:100%;box-sizing:border-box;padding:4px 6px 6px;font-size:13px;font-weight:800;line-height:1.15;text-align:center;min-height:2.7em;display:flex;align-items:center;justify-content:center}",
@@ -2445,7 +2462,8 @@
       ".cn-fb-col{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.2}",
       ".cn-fb-tx{font-weight:900;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".cn-fb-sotto{font-size:11.5px;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".cn-btn.cn-fb-b{flex:none;min-height:38px;padding:0 10px;font-size:13.5px;border-radius:12px;background:rgba(255,255,255,.18)}"
+      ".cn-fb-btns{flex:none;display:flex;flex-direction:column;gap:4px}",
+      ".cn-btn.cn-fb-b{flex:none;min-height:30px;padding:0 9px;font-size:12.5px;border-radius:10px;background:rgba(255,255,255,.18);white-space:nowrap}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -2464,7 +2482,7 @@
       "📸 All'inizio ognuno si fa un <b>selfie</b> (o sceglie una foto, o usa l'avatar) e un <b>filtro buffo</b>: la foto la vede solo chi è entrato dal link della serata, e sparisce quando uscite.",
       "In ogni posto uno di voi è <b>sotto torchio</b>: le domande sono su di lui (anche lui gioca).",
       "🖼️ <b>Immagini</b>: scegli la carta giusta per lui. ✍️ <b>Scrivi</b> e 🎨 <b>Disegna</b>: tutti scrivono o disegnano, poi si vota. 👆 <b>Chi di noi</b>: tocca la faccia di un amico.",
-      "<b>100 punti per ogni amico che sceglie come te</b> (il voto di chi è sotto torchio vale doppio). +100 a chi scrive la battuta o fa il disegno più votato.",
+      "<b>100 punti per ogni amico che sceglie come te</b> (nello Scrivi e nel Disegna il voto di chi è sotto torchio vale doppio). +100 a chi scrive la battuta o fa il disegno più votato.",
       "🃏 <b>3 jolly</b> a testa: raddoppiano i punti di una domanda. Se votate tutti uguale: <b>TUTTI D'ACCORDO</b>, +100 a tutti.",
       "Gran finale: <b>«Passa il ritratto!»</b>, la faccia di un amico passa di telefono in telefono. Punti doppi!"
     ],
