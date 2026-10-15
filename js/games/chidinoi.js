@@ -158,6 +158,191 @@
     if (!A.faccia) return "";
     return A.faccia({ id: id, nome: nome, omino: OMINI[id] || null }, o || {});
   }
+  // un'immagine con la faccia di un giocatore: si ricorda di chi è, così quando arriva (o cambia) la sua foto si aggiorna da sola
+  function imgF(t, id, nome, o, classe) { var i = img(t, faccia(id, nome, o), classe); i._cnf = { id: id, nome: nome, o: o || {} }; return i; }
+  function aggiornaFacce(id) {
+    [].forEach.call(document.querySelectorAll("img"), function (im) {
+      var c = im._cnf; if (!c || (id && c.id !== id)) return;
+      var s = faccia(c.id, c.nome, c.o); if (s && im.getAttribute("src") !== s) im.src = s;
+    });
+    if (FB && FB.agg) FB.agg();
+  }
+
+  // =========================================================
+  //  LA FOTO VERA (js/chidinoi-foto.js). La chiave sta SOLO nel link della stanza, dopo il # (SG.chiaveFoto):
+  //  ogni foto viaggia cifrata (AES-GCM) a pezzi, come mossa normale (mai trattenuta, mai nella vm);
+  //  nella vm solo { f: numero della foto, x: filtro, h: l'host ce l'ha intera } e kf (l'impronta della chiave).
+  //  Le foto degli altri restano solo in memoria e si buttano quando si esce dal gioco; la mia resta in questa scheda
+  //  (sessionStorage) finché dura il gioco, per non rifarla se la pagina si ricarica.
+  // =========================================================
+  var FX = function () { return window.SG_CDN_FOTO || null; };
+  var SS_MIA = "sg-cn-mia", PEZZO = 6000;
+  function nuovoFT() { return { key: null, kf: null, pronta: false, mia: null, enc: null, rx: {}, chiesti: {}, visti: {}, male: {}, ultR: 0, ultP: 0, chiesto: false, vm: null, cb: null, t: null }; }
+  var FT = nuovoFT();
+  function nuovoF() { var s = ""; while (s.length < 8) s += Math.random().toString(36).slice(2); return s.slice(0, 8); }
+  function miaLeggi(cb) {
+    var o = null; try { o = JSON.parse(sessionStorage.getItem(SS_MIA) || "null"); } catch (e) {}
+    if (!o) return cb(null);
+    if (o.u && Date.now() - o.u > 30 * 60000) { miaScrivi(null); return cb(null); }   // (fuori dal gioco da più di mezz'ora: si butta)
+    if (o.av) return cb({ av: true });
+    if (!o.f || !o.j || !FX()) return cb(null);
+    try { FX().daJpeg(FX().daB64(o.j), function (cv) { cb(cv ? { f: o.f, x: o.x | 0, cv: cv, j: o.j } : null); }); } catch (e) { cb(null); }
+  }
+  function miaScrivi(m) { try { if (!m) sessionStorage.removeItem(SS_MIA); else sessionStorage.setItem(SS_MIA, JSON.stringify(m.av ? { av: 1 } : { f: m.f, j: m.j, x: m.x })); } catch (e) {} }
+  // all'inizio: la chiave (dal link, o fatta adesso dall'host) e la mia foto di prima (pagina ricaricata)
+  function fotoInizia(codice, crea, myId, fatto) {
+    var F = FX(), n = 2;
+    function fine() { if (--n === 0) { FT.pronta = true; if (fatto) fatto(); } }
+    if (!F) { FT.pronta = true; if (fatto) fatto(); return; }
+    var k = null; try { k = window.SG && SG.chiaveFoto ? SG.chiaveFoto(codice, crea) : null; } catch (e) {}
+    F.importa(k).then(function (r) { if (r) { FT.key = r.key; FT.kf = r.kf; } fine(); });
+    miaLeggi(function (m) { if (m) { FT.mia = m; miaScrivi(m); if (m.cv) F.metti(myId, m.f, m.cv, m.x); } fine(); });   // (di nuovo in gioco: niente più scadenza)
+  }
+  function fotoOk(vm) { return !!(FT.key && vm && vm.kf && vm.kf === FT.kf); }
+  function validoPezzo(m) {
+    return typeof m.f === "string" && /^[a-z0-9]{4,16}$/.test(m.f) && typeof m.iv === "string" && m.iv.length <= 24 && typeof m.c === "string" && m.c.length <= PEZZO + 8 &&
+      (m.di | 0) >= 1 && (m.di | 0) <= 16 && (m.pz | 0) >= 0 && (m.pz | 0) < (m.di | 0) && /^[A-Za-z0-9+/=]*$/.test(m.c);
+  }
+  function xDi(id, f) { var v = FT.vm, l = v ? (v.players || []).concat(v.guarda || []) : []; for (var i = 0; i < l.length; i++) if (l[i].id === id && l[i].fo && l[i].fo.f === f) return l[i].fo.x | 0; return 0; }
+  // la mia faccia all'host: quale foto e quale filtro (o nessuna: avatar), poi i pezzi cifrati
+  function mandaRitratto(cb) {
+    var m = FT.mia, ok = fotoOk(FT.vm) && !(FX() && FX().spente) && m && !m.av && m.f;
+    FT.ultR = Date.now();
+    cb.invia({ t: "ritratto", f: ok ? m.f : null, x: m && !m.av ? m.x | 0 : 0 });
+  }
+  function mandaMia(cb, forza) {
+    var m = FT.mia, F = FX(); if (!m || m.av || !m.j || !FT.key || !F || !fotoOk(FT.vm)) return;
+    var ora = Date.now(); if (!forza && ora - FT.ultP < 5000) return; FT.ultP = ora;
+    function via(E) { for (var i = 0; i < E.pz.length; i++) cb.invia({ t: "foto", f: E.f, iv: E.iv, pz: i, di: E.pz.length, c: E.pz[i] }); }
+    if (FT.enc && FT.enc.f === m.f) return via(FT.enc);
+    F.cifra(FT.key, F.daB64(m.j), m.f).then(function (r) {
+      if (FT.mia !== m) return;
+      var pz = []; for (var i = 0; i < r.c.length; i += PEZZO) pz.push(r.c.slice(i, i + PEZZO));
+      FT.enc = { f: m.f, iv: r.iv, pz: pz }; via(FT.enc);
+    });
+  }
+  // a ogni foto dell'host (e ogni secondo): i filtri degli altri, le foto che mancano (si chiedono), la mia (si rimanda se l'host non ce l'ha)
+  function fotoVm(t, vm, cb) {
+    FT.vm = vm; FT.cb = cb; FT.t = t;
+    var F = FX(); if (!F) return;
+    var sp = !!(vm.imp && vm.imp.foto === false);
+    if (F.spente !== sp) { F.spente = sp; setTimeout(function () { aggiornaFacce(null); }, 0); }
+    var ok = fotoOk(vm), ora = Date.now(), io = null;
+    (vm.players || []).concat(vm.guarda || []).forEach(function (p) {
+      if (p.id === cb.myId) { io = p; return; }
+      var fo = p.fo;
+      if (!fo || !fo.f) { if (F.ha(p.id)) F.togli(p.id); return; }
+      if (F.ha(p.id, fo.f)) { F.filtro(p.id, fo.x); return; }
+      if (F.ha(p.id)) F.togli(p.id);   // (una foto vecchia: l'ha rifatta)
+      if (!ok || !fo.h || cb.sonoHost) return;
+      // arriva da sola (l'host la manda a tutti appena ce l'ha); se tarda o è andata persa, la chiedo
+      var R = FT.rx[p.id], kv = p.id + "|" + fo.f;
+      if (R && R.f === fo.f && ora - R.t < 6000) return;
+      if (!FT.visti[kv]) { FT.visti[kv] = ora; return; }
+      if (ora - FT.visti[kv] < 2500 || ora - (FT.chiesti[p.id] || 0) < 6000 || FT.male[kv]) return;
+      FT.chiesti[p.id] = ora; cb.invia({ t: "dammiFoto", id: p.id });
+    });
+    if (!io || !FT.pronta) return;
+    var m = FT.mia, f = m && !m.av && ok && !sp ? m.f : null, x = m && !m.av ? m.x | 0 : 0, fo = io.fo || null;
+    if ((fo ? fo.f : null) !== f || (f && (fo.x | 0) !== x)) { if (ora - FT.ultR > 2500) setTimeout(function () { mandaRitratto(cb); }, 0); }
+    else if (f && !fo.h) setTimeout(function () { mandaMia(cb); }, 0);
+  }
+  // un pezzo di una foto (dall'host, per tutti o solo per me): quando ci sono tutti si decifra e si mostra
+  function fotoPezzo(m, cb) {
+    var F = FX(); if (!F || !FT.key || !m.id || m.id === cb.myId || !validoPezzo(m) || F.ha(m.id, m.f)) return;
+    var R = FT.rx[m.id];
+    if (!R || R.f !== m.f || R.iv !== m.iv || R.di !== (m.di | 0)) R = FT.rx[m.id] = { f: m.f, iv: m.iv, di: m.di | 0, pz: {}, n: 0, t: 0 };
+    R.t = Date.now();
+    if (R.pz[m.pz] == null) { R.pz[m.pz] = m.c; R.n++; }
+    if (R.n < R.di || R.lavora) return;
+    R.lavora = true;
+    var c = ""; for (var i = 0; i < R.di; i++) c += R.pz[i];
+    function male() { if (FT.rx[m.id] === R) delete FT.rx[m.id]; FT.male[m.id + "|" + R.f] = 1; }
+    F.decifra(FT.key, R.iv, c, R.f).then(function (bytes) {
+      F.daJpeg(bytes, function (cv) {
+        if (!cv) return male();
+        if (FT.rx[m.id] === R) delete FT.rx[m.id];
+        if (FT.key) F.metti(m.id, R.f, cv, xDi(m.id, R.f));
+      });
+    }).catch(male);
+  }
+  // il camerino (js/chidinoi-foto.js): selfie, galleria o avatar, poi il filtro
+  function apriCamerino(t, cb, soloFiltri) {
+    var F = FX(); if (!F || F.aperto() || !cb.myId) return;
+    var m = FT.mia;
+    setTimeout(function () { cb.invia({ t: "cam", on: 1 }); }, 0);
+    var nome = t.nomeProfilo ? t.nomeProfilo() : "";
+    F.camerino({ base: m && m.cv ? m.cv : null, x: m && m.cv ? m.x : 0, filtri: !!soloFiltri,
+      avatar: ARTE().faccia ? ARTE().faccia({ id: "__avatar", nome: nome, omino: OMINI[cb.myId] || t.mioOmino(nome) }, {}) : "",
+      onFatto: function (r) { scegliMia(r, cb); cb.invia({ t: "cam", on: 0 }); },
+      onChiudi: function () { cb.invia({ t: "cam", on: 0 }); if (FB && FB.agg) FB.agg(); } });
+  }
+  function scegliMia(r, cb) {
+    var F = FX(); if (!F) return;
+    var nuova = false;
+    if (r.avatar) { FT.mia = { av: true }; FT.enc = null; F.togli(cb.myId); }
+    else if (FT.mia && FT.mia.cv && FT.mia.cv === r.base) { FT.mia.x = r.x | 0; F.filtro(cb.myId, r.x); }   // solo il filtro
+    else {
+      var j = ""; try { j = F.aB64(F.jpeg(r.base)); } catch (e) { return; }
+      FT.mia = { f: nuovoF(), x: r.x | 0, cv: r.base, j: j }; FT.enc = null; nuova = true;
+      F.metti(cb.myId, FT.mia.f, r.base, r.x);
+    }
+    miaScrivi(FT.mia);
+    if (FB && FB.agg) FB.agg();
+    setTimeout(function () { mandaRitratto(cb); if (nuova) mandaMia(cb, true); }, 0);   // (solo il filtro: viaggia il nome, la foto no)
+  }
+  // il riquadro della foto nella saletta (uno solo, aggiornato a pezzi): la mia faccia, «📸 Rifai», «🎭 Filtro», chi si sta facendo la foto
+  var FB = null;
+  function boxFoto(t, vm, cb) {
+    var F = FX(); if (!F) return null;
+    if (!FB || FB.t !== t || FB.my !== cb.myId) {
+      var faccina = imgF(t, cb.myId, "", {}, "cn-fb-f");
+      var testo = t.el("span", { class: "cn-fb-tx" }), sotto = t.el("small", { class: "cn-fb-sotto" });
+      var bRifai = tasto(t, "cn-fb-b", "📸 Foto", function () { apriCamerino(t, FB.cb); });
+      var bFiltro = tasto(t, "cn-fb-b", "🎭 Filtro", function () { apriCamerino(t, FB.cb, true); });
+      var tondo = t.el("span", { class: "cn-fb-w" }, [faccina]);
+      var el = t.el("div", { class: "cn-fb" }, [t.el("div", { class: "cn-fb-riga" }, [tondo, t.el("span", { class: "cn-fb-col" }, [testo, sotto]), bRifai, bFiltro])]);
+      FB = { t: t, my: cb.myId, el: el, cb: cb, vm: vm, agg: function () {
+        var v = FB.vm, ok = fotoOk(v), m = FT.mia, foto = !!(m && !m.av && m.cv), f0 = F.FILTRI[(m && m.x) | 0] || F.FILTRI[0];
+        stile(); FB.el.style.display = FT.pronta ? "" : "none";
+        var s = faccia(cb.myId, ""); if (s && faccina.getAttribute("src") !== s) faccina.src = s;
+        var tx0, sot = "", puo = ok && !F.spente;
+        if (F.spente) tx0 = "🙂 Stasera foto spente: si gioca con gli avatar";
+        else if (!FT.key) tx0 = "📸 Le foto si vedono solo entrando dal link dell'host";
+        else if (!ok) tx0 = "📸 Il tuo link è vecchio: le foto non si vedono";
+        else if (foto) { tx0 = "📸 La tua faccia"; sot = f0.e + " " + f0.nome; }
+        else tx0 = "🙂 Giochi con l'avatar";
+        var cam = (v.cam || []).filter(function (id) { return id !== cb.myId; }).map(function (id) { return nomeVm(v, id); });
+        if (cam.length) sot = (sot ? sot + " · " : "") + "📸 Si fanno la foto: " + cam.join(", ");
+        tx(testo, tx0); tx(sotto, sot); sotto.style.display = sot ? "" : "none";
+        tondo.style.display = puo || foto ? "" : "none";
+        bRifai.style.display = puo ? "" : "none"; tx(bRifai, foto ? "📸 Rifai" : "📸 Foto");
+        bFiltro.style.display = puo && foto ? "" : "none";
+      } };
+    }
+    FB.cb = cb; FB.vm = vm; FB.agg();
+    return FB.el;
+  }
+  // chi esce dal gioco (Esci, Cambia gioco, Sala…): le foto degli altri si buttano, e anche la mia
+  var SCHERMI = [], GUARDIA = null, ASSENTE = 0;
+  function mio(s) { if (s && SCHERMI.indexOf(s) < 0) { SCHERMI = SCHERMI.filter(function (x) { return document.body.contains(x); }); SCHERMI.push(s); } guardia(); return s; }
+  function guardia() {
+    if (GUARDIA) return;
+    ASSENTE = 0;
+    GUARDIA = setInterval(function () {
+      if (SCHERMI.some(function (s) { return document.body.contains(s); })) { ASSENTE = 0; if (FT.vm && FT.cb) fotoVm(FT.t, FT.vm, FT.cb); return; }
+      if (++ASSENTE >= 8) pulisciFoto(false, true);   // (8 secondi fuori: non è un cambio di schermata del core)
+    }, 1000);
+  }
+  // anchemia: via anche la mia (Esci); fuori: uscito senza dirlo (Cambia gioco, Sala…): la mia resta mezz'ora in questa scheda, poi si butta
+  function pulisciFoto(anchemia, fuori) {
+    clearInterval(GUARDIA); GUARDIA = null; SCHERMI = [];
+    var F = FX(); if (F) { F.chiudiCamerino(false); F.svuota(); F.spente = false; }
+    if (anchemia) miaScrivi(null);
+    else if (fuori) try { var o = JSON.parse(sessionStorage.getItem(SS_MIA) || "null"); if (o && !o.u) { o.u = Date.now(); sessionStorage.setItem(SS_MIA, JSON.stringify(o)); } } catch (e) {}
+    FT = nuovoFT(); FB = null;
+  }
+  if (FX()) FX().onCambio = aggiornaFacce;
 
   // =========================================================
   //  I DISEGNI: tratti compressi e adesivi, una tavola fissa 750×1000
@@ -217,7 +402,7 @@
   // cb(canvas) arriva quando l'immagine è pronta (il ritratto è un'immagine da caricare)
   var SFONDI = {};
   function sfondoTavola(su, idPosto, prot, nomeProt, cb) {
-    var k = su + "|" + idPosto + "|" + prot + "|" + (OMINI[prot] ? JSON.stringify(OMINI[prot]).length : 0);
+    var k = su + "|" + idPosto + "|" + prot + "|" + (OMINI[prot] ? JSON.stringify(OMINI[prot]).length : 0) + "|" + (su === "ritratto" && FX() && !FX().spente ? FX().ver(prot) : 0);
     if (SFONDI[k] && SFONDI[k].pronto) return cb(SFONDI[k].cv);
     if (SFONDI[k]) { SFONDI[k].attesa.push(cb); return; }
     var cv = document.createElement("canvas"); cv.width = LW / 2; cv.height = LH / 2;
@@ -230,7 +415,12 @@
     var img = new Image();
     img.onload = function () { var w = cv.width * 0.98, h = w * 182 / 178; try { c.drawImage(img, (cv.width - w) / 2, cv.height - h, w, h); } catch (e) {} fatto(); };
     img.onerror = fatto;
-    img.src = faccia(prot, nomeProt, { posto: idPosto });
+    // con la foto: si aspetta un attimo il ritratto giusto (col costume), al massimo 3 secondi
+    var o = { posto: idPosto }, p = { id: prot, nome: nomeProt, omino: OMINI[prot] || null }, prove = 0;
+    (function carica() {
+      if (FX() && !FX().pronta(prot, o, p) && ++prove < 30) return setTimeout(carica, 100);
+      img.src = faccia(prot, nomeProt, o);
+    })();
   }
 
   // =========================================================
@@ -242,7 +432,7 @@
     var acc = Array.isArray(i.posti) ? i.posti.filter(function (x) { return tutti.indexOf(x) >= 0; }) : tutti.slice();
     if (acc.length < 3) acc = tutti.slice();
     var n = [3, 4, 5, 6, 7, 8, 10].indexOf(+i.nPosti) >= 0 ? +i.nPosti : 5;
-    return { posti: acc, nPosti: Math.min(n, acc.length), nDom: [3, 4, 5].indexOf(+i.nDom) >= 0 ? +i.nDom : 4, tempi: TEMPI[i.tempi] ? i.tempi : "normali" };
+    return { posti: acc, nPosti: Math.min(n, acc.length), nDom: [3, 4, 5].indexOf(+i.nDom) >= 0 ? +i.nDom : 4, tempi: TEMPI[i.tempi] ? i.tempi : "normali", foto: i.foto !== false };
   }
   // il ritmo dentro un posto: con 3 o 4 domande il Disegna c'è un posto sì e uno no (posti 1°, 3°, 5°…)
   function pianoDomande(nDom, iPosto) {
@@ -265,6 +455,7 @@
   // =========================================================
   function host(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    pulisciFoto(false);   // (una partita nuova: le foto di prima si buttano; la mia resta in questa scheda)
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
     var H = { fase: "lobby", codice: "…", pronta: false, partita: 0, pid: null, imp: impNorm(t.impostazioni),
       players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0, jolly: 3 }],
@@ -272,7 +463,10 @@
       passo: null, t0: 0, dur: 0, scade: 0, grazia: 0, anim: 0, avanti: {},
       scaletta: [], iP: 0, piano: [], iD: 0, dom: null, item: null, usate: [],
       risp: {}, testi: {}, voci: null, disegni: {}, fatti: {}, gal: null, esito: null, classif: null, fin: null, premi: null, fine: null,
-      stat: {}, titoli: {}, verdetti: {}, battute: {}, posPrima: {}, ultReaz: {} };
+      stat: {}, titoli: {}, verdetti: {}, battute: {}, posPrima: {}, ultReaz: {},
+      foto: {}, cam: {}, dati: {} };   // le foto (cifrate, solo in memoria: per rimandarle a chi rientra), chi è nel camerino
+    var fotoAvviata = false;
+    function avviaFoto() { if (fotoAvviata || !H.codice || H.codice === "…") return; fotoAvviata = true; fotoInizia(H.codice, true, "host", function () { bd(); }); }
     var VISTI = vistiMiei();      // le domande già uscite (questo telefono + profilo), più quelle che mandano gli amici
     var rete = null, tic = null;
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
@@ -286,7 +480,7 @@
     t.onRegole = function (im) { if (H.fase !== "lobby") return; H.imp = impNorm(im); bd(); };
 
     rete = SGNet.ospita(ID, {
-      onCodice: function (c) { H.codice = c; bd(); },
+      onCodice: function (c) { H.codice = c; bd(); avviaFoto(); },
       onConnesso: function () { H.pronta = true; bd(true); },
       onErrore: function () {
         if (H.pronta) return;
@@ -298,8 +492,8 @@
       onAddio: function (id) {
         if (inGuarda(id)) { H.guarda = H.guarda.filter(function (x) { return x.id !== id; }); bd(); return; }
         var p = pById(id); if (!p) return;
-        p.forse = false;
-        if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
+        p.forse = false; delete H.cam[id];
+        if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); delete H.foto[id]; bd(); return; }
         p.via = true;   // a partita iniziata resta in classifica, ma non gioca più (se torna, ritrova il suo posto)
         if (H.fase !== "gioco") return bd();
         if (presenti().length < 2) return fine();
@@ -328,8 +522,11 @@
     function vm(conOmini) {
       var om = conOmini || H.fase === "lobby";
       var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, partita: H.partita, pid: H.pid, imp: H.imp,
-        players: H.players.map(function (p) { var x = { id: p.id, nome: p.nome, punti: p.punti, jolly: p.jolly, via: !!p.via, forse: !!p.forse }; if (om) x.omino = p.omino || null; return x; }),
-        guarda: H.guarda.map(function (g) { var x = { id: g.id, nome: g.nome, tardi: !!g.tardi }; if (om) x.omino = g.omino || null; return x; }) };
+        players: H.players.map(function (p) { var x = { id: p.id, nome: p.nome, punti: p.punti, jolly: p.jolly, via: !!p.via, forse: !!p.forse }; if (om) x.omino = p.omino || null; if (H.foto[p.id]) x.fo = foVm(p.id); return x; }),
+        guarda: H.guarda.map(function (g) { var x = { id: g.id, nome: g.nome, tardi: !!g.tardi }; if (om) x.omino = g.omino || null; if (H.foto[g.id]) x.fo = foVm(g.id); return x; }) };
+      // la foto: solo quale (numero e filtro) e l'impronta della chiave. MAI la foto (va a pezzi cifrati, fuori dalla vm)
+      if (FT.kf) v.kf = FT.kf;
+      var cam = Object.keys(H.cam); if (cam.length && H.fase === "lobby") v.cam = cam;
       if (H.fase === "gioco") {
         var sc = H.scaletta[H.iP] || {};
         Object.assign(v, { passo: H.passo, k: chiave(), resta: resta(), dur: H.dur, el: Date.now() - H.t0, anim: H.anim,
@@ -344,6 +541,38 @@
       return v;
     }
     function bd(conOmini) { var v = vm(conOmini); rete.invia({ t: "vm", vm: v }); disegna(t, v, cbHost); }
+    function foVm(id) { var P = H.foto[id]; return { f: P.f, x: P.x, h: P.ok ? 1 : 0 }; }
+    // ----- le foto: «ritratto» (quale foto e quale filtro), i pezzi cifrati, «dammiFoto» (chi non l'ha ricevuta), «cam» (nel camerino) -----
+    function fotoMossa(id, m) {
+      if (!pById(id) && !inGuarda(id)) return;
+      if (m.t === "cam") { var c0 = !!H.cam[id]; if (m.on) H.cam[id] = 1; else delete H.cam[id]; if (c0 !== !!m.on && H.fase === "lobby") bd(); return; }
+      if (m.t === "ritratto") {
+        var f = typeof m.f === "string" && /^[a-z0-9]{4,16}$/.test(m.f) ? m.f : null, x = lim(m.x | 0, 0, 9), P = H.foto[id];
+        if (!f) { if (P) { delete H.foto[id]; bd(); } return; }
+        if (P && P.f === f) { if (P.x !== x) { P.x = x; bd(); } return; }
+        H.foto[id] = { f: f, x: x, iv: null, di: 0, pz: {}, n: 0, ok: false };
+        return bd();
+      }
+      if (m.t === "foto") {
+        var Q = H.foto[id];
+        if (!Q || !validoPezzo(m) || Q.f !== m.f || (Q.ok && Q.iv === m.iv)) return;   // (prima il «ritratto», poi i pezzi)
+        if (Q.iv !== m.iv || Q.di !== (m.di | 0)) { Q.iv = m.iv; Q.di = m.di | 0; Q.pz = {}; Q.n = 0; Q.ok = false; }
+        if (Q.pz[m.pz] == null) { Q.pz[m.pz] = m.c; Q.n++; }
+        if (Q.n < Q.di) return;
+        Q.ok = true;
+        mandaFoto(null, id);   // a tutti (prima dei pezzi, poi la vm che dice che c'è)
+        return bd();
+      }
+      if (m.t === "dammiFoto") {
+        var chi = String(m.id || ""), kd = id + ">" + chi, ora = Date.now();
+        if (ora - (H.dati[kd] || 0) < 3000) return;
+        H.dati[kd] = ora; mandaFoto(id, chi);
+      }
+    }
+    function mandaFoto(a, id) {
+      var Q = H.foto[id]; if (!Q || !Q.ok) return;
+      for (var i = 0; i < Q.di; i++) { var m = { t: "foto", id: id, f: Q.f, iv: Q.iv, pz: i, di: Q.di, c: Q.pz[i] }; if (a) privato(a, m); else veloce(m); }
+    }
     function veloce(m) { rete.inviaVeloce(m); ricevi(t, m, cbHost); }
     function privato(id, m) { if (id === "host") { ricevi(t, m, cbHost); return; } m.to = id; rete.inviaVeloce(m); }
     function ferma() { if (tic) { clearInterval(tic); tic = null; } }
@@ -375,7 +604,7 @@
       if (H.fase !== "lobby" || presenti().length < MIN) return;
       H.fase = "gioco"; H.partita++; H.pid = nuovoId();
       H.players.forEach(function (p) { p.punti = 0; p.jolly = 3; });
-      H.stat = {}; H.titoli = {}; H.verdetti = {}; H.battute = {}; H.usate = []; H.fine = null; H.premi = null; H.fin = null; H.gal = null;
+      H.stat = {}; H.titoli = {}; H.verdetti = {}; H.battute = {}; H.usate = []; H.fine = null; H.premi = null; H.fin = null; H.gal = null; H.cam = {};
       H.scaletta = creaScaletta(); H.iP = 0; H.iD = 0; H.piano = [];
       if (!tic) tic = setInterval(orologio, 250);
       var n = presenti().length;
@@ -469,6 +698,7 @@
     // mosse di tutti (anche dell'host, con id "host")
     function mossa(id, m) {
       if (m.t === "reaz") return reazione(id, m.e);
+      if (m.t === "ritratto" || m.t === "foto" || m.t === "dammiFoto" || m.t === "cam") return fotoMossa(id, m);
       if (m.t === "visti") { if (typeof m.s === "string" && m.s.length < 20000) scompatta(m.s).forEach(function (q) { if (!VISTI[q]) VISTI[q] = 1; }); return; }
       var p = pById(id);
       if (H.fase !== "gioco" || !p || p.via) return;   // chi guarda soltanto non fa mosse
@@ -785,6 +1015,7 @@
         if (g.tardi && H.players.length < MAX && t.puoSedersi(g.id, g.nome)) { H.players.push({ id: g.id, nome: g.nome, omino: g.omino || null, punti: 0, jolly: 3 }); return false; }
         return true;
       });
+      Object.keys(H.foto).forEach(function (id) { if (!pById(id) && !inGuarda(id)) delete H.foto[id]; });   // (le foto restano: chi è uscito no)
       bd(true);
     }
     t.onRivincita = nuova;
@@ -792,12 +1023,13 @@
     var cbHost = { sonoHost: true, myId: "host", onComincia: comincia, onNuova: nuova,
       invia: function (m) { mossa("host", m); },
       onEsci: function () {
-        function via() { ferma(); rete.chiudi(); t.esci(); }
+        function via() { ferma(); rete.chiudi(); pulisciFoto(true); t.esci(); }
         // (dalla saletta il core ha già chiesto "Chiudere la stanza per tutti?")
         if (H.fase === "gioco") return t.conferma("Chiudere la partita per tutti?", "Gli amici tornano alla Sala.", "Chiudi", via);
         via();
       } };
     bd(true);
+    avviaFoto();
   }
 
   // =========================================================
@@ -805,11 +1037,12 @@
   // =========================================================
   function ospite(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    pulisciFoto(false);
     var S = { rete: null, myId: null, nome: "", vm: null, vistiMandati: false };
     var cb = { sonoHost: false, myId: null,
       invia: function (m) { if (S.rete) S.rete.invia(m); },
       onEsci: function () {
-        function via() { if (S.rete) S.rete.chiudi(); t.esci(); }
+        function via() { if (S.rete) S.rete.chiudi(); pulisciFoto(true); t.esci(); }
         if (S.vm && S.vm.fase === "gioco") return t.conferma("Uscire dalla partita?", null, "Esci", via);
         via();
       } };
@@ -822,12 +1055,15 @@
         try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
         S.nome = (input.value || "").trim().slice(0, 16) || "Amico"; collega();
       } }));
-      t.mostra(s);
+      t.mostra(mio(s));
     }
     function collega() {
       attesa();
       S.rete = SGNet.entra(codice, {
-        onAperto: function (id) { S.myId = id; cb.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome) }); },
+        onAperto: function (id) {
+          S.myId = id; cb.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome) });
+          if (!S.foto) { S.foto = true; fotoInizia(codice, false, id, function () { if (S.vm) disegna(t, S.vm, cb); }); }
+        },
         onMsg: function (m) {
           if (!m || !m.t) return;
           if (m.to && m.to !== S.myId) return;          // era per un altro telefono
@@ -849,7 +1085,7 @@
     function attesa() {
       var s = t.schermata({ icona: "🫵", titolo: "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
-      t.mostra(s);
+      t.mostra(mio(s));
     }
   }
 
@@ -862,6 +1098,7 @@
   var MIE = { k: null, n: [] };
   function ricevi(t, m, cb) {
     if (m.t === "reaz") { if (U && U.t === t) volaReazione(U, m.id, m.e); return; }
+    if (m.t === "foto") return fotoPezzo(m, cb);
     if (m.t === "gal") {
       if (GAL.k !== m.k) GAL = { k: m.k, items: {}, tot: m.tot || 0, mio: [] };
       GAL.tot = m.tot || GAL.tot;
@@ -882,6 +1119,9 @@
   var FIN = null;  // la classifica finale già a schermo: le foto che arrivano dopo non la ridisegnano
   function disegna(t, vm, cb) {
     ricordaOmini(vm.players); ricordaOmini(vm.guarda);
+    fotoVm(t, vm, cb);
+    // si comincia mentre sono nel camerino: tengo la foto fatta (col filtro scelto), se no resto com'ero
+    if (vm.fase !== "lobby" && FX() && FX().aperto()) FX().chiudiCamerino(true);
     if (vm.fase === "lobby") { chiudiU(); FIN = null; return lobby(t, vm, cb); }
     if (vm.fase === "fine") {
       chiudiU();
@@ -903,12 +1143,16 @@
     var n = vm.players.length, imp = impNorm(vm.imp);
     extra.push(t.el("p", { class: "modulo-nota", text: "🫵 Uno alla volta sotto torchio, in " + imp.nPosti + " posti buffi. Si fanno punti votando come gli amici. Circa " + stimaMinuti(imp, Math.max(3, n)) + " minuti." }));
     if (guardano.length) extra.push(t.el("p", { class: "modulo-nota", text: "👀 Guardano: " + guardano.map(function (p) { return p.id === cb.myId ? "tu" : p.nome; }).join(", ") }));
-    t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN,
+    var fb = (dentro || guardo) ? boxFoto(t, vm, cb) : null;
+    if (fb) extra.unshift(fb);
+    mio(t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN,
       vuoti: Math.max(0, MIN - n),
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
       extra: extra,
       spettatore: guardo ? "👀 Questa volta guardi" : !cb.sonoHost && !dentro && n >= MAX ? "👀 La stanza è piena: guardi la partita" : false,
-      attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
+      attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci }));
+    // la prima volta, prima di tutto: «📸 La tua faccia per stasera» (selfie, galleria o avatar), se si può
+    if (!FT.chiesto && FT.pronta && (dentro || guardo) && fotoOk(vm) && imp.foto && !FT.mia && FX()) { FT.chiesto = true; apriCamerino(t, cb); }
   }
 
   // ---------- un tasto che risponde al primo tocco (pointerup) e vibra al tocco ----------
@@ -924,7 +1168,7 @@
   }
   function img(t, src, classe) { var i = t.el("img", { class: classe || "", alt: "", draggable: "false" }); if (src) i.src = src; return i; }
   function miniFaccia(t, id, nome, classe) {
-    var w = t.el("span", { class: "cn-mini " + (classe || "") }, [img(t, faccia(id, nome))]);
+    var w = t.el("span", { class: "cn-mini " + (classe || "") }, [imgF(t, id, nome)]);
     w.title = nome || ""; w._id = id;
     return w;
   }
@@ -969,7 +1213,7 @@
     u.velo = el("div", { class: "cn-velo" });
     u.root.appendChild(u.barra); u.root.appendChild(u.palco); u.root.appendChild(u.fondo); u.root.appendChild(u.volo); u.root.appendChild(u.velo);
     s._contenuto.appendChild(u.root);
-    t.mostra(s);
+    t.mostra(mio(s));
     u.tic = setInterval(function () { orologioUI(u); }, 200);
     return u;
   }
@@ -1039,7 +1283,7 @@
     Object.keys(u.faces).forEach(function (id) { if (!visti[id]) { var f = u.faces[id]; if (f.parentNode) f.parentNode.removeChild(f); delete u.faces[id]; } });
   }
   function volaReazione(u, id, e) {
-    var p = giocatore(u.vm || { players: [] }, id), n = u.t.el("div", { class: "cn-vola" + (e === "🍅" ? " pomodoro" : "") }, [u.t.el("span", { class: "e", text: e }), img(u.t, faccia(id, p ? p.nome : ""), "f")]);
+    var p = giocatore(u.vm || { players: [] }, id), n = u.t.el("div", { class: "cn-vola" + (e === "🍅" ? " pomodoro" : "") }, [u.t.el("span", { class: "e", text: e }), imgF(u.t, id, p ? p.nome : "", {}, "f")]);
     n.style.left = (12 + Math.random() * 70) + "%";
     n.style.setProperty("--dx", ((Math.random() - 0.5) * 80).toFixed(0) + "px");
     u.volo.appendChild(n);
@@ -1083,7 +1327,7 @@
     var P = posto(vm.posto), w = t.el("div", { class: "cn-striscia" });
     var bg = img(t, ARTE().scenaSrc ? ARTE().scenaSrc(vm.posto, 480, 200) : "", "bg");
     w.appendChild(bg);
-    w.appendChild(img(t, faccia(vm.prot, nomeVm(vm, vm.prot), { posto: vm.posto }), "prot"));
+    w.appendChild(imgF(t, vm.prot, nomeVm(vm, vm.prot), { posto: vm.posto }, "prot"));
     w.appendChild(t.el("div", { class: "cn-sotto" }, [t.el("small", { text: "Sotto torchio" }), t.el("b", { text: maiuscolo(nomeVm(vm, vm.prot)) })]));
     if (P) w.appendChild(t.el("span", { class: "cn-em", text: P.emoji }));
     return w;
@@ -1147,7 +1391,7 @@
       if (i < n) {
         if (i === ultimo) return; ultimo = i;
         var p = gente[i];
-        foto.src = faccia(p.id, p.nome); tx(nome, maiuscolo(p.id === u.cb.myId ? p.nome + " (tu)" : p.nome));
+        foto.src = faccia(p.id, p.nome); foto._cnf = { id: p.id, nome: p.nome, o: {} }; tx(nome, maiuscolo(p.id === u.cb.myId ? p.nome + " (tu)" : p.nome));
         cornice.classList.remove("su"); nome.classList.remove("su"); void cornice.offsetWidth; cornice.classList.add("su"); nome.classList.add("su");
         [].forEach.call(piccoli.children, function (m, j) { m.classList.toggle("ok", j <= i); });
         suono("sfilata");
@@ -1171,7 +1415,7 @@
     var av = rigaAvanti(u, vm);
     var scena = t.el("div", { class: "cn-arr-scena" }, [
       img(t, ARTE().scenaSrc ? ARTE().scenaSrc(vm.posto, 480, 640) : "", "bg"),
-      img(t, faccia(vm.prot, nomeVm(vm, vm.prot), { posto: vm.posto, intero: true, faccia: "felice" }), "cn-arr-prot"),
+      imgF(t, vm.prot, nomeVm(vm, vm.prot), { posto: vm.posto, intero: true, faccia: "felice" }, "cn-arr-prot"),
       t.el("div", { class: "cn-arr-titolo" }, [t.el("span", { class: "e", text: P.emoji }), t.el("span", { text: P.nome })]),
       t.el("div", { class: "cn-arr-sotto" }, [t.el("small", { text: "Sotto torchio" }), t.el("b", { text: io ? "TU! 😱" : maiuscolo(nomeVm(vm, vm.prot)) })]),
       vm.dom && vm.dom.q ? t.el("div", { class: "cn-arr-voce", text: "🎙️ " + vm.dom.q }) : null
@@ -1185,7 +1429,7 @@
   function figCarta(t, vm, c) {
     if (c.e) return t.el("div", { class: "fig em" + (spezzaEmoji(c.e).length > 1 ? " due" : ""), text: c.e });
     if (c.chi) return t.el("div", { class: "fig" }, [img(t, ARTE().persona ? ARTE().persona(c, c.s) : "")]);
-    return t.el("div", { class: "fig" }, [img(t, faccia(vm.prot, nomeVm(vm, vm.prot), { posto: vm.posto, faccia: c.lui, piu: c.piu })),
+    return t.el("div", { class: "fig" }, [imgF(t, vm.prot, nomeVm(vm, vm.prot), { posto: vm.posto, faccia: c.lui, piu: c.piu }),
       t.el("span", { class: "smorfia", text: (ARTE().FACCE_EMOJI || {})[c.lui] || "" })]);
   }
 
@@ -1228,7 +1472,7 @@
     } else {
       var volti = t.el("div", { class: "cn-volti n" + Math.min(10, vm.players.filter(function (p) { return !p.via; }).length) });
       vm.players.filter(function (p) { return !p.via; }).forEach(function (p) {
-        var b = t.el("div", { class: "cn-volto", role: "button" }, [img(t, faccia(p.id, p.nome)), t.el("span", { text: p.id === u.cb.myId ? "Tu" : p.nome })]);
+        var b = t.el("div", { class: "cn-volto", role: "button" }, [imgF(t, p.id, p.nome), t.el("span", { text: p.id === u.cb.myId ? "Tu" : p.nome })]);
         b._x = p.id; tocco(b); scelte.push(b); volti.appendChild(b);
       });
       el = t.el("div", { class: "cn-sc chi" }, [cartaDomanda(t, d.q, "👆 Tocca la faccia di un amico (anche la tua)"), volti, R.el]);
@@ -1464,7 +1708,7 @@
       var volti = t.el("div", { class: "cn-volti svela n" + Math.min(10, gente.length) }), celle = {};
       gente.forEach(function (p) {
         var voti = t.el("div", { class: "voti" });
-        var c = t.el("div", { class: "cn-volto" + (p.id === mia ? " mia" : "") }, [img(t, faccia(p.id, p.nome)), t.el("span", { text: p.id === io ? "Tu" : p.nome }), voti]);
+        var c = t.el("div", { class: "cn-volto" + (p.id === mia ? " mia" : "") }, [imgF(t, p.id, p.nome), t.el("span", { text: p.id === io ? "Tu" : p.nome }), voti]);
         c._voti = voti; celle[p.id] = c; volti.appendChild(c);
       });
       Object.keys(E.scelte || {}).forEach(function (id) { var x = E.scelte[id]; if (!celle[x]) return; atterra(u, celle[x]._voti, id, q(cur), mia === x, (E.jolly || []).indexOf(id) >= 0 ? " jolly" : ""); cur += 420; });
@@ -1903,7 +2147,7 @@
     [1, 0, 2].forEach(function (i) {
       var r = cl[i]; if (!r) return;
       podio.appendChild(el("div", { class: "cn-gradino g" + (i + 1) + (r.id === io ? " tu" : "") }, [
-        img(t, faccia(r.id, r.nome), "f"), el("b", { class: "n", text: r.id === io ? "Tu" : r.nome }), el("span", { class: "pt", text: fmtN(r.punti) }),
+        imgF(t, r.id, r.nome, {}, "f"), el("b", { class: "n", text: r.id === io ? "Tu" : r.nome }), el("span", { class: "pt", text: fmtN(r.punti) }),
         el("div", { class: "base", text: med[i] })]));
     });
     s._contenuto.appendChild(podio);
@@ -1924,7 +2168,7 @@
       else s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }));
       s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     }
-    t.mostra(s);
+    t.mostra(mio(s));
     return s;
   }
   var SEGNATI = null;
@@ -2193,7 +2437,15 @@
       "@keyframes cnNome{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}",
       "@keyframes cnArrProt{from{transform:translate(70%,0);opacity:0}to{transform:translate(-50%,0);opacity:1}}",
       "@keyframes cnTimbro{0%{opacity:0;transform:scale(2) rotate(-12deg)}100%{opacity:1;transform:rotate(-3deg)}}",
-      "@keyframes cnAvv{0%{opacity:0}10%,80%{opacity:1}100%{opacity:0}}"
+      "@keyframes cnAvv{0%{opacity:0}10%,80%{opacity:1}100%{opacity:0}}",
+      // il riquadro della foto nella saletta
+      ".cn-fb{border-radius:14px;background:linear-gradient(135deg,#3a1f78,#5a2ca0);color:#fff;padding:7px 8px;margin:0 0 8px;box-shadow:0 2px 10px rgba(0,0,0,.18)}",
+      ".cn-fb-riga{display:flex;align-items:center;gap:7px;min-width:0}",
+      ".cn-fb-w{flex:none;position:relative;width:42px;height:42px;border-radius:50%;overflow:hidden;background:radial-gradient(#fff6d8,#ffb84a);box-shadow:0 0 0 2px #ffcf3f}.cn-fb-f{position:absolute;width:150%;height:150%;left:-25%;top:-14%;object-fit:cover}",
+      ".cn-fb-col{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.2}",
+      ".cn-fb-tx{font-weight:900;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".cn-fb-sotto{font-size:11.5px;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".cn-btn.cn-fb-b{flex:none;min-height:38px;padding:0 10px;font-size:13.5px;border-radius:12px;background:rgba(255,255,255,.18)}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -2206,9 +2458,10 @@
     postiOnline: MAX,
     riassunto: function (imp) {
       var i = impNorm(imp), tutti = posti().length;
-      return i.nPosti + " posti · " + i.nDom + " domande per posto · tempi " + (i.tempi === "calma" ? "con calma" : i.tempi) + (i.posti.length < tutti ? " · " + i.posti.length + " posti accesi su " + tutti : "");
+      return i.nPosti + " posti · " + i.nDom + " domande per posto · tempi " + (i.tempi === "calma" ? "con calma" : i.tempi) + (i.posti.length < tutti ? " · " + i.posti.length + " posti accesi su " + tutti : "") + (i.foto ? "" : " · solo avatar (niente foto)");
     },
     regole: [
+      "📸 All'inizio ognuno si fa un <b>selfie</b> (o sceglie una foto, o usa l'avatar) e un <b>filtro buffo</b>: la foto la vede solo chi è entrato dal link della serata, e sparisce quando uscite.",
       "In ogni posto uno di voi è <b>sotto torchio</b>: le domande sono su di lui (anche lui gioca).",
       "🖼️ <b>Immagini</b>: scegli la carta giusta per lui. ✍️ <b>Scrivi</b> e 🎨 <b>Disegna</b>: tutti scrivono o disegnano, poi si vota. 👆 <b>Chi di noi</b>: tocca la faccia di un amico.",
       "<b>100 punti per ogni amico che sceglie come te</b> (il voto di chi è sotto torchio vale doppio). +100 a chi scrive la battuta o fa il disegno più votato.",
@@ -2217,7 +2470,7 @@
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el, i0 = impNorm(dove);
-      dove.posti = i0.posti.slice(); dove.nPosti = i0.nPosti; dove.nDom = i0.nDom; dove.tempi = i0.tempi;
+      dove.posti = i0.posti.slice(); dove.nPosti = i0.nPosti; dove.nDom = i0.nDom; dove.tempi = i0.tempi; dove.foto = i0.foto;
       var stima = el("div", { class: "modulo-nota", style: "margin-top:8px" });
       function aggStima() { var n = (aiuti.giocatori && aiuti.giocatori.length) || 6; tx(stima, "⏱️ In " + Math.max(3, n) + " circa " + stimaMinuti(impNorm(dove), Math.max(3, n)) + " minuti"); }
       function gruppo(etichetta, voci, prop) {
@@ -2235,6 +2488,7 @@
       gruppo("Quanti posti (un round per posto)", [[3, "3"], [4, "4"], [5, "5"], [6, "6"], [7, "7"], [8, "8"], [10, "10"]], "nPosti");
       gruppo("Domande per posto", [[3, "3"], [4, "4"], [5, "5"]], "nDom");
       gruppo("Tempi", [["calma", "🐢 Con calma"], ["normali", "Normali"], ["veloci", "⚡ Veloci"]], "tempi");
+      gruppo("Le facce", [[true, "📸 Foto vere"], [false, "🙂 Solo avatar"]], "foto");
       box.appendChild(stima); aggStima();
       box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Posti accesi (escono a caso tra questi)" }));
       var gP = el("div", { class: "cat-griglia" });

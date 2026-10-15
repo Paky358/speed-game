@@ -8,6 +8,12 @@
 // 403: 10 telefoni: misure 360x640 e 412x915 in ogni passo (niente scorre, niente esce), console pulita.
 // 404: chi arriva a partita cominciata guarda (niente tasti) ed entra alla Rivincita; il protagonista che esce non blocca.
 // 405: i messaggi: nella foto (vm) mai i disegni né le battute prima della vetrina; i disegni viaggiano leggeri (sotto i 20 KB).
+// LA FOTO VERA (fotocamera finta: un canvas con una faccia disegnata, mai la fotocamera vera):
+// 406: selfie, galleria e avatar, i filtri (solo il nome del filtro viaggia), chi entra col codice vede gli avatar, ricarica, Rivincita,
+//      Cambia gioco (le foto spariscono); nel broker: chiave mai nei messaggi, foto mai trattenute né in chiaro, si aprono solo con la chiave.
+// 407: l'host ricarica in saletta e le foto tornano; «📸 Rifai» con una foto nuova.
+// 408: l'host spegne le foto («🙂 Solo avatar») e le riaccende.
+// 409: il camerino a 360x640 e 412x915 (scelta, fotocamera, sistema, filtri).
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no, T = A.T, vm = A.vm, ids = A.ids;
@@ -365,5 +371,306 @@
     if (max > 30000) no("la foto è troppo grande (" + max + " byte)");
     senzaErrori();
     return "foto al massimo " + max + " byte, nessuna battuta prima della vetrina, nessun disegno nella foto; disegno di 40 tratti in rete al massimo " + maxDis + " byte (" + nDis + " messaggi)";
+  } });
+
+  // =========================================================
+  //  LA FOTO VERA (406-409): fotocamera finta (un canvas con una faccia disegnata: MAI la fotocamera vera),
+  //  galleria finta (un file fatto da un canvas), chiave nel link della Sala, foto cifrate a pezzi
+  // =========================================================
+  // una faccia disegnata (la foto finta), 480×640: la faccia sta dove la sagoma ovale la chiede
+  function facciaFinta(w, pelle, scritta) {
+    var cv = w.document.createElement("canvas"); cv.width = 480; cv.height = 640; var c = cv.getContext("2d");
+    var g = c.createLinearGradient(0, 0, 0, 640); g.addColorStop(0, "#6a8fbf"); g.addColorStop(1, "#c9d8e8"); c.fillStyle = g; c.fillRect(0, 0, 480, 640);
+    c.save(); c.translate(240, 320); c.scale(1.6, 1.6); c.translate(-120, -152);
+    c.fillStyle = "#3b2a20"; c.beginPath(); c.ellipse(120, 120, 100, 95, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = pelle || "#e9b48f"; c.beginPath(); c.ellipse(120, 165, 82, 105, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#3b2a20"; c.beginPath(); c.ellipse(120, 80, 90, 40, 0, Math.PI, 0); c.fill();
+    [84, 156].forEach(function (x) { c.fillStyle = "#fff"; c.beginPath(); c.ellipse(x, 140, 15, 9, 0, 0, 7); c.fill(); c.fillStyle = "#3a6"; c.beginPath(); c.arc(x, 140, 7, 0, 7); c.fill(); c.fillStyle = "#000"; c.beginPath(); c.arc(x, 140, 3.5, 0, 7); c.fill(); });
+    c.strokeStyle = "#b97a5a"; c.lineWidth = 4; c.beginPath(); c.moveTo(120, 150); c.lineTo(112, 185); c.lineTo(128, 186); c.stroke();
+    c.strokeStyle = "#a33"; c.lineWidth = 6; c.beginPath(); c.arc(120, 200, 24, 0.2, Math.PI - 0.2); c.stroke();
+    c.restore();
+    if (scritta) { c.fillStyle = "#fff"; c.font = "bold 40px sans-serif"; c.fillText(scritta, 20, 620); }
+    return cv;
+  }
+  // la fotocamera finta del telefono (si mette prima che parta l'app, anche dopo le ricariche)
+  function camFinta(pelle) {
+    return function (w) {
+      var md = w.navigator.mediaDevices;
+      if (!md) { md = {}; try { Object.defineProperty(w.navigator, "mediaDevices", { configurable: true, value: md }); } catch (e) {} }
+      md.getUserMedia = function () {
+        var cv = facciaFinta(w, pelle), c = cv.getContext("2d"), n = 0;
+        w.__camAccesa = (w.__camAccesa || 0) + 1;
+        w.setInterval(function () { n++; c.fillStyle = n % 2 ? "#6a8fbf" : "#6b8fbf"; c.fillRect(0, 0, 3, 3); }, 80);   // (il video finto si muove: così arrivano i fotogrammi)
+        return Promise.resolve(cv.captureStream(15));
+      };
+    };
+  }
+  // tutto quello che passa dal broker finto (per controllare che una foto non passi MAI in chiaro)
+  function spiaBroker() {
+    W.__pub = [];
+    function avvolgi(k) {
+      if (k.__spiaFoto) return; k.__spiaFoto = true;
+      var pub = k.publish;
+      k.publish = function (topic, payload, o) { if (this.connected && !this.frozen) W.__pub.push({ n: k.nome, topic: topic, p: String(payload), r: !!(o && o.retain) }); return pub.call(this, topic, payload, o); };
+    }
+    if (!W.__creaVero) W.__creaVero = W.creaClient;
+    W.creaClient = function () { var c = W.__creaVero.apply(this, arguments); avvolgi(c); return c; };
+    W.BR.clients.forEach(avvolgi);
+  }
+  function fineSpia() { if (W.__creaVero) { W.creaClient = W.__creaVero; W.__creaVero = null; } }
+  // i messaggi "foto" visti nel broker (dagli amici all'host e dall'host a tutti)
+  function pezziFoto() {
+    var out = [];
+    (W.__pub || []).forEach(function (x) {
+      if (x.p.indexOf('"t":"foto"') < 0) return;
+      var m = null; try { m = JSON.parse(x.p); } catch (e) { return; }
+      var d = m && m.data ? m.data : m;
+      if (d && d.t === "foto") out.push({ n: x.n, r: x.r, len: x.p.length, m: d, id: d.id || m.from || null });
+    });
+    return out;
+  }
+  async function salaFoto(amici, senzaChiave) {
+    var P = await W.apriTel("Paky", { x: 0, salaSempre: true, prima: camFinta("#e9b48f") });
+    spiaBroker();
+    var S = await A.apriSalaNuova("Paky");
+    var link = P.SG.creaLink({ sala: S }), hash = link.split("#")[1] || "";
+    var k = (/(?:^|&)k=([A-Za-z0-9_-]{22})$/.exec(hash) || [])[1];
+    if (!k) no("il link della Sala non ha la chiave («" + hash + "»)");
+    var pelli = ["#c98d6a", "#f2c9a8", "#8d5a3b", "#e0a982", "#b07a55"];
+    for (var i = 0; i < amici.length; i++) await W.apriTel(amici[i], { hash: (senzaChiave || []).indexOf(amici[i]) >= 0 ? "sala=" + S : hash, x: 185 * (i + 1), salaSempre: true, prima: camFinta(pelli[i % pelli.length]) });
+    if (!await W.aspetta(function () { return ((vm(S).membri) || []).length === amici.length + 1; }, 12000)) no("nella Sala non entrano tutti");
+    var C = await A.lanciaDallaSala("Paky", S, NOME);
+    if (!await W.aspetta(function () { return ids(C, "players").length === amici.length + 1; }, 15000)) no("nella saletta non arrivano tutti");
+    return { S: S, C: C, P: P, k: k, hash: hash };
+  }
+  function idDi(C, nome) { var p = (vm(C).players || []).concat(vm(C).guarda || []).filter(function (x) { return x.nome === nome; })[0]; return p ? p.id : null; }
+  function foDi(C, nome) { var p = (vm(C).players || []).concat(vm(C).guarda || []).filter(function (x) { return x.nome === nome; })[0]; return p ? p.fo || null : null; }
+  function camAperto(w) { return w && w.document.querySelector(".cnf"); }
+  async function selfie(nome, filtro) {
+    var w = W.finestra(nome);
+    if (!await W.aspetta(function () { return camAperto(w); }, 10000)) no(nome + ": non si apre «📸 La tua faccia»");
+    if (!W.clicca(w, /Selfie/, ".cnf-b")) no(nome + ": manca «🤳 Selfie»");
+    var sc = await W.aspetta(function () { var b = w.document.querySelector(".cnf-scatto"); return b && !b.disabled ? b : null; }, 8000);
+    if (!sc) no(nome + ": la fotocamera (finta) non parte («" + T(w).slice(0, 80) + "»)");
+    if (!w.document.querySelector(".cnf-sagoma ellipse")) no(nome + ": manca la sagoma ovale");
+    sc.click();
+    if (!await W.aspetta(function () { return w.document.querySelector(".cnf-filtri"); }, 8000)) no(nome + ": dopo lo scatto non arrivano i filtri");
+    if (w.document.querySelectorAll(".cnf-f").length !== 10) no(nome + ": i filtri non sono 10");
+    if (filtro && !W.clicca(w, new RegExp(filtro), ".cnf-f")) no(nome + ": non trovo il filtro " + filtro);
+    W.clicca(w, /Fatto/, ".cnf-b");
+    if (!await W.aspetta(function () { return !camAperto(w); }, 4000)) no(nome + ": il camerino non si chiude");
+  }
+  async function galleria(nome, filtro) {
+    var w = W.finestra(nome);
+    if (!await W.aspetta(function () { return camAperto(w); }, 10000)) no(nome + ": non si apre «📸 La tua faccia»");
+    var inp = w.document.querySelector(".cnf input[type=file]");
+    var cv = facciaFinta(w, "#d9a17a", "galleria"), blob = await new Promise(function (r) { cv.toBlob(r, "image/jpeg", 0.9); });
+    var dt = new w.DataTransfer(); dt.items.add(new w.File([blob], "io.jpg", { type: "image/jpeg" })); inp.files = dt.files; inp.dispatchEvent(new w.Event("change"));
+    if (!await W.aspetta(function () { return w.document.querySelector(".cnf-sist"); }, 6000)) no(nome + ": la foto della galleria non si apre per sistemarla");
+    W.clicca(w, /\+/, ".cnf-zoom button");
+    if (!W.clicca(w, /Così/, ".cnf-b")) no(nome + ": manca «✅ Così»");
+    if (!await W.aspetta(function () { return w.document.querySelector(".cnf-filtri"); }, 6000)) no(nome + ": dopo la galleria non arrivano i filtri");
+    if (filtro && !W.clicca(w, new RegExp(filtro), ".cnf-f")) no(nome + ": non trovo il filtro " + filtro);
+    W.clicca(w, /Fatto/, ".cnf-b");
+    if (!await W.aspetta(function () { return !camAperto(w); }, 4000)) no(nome + ": il camerino non si chiude");
+  }
+  async function avatar(nome) {
+    var w = W.finestra(nome);
+    if (!await W.aspetta(function () { return camAperto(w); }, 10000)) no(nome + ": non si apre «📸 La tua faccia»");
+    if (!W.clicca(w, /Uso l'avatar/, ".cnf-b")) no(nome + ": manca «🙂 Uso l'avatar»");
+    if (!await W.aspetta(function () { return !camAperto(w); }, 4000)) no(nome + ": il camerino non si chiude");
+  }
+  // sul telefono di "chi", la foto di "di" c'è (quella giusta)
+  function vede(C, chi, di) { var w = W.finestra(chi), fo = foDi(C, di), id = idDi(C, di); return !!(w && w.SG_CDN_FOTO && fo && id && w.SG_CDN_FOTO.ha(id, fo.f)); }
+  async function vedonoTutti(C, nomi, conFoto, ms) {
+    var ok = await W.aspetta(function () { return nomi.every(function (a) { return conFoto.every(function (b) { return a === b || vede(C, a, b); }); }); }, ms || 15000);
+    if (!ok) { var manca = []; nomi.forEach(function (a) { conFoto.forEach(function (b) { if (a !== b && !vede(C, a, b)) manca.push(a + "→" + b); }); }); no("le foto non arrivano: " + manca.join(", ")); }
+  }
+  function testoBox(w) { var b = w && w.document.querySelector(".cn-fb"); return b ? b.innerText.replace(/\s+/g, " ") : ""; }
+  // i controlli della rete: la chiave mai nei messaggi, le foto mai trattenute né in chiaro, i pezzi si aprono con la chiave
+  async function controllaRete(k) {
+    var pub = W.__pub || [];
+    if (pub.some(function (x) { return x.p.indexOf(k) >= 0; })) no("la chiave è passata in un messaggio del broker!");
+    if (pub.some(function (x) { return x.r && /"t":"foto"|"pz":/.test(x.p); })) no("un pezzo di foto è stato mandato come messaggio trattenuto");
+    if (pub.some(function (x) { return /data:image|image\/jpeg|base64,/.test(x.p); })) no("un'immagine è passata in chiaro (data:image)");
+    var maxVm = 0; pub.forEach(function (x) { if (x.r && x.p.length > maxVm) maxVm = x.p.length; });
+    var pz = pezziFoto(); if (!pz.length) no("nessuna foto è passata in rete");
+    // le foto: per ognuna (numero + iv) i pezzi rimessi insieme NON sono un JPEG, ma con la chiave si aprono e diventano un JPEG
+    var grp = {};
+    pz.forEach(function (x) { var g = grp[x.m.f + "|" + x.m.iv] || (grp[x.m.f + "|" + x.m.iv] = { f: x.m.f, iv: x.m.iv, di: x.m.di, c: {}, max: 0 }); g.c[x.m.pz] = x.m.c; if (x.len > g.max) g.max = x.len; });
+    var raw = Uint8Array.from(atob(k.replace(/-/g, "+").replace(/_/g, "/") + "=="), function (ch) { return ch.charCodeAt(0); });
+    var key = await crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["decrypt"]);
+    var pesi = [], maxMsg = 0, nFoto = 0;
+    for (var gk in grp) {
+      var g = grp[gk], s = ""; if (Object.keys(g.c).length !== g.di) continue;
+      for (var i = 0; i < g.di; i++) s += g.c[i];
+      var b = Uint8Array.from(atob(s), function (ch) { return ch.charCodeAt(0); });
+      if (b[0] === 0xFF && b[1] === 0xD8) no("una foto è passata in chiaro (JPEG)");
+      var chiaro = null;
+      try { chiaro = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: Uint8Array.from(atob(g.iv), function (ch) { return ch.charCodeAt(0); }), additionalData: new TextEncoder().encode("cn|" + g.f) }, key, b)); } catch (e) { no("una foto non si apre con la chiave del link"); }
+      if (!(chiaro[0] === 0xFF && chiaro[1] === 0xD8)) no("la foto aperta non è un JPEG");
+      // e con una chiave sbagliata non si apre
+      var sbagliata = await crypto.subtle.importKey("raw", crypto.getRandomValues(new Uint8Array(16)), { name: "AES-GCM" }, false, ["decrypt"]), aperta = true;
+      try { await crypto.subtle.decrypt({ name: "AES-GCM", iv: Uint8Array.from(atob(g.iv), function (ch) { return ch.charCodeAt(0); }), additionalData: new TextEncoder().encode("cn|" + g.f) }, sbagliata, b); } catch (e) { aperta = false; }
+      if (aperta) no("una foto si apre anche con una chiave sbagliata");
+      pesi.push(chiaro.length); nFoto++; if (g.max > maxMsg) maxMsg = g.max;
+    }
+    if (!nFoto) no("nessuna foto intera nel broker");
+    return { nFoto: nFoto, pesoMax: Math.max.apply(null, pesi), pesoMin: Math.min.apply(null, pesi), msgMax: maxMsg, vmMax: maxVm, nPezzi: pz.length };
+  }
+  function kb(n) { return (Math.round(n / 100) / 10).toString().replace(".", ",") + " KB"; }
+
+  COPIONE.aggiungi(406, { nome: "Chi di Noi?: la foto vera (selfie, galleria, avatar, filtri), cifrata nel link, rientro, Rivincita, chi entra col codice", fai: async function () {
+    var Z = await salaFoto(["Giulia", "Luca"]), C = Z.C, P = Z.P;
+    // il camerino si apre da solo a tutti, prima di tutto
+    await selfie("Paky", "Occhioni Anime");
+    await galleria("Giulia", "Testa a Cono");
+    await avatar("Luca");
+    if (!await W.aspetta(function () { var a = foDi(C, "Paky"), b = foDi(C, "Giulia"); return a && a.h && a.x === 3 && b && b.h && b.x === 6 && !foDi(C, "Luca"); }, 15000))
+      no("nella vm le facce non tornano: Paky " + JSON.stringify(foDi(C, "Paky")) + " Giulia " + JSON.stringify(foDi(C, "Giulia")) + " Luca " + JSON.stringify(foDi(C, "Luca")));
+    await vedonoTutti(C, ["Paky", "Giulia", "Luca"], ["Paky", "Giulia"]);
+    if (!/La tua faccia/.test(testoBox(P)) || !/Occhioni Anime/.test(testoBox(P))) no("Paky in saletta legge «" + testoBox(P) + "»");
+    if (!/Giochi con l'avatar/.test(testoBox(W.finestra("Luca")))) no("Luca in saletta legge «" + testoBox(W.finestra("Luca")) + "»");
+    var fb = P.document.querySelector(".cn-fb-f"); if (!fb || fb.src.indexOf("data:image/png") !== 0) no("in saletta la faccina di Paky non è la sua foto");
+    // Giulia cambia solo il filtro: viaggia il nome del filtro, la foto no
+    var prima = pezziFoto().length, fG = foDi(C, "Giulia").f, wG = W.finestra("Giulia");
+    if (!W.clicca(wG, /Filtro/, ".cn-fb-b")) no("Giulia non trova «🎭 Filtro»");
+    if (!await W.aspetta(function () { return wG.document.querySelector(".cnf-filtri"); }, 5000)) no("«🎭 Filtro» non apre i filtri");
+    W.clicca(wG, /Nasone da Strega/, ".cnf-f"); W.clicca(wG, /Fatto/, ".cnf-b");
+    if (!await W.aspetta(function () { var b = foDi(C, "Giulia"); return b && b.x === 8 && b.f === fG; }, 8000)) no("il filtro nuovo di Giulia non arriva all'host");
+    await W.dorme(1500);
+    if (pezziFoto().length !== prima) no("cambiando solo il filtro la foto è ripartita (" + (pezziFoto().length - prima) + " pezzi)");
+    // si gioca: nella sfilata e nelle facce in fondo c'è la foto
+    await regole(P, 3, 3, "⚡ Veloci");
+    await comincia(C);
+    var wL = W.finestra("Luca");
+    if (!await W.aspetta(function () { var i = [].filter.call(wL.document.querySelectorAll(".cn-mini img"), function (x) { return x._cnf && x._cnf.id === "host"; })[0]; return i && i.src.indexOf("data:image/png") === 0; }, 8000)) no("Luca non vede la foto di Paky nelle facce in fondo");
+    // Bea entra solo col codice (senza chiave): guarda, e vede tutti con l'avatar
+    await W.apriTel("Bea", { hash: "sala=" + Z.S, x: 185 * 3, salaSempre: true, prima: camFinta("#a0704f") });
+    await W.aspetta(function () { return W.clicca(W.finestra("Bea"), /Guarda/); }, 15000);
+    if (!await W.aspetta(function () { return idDi(C, "Bea"); }, 15000)) no("Bea non arriva a guardare");
+    await W.dorme(4000);
+    var wB = W.finestra("Bea");
+    if (wB.SG_CDN_FOTO.ha("host") || wB.SG_CDN_FOTO.ha(idDi(C, "Giulia"))) no("Bea senza chiave ha le foto!");
+    if (camAperto(wB)) no("a Bea senza chiave si apre il camerino");
+    // Giulia ricarica a metà partita: ritrova la sua foto (dalla sua scheda) e riceve quelle degli altri
+    await giocaPasso(C, { veloce: true });
+    await W.ricarica("Giulia");
+    await vedonoTutti(C, ["Giulia"], ["Paky"], 20000);
+    if (!await W.aspetta(function () { var w = W.finestra("Giulia"); return w.SG_CDN_FOTO.ha(idDi(C, "Giulia"), fG); }, 10000)) no("Giulia dopo la ricarica non ritrova la sua foto");
+    if (camAperto(W.finestra("Giulia"))) no("dopo la ricarica a Giulia si riapre il camerino");
+    if (!await finoAllaFine(C, 500000, { veloce: true })) no("la partita non finisce");
+    // la Rivincita: le foto restano, nessuno rifà il selfie; Bea (senza chiave) entra e legge perché non vede le foto
+    await W.aspetta(function () { return A.tastiFineDi(P); }, 8000);
+    W.clicca(P, /Rivincita/, ".fine-tasti button");
+    if (!await W.aspetta(function () { return vm(C).fase === "lobby" || (vm(C).fase === "gioco" && vm(C).partita === 2); }, 15000)) no("la Rivincita non arriva");
+    await W.dorme(1500);
+    ["Paky", "Giulia", "Luca"].forEach(function (n) { if (camAperto(W.finestra(n))) no("alla Rivincita a " + n + " si riapre il camerino"); });
+    await vedonoTutti(C, ["Paky", "Giulia", "Luca"], ["Paky", "Giulia"], 8000);
+    if (vm(C).fase === "lobby" && !/solo entrando dal link/.test(testoBox(W.finestra("Bea")))) no("Bea in saletta legge «" + testoBox(W.finestra("Bea")) + "»");
+    var R = await controllaRete(Z.k);
+    // Cambia gioco: dopo pochi secondi le foto degli altri spariscono dalla memoria, e la mia dalla scheda
+    if (vm(C).fase === "lobby") W.clicca(P, /Comincia/, ".sl-go");
+    await W.aspetta(function () { return vm(C).fase === "gioco"; }, 10000);
+    if (!await finoAllaFine(C, 500000, { veloce: true, uguali: true })) no("la Rivincita non finisce");
+    await W.aspetta(function () { return A.tastiFineDi(P); }, 8000);
+    if (!W.clicca(P, /Cambia gioco/, ".fine-tasti button")) no("non trovo «Cambia gioco»");
+    var tess = await W.aspetta(function () { return A.tessera(P, "La Scalinata"); }, 6000); if (tess) tess.click();
+    if (!await W.aspetta(function () { var w = W.finestra("Giulia"), m = W.BR.mem.Giulia.s["sg-cn-mia"]; return w && !w.SG_CDN_FOTO.ha("host") && m && JSON.parse(m).u; }, 20000)) no("uscendo dal gioco le foto degli altri restano sul telefono di Giulia (o la sua non ha la scadenza)");
+    fineSpia(); senzaErrori();
+    return "selfie, galleria e avatar ok; filtro cambiato senza rimandare la foto; Bea col codice vede gli avatar; ricarica e Rivincita con le foto; " +
+      R.nFoto + " foto in rete, tutte cifrate (con la chiave si aprono, con un'altra no), " + kb(R.pesoMin) + "-" + kb(R.pesoMax) + " l'una, pezzi da al massimo " + R.msgMax + " byte; chiave mai nei messaggi; vm al massimo " + R.vmMax + " byte";
+  } });
+
+  COPIONE.aggiungi(407, { nome: "Chi di Noi?: l'host ricarica (tutti nella Sala), si rilancia il gioco e le foto tornano da sole, «📸 Rifai» con una foto nuova", fai: async function () {
+    var Z = await salaFoto(["Giulia", "Luca"]), C = Z.C;
+    await selfie("Paky", "Testa Schiacciata"); await selfie("Giulia", "Sdoppiamento"); await selfie("Luca", "Faccia Liquida");
+    await vedonoTutti(C, ["Paky", "Giulia", "Luca"], ["Paky", "Giulia", "Luca"]);
+    var fL = foDi(C, "Luca").f;
+    await W.ricarica("Paky");
+    // (nella Sala l'host che ricarica riporta tutti nella Sala: si rilancia il gioco e le foto tornano da sole, senza rifare il selfie)
+    if (!await W.aspetta(function () { return ((vm(Z.S).membri) || []).length === 3 && !W.finestra("Giulia").document.querySelector(".cn") && /Sei dentro/.test(T(W.finestra("Giulia"))); }, 25000)) no("dopo la ricarica dell'host non tornano tutti nella Sala");
+    await W.dorme(9500);   // (fuori dal gioco più di 8 secondi: le foto degli altri si buttano)
+    if (W.finestra("Giulia").SG_CDN_FOTO.ha("host")) no("fuori dal gioco Giulia ha ancora la foto di Paky");
+    C = Z.C = await A.lanciaDallaSala("Paky", Z.S, NOME);
+    if (!await W.aspetta(function () { var v = vm(C); return v.fase === "lobby" && (v.players || []).length === 3 && ["Paky", "Giulia", "Luca"].every(function (n) { var f = foDi(C, n); return f && f.h; }); }, 30000))
+      no("dopo la ricarica dell'host le foto non tornano tutte nella vm (" + JSON.stringify((vm(C).players || []).map(function (p) { return p.nome + ":" + JSON.stringify(p.fo); })) + ")");
+    ["Paky", "Giulia", "Luca"].forEach(function (n) { if (camAperto(W.finestra(n))) no("rilanciando il gioco a " + n + " si riapre il camerino"); });
+    await vedonoTutti(C, ["Paky", "Giulia", "Luca"], ["Paky", "Giulia", "Luca"], 20000);
+    // Luca rifà la foto
+    var wL = W.finestra("Luca");
+    if (!W.clicca(wL, /Rifai/, ".cn-fb-b")) no("Luca non trova «📸 Rifai»");
+    await selfie("Luca", "Faccia da Uovo");
+    if (!await W.aspetta(function () { var f = foDi(C, "Luca"); return f && f.h && f.f !== fL && f.x === 7; }, 10000)) no("la foto nuova di Luca non arriva all'host");
+    await vedonoTutti(C, ["Paky", "Giulia"], ["Luca"]);
+    if (W.finestra("Giulia").SG_CDN_FOTO.ha(idDi(C, "Luca"), fL)) no("Giulia ha ancora la foto vecchia di Luca");
+    var R = await controllaRete(Z.k);
+    fineSpia(); senzaErrori();
+    return "l'host ricarica e le 3 foto tornano; «📸 Rifai» manda la foto nuova e quella vecchia sparisce; " + R.nFoto + " foto cifrate in rete, " + kb(R.pesoMin) + "-" + kb(R.pesoMax);
+  } });
+
+  COPIONE.aggiungi(408, { nome: "Chi di Noi?: l'host spegne le foto («🙂 Solo avatar») e le riaccende", fai: async function () {
+    var Z = await salaFoto(["Giulia", "Luca"]), C = Z.C, P = Z.P;
+    await selfie("Paky"); await selfie("Giulia", "Specchio"); await avatar("Luca");
+    await vedonoTutti(C, ["Paky", "Giulia", "Luca"], ["Paky", "Giulia"]);
+    async function facce(spente) {
+      var w = W.finestra("Luca");
+      return W.aspetta(function () { var s = w.SG_CDN_ARTE.faccia({ id: "host", nome: "Paky" }, {}); return spente ? s.indexOf("data:image/svg") === 0 : s.indexOf("data:image/png") === 0; }, 10000);
+    }
+    // spente
+    if (!await W.aspetta(function () { return W.clicca(P, /Regole/, ".sl-regole"); }, 4000)) no("non trovo ⚙️ Regole");
+    await W.dorme(250); if (!W.clicca(P, /Solo avatar/, ".modo-chip")) no("non trovo «🙂 Solo avatar»"); W.clicca(P, /Fatto/, ".sl-foglio button"); await W.dorme(600);
+    if (!await facce(true)) no("con le foto spente Luca vede ancora la foto di Paky");
+    if (!await W.aspetta(function () { return !foDi(C, "Giulia") && /foto spente/.test(testoBox(W.finestra("Giulia"))); }, 8000)) no("con le foto spente Giulia legge «" + testoBox(W.finestra("Giulia")) + "»");
+    if (!/solo avatar/.test(A.regoleDi(W.finestra("Giulia")))) no("la riga delle regole non dice «solo avatar»");
+    // riaccese
+    if (!await W.aspetta(function () { return W.clicca(P, /Regole/, ".sl-regole"); }, 4000)) no("non trovo ⚙️ Regole");
+    await W.dorme(250); W.clicca(P, /Foto vere/, ".modo-chip"); W.clicca(P, /Fatto/, ".sl-foglio button");
+    if (!await facce(false)) no("riaccese le foto, Luca non vede la foto di Paky");
+    await vedonoTutti(C, ["Paky", "Luca"], ["Giulia"], 15000);
+    fineSpia(); senzaErrori();
+    return "foto spente: tutti con l'avatar e la riga lo dice; riaccese: le foto tornano";
+  } });
+
+  COPIONE.aggiungi(409, { nome: "Chi di Noi?: il camerino a 360x640 e 412x915 (scelta, fotocamera, sistema, filtri), niente scorre", fai: async function () {
+    var Z = await salaFoto(["Giulia", "Luca"]), w = W.finestra("Giulia"), f = document.getElementById("tel-Giulia"), viste = [];
+    if (!await W.aspetta(function () { return camAperto(w); }, 10000)) no("non si apre il camerino");
+    var st = w.document.createElement("style"); st.textContent = "*,*::before,*::after{animation:none!important;transition:none!important}"; w.document.head.appendChild(st);
+    async function misura(dove) {
+      for (var m = 0; m < 2; m++) {
+        var dim = m ? [412, 915] : [360, 640];
+        f.style.width = dim[0] + "px"; f.style.height = dim[1] + "px"; w.dispatchEvent(new w.Event("resize")); await W.dorme(400);
+        var d = w.document, H = w.innerHeight, Wd = w.innerWidth, fuori = [];
+        [].forEach.call(d.querySelectorAll(".cnf button, .cnf-palco, .cnf-grande, .cnf-tondo, .cnf-f"), function (n) {
+          var b = n.getBoundingClientRect(); if (!b.width || !b.height || n.closest(".cnf-zoom")) return;
+          if (b.bottom > H + 1 || b.right > Wd + 1 || b.left < -1 || b.top < -1) fuori.push((n.className || n.tagName) + " " + Math.round(b.top) + "-" + Math.round(b.bottom));
+        });
+        var pal = d.querySelector(".cnf-palco"); if (pal && pal.getBoundingClientRect().height < 150) fuori.push("palco basso " + Math.round(pal.getBoundingClientRect().height));
+        if (fuori.length) no(dove + " a " + dim.join("x") + ": " + fuori.slice(0, 4).join(", "));
+        viste.push(dove + " " + dim.join("x"));
+      }
+    }
+    await misura("scelta");
+    W.clicca(w, /Selfie/, ".cnf-b");
+    await W.aspetta(function () { var b = w.document.querySelector(".cnf-scatto"); return b && !b.disabled; }, 8000);
+    await misura("fotocamera");
+    w.document.querySelector(".cnf-scatto").click();
+    await W.aspetta(function () { return w.document.querySelector(".cnf-filtri"); }, 8000);
+    await misura("filtri");
+    W.clicca(w, /Rifai/, ".cnf-b");
+    var inp = w.document.querySelector(".cnf input[type=file]"), cv = facciaFinta(w, "#d9a17a"), blob = await new Promise(function (r) { cv.toBlob(r, "image/jpeg", 0.9); });
+    var dt = new w.DataTransfer(); dt.items.add(new w.File([blob], "io.jpg", { type: "image/jpeg" })); inp.files = dt.files; inp.dispatchEvent(new w.Event("change"));
+    await W.aspetta(function () { return w.document.querySelector(".cnf-sist"); }, 6000);
+    await misura("sistema");
+    W.clicca(w, /Così/, ".cnf-b"); await W.aspetta(function () { return w.document.querySelector(".cnf-filtri"); }, 6000);
+    W.clicca(w, /Fatto/, ".cnf-b");
+    // la saletta col riquadro della foto, a 360x640: niente scorre
+    f.style.width = "360px"; f.style.height = "640px"; w.dispatchEvent(new w.Event("resize")); await W.dorme(500);
+    var fb = w.document.querySelector(".cn-fb"); if (!fb) no("manca il riquadro della foto in saletta");
+    var r = fb.getBoundingClientRect(); if (r.right > 361 || r.left < -1) no("il riquadro della foto esce di lato");
+    f.style.width = "360px"; f.style.height = "740px"; w.dispatchEvent(new w.Event("resize"));
+    if (w.__camAccesa && w.document.querySelector("video") ) no("la fotocamera è rimasta accesa");
+    fineSpia(); senzaErrori();
+    return "misurati: " + viste.join(", ");
   } });
 })();

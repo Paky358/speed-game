@@ -143,7 +143,7 @@
   function faccia(p, o) {
     o = o || {}; p = p || {};
     var A = window.SG_CDN_ARTE;
-    if (A && typeof A.foto === "function") { try { var f = A.foto(p.id, o); if (f) return f; } catch (e) {} }   // passo B: la foto col filtro
+    if (A && typeof A.foto === "function") { try { var f = A.foto(p.id, o, p); if (f) return f; } catch (e) {} }   // la foto col filtro (js/chidinoi-foto.js)
     if (!window.SGOmino) return "";
     var cfg = copia(p.omino && typeof p.omino === "object" ? p.omino : SGOmino.casuale(p.nome || p.id || "?"));
     var fx = o.faccia && FACCE[o.faccia], br = null;
@@ -397,6 +397,6 @@
   window.SG_CDN_ARTE = {
     COSTUMI: COSTUMI, PERSONAGGI: PERSONAGGI, FACCE: FACCE, FACCE_EMOJI: FACCE_EMOJI, FESTA: FESTA,
     faccia: faccia, persona: persona, scena: scena, scenaSrc: scenaSrc, emoji: em, hash: hash,
-    foto: null   // passo B: function (id, o) { return src della foto col filtro, o null }
+    foto: (window.SG_CDN_ARTE && SG_CDN_ARTE.foto) || null   // la riempie js/chidinoi-foto.js: function (id, o, p) → src del ritratto con la foto, o null
   };
 })();

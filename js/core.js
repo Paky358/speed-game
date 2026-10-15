@@ -209,6 +209,18 @@
   function dimenticaLinkSessione() { var s = sessione(); if (s) scriviM(s, "sg-link", null); }
   // (finché si è dentro la stanza resta "recente": vedi agganciaRete; un link di ieri in una scheda riaperta non vale più)
   function linkSessione() { var s = sessione(), o = s && leggiM(s, "sg-link"); return o && (o.sala || (o.gioco && o.stanza)) && Date.now() - (o.t || 0) < DURATA_RIENTRO ? o : null; }
+  // 🔑 la chiave segreta di una Sala o di una stanza (le foto cifrate di «Chi di Noi?»): la crea l'host e viaggia SOLO nel link,
+  // dopo il # (mai al server, mai nei messaggi). Resta solo in questa scheda. crea: true = l'host la fa se non c'è; k = quella arrivata dal link
+  var CHIAVI = {};
+  function chiaveDi(codice, crea, k) {
+    var c = String(codice || "").toUpperCase(); if (!/^[A-Z0-9]{4,8}$/.test(c)) return null;
+    var s = sessione(), m = (s && leggiM(s, "sg-chiavi")) || CHIAVI;
+    if (k && /^[A-Za-z0-9_-]{22}$/.test(k)) m[c] = k;
+    else if (m[c] || !crea) return m[c] || null;
+    else { try { var b = new Uint8Array(16); crypto.getRandomValues(b); m[c] = btoa(String.fromCharCode.apply(null, b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); } catch (e) { return null; } }
+    CHIAVI = m; if (s) scriviM(s, "sg-chiavi", m);
+    return m[c];
+  }
   // la stanza che ho aperto io (gioco, codice, regole, nomi): se la pagina si ricarica o l'app si chiude, entro 20 minuti la riapro
   // con lo stesso codice e gli amici rientrano da soli. Si dimentica quando la chiudo apposta.
   var DURATA_MIA = 20 * 60 * 1000;
@@ -4347,7 +4359,7 @@
     var pronto = sala.codice && sala.codice !== "…", gE = E ? giocoDa(E.gioco) : null, TN = !!(E && E.torneino);
     var sS = saletta(gSala(!!T, E), {
       host: true, codice: sala.codice, pronta: sala.pronta, min: E ? 2 : 1, puoiDaSolo: !E, _rete: sala.rete,
-      link: pronto ? SG.creaLink({ sala: sala.codice }) : "",
+      link: pronto ? SG.creaLink({ sala: sala.codice, k: chiaveDi(sala.codice, true) }) : "",
       sotto: TN ? "Torneo a eliminazione · Sala di " + sala.membri[0].nome : (E ? "Torneo a eliminazione · " + (gE ? gE.nome : "") : "Un link per tutti i giochi"),   // (il titolo dice già "Sala online" o "Torneo")
       confermaEsci: TN ? (E.finito ? "Tornare nella Sala?" : "Fermare il torneo? Si torna tutti nella Sala.") : (E ? "Chiudere il torneo per tutti?" : (T && T.n ? "Chiudere la Sala per tutti? I punti di stasera si perdono." : "Chiudere la sala per tutti?")),
       giocatori: sala.membri.map(function (m) { return { id: m.id, nome: m.nome, omino: m.omino || null, host: m.id === "host", tu: m.id === "host" }; }),
@@ -6118,7 +6130,7 @@
       if (U.codEt.textContent !== et) U.codEt.textContent = et;
       if (pronto) U.codBox.setAttribute("data-stanza", codSt); else U.codBox.removeAttribute("data-stanza");
       // o.link: la Sala o il torneo ha il suo; nei giochi della Sala si invita nella Sala
-      U.linkUrl = o.link || (inSala && o.sala.link) || (pronto ? SG.creaLink({ gioco: U.gid, stanza: codSt }) : "");
+      U.linkUrl = o.link || (inSala && o.sala.link) || (pronto ? SG.creaLink({ gioco: U.gid, stanza: codSt, k: U.host ? chiaveDi(codSt, true) : undefined }) : "");
       if (U.linkUrl) U.link.removeAttribute("disabled"); else U.link.setAttribute("disabled", "disabled");
     }
     var sotto = sottoSaletta(o);
@@ -8051,6 +8063,7 @@
       var daLink = !!(linkParams.sala || (linkParams.gioco && linkParams.stanza));
       if (location.hash) try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
       if (daLink) segnaLinkSessione(linkParams.sala ? { sala: linkParams.sala } : { gioco: linkParams.gioco, stanza: linkParams.stanza });
+      if (daLink && linkParams.k) chiaveDi(linkParams.sala || linkParams.stanza, false, linkParams.k);   // 🔑 la chiave delle foto: solo in questa scheda
       if (window.SGNube && SGNube.onCambio) SGNube.onCambio(ricordaProfilo);   // questo telefono ricorda l'ultimo profilo usato
       // PROFILO OBBLIGATORIO: prima di tutto (home, gioco, stanza o Sala del link) c'è il profilo con l'avatar;
       // chi l'ha già usato qui entra da solo. Il link letto qui sopra si usa dopo (la pagina ricaricata lo ritrova)
@@ -8094,6 +8107,8 @@
     sala: function () { lasciaPartita(); if (window.SGNet) SGNet.chiudiGiochi(); schermataSala(null); },
     // impostazioni arrivate da un link (le legge il gioco per i valori di partenza)
     parametriLink: function () { return linkParams; },
+    // 🔑 la chiave delle foto della serata (quella della Sala, o della stanza): crea = sono l'host e la faccio se manca
+    chiaveFoto: function (codice, crea) { var cs = crea ? (sala && sala.codice) : (salaG && salaG.codice); return chiaveDi(codice) || (cs && chiaveDi(cs, crea)) || (crea ? chiaveDi(codice, true) : null); },
     // costruisce un link condivisibile con le impostazioni scelte dall'host
     creaLink: function (params) {
       var base = location.origin + location.pathname;
@@ -8105,6 +8120,8 @@
         // chiavi e valori qui sono già sicuri (lettere, numeri, virgole): niente codifica illeggibile
         pezzi.push(k + "=" + v);
       }
+      var kk = params.k === undefined && (params.sala || params.stanza) ? chiaveDi(params.sala || params.stanza) : null;   // 🔑 la chiave delle foto, se questa scheda ce l'ha
+      if (kk) pezzi.push("k=" + kk);
       return base + (pezzi.length ? "#" + pezzi.join("&") : "");
     },
     // esposti perché comodi anche fuori
