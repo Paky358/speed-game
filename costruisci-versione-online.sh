@@ -74,6 +74,12 @@ VER=$(md5sum "$EXTRA" | cut -c1-10)
   [ -e js/ably-key.js ] && { cat js/ably-key.js; echo ''; }
   [ -e js/net-ably.js ] && { cat js/net-ably.js; echo ''; }
   [ -e js/net-p2p.js ] && { cat js/net-p2p.js; echo ''; }
+  cat js/compagnia.js   # la Compagnia (gruppo fisso di amici): memoria, link, tessere della home, giocato di recente
+  echo ''
+  cat js/scegliamo.js   # Scegliamo insieme: scheda del voto e ruota dei giochi
+  echo ''
+  cat js/amici-online.js   # amici online (pallino verde) e inviti nella Sala
+  echo ''
   cat js/studio.js   # lo studio del game show, condiviso dai giochi (prima dei giochi)
   echo ''
   cat js/asta-sala-arte.js js/asta-stadio-arte.js js/asta-maglie.js   # i disegni dell'Asta: la sala vista dal banditore, lo stadio del fantacalcio, le maglie

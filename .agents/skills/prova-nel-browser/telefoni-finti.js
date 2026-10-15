@@ -88,7 +88,7 @@ window.preparaFinestra = function (w, nome, opz) {
   def("SG", () => sg, v => { sg = v; const avvia = v.avviaApp; v.avviaApp = function () { if (!w.__permesso) return; return avvia.apply(v, arguments); }; });   // l'app parte quando lo dico io
   // il profilo finto resta nella memoria del telefono (come la sessione di Firebase): ricaricando c'è ancora.
   // Di partenza ogni telefono ha già il suo profilo (nome del telefono, con l'avatar); { profilo: false } = mai fatto il profilo
-  if (!("fp" in mem)) mem.fp = opz.profilo === false ? null : Object.assign({ nome, fiches: {}, omino: null, coins: 5000, level: 1, xp: 0 }, typeof opz.profilo === "object" ? opz.profilo : {});
+  if (!("fp" in mem)) mem.fp = opz.profilo === false ? null : Object.assign({ uid: "finto-" + nome, nome, fiches: {}, omino: null, coins: 5000, level: 1, xp: 0 }, typeof opz.profilo === "object" ? opz.profilo : {});
   Object.defineProperty(w, "__fp", { configurable: true, get: () => mem.fp });
   if (opz.offline) w.__offline = true;
   let nube = null;
@@ -122,6 +122,9 @@ window.preparaFinestra = function (w, nome, opz) {
     v.salvaProgressi = () => {}; v.statGioco = () => ({}); v.salvaFiches = () => {}; v.fiches = () => 1000;
     v.lista = () => []; v.salvaLista = () => {}; v.monete = () => 5000; v.cambiaMonete = () => Promise.resolve(5000);
     v.contaPartita = () => {}; v.aggiungiXp = () => null; v.pubblica = () => {};
+    // amici finti: opz.profilo.amici = ["finto-Giulia", …]; le schede pubbliche prendono il nome dall'uid (BR.schede = quante letture)
+    v.amici = () => (mem.fp && mem.fp.amici) || [];
+    v.schede = uids => { BR.schede = (BR.schede || 0) + 1; return w.__offline || w.__reteGiu ? errore("offline") : Promise.resolve((uids || []).map(u => ({ uid: u, nome: String(u).slice(6), omino: null }))); };
   });
   w.__err = [];
   w.addEventListener("error", e => w.__err.push((e.message || "errore") + " @" + (e.filename || "").split("/").pop() + ":" + e.lineno));

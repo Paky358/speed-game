@@ -1,6 +1,6 @@
-// Prove del controllore del Passo 2 (301-306): i casi cattivi del Torneo a eliminazione nella Sala
+// Prove del controllore del Passo 2 (281-287; erano 301-307, numeri lasciati al Passo 3): i casi cattivi del Torneo a eliminazione nella Sala
 // (ricariche, chi esce mentre ci si siede, il Bot quando chi gli sta davanti ricarica).
-// Si carica dopo il copione: await COPIONE.carica("passo2/controllo.js"); await COPIONE.prova(301)
+// Si carica dopo il copione: await COPIONE.carica("passo2/controllo.js"); await COPIONE.prova(281)
 (function () {
   var A = COPIONE.aiuti, W = window, T = A.T, no = A.no, vm = A.vm, tn = A.tn;
   function posto(w, n, i) { var p = w.document.querySelectorAll(".sl-tab .tb-posti")[n - 1]; return p ? p.querySelectorAll(".tb-posto")[i] : null; }
@@ -20,9 +20,9 @@
   }
   function insieme(t0, a, b) { return t0.some(function (p) { return (p.a === a && p.b === b) || (p.a === b && p.b === a); }); }
 
-  // 301. Coppie scelte in 4: Giulia si siede, l'host RICARICA la pagina mentre ci si siede. Dopo: i posti ci sono ancora,
+  // 281. Coppie scelte in 4: Giulia si siede, l'host RICARICA la pagina mentre ci si siede. Dopo: i posti ci sono ancora,
   //      Luca si siede accanto a Giulia, il conto alla rovescia c'è e il torneo parte DA SOLO allo scadere (niente Sala ferma)
-  COPIONE.aggiungi(301, { nome: "Coppie scelte: l'host ricarica mentre ci si siede, i posti restano e si parte da soli", fai: async function () {
+  COPIONE.aggiungi(281, { nome: "Coppie scelte: l'host ricarica mentre ci si siede, i posti restano e si parte da soli", fai: async function () {
     var R = await A.salaConAmici(["Giulia", "Luca", "Marco"]), S = R.S, P = R.w.Paky;
     var E = await coppieScelte(P, S);
     await siede(S, R.w.Giulia, "Giulia", 1, 0);
@@ -38,9 +38,9 @@
     return "posti rimasti dopo la ricarica, Giulia–Luca insieme, partito da solo (" + E1.turni[0].length + " partite)";
   } });
 
-  // 302. In 5 col Bot: chi gioca col Bot RICARICA a metà partita: ritrova la sua partita col Bot (non persa a tavolino),
+  // 282. In 5 col Bot: chi gioca col Bot RICARICA a metà partita: ritrova la sua partita col Bot (non persa a tavolino),
   //      chi guarda la vede ancora, e il torneo arriva in fondo
-  COPIONE.aggiungi(302, { nome: "Torneo in 5 col Bot: chi gioca col Bot ricarica a metà e ritrova la partita", fai: async function () {
+  COPIONE.aggiungi(282, { nome: "Torneo in 5 col Bot: chi gioca col Bot ricarica a metà e ritrova la partita", fai: async function () {
     var R = await A.salaConAmici(["Giulia", "Luca", "Marco", "Bea"]), S = R.S, P = R.w.Paky;
     await A.apriSceltaTn(P);
     A.chipTn(P, "Gioca col Bot");
@@ -61,9 +61,9 @@
     return chi + " ricarica contro " + Ef.bot.nome + " e ritrova la partita; torneo finito (vince " + A.nomeTn(Ef, Ef.campione) + ")";
   } });
 
-  // 303. Coppie scelte in 5: Marco si siede e poi ESCE dalla Sala prima del Via: nessuno gioca contro Marco,
+  // 283. Coppie scelte in 5: Marco si siede e poi ESCE dalla Sala prima del Via: nessuno gioca contro Marco,
   //      in 4 si è pari (niente Bot) e chi era seduto con lui gioca lo stesso
-  COPIONE.aggiungi(303, { nome: "Coppie scelte in 5: uno seduto esce prima del Via, nessuno gioca contro un fantasma", fai: async function () {
+  COPIONE.aggiungi(283, { nome: "Coppie scelte in 5: uno seduto esce prima del Via, nessuno gioca contro un fantasma", fai: async function () {
     var R = await A.salaConAmici(["Giulia", "Luca", "Marco", "Bea"]), S = R.S, P = R.w.Paky;
     await coppieScelte(P, S);
     await siede(S, R.w.Marco, "Marco", 3, 0);
@@ -85,9 +85,9 @@
     return "Marco esce, in 4 due partite vere (" + t0.map(function (p) { return A.nomeTn(E1, p.a) + "–" + A.nomeTn(E1, p.b); }).join(", ") + "), vince " + A.nomeTn(Ef, Ef.campione);
   } });
 
-  // 304. In 4: l'HOST (che gioca una semifinale) ricarica a torneo in corso: il tabellone c'è ancora per tutti,
+  // 284. In 4: l'HOST (che gioca una semifinale) ricarica a torneo in corso: il tabellone c'è ancora per tutti,
   //      la sua partita non è persa a tavolino e il torneo arriva in fondo
-  COPIONE.aggiungi(304, { nome: "Torneo in 4: l'host ricarica a torneo in corso, il tabellone resta e si arriva in fondo", fai: async function () {
+  COPIONE.aggiungi(284, { nome: "Torneo in 4: l'host ricarica a torneo in corso, il tabellone resta e si arriva in fondo", fai: async function () {
     var R = await A.salaConAmici(["Giulia", "Luca", "Marco"]), S = R.S, P = R.w.Paky;
     await A.apriSceltaTn(P);
     var E = await A.viaTn(P, S);
@@ -104,8 +104,8 @@
     return "l'host ricarica in semifinale, il torneo resta (vince " + A.nomeTn(Ef, Ef.campione) + ")";
   } });
 
-  // 305. Fuori dalla Sala: saletta del Tris con 5 (percorso di prima), «⚔️ Fate il torneo in 5», tutti dentro col Bot
-  COPIONE.aggiungi(305, { nome: "Saletta del Tris con 5 (fuori dalla Sala): «Fate il torneo in 5», tutti dentro, c'è il Bot", fai: async function () {
+  // 285. Fuori dalla Sala: saletta del Tris con 5 (percorso di prima), «⚔️ Fate il torneo in 5», tutti dentro col Bot
+  COPIONE.aggiungi(285, { nome: "Saletta del Tris con 5 (fuori dalla Sala): «Fate il torneo in 5», tutti dentro, c'è il Bot", fai: async function () {
     var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "Tris"), amici = ["Giulia", "Luca", "Marco", "Bea"];
     for (var i = 0; i < amici.length; i++) await W.apriTel(amici[i], { hash: "gioco=tris&stanza=" + C, x: 185 * (i + 1) });
     var b = await W.aspetta(function () { var x = P.document.querySelector(".sl-torneino"); return x && !x.hidden && /in 5/.test(x.textContent) ? x : null; }, 12000);
@@ -123,9 +123,9 @@
     return "«Fate il torneo in 5»: tutti e 5 nel torneo col Bot " + E.bot.nome + ", vince " + A.nomeTn(Ef, Ef.campione);
   } });
 
-  // 307. Primo avvio: creato il profilo, chiude l'app su «Sei lui o lei?» senza scegliere: riaprendo l'app (anche dal
+  // 287. Primo avvio: creato il profilo, chiude l'app su «Sei lui o lei?» senza scegliere: riaprendo l'app (anche dal
   //      link di un amico) torna «Sei lui o lei?»; scelto il look si va avanti e poi non lo chiede più
-  COPIONE.aggiungi(307, { nome: "Primo avatar: chi chiude l'app prima di sceglierlo se lo ritrova alla riapertura", fai: async function () {
+  COPIONE.aggiungi(287, { nome: "Primo avatar: chi chiude l'app prima di sceglierlo se lo ritrova alla riapertura", fai: async function () {
     var N = await W.apriTel("Nina", { x: 0, profilo: false });
     var b = await W.aspetta(function () { return N.document.querySelector(".benvenuto-profilo input.link-campo"); }, 5000);
     if (!b) no("niente benvenuto");
@@ -142,9 +142,9 @@
     return "chiusa l'app su «Sei lui o lei?», riaprendo lo richiede; scelto il look, poi non più";
   } });
 
-  // 306. Sullo stesso telefono non si è rotto niente: ogni gioco, ogni modo locale (Contro il Bot, Su questo telefono, Da solo…)
+  // 286. Sullo stesso telefono non si è rotto niente: ogni gioco, ogni modo locale (Contro il Bot, Su questo telefono, Da solo…)
   //      dalla home fino al tavolo, qualche secondo di gioco, nessun errore. opz.solo = ["tris"] per provarne solo alcuni
-  COPIONE.aggiungi(306, { nome: "Stesso telefono: ogni gioco e ogni modo locale parte senza errori", fai: async function (opz) {
+  COPIONE.aggiungi(286, { nome: "Stesso telefono: ogni gioco e ogni modo locale parte senza errori", fai: async function (opz) {
     A.spiaTavolo();
     var sempre = { indexOf: function () { return 0; } }, fatti = [], rotti = [];
     var P = await W.apriTel("Paky", { x: 0, spiaTav: sempre });
