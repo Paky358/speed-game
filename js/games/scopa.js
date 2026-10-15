@@ -1622,6 +1622,7 @@
   //  Online: a ognuno la SUA foto (inviaVeloce, "to"); nella stanza resta la foto di chi guarda (senza carte in mano).
   //  Messaggi con tre: 1 (così chi entra capisce che il tavolo è da tre: vedi ospiteScopaAuto).
   // =====================================================================
+  var TEMPO_TURNO3 = 60;   // online in tre: chi non gioca per un minuto, il Bot gioca una carta al posto suo
   function mischiaTre(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
   function creaMotore3(traguardo, mischia, primo) {
     var st = { traguardo: traguardo == null ? TARGET : traguardo, mazzo: [], tavolo: [], mani: [[], [], []], prese: [[], [], []], scope: [0, 0, 0],
@@ -2219,7 +2220,7 @@
       var b = prendiBot3(1, diff, escludi)[0]; M.st.nomi[s] = b.nome; M.st.avatari[s] = b.omino || null;
     }
     function avviso(testo) { if (M) M.st.avviso = { n: ++nAvv, testo: testo }; }
-    function esci() { if (chiuso) return; chiuso = true; C.esci(); clearTimeout(botT); if (rete) rete.chiudi(); t.esci(); }
+    function esci() { if (chiuso) return; chiuso = true; C.esci(); clearTimeout(botT); fermaTurno(); if (rete) rete.chiudi(); t.esci(); }
     var C = creaClient3(t, {
       sonoHost: true,
       onChiac: function (c) { if (!chOn || !M || M.st.fase !== "gioco" || !CHI.valido("scopa", c)) return; chiac3(C, 0, c); if (rete) rete.inviaVeloce({ t: "chiac", k: 0, id: "host", c: c }); },
@@ -2247,19 +2248,39 @@
     function passo(seat, id, presa) {
       if (chiuso || !M || M.st.turno !== seat) return;
       var ev = M.gioca(seat, id, presa); if (ev.errore) return;
+      nGioc++; fermaTurno();
       suonoPresa(ev.scopa, seat === 0);   // vibra solo la mia
       bcast();
       var m0 = M;
       dopoMossa(M, ev, bcast, giro, function () { return !chiuso && M === m0; });
     }
     function giro() {
-      if (chiuso || !M || botT || M.st.fase !== "gioco" || M.st.presa || !botSeat[M.st.turno]) return;
+      if (chiuso || !M || M.st.fase !== "gioco" || M.st.presa) return;
+      if (!botSeat[M.st.turno]) return turnoUmano();
+      if (botT) return;
       var m0 = M;
       botT = setTimeout(function () {
         botT = null;
         if (chiuso || M !== m0 || M.st.fase !== "gioco" || M.st.presa || !botSeat[M.st.turno]) return;
         var s = M.st.turno, mo = mossaBot3(M.st, s, diff); if (mo) passo(s, mo.carta, mo.presa);
       }, Math.max(700 + Math.random() * 350, (C._dealFino || 0) - Date.now() + 250));
+    }
+    // tocca a una persona: se non gioca per un minuto (distratta, telefono in tasca) il Bot gioca UNA carta al posto suo
+    // (avviso 15 secondi prima); il posto resta suo. Così la partita non resta mai ferma.
+    var nGioc = 0, turnoK = null, tTurno = [];
+    function fermaTurno() { tTurno.forEach(clearTimeout); tTurno = []; turnoK = null; }
+    function turnoUmano() {
+      var k = nGioc; if (turnoK === k) return;
+      fermaTurno(); turnoK = k;
+      var m0 = M, s = M.st.turno, sec = window.__scopaTurno3 || TEMPO_TURNO3;   // (le prove lo accorciano)
+      function ancora() { return !chiuso && M === m0 && M.st.fase === "gioco" && M.st.turno === s && turnoK === k && !botSeat[s] && !M.st.presa; }
+      tTurno.push(setTimeout(function () { if (ancora()) { avviso("⏱️ " + M.st.nomi[s] + ", tra 15 secondi gioca il Bot al posto tuo"); bcast(); } }, Math.max(0, sec - 15) * 1000));
+      tTurno.push(setTimeout(function () {
+        if (!ancora()) return;
+        var mo = mossaBot3(M.st, s, "medio"); if (!mo) return;
+        avviso("⏱️ " + M.st.nomi[s] + " ci pensava troppo: il Bot ha giocato al posto suo");
+        passo(s, mo.carta, mo.presa);
+      }, sec * 1000));
     }
     function rientra(s) {   // chi era uscito a partita in corso torna al suo posto (al posto del bot)
       var v = via[s]; delete via[s];
@@ -2271,7 +2292,7 @@
     function allaSaletta() {   // "Nuova partita" / la Rivincita della Sala: tutti in saletta (poi comincia il prossimo)
       if (!M || chiuso) return;
       primoDopo = (M.st.primoPartita + 1) % 3;
-      clearTimeout(botT); botT = null; M = null; via = {}; detto = false;
+      clearTimeout(botT); botT = null; fermaTurno(); M = null; via = {}; detto = false;
       for (var s = 1; s <= 2; s++) botSeat[s] = true;
       promuovi();
       C.azzera();
@@ -2367,7 +2388,7 @@
       });
     }
     aggiornaLobby();
-    return { lascia: function () { chiuso = true; C.esci(); clearTimeout(botT); }, inSaletta: function () { return !M && !chiuso; } };
+    return { lascia: function () { chiuso = true; C.esci(); clearTimeout(botT); fermaTurno(); }, inSaletta: function () { return !M && !chiuso; } };
   }
 
   // ---------- chi entra in un tavolo a tre (P = il collegamento condiviso con la Scopa a due: vedi ospiteScopaAuto) ----------
