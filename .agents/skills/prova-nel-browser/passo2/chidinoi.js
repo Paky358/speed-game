@@ -225,8 +225,11 @@
     // Avanti: più di metà (5 su 8) fa partire subito
     if (!await W.aspetta(function () { return vm(C).passo === "sfilata"; }, 5000)) no("niente sfilata");
     var k = vm(C).k;
-    ["Paky", "Giulia", "Luca", "Sara"].forEach(function (n) { W.clicca(W.finestra(n), /Avanti/, ".cn-btn.avanti"); });
-    await W.dorme(1200);
+    // (tutti i telefoni devono avere già la sfilata a schermo)
+    if (!await W.aspetta(function () { return ["Paky", "Giulia", "Luca", "Sara", "Marco"].every(function (n) { return W.finestra(n).document.querySelector(".cn-sf .cn-btn.avanti"); }); }, 15000)) no("la sfilata non arriva su tutti");
+    if (vm(C).k !== k) no("la sfilata è finita da sola prima della prova (telefoni lenti)");
+    for (var a = 0; a < 4; a++) W.clicca(W.finestra(["Paky", "Giulia", "Luca", "Sara"][a]), /Avanti/, ".cn-btn.avanti");
+    await W.dorme(800);
     if (vm(C).k !== k) no("con 4 su 8 «Avanti» si parte già");
     if ((vm(C).avanti || []).length !== 4) no("«Avanti» contati: " + (vm(C).avanti || []).length);
     W.clicca(W.finestra("Marco"), /Avanti/, ".cn-btn.avanti");
@@ -302,6 +305,9 @@
     }
     if (!await finoAllaFine(C, 400000)) no("senza il protagonista la partita non finisce");
     W.clicca(P, /Rivincita/, ".fine-tasti button");
+    // (chi è uscito apposta manca: il core propone «▶ Comincia senza …»)
+    await W.aspetta(function () { return vm(C).fase === "lobby"; }, 10000); await W.dorme(1500);
+    if (vm(C).fase === "lobby") W.clicca(P, /Comincia/, ".sl-go");
     if (!await W.aspetta(function () { return vm(C).fase === "gioco" && vm(C).partita === 2; }, 20000)) no("la Rivincita non riparte");
     if (!(vm(C).players || []).some(function (p) { return p.nome === "Bea"; })) no("alla Rivincita Bea non gioca");
     senzaErrori();
@@ -311,25 +317,53 @@
   COPIONE.aggiungi(405, { nome: "Chi di Noi?: niente disegni né battute nella foto, disegni leggeri in rete", fai: async function () {
     var Z = await salaECominci(["Giulia", "Luca", "Sara"]), C = Z.C, P = W.finestra("Paky");
     await regole(P, 3, 5);
-    // spia: tutti i messaggi che passano dal broker
-    var spia = [], vecchio = W.BR.log.length;
-    var orig = W.BR.__pubSpia || null;
+    // spia: la misura di ogni messaggio con un disegno che passa dal broker
+    var maxDis = 0, nDis = 0;
+    function spia() {
+      W.BR.clients.forEach(function (k) {
+        if (k.__spiaCn) return; k.__spiaCn = true;
+        var pub = k.publish;
+        k.publish = function (topic, payload, o) {
+          var s = String(payload);
+          if (/"t":"(dis|gal)"/.test(s)) { nDis++; if (s.length > maxDis) maxDis = s.length; }
+          return pub.call(this, topic, payload, o);
+        };
+      });
+    }
+    // un disegno pesante: 40 tratti da 40 punti l'uno
+    async function disegnoPesante(w) {
+      var f = w.document.querySelector(".cn-tav-foglio"); if (!f) return;
+      var r = f.getBoundingClientRect();
+      for (var t = 0; t < 40; t++) {
+        var x = r.left + r.width * (0.1 + 0.8 * Math.random()), y = r.top + r.height * (0.1 + 0.8 * Math.random());
+        pt(w, f, "pointerdown", x, y);
+        for (var i = 1; i < 40; i++) pt(w, f, "pointermove", x + Math.cos(i / 3 + t) * r.width * 0.2, y + Math.sin(i / 2) * r.height * 0.2);
+        pt(w, f, "pointerup", x, y);
+      }
+    }
     await comincia(C);
-    var max = 0, testiPrima = false, disInVm = false, maxDis = 0;
+    var max = 0, testiPrima = false, disInVm = false, pesanti = 0;
     var fino = Date.now() + 500000;
     while (Date.now() < fino && vm(C).fase === "gioco") {
+      spia();
       var s = W.BR.retained["seratagiochi/v1/" + C + "/stato"] || "";
       if (s.length > max) max = s.length;
       var v = vm(C);
       if ((v.passo === "scrivi") && /Battuta di/.test(s)) testiPrima = true;
       if (/"s":\[\[/.test(s)) disInVm = true;
+      if (v.passo === "disegna" && pesanti < 2) {
+        var wg = W.finestra("Giulia");
+        if (await W.aspetta(function () { return wg.document.querySelector(".cn-tav-foglio"); }, 5000)) { await disegnoPesante(wg); pesanti++; }
+      }
       await giocaPasso(C, { veloce: true });
     }
+    if (!nDis) no("nessun disegno è passato in rete");
+    if (maxDis > 20000) no("un disegno pesa troppo in rete (" + maxDis + " byte)");
     if (vm(C).fase !== "fine") no("la partita non finisce");
     if (testiPrima) no("le battute sono nella foto prima della vetrina");
     if (disInVm) no("un disegno è finito nella foto trattenuta");
     if (max > 30000) no("la foto è troppo grande (" + max + " byte)");
     senzaErrori();
-    return "foto al massimo " + max + " byte, nessuna battuta prima della vetrina, nessun disegno nella foto";
+    return "foto al massimo " + max + " byte, nessuna battuta prima della vetrina, nessun disegno nella foto; disegno di 40 tratti in rete al massimo " + maxDis + " byte (" + nDis + " messaggi)";
   } });
 })();
