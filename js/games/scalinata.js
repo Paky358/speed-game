@@ -1,15 +1,16 @@
 /* =========================================================
    GIOCO — "La Scalinata"  (ispirato a Wii Party, Scalinata a sorte)
-   Sulla scala si sta in 4 (i posti liberi li prendono i bot del
-   gruppo fisso, SG.bot). A ogni round ognuno sceglie in segreto
-   1, 3 o 5 gradini (4 secondi). Le scelte si scoprono tutte
+   Sulla scala si sta almeno in 4 (i posti liberi li prendono i bot
+   del gruppo fisso, SG.bot), fino a 8 (la scala grande: in 5-6 si
+   sceglie da 1 a 5, in 7-8 da 1 a 6). A ogni round ognuno sceglie in
+   segreto 1, 3 o 5 gradini (4 secondi). Le scelte si scoprono tutte
    insieme: se due o più scelgono lo stesso numero restano fermi;
    avanza solo chi ha scelto un numero unico. Chi arriva in cima
    (gradino TRAGUARDO) vince; se ci arrivano in due nello stesso
    round, vincono tutti e due.
    Un telefono solo: il telefono si passa, ognuno sceglie in segreto.
-   Ognuno dal suo (online): si sceglie tutti insieme; se si è più
-   di 4, gli altri guardano e alla partita dopo si dà il cambio.
+   Ognuno dal suo (online): si sceglie tutti insieme; se la scala è
+   piena, gli altri guardano e alla partita dopo si dà il cambio.
    Il tavolo (la scala) si costruisce una volta per partita: a ogni
    round cambiano solo i pezzi che servono (niente lampeggio).
    ========================================================= */
@@ -21,8 +22,14 @@
   var MARGINE_RETE = 900;   // online: un attimo in più per le scelte che arrivano in ritardo dalla rete
   var PAUSA_AUTO = 2600;    // dopo la rivelazione il round dopo parte da solo
   var PAUSA_FINE = 3200;    // dopo l'arrivo in cima, il podio
-  var SCELTE = [1, 3, 5];
-  var COLORI = ["#ff6b6b", "#4dabf7", "#51cf66", "#ffd43b"];
+  var SCELTE = [1, 3, 5];   // la scala piccola (4 posti)
+  // la scala grande (5-8 posti): più numeri, così con tanti giocatori qualcuno sale lo stesso (la partita dura come in 4)
+  function scelteDi(n) { return n <= 4 ? SCELTE : n <= 6 ? [1, 2, 3, 4, 5] : [1, 2, 3, 4, 5, 6]; }
+  var MAX_POSTI = 8;
+  // quanti sulla scala: "misura" = 4 (i Bot ai posti liberi) o tutti quelli che giocano, fino a 8; "piccola" = sempre 4; "grande" = sempre 8
+  function postiPer(scala, umani) { return scala === "piccola" ? 4 : scala === "grande" ? MAX_POSTI : Math.max(4, Math.min(MAX_POSTI, umani)); }
+  function scalaDa(imp) { var s = imp && imp.scala; return s === "piccola" || s === "grande" ? s : "misura"; }
+  var COLORI = ["#ff6b6b", "#4dabf7", "#51cf66", "#ffd43b", "#cc5de8", "#ff922b", "#20c997", "#f783ac"];
   // i bot: quelli del gruppo fisso (SG.bot: sempre gli stessi nomi e avatar in tutti i giochi), mai col nome di chi gioca
   function prendiBot(n, escludi) {
     var b = null;
@@ -139,6 +146,22 @@
       "Né lepre né tartaruga: {a} sale di 3.",
       "+3 per {a}: la via di mezzo funziona."
     ],
+    // scala grande: i numeri 2, 4 e 6 ({n} = il numero)
+    passi: [
+      "{a} sale di {n}: nessuno ci aveva pensato!",
+      "+{n} per {a}: numero libero, strada libera.",
+      "{a} trova il numero giusto: +{n}.",
+      "{a} sale di {n} gradini senza nessuno tra i piedi.",
+      "Che fiuto, {a}: il {n} era tutto suo!",
+      "{a} si prende il {n} e sale.",
+      "+{n} per {a}: in mezzo alla folla, ha trovato il buco giusto."
+    ],
+    sei: [
+      "{a} prende il 6 e vola: sei gradini!",
+      "Il 6 era libero: {a} fa il salto più lungo!",
+      "{a} sale di sei in un colpo solo. Che gambe!",
+      "Super salto di {a}: +6!"
+    ],
     prevedibile: [
       "{b} ha capito il trucco: {a} sceglie sempre {il}!",
       "{b} ti ha letto nel pensiero, {a}: di nuovo {il}?",
@@ -184,8 +207,14 @@
     ]
   };
 
-  function coloreScelta(n) { return n === 1 ? "#8ce99a" : n === 3 ? "#ffd43b" : "#ff922b"; }
-  function aCaso() { return SCELTE[Math.floor(Math.random() * 3)]; }
+  function coloreScelta(n) { return { 1: "#8ce99a", 2: "#c0eb75", 3: "#ffd43b", 4: "#ffc078", 5: "#ff922b", 6: "#ff8787" }[n] || "#ffd43b"; }
+  function aCaso(sc) { sc = sc || SCELTE; return sc[Math.floor(Math.random() * sc.length)]; }
+  // "1, 3 o 5" / "da 1 a 5"
+  function testoNumeri(sc) { sc = sc || SCELTE; return sc.length === 3 ? sc.join(", ").replace(/, (\d+)$/, " o $1") : "da " + sc[0] + " a " + sc[sc.length - 1]; }
+  function testoInizio(sc) {
+    if (sc && sc.length > 3) return "Scala grande: scegli in segreto " + testoNumeri(sc) + ". Stesso numero di un altro? Fermi tutti e due!";
+    return "Scegli in segreto " + testoNumeri(sc) + ". Se un altro sceglie il tuo stesso numero, restate fermi!";
+  }
   function pesca(a) { return a[Math.floor(Math.random() * a.length)]; }
   function riempi(f, v) { return f.replace(/\{(\w+)\}/g, function (_, k) { return v[k] != null ? v[k] : ""; }); }
   function elenco(nomi) { return nomi.length < 2 ? (nomi[0] || "") : nomi.slice(0, -1).join(", ") + " e " + nomi[nomi.length - 1]; }
@@ -203,22 +232,41 @@
     riprende: true,   // se l'host ricarica a metà partita, la partita riprende da dove era (il core lo dice agli amici)
     nome: "La Scalinata",
     icona: "🪜",
-    descrizione: "In quattro sulla scala: scegli 1, 3 o 5. Avanza solo chi sceglie un numero che nessun altro ha scelto. Primo in cima, vince.",
+    descrizione: "Tutti sulla scala, fino a 8: scegli in segreto quanti gradini salire. Avanza solo chi sceglie un numero che nessun altro ha scelto. Primo in cima, vince.",
     giocatoriMin: 1,
-    modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "In 4 (anche con i Bot), vi passate il telefono", amici: true }],
-    giocatoriMax: 4,
-    postiOnline: 4,   // sulla scala si sta in 4: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
+    modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Da 1 a 8, anche con i Bot: vi passate il telefono", amici: true }],
+    giocatoriMax: MAX_POSTI,
+    postiOnline: MAX_POSTI,   // la scala grande: fino a 8 sulla scala (oltre, gli altri guardano)
     difficolta: 2,
     regole: [
-      "Si gioca <b>in 4</b> sulla scala: i posti liberi li prendono i <b>Bot</b>, così puoi giocare anche da solo, in 2 o in 3. A ogni round hai <b>4 secondi</b> per scegliere in segreto <b>1, 3 o 5</b> gradini (se il tempo scade, sceglie il caso).",
+      "Sulla scala si sta <b>almeno in 4</b>: i posti liberi li prendono i <b>Bot</b>, così puoi giocare anche da solo, in 2 o in 3. A ogni round hai <b>4 secondi</b> per scegliere in segreto <b>1, 3 o 5</b> gradini (se il tempo scade, sceglie il caso).",
       "Le scelte si scoprono <b>tutte insieme</b>, sopra la testa di ognuno: se due o più scelgono lo <b>stesso</b> numero, restano <b>fermi</b>.",
       "Avanza solo chi ha scelto un numero <b>che nessun altro ha scelto</b>, di tanti gradini quanti il numero.",
       "Vince il primo che arriva in cima alla scalinata (gradino <b>" + TRAGUARDO + "</b>). Se ci arrivano in due nello stesso round, <b>vincono tutti e due</b>.",
-      "Si può giocare <b>a un telefono solo</b> (si passa di mano) oppure <b>ognuno dal suo</b>. Online, se siete più di 4, gli altri <b>guardano</b>: alla partita dopo salgono loro e dà il cambio chi è arrivato più in basso."
+      "<b>Scala grande</b>: in 5 o 6 si sceglie da <b>1 a 5</b>, in 7 o 8 da <b>1 a 6</b>. Così giocano tutti e la salita dura come in 4.",
+      "Nelle regole l'host sceglie la scala: <b>su misura</b> (4 posti, o tutti quelli che giocano fino a 8), <b>piccola</b> (sempre 4: se siete di più, gli altri guardano e alla partita dopo danno il cambio) o <b>grande</b> (sempre 8, anche coi Bot)."
     ],
+    riassunto: function (imp) {
+      var s = scalaDa(imp);
+      return s === "piccola" ? "🪜 Scala piccola: 4 posti (gli altri guardano)" : s === "grande" ? "🪜 Scala grande: 8 posti (anche coi Bot)" : "🪜 Scala su misura: da 4 a 8 posti";
+    },
 
     // il modo (un telefono solo / online) lo sceglie il core in "Come giocate?"; nel torneo si gioca a un telefono solo
-    impostazioni: function (box, dove, aiuti) { dove.modo = (!aiuti.torneo && aiuti.modo) || "telefono"; },
+    impostazioni: function (box, dove, aiuti) {
+      dove.modo = (!aiuti.torneo && aiuti.modo) || "telefono";
+      dove.scala = "misura";
+      if (aiuti.torneo) return;
+      var el = aiuti.el;
+      box.appendChild(el("div", { class: "etichetta", text: "🪜 La scala" }));
+      var g = el("div", { class: "modo-griglia", style: "grid-template-columns:repeat(3,1fr)" });
+      [["misura", "Su misura", "4, o tutti fino a 8"], ["piccola", "Piccola", "Sempre 4"], ["grande", "Grande", "Sempre 8, coi Bot"]].forEach(function (v) {
+        var b = el("button", { class: "modo-chip" + (dove.scala === v[0] ? " attiva" : ""), style: "justify-content:center;text-align:center", onclick: function () {
+          dove.scala = v[0]; [].forEach.call(g.children, function (c) { c.className = "modo-chip"; }); b.className = "modo-chip attiva";
+        } }, [ el("div", {}, [ el("div", { class: "mt", text: v[1] }), el("div", { class: "ms", text: v[2] }) ]) ]);
+        g.appendChild(b);
+      });
+      box.appendChild(g);
+    },
 
     avvia: function (t) {
       if (t.linkParams && t.linkParams.stanza) return ospiteScala(t, t.linkParams.stanza);
@@ -232,36 +280,41 @@
   // Stima cosa sceglierà ognuno (abitudini recenti + chi è vicino alla cima punta al numero che lo fa arrivare),
   // poi valuta ogni numero: quanto salgo io se resto da solo + quanto vale bloccare chi lo sceglierebbe.
   // Un po' di caso resta sempre: un bot prevedibile si batte facile.
-  function stimaScelte(passi, storia, k) {
-    var w = { 1: 0.8, 3: 1.1, 5: 1.6 }, h = storia[k] || [], peso = 1;   // di partenza: il 5 è il più gettonato
-    for (var i = h.length - 1; i >= 0 && i >= h.length - 8; i--) { w[h[i]] += 1.6 * peso; peso *= 0.8; }
-    var manca = TRAGUARDO - passi[k];
-    if (manca <= 5) SCELTE.forEach(function (n) { if (n >= manca) w[n] *= 2.2; });   // chi può arrivare, ci prova
-    var tot = w[1] + w[3] + w[5], p = {};
-    SCELTE.forEach(function (n) { p[n] = 0.85 * w[n] / tot + 0.05; });
+  // sc = i numeri della scala (1-3-5 nella piccola, 1-5 o 1-6 nella grande)
+  function stimaScelte(passi, storia, k, sc) {
+    sc = sc || SCELTE;
+    var w = {}, h = storia[k] || [], peso = 1;   // di partenza: il numero più alto è il più gettonato
+    sc.forEach(function (n) { w[n] = sc.join() === "1,3,5" ? { 1: 0.8, 3: 1.1, 5: 1.6 }[n] : 0.6 + 0.2 * n; });
+    for (var i = h.length - 1; i >= 0 && i >= h.length - 8; i--) { if (w[h[i]] != null) w[h[i]] += 1.6 * peso; peso *= 0.8; }
+    var manca = TRAGUARDO - passi[k], tot = 0, p = {};
+    if (manca <= sc[sc.length - 1]) sc.forEach(function (n) { if (n >= manca) w[n] *= 2.2; });   // chi può arrivare, ci prova
+    sc.forEach(function (n) { tot += w[n]; });
+    var base = 0.15 / sc.length;
+    sc.forEach(function (n) { p[n] = 0.85 * w[n] / tot + base; });
     return p;
   }
   // bot[k] = true se il posto k è un bot (o uno uscito, che ora gioca il bot)
-  function sceltaBot(io, passi, storia, bot) {
-    var P = passi.map(function (_, k) { return k === io ? null : stimaScelte(passi, storia, k); });
+  function sceltaBot(io, passi, storia, bot, sc) {
+    sc = sc || SCELTE;
+    var P = passi.map(function (_, k) { return k === io ? null : stimaScelte(passi, storia, k, sc); });
     // un umano prevedibile (es. sempre 5): UN solo bot fa da "guardia" e lo blocca, gli altri lo sanno e scelgono altro
     var bersaglio = -1, nB = 0, pB = 0;
     passi.forEach(function (_, j) {
       if (bot[j] || (storia[j] || []).length < 2) return;
-      var p = stimaScelte(passi, storia, j);
-      SCELTE.forEach(function (n) { if (p[n] >= 0.55 && p[n] > pB) { pB = p[n]; nB = n; bersaglio = j; } });
+      var p = stimaScelte(passi, storia, j, sc);
+      sc.forEach(function (n) { if (p[n] >= 0.55 && p[n] > pB) { pB = p[n]; nB = n; bersaglio = j; } });
     });
     if (bersaglio >= 0) {
       var guardia = -1;
       passi.forEach(function (x, k) { if (bot[k] && (guardia < 0 || x < passi[guardia])) guardia = k; });   // il bot più indietro
       var blocca = Math.min(0.95, pB + 0.2);
       if (guardia === io) { if (Math.random() < blocca) return nB; }
-      else if (guardia >= 0) { var g = {}; SCELTE.forEach(function (n) { g[n] = n === nB ? blocca : (1 - blocca) / 2; }); P[guardia] = g; }
+      else if (guardia >= 0) { var g = {}; sc.forEach(function (n) { g[n] = n === nB ? blocca : (1 - blocca) / (sc.length - 1); }); P[guardia] = g; }
     }
-    if (Math.random() < 0.12) return aCaso();
+    if (Math.random() < 0.12) return aCaso(sc);
     function valore(k, n) { var g = Math.min(n, TRAGUARDO - passi[k]); return g + (passi[k] + n >= TRAGUARDO ? 12 : 0); }
     var capo = 0; passi.forEach(function (x, k) { if (k !== io && x > capo) capo = x; });
-    var punti = SCELTE.map(function (n) {
+    var punti = sc.map(function (n) {
       var solo = 1; P.forEach(function (p) { if (p) solo *= 1 - p[n]; });
       var v = solo * valore(io, n);
       P.forEach(function (p, j) {          // bloccare j: vale di più se è in testa e più è vicino alla cima
@@ -274,8 +327,8 @@
     });
     var T = 1.1, somma = 0, e = punti.map(function (v) { var x = Math.exp(v / T); somma += x; return x; });
     var r = Math.random() * somma;
-    for (var i = 0; i < 3; i++) { r -= e[i]; if (r <= 0) return SCELTE[i]; }
-    return SCELTE[2];
+    for (var i = 0; i < sc.length; i++) { r -= e[i]; if (r <= 0) return sc[i]; }
+    return sc[sc.length - 1];
   }
 
   // ---------- il commento del round ----------
@@ -299,10 +352,11 @@
       var g = gruppi[n];
       cand.push(riempi(pesca(g.length >= 3 ? FRASI.scontro3 : FRASI.scontro), { a: nomi[g[0]], b: nomi[g[1]], c: nomi[g[2]], il: ilNum(n), sul: sulNum(n) }));
     });
-    su.forEach(function (i) { cand.push(riempi(pesca(scelte[i] === 5 ? FRASI.cinque : scelte[i] === 1 ? FRASI.uno : FRASI.tre), { a: nomi[i] })); });
+    su.forEach(function (i) { var x = scelte[i]; cand.push(riempi(pesca(x === 5 ? FRASI.cinque : x === 1 ? FRASI.uno : x === 3 ? FRASI.tre : x === 6 ? FRASI.sei : FRASI.passi), { a: nomi[i], n: x })); });
     var capo = 0; passi.forEach(function (p, i) { if (p > passi[capo]) capo = i; });
     var m = TRAGUARDO - passi[capo];
-    if (m > 0 && m <= 5 && su.indexOf(capo) >= 0) cand.push(riempi(pesca(FRASI.cima), { a: nomi[capo], gr: m === 1 ? "un gradino" : m + " gradini" }));
+    var maxN = Math.max.apply(null, scelte.concat([5]));
+    if (m > 0 && m <= maxN && su.indexOf(capo) >= 0) cand.push(riempi(pesca(FRASI.cima), { a: nomi[capo], gr: m === 1 ? "un gradino" : m + " gradini" }));
     return pesca(cand);
   }
 
@@ -320,7 +374,7 @@
     if (T.p !== pt) { T.p = pt; T.scontri = 0; T.usato5 = false; T.solo3 = true; }   // una partita nuova (anche se la fine di quella prima non si è vista)
     T.chiave = chiave;
     var n = scelte[io], c = {};
-    if (avanza[io]) { c["mosse" + n] = 1; c.gradini = passi[io] - prev[io]; }
+    if (avanza[io]) { if (SCELTE.indexOf(n) >= 0) c["mosse" + n] = 1; c.gradini = passi[io] - prev[io]; }   // (i trofei contano le mosse 1, 3 e 5)
     else { T.scontri++; c.scontri = 1; if (nRound === 1) c.scontriPrimoTurno = 1; }
     if (n === 5) T.usato5 = true;
     if (n !== 3) T.solo3 = false;
@@ -420,6 +474,19 @@
       ".sc-msg.piccolo{font-size:.86rem;font-weight:700;color:#ffd8a8}",
       ".sc-auto{height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}",
       ".sc-auto i{display:block;height:100%;background:#69db7c;transform-origin:left center}",
+      // la scala grande: corsie più strette (m5 = 5-6 posti, m7 = 7-8), tasti più piccoli quando i numeri sono 5 o 6
+      ".sc-scena.m5 .sc-corsie,.sc-scena.m7 .sc-corsie{gap:3px}",
+      ".sc-scena.m5 .sc-ped{width:48px;margin-left:-24px}.sc-scena.m5 .sc-av{width:38px;height:38px}",
+      ".sc-scena.m7 .sc-ped{width:38px;margin-left:-19px}.sc-scena.m7 .sc-av{width:31px;height:31px}",
+      ".sc-scena.m7 .sc-av .sc-pallino{width:19px;height:19px;margin:6px}",
+      ".sc-scena.m5 .sc-num,.sc-scena.m7 .sc-num{min-width:22px;padding:0 4px;height:20px;line-height:20px;font-size:.85rem}",
+      ".sc-scena.m5 .sc-nome{font-size:.64rem}.sc-scena.m7 .sc-nome{font-size:.58rem;padding:0}",
+      ".sc-scena.m7 .sc-gr{font-size:.56rem}",
+      ".sc-scena.m7 .sc-bonk{font-size:.56rem;padding:1px 3px}",
+      ".sc-tasti.molti{gap:6px}",
+      ".sc-tasti.molti .sc-tasto{height:86px;border-radius:14px;min-width:0}",
+      ".sc-tasti.molti .sc-tasto b{font-size:2.1rem}",
+      ".sc-tasti.molti .sc-tasto small{font-size:.6rem}",
       ".sc-guarda-nota{margin:8px 0 0;padding:8px 12px;border-radius:12px;background:rgba(77,171,247,.14);font-weight:700;font-size:.9rem;line-height:1.35;text-align:center}"
     ].join("\n");
     var st = document.createElement("style"); st.id = "sc-stile"; st.textContent = css;
@@ -472,7 +539,8 @@
     });
     scala.appendChild(box);
     var voce = el("div", { class: "sc-voce" }), pann = el("div", { class: "sc-pann" });
-    s._contenuto.appendChild(el("div", { class: "sc-scena" }, [
+    var nP = o.posti.length;
+    s._contenuto.appendChild(el("div", { class: "sc-scena" + (nP >= 7 ? " m7" : nP >= 5 ? " m5" : "") }, [
       el("div", { class: "sc-top" }, [bEsci, eRound, eTempo]), el("div", { class: "sc-barra" }, [barra]), scala, voce, pann
     ]));
 
@@ -572,9 +640,10 @@
   }
 
   // pezzi del pannello in basso
-  function pTasti(t, onScegli) {
+  function pTasti(t, onScegli, sc) {
     var el = t.el, fatto = false;
-    return el("div", { class: "sc-tasti" }, SCELTE.map(function (n) {
+    sc = sc || SCELTE;
+    return el("div", { class: "sc-tasti" + (sc.length > 3 ? " molti" : "") }, sc.map(function (n) {
       return el("button", { class: "sc-tasto", style: "background:" + coloreScelta(n), onclick: function () { if (fatto) return; fatto = true; onScegli(n); } }, [
         el("b", { text: String(n) }), el("small", { text: n === 1 ? "gradino" : "gradini" })
       ]);
@@ -595,17 +664,20 @@
   //  UN TELEFONO SOLO (in 4, i posti liberi ai bot)
   // =========================================================
   function partitaLocale(t) {
-    var g = t.giocatori.slice(0, 4).map(function (n, i) { return { nome: n, colore: COLORI[i], passi: 0, bot: false, omino: null }; });
+    var g = t.giocatori.slice(0, MAX_POSTI).map(function (n, i) { return { nome: n, colore: COLORI[i], passi: 0, bot: false, omino: null }; });
     var io = ioDaNome(g.map(function (x) { return x.nome; }));
     if (io >= 0 && t.mioOmino) g[io].omino = t.mioOmino(g[io].nome);
-    prendiBot(4 - g.length, g.map(function (x) { return x.nome; })).forEach(function (b) { g.push({ nome: b.nome, colore: COLORI[g.length], passi: 0, bot: true, omino: b.omino || null }); });
+    // sullo stesso telefono giocano sempre tutti: i Bot riempiono fino a 4 (o fino a 8 con la scala grande)
+    var quanti = Math.max(g.length, postiPer(scalaDa(t.impostazioni), g.length));
+    prendiBot(quanti - g.length, g.map(function (x) { return x.nome; })).forEach(function (b) { g.push({ nome: b.nome, colore: COLORI[g.length], passi: 0, bot: true, omino: b.omino || null }); });
+    var sc = scelteDi(g.length);
     var umani = []; g.forEach(function (x, i) { if (!x.bot) umani.push(i); });
     var solo = umani.length === 1;   // una persona sola: niente "passa il telefono"
-    var L = { nRound: 0, scelte: [], caso: [], T: nuovaTracciaScala(), storia: [[], [], [], []], finita: false, tm: null };
+    var L = { nRound: 0, scelte: [], caso: [], T: nuovaTracciaScala(), storia: g.map(function () { return []; }), finita: false, tm: null };
     var bot = g.map(function (x) { return x.bot; });
     var tav = creaTavolo(t, { posti: g, io: solo ? umani[0] : -1, tu: false, conferma: "Uscire dalla partita?", onEsci: esci });
     t.mostra(tav.s);
-    tav.voce("Scegli in segreto 1, 3 o 5. Se un altro sceglie il tuo stesso numero, restate fermi!");
+    tav.voce(testoInizio(sc));
     inizia(false);
 
     function ferma() { if (L.tm) { clearTimeout(L.tm); L.tm = null; } }
@@ -615,13 +687,13 @@
     function inizia(giaPassato) {
       if (L.finita) return;
       ferma();
-      L.nRound += 1; L.scelte = [null, null, null, null]; L.caso = [false, false, false, false];
+      L.nRound += 1; L.scelte = g.map(function () { return null; }); L.caso = g.map(function () { return false; });
       tav.nuovoRound(passi());
       tav.etichetta("Round " + L.nRound, "Cima al gradino " + TRAGUARDO);
       if (L.nRound > 1) tav.voce("");
       g.forEach(function (x, i) {
         if (!x.bot) return;
-        L.scelte[i] = sceltaBot(i, passi(), L.storia, bot);
+        L.scelte[i] = sceltaBot(i, passi(), L.storia, bot, sc);
         tav.dopo(function () { tav.scelto(i, true); }, 300 + Math.floor(Math.random() * 1400));   // il bot "ci pensa" un attimo
       });
       chiama(0, giaPassato);
@@ -642,9 +714,9 @@
         L.scelte[i] = n; L.caso[i] = !!cieco; tav.scelto(i, true);
         chiama(k + 1, false);
       }
-      tav.pannello([solo ? null : pMsg(t, "Tocca a " + g[i].nome, null, "piccolo"), pTasti(t, prendi)]);
+      tav.pannello([solo ? null : pMsg(t, "Tocca a " + g[i].nome, null, "piccolo"), pTasti(t, prendi, sc)]);
       tav.tempo(SECONDI * 1000);
-      L.tm = setTimeout(function () { prendi(aCaso(), true); }, SECONDI * 1000 + 150);
+      L.tm = setTimeout(function () { prendi(aCaso(sc), true); }, SECONDI * 1000 + 150);
     }
     function rivelaLocale() {
       var scelte = L.scelte.slice(), conta = {};
@@ -698,6 +770,7 @@
       resta: st.fase === "scelta" || st.fase === "rivela" ? Math.max(0, st.deadline - Date.now()) : 0,   // il tempo che resta (non l'ora: gli orologi dei telefoni non sono uguali)
       ripresa: st.ripresa || 0,   // il round in cui la partita è ripresa (l'host aveva ricaricato)
       scelti: !!st.scelti,        // nella Sala ha scelto l'host chi sale: chi guarda non dà il cambio alla partita dopo
+      sc: st.sc || SCELTE, scala: st.scala || "misura", maxPosti: st.scala === "piccola" ? 4 : MAX_POSTI,   // i numeri di questa scala; quanti possono salire
       scelte: null, avanza: null, prev: null, caso: null, commento: "", vincitori: st.vincitori || [] };
     if (st.fase === "rivela") { vm.scelte = st.scelte; vm.avanza = st.avanza; vm.prev = st.prev; vm.caso = st.caso; vm.commento = st.commento; }
     return vm;
@@ -723,7 +796,8 @@
     var st = {
       fase: "lobby", codice: "…", pronta: false, partita: 0, nRound: 0, vincitori: [],
       posti: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", colore: COLORI[0], bot: false, passi: 0, scelta: null, omino: t.mioOmino ? t.mioOmino() : null }],
-      guarda: [], deadline: 0, scelte: null, avanza: null, prev: null, caso: null, commento: "", ripresa: 0
+      guarda: [], deadline: 0, scelte: null, avanza: null, prev: null, caso: null, commento: "", ripresa: 0,
+      scala: scalaDa(t.impostazioni), sc: SCELTE   // la scala scelta dall'host e i suoi numeri (1-3-5, 1-5 o 1-6)
     };
     var T = nuovaTracciaScala();
     var chiusa = false, tScelta = null, tAuto = null, tBot = [];
@@ -732,6 +806,19 @@
     // può salire sulla scala? (nella Sala solo chi è stato scelto; fuori dalla Sala tutti)
     function siede(p) { return p.id === "host" || !t.puoSedersi || t.puoSedersi(p.id, p.nome); }
     function ricolora() { st.posti.forEach(function (p, i) { p.colore = COLORI[i]; }); }
+    // quanti possono salire sulla scala (in saletta): la piccola 4, le altre fino a 8
+    function maxPosti() { return st.scala === "piccola" ? 4 : MAX_POSTI; }
+    // "⚙️ Regole" in saletta: la scala cambia. Chi non ci sta più scende a guardare (chi è arrivato per ultimo);
+    // se c'è posto, chi guardava sale (prima chi aspetta da più tempo)
+    t.onRegole = function (im) {
+      st.scala = scalaDa(im);
+      if (st.fase !== "lobby") return;
+      while (st.posti.length > maxPosti()) st.guarda.unshift(st.posti.pop());
+      var resta = [];
+      st.guarda.forEach(function (p) { if (st.posti.length < maxPosti() && siede(p)) st.posti.push(p); else resta.push(p); });
+      st.guarda = resta;
+      ricolora(); bd();
+    };
 
     var rete = SGNet.ospita("scalinata", {
       onCodice: function (c) { st.codice = c; bd(); },
@@ -786,7 +873,7 @@
       if (trova(id, st.guarda)) return invia();
       var nuovo = { id: id, nome: String(m.nome || "Amico").slice(0, 16), bot: false, passi: 0, scelta: null, omino: avatarOk(m.omino) };
       // nella Sala sulla scala sale solo chi è stato scelto ("Chi gioca?"): gli altri guardano
-      if (st.fase === "lobby" && st.posti.length < 4 && siede(nuovo)) { nuovo.colore = COLORI[st.posti.length]; st.posti.push(nuovo); return bd(); }
+      if (st.fase === "lobby" && st.posti.length < maxPosti() && siede(nuovo)) { nuovo.colore = COLORI[st.posti.length]; st.posti.push(nuovo); return bd(); }
       if (st.guarda.length < MAX_GUARDA) { st.guarda.push(nuovo); return bd(); }
       rete.inviaVeloce({ t: "pieno", id: id });   // con il suo id dentro: smette di bussare
     }
@@ -794,7 +881,8 @@
       if (chiusa || st.fase !== "lobby") return;
       // i posti liberi ai bot del gruppo fisso (nome e avatar arrivano a tutti nella foto)
       var escludi = st.posti.concat(st.guarda).map(function (p) { return p.nome; });
-      prendiBot(4 - st.posti.length, escludi).forEach(function (b, k) { st.posti.push({ id: "bot" + k, nome: b.nome, colore: COLORI[st.posti.length], bot: true, passi: 0, scelta: null, omino: b.omino || null }); });
+      prendiBot(Math.max(0, postiPer(st.scala, st.posti.length) - st.posti.length), escludi).forEach(function (b, k) { st.posti.push({ id: "bot" + k, nome: b.nome, colore: COLORI[st.posti.length], bot: true, passi: 0, scelta: null, omino: b.omino || null }); });
+      st.sc = scelteDi(st.posti.length);   // la scala grande (5-8 posti) ha più numeri
       st.partita += 1; st.nRound = 0; st.vincitori = []; st.ripresa = 0;
       st.posti.forEach(function (p) { p.passi = 0; });
       nuovaScelta();
@@ -802,7 +890,7 @@
     function sceltaAutomatica(p, ms) {
       tBot.push(setTimeout(function () {
         var k = st.posti.indexOf(p); if (k < 0 || chiusa || p.scelta != null || !(p.bot || p.via)) return;   // (è rientrato in tempo: sceglie lui)
-        registraScelta(p.id, sceltaBot(k, st.posti.map(function (x) { return x.passi; }), st.posti.map(function (x) { return x.storia || []; }), st.posti.map(function (x) { return x.bot || x.via; })), st.nRound);
+        registraScelta(p.id, sceltaBot(k, st.posti.map(function (x) { return x.passi; }), st.posti.map(function (x) { return x.storia || []; }), st.posti.map(function (x) { return x.bot || x.via; }), st.sc), st.nRound);
       }, ms));
     }
     // extra: tempo in più (partita ripresa: gli amici intanto rientrano)
@@ -818,7 +906,7 @@
       tScelta = setTimeout(chiudiScelte, SECONDI * 1000 + extra + MARGINE_RETE);
     }
     function registraScelta(id, n, r) {
-      if (chiusa || st.fase !== "scelta" || SCELTE.indexOf(n) < 0) return;
+      if (chiusa || st.fase !== "scelta" || (st.sc || SCELTE).indexOf(n) < 0) return;
       if (r != null && r !== st.nRound) return;   // una scelta in ritardo del round di prima
       var p = trova(id);
       if (!p || p.scelta != null) return;
@@ -828,7 +916,7 @@
     function chiudiScelte() {
       if (chiusa || st.fase !== "scelta") return;
       fermaTimer();
-      st.posti.forEach(function (p) { if (p.scelta == null) { p.scelta = aCaso(); p.caso = true; } });
+      st.posti.forEach(function (p) { if (p.scelta == null) { p.scelta = aCaso(st.sc); p.caso = true; } });
       var scelte = st.posti.map(function (p) { return p.scelta; });
       var conta = {}; scelte.forEach(function (n) { conta[n] = (conta[n] || 0) + 1; });
       st.prev = st.posti.map(function (p) { return p.passi; });
@@ -866,7 +954,7 @@
       umani.sort(function (a, b) { return b.passi - a.passi; });
       // (nella Sala chi non è stato scelto resta a guardare anche alla partita dopo)
       var fila = [host].concat(st.guarda.filter(siede), umani);
-      st.posti = fila.slice(0, 4); st.guarda = fila.slice(4).concat(st.guarda.filter(function (p) { return !siede(p); }));
+      st.posti = fila.slice(0, maxPosti()); st.guarda = fila.slice(maxPosti()).concat(st.guarda.filter(function (p) { return !siede(p); }));
       st.posti.concat(st.guarda).forEach(function (p) { p.passi = 0; p.scelta = null; p.caso = false; });
       ricolora();
       st.fase = "lobby"; st.nRound = 0; st.vincitori = []; st.ripresa = 0; st.scelte = st.avanza = st.prev = st.caso = null; st.commento = "";
@@ -934,7 +1022,7 @@
           if (m.t === "pieno") {
             if (m.id !== S.myId) return;
             S.chiuso = true; S.rete.chiudi();
-            return erroreScala(t, "La stanza è piena: sulla scala ci sono già 4 giocatori e " + MAX_GUARDA + " spettatori.");
+            return erroreScala(t, "La stanza è piena: sulla scala e tra chi guarda non c'è più posto.");
           }
           if (m.t !== "vm" || !m.vm || !m.vm.posti) return;
           var vm = S.vm = m.vm;
@@ -1014,7 +1102,7 @@
       V.fase = "scelta"; V.round = vm.nRound; V.bip = {};
       tav.nuovoRound(vm.posti.map(function (p) { return p.passi; }));
       tav.voce(vm.ripresa && vm.ripresa === vm.nRound ? "🔁 Partita ripresa: si continua da qui!"
-        : vm.nRound === 1 ? "Scegli in segreto 1, 3 o 5. Se un altro sceglie il tuo stesso numero, restate fermi!" : "");
+        : vm.nRound === 1 ? testoInizio(vm.sc) : "");
       tav.tempo(vm.resta);
       var mio = io >= 0 ? vm.posti[io] : null, giaMia = V.mia && V.mia.r === vm.nRound && V.mia.p === vm.partita;
       if (mio && !mio.bot && !mio.via && !mio.chosen && !giaMia) {
@@ -1024,9 +1112,9 @@
           V.mia = { r: nR, p: nP, n: n }; tav.scelto(io, true);
           tav.pannello([pMsg(t, "Hai scelto " + n + " ✓", "Aspetta gli altri…")]);
           cb.onScegli(n, nR);
-        })]);
+        }, vm.sc)]);
       } else if (mio && !mio.bot && !mio.via) tav.pannello([pMsg(t, giaMia ? "Hai scelto " + V.mia.n + " ✓" : "Hai scelto ✓", "Aspetta gli altri…")]);
-      else tav.pannello([pMsg(t, "👀 Stai guardando", !guardo ? null : vm.scelti ? "Questa volta sulla scala ci sono gli altri." : "La scala ha 4 posti: entri alla prossima partita."), t.faccine ? t.faccine() : null]);
+      else tav.pannello([pMsg(t, "👀 Stai guardando", !guardo ? null : vm.scelti ? "Questa volta sulla scala ci sono gli altri." : vm.posti.length >= (vm.maxPosti || 4) ? "La scala è piena (" + (vm.maxPosti || 4) + " posti): entri alla prossima partita." : "La partita era già cominciata: entri alla prossima partita."), t.faccine ? t.faccine() : null]);
       vm.posti.forEach(function (p, i) { if (p.chosen || (i === io && giaMia)) { V.bip[p.id] = 1; tav.scelto(i, true); } });
       return;
     }
@@ -1055,17 +1143,25 @@
 
   function lobbyVM(t, vm, cb, V, guardo) {
     stileScala();
-    var liberi = 4 - vm.posti.length, guarda = vm.guarda || [], extra = [];
+    var bots = Math.max(0, postiPer(vm.scala, vm.posti.length) - vm.posti.length), liberi = bots, mp = vm.maxPosti || 4, guarda = vm.guarda || [], extra = [];
     if (guarda.length) {
       if (!V.notaGuarda) V.notaGuarda = t.el("div", { class: "sc-guarda-nota" });
       var altri = guarda.filter(function (g) { return g.id !== cb.myId; }).map(function (g) { return g.nome; });
       var conTe = altri.length ? " (con te " + (altri.length === 1 ? "guarda " : "guardano ") + elenco(altri) + ")" : "";
       // nella Sala chi sale l'ha scelto l'host: niente cambio alla partita dopo
       var txt = vm.scelti ? (guardo ? "👀 Questa volta guardi" + conTe + ": sulla scala salgono gli amici scelti." : "👀 Guardano: " + elenco(guarda.map(function (g) { return g.nome; })) + ".")
-        : guardo ? "👀 Sulla scala c'è posto per 4: questa partita la guardi" + conTe + ". Alla prossima tocca prima a chi ha guardato!"
-        : "👀 Guardano: " + elenco(guarda.map(function (g) { return g.nome; })) + ". Sulla scala c'è posto per 4: alla prossima partita si dà il cambio.";
+        : guardo ? "👀 Sulla scala c'è posto per " + mp + ": questa partita la guardi" + conTe + ". Alla prossima tocca prima a chi ha guardato!"
+        : "👀 Guardano: " + elenco(guarda.map(function (g) { return g.nome; })) + ". Sulla scala c'è posto per " + mp + ": alla prossima partita si dà il cambio.";
       if (V.notaGuarda.textContent !== txt) V.notaGuarda.textContent = txt;
       extra.push(V.notaGuarda);
+    }
+    // la scala grande: quanti saranno sulla scala e che numeri si scelgono (si aggiorna da sola quando entra qualcuno)
+    var nTot = vm.posti.length + bots;
+    if (nTot > 4) {
+      if (!V.notaScala) V.notaScala = t.el("div", { class: "sc-guarda-nota" });
+      var txS = "🪜 Scala grande: in " + nTot + " sulla scala, si sceglie " + testoNumeri(scelteDi(nTot)) + ".";
+      if (V.notaScala.textContent !== txS) V.notaScala.textContent = txS;
+      extra.unshift(V.notaScala);
     }
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 1, puoiDaSolo: true, vuoti: liberi,
       giocatori: vm.posti.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
@@ -1094,7 +1190,7 @@
     });
     s._contenuto.appendChild(ol);
     var guarda = vm.guarda || [], hoGuardato = guarda.some(function (g) { return g.id === cb.myId; });
-    var cambio = vm.posti.filter(function (p) { return !p.bot && !p.via; }).length + guarda.length > 4;   // qualcuno dovrà scendere
+    var cambio = vm.posti.filter(function (p) { return !p.bot && !p.via; }).length + guarda.length > (vm.maxPosti || 4);   // qualcuno dovrà scendere
     if (guarda.length) s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:12px",
       text: vm.scelti ? (hoGuardato ? "👀 Questa volta hai guardato." : (guarda.length === 1 ? "👀 Ha guardato " : "👀 Hanno guardato ") + elenco(guarda.map(function (g) { return g.nome; })) + ".")
         : hoGuardato ? "👀 Hai guardato: alla prossima partita sali tu sulla scala!"
