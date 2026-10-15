@@ -29,6 +29,13 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
   function aCaso(l) { return l[Math.floor(Math.random() * l.length)]; }
+  // il Bot di questa partita: quello deciso dal core (torneo a eliminazione) o uno dei bot fissi, scelto dal livello
+  // (nei tasti si dice "Bot"; in partita ha il suo nome e il suo avatar). escludi = i nomi di chi gioca
+  function botDi(imp, liv, escludi) {
+    if (imp && imp.bot && imp.bot.nome) return imp.bot;
+    var b = SG.bot && SG.bot.prendi ? SG.bot.prendi(1, { livello: liv === "impossibile" ? "difficile" : liv, escludi: escludi })[0] : null;
+    return b || { nome: "Bot", omino: null, bot: true };
+  }
 
   // ---- suoni (niente vibrazione qui: quella la dà il core solo quando tocchi tu) ----
   // un pennarello che scrive veloce (raffica di rumore filtrato con qualche "tratto")
@@ -293,14 +300,14 @@
     if (vm.fase === "fine") {
       if (vm.fine && vm.fine.vincitore) {
         if (cb.mio === vm.fine.vincitore) return "🏆 Hai vinto!";
-        if (cb.bot && vm.fine.vincitore === "O") return "🤖 Vince il Bot!";
+        if (cb.bot && vm.fine.vincitore === "O") return "🤖 Vince " + nome("O") + "!";
         return "🏆 Vince " + nome(vm.fine.vincitore) + "!";
       }
       return "🤝 Pareggio!";
     }
     if (cb.hostVia) return "⏳ Aspettiamo " + esc(vm.nomi.X) + "…";   // (è uscito un attimo dall'app: lo dice anche la pillola in alto)
     if (cb.mio && cb.mio === vm.turno) return "Tocca a <b>te</b>";
-    if (cb.bot && vm.turno === "O") return "🤖 Il Bot sta pensando…";
+    if (cb.bot && vm.turno === "O") return "🤖 " + nome("O") + " sta pensando…";
     return "Tocca a " + nome(vm.turno);
   }
   function segnoSvg(s, cls) {
@@ -455,6 +462,9 @@
   function piede(ui, vm, cb) {
     var el = ui.t.el, voci = [];   // [tipo, testo, azione]; "fa" = la fila delle faccine (solo online)
     var fa = !cb.locale && ui.t.faccine ? ["fa", ""] : null;
+    // fine di una partita online (host o avversario): i tasti di fine uguali per tutti, se li disegna il core
+    var tf = vm.fase === "fine" && !cb.locale && !cb.guarda && !cb.spettatore && !cb.torneo && ui.t.tastiFine
+      ? { host: !!cb.sonoHost, nuova: cb.sonoHost ? cb.onSaletta : null, esci: cb.onEsci } : null;
     if (vm.fase === "gioco") {
       if (cb.spettatore) { if (fa) voci.push(fa); voci.push(["f", "🏠 Esci", cb.onEsci]); }   // ("👀 Giocano in due: tu guardi" lo dice la pillola in alto)
       else if (cb.notaGioco) voci.push(["n", cb.notaGioco]);
@@ -473,12 +483,17 @@
     } else {
       voci.push(["n", "Aspetta: la rivincita la fa partire " + (vm.nomi.X || "l'host") + "."]); if (fa) voci.push(fa); voci.push(["f", "🏠 Esci", cb.onEsci]);
     }
-    var firma = voci.map(function (v) { return v[0] + v[1]; }).join("|");
+    var firma = (tf ? "tf|" + vm.n + "|" : "") + voci.map(function (v) { return v[0] + v[1]; }).join("|");
     ui.azioni = voci.map(function (v) { return v[2]; });   // le azioni si aggiornano sempre (i tasti restano gli stessi)
     if (firma === ui.firmaPiede) return;
     ui.firmaPiede = firma;
     ui.piede.innerHTML = "";
     var conFa = false;
+    if (tf && ui.t.tastiFine(ui.piede, tf)) {   // li ha messi il core: sopra, le faccine
+      var f0 = fa ? ui.t.faccine() : null;
+      if (f0) { ui.piede.insertBefore(f0, ui.piede.firstChild); conFa = true; }
+      voci = [];
+    }
     voci.forEach(function (v, k) {
       if (v[0] === "fa") { var f = ui.t.faccine(); if (f) { ui.piede.appendChild(f); conFa = true; } return; }
       if (v[0] === "n") ui.piede.appendChild(el("p", { class: "tr-nota", text: v[1] }));
@@ -558,7 +573,10 @@
   }
   // com'è finita, per il core (XP, torneo): chi vince 1°, chi perde 2°; pari = tutti e due 1° (come Drop 4: il core
   // lo tratta come pareggio, nessuno vince; nel torneo a eliminazione si rigioca)
-  function classificaDi(nomi, fine) {
+  function classificaDi(nomi, fine, botK) {   // botK: il segno del Bot (la sua riga ha bot: true)
+    var r = classificaSola(nomi, fine); if (botK) r.forEach(function (x) { if (x.nome === nomi[botK]) x.bot = true; }); return r;
+  }
+  function classificaSola(nomi, fine) {
     if (!fine.vincitore) return [{ nome: nomi.X, pos: 1, pari: true }, { nome: nomi.O, pos: 1, pari: true }];
     return [{ nome: nomi[fine.vincitore], pos: 1 }, { nome: nomi[altro(fine.vincitore)], pos: 2 }];
   }
@@ -569,7 +587,8 @@
   function localeTris(t, modo, liv, torneo, imp) {
     var bot = modo === "bot", variante = imp.variante, inizia = imp.inizia || "turno";
     var lista = (t.giocatori || []).map(function (s) { return String(s || "").trim(); }).filter(Boolean);
-    var gente = bot ? [lista[0] || "Tu", "Bot"] : (torneo ? lista.slice(0, 2) : lista.slice());
+    var ilBot = bot ? botDi(imp, liv, [lista[0] || "Tu", t.nomeProfilo && t.nomeProfilo()]) : null;
+    var gente = bot ? [lista[0] || "Tu", ilBot.nome] : (torneo ? lista.slice(0, 2) : lista.slice());
     if (!bot) {
       if (!gente[0]) gente[0] = "Giocatore 1";
       if (!gente[1]) gente[1] = gente[0] === "Giocatore 2" ? "Giocatore 1" : "Giocatore 2";
@@ -588,14 +607,14 @@
     function vivo() { return !chiuso && (!M.ui || document.body.contains(M.ui.s)); }
     function vm() {
       return { fase: st.fine ? "fine" : "gioco", board: st.board, turno: st.turno, fine: st.fine, ord: st.ord, mosse: st.mosse, variante: st.variante,
-        nomi: { X: sedia.X, O: sedia.O }, omini: { X: ominoDi(sedia.X), O: bot ? "🤖" : ominoDi(sedia.O) },
+        nomi: { X: sedia.X, O: sedia.O }, omini: { X: ominoDi(sedia.X), O: bot ? (ilBot.omino || "🤖") : ominoDi(sedia.O) },
         punti: { X: vittorie[sedia.X] || 0, O: vittorie[sedia.O] || 0, pari: pari[coppia()] || 0 }, n: n };
     }
     var cb = { locale: true, bot: bot, mio: bot ? "X" : null, liv: liv, torneo: torneo,
       onCella: function (i) { if (st && !st.fine && (!bot || st.turno === "X")) gioca(i); },
       onRivincita: rivincita, onEsci: esci,
       onSpareggio: function () { if (st && st.fine) nuova(); },
-      onAvanti: function () { if (st && st.fine && !chiuso) { chiuso = true; t.fine(classificaDi(sedia, st.fine)); } } };
+      onAvanti: function () { if (st && st.fine && !chiuso) { chiuso = true; t.fine(classificaDi(sedia, st.fine, bot && "O")); } } };
     function render() {
       if (!vivo()) { chiuso = true; clearTimeout(timer); timer = null; return false; }   // la partita è stata lasciata: non si rimette su
       var v = vm();
@@ -618,7 +637,7 @@
     function finePartita() {
       var w = st.fine.vincitore; ultimaFine = st.fine;
       if (w) vittorie[sedia[w]] = (vittorie[sedia[w]] || 0) + 1; else pari[coppia()] = (pari[coppia()] || 0) + 1;
-      if (!torneo && t.risultato) t.risultato(classificaDi(sedia, st.fine));   // XP e torneo a eliminazione (nel torneo su questo telefono basta t.fine)
+      if (!torneo && t.risultato) t.risultato(classificaDi(sedia, st.fine, bot && "O"));   // XP e torneo a eliminazione (nel torneo su questo telefono basta t.fine)
     }
     // il Bot pensa un po' (più caselle libere = più tempo), poi muove; se nel frattempo si è usciti o è cominciata un'altra partita, non fa niente
     function pensaBot() {
@@ -682,8 +701,9 @@
           // la partita a metà resta per un po' a chi è uscito (telefono spento, app chiusa): se torna, riprende lui;
           // chi guardava prende il posto solo dopo 90 secondi
           var tienePosto = st.sospesa && st.uscitoId && id !== st.uscitoId && Date.now() - (st.uscitoT || 0) < 90000;
-          if (!st.avvId && !tienePosto && !postoRiservato(st.riserva, id)) {
-            var nome = String(m.nome || "Avversario").trim().slice(0, 16) || "Avversario";
+          var nome = String(m.nome || "Avversario").trim().slice(0, 16) || "Avversario";
+          // (nella Sala gioca solo chi è stato scelto: gli altri guardano)
+          if (!st.avvId && !tienePosto && !postoRiservato(st.riserva, id) && (!t.puoSedersi || t.puoSedersi(id, nome))) {
             if (nome !== st.ultimoO) st.punti = { X: 0, O: 0, pari: 0 };   // un avversario nuovo: il conto riparte
             st.avviso = st.uscito && st.uscito !== nome ? "🔄 " + st.uscito + " è uscito: ora gioca " + nome + "." : "";   // chi prende il posto di chi è uscito
             st.avvId = id; st.nomiO = nome; st.ultimoO = nome; st.ominoO = avatarOk(m.omino); st.uscito = ""; st.uscitoId = null;
@@ -728,8 +748,11 @@
         nuovaGara();
       },
       onRivincita: function () { if (st.fase === "fine" && st.avvId) nuovaGara(); },
+      // la rivincita dei tasti di fine comuni: si torna nella saletta con lo stesso avversario (il core fa il 3-2-1)
+      onSaletta: function () { if (st.fase === "fine" && st.avvId) { st.fase = "lobby"; st.avviso = ""; bd(); } },
       onEsci: function () { if (chiuso) return; chiuso = true; if (rete) rete.chiudi(); t.esci(); }
     };
+    t.onRivincita = cb.onSaletta;
     function disegna() {
       if (chiuso) return;
       var v = vm();

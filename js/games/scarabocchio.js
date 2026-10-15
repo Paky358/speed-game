@@ -841,9 +841,14 @@
       });
       s._contenuto.appendChild(riga);
     }
-    if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
-    else s._contenuto.appendChild(cb._notaFine = el("p", { class: "modulo-nota", style: "text-align:center", text: gioco ? "Se l'host fa un'altra partita, torni da solo nella saletta." : "La partita è appena finita: entri nella prossima! 🎨" }));
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    // i tasti di fine uguali per tutti (Rivincita, Cambia gioco, Ci sto…) li mette il core; se no quelli di sempre
+    cb._notaFine = null;
+    var notaFuori = (vm.guardano || []).indexOf(cb.myId) >= 0 ? "Questa partita l'hai guardata 👀" : "La partita è appena finita: entri nella prossima! 🎨";
+    if (!(t.tastiFine && t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci }))) {
+      if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
+      else s._contenuto.appendChild(cb._notaFine = el("p", { class: "modulo-nota", style: "text-align:center", text: gioco ? "Se l'host fa un'altra partita, torni da solo nella saletta." : notaFuori }));
+      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    } else if (!cb.sonoHost && !gioco) s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: notaFuori }));
     t.mostra(s);
   }
   // la finestrella "Sei sicuro?" (con lo stile delle conferme dell'app); il "sì" si attiva dopo un attimo
@@ -871,7 +876,8 @@
       players: [{ id: "host", nome: nomeHost, omino: mioAvatar(nomeHost), punti: 0, col: COL_GIOC[0] }],
       giro: 0, idx: -1, ordine: [], turno: 0, disegnatore: null, parola: null, opzioni: null, usate: {},
       scadenza: 0, indovinati: [], scoperte: [], guad: {}, tratti: [], chat: [], nMsg: 0, ultimo: null, classifica: null, to: null, toInd: [],
-      partitaId: null, statGiocatori: Object.create(null), paroleDifficiliDisegnate: 0, prossimi: [], perche: null, cestino: null, disegnato: false };
+      partitaId: null, statGiocatori: Object.create(null), paroleDifficiliDisegnate: 0, prossimi: [], perche: null, cestino: null, disegnato: false,
+      guardano: [] };   // chi non è tra chi gioca (scelti nella Sala): guarda il disegno e la chat, non gioca
     var vista = null;
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function statP(id) { return H.statGiocatori[id] || (H.statGiocatori[id] = statVuoteScara()); }
@@ -887,11 +893,13 @@
       H.secondi = im.secondi || 80; H.giri = im.giri || 2; H.difficili = !!im.difficili;
       bd();
     };
+    t.onRivincita = function () { if (H.fase === "fine") nuova(); };   // la Rivincita: tutti di nuovo nella saletta
 
     var rete = SGNet.ospita("scarabocchio", {
       onCodice: function (c) { H.codice = c; bd(); },
       onConnesso: function () { H.pronta = true; bd(); },
       onAddio: function (id) {
+        if (H.guardano.indexOf(id) >= 0) H.guardano.splice(H.guardano.indexOf(id), 1);
         var p = pById(id); if (!p || p.via) return;
         if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); ricolora(); bd(); return; }
         p.via = true; msg("sys", "👋 " + p.nome + " ha lasciato la partita");
@@ -928,6 +936,12 @@
         return;
       }
       var nome = String(m.nome || "Amico").slice(0, 16), omino = avatarValido(m.omino);
+      if (t.puoSedersi && !t.puoSedersi(id, nome)) {   // non è tra chi gioca: riceve le foto e il disegno, e guarda
+        if (H.guardano.indexOf(id) < 0) H.guardano.push(id);
+        rete.invia({ t: "vm", vm: vm() });
+        if (H.fase !== "lobby" && H.fase !== "fine") sync(id);
+        return;
+      }
       if (H.fase === "fine") {   // partita finita: entra nella prossima (intanto vede la classifica)
         if (!H.prossimi.some(function (x) { return x.id === id; })) {
           if (presenti().length + H.prossimi.length >= 10) return privato(id, { t: "piena" });
@@ -971,6 +985,7 @@
         o.classifica = H.classifica; o.statFine = H.statGiocatori; o.paroleDifficiliDisegnate = H.paroleDifficiliDisegnate; o.perche = H.perche || null;
         o.prossimi = H.prossimi.map(function (x) { return x.id; });   // chi è arrivato a partita finita (entra nella prossima)
       }
+      if (H.guardano.length) o.guardano = H.guardano.slice();
       return o;
     }
     function bd() {
@@ -1199,7 +1214,7 @@
     }
     // chi arriva a disegno iniziato (o si ricollega) chiede tutto il disegno
     function sync(id) {
-      if (!pById(id)) return;
+      if (!pById(id) && H.guardano.indexOf(id) < 0) return;
       rete.inviaVeloce({ t: "disegno", to: id, turno: H.turno, q: H.q || 0, tratti: H.fase === "disegno" ? H.tratti : [], omini: mappaOmini() });
       if (id === H.disegnatore) privato(id, H.fase === "scelta" ? { t: "priv", opzioni: H.opzioni } : { t: "priv", parola: H.parola });
       else if (sa(id)) privato(id, { t: "priv", parola: H.parola });   // l'aveva già indovinata
@@ -1249,6 +1264,7 @@
     // sono nella foto? se no (dato per uscito, tolto alla "Nuova partita"…) richiedo di entrare, al massimo ogni 2 secondi
     function ciSono(vm) {
       var id = S.myId, io = (vm.players || []).filter(function (p) { return p.id === id; })[0];
+      if (!io && (vm.guardano || []).indexOf(id) >= 0) return true;   // non sono tra chi gioca: guardo e basta
       if (vm.fase === "fine") return !!io || (vm.prossimi || []).indexOf(id) >= 0 || (vm.classifica || []).some(function (r) { return r.id === id; });
       return !!io && !io.via;
     }
@@ -1333,7 +1349,7 @@
         },
         // chiusa apposta dall'host (se sparisce lo dice il core): sulla classifica finale la classifica resta
         onChiuso: function () {
-          if (S.vm && S.vm.fase === "fine" && cb._notaFine && document.body.contains(cb._notaFine)) { cb._notaFine.textContent = "🚪 L'host ha chiuso la stanza."; return; }
+          if (S.vm && S.vm.fase === "fine") { if (cb._notaFine && document.body.contains(cb._notaFine)) cb._notaFine.textContent = "🚪 L'host ha chiuso la stanza."; return; }
           chiudiVista(); errore(t, "La partita è stata chiusa dall'host.");
         },
         // (arriva solo se il primo collegamento non riesce: a partita cominciata la rete si ricollega da sola)
@@ -1363,6 +1379,7 @@
     icona: "🎨",
     descrizione: "Uno disegna una parola segreta, gli altri la indovinano scrivendo in chat: prendi tanti punti quanti secondi mancano. Si gioca online, ognuno dal suo telefono. Da 2 a 10.",
     giocatoriMin: 2, giocatoriMax: 10, difficolta: 1,
+    postiOnline: 10,   // posti online
     modi: [],            // solo online: ognuno ha bisogno del suo schermo (la parola la vede solo chi disegna)
     soloOnline: true,
     etichettaGiocatori: "🔗 Online · 2–10",

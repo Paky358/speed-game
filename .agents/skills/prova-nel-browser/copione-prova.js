@@ -18,6 +18,27 @@
 // chiusa, 3-2-1 per tutti, si parte da soli, musichetta 🎵/🔇, nomi buffi col 🎲, sei telefoni in uno schermo; 34: lo
 // stesso nella Sala (faccine, "Fai uscire", porta chiusa che resta chiusa se l'host ricarica).
 // I suoni sul computer di prova sono spenti: "pling", bip e musichetta si provano a codice (audioFinto registra le note).
+// Passo 2 (una Sala per la serata): 35-37b "Online" = Sala (telefoni con salaSempre: true; gli scenari vecchi restano sul
+// percorso di prima: i telefoni finti partono con sg-sala-sempre = "0"). Per i file di prova dei passi: COPIONE.aiuti (gli
+// aiuti di qui), COPIONE.aggiungi(n, scenario), await COPIONE.carica("passo2/gruppo-a.js").
+// 40-41 (p2-c): la home con «🔗 Gioca online» e «🔑 Ho un codice» in alto (aiuto apriSalaNuova; apriSala resta per il
+// percorso vecchio) e «Ho un codice» a 4 caselle (aiuti batti, incolla, caselle).
+// 42-44b (p2-d): chi arriva nei giochi della Sala: «Arrivano: 3 su 4», le sagome di chi manca, «▶ Comincia senza Marco»,
+// chi arriva a partita in corso resta nella Sala («entri alla prossima · 👀 Guarda»), chi esce apposta non conta, chi
+// ricarica torna al suo posto; 42b: sei nella Sala e due che mancano in uno schermo (aiuti salaConAmici, lanciaDallaSala, contaSl, sagome).
+// 45 (p2-e): le regole visibili agli amici («📜 Si gioca così», «✨ Regole cambiate», chi arriva dopo; aiuto regoleDi).
+// 46-49 (p2-f): la fine partita uguale per tutti: «↻ Rivincita · 👍 1» col 3-2-1 da solo, «🎮 Cambia gioco» che porta tutti,
+// «👍 Ci sto!», chi è uscito («Comincia senza Luca»), fuori dalla Sala «Nuova partita (stessi amici)» ed «Esci» senza errori;
+// 46b: la fine con 6 a misura (aiuti trisFinoAllaFine, tastiFineDi, misuraFine, misureFine, spiaVia, spiaTavolo).
+// 50 (p2-g): il torneo dentro la Sala: ⚙️ «🏆 Contiamo i punti», la riga corta, i punti sopra i tasti di fine, «🏁 Chiudi e
+// premia» e «↻ Nuovo torneo» che resta nella Sala.
+// 51-53 (p2-h): «Chi gioca a Tris?» (siamo più dei posti: già scelti chi ha giocato meno, un tocco cambia), il duello senza
+// l'host (lo apre un amico, gli altri guardano con «👥 Sala», l'esito va alla Sala, «⚔️ Altra sfida»), 4 posti con l'host
+// sempre dentro (aiuti chiGioca, toccaChi, passaChiGioca, misuraChi, misureChi, toccaGiocoSala; lanciaDallaSala passa da
+// «Chi gioca?» con chi è già scelto).
+// 70-76 (p2-t): il torneino nei giochi a due con 3 o più persone: «Tris in N» (🏆 Torneino già scelto / ⚔️ Una sfida), chi resta
+// in più (🤖 Bot partecipante vero / ⏭️ passa il turno), punti della serata, ricarica e uscita a metà, «🏆 Fate il torneino in N»
+// dalla saletta (anche fuori dalla Sala), il tabellone in 10 senza scorrere (aiuti tn, viaTn, decidiTn, trisTn, finoAllaFineTn, misureTab…).
 (function () {
   "use strict";
   var W = window;
@@ -26,10 +47,19 @@
     var src = await (await fetch("/.agents/skills/prova-nel-browser/telefoni-finti.js?" + Date.now())).text();
     (0, eval)(src.split("// ===== ESEMPIO =====")[0]);
   }
+  // i telefoni finti dicono "sì" da soli alle conferme dell'app (telefoni-finti.js): per provare "Resta" si ferma un attimo
+  function fermaSiDaSolo() { clearInterval(W.__autoConferma); W.__autoConferma = null; W.__siFermo = true; }
+  function riprendiSiDaSolo() {
+    if (!W.__siFermo) return;
+    W.__siFermo = false;
+    W.__autoConferma = setInterval(function () { document.querySelectorAll("iframe").forEach(function (fr) { try { var b = fr.contentWindow.document.querySelector(".conferma-sfondo .btn-rosso:not([disabled])"); if (b) b.click(); } catch (e) {} }); }, 100);
+  }
   // si riparte da zero: via i telefoni, broker vuoto, memorie vuote
   function pulisci() {
     Object.keys(W.BR.tel).forEach(function (n) { (W.BR.perNome[n] || []).forEach(function (c) { c.morto = true; c.connected = false; }); var f = document.getElementById("tel-" + n); if (f) f.remove(); });
-    W.BR.clients = []; W.BR.retained = {}; W.BR.log = []; W.BR.perNome = {}; W.BR.mem = {}; W.BR.tel = {}; W.BR.conti = {};
+    W.BR.clients = []; W.BR.retained = {}; W.BR.log = []; W.BR.perNome = {}; W.BR.mem = {}; W.BR.tel = {}; W.BR.conti = {}; W.BR.pubblici = {};
+    riprendiSiDaSolo();   // (lo scenario 50 ferma per un attimo il "sì" da solo delle conferme)
+    if (W.__cliccaVero) W.clicca = W.__cliccaVero;   // (lo scenario 48 conta i tocchi: se si è fermato a metà, si rimette com'era)
   }
   var T = function (w) { return W.testo(w).replace(/\s+/g, " "); };
   var pill = function (w) { return [].map.call(w.document.querySelectorAll(".sg-pillola"), function (x) { return x.textContent; }).join(" | "); };
@@ -37,7 +67,11 @@
   function vm(cod) { return W.vmDi(cod) || {}; }
   function ids(cod, campo) { return ((vm(cod)[campo || "posti"]) || []).map(function (p) { return p.id; }); }
   function mioId(nome) { var h = W.reteDi(nome); return h && h.stato ? h.stato().id : null; }
-  function codiceSaletta(w) { var b = w.document.querySelector(".sl-cod b"); return b && /^[A-Z0-9]{4}$/.test(b.textContent) ? b.textContent : null; }
+  // il codice della stanza di questa saletta (nei giochi della Sala la testata mostra quello della Sala: la stanza sta in data-stanza)
+  // (finché la stanza non ha il suo codice data-stanza non c'è: null, anche se la testata mostra già quello della Sala)
+  function codiceSaletta(w) { var c = w.document.querySelector(".sl-cod"), x = c && c.getAttribute("data-stanza"); return x && /^[A-Z0-9]{4}$/.test(x) ? x : null; }
+  // il codice scritto nella testata (quello da dare agli amici)
+  function codiceTestata(w) { var b = w.document.querySelector(".sl-cod b"); return b && /^[A-Z0-9]{4}$/.test(b.textContent) ? b.textContent : null; }
   function no(perche) { throw new Error(perche); }
   // la Scalinata va avanti da sola fino alla fine (gli umani scelgono a caso, l'host tocca "Prossimo round")
   async function scalinataFinoAllaFine(cod, umani, host) {
@@ -54,8 +88,8 @@
   // una Sala online: l'host la apre dalla home, gli altri entrano dal link. torneo = "Torneo" → "Online"
   async function apriSala(host, torneo) {
     var w = W.finestra(host);
-    if (torneo) { W.clicca(w, /Torneo \(più giochi/); await W.dorme(250); W.clicca(w, /Online/, ".modo-grande"); }
-    else W.clicca(w, /Sala online/);
+    if (torneo) { W.clicca(w, /Serata a punti \(più giochi|Torneo \(più giochi/); await W.dorme(250); W.clicca(w, /Online/, ".modo-grande"); }
+    else if (!W.clicca(w, /Sala online/)) W.clicca(w, /Gioca online/, ".home-online button");   // (Sala sempre accesa: la home ha «🔗 Gioca online», p2-c)
     var cod = await W.aspetta(function () { return codiceSaletta(w); }, 5000);
     if (!cod) no("la Sala non ha il codice");
     return cod;
@@ -110,7 +144,8 @@
   }
   // un telefono a misura (larg x alt): niente scorre, i tasti in fondo si vedono, i nomi non si coprono e stanno nella stanza,
   // gli avatar pure. "" = tutto bene, se no il perché
-  async function controllaSchermo(w, nome, larg, alt) {
+  async function controllaSchermo(w, nome, larg, alt, nNomi) {   // nNomi: quanti nomi ci devono essere (di solito 6)
+    nNomi = nNomi || 6;
     var f = document.getElementById("tel-" + nome), d = w.document;
     if (!d.getElementById("senza-entrata")) { var st = d.createElement("style"); st.id = "senza-entrata"; st.textContent = ".schermata{ animation:none !important; } .sl-av, .sl-nome{ transition:none !important; }"; d.head.appendChild(st); }
     f.style.width = larg + "px"; f.style.height = alt + "px";
@@ -122,7 +157,7 @@
     if (c.scrollHeight > c.clientHeight + 1) return "il centro scorre (" + c.scrollHeight + " su " + c.clientHeight + ")";
     if (sc.querySelector(".piede").getBoundingClientRect().bottom > alt + 1) return "i tasti in fondo escono dallo schermo";
     var targhe = [].filter.call(d.querySelectorAll(".sl-targhe .sl-nome"), function (t) { return !t.classList.contains("esce"); }).map(function (t) { return { n: nomeTarga(t), r: t.getBoundingClientRect() }; });
-    if (targhe.length < 6) return "nella saletta ci sono " + targhe.length + " nomi invece di 6";
+    if (targhe.length < nNomi) return "nella saletta ci sono " + targhe.length + " nomi invece di " + nNomi;
     for (var i = 0; i < targhe.length; i++) {
       var a = targhe[i].r;
       if (a.left < stz.left - 1 || a.right > stz.right + 1 || a.bottom > stz.bottom + 1) return "il nome «" + targhe[i].n + "» esce dalla stanza";
@@ -140,7 +175,7 @@
     w.__visto = [];
     new w.MutationObserver(function () {
       var d = w.document, segna = function (sel, nome) { if (d.querySelector(sel) && w.__visto.indexOf(nome) < 0) w.__visto.push(nome); };
-      segna(".benvenuto-profilo", "profilo"); segna(".editor-avatar", "editor");
+      segna(".benvenuto-profilo", "profilo"); segna(".editor-avatar", "editor"); segna(".primo-avatar", "avatar");
     }).observe(w.document.documentElement, { childList: true, subtree: true });
   }
   // nel benvenuto: scrive nome (se dato) e password, tocca Avanti e poi "✅ Fatto" nell'editor. Restituisce il nome usato
@@ -151,12 +186,27 @@
     if (nome != null) { campi[0].value = nome; campi[0].dispatchEvent(new w.Event("input", { bubbles: true })); }
     campi[1].value = pwd; var usato = campi[0].value.trim();
     if (!W.clicca(w, /^Avanti/)) no("nel benvenuto non c'è «Avanti»");
-    var fatto = await W.aspetta(function () { return w.document.querySelector(".editor-avatar .om-azione.salva.fatto"); }, 4000);
-    if (!fatto) no("dopo «Avanti» non si apre l'avatar (" + T(w).slice(0, 80) + ")");
-    if (w.document.querySelector(".editor-avatar .om-indietro")) no("nell'avatar del benvenuto c'è ancora ‹");
-    fatto.click();
-    if (!await W.aspetta(function () { return !w.document.querySelector(".editor-avatar"); }, 4000)) no("toccato «Fatto», l'editor resta aperto");
+    await primoAvatar(w, 0, 0);
     return usato;
+  }
+  // il primo avatar (dal 15 ott, p2-z): "Sei lui o lei?" → "Scegli il tuo look" → "✅ Fatto" acceso solo dopo il look.
+  // forma: 0 = lui, 1 = lei; look: il numero del look (0-7). Controlla che Fatto sia spento prima della scelta.
+  async function primoAvatar(w, forma, look) {
+    var d = w.document;
+    var pa = await W.aspetta(function () { return d.querySelector(".primo-avatar .pa-forma"); }, 4000);
+    if (!pa) no("dopo «Avanti» non si apre «Sei lui o lei?» (" + T(w).slice(0, 80) + ")");
+    if (d.querySelector(".editor-avatar")) no("nel benvenuto si apre ancora l'editor intero");
+    var fatto = d.querySelector(".primo-avatar .pa-fatto");
+    if (!fatto || !fatto.disabled) no("«✅ Fatto» acceso prima di scegliere lui o lei");
+    d.querySelectorAll(".primo-avatar .pa-forma")[forma].click();
+    var lk = await W.aspetta(function () { return d.querySelectorAll(".primo-avatar .pa-look")[look]; }, 2000);
+    if (!lk) no("dopo lui/lei non compaiono i look");
+    if (d.querySelectorAll(".primo-avatar .pa-look").length < 6) no("meno di 6 look pronti");
+    if (!fatto.disabled) no("«✅ Fatto» acceso prima di scegliere il look");
+    lk.click();
+    if (fatto.disabled) no("scelto il look, «✅ Fatto» resta spento");
+    fatto.click();
+    if (!await W.aspetta(function () { return !d.querySelector(".primo-avatar"); }, 4000)) no("toccato «Fatto», l'avatar resta aperto");
   }
   // la schermata del profilo a misura (larg x alt; alt piccola = tastiera aperta): niente scorre, il tasto e i campi si
   // vedono tutti. "" = tutto bene, se no il perché
@@ -180,6 +230,236 @@
     return esiti.join(", ");
   }
   var home = function (w) { return !!w.document.querySelector(".schermata.home"); };
+
+  // ---- aiuti per "Online = Sala" (Passo 2, p2-a) ----
+  // il codice della Sala aperta (dalla foto trattenuta nel broker: { t: "sala", … }); null se non c'è
+  function codiceSala() { return W.codici().filter(function (c) { return (W.statoStanza(c) || {}).t === "sala"; }).pop() || null; }
+  // la tessera di un gioco nella home (o nella scelta dei giochi della Sala), col nome come nel titolo
+  function tessera(w, nomeGioco) { return [].find.call(w.document.querySelectorAll(".tessera"), function (t) { return (t.querySelector("h2") || {}).textContent === nomeGioco; }) || null; }
+  // i testi dei modi di "Come giocate?" (uno per riga)
+  function modiVisti(w) { return [].map.call(w.document.querySelectorAll(".modo-grande"), function (b) { return b.innerText.replace(/\s+/g, " ").trim(); }); }
+  // segna se una scritta compare sul telefono, anche per un attimo: var s = spiaTesto(w, /…/); … s.stop() → il testo visto o ""
+  function spiaTesto(w, re) {
+    var visto = "", t = setInterval(function () { var tx = W.testo(w); var m = tx && tx.match(re); if (m && !visto) visto = m[0]; }, 25);
+    return { stop: function () { clearInterval(t); return visto; } };
+  }
+  // l'host tocca la tessera del gioco e poi "Online con gli amici": è nella saletta del gioco dentro la Sala nuova.
+  // Restituisce { S: codice della Sala, C: codice della stanza del gioco, tocchi }
+  async function salaDaGioco(host, nomeGioco) {
+    var w = W.finestra(host);
+    var tess = await W.aspetta(function () { return tessera(w, nomeGioco); }, 5000);
+    if (!tess) no("non trovo la tessera " + nomeGioco);
+    tess.click(); await W.dorme(200);
+    if (!W.clicca(w, /Online con gli amici/, ".modo-grande")) no("in «Come giocate?» non c'è «Online con gli amici» (" + modiVisti(w).join(" / ") + ")");
+    var C = await W.aspetta(function () { return w.document.querySelector(".saletta-schermo") && codiceSaletta(w); }, 5000);
+    if (!C) no("dopo «Online con gli amici» non si arriva nella saletta di " + nomeGioco + " («" + T(w).slice(0, 80) + "»)");
+    var S = await W.aspetta(codiceSala, 3000);
+    if (!S) no("nel broker non c'è la Sala");
+    return { S: S, C: C, tocchi: 2 };
+  }
+  // l'id di qualcuno nella Sala (dai membri della foto della Sala)
+  function idInSala(S, nome) { var m = (vm(S).membri || []).filter(function (x) { return x.nome === nome; })[0]; return m ? m.id : null; }
+
+  // ---- aiuti per la home con la riga online (Passo 2, p2-c) ----
+  // la Sala nuova: l'host tocca "🔗 Gioca online" in home ed è nella Sala (senza gioco). Restituisce il codice della Sala.
+  // (apriSala resta per il percorso vecchio: "👥 Sala online" nel piede, con l'interruttore spento)
+  async function apriSalaNuova(host) {
+    var w = W.finestra(host);
+    if (!await W.aspetta(function () { return w.document.querySelector(".home-online"); }, 5000)) no("in home non c'è la riga online («" + T(w).slice(0, 80) + "»)");
+    if (!W.clicca(w, /Gioca online/, ".home-online button")) no("in home non c'è «🔗 Gioca online»");
+    var S = await W.aspetta(function () { return w.document.querySelector(".saletta-schermo") && codiceSala(); }, 5000);
+    if (!S) no("dopo «🔗 Gioca online» non si arriva nella Sala («" + T(w).slice(0, 80) + "»)");
+    return S;
+  }
+  // la home a misura (larg x alt): i due tasti della riga online si vedono senza scorrere, niente esce di lato.
+  // "" = tutto bene, se no il perché
+  async function misuraHome(w, nome, larg, alt) {
+    var f = document.getElementById("tel-" + nome), d = w.document;
+    if (!d.getElementById("senza-entrata")) { var st = d.createElement("style"); st.id = "senza-entrata"; st.textContent = ".schermata{ animation:none !important; }"; d.head.appendChild(st); }
+    f.style.width = larg + "px"; f.style.height = alt + "px";
+    void d.documentElement.offsetHeight; w.dispatchEvent(new w.Event("resize"));
+    await W.dorme(400); w.scrollTo(0, 0);
+    if (d.documentElement.scrollWidth > larg + 1) return "la pagina scorre di lato (" + d.documentElement.scrollWidth + " px)";
+    var tasti = d.querySelectorAll(".home-online .btn");
+    if (tasti.length !== 2) return "nella riga online ci sono " + tasti.length + " tasti";
+    for (var i = 0; i < 2; i++) {
+      var r = tasti[i].getBoundingClientRect();
+      if (r.top < 0 || r.bottom > alt + 1 || r.left < 0 || r.right > larg + 1) return "«" + tasti[i].innerText.replace(/\s+/g, " ") + "» non si vede senza scorrere (" + Math.round(r.top) + "-" + Math.round(r.bottom) + ")";
+      var sp = [].slice.call(tasti[i].children);
+      for (var k = 0; k < sp.length; k++) if (sp[k].scrollWidth > sp[k].clientWidth + 1) return "la scritta «" + sp[k].textContent + "» è tagliata";
+    }
+    return "";
+  }
+  // "🔑 Ho un codice": scrive una lettera come la tastiera (il campo è uno solo, sopra le 4 caselle)
+  function batti(w, ch) {
+    var inp = w.document.querySelector("input.codice4-campo"); if (!inp) no("non c'è il campo del codice");
+    if (inp.value.length >= 4) return;   // (maxlength 4: la tastiera non scrive la quinta)
+    inp.value += ch; inp.dispatchEvent(new w.Event("input", { bubbles: true }));
+  }
+  // incolla un testo nel campo del codice (come "Incolla" del telefono)
+  function incolla(w, testo) {
+    var inp = w.document.querySelector("input.codice4-campo"); if (!inp) no("non c'è il campo del codice");
+    var dt = new w.DataTransfer(); dt.setData("text/plain", testo);
+    var e = new w.ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true });
+    if (inp.dispatchEvent(e)) { inp.value = String(testo).slice(0, 4); inp.dispatchEvent(new w.Event("input", { bubbles: true })); }   // (se nessuno l'ha fermato: il campo tiene 4 caratteri)
+  }
+  function caselle(w) { return [].map.call(w.document.querySelectorAll(".codice4-caselle span"), function (s) { return s.textContent; }).join(""); }
+
+  // ---- aiuti per "chi arriva" (Passo 2, p2-d) ----
+  // Paky apre la Sala nuova («🔗 Gioca online») e gli amici entrano dal link: { S: codice della Sala, w: { nome: finestra } }
+  async function salaConAmici(amici) {
+    var w = { Paky: await W.apriTel("Paky", { x: 0, salaSempre: true }) };
+    var S = await apriSalaNuova("Paky");
+    for (var i = 0; i < amici.length; i++) w[amici[i]] = await W.apriTel(amici[i], { hash: "sala=" + S, x: 185 * (i + 1), salaSempre: true });
+    if (!await W.aspetta(function () { return ((vm(S).membri) || []).length === amici.length + 1; }, 10000)) no("nella Sala non sono entrati in " + (amici.length + 1) + " (" + ((vm(S).membri) || []).length + ")");
+    return { S: S, w: w };
+  }
+  // dalla Sala (Sala sempre accesa) l'host sceglie un gioco: dritto nella saletta. Restituisce il codice della stanza del gioco
+  async function lanciaDallaSala(host, S, nomeGioco) {
+    var w = W.finestra(host);
+    if (!await W.aspetta(function () { return W.clicca(w, /Scegli (un|il primo) gioco|Prossimo gioco/); }, 4000)) no("non trovo «Scegli un gioco» nella Sala");
+    var tess = await W.aspetta(function () { return tessera(w, nomeGioco); }, 4000);
+    if (!tess) no("non trovo " + nomeGioco + " tra i giochi della Sala");
+    tess.click();
+    await passaChiGioca(w);   // (siamo più dei posti: «Chi gioca?», si gioca con chi è già scelto)
+    var C = await W.aspetta(function () { var c = codiceSaletta(w); return w.document.querySelector(".saletta-schermo") && c && c !== S ? c : null; }, 6000);
+    if (!C) no("dopo " + nomeGioco + " l'host non è nella saletta del gioco («" + T(w).slice(0, 80) + "»)");
+    return C;
+  }
+  // il contatore della saletta ("4 in sala", "Arrivano: 3 su 4") e i nomi sulle sagome di chi manca ("Marco…")
+  function contaSl(w) { var c = w.document.querySelector(".sl-conta"); return c ? c.textContent : ""; }
+  function sagome(w) { return [].filter.call(w.document.querySelectorAll(".sl-targhe .sl-nome.atteso"), function (t) { return !t.classList.contains("esce"); }).map(function (t) { return t.textContent; }).join(" | "); }
+  // ---- aiuti per le regole visibili (p2-e) ----
+  // il testo della riga "📜 Si gioca così: …" della saletta ("" se non c'è o è nascosta)
+  function regoleDi(w) { var r = w && w.document.querySelector(".sl-regole-riga"); return r && !r.hidden ? r.querySelector(".sl-rr-testo").textContent : ""; }
+
+  // ---- aiuti per la fine partita uguale per tutti (p2-f) ----
+  // il Tris fino alla fine: host (X) e avversario (O) toccano la prima casella libera
+  async function trisFinoAllaFine(C, host, avv) {
+    var fino = Date.now() + 30000;
+    while (Date.now() < fino && vm(C).fase !== "fine") {
+      var v = vm(C), w = W.finestra(v.turno === "X" ? host : avv);
+      if (v.fase === "gioco" && w) {
+        var celle = w.document.querySelectorAll(".tr-cella"), k = (v.board || []).indexOf(null), n0 = (v.board || []).filter(Boolean).length;
+        if (k >= 0 && celle[k] && !celle[k].disabled) { celle[k].click(); await W.aspetta(function () { return (vm(C).board || []).filter(Boolean).length > n0 || vm(C).fase === "fine"; }, 3000); continue; }
+      }
+      await W.dorme(120);
+    }
+    return vm(C).fase === "fine";
+  }
+  // i tasti di fine del core su un telefono (le scritte, nell'ordine; quelli nascosti e la riga dei punti no) o null se non ci sono
+  function tastiFineDi(w) { var b = w && w.document.querySelector(".fine-tasti"); return b ? [].filter.call(b.querySelectorAll("button"), function (x) { return !x.hidden && !x.classList.contains("ft-punti"); }).map(function (x) { return x.textContent; }) : null; }
+  // la schermata di fine a misura (larg x alt): niente scorre, i tasti si vedono interi, la riga dei tasti è alta al massimo
+  // 120 px e nessuna scritta è tagliata. "" = tutto bene, se no il perché
+  async function misuraFine(w, nome, larg, alt) {
+    var f = document.getElementById("tel-" + nome), d = w.document;
+    if (!d.getElementById("senza-entrata")) { var st = d.createElement("style"); st.id = "senza-entrata"; st.textContent = ".schermata{ animation:none !important; }"; d.head.appendChild(st); }
+    f.style.width = larg + "px"; f.style.height = alt + "px";
+    void d.documentElement.offsetHeight; w.dispatchEvent(new w.Event("resize"));
+    await W.dorme(400); w.scrollTo(0, 0);
+    var box = d.querySelector(".fine-tasti"); if (!box) return "non ci sono i tasti di fine";
+    if (d.documentElement.scrollHeight > alt + 1) return "la pagina scorre (" + d.documentElement.scrollHeight + " px)";
+    if (d.documentElement.scrollWidth > larg + 1) return "la pagina scorre di lato (" + d.documentElement.scrollWidth + " px)";
+    var r = box.getBoundingClientRect();
+    if (r.bottom > alt + 1) return "i tasti escono dallo schermo (" + Math.round(r.bottom) + ")";
+    if (r.height > 120) return "la riga dei tasti è alta " + Math.round(r.height) + " px";
+    var tasti = box.querySelectorAll("button");
+    for (var i = 0; i < tasti.length; i++) if (tasti[i].scrollWidth > tasti[i].clientWidth + 1) return "la scritta «" + tasti[i].textContent + "» è tagliata";
+    var righe = d.querySelectorAll(".classifica li");
+    for (var k = 0; k < righe.length; k++) { var rr = righe[k].getBoundingClientRect(); if (rr.bottom > r.top + 1 || rr.right > larg + 1) return "la riga «" + righe[k].textContent + "» va sotto i tasti o esce di lato"; }
+    return "";
+  }
+  async function misureFine(w, nome) {
+    var M = [[360, 640], [412, 915]], fatte = [];
+    for (var k = 0; k < M.length; k++) { var e = await misuraFine(w, nome, M[k][0], M[k][1]); if (e) no(nome + " a " + M[k].join("x") + ": " + e); fatte.push(M[k].join("x")); }
+    var f = document.getElementById("tel-" + nome); f.style.width = "360px"; f.style.height = "740px"; w.dispatchEvent(new w.Event("resize"));
+    return fatte.join(", ");
+  }
+  // segna su un telefono se compare il 3-2-1 (anche per poco): s.stop() → true/false
+  function spiaVia(w) { var visto = false, t = setInterval(function () { if (w.document.querySelector(".sl-via")) visto = true; }, 25); return { stop: function () { clearInterval(t); return visto; } }; }
+  // telefoni con la spia del tavolo (solo per le prove): opz.spiaTav = ["timeline"] → w.__tav = il tavolo dato al gioco
+  // (si mette una volta, dopo che i telefoni finti sono caricati)
+  function spiaTavolo() {
+    if (W.__prepP2f || !W.preparaFinestra) return;
+    W.__prepP2f = W.preparaFinestra;
+    W.preparaFinestra = function (w, nome, opz) {
+      W.__prepP2f(w, nome, opz);
+      if (!opz || !opz.spiaTav) return;
+      var d = Object.getOwnPropertyDescriptor(w, "SG");
+      Object.defineProperty(w, "SG", { configurable: true, get: d.get, set: function (v) {
+        d.set(v);
+        var reg = v.registra;
+        v.registra = function (g) {
+          if (g && g.id) { w.__reg = w.__reg || {}; w.__reg[g.id] = g; }   // (i giochi registrati, per nome e impostazioni)
+          if (g && opz.spiaTav.indexOf(g.id) >= 0) { var av = g.avvia; g.avvia = function (t) { w.__tav = t; return av.apply(this, arguments); }; }
+          return reg.apply(this, arguments);
+        };
+      } });
+    };
+  }
+
+
+  // ---- aiuti per "Chi gioca a Tris?" e il duello (p2-h) ----
+  // chi è scelto in "Chi gioca?" (i nomi, nell'ordine della griglia; l'host senza "(tu)"); null se la schermata non c'è
+  function chiGioca(w) {
+    var g = w && w.document.querySelector(".chi-gioca"); if (!g) return null;
+    return [].filter.call(g.querySelectorAll(".cg-chi.scelto"), function () { return true; }).map(function (b) { return b.querySelector(".cg-nome").textContent.replace(/ \(tu\)$/, ""); });
+  }
+  // tocca qualcuno in "Chi gioca?"
+  function toccaChi(w, nome) {
+    var b = [].find.call(w.document.querySelectorAll(".chi-gioca .cg-chi"), function (x) { return x.querySelector(".cg-nome").textContent.replace(/ \(tu\)$/, "") === nome; });
+    if (!b) no("in «Chi gioca?» non c'è " + nome);
+    b.click();
+  }
+  // un gioco a due con 3 o più nella Sala apre prima «Tris in N» (p2-t): qui si sceglie «⚔️ Una sfida» e si va a «Chi gioca?». true = c'era
+  async function sfidaDaTorneino(w) {
+    var t = await W.aspetta(function () { return w.document.querySelector(".torneino-sc, .chi-gioca, .saletta-schermo"); }, 4000);
+    if (!t || !t.classList.contains("torneino-sc")) return false;
+    if (!W.clicca(w, /Una sfida/, ".tn-scelta")) no("in «Tris in N» non c'è «⚔️ Una sfida»");
+    if (!W.clicca(w, /Scegli chi gioca/, ".piede button")) no("in «Tris in N» non c'è «Scegli chi gioca»");
+    return true;
+  }
+  // se c'è "Chi gioca?" (siamo più dei posti), si gioca con quelli già scelti (dopo «⚔️ Una sfida», se c'è la scelta del torneino)
+  async function passaChiGioca(w) {
+    await sfidaDaTorneino(w);
+    var c = await W.aspetta(function () { return w.document.querySelector(".chi-gioca") || w.document.querySelector(".saletta-schermo"); }, 4000);
+    if (c && c.classList.contains("chi-gioca") && !W.clicca(w, /Si gioca/, ".piede button")) no("in «Chi gioca?» non si può toccare «▶ Si gioca»");
+  }
+  // "Chi gioca?" a misura (larg x alt): niente scorre, gli avatar e «Si gioca» si vedono. "" = tutto bene, se no il perché
+  async function misuraChi(w, nome, larg, alt) {
+    var f = document.getElementById("tel-" + nome), d = w.document;
+    if (!d.getElementById("senza-entrata")) { var st = d.createElement("style"); st.id = "senza-entrata"; st.textContent = ".schermata{ animation:none !important; }"; d.head.appendChild(st); }
+    f.style.width = larg + "px"; f.style.height = alt + "px";
+    void d.documentElement.offsetHeight; w.dispatchEvent(new w.Event("resize"));
+    await W.dorme(400); w.scrollTo(0, 0);
+    var sc = d.querySelector(".chi-gioca-sc"); if (!sc) return "non c'è «Chi gioca?»";
+    if (d.documentElement.scrollHeight > alt + 1) return "la pagina scorre (" + d.documentElement.scrollHeight + " px)";
+    if (d.documentElement.scrollWidth > larg + 1) return "la pagina scorre di lato";
+    var c = sc.querySelector(".contenuto"); if (c.scrollHeight > c.clientHeight + 1) return "il centro scorre (" + c.scrollHeight + " su " + c.clientHeight + ")";
+    var cose = [].slice.call(sc.querySelectorAll(".cg-chi, .piede .btn"));
+    for (var i = 0; i < cose.length; i++) { var r = cose[i].getBoundingClientRect(); if (r.top < -1 || r.bottom > alt + 1 || r.left < -1 || r.right > larg + 1) return "«" + cose[i].textContent + "» esce dallo schermo"; }
+    return "";
+  }
+  async function misureChi(w, nome) {
+    var M = [[360, 640], [412, 915]], fatte = [];
+    for (var k = 0; k < M.length; k++) { var e = await misuraChi(w, nome, M[k][0], M[k][1]); if (e) no(nome + " a " + M[k].join("x") + ": " + e); fatte.push(M[k].join("x")); }
+    var f = document.getElementById("tel-" + nome); f.style.width = "360px"; f.style.height = "740px"; w.dispatchEvent(new w.Event("resize"));
+    return fatte.join(", ");
+  }
+  // l'host tocca "Scegli un gioco" e la tessera: dove arriva ("chi" = Chi gioca?, "saletta")
+  async function toccaGiocoSala(w, nomeGioco) {
+    if (!await W.aspetta(function () { return W.clicca(w, /Scegli (un|il primo) gioco|Prossimo gioco/); }, 4000)) no("non trovo «Scegli un gioco» nella Sala");
+    var tess = await W.aspetta(function () { return tessera(w, nomeGioco); }, 4000);
+    if (!tess) no("non trovo " + nomeGioco + " tra i giochi della Sala");
+    var et = (tess.querySelector(".tess-adue") || {}).textContent || "";
+    var tutte = [].map.call(w.document.querySelectorAll(".tessera"), function (t) { return (t.querySelector("h2") || {}).textContent + ": " + ((t.querySelector(".tess-adue") || {}).textContent || ""); });
+    tess.click();
+    var tn0 = await sfidaDaTorneino(w);   // (p2-t: prima «Tris in N», si sceglie la sfida)
+    var dove = await W.aspetta(function () { return w.document.querySelector(".chi-gioca") ? "chi" : (w.document.querySelector(".saletta-schermo") && codiceSaletta(w) ? "saletta" : null); }, 4000);
+    return { dove: dove, etichetta: et, tutte: tutte, torneino: tn0 };
+  }
+  // il Tris di un duello fino alla fine: muovono i due telefoni (chi apre è X)
+  async function duelloTrisFinoAllaFine(C, a, b) { return trisFinoAllaFine(C, a, b); }
 
   var SCENARI = {
     // 1. Linea del tempo: chi è di turno non tocca "Avanti" e il gioco va avanti lo stesso in meno di 25 secondi
@@ -248,7 +528,7 @@
       if (C2 === C) no("aprendo la sua stanza Giulia è finita in quella di Paky (" + C + ")");
       await W.dorme(800);
       if (ids(C).length !== 1) no("Paky vede un fantasma: " + ids(C).join(","));
-      if (!G.document.querySelector(".sl-cod")) no("Giulia non è host della sua stanza");
+      if (!G.document.querySelector(".sl-cod:not(.ospite)")) no("Giulia non è host della sua stanza");
       return "Giulia ha aperto " + C2 + " (Paky resta in " + C + " da solo)";
     } },
 
@@ -532,8 +812,9 @@
       }
       if (!await W.aspetta(function () { return vm(C).fase === "fine" && vm(C).fine && vm(C).fine.vincitore === "X"; }, 4000)) no("la partita non finisce con la vittoria di X");
       if (!await W.aspetta(function () { return /hai vinto|vince|Hai perso|perso/i.test(W.testo(G)); }, 3000)) no("Giulia non vede com'è finita (" + T(G).slice(0, 60) + ")");
-      if (!await W.aspetta(function () { return W.clicca(P, /Rivincita/); }, 3000)) no("l'host non ha «Rivincita»");
-      if (!await W.aspetta(function () { return vm(C).fase === "gioco" && (vm(C).board || []).filter(Boolean).length === 0; }, 4000)) no("la rivincita non comincia");
+      // (dal p2-f la fine online è quella del core: "↻ Nuova partita (stessi amici)" → saletta → 3-2-1 da solo con tutti dentro)
+      if (!await W.aspetta(function () { return W.clicca(P, /Rivincita|Nuova partita/); }, 3000)) no("l'host non ha «Nuova partita»");
+      if (!await W.aspetta(function () { return vm(C).fase === "gioco" && (vm(C).board || []).filter(Boolean).length === 0; }, 8000)) no("la rivincita non comincia");
       return "vince X (Paky) con la riga in alto; rivincita partita (comincia " + vm(C).turno + ")";
     } },
 
@@ -964,9 +1245,9 @@
       if (!await W.aspetta(function () { return JSON.stringify(vm(C)).indexOf("\"" + nome + "\"") >= 0; }, 6000)) no("l'host non vede entrare «" + nome + "»");
       if (!await W.aspetta(function () { return avatarDi(P, nome); }, 3000)) no("nella saletta dell'host non c'è «" + nome + "»");
       var gio = [].concat(vm(C).posti || [], vm(C).giocatori || [], vm(C).players || []).filter(function (g) { return g && g.nome === nome; })[0];
-      if (JSON.stringify(L.__fp.omino) !== JSON.stringify(L.SGOmino.norm(L.SGOmino.casuale(nome)))) no("l'avatar del profilo non è quello dell'anteprima");
+      if (!L.__fp.omino || L.__fp.omino.forma !== "uomo" || L.__fp.omino.capo !== "maglietta") no("l'avatar del profilo non è quello scelto (lui, look Casual)");   // (dal 15 ott: lui/lei e il look, primoAvatar)
       if (!gio || JSON.stringify(gio.omino) !== JSON.stringify(L.__fp.omino)) no("l'avatar che vede l'host non è quello del profilo");
-      return "nomi proposti: " + Object.keys(visti).join(", ") + "; è entrato «" + nome + "» col profilo e l'avatar dell'anteprima";
+      return "nomi proposti: " + Object.keys(visti).join(", ") + "; è entrato «" + nome + "» col profilo e l'avatar scelto (lui, Casual)";
     } },
 
     // 33. Sei telefoni: tutto in uno schermo da 360x640 e da 412x915 (niente scorre), i nomi non si coprono, gli avatar
@@ -1029,15 +1310,25 @@
       campi[0].value = "Nina"; campi[0].dispatchEvent(new N.Event("input", { bubbles: true })); campi[1].value = "abc"; W.clicca(N, /^Avanti/);
       if (!/almeno 6 caratteri/.test(T(N))) no("password corta: nessun avviso");
       campi[1].value = "segreto1"; W.clicca(N, /^Avanti/);
-      var ed = await W.aspetta(function () { return N.document.querySelector(".editor-avatar .om-azione.salva.fatto"); }, 4000);
-      if (!ed) no("dopo «Avanti» non si apre l'avatar");
+      var ed = await W.aspetta(function () { return N.document.querySelector(".primo-avatar .pa-forma"); }, 4000);
+      if (!ed) no("dopo «Avanti» non si apre «Sei lui o lei?»");
       if (!W.BR.conti.nina) no("il profilo non è stato creato");
-      if (!N.__fp.omino || JSON.stringify(N.__fp.omino) !== JSON.stringify(N.SGOmino.norm(N.SGOmino.casuale("Nina")))) no("l'avatar pronto non è quello dell'anteprima (o non è salvato)");
-      if (!/Ecco il tuo avatar/.test(T(N))) no("nell'editor manca il saluto del benvenuto");
-      var misE = await misuraProfilo(N, "Nina", 360, 640); if (misE) no("editor a 360x640: " + misE);
+      if (!N.__fp.omino || JSON.stringify(N.__fp.omino) !== JSON.stringify(N.SGOmino.norm(N.SGOmino.casuale("Nina")))) no("l'avatar di riserva non è salvato subito");
+      if (!/Sei lui o lei/.test(T(N))) no("manca «Sei lui o lei?»");
+      var misE = await misuraProfilo(N, "Nina", 360, 640); if (misE) no("lui/lei a 360x640: " + misE);
+      misE = await misuraProfilo(N, "Nina", 412, 915); if (misE) no("lui/lei a 412x915: " + misE);
+      N.document.querySelectorAll(".primo-avatar .pa-forma")[1].click(); await W.dorme(100);
+      if (!/Scegli il tuo look/.test(T(N))) no("dopo «Lei» non c'è «Scegli il tuo look»");
+      misE = await misuraProfilo(N, "Nina", 360, 640); if (misE) no("i look a 360x640: " + misE);
+      misE = await misuraProfilo(N, "Nina", 412, 915); if (misE) no("i look a 412x915: " + misE);
       var f = document.getElementById("tel-Nina"); f.style.width = "360px"; f.style.height = "740px";
-      ed.click();
+      var fatto = N.document.querySelector(".primo-avatar .pa-fatto");
+      if (!fatto.disabled) no("«Fatto» acceso prima del look");
+      N.document.querySelectorAll(".primo-avatar .pa-look")[1].click();
+      if (fatto.disabled) no("scelto il look, «Fatto» resta spento");
+      fatto.click();
       if (!await W.aspetta(function () { return home(N); }, 4000)) no("toccato «Fatto», non si arriva alla home");
+      if (!N.__fp.omino || N.__fp.omino.forma !== "donna" || N.__fp.omino.capo !== "vestitolungo") no("l'avatar salvato non è «Lei, Elegante» (" + JSON.stringify(N.__fp.omino || {}).slice(0, 80) + ")");
       if (!/Nina/.test(T(N))) no("nella home non c'è il nome del profilo");
       var ric = JSON.parse(N.localStorage.getItem("sg-ultimo-profilo") || "null");
       if (!ric || ric.nome !== "Nina") no("il telefono non ricorda il profilo");
@@ -1046,7 +1337,7 @@
       if (N.__visto.length) no("ricaricando ha visto: " + N.__visto.join(", "));
       N = await W.chiudiApp("Nina");
       if (!await W.aspetta(function () { return home(N); }, 3000) || N.__visto.length) no("riaprendo l'app non si entra da soli");
-      return "benvenuto ok (" + mis + "), avatar pronto, home; ricarica e app riaperta: home senza domande";
+      return "benvenuto ok (" + mis + "), lui o lei → look → Fatto (360x640 e 412x915), home; ricarica e app riaperta: home senza domande";
     } },
 
     // 91. Primo avvio da un link di una stanza: il benvenuto dice chi ti aspetta, poi profilo → avatar → dentro la stanza giusta
@@ -1146,7 +1437,7 @@
       campi[0].value = "Pino"; campi[1].value = "segreto1"; W.clicca(X, /^Avanti/);
       if (!await W.aspetta(function () { return /Serve internet/.test(T(X)); }, 2000)) no("rete giù mentre crea: nessun avviso chiaro");
       X.__reteGiu = false; W.clicca(X, /^Avanti/);
-      if (!await W.aspetta(function () { return X.document.querySelector(".editor-avatar"); }, 3000)) no("tornata la rete, Avanti non crea il profilo");
+      if (!await W.aspetta(function () { return X.document.querySelector(".primo-avatar, .editor-avatar"); }, 3000)) no("tornata la rete, Avanti non crea il profilo");
       // chi ha già il profilo (il telefono lo ricorda), senza rete: entra lo stesso, col suo nome
       var R = await W.apriTel("Rita", { x: 185, profilo: false, offline: true, prima: function (w) { w.localStorage.setItem("sg-ultimo-profilo", JSON.stringify({ nome: "Rita", omino: null })); } });
       if (!await W.aspetta(function () { return home(R); }, 3000)) no("chi ha il profilo, senza rete, non entra («" + T(R).slice(0, 60) + "»)");
@@ -1171,21 +1462,1836 @@
       W.clicca(Q, /Tris/);
       if (!await W.aspetta(function () { return /Come giocate/.test(T(Q)); }, 2000)) no("dopo «Gioca lo stesso» il Tris riporta a «Bentornato»");
       return "Olga entra senza rete e apre il Tris; Pia «Gioca lo stesso» → home → Tris";
-    } }
+    } },
+
+    // ===== PASSO 2: una Sala per tutta la serata (p2-a: "Online" = Sala). Telefoni con salaSempre: true =====
+    // 35. Tessera del Tris → "Online con gli amici": l'host è nella saletta del Tris in 2 tocchi (dentro una Sala nuova,
+    //     "ho un codice" subito sotto "Online", nessuna schermata delle impostazioni); Giulia dal link della Sala è nella
+    //     saletta del Tris da sola, con lo stesso id nella Sala e nel gioco
+    35: { nome: "Online da un gioco apre la Sala: saletta in 2 tocchi, Giulia dal link della Sala", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0, salaSempre: true });
+      var tess = await W.aspetta(function () { return tessera(P, "Tris"); }, 5000); if (!tess) no("non trovo il Tris");
+      tess.click(); await W.dorme(200);
+      var mg = modiVisti(P), iO = -1;
+      mg.forEach(function (t, k) { if (/Online con gli amici/.test(t)) iO = k; });
+      if (iO < 0) no("in «Come giocate?» non c'è «Online con gli amici» (" + mg.join(" / ") + ")");
+      if (!/Si apre la Sala: un codice per tutta la serata/.test(mg[iO])) no("sotto «Online con gli amici»: «" + mg[iO] + "»");
+      if (!/ho un codice/.test(mg[iO + 1] || "")) no("«Online: ho un codice» non è subito sotto «Online» (" + mg.join(" / ") + ")");
+      if (mg.some(function (t) { return /apro io la stanza/.test(t); })) no("c'è ancora «Online: apro io la stanza»");
+      var spia = spiaTesto(P, /Apri la stanza|Comincia per tutti|impostazioni/);
+      var A = await (async function () { W.clicca(P, /Online con gli amici/, ".modo-grande"); var C = await W.aspetta(function () { return P.document.querySelector(".saletta-schermo") && codiceSaletta(P); }, 5000); return C; })();
+      var visto = spia.stop();
+      if (!A) no("dopo «Online con gli amici» l'host non è nella saletta («" + T(P).slice(0, 80) + "»)");
+      if (visto) no("tra la tessera e la saletta si è vista «" + visto + "»");
+      var S = await W.aspetta(codiceSala, 3000); if (!S) no("nel broker non c'è la Sala");
+      if (S === A) no("la Sala e il Tris hanno lo stesso codice");
+      if (vm(S).gioco !== "tris" || vm(S).stanza !== A) no("la Sala non dice che si gioca a Tris nella stanza " + A + " (" + vm(S).gioco + ", " + vm(S).stanza + ")");
+      if (!/Tris/.test(T(P))) no("la saletta non è quella del Tris");
+      // Giulia apre il link della Sala
+      var t0 = Date.now();
+      var G = await W.apriTel("Giulia", { hash: "sala=" + S, x: 185, salaSempre: true });
+      var t1 = Date.now();
+      if (!await W.aspetta(function () { return dentro(G) && G.document.querySelector(".saletta-schermo") && vm(A).avvId; }, 6000)) no("Giulia non arriva nella saletta del Tris («" + T(G).slice(0, 80) + "»)");
+      var dt = (Date.now() - t0) / 1000, dtDopo = (Date.now() - t1) / 1000;
+      if (dt > 2) no("Giulia è nella saletta " + dt.toFixed(1) + " s dopo aver aperto il link (più di 2)");
+      var idS = idInSala(S, "Giulia"), idG = vm(A).avvId;
+      if (!idS) no("Giulia non è tra i membri della Sala");
+      if (idS !== idG || mioId("Giulia") !== idG) no("Giulia ha un id nella Sala (" + idS + ") e un altro nel Tris (" + idG + ")");
+      if (W.statoStanza(A) && G.document.querySelector(".sl-nome.tu") == null) no("Giulia non si vede «Tu» nella saletta");
+      return "Paky nella saletta del Tris in 2 tocchi (Sala " + S + ", Tris " + A + "); Giulia dentro in " + dt.toFixed(1) + " s dal link (caricamento compreso), stesso id " + idG;
+    } },
+
+    // 36. Sala già aperta: l'host esce dal Tris (torna nella Sala), sceglie La Scalinata e va dritto nella saletta (niente
+    //     schermata delle impostazioni, le regole stanno nel ⚙️); Giulia ci arriva da sola, con lo stesso id
+    36: { nome: "Dalla Sala un altro gioco: niente schermata delle impostazioni, gli amici seguono da soli", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0, salaSempre: true });
+      var A = await salaDaGioco("Paky", "Tris"), S = A.S;
+      var G = await W.apriTel("Giulia", { hash: "sala=" + S, x: 185, salaSempre: true });
+      if (!await W.aspetta(function () { return dentro(G) && vm(A.C).avvId; }, 6000)) no("Giulia non entra nel Tris");
+      var idS = idInSala(S, "Giulia");
+      // l'host esce dal Tris: tutti e due nella Sala
+      W.clicca(P, /‹/, ".testa button, .sc-esci");
+      var inSala = function (w) { return /Sala online/.test(W.testo(w)) && w.document.querySelector(".saletta-schermo"); };
+      if (!await W.aspetta(function () { return inSala(P) && !vm(S).gioco && inSala(G); }, 6000)) no("uscito dal Tris, non sono tutti e due nella Sala (Paky «" + T(P).slice(0, 50) + "», Giulia «" + T(G).slice(0, 50) + "»)");
+      var spia = spiaTesto(P, /Comincia per tutti|Sala · impostazioni/), spiaG = spiaTesto(G, /Ops|Collegamento perso/);
+      if (!W.clicca(P, /Scegli (un|il primo) gioco|Prossimo gioco/)) no("nella Sala non c'è «Scegli un gioco»");
+      var tess = await W.aspetta(function () { return tessera(P, "La Scalinata"); }, 4000); if (!tess) no("non trovo La Scalinata tra i giochi della Sala");
+      tess.click();
+      var C2 = await W.aspetta(function () { var c = codiceSaletta(P); return c && c !== A.C && vm(S).gioco === "scalinata" && vm(S).stanza === c ? c : null; }, 5000);
+      var visto = spia.stop();
+      if (!C2) no("toccata La Scalinata, l'host non è nella sua saletta («" + T(P).slice(0, 80) + "»)");
+      if (visto) no("si è vista la schermata delle impostazioni («" + visto + "»)");
+      if (!await W.aspetta(function () { return ids(C2).indexOf(idS) >= 0 && dentro(G); }, 6000)) no("Giulia non arriva da sola nella Scalinata (" + ids(C2).join(",") + ")");
+      var erroriG = spiaG.stop(); if (erroriG) no("Giulia ha visto «" + erroriG + "»");
+      var reg = [].some.call(P.document.querySelectorAll("button"), function (b) { return /Regole|⚙️/.test(b.textContent); });
+      // di nuovo il Tris: stessa Sala, le regole della serata restano
+      W.clicca(P, /‹/, ".testa button, .sc-esci");
+      if (!await W.aspetta(function () { return inSala(P) && !vm(S).gioco; }, 5000)) no("uscito dalla Scalinata, l'host non è nella Sala");
+      W.clicca(P, /Scegli (un|il primo) gioco|Prossimo gioco/);
+      var t2 = await W.aspetta(function () { return tessera(P, "Tris"); }, 4000); t2.click();
+      var C3 = await W.aspetta(function () { var c = codiceSaletta(P); return c && c !== C2 && vm(S).gioco === "tris" ? c : null; }, 5000);
+      if (!C3) no("la seconda volta il Tris non parte");
+      if (!await W.aspetta(function () { return vm(C3).avvId === idS && dentro(G); }, 6000)) no("la seconda volta Giulia non entra nel Tris");
+      if (codiceSala() !== S) no("la Sala è cambiata");
+      return "Sala " + S + ": Tris → Scalinata (" + C2 + ") → Tris (" + C3 + ") senza impostazioni, Giulia sempre dentro da sola con l'id " + idS + (reg ? "; nella saletta c'è il ⚙️" : "");
+    } },
+
+    // 37. Interruttore spento (sg-sala-sempre = "0", come i telefoni degli scenari vecchi): "Online: apro io la stanza" →
+    //     impostazioni → "🔗 Apri la stanza", nessuna Sala; e lo si spegne anche su un telefono acceso, senza ricaricare
+    37: { nome: "Interruttore spento: il percorso di prima", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 });
+      if (P.localStorage.getItem("sg-sala-sempre") !== "0") no("il telefono finto non parte con sg-sala-sempre = 0");
+      var tess = await W.aspetta(function () { return tessera(P, "Tris"); }, 5000); tess.click(); await W.dorme(200);
+      var mg = modiVisti(P), iO = -1; mg.forEach(function (t, k) { if (/apro io la stanza/.test(t)) iO = k; });
+      if (iO < 0 || mg.some(function (t) { return /Online con gli amici/.test(t); })) no("spento, «Come giocate?» dice: " + mg.join(" / "));
+      if (!/ho un codice/.test(mg[iO + 1] || "")) no("«ho un codice» non è subito sotto «Online»");
+      W.clicca(P, /apro io/); await W.dorme(250);
+      if (!/Apri la stanza/.test(T(P))) no("niente schermata delle impostazioni con «Apri la stanza» («" + T(P).slice(0, 60) + "»)");
+      W.clicca(P, /Apri la stanza/);
+      var C = await W.aspetta(function () { return codiceSaletta(P); }, 5000); if (!C) no("la stanza non ha il codice");
+      if (codiceSala()) no("si è aperta anche una Sala");
+      await W.apriTel("Giulia", { hash: "gioco=tris&stanza=" + C, x: 185 });
+      if (!await W.aspetta(function () { return vm(C).avvId; }, 6000)) no("Giulia non entra dal link del gioco");
+      // un telefono con la Sala accesa: spento a mano (senza ricaricare) torna il percorso di prima
+      var M = await W.apriTel("Marco", { x: 370, salaSempre: true });
+      var tm = await W.aspetta(function () { return tessera(M, "Tris"); }, 5000); tm.click(); await W.dorme(200);
+      if (!modiVisti(M).some(function (t) { return /Online con gli amici/.test(t); })) no("acceso, Marco non vede «Online con gli amici»");
+      W.clicca(M, /‹/, ".testa button"); await W.dorme(250);
+      M.localStorage.setItem("sg-sala-sempre", "0");
+      tm = await W.aspetta(function () { return tessera(M, "Tris"); }, 3000); tm.click(); await W.dorme(200);
+      if (!modiVisti(M).some(function (t) { return /apro io la stanza/.test(t); })) no("spento a mano, Marco non vede «Online: apro io la stanza» (" + modiVisti(M).join(" / ") + ")");
+      return "spento: «apro io la stanza» → impostazioni → stanza " + C + " (nessuna Sala), Giulia entra dal link; acceso e poi spento a mano: torna il percorso di prima";
+    } },
+
+    // 37b. Senza profilo (dentro, ma il profilo non arriva: oggi l'unico caso): la Sala si apre lo stesso, il nome si scrive
+    //      una volta ("Come ti chiami?" col 🎲); ricaricando la Sala si riapre da sola (stesso codice, Giulia di nuovo dentro);
+    //      con il nome dell'ultima volta non chiede niente
+    "37b": { nome: "Host senza profilo: apre la Sala e ricaricando la ritrova", fai: async function () {
+      var senza = function (w) { w.SGNube.utente = function () { return { uid: "finto-senza" }; }; };
+      var N = await W.apriTel("Nino", { x: 0, profilo: false, salaSempre: true, prima: senza });
+      if (!await W.aspetta(function () { return home(N); }, 4000)) no("senza profilo non si arriva alla home («" + T(N).slice(0, 60) + "»)");
+      if (!/Crea il tuo profilo/.test(T(N))) no("questo telefono ha un profilo");
+      if (!W.clicca(N, /Gioca online/, ".home-online button")) no("in home non c'è «🔗 Gioca online»");   // (p2-c: la Sala si apre dalla riga online)
+      var inp = await W.aspetta(function () { return N.document.querySelector("input.link-campo"); }, 3000);
+      if (!inp || !/Come ti chiami/.test(inp.placeholder)) no("non chiede «Come ti chiami?» («" + T(N).slice(0, 60) + "»)");
+      if (!N.document.querySelector(".sl-dado")) no("accanto al nome non c'è il 🎲");
+      if (/password|profilo/i.test(T(N))) no("chiede il profilo: «" + T(N).slice(0, 80) + "»");
+      inp.value = "Nino"; W.clicca(N, /Apri la Sala/);
+      var S = await W.aspetta(function () { return codiceSaletta(N); }, 5000); if (!S) no("la Sala non si apre");
+      if (((vm(S).membri || [])[0] || {}).nome !== "Nino") no("nella Sala l'host si chiama «" + ((vm(S).membri || [])[0] || {}).nome + "»");
+      var G = await W.apriTel("Giulia", { hash: "sala=" + S, x: 185, salaSempre: true });
+      if (!await W.aspetta(function () { return (vm(S).membri || []).length === 2 && G.document.querySelector(".saletta-schermo"); }, 6000)) no("Giulia non entra nella Sala di Nino");
+      N = await W.ricarica("Nino");
+      var ok = await W.aspetta(function () { return codiceSaletta(N) === S && /Sala online/.test(W.testo(N)) && (vm(S).membri || []).length === 2 && W.finestra("Giulia").document.querySelector(".saletta-schermo"); }, 10000);
+      if (!ok) no("ricaricando la Sala non si riapre («" + T(N).slice(0, 80) + "»)");
+      if (N.document.querySelector("input.link-campo")) no("ricaricando richiede il nome");
+      if (((vm(S).membri || [])[0] || {}).nome !== "Nino") no("dopo la ricarica l'host si chiama «" + ((vm(S).membri || [])[0] || {}).nome + "»");
+      // un altro telefono senza profilo che ha già scritto il suo nome una volta: niente domande
+      var Q = await W.apriTel("Pino", { x: 370, profilo: false, salaSempre: true, prima: function (w) { senza(w); w.localStorage.setItem("sg-nome-ospite", "Pino"); } });
+      await W.aspetta(function () { return home(Q); }, 4000);
+      W.clicca(Q, /Gioca online/, ".home-online button");
+      var S2 = await W.aspetta(function () { return codiceSaletta(Q); }, 5000);
+      if (!S2) no("col nome dell'ultima volta la Sala non si apre («" + T(Q).slice(0, 60) + "»)");
+      if (((vm(S2).membri || [])[0] || {}).nome !== "Pino") no("la Sala di Pino ha l'host «" + ((vm(S2).membri || [])[0] || {}).nome + "»");
+      return "Nino (senza profilo) scrive il nome una volta e apre la Sala " + S + "; ricaricando la ritrova con Giulia dentro; Pino (nome già scritto) la apre senza domande";
+    } },
+
+    // 38. La testata della Sala (p2-b): nella saletta del Tris, per Paky e per Giulia, il codice della Sala (il testo resta
+    //     "KFRT": lo spazio tra le lettere è solo CSS), "📤 Invita gli amici" col link della Sala (sala=, non stanza=) e il
+    //     messaggio "Stasera siamo nella Sala…"; sottotitolo "Sala · la stanza è tua" / "Sala di Paky"; testata alta al
+    //     massimo 52 px e niente che scorre a 360x640 e 412x915. Poi la stessa testata nella Sala di Giulia
+    38: { nome: "Testata della Sala in ogni saletta: codice, Invita, misure", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0, salaSempre: true });
+      var A = await salaDaGioco("Paky", "Tris"), S = A.S, C = A.C;
+      var G = await W.apriTel("Giulia", { hash: "sala=" + S, x: 185, salaSempre: true });
+      if (!await W.aspetta(function () { return dentro(G) && G.document.querySelector(".saletta-schermo") && vm(C).avvId; }, 6000)) no("Giulia non arriva nella saletta del Tris («" + T(G).slice(0, 80) + "»)");
+      async function testata(nome, w, sotto, stanza, misure) {
+        if (!await W.aspetta(function () { return codiceTestata(w) === S; }, 3000)) no(nome + ": nella testata c'è «" + ((w.document.querySelector(".sl-cod b") || {}).textContent) + "» invece del codice della Sala " + S);
+        var b = w.document.querySelector(".sl-cod b");
+        if (!(parseFloat(w.getComputedStyle(b).letterSpacing) > 0)) no(nome + ": il codice non è spaziato");
+        if (stanza && codiceSaletta(w) !== stanza) no(nome + ": la stanza della saletta è " + codiceSaletta(w) + " invece di " + stanza);
+        var et = w.document.querySelector(".sl-cod small").textContent; if (et !== "Sala") no(nome + ": sopra il codice c'è «" + et + "»");
+        var st = await W.aspetta(function () { var x = w.document.querySelector(".saletta-schermo > .testa .sotto"); return x && x.textContent === sotto ? x : null; }, 2000);
+        if (!st) no(nome + ": sotto il titolo «" + ((w.document.querySelector(".saletta-schermo > .testa .sotto") || {}).textContent) + "» invece di «" + sotto + "»");
+        var inv = w.document.querySelector(".sl-invito .sl-link");
+        if (!inv || !/📤 Invita/.test(inv.textContent) || inv.disabled) no(nome + ": niente «📤 Invita»");
+        var mandato = null;
+        Object.defineProperty(w.navigator, "share", { configurable: true, value: function (d) { mandato = d; return Promise.resolve(); } });
+        inv.click();
+        if (!mandato) no(nome + ": «Invita» non manda niente");
+        if (mandato.url.indexOf("sala=" + S) < 0 || /stanza=/.test(mandato.url)) no(nome + ": il link di Invita è " + mandato.url);
+        if (mandato.text.indexOf("Stasera siamo nella Sala " + S + ".") < 0 || mandato.text.indexOf("«🔑 Ho un codice» e scrivi: " + S) < 0) no(nome + ": il messaggio di Invita è «" + mandato.text + "»");
+        for (var i = 0; i < misure.length; i++) {
+          var r = await controllaSchermo(w, nome.split(" ")[0], misure[i][0], misure[i][1], 2); if (r) no(nome + " a " + misure[i].join("x") + ": " + r);
+          var h = w.document.querySelector(".sl-invito").getBoundingClientRect().height;
+          if (h > 52.5) no(nome + " a " + misure[i].join("x") + ": la testata è alta " + Math.round(h) + " px");
+        }
+        return mandato.text.split("\n")[0];
+      }
+      var mis = [[360, 640], [412, 915]];
+      var msg = await testata("Paky", P, "Sala · la stanza è tua", C, mis);
+      await testata("Giulia", G, "Sala di Paky", C, mis);
+      // tutti e due tornano nella Sala: la stessa testata (codice della Sala, Invita) anche per Giulia
+      // (larghezza di prima: con la finestra nascosta la stanza non si rimette a misura da sola)
+      ["Paky", "Giulia"].forEach(function (n) { var f = document.getElementById("tel-" + n); f.style.width = "360px"; f.style.height = "740px"; });
+      W.clicca(P, /‹/, ".testa button, .sc-esci");
+      var inSala = function (w) { return /Sala online/.test(W.testo(w)) && w.document.querySelector(".saletta-schermo"); };
+      if (!await W.aspetta(function () { return inSala(P) && inSala(G) && !vm(S).gioco; }, 6000)) no("uscito dal Tris, non sono tutti e due nella Sala");
+      await testata("Giulia nella Sala", G, "Sala di Paky", S, [[360, 640]]);
+      return "Paky e Giulia vedono la Sala " + S + " (stanza del Tris " + C + "), Invita col link della Sala («" + msg + "»), testata ≤ 52 px, niente scorre";
+    } },
+
+    // 39. La porta della Sala (p2-b): nella saletta della Scalinata Paky tocca "🔒 Chiudi" → Marco, nuovo, dal link della
+    //     Sala legge "La Sala è chiusa"; Giulia (già nella Sala) esce dal gioco e rientra lo stesso; Paky riapre, Marco tocca
+    //     "↻ Riprova" e finisce nella saletta della Scalinata
+    39: { nome: "La porta della Sala si chiude dalla saletta del gioco", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0, salaSempre: true });
+      var A = await salaDaGioco("Paky", "La Scalinata"), S = A.S, C = A.C;
+      var G = await W.apriTel("Giulia", { hash: "sala=" + S, x: 185, salaSempre: true });
+      if (!await W.aspetta(function () { return dentro(G) && ids(C).length === 2; }, 6000)) no("Giulia non entra nella Scalinata (" + ids(C).join(",") + ")");
+      var idG = mioId("Giulia");
+      if (!W.clicca(P, /Chiudi/, ".sl-porta")) no("nella saletta non c'è «🔒 Chiudi»");
+      if (!await W.aspetta(function () { return /Porta chiusa/.test(statoHost(P)); }, 2000)) no("sotto il titolo non c'è «🔒 Porta chiusa» («" + statoHost(P) + "»)");
+      await W.dorme(400);
+      var M = await W.apriTel("Marco", { hash: "sala=" + S, x: 370, salaSempre: true });
+      if (!await W.aspetta(function () { return /La Sala è chiusa/.test(W.testo(M)); }, 8000)) no("Marco non legge «La Sala è chiusa» («" + T(M).slice(0, 80) + "»)");
+      if ((vm(S).membri || []).some(function (m) { return m.nome === "Marco"; })) no("Marco è entrato nella Sala chiusa");
+      if (ids(C).length !== 2) no("nella Scalinata ci sono " + ids(C).length + " giocatori");
+      // Giulia è nella Sala: esce dal gioco e rientra anche con la porta chiusa
+      W.clicca(G, /‹/, ".testa button, .sc-esci");
+      if (!await W.aspetta(function () { return W.clicca(G, /Rientra/); }, 5000)) no("nella Sala Giulia non ha «Rientra» («" + T(G).slice(0, 80) + "»)");
+      if (!await W.aspetta(function () { return dentro(G) && ids(C).indexOf(idG) >= 0 && G.document.querySelector(".saletta-schermo"); }, 6000)) no("con la porta chiusa Giulia (che è nella Sala) non rientra nel gioco («" + T(G).slice(0, 80) + "»)");
+      // Paky riapre: Marco riprova ed entra
+      if (!W.clicca(P, /Riapri/, ".sl-porta")) no("non c'è «🔓 Riapri»");
+      await W.dorme(500);
+      if (!W.clicca(M, /Riprova/)) no("Marco non ha «↻ Riprova»");
+      if (!await W.aspetta(function () { return dentro(M) && M.document.querySelector(".saletta-schermo") && ids(C).length === 3; }, 8000)) no("riaperta, Marco non arriva nella saletta della Scalinata («" + T(M).slice(0, 80) + "», " + ids(C).length + " giocatori)");
+      return "porta chiusa dalla saletta del gioco: Marco legge «La Sala è chiusa», Giulia rientra lo stesso; riaperta, Marco è nella Scalinata (Sala " + S + ", stanza " + C + ")";
+    } },
+
+    // 40. La home (p2-c): in alto, sotto il profilo, "🔗 Gioca online" e "🔑 Ho un codice" (a 360x640 e 412x915 si vedono
+    //     senza scorrere); nel piede niente più Sala e codice, "🏆 Torneo" è un tasto piccolo e porta al torneo; "Gioca online"
+    //     apre la Sala; tornati in home c'è "👥 Torna nella Sala" col codice (e per Giulia "di Paky"), che riporta nella Sala
+    40: { nome: "Home: «🔗 Gioca online» e «🔑 Ho un codice» in alto, Torneo piccolo, «Torna nella Sala»", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0, salaSempre: true });
+      if (!await W.aspetta(function () { return home(P) && P.document.querySelector(".home-online"); }, 6000)) no("in home non c'è la riga online («" + T(P).slice(0, 80) + "»)");
+      var riga = P.document.querySelector(".home-online");
+      if (!/🔗 Gioca online/.test(riga.innerText) || !/🔑 Ho un codice/.test(riga.innerText)) no("nella riga online: «" + riga.innerText.replace(/\s+/g, " ") + "»");
+      if (!(P.document.querySelector(".home-hero").compareDocumentPosition(riga) & 4) || (riga.compareDocumentPosition(P.document.querySelector(".cat-barra")) & 4) === 0) no("la riga online non sta tra il profilo e i giochi");
+      var mis = [[360, 640], [412, 915]];
+      for (var i = 0; i < mis.length; i++) { var r = await misuraHome(P, "Paky", mis[i][0], mis[i][1]); if (r) no(mis[i].join("x") + ": " + r); }
+      var piede = P.document.querySelector(".home .piede");
+      if (/Sala online|Ho un codice/.test(piede.innerText)) no("nel piede ci sono ancora Sala o codice («" + piede.innerText.replace(/\s+/g, " ") + "»)");
+      if (piede.querySelector(".btn")) no("nel piede c'è ancora un tasto grande («" + piede.querySelector(".btn").innerText + "»)");
+      if (!W.clicca(P, /🏆 Serata a punti/, ".home-azioni .azione")) no("nella riga di Proposte e Bug non c'è «🏆 Serata a punti»");
+      if (!await W.aspetta(function () { return /Su questo telefono/.test(W.testo(P)); }, 3000)) no("«🏆 Serata a punti» non porta alla serata («" + T(P).slice(0, 80) + "»)");
+      W.clicca(P, /‹/, ".testa button");
+      if (!await W.aspetta(function () { return home(P); }, 3000)) no("dal torneo ‹ non torna in home");
+      // "Gioca online": la Sala (senza gioco); poi in home (da una fine partita: «👥 La sala» → ‹) c'è "Torna nella Sala"
+      var S = await apriSalaNuova("Paky");
+      if (vm(S).gioco) no("la Sala parte con un gioco (" + vm(S).gioco + ")");
+      var G = await W.apriTel("Giulia", { hash: "sala=" + S, x: 185, salaSempre: true });
+      if (!await W.aspetta(function () { return idInSala(S, "Giulia") && G.document.querySelector(".saletta-schermo"); }, 6000)) no("Giulia non entra nella Sala");
+      async function aHome(w, chi) {
+        w.SG.sala(); await W.dorme(200);
+        W.clicca(w, /‹/, ".testa button");
+        if (!await W.aspetta(function () { return home(w) && w.document.querySelector(".home-online"); }, 3000)) no(chi + " non torna in home («" + T(w).slice(0, 60) + "»)");
+        return w.document.querySelector(".home-online .btn").innerText.replace(/\s+/g, " ").trim();
+      }
+      var tP = await aHome(P, "Paky");
+      if (!/👥 Torna nella Sala/.test(tP) || tP.indexOf(S) < 0) no("Paky in home vede «" + tP + "» invece di «👥 Torna nella Sala · " + S + "»");
+      var rS = await misuraHome(P, "Paky", 360, 640); if (rS) no("360x640 con la Sala aperta: " + rS);
+      var tG = await aHome(G, "Giulia");
+      if (!/👥 Torna nella Sala/.test(tG) || !/di Paky/.test(tG)) no("Giulia in home vede «" + tG + "» invece di «👥 Torna nella Sala di Paky»");
+      W.clicca(P, /Torna nella Sala/, ".home-online button"); W.clicca(G, /Torna nella Sala/, ".home-online button");
+      var inSala = function (w) { return /Sala online/.test(W.testo(w)) && w.document.querySelector(".saletta-schermo"); };
+      if (!await W.aspetta(function () { return inSala(P) && inSala(G); }, 3000)) no("«Torna nella Sala» non riporta tutti e due nella Sala");
+      if (!idInSala(S, "Giulia") || codiceSala() !== S) no("tornati nella Sala, la Sala non è più la " + S);
+      // l'interruttore spento: la home di prima (Sala, codice e Torneo grandi nel piede)
+      var V = await W.apriTel("Vito", { x: 370 });
+      if (!await W.aspetta(function () { return home(V); }, 6000)) no("Vito non arriva in home");
+      if (V.document.querySelector(".home-online")) no("con l'interruttore spento c'è la riga online");
+      if (!/Sala online/.test(V.document.querySelector(".home .piede").innerText)) no("con l'interruttore spento nel piede manca «👥 Sala online»");
+      return "riga online in alto (" + mis.map(function (m) { return m.join("x"); }).join(", ") + " senza scorrere), piede con «🏆 Serata a punti» piccolo; Paky «" + tP + "», Giulia «" + tG + "», tutti e due di nuovo nella Sala " + S + "; interruttore spento = home di prima";
+    } },
+
+    // 41. "🔑 Ho un codice" a 4 caselle (p2-c): Giulia scrive le prime tre lettere (nessuna partenza), una "o" (non entra,
+    //     avviso), la quarta → entra da sola nella Sala di Paky e nella saletta del Tris; Marco incolla il link della Sala ed
+    //     entra uguale; Luca scrive ZZZZ → "Non trovo…" in circa 2 s, "✏️ Riscrivi il codice" → caselle vuote
+    41: { nome: "«Ho un codice» a 4 caselle: si entra alla quarta lettera, link incollato, codice sbagliato", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0, salaSempre: true });
+      var A = await salaDaGioco("Paky", "Tris"), S = A.S, C = A.C;
+      var G = await W.apriTel("Giulia", { x: 185, salaSempre: true });
+      if (!await W.aspetta(function () { return home(G) && G.document.querySelector(".home-online"); }, 6000)) no("Giulia non è in home");
+      G.__segno = 1;   // se l'app si ricarica, il segno sparisce
+      async function apriCodice(w, chi) {
+        if (!W.clicca(w, /Ho un codice/, ".home-online button")) no(chi + ": in home non c'è «🔑 Ho un codice»");
+        var inp = await W.aspetta(function () { return w.document.querySelector("input.codice4-campo"); }, 3000);
+        if (!inp) no(chi + ": niente campo del codice");
+        return inp;
+      }
+      var inp = await apriCodice(G, "Giulia");
+      var att = { maxlength: "4", autocapitalize: "characters", autocomplete: "off", autocorrect: "off", spellcheck: "false", enterkeyhint: "go" };
+      Object.keys(att).forEach(function (k) { if (inp.getAttribute(k) !== att[k]) no("il campo ha " + k + "=" + inp.getAttribute(k)); });
+      if (G.document.querySelectorAll(".codice4-caselle span").length !== 4) no("le caselle non sono 4");
+      var cs = G.document.querySelector(".codice4-caselle span");
+      if (cs.offsetWidth !== 60 || cs.offsetHeight !== 72) no("le caselle sono " + cs.offsetWidth + "x" + cs.offsetHeight);   // (offset: senza l'animazione di entrata)
+      if (!await W.aspetta(function () { return G.document.activeElement === inp; }, 1500)) no("il campo non ha il tocco appena si apre");
+      // misure (niente scorre, "Entra ▶" a vista)
+      var fG = document.getElementById("tel-Giulia");
+      for (var mi = 0, MS = [[360, 640], [412, 915]]; mi < MS.length; mi++) {
+        fG.style.width = MS[mi][0] + "px"; fG.style.height = MS[mi][1] + "px"; G.dispatchEvent(new G.Event("resize")); await W.dorme(300);
+        if (G.document.documentElement.scrollHeight > MS[mi][1] + 1 || G.document.documentElement.scrollWidth > MS[mi][0] + 1) no(MS[mi].join("x") + ": la schermata del codice scorre");
+        var be = [].find.call(G.document.querySelectorAll(".piede .btn"), function (b) { return /Entra/.test(b.textContent); });
+        if (!be || be.getBoundingClientRect().bottom > MS[mi][1] + 1) no(MS[mi].join("x") + ": «Entra ▶» non si vede");
+      }
+      fG.style.width = "360px"; fG.style.height = "740px"; G.dispatchEvent(new G.Event("resize"));
+      // tre lettere (minuscole: diventano maiuscole) e nessuna partenza
+      for (var k = 0; k < 3; k++) { batti(G, S[k].toLowerCase()); await W.dorme(150); }
+      if (inp.value !== S.slice(0, 3) || caselle(G) !== S.slice(0, 3)) no("dopo tre lettere il campo è «" + inp.value + "» e le caselle «" + caselle(G) + "»");
+      if (!G.document.querySelector(".codice4-caselle span:nth-child(4).attiva")) no("il cursore non è sulla quarta casella");
+      await W.dorme(400);
+      if (!G.document.querySelector("input.codice4-campo") || /Entro nella stanza/.test(W.testo(G))) no("con tre lettere è già partito");
+      // una "o": non entra, c'è l'avviso
+      batti(G, "o"); await W.dorme(100);
+      var av = G.document.querySelector(".codice4-avviso");
+      if (inp.value !== S.slice(0, 3)) no("la O è entrata («" + inp.value + "»)");
+      if (!av || av.textContent !== "Nei codici non ci sono O, I, 0 e 1" || !av.classList.contains("si")) no("dopo la «o» l'avviso è «" + (av && av.textContent) + "»");
+      // la quarta: si entra da soli, nella Sala e nella saletta del Tris
+      var t0 = Date.now();
+      batti(G, S[3].toLowerCase());
+      if (!await W.aspetta(function () { return dentro(G) && G.document.querySelector(".saletta-schermo") && vm(C).avvId === mioId("Giulia"); }, 6000)) no("alla quarta lettera Giulia non arriva nella saletta del Tris («" + T(G).slice(0, 80) + "»)");
+      var dtG = (Date.now() - t0) / 1000;
+      if (!idInSala(S, "Giulia")) no("Giulia non è tra i membri della Sala");
+      if (!G.__segno) no("l'app di Giulia si è ricaricata");
+      // Marco incolla il link della Sala
+      var M = await W.apriTel("Marco", { x: 370, salaSempre: true });
+      if (!await W.aspetta(function () { return home(M) && M.document.querySelector(".home-online"); }, 6000)) no("Marco non è in home");
+      await apriCodice(M, "Marco");
+      incolla(M, "https://paky358.github.io/speed-game/#sala=" + S);
+      if (!await W.aspetta(function () { return idInSala(S, "Marco") && M.document.querySelector(".saletta-schermo"); }, 6000)) no("col link incollato Marco non entra nella Sala («" + T(M).slice(0, 80) + "»)");
+      // Luca scrive ZZZZ
+      var L = await W.apriTel("Luca", { x: 555, salaSempre: true });
+      if (!await W.aspetta(function () { return home(L) && L.document.querySelector(".home-online"); }, 6000)) no("Luca non è in home");
+      await apriCodice(L, "Luca");
+      for (var z = 0; z < 3; z++) batti(L, "z");
+      var t1 = Date.now(); batti(L, "z");
+      var nonc = await W.aspetta(function () { return /Non trovo una partita con il codice ZZZZ/.test(W.testo(L)); }, 6000, 50);
+      if (!nonc) no("ZZZZ non risponde («" + T(L).slice(0, 80) + "»)");
+      var dt = (Date.now() - t1) / 1000;
+      if (dt > 3) no("ZZZZ risponde dopo " + dt.toFixed(1) + " s");
+      if (!W.clicca(L, /✏️ Riscrivi il codice/)) no("dopo «Non trovo…» non c'è «✏️ Riscrivi il codice»");
+      var inpL = await W.aspetta(function () { return L.document.querySelector("input.codice4-campo"); }, 2000);
+      if (!inpL || inpL.value !== "" || caselle(L) !== "") no("«Riscrivi il codice» non torna con le caselle vuote");
+      return "Giulia: 3 lettere ferme, «o» → avviso, alla quarta dentro la saletta del Tris in " + dtG.toFixed(1) + " s (Sala " + S + "); Marco dentro col link incollato; ZZZZ → «Non trovo…» in " + dt.toFixed(1) + " s, «Riscrivi» con le caselle vuote";
+    } },
+
+    // ---- Passo 2, p2-d: chi arriva ----
+    // 42. "Arrivano 3 su 4": nella Sala Paky, Giulia, Luca e Marco; Marco ha il telefono spento quando Paky lancia la
+    //     Scalinata: Paky e Giulia leggono "Arrivano: 3 su 4", c'è la sagoma grigia con "Marco…", il tasto dice
+    //     "▶ Comincia senza Marco"; Marco riaccende → entra da solo, "4 in sala", il tasto torna "Comincia ▶"
+    42: { nome: "«Arrivano: 3 su 4»: la sagoma di Marco, «▶ Comincia senza Marco», poi Marco entra da solo", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca", "Marco"]), S = A.S, P = A.w.Paky, G = A.w.Giulia;
+      W.spegni("Marco"); await W.dorme(300);
+      var C = await lanciaDallaSala("Paky", S, "La Scalinata");
+      if (!await W.aspetta(function () { return ids(C).length === 3; }, 8000)) no("Giulia e Luca non arrivano nella Scalinata (" + ids(C).join(",") + ")");
+      var go = function () { var b = P.document.querySelector(".sl-go"); return b ? b.textContent + (b.disabled ? " (spento)" : "") : ""; };
+      if (!await W.aspetta(function () { return contaSl(P) === "Arrivano: 3 su 4" && contaSl(G) === "Arrivano: 3 su 4"; }, 4000)) no("il contatore dice «" + contaSl(P) + "» (Paky) e «" + contaSl(G) + "» (Giulia)");
+      if (!/Marco…/.test(sagome(P)) || !/Marco…/.test(sagome(G))) no("la sagoma di Marco: «" + sagome(P) + "» (Paky), «" + sagome(G) + "» (Giulia)");
+      if (P.document.querySelectorAll(".sl-av.sl-atteso:not(.esce)").length !== 1) no("le sagome sono " + P.document.querySelectorAll(".sl-av.sl-atteso:not(.esce)").length);
+      if (go() !== "▶ Comincia senza Marco") no("il tasto di Paky dice «" + go() + "»");
+      var conRete = /📶/.test(sagome(P)) ? " (con 📶)" : "";
+      W.riaccendi("Marco");
+      if (!await W.aspetta(function () { return ids(C).length === 4 && dentro(W.finestra("Marco")); }, 8000)) no("Marco riacceso non entra da solo nella Scalinata («" + T(W.finestra("Marco")).slice(0, 80) + "»)");
+      if (!await W.aspetta(function () { return contaSl(P) === "4 in sala" && contaSl(G) === "4 in sala" && !sagome(P) && !sagome(G) && go() === "Comincia ▶"; }, 4000)) no("dopo l'arrivo di Marco: «" + contaSl(P) + "», sagome «" + sagome(P) + "», tasto «" + go() + "»");
+      if (!P.document.querySelector(".sl-go.invita")) no("arrivati tutti, il tasto non si accende");
+      return "«Arrivano: 3 su 4», sagoma «Marco…»" + conRete + ", «▶ Comincia senza Marco»; riacceso, Marco entra da solo: «4 in sala», «Comincia ▶» acceso";
+    } },
+
+    // 42b. Misure: sei nella Sala, due hanno il telefono spento quando parte Nomi, Cose e Città: quattro avatar e due sagome
+    //      stanno in uno schermo da 360x640 e 412x915 (host e ospite), niente scorre
+    "42b": { nome: "Sei nella Sala e due che mancano: tutto in uno schermo (360x640 e 412x915)", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca", "Marco", "Sara", "Bea"]), S = A.S, P = A.w.Paky, G = A.w.Giulia;
+      W.spegni("Sara"); W.spegni("Bea"); await W.dorme(300);
+      await lanciaDallaSala("Paky", S, "Nomi, Cose e Città");
+      if (!await W.aspetta(function () { return P.document.querySelectorAll(".sl-av:not(.sl-atteso):not(.va)").length === 4 && P.document.querySelectorAll(".sl-av.sl-atteso:not(.esce)").length === 2; }, 9000))
+        no("in saletta non ci sono 4 avatar e 2 sagome (" + P.document.querySelectorAll(".sl-av:not(.sl-atteso)").length + " e " + P.document.querySelectorAll(".sl-av.sl-atteso").length + ")");
+      if (!await W.aspetta(function () { return G.document.querySelectorAll(".sl-av.sl-atteso:not(.esce)").length === 2 && dentro(G); }, 4000)) no("Giulia non vede le 2 sagome");
+      var go = P.document.querySelector(".sl-go").textContent;
+      if (go !== "▶ Comincia senza 2") no("il tasto dice «" + go + "»");
+      if (contaSl(P) !== "Arrivano: 4 su 6") no("il contatore dice «" + contaSl(P) + "»");
+      var mis = [[360, 640], [412, 915]];
+      // (con la finestra del browser nascosta la stanza non si rimette a misura da sola quando si stringe il telefono: dopo aver
+      // cambiato misura, un cambio nella Sala (qui: "chi si ricollega", a vuoto) fa ridisporre la saletta di tutti e due)
+      async function aMisura(larg, alt) {
+        ["Paky", "Giulia"].forEach(function (n) { var f = document.getElementById("tel-" + n); var d = W.finestra(n).document;
+          if (!d.getElementById("senza-entrata")) { var x = d.createElement("style"); x.id = "senza-entrata"; x.textContent = ".schermata{ animation:none !important; } .sl-av, .sl-nome{ transition:none !important; }"; d.head.appendChild(x); }   // (come controllaSchermo)
+          f.style.width = larg + "px"; f.style.height = alt + "px"; void d.documentElement.offsetHeight; W.finestra(n).dispatchEvent(new (W.finestra(n).Event)("resize")); });
+        await W.dorme(400);
+        P.dispatchEvent(new P.CustomEvent("sg-forse", { detail: { stanza: S, id: "nessuno", forse: false } }));
+        await W.dorme(600);
+      }
+      for (var i = 0; i < mis.length; i++) {
+        await aMisura(mis[i][0], mis[i][1]);
+        var r = await controllaSchermo(P, "Paky", mis[i][0], mis[i][1], 6); if (r) no("Paky a " + mis[i].join("x") + ": " + r);
+        r = await controllaSchermo(G, "Giulia", mis[i][0], mis[i][1], 6); if (r) no("Giulia a " + mis[i].join("x") + ": " + r);
+      }
+      W.riaccendi("Sara"); W.riaccendi("Bea");
+      return "4 avatar + 2 sagome, «Arrivano: 4 su 6», «▶ Comincia senza 2»; niente scorre a 360x640 e 412x915 (Paky e Giulia)";
+    } },
+
+    // 43. Arriva a partita in corso: la Scalinata è cominciata in 3; Bea apre il link della Sala: resta nella Sala con
+    //     "🎮 Si gioca a La Scalinata · entri alla prossima" e "👀 Guarda" (non viene buttata dentro); alla "Nuova partita"
+    //     Bea è nella saletta senza toccare niente
+    43: { nome: "Arriva a partita in corso: «entri alla prossima» nella Sala, poi dentro da sola alla nuova partita", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca"]), S = A.S, P = A.w.Paky;
+      var C = await lanciaDallaSala("Paky", S, "La Scalinata");
+      if (!await W.aspetta(function () { return ids(C).length === 3; }, 8000)) no("non arrivano in 3 nella Scalinata");
+      W.clicca(P, /Comincia/, ".sl-go");
+      if (!await W.aspetta(function () { return vm(C).fase === "scelta" && vm(S).fase === "gioco"; }, 6000)) no("la partita non comincia (Scalinata «" + vm(C).fase + "», Sala «" + vm(S).fase + "»)");
+      var B = await W.apriTel("Bea", { hash: "sala=" + S, x: 555, salaSempre: true });
+      if (!await W.aspetta(function () { return idInSala(S, "Bea") && B.document.querySelector(".sl-incorso.prossima"); }, 8000)) no("Bea non vede «entri alla prossima» nella Sala («" + T(B).slice(0, 100) + "»)");
+      var box = B.document.querySelector(".sl-incorso.prossima").innerText.replace(/\s+/g, " ");
+      if (!/Si gioca a La Scalinata/.test(box) || !/entri alla prossima/.test(box) || !/👀 Guarda/.test(box)) no("il riquadro di Bea dice «" + box + "»");
+      await W.dorme(2500);
+      if (ids(C).indexOf(idInSala(S, "Bea")) >= 0 || W.reteDi("Bea")) no("Bea è stata buttata dentro la partita");
+      if (!/Sala online/.test(W.testo(B)) || !B.document.querySelector(".sl-incorso.prossima")) no("Bea non è più nella Sala («" + T(B).slice(0, 80) + "»)");
+      if (!await scalinataFinoAllaFine(C, ["Giulia", "Luca"], "Paky")) no("la Scalinata non finisce");
+      if (!await W.aspetta(function () { return vm(S).fase === "fine"; }, 4000)) no("la Sala non dice «fine» («" + vm(S).fase + "»)");
+      await W.dorme(600);
+      if (!B.document.querySelector(".sl-incorso.prossima")) no("a partita finita Bea non è più in attesa nella Sala («" + T(B).slice(0, 80) + "»)");
+      // (dal p2-f nella Sala la «Nuova partita» è «↻ Rivincita» dei tasti di fine del core)
+      if (!await W.aspetta(function () { return W.clicca(P, /Rivincita|Nuova partita/); }, 6000)) no("Paky non trova «↻ Rivincita»");
+      if (!await W.aspetta(function () { return dentro(B) && B.document.querySelector(".saletta-schermo") && ids(C).indexOf(idInSala(S, "Bea")) >= 0; }, 8000)) no("alla nuova partita Bea non è nella saletta («" + T(B).slice(0, 80) + "»)");
+      return "Bea nella Sala con «" + box + "»; alla «Nuova partita» è nella saletta della Scalinata senza toccare niente";
+    } },
+
+    // 44. Esce e non conta: Giulia esce dalla saletta della Scalinata (‹ → Sala): per Paky non è tra chi manca (niente
+    //     sagoma, "2 in sala"); "Rientra ▶" → la Sala la aspetta di nuovo ed è di nuovo nella saletta
+    44: { nome: "Chi esce apposta non conta tra chi manca; «Rientra ▶» lo rimette dentro", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca"]), S = A.S, P = A.w.Paky, G = A.w.Giulia;
+      var C = await lanciaDallaSala("Paky", S, "La Scalinata");
+      if (!await W.aspetta(function () { return ids(C).length === 3; }, 8000)) no("non arrivano in 3 nella Scalinata");
+      var idG = idInSala(S, "Giulia");
+      await W.aspetta(function () { return W.clicca(G, /‹/, ".testa button"); }, 3000);
+      if (!await W.aspetta(function () { return G.document.querySelector(".sl-incorso:not(.prossima)"); }, 5000)) no("Giulia non vede «Rientra ▶» nella Sala («" + T(G).slice(0, 80) + "»)");
+      if (!await W.aspetta(function () { return (vm(S).fuori || []).indexOf(idG) >= 0 && ids(C).length === 2; }, 5000)) no("la Sala non sa che Giulia è uscita (fuori: " + JSON.stringify(vm(S).fuori) + ", nel gioco " + ids(C).length + ")");
+      await W.dorme(500);
+      var sag = P.document.querySelectorAll(".sl-av.sl-atteso:not(.esce)").length, go = P.document.querySelector(".sl-go").textContent;
+      if (sag || contaSl(P) !== "2 in sala" || go !== "Comincia ▶") no("per Paky: " + sag + " sagome, «" + contaSl(P) + "», tasto «" + go + "»");
+      if (!W.clicca(G, /Rientra/, ".sl-incorso button")) no("non c'è «Rientra ▶»");
+      if (!await W.aspetta(function () { return (vm(S).fuori || []).indexOf(idG) < 0; }, 4000)) no("dopo «Rientra» la Sala la considera ancora fuori");
+      if (!await W.aspetta(function () { return ids(C).length === 3 && dentro(G); }, 8000)) no("dopo «Rientra» Giulia non torna nella saletta («" + T(G).slice(0, 80) + "»)");
+      if (!await W.aspetta(function () { return contaSl(P) === "3 in sala"; }, 3000)) no("per Paky il contatore dice «" + contaSl(P) + "»");
+      return "Giulia esce: per Paky niente sagoma, «2 in sala», «Comincia ▶»; «Rientra ▶» → la Sala la aspetta di nuovo, «3 in sala»";
+    } },
+
+    // 44b. Giulia ricarica la pagina a metà Scalinata della Sala: torna al suo posto nella partita (non resta nella Sala con
+    //      "entri alla prossima"): la Sala dice chi è dentro la stanza del gioco (nel)
+    "44b": { nome: "Giulia ricarica a metà Scalinata della Sala: torna al suo posto", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca"]), S = A.S, P = A.w.Paky;
+      var C = await lanciaDallaSala("Paky", S, "La Scalinata");
+      if (!await W.aspetta(function () { return ids(C).length === 3; }, 8000)) no("non arrivano in 3 nella Scalinata");
+      W.clicca(P, /Comincia/, ".sl-go");
+      if (!await W.aspetta(function () { return vm(C).fase === "scelta" && vm(S).fase === "gioco"; }, 6000)) no("la partita non comincia");
+      var idG = idInSala(S, "Giulia");
+      if (ids(C).indexOf(idG) < 0) no("Giulia ha un id nella Sala e un altro nel gioco");
+      if (!await W.aspetta(function () { return (vm(S).nel || []).indexOf(idG) >= 0; }, 3000)) no("la Sala non dice che Giulia è dentro il gioco (nel: " + JSON.stringify(vm(S).nel) + ")");
+      var vista = "";
+      var G = await W.ricarica("Giulia");
+      var spia = setInterval(function () { if (G.document.querySelector(".sl-incorso.prossima")) vista = "entri alla prossima"; }, 30);
+      var ok = await W.aspetta(function () { return /gradin/i.test(W.testo(G)) && !G.document.querySelector(".saletta-schermo") && mioId("Giulia") === idG; }, 10000);
+      clearInterval(spia);
+      if (!ok) no("dopo la ricarica Giulia non è nella partita («" + T(G).slice(0, 100) + "»)");
+      if (vista) no("dopo la ricarica Giulia ha visto «" + vista + "»");
+      if (ids(C).indexOf(idG) < 0) no("Giulia non ha più il suo posto (" + ids(C).join(",") + ")");
+      return "Giulia ricarica a metà Scalinata: torna nella partita col suo posto (id " + idG + ")";
+    } },
+
+    // 45. Regole visibili (p2-e): Linea del tempo dalla Sala con Giulia dentro: Giulia legge "📜 Si gioca così:" con le
+    //     categorie e le carte; Paky cambia le carte in ⚙️ → in meno di 1 s la riga di Giulia cambia e compare
+    //     "✨ Regole cambiate"; Marco che arriva dopo legge già le regole nuove (senza "cambiate"). Il tocco di Giulia apre il
+    //     foglio col riassunto e "📖 Come si gioca"; quello di Paky apre ⚙️ (con "📖 Come si gioca" in fondo).
+    //     Niente scorre a 360x640 e 412x915 (Paky e Giulia)
+    45: { nome: "Regole visibili: «📜 Si gioca così» per tutti, «✨ Regole cambiate», chi arriva dopo le legge già", fai: async function () {
+      var A = await salaConAmici(["Giulia"]), S = A.S, P = A.w.Paky, G = A.w.Giulia;
+      var C = await lanciaDallaSala("Paky", S, "La linea del tempo");
+      if (!await W.aspetta(function () { return ids(C, "giocatori").length === 2 && dentro(G); }, 8000)) no("Giulia non è nella saletta della Linea del tempo");
+      if (!await W.aspetta(function () { return regoleDi(G); }, 3000)) no("Giulia non vede la riga «📜 Si gioca così» («" + T(G).slice(0, 100) + "»)");
+      var r0 = regoleDi(G), rP = regoleDi(P);
+      if (!/5 carte/.test(r0) || !/categori/i.test(r0)) no("la riga di Giulia dice «" + r0 + "»");
+      if (rP !== r0) no("Paky legge «" + rP + "», Giulia «" + r0 + "»");
+      var rigaG = G.document.querySelector(".sl-regole-riga");
+      if (!/Si gioca così/.test(rigaG.textContent)) no("la riga di Giulia non dice «📜 Si gioca così»");
+      if (rigaG.compareDocumentPosition(G.document.querySelector(".sl-attesa")) !== 4) no("la riga di Giulia non sta sopra «Sei dentro»");
+      if (P.document.querySelector(".sl-nota").textContent) no("per Paky resta la nota «" + P.document.querySelector(".sl-nota").textContent + "» con la riga delle regole");
+      // Paky tocca la riga: si apre ⚙️, con "📖 Come si gioca" in fondo; + una carta, ✅ Fatto
+      P.document.querySelector(".sl-regole-riga").click(); await W.dorme(200);
+      var fo = P.document.querySelector(".sl-foglio");
+      if (!fo || !/Regole della partita/.test(fo.textContent)) no("il tocco di Paky sulla riga non apre ⚙️");
+      if (!W.clicca(P, /Come si gioca/, ".sl-foglio button")) no("nel ⚙️ non c'è «📖 Come si gioca»");
+      await W.dorme(100);
+      var come = fo.querySelector(".sl-come");
+      if (!come || come.hidden || come.textContent.length < 40) no("«📖 Come si gioca» non mostra le regole");
+      var bott = fo.querySelectorAll(".stepper button"); if (bott.length < 2) no("nel ⚙️ non c'è il numero di carte");
+      bott[1].click();
+      var t0 = Date.now();
+      W.clicca(P, /Fatto/, ".sl-foglio button");
+      if (!await W.aspetta(function () { return /6 carte/.test(regoleDi(G)) && rigaG.classList.contains("cambiate"); }, 3000)) no("la riga di Giulia non cambia («" + regoleDi(G) + "»)");
+      var ms = Date.now() - t0;
+      if (ms > 1000) no("le regole nuove arrivano a Giulia dopo " + ms + " ms");
+      if (!/6 carte/.test(regoleDi(P))) no("la riga di Paky dice «" + regoleDi(P) + "»");
+      if (!await W.aspetta(function () { return vm(C).carte === 6; }, 3000)) no("le regole nuove non arrivano nella partita (carte " + vm(C).carte + ")");
+      // dopo 2,5 s "✨ Regole cambiate" se ne va
+      await W.dorme(2700);
+      if (rigaG.classList.contains("cambiate")) no("«✨ Regole cambiate» resta più di 2,5 s");
+      // Marco arriva dopo: legge già le regole nuove, senza "cambiate"
+      var M = await W.apriTel("Marco", { hash: "sala=" + S, x: 370, salaSempre: true });
+      if (!await W.aspetta(function () { return dentro(M) && /6 carte/.test(regoleDi(M)); }, 9000)) no("Marco non legge le regole nuove («" + regoleDi(M) + "» · «" + T(M).slice(0, 80) + "»)");
+      if (M.document.querySelector(".sl-regole-riga").classList.contains("cambiate")) no("per Marco «✨ Regole cambiate» anche se è appena arrivato");
+      // Giulia tocca la riga: il foglio col riassunto intero e "📖 Come si gioca"
+      rigaG.click(); await W.dorme(200);
+      var fg = G.document.querySelector(".sl-foglio");
+      if (!fg || fg.querySelector(".sl-reg-tutto").textContent !== regoleDi(G)) no("il tocco di Giulia non apre il foglio col riassunto");
+      if (fg.querySelector(".stepper")) no("nel foglio di Giulia si possono cambiare le regole");
+      if (!W.clicca(G, /Come si gioca/, ".sl-foglio button")) no("nel foglio di Giulia non c'è «📖 Come si gioca»");
+      await W.dorme(100);
+      if (fg.querySelector(".sl-come").hidden) no("«📖 Come si gioca» di Giulia non si apre");
+      W.clicca(G, /Ho capito/, ".sl-foglio button"); await W.dorme(150);
+      if (G.document.querySelector(".sl-velo")) no("il foglio di Giulia non si chiude");
+      // le misure: niente scorre a 360x640 e 412x915 (Paky e Giulia, con la riga delle regole)
+      var mis = [[360, 640], [412, 915]];
+      for (var i = 0; i < mis.length; i++) {
+        ["Paky", "Giulia"].forEach(function (n) { var f = document.getElementById("tel-" + n), d = W.finestra(n).document;
+          if (!d.getElementById("senza-entrata")) { var x = d.createElement("style"); x.id = "senza-entrata"; x.textContent = ".schermata{ animation:none !important; } .sl-av, .sl-nome{ transition:none !important; }"; d.head.appendChild(x); }
+          f.style.width = mis[i][0] + "px"; f.style.height = mis[i][1] + "px"; void d.documentElement.offsetHeight; W.finestra(n).dispatchEvent(new (W.finestra(n).Event)("resize")); });
+        await W.dorme(400);
+        P.dispatchEvent(new P.CustomEvent("sg-forse", { detail: { stanza: S, id: "nessuno", forse: false } }));
+        await W.dorme(600);
+        var r = await controllaSchermo(P, "Paky", mis[i][0], mis[i][1], 3); if (r) no("Paky a " + mis[i].join("x") + ": " + r);
+        r = await controllaSchermo(G, "Giulia", mis[i][0], mis[i][1], 3); if (r) no("Giulia a " + mis[i].join("x") + ": " + r);
+        [[P, "Paky"], [G, "Giulia"]].forEach(function (x) { var rr = x[0].document.querySelector(".sl-regole-riga").getBoundingClientRect(); if (rr.height > 44 || rr.right > mis[i][0] + 1) no("la riga delle regole di " + x[1] + " a " + mis[i].join("x") + " è alta " + Math.round(rr.height) + " px"); });
+      }
+      return "«" + r0 + "» per Giulia e Paky; + una carta → Giulia in " + ms + " ms «" + regoleDi(G) + "» con «✨ Regole cambiate» (2,5 s); Marco arriva e legge già «6 carte»; fogli ok; niente scorre a 360x640 e 412x915";
+    } },
+
+    // 46. Fine uguale (p2-f): Tris nella Sala, Paky contro Giulia fino alla fine. Paky ha "↻ Rivincita" e "🎮 Cambia gioco",
+    //     Giulia "👍 Ci sto!" e "🏠 Torna in Sala"; Giulia tocca "Ci sto" → "✅ Ci stai!" e Paky legge "↻ Rivincita · 👍 1";
+    //     Rivincita → su tutti e due i telefoni il 3-2-1 senza altri tocchi (Giulia è già pronta) e la partita ricomincia
+    46: { nome: "Fine uguale (Tris nella Sala): Rivincita · 👍 1, 3-2-1 da solo", fai: async function () {
+      var A = await salaConAmici(["Giulia"]), S = A.S, P = A.w.Paky, G = A.w.Giulia;
+      var C = await lanciaDallaSala("Paky", S, "Tris");
+      if (!await W.aspetta(function () { return vm(C).avvId && dentro(G); }, 8000)) no("Giulia non entra nella saletta del Tris");
+      W.clicca(P, /Comincia/, ".sl-go");
+      if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 6000)) no("il Tris non comincia");
+      if (!await trisFinoAllaFine(C, "Paky", "Giulia")) no("il Tris non finisce");
+      if (!await W.aspetta(function () { return tastiFineDi(P) && tastiFineDi(G); }, 5000)) no("a fine partita mancano i tasti del core (Paky " + !!tastiFineDi(P) + ", Giulia " + !!tastiFineDi(G) + ")");
+      var tP = tastiFineDi(P).join(" | "), tG = tastiFineDi(G).join(" | ");
+      if (tP !== "↻ Rivincita | 🎮 Cambia gioco") no("Paky ha «" + tP + "»");
+      if (tG !== "👍 Ci sto! | 🏠 Torna in Sala") no("Giulia ha «" + tG + "»");
+      if (/Esci|Aspetta: la rivincita/.test(T(G))) no("Giulia ha anche i tasti di sempre («" + T(G).slice(-100) + "»)");
+      W.clicca(G, /Ci sto/, ".fine-tasti button");
+      if (!await W.aspetta(function () { return (tastiFineDi(G) || [])[0] === "✅ Ci stai!" && (tastiFineDi(P) || [])[0] === "↻ Rivincita · 👍 1"; }, 3000))
+        no("dopo «Ci sto»: Giulia «" + (tastiFineDi(G) || []).join(" | ") + "», Paky «" + (tastiFineDi(P) || []).join(" | ") + "»");
+      var vP = spiaVia(P), vG = spiaVia(G), prG = false, sp = setInterval(function () { if (G.document.querySelector(".sl-pronto.fatto")) prG = true; }, 25);
+      var t0 = Date.now();
+      W.clicca(P, /Rivincita/, ".fine-tasti button");
+      var ok = await W.aspetta(function () { return vm(C).fase === "gioco" && !(vm(C).board || []).filter(Boolean).length; }, 8000);
+      clearInterval(sp);
+      var viP = vP.stop(), viG = vG.stop();
+      if (!ok) no("dopo «Rivincita» la partita non ricomincia da sola («" + T(P).slice(0, 80) + "»)");
+      if (!viP || !viG) no("il 3-2-1 non si è visto (Paky " + viP + ", Giulia " + viG + ")");
+      if (!prG) no("nella saletta della rivincita Giulia non era già pronta");
+      if (vm(C).avvId !== idInSala(S, "Giulia")) no("nella rivincita l'avversario non è Giulia");
+      return "Paky «" + tP + "», Giulia «" + tG + "»; Ci sto → «👍 1»; Rivincita → Giulia già pronta, 3-2-1 su tutti e due e si gioca in " + ((Date.now() - t0) / 1000).toFixed(1) + " s, zero tocchi in più";
+    } },
+
+    // 46b. La fine con 6 nella Sala a misura (360x640 e 412x915): classifica di 6 (fitta da sola), faccine e i due tasti,
+    //      per Paky (Rivincita · Cambia gioco) e per Giulia (Ci sto · Torna in Sala). (La classifica la dà la spia del tavolo:
+    //      t.fine della Linea del tempo, con le schermate di fine del core)
+    "46b": { nome: "Fine con 6 nella Sala: niente scorre, i due tasti in vista", fai: async function () {
+      spiaTavolo();
+      var amici = ["Giulia", "Luca", "Marco", "Bea", "Sara"], w = { Paky: await W.apriTel("Paky", { x: 0, salaSempre: true, spiaTav: ["timeline"] }) };
+      var S = await apriSalaNuova("Paky");
+      for (var i = 0; i < amici.length; i++) w[amici[i]] = await W.apriTel(amici[i], { hash: "sala=" + S, x: 120 * (i + 1), salaSempre: true, spiaTav: ["timeline"] });
+      if (!await W.aspetta(function () { return ((vm(S).membri) || []).length === 6; }, 12000)) no("nella Sala non sono entrati in 6");
+      var C = await lanciaDallaSala("Paky", S, "La linea del tempo");
+      if (!await W.aspetta(function () { return ids(C, "giocatori").length === 6 && dentro(w.Giulia); }, 12000)) no("non sono in 6 nella saletta (" + ids(C, "giocatori").length + ")");
+      var cl = ["Paky", "Giulia", "Luca", "Marco", "Bea", "Sara"].map(function (n, k) { return { nome: n, punti: 12 - k * 2, pos: k + 1 }; });
+      if (!w.Paky.__tav || !w.Giulia.__tav) no("la spia del tavolo non c'è");
+      // (la Linea del tempo è ancora nella saletta: le sue foto non devono ridisegnarla sopra la classifica)
+      w.Paky.__tav.lobby = w.Giulia.__tav.lobby = function () { return null; };
+      w.Paky.__tav.fine(cl); w.Giulia.__tav.fine(cl);
+      if (!await W.aspetta(function () { return tastiFineDi(w.Paky) && tastiFineDi(w.Giulia); }, 4000)) no("niente tasti di fine (Paky «" + T(w.Paky).slice(0, 60) + "», Giulia «" + T(w.Giulia).slice(0, 60) + "»)");
+      var tP = tastiFineDi(w.Paky).join(" | "), tG = tastiFineDi(w.Giulia).join(" | ");
+      if (tP !== "↻ Rivincita | 🎮 Cambia gioco" || tG !== "👍 Ci sto! | 🏠 Torna in Sala") no("Paky «" + tP + "», Giulia «" + tG + "»");
+      if (!w.Paky.document.querySelector(".classifica.fitta") || !w.Giulia.document.querySelector(".classifica.fitta")) no("con 6 a 360x740 la classifica non è fitta");
+      if (!w.Paky.document.querySelector(".fine-faccine") || !w.Giulia.document.querySelector(".fine-faccine")) no("mancano le faccine sulla classifica");
+      var mP = await misureFine(w.Paky, "Paky"), mG = await misureFine(w.Giulia, "Giulia");
+      // Giulia ci sta: il conto arriva sul tasto di Paky senza ridisegnare la schermata
+      var nodo = w.Paky.document.querySelector(".fine-tasti .ft-primo");
+      W.clicca(w.Giulia, /Ci sto/, ".fine-tasti button");
+      if (!await W.aspetta(function () { return nodo.textContent === "↻ Rivincita · 👍 1"; }, 3000)) no("il tasto di Paky dice «" + nodo.textContent + "»");
+      if (!w.Paky.document.body.contains(nodo)) no("per il conto la schermata di Paky si è ridisegnata");
+      // la partita è finita col t.fine del gioco: "↻ Rivincita" rilancia lo stesso gioco (stesse regole) in una stanza nuova,
+      // tutti seguono la Sala, Giulia (ci sta) è già pronta, e quando ci sono tutti parte da solo il 3-2-1
+      var prG = false, sp = setInterval(function () { if (w.Giulia.document.querySelector(".sl-pronto.fatto")) prG = true; }, 25), vP = spiaVia(w.Paky);
+      W.clicca(w.Paky, /Rivincita/, ".fine-tasti button");
+      var C2 = await W.aspetta(function () { var c = vm(S).stanza; return c && c !== C ? c : null; }, 4000);
+      if (!C2) no("la Rivincita non apre la stanza nuova");
+      var ok = await W.aspetta(function () { return vm(C2).fase && vm(C2).fase !== "lobby"; }, 15000);
+      clearInterval(sp);
+      if (!ok) no("la rivincita non parte da sola (in saletta " + ids(C2, "giocatori").length + ", tasto «" + ((w.Paky.document.querySelector(".sl-go") || {}).textContent || "") + "»)");
+      if (!vP.stop()) no("niente 3-2-1 per Paky");
+      if (!prG) no("Giulia non era già pronta nella saletta nuova");
+      if (ids(C2, "giocatori").length !== 6) no("nella rivincita sono in " + ids(C2, "giocatori").length);
+      return "Paky «" + tP + "» e Giulia «" + tG + "», classifica di 6 fitta con le faccine: ok a " + mP + " (Paky) e " + mG + " (Giulia); «👍 1» sullo stesso tasto; Rivincita → stessa Linea del tempo in una stanza nuova, Giulia già pronta, 3-2-1 da solo in 6";
+    } },
+
+    // 47. Rivincita con uno uscito: Scalinata in 3 nella Sala fino alla fine, Luca tocca "🏠 Torna in Sala"; Paky "Rivincita" →
+    //     saletta con Giulia, niente 3-2-1 da solo, il tasto dice "▶ Comincia senza Luca"
+    47: { nome: "Rivincita con uno uscito: niente 3-2-1, «▶ Comincia senza Luca»", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca"]), S = A.S, P = A.w.Paky, G = A.w.Giulia, L = A.w.Luca;
+      var C = await lanciaDallaSala("Paky", S, "La Scalinata");
+      if (!await W.aspetta(function () { return ids(C).length === 3; }, 8000)) no("non arrivano in 3 nella Scalinata");
+      W.clicca(P, /Comincia/, ".sl-go");
+      if (!await scalinataFinoAllaFine(C, ["Giulia", "Luca"], "Paky")) no("la Scalinata non finisce");
+      if (!await W.aspetta(function () { return tastiFineDi(P) && tastiFineDi(L) && tastiFineDi(G); }, 6000)) no("mancano i tasti di fine (" + [P, G, L].map(function (x) { return !!tastiFineDi(x); }).join(",") + ")");
+      if (tastiFineDi(L).join(" | ") !== "👍 Ci sto! | 🏠 Torna in Sala") no("Luca ha «" + tastiFineDi(L).join(" | ") + "»");
+      var idL = idInSala(S, "Luca");
+      W.clicca(L, /Torna in Sala/, ".fine-tasti button");
+      if (!await W.aspetta(function () { return (vm(S).fuori || []).indexOf(idL) >= 0 && L.document.querySelector(".sl-incorso"); }, 5000)) no("Luca non è tornato nella Sala («" + T(L).slice(0, 80) + "»)");
+      var vP = spiaVia(P);
+      W.clicca(P, /Rivincita/, ".fine-tasti button");
+      if (!await W.aspetta(function () { return P.document.querySelector(".saletta-schermo") && dentro(G); }, 6000)) no("dopo «Rivincita» Paky e Giulia non sono nella saletta");
+      await W.dorme(2500);
+      if (vP.stop()) no("è partito il 3-2-1 anche se Luca è uscito");
+      var go = P.document.querySelector(".sl-go").textContent;
+      if (go !== "▶ Comincia senza Luca") no("il tasto di Paky dice «" + go + "»");
+      if (!L.document.querySelector(".sl-incorso") || ids(C).indexOf(idL) >= 0) no("Luca è stato riportato nella saletta («" + T(L).slice(0, 80) + "»)");
+      W.clicca(P, /Comincia senza Luca/, ".sl-go");
+      if (!await W.aspetta(function () { return vm(C).fase === "scelta"; }, 6000)) no("«Comincia senza Luca» non fa partire");
+      return "Luca torna in Sala; Rivincita → saletta con Giulia, niente 3-2-1, «" + go + "» → si gioca in 2";
+    } },
+
+    // 48. Cambia gioco porta tutti: fine della Scalinata (Giulia resta sulla classifica); Paky "🎮 Cambia gioco" → Giulia legge
+    //     "🎮 Si cambia gioco!" e nella Sala "Paky sceglie il prossimo gioco… 🎲"; Paky tocca la Linea del tempo e "Comincia":
+    //     Giulia e Luca sono in partita con zero tocchi. Tocchi dell'host tra un gioco e l'altro: 3
+    48: { nome: "Cambia gioco porta tutti: 3 tocchi dell'host, 0 degli amici", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca"]), S = A.S, P = A.w.Paky, G = A.w.Giulia, L = A.w.Luca;
+      var C = await lanciaDallaSala("Paky", S, "La Scalinata");
+      if (!await W.aspetta(function () { return ids(C).length === 3; }, 8000)) no("non arrivano in 3 nella Scalinata");
+      W.clicca(P, /Comincia/, ".sl-go");
+      if (!await scalinataFinoAllaFine(C, ["Giulia", "Luca"], "Paky")) no("la Scalinata non finisce");
+      if (!await W.aspetta(function () { return tastiFineDi(P) && tastiFineDi(G); }, 6000)) no("mancano i tasti di fine");
+      var pill = spiaTesto(G, /🎮 Si cambia gioco!/), sceglie = spiaTesto(G, /Paky sceglie il prossimo gioco… 🎲/), tocchi = 0;
+      // (gli amici non toccano niente da qui: si conta ogni tocco sui loro telefoni)
+      // (il copione non tocca mai i loro telefoni: si contano i tocchi a copione e quelli veri, non i click che fa l'app da sola)
+      var toccatiAmici = 0, cliccaVero = W.__cliccaVero || (W.__cliccaVero = W.clicca);
+      W.clicca = function (w) { if (w === G || w === L) toccatiAmici++; return cliccaVero.apply(this, arguments); };
+      [G, L].forEach(function (x) { x.document.addEventListener("pointerdown", function () { toccatiAmici++; }, true); });
+      if (W.clicca(P, /Cambia gioco/, ".fine-tasti button")) tocchi++;
+      if (!await W.aspetta(function () { return !vm(S).gioco && vm(S).sceglie; }, 4000)) no("la Sala non dice che Paky sta scegliendo (" + JSON.stringify({ gioco: vm(S).gioco, sceglie: vm(S).sceglie }) + ")");
+      if (!await W.aspetta(function () { return /sceglie il prossimo gioco/.test(T(G)) && /sceglie il prossimo gioco/.test(T(L)); }, 5000)) no("Giulia e Luca non leggono «Paky sceglie il prossimo gioco…» («" + T(G).slice(0, 80) + "»)");
+      var tess = await W.aspetta(function () { return tessera(P, "La linea del tempo"); }, 3000);
+      if (!tess) no("Paky non è nell'elenco dei giochi («" + T(P).slice(0, 80) + "»)");
+      tess.click(); tocchi++;
+      var C2 = await W.aspetta(function () { var c = codiceSaletta(P); return P.document.querySelector(".saletta-schermo") && c && c !== S && c !== C ? c : null; }, 6000);
+      if (!C2) no("dopo la tessera Paky non è nella saletta della Linea del tempo");
+      if (!await W.aspetta(function () { return ids(C2, "giocatori").length === 3 && dentro(G) && dentro(L); }, 9000)) no("Giulia e Luca non arrivano da soli nella saletta (" + ids(C2, "giocatori").length + ")");
+      if (!await W.aspetta(function () { return W.clicca(P, /^Comincia/, ".sl-go"); }, 4000)) no("Paky non trova «Comincia» («" + P.document.querySelector(".sl-go").textContent + "»)");
+      tocchi++;
+      if (!await W.aspetta(function () { return vm(C2).fase && vm(C2).fase !== "lobby" && !G.document.querySelector(".saletta-schermo") && !L.document.querySelector(".saletta-schermo"); }, 9000)) no("la Linea del tempo non comincia per tutti (fase " + vm(C2).fase + ")");
+      var vp = pill.stop(), vs = sceglie.stop();
+      if (!vp) no("Giulia non ha visto «🎮 Si cambia gioco!»");
+      if (!vs) no("Giulia non ha visto «Paky sceglie il prossimo gioco… 🎲»");
+      W.clicca = cliccaVero;
+      if (toccatiAmici) no("gli amici hanno toccato " + toccatiAmici + " volte");
+      if (tocchi !== 3) no("l'host ha toccato " + tocchi + " volte");
+      return "Cambia gioco → Giulia «" + vp + "» e «" + vs + "»; Linea del tempo e Comincia: tutti in partita; host 3 tocchi, amici 0";
+    } },
+
+    // 49. Fuori dalla Sala (sg-sala-sempre = "0"): fine di un Tris online: Paky "↻ Nuova partita (stessi amici)" e "🏠 Esci",
+    //     Giulia "👍 Ci sto!" e "🏠 Esci"; Nuova partita con tutti → 3-2-1 da solo. Alla fine dopo, Paky "🏠 Esci": Giulia resta
+    //     sulla classifica con "🚪 Paky ha chiuso la stanza" (niente "Collegamento perso") e "🏠 Esci" la porta a casa
+    49: { nome: "Fuori dalla Sala: Nuova partita (stessi amici) col 3-2-1, Esci che chiude senza errori", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "Tris");
+      var G = await W.apriTel("Giulia", { hash: "gioco=tris&stanza=" + C, x: 185 });
+      if (!await W.aspetta(function () { return vm(C).avvId && dentro(G); }, 6000)) no("Giulia non entra");
+      W.clicca(P, /Comincia/, ".sl-go");
+      if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 5000)) no("il Tris non comincia");
+      if (!await trisFinoAllaFine(C, "Paky", "Giulia")) no("il Tris non finisce");
+      if (!await W.aspetta(function () { return tastiFineDi(P) && tastiFineDi(G); }, 5000)) no("mancano i tasti di fine (Paky " + !!tastiFineDi(P) + ", Giulia " + !!tastiFineDi(G) + ")");
+      var tP = tastiFineDi(P).join(" | "), tG = tastiFineDi(G).join(" | ");
+      if (tP !== "↻ Nuova partita (stessi amici) | 🏠 Esci") no("Paky ha «" + tP + "»");
+      if (tG !== "👍 Ci sto! | 🏠 Esci") no("Giulia ha «" + tG + "»");
+      var mP = await misureFine(P, "Paky"), mG = await misureFine(G, "Giulia");
+      W.clicca(G, /Ci sto/, ".fine-tasti button");
+      if (!await W.aspetta(function () { return (tastiFineDi(P) || [])[0] === "↻ Nuova partita (stessi amici) · 👍 1"; }, 3000)) no("il tasto di Paky dice «" + (tastiFineDi(P) || []).join(" | ") + "»");
+      var vP = spiaVia(P), vG = spiaVia(G);
+      W.clicca(P, /Nuova partita/, ".fine-tasti button");
+      if (!await W.aspetta(function () { return vm(C).fase === "gioco" && !(vm(C).board || []).filter(Boolean).length; }, 8000)) no("la nuova partita non comincia da sola");
+      if (!vP.stop() || !vG.stop()) no("il 3-2-1 non si è visto su tutti e due");
+      if (!await trisFinoAllaFine(C, "Paky", "Giulia")) no("la seconda partita non finisce");
+      if (!await W.aspetta(function () { return tastiFineDi(P) && tastiFineDi(G); }, 5000)) no("alla seconda fine mancano i tasti");
+      var errore = spiaTesto(G, /Collegamento perso|La stanza è chiusa|Problema di collegamento/);
+      W.clicca(P, /Esci/, ".fine-tasti button");
+      if (!await W.aspetta(function () { return /Paky ha chiuso la stanza/.test(pill(G)); }, 5000)) no("Giulia non legge «🚪 Paky ha chiuso la stanza» (pillole: «" + pill(G) + "»)");
+      await W.dorme(800);
+      var e = errore.stop();
+      if (e) no("Giulia ha visto «" + e + "»");
+      var tG2 = (tastiFineDi(G) || []).join(" | ");
+      if (tG2 !== "🏠 Esci") no("dopo la chiusura Giulia ha «" + tG2 + "»");
+      if (!G.document.querySelector(".tr-cella")) no("la classifica di Giulia è stata coperta («" + T(G).slice(0, 80) + "»)");
+      W.clicca(G, /Esci/, ".fine-tasti button");
+      if (!await W.aspetta(function () { return home(G); }, 4000)) no("«🏠 Esci» non porta Giulia a casa");
+      return "Paky «" + tP + "», Giulia «" + tG + "» (misure " + mP + "); 👍 1 → Nuova partita col 3-2-1 da solo; Esci → Giulia «🚪 Paky ha chiuso la stanza», classifica e «🏠 Esci» restano";
+    } },
+
+    // 50. Il torneo dentro la Sala (p2-g): Sala con 3 (Sala nuova), ⚙️ → "🏆 Contiamo i punti" → la riga corta su tutti i
+    //     telefoni. Scalinata fino alla fine e poi Tris: i punti di ogni gioco sono quelli dei posti (100, 78, 62… per il peso
+    //     del gioco: Scalinata 2, Tris 1); a fine partita "🏆 Paky +… · …" sopra i tasti di chi ha giocato; la riga corta coi
+    //     primi tre; spegnere coi punti chiede conferma ("Resta" = resta acceso); il foglio → "🏁 Chiudi e premia" → podio su
+    //     tutti; "↻ Nuovo torneo" → punti a 0, stessa Sala e stesso codice, gli amici di nuovo nella Sala. Misure a 360x640 e 412x915
+    // (p2-z, 15 ott: la Classifica della serata è accesa da sola; nel ⚙️ solo «🔄 Azzera» e «🏁 Chiudi e premia»)
+    50: { nome: "Classifica della serata nella Sala: accesa da sola, riga corta, punti a fine partita, azzera, premia e Nuova classifica", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca"]), S = A.S, P = A.w.Paky, G = A.w.Giulia, L = A.w.Luca, tel = [P, G, L];
+      var corto = function (w) { var b = w.document.querySelector(".sl-torneo-corto"); return b ? b.querySelector(".sl-tc-testo").textContent : ""; };
+      var rigaPt = function (w) { var b = w && w.document.querySelector(".fine-tasti .ft-punti"); return b && !b.hidden ? b.textContent : ""; };
+      // la riga della Classifica della serata a fine partita: "🏆 Serata: Paky 1° · Luca 2° · Giulia 3° · …" (a pari punti lo stesso posto)
+      var rigaSerata = function (t) { var cl = t.nomi.map(function (n) { return { nome: n, punti: t.punti[n] || 0 }; }).sort(function (a, b) { return b.punti - a.punti; }), po = [];
+        cl.forEach(function (r, i) { po.push(i && r.punti === cl[i - 1].punti ? po[i - 1] : i + 1); });
+        return "🏆 Serata: " + cl.slice(0, 3).map(function (r, i) { return r.nome + " " + po[i] + "°"; }).join(" · ") + (cl.length > 3 ? " · …" : ""); };
+      var CURVA = [100, 78, 62, 50, 40, 32, 25, 19, 14, 10];
+      // i punti di una partita: per posto, peso del gioco compreso
+      function controllaPunti(ass, peso, gioco) {
+        if (!ass || !ass.length) no(gioco + ": nessun punto assegnato");
+        ass.forEach(function (a) { var giusto = Math.round(CURVA[a.pos - 1] * peso); if (a.punti !== giusto) no(gioco + ": " + a.nome + " " + a.pos + "° prende " + a.punti + " invece di " + giusto); });
+        if (!ass.some(function (a) { return a.pos === 1 && a.punti === 100 * peso; })) no(gioco + ": il primo non prende " + 100 * peso);
+      }
+      // 1) la Classifica della serata è già accesa (riga corta su tutti); nel ⚙️ niente interruttore, «🔄 Azzera» spento
+      if (!await W.aspetta(function () { return vm(S).torneo && tel.every(function (w) { return /Classifica della serata: ancora nessuna partita/.test(corto(w)); }); }, 5000))
+        no("la Classifica della serata non è accesa da sola su tutti («" + tel.map(corto).join(" / ") + "»)");
+      var bReg = P.document.querySelector(".saletta-schermo .sl-regole");
+      if (!bReg) no("nella Sala non c'è il ⚙️");
+      bReg.click();
+      var fog = await W.aspetta(function () { var f = P.document.querySelector(".sl-velo"); return f && /Classifica della serata/.test(f.textContent) && f; }, 2000);
+      if (!fog) no("nel ⚙️ della Sala non c'è «🏆 Classifica della serata»");
+      if (fog.querySelector(".sl-interruttore input")) no("nel ⚙️ c'è ancora l'interruttore (la classifica si spegne)");
+      var bAzz = [].find.call(fog.querySelectorAll("button"), function (b) { return /Azzera/.test(b.textContent); });
+      if (!bAzz || !bAzz.disabled) no("«🔄 Azzera» manca o è acceso senza partite");
+      if (!/Per far uscire qualcuno/.test(fog.textContent)) no("nel ⚙️ della Sala manca «Per far uscire qualcuno…»");
+      if (fog.querySelectorAll("[data-posto]").length !== 2 || [].some.call(fog.querySelectorAll("[data-posto]"), function (x) { return !x.hidden; })) no("i posti nascosti per Scegliamo insieme e la Compagnia non ci sono (o si vedono)");
+      W.clicca(P, /Fatto/, ".sl-velo button"); await W.dorme(200);
+      if (!/Sala online/.test(T(P))) no("col torneo il titolo non è più «Sala online»");
+      var misure = [];
+      for (var mi = 0; mi < 2; mi++) { var MS = [[360, 640], [412, 915]][mi]; for (var ti = 0; ti < 2; ti++) { var nm = ["Paky", "Giulia"][ti]; var e = await controllaSchermo(tel[ti], nm, MS[0], MS[1], 3); if (e) no(nm + " nella Sala a " + MS.join("x") + ": " + e); } misure.push(MS.join("x")); }
+      tel.forEach(function (w, i) { var f = document.getElementById("tel-" + ["Paky", "Giulia", "Luca"][i]); f.style.width = "360px"; f.style.height = "740px"; w.dispatchEvent(new w.Event("resize")); });
+      // 2) la Scalinata fino alla fine
+      var C = await lanciaDallaSala("Paky", S, "La Scalinata");
+      if (!await W.aspetta(function () { return ids(C).length === 3; }, 8000)) no("non arrivano in 3 nella Scalinata");
+      W.clicca(P, /Comincia/, ".sl-go");
+      if (!await scalinataFinoAllaFine(C, ["Giulia", "Luca"], "Paky")) no("la Scalinata non finisce");
+      var T1 = await W.aspetta(function () { var t = vm(S).torneo; return t && t.n === 1 && t; }, 6000);
+      if (!T1) no("il torneo non ha contato la Scalinata");
+      if (T1.ultima.stanza !== C) no("ultima.stanza è " + T1.ultima.stanza + " invece di " + C);
+      controllaPunti(T1.ultima.assegnati, 2, "Scalinata");
+      var attesaS = rigaSerata(T1);
+      if (!await W.aspetta(function () { return tel.every(function (w) { return rigaPt(w) === attesaS; }); }, 6000))
+        no("a fine Scalinata la riga della serata sopra i tasti non è «" + attesaS + "» su tutti («" + tel.map(rigaPt).join(" / ") + "»)");
+      var mf = await misureFine(P, "Paky") + " / " + await misureFine(G, "Giulia");
+      // 3) Cambia gioco → Tris (giocano Paky e chi arriva prima; il terzo guarda)
+      W.clicca(P, /Cambia gioco/, ".fine-tasti button");
+      var tess = await W.aspetta(function () { return tessera(P, "Tris"); }, 4000);
+      if (!tess) no("dopo «Cambia gioco» Paky non è nell'elenco dei giochi");
+      tess.click();
+      await passaChiGioca(P);   // (in 3 il Tris apre «Chi gioca?»: si gioca con chi è già scelto, p2-h)
+      var C2 = await W.aspetta(function () { var c = codiceSaletta(P); return P.document.querySelector(".saletta-schermo") && c && c !== S && c !== C ? c : null; }, 6000);
+      if (!C2) no("Paky non è nella saletta del Tris");
+      var avvId = await W.aspetta(function () { return vm(C2).avvId; }, 8000);
+      if (!avvId) no("nessun avversario nel Tris");
+      var avv = (vm(S).membri || []).filter(function (m) { return m.id === avvId; })[0];
+      if (!avv) no("l'avversario del Tris non è uno della Sala");
+      var Aw = W.finestra(avv.nome === "Giulia" ? "Giulia" : "Luca");
+      await W.dorme(600);
+      W.clicca(P, /Comincia/, ".sl-go");
+      if (!await W.aspetta(function () { return vm(C2).fase === "gioco"; }, 6000)) no("il Tris non comincia");
+      if (!await trisFinoAllaFine(C2, "Paky", avv.nome === "Giulia" ? "Giulia" : "Luca")) no("il Tris non finisce");
+      var T2 = await W.aspetta(function () { var t = vm(S).torneo; return t && t.n === 2 && t; }, 6000);
+      if (!T2) no("il torneo non ha contato il Tris");
+      if (T2.ultima.stanza !== C2) no("ultima.stanza del Tris è " + T2.ultima.stanza);
+      controllaPunti(T2.ultima.assegnati, 1, "Tris");
+      var attesaT = rigaSerata(T2);
+      if (!await W.aspetta(function () { return rigaPt(P) === attesaT && rigaPt(Aw) === attesaT; }, 6000))
+        no("a fine Tris la riga non è «" + attesaT + "» (Paky «" + rigaPt(P) + "», " + avv.nome + " «" + rigaPt(Aw) + "»)");
+      // i totali sono la somma delle due partite
+      var somma = {};
+      T1.ultima.assegnati.concat(T2.ultima.assegnati).forEach(function (a) { if (T2.nomi.indexOf(a.nome) < 0) return; somma[a.nome] = (somma[a.nome] || 0) + a.punti; });
+      Object.keys(somma).forEach(function (n) { if (T2.punti[n] !== somma[n]) no("i punti di " + n + " sono " + T2.punti[n] + " invece di " + somma[n]); });
+      // 4) di nuovo nella Sala: la riga corta coi primi tre
+      W.clicca(P, /Cambia gioco/, ".fine-tasti button");
+      await W.aspetta(function () { return tessera(P, "Tris"); }, 4000);
+      W.clicca(P, /‹/, ".testa button");
+      var primi = T2.nomi.map(function (n) { return { n: n, p: somma[n] || 0 }; }).sort(function (a, b) { return b.p - a.p; }).slice(0, 3);
+      var attesaC = "🏆 " + primi.map(function (r) { return r.n + " " + r.p; }).join(" · ");
+      if (!await W.aspetta(function () { return tel.every(function (w) { return corto(w) === attesaC; }); }, 6000)) no("nella Sala la riga corta non è «" + attesaC + "» («" + tel.map(corto).join(" / ") + "»)");
+      // la riga corta si aggiorna senza rifarsi: lo stesso nodo
+      var nodoG = G.document.querySelector(".sl-torneo-corto");
+      // 5) «🔄 Azzera» coi punti chiede conferma: "Resta" = i punti restano (i telefoni finti dicono sì da soli: qui si ferma un attimo)
+      fermaSiDaSolo();
+      P.document.querySelector(".saletta-schermo .sl-regole").click();
+      var bAz = await W.aspetta(function () { var f = P.document.querySelector(".sl-velo"); return f && [].find.call(f.querySelectorAll("button"), function (b) { return /Azzera/.test(b.textContent) && !b.disabled; }); }, 2000);
+      if (!bAz) no("nel ⚙️ «🔄 Azzera» non si accende dopo le partite");
+      bAz.click();
+      var conf = await W.aspetta(function () { var c = P.document.querySelector(".conferma-sfondo"); return c && /Azzerare la classifica/.test(c.textContent) && c; }, 2000);
+      if (!conf) no("«Azzera» non chiede conferma");
+      await W.dorme(900); W.clicca(P, /^Resta$/, ".conferma-sfondo button"); await W.dorme(300);
+      riprendiSiDaSolo();
+      if (!vm(S).torneo || vm(S).torneo.n !== 2) no("dopo «Resta» la classifica si è azzerata");
+      W.clicca(P, /Fatto/, ".sl-velo button"); await W.dorme(300);
+      // 6) il foglio della classifica: per chi entra niente «Chiudi e premia»; per l'host sì → podio su tutti
+      G.document.querySelector(".sl-torneo-corto").click();
+      var fG = await W.aspetta(function () { return G.document.querySelector(".sl-velo"); }, 2000);
+      if (!fG || G.document.querySelectorAll(".sl-velo .classifica li").length !== 3) no("il foglio di Giulia non ha la classifica intera");
+      if (/Chiudi e premia/.test(fG.textContent)) no("Giulia ha «Chiudi e premia»");
+      if (!/Ultima partita: .*Tris/.test(fG.textContent)) no("nel foglio manca «Ultima partita: Tris…»");
+      W.clicca(G, /Ok/, ".sl-velo button");
+      P.document.querySelector(".sl-torneo-corto").click();
+      var chiede = spiaTesto(P, /Chiudere la serata e premiare?/);
+      if (!await W.aspetta(function () { return W.clicca(P, /Chiudi e premia/, ".sl-velo button"); }, 2000)) no("l'host non ha «🏁 Chiudi e premia»");
+      // (la conferma la tocca il telefono finto: «🏁 Premia» appena si accende)
+      if (!await W.aspetta(function () { return tel.every(function (w) { return /Fine della serata!/.test(T(w)); }); }, 6000)) no("il podio non arriva su tutti («" + tel.map(function (w) { return T(w).slice(0, 30); }).join(" / ") + "»)");
+      if (!chiede.stop()) no("«Chiudi e premia» non ha chiesto «Chiudere la serata e premiare?»");
+      if (!new RegExp("👑 " + primi[0].n).test(T(G).replace(/\s+/g, " ")) && T(G).indexOf(primi[0].n) < 0) no("sul podio di Giulia non c'è il campione " + primi[0].n);
+      // 7) "↻ Nuova classifica": punti a 0, stessa Sala e stesso codice, tutti di nuovo nella Sala
+      if (!W.clicca(P, /Nuova classifica/)) no("l'host non ha «↻ Nuova classifica»");
+      if (!await W.aspetta(function () { var t = vm(S).torneo; return t && t.n === 0 && !t.finito && !Object.keys(t.punti).length; }, 4000)) no("la classifica nuova non riparte da 0");
+      if (!await W.aspetta(function () { return tel.every(function (w) { return /ancora nessuna partita/.test(corto(w)) && w.document.querySelector(".saletta-schermo"); }); }, 6000))
+        no("dopo «Nuova classifica» non sono tutti nella Sala con la riga a 0 («" + tel.map(corto).join(" / ") + "»)");
+      if (codiceTestata(P) !== S || codiceSala() !== S) no("dopo «Nuovo torneo» il codice è cambiato");
+      if ((vm(S).membri || []).length !== 3) no("dopo «Nuovo torneo» nella Sala sono in " + (vm(S).membri || []).length);
+      if (G.document.querySelector(".sl-torneo-corto") !== nodoG) no("la riga corta di Giulia si è rifatta (non è più lo stesso pezzo)");
+      return "accesa da sola, riga corta su tutti (Sala a " + misure.join(", ") + "); Scalinata «" + attesaS + "», Tris (Paky-" + avv.nome + ") «" + attesaT + "» sopra i tasti (fine a " + mf + "); Sala «" + attesaC + "»; Azzera chiede conferma; premia → podio su tutti; Nuova classifica → 0, stessa Sala " + S;
+    } },
+
+    // ===== p2-h: "Chi gioca a Tris?" e i giochi coi posti contati =====
+    // 51. Sala con 5, Tris: "Chi gioca a Tris?" con già scelti Paky e Giulia; un tocco su Luca → giocano Paky e Luca, gli altri
+    //     tre guardano (nessun "Tu" né "Tocca a te"); a fine partita "⚔️ Altra sfida" propone Giulia e Marco
+    51: { nome: "Chi gioca a Tris con 5: si sceglie con un tocco, gli altri guardano, Altra sfida propone chi non ha giocato", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca", "Marco", "Bea"]), S = A.S, P = A.w.Paky, w = A.w;
+      var r = await toccaGiocoSala(P, "Tris");
+      if (!/In 2/.test(r.etichetta)) no("nell'elenco il Tris dice «" + r.etichetta + "»");
+      var etS = r.tutte || [];
+      if (!etS.some(function (x) { return /^La Scalinata: Max 4: gioca chi scegli$/.test(x); })) no("con 5 la Scalinata non dice «Max 4: gioca chi scegli» (" + etS.join(" · ") + ")");
+      if (!etS.some(function (x) { return /: Fino a (8|10)$/.test(x); })) no("nessun gioco dice «Fino a 8» o «Fino a 10»");
+      if (r.dove !== "chi") no("toccato il Tris con 5 nella Sala, non si apre «Chi gioca?» («" + T(P).slice(0, 80) + "»)");
+      if (!/Chi gioca a Tris\?/.test(T(P))) no("il titolo non è «Chi gioca a Tris?»");
+      var sc = chiGioca(P).join(",");
+      if (sc !== "Paky,Giulia") no("già scelti: «" + sc + "» invece di Paky e Giulia");
+      if (!/Gli altri guardano: Luca, Marco, Bea/.test(T(P))) no("sotto non c'è «👀 Gli altri guardano: Luca, Marco, Bea» («" + T(P).slice(-120) + "»)");
+      var mis = await misureChi(P, "Paky");
+      var nodo = P.document.querySelector(".chi-gioca");
+      toccaChi(P, "Luca");
+      sc = chiGioca(P).join(",");
+      if (sc !== "Paky,Luca") no("toccato Luca, scelti «" + sc + "» (doveva prendere il posto di Giulia)");
+      if (P.document.querySelector(".chi-gioca") !== nodo) no("al tocco la schermata si è rifatta (lampeggio)");
+      if (!W.clicca(P, /Si gioca/, ".piede button")) no("non c'è «▶ Si gioca»");
+      var C = await W.aspetta(function () { var c = codiceSaletta(P); return P.document.querySelector(".saletta-schermo") && c && c !== S ? c : null; }, 6000);
+      if (!C) no("dopo «Si gioca» Paky non è nella saletta del Tris");
+      var idL = idInSala(S, "Luca");
+      if (!await W.aspetta(function () { return vm(C).avvId === idL && dentro(w.Luca); }, 10000)) no("l'avversario non è Luca (avvId " + vm(C).avvId + ", Luca " + idL + ")");
+      await W.aspetta(function () { return ["Giulia", "Marco", "Bea"].every(function (n) { return w[n].document.querySelector(".saletta-schermo"); }); }, 6000);
+      var sbagli = [];
+      ["Giulia", "Marco", "Bea"].forEach(function (n) {
+        if (dentro(w[n])) sbagli.push(n + " legge «Sei dentro»");
+        if (w[n].document.querySelector(".sl-nome.tu")) sbagli.push(n + " si vede «Tu»");
+      });
+      if (/Arrivano/.test(contaSl(P))) sbagli.push("Paky legge «" + contaSl(P) + "» (chi guarda non è chi manca)");
+      W.clicca(P, /Comincia/, ".sl-go");
+      if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 6000)) no("il Tris non comincia");
+      if (vm(C).turno === "X") { var c0 = P.document.querySelectorAll(".tr-cella")[4]; if (c0) c0.click(); }
+      await W.aspetta(function () { return vm(C).turno === "O"; }, 3000); await W.dorme(600);
+      ["Giulia", "Marco", "Bea"].forEach(function (n) { if (/Tocca a te/.test(W.testo(w[n]))) sbagli.push(n + " (guarda) legge «Tocca a te»"); });
+      if (sbagli.length) no(sbagli.join("; "));
+      if (!await trisFinoAllaFine(C, "Paky", "Luca")) no("il Tris non finisce");
+      if (!await W.aspetta(function () { return (tastiFineDi(P) || []).length === 3; }, 5000)) no("a fine Tris Paky ha «" + (tastiFineDi(P) || []).join(" | ") + "»");
+      var tP = tastiFineDi(P).join(" | ");
+      if (tP !== "↻ Rivincita | ⚔️ Altra sfida | 🎮 Cambia gioco") no("Paky ha «" + tP + "»");
+      var mf = await misureFine(P, "Paky");
+      var gi = vm(S).giocate || {};
+      if (gi.Paky !== 1 || gi.Luca !== 1 || gi.Giulia) no("partite giocate nella Sala: " + JSON.stringify(gi));
+      W.clicca(P, /Altra sfida/, ".fine-tasti button");
+      if (!await W.aspetta(function () { return chiGioca(P); }, 4000)) no("«Altra sfida» non apre «Chi gioca?» («" + T(P).slice(0, 80) + "»)");
+      var sc2 = chiGioca(P).join(",");
+      if (sc2 !== "Giulia,Marco") no("«Altra sfida» propone «" + sc2 + "» invece di Giulia e Marco");
+      if (!await W.aspetta(function () { return !vm(S).gioco && /sceglie chi gioca/.test(W.testo(w.Giulia)) && w.Luca.document.querySelector(".saletta-schermo") && /Sala/.test(W.testo(w.Luca)); }, 6000))
+        no("dopo «Altra sfida» gli amici non sono nella Sala con «Paky sceglie chi gioca…» (Giulia «" + T(w.Giulia).slice(0, 80) + "»)");
+      return "«Chi gioca a Tris?» con Paky e Giulia già scelti (" + mis + "); un tocco su Luca → Paky-Luca, Giulia, Marco e Bea guardano; fine «" + tP + "» (" + mf + "); Altra sfida → Giulia e Marco; etichette: " + etS.filter(function (x) { return /Max|Fino|Servono|In 2/.test(x); }).slice(0, 4).join(" · ");
+    } },
+
+    // 52. Duello senza host: Paky sceglie Giulia e Luca. La partita la apre il telefono di Giulia, Luca gioca, Paky e Marco
+    //     guardano (Paky con "👥 Sala" in alto); a fine partita l'esito arriva alla Sala (torneo acceso: punti a Giulia e Luca),
+    //     Paky ha "⚔️ Altra sfida" e "🎮 Cambia gioco", Marco "🏠 Torna in Sala"; "Cambia gioco" porta via tutti
+    52: { nome: "Duello senza host: lo apre Giulia, Luca gioca, Paky e Marco guardano; esito alla Sala, Altra sfida e Cambia gioco", fai: async function () {
+      var tasti52 = function (w) { var t = tastiFineDi(w); return t ? t.filter(function (x) { return !/^🏆/.test(x); }) : null; };   // (senza la riga dei punti)
+      var A = await salaConAmici(["Giulia", "Luca", "Marco"]), S = A.S, P = A.w.Paky, G = A.w.Giulia, L = A.w.Luca, M = A.w.Marco;
+      // la Classifica della serata è accesa da sola (p2-z)
+      if (!await W.aspetta(function () { return vm(S).torneo; }, 3000)) no("la Classifica della serata non è accesa");
+      var r = await toccaGiocoSala(P, "Tris");
+      if (r.dove !== "chi") no("non si apre «Chi gioca?»");
+      toccaChi(P, "Paky"); toccaChi(P, "Luca");
+      var sc = chiGioca(P).join(",");
+      if (sc !== "Giulia,Luca") no("scelti «" + sc + "» invece di Giulia e Luca");
+      if (!/Gli altri guardano: tu, Marco/.test(T(P))) no("sotto non c'è «Gli altri guardano: tu, Marco»");
+      W.clicca(P, /Si gioca/, ".piede button");
+      var D = await W.aspetta(function () { return vm(S).duello; }, 4000);
+      if (!D) no("nella Sala non c'è il duello");
+      var C = D.stanza;
+      if (D.a !== idInSala(S, "Giulia") || D.b !== idInSala(S, "Luca")) no("il duello è " + D.na + "-" + D.nb);
+      // la stanza la apre Giulia (host del gioco), Luca entra con l'id della Sala
+      if (!await W.aspetta(function () { return vm(C).avvId === D.b; }, 10000)) no("nel duello Luca non è l'avversario (avvId " + vm(C).avvId + ")");
+      if (!await W.aspetta(function () { return G.document.querySelector(".saletta-schermo .sl-go"); }, 6000)) no("Giulia non ha la saletta da host del duello");
+      if (!await W.aspetta(function () { return P.document.querySelector(".tab-sala") && M.document.querySelector(".tab-sala"); }, 6000)) no("Paky e Marco non hanno «👥 Sala» in alto (Paky «" + T(P).slice(0, 60) + "»)");
+      W.clicca(G, /Comincia/, ".sl-go");
+      if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 6000)) no("il duello non comincia");
+      // chi guarda vede la partita e non può toccare
+      if (!await W.aspetta(function () { return P.document.querySelectorAll(".tr-cella").length === 9 && M.document.querySelectorAll(".tr-cella").length === 9; }, 6000)) no("Paky e Marco non vedono il campo del Tris");
+      if (/Tocca a te/.test(W.testo(P) + W.testo(M))) no("chi guarda legge «Tocca a te»");
+      // "👥 Sala": Paky torna nella Sala senza fermare il duello, poi «👀 Guarda» lo riporta a guardare
+      P.document.querySelector(".tab-sala").click();
+      if (!await W.aspetta(function () { return P.document.querySelector(".sl-duello"); }, 4000)) no("dopo «👥 Sala» Paky non vede «⚔️ Giulia e Luca giocano a Tris»");
+      if (vm(C).fase !== "gioco" || !vm(S).duello) no("tornato nella Sala, il duello si è fermato");
+      W.clicca(P, /Guarda/, ".sl-duello button");
+      if (!await W.aspetta(function () { return P.document.querySelectorAll(".tr-cella").length === 9; }, 6000)) no("«👀 Guarda» non riporta Paky a guardare");
+      if (!await trisFinoAllaFine(C, "Giulia", "Luca")) no("il duello non finisce");
+      var T1 = await W.aspetta(function () { var t = vm(S).torneo; return t && t.n === 1 && t; }, 6000);
+      if (!T1) no("l'esito del duello non arriva al torneo della Sala");
+      var nomi = T1.ultima.assegnati.map(function (a) { return a.nome + " +" + a.punti; }).join(" · ");
+      if (!/Giulia \+/.test(nomi) || !/Luca \+/.test(nomi) || /Paky|Marco/.test(nomi)) no("punti del duello: «" + nomi + "»");
+      if (T1.ultima.stanza !== C) no("ultima.stanza " + T1.ultima.stanza + " invece di " + C);
+      var gi = vm(S).giocate || {};
+      if (gi.Giulia !== 1 || gi.Luca !== 1 || gi.Paky || gi.Marco) no("giocate: " + JSON.stringify(gi));
+      if (!await W.aspetta(function () { return (tasti52(P) || []).join(" | ") === "⚔️ Altra sfida | 🎮 Cambia gioco"; }, 6000)) no("a fine duello Paky ha «" + (tasti52(P) || []).join(" | ") + "» («" + T(P).slice(0, 80) + "»)");
+      if (!await W.aspetta(function () { return (tasti52(M) || []).join(" | ") === "🏠 Torna in Sala"; }, 6000)) no("a fine duello Marco ha «" + (tasti52(M) || []).join(" | ") + "»");
+      if (!await W.aspetta(function () { return (tasti52(G) || []).join(" | ") === "↻ Rivincita | 🏠 Torna in Sala" && (tasti52(L) || []).join(" | ") === "👍 Ci sto! | 🏠 Torna in Sala"; }, 6000))
+        no("fine duello: Giulia «" + (tasti52(G) || []).join(" | ") + "», Luca «" + (tasti52(L) || []).join(" | ") + "»");
+      var rigaP = await W.aspetta(function () { var b = P.document.querySelector(".fine-tasti .ft-punti"); return b && !b.hidden ? b.textContent : ""; }, 4000);
+      if (!rigaP) no("sopra i tasti di Paky non c'è la riga dei punti");
+      var mf = await misureFine(P, "Paky") + " / " + await misureFine(M, "Marco");
+      // la rivincita del duello: Paky e Marco tornano a guardare da soli
+      W.clicca(L, /Ci sto/, ".fine-tasti button");
+      await W.dorme(300);
+      W.clicca(G, /Rivincita/, ".fine-tasti button");
+      if (!await W.aspetta(function () { return vm(C).fase === "gioco" && !(vm(C).board || []).filter(Boolean).length; }, 10000)) no("la rivincita del duello non riparte col 3-2-1");
+      if (!await W.aspetta(function () { return P.document.querySelectorAll(".tr-cella").length === 9 && M.document.querySelectorAll(".tr-cella").length === 9; }, 6000)) no("con la rivincita Paky e Marco non tornano a guardare");
+      if (!await trisFinoAllaFine(C, "Giulia", "Luca")) no("la rivincita non finisce");
+      if (!await W.aspetta(function () { var t = vm(S).torneo; return t && t.n === 2; }, 6000)) no("la rivincita non conta nel torneo");
+      if (!await W.aspetta(function () { return (tasti52(P) || [])[1] === "🎮 Cambia gioco"; }, 6000)) no("dopo la rivincita Paky non ha i tasti di fine");
+      // "Cambia gioco" porta via tutti
+      W.clicca(P, /Cambia gioco/, ".fine-tasti button");
+      var inSala = function (w) { return w.document.querySelector(".saletta-schermo") && /Sala/.test(W.testo(w)) && !w.document.querySelector(".tr-cella"); };
+      if (!await W.aspetta(function () { return tessera(P, "Tris") && !vm(S).gioco && !vm(S).duello && inSala(G) && inSala(L) && inSala(M); }, 8000))
+        no("«Cambia gioco» non porta tutti nella Sala (Giulia «" + T(G).slice(0, 50) + "», Luca «" + T(L).slice(0, 50) + "», Marco «" + T(M).slice(0, 50) + "»)");
+      return "duello " + C + " aperto da Giulia, Luca avversario, Paky e Marco guardano («👥 Sala» e ritorno ok); esito alla Sala «" + nomi + "», riga «" + rigaP + "»; fine Paky «⚔️ Altra sfida | 🎮 Cambia gioco», Marco «🏠 Torna in Sala» (" + mf + "); rivincita: si torna a guardare da soli; Cambia gioco porta via tutti";
+    } },
+
+    // 52b. Duello: Marco (guarda) torna nella Sala con «👥 Sala» e rientra con «👀 Guarda»; a fine partita chi l'ha aperto
+    //      (Giulia) tocca «🏠 Torna in Sala»: il duello finisce per tutti, tutti nella Sala, niente «Collegamento perso»
+    "52b": { nome: "Duello: chi guarda va e torna, chi l'ha aperto torna in Sala e porta via tutti", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca", "Marco"]), S = A.S, P = A.w.Paky, G = A.w.Giulia, L = A.w.Luca, M = A.w.Marco;
+      var r = await toccaGiocoSala(P, "Tris");
+      if (r.dove !== "chi") no("non si apre «Chi gioca?»");
+      toccaChi(P, "Paky"); toccaChi(P, "Luca"); W.clicca(P, /Si gioca/, ".piede button");
+      var D = await W.aspetta(function () { return vm(S).duello; }, 4000); if (!D) no("niente duello");
+      var C = D.stanza, errori = [spiaTesto(L, /Collegamento perso|Ops/), spiaTesto(M, /Collegamento perso|Ops/), spiaTesto(P, /Collegamento perso|Ops/)];
+      if (!await W.aspetta(function () { return vm(C).avvId === D.b && M.document.querySelector(".tab-sala"); }, 10000)) no("il duello non si apre (Marco «" + T(M).slice(0, 60) + "»)");
+      M.document.querySelector(".tab-sala").click();
+      var box = await W.aspetta(function () { return M.document.querySelector(".sl-duello"); }, 4000);
+      if (!box || !/Giulia e Luca giocano a Tris/.test(box.textContent)) no("Marco nella Sala non vede «⚔️ Giulia e Luca giocano a Tris» («" + T(M).slice(0, 100) + "»)");
+      W.clicca(M, /Guarda/, ".sl-duello button");
+      if (!await W.aspetta(function () { return M.document.querySelector(".tab-sala"); }, 6000)) no("«👀 Guarda» non riporta Marco al duello");
+      W.clicca(G, /Comincia/, ".sl-go");
+      if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 6000)) no("il duello non comincia");
+      if (!await trisFinoAllaFine(C, "Giulia", "Luca")) no("il duello non finisce");
+      if (!await W.aspetta(function () { return (tastiFineDi(G) || []).indexOf("🏠 Torna in Sala") >= 0; }, 6000)) no("Giulia non ha «🏠 Torna in Sala»");
+      W.clicca(G, /Torna in Sala/, ".fine-tasti button");
+      var inSala = function (w) { return w.document.querySelector(".saletta-schermo") && /Sala/.test(W.testo(w)) && !w.document.querySelector(".tr-cella") && !w.document.querySelector(".fine-tasti"); };
+      if (!await W.aspetta(function () { return !vm(S).duello && !vm(S).gioco && inSala(P) && inSala(G) && inSala(L) && inSala(M); }, 8000))
+        no("Giulia è tornata in Sala ma non tutti sono nella Sala (Paky «" + T(P).slice(0, 50) + "», Luca «" + T(L).slice(0, 50) + "», Marco «" + T(M).slice(0, 50) + "»)");
+      await W.dorme(2000);
+      var visti = errori.map(function (s) { return s.stop(); }).filter(Boolean);
+      if (visti.length) no("qualcuno ha visto «" + visti[0] + "»");
+      if (!/Scegli un gioco|Prossimo gioco/.test(T(P))) no("Paky nella Sala non ha «Scegli un gioco»");
+      return "Marco: «👥 Sala» → «⚔️ Giulia e Luca giocano a Tris · 👀 Guarda» → di nuovo a guardare; Giulia «🏠 Torna in Sala» → duello chiuso, tutti nella Sala senza errori";
+    } },
+
+    // 53. 4 posti: Ruota con 6 nella Sala → "Chi gioca alla Ruota…?" con l'host già dentro e 3 scelti; i 2 non scelti nella
+    //     saletta del gioco leggono "👀 Questa volta guardi" e non hanno "Sono pronto"
+    53: { nome: "4 posti: Ruota con 6, l'host sempre dentro, i 2 non scelti guardano", fai: async function () {
+      var conPronto = function (x) { var b = x.document.querySelector(".sl-pronto"); return !!(b && !b.hidden); };
+      var A = await salaConAmici(["Giulia", "Luca", "Marco", "Bea", "Sara"]), S = A.S, P = A.w.Paky, w = A.w;
+      var nomeR = "";
+      if (!await W.aspetta(function () { return W.clicca(P, /Scegli (un|il primo) gioco|Prossimo gioco/); }, 4000)) no("non trovo «Scegli un gioco»");
+      var tess = await W.aspetta(function () { return [].find.call(P.document.querySelectorAll(".tessera"), function (t) { return /Ruota/.test((t.querySelector("h2") || {}).textContent); }); }, 4000);
+      if (!tess) no("non trovo la Ruota tra i giochi della Sala");
+      nomeR = tess.querySelector("h2").textContent;
+      var et = (tess.querySelector(".tess-adue") || {}).textContent || "";
+      if (et !== "Max 4: gioca chi scegli") no("nell'elenco la Ruota dice «" + et + "»");
+      tess.click();
+      if (!await W.aspetta(function () { return chiGioca(P); }, 4000)) no("non si apre «Chi gioca?» («" + T(P).slice(0, 80) + "»)");
+      if (!/Chi gioca alla Ruota/.test(T(P))) no("il titolo è «" + T(P).slice(0, 40) + "»");
+      var sc = chiGioca(P);
+      if (sc.length !== 4 || sc[0] !== "Paky" || sc.join(",") !== "Paky,Giulia,Luca,Marco") no("già scelti «" + sc.join(",") + "»");
+      toccaChi(P, "Paky");
+      if (chiGioca(P).join(",") !== sc.join(",")) no("l'host si è potuto togliere");
+      toccaChi(P, "Sara");   // al posto del più vecchio scelto (non l'host): Giulia
+      var sc2 = chiGioca(P).join(",");
+      if (sc2 !== "Paky,Luca,Marco,Sara") no("toccata Sara, scelti «" + sc2 + "»");
+      var mis = await misureChi(P, "Paky");
+      W.clicca(P, /Si gioca/, ".piede button");
+      var C = await W.aspetta(function () { var c = codiceSaletta(P); return P.document.querySelector(".saletta-schermo") && c && c !== S ? c : null; }, 6000);
+      if (!C) no("dopo «Si gioca» Paky non è nella saletta della Ruota");
+      var fuori = ["Giulia", "Bea"], dentroN = ["Luca", "Marco", "Sara"];
+      if (!await W.aspetta(function () { return fuori.concat(dentroN).every(function (n) { return w[n].document.querySelector(".saletta-schermo"); }); }, 10000)) no("non arrivano tutti nella saletta della Ruota");
+      var ok = await W.aspetta(function () { return fuori.every(function (n) { return /Questa volta guardi/.test(W.testo(w[n])) && !conPronto(w[n]); }); }, 8000);
+      if (!ok) no(fuori.map(function (n) { return n + " «" + T(w[n]).slice(0, 90) + "» pronto:" + !!conPronto(w[n]); }).join("; "));
+      var senzaPronto = dentroN.filter(function (n) { return !conPronto(w[n]); });
+      if (senzaPronto.length) no(senzaPronto.join(", ") + " (scelti) non hanno «Sono pronto»");
+      return "«Chi gioca " + (nomeR ? "alla " + nomeR.replace(/^La /, "") : "") + "?» con Paky fisso e Giulia, Luca, Marco; Sara al posto di Giulia (" + mis + "); Giulia e Bea: «👀 Questa volta guardi», niente «Sono pronto»";
+    } },
+
+    // 60. I bot fissi (p2-bot): di partenza 8 (Matt compreso), sempre gli stessi nello stesso ordine, mai due uguali,
+    //     niente bot che si chiama come chi gioca; "🤖 I Bot" nel profilo solo per IL PAPPONE; senza rete quelli di partenza
+    60: { nome: "I bot fissi: gli 8 di partenza, SG.bot.prendi, «🤖 I Bot» solo per il proprietario", fai: async function () {
+      var L = await W.apriTel("Luca", { x: 0, prima: botFinti }), B = L.SG.bot;
+      if (!B || !B.tutti) no("non c'è SG.bot");
+      var tutti = B.tutti(), nomi = tutti.map(function (b) { return b.nome; });
+      if (tutti.length !== 8) no("i bot sono " + tutti.length);
+      ["Matt", "Angela", "Rosa", "Peppe"].forEach(function (n) { if (nomi.indexOf(n) < 0) no("manca " + n + " (" + nomi.join(", ") + ")"); });
+      var ids0 = {}; tutti.forEach(function (b) { if (ids0[b.id]) no("due bot con l'id " + b.id); ids0[b.id] = 1; if (!b.omino || !b.omino.forma || !b.frase || L.SG.bot.livelli.indexOf(b.livello) < 0 || !b.bot) no(b.nome + " è incompleto"); });
+      var visi = {}; tutti.forEach(function (b) { var k = L.SGOmino.svg(b.omino); if (visi[k]) no(b.nome + " e " + visi[k] + " hanno lo stesso avatar"); visi[k] = b.nome; });
+      if (B.daId("matt").livello !== "difficile") no("Matt non è difficile");
+      var a = B.prendi(3, { livello: "medio" }).map(function (b) { return b.nome; }).join(","), a2 = B.prendi(3, { livello: "medio" }).map(function (b) { return b.nome; }).join(",");
+      if (a !== a2) no("prendi non dà sempre gli stessi: " + a + " / " + a2);
+      var d = B.prendi(2, { livello: "difficile" }).map(function (b) { return b.nome; });
+      if (d[0] !== "Matt") no("col livello difficile il primo è " + d[0] + " e non Matt");
+      var e = B.prendi(8, { escludi: ["Matt", "rosa"] }).map(function (b) { return b.nome; });
+      if (e.indexOf("Matt") >= 0 || e.indexOf("Rosa") >= 0) no("escludi non toglie Matt e Rosa: " + e.join(","));
+      if (e.length !== 8 || new Set(e).size !== 8) no("prendi(8) con 2 esclusi: " + e.join(","));
+      for (var i = 0; i < 20; i++) { var c = B.prendi(4, { caso: true, livello: "facile" }).map(function (b) { return b.id; }); if (new Set(c).size !== 4) no("a sorte due bot uguali: " + c.join(",")); }
+      var m = B.prendi(1)[0]; m.nome = "Pippo"; m.omino.forma = "x";
+      if (B.daId(m.id).nome === "Pippo" || B.daId(m.id).omino.forma === "x") no("un gioco può cambiare il gruppo dei bot");
+      await apriProfilo(L);
+      if (/I Bot/.test(T(L))) no("Luca vede «🤖 I Bot» nel suo profilo");
+      var P = await W.apriTel("IL PAPPONE", { x: 185, prima: botFinti });
+      await apriProfilo(P);
+      if (!W.clicca(P, /I Bot/, ".st-tasto")) no("IL PAPPONE non ha «🤖 I Bot» nel profilo");
+      if (!await W.aspetta(function () { return P.document.querySelectorAll(".bc-bot").length === 8; }, 3000)) no("«I Bot» non mostra gli 8 bot («" + T(P).slice(0, 80) + "»)");
+      var mis = await misureSchermata(P, "IL PAPPONE"); if (mis) no("«I Bot»: " + mis);
+      var S = await W.apriTel("Sara", { x: 370, offline: true, prima: botFinti });
+      if (S.SG.bot.tutti().map(function (b) { return b.nome; }).join(",") !== nomi.join(",")) no("senza rete Sara non ha i bot di partenza");
+      return nomi.join(", ") + "; medio → " + a + "; difficile → " + d.join(", ") + "; «🤖 I Bot» solo per IL PAPPONE, 4x2 senza scorrere; senza rete quelli di partenza";
+    } },
+
+    // 61. L'editor del proprietario: IL PAPPONE cambia Rosa (nome, livello, avatar col camerino) e salva; Luca ricarica e la vede
+    //     uguale; "↺ Tutti come all'inizio" li rimette per tutti
+    61: { nome: "«🤖 I Bot»: il proprietario cambia un bot e gli altri lo vedono uguale", fai: async function () {
+      var P = await W.apriTel("IL PAPPONE", { x: 0, prima: botFinti }), L = await W.apriTel("Luca", { x: 185, prima: botFinti });
+      var prima = JSON.stringify(L.SG.bot.daId("rosa").omino);
+      await apriProfilo(P);
+      W.clicca(P, /I Bot/, ".st-tasto");
+      var rosa = await W.aspetta(function () { return [].find.call(P.document.querySelectorAll(".bc-bot"), function (b) { return /Rosa/.test(b.textContent); }); }, 3000);
+      if (!rosa) no("non trovo Rosa tra i bot");
+      rosa.click();
+      if (!await W.aspetta(function () { return P.document.querySelector(".bot-scheda"); }, 3000)) no("non si apre la scheda di Rosa");
+      var mis = await misureSchermata(P, "IL PAPPONE"); if (mis) no("la scheda di un bot: " + mis);
+      var campi = P.document.querySelectorAll(".bot-scheda .bc-campo");
+      campi[0].value = "Matt"; W.clicca(P, /Salva/, ".piede button"); await W.dorme(200);
+      if (!/già un bot/.test(T(P))) no("si può chiamare Rosa come Matt");
+      campi[0].value = "Bot"; W.clicca(P, /Salva/, ".piede button"); await W.dorme(200);
+      if (!/resta per i tasti/.test(T(P))) no("si può chiamare un bot «Bot»");
+      campi[0].value = "Rosetta"; campi[1].value = "La nuova campionessa";
+      W.clicca(P, /Difficile/, ".bc-liv");
+      if (!W.clicca(P, /Cambia avatar/)) no("non c'è «✏️ Cambia avatar»");
+      if (!await W.aspetta(function () { return P.document.querySelector(".editor-avatar .om-azione.caso"); }, 3000)) no("non si apre l'editor dell'avatar");
+      P.document.querySelector(".editor-avatar .om-azione.caso").click(); await W.dorme(100);
+      P.document.querySelector(".editor-avatar .om-azione.salva").click();
+      if (!await W.aspetta(function () { return P.document.querySelector(".bot-scheda"); }, 4000)) no("dopo l'avatar non si torna alla scheda di Rosa");
+      campi = P.document.querySelectorAll(".bot-scheda .bc-campo");
+      if (campi[0].value !== "Rosetta" || !P.document.querySelector(".bc-liv.liv-difficile.on")) no("tornando dall'avatar nome o livello si sono persi («" + campi[0].value + "»)");
+      W.clicca(P, /Salva/, ".piede button");
+      if (!await W.aspetta(function () { return P.document.querySelector(".bot-cast") && /Rosetta/.test(T(P)); }, 3000)) no("dopo «Salva» la griglia non mostra Rosetta");
+      var pub = (W.BR.pubblici["IL PAPPONE"] || {}).bot;
+      if (!pub || pub.length !== 8) no("i bot non sono nella scheda pubblica del proprietario");
+      var r = pub.filter(function (b) { return b.id === "rosa"; })[0];
+      if (!r || r.nome !== "Rosetta" || r.livello !== "difficile" || r.frase !== "La nuova campionessa" || JSON.stringify(r.omino) === prima) no("nella scheda pubblica Rosa è " + JSON.stringify(r).slice(0, 80));
+      L = await W.ricarica("Luca");
+      var vista = await W.aspetta(function () { var b = L.SG.bot.daId("rosa"); return b && b.nome === "Rosetta" ? b : null; }, 4000);
+      if (!vista) no("Luca dopo aver ricaricato vede ancora " + L.SG.bot.daId("rosa").nome);
+      if (JSON.stringify(vista.omino) !== JSON.stringify(L.SGOmino.norm(r.omino)) || vista.livello !== "difficile") no("Luca vede Rosetta diversa");
+      if (L.SG.bot.prendi(1, { livello: "difficile" })[0].nome !== "Matt") no("col difficile il primo non è più Matt");
+      var p2 = L.SG.bot.prendi(3, { livello: "difficile" }).map(function (b) { return b.nome; }).join(",");
+      if (p2 !== "Matt,Angela,Rosetta") no("col difficile: " + p2);
+      L.__offline = true; L = await W.ricarica("Luca", { offline: true });   // senza rete: gli ultimi visti
+      if (L.SG.bot.daId("rosa").nome !== "Rosetta") no("senza rete Luca non ricorda Rosetta");
+      L.__offline = false;
+      if (!W.clicca(P, /Tutti come all'inizio/)) no("non c'è «↺ Tutti come all'inizio»");
+      if (!await W.aspetta(function () { return !/Rosetta/.test(T(P)) && /Rosa/.test(T(P)); }, 3000)) no("«Tutti come all'inizio» non rimette Rosa");
+      L = await W.ricarica("Luca", { offline: false });
+      if (!await W.aspetta(function () { return L.SG.bot.daId("rosa").nome === "Rosa"; }, 4000)) no("Luca non vede Rosa tornata come prima");
+      return "Rosetta (difficile, avatar nuovo) salvata nella scheda del proprietario; Luca la vede uguale dopo aver ricaricato (anche senza rete); nomi doppi e «Bot» rifiutati; «↺ Tutti come all'inizio» per tutti";
+    } },
+
+    // 62. Torneo a eliminazione in 3 (Tris): chi resta solo gioca col Bot, che è uno dei bot fissi (medio) e si chiama
+    //     così nel tabellone di tutti
+    62: { nome: "Torneo a eliminazione in 3: il Bot è uno dei bot fissi, uguale per tutti", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 });
+      var tess = await W.aspetta(function () { return [].find.call(P.document.querySelectorAll(".tessera"), function (t) { return (t.querySelector("h2") || {}).textContent === "Tris"; }); }, 5000);
+      if (!tess) no("non trovo il Tris"); tess.click(); await W.dorme(200);
+      if (!W.clicca(P, /Torneo a eliminazione/)) no("non trovo «Torneo a eliminazione»");
+      var S = await W.aspetta(function () { return codiceSaletta(P); }, 5000); if (!S) no("il torneo non ha il codice");
+      await W.apriTel("Giulia", { hash: "sala=" + S, x: 185 });
+      await W.apriTel("Luca", { hash: "sala=" + S, x: 370 });
+      if (!await W.aspetta(function () { return ((vm(S).membri) || []).length === 3; }, 8000)) no("non entrano tutti nel torneo");
+      if (!W.clicca(P, /Comincia il torneo/)) no("non trovo «Comincia il torneo»");
+      var E = await W.aspetta(function () { var e = vm(S).elim; return e && e.iniziato && e.turni && e.turni[0] ? e : null; }, 5000);
+      if (!E) no("il torneo non comincia");
+      var pb = E.turni[0].filter(function (p) { return p.b === "bot"; })[0];
+      if (!pb) no("nessuno gioca col Bot");
+      if (!E.bot || !E.bot.nome) no("il torneo non ha il suo Bot");
+      var fisso = P.SG.bot.daId(E.bot.id);
+      if (!fisso || fisso.nome !== E.bot.nome || fisso.livello !== "medio") no("il Bot del torneo (" + JSON.stringify(E.bot) + ") non è un bot fisso medio");
+      var chi = (E.nomi || {})[pb.a], nb = "🤖 " + E.bot.nome;
+      // tutti sono nella loro partita: il tabellone si apre col 🏆 in alto
+      var tutti3 = ["Paky", "Giulia", "Luca"], letto = {};
+      var visto = await W.aspetta(function () {
+        tutti3.forEach(function (n) {
+          var w = W.finestra(n), f = w.document.querySelector(".sl-foglio");
+          if (!f) { var b = w.document.querySelector(".tab-elim"); if (b) b.click(); f = w.document.querySelector(".sl-foglio"); }
+          letto[n] = f ? f.textContent.replace(/\s+/g, " ") : "";
+        });
+        return tutti3.every(function (n) { return letto[n].indexOf(nb) >= 0 && !/Bot \(medio\)/.test(letto[n]); });
+      }, 8000);
+      if (!visto) no("nel tabellone non si legge «" + nb + "» (" + tutti3.map(function (n) { return n + ": «" + (letto[n] || T(W.finestra(n))).slice(0, 80) + "»"; }).join("; ") + ")");
+      return chi + " gioca contro " + nb + " (bot fisso, medio), scritto così nel tabellone di tutti";
+    } },
+    // ===== IL TORNEINO (p2-t): giochi a due con 3 o più persone =====
+    // 70. In 3 dalla Sala: toccato il Tris si apre «Tris in 3» col Torneino già scelto (a misura, niente lampeggio); «Passa il
+    //     turno»: una partita vera e uno che passa (legge «Passi al turno dopo» e può guardare), poi la finale (decisa dall'host
+    //     col «⋯»), «Ha vinto…» per tutti e «👥 Torna in Sala» che riporta tutti nella Sala
+    70: { nome: "Torneino in 3 dalla Sala: Torneino già scelto, uno passa il turno, partita vera, finale e Torna in Sala", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca"]), S = A.S, P = A.w.Paky;
+      await apriSceltaTn(P);
+      if (!/Tris in 3/.test(T(P))) no("il titolo non è «Tris in 3» («" + T(P).slice(0, 60) + "»)");
+      var sc = P.document.querySelector(".tn-scelta.scelta");
+      if (!sc || !/Torneo: giocate tutti/.test(sc.textContent)) no("«Torneo: giocate tutti» non è già scelto");
+      var opz = P.document.querySelector(".tn-opz");
+      if (!opz || opz.hidden || opzVisibili(P).indexOf("Chi resta in più") < 0) no("siete in 3 e non c'è «Chi resta in più»");
+      var mis = await misureSchermata(P, "Paky"); if (mis) no("«Tris in 3»: " + mis);
+      var nodo = P.document.querySelector(".torneino-sc");
+      W.clicca(P, /Una sfida/, ".tn-scelta");
+      if (!/Scegli chi gioca/.test(P.document.querySelector(".torneino-sc .piede").textContent)) no("con «Una sfida» il tasto non dice «Scegli chi gioca»");
+      if (!opz.hidden) no("con «Una sfida» si vedono ancora le scelte del torneino");
+      W.clicca(P, /Torneo: giocate tutti/, ".tn-scelta");
+      if (P.document.querySelector(".torneino-sc") !== nodo) no("a ogni tocco la schermata si rifà (lampeggio)");
+      chipTn(P, "Passa il turno");
+      if (!/uno a sorte passa il turno/.test(T(P))) no("scelto «Passa il turno», la nota non lo dice");
+      var E = await viaTn(P, S);
+      if (E.bot) no("con «Passa il turno» il torneino ha un Bot (" + JSON.stringify(E.bot) + ")");
+      var t0 = E.turni[0], gioca = t0.filter(function (p) { return p.b; }), passa = t0.filter(function (p) { return !p.b; });
+      if (t0.length !== 2 || gioca.length !== 1 || passa.length !== 1 || passa[0].vince !== passa[0].a) no("primo turno sbagliato: " + JSON.stringify(t0));
+      var chiPassa = nomeTn(E, passa[0].a), wP = W.finestra(chiPassa);
+      if (!await W.aspetta(function () { return /Passi al turno dopo/.test(T(wP)) && wP.document.querySelector(".tb-guarda"); }, 8000)) no(chiPassa + " (passa) legge «" + T(wP).slice(0, 120) + "»");
+      var etG = wP.document.querySelector(".tb-guarda").getAttribute("aria-label");
+      var v1 = await trisTn(S, gioca[0]);
+      var fin = await W.aspetta(function () { var e = tn(S); return e && e.turni.length === 2 ? e.turni[1][0] : null; }, 8000);
+      if (!fin || !fin.b) no("non c'è la finale (" + JSON.stringify(tn(S) && tn(S).turni) + ")");
+      if ([fin.a, fin.b].sort().join() !== [v1, passa[0].a].sort().join()) no("la finale non è tra chi ha vinto (" + v1 + ") e chi è passato (" + passa[0].a + ")");
+      await decidiTn(P, S, fin.k, fin.a);
+      var Ef = await W.aspetta(function () { var e = tn(S); return e && e.finito ? e : null; }, 6000);
+      if (!Ef || Ef.campione !== fin.a) no("il torneino non finisce col campione giusto");
+      var camp = nomeTn(Ef, Ef.campione), letti = {};
+      if (!await W.aspetta(function () { return ["Paky", "Giulia", "Luca"].every(function (n) { letti[n] = T(A.w[n]); return n === camp ? /Hai vinto tu/.test(letti[n]) : letti[n].indexOf("Ha vinto " + camp + "!") >= 0; }); }, 9000))
+        no("non tutti leggono chi ha vinto (" + Object.keys(letti).map(function (n) { return n + ": «" + letti[n].slice(0, 90) + "»"; }).join("; ") + ")");
+      if (!await W.aspetta(function () { return W.clicca(P, /Prossimo gioco/, ".sl-go"); }, 6000)) no("Paky non ha «🎮 Prossimo gioco»");
+      if (!await W.aspetta(function () { return !vm(S).elim; }, 4000)) no("la Sala ha ancora il torneino");
+      if (!await W.aspetta(function () { return ["Giulia", "Luca"].every(function (n) { return /Sala di Paky/.test(T(A.w[n])) && !A.w[n].document.querySelector(".sl-tab"); }); }, 6000))
+        no("gli amici non tornano nella Sala (Giulia «" + T(A.w.Giulia).slice(0, 80) + "»)");
+      if (!P.document.querySelector(".tessera") || P.document.querySelector(".sl-tab")) no("Paky non è nell'elenco dei giochi («" + T(P).slice(0, 80) + "»)");
+      if (!await W.aspetta(function () { return ["Giulia", "Luca"].every(function (n) { return /sceglie il prossimo gioco/.test(T(A.w[n])); }); }, 4000)) no("gli amici non leggono «Paky sceglie il prossimo gioco…»");
+      return "«Tris in 3» (" + "misure ok" + "), " + chiPassa + " passa e può «" + etG + "», finale " + nomeTn(Ef, fin.a) + "–" + nomeTn(Ef, fin.b) + ": «Ha vinto " + camp + "!» per tutti, poi tutti nella Sala";
+    } },
+
+    // 71. In 4 coi punti: niente «Chi resta in più» (si è pari), due semifinali vere insieme, finale vera, i punti nella
+    //     classifica della serata (campione > finalista > semifinalisti) e le partite giocate contate una volta
+    71: { nome: "Torneino in 4 coi punti: semifinali insieme, finale, punti della serata", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca", "Marco"]), S = A.S, P = A.w.Paky;
+      if (!await W.aspetta(function () { return vm(S).torneo; }, 3000)) no("la Classifica della serata non è accesa da sola");
+      await apriSceltaTn(P);
+      if (opzVisibili(P).indexOf("Chi resta in più") >= 0) no("in 4 c'è «Chi resta in più»");
+      if (!/Siete pari/.test(T(P))) no("in 4 la nota non dice «Siete pari»");
+      var E = await viaTn(P, S);
+      var t0 = E.turni[0];
+      if (t0.length !== 2 || t0.some(function (p) { return !p.b || p.b === "bot"; })) no("semifinali sbagliate: " + JSON.stringify(t0));
+      if (!await W.aspetta(function () { return ["Paky", "Giulia", "Luca", "Marco"].every(function (n) { return /Semifinali/.test(T(A.w[n])) || A.w[n].document.querySelector(".tr-cella, .saletta-schermo"); }); }, 8000)) no("non tutti sono nella loro partita");
+      var vinti = await Promise.all(t0.map(function (p) { return trisTn(S, p); }));
+      var fin = await W.aspetta(function () { var e = tn(S); return e && e.turni.length === 2 ? e.turni[1][0] : null; }, 8000);
+      if (!fin || [fin.a, fin.b].sort().join() !== vinti.slice().sort().join()) no("la finale non è tra chi ha vinto le semifinali");
+      var vf = await trisTn(S, fin);
+      var Ef = await W.aspetta(function () { var e = tn(S); return e && e.finito ? e : null; }, 6000);
+      if (!Ef || Ef.campione !== vf) no("il torneino non finisce col campione giusto");
+      var Tq = await W.aspetta(function () { var t = vm(S).torneo; return t && t.n === 1 ? t : null; }, 4000);
+      if (!Tq) no("i punti del torneino non arrivano nella classifica della serata (" + JSON.stringify(vm(S).torneo) + ")");
+      var nC = nomeTn(Ef, vf), nF = nomeTn(Ef, fin.a === vf ? fin.b : fin.a), semi = Ef.turni[0].map(function (p) { return nomeTn(Ef, p.vince === p.a ? p.b : p.a); });
+      var pt = Tq.punti;
+      if (!(pt[nC] > pt[nF] && pt[nF] > pt[semi[0]] && pt[semi[0]] === pt[semi[1]])) no("punti sbagliati: " + JSON.stringify(pt));
+      var gi = vm(S).giocate || {};
+      if (["Paky", "Giulia", "Luca", "Marco"].some(function (n) { return gi[n] !== 1; })) no("partite giocate contate male: " + JSON.stringify(gi));
+      if (!await W.aspetta(function () { return W.clicca(P, /Prossimo gioco/, ".sl-go"); }, 6000)) no("Paky non ha «🎮 Prossimo gioco»");
+      if (!await W.aspetta(function () { return !vm(S).elim && A.w.Giulia.document.querySelector(".sl-torneo-corto"); }, 4000)) no("nella Sala di Giulia non c'è la classifica corta");
+      return "semifinali insieme, finale " + nC + "–" + nF + "; punti: " + Object.keys(pt).map(function (n) { return n + " " + pt[n]; }).join(", ");
+    } },
+
+    // 72. In 5 col Bot difficile: il Bot è un bot fisso difficile, la sua partita la gioca il telefono di chi gli sta davanti
+    //     (e la trasmette), se vince va avanti (sempre come secondo della carta, mai due bot), arriva in fondo e vince:
+    //     «Ha vinto Matt! 🤖» per tutti
+    72: { nome: "Torneino in 5 col Bot difficile: il Bot vince, va avanti e vince il torneino", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca", "Marco", "Bea"]), S = A.S, P = A.w.Paky;
+      await apriSceltaTn(P);
+      chipTn(P, "Gioca col Bot"); chipTn(P, "Difficile");
+      if (!/chi resta gioca col Bot/.test(T(P))) no("la nota non dice che chi resta gioca col Bot");
+      var E = await viaTn(P, S);
+      if (!E.bot || E.livello !== "difficile") no("il torneino non ha il Bot difficile (" + JSON.stringify(E.bot) + ", " + E.livello + ")");
+      var fisso = P.SG.bot.daId(E.bot.id);
+      if (!fisso || fisso.nome !== E.bot.nome || fisso.livello !== "difficile") no("il Bot (" + E.bot.nome + ") non è un bot fisso difficile");
+      var pb = E.turni[0].filter(function (p) { return p.b === "bot"; })[0];
+      if (!pb || E.turni[0].length !== 3) no("primo turno sbagliato: " + JSON.stringify(E.turni[0]));
+      var chi = nomeTn(E, pb.a), wC = W.finestra(chi);
+      if (!await W.aspetta(function () { return wC.document.querySelectorAll(".tr-cella").length === 9; }, 8000)) no(chi + " non ha la partita col Bot («" + T(wC).slice(0, 80) + "»)");
+      if (!await W.aspetta(function () { var v = vm(pb.stanza); return v && v.board; }, 8000)) no("la partita col Bot non si trasmette a chi guarda");
+      var bot2 = 0;
+      var Ef = await finoAllaFineTn(P, S, function (e) {
+        e.turni.forEach(function (tu) { tu.forEach(function (p) { if (p.a === "bot" && p.b) no("il Bot è il primo di una carta (" + p.k + ")"); if (p.a === p.b) no("due uguali nella stessa partita"); }); });
+        bot2 = Math.max(bot2, e.turni.length);
+      });
+      if (Ef.campione !== "bot") no("il campione non è il Bot (" + Ef.campione + ")");
+      if (Ef.turni.length < 3) no("il torneino in 5 ha solo " + Ef.turni.length + " turni");
+      var frase = "Ha vinto " + Ef.bot.nome + "! 🤖", letti = {};
+      if (!await W.aspetta(function () { return ["Paky", "Giulia", "Luca", "Marco", "Bea"].every(function (n) { letti[n] = T(A.w[n]); return letti[n].indexOf(frase) >= 0; }); }, 10000))
+        no("non tutti leggono «" + frase + "» (" + Object.keys(letti).filter(function (n) { return letti[n].indexOf(frase) < 0; }).map(function (n) { return n + ": «" + letti[n].slice(0, 80) + "»"; }).join("; ") + ")");
+      var turni = Ef.turni.map(function (tu) { return tu.map(function (p) { return etTn(Ef, p.a) + (p.b ? "–" + etTn(Ef, p.b) : " passa"); }).join(", "); }).join(" | ");
+      return chi + " gioca col Bot " + Ef.bot.nome + " (difficile, trasmessa); turni: " + turni + "; «" + frase + "» per tutti";
+    } },
+
+    // 73. In 5 con «Passa il turno»: niente Bot; al primo turno uno passa, al secondo passa un altro (mai lo stesso due volte)
+    73: { nome: "Torneino in 5 con «Passa il turno»: niente Bot, chi passa non passa due volte", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca", "Marco", "Bea"]), S = A.S, P = A.w.Paky;
+      await apriSceltaTn(P);
+      chipTn(P, "Passa il turno");
+      var E = await viaTn(P, S);
+      if (E.bot) no("con «Passa il turno» c'è un Bot");
+      var p0 = E.turni[0].filter(function (p) { return !p.b; });
+      if (E.turni[0].length !== 3 || p0.length !== 1) no("primo turno sbagliato: " + JSON.stringify(E.turni[0]));
+      var Ef = await finoAllaFineTn(P, S, function (e) {
+        e.turni.forEach(function (tu) { tu.forEach(function (p) { if (p.a === "bot" || p.b === "bot") no("c'è il Bot in una partita"); }); });
+      });
+      var passati = []; Ef.turni.forEach(function (tu) { tu.forEach(function (p) { if (!p.b) passati.push(p.a); }); });
+      if (passati.length !== 2 || passati[0] === passati[1]) no("chi passa il turno: " + JSON.stringify(passati.map(function (id) { return nomeTn(Ef, id); })));
+      if (!Ef.campione || Ef.campione === "bot") no("campione sbagliato");
+      return "passano " + passati.map(function (id) { return nomeTn(Ef, id); }).join(" e poi ") + "; vince " + nomeTn(Ef, Ef.campione);
+    } },
+
+    // 74. In 4: chi apre una semifinale ricarica la pagina a metà e ritrova la sua partita (che si chiude con l'esito giusto);
+    //     uno dell'altra semifinale esce dalla Sala: vince il suo avversario. Poi la finale e la fine
+    74: { nome: "Torneino in 4: uno ricarica a metà e ritrova la partita, uno esce e vince l'altro", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca", "Marco"]), S = A.S, P = A.w.Paky;
+      await apriSceltaTn(P);
+      var E = await viaTn(P, S);
+      // la semifinale tra due amici (Paky non c'è) e l'altra
+      var m1 = E.turni[0].filter(function (p) { return p.a !== "host" && p.b !== "host"; })[0], m2 = E.turni[0].filter(function (p) { return p !== m1; })[0];
+      if (!m1) no("non c'è una semifinale senza Paky");
+      var nA = nomeTn(E, m1.a);
+      if (!await W.aspetta(function () { return vm(m1.stanza).avvId; }, 12000)) no("la partita di " + nA + " non si apre");
+      await W.ricarica(nA);
+      if (!await W.aspetta(function () { var v = vm(m1.stanza); return W.finestra(nA).document.querySelector(".saletta-schermo .sl-go") && v && v.avvId; }, 15000))
+        no(nA + " ha ricaricato e non ritrova la sua partita («" + T(W.finestra(nA)).slice(0, 80) + "»)");
+      if (partitaTn(S, m1.k).vince) no("chi ha ricaricato ha perso la partita a tavolino");
+      // l'altra semifinale: esce chi non è Paky
+      var esce = m2.a === "host" ? m2.b : m2.a, resta = esce === m2.a ? m2.b : m2.a, nE = nomeTn(E, esce);
+      W.finestra(nE).__reti.filter(function (h) { return h.__sala; }).forEach(function (h) { h.chiudi(); });   // (come «‹» nella Sala: esce)
+      if (!await W.aspetta(function () { var q = partitaTn(S, m2.k); return q && q.vince === resta; }, 8000)) no(nE + " è uscito e la sua partita non va a " + nomeTn(E, resta));
+      var v1 = await trisTn(S, partitaTn(S, m1.k));
+      var fin = await W.aspetta(function () { var e = tn(S); return e && e.turni.length === 2 ? e.turni[1][0] : null; }, 8000);
+      if (!fin || [fin.a, fin.b].sort().join() !== [v1, resta].sort().join()) no("la finale non è tra " + nomeTn(E, v1) + " e " + nomeTn(E, resta));
+      await decidiTn(P, S, fin.k, fin.b);
+      if (!await W.aspetta(function () { var e = tn(S); return e && e.finito; }, 6000)) no("il torneino non finisce");
+      return nA + " ricarica e ritrova la sua semifinale (poi la vince " + nomeTn(E, v1) + "); " + nE + " esce e passa " + nomeTn(E, resta) + "; finale decisa";
+    } },
+
+    // 75. Fuori dalla Sala (percorso di prima): nella saletta del Tris entrano in 3, Paky vede «⚔️ Fate il torneo in 3»:
+    //     un tocco e tutti passano nel torneino da soli (stesso id della stanza), che parte appena ci sono tutti
+    75: { nome: "Saletta del Tris con 3 (fuori dalla Sala): «Fate il torneino in 3», tutti dentro da soli", fai: async function () {
+      var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "Tris");
+      var G = await W.apriTel("Giulia", { hash: "gioco=tris&stanza=" + C, x: 185 });
+      if (!await W.aspetta(function () { return vm(C).avvId && dentro(G); }, 8000)) no("Giulia non entra nel Tris");
+      var L = await W.apriTel("Luca", { hash: "gioco=tris&stanza=" + C, x: 370 });
+      var b = await W.aspetta(function () { var x = P.document.querySelector(".sl-torneino"); return x && !x.hidden ? x : null; }, 8000);
+      if (!b) no("Paky non vede «⚔️ Fate il torneo in 3»");
+      if (b.textContent !== "⚔️ Fate il torneo in 3") no("il tasto dice «" + b.textContent + "»");
+      var idG = mioId("Giulia"), idL = mioId("Luca");
+      b.click();
+      var S = await W.aspetta(function () { return codiceSala(); }, 5000); if (!S) no("non si apre la Sala del torneino");
+      var E = await W.aspetta(function () { var e = tn(S); return e && e.iniziato ? e : null; }, 9000);
+      if (!E) no("il torneino non parte («" + T(P).slice(0, 80) + "»)");
+      if (((vm(S).membri) || []).length !== 3) no("nel torneino non ci sono tutti e 3");
+      if (idInSala(S, "Giulia") !== idG || idInSala(S, "Luca") !== idL) no("nel torneino gli id sono cambiati");
+      if (!await W.aspetta(function () { return [P, G, L].every(function (w) { return w.document.querySelector(".tr-cella, .sl-tab, .tab-elim"); }); }, 9000)) no("non tutti sono nel torneino");
+      if ([G, L].some(function (w) { return /Collegamento perso|La stanza è chiusa/.test(T(w)); })) no("qualcuno legge «Collegamento perso»");
+      return "stanza " + C + " → torneino nella Sala " + S + " con Paky, Giulia e Luca (stessi id), primo turno: " + E.turni[0].map(function (p) { return etTn(E, p.a) + (p.b ? "–" + etTn(E, p.b) : " passa"); }).join(", ");
+    } },
+
+    // 75b. Nella Sala in 2 si comincia il Tris; arriva Luca: nella saletta Paky vede «⚔️ Fate il torneo in 3» e la Sala diventa il torneino
+    "75b": { nome: "Sala: Tris in 2, arriva il terzo, «Fate il torneino in 3» dalla saletta", fai: async function () {
+      var A = await salaConAmici(["Giulia"]), S = A.S, P = A.w.Paky;
+      var C = await lanciaDallaSala("Paky", S, "Tris");
+      if (P.document.querySelector(".sl-torneino:not([hidden])")) no("in 2 c'è già il tasto del torneino");
+      var L = await W.apriTel("Luca", { hash: "sala=" + S, x: 370, salaSempre: true });
+      var b = await W.aspetta(function () { var x = P.document.querySelector(".sl-torneino"); return x && !x.hidden ? x : null; }, 10000);
+      if (!b) no("arrivato Luca, Paky non vede «⚔️ Fate il torneo in 3»");
+      b.click();
+      var E = await W.aspetta(function () { var e = tn(S); return e && e.iniziato ? e : null; }, 6000);
+      if (!E) no("la Sala non diventa il torneino");
+      if (Object.keys(E.nomi).length !== 3) no("nel torneino non ci sono tutti e 3");
+      if (!await W.aspetta(function () { return [P, A.w.Giulia, L].every(function (w) { return w.document.querySelector(".tr-cella, .sl-tab, .tab-elim"); }); }, 9000)) no("non tutti sono nel torneino");
+      return "Tris " + C + " nella Sala " + S + " → torneino in 3: " + E.turni[0].map(function (p) { return etTn(E, p.a) + (p.b ? "–" + etTn(E, p.b) : " passa"); }).join(", ");
+    } },
+
+    // 76. In 10: il tabellone nella Sala sta in uno schermo (360x640 e 412x915) per l'host (primo turno, 5 partite col «⋯»)
+    //     e per chi è fuori (secondo turno, coi turni di prima)
+    76: { nome: "Torneino in 10: il tabellone in uno schermo, senza scorrere", fai: async function () {
+      var amici = ["Giulia", "Luca", "Marco", "Bea", "Nina", "Ciro", "Sara", "Ugo", "Pia"];
+      var A = await salaConAmici(amici), S = A.S, P = A.w.Paky;
+      await apriSceltaTn(P);
+      var m0 = await misureSchermata(P, "Paky"); if (m0) no("«Tris in 10»: " + m0);
+      var E = await viaTn(P, S);
+      if (E.turni[0].length !== 5) no("in 10 il primo turno ha " + E.turni[0].length + " partite");
+      // Paky perde la sua: vede la Sala col tabellone del primo turno
+      var mia = E.turni[0].filter(function (p) { return p.a === "host" || p.b === "host"; })[0];
+      await decidiTn(P, S, mia.k, mia.a === "host" ? mia.b : mia.a);
+      if (!await W.aspetta(function () { return P.document.querySelectorAll(".saletta-schermo .sl-tab .tb-p").length === 5; }, 8000)) no("Paky non vede le 5 partite nel tabellone («" + T(P).slice(0, 80) + "»)");
+      var mH = await misureTab(P, "Paky");
+      // il resto del primo turno: vince il primo della carta
+      var fino = Date.now() + 30000;
+      while (Date.now() < fino) {
+        var e = tn(S); if (e.turni.length > 1) break;
+        var p = e.turni[0].filter(function (x) { return !x.vince; })[0]; if (p) await decidiTn(P, S, p.k, p.a); else await W.dorme(150);
+      }
+      var E1 = tn(S); if (E1.turni.length < 2) no("non parte il secondo turno");
+      var fuori = Object.keys(E1.nomi).filter(function (id) { return id !== "host" && E1.turni[0].some(function (p) { return p.b && p.vince && p.vince !== id && (p.a === id || p.b === id); }); })[0];
+      var nF = nomeTn(E1, fuori), wF = W.finestra(nF);
+      if (!await W.aspetta(function () { return wF.document.querySelector(".saletta-schermo .sl-tab .tb-prima"); }, 8000)) no(nF + " (fuori) non vede il tabellone coi turni di prima");
+      var mF = await misureTab(wF, nF);
+      return "Paky al primo turno (" + mH + "), " + nF + " al secondo (" + mF + ")";
+    } },
+
+    // 54 (p2-z). LA SERATA INTERA: 5 telefoni, un link solo (la Sala), la Classifica della serata accesa da sola.
+    //   1) Scalinata in 4 (Paky, Giulia, Luca, Bea), partita vera: a metà arriva Marco (resta nella Sala: «entri alla
+    //      prossima»), Luca spegne il telefono 25 s e torna al suo posto;
+    //   2) Cambia gioco → Tris → «⚔️ Via al torneo»: Torneo a eliminazione in 5 (col Bot), fino al campione;
+    //   3) «↻ Rifacciamo il torneo» (la rivincita del torneo), fino al campione;
+    //   4) «🎮 Prossimo gioco» → Linea del tempo in 5 (Giulia ricarica la pagina a metà e torna dentro);
+    //   5) Cambia gioco → La Balla Colossale in 5;
+    //   6) Cambia gioco, poi l'host ricarica nella Sala (la Sala si riapre, gli amici restano) → Black Jack in 5.
+    //   Tra la fine di un gioco e l'inizio del prossimo: l'host al massimo 3 tocchi, gli amici 0 (contati). Linea del tempo e
+    //   Balla non si giocano fino in fondo: la fine si chiama dal tavolo (spiaTavolo) su tutti i telefoni, come quando il
+    //   gioco finisce davvero. Alla fine: tutti e 5 nella stessa Sala, la classifica ha contato le partite, nessun errore
+    54: { nome: "Serata intera: 5 telefoni, un link, 6 giochi di fila, classifica, chi arriva, chi si spegne, chi ricarica", fai: async function () {
+      spiaTavolo();
+      var TAV = ["timeline", "balla", "blackjack"], nomi = ["Paky", "Giulia", "Luca", "Bea", "Marco"], w = {}, note = [];
+      w.Paky = await W.apriTel("Paky", { x: 0, salaSempre: true, spiaTav: TAV });
+      var S = await apriSalaNuova("Paky");
+      for (var i = 1; i < 4; i++) w[nomi[i]] = await W.apriTel(nomi[i], { hash: "sala=" + S, x: 185 * i, salaSempre: true, spiaTav: TAV });
+      if (!await W.aspetta(function () { return (vm(S).membri || []).length === 4; }, 10000)) no("nella Sala non sono in 4");
+      if (!vm(S).torneo) no("la Classifica della serata non è accesa da sola");
+      var P = function () { return W.finestra("Paky"); }, F = function (n) { return W.finestra(n); };
+      // i tocchi tra un gioco e l'altro: host al massimo 3, amici 0 (W.clicca e i tocchi veri sui telefoni degli amici)
+      var conta = null, cliccaVero = W.__cliccaVero || (W.__cliccaVero = W.clicca), tocchi = [];
+      W.clicca = function (x) { var r = cliccaVero.apply(this, arguments); if (conta && r) { if (x === P()) conta.h++; else conta.a++; } return r; };
+      function via() { conta = { h: 0, a: 0 }; }
+      function fatto(nome, max) {
+        var c = conta; conta = null;
+        if (c.a) no(nome + ": gli amici hanno toccato " + c.a + " volte");
+        if (c.h > (max || 3)) no(nome + ": l'host ha toccato " + c.h + " volte");
+        tocchi.push(nome + " " + c.h);
+      }
+      function tocca(x) { if (conta) conta.h++; x.click(); }
+      async function tessera2(nome) { var t = await W.aspetta(function () { return tessera(P(), nome); }, 5000); if (!t) no("non trovo la tessera " + nome + " («" + T(P()).slice(0, 80) + "»)"); tocca(t); }
+      async function saletta(nomeG, chi) {   // la saletta del gioco: arrivano tutti da soli, poi «Comincia»
+        var C = await W.aspetta(function () { var c = codiceSaletta(P()); return P().document.querySelector(".saletta-schermo") && c && c !== S ? c : null; }, 8000);
+        if (!C) no("Paky non è nella saletta di " + nomeG + " («" + T(P()).slice(0, 80) + "»)");
+        if (!await W.aspetta(function () { return chi.every(function (n) { return n === "Paky" || dentro(F(n)); }); }, 12000))
+          no(nomeG + ": non arrivano tutti da soli (" + chi.filter(function (n) { return n !== "Paky" && !dentro(F(n)); }).join(", ") + " fuori)");
+        if (!await W.aspetta(function () { return W.clicca(P(), /^\s*(▶\s*)?Comincia/, ".sl-go"); }, 5000)) no(nomeG + ": Paky non trova «Comincia»");
+        if (!await W.aspetta(function () { return chi.every(function (n) { return !F(n).document.querySelector(".saletta-schermo"); }); }, 10000)) no(nomeG + ": la partita non comincia per tutti");
+        return C;
+      }
+      function fineFinta(classifica) {   // la fine dal tavolo, su tutti i telefoni del gioco
+        nomi.forEach(function (n) { var x = F(n); if (x && x.__tav && x.__tav.fine) try { x.__tav.fine(classifica); } catch (e) {} });
+      }
+      async function cambiaGioco(nome) {
+        if (!await W.aspetta(function () { return W.clicca(P(), /Cambia gioco/, ".fine-tasti button"); }, 8000)) no(nome + ": a fine partita Paky non ha «🎮 Cambia gioco»");
+      }
+      // 1) Scalinata in 4, partita vera (tocchi: Scegli un gioco, la tessera, Comincia)
+      via();
+      if (!await W.aspetta(function () { return W.clicca(P(), /Scegli (un|il primo) gioco|Prossimo gioco/); }, 4000)) no("nella Sala non c'è «Scegli un gioco»");
+      await tessera2("La Scalinata");
+      var C1 = await saletta("Scalinata", ["Paky", "Giulia", "Luca", "Bea"]);
+      fatto("Sala → Scalinata");
+      w.Marco = await W.apriTel("Marco", { hash: "sala=" + S, x: 740, salaSempre: true, spiaTav: TAV });
+      if (!await W.aspetta(function () { return /prossima/.test(T(F("Marco"))); }, 10000)) no("Marco arriva a partita in corso ma non legge «entri alla prossima» («" + T(F("Marco")).slice(0, 80) + "»)");
+      W.spegni("Luca"); await W.dorme(25000); W.riaccendi("Luca");
+      if (!await scalinataFinoAllaFine(C1, ["Giulia", "Luca", "Bea"], "Paky")) no("la Scalinata non finisce");
+      if (!await W.aspetta(function () { return F("Luca").document.querySelector(".fine-tasti"); }, 10000)) no("Luca (spento 25 s) non arriva alla fine della Scalinata («" + T(F("Luca")).slice(0, 80) + "»)");
+      note.push("Scalinata: Marco arriva («entri alla prossima»), Luca spento 25 s e di nuovo dentro");
+      // 2) Torneo a eliminazione in 5 (tocchi: Cambia gioco, Tris, Via al torneo)
+      via();
+      await cambiaGioco("Scalinata");
+      await tessera2("Tris");
+      if (!await W.aspetta(function () { return W.clicca(P(), /Via al torneo/, ".piede button"); }, 5000)) no("in «Tris in 5» non c'è «⚔️ Via al torneo»");
+      var E1 = await W.aspetta(function () { var e = tn(S); return e && e.iniziato ? e : null; }, 6000);
+      if (!E1) no("il torneo non parte");
+      fatto("Scalinata → Torneo");
+      if (Object.keys(E1.nomi).length !== 5) no("nel torneo non giocano tutti e 5");
+      await finoAllaFineTn(P(), S);
+      // 3) la rivincita del torneo (1 tocco)
+      via();
+      if (!await W.aspetta(function () { var b = P().document.querySelector(".tb-rifai"); if (b) { b.click(); conta.h++; } return b; }, 8000)) no("a torneo finito Paky non ha «↻ Rifacciamo il torneo»");
+      var E2 = await W.aspetta(function () { var e = tn(S); return e && e.iniziato && !e.finito && e.k !== E1.k ? e : null; }, 6000);
+      if (!E2) no("«Rifacciamo il torneo» non fa ripartire il torneo");
+      fatto("Torneo → di nuovo il torneo");
+      await finoAllaFineTn(P(), S);
+      // 4) Linea del tempo in 5 (tocchi: Prossimo gioco, la tessera, Comincia); Giulia ricarica a metà
+      via();
+      if (!await W.aspetta(function () { return W.clicca(P(), /Prossimo gioco/, ".sl-go"); }, 8000)) no("a torneo finito Paky non ha «🎮 Prossimo gioco»");
+      await tessera2("La linea del tempo");
+      var C4 = await saletta("Linea del tempo", nomi);
+      fatto("Torneo → Linea del tempo");
+      await W.dorme(1500);
+      w.Giulia = await W.ricarica("Giulia", { spiaTav: TAV });
+      if (!await W.aspetta(function () { return !F("Giulia").document.querySelector(".saletta-schermo") && F("Giulia").__tav && ids(C4, "giocatori").indexOf(idInSala(S, "Giulia")) >= 0; }, 12000))
+        no("Giulia ricarica dentro la Linea del tempo e non torna in partita («" + T(F("Giulia")).slice(0, 80) + "»)");
+      note.push("Linea del tempo: Giulia ricarica e torna in partita");
+      fineFinta([{ nome: "Bea", pos: 1 }, { nome: "Marco", pos: 2 }, { nome: "Paky", pos: 3 }, { nome: "Giulia", pos: 4 }, { nome: "Luca", pos: 5 }]);
+      // 5) La Balla Colossale in 5 (tocchi: Cambia gioco, la tessera, Comincia)
+      via();
+      await cambiaGioco("Linea del tempo");
+      await tessera2("La Balla Colossale");
+      await saletta("Balla", nomi);
+      fatto("Linea del tempo → Balla");
+      await W.dorme(1500);
+      fineFinta([{ nome: "Luca", pos: 1 }, { nome: "Giulia", pos: 2 }, { nome: "Bea", pos: 3 }, { nome: "Paky", pos: 4 }, { nome: "Marco", pos: 5 }]);
+      // 6) Cambia gioco, l'host ricarica nella Sala (stesso codice, gli amici restano), poi Black Jack in 5
+      await cambiaGioco("Balla");
+      await W.dorme(800);
+      w.Paky = await W.ricarica("Paky", { salaSempre: true, spiaTav: TAV });
+      if (!await W.aspetta(function () { return P().document.querySelector(".saletta-schermo") && codiceTestata(P()) === S; }, 12000)) no("ricaricata la pagina, la Sala di Paky non si riapre con lo stesso codice («" + T(P()).slice(0, 80) + "»)");
+      if (!await W.aspetta(function () { return (vm(S).membri || []).length === 5; }, 15000)) no("dopo la ricarica dell'host nella Sala non sono in 5 (" + (vm(S).membri || []).length + ")");
+      via();
+      if (!await W.aspetta(function () { return W.clicca(P(), /Scegli (un|il primo) gioco|Prossimo gioco/); }, 6000)) no("dopo la ricarica non c'è «Scegli un gioco»");
+      await tessera2("Black Jack");
+      await saletta("Black Jack", nomi);
+      fatto("(host ricaricato) Sala → Black Jack");
+      var Tn = vm(S).torneo || {};
+      if (!Tn.n || Tn.n < 3) no("la Classifica della serata ha contato " + (Tn.n || 0) + " partite");
+      if ((vm(S).membri || []).length !== 5) no("alla fine nella Sala non sono in 5");
+      W.clicca = cliccaVero;
+      return note.join("; ") + "; tocchi dell'host: " + tocchi.join(", ") + " (amici 0); classifica: " + Tn.n + " partite";
+    } },
+
+    // 55 (p2-z). LE MISURE delle schermate nuove del Passo 2, a 360x640 e 412x915: la Sala con 6 e la classifica corta (host e
+    //   amico), «Tris in 6» (le scelte del torneo), le coppie da scegliere in 10, «Chi gioca a …?» con 10, il primo avatar
+    //   (lui/lei e i look). Le altre (home, 4 caselle, chi manca, regole, fine con la classifica, tabellone in 10) le misurano
+    //   già 40-46b, 50, 76, 90: qui si ricordano solo
+    55: { nome: "Misure delle schermate nuove del Passo 2 (360x640 e 412x915)", fai: async function () {
+      var esiti = [], amici = ["Giulia", "Luca", "Marco", "Bea", "Nino", "Ugo", "Rita", "Sara", "Tino"];
+      var A = await salaConAmici(amici), S = A.S, P = A.w.Paky;
+      // la Sala con la classifica corta (host e amico); controllaSchermo misura con 6 nomi a vista
+      for (var mi = 0, MS = [[360, 640], [412, 915]]; mi < MS.length; mi++) {
+        var e1 = await controllaSchermo(P, "Paky", MS[mi][0], MS[mi][1], 6), e2 = await controllaSchermo(A.w.Giulia, "Giulia", MS[mi][0], MS[mi][1], 6);
+        if (e1) no("Sala di Paky (10) a " + MS[mi].join("x") + ": " + e1);
+        if (e2) no("Sala di Giulia (10) a " + MS[mi].join("x") + ": " + e2);
+      }
+      [P, A.w.Giulia].forEach(function (x, k) { var f = document.getElementById("tel-" + ["Paky", "Giulia"][k]); f.style.width = "360px"; f.style.height = "740px"; x.dispatchEvent(new x.Event("resize")); });
+      if (!P.document.querySelector(".sl-torneo-corto")) no("nella Sala non c'è la classifica corta");
+      esiti.push("Sala con 10 e classifica corta");
+      // «Tris in 10»: le scelte del torneo
+      await apriSceltaTn(P);
+      chipTn(P, "Scegliete voi");
+      var m1 = await misureSchermata(P, "Paky"); if (m1) no("«Tris in 10»: " + m1);
+      esiti.push("Tris in 10");
+      // la scelta delle coppie in 10 (host e amico)
+      if (!W.clicca(P, /Via al torneo/, ".piede button")) no("non c'è «⚔️ Via al torneo»");
+      if (!await W.aspetta(function () { return P.document.querySelectorAll(".sl-tab .tb-posto").length === 10 && A.w.Bea.document.querySelectorAll(".sl-tab .tb-posto").length === 10; }, 6000)) no("le coppie in 10 non hanno 5 partite coi posti");
+      esiti.push("coppie in 10: Paky " + await misureTab(P, "Paky") + ", Bea " + await misureTab(A.w.Bea, "Bea"));
+      // di nuovo nella Sala (‹ ferma il torneo) e «Chi gioca a Tris?» con 10 (dopo «🤺 Una sfida»)
+      W.clicca(P, /‹/, ".testa button"); await W.dorme(600);
+      if (!await W.aspetta(function () { return !vm(S).elim; }, 6000)) no("il torneo non si ferma");
+      await apriSceltaTn(P);
+      W.clicca(P, /Una sfida/, ".tn-scelta"); W.clicca(P, /Scegli chi gioca/, ".piede button");
+      if (!await W.aspetta(function () { return P.document.querySelector(".chi-gioca-sc"); }, 4000)) no("non si apre «Chi gioca a Tris?»");
+      esiti.push("Chi gioca con 10: " + await misureChi(P, "Paky"));
+      // il primo avatar (lui/lei, i look) su un telefono nuovo senza profilo
+      var N = await W.apriTel("Nina", { x: 0, profilo: false });
+      var b = await W.aspetta(function () { return N.document.querySelector(".benvenuto-profilo:not(.bp-entra):not(.bp-bentornato):not(.bp-rete)"); }, 5000);
+      if (!b) no("Nina non vede il benvenuto");
+      var campi = b.querySelectorAll("input.link-campo"); campi[0].value = "Nina"; campi[1].value = "segreto1"; W.clicca(N, /^Avanti/);
+      if (!await W.aspetta(function () { return N.document.querySelector(".primo-avatar .pa-forma"); }, 4000)) no("non si apre «Sei lui o lei?»");
+      var m2 = await misuraProfilo(N, "Nina", 360, 640) || await misuraProfilo(N, "Nina", 412, 915); if (m2) no("«Sei lui o lei?»: " + m2);
+      N.document.querySelectorAll(".primo-avatar .pa-forma")[0].click(); await W.dorme(100);
+      var m3 = await misuraProfilo(N, "Nina", 360, 640) || await misuraProfilo(N, "Nina", 412, 915); if (m3) no("«Scegli il tuo look»: " + m3);
+      esiti.push("primo avatar (lui/lei, look)");
+      return esiti.join(" · ") + " — tutto a 360x640 e 412x915 senza scorrere (home, 4 caselle, chi manca, regole, fine con la classifica e tabellone in 10: scenari 40-46b, 50, 76, 90)";
+    } },
+
+    // 56 (p2-z). LA LISTA DEI 23 GIOCHI, tutti nella stessa Sala con 5 telefoni (Paky, Giulia, Luca, Marco, Bea), uno dopo
+    //   l'altro: entra (dalla Sala, con «🤺 Una sfida»/«Chi gioca?» dove i posti sono pochi; gli amici arrivano da soli),
+    //   gioca (la partita parte per tutti), ↻ Rivincita (si riparte senza toccare niente sui telefoni degli amici),
+    //   🎮 Cambia gioco (tutti di nuovo nella Sala), ⚙️ impostazioni col box fuori dalla pagina (Sala, online, stesso
+    //   telefono, serata a punti). La fine si chiama dal tavolo su tutti i telefoni (spiaTavolo): le partite intere vere
+    //   sono nei file dei gruppi (passo2/gruppo-*.js). opz.solo = ["tris", …] per provarne solo alcuni
+    56: { nome: "Lista dei 23 giochi nella Sala: entra, gioca, Rivincita, Cambia gioco, impostazioni fuori pagina", fai: async function (opz) {
+      spiaTavolo();
+      var LISTA = ["tris", "drop4", "navale", "scopa", "calciobiliardo", "scalinata", "pallamatta", "ruota", "scopa2v2", "pendolo", "horto",
+        "blackjack", "poker", "asta", "sipero", "scarabocchio", "garapesca", "timeline", "nomicose", "balla", "taboo", "ordine", "patata"];
+      if (opz && opz.solo) LISTA = LISTA.filter(function (g) { return opz.solo.indexOf(g) >= 0; });
+      var nomi = ["Paky", "Giulia", "Luca", "Marco", "Bea"], prof = { fiches: { blackjack: 5000 } };
+      await W.apriTel("Paky", { x: 0, salaSempre: true, spiaTav: LISTA, profilo: prof });
+      var S = await apriSalaNuova("Paky");
+      for (var i = 1; i < nomi.length; i++) await W.apriTel(nomi[i], { hash: "sala=" + S, x: 185 * i, salaSempre: true, spiaTav: LISTA, profilo: prof });
+      if (!await W.aspetta(function () { return (vm(S).membri || []).length === 5; }, 12000)) no("nella Sala non sono in 5");
+      var P = W.finestra("Paky"), F = W.finestra, tab = [], rotti = [];
+      // i giochi (nome, posti, impostazioni): si ricaricano i loro file in una copia, come nel 227
+      var REG = {}, FILE = { nomicose: "nomicoseecitta", scopa2v2: "scopa2" }, reg0 = P.SG.registra;
+      P.SG.registra = function (x) { REG[x.id] = x; };
+      try { for (var fi = 0; fi < LISTA.length; fi++) P.eval(await (await fetch("/js/games/" + (FILE[LISTA[fi]] || LISTA[fi]) + ".js?" + Date.now())).text()); }
+      finally { P.SG.registra = reg0; }
+      P.__reg = REG;
+      var fineTasti = function () { return P.document.querySelector(".fine-tasti"); };
+      function fineFinta() { nomi.forEach(function (n, k) { var x = F(n); if (x && x.__tav && x.__tav.fine) try { x.__tav.fine(nomi.map(function (m, j) { return { nome: m, pos: j + 1 }; })); } catch (e) {} }); }
+      for (var gi = 0; gi < LISTA.length; gi++) {
+        var gid = LISTA[gi], g = (P.__reg || {})[gid], riga = { id: gid, entra: "✗", gioca: "✗", riv: "✗", cambia: "✗", box: "✗" };
+        tab.push(riga);
+        try {
+          if (!g) throw new Error("gioco non registrato");
+          nomi.forEach(function (n) { F(n).__tav = null; });
+          // entra: dalla Sala (o dalla fine del gioco di prima: «Cambia gioco» l'ha già fatto)
+          if (!P.document.querySelector(".tessera")) { if (!await W.aspetta(function () { return W.clicca(P, /Scegli (un|il primo) gioco|Prossimo gioco/); }, 6000)) throw new Error("non c'è «Scegli un gioco»"); }
+          var tess = await W.aspetta(function () { return tessera(P, g.nome); }, 5000); if (!tess) throw new Error("niente tessera «" + g.nome + "»");
+          tess.click();
+          var dove = await W.aspetta(function () { return P.document.querySelector(".torneino-sc, .chi-gioca-sc, .saletta-schermo"); }, 5000);
+          if (dove && dove.classList.contains("torneino-sc")) { W.clicca(P, /Una sfida/, ".tn-scelta"); W.clicca(P, /Scegli chi gioca/, ".piede button"); dove = await W.aspetta(function () { return P.document.querySelector(".chi-gioca-sc"); }, 4000); }
+          if (dove && dove.classList.contains("chi-gioca-sc")) W.clicca(P, /Si gioca/, ".piede button");
+          var C = await W.aspetta(function () { var c = codiceSaletta(P); return P.document.querySelector(".saletta-schermo") && c && c !== S ? c : null; }, 8000);
+          if (!C) throw new Error("l'host non arriva nella saletta");
+          var posti = Math.min(g.postiOnline || 10, 5);
+          if (!await W.aspetta(function () { return nomi.slice(1).filter(function (n) { return dentro(F(n)); }).length >= posti - 1; }, 12000)) throw new Error("gli amici non arrivano da soli (dentro: " + nomi.slice(1).filter(function (n) { return dentro(F(n)); }).join(", ") + ")");
+          riga.entra = "✓";
+          // gioca: «Comincia» e la partita parte per l'host e per chi gioca
+          await W.dorme(600);
+          if (!await W.aspetta(function () { W.clicca(P, /^\s*(▶\s*)?(Comincia|Via ▶|Continua ▶)/, ".sl-go, .piede button"); return P.__tav && !P.document.querySelector(".saletta-schermo"); }, 12000)) throw new Error("la partita non parte per l'host");
+          riga.gioca = "✓";
+          await W.dorme(1200);
+          fineFinta();
+          if (!await W.aspetta(function () { var b = fineTasti(); return b && /Rivincita/.test(b.textContent); }, 8000)) throw new Error("a fine partita l'host non ha «↻ Rivincita»");
+          // ↻ Rivincita: l'host lascia la fine e si riparte (nella stessa stanza o in una nuova), gli amici senza toccare
+          var tav0 = P.__tav;
+          W.clicca(P, /Rivincita/, ".fine-tasti button");
+          if (await W.aspetta(function () { return !fineTasti() && (P.__tav !== tav0 || P.document.querySelector(".saletta-schermo") || vm(C).fase !== "fine"); }, 12000)) riga.riv = "✓";
+          else riga.riv = "✗ (resta la fine)";
+          // di nuovo la fine, poi 🎮 Cambia gioco: tutti nella Sala
+          if (P.document.querySelector(".saletta-schermo") && !P.__tav) { await W.aspetta(function () { W.clicca(P, /^\s*(▶\s*)?(Comincia|Via ▶|Continua ▶)/, ".sl-go"); return P.__tav; }, 10000); }
+          await W.dorme(1000);
+          fineFinta();
+          if (!await W.aspetta(function () { return W.clicca(P, /Cambia gioco/, ".fine-tasti button"); }, 8000)) throw new Error("alla fine non c'è «🎮 Cambia gioco»");
+          if (!await W.aspetta(function () { return !vm(S).gioco && P.document.querySelector(".tessera") && nomi.slice(1).every(function (n) { return F(n).document.querySelector(".saletta-schermo") && /Sala/.test(T(F(n))); }); }, 10000))
+            throw new Error("«Cambia gioco» non porta tutti nella Sala");
+          riga.cambia = "✓";
+        } catch (e) { rotti.push(gid + ": " + e.message); }
+        // ⚙️ le impostazioni col box fuori dalla pagina
+        try {
+          if (g && typeof g.impostazioni === "function") {
+            [{ sala: true, modo: "online" }, { modo: "online" }, { modo: (g.modi && g.modi[0] && g.modi[0].modo) || "locale" }, { torneo: true }].forEach(function (a) {
+              var box = P.document.createElement("div"), imp = {};
+              g.impostazioni(box, imp, Object.assign({ el: function (t, at, fi) { var n = P.document.createElement(t); if (at) Object.keys(at).forEach(function (k) { var v = at[k]; if (v == null) return; if (k === "text") n.textContent = v; else if (k === "html") n.innerHTML = v; else if (k === "class") n.className = v; else if (k.slice(0, 2) === "on" && typeof v === "function") n.addEventListener(k.slice(2), v); else n.setAttribute(k, v); }); [].concat(fi || []).forEach(function (f) { if (f != null) n.appendChild(typeof f === "string" ? P.document.createTextNode(f) : f); }); return n; }, giocatori: nomi.slice(0, 3) }, a));
+              if (g.riassunto) g.riassunto(imp);
+            });
+          }
+          riga.box = "✓";
+        } catch (e2) { rotti.push(gid + " (impostazioni): " + e2.message); }
+        if (!P.document.querySelector(".tessera") && (vm(S).gioco || !P.document.querySelector(".saletta-schermo"))) {   // (rimettersi nella Sala per il prossimo)
+          if (!W.clicca(P, /Cambia gioco|Torna in Sala/, ".fine-tasti button")) W.clicca(P, /‹/, ".testa button");
+          await W.dorme(1500);
+        }
+      }
+      var testo = tab.map(function (r) { return r.id + " " + [r.entra, r.gioca, r.riv.charAt(0), r.cambia, r.box].join(""); }).join(" · ");
+      W.__lista23 = tab;
+      if (rotti.length || tab.some(function (r) { return r.riv !== "✓"; })) no("lista (entra gioca rivincita cambia box): " + testo + (rotti.length ? " — " + rotti.join(" | ") : ""));
+      return "lista (entra gioca rivincita cambia box): " + testo;
+    } },
+
+    // 78 (p2-z). Sullo stesso telefono, senza aprire la «Serata a punti»: due partite di fila col gruppo (Paky e Giulia)
+    //     sommano i punti da sole nella Classifica della serata: a fine partita la riga «🏆 Classifica della serata: …», un
+    //     tocco apre la classifica («2 partite giocate»), in home «🏆 Riprendi la serata a punti». La fine si chiama a mano
+    //     dal tavolo del gioco (spiaTavolo), così la prova non dipende dalle mosse della Patata
+    78: { nome: "Stesso telefono: la Classifica della serata si somma da sola gioco dopo gioco", fai: async function () {
+      spiaTavolo();
+      var P = await W.apriTel("Paky", { x: 0, spiaTav: ["patata"] });
+      var tess = await W.aspetta(function () { return tessera(P, "La Patata Bollente"); }, 5000);
+      if (!tess) no("non trovo la Patata Bollente");
+      tess.click();
+      if (!await W.aspetta(function () { return W.clicca(P, /Su questo telefono/, ".modo-grande"); }, 3000)) no("in «Come giocate?» non c'è «Su questo telefono»");
+      var campi = await W.aspetta(function () { var c = P.document.querySelectorAll(".sala-riga input"); return c.length ? c : null; }, 3000);
+      if (!campi) no("non c'è la lista di chi gioca");
+      while (P.document.querySelectorAll(".sala-riga input").length < 2) { if (!W.clicca(P, /Aggiungi giocatore/)) no("non c'è «＋ Aggiungi giocatore»"); await W.dorme(100); }
+      var c2 = P.document.querySelectorAll(".sala-riga input");
+      [["Paky", 0], ["Giulia", 1]].forEach(function (x) { c2[x[1]].value = x[0]; c2[x[1]].dispatchEvent(new P.Event("input", { bubbles: true })); });
+      while (P.document.querySelectorAll(".sala-riga input").length > 2) { P.document.querySelectorAll(".sala-riga .togli")[2].click(); await W.dorme(100); }
+      if (!W.clicca(P, /Avanti/, ".piede button")) no("non c'è «Avanti ▶»");
+      if (!await W.aspetta(function () { return W.clicca(P, /^Comincia/, ".piede button"); }, 3000)) no("non c'è «Comincia ▶»");
+      var t1 = await W.aspetta(function () { return P.__tav; }, 4000); if (!t1) no("la Patata non parte");
+      t1.fine([{ nome: "Paky", pos: 1 }, { nome: "Giulia", pos: 2 }]);
+      var riga = function () { var b = P.document.querySelector(".fine-serata"); return b ? b.textContent : ""; };
+      if (!await W.aspetta(function () { return /Classifica della serata: Paky 1° · Giulia 2°/.test(riga()); }, 3000)) no("a fine partita non c'è «🏆 Classifica della serata: Paky 1° · Giulia 2°» («" + riga() + "»)");
+      var mis = await misureSchermata(P, "Paky"); if (mis) no("la fine con la riga della serata: " + mis);
+      if (!W.clicca(P, /Rigioca/)) no("non c'è «↻ Rigioca»");
+      var t2 = await W.aspetta(function () { return P.__tav !== t1 && P.__tav; }, 4000); if (!t2) no("«Rigioca» non fa ripartire la Patata");
+      t2.fine([{ nome: "Giulia", pos: 1 }, { nome: "Paky", pos: 2 }]);
+      if (!await W.aspetta(function () { return riga(); }, 3000)) no("alla 2ª fine non c'è la riga della serata");
+      var r1 = riga();
+      P.document.querySelector(".fine-serata").click();
+      if (!await W.aspetta(function () { return /Classifica della serata/.test(T(P)) && /2 partite giocate/.test(T(P)); }, 3000)) no("toccata la riga, la classifica non dice «2 partite giocate» («" + T(P).slice(0, 100) + "»)");
+      W.clicca(P, /Home/);
+      if (!await W.aspetta(function () { return /Riprendi la serata a punti/.test(T(P)); }, 3000)) no("in home non c'è «🏆 Riprendi la serata a punti»");
+      return "2 partite col gruppo → riga «" + r1 + "» a fine partita (360x640 e 412x915 ok), classifica con 2 partite, home «Riprendi la serata a punti»";
+    } },
+
+    // 77 (p2-z). In 6, coppie «✋ Scegliete voi»: si apre il tabellone delle coppie («Partita 1: posto libero contro posto
+    //     libero», 3 partite), ognuno tocca un posto e lo vedono tutti; un posto preso non si tocca; «Seduti 3 su 6» e il conto
+    //     alla rovescia; Paky «⚔️ Via al torneo»: chi si è seduto gioca con chi ha scelto, chi era in piedi va nei posti rimasti.
+    //     Misure del tabellone delle coppie a 360x640 e 412x915 (host e amico)
+    77: { nome: "Torneo in 6 con le coppie scelte: posti da toccare, Seduti N su 6, conto alla rovescia, Via", fai: async function () {
+      var A = await salaConAmici(["Giulia", "Luca", "Marco", "Bea", "Nino"]), S = A.S, P = A.w.Paky;
+      await apriSceltaTn(P);
+      if (opzVisibili(P).indexOf("Le coppie") < 0) no("in «Tris in 6» non c'è «Le coppie»");
+      chipTn(P, "Scegliete voi");
+      if (!/si siede dove e con chi vuole/.test(T(P))) no("scelto «Scegliete voi», la nota non lo dice");
+      if (!W.clicca(P, /Via al torneo/, ".piede button")) no("non c'è «⚔️ Via al torneo»");
+      var E = await W.aspetta(function () { var e = tn(S); return e && e.scade && !e.iniziato ? e : null; }, 5000);
+      if (!E || E.coppie !== "scelte") no("non si apre la scelta delle coppie (" + JSON.stringify(tn(S) || {}).slice(0, 120) + ")");
+      var nomi = ["Paky", "Giulia", "Luca", "Marco", "Bea", "Nino"];
+      if (!await W.aspetta(function () { return nomi.every(function (n) { return A.w[n].document.querySelectorAll(".sl-tab .tb-posto").length === 6; }); }, 6000))
+        no("non tutti vedono 3 partite coi posti («" + T(A.w.Bea).slice(0, 100) + "»)");
+      if (!/Partita 1/.test(T(A.w.Giulia)) || !/＋ libero/.test(T(A.w.Giulia))) no("Giulia non legge «Partita 1 … ＋ libero»");
+      if (!A.w.Paky.document.querySelector(".tb-conto")) no("manca il conto alla rovescia");
+      function posto(w, n, i) { return w.document.querySelectorAll(".sl-tab .tb-posti")[n - 1].querySelectorAll(".tb-posto")[i]; }
+      posto(A.w.Giulia, 1, 0).click(); await W.aspetta(function () { return (tn(S).gironi || {})[idInSala(S, "Giulia")] === 1; }, 3000);
+      posto(A.w.Luca, 1, 1).click(); await W.aspetta(function () { return (tn(S).gironi || {})[idInSala(S, "Luca")] === 1; }, 3000);
+      if (!await W.aspetta(function () { var b = posto(A.w.Marco, 1, 0); return b && b.disabled && /Giulia/.test(b.textContent); }, 4000)) no("Marco non vede Giulia seduta (o può prenderle il posto)");
+      posto(A.w.Marco, 2, 1).click();
+      if (!await W.aspetta(function () { return /Seduti 3 su 6/.test(T(P)); }, 4000)) no("Paky non legge «Seduti 3 su 6» («" + T(P).slice(0, 120) + "»)");
+      if (!/Sei seduto nella Partita 1/.test(T(A.w.Giulia))) no("Giulia non legge «Sei seduto nella Partita 1»");
+      var mH = await misureTab(P, "Paky"), mG = await misureTab(A.w.Bea, "Bea");
+      if (!W.clicca(P, /Via al torneo/, ".sl-go")) no("Paky non ha «⚔️ Via al torneo» nella saletta");
+      var E1 = await W.aspetta(function () { var e = tn(S); return e && e.iniziato ? e : null; }, 5000);
+      if (!E1) no("toccato «Via», il torneo non parte");
+      var t0 = E1.turni[0], g = idInSala(S, "Giulia"), l = idInSala(S, "Luca");
+      if (t0.length !== 3) no("il primo turno ha " + t0.length + " partite");
+      if (!t0.some(function (p) { return (p.a === g && p.b === l) || (p.a === l && p.b === g); })) no("Giulia e Luca non giocano insieme come avevano scelto");
+      var tutti = {}; t0.forEach(function (p) { tutti[p.a] = 1; if (p.b) tutti[p.b] = 1; });
+      if (Object.keys(tutti).length !== 6) no("non giocano tutti e 6 al primo turno: " + JSON.stringify(t0));
+      if (P.document.querySelector(".tb-conto")) no("partito il torneo, il conto alla rovescia è ancora lì");
+      return "3 partite coi posti per tutti, Seduti 3 su 6, coppie scelte rispettate (" + t0.map(function (p) { return nomeTn(E1, p.a) + "–" + nomeTn(E1, p.b); }).join(", ") + "); misure " + mH + " / " + mG;
+    } },
+
   };
+
+  // ---- aiuti per i bot fissi (p2-bot) ----
+  // botFinti: da mettere in apriTel(nome, { prima: botFinti }): la scheda pubblica finta (BR.pubblici[nome]) per
+  // SGNube.pubblica e SGNube.cercaNome (senza rete, w.__offline, cercaNome non risponde)
+  function botFinti(w) {
+    W.BR.pubblici = W.BR.pubblici || {};
+    var nome = w.__fp && w.__fp.nome;
+    w.SGNube.pubblica = function (d) {
+      if (w.__offline || !nome) return Promise.resolve();
+      var s = W.BR.pubblici[nome] = W.BR.pubblici[nome] || { nome: nome };
+      for (var k in d) s[k] = JSON.parse(JSON.stringify(d[k]));
+      return Promise.resolve();
+    };
+    w.SGNube.cercaNome = function (n) {
+      if (w.__offline) return Promise.reject(new Error("offline"));
+      var k = Object.keys(W.BR.pubblici).filter(function (x) { return x.trim().toUpperCase() === String(n).trim().toUpperCase(); })[0];
+      return Promise.resolve(k ? JSON.parse(JSON.stringify(W.BR.pubblici[k])) : null);
+    };
+  }
+  // una schermata qualsiasi (non la saletta) a misura: niente scorre e il piede si vede. "" = tutto bene
+  async function misuraSchermata(w, nome, larg, alt) {
+    var f = document.getElementById("tel-" + nome), d = w.document;
+    if (!d.getElementById("senza-entrata")) { var st = d.createElement("style"); st.id = "senza-entrata"; st.textContent = ".schermata{ animation:none !important; }"; d.head.appendChild(st); }
+    f.style.width = larg + "px"; f.style.height = alt + "px";
+    void d.documentElement.offsetHeight; w.dispatchEvent(new w.Event("resize"));
+    await W.dorme(400);
+    var c = d.querySelector(".schermata .contenuto"), p = d.querySelector(".schermata .piede");
+    if (d.documentElement.scrollHeight > alt + 1) return "a " + larg + "x" + alt + " la pagina scorre (" + d.documentElement.scrollHeight + " px)";
+    if (c && c.scrollHeight > c.clientHeight + 1) return "a " + larg + "x" + alt + " il centro scorre (" + c.scrollHeight + " su " + c.clientHeight + ")";
+    if (p && p.getBoundingClientRect().bottom > alt + 1) return "a " + larg + "x" + alt + " i tasti in fondo escono";
+    return "";
+  }
+  async function misureSchermata(w, nome) {
+    var a = await misuraSchermata(w, nome, 360, 640), b = await misuraSchermata(w, nome, 412, 915);
+    var f = document.getElementById("tel-" + nome); f.style.width = "360px"; f.style.height = "740px"; w.dispatchEvent(new w.Event("resize"));
+    return a || b;
+  }
+  // dalla home al profilo
+  async function apriProfilo(w) {
+    var ch = await W.aspetta(function () { return w.document.querySelector(".profilo-chip, .citta-io"); }, 4000);
+    if (!ch) no("non trovo il profilo nella home («" + T(w).slice(0, 60) + "»)");
+    ch.click();
+    if (!await W.aspetta(function () { return /Il tuo profilo/.test(T(w)) && /Esci dal profilo/.test(T(w)); }, 4000)) no("non si apre il profilo («" + T(w).slice(0, 60) + "»)");
+  }
+
+  // ---- aiuti per il torneino (p2-t) ----
+  // il torneino di adesso (dalla foto della Sala) o null; una sua partita; il nome di un partecipante (il Bot col suo nome)
+  function tn(S) { var e = vm(S).elim; return e && e.torneino ? e : null; }
+  function partitaTn(S, k) { var e = tn(S); if (!e) return null; for (var r = 0; r < e.turni.length; r++) for (var j = 0; j < e.turni[r].length; j++) if (e.turni[r][j].k === k) return e.turni[r][j]; return null; }
+  function nomeTn(E, id) { return id === "bot" ? ((E.bot && E.bot.nome) || "Bot") : (E.nomi || {})[id]; }
+  // come lo scrive il tabellone ("🤖 Matt" per il Bot)
+  function etTn(E, id) { return id === "bot" ? "🤖 " + nomeTn(E, id) : nomeTn(E, id); }
+  // dalla Sala l'host tocca un gioco a due: si apre "Tris in N" (🏆 Torneino / ⚔️ Una sfida)
+  async function apriSceltaTn(P, nomeGioco) {
+    if (!await W.aspetta(function () { return W.clicca(P, /Scegli (un|il primo) gioco|Prossimo gioco/); }, 4000)) no("non trovo «Scegli un gioco» nella Sala");
+    var tess = await W.aspetta(function () { return tessera(P, nomeGioco || "Tris"); }, 4000);
+    if (!tess) no("non trovo " + (nomeGioco || "Tris") + " tra i giochi della Sala");
+    tess.click();
+    if (!await W.aspetta(function () { return P.document.querySelector(".torneino-sc"); }, 4000)) no("toccato " + (nomeGioco || "Tris") + ", non si apre «Torneino / Una sfida» («" + T(P).slice(0, 80) + "»)");
+  }
+  // le righe delle scelte del torneo che si vedono ("Le coppie · Chi resta in più · Bravura del Bot")
+  function opzVisibili(P) {
+    var o = P.document.querySelector(".tn-opz"); if (!o || o.hidden) return "";
+    return [].filter.call(o.children, function (r) { return !r.hidden; }).map(function (r) { var e = r.querySelector(".etichetta"); return e ? e.textContent : ""; }).join(" · ");
+  }
+  // tocca una scelta del torneino ("Passa il turno", "Difficile"…)
+  function chipTn(P, testo) {
+    var b = [].find.call(P.document.querySelectorAll(".tn-opz .modo-chip"), function (x) { return x.textContent.indexOf(testo) >= 0; });
+    if (!b) no("tra le scelte del torneino non c'è «" + testo + "»");
+    b.click();
+  }
+  // "🏆 Via al torneino": restituisce il torneino partito
+  async function viaTn(P, S) {
+    if (!W.clicca(P, /Via al torneo/, ".piede button")) no("non c'è «⚔️ Via al torneo»");
+    var E = await W.aspetta(function () { var e = tn(S); return e && e.iniziato ? e : null; }, 5000);
+    if (!E) no("il torneino non parte");
+    return E;
+  }
+  // l'host decide una partita dal tabellone: "⋯" sulla carta → "✅ Passa Luca" (se sta giocando, dal 🏆 sopra la sua partita)
+  async function decidiTn(P, S, k, id) {
+    var carta = await W.aspetta(function () {
+      var c = P.document.querySelector('.tb-p[data-k="' + k + '"]');
+      if (!c && !P.document.querySelector(".sl-foglio")) { var b = P.document.querySelector(".tab-elim"); if (b) b.click(); }
+      return c && c.querySelector(".tb-decidi") ? c : null;
+    }, 6000);
+    if (!carta) no("Paky non trova la partita " + k + " nel tabellone («" + T(P).slice(0, 80) + "»)");
+    carta.querySelector(".tb-decidi").click();
+    var E = tn(S), tx = "✅ Passa " + etTn(E, id);
+    var b = await W.aspetta(function () { return [].find.call(P.document.querySelectorAll(".tb-velo button"), function (x) { return x.textContent === tx; }); }, 2000);
+    if (!b) no("nel foglio «Partita bloccata?» non c'è «" + tx + "»");
+    b.click();
+    if (!await W.aspetta(function () { var p = partitaTn(S, k); return p && p.vince === id; }, 4000)) no("decisa la partita " + k + ", non passa " + nomeTn(E, id));
+    var f = P.document.querySelector(".sl-velo:not(.tb-velo)"); if (f) { var x = f.querySelector(".sl-foglio-x"); if (x) x.click(); }   // (il 🏆 sopra la partita si chiude)
+  }
+  // una partita di Tris vera del torneino: chi l'ha aperta (a) fa Comincia; vince a (X, prima casella libera)
+  async function trisTn(S, p) {
+    var E = tn(S), nA = nomeTn(E, p.a), nB = nomeTn(E, p.b), A = W.finestra(nA);
+    if (!await W.aspetta(function () { return vm(p.stanza).avvId; }, 12000)) no("la partita " + nA + "–" + nB + " non si apre con tutti e due");
+    await W.aspetta(function () { return W.clicca(A, /Comincia/, ".sl-go"); }, 8000);
+    if (!await W.aspetta(function () { return vm(p.stanza).fase === "gioco"; }, 8000)) no("la partita " + nA + "–" + nB + " non comincia");
+    if (!await trisFinoAllaFine(p.stanza, nA, nB)) no("la partita " + nA + "–" + nB + " non finisce");
+    var v = await W.aspetta(function () { var q = partitaTn(S, p.k); return q && q.vince; }, 8000);
+    if (!v) no("finita la partita " + nA + "–" + nB + ", il tabellone non sa chi ha vinto");
+    return v;
+  }
+  // il torneino fino alla fine deciso dall'host: col Bot vince sempre il Bot, se no il primo della carta. Restituisce il torneino finito
+  async function finoAllaFineTn(P, S, controlla) {
+    var fino = Date.now() + 90000;
+    while (Date.now() < fino) {
+      var E = tn(S); if (!E) no("il torneino è sparito");
+      if (E.finito) return E;
+      if (controlla) controlla(E);
+      var tu = E.turni[E.turni.length - 1], p = tu.filter(function (x) { return !x.vince; })[0];
+      if (p) await decidiTn(P, S, p.k, p.b === "bot" ? "bot" : p.a);
+      else await W.dorme(150);
+    }
+    no("il torneino non finisce");
+  }
+  // la Sala col tabellone a misura: niente scorre, carte e tasti dentro lo schermo. "" = tutto bene, se no il perché
+  async function misuraTab(w, nome, larg, alt) {
+    var f = document.getElementById("tel-" + nome), d = w.document;
+    if (!d.getElementById("senza-entrata")) { var st = d.createElement("style"); st.id = "senza-entrata"; st.textContent = ".schermata{ animation:none !important; } .sl-av,.sl-nome{transition:none!important}"; d.head.appendChild(st); }
+    f.style.width = larg + "px"; f.style.height = alt + "px";
+    void d.documentElement.offsetHeight; w.dispatchEvent(new w.Event("resize"));
+    await W.dorme(450); w.scrollTo(0, 0);
+    var tab = d.querySelector(".saletta-schermo .sl-tab"); if (!tab) return "non c'è il tabellone nella Sala";
+    if (d.documentElement.scrollHeight > alt + 1) return "la pagina scorre (" + d.documentElement.scrollHeight + " px)";
+    if (d.documentElement.scrollWidth > larg + 1) return "la pagina scorre di lato";
+    var c = d.querySelector(".saletta-schermo > .contenuto"); if (c && c.scrollHeight > c.clientHeight + 1) return "il centro scorre (" + c.scrollHeight + " su " + c.clientHeight + ")";
+    var cose = [].slice.call(d.querySelectorAll(".sl-tab .tb-p, .sl-tab .tb-prima, .saletta-schermo > .piede .btn:not([hidden])"));
+    for (var i = 0; i < cose.length; i++) { var r = cose[i].getBoundingClientRect(); if (r.width && (r.bottom > alt + 1 || r.right > larg + 1 || r.left < -1)) return "«" + cose[i].textContent.slice(0, 30) + "» esce dallo schermo"; }
+    var nomi = d.querySelectorAll(".sl-tab .tb-n");
+    for (var k = 0; k < nomi.length; k++) if (nomi[k].getBoundingClientRect().right > nomi[k].parentNode.getBoundingClientRect().right + 1) return "il nome «" + nomi[k].textContent + "» esce dalla carta";
+    return "";
+  }
+  async function misureTab(w, nome) {
+    var M = [[360, 640], [412, 915]], fatte = [];
+    for (var k = 0; k < M.length; k++) { var e = await misuraTab(w, nome, M[k][0], M[k][1]); if (e) no(nome + " a " + M[k].join("x") + ": " + e); fatte.push(M[k].join("x")); }
+    var f = document.getElementById("tel-" + nome); f.style.width = "360px"; f.style.height = "740px"; w.dispatchEvent(new w.Event("resize"));
+    return fatte.join(", ");
+  }
 
   W.COPIONE = {
     esiti: [], scenari: SCENARI,
-    prova: async function (n) {
+    // gli aiuti di questo file, per i file di prova dei passi (passo2/…): var A = COPIONE.aiuti; A.vm(C), A.no("perché")…
+    aiuti: { T: T, pill: pill, dentro: dentro, vm: vm, ids: ids, mioId: mioId, codiceSaletta: codiceSaletta, codiceTestata: codiceTestata, no: no, home: home,
+      apriSala: apriSala, salaLanciaGioco: salaLanciaGioco, scalinataFinoAllaFine: scalinataFinoAllaFine,
+      audioFinto: audioFinto, nomeTarga: nomeTarga, targaDi: targaDi, avatarDi: avatarDi, pronto: pronto, statoHost: statoHost,
+      contaFaccine: contaFaccine, controllaSchermo: controllaSchermo,
+      spiaProfilo: spiaProfilo, creaProfilo: creaProfilo, primoAvatar: primoAvatar, misuraProfilo: misuraProfilo, misureProfilo: misureProfilo,
+      codiceSala: codiceSala, tessera: tessera, modiVisti: modiVisti, spiaTesto: spiaTesto, salaDaGioco: salaDaGioco, idInSala: idInSala,
+      apriSalaNuova: apriSalaNuova, misuraHome: misuraHome, batti: batti, incolla: incolla, caselle: caselle,
+      salaConAmici: salaConAmici, lanciaDallaSala: lanciaDallaSala, contaSl: contaSl, sagome: sagome, regoleDi: regoleDi,
+      trisFinoAllaFine: trisFinoAllaFine, tastiFineDi: tastiFineDi, misuraFine: misuraFine, misureFine: misureFine, spiaVia: spiaVia, spiaTavolo: spiaTavolo,
+      chiGioca: chiGioca, toccaChi: toccaChi, passaChiGioca: passaChiGioca, misuraChi: misuraChi, misureChi: misureChi, toccaGiocoSala: toccaGiocoSala,
+      botFinti: botFinti, misuraSchermata: misuraSchermata, misureSchermata: misureSchermata, apriProfilo: apriProfilo,
+      tn: tn, partitaTn: partitaTn, nomeTn: nomeTn, etTn: etTn, apriSceltaTn: apriSceltaTn, chipTn: chipTn, opzVisibili: opzVisibili, viaTn: viaTn, decidiTn: decidiTn, trisTn: trisTn,
+      finoAllaFineTn: finoAllaFineTn, misuraTab: misuraTab, misureTab: misureTab,
+      pulisci: pulisci, carica: carica },
+    // uno scenario nuovo (da un file di prova): COPIONE.aggiungi(201, { nome: "…", fai: async function () { … return "…"; } })
+    aggiungi: function (n, s) { SCENARI[n] = s; return n; },
+    // carica un file di prova della cartella prova-nel-browser (es. "passo2/gruppo-a.js"): i suoi scenari si aggiungono
+    carica: async function (percorso) {
+      await carica();
+      var src = await (await fetch("/.agents/skills/prova-nel-browser/" + String(percorso).replace(/^\/+/, "") + "?" + Date.now())).text();
+      (0, eval)(src);
+      return percorso;
+    },
+    prova: async function (n, opz) {   // (opz: per gli scenari che le leggono, es. 56 { solo: ["tris"] })
       await carica(); pulisci();
       var s = SCENARI[n], t0 = Date.now(), r;
-      try { r = n + " OK · " + s.nome + " · " + (await s.fai()); }
+      try { r = n + " OK · " + s.nome + " · " + (await s.fai(opz)); }
       catch (e) { r = n + " NO · " + s.nome + " · " + (e && e.message || e); }
       var err = W.erroriTel(); if (err.length) r += " · errori: " + err.slice(0, 3).join(" / ");
       r += " (" + Math.round((Date.now() - t0) / 1000) + " s)";
       this.esiti = this.esiti.filter(function (x) { return x.indexOf(n + " ") !== 0; }); this.esiti.push(r);
       return r;
     },
-    tutti: async function () { for (var k in SCENARI) await this.prova(+k); return this.esiti; }
+    tutti: async function () { for (var k in SCENARI) await this.prova(isNaN(+k) ? k : +k); return this.esiti; }
   };
 })();

@@ -768,12 +768,12 @@
     };
     return M;
   }
-  // il messaggio nella targhetta della squadra q (chi = { mie: squadre di questo telefono, bot: squadra di Bot o -1 })
+  // il messaggio nella targhetta della squadra q (chi = { mie: squadre di questo telefono, bot: squadra del Bot o -1, botNome: il suo nome })
   function riga(vm, q, chi) {
     var parti = [];
     if (vm.rig && vm.rig.tiri[q].length) parti.push("Rigori " + vm.rig.tiri[q].map(function (x) { return x ? "✓" : "✗"; }).join(""));
     if (vm.stato === "mira" && vm.turno === q) {
-      if (chi.bot === q) parti.push("Bot pensa…");
+      if (chi.bot === q) parti.push((chi.botNome || "Bot") + " pensa…");
       else if (chi.mie.indexOf(q) >= 0) parti.push(vm.rig ? "Tira il rigore!" : "Tocca a te! Tira e lascia");
       else parti.push("Sta mirando…");
     }
@@ -816,9 +816,12 @@
   function locale(t, modo) {
     var imp = t.impostazioni || {}, bot = modo === "bot", liv = imp.difficolta || "medio";
     var g0 = t.giocatori || [];
-    var nomi = bot ? [g0[0] || "Tu", "Bot"] : [g0[0] || "Giocatore 1", g0[1] || "Giocatore 2"];
-    var omini = [t.mioOmino ? t.mioOmino(nomi[0]) : null, window.SGOmino ? SGOmino.casuale(nomi[1]) : null];
-    var chi = { mie: bot ? [0] : [0, 1], bot: bot ? 1 : -1 };
+    // il Bot: quello deciso dal core (torneo a eliminazione) o uno dei bot fissi, scelto dalla bravura (nei tasti si dice "Bot")
+    var ilBot = !bot ? null : (imp.bot && imp.bot.nome) ? imp.bot
+      : ((SG.bot && SG.bot.prendi && SG.bot.prendi(1, { livello: liv, escludi: [g0[0] || "Tu", t.nomeProfilo && t.nomeProfilo()] })[0]) || { nome: "Bot", omino: null });
+    var nomi = bot ? [g0[0] || "Tu", ilBot.nome] : [g0[0] || "Giocatore 1", g0[1] || "Giocatore 2"];
+    var omini = [t.mioOmino ? t.mioOmino(nomi[0]) : null, bot && ilBot.omino ? ilBot.omino : (window.SGOmino ? SGOmino.casuale(nomi[1]) : null)];
+    var chi = { mie: bot ? [0] : [0, 1], bot: bot ? 1 : -1, botNome: bot ? ilBot.nome : null };
     var primo = 0, M = null, ui = null, tm = null, pensa = 0;
     function via() { if (tm) { clearTimeout(tm); tm = null; } pensa++; }   // pensa++: se Bot stava pensando, la sua scelta non vale più
     window.__CB.locale = function () { return M && M.P; };   // per le prove
@@ -872,6 +875,7 @@
     function fine() {
       via();
       var P = M.P, v = P.vincitore, cl = [{ nome: nomi[v], pos: 1 }, { nome: nomi[1 - v], pos: 2 }];
+      if (bot) cl[v === 1 ? 0 : 1].bot = true;   // la riga del Bot (squadra 1): bot: true
       // i trofei: contro Bot conta chi gioca; in due sullo stesso telefono conta chi ha il nome del profilo
       var prof = window.SGNube && SGNube.profilo && SGNube.profilo(), mio = bot ? 0 : (prof && nomi[1] === prof.nome ? 1 : (prof && nomi[0] === prof.nome ? 0 : -1));
       if (mio >= 0) salvaStat(P, mio, { modo: bot ? "bot" : "telefono", liv: liv });
@@ -888,7 +892,8 @@
   }
 
   // la schermata finale: chi ha vinto e il risultato (con i rigori, se ci sono stati)
-  function finale(t, d, tasti, nota) {
+  // comuni: online, i tasti di fine uguali per tutti (li disegna il core: se torna true, dei tasti resta solo la fila delle faccine)
+  function finale(t, d, tasti, nota, comuni, fa) {
     stile();
     var tu = d.mia, vinto = tu != null && d.vincitore === tu;
     var tit = tu == null ? "Ha vinto " + d.nomi[d.vincitore] + "!" : (vinto ? "Hai vinto!" : "Ha vinto " + d.nomi[d.vincitore]);
@@ -898,8 +903,10 @@
     ]));
     if (d.rigVinto && d.rig) s._contenuto.appendChild(t.el("p", { class: "cb-fine-rig", text: "Ai rigori: " + somma(d.rig.tiri[0]) + " a " + somma(d.rig.tiri[1]) }));
     if (nota) s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center", text: nota }));
-    tasti.forEach(function (b) { if (b) s._piede.appendChild(b); });
+    if (comuni && comuni(s._piede)) { if (fa) s._piede.insertBefore(fa, s._piede.firstChild); }
+    else tasti.forEach(function (b) { if (b) s._piede.appendChild(b); });
     t.mostra(s);
+    return s;
   }
 
   // =========================================================
@@ -907,6 +914,7 @@
   //  Chi entra quando i due posti sono presi (o a partita iniziata) guarda in diretta.
   // =========================================================
   var UI = null;   // lo schermo di gioco online si costruisce UNA volta e poi si aggiorna a pezzi
+  var FINE = { k: null, s: null };   // la schermata finale online già mostrata (si rifà solo se cambia)
   function host(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var imp = t.impostazioni || {};
@@ -918,10 +926,14 @@
     function guarda(id) { return H.spett.some(function (x) { return x.id === id; }); }
     function fermaTimer() { if (H.to) { clearTimeout(H.to); H.to = null; } }
     // in saletta, se un posto è libero, il primo che guardava diventa giocatore
+    // (nella Sala gioca solo chi è stato scelto: gli altri guardano)
+    function puo(id, nome) { return !t.puoSedersi || t.puoSedersi(id, nome); }
     function riempi() {
       while (H.fase === "lobby" && H.players.length < MAX && H.spett.length) {
-        var k = 0;   // (la stanza appena riaperta: il posto resta per un po' a chi giocava)
-        if (H.riserva && Date.now() < H.riserva.fino) { k = -1; for (var j = 0; j < H.spett.length; j++) if (H.spett[j].id === H.riserva.id) k = j; if (k < 0) break; }
+        var k = -1;   // (la stanza appena riaperta: il posto resta per un po' a chi giocava)
+        if (H.riserva && Date.now() < H.riserva.fino) { for (var j = 0; j < H.spett.length; j++) if (H.spett[j].id === H.riserva.id) k = j; if (k < 0) break; }
+        else for (var q = 0; q < H.spett.length && k < 0; q++) if (puo(H.spett[q].id, H.spett[q].nome)) k = q;
+        if (k < 0) break;
         var x = H.spett.splice(k, 1)[0]; H.players.push({ id: x.id, nome: x.nome, omino: x.omino || null });
       }
     }
@@ -965,7 +977,7 @@
         }
         if (m.t === "join") {
           if (!pById(id) && !guarda(id)) {
-            if (H.fase === "lobby" && H.players.length < MAX && !postoRiservato(H.riserva, id)) H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino) });
+            if (H.fase === "lobby" && H.players.length < MAX && !postoRiservato(H.riserva, id) && puo(id, String(m.nome || "Amico").slice(0, 16))) H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino) });
             else if (H.spett.length < 12) H.spett.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino) });   // posti presi: guarda
           }
           riempi();   // chi guardava e trova un posto libero in saletta, gioca
@@ -1050,6 +1062,8 @@
     }
     // "Nuova partita": stessa stanza, stessi amici, si torna nella saletta (batte l'altro); chi guardava prende il posto libero
     function nuova() { fermaTimer(); H.fase = "lobby"; H.primo = 1 - H.primo; H.M = null; H.players = H.players.filter(function (p) { return !p.via; }); riempi(); bd(); }
+    // la rivincita dei tasti di fine comuni (è la stessa "Nuova partita": si torna nella saletta, il core fa il 3-2-1)
+    t.onRivincita = function () { if (H.fase === "fine") nuova(); };
 
     var cbHost = { sonoHost: true, myId: "host", onComincia: comincia, onNuova: nuova,
       onForm: function (f) { if (H.fase === "lobby") { H.form[0] = formOk(f); bd(); } },
@@ -1155,13 +1169,22 @@
       var chiave = codiceDi(vm);
       if (me >= 0 && !cb.sonoHost && vm.stat && !giaSalvata(chiave)) salvaStat(vm, me, { modo: "online" });   // i miei trofei (una volta sola, anche se ricarico la pagina)
       var nota = vm.ritiro ? (me >= 0 ? "L'avversario ha lasciato la partita." : (nomi[1 - (vm.vincitore || 0)] || "L'avversario") + " ha lasciato la partita.") : (cb.guarda ? "Tra poco si torna al tabellone…" : (cb.sonoHost ? "" : "Se l'host fa un'altra partita, torni da solo nella saletta."));
+      // la stessa fine è già sullo schermo (es. è entrato uno a guardare): niente da rifare, niente lampeggio
+      var kFine = chiave + "|" + me + "|" + !!cb.sonoHost + "|" + nota;
+      if (FINE.k === kFine && FINE.s && document.body.contains(FINE.s)) return;
       var fa = t.faccine ? t.faccine() : null;   // la fila delle faccine (stanza online; nel torneo chi guarda non l'ha)
       if (fa) fa.style.margin = "0 0 8px";
-      return finale(t, { vincitore: vm.vincitore, nomi: nomi, gol: vm.gol, mia: me >= 0 ? me : null, rig: vm.rig, rigVinto: vm.rigVinto }, [
+      // online, chi ha giocato (host o avversario): i tasti di fine uguali per tutti, se li disegna il core
+      var comuni = !cb.guarda && (cb.sonoHost || me >= 0) && t.tastiFine
+        ? function (piede) { return t.tastiFine(piede, { host: !!cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci }); } : null;
+      FINE.k = kFine;
+      FINE.s = finale(t, { vincitore: vm.vincitore, nomi: nomi, gol: vm.gol, mia: me >= 0 ? me : null, rig: vm.rig, rigVinto: vm.rigVinto }, [
         fa,
         cb.sonoHost ? t.el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }) : null,
-        t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci })], nota);
+        t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci })], nota, comuni, fa);
+      return FINE.s;
     }
+    FINE.k = null;
     if (!UI || !document.body.contains(UI.cv))
       UI = creaSchermo(t, cb, { flip: me === 1, ruota: false, nomi: nomi, omini: [(pl[0] || {}).omino || null, (pl[1] || {}).omino || null], muto: me < 0 });
     var chi = { mie: me >= 0 ? [me] : [], bot: -1 }, qGiu = me === 1 ? 1 : 0;
@@ -1286,10 +1309,10 @@
 
   SG.registra({
     id: ID, nome: "Calcio Biliardo", icona: "⚽",
-    descrizione: "Il calcio coi dischi: tiri indietro un calciatore come una fionda, colpisci la palla e fai gol. Contro Bot, in due sullo stesso telefono o online.",
+    descrizione: "Il calcio coi dischi: tiri indietro un calciatore come una fionda, colpisci la palla e fai gol. Contro il Bot, in due sullo stesso telefono o online.",
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 2,
     postiOnline: 2,   // online si gioca in due: gli altri guardano
-    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Sfidi Bot" },
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il Bot" },
       { modo: "telefono", icona: "📱", nome: "In due su questo telefono", sotto: "Uno per lato, il telefono in mezzo", amici: true }],
     regole: [
       "Ognuno ha <b>5 calciatori</b>. A turno se ne tira <b>uno</b>: toccalo, tira indietro il dito come una <b>fionda</b> e lascia. Più tiri indietro, più forte parte.",
@@ -1330,7 +1353,7 @@
         chips("🔵 Blu: il secondo della lista (sta in alto)", forme, "form2", "classica", 3);
       }
       else if (!aiuti.sala) chips(dove.modo === "online" ? "La tua formazione (la cambi anche in saletta)" : "La tua formazione", forme, "form", "classica", 3);
-      if (dove.modo === "bot") chips("Bravura di Bot", [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]], "difficolta", "medio");
+      if (dove.modo === "bot") chips("Bravura del Bot", [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]], "difficolta", "medio");
     },
     avvia: function (t) {
       if (t.linkParams && t.linkParams.stanza) return t.linkParams.guarda ? guarda(t, t.linkParams.stanza) : ospite(t, t.linkParams.stanza);   // invito o chi guarda (torneo)

@@ -157,10 +157,17 @@
     if (vm.ultimo) V.ultimo = { mio: vm.ultimo.chi === me, i: vm.ultimo.y * N + vm.ultimo.x };
     if (vm.avviso && vm.avviso.n === vm.n) V.avviso = { key: vm.g + "-" + vm.n, txt: vm.avviso.chi === me ? "💥 Colpito e affondato! " + vm.avviso.nome : "☠️ Ti hanno affondato: " + vm.avviso.nome };
     if (vm.fase === "battaglia" && vm.regole && vm.regole.tempo) V.tempo = { key: vm.g + "-" + vm.n, sec: vm.regole.tempo };
-    V.testo = V.mio ? "🎯 Tocca a te — <b>spara!</b>" : (botto ? "🤖 Spara Bot…" : "⏳ Spara " + esc(nomeAvv) + "…");
+    V.testo = V.mio ? "🎯 Tocca a te — <b>spara!</b>" : (botto ? "🤖 Spara " + esc(nomeAvv) + "…" : "⏳ Spara " + esc(nomeAvv) + "…");
     return V;
   }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  // il Bot di questa partita: quello deciso dal core (torneo a eliminazione) o uno dei bot fissi, scelto dal livello
+  // (nei tasti si dice "Bot"; in partita ha il suo nome). escludi = i nomi di chi gioca
+  function botDi(imp, liv, escludi) {
+    if (imp && imp.bot && imp.bot.nome) return imp.bot;
+    var b = SG.bot && SG.bot.prendi ? SG.bot.prendi(1, { livello: liv, escludi: escludi })[0] : null;
+    return b || { nome: "Bot", omino: null, bot: true };
+  }
 
   // ---------- bot ----------
   // campo: quello che il Bot vede della tua flotta (stringa come campoStr); restanti: lunghezze delle navi ancora a galla
@@ -666,7 +673,9 @@
         gr.nodo,
         el("div", { class: "nav-leg", text: F.statTxt })
       ]));
-      F.tasti.forEach(function (n) { s._piede.appendChild(n); });
+      // online: i tasti di fine uguali per tutti, se li disegna il core (F.comuni); sopra, le faccine
+      if (F.comuni && F.comuni(s._piede)) { if (F.fa) s._piede.insertBefore(F.fa, s._piede.firstChild); }
+      else F.tasti.forEach(function (n) { s._piede.appendChild(n); });
     }
     function reteAvviso(txt) { if (U.rete) U.rete.textContent = txt || ""; }
 
@@ -683,10 +692,11 @@
   // =========================================================
   function controBot(t, liv, regole) {
     var io = (t.giocatori && t.giocatori[0]) || "Tu";
+    var nomeBot = botDi(t.impostazioni, liv, [io, t.nomeProfilo && t.nomeProfilo()]).nome;   // il nome del Bot di questa partita
     var P, ui, chiaveFine = null;
     function esci() { ui.spegni(); t.esci(); }
     ui = Plancia(t, {
-      nomeAvv: function () { return "Bot"; }, bot: true,
+      nomeAvv: function () { return nomeBot; }, bot: true,
       onEsci: function () {
         if (P && P.fase !== "fine") conferma(t, "Uscire dalla partita?", "Esci", esci); else esci();
       }
@@ -703,14 +713,14 @@
     }
     function trasmetti(v) {   // torneo a eliminazione: gli altri guardano la partita col Bot
       if (!t.trasmetti) return;
-      v = v || vmPartita(P); v.nomi = [io, "🤖 Bot"];
+      v = v || vmPartita(P); v.nomi = [io, "🤖 " + nomeBot];
       t.trasmetti({ t: "vm", vm: v });
     }
     function disegna() {
       var v = vmPartita(P);
       trasmetti(v);
       if (P.fase === "fine") return finePartita(v);
-      ui.battaglia(vista(v, 0, P.flotte[0], "Bot", true), sparoIo);
+      ui.battaglia(vista(v, 0, P.flotte[0], nomeBot, true), sparoIo);
     }
     function sparoIo(x, y) {
       var e = sparaP(P, 0, x, y); if (!e) return;
@@ -731,10 +741,10 @@
         chiaveFine = "navale-" + P.g + "-" + Math.random().toString(36).slice(2);
         salvaStatNavale(t, vinto, P.stat[0], "bot", liv, chiaveFine);
         // torneo a eliminazione: chi ha vinto
-        if (t.risultato) t.risultato(vinto ? [{ nome: io, pos: 1 }, { nome: "Bot", pos: 2 }] : [{ nome: "Bot", pos: 1 }, { nome: io, pos: 2 }]);
+        if (t.risultato) t.risultato(vinto ? [{ nome: io, pos: 1 }, { nome: nomeBot, pos: 2, bot: true }] : [{ nome: nomeBot, pos: 1, bot: true }, { nome: io, pos: 2 }]);
       }
-      ui.fine({ key: P.g, vinto: vinto, nomeAvv: "Bot", suAvv: v.campi[1], naviAvv: v.svela[1], statTxt: testoStat(P.stat[0]),
-        sotto: vinto ? "Hai affondato tutta la flotta del Bot." : "Il Bot ha affondato la tua flotta.",
+      ui.fine({ key: P.g, vinto: vinto, nomeAvv: nomeBot, suAvv: v.campi[1], naviAvv: v.svela[1], statTxt: testoStat(P.stat[0]),
+        sotto: vinto ? "Hai affondato tutta la flotta di " + nomeBot + "." : nomeBot + " ha affondato la tua flotta.",
         tasti: [t.el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: nuova }), t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: esci })] });
     }
     nuova();
@@ -799,7 +809,8 @@
           return;
         }
         if (m.t === "join") {
-          if (!L.avvId && L.fase === "lobby" && !postoRiservato(L.riserva, id)) { L.avvId = id; L.nomeAvv = String(m.nome || "Avversario").slice(0, 16); L.ominoAvv = avatarOk(m.omino); if (L.fase === "lobby") lobby(); }
+          // (nella Sala gioca solo chi è stato scelto: gli altri guardano)
+          if (!L.avvId && L.fase === "lobby" && !postoRiservato(L.riserva, id) && (!t.puoSedersi || t.puoSedersi(id, String(m.nome || "").slice(0, 16)))) { L.avvId = id; L.nomeAvv = String(m.nome || "Avversario").slice(0, 16); L.ominoAvv = avatarOk(m.omino); if (L.fase === "lobby") lobby(); }
           if (id === L.avvId) { mandaVm(true); mandaFlotta(); }   // anche se c'era già (si è ricollegato o ha ricaricato): rimando foto e navi
           else mandaVm();
           return;
@@ -891,10 +902,15 @@
       else tasti.push(el("button", { class: "btn btn-primario", text: "👥 Torna alla saletta", onclick: allaSaletta }));
       tasti.push(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: chiudi }));
       var chi = L.nomeAvv || "l'avversario";
+      // (senza avversario resta "👥 Torna alla saletta" del gioco)
+      var comuni = L.avvId && t.tastiFine ? function (piede) { return t.tastiFine(piede, { host: true, nuova: allaRivincita, esci: chiudi }); } : null;
       ui.fine({ key: P.g + (L.avvId ? "" : "-via"), vinto: vinto, nomeAvv: chi, suAvv: v.campi[1], naviAvv: P.tavolino ? null : v.svela[1], statTxt: testoStat(P.stat[0]),
         sotto: P.tavolino ? P.tavolino + " è uscito dalla partita: vinci a tavolino." : (vinto ? "Hai affondato tutta la flotta di " + chi + "." : chi + " ha affondato la tua flotta.") + (L.avvId ? "" : " (" + chi + " è uscito)"),
-        tasti: tasti });
+        tasti: tasti, comuni: comuni, fa: fa });
     }
+    // la rivincita dei tasti di fine comuni: si torna nella saletta con lo stesso avversario (il core fa il 3-2-1)
+    function allaRivincita() { if (P && P.fase === "fine") allaSaletta(); }
+    t.onRivincita = allaRivincita;
     function rivincita() {   // stessa stanza, stesso avversario: si risistemano le navi
       if (!L.avvId || L.assente) return allaSaletta();   // (l'avversario è uscito e non è ancora tornato: si torna in saletta)
       P = nuovaPartita(regole()); chiaveFine = null; clearTimeout(tTurno);
@@ -1017,7 +1033,8 @@
       if (fa) fa.style.margin = "0 0 8px";
       ui.fine({ key: vm.g, vinto: vinto, nomeAvv: nomeHost, suAvv: vm.campi[0], naviAvv: vm.svela && vm.svela[0], statTxt: testoStat(vm.stat && vm.stat[1]),
         sotto: vinto ? "Hai affondato tutta la flotta di " + nomeHost + "." : nomeHost + " ha affondato la tua flotta.",
-        tasti: [el("p", { class: "modulo-nota", style: "text-align:center;margin:0 0 6px", text: "In attesa dell'host per la rivincita…" }), fa, el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: esci })].filter(Boolean) });
+        tasti: [el("p", { class: "modulo-nota", style: "text-align:center;margin:0 0 6px", text: "In attesa dell'host per la rivincita…" }), fa, el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: esci })].filter(Boolean),
+        comuni: t.tastiFine ? function (piede) { return t.tastiFine(piede, { host: false, esci: esci }); } : null, fa: fa });
     }
     function disegnaBattaglia() {
       var vm = S.vm, V = vista(vm, 1, S.stato, vm.nomi[0]);

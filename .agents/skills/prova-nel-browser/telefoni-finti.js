@@ -140,7 +140,11 @@ window.preparaFinestra = function (w, nome, opz) {
 // apre un telefono: opz = { hash: "gioco=tris&stanza=ABCD", x: posizione, profilo: false|{...}, offline: true, prima: w => {...} }
 // (offline: la parte dei profili non si carica finché nella pagina non si fa w.__offline = false)
 // (prima: si fa prima che parta l'app, anche dopo una ricarica). Restituisce la finestra.
+// (salaSempre: true = "Online" apre la Sala della serata, come per chi gioca. Di partenza i telefoni finti hanno
+//  localStorage "sg-sala-sempre" = "0": il percorso di prima, quello degli scenari vecchi. Vale dalla prima apertura
+//  del telefono, o quando lo si ripassa ad apriTel; le ricariche tengono la memoria com'è)
 window.apriTel = async function (nome, opz) {
+  const chiesto = !!(opz && Object.prototype.hasOwnProperty.call(opz, "salaSempre")), nuovo = !BR.mem[nome];
   opz = Object.assign({}, BR.tel[nome] ? BR.tel[nome].opz : {}, opz || {});
   const vecchio = document.getElementById("tel-" + nome); if (vecchio) vecchio.remove();
   const f = document.createElement("iframe"); f.id = "tel-" + nome;
@@ -149,7 +153,8 @@ window.apriTel = async function (nome, opz) {
   f.style.cssText = "position:absolute;top:0;left:" + x + "px;width:360px;height:740px;border:0;background:#000;transform-origin:0 0;transform:scale(.5)";
   document.body.appendChild(f);
   preparaFinestra(f.contentWindow, nome, opz);
-  BR.tel[nome] = { f, opz: Object.assign({}, opz, { hash: null, x }) };
+  if (nuovo || chiesto) { const l = BR.mem[nome].l; if (opz.salaSempre) delete l["sg-sala-sempre"]; else l["sg-sala-sempre"] = "0"; }
+  BR.tel[nome] ={ f, opz: Object.assign({}, opz, { hash: null, x }) };
   await new Promise(r => { f.onload = r; });
   const w = f.contentWindow;
   // i collegamenti da ospite di questo telefono (per mandare mosse a mano: reteDi(nome).invia({...}))

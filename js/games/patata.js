@@ -90,6 +90,7 @@
     giocatoriMin: 2,
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono con la bomba!", amici: true }],
     giocatoriMax: 10,
+    postiOnline: 10,   // posti online
     difficolta: 2,
     regole: [
       "Si vota fra <b>3 categorie</b> o <b>🎲 a sorpresa</b> (una a caso, la sceglie la ruota): si gioca la più votata.",
@@ -510,7 +511,8 @@
     var nomeHost = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Host";
     var H = { fase: "lobby", codice: "…", pronta: false, motore: null, customCats: [], usate: [], regole: regoleDa(t.impostazioni),
       players: [{ id: "host", nome: nomeHost, colore: COLORI[0], omino: t.mioOmino ? t.mioOmino(nomeHost) : ST.mioAvatar(nomeHost) }],
-      attesa: [] };   // attesa: chi è entrato a partita iniziata (guarda, e gioca dalla prossima)
+      attesa: [],     // attesa: chi è entrato a partita iniziata (guarda, e gioca dalla prossima)
+      fuori: [] };    // fuori: nella Sala, chi non è stato scelto per giocare (guarda soltanto, anche le partite dopo)
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function presenti() { return H.players.filter(function (p) { return !p.via; }); }
     function colora() { H.players.forEach(function (p, i) { p.colore = COLORI[i % COLORI.length]; }); }
@@ -520,6 +522,8 @@
       onCodice: function (c) { H.codice = c; bd(); },
       onConnesso: function () { H.pronta = true; bd(); },
       onAddio: function (id) {
+        var nf = H.fuori.length; H.fuori = H.fuori.filter(function (a) { return a.id !== id; });
+        if (H.fuori.length !== nf) { bd(); return; }
         if (H.fase === "lobby") { H.players = H.players.filter(function (p) { return p.id !== id; }); colora(); bd(); return; }
         H.attesa = H.attesa.filter(function (a) { return a.id !== id; });
         var p = pById(id); if (p) p.via = true;   // a partita iniziata resta in classifica come "uscito", ma non gioca più
@@ -529,6 +533,9 @@
         if (!m || !m.t) return;
         if (m.t === "join") {
           var nome = String(m.nome || "Amico").slice(0, 16), omino = ST.avatarValido(m.omino), p = pById(id);
+          // nella Sala gioca solo chi è stato scelto: gli altri guardano (col loro id nella foto)
+          var giaFuori = H.fuori.some(function (a) { return a.id === id; });
+          if (!p && (giaFuori || (t.puoSedersi && !t.puoSedersi(id, nome)))) { if (!giaFuori) H.fuori.push({ id: id, nome: nome }); bd(); return; }
           if (H.fase === "lobby") {
             if (!p) { if (H.players.length >= 10) return piena(id); H.players.push({ id: id, nome: nome, colore: COLORI[H.players.length % COLORI.length], omino: omino }); }
           } else if ((!p || p.via) && !H.attesa.some(function (a) { return a.id === id; })) {
@@ -549,9 +556,11 @@
     function piena(id) { try { rete.inviaVeloce({ t: "piena", to: id }); } catch (e) {} }
     function vmHost() {
       if (H.fase === "lobby") return { fase: "lobby", codice: H.codice, pronta: H.pronta, regole: testoRegole(H.regole),
-        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null }; }), customCats: H.customCats.slice() };
+        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null }; }), customCats: H.customCats.slice(),
+        fuori: H.fuori.map(function (a) { return { id: a.id, nome: a.nome }; }) };
       var vm = H.motore.vm(); vm.codice = H.codice; vm.pronta = H.pronta;
-      vm.guardano = H.attesa.map(function (a) { return { id: a.id, nome: a.nome }; });   // con il loro id: così sanno di essere entrati
+      vm.guardano = H.attesa.concat(H.fuori).map(function (a) { return { id: a.id, nome: a.nome }; });   // con il loro id: così sanno di essere entrati
+      vm.fuori = H.fuori.map(function (a) { return { id: a.id, nome: a.nome }; });
       return vm;
     }
     var detto = null;   // la partita (partitaId) già data al torneo online
@@ -583,9 +592,12 @@
         H.players = presenti().concat(H.attesa.map(function (a) { return { id: a.id, nome: a.nome, omino: a.omino }; }));
         H.attesa = []; colora(); bd();
       },
+      // la Rivincita dei tasti di fine comuni: come "Nuova partita", solo a partita finita (il core fa il 3-2-1)
+      onRivincita: function () { if (H.fase === "gioco" && H.motore && H.motore.st.fase === "fine") cb.onNuova(); },
       onEsci: function () { cb.chiuso = true; stopTimers(); if (H.motore) H.motore.distruggi(); rete.chiudi(); t.esci(); }
     };
     function disegna() { if (!cb.chiuso) disegnaPatataVM(t, vmHost(), cb); }
+    t.onRivincita = cb.onRivincita;
     disegna();
   }
 
@@ -606,6 +618,7 @@
       cb.myId = S.myId;
       // guardo soltanto: sono entrato a partita iniziata (o ero uscito): gioco dalla prossima
       cb.guardo = S.vm.fase !== "lobby" && !S.vm.players.some(function (p) { return p.id === S.myId && !p.via; });
+      cb.scartato = (S.vm.fuori || []).some(function (a) { return a.id === S.myId; });   // nella Sala: non sono stato scelto, guardo
       disegnaPatataVM(t, S.vm, cb);
     }
     schermaNome();
@@ -633,7 +646,12 @@
           if (m.t === "piena") { cb.chiuso = true; stopTimers(); if (S.rete) S.rete.chiudi(); erroreP(t, "La stanza è piena: ci sono già 10 giocatori."); return; }
           if (m.t === "vm") { S.vm = m.vm; S.vmTs = Date.now(); disegna(); }
         },
-        onChiuso: function () { if (cb.chiuso) return; cb.chiuso = true; stopTimers(); erroreP(t, "Collegamento perso. L'host potrebbe aver chiuso la partita."); },
+        onChiuso: function () {
+          if (cb.chiuso) return;
+          // l'host ha chiuso la stanza dalla classifica finale: la classifica resta, con la scritta giusta
+          if (S.vm && S.vm.fase === "fine") { cb.chiusa = true; if (cb._notaFine) { cb._notaFine.textContent = NOTA_CHIUSA_P; cb._notaFine.hidden = false; } return; }
+          cb.chiuso = true; stopTimers(); erroreP(t, "Collegamento perso. L'host potrebbe aver chiuso la partita.");
+        },
         onErrore: function () { if (cb.chiuso) return; cb.chiuso = true; stopTimers(); erroreP(t, "Problema di collegamento. Controlla la connessione e riprova."); }
       });
     }
@@ -796,7 +814,7 @@
         ST.barra(S, [ bVia ]);
         if (R.t.contoAvanti) R.t.contoAvanti(bVia, TEMPO_VOTO, function () { if (RP === R && R.vm.fase === "voto") { ST.viaBarra(S); R.barraK = null; cb.onVia(); } }, kConto);
       }
-      else if (cb.guardo) ST.barra(S, [ el("p", { class: "tl-attesa pt-guardi", text: "👀 Stai guardando: entri nella prossima partita" }), R.t.faccine ? R.t.faccine() : null ]);
+      else if (cb.guardo) ST.barra(S, [ el("p", { class: "tl-attesa pt-guardi", text: cb.scartato ? "👀 Questa volta guardi: gioca chi è stato scelto." : "👀 Stai guardando: entri nella prossima partita" }), R.t.faccine ? R.t.faccine() : null ]);
       else if (!cb.locale) {
         var conto = el("p", { class: "tl-attesa" });
         ST.barra(S, [ el("p", { class: "tl-attesa", text: "Vota pure: parte quando l'host dà il via" }), conto ]);
@@ -929,7 +947,7 @@
       var nodi = [];
       if (mia && vm.soloDare) { var chiRi = null; vm.players.forEach(function (p) { if (p.id === vm.soloDare) chiRi = p; }); nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Te l'hanno rimandata: di' la parola e ridàlla a " + (chiRi ? chiRi.nome : "chi te l'ha rimandata") + " 👇" })); }
       else if (mia) nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Di' una parola su «" + vm.categoria + "» e tocca chi la riceve 👇" }));
-      else if (cb.guardo) nodi.push(el("p", { class: "tl-attesa pt-guardi", text: "👀 Stai guardando: entri nella prossima partita" }), R.t.faccine ? R.t.faccine() : null);
+      else if (cb.guardo) nodi.push(el("p", { class: "tl-attesa pt-guardi", text: cb.scartato ? "👀 Questa volta guardi: gioca chi è stato scelto." : "👀 Stai guardando: entri nella prossima partita" }), R.t.faccine ? R.t.faccine() : null);
       else if (ioFuori) nodi.push(el("p", { class: "tl-attesa pt-guardi", text: "💀 Sei fuori: guarda chi resta in piedi!" }), R.t.faccine ? R.t.faccine() : null);
       else if (!cb.locale && hi >= 0) nodi.push(el("p", { class: "tl-attesa pt-hint", text: "💣 Ce l'ha " + vm.players[hi].nome + "… occhio che può toccare a te!" }));
       if (mia && prevP && !prevP.eliminato) nodi.push(el("button", { class: "pt-indietro", html: "↩️ Non valeva! <b>Ridalla a " + escP(prevP.nome) + "</b>", onclick: function () { swishP(); cb.onIndietro(); } }));
@@ -1020,10 +1038,13 @@
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2, testoComincia: "Continua ▶",
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
       extra: extra, attesa: "Aspetta l'host: poi si vota la categoria e parte la bomba! 💣",
+      // nella Sala: chi non è stato scelto guarda soltanto
+      spettatore: !cb.sonoHost && (vm.fuori || []).some(function (a) { return a.id === cb.myId; }) ? "👀 Questa volta guardi" : null,
       onComincia: cb.onContinua, onEsci: cb.onEsci });
   }
 
   // ---- classifica finale (dopo il finale nello studio) ----
+  var NOTA_CHIUSA_P = "🚪 L'host ha chiuso la stanza.";
   function schermataFineP(t, vm, cb) {
     salvaTrofeiPatata(t, vm, cb);
     var el = t.el;
@@ -1061,14 +1082,24 @@
     sf._contenuto.appendChild(box);
     var fac = !cb.locale && t.faccine ? t.faccine() : null;   // online: le faccine della saletta, si festeggia tutti insieme
     if (fac) { fac.classList.add("fine-faccine"); sf._contenuto.appendChild(fac); }
-    if (cb.locale && cb.torneo) {
+    // online: i tasti di fine comuni (all'host e a chi ha giocato), se li disegna il core: allora niente tasti nostri.
+    // La nota resta nascosta: serve solo se l'host chiude la stanza
+    var tf = cb.locale ? null : cb.sonoHost ? { host: true, nuova: cb.onNuova, esci: cb.onEsci } : (!cb.guardo ? { host: false, esci: cb.onEsci } : null);
+    cb._notaFine = null;
+    if (tf && t.tastiFine && t.tastiFine(sf._piede, tf)) {
+      if (!cb.sonoHost) {
+        cb._notaFine = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:12px", text: cb.chiusa ? NOTA_CHIUSA_P : "" });
+        if (!cb.chiusa) cb._notaFine.hidden = true;
+        sf._contenuto.appendChild(cb._notaFine);
+      }
+    } else if (cb.locale && cb.torneo) {
       sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏆 Avanti nel torneo ▶", onclick: function () { cb.onTorneo(risultato); } }));
     } else if (cb.sonoHost) {
       sf._piede.appendChild(el("button", { class: "btn btn-primario", text: cb.locale ? "🔄 Nuova partita" : "🔄 Nuova partita (si torna nella saletta)", onclick: cb.onNuova }));
       sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Chiudi", onclick: cb.onEsci }));
     } else {
-      sf._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:12px",
-        text: cb.guardo ? "👀 Hai guardato questa partita: se l'host ne fa un'altra, entri anche tu." : "Se l'host fa un'altra partita, torni da solo nella saletta." }));
+      sf._contenuto.appendChild(cb._notaFine = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:12px",
+        text: cb.chiusa ? NOTA_CHIUSA_P : cb.scartato ? "👀 Questa volta hai guardato." : cb.guardo ? "👀 Hai guardato questa partita: se l'host ne fa un'altra, entri anche tu." : "Se l'host fa un'altra partita, torni da solo nella saletta." }));
       sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     }
     t.mostra(sf);

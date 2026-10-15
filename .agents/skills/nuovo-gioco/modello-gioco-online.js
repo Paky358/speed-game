@@ -3,9 +3,12 @@
    È un gioco vero e funzionante ("Il più veloce": quando il tasto diventa
    verde, chi lo tocca per primo prende un punto; chi tocca troppo presto
    ne perde uno). Ha già fatte bene tutte le cose facili da sbagliare:
+   - "Online" da un gioco apre la Sala della serata: il gioco non se ne accorge, il core gli passa
+     tutto nel tavolo (t). Il gioco fa solo la sua stanza, come qui;
    - saletta d'attesa comune (t.lobby) con avatar e posti che mancano;
-   - chi entra senza profilo scrive il nome, chi ha il profilo entra da solo;
+   - chi ha il profilo (tutti, ormai) entra da solo; il nome a mano resta solo come riserva;
    - gli id dei giocatori nella "foto" (vm): servono a chi entra per sapere che è dentro;
+   - "Chi gioca?" della Sala: chi non è tra gli scelti (t.puoSedersi falso) entra e guarda;
    - segreti a un telefono solo con inviaVeloce + "to" (mai con invia);
    - "⚙️ Regole" in saletta (t.onRegole);
    - chi esce: dalla saletta si toglie senza rimescolare, a partita iniziata resta "via";
@@ -16,8 +19,9 @@
    - la rete che salta NON chiude la partita: ci pensa il core ("📶 Mi ricollego…");
      onErrore arriva solo se il PRIMO collegamento non riesce, e allora si offre "Riprova";
    - "Esci" a partita iniziata chiede conferma con la finestra dell'app (t.conferma, mai window.confirm);
-   - fine partita: t.risultato coi NOMI dei giocatori, medaglie a pari merito, le faccine (t.faccine),
-     poi "Nuova partita" nella STESSA saletta;
+   - fine partita: t.risultato coi NOMI dei giocatori, medaglie a pari merito, le faccine (t.faccine);
+     i tasti di fine li mette il core (t.tastiFine: "↻ Rivincita" col 3-2-1, "🎮 Cambia gioco", "👍 Ci sto!"),
+     e la Rivincita usa la "Nuova partita" del gioco (t.onRivincita): tutti nella STESSA saletta;
    - chi arriva a partita cominciata la guarda (con le faccine) ed entra alla prossima;
    - schermo intero senza scorrere e senza titolo, aggiornato a pezzi (niente lampeggio);
    - tocchi con pointerdown (su iPhone il click a volte non arriva).
@@ -42,7 +46,8 @@
     var imp = t.impostazioni || {};
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
     var H = { fase: "lobby", codice: "…", pronta: false, giri: imp.giri || 5, giro: 0, partita: 0, stato: "attesa", vincitore: null, classifica: null, scadenza: 0, to: null,
-      players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0 }] };
+      players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0 }],
+      guarda: [] };   // chi è entrato ma questa volta guarda (nella Sala non è tra gli scelti di "Chi gioca?"): { id, nome }
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function presenti() { return H.players.filter(function (p) { return !p.via; }); }
     function ferma() { if (H.to) { clearTimeout(H.to); H.to = null; } }
@@ -65,6 +70,7 @@
       onTornato: function (id) { var p = pById(id); if (p && p.forse) { p.forse = false; bd(); } },
       // uscito apposta, oppure sparito da più di 20 secondi
       onAddio: function (id) {
+        if (H.guarda.some(function (x) { return x.id === id; })) { H.guarda = H.guarda.filter(function (x) { return x.id !== id; }); bd(); return; }
         var p = pById(id); if (!p) return;
         p.forse = false;
         // nella saletta si toglie e basta (squadre e posti degli altri restano come sono)
@@ -76,9 +82,15 @@
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          var p = pById(id);
+          var p = pById(id), nome = String(m.nome || "Amico").slice(0, 16);
+          // nella Sala, se siamo più dei posti, l'host ha scelto chi gioca ("Chi gioca?"): gli altri entrano e guardano.
+          // (nella foto c'è anche il loro id: così il collegamento sa che sono dentro e smette di ripetere il "join")
+          if (!p && !t.puoSedersi(id, nome)) {
+            if (!H.guarda.some(function (x) { return x.id === id; })) H.guarda.push({ id: id, nome: nome });
+            bd(); return;
+          }
           if (!p && H.fase === "lobby" && H.players.length < MAX)
-            H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino), punti: 0 });
+            H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), punti: 0 });
           // chi rientra (pagina ricaricata, telefono riacceso) ha lo STESSO id: ritrova il suo posto e i suoi punti
           if (p) { p.forse = false; if (p.via && H.fase === "gioco") p.via = false; }
           bd();   // sempre: rimanda la foto a chi è entrato o rientrato (QUI: e i suoi segreti, con privato)
@@ -93,7 +105,8 @@
     function vm() {
       return { fase: H.fase, codice: H.codice, pronta: H.pronta, giri: H.giri, giro: H.giro, partita: H.partita, stato: H.stato, vincitore: H.vincitore, classifica: H.classifica,
         resta: H.stato === "preso" ? Math.max(1, Math.ceil((H.scadenza - Date.now()) / 1000)) : 0,   // i secondi che mancano (non l'ora: gli orologi dei telefoni sono diversi)
-        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, via: !!p.via, forse: !!p.forse, omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }) };
+        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, via: !!p.via, forse: !!p.forse, omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }),
+        guarda: H.guarda };
     }
     // un messaggio per un telefono solo (carta, ruolo, avviso): inviaVeloce con "to", così non resta in stanza
     function privato(id, m) {
@@ -135,8 +148,12 @@
       // torneo online e XP: i NOMI dei giocatori col loro posto (pari merito = stesso posto). Nei giochi a squadre: chi vince al posto 1, gli altri dopo.
       if (t.risultato) t.risultato(H.classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }));
     }
-    // "Nuova partita": stessa stanza, stessi amici, tutti tornano nella saletta (MAI chiudere e riaprire la stanza)
-    function nuova() { ferma(); H.fase = "lobby"; H.stato = "attesa"; H.classifica = null; H.players = presenti(); H.players.forEach(function (p) { p.punti = 0; }); bd(); }
+    // "Nuova partita": stessa stanza, stessi amici, tutti tornano nella saletta (MAI chiudere e riaprire la stanza).
+    // (chi guardava resta a guardare: chi gioca l'ha scelto l'host nella Sala)
+    function nuova() { if (H.fase !== "fine") return; ferma(); H.fase = "lobby"; H.stato = "attesa"; H.classifica = null; H.players = presenti(); H.players.forEach(function (p) { p.punti = 0; }); bd(); }
+    // la "↻ Rivincita" dei tasti di fine del core (e la "Nuova partita" fuori dalla Sala) usa questa: tutti nella saletta,
+    // e se ci sono tutti la partita riparte da sola col 3-2-1 (lo fa il core)
+    t.onRivincita = nuova;
 
     var cbHost = { sonoHost: true, myId: "host", onComincia: comincia, onNuova: nuova, onAvanti: avanti,
       onTocco: function () { tocco("host"); },
@@ -185,7 +202,9 @@
           else if (m.t === "priv") avviso(m.testo);      // QUI: i tuoi messaggi privati
         },
         // la stanza è chiusa: { voluto: true } = l'host l'ha chiusa apposta; { sparito: true } = l'host non è tornato
-        // in 2 minuti (lì il core mostra già "La stanza è chiusa"; nella Sala si torna alla Sala da soli)
+        // in 2 minuti (lì il core mostra già "La stanza è chiusa"; nella Sala si torna alla Sala da soli).
+        // Se l'host esce dalla classifica finale qui non arriva niente: chi è sulla classifica ci resta e legge
+        // "🚪 Paky ha chiuso la stanza" (lo fa il core)
         onChiuso: function (perche) { errore(t, perche && perche.sparito ? "L'host non è tornato: la stanza è chiusa." : "L'host ha chiuso la partita."); },
         // SOLO se il primo collegamento non è riuscito (15 secondi di tentativi): non c'è nessuna partita da chiudere, si riprova.
         // Dopo, la rete che salta non arriva qui: il core mostra "📶 Mi ricollego…" e il collegamento riprova da solo
@@ -204,19 +223,31 @@
   //  DISEGNO (uguale per host e ospiti): saletta, gioco, fine
   // =========================================================
   var UI = null;   // la schermata di gioco si costruisce UNA volta e poi si aggiorna a pezzi
+  var FIN = null;  // la classifica finale già a schermo: le foto che arrivano dopo non la ridisegnano (niente lampeggio)
   function disegna(t, vm, cb) {
-    if (vm.fase === "lobby") { UI = null; return lobby(t, vm, cb); }
-    if (vm.fase === "fine") { UI = null; return finale(t, vm, cb); }
+    if (vm.fase === "lobby") { UI = FIN = null; return lobby(t, vm, cb); }
+    if (vm.fase === "fine") {
+      UI = null;
+      var kf = "fine|" + vm.partita;
+      if (FIN && FIN.k === kf && FIN.t === t && document.body.contains(FIN.s)) return;
+      FIN = { k: kf, t: t, s: finale(t, vm, cb) };
+      return;
+    }
+    FIN = null;
     if (!UI || UI.t !== t || !document.body.contains(UI.s)) UI = creaSchermo(t, cb);
     aggiorna(UI, vm, cb);
   }
   function lobby(t, vm, cb) {
     var dentro = vm.players.some(function (p) { return p.id === cb.myId; });
+    var guardano = vm.guarda || [], guardo = guardano.some(function (p) { return p.id === cb.myId; });
+    // (le regole scelte dall'host le scrive già il core in saletta, "📜 Si gioca così": qui niente doppioni)
+    var extra = [];   // QUI: le info del gioco che non sono regole (o scelte come le squadre)
+    if (guardano.length) extra.push(t.el("p", { class: "modulo-nota", text: "👀 Guardano: " + guardano.map(function (p) { return p.id === cb.myId ? "tu" : p.nome; }).join(", ") }));
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN,
       vuoti: Math.max(0, MIN - vm.players.length),   // solo i posti che mancano per cominciare
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
-      extra: [t.el("p", { class: "modulo-nota", text: "Si gioca a " + vm.giri + " giri." })],   // QUI: le info del gioco (o scelte come le squadre)
-      spettatore: !cb.sonoHost && !dentro && vm.players.length >= MAX ? "👀 La stanza è piena: guardi la partita" : false,
+      extra: extra,
+      spettatore: guardo ? "👀 Questa volta guardi" : !cb.sonoHost && !dentro && vm.players.length >= MAX ? "👀 La stanza è piena: guardi la partita" : false,
       attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
   function creaSchermo(t, cb) {
@@ -288,10 +319,18 @@
     });
     s._contenuto.appendChild(ol);
     if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }
-    if (cb.sonoHost) s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
-    else s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }));
-    s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    if (!cl.some(function (r) { return r.id === cb.myId; })) s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Questa partita l'hai guardata." }));
+    // I TASTI DI FINE LI METTE IL CORE, uguali in tutti i giochi: nella Sala "↻ Rivincita" (col 3-2-1 da solo) e
+    // "🎮 Cambia gioco" per l'host, "👍 Ci sto!" e "🏠 Torna in Sala" per gli altri; fuori dalla Sala "↻ Nuova partita
+    // (stessi amici)" ed "🏠 Esci". La rivincita chiama t.onRivincita (qui: nuova). Non disegnarli a mano.
+    // Se torna false (partita non online, col Bot, torneo a eliminazione, chi guarda la partita di altri) i tasti di sempre:
+    if (!t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) {
+      if (cb.sonoHost) s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
+      else s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }));
+      s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    }
     t.mostra(s);
+    return s;
   }
   function errore(t, testo) {
     var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
@@ -343,7 +382,12 @@
     descrizione: "Quando il tasto diventa verde, toccalo per primo! Ognuno dal suo telefono.",
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1,   // difficolta 1-3: pesa i punti nel torneo
     modi: [], soloOnline: true,   // QUI: se c'è anche un modo sullo stesso telefono, mettilo in modi e togli soloOnline
-    // postiOnline: 2,            // QUI: solo nei giochi a due (online gioca solo l'avversario, gli altri guardano)
+    // QUI: quanti giocano alla stessa partita online. Nella Sala, se gli amici sono di più, l'host sceglie "Chi gioca?"
+    // e gli altri guardano (t.puoSedersi). 2 = gioco a due (gli altri guardano; con 3 o più c'è anche il Torneo a eliminazione)
+    postiOnline: MAX,
+    // QUI (facoltativo): la riga "📜 Si gioca così" che gli amici leggono in saletta. Se manca, il core la scrive da solo
+    // leggendo le scelte accese delle impostazioni (.modo-chip): serve solo se quella automatica non è chiara
+    riassunto: function (imp) { return (imp.giri || 5) + " giri"; },
     regole: [
       "Il tasto è <b>rosso</b>: aspetta. Quando diventa <b>verde</b>, toccalo per primo e prendi un punto.",
       "Se lo tocchi quando è ancora rosso perdi un punto. Vince chi ha più punti alla fine dei giri."

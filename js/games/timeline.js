@@ -462,10 +462,16 @@
     });
     if (box.childNodes.length) s._contenuto.appendChild(box);
     notaFine = null;
-    if (opz.nota) s._contenuto.appendChild(notaFine = el("p", { class: "modulo-nota tl-nota-fine", text: opz.nota }));
+    // online: i tasti di fine uguali per tutti (opz.tf), se li disegna il core: allora niente tasti nostri né "Aspetta l'host"
+    // (la nota resta nascosta: serve solo se l'host chiude la stanza)
+    var comuni = !!(opz.online && opz.tf && t.tastiFine && t.tastiFine(s._piede, opz.tf));
+    var testoNota = comuni ? (opz.chiusa ? NOTA_CHIUSA : "") : opz.nota;
+    if (testoNota || (comuni && !opz.tf.host)) s._contenuto.appendChild(notaFine = el("p", { class: "modulo-nota tl-nota-fine", text: testoNota || "" }));
+    if (notaFine && !testoNota) notaFine.hidden = true;
     var fa = opz.online && t.faccine ? t.faccine() : null;   // online: le faccine, mentre si guarda la classifica
     if (fa) { fa.classList.add("tl-faccine"); s._contenuto.appendChild(fa); }
     FX.vittoria(); setTimeout(coriandoli, 300);
+    if (comuni) { t.mostra(s); return; }
     if (rigioca) s._piede.appendChild(el("button", { class: "btn btn-primario", text: opz.testoRigioca || "↻ Rigioca", onclick: rigioca }));
     if (opz.online) {
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { esci(); } }));
@@ -598,6 +604,16 @@
     giocatoriMin: 1,
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono, uno alla volta", amici: true }],
     giocatoriMax: MAX_GIOCATORI,
+    postiOnline: MAX_GIOCATORI,   // posti online (10)
+    // le regole in una riga, per la saletta: "5 carte a testa · Storia, Cinema" (o "· tutte le categorie")
+    riassunto: function (imp) {
+      imp = imp || {};
+      var cats = window.SG_CATEGORIE || [], scelte = imp.categorie;
+      var nomi = cats.filter(function (c) { return !scelte || scelte.indexOf(c.id) >= 0; }).map(function (c) { return c.nome; });
+      var testo = (imp.carte || 5) + " carte a testa";
+      if (tutteLeCategorie(imp) || !nomi.length) return testo + " · tutte le categorie";
+      return testo + " · " + (nomi.length > 3 ? nomi.slice(0, 3).join(", ") + " e altre " + (nomi.length - 3) : nomi.join(", "));
+    },
     difficolta: 2,   // Media — quanto vale vincerlo nel torneo (1 facile, 2 media, 3 difficile)
 
     regole: [
@@ -815,6 +831,7 @@
       linea: st.linea.map(function (e) { return { anno: e.anno, titolo: e.titolo, fatto: e.fatto || "", cat: e._cat }; }),
       carta: st.carta ? { titolo: st.carta.titolo, cat: st.carta._cat } : null,   // la spiegazione no: si vede nel risultato
       hannoVotato: Object.keys(st.voti || {}), esito: st.esito || null, classifica: st.classifica || null,
+      guarda: (st.guarda || []).slice(),   // nella Sala: chi questa volta guarda soltanto
       // servono agli ospiti per i trofei e alla saletta (in saletta: le carte vere, se il mazzo non basta per tutti)
       carte: st.iniziata ? st.carte : carteGiuste(st.carte, st.mazzo.length, g.length), tutteCat: st.tutteCat, nCat: st.nCat
     };
@@ -849,7 +866,8 @@
       mazzo: mischiaArr(pescaDati(imp)), linea: [], turno: 0, n: 0, carta: null, esito: null, classifica: null,
       fase: "lobby", iniziata: false, carte: carte, codice: "…", scelta: null, voti: {}, scadenza: null, durata: null, _to: null,
       tutteCat: tutteLeCategorie(imp), nCat: quanteCategorie(imp), T: null, partita: idPartita(), pronta: false,
-      giocatori: [{ id: "host", nome: nomeHost, restano: carte, punti: 0, omino: mioAvatar(nomeHost) }]
+      giocatori: [{ id: "host", nome: nomeHost, restano: carte, punti: 0, omino: mioAvatar(nomeHost) }],
+      guarda: []   // nella Sala: chi non è stato scelto per giocare (guarda soltanto; con l'id, così sa di essere entrato)
     };
     function corr() { return st.giocatori[st.turno % st.giocatori.length]; }
     function gDi(id) { var i = indexById(st, id); return i >= 0 ? st.giocatori[i] : null; }
@@ -869,6 +887,7 @@
       onCodice: function (c) { st.codice = c; bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
       onAddio: function (id) {
+        var kG = st.guarda.indexOf(id); if (kG >= 0) { st.guarda.splice(kG, 1); bd(); return; }
         var g = gDi(id); if (!g) return;
         // nella saletta si toglie e basta; a partita iniziata resta al suo posto (grigio): se torna riprende con punti e carte
         if (!st.iniziata) { st.giocatori.splice(indexById(st, id), 1); bd(); return; }
@@ -882,8 +901,14 @@
         var g = gDi(id);
         if (m.t === "join") {
           if (g) { torna(g); return; }   // c'era già (rientra, o si ricollega): stesso posto, rimando la foto
+          var nomeJ = String(m.nome || "Amico").slice(0, 16);
+          // nella Sala gioca solo chi è stato scelto: gli altri guardano (il loro id nella foto: sanno di essere entrati)
+          if (st.guarda.indexOf(id) >= 0 || (t.puoSedersi && !t.puoSedersi(id, nomeJ))) {
+            if (st.guarda.indexOf(id) < 0) st.guarda.push(id);
+            bd(); return;
+          }
           if (!st.iniziata && st.giocatori.length < MAX_GIOCATORI) {
-            st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), restano: st.carte, punti: 0, omino: avatarValido(m.omino) });
+            st.giocatori.push({ id: id, nome: nomeJ, restano: st.carte, punti: 0, omino: avatarValido(m.omino) });
             bd(); return;
           }
           // partita già cominciata: guarda (la foto la riceve come tutti) ed entra alla prossima. Niente messaggio col suo
@@ -1049,11 +1074,13 @@
     var cb = { myId: "host", sonoHost: true,
       onGap: function (g) { scelta("host", g); }, onVoto: function (d) { voto("host", d); },
       onAvanti: function () { if (st.fase === "esito") prossimo(); },   // l'host può sempre andare avanti (anche al posto di chi si è distratto)
-      onComincia: comincia, onNuova: nuova,
+      onComincia: comincia, onNuova: function () { if (st.fase === "fine") nuova(); },
       onFinisci: function () { if (st.fase === "attesa") finisci(); },   // chi manca non torna più: si chiude qui
       onEsci: function (soloRete) {
         clearTo(); scordaSalvato(); rete.chiudi(); if (soloRete !== true) t.esci();
       } };
+    // la Rivincita dei tasti di fine comuni: tutti di nuovo nella saletta, stessi amici (il core fa il 3-2-1)
+    t.onRivincita = cb.onNuova;
     function disegna() { var v = vmDa(st); v._fino = st.scadenza; disegnaVM(t, v, cb); }
     disegna();
   }
@@ -1116,7 +1143,7 @@
         // sulla classifica finale resta la classifica, con la scritta giusta
         onChiuso: function () {
           if (S.tVia) { clearInterval(S.tVia); S.tVia = null; }
-          if (S.vm && S.vm.fase === "fine") { cb.chiusa = true; if (notaFine) notaFine.textContent = NOTA_CHIUSA; return; }
+          if (S.vm && S.vm.fase === "fine") { cb.chiusa = true; if (notaFine) { notaFine.textContent = NOTA_CHIUSA; notaFine.hidden = false; } return; }
           schermaErr("🚪 L'host ha chiuso la partita.");
         },
         // (solo se il primo collegamento non riesce)
@@ -1232,10 +1259,13 @@
       R.fineFatta = true; ultimaFase = "fine";
       var cl = vm.classifica || [], vinc = cl[0] ? idxDi(vm, cl[0].id) : -1;
       await ST.finale(S, vinc, fmtN(cl[0] ? cl[0].punti : 0) + " punti");
+      // i tasti di fine comuni: all'host e a chi ha giocato (chi ha solo guardato tiene i suoi)
+      var tf = cb.sonoHost ? { host: true, nuova: cb.onNuova, esci: cb.onEsci } : (io >= 0 ? { host: false, esci: cb.onEsci } : null);
       schermataFine(R.t, cl, cb.sonoHost ? cb.onNuova : null, cb.sonoHost
-        ? { online: true, testoRigioca: "↻ Nuova partita (stessi amici)", esci: cb.onEsci }
-        : { online: true, esci: cb.onEsci, nota: cb.chiusa ? NOTA_CHIUSA
-          : io >= 0 ? "⏳ Aspetta l'host: se fa un'altra partita, torni da solo nella saletta." : "⏳ Aspetta l'host: alla prossima partita giochi anche tu." });
+        ? { online: true, testoRigioca: "↻ Nuova partita (stessi amici)", esci: cb.onEsci, tf: tf }
+        : { online: true, esci: cb.onEsci, tf: tf, chiusa: !!cb.chiusa, nota: cb.chiusa ? NOTA_CHIUSA
+          : io >= 0 ? "⏳ Aspetta l'host: se fa un'altra partita, torni da solo nella saletta."
+          : (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta hai guardato." : "⏳ Aspetta l'host: alla prossima partita giochi anche tu." });
       return true;
     }
     if (vm.fase === "attesa") {   // chi ha ancora carte è scollegato: si aspetta che torni (al massimo 90 secondi)
@@ -1340,7 +1370,7 @@
       carta: vm.carta, linea: vm.linea, sel: mioTurno ? memSel.gap : null, chiave: "vm-t|" + kT,
       scegli: mioTurno ? function (i) { memSel = { k: kCarta, gap: i }; conf.disabled = false; conf.textContent = "✅ Mettila qui"; } : null });
     if (conf) barra(S, [conf]);
-    else barra(S, [ el("p", { class: "tl-attesa", text: io < 0 ? "👀 Stai guardando: alla prossima partita giochi anche tu!" : "Guarda bene la linea: dopo tocca votare!" }), R.t.faccine() ]);
+    else barra(S, [ el("p", { class: "tl-attesa", text: io < 0 ? ((vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi: gioca chi è stato scelto." : "👀 Stai guardando: alla prossima partita giochi anche tu!") : "Guarda bene la linea: dopo tocca votare!" }), R.t.faccine() ]);
   }
   function mostraVoto(R, vm, gi, io, mioTurno, nomeT, kT) {
     var S = R.S, el = R.t.el, cb = R.cb;
@@ -1370,15 +1400,13 @@
   }
 
   // la saletta d'attesa (uguale per tutti i giochi)
-  var notaLobby = null;
   function disegnaLobby(t, vm, cb) {
-    if (!notaLobby) notaLobby = t.el("p", { class: "modulo-nota", style: "text-align:center" });
-    var nc = vm.nCat || 0;
-    notaLobby.textContent = "📜 " + (vm.carte || 5) + " carte a testa" + (nc ? " · " + (nc === 1 ? "1 categoria" : nc + " categorie") : "");
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2, puoiDaSolo: true,
       giocatori: vm.giocatori.map(function (g, i) { return { id: g.id, nome: g.nome, omino: g.omino || null, host: i === 0, tu: g.id === cb.myId }; }),
       nota: cb.sonoHost && vm.giocatori.length < 2 ? "Si gioca meglio in 2 o più: invita gli amici col tasto 📤." : null,
-      extra: [notaLobby],
+      extra: [],   // (le regole le scrive il core: «📜 Si gioca così: 5 carte a testa · …»)
+      // nella Sala: chi non è stato scelto guarda soltanto
+      spettatore: !cb.sonoHost && (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi" : null,
       attesa: "Aspetta che l'host faccia partire lo studio!", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 

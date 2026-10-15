@@ -507,6 +507,7 @@
     giocatoriMin: MIN,
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Giudice e squadre sullo stesso telefono", amici: true }],
     giocatoriMax: MAX,
+    postiOnline: MAX,   // posti online (10)
     difficolta: 2,
     regole: [
       "A ogni round uno di voi fa da <b>giudice</b> (a turno: tutti lo stesso numero di volte) e gli altri si dividono <b>a sorte</b> in due squadre. Bastano 3 giocatori.",
@@ -810,6 +811,7 @@
     leggiRegole(t.impostazioni);
     // "⚙️ Regole" nella saletta: l'host cambia le regole quando vuole (prima di cominciare)
     t.onRegole = function (im) { if (st.fase !== "lobby") return; leggiRegole(im); bd(); };
+    t.onRivincita = function () { if (st.fase === "fine") nuova(); };   // la Rivincita: tutti di nuovo nella saletta
     var V = { t: t };
 
     var rete = SGNet.ospita("sipero", {
@@ -869,6 +871,7 @@
         var vecchio = st.giocatori.filter(function (x) { return x.via && norm(x.nome) === norm(nome); })[0];
         if (vecchio) { cambiaId(vecchio, id); bd(); manoA(id); return; }
       }
+      if (t.puoSedersi && !t.puoSedersi(id, nome)) { bd(); return; }   // non è tra chi gioca: riceve le foto e guarda
       if (st.giocatori.length >= MAX) { rete.inviaVeloce({ t: "piena", to: id }); return; }
       st.giocatori.push({ id: id, nome: nome, omino: avatarOkS(m.omino), via: false, guarda: st.fase !== "lobby" });
       bd();
@@ -1122,7 +1125,7 @@
         // chiusa apposta da chi organizza (se sparisce lo dice il core): sulla classifica finale la classifica resta
         onChiuso: function () {
           chiudiLente();
-          if (S.vm && S.vm.fase === "fine" && cb._notaFine && document.body.contains(cb._notaFine)) { cb._notaFine.textContent = "🚪 Chi organizzava ha chiuso la stanza."; return; }
+          if (S.vm && S.vm.fase === "fine") { if (cb._notaFine && document.body.contains(cb._notaFine)) cb._notaFine.textContent = "🚪 Chi organizzava ha chiuso la stanza."; return; }
           erroreS(t, "🚪 Chi organizzava ha chiuso la partita.");
         },
         // (arriva solo se il primo collegamento non riesce: a partita cominciata la rete si ricollega da sola)
@@ -1352,9 +1355,12 @@
     s._contenuto.appendChild(ol);
     if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }
     if (!cl.some(function (r) { return r.id === cb.myId; })) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Questa partita l'hai guardata: giochi dalla prossima." }));
-    if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
-    else s._contenuto.appendChild(cb._notaFine = el("p", { class: "modulo-nota", style: "text-align:center", text: "Se chi organizza fa un'altra partita, torni da solo nella saletta." }));
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    // i tasti di fine uguali per tutti (Rivincita, Cambia gioco, Ci sto…) li mette il core; se no quelli di sempre
+    if (!(t.tastiFine && t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci }))) {
+      if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
+      else s._contenuto.appendChild(cb._notaFine = el("p", { class: "modulo-nota", style: "text-align:center", text: "Se chi organizza fa un'altra partita, torni da solo nella saletta." }));
+      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    }
     V.fineS = s;
     t.mostra(s);
   }

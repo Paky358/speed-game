@@ -1,6 +1,6 @@
 /* =========================================================
    POKER con le carte francesi: Texas Hold'em e Poker all'italiana.
-   Contro il computer (tu e i bot, il primo è Bot) oppure online, ognuno dal suo telefono
+   Contro i Bot (i bot fissi di SG.bot, sempre gli stessi) oppure online, ognuno dal suo telefono
    (i posti vuoti l'host li può dare ai bot).
    Si gioca con le Speed Coins del profilo (al tavolo sono le fiches, come al Black Jack): ci si siede
    con al massimo 1.000 e nel profilo si salva sempre "monete fuori dal tavolo + fiches sul tavolo".
@@ -502,7 +502,8 @@
     var M = creaMotore(V.variante);
     var io = M.siedi({ id: "host", nome: nome, omino: t.mioOmino ? t.mioOmino(nome) : null, stack: Math.min(W, BUYIN) });
     var fuori = W - io.stack;   // quello che resta nel portafoglio, fuori dal tavolo
-    var H = { fase: online ? "lobby" : "gioco", codice: "…", pronta: !online, classifica: null, omini: { host: io.omino }, guardano: {} };
+    var H = { fase: online ? "lobby" : "gioco", codice: "…", pronta: !online, classifica: null, omini: { host: io.omino }, guardano: {},
+      soloGuarda: {} };   // chi non è tra chi gioca (scelti nella Sala): guarda e non si siede
     var rete = null, tBot = null, tTempo = null, tMano = null, tSalva = null, salvato = W;
 
     function salvaMio(subito) {   // nel profilo: fiches fuori + fiches sul tavolo
@@ -511,10 +512,20 @@
       var fai = function () { var tot = fuori + io.stack; if (tot !== salvato) { salvato = tot; SGNube.salvaFiches("blackjack", tot); } };
       if (subito) fai(); else tSalva = setTimeout(fai, 1500);
     }
+    // un bot al tavolo: uno dei bot fissi (SG.bot, scelto col livello del tavolo), mai col nome di chi è seduto;
+    // prima quelli che non sono ancora passati da questo tavolo (chi ha finito le fiches non si risiede subito)
     function aggiungiBot() {
-      var usati = {}; M.giocatori.forEach(function (p) { if (!p.via) usati[p.nome] = 1; });
-      var nomeB = NOMI_BOT.filter(function (n) { return !usati[n]; })[0] || ("Bot " + (M.giocatori.length + 1));
-      return M.siedi({ id: "bot" + Math.random().toString(36).slice(2, 7), nome: nomeB, bot: true, stack: BUYIN, omino: window.SGOmino ? SGOmino.casuale(nomeB) : null });
+      var tutti = M.giocatori.map(function (p) { return p.nome; }), seduti = M.giocatori.filter(function (p) { return !p.via; }).map(function (p) { return p.nome; });
+      var b = null;
+      if (window.SG && SG.bot) {
+        b = SG.bot.prendi(1, { livello: V.liv, escludi: tutti })[0];
+        if (!b || !SG.bot.daId(b.id)) b = SG.bot.prendi(1, { livello: V.liv, escludi: seduti })[0] || b;   // finiti quelli nuovi: torna uno di prima
+      }
+      var nomeB = b ? b.nome : (NOMI_BOT.filter(function (n) { return seduti.indexOf(n) < 0; })[0] || ("Bot " + (M.giocatori.length + 1)));
+      var p = M.siedi({ id: "bot" + Math.random().toString(36).slice(2, 7), nome: nomeB, bot: true, stack: BUYIN,
+        omino: b && b.omino ? b.omino : (window.SGOmino ? SGOmino.casuale(nomeB) : null) });
+      H.omini[p.id] = p.omino; mandaOmini();   // il suo avatar a tutti (gli ospiti non lo inventano)
+      return p;
     }
     function seduti() { return M.giocatori.filter(function (p) { return !p.via; }); }
     function ferma() { clearTimeout(tBot); clearTimeout(tTempo); tBot = tTempo = null; M.scadenza = null; }
@@ -535,6 +546,7 @@
         tempo: M.scadenza ? Math.max(0, M.scadenza - Date.now()) : null, tempoTot: M.durata || T_MOSSA,   // quanto manca per decidere (online)
         vinti: M.esito ? M.esito.vinti : null, vincenti: M.esito && M.esito.vincenti ? M.esito.vincenti : null, classifica: H.classifica,
         guardano: Object.keys(H.guardano),   // chi è entrato a tavolo pieno e guarda
+        soloGuarda: Object.keys(H.soloGuarda),   // (di questi, chi non è tra chi gioca: non si siede)
         players: seduti().map(function (p) {
           return { id: p.id, nome: p.nome, bot: p.bot, stack: p.stack, buyin: p.buyin, inGiro: p.inGiro, lascia: p.lascia, allin: p.allin, azione: p.azione, frase: p.frase || "",
             inMano: p.inMano, nCarte: p.mano.length, seduto: p.seduto, pausa: !!p.pausa, chiuso: !!p.chiuso, cambio: p.cambio,
@@ -598,7 +610,7 @@
       if (H.fase !== "gioco") return;
       M.giocatori.forEach(function (p) {
         if (p.via) return;
-        if (p.bot && p.stack <= 0) { p.via = true; if (!online || seduti().length < MAX[M.variante]) aggiungiBot(); }   // un bot nuovo al posto di chi ha finito
+        if (p.bot && p.stack <= 0) { p.via = true; delete H.omini[p.id]; if (!online || seduti().length < MAX[M.variante]) aggiungiBot(); }   // un bot nuovo al posto di chi ha finito
         else if (!p.bot && p.stack <= 0) p.seduto = false;                                                          // chi è senza fiches aspetta di rientrare
       });
       // contro il computer, se hai finito le fiches i bot si fermano e aspettano te
@@ -629,7 +641,7 @@
       onBot: function (piu) {
         if (H.fase !== "lobby") return;
         if (piu && seduti().length < MAX[M.variante]) aggiungiBot();
-        else if (!piu) { var ult = seduti().filter(function (p) { return p.bot; }).pop(); if (ult) ult.via = true; }
+        else if (!piu) { var ult = seduti().filter(function (p) { return p.bot; }).pop(); if (ult) { M.giocatori.splice(M.giocatori.indexOf(ult), 1); if (M.dealer >= M.giocatori.length) M.dealer = -1; delete H.omini[ult.id]; } }   // (in saletta: via del tutto, così il "+" lo rimette)
         bd();
       },
       onComincia: function () {
@@ -666,13 +678,15 @@
 
     // "⚙️ Regole" nella saletta: l'host cambia variante e bravura dei bot quando vuole
     t.onRegole = function (im) { if (H.fase !== "lobby") return; M.variante = variante(im.variante); V.liv = im.difficolta || V.liv; bd(); };
+    // la Rivincita (online, dalla classifica): stessi amici di nuovo nella saletta, ognuno con le sue fiches
+    if (online) t.onRivincita = function () { if (H.fase === "fine") cb.onNuova(); };
 
     if (online) {
       rete = SGNet.ospita(ID, {
         onCodice: function (c) { H.codice = c; bd(); },
         onConnesso: function () { H.pronta = true; bd(); },
         onAddio: function (id) {
-          delete H.guardano[id];
+          delete H.guardano[id]; delete H.soloGuarda[id];
           var i = M.trova(id); if (i < 0) { bd(); return; }
           if (H.fase === "lobby") { M.giocatori.splice(i, 1); if (M.dealer >= M.giocatori.length) M.dealer = -1; bd(); return; }
           M.esce(i); dopoMossa();
@@ -681,6 +695,10 @@
           if (!m || !m.t) return;
           var i = M.trova(id), p = i >= 0 ? M.giocatori[i] : null;
           if (m.t === "join") {
+            if (i < 0 && t.puoSedersi && !t.puoSedersi(id, m.nome)) {   // non è tra chi gioca: guarda il tavolo
+              H.guardano[id] = String(m.nome || "Amico").slice(0, 16); H.soloGuarda[id] = 1;
+              mandaOmini(); bd(); return;
+            }
             var pieno = seduti().length >= MAX[M.variante];
             if (p && p.via && pieno) p = null;   // era uscito e intanto il suo posto è stato preso: guarda
             if (p) { p.via = false; p.pausa = false; if (p.stack > 0) p.seduto = true; delete H.guardano[id]; }   // si era perso: torna al suo posto e gioca dalla prossima mano
@@ -817,7 +835,12 @@
           else if (m.t === "mie") { S.mie = { n: m.n, carte: m.carte || [] }; if (S.vm) disegna(t, S.vm, cb); }
           else if (m.t === "omini") { S.omini = m.omini || {}; if (S.vm) disegna(t, S.vm, cb); }
         },
-        onChiuso: function () { salva(true); errore(t, "Il tavolo è stato chiuso dall'host."); },   // (chiuso apposta: se l'host sparisce, "La stanza è chiusa" lo dice il core)
+        onChiuso: function () {
+          salva(true);
+          // sulla classifica finale la classifica resta: cambia solo la scritta
+          if (S.vm && S.vm.fase === "fine" && FINE && document.body.contains(FINE.s)) { if (cb._notaFine && document.body.contains(cb._notaFine)) cb._notaFine.textContent = "🚪 L'host ha chiuso il tavolo."; return; }
+          errore(t, "Il tavolo è stato chiuso dall'host.");
+        },   // (chiuso apposta: se l'host sparisce, "La stanza è chiusa" lo dice il core)
         onErrore: function () { errore(t, "Problema di collegamento. Riprova."); }   // (solo se il primo collegamento non riesce)
       });
     }
@@ -854,7 +877,7 @@
   function lobby(t, vm, cb) {
     var el = t.el, extra = [], umani = vm.players.filter(function (p) { return !p.bot; }).length;
     extra.push(el("p", { class: "modulo-nota", text: NOME_VAR[vm.variante] + " · da 2 a " + MAX[vm.variante] + " giocatori. Ognuno si siede con le sue Speed Coins, che al tavolo diventano fiches (al massimo " + fmtN(BUYIN) + ")." }));
-    if (vm.players.length > MAX[vm.variante]) extra.push(el("p", { class: "modulo-nota", style: "color:#ffa94d", text: "Siete troppi per questa variante: togli qualche bot." }));
+    if (vm.players.length > MAX[vm.variante]) extra.push(el("p", { class: "modulo-nota", style: "color:#ffa94d", text: "Siete troppi per questa variante: togli qualche Bot." }));
     if (cb.sonoHost) {
       var nb = vm.players.length - umani;
       extra.push(el("div", { class: "pk-bot-riga" }, [
@@ -879,6 +902,7 @@
   // chi è entrato a tavolo pieno: guarda, e si siede appena si libera un posto
   function boxPieno(t, cb, vm) {
     var el = t.el, box = el("div", { class: "pk-fiches" });
+    if ((vm.soloGuarda || []).indexOf(cb.myId) >= 0) { box.appendChild(el("div", { text: "👀 Guardi la partita: questa volta giocano gli altri." })); return box; }
     box.appendChild(el("div", { text: "🪑 Il tavolo è pieno: guardi la partita e ti siedi quando si libera un posto." }));
     if (vm.players.length < MAX[vm.variante] && cb.onSiediti) box.appendChild(el("button", { class: "btn btn-primario", text: "🪑 Siediti, c'è un posto!", onclick: cb.onSiediti }));
     return box;
@@ -1237,9 +1261,12 @@
     });
     s._contenuto.appendChild(ol);
     var fac = t.faccine && t.faccine(); if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }   // le faccine anche sulla classifica
-    if (cb.sonoHost) s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
-    else s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }));
-    s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    // i tasti di fine uguali per tutti (Rivincita, Cambia gioco, Ci sto…) li mette il core; se no quelli di sempre
+    if (!(t.tastiFine && t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci }))) {
+      if (cb.sonoHost) s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
+      else s._contenuto.appendChild(cb._notaFine = t.el("p", { class: "modulo-nota", style: "text-align:center", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }));
+      s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    }
     t.mostra(s);
     return s;
   }
@@ -1258,7 +1285,7 @@
   }
   function senzaRete(t) {
     var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
-    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Il poker online funziona quando l'app è aperta dal sito pubblicato. Intanto puoi giocare contro il computer." }));
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Il poker online funziona quando l'app è aperta dal sito pubblicato. Intanto puoi giocare contro i Bot." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
   }
@@ -1349,9 +1376,16 @@
 
   SG.registra({
     id: ID, nome: "Poker", icona: "♠️",
-    descrizione: "Texas Hold'em o Poker all'italiana con le carte francesi, contro il computer o online. Si gioca con le tue Speed Coins.",
+    descrizione: "Texas Hold'em o Poker all'italiana con le carte francesi, contro i Bot o online. Si gioca con le tue Speed Coins.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 2–10 giocatori",
-    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu e i bot al tavolo (il primo è Bot)" }],
+    postiOnline: 10,   // posti online (all'italiana il tavolo ne fa sedere 6: la regola resta del gioco)
+    // le regole in una riga, per la saletta: "Texas Hold'em · fino a 10 al tavolo · Bot medi"
+    riassunto: function (imp) {
+      imp = imp || {};
+      var liv = { facile: "Bot facili", medio: "Bot medi", difficile: "Bot difficili" }[imp.difficolta] || "Bot medi";
+      return NOME_VAR[variante(imp.variante)] + " · fino a " + MAX[variante(imp.variante)] + " al tavolo · " + liv;
+    },
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro i Bot", sotto: "Tu e i Bot al tavolo" }],
     regole: [
       "<b>Texas Hold'em</b>: hai 2 carte tue e ne escono 5 in mezzo per tutti (3, poi 1, poi 1). Vince la migliore combinazione di 5 carte.",
       "Prima di ogni mano due giocatori mettono i <b>bui</b> (" + PICCOLO + " e " + GRANDE + "). Quando tocca a te: <b>Passa</b>, <b>Chiama</b>, <b>Punta/Rilancia</b> o <b>Lascia</b>.",
@@ -1381,7 +1415,7 @@
           contaAvv,
           el("button", { class: "modo-chip", style: "flex:1;justify-content:center", onclick: function () { dove.avversari = Math.min(MAX[dove.variante] - 1, dove.avversari + 1); contaAvv.textContent = dove.avversari; } }, [ el("div", { class: "mt", text: "+" }) ]) ]));
       }
-      box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei bot" }));
+      box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei Bot" }));
       var dg = el("div", { style: "display:flex;gap:8px" });
       [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]].forEach(function (d) {
         var b = el("button", { class: "modo-chip" + (d[0] === "medio" ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {

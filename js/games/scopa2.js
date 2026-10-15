@@ -15,14 +15,19 @@
 (function () {
   "use strict";
   var TARGET = 11;
-  // nomi di default dei posti bot, relativi al posto 0 (host/tu)
-  var NOMI_BOT = { 1: "Bot", 2: "Giulia", 3: "Toni" };   // 1 e 3 avversari, 2 il tuo compagno (il primo bot si chiama sempre Bot)
+  // i bot: quelli del gruppo fisso (SG.bot: sempre gli stessi nomi e avatar in tutti i giochi), scelti per la bravura;
+  // escludi = i nomi di chi è al tavolo (nessun bot si chiama come uno di loro). Ognuno { nome, omino }
+  function prendiBot(n, livello, escludi) {
+    var b = null;
+    try { if (window.SG && SG.bot && SG.bot.prendi) b = SG.bot.prendi(n, { livello: livello, escludi: escludi }); } catch (e) {}
+    if (!b || b.length < n) { b = []; for (var k = 0; k < n; k++) b.push({ nome: "Bot " + (k + 1), omino: null }); }   // (di sicurezza)
+    return b;
+  }
   function C() { return window.SGCarte; }
   function team(seat) { return seat % 2; }                 // 0 = Squadra 1 (posti 0,2), 1 = Squadra 2 (posti 1,3)
   function trova(a, id) { for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return null; }
   function importanza(c) { return c.id === "D7" ? 12 : c.s === "D" ? 3 : c.v === 7 ? 2.2 : (c.v === 6 || c.v === 1) ? 1.6 : 1; }
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
-  function nomeBotN(k) { return k === 1 ? "Bot" : "Bot " + k; }   // il primo bot si chiama "Bot", poi "Bot 2", "Bot 3"
   function vibra(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }   // solo quando TU tocchi per scegliere
 
   // ---------- motore (4 giocatori, 2 squadre, con pesca) ----------
@@ -632,6 +637,8 @@
     if (fa) { fa.style.margin = "0 0 8px"; s._piede.appendChild(fa); }
     if (vm.fase === "fine") {
       if (cb.torneo) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏆 Punti del torneo", onclick: cb.onTorneo }));
+      // online: i tasti di fine uguali per tutti i giochi (Rivincita, Ci sto…); se il core non li mette, quelli di sempre
+      else if (cb.online && t.tastiFine && t.tastiFine(s._piede, { host: !!cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) { /* fatto dal core */ }
       else if (cb.sonoHost || cb.locale) {
         s._piede.appendChild(el("button", { class: "btn btn-primario", text: cb.locale ? "🔄 Nuova partita" : "🔄 Nuova partita (in saletta)", onclick: cb.onNuova }));
         s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
@@ -664,17 +671,21 @@
     var nomiG = ((t.giocatori && t.giocatori.length) ? t.giocatori : ["Tu"]).slice(0, torneo ? 4 : 1);
     var multi = nomiG.length > 1, vista = 0, finita = false, attesa = false, giroT = null, detto = false;
     function umano(s) { return s < nomiG.length; }
-    function nomiIniziali() {
-      var n = {}, k = 0;
-      for (var s = 0; s < 4; s++) n[s] = umano(s) ? (nomiG[s] || "Giocatore " + (s + 1)) : (multi ? nomeBotN(++k) : NOMI_BOT[s]);
-      return n;
+    // i posti liberi ai bot del gruppo fisso (col loro nome e il loro avatar): avversari e compagno
+    var bots = prendiBot(4 - nomiG.length, diff, nomiG);
+    function postiIniziali(x) {
+      var k = 0; x.nomi = {}; x.avatari = {};
+      for (var s = 0; s < 4; s++) {
+        if (umano(s)) { x.nomi[s] = nomiG[s] || "Giocatore " + (s + 1); continue; }
+        var b = bots[k++]; x.nomi[s] = b.nome; x.avatari[s] = b.omino || null;
+      }
     }
-    function nuovaPartita() { var x = creaStato(C().traguardoDa(t.impostazioni)); x.nomi = nomiIniziali(); nuovaMano(x); detto = false; return x; }
+    function nuovaPartita() { var x = creaStato(C().traguardoDa(t.impostazioni)); postiIniziali(x); nuovaMano(x); detto = false; return x; }
     var st = nuovaPartita();
     function classifica() {
       var v = st.punti[0] > st.punti[1] ? 0 : 1, pari = st.punti[0] === st.punti[1];
       return [0, 1, 2, 3].filter(function (k) { return !torneo || umano(k); })
-        .map(function (k) { return { nome: st.nomi[k], pos: (team(k) === v || pari) ? 1 : 2 }; })
+        .map(function (k) { var x = { nome: st.nomi[k], pos: (team(k) === v || pari) ? 1 : 2 }; if (!umano(k)) x.bot = true; return x; })
         .sort(function (a, b) { return a.pos - b.pos; });
     }
     function esci() { finita = true; Cl.chiuso = true; if (giroT) clearTimeout(giroT); if (window.SGMusica) window.SGMusica.ferma(); t.esci(); }
@@ -730,6 +741,7 @@
     var st = null, rete = null, codice = "…", pronta = false, chiuso = false, attesa = false, giroT = null, nAvviso = 0;
     // posti[1..3]: id se umano collegato, null se libero. Il posto 0 è l'host.
     var posti = { 1: null, 2: null, 3: null };
+    var guarda = [];   // nella Sala: chi non è stato scelto per giocare ({ id, nome }): niente posto al tavolo
     var nomiUmani = { 1: null, 2: null, 3: null }, avatariUmani = { 1: null, 2: null, 3: null };
     var via = {};   // via[posto] = chi è uscito a partita in corso: se torna si riprende il suo posto
     var botSeat = { 0: false, 1: true, 2: true, 3: true };  // chi è gestito dal computer durante la partita
@@ -746,15 +758,21 @@
 
     function mioNome() { return (t.giocatori && t.giocatori[0]) || "Host"; }
     function mioAv() { return t.mioOmino ? t.mioOmino(mioNome()) : C().mioAvatar(mioNome()); }
-    function nomeBotLibero() {   // "Bot", poi "Bot 2", "Bot 3" (la squadra la mostrano il colore e il 🤝)
-      var usati = {}; if (st) for (var s = 0; s < 4; s++) if (st.nomi[s]) usati[st.nomi[s]] = 1;
-      for (var k = 1; k < 9; k++) if (!usati[nomeBotN(k)]) return nomeBotN(k);
-      return "Bot";
+    // un bot del gruppo fisso per un posto libero (bravura di questa partita): mai uno già al tavolo,
+    // né col nome di chi gioca, di chi è uscito o di chi guarda
+    function botLibero() {
+      var escludi = [mioNome()], s;
+      for (s = 1; s <= 3; s++) if (nomiUmani[s]) escludi.push(nomiUmani[s]);
+      if (st) for (s = 0; s < 4; s++) if (st.nomi[s]) escludi.push(st.nomi[s]);
+      Object.keys(via).forEach(function (k) { escludi.push(via[k].nome); });
+      guarda.forEach(function (g) { escludi.push(g.nome); });
+      return prendiBot(1, diff, escludi)[0];
     }
+    function mettiBot(s) { var b = botLibero(); st.nomi[s] = b.nome; st.avatari[s] = b.omino || null; }
     function nomiPartenza() {
       st.nomi = { 0: mioNome() }; st.avatari = { 0: mioAv() };
       for (var s = 1; s <= 3; s++) if (posti[s]) { st.nomi[s] = nomiUmani[s]; st.avatari[s] = avatariUmani[s]; }
-      for (s = 1; s <= 3; s++) if (!posti[s]) { st.nomi[s] = nomeBotLibero(); st.avatari[s] = null; }   // i bot: la loro faccia
+      for (s = 1; s <= 3; s++) if (!posti[s]) mettiBot(s);   // i bot del gruppo fisso, col loro avatar
     }
     function postoLibero() { for (var s = 1; s <= 3; s++) if (!posti[s]) return s; return 0; }
     function seatDi(id) { for (var s = 1; s <= 3; s++) if (posti[s] === id) return s; return -1; }
@@ -771,7 +789,7 @@
       if (!detto && t.risultato) {   // per il torneo online: la squadra che vince, poi l'altra (pari = stesso posto)
         detto = true;
         var v = st.punti[0] >= st.punti[1] ? 0 : 1, pari = st.punti[0] === st.punti[1];
-        t.risultato([0, 1, 2, 3].map(function (k) { return { nome: st.nomi[k], pos: (k % 2 === v || pari) ? 1 : 3 }; })
+        t.risultato([0, 1, 2, 3].map(function (k) { var x = { nome: st.nomi[k], pos: (k % 2 === v || pari) ? 1 : 3 }; if (k > 0 && botSeat[k]) x.bot = true; return x; })
           .sort(function (a, b) { return a.pos - b.pos; }));
       }
     }
@@ -810,11 +828,14 @@
       Cl.azzera();
       aggiornaLobby();
     }
+    t.onRivincita = tornaSaletta;   // la Rivincita della Sala
 
     rete = SGNet.ospita("scopa2v2", {
       onCodice: function (c) { codice = c; if (!st) aggiornaLobby(); },
       onConnesso: function () { pronta = true; if (!st) aggiornaLobby(); },
       onAddio: function (id) {
+        var g0 = guarda.length; guarda = guarda.filter(function (g) { return g.id !== id; });
+        if (guarda.length !== g0 && !st) aggiornaLobby();
         var s = seatDi(id);
         if (s <= 0) return;
         posti[s] = null;
@@ -822,7 +843,7 @@
           var vecchio = nomiUmani[s] || st.nomi[s];
           via[s] = { id: id, nome: vecchio, omino: avatariUmani[s] };
           nomiUmani[s] = null; avatariUmani[s] = null; botSeat[s] = true;
-          st.nomi[s] = nomeBotLibero(); st.avatari[s] = null;
+          st.nomi[s] = null; mettiBot(s);
           avviso(vecchio + " è uscito: gioca il bot");
           bcast(); giro();
         } else { nomiUmani[s] = null; avatariUmani[s] = null; aggiornaLobby(); }
@@ -830,6 +851,14 @@
       onMsg: function (id, m) {
         if (chiuso || !m || !m.t) return;
         if (m.t === "join") {
+          var nomeJ = String(m.nome || "Amico").slice(0, 16);
+          // nella Sala chi non è stato scelto non si siede: questa volta guarda (lo vede scritto nella saletta)
+          if (seatDi(id) < 0 && t.puoSedersi && !t.puoSedersi(id, nomeJ) && !(st && Object.keys(via).some(function (k) { return via[k].id === id; }))) {
+            if (!guarda.some(function (g) { return g.id === id; }) && guarda.length < 12) guarda.push({ id: id, nome: nomeJ });
+            if (st) { if (rete) rete.inviaVeloce({ t: "piena", to: id, inCorso: true, guardi: true }); }
+            else aggiornaLobby();
+            return;
+          }
           if (st) {   // a partita iniziata
             var sj = seatDi(id);
             if (sj > 0) { mandaVm(sj); return; }   // chi rientra al suo posto si riprende le sue carte
@@ -860,7 +889,7 @@
     function aggiornaLobby() {
       if (st || chiuso) return;
       var R = regoleLobby();
-      if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, seggi: seggiLobby(), traguardo: R.traguardo, diff: R.diff });
+      if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, seggi: seggiLobby(), traguardo: R.traguardo, diff: R.diff, guarda: guarda });
       disegnaLobby();
     }
     function cambiaCompagno() {   // ruota i posti 1-2-3: cambia chi gioca con l'host
@@ -872,7 +901,7 @@
     function disegnaLobby() {
       if (st || chiuso) return;
       var R = regoleLobby();
-      renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", seggi: seggiLobby(), traguardo: R.traguardo, diff: R.diff }, {
+      renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", seggi: seggiLobby(), traguardo: R.traguardo, diff: R.diff, guarda: guarda }, {
         onComincia: function () {
           var imp = t.impostazioni || {}; diff = imp.difficolta || diff;
           st = creaStato(C().traguardoDa(imp)); nomiPartenza();
@@ -928,13 +957,16 @@
             if (Cl.vm) Cl.azzera();   // l'host ha fatto "Nuova partita": si torna in saletta
             // non sono al tavolo: se c'è un posto libero lo chiedo (chi era arrivato a partita cominciata entra adesso)
             var seggi = m.seggi || [], dentro = seggi.some(function (g) { return g && g.id === S.myId; });
+            var guardo = !dentro && (m.guarda || []).some(function (g) { return g.id === S.myId; });   // nella Sala: non sono tra gli scelti
+            S.guardo = guardo;
+            if (guardo) { S.fuori = false; return mostraLobby(m); }
             if (!dentro && !seggi.slice(1).some(function (g) { return !g; })) return mostraPiena(false);
             if (!dentro && S.rete && Date.now() - (S.chiesto || 0) > 1500) { S.chiesto = Date.now(); S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : C().mioAvatar(S.nome) }); }
             S.fuori = false;
             mostraLobby(m);
           }
-          else if (m.t === "piena") { if (!Cl.vm) mostraPiena(m.inCorso); }
-          else if (m.t === "inCorso") { if (!Cl.vm && S.msg2 && document.body.contains(S.msg2)) S.msg2.textContent = "La partita è cominciata: sto entrando al tavolo…"; }
+          else if (m.t === "piena") { if (!Cl.vm) mostraPiena(m.inCorso, m.guardi); }
+          else if (m.t === "inCorso") { if (S.guardo && !Cl.vm) mostraPiena(true, true); else if (!Cl.vm && S.msg2 && document.body.contains(S.msg2)) S.msg2.textContent = "La partita è cominciata: sto entrando al tavolo…"; }
         },
         onChiuso: function () {
           if (S.chiuso) return;
@@ -953,7 +985,7 @@
     }
     function mostraLobby(m) {
       if (Cl.vm) return;
-      renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi, traguardo: m.traguardo, diff: m.diff }, { onEsci: esci });
+      renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi, traguardo: m.traguardo, diff: m.diff, guarda: m.guarda }, { onEsci: esci });
     }
     function mostraAttesa() {   // finché non arriva la sala dall'host
       if (Cl.vm) return;
@@ -961,14 +993,16 @@
       S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegato ✅ — sto entrando nella stanza…" });
       s._contenuto.appendChild(S.msg2); t.mostra(s);
     }
-    function mostraPiena(inCorso) {   // nessun posto per me (per ora: alla prossima partita, se c'è posto, entro da solo)
-      var k = inCorso ? "corso" : "piena";
+    function mostraPiena(inCorso, guardi) {   // nessun posto per me (per ora: alla prossima partita, se c'è posto, entro da solo)
+      var k = guardi ? "guardi" : inCorso ? "corso" : "piena";   // guardi: nella Sala non sono tra gli scelti
       if (S.fuori === k && S.sPiena && document.body.contains(S.sPiena)) return;   // già mostrata: niente lampeggio
       S.fuori = k;
-      var s = S.sPiena = t.schermata({ icona: inCorso ? "⏳" : "🈵", titolo: inCorso ? "Partita già cominciata" : "Tavolo al completo", indietro: esci });
+      var s = S.sPiena = t.schermata({ icona: guardi ? "👀" : inCorso ? "⏳" : "🈵", titolo: guardi ? "Questa volta guardi" : inCorso ? "Partita già cominciata" : "Tavolo al completo", indietro: esci });
       s._contenuto.appendChild(el("p", { style: "font-size:1.05rem;line-height:1.5;text-align:center",
-        text: inCorso ? "Al tavolo si sta già giocando: entri alla prossima partita, se c'è un posto libero. Resta qui!"
+        text: guardi ? "Al tavolo giocano gli amici scelti. Quando finiscono si torna nella saletta tutti insieme."
+          : inCorso ? "Al tavolo si sta già giocando: entri alla prossima partita, se c'è un posto libero. Resta qui!"
           : "Al tavolo ci sono già 4 giocatori: se si libera un posto entri da solo." }));
+      var f = guardi && t.faccine ? t.faccine() : null; if (f) { f.style.margin = "16px auto 0"; f.style.maxWidth = "320px"; s._contenuto.appendChild(f); }   // si aspetta: le faccine
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: esci }));
       t.mostra(s);
     }
@@ -980,19 +1014,23 @@
     for (var k = 0; k < seggi.length; k++) if (seggi[k] && seggi[k].id === vm.myId) mioSeat = k;
     var gio = [], umani = 0;
     seggi.forEach(function (g, i) { if (g) { umani++; gio.push({ id: g.id, nome: g.nome, omino: g.omino || null, host: i === 0, tu: g.id === vm.myId }); } });
-    function nomeSeat(i) { var g = seggi[i]; return g ? (g.id === vm.myId ? "tu" : g.nome) : "🤖 bot"; }
+    function nomeSeat(i) { var g = seggi[i]; return g ? (g.id === vm.myId ? "tu" : g.nome) : "🤖 Bot"; }
     var tr = vm.traguardo == null ? TARGET : vm.traguardo, livello = { facile: "facili", medio: "medi", difficile: "difficili" }[vm.diff] || "medi";
     // (compatto: con la saletta e i tasti deve stare tutto in uno schermo da 360x640, anche in 4 col "Cambia compagno")
     var righe = [
       el("div", {}, [ el("b", { text: "🟢 " + nomeSeat(mioSeat % 2) + " + " + nomeSeat(mioSeat % 2 + 2) }), document.createTextNode(" 🆚 "),
         el("b", { text: "🔴 " + nomeSeat(1 - mioSeat % 2) + " + " + nomeSeat(3 - mioSeat % 2) }) ]),
-      el("div", { style: "opacity:.8;font-size:.85em", text: (tr ? "🎯 A " + tr + " punti" : "🎯 Una mano sola") + " · bot " + livello + (umani < 4 ? " · i posti liberi li fanno i bot" : "") }) ];
+      el("div", { style: "opacity:.8;font-size:.85em", text: (tr ? "🎯 A " + tr + " punti" : "🎯 Una mano sola") + " · Bot " + livello + (umani < 4 ? " · i posti liberi li fanno i bot" : "") }) ];
     if (vm.sonoHost && cb.onCambia && umani > 1)
       righe.push(el("button", { class: "btn btn-fantasma", style: "margin:4px auto 0;min-height:0;padding:5px 14px;font-size:.85rem;width:auto", text: "🔀 Cambia compagno", onclick: cb.onCambia }));
+    // nella Sala: chi non è stato scelto guarda (niente posto al tavolo e niente "Sono pronto")
+    var guarda = vm.guarda || [], guardo = !gio.some(function (g) { return g.tu; }) && guarda.some(function (g) { return g.id === vm.myId; });
+    if (guarda.length) righe.push(el("div", { style: "opacity:.8;font-size:.85em", text: "👀 Guardano: " + guarda.map(function (g) { return g.id === vm.myId ? "tu" : g.nome; }).join(", ") }));
     var squadre = el("div", { class: "modulo-nota", style: "text-align:center;line-height:1.5" }, righe);
     t.lobby({ host: vm.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 1, puoiDaSolo: true, vuoti: 4 - umani, giocatori: gio, extra: [squadre],
       nota: vm.sonoHost ? "Puoi cominciare quando vuoi: i posti vuoti li fanno i bot." : null,
-      attesa: "Aspetta che l'host cominci: si gioca in coppia! 🃏", onComincia: cb.onComincia, onEsci: cb.onEsci });
+      spettatore: guardo ? "👀 Questa volta guardi" : null,
+      attesa: guardo ? "Al tavolo giocano gli amici scelti: questa partita la guardi." : "Aspetta che l'host cominci: si gioca in coppia! 🃏", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
   function erroreScopa2(t, txt) {
@@ -1021,7 +1059,8 @@
     icona: "🃏",
     descrizione: "La Scopa a squadre, in quattro al tavolo: tu e il tuo compagno contro due. Contro i bot o online, ognuno dal suo telefono (i posti vuoti li fanno i bot).",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 1–4 giocatori",   // (i posti liberi li prendono i bot)
-    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu e un bot contro due bot" }],
+    postiOnline: 4,   // 4 al tavolo: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro i Bot", sotto: "Tu e un Bot contro due Bot" }],
     regole: [
       "Si gioca <b>in quattro, due squadre</b>: tu + il compagno (di fronte) contro due avversari. Le carte sono le 40 napoletane.",
       "Si gioca a turno alternando le squadre: <b>tu, un avversario, il tuo compagno, l'altro avversario</b>.",
@@ -1041,7 +1080,7 @@
         notaOnline.hidden = (m !== "online");
       }
       bBot = el("button", { class: "modo-chip attiva", onclick: function () { sel("bot"); } }, [
-        el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro i bot" }), el("div", { class: "ms", text: "Tu + 3 bot" })])]);
+        el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro i Bot" }), el("div", { class: "ms", text: "Tu + 3 Bot" })])]);
       bOnl = el("button", { class: "modo-chip", onclick: function () { sel("online"); } }, [
         el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online" }), el("div", { class: "ms", text: "Ognuno dal suo" })])]);
       if (!aiuti.modo && !aiuti.torneo) {   // (se "come giocare" l'avete già scelto prima, qui non si sceglie)
@@ -1050,7 +1089,7 @@
       }
       if (aiuti.torneo) box.appendChild(el("p", { class: "modulo-nota", text: "Nel torneo giocate fino a 4 di voi, passandovi il telefono: i posti che avanzano li fanno i bot." }));
       boxDiff = el("div", {});   // la bravura dei bot si sceglie anche online (⚙️ Regole in saletta)
-      boxDiff.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei bot" }));
+      boxDiff.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei Bot" }));
       var dg = el("div", { style: "display:flex;gap:8px" });
       [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]].forEach(function (d) {
         var b = el("button", { class: "modo-chip" + (d[0] === "medio" ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {

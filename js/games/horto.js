@@ -30,15 +30,15 @@
   function cifre(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
 
   // ---------- fantini: gli avatar dei giocatori, i bot con la loro faccia fissa ----------
-  // il primo bot è sempre Bot; i nomi già usati dalle persone in gara si saltano (sennò XP e vittorie andrebbero alla persona sbagliata)
-  var BOT_NOMI = ["Bot", "Sara", "Leo", "Nina", "Giulia", "Toni", "Rosa", "Marco", "Chiara", "Pietro", "Elena", "Franco",
-    "Lucia", "Dario", "Irene", "Bruno", "Marta", "Gino", "Ada", "Ugo", "Bea", "Teo"];
-  function stessoNome(a, b) { return String(a || "").trim().toLowerCase().slice(0, 16) === String(b || "").trim().toLowerCase().slice(0, 16); }
-  function nomiBot(usati, quanti) {
-    var liberi = BOT_NOMI.filter(function (n) { return !usati.some(function (u) { return stessoNome(u, n); }); }), out = [];
-    for (var i = 0; i < quanti; i++) out.push(liberi[i] || ("Bot " + (i + 2)));
-    return out;
+  // i bot sono quelli del gruppo fisso (SG.bot: sempre gli stessi nomi e avatar in tutti i giochi), scelti per la bravura;
+  // i nomi già usati dalle persone in gara si saltano (sennò XP e vittorie andrebbero alla persona sbagliata). Ognuno { nome, omino }
+  function prendiBot(usati, quanti, diff) {
+    var b = null;
+    try { if (window.SG && SG.bot && SG.bot.prendi) b = SG.bot.prendi(quanti, { livello: diff, escludi: usati }); } catch (e) {}
+    if (!b || b.length < quanti) { b = []; for (var i = 0; i < quanti; i++) b.push({ nome: "Bot " + (i + 1), omino: null }); }   // (di sicurezza)
+    return b;
   }
+  function stessoNome(a, b) { return String(a || "").trim().toLowerCase().slice(0, 16) === String(b || "").trim().toLowerCase().slice(0, 16); }
   // i nomi dei cavalli (in targa nel photo finish e sul podio)
   var NOMI_CAVALLI = ["Fulmine", "Tortellino", "Zoccolo d'Oro", "Saetta", "Polpetta", "Uragano", "Biscotto", "Furia", "Cometa",
     "Brontolo", "Mozzarella", "Tornado", "Peperoncino", "Trottolino", "Bufera", "Cannolo", "Freccia Rossa", "Pistacchio",
@@ -50,12 +50,6 @@
     for (var i = 0; i < n; i++) out.push(a.splice(Math.floor(Math.random() * a.length), 1)[0]);
     return out;
   }
-  var MATT = { forma: "uomo", corpo: "medio", pelle: 2, capelli: "ciuffo", colCap: 1, barba: "corta", capo: "felpa", maglia: 1,
-    cappello: "cappellino", colAcc: 0, sopracc: "decise", occhi: "furbi", bocca: "ghigno" };
-  var BOT_DONNA = { Sara: "lunghi", Nina: "caschetto", Giulia: "coda", Rosa: "riccilunghi", Chiara: "lunghi", Elena: "caschetto",
-    Lucia: "coda", Irene: "riccilunghi", Marta: "lunghi", Ada: "caschetto", Bea: "coda" };
-  var BOT_UOMO = { Leo: "corti", Toni: "spettinati", Marco: "corti", Pietro: "spettinati", Franco: "corti", Dario: "spettinati",
-    Bruno: "corti", Gino: "spettinati", Ugo: "corti", Teo: "spettinati" };
   function mioAvatar(t, nome) {
     if (t && t.mioOmino) { try { var o = t.mioOmino(nome); if (o) return o; } catch (e) {} }
     var p = window.SGNube && SGNube.profilo && SGNube.profilo();
@@ -85,12 +79,7 @@
   }
   function facciaDi(nome, cfg) {
     if (avatarValido(cfg)) return cfg;
-    if (nome === "Bot") return MATT;
-    if (!window.SGOmino) return null;
-    var c = SGOmino.casuale(nome);   // faccia fissa dal nome, donna o uomo come il nome
-    if (BOT_DONNA[nome]) { c.forma = "donna"; c.barba = "no"; c.capelli = BOT_DONNA[nome]; }
-    if (BOT_UOMO[nome]) { c.forma = "uomo"; c.capelli = BOT_UOMO[nome]; c.orecchini = "nessuno"; c.cappello = "nessuno"; c.ombretto = c.eyeliner = c.mascara = c.rossetto = c.blush = "nessuno"; if (/gonna/.test(c.sotto)) c.sotto = "jeans"; }
-    return c;
+    return window.SGOmino ? SGOmino.casuale(nome || "Bot") : null;   // (di sicurezza: i bot arrivano già col loro avatar)
   }
   function avatariPer(nomi, cfgs) { return nomi.map(function (n, i) { return facciaDi(n, cfgs && cfgs[i]); }); }
   var ultimiAv = [];   // gli avatar della corsa in corso (servono anche a photo finish e podio)
@@ -764,7 +753,9 @@
       s._contenuto.appendChild(box);
     }
     if (!cb.locale) { var fac = t.faccine && t.faccine(); if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); } }   // online: le faccine anche sulla classifica
-    if (cb.sonoHost) {
+    // online: i tasti di fine uguali per tutti i giochi (Rivincita, Ci sto…); se il core non li mette, quelli di sempre
+    if (!cb.locale && t.tastiFine && t.tastiFine(s._piede, { host: !!cb.sonoHost, nuova: cb.sonoHost ? cb.onRigioca : null, esci: cb.onEsci })) { /* fatto dal core */ }
+    else if (cb.sonoHost) {
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rigioca", onclick: cb.onRigioca }));
       s._piede.appendChild(el("div", { class: "ho-piede2" }, [
         el("button", { class: "btn btn-fantasma", text: "🛋️ Saletta", onclick: cb.onSaletta }),
@@ -785,9 +776,10 @@
   function corsa(t, nRivali, diff) {
     var N = Math.min(MAXN, 1 + Math.max(1, nRivali));
     var mioNome = (t.giocatori && t.giocatori[0]) || "Tu";
-    var nomi = [mioNome].concat(nomiBot([mioNome], N - 1)), cav = [nuovoCav(true, "io")];
+    var bots = prendiBot([mioNome], N - 1, diff);   // i bot del gruppo fisso, col loro avatar in sella
+    var nomi = [mioNome].concat(bots.map(function (b) { return b.nome; })), cav = [nuovoCav(true, "io")];
     for (var i = 1; i < N; i++) cav.push(botCav(diff));
-    var cn = nomiCavalli(N), av = avatariPer(nomi, [mioAvatar(t, mioNome)]);
+    var cn = nomiCavalli(N), av = avatariPer(nomi, [mioAvatar(t, mioNome)].concat(bots.map(function (b) { return b.omino; })));
     var fase = "via", conto = 3, raf = null, toC = null, ultimo = 0, primoArr = 0, finito = false, arrivi = [], foto = null, garaId = idGara();
     var ref = costruisci(t, N, nomi, 0, {
       cavallo: cn[0],
@@ -864,8 +856,9 @@
     // prima di ogni corsa (e tornando in saletta): chi è uscito lascia il posto, chi aspettava entra
     function sistemaPosti() {
       for (var s = 1; s < N; s++) if (posti[s] && usciti[posti[s]]) { delete usciti[posti[s]]; posti[s] = null; nomiU[s] = null; ominiU[s] = null; }
-      attesa = attesa.filter(function (a) { return !siediti(a.id, a.nome, a.om); });
+      attesa = attesa.filter(function (a) { return a.fuori || !siediti(a.id, a.nome, a.om); });   // (chi non è stato scelto nella Sala resta a guardare)
     }
+    function fuori() { return attesa.filter(function (a) { return a.fuori; }).map(function (a) { return { id: a.id, nome: a.nome }; }); }
     // "⚙️ Regole" in saletta: bravura dei bot e cavalli in gara. Chi è dentro resta
     // (se i cavalli calano, chi era oltre passa a un posto libero; mai meno cavalli delle persone)
     t.onRegole = function (im) {
@@ -879,7 +872,7 @@
       dentro.forEach(function (d) { if (d.vecchio < nuovoN) { p2[d.vecchio] = d.id; n2[d.vecchio] = d.nome; o2[d.vecchio] = d.om; d.fatto = true; } });
       dentro.forEach(function (d) { if (d.fatto) return; for (var k = 1; k < nuovoN; k++) if (!p2[k]) { p2[k] = d.id; n2[k] = d.nome; o2[k] = d.om; return; } });
       posti = p2; nomiU = n2; ominiU = o2; segnaN(nuovoN);   // la scelta mostra il numero vero
-      attesa = attesa.filter(function (a) { return !siediti(a.id, a.nome, a.om); });
+      attesa = attesa.filter(function (a) { return a.fuori || !siediti(a.id, a.nome, a.om); });
       aggiornaLobby();
     };
 
@@ -904,9 +897,17 @@
             else aggiornaLobby();
             return;
           }
-          if (inAttesa(id)) { rete.inviaVeloce({ t: "aspetta", to: id, pieno: fase === "lobby" }); return; }
-          var nome = nomeLibero(String(m.nome || "Amico").trim().slice(0, 16) || "Amico"), om = avatarValido(m.omino);
+          var ia = inAttesa(id);
+          if (ia) { if (ia.fuori && fase === "lobby") aggiornaLobby(); else rete.inviaVeloce({ t: "aspetta", to: id, pieno: fase === "lobby", guardi: !!ia.fuori }); return; }
+          var nomeVero = String(m.nome || "Amico").trim().slice(0, 16) || "Amico";
+          var nome = nomeLibero(nomeVero), om = avatarValido(m.omino);
           visti.push(nome);   // anche se poi esce, nessun bot prenderà il suo nome (sennò, se rientra, prenderebbe XP non suoi)
+          // nella Sala corre solo chi è stato scelto ("Chi gioca?"): gli altri guardano (anche alle corse dopo)
+          if (t.puoSedersi && !t.puoSedersi(id, nomeVero)) {
+            attesa.push({ id: id, nome: nome, om: om, fuori: true });
+            if (fase === "lobby") aggiornaLobby(); else rete.inviaVeloce({ t: "aspetta", to: id, guardi: true });
+            return;
+          }
           if (fase === "lobby" && siediti(id, nome, om)) { aggiornaLobby(); return; }
           attesa.push({ id: id, nome: nome, om: om });   // corsa già partita (o 8 cavalli già pieni): entra alla prossima
           rete.inviaVeloce({ t: "aspetta", to: id, pieno: fase === "lobby" });
@@ -927,7 +928,7 @@
         if (posti[s]) { cav.push(nuovoCav(true, posti[s])); nomi.push(nomiU[s] || ("Amico " + s)); ids.push(posti[s]); cfgs[s] = ominiU[s]; }
         else { cav.push(botCav(diff)); nomi.push(null); ids.push(null); liberi.push(s); }
       }
-      var nb = nomiBot(nomiUmani().concat(visti), liberi.length); liberi.forEach(function (s, i) { nomi[s] = nb[i]; });
+      var nb = prendiBot(nomiUmani().concat(visti), liberi.length, diff); liberi.forEach(function (s, i) { nomi[s] = nb[i].nome; cfgs[s] = nb[i].omino; });
       umaniGara = 1 + quanti(); cn = nomiCavalli(N);
       var av = avatariPer(nomi, cfgs);
       // ogni telefono costruisce la corsa e fa il suo 3-2-1. Resta in stanza: chi rientra ritrova il suo posto (ids)
@@ -974,6 +975,7 @@
     }
     // di nuovo in saletta: stessa stanza, stessi amici, l'host può cambiare le regole e chi aspettava entra
     function tornaInSaletta() { if (fase !== "fine") return; fase = "lobby"; sistemaPosti(); aggiornaLobby(); }
+    t.onRivincita = inizia;   // la Rivincita della Sala (la "Rigioca" dell'host)
     function chiudi() { if (loop) clearInterval(loop); if (toC) clearInterval(toC); loop = toC = null; if (ref) ref.rimuovi(); if (rete) rete.chiudi(); }
 
     function seggi() {
@@ -983,12 +985,12 @@
     }
     function aggiornaLobby() {
       if (fase !== "lobby") return;
-      rete.invia({ t: "lobby", codice: codice, pronta: pronta, seggi: seggi() }); // a tutti gli ospiti
+      rete.invia({ t: "lobby", codice: codice, pronta: pronta, seggi: seggi(), fuori: fuori() }); // a tutti gli ospiti
       disegnaLobby();
     }
     function disegnaLobby() {
       if (fase !== "lobby") return;
-      renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", seggi: seggi() },
+      renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", seggi: seggi(), fuori: fuori() },
         { onComincia: inizia, onEsci: function () { chiudi(); t.esci(); } });
     }
     disegnaLobby();
@@ -1082,8 +1084,8 @@
             chiudiCorsa(); S.fase = "fine"; S.garaId = m.garaId || S.garaId;
             if (io >= 0) salvaTrofeiHorto(t, { id: m.garaId || S.garaId, n: m.n || S.N, diff: m.diff || S.diff, online: true, umani: m.umani || S.umani }, m.ord, io);
             S.ff = finale(t, m.ord, m.nomi, io, m.foto, m.cn, { sonoHost: false, onEsci: esci });
-          } else if (m.t === "aspetta") {   // la corsa è già partita: entro alla prossima
-            if (!S.ref && S.fase !== "fine") schermaAspetta(m.pieno);
+          } else if (m.t === "aspetta") {   // la corsa è già partita: entro alla prossima (guardi: nella Sala non sono tra gli scelti)
+            if (!S.ref && S.fase !== "fine") schermaAspetta(m.pieno, m.guardi);
           }
         },
         onChiuso: function () { chiudiCorsa(); errore(t, "La corsa è stata chiusa dall'host."); },   // (chiusa apposta: se l'host sparisce, "La stanza è chiusa" lo dice il core)
@@ -1117,17 +1119,17 @@
       }, 800);
     }
     function mostraLobby(m) {
-      renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi }, { onEsci: esci });
+      renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi, fuori: m.fuori }, { onEsci: esci });
     }
     function attesa() {   // finché non arriva la saletta dall'host
       var s = t.schermata({ icona: "🐎", titolo: "⏳ Sto entrando…", sotto: "Horto Muso · stanza " + String(codice).toUpperCase(), indietro: esci });
       s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
       t.mostra(s);
     }
-    function schermaAspetta(pieno) {
-      var s = t.schermata({ icona: "🐎", titolo: pieno ? "La corsa è piena" : "👀 Corsa già partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: esci });
+    function schermaAspetta(pieno, guardi) {
+      var s = t.schermata({ icona: "🐎", titolo: guardi ? "👀 Questa volta guardi" : pieno ? "La corsa è piena" : "👀 Corsa già partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: esci });
       s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px",
-        text: pieno ? "Ci sono già 8 cavalli: entri appena si libera un posto." : "Entri alla prossima corsa! 🐎" }));
+        text: guardi ? "Corrono gli amici scelti: alla prossima corsa la guardi dall'inizio! 🐎" : pieno ? "Ci sono già 8 cavalli: entri appena si libera un posto." : "Entri alla prossima corsa! 🐎" }));
       var f = t.faccine && t.faccine(); if (f) { f.style.margin = "16px auto 0"; f.style.maxWidth = "320px"; s._contenuto.appendChild(f); }   // si aspetta: le faccine
       t.mostra(s);
     }
@@ -1137,9 +1139,13 @@
   function renderLobby(t, vm, cb) {
     var gio = [], vuoti = 0;
     (vm.seggi || []).forEach(function (sg, i) { if (sg) gio.push({ id: sg.id, nome: sg.nome, omino: sg.omino || null, host: i === 0, tu: sg.id === vm.myId }); else vuoti++; });
+    // nella Sala: chi non è stato scelto guarda la corsa (niente cavallo e niente "Sono pronto")
+    var fuori = vm.fuori || [], guardo = !gio.some(function (g) { return g.tu; }) && fuori.some(function (g) { return g.id === vm.myId; });
     t.lobby({ host: vm.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 1, puoiDaSolo: true, vuoti: vuoti, giocatori: gio, testoComincia: "Comincia la corsa ▶",
       nota: vm.sonoHost ? "Puoi cominciare quando vuoi: i posti liberi li corrono i bot." : null,
-      attesa: "Aspetta che l'host dia il via alla corsa! 🐎", onComincia: cb.onComincia, onEsci: cb.onEsci });
+      extra: fuori.length ? [t.el("p", { class: "modulo-nota", text: "👀 Guardano: " + fuori.map(function (g) { return g.id === vm.myId ? "tu" : g.nome; }).join(", ") })] : null,
+      spettatore: guardo ? "👀 Questa volta guardi" : null,
+      attesa: guardo ? "Corrono gli amici scelti: questa corsa la guardi! 🐎" : "Aspetta che l'host dia il via alla corsa! 🐎", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
   function errore(t, txt) {
@@ -1158,15 +1164,16 @@
 
   SG.registra({
     id: "horto",
-    modi: [{ modo: "bot", icona: "🤖", nome: "Contro i bot", sotto: "Corri da solo contro i cavalli dei bot" }],
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro i Bot", sotto: "Corri da solo contro i cavalli dei Bot" }],
     nome: "Horto Muso",
     icona: "🐎",
     descrizione: "Corsa di cavalli: frusta a ritmo per accelerare, ma occhio all'energia! Contro i bot o online, ognuno dal suo telefono.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 1,
     etichettaGiocatori: "👥 1–8 giocatori",   // 1 da solo contro i bot, fino a 8 online (i cavalli in gara)
+    postiOnline: 8,   // 8 cavalli al massimo: nella Sala, se siete di più, corre chi sceglie l'host e gli altri guardano
     regole: [
       "Si parte dai <b>cancelletti</b>: corsie dritte, 1.000 m per tutti. La telecamera segue la corsa e in alto la minimappa mostra dove siete.",
-      "In sella c'è il tuo <b>avatar</b>; i bot sono Bot e i suoi amici, ognuno col suo carattere: c'è chi parte a razzo e chi rimonta nel finale.",
+      "In sella c'è il tuo <b>avatar</b>; sugli altri cavalli ci sono i <b>Bot</b>, sempre gli stessi personaggi, e a ogni corsa ognuno ha il suo carattere: c'è chi parte a razzo e chi rimonta nel finale.",
       "I cavalli corrono da soli a una <b>velocità minima</b>. Ogni tocco su <b>FRUSTA</b> dà una spinta di un attimo.",
       "Tocca <b>a ritmo, non a raffica</b>: toccare di nuovo mentre la spinta dura spreca energia (vedi ⚠️ Troppo presto).",
       "Ogni frustata consuma <b>energia</b> (la barra sopra il tasto). Se non frusti, l'energia si <b>ricarica</b>.",
@@ -1185,7 +1192,7 @@
       }
       if (!aiuti.modo && !aiuti.sala) {   // (se "Come giocate?" l'avete già scelto prima, qui non si sceglie)
         bBot = el("button", { class: "modo-chip attiva", onclick: function () { selM("bot"); } }, [
-          el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro i bot" }), el("div", { class: "ms", text: "Da solo" })])]);
+          el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro i Bot" }), el("div", { class: "ms", text: "Da solo" })])]);
         bOnl = el("button", { class: "modo-chip", onclick: function () { selM("online"); } }, [
           el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online" }), el("div", { class: "ms", text: "Ognuno dal suo" })])]);
         box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
@@ -1204,7 +1211,7 @@
       box.appendChild(wR);
       notaPosti = el("p", { class: "modulo-nota", style: "margin-top:6px", text: "Online: i posti liberi li corrono i bot; se entrano più amici, i cavalli aumentano da soli." });
       box.appendChild(notaPosti);
-      box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei bot" }));
+      box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei Bot" }));
       var wD = el("div", { style: "display:flex;gap:8px" });
       [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]].forEach(function (d) {
         var b = el("button", { class: "modo-chip" + (d[0] === "medio" ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {

@@ -109,7 +109,7 @@
       ".tb-colonne{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}.tb-col{border-radius:16px;background:rgba(255,255,255,.08);padding:8px 6px;min-width:0}.tb-col.a{box-shadow:inset 0 -4px #e64980}.tb-col.b{box-shadow:inset 0 -4px #4263eb}.tb-col h3{margin:0 0 4px;font-size:clamp(14px,4vw,18px)}.tb-col .tb-pt{font-size:clamp(26px,8vw,38px);font-weight:1000;line-height:1}",
       ".tb-gente{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 4px;margin-top:4px}.tb-gente div{display:flex;flex-direction:column;align-items:center;width:52px}.tb-gente small{font-size:11px;font-weight:800;max-width:52px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tb-col.vince .tb-av{animation:tbSalta 1s ease-in-out infinite}.tb-col.vince .tb-gente div:nth-child(2n) .tb-av{animation-delay:-.5s}@keyframes tbSalta{0%,100%{transform:none}50%{transform:translateY(-8px)}}",
       ".tb-premi{display:flex;flex-direction:column;gap:5px;width:100%}.tb-premi div{border-radius:12px;background:rgba(255,212,59,.14);padding:6px 10px;font-size:clamp(13px,3.8vw,16px);font-weight:800}",
-      ".tb-squad-box{display:flex;flex-direction:column;gap:4px;margin:2px 0}.tb-sq-testa{display:flex;align-items:center;gap:8px;min-height:28px}.tb-squad-lista{display:flex;gap:4px;flex-wrap:wrap;align-items:center;border-radius:12px;padding:4px 6px;background:rgba(0,0,0,.05)}.tb-squad-lista.a{border-left:4px solid #e64980}.tb-squad-lista.b{border-left:4px solid #4263eb}.tb-squad-lista b{font-size:13px;min-width:2.4em;white-space:nowrap}.tb-scelta{border:0;border-radius:999px;padding:4px 10px;color:#fff;font:inherit;font-size:13px;font-weight:850;line-height:1.25;background:#383d59;max-width:9.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tb-scelta.a{background:#c2255c}.tb-scelta.b{background:#364fc7}.tb-scelta.tu{outline:2px solid #ffd43b}.tb-entra-sq{border:1.5px dashed currentColor;border-radius:999px;padding:3px 9px;background:transparent;font:inherit;font-size:12px;font-weight:850;line-height:1.25;color:inherit;opacity:.75}.tb-casuale{flex:none;border:0;border-radius:999px;padding:5px 11px;background:#ffd43b;color:#332500;font:inherit;font-size:13px;font-weight:950}.tb-sq-nota{min-width:0;font-size:12px;font-weight:700;line-height:1.25;opacity:.75}",
+      ".tb-squad-box{display:flex;flex-direction:column;gap:4px;margin:2px 0}.tb-sq-testa{display:flex;align-items:center;gap:8px;min-height:28px}.tb-squad-lista{display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;align-items:center;border-radius:12px;padding:4px 6px;background:rgba(0,0,0,.05)}.tb-squad-lista::-webkit-scrollbar{display:none}.tb-squad-lista>*{flex:none}.tb-squad-lista.a{border-left:4px solid #e64980}.tb-squad-lista.b{border-left:4px solid #4263eb}.tb-squad-lista b{font-size:13px;min-width:2.4em;white-space:nowrap}.tb-scelta{border:0;border-radius:999px;padding:4px 10px;color:#fff;font:inherit;font-size:13px;font-weight:850;line-height:1.25;background:#383d59;max-width:9.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tb-scelta.a{background:#c2255c}.tb-scelta.b{background:#364fc7}.tb-scelta.tu{outline:2px solid #ffd43b}.tb-entra-sq{border:1.5px dashed currentColor;border-radius:999px;padding:3px 9px;background:transparent;font:inherit;font-size:12px;font-weight:850;line-height:1.25;color:inherit;opacity:.75}.tb-casuale{flex:none;border:0;border-radius:999px;padding:5px 11px;background:#ffd43b;color:#332500;font:inherit;font-size:13px;font-weight:950}.tb-sq-nota{min-width:0;font-size:12px;font-weight:700;line-height:1.25;opacity:.75}",
       ".tb-tasti .sl-faccine{grid-column:1/-1}",
       "@media(max-height:700px){.tb{gap:6px;padding-top:calc(6px + env(safe-area-inset-top));padding-bottom:calc(8px + env(safe-area-inset-bottom))}.tb-timer{font-size:34px}.tb-btn{min-height:60px}.tb-btn.buzz{min-height:78px}.tb-carta{gap:7px;padding:9px}.tb-vietata{padding:5px}.tb-av{height:84px}}"
     ].join("");
@@ -136,14 +136,15 @@
   // ---- le squadre nella saletta: le vedono tutti; ognuno tocca una squadra per cambiarla, l'host sposta chiunque ----
   function boxSquadre(t, o) {
     var box = t.el("div", { class: "tb-squad-box" }), firma = "";
-    // compatto (una riga per squadra, tasti piccoli): la saletta sta in uno schermo anche a 360x640
+    // compatto: una riga sola per squadra (con tanti nomi la riga scorre di lato), tasti piccoli: la saletta sta in uno schermo anche a 360x640
     box.aggiorna = function (giocatori, squadre, mioId) {
       var f = JSON.stringify([giocatori.map(function (p) { return p.id + ":" + p.nome; }), squadre, mioId]);
       if (f === firma) return;
       firma = f; box.innerHTML = "";
       var testa = t.el("div", { class: "tb-sq-testa" });
       if (o.host) testa.appendChild(t.el("button", { class: "tb-casuale", type: "button", text: "🔀 A caso", onclick: o.aCaso }));
-      testa.appendChild(t.el("div", { class: "tb-sq-nota", text: o.host ? "Tocca un nome per spostarlo nell'altra squadra." : "Tocca il tuo nome o «Vai qui» per cambiare squadra." }));
+      var dentro = o.host || giocatori.some(function (p) { return p.id === mioId; });   // (chi guarda soltanto non ha una squadra)
+      testa.appendChild(t.el("div", { class: "tb-sq-nota", text: o.host ? "Tocca un nome per spostarlo nell'altra squadra." : dentro ? "Tocca il tuo nome o «Vai qui» per cambiare squadra." : "Le squadre di questa partita." }));
       box.appendChild(testa);
       [0, 1].forEach(function (s) {
         var r = t.el("div", { class: "tb-squad-lista " + (s ? "b" : "a") });
@@ -155,7 +156,7 @@
             onclick: function () { if (o.host || tu) o.sposta(p.id, 1 - s); } }));
         });
         var mia = squadre[mioId] === 1 ? 1 : 0;
-        if (!o.host && mia !== s) r.appendChild(t.el("button", { class: "tb-entra-sq", type: "button", text: "+ Vai qui", onclick: function () { o.sposta(mioId, s); } }));
+        if (!o.host && dentro && mia !== s) r.appendChild(t.el("button", { class: "tb-entra-sq", type: "button", text: "+ Vai qui", onclick: function () { o.sposta(mioId, s); } }));
         box.appendChild(r);
       });
     };
@@ -347,7 +348,7 @@
       ui.corpo.appendChild(t.el("div", { class: "tb-fine" }, (function () {
         var x = [t.el("h1", { text: titolo })];
         if (f.annullata) x.push(t.el("p", { text: (f.motivo || "") + " Questa partita non conta per vittorie e trofei." }));
-        else if (!dentro(v)) x.push(t.el("p", { text: "👀 Hai guardato questa partita: se l'host ne fa un'altra, giochi anche tu." }));
+        else if (!dentro(v)) x.push(t.el("p", { text: (v.guarda || []).indexOf(me) >= 0 ? "👀 Questa volta hai guardato." : "👀 Hai guardato questa partita: se l'host ne fa un'altra, giochi anche tu." }));
         else if (win >= 0) x.push(t.el("p", { text: squadraDi(v, me) === win ? "Bravissimi, avete vinto! 🎉" : "Peccato, sarà per la prossima!" }));
         var col = t.el("div", { class: "tb-colonne" });
         [0, 1].forEach(function (s) {
@@ -362,8 +363,12 @@
         return x;
       })()));
       faccine(ui.tasti);   // si festeggia (o si sfotte) tutti insieme
-      if (o.sonoHost) ui.tasti.appendChild(tasto("largo", "🔁 Nuova partita (stessi amici)", function () { o.nuova(); }));
-      ui.tasti.appendChild(tasto("grigio largo", "Esci", function () { o.esci(); }));
+      // i tasti di fine comuni (all'host e a chi ha giocato), se li disegna il core: allora niente tasti nostri
+      var tf = o.sonoHost ? { host: true, nuova: o.nuova, esci: o.esci } : (dentro(v) ? { host: false, esci: o.esci } : null);
+      if (!(tf && t.tastiFine && t.tastiFine(ui.tasti, tf))) {
+        if (o.sonoHost) ui.tasti.appendChild(tasto("largo", "🔁 Nuova partita (stessi amici)", function () { o.nuova(); }));
+        ui.tasti.appendChild(tasto("grigio largo", "Esci", function () { o.esci(); }));
+      }
       if (V.festa !== v.partitaId) { V.festa = v.partitaId; if (!f.annullata) suono("fanfara"); }
     }
 
@@ -494,6 +499,7 @@
     var seqEv = 0, ultimo = null, ultimoBuzz = null, fine = null;
     var partitaId = nuovoId(), statGiocatori = Object.create(null);
     var box = null, fotoOspiti = 0;
+    var guarda = [];   // nella Sala: chi non è stato scelto per giocare (guarda soltanto: le squadre si fanno senza di lui)
     statPersona("host");
 
     function nuovoId() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
@@ -535,7 +541,7 @@
       if (!box) box = boxSquadre(t, { host: true, aCaso: function () { distribuisci(giocatori); aggiornaLobby(); }, sposta: sposta });
       box.aggiorna(giocatori, squadre, "host");
       var lista = giocatori.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino, host: !!p.host }; });
-      if (rete) rete.invia({ t: "vm", vm: { fase: "lobby", codice: codice, pronta: pronta, giocatori: lista, squadre: squadre, punti: [0, 0] } });
+      if (rete) rete.invia({ t: "vm", vm: { fase: "lobby", codice: codice, pronta: pronta, giocatori: lista, squadre: squadre, punti: [0, 0], guarda: guarda.slice() } });
       vista.vm({ fase: "lobby" });
       var piccola = membri(0).length < 2 || membri(1).length < 2;
       t.lobby({ host: true, codice: codice, pronta: pronta, min: MIN, vuoti: Math.max(0, MIN - giocatori.length), giocatori: lista, extra: [box],
@@ -571,7 +577,7 @@
         chiaveCarta: chiaveCarta, carta: fase === "turno" ? cartaOra : null, passati: passati,
         giusteTurno: statTurno ? statTurno.giuste.length : 0, combo: attivo ? statPersona(attivo).comboCarte : 0,
         ultimo: ultimo, riepilogo: fase === "pronto" ? riepilogo : null,
-        fine: fase === "fine" ? fine : null, statGiocatori: fase === "fine" ? statGiocatori : null };
+        fine: fase === "fine" ? fine : null, statGiocatori: fase === "fine" ? statGiocatori : null, guarda: guarda.slice() };
     }
     function inviaStato(conOmini) {
       if (fase === "lobby") return aggiornaLobby();
@@ -584,6 +590,7 @@
       onCodice: function (c) { codice = c; aggiornaLobby(); },
       onConnesso: function () { pronta = true; if (fase === "lobby") aggiornaLobby(); else inviaStato(true); },
       onAddio: function (id) {
+        if (guarda.indexOf(id) >= 0) { guarda.splice(guarda.indexOf(id), 1); return inviaStato(true); }
         var p = gioc(id); if (!p) return;
         if (fase === "lobby") { giocatori.splice(indice(id), 1); delete squadre[id]; delete statGiocatori[id]; aggiornaLobby(); return; }
         // a partita iniziata non si toglie nessuno: resta "assente" e può rientrare
@@ -602,8 +609,13 @@
             if (eraVia && fase === "pronto" && avviso) return preparaPronto();
             return inviaStato(true);
           }
+          var nome = String(m.nome || "Amico").trim().slice(0, 16) || "Amico";
+          // nella Sala gioca solo chi è stato scelto: gli altri guardano (col loro id nella foto)
+          if (guarda.indexOf(id) >= 0 || (t.puoSedersi && !t.puoSedersi(id, nome))) {
+            if (guarda.indexOf(id) < 0) guarda.push(id);
+            return inviaStato(true);
+          }
           if (fase === "lobby" && giocatori.length < MAX) {
-            var nome = String(m.nome || "Amico").trim().slice(0, 16) || "Amico";
             giocatori.push({ id: id, nome: nome, omino: valido(m.omino) }); statPersona(id);
             squadre[id] = membri(0).length <= membri(1).length ? 0 : 1;
             aggiornaLobby();
@@ -756,6 +768,8 @@
       aggiornaLobby();
     }
     function chiudi() { if (tic) { clearInterval(tic); tic = null; } if (rete) { rete.chiudi(); rete = null; } }
+    // la Rivincita dei tasti di fine comuni: tutti di nuovo nella saletta, stesse squadre (il core fa il 3-2-1)
+    t.onRivincita = function () { if (fase === "fine") nuovaPartita(); };
 
     // l'orologio dell'host: fine del tempo e partenza da soli
     tic = setInterval(function () {
@@ -796,8 +810,10 @@
       var gio = (v.giocatori || []).map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino, host: !!p.host, tu: p.id === G.myId }; });
       if (!G.box) G.box = boxSquadre(t, { host: false, sposta: function (id, s) { if (id === G.myId && G.rete) G.rete.invia({ t: "squadra", s: s }); } });
       G.box.aggiorna(v.giocatori || [], v.squadre || {}, G.myId);
+      var guardo = (v.guarda || []).indexOf(G.myId) >= 0;   // nella Sala: non sono stato scelto, guardo soltanto
       t.lobby({ host: false, codice: v.codice, pronta: v.pronta, min: MIN, vuoti: Math.max(0, MIN - gio.length), giocatori: gio, extra: [G.box],
-        attesa: "Scegli la tua squadra. Si parte quando l'host dà il via!", onEsci: esci });
+        spettatore: guardo ? "👀 Questa volta guardi" : null,
+        attesa: guardo ? "Si parte quando l'host dà il via: tu guardi la partita." : "Scegli la tua squadra. Si parte quando l'host dà il via!", onEsci: esci });
     }
     attesa();
     G.rete = SGNet.entra(codice, {
@@ -839,6 +855,14 @@
     id: "taboo", nome: "Taboo", icona: "🤐",
     descrizione: "Spiega la parola senza dire quelle vietate. Si gioca tutti nella stessa stanza, ognuno col proprio telefono.",
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1, modi: [], soloOnline: true,
+    postiOnline: MAX,   // posti online (16)
+    // le regole in una riga, per la saletta: "90 secondi a turno · 1 giro · carte miste"
+    riassunto: function (imp) {
+      imp = imp || {};
+      var tempo = [60, 90, 120].indexOf(Number(imp.tempo)) >= 0 ? Number(imp.tempo) : 90, giri = Math.max(1, Math.min(4, Number(imp.giri) || 1));
+      var carte = { 1: "carte facili", 2: "carte miste", 3: "carte difficili" }[Number(imp.carte)] || "carte miste";
+      return tempo + " secondi a turno · " + (giri === 1 ? "1 giro" : giri + " giri") + " · " + carte;
+    },
     regole: [
       "Fate due squadre. A turno, una persona spiega la parola alla propria squadra senza pronunciare le cinque parole vietate.",
       "Vietati anche la parola stessa o un suo pezzo, i gesti, i suoni («fa bau bau») e le parole in altre lingue.",

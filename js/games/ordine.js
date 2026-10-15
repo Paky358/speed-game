@@ -134,7 +134,7 @@
   // ripresa (solo per il vice che prende il posto): { codice, stato (la copia della partita), io (il suo id), omini }
   function host(t, ripresa) {
     var imp = t.impostazioni || {};
-    var prova = !ripresa && imp.modo === "prova";   // 🧪 prova da solo (solo per il proprietario): tu e Bot contro due bot, senza rete
+    var prova = !ripresa && imp.modo === "prova";   // 🧪 prova da solo (solo per il proprietario): tu e un bot contro due bot, senza rete
     if (!prova && !(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var IO = ripresa ? ripresa.io : "host";   // il mio id nella partita
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
@@ -146,16 +146,19 @@
         if (p.id === vecchio) p.via = true;   // l'host di prima è sparito: se torna, rientra come giocatore
         if (p.id === IO) { p.via = false; io = p; }
       });
-      h.msg = ""; h.progressi = h.progressi || {}; h.prossimi = h.prossimi || []; h.salta = h.salta || {}; h.nTurni = h.nTurni || 0;
+      h.msg = ""; h.progressi = h.progressi || {}; h.prossimi = h.prossimi || []; h.salta = h.salta || {}; h.nTurni = h.nTurni || 0; h.guarda = h.guarda || [];
       return h;
     })(ripresa) : { fase: "lobby", codice: "…", pronta: false, nsq: +imp.squadre === 3 ? 3 : 2, nparole: +imp.parole === 20 ? 20 : 25, gruppo: imp.usaMie === false ? [] : leggiGruppo(imp.gruppo), oro: imp.oro !== false, tempo: tempoDa(imp.tempo), mazzo: imp.mazzo || "classico",
       players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), team: 0 }], capo: [null, null, null],
       tab: null, bid: 0, turno: 0, passo: "indizio", indizio: null, tentativi: 0, girate: 0, prop: {}, storia: [], fuori: [],
-      vince: -1, classifica: null, msg: "", ultima: null, nGirate: 0, gen: 1, hostId: IO, vici: [], progressi: {}, prossimi: [], salta: {}, nTurni: 0 };
-    if (prova) {   // i bot: Bot in squadra con te (il primo bot si chiama sempre Bot), Rosa e Peppe nell'altra
+      vince: -1, classifica: null, msg: "", ultima: null, nGirate: 0, gen: 1, hostId: IO, vici: [], progressi: {}, prossimi: [], salta: {}, nTurni: 0,
+      guarda: [] };   // guarda: nella Sala, chi non è stato scelto per giocare (guarda soltanto, col suo id nella foto)
+    if (prova) {   // i bot fissi del gruppo (SG.bot): il primo in squadra con te, gli altri due nell'altra. Giocano a caso: livello facile
       H.nsq = 2;
-      [["bot1", "Bot", 0], ["bot2", "Rosa", 1], ["bot3", "Peppe", 1]].forEach(function (b) {
-        H.players.push({ id: b[0], nome: b[1], team: b[2], bot: true, omino: window.SGOmino ? SGOmino.casuale(b[1]) : null });
+      var cast = window.SG && SG.bot ? SG.bot.prendi(3, { livello: "facile", escludi: [nomeHost] }) : [];
+      ["bot1", "bot2", "bot3"].forEach(function (id, i) {
+        var b = cast[i] || { nome: "Bot " + (i + 1), omino: window.SGOmino ? SGOmino.casuale("Bot " + (i + 1)) : null };
+        H.players.push({ id: id, nome: b.nome, team: i ? 1 : 0, bot: true, omino: avatarValido(b.omino) });
       });
       H.capo = [imp.capoIo === false ? "bot1" : IO, "bot2", null];
     }
@@ -227,7 +230,8 @@
       onAddio: function (id) {
         var np = (H.prossimi || []).length;
         H.prossimi = (H.prossimi || []).filter(function (x) { return x.id !== id; });
-        var p = pById(id); if (!p) { if (H.prossimi.length !== np) bd(); return; }
+        var ng = H.guarda.length; H.guarda = H.guarda.filter(function (x) { return x !== id; });
+        var p = pById(id); if (!p) { if (H.prossimi.length !== np || H.guarda.length !== ng) bd(); return; }
         if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); sistemaCapi(); bd(); return; }
         p.via = true; delete H.prop[id];   // a partita iniziata resta nella sua squadra: se torna, rientra
         if (H.fase === "gioco") controllaTurno();
@@ -281,7 +285,7 @@
         tab: H.tab ? H.tab.map(function (c) { return { w: c.w, g: c.g, c: (c.g || fine) ? c.c : null, oro: (c.g || fine) && c.oro ? 1 : 0 }; }) : null, oro: H.oro,
         bid: H.bid, turno: H.turno, passo: H.passo, indizio: H.indizio, tentativi: H.tentativi, girate: H.girate, prop: H.prop,
         storia: H.storia.slice(-8), log: (H.log || []).slice(-40), fuori: H.fuori.slice(), vince: H.vince, classifica: H.classifica, msg: H.msg, ultima: H.ultima, resto: r,
-        gen: H.gen, hostId: H.hostId, vici: H.vici.slice(), sospeso: H.sospeso || null,
+        gen: H.gen, hostId: H.hostId, vici: H.vici.slice(), sospeso: H.sospeso || null, guarda: (H.guarda || []).slice(),
         progressiFine: fine ? H.progressi : null };
     }
     function progresso(id) {
@@ -311,6 +315,10 @@
         var gia = (H.prossimi || []).some(function (x) { return x.id === id; });
         if (p) { if (p.via) delete H.salta[p.team]; p.via = false; }   // rientra: è di nuovo nella sua squadra
         else if (gia) {}   // aspetta già la prossima partita
+        else if (H.guarda.indexOf(id) >= 0 || (t.puoSedersi && !t.puoSedersi(id, nuovo.nome))) {   // nella Sala gioca solo chi è stato scelto: gli altri guardano
+          if (H.guarda.indexOf(id) < 0) H.guarda.push(id);
+          rete.inviaVeloce({ t: "omini", omini: omini() }); bd(); return;
+        }
         else if (H.players.length + H.prossimi.length >= MAX) { privato(id, { t: "piena" }); return; }   // la stanza è piena: glielo dico
         else if (H.fase === "fine") H.prossimi.push(nuovo);   // partita appena finita: entra nella prossima
         else {
@@ -639,6 +647,9 @@
         ceduto = true;   // da qui niente più foto né schermate
         rete.chiudi(); t.esci();
       } };
+    // la Rivincita dei tasti di fine comuni: tutti di nuovo nella saletta, stesse squadre (il core fa il 3-2-1).
+    // Vale anche per l'amico che porta avanti la partita al posto dell'host (host di riserva)
+    if (!prova) t.onRivincita = function () { if (H.fase === "fine" && !ceduto) nuova(); };
     if (!prova) bd();
   }
 
@@ -769,7 +780,9 @@
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: vm.nsq === 3 ? 6 : MIN,
       vuoti: Math.max(0, (vm.nsq === 3 ? 6 : MIN) - vm.players.length),   // solo i posti che mancano per cominciare
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: vm.hostId ? p.id === vm.hostId : i === 0, tu: p.id === cb.myId }; }),
-      extra: [ box ], puoComincia: ok, nota: ok ? "Ognuno sceglie la sua squadra; il capo ha la 👑." + (info.length ? " " + info.join(" · ") + "." : "") : nota, testoComincia: "Comincia ▶",
+      extra: [ box ], puoComincia: ok,
+      spettatore: !cb.sonoHost && !io && (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi" : null,   // nella Sala: non scelto, guarda
+      nota: ok ? "Ognuno sceglie la sua squadra; il capo ha la 👑." + (info.length ? " " + info.join(" · ") + "." : "") : nota, testoComincia: "Comincia ▶",
       attesa: "Scegli la tua squadra e aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
   // Lo schermo di gioco nello STUDIO TV (come gli altri giochi di Quiz & parole):
@@ -1169,7 +1182,7 @@
     ui.avviato = true;
     // ---- in basso: cosa posso fare io (si ricostruisce solo se cambia il mio ruolo o la fase) ----
     var ks = [vm.fase, vm.passo, vm.turno, r.team, r.capo, vm.girate > 0, vm.fuori.join(""), !!vm.sospeso, r.capoVia && r.altri,
-      vm.attesa ? vm.attesa.k + "/" + vm.attesa.chi : "", r.prossimo, cb.sonoHost && puoChiudere(vm)].join("|");
+      vm.attesa ? vm.attesa.k + "/" + vm.attesa.chi : "", r.prossimo, cb.sonoHost && puoChiudere(vm), !!cb.sonoHost].join("|");   // (sonoHost: l'amico che prende il posto dell'host ha i tasti giusti)
     if (ks !== ui.kSotto) { ui.kSotto = ks; disegnaSotto(ui, vm, cb, r); }
     S.vista.style.setProperty("--or-barra", (S.barraEl.offsetHeight + 6) + "px");   // il tabellone sul maxischermo finisce sopra la barra dei tasti
   }
@@ -1197,10 +1210,15 @@
       else stato("Vincono: " + vinti + ". Ora vedete di chi era ogni parola.");
       faccine();
       var riga = el("div", { class: "or-riga" });
+      box.appendChild(riga);
+      // i tasti di fine comuni (all'host del momento, anche se è l'amico che ha preso il posto dell'host, e a chi ha giocato):
+      // se li disegna il core nella riga, niente tasti nostri. In prova (da solo) restano i nostri
+      var tf = ui.t.tastiFine && !(ui.t.impostazioni && ui.t.impostazioni.modo === "prova") && (cb.sonoHost || r.team >= 0)
+        ? (cb.sonoHost ? { host: true, nuova: cb.onNuova, esci: function () { cb.onEsci(); } } : { host: false, esci: function () { cb.onEsci(); } }) : null;
+      if (tf && ui.t.tastiFine(riga, tf)) return;
       if (cb.sonoHost) riga.appendChild(el("button", { class: "or-btn", text: "↻ Nuova partita", onclick: cb.onNuova }));
       riga.appendChild(el("button", { class: "or-btn chiaro", text: "🏠 Esci", onclick: function () { cb.onEsci(); } }));
-      box.appendChild(riga);
-      if (!cb.sonoHost && !r.prossimo) stato("Se l'host fa un'altra partita, tornate da soli nella saletta.");
+      if (!cb.sonoHost && !r.prossimo) stato(r.team < 0 && (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta hai guardato." : "Se l'host fa un'altra partita, tornate da soli nella saletta.");
       return;
     }
     // i tasti "di servizio": fare il capo al posto di chi è uscito, e (solo l'host) chiudere la partita
@@ -1412,8 +1430,9 @@
     id: ID, nome: "Parola d'ordine", icona: "🕵️",
     descrizione: "Come Codenames: il capo dà un indizio di una parola, la squadra trova le sue parole sul tabellone. Occhio alla parola nera! A 2 o 3 squadre, ognuno dal suo telefono.",
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 4–12 giocatori",
+    postiOnline: MAX,   // posti online (12)
     // "Prova da solo" la vede solo il proprietario (account IL PAPPONE): per vedere com'è il gioco anche senza amici
-    modi: [ { modo: "prova", icona: "🧪", nome: "Prova da solo", sotto: "Solo per te: tu e Bot contro due bot", soloPer: "IL PAPPONE" } ], soloOnline: true,
+    modi: [ { modo: "prova", icona: "🧪", nome: "Prova da solo", sotto: "Solo per te: tu e un Bot contro due Bot", soloPer: "IL PAPPONE" } ], soloOnline: true,
     hostDiRiserva: true,   // se l'host sparisce, un amico porta avanti la partita (il core non la riavvia)
     regole: [
       "Si gioca a <b>2 o 3 squadre</b>. Sul tabellone ci sono 25 parole (o 20, se l'host sceglie così): alcune sono di una squadra, alcune di nessuno e una è la <b>parola nera</b>.",

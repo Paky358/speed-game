@@ -8,7 +8,7 @@
    - lo spicchio "Express": niente più giri, 1.000 a consonante, ma un errore è Bancarotta;
    - l'ultimo round veloce: la ruota gira una volta sola, una lettera a testa e 5 secondi per risolvere;
    - la finale del campione: busta con le Speed Coins, R S T L N E, 3 consonanti + 1 vocale, 10 secondi.
-   Modi: contro il computer (tu + bot, il primo è Bot), sullo stesso telefono (da 2 a 4,
+   Modi: contro i Bot (tu + i bot del gruppo fisso, SG.bot), sullo stesso telefono (da 2 a 4,
    tutti davanti allo stesso schermo), online (fino a 4, l'host può aggiungere bot).
    Online l'host tiene la partita e manda a tutti la foto (vm) con la frase COPERTA:
    la frase vera non viaggia mai finché non è risolta.
@@ -44,7 +44,13 @@
   var CONSONANTI = "BCDFGHJKLMNPQRSTVWXYZ".split("");
   var FREQ_C = "NRTLSCDMPVGBFZHQKJWXY".split("");   // consonanti dalla più frequente in italiano
   var FREQ_V = ["E", "A", "I", "O", "U"];
-  var NOMI_BOT = ["Bot", "Rosa", "Peppe", "Gina"];
+  // i bot: quelli del gruppo fisso (SG.bot: sempre gli stessi nomi e avatar in tutti i giochi), scelti per la bravura;
+  // escludi = i nomi di chi gioca e gli id dei bot già alla ruota
+  function prendiBot(livello, escludi) {
+    var b = null;
+    try { if (window.SG && SG.bot && SG.bot.prendi) b = SG.bot.prendi(1, { livello: livello, escludi: escludi })[0]; } catch (e) {}
+    return b || null;
+  }
   var COL = 12, RIGHE = 4;
   var PARTITE_SALVATE = {}, INCASSI = {};
   // la ruota: 24 spicchi (valori, 2 Bancarotta, 1 Passa, 1 Jolly; con l'Express uno dei 300 diventa "Express")
@@ -669,11 +675,23 @@
     var imp = t.impostazioni || {}, liv = imp.difficolta || "medio", mancheTot = Math.max(1, Math.min(6, Math.floor(+imp.manche || 4))), reg = regoleDa(imp);
     var nome = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Tu";
     var posti = [];   // chi gioca: { id, nome, bot, omino }
+    var guarda = [];  // nella Sala: chi non è stato scelto per giocare ({ id, nome }): guarda la partita
     var H = { fase: online ? "lobby" : "gioco", codice: "…", pronta: !online, omini: {}, gameId: "" };
-    function aggiungiBot() {
-      var usati = {}; posti.forEach(function (p) { usati[p.nome] = 1; });
-      var n = NOMI_BOT.filter(function (x) { return !usati[x]; })[0] || ("Bot " + (posti.length + 1));
-      posti.push({ id: "bot" + Math.random().toString(36).slice(2, 7), nome: n, bot: true, omino: window.SGOmino ? SGOmino.casuale(n) : null });
+    // un bot del gruppo fisso col suo nome e il suo avatar (va anche in H.omini: così lo vedono uguale tutti i telefoni)
+    function nuovoBot(salta) {
+      var escludi = posti.filter(function (p) { return p !== salta; }).map(function (p) { return p.bot ? p.botId : p.nome; })
+        .concat(guarda.map(function (g) { return g.nome; }));
+      var b = prendiBot(liv, escludi), n = b ? b.nome : "Bot " + (posti.length + 1);
+      var p = { id: "bot-" + (b ? b.id : Math.random().toString(36).slice(2, 7)), botId: b ? b.id : null, nome: n, bot: true,
+        omino: (b && b.omino) || (window.SGOmino ? SGOmino.casuale(n) : null) };
+      H.omini[p.id] = p.omino;
+      return p;
+    }
+    function aggiungiBot() { posti.push(nuovoBot(null)); }
+    // cambiata la bravura in saletta: alla ruota vanno i bot di quel livello (stessi posti)
+    function rifaiBot() {
+      posti.forEach(function (p, i) { if (!p.bot) return; delete H.omini[p.id]; posti[i] = nuovoBot(p); });
+      if (rete) rete.inviaVeloce({ t: "omini", omini: H.omini });
     }
     if (modo === "telefono") {
       (t.giocatori || []).slice(0, MAX).forEach(function (n, i) { posti.push({ id: "p" + i, nome: n, omino: window.SGOmino ? SGOmino.casuale(n) : null }); });
@@ -695,8 +713,8 @@
     function ferma() { clearTimeout(tBot); clearTimeout(tFase); tBot = tFase = null; H.kFase = ""; fermaTempo(); fermaLampo(); }
     function vm() {
       if (H.fase !== "gioco" && H.fase !== "fine") return { fase: H.fase, codice: H.codice, pronta: H.pronta, mancheTot: mancheTot, gameId: H.gameId, modo: modo, difficolta: liv, regole: reg,
-        giocatori: posti.map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot }; }) };
-      var v = P.vista(); v.fase = H.fase === "fine" ? "fine" : v.fase; v.codice = H.codice; v.giocoFase = H.fase; v.sigla = H.sigla || false;
+        giocatori: posti.map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot }; }), guarda: guarda.slice(), piuBot: posti.length + mancano() < MAX };
+      var v = P.vista(); v.guarda = guarda.slice(); v.fase = H.fase === "fine" ? "fine" : v.fase; v.codice = H.codice; v.giocoFase = H.fase; v.sigla = H.sigla || false;
       v.gameId = H.gameId; v.modo = modo; v.difficolta = liv;
       // il tempo che resta a chi deve toccare (in millisecondi: gli orologi dei telefoni non sono uguali) e quanto era in tutto
       if (H.scade && H.fase === "gioco") { v.resta = Math.max(0, H.scade - Date.now()); v.tempoTot = H.tempoTot; v.kTempo = H.kTempo; if (online && P.fase === "ftempo") v.grazia = FIN_GRAZIA; }
@@ -726,6 +744,14 @@
       if (posti.length + attesi < MAX) return true;
       clearTimeout(riserva.tm); riserva.tm = setTimeout(bd, riserva.fino - Date.now() + 200);   // finito il tempo, chi aspetta chiede di nuovo
       return false;
+    }
+    // nella Sala: quanti degli scelti non sono ancora arrivati (i loro posti non vanno ai bot)
+    function mancano() {
+      var sc = online && t.scelti; if (!sc || !sc.length) return 0;
+      return sc.filter(function (x) {
+        var id = x && typeof x === "object" ? x.id : x, nm = x && typeof x === "object" ? x.nome : x;
+        return id !== "host" && !posti.some(function (p) { return !p.bot && (p.id === id || (!!nm && stessoNome(p.nome, nm))); });
+      }).length;
     }
     function attoreHost() {
       var f = P.fase;
@@ -941,7 +967,12 @@
       omini: function () { return H.omini; },
       onAzione: function (a, x) { azione("host", a, x); },
       onComincia: comincia,
-      onBot: function (piu) { if (H.fase !== "lobby") return; if (piu && posti.length < MAX) aggiungiBot(); else if (!piu) { for (var i = posti.length - 1; i > 0; i--) if (posti[i].bot) { posti.splice(i, 1); break; } } bd(); },
+      onBot: function (piu) {
+        if (H.fase !== "lobby") return;
+        if (piu && posti.length + mancano() < MAX) { aggiungiBot(); if (rete) rete.inviaVeloce({ t: "omini", omini: H.omini }); }   // (prima l'avatar, poi la foto)
+        else if (!piu) { for (var i = posti.length - 1; i > 0; i--) if (posti[i].bot) { delete H.omini[posti[i].id]; posti.splice(i, 1); break; } }
+        bd();
+      },
       onNuova: function () {
         ferma();
         // chi è uscito e non è tornato lascia il posto (se torna dopo, rientra dalla saletta)
@@ -953,11 +984,14 @@
         if (H.fase === "gioco" && !gia) return t.conferma(online ? "Chiudere la partita per tutti?" : "Uscire dalla partita?", null, "Esci", via);   // la finestra dell'app
         via();
       } };
+    if (online) t.onRivincita = cb.onNuova;   // la Rivincita della Sala
     // "⚙️ Regole" nella saletta: quante manche, bravura dei bot, round speciali
     t.onRegole = function (im) {
       if (H.fase !== "lobby") return;
       im = im || {};
+      var prima = liv;
       mancheTot = Math.max(1, Math.min(6, Math.floor(+im.manche || mancheTot))); liv = im.difficolta || liv; reg = regoleDa(im);
+      if (liv !== prima) rifaiBot();
       bd();
     };
 
@@ -966,16 +1000,23 @@
         onCodice: function (c) { H.codice = c; if (!riserva) riserva = leggiRiserva(c); bd(); },
         onConnesso: function () { H.pronta = true; bd(); },
         onAddio: function (id) {
+          var g0 = guarda.length; guarda = guarda.filter(function (g) { return g.id !== id; });
           if (H.fase === "lobby") { posti = posti.filter(function (p) { return p.id !== id; }); bd(); return; }
+          if (guarda.length !== g0) return bd();
           if (P) { P.esce(id); dopo(); }
         },
         onMsg: function (id, m) {
           if (!m || !m.t) return;
           if (m.t === "join") {
-            var gia = posti.some(function (p) { return p.id === id; });
-            if (!gia && H.fase === "lobby" && postoPer(id)) {
+            var gia = posti.some(function (p) { return p.id === id; }), nomeJ = String(m.nome || "Amico").slice(0, 16);
+            if (!gia && t.puoSedersi && !t.puoSedersi(id, nomeJ)) {   // nella Sala non è tra gli scelti: questa volta guarda
+              if (!guarda.some(function (g) { return g.id === id; }) && guarda.length < 12) guarda.push({ id: id, nome: nomeJ });
+              H.omini[id] = avatarValido(m.omino);
+            }
+            else if (!gia && H.fase === "lobby" && postoPer(id)) {
               var p = { id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino) };
               posti.push(p); H.omini[id] = p.omino;
+              if (posti.some(function (q) { return q.bot && stessoNome(q.nome, p.nome); })) rifaiBot();   // un bot col suo stesso nome: cambia bot
             }
             // era stato tolto (telefono spento più di 20 secondi) e torna: rientra nella partita
             if (gia && P && H.fase === "gioco" && P.torna(id)) { ciclo(); }
@@ -1031,7 +1072,8 @@
             var v = S.vm = m.vm;
             // non sono (più) tra i giocatori ma c'è posto, oppure l'host mi aveva tolto: ripeto "join"
             var me = (v.giocatori || []).filter(function (p) { return p.id === S.myId; })[0];
-            if (S.myId && (v.fase === "lobby" ? !me && v.giocatori.length < MAX : me && me.via && v.giocoFase === "gioco") && Date.now() - S.ultimoJoin > 2500) join();
+            var guardo = (v.guarda || []).some(function (g) { return g.id === S.myId; });   // (nella Sala: non sono tra gli scelti)
+            if (S.myId && !guardo && (v.fase === "lobby" ? !me && v.giocatori.length < MAX : me && me.via && v.giocoFase === "gioco") && Date.now() - S.ultimoJoin > 2500) join();
             if (v.classifica && v.statFine) salvaTrofei(v, S.myId, v.modo, v.difficolta);
             if (v.fin && v.fin.vinto && v.fin.id === S.myId && (v.fase === "fesito" || v.fase === "fine")) incassa(v.gameId, v.fin.premio);
             disegna(t, v, cb);
@@ -1099,15 +1141,17 @@
       extra.push(el("div", { class: "ru-bot-riga" }, [
         el("span", { text: "🤖 Bot alla ruota: " + nb }),
         el("button", { class: "btn btn-fantasma btn-piccolo", text: "−", disabled: nb ? null : "disabled", onclick: function () { cb.onBot(false); } }),
-        el("button", { class: "btn btn-fantasma btn-piccolo", text: "+", disabled: vm.giocatori.length < MAX ? null : "disabled", onclick: function () { cb.onBot(true); } }) ]));
+        el("button", { class: "btn btn-fantasma btn-piccolo", text: "+", disabled: vm.giocatori.length < MAX && vm.piuBot !== false ? null : "disabled", onclick: function () { cb.onBot(true); } }) ]));
     }
-    var piena = !cb.sonoHost && !dentro && vm.giocatori.length >= MAX;
+    var guardo = !dentro && (vm.guarda || []).some(function (g) { return g.id === cb.myId; });   // nella Sala: non sono tra gli scelti
+    var piena = !cb.sonoHost && !dentro && !guardo && vm.giocatori.length >= MAX;
+    if (vm.guarda && vm.guarda.length) extra.push(el("p", { class: "modulo-nota", text: "👀 Guardano: " + vm.guarda.map(function (g) { return g.id === cb.myId ? "tu" : g.nome; }).join(", ") }));
     var s = t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2, puoiDaSolo: vm.giocatori.length >= 2, vuoti: Math.max(0, 2 - vm.giocatori.length),
       giocatori: vm.giocatori.map(function (p) { return { id: p.id, nome: p.nome, omino: (cb.omini() || {})[p.id] || (p.bot && window.SGOmino ? SGOmino.casuale(p.nome) : null), host: p.id === "host", tu: p.id === cb.myId, bot: p.bot }; }),
       extra: extra, attesa: cb.sonoHost || dentro ? "Aspetta che l'host cominci: si gira la ruota! 🎡" :
-        piena ? "Quando comincia, guarderai la partita. 👀" : "Un attimo: ti metto alla ruota…",
+        guardo ? "Questa partita la guardi: si gira la ruota tra poco! 👀" : piena ? "Quando comincia, guarderai la partita. 👀" : "Un attimo: ti metto alla ruota…",
       // "Sei dentro!" e "Sto entrando…" li scrive il core; la ruota piena (4 posti) la sa solo il gioco
-      spettatore: piena ? "👀 La ruota è piena: guarderai la partita" : null,
+      spettatore: guardo ? "👀 Questa volta guardi" : piena ? "👀 La ruota è piena: guarderai la partita" : null,
       onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
   function creaStudioRuota(t, vm, cb) {
@@ -1776,14 +1820,18 @@
         var pr = profiloAttivo();
         righeF.push(pr && pr.nome ? "Le Speed Coins vanno solo a " + pr.nome + ", che ha il profilo su questo telefono." : "Per incassare le Speed Coins serve un profilo.");
       }
-      if (vm.decimo) righeF.push("(Contro il computer e sullo stesso telefono le buste valgono un decimo.)");
+      if (vm.decimo) righeF.push("(Contro i Bot e sullo stesso telefono le buste valgono un decimo.)");
       s._contenuto.appendChild(t.el("div", { class: "ru-fin-box" + (F.vinto ? " vinto" : "") }, righeF.map(function (x, i) { return t.el(i ? "small" : "b", { text: x }); })));
     }
     var fac = cb.online && !cb.telefono && t.faccine ? t.faccine() : null;   // online: le faccine mentre si guarda la classifica
     if (fac) s._contenuto.appendChild(t.el("div", { class: "ru-fac-fine" }, [ fac ]));
-    if (cb.sonoHost) s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: cb.online ? "↻ Nuova partita (stessi amici)" : "↻ Gioca ancora", onclick: cb.onNuova }));
-    else s._contenuto.appendChild(cb._notaFine = t.el("p", { class: "modulo-nota", style: "text-align:center", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }));
-    s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { cb.onEsci(true); } }));
+    // online: i tasti di fine uguali per tutti i giochi (Rivincita, Ci sto…); se il core non li mette, quelli di sempre
+    if (cb.online && !cb.telefono && t.tastiFine && t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: function () { cb.onEsci(true); } })) cb._notaFine = null;
+    else {
+      if (cb.sonoHost) s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: cb.online ? "↻ Nuova partita (stessi amici)" : "↻ Gioca ancora", onclick: cb.onNuova }));
+      else s._contenuto.appendChild(cb._notaFine = t.el("p", { class: "modulo-nota", style: "text-align:center", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }));
+      s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { cb.onEsci(true); } }));
+    }
     t.mostra(s);
   }
   function errore(t, testo) {
@@ -1794,7 +1842,7 @@
   }
   function senzaRete(t) {
     var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
-    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "La Ruota online funziona quando l'app è aperta dal sito pubblicato. Intanto puoi giocare contro il computer o sullo stesso telefono." }));
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "La Ruota online funziona quando l'app è aperta dal sito pubblicato. Intanto puoi giocare contro i Bot o sullo stesso telefono." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
   }
@@ -1905,8 +1953,9 @@
     id: ID, nome: "La Ruota della Fortuna", icona: "🎡",
     descrizione: "Gira la ruota, chiama le consonanti, compra le vocali e indovina la frase! Come in TV: Bancarotta, Passa, Jolly, la frase lampo da prenotare, l'Express, l'ultimo round veloce e la finale per le Speed Coins.",
     giocatoriMin: 1, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 1–4 giocatori",
+    postiOnline: MAX,   // 4 alla ruota: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
     modi: [
-      { modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu contro i bot, come in TV (il primo è Bot)" },
+      { modo: "bot", icona: "🤖", nome: "Contro i Bot", sotto: "Tu contro i Bot, come in TV" },
       { modo: "telefono", icona: "📱", nome: "Sullo stesso telefono", sotto: "Da 2 a 4, tutti davanti allo stesso schermo", amici: true }
     ],
     regole: [
@@ -1918,7 +1967,7 @@
       "🔔 <b>Prenota</b>: ogni manche si apre con una frase lampo. Le lettere compaiono da sole: chi la sa tocca <b>Prenoto!</b> e la scrive. Vale " + fmtN(PREMIO_LAMPO) + " e chi la indovina comincia la manche; chi sbaglia è fuori da quella frase. Online vince chi ha i riflessi più pronti, non chi ha internet più veloce.",
       "🚂 <b>Express</b>: se la ruota si ferma lì, puoi salire sull'Express. Chiami consonanti senza girare (" + fmtN(EXPRESS_V) + " l'una), compri vocali e quando vuoi ti fermi e risolvi. Ma se sbagli una lettera o la soluzione: <b>Bancarotta</b>! Oppure giochi lo spicchio come uno normale.",
       "⚡ <b>Ultimo round veloce</b>: la ruota gira una volta sola. Ogni consonante vale quella cifra più " + fmtN(BONUS_VELOCE) + ", le vocali sono gratis ma non valgono niente. A turno si chiama una lettera e, se c'è, hai 5 secondi per decidere se risolvere.",
-      "🏆 <b>Finale</b>: chi vince la partita sceglie una busta con un premio in Speed Coins (da 500 a 5.000), vede R S T L N E, sceglie 3 consonanti e una vocale e ha 10 secondi per risolvere. Le Speed Coins vanno a chi ha un profilo; contro il computer e sullo stesso telefono le buste valgono un decimo.",
+      "🏆 <b>Finale</b>: chi vince la partita sceglie una busta con un premio in Speed Coins (da 500 a 5.000), vede R S T L N E, sceglie 3 consonanti e una vocale e ha 10 secondi per risolvere. Le Speed Coins vanno a chi ha un profilo; contro i Bot e sullo stesso telefono le buste valgono un decimo.",
       "Online hai 30 secondi per ogni mossa e 60 per risolvere: la barretta sopra i tasti ti dice quanto tempo resta. I round speciali si accendono e si spengono nelle impostazioni."
     ],
     impostazioni: function (box, dove, aiuti) {
@@ -1947,7 +1996,7 @@
         box.appendChild(ga);
       }
       if (aiuti.modo !== "telefono") {
-        box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei bot" }));
+        box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei Bot" }));
         var dg = el("div", { style: "display:flex;gap:8px" });
         [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]].forEach(function (d) {
           var b = el("button", { class: "modo-chip" + (d[0] === "medio" ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {

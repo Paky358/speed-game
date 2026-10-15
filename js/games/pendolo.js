@@ -259,24 +259,23 @@
   function contaVivi(ST) { return ST.chars.filter(function (x) { return x.alive; }).length; }
 
   // ---------- avatar: sulla trave si vedono di faccia, chi lancia lo vediamo di spalle ----------
-  var MATT = { forma: "uomo", corpo: "medio", pelle: 2, capelli: "ciuffo", colCap: 1, barba: "corta", capo: "felpa", maglia: 1,
-    cappello: "cappellino", colAcc: 0, sopracc: "decise", occhi: "furbi", bocca: "ghigno" };   // il bot Bot ha sempre la sua faccia
-  var BOT_NOMI = ["Bot", "Sara", "Leo", "Nina"];
+  // i bot: quelli del gruppo fisso (SG.bot: sempre gli stessi nomi e avatar in tutti i giochi), scelti per la bravura;
+  // escludi = i nomi di chi gioca (nessun bot si chiama come uno di loro). Ognuno { nome, cfg } come i posti della scena
+  function prendiBot(n, livello, escludi) {
+    var b = null;
+    try { if (window.SG && SG.bot && SG.bot.prendi) b = SG.bot.prendi(n, { livello: livello, escludi: escludi }); } catch (e) {}
+    if (!b || b.length < n) { b = []; for (var k = 0; k < n; k++) b.push({ nome: "Bot " + (k + 1), omino: null }); }   // (di sicurezza)
+    return b.map(function (x) { return { nome: x.nome, cfg: x.omino || null }; });
+  }
   function mioAvatar(nome) {
     var p = window.SGNube && SGNube.profilo && SGNube.profilo();
     if (p && p.omino) return p.omino;
     return window.SGOmino ? SGOmino.casuale(nome || "io") : null;
   }
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
-  var BOT_DONNA = { Sara: "lunghi", Nina: "caschetto" }, BOT_UOMO = { Leo: "corti" };
   function facciaDi(nome, cfg) {
     if (avatarValido(cfg)) return cfg;
-    if (nome === "Bot") return MATT;
-    if (!window.SGOmino) return null;
-    var c = SGOmino.casuale(nome);   // i bot: faccia fissa dal nome, donna o uomo come il nome
-    if (BOT_DONNA[nome]) { c.forma = "donna"; c.barba = "no"; c.capelli = BOT_DONNA[nome]; }
-    if (BOT_UOMO[nome]) { c.forma = "uomo"; c.capelli = BOT_UOMO[nome]; c.orecchini = "nessuno"; c.cappello = "nessuno"; c.ombretto = c.eyeliner = c.mascara = c.rossetto = c.blush = "nessuno"; if (/gonna/.test(c.sotto)) c.sotto = "jeans"; }
-    return c;
+    return window.SGOmino ? SGOmino.casuale(nome || "Bot") : null;   // (di sicurezza: i bot arrivano già col loro avatar)
   }
   function immagine(cfg) {   // l'avatar come immagine (pronta dopo un attimo): poi si copia una volta in una bitmap
     if (!cfg || !window.SGOmino) return null;
@@ -405,7 +404,7 @@
     av = av || {};
     var posti = [];
     for (var i = 0; i < NSEAT; i++) {
-      var p = (av.posti && av.posti[i]) || {}, nome = p.nome || BOT_NOMI[i + 1] || "Bot", cfg = facciaDi(nome, p.cfg);
+      var p = (av.posti && av.posti[i]) || {}, nome = p.nome || "Bot", cfg = facciaDi(nome, p.cfg);
       posti.push({ nome: nome, cfg: cfg, img: immagine(cfg), bmp: null, bmpH: 0 });
     }
     var lanc = av.lanc || {};
@@ -646,6 +645,8 @@
     r._contenuto.appendChild(t.el("p", { style: "text-align:center;font-size:1.1rem;line-height:1.5;margin-top:10px", text: o.frase }));
     if (o.stat && o.stat.length) r._contenuto.appendChild(t.el("div", { class: "pd-stat" }, o.stat.map(function (x) { return t.el("div", {}, [t.el("b", { text: String(x[0]) }), t.el("small", { text: x[1] })]); })));
     if (o.record) r._contenuto.appendChild(t.el("p", { class: "pd-record", text: o.record }));
+    // online: i tasti di fine uguali per tutti i giochi (Rivincita, Ci sto…); se il core non li mette, quelli di sempre
+    if (o.online && t.tastiFine && t.tastiFine(r._piede, { host: !!o.online.host, nuova: o.onRigioca || null, esci: o.onEsci })) { t.mostra(r); return; }
     if (o.onRigioca) r._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🔄 Rigioca", onclick: o.onRigioca }));
     else r._piede.appendChild(t.el("p", { class: "modulo-nota", text: "In attesa dell'host per un'altra partita…" }));
     r._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: o.onEsci }));
@@ -673,16 +674,17 @@
     var P = diffP(diff), raf = null, vivo = true, last = performance.now(), ST, ref, mySeat, gameId = nuovoIdPartita("bot");
     var io = (t.giocatori && t.giocatori[0]) || "Tu";
     function inGioco() { return ST && ST.fase === "gioco"; }
+    var bots = prendiBot(3, diff, [io]);   // i bot del gruppo fisso (per la bravura scelta): se stai sulla trave tu, il primo lancia
     if (ruolo === "trave") {   // TU sulla trave (posto 0), un bot lancia, gli altri 2 posti = bot
       ST = nuovoStato(P, mkChars({ 0: "io", 1: null, 2: null }), true); ST.time = P.durTrave; mySeat = 0;
       ref = creaScena(t, "trave", { onAim: function () {}, onAimDrag: function () {}, onLancia: function () {},
         onMov: function (d) { ST.chars[0].mov = inGioco() ? d : 0; }, onSalta: function () { var c = ST.chars[0]; if (inGioco() && c.alive && c.jt <= 0 && c.jcd <= 0) { c.jt = JUMP; c.jcd = JCD; } },
-        onEsci: function () { stop(); t.esci(); } }, { posti: [{ nome: io, cfg: mioAvatar(io) }, { nome: "Sara" }, { nome: "Leo" }], lanc: { nome: "Bot" } }, { mirino: mirino });
+        onEsci: function () { stop(); t.esci(); } }, { posti: [{ nome: io, cfg: mioAvatar(io) }, bots[1], bots[2]], lanc: bots[0] }, { mirino: mirino });
     } else {                   // TU lanci contro 3 bot
       ST = nuovoStato(P, mkChars(null), false); mySeat = -1;
       ref = creaScena(t, "lanciatore", { onAim: function (d) { ST.aimHold = d; }, onAimDrag: function (fr) { ST.aim = clamp(ST.aim + fr * AIMG, -1, 1); },
         onLancia: function () { if (inGioco()) ST.lanciaFlag = true; }, onMov: function () {}, onSalta: function () {},
-        onEsci: function () { stop(); t.esci(); } }, { posti: [{ nome: "Bot" }, { nome: "Sara" }, { nome: "Leo" }], lanc: { nome: io, cfg: mioAvatar(io) } });
+        onEsci: function () { stop(); t.esci(); } }, { posti: bots.slice(0, 3), lanc: { nome: io, cfg: mioAvatar(io) } });
     }
     ST.collis = !!collis;
     var durTot = ruolo === "trave" ? P.durTrave : P.dur, vinto = false;
@@ -702,7 +704,7 @@
       salvaTrofei({ gameId: gameId, modo: "bot", difficolta: diff, nome: io, ruolo: ruolo, vinto: vinto, mirino: !!mirino,
         abbattuti: abbattuti, schivate: ruolo === "trave" ? me.schivate : 0, durata: ST.durata });
       // XP e statistiche: contro il Bot (chi lancia o chi lancia contro di te)
-      try { if (t.risultato) t.risultato([{ nome: io, pos: vinto ? 1 : 2 }, { nome: "Bot", pos: vinto ? 2 : 1 }]); } catch (e) {}   // un intoppo negli XP non deve bloccare la fine
+      try { if (t.risultato) t.risultato([{ nome: io, pos: vinto ? 1 : 2 }, { nome: bots[0].nome, pos: vinto ? 2 : 1, bot: true }]); } catch (e) {}   // un intoppo negli XP non deve bloccare la fine
       schermataFine(t, { vinto: vinto, frase: fraseFine(ruolo, vinto),
         stat: statFine(ruolo, { abbattuti: abbattuti, durata: ST.durata, lanci: ST.lanci, schivate: me.schivate, scampati: me.scampati, resistito: me.alive ? ST.durata : (me.tCad || ST.durata) }),
         record: ruolo === "lanciatore" && vinto ? recordLancio(diff, ST.durata) : null,
@@ -727,8 +729,11 @@
     function seatDi(id) { for (var s = 0; s < NSEAT; s++) if (posti[s] === id) return s; return -1; }
     function dentro(id) { return lanc === id || seatDi(id) >= 0; }
     function postoLibero() { for (var s = 0; s < NSEAT; s++) if (!posti[s]) return s; return -1; }
+    // nella Sala sulla trave (e a lanciare) va solo chi è stato scelto ("Chi gioca?"): gli altri guardano
+    function siede(id) { return id === "host" || !t.puoSedersi || t.puoSedersi(id, nomi[id]); }
+    function fuori() { return attesa.filter(function (id) { return !siede(id); }); }
     function riempiPosti() { attesa = attesa.filter(function (id) { return nomi[id] && !dentro(id); });
-      while (attesa.length && postoLibero() >= 0) posti[postoLibero()] = attesa.shift(); }
+      var resto = []; attesa.forEach(function (id) { var p = postoLibero(); if (p >= 0 && siede(id)) posti[p] = id; else resto.push(id); }); attesa = resto; }
     function seggi() { var a = []; for (var s = 0; s < NSEAT; s++) a.push(posti[s] ? { id: posti[s], nome: nomi[posti[s]] } : null); return a; }
     function umaniTrave() { var n = 0; for (var s = 0; s < NSEAT; s++) if (posti[s]) n++; return n; }
     function claim(id) {   // id (che ha già un posto sulla trave) diventa lanciatore; il vecchio lanciatore prende il suo posto
@@ -768,15 +773,15 @@
         if (m.t === "join") {
           nomi[id] = String(m.nome || nomi[id] || "Amico").slice(0, 16); var om = avatarValido(m.omino); if (om) omini[id] = om;
           if (fase === "lobby") {
-            if (!dentro(id) && attesa.indexOf(id) < 0) { var p = postoLibero(); if (p >= 0) posti[p] = id; else attesa.push(id); }
+            if (!dentro(id) && attesa.indexOf(id) < 0) { var p = postoLibero(); if (p >= 0 && siede(id)) posti[p] = id; else attesa.push(id); }
             lobbyAgg();
           } else if (dentro(id)) { if (fase === "gioco" && viaMsg) rete.invia(viaMsg); }   // chi rientra: gli rimando la partita (nomi, avatar, ruoli)
-          else { if (attesa.indexOf(id) < 0) attesa.push(id); rete.inviaVeloce({ t: "guardi", to: id }); }   // arrivato a partita iniziata: guarda
+          else { if (attesa.indexOf(id) < 0) attesa.push(id); rete.inviaVeloce({ t: "guardi", to: id, fuori: !siede(id) }); }   // arrivato a partita iniziata: guarda
         }
         else if (m.t === "vuoiLanciare") {
           if (fase !== "lobby") return;
           if (seatDi(id) >= 0) claim(id);
-          else if (attesa.indexOf(id) >= 0 && lanc === null) { attesa = attesa.filter(function (x) { return x !== id; }); lanc = id; }   // chi aspetta può lanciare al posto del bot
+          else if (attesa.indexOf(id) >= 0 && lanc === null && siede(id)) { attesa = attesa.filter(function (x) { return x !== id; }); lanc = id; }   // chi aspetta può lanciare al posto del bot
           lobbyAgg();
         }
         else if (m.t === "vuoiTrave") {   // chi lanciava torna sulla trave (in un posto dei bot); a lanciare va un bot
@@ -796,9 +801,10 @@
     function inizia() {
       riempiPosti();
       gameId = nuovoIdPartita("online"); fase = "gioco"; vintoL = false; ST = nuovoStato(P, mkChars(posti), lanc === null); ST.collis = !!collis;
-      var botTrave = lanc ? ["Bot", "Sara", "Leo"] : ["Sara", "Leo", "Nina"], nb = 0;   // se lancia una persona, Bot sta sulla trave
-      var av = { posti: [], lanc: lanc ? { nome: nomi[lanc], cfg: omini[lanc] || null } : { nome: "Bot" } };
-      for (var sb = 0; sb < NSEAT; sb++) av.posti.push(posti[sb] ? { nome: nomi[posti[sb]], cfg: omini[posti[sb]] || null } : { nome: botTrave[nb++] });
+      // i bot del gruppo fisso (per la bravura scelta), mai col nome di chi è in stanza: se nessuno lancia, lancia il primo
+      var bots = prendiBot(NSEAT + 1, diff, Object.keys(nomi).map(function (k) { return nomi[k]; })), nb = 0;
+      var av = { posti: [], lanc: lanc ? { nome: nomi[lanc], cfg: omini[lanc] || null } : bots[nb++] };
+      for (var sb = 0; sb < NSEAT; sb++) av.posti.push(posti[sb] ? { nome: nomi[posti[sb]], cfg: omini[posti[sb]] || null } : bots[nb++]);
       viaMsg = { t: "via", lanc: lanc, seggi: seggi(), av: av, gameId: gameId, difficolta: diff, mir: mirino ? 1 : 0 };
       rete.invia(viaMsg);   // resta "trattenuto": chi rientra o arriva tardi lo riceve subito
       var mioRuolo = (lanc === "host") ? "lanciatore" : "trave";
@@ -849,14 +855,15 @@
       var hs = hostSeat >= 0 ? ST.chars[hostSeat] : null;
       schermataFine(t, { vinto: hostVinto, frase: fraseFine(hostRuolo, hostVinto),
         stat: statFine(hostRuolo, { abbattuti: abbattuti, durata: durata, lanci: ST.lanci, schivate: hs ? hs.schivate : 0, scampati: hs ? hs.scampati : 0, resistito: hostSeat >= 0 ? resist[hostSeat] : durata }),
-        onRigioca: function () { tornaLobby(); }, onEsci: function () { chiudi(); t.esci(); } });
+        online: { host: true }, onRigioca: function () { tornaLobby(); }, onEsci: function () { chiudi(); t.esci(); } });
     }
     function tornaLobby() { fase = "lobby"; ST = null; viaMsg = null; riempiPosti(); lobbyAgg(); }
+    t.onRivincita = tornaLobby;   // la Rivincita della Sala
     function chiudi() { if (loop) cancelAnimationFrame(loop); if (ref) ref.rimuovi(); if (rete) rete.chiudi(); }
 
-    function lobbyAgg() { if (fase !== "lobby") return; rete.invia({ t: "lobby", codice: codice, pronta: pronta, lanc: lanc, seggi: seggi(), nomi: nomi, omini: omini, att: attesa }); disegnaLobby(); }
+    function lobbyAgg() { if (fase !== "lobby") return; rete.invia({ t: "lobby", codice: codice, pronta: pronta, lanc: lanc, seggi: seggi(), nomi: nomi, omini: omini, att: attesa, fuori: fuori() }); disegnaLobby(); }
     function disegnaLobby() { if (fase !== "lobby") return;
-      renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", lanc: lanc, seggi: seggi(), nomi: nomi, omini: omini, att: attesa },
+      renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", lanc: lanc, seggi: seggi(), nomi: nomi, omini: omini, att: attesa, fuori: fuori() },
         { onComincia: inizia,
           onLancio: function () { hostVaA("L"); lobbyAgg(); },
           onTrave: function () { var lib = postoLibero(); hostVaA(lib >= 0 ? lib : 0); lobbyAgg(); },   // un posto dei bot, se c'è (se no si scambia col primo)
@@ -887,8 +894,8 @@
           setTimeout(function () { if (!S.ref && S.fase === null && S.msg2) S.msg2.textContent = "Non trovo la partita: controlla il codice o attendi l'host…"; }, 8000); },
         onMsg: function (m) {
           if (!m || !m.t) return;
-          if (m.t === "lobby") { S.lanc = m.lanc; S.seggi = m.seggi; S.guardi = false; if (!S.ref) { S.fase = "lobby"; mostraLobby(m); } }
-          else if (m.t === "guardi") { if (m.to === S.myId) { S.guardi = true; if (!S.ref && S.msg2 && S.fase !== "fine") S.msg2.textContent = "La partita è già cominciata: appena finisce entri anche tu! 👀"; } }
+          if (m.t === "lobby") { S.lanc = m.lanc; S.seggi = m.seggi; S.guardi = false; S.ioFuori = (m.fuori || []).indexOf(S.myId) >= 0; if (!S.ref) { S.fase = "lobby"; mostraLobby(m); } }
+          else if (m.t === "guardi") { if (m.to === S.myId) { S.guardi = true; if (m.fuori) S.ioFuori = true; if (!S.ref && S.msg2 && S.fase !== "fine") S.msg2.textContent = S.ioFuori ? "👀 Questa volta guardi: giocano gli amici scelti." : "La partita è già cominciata: appena finisce entri anche tu! 👀"; } }
           else if (m.t === "via") {
             if (S.ref && m.gameId === S.gameId) return;   // la stessa partita rimandata (qualcuno è rientrato): niente da rifare
             S.gameId = m.gameId; S.lanc = m.lanc; S.seggi = m.seggi; S.av = m.av || null; S.mir = !!m.mir;
@@ -907,7 +914,7 @@
             for (var si = 0; si < (m.seggi || []).length; si++) if (m.seggi[si] && m.seggi[si].id === S.myId) { mioSeat = si; break; }
             var sonoLanc = m.lanc === S.myId;
             if (!sonoLanc && mioSeat < 0) {   // non giocavo (arrivato tardi o trave piena): niente trofei, solo com'è andata
-              schermataFine(t, { guarda: true, icona: "🏁", titolo: "Partita finita", frase: (m.vintoLanc ? "Chi lanciava li ha buttati giù tutti! 💦" : "Qualcuno è rimasto sulla trave fino alla fine! 🏆") + " Alla prossima giochi anche tu.",
+              schermataFine(t, { online: { host: false }, guarda: true, icona: "🏁", titolo: "Partita finita", frase: (m.vintoLanc ? "Chi lanciava li ha buttati giù tutti! 💦" : "Qualcuno è rimasto sulla trave fino alla fine! 🏆") + (S.ioFuori ? "" : " Alla prossima giochi anche tu."),
                 onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
               return;
             }
@@ -916,7 +923,7 @@
               vinto: vinto, abbattuti: sonoLanc ? m.abbattuti : 0,
               schivate: mioSeat >= 0 && m.schivate ? m.schivate[mioSeat] : 0,
               avversariUmani: sonoLanc ? (+m.umTrave || 0) : (+m.umLanc || 0), durata: m.durata });
-            schermataFine(t, { vinto: vinto, frase: fraseFine(ruolo, vinto),
+            schermataFine(t, { online: { host: false }, vinto: vinto, frase: fraseFine(ruolo, vinto),
               stat: statFine(ruolo, { abbattuti: +m.abbattuti || 0, durata: +m.durata || 0, lanci: +m.lanci || 0,
                 schivate: mioSeat >= 0 && m.schivate ? +m.schivate[mioSeat] || 0 : 0, scampati: mioSeat >= 0 && m.scampati ? +m.scampati[mioSeat] || 0 : 0,
                 resistito: mioSeat >= 0 && m.resist && m.resist[mioSeat] != null ? +m.resist[mioSeat] || 0 : +m.durata || 0 }),
@@ -972,7 +979,7 @@
     }
     function avviaGiro() { if (!S.raf) { S._last = performance.now(); S.raf = requestAnimationFrame(giro); } }
     function fermaGiro() { if (S.raf) cancelAnimationFrame(S.raf); S.raf = null; }
-    function mostraLobby(m) { renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, lanc: m.lanc, seggi: m.seggi, nomi: m.nomi, omini: m.omini, att: m.att },
+    function mostraLobby(m) { renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, lanc: m.lanc, seggi: m.seggi, nomi: m.nomi, omini: m.omini, att: m.att, fuori: m.fuori },
       { onLancio: function () { if (S.rete) S.rete.invia({ t: "vuoiLanciare" }); },
         onTrave: function () { if (S.rete) S.rete.invia({ t: "vuoiTrave" }); }, onEsci: function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); } }); }
     function attesa() { if (S.ref) return;
@@ -999,15 +1006,17 @@
     }
     // il MIO ruolo: due tasti chiari, per l'host e per chi entra
     var lBot = !vm.lanc;
-    var lNome = lBot ? "🤖 bot" : ((vm.nomi && vm.nomi[vm.lanc]) || (vm.lanc === "host" ? "Host" : "Amico"));
+    var lNome = lBot ? "🤖 Bot" : ((vm.nomi && vm.nomi[vm.lanc]) || (vm.lanc === "host" ? "Host" : "Amico"));
     var ioLanc = vm.lanc === vm.myId, ioAtt = att.indexOf(vm.myId) >= 0, ioTrave = !ioLanc && !ioAtt;
-    var puoLanciare = !ioLanc && (!ioAtt || lBot), puoTrave = ioLanc && (vuoti > 0 || vm.sonoHost);
+    var ioFuori = ioAtt && (vm.fuori || []).indexOf(vm.myId) >= 0;   // nella Sala non sono tra gli scelti: questa volta guardo
+    var puoLanciare = !ioLanc && !ioFuori && (!ioAtt || lBot), puoTrave = ioLanc && (vuoti > 0 || vm.sonoHost);
     function chip(icona, tit, sotto, attiva, puo, fn) {
       return el("button", { class: "modo-chip" + (attiva ? " attiva" : ""), style: !attiva && !puo ? "opacity:.5" : "", onclick: function () { if (!attiva && puo) fn(); } }, [
         el("span", { class: "mi", text: icona }), el("div", {}, [el("div", { class: "mt", text: tit }), el("div", { class: "ms", text: sotto })])]);
     }
     s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Il tuo ruolo" }));
-    if (ioAtt) s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin:2px 0 8px", text: lBot ? "👀 La trave è piena: per ora guardi. Se vuoi, puoi lanciare tu al posto del bot!" : "👀 La trave è piena: per ora guardi. Appena si libera un posto entri tu." }));
+    if (ioFuori) s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin:2px 0 8px", text: "👀 Questa volta guardi: giocano gli amici scelti." }));
+    else if (ioAtt) s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin:2px 0 8px", text: lBot ?"👀 La trave è piena: per ora guardi. Se vuoi, puoi lanciare tu al posto del bot!" : "👀 La trave è piena: per ora guardi. Appena si libera un posto entri tu." }));
     s._contenuto.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [
       chip("🎯", "Lancio io", ioAtt && !lBot ? "C'è già chi lancia" : "Butti giù chi è sulla trave", ioLanc, puoLanciare, cb.onLancio),
       chip("🏃", "Sto sulla trave", ioLanc && !puoTrave ? "La trave è piena" : "Salti e schivi la palla", ioTrave, puoTrave, cb.onTrave)
@@ -1020,7 +1029,7 @@
     // trave
     s._contenuto.appendChild(el("div", { class: "etichetta", text: "🏃 Sulla trave (posti liberi = bot)" }));
     (vm.seggi || []).forEach(function (sg, i) {
-      var mio = sg && sg.id === vm.myId, nome = sg ? ((vm.nomi && vm.nomi[sg.id]) || sg.nome || "Amico") : "🤖 bot";
+      var mio = sg && sg.id === vm.myId, nome = sg ? ((vm.nomi && vm.nomi[sg.id]) || sg.nome || "Amico") : "🤖 Bot";
       var tapS = (vm.sonoHost && !mio && cb.onHostSeat) ? function () { cb.onHostSeat(i); } : null;
       if (tapS) tapS._et = "siediti ▶";
       s._contenuto.appendChild(rigaRuolo(
@@ -1032,6 +1041,7 @@
     }
     t.lobby({ host: vm.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 1, puoiDaSolo: true, vuoti: vuoti, giocatori: gio, extra: [s._contenuto],
       nota: vm.sonoHost ? "Cominci quando vuoi: i posti vuoti sulla trave diventano bot." : null,
+      spettatore: ioFuori ? "👀 Questa volta guardi" : null,
       attesa: ioAtt ? "Aspetta che l'host cominci: per questa partita guardi. 👀" : "Aspetta che l'host cominci: sotto puoi chiedere di lanciare tu! 🎯", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
@@ -1044,12 +1054,13 @@
 
   SG.registra({
     id: "pendolo",
-    modi: [{ modo: "bot", icona: "🎯", nome: "Da solo", sotto: "Contro i bot: lanci tu o schivi sulla trave" }],
+    modi: [{ modo: "bot", icona: "🎯", nome: "Da solo", sotto: "Contro i Bot: lanci tu o schivi sulla trave" }],
     nome: "Palla a Pendolo",
     icona: "🎯",
     descrizione: "Mira e lancia la palla-pendolo per buttare in acqua chi sta sulla trave. Da solo contro i bot, oppure online: uno lancia, gli altri scappano e saltano.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 1,
     etichettaGiocatori: "👥 1–4 giocatori",   // (da solo, o online: chi lancia più 3 posti)
+    postiOnline: 4,   // chi lancia più 3 sulla trave: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
     regole: [
       "Sei di spalle: davanti una <b>trave sull'acqua</b> con dei personaggi. La palla appesa oscilla <b>in profondità</b>.",
       "<b>Lanciatore</b>: miri di lato (◀ ▶ o trascini) e premi <b>LANCIA</b>. Il lancio è <b>sempre uguale</b>: il <b>mirino rosso</b> mostra dove arriverà. Mira dove <b>andranno</b>, non dove sono!",
@@ -1064,7 +1075,7 @@
       function selM(m) { dove.modo = m; bBot.className = "modo-chip" + (m === "bot" ? " attiva" : ""); bOnl.className = "modo-chip" + (m === "online" ? " attiva" : ""); notaOnline.hidden = (m !== "online"); boxRuolo.hidden = (m !== "bot"); aggBoxMir(); }
       function selR(r) { dove.ruolo = r; bLanc.className = "modo-chip" + (r === "lanciatore" ? " attiva" : ""); bTrave.className = "modo-chip" + (r === "trave" ? " attiva" : ""); aggBoxMir(); }
       function aggBoxMir() { boxMir.hidden = dove.modo === "bot" && dove.ruolo !== "trave"; }   // da solo, se lanci tu, il mirino lo vedi già
-      bBot = el("button", { class: "modo-chip attiva", onclick: function () { selM("bot"); } }, [el("span", { class: "mi", text: "🎯" }), el("div", {}, [el("div", { class: "mt", text: "Da solo" }), el("div", { class: "ms", text: "Contro i bot" })])]);
+      bBot = el("button", { class: "modo-chip attiva", onclick: function () { selM("bot"); } }, [el("span", { class: "mi", text: "🎯" }), el("div", {}, [el("div", { class: "mt", text: "Da solo" }), el("div", { class: "ms", text: "Contro i Bot" })])]);
       bOnl = el("button", { class: "modo-chip", onclick: function () { selM("online"); } }, [el("span", { class: "mi", text: "🔗" }), el("div", {}, [el("div", { class: "mt", text: "Online" }), el("div", { class: "ms", text: "Ognuno dal suo" })])]);
       if (!aiuti.modo) {   // (se "come giocare" l'avete già scelto prima, qui non si sceglie)
         box.appendChild(el("div", { class: "etichetta", text: "Come giocare" }));
@@ -1076,7 +1087,7 @@
       bTrave = el("button", { class: "modo-chip", onclick: function () { selR("trave"); } }, [el("span", { class: "mi", text: "🏃" }), el("div", {}, [el("div", { class: "mt", text: "Sulla trave" }), el("div", { class: "ms", text: "Schivi il bot che lancia" })])]);
       boxRuolo.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bLanc, bTrave]));
       box.appendChild(boxRuolo);
-      box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei bot" }));
+      box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei Bot" }));
       var w = el("div", { style: "display:flex;gap:8px" });
       [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]].forEach(function (d) {
         var b = el("button", { class: "modo-chip" + (d[0] === "medio" ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center",

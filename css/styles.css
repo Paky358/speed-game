@@ -1081,7 +1081,7 @@ button.am-riga:active{ transform:scale(.985); }
 .sl-invito{ display:flex; gap:10px; align-items:stretch; }
 .sl-cod{ flex:0 0 auto; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:6px 14px; border-radius:16px; background:rgba(255,255,255,.08); box-shadow:inset 0 0 0 2px rgba(255,255,255,.12); }
 .sl-cod small{ font-size:.7rem; opacity:.7; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
-.sl-cod b{ font-size:1.55rem; letter-spacing:3px; font-weight:900; }
+.sl-cod b{ font-size:1.55rem; letter-spacing:.12em; margin-right:-.12em; font-weight:900; line-height:1.1; }   /* (il codice resta "KFRT": lo spazio tra le lettere lo fa solo il CSS) */
 .sl-invito .sl-link{ flex:1; margin:0; min-height:60px; font-size:1.02rem; }
 .sl-stanza{ position:relative; height:clamp(250px, 44vh, 400px); border-radius:22px; overflow:hidden; margin:0 0 12px; box-shadow:0 10px 26px rgba(0,0,0,.35), inset 0 0 0 2px rgba(255,255,255,.08); }
 .sl-muro{ position:absolute; inset:0; background:radial-gradient(60% 45% at 50% 16%, rgba(255,214,140,.32), rgba(255,214,140,0) 70%), repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 16px, transparent 16px 32px), linear-gradient(#5b3f8f, #33245f 72%); }
@@ -1231,7 +1231,8 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .saletta-schermo .sl-nota:empty{ display:none; }
 .saletta-schermo .sl-invito .sl-link{ min-height:52px; padding:10px 14px; }
 .saletta-schermo .sl-cod{ padding:4px 12px; }
-.saletta-schermo .sl-cod b{ font-size:1.45rem; }
+.saletta-schermo .sl-cod b{ font-size:1.6rem; }
+.sl-cod.ospite small::before{ display:none; }   /* (chi entra: niente pallino della porta) */
 .saletta-schermo .sl-attesa{ padding:9px 12px; }
 .saletta-schermo .sl-att-tit{ font-size:1.05rem; margin-bottom:2px; }
 .saletta-schermo .sl-att-testo{ font-size:.92rem; }
@@ -1856,3 +1857,281 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 .om-benv{ position:absolute; left:8px; top:8px; z-index:2; max-width:calc(100% - 118px); padding:6px 11px; border-radius:12px; color:#fff; font-weight:800; font-size:.84rem; line-height:1.2;
   background:rgba(8,16,44,.72); box-shadow:inset 0 0 0 1.5px rgba(255,214,90,.5); animation:bpLogo .5s cubic-bezier(.3,1.5,.5,1); }
 .editor-avatar .om-azione.salva.fatto{ padding:0 16px; font-size:1rem; box-shadow:0 0 0 3px rgba(255,214,90,.35), 0 6px 16px rgba(0,0,0,.35); }
+
+/* ---- Home: la riga online in alto (Passo 2) — "🔗 Gioca online" e "🔑 Ho un codice" uno accanto all'altro ---- */
+.home-online{ display:flex; gap:10px; margin:0; }
+.home-online .btn{ flex:1 1 0; min-width:0; margin:0; flex-direction:column; gap:2px; padding:12px 8px; min-height:64px; line-height:1.15; }
+.home-online .btn span{ font-size:1.02rem; font-weight:900; white-space:nowrap; }
+.home-online .btn small{ font-size:.74rem; font-weight:700; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+.home-online .ho-codice{ color:#fff; border:1px solid rgba(255,255,255,.24);
+  background:linear-gradient(180deg, rgba(255,255,255,.17), rgba(255,255,255,.06));
+  box-shadow:0 8px 20px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.4); }
+.home-online .ho-torna{ background:linear-gradient(135deg, #4fe895, #1faf60); color:#04321c; box-shadow:0 8px 22px rgba(31,175,96,.32); }
+@media (max-width:340px){ .home-online .btn span{ font-size:.92rem; } }
+
+/* ---- "Ho un codice": un campo vero (trasparente) sopra 4 caselle disegnate ---- */
+.codice4{ position:relative; width:max-content; max-width:100%; margin:12px auto 0; }
+.codice4-caselle{ display:flex; gap:12px; justify-content:center; }
+.codice4-caselle span{ position:relative; display:flex; align-items:center; justify-content:center; width:60px; height:72px; border-radius:16px;
+  font-size:2.2rem; font-weight:900; color:#fff; background:var(--carta); border:2px solid rgba(255,255,255,.18); box-shadow:var(--ombra); }
+.codice4-caselle span.piena{ border-color:rgba(255,214,90,.55); }
+.codice4-caselle span.attiva{ border-color:var(--accento); }
+/* il cursore: una lineetta che lampeggia (solo opacità) */
+.codice4-caselle span.attiva::after{ content:""; position:absolute; left:50%; top:18px; bottom:18px; width:3px; margin-left:-1.5px; border-radius:2px;
+  background:var(--accento); animation:codice4Cursore 1s steps(1) infinite; }
+@keyframes codice4Cursore{ 50%{ opacity:0; } }
+/* il campo vero: sopra le caselle, invisibile (16px: su iPhone niente zoom quando si tocca) */
+.codice4-campo{ position:absolute; inset:0; width:100%; height:100%; margin:0; padding:0; border:0; outline:none; opacity:.01;
+  font-size:16px; color:transparent; caret-color:transparent; background:transparent; text-align:center; letter-spacing:40px; -webkit-appearance:none; appearance:none; }
+.codice4-avviso{ min-height:1.35em; margin:10px 0 0; text-align:center; font-size:.95rem; font-weight:800; color:#ffd65a; opacity:0; transition:opacity .15s ease; }
+.codice4-avviso.si{ opacity:1; }
+.codice4-nota{ text-align:center; margin-top:6px; }
+
+/* ---- Chi arriva (Sala, p2-d): le sagome di chi manca, "Arrivano: 3 su 4", "Si gioca a Tris: entri alla prossima" ---- */
+/* chi della Sala non è ancora nella saletta del gioco: il suo avatar grigio e trasparente, fermo (niente respiro) */
+.sl-atteso{ cursor:default; pointer-events:none; }
+.sl-atteso .sl-fig{ opacity:.35; filter:grayscale(1); }
+.sl-atteso .om-tutto, .sl-atteso .om-occhi{ animation:none; }
+.sl-atteso.esce{ opacity:0; }
+.sl-nome.atteso{ background:rgba(10,18,50,.55); color:rgba(255,255,255,.78); box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1); }
+.sl-nome.atteso.forse{ color:#a5d8ff; }
+.sl-incorso.prossima{ box-shadow:inset 0 0 0 2px rgba(116,192,252,.45); }
+.sl-inc-testo{ display:flex; flex-direction:column; min-width:0; line-height:1.25; }
+.sl-inc-testo b{ font-weight:900; overflow-wrap:anywhere; }
+.sl-inc-testo small{ font-size:.85rem; font-weight:700; opacity:.8; }
+.sl-conta.arriva{ max-width:5.4em; white-space:normal; text-align:center; line-height:1.15; padding:3px 8px; }
+
+/* ---- Le regole visibili agli amici (p2-e): "📜 Si gioca così: 5 carte · Storia, Cinema" in una riga sola ---- */
+.sl-regole-riga{ position:relative; display:flex; align-items:center; gap:6px; width:100%; min-width:0; margin:0; padding:7px 12px; border:0; border-radius:12px;
+  background:rgba(255,255,255,.07); box-shadow:inset 0 0 0 1.5px rgba(255,212,59,.28); color:inherit; font:inherit; font-size:.88rem; line-height:1.25; text-align:left; cursor:pointer; }
+.sl-regole-riga[hidden]{ display:none; }
+.sl-rr-et{ flex:0 0 auto; font-weight:900; color:#ffd43b; white-space:nowrap; }
+.sl-rr-testo{ flex:1 1 auto; min-width:0; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* "✨ Regole cambiate": una pillola dentro la riga, a destra, che compare e sparisce (solo opacità) */
+.sl-rr-cambiate{ position:absolute; right:6px; top:50%; margin-top:-.8em; height:1.6em; display:flex; align-items:center; padding:0 9px; border-radius:999px;
+  background:#ffd43b; color:#2b2100; font-size:.78rem; font-weight:900; white-space:nowrap; opacity:0; transition:opacity .2s ease; pointer-events:none; }
+.sl-regole-riga.cambiate .sl-rr-cambiate{ opacity:1; }
+.sl-regole-riga.salta{ animation:slRegSalta .55s cubic-bezier(.3,1.6,.5,1); }
+@keyframes slRegSalta{ 0%{ transform:translateY(0); } 35%{ transform:translateY(-6px) scale(1.02); } 100%{ transform:none; } }
+@media (prefers-reduced-motion: reduce){ .sl-regole-riga.salta{ animation:none; } }
+/* il foglio di chi entra: il riassunto intero; "📖 Come si gioca" si apre dentro i fogli */
+.sl-reg-tutto{ margin:4px 0 8px; font-size:1.05rem; font-weight:800; line-height:1.4; }
+.sl-come-box{ margin-top:10px; }
+.sl-come-box .sl-come-b{ margin:0; }
+.sl-come{ margin-top:10px; padding:10px 12px; border-radius:14px; background:rgba(255,255,255,.05); }
+.sl-come[hidden]{ display:none; }
+.sl-come p{ margin:0 0 10px; font-size:.98rem; line-height:1.45; }
+.sl-come p:last-child{ margin-bottom:0; }
+/* schermi bassi (360x640): chi entra ha anche la riga delle regole, il riquadro "Sei dentro" tiene solo il titolo */
+@media (max-height:720px){
+  .saletta-schermo.con-regole .sl-att-testo{ display:none; }
+  .saletta-schermo.con-regole .sl-attesa{ padding:6px 12px; }
+  .saletta-schermo.con-regole .sl-att-tit{ margin-bottom:0; }
+  .saletta-schermo .sl-regole-riga{ padding:5px 10px; }
+}
+
+/* ---- La fine partita uguale per tutti (p2-f): "↻ Rivincita · 👍 3" e "🎮 Cambia gioco", "👍 Ci sto!" e "🏠 Torna in Sala" ----
+   due tasti nella stessa riga se ci stanno (se no il primo sopra, tutta la riga): al massimo due righe, 120 px */
+.fine-tasti{ display:flex; flex-wrap:wrap; gap:8px; width:100%; }
+.fine-tasti .btn{ width:auto; min-width:0; min-height:52px; padding:10px 8px; font-size:.95rem; line-height:1.15; gap:6px; }
+.fine-tasti .ft-primo{ flex:1.2 1 0; }
+.fine-tasti .ft-secondo{ flex:1 1 0; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18); }
+.fine-tasti .ft-primo[hidden]{ display:none; }
+.fine-tasti .ft-cisto.fatto{ background:rgba(81,207,102,.16); color:#8ce99a; box-shadow:inset 0 0 0 2px rgba(81,207,102,.55); }
+
+/* ---- Il torneo dentro la Sala (p2-g): la classifica corta "🏆 Paky 178 · Luca 140 · Giulia 96 ›" (un tocco: la lista intera)
+   e, a fine partita, "🏆 Paky +100 · Luca +78" sopra i tasti. Una riga sola: se non ci sta, i puntini */
+.sl-torneo-corto{ display:flex; align-items:center; gap:8px; width:100%; min-height:44px; padding:8px 12px 8px 14px; border:0; border-radius:16px; cursor:pointer;
+  background:rgba(255,202,58,.10); box-shadow:inset 0 0 0 2px rgba(255,202,58,.45); color:inherit; font:inherit; font-weight:800; font-size:.95rem; text-align:left; margin-bottom:8px; }
+.saletta-schermo .sl-extra .sl-torneo-corto:last-child{ margin-bottom:0; }
+.sl-tc-testo{ flex:1 1 auto; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sl-tc-freccia{ flex:0 0 auto; font-size:1.3rem; line-height:1; color:#ffd43b; }
+.sl-tc-lista .classifica{ margin:6px 0; }
+.sl-tc-ultima{ margin-top:4px; }
+.fine-tasti .ft-punti{ flex:1 1 100%; display:block; min-width:0; padding:6px 10px; border:0; border-radius:12px; cursor:pointer; background:rgba(255,202,58,.12); color:#ffe066;
+  font:inherit; font-weight:800; font-size:.9rem; line-height:1.25; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fine-tasti .ft-punti[hidden]{ display:none; }
+
+/* ---- "Chi gioca a Tris?" (p2-h): gli avatar della Sala, 5 per riga; chi gioca ha l'anello giallo e la ✓.
+   Si cambiano solo le classi (niente lampeggio). Etichette dei giochi nell'elenco della Sala ---- */
+.chi-gioca-sc{ height:var(--alt, 100dvh); max-height:var(--alt, 100dvh); min-height:0; }
+.chi-gioca-sc > .contenuto{ min-height:0; display:flex; flex-direction:column; }
+.chi-gioca{ display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:10px 6px; }
+.cg-chi{ position:relative; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; padding:4px 0 2px; border:0; border-radius:14px;
+  background:none; color:inherit; font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.cg-av{ width:56px; height:56px; max-width:100%; border-radius:50%; overflow:hidden; flex:0 0 auto; opacity:.55;
+  background:radial-gradient(circle at 50% 35%, #4a6fd1, #22357a); box-shadow:inset 0 0 0 2px rgba(255,255,255,.18); transition:opacity .15s, transform .15s; }
+.cg-av svg{ width:100%; height:100%; display:block; }
+.cg-emo{ display:flex; align-items:center; justify-content:center; width:100%; height:100%; font-size:1.8rem; }
+.cg-nome{ max-width:100%; font-size:.8rem; font-weight:700; line-height:1.15; color:var(--testo-tenue); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cg-segno{ position:absolute; top:0; left:50%; margin-left:14px; width:22px; height:22px; border-radius:50%; background:#ffd43b; color:#222; font-size:.85rem; font-weight:900;
+  line-height:22px; text-align:center; opacity:0; transform:scale(.5); transition:opacity .15s, transform .15s; }
+.cg-chi.scelto .cg-av{ opacity:1; box-shadow:0 0 0 3px #ffd43b; transform:scale(1.04); }
+.cg-chi.scelto .cg-nome{ color:inherit; font-weight:900; }
+.cg-chi.scelto .cg-segno{ opacity:1; transform:none; }
+.cg-chi.fisso{ cursor:default; }
+.chi-gioca.tanti{ gap:6px 4px; }
+.chi-gioca.tanti .cg-av{ width:46px; height:46px; }
+.cg-guardano{ margin:14px 0 4px; font-weight:800; font-size:.95rem; line-height:1.3; text-align:center; min-height:1.3em; }
+.cg-nota{ text-align:center; margin:4px 0 0; }
+.tessera .info .tess-adue.tutti{ color:var(--testo-tenue); font-weight:700; }
+.tessera .info .tess-adue.posti{ color:#ffd43b; }
+.tessera .info .tess-adue.pochi{ color:#74c0fc; }
+/* a fine partita di un gioco a due nella Sala: Rivincita · Altra sfida · Cambia gioco in una riga (le scritte possono andare a capo) */
+.fine-tasti.tre .ft-primo, .fine-tasti.tre .ft-secondo{ flex:1 1 0; font-size:.85rem; padding:8px 4px; white-space:normal; }
+/* chi guarda il duello della Sala: "👥 Sala" in alto a destra (come il 🏆 del torneo a eliminazione) */
+.tab-elim.tab-sala{ background:rgba(0,0,0,.45); }
+/* 🤖 I Bot (solo il proprietario): gli 8 bot fissi in una griglia 4x2, e la scheda di uno (avatar, nome, carattere, livello) */
+.bc-griglia{ display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px; }
+.bc-bot{ display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; padding:6px 4px 8px; border:0; border-radius:16px; background:var(--carta);
+  box-shadow:var(--ombra); color:inherit; font:inherit; cursor:pointer; border-bottom:4px solid #ffd43b; }
+.bc-bot:active{ transform:scale(.96); }
+.bc-bot.liv-facile{ border-bottom-color:#37d47e; } .bc-bot.liv-difficile{ border-bottom-color:#ff5d6c; }
+.bc-av{ display:block; width:100%; aspect-ratio:1 / 1; border-radius:12px; background:radial-gradient(circle at 50% 35%, #5468c4, #2a3a80); overflow:hidden; }
+.bc-av svg{ display:block; width:100%; height:100%; }
+.bc-bot b{ max-width:100%; font-size:.92rem; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bc-bot small{ font-size:.68rem; color:var(--testo-tenue); white-space:nowrap; }
+.bc-nota{ margin:14px 2px 0; font-size:.92rem; }
+.bc-testa{ display:flex; align-items:center; gap:12px; }
+.bc-palco{ flex:none; width:118px; height:156px; border-radius:18px; background:radial-gradient(circle at 50% 30%, #5468c4, #22306a); overflow:hidden; }
+.bc-palco svg{ display:block; width:100%; height:100%; }
+.bc-lato{ flex:1; display:flex; flex-direction:column; gap:8px; min-width:0; }
+.bc-lato .bc-cambia{ width:100%; padding:10px 8px; font-size:.95rem; }
+.bc-etich{ display:block; margin:10px 2px 0; font-size:.85rem; font-weight:800; color:var(--testo-tenue); }
+.bot-scheda .bc-campo{ margin-top:4px; padding:10px 14px; }
+.bc-livelli{ display:flex; gap:6px; margin-top:4px; }
+.bc-liv{ flex:1 1 0; min-width:0; padding:10px 4px; border:2px solid transparent; border-radius:14px; background:var(--carta); color:inherit; font:inherit; font-size:.88rem; font-weight:800; cursor:pointer; }
+.bc-liv.on{ border-color:#ffd43b; background:var(--carta-2); }
+.bc-avviso{ min-height:1.3em; margin-top:6px; }
+/* =========================================================
+   IL TORNEINO (p2-t): giochi a due con 3 o più persone. La scelta nella Sala ("🏆 Torneino" o "⚔️ Una sfida"),
+   il tasto "🏆 Fate il torneino in N" nella saletta, il tabellone compatto (anche in 10 senza scorrere).
+   Si cambiano solo classi e scritte; si animano solo transform e opacity
+   ========================================================= */
+.torneino-sc{ height:var(--alt, 100dvh); max-height:var(--alt, 100dvh); min-height:0; }
+.torneino-sc > .contenuto{ min-height:0; display:flex; flex-direction:column; gap:10px; }
+.tn-scelte{ display:flex; flex-direction:column; gap:10px; }
+.tn-scelta{ position:relative; display:flex; align-items:center; gap:12px; width:100%; min-height:74px; padding:10px 44px 10px 14px; border:2px solid transparent; border-radius:18px;
+  background:var(--carta); color:inherit; font:inherit; text-align:left; cursor:pointer; box-shadow:var(--ombra); -webkit-tap-highlight-color:transparent; transition:transform .12s; }
+.tn-scelta:active{ transform:scale(.98); }
+.tn-scelta.scelta{ border-color:#ffd43b; background:var(--carta-2); }
+.tn-ico{ flex:none; font-size:1.9rem; line-height:1; }
+.tn-testo{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+.tn-testo b{ font-size:1.05rem; line-height:1.2; }
+.tn-testo small{ font-size:.82rem; line-height:1.3; color:var(--testo-tenue); }
+.tn-spunta{ position:absolute; right:12px; top:50%; width:26px; height:26px; margin-top:-13px; border-radius:50%; background:#ffd43b; color:#2b2b33; font-weight:900;
+  line-height:26px; text-align:center; opacity:0; transform:scale(.6); transition:opacity .15s, transform .15s; }
+.tn-scelta.scelta .tn-spunta{ opacity:1; transform:none; }
+.tn-opz[hidden], .tn-opz > div[hidden]{ display:none; }
+.tn-opz .etichetta{ margin:0 0 6px; }
+.tn-opz > div + div{ margin-top:8px; }
+.tn-chips{ display:grid; gap:8px; }
+.tn-chips .modo-chip{ flex-direction:column; gap:2px; justify-content:center; min-width:0; min-height:0; padding:7px 6px; text-align:center; }
+.tn-chips .modo-chip .mi{ font-size:1.25rem; line-height:1.1; }
+.tn-chips .modo-chip .mt{ font-size:.9rem; }
+.tn-nota{ margin:0; text-align:center; }
+@media (max-height:680px){ .tn-scelta{ min-height:64px; padding-top:8px; padding-bottom:8px; } .tn-testo small{ font-size:.78rem; } }
+/* nella saletta di un gioco a due: "🏆 Fate il torneino in 5" (host) */
+.sl-torneino{ width:100%; min-height:46px; padding:8px 14px; border:0; border-radius:16px; font-weight:900; font-size:1rem; color:#2b2b33;
+  background:linear-gradient(135deg,#ffe066,#f59f00); box-shadow:0 4px 12px rgba(245,159,0,.3); }
+.sl-torneino[hidden]{ display:none; }
+/* il tabellone: il mio stato, il turno di adesso a carte su due colonne, i turni di prima in una riga */
+.sl-tab{ padding:8px 10px 8px; }
+.sl-tab .sl-elim-stato{ margin:0 0 6px; font-size:1rem; line-height:1.25; }
+.sl-tab .sl-elim-stato.campione{ font-size:1.2rem; }
+.sl-tab .tb-et{ margin:2px 0 5px; }
+.tb-griglia{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px; }
+.tb-griglia.una{ grid-template-columns:minmax(0, 1fr); }
+.tb-p{ position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:1px; min-width:0; padding:5px 8px 6px; border-radius:12px;
+  background:rgba(255,255,255,.07); font-weight:800; font-size:.86rem; line-height:1.25; }
+.tb-p.mia{ box-shadow:inset 0 0 0 2px #ffe066; }
+.tb-n{ max-width:100%; padding-right:24px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tb-n.vince{ color:#69db7c; }
+.tb-n.vince::before{ content:"✅ "; }
+.tb-n.perde{ opacity:.45; text-decoration:line-through; }
+.tb-stato{ font-size:.72rem; font-weight:700; opacity:.75; }
+.tb-guarda{ margin-top:2px; border:0; border-radius:9px; padding:2px 10px; background:#ffe066; color:#2b2b33; font:inherit; font-size:.76rem; font-weight:900; cursor:pointer; }
+.tb-decidi{ position:absolute; top:3px; right:4px; width:26px; height:22px; padding:0; border:0; border-radius:8px; background:rgba(255,255,255,.12); color:inherit; font:inherit; font-weight:900; line-height:1; cursor:pointer; }
+.tb-prima{ display:flex; gap:6px; align-items:baseline; min-width:0; margin-top:5px; font-size:.78rem; opacity:.85; }
+.tb-prima b{ flex:none; }
+.tb-prima span{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tb-rifai{ width:100%; min-height:40px; margin-top:8px; padding:6px 12px; }
+.tb-rientra{ width:100%; margin:0 0 6px; }
+.tb-nota{ margin:0; text-align:center; }
+.tb-decidi-tasti{ display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+/* a torneo in corso la stanza si stringe: prima il tabellone */
+.saletta-schermo.con-tabellone .sl-stanza{ min-height:96px; }
+/* schermi bassi col torneo in corso: via quello che non serve a giocare (faccine, riga delle regole, note), prima il tabellone */
+@media (max-height:760px){
+  .saletta-schermo.con-tabellone .sl-faccine, .saletta-schermo.con-tabellone .sl-regole-riga, .saletta-schermo.con-tabellone .sl-nota,
+  .saletta-schermo.con-tabellone .sl-consiglio, .saletta-schermo.con-tabellone .sl-att-testo{ display:none; }
+  .saletta-schermo.con-tabellone .tb-p{ padding:4px 8px 5px; line-height:1.18; }
+}
+
+/* ---- il primo avatar (profilo appena nato): lui o lei → il look → Fatto ---- */
+.primo-avatar > .contenuto{ justify-content:flex-start; }
+.pa-corpo{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; margin-top:10px; }
+.pa-forme{ flex-direction:row; gap:12px; align-items:stretch; }
+.pa-forma{ flex:1 1 0; min-width:0; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:6px;
+  padding:10px 6px 12px; border:2px solid rgba(255,255,255,.14); border-radius:20px; background:rgba(255,255,255,.06); color:inherit; font:inherit; cursor:pointer;
+  transition:transform .15s; }
+.pa-forma:active{ transform:scale(.97); }
+.pa-forma b{ font-size:1.15rem; font-weight:900; }
+.pa-fig{ position:relative; flex:1 1 0; min-height:0; width:100%; }
+.pa-fig svg{ position:absolute; left:0; top:0; width:100%; height:100%; transform:scale(1.3); transform-origin:50% 88%; }
+.pa-palco{ position:relative; flex:1 1 120px; min-height:70px; }
+.pa-palco svg{ position:absolute; left:0; top:0; width:100%; height:100%; }
+.pa-palco.senza{ opacity:.45; }
+.pa-barra{ flex:0 0 auto; display:flex; justify-content:space-between; gap:8px; margin:6px 0; }
+.pa-mini-btn{ border:0; border-radius:12px; padding:6px 12px; background:rgba(255,255,255,.1); color:inherit; font:inherit; font-size:.88rem; font-weight:800; cursor:pointer; }
+.pa-griglia{ flex:0 0 auto; display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; }
+.pa-look{ min-width:0; display:flex; flex-direction:column; align-items:center; gap:1px; padding:4px 2px 5px; border:2px solid transparent; border-radius:14px;
+  background:rgba(255,255,255,.07); color:inherit; font:inherit; font-size:.76rem; font-weight:800; cursor:pointer; }
+.pa-look.attiva{ border-color:var(--accento); background:rgba(255,202,58,.16); }
+.pa-mini{ height:72px; width:100%; display:flex; justify-content:center; overflow:hidden; }
+.pa-mini svg{ height:100%; width:auto; }
+.pa-fatto:disabled{ opacity:.45; }
+.pa-pers{ min-height:42px; padding:6px 12px; font-size:.95rem; }
+.primo-avatar.stretta .pa-mini{ height:56px; }
+.primo-avatar.stretta .pa-palco{ flex-basis:80px; }
+@media (max-height:700px){ .pa-mini{ height:58px; } .primo-avatar .bp-sotto{ display:none; } }
+/* ⚙️ della Sala: la Classifica della serata sempre accesa (Azzera / Chiudi e premia) */
+.sl-serata b{ font-size:1.02rem; }
+.sl-serata-tasti{ display:flex; gap:8px; margin-top:8px; }
+.sl-serata-tasti .btn{ flex:1 1 0; min-width:0; min-height:42px; padding:6px 8px; font-size:.92rem; }
+.sl-serata-tasti .btn:disabled{ opacity:.45; }
+/* fine partita sullo stesso telefono: la riga della Classifica della serata */
+.fine-serata{ display:block; width:100%; margin:0 0 8px; padding:7px 12px; border:0; border-radius:12px; background:rgba(255,202,58,.14); color:inherit;
+  font:inherit; font-size:.9rem; font-weight:800; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+/* torneo a eliminazione, "✋ Scegliete voi": le partite coi posti da toccare */
+.tb-coppie-riga{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin:0 0 6px; font-size:.86rem; }
+.tb-conto{ font-weight:800; opacity:.85; white-space:nowrap; }
+.tb-posti{ align-items:stretch; gap:3px; }
+.tb-contro{ align-self:center; font-size:.7rem; font-weight:700; opacity:.6; }
+.tb-posto{ min-height:30px; padding:3px 8px; border:2px dashed rgba(255,255,255,.3); border-radius:10px; background:transparent; color:inherit;
+  font:inherit; font-size:.84rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+.tb-posto.preso{ border-style:solid; border-color:transparent; background:rgba(255,255,255,.12); cursor:default; }
+.tb-posto.mio{ border-color:#ffe066; background:rgba(255,224,102,.18); cursor:pointer; }
+.tb-posto:disabled{ opacity:1; }
+/* "Tris in N" con le coppie: su schermi bassi le scelte in riga (icona accanto alla scritta), così sta tutto senza scorrere */
+@media (max-height:760px){
+  .tn-chips .modo-chip{ flex-direction:row; gap:5px; padding:6px 4px; }
+  .tn-chips .modo-chip .mi{ font-size:1.05rem; }
+  .tn-chips .modo-chip .mt{ font-size:.82rem; line-height:1.15; }
+  .tn-opz .etichetta{ margin-bottom:4px; }
+  .tn-opz > div + div{ margin-top:6px; }
+}
+/* le partite delle coppie: una riga ciascuna ("Partita 1  [Giulia] contro [posto libero]") */
+.tb-coppie .tb-posti{ flex-direction:row; align-items:center; gap:6px; padding:4px 6px; }
+.tb-coppie .tb-pn{ flex:none; width:58px; font-size:.72rem; }
+.tb-coppie .tb-posto{ flex:1 1 0; min-width:0; min-height:32px; }
+.tb-coppie .tb-contro{ flex:none; }
+.tb-coppie{ gap:5px; }
+/* le coppie in tanti su schermi bassi: righe più strette e via le note (chi è in piedi si capisce dai posti liberi) */
+@media (max-height:760px){
+  .saletta-schermo.con-tabellone .tb-coppie{ gap:3px; }
+  .saletta-schermo.con-tabellone .tb-coppie .tb-posti{ padding:2px 6px; }
+  .saletta-schermo.con-tabellone .tb-coppie .tb-posto{ min-height:28px; padding:2px 6px; }
+  .saletta-schermo.con-tabellone .tb-coppie-riga{ margin-bottom:3px; }
+  .saletta-schermo.con-tabellone .sl-tab .tb-nota{ display:none; }
+}

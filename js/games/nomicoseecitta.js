@@ -151,6 +151,7 @@
     descrizione: "Esce una lettera, riempi le categorie con parole che iniziano così, poi votate insieme quali valgono.",
     giocatoriMin: 2,
     giocatoriMax: 10,
+    postiOnline: 10,   // posti online
     difficolta: 2,   // Media — quanto vale vincerlo nel torneo
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono: scrive uno alla volta", amici: true }],
     regole: [
@@ -815,7 +816,8 @@
     var H = { sessioneTrofei: sessioneNcc(), fase: "lobby", codice: "…", pronta: false, cats: cats, secondi: imp.secondi || 60, giri: imp.round || 2, difficili: !!imp.difficili,
       giro: 0, lettera: null, usate: [], giriFatti: 0, interrotta: false, sigla: false, risultatoDato: false,
       players: [{ id: "host", nome: nomeHost, omino: ST.mioAvatar(nomeHost), punti: 0, _trofei: nuovoProgresso() }],
-      risposte: {}, bozze: {}, fatti: {}, voti: {}, ci: 0, pronti: {}, scadenza: 0, tabT0: 0, votoScade: 0, corto: false, ultimo: null, to: null };
+      risposte: {}, bozze: {}, fatti: {}, voti: {}, ci: 0, pronti: {}, scadenza: 0, tabT0: 0, votoScade: 0, corto: false, ultimo: null, to: null,
+      guarda: [] };   // guarda: nella Sala, chi non è stato scelto per giocare (guarda soltanto)
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function pres() { return H.players.filter(function (p) { return !p.via; }); }
     function clearTo() { if (H.to) { clearTimeout(H.to); H.to = null; } }
@@ -844,6 +846,7 @@
       onCodice: function (c) { H.codice = c; bd(); },
       onConnesso: function () { H.pronta = true; bd(); },
       onAddio: function (id) {
+        if (H.guarda.indexOf(id) >= 0) { H.guarda.splice(H.guarda.indexOf(id), 1); bd(); return; }
         if (H.fase === "lobby") { H.players = H.players.filter(function (p) { return p.id !== id; }); bd(); return; }
         var p = pById(id); if (!p || p.via) return;
         p.via = true; controlla(); bd();
@@ -851,7 +854,9 @@
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
-          var p = pById(id);
+          var p = pById(id), nomeJ = String(m.nome || "Amico").slice(0, 16);
+          // nella Sala gioca solo chi è stato scelto: gli altri guardano (col loro id nella foto)
+          if (!p && (H.guarda.indexOf(id) >= 0 || (t.puoSedersi && !t.puoSedersi(id, nomeJ)))) { if (H.guarda.indexOf(id) < 0) H.guarda.push(id); bd(); return; }
           if (!p && H.fase === "lobby" && H.players.length < 10) H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: ST.avatarValido(m.omino), punti: 0, _trofei: nuovoProgresso() });
           else if (p && p.via && H.fase !== "fine") { p.via = false; controlla(); }   // era uscito (o senza rete): rientra nella partita
           bd();   // a chi rientra rimando la foto (col tempo che resta, se si scrive)
@@ -869,7 +874,7 @@
       var o = { sessioneTrofei: H.sessioneTrofei, fase: H.fase, codice: H.codice, pronta: H.pronta, giro: H.giro, giri: H.giri, lettera: H.lettera, secondi: H.secondi, cats: H.cats,
         difficili: H.difficili, interrotta: H.interrotta, giriFatti: H.giriFatti,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, punti: p.punti, via: !!p.via, trofei: p._trofei || null }; }),
-        fatti: Object.keys(H.fatti) };
+        fatti: Object.keys(H.fatti), guarda: H.guarda.slice() };
       if (H.fase === "scrittura" || H.fase === "punti") o.rimMs = Math.max(0, H.scadenza - Date.now());
       if (H.fase === "tabellone") {
         o.ci = H.ci; o.pronti = Object.keys(H.pronti); o.corto = H.corto; o.resta = Math.max(0, H.votoScade - Date.now());
@@ -1008,6 +1013,8 @@
       H.fase = "lobby"; H.giro = 0; H.lettera = null; H.ultimo = null; H.interrotta = false; H.risposte = {}; H.bozze = {}; H.fatti = {}; H.voti = {};
       bd();
     }
+    // la Rivincita dei tasti di fine comuni: tutti di nuovo nella saletta (il core fa il 3-2-1)
+    t.onRivincita = nuova;
     disegnaNccVM(t, vm(), cb);
   }
   var RITARDO_OK = 2500;   // un foglio che arriva entro 2,5 secondi dall'inizio del tabellone vale ancora
@@ -1059,7 +1066,7 @@
         // l'host ha chiuso la stanza apposta (se sparisce e non torna, "La stanza è chiusa" lo dice il core):
         // sulla classifica finale resta la classifica, con la scritta giusta
         onChiuso: function () {
-          if (G.vm && G.vm.fase === "fine") { cb.chiusa = true; if (RN && RN.notaFine) RN.notaFine.textContent = NOTA_CHIUSA_N; return; }
+          if (G.vm && G.vm.fase === "fine") { cb.chiusa = true; if (RN && RN.notaFine) { RN.notaFine.textContent = NOTA_CHIUSA_N; RN.notaFine.hidden = false; } return; }
           erroreN(t, "🚪 L'host ha chiuso la partita.");
         },
         // (solo se il primo collegamento non riesce)
@@ -1163,7 +1170,7 @@
     schermoScritturaOnline(R, vm);
     if (io < 0 || !me || me.via || (vm.fatti || []).indexOf(cb.myId) >= 0) {   // guarda, o ha già consegnato: le faccine mentre gli altri scrivono
       await ST.suSchermo(S, 800);
-      if (S.vivo() && R.vm.fase === "scrittura") ST.barra(S, [ el("p", { class: "nc-attesa", text: io < 0 || !me || me.via ? "👀 Stai guardando: alla prossima partita giochi anche tu." : "Fatto! Aspettiamo gli altri…" }), R.t.faccine() ]);
+      if (S.vivo() && R.vm.fase === "scrittura") ST.barra(S, [ el("p", { class: "nc-attesa", text: io < 0 && (R.vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi: gioca chi è stato scelto." : io < 0 || !me || me.via ? "👀 Stai guardando: alla prossima partita giochi anche tu." : "Fatto! Aspettiamo gli altri…" }), R.t.faccine() ]);
       return;
     }
     R.foglioGiro = vm.giro;
@@ -1375,11 +1382,22 @@
     s._contenuto.appendChild(box);
     var fa = t.faccine();   // le faccine mentre si guarda la classifica
     if (fa) { fa.style.marginTop = "10px"; s._contenuto.appendChild(fa); }
-    if (cb.sonoHost) {
+    // i tasti di fine comuni (all'host e a chi ha giocato), se li disegna il core: allora niente tasti nostri.
+    // La nota resta nascosta: serve solo se l'host chiude la stanza
+    var haGiocato = cb.sonoHost || idxN(vm, cb.myId) >= 0;
+    if (haGiocato && t.tastiFine(s._piede, cb.sonoHost ? { host: true, nuova: cb.onNuova, esci: cb.onEsci } : { host: false, esci: cb.onEsci })) {
+      if (!cb.sonoHost) {
+        var nC = el("p", { class: "modulo-nota", style: "text-align:center", text: cb.chiusa ? NOTA_CHIUSA_N : "" });
+        if (!cb.chiusa) nC.hidden = true;
+        if (R) R.notaFine = nC;
+        s._contenuto.appendChild(nC);
+      }
+    } else if (cb.sonoHost) {
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏁 Fine", onclick: cb.onEsci }));
     } else {
-      var nota = el("p", { class: "modulo-nota", style: "text-align:center", text: cb.chiusa ? NOTA_CHIUSA_N : "⏳ Aspetta l'host: se fa un'altra partita, torni da solo nella saletta." });
+      var nota = el("p", { class: "modulo-nota", style: "text-align:center", text: cb.chiusa ? NOTA_CHIUSA_N
+        : !haGiocato && (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta hai guardato." : "⏳ Aspetta l'host: se fa un'altra partita, torni da solo nella saletta." });
       if (R) R.notaFine = nota;
       s._piede.appendChild(nota);
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
@@ -1391,13 +1409,14 @@
   function lobbyN(t, vm, cb) {
     var el = t.el, cc = el("div", { class: "nc-cats nc-cats-lobby" });
     (vm.cats || []).forEach(function (c) { cc.appendChild(el("span", { text: c.emoji + " " + c.testo })); });
-    var info = el("div", {}, [ el("div", { class: "etichetta", text: "Categorie · " + vm.secondi + " secondi · " + (vm.giri === 1 ? "1 giro" : vm.giri + " giri") + (vm.difficili ? " · anche U e Z" : "") }), cc ]);
+    var info = el("div", {}, [ el("div", { class: "etichetta", text: "Categorie" + (vm.difficili ? " · anche U e Z" : "") }), cc ]);
     var extra = [info];
     // ("Sto entrando…" lo scrive già la saletta: qui solo la stanza piena)
-    if (!cb.sonoHost && idxN(vm, cb.myId) < 0 && vm.players.length >= 10) extra.unshift(el("p", { class: "link-avviso", text: "La stanza è piena (10 giocatori): se qualcuno esce entri tu." }));
+    var guardo = !cb.sonoHost && (vm.guarda || []).indexOf(cb.myId) >= 0;   // nella Sala: non sono stato scelto, guardo
+    if (!cb.sonoHost && !guardo && idxN(vm, cb.myId) < 0 && vm.players.length >= 10) extra.unshift(el("p", { class: "link-avviso", text: "La stanza è piena (10 giocatori): se qualcuno esce entri tu." }));
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2, testoComincia: "Via ▶",
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
-      extra: extra, attesa: "Aspetta che l'host dia il via: poi scrivete tutti insieme!",
+      extra: extra, attesa: "Aspetta che l'host dia il via: poi scrivete tutti insieme!", spettatore: guardo ? "👀 Questa volta guardi" : null,
       onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 })();

@@ -1,6 +1,6 @@
 /* =========================================================
    GIOCO — "Scopone" (carte napoletane, stesse immagini della Scopa)
-   In quattro, a due squadre: TU + Rosa (bot, di fronte) contro Bot e Peppe.
+   In quattro, a due squadre: TU + un bot di fronte (il compagno) contro due bot (i bot fissi di SG.bot).
    Due varianti:
      • Scientifico: 10 carte a testa, niente carte sul tavolo all'inizio.
      • Classico: 9 carte a testa + 4 sul tavolo.
@@ -17,7 +17,7 @@
 (function () {
   "use strict";
   var TARGET = 11;
-  var NOMI_BOT = { 1: "Bot", 2: "Rosa", 3: "Peppe" };   // 1 e 3 rivali, 2 il tuo compagno (il primo bot si chiama sempre Bot)
+  // i tre bot (1 e 3 rivali, 2 il tuo compagno) sono i bot fissi uguali in tutti i giochi (SG.bot), scelti dalla bravura
   var SALVA = "sg-scopone-partita";                     // la partita in corso, salvata sul telefono
   var SEMI_TXT = { D: "🪙", C: "🏆", S: "🗡️", B: "🪵" };   // denari, coppe, spade, bastoni
   // frasi dei bot a fumetto nei momenti forti (corte: stanno nel fumetto)
@@ -41,9 +41,9 @@
     icona: "🃏",
     descrizione: "Lo scopone in quattro (a squadre): tu e il tuo compagno contro due avversari. Varianti classico e scientifico. Contro il computer.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "🤖 Contro il computer",   // (tu e 3 bot: non c'è ancora l'online)
-    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu e Rosa contro Bot e Peppe" }],
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Tu e un Bot contro due Bot" }],
     regole: [
-      "Si gioca <b>in quattro, a due squadre</b>: tu e <b>Rosa</b> (di fronte) contro <b>Bot</b> e <b>Peppe</b>. Qui giochi contro il computer.",
+      "Si gioca <b>in quattro, a due squadre</b>: tu e il tuo <b>compagno</b> (di fronte) contro due <b>avversari</b>. Qui giochi contro il computer: gli altri tre sono Bot.",
       "<b>Scientifico</b>: 10 carte a testa, niente carte sul tavolo. <b>Classico</b>: 9 a testa + 4 sul tavolo.",
       "Le carte sono date <b>tutte subito</b> (non si pesca). Nel tuo turno giochi una carta: se ha lo stesso valore di una del tavolo la <b>prendi</b>, altrimenti puoi prendere una <b>somma</b> di più carte.",
       "Svuoti il tavolo? <b>Scopa</b> (+1), tranne con l'ultima carta. A fine mano le carte rimaste vanno all'ultima squadra che ha preso.",
@@ -66,7 +66,7 @@
       box.appendChild(el("div", { class: "etichetta", text: "Variante" }));
       box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bSci, bCla]));
       dWrap = el("div", {});
-      dWrap.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei bot" }));
+      dWrap.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei Bot" }));
       function righina(scelte, chiave) {   // fila di scelte che si accendono
         var dg = el("div", { style: "display:flex;gap:8px" });
         scelte.forEach(function (d) {
@@ -83,7 +83,7 @@
       box.appendChild(el("p", { class: "modulo-nota", style: "margin:4px 0 0", text: "Le vittorie contano per i trofei nelle partite da 11 punti in su." }));
       box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Illumina le carte che prendono" }));
       box.appendChild(righina([[true, "Sì"], [false, "No"]], "aiuto"));
-      box.appendChild(el("p", { class: "modulo-nota", style: "margin-top:10px", text: "Giochi tu (in basso) con Rosa di fronte, contro Bot e Peppe ai lati." }));
+      box.appendChild(el("p", { class: "modulo-nota", style: "margin-top:10px", text: "Giochi tu (in basso) col tuo compagno di fronte, contro due avversari ai lati: sono tutti Bot." }));
     },
     avvia: function (t) {
       if (!window.SGCarte) { var s = t.schermata({ icona: "⚠️", titolo: "Un attimo" }); s._contenuto.appendChild(t.el("p", { text: "Ricarica la pagina e riprova." })); s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci })); return t.mostra(s); }
@@ -336,7 +336,11 @@
     var finita = false, timers = [];
     var mioNome = (t.nomeProfilo && t.nomeProfilo()) || t.giocatori[0] || "Tu";
     var st, sel = { carta: null, presa: [] };
-    function nomi() { st.nomi = { 0: mioNome, 1: NOMI_BOT[1], 2: NOMI_BOT[2], 3: NOMI_BOT[3] }; }
+    function nomi() {   // i tre bot fissi (SG.bot), scelti dalla bravura: 1 a sinistra, 2 il compagno di fronte, 3 a destra
+      var b = SG.bot && SG.bot.prendi ? SG.bot.prendi(3, { livello: diff, escludi: [mioNome] }) : [];
+      st.nomi = { 0: mioNome }; st.omini = {};
+      [1, 2, 3].forEach(function (s, i) { var x = b[i] || { nome: "Bot " + s, omino: null }; st.nomi[s] = x.nome; st.omini[s] = x.omino || null; });
+    }
     function nuovaPartita() { st = creaStato(variante, C().traguardoDa(t.impostazioni)); nomi(); distribuisci(st); }
     if (salvata) { st = salvata; nomi(); st.presa = null; st.fumo = null; st.resto = null; st.posti = st.posti || {}; st.ultime = st.ultime || {}; }
     else nuovaPartita();
@@ -385,7 +389,7 @@
       var primaDellaMossa = st.mani[0].length;
       var ev = applica(st, seat, id, presa); if (ev.errore) return;
       tracciaScopone(st, seat, ev, primaDellaMossa);
-      // il fumetto: chi ha fatto il colpo, oppure Rosa che ti fa i complimenti
+      // il fumetto: chi ha fatto il colpo, oppure il compagno che ti fa i complimenti
       st.fumo = null;
       if (seat === 0) { if (ev.scopa) st.fumo = { s: 2, txt: pesca(FRASI.bravo) }; else if (ev.sette) st.fumo = { s: 2, txt: pesca(FRASI.braviSette) }; }
       else if (ev.scopa) st.fumo = { s: seat, txt: pesca(FRASI.scopa), forte: true };
@@ -512,8 +516,8 @@
       var punti = el("div", { style: "font-size:.82rem;font-weight:700" });
       head.appendChild(punti);
       if (window.SGMusica) head.appendChild(window.SGMusica.bottone(el));
-      // la stanza: Bot a sinistra, Rosa di fronte, Peppe a destra
-      var sedie = [1, 2, 3].map(function (s) { return { cfg: null, nome: st.nomi[s], n: st.mani[s].length, turno: false, mia: s === 2, faccia: "normale", fumetto: null }; });
+      // la stanza: un bot a sinistra, il compagno di fronte, l'altro bot a destra
+      var sedie = [1, 2, 3].map(function (s) { return { cfg: (st.omini && st.omini[s]) || null, nome: st.nomi[s], n: st.mani[s].length, turno: false, mia: s === 2, faccia: "normale", fumetto: null }; });
       var R = C().stanza4(el, M, sedie);
       R.scena.appendChild(head);
       R.posti.forEach(function (p) { p.ult = el("span", { class: "sp-ult" }); p.targa.appendChild(p.ult); p.stato = { faccia: "normale" }; });
@@ -575,7 +579,7 @@
         if (turno) diTurno = i;
         var o = p.stato;
         if (o.faccia !== faccia) {
-          p.fig.innerHTML = figHtml(st.nomi[s], null, faccia);
+          p.fig.innerHTML = figHtml(st.nomi[s], (st.omini && st.omini[s]) || null, faccia);
           p.box.classList.toggle("pensa", faccia === "pensa");
           if (faccia === "esulta" && st.presa && st.presa.chi === s && p.fig.animate) p.fig.animate([{ transform: "none" }, { transform: "translateY(-18px)" }, { transform: "none" }], { duration: 650, easing: "ease-out" });
         }
@@ -701,14 +705,14 @@
     function fine(st) {
       var r = st.ultimoRound, finale = st.fase === "fine", vinto = st.punti.noi > st.punti.loro, pari = st.punti.noi === st.punti.loro;
       var s = t.schermata({ icona: finale ? (pari ? "🤝" : vinto ? "🏆" : "😮") : "🧮",
-        titolo: finale ? (pari ? "Pareggio!" : (vinto ? "Avete vinto!" : "Hanno vinto Bot e Peppe")) : "Fine mano",
+        titolo: finale ? (pari ? "Pareggio!" : (vinto ? "Avete vinto!" : "Hanno vinto " + st.nomi[1] + " e " + st.nomi[3])) : "Fine mano",
         sotto: "Scopone " + (st.variante === "scientifico" ? "scientifico" : "classico"),
         indietro: function () { if (finale || window.confirm("Uscire dalla partita?")) cb.onEsci(); } });
       schermo = s;
       var C0 = s._contenuto;
       if (finale && !pari) {   // la squadra che ha vinto fa festa
         var avs = el("div", { class: "sp-avs festa" });
-        var chi = vinto ? [[st.nomi[0], C().mioAvatar ? C().mioAvatar(st.nomi[0]) : null], [st.nomi[2], null]] : [[st.nomi[1], null], [st.nomi[3], null]];
+        var chi = vinto ? [[st.nomi[0], C().mioAvatar ? C().mioAvatar(st.nomi[0]) : null], [st.nomi[2], st.omini && st.omini[2]]] : [[st.nomi[1], st.omini && st.omini[1]], [st.nomi[3], st.omini && st.omini[3]]];
         chi.forEach(function (x) { avs.appendChild(el("div", { html: figHtml(x[0], x[1], "esulta") })); });
         C0.appendChild(avs);
       }
@@ -740,7 +744,7 @@
         if (!st.risultatoDato) {
           st.risultatoDato = true;
           var pNoi = st.punti.noi >= st.punti.loro ? 1 : 2, pLoro = st.punti.loro >= st.punti.noi ? 1 : 2;
-          if (t.risultato && st.nomi) t.risultato([0, 2, 1, 3].map(function (seat) { return { nome: st.nomi[seat], pos: seat % 2 === 0 ? pNoi : pLoro }; }));
+          if (t.risultato && st.nomi) t.risultato([0, 2, 1, 3].map(function (seat) { var r = { nome: st.nomi[seat], pos: seat % 2 === 0 ? pNoi : pLoro }; if (seat) r.bot = true; return r; }));
           if (vinto) { suonoVittoria(); coriandoli(s); }
         }
         s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));

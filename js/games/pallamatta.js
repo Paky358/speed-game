@@ -1075,7 +1075,8 @@
       (o.righe || []).forEach(function (r) { box.appendChild(el("div", { class: "pm-rig" + (r[2] ? " " + r[2] : "") }, [el("span", { text: r[0] }), el("b", { text: r[1] })])); });
       (o.nodi || []).forEach(function (n) { if (n) box.appendChild(n); });
       var bt = el("div", { class: "pm-tasti" });
-      (o.tasti || []).forEach(function (x) { bt.appendChild(el("button", { class: "btn " + (x.cls || "btn-fantasma"), text: x.testo, onclick: x.fn })); });
+      // o.piede(bt): online a fine partita i tasti li può mettere il core (true = fatto, niente tasti del gioco)
+      if (!(o.piede && o.piede(bt))) (o.tasti || []).forEach(function (x) { bt.appendChild(el("button", { class: "btn " + (x.cls || "btn-fantasma"), text: x.testo, onclick: x.fn })); });
       box.appendChild(bt); sopra.appendChild(box); sopra.classList.add("su");
       return box;
     }
@@ -1261,9 +1262,13 @@
       extra.push(riga);
     }
     var v = vittorie(vm.players); if (v) extra.push(el("p", { class: "modulo-nota", text: v }));
+    // nella Sala: chi non è stato scelto guarda (niente posto e niente "Sono pronto")
+    var guarda = vm.guarda || [], guardo = !me && guarda.some(function (g) { return g.id === cb.myId; });
+    if (guarda.length) extra.push(el("p", { class: "modulo-nota", text: "👀 Guardano: " + guarda.map(function (g) { return g.id === cb.myId ? "tu" : g.nome; }).join(", ") }));
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN_ON, vuoti: Math.max(0, MIN_ON - vm.players.length),
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
-      extra: extra, attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
+      extra: extra, attesa: guardo ? "Questa partita la guardi: tra poco si tira!" : "Aspetta che l'host cominci!", spettatore: guardo ? "👀 Questa volta guardi" : null,
+      onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
   function ominoDi(g) { return g.omino || (window.SGOmino ? SGOmino.casuale(g.nome) : null); }
 
@@ -1272,6 +1277,7 @@
     var imp = t.impostazioni || {}, nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
     var H = { fase: "lobby", codice: "…", pronta: false, lvSc: imp.lv == null ? "caso" : imp.lv, partita: 0, seq: 0, ultimo: -1, st: null, tav: null, classifica: null, tF: null, tA: null, mira: { t: 0, to: null },
       attesa: [], pausa: null, fineFatta: -1,   // attesa: chi ha chiesto di entrare a stanza piena o a partita cominciata (entra dopo, da solo)
+      guarda: [],   // nella Sala: chi non è stato scelto per giocare (guarda la partita e basta)
       players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost), potere: poterePreferito(), vinte: 0 }] };
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function presenti() { return H.players.filter(function (p) { return !p.via; }); }
@@ -1288,9 +1294,10 @@
       onConnesso: function () { H.pronta = true; bd(); },
       onErrore: function () { fermaTimer(); fermaPausa(); if (H.tav) H.tav.chiudi(); errore(t, "Problema di collegamento: la stanza non si apre. Riprova."); },   // (solo se il primo collegamento non riesce)
       onAddio: function (id) {
-        var prima = H.attesa.length;
+        var prima = H.attesa.length + H.guarda.length;
         H.attesa = H.attesa.filter(function (a) { return a.id !== id; });
-        var p = pById(id); if (!p) { if (H.attesa.length !== prima) bd(); return; }
+        H.guarda = H.guarda.filter(function (a) { return a.id !== id; });
+        var p = pById(id); if (!p) { if (H.attesa.length + H.guarda.length !== prima) bd(); return; }
         if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); accogli(); bd(); return; }
         p.via = true;   // a partita iniziata resta in classifica, ma i suoi turni si saltano
         if (H.fase === "gioco") {
@@ -1304,7 +1311,11 @@
         var p = pById(id);
         if (m.t === "join") {
           var nuovo = { id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino), potere: POTERI[m.potere] ? m.potere : "bomba", vinte: 0 };
-          if (!p && H.fase === "lobby" && H.players.length < MAX_ON) H.players.push(nuovo);
+          if (!p && t.puoSedersi && !t.puoSedersi(id, nuovo.nome)) {   // nella Sala non è tra gli scelti: questa volta guarda
+            H.guarda = H.guarda.filter(function (a) { return a.id !== id; });
+            if (H.guarda.length < 12) H.guarda.push({ id: id, nome: nuovo.nome });
+          }
+          else if (!p && H.fase === "lobby" && H.players.length < MAX_ON) H.players.push(nuovo);
           else if (!p) {   // stanza piena o partita cominciata: aspetta di entrare (lo vede scritto sul suo telefono)
             H.attesa = H.attesa.filter(function (a) { return a.id !== id; });
             if (H.attesa.length < 8) H.attesa.push(nuovo);
@@ -1322,6 +1333,7 @@
     // la "foto" per tutti: SEMPRE con gli id dei giocatori (e di chi aspetta di entrare); nel gioco anche il tavolo (tipi e pezzi già scoppiati)
     function vm() {
       var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, lvSc: H.lvSc, partita: H.partita, classifica: H.classifica, attesa: H.attesa.map(function (a) { return a.id; }),
+        guarda: H.guarda.map(function (a) { return { id: a.id, nome: a.nome }; }),
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, potere: p.potere, vinte: p.vinte || 0, via: !!p.via, punti: p.punti || 0, palline: p.palline || 0, mira: p.mira || 0, fuoco: p.fuoco || 0 }; }) };
       if (H.fase !== "lobby" && H.st) {
         var st = H.st;
@@ -1446,10 +1458,12 @@
       suonoFine(); var v = vittorie(H.players);
       H.tav.finestra({ titolo: titoloFine(H.classifica, "host"), sotto: H.st.febbre ? "Tutti gli arancioni presi!" : H.players.some(function (p) { return !p.via && p.palline > 0; }) ? "Partita chiusa prima della fine" : "Palline finite", righe: righeFine(H.classifica, "host"),
         nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null, faccineFine(t)],
+        piede: function (bt) { return t.tastiFine && t.tastiFine(bt, { host: true, nuova: nuova, esci: cbHost.onEsci }); },
         tasti: [{ testo: "↻ Altra partita (stessi amici)", cls: "btn-primario", fn: nuova }, { testo: "🏠 Esci", fn: cbHost.onEsci }] });
     }
     // "Altra partita": stessa stanza, stessi amici, tutti tornano nella saletta (MAI chiudere e riaprire la stanza); entra anche chi aspettava
     function nuova() { fermaTimer(); fermaPausa(); H.fase = "lobby"; H.classifica = null; H.players = presenti(); accogli(); bd(); }
+    t.onRivincita = nuova;   // la Rivincita della Sala
 
     var cbHost = { sonoHost: true, myId: "host", onComincia: comincia,
       onPotere: function (k) { var p = pById("host"); if (p) p.potere = k; salvaPotere(k); bd(); },
@@ -1516,7 +1530,9 @@
     }
     function mioTurno() { var st = S.st, g = st && st.gioc[st.turno]; return !!g && g.id === S.myId; }
     function ricevi(vm) {
-      if (!vm.players.some(function (p) { return p.id === S.myId; })) {   // non sono (ancora) tra i giocatori
+      // nella Sala, se non sono tra gli scelti, guardo la partita (il tavolo come gli altri, ma senza tirare)
+      var guardo = (vm.guarda || []).some(function (g) { return g.id === S.myId; });
+      if (!guardo && !vm.players.some(function (p) { return p.id === S.myId; })) {   // non sono (ancora) tra i giocatori
         if (S.tav) { S.tav.chiudi(); S.tav = null; S.st = null; } S.coda = null;
         if ((vm.attesa || []).indexOf(S.myId) < 0) {   // l'host non mi ha ancora (o non più): richiedo di entrare, con calma
           if (S.rete && S.myId && Date.now() - (S.tJoin || 0) > 3000) { S.tJoin = Date.now(); S.rete.invia(msgJoin()); }
@@ -1578,8 +1594,14 @@
       if (S.fineDi === S.tav) return;
       S.fineDi = S.tav;
       suonoFine(); var cl = vm.classifica || [], v = vittorie(vm.players);
+      var nota = t.el("p", { class: "pm-nota", text: "Se l'host fa un'altra partita, torni da solo nella saletta." });
       S.tav.finestra({ titolo: titoloFine(cl, S.myId), sotto: vm.feb ? "Tutti gli arancioni presi!" : (vm.players || []).some(function (p) { return !p.via && p.palline > 0; }) ? "Partita chiusa prima della fine" : "Palline finite", righe: righeFine(cl, S.myId),
-        nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null, t.el("p", { class: "pm-nota", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }), faccineFine(t)],
+        nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null, nota, faccineFine(t)],
+        piede: function (bt) {   // i tasti di fine del core (Ci sto…): allora la nota non serve; se no la nota e "Esci" di sempre
+          if (!(t.tastiFine && t.tastiFine(bt, { host: false, esci: cb.onEsci }))) return false;
+          if (nota.parentNode) nota.parentNode.removeChild(nota);
+          return true;
+        },
         tasti: [{ testo: "🏠 Esci", fn: cb.onEsci }] });
     }
   }
@@ -1700,6 +1722,9 @@
     id: ID, nome: "Palla Matta", icona: "🔴",
     descrizione: "Spara la pallina dall'alto e falla rimbalzare sui pioli: fai scoppiare tutti gli arancioni con 10 palline. Livelli, poteri e la febbre finale!",
     giocatoriMin: 1, giocatoriMax: 4, difficolta: 2,
+    postiOnline: 4,   // online si gioca in 4 al massimo: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
+    // la riga «📜 Si gioca così» della saletta
+    riassunto: function (imp) { var lv = imp && imp.lv; return lv == null || lv === "caso" ? "Livello a sorte" : "Livello: " + nomeLivello(+lv); },
     modi: [{ modo: "solo", icona: "🎯", nome: "Da solo", sotto: "I livelli, uno dopo l'altro", diretto: true, min: 1 },   // diretto: niente impostazioni, si va ai livelli
       { modo: "amici", icona: "📱", nome: "Sfida su questo telefono", sotto: "Da 2 a 4: un tiro a testa, vi passate il telefono", amici: true, min: 2 }],
     regole: [

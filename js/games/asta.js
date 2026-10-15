@@ -528,6 +528,14 @@
     giocatoriMin: 2,
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono per rilanciare", amici: true }],
     giocatoriMax: MAX_GIOCATORI,
+    postiOnline: MAX_GIOCATORI,   // posti online (10)
+    // le regole in una riga, per la saletta: "🎁 Temi classici · Vacanze · 15 crediti" o "⚽ Mini asta Fantacalcio · 20 crediti"
+    riassunto: function (imp) {
+      imp = imp || {};
+      if (imp.formato === "fanta") return "⚽ Mini asta Fantacalcio · " + FANTA_BUDGET + " crediti · rosa da 5";
+      var temi = window.SG_ASTA_TEMI || [], tm = temi.filter(function (x) { return x.id === imp.tema; })[0] || temi[0];
+      return "🎁 Temi classici" + (tm ? " · " + tm.icona + " " + tm.nome : "") + " · " + (imp.crediti || 15) + " crediti";
+    },
     difficolta: 3,   // Difficile — vale di più nel torneo (1 facile, 2 media, 3 difficile)
 
     regole: [
@@ -1005,7 +1013,7 @@
     S.bolla.classList.toggle("conta", !!conta); rianima(S.bolla, "via", testo);
   }
   function aggiudica(testo, poi, scritta) {   // il martello batte: "Aggiudicato!" (o un'altra scritta), poi si va avanti
-    var S = SALA; if (!S || !document.body.contains(S.radice)) return poi();
+    var S = SALA; if (!S || !document.body.contains(S.radice)) { SALA = null; return poi(); }   // (sala non a vista: niente martello, e niente giro senza fine)
     fermaConta(S); S.martello.classList.add("batte"); rianima(S.ban, "batte"); parlaBanditore(testo);
     S.radice.appendChild(timbro(scritta || "AGGIUDICATO!")); S.radice.classList.add("chiusa");
     SALA = null;
@@ -1680,6 +1688,8 @@
       st.giocatori.forEach(function (g) { g.crediti = st.crediti; });
       bd();
     };
+    // la Rivincita (dalla classifica): tutti di nuovo nella saletta, stessi amici
+    t.onRivincita = function () { if (st.fase === "fine" && !st.morto) nuovaInLobby(); };
 
     var rete = ospitaAsta({
       onCodice: function (c) { st.codice = c; bd(); },
@@ -1702,7 +1712,7 @@
             var eraVia = gj.via; gj.via = false;
             if (eraVia && st.fase === "scelta" && chiSceglie() === gj) tempoScelta();   // e se tocca a lui scegliere, ha di nuovo il suo tempo
           }
-          else if (!st.iniziata && st.giocatori.length < MAX_GIOCATORI)
+          else if (!st.iniziata && st.giocatori.length < MAX_GIOCATORI && (!t.puoSedersi || t.puoSedersi(id, m.nome)))   // (chi non è tra chi gioca guarda)
             st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: st.crediti, kit: [], stelle: 0, asteVinte: 0, omino: avatarOk(m.omino) });
           bd();
         }
@@ -2297,7 +2307,9 @@
     }
     var fa = t.faccine ? t.faccine() : null;   // le faccine della saletta: si festeggia (o si sfotte) tutti insieme
     if (fa) s._piede.appendChild(el("div", { style: "display:flex;justify-content:center" }, [ fa ]));
-    if (cb.sonoHost) {
+    // i tasti di fine uguali per tutti (Rivincita, Cambia gioco, Ci sto…) li mette il core; se no quelli di sempre
+    if (t.tastiFine && t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) { /* fatto dal core */ }
+    else if (cb.sonoHost) {
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: vm.formato === "fanta" ? "🔄 Nuova partita" : "🔄 Nuova partita (cambia argomento)", onclick: cb.onNuova }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     } else {
@@ -2530,6 +2542,7 @@
     function stopTo() { TM.ferma(); }
     // "⚙️ Regole" in saletta: se torni ai Temi classici cambia motore (stessa stanza, stessi amici)
     t.onRegole = function (im) { if (!st.iniziata && (im.formato || "temi") !== "fanta") { st.morto = true; TM.smetti(); avviaAsta(t); } };
+    t.onRivincita = function () { if (st.fase === "fine" && !st.morto) nuovaInLobby(); };   // la Rivincita: tutti di nuovo nella saletta
 
     var rete = ospitaAsta({
       onCodice: function (c) { st.codice = c; bd(); },
@@ -2547,7 +2560,7 @@
         if (m.t === "join") {
           var gj = perId(st, id);
           if (gj) gj.via = false;   // chi rientra (stesso id) riprende il suo posto e la sua rosa
-          else if (!st.iniziata && st.giocatori.length < MAX_GIOCATORI)
+          else if (!st.iniziata && st.giocatori.length < MAX_GIOCATORI && (!t.puoSedersi || t.puoSedersi(id, m.nome)))   // (chi non è tra chi gioca guarda)
             st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, omino: avatarOk(m.omino) });
           bd();
         }
@@ -2691,6 +2704,9 @@
         bottoni: function () {
           var el = t.el, fa = t.faccine ? t.faccine() : null;   // (le faccine della saletta, sul podio)
           fa = fa ? el("div", { style: "width:100%;display:flex;justify-content:center" }, [ fa ]) : null;
+          // i tasti di fine uguali per tutti li mette il core (in una riga a tutta larghezza); se no quelli di sempre
+          var riga = el("div", { style: "width:100%" });
+          if (t.tastiFine && t.tastiFine(riga, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) return [ fa, riga ];
           return [ fa ].concat(cb.sonoHost ? [ el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }), el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }) ]
             : [ el("p", { class: "sa-nota", text: cb._chiusa ? "🚪 L'host ha chiuso la stanza" : "In attesa dell'host per un'altra partita…" }), el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }) ]);
         } });

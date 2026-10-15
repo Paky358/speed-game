@@ -1,7 +1,7 @@
 /* =========================================================
    BLACK JACK — "Il 21"
    Carte francesi disegnate a mano (SVG originali, nessun mazzo
-   con copyright). Mazzo da 6 mazzi, il banco è Bot (lo guida
+   con copyright). Mazzo da 6 mazzi, il banco è un bot fisso (lo guida
    chi tiene la partita), mosse Carta/Stai/Raddoppia/Dividi/Assicura.
    Da 1 a 10 giocatori. Il tavolo ovale con la telecamera sopra,
    sotto le carte grandi e i tasti di chi decide.
@@ -515,7 +515,7 @@
   function puoPuntare(vm, i) { var g = vm.giocatori[i]; return !!g && !g.puntata && !g.via && !g.salta && g.fiches > 0; }
   function deveAssic(vm, i) { var g = vm.giocatori[i]; return !!g && g.puntata > 0 && !g.dec && !g.via && !!g.mani[0] && !BJ.eBlackjack(g.mani[0].carte) && g.fiches >= Math.max(1, Math.floor(g.puntata / 2)); }
 
-  // ---- le battute di Bot, il croupier (la stessa su tutti i telefoni: si sceglie col numero della mano) ----
+  // ---- le battute del croupier (la stessa su tutti i telefoni: si sceglie col numero della mano) ----
   var FRASI = {
     punta: ["Fate il vostro gioco!", "Puntate, signori!", "Chi mi sfida stasera?", "Le carte sono calde…", "Avanti, il banco aspetta 😏",
       "Mano nuova, storia nuova", "Il 21 vi sta chiamando", "Puntate col cuore… e con la testa", "Mazzo pronto, sorriso pronto 🎩",
@@ -736,7 +736,7 @@
     document.head.appendChild(st);
   }
 
-  // ---------- avatar: Bot il dealer + i giocatori ai loro posti ----------
+  // ---------- avatar: il croupier (un bot fisso) + i giocatori ai loro posti ----------
   var MATT_DEALER = { forma: "uomo", corpo: "medio", pelle: 2, capelli: "indietro", colCap: 1, barba: "corta", capo: "giacca", maglia: 7,
     collo: "papillon", colCollo: 0, sopracc: "decise", occhi: "furbi", bocca: "ghigno" };
   var FACCE = {
@@ -762,6 +762,19 @@
     return window.SGOmino ? SGOmino.casuale(nome || "io") : null;
   }
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  // il banco è uno dei bot fissi (SG.bot: di partenza Matt, il campione), vestito da croupier: giacca e papillon,
+  // faccia, capelli e occhiali suoi (così si riconosce). Si sceglie a inizio partita e va nel vm (gli ospiti lo leggono da lì).
+  var DIVISA = { capo: "giacca", maglia: 7, collo: "papillon", colCollo: 0, mano: "nessuno", animale: "nessuno", schiena: "nessuna", borsa: "nessuna" };
+  function croupierDa(nomi) {
+    var b = window.SG && SG.bot ? SG.bot.prendi(1, { livello: "difficile", escludi: nomi || [] })[0] : null;
+    if (!b) return null;
+    var cfg = {}, n;
+    for (n in (b.omino || MATT_DEALER)) cfg[n] = (b.omino || MATT_DEALER)[n];
+    for (n in DIVISA) cfg[n] = DIVISA[n];
+    return { id: b.id, nome: b.nome, omino: cfg };
+  }
+  function nomeBanco(vm) { return (vm && vm.croupier && vm.croupier.nome) || "Bot"; }
+  function avatarBanco(vm) { return (vm && vm.croupier && avatarValido(vm.croupier.omino)) || MATT_DEALER; }
 
   // ---- suoni (Web Audio) ----
   // la vibrazione al tocco dei tasti la fa già l'app (una sola, solo quando si sceglie): qui nessun vibra()
@@ -874,7 +887,7 @@
     return {
       fase: st.fase, giro: st.giro, mano: st.mano, maniTot: st.maniTot, rimescolato: st.rimescolato, turno: st.turno,
       annuncio: st.annuncio ? { seat: st.annuncio.seat, testo: st.annuncio.testo, id: st.annuncio.id } : null,
-      puntataMin: st.min, consigli: !!(extra && extra.consigli),
+      puntataMin: st.min, consigli: !!(extra && extra.consigli), croupier: st.croupier || null,
       // la carta coperta del banco non parte finché non si gira (nessuno la può sbirciare)
       banco: st.banco.carte.map(function (c, k) { return (k === 1 && !scoperta) ? { s: 0, v: 0, cop: 1 } : cp(c); }),
       classifica: st.fase === "fine" ? st.classifica : null,
@@ -1253,12 +1266,12 @@
       }
       // Bot nell'angolo con quanto ha il banco (sempre visibile)
       var fm = faccinaMatt(), pB = testoBanco(scoperta);
-      var km = fm.faccia + "|" + fm.fum + "|" + pB + "|" + vm.fase;
+      var km = fm.faccia + "|" + fm.fum + "|" + pB + "|" + vm.fase + "|" + nomeBanco(vm);
       if (R.k.m !== km) {
         R.k.m = km;
         hud.className = "bjr-matt" + (vm.fase === "banco" ? " turno" : "");
-        if (window.SGOmino) hud.firstChild.innerHTML = svgAvatar(MATT_DEALER, fm.faccia, { busto: true });
-        var hn = hud.lastChild; hn.innerHTML = ""; hn.appendChild(document.createTextNode(pB ? "🎩 Banco" : "🎩 Bot"));
+        if (window.SGOmino) hud.firstChild.innerHTML = svgAvatar(avatarBanco(vm), fm.faccia, { busto: true });
+        var hn = hud.lastChild; hn.innerHTML = ""; hn.appendChild(document.createTextNode(pB ? "🎩 Banco" : "🎩 " + nomeBanco(vm)));
         if (pB) hn.appendChild(el("b", { class: /Sball/.test(pB) ? "bust" : "", text: pB }));
         if (fumEl) fumEl.remove(); fumEl = null;
         if (fm.fum) { fumEl = el("div", { class: "bjr-fum" + (fm.oro ? " oro" : ""), style: "left:8px;top:" + (R.H - 96) + "px", text: fm.fum }); zBanco.appendChild(fumEl); }   // il fumetto sta sopra la testa di Bot, lontano dalle carte
@@ -1271,8 +1284,8 @@
       }
       // in grande sulla parete: chi sta giocando
       var gt = vm.giocatori[vm.turno], scritta = "", sotto = "", quale = vm.maniTot ? "mano " + Math.min(vm.maniTot, vm.mano + (vm.fase === "esito" ? 0 : 1)) + " di " + vm.maniTot : "";
-      if (vm.fase === "distrib") scritta = "Bot distribuisce…";
-      else if (vm.fase === "banco") scritta = "Tocca a Bot 🎩";
+      if (vm.fase === "distrib") scritta = nomeBanco(vm) + " distribuisce…";
+      else if (vm.fase === "banco") scritta = "Tocca a " + nomeBanco(vm) + " 🎩";
       else if (vm.fase === "esito") { scritta = vm.maniTot && vm.mano >= vm.maniTot ? "Ultima mano finita!" : "Fine mano"; sotto = quale; }
       else if (vm.fase === "fine") scritta = "Fine partita 🏁";
       else if (vm.fase === "punta" && drv.mioIdx) {   // online si punta tutti insieme
@@ -1397,7 +1410,7 @@
       try { if (drv.stanza) sessionStorage.setItem("bj-intro-" + drv.stanza, "1"); } catch (e) {}
       intro.corre = true;
       var N = vm.giocatori.length, velo = el("div", { class: "bjr-intro" }, [
-        el("div", { class: "mg", html: window.SGOmino ? svgAvatar(MATT_DEALER, "esulta") : "" }), el("div", { class: "banc" }) ]);
+        el("div", { class: "mg", html: window.SGOmino ? svgAvatar(avatarBanco(vm), "esulta") : "" }), el("div", { class: "banc" }) ]);
       intro.velo = velo;
       zBanco.appendChild(velo); capt.innerHTML = ""; capt.dataset.k = "";
       var passi = [];
@@ -1465,7 +1478,7 @@
       var mio = drv.puoAgire(vm);
       if (vm.fase === "fine") return heroFine();
       if (drv.mioIdx && !vm.giocatori[mioIdx()]) return heroInfo("🪑", "Ti stai sedendo al tavolo…");   // appena arrivato: il posto sta arrivando
-      if (vm.fase === "distrib") return heroInfo("🂠", "Bot distribuisce…");
+      if (vm.fase === "distrib") return heroInfo("🂠", nomeBanco(vm) + " distribuisce…");
       if (vm.fase === "punta") return heroPunta(chiDecide());
       if (vm.fase === "assic") return heroAssic(chiDecide());
       if (vm.fase === "banco") return heroInfo("🎴", "Gioca il banco…");
@@ -1538,7 +1551,7 @@
         return;
       }
       var costo = Math.floor(g.puntata / 2);
-      zHero.appendChild(el("div", { class: "bj-hfiches", text: "Bot ha un Asso: assicuri per " + fmt(costo) + " 🪙? Paga 2 a 1" }));
+      zHero.appendChild(el("div", { class: "bj-hfiches", text: nomeBanco(vm) + " ha un Asso: assicuri per " + fmt(costo) + " 🪙? Paga 2 a 1" }));
       // come nel turno: i tasti ai lati delle carte (così tutto sta nello spazio di sotto)
       var centro = el("div", { class: "bj-hcentro" });
       heroCarte(g, centro);
@@ -1578,7 +1591,7 @@
       var centro = el("div", { class: "bj-hcentro" });
       heroCarte(g, centro);
       var ma = g.mani[g.attiva], attesa = ma && !ma.chiusa && ma.carte.length < 2;   // dopo "Dividi": aspetta la seconda carta
-      if (attesa) centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:#ffe58a", text: "Bot ti dà la carta…" }));
+      if (attesa) centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:#ffe58a", text: nomeBanco(vm) + " ti dà la carta…" }));
       if (ma && ma.chiusa) {   // mano finita: resta a schermo un attimo prima di passare
         var pm = BJ.punteggio(ma.carte);
         centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:" + (pm > 21 ? "#ff9d8a" : "#9fe6b4"),
@@ -1628,12 +1641,15 @@
     }
     // fine partita: la classifica è sul tavolo; qui si riparte o ci si alza
     function heroFine() {
-      var az = el("div", { class: "bj-azioni" });
-      if (drv.puoNuova && drv.puoNuova()) {
-        zHero.appendChild(el("div", { class: "bj-hnome", text: "Bella partita! 🎉" }));
-        az.appendChild(tasto(drv.testoAncora || "Gioca ancora ▶", "bj-b-carta", function () { bloccaTasti(); drv.onAncora(); }));
-      } else zHero.appendChild(el("div", { class: "bj-hfiches", text: "Aspettiamo l'host: si gioca ancora?" }));
-      az.appendChild(tasto("🚪 Mi alzo", "bj-b-no", function () { chiediUscita(); }));
+      var az = el("div", { class: "bj-azioni" }), host = !!(drv.puoNuova && drv.puoNuova());
+      // online: i tasti di fine uguali per tutti li mette il core (la Rivincita è la serie nuova); se no quelli di sempre
+      var delCore = !!(drv.stanza && t.tastiFine && t.tastiFine(az, { host: host, nuova: drv.onAncora, esci: function () { chiudi(); drv.onEsci(); } }));
+      if (host) zHero.appendChild(el("div", { class: "bj-hnome", text: "Bella partita! 🎉" }));
+      else if (!delCore) zHero.appendChild(el("div", { class: "bj-hfiches", text: "Aspettiamo l'host: si gioca ancora?" }));
+      if (!delCore) {
+        if (host) az.appendChild(tasto(drv.testoAncora || "Gioca ancora ▶", "bj-b-carta", function () { bloccaTasti(); drv.onAncora(); }));
+        az.appendChild(tasto("🚪 Mi alzo", "bj-b-no", function () { chiediUscita(); }));
+      }
       zHero.appendChild(az);
       var fa = drv.stanza && t.faccine ? t.faccine() : null;   // (online) le faccine della saletta sulla classifica
       if (fa) zHero.appendChild(el("div", { style: "display:flex;justify-content:center;margin-top:6px" }, [ fa ]));
@@ -1687,6 +1703,7 @@
     }
     var M = BJ.creaMotore(nomi, t.mischia, fichesIniz, RG), st = M.st, tav;
     st.giocatori[0].prova = prova;
+    st.croupier = croupierDa(nomi);   // il banco: uno dei bot fissi
     var avatari = nomi.map(function (n, i) { return i === 0 ? mioAvatar(n) : null; });   // gli altri: faccia fissa legata al nome
     var maniFinite = 0, detto = false, salvato = st.giocatori[0].fiches;
     // il saldo del profilo segue il tavolo: la puntata si toglie subito (uscendo a metà mano non torna indietro)
@@ -1700,7 +1717,7 @@
     function refresh() { tav.aggiorna(vistaBJ(st, RG)); salva(); }
     tav = tavoloBJ(t, {
       avatari: function () { return avatari; },
-      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · gira la ruota del giorno!") : ("👤 " + prof.nome + " · gioca con le tue monete")) : "Un telefono · Banco: Bot",
+      sotto: prof ? (prova ? ("👤 " + prof.nome + " · prova · gira la ruota del giorno!") : ("👤 " + prof.nome + " · gioca con le tue monete")) : "Un telefono · Banco: " + nomeBanco(st),
       avvisoUscita: function (vm) { return vm.fase !== "esito" && vm.fase !== "fine" && vm.giocatori.some(function (g) { return g.puntata > 0; }) ? "Le puntate di questa mano sono perse." : ""; },
       puoAgire: function () { return true; },
       puoNuova: function () { return true; },
@@ -1751,12 +1768,15 @@
     var nota = t.el("p", { class: "modulo-nota", style: "text-align:center" });
     // "⚙️ Regole" nella saletta: l'host cambia le regole prima di cominciare
     t.onRegole = function (im) { imp = im || {}; if (!M) { RG = regoleDa(imp); lobbyOut(); } };
+    // la Rivincita a fine serie: una serie nuova allo stesso tavolo, ognuno con le monete che ha
+    t.onRivincita = function () { if (!M || finito || M.st.fase !== "fine") return; detto = false; maniFinite = 0; M.nuovaSerie(); bcast(); };
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     var provaHost = false, mieFiches = prof ? SGNube.fiches("blackjack") : null;
     if (prof && (mieFiches == null || mieFiches <= 0)) { provaHost = true; mieFiches = BJ.FICHES_INIZIALI; }
     var seats = [{ id: "host", nome: (prof ? prof.nome : (t.giocatori && t.giocatori[0])) || "Host", fiches: mieFiches, prova: provaHost }];
     seats[0].omino = mioAvatar(seats[0].nome);
     var M = null, rete = null, codice = "…", tav = null, pronta = false, finito = false;
+    var guardano = [];   // chi è entrato ma non è tra chi gioca (scelti nella Sala): guarda il tavolo senza sedersi
     var maniFinite = 0, detto = false, salvato = mieFiches;
     var TT = { k: "", fine: 0, to: null };   // il conto alla rovescia per decidere (lo tiene l'host)
     // la ruota girata in saletta (o dal tavolo): si gioca con le monete nuove (e se eri a zero non è più di prova)
@@ -1807,6 +1827,7 @@
       gestisciTempo();
       var vm = vistaBJ(M.st, RG);
       vm.tempo = TT.k ? { k: TT.k, ms: Math.max(0, TT.fine - Date.now()) } : null;
+      if (guardano.length) vm.guardano = guardano.slice();
       if (rete) rete.invia({ t: "vm", vm: vm });
       if (tav) tav.aggiorna(vm);
       salva();
@@ -1828,6 +1849,7 @@
       RG = regoleDa(imp);
       M = BJ.creaMotore(seats.map(function (x) { return x.nome; }), t.mischia, seats.map(function (x) { return x.fiches; }), RG);
       M.st.giocatori.forEach(function (g, i) { g.rid = seats[i].id; g.prova = !!seats[i].prova; });
+      M.st.croupier = croupierDa(seats.map(function (x) { return x.nome; }));   // il banco: uno dei bot fissi (va a tutti nel vm)
       maniFinite = 0; detto = false;
       avviaTavoloHost(); M.nuovaMano(); bcast();
     }
@@ -1874,6 +1896,7 @@
       onCodice: function (c) { codice = c; if (!M) lobbyOut(); },
       onConnesso: function () { pronta = true; if (!M) lobbyOut(); },
       onAddio: function (id) {
+        if (guardano.indexOf(id) >= 0) guardano.splice(guardano.indexOf(id), 1);
         var i = seatDiId(id); if (i <= 0) return;
         if (M) { M.esce(i); bcast(); }   // a partita iniziata il posto resta (gli altri non cambiano numero): non si aspetta più
         else { seats.splice(i, 1); lobbyOut(); }
@@ -1882,6 +1905,11 @@
         if (!m || !m.t || finito) return;
         if (m.t === "join") {
           var i = seatDiId(id);
+          if (i < 0 && t.puoSedersi && !t.puoSedersi(id, m.nome)) {   // non è tra chi gioca: guarda (riceve le foto, non si siede)
+            if (guardano.indexOf(id) < 0) guardano.push(id);
+            if (M) { rete.inviaVeloce({ t: "avatari", to: id, lista: listaAvatari() }); bcast(); } else lobbyOut();
+            return;
+          }
           if (M) {
             if (i >= 0) {   // chi rientra (pagina ricaricata, rete tornata) ritrova il suo posto e gli avatar
               M.rientra(i);
@@ -2026,7 +2054,8 @@
             S.vm = m.vm;
             S.mioSeat = (m.vm.giocatori || []).findIndex(function (x) { return x.rid === S.mioId; });   // il mio posto lo ritrovo dal mio id (anche dopo aver ricaricato)
             var me = m.vm.giocatori[S.mioSeat];
-            if ((S.mioSeat < 0 || (me && me.via)) && Date.now() - S.ultimoJoin > 3000) mandaJoin();   // l'host non mi ha (ancora) rimesso al tavolo
+            var guardo = S.mioSeat < 0 && (m.vm.guardano || []).indexOf(S.mioId) >= 0;   // non sono tra chi gioca: guardo e basta
+            if ((S.mioSeat < 0 || (me && me.via)) && !guardo && Date.now() - S.ultimoJoin > 3000) mandaJoin();   // l'host non mi ha (ancora) rimesso al tavolo
             assicuraTavolo();
             S.tav.aggiorna(m.vm);
             salvaMio(m.vm);
@@ -2069,7 +2098,9 @@
       });
       s._contenuto.appendChild(ol);
     }
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
+    // chi era al tavolo: i tasti di fine uguali per tutti (se li mette il core); se no si torna alla home
+    if (!(vm && t.tastiFine && t.tastiFine(s._piede, { host: false, esci: t.esci })))
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
     t.mostra(s);
   }
 
@@ -2088,6 +2119,7 @@
     icona: "🃏",
     descrizione: "Il 21 contro il banco: punta le monete, chiedi carta o stai, raddoppia e dividi. Carte francesi vere, 6 mazzi. Da 1 a 10 giocatori.",
     giocatoriMin: 1, giocatoriMax: 10, difficolta: 2,
+    postiOnline: 10,   // posti al tavolo online
     modi: [{ modo: "locale", icona: "📱", nome: "Su questo telefono", sotto: "Siete insieme e vi passate il telefono (fino a 10)", amici: true }],
     regole: [
       "Obiettivo: avvicinarti a <b>21</b> più del banco, senza superarlo. Le figure valgono 10, l'Asso 1 o 11.",

@@ -80,13 +80,21 @@
     function presenti() { return H.players.filter(function (p) { return !p.via && !p.uscito; }); }
     function inGara() { return H.players.filter(function (p) { return !p.uscito; }); }   // chi è caduto per la rete conta ancora (può tornare)
     function ferma() { H.timer.forEach(clearTimeout); H.timer = []; clearInterval(H.tick); H.tick = null; }
-    function riempi() {   // in saletta: chi aspettava entra, finché c'è posto
-      while (H.fase === "lobby" && H.coda.length && H.players.length < MAX) { var c = H.coda.shift(); if (!pById(c.id)) H.players.push(nuovo(c.id, c.nome, c.omino)); }
+    // chi può prendere un posto (nella Sala, se l'host ha scelto chi gioca, gli altri guardano)
+    function siede(id, nome) { return !t.puoSedersi || t.puoSedersi(id, nome); }
+    function riempi() {   // in saletta: chi aspettava entra, finché c'è posto (chi non è tra chi gioca resta a guardare)
+      if (H.fase !== "lobby") return;
+      H.coda = H.coda.filter(function (c) {
+        if (pById(c.id)) return false;
+        if (H.players.length >= MAX || !siede(c.id, c.nome)) return true;
+        H.players.push(nuovo(c.id, c.nome, c.omino)); return false;
+      });
     }
     function avviso(testo, chi) { H.ultimo = { s: ++H.nUlt, chi: chi || null, testo: testo, at: Date.now() }; }
 
     // "⚙️ Regole" nella saletta: l'host cambia la durata quando vuole
     t.onRegole = function (im) { if (H.fase !== "lobby") return; H.durata = im.durata || 180; bd(); };
+    t.onRivincita = function () { if (H.fase === "fine") nuova(); };   // la Rivincita: tutti di nuovo nella saletta
 
     var rete = SGNet.ospita(ID, {
       onCodice: function (c) { H.codice = c; bd(); },
@@ -105,7 +113,7 @@
         var p = pById(id);
         if (m.t === "join") {
           if (p) { p.via = false; p.uscito = false; }   // è tornato (stesso id): riprende, anche se si guarda la classifica
-          else if (H.fase === "lobby" && H.players.length < MAX) H.players.push(nuovo(id, String(m.nome || "Amico").slice(0, 16), avatarValido(m.omino)));
+          else if (H.fase === "lobby" && H.players.length < MAX && siede(id, m.nome)) H.players.push(nuovo(id, String(m.nome || "Amico").slice(0, 16), avatarValido(m.omino)));
           else if (!H.coda.some(function (c) { return c.id === id; })) H.coda.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino) });
           bd();   // anche se c'era già: rimanda la foto (serve a chi si ricollega)
           return;
@@ -125,6 +133,7 @@
       var u = H.ultimo;
       return { fase: H.fase, codice: H.codice, pronta: H.pronta, durata: H.durata, gara: H.gara, resta: H.fase === "gioco" ? Math.max(0, H.fineT - Date.now()) : 0,
         classifica: H.classifica, premi: H.fase === "fine" ? H.premi : undefined, motivo: H.motivo, coda: H.coda.map(function (c) { return c.id; }),
+        guardano: H.coda.filter(function (c) { return !siede(c.id, c.nome); }).map(function (c) { return c.id; }),   // (di questi: chi non è tra chi pesca, guarda)
         ultimo: u ? { s: u.s, chi: u.chi, testo: u.testo, eta: Date.now() - u.at } : null,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, kg: Math.round((p.kg || 0) * 100) / 100, n: p.n || 0, best: p.best, via: !!p.via, uscito: !!p.uscito, omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }) };
     }
@@ -248,7 +257,13 @@
           if (m.to && m.to !== S.myId) return;          // era per un altro telefono
           if (m.t === "vm") { S.vm = m.vm; controllaPrese(m.vm); disegna(t, m.vm, cb); }
         },
-        onChiuso: function () { chiudiSchermo(); errore(t, "La gara è stata chiusa dall'host."); },   // (chiusa apposta: se l'host sparisce, "La stanza è chiusa" lo dice il core)
+        onChiuso: function () {
+          if (S.vm && S.vm.fase === "fine" && (finale0 || String(vista).indexOf("fine:") === 0)) {   // sulla classifica finale la classifica resta: cambia solo la scritta
+            [].forEach.call(document.querySelectorAll(".modulo-nota"), function (p) { if (/Se l'host fa un'altra gara/.test(p.textContent)) p.textContent = "🚪 L'host ha chiuso la gara."; });
+            return;
+          }
+          chiudiSchermo(); errore(t, "La gara è stata chiusa dall'host.");
+        },   // (chiusa apposta: se l'host sparisce, "La stanza è chiusa" lo dice il core)
         onErrore: function () { chiudiSchermo(); errore(t, "Problema di collegamento. Riprova."); }   // (solo se il primo collegamento non riesce)
       });
     }
@@ -269,10 +284,10 @@
   function disegna(t, vm, cb) {
     ultimoVm = vm; ultimoCb = cb;
     var io = null; vm.players.forEach(function (p) { if (p.id === cb.myId) io = p; });
-    var inCoda = (vm.coda || []).indexOf(cb.myId) >= 0;
+    var inCoda = (vm.coda || []).indexOf(cb.myId) >= 0, guardo = (vm.guardano || []).indexOf(cb.myId) >= 0;   // guardo: non sono tra chi pesca (Sala)
     if (vm.fase === "lobby") {
       if (UI || finale0 || FU) chiudiSchermo();
-      if (!io && !cb.sonoHost) return fuori(t, inCoda ? "pieno" : "entro", vm, cb);
+      if (!io && !cb.sonoHost && !guardo) return fuori(t, inCoda ? "pieno" : "entro", vm, cb);   // (chi guarda sta nella saletta con gli altri)
       vista = "lobby"; return lobby(t, vm, cb);
     }
     if (vm.fase === "fine") {
@@ -286,7 +301,7 @@
       if (finale0) return;
       return finale(t, vm, cb);
     }
-    if (!io) return fuori(t, "gara", vm, cb);   // arrivato a gara iniziata: aspetta la prossima (è nella lista dell'host)
+    if (!io) return fuori(t, guardo ? "garaS" : "gara", vm, cb);   // arrivato a gara iniziata (o non è tra chi pesca): aspetta la prossima (è nella lista dell'host)
     if (!UI) {
       if (!window.SGPesca) return errore(t, "Manca il laghetto: aggiorna l'app.");
       UI = SGPesca.crea({ omino: t.mioOmino(io.nome), audio: audio, indietro: cb.onEsci, gara: { onPreso: cb.onPreso } });
@@ -340,10 +355,11 @@
     if (vista === "fuori-" + tipo) return aggFuori(vm, cb);
     chiudiSchermo(); vista = "fuori-" + tipo; FU = null;
     var T = { gara: ["👀 Gara in corso", "La guardi ed entri alla prossima", "Quando l'host fa un'altra gara entri da solo nella saletta."],
+      garaS: ["👀 Gara in corso", "Questa volta pescano gli altri", "Intanto guardi la classifica e fai il tifo!"],
       pieno: ["Stanza piena", "Al massimo " + MAX + " pescatori", "Ci sono già " + MAX + " pescatori: appena si libera un posto entri da solo."],
       entro: ["⏳ Sto entrando…", "Gara di pesca", "Un attimo: l'host ti sta facendo entrare."] }[tipo];
     var s = t.schermata({ icona: "🎣", titolo: T[0], sotto: T[1] });
-    if (tipo === "gara") {
+    if (tipo === "gara" || tipo === "garaS") {
       stile();
       FU = { tempo: t.el("div", { class: "gp-guarda-tempo" }), lista: t.el("ol", { class: "gp-resto gp-guarda" }) };
       s._contenuto.appendChild(FU.tempo); s._contenuto.appendChild(FU.lista);
@@ -403,7 +419,7 @@
   }
   function finale(t, vm, cb) {
     finale0 = null;
-    var cl = vm.classifica || [], fuoriGara = !cl.some(function (r) { return r.id === cb.myId; });
+    var cl = vm.classifica || [], fuoriGara = !cl.some(function (r) { return r.id === cb.myId; }), guardoF = (vm.guardano || []).indexOf(cb.myId) >= 0;
     var firma = "fine:" + vm.gara + ":" + fuoriGara;
     if (vista === firma) return;   // la stessa classifica è già sullo schermo: non si rifà
     clearInterval(TIC); TIC = null; FU = null;   // (chi guardava la gara: il suo orologio si ferma)
@@ -442,8 +458,12 @@
     s._contenuto.appendChild(box);
     var fac = t.faccine && t.faccine(); if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }   // le faccine anche sulla classifica
     var esci = t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci });
-    if (cb.sonoHost) s._piede.appendChild(t.el("div", { class: "gp-piede2" }, [t.el("button", { class: "btn btn-primario", text: "↻ Nuova gara", onclick: cb.onNuova }), esci]));   // in una riga: con 8 pescatori la classifica sta nello schermo
-    else { s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin:0", text: fuoriGara ? "Sei in lista: alla prossima gara entri anche tu!" : "Se l'host fa un'altra gara, torni da solo nella saletta." })); s._piede.appendChild(esci); }
+    // i tasti di fine uguali per tutti (Rivincita, Cambia gioco, Ci sto…) li mette il core; se no quelli di sempre
+    if (t.tastiFine && t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) {
+      if (!cb.sonoHost && fuoriGara) s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin:0", text: guardoF ? "Questa gara l'hai guardata 👀" : "Sei in lista: alla prossima gara entri anche tu!" }));
+    }
+    else if (cb.sonoHost) s._piede.appendChild(t.el("div", { class: "gp-piede2" }, [t.el("button", { class: "btn btn-primario", text: "↻ Nuova gara", onclick: cb.onNuova }), esci]));   // in una riga: con 8 pescatori la classifica sta nello schermo
+    else { s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin:0", text: fuoriGara ? (guardoF ? "Questa gara l'hai guardata 👀" : "Sei in lista: alla prossima gara entri anche tu!") : "Se l'host fa un'altra gara, torni da solo nella saletta." })); s._piede.appendChild(esci); }
     t.mostra(s);
   }
   function errore(t, testo) {
@@ -464,6 +484,7 @@
     id: ID, nome: "Gara di pesca", icona: "🎣",
     descrizione: "Tutti nello stesso laghetto, ognuno dal suo telefono: in pochi minuti vince chi pesca più chili!",
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1,
+    postiOnline: MAX,   // posti online (8 pescatori)
     modi: [], soloOnline: true,
     regole: [
       "Ognuno pesca dal suo telefono nello <b>stesso laghetto</b>, da <b>1 a 10 minuti</b> (lo sceglie l'host).",

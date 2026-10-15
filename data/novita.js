@@ -9,11 +9,28 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 209,
+    data: "15 ottobre 2026",
+    titolo: "Una Sala per tutta la serata: il link si manda una volta 🎉",
+    descrizione: [
+      "Tocca «Online» in un gioco (o «🔗 Gioca online» in home) e si apre la tua Sala: un codice di 4 lettere per tutta la serata. Mandi il link una volta sola e gli amici ti seguono da soli in ogni gioco, senza toccare niente.",
+      "«🔑 Ho un codice» ha 4 caselle: scrivi le lettere e alla quarta sei dentro. Funziona anche incollando il link.",
+      "In saletta vedi chi sta arrivando («Arrivano: 3 su 4»), con la sagoma di chi manca. Se uno tarda c'è «▶ Comincia senza Marco»; chi arriva a partita cominciata la guarda ed entra alla prossima.",
+      "Gli amici leggono le regole che hai scelto («📜 Si gioca così»), e se le cambi lo vedono subito.",
+      "A fine partita «↻ Rivincita»: se ci sono tutti si riparte da soli col 3-2-1. Gli amici toccano «👍 Ci sto!» e chi ha aperto la Sala vede quanti ci stanno.",
+      "«🎮 Cambia gioco»: scegli il prossimo e gli amici ti seguono da soli. Dalla fine di un gioco all'inizio del prossimo bastano 3 tocchi, agli amici zero.",
+      "Se siete più dei posti (Ruota, Scalinata…) chi apre sceglie «Chi gioca?»: già scelto chi ha giocato meno, gli altri guardano la partita con le faccine.",
+      "Nei giochi a due (Tris, Drop 4, Scopa…) con 3 o più amici parte il ⚔️ Torneo a eliminazione: tutti giocano insieme, poi semifinale e finale. Le coppie a caso, oppure «✋ Scegliete voi»: ognuno tocca il posto libero e si siede dove e con chi vuole. Chi resta in più gioca col Bot, che se vince va avanti anche lui! Oppure «🤺 Una sfida»: scegli tu chi gioca, gli altri guardano.",
+      "🏆 Classifica della serata: è accesa da sola, i punti di tutti i giochi della Sala si sommano, a fine partita vedi subito chi è in testa («🏆 Serata: Paky 1° · Luca 2°…») e alla fine si premia il campione della serata. Anche sullo stesso telefono: più giochi di fila con lo stesso gruppo e i punti si sommano da soli («🏆 Serata a punti» in home).",
+      "I bot sono personaggi fissi, uguali in tutti i giochi: Matt, Angela, Rosa, Peppe, Gina, Totò, Ciro e Lella, ognuno col suo avatar e la sua bravura. Nei tasti si sceglie sempre «Bot»."
+    ]
+  },
+  {
     v: 208,
     data: "15 ottobre 2026",
     titolo: "Il tuo profilo e il tuo avatar, per tutti 👋",
     descrizione: [
-      "La prima volta che apri SPeeD GAME ti accoglie il benvenuto: scegli il nome (tocca 🎲 per uno buffo) e una password, e il tuo avatar è già pronto. Lo cambi come vuoi, poi tocchi «✅ Fatto».",
+      "La prima volta che apri SPeeD GAME ti accoglie il benvenuto: scegli il nome (tocca 🎲 per uno buffo) e una password. Poi il tuo avatar: «Sei lui o lei?», scegli il look che ti piace e tocchi «✅ Fatto» (con «✏️ Personalizza di più» lo cambi in tutto).",
       "Se arrivi dal link di un amico, prima ti fai il profilo e poi entri da solo nella sua stanza o nella sua Sala: il benvenuto ti dice già chi ti aspetta.",
       "Chi ha già il profilo su quel telefono entra e basta, anche aprendo un link: nessuna domanda, dritto nella partita. Così tutti giocano col loro nome e il loro avatar.",
       "Cambi telefono? Tocca «Hai già un profilo? Entra» e scrivi nome e password. Se il telefono ti riconosce ma serve la password, te la chiede una volta sola, col nome già scritto.",

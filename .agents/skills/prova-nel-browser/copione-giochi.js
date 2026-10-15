@@ -57,8 +57,9 @@
     for (var i = 0; i < seq.length; i++) { var c = await tocca(seq[i]); if (!i) chi1 = c; if (!await W.aspetta(function () { return n() === i + 1; }, 4000)) no("mossa " + (i + 1)); }
     if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 4000)) no("non finisce");
     if (!await W.aspetta(function () { return /vinto|vince|perso/i.test(W.testo(W.finestra("Giulia"))); }, 3000)) no("Giulia non vede la fine");
-    if (!await W.aspetta(function () { return W.clicca(W.finestra("Paky"), /Rivincita/); }, 3000)) no("niente Rivincita");
-    if (!await W.aspetta(function () { return vm(C).fase === "gioco" && n() === 0; }, 4000)) no("la rivincita non parte");
+    // (dal p2-f la fine online è del core: "↻ Nuova partita (stessi amici)" → saletta → 3-2-1 da solo con tutti dentro)
+    if (!await W.aspetta(function () { return W.clicca(W.finestra("Paky"), /Rivincita|Nuova partita/); }, 3000)) no("niente Rivincita");
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco" && n() === 0; }, 8000)) no("la rivincita non parte");
     var v = sent.stop();
     if (v.length) no("schermate viste: " + v.join("; "));
     return note.join(" · ") + " · vince " + chi1 + " (" + primo + "), rivincita partita";

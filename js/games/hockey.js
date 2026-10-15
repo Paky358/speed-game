@@ -229,7 +229,7 @@
       var vinci = vinciOk(imp.vinci);
       if (imp.modo === "due" && !(imp.torneo && g.length < 2))
         return partitaHK(t, { nomi: [g[0] || "Giocatore 1", g[1] || "Giocatore 2"], vinci: vinci, torneo: !!imp.torneo });
-      return partitaHK(t, { liv: imp.torneo ? "medio" : livOk(imp.botLiv), nomi: [g[0] || "Tu", "Bot"], vinci: vinci, torneo: !!imp.torneo });
+      return partitaHK(t, { liv: imp.torneo ? "medio" : livOk(imp.botLiv), nomi: [g[0] || "Tu", "Bot"], bot: imp.bot || null, vinci: vinci, torneo: !!imp.torneo });
     }
   });
 
@@ -762,9 +762,13 @@
   var LIVELLI = ["facile", "medio", "difficile"];
 
   // ---------- PARTITA SU QUESTO TELEFONO: contro il Bot, oppure in due (uno sotto e uno sopra) ----------
-  // o = { liv: "facile"/"medio"/"difficile" (senza liv = in due), nomi: [chi sta sotto, chi sta sopra], vinci, torneo }
+  // o = { liv: "facile"/"medio"/"difficile" (senza liv = in due), nomi: [chi sta sotto, chi sta sopra], bot (dal core, se c'è), vinci, torneo }
   function partitaHK(t, o) {
     var due = !o.liv, liv = due ? null : livOk(o.liv), D = due ? null : DIFF[liv], vinci = vinciOk(o.vinci);
+    if (!due) {   // il Bot: uno dei bot fissi (SG.bot), scelto dal livello; nei tasti si dice "Bot", in partita ha il suo nome
+      var b = (o.bot && o.bot.nome) ? o.bot : (SG.bot && SG.bot.prendi && SG.bot.prendi(1, { livello: liv, escludi: [o.nomi[0], t.nomeProfilo && t.nomeProfilo()] })[0]);
+      o = Object.assign({}, o, { nomi: [o.nomi[0], (b && b.nome) || "Bot"] });
+    }
     impostaASP(aspSchermo());          // il campo riempie lo schermo del telefono
     var st = statoNuovo(); st.fase = "gioco"; st.due = due;
     var C = null, raf = null, ultimoT = 0, acc = 0, dtRacc = 0, vista = null, salvato = false, memSuoni = {}, tRes = null, confEsci = 0;
@@ -777,6 +781,7 @@
     function nomeDi(chi) { return o.nomi[chi === 1 ? 0 : 1]; }
     function classifica() {
       var a = { nome: nomeDi(1), pos: st.vincitore === 1 ? 1 : 2 }, b = { nome: nomeDi(2), pos: st.vincitore === 2 ? 1 : 2 };
+      if (!due) b.bot = true;   // la riga del Bot: bot: true
       return st.vincitore === 1 ? [a, b] : [b, a];
     }
     function gol(chi) {
@@ -890,8 +895,8 @@
       var el = t.el;
       if (tipo === "fine") {
         var vinto = st.vincitore === 1;
-        var sf = t.schermata({ icona: (due || vinto) ? "🏆" : "🤖", titolo: due ? ("Vince " + nomeDi(st.vincitore) + "!") : (vinto ? "Hai vinto!" : "Ha vinto Bot"),
-          sotto: "Glow Hockey · " + (due ? "in due" : "Bot " + D.nome) });
+        var sf = t.schermata({ icona: (due || vinto) ? "🏆" : "🤖", titolo: due ? ("Vince " + nomeDi(st.vincitore) + "!") : (vinto ? "Hai vinto!" : "Ha vinto " + nomeDi(2)),
+          sotto: "Glow Hockey · " + (due ? "in due" : "🤖 " + nomeDi(2) + " (" + D.nome + ")") });
         // punteggio grande, coi colori delle due racchette
         var lato = function (nome, gol, col) {
           return el("div", { style: "text-align:center;min-width:96px" }, [
@@ -908,13 +913,13 @@
         if (i >= 0 && vinto && i < 2) altro = LIVELLI[i + 1];
         else if (i > 0 && !vinto && st.s2 - st.s1 >= 4) altro = LIVELLI[i - 1];
         if (altro) sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: (vinto ? "🔥 Prova il " : "🙂 Prova il ") + DIFF[altro].nome + " ▶", onclick: function () {
-          memorizza("liv", altro); stop(); partitaHK(t, Object.assign({}, o, { liv: altro }));
+          memorizza("liv", altro); stop(); partitaHK(t, Object.assign({}, o, { liv: altro, bot: null }));   // (col livello nuovo arriva il bot di quel livello)
         } }));
         sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { stop(); t.esci(); } }));
         t.mostra(sf);
       } else {
         // niente titolo: solo il tasto indietro, così il campo prende tutto lo spazio
-        var sg = t.schermata({ sotto: due ? "👥 In due" : "🤖 Bot " + D.nome, indietro: function () {
+        var sg = t.schermata({ sotto: due ? "👥 In due" : "🤖 " + nomeDi(2) + " · " + D.nome, indietro: function () {
           // in due il tasto ‹ sta nel campo di chi gioca sopra: per uscire va toccato due volte
           if (due && performance.now() - confEsci > 2500) { confEsci = performance.now(); avviso(sg, "Tocca di nuovo ‹ per uscire"); return; }
           esci();
