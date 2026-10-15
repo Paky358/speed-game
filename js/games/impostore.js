@@ -10,13 +10,24 @@
    giro; si parla a voce, poi si vota in segreto. Lo spoglio
    svela il più votato; l'impostore scoperto ha un'ultima
    possibilità: indovinare la parola. Una o più mani.
+   ONLINE (ognuno dal suo telefono, anche nella Sala): ognuno vede
+   la sua parola sul suo telefono (tenendo premuto); gli indizi si
+   scrivono di nascosto e si svelano tutti insieme al giro dopo
+   (1-3 giri), oppure si dicono a voce; poi si discute, si vota in
+   segreto sul telefono, lo spoglio, l'ultima possibilità
+   dell'impostore e i punti. Chi rientra ritrova la sua parola;
+   chi guarda vede la parola e chi è l'impostore (tenendo premuto).
    Le coppie di parole sono in data/impostore-parole.js.
    ========================================================= */
 (function () {
   "use strict";
 
   var CHIAVE_REGOLE = "sg_impostore_regole", CHIAVE_USATE = "sg_impostore_usate";
-  var BASE = { aiuto: "simile", spia: "no", mani: 1, tempo: 0, cat: null };
+  // indizi e giri valgono solo online: "scritti" (di nascosto, svelati insieme) o "voce" (come sul telefono solo)
+  var BASE = { aiuto: "simile", spia: "no", mani: 1, tempo: 0, cat: null, indizi: "scritti", giri: 2 };
+  // online: quanti giocano e i tempi (in secondi) di ogni momento della mano
+  var MIN_ON = 3, MAX_ON = 10;
+  var T_INDIZIO = 45, T_LEGGI = 10, T_VOTO = 40, T_ULTIMA = 25, T_ESITO = 20, T_LIBERO = 300;
 
   function rnd(n) { return Math.floor(Math.random() * n); }
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = rnd(i + 1), x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
@@ -71,8 +82,74 @@
     return b;
   }
   function uscita(t) {
-    return function () { if (window.confirm("Uscire dalla partita? I punti di questa partita si perdono.")) t.esci(); };
+    return function () { t.conferma("Uscire dalla partita?", "I punti di questa partita si perdono.", "Esci", t.esci); };
   }
+  function vibra(p) { try { if (navigator.vibrate) navigator.vibrate(p || 12); } catch (e) {} }
+
+  // ---- le regole di una mano, senza grafica (uguali sul telefono solo e online) ----
+  // il segreto di un giocatore: cosa vede tenendo premuto
+  function ruoloInfo(o) {   // o: { imp, spia, spiaSa, aiuto, parola, simile, cat (oggetto categoria) }
+    if (o.imp) {
+      if (o.aiuto === "simile") return { su: "Sei l'impostore! La tua parola è simile ma diversa", grande: o.simile, giu: "Gli altri hanno un'altra parola: mimetizzati" };
+      if (o.aiuto === "categoria") return { su: "Sei l'impostore! Non hai la parola", grande: "🕵️ Impostore", giu: "Categoria: " + (o.cat ? o.cat.icona + " " + o.cat.nome : "?") + ". Ascolta e bluffa" };
+      return { su: "Sei l'impostore! Non hai la parola", grande: "🕵️ Impostore", giu: "Ascolta gli altri e bluffa" };
+    }
+    if (o.spia && o.spiaSa) return { su: "Sei la spia! La tua parola è simile a quella degli altri", grande: o.simile, giu: "Mimetizzati e non farti votare" };
+    return { su: "La tua parola è", grande: o.spia ? o.simile : o.parola, giu: "Non dirla ad alta voce" };
+  }
+  // conti dei voti: il più votato DA SOLO viene accusato (col pareggio nessuno). voti[k] = chi ha votato k (indice) o null
+  function contaVoti(n, voti) {
+    var conte = []; for (var i = 0; i < n; i++) conte.push(0);
+    voti.forEach(function (v) { if (v != null && v >= 0 && v < n) conte[v]++; });
+    var max = Math.max.apply(null, conte.concat([0])), piu = [];
+    conte.forEach(function (c, k) { if (c === max && max > 0) piu.push(k); });
+    return { conte: conte, piu: piu, accusato: piu.length === 1 ? piu[0] : -1 };
+  }
+  // i punti della mano (spia = -1 se non c'è)
+  function puntiMano(n, voti, imp, spia, accusato, indovinato) {
+    var scoperto = accusato === imp, p = [];
+    for (var k = 0; k < n; k++) {
+      var x = 0;
+      if (k === imp) x = !scoperto ? 3 : (indovinato ? 2 : 0);
+      else {
+        if (voti[k] === imp) x += 2;
+        else if (spia >= 0 && voti[k] === spia) x += 1;
+        if (k === spia && accusato !== k) x += 2;
+      }
+      p.push(x);
+    }
+    return p;
+  }
+  function testiEsito(accusato, imp, spia, indovinato) {
+    if (accusato === imp && !indovinato) return { titolo: "Impostore scoperto!", icona: "✅", sotto: "E non ha indovinato la parola" };
+    if (accusato === imp) return { titolo: "Scoperto… ma ha indovinato!", icona: "🎯", sotto: "Si salva all'ultimo" };
+    if (spia >= 0 && accusato === spia) return { titolo: "Presa la spia!", icona: "🎭", sotto: "Ma l'impostore se la cava" };
+    if (accusato >= 0) return { titolo: "Avete accusato un innocente!", icona: "😇", sotto: "L'impostore l'ha fatta franca" };
+    return { titolo: "Pareggio nei voti!", icona: "🤝", sotto: "Così l'impostore si salva" };
+  }
+  // le 6 parole dell'ultima possibilità: la giusta, la simile e altre della stessa categoria (se non bastano, da tutte)
+  function scelteUltima(cats, cat, parola, simile) {
+    var c = cats.filter(function (x) { return x.id === cat; })[0] || cats[0], esche = [];
+    c.coppie.forEach(function (p) { if (p.a !== parola && p.b !== parola) esche.push(p.a, p.b); });
+    esche = mischia(esche.filter(function (w) { return w !== simile; }));
+    if (esche.length < 4) cats.forEach(function (cc) { if (cc !== c) cc.coppie.forEach(function (p) { esche.push(p.a); }); });
+    var scelte = [parola, simile];
+    esche.forEach(function (w) { if (scelte.length < 6 && scelte.indexOf(w) < 0) scelte.push(w); });
+    return mischia(scelte);
+  }
+  // un indizio non può contenere la propria parola (nemmeno al plurale: pizza → pizze)
+  function norma(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim(); }
+  function radice(w) { return w.length >= 4 ? w.replace(/[aeiou]$/, "") : w; }
+  function svelaParola(testo, parola) {
+    var a = norma(testo), b = norma(parola);
+    if (!a || !b) return false;
+    if (a.replace(/ /g, "") === b.replace(/ /g, "")) return true;
+    var pa = a.split(" ").map(radice), pb = b.split(" ").filter(function (w) { return w.length >= 3; }).map(radice);
+    return pb.some(function (w) { return pa.indexOf(w) >= 0; });
+  }
+  function pulisciIndizio(s) { return String(s || "").replace(/\s+/g, " ").trim().slice(0, 24); }
+  // per le prove (.agents/skills/prova-nel-browser/migliora/impostore.js): le regole senza grafica
+  window.__impostore = { contaVoti: contaVoti, puntiMano: puntiMano, testiEsito: testiEsito, scelteUltima: scelteUltima, svelaParola: svelaParola, pulisciIndizio: pulisciIndizio, ruoloInfo: ruoloInfo };
 
   SG.registra({
     id: "impostore",
@@ -83,7 +160,16 @@
     giocatoriMax: 10,
     difficolta: 2,
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono e guardate la parola in segreto", amici: true }],
+    postiOnline: MAX_ON,
+    // la riga "📜 Si gioca così" che gli amici leggono in saletta
+    riassunto: function (imp) {
+      var r = regoleDa(imp), con = r.spia !== "no";
+      var aiuto = r.aiuto === "buio" ? "🙈 l'impostore non sa niente" : (r.aiuto === "simile" && !con) ? "💡 parola simile all'impostore" : "🏷️ l'impostore sa la categoria";
+      return [r.indizi === "voce" ? "🗣️ Indizi a voce" : "✍️ " + (r.giri > 1 ? r.giri + " giri di indizi scritti" : "1 giro di indizi scritti"), aiuto,
+        con ? (r.spia === "sa" ? "🎭 con la spia" : "🤫 con la spia (che non lo sa)") : null, r.mani > 1 ? r.mani + " mani" : "1 mano"].filter(Boolean).join(" · ");
+    },
     regole: [
+      "<b>Online</b>: ognuno vede la sua parola sul suo telefono. Gli <b>indizi</b> si scrivono di nascosto e si svelano <b>tutti insieme</b> (oppure si dicono a voce, se l'host sceglie così). Poi si discute e si vota sul telefono.",
       "Il telefono passa di mano: ognuno <b>tiene premuto</b> per vedere in segreto la sua parola. Uno di voi è l'<b>impostore</b>: non ha la parola.",
       "L'host sceglie cosa sa l'impostore: una parola <b>simile</b>, solo la <b>categoria</b> oppure <b>niente</b>.",
       "Da 4 giocatori può esserci anche la <b>spia</b>: riceve una parola simile a quella degli altri (mare/lago). L'host decide se la spia <b>sa</b> di esserlo oppure <b>no</b>: in quel caso crede di avere la parola giusta!",
@@ -93,12 +179,12 @@
     ],
 
     impostazioni: function (box, dove, aiuti) {
-      var el = aiuti.el, cats = categorie();
+      var el = aiuti.el, cats = categorie(), online = aiuti.modo === "online";
       var r = regoleDa(Object.assign({}, leggi(CHIAVE_REGOLE) || {}, dove));
       for (var k in r) dove[k] = r[k];
       if (dove.cat) dove.cat = dove.cat.filter(function (id) { return cats.some(function (c) { return c.id === id; }); });
       if (dove.cat && !dove.cat.length) dove.cat = null;
-      function salva() { scrivi(CHIAVE_REGOLE, { aiuto: dove.aiuto, spia: dove.spia, mani: dove.mani, tempo: dove.tempo, cat: dove.cat }); }
+      function salva() { scrivi(CHIAVE_REGOLE, { aiuto: dove.aiuto, spia: dove.spia, mani: dove.mani, tempo: dove.tempo, cat: dove.cat, indizi: dove.indizi, giri: dove.giri }); }
 
       var CHIP = "padding:9px 12px;min-height:44px;font-size:.95rem";
       // le scelte principali: tre tasti su una riga (icona sopra, scritta sotto), così stanno in alto senza scorrere
@@ -126,6 +212,8 @@
         { v: "simile", i: "💡", t: "Parola simile" }, { v: "categoria", i: "🏷️", t: "La categoria" }, { v: "buio", i: "🙈", t: "Niente" }]);
       riga("La spia", "spia", [
         { v: "no", i: "🚫", t: "Niente spia" }, { v: "sa", i: "🎭", t: "Sa di esserlo" }, { v: "nonsa", i: "🤫", t: "Non lo sa" }]);
+      // online: gli indizi scritti di nascosto (svelati tutti insieme) oppure a voce, come sul telefono solo
+      if (online) riga("Gli indizi", "indizi", [{ v: "scritti", i: "✍️", t: "Scritti di nascosto" }, { v: "voce", i: "🗣️", t: "A voce" }]);
       var nota = el("p", { class: "modulo-nota", style: "margin:8px 0 0" });
       box.appendChild(nota);
 
@@ -144,7 +232,11 @@
       box.appendChild(apri);
       box.appendChild(altro);
       riga("Mani", "mani", [{ v: 1, t: "1 mano" }, { v: 3, t: "3 mani" }, { v: 5, t: "5 mani" }], altro);
-      riga("Tempo per parlare", "tempo", [{ v: 0, i: "♾️", t: "Libero" }, { v: 60, t: "1 min" }, { v: 120, t: "2 min" }, { v: 180, t: "3 min" }], altro);
+      var boxGiri = el("div");
+      if (online) { riga("Giri di indizi", "giri", [{ v: 1, t: "1 giro" }, { v: 2, t: "2 giri" }, { v: 3, t: "3 giri" }], boxGiri); altro.appendChild(boxGiri); }
+      riga(online ? "Tempo per discutere" : "Tempo per parlare", "tempo", [{ v: 0, i: "♾️", t: "Libero" }, { v: 60, t: "1 min" }, { v: 120, t: "2 min" }, { v: 180, t: "3 min" }], altro);
+      var notaTempo = online ? el("p", { class: "modulo-nota", style: "margin:6px 0 0", text: "Libero: si vota quando più di metà tocca «🗳️ Votiamo» (al massimo 5 minuti)." }) : null;
+      if (notaTempo) altro.appendChild(notaTempo);
 
       // categorie: tocca per togliere o rimettere (almeno una resta)
       altro.appendChild(el("div", { class: "etichetta", text: "Categorie" }));
@@ -182,13 +274,18 @@
         if (dove.spia === "sa") s += " La spia ha una parola simile e lo sa.";
         if (dove.spia === "nonsa") s += " La spia ha una parola simile ma crede di avere quella giusta!";
         if (dove.spia !== "no") s += " (La spia c'è da 4 giocatori in su; la parola simile va a lei, quindi l'impostore non la riceve.)";
+        if (online) s += dove.indizi === "voce" ? " Gli indizi si dicono a voce, a turno: giocate vicini o in chiamata." : " Gli indizi si scrivono di nascosto e si svelano tutti insieme.";
         nota.textContent = s;
+        boxGiri.hidden = !online || dove.indizi === "voce";
+        if (notaTempo) notaTempo.hidden = dove.tempo !== 0;
         tutte.className = "cat-chip" + (!dove.cat ? " attiva" : "");
         chipCat.forEach(function (b) { b.className = "cat-chip" + (dove.cat && dove.cat.indexOf(b._id) >= 0 ? " attiva" : ""); });
         var n = 0; cats.forEach(function (c) { if (!dove.cat || dove.cat.indexOf(c.id) >= 0) n += c.coppie.length; });
         contaCat.textContent = n + " coppie di parole in gioco";
         var nc = dove.cat ? dove.cat.length : 0;
-        riassunto.textContent = (dove.mani > 1 ? dove.mani + " mani" : "1 mano") + " · " + (dove.tempo ? "⏱️ " + Math.round(dove.tempo / 60) + " min" : "⏱️ libero") + " · " +
+        riassunto.textContent = (dove.mani > 1 ? dove.mani + " mani" : "1 mano") + " · " +
+          (online && dove.indizi !== "voce" ? (dove.giri > 1 ? dove.giri + " giri" : "1 giro") + " · " : "") +
+          (dove.tempo ? "⏱️ " + Math.round(dove.tempo / 60) + " min" : "⏱️ libero") + " · " +
           (nc ? nc + (nc === 1 ? " categoria" : " categorie") : "tutte le categorie");
       }
       aggiorna();
@@ -197,6 +294,8 @@
     avvia: function (t) {
       var cats = categorie();
       if (!cats.length) return niente(t);
+      if (t.linkParams && t.linkParams.stanza) return ospite(t, t.linkParams.stanza);   // entrato da un invito (o dalla Sala)
+      if (t.impostazioni && t.impostazioni.modo === "online") return host(t);
       var st = {
         R: regoleDa(t.impostazioni),
         cats: cats,
@@ -269,16 +368,7 @@
 
   // cosa vede ognuno: stessa forma e stessi colori per tutti, cambia solo il testo
   function ruolo(st, i) {
-    if (i === st.impostore) {
-      if (st.aiuto === "simile") return { su: "Sei l'impostore! La tua parola è simile ma diversa", grande: st.simile, giu: "Gli altri hanno un'altra parola: mimetizzati" };
-      if (st.aiuto === "categoria") {
-        var c = categoria(st, st.cat);
-        return { su: "Sei l'impostore! Non hai la parola", grande: "🕵️ Impostore", giu: "Categoria: " + c.icona + " " + c.nome + ". Ascolta e bluffa" };
-      }
-      return { su: "Sei l'impostore! Non hai la parola", grande: "🕵️ Impostore", giu: "Ascolta gli altri e bluffa" };
-    }
-    if (i === st.spia && st.R.spia === "sa") return { su: "Sei la spia! La tua parola è simile a quella degli altri", grande: st.simile, giu: "Mimetizzati e non farti votare" };
-    return { su: "La tua parola è", grande: i === st.spia ? st.simile : st.parola, giu: "Non dirla ad alta voce" };
+    return ruoloInfo({ imp: i === st.impostore, spia: i === st.spia, spiaSa: st.R.spia === "sa", aiuto: st.aiuto, parola: st.parola, simile: st.simile, cat: categoria(st, st.cat) });
   }
 
   function schermataRuolo(t, st, i) {
@@ -387,13 +477,7 @@
   }
 
   // conti dei voti: il più votato DA SOLO viene accusato (col pareggio nessuno)
-  function conta(st) {
-    var conte = st.g.map(function () { return 0; });
-    st.g.forEach(function (gg) { if (gg.voto != null) conte[gg.voto]++; });
-    var max = Math.max.apply(null, conte), piu = [];
-    conte.forEach(function (c, k) { if (c === max && max > 0) piu.push(k); });
-    return { conte: conte, piu: piu, accusato: piu.length === 1 ? piu[0] : -1 };
-  }
+  function conta(st) { return contaVoti(st.g.length, st.g.map(function (gg) { return gg.voto; })); }
 
   // ---- lo spoglio: i voti escono uno alla volta, poi il verdetto ----
   function spoglio(t, st) {
@@ -452,17 +536,10 @@
 
   // ---- ultima possibilità: l'impostore scoperto prova a indovinare la parola ----
   function ultimaPossibilita(t, st) {
-    var el = t.el, c = categoria(st, st.cat);
+    var el = t.el;
     var nome = st.g[st.impostore].nome;
     var s = t.schermata({ icona: "🎯", titolo: "Ultima possibilità!", sotto: nome + ", indovina la parola degli altri", indietro: uscita(t) });
-    // esche: altre parole della stessa categoria (se non bastano, da tutte)
-    var esche = [];
-    c.coppie.forEach(function (p) { if (p.a !== st.parola && p.b !== st.parola) { esche.push(p.a, p.b); } });
-    esche = mischia(esche.filter(function (w) { return w !== st.simile; }));
-    if (esche.length < 4) st.cats.forEach(function (cc) { if (cc !== c) cc.coppie.forEach(function (p) { esche.push(p.a); }); });
-    var scelte = [st.parola, st.simile];
-    esche.forEach(function (w) { if (scelte.length < 6 && scelte.indexOf(w) < 0) scelte.push(w); });
-    scelte = mischia(scelte);
+    var scelte = scelteUltima(st.cats, st.cat, st.parola, st.simile);
     s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center",
       text: "Se indovini ti salvi e prendi 2 punti. Gli altri: niente aiutini!" }));
     var g = el("div", { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" });
@@ -497,28 +574,33 @@
   function salvaTrofei(st, salvo) {
     var prof = window.SGNube && SGNube.disponibile() && SGNube.profilo();
     if (!prof) return;
-    var io = -1, V = st.V;
+    var io = -1;
     st.g.forEach(function (gg, k) { if (io < 0 && stessoNome(gg.nome, prof.nome)) io = k; });
     if (io < 0) return;
-    // la serie continua tra le partite (e tra le mani: la tengo qui, il cloud può arrivare in ritardo)
-    if (st.serie == null) st.serie = (SGNube.statGioco("impostore") || {}).serieSmascheratiOra || 0;
-    var serie = st.serie;
-    var c = {}, conParola = st.aiuto === "simile", buio = st.aiuto === "buio";
-    if (st.mano >= st.R.mani) c.partite = 1;   // la partita conta una volta sola, all'ultima mano
-    if (io === st.impostore) {
+    contaTrofei({ io: io, impostore: st.impostore, spia: st.spia, voti: st.g.map(function (gg) { return gg.voto; }), conte: st.V.conte, accusato: st.V.accusato,
+      aiuto: st.aiuto, iniziante: st.iniziante, ultima: st.mano >= st.R.mani, salvo: salvo }, st);
+  }
+  // i contatori di una mano per il giocatore "io" (indice). mem tiene la serie tra le mani (il cloud può arrivare in ritardo)
+  function contaTrofei(d, mem) {
+    if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo())) return;
+    if (mem.serie == null) mem.serie = (SGNube.statGioco("impostore") || {}).serieSmascheratiOra || 0;
+    var serie = mem.serie, io = d.io;
+    var c = {}, conParola = d.aiuto === "simile", buio = d.aiuto === "buio";
+    if (d.ultima) c.partite = 1;   // la partita conta una volta sola, all'ultima mano
+    if (io === d.impostore) {
       if (conParola) c.impostoreConAiuto = 1;
-      if (salvo) {
+      if (d.salvo) {
         c.vinteImpostore = 1;
         if (conParola) c.vinteImpAiutoOn = 1; else if (buio) c.vinteImpAiutoOff = 1;
-        if (V.conte[io] === 0) { c.vinteImp0Voti = 1; if (buio) c.vinteImpPerfette = 1; }   // nessuno ti ha votato
-        if (st.iniziante === io) c.vinteImpApertura = 1;                                     // e aprivi pure il giro
+        if (d.conte[io] === 0) { c.vinteImp0Voti = 1; if (buio) c.vinteImpPerfette = 1; }   // nessuno ti ha votato
+        if (d.iniziante === io) c.vinteImpApertura = 1;                                      // e aprivi pure il giro
       }
     } else {
-      if (st.g[io].voto === st.impostore) { c.smascherati = 1; if (conParola) c.smascheratiControAiuto = 1; serie++; }
+      if (d.voti[io] === d.impostore) { c.smascherati = 1; if (conParola) c.smascheratiControAiuto = 1; serie++; }
       else serie = 0;
-      if (V.accusato === io && io !== st.spia) c.innocenteAccusato = 1;   // il più votato, ma innocente
+      if (d.accusato === io && io !== d.spia) c.innocenteAccusato = 1;   // il più votato, ma innocente
     }
-    st.serie = serie;
+    mem.serie = serie;
     var incrs = []; for (var k in c) incrs.push([k, c[k]]);
     SGNube.salvaProgressi(null, "impostore", incrs, [["serieSmascheratiMax", serie]], [["serieSmascheratiOra", serie]]);
   }
@@ -527,24 +609,11 @@
   function esito(t, st) {
     var el = t.el, V = st.V, R = st.R, n = st.g.length;
     var scoperto = V.accusato === st.impostore, salvo = !scoperto || st.indovinato;
-    st.g.forEach(function (gg, k) {
-      var p = 0;
-      if (k === st.impostore) p = !scoperto ? 3 : (st.indovinato ? 2 : 0);
-      else {
-        if (gg.voto === st.impostore) p += 2;
-        else if (gg.voto === st.spia && st.spia >= 0) p += 1;
-        if (k === st.spia && V.accusato !== k) p += 2;
-      }
-      gg.piu = p; gg.punti += p;
-    });
+    var pm = puntiMano(n, st.g.map(function (gg) { return gg.voto; }), st.impostore, st.spia, V.accusato, st.indovinato);
+    st.g.forEach(function (gg, k) { gg.piu = pm[k]; gg.punti += pm[k]; });
     salvaTrofei(st, salvo);
 
-    var titolo, icona, sotto;
-    if (scoperto && !st.indovinato) { titolo = "Impostore scoperto!"; icona = "✅"; sotto = "E non ha indovinato la parola"; }
-    else if (scoperto) { titolo = "Scoperto… ma ha indovinato!"; icona = "🎯"; sotto = "Si salva all'ultimo"; }
-    else if (V.accusato === st.spia && st.spia >= 0) { titolo = "Presa la spia!"; icona = "🎭"; sotto = "Ma l'impostore se la cava"; }
-    else if (V.accusato >= 0) { titolo = "Avete accusato un innocente!"; icona = "😇"; sotto = "L'impostore l'ha fatta franca"; }
-    else { titolo = "Pareggio nei voti!"; icona = "🤝"; sotto = "Così l'impostore si salva"; }
+    var te = testiEsito(V.accusato, st.impostore, st.spia, st.indovinato), titolo = te.titolo, icona = te.icona, sotto = te.sotto;
     var ultima = st.mano >= R.mani;
     var s = t.schermata({ icona: icona, titolo: titolo, sotto: sotto + (R.mani > 1 ? " · mano " + st.mano + " di " + R.mani : ""), indietro: uscita(t) });
 
@@ -587,5 +656,922 @@
       for (var j = 0; j < i; j++) if (ord[j].punti === x.punti) { pos = j + 1; break; }
       return { nome: x.nome, punti: x.punti, pos: pos };
     });
+  }
+
+  // =========================================================
+  //  ONLINE — ognuno dal suo telefono (anche nella Sala della serata).
+  //  L'HOST tiene la partita vera e manda a tutti la "foto" (vm): mai
+  //  segreti nella foto. Le parole vanno a un telefono solo (inviaVeloce
+  //  con "to"); chi rientra le richiede ("chiedi") e le ritrova.
+  //  Una mano: indizi (1-3 giri, scritti di nascosto e svelati tutti
+  //  insieme; oppure a voce) → discussione → voto segreto → spoglio →
+  //  ultima possibilità dell'impostore → punti. Poi la mano dopo.
+  // =========================================================
+  function fmtN(n) { var s = String(Math.round(Math.abs(n || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, "."); return (n < 0 ? "−" : "") + s; }   // 1.000
+  function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+  function trova(vm, id) { var l = (vm && vm.players) || []; for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
+  function presentiVm(vm) { return ((vm && vm.players) || []).filter(function (p) { return !p.via; }); }
+  function setTx(n, tx) { if (n && n.textContent !== tx) n.textContent = tx; }
+  var MEM = { serie: null, fatti: {} };   // trofei online: la serie tra le mani e le mani già contate (su questo telefono)
+
+  function host(t) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
+    var H = { fase: "lobby", codice: "…", pronta: false, partita: 0, mano: 0, R: regoleDa(t.impostazioni), cats: categorie(),
+      players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0, piu: 0 }],
+      guarda: [],   // nella Sala: chi non è stato scelto per giocare (guarda soltanto, col suo id nella foto): { id, nome }
+      tardi: [],    // arrivati a partita cominciata: guardano ed entrano alla prossima
+      passo: null, giro: 0, ordine: [], ind: {}, cor: {}, voti: {}, pronti: [], scadenza: 0, to: null,
+      seg: null, V: null, vv: null, spoglio: null, ultima: null, esito: null, classifica: null };
+    function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
+    function iDi(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return i; return -1; }
+    function presenti() { return H.players.filter(function (p) { return !p.via; }); }
+    function ferma() { if (H.to) { clearTimeout(H.to); H.to = null; } }
+    function dopo(ms, fn) { ferma(); H.to = setTimeout(function () { H.to = null; fn(); }, ms); }
+    function scade(sec) { H.scadenza = Date.now() + sec * 1000; }
+    function servono() { return Math.floor(presenti().length / 2) + 1; }
+    function guardaId(id) { return H.guarda.some(function (x) { return x.id === id; }); }
+    function chiave() { return H.partita + "|" + H.mano + "|" + H.passo + "|" + H.giro; }
+    function catDi(id) { return H.cats.filter(function (c) { return c.id === id; })[0] || null; }
+    function prontiVeri() { return H.pronti.filter(function (id) { var p = pById(id); return p && !p.via; }); }
+
+    // "⚙️ Regole" nella saletta: l'host cambia le impostazioni quando vuole
+    t.onRegole = function (im) { if (H.fase !== "lobby") return; H.R = regoleDa(im); bd(); };
+
+    var rete = SGNet.ospita("impostore", {
+      onCodice: function (c) { H.codice = c; bd(); },
+      onConnesso: function () { H.pronta = true; bd(); },
+      // la stanza non si è proprio aperta (primo collegamento): si riprova da capo. Dopo, la rete che salta la gestisce il core
+      onErrore: function () {
+        if (H.pronta) return;
+        ferma(); if (rete) rete.chiudi();
+        erroreRete(t, "Non riesco ad aprire la stanza.", function () { host(t); });
+      },
+      onForse: function (id) { var p = pById(id); if (p && !p.forse) { p.forse = true; bd(); } },
+      onTornato: function (id) { var p = pById(id); if (p && p.forse) { p.forse = false; bd(); } },
+      onAddio: function (id) {
+        if (guardaId(id)) { H.guarda = H.guarda.filter(function (x) { return x.id !== id; }); bd(); return; }
+        if (H.tardi.indexOf(id) >= 0) { H.tardi.splice(H.tardi.indexOf(id), 1); return; }
+        var p = pById(id); if (!p) return;
+        p.forse = false;
+        // nella saletta si toglie e basta (i posti degli altri restano come sono)
+        if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
+        p.via = true;   // a partita iniziata resta in classifica, ma non gioca più (se torna riprende il suo posto)
+        if (H.fase === "gioco" && presenti().length < MIN_ON) return fine();
+        controlla(); bd();
+      },
+      onMsg: function (id, m) {
+        if (!m || !m.t) return;
+        if (m.t === "join") {
+          var p = pById(id), nome = String(m.nome || "Amico").slice(0, 16);
+          // nella Sala, se siete più dei posti, gioca chi ha scelto l'host: gli altri guardano (col loro id nella foto)
+          if (!p && (guardaId(id) || !t.puoSedersi(id, nome))) {
+            if (!guardaId(id)) H.guarda.push({ id: id, nome: nome });
+            bd(); spettatore(id); return;
+          }
+          if (!p && H.fase === "lobby" && H.players.length < MAX_ON)
+            H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), punti: 0, piu: 0 });
+          else if (!p) {   // arrivato a partita cominciata (o stanza piena): guarda ed entra alla prossima
+            if (H.fase !== "lobby" && H.tardi.indexOf(id) < 0) H.tardi.push(id);
+            bd(); spettatore(id); return;
+          }
+          // chi rientra (pagina ricaricata, telefono riacceso) ha lo STESSO id: ritrova il suo posto, i suoi punti e la sua parola
+          if (p) { p.forse = false; if (p.via && H.fase === "gioco") { p.via = false; controlla(); } }
+          bd();
+          if (p && H.fase === "gioco") privato(id, segretoDi(id));
+          return;
+        }
+        if (H.fase !== "gioco") return;
+        if (m.t === "chiedi") { if (pById(id)) privato(id, segretoDi(id)); else spettatore(id); return; }
+        var q = pById(id); if (!q || q.via) return;   // chi guarda soltanto non fa mosse
+        if (m.t === "indizio") indizio(id, m.testo);
+        else if (m.t === "voto") voto(id, m.chi);
+        else if (m.t === "avanti") avanti(id, m.k);
+        else if (m.t === "indovina") indovina(id, m.w);
+      }
+    });
+    if (!rete) return senzaRete(t);
+
+    // ----- i segreti: a un telefono solo -----
+    function segretoDi(id) {
+      var S = H.seg; if (!S) return null;
+      var imp = id === S.imp, spia = id === S.spia;
+      var info = ruoloInfo({ imp: imp, spia: spia, spiaSa: H.R.spia === "sa", aiuto: S.aiuto, parola: S.parola, simile: S.simile, cat: catDi(S.cat) });
+      // "mia": la parola che ha in mano (serve al suo telefono per non fargliela scrivere come indizio)
+      return { t: "seg", k: H.partita + "|" + H.mano, info: info, mia: imp ? (S.aiuto === "simile" ? S.simile : null) : spia ? S.simile : S.parola };
+    }
+    // chi guarda vede tutto (tenendo premuto): la parola e chi è l'impostore
+    function spettatore(id) {
+      var S = H.seg; if (H.fase !== "gioco" || !S) return;
+      var c = catDi(S.cat), pi = pById(S.imp), ps = S.spia ? pById(S.spia) : null;
+      privato(id, { t: "seg", k: H.partita + "|" + H.mano, guarda: { parola: S.parola, simile: S.simile, aiuto: S.aiuto,
+        imp: pi ? pi.nome : "?", spia: ps ? ps.nome : null, cat: c ? c.icona + " " + c.nome : "" } });
+    }
+    function privato(id, m) {
+      if (!m) return;
+      if (id === "host") { riceviPrivato(cbHost, m); return; }
+      m.to = id; rete.inviaVeloce(m);   // (con "to": non resta in stanza e gli altri telefoni lo ignorano)
+    }
+    // la "foto" per tutti: SEMPRE con gli id e con "fase"; MAI le parole (solo a fine mano, nell'esito)
+    function vm() {
+      var u = H.ultima;
+      return { fase: H.fase, codice: H.codice, pronta: H.pronta, partita: H.partita, mano: H.mano, mani: H.R.mani,
+        indizi: H.R.indizi, giri: H.R.giri, passo: H.passo, giro: H.giro, k: chiave(),
+        resta: H.fase === "gioco" && H.scadenza ? Math.max(0, Math.ceil((H.scadenza - Date.now()) / 1000)) : 0,   // i secondi che mancano (non l'ora)
+        ordine: H.ordine, ind: H.ind, scritto: Object.keys(H.cor), votato: Object.keys(H.voti),
+        pronti: prontiVeri(), servono: servono(),
+        conSpia: !!(H.seg && H.seg.spia), spiaNonSa: H.R.spia === "nonsa",
+        spoglio: H.spoglio,
+        ultima: u ? { chi: u.chi, scelte: u.scelte, scelto: u.scelto, giusto: u.giusto, parola: u.scelto != null && H.seg ? H.seg.parola : null } : null,
+        esito: H.esito, classifica: H.classifica,
+        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, piu: p.piu || 0, via: !!p.via, forse: !!p.forse, omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }),
+        guarda: H.guarda };
+    }
+    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); disegna(t, v, cbHost); }
+
+    // ----- la partita -----
+    function comincia() {
+      if (H.fase !== "lobby" || presenti().length < MIN_ON) return;
+      H.fase = "gioco"; H.partita++; H.mano = 0; H.classifica = null; H.tardi = [];
+      H.players.forEach(function (p) { p.punti = 0; p.piu = 0; });
+      nuovaMano();
+    }
+    function nuovaMano() {
+      ferma();
+      H.mano++;
+      var pres = presenti(), R = H.R;
+      var c = pescaCoppia(H), giro = Math.random() < 0.5;   // una volta su due le due parole si scambiano
+      var imp = pres[rnd(pres.length)].id, spia = null;
+      if (R.spia !== "no" && pres.length >= 4) { do { spia = pres[rnd(pres.length)].id; } while (spia === imp); }
+      H.seg = { parola: giro ? c.b : c.a, simile: giro ? c.a : c.b, cat: c.cat, imp: imp, spia: spia,
+        aiuto: (R.aiuto === "simile" && spia) ? "categoria" : R.aiuto };   // con la spia la parola simile è sua
+      // chi apre il giro: a caso, ma l'impostore apre di rado (come sul telefono solo)
+      var ini = rnd(pres.length);
+      if (pres[ini].id === imp && Math.random() < 0.6 && pres.length > 1) { do { ini = rnd(pres.length); } while (pres[ini].id === imp); }
+      H.ordine = pres.slice(ini).concat(pres.slice(0, ini)).map(function (p) { return p.id; });
+      H.ind = {}; H.cor = {}; H.voti = {}; H.pronti = []; H.V = H.vv = H.spoglio = H.ultima = H.esito = null;
+      H.players.forEach(function (p) { p.piu = 0; });
+      // i segreti prima della foto: ognuno la sua parola, chi guarda il segreto intero
+      H.players.forEach(function (p) { privato(p.id, segretoDi(p.id)); });
+      H.guarda.forEach(function (x) { spettatore(x.id); });
+      H.tardi.forEach(spettatore);
+      if (R.indizi === "voce") iniziaDiscuti(); else iniziaIndizi(1);
+    }
+    function iniziaIndizi(g) {
+      H.passo = "indizi"; H.giro = g; H.cor = {};
+      var sec = T_INDIZIO + (g === 1 ? T_LEGGI : 0);   // al primo giro qualche secondo in più per guardare la parola
+      scade(sec); dopo(sec * 1000, chiudiIndizi); bd();
+    }
+    function indizio(id, testo) {
+      if (H.passo !== "indizi") return;
+      testo = pulisciIndizio(testo); if (!testo) return;
+      var sg = segretoDi(id);
+      if (sg && sg.mia && svelaParola(testo, sg.mia)) { privato(id, { t: "no", testo: "🙊 Non puoi scrivere la tua parola!" }); return; }
+      H.cor[id] = testo;
+      controlla(); bd();
+    }
+    // gli indizi del giro si svelano tutti insieme (anche "—" per chi non ha scritto)
+    function chiudiIndizi() {
+      if (H.passo !== "indizi") return;
+      H.players.forEach(function (p) {
+        if (H.ordine.indexOf(p.id) < 0 && H.cor[p.id] == null) return;
+        H.ind[p.id] = (H.ind[p.id] || []).concat([H.cor[p.id] || ""]);
+      });
+      if (H.giro < H.R.giri) return iniziaIndizi(H.giro + 1);
+      iniziaDiscuti();
+    }
+    function iniziaDiscuti() {
+      H.passo = "discuti"; H.giro = 0; H.pronti = [];
+      var sec = (H.R.tempo || T_LIBERO) + (H.R.indizi === "voce" ? T_LEGGI : 0);
+      scade(sec); dopo(sec * 1000, iniziaVoto); bd();
+    }
+    function iniziaVoto() {
+      if (H.passo !== "discuti") return;
+      H.passo = "voto"; H.voti = {}; H.pronti = [];
+      scade(T_VOTO); dopo(T_VOTO * 1000, chiudiVoto); bd();
+    }
+    function voto(id, chi) {
+      if (H.passo !== "voto" || chi === id) return;
+      var q = pById(chi); if (!q) return;
+      H.voti[id] = chi;
+      controlla(); bd();
+    }
+    function chiudiVoto() {
+      if (H.passo !== "voto") return;
+      var n = H.players.length;
+      H.vv = H.players.map(function (p) { return H.voti[p.id] != null ? iDi(H.voti[p.id]) : null; });
+      H.V = contaVoti(n, H.vv);
+      var acc = H.V.accusato >= 0 ? H.players[H.V.accusato].id : null, conte = {};
+      H.players.forEach(function (p, i) { conte[p.id] = H.V.conte[i]; });
+      H.spoglio = { conte: conte, piu: H.V.piu.map(function (i) { return H.players[i].id; }), acc: acc,
+        ruolo: acc == null ? null : acc === H.seg.imp ? "impostore" : acc === H.seg.spia ? "spia" : "innocente",
+        ordine: H.ordine.concat(H.players.map(function (p) { return p.id; }).filter(function (id) { return H.ordine.indexOf(id) < 0 && conte[id]; })) };
+      H.passo = "spoglio"; H.giro = 0;
+      var ms = 1000 + H.spoglio.ordine.length * 350 + 2600;
+      H.scadenza = Date.now() + ms; bd();
+      dopo(ms, function () { if (acc != null && acc === H.seg.imp) iniziaUltima(); else chiudiMano(false); });
+    }
+    // l'impostore scoperto ha un'ultima possibilità: indovinare la parola tra 6
+    function iniziaUltima() {
+      H.ultima = { chi: H.seg.imp, scelte: scelteUltima(H.cats, H.seg.cat, H.seg.parola, H.seg.simile), scelto: null, giusto: null };
+      H.passo = "ultima"; H.giro = 0;
+      var q = pById(H.seg.imp), sec = q && !q.via ? T_ULTIMA : 4;   // (se è uscito, si aspetta poco)
+      scade(sec); dopo(sec * 1000, function () { indovina(H.seg.imp, null, true); }); bd();
+    }
+    function indovina(id, w, scaduto) {
+      var u = H.ultima;
+      if (H.passo !== "ultima" || !u || id !== u.chi || u.scelto != null) return;
+      if (!scaduto && u.scelte.indexOf(w) < 0) return;
+      u.scelto = scaduto ? "" : w; u.giusto = !scaduto && w === H.seg.parola;
+      scade(3); bd();
+      dopo(3000, function () { chiudiMano(u.giusto); });
+    }
+    function chiudiMano(indovinato) {
+      if (H.passo !== "spoglio" && H.passo !== "ultima") return;
+      var S = H.seg, n = H.players.length, imp = iDi(S.imp), spia = S.spia ? iDi(S.spia) : -1;
+      var pm = puntiMano(n, H.vv, imp, spia, H.V.accusato, !!indovinato);
+      H.players.forEach(function (p, i) { p.piu = pm[i]; p.punti += pm[i]; });
+      var te = testiEsito(H.V.accusato, imp, spia, !!indovinato), c = catDi(S.cat);
+      H.esito = { titolo: te.titolo, icona: te.icona, sotto: te.sotto, imp: S.imp, spia: S.spia, parola: S.parola, simile: S.simile, aiuto: S.aiuto,
+        cat: c ? c.icona + " " + c.nome : "", voti: H.voti, conte: H.spoglio.conte, acc: H.spoglio.acc, indovinato: !!indovinato,
+        iniziante: H.ordine[0] || null, ultima: H.mano >= H.R.mani, giocano: H.players.map(function (p) { return p.id; }) };
+      H.passo = "esito"; H.giro = 0; H.pronti = [];
+      scade(T_ESITO); dopo(T_ESITO * 1000, avantiEsito); bd();
+    }
+    // «🗳️ Votiamo» e «⏩ Avanti»: si va avanti subito se lo tocca più di metà (k = il momento giusto: un tocco vecchio non vale)
+    function avanti(id, k) {
+      if (k && k !== chiave()) return;
+      if (H.passo !== "discuti" && H.passo !== "esito") return;
+      if (H.pronti.indexOf(id) < 0) H.pronti.push(id);
+      if (prontiVeri().length >= servono()) return H.passo === "discuti" ? iniziaVoto() : avantiEsito();
+      bd();
+    }
+    function avantiEsito() {
+      if (H.fase !== "gioco" || H.passo !== "esito") return;
+      if (H.mano >= H.R.mani) return fine();
+      nuovaMano();
+    }
+    // qualcuno ha finito (o è uscito): se ci sono tutti si va avanti senza aspettare il tempo
+    function controlla() {
+      if (H.fase !== "gioco") return;
+      var pres = presenti();
+      if (H.passo === "indizi" && pres.every(function (p) { return H.cor[p.id] != null; })) { scade(1); dopo(900, chiudiIndizi); }
+      else if (H.passo === "voto" && pres.every(function (p) { return H.voti[p.id] != null; })) { scade(2); dopo(1500, chiudiVoto); }
+      else if ((H.passo === "discuti" || H.passo === "esito") && prontiVeri().length >= servono()) { if (H.passo === "discuti") iniziaVoto(); else avantiEsito(); }
+    }
+    function fine() {
+      ferma();
+      var ord = H.players.slice().sort(function (a, b) { return b.punti - a.punti; });
+      H.classifica = ord.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, via: !!p.via, pos: 1 + ord.filter(function (q) { return q.punti > p.punti; }).length }; });
+      H.fase = "fine"; H.passo = null; H.scadenza = 0; bd();
+      // classifica della serata e XP: i NOMI dei giocatori col loro posto (pari merito = stesso posto)
+      if (t.risultato) t.risultato(H.classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }));
+    }
+    // "Nuova partita": stessa stanza, stessi amici, tutti tornano nella saletta (chi guardava nella Sala resta a guardare)
+    function nuova() {
+      if (H.fase !== "fine") return;
+      ferma(); H.fase = "lobby"; H.passo = null; H.mano = 0; H.classifica = null; H.tardi = [];
+      H.seg = H.V = H.vv = H.spoglio = H.ultima = H.esito = null; H.ordine = []; H.ind = {}; H.cor = {}; H.voti = {}; H.pronti = []; H.scadenza = 0;
+      H.players = presenti(); H.players.forEach(function (p) { p.punti = 0; p.piu = 0; });
+      bd();
+    }
+    t.onRivincita = nuova;
+
+    var cbHost = { sonoHost: true, myId: "host", seg: null, mio: {}, vm: null, chiedi: null,
+      onComincia: comincia, onNuova: nuova,
+      onIndizio: function (w) { indizio("host", w); },
+      onVoto: function (chi) { voto("host", chi); },
+      onAvanti: function (k) { avanti("host", k); },
+      onIndovina: function (w) { indovina("host", w); },
+      onEsci: function () {
+        function via() { ferma(); rete.chiudi(); t.esci(); }
+        // (dalla saletta il core ha già chiesto "Chiudere la stanza per tutti?")
+        if (H.fase === "gioco") return t.conferma("Chiudere la partita per tutti?", "Gli amici tornano alla home.", "Chiudi", via);
+        via();
+      } };
+    bd();
+  }
+
+  // =========================================================
+  //  ONLINE — OSPITE: disegna le foto dell'host e manda solo le sue mosse
+  // =========================================================
+  function ospite(t, codice) {
+    if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var S = { rete: null, nome: "", chiesto: 0 };
+    function invia(m) { if (S.rete) S.rete.invia(m); }
+    var cb = { sonoHost: false, myId: null, seg: null, mio: {}, vm: null,
+      onIndizio: function (w) { invia({ t: "indizio", testo: w }); },
+      onVoto: function (chi) { invia({ t: "voto", chi: chi }); },
+      onAvanti: function (k) { invia({ t: "avanti", k: k }); },
+      onIndovina: function (w) { invia({ t: "indovina", w: w }); },
+      // la mia parola non è arrivata (pagina ricaricata, messaggio perso): la richiedo all'host, al massimo ogni 2,5 secondi
+      chiedi: function () { if (!S.rete || Date.now() - S.chiesto < 2500) return; S.chiesto = Date.now(); invia({ t: "chiedi" }); },
+      onEsci: function () {
+        function via() { if (S.rete) S.rete.chiudi(); t.esci(); }
+        if (cb.vm && cb.vm.fase === "gioco" && trova(cb.vm, cb.myId)) return t.conferma("Uscire dalla partita?", null, "Esci", via);
+        via();
+      } };
+    if (t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
+    function chiediNome() {
+      var s = t.schermata({ icona: "🕵️", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var input = t.el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
+      s._contenuto.appendChild(input);
+      s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
+        try { SG.audioCtx && SG.audioCtx(); } catch (e) {}
+        S.nome = (input.value || "").trim().slice(0, 16) || "Amico"; collega();
+      } }));
+      t.mostra(s);
+    }
+    function collega() {
+      attesa();
+      S.rete = SGNet.entra(codice, {
+        // il "join" lo ripete il collegamento finché il mio id non compare nella foto dell'host
+        onAperto: function (id) { cb.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome) }); },
+        onMsg: function (m) {
+          if (!m || !m.t) return;
+          if (m.to && m.to !== cb.myId) return;   // era per un altro telefono
+          if (m.t === "vm") {
+            disegna(t, m.vm, cb);
+            if (m.vm.fase === "gioco" && !(cb.seg && cb.seg.k === m.vm.partita + "|" + m.vm.mano)) cb.chiedi();
+          }
+          else if (m.t === "seg" || m.t === "no") riceviPrivato(cb, m);
+        },
+        onChiuso: function (perche) { errore(t, perche && perche.sparito ? "L'host non è tornato: la stanza è chiusa." : "L'host ha chiuso la partita."); },
+        // SOLO se il primo collegamento non è riuscito: si riprova (dopo, la rete che salta la gestisce il core)
+        onErrore: function () { if (S.rete) S.rete.chiudi(); erroreRete(t, "Non riesco a entrare nella stanza.", collega); }
+      });
+      if (!S.rete) senzaRete(t);
+    }
+    function attesa() {
+      var s = t.schermata({ icona: "🕵️", titolo: "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
+      t.mostra(s);
+    }
+  }
+
+  // un messaggio solo per questo telefono: il segreto della mano, o "non puoi scrivere la tua parola"
+  function riceviPrivato(cb, m) {
+    if (m.t === "seg") { cb.seg = m; if (UI && UI.cb === cb && cb.vm && cb.vm.fase === "gioco") aggiornaCarta(UI, cb.vm, cb); return; }
+    if (m.t === "no") {
+      cb.mio.ind = null; avviso(m.testo); vibra(30);
+      if (UI && UI.cb === cb && UI.fase && UI.fase.zona) UI.fase.zona();
+    }
+  }
+
+  // =========================================================
+  //  ONLINE — DISEGNO (uguale per host e ospiti)
+  // =========================================================
+  var UI = null;   // la schermata di gioco si costruisce UNA volta e poi si aggiorna a pezzi
+  var FIN = null;  // la classifica finale già a schermo: le foto che arrivano dopo non la ridisegnano
+  function disegna(t, vm, cb) {
+    cb.vm = vm;
+    if (vm.fase === "lobby") { UI = FIN = null; return lobby(t, vm, cb); }
+    if (vm.fase === "fine") {
+      UI = null;
+      var kf = "fine|" + vm.partita;
+      if (FIN && FIN.k === kf && FIN.t === t && document.body.contains(FIN.s)) return;
+      FIN = { k: kf, t: t, s: finale(t, vm, cb) };
+      return;
+    }
+    FIN = null;
+    if (!UI || UI.t !== t || UI.cb !== cb || !document.body.contains(UI.s)) UI = creaSchermo(t, cb);
+    aggiorna(UI, vm, cb);
+  }
+  function lobby(t, vm, cb) {
+    var dentro = vm.players.some(function (p) { return p.id === cb.myId; });
+    var guardano = vm.guarda || [], guardo = guardano.some(function (p) { return p.id === cb.myId; });
+    // (le regole scelte dall'host le scrive già il core in saletta, "📜 Si gioca così")
+    var extra = [];
+    if (guardano.length) extra.push(t.el("p", { class: "modulo-nota", text: "👀 Guardano: " + guardano.map(function (p) { return p.id === cb.myId ? "tu" : p.nome; }).join(", ") }));
+    t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN_ON,
+      vuoti: Math.max(0, MIN_ON - vm.players.length),   // solo i posti che mancano per cominciare
+      giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
+      extra: extra,
+      spettatore: guardo ? "👀 Questa volta guardi" : !cb.sonoHost && !dentro && vm.players.length >= MAX_ON ? "👀 La stanza è piena: guardi la partita" : false,
+      attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
+  }
+
+  function creaSchermo(t, cb) {
+    stile();
+    var el = t.el, s = t.schermata({}); s.classList.add("im-piena");   // schermo intero: niente titolo, niente scorrimento
+    var ui = { t: t, s: s, cb: cb, k: null, fase: null, tempoFine: 0, kTempo: null };
+    ui.stato = el("div", { class: "im-stato" });
+    ui.tempo = el("div", { class: "im-tempo" });
+    ui.carta = cartaSegreta(t);
+    ui.corpo = el("div", { class: "im-corpo" });
+    ui.piede = el("div", { class: "im-piede" });
+    ui.avviso = el("div", { class: "im-avviso" });
+    var esci = el("button", { class: "im-esci", type: "button", "aria-label": "Esci", text: "‹", onclick: function () { cb.onEsci(); } });
+    s._contenuto.appendChild(el("div", { class: "im-scena" }, [el("div", { class: "im-barra" }, [esci, ui.stato, ui.tempo]), ui.carta.nodo, ui.corpo, ui.piede, ui.avviso]));
+    t.mostra(s);
+    // il tempo che scorre (solo la scritta) e, se la mia parola non è arrivata, la richiesta all'host
+    ui.timer = setInterval(function () {
+      if (!document.body.contains(s)) { if (Date.now() - ui.nato > 2000) clearInterval(ui.timer); return; }
+      var v = cb.vm;
+      if (ui.tempoFine) {
+        var r = Math.max(0, Math.ceil((ui.tempoFine - Date.now()) / 1000));
+        setTx(ui.tempo, "⏱️ " + Math.floor(r / 60) + ":" + ("0" + (r % 60)).slice(-2));
+        ui.tempo.classList.toggle("poco", r <= 10);
+        if (r !== ui.ultimoSec && r > 0 && r <= 5 && trova(v, cb.myId)) tic(700);
+        ui.ultimoSec = r;
+      } else setTx(ui.tempo, "");
+      if (cb.chiedi && v && v.fase === "gioco" && !(cb.seg && cb.seg.k === v.partita + "|" + v.mano)) cb.chiedi();
+      if (ui.fase && ui.fase.tic) ui.fase.tic();
+    }, 250);
+    ui.nato = Date.now();
+    return ui;
+  }
+
+  // la carta segreta: si tiene premuto per vederla (grande quando arriva la parola, poi piccola in alto)
+  function cartaSegreta(t) {
+    var el = t.el;
+    var su = el("div", { class: "im-c-su" }), grande = el("div", { class: "im-c-grande" }), giu = el("div", { class: "im-c-giu" });
+    var tx = el("span", { class: "im-c-tx" });
+    var coperta = el("div", { class: "im-c-coperta" }, [el("span", { class: "im-c-dito", text: "👆" }), tx]);
+    var nodo = el("div", { class: "im-carta" }, [coperta, el("div", { class: "im-c-dentro" }, [su, grande, giu])]);
+    var premuto = false;
+    nodo.addEventListener("pointerdown", function (e) {
+      e.preventDefault(); premuto = true; nodo.classList.add("su");
+      try { nodo.setPointerCapture(e.pointerId); } catch (x) {}
+    });
+    function lascia() { if (!premuto) return; premuto = false; nodo.classList.remove("su"); }
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach(function (ev) { nodo.addEventListener(ev, lascia); });
+    nodo.addEventListener("contextmenu", function (e) { e.preventDefault(); });   // niente menu col dito premuto a lungo
+    return { nodo: nodo, su: su, grande: grande, giu: giu, tx: tx, sig: null };
+  }
+  function aggiornaCarta(ui, vm, cb) {
+    var c = ui.carta, seg = cb.seg && cb.seg.k === vm.partita + "|" + vm.mano ? cb.seg : null, info, cop;
+    if (!seg) { info = { su: "", grande: "⏳", giu: "" }; cop = trova(vm, cb.myId) ? "Arriva la tua parola…" : "Arriva il segreto…"; }
+    else if (seg.guarda) {
+      var g = seg.guarda;
+      info = { su: "Parola: " + g.parola + (g.spia ? " · la spia ha «" + g.simile + "»" : g.aiuto === "simile" ? " · l'impostore ha «" + g.simile + "»" : ""),
+        grande: "🕵️ " + g.imp, giu: g.spia ? "🎭 La spia è " + g.spia : "Shh: non dirlo a chi gioca!" };
+      cop = "Tieni premuto: il segreto (guardi)";
+    }
+    else { info = seg.info; cop = "Tieni premuto: la tua parola"; }
+    var sig = JSON.stringify([info, cop]);
+    if (c.sig === sig) return;
+    c.sig = sig;
+    setTx(c.su, info.su); setTx(c.grande, info.grande); setTx(c.giu, info.giu); setTx(c.tx, cop);
+    c.grande.classList.toggle("lunga", String(info.grande).length > 14);
+  }
+
+  var TESTI_PASSO = { indizi: "✍️ Indizi", discuti: "🗣️ Discutete", voto: "🗳️ Si vota", spoglio: "📮 Lo spoglio", ultima: "🎯 Ultima prova", esito: "🏁 Fine mano" };
+  function aggiorna(ui, vm, cb) {
+    var me = trova(vm, cb.myId), guardo = !me;
+    var passo = (vm.passo === "indizi" && vm.giri > 1 ? "✍️ Indizio " + vm.giro + " di " + vm.giri : (TESTI_PASSO[vm.passo] || "")) +
+      (vm.passo === "discuti" && vm.indizi === "voce" ? " a voce" : "");
+    setTx(ui.stato, (guardo ? "👀 Guardi · " : "") + (vm.mani > 1 ? "Mano " + vm.mano + "/" + vm.mani + " · " : "") + passo);
+    // il tempo: si riparte a ogni momento nuovo (e si corregge se l'host l'ha accorciato)
+    var conTempo = vm.passo === "indizi" || vm.passo === "discuti" || vm.passo === "voto" || (vm.passo === "ultima" && vm.ultima && vm.ultima.scelto == null);
+    if (!conTempo) ui.tempoFine = 0;
+    else {
+      var fineNuova = Date.now() + (vm.resta || 0) * 1000;
+      if (ui.kTempo !== vm.k || !ui.tempoFine || Math.abs(fineNuova - ui.tempoFine) > 1600) ui.tempoFine = fineNuova;
+    }
+    ui.kTempo = vm.k;
+    // la carta: grande quando la parola è appena arrivata, nascosta a fine mano (le parole sono svelate)
+    var primo = (vm.passo === "indizi" && vm.giro === 1) || (vm.passo === "discuti" && vm.indizi === "voce");
+    ui.carta.nodo.classList.toggle("grande", primo);
+    ui.carta.nodo.hidden = vm.passo === "esito";
+    aggiornaCarta(ui, vm, cb);
+    // il momento della mano: si costruisce una volta (quando cambia), poi si aggiornano solo i pezzi
+    if (vm.k !== ui.k) {
+      ui.k = vm.k;
+      ui.t.svuota(ui.corpo); ui.t.svuota(ui.piede);
+      var f = { indizi: fIndizi, discuti: fDiscuti, voto: fVoto, spoglio: fSpoglio, ultima: fUltima, esito: fEsito }[vm.passo];
+      ui.fase = (f && f(ui, vm, cb)) || {};
+      ui.corpo.scrollTop = 0;
+    }
+    if (ui.fase.agg) ui.fase.agg(vm);
+  }
+
+  // ---- pezzi comuni dei momenti ----
+  function titolo(el, testo, sotto) { return el("div", { class: "im-tit" }, [el("b", { text: testo }), sotto ? el("small", { text: sotto }) : null]); }
+  // chi guarda: una riga e le faccine
+  function piedeGuarda(ui, vm, cb) {
+    var el = ui.t.el, scelto = (vm.guarda || []).some(function (x) { return x.id === cb.myId; });
+    ui.piede.appendChild(el("p", { class: "im-conto", text: scelto ? "👀 Questa volta guardi: tieni premuto in alto per il segreto" : "👀 Guardi: alla prossima partita giochi anche tu" }));
+    faccine(ui);
+  }
+  function faccine(ui) { var f = ui.t.faccine(); if (f) ui.piede.appendChild(f); return f; }
+  // il tasto "più di metà": «🗳️ Votiamo» / «⏩ Avanti» con quanti l'hanno toccato (il mio tocco resta segnato)
+  function tastoPronti(ui, vm, cb, testo, fatto) {
+    var el = ui.t.el, me = trova(vm, cb.myId), k = vm.k; if (!me || me.via) return null;
+    var tx = el("span", { class: "tx", text: testo }), q = el("span", { class: "quanti" });
+    var b = el("button", { class: "btn btn-primario im-pronto", type: "button", onclick: function () {
+      if (b.disabled) return;
+      cb.mio.pronto = k; agg(cb.vm || vm); cb.onAvanti(k);
+    } }, [tx, q]);
+    function agg(v) {
+      var l = v.pronti || [], mio = cb.mio.pronto === k || l.indexOf(cb.myId) >= 0, n = l.length + (mio && l.indexOf(cb.myId) < 0 ? 1 : 0);
+      setTx(q, Math.min(n, v.servono || 1) + " su " + (v.servono || 1));
+      setTx(tx, mio ? fatto : testo);
+      b.disabled = mio;
+    }
+    agg(vm);
+    ui.piede.appendChild(b);
+    return { agg: agg };
+  }
+  function riempiIndizi(el, box, lista, nuovo, k) {
+    lista.forEach(function (w, g) {
+      var ch = el("b", { class: "im-w" + (nuovo && g === lista.length - 1 ? " nuova" : "") + (g === lista.length - 1 && lista.length > 1 ? " ultimo" : "") + (w ? "" : " vuota"), text: w || "—" });
+      if (nuovo && g === lista.length - 1) ch.style.animationDelay = (k * 0.22) + "s";   // svelati tutti insieme, uno dopo l'altro
+      box.appendChild(ch);
+    });
+  }
+  // gli indizi di tutti, nell'ordine del giro (correnti: ✍️/✅ di chi sta scrivendo)
+  function listaIndizi(ui, vm, cb, correnti, nuovi) {
+    var el = ui.t.el, ids = (vm.ordine || []).filter(function (id) { return trova(vm, id); });
+    var box = el("div", { class: "im-lista" + (ids.length > 6 ? " fitta" : "") }), righe = {};
+    ids.forEach(function (id, k) {
+      var p = trova(vm, id), ind = el("span", { class: "im-ind" }), segno = el("span", { class: "im-segno" });
+      riempiIndizi(el, ind, (vm.ind && vm.ind[id]) || [], nuovi, k);
+      var r = el("div", { class: "im-riga" + (id === cb.myId ? " io" : "") }, [el("span", { class: "im-nome", text: id === cb.myId ? "Tu" : p.nome }), ind, segno]);
+      box.appendChild(r); righe[id] = { r: r, segno: segno };
+    });
+    return { nodo: box, agg: function (v) {
+      ids.forEach(function (id) {
+        var p = trova(v, id) || {}, x = righe[id];
+        setTx(x.segno, p.via ? "🚪" : p.forse ? "📶" : correnti ? ((v.scritto || []).indexOf(id) >= 0 ? "✅" : "✍️") : "");
+        x.r.classList.toggle("via", !!p.via);
+      });
+    } };
+  }
+  function haIndizi(vm) { return vm.ind && Object.keys(vm.ind).length > 0; }
+
+  // ---- ✍️ gli indizi: si scrive di nascosto, si svelano tutti insieme al giro dopo ----
+  function fIndizi(ui, vm, cb) {
+    var el = ui.t.el, me = trova(vm, cb.myId), k = vm.k;
+    ui.corpo.appendChild(titolo(el, vm.giro > 1 ? "✍️ Un altro indizio" : "✍️ Scrivi un indizio",
+      vm.giro > 1 ? "Ecco gli indizi di prima: scrivine un altro, diverso" : "Una parola legata alla tua, senza dirla: si svelano tutti insieme"));
+    var zona = el("div", { class: "im-scrivi" });
+    if (me) ui.corpo.appendChild(zona);
+    var lista = listaIndizi(ui, vm, cb, true, vm.giro > 1);
+    ui.corpo.appendChild(lista.nodo);
+    var conto = el("p", { class: "im-conto" });
+    ui.piede.appendChild(conto);
+    if (!me) piedeGuarda(ui, vm, cb);
+    var disegnato = null;
+    function zonaScrivi() {
+      if (!me) return;
+      var v = cb.vm || vm, mio = cb.mio.ind && cb.mio.ind.k === k ? cb.mio.ind : null;
+      var gia = !mio && (v.scritto || []).indexOf(cb.myId) >= 0;   // (rientrato: l'avevo già scritto)
+      var stato = mio ? "m:" + mio.testo : gia ? "gia" : "scrivi";
+      if (stato === disegnato) return;
+      disegnato = stato;
+      ui.t.svuota(zona);
+      if (mio || gia) {
+        zona.appendChild(el("div", { class: "im-fatto" }, [el("span", { text: mio ? "✅ Hai scritto «" + mio.testo + "»" : "✅ Hai scritto il tuo indizio" }),
+          el("button", { class: "im-cambia", type: "button", text: "✏️ Cambia", onclick: function () { cb.mio.ind = null; disegnato = null; cb.mio.cambio = k; zonaScrivi(); } })]));
+        return;
+      }
+      var inp = el("input", { type: "text", class: "im-input", maxlength: "24", placeholder: "Il tuo indizio", autocomplete: "off", autocapitalize: "none", enterkeyhint: "send" });
+      var b = el("button", { class: "btn btn-primario im-invia", type: "button", text: "Invia" });
+      function manda() {
+        var w = pulisciIndizio(inp.value);
+        if (!w) { inp.focus(); return; }
+        var sg = cb.seg && cb.seg.k === v.partita + "|" + v.mano ? cb.seg : null;
+        if (sg && sg.mia && svelaParola(w, sg.mia)) { avviso("🙊 Non puoi scrivere la tua parola!"); vibra(30); return; }
+        cb.mio.ind = { k: k, testo: w, quando: Date.now() };
+        try { inp.blur(); } catch (e) {}
+        cb.onIndizio(w); zonaScrivi();
+      }
+      b.addEventListener("click", manda);
+      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); manda(); } });
+      zona.appendChild(inp); zona.appendChild(b);
+      if (cb.mio.cambio === k) { cb.mio.cambio = null; try { inp.focus(); } catch (e) {} }
+    }
+    zonaScrivi();
+    return { zona: zonaScrivi, agg: function (v) {
+      lista.agg(v);
+      setTx(conto, "✍️ " + (v.scritto || []).length + " su " + presentiVm(v).length + " hanno scritto");
+      // l'indizio non è arrivato all'host (rete saltata): lo rimando
+      var mio = cb.mio.ind;
+      if (mio && mio.k === k && (v.scritto || []).indexOf(cb.myId) < 0 && Date.now() - mio.quando > 3000) { mio.quando = Date.now(); cb.onIndizio(mio.testo); }
+      zonaScrivi();
+    } };
+  }
+
+  // ---- 🗣️ la discussione: gli indizi svelati (o il giro a voce), poi «🗳️ Votiamo» ----
+  function fDiscuti(ui, vm, cb) {
+    var el = ui.t.el, me = trova(vm, cb.myId), voce = vm.indizi === "voce";
+    var ruoli = "In gioco: 🕵️ 1 impostore" + (vm.conSpia ? " · 🎭 1 spia" + (vm.spiaNonSa ? " (che non lo sa!)" : "") : "");
+    var lista = null;
+    if (voce) {
+      var ini = trova(vm, (vm.ordine || [])[0]);
+      ui.corpo.appendChild(titolo(el, "🗣️ A turno, a voce", "Ognuno dice UNA parola legata alla sua, senza svelarla. Poi discutete: chi bluffa?"));
+      ui.corpo.appendChild(el("div", { class: "im-inizia" }, [el("small", { text: "Inizia" }), el("b", { text: ini ? (ini.id === cb.myId ? "Tu" : ini.nome) : "?" })]));
+      var giro = el("div", { class: "im-ordine" });
+      (vm.ordine || []).forEach(function (id, k) { var p = trova(vm, id); if (p) giro.appendChild(el("span", { class: k === 0 ? "primo" : "", text: (k + 1) + ". " + (id === cb.myId ? "Tu" : p.nome) })); });
+      ui.corpo.appendChild(giro);
+    } else {
+      ui.corpo.appendChild(titolo(el, "🗣️ Chi bluffa?", "Ecco tutti gli indizi: discutete, poi si vota"));
+      lista = listaIndizi(ui, vm, cb, false, true);
+      ui.corpo.appendChild(lista.nodo);
+    }
+    ui.corpo.appendChild(el("p", { class: "im-ruoli", text: ruoli }));
+    var tp = me ? tastoPronti(ui, vm, cb, "🗳️ Votiamo", "✅ Votiamo") : null;
+    if (me) faccine(ui); else piedeGuarda(ui, vm, cb);
+    return { agg: function (v) { if (lista) lista.agg(v); if (tp) tp.agg(v); } };
+  }
+
+  // ---- 🗳️ il voto segreto: si può cambiare finché non votano tutti ----
+  function fVoto(ui, vm, cb) {
+    var el = ui.t.el, me = trova(vm, cb.myId), k = vm.k;
+    var cand = (vm.ordine || []).concat(vm.players.map(function (p) { return p.id; }).filter(function (id) { return (vm.ordine || []).indexOf(id) < 0; }))
+      .filter(function (id) { var p = trova(vm, id); return p && !p.via && id !== cb.myId; });
+    ui.corpo.appendChild(titolo(el, "🗳️ Chi è l'impostore?", me ? "Vota in segreto: puoi cambiare finché non votano tutti" : "Gli altri votano in segreto"));
+    var griglia = el("div", { class: "im-voti" + (cand.length > 4 ? " due" : "") }), bot = {};
+    cand.forEach(function (id) {
+      var p = trova(vm, id), ind = (vm.ind && vm.ind[id]) || [];
+      var b = el("button", { class: "im-vb", type: "button", onclick: function () {
+        if (!me || b.disabled) return;
+        cb.mio.voto = { k: k, chi: id, quando: Date.now() }; agg(cb.vm || vm); cb.onVoto(id);
+      } }, [el("b", { text: p.nome }), ind.length ? el("small", { text: ind.map(function (w) { return w || "—"; }).join(" · ") }) : null]);
+      if (!me) b.disabled = true;
+      bot[id] = b; griglia.appendChild(b);
+    });
+    ui.corpo.appendChild(griglia);
+    var conto = el("p", { class: "im-conto" });
+    ui.piede.appendChild(conto);
+    if (!me) piedeGuarda(ui, vm, cb);
+    function agg(v) {
+      var mio = cb.mio.voto && cb.mio.voto.k === k ? cb.mio.voto : null;
+      cand.forEach(function (id) { var p = trova(v, id) || {}; bot[id].classList.toggle("scelto", !!mio && mio.chi === id); bot[id].classList.toggle("via", !!p.via); });
+      var n = (v.votato || []).length, tot = presentiVm(v).length;
+      setTx(conto, (mio ? "Hai votato " + (trova(v, mio.chi) || {}).nome + " · " : "") + "✅ " + n + " su " + tot + " hanno votato");
+      // il voto non è arrivato all'host (rete saltata): lo rimando
+      if (mio && (v.votato || []).indexOf(cb.myId) < 0 && Date.now() - mio.quando > 3000) { mio.quando = Date.now(); cb.onVoto(mio.chi); }
+    }
+    return { agg: agg };
+  }
+
+  // ---- 📮 lo spoglio: i voti escono uno alla volta, poi il verdetto ----
+  function fSpoglio(ui, vm, cb) {
+    var el = ui.t.el, sp = vm.spoglio || { conte: {}, piu: [], ordine: [] }, k = vm.k, me = trova(vm, cb.myId);
+    ui.corpo.appendChild(titolo(el, "📮 Lo spoglio", "Quanti voti ha preso ognuno"));
+    var ids = (sp.ordine || []).filter(function (id) { return trova(vm, id); });
+    var griglia = el("div", { class: "im-sp" + (ids.length > 6 ? " fitta" : "") }), righe = {};
+    ids.forEach(function (id) {
+      var bolla = el("span", { class: "im-bolla", text: "·" });
+      var r = el("div", { class: "im-sp-r" }, [el("span", { class: "im-nome", text: id === cb.myId ? "Tu" : trova(vm, id).nome }), bolla]);
+      griglia.appendChild(r); righe[id] = { r: r, bolla: bolla };
+    });
+    ui.corpo.appendChild(griglia);
+    var v1 = el("div", { class: "v1" }), v2 = el("div", { class: "v2" }), ver = el("div", { class: "im-verdetto" }, [v1, v2]);
+    ui.corpo.appendChild(ver);
+    if (!me) piedeGuarda(ui, vm, cb);
+    function vivo() { return UI === ui && ui.k === k && document.body.contains(ui.s); }
+    function dopo(ms, fn) { setTimeout(function () { if (vivo()) fn(); }, ms); }
+    var passi = 450;
+    ids.forEach(function (id, i) {
+      passi = 450 + i * 330;
+      dopo(passi, function () {
+        var x = righe[id], n = sp.conte[id] || 0;
+        x.bolla.textContent = String(n); x.bolla.style.transform = "scale(1.35)";
+        setTimeout(function () { x.bolla.style.transform = ""; }, 200);
+        tic(500 + n * 90);
+      });
+    });
+    dopo(passi + 500, function () {
+      (sp.piu || []).forEach(function (id) { if (righe[id]) righe[id].r.classList.add("piu"); });
+      var acc = sp.acc != null ? trova(vm, sp.acc) : null;
+      v1.textContent = acc ? "Il più votato è " + (sp.acc === cb.myId ? "TU" : acc.nome) + "…" : (sp.piu || []).length ? "Pareggio nei voti!" : "Nessun voto";
+      v2.textContent = !acc ? "🤝 Nessuno viene accusato" : sp.ruolo === "impostore" ? "🕵️ ed è l'impostore!" : sp.ruolo === "spia" ? "🎭 ed è la spia!" : "😇 ed è innocente!";
+      ver.classList.add("su");
+      rullo();
+    });
+    dopo(passi + 1900, function () {
+      v2.classList.add("su");
+      fanfara(sp.ruolo === "impostore" || sp.ruolo === "spia");
+      if (me) vibra([30, 40, 30]);   // la rivelazione: un momento che conta
+    });
+    return {};
+  }
+
+  // ---- 🎯 l'ultima possibilità: solo l'impostore tocca, gli altri guardano ----
+  function fUltima(ui, vm, cb) {
+    var el = ui.t.el, u = vm.ultima || { scelte: [] }, io = u.chi === cb.myId, chi = trova(vm, u.chi) || { nome: "?" };
+    ui.corpo.appendChild(io ? titolo(el, "🎯 Ultima possibilità!", "Indovina la parola degli altri: se ci riesci ti salvi e prendi 2 punti")
+      : titolo(el, "🎯 " + chi.nome + " è l'impostore!", "Ultima possibilità: prova a indovinare la vostra parola…"));
+    var griglia = el("div", { class: "im-scelte" }), bot = [];
+    u.scelte.forEach(function (w) {
+      var b = el("button", { class: "im-sc", type: "button", text: w, onclick: function () {
+        if (!io || b.disabled) return;
+        bot.forEach(function (x) { x.disabled = true; }); b.classList.add("mia");
+        cb.onIndovina(w);
+      } });
+      b._w = w; if (!io || u.scelto != null) b.disabled = true;
+      bot.push(b); griglia.appendChild(b);
+    });
+    ui.corpo.appendChild(griglia);
+    var ris = el("div", { class: "im-ris" });
+    ui.corpo.appendChild(ris);
+    if (!io) faccine(ui);
+    var mostrato = false;
+    return { agg: function (v) {
+      var x = v.ultima; if (!x || x.scelto == null || mostrato) return;
+      mostrato = true;
+      bot.forEach(function (b) {
+        b.disabled = true;
+        if (b._w === x.parola) b.classList.add("giusta");
+        else if (b._w === x.scelto) b.classList.add("sbagliata");
+      });
+      ris.textContent = x.giusto ? "🎯 Indovinata! Si salva!" : x.scelto ? "❌ Sbagliato! La parola era «" + x.parola + "»" : "⌛ Tempo scaduto! La parola era «" + x.parola + "»";
+      fanfara(!x.giusto);
+      if (trova(v, cb.myId)) vibra(x.giusto ? [30, 40, 30] : 25);
+    } };
+  }
+
+  // ---- 🏁 fine mano: chi era chi, le parole, i voti e i punti. Si va avanti col conto, o subito se più di metà tocca «⏩ Avanti» ----
+  function fEsito(ui, vm, cb) {
+    var el = ui.t.el, e = vm.esito || {}, me = trova(vm, cb.myId);
+    var pi = trova(vm, e.imp) || { nome: "?" }, ps = e.spia ? trova(vm, e.spia) : null;
+    ui.corpo.appendChild(el("div", { class: "im-testa" }, [el("span", { class: "ic", text: e.icona || "🏁" }), el("b", { text: e.titolo || "" }),
+      el("small", { text: (e.sotto || "") + (vm.mani > 1 ? " · mano " + vm.mano + " di " + vm.mani : "") })]));
+    ui.corpo.appendChild(el("div", { class: "im-svela" }, [
+      el("div", { class: "chi", text: "🕵️ Impostore: " + (e.imp === cb.myId ? "tu" : pi.nome) + (ps ? " · 🎭 Spia: " + (e.spia === cb.myId ? "tu" : ps.nome) : "") }),
+      el("div", { class: "par" }, ["Parola: ", el("b", { text: e.parola || "" }),
+        ps ? " · la spia aveva «" + e.simile + "»" : e.aiuto === "simile" ? " · l'impostore aveva «" + e.simile + "»" : e.cat ? " · " + e.cat : null])]));
+    // una riga a testa: chi ha votato chi e i punti presi
+    var ids = (e.giocano || []).filter(function (id) { return trova(vm, id); }), fitta = ids.length > 6;
+    var lista = el("div", { class: "im-es" + (fitta ? " fitta" : "") });
+    ids.forEach(function (id) {
+      var p = trova(vm, id), segno = id === e.imp ? "🕵️ " : id === e.spia ? "🎭 " : "", vo = e.voti ? e.voti[id] : null, vp = vo ? trova(vm, vo) : null;
+      var voto = vp ? "→ " + (vo === cb.myId ? "te" : vp.nome) + (id === e.imp ? "" : vo === e.imp ? " ✅" : vo === e.spia ? " 🎭" : " ❌") : "";
+      lista.appendChild(el("div", { class: "im-es-r" + (id === cb.myId ? " io" : "") }, [
+        el("span", { class: "nm", text: segno + (id === cb.myId ? "Tu" : p.nome) }),
+        el("span", { class: "vo", text: voto }),
+        el("span", { class: "pi" + (p.piu ? "" : " zero"), text: "+" + p.piu }),
+        el("span", { class: "tot", text: fmtN(p.punti) })]));
+    });
+    ui.corpo.appendChild(lista);
+    // il conto per tutti ("Si va avanti tra 20…": il tempo lo tiene l'host) e «⏩ Avanti» a chi gioca
+    var conto = el("p", { class: "im-conto" });
+    ui.piede.appendChild(conto);
+    ui.t.contoAvanti(conto, vm.resta || T_ESITO, null, "im-esito|" + vm.k);
+    var tp = me && !me.via ? tastoPronti(ui, vm, cb, e.ultima ? "🏆 Classifica" : "⏩ Avanti", e.ultima ? "✅ Classifica" : "✅ Avanti") : null;
+    if (me) faccine(ui); else piedeGuarda(ui, vm, cb);
+    // i trofei: ognuno conta i suoi, una volta per mano
+    var km = vm.codice + "|" + vm.k;
+    if (me && !MEM.fatti[km] && ids.indexOf(cb.myId) >= 0) {
+      MEM.fatti[km] = 1;
+      var ix = function (id) { return id == null ? -1 : ids.indexOf(id); };
+      var io = ix(cb.myId), imp = ix(e.imp), acc = ix(e.acc);
+      try {
+        contaTrofei({ io: io, impostore: imp, spia: ix(e.spia), voti: ids.map(function (id) { var x = e.voti ? e.voti[id] : null; return x ? ix(x) : null; }),
+          conte: ids.map(function (id) { return (e.conte && e.conte[id]) || 0; }), accusato: acc, aiuto: e.aiuto, iniziante: ix(e.iniziante),
+          ultima: !!e.ultima, salvo: acc !== imp || e.indovinato }, MEM);
+      } catch (er) {}
+    }
+    if (me && me.piu >= 3) vibra(20);   // tanti punti
+    return { agg: function (v) { if (tp) tp.agg(v); } };
+  }
+
+  function avviso(testo) {
+    if (!UI || !testo) return;
+    UI.avviso.textContent = testo; UI.avviso.classList.remove("su"); void UI.avviso.offsetWidth; UI.avviso.classList.add("su");
+  }
+  // medaglie a pari merito: oro, oro, poi argento (posti 1, 1, 3 → 🥇🥇🥈), come la fine partita del core
+  function medaglie(posti) {
+    var gruppi = 0, prec = null;
+    return posti.map(function (p) { if (p !== prec) { gruppi++; prec = p; } return ["🥇", "🥈", "🥉"][gruppi - 1] || p + "°"; });
+  }
+  function finale(t, vm, cb) {
+    var s = t.schermata({ icona: "🏆", titolo: "Classifica finale" });
+    var cl = vm.classifica || [], fac = t.faccine();
+    // tanti giocatori (o schermo basso): righe su due colonne, così i tasti restano a vista senza scorrere
+    var fitta = cl.length > 6 || cl.length * 71 + 300 + (fac ? 56 : 0) > (window.innerHeight || 640);
+    var ol = t.el("ol", { class: "classifica" + (fitta ? " fitta" : "") }), med = medaglie(cl.map(function (r) { return r.pos; }));
+    cl.forEach(function (r, i) {
+      ol.appendChild(t.el("li", { class: r.pos === 1 ? "vincitore" : "" }, [
+        t.el("span", { class: "pos", text: med[i] }),
+        t.el("span", { class: "nome", text: r.id === cb.myId ? r.nome + " (tu)" : r.nome }),
+        t.el("span", { class: "punti", text: fmtN(r.punti) })]));
+    });
+    s._contenuto.appendChild(ol);
+    if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }
+    if (!cl.some(function (r) { return r.id === cb.myId; })) s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Questa partita l'hai guardata." }));
+    else if (cl.some(function (r) { return r.id === cb.myId && r.pos === 1; })) vibra([30, 40, 60]);   // vittoria
+    // I TASTI DI FINE LI METTE IL CORE (Rivincita col 3-2-1, Cambia gioco, Ci sto). Solo se torna false, i tasti di sempre
+    if (!t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) {
+      if (cb.sonoHost) s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
+      else s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }));
+      s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    }
+    t.mostra(s);
+    return s;
+  }
+  function errore(t, testo) {
+    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
+    t.mostra(s);
+  }
+  // il primo collegamento non è riuscito: "Riprova" rifà il collegamento da capo
+  function erroreRete(t, testo, riprova) {
+    var s = t.schermata({ icona: "📶", titolo: "Niente rete?", indietro: t.esci });
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo + " Controlla la connessione e riprova." }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Riprova", onclick: riprova }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Torna alla home", onclick: t.esci }));
+    t.mostra(s);
+  }
+  function senzaRete(t) {
+    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Online si gioca quando l'app è aperta dal sito pubblicato." }));
+    s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
+    t.mostra(s);
+  }
+
+  var cssFatto = false;
+  function stile() {
+    if (cssFatto) return; cssFatto = true;
+    var st = document.createElement("style");
+    st.textContent = [
+      ".schermata.im-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden}",
+      ".schermata.im-piena>.testa,.schermata.im-piena>.piede{display:none}",
+      ".schermata.im-piena>.contenuto{height:100%;margin:0;padding:0}",
+      ".im-scena{position:relative;height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom));overflow:hidden}",
+      ".im-barra{display:flex;align-items:center;gap:8px;font-weight:800;flex:none}",
+      ".im-esci{flex:none;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:1.3rem;font-weight:900;cursor:pointer}",
+      ".im-stato{flex:1;min-width:0;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".im-tempo{flex:none;font-variant-numeric:tabular-nums;font-weight:900;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.12)}",
+      ".im-tempo.poco{background:var(--rosso);color:#3a0009}.im-tempo:empty{display:none}",
+      // la carta segreta (tieni premuto)
+      ".im-carta{position:relative;flex:none;height:46px;border-radius:16px;background:var(--carta);box-shadow:var(--ombra);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;cursor:pointer;overflow:hidden}",
+      ".im-carta.grande{height:clamp(110px,22vh,180px);border-radius:22px}.im-carta[hidden]{display:none}",
+      ".im-c-coperta,.im-c-dentro{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:8px;padding:4px 12px;text-align:center;transition:opacity .12s}",
+      ".im-c-dentro{opacity:0;flex-direction:column;gap:2px}.im-carta.su .im-c-dentro{opacity:1}.im-carta.su .im-c-coperta{opacity:0}",
+      ".im-c-dito{font-size:1.3rem}.im-c-tx{font-weight:800}",
+      ".im-carta.grande .im-c-coperta{flex-direction:column;gap:4px}.im-carta.grande .im-c-dito{font-size:2.4rem}.im-carta.grande .im-c-tx{font-size:1.1rem}",
+      ".im-c-su,.im-c-giu{font-size:.8rem;opacity:.85;line-height:1.15}",
+      ".im-c-grande{font-size:1.2rem;font-weight:900;line-height:1.1;overflow-wrap:anywhere}",
+      ".im-carta.grande .im-c-grande{font-size:1.9rem}.im-carta.grande .im-c-grande.lunga{font-size:1.45rem}",
+      ".im-carta:not(.grande) .im-c-su,.im-carta:not(.grande) .im-c-giu{display:none}",
+      // il corpo del momento
+      ".im-corpo{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:8px;overflow:hidden}",
+      ".im-tit{display:flex;flex-direction:column;gap:2px;text-align:center;flex:none}.im-tit b{font-size:1.12rem;line-height:1.2}.im-tit small{font-size:.84rem;opacity:.8;line-height:1.25}",
+      ".im-scrivi{display:flex;gap:8px;flex:none}",
+      ".im-input{flex:1;min-width:0;height:48px;box-sizing:border-box;border-radius:14px;border:2px solid rgba(255,255,255,.22);background:rgba(0,0,0,.18);color:inherit;font:inherit;font-size:1.1rem;font-weight:700;padding:0 12px}",
+      ".im-input:focus{outline:none;border-color:var(--accento)}",
+      ".btn.im-invia{width:auto;margin:0;flex:none;padding:0 18px;min-height:48px}",
+      ".im-fatto{flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;padding:0 6px 0 12px;border-radius:14px;background:rgba(55,212,126,.16);font-weight:800;overflow:hidden}",
+      ".im-fatto span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".im-cambia{flex:none;border:0;border-radius:10px;padding:8px 10px;background:rgba(255,255,255,.14);color:inherit;font:inherit;font-weight:800;cursor:pointer}",
+      ".im-lista{display:grid;gap:5px;align-content:start;min-height:0;overflow:hidden}.im-lista.fitta{grid-template-columns:1fr 1fr;gap:4px}",
+      ".im-riga{display:flex;align-items:center;gap:4px 8px;padding:5px 10px;border-radius:12px;background:rgba(255,255,255,.07);min-width:0}",
+      ".im-lista.fitta .im-riga{flex-wrap:wrap;padding:4px 7px;font-size:.88rem;gap:2px 5px}.im-lista.fitta .im-nome{flex:1;max-width:none}.im-lista.fitta .im-ind{order:3;flex:1 1 100%}.im-lista.fitta .im-ind:empty{display:none}.im-riga.via{opacity:.45}.im-riga.io{box-shadow:inset 0 0 0 2px rgba(255,202,58,.45)}",
+      ".im-nome{flex:none;max-width:42%;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".im-ind{flex:1;min-width:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:.88rem;line-height:1.25;overflow-wrap:anywhere}",
+      ".im-lista.fitta .im-ind{font-size:.78rem}",
+      ".im-w{display:inline;font-weight:800}.im-w+.im-w::before{content:\" · \";font-weight:400;opacity:.6}.im-w.ultimo{color:var(--accento)}.im-w.vuota{opacity:.55}",
+      ".im-w.nuova{animation:imSvela .5s ease both}",
+      "@keyframes imSvela{from{opacity:0}to{opacity:1}}",
+      ".im-segno{flex:none;margin-left:auto}",
+      ".im-conto{margin:0;text-align:center;font-weight:800;opacity:.85;font-size:.9rem}",
+      ".im-piede{flex:none;display:flex;flex-direction:column;gap:6px;align-items:stretch}.im-piede>.sl-faccine{align-self:center;flex:none}",
+      ".btn.im-pronto{margin:0;display:flex;align-items:center;justify-content:center;gap:10px}.im-pronto .quanti{font-size:.85rem;opacity:.8;font-weight:700}",
+      ".im-ruoli{margin:0;text-align:center;font-weight:700;font-size:.86rem;opacity:.9;flex:none}",
+      ".im-inizia{text-align:center;flex:none}.im-inizia small{opacity:.8}.im-inizia b{display:block;font-size:1.8rem;font-weight:900;overflow-wrap:anywhere;line-height:1.1}",
+      ".im-ordine{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;flex:none}",
+      ".im-ordine span{padding:4px 10px;border-radius:999px;background:var(--carta);font-weight:700;font-size:.88rem;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".im-ordine span.primo{background:var(--accento);color:#241f00}",
+      // il voto
+      ".im-voti{display:grid;gap:6px;align-content:start;min-height:0}.im-voti.due{grid-template-columns:1fr 1fr}",
+      ".im-vb{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;min-height:48px;min-width:0;padding:5px 10px;border-radius:14px;border:2px solid transparent;background:var(--carta);color:inherit;font:inherit;text-align:left;cursor:pointer}",
+      ".im-vb b{font-size:1rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".im-vb small{font-size:.76rem;opacity:.8;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".im-vb.scelto{border-color:var(--accento);background:var(--carta-2)}.im-vb:disabled{cursor:default;color:inherit}.im-vb.via{opacity:.45}",
+      // lo spoglio
+      ".im-sp{display:grid;gap:5px}.im-sp.fitta{grid-template-columns:1fr 1fr;gap:4px}",
+      ".im-sp-r{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;border-radius:12px;background:var(--carta);border:2px solid transparent}",
+      ".im-sp.fitta .im-sp-r{padding:3px 8px}.im-sp-r.piu{border-color:var(--accento)}",
+      ".im-bolla{min-width:30px;text-align:center;padding:1px 8px;border-radius:999px;background:var(--carta-2);font-weight:900;transition:transform .2s}",
+      ".im-verdetto{text-align:center;opacity:0;transform:scale(.9);transition:opacity .3s,transform .3s;flex:none}.im-verdetto.su{opacity:1;transform:none}",
+      ".im-verdetto .v1{font-weight:700;opacity:.9}",
+      ".im-verdetto .v2{font-size:1.45rem;font-weight:900;line-height:1.2;margin-top:2px;opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s}.im-verdetto .v2.su{opacity:1;transform:none}",
+      // l'ultima possibilità
+      ".im-scelte{display:grid;grid-template-columns:1fr 1fr;gap:8px}",
+      ".im-sc{min-height:52px;border-radius:14px;border:2px solid transparent;background:var(--carta);color:inherit;font:inherit;font-weight:800;font-size:1rem;padding:8px;overflow-wrap:anywhere;line-height:1.15;cursor:pointer}",
+      ".im-sc:disabled{cursor:default;color:inherit}.im-sc.mia{border-color:var(--accento)}",
+      ".im-sc.giusta{background:var(--verde);color:#04321c}.im-sc.sbagliata{background:var(--rosso);color:#3a0009}",
+      ".im-ris{text-align:center;font-size:1.25rem;font-weight:900;min-height:1.4em;flex:none}",
+      // fine mano
+      ".im-testa{text-align:center;flex:none;line-height:1.15}.im-testa .ic{font-size:1.9rem;display:block}.im-testa b{display:block;font-size:1.25rem}.im-testa small{opacity:.8;font-size:.85rem}",
+      ".im-svela{text-align:center;padding:6px 10px;border-radius:14px;background:var(--carta);flex:none}",
+      ".im-svela .chi{font-size:1.08rem;font-weight:900;overflow-wrap:anywhere}.im-svela .par{font-size:.9rem;opacity:.92}",
+      ".im-es{display:flex;flex-direction:column;gap:3px;min-height:0;overflow:hidden}",
+      ".im-es-r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) auto 2.6ch;gap:8px;align-items:center;padding:5px 10px;border-radius:10px;background:rgba(255,255,255,.06);font-size:.94rem}",
+      ".im-es.fitta .im-es-r{padding:2px 8px;font-size:.85rem}.im-es-r.io{box-shadow:inset 0 0 0 2px rgba(255,202,58,.45)}",
+      ".im-es-r span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.im-es-r .nm{font-weight:800}.im-es-r .vo{opacity:.85}",
+      ".im-es-r .pi{font-weight:900;color:var(--verde)}.im-es-r .pi.zero{color:var(--testo-tenue)}.im-es-r .tot{font-weight:900;text-align:right}",
+      ".im-avviso{position:absolute;left:12px;right:12px;top:42%;text-align:center;font-weight:900;font-size:1.2rem;color:#ffa94d;opacity:0;pointer-events:none;text-shadow:0 2px 8px rgba(0,0,0,.5)}",
+      ".im-avviso.su{animation:imAvviso 1.8s ease}",
+      "@keyframes imAvviso{0%{opacity:0;transform:scale(.8)}15%{opacity:1;transform:scale(1.05)}80%{opacity:1}100%{opacity:0}}",
+      // schermi alti: righe più comode
+      "@media (min-height:780px){.im-es-r{padding:8px 12px;font-size:1rem}.im-es.fitta .im-es-r{padding:5px 10px;font-size:.92rem}.im-riga{padding:8px 12px}.im-sp-r{padding:9px 12px}.im-vb{min-height:56px}.im-lista.fitta .im-riga{padding:6px 8px}}"
+    ].join("");
+    document.head.appendChild(st);
   }
 })();
