@@ -57,7 +57,8 @@
   var MAX_NOSTRE = 120, MAX_LATO = 24, LS_NOSTRE = "sg-lu-nostre";
   function pulisciLato(s) {
     s = String(s || "").replace(/[’`´]/g, "'").replace(/\s+/g, " ").trim();
-    if (!s || s.length > MAX_LATO || !/^[A-Za-zÀ-ÖØ-öø-ÿ0-9' .!?]+$/.test(s) || norm(s).replace(/ /g, "").length < 2) return "";
+    // (anche il trattino e la virgola dentro un lato: «Ex-fidanzato», «Wi-Fi», «Pane, burro»)
+    if (!s || s.length > MAX_LATO || !/^[A-Za-zÀ-ÖØ-öø-ÿ0-9' .!?,\-]+$/.test(s) || norm(s).replace(/ /g, "").length < 2) return "";
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
   // una riga scritta a mano: «Caldo ↔ Freddo», «Caldo - Freddo», «Caldo / Freddo», «Caldo|Freddo»
@@ -1950,7 +1951,7 @@
       ".lu-fin-sq span{display:block;font-weight:800;font-size:14px;opacity:.85}.lu-fin-sq b{display:block;font-size:30px;font-weight:1000;line-height:1.1}.lu-fin-sq small{display:block;font-weight:700;font-size:14px;margin-top:4px}.lu-fin-sq>div.vince{outline:3px solid #ffd43b;outline-offset:-3px}",
       ".lu-premi{display:flex;flex-direction:column;gap:4px;margin:0 0 8px}.lu-premi div{border-radius:12px;padding:5px 10px;background:rgba(255,212,59,.16);font-weight:800;font-size:13.5px;line-height:1.25}",
       // 📝 le nostre scale: la firma sopra la scala, la carta col 📝 (Classico), l'elenco nelle regole
-      ".lu-firma{position:absolute;left:50%;top:-9px;transform:translateX(-50%);padding:1px 8px;border-radius:999px;background:#ffd43b;color:#3b2a00;font-size:10.5px;font-weight:900;line-height:1.5;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .3s;box-shadow:0 2px 6px #0006;z-index:1}.lu-firma.vis{opacity:1}",
+      ".lu-firma{position:absolute;left:50%;top:-9px;transform:translateX(-50%);padding:1px 8px;border-radius:999px;background:#ffd43b;color:#3b2a00;font-size:10.5px;font-weight:900;line-height:1.5;white-space:nowrap;opacity:0;pointer-events:none;visibility:hidden;transition:opacity .3s,visibility .3s;box-shadow:0 2px 6px #0006;z-index:1}.lu-firma.vis{opacity:1;visibility:visible}",
       ".lu-carta.nostra{box-shadow:0 0 0 2.5px #ffd43b,0 4px 0 #0005}.lu-carta.nostra i{opacity:1}",
       ".lu-nostre-agg{display:flex;gap:6px;align-items:stretch}.lu-nostre-agg .link-campo{flex:1;min-width:0;margin:0;resize:none;min-height:46px;font:inherit;font-size:15px;line-height:1.3;padding:6px 10px;box-sizing:border-box}",
       ".lu-nostre-esito{min-height:1.2em;margin:4px 0 0}.lu-nostre-conta{font-size:.8rem;font-weight:800;opacity:.8;margin:6px 0 4px}",

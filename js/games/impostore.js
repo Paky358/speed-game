@@ -1685,9 +1685,11 @@
   // ---- 🗳️ il voto segreto: si può cambiare finché non votano tutti ----
   function fVoto(ui, vm, cb) {
     var el = ui.t.el, me = giocoIo(vm, cb), k = vm.k;
-    // si possono votare quelli ancora dentro (a eliminazione chi è fuori no; al ballottaggio solo i pari)
+    // si possono votare quelli ancora dentro (a eliminazione chi è fuori no; al ballottaggio solo i pari).
+    // A eliminazione anche chi se n'è andato dall'app resta votabile: se no un impostore uscito non si potrebbe più scoprire
+    // e i cittadini dovrebbero eliminarsi tra loro finché vince lui
     var cand = (vm.ordine || []).concat(vm.players.map(function (p) { return p.id; }).filter(function (id) { return (vm.ordine || []).indexOf(id) < 0; }))
-      .filter(function (id) { var p = trova(vm, id); return p && !p.via && !p.fuori && id !== cb.myId && (!vm.ballo || vm.ballo.indexOf(id) >= 0); });
+      .filter(function (id) { var p = trova(vm, id); return p && (!p.via || vm.elim) && !p.fuori && id !== cb.myId && (!vm.ballo || vm.ballo.indexOf(id) >= 0); });
     var sotto = me ? "Vota in segreto: puoi cambiare finché non votano tutti" : "Gli altri votano in segreto";
     ui.corpo.appendChild(vm.ballo ? titolo(el, "⚖️ Ballottaggio!", "Di nuovo pari: si vota solo tra loro, in " + T_BALLO + " secondi")
       : vm.elim ? titolo(el, "🗳️ Chi esce?", me ? "Il più votato esce. Vota in segreto: puoi cambiare finché non votano tutti" : sotto)
