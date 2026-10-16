@@ -1439,7 +1439,7 @@
     a.offerta += 1; a.leader = i;
     delete a.passati[i];
     FX.rilancio();
-    if (restaSoloLeader(st)) return chiudiAsta(t, st);   // nessun altro può più rilanciare: è subito sua
+    if (restaSoloLeader(st)) { disegnaAsta(t, st); return chiudiAsta(t, st); }   // nessun altro può più rilanciare: è subito sua (prima il tabellone mostra l'offerta nuova, poi il martello)
     tempoAsta(a, function () { chiudiAsta(t, st); });
     disegnaAsta(t, st);
   }
