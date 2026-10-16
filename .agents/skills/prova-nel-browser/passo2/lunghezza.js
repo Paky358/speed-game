@@ -75,7 +75,8 @@
     if (v.passo === "rivela") {
       await W.dorme(opz.veloce ? 300 : 2900);
       var k = v.partita + "|" + v.turno;
-      tocca(P, /Avanti|Classifica/);
+      // «⏩ Avanti» a maggioranza (g4): toccano tutti quelli che giocano
+      v.players.filter(function (p) { return !p.via; }).forEach(function (p) { var wp = tel(C, p.id); if (wp) tocca(wp, /Avanti|Classifica/); });
       await W.aspetta(function () { var x = vm(C); return x.fase !== "gioco" || x.partita + "|" + x.turno !== k; }, 4000); return true;
     }
     await W.dorme(150);
