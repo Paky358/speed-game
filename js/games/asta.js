@@ -618,7 +618,7 @@
       "Un solo telefono <b>appoggiato al tavolo</b>: tutti vedono le carte e ognuno tocca il proprio tasto.",
       "Si giocano <b>4 round</b> a tema. In ogni round sul tavolo ci sono tante carte quanti sono i giocatori e <b>ognuno se ne aggiudica una</b>.",
       "A turno uno sceglie quale carta mettere all'asta: parte da <b>1 credito</b>. Gli altri possono <b>rilanciare</b> (+1) o <b>passare</b>.",
-      "Dopo ogni rilancio partono <b>10 secondi</b>: allo scadere la carta va a chi ha l'offerta più alta. <b>Paga solo il vincitore.</b> Chi ha già l'offerta più alta non può rilanciare contro sé stesso.",
+      "Dopo ogni rilancio partono <b>10 secondi</b>: allo scadere la carta va a chi ha l'offerta più alta. <b>Paga solo il vincitore.</b> Chi ha già l'offerta più alta <b>può rialzare da solo</b> (tocca di nuovo il suo avatar): è strategia, così chi ha pochi crediti non ci arriva più.",
       "Attenzione: devi tenere <b>almeno 1 credito per ogni round che resta</b>, altrimenti rimani a piedi.",
       "Alla fine ognuno vota i kit degli altri con le <b>stelle</b> (non il proprio): vince chi ne raccoglie di più.",
       "<b>🧨 La carta maledetta</b> (se l'host la accende): una volta a partita, nel 2° o nel 3° round, esce una carta che <b>nessuno vuole</b>. A turno ognuno sceglie: <b>💸 paga</b> 1 credito in più dell'ultimo per scansarla, oppure <b>😩 se la prende</b>. Chi non decide in tempo se la prende. Il <b>primo che se la prende</b> la mette nel kit e non paga niente; <b>tutti gli altri pagano</b> quello che hanno offerto. Nel voto finale chi ce l'ha perde <b>mezza stella di media</b> (🧨 −0,5 ⭐ da ogni voto).",
@@ -1501,26 +1501,24 @@
     // il rilancio porta con sé quale asta e quale prezzo ho visto: se nel frattempo è cambiato, non conta (e niente doppi tocchi)
     var rilancio = function () { if (unTocco(cb)) cb.onRilancia({ n: a.n, prezzo: prezzo }); };
     if (inGara && !hoPassato) {
-      if (guido) mie.push(el("button", { class: "btn btn-verde sa-grande", text: "👑 L'offerta è tua", disabled: "disabled" }));   // non si rilancia contro sé stessi
-      else {
-        var bSu = el("button", { class: "btn btn-verde sa-grande", text: "🙋 Rilancio: " + prezzo + " 💰", onclick: rilancio });
-        if (max < prezzo) bSu.disabled = true;
-        mie.push(bSu);
-        mie.push(el("button", { class: "btn btn-rosso", text: "Passo", onclick: function () { cb.onPassa({ n: a.n }); } }));
-      }
+      // chi ha già l'offerta più alta può rialzare da solo (è strategia: chi ha pochi crediti non ci arriva più); passare no
+      var bSu = el("button", { class: "btn btn-verde sa-grande", text: (guido ? "🙋 Rialzo: " : "🙋 Rilancio: ") + prezzo + " 💰", onclick: rilancio });
+      if (max < prezzo) bSu.disabled = true;
+      mie.push(bSu);
+      if (!guido) mie.push(el("button", { class: "btn btn-rosso", text: "Passo", onclick: function () { cb.onPassa({ n: a.n }); } }));
     }
     var tardi = cb._tardi && Date.now() - cb._tardi < 3000;
     var persone = vm.giocatori.map(function (g, i) {
       var pass = a.passati.indexOf(g.id) >= 0;
       return { id: g.id, nome: g.nome, omino: g.omino || null, num: i + 1, via: !!g.via, stato: g.haCarta ? "fuori" : pass ? "passato" : "gara",
-        nota: g.haCarta ? "✔ ha la carta" : pass ? "ha passato" : g.crediti + " 💰", puo: g.id === myId && inGara && !hoPassato && !guido && max >= prezzo };
+        nota: g.haCarta ? "✔ ha la carta" : pass ? "ha passato" : g.crediti + " 💰", puo: g.id === myId && inGara && !hoPassato && max >= prezzo };
     });
     salaAsta(t, {
       chiave: chiaveVM(vm, a.carta), info: "Round " + (vm.roundIdx + 1) + " di " + vm.totRound + " · stanza " + (vm.codice || ""),
       carta: cartaSala(el, a.carta.emoji, a.carta.nome, true), sotto: "Fascia ancora segreta 🤫",
       prezzo: a.offerta, leader: a.leaderId || null, persone: persone, io: myId || "—", mie: mie,
       giro: a.giro, resta: a.resta, durata: SECONDI * 1000,
-      nota: !io ? "Stai guardando la partita" : !inGara ? "Hai già la tua carta di questo round" : hoPassato ? "Hai passato: aspetti il risultato" : guido ? "👑 L'offerta più alta è tua"
+      nota: !io ? "Stai guardando la partita" : !inGara ? "Hai già la tua carta di questo round" : hoPassato ? "Hai passato: aspetti il risultato" : guido ? (max >= prezzo ? "👑 L'offerta più alta è tua: tocca ancora per rialzare" : "👑 L'offerta più alta è tua")
         : tardi ? "⏱ Troppo tardi: qualcuno ha offerto prima di te. Ora è " + a.offerta + " 💰" : "Hai " + io.crediti + " 💰 · puoi arrivare a " + Math.max(0, max),
       onRilancia: rilancio, onPassa: function () { cb.onPassa({ n: a.n }); },
       onIndietro: function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); },
@@ -1537,19 +1535,17 @@
     // l'offerta porta con sé quale calciatore e quale prezzo ho visto: se nel frattempo è cambiato, non conta (e niente doppi tocchi)
     var rilancio = function () { if (a && unTocco(cb)) cb.onRilancia({ n: a.nCarta, prezzo: prezzo }); };
     if (inGara && !hoPassato) {
-      if (guido) mie.push(el("button", { class: "btn btn-verde sa-grande", text: "👑 L'offerta è tua", disabled: "disabled" }));   // non si rilancia contro sé stessi
-      else {
-        var bSu = el("button", { class: "btn btn-verde sa-grande", text: !a.leaderId ? "🙋 Lo prendo a " + a.offerta + " 💰" : "🙋 Rilancio: " + prezzo + " 💰", onclick: rilancio });
-        if (max < prezzo) bSu.disabled = true;
-        mie.push(bSu);
-        mie.push(el("button", { class: "btn btn-rosso", text: "Passo", onclick: function () { cb.onPassa({ n: a.nCarta }); } }));
-      }
+      // chi ha già l'offerta più alta può rialzare da solo (è strategia: chi ha pochi crediti non ci arriva più); passare no
+      var bSu = el("button", { class: "btn btn-verde sa-grande", text: !a.leaderId ? "🙋 Lo prendo a " + a.offerta + " 💰" : (guido ? "🙋 Rialzo: " : "🙋 Rilancio: ") + prezzo + " 💰", onclick: rilancio });
+      if (max < prezzo) bSu.disabled = true;
+      mie.push(bSu);
+      if (!guido) mie.push(el("button", { class: "btn btn-rosso", text: "Passo", onclick: function () { cb.onPassa({ n: a.nCarta }); } }));
     }
     var tardi = cb._tardi && Date.now() - cb._tardi < 3000;
     var persone = vm.giocatori.map(function (g, i) {
       var pieno = a ? (g.conta[a.ruolo] || 0) >= FANTA_SLOT[a.ruolo] : false, pass = !!a && a.passati.indexOf(g.id) >= 0;
       return { id: g.id, nome: g.nome, omino: g.omino || null, num: i + 1, crediti: g.crediti, kit: g.kit || [], via: !!g.via, stato: pieno ? "fuori" : pass ? "passato" : "gara",
-        nota: pieno ? notaPieno(a.ruolo) : pass ? "ha passato" : g.crediti + " 💰", puo: g.id === myId && inGara && !hoPassato && !guido && max >= prezzo };
+        nota: pieno ? notaPieno(a.ruolo) : pass ? "ha passato" : g.crediti + " 💰", puo: g.id === myId && inGara && !hoPassato && max >= prezzo };
     });
     stadio(t, {
       chiave: "fo|" + (vm.codice || "") + "|" + (vm.sessione || ""), fase: a ? "asta" : "esito",
@@ -1558,7 +1554,7 @@
       persone: persone, io: myId || "—", mie: mie, giro: a ? a.giro : null, resta: a ? a.resta : 0, durata: a ? (a.durata || FANTA_RILANCIO_MS) : FANTA_RILANCIO_MS, puoPassare: false,
       esito: e ? { n: e.n, nCarta: e.nCarta, tipo: e.tipo, motivo: e.motivo || "", chiId: e.chiId, chiNome: e.chiNome, carta: e.carta, prezzo: e.prezzo } : null,
       avviso: a ? avvisoFanta(a.ultimoDuello, a.ultimaChiamata, a.ruolo) : "",
-      nota: !a ? "" : !io ? "Stai guardando la partita" : !inGara ? "Hai già " + (a.ruolo === "C" ? "i 2 centrocampisti" : "il " + ru.nome.toLowerCase()) + " in rosa" : hoPassato ? "Hai passato: aspetti il risultato" : guido ? "👑 L'offerta più alta è tua"
+      nota: !a ? "" : !io ? "Stai guardando la partita" : !inGara ? "Hai già " + (a.ruolo === "C" ? "i 2 centrocampisti" : "il " + ru.nome.toLowerCase()) + " in rosa" : hoPassato ? "Hai passato: aspetti il risultato" : guido ? (max >= prezzo ? "👑 L'offerta più alta è tua: tocca ancora per rialzare" : "👑 L'offerta più alta è tua")
         : tardi ? "⏱ Troppo tardi: qualcuno ha offerto prima di te. Ora è " + a.offerta + " 💰" : "Hai " + io.crediti + " 💰 · puoi arrivare a " + Math.max(0, max),
       onRilancia: rilancio, onPassa: function () { if (a) cb.onPassa({ n: a.nCarta }); },
       onIndietro: function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); },
@@ -1676,24 +1672,24 @@
     var persone = st.giocatori.map(function (g, i) {
       var inGara = st.senzaCarta.indexOf(i) >= 0, pass = !!a.passati[i];
       return { id: i, nome: g.nome, omino: g.omino || null, num: i + 1, stato: !inGara ? "fuori" : pass ? "passato" : "gara",
-        nota: !inGara ? "✔ ha la carta" : pass ? "ha passato" : g.crediti + " 💰", puo: inGara && !pass && a.leader !== i && maxPuntata(st, i) >= a.offerta + 1 };
+        nota: !inGara ? "✔ ha la carta" : pass ? "ha passato" : g.crediti + " 💰", puo: inGara && !pass && maxPuntata(st, i) >= a.offerta + 1 };
     });
     salaAsta(t, { chiave: "t|" + st.sessione + "|" + st.roundIdx + "|" + a.idxCarta + "|" + a.carta.nome, info: "Round " + (st.roundIdx + 1) + " di " + TOT_ROUND,
       carta: cartaSala(el, a.carta.emoji, a.carta.nome, true), sotto: "Fascia ancora segreta 🤫", prezzo: a.offerta, base: false, leader: a.leader,
       persone: persone, io: null, giro: a.giro, resta: a.scadenza - Date.now(), durata: SECONDI * 1000,
-      nota: "Tocca il tuo avatar per rilanciare di 1. Allo scadere del tempo la carta va a chi offre di più.",
+      nota: "Tocca il tuo avatar per rilanciare di 1 (chi ha l'offerta può rialzare). Allo scadere del tempo la carta va a chi offre di più.",
       onRilancia: function (i) { rilancia(t, st, i); }, onPassa: function (i) { passa(t, st, i); }, onIndietro: function () { esciAsta(t, st); },
       extra: { testo: "🃏 Carte", apri: function () { var b = el("div", {}), pal = dettaglioPalio(el, st.tavolo, a.carta.nome); if (pal) b.appendChild(pal); b.appendChild(pannelloKit(el, st.giocatori)); foglioSala(t, "🃏 Le carte", b); } } });
   }
 
   function rilancia(t, st, i) {
     var a = st.asta;
-    // chi ha già l'offerta più alta non rilancia contro sé stesso (un doppio tocco non fa pagare di più)
-    if (!a || a.leader === i || st.senzaCarta.indexOf(i) < 0 || maxPuntata(st, i) < a.offerta + 1) return;
+    // anche chi ha già l'offerta più alta può rialzare da solo (è strategia: chi ha pochi crediti non ci arriva più)
+    if (!a || st.senzaCarta.indexOf(i) < 0 || maxPuntata(st, i) < a.offerta + 1) return;
     a.offerta += 1; a.leader = i;
     delete a.passati[i];
     FX.rilancio();
-    if (restaSoloLeader(st)) return chiudiAsta(t, st);   // nessun altro può più rilanciare: è subito sua
+    if (restaSoloLeader(st)) { disegnaAsta(t, st); return chiudiAsta(t, st); }   // nessun altro può più rilanciare: è subito sua (prima il tabellone mostra l'offerta nuova, poi il martello)
     tempoAsta(a, function () { chiudiAsta(t, st); });
     disegnaAsta(t, st);
   }
@@ -2074,8 +2070,8 @@
     function rilanciaO(id, m) {
       if (st.fase !== "asta" || !st.asta || !m || (m.n != null && m.n !== st.nAsta)) return;
       var g = perId(st, id); if (!g) return;
-      if (st.senzaCarta.indexOf(id) < 0 || st.asta.leader === id) return;   // chi ha già l'offerta più alta non rilancia contro sé stesso
-      if (m.prezzo !== st.asta.offerta + 1) return tardi(id);
+      if (st.senzaCarta.indexOf(id) < 0) return;   // (anche chi ha già l'offerta più alta può rialzare da solo: è strategia)
+      if (m.prezzo !== st.asta.offerta + 1) { if (st.asta.leader !== id) tardi(id); return; }   // (un doppio tocco di chi guida non conta, senza "troppo tardi")
       if (maxPuntataG(st, g) < m.prezzo) return;
       st.asta.offerta = m.prezzo; st.asta.leader = id;
       delete st.asta.passati[id];
@@ -2853,7 +2849,7 @@
     var persone = st.giocatori.map(function (g, i) {
       var pieno = !!a && ruoloPieno(g, a.ruolo), pass = !!a && !!a.passati[i];
       return { id: i, nome: g.nome, omino: g.omino || null, num: i + 1, crediti: g.crediti, kit: g.kit, stato: pieno ? "fuori" : pass ? "passato" : "gara",
-        nota: pieno ? notaPieno(a.ruolo) : pass ? "ha passato" : g.crediti + " 💰", puo: !!a && !pieno && !pass && a.leader !== i && maxFanta(g) >= prezzo };
+        nota: pieno ? notaPieno(a.ruolo) : pass ? "ha passato" : g.crediti + " 💰", puo: !!a && !pieno && !pass && maxFanta(g) >= prezzo };
     });
     stadio(t, { chiave: "f|" + st.sessione, fase: a ? "asta" : "esito",
       info: (a ? ru.nome + " all'asta · " : esito.tipo === "accollo" ? "Nessuno lo vuole · " : "Aggiudicato! · ") + postiPresi(st.giocatori),
@@ -2861,13 +2857,13 @@
       leader: a ? a.leader : esito.chiId, persone: persone, io: null, giro: a ? a.giro : null, resta: a ? a.scadenza - Date.now() : 0, durata: a ? a.durata : FANTA_RILANCIO_MS, puoPassare: !!a,
       esito: esito || null,
       avviso: a ? avvisoFanta(eleggN === 2 && carteRuolo === 2, ultimaChiamata(st.mazzo, carta), carta.ruolo) : "",
-      nota: !a ? "" : a.leader === null ? "Tocca il tuo avatar per prenderlo a " + a.offerta + ". Se nessuno lo vuole torna in fondo al mazzo." : "Tocca il tuo avatar per rilanciare di 1.",
+      nota: !a ? "" : a.leader === null ? "Tocca il tuo avatar per prenderlo a " + a.offerta + ". Se nessuno lo vuole torna in fondo al mazzo." : "Tocca il tuo avatar per rilanciare di 1 (chi ha l'offerta può rialzare).",
       onRilancia: function (i) { rilanciaFanta(t, st, i); }, onPassa: function (i) { passaFanta(t, st, i); }, onIndietro: function () { esciAsta(t, st); },
       extra: { testo: "👕 Tutte", apri: function () { formazioni(t, st.giocatori); } } });
   }
 
   function rilanciaFanta(t, st, i) {
-    var a = st.asta; if (!a || a.leader === i) return;   // chi ha già l'offerta più alta non rilancia contro sé stesso
+    var a = st.asta; if (!a) return;   // (anche chi ha già l'offerta più alta può rialzare da solo: è strategia)
     var g = st.giocatori[i];
     if (ruoloPieno(g, a.ruolo)) return;
     var prezzo = (a.leader === null) ? a.offerta : a.offerta + 1;
@@ -3001,9 +2997,9 @@
     // m: { n (quale calciatore), prezzo (quello che ha visto) }: un'offerta arrivata in ritardo o doppia non conta
     function rilanciaO(id, m) {
       if (st.fase !== "asta" || !st.asta || !m || m.n !== st.nCarta) return;
-      var g = perId(st, id); if (!g || ruoloPieno(g, st.asta.ruolo) || st.asta.leader === id) return;   // non si rilancia contro sé stessi
+      var g = perId(st, id); if (!g || ruoloPieno(g, st.asta.ruolo)) return;   // (anche chi ha già l'offerta più alta può rialzare da solo: è strategia)
       var prezzo = (st.asta.leader === null) ? st.asta.offerta : st.asta.offerta + 1;
-      if (m.prezzo !== prezzo) return tardi(id);
+      if (m.prezzo !== prezzo) { if (st.asta.leader !== id) tardi(id); return; }   // (un doppio tocco di chi guida non conta, senza "troppo tardi")
       if (maxFanta(g) < prezzo) return;
       st.asta.offerta = prezzo; st.asta.leader = id; delete st.asta.passati[id];
       FX.rilancio(id === "host");
