@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 214,
+    data: "16 ottobre 2026",
+    titolo: "L'Asta: si rialza da soli 🔨",
+    descrizione: [
+      "L'Asta: chi ha l'offerta più alta può di nuovo rialzare da solo (come deciso: è strategia!). Tocca ancora il tuo avatar (o «🙋 Rialzo») e chi ha pochi crediti non ci arriva più."
+    ]
+  },
+  {
     v: 213,
     data: "16 ottobre 2026",
     titolo: "Gioco nuovo: Chi di Noi? 🫵",
