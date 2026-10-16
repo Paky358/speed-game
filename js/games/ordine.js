@@ -695,8 +695,16 @@
           if (m.to && m.to !== S.myId) return;          // era per un altro telefono
           if (m.t === "vm") {
             if (m.vm.gen != null) { if (m.vm.gen < S.gen) return; S.gen = m.vm.gen; }   // la foto di un host vecchio (sostituito): non conta
+            var faseDi = S.vm ? S.vm.fase : null;
             S.vm = m.vm;
             if (m.vm.fase === "fine" && !t.guarda) salvaProgressiOrdine(m.vm.codice + "|" + m.vm.bid, S.myId, m.vm.progressiFine, m.vm.players, t.guarda);
+            // com'è finita, anche da chi gioca senza tenere la stanza (una volta, solo se la fine l'ha vista arrivare: non
+            // rientrando a partita finita). Nella Sala, se l'host è sparito e la partita l'ha finita un amico (host di riserva),
+            // i punti della serata li conta chi ha preso la Sala, che qui è un giocatore. (Gli XP non raddoppiano: il core
+            // tiene una volta sola la stessa partita detta due volte)
+            if (m.vm.fase === "fine" && faseDi === "gioco" && m.vm.classifica && !t.guarda && t.risultato && trova(m.vm, S.myId)) {
+              t.risultato(m.vm.classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }));
+            }
             disegna(t, m.vm, cb); controllaChiave();
           }
           else if (m.t === "chiave") { S.chiave = { bid: m.bid, col: m.col }; if (S.vm) disegna(t, S.vm, cb); }

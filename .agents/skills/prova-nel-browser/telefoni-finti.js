@@ -20,8 +20,22 @@
 //   inciampa(nome, ms)              = la rete salta un attimo: errore + testamento, poi si ricollega da solo
 //   ricarica(nome)                  = la pagina si ricarica (stessa scheda: stessa memoria)
 //   chiudiApp(nome)                 = l'app si chiude e si riapre (memoria sì, sessionStorage no)
+//   congela(nome) / scongela(nome)  = il telefono si ferma (tasca, schermo spento) ma il broker NON se n'è ancora accorto:
+//                                     niente testamento, non manda e non riceve; spegni(nome) dopo = il broker se ne accorge
+//   apriTel(nome, { orologio: ms }) = l'orologio del telefono è avanti (ms > 0) o indietro: Date.now() e new Date() della
+//                                     sua pagina; spostaOrologio(nome, ms) lo cambia a telefono aperto (anche "il giorno dopo")
+// Per contare e guardare: contaCollegamenti(nome) (collegamenti aperti da quel telefono, anche le sbirciate),
+// BR.storia (ogni messaggio passato su un ".../<codice>/stato": { ms, da, r, topic, p }), BR.nube[uid].liste (le liste
+// del profilo: due telefoni con lo stesso uid le vedono uguali), BR.amicizie (le richieste d'amicizia mandate).
 document.open(); document.write('<!doctype html><body style="margin:0;background:#333;position:relative"></body>'); document.close();
-window.BR = { clients: [], retained: {}, log: [], perNome: {}, mem: {}, tel: {}, conti: {}, ritardo: 4 };
+window.BR = { clients: [], retained: {}, log: [], perNome: {}, mem: {}, tel: {}, conti: {}, ritardo: 4, nube: {}, amicizie: [], storia: [], congelati: {} };
+// ogni messaggio sullo "stato" di una stanza (foto dell'host, testamenti) resta in BR.storia (per fotoSale del Passo 3)
+window.segnaStoria = function (da, topic, payload, r) {
+  if (!/\/stato$/.test(topic)) return;
+  const s = BR.storia = BR.storia || [];
+  s.push({ ms: Date.now(), da, r: !!r, topic, p: String(payload) });
+  if (s.length > 1500) s.splice(0, 500);
+};
 // un profilo finto già fatto (per "Hai già un profilo? Entra" e "Bentornato"): contoFinto("Luca", "segreto1")
 window.contoFinto = (nome, pwd, extra) => { const k = String(nome).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); BR.conti = BR.conti || {}; BR.conti[k] = { pwd: String(pwd), profilo: Object.assign({ uid: "finto-" + k, nome: String(nome).trim(), fiches: {}, omino: null, coins: 5000, level: 1, xp: 0 }, extra || {}) }; return BR.conti[k].profilo; };
 // la finestra di conferma dell'app ("Uscire dalla partita?", "Chiudere la stanza per tutti?") risponde sì da sola,
@@ -45,6 +59,7 @@ window.creaClient = function (nome, opts) {
       if (o && o.retain) { if (payload === "") delete BR.retained[topic]; else BR.retained[topic] = payload; }
       BR.log.push(nome + " → " + topic.split("/").slice(2).join("/") + " " + String(payload).slice(0, 80));
       if (BR.log.length > 400) BR.log.splice(0, 100);
+      segnaStoria(nome, topic, payload, o && o.retain);
       BR.clients.forEach(k => { if (k.connected && !k.frozen && k.subs.has(topic)) k.deliver(topic, payload, false); });
       return this;
     },
@@ -56,22 +71,44 @@ window.creaClient = function (nome, opts) {
       const w = this.opts && this.opts.will; if (!w) return;
       if (w.retain) { if (w.payload === "") delete BR.retained[w.topic]; else BR.retained[w.topic] = w.payload; }
       BR.log.push(nome + " ✝ " + w.topic.split("/").slice(2).join("/") + " " + String(w.payload).slice(0, 60));
+      segnaStoria(nome + " ✝", w.topic, w.payload, w.retain);
       BR.clients.forEach(k => { if (k.connected && !k.frozen && k.subs.has(w.topic)) k.deliver(w.topic, w.payload, false); });
     },
     // sparisci() = telefono che si spegne all'improvviso (il broker manda il "testamento"); torna() = si riaccende
-    sparisci() { if (!this.connected) return; this.connected = false; this.frozen = true; BR.clients = BR.clients.filter(x => x !== this); this.testamento(); this.emit("close"); this.emit("offline"); },
-    torna() { if (this.morto) return; this.frozen = false; this.connected = true; this.subs = new Set(); if (!BR.clients.includes(this)) BR.clients.push(this); this.emit("connect"); },
+    sparisci() { if (!this.connected) return; delete this.__gelo; this.connected = false; this.frozen = true; BR.clients = BR.clients.filter(x => x !== this); this.testamento(); this.emit("close"); this.emit("offline"); },
+    torna() { if (this.morto) return; delete this.__gelo; this.frozen = false; this.connected = true; this.subs = new Set(); if (!BR.clients.includes(this)) BR.clients.push(this); this.emit("connect"); },
     // la rete salta un attimo: errore, il broker manda il testamento, poi mqtt si ricollega da solo dopo ms
     inciampa(ms) { if (!this.connected) return; this.emit("error", new Error("rete saltata (finta)")); this.sparisci(); setTimeout(() => this.torna(), ms || 2500); }
   };
   BR.clients.push(c); (BR.perNome[nome] = BR.perNome[nome] || []).push(c);
-  setTimeout(() => { if (c.morto) return; c.connected = true; c.emit("connect"); }, 10);
+  // (un telefono congelato non arriva al broker: il collegamento parte quando si scongela)
+  setTimeout(() => { if (c.morto) return; if (BR.congelati && BR.congelati[nome]) { c.__gelo = true; c.frozen = true; BR.clients = BR.clients.filter(x => x !== c); return; } c.connected = true; c.emit("connect"); }, 10);
   return c;
 };
 // una memoria finta (localStorage o sessionStorage) che resta nella pagina dei telefoni
 window.memoriaFinta = function (d) {
   return { getItem: k => (Object.prototype.hasOwnProperty.call(d, k) ? d[k] : null), setItem: (k, v) => { d[k] = String(v); },
     removeItem: k => { delete d[k]; }, clear: () => { Object.keys(d).forEach(k => delete d[k]); }, key: i => Object.keys(d)[i] || null, get length() { return Object.keys(d).length; } };
+};
+// l'orologio spostato di un telefono: Date.now() e new Date() (senza argomenti) danno l'ora vera + w.__orologio.ms
+// (Date diventa un "Date" che fa lo stesso, con lo stesso prototype: instanceof Date va ancora)
+window.mettiOrologio = function (w) {
+  if (w.__dataVera) return;
+  const D0 = w.Date, ora = () => D0.now() + ((w.__orologio && w.__orologio.ms) || 0);
+  function D(...a) {
+    if (!new.target) return new D0(ora()).toString();
+    return Reflect.construct(D0, a.length ? a : [ora()], new.target);
+  }
+  D.prototype = D0.prototype; D.now = ora; D.parse = D0.parse; D.UTC = D0.UTC;
+  w.__dataVera = D0; w.Date = D;
+};
+// sposta l'orologio di un telefono aperto (ms = quanto avanti, negativo = indietro; 0 = ora giusta). Vale anche dopo le ricariche
+window.spostaOrologio = function (nome, ms) {
+  ms = +ms || 0;
+  if (BR.tel[nome]) BR.tel[nome].opz.orologio = ms;
+  const w = finestra(nome);
+  if (w) { w.__orologio = w.__orologio || { ms: 0 }; w.__orologio.ms = ms; if (ms) mettiOrologio(w); }
+  return ms;
 };
 // tutto finto nella finestra del telefono PRIMA che parta qualsiasi script della pagina
 // (la finestra iniziale dell'iframe viene riusata dalla pagina che si carica)
@@ -91,6 +128,13 @@ window.preparaFinestra = function (w, nome, opz) {
   if (!("fp" in mem)) mem.fp = opz.profilo === false ? null : Object.assign({ uid: "finto-" + nome, nome, fiches: {}, omino: null, coins: 5000, level: 1, xp: 0 }, typeof opz.profilo === "object" ? opz.profilo : {});
   Object.defineProperty(w, "__fp", { configurable: true, get: () => mem.fp });
   if (opz.offline) w.__offline = true;
+  // l'orologio del telefono (opz.orologio = ms avanti, o indietro se negativo)
+  w.__orologio = { ms: +opz.orologio || 0 };
+  if (w.__orologio.ms) mettiOrologio(w);
+  // la nube finta: BR.nube[uid] = { liste: {…}, amici: […] } (resta tra ricariche e tra telefoni con lo stesso uid)
+  const uidMio = () => (mem.fp ? mem.fp.uid || "finto-" + nome : null);
+  const nubeDi = u => { BR.nube = BR.nube || {}; return (BR.nube[u] = BR.nube[u] || { liste: {} }); };
+  const copia = x => w.JSON.parse(JSON.stringify(x == null ? [] : x));   // (array della pagina del telefono)
   let nube = null;
   def("SGNube", () => nube, v => {
     nube = v;
@@ -120,10 +164,32 @@ window.preparaFinestra = function (w, nome, opz) {
     v.esci = () => { mem.fp = null; setTimeout(avvisa, 5); return Promise.resolve(); };
     v.salvaOmino = (cfg, omini, n) => { if (!mem.fp) return Promise.resolve(); mem.fp.omino = cfg; if (omini) { mem.fp.omini = omini; mem.fp.ominoN = n || 0; } return Promise.resolve(); };
     v.salvaProgressi = () => {}; v.statGioco = () => ({}); v.salvaFiches = () => {}; v.fiches = () => 1000;
-    v.lista = () => []; v.salvaLista = () => {}; v.monete = () => 5000; v.cambiaMonete = () => Promise.resolve(5000);
+    // le liste del profilo (es. "compagnie"): salvate davvero in BR.nube[uid].liste (di partenza quelle di opz.profilo.liste)
+    v.lista = n => {
+      const u = uidMio(); if (!u) return copia([]);
+      const L = nubeDi(u).liste;
+      return copia(Object.prototype.hasOwnProperty.call(L, n) ? L[n] : (mem.fp.liste || {})[n]);
+    };
+    v.salvaLista = (n, lista) => { const u = uidMio(); if (u) nubeDi(u).liste[n] = JSON.parse(JSON.stringify(lista == null ? [] : lista)); return Promise.resolve(); };
+    v.monete = () => 5000; v.cambiaMonete = () => Promise.resolve(5000);
     v.contaPartita = () => {}; v.aggiungiXp = () => null; v.pubblica = () => {};
-    // amici finti: opz.profilo.amici = ["finto-Giulia", …]; le schede pubbliche prendono il nome dall'uid (BR.schede = quante letture)
-    v.amici = () => (mem.fp && mem.fp.amici) || [];
+    // amici finti: opz.profilo.amici = ["finto-Giulia", …] o BR.nube[uid].amici (vince questa); le schede pubbliche
+    // prendono il nome dall'uid (BR.schede = quante letture)
+    v.amici = () => { const u = uidMio(), n = u && BR.nube && BR.nube[u]; return n && n.amici ? copia(n.amici) : (mem.fp && mem.fp.amici) || []; };
+    // richieste d'amicizia: chiediAmicizia le segna in BR.amicizie ({ da, a, nome }) e risponde "inviata";
+    // richieste() le rilegge (arrivate a me / mandate da me, tutte "in attesa": nessuno le accetta da solo)
+    v.chiediAmicizia = sch => {
+      if (w.__offline || w.__reteGiu || !mem.fp) return errore("offline");
+      const da = uidMio(), a = sch && sch.uid; BR.amicizie = BR.amicizie || [];
+      if (a && !BR.amicizie.some(r => r.da === da && r.a === a)) BR.amicizie.push({ da, a, nome: (sch && sch.nome) || "", daNome: mem.fp.nome, t: Date.now() });
+      BR.log.push("AMICIZIA " + nome + " → " + a);
+      return Promise.resolve("inviata");
+    };
+    v.richieste = () => {
+      if (w.__offline || w.__reteGiu || !mem.fp) return errore("offline");
+      const me = uidMio(), l = BR.amicizie || [], r = x => Object.assign({ id: x.da + "_" + x.a, stato: "attesa", aNome: x.nome }, x);
+      return Promise.resolve(copia({ arrivate: l.filter(x => x.a === me).map(r), inviate: l.filter(x => x.da === me).map(r) }));
+    };
     v.schede = uids => { BR.schede = (BR.schede || 0) + 1; return w.__offline || w.__reteGiu ? errore("offline") : Promise.resolve((uids || []).map(u => ({ uid: u, nome: String(u).slice(6), omino: null }))); };
   });
   w.__err = [];
@@ -143,6 +209,8 @@ window.preparaFinestra = function (w, nome, opz) {
 // apre un telefono: opz = { hash: "gioco=tris&stanza=ABCD", x: posizione, profilo: false|{...}, offline: true, prima: w => {...} }
 // (offline: la parte dei profili non si carica finché nella pagina non si fa w.__offline = false)
 // (prima: si fa prima che parta l'app, anche dopo una ricarica). Restituisce la finestra.
+// (profilo: { nome: "Paky", uid: "finto-Paky" } = lo stesso profilo di un altro telefono: apriTel("Paky2", { profilo: … });
+//  orologio: ms = l'orologio del telefono avanti o indietro, vedi spostaOrologio)
 // (salaSempre: true = "Online" apre la Sala della serata, come per chi gioca. Di partenza i telefoni finti hanno
 //  localStorage "sg-sala-sempre" = "0": il percorso di prima, quello degli scenari vecchi. Vale dalla prima apertura
 //  del telefono, o quando lo si ripassa ad apriTel; le ricariche tengono la memoria com'è)
@@ -150,6 +218,7 @@ window.apriTel = async function (nome, opz) {
   const chiesto = !!(opz && Object.prototype.hasOwnProperty.call(opz, "salaSempre")), nuovo = !BR.mem[nome];
   opz = Object.assign({}, BR.tel[nome] ? BR.tel[nome].opz : {}, opz || {});
   const vecchio = document.getElementById("tel-" + nome); if (vecchio) vecchio.remove();
+  if (BR.congelati) delete BR.congelati[nome];   // (un telefono che si apre non è più fermo)
   const f = document.createElement("iframe"); f.id = "tel-" + nome;
   f.src = "/index.html?v=prova" + (opz.hash ? "#" + opz.hash : "");
   const x = opz.x != null ? opz.x : 185 * Object.keys(BR.tel).length;
@@ -194,6 +263,23 @@ window.viviDi = nome => (BR.perNome[nome] || []).filter(c => c.connected && !c.m
 window.spegni = nome => viviDi(nome).forEach(c => c.sparisci());
 window.riaccendi = nome => (BR.perNome[nome] || []).filter(c => c.frozen && !c.morto).forEach(c => c.torna());
 window.inciampa = (nome, ms) => viviDi(nome).forEach(c => c.inciampa(ms));
+// il telefono si ferma ma il broker non se n'è accorto (niente testamento): non manda e non riceve niente.
+// (la pagina va avanti: è solo la rete che tace. spegni(nome) dopo congela = il broker se ne accorge e manda il testamento)
+window.congela = nome => {
+  BR.congelati = BR.congelati || {}; BR.congelati[nome] = true;
+  viviDi(nome).forEach(c => { c.__gelo = true; c.frozen = true; BR.clients = BR.clients.filter(x => x !== c); });
+};
+// riparte da dove era (gli stessi collegamenti, gli stessi topic: quello che è passato intanto è perso)
+window.scongela = nome => {
+  if (BR.congelati) delete BR.congelati[nome];
+  (BR.perNome[nome] || []).filter(c => c.__gelo && !c.morto).forEach(c => {
+    delete c.__gelo; c.frozen = false;
+    if (!BR.clients.includes(c)) BR.clients.push(c);
+    if (!c.connected) { c.connected = true; c.emit("connect"); }   // (nato mentre era fermo)
+  });
+};
+// quanti collegamenti ha aperto quel telefono da quando c'è (ricariche e sbirciate comprese)
+window.contaCollegamenti = nome => (BR.perNome[nome] || []).length;
 // la pagina si ricarica: i collegamenti cadono di colpo (il broker manda i testamenti), poi la pagina riparte
 // senza il "#..." (l'app l'ha già tolto dall'indirizzo) e con la stessa memoria
 window.ricarica = async function (nome, opz) {

@@ -154,11 +154,12 @@
     if (!/^gruppo=KFRTPQ&n=[^&= ]+&e=[^&= ]+$/.test(l.split("#")[1])) no("link non codificato: " + l);
     var m = C.messaggio("KFRTPQ");
     if (m.indexOf("«🍻 Giovedì & co=1»") < 0 || m.indexOf("scrivi KFRTPQ") < 0 || m.indexOf("Ho un codice") < 0) no("messaggio: " + m);
-    // un altro telefono apre il link: il core lo legge (parametriLink) con nome ed emoji uguali
+    // un altro telefono apre il link: il core lo legge (e lo toglie dall'indirizzo) e salva la compagnia con nome ed emoji
+    // uguali (l'entrata vera nella Sala la prova la 311b di compagnia.js)
     var L = await W.apriTel("Luca", { x: 185, hash: l.split("#")[1] });
-    var pl = L.SG.parametriLink();
-    if (pl.gruppo !== "KFRTPQ" || pl.n !== "Giovedì & co=1" || pl.e !== "🍻") no("letto dal core: " + JSON.stringify(pl));
-    return "link " + l.split("#")[1].slice(0, 60) + "… letto dal core: " + pl.e + " " + pl.n + " (da completare con p3-a: entrata nella compagnia)";
+    var pl = await W.aspetta(function () { return L.SGCompagnia && L.SGCompagnia.trova("KFRTPQ"); }, 6000);
+    if (!pl || pl.n !== "Giovedì & co=1" || pl.e !== "🍻") no("salvata dal core: " + JSON.stringify(pl));
+    return "link " + l.split("#")[1].slice(0, 60) + "… letto dal core e salvato: " + pl.e + " " + pl.n;
   } });
 
   // 363. Tessere: i testi giusti per ogni stato e aggiornate sugli stessi nodi

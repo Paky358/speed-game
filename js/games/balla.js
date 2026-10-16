@@ -371,6 +371,8 @@
       toPoco = setTimeout(function () { tempo.classList.add("poco"); sec.classList.add("poco"); }, Math.max(0, ms - 10000));
       var fineT = Date.now() + ms, ultimo = -1;
       var segna = function () {
+        // il foglio non c'è più (es. nella Sala l'host è sparito e il core ha portato tutti fuori): il tempo si ferma, niente tic
+        if (ultimo >= 0 && !document.body.contains(velo)) { clearTimeout(toPoco); clearInterval(toSec); return; }
         var s = Math.max(0, Math.ceil((fineT - Date.now()) / 1000)); if (s === ultimo) return;
         ultimo = s; sec.textContent = s;
         if (s > 0 && s <= 5) tic(980);

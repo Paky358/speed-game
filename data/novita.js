@@ -9,6 +9,21 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 211,
+    data: "16 ottobre 2026",
+    titolo: "La Compagnia: ritrovarsi senza mandare il link 📌",
+    descrizione: [
+      "📌 La Compagnia è il link fisso del vostro gruppo e vale per sempre. Dalla Sala tocca «📌 Fanne la nostra Compagnia», scegli nome ed emoji (es. 🍻 Quelli del giovedì) e gli amici già dentro ti seguono da soli, senza perdere i punti. Fissate il link nel gruppo: vale tutte le sere. Il codice è di 6 lettere e si scrive anche in «🔑 Ho un codice».",
+      "In home la tessera della Compagnia ti dice chi è già dentro («🟢 Paky e Luca sono dentro · Entra ›»): un tocco e sei nella Sala. Nei giochi online c'è anche «Online con «Quelli del giovedì»»: due tocchi e giochi.",
+      "Il primo che arriva apre la serata («Apri la serata ›») e gli altri finiscono nella sua Sala. Anche se due toccano insieme, la Sala è una sola.",
+      "Se chi tiene la Sala se ne va, la Sala passa a un amico e la serata continua, con gli stessi amici e la stessa Classifica della serata. Chi esce può scegliere «👑 Passa la Sala a Giulia»; se il telefono si spegne, dopo poco la prende un amico da solo (se era solo uscito un attimo per mandare il link, gli amici aspettano di più). La partita a metà si rifà, ma i duelli tra due amici e Parola d'ordine vanno avanti. Nel Torneo a eliminazione si aspetta chi l'ha aperto.",
+      "🔁 Riapri la Sala di ieri sera: in home, con i nomi di chi c'era. Stesso codice per 24 ore, così gli amici col link di ieri entrano da soli.",
+      "👥 Giocato di recente: in home e a fine partita vedi con chi hai giocato («👥 Avete giocato con: Luca ➕»), con ➕ per chiedergli l'amicizia.",
+      "In «📌 Le tue compagnie» rimandi il link, cambi nome ed emoji o ne togli una. Con il profilo le compagnie ti seguono anche sull'altro telefono.",
+      "Sistemati Black Jack, Scarabocchio, Gara di pesca, La Balla Colossale e Scopa: quando si cambia gioco o la Sala passa a un amico non resta più niente sotto (sfondo verde, tic dei secondi, musica)."
+    ]
+  },
+  {
     v: 210,
     data: "15 ottobre 2026",
     titolo: "Gioco nuovo: Stessa Lunghezza d'Onda 📡",

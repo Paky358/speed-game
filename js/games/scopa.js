@@ -17,7 +17,7 @@
   // Condivisa da Scopa, Scopa 2 vs 2 e Scopone. Stile osteria: basso "zum-pa", accordi pizzicati
   // tipo mandolino, melodia che si ripete, cassa e charleston leggeri. Tasto 🎵/🔇 (scelta ricordata).
   window.SGMusica = window.SGMusica || (function () {
-    var on = true, giocando = false, ctx = null, master = null, filtro = null, timer = null, nextT = 0, step = 0, rumore = null;
+    var on = true, giocando = false, ctx = null, master = null, filtro = null, timer = null, nextT = 0, step = 0, rumore = null, guardia = null, tGuardia = null;
     try { on = (localStorage.getItem("sg-musica") !== "off"); } catch (e) {}
     var S = 60 / 128 / 4;   // un sedicesimo a 128 battiti al minuto
     function hz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
@@ -75,8 +75,16 @@
       if (ctx && master) { try { master.gain.cancelScheduledValues(ctx.currentTime); var v = master.gain.value || 0.0001; master.gain.setValueAtTime(v, ctx.currentTime); master.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6); } catch (e) {} }
     }
     return {
-      avvia: function () { giocando = true; if (on) startAudio(); },
-      ferma: function () { giocando = false; stopAudio(); },
+      // vivo (facoltativo): "la partita è ancora sullo schermo?". Se l'app passa ad altro senza far uscire il gioco
+      // (es. l'host della Sala sparisce e si torna nella Sala), la musica si ferma da sola
+      avvia: function (vivo) {
+        giocando = true;
+        guardia = vivo || null;
+        if (guardia && !tGuardia) tGuardia = setInterval(function () { if (guardia && !guardia()) window.SGMusica.ferma(); }, 500);
+        if (!guardia && tGuardia) { clearInterval(tGuardia); tGuardia = null; }
+        if (on) startAudio();
+      },
+      ferma: function () { giocando = false; guardia = null; clearInterval(tGuardia); tGuardia = null; stopAudio(); },
       attiva: function () { return on; },
       commuta: function () { on = !on; try { localStorage.setItem("sg-musica", on ? "on" : "off"); } catch (e) {} if (giocando) { if (on) startAudio(); else stopAudio(); } return on; },
       // pulsante 🎵/🔇 pronto da mettere in una schermata
@@ -923,7 +931,7 @@
   function renderScopa(t, C, cb) {
     if (C.uscito) return;
     assicuraStile();
-    if (window.SGMusica && !cb.guarda) window.SGMusica.avvia();   // chi guarda non ha suoni
+    if (window.SGMusica && !cb.guarda) window.SGMusica.avvia(function () { return !C.uscito && !!C._schermo && document.body.contains(C._schermo); });   // chi guarda non ha suoni
     var el = t.el, vm = C.vm, Mi = misureScopa(cb.spettatore && t.faccine ? 50 : 0);
     var chiaveRound = vm.idPartita + ":" + vm.nRound;
     var m = scMount, nuovo = !(m && m.C === C && m.k === Mi.k && document.body.contains(m.s));

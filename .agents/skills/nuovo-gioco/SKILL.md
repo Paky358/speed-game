@@ -97,6 +97,7 @@ Il contratto della Sala (15 ott 2026, nel modello sono già usati tutti):
 - **Saletta**: `vuoti` sono solo i posti che mancano per arrivare al minimo, non tutti quelli fino al massimo. Se qualcuno esce, non rimescolare le squadre o i posti già decisi dall'host.
 - **Punti e penalità**: rileggi chi deve prenderli o perderli (per esempio, un BUZZ penalizza la squadra di chi ha sbagliato, non quella di chi l'ha visto).
 - Nessuna scritta col nome del gioco in alto nello schermo di gioco.
+- **Nella Sala l'host può cambiare tra una partita e l'altra** (Passo 3: se chi tiene la Sala se ne va, la prende un amico e diventa lui "host"): il gioco non deve contare sul fatto che "host" sia sempre lo stesso telefono fuori dalla partita (niente memorie del gioco legate a "host" tra una partita e l'altra). E quando il core porta via il gioco (Sala passata a un amico, "Cambia gioco") i suoi timer, suoni e sfondi non devono restare sopra la Sala: se la schermata del gioco non è più nella pagina, fermali (già successo con Black Jack, Scarabocchio, Gara di pesca e La Balla).
 
 ## Nella pull request: copia questa lista e spunta solo quello che hai davvero fatto
 ```
@@ -111,6 +112,7 @@ Il contratto della Sala (15 ott 2026, nel modello sono già usati tutti):
 - [ ] impostazioni funziona col box fuori dalla pagina; riga "📜 Si gioca così" chiara (se no riassunto)
 - [ ] t.risultato coi nomi dei giocatori (a squadre: chi vince al posto 1); bot da SG.bot.prendi, nei tasti solo "Bot"
 - [ ] Col profilo entra da solo
+- [ ] Non conta su "host" sempre lo stesso telefono fuori dalla partita; portato via dal core (Sala passata, Cambia gioco) non lascia timer, suoni o sfondi sopra la Sala
 - [ ] Provato dalla Sala: una partita intera con 3 amici finti, uno che esce a metà, "↻ Rivincita" col 3-2-1, "🎮 Cambia gioco" (vedi passo2/modello.js)
 - [ ] Provato coi telefoni finti: un amico che ricarica la pagina, uno col telefono spento più di 20 s che poi torna, l'host che ricarica, uno che arriva a partita cominciata
 - [ ] Console senza errori; schermi 360x640 e 412x915 senza scorrere

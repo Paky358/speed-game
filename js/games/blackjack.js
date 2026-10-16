@@ -928,6 +928,10 @@
     mazzo.style.visibility = "hidden";   // il mazzo non si vede (spazio al tavolo): le carte partono da Bot
     s._contenuto.appendChild(wrap); t.mostra(s);
     document.body.classList.add("bj-verde");
+    // il core può portarci via dal tavolo senza passare da qui (la Sala che passa a un amico, «Cambia gioco»): appena il
+    // tavolo non è più nella pagina si chiude da solo (via lo sfondo verde e i tempi), se no il verde resterebbe sotto la Sala
+    // (drv.portatoVia: chi era seduto da amico a metà mano riprende la sua puntata, come quando l'host lascia il tavolo)
+    var guardia = setInterval(function () { if (!document.body.contains(wrap)) { chiudi(); if (drv.portatoVia) drv.portatoVia(); } }, 400);
     // se lo schermo cambia misura (barre del telefono, rotazione) il tavolo si ridisegna sulla misura nuova
     function suResize() { if (vm && !chiuso && document.body.contains(wrap)) disegnaScena(); }
     window.addEventListener("resize", suResize);
@@ -943,6 +947,7 @@
     function chiudi() {
       if (chiuso) return;
       chiuso = true;
+      clearInterval(guardia);
       [timerPasso, bollaTimer, scopri.t, bloccoT].forEach(function (x) { if (x) clearTimeout(x); });
       if (tempo.int) clearInterval(tempo.int);
       intro.stop = true;
@@ -2024,7 +2029,9 @@
         onAssicura: function (si) { invia({ t: "mossa", kind: "assic", si: si }); },
         onFineMano: function (vm) { var me = vm.giocatori[S.mioSeat]; if (prof && me && !me.prova) { salvaFineMano(me, vm); S.salvato = me.fiches; } },
         onNuova: function () {},
-        onEsci: function () { S.finito = true; if (S.rete) S.rete.chiudi(); t.esci(); }
+        onEsci: function () { S.finito = true; if (S.rete) S.rete.chiudi(); t.esci(); },
+        // il core mi ha portato via dal tavolo (la Sala è passata a un amico, «Cambia gioco»…): a metà mano la puntata torna
+        portatoVia: function () { if (S.finito) return; finisci("", null, !!S.vm && ["esito", "fine"].indexOf(S.vm.fase) < 0); }
       });
     }
     function finisci(titolo, classifica, rimborso) {

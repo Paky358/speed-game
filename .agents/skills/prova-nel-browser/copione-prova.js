@@ -58,6 +58,7 @@
   function pulisci() {
     Object.keys(W.BR.tel).forEach(function (n) { (W.BR.perNome[n] || []).forEach(function (c) { c.morto = true; c.connected = false; }); var f = document.getElementById("tel-" + n); if (f) f.remove(); });
     W.BR.clients = []; W.BR.retained = {}; W.BR.log = []; W.BR.perNome = {}; W.BR.mem = {}; W.BR.tel = {}; W.BR.conti = {}; W.BR.pubblici = {};
+    W.BR.nube = {}; W.BR.amicizie = []; W.BR.storia = []; W.BR.congelati = {};   // (liste del profilo, amicizie, foto passate, telefoni fermi)
     riprendiSiDaSolo();   // (lo scenario 50 ferma per un attimo il "sì" da solo delle conferme)
     if (W.__cliccaVero) W.clicca = W.__cliccaVero;   // (lo scenario 48 conta i tocchi: se si è fermato a metà, si rimette com'era)
   }
@@ -69,9 +70,11 @@
   function mioId(nome) { var h = W.reteDi(nome); return h && h.stato ? h.stato().id : null; }
   // il codice della stanza di questa saletta (nei giochi della Sala la testata mostra quello della Sala: la stanza sta in data-stanza)
   // (finché la stanza non ha il suo codice data-stanza non c'è: null, anche se la testata mostra già quello della Sala)
-  function codiceSaletta(w) { var c = w.document.querySelector(".sl-cod"), x = c && c.getAttribute("data-stanza"); return x && /^[A-Z0-9]{4}$/.test(x) ? x : null; }
+  // (4 lettere, o 6 per la Sala di una Compagnia; anche scritto spaziato "K F R T")
+  function soloCodice(x) { x = String(x == null ? "" : x).replace(/\s+/g, ""); return /^([A-Z0-9]{4}|[A-Z0-9]{6})$/.test(x) ? x : null; }
+  function codiceSaletta(w) { var c = w.document.querySelector(".sl-cod"); return c ? soloCodice(c.getAttribute("data-stanza")) : null; }
   // il codice scritto nella testata (quello da dare agli amici)
-  function codiceTestata(w) { var b = w.document.querySelector(".sl-cod b"); return b && /^[A-Z0-9]{4}$/.test(b.textContent) ? b.textContent : null; }
+  function codiceTestata(w) { var b = w.document.querySelector(".sl-cod b"); return b ? soloCodice(b.textContent) : null; }
   function no(perche) { throw new Error(perche); }
   // la Scalinata va avanti da sola fino alla fine (gli umani scelgono a caso, l'host tocca "Prossimo round")
   async function scalinataFinoAllaFine(cod, umani, host) {
@@ -3259,7 +3262,7 @@
   W.COPIONE = {
     esiti: [], scenari: SCENARI,
     // gli aiuti di questo file, per i file di prova dei passi (passo2/…): var A = COPIONE.aiuti; A.vm(C), A.no("perché")…
-    aiuti: { T: T, pill: pill, dentro: dentro, vm: vm, ids: ids, mioId: mioId, codiceSaletta: codiceSaletta, codiceTestata: codiceTestata, no: no, home: home,
+    aiuti: { T: T, pill: pill, dentro: dentro, vm: vm, ids: ids, mioId: mioId, codiceSaletta: codiceSaletta, codiceTestata: codiceTestata, soloCodice: soloCodice, no: no, home: home,
       apriSala: apriSala, salaLanciaGioco: salaLanciaGioco, scalinataFinoAllaFine: scalinataFinoAllaFine,
       audioFinto: audioFinto, nomeTarga: nomeTarga, targaDi: targaDi, avatarDi: avatarDi, pronto: pronto, statoHost: statoHost,
       contaFaccine: contaFaccine, controllaSchermo: controllaSchermo,

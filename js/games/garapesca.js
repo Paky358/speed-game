@@ -326,6 +326,7 @@
   }
   var ultimoSec = -1;
   function ticchetta() {   // gli ultimi 5 secondi: un tic a ogni secondo
+    if (UI && !document.body.contains(UI)) return chiudiSchermo();   // il core ci ha portati via (la Sala passata a un amico, «Cambia gioco»): via il lago e i tic
     var r = Math.ceil((FINE_AT - Date.now()) / 1000);
     if (r === ultimoSec) return; ultimoSec = r;
     if (r < 1 || r > 5 || !UI) return;
@@ -363,7 +364,7 @@
       stile();
       FU = { tempo: t.el("div", { class: "gp-guarda-tempo" }), lista: t.el("ol", { class: "gp-resto gp-guarda" }) };
       s._contenuto.appendChild(FU.tempo); s._contenuto.appendChild(FU.lista);
-      TIC = setInterval(function () { if (FU) scriviTempo(); }, 1000);
+      TIC = setInterval(function () { if (FU && !document.body.contains(FU.tempo)) return chiudiSchermo(); if (FU) scriviTempo(); }, 1000);
     }
     s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:" + (tipo === "gara" ? "10px" : "24px"), text: T[2] }));
     if (tipo !== "entro") { var f = t.faccine && t.faccine(); if (f) { f.style.margin = "12px auto 0"; f.style.maxWidth = "320px"; s._contenuto.appendChild(f); } }   // si aspetta a lungo: le faccine

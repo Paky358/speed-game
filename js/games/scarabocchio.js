@@ -589,10 +589,12 @@
     window.addEventListener("resize", misura);
     requestAnimationFrame(misura);
     var tMisura = setInterval(function () { if (cv.style.width) clearInterval(tMisura); else misura(); }, 300);   // pagina ancora nascosta: riprovo finché ho le misure
+    function smonta() { clearInterval(tSped); clearInterval(tTempo); clearInterval(tMisura); if (ro) ro.disconnect(); window.removeEventListener("resize", misura); }
 
     // ----- tempo -----
     var scad = 0, faseOra = null, ultimoTic = -1;
     var tTempo = setInterval(function () {
+      if (!document.body.contains(scena)) return smonta();   // il core ci ha portati via (la Sala passata a un amico, «Cambia gioco»): niente tic né invii
       if (!scad) return;
       var r = Math.max(0, Math.ceil((scad - Date.now()) / 1000));
       tempo.textContent = "⏱ " + r;
@@ -781,7 +783,7 @@
       avviso: function (x) { riga1(x, "sys"); inFondoChat(); },
       // la chat "tra chi sa" (chi ha indovinato e chi disegna): la vedono solo loro
       sa: function (m) { chat.appendChild(el("div", { class: "sb-msg sa" }, [el("b", { text: (m.id === io ? "Tu" : m.nome) + " 🤫: " }), document.createTextNode(m.x)])); inFondoChat(); },
-      chiudi: function () { clearInterval(tSped); clearInterval(tTempo); clearInterval(tMisura); if (ro) ro.disconnect(); window.removeEventListener("resize", misura); }
+      chiudi: smonta
     };
   }
 
