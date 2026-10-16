@@ -28,6 +28,10 @@
   var TEMPO_TURNO = 60;                                  // online: chi non gioca per tanto, gioca il Bot al posto suo
   // i tre bot (1 e 3 rivali, 2 il tuo compagno) sono i bot fissi uguali in tutti i giochi (SG.bot), scelti dalla bravura
   var SALVA = "sg-scopone-partita";                     // la partita in corso, salvata sul telefono
+  var COPPIE = "sg-scopone-coppie";                     // 👫 lo storico delle coppie della giornata (sul telefono dell'host, per nome)
+  // 🤫 Messaggio al compagno (online, tra due compagni veri): le frasi pronte, al massimo PSST_MAX a testa per smazzata
+  var PSST = ["💰 Ho il settebello", "🪙 Ho i denari", "7️⃣ Ho un 7", "🚫 Non ho 7", "✋ Lascia, ci penso io", "🤝 Fidati di me"];
+  var PSST_MAX = 2, PSST_MS = 4000;
   var SEMI_TXT = { D: "🪙", C: "🏆", S: "🗡️", B: "🪵" };   // denari, coppe, spade, bastoni
   // frasi dei bot a fumetto nei momenti forti (corte: stanno nel fumetto)
   var FRASI = {
@@ -68,6 +72,9 @@
       "Punti a fine mano (sommando i due compagni): <b>Carte, Denari, Settebello, Primiera</b> e le <b>Scope</b>. Con la <b>Napola</b> accesa: asso, 2 e 3 di denari presi dalla stessa coppia valgono 3 punti, +1 per ogni denaro che segue (4, 5…).",
       "Vince la coppia che arriva per prima ai <b>punti scelti</b> (di solito " + TARGET + "; lo «Scopone a trentuno» si gioca a 31 con la Napola; a pari punti si gioca un'altra mano). Si può giocare anche <b>una mano sola</b>.",
       "Online le coppie le sceglie l'host (🔀 in saletta), oppure si sorteggiano o cambiano a ogni partita. A fine mano <b>⏩ Avanti</b>: se lo tocca più di metà si riparte subito. Chi guarda vede le carte di un giocatore alla volta (🔄 per cambiare), chi gioca vede solo le sue.",
+      "A fine mano <b>🏅 Il migliore in campo</b>: in ogni coppia la medaglia va a chi ha portato di più (scope e settebello contano di più; a pari, niente medaglia).",
+      "Online l'host si ricorda le coppie di oggi (<b>👫 «Paky e Luca: 3 vinte, 1 persa»</b>): lo vedete in saletta e a fine partita. L'host può fare <b>🔁 Rivincita a coppie scambiate</b>: si rigioca subito, ognuno con un compagno nuovo.",
+      "<b>🤫 Messaggio al compagno</b> (si accende nel ⚙️): online, se il compagno non è un Bot, il tasto 🤫 vicino alla mano manda una frase pronta («Ho il settebello», «Lascia, ci penso io»…). La legge solo il compagno; gli avversari e chi guarda vedono solo 🤫. Al massimo 2 a testa per mano.",
       "Accanto al nome di ogni giocatore vedi l'<b>ultima carta</b> che ha giocato. Contro i Bot, se chiudi l'app a metà, la prossima volta puoi <b>riprendere la partita</b>."
     ],
     // la riga "📜 Si gioca così" che gli amici leggono in saletta
@@ -78,12 +85,13 @@
       if (imp.napola) p.push("con la Napola");
       if (imp.ultima) p.push("scopa anche all'ultima carta");
       if (imp.coppie === "caso") p.push("coppie a caso"); else if (imp.coppie === "giro") p.push("compagni a giro");
+      if (imp.psst) p.push("🤫 messaggi al compagno");
       return p.join(" · ");
     },
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el, online = aiuti.modo === "online";
       dove.variante = "scientifico"; dove.difficolta = "medio"; dove.aiuto = true; dove.napola = false; dove.ultima = false;
-      if (online) dove.coppie = "scelte";
+      if (online) { dove.coppie = "scelte"; dove.psst = false; }
       var bSci, bCla;
       // c'è una partita lasciata a metà? lo diciamo subito (si riprende toccando Comincia)
       var prof = !online && window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo(), sosp = online ? null : leggiSalvata(prof && prof.nome ? String(prof.nome).trim().slice(0, 16) : undefined);
@@ -119,6 +127,11 @@
       box.appendChild(righina([[false, "No"], [true, "Sì"]], "napola"));
       etichetta("Scopa all'ultima carta");
       box.appendChild(righina([[false, "Non vale"], [true, "Vale"]], "ultima"));
+      if (online) {   // 🤫 Messaggio al compagno: solo online, tra due compagni veri
+        etichetta("🤫 Messaggio al compagno");
+        box.appendChild(righina([[false, "No"], [true, "Sì"]], "psst"));
+        box.appendChild(el("p", { class: "modulo-nota", style: "margin:4px 0 0", text: "Un tasto 🤫 manda al compagno una frase pronta (2 a mano): la legge solo lui." }));
+      }
       etichetta("Illumina le carte che prendono");
       box.appendChild(righina([[true, "Sì"], [false, "No"]], "aiuto"));
       box.appendChild(el("p", { class: "modulo-nota", style: "margin-top:10px", text: online
@@ -162,6 +175,20 @@
   }
   function cancellaSalvata() { try { localStorage.removeItem(SALVA); } catch (e) {} }
 
+  // ---------- 👫 lo storico delle coppie di oggi (online, sul telefono dell'host; per NOME, si azzera a mezzanotte) ----------
+  function oggi() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+  function leggiCoppie() {
+    try {
+      var o = JSON.parse(localStorage.getItem(COPPIE) || "null");
+      if (!o || o.g !== oggi() || !o.c || typeof o.c !== "object") return {};
+      var c = {};
+      Object.keys(o.c).slice(0, 60).forEach(function (k) { var x = o.c[k]; if (x && typeof x.nomi === "string") c[k] = { nomi: x.nomi.slice(0, 40), v: +x.v || 0, p: +x.p || 0 }; });
+      return c;
+    } catch (e) { return {}; }
+  }
+  function salvaCoppie(c) { try { localStorage.setItem(COPPIE, JSON.stringify({ g: oggi(), c: c })); } catch (e) {} }
+  function testoCoppia(x) { return x.nomi + ": " + x.v + (x.v === 1 ? " vinta" : " vinte") + ", " + x.p + (x.p === 1 ? " persa" : " perse"); }
+
   // ---------- motore ----------
   function creaStato(variante, traguardo, regole) {   // traguardo: i punti da raggiungere (0 = una mano sola)
     var st = {
@@ -182,6 +209,7 @@
     else { st.tavolo = []; for (var s2 = 0; s2 < 4; s2++) st.mani[s2] = st.mazzo.splice(0, 10); }
     st.prese = [[], [], [], []]; st.scope = [0, 0, 0, 0]; st.ultimaPresa = null; st.turno = st.primo; st.fase = "gioco"; st.presa = null; st.messaGiu = null;
     st.posti = {}; st.ultime = {}; st.manoN = (st.manoN || 0) + 1; st.giocate = 0; st.fumo = null; st.resto = null;
+    st.psst = null; st.psstN = [0, 0, 0, 0];   // 🤫 i messaggi al compagno ricominciano a ogni smazzata
   }
 
   // esegue una mossa del giocatore "seat": ritorna {presa, scopa, sette, somma}. La fine mano la chiude chi chiama (dopo aver mostrato l'ultima giocata).
@@ -210,12 +238,38 @@
     return ev;
   }
   function fineMano(st) {
+    var mvp = migliori(st.prese, st.scope);   // 🏅 conta quello che ognuno ha preso LUI (le carte rimaste non sono merito suo)
     if (st.tavolo.length && st.ultimaPresa != null) { st.prese[st.ultimaPresa] = st.prese[st.ultimaPresa].concat(st.tavolo); st.tavolo = []; }
     var r = contaScopone(st);
+    r.mvp = mvp;
     st.punti.noi += r.puntiNoi; st.punti.loro += r.puntiLoro;
     r.tot = { noi: st.punti.noi, loro: st.punti.loro };
     st.ultimoRound = r; st.presa = null; st.resto = null; st.fumo = null;
     st.fase = C().partitaFinita(st.traguardo, st.punti.noi, st.punti.loro) ? "fine" : "fineround";
+  }
+  // 🏅 Il migliore in campo: per ogni coppia, chi dei due ha portato di più (scope e settebello pesano di più; a pari, nessuno)
+  function bravura(prese, scope) {
+    var b = { n: prese.length, den: 0, sette: false, n7: 0, scope: scope || 0 }, n6 = 0, n1 = 0;
+    prese.forEach(function (c) { if (c.s === "D") b.den++; if (c.id === "D7") b.sette = true; if (c.v === 7) b.n7++; else if (c.v === 6) n6++; else if (c.v === 1) n1++; });
+    b.punti = 2 * b.n + 3 * b.den + (b.sette ? 20 : 0) + 20 * b.scope + 4 * b.n7 + 2 * n6 + n1;   // (tutto ×2: numeri interi, il pari è un pari vero)
+    return b;
+  }
+  function testoBravura(b) {   // "2 scope e il settebello", "il settebello e 6 denari", "14 carte e 5 denari"
+    var p = [];
+    if (b.scope) p.push(b.scope === 1 ? "1 scopa" : b.scope + " scope");
+    if (b.sette) p.push("il settebello");
+    if (p.length < 2 && b.den) p.push(b.den === 1 ? "1 denaro" : b.den + " denari");
+    if (p.length < 2 && b.n7 >= 2) p.push(b.n7 + " sette");
+    if (p.length < 2) p.push(b.n === 1 ? "1 carta" : b.n + " carte");
+    return p.length > 1 ? p[0] + " e " + p[1] : p[0];
+  }
+  function migliori(prese, scope) {   // [coppia dei posti 0-2, coppia dei posti 1-3]: { s, testo } o null
+    return [[0, 2], [1, 3]].map(function (c) {
+      var a = bravura(prese[c[0]], scope[c[0]]), b = bravura(prese[c[1]], scope[c[1]]);
+      if (a.punti === b.punti) return null;
+      var s = a.punti > b.punti ? c[0] : c[1];
+      return { s: s, testo: testoBravura(s === c[0] ? a : b) };
+    });
   }
   function carteSquadra(st, team) { var o = []; for (var s = 0; s < 4; s++) if (squadra(s) === team) o = o.concat(st.prese[s]); return o; }
   // la Napola: asso, 2 e 3 di denari = 3 punti, poi +1 per ogni denaro che segue (4, 5, 6…)
@@ -271,7 +325,10 @@
         tot: u.tot ? { noi: u.tot.loro, loro: u.tot.noi } : null
       } : JSON.parse(JSON.stringify(u));
       v.ultimoRound.scopeSeat = [0, 1, 2, 3].map(function (k) { return (u.scopeSeat || [])[a(k)] || 0; });
+      v.ultimoRound.mvp = (u.mvp || []).filter(Boolean).map(function (x) { return { s: r(x.s), testo: x.testo }; });   // 🏅 (posti sullo schermo)
     }
+    // 🤫 il messaggio al compagno: tutti sanno CHI l'ha mandato (🤫 sopra il suo avatar); la frase solo lui e il compagno
+    if (st.psst) v.psst = { s: r(st.psst.s), n: st.psst.n, k: (!guardo && st.psst.k != null && (st.psst.s === io || st.psst.s === (io + 2) % 4)) ? st.psst.k : null };
     return v;
   }
 
@@ -563,9 +620,26 @@
       onNuova: function () { if (o.onNuova) o.onNuova(); },
       onEsci: function () { o.onEsci(); },
       onIndietro: function () { o.onEsci(); },
-      onCambiaVista: function () { if (o.cambiaVista) o.cambiaVista(); }
+      onCambiaVista: function () { if (o.cambiaVista) o.cambiaVista(); },
+      onPsst: function (k) { if (o.psst) o.psst(k); },
+      onScambia: o.scambia ? function (piede) { o.scambia(piede); } : null
     }, true, function () { return Cl.chiuso; }, { online: true, sonoHost: !!o.sonoHost });
     Cl.V = V;
+    // 🤫 un messaggio nuovo: il compagno legge la frase sopra il mio avatar, gli altri (e chi guarda) solo 🤫, per 4 secondi;
+    // chi l'ha mandato vede passare "🤫 A Luca: «…»". Chi rientra non rivede quelli vecchi (l'host li tiene 4 secondi)
+    function vediPsst(st) {
+      var p = st.psst;
+      if (!p) return;
+      if (p.n === Cl.psstN) { V.psstPosto(p.s); return; }   // (chi guarda e cambia giocatore: il fumetto resta sopra chi l'ha mandato)
+      Cl.psstN = p.n;
+      var frase = p.k != null ? PSST[p.k] : null;
+      if (p.s === 0 && !st.guardo) { if (frase) V.avvisoLocale("🤫 A " + st.nomi[2] + ": «" + frase + "»"); return; }
+      var dalComp = p.s === 2 && !st.guardo && frase;
+      V.psst({ n: p.n, s: p.s, txt: dalComp ? frase : "🤫", fino: Date.now() + PSST_MS });
+      if (dalComp) { vibra(25); suonoNote([[988, 0], [1319, 0.08]], 0.07); }   // il compagno ti ha detto qualcosa: un momento che conta
+      clearTimeout(Cl.psstT);
+      Cl.psstT = setTimeout(function () { if (!V.uscito()) Cl.ridisegna(); }, PSST_MS + 80);   // il fumetto se ne va (solo se il tavolo c'è ancora)
+    }
     function puo() {
       var st = Cl.st;
       if (!st || Cl.chiuso || st.guardo || st.turno !== 0 || st.fase !== "gioco" || st.presa || st.resto) return false;
@@ -606,10 +680,12 @@
       }
       if (!st.presa) Cl.presaN = null;
       if (!st.guardo) tracciaOnline(Cl.T, st);   // trofei (chi guarda non ne prende)
-      Cl.st = st; V.disegna(st, Cl.sel);
+      Cl.st = st;
+      vediPsst(st);
+      V.disegna(st, Cl.sel);
     };
     Cl.ridisegna = function () { if (Cl.st && !Cl.chiuso) V.disegna(Cl.st, Cl.sel); };
-    Cl.azzera = function () { Cl.st = null; Cl.sel = { carta: null, presa: [] }; Cl.attesa = null; Cl.presaN = null; Cl.mioPrima = false; V.azzera(); };
+    Cl.azzera = function () { Cl.st = null; Cl.sel = { carta: null, presa: [] }; Cl.attesa = null; Cl.presaN = null; Cl.mioPrima = false; clearTimeout(Cl.psstT); V.azzera(); };
     return Cl;
   }
 
@@ -626,7 +702,7 @@
       via: {},                                       // via[posto] = chi è uscito a partita in corso (se torna, si riprende il suo posto)
       bot: { 0: false, 1: true, 2: true, 3: true },  // chi gioca col computer durante la partita
       guarda: [],                                    // chi guarda: { id, nome, sala } (sala = non scelto in "Chi gioca?"; se no aspetta un posto)
-      avanti: {}, scad: 0, nAvviso: 0, avviso: null, detto: false, storico: {}, giocateTurno: -1 };
+      avanti: {}, scad: 0, nAvviso: 0, avviso: null, detto: false, storico: leggiCoppie(), giocateTurno: -1, psstN: 0, scambia: false };
     var timers = [];
     function dopo(fn, ms) { var id = setTimeout(function () { timers = timers.filter(function (x) { return x !== id; }); if (!H.chiuso) fn(); }, ms); timers.push(id); return id; }
     function fermaTutto() { timers.forEach(clearTimeout); timers = []; }
@@ -646,6 +722,15 @@
       sonoHost: true,
       gioca: function (id, presa) { passo(0, id, presa); },
       voto: function () { voto("host", H.st && H.st.manoN); },
+      psst: function (k) { psstDa(0, k); },
+      // "🔁 Rivincita a coppie scambiate": la Rivincita di sempre (quella del core, col 3-2-1), ma prima si cambiano i compagni
+      scambia: function (piede) {
+        if (!H.st || H.st.fase !== "fine") return;
+        H.scambia = true;
+        var b = piede && piede.querySelector(".ft-primo");
+        if (b && !b.disabled && document.body.contains(b)) b.click();   // (il tocco è già tuo: il core non vibra due volte)
+        else tornaSaletta();
+      },
       onAvanti: prossimaMano,
       onNuova: tornaSaletta,
       onEsci: function () {   // (dalla saletta il core ha già chiesto "Chiudere la stanza per tutti?")
@@ -672,14 +757,37 @@
       var u = umani(), si = u.filter(function (id) { return H.avanti[id]; }).length;
       return { si: si, tot: u.length, resta: Math.max(1, Math.ceil((H.scad - Date.now()) / 1000)), mio: s != null && !!H.avanti[idDi(s)] };
     }
-    function storicoTesti() {   // le coppie di questa stanza: "Paky e Luca: 2 vinte · 1 persa"
-      return Object.keys(H.storico).map(function (k) { var x = H.storico[k]; return x.nomi + ": " + x.v + (x.v === 1 ? " vinta" : " vinte") + " · " + x.p + (x.p === 1 ? " persa" : " perse"); });
+    // 👫 lo storico delle coppie di oggi (per nome, anche tra una stanza e l'altra): "Paky e Luca: 3 vinte, 1 persa"
+    function storicoTesti() {   // a fine partita: le due coppie che hanno appena giocato
+      var st = H.st, o = [];
+      if (st) [0, 1].forEach(function (tm) { var x = H.storico[[st.nomi[tm], st.nomi[tm + 2]].sort().join("|")]; if (x) o.push(testoCoppia(x)); });
+      return o;
     }
-    function extra(v, s) { v.pid = H.pid; v.avviso = H.avviso; v.avanti = infoAvanti(s); v.storico = H.st && H.st.fase === "fine" ? storicoTesti() : null; return v; }
+    // quanti 🤫 restano a questo posto (-1 = niente tasto: messaggi spenti, o lui o il compagno sono Bot)
+    function psstResto(s) { var st = H.st; return (s != null && st && st.conPsst && !H.bot[s] && !H.bot[(s + 2) % 4]) ? PSST_MAX - (st.psstN[s] || 0) : -1; }
+    function extra(v, s) {
+      v.pid = H.pid; v.avviso = H.avviso; v.avanti = infoAvanti(s); v.storico = H.st && H.st.fase === "fine" ? storicoTesti() : null;
+      v.psstResto = psstResto(s);
+      if (s === 0) v.scambia = !!(H.st && H.st.fase === "fine" && (imp().coppie || "scelte") === "scelte" && [1, 2, 3].some(function (k) { return H.posti[k]; }));   // (l'host: "🔁 Rivincita a coppie scambiate")
+      return v;
+    }
     function pieno() {   // per chi guarda: tutto (sceglie lui di chi vedere le carte) tranne il mazzo, che non serve
       var st = H.st, o = {};
       for (var k in st) if (k !== "mazzo" && k !== "_T") o[k] = st[k];
+      if (st.psst) o.psst = { s: st.psst.s, n: st.psst.n };   // 🤫 chi guarda vede solo CHI l'ha mandato, mai la frase
       return o;
+    }
+    // 🤫 un messaggio al compagno: passa dall'host, la frase va solo a chi l'ha mandato e al compagno (nella LORO vista,
+    // come le carte); agli altri e a chi guarda solo "🤫" sopra l'avatar. Al massimo PSST_MAX a testa per smazzata; dopo 4 s sparisce
+    function psstDa(s, k) {
+      var st = H.st; k = +k;
+      if (H.chiuso || !st || !st.conPsst || st.fase !== "gioco" || !(k >= 0 && k < PSST.length) || k % 1) return;
+      if (H.bot[s] || H.bot[(s + 2) % 4]) return;   // il compagno è un Bot: niente messaggi
+      if ((st.psstN[s] || 0) >= PSST_MAX) { if (s > 0) mandaVm(s); return; }
+      st.psstN[s] = (st.psstN[s] || 0) + 1;
+      var n = ++H.psstN; st.psst = { s: s, k: k, n: n };
+      bcast();
+      dopo(function () { if (st.psst && st.psst.n === n) st.psst = null; }, PSST_MS);   // (chi rientra dopo non lo rivede)
     }
     function mandaVm(s) { if (rete && H.posti[s]) rete.inviaVeloce({ t: "vm", to: H.posti[s], vm: extra(vistaDa(H.st, s), s) }); }   // solo a lui, e non resta sul server
     function mandaGuarda(id) { if (rete && H.st) rete.inviaVeloce({ t: "vm", to: id, vm: extra({ guardo: true, pieno: pieno() }, null) }); }
@@ -698,6 +806,7 @@
       if (im.coppie === "caso") sorteggia(false);
       var st = H.st = creaStato(im.variante || "scientifico", C().traguardoDa(im), regoleDa(im));
       st.aiuto = im.aiuto !== false; H.pid = Math.random().toString(36).slice(2, 8);
+      st.conPsst = !!im.psst; H.scambia = false;   // 🤫 messaggi al compagno (⚙️)
       st.nomi = { 0: mioNome() }; st.omini = { 0: mioAv() };
       for (var s = 1; s <= 3; s++) { H.bot[s] = !H.posti[s]; if (H.posti[s]) { st.nomi[s] = H.nomi[s]; st.omini[s] = H.avi[s]; } }
       for (s = 1; s <= 3; s++) if (H.bot[s]) mettiBot(s);
@@ -786,12 +895,13 @@
       var st = H.st; if (H.detto) return;
       H.detto = true;
       var v = st.punti.noi > st.punti.loro ? 0 : 1, pari = st.punti.noi === st.punti.loro;
-      // le coppie di questa stanza: quante vinte e quante perse (per nome)
+      // 👫 le coppie di oggi: quante vinte e quante perse (per nome; resta sul telefono dell'host fino a mezzanotte)
       [0, 1].forEach(function (tm) {
         var a = st.nomi[tm], b = st.nomi[tm + 2], k = [a, b].sort().join("|");
         var x = H.storico[k] || (H.storico[k] = { nomi: a + " e " + b, v: 0, p: 0 });
         if (!pari) { if (tm === v) x.v++; else x.p++; }
       });
+      salvaCoppie(H.storico);
       // per la Classifica della serata e gli XP: i nomi, chi vince al posto 1 (pari: tutti al posto 1)
       if (t.risultato) t.risultato([0, 2, 1, 3].map(function (k) { var x = { nome: st.nomi[k], pos: (k % 2 === v || pari) ? 1 : 3 }; if (k > 0 && H.bot[k]) x.bot = true; return x; })
         .sort(function (a, b) { return a.pos - b.pos; }));
@@ -810,7 +920,8 @@
       fermaTutto();
       H.st = null; H.via = {}; H.attesa = false; H.avanti = {}; H.detto = false; H.avviso = null; H.giocateTurno = -1;
       for (var s = 1; s <= 3; s++) H.bot[s] = true;
-      if (imp().coppie === "giro") ruota();   // compagni a giro: ognuno gioca con tutti
+      if (imp().coppie === "giro" || H.scambia) ruota();   // compagni a giro (ognuno gioca con tutti) o "🔁 Rivincita a coppie scambiate"
+      H.scambia = false;
       promuovi();
       Cl.azzera();
       aggiornaLobby();
@@ -847,18 +958,18 @@
         var n = c.map(function (s) { return s === 0 ? mioNome() : H.nomi[s]; });
         if (!n[0] || !n[1]) return;
         var x = H.storico[n.slice().sort().join("|")];
-        if (x && (x.v || x.p)) o.push(x.nomi + " " + x.v + "–" + x.p);
+        if (x && (x.v || x.p)) o.push(testoCoppia(x));
       });
       return o;
     }
     function aggiornaLobby() {
       if (H.st || H.chiuso) return;
-      if (rete) rete.invia({ t: "lobby", codice: H.codice, pronta: H.pronta, seggi: seggi(), guarda: H.guarda, coppie: imp().coppie || "scelte", storico: storicoLobby() });
+      if (rete) rete.invia({ t: "lobby", codice: H.codice, pronta: H.pronta, seggi: seggi(), guarda: H.guarda, coppie: imp().coppie || "scelte", storico: storicoLobby(), psst: !!imp().psst });
       disegnaLobby();
     }
     function disegnaLobby() {
       if (H.st || H.chiuso) return;
-      renderLobby(t, { codice: H.codice, pronta: H.pronta, sonoHost: true, myId: "host", seggi: seggi(), guarda: H.guarda, coppie: imp().coppie || "scelte", storico: storicoLobby() }, {
+      renderLobby(t, { codice: H.codice, pronta: H.pronta, sonoHost: true, myId: "host", seggi: seggi(), guarda: H.guarda, coppie: imp().coppie || "scelte", storico: storicoLobby(), psst: !!imp().psst }, {
         onComincia: comincia,
         onCambia: function () { if (!H.st) { ruota(); aggiornaLobby(); } },
         onCaso: function () { if (!H.st) { sorteggia(true); aggiornaLobby(); } },
@@ -905,6 +1016,7 @@
         if (!H.st) return;
         if (m.t === "gioca") { var sm = seatDi(id); if (sm > 0 && !H.bot[sm] && !passo(sm, m.carta, m.presa)) mandaVm(sm); }   // mossa non valida: gli rimando la sua vista
         else if (m.t === "avanti") voto(id, m.m);
+        else if (m.t === "psst") { var sp = seatDi(id); if (sp > 0) psstDa(sp, m.k); }
       }
     });
     if (!rete) return senzaRete(t);
@@ -925,6 +1037,7 @@
       sonoHost: false,
       gioca: function (id, presa) { if (S.rete) S.rete.invia({ t: "gioca", carta: id, presa: presa }); },
       voto: function () { if (S.rete && Cl.st) S.rete.invia({ t: "avanti", m: Cl.st.manoN }); },
+      psst: function (k) { if (S.rete) S.rete.invia({ t: "psst", k: k }); },   // 🤫 al compagno (passa dall'host)
       onEsci: function () {
         if (Cl.st && Cl.st.fase !== "fine" && !Cl.st.guardo) return t.conferma("Uscire dalla partita?", "Al tuo posto gioca un Bot.", "Esci", via);
         via();
@@ -967,7 +1080,7 @@
             if (m.vm.guardo) { S.guardo = m.vm; mostraGuardo(); } else { S.guardo = null; Cl.setVm(m.vm); }
           } else if (m.t === "lobby") {
             if (S.inGioco) { S.inGioco = false; S.guardo = null; Cl.azzera(); }   // "Nuova partita": si torna in saletta
-            renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi, guarda: m.guarda, coppie: m.coppie, storico: m.storico }, { onEsci: via });
+            renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi, guarda: m.guarda, coppie: m.coppie, storico: m.storico, psst: m.psst }, { onEsci: via });
           } else if (m.t === "inCorso") {
             if (!S.inGioco && S.msg && document.body.contains(S.msg)) S.msg.textContent = "La partita è cominciata: sto entrando…";
           }
@@ -1001,8 +1114,11 @@
         el("b", { text: "🔴 " + nomeSeat((io + 1) % 4) + " + " + nomeSeat((io + 3) % 4) }) ]) ];
     if (L.coppie === "caso") righe.push(el("div", { style: "opacity:.8;font-size:.85em", text: "🎲 Le coppie si sorteggiano al via" }));
     else if (L.coppie === "giro") righe.push(el("div", { style: "opacity:.8;font-size:.85em", text: "🔄 A ogni partita si cambia compagno" }));
-    if (L.storico && L.storico.length) righe.push(el("div", { style: "opacity:.8;font-size:.85em", text: "📊 " + L.storico.join(" · ") }));
-    if (umani < 4) righe.push(el("div", { style: "opacity:.8;font-size:.85em", text: "I posti liberi li fanno i Bot" }));
+    if (L.storico && L.storico.length) righe.push(el("div", { style: "opacity:.8;font-size:.85em", text: "👫 " + L.storico.join(" · ") }));   // le coppie di adesso, oggi
+    var sotto = [];
+    if (L.psst) sotto.push("🤫 messaggi al compagno");
+    if (umani < 4) sotto.push("i posti liberi li fanno i Bot");
+    if (sotto.length) { sotto[0] = sotto[0].charAt(0).toUpperCase() + sotto[0].slice(1); righe.push(el("div", { style: "opacity:.8;font-size:.85em", text: sotto.join(" · ") })); }
     if (L.sonoHost && umani > 1 && L.coppie !== "caso") {
       righe.push(el("div", { style: "display:flex;gap:6px;justify-content:center;margin-top:4px" }, [
         el("button", { class: "btn btn-fantasma", style: "margin:0;min-height:0;padding:5px 12px;font-size:.85rem;width:auto", text: "🔀 Cambia compagno", onclick: cb.onCambia }),
@@ -1070,6 +1186,18 @@
       ".sp-avanti .btn{margin:0}",
       ".sp-avanti p{margin:0;text-align:center;font-weight:800}",
       ".sp-storico{text-align:center;font-size:.8rem;margin-top:6px;opacity:.85}",
+      ".sp-mvp{text-align:center;font-size:.8rem;font-weight:700;margin-top:4px;line-height:1.35}",
+      ".sp-stretto .sp-avs{display:none}.sp-stretto .sp-storico{margin-top:3px}",
+      ".sp-scambia{margin:0 0 6px!important;min-height:0!important;padding:7px 12px!important;font-size:.9rem!important}",
+      // 🤫 il tasto vicino alla mano e il pannellino delle frasi
+      ".sp-psst{position:absolute;right:8px;bottom:calc(5px + env(safe-area-inset-bottom));z-index:7;margin:0;min-height:0;height:28px;padding:0 10px;border-radius:999px;border:1.5px solid rgba(255,255,255,.4);background:rgba(10,18,50,.8);color:#fff;font-weight:900;font-size:.85rem;line-height:1;cursor:pointer}",
+      ".sp-psst[disabled]{opacity:.4;cursor:default}",
+      ".sp-psst-pan{position:absolute;left:8px;right:8px;bottom:100%;margin-bottom:6px;z-index:8;background:rgba(10,18,50,.97);border:1.5px solid #ffd43b;border-radius:14px;padding:8px;box-shadow:0 6px 18px rgba(0,0,0,.45);animation:spPan .18s ease-out}",
+      "@keyframes spPan{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}",
+      ".sp-psst-tit{font-size:.8rem;font-weight:800;text-align:center;margin:0 26px 6px;color:#fff}",
+      ".sp-psst-gr{display:grid;grid-template-columns:1fr 1fr;gap:6px}",
+      ".sp-psst-f{margin:0;min-height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font-weight:800;font-size:.82rem;padding:4px 6px;line-height:1.15;cursor:pointer}",
+      ".sp-psst-x{position:absolute;top:3px;right:4px;margin:0;min-height:0;background:none;border:0;color:#fff;font-size:1.05rem;padding:3px 8px;cursor:pointer}",
       // fine mano: tabella Noi / Loro
       ".sp-tab{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:4px;font-size:.95rem}",
       ".sp-tab > div{padding:5px 8px;border-radius:8px;background:rgba(255,255,255,.05);text-align:center}",
@@ -1084,7 +1212,9 @@
       ".sp-avs.festa > div:nth-child(2){animation-delay:.25s}",
       "@keyframes spSalta{0%,100%{transform:none}40%{transform:translateY(-12px)}}",
       // telefoni bassi (360x640): riepilogo più stretto, così i tasti restano a vista senza scorrere
-      "@media (max-height:740px){.sp-tab{font-size:.86rem;gap:3px}.sp-tab > div{padding:2px 8px}.sp-avs{margin:0 0 2px}.sp-avs > div{width:54px}.sp-tot{font-size:1.15rem!important;margin-top:4px!important}}",
+      "@media (max-height:740px){.sp-tab{font-size:.86rem;gap:3px}.sp-tab > div{padding:2px 8px}.sp-avs{margin:0 0 2px}.sp-avs > div{width:54px}.sp-tot{font-size:1.15rem!important;margin-top:4px!important}" +
+        // (l'host con «🔁 Rivincita a coppie scambiate» ha un tasto in più: sugli schermi bassi niente avatar della festa e righe più strette)
+        ".sp-mvp{font-size:.74rem;line-height:1.22;margin-top:2px}.sp-avs > div{width:46px}.sp-piu .sp-avs{display:none}.sp-piu .sp-storico{margin-top:3px;font-size:.75rem}.sp-piu .sp-scambia{padding:5px 12px!important;margin-bottom:4px!important}}",
       ".sp-cori{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:50}",
       ".sp-cori i{position:absolute;top:-20px;width:9px;height:14px;border-radius:2px;animation:spCade 2.6s ease-in forwards}",
       "@keyframes spCade{0%{transform:translateY(0) rotate(0);opacity:1}85%{opacity:1}100%{transform:translateY(105vh) rotate(540deg);opacity:0}}"
@@ -1109,6 +1239,7 @@
   function vista(t, cb, aiuto, eFinita, opz) {
     opz = opz || {};
     var el = t.el, mont = null, dealFino = 0, schermo = null, FIN = null;
+    var psstF = null;   // 🤫 il fumetto del messaggio al compagno: { n, s (posto sullo schermo), txt, fino }
 
     // il disegno di un avatar con un'espressione (lo fa la stanza condivisa; si tiene da parte)
     function figHtml(nome, cfg, faccia) {
@@ -1162,6 +1293,16 @@
       mensola.appendChild(manoW);
       var preseEl = el("div", { class: "sc-prese", onclick: function () { if (mont && mont.guardo) cb.onCambiaVista && cb.onCambiaVista(); } });
       mensola.appendChild(preseEl);
+      // 🤫 online tra due compagni veri: il tasto vicino alla mano apre le frasi pronte (le legge solo il compagno)
+      mensola.style.position = "relative";
+      var psstP = el("div", { class: "sp-psst-pan", hidden: "hidden" }), psstTit = el("div", { class: "sp-psst-tit" });
+      psstP.appendChild(psstTit);
+      psstP.appendChild(el("div", { class: "sp-psst-gr" }, PSST.map(function (f, i) {
+        return el("button", { class: "sp-psst-f", type: "button", text: f, onclick: function () { psstP.hidden = true; if (cb.onPsst) cb.onPsst(i); } });
+      })));
+      psstP.appendChild(el("button", { class: "sp-psst-x", type: "button", text: "✕", "aria-label": "Chiudi", onclick: function () { psstP.hidden = true; } }));
+      var psstB = el("button", { class: "sp-psst", type: "button", hidden: "hidden", onclick: function () { if (!psstB.disabled) psstP.hidden = !psstP.hidden; } });
+      mensola.appendChild(psstP); mensola.appendChild(psstB);
       box.appendChild(mensola);
 
       // montaggio: la schermata resta la stessa per tutta la partita, cambia solo il contenuto quando serve
@@ -1175,7 +1316,7 @@
       }
       mont.box = box; mont.R = R; mont.M = M; mont.wH = wH; mont.k = ms.k; mont.manoN = st.manoN;
       mont.punti = punti; mont.area = area; mont.grid = null; mont.tavEls = {}; mont.manoW = manoW; mont.manoEls = {};
-      mont.preseEl = preseEl; mont.aiutoEl = aiutoEl; mont.presaVista = null; mont.restoVisto = false; mont.gioc = null; mont.costruendo = true;
+      mont.preseEl = preseEl; mont.aiutoEl = aiutoEl; mont.psstB = psstB; mont.psstP = psstP; mont.psstTit = psstTit; mont.presaVista = null; mont.restoVisto = false; mont.gioc = null; mont.costruendo = true;
       mont.avvisoN = st.avviso ? st.avviso.n : null;   // (un avviso già passato non torna quando la stanza si rifà)
       mont.testoPunti = mont.preseTxt = mont.aiutoTesto = null;   // (la stanza è nuova: le scritte vanno rimesse)
       if (C().correggiStanza4(M, mont.cont.parentNode, mensola, function () { costruisci(st, sel, misure(st), deal); })) return;
@@ -1211,6 +1352,9 @@
         else if (st.presa && st.fumo && st.fumo.forte && st.fumo.s === s) faccia = "esulta";
         else if (st.turno === s && st.fase === "gioco" && !st.presa && !st.resto) { faccia = "pensa"; fumetto = "🤔"; }
         if (st.fumo && st.fumo.s === s) { fumetto = st.fumo.txt; forte = !!st.fumo.forte; if (faccia === "normale" || faccia === "pensa") faccia = "esulta"; }
+        // 🤫 il messaggio al compagno (la frase, o solo 🤫 per gli avversari e chi guarda): 4 secondi, sotto la scopa e le frasi forti
+        var psstQui = psstF && psstF.s === s && Date.now() < psstF.fino && !(st.presa && st.presa.scopa) && !(st.fumo && st.fumo.s === s) ? psstF.txt : null;
+        if (psstQui) fumetto = psstQui;
         var turno = st.turno === s && !st.presa && !st.resto && st.fase === "gioco";
         if (turno) diTurno = i;
         var o = p.stato;
@@ -1221,8 +1365,10 @@
         }
         if (o.fumetto !== fumetto) {
           var vecchio = p.box.querySelector(".sc-fumetto"); if (vecchio) vecchio.parentNode.removeChild(vecchio);
+          p.box.style.zIndex = fumetto ? "6" : "";   // (chi parla sta sopra gli altri avatar e le targhe: il fumetto non resta coperto)
           if (fumetto) {
-            var fm = el("div", { class: "sc-fumetto" + (forte || faccia === "esulta" && fumetto.indexOf("🤔") < 0 ? " scopa" : "") + (fumetto.length > 9 ? " sp-frase" : ""), text: fumetto });
+            var fm = el("div", { class: "sc-fumetto" + (psstQui ? (fumetto.length > 9 ? " lungo" : "")
+              : (forte || faccia === "esulta" && fumetto.indexOf("🤔") < 0 ? " scopa" : "") + (fumetto.length > 9 ? " sp-frase" : "")), text: fumetto });
             p.box.appendChild(fm);
             fm.style.left = Math.round(p.w * (i === 2 ? 0.05 : 0.7)) + "px"; fm.style.top = Math.round(p.w * 0.15) + "px";
             // se esce dallo schermo a destra, il fumetto va dall'altra parte della testa
@@ -1333,6 +1479,17 @@
       if (guardo) preseTxt = "👀 Guardi le carte di <b>" + st.nomi[0] + "</b>" + (turno0 ? " · è il suo turno" : "") + " · 🔄 cambia";
       else preseTxt = (mioTurno && opz.online ? "<span class='sp-tocca'>👉 Tocca a te!</span>" : "") + "prese coppia: <b>" + mie.length + "</b>" + (trova(mie, "D7") ? " · 7💰" : "") + (scNoi ? " · scope " + scNoi : "") + (mioTurno && !opz.online ? " · <b style='color:#ffd43b'>tocca a te</b>" : "");
       if (mont.preseTxt !== preseTxt) { mont.preseTxt = preseTxt; mont.preseEl.innerHTML = preseTxt; mont.preseEl.classList.toggle("sp-guardo", guardo); }
+      // 🤫 il tasto dei messaggi al compagno (solo online, chi gioca, e se il compagno non è un Bot) e il pannellino delle frasi
+      var resto = st.psstResto, vedi = !guardo && resto != null && resto >= 0 && st.fase === "gioco";
+      if (mont.psstB.hidden === vedi) mont.psstB.hidden = !vedi;
+      if (vedi) {
+        var tb = "🤫 " + Math.max(0, resto);
+        if (mont.psstB.textContent !== tb) mont.psstB.textContent = tb;
+        if (mont.psstB.disabled !== (resto <= 0)) mont.psstB.disabled = resto <= 0;
+        var tt = "🤫 Solo " + (st.nomi[2] || "il compagno") + " lo legge · ancora " + resto;
+        if (mont.psstTit.textContent !== tt) mont.psstTit.textContent = tt;
+      }
+      if ((!vedi || resto <= 0) && !mont.psstP.hidden) mont.psstP.hidden = true;
     }
 
     // il ventaglio dei dorsi in mano a un bot (come lo mette la stanza condivisa)
@@ -1392,11 +1549,20 @@
         var ss = r.scopeSeat || [], chiSc = [];
         [0, 2, 1, 3].forEach(function (seat) { if (ss[seat]) chiSc.push((seat === 0 && !guardo ? "Tu" : st.nomi[seat]) + " " + ss[seat]); });
         if (chiSc.length) C0.appendChild(el("div", { class: "tenue", style: "text-align:center;font-size:.85rem;margin-top:6px", text: "Scope: " + chiSc.join(" · ") }));
+        // 🏅 Il migliore in campo di ogni coppia: "🏅 Luca: 2 scope e il settebello" (a pari, nessuna medaglia)
+        var mvp = (r.mvp || []).filter(Boolean).sort(function (x, y) { return (x.s % 2) - (y.s % 2); });
+        if (mvp.length) {
+          C0.appendChild(el("div", { class: "sp-mvp" }, mvp.map(function (x, i) {
+            var nome = x.s === 0 && !guardo ? "Tu" : st.nomi[x.s];
+            return el("div", {}, [ el("span", { style: "color:" + (squadra(x.s) === "noi" ? "#69db7c" : "#ff8787"), text: "🏅 " + nome }), document.createTextNode(": " + x.testo) ]);
+          })));
+          if (!guardo && mvp.some(function (x) { return x.s === 0; })) vibra(30);   // la medaglia è tua: breve
+        }
         var tot = r.tot || st.punti;
         C0.appendChild(el("div", { class: "sp-tot", style: "text-align:center;font-size:1.35rem;font-weight:800;margin-top:8px",
           html: (guardo ? "" : "Noi ") + "<span style='color:#ffd43b'>" + tot.noi + "</span> — " + tot.loro + (guardo ? "" : " Loro") + " <span class='tenue' style='font-size:.85rem;font-weight:600'>(" + C().testoTraguardo(st.traguardo) + ")</span>" }));
       }
-      if (finale && st.storico && st.storico.length) C0.appendChild(el("div", { class: "sp-storico", text: "📊 " + st.storico.join(" · ") }));   // le coppie della serata in questa stanza
+      if (finale && st.storico && st.storico.length) C0.appendChild(el("div", { class: "sp-storico", text: "👫 " + st.storico.join(" · ") }));   // 👫 lo storico delle coppie di oggi
       if (finale) {
         if (!online) {
           // com'è finita (dà gli XP): tu e il compagno contro i rivali — una volta sola
@@ -1411,6 +1577,12 @@
         } else {
           if (vinto && !guardo) { suonoVittoria(); coriandoli(s); vibra(80); }
           var fac = t.faccine ? t.faccine() : null; if (fac) { fac.style.margin = "0 0 8px"; s._piede.appendChild(fac); }
+          // l'host: "🔁 Rivincita a coppie scambiate" (la Rivincita di sempre, ma ognuno cambia compagno)
+          if (opz.sonoHost && st.scambia && cb.onScambia) {
+            var piede = s._piede;
+            s.classList.add("sp-piu");
+            piede.appendChild(el("button", { class: "btn btn-fantasma sp-scambia", type: "button", text: "🔁 Rivincita a coppie scambiate", onclick: function () { cb.onScambia(piede); } }));
+          }
           // i tasti di fine uguali per tutti i giochi (Rivincita col 3-2-1, Ci sto, Cambia gioco); se il core non li mette, quelli di sempre
           if (!(t.tastiFine && t.tastiFine(s._piede, { host: !!opz.sonoHost, nuova: opz.sonoHost ? cb.onNuova : null, esci: cb.onEsci }))) {
             if (opz.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
@@ -1429,6 +1601,17 @@
         avanti();
       }
       t.mostra(s);
+      stringi(s);
+    }
+    // se il riepilogo non sta in uno schermo (nomi lunghi, la riga della serata, il tasto in più dell'host) via gli avatar
+    // della festa: si controlla subito e quando il core ha finito di riempire i tasti (niente scorrimento)
+    function stringi(s) {
+      [0, 400, 1500].forEach(function (ms) {
+        setTimeout(function () {
+          if (!document.body.contains(s) || s.classList.contains("sp-stretto")) return;
+          if (document.documentElement.scrollHeight > window.innerHeight + 1) s.classList.add("sp-stretto");
+        }, ms);
+      });
     }
     // la riga di "⏩ Avanti" sotto il riepilogo della mano: si rifà solo quando cambia qualcosa (niente lampeggio)
     function avanti() {
@@ -1460,9 +1643,20 @@
       disegna: disegna,
       dealFino: function () { return dealFino; },
       uscito: function () { return !!schermo && !document.body.contains(schermo); },
-      azzera: function () { mont = null; FIN = null; schermo = null; dealFino = 0; ultimo = null; },
+      azzera: function () { mont = null; FIN = null; schermo = null; dealFino = 0; ultimo = null; psstF = null; },
+      // 🤫 il fumetto del messaggio al compagno sopra un posto (e chi guarda che cambia giocatore: il posto si sposta)
+      psst: function (f) { psstF = f; },
+      psstPosto: function (s) { if (psstF) psstF.s = s; },
+      // un avviso che passa solo su questo telefono ("🤫 A Luca: «Ho il settebello»")
+      avvisoLocale: function (testo) {
+        if (!mont || !mont.R || !document.body.contains(mont.s)) return;
+        var av = el("div", { class: "sp-avviso", text: testo }); mont.R.scena.appendChild(av);
+        setTimeout(function () { if (av.parentNode) av.parentNode.removeChild(av); }, 3700);
+      },
       // girato il telefono o cambiata l'altezza dello schermo: la stanza si rifà della misura giusta (solo se cambia)
-      misura: function () { if (!eFinita() && ultimo && mont && document.body.contains(mont.s) && ultimo.st.fase === "gioco") disegna(ultimo.st, ultimo.sel); }
+      misura: function () {
+        if (FIN && FIN.s && document.body.contains(FIN.s)) { stringi(FIN.s); return; }   // (il riepilogo: se non sta più, via gli avatar della festa)
+        if (!eFinita() && ultimo && mont && document.body.contains(mont.s) && ultimo.st.fase === "gioco") disegna(ultimo.st, ultimo.sel); }
     };
     return api;
   }
@@ -1473,5 +1667,5 @@
   });
 
   // (per le prove) il motore, senza grafica
-  window.__SCOPONE = { creaStato: creaStato, distribuisci: distribuisci, applica: applica, fineMano: fineMano, contaScopone: contaScopone, napola: napola, vistaDa: vistaDa, mossaBot: mossaBot, maniVuote: maniVuote };
+  window.__SCOPONE = { creaStato: creaStato, distribuisci: distribuisci, applica: applica, fineMano: fineMano, contaScopone: contaScopone, napola: napola, vistaDa: vistaDa, mossaBot: mossaBot, maniVuote: maniVuote, migliori: migliori, bravura: bravura };
 })();

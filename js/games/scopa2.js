@@ -15,6 +15,10 @@
 (function () {
   "use strict";
   var TARGET = 11;
+  var PAUSA_MANO = 12;   // online: secondi del riepilogo della mano (con "⏩ Avanti": se lo tocca più di metà si parte subito)
+  // 🤫 Messaggio al compagno (online, tra due compagni veri): le frasi pronte, al massimo PSST_MAX a testa per smazzata
+  var PSST = ["💰 Ho il settebello", "🪙 Ho i denari", "7️⃣ Ho un 7", "🚫 Non ho 7", "✋ Lascia, ci penso io", "🤝 Fidati di me"];
+  var PSST_MAX = 2, PSST_MS = 4000;
   // i bot: quelli del gruppo fisso (SG.bot: sempre gli stessi nomi e avatar in tutti i giochi), scelti per la bravura;
   // escludi = i nomi di chi è al tavolo (nessun bot si chiama come uno di loro). Ognuno { nome, omino }
   function prendiBot(n, livello, escludi) {
@@ -47,6 +51,7 @@
     st.prese = [[], [], [], []]; st.scope = [0, 0, 0, 0];
     st.ultimaPresa = null; st.turno = st.primo; st.fase = "gioco"; st.presa = null; st.messaGiu = null;
     st.nMano = (st.nMano || 0) + 1; st.resti = null;
+    st.psst = null; st.psstN = [0, 0, 0, 0];   // 🤫 i messaggi al compagno ricominciano a ogni smazzata
   }
   function pesca(st) { for (var s = 0; s < 4; s++) st.mani[s] = st.mazzo.splice(0, 3); }
   function maniVuote(st) { return !st.mani[0].length && !st.mani[1].length && !st.mani[2].length && !st.mani[3].length; }
@@ -79,12 +84,38 @@
   function fineMano(st) {
     // le carte rimaste vanno a chi ha preso per ultimo (le ricordo per mostrarle prima del riepilogo)
     st.resti = { carte: st.tavolo.slice(), seat: st.ultimaPresa };
+    var mvp = migliori(st.prese, st.scope);   // 🏅 conta quello che ognuno ha preso LUI (le carte rimaste non sono merito suo)
     if (st.tavolo.length && st.ultimaPresa != null) { st.prese[st.ultimaPresa] = st.prese[st.ultimaPresa].concat(st.tavolo); st.tavolo = []; }
     var r = conta(st);
+    r.mvp = mvp;
     st.punti[0] += r.punti[0]; st.punti[1] += r.punti[1];
     r.tot = [st.punti[0], st.punti[1]];
     st.ultimoRound = r;
     st.fase = C().partitaFinita(st.traguardo, st.punti[0], st.punti[1]) ? "fine" : "fineround";
+  }
+  // 🏅 Il migliore in campo: per ogni coppia, chi dei due ha portato di più (scope e settebello pesano di più; a pari, nessuno)
+  function bravura(prese, scope) {
+    var b = { n: prese.length, den: 0, sette: false, n7: 0, scope: scope || 0 }, n6 = 0, n1 = 0;
+    prese.forEach(function (c) { if (c.s === "D") b.den++; if (c.id === "D7") b.sette = true; if (c.v === 7) b.n7++; else if (c.v === 6) n6++; else if (c.v === 1) n1++; });
+    b.punti = 2 * b.n + 3 * b.den + (b.sette ? 20 : 0) + 20 * b.scope + 4 * b.n7 + 2 * n6 + n1;   // (tutto ×2: numeri interi, il pari è un pari vero)
+    return b;
+  }
+  function testoBravura(b) {   // "2 scope e il settebello", "il settebello e 6 denari", "14 carte e 5 denari"
+    var p = [];
+    if (b.scope) p.push(b.scope === 1 ? "1 scopa" : b.scope + " scope");
+    if (b.sette) p.push("il settebello");
+    if (p.length < 2 && b.den) p.push(b.den === 1 ? "1 denaro" : b.den + " denari");
+    if (p.length < 2 && b.n7 >= 2) p.push(b.n7 + " sette");
+    if (p.length < 2) p.push(b.n === 1 ? "1 carta" : b.n + " carte");
+    return p.length > 1 ? p[0] + " e " + p[1] : p[0];
+  }
+  function migliori(prese, scope) {   // [squadra dei posti 0-2, squadra dei posti 1-3]: { s, testo } o null
+    return [[0, 2], [1, 3]].map(function (c) {
+      var a = bravura(prese[c[0]], scope[c[0]]), b = bravura(prese[c[1]], scope[c[1]]);
+      if (a.punti === b.punti) return null;
+      var s = a.punti > b.punti ? c[0] : c[1];
+      return { s: s, testo: testoBravura(s === c[0] ? a : b) };
+    });
   }
   function prossimaMano(st) { if (st.fase !== "fineround") return; st.primo = (st.primo + 1) % 4; nuovaMano(st); }
   function carteTeam(st, tm) { var o = []; for (var s = 0; s < 4; s++) if (team(s) === tm) o = o.concat(st.prese[s]); return o; }
@@ -224,9 +255,13 @@
         sette: pr.sette == null ? null : (pr.sette === m ? "mia" : "altra"),
         pCarte: pr.pCarte == null ? null : (pr.pCarte === m ? "mia" : "altra"),
         pDen: pr.pDen == null ? null : (pr.pDen === m ? "mia" : "altra"),
-        pPrim: pr.pPrim == null ? null : (pr.pPrim === m ? "mia" : "altra")
+        pPrim: pr.pPrim == null ? null : (pr.pPrim === m ? "mia" : "altra"),
+        // 🏅 [mia squadra, altra]: { nome, testo, io } o null
+        mvp: [m, a].map(function (tm) { var x = pr.mvp && pr.mvp[tm]; return x ? { nome: st.nomi[x.s], testo: x.testo, io: x.s === io } : null; })
       };
     }
+    // 🤫 il messaggio al compagno: tutti sanno CHI l'ha mandato (🤫 sopra il suo avatar); la frase solo lui e il compagno
+    var ps = st.psst ? { s: st.psst.s, n: st.psst.n, k: (st.psst.s === io || st.psst.s === comp) ? st.psst.k : null } : null;
     var preseMioTeam = st.prese[io].concat(st.prese[comp]);
     var re = st.resti && st.fase !== "gioco" ? st.resti : null;
     return {
@@ -241,7 +276,8 @@
       messaGiu: st.messaGiu, ultimoRound: ultimo, avatari: st.avatari || null, avviso: st.avviso || null,
       resti: re ? { carte: re.carte.slice(), n: re.carte.length, nome: re.seat != null ? st.nomi[re.seat] : null, mia: re.seat != null && team(re.seat) === mioTeam } : null,
       presa: st.presa ? { seat: st.presa.seat, mio: st.presa.seat === io, carta: st.presa.carta, presiIds: st.presa.presiIds, tavoloPrima: st.presa.tavoloPrima, scopa: st.presa.scopa } : null,
-      vincitoreMio: st.fase === "fine" ? (st.punti[mioTeam] > st.punti[1 - mioTeam]) : false
+      vincitoreMio: st.fase === "fine" ? (st.punti[mioTeam] > st.punti[1 - mioTeam]) : false,
+      psst: ps
     };
   }
 
@@ -311,7 +347,19 @@
   // ---------- client (selezione + tap + tenuta minima dell'animazione) ----------
   // Cl.chiuso: la partita è stata lasciata (niente più disegni); Cl.pausa: c'è la schermata "passa il telefono"
   function creaClient(t, cb) {
-    var Cl = { vm: null, sel: { carta: null, presa: [] }, chiuso: false, pausa: false }, T = nuovaTracciaS2();
+    var Cl = { vm: null, sel: { carta: null, presa: [] }, chiuso: false, pausa: false, cb: cb }, T = nuovaTracciaS2();
+    // 🤫 un messaggio nuovo: il compagno legge la frase sopra il mio avatar, gli altri solo 🤫 (per 4 secondi);
+    // chi l'ha mandato vede passare "🤫 A Luca: «…»". Chi rientra non rivede quelli vecchi (l'host li tiene 4 secondi)
+    Cl.vediPsst = function (vm) {
+      var p = vm.psst; if (!p || p.n === Cl._psstN) return;
+      Cl._psstN = p.n;
+      var comp = (vm.io + 2) % 4, frase = p.k != null ? PSST[p.k] : null;
+      if (p.s === vm.io) { if (frase) psstF = { n: p.n, mio: true, testo: "🤫 A " + vm.nomi[comp] + ": «" + frase + "»" }; return; }
+      psstF = { n: p.n, s: p.s, txt: (p.s === comp && frase) ? frase : "🤫", fino: Date.now() + PSST_MS };
+      if (p.s === comp && frase) { vibra(25); suonoNote([[988, 0], [1319, 0.08]], 0.07); }   // il compagno ti ha detto qualcosa: un momento che conta
+      if (Cl._psstT) clearTimeout(Cl._psstT);
+      Cl._psstT = setTimeout(function () { Cl._psstT = null; if (mont && document.body.contains(mont.box)) Cl.disegna(); }, PSST_MS + 80);   // il fumetto se ne va (solo se il tavolo c'è ancora)
+    };
     Cl.tapMano = function (id) {
       var vm = Cl.vm; if (!vm || vm.turno !== vm.io || vm.fase !== "gioco" || vm.presa) return;
       var carta = trova(vm.mano, id); if (!carta) return;
@@ -332,12 +380,13 @@
       else if (C().prefisso(opts, [id])) Cl.sel.presa = [id];   // carta di un'altra presa: si ricomincia la scelta da quella
       Cl.disegna();
     };
-    Cl.disegna = function () { if (!Cl.vm || Cl.chiuso || Cl.pausa) return; disegna(t, Cl, cb); };
+    Cl.disegna = function () { if (!Cl.vm || Cl.chiuso || Cl.pausa) return; clVivo = Cl; disegna(t, Cl, cb); };
     Cl._fino = 0; Cl._pend = null; Cl._fineVista = null; Cl._mioPrima = false;
-    Cl.azzera = function () { if (Cl._pend) clearTimeout(Cl._pend); Cl._pend = null; Cl._fino = 0; Cl.vm = null; Cl.sel = { carta: null, presa: [] }; mont = null; };
+    Cl.azzera = function () { if (Cl._pend) clearTimeout(Cl._pend); Cl._pend = null; Cl._fino = 0; Cl.vm = null; Cl.sel = { carta: null, presa: [] }; mont = null; psstF = null; };
     Cl.setVm = function (vm) {
       if (Cl.chiuso || !vm) return;
       if (!cb.noTrofei) tracciaS2(T, vm);   // trofei
+      Cl.vediPsst(vm);
       if (vm.turno !== vm.io || vm.fase !== "gioco") Cl.sel = { carta: null, presa: [] };
       // online: quando arriva il tuo turno, un piccolo suono
       var mio = vm.fase === "gioco" && vm.turno === vm.io && !vm.presa;
@@ -377,6 +426,22 @@
       "@keyframes s2Avviso{0%{opacity:0;transform:translate(-50%,-8px)}10%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-8px)}}",
       ".s2-riga{opacity:0;animation:s2Entra .35s ease-out forwards}",
       "@keyframes s2Entra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}",
+      // 🤫 il tasto vicino alla mano, il pannellino delle frasi e il fumetto lungo che non esce dallo schermo
+      ".s2-psst{position:absolute;right:8px;bottom:calc(5px + env(safe-area-inset-bottom));z-index:7;margin:0;min-height:0;height:28px;padding:0 10px;border-radius:999px;border:1.5px solid rgba(255,255,255,.4);background:rgba(10,18,50,.8);color:#fff;font-weight:900;font-size:.85rem;line-height:1;cursor:pointer}",
+      ".s2-psst[disabled]{opacity:.4;cursor:default}",
+      ".s2-psst-pan{position:absolute;left:8px;right:8px;bottom:100%;margin-bottom:6px;z-index:8;background:rgba(10,18,50,.97);border:1.5px solid #ffd43b;border-radius:14px;padding:8px;box-shadow:0 6px 18px rgba(0,0,0,.45);animation:s2Pan .18s ease-out}",
+      "@keyframes s2Pan{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}",
+      ".s2-psst-tit{font-size:.8rem;font-weight:800;text-align:center;margin:0 26px 6px;color:#fff}",
+      ".s2-psst-gr{display:grid;grid-template-columns:1fr 1fr;gap:6px}",
+      ".s2-psst-f{margin:0;min-height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font-weight:800;font-size:.82rem;padding:4px 6px;line-height:1.15;cursor:pointer}",
+      ".s2-psst-x{position:absolute;top:3px;right:4px;margin:0;min-height:0;background:none;border:0;color:#fff;font-size:1.05rem;padding:3px 8px;cursor:pointer}",
+      ".sc-fumetto.s2-dx{transform-origin:100% 100%}",
+      ".sc-fumetto.s2-dx::after{left:auto;right:-6px;border:7px solid transparent;border-left-color:#fff;border-right:0}",
+      ".s2-mvp{text-align:center;font-size:.8rem;font-weight:700;margin-top:6px;line-height:1.35}",
+      ".s2-avanti{display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:6px}",
+      ".s2-avanti .btn{margin:0}",
+      ".s2-avanti p{margin:0;text-align:center;font-weight:800}",
+      ".btn.s2-fatto,.btn.s2-fatto[disabled]{opacity:.8;cursor:default}",
       ".s2-festa{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:50}",
       ".s2-festa span{position:absolute;top:-30px;font-size:1.4rem;animation:s2Cade linear forwards}",
       "@keyframes s2Cade{to{transform:translateY(110vh) rotate(540deg);opacity:.9}}"
@@ -400,6 +465,16 @@
   // ---------- disegno: la stanza si monta UNA volta, poi a ogni mossa si cambia solo quello che cambia ----------
   var mont = null, s2Posti = {};   // s2Posti: posto fisso di ogni carta in tavola
   var memo = { prevMano: 0, prevTav: {}, avvisoN: null };   // cosa c'era al disegno di prima (per la distribuzione animata)
+  // girato il telefono o cambiata l'altezza dello schermo: la stanza si rifà della misura giusta (solo se cambia, solo al tavolo)
+  var clVivo = null, giraT = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(giraT);
+    giraT = setTimeout(function () {
+      var Cl = clVivo;
+      if (Cl && !Cl.chiuso && !Cl.pausa && Cl.vm && Cl.vm.fase === "gioco" && mont && document.body.contains(mont.box)) Cl.disegna();
+    }, 250);
+  });
+  var psstF = null;   // 🤫 il fumetto del messaggio al compagno: { n, s (posto), txt, fino } (o { n, mio, testo } per chi l'ha mandato)
   function sedieDa(vm) {
     var io = vm.io, comp = (io + 2) % 4, ordine = [(io + 1) % 4, comp, (io + 3) % 4];
     var mioTurno = (vm.turno === io && vm.fase === "gioco" && !vm.presa);
@@ -407,6 +482,7 @@
       var faccia = "normale", fumetto = null;
       if (vm.presa && vm.presa.scopa) { faccia = team(s) === team(vm.presa.seat) ? "esulta" : "triste"; if (s === vm.presa.seat) fumetto = "🧹 SCOPA!"; }
       else if (vm.turno === s && vm.fase === "gioco" && !vm.presa) { faccia = "pensa"; fumetto = "🤔"; }
+      if (psstF && !psstF.mio && psstF.s === s && Date.now() < psstF.fino && !(vm.presa && vm.presa.scopa)) fumetto = psstF.txt;   // 🤫
       var cfg = (vm.avatari && C().avatarValido(vm.avatari[s])) || null;
       return { cfg: cfg, nome: vm.nomi[s] || "—", n: vm.nCarte[s], turno: vm.turno === s && !vm.presa, mia: s === comp, faccia: faccia, fumetto: fumetto,
         salta: faccia === "esulta" && s === (vm.presa && vm.presa.seat), seat: s };
@@ -419,6 +495,17 @@
       p.chiave = p.faccia + "|" + (p.fumetto || "") + "|" + dx + "," + dy + "|" + (vm.presa && vm.presa.scopa ? vm.presa.carta.id : "");
     });
     return sedie;
+  }
+  // i fumetti lunghi (🤫 la frase del compagno) vanno a capo e, se escono dallo schermo a destra, passano dall'altra parte
+  function sistemaFumetti(R) {
+    var sw = R.scena.clientWidth;
+    R.posti.forEach(function (pos) {
+      var fm = pos.box.querySelector(".sc-fumetto");
+      pos.box.style.zIndex = fm ? "6" : "";   // (chi parla sta sopra gli altri avatar e le targhe: il fumetto non resta coperto)
+      if (!fm || fm.textContent.length <= 9) return;
+      fm.classList.add("lungo");
+      if (pos.box.offsetLeft + fm.offsetLeft + fm.offsetWidth > sw - 4) { fm.classList.add("s2-dx"); fm.style.left = Math.round(pos.box.offsetWidth * 0.32 - fm.offsetWidth) + "px"; }
+    });
   }
   function disegna(t, Cl, cb) {
     var vm = Cl.vm;
@@ -453,6 +540,16 @@
     // (altezze fisse: la mensola resta uguale con la mano piena o vuota e con "Tocca a te", così la stanza si misura giusta)
     var manoW = el("div", { class: "sc-mano-riga", style: "min-height:" + Math.round(wH * ASP) + "px" }), prese = el("div", { class: "sc-prese", style: "min-height:1.6em" });
     mensola.appendChild(manoW); mensola.appendChild(prese);
+    // 🤫 online tra due compagni veri: il tasto vicino alla mano apre le frasi pronte (le vede solo il compagno)
+    mensola.style.position = "relative";
+    var psstP = el("div", { class: "s2-psst-pan", hidden: "hidden" }), psstTit = el("div", { class: "s2-psst-tit" });
+    psstP.appendChild(psstTit);
+    psstP.appendChild(el("div", { class: "s2-psst-gr" }, PSST.map(function (f, i) {
+      return el("button", { class: "s2-psst-f", type: "button", text: f, onclick: function () { psstP.hidden = true; if (Cl.cb.onPsst) Cl.cb.onPsst(i); } });
+    })));
+    psstP.appendChild(el("button", { class: "s2-psst-x", type: "button", text: "✕", "aria-label": "Chiudi", onclick: function () { psstP.hidden = true; } }));
+    var psstB = el("button", { class: "s2-psst", type: "button", hidden: "hidden", onclick: function () { if (!psstB.disabled) psstP.hidden = !psstP.hidden; } });
+    mensola.appendChild(psstP); mensola.appendChild(psstB);
     box.appendChild(mensola);
     var cont;
     if (mont && mont.cont && document.body.contains(mont.box)) { mont.cont.replaceChild(box, mont.box); cont = mont.cont; }
@@ -462,10 +559,10 @@
       s._contenuto.appendChild(box); t.mostra(s);
       cont = s._contenuto;
     }
-    mont = { key: key, box: box, cont: cont, R: R, punti: punti, area: area, griglia: griglia, mensola: mensola, manoW: manoW, prese: prese,
+    mont = { key: key, box: box, cont: cont, R: R, punti: punti, area: area, griglia: griglia, mensola: mensola, manoW: manoW, prese: prese, psstB: psstB, psstP: psstP, psstTit: psstTit,
       tav: {}, mano: {}, wT: null, wH: wH, chiaviSedie: sedie.map(function (p) { return p.chiave; }), gioc: null, presaKey: null, aiuto: null };
     if (C().correggiStanza4(M, cont.parentNode, mensola, function () { disegna(t, Cl, cb); })) return false;
-    R.siedi();
+    R.siedi(); sistemaFumetti(R);
     return true;
   }
   // aggiorna SOLO le parti che cambiano: punteggio, avatar, targhe, carte coperte, tavolo, mano
@@ -497,7 +594,24 @@
       while (pos.vent.children.length > p.n) { pos.vent.removeChild(pos.vent.lastChild); rifai = true; }
       while (pos.vent.children.length < p.n) { pos.vent.appendChild(el("div", { class: "sc-dorso" })); rifai = true; }
     });
-    if (rifai) R.siedi();
+    if (rifai) { R.siedi(); sistemaFumetti(R); }
+
+    // 🤫 il tasto dei messaggi al compagno (solo online e se il compagno non è un Bot) e il pannellino delle frasi
+    var resto = vm.psstResto, vedi = resto != null && resto >= 0 && vm.fase === "gioco";
+    if (mont.psstB.hidden === vedi) mont.psstB.hidden = !vedi;
+    if (vedi) {
+      var tb = "🤫 " + Math.max(0, resto);
+      if (mont.psstB.textContent !== tb) mont.psstB.textContent = tb;
+      if (mont.psstB.disabled !== (resto <= 0)) mont.psstB.disabled = resto <= 0;
+      var tt = "🤫 Solo " + (vm.nomi[(io + 2) % 4] || "il compagno") + " lo legge · ancora " + resto;
+      if (mont.psstTit.textContent !== tt) mont.psstTit.textContent = tt;
+    }
+    if ((!vedi || resto <= 0) && !mont.psstP.hidden) mont.psstP.hidden = true;
+    if (psstF && psstF.mio && psstF.n !== memo.psstAvv) {   // a chi l'ha mandato: "🤫 A Luca: «Ho il settebello»"
+      memo.psstAvv = psstF.n;
+      var avP = el("div", { class: "s2-avviso", text: psstF.testo }); R.scena.appendChild(avP);
+      setTimeout(function () { if (avP.parentNode) avP.parentNode.removeChild(avP); }, 3300);
+    }
 
     // il tavolo: le carte restano al loro posto, si aggiungono e si tolgono una per una
     var cartaSel = Cl.sel.carta ? trova(vm.mano, Cl.sel.carta) : null;
@@ -592,9 +706,15 @@
 
   function renderFine(t, vm, cb) {
     var kF = vm.pid + ":" + vm.nMano + ":" + vm.fase;   // la stessa schermata già mostrata: non si rifà (niente lampeggio, niente suoni doppi)
-    if (memo.fineKey === kF && memo.fineS && document.body.contains(memo.fineS)) return;
+    if (memo.fineKey === kF && memo.fineS && document.body.contains(memo.fineS)) {   // (online cambia solo la riga di "⏩ Avanti")
+      if (memo.avBox && vm.fase === "fineround") avantiRiga(t, vm, cb);
+      return;
+    }
+    memo.avBox = null; memo.avNodo = null;
     var el = t.el, r = vm.ultimoRound, sq = vm.squadre || { mia: ["Noi", ""], altra: ["Loro", ""] };
     function nomiSq(a) { return a.filter(Boolean).join(" e "); }
+    var mvp = (r && r.mvp) || [null, null];
+    function nomiMvp(a, mv) { return a.filter(Boolean).map(function (n) { return n + (mv && mv.nome === n ? " 🏅" : ""); }).join(" e "); }   // 🏅 accanto al migliore
     var titolo = "Fine mano";
     if (vm.fase === "fine") {
       if (vm.punti.mia === vm.punti.altra) titolo = "Pareggio!";
@@ -613,7 +733,7 @@
     }
     if (r) {
       s._contenuto.appendChild(el("div", { class: "tenue", style: "text-align:center;margin-bottom:6px;font-weight:700",
-        html: "<span style='color:#69db7c'>" + nomiSq(sq.mia) + "</span> — <span style='color:#ff8787'>" + nomiSq(sq.altra) + "</span>" }));
+        html: "<span style='color:#69db7c'>" + esc(nomiMvp(sq.mia, mvp[0])) + "</span> — <span style='color:#ff8787'>" + esc(nomiMvp(sq.altra, mvp[1])) + "</span>" }));
       if (vm.resti && vm.resti.n && vm.resti.nome)
         s._contenuto.appendChild(el("div", { class: "tenue", style: "text-align:center;font-size:.8rem;margin-bottom:6px",
           text: (vm.resti.n === 1 ? "L'ultima carta rimasta sul tavolo va" : "Le " + vm.resti.n + " carte rimaste sul tavolo vanno") + " a " + vm.resti.nome + " (ha preso per ultimo)." }));
@@ -623,6 +743,16 @@
       s._contenuto.appendChild(riga("Primiera (" + r.prim[0] + " vs " + r.prim[1] + ")", r.prim[0], r.prim[1], r.pPrim));
       var chi = r.scopeChi ? [r.scopeChi[0], r.scopeChi[1]].filter(Boolean).join(" · ") : "";
       s._contenuto.appendChild(riga("Scope 🧹", r.scope[0], r.scope[1], null, chi ? "Le hanno fatte: " + chi : null));
+      // 🏅 Il migliore in campo di ogni coppia: "🏅 Luca: 2 scope e il settebello" (a pari, nessuna medaglia)
+      var righeMvp = [0, 1].filter(function (i) { return mvp[i]; }).map(function (i) {
+        var x = mvp[i], nome = x.io && !cb.multi ? "Tu" : x.nome;
+        return "<span style='color:" + (i === 0 ? "#69db7c" : "#ff8787") + "'>🏅 " + esc(nome) + "</span>: " + esc(x.testo);
+      });
+      if (righeMvp.length) {
+        var dMvp = nRiga++ * 0.22;
+        s._contenuto.appendChild(el("div", { class: "s2-riga s2-mvp", style: "animation-delay:" + dMvp.toFixed(2) + "s", html: righeMvp.join("<br>") }));
+        if (!cb.multi && ((mvp[0] && mvp[0].io) || (mvp[1] && mvp[1].io))) setTimeout(function () { vibra(30); }, Math.round(dMvp * 1000) + 200);   // la medaglia è tua: breve
+      }
       var linea = el("div", { class: "s2-riga", style: "height:1px;background:rgba(255,255,255,.15);margin:8px 0;animation-delay:" + (nRiga * 0.22).toFixed(2) + "s" });
       s._contenuto.appendChild(linea);
       s._contenuto.appendChild(riga("Punti mano", r.punti[0], r.punti[1], null));
@@ -648,20 +778,45 @@
       }
       if (vm.punti.mia !== vm.punti.altra && (vm.vincitoreMio || cb.multi)) setTimeout(function () { coriandoli(); suonoNote([[523, 0], [659, 0.12], [784, 0.24], [1047, 0.38]], 0.16); }, 1300);
     } else {
-      // online la prossima mano parte da sola: l'host vede il conto sul tasto, gli altri "Si va avanti tra 12…"
-      var kConto = "mano|" + vm.pid + ":" + vm.nMano;
-      if (cb.sonoHost || cb.locale) {
-        var bC = el("button", { class: "btn btn-primario", text: "Continua ▶", onclick: cb.onAvanti });
-        s._piede.appendChild(bC);
-        if (cb.online && t.contoAvanti) t.contoAvanti(bC, 12, cb.onAvanti, kConto);   // (il conto chiama la funzione: niente vibrazione)
+      if (cb.online) {
+        // online la prossima mano parte da sola dopo il conto; "⏩ Avanti": se lo tocca più di metà di chi gioca si parte subito
+        memo.avBox = el("div", { class: "s2-avanti" });
+        memo.avConta = el("p", { class: "modulo-nota", style: "font-size:.8rem", hidden: "hidden" });
+        memo.avBox.appendChild(memo.avConta);
+        s._piede.insertBefore(memo.avBox, s._piede.firstChild);
+        memo.fineKey = kF; memo.fineS = s;
+        avantiRiga(t, vm, cb);
       } else {
-        var po = el("p", { class: "modulo-nota", text: "In attesa dell'host per la prossima mano…" });
-        s._piede.appendChild(po);
-        if (cb.online && t.contoAvanti) t.contoAvanti(po, 12, null, kConto);
+        s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Continua ▶", onclick: cb.onAvanti }));
       }
     }
     t.mostra(s); memo.fineKey = kF; memo.fineS = s;
   }
+  // la riga di "⏩ Avanti" sotto il riepilogo della mano (online): il mio tocco resta «✅ Avanti» e cambia solo il numero
+  function avantiRiga(t, vm, cb) {
+    var el = t.el, A = vm.avanti || { si: 0, tot: 0, resta: PAUSA_MANO }, kM = vm.pid + ":" + vm.nMano;
+    if (memo.avK !== kM || vm.avanti) { memo.avK = kM; memo.avScade = Date.now() + (A.resta || PAUSA_MANO) * 1000; }   // (i secondi che mancano, dall'host)
+    var toccato = !!A.mio || memo.mioVoto === kM;
+    if (memo.avTocc !== toccato || !memo.avNodo || !memo.avBox.contains(memo.avNodo)) {
+      memo.avTocc = toccato;
+      var nodo = toccato
+        ? el("button", { class: "btn btn-primario s2-fatto", type: "button", disabled: "disabled", text: "✅ Avanti " })
+        : el("button", { class: "btn btn-primario", type: "button", text: "⏩ Avanti ", onclick: function () {
+            memo.mioVoto = kM;
+            if (cb.onVoto) cb.onVoto(vm.nMano, vm.pid);
+            if (memo.avBox && document.body.contains(memo.avBox) && memo.avK === kM) avantiRiga(t, memo.vmFine || vm, cb);
+          } });
+      if (memo.avNodo && memo.avNodo.parentNode) memo.avNodo.parentNode.removeChild(memo.avNodo);
+      memo.avBox.insertBefore(nodo, memo.avBox.firstChild); memo.avNodo = nodo;
+      // il conto: a zero l'host fa partire la mano (gli altri vedono solo il numero); il conto chiama la funzione, niente vibrazione
+      if (t.contoAvanti) t.contoAvanti(nodo, Math.max(1, Math.ceil((memo.avScade - Date.now()) / 1000)), cb.sonoHost ? cb.onAvanti : null, "mano|" + kM);
+    }
+    memo.vmFine = vm;
+    var tx = A.si ? "⏩ " + A.si + " su " + A.tot + " vogliono andare avanti" : "";
+    if (memo.avConta.textContent !== tx) memo.avConta.textContent = tx;
+    if (memo.avConta.hidden !== !tx) memo.avConta.hidden = !tx;
+  }
+  function esc(x) { return String(x == null ? "" : x).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
   // ========================================================
   //  LOCALE — tu (posto 0) + 3 bot; nel torneo sullo stesso telefono fino a 4 persone
@@ -745,15 +900,54 @@
     var nomiUmani = { 1: null, 2: null, 3: null }, avatariUmani = { 1: null, 2: null, 3: null };
     var via = {};   // via[posto] = chi è uscito a partita in corso: se torna si riprende il suo posto
     var botSeat = { 0: false, 1: true, 2: true, 3: true };  // chi è gestito dal computer durante la partita
+    var avanti = {}, avKey = null, scad = 0;   // "⏩ Avanti" sul riepilogo della mano: chi l'ha toccato (per id) e quando scade il conto
+    var psstCont = 0;                          // 🤫 il numero dell'ultimo messaggio al compagno
 
     function esci() { chiuso = true; Cl.chiuso = true; if (giroT) clearTimeout(giroT); if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
     var Cl = creaClient(t, {
       sonoHost: true, online: true,
       onMossa: function (id, presa) { if (st) passo(0, id, presa); },
-      onAvanti: function () { if (st && st.fase === "fineround") { prossimaMano(st); bcast(); giro(); } },
+      onAvanti: avantiOra,
+      onVoto: function (m, pid) { voto("host", m, pid); },
+      onPsst: function (k) { psstDa(0, k); },
       onNuova: function () { tornaSaletta(); },
       onEsci: esci
     });
+    function avantiOra() { if (st && st.fase === "fineround") { prossimaMano(st); bcast(); giro(); } }
+    // chi gioca davvero ed è presente (l'host e gli amici al tavolo; non i Bot né chi guarda)
+    function umani() { var o = ["host"]; for (var s = 1; s <= 3; s++) if (posti[s] && !botSeat[s]) o.push(posti[s]); return o; }
+    function idDi(s) { return s === 0 ? "host" : posti[s]; }
+    function infoAvanti(s) {
+      var u = umani(), si = u.filter(function (id) { return avanti[id]; }).length;
+      return { si: si, tot: u.length, resta: Math.max(1, Math.ceil((scad - Date.now()) / 1000)), mio: s != null && !!avanti[idDi(s)] };
+    }
+    // "⏩ Avanti": vale solo per QUESTA smazzata; se lo tocca più di metà di chi gioca si parte subito (se no, il conto alla rovescia)
+    function voto(id, m, pid) {
+      if (!st || st.fase !== "fineround" || m !== st.nMano || (pid && pid !== st.pid)) return;
+      if (umani().indexOf(id) < 0) return;   // chi guarda e i Bot non contano
+      avanti[id] = 1;
+      var I = infoAvanti(null);
+      if (I.si * 2 > I.tot) return avantiOra();
+      bcast();
+    }
+    // 🤫 un messaggio al compagno: passa dall'host, la frase va solo a chi l'ha mandato e al compagno (nella LORO vista,
+    // come le carte); agli altri solo "🤫" sopra l'avatar. Al massimo PSST_MAX a testa per smazzata; dopo 4 secondi sparisce
+    function psstDa(s, k) {
+      k = +k;
+      if (!st || !st.conPsst || st.fase !== "gioco" || !(k >= 0 && k < PSST.length) || k % 1) return;
+      if (botSeat[s] || botSeat[(s + 2) % 4]) return;   // il compagno è un Bot: niente messaggi
+      if ((st.psstN[s] || 0) >= PSST_MAX) { if (s > 0) mandaVm(s); return; }
+      st.psstN[s] = (st.psstN[s] || 0) + 1;
+      var n = ++psstCont; st.psst = { s: s, k: k, n: n };
+      bcast();
+      setTimeout(function () { if (st && st.psst && st.psst.n === n) st.psst = null; }, PSST_MS);   // (chi rientra dopo non lo rivede)
+    }
+    // quello che il core non vede nella vista di un posto: "⏩ Avanti" e quanti 🤫 restano (-1 = niente tasto)
+    function conVm(v, s) {
+      v.avanti = st.fase === "fineround" ? infoAvanti(s) : null;
+      v.psstResto = (st.conPsst && !botSeat[s] && !botSeat[(s + 2) % 4]) ? PSST_MAX - (st.psstN[s] || 0) : -1;
+      return v;
+    }
     t.onRegole = function () { if (!st) aggiornaLobby(); };   // l'host ha cambiato le regole in saletta: lo vedono tutti
 
     function mioNome() { return (t.giocatori && t.giocatori[0]) || "Host"; }
@@ -779,12 +973,13 @@
     function avviso(testo) { if (st) st.avviso = { n: ++nAvviso, testo: testo }; }
 
     var detto = false;   // il risultato della partita è già stato dato al torneo online?
-    function mandaVm(s) { if (rete && posti[s]) rete.inviaVeloce({ t: "vm", to: posti[s], vm: vistaDa(st, s) }); }   // solo a lui, e non resta sul server
+    function mandaVm(s) { if (rete && posti[s]) rete.inviaVeloce({ t: "vm", to: posti[s], vm: conVm(vistaDa(st, s), s) }); }   // solo a lui, e non resta sul server
     function bcast() {
       if (chiuso) return;
       if (!st) { disegnaLobby(); return; }
+      if (st.fase === "fineround" && avKey !== st.pid + ":" + st.nMano) { avKey = st.pid + ":" + st.nMano; avanti = {}; scad = Date.now() + PAUSA_MANO * 1000; }   // riepilogo nuovo
       for (var s = 1; s <= 3; s++) mandaVm(s);
-      Cl.setVm(vistaDa(st, 0));
+      Cl.setVm(conVm(vistaDa(st, 0), 0));
       if (st.fase !== "fine") { detto = false; return; }
       if (!detto && t.risultato) {   // per il torneo online: la squadra che vince, poi l'altra (pari = stesso posto)
         detto = true;
@@ -873,6 +1068,8 @@
           }
           aggiornaLobby();   // trasmette la sala aggiornata a tutti gli ospiti
         } else if (m.t === "gioca" && st) { var sm = seatDi(id); if (sm > 0) passo(sm, m.carta, m.presa); }
+        else if (m.t === "avanti" && st) voto(id, m.m, m.pid);
+        else if (m.t === "psst" && st) { var sp = seatDi(id); if (sp > 0) psstDa(sp, m.k); }
       },
       // (arriva solo se il primo collegamento non riesce: a partita cominciata la rete si ricollega da sola)
       onErrore: function () { if (!chiuso && !pronta && !st) { chiuso = true; Cl.chiuso = true; erroreScopa2(t, "Problema di collegamento. Controlla la connessione e riprova."); } }
@@ -885,11 +1082,11 @@
         posti[2] ? { nome: nomiUmani[2], id: posti[2], omino: avatariUmani[2] } : null,
         posti[3] ? { nome: nomiUmani[3], id: posti[3], omino: avatariUmani[3] } : null];
     }
-    function regoleLobby() { var imp = t.impostazioni || {}; return { traguardo: C().traguardoDa(imp), diff: imp.difficolta || diff }; }
+    function regoleLobby() { var imp = t.impostazioni || {}; return { traguardo: C().traguardoDa(imp), diff: imp.difficolta || diff, psst: !!imp.psst }; }
     function aggiornaLobby() {
       if (st || chiuso) return;
       var R = regoleLobby();
-      if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, seggi: seggiLobby(), traguardo: R.traguardo, diff: R.diff, guarda: guarda });
+      if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, seggi: seggiLobby(), traguardo: R.traguardo, diff: R.diff, psst: R.psst, guarda: guarda });
       disegnaLobby();
     }
     function cambiaCompagno() {   // ruota i posti 1-2-3: cambia chi gioca con l'host
@@ -901,10 +1098,11 @@
     function disegnaLobby() {
       if (st || chiuso) return;
       var R = regoleLobby();
-      renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", seggi: seggiLobby(), traguardo: R.traguardo, diff: R.diff, guarda: guarda }, {
+      renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", seggi: seggiLobby(), traguardo: R.traguardo, diff: R.diff, psst: R.psst, guarda: guarda }, {
         onComincia: function () {
           var imp = t.impostazioni || {}; diff = imp.difficolta || diff;
           st = creaStato(C().traguardoDa(imp)); nomiPartenza();
+          st.conPsst = !!imp.psst;   // 🤫 messaggi al compagno (⚙️)
           for (var s = 1; s <= 3; s++) botSeat[s] = !posti[s];
           nuovaMano(st);
           if (rete) rete.invia({ t: "inCorso" });   // sul server resta solo "partita in corso" (niente carte di nessuno)
@@ -914,6 +1112,7 @@
         onEsci: esci
       });
     }
+    window.__SCOPA2host = { st: function () { return st; }, posti: posti, botSeat: botSeat };   // (per le prove) lo stato vero della partita su questo telefono
     disegnaLobby();
   }
 
@@ -924,6 +1123,8 @@
     var Cl = creaClient(t, {
       sonoHost: false, online: true,
       onMossa: function (id, presa) { if (S.rete) S.rete.invia({ t: "gioca", carta: id, presa: presa }); },
+      onVoto: function (m, pid) { if (S.rete) S.rete.invia({ t: "avanti", m: m, pid: pid }); },   // "⏩ Avanti" (vale per questa smazzata)
+      onPsst: function (k) { if (S.rete) S.rete.invia({ t: "psst", k: k }); },                      // 🤫 al compagno (passa dall'host)
       onAvanti: function () {}, onNuova: function () {}, onEsci: esci
     });
     schermaNome();
@@ -985,7 +1186,7 @@
     }
     function mostraLobby(m) {
       if (Cl.vm) return;
-      renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi, traguardo: m.traguardo, diff: m.diff, guarda: m.guarda }, { onEsci: esci });
+      renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi, traguardo: m.traguardo, diff: m.diff, psst: m.psst, guarda: m.guarda }, { onEsci: esci });
     }
     function mostraAttesa() {   // finché non arriva la sala dall'host
       if (Cl.vm) return;
@@ -1020,7 +1221,7 @@
     var righe = [
       el("div", {}, [ el("b", { text: "🟢 " + nomeSeat(mioSeat % 2) + " + " + nomeSeat(mioSeat % 2 + 2) }), document.createTextNode(" 🆚 "),
         el("b", { text: "🔴 " + nomeSeat(1 - mioSeat % 2) + " + " + nomeSeat(3 - mioSeat % 2) }) ]),
-      el("div", { style: "opacity:.8;font-size:.85em", text: (tr ? "🎯 A " + tr + " punti" : "🎯 Una mano sola") + " · Bot " + livello + (umani < 4 ? " · i posti liberi li fanno i bot" : "") }) ];
+      el("div", { style: "opacity:.8;font-size:.85em", text: (tr ? "🎯 A " + tr + " punti" : "🎯 Una mano sola") + " · Bot " + livello + (vm.psst ? " · 🤫 messaggi al compagno" : "") + (umani < 4 ? " · i posti liberi li fanno i Bot" : "") }) ];
     if (vm.sonoHost && cb.onCambia && umani > 1)
       righe.push(el("button", { class: "btn btn-fantasma", style: "margin:4px auto 0;min-height:0;padding:5px 14px;font-size:.85rem;width:auto", text: "🔀 Cambia compagno", onclick: cb.onCambia }));
     // nella Sala: chi non è stato scelto guarda (niente posto al tavolo e niente "Sono pronto")
@@ -1053,11 +1254,14 @@
     t.mostra(s);
   }
 
+  // (per le prove) il motore, senza grafica
+  window.__SCOPA2 = { creaStato: creaStato, nuovaMano: nuovaMano, applica: applica, fineMano: fineMano, prossimaMano: prossimaMano, vistaDa: vistaDa, mossaBot: mossaBot, migliori: migliori, bravura: bravura, maniVuote: maniVuote };
+
   SG.registra({
     id: "scopa2v2",
     nome: "Scopa 2 vs 2",
     icona: "🃏",
-    descrizione: "La Scopa a squadre, in quattro al tavolo: tu e il tuo compagno contro due. Contro i bot o online, ognuno dal suo telefono (i posti vuoti li fanno i bot).",
+    descrizione: "La Scopa a squadre, in quattro al tavolo: tu e il tuo compagno contro due. Contro i Bot o online, ognuno dal suo telefono (i posti vuoti li fanno i Bot).",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 1–4 giocatori",   // (i posti liberi li prendono i bot)
     postiOnline: 4,   // 4 al tavolo: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro i Bot", sotto: "Tu e un Bot contro due Bot" }],
@@ -1067,17 +1271,29 @@
       "Come la Scopa normale: tre carte in mano a testa, quattro sul tavolo, si <b>pesca</b> tre a testa quando le mani finiscono, fino a esaurire il mazzo.",
       "Prendi con una carta di <b>valore uguale</b> (se c'è) oppure con una <b>somma</b>. Svuoti il tavolo? <b>Scopa</b> (+1), tranne con l'ultima carta.",
       "Punti a fine mano, sommando i due compagni: <b>Carte, Denari, Settebello, Primiera</b> e le <b>Scope</b>. Vince la squadra che arriva per prima ai <b>punti scelti</b> (di solito " + TARGET + "; a pari punti si gioca un'altra mano). Si può giocare anche <b>una mano sola</b>.",
-      "Modalità: <b>contro i bot</b> (tu + 3 bot) oppure <b>online</b> (ognuno dal suo telefono; i posti liberi li giocano i bot). Nel <b>torneo sullo stesso telefono</b> giocano fino a 4 di voi passandovi il telefono."
+      "A fine mano <b>🏅 Il migliore in campo</b>: in ogni coppia la medaglia va a chi ha portato di più (scope e settebello contano di più; a pari, niente medaglia).",
+      "Modalità: <b>contro i Bot</b> (tu + 3 Bot) oppure <b>online</b> (ognuno dal suo telefono; i posti liberi li giocano i Bot). Nel <b>torneo sullo stesso telefono</b> giocano fino a 4 di voi passandovi il telefono.",
+      "Online, a fine mano <b>⏩ Avanti</b>: se lo tocca più di metà di chi gioca si riparte subito, se no c'è il conto alla rovescia.",
+      "<b>🤫 Messaggio al compagno</b> (si accende nel ⚙️): online, se il compagno non è un Bot, il tasto 🤫 vicino alla mano manda una frase pronta («Ho il settebello», «Lascia, ci penso io»…). La legge solo il compagno; gli avversari vedono solo 🤫. Al massimo 2 a testa per mano."
     ],
+    // la riga "📜 Si gioca così" che gli amici leggono in saletta
+    riassunto: function (imp) {
+      imp = imp || {};
+      var tr = C() ? C().traguardoDa(imp) : TARGET, liv = { facile: "facili", medio: "medi", difficile: "difficili" }[imp.difficolta] || "medi";
+      var p = [tr ? "a " + tr + " punti" : "una mano sola", "Bot " + liv];
+      if (imp.psst) p.push("🤫 messaggi al compagno");
+      return p.join(" · ");
+    },
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
-      dove.modo = "bot"; dove.difficolta = "medio"; dove.torneo = !!aiuti.torneo;
-      var bBot, bOnl, boxDiff, notaOnline;
+      dove.modo = "bot"; dove.difficolta = "medio"; dove.torneo = !!aiuti.torneo; dove.psst = false;
+      var bBot, bOnl, boxDiff, notaOnline, boxPsst;
       function sel(m) {
         dove.modo = m;
         bBot.className = "modo-chip" + (m === "bot" ? " attiva" : "");
         bOnl.className = "modo-chip" + (m === "online" ? " attiva" : "");
         notaOnline.hidden = (m !== "online");
+        if (boxPsst) boxPsst.hidden = (m !== "online");
       }
       bBot = el("button", { class: "modo-chip attiva", onclick: function () { sel("bot"); } }, [
         el("span", { class: "mi", text: "🤖" }), el("div", {}, [el("div", { class: "mt", text: "Contro i Bot" }), el("div", { class: "ms", text: "Tu + 3 Bot" })])]);
@@ -1099,6 +1315,20 @@
       });
       boxDiff.appendChild(dg); box.appendChild(boxDiff);
       C().sceltaTraguardo(el, box, dove);   // i punti da raggiungere (anche online, ⚙️ Regole)
+      if (!aiuti.torneo) {   // 🤫 Messaggio al compagno: solo online (tra due compagni veri)
+        boxPsst = el("div", { hidden: aiuti.modo === "online" ? null : "hidden" });
+        boxPsst.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "🤫 Messaggio al compagno" }));
+        var pg = el("div", { style: "display:flex;gap:8px" });
+        [[false, "No"], [true, "Sì"]].forEach(function (d) {
+          var b = el("button", { class: "modo-chip" + (d[0] === !!dove.psst ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {
+            dove.psst = d[0]; [].forEach.call(pg.children, function (c) { c.className = "modo-chip"; c.style.flex = "1"; }); b.className = "modo-chip attiva";
+          } }, [el("div", { class: "mt", text: d[1] })]);
+          b.style.flex = "1"; pg.appendChild(b);
+        });
+        boxPsst.appendChild(pg);
+        boxPsst.appendChild(el("p", { class: "modulo-nota", style: "margin:4px 0 0", text: "Un tasto 🤫 manda al compagno una frase pronta (2 a mano): la legge solo lui." }));
+        box.appendChild(boxPsst);
+      }
       notaOnline = el("div", { class: "link-avviso", hidden: "hidden" });
       notaOnline.textContent = (window.SGNet && SGNet.disponibile())
         ? "Apri la stanza e invita gli amici col tasto 📤: entrano dal loro telefono. I posti liberi li giocano i bot."
@@ -1110,7 +1340,7 @@
     avvia: function (t) {
       if (!window.SGCarte) { var s = t.schermata({ icona: "⚠️", titolo: "Un attimo" }); s._contenuto.appendChild(t.el("p", { text: "Ricarica la pagina e riprova." })); s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci })); return t.mostra(s); }
       var imp = t.impostazioni || {};
-      mont = null; memo = { prevMano: 0, prevTav: {}, avvisoN: null }; s2Posti = {};   // partita nuova: niente resti di quella prima
+      mont = null; memo = { prevMano: 0, prevTav: {}, avvisoN: null }; s2Posti = {}; psstF = null;   // partita nuova: niente resti di quella prima
       if (t.linkParams && t.linkParams.stanza) return ospiteScopa2(t, t.linkParams.stanza);
       if (imp.modo === "online") return hostScopa2(t, imp.difficolta || "medio");
       return localeScopa2(t, imp.difficolta || "medio", !!imp.torneo);
