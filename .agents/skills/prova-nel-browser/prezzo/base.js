@@ -12,6 +12,8 @@
 // pz7: online in 3: chi arriva tardi entra al prossimo oggetto; l'host ricarica (tutti in saletta, stesso codice).
 // pz8: le misure: 360x640 e 412x915 in ogni passo (niente scorre, il maxischermo si vede tutto sopra il pannello).
 // pz9: online nella Sala con 8 telefoni, 📺 Come in TV ⚡ Veloce (8 leggii, Ruota e Vetrina in 8).
+// pz10: «🤖 Contro il Bot» con un secondo gioco a premi finto: chi vince l'Offerta sceglie tra due.
+// (pz8 a una misura sola: W.__pz8misure = [[360, 640]])
 // Le regole della partita per la prova: w.__imp (le legge solo chi apre, all'avvio), con apriTel(nome, { spiaPrezzo: true }).
 (function () {
   "use strict";
@@ -432,6 +434,29 @@
       ["ruota.giro1", "ruota.decidi", "vetrina.offri", "vetrina.riv", "carrello"].forEach(function (f) { if (spia.viste.indexOf(f) < 0) no("in 8 non si è passati da «" + f + "»"); });
       return "classifica " + cl.map(function (r) { return r.pos + "° " + r.nome + " " + r.punti; }).join(", ") + errori();
     } finally { senzaSpia(); }
+  } });
+
+  // ===================== pz10: chi vince l'Offerta sceglie il gioco a premi =====================
+  // (finché c'è un gioco a premi solo, la scelta non si vede: qui se ne registra un secondo finto, copia di «Più o meno»)
+  COPIONE.aggiungi("pz10", { nome: "Prezzo: 🤖 Contro il Bot, con due giochi a premi chi vince l'Offerta sceglie", fai: async function () {
+    var w = await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "puntata", offerte: "vista", liv: "facile", nBot: 1 }; } });
+    if (!await W.aspetta(function () { return w.SG_PREZZO_PREMI && w.SG_PREZZO_PREMI.piuomeno; }, 5000)) no("«Più o meno» non è registrato");
+    w.SG_PREZZO_PREMI.finto = Object.assign({}, w.SG_PREZZO_PREMI.piuomeno, { nome: "Il Finto", icona: "🧪", regola: "Una copia di Più o meno, per la prova" });
+    await apriGioco(w);
+    if (!W.clicca(w, /Contro il Bot/)) no("niente «🤖 Contro il Bot»");
+    await W.dorme(300);
+    if (!W.clicca(w, /Comincia/)) no("niente «Comincia»");
+    var spia = spiaFasi("Paky"), sceltoIo = false, tipi = {};
+    // Paky offre preciso nella prima Offerta (vince lui e sceglie); il secondo gioco a premi è l'altro (niente scelta)
+    var ok = await giocaTutti(["Paky"], function () { var H = w.__prezzoH; return H.fase === "punti" && H.iPremio >= 2 || H.fase === "fine"; }, { ms: 300000,
+      offerta: function (pr, H) { return H.iOff === 1 ? pr : pr * 0.2; },
+      ognuno: function () { var H = w.__prezzoH; if (H.fase === "scegli" && H.scelta && H.scelta.fatta) { if (H.scelta.chi === "host") sceltoIo = true; } if (H.premio) tipi[H.premio.tipo] = 1; } });
+    spia.ferma();
+    if (!ok) no("non si arriva al secondo gioco a premi (" + spia.viste.join(" → ") + ")");
+    if (spia.viste.indexOf("scegli") < 0) no("con due giochi a premi non c'è stata la scelta (" + spia.viste.join(" → ") + ")");
+    if (!sceltoIo) no("Paky ha vinto l'Offerta ma non ha scelto lui");
+    if (!tipi.finto || !tipi.piuomeno) no("i due giochi a premi non sono usciti tutti e due (si sceglie tra due, poi l'altro): " + Object.keys(tipi));
+    return "Paky ha scelto · giochi: " + Object.keys(tipi).join(", ") + errori();
   } });
 
   W.PZ = { agisci: agisci, giocaTutti: giocaTutti, spiaFasi: spiaFasi, controllaVista: controllaVista, contrBot: contrBot, stessoTelefono: stessoTelefono, salaPrezzo: salaPrezzo, conSpia: conSpia, senzaSpia: senzaSpia };

@@ -1226,7 +1226,7 @@
     });
     var tb = Z().barraTempo(el, fine, function () { if (R.cb.locale === "telefono") R.cb.mossa({ t: "passa", k: k }, sc.chi); });
     R.tempoPan = tb;
-    R.pan.metti([ testaPan(R, chi, R.cb.locale === "telefono" ? chi.nome + ", scegli tu!" : "🎁 Scegli il gioco a premi", tb), el("div", { class: "pz-scelte" }, bottoni) ]).su();
+    R.pan.metti([ testaPan(R, chi, R.cb.locale === "telefono" ? chi.nome + ", scegli tu!" : "🎁 Scegli tu!", tb), el("div", { class: "pz-scelte" }, bottoni) ]).su();
   }
   function aggiornaScelta(R) {
     var sc = R.vm.scelta; if (!sc || !sc.fatta || !R.ui.carte || R.ui.sceltaVista) return;
