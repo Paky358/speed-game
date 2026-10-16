@@ -480,7 +480,7 @@
     "@keyframes asSorpresa{0%{transform:scale(.3) rotate(-12deg);opacity:0}60%{transform:scale(1.08) rotate(3deg);opacity:1}100%{transform:none}}",
     // ⭐ il voto a un tocco: la carta-scenario in alto, sotto i kit degli altri (tocchi quello che se la cava meglio)
     ".schermata.as-vt{flex:0 0 auto;height:var(--alt,100dvh);max-height:var(--alt,100dvh);min-height:0;}",
-    ".as-vt>.contenuto{min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}",
+    ".as-vt>.contenuto{min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}",
     ".as-vt .as-scen{margin-left:40px;}",   // (spazio per il ‹ in alto a sinistra)
     ".as-scen{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#3b1f6e,#1f2a6e);border:2px solid rgba(255,255,255,.18);border-radius:16px;padding:9px 12px;margin:0 0 8px;box-shadow:0 8px 22px rgba(0,0,0,.35);}",
     ".as-scen .e{font-size:2.2rem;line-height:1;flex:none;}.as-scen .x{flex:1;min-width:0;}",
@@ -494,6 +494,8 @@
     ".as-vk.scelto{border-color:var(--accento);background:linear-gradient(150deg,var(--carta-2),#3a3060);}.as-vk.scelto .n i{filter:none;opacity:1;}",
     ".as-vk.mio{opacity:.55;cursor:default;}.as-vk:disabled{color:inherit;}",
     ".as-vk.fitto{padding:4px 9px;margin-bottom:4px;}.as-vk.fitto .k{font-size:.72rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}",
+    ".as-vk.mini{padding:3px 9px;margin-bottom:3px;border-radius:11px;}.as-vk.mini .n{font-size:.88rem;}.as-vk.mini .n i{font-size:1.05rem;}.as-vk.mini .k{-webkit-line-clamp:1;margin-top:0;}",
+    ".as-vk.due{display:inline-block;vertical-align:top;width:calc(50% - 3px);}.as-vk.due:nth-of-type(odd){margin-right:6px;}.as-vk.due .k{font-size:0;line-height:1.2;}.as-vk.due .k .em{font-size:1.05rem;margin-right:3px;}",
     // 🏅 i titoli scherzosi di fine partita (non sono trofei)
     ".as-titoli{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0 4px;}",
     ".as-tit{background:linear-gradient(150deg,var(--carta-2),#2a2550);border-radius:12px;padding:6px 8px;min-width:0;}",
@@ -1721,7 +1723,7 @@
     var hoPassato = a.passati.indexOf(myId) >= 0, guido = a.leaderId === myId, prezzi = prezziSalto(a.offerta, false, SALTI_TEMI), prezzo = prezzi[0];
     var inGara = io && !io.haCarta, max = io ? io.crediti - ((vm.totRound - 1) - vm.roundIdx) : 0;
     // il rilancio porta con sé quale asta e quale offerta ho visto: se nel frattempo è cambiata, non conta (e niente doppi tocchi)
-    var offri = function (p) { if (unTocco(cb)) cb.onRilancia({ n: a.n, prezzo: p, vista: a.offerta }); };
+    var offri = function (p) { if (unTocco(cb, a.n + "|" + a.offerta)) cb.onRilancia({ n: a.n, prezzo: p, vista: a.offerta }); };
     var mie = tastiOfferta(el, { prezzi: prezzi, salti: SALTI_TEMI, max: max, guido: guido, primo: false, inGara: inGara && !hoPassato,
       offri: offri, passa: function () { cb.onPassa({ n: a.n }); } });
     var tardi = cb._tardi && Date.now() - cb._tardi < 3000;
@@ -1773,7 +1775,7 @@
     var prezzi = a ? prezziSalto(a.offerta, !a.leaderId, SALTI_FANTA) : [0], prezzo = prezzi[0];
     var inGara = !!(a && io && (io.conta[a.ruolo] || 0) < FANTA_SLOT[a.ruolo]), max = io ? io.max : 0;
     // l'offerta porta con sé quale calciatore e quale offerta ho visto: se nel frattempo è cambiata, non conta (e niente doppi tocchi)
-    var offri = function (p) { if (a && unTocco(cb)) cb.onRilancia({ n: a.nCarta, prezzo: p, vista: a.offerta }); };
+    var offri = function (p) { if (a && unTocco(cb, a.nCarta + "|" + a.offerta + "|" + (a.leaderId || ""))) cb.onRilancia({ n: a.nCarta, prezzo: p, vista: a.offerta }); };
     var mie = a ? tastiOfferta(el, { prezzi: prezzi, salti: SALTI_FANTA, max: max, guido: guido, primo: !a.leaderId, inGara: inGara && !hoPassato,
       offri: offri, passa: function () { cb.onPassa({ n: a.nCarta }); } }) : [];
     var tardi = cb._tardi && Date.now() - cb._tardi < 3000;
@@ -2157,7 +2159,7 @@
     s.classList.add("as-vt");
     s._contenuto.appendChild(nodoScenario(el, st.scenario, false));
     s._contenuto.appendChild(el("p", { class: "as-msg", style: "margin:0 0 8px", text: "⭐ " + nomeBreve(st.giocatori[votante].nome) + ", a chi dai la tua stella? Un tocco." }));
-    var fitto = st.giocatori.length > 5;
+    var fitto = fittoVoto(st.giocatori.length);
     st.giocatori.forEach(function (g, i) {
       if (i === votante) return;
       var b = nodoVotoKit(el, g, fitto, function () {
@@ -2169,6 +2171,21 @@
       s._contenuto.appendChild(b);
     });
     t.mostra(s);
+    stringiVoto(s._contenuto, [].slice.call(s._contenuto.querySelectorAll(".as-vk")), fitto);
+  }
+  // quanto stretti i kit da votare, perché stiano tutti nello schermo senza scorrere: da 5 giocatori si parte con le carte su
+  // 2 righe; se ancora non ci stanno (schermo basso, kit lunghi, tanti giocatori) si stringe da solo: carte su una riga sola
+  // (i nomi finiscono coi puntini), poi i kit su due colonne con le sole figurine delle carte
+  var FITTI = ["", " fitto", " fitto mini", " fitto mini due"];
+  function fittoVoto(n) { return n >= 5 ? " fitto" : ""; }
+  function stringiVoto(cont, kit, liv) {
+    var i = Math.max(0, FITTI.indexOf(liv || ""));
+    if (!cont || !document.body.contains(cont)) return FITTI[i];
+    while (cont.scrollHeight > cont.clientHeight + 1 && i < FITTI.length - 1) {
+      i++;
+      kit.forEach(function (b) { b.classList.remove("fitto", "mini", "due"); FITTI[i].split(" ").forEach(function (c) { if (c) b.classList.add(c); }); });
+    }
+    return FITTI[i];
   }
   // un kit da votare: il nome con la ⭐ e le carte in breve (uguale sullo stesso telefono e online)
   function nodoVotoKit(el, g, fitto, onclick) {
@@ -2180,7 +2197,7 @@
       carte.appendChild(document.createTextNode(c.nome));
     });
     var mal = haMaledetta(g);
-    return el("button", { type: "button", class: "as-vk" + (fitto ? " fitto" : "") + (mal ? " maled" : ""), onclick: onclick }, [
+    return el("button", { type: "button", class: "as-vk" + (fitto || "") + (mal ? " maled" : ""), onclick: onclick }, [
       el("div", { class: "n" }, [ el("span", { text: g.nome }), mal ? el("span", { class: "as-malus", style: "flex:none", text: "🧨 −0,5 ⭐" }) : null, el("i", { text: "⭐" }) ]),
       carte ]);
   }
@@ -2549,8 +2566,10 @@
     if (RIP_USATA === t || !s || s.formato !== formato || !s.fase || s.fase === "lobby" || !s.giocatori) return null;
     RIP_USATA = t; return s;
   }
-  // un tocco alla volta: un doppio tocco (entro mezzo secondo) conta una volta sola
-  function unTocco(cb) { var ora = Date.now(); if (ora - (cb._tocco || 0) < 500) return false; cb._tocco = ora; return true; }
+  // un tocco alla volta: un secondo tocco sulla STESSA offerta vista (prima che arrivi la foto nuova) non parte, perché l'host
+  // lo scarterebbe comunque. Appena il prezzo sullo schermo è cambiato si può toccare subito di nuovo: chi guida rialza da solo
+  // anche due volte di fila (due tocchi = +2, regola fissa del proprietario)
+  function unTocco(cb, chiave) { var ora = Date.now(); if (cb._toccoK === chiave && ora - (cb._tocco || 0) < 1500) return false; cb._toccoK = chiave; cb._tocco = ora; return true; }
   // i prezzi che si possono offrire adesso coi salti: base = l'offerta (o, nel fanta senza offerte, una in meno: il primo +1 la prende al prezzo di partenza)
   function prezziSalto(offerta, senzaCapo, salti) { var base = senzaCapo ? offerta - 1 : offerta; return salti.map(function (s) { return base + s; }); }
   // (host) un'offerta arrivata: { prezzo, vista (l'offerta che vedeva) }. Torna il prezzo buono, "tardi" (ha visto un prezzo vecchio) o null.
@@ -3312,7 +3331,7 @@
     s._contenuto.appendChild(nodoScenario(el, vm.scenario, true));
     V.cosa = el("p", { class: "as-msg", style: "margin:0 0 8px" });
     s._contenuto.appendChild(V.cosa);
-    var fitto = vm.giocatori.length > 5;
+    var fitto = fittoVoto(vm.giocatori.length);
     vm.giocatori.forEach(function (g) {
       if (g.id === myId) return;   // (il mio kit non si vota)
       var b = nodoVotoKit(el, g, fitto, io ? function () {
@@ -3338,7 +3357,7 @@
     V.agg = function (v) {
       V.vm = v;
       var mio = cb._mioVoto && cb._mioVoto.s === v.sessione ? cb._mioVoto.per : null, n = (v.hannoVotato || []).length, tot = v.giocatori.filter(function (g) { return !g.via; }).length;
-      Object.keys(V.bott).forEach(function (id) { var c = "as-vk" + (fitto ? " fitto" : "") + (id === mio ? " scelto" : "") + (V.bott[id].classList.contains("maled") ? " maled" : ""); if (V.bott[id].className !== c) V.bott[id].className = c; });
+      Object.keys(V.bott).forEach(function (id) { var c = "as-vk" + (fitto || "") + (id === mio ? " scelto" : "") + (V.bott[id].classList.contains("maled") ? " maled" : ""); if (V.bott[id].className !== c) V.bott[id].className = c; });
       var nm = mio ? (trova(v.giocatori, mio) || {}).nome : null;
       var tx = !io ? "👀 Stai guardando: votano gli altri (" + n + " su " + tot + ")"
         : nm ? "✅ La tua ⭐ va a " + nm + " · puoi cambiare finché il voto è aperto (" + n + " su " + tot + ")"
@@ -3349,9 +3368,12 @@
         V.chiudi.textContent = "Chiudi il voto (" + n + " su " + tot + ")";
         if (n < 1) { if (V.chiudi.parentNode) V.chiudi.parentNode.removeChild(V.chiudi); } else if (!V.chiudi.parentNode) V.s._piede.appendChild(V.chiudi);
       }
+      // (il tasto «Chiudi il voto» dell'host toglie spazio: se i kit non ci stanno più, si stringono)
+      if (document.body.contains(V.s)) fitto = stringiVoto(V.s._contenuto, [].slice.call(V.s._contenuto.querySelectorAll(".as-vk")), fitto);
     };
     V.agg(vm);
     t.mostra(s);
+    fitto = stringiVoto(s._contenuto, [].slice.call(s._contenuto.querySelectorAll(".as-vk")), fitto);
   }
 
   function titoloFaseAsta(vm, myId) {
