@@ -9,6 +9,40 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 213,
+    data: "16 ottobre 2026",
+    titolo: "Gioco nuovo: Chi di Noi? 🫵",
+    descrizione: [
+      "Il nostro «Dimmi chi sei!»: da 3 a 10 amici online, ognuno dal suo telefono. In 20 posti buffi (la spiaggia, il matrimonio, la nave dei pirati…) a turno uno va sotto torchio, vestito per il posto, e gli altri dicono cosa pensano di lui.",
+      "Quattro tipi di domande: Immagini (scegli il personaggio o la cosa che gli somiglia di più), Scrivi (la battuta migliore, con le risposte della casa se non ti viene niente), Disegna (col dito e con gli adesivi da trascinare, girare e ingrandire, anche sulla sua faccia) e Chi di noi (tutti votano chi del gruppo…).",
+      "Si fanno punti votando come gli amici (il voto di chi è sotto torchio vale doppio), +100 alla battuta o al disegno più votato, 3 jolly a testa e TUTTI D'ACCORDO +100 a tutti. I voti si svelano uno alla volta con le facce di chi ha votato.",
+      "📸 La foto vera: entrando ti fai un selfie con la sagoma (occhi sulle lineette, 3-2-1) o scegli una foto dalla galleria, oppure usi il tuo avatar. Poi scegli uno dei 10 filtri buffi: Originale, Sdoppiamento, Specchio, Occhioni Anime, Mascellone Gigachad, Faccia Liquida, Testa a Cono, Faccia da Uovo, Nasone da Strega, Testa Schiacciata. La tua faccia sta sull'avatar col costume del posto per tutta la partita.",
+      "Le foto viaggiano chiuse a chiave: le vede solo chi è entrato col link della serata (chi scrive il codice vede gli avatar), non restano sui telefoni degli altri e spariscono quando si esce. Chi apre la partita può scegliere «🙂 Solo avatar».",
+      "Gran finale «Passa il ritratto!», titoli di fine partita (Il Bersaglio, Mente del Gruppo, Il Cecchino…), podio e la figurina da salvare. 1.413 domande, e il gioco si ricorda quelle già uscite."
+    ]
+  },
+  {
+    v: 212,
+    data: "16 ottobre 2026",
+    titolo: "I giochi di sempre, ancora meglio 🛠️",
+    descrizione: [
+      "🤥 La Balla Colossale: «😂 Che balla!» per ridere delle balle più belle (la Balla d'oro del round vale un punto in più) e il round «👥 Parliamo di te», con 140 domande sugli amici: chi è di turno scrive la verità e gli altri si inventano le balle. Nelle regole scegli quanti round e di cosa si parla.",
+      "🖍️ Scarabocchio: «📝 Le nostre parole». Chi apre la partita scrive le parole del gruppo (nomi di amici, posti, battute) e si giocano mescolate alle altre o da sole.",
+      "✍️ Nomi, Cose e Città: lo ✋ STOP come sulla carta. Chi riempie tutte le caselle ferma tutti e agli altri restano 10 secondi.",
+      "🥔 Patata Bollente: la «🤫 Miccia segreta». Scoppia a caso tra 20 e 60 secondi, nessuno vede il tempo e alla fine si scopre quanto durava.",
+      "📜 Linea del tempo online: il modo «⚡ Tutti insieme». La stessa carta per tutti nello stesso momento, punti in più al più veloce e l'ultima carta vale doppio: nessuno aspetta il suo turno.",
+      "🪜 Scalinata: la scala grande fino a 8 giocatori, così giocano tutti invece di guardare.",
+      "🃏 Poker: chi vince perché gli altri lasciano può toccare «🃏 Fai vedere!» e mostrare se era un BLUFF. Poker e Black Jack hanno il «🏆 Torneo della serata»: tutti partono con 1.000 fiches finte (le Speed Coins non si toccano) e vince chi ne ha di più.",
+      "🏇 Horto Muso: il «🏆 Gran Premio», 3 corse a punti con l'ultima che vale doppio.",
+      "🃏 Scopa: si gioca anche in tre, ognuno per sé (contro 2 Bot o online). Nella Sala in tre c'è «In tre: giocate tutti». Se uno si distrae per un minuto, il Bot gioca una carta al posto suo.",
+      "💬 Faccine e frasi durante la partita in Scopa, Tris, Drop 4, Battaglia Navale e Calcio Biliardo.",
+      "🃏 Scopone online in 4: ognuno dal suo telefono, a coppie, i posti vuoti li fanno i Bot. Le coppie si scelgono o si sorteggiano. Regole nuove anche contro i Bot: la Napola e la scopa all'ultima carta.",
+      "🕵️ L'Impostore online: ognuno vede la sua parola sul suo telefono, gli indizi si scrivono di nascosto e si svelano tutti insieme, poi il voto segreto e l'ultima possibilità dell'impostore. Si può giocare anche nella Sala della serata.",
+      "🤐 Taboo anche «📱 Su questo telefono», il classico: chi spiega tiene il telefono e un avversario dietro di lui guarda la carta e preme BUZZ.",
+      "In tanti giochi online «⏩ Avanti» parte subito se lo tocca più di metà, e le domande «Vuoi uscire?» usano la finestra dell'app."
+    ]
+  },
+  {
     v: 211,
     data: "16 ottobre 2026",
     titolo: "La Compagnia: ritrovarsi senza mandare il link 📌",

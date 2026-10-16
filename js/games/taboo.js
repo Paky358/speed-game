@@ -111,6 +111,11 @@
       ".tb-premi{display:flex;flex-direction:column;gap:5px;width:100%}.tb-premi div{border-radius:12px;background:rgba(255,212,59,.14);padding:6px 10px;font-size:clamp(13px,3.8vw,16px);font-weight:800}",
       ".tb-squad-box{display:flex;flex-direction:column;gap:4px;margin:2px 0}.tb-sq-testa{display:flex;align-items:center;gap:8px;min-height:28px}.tb-squad-lista{display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;align-items:center;border-radius:12px;padding:4px 6px;background:rgba(0,0,0,.05)}.tb-squad-lista::-webkit-scrollbar{display:none}.tb-squad-lista>*{flex:none}.tb-squad-lista.a{border-left:4px solid #e64980}.tb-squad-lista.b{border-left:4px solid #4263eb}.tb-squad-lista b{font-size:13px;min-width:2.4em;white-space:nowrap}.tb-scelta{border:0;border-radius:999px;padding:4px 10px;color:#fff;font:inherit;font-size:13px;font-weight:850;line-height:1.25;background:#383d59;max-width:9.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tb-scelta.a{background:#c2255c}.tb-scelta.b{background:#364fc7}.tb-scelta.tu{outline:2px solid #ffd43b}.tb-entra-sq{border:1.5px dashed currentColor;border-radius:999px;padding:3px 9px;background:transparent;font:inherit;font-size:12px;font-weight:850;line-height:1.25;color:inherit;opacity:.75}.tb-casuale{flex:none;border:0;border-radius:999px;padding:5px 11px;background:#ffd43b;color:#332500;font:inherit;font-size:13px;font-weight:950}.tb-sq-nota{min-width:0;font-size:12px;font-weight:700;line-height:1.25;opacity:.75}",
       ".tb-tasti .sl-faccine{grid-column:1/-1}",
+      // su questo telefono: le squadre da toccare, chi controlla, le carte del riepilogo che si correggono
+      ".tb-loc-squadre{justify-content:flex-start;padding-top:4px}.tb-loc-squadre .tb-colonne{flex:1;min-height:0}.tb-loc-squadre .tb-col{display:flex;flex-direction:column;min-height:0;overflow:hidden}",
+      ".tb-loc-nomi{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-content:flex-start;min-height:0;overflow:hidden;padding-top:4px}.tb-loc-nomi .tb-scelta{font-size:clamp(14px,4vw,17px);padding:7px 12px;max-width:100%}",
+      ".tb-loc-ctrl{width:100%;box-sizing:border-box;border-radius:16px;background:rgba(250,82,82,.16);border:2px solid rgba(250,82,82,.55);padding:8px 12px}.tb-loc-ctrl b{display:block;font-size:clamp(17px,5vw,22px)}.tb-loc-ctrl span{display:block;font-size:clamp(13px,3.7vw,16px);font-weight:700;opacity:.9;margin-top:2px}",
+      "button.tb-chip{border:0;color:#fff;font-family:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}.tb-chip.nu{background:rgba(255,255,255,.22)}.tb-loc-corr{color:#fff;opacity:.7;margin-top:auto}",
       "@media(max-height:700px){.tb{gap:6px;padding-top:calc(6px + env(safe-area-inset-top));padding-bottom:calc(8px + env(safe-area-inset-bottom))}.tb-timer{font-size:34px}.tb-btn{min-height:60px}.tb-btn.buzz{min-height:78px}.tb-carta{gap:7px;padding:9px}.tb-vietata{padding:5px}.tb-av{height:84px}}"
     ].join("");
     document.head.appendChild(s);
@@ -185,7 +190,7 @@
     }
     function esci() {
       if (V.v && V.v.fase === "fine") return o.esci();
-      if (window.confirm(o.sonoHost ? "Chiudere la partita per tutti?" : "Uscire dalla partita?")) o.esci();
+      t.conferma(o.sonoHost ? "Chiudere la partita per tutti?" : "Uscire dalla partita?", o.sonoHost ? "La partita finisce anche per gli amici." : null, o.sonoHost ? "Chiudi" : "Esci", function () { o.esci(); });
     }
     function frame() {
       stile();
@@ -311,7 +316,7 @@
         ui.corpo.appendChild(t.el("div", { class: "tb-prossimo" }, [t.el("div", {}, [t.el("b", { text: "⏳ Aspettiamo…" }), t.el("span", { text: v.avviso })])]));
         if (o.sonoHost) {
           var rifai = tasto("blu", "🔀 Rifai le squadre", function () { o.rifai(); }); rifai.disabled = (v.presenti || 0) < MIN;
-          var chiudiP = tasto("grigio", "🏁 Chiudi la partita", function () { if (window.confirm("Chiudere la partita? Non conterà né vittorie né trofei.")) o.chiudiPartita(); });
+          var chiudiP = tasto("grigio", "🏁 Chiudi la partita", function () { t.conferma("Chiudere la partita?", "Non conterà né vittorie né trofei.", "Chiudi", function () { o.chiudiPartita(); }); });
           ui.tasti.appendChild(rifai); ui.tasti.appendChild(chiudiP);
           ui.tasti.appendChild(t.el("div", { class: "tb-nota", text: rifai.disabled ? "Per rifare le squadre servono almeno 4 persone collegate." : "Se tornano, si riparte da soli." }));
           // la partita non resta ferma: se nessuno torna, dopo un po' si rifanno le squadre (o, se siete in pochi, si chiude)
@@ -473,6 +478,9 @@
 
   function avvia(t) {
     stile();
+    var modo = (t.impostazioni || {}).modo;
+    if (!(t.linkParams && t.linkParams.stanza) && modo && modo !== "online") return locale(t);   // su questo telefono (anche nella Serata a punti)
+    if (!(t.linkParams && t.linkParams.stanza) && !modo && t.giocatori && t.giocatori.length >= MIN) return locale(t);
     if (t.linkParams && t.linkParams.stanza) {
       if (t.nomeProfilo()) return ospite(t, t.linkParams.stanza, t.nomeProfilo());
       return chiediNome(t, t.linkParams.stanza, function (nome) { ospite(t, t.linkParams.stanza, nome); });   // senza profilo: si scrive il nome
@@ -834,6 +842,356 @@
     G.tic = setInterval(function () { vista.tick(); }, 200);
   }
 
+  // =========================================================
+  //  SU QUESTO TELEFONO: il classico. Chi spiega tiene il telefono,
+  //  un avversario guarda la carta da sopra la spalla e preme BUZZ.
+  // =========================================================
+  var ICONE = { ok: "✅", no: "❌", pa: "⏭️" };
+  function vibra(x) { try { if (navigator.vibrate) navigator.vibrate(x); } catch (e) {} }
+  function elenco(nomi) { return nomi.length > 1 ? nomi.slice(0, -1).join(", ") + " e " + nomi[nomi.length - 1] : (nomi[0] || ""); }
+
+  function locale(t) {
+    stile();
+    var imp = t.impostazioni || {};
+    var durata = [60, 90, 120].indexOf(Number(imp.tempo)) >= 0 ? Number(imp.tempo) : 90;
+    var giri = Math.max(1, Math.min(4, Number(imp.giri) || 1));
+    var livello = [1, 2, 3].indexOf(Number(imp.carte)) >= 0 ? Number(imp.carte) : 2;
+    var mio = (t.nomeProfilo && t.nomeProfilo()) || "", ominoMio = mio ? avatar(mio) : null;
+    // i giocatori per posto (due nomi uguali restano due persone diverse)
+    var gio = (t.giocatori || []).map(function (n, k) { return { k: k, nome: String(n || "").trim() || ("Giocatore " + (k + 1)), sq: 0 }; });
+    var L = { turni: [], coda: [], idx: 0, punt: [0, 0], ctrl: [0, 0], prima: Math.random() < 0.5 ? 0 : 1,
+      carte: mazzo(livello), ic: 0, uscite: [], T: null, ui: null, tic: null, finita: false };
+
+    function membri(s) { return gio.filter(function (p) { return p.sq === s; }); }
+    function punti() {
+      var p = [0, 0];
+      var tutti = L.T && L.turni.indexOf(L.T) < 0 ? L.turni.concat([L.T]) : L.turni;   // (anche il turno in corso)
+      tutti.forEach(function (T) { T.carte.forEach(function (c) { if (c.e === "ok") p[T.sq]++; else if (c.e === "no") p[T.sq]--; }); });
+      return p;
+    }
+    function omino(nome) { return nome === mio && ominoMio ? ominoMio : null; }
+    function ferma() { if (L.tic) { clearInterval(L.tic); L.tic = null; } }
+    function viva() { return L.ui && document.body.contains(L.ui.s); }
+    function esci() {
+      if (L.finita) { ferma(); return t.esci(); }
+      var eraPausa = L.T && L.T.pausa;
+      if (L.T && L.T.corre && !eraPausa) pausa();   // mentre si decide, il tempo si ferma
+      t.conferma("Uscire dalla partita?", "La partita in corso si perde.", "Esci", function () { ferma(); t.esci(); });
+    }
+    function dividi() {
+      mescola(gio).forEach(function (p, i) { p.sq = (i + L.prima) % 2; });
+    }
+
+    // ---- la cornice di gioco (in alto: pausa, punti, tempo, esci) ----
+    function cornice(conPausa) {
+      var s = t.schermata({}); s.classList.add("tb-piena");
+      var ui = { s: s };
+      ui.pausa = t.el("button", { class: "tb-mini", type: "button", text: "⏸️", title: "Pausa", onclick: function () { pausa(); } });
+      ui.esci = t.el("button", { class: "tb-mini", type: "button", text: "✕", title: "Esci", onclick: esci });
+      ui.box = [0, 1].map(function (q) { return t.el("div", { class: "tb-squadra " + (q ? "b" : "a") }, [t.el("span", { text: "Squadra " + SQUADRE[q] }), t.el("b", { text: "0" })]); });
+      ui.score = ui.box.map(function (b) { return b.querySelector("b"); });
+      ui.timer = t.el("div", { class: "tb-timer testo" });
+      ui.barraI = t.el("i");
+      ui.barra = t.el("div", { class: "tb-barra" }, [ui.barraI]);
+      ui.turno = t.el("div", { class: "tb-turno" });
+      ui.corpo = t.el("div", { class: "tb-corpo" });
+      ui.banner = t.el("div", { class: "tb-banner" });
+      ui.centro = t.el("div", { class: "tb-centro" }, [ui.corpo, ui.banner]);
+      ui.tasti = t.el("div", { class: "tb-tasti" });
+      ui.pausa.style.visibility = conPausa ? "visible" : "hidden";
+      ui.barra.style.visibility = "hidden";
+      s._contenuto.appendChild(t.el("div", { class: "tb" }, [t.el("div", { class: "tb-top" }, [ui.pausa, ui.box[0], ui.timer, ui.box[1], ui.esci]), ui.barra, ui.turno, ui.centro, ui.tasti]));
+      L.ui = ui; segna(false);
+      return ui;
+    }
+    function segna(salta) {   // i punti in alto (salta = il numero che cambia fa un saltino)
+      var ui = L.ui, p = punti();
+      [0, 1].forEach(function (q) {
+        var nuovo = String(p[q]);
+        if (ui.score[q].textContent !== nuovo) {
+          ui.score[q].textContent = nuovo;
+          if (salta) { ui.box[q].classList.remove("tb-bump"); void ui.box[q].offsetWidth; ui.box[q].classList.add("tb-bump"); }
+        }
+      });
+    }
+    function vola(testo, classe) {
+      var n = t.el("div", { class: "tb-volo " + classe, text: testo });
+      L.ui.centro.appendChild(n); setTimeout(function () { if (n.parentNode) n.parentNode.removeChild(n); }, 950);
+    }
+    function nascondiBanner() { if (L.tBanner) { clearTimeout(L.tBanner); L.tBanner = null; } if (L.ui) L.ui.banner.classList.remove("vis"); }
+
+    // ---- 1. le squadre: si toccano i nomi per spostarli ----
+    function schermoSquadre() {
+      var ui = cornice(false);
+      ui.timer.textContent = "👥";
+      ui.turno.textContent = "Le squadre";
+      var col = t.el("div", { class: "tb-colonne tb-sq-loc" }), nota = t.el("div", { class: "tb-nota" });
+      var via = tasto("", "Via ▶", function () { if (membri(0).length >= 2 && membri(1).length >= 2) comincia(); });
+      function disegna() {
+        col.innerHTML = "";
+        [0, 1].forEach(function (s) {
+          var lista = t.el("div", { class: "tb-loc-nomi" });
+          membri(s).forEach(function (p) {
+            lista.appendChild(t.el("button", { class: "tb-scelta " + (s ? "b" : "a") + (p.nome === mio ? " tu" : ""), type: "button", text: p.nome,
+              onclick: function () { p.sq = 1 - s; disegna(); } }));
+          });
+          col.appendChild(t.el("div", { class: "tb-col " + (s ? "b" : "a") }, [t.el("h3", { text: "Squadra " + SQUADRE[s] + " · " + membri(s).length }), lista]));
+        });
+        var ok = membri(0).length >= 2 && membri(1).length >= 2;
+        via.disabled = !ok;
+        nota.textContent = ok ? "Tocca un nome per cambiargli squadra." : "Ogni squadra deve avere almeno 2 persone: tocca un nome per spostarlo.";
+      }
+      ui.corpo.appendChild(t.el("div", { class: "tb-nascondi tb-loc-squadre" }, [col,
+        t.el("div", { class: "tb-sub", text: "A turno uno spiega alla sua squadra; un avversario guarda la carta e preme BUZZ." })]));
+      ui.tasti.appendChild(tasto("grigio", "🔀 A caso", function () { dividi(); disegna(); }));
+      ui.tasti.appendChild(via);
+      ui.tasti.appendChild(nota);
+      disegna();
+      t.mostra(ui.s);
+    }
+    function tasto(classe, testo, fn) {
+      return bottone(t, classe, testo, function () { if (Date.now() < (L.blocco || 0)) return; L.blocco = Date.now() + BLOCCO_MS; fn(); });
+    }
+
+    // ---- 2. i turni: le squadre si alternano, stessi turni per tutte e due; dentro la squadra si va a giro ----
+    function comincia() {
+      var turniSquadra = Math.max(membri(0).length, membri(1).length) * giri;
+      L.coda = []; for (var k = 0; k < turniSquadra * 2; k++) L.coda.push((L.prima + k) % 2);
+      L.idx = 0; L.turni = []; L.punt = [0, 0]; L.ctrl = [1, 1];   // (chi controlla non è chi spiega subito dopo: si può preparare)
+      prossimo();
+    }
+    function prossimoChi() {   // chi spiega e chi controlla nel prossimo turno (senza andare avanti)
+      if (L.idx >= L.coda.length) return null;
+      var s = L.coda[L.idx], m = membri(s), a = membri(1 - s);
+      return { sq: s, chi: m[L.punt[s] % m.length], ctrl: a[L.ctrl[1 - s] % a.length] };
+    }
+    function prossimo() {
+      var x = prossimoChi(); if (!x) return finale();
+      L.punt[x.sq]++; L.ctrl[1 - x.sq]++; L.idx++;
+      L.T = { n: L.idx, sq: x.sq, chi: x.chi, ctrl: x.ctrl, carte: [], passati: 0, carta: null, corre: false, pausa: false, combo: 0, comboMax: 0 };
+      schermoPronto();
+    }
+    function testoTurno() { return "Turno " + L.T.n + " di " + L.coda.length; }
+    function schermoPronto() {
+      var T = L.T, ui = cornice(false), compagni = membri(T.sq).filter(function (p) { return p !== T.chi; }).map(function (p) { return p.nome; });
+      ui.timer.textContent = "Pronti?";
+      ui.turno.textContent = testoTurno();
+      ui.corpo.appendChild(t.el("div", { class: "tb-nascondi" }, [
+        t.el("div", { class: "tb-sub", text: "📱 Passa il telefono a" }),
+        avatarNodo(t, omino(T.chi.nome), T.chi.nome),
+        t.el("div", { class: "tb-indovina", text: T.chi.nome }),
+        t.el("div", { class: "tb-sub", text: "Squadra " + SQUADRE[T.sq] + " · spieghi a " + elenco(compagni) }),
+        t.el("div", { class: "tb-loc-ctrl" }, [t.el("b", { text: "👀 " + T.ctrl.nome + " controlla" }),
+          t.el("span", { text: "Mettiti dietro a " + T.chi.nome + ", guarda la carta e premi BUZZ se dice una parola vietata." })])
+      ]));
+      ui.tasti.appendChild(tasto("largo", "▶ Pronti, via!", partenza));
+      ui.tasti.appendChild(t.el("div", { class: "tb-nota", text: "I compagni di " + T.chi.nome + " non guardano lo schermo!" }));
+      t.mostra(ui.s);
+    }
+
+    // ---- 3. il turno: la carta, ✅, ⏭️ e il BUZZ sullo stesso telefono ----
+    function partenza() {
+      var T = L.T, ui = cornice(true);
+      T.corre = true; T.fine = Date.now() + durata * 1000;
+      ui.turno.textContent = testoTurno() + " · 👀 " + T.ctrl.nome + " controlla";
+      ui.timer.className = "tb-timer"; ui.barra.style.visibility = "visible";
+      ui.ok = tasto("", "✅ Indovinata", function () { mossa("ok"); });
+      ui.pa = tasto("pass", "⏭️ Passo 0/" + MAX_PASSI, function () { mossa("pa"); });
+      ui.bz = tasto("buzz", "❌ BUZZ", function () { mossa("no"); });
+      ui.tasti.appendChild(ui.ok); ui.tasti.appendChild(ui.pa); ui.tasti.appendChild(ui.bz);
+      t.mostra(ui.s);
+      suono("via");
+      pesca();
+      ferma(); L.ultimoSec = -1;
+      L.tic = setInterval(tick, 200); tick();
+    }
+    function pesca() {
+      var T = L.T;
+      if (L.ic >= L.carte.length) { L.carte = mescola(carteDelLivello(livello)); L.ic = 0; }   // mazzo finito: si rimescola
+      T.carta = L.carte[L.ic++]; L.uscite.push(T.carta.p);
+      mostraCarta();
+    }
+    function cartaNodo(c) {
+      return t.el("div", { class: "tb-carta tb-entra" }, [t.el("div", { class: "tb-parola", text: c.p }),
+        t.el("div", { class: "tb-vietate" }, (c.v || []).map(function (w) { return t.el("div", { class: "tb-vietata", text: w }); })),
+        t.el("div", { class: "tb-promemoria", text: "Vietati anche: la parola stessa, un suo pezzo, i gesti" })]);
+    }
+    function mostraCarta() {   // cambia solo la carta e il tasto dei passi (niente lampeggio)
+      var T = L.T, ui = L.ui; if (!viva()) return;
+      ui.corpo.innerHTML = "";
+      if (T.pausa) {
+        ui.corpo.appendChild(t.el("div", { class: "tb-nascondi" }, [t.el("div", { class: "tb-indovina", text: "⏸️ Pausa" }), t.el("div", { class: "tb-sub", text: "Il tempo è fermo. La carta torna quando riprendete." })]));
+      } else if (T.carta) ui.corpo.appendChild(cartaNodo(T.carta));
+      ui.pa.textContent = "⏭️ Passo " + T.passati + "/" + MAX_PASSI;
+      ui.pa.disabled = T.pausa || T.passati >= MAX_PASSI;
+      ui.ok.disabled = ui.bz.disabled = T.pausa;
+      ui.pausa.textContent = T.pausa ? "▶️" : "⏸️";
+      if (T.pausa) {
+        if (!ui.riprendi) { ui.riprendi = tasto("blu largo", "▶ Riprendi", function () { pausa(); }); ui.tasti.appendChild(ui.riprendi); }
+      } else if (ui.riprendi) { ui.riprendi.remove(); ui.riprendi = null; }
+    }
+    function mossa(e) {
+      var T = L.T; if (!T || !T.corre || T.pausa || !T.carta) return;
+      if (e === "pa" && T.passati >= MAX_PASSI) return;
+      var rec = { p: T.carta.p, e: e, base: "pa" };
+      T.carte.push(rec); T.carta = null;   // (fino alla carta nuova i tocchi non contano)
+      if (e === "ok") { T.combo++; T.comboMax = Math.max(T.comboMax, T.combo); suono("giusta"); vola("✅ +1", "ok"); if (T.combo >= 5 && T.combo % 5 === 0) vibra(25); }
+      else if (e === "pa") { T.passati++; T.combo = 0; suono("passo"); vola("⏭️ Passata", "pa"); }
+      else {
+        T.combo = 0; suono("buzz"); vola("❌ −1", "no"); vibra([60, 40, 60]);
+        var c = L.ui.corpo.querySelector(".tb-carta"); if (c) { c.classList.remove("tb-entra"); c.classList.add("tb-trema"); }
+        bannerBuzz(rec);
+      }
+      segna(true);
+      if (e !== "no") return pesca();
+      setTimeout(function () { if (L.T === T && T.corre && !T.carta) pesca(); }, 380);   // dopo il BUZZ la carta trema, poi arriva la nuova
+    }
+    function bannerBuzz(rec) {
+      var b = L.ui.banner; b.innerHTML = ""; b.classList.remove("verde");
+      b.appendChild(t.el("b", { text: "🚨 BUZZ!" }));
+      b.appendChild(t.el("small", { text: "Parola vietata · carta: " + rec.p }));
+      b.appendChild(tasto("", "↩️ Annulla BUZZ", function () {
+        if (rec.e !== "no") return;
+        rec.e = "nu"; rec.base = "nu"; rec.ico = "↩️"; segna(true); suono("via");
+        nascondiBanner();
+      }));
+      b.classList.add("vis");
+      if (L.tBanner) clearTimeout(L.tBanner);
+      L.tBanner = setTimeout(nascondiBanner, ANNULLA_MS);
+    }
+    function pausa() {
+      var T = L.T; if (!T || !T.corre) return;
+      if (!T.pausa) { T.resta = Math.max(0, T.fine - Date.now()); T.pausa = true; nascondiBanner(); }
+      else { T.pausa = false; T.fine = Date.now() + T.resta; }
+      mostraCarta(); tick();
+    }
+    function tick() {
+      var T = L.T, ui = L.ui;
+      if (!T || !T.corre) return;
+      if (!viva()) { ferma(); return; }   // usciti dal gioco: l'orologio si spegne
+      var rest = T.pausa ? T.resta : Math.max(0, T.fine - Date.now()), sec = Math.ceil(rest / 1000);
+      ui.timer.textContent = T.pausa ? "⏸️" : String(sec);
+      ui.barraI.style.transform = "scaleX(" + Math.max(0, Math.min(1, rest / (durata * 1000))).toFixed(4) + ")";
+      ui.barra.classList.toggle("rossa", sec <= 10);
+      if (!T.pausa && sec <= 5 && sec > 0 && sec !== L.ultimoSec) suono("tic");
+      L.ultimoSec = sec;
+      if (!T.pausa && rest <= 0) tempoScaduto();
+    }
+    function tempoScaduto() {
+      var T = L.T; T.corre = false; ferma(); nascondiBanner();
+      if (T.carta) T.carte.push({ p: T.carta.p, e: "nu", base: "nu", ico: "⏰" });   // la carta allo scadere: se l'avevano detta in tempo, si corregge
+      T.carta = null;
+      segnaViste(L.uscite); L.uscite = [];
+      suono("gong"); vola("⏰ Tempo!", "pa");
+      var ui = L.ui; ui.ok.disabled = ui.pa.disabled = ui.bz.disabled = true; ui.timer.textContent = "0";
+      L.turni.push(T);
+      setTimeout(function () { if (L.T === T && viva()) schermoRiepilogo(); }, 1100);
+    }
+
+    // ---- 4. com'è andato il turno: le carte si toccano per correggerle ----
+    function schermoRiepilogo() {
+      var T = L.T, ui = cornice(false), dopo = prossimoChi();
+      ui.timer.textContent = dopo ? "⏰" : "🏁";
+      ui.turno.textContent = testoTurno() + (dopo ? "" : " · l'ultimo!");
+      var em = t.el("em"), box = t.el("div", { class: "tb-riep" }, [t.el("h3", {}, [t.el("span", { text: T.chi.nome + " · Squadra " + SQUADRE[T.sq] }), em])]);
+      var chips = t.el("div", { class: "tb-chips" });
+      function delta() { var d = 0; T.carte.forEach(function (c) { if (c.e === "ok") d++; else if (c.e === "no") d--; }); em.textContent = (d > 0 ? "+" : "") + d; }
+      function testoChip(c) { return (c.e === "nu" ? (c.ico || "⏰") : ICONE[c.e]) + " " + c.p; }
+      var max = window.innerHeight < 700 ? 16 : 24;
+      if (!T.carte.length) chips.appendChild(t.el("span", { class: "tb-chip altre", text: "Nessuna carta in questo turno" }));
+      T.carte.slice(-max).forEach(function (c) {
+        var b = t.el("button", { class: "tb-chip " + c.e, type: "button", text: testoChip(c), onclick: function () {
+          var giro = ["ok", "no", c.base || "pa"], i = giro.indexOf(c.e);
+          c.e = giro[(i + 1) % giro.length]; b.className = "tb-chip " + c.e; b.textContent = testoChip(c);
+          delta(); segna(true);
+        } });
+        chips.appendChild(b);
+      });
+      if (T.carte.length > max) chips.insertBefore(t.el("span", { class: "tb-chip altre", text: "+" + (T.carte.length - max) + " prima" }), chips.firstChild);
+      box.appendChild(chips);
+      if (T.carte.length) box.appendChild(t.el("div", { class: "tb-promemoria tb-loc-corr", text: "Sbagliato un tocco? Tocca una carta per correggerla (✅ → ❌ → ⏭️)." }));
+      delta(); ui.corpo.appendChild(box);
+      if (dopo) {
+        ui.corpo.appendChild(t.el("div", { class: "tb-prossimo" }, [avatarNodo(t, omino(dopo.chi.nome), dopo.chi.nome),
+          t.el("div", {}, [t.el("b", { text: "Ora tocca a " + dopo.chi.nome }), t.el("span", { text: "Squadra " + SQUADRE[dopo.sq] + " · 👀 controlla " + dopo.ctrl.nome })])]));
+        ui.tasti.appendChild(tasto("largo", "Avanti ▶", prossimo));
+      } else {
+        ui.corpo.appendChild(t.el("div", { class: "tb-prossimo" }, [t.el("div", {}, [t.el("b", { text: "🏁 Turni finiti!" }), t.el("span", { text: "Controllate le carte, poi vediamo chi ha vinto." })])]));
+        ui.tasti.appendChild(tasto("largo", "🏆 Chi ha vinto?", finale));
+      }
+      t.mostra(ui.s);
+    }
+
+    // ---- 5. la fine: la squadra che vince, i premi, poi la classifica del core ----
+    function finale() {
+      ferma(); L.finita = true;
+      var p = punti(), win = p[0] === p[1] ? -1 : (p[0] > p[1] ? 0 : 1), ui = cornice(false);
+      ui.timer.textContent = "Fine"; ui.turno.textContent = "";
+      // i premi (contati dopo le correzioni)
+      var spieg = {}, serie = null;
+      L.turni.forEach(function (T) {
+        var n = T.carte.filter(function (c) { return c.e === "ok"; }).length;
+        spieg[T.chi.k] = (spieg[T.chi.k] || 0) + n;
+        var cc = 0, mx = 0; T.carte.forEach(function (c) { if (c.e === "ok") { cc++; mx = Math.max(mx, cc); } else if (c.e !== "nu") cc = 0; });
+        if (mx >= 3 && (!serie || mx > serie.n)) serie = { nome: T.chi.nome, n: mx };
+      });
+      var best = null; gio.forEach(function (g) {
+        var n = spieg[g.k] || 0; if (n <= 0) return;
+        if (!best || n > best.n) best = { nome: g.nome, n: n, pari: [g.nome] }; else if (n === best.n) best.pari.push(g.nome);
+      });
+      if (best && best.pari.length > 1) best = best.pari.length === 2 ? { nome: elenco(best.pari), n: best.n } : null;   // a pari: due nomi, se di più niente premio
+      var premi = [];
+      if (best) premi.push("🎙️ Miglior spiegatore: " + best.nome + " (" + best.n + (best.n === 1 ? " carta" : " carte") + ")");
+      if (serie) premi.push("🔥 Serie più lunga: " + serie.nome + " (" + serie.n + " di fila)");
+      var col = t.el("div", { class: "tb-colonne" });
+      [0, 1].forEach(function (s) {
+        var gente = t.el("div", { class: "tb-gente" });
+        membri(s).forEach(function (g) { gente.appendChild(t.el("div", {}, [avatarNodo(t, omino(g.nome), g.nome, "piccolo"), t.el("small", { text: g.nome })])); });
+        col.appendChild(t.el("div", { class: "tb-col " + (s ? "b" : "a") + (win === s ? " vince" : "") }, [t.el("h3", { text: "Squadra " + SQUADRE[s] }), t.el("div", { class: "tb-pt", text: String(p[s]) }), gente]));
+      });
+      ui.corpo.appendChild(t.el("div", { class: "tb-fine" }, [t.el("h1", { text: win < 0 ? "Pareggio! 🤝" : "Squadra " + SQUADRE[win] + " vince! 🏆" }),
+        t.el("p", { text: win < 0 ? "Stessi punti: siete pari." : "Bravissimi: " + elenco(membri(win).map(function (g) { return g.nome; })) + "!" }), col]
+        .concat(premi.length ? [t.el("div", { class: "tb-premi" }, premi.map(function (x) { return t.el("div", { text: x }); }))] : [])));
+      // la classifica per il core (Serata a punti): la squadra che vince al primo posto
+      var primi = win < 0 ? gio.length : membri(win).length;
+      var cl = gio.map(function (g) { return { nome: g.nome, punti: p[g.sq], pos: (win < 0 || g.sq === win) ? 1 : primi + 1 }; }).sort(function (a, b) { return a.pos - b.pos; });
+      ui.tasti.appendChild(tasto("largo", "Classifica 🏆", function () { t.fine(cl); }));
+      t.mostra(ui.s);
+      suono("fanfara"); if (win >= 0) vibra([30, 40, 30]);
+      salvaLocale(win);
+    }
+    // i trofei di chi ha il profilo (se gioca anche lui su questo telefono)
+    function salvaLocale(win) {
+      if (imp.prova || !mio) return;
+      if (!(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
+      var me = gio.filter(function (g) { return g.nome === mio; })[0]; if (!me) return;
+      var x = { partite: 1, turniSpiegati: 0, carteIndovinate: 0, cartePassate: 0, turniPositivi: 0, vittorie: win >= 0 && me.sq === win ? 1 : 0 }, combo = 0, esiti = [];
+      L.turni.forEach(function (T) {
+        if (T.chi !== me) return;
+        var ok = 0, no = 0, cc = 0;
+        x.turniSpiegati++;
+        T.carte.forEach(function (c) {
+          if (c.e === "ok") { ok++; cc++; combo = Math.max(combo, cc); } else { if (c.e === "no") no++; if (c.e === "pa") x.cartePassate++; if (c.e !== "nu") cc = 0; }
+        });
+        x.carteIndovinate += ok; if (ok > no) x.turniPositivi++;
+        esiti.push(ok > no);
+      });
+      var s0 = SGNube.statGioco ? (SGNube.statGioco("taboo") || {}) : {}, serie = s0.serieTurniPositiviOra || 0, serieMax = 0;
+      esiti.forEach(function (b) { serie = b ? serie + 1 : 0; serieMax = Math.max(serieMax, serie); });
+      var incr = []; Object.keys(x).forEach(function (k) { if (x[k] > 0) incr.push([k, x[k]]); });
+      try { SGNube.salvaProgressi(null, "taboo", incr, [["comboCarteMax", combo], ["serieTurniPositiviMax", serieMax]], [["serieTurniPositiviOra", serie]]); } catch (e) {}
+    }
+
+    if (gio.length < MIN) {   // (il core ne chiede già 4: qui per sicurezza)
+      var s = t.schermata({ icona: "🤐", titolo: "Taboo" });
+      s._contenuto.appendChild(t.el("p", { class: "modulo-nota", text: "Servono almeno 4 persone: due squadre da 2." }));
+      s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci })); t.mostra(s);
+      return;
+    }
+    dividi();
+    schermoSquadre();
+  }
+
   function impostazioni(box, dove, aiuti) {
     dove.tempo = Number(dove.tempo) || 90; dove.giri = Number(dove.giri) || 1; dove.carte = Number(dove.carte) || 2;
     var el = aiuti.el;
@@ -853,8 +1211,9 @@
 
   SG.registra({
     id: "taboo", nome: "Taboo", icona: "🤐",
-    descrizione: "Spiega la parola senza dire quelle vietate. Si gioca tutti nella stessa stanza, ognuno col proprio telefono.",
-    giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1, modi: [], soloOnline: true,
+    descrizione: "Spiega la parola senza dire quelle vietate! Su un telefono solo che passa di mano, o online ognuno col suo.",
+    giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1,
+    modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Chi spiega tiene il telefono, un avversario guarda e preme BUZZ", amici: true, min: MIN }],
     postiOnline: MAX,   // posti online (16)
     // le regole in una riga, per la saletta: "90 secondi a turno · 1 giro · carte miste"
     riassunto: function (imp) {
@@ -866,10 +1225,11 @@
     regole: [
       "Fate due squadre. A turno, una persona spiega la parola alla propria squadra senza pronunciare le cinque parole vietate.",
       "Vietati anche la parola stessa o un suo pezzo, i gesti, i suoni («fa bau bau») e le parole in altre lingue.",
-      "Chi spiega vede la carta; la squadra avversaria la vede e può premere <b>BUZZ</b>. I compagni vedono solo il tempo e chi spiega.",
-      "Ogni parola indovinata vale <b>+1</b>. Ogni BUZZ toglie <b>1 punto</b> (chi spiega o l'host possono annullarlo se è sbagliato). Si possono saltare al massimo <b>3 carte per turno</b>, senza perdere punti.",
+      "<b>Su questo telefono</b>: chi spiega tiene il telefono e un avversario si mette dietro di lui, guarda la carta e preme <b>BUZZ</b>. I compagni non guardano lo schermo. A fine turno si tocca una carta per correggerla (anche quella detta proprio allo scadere ⏰).",
+      "<b>Online</b>: ognuno col suo telefono. Chi spiega vede la carta; la squadra avversaria la vede e può premere <b>BUZZ</b>. I compagni vedono solo il tempo e chi spiega.",
+      "Ogni parola indovinata vale <b>+1</b>. Ogni BUZZ toglie <b>1 punto</b> (se è sbagliato si annulla entro 5 secondi: online lo fanno chi spiega o l'host). Si possono saltare al massimo <b>3 carte per turno</b>, senza perdere punti.",
       "Le squadre si alternano e ogni squadra ha gli stessi turni. Il tempo parte quando chi spiega tocca «Pronti, via!».",
-      "L'host sceglie il tempo, quanti giri fare e le carte (facili, miste o difficili). Vince la squadra con più punti."
+      "Prima di cominciare si sceglie il tempo, quanti giri fare e le carte (facili, miste o difficili). Vince la squadra con più punti."
     ],
     impostazioni: impostazioni,
     avvia: avvia

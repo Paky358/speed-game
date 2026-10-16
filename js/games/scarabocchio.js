@@ -126,6 +126,35 @@
   }
   var FACILI = leggiParole(FACILI_TESTO), DIFFICILI = leggiParole(DIFFICILI_TESTO);
 
+  // ---------- «📝 Le nostre parole»: quelle del gruppo (nomi di amici, posti, battute) ----------
+  // Le scrive l'host nelle regole e restano sul suo profilo (SG.listaProfilo("scarabocchio")).
+  // Una voce = la parola da disegnare; dopo "/" gli altri modi di dirla che valgono uguale ("Peppe/Giuseppe").
+  var MAX_NOSTRE = 300, MAX_LUNGA = 24;
+  function chiaveNostra(v) { return norm(String(v || "").split("/")[0]).replace(/ /g, ""); }
+  function pulisciNostra(v) {
+    var alt = String(v || "").replace(/[’`´]/g, "'").split("/").map(function (w) { return w.replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim(); }).filter(Boolean);
+    if (!alt.length) return null;
+    var visti = {}, ok = [];
+    for (var i = 0; i < alt.length; i++) {
+      var w = alt[i], k = norm(w).replace(/ /g, "");
+      if (w.length > MAX_LUNGA || !/^[A-Za-zÀ-ÖØ-öø-ÿ' ]+$/.test(w) || k.length < 2) return null;   // solo lettere (anche accentate), spazi e apostrofi
+      if (!visti[k]) { visti[k] = 1; ok.push(w); }
+    }
+    return ok.slice(0, 4).join("/");
+  }
+  function leggiNostre(lista) {
+    var out = [], visti = {};
+    (Array.isArray(lista) ? lista : []).forEach(function (v) {
+      var p = pulisciNostra(v); if (!p || out.length >= MAX_NOSTRE) return;
+      var k = chiaveNostra(p); if (visti[k]) return;
+      visti[k] = 1; out.push(p);
+    });
+    return out;
+  }
+  // "mix" = mescolate (una delle 3 scelte è vostra), "solo" = solo le vostre, "no" = solo quelle del gioco
+  function modoNostre(imp, n) { var m = imp && imp.nostreModo; if (m === "mix" || m === "solo" || m === "no") return m; return n ? "mix" : "no"; }
+  function nostreDelProfilo() { try { return leggiNostre(window.SG && SG.listaProfilo ? SG.listaProfilo("scarabocchio") : []); } catch (e) { return []; } }
+
   // ---------- costanti ----------
   var LW = 1000, LH = 1200;                                    // la lavagna "logica", un po' più alta che larga (sta meglio sul telefono): i punti viaggiano in queste coordinate
   // i colori principali (l'ultimo, bianco, è la gomma)
@@ -202,7 +231,8 @@
     return r[b.length];
   }
   // le risposte buone per una parola (lei e i sinonimi), senza spazi
-  function risposte(parola) { return [parola].concat(SINONIMI[parola] || []).map(function (w) { return norm(w).replace(/ /g, ""); }); }
+  // alt = gli altri modi di dirla scritti dall'host («Le nostre parole»: "Peppe/Giuseppe")
+  function risposte(parola, alt) { return [parola].concat(SINONIMI[parola] || [], alt || []).map(function (w) { return norm(w).replace(/ /g, ""); }); }
   // singolare <-> plurale: cambia solo la fine (gatto/gatti, mela/mele, fiore/fiori, granchio/granchi, fungo/funghi)
   function varianti(w) {
     var n = w.length, a = w.slice(0, -1), u = w[n - 1], out = [];
@@ -225,8 +255,8 @@
     return out;
   }
   // "giusta" se la parola (o un sinonimo, o il plurale) è nel messaggio, anche dentro una frase; "quasi" se ci manca poco
-  function controlla(x, parola) {
-    var rr = risposte(parola), pp = pezzi(x), i, j;
+  function controlla(x, parola, alt) {
+    var rr = risposte(parola, alt), pp = pezzi(x), i, j;
     for (i = 0; i < pp.length; i++) for (j = 0; j < rr.length; j++) if (pp[i] === rr[j] || plurale(pp[i], rr[j])) return "giusta";
     for (i = 0; i < pp.length; i++) for (j = 0; j < rr.length; j++) {
       var g = pp[i], r = rr[j];
@@ -298,6 +328,17 @@
       ".sb-parola{font-size:clamp(1.4rem,7vw,2.1rem);font-weight:900;color:#ffe066;text-transform:uppercase;letter-spacing:.04em;line-height:1.1}",
       ".sb-scelte{display:flex;flex-direction:column;gap:8px;width:min(320px,92%)}",
       ".sb-scelte button{border:0;border-radius:14px;padding:11px;font:inherit;font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,#ffe066,#f4b011);color:#3a2a00;cursor:pointer;text-transform:capitalize}",
+      ".sb-scelte button .sb-nostra{font-size:.85em;margin-left:6px}",
+      ".sb-scelte button.nostra{background:linear-gradient(135deg,#b2f2bb,#51cf66);color:#0b3a17}",
+      // «📝 Le nostre parole» nelle regole: una alla volta, ognuna con la sua ✕
+      ".sb-agg{display:flex;gap:6px;align-items:center}.sb-agg .link-campo{flex:1;min-width:0;margin:0}",
+      ".sb-esito{min-height:1.2em;margin:4px 0 0}",
+      ".sb-conta{font-size:.8rem;font-weight:800;opacity:.85;margin:6px 0 4px}",
+      ".sb-lista{display:flex;flex-wrap:wrap;gap:6px}",
+      ".sb-pw{display:inline-flex;align-items:center;gap:4px;padding:4px 4px 4px 10px;border-radius:999px;background:rgba(255,255,255,.12);font-weight:800;font-size:.85rem;max-width:100%}",
+      ".sb-pw>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".sb-x{flex:0 0 auto;width:24px;height:24px;border:0;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font:inherit;font-size:.75rem;font-weight:900;cursor:pointer;touch-action:manipulation}",
+      ".sb-lista-tasti{display:flex;gap:6px;margin-top:8px}",
       ".sb-righe{font-size:.9rem;line-height:1.45}",
       ".sb-righe b{color:#8ce99a}",
       ".sb-fig{width:64px;height:64px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.12)}",
@@ -704,7 +745,7 @@
       if (puoi !== primaPuoi || cambiato || faccineMosse) misura();   // gli strumenti (o le faccine) prendono più posto delle figurine: rifaccio le misure
       aggGente(vm);
       // sopra la lavagna
-      var chiaveS = vm.fase + "|" + vm.turno + "|" + (dis ? (priv.opzioni || []).join(",") : "") + "|" + (vm.fase === "punti" ? JSON.stringify(vm.ultimo) : "");
+      var chiaveS = vm.fase + "|" + vm.turno + "|" + (dis ? (priv.opzioni || []).join(",") + "/" + (priv.nostre || []).join(",") : "") + "|" + (vm.fase === "punti" ? JSON.stringify(vm.ultimo) : "");
       if (chiaveS !== chiaveSopra) { chiaveSopra = chiaveS; disegnaSopra(vm, dis, priv); }
       // la chat e il campo per scrivere (chi disegna non scrive, neanche mentre sceglie)
       aggChat(vm);
@@ -727,10 +768,15 @@
         if (dis) {
           sopra.appendChild(el("div", { class: "sb-tit", text: "Tocca a te! Scegli cosa disegnare" }));
           var sc = el("div", { class: "sb-scelte" });
-          (priv.opzioni || []).forEach(function (w, i) { sc.appendChild(el("button", { text: w, onclick: function () { cb.onScegli(i); } })); });
+          var nostre = priv.nostre || [];   // quali delle 3 sono parole vostre («📝 Le nostre parole»)
+          (priv.opzioni || []).forEach(function (w, i) {
+            var b = el("button", { class: nostre.indexOf(i) >= 0 ? "nostra" : "", text: w, onclick: function () { cb.onScegli(i); } });
+            if (nostre.indexOf(i) >= 0) b.appendChild(el("span", { class: "sb-nostra", "aria-label": "parola vostra", text: "📝" }));
+            sc.appendChild(b);
+          });
           if (!(priv.opzioni || []).length) sc.appendChild(el("div", { class: "sb-tit", text: "…" }));
           sopra.appendChild(sc);
-          sopra.appendChild(el("div", { class: "sb-righe", text: "Gli altri non vedono la parola: disegnala senza scrivere!" }));
+          sopra.appendChild(el("div", { class: "sb-righe", text: (nostre.length ? "📝 = una parola vostra. " : "") + "Gli altri non vedono la parola: disegnala senza scrivere!" }));
         } else {
           var cfg = omini[vm.disegnatore];
           if (cfg && window.SGOmino) sopra.appendChild(el("div", { class: "sb-fig", html: SGOmino.svg(cfg) }));
@@ -739,7 +785,7 @@
         }
       } else if (vm.fase === "punti" && vm.ultimo) {
         sopra.hidden = false;
-        sopra.appendChild(el("div", { class: "sb-tit", text: vm.ultimo.tutti ? "Avete indovinato tutti! 🎉" : "La parola era" }));
+        sopra.appendChild(el("div", { class: "sb-tit", text: (vm.ultimo.tutti ? "Avete indovinato tutti! 🎉" : "La parola era") + (vm.ultimo.nostra ? " · 📝 una parola vostra" : "") }));
         sopra.appendChild(el("div", { class: "sb-parola", text: vm.ultimo.parola }));
         var righe = (vm.ultimo.righe || []).map(function (r) { return esc(r.id === io ? "Tu" : r.nome) + " <b>+" + fmtN(r.pts) + "</b>" + (r.dis ? " ✏️" : ""); });
         sopra.appendChild(el("div", { class: "sb-righe", html: righe.length ? righe.join(" · ") : "Nessuno l'ha indovinata 😅" }));
@@ -795,7 +841,8 @@
     var info = el("div", {}, [
       el("div", { class: "etichetta", text: "Si gioca così" }),
       el("p", { class: "modulo-nota", style: "margin-top:2px", text: "✏️ " + vm.giri + (vm.giri === 1 ? " giro (ognuno disegna una volta)" : " giri (ognuno disegna " + vm.giri + " volte)") +
-        " · ⏱ " + vm.secondi + " secondi a disegno · " + (vm.difficili ? "🤔 parole anche difficili" : "🙂 parole facili") })
+        " · ⏱ " + vm.secondi + " secondi a disegno · " + (vm.difficili ? "🤔 parole anche difficili" : "🙂 parole facili") +
+        (vm.nostre ? " · 📝 " + fmtN(vm.nostre) + (vm.nostre === 1 ? " parola vostra" : " parole vostre") + (vm.nostreModo === "solo" ? " (solo quelle)" : " (mescolate)") : "") })
     ]);
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2,
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
@@ -879,8 +926,21 @@
       giro: 0, idx: -1, ordine: [], turno: 0, disegnatore: null, parola: null, opzioni: null, usate: {},
       scadenza: 0, indovinati: [], scoperte: [], guad: {}, tratti: [], chat: [], nMsg: 0, ultimo: null, classifica: null, to: null, toInd: [],
       partitaId: null, statGiocatori: Object.create(null), paroleDifficiliDisegnate: 0, prossimi: [], perche: null, cestino: null, disegnato: false,
-      guardano: [] };   // chi non è tra chi gioca (scelti nella Sala): guarda il disegno e la chat, non gioca
+      guardano: [],   // chi non è tra chi gioca (scelti nella Sala): guarda il disegno e la chat, non gioca
+      nostre: [], alt: Object.create(null), nostreModo: "no", opzNostre: [], parolaNostra: false };   // «📝 Le nostre parole» (solo l'host le conosce)
     var vista = null;
+    // le parole del gruppo: quelle delle regole (o, se non ci sono, quelle salvate sul profilo dell'host)
+    function preparaNostre(lista, modo) {
+      H.nostre = []; H.alt = Object.create(null);
+      leggiNostre(lista).forEach(function (v) {
+        var a = v.split("/");
+        if (H.nostre.indexOf(a[0]) >= 0) return;
+        H.nostre.push(a[0]); if (a.length > 1) H.alt[a[0]] = a.slice(1);
+      });
+      H.nostreModo = H.nostre.length ? (modo === "solo" || modo === "mix" ? modo : "no") : "no";
+    }
+    var nostre0 = Array.isArray(imp.nostre) ? imp.nostre : nostreDelProfilo();
+    preparaNostre(nostre0, modoNostre(imp, nostre0.length));
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function statP(id) { return H.statGiocatori[id] || (H.statGiocatori[id] = statVuoteScara()); }
     function presenti() { return H.players.filter(function (p) { return !p.via; }); }
@@ -893,6 +953,8 @@
     t.onRegole = function (im) {
       if (H.fase !== "lobby") return;
       H.secondi = im.secondi || 80; H.giri = im.giri || 2; H.difficili = !!im.difficili;
+      var l = Array.isArray(im.nostre) ? im.nostre : nostreDelProfilo();
+      preparaNostre(l, modoNostre(im, l.length));
       bd();
     };
     t.onRivincita = function () { if (H.fase === "fine") nuova(); };   // la Rivincita: tutti di nuovo nella saletta
@@ -971,7 +1033,7 @@
     }
     function sa(id) { return H.fase === "disegno" && H.indovinati.indexOf(id) >= 0; }   // ha indovinato la parola di questo turno?
     function priv() {   // quello che vedo solo io: la parola se disegno (o se l'ho indovinata), le 3 scelte
-      if (H.disegnatore === "host") return { parola: H.parola, opzioni: H.fase === "scelta" ? H.opzioni : null };
+      if (H.disegnatore === "host") return { parola: H.parola, opzioni: H.fase === "scelta" ? H.opzioni : null, nostre: H.fase === "scelta" ? H.opzNostre : null };
       if (sa("host")) return { parola: H.parola };
       return null;
     }
@@ -979,6 +1041,7 @@
     function vm() {
       var o = { fase: H.fase, codice: H.codice, pronta: H.pronta, giro: H.giro, giri: H.giri, secondi: H.secondi, difficili: H.difficili,
         turno: H.turno, disegnatore: H.disegnatore, chat: H.chat.slice(), partitaId: H.partitaId,
+        nostre: H.nostreModo !== "no" ? H.nostre.length : 0, nostreModo: H.nostreModo,   // quante parole vostre (le parole no: le sa solo l'host)
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, via: !!p.via, ok: H.indovinati.indexOf(p.id) >= 0, omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }) };
       if (H.fase === "scelta" || H.fase === "disegno") o.rimMs = Math.max(0, H.scadenza - Date.now());
       if (H.fase === "disegno") o.indizio = maschera(H.parola, H.scoperte);
@@ -1012,15 +1075,26 @@
       H.chat = []; H.usate = {}; H.classifica = null; H.perche = null; H.prossimi = []; H.partitaId = nuovaPartitaScara(); H.statGiocatori = Object.create(null); H.paroleDifficiliDisegnate = 0;
       H.players.forEach(function (p) { H.statGiocatori[p.id] = statVuoteScara(); });
       msg("sys", "🎨 Si comincia! Chi disegna non può scrivere, gli altri indovinano in chat.");
+      if (H.nostreModo === "solo") msg("sys", "📝 Si gioca con le vostre parole!");
+      else if (H.nostreModo === "mix") msg("sys", "📝 In mezzo ci sono anche le vostre parole!");
       prossimoTurno();
     }
+    // le 3 parole tra cui scegliere. Con «Le nostre parole»: mescolate = una delle 3 è vostra, solo = tutte e 3 vostre
+    // (se ne avete scritte meno di 3, le altre sono del gioco); finite le vostre, si ricomincia da capo
     function pesca() {
       var pool = FACILI.filter(function (w) { return !H.usate[w]; }), dif = DIFFICILI.filter(function (w) { return !H.usate[w]; });
-      if (pool.length < 3) { H.usate = {}; pool = FACILI.slice(); dif = DIFFICILI.slice(); }
-      var scelte = [];
-      function una(lista) { var w; do { w = aCaso(lista); } while (scelte.indexOf(w) >= 0); scelte.push(w); }
-      una(pool); una(pool);
-      una(H.difficili && dif.length ? dif : pool);   // con le parole difficili: 2 facili e 1 difficile
+      if (pool.length < 3) { FACILI.concat(DIFFICILI).forEach(function (w) { delete H.usate[w]; }); pool = FACILI.slice(); dif = DIFFICILI.slice(); }
+      var scelte = [], daNostre = [], nostre = [];
+      if (H.nostreModo !== "no") {
+        nostre = H.nostre.filter(function (w) { return !H.usate[w]; });
+        if (nostre.length < (H.nostreModo === "solo" ? 3 : 1)) { H.nostre.forEach(function (w) { delete H.usate[w]; }); nostre = H.nostre.slice(); }
+      }
+      function una(lista) { lista = lista.filter(function (w) { return scelte.indexOf(w) < 0; }); if (!lista.length) return null; var w = aCaso(lista); scelte.push(w); return w; }
+      var quanteN = H.nostreModo === "solo" ? Math.min(3, nostre.length) : (H.nostreModo === "mix" && nostre.length ? 1 : 0);
+      for (var i = 0; i < quanteN; i++) { var w = una(nostre); if (w) daNostre.push(w); }
+      while (scelte.length < 3) if (!una(scelte.length === 2 && H.difficili && dif.length ? dif : pool)) una(FACILI);   // con le parole difficili: l'ultima è difficile
+      for (var j = scelte.length - 1; j > 0; j--) { var k = Math.floor(Math.random() * (j + 1)), x = scelte[j]; scelte[j] = scelte[k]; scelte[k] = x; }   // in ordine a caso
+      H.opzNostre = []; scelte.forEach(function (w, n) { if (daNostre.indexOf(w) >= 0) H.opzNostre.push(n); });
       return scelte;
     }
     function prossimoTurno() {
@@ -1032,19 +1106,19 @@
         var d = pById(H.ordine[H.idx]); if (d && !d.via) break;
       }
       H.turno++; H.disegnatore = H.ordine[H.idx];
-      H.opzioni = pesca(); H.parola = null; H.tratti = []; H.q = 0; H.indovinati = []; H.scoperte = []; H.guad = {}; H.ultimo = null;
+      H.opzioni = pesca(); H.parola = null; H.parolaNostra = false; H.tratti = []; H.q = 0; H.indovinati = []; H.scoperte = []; H.guad = {}; H.ultimo = null;
       H.cestino = null; H.disegnato = false; H.corti = false;
       H.attesi = Math.max(1, presenti().length - 1);   // quanti possono indovinare in questo turno
       H.fase = "scelta"; H.scadenza = Date.now() + SCELTA_MS;
       bd();
-      privato(H.disegnatore, { t: "priv", opzioni: H.opzioni });
+      privato(H.disegnatore, { t: "priv", opzioni: H.opzioni, nostre: H.opzNostre });
       H.to = setTimeout(function () { scegli(H.disegnatore, Math.floor(Math.random() * 3)); }, SCELTA_MS);
     }
     function scegli(id, i) {
       if (H.fase !== "scelta" || id !== H.disegnatore) return;
       i = intIn(i, 2);
       ferma();
-      H.parola = H.opzioni[i]; H.usate[H.parola] = 1;
+      H.parola = H.opzioni[i]; H.usate[H.parola] = 1; H.parolaNostra = H.opzNostre.indexOf(i) >= 0;
       statP(id).turniDisegnati++;
       if (DIFFICILI.indexOf(H.parola) >= 0) { statP(id).paroleDifficiliDisegnate++; H.paroleDifficiliDisegnate++; }
       H.fase = "disegno"; H.scadenza = Date.now() + H.secondi * 1000;
@@ -1084,7 +1158,7 @@
           H.indovinati.concat([H.disegnatore]).forEach(function (q) { var pq = pById(q); if (pq && !pq.via) privato(q, { t: "sa", id: m.id, nome: m.nome, x: m.x }); });
           return;
         }
-        var esito = controlla(x, H.parola);   // la parola può essere anche dentro una frase ("è un gatto!")
+        var esito = controlla(x, H.parola, H.parolaNostra ? H.alt[H.parola] : null);   // la parola può essere anche dentro una frase ("è un gatto!")
         if (esito === "giusta") return indovina(p);
         if (esito === "quasi") { statP(id).quasi++; return privato(id, { t: "quasi", x: x }); }   // "ci sei quasi" lo sa solo lui: agli altri non si svela niente
       }
@@ -1144,7 +1218,7 @@
         if (gi > H.giri) break;
         var q = pById(H.ordine[ix]); if (q && !q.via) { prossimo = q; break; }
       }
-      H.ultimo = { parola: parola, righe: righe, tutti: motivo === "tutti", prossimo: prossimo ? prossimo.id : null, prossimoNome: prossimo ? prossimo.nome : null };
+      H.ultimo = { parola: parola, righe: righe, tutti: motivo === "tutti", nostra: !!H.parolaNostra, prossimo: prossimo ? prossimo.id : null, prossimoNome: prossimo ? prossimo.nome : null };
       H.fase = "punti"; H.parola = parola;
       bd();
       H.to = setTimeout(prossimoTurno, PUNTI_MS);
@@ -1218,7 +1292,7 @@
     function sync(id) {
       if (!pById(id) && H.guardano.indexOf(id) < 0) return;
       rete.inviaVeloce({ t: "disegno", to: id, turno: H.turno, q: H.q || 0, tratti: H.fase === "disegno" ? H.tratti : [], omini: mappaOmini() });
-      if (id === H.disegnatore) privato(id, H.fase === "scelta" ? { t: "priv", opzioni: H.opzioni } : { t: "priv", parola: H.parola });
+      if (id === H.disegnatore) privato(id, H.fase === "scelta" ? { t: "priv", opzioni: H.opzioni, nostre: H.opzNostre } : { t: "priv", parola: H.parola });
       else if (sa(id)) privato(id, { t: "priv", parola: H.parola });   // l'aveva già indovinata
     }
 
@@ -1343,7 +1417,7 @@
           else if (m.t === "sa") S.vista.sa(m);
           else if (m.t === "priv") {
             if (S.priv.turno !== m.n) S.priv = { turno: m.n, parola: null, opzioni: null };
-            if (m.opzioni) S.priv.opzioni = m.opzioni;
+            if (m.opzioni) { S.priv.opzioni = m.opzioni; S.priv.nostre = Array.isArray(m.nostre) ? m.nostre : null; }
             if (m.parola) S.priv.parola = m.parola;
             if (S.vm) S.vista.aggiorna(S.vm, privDi(S.vm));
           }
@@ -1392,25 +1466,100 @@
       "Quando ha indovinato più di metà del gruppo, restano <b>20 secondi</b>. Chi ha già indovinato vede la parola e può chiacchierare con chi la sa.",
       "Chi disegna ha 12 colori, la gomma, 3 grandezze e il <b>secchiello</b> per riempire una zona chiusa con un tocco. Il cestino si può annullare.",
       "Il tempo è poco: mentre passa si scoprono alcune lettere della parola. Chi disegna non può scrivere lettere o parole sulla lavagna!",
+      "📝 <b>Le nostre parole</b>: nelle regole (⚙️) l'host può scrivere le parole del vostro gruppo (nomi di amici, posti, battute). Restano salvate sul suo profilo e si giocano <b>mescolate</b> alle altre (una delle 3 scelte è vostra, col 📝) o <b>solo quelle</b>.",
       "Dopo tutti i giri vince chi ha <b>più punti</b>."
     ],
+    // la riga "📜 Si gioca così" della saletta
+    riassunto: function (imp) {
+      imp = imp || {};
+      var n = Array.isArray(imp.nostre) ? leggiNostre(imp.nostre).length : 0, m = modoNostre(imp, n);
+      return (imp.secondi || 80) + " secondi · " + (imp.giri || 2) + ((imp.giri || 2) === 1 ? " giro" : " giri") + " · " + (imp.difficili ? "anche parole difficili" : "parole facili") +
+        (n && m !== "no" ? " · 📝 " + fmtN(n) + (n === 1 ? " parola vostra" : " parole vostre") + (m === "solo" ? " (solo quelle)" : " (mescolate)") : "");
+    },
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
+      iniettaCSS();
       dove.modo = "online"; dove.secondi = 80; dove.giri = 2; dove.difficili = false;
-      function riga(titolo, valori, chiave) {
+      function riga(titolo, valori, chiave, nota) {
         box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: titolo }));
-        var g = el("div", { class: "modo-griglia", style: "grid-template-columns:repeat(" + valori.length + ",1fr)" });
+        var g = el("div", { class: "modo-griglia", style: "grid-template-columns:repeat(" + valori.length + ",1fr)" }), tasti = [];
+        function accendi(v) { dove[chiave] = v; tasti.forEach(function (x) { x.b.className = "modo-chip" + (x.v === v ? " attiva" : ""); }); }
         valori.forEach(function (v) {
-          var b = el("button", { class: "modo-chip" + (dove[chiave] === v[0] ? " attiva" : ""), style: "justify-content:center;text-align:center", onclick: function () {
-            dove[chiave] = v[0]; [].forEach.call(g.children, function (c) { c.className = "modo-chip"; }); b.className = "modo-chip attiva";
-          } }, [el("div", {}, [el("div", { class: "mt", text: v[1] })])]);
+          var b = el("button", { class: "modo-chip" + (dove[chiave] === v[0] ? " attiva" : ""), style: "justify-content:center;text-align:center", onclick: function () { accendi(v[0]); if (nota) nota(); } },
+            [el("div", {}, [el("div", { class: "mt", text: v[1] })])]);
+          tasti.push({ b: b, v: v[0] });
           g.appendChild(b);
         });
         box.appendChild(g);
+        return accendi;
       }
       riga("Tempo per disegnare", [[60, "60 secondi"], [80, "80 secondi"], [100, "100 secondi"]], "secondi");
       riga("Quanti giri (ognuno disegna una volta a giro)", [[1, "1 giro"], [2, "2 giri"], [3, "3 giri"]], "giri");
       riga("Parole", [[false, "🙂 Facili"], [true, "🤔 Anche difficili"]], "difficili");
+
+      // 📝 LE NOSTRE PAROLE: restano salvate sul profilo dell'host. Si scrivono di fila ("Peppe, la vespa di Ciro, Ibiza"),
+      // così si possono copiare e passare agli amici; poi si vedono una alla volta, ognuna con la sua ✕
+      var lista = nostreDelProfilo();
+      dove.nostre = lista.slice();
+      dove.nostreModo = lista.length ? "mix" : "no";
+      box.appendChild(el("div", { class: "etichetta", style: "margin-top:14px", text: "📝 Le nostre parole" }));
+      box.appendChild(el("p", { class: "modulo-nota", text: "Le parole del vostro gruppo: nomi di amici, posti, battute. Restano salvate sul tuo profilo. Scrivile di fila, separate da una virgola (es. Peppe, la vespa di Ciro, Ibiza). Se si può dire in due modi usa la barra: Peppe/Giuseppe." }));
+      var input = el("input", { type: "text", class: "link-campo", maxlength: "2000", placeholder: "Peppe, la vespa di Ciro, Ibiza", autocomplete: "off", autocapitalize: "off", spellcheck: "false", enterkeyhint: "done" });
+      var esito = el("p", { class: "modulo-nota sb-esito" }), elenco = el("div", { class: "sb-lista" }), conta = el("div", { class: "sb-conta" });
+      var bCopia = el("button", { class: "btn btn-fantasma btn-piccolo", text: "📋 Copia tutte", onclick: function () {
+        var tx = lista.join(", ");
+        function fatto() { bCopia.textContent = "✅ Copiate!"; setTimeout(function () { bCopia.textContent = "📋 Copia tutte"; }, 1600); }
+        try { navigator.clipboard.writeText(tx).then(fatto, function () { window.prompt("Copia le vostre parole:", tx); }); } catch (e) { window.prompt("Copia le vostre parole:", tx); }
+      } });
+      var bSvuota = el("button", { class: "btn btn-fantasma btn-piccolo", text: "🗑️ Cancella tutte", onclick: function () {
+        if (!lista.length) return;
+        function via() { lista = []; salva(); disegnaLista(); }
+        if (window.SG && SG.conferma) SG.conferma("Cancellare tutte le " + fmtN(lista.length) + " parole vostre?", "Si cancellano anche dal tuo profilo.", "🗑️ Cancella", via);
+        else via();
+      } });
+      function salva() {
+        try { if (window.SG && SG.salvaListaProfilo) SG.salvaListaProfilo("scarabocchio", lista.slice()); } catch (e) {}
+        dove.nostre = lista.slice();   // così anche "⚙️ Regole" in saletta se ne accorge (e l'host le usa subito)
+      }
+      function disegnaConta() {
+        var m = dove.nostreModo, n = lista.length;
+        conta.textContent = !n ? "Ancora nessuna parola: si gioca con quelle del gioco." :
+          (n === 1 ? "1 parola vostra" : fmtN(n) + " parole vostre") +
+          (m === "no" ? " · per ora non si usano" : m === "solo" && n < 3 ? " · con «Solo le nostre» ne servono almeno 3: le altre le mette il gioco" :
+            m === "solo" ? " · più ne scrivete, meno si ripetono" : " · una delle 3 scelte è vostra");
+      }
+      function disegnaLista() {
+        while (elenco.firstChild) elenco.removeChild(elenco.firstChild);
+        lista.forEach(function (w, i) {
+          elenco.appendChild(el("span", { class: "sb-pw" }, [ el("span", { text: w.replace(/\//g, " / ") }),
+            el("button", { class: "sb-x", type: "button", "aria-label": "Cancella " + w, text: "✕", onclick: function () { lista.splice(i, 1); salva(); disegnaLista(); } }) ]));
+        });
+        bCopia.style.display = bSvuota.style.display = lista.length ? "" : "none";
+        disegnaConta();
+      }
+      function aggiungi() {
+        var nuove = String(input.value || "").split(/[,;\n]+/), messe = 0, scartate = [], prima = lista.length;
+        nuove.forEach(function (w) {
+          if (!w.trim()) return;
+          var p = pulisciNostra(w);
+          if (!p) { scartate.push(w.trim()); return; }
+          if (lista.some(function (x) { return chiaveNostra(x) === chiaveNostra(p); })) return;   // c'è già
+          if (lista.length >= MAX_NOSTRE) { scartate.push(w.trim()); return; }
+          lista.push(p); messe++;
+        });
+        input.value = "";
+        if (messe) { salva(); if (!prima && dove.nostreModo === "no") accendiModo("mix"); disegnaLista(); }   // le prime parole: si usano subito, mescolate
+        esito.textContent = (messe ? "✅ Aggiunte: " + fmtN(messe) + ". " : "") +
+          (scartate.length ? "Non valgono (solo lettere, al massimo " + MAX_LUNGA + " per parola): " + scartate.slice(0, 5).join(", ") + (scartate.length > 5 ? "…" : "") : "");
+      }
+      input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); aggiungi(); } });
+      box.appendChild(el("div", { class: "sb-agg" }, [ input, el("button", { class: "btn btn-primario btn-piccolo", type: "button", text: "➕ Aggiungi", onclick: aggiungi }) ]));
+      box.appendChild(esito);
+      box.appendChild(conta);
+      box.appendChild(elenco);
+      box.appendChild(el("div", { class: "sb-lista-tasti" }, [ bCopia, bSvuota ]));
+      var accendiModo = riga("Le nostre parole in partita", [["mix", "🔀 Mescolate"], ["solo", "📝 Solo le nostre"], ["no", "🎨 Solo del gioco"]], "nostreModo", disegnaConta);
+      disegnaLista();
       if (!(window.SGNet && SGNet.disponibile())) box.appendChild(el("div", { class: "link-avviso", text: "Si gioca online: funziona quando il gioco è aperto dal sito pubblicato." }));
     },
     avvia: function (t) {

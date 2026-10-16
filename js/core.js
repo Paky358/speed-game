@@ -50,7 +50,7 @@
   var catAttiva = "tutti";
   function catDi(g) { return CAT_GIOCO[g.id] || null; }
   // Giochi che hanno la modalità "ognuno dal suo telefono" (usabili nella Sala online).
-  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, poker: 1, ruota: 1, ordine: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1, calciobiliardo: 1, pallamatta: 1, garapesca: 1, balla: 1, lunghezza: 1, chidinoi: 1 };
+  var GIOCHI_ONLINE = { asta: 1, blackjack: 1, poker: 1, ruota: 1, ordine: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1, calciobiliardo: 1, pallamatta: 1, garapesca: 1, balla: 1, lunghezza: 1, chidinoi: 1, scopone: 1, impostore: 1 };
   function giocoOnline(g) { return !!(g && GIOCHI_ONLINE[g.id]); }
   var app;                    // contenitore radice (#app)
   var linkParams = {};        // impostazioni arrivate da un link condiviso
@@ -5136,13 +5136,20 @@
     var m = quantiTorneino(n), dispari = m % 2 === 1;
     var cT = carta("torneino", "⚔️", "Torneo: giocate tutti", (n > MAX_ELIM ? "Giocano in " + MAX_ELIM + ", gli altri guardano. " : "") + "Tutte le partite insieme: chi vince va avanti fino alla finale");
     var cS = carta("sfida", "🤺", "Una sfida: scegli chi gioca", "Giocano in 2, gli altri guardano in diretta");
+    // un gioco che si fa anche in tre (la Scopa: g.inTre e il riquadro delle regole sa passare a tre): in tre la prima scelta
+    // è «In tre: giocate tutti», tutti allo stesso tavolo
+    var tre = n === 3 && g.inTre && R && R.box && typeof R.box._inTre === "function";
+    var cTre = tre ? carta("tre", "👥", "In tre: giocate tutti", "Tutti e tre allo stesso tavolo, ognuno per sé") : null;
+    if (tre) scelta = "tre";
     var opz = opzioniTorneino(T, function () { rifai(); }, false, dispari);
     var nota = el("p", { class: "modulo-nota tn-nota" });
-    s._contenuto.appendChild(el("div", { class: "tn-scelte" }, [cT, cS]));
+    s._contenuto.appendChild(el("div", { class: "tn-scelte" }, [cTre, cT, cS].filter(Boolean)));
     if (opz) s._contenuto.appendChild(opz);
     s._contenuto.appendChild(nota);
     var via = el("button", { class: "btn btn-primario", type: "button", onclick: function () {
       if (!sala) return schermataHome();
+      if (tre) try { R.box._inTre(scelta === "tre"); } catch (e) {}   // (in due per la sfida e il torneo)
+      if (scelta === "tre") return salaParti(g, R, sala.membri.map(function (x) { return { id: x.id, nome: x.nome }; }));
       if (scelta === "sfida") return schermataChiGioca(g, function (scelti) { salaParti(g, R, scelti); });
       salaTorneino(g, R, T);
     } });
@@ -5151,11 +5158,11 @@
     s._piede.appendChild(bReg ? el("div", { class: "sl-tasti" }, [bReg, via]) : via);
     // si cambiano solo le classi e le scritte: niente lampeggio
     function rifai() {
-      [cT, cS].forEach(function (c) { var si = c._id === scelta; c.classList.toggle("scelta", si); c.setAttribute("aria-pressed", si ? "true" : "false"); });
+      [cTre, cT, cS].filter(Boolean).forEach(function (c) { var si = c._id === scelta; c.classList.toggle("scelta", si); c.setAttribute("aria-pressed", si ? "true" : "false"); });
       if (opz) opz.hidden = scelta !== "torneino";
-      var tx = scelta === "sfida" ? "Poi scegli i due che giocano." : T.coppie === "scelte" ? "Ognuno si siede dove e con chi vuole: poi parti tu." : (dispari ? (T.resto === "passa" ? "Siete dispari: uno a sorte passa il turno." : "Siete dispari: chi resta gioca col Bot. Se lo batte va avanti, se no va avanti il Bot!") : "Siete pari: giocano tutti subito.");
+      var tx = scelta === "tre" ? "Una partita sola, tutti e tre allo stesso tavolo." : scelta === "sfida" ? "Poi scegli i due che giocano." : T.coppie === "scelte" ? "Ognuno si siede dove e con chi vuole: poi parti tu." : (dispari ? (T.resto === "passa" ? "Siete dispari: uno a sorte passa il turno." : "Siete dispari: chi resta gioca col Bot. Se lo batte va avanti, se no va avanti il Bot!") : "Siete pari: giocano tutti subito.");
       if (nota.textContent !== tx) nota.textContent = tx;
-      var tv = scelta === "sfida" ? "🤺 Scegli chi gioca" : "⚔️ Via al torneo";
+      var tv = scelta === "tre" ? "▶ Si gioca in tre" : scelta === "sfida" ? "🤺 Scegli chi gioca" : "⚔️ Via al torneo";
       if (via.textContent !== tv) via.textContent = tv;
     }
     rifai();

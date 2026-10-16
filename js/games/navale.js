@@ -24,6 +24,8 @@
   var NTOT = FLOTTA.length;
   var LET = "ABCDEFGHIJ".split(""); // lettere per le RIGHE (a sinistra); numeri 1-10 per le COLONNE (in alto)
   var VUOTO = new Array(N * N + 1).join("0");
+  // ---- faccine e frasi durante la partita (il pezzo comune è in scopa.js: window.SGChiacchiere) ----
+  function CH() { return window.SGChiacchiere || null; }
 
   // ---------- utilità griglia ----------
   function matrice(v) { var m = []; for (var y = 0; y < N; y++) { m[y] = []; for (var x = 0; x < N; x++) m[y][x] = v; } return m; }
@@ -333,6 +335,7 @@
       ".nav-boat{display:inline-block;height:9px;border-radius:5px;background:linear-gradient(180deg,#c6d0dc,#6d7887);box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}",
       ".nav-boat.giu{background:#e03131}",
       ".nav-pc{font-weight:800}",
+      ".nav-pann .sgc-tasto{margin-top:4px}",   // il tasto 💬 sotto le flotte
       // piazzamento
       ".nav-tit{text-align:center;font-weight:800;font-size:1rem;min-height:1.3em;padding:0 42px}",
       ".nav-sub{text-align:center;font-size:.76rem;color:rgba(255,255,255,.7);min-height:2.4em;max-width:var(--navW);line-height:1.2}",
@@ -467,6 +470,7 @@
       box.appendChild(scelte("Le navi si possono toccare?", [[false, "Sì"], [true, "No, all'italiana"]], "staccate"));
       boxTempo = scelte("Tempo per sparare", [[0, "Libero"], [20, "20 s"], [40, "40 s"]], "tempo");
       box.appendChild(boxTempo);
+      if (CH()) CH().regola(el, boxTempo, dove);   // 💬 faccine e frasi durante la partita (solo online: l'host le può spegnere)
 
       notaOnline = el("div", { class: "link-avviso", hidden: "hidden" });
       notaOnline.textContent = (window.SGNet && SGNet.disponibile())
@@ -611,6 +615,9 @@
       var pann = el("div", { class: "nav-pann" }, [el("div", { class: "nav-pt", text: "Navi nemiche" })]
         .concat(U.nemiche.map(function (q) { return q.riga; }))
         .concat([el("div", { class: "nav-pt", style: "margin-top:6px", text: "◀ La tua flotta" }), U.conta]));
+      // 💬 faccine e frasi (contro il Bot, o online se l'host le ha lasciate accese)
+      U.chiac = opt.chiac && CH() ? CH().tasto({ gioco: "navale", onScegli: opt.chiac }) : null;
+      if (U.chiac) { U.chiac.hidden = true; pann.appendChild(U.chiac); }
       s._contenuto.appendChild(el("div", { class: "nav-scena" }, [U.stato, U.rete, U.tempo, el("div", { class: "nav-wrap" }, [U.att.nodo, U.avviso]), el("div", { class: "nav-basso" }, [U.mia.nodo, pann])]));
       U.prevA = null; U.prevM = null;
     }
@@ -620,6 +627,7 @@
       if (fase !== "battaglia") costruisciBattaglia(onSpara);
       if (onSpara) U.onSpara = onSpara;
       U.V = V;
+      if (U.chiac) { var on = !!(opt.chiacOn && opt.chiacOn()); if (U.chiac.hidden === on) U.chiac.hidden = !on; }
       U.stato.innerHTML = V.mira != null ? "🎯 Fuoco!…" : V.testo;
       var sc = scafi(V.mieNavi), i, v, cls;
       for (i = 0; i < N * N; i++) {
@@ -678,9 +686,17 @@
       else F.tasti.forEach(function (n) { s._piede.appendChild(n); });
     }
     function reteAvviso(txt) { if (U.rete) U.rete.textContent = txt || ""; }
+    // 💬 un fumetto: mio = sopra la mia flotta piccola; dell'altro = sopra il suo campo, col nome. Fuori dalla battaglia,
+    // o da chi guarda: in basso a sinistra col nome
+    function chiac(mio, c, nome, muto) {
+      var X = CH(); if (!X || !vivo()) return;
+      var anc = fase === "battaglia" && U.mia ? (mio ? U.mia.nodo : U.att.nodo) : null;
+      if (anc) X.bolla(anc, "navale", c, { nome: mio ? null : nome, muto: muto });
+      else X.volante("navale", c, mio ? "Tu" : nome, muto);
+    }
 
     return { piazza: piazza, aggPiazza: aggPiazza, staPiazzando: staPiazzando, battaglia: battaglia, fine: fine, reteAvviso: reteAvviso,
-      dopo: dopo, spegni: spegni, vivo: vivo, fase: function () { return fase; } };
+      dopo: dopo, spegni: spegni, vivo: vivo, fase: function () { return fase; }, chiac: chiac };
   }
   function testoStat(s) {
     if (!s || !s.colpi) return "";
@@ -694,11 +710,20 @@
     var io = (t.giocatori && t.giocatori[0]) || "Tu";
     var nomeBot = botDi(t.impostazioni, liv, [io, t.nomeProfilo && t.nomeProfilo()]).nome;   // il nome del Bot di questa partita
     var P, ui, chiaveFine = null;
+    var tx = CH() ? CH().trasmettitore(t) : null;   // torneo a eliminazione: le chiacchiere arrivano anche a chi guarda
     function esci() { ui.spegni(); t.esci(); }
     ui = Plancia(t, {
       nomeAvv: function () { return nomeBot; }, bot: true,
       onEsci: function () {
         if (P && P.fase !== "fine") conferma(t, "Uscire dalla partita?", "Esci", esci); else esci();
+      },
+      // 💬 contro il Bot: il mio fumetto, e ogni tanto Bot risponde
+      chiacOn: function () { return !!P && P.fase === "battaglia"; },
+      chiac: function (c) {
+        if (!ui.vivo() || !CH() || !CH().valido("navale", c)) return;
+        ui.chiac(true, c); if (tx) tx({ t: "chiac", k: 0, id: "io", c: c });
+        var P0 = P;
+        CH().rispondeBot(function (r) { if (!ui.vivo() || P !== P0 || P.fase !== "battaglia") return; ui.chiac(false, r, nomeBot); if (tx) tx({ t: "chiac", k: 1, id: "bot", c: r }); });
       }
     });
     function nuova() {
@@ -761,11 +786,13 @@
     var nomeIo = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Host";
     var L = { fase: "lobby", codice: "…", pronta: false, avvId: null, nomeAvv: null, ominoIo: t.mioOmino ? t.mioOmino(nomeIo) : null, ominoAvv: null };
     var P = null, ui = null, rete = null, ultimoVm = null, chiaveFine = null, tTurno = null, chiaveTurno = null;
+    var ch = CH(), filtra = ch ? ch.filtro() : null;   // 💬 le faccine e le frasi (accese o spente dall'host nel ⚙️)
+    L.ch = !!ch && ch.attive(t.impostazioni);
     function nomeAvv() { return L.nomeAvv || "l'avversario"; }
     function regole() { return regoleDa(t.impostazioni, true); }
 
     // "⚙️ Regole" nella saletta: si vedono subito anche dall'altro
-    t.onRegole = function () { if (L.fase === "lobby") { lobby(); mandaVm(); } };
+    t.onRegole = function (im) { L.ch = !!ch && ch.attive(im || t.impostazioni); if (L.fase === "lobby") { lobby(); mandaVm(); } };
 
     rete = SGNet.ospita("navale", {
       onCodice: function (c) { L.codice = c; L.riserva = riservaAvv("navale", c); if (L.fase === "lobby") lobby(); mandaVm(); },
@@ -815,6 +842,16 @@
           else mandaVm();
           return;
         }
+        if (m.t === "chiac") {   // 💬 dall'avversario (o una faccina da chi guarda): a tutti
+          if (!ch || !L.ch || L.fase === "lobby" || !P || !filtra(id)) return;
+          var gioca = !!L.avvId && id === L.avvId, c = String(m.c || "");
+          if (!ch.valido("navale", c, !gioca)) return;
+          var x = { t: "chiac", k: gioca ? 1 : "g", id: id, c: c };
+          if (!gioca) x.n = ch.nomeDi(m.n);
+          rete.inviaVeloce(x);
+          if (!gioca) ch.volante("navale", c, x.n); else if (ui) ui.chiac(false, c, nomeAvv(), false);
+          return;
+        }
         if (id !== L.avvId || !P) return;   // solo il mio avversario gioca (un terzo telefono può solo guardare)
         if (m.t === "pronto") {
           if (P.fase === "piazza" && !P.flotte[1]) { var st = dallaPosa(m.navi, P.regole.staccate); if (st) { P.flotte[1] = st; provaVia(); } }
@@ -831,6 +868,7 @@
       var v = P && L.fase === "gioco" ? vmPartita(P) : { fase: "lobby", regole: regole() };
       v.ids = { host: "host", avv: L.avvId };
       v.nomi = [nomeIo, L.nomeAvv || "Avversario"];
+      v.ch = L.ch ? 1 : 0;   // 💬 accese o spente dall'host
       if (L.fase === "lobby") { v.omini = [L.ominoIo, L.ominoAvv]; v.codice = L.codice; }
       return v;
     }
@@ -857,7 +895,9 @@
       if (ui) ui.spegni();
       ui = Plancia(t, { nomeAvv: nomeAvv, onEsci: function () {
         if (P && P.fase !== "fine") conferma(t, "Chiudere la partita per tutti?", "Chiudi", chiudi); else chiudi();
-      } });
+      },
+        chiacOn: function () { return L.ch && !!P && P.fase === "battaglia"; },
+        chiac: function (c) { if (!L.ch || !P || !ch.valido("navale", c)) return; ui.chiac(true, c); rete.inviaVeloce({ t: "chiac", k: 0, id: "host", c: c }); } });
       piazzaIo();
       mandaVm();
     }
@@ -956,6 +996,14 @@
         onMsg: function (m) {
           if (!m || !m.t) return;
           if (m.to && m.to !== S.myId) return;   // era per un altro telefono
+          if (m.t === "chiac") {   // 💬 di un altro: sopra il campo di chi gioca (chi guarda: in basso a sinistra)
+            if (m.id === S.myId || !CH()) return;
+            var nomi = (S.vm && S.vm.nomi) || ["", ""];
+            if (S.spett) S.spett.chiac(m.k, m.c, m.n);
+            else if (ui && (m.k === 0 || m.k === 1)) ui.chiac(m.k === 1, m.c, nomi[m.k]);
+            else CH().volante("navale", m.c, m.n);
+            return;
+          }
           if (m.t === "vm" && m.vm) foto(m.vm);
           else if (m.t === "flotta") { if (S.vm && m.g === S.vm.g) { S.stato = dallaPosa(m.navi, false); if (S.vm) foto(S.vm); } }
         },
@@ -1004,7 +1052,9 @@
       if (vm.g !== S.g) { S.g = vm.g; S.stato = null; S.prontoMandato = false; S.pend = null; S.lastN = null; S.pzKey = null; }
       if (!ui) ui = Plancia(t, { nomeAvv: function () { return (S.vm && S.vm.nomi && S.vm.nomi[0]) || "l'host"; }, onEsci: function () {
         if (S.vm && S.vm.fase !== "fine") conferma(t, "Uscire dalla partita?", "Esci", esci); else esci();
-      } });
+      },
+        chiacOn: function () { return !!S.vm && S.vm.ch === 1 && S.vm.fase === "battaglia"; },
+        chiac: function (c) { if (!S.rete || !CH() || !CH().valido("navale", c)) return; ui.chiac(true, c); S.rete.invia({ t: "chiac", c: c }); } });
       var nomeHost = vm.nomi[0];
       if (vm.fase === "piazza" || (vm.fase === "battaglia" && !S.stato)) {
         // libera = sto sistemando le navi; pronta = le ho mandate, aspetto l'altro; recupero = ho ricaricato, l'host mi rimanda le mie navi
@@ -1051,8 +1101,9 @@
 
   // chi guarda (torneo a eliminazione, o un terzo telefono): i due campi coi colpi, senza mai vedere dove sono le navi
   // (si svelano solo a partita finita). Niente suoni: farebbero vibrare il telefono.
-  function Spettatore(t, esci, testoLobby) {
-    var el = t.el, scritta = null, mont = null, spento = false;
+  // onChiac (chi guarda il torneo, senza la fila delle faccine della stanza): il tasto 💬 con le faccine
+  function Spettatore(t, esci, testoLobby, onChiac) {
+    var el = t.el, scritta = null, mont = null, spento = false, ultimo = null;
     function attesa(txt) {
       if (spento || scritta === txt) return; scritta = txt; mont = null;
       var s = t.schermata({ indietro: esci });
@@ -1075,16 +1126,28 @@
       // in una stanza online (non nel torneo): la fila delle faccine, il mio avatar le fa sui telefoni di tutti
       var fa = t.faccine ? t.faccine() : null;
       if (fa) fa.style.cssText += ";width:100%;max-width:380px;box-sizing:border-box";
-      s._contenuto.appendChild(el("div", { class: "nav-scena" }, [mont.riga, mont.tit, due, mont.nota, fa].filter(Boolean)));
+      // (nel torneo la fila non c'è: il tasto 💬 con le faccine, se chi gioca le ha accese)
+      mont.chiac = !fa && onChiac && CH() ? CH().tasto({ gioco: "navale", soloFaccine: true, onScegli: onChiac }) : null;
+      if (mont.chiac) mont.chiac.hidden = true;
+      s._contenuto.appendChild(el("div", { class: "nav-scena" }, [mont.riga, mont.tit, due, mont.nota, fa, mont.chiac].filter(Boolean)));
       t.mostra(s);
+    }
+    // 💬 di chi gioca: sopra il suo campo, col nome; di chi guarda: in basso a sinistra
+    function chiac(k, c, nome) {
+      if (spento || !CH()) return;
+      var n = (ultimo && ultimo.nomi) || ["", ""];
+      if ((k === 0 || k === 1) && mont && document.body.contains(mont.s)) CH().bolla(mont.lati[k].nodo, "navale", c, { nome: n[k], muto: true });
+      else CH().volante("navale", c, (k === 0 || k === 1) ? n[k] : nome, true);
     }
     function disegna(vm) {
       if (spento || !vm) return;
+      ultimo = vm;
       var n = vm.nomi || ["?", "?"];
       if (vm.fase === "lobby") return attesa(testoLobby || "👀 La partita sta per cominciare…");
       if (vm.fase === "piazza") return attesa("👀 " + n[0] + " e " + n[1] + " stanno sistemando le navi… ⚓");
       if (!mont || !document.body.contains(mont.s)) costruisci();
       mont.riga.textContent = "👀 " + n[0] + " 🆚 " + n[1];
+      if (mont.chiac) { var on = vm.ch === 1 && vm.fase === "battaglia"; if (mont.chiac.hidden === on) mont.chiac.hidden = !on; }
       mont.tit.textContent = vm.fase === "fine" ? "🏆 Vince " + n[vm.vince] + "!" + (vm.tavolino ? " (" + vm.tavolino + " è uscito)" : "") : "🎯 Spara " + n[vm.tocca] + "…";
       mont.nota.textContent = vm.fase === "fine" ? (testoLobby ? "" : "Tra poco si torna al tabellone…") : "";
       [0, 1].forEach(function (k) {
@@ -1099,16 +1162,24 @@
         }
       });
     }
-    return { disegna: disegna, spegni: function () { spento = true; } };
+    return { disegna: disegna, chiac: chiac, spegni: function () { spento = true; } };
   }
   function guardaNavale(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var rete = null;
     function esci() { sp.spegni(); if (rete) rete.chiudi(); t.esci(); }
-    var sp = Spettatore(t, esci, null);
+    // 💬 chi guarda manda solo faccine (col suo nome); si vede subito qui, poi l'host la manda a tutti
+    var sp = Spettatore(t, esci, null, function (c) {
+      if (!rete || !CH() || !CH().valido("navale", c, true)) return;
+      var n = CH().nomeDi(t.nomeProfilo && t.nomeProfilo());
+      CH().volante("navale", c, n, true); rete.invia({ t: "chiac", c: c, n: n });
+    });
     t.mostra((function () { var s = t.schermata({ indietro: esci }); s._contenuto.appendChild(t.el("p", { class: "modulo-nota guarda-attesa", text: "👀 Mi collego alla partita…" })); return s; })());
     rete = SGNet.entra(codice, {
-      onMsg: function (m) { if (m && m.t === "vm" && m.vm) sp.disegna(m.vm); },
+      onMsg: function (m) {
+        if (m && m.t === "chiac") { if (!rete || m.id !== rete.mioId) sp.chiac(m.k, m.c, m.n); return; }   // 💬 dei due che giocano (o di chi guarda)
+        if (m && m.t === "vm" && m.vm) sp.disegna(m.vm);
+      },
       onChiuso: esci,   // partita finita e chiusa: si torna al tabellone
       onErrore: function () {}
     });

@@ -15,6 +15,8 @@
 
   var ID = "calciobiliardo";
   var MIN = 2, MAX = 2;          // online: in due
+  // le domande ("Uscire dalla partita?") con la finestra al centro dell'app, mai quella del browser
+  function chiedi(t, dom, fn) { if (t && t.conferma) t.conferma(dom, fn); else if (window.confirm(dom)) fn(); }
 
   // ---------- il campo (misure in "larghezze di campo") ----------
   var W = 1, L = 1.55, PORTA = 0.38, FONDO = 0.07;
@@ -28,6 +30,16 @@
   var TEMPO = 30;                                              // online: secondi per tirare
   var GIALLO = "#ffcc1f", BLU = "#2f7dff", NOTTE = "#0d1533";   // le due squadre: gialli (sotto) e blu (sopra)
   function colore(q) { return q === 0 ? GIALLO : BLU; }
+  // ---- faccine e frasi durante la partita (il pezzo comune è in scopa.js: window.SGChiacchiere) ----
+  function CH() { return window.SGChiacchiere || null; }
+  // l'host: una chiacchiera arrivata da un telefono (chi gioca coi blu: frasi e faccine; chi guarda: solo faccine)
+  function chiacDaOspite(ch, acceso, filtra, id, m, giocatore) {
+    if (!ch || !acceso || !filtra(id)) return null;
+    var c = String(m.c || ""); if (!ch.valido(ID, c, !giocatore)) return null;
+    var x = { t: "chiac", k: giocatore ? 1 : "g", id: id, c: c };
+    if (!giocatore) x.n = ch.nomeDi(m.n);
+    return x;
+  }
   // le formazioni: [x, distanza dalla PROPRIA linea di fondo]; il primo è il portiere,
   // l'ultimo è l'attaccante (si mette a centrocampo e ha la faccia di chi gioca)
   var FORMAZIONI = {
@@ -322,7 +334,10 @@
     var qGiu = o.flip ? 1 : 0;
     ui.giu = targa("giu", qGiu); ui.su = targa("su" + (o.ruota ? " ruota" : ""), 1 - qGiu);
     ui.festa = el("div", { class: "cb-festa" });   // l'esultanza: avatar, scritta, coriandoli
-    [ui.cv, ui.su.box, ui.giu.box, esci, audio, ui.orologio, ui.orologio2, ui.festa].forEach(function (n) { if (n) scena.appendChild(n); });
+    // 💬 faccine e frasi, in basso a destra (contro il Bot; online se l'host le ha lasciate accese; chi guarda il torneo: faccine)
+    ui.bChiac = o.chiac && CH() ? CH().tasto({ gioco: ID, soloFaccine: !!o.soloFaccine, onScegli: o.chiac }) : null;
+    if (ui.bChiac) { ui.bChiac.classList.add("cb-chiac"); ui.bChiac.hidden = !o.chiacSubito; }
+    [ui.cv, ui.su.box, ui.giu.box, esci, audio, ui.orologio, ui.orologio2, ui.festa, ui.bChiac].forEach(function (n) { if (n) scena.appendChild(n); });
     s._contenuto.appendChild(scena);
     t.mostra(s);
     if (s.querySelector(".tab-elim")) ui.orologio.classList.add("sotto");   // nel torneo in alto a destra c'è il tasto 🏆
@@ -445,6 +460,13 @@
       if (ui.su.msg.textContent !== su) ui.su.msg.textContent = su;
     }
     ui.avvisa = function (q, txt, ms) { ui.avviso = { q: q, txt: txt, fino: Date.now() + (ms || 2500) }; scriviTesti(); };
+    // 💬 il tasto si vede o no; un fumetto: chi gioca (0 gialli, 1 blu) vicino alla sua targhetta, chi guarda in basso a sinistra
+    ui.chiacOn = function (on) { if (ui.bChiac && ui.bChiac.hidden === !!on) ui.bChiac.hidden = !on; };
+    ui.chiac = function (q, c, nome) {
+      var X = CH(); if (!X || !vivo()) return;
+      if (q === 0 || q === 1) X.bolla(q === qGiu ? ui.giu.box : ui.su.box, ID, c, { sotto: q !== qGiu, muto: !!o.muto });
+      else X.volante(ID, c, nome, !!o.muto);
+    };
     function scriviOrologio() {
       if (ui.fineTempo == null) return;
       var sec = Math.max(0, Math.ceil((ui.fineTempo - Date.now()) / 1000)), txt = "⏱ " + Math.floor(sec / 60) + ":" + ("0" + sec % 60).slice(-2);
@@ -823,11 +845,19 @@
     var omini = [t.mioOmino ? t.mioOmino(nomi[0]) : null, bot && ilBot.omino ? ilBot.omino : (window.SGOmino ? SGOmino.casuale(nomi[1]) : null)];
     var chi = { mie: bot ? [0] : [0, 1], bot: bot ? 1 : -1, botNome: bot ? ilBot.nome : null };
     var primo = 0, M = null, ui = null, tm = null, pensa = 0;
+    var tx = CH() ? CH().trasmettitore(t) : null;   // torneo a eliminazione: le chiacchiere arrivano anche a chi guarda
+    // 💬 contro il Bot: il mio fumetto, e ogni tanto Bot risponde
+    function chiacMia(c) {
+      if (!ui || !M || M.P.fase === "fine" || !CH() || !CH().valido(ID, c)) return;
+      ui.chiac(0, c); if (tx) tx({ t: "chiac", k: 0, id: "io", c: c });
+      var M0 = M;
+      CH().rispondeBot(function (r) { if (M !== M0 || M.P.fase === "fine" || !document.body.contains(ui.cv)) return; ui.chiac(1, r); if (tx) tx({ t: "chiac", k: 1, id: "bot", c: r }); });
+    }
     function via() { if (tm) { clearTimeout(tm); tm = null; } pensa++; }   // pensa++: se Bot stava pensando, la sua scelta non vale più
     window.__CB.locale = function () { return M && M.P; };   // per le prove
     var cb = {
       onTiro: function (i, vx, vy) { if (M && (!bot || M.P.turno === 0)) tira(i, vx, vy); },
-      onEsci: function () { if (M && M.P.fase !== "fine" && !window.confirm("Uscire dalla partita?")) return; via(); follaFerma(); t.esci(); },
+      onEsci: function () { function e() { via(); follaFerma(); t.esci(); } if (M && M.P.fase !== "fine") chiedi(t, "Uscire dalla partita?", e); else e(); },
       ogniSecondo: function () { if (!M || tm) return; var r = M.controllaTempo(); if (r) avanti(r > 0 ? r : 0); }
     };
     // la foto anche per chi guarda (torneo a eliminazione: gli altri vedono la partita col bot)
@@ -841,7 +871,7 @@
     function inizia() {
       var form = [imp.form || "classica", bot ? NOMI_FORM[Math.floor(Math.random() * NOMI_FORM.length)] : (imp.form2 || "classica")];   // Bot sceglie a caso
       M = creaMotore({ vince: imp.vince, gol: imp.gol, minuti: imp.minuti, form: form, primo: primo });
-      ui = creaSchermo(t, cb, { flip: false, ruota: !bot, nomi: nomi, omini: omini });
+      ui = creaSchermo(t, cb, { flip: false, ruota: !bot, nomi: nomi, omini: omini, chiac: bot ? chiacMia : null, chiacSubito: bot });
       aggiorna();
       if (bot) ui.avvisa(1, "Formazione: " + nomeForm(form[1]), 4000);   // la formazione che ha scelto Bot
       segui();
@@ -922,6 +952,8 @@
     var H = { fase: "lobby", codice: "…", pronta: false, primo: 0, M: null, ritiro: false, scade: 0, to: null, tiroN: 0, partita: "", formDi: null,
       opz: { vince: imp.vince === "tempo" ? "tempo" : "gol", gol: imp.gol || 3, minuti: imp.minuti || 3 }, form: [formOk(imp.form), "classica"], formImp: imp.form,
       players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost) }], spett: [] };
+    var ch = CH(), filtra = ch ? ch.filtro() : null;   // 💬 le faccine e le frasi (accese o spente dall'host nel ⚙️)
+    H.ch = !!ch && ch.attive(imp);
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function guarda(id) { return H.spett.some(function (x) { return x.id === id; }); }
     function fermaTimer() { if (H.to) { clearTimeout(H.to); H.to = null; } }
@@ -943,6 +975,7 @@
       H.opz = { vince: im.vince === "tempo" ? "tempo" : "gol", gol: im.gol || 3, minuti: im.minuti || 3 };
       // la formazione delle regole vale solo se l'host l'ha cambiata lì (se no resta quella scelta in saletta)
       if (im.form && im.form !== H.formImp) { H.formImp = im.form; H.form[0] = formOk(im.form); }
+      H.ch = !!ch && ch.attive(im);
       bd();
     };
     var rete = SGNet.ospita(ID, {
@@ -985,13 +1018,19 @@
           return;
         }
         var avv = H.players[1];
+        if (m.t === "chiac") {   // 💬 dall'avversario (o una faccina da chi guarda): a tutti
+          if (H.fase !== "gioco") return;
+          var x = chiacDaOspite(ch, H.ch, filtra, id, m, !!avv && avv.id === id);
+          if (x) { rete.inviaVeloce(x); if (UI && document.body.contains(UI.cv)) UI.chiac(x.k, x.c, x.n); }
+          return;
+        }
         if (m.t === "form" && H.fase === "lobby" && avv && avv.id === id) { H.form[1] = formOk(m.f); bd(); return; }
         if (H.fase !== "gioco" || !avv || avv.id !== id) return;
         if (m.t === "tiro") tira(1, m.i | 0, +m.vx || 0, +m.vy || 0);
       }
     });
     function vm() {
-      var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, opz: H.opz, form: H.form.slice(), ritiro: H.ritiro, partita: H.partita,
+      var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, opz: H.opz, form: H.form.slice(), ritiro: H.ritiro, partita: H.partita, ch: H.ch ? 1 : 0,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, via: !!p.via, omino: p.omino || null }; }),
         spett: H.spett.map(function (x) { return { id: x.id, nome: x.nome }; }) };
       if (H.M && H.fase !== "lobby") {
@@ -1066,11 +1105,12 @@
     t.onRivincita = function () { if (H.fase === "fine") nuova(); };
 
     var cbHost = { sonoHost: true, myId: "host", onComincia: comincia, onNuova: nuova,
+      onChiac: function (c) { if (!H.ch || H.fase !== "gioco" || !ch.valido(ID, c)) return; if (UI) UI.chiac(0, c); rete.inviaVeloce({ t: "chiac", k: 0, id: "host", c: c }); },
       onForm: function (f) { if (H.fase === "lobby") { H.form[0] = formOk(f); bd(); } },
       onTiro: function (i, vx, vy) { tira(0, i, vx, vy); },
       ogniSecondo: function () { if (H.fase !== "gioco" || !H.M || H.to && H.M.P.stato !== "mira") return; var r = H.M.controllaTempo(); if (r) avanti(r > 0 ? r : 0); },
       onEsci: function () {
-        if (H.fase === "gioco" && !window.confirm("Chiudere la partita per tutti?")) return;
+        if (H.fase === "gioco" && !H._siChiude) return chiedi(t, "Chiudere la partita per tutti?", function () { H._siChiude = true; cbHost.onEsci(); });
         fermaTimer(); H.tiroN++; follaFerma(); rete.chiudi(); t.esci();
       } };
     bd();
@@ -1086,8 +1126,15 @@
     var cb = { sonoHost: false, myId: null,
       onTiro: function (i, vx, vy) { if (S.rete) S.rete.invia({ t: "tiro", i: i, vx: vx, vy: vy }); },
       onForm: function (f) { if (S.rete) S.rete.invia({ t: "form", f: f }); },
+      // 💬 il mio fumetto subito, poi lo manda l'host a tutti (chi guarda: solo faccine, col suo nome)
+      onChiac: function (c) {
+        var me = S.vm ? miaSquadra(S.vm, cb) : -1;
+        if (!S.rete || !CH() || !CH().valido(ID, c, me < 0)) return;
+        if (me >= 0) { if (UI) UI.chiac(me, c); S.rete.invia({ t: "chiac", c: c }); }
+        else { var n = CH().nomeDi(S.nome); if (UI) UI.chiac("g", c, n); S.rete.invia({ t: "chiac", c: c, n: n }); }
+      },
       onEsci: function () {
-        if (S.vm && S.vm.fase === "gioco" && miaSquadra(S.vm, cb) >= 0 && !window.confirm("Uscire dalla partita?")) return;
+        if (S.vm && S.vm.fase === "gioco" && miaSquadra(S.vm, cb) >= 0 && !S._siEsce) return chiedi(t, "Uscire dalla partita?", function () { S._siEsce = true; cb.onEsci(); });
         follaFerma();
         if (S.rete) { try { S.rete.invia({ t: "esco" }); } catch (e) {} S.rete.chiudi(); }   // (l'host sa che sono uscito apposta)
         t.esci();
@@ -1118,7 +1165,13 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var S = { rete: null, myId: null, vm: null, anim: false, attesa: null, ultimoN: 0 };
     var cb = { sonoHost: false, myId: null, guarda: true, onTiro: function () {},
-      onEsci: function () { follaFerma(); if (S.rete) S.rete.chiudi(); t.esci(); } };
+      onEsci: function () { follaFerma(); if (S.rete) S.rete.chiudi(); t.esci(); },
+      // 💬 chi guarda manda solo faccine (col suo nome); si vede subito qui, poi l'host la manda a tutti
+      onChiac: function (c) {
+        if (!S.rete || !CH() || !CH().valido(ID, c, true)) return;
+        var n = CH().nomeDi(t.nomeProfilo && t.nomeProfilo());
+        if (UI) UI.chiac("g", c, n); S.rete.invia({ t: "chiac", c: c, n: n });
+      } };
     attesaSchermo(t, "👀 Mi collego alla partita…", codice);
     S.rete = SGNet.entra(codice, {
       onMsg: function (m) {
@@ -1133,6 +1186,10 @@
   function riceviOnline(t, S, cb, m) {
     if (!m || !m.t) return;
     if (m.to && m.to !== S.myId) return;
+    if (m.t === "chiac") {   // 💬 di un altro (il mio l'ho già visto)
+      if (m.id !== (S.myId || (S.rete && S.rete.mioId)) && UI && document.body.contains(UI.cv)) UI.chiac(m.k, m.c, m.n);
+      return;
+    }
     if (m.t === "vm" && m.vm) {
       if (S.anim) S.attesa = m.vm;
       else { S.vm = m.vm; disegnaOnline(t, m.vm, cb); }
@@ -1186,7 +1243,10 @@
     }
     FINE.k = null;
     if (!UI || !document.body.contains(UI.cv))
-      UI = creaSchermo(t, cb, { flip: me === 1, ruota: false, nomi: nomi, omini: [(pl[0] || {}).omino || null, (pl[1] || {}).omino || null], muto: me < 0 });
+      UI = creaSchermo(t, cb, { flip: me === 1, ruota: false, nomi: nomi, omini: [(pl[0] || {}).omino || null, (pl[1] || {}).omino || null], muto: me < 0,
+        // 💬 a chi gioca; a chi guarda solo le faccine
+        chiac: cb.onChiac || null, soloFaccine: me < 0 });
+    UI.chiacOn(vm.ch === 1 && vm.fase === "gioco");
     var chi = { mie: me >= 0 ? [me] : [], bot: -1 }, qGiu = me === 1 ? 1 : 0;
     UI.aggiorna({ st: vm.st, gol: vm.gol, turno: vm.turno, fase: vm.stato, mie: chi.mie, solo: vm.solo, restoTurno: vm.restoTurno, restoPartita: vm.restoPartita,
       evento: vm.evento, puoi: me >= 0 && vm.stato === "mira" && vm.turno === me }, { giu: riga(vm, qGiu, chi), su: riga(vm, 1 - qGiu, chi) });
@@ -1255,6 +1315,7 @@
       // il tasto per uscire: piccolo, nell'angolo (come negli altri giochi)
       ".cb-esci{position:absolute;top:calc(10px + env(safe-area-inset-top));left:10px;z-index:3;width:36px;height:36px;border:0;border-radius:12px;padding:0 0 3px;cursor:pointer;font:inherit;font-size:1.4rem;font-weight:900;line-height:1;color:#fff;background:rgba(255,255,255,.14)}",
       ".cb-audio{position:absolute;top:calc(10px + env(safe-area-inset-top));left:52px;z-index:3;width:36px;height:36px;border:0;border-radius:12px;padding:0;cursor:pointer;font:inherit;font-size:1.05rem;line-height:1;background:rgba(255,255,255,.14)}",
+      ".cb-scena .cb-chiac{position:absolute;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:3}",   // il tasto 💬
       // l'orologio della partita a tempo (in alto a destra; nel torneo scende sotto il tasto 🏆)
       ".cb-orologio{position:absolute;top:calc(10px + env(safe-area-inset-top));right:10px;z-index:3;height:36px;padding:0 10px;border-radius:12px;display:flex;align-items:center;font-weight:900;font-size:.95rem;color:#fff;background:rgba(8,13,36,.82);box-shadow:0 0 0 2px rgba(255,255,255,.12);pointer-events:none}",
       ".cb-orologio[hidden]{display:none}",
@@ -1354,6 +1415,7 @@
       }
       else if (!aiuti.sala) chips(dove.modo === "online" ? "La tua formazione (la cambi anche in saletta)" : "La tua formazione", forme, "form", "classica", 3);
       if (dove.modo === "bot") chips("Bravura del Bot", [["facile", "Facile"], ["medio", "Medio"], ["difficile", "Difficile"]], "difficolta", "medio");
+      if (dove.modo === "online" && CH()) CH().regola(el, box, dove);   // 💬 faccine e frasi durante la partita (l'host le può spegnere)
     },
     avvia: function (t) {
       if (t.linkParams && t.linkParams.stanza) return t.linkParams.guarda ? guarda(t, t.linkParams.stanza) : ospite(t, t.linkParams.stanza);   // invito o chi guarda (torneo)

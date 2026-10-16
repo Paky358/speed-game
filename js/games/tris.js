@@ -169,6 +169,25 @@
     if (!l.length) return ""; ultimaBattuta = aCaso(l); return ultimaBattuta;
   }
 
+  // ---- faccine e frasi durante la partita (il pezzo comune è in scopa.js: window.SGChiacchiere) ----
+  function CH() { return window.SGChiacchiere || null; }
+  // chi parla: "X" / "O" = un giocatore (fumetto sotto il suo avatar); se no chi guarda (in basso a sinistra, col nome)
+  function chiacTris(ui, k, c, nome) {
+    var X = CH(); if (!X || !ui || !document.body.contains(ui.s)) return;
+    var muto = !!(ui.cb && ui.cb.guarda);   // (chi guarda: niente suoni)
+    if (k === "X" || k === "O") X.bolla(ui.gio[k].box, "tris", c, { sotto: true, muto: muto });
+    else X.volante("tris", c, nome, muto);
+  }
+  // l'host: una chiacchiera arrivata da un telefono (avvId = chi gioca con l'O; gli altri guardano: solo faccine)
+  function chiacDaOspite(ch, filtra, acceso, id, m, avvId) {
+    if (!ch || !acceso || !filtra(id)) return null;
+    var gioca = !!avvId && id === avvId, c = String(m.c || "");
+    if (!ch.valido("tris", c, !gioca)) return null;
+    var x = { t: "chiac", k: gioca ? "O" : "g", id: id, c: c };
+    if (!gioca) x.n = ch.nomeDi(m.n);
+    return x;
+  }
+
   SG.registra({
     id: "tris",
     nome: "Tris",
@@ -207,6 +226,7 @@
       if (dove.modo === "bot") scelta("Bravura del Bot", "difficolta", [["facile", "🙂", "Facile"], ["medio", "😐", "Medio"], ["difficile", "😠", "Difficile"], ["impossibile", "💀", "Impossibile"]], 2);
       scelta("Variante", "variante", [["classico", "⭕", "Classico", "Il Tris di sempre"], ["sparisce", "♻️", "Che sparisce", "Max 3 segni a testa"]], 2);
       if (!aiuti.torneo) scelta("Chi comincia", "inizia", [["turno", "🔁", "A turno"], ["perso", "😤", "Chi perde"], ["caso", "🎲", "A sorte"]], 3);
+      if (dove.modo === "online" && CH()) CH().regola(el, box, dove);   // 💬 faccine e frasi durante la partita (l'host le può spegnere)
       if (dove.modo === "online" && !aiuti.sala) {
         box.appendChild(el("div", { class: "link-avviso", text: (window.SGNet && SGNet.disponibile())
           ? "Apri la stanza e invita l'altro col tasto 📤: entra dal suo telefono (gli altri guardano)."
@@ -280,6 +300,7 @@
       ".tr-piede .sl-faccine{flex:1 1 100%}",
       ".tr-scena.con-fa{--trw:min(92vw,calc(var(--alt,100dvh) - 350px),480px)}",
       ".tr-nota{flex:1 1 100%;margin:0;text-align:center;font-weight:700;font-size:.9rem;opacity:.85;line-height:1.3}",
+      ".tr-nota.corta{flex:1 1 0;min-width:0}",   // (accanto al tasto 💬)
       ".tr-cor{position:absolute;left:50%;top:45%;width:9px;height:14px;border-radius:2px;pointer-events:none;z-index:8;will-change:transform,opacity}",
       ".tr-attesa{font-size:1.1rem;line-height:1.5;text-align:center;margin:auto 0}",
       // telefoni alti: avatar e scritte più grandi
@@ -363,7 +384,8 @@
   }
   function indietro(ui) {
     var cb = ui.cb; if (!cb) return;
-    if (cb.guarda || !ui.vm || ui.vm.fase !== "gioco" || window.confirm("Uscire dalla partita?")) cb.onEsci();
+    if (cb.guarda || !ui.vm || ui.vm.fase !== "gioco") return cb.onEsci();
+    if (ui.t.conferma) ui.t.conferma("Uscire dalla partita?", cb.onEsci); else if (window.confirm("Uscire dalla partita?")) cb.onEsci();   // (la finestra al centro dell'app)
   }
   function tocca(ui, i) {
     if (!puoi(ui) || ui.vm.board[i] != null) return;
@@ -460,8 +482,10 @@
     }
   }
   function piede(ui, vm, cb) {
-    var el = ui.t.el, voci = [];   // [tipo, testo, azione]; "fa" = la fila delle faccine (solo online)
+    var el = ui.t.el, voci = [];   // [tipo, testo, azione]; "fa" = la fila delle faccine (solo online); "c" = il tasto 💬
     var fa = !cb.locale && ui.t.faccine ? ["fa", ""] : null;
+    // 💬 durante la partita: contro il Bot, online se l'host le ha lasciate accese (chi guarda il torneo: solo faccine)
+    var chiac = vm.fase === "gioco" && !!cb.onChiac && !!CH() && (cb.locale ? !!cb.bot : vm.ch === 1);
     // fine di una partita online (host o avversario): i tasti di fine uguali per tutti, se li disegna il core
     var tf = vm.fase === "fine" && !cb.locale && !cb.guarda && !cb.spettatore && !cb.torneo && ui.t.tastiFine
       ? { host: !!cb.sonoHost, nuova: cb.sonoHost ? cb.onSaletta : null, esci: cb.onEsci } : null;
@@ -469,6 +493,7 @@
       if (cb.spettatore) { if (fa) voci.push(fa); voci.push(["f", "🏠 Esci", cb.onEsci]); }   // ("👀 Giocano in due: tu guardi" lo dice la pillola in alto)
       else if (cb.notaGioco) voci.push(["n", cb.notaGioco]);
       else if (vm.variante === "sparisce") voci.push(["n", "♻️ Tris che sparisce: al 4° segno sparisce il tuo più vecchio (quello chiaro)."]);
+      if (chiac) voci.unshift(["c", ""]);
     } else if (cb.guarda && !cb.spettatore) {
       voci.push(["n", vm.fine && vm.fine.vincitore ? "Tra poco si torna al tabellone…" : "Pareggio: si rigioca!"]);
     } else if (cb.spettatore) {
@@ -496,7 +521,8 @@
     }
     voci.forEach(function (v, k) {
       if (v[0] === "fa") { var f = ui.t.faccine(); if (f) { ui.piede.appendChild(f); conFa = true; } return; }
-      if (v[0] === "n") ui.piede.appendChild(el("p", { class: "tr-nota", text: v[1] }));
+      if (v[0] === "c") { ui.piede.appendChild(CH().tasto({ gioco: "tris", soloFaccine: !!ui.cb.guarda, onScegli: function (c) { if (ui.cb && ui.cb.onChiac) ui.cb.onChiac(c); } })); return; }
+      if (v[0] === "n") ui.piede.appendChild(el("p", { class: "tr-nota" + (chiac ? " corta" : ""), text: v[1] }));
       else {
         var b = el("button", { class: "btn " + (v[0] === "p" ? "btn-primario" : "btn-fantasma"), text: v[1], onclick: function () { var f = ui.azioni[k]; if (f) f(); } });
         ui.piede.appendChild(b);
@@ -610,7 +636,14 @@
         nomi: { X: sedia.X, O: sedia.O }, omini: { X: ominoDi(sedia.X), O: bot ? (ilBot.omino || "🤖") : ominoDi(sedia.O) },
         punti: { X: vittorie[sedia.X] || 0, O: vittorie[sedia.O] || 0, pari: pari[coppia()] || 0 }, n: n };
     }
+    var tx = CH() ? CH().trasmettitore(t) : null;   // torneo a eliminazione: le chiacchiere arrivano anche a chi guarda
     var cb = { locale: true, bot: bot, mio: bot ? "X" : null, liv: liv, torneo: torneo,
+      // 💬 contro il Bot: il mio fumetto, e ogni tanto Bot risponde
+      onChiac: !bot ? null : function (c) {
+        if (!vivo() || !CH() || !CH().valido("tris", c)) return;
+        chiacTris(M.ui, "X", c); if (tx) tx({ t: "chiac", k: "X", id: "io", c: c });
+        CH().rispondeBot(function (r) { if (!vivo() || !st || st.fine) return; chiacTris(M.ui, "O", r); if (tx) tx({ t: "chiac", k: "O", id: "bot", c: r }); });
+      },
       onCella: function (i) { if (st && !st.fine && (!bot || st.turno === "X")) gioca(i); },
       onRivincita: rivincita, onEsci: esci,
       onSpareggio: function () { if (st && st.fine) nuova(); },
@@ -683,8 +716,10 @@
       punti: { X: 0, O: 0, pari: 0 }, ultimoO: "", sospesa: false, avviso: ""
     };
     var M = { ui: null, fase: null }, chiuso = false, rete = null;
-    // "⚙️ Regole" nella saletta: valgono dalla prossima partita
-    t.onRegole = function (im) { st.variante = im.variante || "classico"; st.inizia = im.inizia || "turno"; if (st.fase === "lobby") bd(); };
+    var ch = CH(), filtra = ch ? ch.filtro() : null;   // 💬 le faccine e le frasi (accese o spente dall'host nel ⚙️)
+    st.ch = !!ch && ch.attive(imp);
+    // "⚙️ Regole" nella saletta: valgono dalla prossima partita (le chiacchiere subito)
+    t.onRegole = function (im) { st.variante = im.variante || "classico"; st.inizia = im.inizia || "turno"; var c0 = st.ch; st.ch = !!ch && ch.attive(im); if (st.fase === "lobby" || c0 !== st.ch) bd(); };
     var bRicomincia = t.el("button", { class: "btn btn-fantasma", text: "🔄 Ricomincia da capo", onclick: function () { if (st.fase === "lobby" && st.avvId) nuovaGara(); } });
     rete = SGNet.ospita("tris", {
       onCodice: function (c) { st.codice = c; st.riserva = riservaAvv("tris", c); bd(); },
@@ -711,6 +746,10 @@
           bd();   // (chi rientra o chi guarda riceve la foto)
         }
         else if (m.t === "mossa") { if (st.fase === "gioco" && st.p.turno === "O" && id === st.avvId) applica(+m.i); }
+        else if (m.t === "chiac" && st.fase !== "lobby") {   // 💬 dall'avversario (o una faccina da chi guarda): a tutti
+          var x = chiacDaOspite(ch, filtra, st.ch, id, m, st.avvId);
+          if (x) { rete.inviaVeloce(x); chiacTris(M.ui, x.k, x.c, x.n); }
+        }
       },
       // (arriva solo se il primo collegamento non riesce: dopo, la rete si ricollega da sola)
       onErrore: function () { if (!chiuso && !st.pronta) { chiuso = true; errore(t, "Problema di collegamento. Controlla la connessione e riprova."); } }
@@ -719,7 +758,7 @@
       var p = st.p;
       return { fase: st.fase, codice: st.codice, pronta: st.pronta, board: p.board, turno: p.turno, fine: p.fine, ord: p.ord, mosse: p.mosse, variante: p.variante,
         nomi: { X: st.nomiX, O: st.nomiO || st.ultimoO || "Avversario" }, avversario: !!st.avvId, avvId: st.avvId,
-        omini: { X: st.ominoX, O: st.ominoO }, punti: st.punti, n: st.n, sospesa: st.sospesa, avviso: st.avviso, prossima: st.variante };
+        omini: { X: st.ominoX, O: st.ominoO }, punti: st.punti, n: st.n, sospesa: st.sospesa, avviso: st.avviso, prossima: st.variante, ch: st.ch ? 1 : 0 };
     }
     function bd() {
       if (chiuso) return;
@@ -741,6 +780,7 @@
     }
     var cb = {
       sonoHost: true, mio: "X", ricomincia: bRicomincia,
+      onChiac: function (c) { if (!st.ch || !rete || st.fase === "lobby" || !ch.valido("tris", c)) return; chiacTris(M.ui, "X", c); rete.inviaVeloce({ t: "chiac", k: "X", id: "host", c: c }); },
       onCella: function (i) { if (st.fase === "gioco" && st.p.turno === "X") applica(i); },
       onComincia: function () {
         if (st.fase !== "lobby" || !st.avvId) return;
@@ -767,7 +807,9 @@
     var el = t.el, S = { myId: null, vm: null, rete: null, nome: "", msg: null, chiuso: false, scritta: null }, M = { ui: null, fase: null };
     function esci() { if (S.chiuso) return; S.chiuso = true; if (S.rete) S.rete.chiudi(); t.esci(); }
     // gioca solo l'avversario vero (il suo id è nella foto dell'host): chi è in più guarda, senza "Tu" né "Tocca a te"
-    var cbG = { sonoHost: false, mio: "O", prova: true, onCella: function (i) { if (S.rete) S.rete.invia({ t: "mossa", i: i }); }, onComincia: function () {}, onEsci: esci };
+    var cbG = { sonoHost: false, mio: "O", prova: true, onCella: function (i) { if (S.rete) S.rete.invia({ t: "mossa", i: i }); }, onComincia: function () {}, onEsci: esci,
+      // 💬 il mio fumetto subito, poi lo manda l'host a tutti (il suo "rimando" a me non si rifà)
+      onChiac: function (c) { if (!S.rete || !CH() || !CH().valido("tris", c)) return; chiacTris(M.ui, "O", c); S.rete.invia({ t: "chiac", c: c }); } };
     var cbS = { spettatore: true, guarda: true, sonoHost: false, mio: "-", onCella: function () {}, onEsci: esci };   // si gioca in due: si guarda
     function disegna() {
       if (S.chiuso || !S.vm) return;
@@ -796,7 +838,12 @@
       S.rete = SGNet.entra(codice, {
         onAperto: function (id) { S.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : null });
           setTimeout(function () { if (!S.vm && S.msg) S.msg.textContent = "Non trovo la partita: controlla il codice, o l'host non ha ancora aperto la stanza…"; }, 8000); },
-        onMsg: function (m) { if (S.chiuso || !m || m.t !== "vm" || !m.vm || !m.vm.board) return; S.vm = m.vm; disegna(); },
+        onMsg: function (m) {
+          if (S.chiuso || !m) return;
+          if (m.t === "chiac") { if (m.id !== S.myId) chiacTris(M.ui, m.k, m.c, m.n); return; }   // 💬 di un altro
+          if (m.t !== "vm" || !m.vm || !m.vm.board) return;
+          S.vm = m.vm; disegna();
+        },
         onHostVia: function (sparito) { cbG.hostVia = cbS.hostVia = !!sparito; disegna(); },
         onChiuso: function () { if (S.chiuso) return; S.chiuso = true; if (S.rete) S.rete.chiudi(); chiusa(t, S.vm, cbG.hostVia); },
         onErrore: function () { if (!S.chiuso && !S.vm) errore(t, "Problema di collegamento. Controlla la connessione e riprova."); }   // (solo se il primo collegamento non riesce)
@@ -809,11 +856,19 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var rete = null, S = { scritta: null, chiuso: false }, M = { ui: null, fase: null };   // (chi guarda: niente suoni né trofei)
     var cb = { guarda: true, sonoHost: false, mio: "-", onCella: function () {}, onRivincita: function () {},
-      onEsci: function () { if (S.chiuso) return; S.chiuso = true; if (rete) rete.chiudi(); t.esci(); } };
+      onEsci: function () { if (S.chiuso) return; S.chiuso = true; if (rete) rete.chiudi(); t.esci(); },
+      // 💬 chi guarda manda solo faccine (col suo nome); si vede subito qui, poi l'host la manda a tutti
+      onChiac: function (c) {
+        if (!rete || !CH() || !CH().valido("tris", c, true)) return;
+        var n = CH().nomeDi(t.nomeProfilo && t.nomeProfilo());
+        chiacTris(M.ui, "g", c, n); rete.invia({ t: "chiac", c: c, n: n });
+      } };
     attesa(t, S, "👀 Mi collego alla partita…", cb.onEsci);
     rete = SGNet.entra(codice, {
       onMsg: function (m) {
-        if (S.chiuso || !m || m.t !== "vm" || !m.vm || !m.vm.board) return;
+        if (S.chiuso || !m) return;
+        if (m.t === "chiac") { if (!rete || m.id !== rete.mioId) chiacTris(M.ui, m.k, m.c, m.n); return; }   // 💬 dei due che giocano (o di chi guarda)
+        if (m.t !== "vm" || !m.vm || !m.vm.board) return;
         if (m.vm.fase === "lobby") { M.fase = "lobby"; return attesa(t, S, "👀 La partita sta per cominciare…", cb.onEsci); }
         S.scritta = null;
         campo(t, M, m.vm, cb, true);

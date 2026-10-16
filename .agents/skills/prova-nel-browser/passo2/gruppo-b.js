@@ -97,28 +97,24 @@
     if (!await W.aspetta(function () { return partita(vm(C), W.statoStanza(C) || {}); }, 15000)) no("dopo «↻ Rivincita» la partita non riparte");
   }
 
-  // 211. Scalinata nella Sala con 5 (4 posti): «Chi gioca?» → sulla scala salgono i 4 scelti, Bea guarda (anche alla rivincita)
-  COPIONE.aggiungi(211, { nome: "Scalinata dalla Sala: Chi gioca (4 su 5), Bea guarda; partita intera; fine del core e Rivincita", fai: async function () {
+  // 211. Scalinata nella Sala con 5: con la scala grande (dal ramo miglioramenti) salgono tutti e 5, niente «Chi gioca?»
+  //      né Bot, numeri da 1 a 5; partita intera, fine del core e Rivincita con tutti. («Chi gioca?» con chi guarda: sc1, «Piccola»)
+  COPIONE.aggiungi(211, { nome: "Scalinata dalla Sala in 5: tutti sulla scala grande (niente Chi gioca); partita intera; fine del core e Rivincita", fai: async function () {
     var S = await salaCon(["Paky", "Giulia", "Luca", "Marco", "Bea"]);
-    var C = await lancia(S, "Paky", "La Scalinata", "scalinata", ["Paky", "Giulia", "Luca", "Marco"]);
-    var idBea = A.idInSala(S, "Bea");
-    if (!await W.aspetta(function () { return A.ids(C).length === 4 && A.ids(C, "guarda").indexOf(idBea) >= 0; }, 10000)) no("sulla scala non ci sono i 4 scelti con Bea a guardare (posti " + A.ids(C).join(",") + " · guarda " + A.ids(C, "guarda").join(",") + ")");
-    if (!vm(C).scelti) no("la foto della Scalinata non dice che si è scelto chi gioca");
-    await guardaInSaletta("Bea");
+    var C = await lancia(S, "Paky", "La Scalinata", "scalinata", null);
+    if (!await W.aspetta(function () { return A.ids(C).length === 5; }, 10000)) no("sulla scala non ci sono tutti e 5 (posti " + A.ids(C).join(",") + " · guarda " + A.ids(C, "guarda").join(",") + ")");
     var P = W.finestra("Paky");
     if (!await W.aspetta(function () { return W.clicca(P, /^\s*(▶\s*)?Comincia/); }, 6000)) no("l'host non ha «Comincia»");
     if (!await W.aspetta(function () { return vm(C).fase === "scelta"; }, 8000)) no("la partita non comincia");
-    if (A.ids(C).indexOf(idBea) >= 0) no("Bea è salita sulla scala");
-    if (vm(C).posti.some(function (p) { return p.bot; })) no("c'è un bot anche se i 4 scelti ci sono tutti");
-    if (!await A.scalinataFinoAllaFine(C, ["Giulia", "Luca", "Marco"], "Paky")) no("la Scalinata non è finita");
+    if (vm(C).posti.some(function (p) { return p.bot; })) no("c'è un bot anche se ci sono tutti e 5");
+    if ((vm(C).sc || []).join() !== "1,2,3,4,5") no("i numeri sono " + JSON.stringify(vm(C).sc));
+    if (!await A.scalinataFinoAllaFine(C, ["Giulia", "Luca", "Marco", "Bea"], "Paky")) no("la Scalinata non è finita");
     var tx = await fineCore(P, /Nuova partita/);
-    var B = W.finestra("Bea");
-    if (/Ci sto/.test(W.testo(B))) no("Bea (ha guardato) ha «Ci sto»");
-    ["Giulia", "Luca", "Marco"].forEach(function (n) { W.clicca(W.finestra(n), /Ci sto/); });
+    ["Giulia", "Luca", "Marco", "Bea"].forEach(function (n) { W.clicca(W.finestra(n), /Ci sto/); });
     await rivincita(P, C, function (v) { return v.fase === "scelta" || v.fase === "lobby"; });
     await W.dorme(400);
-    if (A.ids(C).indexOf(idBea) >= 0) no("alla rivincita Bea ha preso un posto (non era scelta)");
-    return "Sala " + S + ": Chi gioca → sulla scala Paky, Giulia, Luca e Marco, Bea guarda (anche alla rivincita); fine del core: " + tx;
+    if (A.ids(C).length !== 5) no("alla rivincita sulla scala non sono in 5 (" + A.ids(C).join(",") + ")");
+    return "Sala " + S + ": tutti e 5 sulla scala grande (1-5, niente Bot), partita intera, rivincita in 5; fine del core: " + tx;
   } });
 
   // 212. Palla Matta nella Sala con 5 (4 posti): giocano Paky, Giulia, Marco e Bea, Luca guarda il tavolo

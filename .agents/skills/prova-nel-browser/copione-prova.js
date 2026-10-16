@@ -2285,7 +2285,9 @@
       var r = await toccaGiocoSala(P, "Tris");
       if (!/In 2/.test(r.etichetta)) no("nell'elenco il Tris dice «" + r.etichetta + "»");
       var etS = r.tutte || [];
-      if (!etS.some(function (x) { return /^La Scalinata: Max 4: gioca chi scegli$/.test(x); })) no("con 5 la Scalinata non dice «Max 4: gioca chi scegli» (" + etS.join(" · ") + ")");
+      // (la Scalinata dal 16 ott ha la scala grande fino a 8: con 5 i posti contati li ha Palla a Pendolo)
+      if (!etS.some(function (x) { return /^Palla a Pendolo: Max 4: gioca chi scegli$/.test(x); })) no("con 5 Palla a Pendolo non dice «Max 4: gioca chi scegli» (" + etS.join(" · ") + ")");
+      if (!etS.some(function (x) { return /^La Scalinata: Fino a 8$/.test(x); })) no("con 5 la Scalinata non dice «Fino a 8» (" + etS.join(" · ") + ")");
       if (!etS.some(function (x) { return /: Fino a (8|10)$/.test(x); })) no("nessun gioco dice «Fino a 8» o «Fino a 10»");
       if (r.dove !== "chi") no("toccato il Tris con 5 nella Sala, non si apre «Chi gioca?» («" + T(P).slice(0, 80) + "»)");
       if (!/Chi gioca a Tris\?/.test(T(P))) no("il titolo non è «Chi gioca a Tris?»");
@@ -2965,7 +2967,8 @@
     56: { nome: "Lista dei 23 giochi nella Sala: entra, gioca, Rivincita, Cambia gioco, impostazioni fuori pagina", fai: async function (opz) {
       spiaTavolo();
       var LISTA = ["tris", "drop4", "navale", "scopa", "calciobiliardo", "scalinata", "pallamatta", "ruota", "scopa2v2", "pendolo", "horto",
-        "blackjack", "poker", "asta", "sipero", "scarabocchio", "garapesca", "timeline", "nomicose", "balla", "taboo", "ordine", "patata"];
+        "blackjack", "poker", "asta", "sipero", "scarabocchio", "garapesca", "timeline", "nomicose", "balla", "taboo", "ordine", "patata",
+        "scopone", "impostore", "chidinoi"];   // (dal 16 ott anche lo Scopone e L'Impostore online e «Chi di Noi?»)
       if (opz && opz.solo) LISTA = LISTA.filter(function (g) { return opz.solo.indexOf(g) >= 0; });
       var nomi = ["Paky", "Giulia", "Luca", "Marco", "Bea"], prof = { fiches: { blackjack: 5000 } };
       await W.apriTel("Paky", { x: 0, salaSempre: true, spiaTav: LISTA, profilo: prof });

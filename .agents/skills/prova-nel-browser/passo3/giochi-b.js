@@ -151,11 +151,11 @@
   }
 
   var GIOCHI = {
-    // Bea guarda, Giulia (il vice) sale sulla scala; la Scalinata si gioca davvero
-    381: { nome: "La Scalinata", gid: "scalinata", amici: ["Giulia", "Luca", "Marco", "Bea"], scelti: ["Paky", "Giulia", "Luca", "Marco"],
+    // tutti e 5 sulla scala grande (dal 16 ott la Scalinata arriva a 8: niente «Chi gioca?»), Giulia (il vice) compresa; si gioca davvero
+    381: { nome: "La Scalinata", gid: "scalinata", amici: ["Giulia", "Luca", "Marco", "Bea"], scelti: null,
       partita: function (v) { return v.fase === "scelta"; }, attesa: 1500,
       aMeta: async function (C) {   // un round intero: si arriva al secondo round (la partita di Paky è salvata sul suo telefono)
-        ["Giulia", "Luca", "Marco"].forEach(function (n) { W.clicca(W.finestra(n), /^\s*3\s*gradin/); });
+        ["Paky", "Giulia", "Luca", "Marco", "Bea"].forEach(function (n) { W.clicca(W.finestra(n), /^\s*3\s*gradin/); });
         if (!await W.aspetta(function () { return vm(C).fase === "rivela"; }, 15000)) no("il primo round della Scalinata non si chiude");
         W.clicca(W.finestra("Paky"), /Prossimo round/);
         if (!await W.aspetta(function () { return vm(C).fase === "scelta"; }, 6000)) no("non parte il secondo round");

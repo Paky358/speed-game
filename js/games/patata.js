@@ -22,11 +22,14 @@
     imp = imp || {};
     var tempo = [10, 15, 20].indexOf(+imp.tempo) >= 0 ? +imp.tempo : 15;
     var vite = [1, 2, 3].indexOf(+imp.vite) >= 0 ? +imp.vite : 1;
-    return { tempo: tempo * 1000, accelera: imp.accelera !== false, vite: vite, difficili: !!imp.difficili };
+    return { tempo: tempo * 1000, accelera: imp.accelera !== false, vite: vite, difficili: !!imp.difficili, segreta: imp.miccia === "segreta" };
   }
   function testoRegole(r) {
-    return "⏱️ " + (r.tempo / 1000) + " secondi" + (r.accelera ? " (poi cala)" : "") + " · " + (r.vite > 1 ? "❤️ " + r.vite + " vite" : "❤️ 1 vita") + (r.difficili ? " · anche categorie difficili" : "");
+    var tempo = r.segreta ? "🤫 Miccia segreta (scoppia tra " + MICCIA_MIN / 1000 + " e " + MICCIA_MAX / 1000 + " secondi)" : "⏱️ " + (r.tempo / 1000) + " secondi" + (r.accelera ? " (poi cala)" : "");
+    return tempo + " · " + (r.vite > 1 ? "❤️ " + r.vite + " vite" : "❤️ 1 vita") + (r.difficili ? " · anche categorie difficili" : "");
   }
+  // la miccia segreta (come la bomba vera): a ogni manche dura un tempo a caso, che nessuno vede (lo sa solo il motore dell'host)
+  var MICCIA_MIN = 20000, MICCIA_MAX = 60000;
   // Pause dello spettacolo (il tempo della bomba NON scende): rivelazione della categoria con la bomba
   // che vola sul primo, bomba che passa al nuovo dopo un'esplosione, e l'esplosione stessa.
   var ATTESA_INIZIO = 4600, ATTESA_ROUND = 1800, DURATA_BOOM = 3400;
@@ -98,28 +101,36 @@
       "Ogni <b>4 passaggi</b> il tempo cala di 2 secondi, fino a 5. Non puoi ripassarla a chi l'ha già avuta finché non ha fatto il giro.",
       "Se chi te l'ha data <b>non ha detto la parola</b> (o l'ha ripetuta), tocca <b>“↩️ Non valeva!”</b>: torna a lui, col tempo che aveva.",
       "A chi <b>finisce il tempo</b> la bomba esplode: perde una vita (di solito ne ha una sola: è fuori). Vince l'<b>ultimo rimasto</b>.",
-      "Tempo, vite e categorie difficili si cambiano nelle regole della partita."
+      "Con la <b>🤫 miccia segreta</b> non c'è il conto alla rovescia: la bomba scoppia a caso tra 20 e 60 secondi, e passarla non rimette a posto il tempo. Si sente solo il ticchettio che accelera: chi ce l'ha in mano quando scoppia, perde!",
+      "Miccia, tempo, vite e categorie difficili si cambiano nelle regole della partita."
     ],
+    riassunto: function (imp) { return testoRegole(regoleDa(imp)); },
 
     // le scelte con bottoni .modo-chip: così l'host le ritrova anche in "⚙️ Regole" nella saletta
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
       dove.modo = aiuti.torneo ? "telefono" : (aiuti.modo || "telefono");
       if (aiuti.torneo) dove.torneo = true;
-      dove.tempo = 15; dove.accelera = true; dove.vite = 1; dove.difficili = false;
-      function fila(titolo, voci, chiave) {
-        box.appendChild(el("div", { class: "etichetta", text: titolo }));
+      dove.tempo = 15; dove.accelera = true; dove.vite = 1; dove.difficili = false; dove.miccia = "vista";
+      function fila(titolo, voci, chiave, dentro, poi) {
+        dentro = dentro || box;
+        dentro.appendChild(el("div", { class: "etichetta", text: titolo }));
         var g = el("div", { class: "modo-griglia", style: "grid-template-columns:repeat(" + voci.length + ",1fr)" });
         voci.forEach(function (v) {
           var b = el("button", { class: "modo-chip" + (dove[chiave] === v[0] ? " attiva" : ""), style: "justify-content:center", onclick: function () {
             dove[chiave] = v[0]; [].forEach.call(g.children, function (c) { c.className = "modo-chip"; }); b.className = "modo-chip attiva";
+            if (poi) poi();
           } }, [el("div", { class: "mt", text: v[1] })]);
           g.appendChild(b);
         });
-        box.appendChild(g);
+        dentro.appendChild(g);
       }
-      fila("⏱️ Tempo per passarla", [[10, "10 s"], [15, "15 s"], [20, "20 s"]], "tempo");
-      fila("⚡ Il tempo cala ogni 4 passaggi", [[true, "Sì"], [false, "No"]], "accelera");
+      // la miccia segreta: niente conto alla rovescia, quindi tempo e "cala" non servono (si nascondono)
+      var conTempo = el("div");
+      fila("💣 La miccia", [["vista", "A vista ⏱️"], ["segreta", "Segreta 🤫"]], "miccia", null, function () { conTempo.hidden = dove.miccia === "segreta"; });
+      box.appendChild(conTempo);
+      fila("⏱️ Tempo per passarla", [[10, "10 s"], [15, "15 s"], [20, "20 s"]], "tempo", conTempo);
+      fila("⚡ Il tempo cala ogni 4 passaggi", [[true, "Sì"], [false, "No"]], "accelera", conTempo);
       fila("❤️ Vite di ognuno", [[1, "1"], [2, "2"], [3, "3"]], "vite");
       fila("🗂️ Categorie", [[false, "Normali"], [true, "Anche difficili"]], "difficili");
     },
@@ -160,8 +171,10 @@
       fase: "voto", cats: pesca(3), categoria: null,
       players: giocatori.map(function (g) { return { id: g.id, nome: g.nome, colore: g.colore, omino: g.omino || null, eliminato: false, via: false, vite: regole.vite, voto: null }; }),
       holder: null, prev: null, ultimo: null, giro: [], round: 0, ts: 0, boom: null, vincitore: null, abbandonata: false,
-      remaining: 0, cap: regole.tempo, passaggi: 0, remPrima: null, giroPrima: [], eliminati: [], soloDare: null, attesa: 0
+      remaining: 0, cap: regole.tempo, passaggi: 0, remPrima: null, giroPrima: [], eliminati: [], soloDare: null, attesa: 0,
+      miccia: 0, bruciato: 0   // miccia segreta: quanto dura questa manche (mai nella foto prima dello scoppio) e quanta ne è già bruciata
     };
+    function nuovaMiccia() { st.miccia = MICCIA_MIN + Math.floor(Math.random() * (MICCIA_MAX - MICCIA_MIN + 1)); st.bruciato = 0; }
     var partitaId = nuovaSessioneP(), statGiocatori = creaStatGiocatoriP(st.players);
     function statP(id) { return statGiocatori[id] || (statGiocatori[id] = { votiCategoria: 0, bombeRicevute: 0, passaggi: 0, rimandi: 0, esplosioni: 0, roundSopravvissuti: 0 }); }
     function pById(id) { for (var i = 0; i < st.players.length; i++) if (st.players[i].id === id) return st.players[i]; return null; }
@@ -184,8 +197,14 @@
     function aggiorna() {
       if (chiuso || st.fase !== "gioco") return;
       var now = Date.now(), dt = now - st.ts; st.ts = now;
-      if (now < st.attesa) return;   // pausa dello spettacolo: il tempo è fermo
+      // pausa dello spettacolo: il tempo è fermo (ma la miccia segreta brucia anche nell'attimo dopo un passaggio)
+      if (now < st.attesa && !(regole.segreta && st.blocco)) return;
       if (!holderObj()) return;
+      if (regole.segreta) {   // la miccia brucia per conto suo: passare la bomba non la rimette a posto
+        st.bruciato += dt;
+        if (st.bruciato >= st.miccia) { st.bruciato = st.miccia; esplode(); }
+        return;
+      }
       st.remaining -= dt;
       if (st.remaining <= 0) { st.remaining = 0; esplode(); }
     }
@@ -205,8 +224,8 @@
       if (vv.length < 2) { finisci(true); cambia(); return; }
       st.holder = vv[Math.floor(Math.random() * vv.length)].id;
       statP(st.holder).bombeRicevute++;
-      st.prev = null; st.ultimo = null; st.soloDare = null; st.giro = [st.holder]; st.cap = capMs(0); st.remaining = st.cap;
-      st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_INIZIO + (st.sorpresa ? ATTESA_SORPRESA : 0); cambia();
+      st.prev = null; st.ultimo = null; st.soloDare = null; st.giro = [st.holder]; st.cap = capMs(0); st.remaining = st.cap; nuovaMiccia();
+      st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_INIZIO + (st.sorpresa ? ATTESA_SORPRESA : 0); st.blocco = false; cambia();
     }
     function esplode() {
       var h = holderObj(); if (!h) return;
@@ -214,7 +233,7 @@
       h.vite = Math.max(0, (h.vite || 1) - 1);
       var fuori = h.vite <= 0;
       if (fuori) { h.eliminato = true; st.eliminati.push(h.id); }
-      st.boom = { id: h.id, nome: h.nome, fuori: fuori, vite: h.vite }; st.fase = "esplosione"; cambia();
+      st.boom = { id: h.id, nome: h.nome, fuori: fuori, vite: h.vite, miccia: regole.segreta ? Math.round(st.miccia / 1000) : null }; st.fase = "esplosione"; cambia();
       toBoom = setTimeout(function () {
         toBoom = null;
         if (chiuso || st.fase !== "esplosione") return;   // partita lasciata o già finita (es. sono usciti tutti)
@@ -232,8 +251,8 @@
         st.holder = nh.id; st.giro.push(nh.id); statP(nh.id).bombeRicevute++;
         if (st.giro.length >= v.length) st.giro = [nh.id];
         st.prev = null; st.ultimo = null; st.soloDare = null;
-        st.cap = capMs(st.passaggi); st.remaining = st.cap; st.remPrima = null;
-        st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_ROUND; cambia();
+        st.cap = capMs(st.passaggi); st.remaining = st.cap; st.remPrima = null; nuovaMiccia();
+        st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_ROUND; st.blocco = false; cambia();
       }, DURATA_BOOM);
     }
 
@@ -265,7 +284,7 @@
         st.giroPrima = st.giro.slice();         // per ripristinarlo con "Non valeva!"
         st.prev = st.holder; st.holder = targetId; st.giro.push(targetId);
         sistemaGiro();
-        st.ts = Date.now(); st.attesa = st.ts + BLOCCO_PASSAGGIO;   // un attimo fermi: il secondo tocco non la ripassa subito
+        st.ts = Date.now(); st.attesa = st.ts + BLOCCO_PASSAGGIO; st.blocco = true;   // un attimo fermi: il secondo tocco non la ripassa subito
         cambia();
       },
       indietro: function (fromId) {
@@ -282,7 +301,7 @@
         st.soloDare = st.holder;                 // chi riprende la bomba potrà ridarla SOLO a chi gliel'ha rimandata
         // NON si resetta il giro: si ripristina com'era prima del passaggio annullato
         var back = st.prev; st.prev = null; st.holder = back; st.giro = st.giroPrima ? st.giroPrima.slice() : st.giro; sistemaGiro();
-        st.ts = Date.now(); st.attesa = st.ts + BLOCCO_PASSAGGIO; cambia();
+        st.ts = Date.now(); st.attesa = st.ts + BLOCCO_PASSAGGIO; st.blocco = true; cambia();
       },
       // chi se ne va (online): fuori da questa partita e da quelle dopo
       rimuovi: function (id) {
@@ -298,7 +317,7 @@
           else if (st.holder === id && st.fase === "gioco") {   // aveva la bomba: passa a un altro a caso, con un attimo per accorgersene
             st.holder = v[Math.floor(Math.random() * v.length)].id; statP(st.holder).bombeRicevute++;
             st.prev = null; st.soloDare = null; st.giro = [st.holder]; st.cap = capMs(st.passaggi); st.remaining = st.cap;
-            st.ts = Date.now(); st.attesa = st.ts + ATTESA_ROUND;
+            st.ts = Date.now(); st.attesa = st.ts + ATTESA_ROUND; st.blocco = false;
           } else {
             if (st.prev === id) st.prev = null;
             sistemaGiro();
@@ -312,6 +331,7 @@
         partitaId = nuovaSessioneP(); statGiocatori = creaStatGiocatoriP(st.players); cambia();
       },
       remaining: function () { return Math.max(0, st.remaining); },
+      bruciato: function () { return st.bruciato; },
       chiuso: function () { return chiuso; },
       distruggi: function () { chiuso = true; clearInterval(loop); if (toBoom) { clearTimeout(toBoom); toBoom = null; } },
       vm: function () {
@@ -327,6 +347,8 @@
           fase: st.fase, categoria: st.categoria, sorpresa: !!st.sorpresa, cats: st.cats, round: st.round,
           partitaId: partitaId, statFine: st.fase === "fine" ? statGiocatori : null, abbandonata: !!st.abbandonata,
           viteMax: regole.vite, tempo: regole.tempo,
+          // miccia segreta: nella foto c'è solo quanta ne è già bruciata (serve al ticchettio), MAI quanto dura
+          segreta: !!regole.segreta, bruciato: regole.segreta ? Math.round(st.bruciato) : 0, blocco: !!st.blocco,
           players: st.players.map(function (p) { return { id: p.id, nome: p.nome, colore: p.colore, omino: p.omino || null, eliminato: p.eliminato, via: !!p.via, vite: p.vite, voto: p.voto }; }),
           holder: st.holder, prev: st.prev, ultimo: st.ultimo, giro: st.giro.slice(),
           soloDare: (st.soloDare != null && inGara(st.soloDare)) ? st.soloDare : null,
@@ -407,6 +429,7 @@
       "@keyframes ptPulsa{from{transform:scale(.94)}to{transform:scale(1.06)}}",
       ".pt-conto{font-family:'Courier New',ui-monospace,monospace;font-size:150px;font-weight:900;line-height:.95;color:#fff;text-shadow:0 0 30px rgba(255,120,60,.6)}",
       ".pt-conto.poco{color:#ff5d6c;will-change:transform;animation:ptCuore .5s ease-out infinite}",
+      ".pt-conto.pt-mistero{letter-spacing:.06em}",
       "@keyframes ptCuore{0%{transform:scale(1)}15%{transform:scale(1.12)}30%{transform:scale(1)}45%{transform:scale(1.07)}100%{transform:scale(1)}}",
       // la bomba arriva sul tuo telefono (online): lo schermo si colora di rosso un attimo
       ".pt-allarme{position:absolute;inset:0;z-index:23;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,rgba(255,40,40,0) 35%,rgba(255,30,30,.75) 100%)}",
@@ -491,6 +514,7 @@
     var cb = {
       locale: true, sonoHost: true, myId: null, torneo: !!imp.torneo, chiuso: false,
       getRemaining: function () { return motore.remaining(); },
+      getBruciato: function () { return motore.bruciato(); },
       onScegliCat: function (idx) { motore.viaCon(idx); },
       onPassa: function (id) { motore.passa(motore.st.holder, id); },
       onIndietro: function () { motore.indietro(motore.st.holder); },
@@ -574,6 +598,7 @@
     var cb = {
       locale: false, sonoHost: true, myId: "host", chiuso: false,
       getRemaining: function () { return H.motore ? H.motore.remaining() : 0; },
+      getBruciato: function () { return H.motore ? H.motore.bruciato() : 0; },
       onAggiungiCat: function (txt) { txt = String(txt || "").trim().slice(0, 40); if (H.fase === "lobby" && txt && H.customCats.indexOf(txt) < 0) { H.customCats.push(txt); bd(); } },
       onTogliCat: function (i) { if (H.fase === "lobby") { H.customCats.splice(i, 1); bd(); } },
       onContinua: function () {
@@ -608,6 +633,7 @@
       locale: false, sonoHost: false, myId: null, chiuso: false,
       // il tempo scende solo dopo la pausa dello spettacolo (attesaMs)
       getRemaining: function () { if (!S.vm) return 0; return Math.max(0, S.vm.remaining - Math.max(0, (Date.now() - S.vmTs) - (S.vm.attesaMs || 0))); },
+      getBruciato: function () { if (!S.vm) return 0; return (S.vm.bruciato || 0) + Math.max(0, (Date.now() - S.vmTs) - (S.vm.blocco ? 0 : (S.vm.attesaMs || 0))); },
       onVota: function (idx) { S.rete && S.rete.invia({ t: "vota", idx: idx }); },
       onPassa: function (id) { S.rete && S.rete.invia({ t: "passa", target: id }); },
       onIndietro: function () { S.rete && S.rete.invia({ t: "indietro" }); },
@@ -756,18 +782,20 @@
   }
 
   // ---- il maxischermo ----
-  function testoCap(vm) { return "Chi la riceve ha " + Math.round(vm.cap / 1000) + " secondi"; }
+  function testoCap(vm) { return vm.segreta ? "🤫 Nessuno sa quando scoppia!" : "Chi la riceve ha " + Math.round(vm.cap / 1000) + " secondi"; }
   function schermoPatata(R) {
     var el = R.t.el, S = R.S, vm = R.vm, h = null;
     ST.fermaTimer(S); ST.vuota(S.sch);
     vm.players.forEach(function (p) { if (p.id === vm.holder) h = p; });
-    R.contoEl = el("div", { class: "pt-conto", text: (vm.cap / 1000).toFixed(1) });
+    // miccia segreta: al posto dei secondi, il punto di domanda (il tempo vero non lo sa nessuno)
+    R.contoEl = el("div", { class: "pt-conto" + (vm.segreta ? " pt-mistero" : ""), text: vm.segreta ? "???" : (vm.cap / 1000).toFixed(1) });
+    R.bombonaEl = null;
     R.chiEl = el("b", { text: h ? h.nome : "" });
     R.regolaEl = el("div", { class: "pt-regola", text: testoCap(vm) });
     S.sch.appendChild(el("div", { class: "pt-sch" }, [
       el("div", { class: "pt-cat", text: "🗂️ categoria" }),
       el("div", { class: "pt-catnome", text: vm.categoria || "" }),
-      el("div", { class: "pt-bombona", text: "💣" }),
+      R.bombonaEl = el("div", { class: "pt-bombona", text: "💣" }),
       R.contoEl,
       el("div", { class: "pt-chi" }, [ el("span", { text: "Ha la bomba " }), R.chiEl ]),
       R.regolaEl
@@ -892,9 +920,12 @@
     S.mondo.appendChild(b); setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 1800);
     ST.fermaTimer(S); ST.vuota(S.sch);
     var resta = vm.boom.vite === 1 ? "resta con 1 vita ❤️" : "restano " + vm.boom.vite + " vite ❤️";
+    // miccia segreta: adesso si può dire quanto durava
+    var durava = vm.boom.miccia ? "🤫 La miccia durava " + vm.boom.miccia + " secondi" : null;
     S.sch.appendChild(el("div", { class: "pt-sch" }, [ el("div", { class: "pt-boomtxt", text: "💥 BOOM!" }),
       el("div", { class: "pt-chi" }, [ el("b", { text: vm.boom.nome }), el("span", { text: fuori ? " è fuori!" : " perde una vita!" }) ]),
-      fuori ? null : el("div", { class: "pt-regola", text: resta }) ]));
+      fuori ? null : el("div", { class: "pt-regola", text: resta }),
+      durava ? el("div", { class: "pt-regola", text: durava }) : null ]));
     R.inq = "leggio"; await ST.suLeggio(S, i, 450);
     if (R.cb.chiuso || !S.vivo()) return;
     ST.faccia(S, i, "esploso"); ST.accendiSolo(S, -1);
@@ -961,6 +992,7 @@
   function avviaCronometro(R) {
     stopTimers();
     var S = R.S;
+    if (R.vm.segreta) return cronometroSegreto(R);
     dispTimer = setInterval(function () {
       if (!S.vivo() || R.cb.chiuso || R.vm.fase !== "gioco") { stopTimers(); return; }
       var r = Math.max(0, R.cb.getRemaining()), hi = idxP(R.vm, R.vm.holder), txt = (r / 1000).toFixed(1);
@@ -975,6 +1007,31 @@
       var r = R.cb.getRemaining(), inAttesa = Date.now() < R.vmTs + (R.vm.attesaMs || 0), pieno = R.vm.tempo || 15000;
       if (r > 0 && !inAttesa) { if (r < 3000) cuoreP(); else tickP(560 + (1 - Math.min(1, r / pieno)) * 620); }
       tickTimer = setTimeout(loopSuono, r < 3000 ? 500 : Math.max(85, Math.min(620, r / 12)));
+    })();
+  }
+  // la miccia segreta: niente numeri. Il ticchettio (e la bomba che trema) accelera con il tempo PASSATO dall'inizio
+  // della manche, che non dice niente su quando scoppierà: dopo 20 secondi può succedere in qualsiasi momento
+  function fretta(ms) { return Math.max(0, Math.min(1, ms / MICCIA_MAX)); }   // 0 all'inizio, 1 dopo un minuto
+  function cronometroSegreto(R) {
+    var S = R.S, ultimoK = null;
+    dispTimer = setInterval(function () {
+      if (!S.vivo() || R.cb.chiuso || R.vm.fase !== "gioco") { stopTimers(); return; }
+      var b = R.cb.getBruciato(), f = fretta(b), hi = idxP(R.vm, R.vm.holder), k = f < 0.33 ? 0 : f < 0.6 ? 1 : 2;
+      if (hi >= 0) ST.testoLeggio(S, hi, "💣 ???", k === 2);
+      if (k !== ultimoK) {   // tre passi di fretta: cambia solo la classe (niente ridisegni)
+        ultimoK = k;
+        if (R.contoEl) R.contoEl.classList.toggle("poco", k === 2);
+        if (R.bomba) R.bomba.classList.toggle("corri", k >= 1);
+        if (R.bombonaEl) R.bombonaEl.style.animationDuration = [0.6, 0.38, 0.22][k] + "s";
+      }
+      if (hi >= 0 && Date.now() >= R.vmTs + (R.vm.attesaMs || 0) && !R.toccaAttivo) { R.toccaAttivo = true; aggiornaGioco(R); }
+    }, 150);
+    R.toccaAttivo = Date.now() >= R.vmTs + (R.vm.attesaMs || 0);
+    (function loopSuono() {
+      if (!S.vivo() || R.cb.chiuso || R.vm.fase !== "gioco") { tickTimer = null; return; }
+      var inAttesa = Date.now() < R.vmTs + (R.vm.attesaMs || 0), f = fretta(R.cb.getBruciato());
+      if (!inAttesa) tickP(560 + f * 620);
+      tickTimer = setTimeout(loopSuono, Math.round(620 - f * 500));   // da 620 a 120 millisecondi
     })();
   }
 

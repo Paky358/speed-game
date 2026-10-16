@@ -7,8 +7,14 @@
       sono meno di 5 la "redazione" aggiunge qualche balla sua (balleCasa: chi ci casca non dà punti a nessuno).
    3. A turno ognuno vota in segreto quella che crede vera (la sua non la può votare).
    4. La rivelazione: +2 a chi trova la verità, +1 all'autore di una balla per ogni voto che prende.
-      L'ultimo round vale doppio. A fine partita i premi: Re delle balle, Detective, Credulone.
-   Le notizie sono in data/balla-domande.js: SG_BALLA = [{ domanda, rispostaVera, balleCasa: [..] }].
+      L'ultimo round vale doppio. A fine partita i premi: Re delle balle, Detective, Credulone, Balla d'oro.
+   5. «😂 Che balla!» (regola dell'host, accesa di partenza): alla rivelazione chi vuole mette un 😂 alle balle che lo
+      fanno ridere (non alla sua). La balla con più 😂 del round è la «Balla d'oro»: +1 a chi l'ha scritta.
+   6. «👥 Parliamo di te» (regola dell'host: solo notizie / notizie e amici / solo amici): la domanda è su uno di voi
+      («Il cibo che Luca non mangerebbe mai è…»). Lui scrive la VERITÀ, gli altri le balle; lui non vota e prende +1
+      per ogni amico che trova la sua verità. Se non la scrive (online, tempo finito) si passa a una notizia.
+   Le notizie sono in data/balla-domande.js: SG_BALLA = [{ domanda, rispostaVera, balleCasa: [..] }]
+   e, in fondo allo stesso file, le domande sugli amici: SG_BALLA_AMICI = [{ domanda (con {nome}), balleCasa: [..] }].
    La domanda finisce con "..." (il pezzo mancante va in fondo) oppure ha "___" dove va il pezzo.
    ========================================================= */
 (function () {
@@ -77,19 +83,49 @@
   function moltiplica(giro, giri) { return giri > 1 && giro + 1 >= giri ? 2 : 1; }
   // i punti del round: voti[i] = la scelta votata da i. Restituisce, per ogni giocatore, i punti presi con la verità e con le balle
   // (più i numeri per i premi: verità trovate, amici ingannati, volte che ci è cascato, balla che ha ingannato tutti)
-  function calcola(scelte, voti, n, m, presenti) {
+  // votanti = quanti potevano votare (chi è rimasto, senza il protagonista di «Parliamo di te»);
+  // prot = il posto del protagonista (+1 per ogni amico che trova la sua verità);
+  // risate = i 😂 di ogni scelta (con «Che balla!» accesa): le risate prese e la Balla d'oro (+1 a chi l'ha scritta)
+  function calcola(scelte, voti, n, m, votanti, prot, risate) {
     m = m || 1;
-    var d = []; for (var i = 0; i < n; i++) d.push({ vera: 0, inganni: 0, trovata: 0, ingannati: 0, cascato: 0, perfetta: 0 });
+    var d = []; for (var i = 0; i < n; i++) d.push({ vera: 0, inganni: 0, capito: 0, oro: 0, risate: 0, trovata: 0, ingannati: 0, cascato: 0, perfetta: 0, ori: 0 });
+    var conProt = prot != null && prot >= 0 && prot < n;
     voti.forEach(function (v, i) {
-      if (v == null || !scelte[v]) return;
-      if (scelte[v].vera) { d[i].vera += 2 * m; d[i].trovata = 1; }
+      if (v == null || !scelte[v] || (conProt && i === prot)) return;
+      if (scelte[v].vera) { d[i].vera += 2 * m; d[i].trovata = 1; if (conProt) d[prot].capito += m; }
       else { d[i].cascato = 1; scelte[v].autori.forEach(function (a) { if (a !== i) { d[a].inganni += m; d[a].ingannati++; } }); }
     });
     // la balla perfetta: l'hanno votata tutti gli altri (almeno 2)
-    var altri = (presenti == null ? n : presenti) - 1;
+    var altri = (votanti == null ? n - (conProt ? 1 : 0) : votanti) - 1;
     d.forEach(function (x) { if (altri >= 2 && x.ingannati >= altri) x.perfetta = 1; });
+    if (risate) {
+      scelte.forEach(function (sc, k) { (sc.autori || []).forEach(function (a) { if (d[a]) d[a].risate += risate[k] || 0; }); });
+      var oro = calcolaOro(scelte, risate);
+      if (oro) oro.ks.forEach(function (k) { scelte[k].autori.forEach(function (a) { if (d[a]) { d[a].oro = 1; d[a].ori = 1; } }); });
+    }
     return d;
   }
+  // la Balla d'oro del round: la balla di un giocatore (non della redazione) con più 😂; a pari 😂 vincono tutte
+  function calcolaOro(scelte, risate) {
+    var max = 0, ks = [];
+    scelte.forEach(function (sc, k) {
+      if (sc.vera || sc.casa || !(sc.autori || []).length) return;
+      var n = (risate && risate[k]) || 0; if (!n) return;
+      if (n > max) { max = n; ks = [k]; } else if (n === max) ks.push(k);
+    });
+    return max ? { ks: ks, n: max } : null;
+  }
+  // i punti del round di un giocatore
+  function puntiDi(d) { return d.vera + d.inganni + d.capito + d.oro; }
+  // il piano dei round: "n" = notizia, "a" = «Parliamo di te». modo: "no" (solo notizie), "solo" (solo amici), altrimenti mescolate
+  // (si comincia sempre con una notizia e si chiude con una notizia, quella a punti doppi)
+  function pianoRound(giri, modo) {
+    var ci = (window.SG_BALLA_AMICI || []).length > 0, p = [];
+    for (var i = 0; i < giri; i++) p.push(!ci || modo === "no" ? "n" : modo === "solo" ? "a" : i % 2 === 1 && i + 1 < giri ? "a" : "n");
+    return p;
+  }
+  // la domanda sugli amici col nome del protagonista
+  function riempi(tpl, nome) { return String(tpl || "").replace(/\{nome\}/g, nome); }
   // la domanda divisa attorno al pezzo mancante
   function pezzi(domanda) {
     var s = String(domanda || "").trim(), m = s.match(/_{3,}/);
@@ -100,8 +136,13 @@
   // ---- quali notizie: mai le stesse finché non le avete viste tutte (ricordate su questo telefono) ----
   var CHIAVE_VISTE = "sg-balla-viste";
   function chiave(d) { return String(d.domanda).slice(0, 60); }
-  function scegliDomande(n) {
-    var tutte = (window.SG_BALLA || []).filter(function (d) { return d && d.domanda && d.rispostaVera; });
+  // le domande sugli amici (stessa regola: mai le stesse finché non le avete viste tutte)
+  function scegliAmici(n) {
+    return n > 0 ? scegliDomande(n, (window.SG_BALLA_AMICI || []).filter(function (d) { return d && d.domanda && /\{nome\}/.test(d.domanda); }), "sg-balla-amici-viste") : [];
+  }
+  function scegliDomande(n, lista, chiaveLS) {
+    var CHIAVE_VISTE = chiaveLS || "sg-balla-viste";
+    var tutte = lista || (window.SG_BALLA || []).filter(function (d) { return d && d.domanda && d.rispostaVera; });
     var viste = {}; try { (JSON.parse(localStorage.getItem(CHIAVE_VISTE) || "[]") || []).forEach(function (k) { viste[k] = 1; }); } catch (e) {}
     var scelte = mescola(tutte.filter(function (d) { return !viste[chiave(d)]; })).slice(0, n);
     if (scelte.length < n) {   // finite le nuove: si ricomincia il giro di tutte
@@ -129,42 +170,76 @@
       "Poi tutte le balle e la risposta vera si mescolano e a turno ognuno <b>vota</b> in segreto quella che crede vera. La propria balla non si può votare.",
       "Quando le risposte sono poche, anche la <b>redazione</b> aggiunge qualche balla sua: occhio a non cascarci!",
       "<b>+2 punti</b> a chi trova la risposta vera. <b>+1 punto</b> a chi ha scritto una balla, per ogni amico che ci è cascato.",
-      "🔥 <b>L'ultimo round vale doppio.</b> Alla fine vince chi ha più punti, e ci sono i premi: Re delle balle, Detective e Credulone.",
+      "👥 <b>Parliamo di te</b>: in certi round la domanda è su uno di voi («Il cibo che Luca non mangerebbe mai è…»). Lui scrive la <b>verità</b>, gli altri le balle. Lui non vota e prende <b>+1</b> per ogni amico che trova la sua verità.",
+      "😂 <b>Che balla!</b> Quando le balle si scoprono, toccate 😂 su quelle che vi fanno ridere (non sulla vostra). La più votata del round è la <b>Balla d'oro</b>: +1 a chi l'ha scritta.",
+      "🔥 <b>L'ultimo round vale doppio.</b> Alla fine vince chi ha più punti, e ci sono i premi: Re delle balle, Detective, Credulone e Balla d'oro.",
       "<b>Online</b> ognuno scrive e vota dal suo telefono, tutti insieme: 75 secondi per la balla e 45 per il voto."
     ],
 
     impostazioni: function (box, dove, aiuti) {
-      var el = aiuti.el, br = {};
-      dove.round = 5;
-      box.appendChild(el("div", { class: "etichetta", text: "Quante notizie" }));
-      function scegliRound(v) { dove.round = v; [3, 5, 7].forEach(function (x) { br[x].className = "modo-chip" + (v === x ? " attiva" : ""); }); }
-      var gR = el("div", { class: "modo-griglia" });
-      [3, 5, 7].forEach(function (v) {
-        br[v] = el("button", { class: "modo-chip" + (v === 5 ? " attiva" : ""), onclick: function () { scegliRound(v); } }, [
-          el("div", {}, [ el("div", { class: "mt", text: v + " round" }), el("div", { class: "ms", text: v === 3 ? "Una partita veloce" : v === 5 ? "Il giusto" : "Serata lunga" }) ]) ]);
-        gR.appendChild(br[v]);
-      });
-      box.appendChild(gR);
+      var el = aiuti.el;
+      if ([3, 5, 7].indexOf(dove.round) < 0) dove.round = 5;
+      if (["no", "misto", "solo"].indexOf(dove.amici) < 0) dove.amici = "misto";
+      if (typeof dove.ride !== "boolean") dove.ride = true;
+      // un gruppo di scelte: un tocco accende quella e spegne le altre
+      function gruppo(etichetta, chiave, voci) {
+        box.appendChild(el("div", { class: "etichetta", text: etichetta }));
+        var g = el("div", { class: "modo-griglia" }), bb = [];
+        voci.forEach(function (v) {
+          var b = el("button", { class: "modo-chip" + (dove[chiave] === v.v ? " attiva" : ""), type: "button", onclick: function () {
+            dove[chiave] = v.v; bb.forEach(function (x) { x.b.className = "modo-chip" + (x.v === v.v ? " attiva" : ""); });
+          } }, [ el("div", {}, [ el("div", { class: "mt", text: v.mt }), el("div", { class: "ms", text: v.ms }) ]) ]);
+          bb.push({ b: b, v: v.v }); g.appendChild(b);
+        });
+        box.appendChild(g);
+      }
+      gruppo("Quanti round", "round", [ { v: 3, mt: "3 round", ms: "Una partita veloce" }, { v: 5, mt: "5 round", ms: "Il giusto" }, { v: 7, mt: "7 round", ms: "Serata lunga" } ]);
+      if ((window.SG_BALLA_AMICI || []).length)
+        gruppo("Di cosa si parla", "amici", [ { v: "no", mt: "📰 Solo notizie", ms: "Notizie vere e strane" },
+          { v: "misto", mt: "🔀 Notizie e amici", ms: "Un round sì e uno no si parla di voi" }, { v: "solo", mt: "👥 Solo amici", ms: "Ogni round una domanda su uno di voi" } ]);
+      gruppo("Che balla!", "ride", [ { v: true, mt: "😂 Sì", ms: "Le risate alle balle e la Balla d'oro" }, { v: false, mt: "No", ms: "Solo voti e punti" } ]);
       box.appendChild(el("p", { class: "modulo-nota", text: aiuti.modo === "online" ? "Online ognuno scrive e vota dal suo telefono, tutti insieme: 75 secondi per la balla, 45 per il voto." : "Ogni round: si scrivono le balle passandosi il telefono, poi si vota, sempre in segreto." }));
+    },
+    // la riga "📜 Si gioca così" che leggono gli amici in saletta
+    riassunto: function (imp) {
+      imp = imp || {};
+      var am = (window.SG_BALLA_AMICI || []).length ? ({ no: "Solo notizie", solo: "Solo amici" }[imp.amici] || "Notizie e amici") : "Solo notizie";
+      return (imp.round || 5) + " round · " + am + " · " + (imp.ride === false ? "senza «Che balla!»" : "😂 Che balla!");
     },
 
     avvia: function (t) {
       if (t.linkParams && t.linkParams.stanza) return ospiteB(t, t.linkParams.stanza);   // entrato da un invito
       if ((t.impostazioni || {}).modo === "online") { assicuraStile(); return hostB(t); }
       var imp = t.impostazioni || {};
-      var domande = scegliDomande(imp.round || 5);
+      var g = t.giocatori.map(function (n) { return { nome: n, punti: 0, tot: nuoviTot() }; });
+      var domande = domandeLocali(imp.round || 5, imp.amici, g);
       if (!domande.length) return niente(t);
       assicuraStile();
-      var st = { t: t, domande: domande, giri: domande.length, giro: 0,
-        g: t.giocatori.map(function (n) { return { nome: n, punti: 0, tot: nuoviTot() }; }) };
+      var st = { t: t, domande: domande, giri: domande.length, giro: 0, g: g, ride: imp.ride !== false };
       st.S = ST.crea(t, st.g.map(function (g) { return { nome: g.nome }; }), { io: -1, esci: t.esci, titolo: "La Balla Colossale", logo: ["LA BALLA", "COLOSSALE"] });
       ST.apertura(st.S).then(function () { round(st); });
     }
   });
 
+  // le domande della partita sullo stesso telefono: notizie e (se si parla di voi) domande sugli amici, coi protagonisti a turno
+  function domandeLocali(giri, modo, g) {
+    var piano = pianoRound(giri, modo);
+    var nA = piano.filter(function (x) { return x === "a"; }).length;
+    var notizie = scegliDomande(piano.length - nA), amici = scegliAmici(nA);
+    var turno = mescola(g.map(function (_, i) { return i; })), q = 0, out = [];
+    piano.forEach(function (x) {
+      var tpl = x === "a" ? amici.shift() : null;
+      if (tpl) { var p = turno[q++ % turno.length]; out.push({ domanda: riempi(tpl.domanda, g[p].nome), rispostaVera: "", balleCasa: tpl.balleCasa || [], amici: true, prot: p, protNome: g[p].nome }); }
+      else { var d = notizie.shift() || scegliDomande(1)[0]; if (d) out.push(d); }
+    });
+    return out;
+  }
+  function eProt(st, i) { return !!(st.d && st.d.amici && st.d.prot === i); }
+  function avvisoVera(st) { return st.d && st.d.amici ? "😱 È proprio la risposta di " + st.d.protNome + "! Inventa una balla diversa." : AVVISO_VERA; }
+
   // i numeri della partita di ogni giocatore (per i premi finali e i contatori)
-  function nuoviTot() { return { trovate: 0, ingannati: 0, cascato: 0, perfette: 0 }; }
-  function sommaTot(tot, d) { tot.trovate += d.trovata; tot.ingannati += d.ingannati; tot.cascato += d.cascato; tot.perfette += d.perfetta; }
+  function nuoviTot() { return { trovate: 0, ingannati: 0, cascato: 0, perfette: 0, risate: 0, ori: 0 }; }
+  function sommaTot(tot, d) { tot.trovate += d.trovata; tot.ingannati += d.ingannati; tot.cascato += d.cascato; tot.perfette += d.perfetta; tot.risate = (tot.risate || 0) + (d.risate || 0); tot.ori = (tot.ori || 0) + (d.ori || 0); }
 
   function niente(t) {
     var s = t.schermata({ icona: "🤥", titolo: "Mancano le notizie", indietro: t.esci });
@@ -180,8 +255,9 @@
   // il ritaglio di giornale con la notizia; risposta = il pezzo da mettere al posto del buco (null = il buco giallo)
   function ritaglio(el, st, risposta, grande) {
     var p = pezzi(st.d.domanda), buco = el("span", { class: "bc-buco" + (risposta ? " pieno" : ""), text: risposta || "" });
-    return el("div", { class: "bc-ritaglio" + (grande ? " grande" : "") }, [
-      el("div", { class: "bc-testata", text: "📰 Notizia vera · round " + (st.giro + 1) + " di " + st.giri }),
+    var am = !!st.d.amici;   // «Parliamo di te»: un foglietto giallo invece del giornale
+    return el("div", { class: "bc-ritaglio" + (grande ? " grande" : "") + (am ? " amici" : "") }, [
+      el("div", { class: "bc-testata", text: (am ? "👥 Parliamo di " + (st.d.protNome || "te") : "📰 Notizia vera") + " · round " + (st.giro + 1) + " di " + st.giri }),
       el("p", { class: "bc-notizia" }, [ document.createTextNode(p.prima + " "), buco, document.createTextNode(p.dopo ? " " + p.dopo : "") ])
     ]);
   }
@@ -201,26 +277,48 @@
     ST.FX.rullo(1);
     await ST.dorme(1100);
     ST.pubblico(S, "piano");
+    if (st.d.amici) await annunciaAmici(S, st.d.prot, st.d.protNome);
     if (moltiplica(st.giro, st.giri) > 1) await annunciaDoppio(S);
-    await ST.aspettaTasto(S, "Letta! Ora le balle ✍️");
-    for (var i = 0; i < st.g.length; i++) {
+    await ST.aspettaTasto(S, st.d.amici ? "Letta! Prima " + st.d.protNome + " ✍️" : "Letta! Ora le balle ✍️");
+    // «Parliamo di te»: scrive per primo il protagonista (la verità), così le balle uguali alla verità si scoprono subito
+    var ordine = st.g.map(function (_, i) { return i; });
+    if (st.d.amici) ordine = [st.d.prot].concat(ordine.filter(function (i) { return i !== st.d.prot; }));
+    for (var q = 0; q < ordine.length; q++) {
       if (!S.vivo()) return;
-      await turnoScrittura(st, i);
+      await turnoScrittura(st, ordine[q]);
     }
     if (!S.vivo()) return;
     st.scelte = preparaScelte(st.d.rispostaVera, st.balle, st.d.balleCasa);
+    st.risate = st.scelte.map(function () { return 0; });
+    // sullo stesso telefono i 😂 si contano a tocchi: al massimo uno per ogni amico che non l'ha scritta
+    st.rideFn = function (k) { var sc = st.scelte[k]; if ((st.risate[k] || 0) >= st.g.length - (sc.autori || []).length) return false; st.risate[k]++; return true; };
     await presentaRisposte(st);
     if (!S.vivo()) return;
     await ST.aspettaTasto(S, "Si vota! 🗳️");
     st.fatti = st.g.map(function () { return false; });
-    for (i = 0; i < st.g.length; i++) {
+    for (var i = 0; i < st.g.length; i++) {
       if (!S.vivo()) return;
+      if (eProt(st, i)) continue;   // il protagonista la verità la sa: non vota
       await turnoVoto(st, i);
     }
     if (!S.vivo()) return;
     await rivelazione(st);
     if (!S.vivo()) return;
+    if (st.ride) {
+      var oro = calcolaOro(st.scelte, st.risate);
+      if (oro) await schermoOro(st, oro);
+      if (!S.vivo()) return;
+    }
     await punteggi(st);
+  }
+
+  // «Parliamo di te»: lo studio annuncia di chi si parla
+  async function annunciaAmici(S, i, nome) {
+    ST.terzo(S, i, "👥 Parliamo di " + nome + "!", nome + " scrive la verità, gli altri le balle", "👥");
+    ST.pubblico(S, "applauso");
+    if (i != null && i >= 0) ST.faccia(S, i, "esulta");
+    await ST.dorme(2600); ST.viaTerzo(S);
+    if (i != null && i >= 0) ST.faccia(S, i, null);
   }
 
   // l'ultimo round: punti doppi (lo annuncia lo studio)
@@ -234,9 +332,12 @@
   function schermoTurno(st, i, cosa) {
     var S = st.S, el = st.t.el;
     var fatti = el("div", { class: "bc-fatti" }); st.boxFatti = fatti;
-    st.g.forEach(function (g, k) { fatti.appendChild(el("span", { class: st.fatti[k] ? "ok" : "" }, [ fac(el, g), el("span", { text: (st.fatti[k] ? "✅ " : "") + g.nome }) ])); });
-    var chi = i == null ? (cosa === "scrive" ? "✍️ Inventate una balla per completarla!" : "🗳️ Qual è la risposta vera?")
-      : (cosa === "scrive" ? "✍️ Scrive " : "🗳️ Vota ") + st.g[i].nome;
+    st.g.forEach(function (g, k) {
+      if (g.via || (cosa === "vota" && eProt(st, k))) return;   // (chi è uscito; e il protagonista, che non vota)
+      fatti.appendChild(el("span", { class: st.fatti[k] ? "ok" : "" }, [ fac(el, g), el("span", { text: (st.fatti[k] ? "✅ " : "") + g.nome }) ]));
+    });
+    var chi = i == null ? (cosa === "scrive" ? (st.d.amici ? "✍️ " + st.d.protNome + " scrive la verità, voi una balla!" : "✍️ Inventate una balla per completarla!") : "🗳️ Qual è la risposta vera?")
+      : (cosa === "scrive" ? (eProt(st, i) ? "🤫 Scrive la verità " : "✍️ Scrive ") : "🗳️ Vota ") + st.g[i].nome;
     if (cosa === "vota") return tabellone(st, { sotto: [ el("div", { class: "bc-chi-sch", text: chi }), fatti ] });
     ST.fermaTimer(S); ST.vuota(S.sch);
     S.sch.appendChild(el("div", { class: "bc-sch" }, [ ritaglio(el, st, null, true), el("div", { class: "bc-chi-sch", text: chi }), fatti ]));
@@ -327,10 +428,11 @@
     await ST.stacco(S, i, "Passa il telefono a " + g.nome);
     await ST.aspettaTasto(S, "📱 Sono " + g.nome + ", tocca a me ▶");
     if (!S.vivo()) return;
-    ST.accendiSolo(S, i); ST.testoLeggio(S, i, "✍️ scrive");
+    ST.accendiSolo(S, i); ST.testoLeggio(S, i, eProt(st, i) ? "🤫 la verità" : "✍️ scrive");
     await ST.suLeggio(S, i, 400);
     ST.lampo(S);
-    st.balle[i] = await apriBiglietto(st, i);
+    if (eProt(st, i)) { st.d.rispostaVera = await apriBiglietto(st, i, { vero: true }); st.balle[i] = ""; }   // la verità, non una balla
+    else st.balle[i] = await apriBiglietto(st, i);
     if (!S.vivo()) return;
     st.fatti[i] = true;
     ST.testoLeggio(S, i, "✅ fatto"); ST.faccia(S, i, "esulta");
@@ -411,12 +513,13 @@
   var AVVISO_VERA = "😱 Troppo vicina alla risposta vera! Inventa una balla diversa.";
 
   // scrivere la balla: la notizia col buco, la penna, "Fatto". Restituisce la balla (o "" se il tempo finisce col foglio vuoto).
-  // o.ms = il tempo (online); o.avviso = un avviso subito; o.verita = false quando la verità la sa solo l'host (online)
+  // o.ms = il tempo (online); o.avviso = un avviso subito; o.verita = false quando la verità la sa solo l'host (online);
+  // o.vero = «Parliamo di te»: il protagonista scrive la VERITÀ su di sé (niente controllo)
   function apriBiglietto(st, i, o) {
     var S = st.S, el = st.t.el, g = st.g[i]; o = o || {};
     return new Promise(function (fine) {
       var chiuso = false, toFine = null;
-      var inp = el("textarea", { class: "bc-penna", maxlength: String(MAX_BALLA), rows: "2", autocomplete: "off", autocapitalize: "none", spellcheck: "true", enterkeyhint: "done", placeholder: "scrivi qui la tua balla…" });
+      var inp = el("textarea", { class: "bc-penna", maxlength: String(MAX_BALLA), rows: "2", autocomplete: "off", autocapitalize: "none", spellcheck: "true", enterkeyhint: "done", placeholder: o.vero ? "scrivi qui la verità…" : "scrivi qui la tua balla…" });
       var conta = el("div", { class: "bc-conta", text: "0/" + MAX_BALLA });
       var avviso = el("div", { class: "bc-avviso" });
       var ok = el("button", { class: "btn btn-primario bc-ok", text: o.ms ? "✅ Fatto!" : "✅ Fatto, nascondi", disabled: "disabled" });
@@ -444,8 +547,8 @@
       function finito() {
         if (chiuso) return;
         var v = pulisci(inp.value); if (!v) return;
-        if (o.verita !== false && eLaVerita(v, st.d.rispostaVera)) {   // ha scritto proprio la verità: deve inventare un'altra cosa
-          avviso.textContent = AVVISO_VERA; inp.value = ""; aggiorna(); avviso.classList.add("on");
+        if (!o.vero && o.verita !== false && st.d.rispostaVera && eLaVerita(v, st.d.rispostaVera)) {   // ha scritto proprio la verità: deve inventare un'altra cosa
+          avviso.textContent = avvisoVera(st); inp.value = ""; aggiorna(); avviso.classList.add("on");
           try { inp.focus({ preventScroll: true }); } catch (e) {}
           return;
         }
@@ -456,7 +559,7 @@
       inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); finito(); } });
       ok.addEventListener("click", finito);
       var v0 = apriVelo(S, el, [ testaSegreta(el, g), anteprima,
-        el("label", { class: "bc-scrivi" }, [ el("span", { class: "bc-et", text: "✍️ La tua balla: deve sembrare vera!" }), inp, conta ]),
+        el("label", { class: "bc-scrivi" + (o.vero ? " vero" : "") }, [ el("span", { class: "bc-et", text: o.vero ? "🤫 Scrivi la VERITÀ: gli altri dovranno trovarla!" : "✍️ La tua balla: deve sembrare vera!" }), inp, conta ]),
         avviso, ok ], "", o.ms);
       if (o.avviso) { avviso.textContent = o.avviso; avviso.classList.add("on"); }
       if (vv) vv.addEventListener("resize", tastiera);
@@ -517,7 +620,6 @@
     ST.accendiSolo(S, -1); ST.tutteNormali(S);
     st.conta = st.scelte.map(function () { return 0; });
     st.voti.forEach(function (v) { if (v != null) st.conta[v]++; });
-    st.esito = calcola(st.scelte, st.voti, st.g.length, moltiplica(st.giro, st.giri));
     var ordine = st.scelte.map(function (_, k) { return k; })
       .filter(function (k) { return !st.scelte[k].vera && st.conta[k] > 0; })
       .sort(function (a, b) { return st.conta[a] - st.conta[b]; });
@@ -542,7 +644,8 @@
       ST.fermaTimer(S); ST.vuota(S.sch);
       var gente = el("div", { class: "bc-gente" });
       var timbro = el("div", { class: "bc-timbro " + (sc.vera ? "vero" : "balla"), text: sc.vera ? "Vero!" : "Balla!" });
-      var biglietto = el("div", { class: "bc-big" }, [ el("span", { class: "tx", text: sc.testo }), timbro ]);
+      // (con «Che balla!» il biglietto tiene un po' di spazio sotto per il tasto 😂: niente salti quando compare)
+      var biglietto = el("div", { class: "bc-big" + (!sc.vera && st.ride && st.rideFn ? " con-ride" : "") }, [ el("span", { class: "tx", text: sc.testo }), timbro ]);
       var sotto = el("div", { class: "bc-sotto" });
       S.sch.appendChild(el("div", { class: "bc-sch riv" }, [
         el("div", { class: "bc-giro", text: votanti.length ? (votanti.length === 1 ? "1 voto" : votanti.length + " voti") : "Nessun voto" }),
@@ -560,17 +663,22 @@
       if (!S.vivo()) return fine();
       timbro.classList.add("on");
       var m = moltiplica(st.giro, st.giri);
+      // «😂 Che balla!»: appena il timbro dice «Balla!» si può ridere (non della propria)
+      if (!sc.vera && st.ride && st.rideFn) biglietto.appendChild(bottoneRide(st, k, false));
       if (sc.vera) {
-        sotto.appendChild(el("div", { class: "bc-intera" }, [ el("small", { text: "La notizia vera:" }), ritaglio(el, st, sc.testo, false) ]));
+        var am = st.d.amici;
+        sotto.appendChild(el("div", { class: "bc-intera" }, [ el("small", { text: am ? "La risposta di " + st.d.protNome + ":" : "La notizia vera:" }), ritaglio(el, st, sc.testo, false) ]));
         if (votanti.length) {
           sotto.appendChild(el("div", { class: "bc-premio si", text: "+" + (2 * m) + " punti a " + nomi(st, votanti) }));
+          if (am) sotto.appendChild(el("div", { class: "bc-premio si oro", text: "+" + (votanti.length * m) + " a " + st.d.protNome + ": " + (votanti.length === 1 ? "l'ha capita 1 amico" : "l'hanno capita in " + quanti(votanti.length)) }));
           gente.querySelectorAll(".bc-votante").forEach(function (n) { n.classList.add("giusto"); });
           votanti.forEach(function (v) { ST.faccia(S, v, "evviva"); });
           ST.pubblico(S, "ovazione"); ST.coriandoli();
         } else {
-          sotto.appendChild(el("div", { class: "bc-premio no", text: "Nessuno ha trovato la verità! 😱" }));
+          sotto.appendChild(el("div", { class: "bc-premio no", text: am ? "Nessuno conosce davvero " + st.d.protNome + "! 😱" : "Nessuno ha trovato la verità! 😱" }));
           ST.pubblico(S, "ohh");
         }
+        if (am && st.d.prot >= 0) ST.faccia(S, st.d.prot, votanti.length ? "evviva" : "esploso");
       } else {
         gente.querySelectorAll(".bc-votante").forEach(function (n) { n.classList.add("cascato"); });
         votanti.forEach(function (v) { ST.faccia(S, v, "esploso"); });
@@ -597,13 +705,77 @@
   async function schermoIgnorate(st, lista, online) {
     var S = st.S, el = st.t.el;
     ST.fermaTimer(S); ST.vuota(S.sch);
-    var righe = el("div", { class: "bc-ignorate" });
+    var righe = el("div", { class: "bc-ignorate" }), ride = st.ride && st.rideFn;
     lista.forEach(function (k, n) {
-      var sc = st.scelte[k], r = el("div", { class: "bc-ign" }, [ el("span", { class: "tx", text: sc.testo }), el("span", { class: "di", text: sc.autori.length ? nomi(st, sc.autori) : "🗞️ redazione" }) ]);
+      var sc = st.scelte[k], r = el("div", { class: "bc-ign" }, [ el("span", { class: "tx", text: sc.testo }), el("span", { class: "di", text: sc.autori.length ? nomi(st, sc.autori) : "🗞️ redazione" }),
+        ride ? bottoneRide(st, k, true) : null ]);
       r.style.animationDelay = (n * 0.12) + "s"; righe.appendChild(r);
     });
-    S.sch.appendChild(el("div", { class: "bc-sch" }, [ el("div", { class: "bc-chi-sch", text: "🙄 Balle a cui non ha creduto nessuno" }), righe ]));
+    var box = el("div", { class: "bc-sch" }, [ el("div", { class: "bc-chi-sch", text: "🙄 Balle a cui non ha creduto nessuno" }), righe,
+      ride ? el("div", { class: "bc-giro", text: "😂 Fanno ridere? Toccate 😂" }) : null ]);
+    S.sch.appendChild(box);
     ST.pubblico(S, "piano");
+    if (!online) await ST.aspettaTasto(S, st.ride ? "Avanti ▶" : "Vediamo i punti ▶");
+  }
+
+  // ---- «😂 Che balla!»: il tasto delle risate su una balla ----
+  // st.rideFn(k) = conta la risata (false = non si può: già fatto, o troppi tocchi); st.hoRiso(k) = online, l'ho già fatto;
+  // st.miaBalla(sc) = online, l'ho scritta io (non si ride della propria). piccolo = nella lista delle balle ignorate
+  function bottoneRide(st, k, piccolo) {
+    var el = st.t.el, sc = st.scelte[k], mia = !!(st.miaBalla && st.miaBalla(sc));
+    var b = el("button", { class: "bc-ride" + (piccolo ? " pic" : ""), type: "button", "aria-label": "Che balla!" }, [
+      el("span", { class: "em", text: "😂" }), piccolo ? null : el("span", { class: "rt", text: mia ? "La tua" : "Che balla!" }), el("b", { class: "nn" }) ]);
+    b._n = 0;
+    if (mia) { b.disabled = true; b.classList.add("mia"); }   // (della propria balla non si ride)
+    segnaRide(b, (st.risate && st.risate[k]) || 0, st.hoRiso && st.hoRiso(k), true);
+    b.addEventListener("click", function () {
+      if (b.disabled) return;
+      if (!st.rideFn(k)) { b.classList.remove("no"); void b.offsetWidth; b.classList.add("no"); return; }
+      try { if (navigator.vibrate) navigator.vibrate(10); } catch (e) {}
+      risatina();
+      segnaRide(b, st.risate[k], st.hoRiso && st.hoRiso(k));
+    });
+    if (st.rideBtn) st.rideBtn[k] = b;
+    return b;
+  }
+  // il numero di 😂 (a ogni risata in più vola su una faccina); mio = l'ho già toccato io
+  function segnaRide(b, n, mio, subito) {
+    if (!subito) for (var q = b._n; q < Math.min(n, b._n + 4); q++) vola(b, q - b._n);
+    b._n = n;
+    var nn = b.querySelector(".nn"), tx = n ? String(n) : "";
+    if (nn.textContent !== tx) nn.textContent = tx;
+    b.classList.toggle("mio", !!mio);
+  }
+  function vola(b, q) {
+    var f = document.createElement("span"); f.className = "bc-vola"; f.textContent = "😂";
+    f.style.left = (25 + Math.random() * 50) + "%"; f.style.animationDelay = (q * 0.12) + "s";
+    b.appendChild(f); setTimeout(function () { if (f.parentNode) f.parentNode.removeChild(f); }, 1500);
+  }
+  function risatina() {   // "ah-ah-ah": tre note che scendono
+    var c = SG.audioCtx && SG.audioCtx(); if (!c) return;
+    try { [880, 740, 622].forEach(function (f, i) { var o = c.createOscillator(), g = c.createGain(), n = c.currentTime + i * 0.09;
+      o.type = "triangle"; o.frequency.setValueAtTime(f, n); g.gain.setValueAtTime(0.0001, n); g.gain.exponentialRampToValueAtTime(0.09, n + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, n + 0.08);
+      o.connect(g); g.connect(c.destination); o.start(n); o.stop(n + 0.09); }); } catch (e) {}
+  }
+
+  // ---- la Balla d'oro del round: la balla con più 😂, sul maxischermo (+1 a chi l'ha scritta) ----
+  async function schermoOro(st, oro, online) {
+    var S = st.S, el = st.t.el; if (!oro || !S.vivo()) return;
+    ST.accendiSolo(S, -1); ST.tutteNormali(S); ST.viaBarra(S);
+    await ST.suSchermo(S, 700);
+    ST.fermaTimer(S); ST.vuota(S.sch);
+    var autori = [];
+    oro.ks.forEach(function (k) { (st.scelte[k].autori || []).forEach(function (a) { if (autori.indexOf(a) < 0) autori.push(a); }); });
+    var carte = oro.ks.slice(0, 2).map(function (k) { return el("div", { class: "bc-big oro" }, [ el("span", { class: "tx", text: st.scelte[k].testo }) ]); });
+    S.sch.appendChild(el("div", { class: "bc-sch riv bc-oro" }, [
+      el("div", { class: "bc-coppa", text: "🏆" }),
+      el("div", { class: "bc-chi-sch", text: oro.ks.length > 1 ? "Balle d'oro del round!" : "Balla d'oro del round!" }) ].concat(carte, [
+      el("div", { class: "bc-giro", text: "😂 × " + oro.n + (oro.ks.length > 1 ? " a testa" : "") }),
+      el("div", { class: "bc-autori" }, autori.map(function (a) { return el("span", { class: "bc-votante autore" }, [ fac(el, st.g[a], "evviva"), el("span", { text: st.g[a].nome + " +1" }) ]); }))
+    ])));
+    autori.forEach(function (a) { ST.faccia(S, a, "evviva"); });
+    ST.pubblico(S, "ovazione"); ST.coriandoli(); tic(1046);
+    try { if (navigator.vibrate) navigator.vibrate([30, 40, 60]); } catch (e) {}
     if (!online) await ST.aspettaTasto(S, "Vediamo i punti ▶");
   }
 
@@ -613,8 +785,9 @@
     ST.viaBarra(S); ST.tutteNormali(S);
     await ST.largo(S, 900);
     ST.terzo(S, null, "Fine del round " + (st.giro + 1), "Ecco i punti!", "🏁");
+    st.esito = calcola(st.scelte, st.voti, st.g.length, moltiplica(st.giro, st.giri), null, st.d.amici ? st.d.prot : null, st.ride ? st.risate : null);
     for (var i = 0; i < st.g.length; i++) {
-      var d = st.esito[i], piu = d.vera + d.inganni;
+      var d = st.esito[i], piu = puntiDi(d);
       st.g[i].punti += piu; st.g[i].ultimo = piu; sommaTot(st.g[i].tot, d);
       ST.puntiLeggio(S, i, st.g[i].punti, piu);
       ST.faccia(S, i, piu > 0 ? "esulta" : "triste");
@@ -655,7 +828,8 @@
   var PREMI = [
     { k: "ingannati", icona: "🤥", nome: "Re delle balle", dice: function (n) { return n === 1 ? "1 amico ingannato" : n + " amici ingannati"; } },
     { k: "trovate", icona: "🔍", nome: "Detective", dice: function (n) { return n === 1 ? "1 verità scovata" : n + " verità scovate"; } },
-    { k: "cascato", icona: "🙈", nome: "Credulone", dice: function (n) { return n === 1 ? "ci è cascato 1 volta" : "ci è cascato " + n + " volte"; } }
+    { k: "cascato", icona: "🙈", nome: "Credulone", dice: function (n) { return n === 1 ? "ci è cascato 1 volta" : "ci è cascato " + n + " volte"; } },
+    { k: "risate", icona: "😂", nome: "Balla d'oro", dice: function (n) { return n === 1 ? "1 risata per le sue balle" : n + " risate per le sue balle"; } }
   ];
   async function schermoPremi(S, el, g, online) {
     var righe = [];
@@ -704,7 +878,8 @@
         if (SALVATE[sessione]) return; SALVATE[sessione] = 1;
         try { if (localStorage.getItem("sg-balla-salvata") === sessione) return; localStorage.setItem("sg-balla-salvata", sessione); } catch (e) {}
       }
-      var incr = [["partite", 1], ["veritaTrovate", me.tot.trovate], ["amiciIngannati", me.tot.ingannati], ["ballePerfette", me.tot.perfette]];
+      var incr = [["partite", 1], ["veritaTrovate", me.tot.trovate], ["amiciIngannati", me.tot.ingannati], ["ballePerfette", me.tot.perfette],
+        ["risatePrese", me.tot.risate || 0], ["balleDoro", me.tot.ori || 0]];
       if (online) incr.push(["partiteOnline", 1]);
       if (me.pos === 1) incr.push(["vinte", 1]);
       SGNube.salvaProgressi(null, "balla", incr.filter(function (x) { return x[1] > 0; }), [["puntiMax", me.punti || 0]]);
@@ -726,6 +901,9 @@
   function durataVoti(nv) { return 1600 + nv * 300 + 1600 + 1500; }          // i voti che compaiono sul tabellone
   function durataPasso(nVoti, vera) { return (vera ? 7200 : 5600) + nVoti * 380; }
   function durataPunti(n) { return 4000 + n * 320 + 12000; }                 // i punti sui leggii, poi 12 secondi di classifica
+  var RIDE_IN_PIU = 2500;            // «Che balla!»: un po' più di tempo su ogni balla scoperta, per toccare 😂
+  var DURATA_IGNORATE_RIDE = 8000;   // e sulle balle a cui non ha creduto nessuno
+  var DURATA_ORO = 5600;             // la Balla d'oro del round sul maxischermo
 
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   function senzaRete(t) {
@@ -746,18 +924,25 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var imp = t.impostazioni || {};
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
-    var H = { fase: "lobby", codice: "…", pronta: false, giri: imp.round || 5, giro: 0, domande: [], d: null,
+    var H = { fase: "lobby", codice: "…", pronta: false, giri: imp.round || 5, giro: 0, d: null, notizie: [], amiciQ: [], piano: [],
+      modoAmici: imp.amici || "misto", ride: imp.ride !== false, giaProt: [], rif: 0, saltato: null,
       players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0 }],
       balle: {}, fatti: {}, voti: {}, scelte: [], scadenza: 0, passo: 0, ordine: [], ignorate: [], ultimo: {}, classifica: null, to: null,
+      risate: {}, oro: null, avanti: [],
       guarda: [] };   // nella Sala: chi non è stato scelto per giocare (guarda soltanto, col suo id nella foto)
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function iDi(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return i; return -1; }
     function presenti() { return H.players.filter(function (p) { return !p.via; }); }
+    // chi vota in questo round: chi è rimasto, senza il protagonista di «Parliamo di te» (la verità la sa)
+    function votanti() { return presenti().filter(function (p) { return !(H.d && H.d.amici && p.id === H.d.prot); }); }
     function ferma() { if (H.to) { clearTimeout(H.to); H.to = null; } }
     function dopo(ms, f) { ferma(); H.to = setTimeout(f, ms); }
 
-    // "⚙️ Regole" nella saletta: quante notizie
-    t.onRegole = function (im) { if (H.fase !== "lobby") return; H.giri = im.round || 5; bd(); };
+    // "⚙️ Regole" nella saletta: quanti round, di cosa si parla, «Che balla!»
+    t.onRegole = function (im) {
+      if (H.fase !== "lobby") return;
+      im = im || {}; H.giri = im.round || 5; H.modoAmici = im.amici || "misto"; H.ride = im.ride !== false; bd();
+    };
 
     var rete = SGNet.ospita("balla", {
       onCodice: function (c) { H.codice = c; bd(); },
@@ -777,30 +962,37 @@
           if (!p0 && (H.guarda.indexOf(id) >= 0 || (t.puoSedersi && !t.puoSedersi(id, nomeJ)))) { if (H.guarda.indexOf(id) < 0) H.guarda.push(id); bd(); return; }
           if (H.fase === "lobby" && !p0 && H.players.length < MAX_ON)
             H.players.push({ id: id, nome: nomeJ, omino: avatarValido(m.omino), punti: 0, tot: nuoviTot() });
-          else if (p0 && p0.via) p0.via = false;   // è tornato (stesso id): riprende a giocare coi suoi punti
+          else if (p0 && p0.via) { p0.via = false; controlla(); }   // è tornato (stesso id): riprende a giocare coi suoi punti
           bd();   // anche se c'era già: rimanda la foto (serve a chi si ricollega)
           if (p0 && H.balle[id] && H.d && H.fase !== "lobby") privato(id, { t: "priv", k: "mia", testo: H.balle[id], dom: H.d.domanda });   // e la sua balla
           return;
         }
         if (m.t === "balla") balla(id, m.testo);
         else if (m.t === "voto") voto(id, m.k);
+        else if (m.t === "ride") ride(id, m.k);
+        else if (m.t === "avanti") avanti(id);
       },
       // (arriva solo se il primo collegamento non riesce: a partita cominciata la rete si ricollega da sola)
       onErrore: function () { if (!H.pronta) { ferma(); errore(t, "Non riesco ad aprire la stanza. Controlla la connessione e riprova."); } }
     });
     if (!rete) return senzaRete(t);
-    // la "foto" per tutti: SEMPRE con gli id; le balle e i voti solo quando si scoprono
+    // la "foto" per tutti: SEMPRE con gli id; le balle, la verità e i voti solo quando si scoprono
     function vm() {
-      var f = H.fase, o = { fase: f, codice: H.codice, pronta: H.pronta, giro: H.giro, giri: H.giri, classifica: H.classifica, sessione: H.sessione,
+      var f = H.fase, o = { fase: f, codice: H.codice, pronta: H.pronta, giro: H.giro, giri: H.giri, rif: H.rif, classifica: H.classifica, sessione: H.sessione,
+        ride: H.ride, modoAmici: H.modoAmici,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, punti: p.punti, via: !!p.via }; }),
         fatti: Object.keys(H.fatti), guarda: H.guarda.slice() };
-      if (H.d && f !== "lobby") o.domanda = H.d.domanda;
+      if (H.d && f !== "lobby") { o.domanda = H.d.domanda; if (H.d.amici) { o.amici = true; o.prot = H.d.prot; } }
+      if (f === "notizia" && H.saltato) o.saltato = H.saltato;
       if (f === "scrittura" || f === "voto" || f === "punti") o.rimMs = Math.max(0, H.scadenza - Date.now());
       if (f === "risposte" || f === "voto") o.scelte = H.scelte.map(function (sc) { return { testo: sc.testo }; });
-      if ((f === "voti" || f === "rivela" || f === "punti" || f === "fine") && H.scelte.length) {
+      if ((f === "voti" || f === "rivela" || f === "oro" || f === "punti" || f === "fine") && H.scelte.length) {
         o.vera = H.d.rispostaVera; o.scelte = H.scelte; o.ordine = H.ordine; o.ignorate = H.ignorate; o.passo = H.passo;
         o.voti = H.players.map(function (p) { return H.voti[p.id] != null ? H.voti[p.id] : null; });
+        o.risate = H.scelte.map(function (_, k) { return (H.risate[k] || []).slice(); });
       }
+      if (f === "oro" || f === "punti" || f === "fine") o.oro = H.oro;
+      if (f === "punti") { o.avanti = H.avanti.slice(); o.servono = servono(); }
       if (f === "punti" || f === "fine") o.ultimo = H.ultimo;
       return o;
     }
@@ -811,29 +1003,59 @@
     // ----- la partita -----
     function comincia() {
       if (H.fase !== "lobby" || presenti().length < MIN_ON) return;
-      H.domande = scegliDomande(H.giri); if (!H.domande.length) return;
-      H.giri = H.domande.length; H.giro = 0; H.classifica = null;
+      H.piano = pianoRound(H.giri, H.modoAmici);
+      var nA = H.piano.filter(function (x) { return x === "a"; }).length;
+      H.notizie = scegliDomande(H.piano.length - nA); H.amiciQ = scegliAmici(nA);
+      if (!H.notizie.length && !H.amiciQ.length) return;
+      H.giro = 0; H.classifica = null; H.giaProt = []; H.rif = 0;
       H.sessione = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
       H.players.forEach(function (p) { p.punti = 0; p.tot = nuoviTot(); });
       H.fase = "apertura"; bd();   // la sigla dello studio, uguale su tutti i telefoni
       dopo(ST.durataApertura(H.players.length), nuovoRound);
     }
+    // la domanda del round: una notizia, oppure («Parliamo di te») una domanda su un amico che non è ancora stato protagonista
+    function domandaDelRound() {
+      if (H.piano[H.giro] === "a" && H.amiciQ.length && presenti().length >= MIN_ON) {
+        var cand = presenti().filter(function (p) { return H.giaProt.indexOf(p.id) < 0; });
+        if (!cand.length) { H.giaProt = []; cand = presenti(); }
+        var p = cand[Math.floor(Math.random() * cand.length)], tpl = H.amiciQ.shift();
+        H.giaProt.push(p.id);
+        return { domanda: riempi(tpl.domanda, p.nome), rispostaVera: "", balleCasa: tpl.balleCasa || [], amici: true, prot: p.id };
+      }
+      return H.notizie.shift() || scegliDomande(1)[0];
+    }
+    function pulisciRound() { H.balle = {}; H.fatti = {}; H.voti = {}; H.scelte = []; H.ordine = []; H.ignorate = []; H.passo = 0; H.ultimo = {}; H.risate = {}; H.oro = null; H.avanti = []; }
     function nuovoRound() {
-      H.d = H.domande[H.giro]; H.balle = {}; H.fatti = {}; H.voti = {}; H.scelte = []; H.ordine = []; H.ignorate = []; H.passo = 0; H.ultimo = {};
+      H.d = domandaDelRound(); H.saltato = null; pulisciRound();
       H.fase = "notizia"; bd();
       dopo(DURATA_NOTIZIA, scrittura);
+    }
+    // il protagonista non ha scritto la sua verità (tempo finito o uscito): si passa a una notizia, stesso round
+    function siPassaAUnaNotizia() {
+      var p = pById(H.d.prot); H.saltato = p ? p.nome : "Il protagonista";
+      H.d = H.notizie.shift() || scegliDomande(1)[0]; H.rif++; pulisciRound();
+      H.fase = "notizia"; bd();
+      dopo(DURATA_NOTIZIA + 2600, scrittura);
     }
     function scrittura() { H.fase = "scrittura"; H.scadenza = Date.now() + TEMPO_SCRIVI + ANTICIPO; bd(); dopo(TEMPO_SCRIVI + ANTICIPO + GRAZIA, fineScrittura); }
     function balla(id, testo) {
       var p = pById(id); if (H.fase !== "scrittura" || !p || p.via || H.fatti[id]) return;
       var v = pulisci(testo); if (!v) return;
-      if (eLaVerita(v, H.d.rispostaVera)) return privato(id, { t: "priv", k: "vera" });   // ha scritto la verità: ne deve inventare un'altra
+      if (H.d.amici && id === H.d.prot) {   // «Parliamo di te»: questa è la verità
+        H.d.rispostaVera = v; H.fatti[id] = 1;
+        // chi aveva già scritto proprio la verità ne deve inventare un'altra
+        Object.keys(H.balle).forEach(function (o) { if (eLaVerita(H.balle[o], v)) { delete H.balle[o]; delete H.fatti[o]; privato(o, { t: "priv", k: "vera" }); } });
+        controlla(); bd(); return;
+      }
+      if (H.d.rispostaVera && eLaVerita(v, H.d.rispostaVera)) return privato(id, { t: "priv", k: "vera" });   // ha scritto la verità: ne deve inventare un'altra
       H.balle[id] = v; H.fatti[id] = 1; controlla(); bd();
       privato(id, { t: "priv", k: "mia", testo: v, dom: H.d.domanda });   // conferma: questa è la tua balla
     }
     function fineScrittura() {
       ferma();
-      H.scelte = preparaScelte(H.d.rispostaVera, H.players.map(function (p) { return H.balle[p.id] || ""; }), H.d.balleCasa);   // gli autori sono i posti dei giocatori
+      if (H.d.amici && !H.d.rispostaVera) return siPassaAUnaNotizia();
+      var vera = H.d.rispostaVera;
+      H.scelte = preparaScelte(vera, H.players.map(function (p) { var b = H.balle[p.id] || ""; return b && !eLaVerita(b, vera) ? b : ""; }), H.d.balleCasa);   // gli autori sono i posti dei giocatori
       H.fatti = {}; H.fase = "risposte"; bd();
       dopo(durataRisposte(H.scelte.length), votazione);
     }
@@ -841,6 +1063,7 @@
     function voto(id, k) {
       var i = iDi(id), p = H.players[i]; k = Number(k);
       if (H.fase !== "voto" || !p || p.via || H.voti[id] != null || !(k >= 0 && k < H.scelte.length)) return;
+      if (H.d.amici && id === H.d.prot) return;   // il protagonista non vota
       if (H.scelte[k].autori.indexOf(i) >= 0) return privato(id, { t: "priv", k: "tua" });   // la propria balla non si vota
       H.voti[id] = k; H.fatti[id] = 1; controlla(); bd();
     }
@@ -855,35 +1078,66 @@
       dopo(durataVoti(nv), function () { H.fase = "rivela"; H.passo = 0; bd(); prossimoPasso(conta); });
     }
     // la rivelazione: un passo alla volta (prima le balle votate, poi la verità, poi quelle che non ha votato nessuno)
+    // con «Che balla!» accesa i passi delle balle durano un po' di più: c'è il tempo di toccare 😂
     function prossimoPasso(conta) {
       var nL = H.ordine.length, kVera = H.scelte.map(function (sc) { return sc.vera; }).indexOf(true);
-      var dur = H.passo < nL ? durataPasso(conta[H.ordine[H.passo]], false) : H.passo === nL ? durataPasso(conta[kVera], true) : 4600;
+      var dur = H.passo < nL ? durataPasso(conta[H.ordine[H.passo]], false) + (H.ride ? RIDE_IN_PIU : 0)
+        : H.passo === nL ? durataPasso(conta[kVera], true) : (H.ride ? DURATA_IGNORATE_RIDE : 4600);
       dopo(dur, function () {
         H.passo++;
-        if (H.passo > nL + (H.ignorate.length ? 1 : 0)) return punti();
+        if (H.passo > nL + (H.ignorate.length ? 1 : 0)) return dopoRivela();
         bd(); prossimoPasso(conta);
       });
+    }
+    // i 😂 di «Che balla!»: uno a testa per balla (anche chi guarda nella Sala), mai sulla propria
+    function ride(id, k) {
+      k = Number(k);
+      if (!H.ride || H.fase !== "rivela" || !(k >= 0 && k < H.scelte.length) || H.scelte[k].vera) return;
+      var i = iDi(id), p = H.players[i];
+      if (p ? p.via : H.guarda.indexOf(id) < 0) return;
+      if (i >= 0 && H.scelte[k].autori.indexOf(i) >= 0) return;
+      var l = H.risate[k] || (H.risate[k] = []); if (l.indexOf(id) >= 0) return;
+      l.push(id); bd();
+    }
+    function contaRisate() { return H.scelte.map(function (_, k) { return (H.risate[k] || []).length; }); }
+    // finita la rivelazione: la Balla d'oro del round (se qualcuno ha riso), poi i punti
+    function dopoRivela() {
+      H.oro = H.ride ? calcolaOro(H.scelte, contaRisate()) : null;
+      if (!H.oro) return punti();
+      H.fase = "oro"; bd();
+      dopo(DURATA_ORO, punti);
     }
     function punti() {
       ferma();
       var esito = calcola(H.scelte, H.players.map(function (p) { return H.voti[p.id] != null ? H.voti[p.id] : null; }), H.players.length,
-        moltiplica(H.giro, H.giri), presenti().length);
+        moltiplica(H.giro, H.giri), votanti().length, H.d.amici ? iDi(H.d.prot) : null, H.ride ? contaRisate() : null);
       H.ultimo = {};
-      H.players.forEach(function (p, i) { if (p.via) return; var d = esito[i].vera + esito[i].inganni; p.punti += d; H.ultimo[p.id] = d; sommaTot(p.tot || (p.tot = nuoviTot()), esito[i]); });
+      H.players.forEach(function (p, i) { if (p.via) return; var d = puntiDi(esito[i]); p.punti += d; H.ultimo[p.id] = d; sommaTot(p.tot || (p.tot = nuoviTot()), esito[i]); });
       if (H.giro + 1 >= H.giri) return fine();
-      // la classifica del round: l'host tocca "Prossima notizia ▶" (che conta) oppure si va avanti da soli
+      // la classifica del round: si va avanti col conto alla rovescia, o subito se più di metà tocca «⏩ Avanti»
       var dur = durataPunti(H.players.length);
-      H.fase = "punti"; H.scadenza = Date.now() + dur; bd();
+      H.avanti = []; H.fase = "punti"; H.scadenza = Date.now() + dur; bd();
       dopo(dur, prossimo);
+    }
+    function servono() { return Math.floor(presenti().length / 2) + 1; }
+    function avanti(id) {
+      var p = pById(id); if (H.fase !== "punti" || !p || p.via || H.avanti.indexOf(id) >= 0) return;
+      H.avanti.push(id);
+      if (H.avanti.length >= servono()) return prossimo();
+      bd();
     }
     function prossimo() { if (H.fase !== "punti") return; ferma(); H.giro++; nuovoRound(); }
     // chi ha finito di scrivere / di votare: quando ci sono tutti si va avanti senza aspettare il tempo
     function controlla() {
       if (H.fase === "lobby" || H.fase === "fine") return;
       if (presenti().length < 2) return fine();   // è rimasto uno solo: finisce qui
-      var tutti = function () { return presenti().every(function (p) { return H.fatti[p.id]; }); };
-      if (H.fase === "scrittura" && tutti()) dopo(1200, fineScrittura);
-      if (H.fase === "voto" && tutti()) dopo(1200, fineVoto);
+      var tutti = function (lista) { return lista.every(function (p) { return H.fatti[p.id]; }); };
+      if (H.fase === "scrittura") {
+        var protVia = H.d && H.d.amici && !H.d.rispostaVera && (pById(H.d.prot) || {}).via;
+        if (protVia || tutti(presenti())) dopo(1200, fineScrittura);
+      }
+      if (H.fase === "voto" && tutti(votanti())) dopo(1200, fineVoto);
+      if (H.fase === "punti" && H.avanti.length >= servono()) prossimo();
     }
     function fine() {
       ferma();
@@ -901,6 +1155,7 @@
 
     var cbHost = { sonoHost: true, myId: "host", onComincia: comincia, onNuova: nuova, onProssimo: prossimo,
       onBalla: function (testo) { balla("host", testo); }, onVoto: function (k) { voto("host", k); },
+      onRide: function (k) { ride("host", k); }, onAvanti: function () { avanti("host"); },
       onEsci: function (giaChiesto) {   // (dallo studio la domanda "Uscire dalla partita?" l'ha già fatta lui)
         if (giaChiesto !== true && H.fase !== "lobby" && H.fase !== "fine") return t.conferma("Chiudere la partita per tutti?", null, "Esci", function () { cbHost.onEsci(true); });   // un tocco sbagliato non chiude il gioco a tutti
         ferma(); rete.chiudi(); t.esci();
@@ -917,6 +1172,8 @@
     var cb = { sonoHost: false, myId: null,
       onBalla: function (testo) { if (G.rete) G.rete.invia({ t: "balla", testo: testo }); },
       onVoto: function (k) { if (G.rete) G.rete.invia({ t: "voto", k: k }); },
+      onRide: function (k) { if (G.rete) G.rete.invia({ t: "ride", k: k }); },
+      onAvanti: function () { if (G.rete) G.rete.invia({ t: "avanti" }); },
       onEsci: function (giaChiesto) {
         if (giaChiesto !== true && G.vm && G.vm.fase !== "lobby" && G.vm.fase !== "fine") return t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(true); });
         if (G.rete) G.rete.chiudi(); t.esci();
@@ -975,19 +1232,34 @@
     if (vm.fase === "lobby") { RB = null; return lobbyB(t, vm, cb); }
     // lo studio si fa una volta per partita (e di nuovo se l'host ricomincia dopo la fine)
     if (!RB || (!RB.S.vivo() && (vm.fase !== "fine" || !RB.fineFatta))) {
-      RB = { t: t, cb: cb, usciti: {} };
+      RB = { t: t, cb: cb, usciti: {}, mie: {} };
       RB.S = ST.crea(t, vm.players, { io: idxDi(vm, cb.myId), esci: function () { cb.onEsci(true); }, titolo: "La Balla Colossale", logo: ["LA BALLA", "COLOSSALE"] });
       vm.players.forEach(function (p, i) { ST.puntiLeggio(RB.S, i, p.punti, 0); });
     }
     RB.vm = vm; RB.cb = cb; RB.vmTs = Date.now();
     if (vm.fase !== "scrittura" && vm.fase !== "voto" && RB.S._chiudiVelo) RB.S._chiudiVelo();   // il tempo è finito per tutti: il foglio si chiude
+    aggiornaRisate(RB); aggiornaAvanti(RB);   // (i 😂 degli altri e i tocchi di «⏩ Avanti»: solo i numeri, senza ridisegnare)
     regiaTick(RB);
+  }
+  // «😂 Che balla!»: i 😂 arrivati dagli altri telefoni sui tasti a vista (a ogni risata in più vola una faccina)
+  function aggiornaRisate(R) {
+    var vm = R.vm, btn = R.rideBtn; if (!btn || !vm.risate) return;
+    Object.keys(btn).forEach(function (k) {
+      var b = btn[k], l = vm.risate[k] || [], mia = l.indexOf(R.cb.myId) >= 0;
+      if (!b.isConnected) return;
+      segnaRide(b, l.length + (R.mie[R.kRide + "|" + k] && !mia ? 1 : 0), mia || !!R.mie[R.kRide + "|" + k]);
+    });
+  }
+  function testoLobby(vm) {
+    var am = vm.modoAmici === "solo" ? " Ogni round una domanda su uno di voi: lui scrive la verità, gli altri le balle."
+      : vm.modoAmici === "no" ? "" : " Ogni tanto la domanda è su uno di voi (👥 Parliamo di te).";
+    return "Si gioca con " + (vm.giri === 1 ? "1 round" : vm.giri + " round") + "." + am + (vm.ride === false ? "" : " 😂 Alle balle più divertenti va la Balla d'oro.");
   }
   function lobbyB(t, vm, cb) {
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN_ON,
       vuoti: Math.max(0, MIN_ON - vm.players.length),
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
-      extra: [t.el("p", { class: "modulo-nota bc-lobby", text: "Si gioca con " + (vm.giri === 1 ? "1 notizia" : vm.giri + " notizie") + ". Ognuno scrive la sua balla e vota dal suo telefono, tutti insieme." })],
+      extra: [t.el("p", { class: "modulo-nota bc-lobby", text: testoLobby(vm) + " Ognuno scrive e vota dal suo telefono, tutti insieme." })],
       // nella Sala: chi non è stato scelto guarda soltanto
       spettatore: !cb.sonoHost && (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi" : null,
       attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
@@ -1005,9 +1277,23 @@
   }
   // lo stato del round come lo usano le schermate (uguali a quelle del telefono che passa)
   function statoDa(R, vm) {
-    return { S: R.S, t: R.t, g: vm.players, d: { domanda: vm.domanda || "", rispostaVera: vm.vera || "" }, giro: vm.giro, giri: vm.giri,
+    var ip = vm.amici ? idxDi(vm, vm.prot) : -1, io = idxDi(vm, R.cb.myId), kR = vm.giro + "." + (vm.rif || 0);
+    var st = { S: R.S, t: R.t, g: vm.players, giro: vm.giro, giri: vm.giri,
+      d: { domanda: vm.domanda || "", rispostaVera: vm.vera || "", amici: !!vm.amici, prot: ip, protNome: ip >= 0 ? vm.players[ip].nome : "" },
       scelte: vm.scelte || [], voti: vm.voti || vm.players.map(function () { return null; }),
-      fatti: vm.players.map(function (p) { return (vm.fatti || []).indexOf(p.id) >= 0; }) };
+      fatti: vm.players.map(function (p) { return (vm.fatti || []).indexOf(p.id) >= 0; }),
+      ride: vm.ride !== false, rideBtn: {}, kR: kR };
+    // «😂 Che balla!» online: un 😂 a testa per balla (lo conta l'host), mai sulla propria
+    var mieR = function (k) { return !!R.mie[kR + "|" + k] || ((vm.risate || [])[k] || []).indexOf(R.cb.myId) >= 0; };
+    st.risate = st.scelte.map(function (_, k) { var l = (vm.risate || [])[k] || []; return l.length + (R.mie[kR + "|" + k] && l.indexOf(R.cb.myId) < 0 ? 1 : 0); });
+    st.hoRiso = mieR;
+    st.miaBalla = function (sc) { return io >= 0 && (sc.autori || []).indexOf(io) >= 0; };
+    var me = vm.players[io], guardo = (vm.guarda || []).indexOf(R.cb.myId) >= 0;
+    st.rideFn = !(me ? !me.via : guardo) ? null : function (k) {   // (chi è uscito non ride; chi guarda nella Sala sì)
+      if (mieR(k) || R.vm.fase !== "rivela") return false;
+      R.mie[kR + "|" + k] = 1; st.risate[k]++; R.cb.onRide(k); return true;
+    };
+    return st;
   }
   // un passo della regia: true se ha fatto un momento dello spettacolo (poi si guarda lo stato più recente)
   async function regiaPasso(R) {
@@ -1017,7 +1303,8 @@
       if (p.via && !R.usciti[p.id]) { R.usciti[p.id] = true; ST.fuori(S, i, true); ST.testoLeggio(S, i, "👋 uscito", true); }
       else if (!p.via && R.usciti[p.id]) { delete R.usciti[p.id]; ST.fuori(S, i, false); ST.puntiLeggio(S, i, p.punti, 0); }   // è tornato
     });
-    var kG = vm.giro, st = statoDa(R, vm);
+    // la chiave del round: il giro e, se il protagonista non ha scritto e si è passati a una notizia, quante volte è successo
+    var st = statoDa(R, vm), kG = st.kR;
     if (vm.fase === "apertura") {
       if (R.aperturaFatta) return false;
       R.aperturaFatta = true; await ST.apertura(S); return true;
@@ -1028,9 +1315,14 @@
       R.kN = kG; R.vera = false; R.tua = false;
       ST.viaBarra(S); ST.accendiSolo(S, -1); ST.tutteNormali(S);
       vm.players.forEach(function (p, i) { if (!p.via) ST.puntiLeggio(S, i, p.punti, 0); });
+      if (vm.saltato) {   // «Parliamo di te» saltato: lo studio lo dice, poi la notizia
+        ST.terzo(S, null, "😶 " + vm.saltato + " non ha scritto la risposta", "Si passa a una notizia!", "📰"); ST.pubblico(S, "ohh");
+        await ST.dorme(2400); ST.viaTerzo(S);
+      }
       await ST.suSchermo(S, 800);
       schermoTurno(st, null, "scrive"); R.boxFatti = st.boxFatti;
       ST.FX.rullo(1); await ST.dorme(1100); ST.pubblico(S, "piano");
+      if (st.d.amici && R.vm.fase === "notizia") await annunciaAmici(S, st.d.prot, st.d.protNome);
       if (moltiplica(vm.giro, vm.giri) > 1 && R.vm.fase === "notizia") await annunciaDoppio(S);
       return true;
     }
@@ -1058,13 +1350,20 @@
       var kP = kG + "|" + vm.passo;
       if (R.kP === kP) return false;
       R.kP = kP; R.kVo = kG; ST.viaBarra(S);
+      R.rideBtn = st.rideBtn; R.kRide = kG;   // (i 😂 degli altri arrivano su questi tasti)
       var nL = (vm.ordine || []).length;
       if (vm.passo < nL) await mostraScelta(st, vm.ordine[vm.passo], true);
       else if (vm.passo === nL) await mostraScelta(st, st.scelte.map(function (sc) { return sc.vera; }).indexOf(true), true);
       else await schermoIgnorate(st, vm.ignorate || [], true);
       return true;
     }
+    if (vm.fase === "oro") {
+      if (R.kOro === kG) return false;
+      R.kOro = R.kP = R.kVo = kG; R.rideBtn = null;
+      await schermoOro(st, vm.oro, true); return true;
+    }
     if (vm.fase === "punti" || vm.fase === "fine") {
+      R.rideBtn = null;
       if (R.kPunti !== kG && vm.ultimo) { R.kPunti = kG; await puntiOnline(R, vm); return true; }
       if (vm.fase === "fine") {
         if (R.fineFatta) return false;
@@ -1082,11 +1381,16 @@
     var riprova = R.vera; R.vera = false;
     schermoTurno(st, null, "scrive"); R.boxFatti = st.boxFatti; aggiornaFatti(R, vm, "scrive", true);
     if (io < 0 || !me || me.via || (!riprova && (vm.fatti || []).indexOf(cb.myId) >= 0)) { await ST.suSchermo(S, 800); attesaOnline(R, io < 0 || !me || me.via); return; }
-    ST.accendiSolo(S, io); ST.testoLeggio(S, io, "✍️ scrive");
-    if (!riprova) { ST.terzo(S, io, "Scrivete tutti la vostra balla!", "Deve sembrare vera", "✍️"); await ST.suLeggio(S, io, 700); ST.viaTerzo(S); ST.lampo(S); }
-    var testo = await apriBiglietto(st, io, { ms: tempoRimasto(R), verita: false, avviso: riprova ? AVVISO_VERA : null });
+    var vero = eProt(st, io);   // «Parliamo di te» e la domanda è su di me: scrivo la verità
+    ST.accendiSolo(S, io); ST.testoLeggio(S, io, vero ? "🤫 la verità" : "✍️ scrive");
+    if (!riprova) {
+      if (vero) ST.terzo(S, io, "La domanda è su di te!", "Scrivi la verità: gli altri dovranno trovarla", "🤫");
+      else ST.terzo(S, io, "Scrivete tutti la vostra balla!", st.d.amici ? "Su " + st.d.protNome + ": deve sembrare vera" : "Deve sembrare vera", "✍️");
+      await ST.suLeggio(S, io, 700); ST.viaTerzo(S); ST.lampo(S);
+    }
+    var testo = await apriBiglietto(st, io, { ms: tempoRimasto(R), verita: false, vero: vero, avviso: riprova ? avvisoVera(st) : null });
     if (!S.vivo()) return;
-    if (testo && R.vm.fase === "scrittura") { MIA = { dom: vm.domanda, testo: testo }; cb.onBalla(testo); }   // (l'host poi conferma, o dice "è la verità")
+    if (testo && R.vm.fase === "scrittura") { if (!vero) MIA = { dom: vm.domanda, testo: testo }; cb.onBalla(testo); }   // (l'host poi conferma, o dice "è la verità")
     ST.testoLeggio(S, io, testo ? "✅ fatto" : "😶 niente"); ST.faccia(S, io, testo ? "esulta" : "triste");
     await ST.suSchermo(S, 800);
     ST.faccia(S, io, null);
@@ -1104,6 +1408,11 @@
     var riprova = R.tua; R.tua = false;
     schermoTurno(st, null, "vota"); R.boxFatti = st.boxFatti; aggiornaFatti(R, vm, "vota", true);
     if (io < 0 || !me || me.via || (!riprova && (vm.fatti || []).indexOf(cb.myId) >= 0)) { await ST.suSchermo(S, 800); attesaOnline(R, io < 0 || !me || me.via); return; }
+    if (eProt(st, io)) {   // «Parliamo di te» e la domanda è su di me: la verità la so, non voto
+      ST.testoLeggio(S, io, "🤫 la sa"); await ST.suSchermo(S, 800);
+      if (R.vm.fase === "voto") ST.barra(S, [ el("p", { class: "bc-attesa", text: "🤫 La domanda è su di te: non voti. Guarda chi ci casca!" }), R.t.faccine() ]);
+      return;
+    }
     ST.accendiSolo(S, io); ST.testoLeggio(S, io, "🗳️ vota");
     if (!riprova) { ST.terzo(S, io, "Tutti al voto!", "Qual è la risposta vera?", "🗳️"); await ST.suLeggio(S, io, 700); ST.viaTerzo(S); ST.lampo(S); }
     var mia = function (sc) { return !!MIA && MIA.dom === R.vm.domanda && norm(sc.testo) === norm(MIA.testo); };
@@ -1120,12 +1429,17 @@
     var S = R.S, el = R.t.el, fatti = vm.fatti || [], k = cosa + "|" + fatti.join("|");
     if (!forza && R.kFatti === k) return;
     R.kFatti = k;
+    var prot = vm.amici ? vm.prot : null;   // «Parliamo di te»: il protagonista scrive la verità e non vota
     if (R.boxFatti) {
       ST.vuota(R.boxFatti);
-      vm.players.forEach(function (p) { if (p.via) return; var ok = fatti.indexOf(p.id) >= 0;
+      vm.players.forEach(function (p) { if (p.via || (cosa === "vota" && p.id === prot)) return; var ok = fatti.indexOf(p.id) >= 0;
         R.boxFatti.appendChild(el("span", { class: ok ? "ok" : "" }, [ fac(el, p), el("span", { text: (ok ? "✅ " : "") + (p.id === R.cb.myId ? "Tu" : p.nome) }) ])); });
     }
-    vm.players.forEach(function (p, i) { if (p.via) return; var ok = fatti.indexOf(p.id) >= 0; ST.testoLeggio(S, i, ok ? (cosa === "vota" ? "✅ votato" : "✅ fatto") : (cosa === "vota" ? "🗳️ vota" : "✍️ scrive")); });
+    vm.players.forEach(function (p, i) {
+      if (p.via) return; var ok = fatti.indexOf(p.id) >= 0;
+      if (p.id === prot) return ST.testoLeggio(S, i, cosa === "vota" ? "🤫 la sa" : ok ? "✅ fatto" : "🤫 la verità");
+      ST.testoLeggio(S, i, ok ? (cosa === "vota" ? "✅ votato" : "✅ fatto") : (cosa === "vota" ? "🗳️ vota" : "✍️ scrive"));
+    });
   }
   // i punti del round scorrono sui leggii
   async function puntiOnline(R, vm) {
@@ -1160,12 +1474,30 @@
       box.appendChild(r);
     });
     S.sch.appendChild(box);
-    // l'host: "Prossima notizia ▶ 12" (conta e a zero si va avanti); gli altri: "Si va avanti tra 12…" (il tempo lo tiene l'host)
+    // "Si va avanti tra 12…" per tutti (il tempo lo tiene l'host); «⏩ Avanti» a chi gioca: si parte subito se lo tocca più di metà
     var sec = Math.max(1, Math.round(((R.vm.rimMs || 12000) - (Date.now() - R.vmTs)) / 1000)), k = "bc-notizia|" + vm.sessione + "|" + vm.giro;
-    var nodo = cb.sonoHost ? el("button", { class: "btn btn-primario", text: "Prossima notizia ▶", onclick: function () { ST.viaBarra(S); cb.onProssimo(); } })
-      : el("p", { class: "bc-attesa" });
-    ST.barra(S, [ nodo, R.t.faccine() ]);
-    R.t.contoAvanti(nodo, sec, cb.sonoHost ? function () { ST.viaBarra(S); cb.onProssimo(); } : null, k);
+    var conto = el("p", { class: "bc-attesa" }), me = vm.players[idxDi(vm, cb.myId)], bAv = null;
+    if (me && !me.via) {
+      bAv = el("button", { class: "btn btn-primario bc-avanti", type: "button", onclick: function () {
+        if (bAv.disabled) return; R.avantiMio = k; bAv.disabled = true; aggiornaAvanti(R);
+        try { if (navigator.vibrate) navigator.vibrate(10); } catch (e) {}
+        cb.onAvanti();
+      } }, [ el("span", { class: "tx", text: "⏩ Avanti" }), el("span", { class: "quanti" }) ]);
+    }
+    R.bAvanti = bAv; R.kAvanti = k;
+    ST.barra(S, [ conto, bAv, R.t.faccine() ]);
+    R.t.contoAvanti(conto, sec, null, k);
+    aggiornaAvanti(R);
+  }
+  // «⏩ Avanti» sulla classifica del round: quanti l'hanno toccato (servono più di metà); il mio tocco resta segnato
+  function aggiornaAvanti(R) {
+    var b = R.bAvanti, vm = R.vm; if (!b || !b.isConnected || vm.fase !== "punti") return;
+    var l = vm.avanti || [], mio = l.indexOf(R.cb.myId) >= 0 || R.avantiMio === R.kAvanti, n = l.length + (mio && l.indexOf(R.cb.myId) < 0 ? 1 : 0);
+    var q = b.querySelector(".quanti"), tx = n + " su " + (vm.servono || 1);
+    if (q.textContent !== tx) q.textContent = tx;
+    var t0 = mio ? "✅ Avanti" : "⏩ Avanti", s = b.querySelector(".tx");
+    if (s.textContent !== t0) s.textContent = t0;
+    b.disabled = mio;
   }
   async function finaleOnline(R, vm) {
     var S = R.S, t = R.t, el = t.el, cb = R.cb, clas = vm.classifica || [];
@@ -1334,11 +1666,38 @@
       ".bc-cl .nm{flex:1;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".bc-cl .pt{font-weight:900;color:#ffe066}",
       ".bc-cl .pi{font-size:12px;font-weight:800;color:#6ff0a6;margin-left:4px}",
-      "@media (prefers-reduced-motion:reduce){.bc-carta,.bc-big,.bc-votante,.bc-timbro.on,.bc-cl,.bc-ign{animation:none}.bc-timbro.on{transform:rotate(12deg);opacity:1}}"
+      // «Parliamo di te»: un foglietto giallo al posto del ritaglio di giornale; il foglio della verità
+      ".bc-ritaglio.amici{background:linear-gradient(transparent 0 0),repeating-linear-gradient(0deg,rgba(60,90,200,.10) 0 1px,transparent 1px 26px),#fff4a8;font-family:system-ui,sans-serif;transform:rotate(1.2deg)}",
+      ".bc-ritaglio.amici:before,.bc-ritaglio.amici:after{display:none}",
+      ".bc-ritaglio.amici .bc-testata{color:#7048e8;border-bottom-color:#7048e8}",
+      ".bc-ritaglio.amici .bc-notizia{font-weight:800}",
+      ".bc-scrivi.vero{box-shadow:0 0 0 3px #37d47e,0 8px 20px rgba(0,0,0,.35)}.bc-scrivi.vero .bc-et{color:#2b8a3e}",
+      // «😂 Che balla!»: il tasto delle risate sul biglietto (in basso a sinistra; il timbro è a destra) e nella lista
+      ".bc-big.con-ride{margin-bottom:14px}.bc-big.con-ride .bc-timbro{font-size:24px;padding:2px 11px;border-width:4px}",
+      ".bc-ride{position:absolute;left:6px;bottom:-24px;z-index:2;display:flex;align-items:center;gap:4px;min-height:44px;padding:3px 12px 3px 7px;border:3px solid #fff;border-radius:99px;",
+        "background:#ffd43b;color:#3b2a00;font:900 15px system-ui,sans-serif;box-shadow:0 6px 14px rgba(0,0,0,.4);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;animation:bcPop .4s cubic-bezier(.3,1.6,.5,1) both;transition:transform .12s}",
+      ".bc-ride:active{transform:scale(.92)}",
+      ".bc-ride .em{font-size:22px;line-height:1}.bc-ride .nn{min-width:0;font-size:16px}.bc-ride .nn:not(:empty){margin-left:2px;background:#fff;border-radius:99px;padding:0 8px;color:#c92a2a}",
+      ".bc-ride.mio{background:#ff922b;color:#fff}.bc-ride.mio .rt:after{content:' ✓'}",
+      ".bc-ride.mia,.bc-ride:disabled{background:#ced4da;color:#495057;cursor:default;box-shadow:none}",
+      ".bc-ride.no{animation:bcScuoti .35s}",
+      ".bc-ride.pic{position:relative;left:auto;bottom:auto;min-height:40px;padding:2px 10px 2px 6px;border-width:2px;font-size:14px;flex:0 0 auto}.bc-ride.pic .em{font-size:20px}.bc-ride.pic .nn{font-size:14px}",
+      ".bc-vola{position:absolute;bottom:60%;font-size:26px;pointer-events:none;animation:bcVola 1.2s ease-out both}",
+      "@keyframes bcVola{from{transform:translate(-50%,0) scale(.6);opacity:1}to{transform:translate(-50%,-90px) scale(1.3) rotate(-14deg);opacity:0}}",
+      ".bc-ign{position:relative}",
+      // la Balla d'oro del round
+      ".bc-oro{gap:14px}",
+      ".bc-coppa{font-size:56px;line-height:1;animation:bcPop .5s cubic-bezier(.3,1.6,.5,1) both}",
+      ".bc-big.oro{background:linear-gradient(135deg,#fff8d6,#ffe066);box-shadow:0 0 0 4px #f59f00,0 14px 30px rgba(0,0,0,.45);padding:16px 16px 18px}",
+      ".bc-big.oro .tx{font-size:26px}",
+      ".bc-premio.oro{background:#ffd43b;color:#3b2a00}",
+      // «⏩ Avanti» sulla classifica del round
+      ".bc-avanti{display:flex;align-items:center;justify-content:center;gap:10px}.bc-avanti .quanti{font-size:14px;font-weight:800;background:rgba(255,255,255,.22);border-radius:99px;padding:2px 10px}",
+      "@media (prefers-reduced-motion:reduce){.bc-carta,.bc-big,.bc-votante,.bc-timbro.on,.bc-cl,.bc-ign,.bc-ride,.bc-vola,.bc-coppa{animation:none}.bc-timbro.on{transform:rotate(12deg);opacity:1}}"
     ].join("");
     document.head.appendChild(s);
   }
 
   // per le prove (e per l'online, più avanti): le regole senza grafica
-  window.__balla = { norm: norm, eLaVerita: eLaVerita, preparaScelte: preparaScelte, calcola: calcola, pezzi: pezzi, pulisci: pulisci };
+  window.__balla = { norm: norm, eLaVerita: eLaVerita, preparaScelte: preparaScelte, calcola: calcola, calcolaOro: calcolaOro, pianoRound: pianoRound, riempi: riempi, pezzi: pezzi, pulisci: pulisci };
 })();

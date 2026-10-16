@@ -919,6 +919,7 @@
     var X = await A.salaConAmici(["Giulia", "Luca"]), S = X.S, P = X.w.Paky, G = X.w.Giulia;
     nascondi(P, true);
     if (!await W.aspetta(function () { return vm(S).pausa; }, 3000)) no("nascosta la pagina, nella foto non c'è la pausa");
+    await W.dorme(300);   // (la foto della pausa deve stare prima di t0: se no, nello stesso millesimo, conterebbe come «ripubblicata»)
     // a) la rete è caduta (telefono in tasca): torna dopo 11 minuti
     W.spegni("Paky");
     W.spostaOrologio("Paky", 11 * 60 * 1000);
