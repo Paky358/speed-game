@@ -183,7 +183,7 @@
     mandaO(X, capo2, { t: "indizio", parola: "PLUTONIO", n: 1 });
     await aspettaIndovina(X, 1);
     var key2 = chiaveDa(W.finestra(nomeDi(C, capo2)));
-    var sua = key2.indexOf(team2);
+    var cc2 = carte(W.finestra(nomeDi(C, capo2))), sua = key2.findIndex(function (c, i) { return c === team2 && !cc2[i].classList.contains("g"); });   // (una ancora coperta: quelle girate prima dell'indizio non valgono)
     mandaO(X, capo2, { t: "intendo", x: 1, l: [sua, key2.indexOf(team2 === 0 ? 1 : 0)] });   // (la parola dell'altra squadra non vale)
     await W.dorme(400);
     // i segreti: mai nella foto, mai nei messaggi dell'host durante la partita
