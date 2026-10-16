@@ -18,7 +18,13 @@
 //     misure a 360x640 e 412x915 di busta e voto. Con { dieci: true } in 10 (8 giocano + 2 guardano).
 // pa4 Online fantacalcio in 3: +5 senza offerte → 5, tasti +1/+2/+5/Passo, il +5 spento oltre il massimo, partita intera,
 //     podio con «📸 Foto» e i titoli che girano sul maxischermo.
-// paR Le prove di prima (ar1-ar4, ac1-ac4, 223, 223f, g8a0-g8a2) coi round dei temi «Tutti normali» dove serve:
+// paP La ripresa di Passo 5 (finta finché il core non ha t.ricorda / t.ripresa): l'host ricarica a busta chiusa (la busta si
+//     riapre da capo e nella copia ricordata non ci sono le offerte segrete), a metà di un'asta (il lotto riparte da 1) e
+//     durante il voto (continua coi voti già dati), fino alla classifica.
+// paM 🧨 La carta maledetta sullo stesso telefono in 3 (paga 1, 2, 3, il primo se la prende) col voto a un tocco e il −0,5.
+// paMo 🧨 La carta maledetta online in 3 + Bea che guarda, Luca che ricarica a metà, voto a un tocco e −0,5 in classifica.
+//     (paM e paMo prendono il posto di g8a1 e g8a2, fatte per il voto a mezze stelle e i «Kit completi» che non ci sono più.)
+// paR Le prove di prima (ar1-ar4, ac1-ac4, g8a0, 223, 223f) coi round dei temi «Tutti normali» dove serve:
 //     await COPIONE.prova("paR") (lunga: 15-20 minuti; { solo: ["ar1", "ac1"] } per farne alcune).
 (function () {
   "use strict";
@@ -50,7 +56,8 @@
               w.__t = t;
               if (w.__imp && t.impostazioni) Object.keys(w.__imp).forEach(function (k) { t.impostazioni[k] = w.__imp[k]; });
               // la ripresa di Passo 5 finta (questo core non ha ancora t.ricorda / t.ripresa): la copia va in W.__ricordo
-              if (w.__ricordaSpia && !t.ricorda) t.ricorda = function (s) { W.__ricordo = s ? JSON.parse(JSON.stringify(s)) : null; };
+              // (col core di Passo 5 la copia si legge lo stesso, e il t.ricorda vero continua a lavorare)
+              if (w.__ricordaSpia) { var ric0 = t.ricorda; t.ricorda = function (s) { W.__ricordo = s ? JSON.parse(JSON.stringify(s)) : null; if (ric0) return ric0.apply(t, arguments); }; }
               if (w.__ripresa && !t.ripresa) { t.ripresa = { stato: w.__ripresa, io: "host", gen: 1, eta: 1000, ora: function (x) { return x; } }; w.__ripresa = null; }
               return av.apply(this, arguments);
             };
@@ -103,8 +110,8 @@
   function chipBox(box, re) { return [].find.call(box.querySelectorAll(".modo-chip"), function (b) { return re.test(b.textContent); }); }
 
   // stesso telefono: dalla home fino al gioco (nomi e regole della prova)
-  async function partitaLocale(imp, nomi) {
-    var P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = imp; } });
+  async function partitaLocale(imp, nomi, prima) {
+    var P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = imp; if (prima) prima(w); } });
     senzaAnimazioni(P); spiaFoto(P);
     var tess = await W.aspetta(function () { return A.tessera(P, "L'Asta"); }, 6000);
     if (!tess) no("non trovo la tessera dell'Asta");
@@ -223,7 +230,7 @@
           primaAsta = false;
           var sel = qa(P, ".as-sel button").map(function (b) { return b.textContent; }).join(",");
           if (sel !== "+1,+3") no("il selettore dei salti è «" + sel + "»");
-          if (!qa(P, ".sa-pers .sa-manca").some(function (s) { return /max \d/.test(s.textContent); })) no("sotto gli avatar non c'è «max» (" + qa(P, ".sa-pers .sa-manca").map(function (s) { return s.textContent; }).join(",") + ")");
+          if (!qa(P, ".sa-pers small").some(function (s) { return /max \d/.test(s.textContent); })) no("sotto gli avatar non c'è «max» (" + qa(P, ".sa-pers small").map(function (s) { return s.textContent; }).join(",") + ")");
           var capo = capoNome(P), altro = NOMI.filter(function (n) { return n !== capo; })[0], p0 = prezzo(P);
           bott(P, ".as-sel button", /^\+3$/).click(); await W.dorme(80);
           if (!q(P, ".as-sel button.on") || q(P, ".as-sel button.on").textContent !== "+3") no("toccando +3 il selettore non si accende");
@@ -273,7 +280,9 @@
     var sel = qa(P, ".as-sel button").map(function (b) { return b.textContent; }).join(",");
     if (sel !== "+1,+2,+5") no("il selettore del fanta è «" + sel + "»");
     var manca = qa(P, ".sa-manca").map(function (m) { return m.textContent; });
-    if (manca.length !== 3 || manca.some(function (m) { return m !== "max 16\n🧤🛡️🎽🎽⚽"; })) no("i posti che mancano all'inizio: " + JSON.stringify(manca));
+    if (manca.length !== 3 || manca.some(function (m) { return m !== "🧤🛡️🎽🎽⚽"; })) no("i posti che mancano all'inizio: " + JSON.stringify(manca));
+    var note0 = qa(P, ".sa-pers small").map(function (m) { return m.textContent; });
+    if (note0.some(function (m) { return m !== "20 💰 · max 16"; })) no("sotto gli avatar all'inizio: " + JSON.stringify(note0) + " (voluto «20 💰 · max 16»)");
     var gara = qa(P, ".sa-pers.puo").map(function (p) { return p.querySelector("b").textContent; });
     if (gara.length < 2) no("all'inizio possono offrire in " + gara.length);
     bott(P, ".as-sel button", /^\+5$/).click(); persDi(P, gara[0]).click(); await W.dorme(150);
@@ -460,7 +469,7 @@
     if (!gNome || gNome.votiDa.indexOf("Giulia") < 0) no("il voto (cambiato) di Giulia non va a " + nomeScelto + ": " + JSON.stringify(gNome && gNome.votiDa));
     if (!F.titoli) no("nella foto di fine non ci sono i titoli");
     if (!await W.aspetta(function () { return /Classifica finale/.test(T(Lw)) && q(Lw, ".as-voti-da"); }, 4000)) no("Luca non vede la classifica con «⭐ da…»");
-    var foto = bott(Lw, ".as-foto .btn", /Manda il tuo kit/); if (!foto) no("Luca non ha «📸 Manda il tuo kit»");
+    var foto = bott(Lw, ".as-foto .btn", /📸 Foto/); if (!foto || !/Manda il tuo kit/.test(foto.title)) no("Luca non ha «📸 Foto» (manda il tuo kit)");
     foto.click(); x.push(await fotoFatta(Lw, "del kit di Luca"));
     misure = misure.concat(await misura("Luca", "la classifica", [".classifica", ".schermata .piede .btn"]));
     if (misure.length) no(misure.join(" / "));
@@ -508,6 +517,129 @@
     bott(L, ".sa-testa .sa-tasto", /📸 Foto/).click(); x.push(await fotoFatta(L, "della rosa di Luca"));
     if ((F.titoli || []).length) { var tk = await W.aspetta(function () { var t = (q(L, ".st-ticker") || {}).textContent || ""; return /^(💎|🎯|💸|🧊|🤡|🔥|🛍️|🚀|📣) /.test(t) && t; }, 9000); if (!tk) no("i titoli non girano sul maxischermo"); else x.push("ticker «" + tk + "»"); }
     x.push("titoli: " + (F.titoli || []).map(function (t) { return t.icona + " " + t.titolo + " " + t.chi + " (" + t.dett + ")"; }).join(" | "));
+    return x.join(" · ");
+  } });
+
+  // ===================================================================== paM / paMo: 🧨 la carta maledetta col voto a un tocco
+  // (le prove g8a1 e g8a2 di prima erano fatte per il voto a mezze stelle e i «Kit completi», che non ci sono più: le rifanno queste)
+  COPIONE.aggiungi("paM", { nome: "Asta stesso telefono in 3 con 🧨: paga 1, 2, 3, il primo se la prende; crediti, voto a un tocco col bordo nero, −0,5 in classifica", fai: async function () {
+    var NOMI = ["Paky", "Giulia", "Luca"];
+    var P = await partitaLocale({ formato: "temi", crediti: 15, round: "normali", maledetta: true }, NOMI, function (w) { w.__astaMalProva = { round: 1, quando: 2 }; });
+    var visti = [], esito = "", cr = null, voto = null, fasce = null, misure = [], fino = Date.now() + 240000;
+    while (Date.now() < fino) {
+      var d = P.document, tx = T(P);
+      if (/Fasce svelate/.test(tx)) break;
+      if (/Passa il telefono a/.test(tx)) { W.clicca(P, /^Sono /); await W.dorme(150); continue; }
+      var M = q(P, ".schermata.as-mal");
+      if (M) {
+        var paga = M.querySelector(".as-mal-tasti .btn-verde"), prendo = M.querySelector(".as-mal-tasti .btn-rosso"), chi = (M.querySelector(".as-mal-p.ora b") || {}).textContent;
+        if (!visti.length) misure = misure.concat(await misura("Paky", "la carta maledetta", [".as-mal-carta", ".as-mal-tasti", ".as-mal-gente"]));
+        if (visti.length < 3) {
+          if (!paga || paga.disabled || paga.textContent.indexOf("Pago " + (visti.length + 1)) < 0) no("al giro " + (visti.length + 1) + " il tasto è «" + (paga && paga.textContent) + "»");
+          visti.push(chi + ":paga" + (visti.length + 1)); paga.click();
+        } else {
+          if (chi !== visti[0].split(":")[0]) no("al 4° giro tocca a " + chi + " (non al primo)");
+          visti.push(chi + ":prendo"); prendo.click(); await W.dorme(250);
+          esito = T(P); cr = {}; qa(P, ".as-pt").forEach(function (p) { cr[p.querySelector(".n").textContent] = +p.querySelector(".c").textContent.replace(/\D/g, ""); });
+        }
+        await W.dorme(200); continue;
+      }
+      if (q(P, ".as-vk")) {
+        var mr = q(P, ".as-vk.maled"); if (mr && !voto) voto = { badge: (mr.querySelector(".as-malus") || {}).textContent, carta: !!mr.querySelector(".as-mal-in") };
+        qa(P, ".as-vk")[0].click(); await W.dorme(700); continue;
+      }
+      if (q(P, ".as-scen") && /Si vota/.test(tx)) { W.clicca(P, /Si vota/); await W.dorme(200); continue; }
+      var carte = qa(P, ".as-carta:not([disabled])");
+      if (carte.length) { carte[0].click(); await W.dorme(250); continue; }
+      if (q(P, ".sa-pers") && prezzo(P) != null && !q(P, ".sa-aggiudicato")) {
+        var c2 = capoNome(P);
+        qa(P, ".sa-pers").forEach(function (p) { var b = p.querySelector("b").textContent, ps = p.querySelector(".sa-passo"); if (b !== c2 && ps && ps.style.visibility !== "hidden" && !p.classList.contains("fuori")) ps.click(); });
+        await W.dorme(300); continue;
+      }
+      W.clicca(P, /Vedi le carte|Avanti ▶|Avanti/); await W.dorme(250);
+    }
+    if (visti.length !== 4) no("la carta maledetta: " + JSON.stringify(visti));
+    var n1 = visti[3].split(":")[0];
+    if (!new RegExp("😩 " + n1 + " se la prende!").test(esito)) no("l'esito non dice che se la prende " + n1);
+    visti.slice(0, 3).forEach(function (v, i) { var nn = v.split(":")[0];
+      if (nn === n1) { if (!new RegExp(nn + " si riprende i suoi " + (i + 1) + " 💰").test(esito)) no("l'esito non dice che " + nn + " si riprende " + (i + 1)); }
+      else if (!new RegExp(nn + " paga " + (i + 1) + " 💰").test(esito)) no("l'esito non dice che " + nn + " paga " + (i + 1)); });
+    if (!voto || voto.badge !== "🧨 −0,5 ⭐" || !voto.carta) no("nel voto la carta maledetta: " + JSON.stringify(voto));
+    if (!/Fasce svelate/.test(T(P))) no("non arriva alle fasce svelate");
+    fasce = { riga: !!q(P, ".as-kit .riga.maled"), tier: !!q(P, ".as-kit .riga.maled .tier-M") };
+    if (!fasce.riga || !fasce.tier) no("nelle fasce svelate: " + JSON.stringify(fasce));
+    W.clicca(P, /Classifica finale/); await W.dorme(400);
+    var riga = qa(P, ".classifica li").filter(function (li) { return li.textContent.indexOf(n1) >= 0; })[0];
+    if (!riga || !/🧨 −0,5/.test(riga.textContent)) no("in classifica " + n1 + " non ha il 🧨 −0,5 («" + (riga && riga.textContent) + "»)");
+    if (misure.length) no(misure.join(" / "));
+    return "giri " + visti.join(", ") + " · crediti " + JSON.stringify(cr) + " · voto " + voto.badge + " · " + riga.textContent.replace(/\s+/g, " ");
+  } });
+
+  COPIONE.aggiungi("paMo", { nome: "Asta online in 3 + Bea che guarda: 🧨 a turni, Luca ricarica a metà, voto a un tocco e −0,5 in classifica", fai: async function () {
+    var IMP = { formato: "temi", crediti: 15, round: "normali", maledetta: true };
+    var P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = IMP; w.__astaMalProva = { round: 1, quando: 2 }; } }), C = await W.apriStanza(P, "L'Asta");
+    senzaAnimazioni(P);
+    for (var i = 1; i < 3; i++) { var w0 = await W.apriTel(["Paky", "Giulia", "Luca"][i], { hash: "gioco=asta&stanza=" + C, x: 185 * i }); senzaAnimazioni(w0); }
+    if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 3; }, 12000)) no("non sono entrati in 3");
+    W.clicca(P, /Comincia/);
+    if (!await W.aspetta(function () { return vm(C).fase && vm(C).fase !== "lobby"; }, 8000)) no("la partita non comincia");
+    var B = await W.apriTel("Bea", { hash: "gioco=asta&stanza=" + C, x: 555 }); senzaAnimazioni(B);
+    var x = [], giri = [], ricaricato = false, beaOk = false, fino = Date.now() + 240000;
+    while (Date.now() < fino && vm(C).fase !== "fine") {
+      var v = vm(C);
+      if (v.fase === "round" || v.fase === "esito" || v.fase === "malEsito") { W.clicca(P, /Vedi le carte|Avanti/); await W.dorme(300); continue; }
+      if (v.fase === "scelta") {
+        if (v.sceglieId === "host") { var cc = qa(P, ".as-carta:not([disabled])")[0]; if (cc) cc.click(); }
+        else { var n0 = nomeDiId(C, v.sceglieId); if (n0) manda(n0, { t: "scegli", idx: 0, n: v.nScelta, nome: v.tavolo[0].nome }); }
+        await W.dorme(400); continue;
+      }
+      if (v.fase === "asta" && v.asta) {
+        var a = v.asta;
+        v.giocatori.forEach(function (g) { if (g.haCarta || g.id === a.leaderId || a.passati.indexOf(g.id) >= 0) return; if (g.nome === "Paky") { var bp = bott(P, ".sa-piede .btn", /^Passo$/); if (bp) bp.click(); } else manda(g.nome, { t: "passa", n: a.n }); });
+        await W.dorme(400); continue;
+      }
+      if (v.fase === "maledetta" && v.mal) {
+        var M = v.mal, chi = nomeDiId(C, M.turnoId);
+        if (!beaOk) {
+          if (!await W.aspetta(function () { return /Stai guardando/.test(T(B)); }, 4000)) no("Bea non legge «Stai guardando» alla carta maledetta («" + T(B).slice(-120) + "»)");
+          if (qa(B, ".as-mal-tasti .btn").length) no("Bea (guarda) ha i tasti della carta maledetta");
+          beaOk = true;
+        }
+        if (giri.length === 1 && !ricaricato) {   // Luca ricarica a metà e ritrova la carta maledetta
+          ricaricato = true; await W.ricarica("Luca"); var L = W.finestra("Luca"); senzaAnimazioni(L);
+          if (!await W.aspetta(function () { return q(L, ".schermata.as-mal") && /offre 1 💰/.test(T(L)); }, 8000)) no("Luca ricaricato non ritrova la carta maledetta con l'offerta di prima («" + T(L).slice(0, 160) + "»)");
+          continue;
+        }
+        if (giri.length < 2) {
+          if (chi === "Paky") { var bP = await W.aspetta(function () { return bott(P, ".as-mal-tasti .btn-verde", /Pago/); }, 3000); if (bP) bP.click(); }
+          else manda(chi, { t: "mal", n: M.n, a: "paga", prezzo: M.prezzo + 1 });
+          giri.push(chi + ":paga" + (M.prezzo + 1));
+        } else {
+          if (chi === "Paky") { var bR = await W.aspetta(function () { return bott(P, ".as-mal-tasti .btn-rosso", /Me la prendo/); }, 3000); if (bR) bR.click(); }
+          else manda(chi, { t: "mal", n: M.n, a: "prendo", g: M.giro });
+          giri.push(chi + ":prendo");
+        }
+        var g0 = M.giro; await W.aspetta(function () { var z = vm(C); return z.fase !== "maledetta" || (z.mal && z.mal.giro !== g0); }, 4000);
+        continue;
+      }
+      if (v.fase === "voto") {
+        v.giocatori.forEach(function (g) {
+          if ((v.hannoVotato || []).indexOf(g.id) >= 0) return;
+          var per = v.giocatori.filter(function (o) { return o.id !== g.id; })[0].id;
+          if (g.nome === "Paky") { var kk = q(P, ".as-vk:not([disabled]):not(.mio)"); if (kk) kk.click(); } else manda(g.nome, { t: "voto", per: per, s: v.sessione });
+        });
+        await W.dorme(600); continue;
+      }
+      await W.dorme(300);
+    }
+    if (vm(C).fase !== "fine") no("la partita non finisce (fase " + vm(C).fase + ")");
+    if (giri.length !== 3) no("i giri della carta maledetta: " + giri.join(", "));
+    var F = vm(C), conMal = F.giocatori.filter(function (g) { return g.kit.some(function (c) { return c.maledetta; }); });
+    if (conMal.length !== 1) no("la carta maledetta è in " + conMal.length + " kit");
+    var r = (F.classifica || []).filter(function (z) { return z.nome === conMal[0].nome; })[0];
+    if (!r || !/🧨 −0,5/.test(r.punti)) no("in classifica chi ha la carta maledetta non ha il 🧨: " + JSON.stringify(r));
+    var Bc = await W.aspetta(function () { return q(B, ".classifica") && T(B); }, 5000); if (!Bc || !/🧨 −0,5/.test(Bc)) no("Bea non vede la classifica col 🧨");
+    x.push("giri " + giri.join(", "), "Luca ricarica ok", "classifica " + F.classifica.map(function (z) { return z.nome + " " + z.punti; }).join(" | "));
     return x.join(" · ");
   } });
 
@@ -619,7 +751,7 @@
 
   // ===================================================================== paR: le prove di prima
   COPIONE.aggiungi("paR", { nome: "Le prove di prima dell'Asta (rialzo da soli, carta maledetta, Sala), coi round normali dove servono", fai: async function (opz) {
-    var lista = (opz && opz.solo) || ["ar1", "ar2", "ar3", "ar4", "ac1", "ac2", "ac3", "ac4", "g8a0", "g8a1", "g8a2", 223, "223f"], out = [];
+    var lista = (opz && opz.solo) || ["ar1", "ar2", "ar3", "ar4", "ac1", "ac2", "ac3", "ac4", "g8a0", 223, "223f"], out = [];
     if (!COPIONE.scenari.ar1) await COPIONE.carica("migliora/asta-rialzo.js");
     if (!COPIONE.scenari.ac1) await COPIONE.carica("migliora/asta-rialzo-controllo.js");
     if (!COPIONE.scenari.g8a0) await COPIONE.carica("migliora2/g8-asta-pesca.js");

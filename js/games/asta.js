@@ -418,8 +418,8 @@
     ".st-gradino.p3 .blocco{height:52px;background:linear-gradient(180deg,#f3b886,#b5651d);}",
     ".st-altri{margin-top:6px;padding:6px 10px;border-radius:10px;background:rgba(0,0,0,.35);font-size:.76rem;font-weight:800;line-height:1.5;text-align:center;}",
     // sotto ogni avatar: i crediti e fin dove può arrivare; nel fantacalcio anche i posti che gli mancano (🧤🛡️🎽⚽)
-    ".sa-pers .sa-manca{font-style:normal;font-size:.6rem;line-height:1.1;white-space:pre;text-align:center;letter-spacing:-.04em;text-shadow:0 1px 2px rgba(0,0,0,.8);min-height:.7rem;}",
-    ".st-tribuna .sa-pers .sa-manca{min-height:2.2em;}.st-tribuna .sa-fila1 .sa-pers .sa-manca,.st-tribuna .sa-fila1 ~ .sa-fila0 .sa-pers .sa-manca{font-size:.5rem;}",
+    ".sa-pers .sa-manca{font-style:normal;font-size:.6rem;line-height:1.1;white-space:nowrap;text-align:center;letter-spacing:-.04em;text-shadow:0 1px 2px rgba(0,0,0,.8);}",
+    ".st-tribuna .sa-pers .sa-manca{min-height:1.15em;}.st-tribuna .sa-fila1 .sa-pers .sa-manca,.st-tribuna .sa-fila1 ~ .sa-fila0 .sa-pers .sa-manca{font-size:.5rem;}",
     // i rilanci a salto: il tasto grande (+1) e accanto i salti (+3, o +2 e +5) e «Passo»
     ".as-salti{display:flex;gap:6px;width:100%;}.as-salti .btn{flex:1 1 0;min-width:0;padding-left:4px;padding-right:4px;font-size:.92rem;}",
     ".as-salti .btn small{display:block;font-size:.68rem;font-weight:800;opacity:.85;line-height:1.05;}",
@@ -459,6 +459,17 @@
     ".as-bst button{width:50px;height:50px;border-radius:50%;border:0;font-size:1.6rem;font-weight:900;font-family:inherit;background:var(--carta-2);color:var(--testo);}",
     ".as-bst button.p3{width:auto;border-radius:25px;padding:0 12px;font-size:1rem;}",
     ".as-bst button:disabled{opacity:.3;}",
+    // la busta di carta (sullo stesso telefono, in mezzo allo schermo): il lembo a V in alto, l'offerta scritta sopra
+    ".as-env{position:relative;width:100%;max-width:330px;margin:auto;aspect-ratio:1.55;border-radius:16px;box-shadow:0 14px 30px rgba(0,0,0,.45);" +
+      "background:linear-gradient(to bottom left,#e8d3a0 50%,transparent 50%) left top/50% 52% no-repeat,linear-gradient(to bottom right,#e8d3a0 50%,transparent 50%) right top/50% 52% no-repeat,linear-gradient(170deg,#fbf0d6,#f0dfb4);}",
+    ".as-env::after{content:'🤫';position:absolute;left:50%;top:50%;transform:translate(-50%,-62%);width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.25rem;" +
+      "background:radial-gradient(circle at 38% 32%,#ef5a6c,#a3162a 70%);box-shadow:0 3px 6px rgba(0,0,0,.35),inset 0 0 0 3px rgba(255,255,255,.12);}",   // il sigillo di ceralacca
+    ".as-env .as-bst{position:absolute;left:0;right:0;bottom:12%;}",
+    ".as-env .as-bst .v{color:#5a3b00;text-shadow:none;}.as-env .as-bst button{background:rgba(90,59,0,.14);color:#4a3000;}",
+    ".as-env-tx{position:absolute;left:0;right:0;bottom:13%;text-align:center;font-size:1.9rem;font-weight:900;color:#5a3b00;}",
+    ".as-env.chiusa::after{content:'🔒';}",   // (busta chiusa: il sigillo col lucchetto)
+    ".as-bus .as-env{flex:none;max-width:290px;}.as-bus-fitta .as-env{max-width:200px;}.as-bus-fitta .as-env-tx{font-size:1.4rem;}",
+    ".as-bus-fitta .as-env .as-bst{gap:6px;bottom:8%;}.as-bus-fitta .as-env .as-bst button{width:40px;height:40px;font-size:1.3rem;}.as-bus-fitta .as-env .as-bst .v{min-width:64px;font-size:1.5rem;}",
     ".as-bus-fitta .as-bus-carta{padding:6px 10px;}.as-bus-fitta .as-bus-carta .em{width:46px;height:46px;font-size:1.8rem;}.as-bus-fitta .as-bus-p{padding:3px 7px;font-size:.78rem;}",
     // le buste aperte (nell'esito): una alla volta, dalla più bassa alla più alta
     ".as-buste{display:flex;flex-direction:column;gap:4px;margin:2px auto 0;width:100%;max-width:340px;}",
@@ -470,6 +481,7 @@
     // ⭐ il voto a un tocco: la carta-scenario in alto, sotto i kit degli altri (tocchi quello che se la cava meglio)
     ".schermata.as-vt{flex:0 0 auto;height:var(--alt,100dvh);max-height:var(--alt,100dvh);min-height:0;}",
     ".as-vt>.contenuto{min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}",
+    ".as-vt .as-scen{margin-left:40px;}",   // (spazio per il ‹ in alto a sinistra)
     ".as-scen{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#3b1f6e,#1f2a6e);border:2px solid rgba(255,255,255,.18);border-radius:16px;padding:9px 12px;margin:0 0 8px;box-shadow:0 8px 22px rgba(0,0,0,.35);}",
     ".as-scen .e{font-size:2.2rem;line-height:1;flex:none;}.as-scen .x{flex:1;min-width:0;}",
     ".as-scen small{display:block;font-size:.66rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#c9b8ff;}",
@@ -489,6 +501,7 @@
     ".as-tit .c{font-size:.95rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
     ".as-tit .d{font-size:.68rem;font-weight:700;color:var(--testo-tenue);line-height:1.2;}",
     ".as-foto{display:flex;gap:6px;justify-content:center;margin:6px 0 2px;}.as-foto .btn{margin:0;flex:1;max-width:320px;}",
+    ".as-foto-riga{align-items:center;margin:0;}.as-foto-riga .btn{flex:none;width:auto;min-height:40px;padding:6px 14px;font-size:.92rem;border-radius:999px;}",
     ".as-voti-da{font-size:.72rem;font-weight:800;color:var(--accento);margin:-4px 0 4px;}"
   ].join("");
   document.head.appendChild(stile);
@@ -1715,7 +1728,7 @@
     var persone = vm.giocatori.map(function (g, i) {
       var pass = a.passati.indexOf(g.id) >= 0, gm = g.max != null ? g.max : g.crediti - ((vm.totRound - 1) - vm.roundIdx);
       return { id: g.id, nome: g.nome, omino: g.omino || null, num: i + 1, via: !!g.via, stato: g.haCarta ? "fuori" : pass ? "passato" : "gara",
-        nota: g.haCarta ? "✔ ha la carta" : pass ? "ha passato" : g.crediti + " 💰", manca: !g.haCarta && !pass ? sottoNota(gm, g.crediti, "") : "",
+        nota: g.haCarta ? "✔ ha la carta" : pass ? "ha passato" : notaCrediti(g.crediti, gm), manca: "",
         puo: g.id === myId && inGara && !hoPassato && max >= prezzo };
     });
     salaAsta(t, {
@@ -1767,7 +1780,7 @@
     var persone = vm.giocatori.map(function (g, i) {
       var pieno = a ? (g.conta[a.ruolo] || 0) >= FANTA_SLOT[a.ruolo] : false, pass = !!a && a.passati.indexOf(g.id) >= 0;
       return { id: g.id, nome: g.nome, omino: g.omino || null, num: i + 1, crediti: g.crediti, kit: g.kit || [], via: !!g.via, stato: pieno ? "fuori" : pass ? "passato" : "gara",
-        nota: pieno ? notaPieno(a.ruolo) : pass ? "ha passato" : g.crediti + " 💰", manca: sottoNota(!pieno && !pass ? g.max : null, g.crediti, iconeMancano(g.conta)),
+        nota: pieno ? notaPieno(a.ruolo) : pass ? "ha passato" : notaCrediti(g.crediti, g.max), manca: iconeMancano(g.conta),
         puo: g.id === myId && inGara && !hoPassato && max >= prezzo };
     });
     stadio(t, {
@@ -1787,7 +1800,7 @@
     });
   }
   // sotto l'avatar nel fantacalcio: i crediti e fin dove può arrivare; sotto ancora i posti che gli mancano (🧤🛡️🎽⚽)
-  function sottoNota(max, crediti, icone) { var m = max != null && max < crediti ? "max " + Math.max(0, max) : ""; return m && icone ? m + String.fromCharCode(10) + icone : (m || icone || ""); }   // (due righe: il massimo e i posti)
+  function notaCrediti(crediti, max) { return crediti + " 💰" + (max != null && max < crediti ? " · max " + Math.max(0, max) : ""); }   // sotto l'avatar: i crediti e fin dove può arrivare (nel fanta sotto ancora i posti che gli mancano)
   function iconeMancano(conta) {
     var s = ""; FANTA_ORD.forEach(function (r) { for (var k = (conta && conta[r]) || 0; k < FANTA_SLOT[r]; k++) s += FANTA_RUOLI[r].emoji; });
     return s;
@@ -1908,7 +1921,7 @@
     var persone = st.giocatori.map(function (g, i) {
       var inGara = st.senzaCarta.indexOf(i) >= 0, pass = !!a.passati[i], max = maxPuntata(st, i);
       return { id: i, nome: g.nome, omino: g.omino || null, num: i + 1, stato: !inGara ? "fuori" : pass ? "passato" : "gara",
-        nota: !inGara ? "✔ ha la carta" : pass ? "ha passato" : g.crediti + " 💰", manca: inGara && !pass ? sottoNota(max, g.crediti, "") : "",
+        nota: !inGara ? "✔ ha la carta" : pass ? "ha passato" : notaCrediti(g.crediti, max), manca: "",
         puo: inGara && !pass && max >= a.offerta + 1 };
     });
     salaAsta(t, { chiave: "t|" + st.sessione + "|" + st.roundIdx + "|" + a.idxCarta + "|" + a.carta.nome, info: "Round " + (st.roundIdx + 1) + " di " + TOT_ROUND,
@@ -2058,7 +2071,7 @@
     meno = el("button", { type: "button", text: "−", onclick: function () { if (q > min) { q--; agg(); } } });
     piu = el("button", { type: "button", text: "+", onclick: function () { if (q < max) { q++; agg(); } } });
     piu3 = el("button", { type: "button", class: "p3", text: "+3", onclick: function () { q = Math.min(max, q + 3); agg(); } });
-    s._contenuto.appendChild(el("div", { class: "as-bst", style: "margin-top:auto;margin-bottom:auto" }, [ meno, v, piu, piu3 ]));
+    s._contenuto.appendChild(el("div", { class: "as-env" }, [ el("div", { class: "as-bst" }, [ meno, v, piu, piu3 ]) ]));   // (la busta di carta, col numero sopra)
     var ok = el("button", { class: "btn btn-primario", onclick: function () { if (ok.disabled) return; ok.disabled = true; vibra(20); FX.rilancio(false); fatto(q); } });
     s._piede.appendChild(ok);
     agg();
@@ -3221,7 +3234,7 @@
       var s = U.s = t.schermata({ indietro: function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); } });
       s.classList.add("as-bus");
       if (vm.giocatori.length > 6) s.classList.add("as-bus-fitta");
-      s._contenuto.appendChild(el("div", { class: "as-bus-testa" }, [ el("span", { text: "✉️ Busta chiusa · Round " + (vm.roundIdx + 1) + " di " + vm.totRound }) ]));
+      s._contenuto.appendChild(el("div", { class: "as-bus-testa" }, [ el("span", { text: "✉️ Busta chiusa · round " + (vm.roundIdx + 1) + "/" + vm.totRound }) ]));
       s._contenuto.appendChild(el("div", { class: "as-bus-carta" }, [ emLotto(el, "em", B.carta),
         el("div", {}, [ el("div", { class: "nm", text: nomeLotto(B.carta) }), el("div", { class: "sm", text: "Scelta da " + nomeDi({ giocatori: vm.giocatori }, B.chooserId) + " · " + sottoLotto(B.carta) }) ]) ]));
       s._contenuto.appendChild(el("p", { class: "as-bus-regola", text: "Tutti scrivono in segreto quanto offrono: si aprono le buste insieme. Vince l'offerta più alta, a pari offerta chi ha chiuso prima." }));
@@ -3236,6 +3249,8 @@
         U.pers[g.id] = { nodo: nodo, st: st2 }; gente.appendChild(nodo);
       });
       s._contenuto.appendChild(gente);
+      U.env = el("div", { class: "as-env" });   // la busta di carta in mezzo: dentro il mio numero (o com'è andata)
+      s._contenuto.appendChild(U.env);
       U.piede = el("div", { class: "as-bus-piede" });
       s._piede.appendChild(U.piede);
       t.mostra(s);
@@ -3254,12 +3269,14 @@
     var kP = [B.n, inGara ? 1 : 0, mia.chiusa ? "c" + mia.q : 0, max, io ? 1 : 0].join("|");
     if (kP === U2.kP) return;
     U2.kP = kP;
-    svuotaNodo(U2.piede);
+    svuotaNodo(U2.piede); svuotaNodo(U2.env);
     var nota = el("p", { class: "sa-nota" });
     U2.piede.appendChild(nota);
-    if (!io) { nota.textContent = "Stai guardando: le buste si aprono tutte insieme"; return; }
-    if (!inGara) { nota.textContent = "Hai già la tua carta di questo round: guardi le buste degli altri"; return; }
-    if (mia.chiusa) { nota.textContent = "✉️ Busta chiusa" + (mia.q != null ? ": " + mia.q + " 💰" : "") + ". Aspetta gli altri…"; return; }
+    var scritta = function (tx) { U2.env.classList.add("chiusa"); U2.env.appendChild(el("div", { class: "as-env-tx", text: tx })); };
+    if (!io) { nota.textContent = "Stai guardando: le buste si aprono tutte insieme"; scritta("👀"); return; }
+    if (!inGara) { nota.textContent = "Hai già la tua carta di questo round: guardi le buste degli altri"; scritta("✔"); return; }
+    if (mia.chiusa) { nota.textContent = "✉️ Busta chiusa" + (mia.q != null ? ": " + mia.q + " 💰" : "") + ". Aspetta gli altri…"; scritta(mia.q != null ? mia.q + " 💰" : "✉️"); return; }
+    U2.env.classList.remove("chiusa");
     nota.textContent = (chooser ? "Hai scelto tu la carta: offri almeno 1. " : "0 = non la vuoi. ") + "Hai " + io.crediti + " 💰 · puoi offrire fino a " + max;
     var v = el("div", { class: "v" }), meno, piu, piu3, ok;
     function agg() { mia.q = Math.max(min, Math.min(max, mia.q || 0)); v.textContent = mia.q + " 💰"; meno.disabled = mia.q <= min; piu.disabled = piu3.disabled = mia.q >= max;
@@ -3267,7 +3284,7 @@
     meno = el("button", { type: "button", text: "−", onclick: function () { mia.q--; agg(); } });
     piu = el("button", { type: "button", text: "+", onclick: function () { mia.q++; agg(); } });
     piu3 = el("button", { type: "button", class: "p3", text: "+3", onclick: function () { mia.q += 3; agg(); } });
-    U2.piede.appendChild(el("div", { class: "as-bst" }, [ meno, v, piu, piu3 ]));
+    U2.env.appendChild(el("div", { class: "as-bst" }, [ meno, v, piu, piu3 ]));
     function chiudi() {
       if (mia.chiusa) return; mia.chiusa = true; vibra(20); cb.onBusta({ n: B.n, q: mia.q });
       if (BUS === U2 && document.body.contains(U2.s)) { U2.kP = null; salaBustaVM(t, vm, cb); }   // (se le buste si sono già aperte, c'è già l'esito)
@@ -3388,11 +3405,12 @@
     s._contenuto.appendChild(ol);
     var tit = nodoTitoli(el, vm.titoli);   // 🏅 i titoli scherzosi
     if (tit) s._contenuto.appendChild(tit);
-    // 📸 la foto del mio kit (chi guarda: tutti i kit) da mandare nel gruppo
+    // 📸 la foto del mio kit (chi guarda: tutti i kit) da mandare nel gruppo: in basso accanto alle faccine, così si vede sempre
+    var fotoB = null;
     if (vm.formato !== "fanta" && vm.giocatori && vm.giocatori.length) {
       var io = trova(vm.giocatori, cb.myId);
-      s._contenuto.appendChild(el("div", { class: "as-foto" }, [ el("button", { class: "btn btn-fantasma", text: io ? "📸 Manda il tuo kit" : "📸 Manda i kit",
-        onclick: function () { fotoKit(vm.giocatori, { icona: vm.temaIcona, nome: vm.temaNome }, io ? io.nome : null); } }) ]));
+      fotoB = el("button", { class: "btn btn-fantasma", text: "📸 Foto", title: io ? "Manda il tuo kit nel gruppo" : "Manda i kit nel gruppo", "aria-label": io ? "Manda il tuo kit nel gruppo" : "Manda i kit nel gruppo",
+        onclick: function () { fotoKit(vm.giocatori, { icona: vm.temaIcona, nome: vm.temaNome }, io ? io.nome : null); } });
     }
     // Fasce svelate: ora che si è votato, si scopre il vero valore delle carte (e chi ha votato chi)
     if (vm.formato !== "fanta" && vm.giocatori && vm.giocatori.some(function (g) { return g.kit && g.kit.length; })) {
@@ -3402,7 +3420,7 @@
       s._contenuto.appendChild(kits);
     }
     var fa = t.faccine ? t.faccine() : null;   // le faccine della saletta: si festeggia (o si sfotte) tutti insieme
-    if (fa) s._piede.appendChild(el("div", { style: "display:flex;justify-content:center" }, [ fa ]));
+    if (fa || fotoB) s._piede.appendChild(el("div", { class: "as-foto as-foto-riga" }, [ fa, fotoB ]));
     // i tasti di fine uguali per tutti (Rivincita, Cambia gioco, Ci sto…) li mette il core; se no quelli di sempre
     if (t.tastiFine && t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) { /* fatto dal core */ }
     else if (cb.sonoHost) {
@@ -3556,7 +3574,7 @@
     var persone = st.giocatori.map(function (g, i) {
       var pieno = !!a && ruoloPieno(g, a.ruolo), pass = !!a && !!a.passati[i];
       return { id: i, nome: g.nome, omino: g.omino || null, num: i + 1, crediti: g.crediti, kit: g.kit, stato: pieno ? "fuori" : pass ? "passato" : "gara",
-        nota: pieno ? notaPieno(a.ruolo) : pass ? "ha passato" : g.crediti + " 💰", manca: sottoNota(!pieno && !pass ? maxFanta(g) : null, g.crediti, iconeMancano(g.conta)),
+        nota: pieno ? notaPieno(a.ruolo) : pass ? "ha passato" : notaCrediti(g.crediti, maxFanta(g)), manca: iconeMancano(g.conta),
         puo: !!a && !pieno && !pass && maxFanta(g) >= prezzo };
     });
     stadio(t, { chiave: "f|" + st.sessione, fase: a ? "asta" : "esito",
