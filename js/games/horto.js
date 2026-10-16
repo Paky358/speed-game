@@ -478,7 +478,11 @@
     var s = t.schermata({});
     s.classList.add("ho-piena");
     var scena = el("div", { class: "ho-scena" });
-    scena.appendChild(el("button", { class: "ho-esci", text: "‹", "aria-label": "Esci dalla corsa", onclick: function () { if (window.confirm(cb.conferma || "Uscire dalla corsa?")) cb.onEsci(); } }));
+    scena.appendChild(el("button", { class: "ho-esci", text: "‹", "aria-label": "Esci dalla corsa", onclick: function () {
+      // la finestra al centro dell'app (window.confirm solo se manca)
+      var dom = cb.conferma || "Uscire dalla corsa?";
+      if (t.conferma) t.conferma(dom, null, "Esci", function () { cb.onEsci(); }); else if (window.confirm(dom)) cb.onEsci();
+    } }));
     // cielo con tribuna, minimappa e posizione
     var folla = el("div", { class: "ho-folla" }, [el("i")]);
     var cielo = el("div", { class: "ho-cielo" }, [

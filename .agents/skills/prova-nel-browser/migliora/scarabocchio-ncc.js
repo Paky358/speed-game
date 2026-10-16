@@ -191,13 +191,15 @@
     await W.aspetta(function () { return !P.document.querySelector(".sl-velo"); }, 3000);
     await W.dorme(300);
     await apriRegole(P);
+    // (i telefoni finti dicono «sì» da soli alle conferme: qui si ferma, se no «Resta» e il tasto rosso fanno a gara; pulisci() lo rimette)
+    clearInterval(W.__autoConferma); W.__autoConferma = null; W.__siFermo = true;
     if (!W.clicca(P, /Cancella tutte/, ".sl-velo button")) no("non trovo «🗑️ Cancella tutte»");
     var cf = await W.aspetta(function () { return P.document.querySelector(".conferma-sfondo"); }, 2000);
     if (!cf) no("«Cancella tutte» non chiede conferma con la finestra al centro");
     W.clicca(P, /^Resta$/, ".conferma-sfondo button"); await W.dorme(150);
     if ((W.BR.mem.Paky.liste.scarabocchio || []).length !== 3) no("con «Resta» le parole si sono cancellate");
     W.clicca(P, /Cancella tutte/, ".sl-velo button");
-    var si = await W.aspetta(function () { var b = P.document.querySelector(".conferma-sfondo .btn-rosso"); return b && !b.disabled ? b : null; }, 2000);
+    var si = await W.aspetta(function () { var b = P.document.querySelector(".conferma-sfondo .btn-rosso"); return b && !b.disabled ? b : null; }, 4000);
     if (!si) no("il tasto «🗑️ Cancella» della conferma non si accende");
     si.click(); await W.dorme(150);
     if ((W.BR.mem.Paky.liste.scarabocchio || []).length !== 0) no("dopo la conferma le parole sono ancora sul profilo");

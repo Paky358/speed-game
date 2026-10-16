@@ -752,7 +752,8 @@
       if (H.fase !== "gioco") return;
       if (V.torneo) {   // il torneo: chi è senza fiches esce; resta uno solo (o, contro i Bot, sono uscito io) e si chiude
         eliminaSenzaFiches();
-        if (inGara().length <= 1 || (!online && io.elim)) return fineTorneo();
+        // (chi è andato via con delle fiches resta in classifica, ma non tiene fermo il torneo: nel torneo non entra nessuno di nuovo)
+        if (inGara().filter(function (p) { return !p.via; }).length <= 1 || (!online && io.elim)) return fineTorneo();
         M.livelloBui(Math.floor((M.n - H.n0) / V.ogni));   // i bui salgono ogni "ogni" mani
       }
       M.giocatori.forEach(function (p) {
@@ -868,7 +869,10 @@
           delete H.guardano[id]; delete H.soloGuarda[id];
           var i = M.trova(id); if (i < 0) { bd(); return; }
           if (H.fase === "lobby") { M.giocatori.splice(i, 1); if (M.dealer >= M.giocatori.length) M.dealer = -1; bd(); return; }
-          M.esce(i); dopoMossa();
+          M.esce(i);
+          // torneo fermo tra una mano e l'altra (non si gioca in uno): resta uno solo, il torneo si chiude
+          if (V.torneo && H.fase === "gioco" && M.stato === "attesa" && !tMano) { prossimaMano(); return; }
+          dopoMossa();
         },
         onMsg: function (id, m) {
           if (!m || !m.t) return;
