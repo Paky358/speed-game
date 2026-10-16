@@ -13,7 +13,12 @@
   var FANTA_VUOTO_MS = 6000, FANTA_RILANCIO_MS = 8000;   // fantacalcio: 6 secondi finché nessuno offre, 8 dopo ogni offerta
   var SCELTA_MS = 20000;  // (online) tempo per scegliere la carta da mettere all'asta: poi ne esce una a caso
   var AUTO_ESITO_MS = 4000, AUTO_ROUND_MS = 4500;   // temi: l'esito e l'inizio round vanno avanti da soli (c'è anche il tasto)
-  var AUTO_KIT_MS = 15000;   // (online) i kit completi restano a schermo 15 secondi, poi si vota da soli
+  var AUTO_KIT_MS = 15000;   // (online) i kit completi restano a schermo 15 secondi, poi si vota da soli (o subito, se più di metà tocca «⏩ Avanti»)
+  // «🧨 La carta maledetta» (regola dell'host, solo nell'asta a temi): una volta a partita, in un round a caso tra il 2° e il 3°,
+  // esce una carta che nessuno vuole. A turno si paga per scansarla o ce la si prende: il tempo per decidere, poi te la prendi.
+  var MAL_MS = 8000, MAL_MS_TEL = 10000, MAL_MS_FORZATO = 3000;   // online / sullo stesso telefono / chi non ha più crediti per pagare
+  var AUTO_MAL_MS = 6000;   // l'esito della carta maledetta resta un attimo, poi si va avanti da soli
+  var MALUS = 0.5;          // chi ce l'ha nel kit perde mezza stella di media nel voto (cioè mezza stella da ogni voto)
   // (online) il voto ha un tempo per tutti: 60 secondi fino a 4 giocatori, 10 in più per ognuno dopo (al massimo 2 minuti);
   // poco prima della fine i voti messi partono da soli, e chi non ha votato dà 3,5 ⭐ a testa
   function votoMs(n) { return Math.min(120000, 60000 + Math.max(0, n - 4) * 10000); }
@@ -143,6 +148,51 @@
       "filter:grayscale(1);opacity:.4;padding:2px;}",
     ".as-stelle button.on{filter:none;opacity:1;}",
     ".as-msg{text-align:center;color:var(--testo-tenue);font-weight:700;}",
+    // 🧨 la carta maledetta: sempre col bordo nero (nel kit, nel voto, nelle fasce svelate) e il badge 🧨 al posto della fascia
+    ".tier-M{background:#0b0b0f;color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.35);font-size:.8rem;}",
+    ".as-kit .riga.maled,.as-rose-riga.maled{border:2px solid #000;border-radius:9px;background:linear-gradient(135deg,#3b3b46,#202027);box-shadow:0 0 0 1px rgba(255,255,255,.28);padding-left:6px;padding-right:4px;margin:2px 0;}",
+    ".as-kits .as-kit .riga.maled{grid-column:1/-1;}",
+    ".as-mal-in{display:inline-block;border:2px solid #000;border-radius:7px;padding:0 4px;background:#2b2b33;box-shadow:0 0 0 1px rgba(255,255,255,.28);color:var(--testo);}",
+    ".as-malus{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:7px;background:#0b0b0f;color:#ff8787;font-size:.72rem;font-weight:900;vertical-align:1px;box-shadow:0 0 0 1px rgba(255,255,255,.25);}",
+    ".as-kv.maled{box-shadow:0 0 0 2px #000,0 0 0 3px rgba(255,255,255,.22),var(--ombra);}",
+    // l'asta al contrario della carta maledetta: tutto in uno schermo (anche in 10), si aggiorna solo quello che cambia
+    ".schermata.as-mal{flex:0 0 auto;height:var(--alt,100dvh);max-height:var(--alt,100dvh);min-height:0;overflow:hidden;background:radial-gradient(130% 70% at 50% 0%,#3a1020 0%,var(--sfondo) 62%);}",
+    ".as-mal>.contenuto{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;overflow:hidden;}",
+    ".as-mal-testa{display:flex;align-items:center;justify-content:center;gap:8px;min-height:34px;padding:0 38px;flex:none;font-size:.78rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#ff8787;}",
+    ".as-mal-carta{display:flex;align-items:center;gap:12px;background:linear-gradient(150deg,#26262e,#0b0b0f);border:3px solid #000;box-shadow:0 0 0 2px rgba(255,255,255,.3),0 10px 26px rgba(0,0,0,.5);border-radius:18px;padding:10px 12px;color:#fff;}",
+    ".as-mal-carta .em{font-size:2.4rem;width:62px;height:62px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4a4a55,#15151b);}",
+    ".as-mal-carta .nm{font-size:1.12rem;font-weight:900;line-height:1.18;}",
+    ".as-mal-carta .sm{font-size:.74rem;font-weight:800;color:#ff8787;margin-top:2px;}",
+    ".as-mal.entra .as-mal-carta{animation:asMalEntra .7s cubic-bezier(.2,1.4,.4,1);}",
+    "@keyframes asMalEntra{0%{transform:scale(1.35) rotate(-4deg);opacity:0}45%{transform:scale(.96) rotate(2deg);opacity:1}70%{transform:rotate(-1.5deg)}100%{transform:none}}",
+    ".as-mal-regola{margin:0;text-align:center;font-size:.8rem;line-height:1.3;color:var(--testo-tenue);font-weight:700;}",
+    ".as-mal-prezzo{text-align:center;line-height:1.1;}",
+    ".as-mal-prezzo small{display:block;font-size:.72rem;font-weight:800;color:var(--testo-tenue);}",
+    ".as-mal-prezzo b{font-size:1.9rem;font-weight:900;color:var(--accento);}",
+    ".as-mal-tempo{position:relative;height:8px;border-radius:99px;background:var(--carta);overflow:hidden;flex:none;}",
+    ".as-mal-tempo i{position:absolute;left:0;top:0;bottom:0;width:100%;transform-origin:left center;background:linear-gradient(90deg,#ff6b6b,var(--accento),var(--verde));}",
+    ".as-mal-conta{height:1.3em;text-align:center;font-weight:900;font-size:1.05rem;color:#ff6b6b;}",
+    ".as-mal-gente{display:grid;grid-template-columns:1fr 1fr;gap:5px;min-height:0;}",
+    ".as-mal-p{display:flex;align-items:center;gap:6px;min-width:0;background:var(--carta);border:2px solid transparent;border-radius:12px;padding:5px 8px;font-size:.85rem;}",
+    ".as-mal-p b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+    ".as-mal-p span{flex:none;font-weight:800;color:var(--testo-tenue);font-size:.78rem;}",
+    ".as-mal-p.ora{border-color:var(--accento);background:linear-gradient(150deg,var(--carta-2),#2a2550);}",
+    ".as-mal-p.ora span{color:var(--accento);}",
+    ".as-mal-p.via{opacity:.4;}",
+    ".as-mal-p.mio b{color:#ffe066;}",
+    ".as-mal-piede{display:flex;flex-direction:column;gap:6px;}",
+    ".as-mal-piede .sa-nota{color:var(--testo);text-shadow:none;font-size:.86rem;}",
+    ".as-mal-tasti{display:flex;gap:8px;}.as-mal-tasti .btn{flex:1;min-width:0;margin:0;padding-left:6px;padding-right:6px;}",
+    ".as-mal-fitta .as-mal-carta{padding:6px 10px;}.as-mal-fitta .as-mal-carta .em{width:46px;height:46px;font-size:1.8rem;}.as-mal-fitta .as-mal-p{padding:3px 7px;font-size:.78rem;}",
+    ".as-mal-fitta .as-mal-prezzo b{font-size:1.5rem;}.as-mal-fitta .as-mal-regola{font-size:.74rem;}",
+    // l'esito della carta maledetta
+    ".as-big.as-maled{background:linear-gradient(150deg,#3b3b46,#0b0b0f);color:#fff;border:3px solid #000;box-shadow:0 0 0 2px rgba(255,255,255,.3),0 12px 30px rgba(0,0,0,.5);}",
+    ".as-big.as-maled{padding:8px 12px 10px;margin-bottom:6px;}.as-big.as-maled .em{width:54px;height:54px;font-size:2rem;margin-bottom:4px;background:radial-gradient(circle at 35% 30%,#55555f,#15151b);}.as-big.as-maled .nm{font-size:1.15rem;}",
+    ".as-big.as-maled .as-fascia-x{color:#ff8787;opacity:1;}",
+    ".as-mal-conti{display:flex;flex-direction:column;gap:3px;font-size:.88rem;font-weight:700;text-align:center;}",
+    // «⏩ Avanti» sui kit completi (online): il conto resta, il tasto dice quanti l'hanno toccato
+    ".as-av-kit{display:flex;flex-direction:column;gap:6px;align-items:stretch;}.as-av-kit .as-msg{margin:0;}",
+    ".as-av-kit .btn{margin:0;}.as-av-kit .quanti{margin-left:8px;font-size:.85em;opacity:.85;}",
     // striscia dei 4 round (tutte le cose che si metteranno all'asta): quella in corso ha il contorno giallo
     ".as-steps{display:flex;gap:5px;justify-content:center;margin:2px 0 12px;}",
     ".as-step{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--carta);",
@@ -388,7 +438,8 @@
     tic: function (p) { beep([520 + Math.round(p * 700)], 0.035, "square"); },      // il contatore del valore delle rose (sale di tono)
     pop: function () { beep([880, 1320], 0.08, "triangle"); },                       // la maglia arriva nel campetto (solo suono: niente vibrazione senza tocco)
     posto: function () { beep([660, 990], 0.14, "triangle"); },
-    festa: function () { beep([660, 880, 1046, 1318], 0.2, "triangle"); }
+    festa: function () { beep([660, 880, 1046, 1318], 0.2, "triangle"); },
+    maledetta: function () { beep([392, 311, 233], 0.24, "sawtooth"); }                 // 🧨 esce la carta maledetta (tre note che scendono)
   };
 
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
@@ -423,7 +474,32 @@
   function cellaTier(el, tier, rivela) {
     // Durante l'asta la fascia resta nascosta: niente badge (più spazio al nome).
     // Si mostra il badge colorato solo alla fine, quando rivela === true.
+    if (tier === "M") return el("span", { class: "tier tier-M", text: "🧨", title: "Carta maledetta" });   // la carta maledetta si vede sempre
     return rivela ? el("span", { class: "tier tier-" + tier, text: tier }) : null;
+  }
+
+  // ---- 🧨 la carta maledetta ----
+  function cartaMaledetta() {
+    var l = window.SG_ASTA_MALEDETTE || []; if (!l.length) return null;
+    var c = l[Math.floor(Math.random() * l.length)];
+    return { nome: c.nome, emoji: c.emoji, tier: "M", maledetta: true };
+  }
+  // quando esce: in un round a caso tra il 2° e il 3°, e in un momento a caso di quel round
+  // (quando restano senza carta "quando" giocatori: da subito dopo la prima asta fino alla fine del round)
+  function pianoMaledetta(n) {
+    var P = window.__astaMalProva;   // (solo per le prove nel browser: il round e il momento scelti a mano)
+    if (P) return { round: P.round, quando: Math.min(P.quando, Math.max(0, n - 1)), fatta: false };
+    return { round: 1 + Math.floor(Math.random() * 2), quando: Math.floor(Math.random() * Math.max(1, n)), fatta: false }; }
+  function haMaledetta(g) { return !!(g && g.kit && g.kit.some(function (c) { return c && c.maledetta; })); }
+  // alla fine del voto: chi ha la carta maledetta perde mezza stella di media (mezza stella per ogni voto ricevuto)
+  function malusVoto(giocatori) {
+    var n = giocatori.length;
+    giocatori.forEach(function (g) {
+      g.malus = 0;
+      if (!haMaledetta(g)) return;
+      g.malus = mezzo(MALUS * Math.max(1, n - 1));
+      g.stelle = Math.max(0, mezzo(g.stelle - g.malus));
+    });
   }
 
   // Prende N carte dal round tenendo RARI i pezzi migliori:
@@ -534,7 +610,7 @@
       imp = imp || {};
       if (imp.formato === "fanta") return "⚽ Mini asta Fantacalcio · " + FANTA_BUDGET + " crediti · rosa da 5";
       var temi = window.SG_ASTA_TEMI || [], tm = temi.filter(function (x) { return x.id === imp.tema; })[0] || temi[0];
-      return "🎁 Temi classici" + (tm ? " · " + tm.icona + " " + tm.nome : "") + " · " + (imp.crediti || 15) + " crediti";
+      return "🎁 Temi classici" + (tm ? " · " + tm.icona + " " + tm.nome : "") + " · " + (imp.crediti || 15) + " crediti" + (imp.maledetta ? " · 🧨 carta maledetta" : "");
     },
     difficolta: 3,   // Difficile — vale di più nel torneo (1 facile, 2 media, 3 difficile)
 
@@ -545,6 +621,7 @@
       "Dopo ogni rilancio partono <b>10 secondi</b>: allo scadere la carta va a chi ha l'offerta più alta. <b>Paga solo il vincitore.</b> Chi ha già l'offerta più alta non può rilanciare contro sé stesso.",
       "Attenzione: devi tenere <b>almeno 1 credito per ogni round che resta</b>, altrimenti rimani a piedi.",
       "Alla fine ognuno vota i kit degli altri con le <b>stelle</b> (non il proprio): vince chi ne raccoglie di più.",
+      "<b>🧨 La carta maledetta</b> (se l'host la accende): una volta a partita, nel 2° o nel 3° round, esce una carta che <b>nessuno vuole</b>. A turno ognuno sceglie: <b>💸 paga</b> 1 credito in più dell'ultimo per scansarla, oppure <b>😩 se la prende</b>. Chi non decide in tempo se la prende. Il <b>primo che se la prende</b> la mette nel kit e non paga niente; <b>tutti gli altri pagano</b> quello che hanno offerto. Nel voto finale chi ce l'ha perde <b>mezza stella di media</b> (🧨 −0,5 ⭐ da ogni voto).",
       "<b>Mini asta Fantacalcio</b>: 20 crediti a testa per una rosa da 5 (1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante). I calciatori escono a caso uno alla volta e partono da <b>1 credito</b>: ci sono <b>6 secondi</b> per la prima offerta e <b>8</b> dopo ogni rilancio, poi chi offre di più se lo prende. Se nessuno lo vuole <b>torna in fondo al mazzo</b> e si va avanti; solo quando tutti quelli rimasti di un ruolo sono stati rifiutati <b>2 volte</b>, vanno a caso a chi ne ha ancora bisogno.",
       "Nel fantacalcio alla fine si scoprono le <b>quotazioni vere</b> dei calciatori: vince la rosa che <b>vale di più</b>. A pari valore vince chi ha <b>più crediti avanzati</b>."
     ],
@@ -556,8 +633,9 @@
       dove.crediti = 15;
       dove._creditiTemi = 15;
 
+      dove.maledetta = dove.maledetta === true;   // (riaprendo «⚙️ Regole» resta com'era; di base No)
       // contenitori che compaiono/spariscono in base alla modalità scelta
-      var wrapCrediti = el("div", {}), wrapTema = el("div", {}), wrapFanta = el("div", { hidden: "hidden" });
+      var wrapCrediti = el("div", {}), wrapTema = el("div", {}), wrapFanta = el("div", { hidden: "hidden" }), wrapMal = el("div", {});
 
       // --- Modalità: Temi classici oppure Mini asta Fantacalcio ---
       box.appendChild(el("div", { class: "etichetta", text: "Modalità" }));
@@ -569,6 +647,7 @@
         bFanta.className = "modo-chip" + (f === "fanta" ? " attiva" : "");
         wrapCrediti.hidden = (f !== "temi");
         wrapTema.hidden = (f !== "temi");
+        wrapMal.hidden = (f !== "temi");
         wrapFanta.hidden = (f !== "fanta");
         dove.crediti = (f === "fanta") ? 20 : dove._creditiTemi;
       }
@@ -643,6 +722,24 @@
       }
       box.appendChild(wrapTema);
 
+      // --- 🧨 La carta maledetta (solo Temi classici): una carta che nessuno vuole, si paga per scansarla ---
+      wrapMal.appendChild(el("div", { class: "etichetta", text: "🧨 La carta maledetta" }));
+      var bMalSi, bMalNo;
+      function scegliMal(v) {
+        dove.maledetta = v;
+        bMalSi.className = "modo-chip" + (v ? " attiva" : "");
+        bMalNo.className = "modo-chip" + (!v ? " attiva" : "");
+      }
+      bMalSi = el("button", { class: "modo-chip", onclick: function () { scegliMal(true); } }, [
+        el("span", { class: "mi", text: "🧨" }), el("div", {}, [
+          el("div", { class: "mt", text: "Sì" }), el("div", { class: "ms", text: "Una volta: si paga per scansarla" })])]);
+      bMalNo = el("button", { class: "modo-chip attiva", onclick: function () { scegliMal(false); } }, [
+        el("span", { class: "mi", text: "🙂" }), el("div", {}, [
+          el("div", { class: "mt", text: "No" }), el("div", { class: "ms", text: "Solo carte buone" })])]);
+      wrapMal.appendChild(el("div", { class: "modo-griglia" }, [bMalSi, bMalNo]));
+      scegliMal(dove.maledetta);
+      box.appendChild(wrapMal);
+
       // --- Nota Fantacalcio (solo modalità Fantacalcio) ---
       wrapFanta.appendChild(el("div", { class: "link-avviso",
         text: "⚽ 20 crediti a testa · rosa da 5 (1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante). I calciatori escono dal mazzo uno alla volta, in ordine tutto a caso. Alla fine vince la rosa che vale di più." }));
@@ -712,6 +809,7 @@
 
       var st = {
         tema: tema, crediti: crediti, sessione: nuovaSessione(), roundIdx: 0, chooserPtr: 0, tavolo: [], senzaCarta: [], asta: null,
+        malPiano: t.impostazioni && t.impostazioni.maledetta ? pianoMaledetta(t.giocatori.length) : null,   // 🧨 la carta maledetta (regola dell'host)
         giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: crediti, kit: [], stelle: 0, asteVinte: 0 }; })
       };
       iniziaRound(t, st);
@@ -765,6 +863,8 @@
 
   // ---- decide cosa fare: assegnazione automatica, scelta carta, o fine round ----
   function prossimaAsta(t, st) {
+    if (st.finita) return;
+    if (devoMaledetta(st)) return apriMaledetta(t, st);   // 🧨 tocca alla carta maledetta (una volta a partita)
     if (st.senzaCarta.length === 0) return fineRound(t, st);
     if (st.senzaCarta.length === 1 && st.tavolo.length === 1) {
       var i = st.senzaCarta[0], carta = st.tavolo[0];
@@ -774,6 +874,54 @@
       return esitoAsta(t, st, i, carta, 1, true);
     }
     schermataScelta(t, st);
+  }
+
+  // ---- 🧨 la carta maledetta (stesso telefono): i giocatori sono gli indici 0, 1, 2… ----
+  function devoMaledetta(st) { var P = st.malPiano; return !!(P && !P.fatta && st.roundIdx === P.round && st.senzaCarta.length <= P.quando); }
+  // quanto può offrire per scansarla: tiene 1 credito per ogni round che resta e, se non ha ancora la carta di questo round, 1 anche per quella
+  function maxMal(st, i) { return maxPuntata(st, i) - (st.senzaCarta.indexOf(i) >= 0 ? 1 : 0); }
+  function chiMal(st) { var M = st.malA; return M.ordine[M.turno % M.ordine.length]; }
+  function apriMaledetta(t, st) {
+    st.malPiano.fatta = true;
+    var carta = cartaMaledetta(); if (!carta) return prossimaAsta(t, st);
+    var n = st.giocatori.length, da = Math.floor(Math.random() * n), ordine = [];
+    for (var i = 0; i < n; i++) ordine.push((da + i) % n);   // si comincia da uno a caso
+    st.malA = { carta: carta, ordine: ordine, turno: 0, offerte: {}, prezzo: 0, giro: 0 };
+    FX.maledetta();
+    turnoMal(t, st);
+  }
+  function turnoMal(t, st) {
+    var M = st.malA; if (!M || st.finita) return;
+    var k = chiMal(st), forz = maxMal(st, k) < M.prezzo + 1, ms = forz ? MAL_MS_FORZATO : MAL_MS_TEL;
+    M.giro++; M.scad = Date.now() + ms; M.durata = ms; M.forzato = forz;
+    clearTimeout(st.malTo);
+    st.malTo = setTimeout(function () { if (st.malA === M && !st.finita) prendeMal(t, st, k, true); }, ms);   // tempo scaduto: se la prende
+    var persone = st.giocatori.map(function (g, i) { return { id: i, nome: g.nome, offerta: M.offerte[i] || 0, crediti: g.crediti }; });
+    salaMal(t, { chiave: "tm|" + st.sessione, info: "Round " + (st.roundIdx + 1) + " di " + TOT_ROUND, carta: M.carta, prezzo: M.prezzo,
+      persone: persone, turnoId: k, forzato: forz, giro: M.giro, resta: ms, durata: ms, io: null,
+      onPaga: function (i) { pagaMal(t, st, i); }, onPrendo: function (i) { prendeMal(t, st, i, false); }, onIndietro: function () { esciAsta(t, st); } });
+  }
+  function pagaMal(t, st, k) {
+    var M = st.malA; if (!M || chiMal(st) !== k || M.forzato || maxMal(st, k) < M.prezzo + 1) return;
+    M.prezzo++; M.offerte[k] = M.prezzo; M.turno++;
+    FX.rilancio(false);
+    turnoMal(t, st);
+  }
+  function prendeMal(t, st, k, scaduto) {
+    var M = st.malA; if (!M || chiMal(st) !== k) return;
+    clearTimeout(st.malTo); st.malTo = null; st.malA = null;
+    var paga = [];
+    st.giocatori.forEach(function (g, i) { var q = M.offerte[i] || 0; if (i !== k && q > 0) { g.crediti -= q; paga.push({ id: i, nome: g.nome, quanto: q }); } });   // gli altri pagano quello che hanno offerto
+    st.giocatori[k].kit.push(M.carta);   // chi se la prende non paga niente
+    fermaMal();
+    var el = t.el, s = t.schermata({});
+    s._contenuto.appendChild(intestazioneRound(el, st));
+    s._contenuto.appendChild(strisciaCrediti(el, st, k));
+    nodiEsitoMal(el, { chiNome: st.giocatori[k].nome, carta: M.carta, paga: paga, ripresa: M.offerte[k] || 0, scaduto: scaduto }, null).forEach(function (n) { s._contenuto.appendChild(n); });
+    FX.aggiudicato(); vibra([40, 60, 40]);   // un momento che conta
+    var vai = autoAvanti(st, s, function () { prossimaAsta(t, st); }, AUTO_MAL_MS);
+    s._piede.appendChild(tastoAuto(el, "Avanti ▶", AUTO_MAL_MS, vai));
+    t.mostra(s);
   }
 
   function schermataScelta(t, st) {
@@ -906,7 +1054,7 @@
   }
   window.addEventListener("resize", function () { if (SALA) adattaPubblico(SALA.pubblico); if (STADIO) adattaPubblico(STADIO.pubblico); });
   function pulisciCache() { Object.keys(CACHE_AV).forEach(function (k) { if (k.indexOf("arte|") !== 0) delete CACHE_AV[k]; }); }   // le pose degli avatar della partita prima (i disegni fissi restano)
-  function fermaTutto() { fermaConta(SALA); fermaConta(STADIO); fermaRivela(RIVELA); SALA = null; STADIO = null; RIVELA = null; }   // si esce dalla partita: niente più timer che ridisegnano
+  function fermaTutto() { fermaConta(SALA); fermaConta(STADIO); fermaRivela(RIVELA); fermaMal(); SALA = null; STADIO = null; RIVELA = null; }   // si esce dalla partita: niente più timer che ridisegnano
   function testaAsta(el, S, d) {
     return el("div", { class: "sa-testa" }, [
       el("button", { class: "sa-tasto", text: "‹", "aria-label": "Esci", onclick: function () { S.ultimiDati.onIndietro(); } }),
@@ -1018,6 +1166,108 @@
     S.radice.appendChild(timbro(scritta || "AGGIUDICATO!")); S.radice.classList.add("chiusa");
     SALA = null;
     setTimeout(poi, 1500);
+  }
+
+  // =========================================================
+  //  🧨 LA CARTA MALEDETTA — l'asta al contrario (come in High Society), sullo stesso telefono e online.
+  //  A turno: «💸 Pago N» (1 credito in più dell'ultima offerta) oppure «😩 Me la prendo»; chi non decide in tempo se la prende
+  //  (negli ultimi 2 secondi «Uno… due…»). Il primo che se la prende la mette nel kit e si riprende la sua offerta;
+  //  tutti gli altri pagano quello che hanno offerto. La schermata si fa una volta per carta e poi cambia solo quello che serve.
+  // =========================================================
+  var MAL = null;
+  function fermaMal() { if (MAL) { MAL.conta.forEach(function (x) { clearTimeout(x); }); MAL.conta = []; } MAL = null; }
+  // d: { chiave, info, carta, prezzo (l'ultima offerta), persone: [{ id, nome, offerta, crediti, via }], turnoId, forzato, giro, resta, durata,
+  //      io (online: il mio id, "—" se guardo; null = stesso telefono: tocca chi è di turno), onPaga(id), onPrendo(id), onIndietro }
+  function salaMal(t, d) {
+    if (MAL && MAL.chiave === d.chiave && document.body.contains(MAL.s)) return aggMal(d);
+    fermaMal();
+    var el = t.el, M = { chiave: d.chiave, d: d, pers: {}, conta: [], giro: null, kPiede: null };
+    var s = M.s = t.schermata({ indietro: function () { M.d.onIndietro(); } });
+    s.classList.add("as-mal", "entra");
+    if (d.persone.length > 6) s.classList.add("as-mal-fitta");
+    M.info = el("span");
+    s._contenuto.appendChild(el("div", { class: "as-mal-testa" }, [ el("span", { text: "🧨 Carta maledetta" }), M.info ]));
+    s._contenuto.appendChild(el("div", { class: "as-mal-carta" }, [ el("span", icoAttr("em", d.carta.emoji)),
+      el("div", {}, [ el("div", { class: "nm", text: d.carta.nome }), el("div", { class: "sm", text: "Nessuno la vuole! Nel voto: −0,5 ⭐ di media" }) ]) ]));
+    s._contenuto.appendChild(el("p", { class: "as-mal-regola", text: "A turno: paghi per scansarla o te la prendi. Chi se la prende non paga niente: gli altri pagano quello che hanno offerto." }));
+    M.prezzo = el("b");
+    s._contenuto.appendChild(el("div", { class: "as-mal-prezzo" }, [ el("small", { text: "Per scansarla ora si paga" }), M.prezzo ]));
+    M.barra = el("i");
+    s._contenuto.appendChild(el("div", { class: "as-mal-tempo" }, [ M.barra ]));
+    M.uno = el("div", { class: "as-mal-conta" });
+    s._contenuto.appendChild(M.uno);
+    var gente = el("div", { class: "as-mal-gente" });
+    d.persone.forEach(function (p) {
+      var off = el("span"), nodo = el("div", { class: "as-mal-p" }, [ el("b", { text: p.nome }), off ]);
+      M.pers[p.id] = { nodo: nodo, off: off };
+      gente.appendChild(nodo);
+    });
+    s._contenuto.appendChild(gente);
+    M.piede = el("div", { class: "as-mal-piede" });
+    s._piede.appendChild(M.piede);
+    MAL = M;
+    t.mostra(s);
+    aggMal(d);
+  }
+  function aggMal(d) {
+    var M = MAL; if (!M) return; M.d = d;
+    var el = document.createElement.bind(document);
+    if (M.info.textContent !== (d.info ? "· " + d.info : "")) M.info.textContent = d.info ? "· " + d.info : "";
+    var tx = (d.prezzo + 1) + " 💰"; if (M.prezzo.textContent !== tx) M.prezzo.textContent = tx;
+    d.persone.forEach(function (p) {
+      var q = M.pers[p.id]; if (!q) return;
+      var cls = "as-mal-p" + (p.id === d.turnoId ? " ora" : "") + (p.via ? " via" : "") + (d.io != null && p.id === d.io ? " mio" : "");
+      if (q.nodo.className !== cls) q.nodo.className = cls;
+      var o = p.via ? "non c'è" : p.offerta ? "offre " + p.offerta + " 💰" : p.id === d.turnoId ? "⏳" : "—";
+      if (q.off.textContent !== o) q.off.textContent = o;
+    });
+    // il tempo: riparte a ogni turno (giro nuovo)
+    if (d.giro !== M.giro) {
+      M.giro = d.giro;
+      M.conta.forEach(function (x) { clearTimeout(x); }); M.conta = [];
+      var resta = Math.max(0, +d.resta || 0), tot = Math.max(resta, d.durata || resta || 1);
+      M.barra.style.transition = "none"; M.barra.style.transform = "scaleX(" + (tot ? resta / tot : 0) + ")"; void M.barra.offsetWidth;
+      M.barra.style.transition = "transform " + resta + "ms linear"; M.barra.style.transform = "scaleX(0)";
+      M.uno.textContent = "";
+      ["Uno…", "Due…"].forEach(function (parola, i) {
+        var quando = resta - (2 - i) * 1000; if (quando < 0) return;
+        M.conta.push(setTimeout(function () { if (MAL !== M || !document.body.contains(M.s)) return; M.uno.textContent = parola; FX.conta(i); }, quando));
+      });
+    }
+    // in basso: chi è di turno sceglie (stesso telefono: chiunque sia di turno; online: solo lui)
+    var turno = trova(d.persone, d.turnoId), nome = turno ? turno.nome : "", mio = d.io == null || d.io === d.turnoId;
+    var kP = [d.turnoId, d.giro, d.forzato ? 1 : 0, mio ? 1 : 0, d.prezzo].join("|");
+    if (kP === M.kPiede) return;
+    M.kPiede = kP;
+    svuotaNodo(M.piede);
+    var nota = el("p"); nota.className = "sa-nota";
+    nota.textContent = d.forzato ? (d.io === d.turnoId ? "Non hai più crediti per pagare: te la prendi tu 😩" : nome + " non ha più crediti per pagare: se la prende 😩")
+      : d.io == null ? "Tocca a " + nome + " (" + (turno ? turno.crediti : 0) + " 💰): paghi " + (d.prezzo + 1) + " 💰 o te la prendi?"
+      : d.io === d.turnoId ? "Tocca a te! Paghi " + (d.prezzo + 1) + " 💰 o te la prendi?"
+      : d.io === "—" ? "Stai guardando: tocca a " + nome
+      : "Tocca a " + nome + ": paga o se la prende?";
+    M.piede.appendChild(nota);
+    if (!mio) return;
+    var giro = d.giro, fatto = false, chi = d.turnoId;
+    function una(fn) { return function () { if (fatto || !MAL || MAL.d.giro !== giro) return; fatto = true; vibra(20); fn(chi); }; }
+    var bPaga = el("button"); bPaga.className = "btn btn-verde"; bPaga.textContent = "💸 Pago " + (d.prezzo + 1) + " 💰"; bPaga.onclick = una(function (k) { MAL.d.onPaga(k); });
+    if (d.forzato) bPaga.disabled = true;
+    var bPrendo = el("button"); bPrendo.className = "btn btn-rosso"; bPrendo.textContent = "😩 Me la prendo"; bPrendo.onclick = una(function (k) { MAL.d.onPrendo(k); });
+    var riga = el("div"); riga.className = "as-mal-tasti"; riga.appendChild(bPaga); riga.appendChild(bPrendo);
+    M.piede.appendChild(riga);
+  }
+  // l'esito: chi se l'è presa, chi ha pagato e quanto (uguale sullo stesso telefono e online)
+  function nodiEsitoMal(el, e, myId) {
+    var tu = myId != null && e.chiId === myId, righe = el("div", { class: "as-mal-conti" });
+    if (e.scaduto) righe.appendChild(el("div", { text: "⏱ " + (tu ? "Non hai" : e.chiNome + " non ha") + " deciso in tempo" }));
+    righe.appendChild(el("div", { text: e.paga && e.paga.length ? "💸 " + e.paga.map(function (p) { return (myId != null && p.id === myId ? "Tu paghi " : p.nome + " paga ") + p.quanto + " 💰"; }).join(" · ") : "Nessuno ha pagato niente" }));
+    if (e.ripresa) righe.appendChild(el("div", { text: "↩️ " + (tu ? "Ti riprendi" : e.chiNome + " si riprende") + " i suoi " + e.ripresa + " 💰" }));
+    return [
+      el("div", { style: "text-align:center;font-size:1.2rem;font-weight:900;margin-top:0", text: tu ? "😩 Te la prendi tu!" : "😩 " + e.chiNome + " se la prende!" }),
+      el("div", { class: "as-big as-maled", style: "margin:6px 0" }, [ el("div", icoAttr("em", e.carta.emoji)), el("div", { class: "nm", text: e.carta.nome }),
+        el("div", { class: "as-fascia-x", text: "🧨 Va nel kit · nel voto −0,5 ⭐ di media" }) ]),
+      righe
+    ];
   }
 
   // =========================================================
@@ -1228,7 +1478,7 @@
   }
   function esciAsta(t, st) { t.conferma("Uscire dalla partita?", null, "Esci", function () { esciAstaOra(t, st); }); }   // la finestra dell'app
   function esciAstaOra(t, st) {
-    if (st) { st.finita = true; if (st.asta && st.asta.bar && st.asta.bar._stop) st.asta.bar._stop(); if (st.pausa) clearTimeout(st.pausa); }
+    if (st) { st.finita = true; if (st.asta && st.asta.bar && st.asta.bar._stop) st.asta.bar._stop(); if (st.pausa) clearTimeout(st.pausa); clearTimeout(st.malTo); st.malA = null; }
     fermaTutto(); t.esci();
   }
   function tempoAsta(a, quando, ms) {   // (stesso telefono) il conto alla rovescia riparte: allo scadere, quando()
@@ -1519,7 +1769,7 @@
     var box = el("div", { class: "as-kit" });
     box.appendChild(el("h3", { text: g.nome + " · " + g.crediti + " 💰 avanzati" }));
     (fanta ? ordinaRosa(g.kit) : g.kit).forEach(function (c) {
-      box.appendChild(el("div", { class: "riga" }, fanta ? [
+      box.appendChild(el("div", { class: "riga" + (c.maledetta ? " maled" : "") }, fanta ? [
         el("span", { class: "em", text: (FANTA_RUOLI[c.ruolo] || {}).emoji }),
         el("span", { style: "flex:1", text: c.nome + (c.squadra ? " · " + c.squadra : "") }),
         el("span", { class: "as-rb as-rb-" + c.ruolo, text: (FANTA_RUOLI[c.ruolo] || {}).breve })
@@ -1567,6 +1817,7 @@
         bottoni: function () { return [t.el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: function () { classificaFinale(t, st, righe); } })]; } });
     }
     FX.fine();
+    if (!st.malusFatto) { st.malusFatto = true; malusVoto(st.giocatori); }   // 🧨 chi ha la carta maledetta: −0,5 ⭐ di media
     svelaFasce(t, st);   // le fasce restano nascoste per tutta la partita: si svelano solo ORA
   }
   // le posizioni in classifica: a pari punti, stessa posizione
@@ -1576,7 +1827,8 @@
     var righe = giocatori.slice().sort(function (a, b) { return (b.stelle - a.stelle) || (b.crediti - a.crediti); });
     return conPosizioni(righe.map(function (g) {
       var pari = righe.some(function (o) { return o !== g && o.stelle === g.stelle; });   // a pari stelle si vede anche lo spareggio
-      return { id: g.id, nome: g.nome, stelle: g.stelle, crediti: g.crediti, punti: fmtMezzi(g.stelle) + " ⭐" + (pari ? " · " + g.crediti + " 💰" : "") };
+      return { id: g.id, nome: g.nome, stelle: g.stelle, crediti: g.crediti,
+        punti: fmtMezzi(g.stelle) + " ⭐" + (g.malus ? " · 🧨 −0,5 ⭐ a voto" : "") + (pari ? " · " + g.crediti + " 💰" : "") };
     }), function (a, b) { return a.stelle === b.stelle && a.crediti === b.crediti; });
   }
 
@@ -1627,8 +1879,15 @@
       rounds: (st.tema.round || []).map(function (x) { return { nome: x.nome, icona: x.icona }; }),
       giocatori: st.giocatori.map(function (g) {
         return { id: g.id, nome: g.nome, omino: g.omino || null, crediti: g.crediti, creditiSpesi: st.crediti - g.crediti,
-          asteVinte: g.asteVinte || 0, stelle: g.stelle || 0, haCarta: st.senzaCarta.indexOf(g.id) < 0, via: !!g.via, kit: g.kit.slice() };
+          asteVinte: g.asteVinte || 0, stelle: g.stelle || 0, malus: g.malus || 0, haCarta: st.senzaCarta.indexOf(g.id) < 0, via: !!g.via, kit: g.kit.slice() };
       }),
+      maledetta: !!st.maledetta,   // 🧨 la regola (per la saletta)
+      mal: st.fase === "maledetta" && st.mal ? { n: st.mal.n, carta: st.mal.carta, ordine: st.mal.ordine.slice(), offerte: st.mal.offerte, prezzo: st.mal.prezzo,
+        turnoId: st.mal.ordine[st.mal.turno % st.mal.ordine.length], giro: st.mal.giro, forzato: !!st.mal.forzato,
+        resta: st.mal.scad ? Math.max(0, st.mal.scad - ora) : 0, durata: st.mal.durata || MAL_MS } : null,   // (il tempo che resta, non l'ora)
+      malEsito: st.fase === "malEsito" ? st.malEsito : null,
+      avKit: st.fase === "kit" ? { si: st.giocatori.filter(function (g) { return !g.via && st.avKit && st.avKit[g.id]; }).map(function (g) { return g.id; }),
+        tot: st.giocatori.filter(function (g) { return !g.via; }).length } : null,
       tavolo: st.tavolo.map(function (c) { return { nome: c.nome, emoji: c.emoji, tier: c.tier }; }),
       sceglieId: sceglie, sceglieNome: sceglie ? nomeDi(st, sceglie) : "",
       nScelta: st.nScelta, restaScelta: st.fineScelta ? Math.max(0, st.fineScelta - ora) : 0, durataScelta: st.durataScelta || SCELTA_MS,
@@ -1674,6 +1933,8 @@
       tavolo: [], senzaCarta: [], asta: null, esito: null, classifica: null,
       fase: "lobby", iniziata: false, codice: "…", scadenza: null, _to: null, voti: {}, giro: 0,
       nAsta: 0, nScelta: 0, fineScelta: null, fineAuto: null,
+      maledetta: !!(t.impostazioni && t.impostazioni.maledetta), malPiano: null, mal: null, malEsito: null, nMal: 0,   // 🧨 la carta maledetta
+      avKit: {},   // chi ha toccato «⏩ Avanti» sui kit completi
       giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: crediti, kit: [], stelle: 0, asteVinte: 0, omino: t.mioOmino ? t.mioOmino() : null }]
     };
     var TM = timerHost(st, function () { return !cb._uscito && !st.morto; });
@@ -1685,6 +1946,7 @@
       var temi = window.SG_ASTA_TEMI || [];
       st.tema = temi.filter(function (x) { return x.id === im.tema; })[0] || st.tema;
       st.crediti = im.crediti || 15;
+      st.maledetta = !!im.maledetta;
       st.giocatori.forEach(function (g) { g.crediti = st.crediti; });
       bd();
     };
@@ -1702,6 +1964,11 @@
         if (st.fase === "asta" && verificaPassati()) return;
         if (st.fase === "voto") { bd(); return verificaVoti(); }
         if (st.fase === "scelta" && chiSceglie() === g) tempoScelta();   // tocca a lui scegliere: tra un attimo una carta a caso
+        if (st.fase === "maledetta" && st.mal) {   // 🧨 era il suo turno: tocca al prossimo (tiene l'offerta che aveva); se resta uno solo, se la prende lui
+          if (malDi() === g) { st.mal.turno++; return turnoMalO(); }
+          if (attiviMal().length <= 1) return turnoMalO();
+        }
+        if (st.fase === "kit" && maggioranzaKit()) return avanti();   // chi resta ha già detto «Avanti»
         bd();
       },
       onMsg: function (id, m) {
@@ -1720,6 +1987,8 @@
         else if (m.t === "rilancia") rilanciaO(id, m);
         else if (m.t === "passa") passaO(id, m);
         else if (m.t === "voto") voto(id, m.voti, m.s);
+        else if (m.t === "mal") malMossa(id, m);
+        else if (m.t === "avanti") avantiKit(id, m.s);
       },
       onErrore: function (e) {
         // un errore di rete passeggero: la rete si ricollega da sola e rimanda l'ultima foto, quindi la partita NON si ferma
@@ -1735,7 +2004,9 @@
 
     function comincia() {
       if (st.iniziata || st.giocatori.length < 2) return;
-      st.iniziata = true; st.sessione = nuovaSessione(); st.roundIdx = 0; nuovoRound();
+      st.iniziata = true; st.sessione = nuovaSessione(); st.roundIdx = 0;
+      st.malPiano = st.maledetta ? pianoMaledetta(st.giocatori.length) : null; st.mal = null; st.malEsito = null;   // 🧨 quando uscirà la carta maledetta
+      nuovoRound();
     }
     function avantiDaSolo(ms, fn) {   // l'esito, l'inizio del round e i kit restano un attimo, poi si va avanti da soli
       st.fineAuto = Date.now() + ms; st.durataAuto = ms;
@@ -1754,6 +2025,7 @@
     }
     function prossima() {
       stopTo(); st.fineAuto = null;
+      if (devoMal()) return apriMalO();   // 🧨 tocca alla carta maledetta (una volta a partita)
       if (st.senzaCarta.length === 0) return fineRoundO();
       if (st.senzaCarta.length === 1 && st.tavolo.length === 1) {
         var g = perId(st, st.senzaCarta[0]), carta = st.tavolo[0];
@@ -1841,10 +2113,70 @@
       avantiDaSolo(AUTO_ESITO_MS);
       FX.aggiudicato(); bd();
     }
+    // ---- 🧨 la carta maledetta (online): il tempo e i turni li tiene l'host ----
+    function devoMal() { var P = st.malPiano; return !!(P && !P.fatta && st.roundIdx === P.round && st.senzaCarta.length <= P.quando); }
+    function maxMalG(g) { return maxPuntataG(st, g) - (st.senzaCarta.indexOf(g.id) >= 0 ? 1 : 0); }   // (tiene anche 1 credito per la carta di questo round, se non ce l'ha)
+    function malDi() { var M = st.mal; return M ? perId(st, M.ordine[M.turno % M.ordine.length]) : null; }
+    function attiviMal() { return st.mal ? st.mal.ordine.filter(function (id) { var g = perId(st, id); return g && !g.via; }) : []; }
+    function apriMalO() {
+      st.malPiano.fatta = true;
+      var carta = cartaMaledetta(); if (!carta) return prossima();
+      var ids = st.giocatori.map(function (g) { return g.id; }), da = Math.floor(Math.random() * ids.length);
+      st.nMal++;
+      st.mal = { n: st.nMal, carta: carta, ordine: ids.slice(da).concat(ids.slice(0, da)), turno: 0, offerte: {}, prezzo: 0, giro: 0 };   // si comincia da uno a caso
+      st.fase = "maledetta"; st.asta = null; st.esito = null; st.malEsito = null; st.scadenza = null;
+      FX.maledetta();
+      turnoMalO();
+    }
+    function turnoMalO() {
+      var M = st.mal; if (st.fase !== "maledetta" || !M) return;
+      stopTo();
+      // chi non c'è salta il turno (tiene l'offerta che aveva fatto); se resta uno solo, se la prende lui
+      var att = attiviMal();
+      if (att.length <= 1) return prendeMalO(att.length ? att[0] : M.ordine[M.turno % M.ordine.length], true);
+      for (var i = 0; i < M.ordine.length && (!malDi() || malDi().via); i++) M.turno++;
+      var g = malDi(), forz = maxMalG(g) < M.prezzo + 1, ms = forz ? MAL_MS_FORZATO : MAL_MS, gi;
+      M.giro++; gi = M.giro; M.scad = Date.now() + ms; M.durata = ms; M.forzato = forz;
+      TM.dopo(function () { if (st.mal === M && M.giro === gi) prendeMalO(g.id, true); }, ms);   // tempo scaduto: se la prende
+      bd();
+    }
+    // m: { n (quale carta maledetta), a: "paga" (prezzo: quello che ha visto + 1) | "prendo" (g: il turno che ha visto) }
+    function malMossa(id, m) {
+      var M = st.mal; if (st.fase !== "maledetta" || !M || !m || m.n !== M.n) return;
+      var g = malDi(); if (!g || g.id !== id) return;   // solo chi è di turno
+      if (m.a === "prendo") { if (m.g != null && m.g !== M.giro) return; return prendeMalO(id, false); }
+      if (m.a === "paga") {
+        if (M.forzato || m.prezzo !== M.prezzo + 1 || maxMalG(g) < m.prezzo) return;
+        M.prezzo = m.prezzo; M.offerte[id] = m.prezzo; M.turno++;
+        FX.rilancio(id === "host");
+        turnoMalO();
+      }
+    }
+    function prendeMalO(id, scaduto) {
+      var M = st.mal; if (st.fase !== "maledetta" || !M) return;
+      stopTo();
+      var chi = perId(st, id) || perId(st, M.ordine[0]), paga = [];
+      st.giocatori.forEach(function (g) { var q = M.offerte[g.id] || 0; if (g.id !== chi.id && q > 0) { g.crediti -= q; paga.push({ id: g.id, nome: g.nome, quanto: q }); } });   // gli altri pagano quello che hanno offerto
+      chi.kit.push(M.carta);   // chi se la prende non paga niente (si riprende la sua offerta)
+      st.malEsito = { n: M.n, chiId: chi.id, chiNome: chi.nome, carta: M.carta, paga: paga, ripresa: M.offerte[chi.id] || 0, scaduto: !!scaduto };
+      st.mal = null; st.fase = "malEsito";
+      avantiDaSolo(AUTO_MAL_MS);
+      FX.aggiudicato(); bd();
+    }
+    // ---- «⏩ Avanti» sui kit completi: se lo tocca più di metà di chi gioca ed è presente, si vota subito ----
+    function presentiKit() { return st.giocatori.filter(function (g) { return !g.via; }); }
+    function maggioranzaKit() { var p = presentiKit(), si = p.filter(function (g) { return st.avKit[g.id]; }).length; return p.length > 0 && si * 2 > p.length; }
+    function avantiKit(id, s) {
+      if (st.fase !== "kit" || (s != null && s !== st.sessione)) return;   // vale solo per questa schermata
+      var g = perId(st, id); if (!g || g.via || st.avKit[id]) return;      // chi guarda non conta
+      st.avKit[id] = 1;
+      if (maggioranzaKit()) return avanti();
+      bd();
+    }
     function avanti() {
-      if (st.fase === "esito" || st.fase === "round") return prossima();
+      if (st.fase === "esito" || st.fase === "round" || st.fase === "malEsito") return prossima();
       if (st.fase === "kit") {   // si vota: il voto ha un tempo per tutti, poi si chiude da solo
-        stopTo(); st.fineAuto = null;
+        stopTo(); st.fineAuto = null; st.avKit = {};
         var ms = votoMs(st.giocatori.length);
         st.fase = "voto"; st.voti = {}; st.fineVoto = Date.now() + ms;
         TM.dopo(function () { verificaVoti(true); }, ms);
@@ -1854,7 +2186,7 @@
     function fineRoundO() {
       st.roundIdx++;
       if (st.roundIdx < TOT_ROUND) return nuovoRound();
-      st.fase = "kit"; avantiDaSolo(AUTO_KIT_MS, avanti); bd();
+      st.fase = "kit"; st.avKit = {}; avantiDaSolo(AUTO_KIT_MS, avanti); bd();
     }
     function voto(id, voti, sessione) {
       if (st.fase !== "voto" || (sessione != null && sessione !== st.sessione)) return;   // (un voto rimasto indietro dalla partita prima non conta; senza numero: vale per questa)
@@ -1878,6 +2210,7 @@
           if (vv >= 0.5) g.stelle = mezzo(g.stelle + Math.max(0.5, Math.min(5, vv)));
         });
       });
+      malusVoto(st.giocatori);   // 🧨 chi ha la carta maledetta: −0,5 ⭐ di media
       st.classifica = classificaStelle(st.giocatori);
       st.fase = "fine"; FX.fine(); bd();
       if (t.risultato) t.risultato(st.classifica);   // per il torneo online
@@ -1893,8 +2226,9 @@
       st.iniziata = false; st.fase = "lobby"; st.sessione = null; st.roundIdx = 0; st.chooserPtr = 0;
       st.tavolo = []; st.senzaCarta = []; st.asta = null; st.esito = null; st.classifica = null; st.voti = {}; st.scadenza = null;
       st.fineScelta = null; st.fineAuto = null; st.fineVoto = null;
+      st.mal = null; st.malEsito = null; st.malPiano = null; st.avKit = {};
       st.giocatori = st.giocatori.filter(function (g) { return !g.via; });   // chi non c'è più esce dalla stanza
-      st.giocatori.forEach(function (g) { g.crediti = st.crediti; g.kit = []; g.stelle = 0; g.asteVinte = 0; });
+      st.giocatori.forEach(function (g) { g.crediti = st.crediti; g.kit = []; g.stelle = 0; g.asteVinte = 0; g.malus = 0; });
       bd();
     }
     var cb = {
@@ -1907,6 +2241,8 @@
       onPassa: function (x) { passaO("host", x); },
       onAvanti: avanti,
       onVoto: function (v) { voto("host", v, st.sessione); },
+      onMal: function (x) { malMossa("host", x); },
+      onAvantiKit: function () { avantiKit("host", st.sessione); },
       onChiudiVoti: function () { if (st.fase === "voto") t.conferma("Chiudere il voto?", "Chi non ha votato dà 3,5 ⭐ a testa.", "Chiudi", function () { if (st.fase === "voto") verificaVoti(true); }); },
       onEsci: function () { stopTo(); TM.smetti(); cb._uscito = true; fermaTutto(); rete.chiudi(); t.esci(); }
     };
@@ -1927,6 +2263,8 @@
       onPassa: function (x) { manda({ t: "passa", n: x.n }); },
       onAvanti: function () {},
       onVoto: function (v) { manda({ t: "voto", voti: v, s: S.vm && S.vm.sessione }); },
+      onMal: function (x) { manda({ t: "mal", n: x.n, a: x.a, prezzo: x.prezzo, g: x.g }); },
+      onAvantiKit: function () { manda({ t: "avanti", s: S.vm && S.vm.sessione }); },
       onEsci: function () { cb._uscito = true; fermaTutto(); if (S.rete) S.rete.chiudi(); t.esci(); }
     };
     function disegna() {
@@ -2045,14 +2383,17 @@
       steppers.push({ key: o.key, meno: meno, piu: piu, val: val });
       // una riga per kit: il nome, le carte in breve (toccando si leggono tutte), le stelle a destra
       var carte = el("div", { class: "as-kv-k" });
+      var mal = haMaledetta(o.g);
       (o.g.kit || []).forEach(function (c, i) {
         if (i) carte.appendChild(document.createTextNode(" · "));
+        if (c.maledetta) { carte.appendChild(el("span", { class: "as-mal-in" }, [ el("span", icoAttr("em", c.emoji)), document.createTextNode(c.nome) ])); return; }   // col bordo nero
         carte.appendChild(el("span", icoAttr("em", c.emoji)));
         carte.appendChild(document.createTextNode(c.nome));
       });
-      var riga = el("div", { class: "as-kv" + (fitto ? " fitta" : "") });
+      var riga = el("div", { class: "as-kv" + (fitto ? " fitta" : "") + (mal ? " maled" : "") });
+      // chi ha la carta maledetta: scritto chiaro che perde mezza stella di media
       riga.appendChild(el("div", { class: "as-kv-t", onclick: function () { riga.classList.toggle("aperta"); } }, [
-        el("div", { class: "as-kv-n", text: o.g.nome }), carte ]));
+        el("div", { class: "as-kv-n" }, [ document.createTextNode(o.g.nome), mal ? el("span", { class: "as-malus", text: "🧨 −0,5 ⭐" }) : null ]), carte ]));
       riga.appendChild(meno); riga.appendChild(val); riga.appendChild(piu);
       nodi.push(riga);
     });
@@ -2069,7 +2410,7 @@
       card.appendChild(el("div", { class: "as-rose-nome", text: g.nome + " · " + g.crediti + "💰" }));
       if (!g.kit || !g.kit.length) card.appendChild(el("div", { class: "as-rose-vuota", text: "ancora niente" }));
       else g.kit.forEach(function (c) {
-        card.appendChild(el("div", { class: "as-rose-riga" }, [
+        card.appendChild(el("div", { class: "as-rose-riga" + (c.maledetta ? " maled" : "") }, [
           el("span", icoAttr("as-rose-em", c.emoji)),
           el("span", { class: "as-rose-txt", text: c.nome }),
           cellaTier(el, c.tier, false)
@@ -2102,7 +2443,7 @@
     var box = el("div", { class: "as-kit" });
     box.appendChild(el("h3", { text: g.nome + " · " + g.crediti + " 💰 avanzati" }));
     g.kit.forEach(function (c) {
-      box.appendChild(el("div", { class: "riga" }, [
+      box.appendChild(el("div", { class: "riga" + (c.maledetta ? " maled" : "") }, [
         el("span", icoAttr("em", c.emoji)),
         el("span", { style: "flex:1", text: c.nome }),
         cellaTier(el, c.tier, rivela)
@@ -2120,6 +2461,8 @@
     var M = cb._martello;   // la stessa foto rimandata mentre batte il martello (qualcuno rientra): la tengo per dopo, il martello finisce
     if (M && Date.now() < M.fino && vm.fase === "esito" && vm.esito && vm.esito.carta && chiaveVM(vm, vm.esito.carta) === M.k) { M.vm = vm; return; }
     var ver = cb._ver = (cb._ver || 0) + 1;
+    if (vm.fase === "maledetta" && vm.mal) return salaMalVM(t, vm, cb);   // 🧨 l'asta al contrario della carta maledetta
+    if (MAL) fermaMal();
     if (vm.fase === "asta") return salaAstaVM(t, vm, cb);
     if (vm.fase === "esito" && vm.esito && vm.esito.carta && SALA && SALA.chiave === chiaveVM(vm, vm.esito.carta)) {
       var e0 = vm.esito, nessuno = e0.tipo === "accollo", m = cb._martello = { k: chiaveVM(vm, e0.carta), fino: Date.now() + 1600, vm: vm };
@@ -2130,6 +2473,10 @@
     var kVoto = vm.fase === "voto" ? "voto|" + vm.sessione + "|" + vm.giocatori.map(function (g) { return g.id; }).join(",") : null;
     if (kVoto && vm.hannoVotato.indexOf(myId) < 0 && cb._voto && cb._voto.k === kVoto && document.body.contains(cb._voto.s)) { if (cb._voto.agg) cb._voto.agg(vm); return; }
     cb._voto = null;
+    // (kit completi) le foto che arrivano quando qualcuno tocca «⏩ Avanti» cambiano solo il numero sul tasto (niente lampeggio)
+    var kKit = vm.fase === "kit" ? "kit|" + vm.sessione + "|" + vm.giocatori.map(function (g) { return g.id; }).join(",") : null;
+    if (kKit && cb._kit && cb._kit.k === kKit && document.body.contains(cb._kit.s)) { cb._kit.agg(vm); return; }
+    cb._kit = null;
     var esci = function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); };
     var s = vm.fase === "scelta" ? t.schermata({ indietro: esci })   // la scelta della carta: il tavolo prima di tutto (niente titolo)
       : t.schermata({ sotto: "Stanza " + (vm.codice || ""), icona: "🔨", titolo: titoloFaseAsta(vm, myId), indietro: esci });
@@ -2178,10 +2525,17 @@
       piedeAuto(t, s, vm, cb, "Avanti ▶", "Si va avanti da soli…");
     }
 
+    else if (vm.fase === "malEsito" && vm.malEsito) {   // 🧨 chi si è presa la carta maledetta e chi ha pagato
+      var em = vm.malEsito;
+      nodiEsitoMal(el, em, myId).forEach(function (n) { s._contenuto.appendChild(n); });
+      if (em.chiId === myId && cb._vibMal !== vm.sessione + "|" + em.n) { cb._vibMal = vm.sessione + "|" + em.n; vibra([40, 60, 40]); }   // è toccata a te: un momento che conta
+      piedeAuto(t, s, vm, cb, "Avanti ▶", "Si va avanti da soli…");
+    }
+
     else if (vm.fase === "kit") {
       if (vm.giocatori.length > 2) s.classList.add("as-kits");
       vm.giocatori.forEach(function (g) { s._contenuto.appendChild(nodoKitVm(el, g)); });
-      piedeAuto(t, s, vm, cb, "Si vota ⭐", "Tra poco si vota…");
+      cb._kit = piedeKit(t, s, vm, cb, kKit);   // il conto per tutti e «⏩ Avanti» per chi gioca
     }
 
     else if (vm.fase === "voto") {
@@ -2251,7 +2605,47 @@
     }
   }
 
+  // (online) 🧨 l'asta al contrario della carta maledetta vista da questo telefono: i tasti solo a chi è di turno
+  function salaMalVM(t, vm, cb) {
+    var M = vm.mal, myId = cb.myId, io = trova(vm.giocatori, myId);
+    salaMal(t, { chiave: "vm|" + (vm.codice || "") + "|" + vm.sessione + "|" + M.n, info: "Round " + (vm.roundIdx + 1) + " di " + vm.totRound, carta: M.carta, prezzo: M.prezzo,
+      persone: vm.giocatori.map(function (g) { return { id: g.id, nome: g.nome, offerta: (M.offerte || {})[g.id] || 0, crediti: g.crediti, via: !!g.via }; }),
+      turnoId: M.turnoId, forzato: M.forzato, giro: M.giro, resta: M.resta, durata: M.durata, io: io ? myId : "—",
+      onPaga: function () { cb.onMal({ n: M.n, a: "paga", prezzo: M.prezzo + 1 }); },
+      onPrendo: function () { cb.onMal({ n: M.n, a: "prendo", g: M.giro }); },
+      onIndietro: function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); } });
+  }
+  // (online) in fondo ai kit completi: «Si va avanti tra 12…» per tutti (il tempo lo tiene l'host) e «⏩ Avanti» a chi gioca:
+  // se lo tocca più di metà di chi c'è, si vota subito. Il mio tocco resta «✅ Avanti»; cambia solo il numero.
+  function piedeKit(t, s, vm, cb, k) {
+    var el = t.el, K = { k: k, s: s, mio: false, vm: vm }, box = el("div", { class: "as-av-kit" });
+    var conto = el("p", { class: "as-msg", text: "Tra poco si vota…" });
+    box.appendChild(conto);
+    if (trova(vm.giocatori, cb.myId)) {   // (chi guarda non ha il tasto)
+      K.b = el("button", { class: "btn btn-primario", type: "button", onclick: function () {
+        if (K.b.disabled || K.mio) return;
+        K.mio = true; vibra(10); K.agg(K.vm);
+        cb.onAvantiKit();
+      } }, [ el("span", { class: "tx", text: "⏩ Avanti" }), el("span", { class: "quanti" }) ]);
+      box.appendChild(K.b);
+    }
+    s._piede.appendChild(box);
+    if ((vm.restaAuto || 0) > 0 && t.contoAvanti) t.contoAvanti(conto, Math.max(1, Math.ceil(vm.restaAuto / 1000)), null, "asta|kit|" + (vm.codice || "") + "|" + vm.sessione);
+    K.agg = function (v) {
+      K.vm = v; if (!K.b) return;
+      var A = v.avKit || { si: [], tot: 0 }, l = A.si || [], dentro = l.indexOf(cb.myId) >= 0, mio = K.mio || dentro;
+      var n = l.length + (mio && !dentro ? 1 : 0), q = K.b.querySelector(".quanti"), tq = n + " su " + Math.max(1, A.tot || 0);
+      if (q.textContent !== tq) q.textContent = tq;
+      var tx = K.b.querySelector(".tx"), t0 = mio ? "✅ Avanti" : "⏩ Avanti";
+      if (tx.textContent !== t0) tx.textContent = t0;
+      K.b.disabled = mio;
+    };
+    K.agg(vm);
+    return K;
+  }
+
   function titoloFaseAsta(vm, myId) {
+    if (vm.fase === "malEsito") return "🧨 Carta maledetta";
     if (vm.fase === "round") return vm.roundNome || "Round";
     if (vm.fase === "scelta") return vm.sceglieId === myId ? "Scegli tu" : ("Sceglie " + vm.sceglieNome);
     if (vm.fase === "asta") return "Asta in corso";
@@ -2270,7 +2664,7 @@
     } else {   // tutte le regole si cambiano da "⚙️ Regole" (l'host); qui tutti vedono come si gioca
       var cr = (vm.giocatori && vm.giocatori[0] && vm.giocatori[0].crediti) || 15;
       info.appendChild(el("div", { class: "etichetta", text: "Si gioca così" }));
-      info.appendChild(el("p", { class: "as-msg", text: "🎁 Temi classici · " + vm.temaIcona + " " + vm.temaNome + " · 💰 " + cr + " crediti a testa" }));
+      info.appendChild(el("p", { class: "as-msg", text: "🎁 Temi classici · " + vm.temaIcona + " " + vm.temaNome + " · 💰 " + cr + " crediti a testa" + (vm.maledetta ? " · 🧨 carta maledetta" : "") }));
     }
     t.lobby({ host: cb.sonoHost, codice: vm.codice, min: 2,
       giocatori: vm.giocatori.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),

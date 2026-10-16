@@ -44,8 +44,44 @@
       "⏳ Ultimi 30 secondi: ogni pesce conta!", "⏳ Mancano 30 secondi: ancora un lancio!", "⏳ 30 secondi alla fine: tutto può cambiare!",
       "⏳ Ultimi 30 secondi: i pesci grossi sono lì!", "⏳ Mezzo minuto: forza, ancora uno!"
     ],
-    ultimi10: [ "⏳ Ultimi 10 secondi!", "⏳ 10 secondi: ultimo lancio!", "⏳ 10 secondi alla fine: tirate su!" ]
+    ultimi10: [ "⏳ Ultimi 10 secondi!", "⏳ 10 secondi: ultimo lancio!", "⏳ 10 secondi alla fine: tirate su!" ],
+    // chi passa in testa quando l'obiettivo non è «più chili» ({s} = quante specie, {c} = quanti pesci)
+    sorpassoLungo: [
+      "📏 {n} ha il pesce più lungo: {p} da {cm} cm!", "📏 Nuovo record di lunghezza: {cm} cm per {n}!", "📏 {n} passa in testa con {p} da {cm} cm!",
+      "📏 Metro alla mano: ora comanda {n} ({cm} cm)!", "📏 Che bestione! {n} va in testa con {cm} cm!"
+    ],
+    sorpassoSpecie: [
+      "🐠 {n} passa in testa: {s} specie diverse!", "🐠 Che collezione! {n} è primo con {s} specie!", "🐠 {n} aggiunge {p} e va in testa ({s} specie)!",
+      "🐠 Nuovo capolista: {n}, {s} specie diverse!", "🐠 {n} conosce tutto il laghetto: {s} specie, primo posto!"
+    ],
+    sorpassoPesci: [
+      "🔢 {n} va in testa: {c} pesci!", "🔢 {n} non si ferma più: {c} pesci, è primo!", "🔢 Sorpasso a colpi di pesci: {n} a quota {c}!",
+      "🔢 {n} è il più veloce: {c} pesci e primo posto!", "🔢 Un pesce dopo l'altro: {n} comanda con {c}!"
+    ]
   };
+  // 🎯 l'obiettivo della gara (lo sceglie l'host); a parità vince sempre chi ha più chili
+  var OBIETTIVI = {
+    kg: { ico: "⚖️", nome: "Più chili", frase: "vince chi pesca più chili", cronaca: "sorpasso" },
+    lungo: { ico: "📏", nome: "Il pesce più lungo", frase: "vince il pesce più lungo", cronaca: "sorpassoLungo" },
+    specie: { ico: "🐠", nome: "Più specie diverse", frase: "vince chi prende più specie diverse", cronaca: "sorpassoSpecie" },
+    pesci: { ico: "🔢", nome: "Più pesci", frase: "vince chi prende più pesci", cronaca: "sorpassoPesci" }
+  };
+  function ob(id) { return OBIETTIVI[id] ? id : "kg"; }
+  // il valore che conta per l'obiettivo (p: un giocatore della foto o della classifica: kg, n, lungo { cm }, sp = quante specie)
+  function valore(p, o) {
+    if (!p) return 0;
+    if (o === "lungo") return p.lungo ? p.lungo.cm || 0 : 0;
+    if (o === "specie") return p.sp || 0;
+    if (o === "pesci") return p.n || 0;
+    return p.kg || 0;
+  }
+  function testoVal(p, o) {   // «📏 64 cm», «🐠 5 specie», «🔢 7 pesci» (più chili: «3,25 kg» come sempre)
+    if (o === "lungo") return "📏 " + (p && p.lungo ? fmtN(p.lungo.cm) + " cm" : "—");
+    if (o === "specie") return "🐠 " + (p && p.sp || 0) + " specie";
+    if (o === "pesci") { var c = p && p.n || 0; return "🔢 " + fmtN(c) + (c === 1 ? " pesce" : " pesci"); }
+    return kg(p && p.kg);
+  }
+  function confronta(a, b, o) { return (a.uscito ? 1 : 0) - (b.uscito ? 1 : 0) || valore(b, o) - valore(a, o) || (b.kg || 0) - (a.kg || 0); }
   function frase(tipo, v) {
     var l = CRONACA[tipo] || [""], s = l[Math.floor(Math.random() * l.length)];
     v = v || {}; return s.replace(/\{(\w+)\}/g, function (_, k) { return v[k] != null ? v[k] : ""; });
@@ -58,11 +94,11 @@
   function nomePesce(id) { var sp = window.SGPesca && SGPesca.pesce(id); return sp ? sp.nome : "pesce"; }
   function minuti(sec) { var m = Math.round(sec / 60); return m === 1 ? "1 minuto" : m + " minuti"; }
   function chiave() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }   // ogni pesce ha la sua: mai contato due volte
-  function ordina(l) {   // chi esce apposta finisce in fondo; gli altri dal più chili al meno
-    return l.slice().sort(function (a, b) { return (a.uscito ? 1 : 0) - (b.uscito ? 1 : 0) || (b.kg || 0) - (a.kg || 0); });
+  function ordina(l, o) {   // chi esce apposta finisce in fondo; gli altri secondo l'obiettivo (a parità, chi ha più chili)
+    return l.slice().sort(function (a, b) { return confronta(a, b, ob(o)); });
   }
-  function righe(players, mioId) {   // la classifica dal vivo (chi è uscito apposta resta, in fondo, con la porta)
-    return ordina(players).map(function (p) { return { nome: p.nome + (p.uscito ? " 🚪" : ""), kg: p.kg || 0, tu: p.id === mioId }; });
+  function righe(players, mioId, o) {   // la classifica dal vivo (chi è uscito apposta resta, in fondo, con la porta)
+    return ordina(players, o).map(function (p) { return { nome: p.nome + (p.uscito ? " 🚪" : ""), kg: p.kg || 0, n: p.n || 0, sp: p.sp || 0, lungo: p.lungo || null, tu: p.id === mioId }; });
   }
 
   // =========================================================
@@ -72,10 +108,10 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var imp = t.impostazioni || {};
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
-    var H = { fase: "lobby", codice: "…", pronta: false, durata: imp.durata || 180, fineT: 0, classifica: null, premi: null, motivo: null, ultimo: null, nUlt: 0, gara: 0, timer: [], tick: null,
+    var H = { fase: "lobby", codice: "…", pronta: false, durata: imp.durata || 180, obiettivo: ob(imp.obiettivo), fineT: 0, classifica: null, premi: null, motivo: null, ultimo: null, nUlt: 0, gara: 0, timer: [], tick: null,
       coda: [],   // chi è arrivato a gara iniziata o con la saletta piena: entra appena può
       players: [nuovo("host", nomeHost, t.mioOmino(nomeHost))] };
-    function nuovo(id, nome, omino) { return { id: id, nome: nome, omino: omino, kg: 0, n: 0, best: null, visti: {}, specie: {} }; }
+    function nuovo(id, nome, omino) { return { id: id, nome: nome, omino: omino, kg: 0, n: 0, best: null, lungo: null, sp: 0, visti: {}, specie: {} }; }
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function presenti() { return H.players.filter(function (p) { return !p.via && !p.uscito; }); }
     function inGara() { return H.players.filter(function (p) { return !p.uscito; }); }   // chi è caduto per la rete conta ancora (può tornare)
@@ -92,8 +128,8 @@
     }
     function avviso(testo, chi) { H.ultimo = { s: ++H.nUlt, chi: chi || null, testo: testo, at: Date.now() }; }
 
-    // "⚙️ Regole" nella saletta: l'host cambia la durata quando vuole
-    t.onRegole = function (im) { if (H.fase !== "lobby") return; H.durata = im.durata || 180; bd(); };
+    // "⚙️ Regole" nella saletta: l'host cambia la durata e l'obiettivo quando vuole
+    t.onRegole = function (im) { if (H.fase !== "lobby") return; H.durata = im.durata || 180; H.obiettivo = ob(im.obiettivo); bd(); };
     t.onRivincita = function () { if (H.fase === "fine") nuova(); };   // la Rivincita: tutti di nuovo nella saletta
 
     var rete = SGNet.ospita(ID, {
@@ -131,20 +167,20 @@
     // la "foto" per tutti: SEMPRE con gli id; il tempo come "quanto manca" (gli orologi dei telefoni non sono uguali)
     function vm() {
       var u = H.ultimo;
-      return { fase: H.fase, codice: H.codice, pronta: H.pronta, durata: H.durata, gara: H.gara, resta: H.fase === "gioco" ? Math.max(0, H.fineT - Date.now()) : 0,
+      return { fase: H.fase, codice: H.codice, pronta: H.pronta, durata: H.durata, obiettivo: H.obiettivo, gara: H.gara, resta: H.fase === "gioco" ? Math.max(0, H.fineT - Date.now()) : 0,
         classifica: H.classifica, premi: H.fase === "fine" ? H.premi : undefined, motivo: H.motivo, coda: H.coda.map(function (c) { return c.id; }),
         guardano: H.coda.filter(function (c) { return !siede(c.id, c.nome); }).map(function (c) { return c.id; }),   // (di questi: chi non è tra chi pesca, guarda)
         ultimo: u ? { s: u.s, chi: u.chi, testo: u.testo, eta: Date.now() - u.at } : null,
-        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, kg: Math.round((p.kg || 0) * 100) / 100, n: p.n || 0, best: p.best, via: !!p.via, uscito: !!p.uscito, omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }) };
+        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, kg: Math.round((p.kg || 0) * 100) / 100, n: p.n || 0, best: p.best, lungo: p.lungo || null, sp: p.sp || 0, via: !!p.via, uscito: !!p.uscito, omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }) };
     }
     function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); disegna(t, v, cbHost); }
 
     // ----- la gara -----
     function comincia() {
       if (H.fase !== "lobby" || presenti().length < MIN) return;
-      H.players = presenti(); H.players.forEach(function (p) { p.kg = 0; p.n = 0; p.best = null; p.visti = {}; p.specie = {}; p.uscito = false; });
+      H.players = presenti(); H.players.forEach(function (p) { p.kg = 0; p.n = 0; p.best = null; p.lungo = null; p.sp = 0; p.visti = {}; p.specie = {}; p.uscito = false; });
       H.fase = "gioco"; H.gara++; H.classifica = null; H.motivo = null; H.fineT = Date.now() + H.durata * 1000 + 1500;
-      avviso(frase("via"));
+      avviso(frase("via") + " 🎯 Oggi " + OBIETTIVI[H.obiettivo].frase + "!");   // l'obiettivo della gara, detto a tutti all'inizio
       H.tick = setInterval(bd, 5000);   // ogni tanto il tempo giusto a tutti
       var tot = H.durata * 1000 + 1500;
       H.timer.push(setTimeout(function () { fine("tempo"); }, tot));
@@ -152,7 +188,8 @@
       H.timer.push(setTimeout(function () { avviso(frase("ultimi10")); bd(); }, tot - 10000));
       bd();
     }
-    function capo() { var c = null; H.players.forEach(function (p) { if ((p.kg || 0) > 0 && (!c || p.kg > c.kg)) c = p; }); return c; }
+    // chi è in testa per l'obiettivo della gara (a parità, chi ha più chili)
+    function capo() { var c = null; H.players.forEach(function (p) { if (valore(p, H.obiettivo) > 0 && (!c || confronta(p, c, H.obiettivo) < 0)) c = p; }); return c; }
     function preso(id, m) {   // un pesce preso da qualcuno (anche dall'host): true se conta
       var p = pById(id), sp = window.SGPesca && SGPesca.pesce(String(m.id || ""));
       if (!p || !sp || H.fase !== "gioco" || Date.now() > H.fineT + 1500 || p.n >= H.durata) return false;
@@ -160,11 +197,12 @@
       // l'host ricalcola il peso (stessa formula del laghetto), coi cm dentro la misura di quel pesce
       var cm = Math.max(sp.cm[0], Math.min(sp.cm[1], Math.round(+m.cm || 0))), w = SGPesca.pesoKg(sp, cm);
       var prima = capo(), nessuno = !H.players.some(function (q) { return q.n > 0; });
-      p.kg = (p.kg || 0) + w; p.n = (p.n || 0) + 1; p.specie[sp.id] = (p.specie[sp.id] || 0) + 1;
+      p.kg = (p.kg || 0) + w; p.n = (p.n || 0) + 1; p.specie[sp.id] = (p.specie[sp.id] || 0) + 1; p.sp = Object.keys(p.specie).length;
       if (!p.best || w > p.best.kg) p.best = { id: sp.id, cm: cm, kg: w };
-      var v = { n: p.nome, p: sp.nome, cm: cm, kg: kg(w) }, ora = capo();
+      if (!p.lungo || cm > p.lungo.cm) p.lungo = { id: sp.id, cm: cm };   // il pesce più lungo (non sempre è il più pesante)
+      var v = { n: p.nome, p: sp.nome, cm: cm, kg: kg(w), s: p.sp, c: p.n }, ora = capo();
       if (sp.r >= 4) avviso(frase("r4", v), id);
-      else if (ora === p && prima && prima !== p) avviso(frase("sorpasso", v), id);
+      else if (ora === p && prima && prima !== p) avviso(frase(OBIETTIVI[H.obiettivo].cronaca, v), id);   // il cronista: passa in testa per l'obiettivo della gara
       else if (nessuno) avviso(frase("primo", v), id);
       else if (sp.r >= 2) avviso(frase(sp.r >= 3 ? "r3" : "r2", v), id);
       return true;
@@ -177,7 +215,7 @@
         var a = (p.specie && p.specie.alborella) || 0; if (a >= 3 && (!alb || a > alb.a)) alb = { p: p, a: a };
       });
       if (piu) l.push({ ico: "🐋", tit: "Pesce più grosso", chi: piu.nome, cosa: nomePesce(piu.best.id) + " · " + piu.best.cm + " cm · " + kg(piu.best.kg), pesce: piu.best.id });
-      if (tanti && tanti.n >= 2) l.push({ ico: "🎣", tit: "Più pesci presi", chi: tanti.nome, cosa: tanti.n + " pesci" });
+      if (tanti && tanti.n >= 2 && H.obiettivo !== "pesci") l.push({ ico: "🎣", tit: "Più pesci presi", chi: tanti.nome, cosa: tanti.n + " pesci" });   // (con «più pesci» lo dice già il podio)
       if (alb) l.push({ ico: "👑", tit: "Re delle alborelle", chi: alb.p.nome, cosa: alb.a + " alborelle" });
       else if (tanti) { var zero = ord.filter(function (p) { return !p.n && !p.uscito; })[0]; if (zero) l.push({ ico: "🪱", tit: "Lombrico d'oro", chi: zero.nome, cosa: "nessun pesce, ma tanta pazienza" }); }
       return l.slice(0, 3);
@@ -185,11 +223,11 @@
     function fine(motivo) {
       if (H.fase !== "gioco") return;
       ferma();
-      var ord = ordina(H.players);
-      // pari merito = stesso posto; chi è uscito apposta viene dopo tutti quelli rimasti
+      var ord = ordina(H.players, H.obiettivo);
+      // secondo l'obiettivo della gara (a parità, chi ha più chili); pari merito = stesso posto; chi è uscito apposta viene dopo tutti quelli rimasti
       H.classifica = ord.map(function (p) {
-        return { id: p.id, nome: p.nome, omino: p.omino || null, uscito: !!p.uscito, kg: Math.round((p.kg || 0) * 100) / 100, n: p.n || 0, best: p.best,
-          pos: 1 + ord.filter(function (q) { return (q.uscito ? 1 : 0) < (p.uscito ? 1 : 0) || (!!q.uscito === !!p.uscito && (q.kg || 0) > (p.kg || 0)); }).length };
+        return { id: p.id, nome: p.nome, omino: p.omino || null, uscito: !!p.uscito, kg: Math.round((p.kg || 0) * 100) / 100, n: p.n || 0, best: p.best, lungo: p.lungo || null, sp: p.sp || 0,
+          pos: 1 + ord.filter(function (q) { return confronta(q, p, H.obiettivo) < 0; }).length };
       });
       H.premi = premi(ord);
       H.motivo = motivo || "tempo"; H.fase = "fine"; bd();
@@ -199,7 +237,7 @@
     // "Nuova gara": stessa stanza, stessi amici (più chi aspettava), tutti tornano nella saletta (MAI chiudere e riaprire la stanza)
     function nuova() {
       ferma(); H.fase = "lobby"; H.classifica = null; H.premi = null; H.motivo = null; H.ultimo = null;
-      H.players = presenti(); H.players.forEach(function (p) { p.kg = 0; p.n = 0; p.best = null; });
+      H.players = presenti(); H.players.forEach(function (p) { p.kg = 0; p.n = 0; p.best = null; p.lungo = null; p.sp = 0; });
       riempi(); bd();
     }
 
@@ -304,25 +342,58 @@
     if (!io) return fuori(t, guardo ? "garaS" : "gara", vm, cb);   // arrivato a gara iniziata (o non è tra chi pesca): aspetta la prossima (è nella lista dell'host)
     if (!UI) {
       if (!window.SGPesca) return errore(t, "Manca il laghetto: aggiorna l'app.");
-      UI = SGPesca.crea({ omino: t.mioOmino(io.nome), audio: audio, indietro: cb.onEsci, gara: { onPreso: cb.onPreso } });
+      UI = SGPesca.crea({ omino: t.mioOmino(io.nome), audio: audio, indietro: cb.onEsci, gara: { onPreso: function (f) {
+        segnaMio(f); cb.onPreso(f);
+        // (il laghetto riscrive in alto i miei chili subito dopo: con un altro obiettivo ci rimetto il valore giusto prima che si veda)
+        if (window.Promise) Promise.resolve().then(sistemaTesta);
+      } } });
       t.mostra(UI); UI._monta(); vista = "lago";
+      var ai = UI.querySelector(".pe-aiuto"), o0 = ob(vm.obiettivo);   // il primo aiuto dice l'obiettivo della gara
+      if (ai && o0 !== "kg") ai.textContent = "Tieni premuto per lanciare: " + OBIETTIVI[o0].frase + "!";
       TIC = setInterval(ticchetta, 200);
     }
     FINE_AT = Date.now() + (vm.resta || 0);
     statoLago(vm, cb, true);
   }
   function statoLago(vm, cb, conAvviso) {
-    var r = righe(vm.players, cb.myId), u = vm.ultimo;
+    var o = ob(vm.obiettivo), r = righe(vm.players, cb.myId, o), u = vm.ultimo;
+    if (vm.gara !== MIO.gara) MIO = { gara: vm.gara, lungo: null, specie: {}, n: 0 };   // gara nuova: i miei pesci ripartono da zero
     UI._gara.stato({ fineAt: conAvviso ? FINE_AT : 0, righe: r,
       avviso: conAvviso && u && u.chi !== cb.myId && (u.eta || 0) < 5000 ? u : null });   // un avviso vecchio (chi rientra) non si rivede
-    tuInClassifica(r);
+    tuInClassifica(r, o);
+    sistemaTesta();
   }
-  // la classifica in alto mostra 4 righe: se sei più giù, l'ultima diventa la tua (col tuo posto vero)
-  function tuInClassifica(r) {
+  // la classifica in alto mostra 4 righe: se sei più giù, l'ultima diventa la tua (col tuo posto vero).
+  // Il laghetto le scrive in chili: con un altro obiettivo ci scrivo il valore giusto («📏 64 cm», «🐠 5 specie», «🔢 7 pesci»)
+  function tuInClassifica(r, o) {
     var box = UI && UI.querySelector && UI.querySelector(".pe-classi"), i = -1;
+    if (!box) return;
     r.forEach(function (x, j) { if (x.tu) i = j; });
-    if (!box || i < 4 || box.children.length < 4) return;
-    var ult = box.children[3]; ult.className = "pe-cl tu"; ult.textContent = (i + 1) + ". Tu · " + kg(r[i].kg);
+    if (o !== "kg") [].forEach.call(box.children, function (riga, j) {
+      var x = r[j]; if (!x || j > 3) return;
+      var tx = (j + 1) + ". " + (x.tu ? "Tu" : x.nome) + " · " + testoVal(x, o);
+      if (riga.textContent !== tx) riga.textContent = tx;
+    });
+    if (i < 4 || box.children.length < 4) return;
+    var ult = box.children[3]; ult.className = "pe-cl tu"; ult.textContent = (i + 1) + ". Tu · " + testoVal(r[i], o);
+  }
+  // i miei pesci di questa gara, contati anche qui: così il numero in alto cambia subito, senza aspettare la foto dell'host
+  var MIO = { gara: null, lungo: null, specie: {}, n: 0 };
+  function segnaMio(f) {
+    if (!f) return;
+    MIO.n++; MIO.specie[f.id] = 1;
+    if (!MIO.lungo || f.cm > MIO.lungo.cm) MIO.lungo = { id: f.id, cm: f.cm };
+  }
+  // in alto (accanto al tempo) il laghetto scrive i miei chili: con un altro obiettivo ci va il mio valore per quell'obiettivo
+  function sistemaTesta() {
+    var vm = ultimoVm, cb = ultimoCb; if (!UI || !vm || !cb) return;
+    var o = ob(vm.obiettivo); if (o === "kg") return;
+    var chip = UI.querySelector(".pe-testa .pe-chip"); if (!chip) return;
+    var io = null; (vm.players || []).forEach(function (p) { if (p.id === cb.myId) io = p; });
+    var mio = { n: Math.max(io ? io.n || 0 : 0, MIO.n), sp: Math.max(io ? io.sp || 0 : 0, Object.keys(MIO.specie).length),
+      lungo: (io && io.lungo && (!MIO.lungo || io.lungo.cm >= MIO.lungo.cm)) ? io.lungo : MIO.lungo };
+    var tx = "🏆 " + testoVal(mio, o);
+    if (chip.textContent !== tx) chip.textContent = tx;
   }
   var ultimoSec = -1;
   function ticchetta() {   // gli ultimi 5 secondi: un tic a ogni secondo
@@ -344,7 +415,7 @@
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN,
       vuoti: Math.max(0, MIN - vm.players.length),   // solo i posti che mancano per cominciare
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
-      extra: [t.el("p", { class: "modulo-nota", text: "🎣 Gara di " + minuti(vm.durata) + " nel laghetto: vince chi pesca più chili. Canna e lombrichi uguali per tutti." + (n ? " (Stanza piena: " + n + (n === 1 ? " aspetta" : " aspettano") + " un posto.)" : "") })],
+      extra: [t.el("p", { class: "modulo-nota", text: "🎣 Gara di " + minuti(vm.durata) + " nel laghetto: 🎯 " + OBIETTIVI[ob(vm.obiettivo)].frase + (ob(vm.obiettivo) !== "kg" ? " (a parità, chi ha più chili)" : "") + ". Canna e lombrichi uguali per tutti." + (n ? " (Stanza piena: " + n + (n === 1 ? " aspetta" : " aspettano") + " un posto.)" : "") })],
       attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
   // chi non è (ancora) nella gara: un cartello, rifatto solo se cambia. Le parole sono quelle della saletta del core
@@ -379,12 +450,12 @@
   function aggFuori(vm, cb) {   // chi guarda: solo i testi che cambiano (niente lampeggio)
     if (!FU || !vm || !cb) return;
     FINE_AT = Date.now() + (vm.resta || 0); scriviTempo();
-    var r = righe(vm.players, cb.myId).slice(0, 8), li = FU.lista.children;
+    var o = ob(vm.obiettivo), r = righe(vm.players, cb.myId, o).slice(0, 8), li = FU.lista.children;
     while (li.length > r.length) FU.lista.removeChild(FU.lista.lastChild);
     r.forEach(function (x, i) {
       var riga = li[i];
       if (!riga) { riga = document.createElement("li"); riga.appendChild(document.createElement("span")); riga.appendChild(document.createElement("b")); riga.appendChild(document.createElement("span")); FU.lista.appendChild(riga); }
-      var c = riga.children, a = (i + 1) + "°", k = kg(x.kg);
+      var c = riga.children, a = (i + 1) + "°", k = testoVal(x, o);
       if (c[0].textContent !== a) c[0].textContent = a;
       if (c[1].textContent !== x.nome) c[1].textContent = x.nome;
       if (c[2].textContent !== k) c[2].textContent = k;
@@ -425,7 +496,10 @@
     if (vista === firma) return;   // la stessa classifica è già sullo schermo: non si rifà
     clearInterval(TIC); TIC = null; FU = null;   // (chi guardava la gara: il suo orologio si ferma)
     vista = firma; stile();
-    var s = t.schermata({ icona: "🏆", titolo: "Classifica della gara", sotto: vm.motivo === "soli" ? "Gli altri sono usciti" : null });
+    var o = ob(vm.obiettivo), OB = OBIETTIVI[o];
+    var s = t.schermata({ icona: "🏆", titolo: "Classifica della gara", sotto: (vm.motivo === "soli" ? "Gli altri sono usciti · " : "") + "🎯 " + OB.nome });
+    // il valore che conta per l'obiettivo (e, se non sono i chili, i chili sotto: a parità vincono loro)
+    function quanto(r, conPesci) { return o === "kg" ? kg(r.kg) + (conPesci && r.n ? " · " + r.n + (r.n === 1 ? " pesce" : " pesci") : "") : testoVal(r, o) + " · " + kg(r.kg); }
     var box = t.el("div", { class: "gp-fin" + (cl.length > 6 ? " tanti" : "") }), med = ["🥇", "🥈", "🥉"];
     function chi(r) { return r.id === cb.myId ? r.nome + " (tu)" : r.nome; }
     // il podio: i primi tre sui gradini (il primo al centro, con le braccia alzate)
@@ -436,14 +510,14 @@
       if (r.omino && window.SGOmino) av.innerHTML = SGOmino.svg(r.omino, { braccia: r.pos === 1 ? "su" : undefined });
       pod.appendChild(t.el("div", { class: "gp-gr p" + Math.min(3, r.pos) }, [ av,
         t.el("span", { class: "gp-nm", text: chi(r) + (r.uscito ? " 🚪" : "") }),
-        t.el("span", { class: "gp-kg", text: kg(r.kg) + (r.n ? " · " + r.n + (r.n === 1 ? " pesce" : " pesci") : "") }),
+        t.el("span", { class: "gp-kg", text: quanto(r, true) }),
         t.el("div", { class: "gp-gradino", text: med[r.pos - 1] || r.pos + "°" }) ]));
     });
     box.appendChild(pod);
     if (cl.length > 3) {
       var ol = t.el("ol", { class: "gp-resto" + (cl.length > 6 ? " due" : "") });
       cl.slice(3).forEach(function (r) {
-        ol.appendChild(t.el("li", null, [ t.el("span", { text: r.pos + "°" }), t.el("b", { text: chi(r) + (r.uscito ? " 🚪 ha lasciato" : "") }), t.el("span", { text: kg(r.kg) }) ]));
+        ol.appendChild(t.el("li", null, [ t.el("span", { text: r.pos + "°" }), t.el("b", { text: chi(r) + (r.uscito ? " 🚪 ha lasciato" : "") }), t.el("span", { text: o === "kg" ? kg(r.kg) : testoVal(r, o) }) ]));
       });
       box.appendChild(ol);
     }
@@ -491,11 +565,15 @@
       "Ognuno pesca dal suo telefono nello <b>stesso laghetto</b>, da <b>1 a 10 minuti</b> (lo sceglie l'host).",
       "Si pesca come al laghetto: tieni premuto per <b>lanciare</b>, tocca quando il galleggiante <b>va giù</b>, poi tira e molla il filo nella <b>lotta</b>.",
       "Canna e lombrichi sono <b>uguali per tutti</b> e senza limite. Ogni pesce preso vale il suo <b>peso</b>: i pesci grossi del largo valgono tantissimo!",
-      "In alto vedi il tempo e la classifica dal vivo. Allo scadere vince chi ha pescato <b>più chili</b>. Chi esce prima della fine va in fondo alla classifica."
+      "In alto vedi il tempo e la classifica dal vivo. Allo scadere vince chi è primo per l'<b>obiettivo della gara</b> (di solito <b>più chili</b>). Chi esce prima della fine va in fondo alla classifica.",
+      "<b>🎯 L'obiettivo della gara</b> lo sceglie l'host: <b>⚖️ più chili</b> (di solito), <b>📏 il pesce più lungo</b>, <b>🐠 più specie diverse</b> o <b>🔢 più pesci</b>. La classifica in alto mostra quello che conta, e <b>a parità vince chi ha più chili</b>."
     ],
+    // le regole in una riga, per la saletta: «🎯 vince il pesce più lungo · 3 minuti»
+    riassunto: function (imp) { imp = imp || {}; return "🎯 " + OBIETTIVI[ob(imp.obiettivo)].frase + " · " + minuti(imp.durata || 180); },
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
       if (dove.durata == null) dove.durata = 180;
+      dove.obiettivo = ob(dove.obiettivo);
       // le scelte con bottoni .modo-chip: così l'host le ritrova in "⚙️ Regole" nella saletta
       box.appendChild(el("div", { class: "etichetta", text: "Quanto dura la gara" }));
       var g = el("div", { class: "modo-griglia", style: "display:grid;grid-template-columns:repeat(3,1fr);gap:8px" });
@@ -506,6 +584,17 @@
         g.appendChild(b);
       });
       box.appendChild(g);
+      // 🎯 l'obiettivo: chi vince (a parità, sempre chi ha più chili)
+      box.appendChild(el("div", { class: "etichetta", text: "🎯 Obiettivo: vince chi ha" }));
+      var g2 = el("div", { class: "modo-griglia", style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" });
+      Object.keys(OBIETTIVI).forEach(function (k) {
+        var O = OBIETTIVI[k];
+        var b = el("button", { class: "modo-chip" + (dove.obiettivo === k ? " attiva" : ""), style: "padding:10px 8px", onclick: function () {
+          dove.obiettivo = k; [].forEach.call(g2.children, function (c) { c.classList.remove("attiva"); }); b.classList.add("attiva");
+        } }, [ el("span", { class: "mi", text: O.ico }), el("div", {}, [ el("div", { class: "mt", text: O.nome }) ]) ]);
+        g2.appendChild(b);
+      });
+      box.appendChild(g2);
     },
     avvia: function (t) {
       if (t.linkParams && t.linkParams.stanza) return ospite(t, t.linkParams.stanza);   // entrato da un invito
