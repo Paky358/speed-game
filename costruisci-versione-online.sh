@@ -83,6 +83,8 @@ VER=$(md5sum "$EXTRA" | cut -c1-10)
   cat js/studio.js   # lo studio del game show, condiviso dai giochi (prima dei giochi)
   echo ''
   cat js/asta-sala-arte.js js/asta-stadio-arte.js js/asta-maglie.js   # i disegni dell'Asta: la sala vista dal banditore, lo stadio del fantacalcio, le maglie
+  cat js/chidinoi-arte.js   # i disegni di «Chi di Noi?»: scene dei posti, costumi, personaggi pronti, la faccia dei giocatori
+  cat js/chidinoi-foto.js   # la foto vera di «Chi di Noi?»: selfie con la sagoma, i 10 filtri, la cifratura delle foto
   echo ''
   for f in data/*.js; do [ -e "$f" ] && { cat "$f"; echo ''; }; done
   for f in js/games/*.js; do [ -e "$f" ] && { cat "$f"; echo ''; }; done
