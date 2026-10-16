@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 214,
+    data: "16 ottobre 2026",
+    titolo: "Gioco nuovo: Il Prezzo è Giusto! 🏷️",
+    descrizione: [
+      "Quanto costa? Si indovina il prezzo di cose vere: la spesa, il caffè al bar, lo smartphone, la Vespa, una settimana al mare… Quasi 500 prodotti con i prezzi medi in Italia del 2026.",
+      "Si gioca nello studio della TV, da 2 a 8 amici online (ognuno dal suo telefono, tutti insieme, anche nella Sala della serata), sullo stesso telefono a turno e «🤖 Contro il Bot».",
+      "📺 Come in TV: si apre il sipario, compare il prodotto e avete 20 secondi per scrivere il prezzo. Vince chi ci va più vicino senza superarlo. Le offerte si vedono arrivare: puoi fare il cattivo e dire 1 € in più di un amico (il pubblico fischia 😈). Se sforate tutti, si rifà una volta.",
+      "Chi vince l'Offerta sceglie il gioco a premi (🔼🔽 Più o meno: altri in arrivo) e si gioca tutti insieme; poi 🎡 la Ruota del 100, dove girate tutti insieme («CENTO! CENTO! CENTO!»), e 🛍️ la Vetrina finale: se ci andate vicinissimo, VINCI TUTTO! Alla fine il carrello con quello che vi portate a casa.",
+      "🎯 Solo il prezzo: esce un oggetto, 20 secondi, vince chi ci va più vicino (sopra o sotto) e chi lo indovina preciso prende il bonus. L'ultimo oggetto vale doppio.",
+      "Chi ospita sceglie il formato, quanto dura (⚡ Veloce, 📺 Puntata, 🌙 Serata lunga), le offerte a vista o segrete e le categorie dei prodotti."
+    ]
+  },
+  {
     v: 213,
     data: "16 ottobre 2026",
     titolo: "Gioco nuovo: Chi di Noi? 🫵",
