@@ -269,15 +269,17 @@
           var m2 = await misura(G, "Giulia", 360, 640, ".tl-esito") || await misura(G, "Giulia", 412, 915, ".tl-esito"); rimetti(G, "Giulia");
           if (m2) no("Giulia sul risultato: " + m2);
         }
-        // «⏩ Avanti»: Paky da solo non basta (1 su 3), con Giulia sì (2 su 3)
+        // «⏩ Avanti»: Paky e Giulia non bastano (2 su 3), con tutti e 3 sì (regola del 16 ott: «Avanti» di TUTTI)
         if (vm(C).fase === "tEsito" && carte < 5) {
           if (!await W.aspetta(function () { return W.clicca(P, /Avanti/, "button") || vm(C).n !== ultimaN; }, 15000)) no("Paky non trova «⏩ Avanti»");
           await W.dorme(1500);
           if (vm(C).fase !== "tEsito" && vm(C).n === ultimaN) no("con 1 su 3 si è già andati avanti");
           if (!await W.aspetta(function () { return /Pronto · 1 su 3/.test(T(P)); }, 3000)) note.push("Paky non legge «Pronto · 1 su 3» («" + T(P).slice(-80) + "»)");
-          avantiDa("Giulia", C);
+          avantiDa("Giulia", C); await W.dorme(1200);
+          if (vm(C).n !== ultimaN && vm(C).fase !== "fine") no("con 2 su 3 si è già andati avanti");
+          avantiDa("Luca", C);
           var t2 = Date.now();
-          if (!await W.aspetta(function () { return vm(C).n !== ultimaN || vm(C).fase === "fine"; }, 3000)) no("con 2 su 3 non si va avanti");
+          if (!await W.aspetta(function () { return vm(C).n !== ultimaN || vm(C).fase === "fine"; }, 3000)) no("con 3 su 3 non si va avanti");
           ripasso[carte] = Date.now() - t2;
         } else if (carte >= 5) avantiDa("Giulia", C), avantiDa("Luca", C);
       }
@@ -288,7 +290,7 @@
     var cl = vm(C).classifica || [];
     cl.forEach(function (r) { if (r.punti !== punti[r.id]) no(r.nome + " ha " + r.punti + " punti invece di " + punti[r.id]); });
     senzaErrori();
-    return "5 carte tutti insieme; " + note.join("; ") + "; Avanti a maggioranza in " + Object.keys(ripasso).map(function (k) { return ripasso[k] + " ms"; }).join(", ") +
+    return "5 carte tutti insieme; " + note.join("; ") + "; Avanti di tutti in " + Object.keys(ripasso).map(function (k) { return ripasso[k] + " ms"; }).join(", ") +
       "; classifica " + cl.map(function (r) { return r.nome + " " + r.punti; }).join(", ") + "; 360x640 e 412x915 senza scorrere";
   } });
 
