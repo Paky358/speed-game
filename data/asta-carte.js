@@ -11,6 +11,7 @@
   nome: "Sopravvivenza Zombie",
   icona: "🧟",
   sottotitolo: "Costruisci il kit che ti salva la pelle",
+  scenari: [ { emoji: "🧟", testo: "Gli zombie sfondano la porta: chi arriva vivo a domani mattina?" }, { emoji: "🌉", testo: "Il ponte è crollato: chi attraversa la città infestata da solo?" }, { emoji: "🏚️", testo: "Un mese chiusi in cantina: chi resiste senza impazzire?" } ],
   round: [
     {
       nome: "L'Arma", icona: "🔪",

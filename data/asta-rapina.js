@@ -9,6 +9,7 @@
   nome: "Il Colpo del Secolo",
   icona: "💰",
   sottotitolo: "Metti su la squadra e il piano per la rapina perfetta",
+  scenari: [ { emoji: "🚨", testo: "Suona l'allarme: quale banda scappa col bottino?" }, { emoji: "🕵️", testo: "Il commissario indaga: chi la fa franca?" }, { emoji: "🎬", testo: "Ne fanno un film: quale colpo è il più spettacolare?" } ],
   round: [
     {
       nome: "La Mente", icona: "🧠",

@@ -9,6 +9,7 @@
   nome: "Il Giardino Perfetto",
   icona: "🌳",
   sottotitolo: "Compra pezzo per pezzo il giardino che fa invidia a tutto il quartiere",
+  scenari: [ { emoji: "🌸", testo: "Concorso del giardino più bello del paese: chi vince?" }, { emoji: "🐌", testo: "Invasione di lumache: quale giardino sopravvive?" }, { emoji: "🍖", testo: "Grigliata con trenta amici: quale giardino è perfetto?" } ],
   round: [
     {
       nome: "Il Terreno", icona: "🌱",

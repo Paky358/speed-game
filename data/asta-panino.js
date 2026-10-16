@@ -9,6 +9,7 @@
   nome: "Il Panino Perfetto",
   icona: "🍔",
   sottotitolo: "Compra gli ingredienti e monta il panino migliore",
+  scenari: [ { emoji: "🌙", testo: "Fame alle 3 di notte: quale panino ti salva?" }, { emoji: "🏟️", testo: "Panino da portare allo stadio: quale arriva intero al 90°?" }, { emoji: "👨‍🍳", testo: "Lo assaggia uno chef stellato: quale non lo fa piangere?" } ],
   round: [
     {
       nome: "Il Pane", icona: "🍞",
