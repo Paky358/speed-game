@@ -321,8 +321,13 @@
       var vecchi = W.finestra(X).__mandati.slice();
       await W.dorme(900);   // (col core vero la ripresa si salva al massimo ogni mezzo secondo)
       var R = W.__ricordo; if (!R) no("t.ricorda non ha ricevuto niente");
+      // (il broker vero manda la foto trattenuta subito dopo l'iscrizione; la rete finta lenta la farebbe arrivare dopo i 400 ms
+      // in cui l'host che riapre guarda la stanza, e lui la crederebbe chiusa: per la ricarica la rete torna calma, poi di nuovo lenta)
+      W.__caos = calma();
       P = await W.ricarica("Paky", { pa: true, prima: function (w) { w.__imp = IMP; w.__ricordaSpia = true; w.__ripresa = R; } }); fermo(P);
-      if (!await W.aspetta(function () { var v = vm(C); return v.fase === "asta" && v.asta && v.asta.n !== nA; }, 12000)) no("dopo la ricarica dell'host il lotto non riparte (fase " + vm(C).fase + ")");
+      var riap = await W.aspetta(function () { var v = vm(C); return v.fase === "asta" && v.asta && v.asta.n !== nA; }, 12000);
+      W.__caos = { min: 300, max: 800, dup: 0.3, disordine: false };
+      if (!riap) no("dopo la ricarica dell'host il lotto non riparte (fase " + vm(C).fase + ", n " + (vm(C).asta||{}).n + " prima " + nA + "; foto di " + X + ": " + JSON.stringify(((W.__fotoDi || {})[X] || []).slice(-6)) + "; host: " + JSON.stringify(((W.__fotoDi || {}).Paky || []).slice(-6)) + "; R " + (R && R.fase) + "/" + (R && R.nAsta) + "; ripresa vera " + !!(P.__t && P.__t.ripresa && !P.__t.ripresa.stato.__finta) + " «" + T(P).slice(0, 120) + "»)");
       var a2 = vm(C).asta;
       if (a2.offerta !== 1) no("il lotto ripartito non parte da 1: " + a2.offerta);
       // i messaggi vecchi (asta di prima) rimandati: niente

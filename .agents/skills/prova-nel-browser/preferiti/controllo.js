@@ -492,7 +492,7 @@
   // col dito: tocca il posto, (l'anno), «✅ Mettila qui»; doppio = due tocchi veloci sul tasto
   async function piazza(w, gap, anno, doppio) {
     var sl = await W.aspetta(function () { var s = w.document.querySelectorAll(".tl-slot"); return s.length ? s : null; }, 9000);
-    if (!sl) return "niente posti";
+    if (!sl) return "niente posti («" + T(w).replace(/\s+/g, " ").slice(0, 160) + "»" + (w.__cerr ? ", errori: " + w.__cerr.slice(-3).join(" / ") : "") + ")";
     var b = sl[Math.max(0, Math.min(gap, sl.length - 1))]; b.click(); await W.dorme(120);
     if (anno != null) { scriviAnno(w, anno); await W.dorme(80); }
     var c = await W.aspetta(function () { var x = w.document.querySelector(".tl-conferma"); return x && !x.disabled ? x : null; }, 2000);
@@ -501,7 +501,7 @@
     return "";
   }
   async function tlStanza(imp, nomi) {
-    var P = await W.apriTel("Paky", { x: 0, cp: "timeline", prima: function (w) { w.__imp = imp; } }), C = await W.apriStanza(P, "La linea del tempo");
+    var P = await W.apriTel("Paky", { x: 0, cp: "timeline", prima: function (w) { w.__imp = imp; var ce = w.console.error; w.console.error = function () { (w.__cerr = w.__cerr || []).push([].map.call(arguments, function (a) { return a && a.stack ? String(a.stack).split(String.fromCharCode(10)).slice(0, 3).join(" ") : String(a); }).join(" ")); return ce.apply(this, arguments); }; } }), C = await W.apriStanza(P, "La linea del tempo");
     for (var i = 1; i < nomi.length; i++) await W.apriTel(nomi[i], { hash: "gioco=timeline&stanza=" + C, x: 185 * i, cp: "timeline" });
     if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === nomi.length; }, 15000)) no("non entrano in " + nomi.length);
     return { P: P, C: C };

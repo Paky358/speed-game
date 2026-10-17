@@ -1923,7 +1923,7 @@
         var fatto = await regiaPasso(R);
         if (!fatto && !R.ancora) break;
       }
-    } catch (e) {} finally { R.corre = false; }
+    } catch (e) { try { console.error("Linea del tempo:", e); } catch (x) {} } finally { R.corre = false; }
   }
   // un passo della regia: true se ha fatto uno spettacolo (poi si ricontrolla la situazione più recente)
   async function regiaPasso(R) {
