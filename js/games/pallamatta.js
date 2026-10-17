@@ -674,7 +674,7 @@
       try { var cf = cfg.faccia ? cfg.faccia(g) : null; if (cf && window.SGOmino) { var im = new Image(); im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGOmino.svg(cf, { busto: true })); facce[k] = im; } } catch (e) {}
       return facce[k];
     }
-    var scena = el("div", { class: "pm-scena" + (cfg.multi ? " pm-multi" : "") }), cv = el("canvas", { class: "pm-tavolo" }), ctx = cv.getContext("2d");
+    var scena = el("div", { class: "pm-scena" + (cfg.multi ? " pm-multi" : "") + (cfg.basso ? " pm-targa" : "") }), cv = el("canvas", { class: "pm-tavolo" }), ctx = cv.getContext("2d");
     // in alto: esci, suoni, punti (o di chi è il turno), palline; sotto la barra degli arancioni col moltiplicatore
     var bEsci = el("button", { class: "pm-tasto", text: "‹", "aria-label": "Esci", onclick: function () { cfg.onEsci(); } });
     var bAudio = el("button", { class: "pm-tasto", text: suoniOn() ? "🔊" : "🔇", onclick: function () { var on = !suoniOn(); try { localStorage.setItem(CHIAVE_SUONI, on ? "1" : "0"); } catch (e) {} bAudio.textContent = on ? "🔊" : "🔇"; } });
@@ -696,7 +696,8 @@
       cw = scena.clientWidth || 360; ch = scena.clientHeight || 640; dpr = Math.min(2, window.devicePixelRatio || 1);
       cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
       var top = gioc ? gioc.offsetTop + gioc.offsetHeight + 4 : testa.offsetHeight + 6;
-      S = Math.min((cw - 8) / W, (ch - top - 6) / st.H); ox = (cw - S * W) / 2; oy = top + (ch - top - 6 - S * st.H) / 2;
+      var bs = cfg.basso || 0;   // (chi guarda soltanto: sotto lascio il posto per la targhetta del core)
+      S = Math.min((cw - 8) / W, (ch - top - 6 - bs) / st.H); ox = (cw - S * W) / 2; oy = top + (ch - top - 6 - bs - S * st.H) / 2;
       sprite = {}; sfondo = null;
     }
     window.addEventListener("resize", misura);
@@ -1267,7 +1268,8 @@
     if (guarda.length) extra.push(el("p", { class: "modulo-nota", text: "👀 Guardano: " + guarda.map(function (g) { return g.id === cb.myId ? "tu" : g.nome; }).join(", ") }));
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN_ON, vuoti: Math.max(0, MIN_ON - vm.players.length),
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
-      extra: extra, attesa: guardo ? "Questa partita la guardi: tra poco si tira!" : "Aspetta che l'host cominci!", spettatore: guardo ? "👀 Questa volta guardi" : null,
+      extra: extra, attesa: cb.guarda ? "Guardi la partita: tra poco si tira! 🔴" : guardo ? "Questa partita la guardi: tra poco si tira!" : "Aspetta che l'host cominci!",
+      spettatore: cb.guarda ? "👀 Guardi la partita" : guardo ? "👀 Questa volta guardi" : null,   // (cb.guarda: guardo soltanto, dal link)
       onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
   function ominoDi(g) { return g.omino || (window.SGOmino ? SGOmino.casuale(g.nome) : null); }
@@ -1422,7 +1424,10 @@
       }
       nuovoViola(st); H.seq++; st.fase = "mira"; bd(); avvisaTurno(); timerTurno();
     }
-    function avvisaTurno() { var g = H.st.gioc[H.st.turno]; if (H.tav && !H.pausa) H.tav.dimmi(g.id === "host" ? "🎯 Tocca a te!" : "🎯 Tocca a " + g.nome); }
+    function avvisaTurno() {
+      var g = H.st.gioc[H.st.turno]; if (H.tav && !H.pausa) H.tav.dimmi(g.id === "host" ? "🎯 Tocca a te!" : "🎯 Tocca a " + g.nome);
+      if (g && t.aCheSiamo) t.aCheSiamo("tocca a " + g.nome);   // (nella Sala: a che punto è la partita, per chi è fuori)
+    }
     function timerTurno() {   // chi non tira: dopo 35 secondi un avviso, dopo 45 la pallina parte da sola (mai per chi è uscito, mai in pausa)
       fermaTimer(); if (H.pausa) return; var seq = H.seq;
       H.tF = setTimeout(function () {
@@ -1520,10 +1525,13 @@
   function ospite(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var S = { rete: null, myId: null, nome: "", vm: null, tav: null, st: null, partita: -1, coda: null, tAtt: null, mira: { t: 0, to: null }, fineDi: null, att: null };
-    var cb = { sonoHost: false, myId: null,
+    // guardo soltanto (link con guarda=1): il tavolo come gli altri, senza tirare; in basso la targhetta del core («👀 Guardi · 😂 · ✕»)
+    var GUARDA = !!t.guarda, TARGA = GUARDA && !t.eliminazione;
+    var cb = { sonoHost: false, myId: null, guarda: GUARDA,
       onPotere: function (k) { salvaPotere(k); if (S.rete) S.rete.invia({ t: "potere", k: k }); },
       onEsci: function () {
         function via() { if (S.rete) S.rete.chiudi(); if (S.tav) S.tav.chiudi(); t.esci(); }
+        if (GUARDA) return t.conferma("Smetti di guardare?", "Torni dove eri prima.", "Esci", via);
         if (S.vm && S.vm.fase === "gioco" && S.tav) return S.tav.chiedi("Uscire dalla partita?", "Gli altri continuano senza di te.", "🏠 Esci", via);
         via();
       } };
@@ -1573,7 +1581,8 @@
     function mioTurno() { var st = S.st, g = st && st.gioc[st.turno]; return !!g && g.id === S.myId; }
     function ricevi(vm) {
       // nella Sala, se non sono tra gli scelti, guardo la partita (il tavolo come gli altri, ma senza tirare)
-      var guardo = (vm.guarda || []).some(function (g) { return g.id === S.myId; });
+      // (e chi guarda soltanto: guarda e basta, niente "join" da ripetere)
+      var guardo = GUARDA || (vm.guarda || []).some(function (g) { return g.id === S.myId; });
       if (!guardo && !vm.players.some(function (p) { return p.id === S.myId; })) {   // non sono (ancora) tra i giocatori
         if (S.tav) { S.tav.chiudi(); S.tav = null; S.st = null; } S.coda = null;
         if ((vm.attesa || []).indexOf(S.myId) < 0) {   // l'host non mi ha ancora (o non più): richiedo di entrare, con calma
@@ -1600,8 +1609,8 @@
       var gioc = vm.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino, potere: p.potere }; });
       if (S.tav) S.tav.chiudi();
       S.st = nuovoStato(vm.lv, gioc, pioli); S.st.seq = -1; S.partita = vm.partita; S.coda = null;
-      S.tav = tavolo(t, { st: S.st, multi: true, mio: function () { return S.st.fase === "mira" && mioTurno(); }, sonoIo: function (g) { return g.id === S.myId; },
-        onTiro: tira, onMira: mandaMira, onEsci: cb.onEsci, faccia: ominoDi });
+      S.tav = tavolo(t, { st: S.st, multi: true, mio: function () { return !GUARDA && S.st.fase === "mira" && mioTurno(); }, sonoIo: function (g) { return g.id === S.myId; },
+        onTiro: tira, onMira: mandaMira, onEsci: cb.onEsci, faccia: ominoDi, basso: TARGA ? 58 : 0 });   // (basso: il posto per la targhetta)
       S.tav.dimmi(nomeLivello(vm.lv) + " · un tiro a testa!");
       return true;
     }
@@ -1627,7 +1636,7 @@
       S.tav.riproduci(m.rec, function () { var v = S.coda; S.coda = null; if (v) ricevi(v); });
     }
     function tira(a) {
-      if (!S.rete) return;
+      if (!S.rete || GUARDA) return;
       S.rete.invia({ t: "tira", a: Math.round(a * 1000) / 1000, seq: S.st.seq, ts: Math.round(S.st.t * 100) / 100 });   // (ts: dov'era il secchio quando ho tirato)
       clearTimeout(S.tAtt); S.tAtt = setTimeout(function () { if (S.st && S.st.fase === "attesa" && mioTurno()) S.st.fase = "mira"; }, 4000);   // se il tiro si è perso per strada, si può ritirare
     }
@@ -1639,16 +1648,18 @@
     function fineOspite(vm) {   // la classifica: una volta sola per partita (le foto dopo non la fanno ripartire)
       if (S.fineDi === S.tav) return;
       S.fineDi = S.tav;
-      suonoFine(); var cl = vm.classifica || [], v = vittorie(vm.players);
-      var nota = t.el("p", { class: "pm-nota", text: "Se l'host fa un'altra partita, torni da solo nella saletta." });
+      if (!GUARDA) suonoFine();   // (chi guarda soltanto: niente musichetta sua)
+      var cl = vm.classifica || [], v = vittorie(vm.players);
+      var nota = t.el("p", { class: "pm-nota", text: GUARDA ? "👀 Se l'host fa un'altra partita, entri anche tu nella saletta." : "Se l'host fa un'altra partita, torni da solo nella saletta." });
       S.tav.finestra({ titolo: titoloFine(cl, S.myId), sotto: vm.feb ? "Tutti gli arancioni presi!" : (vm.players || []).some(function (p) { return !p.via && p.palline > 0; }) ? "Partita chiusa prima della fine" : "Palline finite", righe: righeFine(cl, S.myId),
-        nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null, nota, faccineFine(t)],
+        // (chi guarda soltanto ha le faccine nella targhetta del core, in basso, e una sola uscita: il suo ✕)
+        nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null, nota, TARGA ? null : faccineFine(t)],
         piede: function (bt) {   // i tasti di fine del core (Ci sto…): allora la nota non serve; se no la nota e "Esci" di sempre
           if (!(t.tastiFine && t.tastiFine(bt, { host: false, esci: cb.onEsci }))) return false;
           if (nota.parentNode) nota.parentNode.removeChild(nota);
           return true;
         },
-        tasti: [{ testo: "🏠 Esci", fn: cb.onEsci }] });
+        tasti: TARGA ? [] : [{ testo: "🏠 Esci", fn: cb.onEsci }] });
     }
   }
   function faccineFine(t) {   // online: la fila delle faccine anche sulla classifica (il mio avatar le fa sui telefoni di tutti)
@@ -1699,6 +1710,7 @@
       "@keyframes pmAvviso{0%{opacity:0;transform:translate(-50%,-8px) scale(.9)}12%{opacity:1;transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0}}",
       ".pm-sopra{position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(10,6,30,.55);opacity:0;pointer-events:none;transition:opacity .3s}",
       ".pm-sopra.su{opacity:1;pointer-events:auto}",
+      ".pm-targa .pm-sopra{padding-bottom:70px}",   // chi guarda soltanto: sotto c'è la targhetta del core
       ".pm-fine{width:100%;max-width:340px;padding:18px 16px;border-radius:22px;text-align:center;color:#fff;background:linear-gradient(180deg,#3b2a86,#22195a);box-shadow:0 12px 40px rgba(0,0,0,.5),inset 0 0 0 2px rgba(190,170,255,.35);animation:pmEntra .45s cubic-bezier(.3,1.4,.5,1)}",
       "@keyframes pmEntra{from{transform:scale(.6);opacity:0}}",
       ".pm-fine h2{margin:0 0 6px;font-size:1.4rem}",
@@ -1770,6 +1782,7 @@
     giocatoriMin: 1, giocatoriMax: 4, difficolta: 2,
     postiOnline: 4,   // online si gioca in 4 al massimo: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
     riprende: true,   // se l'host ricarica la pagina, la partita riprende (stesso tavolo, punti, palline e turno: t.ripresa)
+    ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
     // la riga «📜 Si gioca così» della saletta
     riassunto: function (imp) { var lv = imp && imp.lv; return lv == null || lv === "caso" ? "Livello a sorte" : "Livello: " + nomeLivello(+lv); },
     modi: [{ modo: "solo", icona: "🎯", nome: "Da solo", sotto: "I livelli, uno dopo l'altro", diretto: true, min: 1 },   // diretto: niente impostazioni, si va ai livelli

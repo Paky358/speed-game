@@ -199,14 +199,14 @@
 
   // ---------- 656 Pallino verde ----------
   aggiungi(656, { nome: "Amici online: pallino verde, nomi dalla memoria, badge, evento al massimo 1 al secondo, testamento", fai: async function () {
-    var P = await telAmici("Paky", ["Giulia", "Luca"], 0), G = await telAmici("Giulia", ["Paky"], 185);
+    var P = await telAmici("Paky", ["Giulia", "Luca"], 0), G;   // (Giulia si apre dopo: dal p6-f la presenza la accende il core da solo)
     var eventi = [];
     P.addEventListener("sg-amici-online", function (e) { eventi.push({ t: Date.now(), n: e.detail.n }); });
-    if (P.SGAmiciOnline.badge() !== null) no("badge prima di avvia (senza presenza) non è null");
     await avvia(P, "Paky");
     if (P.SGAmiciOnline.online().length) no("Paky vede amici online prima che ci siano: " + nomiOnline(P));
     if (P.SGAmiciOnline.badge() !== null) no("badge con nessuno online non è null");
     var t0 = Date.now();
+    G = await telAmici("Giulia", ["Paky"], 185);
     await avvia(G, "Giulia");
     if (!await W.aspetta(function () { return /Giulia:app/.test(nomiOnline(P)); }, 2000)) no("in 2 s Paky non vede Giulia online: " + nomiOnline(P));
     var ms = Date.now() - t0;
@@ -244,6 +244,7 @@
     if (!await W.aspetta(function () { return /Luca:gioco/.test(nomiOnline(P)); }, 2000)) no("Luca online non si vede: " + nomiOnline(P));
     if (!await W.aspetta(function () { return b.textContent === "🟢 2"; }, 1500)) no("badge con due: " + b.textContent);
     // Giulia chiude l'app → sparisce (testamento)
+    W.BR.mem.Giulia.fp.amici = [];   // (riaperta senza amici: il core, dal p6-f, non le riaccende la presenza)
     await W.chiudiApp("Giulia");
     if (!await W.aspetta(function () { return !/Giulia/.test(nomiOnline(P)); }, 2000)) no("Giulia chiusa resta online per Paky");
     // Luca tolto dagli amici → non si vede più
@@ -253,7 +254,7 @@
     if (!await W.aspetta(function () { return !P.SGAmiciOnline.online().length; }, 1500)) no("tolto Luca, Paky lo vede ancora: " + nomiOnline(P));
     await W.dorme(200);
     if (W.BR.schede !== letture + 1) no("con la lista cambiata le schede non si rileggono (" + (W.BR.schede - letture) + ")");
-    if (!b.classList.contains("zero")) no("badge con 0 si vede ancora: " + b.outerHTML);
+    if (!await W.aspetta(function () { return b.classList.contains("zero"); }, 1500)) no("badge con 0 si vede ancora: " + b.outerHTML);   // (l'evento al massimo 1 al secondo)
     // ricaricando: la memoria basta, niente letture
     letture = W.BR.schede;
     var P2 = await W.ricarica("Paky");

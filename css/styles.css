@@ -1929,6 +1929,12 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 .sl-inc-testo{ display:flex; flex-direction:column; min-width:0; line-height:1.25; }
 .sl-inc-testo b{ font-weight:900; overflow-wrap:anywhere; }
 .sl-inc-testo small{ font-size:.85rem; font-weight:700; opacity:.8; }
+/* (Passo 6) il riquadro a due tasti: "▶ Entra · giochi dal prossimo turno" e "👀 Guarda" sotto la riga del gioco */
+.sl-incorso.due-tasti{ flex-wrap:wrap; row-gap:6px; padding:8px; }
+.sl-incorso.due-tasti .sl-inc-testo{ flex:1 1 100%; padding-left:6px; }
+.sl-inc-tasti{ display:flex; gap:8px; flex:1 1 100%; min-width:0; }
+.sl-inc-tasti .btn{ min-height:40px; padding:6px 12px; }
+.sl-inc-tasti .sl-inc-entra{ flex:1 1 auto; min-width:0; white-space:normal; line-height:1.15; }
 .sl-conta.arriva{ max-width:5.4em; white-space:normal; text-align:center; line-height:1.15; padding:3px 8px; }
 
 /* ---- Le regole visibili agli amici (p2-e): "📜 Si gioca così: 5 carte · Storia, Cinema" in una riga sola ---- */
@@ -2202,6 +2208,13 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 .home-fitta .home-logo svg{ width:120px; height:71px; }
 .home-fitta .home-profilo{ margin-top:10px; gap:6px; }
 .home-fitta .home-profilo .home-novita{ min-height:40px; padding-top:7px; padding-bottom:7px; }
+/* con 3 righe e più in alto (core.js stringiHome), sugli schermi bassi, il logo si toglie e titolo e spazi si stringono ancora */
+@media (max-height:760px){
+  .home-fittissima .home-logo{ display:none; }
+  .home-fittissima .home-titolo{ font-size:1.9rem; }
+  .home-fittissima .home-profilo{ margin-top:4px; }
+  .schermata.home.home-fittissima .contenuto{ gap:10px; }
+}
 /* "👥 Giocato di recente" (p3-e): in home sotto la riga online (i chip scorrono di lato); a fine partita "👥 Avete giocato con: Luca ➕"
    sopra i tasti, una riga sola di 30 px. In home in una riga sola (titolo a sinistra su due righe). Tutte e due solo se ci stanno:
    la riga della fine se niente esce dallo schermo, quella della home se non manda le categorie fuori dal primo schermo */
@@ -2213,3 +2226,89 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 .ft-rec{ width:100%; min-width:0; display:flex; justify-content:center; flex:0 0 auto; }
 .ft-rec[hidden]{ display:none; }
 .ft-rec .cmp-fine{ max-width:100%; }
+/* (Passo 6) chi guarda soltanto: "👀 2" accanto al contatore della saletta (a destra, prima di 🎵) e a sinistra nella fila
+   delle faccine; la targhetta "👀 Guardi · 😂 · ✕" in basso al centro (al massimo 44 px, si toccano solo i suoi tasti) */
+.sl-guardano{ position:absolute; right:48px; top:12px; z-index:5; font-size:.74rem; font-weight:800; background:rgba(0,0,0,.42); padding:2px 9px; border-radius:10px; pointer-events:none; }
+.sl-guardano[hidden], .sl-fa-pubblico[hidden]{ display:none; }
+.sl-fa-pubblico{ flex:0 0 auto; align-self:center; padding:0 6px 0 8px; font-size:.8rem; font-weight:800; white-space:nowrap; opacity:.85; }
+.sg-guardo{ position:fixed; left:50%; bottom:calc(10px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:9996; box-sizing:border-box; height:44px; max-width:calc(100% - 24px);
+  display:flex; align-items:center; gap:4px; padding:3px 3px 3px 14px; border-radius:999px; background:rgba(12,16,44,.9); color:#fff; box-shadow:0 6px 16px rgba(0,0,0,.4);
+  pointer-events:none; animation:sgGuardoSu .3s ease-out; }
+.sg-guardo-tx{ font-weight:800; font-size:.86rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; margin-right:4px; }
+.sg-guardo button{ pointer-events:auto; flex:0 0 auto; width:38px; height:38px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.12); color:#fff; font-size:1.15rem; line-height:1; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.sg-guardo button:active{ transform:scale(.9); }
+.sg-guardo-x{ font-size:1rem !important; }
+.sg-guardo-fila{ position:fixed; left:50%; bottom:calc(62px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:9996; width:min(340px, calc(100% - 24px));
+  border-radius:999px; background:rgba(12,16,44,.92); box-shadow:0 6px 16px rgba(0,0,0,.4); animation:sgGuardoSu .2s ease-out; }
+@keyframes sgGuardoSu{ from{ opacity:0; } to{ opacity:1; } }
+@media (prefers-reduced-motion: reduce){ .sg-guardo, .sg-guardo-fila{ animation:none; } }
+/* (Passo 6) "👑 Chi vince resta": la fine di una sfida (chi resta, chi tocca adesso, la coda, "Prossima sfida tra 8…"),
+   la riga della coda nella Sala e "⏭ Salta Luca" dell'host in alto. Niente animazioni: cambiano solo le scritte */
+.fine-resta{ display:flex; align-items:center; gap:10px; width:100%; min-height:42px; margin:0; padding:4px 12px; box-sizing:border-box; border-radius:16px;
+  background:rgba(255,212,59,.1); box-shadow:inset 0 0 0 2px rgba(255,212,59,.45); text-align:left; flex:1 1 100%; }
+.fine-resta .fr-av{ flex:0 0 auto; width:34px; height:34px; border-radius:50%; overflow:hidden; background:rgba(255,255,255,.1); }
+.fine-resta .fr-av[hidden]{ display:none; }
+.fine-resta .fr-av svg{ width:100%; height:100%; display:block; }
+.fine-resta .fr-testi{ display:flex; flex-direction:column; min-width:0; flex:1 1 auto; line-height:1.2; }
+.fine-resta .fr-tit{ font-size:1.02rem; color:#ffe066; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fine-resta .fr-sotto{ display:flex; min-width:0; font-weight:800; font-size:.85rem; white-space:nowrap; }
+.fine-resta .fr-ora-tx{ min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.fine-resta .fr-conto{ flex:0 0 auto; color:#a5d8ff; }
+.fine-resta + .fine-tasti .btn{ min-height:42px; padding-top:6px; padding-bottom:6px; }
+.sl-coda{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 8px 6px 14px; border-radius:16px; background:rgba(255,212,59,.08);
+  box-shadow:inset 0 0 0 2px rgba(255,212,59,.4); font-weight:800; margin-bottom:8px; min-width:0; }
+.sl-coda .btn{ margin:0; flex:0 0 auto; }
+.sl-coda-testi{ display:flex; flex-direction:column; min-width:0; flex:1 1 auto; }
+.sl-coda-tx{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.92rem; }
+.sl-coda-conto{ font-size:.8rem; color:#a5d8ff; }
+.sl-coda-conto[hidden]{ display:none; }
+.sl-coda-rec .sl-coda-tx{ color:#ffe066; }
+.sl-resta-salta{ position:fixed; left:50%; top:calc(10px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:9997; height:40px; max-width:calc(100% - 24px);
+  padding:0 16px; border:0; border-radius:999px; background:#ffd43b; color:#1a1a2e; font-weight:900; font-size:.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  box-shadow:0 6px 16px rgba(0,0,0,.4); cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.sl-resta-salta:active{ transform:translateX(-50%) scale(.95); }
+
+/* ---- "🗳️ Scegliamo insieme" nella Sala (Passo 6, p6-e): la riga in alto della proposta e i 3 giochi accesi ---- */
+.sl-proposta{ display:flex; align-items:center; gap:10px; margin:0 0 12px; padding:10px 12px; border-radius:14px; background:rgba(255,212,59,.12); border:1px solid rgba(255,212,59,.35); }
+.sl-prop-tx{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+.sl-prop-tx b{ font-size:1rem; font-weight:900; color:#ffe066; }
+.sl-prop-tx small{ font-size:.8rem; color:var(--testo-tenue); }
+.sl-proposta .btn{ flex:0 0 auto; }
+.tessera .tess-voto{ position:absolute; top:-8px; right:10px; padding:2px 8px; border-radius:10px; background:#ffd43b; color:#1a1a2e; font-size:.85rem; line-height:1.3;
+  box-shadow:0 2px 6px rgba(0,0,0,.35); opacity:0; transform:scale(.6); transition:opacity .15s ease, transform .2s ease; pointer-events:none; }
+.tessera.proposta{ border-color:#ffd43b; box-shadow:0 0 0 2px #ffd43b, var(--ombra); }
+.tessera.proposta .tess-voto{ opacity:1; transform:none; }
+.sala-sceglie .griglia-giochi{ padding-top:8px; }
+/* (la lista dei giochi scorre: «🗳️ Si vota!» resta sempre in fondo allo schermo) */
+.sala-sceglie .piede:has(.sl-si-vota){ position:sticky; bottom:0; z-index:5; margin-left:-16px; margin-right:-16px; padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  background:linear-gradient(to top, var(--sfondo) 72%, rgba(34,48,102,0)); }
+/* (telefoni bassi: il ⚙️ della Sala con «🗳️ Scegliamo insieme» sta in uno schermo senza scorrere) */
+@media (max-height:700px){
+  .sl-foglio-corpo .sl-viva-opz{ padding:8px 12px; margin-bottom:8px; gap:4px; }
+  .sl-foglio-corpo > .modulo-nota{ margin:2px 0 0; font-size:.8rem; line-height:1.3; }
+}
+
+/* ---- gli amici online (Passo 6, p6-f) ---- */
+/* "➕ Invita gli amici 🟢 2" nella testata della Sala: stessa misura di "📤 Invita" (il pallino sta dentro il tasto) */
+.sl-invito .sl-link.con-amici{ display:flex; align-items:center; justify-content:center; gap:6px; min-width:0; white-space:nowrap; }
+.sl-link.con-amici .sl-link-tx{ min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.sl-link.con-amici .ao-badge{ flex:0 0 auto; }
+@media (max-width:380px){ .sl-invito .sl-link.con-amici{ font-size:.94rem; padding-left:10px; padding-right:10px; gap:5px; } }
+/* in home, sotto "🔗 Gioca online": "🟢 Giulia e altri 2 sono nell'app · 📨 Chiama" (una riga piccola, fino a 4 avatar) */
+.home-amici-on{ display:flex; align-items:center; gap:8px; width:100%; min-width:0; margin:-12px 0 0; min-height:38px; padding:3px 6px 3px 8px;
+  border:1px solid rgba(105,219,124,.35); border-radius:14px; background:rgba(47,158,68,.14); color:inherit; font:inherit; text-align:left; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.home-amici-on[hidden]{ display:none; }
+.home-amici-on:active{ transform:scale(.98); }
+.home-fitta .home-amici-on{ margin-top:-6px; }
+.hao-av{ flex:0 0 auto; display:flex; }
+.hao-f{ width:28px; height:28px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#2b3a6b;
+  box-shadow:0 0 0 2px #2f9e44; font-size:.8rem; font-weight:900; }
+.hao-f + .hao-f{ margin-left:-8px; }
+.hao-f svg{ width:100%; height:100%; display:block; }
+.hao-tx{ flex:1 1 auto; min-width:0; font-size:.82rem; font-weight:800; line-height:1.15; overflow:hidden; overflow-wrap:anywhere;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }   /* (due righe al massimo: a 360 px i nomi non stanno in una) */
+.hao-chiama{ flex:0 0 auto; padding:5px 10px; border-radius:999px; background:#2f9e44; color:#fff; font-size:.82rem; font-weight:900; white-space:nowrap; }
+/* "🟢 Fatti vedere online dagli amici" nella scheda Amici */
+.am-presenza{ margin:0 0 12px; }

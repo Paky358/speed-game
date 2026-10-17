@@ -731,6 +731,8 @@
       ".sc-panno{position:relative;width:100%;height:100%;border-radius:24px;background:radial-gradient(90% 70% at 50% 30%,#35b273 0%,#1e8452 55%,#135c3a 100%);box-shadow:inset 0 0 26px rgba(0,0,0,.45);transform-style:preserve-3d}",
       ".sc-terra.sc-t3d{position:absolute;left:3%;right:3%;top:9%;bottom:4%;padding:0;transform-style:preserve-3d}",
       ".schermata.sc-piena{padding:env(safe-area-inset-top) 0 0 0}",
+      // chi guarda soltanto: in basso c'è la targhetta del core (alta 44 px + 10): la si lascia libera
+      ".schermata.sc-piena.sc-con-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",
       ".sc-piena .sc-scena{border-radius:0;box-shadow:inset 0 0 50px rgba(0,0,0,.55)}",
       ".sc-piena .sc-mensola{margin:0;border-radius:0;padding-bottom:calc(8px + env(safe-area-inset-bottom))}",
       ".sc-testata{position:absolute;left:0;right:0;top:0;z-index:7;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 8px 0 54px;pointer-events:none}",
@@ -1104,9 +1106,11 @@
     m.prese = el("div", { class: "sc-prese" });
     m.mensola.appendChild(m.tocca); m.mensola.appendChild(m.manoRiga); m.mensola.appendChild(m.prese);
     box.appendChild(m.mensola);
-    // chi è in più e guarda (stanza online): sotto la mensola la fila delle faccine
+    // chi è in più e guarda (stanza online, o chi guarda il torneo a eliminazione): sotto la mensola la fila delle faccine.
+    // Chi guarda soltanto fuori dal torneo ha la targhetta del core in basso: al suo posto uno spazio vuoto
     m.fa = null;
-    if (Mi.sotto && t.faccine) { var fa = t.faccine(); if (fa) { fa.style.margin = "6px 8px 0"; box.appendChild(fa); m.fa = fa; } }
+    if (Mi.sotto && Mi.fila && t.faccine) { var fa = t.faccine(); if (fa) { fa.style.margin = "6px 8px 0"; box.appendChild(fa); m.fa = fa; } }
+    else if (Mi.sotto && !Mi.fila) { m.fa = el("div", { class: "sc-posto-targa", style: "flex:0 0 auto;height:" + Mi.sotto + "px" }); box.appendChild(m.fa); }
     var s = t.schermata({ indietro: function () { if (cb.guarda) cb.onEsci(); else chiediEsci(t, cb.onEsci); } });
     s.classList.add("sc-piena");   // stanza da bordo a bordo
     s._contenuto.appendChild(box);
@@ -1149,7 +1153,11 @@
     if (C.uscito) return;
     assicuraStile();
     if (window.SGMusica && !cb.guarda) window.SGMusica.avvia(function () { return !C.uscito && !!C._schermo && document.body.contains(C._schermo); });   // chi guarda non ha suoni
-    var el = t.el, vm = C.vm, Mi = misureScopa(cb.spettatore && t.faccine ? 50 : 0);
+    // sotto la mensola: la fila delle faccine (chi è in più nella stanza; chi guarda il torneo a eliminazione) o il posto
+    // della targhetta del core (chi guarda soltanto, fuori dal torneo: le faccine sono nel suo 😂)
+    var targa = !!(cb.guarda && !cb.spettatore && t.guarda && !t.eliminazione), fila = !!((cb.spettatore || (cb.guarda && t.guarda && !targa)) && t.faccine);
+    var el = t.el, vm = C.vm, Mi = misureScopa(fila ? 50 : (targa ? 56 : 0));
+    Mi.fila = fila;
     var chiaveRound = vm.idPartita + ":" + vm.nRound;
     var m = scMount, nuovo = !(m && m.C === C && m.k === Mi.k && document.body.contains(m.s));
     if (nuovo) {
@@ -1454,16 +1462,23 @@
       if (barre.length) setTimeout(function () { barre.forEach(function (x) { x[0].style.transform = "scaleX(" + x[1] + ")"; }); }, 40);
     }
     var nota = function (txt) { var p = el("p", { class: "modulo-nota", style: "margin:0 0 6px;text-align:center", text: txt }); s._piede.appendChild(p); return p; };
+    // chi guarda soltanto (fuori dal torneo a eliminazione) ha la targhetta del core in basso: faccine e uscita sono lì
+    var targa = !!(cb.guarda && !cb.spettatore && t.guarda && !t.eliminazione);
+    if (targa) s._piede.style.paddingBottom = "calc(58px + env(safe-area-inset-bottom))";
     // online: la fila delle faccine (il mio avatar le fa sui telefoni di tutti); null se non serve
-    var fa = !cb.locale && t.faccine ? t.faccine() : null;
+    var fa = !cb.locale && !targa && t.faccine ? t.faccine() : null;
     if (fa) { fa.style.margin = "0 0 8px"; s._piede.appendChild(fa); }
     // la prossima smazzata parte da sola: l'host vede il conto sul tasto, gli altri "Si va avanti tra 12…"
     var kConto = "smazzata|" + vm.idPartita + ":" + vm.nRound;
     if (cb.guarda) {   // chi guarda: niente tasti di gioco, solo cosa succede
-      var pg = nota(!fine ? "In attesa della prossima smazzata…" : cb.spettatore ? "In attesa dell'host per un'altra partita…"
-        : (pari ? "Pareggio: si rigioca!" : "Tra poco si torna al tabellone…"));   // (spettatore: stanza online; se no torneo)
-      if (fine && cb.spettatore) s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
-      if (!fine && !vm.bot && t.contoAvanti) t.contoAvanti(pg, 12, null, kConto);   // (la partita col Bot va avanti quando tocca chi gioca)
+      // a fine partita i tasti del core, se ne ha per chi guarda (es. "Chi vince resta"; chi è in più nella stanza, solo
+      // nella Sala con "Chi gioca?": «🏠 Torna in Sala»)
+      if (!(fine && !cb.locale && (t.guarda || (cb.spettatore && t.scelti)) && t.tastiFine && t.tastiFine(s._piede, { host: false, esci: cb.onEsci }))) {
+        var pg = nota(!fine ? "In attesa della prossima smazzata…" : cb.spettatore ? "In attesa dell'host per un'altra partita…"
+          : !t.eliminazione ? "👀 Aspettiamo la prossima partita…" : (pari ? "Pareggio: si rigioca!" : "Tra poco si torna al tabellone…"));   // (spettatore: stanza online)
+        if (fine && cb.spettatore) s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+        if (!fine && !vm.bot && t.contoAvanti) t.contoAvanti(pg, 12, null, kConto);   // (la partita col Bot va avanti quando tocca chi gioca)
+      }
     } else if (fine) {
       // online: i tasti di fine uguali per tutti, se li disegna il core (se no quelli di sempre)
       if (!(!cb.locale && t.tastiFine && t.tastiFine(s._piede, { host: !!cb.sonoHost, nuova: cb.sonoHost ? cb.onSaletta : null, esci: cb.onEsci }))) {
@@ -1884,8 +1899,10 @@
     assicuraStile();
     // chi guarda non ha suoni; se il core ci porta via (la Sala passa a un amico) la musica si ferma da sola
     if (window.SGMusica && !C._guarda) window.SGMusica.avvia(function () { return !C.uscito && !!S3.m && S3.m.C === C && document.body.contains(S3.m.box); });
-    var wH = larghezza(3, 10, 104), M = misureStanza4("scopa3", wH, 1);
-    var key = [vm.io, vm.guarda, M.scW, M.scH, M.wT, wH, JSON.stringify(vm.nomi), JSON.stringify(vm.avatari || null)].join("|");
+    // chi guarda soltanto (fuori dal torneo): in basso la targhetta del core, la schermata le lascia il posto (misure a parte)
+    var tg = !!(C._guarda && t.guarda && !t.eliminazione);
+    var wH = larghezza(3, 10, 104), M = misureStanza4(tg ? "scopa3g" : "scopa3", wH, 1);
+    var key = [vm.io, vm.guarda, tg, M.scW, M.scH, M.wT, wH, JSON.stringify(vm.nomi), JSON.stringify(vm.avatari || null)].join("|");
     if (!(S3.m && S3.m.C === C && S3.m.key === key && document.body.contains(S3.m.box))) {
       if (!monta3(t, C, M, wH, key, vm)) return;   // (rifatta della misura giusta: ha già disegnato tutto)
     }
@@ -1919,6 +1936,7 @@
     else {
       var s = t.schermata({ indietro: function () { if (C._guarda) cb.onEsci(); else chiediEsci(t, cb.onEsci); } });
       s.classList.add("sc-piena");   // stanza da bordo a bordo
+      if (C._guarda && t.guarda && !t.eliminazione) s.classList.add("sc-con-targa");   // (il posto della targhetta di chi guarda)
       s._contenuto.appendChild(box); t.mostra(s);
       cont = s._contenuto;
     }
@@ -2106,13 +2124,19 @@
       if (barre.length) setTimeout(function () { barre.forEach(function (x) { x[0].style.transform = "scaleX(" + x[1] + ")"; }); }, 40);
     }
     var nota = function (txt) { var q = el("p", { class: "modulo-nota", style: "margin:0 0 6px;text-align:center", text: txt }); s._piede.appendChild(q); return q; };
-    var fa = !cb.locale && t.faccine ? t.faccine() : null;   // online: la fila delle faccine (il mio avatar le fa sui telefoni di tutti)
+    // chi guarda soltanto (fuori dal torneo) ha la targhetta del core in basso: faccine e uscita sono lì
+    var targa = !!(vm.guarda && t.guarda && !t.eliminazione);
+    if (targa) s._piede.style.paddingBottom = "calc(58px + env(safe-area-inset-bottom))";
+    var fa = !cb.locale && !targa && t.faccine ? t.faccine() : null;   // online: la fila delle faccine (il mio avatar le fa sui telefoni di tutti)
     if (fa) { fa.style.margin = "0 0 8px"; s._piede.appendChild(fa); }
     var kConto = "smazzata3|" + vm.pid + ":" + vm.nMano;
     if (vm.guarda) {
-      var pg = nota(!fine ? "In attesa della prossima smazzata…" : "In attesa dell'host per un'altra partita…");
-      if (!fine && t.contoAvanti) t.contoAvanti(pg, 12, null, kConto);
-      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+      // a fine partita i tasti del core, se ne ha per chi guarda (chi è in più nella stanza: solo nella Sala con "Chi gioca?")
+      if (!(fine && !cb.locale && (t.guarda || t.scelti) && t.tastiFine && t.tastiFine(s._piede, { host: false, esci: cb.onEsci }))) {
+        var pg = nota(!fine ? "In attesa della prossima smazzata…" : (t.guarda ? "👀 Aspettiamo la prossima partita…" : "In attesa dell'host per un'altra partita…"));
+        if (!fine && t.contoAvanti) t.contoAvanti(pg, 12, null, kConto);
+        if (!targa) s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+      }
     } else if (fine) {
       // online: i tasti di fine uguali per tutti, se li disegna il core (se no quelli di sempre)
       if (!(!cb.locale && t.tastiFine && t.tastiFine(s._piede, { host: !!cb.sonoHost, nuova: cb.sonoHost ? cb.onSaletta : null, esci: cb.onEsci }))) {
@@ -2608,6 +2632,7 @@
     inTre: true,   // si gioca anche in tre, ognuno per sé (impostazioni.inTre; nella Sala il core la offre a chi è in tre)
     postiOnline: 2,   // online si gioca in due: gli altri guardano
     riprende: true,   // se l'host ricarica la pagina, la smazzata continua dalla stessa mano (t.ripresa)
+    ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il Bot" },
       { modo: "bot3", icona: "🃏", nome: "In tre contro due Bot", sotto: "Ognuno per sé: tu e due Bot" }],
     regole: [
@@ -3010,39 +3035,46 @@
     return { lascia: function () { C.esci(); Cg.esci(); } };   // (si passa al tavolo a tre: la stanza resta aperta)
   }
 
-  // chi guarda una partita del torneo a eliminazione: la vede in diretta alle spalle di un giocatore, senza toccare.
-  // (Niente suoni né musica: farebbero rumore e vibrare il telefono.)
+  // chi guarda soltanto (torneo a eliminazione, duello della Sala, "👀 Guarda"): la vede in diretta alle spalle di un
+  // giocatore, senza toccare. Anche la Scopa in tre (la foto di chi guarda, senza carte in mano di nessuno).
+  // (Niente suoni né musica: farebbero rumore e vibrare il telefono. Le faccine passano dal core: le mosse il core le butta)
   function guardaScopa(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var rete = null, scritta = null;
-    var C = creaClient(t, {
-      guarda: true, sonoHost: false,
-      onMossa: function () {}, onAvanti: function () {}, onNuova: function () {},
-      onEsci: function () { esci(); },
-      // 💬 chi guarda manda solo faccine (col suo nome); si vede subito qui, poi l'host la manda a tutti
-      onChiac: function (c) {
-        var X = window.SGChiacchiere; if (!rete || !X.valido("scopa", c, true)) return;
-        var n = X.nomeDi(t.nomeProfilo && t.nomeProfilo());
-        chiacScopa(C, "g", c, n); rete.invia({ t: "chiac", c: c, n: n });
-      }
-    });
-    function esci() { C.esci(); if (rete) rete.chiudi(); t.esci(); }
+    var rete = null, scritta = null, fuori = false, C3 = null;
+    function niente() {}
+    var C = creaClient(t, { guarda: true, sonoHost: false, onMossa: niente, onAvanti: niente, onNuova: niente, onEsci: function () { esci(); } });
+    function esci() { if (fuori) return; fuori = true; C.esci(); if (C3) C3.esci(); if (rete) rete.chiudi(); t.esci(); }
+    function lascia1() { if (C._pend) { clearTimeout(C._pend); C._pend = null; } C.vm = null; }   // (si passa al tavolo a tre: quello a due non disegna più)
     function attesa(txt) {
       if (scritta === txt) return; scritta = txt;
       var s = t.schermata({ indietro: esci });
       s._contenuto.appendChild(t.el("p", { class: "modulo-nota guarda-attesa", text: txt }));
+      if (t.eliminazione && t.faccine) { var fa = t.faccine(); if (fa) s._piede.appendChild(fa); }   // (fuori dal torneo le faccine sono nella targhetta)
       t.mostra(s);
+    }
+    // la Scopa in tre: il tavolo a tre, con la foto di chi guarda
+    function tre(m) {
+      if (m.t === "vm" && m.vm && m.guarda) {
+        if (!C3) { lascia1(); S3.m = null; S3.posti = {}; S3.prevMano = 0; S3.prevTav = {}; C3 = creaClient3(t, { guarda: true, sonoHost: false, onMossa: niente, onAvanti: niente, onNuova: niente, onEsci: esci }); }
+        scritta = null; C3.setVm(m.vm);
+      } else if (m.t === "lobby") { if (C3 && C3.vm) C3.azzera(); attesa("👀 La partita sta per cominciare…"); }
     }
     attesa("👀 Mi collego alla partita…");
     rete = SGNet.entra(codice, {
       onMsg: function (m) {
-        if (!m || C.uscito) return;
-        if (m.t === "chiac") { if (!rete || m.id !== rete.mioId) chiacScopa(C, m.k, m.c, m.n); return; }   // 💬 dei due che giocano (o di chi guarda)
+        if (!m || fuori || m.to) return;   // (m.to: la foto di un giocatore, con le sue carte: non è per chi guarda)
+        if (m.t === "chiac") {   // 💬 di chi gioca (o di chi guarda)
+          if (rete && m.id === rete.mioId) return;
+          if (C3 && C3.vm) chiac3(C3, m.k, m.c, m.n); else chiacScopa(C, m.k, m.c, m.n);
+          return;
+        }
+        if (m.tre) return tre(m);
+        if (C3) { C3.esci(); C3.azzera(); C3 = null; }   // (si torna a due)
         if (m.t === "vm" && m.vm) { scritta = null; C.setVm(m.vm); }
         else if (m.t === "lobby") { C.vm = null; attesa("👀 La partita sta per cominciare…"); }
       },
-      onChiuso: function () { if (!C.uscito) esci(); },   // partita finita e chiusa: si torna al tabellone
-      onErrore: function () { if (!C.uscito && !C.vm) erroreScopa(t, "Problema di collegamento. Riprova."); }
+      onChiuso: function () { if (!fuori) esci(); },   // partita finita e chiusa: si torna al tabellone
+      onErrore: function () { if (!fuori && !C.vm && !(C3 && C3.vm)) erroreScopa(t, "Problema di collegamento. Riprova."); }
     });
   }
 

@@ -628,7 +628,7 @@
       chiave: function () { return chiaveHost && chiaveHost.bid === H.bid && H.fase === "gioco" && H.capo.indexOf(IO) >= 0 ? chiaveHost.col : null; },
       manda: function (m) { azione(IO, m); },
       onEsci: function (gia) {   // gia = l'ha già confermato il tasto ‹ dello studio
-        if (H.fase === "gioco" && !gia && !window.confirm(prova ? "Uscire dalla prova?" : "Chiudere la partita per tutti?")) return;   // un tocco sbagliato non chiude il gioco a tutti
+        if (H.fase === "gioco" && !gia) return t.conferma(prova ? "Uscire dalla prova?" : "Chiudere la partita per tutti?", prova ? null : "La partita finisce anche per gli amici.", prova ? "Esci" : "Chiudi", function () { cbHost.onEsci(true); });   // un tocco sbagliato non chiude il gioco a tutti
         clearTimeout(tBot); clearTimeout(tAttesa); clearTimeout(tCless); clearTimeout(tSosp); clearTimeout(tAttesi);
         ceduto = true;   // da qui niente più foto né schermate
         rete.chiudi(); t.esci();
@@ -651,7 +651,7 @@
       chiave: function () { return S.chiave && S.vm && S.vm.fase === "gioco" && S.chiave.bid === S.vm.bid ? S.chiave.col : null; },
       manda: function (m) { if (S.rete) S.rete.invia(m); },
       onEsci: function (gia) {
-        if (S.vm && S.vm.fase === "gioco" && !gia && !window.confirm("Uscire dalla partita?")) return;
+        if (S.vm && S.vm.fase === "gioco" && !gia) return t.conferma("Uscire dalla partita?", function () { cb.onEsci(true); });
         if (S.rete) S.rete.chiudi(); t.esci();
       } };
     if (t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
@@ -948,6 +948,7 @@
       posti: function (S) { return postiCapi(S, ui.nsq); }, dopoLayout: function (S) { posizionaBanchi(ui, S); adattaScritte(ui); } });
     var S = ui.S;
     S.vista.classList.add("or-studio");
+    if (t.guarda && !t.eliminazione) S.vista.classList.add("st-con-targa");   // chi guarda soltanto: il posto della targhetta del core in basso
     for (var k = 0; k < vm.nsq; k++) ST.testoLeggio(S, k, SQ[k].nome.toUpperCase());
     // il maxischermo: squadre con le faccine, indizio, tabellone, chat
     var pannelli = el("div", { class: "or-pannelli" });
@@ -1176,12 +1177,14 @@
     }
     return false;
   }
+  // chi guarda soltanto (link con guarda=1): in basso la targhetta del core "👀 Guardi · 😂 · ✕": faccine e uscita le dà lei
+  function conTarga(t) { return !!(t && t.guarda && !t.eliminazione); }
   function disegnaSotto(ui, vm, cb, r) {
     var el = ui.el, box = ui.sotto;
     while (box.firstChild) box.removeChild(box.firstChild);
     function stato(tx) { var d = el("div", { class: "or-stato", text: tx }); box.appendChild(d); return d; }
     // la fila delle faccine (online), dove si aspetta: il turno degli altri, la squadra fuori, la fine
-    function faccine() { var f = ui.t.faccine ? ui.t.faccine() : null; if (f) { f.classList.add("or-faccine"); box.appendChild(f); } }
+    function faccine() { if (conTarga(ui.t)) return; var f = ui.t.faccine ? ui.t.faccine() : null; if (f) { f.classList.add("or-faccine"); box.appendChild(f); } }
     if (vm.fase === "fine") {
       var vinti = vm.players.filter(function (p) { return p.team === vm.vince; }).map(function (p) { return p.nome; }).join(", ");
       if (r.prossimo) stato("Sei dentro! Giochi dalla prossima partita, appena l'host la fa partire.");
@@ -1193,9 +1196,10 @@
       box.appendChild(riga);
       // i tasti di fine comuni (all'host del momento, anche se è l'amico che ha preso il posto dell'host, e a chi ha giocato):
       // se li disegna il core nella riga, niente tasti nostri. In prova (da solo) restano i nostri
-      var tf = ui.t.tastiFine && !(ui.t.impostazioni && ui.t.impostazioni.modo === "prova") && (cb.sonoHost || r.team >= 0)
+      var tf = ui.t.tastiFine && !(ui.t.impostazioni && ui.t.impostazioni.modo === "prova") && (cb.sonoHost || r.team >= 0 || conTarga(ui.t))
         ? (cb.sonoHost ? { host: true, nuova: cb.onNuova, esci: function () { cb.onEsci(); } } : { host: false, esci: function () { cb.onEsci(); } }) : null;
       if (tf && ui.t.tastiFine(riga, tf)) return;
+      if (conTarga(ui.t)) { stato("👀 Hai guardato: se l'host fa un'altra partita, entri anche tu."); return; }   // (si esce dalla targhetta)
       if (cb.sonoHost) riga.appendChild(el("button", { class: "or-btn", text: "↻ Nuova partita", onclick: cb.onNuova }));
       riga.appendChild(el("button", { class: "or-btn chiaro", text: "🏠 Esci", onclick: function () { cb.onEsci(); } }));
       if (!cb.sonoHost && !r.prossimo) stato(r.team < 0 && (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta hai guardato." : "Se l'host fa un'altra partita, tornate da soli nella saletta.");
@@ -1205,7 +1209,7 @@
     var servizio = el("div", { class: "or-riga" });
     if (r.capoVia && r.altri) servizio.appendChild(el("button", { class: "or-btn", text: "👑 Faccio io il capo", onclick: function () { cb.manda({ t: "capo" }); } }));
     if (cb.sonoHost && puoChiudere(vm)) servizio.appendChild(el("button", { class: "or-btn chiaro", text: "🏁 Chiudi la partita", onclick: function () {
-      if (window.confirm("Chiudere la partita? Vince la squadra che ha meno parole da trovare.")) cb.manda({ t: "chiudi" });
+      ui.t.conferma("Chiudere la partita?", "Vince la squadra che ha meno parole da trovare.", "Chiudi", function () { cb.manda({ t: "chiudi" }); });
     } }));
     function fineServizio() { if (servizio.firstChild) box.appendChild(servizio); }
     if (r.team >= 0 && vm.fuori.indexOf(r.team) >= 0) { stato("La vostra squadra è fuori: guardate come va a finire."); faccine(); return fineServizio(); }
@@ -1361,6 +1365,7 @@
       ".or-sch{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;color:#1f1f1f}",
       ".or-sch .or-pannelli{flex:none}.or-sch .or-ind{min-height:40px}",
       ".or-studio .st-barra{gap:6px;padding:10px 10px calc(10px + env(safe-area-inset-bottom))}",
+      ".or-studio.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}",   // chi guarda: il posto della targhetta
       ".or-studio .or-btn{background:#fff;color:#1f1f1f}.or-studio .or-btn.chiaro{background:rgba(255,255,255,.18);color:#fff}",
       ".or-studio .or-stato{color:#e6e9ff}",
       ".or-studio .or-num{background:rgba(255,255,255,.18);color:#fff}.or-studio .or-num.on{background:#fff;color:#1f1f1f}",
@@ -1411,6 +1416,7 @@
     descrizione: "Come Codenames: il capo dà un indizio di una parola, la squadra trova le sue parole sul tabellone. Occhio alla parola nera! A 2 o 3 squadre, ognuno dal suo telefono.",
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 4–12 giocatori",
     postiOnline: MAX,   // posti online (12)
+    ritardatari: "turno",   // chi arriva a partita cominciata entra subito nella squadra più piccola e gioca dal prossimo turno
     // "Prova da solo" la vede solo il proprietario (account IL PAPPONE): per vedere com'è il gioco anche senza amici
     modi: [ { modo: "prova", icona: "🧪", nome: "Prova da solo", sotto: "Solo per te: tu e un Bot contro due Bot", soloPer: "IL PAPPONE" } ], soloOnline: true,
     // se all'host si ricarica la pagina la partita riprende da lui; se sparisce del tutto, un amico la porta avanti (il core)

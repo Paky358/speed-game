@@ -292,6 +292,8 @@
       ".schermata.nav-piena>.contenuto{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}",
       ".schermata.nav-piena>.piede{margin-top:8px}",
       ".schermata.nav-piena>.piede:empty{display:none}",
+      // chi guarda: in basso c'è la targhetta del core (alta 44 px + 10): la si lascia libera
+      ".schermata.nav-piena.nav-targa{padding-bottom:calc(62px + env(safe-area-inset-bottom))}",
       ".nav-scena{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}",
       ".nav-stato{width:100%;box-sizing:border-box;padding:2px 46px;text-align:center;font-weight:800;font-size:1rem;line-height:1.25;min-height:1.3em}",
       ".nav-rete{font-size:.74rem;color:#ffd43b;text-align:center;min-height:0}",
@@ -433,6 +435,7 @@
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 2, etichettaGiocatori: "👥 1–2 giocatori",   // (sullo stesso telefono: contro il Bot; online in due)
     postiOnline: 2,   // online si gioca in due: gli altri guardano
     riprende: true,   // se l'host ricarica la pagina, la battaglia riprende con le stesse navi e gli stessi colpi (t.ripresa)
+    ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il Bot", sotto: "Giochi da solo contro il Bot" }],
     regole: [
       "Ognuno ha una griglia <b>10×10</b> e una <b>flotta</b>: Portaerei (5), Corazzata (4), Incrociatore (3), Sommergibile (3), Cacciatorpediniere (2).",
@@ -975,8 +978,8 @@
       else tasti.push(el("button", { class: "btn btn-primario", text: "👥 Torna alla saletta", onclick: allaSaletta }));
       tasti.push(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: chiudi }));
       var chi = L.nomeAvv || "l'avversario";
-      // (senza avversario resta "👥 Torna alla saletta" del gioco)
-      var comuni = L.avvId && t.tastiFine ? function (piede) { return t.tastiFine(piede, { host: true, nuova: allaRivincita, esci: chiudi }); } : null;
+      // (anche senza avversario: la "Rivincita" del core torna nella saletta col posto libero; con "Chi vince resta" decide il core)
+      var comuni = t.tastiFine ? function (piede) { return t.tastiFine(piede, { host: true, nuova: allaRivincita, esci: chiudi }); } : null;
       ui.fine({ key: P.g + (L.avvId ? "" : "-via"), vinto: vinto, nomeAvv: chi, suAvv: v.campi[1], naviAvv: P.tavolino ? null : v.svela[1], statTxt: testoStat(P.stat[0]),
         sotto: P.tavolino ? P.tavolino + " è uscito dalla partita: vinci a tavolino." : (vinto ? "Hai affondato tutta la flotta di " + chi + "." : chi + " ha affondato la tua flotta.") + (L.avvId ? "" : " (" + chi + " è uscito)"),
         tasti: tasti, comuni: comuni, fa: fa });
@@ -1167,23 +1170,27 @@
     }
   }
 
-  // chi guarda (torneo a eliminazione, o un terzo telefono): i due campi coi colpi, senza mai vedere dove sono le navi
-  // (si svelano solo a partita finita). Niente suoni: farebbero vibrare il telefono.
-  // onChiac (chi guarda il torneo, senza la fila delle faccine della stanza): il tasto 💬 con le faccine
-  function Spettatore(t, esci, testoLobby, onChiac) {
+  // chi guarda (torneo a eliminazione, duello della Sala, "👀 Guarda", o un terzo telefono): i due campi coi colpi, senza
+  // mai vedere dove sono le navi (si svelano solo a partita finita). Niente suoni: farebbero vibrare il telefono.
+  // Le faccine sono quelle del core (t.faccine()); chi guarda soltanto fuori dal torneo ha la targhetta del core in basso
+  // "👀 Guardi · 😂 · ✕" (faccine e uscita): lì niente fila, e sotto si lascia il suo posto
+  function Spettatore(t, esci, testoLobby) {
     var el = t.el, scritta = null, mont = null, spento = false, ultimo = null;
+    var targa = !!(t.guarda && !t.eliminazione);
+    function fila() { return t.faccine && !targa ? t.faccine() : null; }
     function attesa(txt) {
       if (spento || scritta === txt) return; scritta = txt; mont = null;
       var s = t.schermata({ indietro: esci });
       s._contenuto.appendChild(el("p", { class: "modulo-nota guarda-attesa", text: txt }));
-      var fa = t.faccine ? t.faccine() : null;   // (stanza online: intanto le faccine)
+      var fa = fila();   // (stanza online: intanto le faccine)
       if (fa) s._piede.appendChild(fa);
       t.mostra(s);
     }
     function costruisci() {
       scritta = null;
       var s = t.schermata({ indietro: esci }); s.classList.add("nav-piena");
-      mont = { s: s, riga: el("div", { class: "guarda-riga" }), tit: el("div", { class: "nav-stato" }), lati: [] };
+      if (targa) s.classList.add("nav-targa");
+      mont = { s: s, riga: el("div", { class: "guarda-riga" }), tit: el("div", { class: "nav-stato" }), lati: [], fineK: null, tf: false };
       var due = el("div", { class: "nav-guarda" });
       for (var k = 0; k < 2; k++) {
         var lato = { sub: el("div", { class: "nav-sub" }), gr: Griglia(el, "nav-g", null) };
@@ -1191,14 +1198,19 @@
         mont.lati.push(lato); due.appendChild(lato.nodo);
       }
       mont.nota = el("p", { class: "modulo-nota", style: "text-align:center" });
-      // in una stanza online (non nel torneo): la fila delle faccine, il mio avatar le fa sui telefoni di tutti
-      var fa = t.faccine ? t.faccine() : null;
+      // la fila delle faccine: il mio avatar (o il mio nome, se guardo soltanto) le fa sui telefoni di tutti
+      var fa = fila();
       if (fa) fa.style.cssText += ";width:100%;max-width:380px;box-sizing:border-box";
-      // (nel torneo la fila non c'è: il tasto 💬 con le faccine, se chi gioca le ha accese)
-      mont.chiac = !fa && onChiac && CH() ? CH().tasto({ gioco: "navale", soloFaccine: true, onScegli: onChiac }) : null;
-      if (mont.chiac) mont.chiac.hidden = true;
-      s._contenuto.appendChild(el("div", { class: "nav-scena" }, [mont.riga, mont.tit, due, mont.nota, fa, mont.chiac].filter(Boolean)));
+      s._contenuto.appendChild(el("div", { class: "nav-scena" }, [mont.riga, mont.tit, due, mont.nota, fa].filter(Boolean)));
       t.mostra(s);
+    }
+    // a partita finita i tasti di fine del core, se ne ha per chi guarda (es. "Chi vince resta"; chi è in più nella
+    // stanza, solo nella Sala con "Chi gioca?"). Una volta per partita
+    function fineCore(vm) {
+      var k = vm.fase === "fine" ? String(vm.g) : null;
+      if (mont.fineK === k) return;
+      mont.fineK = k; mont.tf = false; mont.s._piede.innerHTML = "";
+      if (k != null && t.tastiFine && (t.guarda || t.scelti)) mont.tf = !!t.tastiFine(mont.s._piede, { host: false, esci: esci });
     }
     // 💬 di chi gioca: sopra il suo campo, col nome; di chi guarda: in basso a sinistra
     function chiac(k, c, nome) {
@@ -1215,9 +1227,10 @@
       if (vm.fase === "piazza") return attesa("👀 " + n[0] + " e " + n[1] + " stanno sistemando le navi… ⚓");
       if (!mont || !document.body.contains(mont.s)) costruisci();
       mont.riga.textContent = "👀 " + n[0] + " 🆚 " + n[1];
-      if (mont.chiac) { var on = vm.ch === 1 && vm.fase === "battaglia"; if (mont.chiac.hidden === on) mont.chiac.hidden = !on; }
+      fineCore(vm);
       mont.tit.textContent = vm.fase === "fine" ? "🏆 Vince " + n[vm.vince] + "!" + (vm.tavolino ? " (" + vm.tavolino + " è uscito)" : "") : "🎯 Spara " + n[vm.tocca] + "…";
-      mont.nota.textContent = vm.fase === "fine" ? (testoLobby ? "" : "Tra poco si torna al tabellone…") : "";
+      var nt = vm.fase !== "fine" || testoLobby || mont.tf ? "" : (t.eliminazione ? "Tra poco si torna al tabellone…" : "👀 Aspettiamo la prossima partita…");
+      if (mont.nota.textContent !== nt) mont.nota.textContent = nt;
       [0, 1].forEach(function (k) {
         var lato = mont.lati[k], campo = vm.campi[k], sc = scafi(vm.svela ? dallaPosa(vm.svela[k], false) : null);
         lato.sub.textContent = "🚢 Flotta di " + n[k] + " · " + (NTOT - contaGiu(vm.aff[k])) + "/" + NTOT + " a galla";
@@ -1236,12 +1249,8 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var rete = null;
     function esci() { sp.spegni(); if (rete) rete.chiudi(); t.esci(); }
-    // 💬 chi guarda manda solo faccine (col suo nome); si vede subito qui, poi l'host la manda a tutti
-    var sp = Spettatore(t, esci, null, function (c) {
-      if (!rete || !CH() || !CH().valido("navale", c, true)) return;
-      var n = CH().nomeDi(t.nomeProfilo && t.nomeProfilo());
-      CH().volante("navale", c, n, true); rete.invia({ t: "chiac", c: c, n: n });
-    });
+    // (le faccine di chi guarda passano dal core: le sue mosse il core le butta)
+    var sp = Spettatore(t, esci, null);
     t.mostra((function () { var s = t.schermata({ indietro: esci }); s._contenuto.appendChild(t.el("p", { class: "modulo-nota guarda-attesa", text: "👀 Mi collego alla partita…" })); return s; })());
     rete = SGNet.entra(codice, {
       onMsg: function (m) {

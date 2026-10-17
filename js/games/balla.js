@@ -164,6 +164,7 @@
     postiOnline: 8,   // posti online
     riprende: true,   // se l'host ricarica a metà partita, la partita riprende da dove era (t.ripresa)
     riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
+    ritardatari: "turno",   // online: chi arriva a partita cominciata gioca dal round dopo (con 0 punti)
     difficolta: 2,
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono per scrivere e votare", amici: true }],
     regole: [
@@ -932,18 +933,26 @@
       players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0 }],
       balle: {}, fatti: {}, voti: {}, scelte: [], scadenza: 0, passo: 0, ordine: [], ignorate: [], ultimo: {}, classifica: null, to: null,
       risate: {}, oro: null, avanti: [],
-      guarda: [] };   // nella Sala: chi non è stato scelto per giocare (guarda soltanto, col suo id nella foto)
+      guarda: [],   // nella Sala: chi non è stato scelto per giocare (guarda soltanto, col suo id nella foto)
+      prossimi: [] };   // chi è arrivato a partita cominciata: { id, nome, omino }, entra all'inizio del round dopo (i punti del round vanno per posto)
     // la partita di prima (l'host ha ricaricato la pagina o riaperto l'app: t.ripresa): si riprende da lì.
     // Gli amici non si danno per usciti: si aspettano ("attesi") e rientrano da soli; chi non torna entro 10 secondi esce
     var R0 = t.ripresa && t.ripresa.stato, ripresa = !!(R0 && R0.fase && R0.fase !== "lobby" && R0.players), attesi = {}, tAttesi = null;
     if (ripresa) {
-      H = R0; H.to = null; H.pronta = false; H.guarda = H.guarda || []; H.avanti = H.avanti || [];
+      H = R0; H.to = null; H.pronta = false; H.guarda = H.guarda || []; H.avanti = H.avanti || []; H.prossimi = H.prossimi || [];
       H.players.forEach(function (p) { if (p.id !== IO && !p.via) attesi[p.id] = 1; });
+      H.prossimi.forEach(function (x) { attesi[x.id] = 1; });
       if (H.d && H.balle[IO]) MIA = { dom: H.d.domanda, testo: H.balle[IO] };   // la mia balla di questo round
     }
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function iDi(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return i; return -1; }
     function presenti() { return H.players.filter(function (p) { return !p.via; }); }
+    function prossimo(id) { return H.prossimi.some(function (x) { return x.id === id; }); }
+    // chi aspettava entra in partita (all'inizio di un round, o nella saletta della partita dopo) con 0 punti
+    function entrano() {
+      H.prossimi.forEach(function (x) { if (!pById(x.id) && H.players.length < MAX_ON) H.players.push({ id: x.id, nome: x.nome, omino: x.omino || null, punti: 0, tot: nuoviTot() }); });
+      H.prossimi = [];
+    }
     // chi vota in questo round: chi è rimasto, senza il protagonista di «Parliamo di te» (la verità la sa)
     function votanti() { return presenti().filter(function (p) { return !(H.d && H.d.amici && p.id === H.d.prot); }); }
     function ferma() { if (H.to) { clearTimeout(H.to); H.to = null; } }
@@ -959,6 +968,7 @@
     function addio(id) {
       delete attesi[id];
       if (H.guarda.indexOf(id) >= 0) { H.guarda.splice(H.guarda.indexOf(id), 1); bd(); return; }
+      if (prossimo(id)) { H.prossimi = H.prossimi.filter(function (x) { return x.id !== id; }); bd(); return; }   // aspettava il round dopo: via e basta
       var p = pById(id); if (!p || p.via) return;
       if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
       p.via = true;   // a partita iniziata resta in classifica, ma non gioca più
@@ -977,6 +987,10 @@
           if (!p0 && (H.guarda.indexOf(id) >= 0 || (t.puoSedersi && !t.puoSedersi(id, nomeJ)))) { if (H.guarda.indexOf(id) < 0) H.guarda.push(id); bd(); return; }
           if (H.fase === "lobby" && !p0 && H.players.length < MAX_ON)
             H.players.push({ id: id, nome: nomeJ, omino: avatarValido(m.omino), punti: 0, tot: nuoviTot() });
+          // a partita cominciata: aspetta il round dopo (entrare a metà round sballerebbe i punti, che vanno per posto).
+          // Se non c'è più posto guarda soltanto (entra alla prossima partita, se si libera un posto)
+          else if (!p0 && H.fase !== "lobby" && !prossimo(id) && H.players.length + H.prossimi.length < MAX_ON)
+            H.prossimi.push({ id: id, nome: nomeJ, omino: avatarValido(m.omino) });
           else if (p0 && p0.via) { p0.via = false; controlla(); }   // è tornato (stesso id): riprende a giocare coi suoi punti
           bd();   // anche se c'era già: rimanda la foto (serve a chi si ricollega)
           if (p0 && H.balle[id] && H.d && H.fase !== "lobby") privato(id, { t: "priv", k: "mia", testo: H.balle[id], dom: H.d.domanda });   // e la sua balla
@@ -998,6 +1012,7 @@
         ride: H.ride, modoAmici: H.modoAmici,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, punti: p.punti, via: !!p.via }; }),
         fatti: Object.keys(H.fatti), guarda: H.guarda.slice() };
+      if (H.prossimi.length) o.prossimi = H.prossimi.map(function (x) { return x.id; });   // chi gioca dal round dopo
       if (H.d && f !== "lobby") { o.domanda = H.d.domanda; if (H.d.amici) { o.amici = true; o.prot = H.d.prot; } }
       if (f === "notizia" && H.saltato) o.saltato = H.saltato;
       if (f === "scrittura" || f === "voto" || f === "punti") o.rimMs = Math.max(0, H.scadenza - Date.now());
@@ -1073,6 +1088,8 @@
     }
     function pulisciRound() { H.balle = {}; H.fatti = {}; H.voti = {}; H.scelte = []; H.ordine = []; H.ignorate = []; H.passo = 0; H.ultimo = {}; H.risate = {}; H.oro = null; H.avanti = []; }
     function nuovoRound() {
+      entrano();   // chi è arrivato durante il round di prima gioca da questo
+      if (t.aCheSiamo) t.aCheSiamo("Round " + (H.giro + 1) + " di " + H.giri);   // (nella Sala, per chi è fuori)
       H.d = domandaDelRound(); H.saltato = null; pulisciRound();
       H.fase = "notizia"; bd();
       dopo(DURATA_NOTIZIA, scrittura);
@@ -1141,7 +1158,7 @@
       k = Number(k);
       if (!H.ride || H.fase !== "rivela" || !(k >= 0 && k < H.scelte.length) || H.scelte[k].vera) return;
       var i = iDi(id), p = H.players[i];
-      if (p ? p.via : H.guarda.indexOf(id) < 0) return;
+      if (p ? p.via : H.guarda.indexOf(id) < 0 && !prossimo(id)) return;   // (chi aspetta il round dopo ride anche lui)
       if (i >= 0 && H.scelte[k].autori.indexOf(i) >= 0) return;
       var l = H.risate[k] || (H.risate[k] = []); if (l.indexOf(id) >= 0) return;
       l.push(id); bd();
@@ -1198,7 +1215,7 @@
       if (t.risultato) t.risultato(H.classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }));
     }
     // "Nuova partita": stessa stanza, stessi amici (anche chi era uscito ed è tornato), tutti tornano nella saletta
-    function nuova() { ferma(); H.fase = "lobby"; H.classifica = null; H.d = null; H.players = presenti();
+    function nuova() { ferma(); H.fase = "lobby"; H.classifica = null; H.d = null; H.players = presenti(); entrano();   // (e chi aspettava)
       // chi tiene la partita è il primo (in saletta ha la corona); se l'ha presa guardando (host di riserva), si siede
       if (!pById(IO)) { H.guarda = H.guarda.filter(function (x) { return x !== IO; }); H.players.push({ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0 }); }
       H.players.sort(function (a, b) { return (b.id === IO) - (a.id === IO); }); H.players.forEach(function (p) { p.punti = 0; p.tot = nuoviTot(); }); bd(); }
@@ -1282,10 +1299,17 @@
     if (vm.fase === "lobby") { RB = null; return lobbyB(t, vm, cb); }
     // lo studio si fa una volta per partita (e di nuovo se l'host ricomincia dopo la fine)
     // (e da capo se il tavolo è un altro: l'amico che prende il posto dell'host sparito, Passo 5, non usa lo studio di quando era ospite)
+    var ids = vm.players.map(function (p) { return p.id; }).join("|");
     if (!RB || RB.t !== t || (!RB.S.vivo() && (vm.fase !== "fine" || !RB.fineFatta))) {
-      RB = { t: t, cb: cb, usciti: {}, mie: {} };
+      RB = { t: t, cb: cb, usciti: {}, mie: {}, ids: ids };
       RB.S = ST.crea(t, vm.players, { io: idxDi(vm, cb.myId), esci: function () { cb.onEsci(true); }, titolo: "La Balla Colossale", logo: ["LA BALLA", "COLOSSALE"] });
+      if (conTarga(t)) RB.S.vista.classList.add("st-con-targa");   // chi guarda soltanto: il posto della targhetta del core in basso
       vm.players.forEach(function (p, i) { ST.puntiLeggio(RB.S, i, p.punti, 0); });
+    } else if (RB.ids !== ids && RB.S.vivo()) {   // è entrato chi aspettava il round dopo: rifaccio i leggii (i posti di prima restano gli stessi)
+      RB.ids = ids; RB.usciti = {};
+      RB.S.impostaGiocatori(vm.players, idxDi(vm, cb.myId));
+      vm.players.forEach(function (p, i) { ST.puntiLeggio(RB.S, i, p.punti, 0); });
+      if (RB.S.shot) ST.camera(RB.S, RB.S.shot(), 0);
     }
     RB.vm = vm; RB.cb = cb; RB.vmTs = Date.now();
     if (vm.fase !== "scrittura" && vm.fase !== "voto" && RB.S._chiudiVelo) RB.S._chiudiVelo();   // il tempo è finito per tutti: il foglio si chiude
@@ -1339,8 +1363,8 @@
     st.risate = st.scelte.map(function (_, k) { var l = (vm.risate || [])[k] || []; return l.length + (R.mie[kR + "|" + k] && l.indexOf(R.cb.myId) < 0 ? 1 : 0); });
     st.hoRiso = mieR;
     st.miaBalla = function (sc) { return io >= 0 && (sc.autori || []).indexOf(io) >= 0; };
-    var me = vm.players[io], guardo = (vm.guarda || []).indexOf(R.cb.myId) >= 0;
-    st.rideFn = !(me ? !me.via : guardo) ? null : function (k) {   // (chi è uscito non ride; chi guarda nella Sala sì)
+    var me = vm.players[io], guardo = (vm.guarda || []).indexOf(R.cb.myId) >= 0 || (vm.prossimi || []).indexOf(R.cb.myId) >= 0;
+    st.rideFn = !(me ? !me.via : guardo) ? null : function (k) {   // (chi è uscito non ride; chi guarda nella Sala e chi aspetta il round dopo sì)
       if (mieR(k) || R.vm.fase !== "rivela") return false;
       R.mie[kR + "|" + k] = 1; st.risate[k]++; R.cb.onRide(k); return true;
     };
@@ -1445,14 +1469,24 @@
     ST.testoLeggio(S, io, testo ? "✅ fatto" : "😶 niente"); ST.faccia(S, io, testo ? "esulta" : "triste");
     await ST.suSchermo(S, 800);
     ST.faccia(S, io, null);
-    if (R.vm.fase === "scrittura") ST.barra(S, [ el("p", { class: "bc-attesa", text: "Fatto! Aspettiamo gli altri…" }), R.t.faccine() ]);
+    if (R.vm.fase === "scrittura") ST.barra(S, [ el("p", { class: "bc-attesa", text: "Fatto! Aspettiamo gli altri…" }), faccineB(R.t) ]);
   }
   // chi non scrive/vota adesso (guarda, oppure ha già finito): una riga e le faccine, mentre gli altri finiscono
   function attesaOnline(R, guardo) {
     var S = R.S, el = R.t.el, f = R.vm.fase;
     if (!S.vivo() || (f !== "scrittura" && f !== "voto")) return;
-    ST.barra(S, [ el("p", { class: "bc-attesa", text: guardo ? ((R.vm.guarda || []).indexOf(R.cb.myId) >= 0 ? "👀 Questa volta guardi: gioca chi è stato scelto." : "👀 Stai guardando: alla prossima partita giochi anche tu.") : "Fatto! Aspettiamo gli altri…" }), R.t.faccine() ]);
+    ST.barra(S, [ el("p", { class: "bc-attesa", text: !guardo ? "Fatto! Aspettiamo gli altri…" : testoGuardo(R) }), faccineB(R.t) ]);
   }
+  // la riga di chi non gioca questo round: aspetta il round dopo, guarda nella Sala, o guarda soltanto
+  function testoGuardo(R) {
+    var vm = R.vm, id = R.cb.myId;
+    if ((vm.prossimi || []).indexOf(id) >= 0) return "✋ Giochi dal prossimo round: intanto guarda!";
+    if ((vm.guarda || []).indexOf(id) >= 0) return "👀 Questa volta guardi: gioca chi è stato scelto.";
+    return "👀 Stai guardando: alla prossima partita giochi anche tu.";
+  }
+  // chi guarda soltanto (col link "guarda", fuori dal torneo a eliminazione): le faccine e l'uscita le dà la targhetta del core
+  function conTarga(t) { return !!(t && t.guarda && !t.eliminazione); }
+  function faccineB(t) { return conTarga(t) || !t.faccine ? null : t.faccine(); }
   // tutti votano insieme, ognuno dal suo telefono; il tabellone resta sul maxischermo
   async function votaOnline(R, st) {
     var S = R.S, el = R.t.el, cb = R.cb, vm = R.vm, io = idxDi(vm, cb.myId), me = vm.players[io];
@@ -1461,7 +1495,7 @@
     if (io < 0 || !me || me.via || (!riprova && (vm.fatti || []).indexOf(cb.myId) >= 0)) { await ST.suSchermo(S, 800); attesaOnline(R, io < 0 || !me || me.via); return; }
     if (eProt(st, io)) {   // «Parliamo di te» e la domanda è su di me: la verità la so, non voto
       ST.testoLeggio(S, io, "🤫 la sa"); await ST.suSchermo(S, 800);
-      if (R.vm.fase === "voto") ST.barra(S, [ el("p", { class: "bc-attesa", text: "🤫 La domanda è su di te: non voti. Guarda chi ci casca!" }), R.t.faccine() ]);
+      if (R.vm.fase === "voto") ST.barra(S, [ el("p", { class: "bc-attesa", text: "🤫 La domanda è su di te: non voti. Guarda chi ci casca!" }), faccineB(R.t) ]);
       return;
     }
     ST.accendiSolo(S, io); ST.testoLeggio(S, io, "🗳️ vota");
@@ -1473,7 +1507,7 @@
     ST.testoLeggio(S, io, k != null ? "✅ votato" : "😶 niente"); ST.faccia(S, io, "pensa");
     await ST.suSchermo(S, 800);
     ST.faccia(S, io, null);
-    if (R.vm.fase === "voto") ST.barra(S, [ el("p", { class: "bc-attesa", text: k != null ? "Votato! Aspettiamo gli altri…" : "Aspettiamo gli altri…" }), R.t.faccine() ]);
+    if (R.vm.fase === "voto") ST.barra(S, [ el("p", { class: "bc-attesa", text: k != null ? "Votato! Aspettiamo gli altri…" : "Aspettiamo gli altri…" }), faccineB(R.t) ]);
   }
   // chi ha già finito: le spunte sotto il maxischermo e sui leggii (si rifanno solo se cambia qualcosa)
   function aggiornaFatti(R, vm, cosa, forza) {
@@ -1536,7 +1570,8 @@
       } }, [ el("span", { class: "tx", text: "⏩ Avanti" }), el("span", { class: "quanti" }) ]);
     }
     R.bAvanti = bAv; R.kAvanti = k;
-    ST.barra(S, [ conto, bAv, R.t.faccine() ]);
+    var tocca = !bAv && (vm.prossimi || []).indexOf(cb.myId) >= 0 ? el("p", { class: "bc-attesa", text: "✋ Al prossimo round giochi anche tu!" }) : null;
+    ST.barra(S, [ conto, bAv || tocca, faccineB(R.t) ]);
     R.t.contoAvanti(conto, sec, null, k);
     aggiornaAvanti(R);
   }
@@ -1572,18 +1607,21 @@
     s._contenuto.appendChild(box);
     // i tasti di fine comuni (all'host e a chi ha giocato), se li disegna il core: allora niente tasti nostri né "Aspetta l'host"
     // (la nota resta nascosta: serve solo se l'host chiude la stanza)
-    var haGiocato = cb.sonoHost || idxDi(vm, cb.myId) >= 0;
-    var comuni = haGiocato && t.tastiFine(s._piede, cb.sonoHost ? { host: true, nuova: cb.onNuova, esci: cb.onEsci } : { host: false, esci: cb.onEsci });
+    // (chi guarda soltanto: i tasti di fine del core se ci sono, se no la targhetta "👀 Guardi · ✕" basta: niente Esci nostro)
+    var haGiocato = cb.sonoHost || idxDi(vm, cb.myId) >= 0, targa = conTarga(t);
+    var comuni = (haGiocato || targa) && t.tastiFine(s._piede, cb.sonoHost ? { host: true, nuova: cb.onNuova, esci: cb.onEsci } : { host: false, esci: cb.onEsci });
+    if (targa) s.classList.add("bc-con-targa");
     if (cb.sonoHost) { if (!comuni) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova })); }
     else {
-      var guardo = !haGiocato && (vm.guarda || []).indexOf(cb.myId) >= 0;
+      var guardo = !haGiocato && (vm.guarda || []).indexOf(cb.myId) >= 0, aspetto = !haGiocato && (vm.prossimi || []).indexOf(cb.myId) >= 0;
       s._contenuto.appendChild(R.notaFine = el("p", { class: "modulo-nota", style: "text-align:center", text: cb.chiusa ? NOTA_CHIUSA
-        : comuni ? "" : guardo ? "👀 Questa volta hai guardato." : "⏳ Aspetta l'host: se fa un'altra partita, torni da solo nella saletta." }));
+        : comuni ? "" : guardo ? "👀 Questa volta hai guardato." : aspetto ? "✋ Sei dentro: alla prossima partita giochi anche tu!"
+        : targa ? "👀 Hai guardato: se l'host fa un'altra partita, entri anche tu." : "⏳ Aspetta l'host: se fa un'altra partita, torni da solo nella saletta." }));
       if (!R.notaFine.textContent) R.notaFine.hidden = true;
     }
-    var fa = t.faccine();   // le faccine mentre si guarda la classifica
+    var fa = faccineB(t);   // le faccine mentre si guarda la classifica
     if (fa) { fa.style.marginTop = "10px"; s._contenuto.appendChild(fa); }
-    if (!comuni) s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+    if (!comuni && !targa) s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     t.mostra(s);
   }
 
@@ -1658,6 +1696,9 @@
       ".bc-scelta .n{flex:0 0 auto;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#5a4a9a;color:#fff;font-family:system-ui,sans-serif;font-weight:900;font-size:13px}",
       ".bc-tempo{height:6px;border-radius:3px;background:rgba(255,255,255,.18);overflow:hidden}.bc-tempo i{display:block;height:100%;width:100%;background:#ffd43b;transform-origin:0 50%;will-change:transform}.bc-tempo.poco i{background:#ff5d6c}",
       ".bc-attesa{margin:0;text-align:center;font-weight:800;color:#cdd6ff}",
+      // chi guarda soltanto: in basso il posto della targhetta del core ("👀 Guardi · 😂 · ✕")
+      ".st-vista.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}.st-vista.st-con-targa.con-barra .st-sch-in{padding-bottom:152px}",
+      ".bc-con-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",
       ".bc-lobby{margin:0;font-size:14px;line-height:1.45}",
       ".bc-scelta{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:2px solid #e2d8c3;border-radius:14px;background:#fffdf4;color:#1d2a5c;padding:9px 12px;font-family:" + MANO + ";font-size:20px;font-weight:700;line-height:1.25;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s}",
       ".bc-scelta:active{transform:scale(.97)}",

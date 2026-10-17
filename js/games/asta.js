@@ -128,6 +128,8 @@
     // (online) classifica finale alta come lo schermo: i tasti in fondo si vedono sempre, se serve scorre solo il centro
     ".schermata.as-fissa{flex:0 0 auto;height:var(--alt,100dvh);max-height:var(--alt,100dvh);min-height:0;}",
     ".schermata.as-fissa>.contenuto{min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}",
+    // chi guarda col link: in basso la targhetta del core "👀 Guardi · 😂 · ✕" (la schermata le lascia il posto)
+    ".schermata.as-targa,.schermata.sa-sala.as-targa{padding-bottom:calc(60px + env(safe-area-inset-bottom));}",
     ".as-kit{background:var(--carta);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:var(--ombra);}",
     ".as-kit h3{margin:0 0 8px;font-size:1.15rem;}",
     ".as-kit .riga{display:flex;align-items:center;gap:10px;padding:4px 0;font-size:.98rem;}",
@@ -529,6 +531,7 @@
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono per rilanciare", amici: true }],
     giocatoriMax: MAX_GIOCATORI,
     postiOnline: MAX_GIOCATORI,   // posti online (10)
+    ritardatari: "partita",   // chi arriva ad asta cominciata la guarda ed entra alla prossima partita
     riprende: true,   // se l'host ricarica a metà partita, la partita riprende (il lotto all'asta riparte da capo, nessuno paga niente)
     riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     // le regole in una riga, per la saletta: "🎁 Temi classici · Vacanze · 15 crediti" o "⚽ Mini asta Fantacalcio · 20 crediti"
@@ -1002,7 +1005,7 @@
     S.piede = el("div", { class: "sa-piede" });
     S.ban = el("div", { class: "sa-ban" }, [ el("img", { class: "sa-ban-img", src: srcAv(banditore(), { spalle: true }), alt: "" }),
       el("img", { class: "sa-leggio", src: arte("leggio", LEGGIO_RIS), alt: "" }), S.martello, S.bolla ]);
-    S.radice = el("div", { class: "schermata sa-sala" }, [ sfondo, testaAsta(el, S, d), S.pannello, S.avviso, el("div", { class: "sa-tempo" }, [ S.tempo ]),
+    S.radice = el("div", { class: "schermata sa-sala" + (t.guarda ? " as-targa" : "") }, [ sfondo, testaAsta(el, S, d), S.pannello, S.avviso, el("div", { class: "sa-tempo" }, [ S.tempo ]),
       pubblico(el, S, d.persone, arte("sedia", SEDIA_RIS), "sa-platea"), el("div", { class: "sa-basso" }, [ S.ban, S.piede ]) ]);
     S.ultimiDati = d; SALA = S;
     t.mostra(S.radice);
@@ -1109,7 +1112,7 @@
     S.tempo = el("i");
     S.piede = el("div", { class: "sa-piede st-piede" });
     var board = maxischermo(el, S, false), campo = campetto(el, S);
-    S.radice = el("div", { class: "schermata sa-sala st-stadio" }, [ sfondo, testaAsta(el, S, d), board, S.avviso, el("div", { class: "sa-tempo" }, [ S.tempo ]),
+    S.radice = el("div", { class: "schermata sa-sala st-stadio" + (t.guarda ? " as-targa" : "") }, [ sfondo, testaAsta(el, S, d), board, S.avviso, el("div", { class: "sa-tempo" }, [ S.tempo ]),
       pubblico(el, S, d.persone, arte("seggiolino", SEGG_RIS), "st-tribuna", 5),
       el("div", { class: "st-campo-box" }, [
         el("div", { class: "st-campo-testa" }, [
@@ -1357,7 +1360,7 @@
     R.podio = el("div", { class: "st-podio", style: "display:none" });
     R.piede = el("div", { class: "sa-piede st-piede" });
     R.salta = el("button", { class: "sa-tasto", text: "Salta ⏭", onclick: function () { podioRivela(R); } });
-    R.radice = el("div", { class: "schermata sa-sala st-stadio st-rivela" }, [ sfondo,
+    R.radice = el("div", { class: "schermata sa-sala st-stadio st-rivela" + (t.guarda ? " as-targa" : "") }, [ sfondo,
       el("div", { class: "sa-testa" }, [ el("button", { class: "sa-tasto", text: "‹", "aria-label": "Esci", onclick: function () { R.opz.onEsci(); } }),
         el("div", { class: "sa-info", text: "La classifica delle rose" }), R.salta ]),
       board, R.campoBox, R.podio, R.piede ]);
@@ -1764,7 +1767,11 @@
     };
     var rete = ospitaAsta(cbRete, { ripresa: ripresa });   // (con la ripresa gli amici non tornano in saletta)
 
-    function invia() { rete.invia({ t: "vm", vm: vmAsta(st) }); ricorda(); }
+    function invia() {
+      rete.invia({ t: "vm", vm: vmAsta(st) }); ricorda();
+      if (t.aCheSiamo && st.iniziata && ["round", "scelta", "asta", "esito"].indexOf(st.fase) >= 0) t.aCheSiamo("round " + (st.roundIdx + 1) + " di " + TOT_ROUND);   // (nella Sala, per chi è fuori)
+      else if (t.aCheSiamo && st.iniziata && (st.fase === "kit" || st.fase === "voto")) t.aCheSiamo("si votano i kit");
+    }
     // la partita com'è adesso, per riprenderla se ricarico la pagina (in saletta niente)
     function ricorda() { if (!st.morto) t.ricorda(st.iniziata && st.fase !== "lobby" ? statoDaRicordare(st, "temi") : null); }
     var dopoTM = TM.dopo; TM.dopo = function (fn, ms) { dopoTM(fn, ms); ricorda(); };   // (anche l'ora del prossimo passo)
@@ -2196,6 +2203,7 @@
     if (vm.fase !== "kit" && vm.fase !== "voto") s._contenuto.appendChild(testaRound(el, vm));
     if (vm.fase !== "voto" && vm.fase !== "kit") s._contenuto.appendChild(strisciaOnline(el, vm, myId));   // (nei kit i crediti avanzati sono già scritti, nella votazione non servono: più posto ai kit)
     if (vm.fase === "kit" || vm.fase === "voto") s.classList.add("as-fissa");   // (i tasti in fondo si vedono sempre)
+    if (t.guarda) s.classList.add("as-targa");
 
     if (vm.fase === "round") {
       s._contenuto.appendChild(el("div", { style: "text-align:center;font-size:3.4rem;line-height:1;margin:10px 0", text: vm.roundIcona }));
@@ -2265,7 +2273,7 @@
           s._contenuto.appendChild(pc);
           if (t.contoAvanti) t.contoAvanti(pc, secVoto, null, kConto);
         }
-        var fa = t.faccine ? t.faccine() : null;   // intanto si fanno le faccine agli altri
+        var fa = t.faccine && !t.guarda ? t.faccine() : null;   // intanto si fanno le faccine agli altri (chi guarda col link: dalla targhetta)
         if (fa) s._contenuto.appendChild(el("div", { style: "display:flex;justify-content:center;margin-top:14px" }, [ fa ]));
         if (bChiudi) aggChiudi(vm);
       } else {
@@ -2331,7 +2339,7 @@
       info.appendChild(el("div", { class: "etichetta", text: "Si gioca così" }));
       info.appendChild(el("p", { class: "as-msg", text: "🎁 Temi classici · " + vm.temaIcona + " " + vm.temaNome + " · 💰 " + cr + " crediti a testa" }));
     }
-    t.lobby({ host: cb.sonoHost, codice: vm.codice, min: 2,
+    t.lobby({ host: cb.sonoHost, codice: vm.codice, min: 2, spettatore: t.guarda ? "👀 Guardi soltanto" : false,   // (chi guarda col link)
       giocatori: vm.giocatori.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
       extra: [info], attesa: "Aspetta che l'host cominci l'asta: tieni pronti i crediti! 💰",
       onComincia: cb.onComincia, onEsci: cb.onEsci });
@@ -2343,6 +2351,7 @@
     var etichetta = vm.formato === "fanta" ? "Mini asta Fantacalcio" : ("L'Asta · " + (vm.temaNome || ""));
     var s = t.schermata({ icona: "🏆", titolo: "Classifica finale", sotto: etichetta });
     s.classList.add("as-fissa");   // (alta come lo schermo: "Nuova partita" si vede sempre, le fasce svelate scorrono nel centro)
+    if (t.guarda) s.classList.add("as-targa");
     s._contenuto.appendChild(el("div", { class: "tl-coriandoli", text: "🎉🥳🎉" }));
     var ol = el("ol", { class: "classifica" });
     var med = ["🥇", "🥈", "🥉"], gruppo = 0, ultimaPos = null;
@@ -2364,10 +2373,12 @@
       if (vm.giocatori.length > 2) s.classList.add("as-kits");
       vm.giocatori.forEach(function (g) { s._contenuto.appendChild(nodoKitVm(el, g, true)); });
     }
-    var fa = t.faccine ? t.faccine() : null;   // le faccine della saletta: si festeggia (o si sfotte) tutti insieme
+    var fa = t.faccine && !t.guarda ? t.faccine() : null;   // le faccine della saletta: si festeggia (o si sfotte) tutti insieme
     if (fa) s._piede.appendChild(el("div", { style: "display:flex;justify-content:center" }, [ fa ]));
+    // chi guarda col link: faccine e uscita nella targhetta del core; alla prossima partita entra da solo
+    if (t.guarda) s._piede.appendChild(el("p", { class: "as-msg", text: "👀 Se l'host fa un'altra partita, entri anche tu nella saletta." }));
     // i tasti di fine uguali per tutti (Rivincita, Cambia gioco, Ci sto…) li mette il core; se no quelli di sempre
-    if (t.tastiFine && t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) { /* fatto dal core */ }
+    else if (t.tastiFine && t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) { /* fatto dal core */ }
     else if (cb.sonoHost) {
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: vm.formato === "fanta" ? "🔄 Nuova partita" : "🔄 Nuova partita (cambia argomento)", onclick: cb.onNuova }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
@@ -2792,8 +2803,10 @@
       return rivelaFanta(t, vm.classifica || [], { chiave: "ro|" + (vm.codice || "") + "|" + vm.sessione,
         onEsci: function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); },
         bottoni: function () {
-          var el = t.el, fa = t.faccine ? t.faccine() : null;   // (le faccine della saletta, sul podio)
+          var el = t.el, fa = t.faccine && !t.guarda ? t.faccine() : null;   // (le faccine della saletta, sul podio)
           fa = fa ? el("div", { style: "width:100%;display:flex;justify-content:center" }, [ fa ]) : null;
+          // chi guarda col link: faccine e uscita nella targhetta del core; alla prossima partita entra da solo
+          if (t.guarda) return [ el("p", { class: "sa-nota", text: "👀 Se l'host fa un'altra partita, entri anche tu nella saletta." }) ];
           // i tasti di fine uguali per tutti li mette il core (in una riga a tutta larghezza); se no quelli di sempre
           var riga = el("div", { style: "width:100%" });
           if (t.tastiFine && t.tastiFine(riga, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) return [ fa, riga ];
