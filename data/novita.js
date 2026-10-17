@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 227,
+    data: "17 ottobre 2026",
+    titolo: "Le novità, di nuovo in lista 📜",
+    descrizione: [
+      "Dal menu, «🆕 Novità» apre di nuovo la lista semplice di tutte le novità, come prima. In città restano sulla bacheca della piazza, con la città dietro."
+    ]
+  },
+  {
     v: 226,
     data: "17 ottobre 2026",
     titolo: "Gioco nuovo: Il Prezzo è Giusto! 🏷️",
