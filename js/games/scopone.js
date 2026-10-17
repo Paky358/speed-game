@@ -63,6 +63,8 @@
     descrizione: "Lo scopone in quattro, a coppie: tu e il tuo compagno contro due avversari. Scientifico o classico, contro i Bot o online, ognuno dal suo telefono (i posti vuoti li fanno i Bot).",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 1–4 giocatori",   // (i posti liberi li prendono i Bot)
     postiOnline: 4,   // 4 al tavolo: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
+    riprende: true,   // se l'host ricarica la pagina (o riapre l'app), la mano continua da dove era (stesse carte, punti e turno)
+    riserva: true,    // se il telefono dell'host si spegne del tutto, un amico seduto al tavolo porta avanti la partita dal suo posto
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro i Bot", sotto: "Tu e un Bot contro due Bot" }],
     regole: [
       "Si gioca <b>in quattro, a due coppie</b>: tu e il tuo <b>compagno</b> (di fronte) contro due <b>avversari</b>. Contro i Bot gli altri tre sono Bot; <b>online</b> ognuno gioca dal suo telefono e i posti vuoti li fanno i Bot.",
@@ -693,36 +695,79 @@
   //  ONLINE — HOST = posto 0; gli amici prendono i posti 1, 2, 3 (di fronte = il compagno dell'host).
   //  I posti vuoti li fanno i Bot. A ognuno arriva solo la SUA vista (con le sue carte), mai quella degli altri;
   //  chi guarda riceve tutto e sceglie lui di chi vedere le carte.
+  //  La rete salta, la partita no: se l'host ricarica la pagina (o riapre l'app) la mano continua da dove era
+  //  (t.ripresa); se il suo telefono si spegne del tutto, un amico seduto al tavolo porta avanti la partita dal suo
+  //  posto (host di riserva) e l'host di prima, se torna, si riprende il suo.
   // ========================================================
+  var RESPIRO = 5000;   // (ripresa) i secondi di respiro prima che i Bot tornino a giocare: gli amici intanto rientrano
   function hostScopone(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     C().assicuraStile(); stileScopone();
+    var IO = t.mioId || "host";   // chi tiene la partita su questo telefono ("host", o l'id da amico del vice)
+    // il mio posto: lo 0; dopo un subentro (host di riserva) quello dove giocavo; -1 = tengo la partita guardando.
+    // In saletta è sempre lo 0 (l'host di prima, se c'è, si siede in un posto da amico)
+    var MIO = 0;
+    function altri() { return [0, 1, 2, 3].filter(function (s) { return s !== MIO; }); }
     var H = { st: null, codice: "…", pronta: false, chiuso: false, attesa: false, pid: "",
-      posti: { 1: null, 2: null, 3: null }, nomi: { 1: null, 2: null, 3: null }, avi: { 1: null, 2: null, 3: null },
+      posti: { 0: null, 1: null, 2: null, 3: null }, nomi: { 0: null, 1: null, 2: null, 3: null }, avi: { 0: null, 1: null, 2: null, 3: null },
       via: {},                                       // via[posto] = chi è uscito a partita in corso (se torna, si riprende il suo posto)
       bot: { 0: false, 1: true, 2: true, 3: true },  // chi gioca col computer durante la partita
       guarda: [],                                    // chi guarda: { id, nome, sala } (sala = non scelto in "Chi gioca?"; se no aspetta un posto)
-      avanti: {}, scad: 0, nAvviso: 0, avviso: null, detto: false, storico: leggiCoppie(), giocateTurno: -1, psstN: 0, scambia: false };
-    var timers = [];
+      avanti: {}, scad: 0, nAvviso: 0, avviso: null, detto: false, storico: leggiCoppie(), giocateTurno: -1, psstN: 0, scambia: false,
+      rip: 0,          // quante volte la partita è ripresa (nella chiave del conto del riepilogo: riparte giusto su tutti)
+      gSeat: 0 };      // (se tengo la partita guardando) di chi guardo le carte
+    var timers = [], respiroFino = 0, attesi = {};
     function dopo(fn, ms) { var id = setTimeout(function () { timers = timers.filter(function (x) { return x !== id; }); if (!H.chiuso) fn(); }, ms); timers.push(id); return id; }
     function fermaTutto() { timers.forEach(clearTimeout); timers = []; }
     function imp() { return t.impostazioni || {}; }
     function diff() { return imp().difficolta || "medio"; }
     function mioNome() { return (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Host"; }
     function mioAv() { return t.mioOmino ? t.mioOmino(mioNome()) : C().mioAvatar(mioNome()); }
-    function seatDi(id) { for (var s = 1; s <= 3; s++) if (H.posti[s] === id) return s; return -1; }
-    function postoLibero() { for (var s = 1; s <= 3; s++) if (!H.posti[s]) return s; return 0; }
+    function seatDi(id) { var l = altri().filter(function (s) { return H.posti[s] === id; }); return l.length ? l[0] : -1; }
+    function postoLibero() { var l = altri().filter(function (s) { return !H.posti[s]; }); return l.length ? l[0] : -1; }
     function guardaDi(id) { for (var i = 0; i < H.guarda.length; i++) if (H.guarda[i].id === id) return H.guarda[i]; return null; }
-    function idDi(s) { return s === 0 ? "host" : H.posti[s]; }
-    function umani() { var o = ["host"]; for (var s = 1; s <= 3; s++) if (H.posti[s] && !(H.st && H.bot[s])) o.push(H.posti[s]); return o; }
+    function idDi(s) { return s === MIO ? IO : H.posti[s]; }
+    function umani() { var o = MIO >= 0 ? [IO] : []; altri().forEach(function (s) { if (H.posti[s] && !(H.st && H.bot[s])) o.push(H.posti[s]); }); return o; }
     function avviso(testo) { H.avviso = { n: ++H.nAvviso, testo: testo }; }
 
-    function viaHost() { H.chiuso = true; Cl.chiuso = true; fermaTutto(); if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
+    // ---- la partita si ricorda (t.ricorda) dopo ogni cambiamento: se l'host ricarica la mano continua; in saletta niente ----
+    var ricordato = !!(t.ripresa && t.ripresa.stato && t.ripresa.stato.scopone);
+    function ricorda(x, soloQui) {
+      if (!t.ricorda) return;
+      if (!x) { if (ricordato) { ricordato = false; t.ricorda(null); } return; }
+      ricordato = true; t.ricorda(x, soloQui);
+    }
+    function ricordaOra() {
+      if (!H.st) return;
+      var st = JSON.parse(JSON.stringify(H.st)); delete st.psst;   // (il 🤫 di questo momento dura 4 secondi: non si ricorda)
+      var x = { scopone: { st: st, mio: MIO, io: IO, posti: H.posti, nomi: H.nomi, avi: H.avi, bot: H.bot, via: H.via, guarda: H.guarda,
+        pid: H.pid, scad: H.scad, avanti: H.avanti, nAvviso: H.nAvviso, detto: H.detto, psstN: H.psstN, rip: H.rip, gSeat: H.gSeat } };
+      x.fase = st.fase;
+      var tx = JSON.stringify(x), soloQui = null;
+      if (tx.length > 50000) {   // (gli avatar sono tanti: restano su questo telefono, la copia per il vice va senza)
+        x = JSON.parse(tx); var y = x.scopone;
+        soloQui = { omini: y.st.omini, avi: y.avi, via: {}, guarda: {} };
+        y.st.omini = {}; y.avi = { 0: null, 1: null, 2: null, 3: null };
+        Object.keys(y.via).forEach(function (k) { soloQui.via[k] = y.via[k].omino; y.via[k].omino = null; });
+        y.guarda.forEach(function (g) { soloQui.guarda[g.id] = g.omino; g.omino = null; });
+      }
+      ricorda(x, soloQui);
+    }
+    // (host di riserva) chi porta avanti la partita se sparisco: gli amici seduti al tavolo (hanno già le loro carte e il loro posto)
+    var viciK = "";
+    function vici() {
+      if (!t.vici) return;
+      var l = altri().filter(function (s) { return H.posti[s] && !H.bot[s]; }).map(function (s) { return H.posti[s]; }), k = l.join(",");
+      if (k !== viciK) { viciK = k; t.vici(l.length ? l : null); }
+    }
+
+    function viaHost() { ricorda(null); H.chiuso = true; Cl.chiuso = true; fermaTutto(); if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
     var Cl = clientScopone(t, {
       sonoHost: true,
-      gioca: function (id, presa) { passo(0, id, presa); },
-      voto: function () { voto("host", H.st && H.st.manoN); },
-      psst: function (k) { psstDa(0, k); },
+      gioca: function (id, presa) { if (MIO >= 0) passo(MIO, id, presa); },
+      voto: function () { voto(IO, H.st && H.st.manoN); },
+      psst: function (k) { if (MIO >= 0) psstDa(MIO, k); },
+      cambiaVista: function () { if (MIO < 0) { H.gSeat = (H.gSeat + 1) % 4; mostraMia(); } },   // (tengo la partita guardando: 🔄)
       // "🔁 Rivincita a coppie scambiate": la Rivincita di sempre (quella del core, col 3-2-1), ma prima si cambiano i compagni
       scambia: function (piede) {
         if (!H.st || H.st.fase !== "fine") return;
@@ -744,7 +789,7 @@
     // un bot del gruppo fisso per un posto libero: mai uno già al tavolo, né col nome di chi gioca, di chi è uscito o di chi guarda
     function mettiBot(s) {
       var escludi = [mioNome()], k;
-      for (k = 1; k <= 3; k++) if (H.nomi[k]) escludi.push(H.nomi[k]);
+      for (k = 0; k <= 3; k++) if (H.nomi[k]) escludi.push(H.nomi[k]);
       if (H.st) for (k = 0; k < 4; k++) if (H.st.nomi[k] && k !== s) escludi.push(H.st.nomi[k]);
       Object.keys(H.via).forEach(function (x) { escludi.push(H.via[x].nome); });
       H.guarda.forEach(function (g) { escludi.push(g.nome); });
@@ -766,9 +811,9 @@
     // quanti 🤫 restano a questo posto (-1 = niente tasto: messaggi spenti, o lui o il compagno sono Bot)
     function psstResto(s) { var st = H.st; return (s != null && st && st.conPsst && !H.bot[s] && !H.bot[(s + 2) % 4]) ? PSST_MAX - (st.psstN[s] || 0) : -1; }
     function extra(v, s) {
-      v.pid = H.pid; v.avviso = H.avviso; v.avanti = infoAvanti(s); v.storico = H.st && H.st.fase === "fine" ? storicoTesti() : null;
+      v.pid = H.pid; v.rip = H.rip; v.avviso = H.avviso; v.avanti = infoAvanti(s); v.storico = H.st && H.st.fase === "fine" ? storicoTesti() : null;
       v.psstResto = psstResto(s);
-      if (s === 0) v.scambia = !!(H.st && H.st.fase === "fine" && (imp().coppie || "scelte") === "scelte" && [1, 2, 3].some(function (k) { return H.posti[k]; }));   // (l'host: "🔁 Rivincita a coppie scambiate")
+      if (s != null && s === MIO) v.scambia = !!(H.st && H.st.fase === "fine" && (imp().coppie || "scelte") === "scelte" && altri().some(function (k) { return H.posti[k]; }));   // (l'host: "🔁 Rivincita a coppie scambiate")
       return v;
     }
     function pieno() {   // per chi guarda: tutto (sceglie lui di chi vedere le carte) tranne il mazzo, che non serve
@@ -783,7 +828,7 @@
       var st = H.st; k = +k;
       if (H.chiuso || !st || !st.conPsst || st.fase !== "gioco" || !(k >= 0 && k < PSST.length) || k % 1) return;
       if (H.bot[s] || H.bot[(s + 2) % 4]) return;   // il compagno è un Bot: niente messaggi
-      if ((st.psstN[s] || 0) >= PSST_MAX) { if (s > 0) mandaVm(s); return; }
+      if ((st.psstN[s] || 0) >= PSST_MAX) { if (s !== MIO) mandaVm(s); return; }
       st.psstN[s] = (st.psstN[s] || 0) + 1;
       var n = ++H.psstN; st.psst = { s: s, k: k, n: n };
       bcast();
@@ -791,12 +836,20 @@
     }
     function mandaVm(s) { if (rete && H.posti[s]) rete.inviaVeloce({ t: "vm", to: H.posti[s], vm: extra(vistaDa(H.st, s), s) }); }   // solo a lui, e non resta sul server
     function mandaGuarda(id) { if (rete && H.st) rete.inviaVeloce({ t: "vm", to: id, vm: extra({ guardo: true, pieno: pieno() }, null) }); }
+    // la mia vista: dal mio posto; se tengo la partita guardando (vice che guardava), come chi guarda (🔄 per cambiare)
+    function mostraMia() {
+      if (H.chiuso || !H.st) return;
+      if (MIO >= 0) return Cl.setVm(extra(vistaDa(H.st, MIO), MIO));
+      Cl.setVm(extra(vistaDa(pieno(), H.gSeat, true), null));
+    }
     function bcast() {
       if (H.chiuso) return;
       if (!H.st) return aggiornaLobby();
-      for (var s = 1; s <= 3; s++) if (!H.bot[s]) mandaVm(s);
+      ricordaOra();
+      altri().forEach(function (s) { if (!H.bot[s]) mandaVm(s); });
       H.guarda.forEach(function (g) { mandaGuarda(g.id); });
-      Cl.setVm(extra(vistaDa(H.st, 0), 0));
+      vici();
+      mostraMia();
     }
 
     // ---- la partita ----
@@ -814,8 +867,18 @@
       distribuisci(st);
       H.via = {}; H.detto = false; H.avanti = {}; H.avviso = null;
       if (im.coppie === "caso") avviso("🎲 Coppie: " + st.nomi[0] + " e " + st.nomi[2] + " contro " + st.nomi[1] + " e " + st.nomi[3]);
-      if (rete) rete.invia({ t: "inCorso" });   // sul server resta solo "partita in corso" (niente carte di nessuno)
+      if (rete) rete.invia({ t: "inCorso", fase: "gioco" });   // sul server resta solo "partita in corso" (niente carte di nessuno)
       bcast(); giro();
+    }
+    // l'ultima carta è giocata: prima si vede la giocata, poi le carte rimaste, poi i punti
+    function chiudiDopo(st, ms) {
+      H.attesa = true;
+      dopo(function () {
+        if (H.st !== st) return;
+        st.presa = null; st.fumo = null;
+        if (st.tavolo.length && st.ultimaPresa != null) { st.resto = squadra(st.ultimaPresa); bcast(); dopo(function () { if (H.st === st) chiudiMano(); }, 1600); }
+        else chiudiMano();
+      }, ms);
     }
     function passo(seat, id, presa) {
       var st = H.st;
@@ -826,16 +889,7 @@
       else if (ev.sette) st.fumo = { s: seat, txt: pesca(FRASI.sette), forte: true };
       else if (ev.somma && H.bot[seat] && Math.random() < 0.5) st.fumo = { s: seat, txt: pesca(FRASI.somma) };
       bcast();
-      if (maniVuote(st)) {   // l'ultima carta: prima si vede la giocata, poi le carte rimaste, poi i punti
-        H.attesa = true;
-        dopo(function () {
-          if (H.st !== st) return;
-          st.presa = null; st.fumo = null;
-          if (st.tavolo.length && st.ultimaPresa != null) { st.resto = squadra(st.ultimaPresa); bcast(); dopo(function () { if (H.st === st) chiudiMano(); }, 1600); }
-          else chiudiMano();
-        }, ev.presa ? (ev.scopa ? 1500 : 1100) : 800);
-        return true;
-      }
+      if (maniVuote(st)) { chiudiDopo(st, ev.presa ? (ev.scopa ? 1500 : 1100) : 800); return true; }
       if (ev.presa) { H.attesa = true; dopo(function () { if (H.st !== st) return; H.attesa = false; st.presa = null; st.fumo = null; bcast(); giro(); }, ev.scopa ? 1500 : 1000); }
       else giro();
       return true;
@@ -848,7 +902,7 @@
         dopo(function () {
           if (H.st !== st || st.fase !== "gioco" || st.turno !== s || st.giocate !== g || H.attesa || !H.bot[s]) return;
           var m = mossaBot(st, s, diff()); if (m) passo(s, m.carta, m.presa);
-        }, Math.max(750 + Math.random() * 400, Cl.V.dealFino() - Date.now() + 250));   // i bot aspettano la fine della distribuzione
+        }, Math.max(750 + Math.random() * 400, Cl.V.dealFino() - Date.now() + 250, respiroFino - Date.now()));   // i bot aspettano la fine della distribuzione (e il respiro dopo una ripresa)
         return;
       }
       // tocca a un amico: se non gioca per tanto (distratto, telefono in tasca) gioca il Bot al posto suo, una carta
@@ -903,9 +957,9 @@
       });
       salvaCoppie(H.storico);
       // per la Classifica della serata e gli XP: i nomi, chi vince al posto 1 (pari: tutti al posto 1)
-      if (t.risultato) t.risultato([0, 2, 1, 3].map(function (k) { var x = { nome: st.nomi[k], pos: (k % 2 === v || pari) ? 1 : 3 }; if (k > 0 && H.bot[k]) x.bot = true; return x; })
+      if (t.risultato) t.risultato([0, 2, 1, 3].map(function (k) { var x = { nome: st.nomi[k], pos: (k % 2 === v || pari) ? 1 : 3 }; if (k !== MIO && H.bot[k]) x.bot = true; return x; })
         .sort(function (a, b) { return a.pos - b.pos; }));
-      if (rete) rete.invia({ t: "fine" });   // (sul server: la partita è finita, senza carte)
+      if (rete) rete.invia({ t: "fine", fase: "fine" });   // (sul server: la partita è finita, senza carte)
     }
     function rientra(s) {   // chi era uscito a partita in corso torna al suo posto (al posto del bot)
       var v = H.via[s]; delete H.via[s];
@@ -918,7 +972,18 @@
     function tornaSaletta() {
       if (!H.st || H.st.fase !== "fine") return;
       fermaTutto();
-      H.st = null; H.via = {}; H.attesa = false; H.avanti = {}; H.detto = false; H.avviso = null; H.giocateTurno = -1;
+      H.st = null; H.via = {}; H.attesa = false; H.avanti = {}; H.detto = false; H.avviso = null; H.giocateTurno = -1; attesi = {};
+      if (MIO !== 0) {   // (tenevo la partita al posto di un altro: in saletta torno al posto 0, chi era lì prende il mio)
+        var chi0 = H.posti[0] ? { id: H.posti[0], nome: H.nomi[0], omino: H.avi[0] } : null;
+        var mioPrima = MIO;
+        H.posti[0] = H.nomi[0] = H.avi[0] = null; MIO = 0;
+        if (chi0) {
+          var l0 = mioPrima > 0 && !H.posti[mioPrima] ? mioPrima : postoLibero();
+          if (l0 >= 0) { H.posti[l0] = chi0.id; H.nomi[l0] = chi0.nome; H.avi[l0] = chi0.omino; }
+          else if (!guardaDi(chi0.id)) H.guarda.push(chi0);
+        }
+      }
+      H.bot[0] = false;
       for (var s = 1; s <= 3; s++) H.bot[s] = true;
       if (imp().coppie === "giro" || H.scambia) ruota();   // compagni a giro (ognuno gioca con tutti) o "🔁 Rivincita a coppie scambiate"
       H.scambia = false;
@@ -930,7 +995,7 @@
     function promuovi() {
       H.guarda = H.guarda.filter(function (g) {
         if (g.sala) return true;
-        var s = postoLibero(); if (!s) return true;
+        var s = postoLibero(); if (s < 0) return true;
         H.posti[s] = g.id; H.nomi[s] = g.nome; H.avi[s] = g.omino || null; return false;
       });
     }
@@ -950,7 +1015,7 @@
 
     // ---- la saletta ----
     function seggi() {
-      return [{ nome: mioNome(), id: "host", omino: mioAv() }].concat([1, 2, 3].map(function (s) { return H.posti[s] ? { nome: H.nomi[s], id: H.posti[s], omino: H.avi[s] } : null; }));
+      return [{ nome: mioNome(), id: IO, omino: mioAv() }].concat([1, 2, 3].map(function (s) { return H.posti[s] ? { nome: H.nomi[s], id: H.posti[s], omino: H.avi[s] } : null; }));
     }
     function storicoLobby() {   // il record delle coppie di adesso (se hanno già giocato insieme in questa stanza)
       var o = [];
@@ -964,12 +1029,13 @@
     }
     function aggiornaLobby() {
       if (H.st || H.chiuso) return;
+      ricorda(null);   // (in saletta niente da riprendere)
       if (rete) rete.invia({ t: "lobby", codice: H.codice, pronta: H.pronta, seggi: seggi(), guarda: H.guarda, coppie: imp().coppie || "scelte", storico: storicoLobby(), psst: !!imp().psst });
       disegnaLobby();
     }
     function disegnaLobby() {
       if (H.st || H.chiuso) return;
-      renderLobby(t, { codice: H.codice, pronta: H.pronta, sonoHost: true, myId: "host", seggi: seggi(), guarda: H.guarda, coppie: imp().coppie || "scelte", storico: storicoLobby(), psst: !!imp().psst }, {
+      renderLobby(t, { codice: H.codice, pronta: H.pronta, sonoHost: true, myId: IO, seggi: seggi(), guarda: H.guarda, coppie: imp().coppie || "scelte", storico: storicoLobby(), psst: !!imp().psst }, {
         onComincia: comincia,
         onCambia: function () { if (!H.st) { ruota(); aggiornaLobby(); } },
         onCaso: function () { if (!H.st) { sorteggia(true); aggiornaLobby(); } },
@@ -977,17 +1043,55 @@
       });
     }
 
-    var rete = SGNet.ospita(ID, {
+    // ---- la ripresa (t.ripresa): stessa mano (le carte in mano a tutti, il tavolo, le prese), stessi punti, stessi posti e
+    // stesse coppie. Gli amici restano al loro posto e rientrano da soli (il join gli rimanda le sue carte); chi non torna in
+    // 30 s lascia il posto al Bot (come quando se ne va: se torna, se lo riprende). Se la tengo io al posto dell'host sparito
+    // (t.ripresa.daRiserva) gioco dal mio posto e il suo resta a lui
+    var RIP = t.ripresa && t.ripresa.stato && t.ripresa.stato.scopone;
+    if (RIP && RIP.st && Array.isArray(RIP.st.mani) && RIP.st.fase !== "lobby") {
+      var oraR = t.ripresa.ora || function (x) { return x; }, SQ = t.ripresa.soloQui || null, st0 = H.st = RIP.st;
+      st0.presa = null; st0.fumo = null; st0.psst = null;   // (una presa che si stava guardando è già fatta: si va avanti)
+      st0.omini = st0.omini || {};
+      if (SQ && SQ.omini) st0.omini = SQ.omini;
+      ["posti", "nomi", "avi", "bot"].forEach(function (k) {
+        var x = (k === "avi" && SQ && SQ.avi) || RIP[k] || {};
+        for (var s = 0; s <= 3; s++) H[k][s] = k === "bot" ? !!x[s] : (x[s] || null);
+      });
+      H.via = RIP.via && typeof RIP.via === "object" ? RIP.via : {};
+      H.guarda = Array.isArray(RIP.guarda) ? RIP.guarda : [];
+      if (SQ && SQ.via) Object.keys(H.via).forEach(function (k) { if (SQ.via[k]) H.via[k].omino = SQ.via[k]; });
+      if (SQ && SQ.guarda) H.guarda.forEach(function (g) { if (SQ.guarda[g.id]) g.omino = SQ.guarda[g.id]; });
+      H.pid = RIP.pid || ""; H.avanti = RIP.avanti && typeof RIP.avanti === "object" ? RIP.avanti : {};
+      H.nAvviso = +RIP.nAvviso || 0; H.detto = !!RIP.detto; H.psstN = +RIP.psstN || 0; H.rip = (+RIP.rip || 0) + 1; H.gSeat = +RIP.gSeat || 0;
+      H.scad = RIP.scad ? oraR(RIP.scad) : 0;
+      // chi teneva la partita (il suo posto e il suo id); se adesso la tengo io da un altro posto (host di riserva),
+      // il suo posto diventa quello di un amico che rientra (o del Bot) e il mio quello dove giocavo
+      var mioPrima = RIP.mio >= -1 && RIP.mio <= 3 ? +RIP.mio : 0, ioPrima = RIP.io || "host";
+      MIO = mioPrima;
+      if (ioPrima !== IO) {
+        var sMio = [0, 1, 2, 3].filter(function (s) { return H.posti[s] === IO; })[0];
+        if (mioPrima >= 0) { H.posti[mioPrima] = ioPrima; H.nomi[mioPrima] = st0.nomi[mioPrima]; H.avi[mioPrima] = st0.omini[mioPrima] || null; H.bot[mioPrima] = false; }
+        Object.keys(H.via).forEach(function (k) { if (H.via[k] && H.via[k].id === IO) delete H.via[k]; });
+        if (sMio != null) { MIO = sMio; H.posti[MIO] = H.nomi[MIO] = H.avi[MIO] = null; H.bot[MIO] = false; }
+        else MIO = -1;   // (guardavo: tengo la partita guardando, il posto dell'host resta suo)
+        H.guarda = H.guarda.filter(function (g) { return g.id !== IO; });
+      }
+      altri().forEach(function (s) { if (H.posti[s] && !H.bot[s]) attesi[H.posti[s]] = 1; });
+      H.guarda.forEach(function (g) { attesi[g.id] = 1; });
+    }
+
+    var cbR = {
       onCodice: function (c) { H.codice = c; if (!H.st) aggiornaLobby(); },
       onConnesso: function () { H.pronta = true; if (!H.st) aggiornaLobby(); },
       // (arriva solo se il primo collegamento non riesce: a partita cominciata la rete si ricollega da sola)
       onErrore: function () { if (H.pronta || H.st || H.chiuso) return; H.chiuso = true; Cl.chiuso = true; fermaTutto(); if (rete) rete.chiudi(); erroreRete(t, "Non riesco ad aprire la stanza.", function () { hostScopone(t); }); },
       // un amico sparito senza salutare: se è il suo turno lo diciamo (dopo 20 secondi arriva onAddio e gioca il Bot)
-      onForse: function (id) { var s = seatDi(id); if (s > 0 && H.st && H.st.fase === "gioco" && !H.bot[s]) { avviso("📶 " + H.nomi[s] + " si sta ricollegando…"); bcast(); } },
+      onForse: function (id) { var s = seatDi(id); if (s >= 0 && H.st && H.st.fase === "gioco" && !H.bot[s]) { avviso("📶 " + H.nomi[s] + " si sta ricollegando…"); bcast(); } },
       onAddio: function (id) {
+        delete attesi[id];
         var g0 = H.guarda.length; H.guarda = H.guarda.filter(function (g) { return g.id !== id; });
         var s = seatDi(id);
-        if (s <= 0) { if (H.guarda.length !== g0 && !H.st) aggiornaLobby(); return; }
+        if (s < 0) { if (H.guarda.length !== g0 && !H.st) aggiornaLobby(); return; }
         var nome = H.nomi[s];
         H.posti[s] = null; H.nomi[s] = null; H.avi[s] = null;
         if (H.st && H.st.fase !== "fine") {   // il suo posto passa a un Bot (se torna, se lo riprende)
@@ -999,30 +1103,44 @@
       },
       onMsg: function (id, m) {
         if (H.chiuso || !m || !m.t) return;
+        delete attesi[id];   // (ripresa: si è rifatto vivo)
         if (m.t === "join") {
           var nome = String(m.nome || "Amico").slice(0, 16), s = seatDi(id), g = guardaDi(id);
-          if (s > 0) { if (H.st) mandaVm(s); else aggiornaLobby(); return; }   // chi rientra (pagina ricaricata) ritrova il suo posto e le sue carte
-          if (H.st) for (var k = 1; k <= 3; k++) if (H.via[k] && H.via[k].id === id && !H.posti[k]) { rientra(k); return; }
+          if (s >= 0) { if (H.st) mandaVm(s); else aggiornaLobby(); return; }   // chi rientra (pagina ricaricata) ritrova il suo posto e le sue carte
+          if (H.st) { var kv = altri().filter(function (k) { return H.via[k] && H.via[k].id === id && !H.posti[k]; })[0]; if (kv != null) { rientra(kv); return; } }
           if (g) { if (H.st) mandaGuarda(id); else aggiornaLobby(); return; }
           // nella Sala chi non è stato scelto in "Chi gioca?" guarda (il suo id va nella foto, tra chi guarda)
           if (t.puoSedersi && !t.puoSedersi(id, nome)) { H.guarda.push({ id: id, nome: nome, sala: true }); if (H.st) mandaGuarda(id); else aggiornaLobby(); return; }
           var om = C().avatarValido(m.omino);
-          var libero = H.st ? 0 : postoLibero();
-          if (libero) { H.posti[libero] = id; H.nomi[libero] = nome; H.avi[libero] = om; }
+          var libero = H.st ? -1 : postoLibero();
+          if (libero >= 0) { H.posti[libero] = id; H.nomi[libero] = nome; H.avi[libero] = om; }
           else if (H.guarda.length < 12) H.guarda.push({ id: id, nome: nome, omino: om });   // partita cominciata o tavolo pieno: guarda ed entra alla prossima
           if (H.st) mandaGuarda(id); else aggiornaLobby();
           return;
         }
         if (!H.st) return;
-        if (m.t === "gioca") { var sm = seatDi(id); if (sm > 0 && !H.bot[sm] && !passo(sm, m.carta, m.presa)) mandaVm(sm); }   // mossa non valida: gli rimando la sua vista
+        if (m.t === "gioca") { var sm = seatDi(id); if (sm >= 0 && !H.bot[sm] && !passo(sm, m.carta, m.presa)) mandaVm(sm); }   // mossa non valida: gli rimando la sua vista
         else if (m.t === "avanti") voto(id, m.m);
-        else if (m.t === "psst") { var sp = seatDi(id); if (sp > 0) psstDa(sp, m.k); }
+        else if (m.t === "psst") { var sp = seatDi(id); if (sp >= 0) psstDa(sp, m.k); }
       }
-    });
+    };
+    var rete = SGNet.ospita(ID, cbR, H.st ? { ripresa: true } : null);   // (ripresa: gli amici restano al tavolo, non tornano in saletta)
     if (!rete) return senzaRete(t);
     // (per le prove) lo stato vero della partita su questo telefono
-    window.__SCOPONEhost = { st: function () { return H.st; }, H: H };
-    disegnaLobby();
+    window.__SCOPONEhost = { st: function () { return H.st; }, H: H, mio: function () { return MIO; }, io: IO };
+    if (!H.st) { disegnaLobby(); return; }
+    // (ripresa) il tavolo com'era, a ognuno le sue carte; dopo il respiro si va avanti da dove si era
+    var stR = H.st;
+    if (rete) rete.invia(stR.fase === "fine" ? { t: "fine", fase: "fine" } : { t: "inCorso", fase: "gioco" });   // (sul server solo a che punto è la partita, senza carte)
+    if (stR.fase === "gioco") {
+      if (maniVuote(stR)) { bcast(); chiudiDopo(stR, RESPIRO); }   // l'ultima carta era già giocata: si chiude la mano
+      else { respiroFino = Date.now() + RESPIRO; bcast(); giro(); }   // tocca a chi toccava (i Bot dopo il respiro)
+    } else {
+      if (stR.fase === "fineround") H.scad = Math.max(H.scad || 0, Date.now() + RESPIRO + 1000);   // il riepilogo, col tempo che restava (almeno 6 s)
+      bcast();
+    }
+    // chi non si rifà vivo in 30 s lascia il posto al Bot (come quando se ne va; se torna, se lo riprende)
+    dopo(function () { if (H.st && !Cl.V.uscito()) Object.keys(attesi).forEach(function (id) { cbR.onAddio(id); }); }, 30000);   // (non se il core ha già portato via il gioco)
   }
 
   // ========================================================
@@ -1048,7 +1166,7 @@
     function mostraGuardo() {
       var g = S.guardo; if (!g || !g.pieno) return;
       var v = vistaDa(g.pieno, S.seat, true);
-      v.pid = g.pid; v.avviso = g.avviso; v.avanti = g.avanti; v.storico = g.storico;
+      v.pid = g.pid; v.rip = g.rip; v.avviso = g.avviso; v.avanti = g.avanti; v.storico = g.storico;
       Cl.setVm(v);
     }
     if (t.nomeProfilo && t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
@@ -1616,11 +1734,11 @@
     // la riga di "⏩ Avanti" sotto il riepilogo della mano: si rifà solo quando cambia qualcosa (niente lampeggio)
     function avanti() {
       var st = FIN.st, A = st.avanti || {}, gioco = !st.guardo, toccato = gioco && (!!A.mio || FIN.mio === st.manoN);
-      var k = st.manoN + "|" + (toccato ? 1 : 0) + "|" + (A.si || 0) + "|" + (A.tot || 0);
+      var k = st.manoN + "|" + (st.rip || 0) + "|" + (toccato ? 1 : 0) + "|" + (A.si || 0) + "|" + (A.tot || 0);
       if (FIN.kA === k || !FIN.box) return;
       FIN.kA = k;
       while (FIN.box.firstChild) FIN.box.removeChild(FIN.box.firstChild);
-      var kC = "scopone|" + (st.pid || "") + "|" + st.manoN, nodo;
+      var kC = "scopone|" + (st.pid || "") + "|" + st.manoN + "|" + (st.rip || 0), nodo;   // (rip: dopo una ripresa il conto riparte giusto su tutti)
       if (gioco && !toccato) nodo = el("button", { class: "btn btn-primario", text: "⏩ Avanti", onclick: function () { FIN.mio = st.manoN; cb.onVoto(); avanti(); } });
       else nodo = el("p", { class: "modulo-nota" });
       FIN.box.appendChild(nodo);

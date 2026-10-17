@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 231,
+    data: "18 ottobre 2026",
+    titolo: "Scopone: la partita non si perde 🔁",
+    descrizione: [
+      "Se a chi ha aperto la partita si ricarica la pagina o si chiude l'app, riaprendola la mano continua da dove era: le stesse carte in mano a tutti, lo stesso tavolo, le stesse prese e gli stessi punti, e tocca a chi toccava. Gli amici leggono «🔁 Paky è tornato: la partita riprende da dove era».",
+      "Se si stava guardando il riepilogo della mano, si resta lì e i punti non si danno due volte; poi la mano dopo parte come sempre.",
+      "Se il telefono di chi ha aperto la partita si spegne del tutto, dopo pochi secondi un amico seduto al tavolo porta avanti la partita dal suo posto («👑 Ora la partita la tiene Giulia»). Chi torna si riprende il suo posto e le sue carte; se non torna, al suo posto gioca un Bot."
+    ]
+  },
+  {
     v: 230,
     data: "18 ottobre 2026",
     titolo: "Chi di Noi?: la partita non si perde 🔁",

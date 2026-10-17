@@ -283,7 +283,7 @@
 
   // ===== sp6: chi si distrae e l'host che ricarica =====
   // (il tempo del turno qui è 8 secondi invece di 60, così la prova non aspetta un minuto)
-  COPIONE.aggiungi("sp6", { nome: "Scopone online: chi non gioca per troppo (gioca il Bot per lui), l'host ricarica (tutti in saletta, stesso codice)", fai: async function () {
+  COPIONE.aggiungi("sp6", { nome: "Scopone online: chi non gioca per troppo (gioca il Bot per lui), l'host ricarica (la partita riprende, stesso codice)", fai: async function () {
     await sorgente(); SRC = SRC.replace("var TEMPO_TURNO = 60;", "var TEMPO_TURNO = 8;");
     var P = await W.apriTel("Paky", opzOn({ x: 0 }));
     var C = await apriStanzaScopone(P);
@@ -301,14 +301,22 @@
     await W.dorme(600);
     var v = visto.stop(); if (!v) no("Paky non legge «… ci pensava troppo: ha giocato il Bot per lui»");
     if (hostSt(P).nomi[sL] !== "Luca") no("il posto di Luca è passato al Bot per sempre");
-    // l'host ricarica la pagina: la stanza si riapre con lo stesso codice e tutti tornano in saletta
+    // l'host ricarica la pagina: dal 18 ott (Passo 5) la partita RIPRENDE da dove era (stesso codice, stessa mano, niente
+    // saletta per nessuno), e Luca ritrova le sue carte e il suo posto
+    var prima = hostSt(P), sl = false;
     var P2 = await W.ricarica("Paky");
-    if (!await W.aspetta(function () { return A.codiceSaletta(P2) === C && stato(G) === "lobby" && stato(L) === "lobby"; }, 20000)) no("dopo la ricarica dell'host non sono tutti nella saletta " + C + " (Paky «" + T(P2).slice(0, 60) + "», Giulia «" + T(G).slice(0, 60) + "»)");
-    if (!await W.aspetta(function () { return (A.vm(C).seggi || []).filter(Boolean).length === 3; }, 10000)) no("dopo la ricarica in saletta non sono in 3");
-    if (!W.clicca(P2, /Comincia/, ".sl-go") && !W.clicca(P2, /Comincia/)) no("dopo la ricarica Paky non trova «Comincia»");
-    if (!await W.aspetta(function () { return hostSt(P2) && stato(G) === "gioco" && stato(L) === "gioco"; }, 10000)) no("dopo la ricarica non si riparte");
+    var ok = await W.aspetta(function () {
+      if (stato(G) === "lobby" || stato(L) === "lobby") sl = true;
+      var s = hostSt(W.finestra("Paky"));
+      return s && s.fase === "gioco" && stato(W.finestra("Paky")) === "gioco" && stato(G) === "gioco" && stato(L) === "gioco" && s.manoN === prima.manoN;
+    }, 20000);
+    if (!ok) no("dopo la ricarica dell'host la partita non riprende (Paky «" + T(W.finestra("Paky")).slice(0, 60) + "», Giulia «" + T(G).slice(0, 60) + "»)");
+    if (sl) no("dopo la ricarica dell'host qualcuno è passato dalla saletta");
+    var s2 = hostSt(W.finestra("Paky"));
+    if (s2.nomi[sL] !== "Luca") no("dopo la ricarica il posto di Luca non è suo (" + JSON.stringify(s2.nomi) + ")");
+    if (!await W.aspetta(function () { return manoDi(L) === ids(hostSt(W.finestra("Paky")).mani[sL]); }, 8000)) no("dopo la ricarica Luca non ha le sue carte");
     var e = errori(); if (e.length) no("errori: " + e.slice(0, 3).join(" / "));
-    return "Luca distratto: avviso e il Bot gioca una carta per lui (il posto resta suo); Paky ricarica: tutti nella saletta " + C + " e si riparte";
+    return "Luca distratto: avviso e il Bot gioca una carta per lui (il posto resta suo); Paky ricarica: la partita riprende (stesso codice " + C + ", stessa mano, Luca al suo posto con le sue carte)";
   } });
 
   // ===== sp5: il motore =====
