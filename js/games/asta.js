@@ -2615,7 +2615,10 @@
   }
   // manda un tocco: da: { offerta, leader } (l'offerta come la vedo io), prezzo: dove voglio arrivare
   function mandaTocco(cb, n, da, prezzo, ridisegna) {
-    var ora = Date.now(), tk = Math.max((cb._tk || 0) + 1, ora); cb._tk = tk;
+    // il numero sale sempre, anche dopo una ricarica con l'orologio del telefono tornato indietro: mai sotto l'ultimo tocco
+    // mio che l'host ha già visto (asta.tk nella foto), se no l'host lo scarterebbe come un doppione
+    var fa = cb._vmA && cb._vmA.asta, visto = (fa && fa.tk && +fa.tk[cb.myId]) || 0;
+    var ora = Date.now(), tk = Math.max((cb._tk || 0) + 1, ora, visto + 1); cb._tk = tk;
     var c = cb._coda && cb._coda.n === n ? cb._coda : (cb._coda = { n: n, tocchi: [] });
     c.tocchi.push({ tk: tk, vista: da.offerta, vl: String(da.leader || ""), prezzo: prezzo, ora: ora });
     cb.onRilancia({ n: n, prezzo: prezzo, vista: da.offerta, vl: String(da.leader || ""), tk: tk });
@@ -2632,8 +2635,10 @@
     var tk = +m.tk; a.tk = a.tk || {};
     if (!(tk > (a.tk[id] || 0))) return "doppio";
     if (m.vista !== a.offerta || String(m.vl || "") !== String(a.leader || "")) {
-      // partiva da una mia offerta più alta di quella di adesso: è il seguito di un mio tocco ancora per strada
-      if (m.vl === String(id) && a.leader !== id && m.vista >= a.offerta) { a.attesa = a.attesa || {}; (a.attesa[id] = a.attesa[id] || []).push(m); return "attesa"; }
+      // partiva da una mia offerta che non c'è ancora (più alta di quella di adesso, o uguale ma di un altro): è il seguito di
+      // un mio tocco ancora per strada. Vale anche se l'offerta più alta è già mia: coi tocchi arrivati in disordine il terzo
+      // può arrivare prima del secondo (si tiene da parte, se no il secondo sembrerebbe un doppione e si perderebbero tutti e due)
+      if (m.vl === String(id) && m.vista >= a.offerta) { a.attesa = a.attesa || {}; (a.attesa[id] = a.attesa[id] || []).push(m); return "attesa"; }
       a.tk[id] = tk; return "tardi";
     }
     a.tk[id] = tk;
