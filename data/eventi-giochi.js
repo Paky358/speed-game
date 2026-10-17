@@ -132,7 +132,7 @@
     // ancora classici, console e giochi da telefono
     { anno: 1952, titolo: "A Cambridge si gioca a tris contro un computer: è «OXO»", fatto: "La casella si sceglieva girando la rotella di un telefono, e lo schermo era fatto di pochi puntini." },
     { anno: 1971, titolo: "Esce «Computer Space», il primo videogioco a gettoni venduto in serie", fatto: "Lo fanno i futuri fondatori dell'Atari: il mobile sembra un'astronave, ma pochi capiscono come si gioca." },
-    { anno: 1982, titolo: "Esce «Ms. Pac-Man», la signora Pac-Man col fiocco", fatto: "Nasce da una modifica fatta di nascosto da alcuni studenti americani, poi comprata e pubblicata ufficialmente." },
+    { anno: 1982, titolo: "Esce «Ms. Pac-Man», la signora Pac-Man col fiocco", fatto: "Nasce come kit per modificare Pac-Man, fatto da una piccola ditta americana: poi viene comprato e pubblicato ufficialmente." },
     { anno: 1986, titolo: "Esce «Bubble Bobble»", fatto: "Due draghetti, Bub e Bob, chiudono i nemici nelle bolle: si gioca meglio in due." },
     { anno: 1986, titolo: "Esce «Out Run» nelle sale giochi", fatto: "Una Ferrari decappottabile con la ragazza accanto, e la musica si sceglie dalla radio prima di partire." },
     { anno: 1987, titolo: "In Giappone esce il primo «Mega Man»", fatto: "Lì si chiama Rockman e sua sorella Roll: insieme fanno 'rock and roll'." },
