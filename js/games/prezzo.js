@@ -1823,7 +1823,9 @@
     postiOnline: MAX_ON,   // fino a 8 nello studio: nella Sala, se siete di più, l'host sceglie chi gioca
     modi: [
       { modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Da 2 a 8, a turno", amici: true, min: 2 },
-      { modo: "bot", icona: "🤖", nome: "Contro il Bot", sotto: "Tu contro i Bot, come in TV", min: 1 }
+      // diretto: si parte subito (due tocchi dalla home) con le regole di partenza di impostazioni(): 📺 Come in TV, Puntata,
+      // 3 Bot medi, offerte a vista, tutte le categorie
+      { modo: "bot", icona: "🤖", nome: "Contro il Bot", sotto: "Tu contro 3 Bot, come in TV", min: 1, diretto: true }
     ],
     regole: [
       "Si indovina il <b>prezzo</b> di cose vere: la spesa, il caffè al bar, lo smartphone, la Vespa, una settimana al mare… Sono prezzi medi in Italia.",

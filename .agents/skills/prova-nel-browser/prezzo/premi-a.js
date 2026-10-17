@@ -197,8 +197,7 @@
     var tess = await W.aspetta(function () { return [].filter.call(w.document.querySelectorAll(".tessera"), function (t) { return /Prezzo è Giusto/.test(t.textContent); })[0]; }, 5000);
     tess.click(); await W.dorme(300);
     if (!W.clicca(w, /Contro il Bot/)) no("niente «🤖 Contro il Bot»");
-    await W.dorme(300);
-    if (!W.clicca(w, /Comincia/)) no("niente «Comincia»");
+    if (!await W.aspetta(function () { return w.__prezzoH && w.__prezzoH.fase !== "lobby"; }, 5000)) no("la partita col Bot non parte al secondo tocco");
     var sp = spiaPremi("Paky"), viste = PZ.spiaFasi("Paky"), vistoMonte = 0, vistePalle = 0, vistoPan = {};
     var ok = await giocaTutti(["Paky"], function () { return w.__prezzoH && w.__prezzoH.fase === "fine" && !w.document.querySelector(".st-vista"); }, { ms: 480000,
       offerta: function (pr, H) { return H.iOff === 1 ? pr * 0.99 : pr * (0.6 + Math.random() * 0.35); },
@@ -406,7 +405,7 @@
       var f = document.getElementById("tel-Paky"); f.style.width = wh[0] + "px"; f.style.height = wh[1] + "px"; w.dispatchEvent(new w.Event("resize"));
       var tess = await W.aspetta(function () { return [].filter.call(w.document.querySelectorAll(".tessera"), function (t) { return /Prezzo è Giusto/.test(t.textContent); })[0]; }, 5000);
       tess.click(); await W.dorme(300);
-      W.clicca(w, /Contro il Bot/); await W.dorme(300); W.clicca(w, /Comincia/);
+      W.clicca(w, /Contro il Bot/); await W.dorme(300);   // (diretto: parte da solo, niente «Comincia»)
       var visti = {}, guai = {}, fatti = {};
       await giocaTutti(["Paky"], function () { var H = w.__prezzoH; return H && (H.fase === "fine" || H.fase === "ruota"); }, { ms: 300000, passo: 500, ognuno: async function () {
         var H = w.__prezzoH; if (!H || H.fase !== "premio" || !H.premio) return;

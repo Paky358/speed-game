@@ -3,7 +3,7 @@
 //
 // pz1: le regole senza grafica (Offerta senza sforare e col margine del 2%, pari merito, PREZZO GIUSTO, «+1 €» cattivo,
 //      tutti sopra, Solo il prezzo sopra o sotto, ultimo doppio, Ruota del 100, piano delle puntate, i prodotti e le vetrine).
-// pz2: «🤖 Contro il Bot», 📺 Come in TV ⚡ Veloce: dalla home alla fine (Offerte, Più o meno, Ruota, Vetrina, carrello, classifica del core).
+// pz2: «🤖 Contro il Bot» (diretto: due tocchi), 📺 Come in TV ⚡ Veloce: dalla home alla fine (Offerte, Più o meno, Ruota, Vetrina, carrello, classifica del core).
 // pz3: «🤖 Contro il Bot», 🎯 Solo il prezzo ⚡ Veloce (6 oggetti, l'ultimo doppio), offerte segrete.
 // pz4: sullo stesso telefono in 3, 📺 ⚡ Veloce: a turno («📱 Sono Luca, tocca a me»), ruota a turno, vetrina passandosi il telefono.
 // pz5: online nella Sala con 3 telefoni, 📺 ⚡ Veloce a vista: partita intera, il «+1 €» cattivo, Luca ricarica mentre si offre,
@@ -13,6 +13,7 @@
 // pz8: le misure: 360x640 e 412x915 in ogni passo (niente scorre, il maxischermo si vede tutto sopra il pannello).
 // pz9: online nella Sala con 8 telefoni, 📺 Come in TV ⚡ Veloce (8 leggii, Ruota e Vetrina in 8).
 // pz10: «🤖 Contro il Bot» con un secondo gioco a premi finto: chi vince l'Offerta sceglie tra due.
+// pz11: «🤖 Contro il Bot» parte in due tocchi (gioco → Contro il Bot, niente impostazioni) con le regole di partenza.
 // (pz8 a una misura sola: W.__pz8misure = [[360, 640]])
 // Le regole della partita per la prova: w.__imp (le legge solo chi apre, all'avvio), con apriTel(nome, { spiaPrezzo: true }).
 (function () {
@@ -134,9 +135,9 @@
     var w = await W.apriTel(nome, { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = imp; } });
     await apriGioco(w);
     if (!W.clicca(w, /Contro il Bot/)) no("in «Come giocate?» non c'è «🤖 Contro il Bot» (" + T(w).slice(0, 120) + ")");
-    await W.dorme(300);
-    if (!W.clicca(w, /Comincia/)) no("non trovo «Comincia» nelle impostazioni del Bot");
-    if (!await W.aspetta(function () { return w.__prezzoH && w.__prezzoH.fase !== "lobby"; }, 5000)) no("la partita col Bot non comincia");
+    // «🤖 Contro il Bot» è diretto: due tocchi dalla home (gioco → Contro il Bot) e si parte, senza le impostazioni
+    // (le regole della prova arrivano da w.__imp, messe dalla spia all'avvio)
+    if (!await W.aspetta(function () { return w.__prezzoH && w.__prezzoH.fase !== "lobby"; }, 5000)) no("la partita col Bot non parte al secondo tocco (" + T(w).slice(0, 160) + ")");
     return w;
   }
   async function stessoTelefono(amici, imp) {
@@ -444,8 +445,7 @@
     w.SG_PREZZO_PREMI.finto = Object.assign({}, w.SG_PREZZO_PREMI.piuomeno, { nome: "Il Finto", icona: "🧪", regola: "Una copia di Più o meno, per la prova" });
     await apriGioco(w);
     if (!W.clicca(w, /Contro il Bot/)) no("niente «🤖 Contro il Bot»");
-    await W.dorme(300);
-    if (!W.clicca(w, /Comincia/)) no("niente «Comincia»");
+    if (!await W.aspetta(function () { return w.__prezzoH && w.__prezzoH.fase !== "lobby"; }, 5000)) no("la partita col Bot non parte al secondo tocco");
     var spia = spiaFasi("Paky"), sceltoIo = false, tipi = {};
     // Paky offre preciso nella prima Offerta (vince lui e sceglie); il secondo gioco a premi è l'altro (niente scelta)
     var ok = await giocaTutti(["Paky"], function () { var H = w.__prezzoH; return H.fase === "punti" && H.iPremio >= 2 || H.fase === "fine"; }, { ms: 300000,
@@ -457,6 +457,37 @@
     if (!sceltoIo) no("Paky ha vinto l'Offerta ma non ha scelto lui");
     if (!tipi.finto || !tipi.piuomeno) no("i due giochi a premi non sono usciti tutti e due (si sceglie tra due, poi l'altro): " + Object.keys(tipi));
     return "Paky ha scelto · giochi: " + Object.keys(tipi).join(", ") + errori();
+  } });
+
+  // ===================== pz11: «🤖 Contro il Bot» in due tocchi, con le regole di partenza =====================
+  COPIONE.aggiungi("pz11", { nome: "Prezzo: 🤖 Contro il Bot parte in due tocchi (📺 Come in TV, Puntata, 3 Bot medi, a vista, tutte le categorie)", fai: async function () {
+    var w = await W.apriTel("Paky", { x: 0, spiaPrezzo: true });   // niente w.__imp: le regole sono quelle di partenza del gioco
+    await apriGioco(w);                                            // 1° tocco
+    if (!W.clicca(w, /Contro il Bot/)) no("in «Come giocate?» non c'è «🤖 Contro il Bot»");   // 2° tocco
+    if (!await W.aspetta(function () { return w.__prezzoH && w.__prezzoH.fase !== "lobby"; }, 5000)) no("al secondo tocco la partita non parte (" + T(w).slice(0, 160) + ")");
+    if (/Impostazioni|Comincia ▶/.test(T(w))) no("si vedono ancora le impostazioni");
+    var H = w.__prezzoH, I = H.imp, nCat = (w.SGPrezzoScena && w.SGPrezzoScena.ORDINE_CAT || []).length;
+    var atteso = { formato: "tv", durata: "puntata", offerte: "vista", sforare: false, liv: "medio", nBot: 3 };
+    Object.keys(atteso).forEach(function (k) { if (I[k] !== atteso[k]) no("regola «" + k + "» = " + JSON.stringify(I[k]) + " invece di " + JSON.stringify(atteso[k])); });
+    if (!nCat || I.cats.length !== nCat) no("categorie: " + I.cats.length + " su " + nCat);
+    if (H.players.length !== 4 || !H.players.slice(1).every(function (p) { return p.bot; })) no("non siamo tu + 3 Bot: " + H.players.map(function (p) { return p.nome; }).join(", "));
+    var t = w.__tP; if (!t || !t.impostazioni || t.impostazioni.modo !== "bot") no("il modo passato al gioco non è «bot»");
+    var cast = H.players.map(function (p) { return p.nome; }).join(", ");
+    // si gioca fino alla fine, con le regole di partenza
+    var spia = spiaFasi("Paky");
+    var ok = await giocaTutti(["Paky"], function () { return w.__prezzoH.fase === "fine" && /Rigioca/.test(T(w)) && !w.document.querySelector(".st-vista"); }, { ms: 600000 });
+    spia.ferma();
+    if (!ok) no("la partita col Bot non arriva alla fine (fase " + w.__prezzoH.fase + "." + w.__prezzoH.sotto + "; " + spia.viste.slice(-8).join(" → ") + ")");
+    ["offerta.rivela", "premio.riv", "ruota.riv", "vetrina.riv", "carrello", "fine"].forEach(function (f) { if (spia.viste.indexOf(f) < 0) no("la puntata non è passata da «" + f + "»"); });
+    var clas = w.__prezzoH.classifica.map(function (r) { return r.pos + "° " + r.nome + " " + r.punti; }).join(", ");
+    // «↻ Rigioca» (un tocco): stesse regole, stessi Bot
+    var H0 = w.__prezzoH;
+    if (!W.clicca(w, /Rigioca/)) no("niente «↻ Rigioca» alla fine");
+    if (!await W.aspetta(function () { return w.__prezzoH && w.__prezzoH !== H0 && w.__prezzoH.fase !== "lobby"; }, 5000)) no("«Rigioca» non fa ripartire la partita col Bot");
+    var I2 = w.__prezzoH.imp;
+    Object.keys(atteso).forEach(function (k) { if (I2[k] !== atteso[k]) no("dopo «Rigioca» la regola «" + k + "» = " + JSON.stringify(I2[k])); });
+    if (w.__prezzoH.players.length !== 4) no("dopo «Rigioca» giocatori " + w.__prezzoH.players.length);
+    return "partita col Bot al 2° tocco · " + JSON.stringify(atteso) + " · " + nCat + " categorie · " + cast + " · finita: " + clas + " · Rigioca ok" + errori();
   } });
 
   W.PZ = { agisci: agisci, giocaTutti: giocaTutti, spiaFasi: spiaFasi, controllaVista: controllaVista, contrBot: contrBot, stessoTelefono: stessoTelefono, salaPrezzo: salaPrezzo, conSpia: conSpia, senzaSpia: senzaSpia };
