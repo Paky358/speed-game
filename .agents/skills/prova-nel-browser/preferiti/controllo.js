@@ -4,12 +4,12 @@
 // passa sul finto broker (non solo nella foto).
 // Uso (dopo copione-prova.js): await COPIONE.carica("preferiti/controllo.js"); await COPIONE.prova("cpa1")
 //
-// cpa1 Asta temi online in 5 + Bea che arriva tardi: si gioca coi tasti; doppio tocco veloce di un amico = +1 solo; il rialzo
+// cpa1 Asta temi online in 5 + Bea che arriva tardi: si gioca coi tasti; doppio tocco veloce di un amico = +2 (il secondo è un rialzo da solo); il rialzo
 //      da soli col tasto «🙋 Rialzo» (anche due volte di fila); Marta spenta durante la busta chiusa (la busta si apre lo stesso
 //      e la sua offerta non c'è), Sara ricarica a metà asta, Luca spento durante il voto (il voto si chiude lo stesso, col
 //      tempo), le offerte in busta mai sul broker prima che si aprano, il pacco coperto; misure a 360x640 di asta, busta, voto
 //      e classifica coi 5 kit.
-// cpa2 Asta fantacalcio online in 6: partita intera coi tasti; rialzo da soli nel fanta (anche col +5); doppio tocco = +1;
+// cpa2 Asta fantacalcio online in 6: partita intera coi tasti; rialzo da soli nel fanta (anche col +5); doppio tocco su «Lo prendo» = 2 (lo prende e rialza);
 //      Tommi spento a metà (passa da solo, la partita non si ferma) e poi torna; misure a 360x640 dello stadio in 6.
 // cpo1 Parola d'ordine online in 6 (3 contro 3), ⏳ 1 minuto: partita intera fino alla vittoria vera; il capo segna le
 //      parole pensate col dito; doppio «gira» veloce; i due che indovinano di una squadra spenti (il turno non resta fermo);
@@ -167,8 +167,8 @@
       if (v.fase === "asta" && v.asta && v.asta.n !== ultimaAsta) {
         var a = v.asta, nA = a.n; ultimaAsta = nA; F.aste++;
         if (!F.misAsta) { F.misAsta = true; mis = mis.concat(await misura("Giulia", "asta", [".sa-piede .btn", ".sa-pers", ".as-salti .btn"])); }
-        // il primo amico in gara (non chi guida) fa un doppio tocco veloce sul tasto grande: deve salire di 1 solo
-        var gara = NOMI.filter(function (nn) { var g = gioc(C, nn); return g && !g.haCarta && !g.via && nn !== "Paky" && idDi(nn) !== a.leaderId && g.max >= a.offerta + 1; });
+        // il primo amico in gara (non chi guida) fa un doppio tocco veloce sul tasto grande: deve salire di 2 (il secondo tocco è un rialzo da solo: due tocchi = +2)
+        var gara = NOMI.filter(function (nn) { var g = gioc(C, nn); return g && !g.haCarta && !g.via && nn !== "Paky" && idDi(nn) !== a.leaderId && g.max >= a.offerta + 2; });
         if (!F.doppio && gara.length) {
           var wd = W.finestra(gara[0]), big = bott(wd, ".sa-piede .sa-grande, .sa-piede .btn", /Rilancio/);
           if (big) {
@@ -177,7 +177,7 @@
             var dopo = vm(C).asta;
             if (dopo && dopo.n === nA) {
               F.doppio = true;
-              if (dopo.offerta !== prima + 1) no("il doppio tocco veloce di " + gara[0] + " fa salire di " + (dopo.offerta - prima) + " invece di 1");
+              if (dopo.offerta !== prima + 2 || dopo.leaderId !== idDi(gara[0])) no("il doppio tocco veloce di " + gara[0] + " fa salire di " + (dopo.offerta - prima) + " invece di 2 (capo " + dopo.leaderNome + ")");
               x.push("doppio tocco di " + gara[0] + ": " + prima + " → " + dopo.offerta);
             }
           }
@@ -273,12 +273,12 @@
       if (F.n === 14 && F.spento && !F.tornato) { F.tornato = true; W.riaccendi("Tommi"); x.push("Tommi riacceso all'asta " + F.n); }
       var vivi = elegg.filter(function (n) { return !(F.spento && !F.tornato && n === "Tommi"); });
       if (!a.leaderId) {
-        // il primo che può lo prende coi tasti; alla terza asta un doppio tocco veloce sul «Lo prendo»
+        // il primo che può lo prende coi tasti; alla terza asta un doppio tocco veloce sul «Lo prendo» (= 2: lo prende e rialza da solo)
         var pr = vivi.filter(function (n) { var g = gioc(C, n); return g.max >= a.offerta; })[0];
         if (pr) {
           var w = W.finestra(pr), b = await W.aspetta(function () { return bott(w, ".st-piede .btn", /Lo prendo|Rilancio/); }, 2500);
           if (b) {
-            if (!F.doppio && pr !== "Paky") { b.click(); b.click(); F.doppio = pr; await W.dorme(600); var dd = vm(C).asta; if (dd && dd.nCarta === nC && dd.offerta !== 1) no("doppio tocco su «Lo prendo» di " + pr + ": offerta " + dd.offerta + " invece di 1"); }
+            if (!F.doppio && pr !== "Paky" && gioc(C, pr).max >= 2) { b.click(); b.click(); F.doppio = pr; await W.dorme(600); var dd = vm(C).asta; if (dd && dd.nCarta === nC && (dd.offerta !== 2 || dd.leaderId !== idDi(pr))) no("doppio tocco su «Lo prendo» di " + pr + ": offerta " + dd.offerta + " di " + dd.leaderNome + " invece di 2"); }
             else b.click();
           }
         }
@@ -310,7 +310,7 @@
     var tom = gioc(C, "Tommi");
     if (tom) { var tot = 0; Object.keys(SLOT).forEach(function (r) { tot += (tom.conta[r] || 0); }); x.push("Tommi finisce con " + tot + " calciatori"); }
     Fi.giocatori.forEach(function (g) { var tot = 0; Object.keys(SLOT).forEach(function (r) { tot += (g.conta[r] || 0); }); if (tot !== 5) no(g.nome + " finisce con " + tot + " calciatori invece di 5"); if (g.crediti < 0) no(g.nome + " ha crediti negativi"); });
-    x.push("rialzo da soli " + F.rialzo1 + ", +5 " + F.rialzo5 + "; doppio tocco di " + F.doppio + " = 1");
+    x.push("rialzo da soli " + F.rialzo1 + ", +5 " + F.rialzo5 + "; doppio tocco di " + F.doppio + " = 2");
     if (mis.length) no(mis.join(" / "));
     senzaErrori();
     return x.join(" · ") + " · " + Math.round((Date.now() - t0) / 1000) + " s";

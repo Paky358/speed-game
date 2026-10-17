@@ -1329,8 +1329,12 @@
   }
   function piedeAsta(S, d) {   // la riga d'aiuto e i tasti (online solo per chi gioca da questo telefono; sullo stesso telefono il salto del rilancio)
     // i tasti si rifanno solo se cambiano (stessa chiave: cambia solo la scritta), così niente lampeggio
-    if (d.kPiede != null && d.kPiede === S.kPiede && S.notaP && S.notaP.parentNode === S.piede) { if (S.notaP.textContent !== (d.nota || "")) S.notaP.textContent = d.nota || ""; return; }
-    S.kPiede = d.kPiede;
+    if (d.kPiede != null && d.kPiede === S.kPiede && S.notaP && S.notaP.parentNode === S.piede) {
+      if (S.notaP.textContent !== (d.nota || "")) S.notaP.textContent = d.nota || "";
+      if (S.mie && S.mie._agg && d.mie && d.mie._o) S.mie._agg(d.mie._o);   // (online) stessi tasti, prezzi nuovi
+      return;
+    }
+    S.kPiede = d.kPiede; S.mie = d.io != null ? d.mie : null;
     svuotaNodo(S.piede);
     var n = S.notaP = document.createElement("p"); n.className = "sa-nota"; n.textContent = d.nota || "";
     if (d.nota || d.kPiede != null) S.piede.appendChild(n);
@@ -1720,10 +1724,18 @@
   // (online, temi) la sala d'asta vista da questo telefono: il tuo avatar ha il numero giallo, i tuoi tasti in basso
   function salaAstaVM(t, vm, cb) {
     var el = t.el, myId = cb.myId, a = vm.asta, io = trova(vm.giocatori, myId);
-    var hoPassato = a.passati.indexOf(myId) >= 0, guido = a.leaderId === myId, prezzi = prezziSalto(a.offerta, false, SALTI_TEMI), prezzo = prezzi[0];
+    cb._vmA = vm;
+    var v = vistaTocchi(cb, a.n, a);   // l'offerta come la vedo io: coi miei tocchi ancora per strada è già mia (due tocchi = +2)
+    var hoPassato = a.passati.indexOf(myId) >= 0, guido = v.leader === myId, prezzi = prezziSalto(v.offerta, false, SALTI_TEMI), prezzo = prezzi[0];
     var inGara = io && !io.haCarta, max = io ? io.crediti - ((vm.totRound - 1) - vm.roundIdx) : 0;
-    // il rilancio porta con sé quale asta e quale offerta ho visto: se nel frattempo è cambiata, non conta (e niente doppi tocchi)
-    var offri = function (p) { if (unTocco(cb, a.n + "|" + a.offerta)) cb.onRilancia({ n: a.n, prezzo: p, vista: a.offerta }); };
+    // ogni tocco è una mossa a sé (vedi mandaTocco): parte dall'offerta come la vedo io adesso, anche se la foto nuova non è ancora arrivata
+    var ridisegna = function () { var x = cb._vmA; if (x && x.fase === "asta" && x.asta && x.asta.n === a.n && !cb._uscito) disegnaAstaVM(t, x, cb); };
+    var offri = function (p, i) {
+      var x = cb._vmA, aa = x && x.fase === "asta" && x.asta; if (!aa || aa.n !== a.n) return;
+      var da = vistaTocchi(cb, aa.n, aa), pr = prezziSalto(da.offerta, false, SALTI_TEMI)[i || 0];
+      if (pr == null || max < pr) return;   // (non ci arrivo coi miei crediti)
+      mandaTocco(cb, aa.n, da, pr, ridisegna);
+    };
     var mie = tastiOfferta(el, { prezzi: prezzi, salti: SALTI_TEMI, max: max, guido: guido, primo: false, inGara: inGara && !hoPassato,
       offri: offri, passa: function () { cb.onPassa({ n: a.n }); } });
     var tardi = cb._tardi && Date.now() - cb._tardi < 3000;
@@ -1736,34 +1748,44 @@
     salaAsta(t, {
       chiave: chiaveVM(vm, a.carta), info: "Round " + (vm.roundIdx + 1) + " di " + vm.totRound + " · stanza " + (vm.codice || ""),
       carta: cartaLotto(el, a.carta), sotto: sottoLotto(a.carta), budget: vm.budget, grosso: 3,
-      prezzo: a.offerta, leader: a.leaderId || null, persone: persone, io: myId || "—", mie: mie,
-      kPiede: [a.n, a.offerta, guido ? 1 : 0, hoPassato ? 1 : 0, inGara ? 1 : 0, max].join("|"),
+      prezzo: v.offerta, leader: v.leader, persone: persone, io: myId || "—", mie: mie,
+      kPiede: [a.n, hoPassato ? 1 : 0, inGara ? 1 : 0, max].join("|"),   // (prezzi e «Passo» cambiano al loro posto, anche quando divento io il capo: vedi tastiOfferta)
       giro: a.giro, resta: a.resta, durata: SECONDI * 1000,
       nota: !io ? "Stai guardando la partita" : !inGara ? "Hai già la tua carta di questo round" : hoPassato ? "Hai passato: aspetti il risultato" : guido ? (max >= prezzo ? "👑 L'offerta più alta è tua: tocca ancora per rialzare" : "👑 L'offerta più alta è tua")
         : tardi ? "⏱ Troppo tardi di un soffio: qualcuno ha offerto prima di te. Ora è " + a.offerta + " 💰" : "Hai " + io.crediti + " 💰 · puoi arrivare a " + Math.max(0, max),
-      onRilancia: function () { offri(prezzo); }, onPassa: function () { cb.onPassa({ n: a.n }); },
+      onRilancia: function () { offri(null, 0); }, onPassa: function () { cb.onPassa({ n: a.n }); },
       onIndietro: function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); },
       extra: { testo: "🃏 Carte", apri: function () { var b = el("div", {}), pal = dettaglioPalio(el, vm.tavolo, a.carta.nome); if (pal) b.appendChild(pal); b.appendChild(pannelloKit(el, vm.giocatori)); foglioSala(t, "🃏 Le carte", b); } }
     });
   }
   // (online) i miei tasti per offrire: il primo grande (+1, o «Lo prendo a 1»), accanto i salti (+3, o +2 e +5) e «Passo».
   // Un salto che supera il massimo che posso offrire è spento. Chi guida rialza (non passa).
-  // o: { prezzi, salti, max, guido, primo (fanta: nessuno ha ancora offerto), inGara, offri(prezzo), passa() }
+  // o: { prezzi, salti, max, guido, primo (fanta: nessuno ha ancora offerto), inGara, offri(prezzo, quale salto), passa() }
+  // I tasti restano gli stessi per tutta l'asta (finché sono in gara): a ogni offerta nuova cambiano solo i prezzi scritti e «Passo» (via quando guido)
+  // (out._agg), così due tocchi fulminei cadono sempre sullo stesso tasto e niente lampeggia.
   function tastiOfferta(el, o) {
     if (!o.inGara) return [];
-    var out = [], p0 = o.prezzi[0];
-    var b0 = el("button", { class: "btn btn-verde sa-grande", text: o.primo ? "🙋 Lo prendo a " + p0 + " 💰" : (o.guido ? "🙋 Rialzo: " : "🙋 Rilancio: ") + p0 + " 💰", onclick: function () { o.offri(p0); } });
-    if (o.max < p0) b0.disabled = true;
+    var out = [];
+    var b0 = el("button", { class: "btn btn-verde sa-grande", onclick: function () { o.offri(null, 0); } });
     out.push(b0);
-    var riga = el("div", { class: "as-salti" });
+    var riga = el("div", { class: "as-salti" }), salti = [];
     o.salti.forEach(function (s, i) {
       if (!i) return;
-      var p = o.prezzi[i], b = el("button", { class: "btn btn-verde", onclick: function () { o.offri(p); } }, [ document.createTextNode("+" + s), el("small", { text: p + " 💰" }) ]);
-      if (o.max < p) b.disabled = true;
+      var sm = el("small"), b = el("button", { class: "btn btn-verde", onclick: function () { o.offri(null, i); } }, [ document.createTextNode("+" + s), sm ]);
+      salti.push({ b: b, sm: sm, i: i });
       riga.appendChild(b);
     });
-    if (!o.guido) riga.appendChild(el("button", { class: "btn btn-rosso", text: "Passo", onclick: o.passa }));
+    var pb = el("button", { class: "btn btn-rosso", text: "Passo", onclick: function () { o.passa(); } });   // (chi guida non passa: il tasto c'è solo per gli altri)
     out.push(riga);
+    out._o = o;
+    out._agg = function (x) {   // i prezzi di adesso (x: lo stesso tipo di o)
+      var p0 = x.prezzi[0], tx = x.primo ? "🙋 Lo prendo a " + p0 + " 💰" : (x.guido ? "🙋 Rialzo: " : "🙋 Rilancio: ") + p0 + " 💰";
+      if (b0.textContent !== tx) b0.textContent = tx;
+      if (b0.disabled !== (x.max < p0)) b0.disabled = x.max < p0;
+      salti.forEach(function (z) { var p = x.prezzi[z.i], st = p + " 💰"; if (z.sm.textContent !== st) z.sm.textContent = st; if (z.b.disabled !== (x.max < p)) z.b.disabled = x.max < p; });
+      if (x.guido && pb.parentNode) riga.removeChild(pb); else if (!x.guido && !pb.parentNode) riga.appendChild(pb);
+    };
+    out._agg(o);
     return out;
   }
   // (online, fantacalcio) lo stadio visto da questo telefono
@@ -1771,12 +1793,20 @@
     var el = t.el, myId = cb.myId, a = vm.fase === "asta" ? vm.asta : null, e = vm.fase === "esito" ? vm.esito : null, io = trova(vm.giocatori, myId);
     var carta = a ? a.carta : e ? e.carta : null; if (!carta) return;
     var ru = FANTA_RUOLI[carta.ruolo] || {};
-    var hoPassato = !!a && a.passati.indexOf(myId) >= 0, guido = !!a && a.leaderId === myId;
-    var prezzi = a ? prezziSalto(a.offerta, !a.leaderId, SALTI_FANTA) : [0], prezzo = prezzi[0];
+    cb._vmA = vm;
+    var v = a ? vistaTocchi(cb, a.nCarta, a) : null;   // l'offerta come la vedo io: coi miei tocchi ancora per strada è già mia (due tocchi = +2)
+    var hoPassato = !!a && a.passati.indexOf(myId) >= 0, guido = !!v && v.leader === myId;
+    var prezzi = a ? prezziSalto(v.offerta, !v.leader, SALTI_FANTA) : [0], prezzo = prezzi[0];
     var inGara = !!(a && io && (io.conta[a.ruolo] || 0) < FANTA_SLOT[a.ruolo]), max = io ? io.max : 0;
-    // l'offerta porta con sé quale calciatore e quale offerta ho visto: se nel frattempo è cambiata, non conta (e niente doppi tocchi)
-    var offri = function (p) { if (a && unTocco(cb, a.nCarta + "|" + a.offerta + "|" + (a.leaderId || ""))) cb.onRilancia({ n: a.nCarta, prezzo: p, vista: a.offerta }); };
-    var mie = a ? tastiOfferta(el, { prezzi: prezzi, salti: SALTI_FANTA, max: max, guido: guido, primo: !a.leaderId, inGara: inGara && !hoPassato,
+    // ogni tocco è una mossa a sé (vedi mandaTocco): parte dall'offerta come la vedo io adesso, anche se la foto nuova non è ancora arrivata
+    var ridisegna = function () { var x = cb._vmA; if (a && x && x.fase === "asta" && x.asta && x.asta.nCarta === a.nCarta && !cb._uscito) disegnaFantaVM(t, x, cb); };
+    var offri = function (p, i) {
+      var x = cb._vmA, aa = x && x.fase === "asta" && x.asta; if (!a || !aa || aa.nCarta !== a.nCarta) return;
+      var da = vistaTocchi(cb, aa.nCarta, aa), pr = prezziSalto(da.offerta, !da.leader, SALTI_FANTA)[i || 0];
+      if (pr == null || max < pr) return;   // (non ci arrivo coi miei crediti)
+      mandaTocco(cb, aa.nCarta, da, pr, ridisegna);
+    };
+    var mie = a ? tastiOfferta(el, { prezzi: prezzi, salti: SALTI_FANTA, max: max, guido: guido, primo: !v.leader, inGara: inGara && !hoPassato,
       offri: offri, passa: function () { cb.onPassa({ n: a.nCarta }); } }) : [];
     var tardi = cb._tardi && Date.now() - cb._tardi < 3000;
     var persone = vm.giocatori.map(function (g, i) {
@@ -1788,15 +1818,15 @@
     stadio(t, {
       chiave: "fo|" + (vm.codice || "") + "|" + (vm.sessione || ""), fase: a ? "asta" : "esito",
       info: (a ? ru.nome + " all'asta" : e.tipo === "accollo" ? "Nessuno lo vuole" : "Aggiudicato!") + " · " + (vm.presi || (vm.restano + " in mazzo")),
-      carta: carta, giroCarta: a ? a.nCarta : e.nCarta, prezzo: a ? a.offerta : e.prezzo, base: !!a && !a.leaderId, leader: a ? (a.leaderId || null) : (e.chiId || null),
+      carta: carta, giroCarta: a ? a.nCarta : e.nCarta, prezzo: a ? v.offerta : e.prezzo, base: !!a && !v.leader, leader: a ? v.leader : (e.chiId || null),
       budget: FANTA_BUDGET, grosso: 5,
       persone: persone, io: myId || "—", mie: mie, giro: a ? a.giro : null, resta: a ? a.resta : 0, durata: a ? (a.durata || FANTA_RILANCIO_MS) : FANTA_RILANCIO_MS, puoPassare: false,
-      kPiede: a ? [a.nCarta, a.offerta, a.leaderId ? 1 : 0, guido ? 1 : 0, hoPassato ? 1 : 0, inGara ? 1 : 0, max].join("|") : null,
+      kPiede: a ? [a.nCarta, hoPassato ? 1 : 0, inGara ? 1 : 0, max].join("|") : null,   // (prezzi e «Passo» cambiano al loro posto, anche quando divento io il capo: vedi tastiOfferta)
       esito: e ? { n: e.n, nCarta: e.nCarta, tipo: e.tipo, motivo: e.motivo || "", chiId: e.chiId, chiNome: e.chiNome, carta: e.carta, prezzo: e.prezzo } : null,
       avviso: a ? avvisoFanta(a.ultimoDuello, a.ultimaChiamata, a.ruolo) : "",
       nota: !a ? "" : !io ? "Stai guardando la partita" : !inGara ? "Hai già " + (a.ruolo === "C" ? "i 2 centrocampisti" : "il " + ru.nome.toLowerCase()) + " in rosa" : hoPassato ? "Hai passato: aspetti il risultato" : guido ? (max >= prezzo ? "👑 L'offerta più alta è tua: tocca ancora per rialzare" : "👑 L'offerta più alta è tua")
         : tardi ? "⏱ Troppo tardi di un soffio: qualcuno ha offerto prima di te. Ora è " + a.offerta + " 💰" : "Hai " + io.crediti + " 💰 · puoi arrivare a " + Math.max(0, max),
-      onRilancia: function () { offri(prezzo); }, onPassa: function () { if (a) cb.onPassa({ n: a.nCarta }); },
+      onRilancia: function () { offri(null, 0); }, onPassa: function () { if (a) cb.onPassa({ n: a.nCarta }); },
       onIndietro: function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); },
       extra: { testo: "👕 Tutte", apri: function () { formazioni(t, vm.giocatori); } }
     });
@@ -2516,7 +2546,7 @@
       asta: st.asta ? {
         n: st.nAsta, carta: vistaCarta(st.asta.carta), offerta: st.asta.offerta,
         leaderId: st.asta.leader, leaderNome: nomeDi(st, st.asta.leader),
-        passati: Object.keys(st.asta.passati), giro: st.giro, resta: st.scadenza ? st.scadenza - ora : 0   // il tempo che resta (non l'ora: gli orologi dei telefoni non sono uguali)
+        passati: Object.keys(st.asta.passati), tk: st.asta.tk || {}, giro: st.giro, resta: st.scadenza ? st.scadenza - ora : 0   // il tempo che resta (non l'ora: gli orologi dei telefoni non sono uguali)
       } : null,
       // ✉️ la busta chiusa: si vede solo CHI ha chiuso la busta, mai quanto ha offerto (le offerte le tiene l'host)
       busta: B ? { n: B.n, carta: vistaCarta(B.carta), chooserId: B.chooser, gara: B.gara.slice(), chiusi: Object.keys(B.offerte),
@@ -2566,10 +2596,50 @@
     if (RIP_USATA === t || !s || s.formato !== formato || !s.fase || s.fase === "lobby" || !s.giocatori) return null;
     RIP_USATA = t; return s;
   }
-  // un tocco alla volta: un secondo tocco sulla STESSA offerta vista (prima che arrivi la foto nuova) non parte, perché l'host
-  // lo scarterebbe comunque. Appena il prezzo sullo schermo è cambiato si può toccare subito di nuovo: chi guida rialza da solo
-  // anche due volte di fila (due tocchi = +2, regola fissa del proprietario)
-  function unTocco(cb, chiave) { var ora = Date.now(); if (cb._toccoK === chiave && ora - (cb._tocco || 0) < 1500) return false; cb._toccoK = chiave; cb._tocco = ora; return true; }
+  // ---- (online) ogni tocco su «Rilancio»/«Rialzo» è una mossa a sé: due tocchi = +2, anche fulminei e con la rete lenta ----
+  // Il telefono tiene la coda dei suoi tocchi che l'host non ha ancora visto (cb._coda): il tocco nuovo parte dall'ultima
+  // offerta che ha mandato lui (sarà sua, se l'host la accetta), non da quella della foto. Ogni tocco ha un numero che sale
+  // (tk): l'host scarta un tocco già visto (lo stesso messaggio arrivato due volte) e scrive nella foto l'ultimo tocco visto
+  // di ognuno (asta.tk), così il telefono sa quali suoi tocchi sono già arrivati.
+  var ATTESA_TOCCO_MS = 4000;   // un tocco che dopo 4 secondi l'host non ha ancora visto si è perso: si torna alla foto
+  // a: l'asta della foto ({ offerta, leaderId, tk }), n: quale asta. Torna l'offerta come la vedo io: { offerta, leader, inArrivo }
+  function vistaTocchi(cb, n, a) {
+    var c = cb._coda, vera = { offerta: a.offerta, leader: a.leaderId || null };
+    if (!c || c.n !== n || !cb.myId) { cb._coda = null; return vera; }
+    var visto = (a.tk && a.tk[cb.myId]) || 0;
+    c.tocchi = c.tocchi.filter(function (x) { return x.tk > visto; });
+    var primo = c.tocchi[0], ultimo = c.tocchi[c.tocchi.length - 1];
+    // il primo tocco ancora per strada parte da quello che mostra la foto? Se no qualcuno è arrivato prima (o un tocco si è perso)
+    if (!primo || primo.vista !== vera.offerta || primo.vl !== String(vera.leader || "") || Date.now() - ultimo.ora > ATTESA_TOCCO_MS) { cb._coda = null; return vera; }
+    return { offerta: ultimo.prezzo, leader: cb.myId, inArrivo: true };
+  }
+  // manda un tocco: da: { offerta, leader } (l'offerta come la vedo io), prezzo: dove voglio arrivare
+  function mandaTocco(cb, n, da, prezzo, ridisegna) {
+    var ora = Date.now(), tk = Math.max((cb._tk || 0) + 1, ora); cb._tk = tk;
+    var c = cb._coda && cb._coda.n === n ? cb._coda : (cb._coda = { n: n, tocchi: [] });
+    c.tocchi.push({ tk: tk, vista: da.offerta, vl: String(da.leader || ""), prezzo: prezzo, ora: ora });
+    cb.onRilancia({ n: n, prezzo: prezzo, vista: da.offerta, vl: String(da.leader || ""), tk: tk });
+    if (ridisegna) {
+      ridisegna();   // il mio tabellone mostra subito l'offerta in arrivo
+      clearTimeout(cb._toTocco);   // (se il tocco si perde, tra poco si torna alla foto)
+      cb._toTocco = setTimeout(function () { if (cb._coda && !cb._uscito) ridisegna(); }, ATTESA_TOCCO_MS + 100);
+    }
+  }
+  // (host) un tocco arrivato. Torna il prezzo buono, "doppio" (tocco già visto: niente), "attesa" (il seguito di un suo tocco
+  // che non è ancora arrivato: lo tengo da parte in a.attesa), "tardi" (partiva da un'offerta che non c'è più) o null
+  function toccoArrivato(a, id, m, senzaCapo, salti) {
+    if (m.tk == null) return prezzoOfferto(m, a.offerta, senzaCapo, salti);   // (telefoni di prima)
+    var tk = +m.tk; a.tk = a.tk || {};
+    if (!(tk > (a.tk[id] || 0))) return "doppio";
+    if (m.vista !== a.offerta || String(m.vl || "") !== String(a.leader || "")) {
+      // partiva da una mia offerta più alta di quella di adesso: è il seguito di un mio tocco ancora per strada
+      if (m.vl === String(id) && a.leader !== id && m.vista >= a.offerta) { a.attesa = a.attesa || {}; (a.attesa[id] = a.attesa[id] || []).push(m); return "attesa"; }
+      a.tk[id] = tk; return "tardi";
+    }
+    a.tk[id] = tk;
+    return prezziSalto(a.offerta, senzaCapo, salti).indexOf(m.prezzo) >= 0 ? m.prezzo : null;
+  }
+  function inAttesa(a, id) { var l = a && a.attesa && a.attesa[id]; if (!l || !l.length) return []; delete a.attesa[id]; return l.sort(function (x, y) { return x.tk - y.tk; }); }
   // i prezzi che si possono offrire adesso coi salti: base = l'offerta (o, nel fanta senza offerte, una in meno: il primo +1 la prende al prezzo di partenza)
   function prezziSalto(offerta, senzaCapo, salti) { var base = senzaCapo ? offerta - 1 : offerta; return salti.map(function (s) { return base + s; }); }
   // (host) un'offerta arrivata: { prezzo, vista (l'offerta che vedeva) }. Torna il prezzo buono, "tardi" (ha visto un prezzo vecchio) o null.
@@ -2774,20 +2844,24 @@
       if (id === IO) { cb._tardi = Date.now(); return disegna(); }
       rete.inviaVeloce({ t: "tardi", a: id, prezzo: st.asta ? st.asta.offerta : 0 });
     }
-    // m: { n (quale asta), prezzo, vista (l'offerta che vedeva) }: un'offerta vecchia o doppia non conta; i salti +1 e +3
+    // m: { n (quale asta), prezzo, vista + vl (l'offerta e chi l'aveva, come le vedeva lui), tk (il numero del tocco) }:
+    // ogni tocco conta una volta sola (lo stesso tocco arrivato due volte no) e un tocco partito da un'offerta che non c'è più
+    // non conta; il secondo tocco di chi ha appena preso l'offerta è un rialzo da solo (due tocchi = +2). I salti +1 e +3
     function rilanciaO(id, m) {
       if (st.fase !== "asta" || !st.asta || !m || (m.n != null && m.n !== st.nAsta)) return;
       var g = perId(st, id); if (!g) return;
       if (st.senzaCarta.indexOf(id) < 0) return;   // (anche chi ha già l'offerta più alta può rialzare da solo: è strategia)
-      var p = prezzoOfferto(m, st.asta.offerta, false, SALTI_TEMI);
-      if (p === "tardi") { if (st.asta.leader !== id) tardi(id); return; }   // (un doppio tocco di chi guida non conta, senza "troppo tardi")
-      if (p == null || maxPuntataG(st, g) < p) return;
-      segnaRilancio(g, p - st.asta.offerta, 3);
-      st.asta.ultimoSec = st.scadenza && st.scadenza - Date.now() < 2000 ? id : null;   // 🎯 all'ultimo secondo
-      st.asta.offerta = p; st.asta.leader = id;
-      delete st.asta.passati[id];
+      var a = st.asta, p = toccoArrivato(a, id, m, false, SALTI_TEMI);
+      if (p === "tardi") { if (a.leader !== id) tardi(id); if (m.tk != null) bd(); return; }   // (un tocco vecchio di chi guida non conta, senza "troppo tardi"; la foto dice al suo telefono che è arrivato)
+      if (p === "doppio" || p === "attesa") return;
+      if (p == null || maxPuntataG(st, g) < p) { if (m.tk != null) bd(); return; }   // (la foto dice al suo telefono che il tocco è arrivato)
+      segnaRilancio(g, p - a.offerta, 3);
+      a.ultimoSec = st.scadenza && st.scadenza - Date.now() < 2000 ? id : null;   // 🎯 all'ultimo secondo
+      a.offerta = p; a.leader = id;
+      delete a.passati[id];
       FX.rilancio(id === IO);
       if (!verificaPassati()) riparti();   // se nessun altro può più offrire, è subito sua
+      inAttesa(st.asta, id).forEach(function (x) { rilanciaO(id, x); });   // i suoi tocchi arrivati prima di questo
     }
     function passaO(id, m) {
       if (st.fase !== "asta" || !st.asta || !m || (m.n != null && m.n !== st.nAsta)) return;
@@ -3000,7 +3074,7 @@
     var cb = {
       myId: null, sonoHost: false,
       onScegli: function (x) { manda({ t: "scegli", idx: x.idx, n: x.n, nome: x.nome }); },
-      onRilancia: function (x) { manda({ t: "rilancia", n: x.n, prezzo: x.prezzo, vista: x.vista }); },
+      onRilancia: function (x) { manda({ t: "rilancia", n: x.n, prezzo: x.prezzo, vista: x.vista, vl: x.vl, tk: x.tk }); },   // (ogni tocco col suo numero: vedi mandaTocco)
       onPassa: function (x) { manda({ t: "passa", n: x.n }); },
       onBusta: function (x) { manda({ t: "busta", n: x.n, q: x.q }); },
       onAvanti: function () {},
@@ -3133,6 +3207,7 @@
   }
 
   function disegnaAstaVM(t, vm, cb) {
+    cb._vmA = vm;   // (l'ultima foto: un tocco in arrivo si ridisegna solo se si è ancora in quell'asta)
     var el = t.el, myId = cb.myId;
     if (vm.fase === "lobby") { cb._busta = null; cb._mioVoto = null; return lobbyAsta(t, vm, cb); }
     if (vm.fase === "fine") return schermataFineAsta(t, vm, cb);
@@ -3779,18 +3854,22 @@
       if (id === IO) { cb._tardi = Date.now(); return disegna(); }
       rete.inviaVeloce({ t: "tardi", a: id, prezzo: st.asta ? st.asta.offerta : 0 });
     }
-    // m: { n (quale calciatore), prezzo, vista (l'offerta che vedeva) }: un'offerta arrivata in ritardo o doppia non conta; i salti +1, +2 e +5
+    // m: { n (quale calciatore), prezzo, vista + vl (l'offerta e chi l'aveva, come le vedeva lui), tk (il numero del tocco) }:
+    // ogni tocco conta una volta sola e un tocco partito da un'offerta che non c'è più non conta; il secondo tocco di chi
+    // ha appena preso l'offerta è un rialzo da solo (due tocchi = +2, +2 poi +5 = +7). I salti +1, +2 e +5
     function rilanciaO(id, m) {
       if (st.fase !== "asta" || !st.asta || !m || m.n !== st.nCarta) return;
       var g = perId(st, id); if (!g || ruoloPieno(g, st.asta.ruolo)) return;   // (anche chi ha già l'offerta più alta può rialzare da solo: è strategia)
-      var senza = st.asta.leader === null, prezzo = prezzoOfferto(m, st.asta.offerta, senza, SALTI_FANTA);
-      if (prezzo === "tardi") { if (st.asta.leader !== id) tardi(id); return; }   // (un doppio tocco di chi guida non conta, senza "troppo tardi")
-      if (prezzo == null || maxFanta(g) < prezzo) return;
-      segnaRilancio(g, prezzo - (senza ? st.asta.offerta - 1 : st.asta.offerta), 5);
-      st.asta.ultimoSec = st.scadenza && st.scadenza - Date.now() < 2000 ? id : null;   // 🎯 all'ultimo secondo
-      st.asta.offerta = prezzo; st.asta.leader = id; delete st.asta.passati[id];
+      var a = st.asta, senza = a.leader === null, prezzo = toccoArrivato(a, id, m, senza, SALTI_FANTA);
+      if (prezzo === "tardi") { if (a.leader !== id) tardi(id); if (m.tk != null) bd(); return; }   // (un tocco vecchio di chi guida non conta, senza "troppo tardi"; la foto dice al suo telefono che è arrivato)
+      if (prezzo === "doppio" || prezzo === "attesa") return;
+      if (prezzo == null || maxFanta(g) < prezzo) { if (m.tk != null) bd(); return; }   // (la foto dice al suo telefono che il tocco è arrivato)
+      segnaRilancio(g, prezzo - (senza ? a.offerta - 1 : a.offerta), 5);
+      a.ultimoSec = st.scadenza && st.scadenza - Date.now() < 2000 ? id : null;   // 🎯 all'ultimo secondo
+      a.offerta = prezzo; a.leader = id; delete a.passati[id];
       FX.rilancio(id === IO);
       if (!verifica()) riparti(FANTA_RILANCIO_MS);   // se nessun altro può più offrire, aggiudico subito
+      inAttesa(st.asta, id).forEach(function (x) { rilanciaO(id, x); });   // i suoi tocchi arrivati prima di questo
     }
     function passaO(id, m) {
       if (st.fase !== "asta" || !st.asta || !m || m.n !== st.nCarta || st.asta.leader === id) return;
@@ -3864,7 +3943,7 @@
       asta: a ? {
         carta: { nome: a.carta.nome, squadra: a.carta.squadra, ruolo: a.carta.ruolo }, nCarta: st.nCarta,
         ruolo: a.ruolo, offerta: a.offerta, leaderId: a.leader, leaderNome: a.leader ? nomeDi(st, a.leader) : "",
-        passati: Object.keys(a.passati || {}), giro: st.giro, durata: st.durata || FANTA_RILANCIO_MS, resta: st.scadenza ? st.scadenza - Date.now() : 0,   // il tempo che resta (non l'ora: gli orologi dei telefoni non sono uguali)
+        passati: Object.keys(a.passati || {}), tk: a.tk || {}, giro: st.giro, durata: st.durata || FANTA_RILANCIO_MS, resta: st.scadenza ? st.scadenza - Date.now() : 0,   // il tempo che resta (non l'ora: gli orologi dei telefoni non sono uguali)
         ultimaChiamata: ultimaChiamata(st.mazzo, a.carta),
         ultimoDuello: (st.giocatori.filter(function (g) { return !ruoloPieno(g, a.ruolo); }).length === 2 &&
           st.mazzo.filter(function (c) { return c.ruolo === a.ruolo; }).length === 2)
@@ -3878,6 +3957,7 @@
 
   // ---------- DISEGNO CONDIVISO FANTACALCIO (host e ospiti) ----------
   function disegnaFantaVM(t, vm, cb) {
+    cb._vmA = vm;   // (l'ultima foto: un tocco in arrivo si ridisegna solo se si è ancora in quell'asta)
     if (vm.fase === "lobby") { fermaConta(STADIO); STADIO = null; return lobbyAsta(t, vm, cb); }
     if (vm.fase === "fine") {
       salvaTrofeiAsta(t, vm, cb.myId, true);
