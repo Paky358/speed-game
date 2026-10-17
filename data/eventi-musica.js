@@ -153,7 +153,7 @@
     { anno: 1981, titolo: "Alice vince Sanremo con «Per Elisa»", fatto: "La canzone è scritta insieme a Franco Battiato." },
     { anno: 1982, titolo: "Vasco Rossi canta «Vado al massimo» a Sanremo", fatto: "Il Festival non lo premia, ma la canzone diventa uno dei suoi classici." },
     { anno: 1983, titolo: "I Righeira cantano «Vamos a la playa»", fatto: "Due ragazzi torinesi con un tormentone in spagnolo: si balla in tutta Europa." },
-    { anno: 1983, titolo: "Antonello Venditti canta «Grazie Roma»", fatto: "Esce per festeggiare lo scudetto della Roma e diventa un inno da stadio." },
+    { anno: 1983, titolo: "Antonello Venditti canta «Grazie Roma»", fatto: "Tutti pensano che sia scritta per lo scudetto della Roma, ma Venditti l'aveva incisa prima: diventa un inno da stadio." },
     { anno: 1984, titolo: "Antonello Venditti canta «Notte prima degli esami»", fatto: "Ancora oggi la cantano i ragazzi la sera prima della maturità." },
     { anno: 1985, titolo: "Bruce Springsteen fa il suo primo concerto in Italia, a San Siro", fatto: "Lo stadio di Milano si riempie per il «Boss»." },
     { anno: 1985, titolo: "Zucchero canta «Donne» a Sanremo", fatto: "Arriva tra gli ultimi, ma diventa una delle sue canzoni più amate." },
@@ -167,13 +167,13 @@
     { anno: 1996, titolo: "Ron e Tosca vincono Sanremo con «Vorrei incontrarti fra cent'anni»", fatto: "Un duetto d'amore che sfida il tempo." },
     { anno: 1998, titolo: "Annalisa Minetti vince Sanremo con «Senza te o con te»", fatto: "L'anno prima aveva partecipato a Miss Italia." },
     { anno: 1998, titolo: "Gli Eiffel 65 pubblicano in Italia «Blue (Da Ba Dee)»", fatto: "Poco dopo la ballano in tutto il mondo." },
-    { anno: 2000, titolo: "Paola e Chiara vincono il Festivalbar con «Vamos a bailar»", fatto: "La canzone era stata scartata da Sanremo." },
+    { anno: 2000, titolo: "Paola e Chiara cantano «Vamos a bailar»", fatto: "Era stata scartata da Sanremo: diventa il tormentone dell'estate." },
     { anno: 2000, titolo: "I Subsonica cantano «Tutti i miei sbagli» a Sanremo", fatto: "La band torinese porta l'elettronica sul palco dell'Ariston." },
     { anno: 2007, titolo: "Laura Pausini fa un concerto a San Siro", fatto: "È la prima donna a fare un concerto tutto suo nello stadio di Milano." },
     { anno: 2008, titolo: "Giusy Ferreri canta «Non ti scordar mai di me»", fatto: "Arrivava dalla prima edizione italiana di X Factor: poco prima faceva la cassiera." },
     { anno: 2010, titolo: "Pupo, Emanuele Filiberto e Luca Canonici cantano «Italia amore mio» a Sanremo", fatto: "Il principe di casa Savoia sul palco: tanti fischi, ma arrivano secondi." },
     { anno: 2011, titolo: "L'Italia torna all'Eurovision dopo tanti anni di assenza", fatto: "Raphael Gualazzi arriva secondo con «Madness of Love»." },
-    { anno: 2012, titolo: "Esce «Il pulcino Pio»", fatto: "Nasce da una radio di Roma e diventa un tormentone per bambini anche all'estero." },
+    { anno: 2012, titolo: "«Il pulcino Pio» è il tormentone dell'estate", fatto: "Nasce da una radio di Roma e la cantano i bambini anche all'estero." },
     { anno: 2013, titolo: "Spotify arriva in Italia", fatto: "Parte proprio nei giorni del Festival di Sanremo." },
     { anno: 2016, titolo: "Fabio Rovazzi pubblica «Andiamo a comandare»", fatto: "Un video fatto con pochi soldi diventa il tormentone dell'estate." },
     { anno: 2017, titolo: "I Thegiornalisti cantano «Riccione»", fatto: "Il tormentone estivo della band di Tommaso Paradiso." },
@@ -185,7 +185,7 @@
     { anno: 2023, titolo: "Annalisa canta «Mon amour»", fatto: "Un tormentone estivo che si sente ovunque." },
     { anno: 2024, titolo: "John Travolta balla il «qua qua» con Fiorello a Sanremo", fatto: "La star di «Grease» non sembra divertirsi molto: diventa un caso." },
     { anno: 2025, titolo: "Lucio Corsi porta «Volevo essere un duro» all'Eurovision", fatto: "Era arrivato secondo a Sanremo: a Basilea arriva quinto." },
-    { anno: 2026, titolo: "Sal Da Vinci vince Sanremo con «Per sempre sì»", fatto: "Il cantante napoletano batte di poco il rapper Sayf." },
-    { anno: 2026, titolo: "Ultimo canta a Tor Vergata davanti a 250.000 persone", fatto: "Arriva in elicottero: è il concerto a pagamento più grande mai fatto in Italia." }
+    { anno: 2026, titolo: "Sal Da Vinci vince Sanremo con «Per sempre sì»", fatto: "Il cantante napoletano batte il rapper Sayf." },
+    { anno: 2026, titolo: "Ultimo canta a Tor Vergata davanti a 250.000 persone", fatto: "Batte il record del Modena Park di Vasco Rossi: è il concerto a pagamento con più spettatori mai fatto in Italia." }
   ]
 });

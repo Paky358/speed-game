@@ -174,10 +174,9 @@
     { anno: 2013, titolo: "Il rapper Moreno vince «Amici»", fatto: "È il primo rapper ammesso al talent di Maria De Filippi." },
     { anno: 2014, titolo: "Fedez debutta come giudice di X Factor", fatto: "Al primo tentativo vince con Lorenzo Fragola." },
     { anno: 2014, titolo: "J-Ax diventa coach di «The Voice of Italy»", fatto: "Siede accanto a Raffaella Carrà, Noemi e Piero Pelù." },
-    { anno: 2014, titolo: "Emis Killa canta «Maracanã»", fatto: "È la sigla di Sky Sport per i Mondiali in Brasile: il video è girato nelle favelas di Rio." },
-    { anno: 2015, titolo: "Emis Killa canta «Rossoneri», il nuovo inno del Milan", fatto: "La scrive con Saturnino, il bassista di Jovanotti." },
+    { anno: 2014, titolo: "Emis Killa canta «Maracanã»", fatto: "Esce pochi giorni prima dei Mondiali in Brasile e arriva primo in classifica." },
     { anno: 2015, titolo: "Baby K e Giusy Ferreri cantano «Roma-Bangkok»", fatto: "Il tormentone dell'estate: prende tanti dischi di platino." },
-    { anno: 2016, titolo: "Ghali pubblica «Ninna nanna»", fatto: "Esce solo su Spotify, senza video, e batte il record di ascolti nel primo giorno." },
+    { anno: 2016, titolo: "Ghali pubblica «Ninna nanna»", fatto: "Esce prima solo su Spotify e in due settimane è già disco d'oro." },
     { anno: 2016, titolo: "J-Ax e Fedez cantano «Vorrei ma non posto»", fatto: "Prende in giro chi vive solo per i social: è il tormentone dell'estate." },
     { anno: 2016, titolo: "Esce «Zeta», il film sul rap italiano", fatto: "Il protagonista è il rapper Izi; tra gli altri ci sono Fedez, J-Ax e Salmo." },
     { anno: 2017, titolo: "Fedez chiede a Chiara Ferragni di sposarlo durante un concerto", fatto: "Succede sul palco dell'Arena di Verona: lei dice sì tra le lacrime." },
@@ -194,7 +193,7 @@
     { anno: 2021, titolo: "Blanco e Sfera Ebbasta pubblicano «Mi fai impazzire»", fatto: "Arriva subito in cima alle classifiche." },
     { anno: 2021, titolo: "Willie Peyote vince il premio della critica a Sanremo", fatto: "Il rapper torinese lo vince con «Mai dire mai (La locura)»." },
     { anno: 2022, titolo: "Dargen D'Amico canta «Dove si balla» a Sanremo", fatto: "Occhiali scuri e una canzone da ballare: diventa un tormentone." },
-    { anno: 2022, titolo: "Salmo fa il suo primo concerto a San Siro", fatto: "Era stato rimandato due volte per il Covid." },
+    { anno: 2022, titolo: "Salmo fa il suo primo concerto a San Siro", fatto: "Il rapper sardo porta nello stadio di Milano il suo «Flop Tour»." },
     { anno: 2022, titolo: "J-Ax e Fedez fanno pace e cantano insieme in piazza Duomo", fatto: "Dopo anni senza parlarsi, un concerto gratis per beneficenza: «Love Mi»." },
     { anno: 2023, titolo: "Lazza arriva secondo a Sanremo con «Cenere»", fatto: "Lo batte solo Marco Mengoni." },
     { anno: 2023, titolo: "Gli Articolo 31 tornano insieme a Sanremo con «Un bel viaggio»", fatto: "J-Ax e DJ Jad di nuovo sullo stesso palco dopo tanti anni." },
@@ -202,10 +201,10 @@
     { anno: 2024, titolo: "Geolier arriva secondo a Sanremo con «I p' me, tu p' te»", fatto: "Canta in napoletano: vince la serata delle cover, poi lo batte solo Angelina Mango." },
     { anno: 2024, titolo: "Ghali porta un piccolo alieno sul palco di Sanremo", fatto: "Si chiama Rich Ciolino e lo accompagna mentre canta «Casa mia»." },
     { anno: 2024, titolo: "Anna canta «30°C»", fatto: "Il tormentone dell'estate della rapper di La Spezia." },
-    { anno: 2024, titolo: "Sfera Ebbasta fa il suo primo concerto a San Siro", fatto: "Oltre 60.000 persone per il ragazzo di Cinisello Balsamo." },
+    { anno: 2024, titolo: "Sfera Ebbasta fa il suo primo concerto a San Siro", fatto: "Due sere di fila per il ragazzo di Cinisello Balsamo: è il primo rapper italiano a farlo." },
     { anno: 2025, titolo: "Marracash fa il primo tour negli stadi di un rapper italiano", fatto: "Due sere di fila a San Siro, nella sua Milano." },
-    { anno: 2026, titolo: "Sayf arriva secondo a Sanremo con «Tu mi piaci tanto»", fatto: "Il rapper italo-tunisino di Genova era alla sua prima volta al Festival." },
+    { anno: 2026, titolo: "Sayf arriva secondo a Sanremo con «Tu mi piaci tanto»", fatto: "Il rapper ligure era alla sua prima volta al Festival." },
     { anno: 2026, titolo: "Fedez e Marco Masini cantano «Male necessario» a Sanremo", fatto: "Arrivano tra i primi cinque." },
-    { anno: 2026, titolo: "Ghali legge una poesia di Gianni Rodari all'apertura delle Olimpiadi invernali, a San Siro", fatto: "Una poesia contro la guerra, detta in italiano, francese e inglese." }
+    { anno: 2026, titolo: "Ghali legge una poesia di Gianni Rodari all'apertura delle Olimpiadi invernali, a San Siro", fatto: "È «Promemoria», una poesia contro la guerra: nello stesso momento c'è sul palco l'attrice Charlize Theron." }
   ]
 });
