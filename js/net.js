@@ -263,6 +263,12 @@
       function via() { a.forEach(function (h) { try { h.chiudi(); } catch (e) {} }); }
       if (ritardo) setTimeout(via, ritardo); else via();
     },
+    // Come chiudiGiochi, ma dalle stanze che ospito esco come se fossi sparito (senza "chiusa apposta"): serve quando la partita
+    // l'ha già presa un amico (host di riserva) e io torno solo da amico. Le stanze dove sono ospite si chiudono come sempre
+    lasciaGiochi: function () {
+      var a = aperte.slice(); aperte = [];
+      a.forEach(function (h) { try { if (h.ospito && h.sparisci) h.sparisci(); else h.chiudi(); } catch (e) {} });
+    },
 
     // Ricorda con quale codice-giocatore questo telefono sta in una stanza (es. "host"):
     // se poi ci rientra come ospite (host di riserva, app riaperta) torna la stessa persona.
@@ -535,7 +541,7 @@
       }
 
       var h = {
-        codice: codice, sessione: sid,
+        codice: codice, sessione: sid, ospito: true,
         // la partita (vm) viene mandata a tutti e "trattenuta" (retain) così
         // chi entra dopo riceve subito lo stato attuale
         invia: function (msg) { if (chiusa) return; ultimo = msg; manda(msg, true); },
@@ -551,6 +557,13 @@
           if (chiusa) return;
           fine();
           U.forEach(function (u) { try { if (u.client) u.client.end(); } catch (e) {} });   // uscita "educata": il broker non manda l'avviso "host sparito"
+        },
+        // esco come se fossi sparito: dal vivo il mio "host sparito" (non trattenuto, non "apposta"), poi esco in silenzio.
+        // Chi segue già un altro host (il vice) lo scarta; chi seguiva me lo aspetta, o il vice prende il mio posto
+        sparisci: function () {
+          if (chiusa) return;
+          U.forEach(function (u) { try { if (su(u)) u.client.publish(T.stato, JSON.stringify(testamento()), { retain: false }); } catch (e) {} });
+          h.lascia();
         },
         chiudi: function () {
           if (chiusa) return;

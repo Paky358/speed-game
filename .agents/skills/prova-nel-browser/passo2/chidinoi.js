@@ -4,7 +4,7 @@
 // 400: 3 telefoni, 3 posti da 3 domande: partita intera (sfilata, arrivo, Immagini, Scrivi con le battute della casa, Disegna,
 //      gran finale, titoli, figurina), un amico che ricarica mentre disegna (ritrova il disegno) e mentre vota, Rivincita col 3-2-1, Cambia gioco.
 // 401: 5 telefoni, 3 posti da 4 domande (c'è Chi di noi): uno spento più di 20 s a metà (non blocca), poi torna e ritrova il posto.
-// 402: 8 telefoni, 3 posti da 5 domande: partita intera con jolly, «⏩ Avanti» della maggioranza, l'host che ricarica (tutti nella Sala).
+// 402: 8 telefoni, 3 posti da 5 domande: partita intera con jolly, «⏩ Avanti» della maggioranza, l'host che ricarica sulla classifica (dal Passo 5 la ritrova: niente Sala).
 // 403: 10 telefoni: misure 360x640 e 412x915 in ogni passo (niente scorre, niente esce), console pulita.
 // 404: chi arriva a partita cominciata guarda (niente tasti) ed entra alla Rivincita; il protagonista che esce non blocca.
 // 405: i messaggi: nella foto (vm) mai i disegni né le battute prima della vetrina; i disegni viaggiano leggeri (sotto i 20 KB).
@@ -247,11 +247,14 @@
     var f = vm(C).fine;
     var jol = (vm(C).players || []).filter(function (p) { return p.jolly < 3; }).length;
     if (!jol) no("nessuno ha usato il jolly");
-    // l'host ricarica: tutti nella Sala
+    // l'host ricarica sulla classifica: dal Passo 5 (riprende) la partita riprende lì, nessuno torna nella Sala, e Paky ritrova
+    // la classifica coi tasti di fine (prima tutti tornavano nella Sala)
+    var nEs = A.contaStoria(C, '"__esito"');
     await W.ricarica("Paky");
-    if (!await W.aspetta(function () { return ((vm(Z.S).membri) || []).length === 8 && /Sei dentro/.test(T(W.finestra("Giulia"))) && !W.finestra("Giulia").document.querySelector(".cn"); }, 25000)) no("dopo la ricarica dell'host non tornano tutti nella Sala");
+    if (!await W.aspetta(function () { var P2 = W.finestra("Paky"); return vm(C).fase === "fine" && (W.statoStanza(C) || {})._r && P2 && P2.document.querySelector(".cn-podio") && A.tastiFineDi(P2) && W.finestra("Giulia").document.querySelector(".cn-podio"); }, 25000)) no("dopo la ricarica dell'host la classifica non riprende (fase " + vm(C).fase + ")");
+    if (A.contaStoria(C, '"__esito"') !== nEs) no("dopo la ricarica sulla classifica c'è un __esito in più");
     senzaErrori();
-    return "8 telefoni: Avanti 4/8 no, 5/8 sì; partita intera con " + jol + " jolly usati; host che ricarica ok; classifica " + (f ? f.classifica.map(function (r) { return r.nome + " " + r.punti; }).join(", ") : "?");
+    return "8 telefoni: Avanti 4/8 no, 5/8 sì; partita intera con " + jol + " jolly usati; l'host ricarica sulla classifica e la ritrova (niente Sala, niente esito doppio); classifica " + (f ? f.classifica.map(function (r) { return r.nome + " " + r.punti; }).join(", ") : "?");
   } });
 
   COPIONE.aggiungi(403, { nome: "Chi di Noi?: 10 telefoni, misure 360x640 e 412x915 in ogni passo", fai: async function () {
@@ -773,7 +776,9 @@
   }
 
   // (per guardare le schermate a mano: COPIONE.cn.salaFoto(["Giulia","Luca"]), selfie("Paky","Occhioni Anime"), regole(P,3,3), comincia(C)…)
-  Object.assign(COPIONE.cn, { salaFoto: salaFoto, selfie: selfie, galleria: galleria, avatar: avatar, regole: regole, comincia: comincia, spiaPunti: spiaPunti, forgia: forgia, salaECominci: salaECominci });
+  Object.assign(COPIONE.cn, { salaFoto: salaFoto, selfie: selfie, galleria: galleria, avatar: avatar, regole: regole, comincia: comincia, spiaPunti: spiaPunti, forgia: forgia, salaECominci: salaECominci,
+    // (anche per passo5/chidinoi.js: la ripresa e l'host di riserva)
+    vedonoTutti: vedonoTutti, controllaRete: controllaRete, foDi: foDi, idDi: idDi, finoA: finoA, disegnaUn: disegnaUn, esitoPunti: esitoPunti, fineSpia: fineSpia, pezziFoto: pezziFoto, senzaErrori: senzaErrori, vede: vede, camAperto: camAperto, camFinta: camFinta, spiaBroker: spiaBroker });
 
   COPIONE.aggiungi(410, { nome: "Chi di Noi?: 5 telefoni, i punti ricontati a parte in ogni svelamento (tutti i tipi, jolly, voto doppio, tutti d'accordo)", fai: async function () {
     var Z = await salaECominci(["Giulia", "Luca", "Sara", "Marco"]), C = Z.C, P = W.finestra("Paky");

@@ -28,6 +28,7 @@
   var GOMMA = 8, PUNTE = [7, 18];
   var LW = 750, LH = 1000;          // la tavola da disegno (3:4), in coordinate fisse
   var MAX_PUNTI = 2600, MAX_ADESIVI = 30;
+  var RESPIRO = 5000, RESPIRO_MAX = 10000;   // la partita ripresa: almeno 5 s fermi, e chi non torna entro 10 s esce
   var ARTE = function () { return window.SG_CDN_ARTE || {}; };
 
   function fmtN(n) { var s = String(Math.round(Math.abs(n || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, "."); return (n < 0 ? "−" : "") + s; }   // 1.000
@@ -455,18 +456,78 @@
   // =========================================================
   function host(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    pulisciFoto(false);   // (una partita nuova: le foto di prima si buttano; la mia resta in questa scheda)
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
+    // io che tengo la partita: "host", oppure (host di riserva) l'id da amico di chi ha preso il posto dell'host sparito
+    var IO = t.mioId || "host";
     var H = { fase: "lobby", codice: "…", pronta: false, partita: 0, pid: null, imp: impNorm(t.impostazioni),
-      players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0, jolly: 3 }],
+      rip: 0,   // quante volte la partita è ripresa (nel conto di «Avanti»: dopo una ripresa riparte giusto su tutti i telefoni)
+      kf: null,   // l'impronta della chiave delle foto (è già nella foto per tutti): resta uguale anche se l'host perde la chiave
+      players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0, jolly: 3 }],
       guarda: [],   // { id, nome, omino, tardi }: chi guarda (tardi = arrivato a partita cominciata: entra alla prossima)
       passo: null, t0: 0, dur: 0, scade: 0, grazia: 0, anim: 0, avanti: {},
       scaletta: [], iP: 0, piano: [], iD: 0, dom: null, item: null, usate: [],
       risp: {}, testi: {}, voci: null, disegni: {}, fatti: {}, gal: null, esito: null, classif: null, fin: null, premi: null, fine: null,
       stat: {}, titoli: {}, verdetti: {}, battute: {}, posPrima: {}, ultReaz: {},
       foto: {}, cam: {}, dati: {} };   // le foto (cifrate, solo in memoria: per rimandarle a chi rientra), chi è nel camerino
+    // ----- la partita di prima (t.ripresa): l'host ha ricaricato la pagina o riaperto l'app, oppure (daRiserva) l'host è
+    // sparito e questo telefono la porta avanti. Chi giocava resta al suo posto come "atteso" (rientra da solo col suo join,
+    // stesso id); chi non torna entro 10 secondi esce. Almeno 5 secondi di respiro: nessun passo va avanti.
+    // LE FOTO non sono mai nella copia: solo quale foto e quale filtro (già nella foto per tutti) e l'impronta della chiave;
+    // gli amici rimandano da soli i pezzi cifrati a chi tiene la partita.
+    var R0 = t.ripresa, ripresa = !!(R0 && R0.stato && R0.stato.fase && R0.stato.fase !== "lobby" && R0.stato.players);
+    var attesi = {}, respiroFino = 0, respiroMax = 0, tRespiro = null;
+    if (ripresa) {
+      // (non è una partita nuova: le facce già a schermo restano, il resto delle foto riparte da capo)
+      clearInterval(GUARDIA); GUARDIA = null; SCHERMI = []; FT = nuovoFT(); FB = null;
+      riprendiStato(R0.stato, R0.soloQui || {});
+    } else pulisciFoto(false);   // (una partita nuova: le foto di prima si buttano; la mia resta in questa scheda)
+    function riprendiStato(S0, Q0) {
+      Object.keys(S0).forEach(function (k) { if (k !== "fo") H[k] = S0[k]; });
+      H.pronta = false; H.rip = (H.rip || 0) + 1; H.cam = {}; H.dati = {}; H.ultReaz = {}; H.avanti = H.avanti || {};
+      H.guarda = (H.guarda || []).map(function (g) { return { id: g.id, nome: g.nome, tardi: !!g.tardi, omino: (Q0.omini || {})[g.id] || OMINI[g.id] || null }; });
+      var vecchio = R0.daRiserva ? R0.vecchioHost : null;
+      H.players.forEach(function (p) {
+        p.forse = false;
+        p.omino = p.id === IO ? t.mioOmino(p.nome) : ((Q0.omini || {})[p.id] || OMINI[p.id] || null);
+        if (H.fase === "fine") { p.via = p.id !== IO; return; }   // (sulla classifica: rientra chi torna)
+        if (p.id === vecchio) p.via = true;                       // (l'host sparito: se torna, rientra col suo posto)
+        else if (p.id !== IO && !p.via) attesi[p.id] = 1;
+      });
+      // le foto: solo quale (numero e filtro); i pezzi li rimandano gli amici
+      H.foto = {}; Object.keys(S0.fo || {}).forEach(function (id) { var o = S0.fo[id]; if (o && o.f) H.foto[id] = { f: o.f, x: o.x | 0, iv: null, di: 0, pz: {}, n: 0, ok: false }; });
+      // i pezzi grossi (soloQui: solo su questo telefono). Il vice non li ha: la galleria la prende da quella che aveva già da
+      // amico, i disegni di questo passo glieli rimandano gli amici (si toglie il loro "fatto")
+      H.disegni = Q0.disegni || {};
+      if (H.fin) H.fin.fogli.forEach(function (f, j) { f.strati = (Q0.finS && Q0.finS[j]) || f.strati || []; });
+      if (H.gal) H.gal.forEach(function (g, i) {
+        var d = (Q0.galD || [])[i], it = GAL.k === H.kGal ? GAL.items[g.n] : null;
+        if (d) { g.dis = d.dis || null; g.strati = d.strati || null; }
+        else if (it) { g.dis = it.dis || null; g.strati = it.strati || null; }
+        else if (g.autori && H.fin) { var f = H.fin.fogli.filter(function (x) { return x.n === g.n; })[0]; if (f) g.strati = f.strati.map(function (s) { return s.dis; }); }
+      });
+      if (H.passo === "disegna" || H.passo === "passa") Object.keys(H.fatti).forEach(function (id) { if (!H.disegni[id]) delete H.fatti[id]; });
+      // le ore salvate sono dell'orologio di chi teneva la partita: si convertono; il passo a metà continua col tempo che
+      // restava, ma almeno 12 secondi per rispondere (5 nei riepiloghi), e i punti già dati restano (niente doppi)
+      var ora = Date.now();
+      respiroFino = ora + RESPIRO; respiroMax = ora + RESPIRO_MAX;
+      if (H.fase === "gioco") {
+        H.t0 = H.t0 ? R0.ora(H.t0) : ora;
+        H.scade = H.scade ? R0.ora(H.scade) : 0;
+        var min = ora + (RISP_UI[H.passo] ? 12000 : RESPIRO + 500) + (H.grazia || 0);
+        if (!H.scade || H.scade < min) H.scade = min;
+      }
+    }
     var fotoAvviata = false;
-    function avviaFoto() { if (fotoAvviata || !H.codice || H.codice === "…") return; fotoAvviata = true; fotoInizia(H.codice, true, "host", function () { bd(); }); }
+    function avviaFoto() {
+      if (fotoAvviata || !H.codice || H.codice === "…") return; fotoAvviata = true;
+      // (il vice non crea la chiave: usa quella del suo link. Se la chiave di questo telefono non è quella della partita,
+      // per esempio l'app chiusa l'ha persa, faccio solo da postino: l'impronta resta quella di prima e le foto tra gli amici restano)
+      fotoInizia(H.codice, !(ripresa && R0.daRiserva), IO, function () {
+        if (H.kf && FT.kf && FT.kf !== H.kf) { FT.key = null; FT.kf = null; }
+        else if (!H.kf && FT.kf) H.kf = FT.kf;
+        bd();
+      });
+    }
     var VISTI = vistiMiei();      // le domande già uscite (questo telefono + profilo), più quelle che mandano gli amici
     var rete = null, tic = null;
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
@@ -494,18 +555,21 @@
         var p = pById(id); if (!p) return;
         p.forse = false; delete H.cam[id];
         if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); delete H.foto[id]; bd(); return; }
+        delete attesi[id];
         p.via = true;   // a partita iniziata resta in classifica, ma non gioca più (se torna, ritrova il suo posto)
         if (H.fase !== "gioco") return bd();
-        if (presenti().length < 2) return fine();
+        if (!respiroFino && presenti().length < 2) return fine();   // (nel respiro della ripresa decide fineRespiro)
         bd(); controllaFatto();
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
           var p = pById(id), nome = String(m.nome || "Amico").trim().slice(0, 16) || "Amico";
-          // chi rientra (pagina ricaricata, telefono riacceso) ha lo STESSO id: ritrova il suo posto, i suoi punti e quello che aveva già mandato
-          if (p) { p.forse = false; if (p.via && H.fase === "gioco") p.via = false; bd(true); privati(id); return; }
-          if (inGuarda(id)) { bd(true); privati(id); return; }
+          delete attesi[id];   // (dopo una ripresa: è tornato)
+          // chi rientra (pagina ricaricata, telefono riacceso, partita ripresa) ha lo STESSO id: ritrova il suo posto, i suoi
+          // punti e quello che aveva già mandato (anche sulla classifica: così alla "Nuova partita" c'è anche lui)
+          if (p) { p.forse = false; if (p.via && H.fase !== "lobby") p.via = false; if (!p.omino) p.omino = avatarValido(m.omino); bd(true); privati(id); return; }
+          if (inGuarda(id)) { H.guarda.forEach(function (g) { if (g.id === id && !g.omino) g.omino = avatarValido(m.omino); }); bd(true); privati(id); return; }
           if (!t.puoSedersi(id, nome)) { H.guarda.push({ id: id, nome: nome, omino: avatarValido(m.omino) }); bd(true); return; }
           if (H.fase === "lobby" && H.players.length < MAX) { H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), punti: 0, jolly: 3 }); bd(true); return; }
           // partita cominciata (o stanza piena): guarda ed entra alla prossima
@@ -514,18 +578,20 @@
         }
         mossa(id, m);
       }
-    });
+    }, { ripresa: ripresa });   // (con la partita ripresa gli amici NON tornano in saletta: leggono «🔁 … la partita riprende»)
     if (!rete) return senzaRete(t);
+    if (ripresa && rete.codice) H.codice = rete.codice;
 
     // ----- la "foto" per tutti: SEMPRE con gli id e con "fase"; MAI le battute prima della vetrina né i disegni -----
     function resta() { return H.scade ? Math.max(0, Math.ceil((H.scade - H.grazia - Date.now()) / 1000)) : 0; }
     function vm(conOmini) {
       var om = conOmini || H.fase === "lobby";
       var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, partita: H.partita, pid: H.pid, imp: H.imp,
+        tiene: IO, rip: H.rip,   // chi tiene la partita (la corona in saletta) e quante volte è ripresa
         players: H.players.map(function (p) { var x = { id: p.id, nome: p.nome, punti: p.punti, jolly: p.jolly, via: !!p.via, forse: !!p.forse }; if (om) x.omino = p.omino || null; if (H.foto[p.id]) x.fo = foVm(p.id); return x; }),
         guarda: H.guarda.map(function (g) { var x = { id: g.id, nome: g.nome, tardi: !!g.tardi }; if (om) x.omino = g.omino || null; if (H.foto[g.id]) x.fo = foVm(g.id); return x; }) };
       // la foto: solo quale (numero e filtro) e l'impronta della chiave. MAI la foto (va a pezzi cifrati, fuori dalla vm)
-      if (FT.kf) v.kf = FT.kf;
+      var kf = H.kf || FT.kf; if (kf) v.kf = kf;
       var cam = Object.keys(H.cam); if (cam.length && H.fase === "lobby") v.cam = cam;
       if (H.fase === "gioco") {
         var sc = H.scaletta[H.iP] || {};
@@ -540,7 +606,52 @@
       if (H.fase === "fine") v.fine = H.fine;
       return v;
     }
-    function bd(conOmini) { var v = vm(conOmini); rete.invia({ t: "vm", vm: v }); disegna(t, v, cbHost); }
+    function bd(conOmini) { var v = vm(conOmini); rete.invia({ t: "vm", vm: v }); ricorda(); disegna(t, v, cbHost); vici(); }
+    // (host di riserva) chi porta avanti la partita se sparisco: prima chi guarda (non gioca: non ha niente da perdere)
+    var viciK = "";
+    function vici() { var l = H.guarda.map(function (g) { return g.id; }), k = l.join(","); if (k !== viciK && t.vici) { viciK = k; t.vici(l.length ? l : null); } }
+    // la partita da ricordare (se ricarico la pagina, o se la porta avanti un amico): un oggetto SEMPLICE, senza timer né
+    // nodi, con le scadenze come ORE. MAI le foto: solo quale foto e quale filtro (già nella foto per tutti), mai i pezzi
+    // né la chiave. I pezzi grossi (disegni, galleria, strati grandi del finale, avatar) restano su questo telefono (soloQui)
+    var NON_RICORDA = { foto: 1, cam: 1, dati: 1, ultReaz: 1, pronta: 1, disegni: 1, gal: 1, fin: 1, players: 1, guarda: 1 };
+    function ricorda() {
+      if (H.fase === "lobby") return t.ricorda(null);
+      var s = {}, Q = { disegni: H.disegni, omini: {} };
+      Object.keys(H).forEach(function (k) { if (!NON_RICORDA[k]) s[k] = H[k]; });
+      s.players = H.players.map(function (p) { if (p.omino) Q.omini[p.id] = p.omino; return { id: p.id, nome: p.nome, punti: p.punti, jolly: p.jolly, via: !!p.via }; });
+      s.guarda = H.guarda.map(function (g) { if (g.omino) Q.omini[g.id] = g.omino; return { id: g.id, nome: g.nome, tardi: !!g.tardi }; });
+      s.fo = {}; Object.keys(H.foto).forEach(function (id) { s.fo[id] = { f: H.foto[id].f, x: H.foto[id].x }; });
+      if (H.gal) {
+        s.gal = H.gal.map(function (g) { return { n: g.n, a: g.a, autori: g.autori || null, target: g.target || null, miss: g.miss || null, su: g.su || null }; });
+        Q.galD = H.gal.map(function (g) { return { dis: g.dis || null, strati: g.strati || null }; });
+      }
+      if (H.fin) {
+        var F = H.fin, piccoli = (F.peso || 0) < 30000;   // (gli strati del finale vanno anche al vice solo se sono leggeri)
+        s.fin = { K: F.K, k: F.k, ordine: F.ordine, tiene: F.tiene, peso: F.peso || 0,
+          fogli: F.fogli.map(function (f) { return { n: f.n, target: f.target, miss: f.miss, autori: f.autori, strati: piccoli ? f.strati : null }; }) };
+        Q.finS = F.fogli.map(function (f) { return f.strati; });
+      }
+      t.ricorda(s, Q);
+    }
+    // ----- la ripresa: respiro (gli amici rientrano da soli), poi si va avanti -----
+    function riprendi() {
+      if (H.fase === "gioco" && !tic) tic = setInterval(orologio, 250);
+      bd(true);
+      privati(IO);   // (la mia risposta, il mio foglio, la galleria: anche a me)
+      if (H.fase === "fine" && H.gal) mandaGalleria(IO);   // (per la mia figurina)
+      avviaFoto();
+      tRespiro = setTimeout(fineRespiro, RESPIRO);
+    }
+    function fineRespiro() {
+      tRespiro = null;
+      if (Object.keys(attesi).length && Date.now() < respiroMax) { tRespiro = setTimeout(fineRespiro, 500); return; }
+      var non = Object.keys(attesi); attesi = {}; respiroFino = 0;
+      non.forEach(function (id) { var p = pById(id); if (p) { p.via = true; p.forse = false; } });   // (non è tornato: esce, se torna rientra)
+      if (H.fase !== "gioco") return bd();
+      if (presenti().length < 2) return fine();
+      bd(); controllaFatto();
+      if (RIEPILOGHI[H.passo] && Object.keys(H.avanti).filter(function (x) { var q = pById(x); return q && !q.via; }).length >= serveAvanti()) avanti();
+    }
     function foVm(id) { var P = H.foto[id]; return { f: P.f, x: P.x, h: P.ok ? 1 : 0 }; }
     // ----- le foto: «ritratto» (quale foto e quale filtro), i pezzi cifrati, «dammiFoto» (chi non l'ha ricevuta), «cam» (nel camerino) -----
     function fotoMossa(id, m) {
@@ -574,7 +685,7 @@
       for (var i = 0; i < Q.di; i++) { var m = { t: "foto", id: id, f: Q.f, iv: Q.iv, pz: i, di: Q.di, c: Q.pz[i] }; if (a) privato(a, m); else veloce(m); }
     }
     function veloce(m) { rete.inviaVeloce(m); ricevi(t, m, cbHost); }
-    function privato(id, m) { if (id === "host") { ricevi(t, m, cbHost); return; } m.to = id; rete.inviaVeloce(m); }
+    function privato(id, m) { if (id === IO) { ricevi(t, m, cbHost); return; } m.to = id; rete.inviaVeloce(m); }
     function ferma() { if (tic) { clearInterval(tic); tic = null; } }
     function serveAvanti() { return Math.floor(attivi().length / 2) + 1; }
 
@@ -602,7 +713,7 @@
     // ----- la partita -----
     function comincia() {
       if (H.fase !== "lobby" || presenti().length < MIN) return;
-      H.fase = "gioco"; H.partita++; H.pid = nuovoId();
+      H.fase = "gioco"; H.partita++; H.pid = nuovoId(); clearTimeout(tRespiro); respiroFino = 0; attesi = {};
       H.players.forEach(function (p) { p.punti = 0; p.jolly = 3; });
       H.stat = {}; H.titoli = {}; H.verdetti = {}; H.battute = {}; H.usate = []; H.fine = null; H.premi = null; H.fin = null; H.gal = null; H.cam = {};
       H.scaletta = creaScaletta(); H.iP = 0; H.iD = 0; H.piano = [];
@@ -695,7 +806,7 @@
       H.dom = null; H.esito = null; H.voci = null; H.gal = null;
       vai("classifica", T_CLASS);
     }
-    // mosse di tutti (anche dell'host, con id "host")
+    // mosse di tutti (anche di chi tiene la partita, con id IO)
     function mossa(id, m) {
       if (m.t === "reaz") return reazione(id, m.e);
       if (m.t === "ritratto" || m.t === "foto" || m.t === "dammiFoto" || m.t === "cam") return fotoMossa(id, m);
@@ -704,7 +815,7 @@
       if (H.fase !== "gioco" || !p || p.via) return;   // chi guarda soltanto non fa mosse
       if (m.k !== chiave()) { if (m.t === "dammi") privati(id); return; }   // mossa di un passo vecchio
       if (m.t === "dammi") return privati(id);
-      if (m.t === "avanti") { if (RIEPILOGHI[H.passo]) { H.avanti[id] = 1; if (Object.keys(H.avanti).filter(function (x) { var q = pById(x); return q && !q.via; }).length >= serveAvanti()) return avanti(); bd(); } return; }
+      if (m.t === "avanti") { if (RIEPILOGHI[H.passo]) { H.avanti[id] = 1; if (Object.keys(H.avanti).filter(function (x) { var q = pById(x); return q && !q.via; }).length >= serveAvanti() && !respiroFino) return avanti(); bd(); } return; }
       if (m.t === "scelta" && (H.passo === "scegli" || H.passo === "vota" || H.passo === "fvota")) {
         if (H.risp[id]) return;
         var x = m.x;
@@ -748,7 +859,7 @@
     }
     var tFatto = null;
     function controllaFatto() {
-      if (H.fase !== "gioco" || !RISPOSTE[H.passo]) return;
+      if (H.fase !== "gioco" || !RISPOSTE[H.passo] || respiroFino) return;   // (nel respiro della ripresa si aspetta)
       var d = devono();
       if (d.length && d.some(function (p) { return !H.fatti[p.id]; })) return;
       if (!d.length) return;   // nessuno collegato: aspetta il tempo
@@ -782,7 +893,7 @@
     }
     function orologio() {
       if (H.fase !== "gioco" || !H.scade) return;
-      if (Date.now() >= H.scade) scaduto();
+      if (Date.now() >= H.scade && !respiroFino) scaduto();
     }
 
     // ----- 🖼️ Immagini e 👆 Chi di noi: lo svelamento -----
@@ -955,6 +1066,7 @@
         var d = H.disegni[id], f = F.fogli[F.tiene[id]];
         if (d && !disVuoto(d)) { f.strati.push({ by: id, dis: d }); if (f.autori.indexOf(id) < 0) f.autori.push(id); }
       });
+      try { F.peso = JSON.stringify(F.fogli.map(function (f) { return f.strati; })).length; } catch (e) { F.peso = 99999; }   // (quanto pesano gli strati: per la copia del vice)
       if (F.k < F.K && presenti().length >= 2) return passaggio(F.k + 1);
       // la galleria dei ritratti trasformati
       H.gal = F.fogli.map(function (f) { return { n: f.n, a: null, autori: f.autori.slice(), target: f.target, miss: f.miss, strati: f.strati.map(function (s) { return s.dis; }), su: "ritratto" }; });
@@ -996,7 +1108,7 @@
     }
     function punti0(n, uno, tanti) { return n + " " + (n === 1 ? uno : tanti); }
     function fine() {
-      ferma(); clearTimeout(tFatto);
+      ferma(); clearTimeout(tFatto); clearTimeout(tRespiro); respiroFino = 0; attesi = {};
       H.scade = 0;
       var ord = H.players.slice().sort(function (a, b) { return b.punti - a.punti; });
       var cl = ord.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, pos: 1 + ord.filter(function (q) { return q.punti > p.punti; }).length, via: !!p.via }; });
@@ -1025,20 +1137,22 @@
         return true;
       });
       Object.keys(H.foto).forEach(function (id) { if (!pById(id) && !inGuarda(id)) delete H.foto[id]; });   // (le foto restano: chi è uscito no)
+      // chi tiene la partita è il primo (la corona in saletta); se l'ha presa guardando (host di riserva), si siede
+      if (!pById(IO)) { H.guarda = H.guarda.filter(function (x) { return x.id !== IO; }); H.players.push({ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0, jolly: 3 }); }
+      H.players.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });
       bd(true);
     }
     t.onRivincita = nuova;
 
-    var cbHost = { sonoHost: true, myId: "host", onComincia: comincia, onNuova: nuova,
-      invia: function (m) { mossa("host", m); },
+    var cbHost = { sonoHost: true, myId: IO, onComincia: comincia, onNuova: nuova,
+      invia: function (m) { mossa(IO, m); },
       onEsci: function () {
-        function via() { ferma(); rete.chiudi(); pulisciFoto(true); t.esci(); }
+        function via() { ferma(); clearTimeout(tRespiro); t.ricorda(null); rete.chiudi(); pulisciFoto(true); t.esci(); }   // (uscito apposta: niente da riprendere)
         // (dalla saletta il core ha già chiesto "Chiudere la stanza per tutti?")
         if (H.fase === "gioco") return t.conferma("Chiudere la partita per tutti?", "Gli amici tornano alla Sala.", "Chiudi", via);
         via();
       } };
-    bd(true);
-    avviaFoto();
+    if (ripresa) riprendi(); else { bd(true); avviaFoto(); }
   }
 
   // =========================================================
@@ -1125,6 +1239,7 @@
   //  DISEGNO (uguale per host e ospiti): saletta, gioco, fine
   // =========================================================
   var U = null;    // la schermata di gioco: si costruisce UNA volta e poi si aggiorna a pezzi
+  var INVIATA = null;   // la mia ultima risposta ({ k, m }): resta anche se la schermata si rifà (il vice che prende la partita la rimanda a sé)
   var FIN = null;  // la classifica finale già a schermo: le foto che arrivano dopo non la ridisegnano
   function disegna(t, vm, cb) {
     ricordaOmini(vm.players); ricordaOmini(vm.guarda);
@@ -1156,7 +1271,7 @@
     if (fb) extra.unshift(fb);
     mio(t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN,
       vuoti: Math.max(0, MIN - n),
-      giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
+      giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: vm.tiene ? p.id === vm.tiene : i === 0, tu: p.id === cb.myId }; }),
       extra: extra,
       spettatore: guardo ? "👀 Questa volta guardi" : !cb.sonoHost && !dentro && n >= MAX ? "👀 La stanza è piena: guardi la partita" : false,
       attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci }));
@@ -1192,7 +1307,14 @@
     stile();
     var s = t.schermata({}); s.classList.add("cn-piena");
     var el = t.el;
-    var u = { t: t, s: s, cb: cb, k: null, cur: null, vm: null, guardo: false, scade: 0, dur: 1, ultTic: -1, faces: {} };
+    // le mie risposte passano di qui (INVIATA): se chi tiene la partita non mi ha tra chi ha risposto (la mossa è andata persa mentre ricaricava
+    // la pagina, o mentre la partita passava a un amico), la rimando da solo (vedi orologioUI)
+    var cbU = Object.create(cb);
+    cbU.invia = function (m) {
+      if (m && m.k && (m.t === "scelta" || m.t === "testo" || (m.t === "dis" && m.fine))) INVIATA = { k: m.k, m: m, t: Date.now(), n: 0 };
+      cb.invia(m);
+    };
+    var u = { t: t, s: s, cb: cbU, k: null, cur: null, vm: null, guardo: false, scade: 0, dur: 1, ultTic: -1, faces: {} };
     u.root = el("div", { class: "cn" });
     // la barra in alto: ‹ · posto e domanda · tempo · jolly · 🏆
     u.esci = el("button", { class: "cn-esci", type: "button", "aria-label": "Esci", text: "‹", onclick: function () { cb.onEsci(); } });
@@ -1240,6 +1362,11 @@
       if (!u.guardo && !fatto && s <= 5 && s > 0 && u.ultTic !== s) { u.ultTic = s; suono("tic"); }
     }
     if (u.cur && u.cur.tic) try { u.cur.tic(resta); } catch (e) {}
+    // la mia risposta non risulta all'host: la rimando (ogni 4 secondi, al massimo 5 volte; l'host tiene sempre la prima)
+    var I = INVIATA, ora = Date.now();
+    if (I && I.k === u.vm.k && RISP_UI[u.vm.passo] && !u.guardo && (u.vm.risposto || []).indexOf(u.cb.myId) < 0 && ora - I.t > 4000 && I.n < 5) {
+      I.t = ora; I.n++; u.cb.invia(I.m);
+    }
   }
   var RISP_UI = { scegli: 1, scrivi: 1, vota: 1, disegna: 1, passa: 1, fvota: 1 };
 
@@ -1368,8 +1495,11 @@
     });
     R.el = t.el("div", { class: "cn-riga-avanti" }, [R.conto, R.b]);
     if (u.guardo) R.b.style.display = "none";
-    t.contoAvanti(R.conto, vm.resta || 1, null, "cn|" + vm.k);
+    // (nella chiave anche le riprese: dopo una ripresa il conto riparte giusto su tutti i telefoni)
+    R.rip = vm.rip || 0;
+    t.contoAvanti(R.conto, vm.resta || 1, null, "cn|" + vm.k + "|" + R.rip);
     R.agg = function (v) {
+      if ((v.rip || 0) !== R.rip) { R.rip = v.rip || 0; t.contoAvanti(R.conto, v.resta || 1, null, "cn|" + v.k + "|" + R.rip); }
       var n = (v.avanti || []).length;
       tx(R.b, (R.toccato ? "✓ " : "⏩ ") + "Avanti" + (n ? " " + n + "/" + v.serve : ""));
     };
@@ -2474,6 +2604,8 @@
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1,
     modi: [], soloOnline: true,
     postiOnline: MAX,
+    riprende: true,   // se l'host ricarica o riapre l'app, la partita riprende da dove era (t.ripresa, t.ricorda)
+    riserva: true,    // se l'host sparisce del tutto un amico porta avanti la partita (gioco lungo, non a due, non in tempo reale)
     riassunto: function (imp) {
       var i = impNorm(imp), tutti = posti().length;
       return i.nPosti + " posti · " + i.nDom + " domande per posto · tempi " + (i.tempi === "calma" ? "con calma" : i.tempi) + (i.posti.length < tutti ? " · " + i.posti.length + " posti accesi su " + tutti : "") + (i.foto ? "" : " · solo avatar (niente foto)");

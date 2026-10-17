@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 230,
+    data: "18 ottobre 2026",
+    titolo: "Chi di Noi?: la partita non si perde 🔁",
+    descrizione: [
+      "Se a chi ha aperto la partita si ricarica la pagina o si chiude l'app, riaprendola la partita riprende da dove era: stessi punti, stesso posto e stessa domanda, e gli amici leggono «🔁 Paky è tornato: la partita riprende da dove era». Le risposte, le battute e i disegni già mandati restano, e chi stava disegnando non perde niente.",
+      "Qualche secondo di respiro e poi si continua col tempo che mancava (mai troppo poco). Se si stavano scoprendo i voti, i punti non si danno due volte.",
+      "Se il telefono di chi ha aperto la partita si spegne del tutto, dopo pochi secondi un amico porta avanti la partita («👑 Ora la partita la tiene Luca») e chi torna rientra a giocare col suo posto.",
+      "📸 Le foto restano solo vostre: non finiscono mai nella copia della partita, e le facce che si vedevano restano a schermo."
+    ]
+  },
+  {
     v: 229,
     data: "18 ottobre 2026",
     titolo: "Stessa Lunghezza d'Onda: la partita non si perde 🔁",

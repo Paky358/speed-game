@@ -4691,7 +4691,12 @@
     var C = S0.codice, io0 = S0.membri[0] || {}, eraMia = !!(S0.riaperta || S0.pronta), chi = nomeHostDi(m) || "un amico";
     try { S0.rete.lascia(); } catch (e) {}
     clearInterval(S0.tVivo); clearTimeout(S0.tCoppie);
-    if (S0.inGioco) { lasciaPartita(); SGNet.chiudiGiochi(); }   // (la partita era sul mio telefono: non c'è più)
+    if (S0.inGioco) {   // (la partita era sul mio telefono: non c'è più)
+      // ...ma un gioco con l'host di riserva lo porta avanti un amico (o lo prende adesso): dalla sua stanza esco come se
+      // fossi sparito, perché un "chiusa apposta" di chi la teneva prima farebbe uscire dalla partita chi gioca col vice
+      var conRiserva = !!(partitaCorrente && partitaCorrente.viva() && riservaPer(partitaCorrente));
+      lasciaPartita(); if (conRiserva && SGNet.lasciaGiochi) SGNet.lasciaGiochi(); else SGNet.chiudiGiochi();
+    }
     chiudiTabelloneElim();
     sala = null; dimenticaMiaSala();
     pillola("riapro", null);
