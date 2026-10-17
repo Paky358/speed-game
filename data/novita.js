@@ -9,6 +9,54 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 231,
+    data: "18 ottobre 2026",
+    titolo: "La Balla Colossale: notizie vere controllate ✅",
+    descrizione: [
+      "Tutte le notizie vere della Balla Colossale sono state ricontrollate su due fonti: una ventina sistemate, tolte quelle che erano solo leggende (per esempio non è vero che il Canada ha più laghi del resto del mondo: è vero solo per quelli grandi)."
+    ]
+  },
+  {
+    v: 230,
+    data: "18 ottobre 2026",
+    titolo: "L'Asta: 5 temi nuovi 🔨",
+    descrizione: [
+      "Cinque temi nuovi da mettere insieme all'asta: 💒 Il Matrimonio da Sogno, 🚌 La Gita Scolastica, 📦 Il Trasloco, 🎤 La Serata Karaoke e ⛺ Il Campeggio.",
+      "Ognuno ha 4 round e più di 260 carte, dalle migliori ai disastri (la torta nuziale crollata in diretta, il prof con la verifica in pullman, il divano che non passa dalla porta), e il suo scenario per il voto finale."
+    ]
+  },
+  {
+    v: 229,
+    data: "18 ottobre 2026",
+    titolo: "Le immagini nuove dei giochi 🖼️",
+    descrizione: [
+      "In home 14 giochi hanno la loro immagine nuova, tutte nello stesso stile: L'Asta, La Linea del tempo, Parola d'ordine, La Balla Colossale, Calcio Biliardo, Il Prezzo è Giusto, Chi di Noi?, Stessa Lunghezza d'Onda, L'Impostore, Sì… però, Scarabocchio, Taboo, Nomi Cose e Città e La Patata Bollente. Le altre arrivano presto."
+    ]
+  },
+  {
+    v: 228,
+    data: "17 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: la partita non si perde 🔁",
+    descrizione: [
+      "Se a chi ha aperto la partita si ricarica la pagina o si chiude l'app, riaprendola la partita riprende da dove era: stessi punti, stessi premi nel carrello, e gli amici leggono «🔁 Paky è tornato: la partita riprende da dove era».",
+      "Se l'offerta, la Ruota o la Vetrina erano a metà, dopo qualche secondo con la classifica («🔁 Si riprende!») si rifanno da capo; se si stava scoprendo il prezzo, si rivede la rivelazione (niente punti doppi).",
+      "Se il telefono di chi ha aperto la partita si spegne del tutto, dopo pochi secondi un amico porta avanti la partita («👑 Ora la partita la tiene Luca») e chi torna rientra a giocare col suo posto e i suoi punti."
+    ]
+  },
+  {
+    v: 227,
+    data: "17 ottobre 2026",
+    titolo: "Gioco nuovo: Il Prezzo è Giusto! 🏷️",
+    descrizione: [
+      "Quanto costa? Si indovina il prezzo di cose vere: la spesa, il caffè al bar, lo smartphone, la Vespa, una settimana al mare… Quasi 500 prodotti con i prezzi medi in Italia del 2026.",
+      "Si gioca nello studio della TV, da 2 a 8 amici online (ognuno dal suo telefono, tutti insieme, anche nella Sala della serata), sullo stesso telefono a turno e «🤖 Contro il Bot» (parte subito: due tocchi e sei nello studio con 3 Bot, come in TV).",
+      "📺 Come in TV: si apre il sipario, compare il prodotto e avete 20 secondi per scrivere il prezzo. Vince chi ci va più vicino senza superarlo. Le offerte si vedono arrivare: puoi fare il cattivo e dire 1 € in più di un amico (il pubblico fischia 😈). Se sforate tutti, si rifà una volta.",
+      "Chi vince l'Offerta sceglie il gioco a premi tra due (🔼🔽 Più o meno, 🧗 L'Alpinista, 📊 Mettili in ordine, ✋ È troppo! e 🟡 Plinko) e si gioca tutti insieme; poi 🎡 la Ruota del 100, dove girate tutti insieme («CENTO! CENTO! CENTO!»), e 🛍️ la Vetrina finale: se ci andate vicinissimo, VINCI TUTTO! Alla fine il carrello con quello che vi portate a casa.",
+      "🎯 Solo il prezzo: esce un oggetto, 20 secondi, vince chi ci va più vicino (sopra o sotto) e chi lo indovina preciso prende il bonus. L'ultimo oggetto vale doppio.",
+      "Chi ospita sceglie il formato, quanto dura (⚡ Veloce, 📺 Puntata, 🌙 Serata lunga), le offerte a vista o segrete e le categorie dei prodotti."
+    ]
+  },
+  {
     v: 226,
     data: "17 ottobre 2026",
     titolo: "Le novità, di nuovo in lista 📜",
