@@ -114,7 +114,7 @@
     { anno: 2001, titolo: "Tiziano Ferro pubblica «Xdono»", fatto: "Il suo primo successo, anche in Spagna e in America Latina." },
     { anno: 2005, titolo: "Ligabue suona a Campovolo davanti a una folla immensa", fatto: "A Reggio Emilia arrivano circa 180.000 persone." },
     { anno: 2005, titolo: "I Negramaro pubblicano «Mentre tutto scorre»", fatto: "La band salentina diventa famosa in tutta Italia." },
-    { anno: 2006, titolo: "Laura Pausini vince il suo primo Grammy", fatto: "Il premio è per un disco cantato in spagnolo." },
+    { anno: 2006, titolo: "Laura Pausini vince il suo primo Grammy americano", fatto: "Il premio è per un disco cantato in spagnolo." },
     { anno: 2007, titolo: "Muore Luciano Pavarotti", fatto: "Il tenore di Modena era famoso in tutto il mondo." },
     { anno: 2008, titolo: "Jovanotti pubblica «A te»", fatto: "Diventa la canzone d'amore dei matrimoni." },
     { anno: 2009, titolo: "Marco Mengoni vince X Factor", fatto: "Il talent di Rai 2 lancia la sua carriera." },
