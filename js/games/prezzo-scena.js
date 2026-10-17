@@ -254,7 +254,7 @@
     function aBuf(v) {
       v = tondo2(v); var i = Math.floor(v + 1e-9), c = Math.round((v - i) * 100);
       if (!opz.cent || !c) return String(i);
-      return i + "," + (c % 10 ? (c < 10 ? "0" : "") + c : String(c / 10));
+      return i + "," + (c < 10 ? "0" : "") + c;   // sempre coi due centesimi: «11,10 €»
     }
     function togli() { if (fatto || chiuso) return; buf = buf.slice(0, -1); if (buf === "0") buf = ""; mostra(); }
     function valore() { if (!buf) return 0; var p = buf.split(","); return tondo2(+(p[0] || 0) + (p[1] ? +("0." + p[1]) : 0)); }
@@ -276,7 +276,7 @@
     ["1", "2", "3"].forEach(function (d) { tasto(d, "", function () { aggiungi(d); }); });
     tasto("⌫", "fn", togli).setAttribute("aria-label", "Cancella");
     ["4", "5", "6"].forEach(function (d) { tasto(d, "", function () { aggiungi(d); }); });
-    tasto(opz.cent ? "," : "000", "fn", function () { aggiungi(opz.cent ? "," : "000"); });
+    tasto(opz.cent ? "," : "000", opz.cent ? "fn virgola" : "fn", function () { aggiungi(opz.cent ? "," : "000"); });
     ["7", "8", "9", "0"].forEach(function (d) { tasto(d, "", function () { aggiungi(d); }); });
     tasti.appendChild(ok);
     premi(canc, togli);
@@ -294,6 +294,7 @@
       while (riga.firstChild) riga.removeChild(riga.firstChild);
       lista = (lista || []).slice().sort(function (a, b) { return a.v - b.v; });
       riga.hidden = !lista.length;
+      riga.classList.toggle("tante", lista.length > 3);   // tante offerte: chip piccole su due righe, si vedono tutte
       lista.forEach(function (o) {
         var b = el("button", { class: "pz-offch" + (o.mia ? " mia" : ""), type: "button" }, [ el("b", { text: o.nome }), el("span", { text: fmtE(o.v) }) ]);
         if (!o.mia) premi(b, function () {
@@ -423,7 +424,11 @@
       ".st-vista.pz-con-pan .st-sch-in{padding-bottom:calc(var(--pz-pan,300px) + 4px)}",
       ".st-vista.pz-con-pan .st-terzo{bottom:calc(var(--pz-pan,300px) + 10px)}",
       ".st-vista.pz-con-pan .st-barra{display:none}",
-      ".pz-sch{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:2px 2px 0;overflow:hidden}",
+      // (telefoni bassi col pannello su: il prodotto un po' più piccolo, così il tabellone delle offerte resta sopra il pannello)
+      ".st-vista.pz-con-pan .pz-sch{gap:6px}",
+      ".st-vista.pz-con-pan .pz-tab.fitto .pz-och .nm{display:none}.st-vista.pz-con-pan .pz-tab.fitto .pz-och{padding-right:8px}",
+      "@media (max-height:700px){.st-vista.pz-con-pan .pz-sip .pz-emo{font-size:36px;height:1.15em}}",
+      ".pz-sch{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;justify-content:safe center;gap:10px;text-align:center;padding:2px 2px 0;overflow:hidden}",
       ".pz-testa{display:flex;align-items:center;justify-content:center;gap:8px;min-height:30px;margin:0 40px;font-size:13px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#ffe066}",
       ".pz-testa .x2{background:#ff3ea5;color:#fff;border-radius:99px;padding:2px 9px;letter-spacing:.04em;animation:pzPulsa 1s ease-in-out infinite}",
       ".pz-titolo{font-size:22px;font-weight:900;color:#fff;line-height:1.15}",
@@ -472,6 +477,7 @@
       ".pz-tempo .b i{display:block;height:100%;width:100%;background:#ffd43b;transform-origin:0 50%;will-change:transform;transition:transform .2s linear}",
       ".pz-tempo .s{min-width:26px;text-align:right;font-size:17px;font-weight:900;color:#ffd43b;font-variant-numeric:tabular-nums}",
       ".pz-tempo.poco .b i{background:#ff5d6c}.pz-tempo.poco .s{color:#ff5d6c}",
+      ".pz-tempo.mini{width:min(220px,70%);margin:4px auto 0}.pz-tempo.mini .b{height:5px}.pz-tempo.mini .s{font-size:14px;min-width:20px}",
       // il pannello in basso
       ".pz-pan{position:absolute;left:0;right:0;bottom:0;z-index:23;box-sizing:border-box;display:flex;flex-direction:column;gap:7px;padding:9px 12px calc(10px + env(safe-area-inset-bottom));",
         "border-radius:22px 22px 0 0;background:linear-gradient(#2b1a78f2,#120a3cf7 40%);box-shadow:0 -10px 30px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.25);color:#fff;",
@@ -487,6 +493,11 @@
       ".pz-tast{display:flex;flex-direction:column;gap:7px}",
       ".pz-offrow{display:flex;gap:6px;overflow:hidden;flex-wrap:nowrap;min-height:30px}",
       ".pz-offrow[hidden]{display:none}",
+      ".pz-offrow.tante{flex-wrap:wrap;gap:4px;max-height:72px}",
+      ".pz-offrow.tante .pz-offch{flex-direction:column;align-items:center;gap:0;padding:2px 8px;line-height:1.12}",
+      ".pz-offrow.tante .pz-offch b{font-size:10.5px;max-width:56px}.pz-offrow.tante .pz-offch span{font-size:12.5px}",
+      // (le offerte stanno tutte nel pannello: il tabellone del maxischermo si toglie per fare spazio)
+      ".st-vista.pz-con-pan:has(.pz-offrow.tante) .pz-sch .pz-tab{display:none}",
       ".pz-offch{flex:0 0 auto;display:flex;align-items:center;gap:5px;border:0;border-radius:99px;padding:4px 10px;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:13px;cursor:pointer;-webkit-tap-highlight-color:transparent}",
       ".pz-offch b{font-weight:800;color:#cdd6ff;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pz-offch span{font-weight:900;color:#ffe066}",
       ".pz-offch.mia{background:rgba(55,212,126,.3)}.pz-offch.piu{animation:pzPop .3s}",
@@ -499,6 +510,7 @@
       ".pz-k,.pz-ok{height:clamp(40px,calc(var(--alt,640px) * .07),56px);border:0;border-radius:13px;font:inherit;font-weight:900;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .08s}",
       ".pz-k{font-size:23px;color:#fff;background:linear-gradient(#5b46c4,#3a2a96);box-shadow:inset 0 -3px 0 rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.25)}",
       ".pz-k.fn{font-size:19px;background:linear-gradient(#3d3570,#272152)}",
+      ".pz-k.virgola{font-size:34px;line-height:.6;padding-bottom:10px}",
       ".pz-k:active,.pz-ok:active{transform:scale(.95)}",
       ".pz-ok{grid-column:span 4;font-size:19px;color:#3b2a00;background:linear-gradient(#ffe98a,#fcc419);box-shadow:inset 0 -4px 0 rgba(0,0,0,.18),0 4px 14px rgba(252,196,25,.35)}",
       ".pz-ok:disabled{opacity:.5;cursor:default;box-shadow:none}.pz-ok.no{background:linear-gradient(#ffc9c9,#ff8787);color:#5c0011;opacity:.9}",

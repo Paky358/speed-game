@@ -444,7 +444,8 @@
       } else if (dopo.length) {
         var mn = Math.min.apply(null, dopo.map(function (id) { return tocchi[id]; }));
         banner.className = "pz-banner pzb-ban-s";
-        banner.textContent = "😅 Nessuno al primo sopra: il più vicino è " + minus(elenco(A, dopo.filter(function (id) { return tocchi[id] === mn; })));
+        var vicini = dopo.filter(function (id) { return tocchi[id] === mn; }), conMe = A.locale !== "telefono" && vicini.indexOf(me) >= 0;
+        banner.textContent = "😅 Nessuno al primo sopra: " + (vicini.length > 1 ? (conMe ? "i più vicini siete " : "i più vicini sono ") : conMe ? "il più vicino sei " : "il più vicino è ") + minus(elenco(A, vicini));
         A.ST.pubblico(A.S, "applauso");
       } else {
         banner.className = "pz-banner no pzb-ban-s";

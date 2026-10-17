@@ -16,7 +16,7 @@ window.SG_PREZZO.prodotti.push(
   { id: "a3-vignetta-svizzera", cat: "motori", e: "🇨🇭", nome: "Vignetta svizzera", desc: "Il bollino per guidare un anno sulle autostrade svizzere", prezzo: 43, cur: "Costa 40 franchi; chi guida senza paga 200 franchi di multa" },
   { id: "a3-deposito-gomme", cat: "motori", e: "📦", nome: "Deposito delle gomme", desc: "Il gommista tiene le tue gomme invernali per l'estate", dove: "dal gommista", prezzo: 45 },   // ricerca: 40-50
   { id: "a3-autostrada-mi-rm", cat: "motori", e: "🛣️", nome: "Autostrada Milano-Roma", desc: "Il pedaggio in auto, tutto il viaggio in autostrada", prezzo: 46 },   // ricerca: 45,60
-  { id: "a3-telepass", cat: "motori", e: "📟", nome: "Telepass per un anno", desc: "Il canone del dispositivo base, dodici mesi", prezzo: 47, cur: "Fino a giugno 2024 il canone era di 1,83 al mese: poi è più che raddoppiato", wow: 1 },   // ricerca: 3,90 al mese
+  { id: "a3-telepass", cat: "motori", e: "📟", nome: "Telepass per un anno", desc: "Il canone del dispositivo base, dodici mesi", prezzo: 47, cur: "Fino a giugno 2024 il canone era di 1,83 € al mese: poi è più che raddoppiato", wow: 1 },   // ricerca: 3,90 al mese
   { id: "a3-cambio-gomme", cat: "motori", e: "🔧", nome: "Cambio gomme di stagione", desc: "Smontare e montare le 4 ruote, con l'equilibratura", dove: "dal gommista", prezzo: 50 },   // ricerca: 40-60
   { id: "a3-traforo-monte-bianco", cat: "motori", e: "⛰️", nome: "Traforo del Monte Bianco", desc: "In auto, solo andata, dall'Italia alla Francia", prezzo: 55, cur: "La galleria è lunga 11,6 km" },   // ricerca: 52-56 (dubbio)
   { id: "a3-revisione", cat: "motori", e: "📋", nome: "Revisione dell'auto", desc: "Quella obbligatoria ogni due anni, in un centro autorizzato", prezzo: 79, cur: "La tariffa è la stessa in tutta Italia" },   // ricerca: 79,02
@@ -56,8 +56,8 @@ window.SG_PREZZO.prodotti.push(
   // ---------- 🏖️ VIAGGI E VACANZE ----------
   { id: "a3-funicolare-capri", cat: "viaggi", e: "🚡", nome: "Funicolare di Capri", desc: "Dal porto alla Piazzetta, solo andata", prezzo: 2.4 },   // stima: 2,20-2,40 (dubbio)
   { id: "a3-contributo-venezia", cat: "viaggi", e: "🎫", nome: "Ticket d'ingresso a Venezia", desc: "Per chi visita la città in giornata, prenotato prima", dove: "nei giorni di folla", prezzo: 5, cur: "Chi lo prende negli ultimi tre giorni paga il doppio" },
-  { id: "a3-vaporetto", cat: "viaggi", e: "🚤", nome: "Biglietto del vaporetto", desc: "Una corsa singola, vale 75 minuti", dove: "a Venezia", prezzo: 9.5, cur: "I veneziani residenti pagano la stessa corsa circa 1,50", wow: 1 },
-  { id: "a3-cenacolo", cat: "viaggi", e: "🍞", nome: "L'Ultima Cena di Leonardo", desc: "Quindici minuti davanti al dipinto, ingresso intero", dove: "a Milano", prezzo: 15, cur: "Chi ha tra 18 e 25 anni paga solo 2" },
+  { id: "a3-vaporetto", cat: "viaggi", e: "🚤", nome: "Biglietto del vaporetto", desc: "Una corsa singola, vale 75 minuti", dove: "a Venezia", prezzo: 9.5, cur: "I veneziani residenti pagano la stessa corsa circa 1,50 €", wow: 1 },
+  { id: "a3-cenacolo", cat: "viaggi", e: "🍞", nome: "L'Ultima Cena di Leonardo", desc: "Quindici minuti davanti al dipinto, ingresso intero", dove: "a Milano", prezzo: 15, cur: "Chi ha tra 18 e 25 anni paga solo 2 €" },
   { id: "a3-cristo-velato", cat: "viaggi", e: "🗿", nome: "Il Cristo Velato", desc: "Ingresso intero alla Cappella Sansevero", dove: "a Napoli", prezzo: 12 },   // ricerca: 12 (una guida)
   { id: "a3-leonardo-express", cat: "viaggi", e: "🚆", nome: "Leonardo Express", desc: "Il treno da Roma Termini a Fiumicino, solo andata", prezzo: 14 },
   { id: "a3-malpensa-express", cat: "viaggi", e: "🚆", nome: "Malpensa Express", desc: "Il treno da Milano Centrale all'aeroporto, solo andata", prezzo: 15 },
@@ -66,7 +66,7 @@ window.SG_PREZZO.prodotti.push(
   { id: "a3-reggia-caserta", cat: "viaggi", e: "🏰", nome: "Reggia di Caserta", desc: "Parco e appartamenti reali, ingresso intero", prezzo: 18 },
   { id: "a3-musei-vaticani", cat: "viaggi", e: "⛪", nome: "Musei Vaticani", desc: "Ingresso intero, con la Cappella Sistina", dove: "a Roma", prezzo: 20 },
   { id: "a3-scavi-pompei", cat: "viaggi", e: "🏛️", nome: "Scavi di Pompei", desc: "Biglietto intero (le scarpe comode le porti tu)", prezzo: 20 },   // ricerca: 20 (forse 22 col Pompei+)
-  { id: "a3-david", cat: "viaggi", e: "🗿", nome: "Il David di Michelangelo", desc: "Ingresso alla Galleria dell'Accademia", dove: "a Firenze", prezzo: 20, cur: "Da febbraio 2026 costa 4 in più di prima" },
+  { id: "a3-david", cat: "viaggi", e: "🗿", nome: "Il David di Michelangelo", desc: "Ingresso alla Galleria dell'Accademia", dove: "a Firenze", prezzo: 20, cur: "Da febbraio 2026 costa 4 € in più di prima" },
   { id: "a3-torre-pisa", cat: "viaggi", e: "🗼", nome: "Salita sulla Torre di Pisa", desc: "Quasi 300 scalini, a orario fisso, un adulto", prezzo: 20 },   // ricerca: 20 + eventuale prevendita
   { id: "a3-uffizi", cat: "viaggi", e: "🖼️", nome: "Biglietto degli Uffizi", desc: "Ingresso intero, in alta stagione", dove: "a Firenze", prezzo: 25 },
   { id: "a3-cupola-brunelleschi", cat: "viaggi", e: "⛪", nome: "Cupola del Brunelleschi", desc: "Il biglietto per salire in cima e vedere il Duomo", dove: "a Firenze", prezzo: 30 },   // ricerca: Brunelleschi Pass 30
@@ -127,7 +127,7 @@ window.SG_PREZZO.prodotti.push(
   { id: "a3-pantheon", cat: "curiosita", e: "🏛️", nome: "Biglietto del Pantheon", desc: "Ingresso intero per vedere il buco nel tetto", dove: "a Roma", prezzo: 5, cur: "Fino al 2023 si entrava gratis" },
   { id: "a3-colosseo", cat: "curiosita", e: "🏟️", nome: "Biglietto del Colosseo", desc: "Ingresso intero, con il Foro Romano e il Palatino", dove: "a Roma", prezzo: 18, cur: "La prima domenica del mese si entra gratis" },
   { id: "a3-gardaland", cat: "curiosita", e: "🎢", nome: "Biglietto di Gardaland", desc: "Ingresso di un giorno, comprato alla cassa", prezzo: 59, cur: "Comprato online con qualche giorno d'anticipo costa molto meno" },
-  { id: "a3-skipass-cortina", cat: "curiosita", e: "🎿", nome: "Skipass di un giorno", desc: "Dolomiti Superski, un adulto, in alta stagione", dove: "a Cortina, a Natale", prezzo: 89, cur: "Un anno prima costava 86" },
+  { id: "a3-skipass-cortina", cat: "curiosita", e: "🎿", nome: "Skipass di un giorno", desc: "Dolomiti Superski, un adulto, in alta stagione", dove: "a Cortina, a Natale", prezzo: 89, cur: "Un anno prima costava 86 €" },
   { id: "a3-giro-gondola", cat: "curiosita", e: "🛶", nome: "Giro in gondola", desc: "Mezz'ora tra i canali, fino a cinque persone, di giorno", dove: "a Venezia", prezzo: 90, cur: "Di sera lo stesso giro costa di più" },
   { id: "a3-finale-internazionali", cat: "curiosita", e: "🎾", nome: "Finale degli Internazionali", desc: "Il tennis maschile sul Centrale, nei posti più lontani", dove: "a Roma, a maggio", prezzo: 590, wow: 1 },   // ricerca: 587,90
   { id: "a3-twiga", cat: "curiosita", e: "🏖️", nome: "Tenda in spiaggia al Twiga", desc: "Una tenda col divano per un giorno, sul lido di Briatore", dove: "in Versilia, ad agosto", prezzo: 600, wow: 1 },

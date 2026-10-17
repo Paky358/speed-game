@@ -604,6 +604,8 @@
           if (H.fase !== "vetrina" || H.sotto !== "offri") return;
           var tot = 0;
           H.vet.v.pezzi.forEach(function (x, i) { tot += (H.indizio && H.indizio.id === b.id && H.indizio.i === i) ? x.prezzo : stimaBot(x.prezzo, H.imp.liv, false); });
+          // (un'idea sbagliata sul totale, uguale per tutti i pezzi: se no gli errori si compensano e il Bot fa «VINCI TUTTO» troppo spesso)
+          tot *= Math.exp(Math.max(-2.5, Math.min(2.5, gauss())) * (ERR[H.imp.liv] || 0.25) * 0.7);
           offVetrina(b.id, Z().arrotonda(tot * (1 - (ERR[H.imp.liv] || 0.25) * 0.25), tot));
         });
       });
@@ -922,8 +924,11 @@
   }
   // in basso, per chi aspetta o guarda: una riga e le faccine
   function attesa(R, testo) {
-    var el = R.t.el; R.pan.giu();
-    ST.barra(R.S, [ el("p", { class: "pz-attesa", text: testo }), R.t.faccine() ]);
+    var el = R.t.el, vm = R.vm; R.pan.giu();
+    // i secondi che mancano (niente attesa senza tempo): una barretta muta sotto la riga
+    var resta = vm.restaMs ? vm.restaMs - (Date.now() - R.vmTs) : 0, tb = null;
+    if (R.cb.locale !== "telefono" && resta > 1500 && vm.fase !== "punti") tb = Z().barraTempo(el, Date.now() + resta, null, { muto: true, cls: "mini" });
+    ST.barra(R.S, [ el("p", { class: "pz-attesa", text: testo }), tb ? tb.el : null, R.t.faccine() ]);
   }
   function guardaTesto(R) {
     var vm = R.vm, id = R.cb.myId;
@@ -1033,6 +1038,19 @@
     if (!U || !U.tab.isConnected || vm.fase !== "offerta") return;
     var vista = !!vm.off, off = vm.off || {}, fatti = vm.offFatti || Object.keys(off);
     var lista = vm.players.filter(function (p) { return !p.via; });
+    // a vista, appena arriva un «+1 €» su un altro: il pubblico fischia subito (la prima foto dopo una ricarica non conta)
+    if (vista && vm.sotto === "offri") {
+      if (U.rif !== (vm.rifai || 0)) { U.rif = vm.rifai || 0; U.visti = null; }
+      var ord = vm.ord || Object.keys(off), prima = !U.visti;
+      U.visti = U.visti || {};
+      ord.forEach(function (id, i) {
+        if (U.visti[id] || off[id] == null) return; U.visti[id] = 1;
+        if (prima) return;
+        Z().FX.toc(760);
+        var su = ord.slice(0, i).filter(function (a) { var d = Math.round((off[id] - off[a]) * 100) / 100; return a !== id && (d === 1 || (vm.prod && vm.prod.cent && d === 0.1)); })[0];
+        if (su) { Z().FX.buu(); fumetto(R.S, "Buuu! 😈 +" + E(off[id] - off[su])); }
+      });
+    }
     if (vista) lista.sort(function (a, b) { var x = off[a.id], y = off[b.id]; return (x == null) - (y == null) || (x || 0) - (y || 0); });
     lista.forEach(function (p) {
       var c = U.chips[p.id];
@@ -1058,7 +1076,9 @@
   async function fOffri(R) {
     var S = R.S, vm = R.vm, k = vm.k;
     var U = schOfferta(R, true); aggiornaTab(R);
-    U.nota.textContent = vm.rifai ? "😬 Si rifà! Tutti sotto i " + E(vm.limite) : vm.offerte === "vista" ? "👀 Le offerte si vedono: occhio al «+1 €»!" : "🤫 Offerte segrete: si scoprono alla fine";
+    // la regola sempre sotto gli occhi: senza superarlo (o sopra o sotto) e come sono le offerte
+    var senza = vm.formato !== "solo" || vm.sforare;
+    U.nota.textContent = vm.rifai ? "😬 Si rifà! Tutti sotto i " + E(vm.limite) : (senza ? "⬇️ Senza superarlo!" : "↕️ Sopra o sotto") + (vm.offerte === "vista" ? " · 👀 occhio al «+1 €»" : " · 🤫 offerte segrete");
     if (vm.rifai) ST.terzo(S, null, "Tutti sotto i " + E(vm.limite) + "!", "Si rifà una volta sola", "😬");
     await ST.suSchermo(S, 300); if (!vivoK(R, k)) return;
     if (R.cb.locale === "telefono") return turniOfferte(R, k);
@@ -1738,7 +1758,15 @@
   // i messaggi solo per questo telefono
   function privatoR(m) {
     if (!R || !m) return;
-    if (m.k === "mia") { R.mie["o" + m.kk] = m.v; R.mie.oId = m.per; return; }
+    if (m.k === "mia" || m.k === "miaV") {
+      if (m.k === "mia") { R.mie["o" + m.kk] = m.v; R.mie.oId = m.per; } else R.mie["v" + m.kk] = m.v;
+      // (chi ha ricaricato la pagina e ha già offerto: il tastierino si chiude da solo, col prezzo che aveva detto)
+      if (R.tast && R.tastK === m.kk && R.vm.k === m.kk && R.cb.locale !== "telefono") {
+        var k0 = m.kk, v0 = m.v; R.tast.fatto(v0);
+        if (!R.toAttesa || R.toAttesaK !== k0) { clearTimeout(R.toAttesa); R.toAttesaK = k0; R.toAttesa = setTimeout(function () { if (vivoK(R, k0) && R.tast) attesa(R, m.k === "miaV" ? "✅ Hai offerto " + E(v0) + " per la vetrina" : "✅ Hai offerto " + E(v0) + " · aspettiamo gli altri…"); }, 1300); }
+      }
+      return;
+    }
     if (m.k === "preso" || m.k === "sotto") {
       if (R.tast && R.tastK === m.kk) {
         clearTimeout(R.toAttesa);
@@ -1755,7 +1783,6 @@
       return;
     }
     if (m.k === "indizio") { R.indizio = m; return; }
-    if (m.k === "miaV") { R.mie["v" + m.kk] = m.v; return; }
     if (m.k === "miaR") { R.mie["r" + m.kk] = m.si; return; }
   }
 
@@ -1866,7 +1893,7 @@
       var solo = imp.formato === "solo", d = imp.durata || "puntata";
       var nCat = Array.isArray(imp.categorie) && imp.categorie.length >= 3 && imp.categorie.length < 10 ? imp.categorie.length + " categorie su 10" : "tutte le categorie";
       return (solo ? "🎯 Solo il prezzo · " + (N_OGG[d] || 10) + " oggetti · " + (imp.sforare ? "senza sforare" : "sopra o sotto") :
-        "📺 Come in TV · " + ({ veloce: "⚡ Veloce", lunga: "🌙 Serata lunga" }[d] || "📺 Puntata") + " · offerte " + (imp.offerte === "segrete" ? "segrete" : "a vista")) + " · " + nCat;
+        "📺 Come in TV · " + ({ veloce: "⚡ Veloce", lunga: "🌙 Serata lunga" }[d] || "📺 Puntata")) + " · offerte " + (imp.offerte === "segrete" ? "segrete" : "a vista") + " · " + nCat;
     },
     avvia: function (t) {
       Z().stile();

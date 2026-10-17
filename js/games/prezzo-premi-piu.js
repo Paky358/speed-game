@@ -175,7 +175,7 @@
       }
       var primi = riv.arrivi || [];
       banner.className = primi.length ? "pz-banner" : "pz-banner no";
-      banner.textContent = primi.length ? "🏆 " + A.nome(primi[0].id) + " l'ha trovato per primo!" : "😱 Nessuno l'ha trovato!";
+      banner.textContent = primi.length ? (A.nome(primi[0].id) === "Tu" ? "🏆 L'hai trovato per primo!" : "🏆 " + A.nome(primi[0].id) + " l'ha trovato per primo!") : "😱 Nessuno l'ha trovato!";
       A.ST.pubblico(A.S, primi.length ? "applauso" : "ohh");
       await A.dorme(2300);
     }
