@@ -809,26 +809,45 @@
     return "Luca host dopo " + dt + " s (gen 2), Marco lo segue";
   } });
 
-  // 335. Partita in corso: la Scalinata era sul telefono di Paky
-  aggiungi(335, { nome: "Partita in corso (Scalinata) e Paky sparisce: tutti nella Sala di Giulia, niente gioco sopra la Sala; Giulia lancia Tris e si gioca", fai: async function () {
+  // 335. Partita in corso: la Scalinata era sul telefono di Paky.
+  // (Passo 5, p5-z) la Scalinata ha l'host di riserva del core (riprende + riserva): la partita NON si perde. Un amico la porta
+  // avanti (6 s), la Sala passa a Giulia (20 s) col gioco ancora dentro, si arriva al podio; poi tutti nella Sala di Giulia,
+  // Tris, e nella Classifica della serata contano tutte e due le partite
+  aggiungi(335, { nome: "Partita in corso (Scalinata) e Paky sparisce: un amico porta avanti la Scalinata, la Sala passa a Giulia col gioco dentro; podio, tutti nella Sala, Giulia lancia Tris e si gioca", fai: async function () {
     var X = await A.salaConAmici(["Giulia", "Luca"]), S = X.S, P = X.w.Paky, G = X.w.Giulia, L = X.w.Luca;
     var C = await A.lanciaDallaSala("Paky", S, "La Scalinata");
     if (!await W.aspetta(function () { return vm(S).stanza === C && [G, L].every(function (w) { return A.codiceSaletta(w) === C; }); }, 8000)) no("gli amici non arrivano nella saletta della Scalinata");
     if (!await W.aspetta(function () { return W.clicca(P, /Comincia/, ".sl-go"); }, 4000)) no("niente «Comincia»");
     if (!await W.aspetta(function () { return vm(S).fase === "gioco"; }, 10000)) no("la Scalinata non comincia (fase " + vm(S).fase + ")");
     await W.dorme(2500);
+    var nomeDi = {}; ["Giulia", "Luca"].forEach(function (n) { nomeDi[idDi(S, n)] = n; });   // (gli id del gioco = quelli della Sala)
+    var gen0 = +(W.statoStanza(C) || {})._g || 1;
     spentoDavvero("Paky");
-    if (!await W.aspetta(function () { return hostDi(S) === "Giulia" && vm(S).gen === 2 && eHost(G) && salaDi(L, S); }, 28000, 250)) no("la Sala non passa a Giulia (host " + hostDi(S) + ", Giulia «" + A.T(G).slice(0, 50) + "», Luca «" + A.T(L).slice(0, 50) + "»)");
-    if (vm(S).gioco || vm(S).stanza) no("la Sala di Giulia ha ancora il gioco " + vm(S).gioco);
+    var sG = await W.aspetta(function () { var s = W.statoStanza(C) || {}; return (+s._g || 1) > gen0 && nomeDi[s._h] ? s : null; }, 15000, 250);
+    if (!sG) no("nessun amico porta avanti la Scalinata (_h " + (W.statoStanza(C) || {})._h + ", _g " + (W.statoStanza(C) || {})._g + ")");
+    var VG = nomeDi[sG._h];
+    if (!await W.aspetta(function () { return hostDi(S) === "Giulia" && vm(S).gen === 2; }, 28000, 250)) no("la Sala non passa a Giulia (host " + hostDi(S) + ", Giulia «" + A.T(G).slice(0, 50) + "», Luca «" + A.T(L).slice(0, 50) + "»)");
+    await W.dorme(1500);
+    if (vm(S).gioco !== "scalinata" || vm(S).stanza !== C) no("la Sala di Giulia ha chiuso la Scalinata (gioco " + vm(S).gioco + ", stanza " + vm(S).stanza + ")");
+    var fuori = [G, L].filter(function (w) { return w.document.querySelector(".saletta-schermo"); });
+    if (fuori.length) no("con la Sala nuova Giulia o Luca non sono più nella Scalinata");
+    if (!await A.scalinataFinoAllaFine(C, ["Giulia", "Luca"], VG)) no("la Scalinata tenuta da " + VG + " non arriva al podio (fase " + vm(C).fase + ")");
+    // al podio Giulia (host della Sala) porta tutti nella Sala: «🏠 Torna in Sala» o «🎮 Cambia gioco» (e poi ‹)
+    var tocco = await W.aspetta(function () { return W.clicca(G, /Torna in Sala/, ".fine-tasti button") ? "Torna in Sala" : W.clicca(G, /Cambia gioco/, ".fine-tasti button") ? "Cambia gioco" : null; }, 40000, 300);
+    if (!tocco) no("al podio Giulia non ha «🏠 Torna in Sala» né «🎮 Cambia gioco» («" + A.T(G).slice(-80) + "»)");
+    if (tocco === "Cambia gioco") { await W.aspetta(function () { return /Quale gioco/.test(A.T(G)); }, 8000); await W.dorme(500); W.clicca(G, /^‹$/); }
+    if (!await W.aspetta(function () { return eHost(G) && salaDi(L, S) && !vm(S).gioco; }, 10000)) no("dopo il podio non sono tutti nella Sala di Giulia (Giulia «" + A.T(G).slice(0, 50) + "», Luca «" + A.T(L).slice(0, 50) + "»)");
     await W.dorme(3000);   // (nessun timer della Scalinata deve disegnare sopra la Sala)
     if (!eHost(G) || !salaDi(L, S)) no("dopo 3 s qualcosa ha coperto la Sala (Giulia «" + A.T(G).slice(0, 50) + "», Luca «" + A.T(L).slice(0, 50) + "»)");
+    var n0 = ((vm(S).torneo || {}).n) || 0;
+    if (n0 < 1) no("la Scalinata finita da " + VG + " non conta nella Classifica della serata");
     var C2 = await A.lanciaDallaSala("Giulia", S, "Tris");
     if (!await W.aspetta(function () { return vm(C2).avvId === idDi(S, "Luca"); }, 8000)) no("Luca non entra nel Tris di Giulia");
     if (!await W.aspetta(function () { return W.clicca(G, /Comincia/, ".sl-go"); }, 4000)) no("niente «Comincia» per Giulia");
     if (!await A.trisFinoAllaFine(C2, "Giulia", "Luca")) no("il Tris non finisce");
-    if (!await W.aspetta(function () { var t = vm(S).torneo; return t && t.n === 1; }, 6000)) no("il Tris non conta nella Classifica della serata");
+    if (!await W.aspetta(function () { var t = vm(S).torneo; return t && t.n === n0 + 1; }, 6000)) no("il Tris non conta nella Classifica della serata");
     erroriVuoti();
-    return "Scalinata persa, Giulia e Luca nella Sala di Giulia (gen 2), poi Tris giocato e contato";
+    return "Scalinata portata avanti da " + VG + " fino al podio, la Sala a Giulia (gen 2) col gioco dentro, poi «" + tocco + "» e tutti nella Sala; Tris giocato; " + (n0 + 1) + " partite nella Classifica della serata";
   } });
 
   // 336. Il duello continua: l'esito arriva alla Sala nuova
@@ -871,9 +890,9 @@
     if (!await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 4000)) no("niente Comincia");
     if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 9000)) no("Parola d'ordine non comincia");
     await W.dorme(3000);
-    var gen0 = vm(C).gen;
+    var gen0 = +(W.statoStanza(C) || {})._g || 1;   // (Passo 5: chi tiene il gioco sta nella foto: _g, _h)
     spentoDavvero("Paky");
-    if (!await W.aspetta(function () { return vm(C).gen > gen0 && vm(C).fase === "gioco"; }, 15000, 250)) no("nessuno porta avanti Parola d'ordine");
+    if (!await W.aspetta(function () { var s = W.statoStanza(C) || {}; return (+s._g || 1) > gen0 && s._h && s._h !== "host" && vm(C).fase === "gioco"; }, 15000, 250)) no("nessuno porta avanti Parola d'ordine");
     if (!await W.aspetta(function () { return hostDi(S) === "Giulia" && vm(S).gen === 2; }, 28000, 250)) no("la Sala non passa a Giulia");
     var v = vm(S);
     if (v.gioco !== "ordine" || v.stanza !== C) no("la Sala di Giulia ha perso Parola d'ordine (" + v.gioco + ")");
@@ -882,7 +901,7 @@
     if (sotto.length) no("dopo il cambio della Sala sono usciti dal gioco: " + sotto.join(", "));
     if (vm(C).fase !== "gioco") no("il gioco si è fermato (" + vm(C).fase + ")");
     erroriVuoti();
-    return "Parola d'ordine avanti (gen " + vm(C).gen + "), la Sala a Giulia (gen 2) col gioco ancora dentro, nessuno uscito";
+    return "Parola d'ordine avanti (_g " + (W.statoStanza(C) || {})._g + "), la Sala a Giulia (gen 2) col gioco ancora dentro, nessuno uscito";
   } });
 
   // 337. Torneo a eliminazione: nessun vice
@@ -1011,7 +1030,7 @@
   aggiungi(341, { nome: "Tessera in home: «🟢 Giulia è dentro» con l'avatar; Giulia chiude → «Nessuno ancora» al suo posto; poche sbirciate; un tocco ed entri", fai: async function () {
     var G = await hostCompagnia("Giulia", 185);
     var P = await telHome("Paky", 0, { prima: conComp([[C, NOME]]) });
-    var t0 = Date.now(), n0 = W.contaCollegamenti("Paky"), sP = spiaPillole(P);
+    var t0 = Date.now(), n0 = W.contaCollegamenti("Paky", 0), sP = spiaPillole(P);
     if (!await W.aspetta(function () { return P3.tessera(P, C) === "🍻 " + NOME + " · 🟢 Giulia è dentro · Entra ›"; }, 8000)) no("tessera di Paky: «" + P3.tessera(P, C) + "»");
     var nodo = tesseraDi(P), av = nodo.querySelectorAll(".cmp-av:not([hidden]) svg");
     if (av.length !== 1) no("sulla tessera ci sono " + av.length + " avatar (deve esserci quello di Giulia)");
@@ -1025,7 +1044,7 @@
     if (!inHome(P)) no("Paky non è più in home");
     // la home aperta 70 s: al massimo 3 sbirciate
     var resta = 70000 - (Date.now() - t0); if (resta > 0) await W.dorme(resta);
-    var nSb = W.contaCollegamenti("Paky") - n0;
+    var nSb = W.contaCollegamenti("Paky", 0) - n0;   // (Passo 5: una sbirciata apre un collegamento per ufficio postale: si contano quelli del primo)
     if (nSb > 3) no("in 70 s di home Paky ha aperto " + nSb + " collegamenti");
     var pp = sP.stop();
     if (pp.some(function (t) { return /Mi ricollego/.test(t); })) no("pillola «Mi ricollego» in home: " + pp.join(" | "));
@@ -1648,18 +1667,19 @@
   // gli stessi numeri non si coprono). opz = { file: ["passo3/rete.js", …], salta: [56, …], da: "…" } (senza: tutti)
   // Gli esiti finiscono anche in window.__esiti422. Lungo (ore): meglio a pezzi, con la scheda ricaricata tra un pezzo e l'altro.
   var FILE422 = ["copione-prova.js", "copione-giochi.js", "passo2/gruppo-a.js", "passo2/gruppo-b.js", "passo2/gruppo-c.js", "passo2/gruppo-d.js",
-    "passo2/bot-gruppo-a.js", "passo2/bot-gruppo-b.js", "passo2/bot-gruppo-c.js", "passo2/bot-gruppo-d.js", "passo2/modello.js", "passo2/controllo.js", "passo2/lunghezza.js",
-    "passo3/comune.js", "passo3/rete.js", "passo3/tessere.js", "passo3/compagnia.js", "passo3/giochi-a.js", "passo3/giochi-b.js", "passo3/giochi-c.js", "passo3/giochi-d.js"];
+    "passo2/bot-gruppo-a.js", "passo2/bot-gruppo-b.js", "passo2/bot-gruppo-c.js", "passo2/bot-gruppo-d.js", "passo2/modello.js", "passo2/controllo.js", "passo2/lunghezza.js", "passo2/chidinoi.js",
+    "passo3/comune.js", "passo3/rete.js", "passo3/tessere.js", "passo3/compagnia.js", "passo3/giochi-a.js", "passo3/giochi-b.js", "passo3/giochi-c.js", "passo3/giochi-d.js",
+    "passo5/rete.js", "passo5/g1.js", "passo5/g2.js", "passo5/g3.js", "passo5/g4.js", "passo5/g5.js", "passo5/ordine.js", "passo5/riserva.js", "passo5/modello.js", "passo5/controllo.js"];
   // gli scenari di un file (quelli che il file aggiunge o cambia quando si carica)
   async function scenariDi(file) {
     var Sc = W.COPIONE.scenari, prima = {};
     Object.keys(Sc).forEach(function (k) { prima[k] = Sc[k]; });
-    if (file === "copione-prova.js") return Object.keys(Sc).filter(function (k) { var n = parseInt(k, 10); return n < 100; });
+    if (file === "copione-prova.js") return Object.keys(Sc).filter(function (k) { var n = parseInt(k, 10); return n < 100 || (n >= 500 && n < 520); });   // (501-519: Passo 5 nel copione)
     await W.COPIONE.carica(file);
     if (file === "passo3/compagnia.js") W.COPIONE.passo3 = W.P3;
     return Object.keys(Sc).filter(function (k) { return Sc[k] !== prima[k] && ["420", "421", "422"].indexOf(k) < 0; });
   }
-  aggiungi(422, { nome: "Tutto il copione: 1-99, 101-111, passo2/* e passo3/* (file per file)", fai: async function (opz) {
+  aggiungi(422, { nome: "Tutto il copione: 1-99, 101-111, 501-519, passo2/*, passo3/* e passo5/* (file per file)", fai: async function (opz) {
     opz = opz || {};
     var file = opz.file || FILE422, salta = (opz.salta || []).map(String), esiti = W.__esiti422 = W.__esiti422 || [], no422 = [], quanti = 0;
     for (var i = 0; i < file.length; i++) {

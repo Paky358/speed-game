@@ -127,7 +127,8 @@
   }
   async function comincia(X) {
     if (!await W.aspetta(function () { return W.clicca(X.P, /Comincia|Via ▶|Continua ▶/); }, 8000)) no("Paky non trova «Comincia» («" + T(X.P).slice(0, 100) + "»)");
-    if (!await W.aspetta(function () { return !inSaletta(X.gid, vm(X.C)); }, 6000)) no("la partita non comincia");
+    // (12 s: se un amico sta ancora arrivando nella stanza («Marco…») la saletta lo aspetta, poi il 3-2-1)
+    if (!await W.aspetta(function () { return !inSaletta(X.gid, vm(X.C)); }, 12000)) no("la partita non comincia");
   }
 
   // ---- le partite a copione, fino alla fine ----

@@ -162,6 +162,8 @@
     giocatoriMin: 3,
     giocatoriMax: 8,
     postiOnline: 8,   // posti online
+    riprende: true,   // se l'host ricarica a metà partita, la partita riprende da dove era (t.ripresa)
+    riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     difficolta: 2,
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono per scrivere e votare", amici: true }],
     regole: [
@@ -924,12 +926,21 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var imp = t.impostazioni || {};
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
+    var IO = t.mioId || "host";   // io che tengo la partita ("host", o l'amico che ha preso il posto dell'host)
     var H = { fase: "lobby", codice: "…", pronta: false, giri: imp.round || 5, giro: 0, d: null, notizie: [], amiciQ: [], piano: [],
       modoAmici: imp.amici || "misto", ride: imp.ride !== false, giaProt: [], rif: 0, saltato: null,
-      players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0 }],
+      players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0 }],
       balle: {}, fatti: {}, voti: {}, scelte: [], scadenza: 0, passo: 0, ordine: [], ignorate: [], ultimo: {}, classifica: null, to: null,
       risate: {}, oro: null, avanti: [],
       guarda: [] };   // nella Sala: chi non è stato scelto per giocare (guarda soltanto, col suo id nella foto)
+    // la partita di prima (l'host ha ricaricato la pagina o riaperto l'app: t.ripresa): si riprende da lì.
+    // Gli amici non si danno per usciti: si aspettano ("attesi") e rientrano da soli; chi non torna entro 10 secondi esce
+    var R0 = t.ripresa && t.ripresa.stato, ripresa = !!(R0 && R0.fase && R0.fase !== "lobby" && R0.players), attesi = {}, tAttesi = null;
+    if (ripresa) {
+      H = R0; H.to = null; H.pronta = false; H.guarda = H.guarda || []; H.avanti = H.avanti || [];
+      H.players.forEach(function (p) { if (p.id !== IO && !p.via) attesi[p.id] = 1; });
+      if (H.d && H.balle[IO]) MIA = { dom: H.d.domanda, testo: H.balle[IO] };   // la mia balla di questo round
+    }
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function iDi(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return i; return -1; }
     function presenti() { return H.players.filter(function (p) { return !p.via; }); }
@@ -944,19 +955,23 @@
       im = im || {}; H.giri = im.round || 5; H.modoAmici = im.amici || "misto"; H.ride = im.ride !== false; bd();
     };
 
+    // chi se ne va (o, dopo una ripresa, non è tornato in tempo)
+    function addio(id) {
+      delete attesi[id];
+      if (H.guarda.indexOf(id) >= 0) { H.guarda.splice(H.guarda.indexOf(id), 1); bd(); return; }
+      var p = pById(id); if (!p || p.via) return;
+      if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
+      p.via = true;   // a partita iniziata resta in classifica, ma non gioca più
+      controlla(); bd();
+    }
     var rete = SGNet.ospita("balla", {
       onCodice: function (c) { H.codice = c; bd(); },
       onConnesso: function () { H.pronta = true; bd(); },
-      onAddio: function (id) {
-        if (H.guarda.indexOf(id) >= 0) { H.guarda.splice(H.guarda.indexOf(id), 1); bd(); return; }
-        var p = pById(id); if (!p) return;
-        if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
-        p.via = true;   // a partita iniziata resta in classifica, ma non gioca più
-        controlla(); bd();
-      },
+      onAddio: addio,
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
+          delete attesi[id];   // (dopo una ripresa: è tornato)
           var p0 = pById(id), nomeJ = String(m.nome || "Amico").slice(0, 16);
           // nella Sala gioca solo chi è stato scelto: gli altri guardano
           if (!p0 && (H.guarda.indexOf(id) >= 0 || (t.puoSedersi && !t.puoSedersi(id, nomeJ)))) { if (H.guarda.indexOf(id) < 0) H.guarda.push(id); bd(); return; }
@@ -973,9 +988,10 @@
         else if (m.t === "avanti") avanti(id);
       },
       // (arriva solo se il primo collegamento non riesce: a partita cominciata la rete si ricollega da sola)
-      onErrore: function () { if (!H.pronta) { ferma(); errore(t, "Non riesco ad aprire la stanza. Controlla la connessione e riprova."); } }
-    });
+      onErrore: function () { if (!H.pronta) { ferma(); clearTimeout(tAttesi); t.ricorda(null); errore(t, "Non riesco ad aprire la stanza. Controlla la connessione e riprova."); } }
+    }, { ripresa: ripresa });   // (gli amici non tornano in saletta: la partita riprende)
     if (!rete) return senzaRete(t);
+    if (ripresa && rete.codice) H.codice = rete.codice;
     // la "foto" per tutti: SEMPRE con gli id; le balle, la verità e i voti solo quando si scoprono
     function vm() {
       var f = H.fase, o = { fase: f, codice: H.codice, pronta: H.pronta, giro: H.giro, giri: H.giri, rif: H.rif, classifica: H.classifica, sessione: H.sessione,
@@ -997,8 +1013,39 @@
       return o;
     }
     // un messaggio per un telefono solo: inviaVeloce con "to" (così non resta in stanza)
-    function privato(id, m) { if (id === "host") return privatoB(m); m.to = id; rete.inviaVeloce(m); }
-    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); disegnaVM(t, v, cbHost); }
+    function privato(id, m) { if (id === IO) return privatoB(m); m.to = id; rete.inviaVeloce(m); }
+    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); ricorda(); disegnaVM(t, v, cbHost); vici(); }
+    // (host di riserva) chi porta avanti la partita se sparisco: prima chi guarda (non gioca: non ha niente da perdere)
+    var viciK = "";
+    function vici() { var k = H.guarda.join(","); if (k !== viciK && t.vici) { viciK = k; t.vici(H.guarda.length ? H.guarda.slice() : null); } }
+    // la partita com'è adesso, per riprenderla se ricarico la pagina (tutto H tranne il timer; in saletta niente).
+    // Le balle e i voti segreti restano qui (e nella copia per il vice), mai nella foto
+    function ricorda() {
+      if (H.fase === "lobby") return t.ricorda(null);
+      var s = {}; Object.keys(H).forEach(function (k) { if (k !== "to") s[k] = H[k]; });
+      t.ricorda(s);
+    }
+    // la ripresa: scrittura e voto si rifanno col tempo intero (le balle e i voti già dati restano), la rivelazione va
+    // ai punti del round e poi alla notizia dopo. Il giro cambia chiave (rif), così ogni telefono riapre il suo foglio
+    function riprendi() {
+      var f = H.fase;
+      tAttesi = setTimeout(function () { Object.keys(attesi).forEach(addio); }, 10000);
+      if (f === "fine") return bd();
+      if (f === "apertura" || !H.d) return nuovoRound();
+      if (f === "notizia" || f === "scrittura") { H.rif++; H.saltato = null; H.fase = "notizia"; bd(); return dopo(DURATA_NOTIZIA, scrittura); }
+      if (f === "risposte" || f === "voto") {   // le risposte di nuovo sul tabellone, poi si vota (chi aveva votato ha già fatto)
+        H.rif++; H.fatti = {}; Object.keys(H.voti).forEach(function (id) { H.fatti[id] = 1; });
+        H.fase = "risposte"; bd(); return dopo(durataRisposte(H.scelte.length), votazione);
+      }
+      if (f === "voti") return fineVoto();   // i voti di nuovo sul tabellone, poi la rivelazione
+      if (f === "rivela") { bd(); return dopo(5000, dopoRivela); }   // (la Balla d'oro, se c'è, poi i punti)
+      if (f === "oro") { bd(); return dopo(DURATA_ORO, punti); }
+      if (f === "punti") {   // la classifica del round: il tempo che restava (almeno 5 secondi)
+        var resta = Math.max(5000, (t.ripresa.ora(H.scadenza) || 0) - Date.now());
+        H.avanti = []; H.scadenza = Date.now() + resta; bd(); return dopo(resta, prossimo);
+      }
+      nuovoRound();
+    }
 
     // ----- la partita -----
     function comincia() {
@@ -1151,18 +1198,21 @@
       if (t.risultato) t.risultato(H.classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }));
     }
     // "Nuova partita": stessa stanza, stessi amici (anche chi era uscito ed è tornato), tutti tornano nella saletta
-    function nuova() { ferma(); H.fase = "lobby"; H.classifica = null; H.d = null; H.players = presenti(); H.players.forEach(function (p) { p.punti = 0; p.tot = nuoviTot(); }); bd(); }
+    function nuova() { ferma(); H.fase = "lobby"; H.classifica = null; H.d = null; H.players = presenti();
+      // chi tiene la partita è il primo (in saletta ha la corona); se l'ha presa guardando (host di riserva), si siede
+      if (!pById(IO)) { H.guarda = H.guarda.filter(function (x) { return x !== IO; }); H.players.push({ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0 }); }
+      H.players.sort(function (a, b) { return (b.id === IO) - (a.id === IO); }); H.players.forEach(function (p) { p.punti = 0; p.tot = nuoviTot(); }); bd(); }
 
-    var cbHost = { sonoHost: true, myId: "host", onComincia: comincia, onNuova: nuova, onProssimo: prossimo,
-      onBalla: function (testo) { balla("host", testo); }, onVoto: function (k) { voto("host", k); },
-      onRide: function (k) { ride("host", k); }, onAvanti: function () { avanti("host"); },
+    var cbHost = { sonoHost: true, myId: IO, onComincia: comincia, onNuova: nuova, onProssimo: prossimo,
+      onBalla: function (testo) { balla(IO, testo); }, onVoto: function (k) { voto(IO, k); },
+      onRide: function (k) { ride(IO, k); }, onAvanti: function () { avanti(IO); },
       onEsci: function (giaChiesto) {   // (dallo studio la domanda "Uscire dalla partita?" l'ha già fatta lui)
         if (giaChiesto !== true && H.fase !== "lobby" && H.fase !== "fine") return t.conferma("Chiudere la partita per tutti?", null, "Esci", function () { cbHost.onEsci(true); });   // un tocco sbagliato non chiude il gioco a tutti
-        ferma(); rete.chiudi(); t.esci();
+        ferma(); clearTimeout(tAttesi); t.ricorda(null); rete.chiudi(); t.esci();
       } };
     // la Rivincita dei tasti di fine comuni: tutti di nuovo nella saletta, stessi amici (il core fa il 3-2-1)
     t.onRivincita = function () { if (H.fase === "fine") nuova(); };
-    bd();
+    if (ripresa) riprendi(); else bd();
   }
 
   // ---------------- OSPITE ----------------
@@ -1231,7 +1281,8 @@
     assicuraStile();
     if (vm.fase === "lobby") { RB = null; return lobbyB(t, vm, cb); }
     // lo studio si fa una volta per partita (e di nuovo se l'host ricomincia dopo la fine)
-    if (!RB || (!RB.S.vivo() && (vm.fase !== "fine" || !RB.fineFatta))) {
+    // (e da capo se il tavolo è un altro: l'amico che prende il posto dell'host sparito, Passo 5, non usa lo studio di quando era ospite)
+    if (!RB || RB.t !== t || (!RB.S.vivo() && (vm.fase !== "fine" || !RB.fineFatta))) {
       RB = { t: t, cb: cb, usciti: {}, mie: {} };
       RB.S = ST.crea(t, vm.players, { io: idxDi(vm, cb.myId), esci: function () { cb.onEsci(true); }, titolo: "La Balla Colossale", logo: ["LA BALLA", "COLOSSALE"] });
       vm.players.forEach(function (p, i) { ST.puntiLeggio(RB.S, i, p.punti, 0); });

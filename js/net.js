@@ -44,6 +44,19 @@
      da lì in poi non conta più, nemmeno il suo "host sparito".
      Un "host sparito" non cambia mai la sessione che si segue.
 
+   L'UFFICIO POSTALE DI RISERVA (Passo 5): gli uffici pubblici sono
+   due (BROKERS). Chi apre la stanza parla su tutti e due (stessa
+   sessione, stessa foto, stesso testamento); chi entra ne usa uno:
+   - prova prima l'ultimo che ha funzionato (sg-broker, per un'ora),
+     e se non risponde in 2,5 secondi apre anche l'altro;
+   - se l'host non si sente (4 secondi, o arriva "host sparito") guarda
+     in silenzio nell'altro ufficio: se lì l'host risponde, passa lì;
+   - a partita in corso, se il suo ufficio è giù da 12 secondi passa
+     all'altro da solo ("📶 La rete è lenta: passo al collegamento di
+     riserva…") e rimanda le ultime mosse: l'host scarta i doppioni
+     (ogni mossa ha la sua istanza i e il suo numero k).
+   RISERVA = false (o sg-riserva = "0" su un telefono): un ufficio solo, come prima.
+
    La presenza degli amici (SGNet.presenza, fuori dalle stanze):
    ognuno ha un "indirizzo" fatto con l'impronta del suo profilo
    (SGNet.impronta) e lì lascia scritto se è nell'app; gli amici
@@ -53,7 +66,16 @@
 (function () {
   "use strict";
 
-  var BROKER = "wss://broker.hivemq.com:8884/mqtt";
+  // gli uffici postali: il primo è quello di sempre, il secondo è la riserva (sbirciate e "Ho un codice" li guardano tutti e due)
+  var BROKERS = ["wss://broker.hivemq.com:8884/mqtt", "wss://broker.emqx.io:8084/mqtt"];
+  var RISERVA = true;          // false = un ufficio solo (il primo), come prima
+  var BROKER = BROKERS[0];
+  var DURATA_BROKER = 3600000; // l'ultimo ufficio che ha funzionato (sg-broker) vale un'ora
+  var ALTRO_DOPO = 2500;       // chi entra: se il suo ufficio non risponde in 2,5 secondi apre anche l'altro
+  var SONDA = 4000;            // chi entra: l'host non si sente da 4 secondi → guarda in silenzio nell'altro ufficio
+  var CAMBIO = 12000;          // a partita in corso: l'ufficio è giù da 12 secondi → si passa all'altro
+  var RIPROVA_UFFICIO = 30000; // l'host: un ufficio che non ha mai risposto si riprova ogni 30 secondi
+  var DOPPI = 60000;           // l'host: le mosse già viste negli ultimi 60 secondi si scartano
   var BASE = "seratagiochi/v1/";
   var ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // niente caratteri ambigui
   var ATTESA_OSPITE = 20000;   // chi sparisce all'improvviso: tanto tempo per tornare prima di toglierlo
@@ -101,50 +123,91 @@
   function segna(h, tieni) { if (!tieni) aperte.push(h); return h; }
   function togli(h) { aperte = aperte.filter(function (x) { return x !== h; }); }
 
+  // ---- gli uffici postali ----
+  // c'è la riserva? (sg-riserva = "0" la spegne su questo telefono)
+  function riserva() { if (!RISERVA) return false; try { return localStorage.getItem("sg-riserva") !== "0"; } catch (e) { return true; } }
+  // gli uffici da usare, in ordine: prima l'ultimo che ha funzionato (sg-broker, un'ora)
+  function uffici() {
+    if (!riserva()) return [BROKERS[0]];
+    var l = BROKERS.slice();
+    try {
+      var v = JSON.parse(localStorage.getItem("sg-broker") || "null"), i = v && v.url ? l.indexOf(v.url) : -1;
+      if (i > 0 && Date.now() - v.t < DURATA_BROKER) { l.splice(i, 1); l.unshift(v.url); }
+    } catch (e) {}
+    return l;
+  }
+  function altroUfficio(url) { var l = uffici(); for (var i = 0; i < l.length; i++) if (l[i] !== url) return l[i]; return null; }
+  function ricordaUfficio(url) { try { localStorage.setItem("sg-broker", JSON.stringify({ url: url, t: Date.now() })); } catch (e) {} }
+  var usato = null;   // l'ufficio che questo telefono sta usando adesso (SGNet.broker)
+  // "📶 La rete è lenta: passo al collegamento di riserva…": una volta per stanza, nelle pillole in alto dell'app
+  var avvisati = {};
+  function avvisoRiserva(codice) {
+    if (avvisati[codice]) return;
+    avvisati[codice] = 1;
+    evento("sg-riserva", { stanza: codice });
+    try {
+      var box = document.querySelector(".sg-pillole"), mio = !box;
+      if (mio) { box = document.createElement("div"); box.className = "sg-pillole"; box.setAttribute("aria-live", "polite"); document.body.appendChild(box); }
+      var n = document.createElement("div");
+      n.className = "sg-pillola grigia sg-pillola-riserva"; n.textContent = "📶 La rete è lenta: passo al collegamento di riserva…";
+      box.appendChild(n);
+      setTimeout(function () { if (n.parentNode) n.parentNode.removeChild(n); if (mio && box.parentNode && !box.children.length) box.parentNode.removeChild(box); }, 3000);
+    } catch (e) {}
+  }
+
   // ---- il collegamento al broker ----
   // Il broker pubblico a volte tarda (circa 1 volta su 4 ci mette 7 secondi invece di 0,15): se dopo un secondo e mezzo
   // non ha ancora risposto si apre un secondo collegamento e si tiene il primo che risponde (l'altro si chiude).
-  // pronto(client) arriva una volta sola, al primo collegamento; poi i ricollegamenti li fa mqtt da solo.
+  // pronto(client, url) arriva una volta sola, al primo collegamento; poi i ricollegamenti li fa mqtt da solo.
   // errore(e) solo se il primo collegamento non arriva entro 15 secondi (mqtt intanto riprova da solo);
   // dopo, la rete che salta è solo un avviso ("sg-rete": "📶 Mi ricollego…").
   // errore = null: collegamento "muto" (la sbirciata): nessun avviso sullo schermo
-  // altro (facoltativo): { url: un altro ufficio postale, muto: true = nessun avviso anche se c'è la funzione errore }
+  // altro (facoltativo): { url: un altro ufficio postale, urls: una lista di uffici (il primo subito e di nuovo dopo
+  //   1,5 secondi, il secondo dopo 2,5: vince il primo che risponde), muto: true = nessun avviso anche se c'è la funzione errore }
+  // Restituisce { chiudi(), sveglia() }: sveglia toglie il muto (una sonda che diventa il collegamento vero)
   var GARA = 1500, nCol = 0;
   function collega(opzioni, pronto, errore, altro) {
+    altro = altro || {};
     var tutti = [], vinto = null, finito = false, ultimoErr = null, id = ++nCol, giu = false;
-    var muto = !errore || !!(altro && altro.muto), url = (altro && altro.url) || BROKER;
+    var muto = !errore || !!altro.muto, lista = (altro.urls && altro.urls.length) ? altro.urls : [altro.url || BROKER];
     function rete(stato) { if (muto || stato === giu) return; giu = stato; evento("sg-rete", { id: id, giu: stato }); }
-    function apri() {
+    function apri(url) {
       var c = mqtt.connect(url, opzioni); tutti.push(c);
+      try { c.sgUrl = url; } catch (e) {}
       c.on("error", function (e) { if (!vinto && !finito) ultimoErr = e; });
       c.on("connect", function () {
         if (finito) return;
         if (vinto && c !== vinto) return;
         rete(false);
         if (vinto) return;   // ricollegato dopo un buco: ci pensa chi usa il collegamento
-        vinto = c; clearTimeout(tGara); clearTimeout(tErr); clearTimeout(tLento);
+        vinto = c; tGara.forEach(clearTimeout); clearTimeout(tErr); clearTimeout(tLento);
         tutti.forEach(function (x) { if (x !== c) try { x.end(); } catch (e) {} });   // (uscita educata: il broker non manda il "testamento")
-        pronto(c);
+        pronto(c, url);
       });
       // la rete è saltata dopo il collegamento: niente errori al gioco, solo l'avviso "Mi ricollego…" (mqtt riprova da solo)
       function caduto() { if (!finito && vinto === c) rete(true); }
       c.on("close", caduto); c.on("offline", caduto);
       return c;
     }
-    apri();
-    var tGara = setTimeout(function () { if (!vinto && !finito) apri(); }, GARA);
+    // la gara: il primo ufficio subito e di nuovo dopo 1,5 secondi (a volte tarda), gli altri dopo 2,5 secondi
+    apri(lista[0]);
+    var tGara = [setTimeout(function () { if (!vinto && !finito) apri(lista[0]); }, GARA)];
+    lista.slice(1).forEach(function (u, i) { tGara.push(setTimeout(function () { if (!vinto && !finito) apri(u); }, ALTRO_DOPO * (i + 1))); });
     var tLento = setTimeout(function () { if (!vinto && !finito && errore) rete(true); }, LENTO);
     // il primo collegamento non arriva proprio: smetto di provare e lo dico al gioco ("Problema di collegamento", si riprova da capo)
     var tErr = setTimeout(function () {
       if (vinto || finito) return;
-      finito = true; clearTimeout(tGara); clearTimeout(tLento); rete(false);
+      finito = true; tGara.forEach(clearTimeout); clearTimeout(tLento); rete(false);
       tutti.forEach(function (x) { try { x.end(true); } catch (e) {} });
       if (errore) errore(ultimoErr || { message: "nessuna risposta" });
     }, ATTESA_PRIMO);
-    return { chiudi: function () {
-      finito = true; clearTimeout(tGara); clearTimeout(tErr); clearTimeout(tLento); rete(false);
-      tutti.forEach(function (x) { if (x !== vinto) try { x.end(true); } catch (e) {} });
-    } };
+    return {
+      chiudi: function () {
+        finito = true; tGara.forEach(clearTimeout); clearTimeout(tErr); clearTimeout(tLento); rete(false);
+        tutti.forEach(function (x) { if (x !== vinto) try { x.end(true); } catch (e) {} });
+      },
+      sveglia: function () { if (!muto || !errore) return; muto = false; if (vinto && !vinto.connected && !finito) rete(true); }
+    };
   }
   // tornando nell'app (schermo sbloccato, di nuovo in rete) chi ha perso il collegamento si ricollega subito,
   // senza aspettare il prossimo tentativo
@@ -207,6 +270,11 @@
       try { localStorage.setItem("sg-id-" + String(codice).toUpperCase(), JSON.stringify({ id: id, t: Date.now() })); } catch (e) {}
     },
 
+    // Quale ufficio postale sta usando questo telefono (l'indirizzo): per le prove e per sapere com'è andata
+    broker: function () { return usato || uffici()[0]; },
+    // gli uffici in uso, in ordine (con la riserva spenta: uno solo)
+    uffici: function () { return uffici(); },
+
     // L'host apre una stanza. cb: { onCodice, onConnesso, onAddio(id), onMsg(id,msg), onErrore(e), onStato(msg),
     //   onForse(id) / onTornato(id) (facoltativi: un ospite sparito senza salutare, e tornato in tempo) }
     // opz (facoltative): codice = la stanza ha già il suo codice (host di riserva, stanza riaperta dopo una ricarica);
@@ -217,9 +285,16 @@
     //   trattenuta nella stanza (decide appena arriva, o 400 ms dopo l'iscrizione, al massimo dopo guardaPrima ms).
     //   Se è la foto viva di un'altra sessione: cb.onOccupata(msg); se torna true si va avanti, se no non si pubblica
     //   niente (l'app farà lascia()). Intanto invia mette in coda, e cb.onConnesso arriva solo dopo la decisione;
+    //   con due uffici decide il primo che risponde (l'altro aspetta e fa come lui);
+    //   se la stanza è vuota davvero (niente di trattenuto: chiusa apposta) chiede cb.onVuota(): false = non pubblico niente;
     // guardaRitorno = ms: lo stesso, ma solo quando si ricollega (non al primo collegamento);
     // sopra = la sessione di una Sala morta che sto riaprendo: la sua foto non conta come "occupata";
     // testamento = campi in più nel "host sparito" (es. { g: 3 } → { t: "__hostgone", s, g: 3 })
+    // ripresa = la stanza si riapre e la partita RIPRENDE da dove era (Passo 5): "ci sono" dice r: 1 e le foto _r: 1, così chi
+    //   era dentro non riparte dalla saletta (il terzo argomento di onHostNuovo è il messaggio: ripresa = msg.r || msg._r)
+    // Con la riserva l'host sta su TUTTI gli uffici (stessa sessione, foto, testamento e "meta" su ognuno; quello che
+    // si manda con un ufficio giù aspetta in una coda sua). onConnesso arriva quando il primo ufficio è pronto;
+    // onErrore solo se nessun ufficio risponde in 15 secondi.
     ospita: function (giocoId, cb, opz) {
       if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
       opz = opz || {};
@@ -232,12 +307,20 @@
       // ogni apertura ha la sua sessione: va nelle foto trattenute (_s) e in "__hostqui"; chi è dentro capisce
       // così se l'host ha riaperto la stanza (pagina ricaricata) e rientra da solo
       var sid = nuovaSessione();
-      var chiusa = false, client = null, risposto = 0;
+      var chiusa = false, ceduto = false, errorato = false, collegatoMai = false, t0 = Date.now();
       var inForse = {};   // chi è sparito all'improvviso: id -> timer (se si rifà vivo in tempo, resta dentro)
-      var coda = [], ultimo = null;   // coda: quello mandato con la rete giù (parte appena torna); ultimo: l'ultima foto della partita
-      // prima guardo, poi parlo: guardando = sto leggendo la stanza (non pubblico niente); ceduto = c'era la Sala di un
-      // altro e non pubblico più niente (l'app chiude); passato = c'è già stato un collegamento (i prossimi sono ritorni)
-      var guardando = false, ceduto = false, passato = false, giro = 0, decidi = null;
+      var ultimo = null;  // l'ultima foto della partita
+      // prima guardo, poi parlo: guardo = la decisione in corso { U: l'ufficio che guarda, attesa: gli altri che aspettano };
+      // ceduto = c'era la Sala di un altro e non pubblico più niente (l'app chiude)
+      var guardo = null, giro = 0;
+      // le mosse già viste (from|i|k → ora): chi cambia ufficio rimanda le ultime, qui passano una volta sola;
+      // da quale ufficio parla ognuno (un "sparito" che arriva da un ufficio che non usa più non conta)
+      var visti = {}, nVisti = 0, ufficioDi = {}, statiVisti = [];
+      // un "ufficio" per indirizzo: il suo collegamento, la sua coda (quello mandato mentre era giù), ecc.
+      var U = uffici().map(function (url, n) {
+        return { n: n, url: url, client: null, col: null, coda: [], passato: false, guardando: false, pronto: false,
+          fallito: false, tRiprova: null, rimesso: 0, risposto: 0 };
+      });
       // Il codice si conosce SUBITO (non dipende dal collegamento): mostralo subito,
       // così la stanza dà sempre il codice anche se la rete è lenta a collegarsi.
       // (un tick dopo, così chi ci chiama ha già ricevuto l'oggetto "rete")
@@ -245,17 +328,41 @@
       function conSessione(msg) {
         if (!msg || typeof msg !== "object") return msg;
         var o = {}; for (var k in msg) if (Object.prototype.hasOwnProperty.call(msg, k)) o[k] = msg[k];
-        o._s = sid; return o;
+        o._s = sid; if (opz.ripresa) o._r = 1;   // (_r: la partita riprende da dove era, vedi opz.ripresa)
+        return o;
       }
       function testamento() {
         var o = { t: "__hostgone", s: sid }, x = opz.testamento;
         if (x && typeof x === "object") for (var k in x) if (Object.prototype.hasOwnProperty.call(x, k) && k !== "t" && k !== "s" && k !== "voluto") o[k] = x[k];
         return o;
       }
+      function su(u) { return !!(u.client && u.client.connected); }
+      function puoParlare(u) { return su(u) && !u.guardando && !ceduto; }
+      // "📶 Mi ricollego…" dell'host: solo quando non c'è NESSUN ufficio (al primo collegamento dopo 3 secondi)
+      var idRete = ++nCol, reteGiuOra = false;
+      function segnaRete(g) { if (g === reteGiuOra) return; reteGiuOra = g; evento("sg-rete", { id: idRete, giu: g }); }
+      function reteHost() {
+        if (chiusa || errorato || U.some(su)) return segnaRete(false);
+        if (collegatoMai || Date.now() - t0 >= LENTO - 50) segnaRete(true);
+      }
+      var tLento = setTimeout(reteHost, LENTO);
+      // manda su tutti gli uffici (il testo si prepara una volta sola); chi è giù lo mette nella sua coda
       function manda(msg, trattieni) {
-        if (client && client.connected && !guardando && !ceduto) { try { client.publish(T.stato, JSON.stringify(trattieni ? conSessione(msg) : msg), { retain: !!trattieni }); return; } catch (e) {} }
+        var tx = null;
+        U.forEach(function (u) {
+          if (puoParlare(u)) {
+            try { if (tx === null) tx = JSON.stringify(trattieni ? conSessione(msg) : msg); u.client.publish(T.stato, tx, { retain: !!trattieni }); return; } catch (e) {}
+          }
+          inCoda(u, msg, trattieni);
+        });
+      }
+      function mandaSu(u, msg, trattieni) {
+        if (puoParlare(u)) { try { u.client.publish(T.stato, JSON.stringify(trattieni ? conSessione(msg) : msg), { retain: !!trattieni }); return; } catch (e) {} }
+        inCoda(u, msg, trattieni);
+      }
+      function inCoda(u, msg, trattieni) {
         if (!trattieni && effimero(msg)) return;
-        coda.push({ m: msg, r: !!trattieni, t: Date.now() }); if (coda.length > CODA_MAX) coda.shift();   // la rete è giù: la mossa non si perde
+        u.coda.push({ m: msg, r: !!trattieni, t: Date.now() }); if (u.coda.length > CODA_MAX) u.coda.shift();   // la rete è giù: la mossa non si perde
       }
       // chi è sparito all'improvviso e ha ancora tempo per tornare: l'app lo mostra grigio con 📶 ("si sta ricollegando…")
       // Anche il gioco lo sa subito, se vuole: cb.onForse(id) quando sparisce senza salutare, cb.onTornato(id) quando
@@ -264,67 +371,94 @@
         evento("sg-forse", { stanza: codice, id: id, forse: !!si });
         try { if (si) { if (cb.onForse) cb.onForse(id); } else if (tornato && cb.onTornato) cb.onTornato(id); } catch (e) {}
       }
-      function svuota() { var ora = Date.now(), l = coda; coda = []; l.forEach(function (x) { if (x.r || ora - x.t < CODA_VITA) manda(x.m, x.r); }); }
-      function ciSono() { if (guardando || ceduto) return; try { if (client && client.connected) client.publish(T.stato, JSON.stringify({ t: "__hostqui", s: sid }), { retain: false }); } catch (e) {} }
+      function svuota(u) { var ora = Date.now(), l = u.coda; u.coda = []; l.forEach(function (x) { if (x.r || ora - x.t < CODA_VITA) mandaSu(u, x.m, x.r); }); }
+      function ciSono(u) { if (!puoParlare(u)) return; try { u.client.publish(T.stato, JSON.stringify(opz.ripresa ? { t: "__hostqui", s: sid, r: 1 } : { t: "__hostqui", s: sid }), { retain: false }); } catch (e) {} }
       // il testamento di un mio collegamento di prima arriva in ritardo (rete cambiata, telefono che si riprende:
-      // il broker se ne accorge anche 30 secondi dopo) e copre la mia foto: dico che ci sono e la rimetto
-      var rimesso = 0;
-      function rimetti() {
-        if (chiusa || guardando || ceduto || !client || !client.connected || Date.now() - rimesso < 1000) return;
-        rimesso = Date.now(); ciSono();
-        if (ultimo) manda(ultimo, true); else try { client.publish(T.stato, "", { retain: true }); } catch (e) {}
+      // il broker se ne accorge anche 30 secondi dopo) e copre la mia foto: dico che ci sono e la rimetto (su quell'ufficio)
+      function rimetti(u) {
+        if (chiusa || !puoParlare(u) || Date.now() - u.rimesso < 1000) return;
+        u.rimesso = Date.now(); ciSono(u);
+        if (ultimo) mandaSu(u, ultimo, true); else try { u.client.publish(T.stato, "", { retain: true }); } catch (e) {}
       }
-      function collegato() {
+      function collegato(u) {
         if (chiusa || ceduto) return;
-        var g = opz.guardaPrima || (passato ? opz.guardaRitorno : 0);
-        passato = true;
-        if (g) return guarda(g);
-        parla(false);
+        var g = opz.guardaPrima || (u.passato ? opz.guardaRitorno : 0);
+        u.passato = true;
+        if (!g) return parla(u, false);
+        u.guardando = true;
+        // un altro ufficio sta già guardando: aspetto la sua decisione
+        if (guardo && guardo.U !== u) { if (guardo.attesa.indexOf(u) < 0) guardo.attesa.push(u); return; }
+        guarda(u, g);
       }
-      // prima guardo: leggo la foto trattenuta della stanza e poi decido se parlare
-      function guarda(g) {
-        guardando = true;
-        var mioGiro = ++giro, fatto = false, t400 = null, tMax = null;
-        decidi = function (m) {
+      // prima guardo: leggo la foto trattenuta della stanza e poi decido se parlare (su questo ufficio e su quelli che aspettano)
+      function guarda(u, g) {
+        var mioGiro = ++giro, fatto = false, t400 = null, tMax = null, c = u.client;
+        var G = guardo = { U: u, attesa: guardo ? guardo.attesa : [], decidi: null };
+        G.decidi = function (m, vuota) {
           if (fatto || mioGiro !== giro || chiusa) return;
-          fatto = true; decidi = null; guardando = false; clearTimeout(t400); clearTimeout(tMax);
+          fatto = true; clearTimeout(t400); clearTimeout(tMax);
+          var tutti = [u].concat(G.attesa.filter(function (x) { return x !== u; }));
+          if (guardo === G) guardo = null;
+          tutti.forEach(function (x) { x.guardando = false; });
           // la Sala viva di un altro (non un "host sparito", non una mia foto, non la Sala morta che sto riaprendo)
           if (m && typeof m === "object" && m._s && m._s !== sid && m._s !== opz.sopra && m.t !== "__hostgone") {
             var avanti = false;
             try { avanti = !!(cb.onOccupata && cb.onOccupata(m) === true); } catch (e) {}
             if (!avanti) { ceduto = true; return; }   // non pubblico niente: l'app esce (lascia) ed entra da amico
           }
-          if (!chiusa) parla(true);
+          // (stanza vuota davvero: né foto né "host sparito" trattenuti = qualcuno l'ha chiusa apposta. Chi riprende una
+          // partita lo sa con cb.onVuota: se torna false non pubblico niente, la partita è finita senza di me)
+          if (vuota && cb.onVuota) { var va = true; try { va = cb.onVuota() !== false; } catch (e) {} if (!va) { ceduto = true; return; } }
+          if (chiusa) return;
+          tutti.forEach(function (x) { if (su(x)) parla(x, x === u && x.client === c); });
         };
-        client.subscribe(T.stato, function () { if (!fatto && mioGiro === giro) t400 = setTimeout(function () { if (decidi) decidi(null); }, 400); });
-        tMax = setTimeout(function () { if (decidi) decidi(null); }, g);
+        c.subscribe(T.stato, function () { if (!fatto && mioGiro === giro) t400 = setTimeout(function () { G.decidi(null, true); }, 400); });
+        tMax = setTimeout(function () { G.decidi(null); }, g);
       }
       // parlo: la stanza è mia (giaStato = sono già iscritto allo stato: guardando)
-      function parla(giaStato) {
-        if (chiusa || ceduto || !client) return;
-        // quando è davvero collegato la stanza è "pronta": lo comunichiamo al gioco
-        client.subscribe(T.azioni, function () { if (!chiusa) cb.onConnesso && cb.onConnesso(); });
-        if (!giaStato) client.subscribe(T.stato);   // anche la mia stanza: così mi accorgo di un "host sparito" che non è vero (vedi rimetti)
+      function parla(u, giaStato) {
+        if (chiusa || ceduto || !u.client) return;
+        var c = u.client;
+        // quando è davvero collegato la stanza è "pronta": lo comunichiamo al gioco (al primo ufficio pronto)
+        c.subscribe(T.azioni, function () {
+          if (chiusa || u.client !== c || !c.connected) return;
+          var primo = !U.some(function (x) { return x !== u && x.pronto; });
+          u.pronto = true;
+          if (primo) cb.onConnesso && cb.onConnesso();
+        });
+        if (!giaStato) c.subscribe(T.stato);   // anche la mia stanza: così mi accorgo di un "host sparito" che non è vero (vedi rimetti)
         // annuncia QUALE gioco è questa stanza, così chi entra col codice apre quello giusto
-        try { client.publish(META, JSON.stringify({ g: giocoId || "" }), { retain: true }); } catch (e) {}
+        try { c.publish(META, JSON.stringify({ g: giocoId || "" }), { retain: true }); } catch (e) {}
         // "ci sono", con la mia sessione: a ogni collegamento, anche il primo (chi aspettava sa che sono tornato,
         // e se la sessione è nuova, cioè ho riaperto la stanza, rientra da solo)
-        ciSono();
-        var inCoda = coda.some(function (x) { return x.r; });
-        if (ultimo && !inCoda) manda(ultimo, true);   // rimetto l'ultima foto (il testamento "host sparito" l'aveva coperta)
-        else if (!ultimo && !inCoda) try { client.publish(T.stato, "", { retain: true }); } catch (e) {}   // nessuna foto ancora: tolgo un vecchio "host sparito"
-        svuota();   // quello che ho fatto mentre la rete era giù
+        ciSono(u);
+        var inCodaR = u.coda.some(function (x) { return x.r; });
+        if (ultimo && !inCodaR) mandaSu(u, ultimo, true);   // rimetto l'ultima foto (il testamento "host sparito" l'aveva coperta)
+        else if (!ultimo && !inCodaR) try { c.publish(T.stato, "", { retain: true }); } catch (e) {}   // nessuna foto ancora: tolgo un vecchio "host sparito"
+        svuota(u);   // quello che ho fatto mentre la rete era giù
       }
-      function messaggio(topic, payload, pacchetto) {
+      // lo stesso messaggio sullo stato arrivato da due uffici (le mie foto, quelle di un altro host): una volta sola
+      function giaVisto(u, tx) {
+        if (U.length < 2) return false;
+        var ora = Date.now();
+        statiVisti = statiVisti.filter(function (x) { return ora - x.t < 5000; });
+        for (var i = 0; i < statiVisti.length; i++) if (statiVisti[i].tx === tx && statiVisti[i].n !== u.n) { statiVisti.splice(i, 1); return true; }
+        statiVisti.push({ tx: tx, n: u.n, t: ora }); if (statiVisti.length > 30) statiVisti.shift();
+        return false;
+      }
+      function messaggio(u, topic, payload, pacchetto) {
         if (chiusa) return;
         if (topic === T.stato) {
           var tx = payload.toString(), trat = !!(pacchetto && pacchetto.retain);
           // sto guardando: la foto trattenuta decide se parlo (vedi guarda)
-          if (guardando && trat) { var mt = null; try { mt = JSON.parse(tx || "null"); } catch (e) {} if (decidi) decidi(mt); return; }
+          if (u.guardando && trat) {
+            if (guardo && guardo.U === u) { var mt = null; try { mt = JSON.parse(tx || "null"); } catch (e) {} guardo.decidi(mt); }
+            return;
+          }
           // dal vivo, mentre io ci sono: un "host sparito" (non voluto) è di un mio collegamento vecchio
           // (quello trattenuto che trovo collegandomi l'ho già sistemato in collegato())
-          if (!trat && tx.indexOf('"__hostgone"') >= 0 && tx.indexOf('"voluto"') < 0) rimetti();
-          if (!opz.ascoltaStato) return;
+          if (!trat && tx.indexOf('"__hostgone"') >= 0 && tx.indexOf('"voluto"') < 0) rimetti(u);
+          if (!opz.ascoltaStato || giaVisto(u, tx)) return;
           // (con ascoltaStato) quello che mandano gli host: anche uno che ha preso il nostro posto
           var s; try { s = JSON.parse(tx || "null"); } catch (e) { return; }
           if (s && cb.onStato) cb.onStato(s, trat);
@@ -332,8 +466,19 @@
         }
         var m; try { m = JSON.parse(payload.toString()); } catch (e) { return; }
         if (!m || !m.from) return;
+        // la stessa mossa due volte (chi è passato all'altro ufficio rimanda le ultime): la prima vale, la seconda no
+        if (m.i != null && m.k != null) {
+          var kk = m.from + "|" + m.i + "|" + m.k, ora = Date.now();
+          if (visti[kk]) return;
+          visti[kk] = ora;
+          if (++nVisti > 500) { nVisti = 0; for (var q in visti) { if (ora - visti[q] > DOPPI) delete visti[q]; else nVisti++; } }
+        }
+        var lascio = m.data && m.data.t === "__leave";
+        // "sparito" da un ufficio che quell'amico non usa più (è passato all'altro): è il testamento del collegamento vecchio
+        if (lascio && !m.data.voluto && ufficioDi[m.from] != null && ufficioDi[m.from] !== u.n) return;
+        if (!lascio) ufficioDi[m.from] = u.n;
         if (inForse[m.from]) { clearTimeout(inForse[m.from]); delete inForse[m.from]; forse(m.from, false, true); }   // si è rifatto vivo in tempo
-        if (m.data && m.data.t === "__leave") {
+        if (lascio) {
           if (m.data.voluto) { cb.onAddio && cb.onAddio(m.from); return; }   // è uscito apposta
           // sparito all'improvviso: lo aspetto un po' prima di toglierlo dalla partita
           var chi = m.from;
@@ -342,22 +487,52 @@
           return;
         }
         if (m.data && m.data.t === "__ci") return;   // "ci sono": serve solo a non toglierlo (qui sopra), il gioco non lo vede
-        // chi bussa sa subito che ci sono, anche se il gioco non gli risponde (al massimo una volta al secondo)
-        if (m.data && m.data.t === "join" && Date.now() - risposto > 1000) { risposto = Date.now(); ciSono(); }
+        // chi bussa sa subito che ci sono (sull'ufficio da cui bussa), anche se il gioco non gli risponde (al massimo una volta al secondo)
+        if (m.data && m.data.t === "join" && Date.now() - u.risposto > 1000) { u.risposto = Date.now(); ciSono(u); }
         cb.onMsg && cb.onMsg(m.from, m.data);
       }
-      var collegamento = collega({
-        clean: true, reconnectPeriod: 2000, keepalive: opz.keepalive || KEEPALIVE,
-        // Se l'host sparisce all'improvviso il broker lo dice a tutti e lo LASCIA nella stanza (trattenuto):
-        // chi arriva dopo trova "host sparito" invece della foto ferma di una partita che non va avanti
-        // (opz.testamento: campi in più, es. la generazione della Sala { g: 3 })
-        will: { topic: T.stato, payload: JSON.stringify(testamento()), retain: true }
-      }, function (c) {
-        client = c; vivi.push(c);
-        c.on("connect", collegato); c.on("message", messaggio);
-        collegato();
-      }, function (e) { if (!chiusa) cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message }); });
-      function fine() { chiusa = true; togli(h); collegamento.chiudi(); vivi = vivi.filter(function (x) { return x !== client; }); Object.keys(inForse).forEach(function (k) { clearTimeout(inForse[k]); }); inForse = {}; coda = []; }
+      // apre (o riapre) un ufficio: il collegamento resta, i ricollegamenti li fa mqtt da solo
+      function apriUfficio(u) {
+        if (chiusa || errorato) return;
+        u.fallito = false;
+        u.col = collega({
+          clean: true, reconnectPeriod: 2000, keepalive: opz.keepalive || KEEPALIVE,
+          // Se l'host sparisce all'improvviso il broker lo dice a tutti e lo LASCIA nella stanza (trattenuto):
+          // chi arriva dopo trova "host sparito" invece della foto ferma di una partita che non va avanti
+          // (opz.testamento: campi in più, es. la generazione della Sala { g: 3 })
+          will: { topic: T.stato, payload: JSON.stringify(testamento()), retain: true }
+        }, function (c) {
+          if (chiusa) { try { c.end(); } catch (e) {} return; }
+          u.client = c; vivi.push(c); collegatoMai = true;
+          if (!usato) usato = u.url;
+          function giu() { if (u.client !== c) return; u.pronto = false; reteHost(); }
+          c.on("connect", function () { if (u.client !== c || chiusa) return; reteHost(); collegato(u); });
+          c.on("close", giu); c.on("offline", giu);
+          c.on("message", function (t, p, k) { if (u.client === c) messaggio(u, t, p, k); });
+          reteHost();
+          collegato(u);
+        }, function (e) {
+          u.col = null; u.fallito = true;
+          if (chiusa) return;
+          // nessun ufficio ha mai risposto: lo dico al gioco (come prima, "Problema di collegamento")
+          if (!collegatoMai && U.every(function (x) { return x.fallito; })) {
+            errorato = true; clearTimeout(tLento); reteHost();
+            U.forEach(function (x) { clearTimeout(x.tRiprova); });
+            cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message });
+            return;
+          }
+          // un ufficio solo non risponde (gli altri sì, o ci stanno ancora provando): lo riprovo con calma
+          u.tRiprova = setTimeout(function () { u.tRiprova = null; apriUfficio(u); }, RIPROVA_UFFICIO);
+        }, { url: u.url, muto: true });   // ("Mi ricollego…" lo decide reteHost: solo se non c'è nessun ufficio)
+      }
+      U.forEach(apriUfficio);
+      function fine() {
+        chiusa = true; togli(h); clearTimeout(tLento);
+        U.forEach(function (u) { clearTimeout(u.tRiprova); if (u.col) u.col.chiudi(); u.coda = []; });
+        vivi = vivi.filter(function (x) { return !U.some(function (u) { return u.client === x; }); });
+        Object.keys(inForse).forEach(function (k) { clearTimeout(inForse[k]); }); inForse = {};
+        segnaRete(false);
+      }
 
       var h = {
         codice: codice, sessione: sid,
@@ -369,41 +544,49 @@
         // un messaggio per uno solo (il gioco ci mette dentro a chi va): NON trattenuto, così non prende il posto
         // dell'ultima foto della partita (chi arriva dopo deve trovare la foto, non il messaggio privato di un altro)
         inviaA: function (id, msg) { if (!chiusa) manda(msg, false); },
+        // gli uffici di questa stanza (per le prove): [{ url, su, pronto }]
+        uffici: function () { return U.map(function (u) { return { url: u.url, su: su(u), pronto: u.pronto }; }); },
         // se ne va in silenzio SENZA chiudere la stanza: un altro telefono ha preso il posto di host
         lascia: function () {
           if (chiusa) return;
           fine();
-          try { if (client) client.end(); } catch (e) {}   // uscita "educata": il broker non manda l'avviso "host sparito"
+          U.forEach(function (u) { try { if (u.client) u.client.end(); } catch (e) {} });   // uscita "educata": il broker non manda l'avviso "host sparito"
         },
         chiudi: function () {
           if (chiusa) return;
           fine();
-          try {
-            if (!client) return;
-            client.publish(T.stato, JSON.stringify({ t: "__hostgone", voluto: 1, s: sid }), { retain: false });   // chiusa apposta: gli altri escono subito
-            client.publish(T.stato, "", { retain: true }); // pulisce lo stato trattenuto
-            client.publish(META, "", { retain: true });    // pulisce l'annuncio del gioco
-            client.end();
-          } catch (e) {}
+          U.forEach(function (u) {
+            var c = u.client;
+            try {
+              if (!c) return;
+              c.publish(T.stato, JSON.stringify({ t: "__hostgone", voluto: 1, s: sid }), { retain: false });   // chiusa apposta: gli altri escono subito
+              c.publish(T.stato, "", { retain: true }); // pulisce lo stato trattenuto
+              c.publish(META, "", { retain: true });    // pulisce l'annuncio del gioco
+              c.end();
+            } catch (e) {}
+          });
         }
       };
       return segna(h, giocoId === "__sala");   // la sala resta aperta tra un gioco e l'altro
     },
 
     // Un ospite entra con il codice. cb: { onAperto(id), onMsg(msg), onChiuso(perché: { voluto } o { sparito }), onErrore(e), onHostVia(sparito),
-    //   onHostNuovo(eraDentro, eraVivo, msg) } (msg = il messaggio dell'host nuovo: "Paky è tornato" o "ora la tiene Luca")
+    //   onHostNuovo(eraDentro, eraVivo, msg) } (msg = il messaggio dell'host nuovo: "Paky è tornato" o "ora la tiene Luca";
+    //   con msg.r o msg._r la partita riprende da dove era: l'app non riparte dalla saletta)
     // opz.tieni = non chiuderla quando si cambia gioco (è la connessione della sala);
     // opz.guarda = guarda soltanto (non entra: niente "stanza ferma", aspetta l'host come chi è dentro);
     // opz.decideApp = (la Sala) la rete non passa da sola a una sessione nuova: la foto di un'altra sessione arriva a
     //   cb.onMsg (col suo _s) e l'app decide; se lì chiama h.seguiHost(quella sessione), subito dopo arriva
     //   cb.onHostNuovo(eraDentro, eraVivo, msg). Un "host sparito" conta solo se è della sessione che seguo.
     // h.seguiHost(s): da ora seguo la sessione s (anche se "più piccola": orologi diversi), quella di prima non conta più
+    // Con la riserva chi entra usa UN ufficio (vedi in cima): cambia da solo se l'host non si sente lì o se l'ufficio è giù;
+    // per il gioco non cambia niente (stesso id, stesse foto). Ogni mossa porta i (istanza) e k (numero): l'host scarta i doppioni.
     entra: function (codice, cb, opz) {
       if (!this.disponibile()) { cb.onErrore && cb.onErrore({ type: "no-mqtt" }); return null; }
       opz = opz || {};
       codice = String(codice).toUpperCase();
       var myId = idPerStanza(codice);   // rientrando nella stessa stanza si torna "la stessa persona"
-      var T = topics(codice), client = null, coda = [];
+      var T = topics(codice), client = null, coda = [], ufficio = null, collegamento = null;
       var aperto = false, chiusa = false, entrata = null, dentro = false, tRipeti = null, tAddio = null, tCi = null, ultimoInvio = 0;
       var ultimoJoin = 0, primoJoin = 0, nRipeti = 0;
       var sessione = null;     // la sessione dell'host che conosco: se cambia, l'host ha riaperto la stanza
@@ -412,14 +595,42 @@
       var ferma = false;       // l'host non c'è: "la stanza è ferma" (o "non risponde")
       var tMuta = null;
       var foto = false, presente = false;   // l'ultima foto dell'host (messaggio trattenuto, con _s) ha il mio id?
+      var fotoViva = false;    // ho visto una foto dell'host (trattenuta, con _s, non "sparito")
+      // le mosse: i = questa entrata, k = il numero della mossa; recenti = le ultime mandate (30 s), da rimandare se cambio ufficio
+      var istanza = Math.random().toString(36).slice(2, 8), nMossa = 0, recenti = [];
+      // la riserva: sonda = sto guardando in silenzio nell'altro ufficio; cambio = sto passando all'altro perché il mio è giù
+      var sonda = null, ultimaSonda = 0, cambio = null, giuDa = 0, tGiu = null, tSonda = null;
+      function opzioni() {
+        return { clean: true, reconnectPeriod: 2000, keepalive: KEEPALIVE,
+          will: { topic: T.azioni, payload: JSON.stringify({ from: myId, data: { t: "__leave" } }), retain: false } };
+      }
+      function busta(msg) { return { from: myId, data: msg, i: istanza, k: ++nMossa }; }
+      function pubblicaBusta(b, c) {
+        c = c || client;
+        if (!c || !c.connected) return false;
+        try { c.publish(T.azioni, JSON.stringify(b), { retain: false }); return true; } catch (e) { return false; }
+      }
+      function tagliaRecenti() { var ora = Date.now(); recenti = recenti.filter(function (x) { return ora - x.t < CODA_VITA; }); if (recenti.length > CODA_MAX) recenti.splice(0, recenti.length - CODA_MAX); }
       function pubblica(msg) {
-        if (client && client.connected) {
-          try { client.publish(T.azioni, JSON.stringify({ from: myId, data: msg }), { retain: false }); ultimoInvio = Date.now(); if (msg && msg.t === "join") ultimoJoin = ultimoInvio; return; } catch (e) {}
+        var b = busta(msg);
+        if (pubblicaBusta(b)) {
+          ultimoInvio = Date.now();
+          if (msg && msg.t === "join") ultimoJoin = ultimoInvio;
+          else if (msg && msg.t !== "__ci" && !effimero(msg)) { recenti.push({ b: b, t: ultimoInvio }); tagliaRecenti(); }
+          return;
         }
         if (!msg || msg.t === "join" || msg.t === "__ci" || effimero(msg)) return;   // ("sono entrato" e "ci sono" li ripeto comunque appena torna la rete; una faccina vale solo adesso)
-        coda.push({ m: msg, t: Date.now() }); if (coda.length > CODA_MAX) coda.shift();   // la rete è giù: la mossa parte appena torna
+        coda.push({ b: b, t: Date.now() }); if (coda.length > CODA_MAX) coda.shift();   // la rete è giù: la mossa parte appena torna
       }
-      function svuota() { var ora = Date.now(), l = coda; coda = []; l.forEach(function (x) { if (ora - x.t < CODA_VITA) pubblica(x.m); }); }
+      function svuota() {
+        var ora = Date.now(), l = coda; coda = [];
+        l.forEach(function (x) {
+          if (ora - x.t >= CODA_VITA) return;
+          if (pubblicaBusta(x.b)) { ultimoInvio = ora; recenti.push({ b: x.b, t: ora }); }
+          else coda.push(x);
+        });
+        tagliaRecenti();
+      }
       function smetti() { if (tRipeti) { clearTimeout(tRipeti); tRipeti = null; } }
       // "sono entrato" può perdersi (stanza non ancora pronta, host via un attimo):
       // lo ripeto finché l'host non mi mette dentro (il mio codice compare nei suoi messaggi).
@@ -442,12 +653,118 @@
       }
       function collegato() {
         if (chiusa) return;
-        client.subscribe(T.stato, function () {
-          if (chiusa) return;
-          if (!aperto) { aperto = true; cb.onAperto && cb.onAperto(myId); }
+        var c = client;
+        c.subscribe(T.stato, function () {
+          if (chiusa || c !== client) return;
+          if (!aperto) {
+            aperto = true; cb.onAperto && cb.onAperto(myId);
+            // l'host non si sente da 4 secondi (né dal vivo né, per chi guarda, con una foto): guardo nell'altro ufficio
+            if (riserva()) tSonda = setTimeout(function () { tSonda = null; if (!chiusa && !vivo && !(opz.guarda && fotoViva)) sondaAltro(null); }, SONDA);
+          }
           else if (entrata) pubblica(entrata);   // ricollegato dopo un buco: ripeto che ci sono (l'host non mi toglie)
           svuota();   // e mando le mosse fatte mentre la rete era giù
         });
+      }
+      // ---- la riserva ----
+      // un collegamento che uso (o che potrei usare): i suoi avvisi contano solo se è quello di adesso
+      function ascolta(c) {
+        c.on("connect", function () { if (c !== client || chiusa) return; reteSu(); collegato(); });
+        c.on("message", function (t, p, k) { if (c === client) messaggio(t, p, k); else if (c.sgSonda) c.sgSonda(t, p, k); });
+        function caduto() { if (c === client && !chiusa) reteGiu(); }
+        c.on("close", caduto); c.on("offline", caduto);
+      }
+      // il mio ufficio è giù: se resta giù 12 secondi (app in vista e telefono in rete) passo all'altro
+      function reteGiu() {
+        if (giuDa || !riserva() || !altroUfficio(ufficio)) return;
+        giuDa = Date.now(); clearTimeout(tGiu); tGiu = setTimeout(controllaGiu, CAMBIO);
+      }
+      function reteSu() {
+        giuDa = 0; clearTimeout(tGiu); tGiu = null;
+        if (cambio) { var C = cambio; cambio = null; C.col.chiudi(); }   // il mio ufficio è tornato: resto qui
+      }
+      function controllaGiu() {
+        tGiu = null;
+        if (chiusa || !giuDa || (client && client.connected)) return;
+        var visibile = true, inRete = true;
+        try { visibile = !document.hidden; inRete = navigator.onLine !== false; } catch (e) {}
+        // (in secondo piano o senza rete: non è colpa dell'ufficio; ricontrollo tra poco)
+        if (!visibile || !inRete || !(entrata || opz.guarda) || cambio || sonda) { tGiu = setTimeout(controllaGiu, 2000); return; }
+        passaAllAltro();
+      }
+      function passaAllAltro() {
+        var url = altroUfficio(ufficio);
+        if (!url || cambio) return;
+        var C = cambio = { col: null };
+        avvisoRiserva(codice);
+        C.col = collega(opzioni(), function (c, u2) {
+          if (chiusa || cambio !== C) { try { c.end(); } catch (e) {} return; }
+          cambio = null;
+          ascolta(c);
+          prendi(c, C.col, u2, false);
+        }, function () {
+          if (cambio !== C) return;
+          cambio = null;
+          if (giuDa && !chiusa) tGiu = setTimeout(controllaGiu, CAMBIO);   // neanche l'altro risponde: riprovo più tardi
+        }, { url: url });
+      }
+      // da ora uso il collegamento c (sull'ufficio url): chiudo quello di prima, rimando "sono entrato", le ultime mosse
+      // (l'host scarta quelle che ha già) e la coda. iscritto = è già iscritto allo stato (la sonda)
+      function prendi(c, col, url, iscritto) {
+        var vecchio = client, vCol = collegamento;
+        vivi = vivi.filter(function (x) { return x !== vecchio; });
+        client = c; collegamento = col; ufficio = url; usato = url; vivi.push(c);
+        if (col && col.sveglia) col.sveglia();
+        giuDa = 0; clearTimeout(tGiu); tGiu = null;
+        try { if (vecchio && vecchio !== c) vecchio.end(); } catch (e) {}   // (uscita educata: niente "sparito")
+        if (vCol && vCol !== col) vCol.chiudi();
+        function rimanda() {
+          if (chiusa || c !== client) return;
+          if (!aperto) { aperto = true; cb.onAperto && cb.onAperto(myId); }
+          if (entrata) { pubblica(entrata); if (!dentro) insisti(); }
+          tagliaRecenti(); recenti.forEach(function (x) { pubblicaBusta(x.b); });
+          svuota();
+        }
+        if (iscritto) rimanda(); else c.subscribe(T.stato, rimanda);
+        if (dentro) ricordaUfficio(url);
+      }
+      // guardo in silenzio nell'altro ufficio: se lì l'host risponde DAL VIVO (al mio "sono entrato") passo lì.
+      // Se lì c'è il suo testamento, o in 1,5 secondi non risponde, resto dove sono. poi(passato) quando ho deciso.
+      function sondaAltro(poi) {
+        var url = altroUfficio(ufficio);
+        if (!url || !riserva() || chiusa || sonda || cambio || Date.now() - ultimaSonda < 10000) { if (poi) poi(false); return; }
+        ultimaSonda = Date.now();
+        var S = sonda = { c: null, col: null, finita: false }, tFine = null;
+        function basta(passato) {
+          if (S.finita) return;
+          S.finita = true; if (sonda === S) sonda = null; clearTimeout(tFine); clearTimeout(tTot);
+          if (!passato) { S.col.chiudi(); try { if (S.c) { S.c.sgSonda = null; S.c.end(); } } catch (e) {} }
+          if (poi) poi(passato);
+        }
+        var tTot = setTimeout(function () { basta(false); }, SONDA);
+        S.col = collega(opzioni(), function (c, u2) {
+          S.c = c;
+          if (S.finita || chiusa) { try { c.end(); } catch (e) {} return; }
+          ascolta(c);
+          c.sgSonda = function (t, p, k) {
+            if (S.finita) return;
+            var tx = p.toString(), m = null; try { m = JSON.parse(tx || "null"); } catch (e) {}
+            if (!m || typeof m !== "object") return;
+            var trat = !!(k && k.retain), s = m._s || ((m.t === "__hostqui" || m.t === "__hostgone") ? m.s : null);
+            if (s && scartate[s]) return;
+            if (opz.decideApp && sessione && s && s !== sessione) return;
+            if (m.t === "__hostgone") { if (!m.voluto && (!sessione || !s || s === sessione)) basta(false); return; }   // anche lì è sparito
+            if (trat && !(opz.guarda && m._s)) return;   // una foto trattenuta non basta (potrebbe essere vecchia): serve l'host dal vivo
+            c.sgSonda = null;
+            basta(true);
+            prendi(c, S.col, u2, true);
+            messaggio(t, p, k);
+          };
+          c.subscribe(T.stato, function () {
+            if (S.finita) return;
+            if (entrata) pubblicaBusta(busta(entrata), c);   // "sono entrato" anche qui: l'host risponde "ci sono"
+            tFine = setTimeout(function () { basta(false); }, 1500);
+          });
+        }, function () { basta(false); }, { url: url, muto: true });
       }
       function messaggio(_t, payload, pacchetto) {
         if (chiusa) return;
@@ -461,6 +778,9 @@
         // un "host sparito" di una sessione vecchia (il broker se n'è accorto tardi e l'host intanto ha riaperto): non conta.
         // Con decideApp conta solo quello della sessione che seguo (anche quando l'host chiude apposta)
         if (sparito && s && sessione && (opz.decideApp ? s !== sessione : (!m.voluto && s < sessione))) return;
+        // "host sparito" su questo ufficio: forse l'host ha perso solo questo. Intanto che lo aspetto guardo nell'altro:
+        // se lì risponde passo lì (e la sua risposta dal vivo toglie l'attesa, come quando l'host torna)
+        if (sparito && !m.voluto && riserva() && (!opz.decideApp || !sessione || s === sessione)) sondaAltro(null);
         var seguita = false;   // (decideApp) l'app ha appena scelto di seguire questa sessione: il messaggio l'ha già visto
         if (opz.decideApp && s && sessione && s !== sessione) {
           // la foto di un'altra Sala sullo stesso codice: decide l'app (regola della Sala) e, se vuole, chiama seguiHost
@@ -477,6 +797,7 @@
           if (ferma) { ferma = false; evento("sg-stanza-ferma", { stanza: codice, ferma: false }); }
           if (tAddio) { clearTimeout(tAddio); tAddio = null; avvisaHost(T.stato, false); cb.onHostVia && cb.onHostVia(false); }
         }
+        if (m._s && !sparito) fotoViva = true;
         // (un "host sparito" non cambia mai la sessione che conosco: uno di una sessione più nuova non deve far scartare
         // come "vecchio" il testamento vero del mio host)
         if (s && !sparito && (!sessione || (!opz.decideApp && s > sessione))) {
@@ -490,7 +811,7 @@
           }
         }
         var mio = !delCore(m) && testo.indexOf('"' + myId + '"') >= 0;
-        if (entrata && !dentro && mio) { dentro = true; smetti(); clearTimeout(tMuta); tMuta = null; }   // l'host mi ha messo nella partita
+        if (entrata && !dentro && mio) { dentro = true; smetti(); clearTimeout(tMuta); tMuta = null; if (riserva() && ufficio) ricordaUfficio(ufficio); }   // l'host mi ha messo nella partita
         if (m._s) { foto = true; presente = mio; }
         if (m.t === "__hostqui" || seguita) return;
         if (sparito) {
@@ -505,17 +826,16 @@
         }
         cb.onMsg && cb.onMsg(m);
       }
-      var collegamento = collega({
-        clean: true, reconnectPeriod: 2000, keepalive: KEEPALIVE,
-        will: { topic: T.azioni, payload: JSON.stringify({ from: myId, data: { t: "__leave" } }), retain: false }
-      }, function (c) {
-        client = c; vivi.push(c);
-        c.on("connect", collegato); c.on("message", messaggio);
+      collegamento = collega(opzioni(), function (c, url) {
+        client = c; ufficio = url; usato = url; vivi.push(c);
+        ascolta(c);
         collegato();
-      }, function (e) { if (!chiusa) cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message }); });
+      }, function (e) { if (!chiusa) cb.onErrore && cb.onErrore({ type: "mqtt", message: e && e.message }); }, { urls: uffici() });
       function fine() {
-        chiusa = true; togli(h); smetti(); collegamento.chiudi(); vivi = vivi.filter(function (x) { return x !== client; }); coda = [];
-        clearTimeout(tMuta); tMuta = null;
+        chiusa = true; togli(h); smetti(); collegamento.chiudi(); vivi = vivi.filter(function (x) { return x !== client; }); coda = []; recenti = [];
+        clearTimeout(tMuta); tMuta = null; clearTimeout(tSonda); tSonda = null; clearTimeout(tGiu); tGiu = null;
+        if (cambio) { cambio.col.chiudi(); cambio = null; }
+        if (sonda) { var S = sonda; sonda = null; S.finita = true; S.col.chiudi(); try { if (S.c) S.c.end(); } catch (e) {} }
         if (tAddio) { clearTimeout(tAddio); tAddio = null; avvisaHost(T.stato, false); }
         if (tCi) { clearInterval(tCi); tCi = null; }
         if (ferma) { ferma = false; evento("sg-stanza-ferma", { stanza: codice, ferma: false }); }
@@ -536,10 +856,10 @@
             if (!tCi) tCi = setInterval(function () { if (!chiusa && Date.now() - ultimoInvio >= CI_SONO - 1000) pubblica({ t: "__ci" }); }, CI_SONO);
           }
         },
-        // come sta il collegamento (per l'app: "Sei dentro", "Sto entrando…", "entri alla prossima")
+        // come sta il collegamento (per l'app: "Sei dentro", "Sto entrando…", "entri alla prossima"); ufficio = l'indirizzo che uso
         stato: function () {
           return { id: myId, aperto: aperto, chiusa: chiusa, dentro: dentro, presente: foto ? presente : dentro, foto: foto,
-            vivo: vivo, ferma: ferma, entrato: primoJoin, sessione: sessione };
+            vivo: vivo, ferma: ferma, entrato: primoJoin, sessione: sessione, ufficio: ufficio };
         },
         // l'app mi vede in saletta ma l'ultima foto dell'host non ha il mio id: chiedo di nuovo di entrare
         // (ero dentro e l'host mi ha tolto, oppure è cominciata una partita nuova e io aspettavo)
@@ -564,13 +884,15 @@
         // se ne va in silenzio (senza dire "esco"): serve all'host di riserva che sta per prendere il posto dell'host
         lascia: function () {
           if (chiusa) return;
+          var c = client;
           fine();
-          try { if (client) client.end(); } catch (e) {}
+          try { if (c) c.end(); } catch (e) {}
         },
         chiudi: function () {
           if (chiusa) return;
+          var c = client;
           fine();
-          try { if (client) { client.publish(T.azioni, JSON.stringify({ from: myId, data: { t: "__leave", voluto: 1 } }), { retain: false }); client.end(); } } catch (e) {}
+          try { if (c) { c.publish(T.azioni, JSON.stringify({ from: myId, data: { t: "__leave", voluto: 1 } }), { retain: false }); c.end(); } } catch (e) {}
         }
       };
       return segna(h, opz.tieni);
@@ -580,30 +902,47 @@
     // Così chi entra digitando il codice apre il gioco giusto e non un altro.
     // cb(idGioco, { ferma }) : idGioco = null se non c'è nessuna stanza con quel codice;
     // ferma = l'host è sparito (chi entra lo saprà subito). Risponde 2 secondi dopo l'iscrizione (non 10).
+    // Con la riserva chiede a tutti e due gli uffici insieme: vince il primo che ha il gioco con l'host vivo
+    // (se un ufficio è giù non si aspetta: risponde quello che c'è).
     scopriGioco: function (codice, cb) {
       if (!this.disponibile()) { cb(null, {}); return; }
       var C = String(codice).toUpperCase(), META = BASE + C + "/meta", STATO = BASE + C + "/stato";
-      var fatto = false, client = null, g = null, ferma = false, statoVisto = false, tFine = null, tMax = null;
-      function fine() {
-        if (fatto) return; fatto = true; clearTimeout(tFine); clearTimeout(tMax);
-        collegamento.chiudi(); try { if (client) client.end(true); } catch (e) {}
-        cb(g || null, { ferma: ferma });
+      var fatto = false, tMax = null, tResto = null;
+      var L = uffici().map(function (url, n) { return { url: url, n: n, client: null, col: null, g: null, ferma: false, statoVisto: false, finito: false, tFine: null }; });
+      function fine(x) {
+        if (fatto) return; fatto = true; clearTimeout(tMax); clearTimeout(tResto);
+        L.forEach(function (y) { clearTimeout(y.tFine); if (y.col) y.col.chiudi(); try { if (y.client) y.client.end(true); } catch (e) {} });
+        // (nessuno ha deciso da solo: il gioco con l'host vivo, se no quello di un ufficio qualsiasi)
+        if (!x) x = L.filter(function (y) { return y.g && !y.ferma; })[0] || L.filter(function (y) { return y.g; })[0] || null;
+        cb((x && x.g) || null, { ferma: !!(x && x.ferma) });
       }
-      var collegamento = collega({ clean: true, reconnectPeriod: 0 }, function (c) {
-        client = c;
-        c.on("message", function (topic, payload) {
-          var m = null; try { m = JSON.parse(payload.toString() || "null"); } catch (e) {}
-          if (topic === META) {
-            g = m && m.g;
-            clearTimeout(tFine); tFine = setTimeout(fine, statoVisto ? 0 : 400);   // (lo stato di solito arriva subito dopo)
-          } else {
-            statoVisto = true; ferma = !!(m && m.t === "__hostgone" && !m.voluto);
-            if (g) { clearTimeout(tFine); fine(); }
-          }
-        });
-        c.subscribe([META, STATO], function () { if (!fatto && !g) tFine = setTimeout(fine, 2000); });
-      }, function () {});
-      tMax = setTimeout(fine, 10000);   // il collegamento non arriva proprio
+      // un ufficio ha detto la sua: col gioco e l'host vivo basta questo; se no aspetto gli altri (al massimo 1,5 secondi in più)
+      function detto(x) {
+        if (fatto || x.finito) return;
+        x.finito = true; clearTimeout(x.tFine);
+        if (x.g && !x.ferma) return fine(x);
+        if (L.every(function (y) { return y.finito; })) return fine(null);
+        if (!tResto) tResto = setTimeout(function () { fine(null); }, 1500);
+      }
+      L.forEach(function (x) {
+        x.col = collega({ clean: true, reconnectPeriod: 0 }, function (c) {
+          x.client = c;
+          if (fatto) { try { c.end(true); } catch (e) {} return; }
+          c.on("message", function (topic, payload) {
+            if (fatto || x.finito) return;
+            var m = null; try { m = JSON.parse(payload.toString() || "null"); } catch (e) {}
+            if (topic === META) {
+              x.g = m && m.g;
+              clearTimeout(x.tFine); x.tFine = setTimeout(function () { detto(x); }, x.statoVisto ? 0 : 400);   // (lo stato di solito arriva subito dopo)
+            } else {
+              x.statoVisto = true; x.ferma = !!(m && m.t === "__hostgone" && !m.voluto);
+              if (x.g) detto(x);
+            }
+          });
+          c.subscribe([META, STATO], function () { if (!fatto && !x.finito && !x.g) x.tFine = setTimeout(function () { detto(x); }, 2000); });
+        }, function () { detto(x); }, { url: x.url, muto: x.n > 0 });   // (l'avviso di rete lento solo per il primo, come prima)
+      });
+      tMax = setTimeout(function () { fine(null); }, 10000);   // il collegamento non arriva proprio
     },
 
     // Sbircia in più stanze (le Compagnie della home) con UN collegamento solo, che legge e chiude subito:
@@ -613,40 +952,58 @@
     //   "vuota" = non c'è niente; "boh" = il collegamento non è arrivato. msg = il messaggio letto (o null);
     //   gen = msg.gen o msg.g (la generazione della Sala) o 0.
     // Risponde 400 ms dopo l'iscrizione (o subito, se hanno già risposto tutte), al massimo dopo 6 secondi.
+    // Con la riserva: un collegamento per ufficio; "viva" se un ufficio la dice viva (subito appena sono tutte vive), se
+    // no "ferma" se uno la dice ferma; un ufficio giù non si aspetta più di 1,5 secondi dopo che l'altro ha risposto.
     sbircia: function (codici, cb) {
       var lista = [], visti = {};
       (Array.isArray(codici) ? codici : [codici]).forEach(function (c) {
         c = String(c == null ? "" : c).trim().toUpperCase();
         if (c && !visti[c] && lista.length < 12) { visti[c] = 1; lista.push(c); }
       });
-      var esito = {}, nVisti = 0, fatto = false, arrivato = false, client = null, collegamento = null, tFine = null, tMax = null, perTopic = {};
+      var esito = {}, fatto = false, tMax = null, tResto = null, perTopic = {};
       lista.forEach(function (c) { perTopic[topics(c).stato] = c; });
+      var L = uffici().map(function (url) { return { url: url, client: null, col: null, arrivato: false, finito: false, es: {}, n: 0, tFine: null }; });
+      // il migliore dei due: viva batte ferma e vuota; a parità la generazione più alta
+      function meglio(a, b) { if (!a) return b; if (!b) return a; if ((a.stato === "viva") !== (b.stato === "viva")) return a.stato === "viva" ? a : b; return b.gen > a.gen ? b : a; }
       function fine() {
-        if (fatto) return; fatto = true; clearTimeout(tFine); clearTimeout(tMax);
-        try { if (collegamento) collegamento.chiudi(); } catch (e) {}
-        try { if (client) client.end(true); } catch (e) {}
-        lista.forEach(function (c) { if (!esito[c]) esito[c] = { stato: arrivato ? "vuota" : "boh", msg: null, gen: 0 }; });
+        if (fatto) return; fatto = true; clearTimeout(tMax); clearTimeout(tResto);
+        L.forEach(function (x) { clearTimeout(x.tFine); try { if (x.col) x.col.chiudi(); } catch (e) {} try { if (x.client) x.client.end(true); } catch (e) {} });
+        var arrivato = L.some(function (x) { return x.arrivato; });
+        lista.forEach(function (c) {
+          var e = null; L.forEach(function (x) { e = meglio(e, x.es[c] || null); });
+          esito[c] = e || { stato: arrivato ? "vuota" : "boh", msg: null, gen: 0 };
+        });
         try { if (cb) cb(esito); } catch (e) {}
       }
+      function tutteVive() { return lista.every(function (c) { return L.some(function (x) { return x.es[c] && x.es[c].stato === "viva"; }); }); }
+      function finito(x) {
+        if (fatto || x.finito) return;
+        x.finito = true; clearTimeout(x.tFine);
+        if (L.every(function (y) { return y.finito; })) return fine();
+        if (!tResto) tResto = setTimeout(fine, 1500);
+      }
       if (!lista.length || !window.SGNet.disponibile()) { setTimeout(fine, 0); return; }
-      collegamento = collega({ clean: true, reconnectPeriod: 0 }, function (c) {
-        client = c;
-        if (fatto) { try { c.end(true); } catch (e) {} return; }
-        arrivato = true;
-        c.on("message", function (topic, payload) {
-          var C = perTopic[topic];
-          if (fatto || !C || esito[C]) return;
-          var m = null; try { m = JSON.parse(payload.toString() || "null"); } catch (e) { return; }
-          if (!m || typeof m !== "object") return;
-          var st = null;
-          if (m.t === "__hostgone") { if (!m.voluto) st = "ferma"; }   // (chiusa apposta: tra poco è vuota)
-          else if (m._s || m.t === "sala" || m.t === "__hostqui") st = "viva";
-          if (!st) return;
-          esito[C] = { stato: st, msg: m, gen: +(m.gen || m.g) || 0 };
-          if (++nVisti >= lista.length) fine();   // hanno già risposto tutte
-        });
-        c.subscribe(Object.keys(perTopic), function () { if (!fatto) tFine = setTimeout(fine, 400); });
-      }, null);   // (null = collegamento muto: niente avvisi sullo schermo)
+      L.forEach(function (x) {
+        x.col = collega({ clean: true, reconnectPeriod: 0 }, function (c) {
+          x.client = c;
+          if (fatto) { try { c.end(true); } catch (e) {} return; }
+          x.arrivato = true;
+          c.on("message", function (topic, payload) {
+            var C = perTopic[topic];
+            if (fatto || !C || x.es[C]) return;
+            var m = null; try { m = JSON.parse(payload.toString() || "null"); } catch (e) { return; }
+            if (!m || typeof m !== "object") return;
+            var st = null;
+            if (m.t === "__hostgone") { if (!m.voluto) st = "ferma"; }   // (chiusa apposta: tra poco è vuota)
+            else if (m._s || m.t === "sala" || m.t === "__hostqui") st = "viva";
+            if (!st) return;
+            x.es[C] = { stato: st, msg: m, gen: +(m.gen || m.g) || 0 };
+            if (tutteVive()) return fine();   // sono già tutte vive: non serve aspettare
+            if (++x.n >= lista.length) finito(x);   // su questo ufficio hanno già risposto tutte
+          });
+          c.subscribe(Object.keys(perTopic), function () { if (!fatto && !x.finito) x.tFine = setTimeout(function () { finito(x); }, 400); });
+        }, null, { url: x.url });   // (null = collegamento muto: niente avvisi sullo schermo)
+      });
       tMax = setTimeout(fine, 6000);
     },
 

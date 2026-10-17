@@ -22,7 +22,7 @@
   function prezzo(w) { var b = q(w, ".sa-prezzo b, .st-prezzo b"); return b ? parseInt(b.textContent, 10) : null; }
   function caso(n) { return Math.floor(Math.random() * n); }
   var NOMI = ["Paky", "Giulia", "Luca", "Marta"];
-  var SLOT = { P: 1, D: 1, C: 2, A: 1 }, ULT = {};   // ULT: l ultimo tocco di ogni telefono (sul telefono un secondo tocco entro mezzo secondo non conta, apposta)
+  var SLOT = { P: 1, D: 1, C: 2, A: 1 }, ULT = {};   // ULT: l ultimo tocco di ogni telefono (qui tra un tocco e l altro si aspetta la foto nuova; i tocchi fulminei, che contano tutti, li prova preferiti/asta-tocchi.js)
 
   async function quattroTelefoni(imp) {
     var P = await W.apriTel("Paky", { x: 0, ar: true, prima: function (w) { w.__imp = imp; } }), C = await W.apriStanza(P, "L'Asta");

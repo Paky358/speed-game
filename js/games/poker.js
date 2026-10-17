@@ -164,13 +164,89 @@
     return best;
   }
 
+  // ---- «📊 Le percentuali da TV» (Texas Hold'em, all-in con le carte girate) ----
+  // forza7: la forza delle 7 carte (2 tue + 5 in mezzo) in un numero solo, con lo STESSO ordine di miglioreMano
+  // (tipo e poi le carte che decidono, come in valuta5): serve solo a contare in fretta migliaia di mani.
+  var CNT = [], SC = [0, 0, 0, 0], SM = [0, 0, 0, 0];
+  function scalaIn(m) {   // la carta più alta della scala dentro la maschera dei ranghi (0 = niente scala)
+    for (var t = 14; t >= 6; t--) if (((m >> (t - 4)) & 31) === 31) return t;
+    return (m & 0x403C) === 0x403C ? 5 : 0;   // 5-4-3-2-A
+  }
+  var ALTE = [0, 0, 0, 0, 0];
+  function alte(n, via1, via2) {   // in ALTE le n carte più alte (senza i ranghi già usati); niente array nuovi: si conta in fretta
+    var k = 0;
+    ALTE[0] = ALTE[1] = ALTE[2] = ALTE[3] = ALTE[4] = 0;
+    for (var x = 14; x >= 2 && k < n; x--) if (CNT[x] && x !== via1 && x !== via2) ALTE[k++] = x;
+    return ALTE;
+  }
+  function cod(tipo, a, b, c, d, e) { return ((((tipo * 16 + (a || 0)) * 16 + (b || 0)) * 16 + (c || 0)) * 16 + (d || 0)) * 16 + (e || 0); }
+  function forza7(cc) {
+    var r, k, m = 0, fs = -1;
+    for (r = 2; r <= 14; r++) CNT[r] = 0;
+    SC[0] = SC[1] = SC[2] = SC[3] = 0; SM[0] = SM[1] = SM[2] = SM[3] = 0;
+    for (k = 0; k < cc.length; k++) { r = cc[k].v === 1 ? 14 : cc[k].v; CNT[r]++; SC[cc[k].s]++; SM[cc[k].s] |= 1 << r; m |= 1 << r; }
+    for (k = 0; k < 4; k++) if (SC[k] >= 5) fs = k;
+    if (fs >= 0) { var sf = scalaIn(SM[fs]); if (sf) return cod(8, sf); }
+    var q = 0, t1 = 0, t2 = 0, p1 = 0, p2 = 0;
+    for (r = 14; r >= 2; r--) {
+      if (CNT[r] === 4) q = r;
+      else if (CNT[r] === 3) { if (!t1) t1 = r; else if (!t2) t2 = r; }
+      else if (CNT[r] === 2) { if (!p1) p1 = r; else if (!p2) p2 = r; }
+    }
+    var a = ALTE;
+    if (q) { a = alte(1, q); return cod(7, q, a[0]); }
+    if (t1 && (t2 || p1)) return cod(6, t1, Math.max(t2, p1));
+    if (fs >= 0) { k = 0; for (r = 14; r >= 2 && k < 5; r--) if (SM[fs] & (1 << r)) a[k++] = r; return cod(5, a[0], a[1], a[2], a[3], a[4]); }
+    var sc = scalaIn(m); if (sc) return cod(4, sc);
+    if (t1) { a = alte(2, t1); return cod(3, t1, a[0], a[1]); }
+    if (p1 && p2) { a = alte(1, p1, p2); return cod(2, p1, p2, a[0]); }
+    if (p1) { a = alte(3, p1); return cod(1, p1, a[0], a[1], a[2]); }
+    a = alte(5); return cod(0, a[0], a[1], a[2], a[3], a[4]);
+  }
+  // quante volte vince (e pareggia) ogni mano scoperta, con le carte che mancano in mezzo:
+  // conto esatto se mancano 0, 1 o 2 carte (al flop al massimo 990 coppie), se no "prove" tavoli a caso (prima del flop).
+  // Le carte di chi ha lasciato non si conoscono: restano nel mazzo, come in TV. Ritorna [[vince %, pari %], …]
+  function percentuali(mani, tavolo, prove, morte) {   // (morte: carte già viste fuori dal gioco, es. di chi è uscito con le carte girate)
+    var n = mani.length, usate = {}, resto = [], i, j, s, v;
+    mani.forEach(function (m) { m.forEach(function (c) { usate[c.v + "-" + c.s] = 1; }); });
+    tavolo.concat(morte || []).forEach(function (c) { usate[c.v + "-" + c.s] = 1; });
+    for (s = 0; s < 4; s++) for (v = 1; v <= 13; v++) if (!usate[v + "-" + s]) resto.push({ v: v, s: s });
+    var vinte = [], pari = [], tot = 0, sette = [], fz = [], manca = 5 - tavolo.length;
+    for (i = 0; i < n; i++) { vinte.push(0); pari.push(0); sette.push(mani[i].concat(tavolo)); fz.push(0); }
+    function conta(extra) {   // un tavolo completo: chi ha la mano migliore (a pari: si divide)
+      var best = -1, quanti = 0, k, e;
+      for (k = 0; k < n; k++) {
+        var c7 = sette[k];
+        for (e = 0; e < extra.length; e++) c7[2 + tavolo.length + e] = extra[e];
+        c7.length = 2 + tavolo.length + extra.length;
+        fz[k] = forza7(c7);
+        if (fz[k] > best) { best = fz[k]; quanti = 1; } else if (fz[k] === best) quanti++;
+      }
+      for (k = 0; k < n; k++) if (fz[k] === best) { if (quanti === 1) vinte[k]++; else pari[k]++; }
+      tot++;
+    }
+    if (manca <= 0) conta([]);
+    else if (manca === 1) for (i = 0; i < resto.length; i++) conta([resto[i]]);
+    else if (manca === 2) for (i = 0; i < resto.length; i++) for (j = i + 1; j < resto.length; j++) conta([resto[i], resto[j]]);
+    else {
+      var pz = prove || 3000, ex = [];
+      for (var p = 0; p < pz; p++) {
+        for (var a = 0; a < manca; a++) { var b = a + Math.floor(Math.random() * (resto.length - a)), x = resto[a]; resto[a] = resto[b]; resto[b] = x; ex[a] = resto[a]; }
+        ex.length = manca; conta(ex);
+      }
+    }
+    return mani.map(function (m, k) { return [Math.round(vinte[k] / tot * 1000) / 10, Math.round(pari[k] / tot * 1000) / 10]; });
+  }
+
   // =========================================================
   //  MOTORE DELLA PARTITA (uguale contro il computer e online)
   // =========================================================
   function creaMotore(variante) {
     var M = { variante: variante, giocatori: [], dealer: -1, mazzo: [], scarti: [], tavolo: [], piatto: 0, daChiamare: 0, rilMin: 0,
       turno: -1, stato: "attesa", n: 0, esito: null, basso: 2, corsa: false, scadenza: null,
-      bui: { piccolo: PICCOLO, grande: GRANDE, invito: INVITO, punta: PUNTA_IT }, livello: 0 };   // (i bui salgono solo nel Torneo della serata)
+      bui: { piccolo: PICCOLO, grande: GRANDE, invito: INVITO, punta: PUNTA_IT }, livello: 0,   // (i bui salgono solo nel Torneo della serata)
+      conPerc: false, perc: null, percMs: 0,   // «📊 percentuali da TV»: accese? quelle della strada di adesso { id: [vince, pari] }, quanto ci ha messo il conto
+      bomba: 0 };   // «💣 Mano bomba»: quanto ha messo ognuno (0 = mano normale)
     function minimo() { return M.variante === "he" ? M.bui.grande : M.bui.punta; }
     // il Torneo della serata: livello k dei bui (0 = i bui di sempre)
     M.livelloBui = function (k) {
@@ -209,9 +285,11 @@
     // tavolo pulito, nessuna mano in corso
     M.azzera = function () {
       M.giocatori.forEach(function (p) { p.inMano = false; p.lascia = false; p.allin = false; p.inGiro = 0; p.messo = 0; p.mano = []; p.agito = false; p.chiuso = false; p.azione = ""; p.frase = ""; p.mostra = false; p.cambio = null; p.valut = null; p.rilanciMano = 0; p.rilanciVeriMano = 0; p.carteCambiateMano = 0; });
-      M.esito = null; M.tavolo = []; M.piatto = 0; M.scarti = []; M.corsa = false; M.turno = -1; M.stato = "attesa";
+      M.esito = null; M.tavolo = []; M.piatto = 0; M.scarti = []; M.corsa = false; M.turno = -1; M.stato = "attesa"; M.perc = null; M.bomba = 0;
     };
-    M.nuovaMano = function () {
+    // opz.bomba: «💣 Mano bomba» (Torneo della serata): ognuno mette subito questa puntata nel piatto (chi ne ha meno, tutto quello che ha)
+    // e non si punta prima: Hold'em si scopre subito il flop e si punta da lì; all'italiana si va subito al cambio
+    M.nuovaMano = function (opz) {
       M.azzera();
       var gioc = attivi();
       if (gioc.length < MIN) { M.stato = "attesa"; return false; }
@@ -221,6 +299,27 @@
       M.dealer = dopo(M.dealer, siMano);
       M.basso = M.variante === "it" ? bassoIt(gioc.length) : 2;
       M.mazzo = creaMazzo(M.variante, gioc.length);
+      var bomba = opz && opz.bomba > 0 ? Math.floor(opz.bomba) : 0;
+      if (bomba) {
+        M.bomba = bomba;
+        gioc.forEach(function (p) {   // la puntata di tutti va dritta nel piatto (come l'invito)
+          var x = Math.min(bomba, p.stack); p.stack -= x; p.messo += x; M.piatto += x; if (p.stack === 0) p.allin = true;
+          p.azione = "💣 " + fmtN(x);
+          p.mano = M.variante === "he" ? [pesca(), pesca()] : [pesca(), pesca(), pesca(), pesca(), pesca()];
+        });
+        M.daChiamare = 0; M.rilMin = minimo(); M.turno = -1;
+        var conFiches = gioc.filter(function (p) { return !p.allin; }).length;
+        if (M.variante === "he") {
+          M.stato = "preflop"; prossimaStrada();   // il flop subito
+          if (conFiches <= 1) { M.corsa = true; scopri(); return true; }   // tutti (o quasi) già dentro con tutto: carte girate
+          M.turno = dopo(M.dealer, puoMuovere);
+          controlla();
+        } else {
+          M.stato = "cambio";
+          gioc.forEach(function (p) { p.cambio = null; });
+        }
+        return true;
+      }
       if (M.variante === "he") {
         var sb = gioc.length === 2 ? M.dealer : dopo(M.dealer, siMano), bb = dopo(sb, siMano);   // in due il mazziere mette il buio piccolo
         metti(M.giocatori[sb], M.bui.piccolo); M.giocatori[sb].azione = "Buio " + fmtN(M.bui.piccolo);
@@ -313,7 +412,18 @@
       prossimaStrada(); scopri();
     };
     // all-in: le carte di chi è rimasto si vedono subito, col nome della mano aggiornato a ogni strada
-    function scopri() { inMano().forEach(function (q) { q.mostra = true; q.valut = miglioreMano(q.mano.concat(M.tavolo), "he", 2); }); }
+    // e, se accese, le «📊 percentuali da TV» di ognuno (calcolate qui, una volta per strada, solo da chi tiene la partita)
+    function scopri() {
+      var rest = inMano();
+      rest.forEach(function (q) { q.mostra = true; q.valut = miglioreMano(q.mano.concat(M.tavolo), "he", 2); });
+      M.perc = null;
+      if (!M.conPerc || rest.length < 2) return;
+      var morte = []; M.giocatori.forEach(function (q) { if (q.mostra && rest.indexOf(q) < 0) morte = morte.concat(q.mano); });
+      // prima del flop circa 3.000 tavoli a caso (con tanti giocatori un po' meno, così anche un telefono lento non si ferma)
+      var t0 = Date.now(), pc = percentuali(rest.map(function (q) { return q.mano; }), M.tavolo, Math.min(3000, Math.round(12000 / rest.length)), morte);
+      M.perc = {}; rest.forEach(function (q, k) { M.perc[q.id] = pc[k]; });
+      M.percMs = Date.now() - t0;
+    }
     // all'italiana: si cambiano da 0 a 4 carte (quali = posizioni nella mano)
     M.cambia = function (i, quali) {
       var p = M.giocatori[i];
@@ -346,7 +456,7 @@
       if (!M.inCorso() || !p.inMano || p.lascia) return;
       p.lascia = true; p.azione = "Uscito";
       if (M.stato === "cambio") forseFineCambio();
-      else if (M.corsa) { if (inMano().length <= 1) vinceSolo(inMano()[0]); }
+      else if (M.corsa) { if (inMano().length <= 1) vinceSolo(inMano()[0]); else scopri(); }   // (le percentuali senza chi è uscito)
       else controlla();
     };
     // i piatti: chi è all-in vince solo fino a quanto ha messo (piatti laterali per gli altri)
@@ -391,6 +501,7 @@
       M.giocatori.forEach(function (q) { M.piatto += q.inGiro; q.inGiro = 0; });
       var tot = M.piatto, vinti = {}; M.piatto = 0;
       M.giocatori.forEach(function (q) { q.mostra = false; q.valut = null; });   // (anche se erano state girate durante un all-in)
+      M.perc = null;
       if (p) { p.stack += tot; vinti[p.id] = tot; }
       M.turno = -1; M.corsa = false; M.stato = "finemano"; M.esito = { vinti: vinti, confronto: false, vincitore: p ? p.id : null };
     }
@@ -411,7 +522,15 @@
     M.annulla = function () {
       if (!M.inCorso()) return;
       M.giocatori.forEach(function (q) { q.stack += q.messo; q.messo = 0; q.inGiro = 0; q.inMano = false; q.mano = []; q.allin = false; });
-      M.piatto = 0; M.turno = -1; M.corsa = false; M.stato = "attesa"; M.esito = null; M.tavolo = [];
+      M.piatto = 0; M.turno = -1; M.corsa = false; M.stato = "attesa"; M.esito = null; M.tavolo = []; M.perc = null; M.bomba = 0;
+    };
+    // la ripresa (l'host ha ricaricato la pagina): il tavolo com'è (M senza le sue funzioni: un oggetto semplice, con mazzo,
+    // carte in mano, puntate e turno) e di nuovo dentro il motore: la mano continua dallo stesso punto
+    M.esporta = function () { return JSON.parse(JSON.stringify(M)); };
+    M.importa = function (x) {
+      if (!x || typeof x !== "object" || !Array.isArray(x.giocatori)) return false;
+      Object.keys(x).forEach(function (k) { if (typeof M[k] !== "function") M[k] = x[k]; });
+      return true;
     };
     return M;
   }
@@ -516,6 +635,16 @@
       });
       return;
     }
+    if (tipo === "bomba") {   // «💣 Mano bomba»: un botto basso che scende, poi un tintinnio di fiches
+      try {
+        var tb = ctx.currentTime, ob = ctx.createOscillator(), gb = ctx.createGain();
+        ob.type = "sine"; ob.frequency.setValueAtTime(150, tb); ob.frequency.exponentialRampToValueAtTime(40, tb + 0.45);
+        gb.gain.setValueAtTime(0.0001, tb); gb.gain.exponentialRampToValueAtTime(0.25, tb + 0.02); gb.gain.exponentialRampToValueAtTime(0.0001, tb + 0.5);
+        ob.connect(gb); gb.connect(ctx.destination); ob.start(tb); ob.stop(tb + 0.52);
+      } catch (e) {}
+      setTimeout(function () { suono("vinci"); }, 380);
+      return;
+    }
     if (tipo === "vinci" || tipo === "grande") {   // fiches che arrivano: tre (o cinque, se il piatto è grande) tintinnii che salgono
       [0, 1, 2, 3, 4].slice(0, tipo === "grande" ? 5 : 3).forEach(function (k) {
         try {
@@ -544,20 +673,51 @@
     if (online && !(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var imp = t.impostazioni || {};
     // torneo: il Torneo della serata a fiches uguali (finte), coi bui che salgono ogni "ogni" mani
-    var V = { variante: variante(imp.variante), liv: imp.difficolta || "medio", torneo: !!imp.torneo, ogni: +imp.ogni === 10 ? 10 : 5 };
+    // perc: le «📊 percentuali da TV» all'all-in (Hold'em); bomba: nel torneo una «💣 Mano bomba» ogni 5 o 10 mani (0 = mai)
+    var V = { variante: variante(imp.variante), liv: imp.difficolta || "medio", torneo: !!imp.torneo, ogni: +imp.ogni === 10 ? 10 : 5,
+      perc: imp.perc !== false, bomba: ogniBomba(imp.bomba) };
     var prof = conProfilo();
     var nome = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Tu";
+    var IO = t.mioId || "host";   // chi tiene il tavolo su questo telefono ("host", o l'amico che ha preso il posto dell'host)
+    // la ripresa (l'host ha ricaricato la pagina a metà partita): quello che si è ricordato in bd()
+    var RIP = online && t.ripresa && t.ripresa.stato && t.ripresa.stato.poker;
+    if (RIP && !(RIP.M && Array.isArray(RIP.M.giocatori) && RIP.H && RIP.V)) RIP = null;
+    if (RIP) V = RIP.V;
     var W = prof ? portafoglio() : BUYIN;   // il mio portafoglio (le Speed Coins del profilo); senza profilo 1.000 per giocare
-    if (prof && W < GRANDE && !V.torneo) return senzaFiches(t, function () { partita(t, online); });   // (il torneo si gioca con fiches finte)
+    if (!RIP && prof && W < GRANDE && !V.torneo) return senzaFiches(t, function () { partita(t, online); });   // (il torneo si gioca con fiches finte)
     var partitaId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     var M = creaMotore(V.variante);
-    var io = M.siedi({ id: "host", nome: nome, omino: t.mioOmino ? t.mioOmino(nome) : null, stack: V.torneo ? FICHES_TORNEO : Math.min(W, BUYIN) });
+    M.conPerc = V.perc;
+    var io = M.siedi({ id: IO, nome: nome, omino: t.mioOmino ? t.mioOmino(nome) : null, stack: V.torneo ? FICHES_TORNEO : Math.min(W, BUYIN) });
     io.portato = Math.min(W, BUYIN);   // le monete vere che ho portato al tavolo (nel torneo restano da parte)
     var fuori = W - io.portato;   // quello che resta nel portafoglio, fuori dal tavolo
-    var H = { fase: online ? "lobby" : "gioco", codice: "…", pronta: !online, classifica: null, omini: { host: io.omino }, guardano: {},
+    var omini0 = {}; omini0[IO] = io.omino;
+    var H = { fase: online ? "lobby" : "gioco", codice: "…", pronta: !online, classifica: null, omini: omini0, guardano: {},
       soloGuarda: {},   // chi non è tra chi gioca (scelti nella Sala): guarda e non si siede
       nElim: 0, n0: 0, aspetta: {}, fineT: 0, fineDur: 0, detto: false };   // torneo: quanti sono usciti; chi è arrivato a torneo iniziato (entra al prossimo)
     var rete = null, tBot = null, tTempo = null, tMano = null, tSalva = null, salvato = W;
+    // ---- la ripresa: stesso tavolo, stessa mano (carte in mano, carte in tavola, puntate, turno), stesse fiches. Gli amici
+    // restano seduti e rientrano da soli (il join gli rimanda le sue carte); se tocca a un Bot, il Bot riparte dal suo turno
+    var attesi = {};
+    if (RIP && M.importa(RIP.M)) {
+      ["fase", "classifica", "omini", "guardano", "soloGuarda", "nElim", "n0", "aspetta", "detto"].forEach(function (k) { if (RIP.H[k] != null) H[k] = RIP.H[k]; });
+      if (RIP.partitaId) partitaId = RIP.partitaId;
+      if (isFinite(RIP.fuori)) fuori = RIP.fuori;
+      // (le fiches del profilo le ho già salvate dal tavolo prima di ricaricare: si risalva solo se cambiano)
+      M.scadenza = null;
+      var iIo = M.trova(IO);
+      if (iIo >= 0) io = M.giocatori[iIo];
+      else { M.giocatori.push(io); H.omini[IO] = io.omino; }   // (non dovrebbe succedere: mi risiedo, gioco dalla prossima mano)
+      // ho preso il tavolo dall'host sparito (host di riserva): le monete fuori dal tavolo sono le MIE (quelle che tenevo da
+      // ospite su questo telefono), non le sue
+      if (t.ripresa.daRiserva) {
+        var rOsp = null;
+        try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf("sg-poker-fuori-") === 0 && k.slice(-(IO.length + 1)) === "-" + IO) { var x = JSON.parse(localStorage.getItem(k)); if (x && isFinite(x.fuori) && isFinite(x.salvato) && (!rOsp || x.t > rOsp.t)) rOsp = x; } }); } catch (e) {}
+        fuori = iIo < 0 ? W - io.portato : rOsp ? Math.max(0, rOsp.fuori + (W - rOsp.salvato)) : Math.max(0, W - io.stack);
+        salvato = W;
+      }
+      M.giocatori.forEach(function (p) { if (!p.bot && !p.via && p.id !== IO) attesi[p.id] = 1; });
+    } else RIP = null;
 
     function salvaMio(subito) {   // nel profilo: fiches fuori + fiches sul tavolo (nel torneo le fiches sono finte: niente)
       if (!prof || V.torneo) return;
@@ -604,8 +764,12 @@
         svelabile: M.stato === "finemano" && M.esito && M.esito.vincitore && M.puoSvelare(M.trova(M.esito.vincitore)) ? M.esito.vincitore : null,
         bui: M.bui,
         // torneo: tra = quante mani mancano (dopo questa) prima che salgano i bui
-        torneo: V.torneo ? { ogni: V.ogni, livello: M.livello, fiches: FICHES_TORNEO, tra: M.n > H.n0 ? V.ogni - ((M.n - H.n0 - 1) % V.ogni) - 1 : V.ogni } : null,
+        torneo: V.torneo ? { ogni: V.ogni, livello: M.livello, fiches: FICHES_TORNEO, tra: M.n > H.n0 ? V.ogni - ((M.n - H.n0 - 1) % V.ogni) - 1 : V.ogni, bomba: V.bomba } : null,
+        // «📊 percentuali da TV»: { id: [vince %, pari %] } di chi ha le carte girate all'all-in (solo carte che tutti vedono già)
+        perc: M.perc, percSi: V.perc,
+        bomba: M.bomba || 0,   // «💣 Mano bomba»: la puntata di tutti in questa mano (0 = mano normale)
         guardano: Object.keys(H.guardano),   // chi è entrato a tavolo pieno e guarda
+        hostId: IO,   // chi tiene il tavolo (in saletta ha la corona)
         soloGuarda: Object.keys(H.soloGuarda),   // (di questi, chi non è tra chi gioca: non si siede)
         players: seduti().map(function (p) {
           return { id: p.id, nome: p.nome, bot: p.bot, stack: p.stack, buyin: p.buyin, inGiro: p.inGiro, lascia: p.lascia, allin: p.allin, azione: p.azione, frase: p.frase || "",
@@ -675,12 +839,27 @@
     function mandaCarte(soloId) {   // a ognuno le sue carte, a parte
       if (!rete) return;
       M.giocatori.forEach(function (p) {
-        if (p.bot || p.id === "host" || p.via || (soloId && p.id !== soloId)) return;
+        if (p.bot || p.id === IO || p.via || (soloId && p.id !== soloId)) return;
         rete.inviaVeloce({ t: "mie", to: p.id, n: M.n, carte: p.inMano ? p.mano.slice() : [] });
       });
     }
     function mandaOmini() { if (rete) rete.inviaVeloce({ t: "omini", omini: H.omini }); }
-    function bd() { var v = vm(); if (rete) rete.invia({ t: "vm", vm: v }); disegna(t, v, cb); }
+    function bd() { var v = vm(); if (rete) { rete.invia({ t: "vm", vm: v }); vici(); } ricorda(); disegna(t, v, cb); }
+    // (host di riserva) chi porta avanti il tavolo se sparisco: chi è seduto (ha già il suo posto e le sue fiches)
+    var viciK = "";
+    function vici() {
+      var l = M.giocatori.filter(function (p) { return !p.bot && !p.via && p.id !== IO; }).map(function (p) { return p.id; }), k = l.join(",");
+      if (k !== viciK && t.vici) { viciK = k; t.vici(l.length ? l : null); }
+    }
+    // online, dopo ogni cambiamento il tavolo si ricorda (se l'host ricarica, la mano continua); in saletta niente da riprendere
+    var ricordato = !!RIP;
+    function ricorda() {
+      if (!online || !t.ricorda) return;
+      if (H.fase === "lobby") { if (ricordato) { ricordato = false; t.ricorda(null); } return; }
+      ricordato = true;
+      t.ricorda({ poker: { V: V, M: M.esporta(), partitaId: partitaId, fuori: fuori,
+        H: { fase: H.fase, classifica: H.classifica, omini: H.omini, guardano: H.guardano, soloGuarda: H.soloGuarda, nElim: H.nElim, n0: H.n0, aspetta: H.aspetta, detto: H.detto } } });
+    }
 
     // ---- il giro: bot, tempo per decidere, carte che escono da sole, mano finita ----
     function ciclo() {
@@ -756,6 +935,8 @@
         if (inGara().filter(function (p) { return !p.via; }).length <= 1 || (!online && io.elim)) return fineTorneo();
         M.livelloBui(Math.floor((M.n - H.n0) / V.ogni));   // i bui salgono ogni "ogni" mani
       }
+      // «💣 Mano bomba» (solo nel torneo): la 5ª, la 10ª… mano del torneo (o la 10ª, la 20ª…): tutti dentro col doppio della puntata grande
+      var bomba = V.torneo && V.bomba && (M.n + 1 - H.n0) % V.bomba === 0 ? (M.variante === "he" ? M.bui.grande : M.bui.punta) * 2 : 0;
       M.giocatori.forEach(function (p) {
         if (p.via || p.elim) return;
         if (p.bot && p.stack <= 0) { p.via = true; delete H.omini[p.id]; if (!online || seduti().length < MAX[M.variante]) aggiungiBot(); }   // un bot nuovo al posto di chi ha finito
@@ -763,23 +944,23 @@
       });
       // contro il computer, se hai finito le fiches i bot si fermano e aspettano te
       if (!online && !io.seduto) { M.azzera(); salvaMio(true); ciclo(); bd(); return; }
-      if (M.nuovaMano()) { suono("carta"); mandaCarte(); }
+      if (M.nuovaMano(bomba ? { bomba: bomba } : null)) { suono("carta"); mandaCarte(); }
       salvaMio(true); ciclo(); bd();
     }
     // la mossa vale solo se è per la mano, il momento e la puntata che si vedevano quando si è toccato
     function attuale(rif) { return !rif || (rif.n === M.n && rif.st === M.stato && rif.dc === M.daChiamare); }
 
     // ---- le mie mosse (host o chi gioca contro il computer) ----
-    var cb = { sonoHost: true, online: online, myId: "host",
+    var cb = { sonoHost: true, online: online, myId: IO,
       mie: function () { return { n: M.n, carte: io.inMano ? io.mano.slice() : [] }; },
       omini: function () { return H.omini; },
       fuori: function () { return fuori; },
       puoRientrare: function () { if (V.torneo) return 0; return prof ? Math.min(fuori, BUYIN - io.stack) : BUYIN - io.stack; },   // senza profilo le fiches sono per finta (nel torneo non si rientra)
       rientroInCorso: function () { return false; },
-      onAzione: function (tipo, tot, rif) { if (attuale(rif) && M.azione(M.trova("host"), tipo, tot)) { io.pausa = false; if (tipo !== "lascia" && tipo !== "passa") suono("fiche"); dopoMossa(); } },
-      onCambio: function (quali, rif) { if ((!rif || rif.n === M.n) && M.cambia(M.trova("host"), quali)) { io.pausa = false; suono("carta"); dopoMossa(); } },
-      onSvela: function (n) { if (n == null || n === M.n) svela(M.trova("host")); },
-      onTace: function (n) { if (n == null || n === M.n) tace(M.trova("host")); },
+      onAzione: function (tipo, tot, rif) { if (attuale(rif) && M.azione(M.trova(IO), tipo, tot)) { io.pausa = false; if (tipo !== "lascia" && tipo !== "passa") suono("fiche"); dopoMossa(); } },
+      onCambio: function (quali, rif) { if ((!rif || rif.n === M.n) && M.cambia(M.trova(IO), quali)) { io.pausa = false; suono("carta"); dopoMossa(); } },
+      onSvela: function (n) { if (n == null || n === M.n) svela(M.trova(IO)); },
+      onTace: function (n) { if (n == null || n === M.n) tace(M.trova(IO)); },
       onCiSono: function () { io.pausa = false; if (H.fase === "gioco" && M.stato === "attesa") prossimaMano(); else bd(); },
       onRientra: function () {   // si risiede con altre fiches del portafoglio
         var x = cb.puoRientrare(); if (V.torneo || x < GRANDE || io.stack >= GRANDE || (M.inCorso() && io.inMano && !io.lascia)) return;
@@ -843,9 +1024,10 @@
         // nel torneo lasciato a metà conta il posto che avevi in quel momento)
         if (!online && M.n > 0 && t.risultato && !H.detto) {
           var mioPos = io.stack - io.buyin > 0 ? 1 : 2;
-          if (V.torneo) classificaTorneo().forEach(function (r) { if (r.id === "host") mioPos = r.pos; });
+          if (V.torneo) classificaTorneo().forEach(function (r) { if (r.id === IO) mioPos = r.pos; });
           H.detto = true; t.risultato([{ nome: io.nome, pos: mioPos }]);
         }
+        if (online && t.ricorda) t.ricorda(null);   // (uscito apposta: niente da riprendere)
         if (rete) rete.chiudi();
         t.esci();
       } };
@@ -855,6 +1037,7 @@
     t.onRegole = function (im) {
       if (H.fase !== "lobby") return;
       M.variante = variante(im.variante); V.liv = im.difficolta || V.liv; V.ogni = +im.ogni === 10 ? 10 : 5;
+      V.perc = im.perc !== false; M.conPerc = V.perc; V.bomba = ogniBomba(im.bomba);
       if (!!im.torneo !== V.torneo) metteTorneo(!!im.torneo);
       bd();
     };
@@ -862,10 +1045,11 @@
     if (online) t.onRivincita = function () { if (H.fase === "fine") cb.onNuova(); };
 
     if (online) {
-      rete = SGNet.ospita(ID, {
+      var cbR = {
         onCodice: function (c) { H.codice = c; bd(); },
         onConnesso: function () { H.pronta = true; bd(); },
         onAddio: function (id) {
+          delete attesi[id];
           delete H.guardano[id]; delete H.soloGuarda[id];
           var i = M.trova(id); if (i < 0) { bd(); return; }
           if (H.fase === "lobby") { M.giocatori.splice(i, 1); if (M.dealer >= M.giocatori.length) M.dealer = -1; bd(); return; }
@@ -876,6 +1060,7 @@
         },
         onMsg: function (id, m) {
           if (!m || !m.t) return;
+          delete attesi[id];   // (ripresa: si è rifatto vivo)
           var i = M.trova(id), p = i >= 0 ? M.giocatori[i] : null;
           if (m.t === "join") {
             if (i < 0 && t.puoSedersi && !t.puoSedersi(id, m.nome)) {   // non è tra chi gioca: guarda il tavolo
@@ -916,7 +1101,16 @@
           }
         },
         onErrore: function () { ferma(); clearTimeout(tMano); tMano = null; errore(t, "Problema di collegamento: la stanza non si apre. Riprova."); }   // (solo se il primo collegamento non riesce)
-      });
+      };
+      rete = SGNet.ospita(ID, cbR, RIP ? { ripresa: true } : null);
+      if (RIP) {   // (ripresa) il giro riparte da chi toccava: tempo per decidere intero, o il Bot che ci pensa
+        if (H.fase === "gioco") ciclo();
+        // chi non si rifà vivo in 20 s si alza come quando se ne va
+        setTimeout(function () {
+          if (!document.body.contains(t.radice)) return;
+          Object.keys(attesi).forEach(function (id) { cbR.onAddio(id); });
+        }, 20000);
+      }
       bd();
     } else {
       var nBot = Math.max(1, Math.min(MAX[M.variante] - 1, Math.floor(+imp.avversari || 3)));
@@ -1060,7 +1254,8 @@
       FINE = { k: k, s: finale(t, vm, cb) }; return;
     }
     FINE = null;
-    if (!UI || !document.body.contains(UI.s)) UI = creaSchermo(t, cb);
+    // (rifatta anche quando questo telefono passa da ospite a chi tiene il tavolo: host di riserva, il 🏁 è solo dell'host)
+    if (!UI || !document.body.contains(UI.s) || UI.sonoHost !== !!cb.sonoHost) { UI = creaSchermo(t, cb); UI.sonoHost = !!cb.sonoHost; }
     UI.cb = cb;
     aggiorna(UI, vm);
   }
@@ -1071,7 +1266,8 @@
   function lobby(t, vm, cb) {
     var el = t.el, extra = [], umani = vm.players.filter(function (p) { return !p.bot; }).length;
     extra.push(el("p", { class: "modulo-nota", text: vm.torneo
-      ? "🏆 Torneo della serata · " + NOME_VAR[vm.variante] + ": tutti partono con " + fmtN(vm.torneo.fiches) + " fiches finte, i bui salgono ogni " + vm.torneo.ogni + " mani e chi resta senza fiches esce. Le Speed Coins non si toccano."
+      ? "🏆 Torneo della serata · " + NOME_VAR[vm.variante] + ": tutti partono con " + fmtN(vm.torneo.fiches) + " fiches finte, i bui salgono ogni " + vm.torneo.ogni + " mani e chi resta senza fiches esce." +
+        (vm.torneo.bomba ? " 💣 Una mano ogni " + vm.torneo.bomba + " è una Mano bomba." : "") + " Le Speed Coins non si toccano."
       : NOME_VAR[vm.variante] + " · da 2 a " + MAX[vm.variante] + " giocatori. Ognuno si siede con le sue Speed Coins, che al tavolo diventano fiches (al massimo " + fmtN(BUYIN) + ")." }));
     if (vm.players.length > MAX[vm.variante]) extra.push(el("p", { class: "modulo-nota", style: "color:#ffa94d", text: "Siete troppi per questa variante: togli qualche Bot." }));
     if (cb.sonoHost) {
@@ -1091,7 +1287,7 @@
       puoComincia: vm.players.length >= MIN && vm.players.length <= MAX[vm.variante],
       vuoti: Math.max(0, MIN - vm.players.length),
       giocatori: vm.players.map(function (p) {
-        return { id: p.id, nome: p.nome, omino: (cb.omini() || {})[p.id] || (p.bot && window.SGOmino ? SGOmino.casuale(p.nome) : null), host: p.id === "host", tu: p.id === cb.myId, bot: p.bot };
+        return { id: p.id, nome: p.nome, omino: (cb.omini() || {})[p.id] || (p.bot && window.SGOmino ? SGOmino.casuale(p.nome) : null), host: p.id === (vm.hostId || "host"), tu: p.id === cb.myId, bot: p.bot };
       }),
       extra: extra, attesa: "Aspetta che l'host cominci: si gioca a " + NOME_VAR[vm.variante] + "! 🃏", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
@@ -1136,6 +1332,7 @@
     ui.piatto = el("div", { class: "pk-piatto" });
     ui.msg = el("div", { class: "pk-msg" });
     ui.tavolo.appendChild(el("div", { class: "pk-centro" }, [ ui.comuni, ui.piatto, ui.msg ]));
+    ui.mioPerc = nodoPerc(el, true); ui.tavolo.appendChild(ui.mioPerc);   // «📊» la mia percentuale all'all-in
     ui.tempo = el("div", { class: "pk-tempo" }, [ el("i") ]);
     ui.mioInfo = el("div", { class: "pk-mio-info" });
     ui.mie = el("div", { class: "pk-mie" });
@@ -1165,6 +1362,7 @@
     i.style.transition = "transform " + resta + "ms linear"; i.style.transform = "scaleX(0)";
   }
   function aggiorna(ui, vm) {
+    var prec = ui.vm;   // (la foto di prima: la «💣 Mano bomba» si annuncia solo a chi era già al tavolo, non a chi ricarica)
     ui.vm = vm;
     var cb = ui.cb, el = ui.el, io = null;
     vm.players.forEach(function (p) { if (p.id === cb.myId) io = p; });
@@ -1180,6 +1378,7 @@
       ui.livello = vm.torneo.livello;
     } else ui.livello = null;
     bluffBanner(ui, vm);
+    bombaBanner(ui, vm, prec);
     var fine = vm.stato === "finemano" && vm.vinti, vincenti = {};
     if (fine && vm.vincenti) vm.vincenti.forEach(function (k) { vincenti[k] = 1; });
     var evidenzia = !!(fine && vm.vincenti && vm.vincenti.length);
@@ -1191,8 +1390,9 @@
     if (kt !== ui.kTempo) { ui.kTempo = kt; ui.tempoFine = vm.tempo != null ? Date.now() + vm.tempo : 0; }
 
     // ---- gli altri intorno al tavolo (io sono in basso: le mie cose stanno sotto) ----
-    var k0 = 0; vm.players.forEach(function (p, k) { if (p.id === cb.myId) k0 = k; });
-    var altri = vm.players.slice(k0 + 1).concat(vm.players.slice(0, k0)).filter(function (p) { return p.id !== cb.myId; });
+    var k0 = -1; vm.players.forEach(function (p, k) { if (p.id === cb.myId) k0 = k; });
+    // (chi guarda non è al tavolo: vede tutti, host compreso)
+    var altri = k0 < 0 ? vm.players.slice() : vm.players.slice(k0 + 1).concat(vm.players.slice(0, k0));
     var n = altri.length, arco = n <= 1 ? 0 : Math.min(300, 64 * (n - 1)), visti = {};
     ui.tavolo.classList.toggle("stretto", n >= 6);
     altri.forEach(function (p, k) {
@@ -1202,6 +1402,7 @@
       if (!P) { P = ui.posti[p.id] = creaPosto(ui, p); ui.tavolo.appendChild(P.nodo); }
       P.nodo.style.left = (50 + (n >= 6 ? 41 : 39) * Math.cos(a)).toFixed(1) + "%";
       P.nodo.style.top = (50 + (n >= 6 ? 40 : 36) * Math.sin(a)).toFixed(1) + "%";
+      P.nodo.classList.toggle("dx", Math.cos(a) > 0.2);   // (i posti a destra: il cartellino della percentuale va verso il centro, non fuori schermo)
       aggiornaPosto(ui, P, p, vm, vincenti, kt);
       visti[p.id] = 1;
     });
@@ -1218,8 +1419,13 @@
       ui.slotCom[c].classList.toggle("conta", !!(evidenzia && cc && vincenti[cc.v + "-" + cc.s]));
       ui.slotCom[c].classList.toggle("spenta", !!(evidenzia && cc && !vincenti[cc.v + "-" + cc.s]));
     }
-    ui.piatto.textContent = vm.piatto > 0 ? "Piatto " + fmtN(vm.piatto) : "";
-    ui.msg.textContent = messaggio(vm, cb);
+    var tP = vm.piatto > 0 ? (vm.bomba ? "💣 Piatto " : "Piatto ") + fmtN(vm.piatto) : "";
+    if (ui.piatto.textContent !== tP) ui.piatto.textContent = tP;
+    ui.piatto.classList.toggle("bomba", !!vm.bomba);
+    var tM = messaggio(vm, cb);
+    if (ui.msg.textContent !== tM) ui.msg.textContent = tM;
+    // «📊 percentuali da TV»: la mia, in basso sul tavolo (quelle degli altri stanno accanto al loro avatar)
+    mettiPerc(ui, ui.mioPerc, io && vm.perc ? vm.perc[io.id] : null, vm, true);
 
     // ---- le mie carte (nel cambio, toccarle sposta solo quella toccata) ----
     var mie = cb.mie();
@@ -1287,6 +1493,41 @@
     suono(sv.bluff ? "bluff" : "grande");
     if (sv.bluff) { try { if (navigator.vibrate) navigator.vibrate([60, 50, 140]); } catch (e) {} }   // (un momento di gioco: vibra una volta)
   }
+  // «💣 MANO BOMBA!»: in grande sul tavolo di tutti, una volta all'inizio della mano (con un botto e una vibrazione breve).
+  // Chi ha appena aperto o ricaricato la pagina a mano cominciata vede solo il 💣 sul piatto.
+  function bombaBanner(ui, vm, prec) {
+    if (!vm.bomba || vm.stato === "attesa" || vm.stato === "finemano") return;
+    if (ui.kBomba === vm.n) return;
+    ui.kBomba = vm.n;
+    if (!prec || !(prec.n < vm.n)) return;
+    if (ui.bombaN && ui.bombaN.parentNode) ui.bombaN.parentNode.removeChild(ui.bombaN);
+    var el = ui.el;
+    ui.bombaN = el("div", { class: "pk-bomba" }, [
+      el("div", { class: "pk-bomba-t", text: "💣 MANO BOMBA!" }),
+      el("div", { class: "pk-bomba-s", text: "Tutti dentro con " + fmtN(vm.bomba) + (vm.variante === "he" ? ": niente puntate prima, si punta dal flop" : ": niente puntate prima, si cambia subito") }) ]);
+    ui.tavolo.appendChild(ui.bombaN);
+    var nodo = ui.bombaN; setTimeout(function () { if (nodo.parentNode) nodo.parentNode.removeChild(nodo); }, 3300);
+    suono("bomba");
+    try { if (navigator.vibrate) navigator.vibrate(90); } catch (e) {}   // (un momento di gioco: una vibrazione breve)
+  }
+  // «📊 percentuali da TV»: il cartellino (vince %, sotto in piccolo «pari %»). Cambia solo il numero, con un piccolo
+  // movimento (transform/opacity); a carte finite chi vince si illumina
+  function testoPerc(x) { return x >= 100 ? "100%" : x >= 1 ? Math.min(99, Math.round(x)) + "%" : x > 0 ? "<1%" : "0%"; }
+  function mettiPerc(ui, nodo, d, vm, io) {
+    var k = d ? d[0] + "|" + d[1] : "";
+    var top = !!(d && vm.tavolo.length >= 5 && d[0] + d[1] > 0), zero = !!(d && d[0] + d[1] <= 0);
+    nodo.classList.toggle("top", top); nodo.classList.toggle("zero", zero);
+    if (nodo._k === k) return;
+    nodo._k = k;
+    if (!d) { nodo.style.display = "none"; return; }
+    nodo.style.display = "";
+    var n = nodo.firstChild, b = n.firstChild, s = n.lastChild;
+    b.textContent = (io ? "Tu " : "") + testoPerc(d[0]);
+    s.textContent = d[1] >= 0.5 ? "pari " + testoPerc(d[1]) : "";   // (un pareggio quasi impossibile non si scrive)
+    s.style.display = d[1] >= 0.5 ? "" : "none";
+    n.classList.remove("muovi"); void n.offsetWidth; n.classList.add("muovi");
+  }
+  function nodoPerc(el, io) { var n = el("div", { class: "pk-perc" + (io ? " io" : ""), style: "display:none" }, [ el("span", { class: "pk-perc-n" }, [ el("b"), el("small") ]) ]); n._k = ""; return n; }
   // una scritta che passa sul tavolo (torneo: "⬆️ Salgono i bui")
   function avviso(ui, testo, k) {
     if (ui.avviso && ui.avviso.parentNode) ui.avviso.parentNode.removeChild(ui.avviso);
@@ -1320,11 +1561,12 @@
     P.d = el("span", { class: "pk-d", text: "D" });
     P.nuv = el("div", { class: "pk-nuv" });
     P.tempo = el("div", { class: "pk-tempo piccolo" }, [ el("i") ]);
+    P.perc = nodoPerc(el, false);
     P.carte = el("div", { class: "pk-dorsi" });
     P.nome = el("div", { class: "pk-nome", text: p.nome });
     P.stack = el("div", { class: "pk-stack" });
     P.az = el("div", { class: "pk-az" });
-    P.nodo = el("div", { class: "pk-posto" }, [ el("div", { class: "pk-av-box" }, [ P.av, P.d, P.nuv, P.tempo ]), P.carte, P.nome, P.stack, P.az ]);
+    P.nodo = el("div", { class: "pk-posto" }, [ el("div", { class: "pk-av-box" }, [ P.av, P.d, P.nuv, P.tempo, P.perc ]), P.carte, P.nome, P.stack, P.az ]);
     return P;
   }
   // che tipo di mossa è (per il colore della nuvoletta)
@@ -1347,12 +1589,13 @@
     if (P.az.textContent !== az) P.az.textContent = az;
     if (P.az.className !== cls) P.az.className = cls;
     barraTempo(P.tempo, vm.turno === p.id && ui.tempoFine ? ui.tempoFine : 0, vm.tempoTot, kt + "|" + (vm.turno === p.id));
+    mettiPerc(ui, P.perc, vm.perc && !p.lascia ? vm.perc[p.id] : null, vm, false);
     // la nuvoletta con l'ultima mossa (e ogni tanto una battuta del bot)
     var kn = vm.n + "|" + p.azione + "|" + p.inGiro + "|" + (p.frase || "");
     if (P.kn === null) P.kn = kn;
     else if (kn !== P.kn) {
       P.kn = kn;
-      if (p.azione && !/^(Buio|Invito)/.test(p.azione) && vm.stato !== "finemano") {
+      if (p.azione && !/^(Buio|Invito|💣)/.test(p.azione) && vm.stato !== "finemano") {
         svuota(P.nuv);
         P.nuv.appendChild(ui.el("span", { text: p.azione + (p.inGiro > 0 && /^(Chiama|Punta|Rilancia|All-in)/.test(p.azione) ? " " + fmtN(p.inGiro) : "") }));
         if (p.frase) P.nuv.appendChild(ui.el("small", { text: "«" + p.frase + "»" }));
@@ -1371,8 +1614,9 @@
   function nomeDi(vm, cb, id) { if (id === cb.myId) return "Tu"; for (var i = 0; i < vm.players.length; i++) if (vm.players[i].id === id) return vm.players[i].nome; return "?"; }
   function messaggio(vm, cb) {
     if (vm.stato === "attesa") return vm.players.filter(function (p) { return p.stack > 0 && p.seduto !== false && !p.pausa; }).length < MIN ? "Aspettiamo altri giocatori con le fiches…" : "";
-    if (vm.stato === "cambio") return "🔄 Cambio delle carte…";
+    if (vm.stato === "cambio") return (vm.bomba ? "💣 Mano bomba · " : "") + "🔄 Cambio delle carte…";
     if (vm.corsa) return "🔥 All-in! Carte scoperte, le altre escono da sole…";
+    if (vm.bomba && PUNTATE[vm.stato]) return "💣 Mano bomba!";
     if (vm.stato === "finemano" && vm.vinti) {
       var ids = Object.keys(vm.vinti); if (!ids.length) return "";
       var chi = ids.map(function (id) { return nomeDi(vm, cb, id); });
@@ -1638,6 +1882,24 @@
       ".pk-avviso{position:absolute;left:50%;top:22%;z-index:6;pointer-events:none;white-space:nowrap;background:#ffe066;color:#3b2400;font-weight:900;font-size:.95rem;border-radius:14px;padding:5px 12px;",
         "box-shadow:0 6px 16px rgba(0,0,0,.45);transform:translate(-50%,0);animation:pkAvv 2.7s ease-out forwards}",
       "@keyframes pkAvv{0%{opacity:0;transform:translate(-50%,10px) scale(.8)}12%{opacity:1;transform:translate(-50%,0) scale(1.06)}20%{transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-8px)}}",
+      // «📊 percentuali da TV»: il cartellino accanto all'avatar (e il mio in basso sul tavolo); si muove solo il numero
+      ".pk-perc{position:absolute;left:58%;top:-12px;z-index:3;pointer-events:none}",
+      ".pk-posto.dx .pk-perc{left:auto;right:58%}",
+      ".pk-perc.io{left:50%;top:auto;bottom:1%;transform:translateX(-50%)}",
+      ".pk-perc-n{display:block;background:rgba(10,14,12,.92);border:2px solid #ffe066;color:#ffe066;border-radius:10px;padding:1px 6px;font-weight:900;font-size:.8rem;line-height:1.15;text-align:center;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.5)}",
+      ".pk-perc-n b{font-weight:900}.pk-perc-n small{display:block;font-size:.56rem;font-weight:800;color:#fff;opacity:.85;line-height:1.1}",
+      ".pk-perc.io .pk-perc-n{font-size:.9rem;padding:2px 9px}",
+      ".pk-perc-n.muovi{animation:pkPerc .45s ease-out}",
+      "@keyframes pkPerc{0%{opacity:.25;transform:scale(1.4)}60%{opacity:1;transform:scale(.95)}100%{opacity:1;transform:none}}",
+      ".pk-perc.top .pk-perc-n{background:#ffe066;color:#3b2400;border-color:#fff;box-shadow:0 0 0 2px #ffe066,0 0 16px #ffe066}.pk-perc.top .pk-perc-n small{color:#3b2400}",
+      ".pk-perc.zero .pk-perc-n{opacity:.6;border-color:rgba(255,255,255,.35);color:#ced4da}",
+      ".pk-tavolo.stretto .pk-perc-n{font-size:.68rem;padding:0 4px}",
+      // «💣 Mano bomba»: il piatto col 💣 e l'annuncio grande (solo transform e opacity)
+      ".pk-piatto.bomba{color:#ff922b;text-shadow:0 0 8px rgba(255,146,43,.6)}",
+      ".pk-bomba{position:absolute;left:50%;top:42%;z-index:7;pointer-events:none;text-align:center;padding:9px 14px 11px;border-radius:18px;max-width:88%;box-sizing:border-box;",
+        "background:rgba(20,8,4,.92);border:3px solid #ff922b;box-shadow:0 10px 30px rgba(0,0,0,.6);transform:translate(-50%,-50%);animation:pkBluff 3.2s ease-out forwards}",
+      ".pk-bomba-t{font-size:1.75rem;font-weight:900;line-height:1.05;color:#ffa94d;text-shadow:0 3px 0 rgba(0,0,0,.45);white-space:nowrap}",
+      ".pk-bomba-s{font-size:.8rem;font-weight:800;margin-top:4px;line-height:1.25}",
       // la mini-guida delle combinazioni
       ".pk-guida{position:absolute;inset:0;z-index:8;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:12px}",
       ".pk-g-foglio{width:100%;max-width:380px;background:#14301f;border:2px solid #6b3e1f;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:5px}",
@@ -1647,18 +1909,23 @@
     document.head.appendChild(st);
   }
   function variante(v) { return v === "it" ? "it" : "he"; }
+  function ogniBomba(b) { return +b === 5 ? 5 : +b === 10 ? 10 : 0; }   // «💣 Mano bomba»: una ogni 5 o 10 mani del torneo, 0 = mai
 
   SG.registra({
     id: ID, nome: "Poker", icona: "♠️",
     descrizione: "Texas Hold'em o Poker all'italiana con le carte francesi, contro i Bot o online. Si gioca con le tue Speed Coins.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 2–10 giocatori",
     postiOnline: 10,   // posti online (all'italiana il tavolo ne fa sedere 6: la regola resta del gioco)
+    riprende: true,    // se l'host ricarica la pagina, la mano continua (le carte tornano a ognuno, i Bot ripartono dal loro turno)
+    riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     // le regole in una riga, per la saletta: "Texas Hold'em · fino a 10 al tavolo · Bot medi"
     riassunto: function (imp) {
       imp = imp || {};
       var liv = { facile: "Bot facili", medio: "Bot medi", difficile: "Bot difficili" }[imp.difficolta] || "Bot medi";
-      return (imp.torneo ? "🏆 Torneo a fiches uguali (bui su ogni " + (+imp.ogni === 10 ? 10 : 5) + " mani) · " : "") +
-        NOME_VAR[variante(imp.variante)] + " · fino a " + MAX[variante(imp.variante)] + " al tavolo · " + liv;
+      var bo = imp.torneo ? ogniBomba(imp.bomba) : 0;
+      return (imp.torneo ? "🏆 Torneo a fiches uguali (bui su ogni " + (+imp.ogni === 10 ? 10 : 5) + " mani" + (bo ? ", 💣 mano bomba ogni " + bo : "") + ") · " : "") +
+        NOME_VAR[variante(imp.variante)] + " · fino a " + MAX[variante(imp.variante)] + " al tavolo · " + liv +
+        (variante(imp.variante) === "he" && imp.perc === false ? " · senza percentuali" : "");
     },
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro i Bot", sotto: "Tu e i Bot al tavolo" }],
     regole: [
@@ -1668,7 +1935,9 @@
       "Dalla più bassa: carta alta, coppia, doppia coppia, tris, scala, colore, full, poker, scala colore (all'italiana colore e full si scambiano).",
       "Si gioca con le tue <b>Speed Coins</b>: ti siedi con al massimo " + fmtN(BUYIN) + " e quello che vinci o perdi resta nelle tue monete.",
       "<b>Fai vedere!</b> Se vinci perché gli altri lasciano, puoi girare le tue carte: se non avevi niente, su tutti i telefoni compare <b>🃏 BLUFF!</b>",
-      "<b>🏆 Torneo della serata</b> (si accende nelle regole): tutti partono con " + fmtN(FICHES_TORNEO) + " fiches finte, i bui salgono ogni 5 o 10 mani e chi resta senza fiches esce. Vince l'ultimo rimasto (o chi ne ha di più quando l'host chiude). Le Speed Coins non si toccano."
+      "<b>📊 Le percentuali da TV</b> (Texas Hold'em): quando c'è un all-in e le carte si girano, accanto a ognuno compare quante possibilità ha di vincere, e cambiano a ogni carta che esce. Si possono spegnere nelle regole.",
+      "<b>🏆 Torneo della serata</b> (si accende nelle regole): tutti partono con " + fmtN(FICHES_TORNEO) + " fiches finte, i bui salgono ogni 5 o 10 mani e chi resta senza fiches esce. Vince l'ultimo rimasto (o chi ne ha di più quando l'host chiude). Le Speed Coins non si toccano.",
+      "<b>💣 Mano bomba</b> (solo nel torneo, se l'host la accende): una mano ogni 5 o 10 tutti mettono nel piatto la stessa puntata (il doppio del buio grande) e non si punta prima: si scoprono subito le prime tre carte e si punta da lì (all'italiana si cambia subito). Chi ha meno fiches mette tutto quello che ha."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
@@ -1679,7 +1948,9 @@
         dove.variante = v; dove.avversari = Math.min(dove.avversari, MAX[v] - 1);
         bHe.className = "modo-chip" + (v === "he" ? " attiva" : ""); bIt.className = "modo-chip" + (v === "it" ? " attiva" : "");
         if (contaAvv) contaAvv.textContent = dove.avversari;
+        if (rigaPerc) rigaPerc.style.display = v === "he" ? "" : "none";   // (le percentuali ci sono solo nel Texas Hold'em)
       }
+      var rigaPerc = null;
       bHe = el("button", { class: "modo-chip attiva", onclick: function () { selV("he"); } }, [ el("span", { class: "mi", text: "🤠" }), el("div", {}, [ el("div", { class: "mt", text: "Texas Hold'em" }), el("div", { class: "ms", text: "2 carte tue + 5 in mezzo" }) ]) ]);
       bIt = el("button", { class: "modo-chip", onclick: function () { selV("it"); } }, [ el("span", { class: "mi", text: "🇮🇹" }), el("div", {}, [ el("div", { class: "mt", text: "All'italiana" }), el("div", { class: "ms", text: "5 carte, poi le cambi" }) ]) ]);
       box.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bHe, bIt]));
@@ -1701,14 +1972,31 @@
         b.style.flex = "1"; dg.appendChild(b);
       });
       box.appendChild(dg);
+      // «📊 Percentuali all'all-in» (Texas Hold'em): Sì di base
+      dove.perc = true;
+      function chips(dove2, chiave, scelte, attiva) {   // una fila di scelte (una sola accesa)
+        var r = el("div", { style: "display:flex;gap:8px" });
+        scelte.forEach(function (d) {
+          var b = el("button", { class: "modo-chip" + (d[0] === attiva ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {
+            dove2[chiave] = d[0]; [].forEach.call(r.children, function (c) { c.className = "modo-chip"; }); b.className = "modo-chip attiva";
+          } }, [ el("div", { class: "mt", text: d[1] }) ]);
+          r.appendChild(b);
+        });
+        return r;
+      }
+      rigaPerc = el("div", {}, [
+        el("div", { class: "etichetta", style: "margin-top:10px", text: "📊 Percentuali all'all-in" }),
+        chips(dove, "perc", [[true, "Sì"], [false, "No"]], true),
+        el("p", { class: "modulo-nota", style: "margin-top:4px", text: "Quando le carte si girano, accanto a ognuno quante possibilità ha di vincere, come in TV." }) ]);
       // il Torneo della serata: fiches uguali per tutti (finte), bui che salgono, chi resta senza esce
-      dove.torneo = false; dove.ogni = 5;
+      dove.torneo = false; dove.ogni = 5; dove.bomba = 0;
       box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "🏆 Torneo della serata" }));
       var tg = el("div", { style: "display:flex;gap:8px" }), og = el("div", { style: "display:flex;gap:8px;margin-top:6px" }), notaM = el("p", { class: "modulo-nota", style: "margin-top:8px" });
       function selT(v) {
         dove.torneo = v;
         [].forEach.call(tg.children, function (c, k) { c.className = "modo-chip" + ((k === 1) === v ? " attiva" : ""); });
         og.style.display = v ? "flex" : "none";
+        rigaBomba.style.display = v ? "" : "none";   // (la Mano bomba c'è solo nel torneo: le Speed Coins non si toccano)
         notaM.textContent = v ? "Torneo: tutti partono con " + fmtN(FICHES_TORNEO) + " fiches finte, i bui salgono e chi resta senza fiches esce. Vince l'ultimo rimasto. Le tue Speed Coins non si toccano."
           : "Si gioca con le tue Speed Coins: ti siedi con al massimo " + fmtN(BUYIN) + " e quello che vinci o perdi resta nelle tue monete.";
         if (bonus) bonus.hidden = v;
@@ -1724,6 +2012,13 @@
         og.appendChild(b);
       });
       box.appendChild(og);
+      // «💣 Mano bomba» (solo nel torneo): tutti dentro con la stessa puntata, niente puntate prima
+      var rigaBomba = el("div", {}, [
+        el("div", { class: "etichetta", style: "margin-top:10px", text: "💣 Mano bomba" }),
+        chips(dove, "bomba", [[0, "No"], [10, "1 ogni 10 mani"], [5, "1 ogni 5"]], 0),
+        el("p", { class: "modulo-nota", style: "margin-top:4px", text: "Tutti mettono nel piatto la stessa puntata (il doppio del buio grande) e non si punta prima: si scoprono subito le prime tre carte (all'italiana si cambia subito)." }) ]);
+      box.appendChild(rigaBomba);
+      box.appendChild(rigaPerc);
       var bonus = null;
       if (conProfilo() && BJ() && BJ().riquadroBonus) { bonus = BJ().riquadroBonus(el); bonus.style.marginTop = "12px"; box.appendChild(bonus); }
       box.appendChild(notaM);
@@ -1736,5 +2031,6 @@
   });
 
   // per le prove (motore e punti), senza toccare la partita
-  window.__POKER = { bluffDi: bluffDi, creaMotore: creaMotore, valuta5: valuta5, miglioreMano: miglioreMano, confronta: confronta, equita: equita, cambioBot: cambioBot, decidiBot: decidiBot };
+  window.__POKER = { bluffDi: bluffDi, creaMotore: creaMotore, valuta5: valuta5, miglioreMano: miglioreMano, confronta: confronta, equita: equita, cambioBot: cambioBot, decidiBot: decidiBot,
+    forza7: forza7, percentuali: percentuali };
 })();

@@ -11,14 +11,21 @@
    Punti personali: chi è nella squadra scelta dal giudice prende +1.
    Modi: stesso telefono (si passa di mano) e online (l'host tiene la
    partita; la mano di carte arriva solo ai telefoni della squadra).
+   «🙋 Ognuno per sé» (alla Red Flags): niente squadre, ognuno ha la sua
+   mano (4 Bonus e 3 Malus nuovi a ogni round), gioca 2 Bonus sul suo
+   scenario e poi 1 Malus su quello del vicino; gli scenari si svelano
+   uno alla volta e il giudice ne sceglie uno (+1 a chi l'ha presentato).
+   «🃏 Carta bianca»: una volta a partita ognuno può scrivere una carta
+   sua (Bonus o Malus, al massimo 60 lettere), firmata sul tavolo.
    Carte in data/sipero-carte.js.
    ========================================================= */
 (function () {
   "use strict";
 
   var MAX_MANO = 7, MIN = 3, MAX = 10;
+  var MANO_SOLO = { bonus: 4, malus: 3 }, MAX_SCRITTA = 60;   // «Ognuno per sé»: la mano di ognuno; la carta bianca
   // online nessuna attesa resta ferma: se chi deve toccare non tocca, si va avanti da soli (secondi)
-  var TEMPO_CARTE = 120, TEMPO_ARRINGA = 180, TEMPO_DOPO_ARRINGA = 20, TEMPO_GIUDIZIO = 90, TEMPO_ESITO = 15;
+  var TEMPO_CARTE = 120, TEMPO_ARRINGA = 180, TEMPO_DOPO_ARRINGA = 20, TEMPO_GIUDIZIO = 90, TEMPO_ESITO = 20, TEMPO_PRESENTA = 90;
   var CHIAVE_SEQ = "sg-sipero-sequenza";   // l'ultima sequenza personalizzata, sul telefono di chi organizza
   var PARTITE_SALVATE = Object.create(null);
   var CLASSICA = [
@@ -44,6 +51,21 @@
     if (!st.statGiocatori) st.statGiocatori = Object.create(null);
     if (!st.statGiocatori[id]) st.statGiocatori[id] = { roundGiocati: 0, roundGiudice: 0, roundVinti: 0, carteBonus: 0, carteMalus: 0 };
     return st.statGiocatori[id];
+  }
+  function vibra(p) { try { if (navigator.vibrate) navigator.vibrate(p || 20); } catch (e) {} }
+  // la carta bianca: spazi puliti, al massimo 60 lettere
+  function pulisciScritta(s) { return String(s == null ? "" : s).replace(/\s+/g, " ").trim().slice(0, MAX_SCRITTA); }
+  // le regole nuove (base: a squadre, carta bianca sì)
+  function siDa(imp) { return imp && imp.si === "solo" ? "solo" : "squadre"; }
+  function biancaDa(imp) { var b = imp ? imp.bianca : undefined; return !(b === 0 || b === false || b === "0" || b === "no"); }
+  // la riga "📜 Si gioca così" (anche per gli amici in saletta)
+  function riassuntoImp(imp) {
+    imp = imp || {};
+    var solo = siDa(imp) === "solo", giri = [1, 2, 3].indexOf(+imp.giri) >= 0 ? +imp.giri : 1, arr = +imp.arringa || 0;
+    var s = seqDa(imp);
+    return [solo ? "🙋 Ognuno per sé" : "👥 A squadre", solo ? null : (imp.modalita === "custom" && !s.vuota ? "🎛️ Fasi personalizzate" : "📜 Fasi classiche"),
+      !solo && imp.squadre === "mano" ? "✋ squadre scelte dall'host (un round)" : "🔁 " + giri + (giri === 1 ? " giro" : " giri"),
+      "🎤 arringa " + (arr ? arr + " secondi" : "libera"), biancaDa(imp) ? "🃏 carta bianca" : null].filter(Boolean).join(" · ");
   }
   // classifica con il posto: a pari punti lo stesso posto
   function conPosizioni(lista) {
@@ -118,6 +140,53 @@
     return mani;
   }
   function scenVuoti() { return [{ voci: [] }, { voci: [] }]; }
+  // una voce sul tavolo: con la firma se è una carta bianca (la firma si usa una volta sola)
+  function voce(tipo, testo, firme, da) {
+    var v = { tipo: tipo, testo: testo };
+    if (firme && firme[testo]) { v.di = firme[testo]; delete firme[testo]; }
+    if (da) v.da = da;
+    return v;
+  }
+  // le firme delle carte bianche che sono in una mano (da mandare insieme alla mano)
+  function firmeDi(mano, firme) {
+    var f = {};
+    if (mano && firme) ["bonus", "malus"].forEach(function (k) { (mano[k] || []).forEach(function (c) { if (firme[c]) f[c] = firme[c]; }); });
+    return f;
+  }
+
+  // ---------- «🙋 Ognuno per sé»: il round (uguale sullo stesso telefono e online) ----------
+  // R: { giudice, pres:[id] (chi presenta, in ordine), bers:{id: id del vicino da rovinare}, mani:{id:{bonus,malus}},
+  //      scen:{id:{bonus:[voci], malus: voce|null}}, mio:{id: il Malus che ha messo}, fatti:{id:1}, passo:"bonus"|"malus",
+  //      mostra (lo scenario che si svela), vincitore }
+  function roundSolo(t, mazzi, giudice, pres) {
+    var R = { giudice: giudice, pres: pres.slice(), bers: {}, mani: {}, scen: {}, mio: {}, fatti: {}, passo: "bonus", mostra: 0, vincitore: null };
+    var u = Object.create(null);
+    pres.forEach(function (id, i) {
+      R.bers[id] = pres[(i + 1) % pres.length];
+      R.scen[id] = { bonus: [], malus: null };
+      var m = { bonus: [], malus: [] };
+      ["bonus", "malus"].forEach(function (k) {
+        while (m[k].length < MANO_SOLO[k]) { var c = pesca(t, mazzi[k], u); if (c == null) break; m[k].push(c); u[c] = 1; }
+      });
+      R.mani[id] = m;
+    });
+    return R;
+  }
+  function quanteSolo(R, id) { var m = R.mani[id]; return R.passo === "bonus" ? Math.min(2, m ? m.bonus.length : 0) : Math.min(1, m ? m.malus.length : 0); }
+  // chi presenta gioca le sue carte (false = mossa non valida). nomeDi(id) = il nome da scrivere sotto il Malus
+  function giocaSolo(R, id, carte, firme, nomeDi) {
+    if (R.pres.indexOf(id) < 0 || R.fatti[id] || !Array.isArray(carte)) return false;
+    var tipo = R.passo, mano = R.mani[id][tipo], n = quanteSolo(R, id);
+    if (carte.length !== n) return false;
+    for (var i = 0; i < carte.length; i++) if (mano.indexOf(carte[i]) < 0 || carte.indexOf(carte[i]) !== i) return false;
+    if (tipo === "bonus") carte.forEach(function (c) { R.scen[id].bonus.push(voce("bonus", c, firme)); });
+    else if (carte.length) { var v = voce("malus", carte[0], firme, nomeDi(id)); R.scen[R.bers[id]].malus = v; R.mio[id] = v; }
+    R.mani[id][tipo] = mano.filter(function (c) { return carte.indexOf(c) < 0; });
+    R.fatti[id] = 1;
+    return true;
+  }
+  function casoSolo(t, R, id) { return t.mischia(R.mani[id][R.passo]).slice(0, quanteSolo(R, id)); }
+  function vociSolo(R, id, conMalus) { var s = R.scen[id]; if (!s) return []; return s.bonus.concat(conMalus && s.malus ? [s.malus] : []); }
 
   // squadre a sorte, bilanciate, cercando di non rimettere sempre insieme le stesse coppie
   function chiaveCoppia(a, b) { return a < b ? a + "|" + b : b + "|" + a; }
@@ -290,7 +359,47 @@
       ".sp-riga-t{display:flex;justify-content:space-between;gap:8px;font-weight:700}",
       ".sp-ruoli{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:6px}",
       ".sp-ruoli button{min-height:38px;border-radius:10px;border:2px solid transparent;background:rgba(255,255,255,.1);color:#fff;font:inherit;font-size:1.05rem;cursor:pointer}",
-      ".sp-ruoli button.attiva{border-color:#ffca3a;background:rgba(255,202,58,.2)}"
+      ".sp-ruoli button.attiva{border-color:#ffca3a;background:rgba(255,202,58,.2)}",
+      // la testa delle colonne (con l'avatar di chi presenta, in «Ognuno per sé»)
+      ".sp-col-testa{display:flex;align-items:center;gap:6px}",
+      ".sp-col-tx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".sp-col-testa .sp-av{width:26px;height:26px}.sp-av[hidden]{display:none}",
+      // 🃏 la carta bianca: bordo tratteggiato d'oro e la firma
+      ".sp-mini.scritta,.sp-lente-r.scritta{box-shadow:inset 0 0 0 2px #ffca3a}",
+      ".sp-firma,.sp-da{font-size:.86em;font-weight:800;white-space:nowrap}.sp-firma{color:#ffe08a}.sp-da{opacity:.85}",
+      ".sp-carta.scritta{border:2px dashed #ffca3a}",
+      ".sp-fc{position:absolute;left:7px;bottom:2px;font-size:.62rem;font-weight:800;color:#ffe08a;white-space:nowrap}",
+      ".sp-carta.scritta .sp-tx{margin-bottom:8px}",
+      ".btn.sp-scrivi-b{flex:0 0 auto!important;width:auto;background:rgba(255,202,58,.16);color:#ffe08a;border:2px dashed rgba(255,202,58,.6)}",
+      ".sp-scrivi textarea{width:100%;box-sizing:border-box;min-height:86px;border-radius:12px;border:2px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:#fff;font:inherit;font-size:1rem;line-height:1.35;padding:10px;resize:none}",
+      ".sp-scrivi .sp-conta{text-align:right;font-size:.78rem;color:var(--testo-tenue);margin:3px 2px 8px}",
+      ".sp-scrivi .sp-chis{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}",
+      ".sp-scrivi .sp-chis button{border:2px solid transparent;border-radius:999px;background:rgba(255,255,255,.1);color:#fff;font:inherit;font-weight:800;font-size:.85rem;padding:5px 12px;cursor:pointer}",
+      ".sp-scrivi .sp-chis button.attiva{border-color:#ffca3a;background:rgba(255,202,58,.2)}",
+      ".sp-scrivi .sp-due{display:flex;gap:8px}.sp-scrivi .sp-due .btn{flex:1;margin:0}",
+      ".sp-scrivi .sp-nota-s{font-size:.82rem;color:var(--testo-tenue);margin:0 0 8px;line-height:1.35}",
+      // ⏩ Avanti a maggioranza
+      ".btn.sp-pronto{display:flex;align-items:center;justify-content:center;gap:8px}.sp-pronto .quanti{font-size:.82rem;opacity:.8;font-weight:700}",
+      ".sp-piede .sp-nota.sp-conto{flex:0 1 auto;font-size:.78rem}",
+      // 🙋 Ognuno per sé: il palco (lo scenario di uno), chi ha giocato, le schede da sfogliare
+      ".sp-palco{flex:0 1 auto;min-height:0;display:flex;flex-direction:column;gap:6px}",
+      ".sp-palco>[hidden]{display:none!important}",
+      ".sp-scena.largo .sp-palco{flex:1 1 auto}",
+      ".sp-palco .sp-col{flex:1 1 auto;min-height:70px;max-height:none}",
+      ".sp-scena:not(.largo) .sp-palco .sp-col{max-height:34vh}",
+      ".sp-col.cs{--sq:#ffca3a}",
+      ".sp-stato{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}",
+      ".sp-stato>span{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 2px;border-radius:999px;background:rgba(255,255,255,.08);font-size:.76rem;font-weight:700;max-width:46%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}",
+      ".sp-stato>span.ok{background:rgba(55,212,126,.24)}.sp-stato>span.via{opacity:.55}.sp-stato>span{padding:3px 9px}",
+      ".sp-stato .sp-av{width:22px;height:22px}",
+      ".sp-tab{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}",
+      ".sp-tab button{max-width:48%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border:2px solid transparent;border-radius:999px;background:rgba(255,255,255,.1);color:#fff;font:inherit;font-weight:800;font-size:.8rem;padding:4px 10px;cursor:pointer}",
+      ".sp-tab button.attiva{border-color:#ffca3a;background:rgba(255,202,58,.22)}",
+      ".sp-tab button.vince{background:rgba(255,202,58,.45)}",
+      ".sp-verdetto.cs{--sqc:#c98a00}",
+      ".sp-giocate{display:flex;flex-direction:column;gap:4px;margin:0 auto;max-width:440px;width:100%}",
+      ".sp-rovina{display:grid;grid-template-columns:1fr auto 1fr;gap:4px 8px;align-items:center;font-size:.85rem;font-weight:700}",
+      ".sp-rovina span:nth-child(3n+2){text-align:center}"
     ].join("\n");
     document.head.appendChild(st);
     // girando il telefono le carte si rimisurano
@@ -299,7 +408,7 @@
       clearTimeout(tm);
       tm = setTimeout(function () {
         [].forEach.call(document.querySelectorAll(".sp-mano"), adattaCarte);
-        [].forEach.call(document.querySelectorAll(".sp-scena.largo .sp-lista"), adattaLista);
+        [].forEach.call(document.querySelectorAll(".sp-scena.largo .sp-lista"), function (l) { adattaLista(l, l.parentNode.classList.contains("cs") ? 19 : 14); });
       }, 200);
     });
   }
@@ -313,7 +422,7 @@
     var box = el("div", { class: "sp-lente-box" });
     box.appendChild(el("div", { class: "sp-lente-tit", text: titolo }));
     if (!voci.length) box.appendChild(el("p", { class: "tenue", text: "Ancora nessuna carta." }));
-    voci.forEach(function (v) { box.appendChild(el("div", { class: "sp-lente-r " + (v.tipo === "bonus" ? "b" : "m"), text: (v.tipo === "bonus" ? "✅ " : "❌ ") + v.testo })); });
+    voci.forEach(function (v) { box.appendChild(el("div", { class: "sp-lente-r " + (v.tipo === "bonus" ? "b" : "m") + (v.di ? " scritta" : "") }, testoVoce(el, v))); });
     function chiudi() { if (Date.now() - aperta < 350) return; if (velo.parentNode) velo.parentNode.removeChild(velo); }
     box.appendChild(el("button", { class: "btn btn-primario", text: "Chiudi", onclick: chiudi }));
     var velo = el("div", { class: "sp-lente", onclick: function (e) { if (e.target === velo) chiudi(); } }, [box]);
@@ -332,18 +441,28 @@
     nodo.addEventListener("pointerup", stop); nodo.addEventListener("pointercancel", stop); nodo.addEventListener("pointerleave", stop);
   }
 
-  // lo schermo di gioco: barra, tavolo (i due scenari), turno, azione, piede
-  function creaScena(t, onEsci) {
+  // lo schermo di gioco: barra, tavolo (i due scenari), turno, azione, piede.
+  // solo = «Ognuno per sé»: al posto del tavolo a due colonne c'è il palco (chi ha giocato, le schede, lo scenario di uno)
+  function creaScena(t, onEsci, solo) {
     stile();
     var el = t.el;
     var s = t.schermata({}); s.classList.add("sp-piena");
-    var ui = { t: t, s: s, chiave: null, nuova: true };
+    var ui = { t: t, s: s, chiave: null, nuova: true, solo: !!solo };
     ui.fase = el("b"); ui.sotto = el("small"); ui.giudice = el("div", { class: "sp-giudice" });
     ui.barra = el("div", { class: "sp-barra" }, [
       el("button", { class: "sp-esci", "aria-label": "Esci", text: "‹", onclick: onEsci }),
       el("div", { class: "sp-fase" }, [ui.fase, ui.sotto]), ui.giudice]);
-    ui.cols = [creaColonna(t, 0), creaColonna(t, 1)];
-    ui.tavolo = el("div", { class: "sp-tavolo" }, [ui.cols[0].nodo, ui.cols[1].nodo]);
+    if (solo) {
+      ui.cols = [];
+      ui.stato = el("div", { class: "sp-stato", hidden: "hidden" });
+      ui.tab = el("div", { class: "sp-tab", hidden: "hidden" });
+      ui.scheda = creaColonna(t, "s");
+      ui.scheda.nodo.hidden = true;
+      ui.tavolo = el("div", { class: "sp-palco" }, [ui.stato, ui.tab, ui.scheda.nodo]);
+    } else {
+      ui.cols = [creaColonna(t, 0), creaColonna(t, 1)];
+      ui.tavolo = el("div", { class: "sp-tavolo" }, [ui.cols[0].nodo, ui.cols[1].nodo]);
+    }
     ui.turno = el("div", { class: "sp-turno" });
     ui.azione = el("div", { class: "sp-azione" });
     ui.piede = el("div", { class: "sp-piede" });
@@ -355,20 +474,34 @@
   function barra(ui, fase, sotto, giudice) { testoSe(ui.fase, fase); testoSe(ui.sotto, sotto); testoSe(ui.giudice, giudice); }
   function creaColonna(t, k) {
     var el = t.el;
-    var c = { k: k, t: t, testa: el("div", { class: "sp-col-testa" }), lista: el("div", { class: "sp-lista" }), voci: [], titolo: "" };
+    var c = { k: k, t: t, av: el("span", { class: "sp-av", hidden: "hidden" }), tx: el("span", { class: "sp-col-tx" }), lista: el("div", { class: "sp-lista" }), voci: [], titolo: "", avK: null };
+    c.testa = el("div", { class: "sp-col-testa" }, [c.av, c.tx]);
     c.nodo = el("div", { class: "sp-col c" + k, role: "button", onclick: function () { lente(t, c.titolo, c.voci); } }, [c.testa, c.lista]);
     return c;
   }
-  // d: { titolo, voci:[{tipo,testo}], turno, mia, vince, anima (false = senza animazione), ritardo (secondi tra una carta e l'altra) }
+  // il testo di una carta sul tavolo: ✅/❌, la frase, la firma della carta bianca e (Ognuno per sé) chi ha messo il Malus
+  function testoVoce(el, v) {
+    var parti = [document.createTextNode((v.tipo === "bonus" ? "✅ " : "❌ ") + v.testo)];
+    if (v.di) parti.push(el("span", { class: "sp-firma", text: " ✍️ di " + v.di }));
+    if (v.da) parti.push(el("span", { class: "sp-da", text: " · 💥 da " + v.da }));
+    return parti;
+  }
+  // d: { titolo, voci:[{tipo,testo,di?,da?}], turno, mia, vince, anima (false = senza animazione), ritardo (secondi tra una carta e l'altra),
+  //      avatar: { k, nome, omino } (solo la scheda di «Ognuno per sé») }
   // aggiunge solo le carte nuove; ridà quante sono state aggiunte
   function aggiornaColonna(c, d) {
     var el = c.t.el;
-    testoSe(c.testa, d.titolo); c.titolo = d.titolo;
+    testoSe(c.tx, d.titolo); c.titolo = d.titolo;
+    if (d.avatar !== undefined) {
+      var ak = d.avatar ? d.avatar.k : "";
+      if (c.avK !== ak) { c.avK = ak; c.av.innerHTML = d.avatar ? avatarHtml(d.avatar.nome, d.avatar.omino) : ""; c.av.hidden = !d.avatar; }
+    }
     c.nodo.classList.toggle("turno", !!d.turno);
     c.nodo.classList.toggle("mia", !!d.mia);
     c.nodo.classList.toggle("vince", !!d.vince);
     var nuove = d.voci || [], vecchie = c.voci;
-    var stesse = vecchie.length <= nuove.length && vecchie.every(function (v, i) { return v.testo === nuove[i].testo && v.tipo === nuove[i].tipo; });
+    var stesse = d.chiave === c.vChiave && vecchie.length <= nuove.length && vecchie.every(function (v, i) { return v.testo === nuove[i].testo && v.tipo === nuove[i].tipo && v.di === nuove[i].di && v.da === nuove[i].da; });
+    c.vChiave = d.chiave;
     if (!stesse) { svuota(c.lista); vecchie = []; }
     var vuoto = c.lista.querySelector(".sp-vuoto");
     if (!nuove.length) { if (!vuoto) c.lista.appendChild(el("div", { class: "sp-vuoto", text: "(ancora niente)" })); }
@@ -376,7 +509,7 @@
     var aggiunte = 0;
     for (var i = vecchie.length; i < nuove.length; i++) {
       var v = nuove[i];
-      var n = el("div", { class: "sp-mini " + (v.tipo === "bonus" ? "b" : "m") + (d.anima === false ? "" : " nuova"), text: (v.tipo === "bonus" ? "✅ " : "❌ ") + v.testo });
+      var n = el("div", { class: "sp-mini " + (v.tipo === "bonus" ? "b" : "m") + (v.di ? " scritta" : "") + (d.anima === false ? "" : " nuova") }, testoVoce(el, v));
       if (d.ritardo) n.style.animationDelay = ((d.base || 0) + aggiunte * d.ritardo).toFixed(2) + "s";
       c.lista.appendChild(n); aggiunte++;
     }
@@ -385,17 +518,18 @@
     return aggiunte;
   }
   // nel tavolo grande (arringa e verdetto) le scritte si rimpiccioliscono quel che serve per stare tutte
-  function adattaLista(lista) {
+  function adattaLista(lista, max) {
     if (!lista || !document.body.contains(lista)) return;
-    var f = 14;
+    var f = max || 14;
     lista.style.fontSize = f + "px";
     while (lista.scrollHeight > lista.clientHeight + 1 && f > 9) { f -= 0.5; lista.style.fontSize = f + "px"; }
   }
-  function adattaTavolo(ui) { ui.cols.forEach(function (c) { adattaLista(c.lista); }); }
+  function colonneUi(ui) { return ui.scheda ? ui.cols.concat([ui.scheda]) : ui.cols; }
+  function adattaTavolo(ui) { colonneUi(ui).forEach(function (c) { if (!c.nodo.hidden) adattaLista(c.lista, c === ui.scheda && ui.scena.classList.contains("largo") ? 19 : 14); }); }
   function largo(ui, si) {
     var era = ui.scena.classList.contains("largo");
     ui.scena.classList.toggle("largo", !!si);
-    if (era && !si) ui.cols.forEach(function (c) { c.lista.style.fontSize = ""; });
+    if (era && !si) colonneUi(ui).forEach(function (c) { c.lista.style.fontSize = ""; });
   }
   // un messaggio al posto delle carte
   function messaggio(ui, emo, testo) {
@@ -405,9 +539,10 @@
   function notaPiede(ui, testo) { ui.piede.appendChild(ui.t.el("div", { class: "sp-nota", text: testo })); }
 
   // la mano di carte in griglia (2 colonne, niente scorrimento).
-  // o: { carte, tipo, quante (0 = solo da guardare), altre: { tipo, carte } | null, onCambia(sel) }
+  // o: { carte, tipo, quante (0 = solo da guardare), altre: { tipo, carte } | null, onCambia(sel),
+  //      firme: { testo: nome } (le carte bianche), presel: [testo] (già scelte: la carta appena scritta) }
   function creaMano(t, o) {
-    var el = t.el, sel = [], nodi = [];
+    var el = t.el, sel = [], nodi = [], firme = o.firme || {};
     var g = el("div", { class: "sp-mano" });
     var n = o.carte.length + (o.altre ? 1 : 0);
     g.style.gridTemplateRows = "repeat(" + Math.max(1, Math.ceil(n / 2)) + ", minmax(0, 1fr))";
@@ -417,14 +552,15 @@
     }
     o.carte.forEach(function (c) {
       var num = el("span", { class: "sp-n" });
-      var attr = { class: "sp-carta " + (o.tipo === "bonus" ? "b" : "m") };
+      var attr = { class: "sp-carta " + (o.tipo === "bonus" ? "b" : "m") + (firme[c] ? " scritta" : "") };
       if (o.quante) attr.role = "button";
-      var b = el("div", attr, [el("span", { class: "sp-tx", text: c }), num]);
+      var b = el("div", attr, [el("span", { class: "sp-tx", text: c }), num, firme[c] ? el("span", { class: "sp-fc", text: "✍️ di " + firme[c] }) : null]);
       var titolo = o.tipo === "bonus" ? "🟢 Carta Bonus" : "🔴 Carta Malus";
-      premiLungo(b, function () { lente(t, titolo, [{ tipo: o.tipo, testo: c }]); });
+      var lv = [{ tipo: o.tipo, testo: c, di: firme[c] || undefined }];
+      premiLungo(b, function () { lente(t, titolo, lv); });
       b.addEventListener("click", function () {
         if (b._lungo) return;
-        if (!o.quante) return lente(t, titolo, [{ tipo: o.tipo, testo: c }]);
+        if (!o.quante) return lente(t, titolo, lv);
         var i = sel.indexOf(c);
         if (i >= 0) sel.splice(i, 1);
         else { if (sel.length >= o.quante) sel.shift(); sel.push(c); }   // piena: la prima scelta lascia il posto
@@ -438,6 +574,7 @@
       g.appendChild(el("div", { class: "sp-altre", role: "button", text: "👀 " + tt + " (" + o.altre.carte.length + ")",
         onclick: function () { lente(t, tt, o.altre.carte.map(function (c) { return { tipo: o.altre.tipo, testo: c }; })); } }));
     }
+    if (o.quante && o.presel) { o.presel.forEach(function (c) { if (o.carte.indexOf(c) >= 0 && sel.length < o.quante) sel.push(c); }); if (sel.length) segna(); }
     return { nodo: g, sel: function () { return sel.slice(); }, adatta: function () { adattaCarte(g); } };
   }
   // ogni carta col carattere più grande che ci sta
@@ -468,8 +605,9 @@
   }
 
   // il verdetto: martelletto, cartello della squadra e coriandoli
-  function verdetto(ui, k, testo) {
+  function verdetto(ui, k, testo, vinto) {
     var el = ui.t.el, colori = ["#ffca3a", "#ff6b6b", "#4dabf7", "#51cf66", "#cc5de8"];
+    vibra(vinto ? [30, 40, 30, 40, 60] : 25);   // il verdetto è un momento che conta (di più per chi ha vinto)
     var nodo = el("div", { class: "sp-verdetto c" + k }, [el("div", { class: "sp-martello", text: "🔨" }), el("div", { class: "sp-vtesto", text: testo })]);
     for (var i = 0; i < 22; i++) {
       nodo.appendChild(el("i", { class: "sp-cor", style: "left:" + (Math.random() * 100).toFixed(1) + "%;background:" + colori[i % 5] +
@@ -488,11 +626,45 @@
     });
     return box;
   }
-  function avatar(t, nome, omino) {
+  function avatarHtml(nome, omino) {
     var cfg = omino || (window.SGOmino && SGOmino.casuale ? SGOmino.casuale(nome) : null);
-    var html = "";
-    try { html = cfg && window.SGOmino ? SGOmino.svg(cfg) : ""; } catch (e) {}
-    return t.el("span", { class: "sp-av", html: html });
+    try { return cfg && window.SGOmino ? SGOmino.svg(cfg) : ""; } catch (e) { return ""; }
+  }
+  function avatar(t, nome, omino) { return t.el("span", { class: "sp-av", html: avatarHtml(nome, omino) }); }
+  // ✍️ la carta bianca: si scrive una carta propria (al massimo 60 lettere).
+  // o: { tipo, chi: [nomi] (stesso telefono a squadre: chi la scrive) | null, onOk(testo, chi) }
+  function scriviCarta(t, o) {
+    if (document.querySelector(".sp-lente")) return;
+    stile();
+    var el = t.el, chi = o.chi && o.chi.length === 1 ? o.chi[0] : null;
+    var area = el("textarea", { maxlength: String(MAX_SCRITTA), rows: "3", placeholder: o.tipo === "bonus" ? "Es. Hai un maggiordomo che ti legge nel pensiero" : "Es. …ma il maggiordomo è tua suocera" });
+    var conta = el("div", { class: "sp-conta", text: "0 / " + MAX_SCRITTA });
+    var ok = el("button", { class: "btn btn-primario", text: "✍️ Metti in mano", disabled: "disabled" });
+    function aggiorna() {
+      var s = pulisciScritta(area.value);
+      conta.textContent = area.value.length + " / " + MAX_SCRITTA;
+      ok.disabled = !s || (o.chi && o.chi.length > 1 && !chi);
+    }
+    area.addEventListener("input", aggiorna);
+    var figli = [el("div", { class: "sp-lente-tit", text: o.tipo === "bonus" ? "🃏 La tua carta Bonus" : "🃏 La tua carta Malus" }),
+      el("p", { class: "sp-nota-s", text: "Una sola a partita, firmata col tuo nome sul tavolo. " + (o.tipo === "bonus" ? "Qualcosa di bellissimo…" : "Il guaio che rovina tutto…") })];
+    if (o.chi && o.chi.length > 1) {
+      var riga = el("div", { class: "sp-chis" });
+      o.chi.forEach(function (n) {
+        riga.appendChild(el("button", { text: n, onclick: function (e) {
+          chi = n; [].forEach.call(riga.children, function (b) { b.classList.toggle("attiva", b === e.currentTarget); }); aggiorna();
+        } }));
+      });
+      figli.push(el("div", { class: "etichetta", style: "margin:0 0 4px", text: "Chi la scrive?" }), riga);
+    }
+    figli.push(area, conta);
+    var box = el("div", { class: "sp-lente-box sp-scrivi" }, figli);
+    function chiudi() { if (velo.parentNode) velo.parentNode.removeChild(velo); }
+    ok.addEventListener("click", function () { var s = pulisciScritta(area.value); if (!s || ok.disabled) return; chiudi(); o.onOk(s, chi); });
+    box.appendChild(el("div", { class: "sp-due" }, [el("button", { class: "btn btn-fantasma", text: "Annulla", onclick: chiudi }), ok]));
+    var velo = el("div", { class: "sp-lente", onclick: function (e) { if (e.target === velo) chiudi(); } }, [box]);
+    document.body.appendChild(velo);
+    setTimeout(function () { try { area.focus(); } catch (e) {} }, 60);
   }
   function persona(t, nome) { return t.el("span", { class: "sp-pers" }, [avatar(t, nome), document.createTextNode(nome)]); }
 
@@ -503,18 +675,24 @@
     id: "sipero",
     nome: "Sì... però",
     icona: "🤨",
-    descrizione: "Due squadre costruiscono lo scenario di vita migliore e si sabotano a colpi di Malus. Il giudice decide chi vince.",
+    descrizione: "Costruite lo scenario di vita migliore (a squadre o ognuno per sé) e rovinate quello degli altri a colpi di Malus. Il giudice decide chi vince.",
     giocatoriMin: MIN,
-    modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Giudice e squadre sullo stesso telefono", amici: true }],
+    modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono: le carte restano segrete", amici: true }],
     giocatoriMax: MAX,
     postiOnline: MAX,   // posti online (10)
+    riprende: true,     // se l'host ricarica a metà partita, la partita riprende dalla stessa fase (le carte tornano alle squadre)
+    riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     difficolta: 2,
+    // la riga "📜 Si gioca così" che gli amici leggono in saletta
+    riassunto: function (imp) { return riassuntoImp(imp); },
     regole: [
       "A ogni round uno di voi fa da <b>giudice</b> (a turno: tutti lo stesso numero di volte) e gli altri si dividono <b>a sorte</b> in due squadre. Bastano 3 giocatori.",
       "Le squadre giocano a turno le carte: i <b>Bonus</b> rendono più bello il proprio scenario, i <b>Malus</b> rovinano quello avversario. Nella classica: 😇 <b>Paradiso</b> (2 Bonus), 💥 <b>Schianto</b> (2 Malus agli avversari), 🩹 <b>Rinforzo</b> (1 Bonus), 🪓 <b>Ghigliottina</b> (2 Malus finali). Si può anche comporre una sequenza personalizzata.",
       "Il tavolo si vede sempre: scegliete il Malus che incastra meglio i Bonus degli avversari. Tieni premuta una carta per leggerla in grande.",
       "Poi l'<b>arringa</b>: ogni squadra convince a voce il giudice che il suo scenario, guai compresi, è il migliore da vivere (libera o a tempo).",
-      "Il giudice sceglie la squadra vincente: chi ne fa parte prende un punto. Alla fine vince chi ha più punti. Online chi apre la stanza può anche scegliere lui squadre e giudice, per un round solo."
+      "Il giudice sceglie la squadra vincente: chi ne fa parte prende un punto. Alla fine vince chi ha più punti. Online chi apre la stanza può anche scegliere lui squadre e giudice, per un round solo.",
+      "🙋 <b>Ognuno per sé</b> (si sceglie nelle regole): niente squadre. Ognuno ha la sua mano (4 Bonus e 3 Malus nuovi a ogni round): prima gioca <b>in segreto 2 Bonus</b> sul suo scenario, poi, visti i Bonus di tutti, <b>1 Malus sullo scenario del vicino</b> (l'app dice a chi). Gli scenari si svelano uno alla volta, ognuno difende il suo e il giudice sceglie il migliore: <b>+1 a chi l'ha presentato</b>.",
+      "🃏 <b>Carta bianca</b> (accesa di partenza): una volta a partita ognuno può toccare «✍️ Scrivi tu» e scrivere una carta sua, Bonus o Malus (al massimo 60 lettere), da giocare al posto di una della mano. Sul tavolo ha il bordo d'oro e la firma. Se non la giochi nel round, si perde."
     ],
 
     impostazioni: function (box, dove, aiuti) {
@@ -525,6 +703,8 @@
       dove.giri = 1;
       dove.arringa = 0;
       dove.squadre = "sorte";
+      dove.si = "squadre";   // «🙋 Ognuno per sé» = "solo"
+      dove.bianca = 1;       // «🃏 Carta bianca»: accesa di partenza
       var online = dove.modo === "online";
 
       function rigaChip(valori, get, set, colonne) {
@@ -540,10 +720,19 @@
       }
       if (online) box.appendChild(el("p", { class: "modulo-nota", text: "Queste regole le ritrovi nella saletta (⚙️ Regole): puoi cambiarle anche con gli amici già dentro." }));
 
-      // --- le fasi ---
-      box.appendChild(el("div", { class: "etichetta", text: "Le fasi" }));
-      var pannello = el("div", { hidden: "hidden" });
+      // --- si gioca: a squadre o ognuno per sé ---
+      var soloNo = el("div"), squadreBox = el("div");   // (le fasi e le squadre valgono solo a squadre)
+      box.appendChild(el("div", { class: "etichetta", text: "Si gioca" }));
       box.appendChild(rigaChip([
+        { val: "squadre", ic: "👥", txt: "A squadre", sotto: "Due squadre, carte a turno" },
+        { val: "solo", ic: "🙋", txt: "Ognuno per sé", sotto: "Ognuno il suo scenario" }
+      ], function () { return dove.si; }, function (v) { dove.si = v; soloNo.hidden = squadreBox.hidden = (v === "solo"); }));
+      box.appendChild(soloNo);
+
+      // --- le fasi ---
+      soloNo.appendChild(el("div", { class: "etichetta", text: "Le fasi" }));
+      var pannello = el("div", { hidden: "hidden" });
+      soloNo.appendChild(rigaChip([
         { val: "classica", ic: "📜", txt: "Classica", sotto: "Paradiso, Schianto, Rinforzo, Ghigliottina" },
         { val: "custom", ic: "🎛️", txt: "Personalizzata", sotto: "Le componi tu" }
       ], function () { return dove.modalita; }, function (v) { dove.modalita = v; pannello.hidden = (v !== "custom"); }));
@@ -578,7 +767,7 @@
         el("button", { class: "btn btn-fantasma", style: "flex:1", text: "↺ Come la Classica", onclick: function () { dove.sequenza = seqPulita(CLASSICA); cambiata(); } })
       ]));
       ridisegnaFasi();
-      box.appendChild(pannello);
+      soloNo.appendChild(pannello);
 
       // --- quanti round ---
       box.appendChild(el("div", { class: "etichetta", text: "Quanto si gioca" }));
@@ -589,10 +778,16 @@
       box.appendChild(el("div", { class: "etichetta", text: "L'arringa" }));
       box.appendChild(rigaChip([{ val: 0, txt: "Libera" }, { val: 60, txt: "60 secondi" }, { val: 90, txt: "90 secondi" }], function () { return dove.arringa; }, function (v) { dove.arringa = v; }, 3));
 
+      // --- 🃏 la carta bianca ---
+      box.appendChild(el("div", { class: "etichetta", text: "🃏 Carta bianca" }));
+      box.appendChild(rigaChip([{ val: 1, txt: "Sì" }, { val: 0, txt: "No" }], function () { return dove.bianca; }, function (v) { dove.bianca = v; }, 2));
+      box.appendChild(el("p", { class: "modulo-nota", text: "Una volta a partita ognuno può scrivere una carta sua, Bonus o Malus, al posto di una della mano." }));
+
       // --- le squadre (solo online) ---
       if (online) {
-        box.appendChild(el("div", { class: "etichetta", text: "Squadre e giudice" }));
-        box.appendChild(rigaChip([
+        box.appendChild(squadreBox);
+        squadreBox.appendChild(el("div", { class: "etichetta", text: "Squadre e giudice" }));
+        squadreBox.appendChild(rigaChip([
           { val: "sorte", ic: "🎲", txt: "A sorte", sotto: "Cambiano a ogni round, il giudice gira" },
           { val: "mano", ic: "✋", txt: "Le scelgo io", sotto: "Un round solo, in saletta" }
         ], function () { return dove.squadre; }, function (v) { dove.squadre = v; }));
@@ -628,10 +823,24 @@
       giocatori: t.giocatori.slice(), punti: punti, seq: sq.seq, avvisoSeq: sq.vuota,
       totale: t.giocatori.length * giri, round: 0, arringa: +imp.arringa || 0,
       mazzi: { bonus: nuovoMazzo(t, dati.bonus), malus: nuovoMazzo(t, dati.malus) }, coppie: {},
-      sessione: nuovaSessione(), statGiocatori: Object.create(null)
+      sessione: nuovaSessione(), statGiocatori: Object.create(null),
+      solo: siDa(imp) === "solo", bianca: biancaDa(imp), bianche: {}, firme: {}   // 🙋 ognuno per sé; 🃏 chi ha già scritto la sua carta
     };
     st.esci = function () { t.conferma("Uscire dalla partita?", "I punti di questa partita si perdono.", "Esci", function () { chiudiLente(); t.esci(); }); };
     iniziaRound(t, st);
+  }
+  // il tasto «✍️ Scrivi tu» sotto la mano (stesso telefono): chi = chi può scriverla (chi non l'ha ancora usata)
+  function tastoScriviLocale(t, st, ui, tipo, chi, mano, ridisegna) {
+    if (!st.bianca || !chi.length) return null;
+    return t.el("button", { class: "btn sp-scrivi-b", text: "✍️ Scrivi tu", onclick: function () {
+      scriviCarta(t, { tipo: tipo, chi: chi, onOk: function (testo, nome) {
+        nome = nome || chi[0];
+        if (st.bianche[nome]) return;
+        st.bianche[nome] = 1; st.firme[testo] = nome;
+        if (mano.indexOf(testo) < 0) mano.push(testo);
+        ridisegna(testo);
+      } });
+    } });
   }
   function membri(st, k) { return st.squadre[k].join(", "); }
   function titoloColonna(k, nomi) { return emoSq(k) + " " + nomeSq(k) + (nomi ? " · " + nomi : ""); }
@@ -641,6 +850,7 @@
     if (st.round > st.totale) return finePartita(t, st);
     var el = t.el, n = st.giocatori.length;
     st.giudice = st.giocatori[(st.round - 1) % n];
+    if (st.solo) return iniziaRoundSolo(t, st);
     st.squadre = formaSquadre(t, st.giocatori.filter(function (x) { return x !== st.giudice; }), st.coppie);
     st.giocatori.forEach(function (nome) { statPersona(st, nome).roundGiocati++; });
     statPersona(st, st.giudice).roundGiudice++;
@@ -685,17 +895,26 @@
     var mano = st.mani[p.sq], altro = f.tipo === "bonus" ? "malus" : "bonus";
     var n = Math.min(f.n, mano[f.tipo].length);
     testoSe(ui.turno, emoSq(p.sq) + " Tocca a voi: " + istruzione({ tipo: f.tipo, n: n, bers: f.bers }, p.sq, true));
-    var bOk = el("button", { class: "btn btn-primario", text: "Conferma ▶", disabled: "disabled" });
-    var m = creaMano(t, { carte: mano[f.tipo], tipo: f.tipo, quante: n, altre: { tipo: altro, carte: mano[altro] },
-      onCambia: function (sel) { bOk.disabled = sel.length !== n; } });
-    ui.azione.appendChild(m.nodo);
-    ui.piede.appendChild(bOk);
-    m.adatta();
-    bOk.addEventListener("click", function () {
+    var bOk, m;
+    // la mano (si rifà solo lei quando arriva la carta bianca appena scritta, già scelta)
+    function disegnaMano(presel) {
+      svuota(ui.azione); svuota(ui.piede);
+      bOk = el("button", { class: "btn btn-primario", text: "Conferma ▶", disabled: "disabled", onclick: conferma });
+      m = creaMano(t, { carte: mano[f.tipo], tipo: f.tipo, quante: n, altre: { tipo: altro, carte: mano[altro] }, firme: st.firme, presel: presel ? [presel] : null,
+        onCambia: function (sel) { bOk.disabled = sel.length !== n; } });
+      ui.azione.appendChild(m.nodo);
+      var scr = tastoScriviLocale(t, st, ui, f.tipo, st.squadre[p.sq].filter(function (x) { return !st.bianche[x]; }), mano[f.tipo], disegnaMano);
+      if (scr && !mano[f.tipo].some(function (c) { return st.firme[c]; })) ui.piede.appendChild(scr);
+      ui.piede.appendChild(bOk);
+      bOk.disabled = m.sel().length !== n;
+      m.adatta();
+    }
+    disegnaMano(null);
+    function conferma() {
       var sel = m.sel(); if (sel.length !== n || bOk._fatto) return;
       bOk._fatto = true; bOk.disabled = true;
       var bers = f.bers === "se" ? p.sq : altra(p.sq);
-      sel.forEach(function (c) { st.scen[bers].voci.push({ tipo: f.tipo, testo: c }); });
+      sel.forEach(function (c) { st.scen[bers].voci.push(voce(f.tipo, c, st.firme)); });
       st.squadre[p.sq].forEach(function (nome) { statPersona(st, nome)[f.tipo === "bonus" ? "carteBonus" : "carteMalus"] += sel.length; });
       mano[f.tipo] = mano[f.tipo].filter(function (c) { return sel.indexOf(c) < 0; });
       riempi(t, mano[f.tipo], st.mazzi[f.tipo], inUsoDa(st.mani, st.scen));
@@ -706,7 +925,7 @@
       svuota(ui.azione); svuota(ui.piede);
       messaggio(ui, f.tipo === "bonus" ? "✨" : "💥", "Carte sul tavolo!");
       setTimeout(function () { if (document.body.contains(ui.s)) prossimoPasso(t, st); }, 1100);
-    });
+    }
   }
 
   function alCentro(t, st) {
@@ -773,6 +992,160 @@
       onclick: function () { chiudiLente(); iniziaRound(t, st); } }));
   }
 
+  // =========================================================
+  //  🙋 OGNUNO PER SÉ — pezzi comuni e stesso telefono
+  // =========================================================
+  // chi presenta: tutti tranne il giudice, a partire da chi gli siede dopo
+  function presDopo(lista, giudice) {
+    var i = lista.indexOf(giudice);
+    return lista.slice(i + 1).concat(lista.slice(0, Math.max(0, i))).filter(function (x) { return x !== giudice; });
+  }
+  // lo scenario di uno sul palco. d: { id, nome, omino, titolo, voci, vince, anima, ritardo }
+  function mostraScheda(ui, d) {
+    ui.scheda.nodo.hidden = false;
+    return aggiornaColonna(ui.scheda, { titolo: d.titolo, voci: d.voci, vince: d.vince, turno: d.turno, anima: d.anima, ritardo: d.ritardo, chiave: d.id,
+      avatar: { k: d.id + "|" + (d.omino ? 1 : 0), nome: d.nome, omino: d.omino } });
+  }
+  function nascondiScheda(ui) { ui.scheda.nodo.hidden = true; }
+  // le linguette per sfogliare gli scenari (verdetto): si rifanno solo se cambia chi presenta
+  function linguette(ui, pres, nomeDi, attivo, vince, onTocca) {
+    var el = ui.t.el, sig = pres.map(nomeDi).join("|") + "#" + (vince || "");
+    ui.tab.hidden = false;
+    if (ui.tabSig !== sig) {
+      ui.tabSig = sig; svuota(ui.tab);
+      pres.forEach(function (id) {
+        ui.tab.appendChild(el("button", { "data-id": id, class: id === vince ? "vince" : "", text: (id === vince ? "🏅 " : "") + nomeDi(id), onclick: function () { onTocca(id); } }));
+      });
+    }
+    ui.tabOn = onTocca;
+    [].forEach.call(ui.tab.children, function (b) { b.classList.toggle("attiva", b.getAttribute("data-id") === attivo); });
+  }
+  function suoniScheda(ui, voci, passo) {
+    voci.forEach(function (v, i) { setTimeout(function () { if (document.body.contains(ui.s)) suono(v.tipo); }, Math.round(i * passo * 1000) + 150); });
+  }
+
+  function iniziaRoundSolo(t, st) {
+    var el = t.el, R = st.R = roundSolo(t, st.mazzi, st.giudice, presDopo(st.giocatori, st.giudice));
+    st.giocatori.forEach(function (nome) { statPersona(st, nome).roundGiocati++; });
+    statPersona(st, st.giudice).roundGiudice++;
+    stile();
+    var s = t.schermata({ icona: "🙋", titolo: "Round " + st.round + " di " + st.totale, indietro: st.esci });
+    var box = el("div", { class: "sp-round" });
+    box.appendChild(el("div", { class: "sp-giudbox" }, [avatar(t, st.giudice), el("span", { text: "⚖️ Giudice: " + st.giudice })]));
+    var rov = el("div", { class: "sp-rovina" });
+    R.pres.forEach(function (id) {
+      rov.appendChild(el("span", { class: "sp-chi" }, [persona(t, id)]));
+      rov.appendChild(el("span", { text: "💥→" }));
+      rov.appendChild(el("span", { class: "sp-chi" }, [persona(t, R.bers[id])]));
+    });
+    box.appendChild(el("div", { class: "sp-sqbox cs", style: "--sq:#ffca3a" }, [el("b", { text: "🙋 Ognuno per sé · chi rovina chi" }), rov]));
+    box.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin:0", text: "Passatevi il telefono: prima ognuno sceglie in segreto 2 Bonus per il suo scenario, poi 1 Malus per lo scenario del vicino." }));
+    s._contenuto.appendChild(box);
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Via ▶", onclick: function () { turnoSolo(t, st, 0); } }));
+    t.mostra(s);
+  }
+  function turnoSolo(t, st, i) {
+    var R = st.R;
+    if (i >= R.pres.length) {
+      if (R.passo === "bonus") { R.passo = "malus"; R.fatti = {}; return turnoSolo(t, st, 0); }
+      return alCentroSolo(t, st);
+    }
+    t.passaA(R.pres[i], function () { sceltaSoloLocale(t, st, i); });
+  }
+  function sceltaSoloLocale(t, st, i) {
+    var el = t.el, R = st.R, id = R.pres[i], tipo = R.passo, bonus = tipo === "bonus", vic = R.bers[id];
+    var ui = creaScena(t, st.esci, true);
+    barra(ui, bonus ? "😇 I tuoi Bonus" : "💥 Il tuo Malus", "Round " + st.round + " di " + st.totale + " · tocca a " + id, "⚖️ " + st.giudice);
+    if (!bonus) mostraScheda(ui, { id: vic, nome: vic, titolo: "💥 Lo scenario di " + vic, voci: vociSolo(R, vic, false), anima: false });
+    var n = quanteSolo(R, id), mano = R.mani[id], bOk, m;
+    testoSe(ui.turno, bonus ? "😇 " + id + ", scegli " + n + " Bonus per il tuo scenario (in segreto)" : "💥 " + id + ", rovina lo scenario di " + vic + ": scegli 1 Malus");
+    function disegnaMano(presel) {
+      svuota(ui.azione); svuota(ui.piede);
+      bOk = el("button", { class: "btn btn-primario", text: "Conferma ▶", disabled: "disabled", onclick: conferma });
+      m = creaMano(t, { carte: mano[tipo], tipo: tipo, quante: n, altre: bonus ? { tipo: "malus", carte: mano.malus } : null, firme: st.firme, presel: presel ? [presel] : null,
+        onCambia: function (sel) { bOk.disabled = sel.length !== n; } });
+      ui.azione.appendChild(m.nodo);
+      var scr = tastoScriviLocale(t, st, ui, tipo, st.bianche[id] ? [] : [id], mano[tipo], disegnaMano);
+      if (scr) ui.piede.appendChild(scr);
+      ui.piede.appendChild(bOk);
+      bOk.disabled = m.sel().length !== n;
+      m.adatta(); adattaTavolo(ui);
+    }
+    disegnaMano(null);
+    function conferma() {
+      var sel = m.sel(); if (sel.length !== n || bOk._fatto) return;
+      if (!giocaSolo(R, id, sel, st.firme, function (x) { return x; })) return;
+      bOk._fatto = true; bOk.disabled = true;
+      statPersona(st, id)[bonus ? "carteBonus" : "carteMalus"] += sel.length;
+      if (!bonus) mostraScheda(ui, { id: vic, nome: vic, titolo: "💥 Lo scenario di " + vic, voci: vociSolo(R, vic, true) });
+      suono(tipo);
+      svuota(ui.azione); svuota(ui.piede);
+      messaggio(ui, bonus ? "✨" : "💥", bonus ? "Bonus giocati: restano segreti fino allo svelamento!" : "Malus piazzato: si scopre quando " + vic + " presenta!");
+      setTimeout(function () { if (document.body.contains(ui.s)) turnoSolo(t, st, i + 1); }, 1100);
+    }
+  }
+  function alCentroSolo(t, st) {
+    var el = t.el, s = t.schermata({ indietro: st.esci });
+    s._contenuto.appendChild(el("div", { class: "sp-centro" }, [
+      el("div", { class: "sp-grande", text: "📱" }),
+      el("b", { text: "Mettete il telefono al centro del tavolo" }),
+      el("p", { text: "Tutti hanno giocato: gli scenari si scoprono uno alla volta, coi Malus. Ognuno difende il suo davanti al giudice!" })
+    ]));
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Scopriamo gli scenari 🎭", onclick: function () { svelaSoloLocale(t, st, null, 0); } }));
+    t.mostra(s);
+  }
+  function svelaSoloLocale(t, st, ui, i) {
+    var el = t.el, R = st.R, id = R.pres[i], n = R.pres.length;
+    if (!ui) ui = creaScena(t, st.esci, true);
+    largo(ui, true);
+    R.mostra = i;
+    barra(ui, "🎭 Gli scenari", "Round " + st.round + " di " + st.totale + " · scenario " + (i + 1) + " di " + n, "⚖️ " + st.giudice);
+    var voci = vociSolo(R, id, true);
+    mostraScheda(ui, { id: id, nome: id, titolo: "🎭 Lo scenario di " + id, voci: voci, ritardo: 0.45, turno: true });
+    suoniScheda(ui, voci, 0.45);
+    testoSe(ui.turno, "🎤 " + id + ", convinci il giudice!");
+    svuota(ui.azione); svuota(ui.piede);
+    if (st.arringa) mettiTimer(t, ui.azione, st.arringa);
+    ui.piede.appendChild(el("button", { class: "btn btn-primario", text: i < n - 1 ? "Prossimo scenario ▶" : "Al verdetto ⚖️", onclick: function () {
+      chiudiLente();
+      if (i < n - 1) svelaSoloLocale(t, st, ui, i + 1); else giudizioSoloLocale(t, st, ui);
+    } }));
+    adattaTavolo(ui);
+  }
+  function giudizioSoloLocale(t, st, ui) {
+    var el = t.el, R = st.R, vede = R.pres[0];
+    barra(ui, "⚖️ Il verdetto", "Round " + st.round + " di " + st.totale, "⚖️ " + st.giudice);
+    testoSe(ui.turno, "⚖️ " + st.giudice + ", quale scenario è il migliore da vivere?");
+    svuota(ui.azione); svuota(ui.piede);
+    var bSc = el("button", { class: "btn btn-primario", onclick: function () {
+      if (bSc._fatto) return; bSc._fatto = true; chiudiLente(); esitoSoloLocale(t, st, ui, vede);
+    } });
+    ui.piede.appendChild(bSc);
+    function vedi(id) {
+      vede = id;
+      linguette(ui, R.pres, function (x) { return x; }, vede, null, vedi);
+      mostraScheda(ui, { id: id, nome: id, titolo: "🎭 Lo scenario di " + id, voci: vociSolo(R, id, true), anima: false });
+      testoSe(bSc, "⚖️ Scelgo " + id);
+      adattaTavolo(ui);
+    }
+    vedi(vede);
+  }
+  function esitoSoloLocale(t, st, ui, chi) {
+    var el = t.el, R = st.R;
+    R.vincitore = chi;
+    st.punti[chi] = (st.punti[chi] || 0) + 1; statPersona(st, chi).roundVinti++;
+    ui.tab.hidden = true;
+    mostraScheda(ui, { id: chi, nome: chi, titolo: "🏅 Lo scenario di " + chi, voci: vociSolo(R, chi, true), vince: true, anima: false });
+    testoSe(ui.turno, "🏅 Il round va a " + chi + ": +1!");
+    svuota(ui.azione); svuota(ui.piede);
+    ui.azione.appendChild(classificaCorta(t, st.giocatori.map(function (nome) { return { id: nome, nome: nome, punti: st.punti[nome] || 0 }; })));
+    adattaTavolo(ui);
+    verdetto(ui, "s", "Vince " + chi + "!", true);
+    var ultimo = st.round >= st.totale;
+    ui.piede.appendChild(el("button", { class: "btn btn-primario", text: ultimo ? "Classifica finale 🏆" : "Prossimo round ▶",
+      onclick: function () { chiudiLente(); iniziaRound(t, st); } }));
+  }
+
   function finePartita(t, st) {
     chiudiLente();
     var classifica = conPosizioni(st.giocatori.map(function (nome) { return { nome: nome, punti: st.punti[nome] || 0 }; }));
@@ -792,21 +1165,25 @@
   function hostSipero(t, dati) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteS(t);
     var nomeHost = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Host";
+    var IO = t.mioId || "host";   // io che tengo la partita ("host", o l'amico che ha preso il posto dell'host)
     var st = {
       fase: "lobby", codice: "…", pronta: false,
-      giocatori: [{ id: "host", nome: nomeHost, omino: t.mioOmino ? t.mioOmino(nomeHost) : null, via: false, guarda: false }],
+      giocatori: [{ id: IO, nome: nomeHost, omino: t.mioOmino ? t.mioOmino(nomeHost) : null, via: false, guarda: false }],
       assegna: {}, regole: null, manuale: false, seq: CLASSICA, arringaSec: 0,
       round: 0, totale: 0, punti: {}, giudicati: {}, giocato: {}, coppie: {}, ordine: [],
       mazzi: { bonus: nuovoMazzo(t, dati.bonus), malus: nuovoMazzo(t, dati.malus) },
       scen: scenVuoti(), mani: null, manoV: [0, 0], passi: [], passo: 0, parla: 0, timerN: 0,
       vincitore: null, sorte: false, classifica: null, sessione: null, statGiocatori: Object.create(null), autoTo: null,
-      scadenza: 0, attesaTo: null   // l'attesa di un tocco (carte, arringa, verdetto): a tempo scaduto si va avanti da soli
+      scadenza: 0, attesaTo: null,   // l'attesa di un tocco (carte, arringa, verdetto): a tempo scaduto si va avanti da soli
+      solo: false, R: null, mv: {},  // 🙋 ognuno per sé: il round (mani di ognuno) e la versione della mano di ognuno
+      bianche: {}, firme: {},        // 🃏 chi ha già scritto la sua carta; le carte scritte che sono ancora in mano (testo → nome)
+      pronti: []                     // ⏩ chi ha toccato «Avanti» sull'esito del round
     };
     function leggiRegole(imp) {
       imp = imp || {};
-      var s = seqDa(imp);
-      st.regole = { seq: s.seq, vuota: s.vuota, giri: [1, 2, 3].indexOf(+imp.giri) >= 0 ? +imp.giri : 1,
-        arringa: +imp.arringa || 0, squadre: imp.squadre === "mano" ? "mano" : "sorte" };
+      var s = seqDa(imp), si = siDa(imp);
+      st.regole = { seq: s.seq, vuota: si === "solo" ? false : s.vuota, giri: [1, 2, 3].indexOf(+imp.giri) >= 0 ? +imp.giri : 1,
+        arringa: +imp.arringa || 0, squadre: si !== "solo" && imp.squadre === "mano" ? "mano" : "sorte", si: si, bianca: biancaDa(imp) ? 1 : 0 };
     }
     leggiRegole(t.impostazioni);
     // "⚙️ Regole" nella saletta: l'host cambia le regole quando vuole (prima di cominciare)
@@ -814,21 +1191,49 @@
     t.onRivincita = function () { if (st.fase === "fine") nuova(); };   // la Rivincita: tutti di nuovo nella saletta
     var V = { t: t };
 
+    // la partita di prima (l'host ha ricaricato la pagina o riaperto l'app: t.ripresa): si riprende dalla stessa fase.
+    // Gli amici non si danno per usciti: si aspettano ("attesi") e rientrano da soli (con le carte della loro squadra);
+    // chi non torna entro 10 secondi esce
+    var R0 = t.ripresa && t.ripresa.stato, ripresa = !!(R0 && R0.fase && R0.fase !== "lobby" && R0.giocatori), attesi = {}, tAttesi = null;
+    if (ripresa) {
+      Object.keys(R0).forEach(function (k) { if (k !== "mazzi") st[k] = R0[k]; });
+      st.mazzi = { bonus: mazzoDa(dati.bonus, R0.mazzi && R0.mazzi.bonus), malus: mazzoDa(dati.malus, R0.mazzi && R0.mazzi.malus) };
+      st.attesaTo = null; st.autoTo = null; st.pronta = false;
+      st.statGiocatori = st.statGiocatori || Object.create(null);
+      st.giocatori.forEach(function (p) { if (p.id !== IO && !p.via) attesi[p.id] = 1; });
+    }
+    // il mazzo nella memoria: le carte ancora da pescare come numeri (la posizione nella lista delle carte), così resta piccolo
+    function mazzoDa(lista, numeri) {
+      var pila = (numeri || []).map(function (i) { return lista[i]; }).filter(function (c) { return c != null; });
+      return { carte: lista.slice(), pila: pila.length ? pila : t.mischia(lista) };
+    }
+    function numeri(mz, lista) { return mz.pila.map(function (c) { return lista.indexOf(c); }).filter(function (i) { return i >= 0; }); }
+    function ricorda() {
+      if (st.fase === "lobby") return t.ricorda(null);
+      var s = {};
+      Object.keys(st).forEach(function (k) { if (k !== "attesaTo" && k !== "autoTo" && k !== "mazzi") s[k] = st[k]; });
+      s.mazzi = { bonus: numeri(st.mazzi.bonus, dati.bonus), malus: numeri(st.mazzi.malus, dati.malus) };
+      t.ricorda(s);
+    }
+
     var rete = SGNet.ospita("sipero", {
       onCodice: function (c) { st.codice = c; bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
       onAddio: addio,
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") return entra(id, m);
+        if (m.t === "join") { delete attesi[id]; return entra(id, m); }   // (dopo una ripresa: è tornato)
         if (!pById(id)) return;
         if (m.t === "chiediMano") manoA(id);
         else if (m.t === "gioca") giocaCarte(id, m.carte);
         else if (m.t === "avanti") avanti(id);
-        else if (m.t === "giudica") giudica(id, m.sq);
+        else if (m.t === "giudica") { if (st.solo) giudicaS(id, m.chi); else giudica(id, m.sq); }
+        else if (m.t === "bianca") bianca(id, m.testo);
+        else if (m.t === "pronto") pronto(id, m.k);
       },
       onErrore: function (e) { if (e && e.type === "no-mqtt") senzaReteS(t); }   // gli altri intoppi li ripara la rete da sola
-    });
+    }, { ripresa: ripresa });   // (con la ripresa gli amici non tornano in saletta)
+    if (ripresa && rete && rete.codice) st.codice = rete.codice;
     function pById(id) { for (var i = 0; i < st.giocatori.length; i++) if (st.giocatori[i].id === id) return st.giocatori[i]; return null; }
     function presenti() { return st.giocatori.filter(function (p) { return !p.via; }); }
     function giudice() { for (var i = 0; i < st.giocatori.length; i++) if (st.assegna[st.giocatori[i].id] === "g") return st.giocatori[i]; return null; }
@@ -845,19 +1250,20 @@
       st.attesaTo = setTimeout(function () { st.attesaTo = null; st.scadenza = 0; fn(); }, sec * 1000);
     }
     // la squadra di turno sceglie le carte: se non gioca in tempo, le sceglie il caso
-    function attendiPasso() {
+    // (sec: il tempo che restava, quando la partita riprende)
+    function attendiPasso(sec) {
       if (st.fase !== "gioco" || st.passo >= st.passi.length) return;
       var quale = st.passo;
-      attendi(TEMPO_CARTE, function () {
+      attendi(sec || TEMPO_CARTE, function () {
         if (st.fase !== "gioco" || st.passo !== quale) return;
         var p = st.passi[st.passo];
         giocaPasso(p, t.mischia(st.mani[p.sq][p.f.tipo]).slice(0, nCarte(p)));
       });
     }
     // l'arringa di una squadra: finito il suo tempo (più un attimo) si va avanti da soli
-    function attendiArringa() {
+    function attendiArringa(sec) {
       var parla = st.parla;
-      attendi(st.arringaSec ? st.arringaSec + TEMPO_DOPO_ARRINGA : TEMPO_ARRINGA, function () {
+      attendi(sec || (st.arringaSec ? st.arringaSec + TEMPO_DOPO_ARRINGA : TEMPO_ARRINGA), function () {
         if (st.fase === "arringa" && st.parla === parla) avanzaArringa();
       });
     }
@@ -865,16 +1271,17 @@
     // ----- chi entra, chi rientra, chi esce -----
     function entra(id, m) {
       var p = pById(id);
-      if (p) { p.via = false; bd(); manoA(id); return; }   // rientra (stesso id): ritrova la partita e le sue carte
+      if (p) { p.via = false; bd(); ominiA(id); manoA(id); return; }   // rientra (stesso id): ritrova la partita e le sue carte
       var nome = String(m.nome || "").trim().slice(0, 16) || "Amico";
       if (st.fase !== "lobby") {   // rientra da un altro telefono (o con la memoria cancellata): stesso nome, stesso posto
         var vecchio = st.giocatori.filter(function (x) { return x.via && norm(x.nome) === norm(nome); })[0];
-        if (vecchio) { cambiaId(vecchio, id); bd(); manoA(id); return; }
+        if (vecchio) { cambiaId(vecchio, id); bd(); ominiA(id); manoA(id); return; }
       }
       if (t.puoSedersi && !t.puoSedersi(id, nome)) { bd(); return; }   // non è tra chi gioca: riceve le foto e guarda
       if (st.giocatori.length >= MAX) { rete.inviaVeloce({ t: "piena", to: id }); return; }
       st.giocatori.push({ id: id, nome: nome, omino: avatarOkS(m.omino), via: false, guarda: st.fase !== "lobby" });
       bd();
+      if (st.fase !== "lobby") ominiA(id);   // (arrivato a partita in corso: gli avatar di chi gioca)
     }
     function cambiaId(p, nuovo) {
       var vec = p.id; p.id = nuovo; p.via = false;
@@ -882,31 +1289,68 @@
       ["punti", "giudicati", "giocato"].forEach(function (k) { if (vec in st[k]) { st[k][nuovo] = st[k][vec]; delete st[k][vec]; } });
       if (st.statGiocatori[vec]) { st.statGiocatori[nuovo] = st.statGiocatori[vec]; delete st.statGiocatori[vec]; }
       st.ordine = st.ordine.map(function (x) { return x === vec ? nuovo : x; });
+      // 🃏 ⏩ 🙋 le cose nuove tenute per id
+      if (st.bianche[vec]) { st.bianche[nuovo] = 1; delete st.bianche[vec]; }
+      st.pronti = st.pronti.map(function (x) { return x === vec ? nuovo : x; });
+      if (vec in st.mv) { st.mv[nuovo] = st.mv[vec]; delete st.mv[vec]; }
+      var R = st.R;
+      if (R) {
+        if (R.giudice === vec) R.giudice = nuovo;
+        R.pres = R.pres.map(function (x) { return x === vec ? nuovo : x; });
+        Object.keys(R.bers).forEach(function (x) { if (R.bers[x] === vec) R.bers[x] = nuovo; });
+        ["bers", "mani", "scen", "mio", "fatti"].forEach(function (k) { if (vec in R[k]) { R[k][nuovo] = R[k][vec]; delete R[k][vec]; } });
+        if (R.vincitore === vec) R.vincitore = nuovo;
+        if (st.solo && st.vincitore === vec) st.vincitore = nuovo;
+      }
     }
     function addio(id) {
-      var p = pById(id); if (!p || id === "host") return;
+      delete attesi[id];
+      var p = pById(id); if (!p || id === IO) return;
       if (st.fase === "lobby") { st.giocatori = st.giocatori.filter(function (x) { return x.id !== id; }); delete st.assegna[id]; bd(); return; }
       p.via = true;   // a partita iniziata tiene il suo posto (e il suo ruolo): se rientra, riprende da lì
-      bd(); controllaVuota();
+      bd();
+      if (st.solo) controllaSolo(); else controllaVuota();
+      controllaPronti();
+    }
+    // gli avatar di chi gioca: una volta all'inizio (e a chi rientra), così la foto resta leggera
+    function ominiA(id) {
+      if (!st.solo || st.fase === "lobby") return;
+      var o = {}; st.giocatori.forEach(function (p) { if (p.omino) o[p.id] = p.omino; });
+      var m = { t: "omini", o: o }; if (id) m.to = id;
+      rete.inviaVeloce(m);
     }
 
-    // ----- la mano: solo ai telefoni della squadra -----
+    // ----- la mano: solo ai telefoni della squadra (🙋 ognuno per sé: solo al suo telefono) -----
     function manoA(id) {
-      if (id === "host" || !st.mani || st.fase === "lobby" || st.fase === "fine") return;
+      if (id === IO || st.fase === "lobby" || st.fase === "fine") return;
+      if (st.solo) return manoS(id);
+      if (!st.mani) return;
       var k = squadraDi(st.assegna, id); if (k < 0) return;
-      rete.inviaVeloce({ t: "mano", per: [id], sq: k, v: st.manoV[k], mano: st.mani[k] });
+      rete.inviaVeloce({ t: "mano", per: [id], sq: k, v: st.manoV[k], mano: st.mani[k], firme: firmeDi(st.mani[k], st.firme) });
     }
     function manoSquadra(k) {
-      var per = presentiSq(k).map(function (p) { return p.id; }).filter(function (id) { return id !== "host"; });
-      if (per.length) rete.inviaVeloce({ t: "mano", per: per, sq: k, v: st.manoV[k], mano: st.mani[k] });
+      var per = presentiSq(k).map(function (p) { return p.id; }).filter(function (id) { return id !== IO; });
+      if (per.length) rete.inviaVeloce({ t: "mano", per: per, sq: k, v: st.manoV[k], mano: st.mani[k], firme: firmeDi(st.mani[k], st.firme) });
+    }
+    // la mia mano e le carte che ho già giocato in questo round (chi rientra le ritrova)
+    function soloMio(id) {
+      var R = st.R; if (!R || !R.mani[id]) return null;
+      return { mano: R.mani[id], mie: { bonus: R.scen[id].bonus, malus: R.mio[id] || null }, firme: firmeDi(R.mani[id], st.firme), v: st.mv[id] || 0 };
+    }
+    function manoS(id) {
+      if (id === IO) return;
+      var x = soloMio(id); if (!x) return;
+      rete.inviaVeloce({ t: "manoS", per: [id], v: x.v, mano: x.mano, mie: x.mie, firme: x.firme });
     }
 
     // la "foto" per tutti: SEMPRE con gli id; MAI le carte in mano
     function vm() {
       var g = giudice(), r = st.regole;
-      var v = { fase: st.fase, codice: st.codice, pronta: st.pronta,
+      var v = { fase: st.fase, codice: st.codice, pronta: st.pronta, hostId: IO,
         giocatori: st.giocatori.map(function (p) { return { id: p.id, nome: p.nome, via: !!p.via, guarda: !!p.guarda, punti: st.punti[p.id] || 0, omino: st.fase === "lobby" ? (p.omino || null) : undefined }; }),
-        regole: { seq: r.seq, vuota: r.vuota, giri: r.giri, arringa: r.arringa, squadre: r.squadre },
+        regole: { seq: r.seq, vuota: r.vuota, giri: r.giri, arringa: r.arringa, squadre: r.squadre, si: r.si, bianca: r.bianca },
+        solo: st.fase === "lobby" ? r.si === "solo" : st.solo, bianche: Object.keys(st.bianche),
+        pronti: st.fase === "esito" ? prontiVeri() : [], servono: servono(), kAv: kAv(),
         manuale: st.manuale, round: st.round, totale: st.totale, assegna: st.assegna,
         giudiceId: g ? g.id : null, giudiceNome: g ? g.nome : "", giudiceVia: !!(g && g.via),
         scen: st.scen, manoV: st.manoV, step: null, vuota: false, prossimi: null,
@@ -919,9 +1363,49 @@
         v.vuota = presentiSq(p.sq).length === 0;
         v.prossimi = [0, 1].map(function (k) { for (var j = st.passo; j < st.passi.length; j++) if (st.passi[j].sq === k) return st.passi[j].f.tipo; return null; });
       }
+      if (st.solo && st.R && st.fase !== "lobby" && st.fase !== "fine") vmSolo(v);
       return v;
     }
-    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); disegnaOn(V, v, cb); }
+    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); ricorda(); disegnaOn(V, v, cb); vici(); }
+    // (host di riserva) chi porta avanti la partita se sparisco: prima chi guarda (non gioca: non ha niente da perdere)
+    var viciK = "";
+    function vici() {
+      var l = st.giocatori.filter(function (p) { return p.guarda && !p.via && p.id !== IO; }).map(function (p) { return p.id; }), k = l.join(",");
+      if (k !== viciK && t.vici) { viciK = k; t.vici(l.length ? l : null); }
+    }
+
+    // la ripresa: la stessa fase, coi secondi che restavano (almeno 8, per respirare); l'arringa a tempo si rifà da
+    // capo (il cronometro lo vedono tutti); le carte tornano alle squadre (a chi rientra col suo "join")
+    function riprendi() {
+      tAttesi = setTimeout(function () { Object.keys(attesi).forEach(addio); }, 10000);
+      var f = st.fase, resta = Math.max(8000, ((t.ripresa.ora(st.scadenza) || 0) - Date.now())) / 1000;
+      st.scadenza = 0;
+      if (st.solo && st.R) {   // 🙋 ognuno per sé: stesso passo (Bonus o Malus), stesso scenario da svelare
+        var R = st.R;
+        if (f === "gioco") { attendiSolo(resta); bd(); R.pres.forEach(manoS); controllaSolo(); return; }
+        if (f === "arringa") { if (st.arringaSec) { st.timerN++; attendiSvela(); } else attendiSvela(resta); return bd(); }
+        if (f === "giudizio") { attendi(resta, function () { if (st.fase === "giudizio" && st.R === R) decidiS(R.pres[Math.floor(Math.random() * R.pres.length)], true); }); return bd(); }
+      } else {
+        if (f === "gioco") { attendiPasso(resta); bd(); manoSquadra(0); manoSquadra(1); controllaVuota(); return; }
+        if (f === "arringa") { if (st.arringaSec) { st.timerN++; attendiArringa(); } else attendiArringa(resta); return bd(); }
+        if (f === "giudizio") { attendi(resta, function () { if (st.fase === "giudizio") decidi(Math.random() < 0.5 ? 0 : 1, true); }); return bd(); }
+      }
+      if (f === "esito") { attendi(resta, prossimo); return bd(); }   // (⏩ «Avanti»: i tocchi di prima valgono ancora)
+      bd();   // (la classifica: si resta lì)
+    }
+    // 🙋 nella foto per tutti: chi presenta, chi rovina chi, chi ha giocato e la parte degli scenari che si può vedere.
+    // I Bonus restano segreti finché non li hanno giocati tutti; i Malus finché quello scenario non si svela. MAI le mani.
+    function vmSolo(v) {
+      var R = st.R, gioco = st.fase === "gioco";
+      v.scen = null; v.step = null;
+      v.pres = R.pres; v.bers = R.bers; v.passoS = R.passo; v.mostra = R.mostra; v.mv = st.mv;
+      v.fatti = gioco ? R.pres.filter(function (id) { return R.fatti[id]; }) : R.pres.slice();
+      v.schede = {};
+      R.pres.forEach(function (id, i) {
+        var s = R.scen[id], bonusSi = !(gioco && R.passo === "bonus"), malusSi = st.fase === "giudizio" || st.fase === "esito" || (st.fase === "arringa" && i <= R.mostra);
+        v.schede[id] = { b: bonusSi ? s.bonus : [], m: malusSi ? s.malus : null };
+      });
+    }
 
     // ----- la partita -----
     function manualeOk() {
@@ -932,19 +1416,23 @@
       if (st.fase !== "lobby") return;
       var r = st.regole, pres = presenti();
       if (r.vuota) return;
-      st.manuale = r.squadre === "mano";
+      st.solo = r.si === "solo";
+      st.manuale = !st.solo && r.squadre === "mano";
       if (st.manuale) { if (!manualeOk()) return; st.totale = 1; }
       else { if (pres.length < MIN) return; st.totale = pres.length * r.giri; st.assegna = {}; }
       st.seq = r.seq; st.arringaSec = r.arringa;
       st.ordine = pres.map(function (p) { return p.id; });
       st.round = 0; st.punti = {}; st.giudicati = {}; st.giocato = {}; st.coppie = {};
       st.sessione = nuovaSessione(); st.statGiocatori = Object.create(null); st.classifica = null;
+      st.bianche = {}; st.firme = {}; st.pronti = []; st.R = null; st.mv = {};
       st.giocatori.forEach(function (p) { p.guarda = false; });
       prossimoRound();
+      ominiA(null);
     }
     function prossimoRound() {
       ferma();
       st.round += 1;
+      st.pronti = [];
       var pres = presenti();
       if (st.round > st.totale || (!st.manuale && pres.length < MIN)) return fine();
       if (!st.manuale) {
@@ -953,15 +1441,19 @@
         var g = pres.slice().sort(function (a, b) {
           return ((st.giudicati[a.id] || 0) - (st.giudicati[b.id] || 0)) || (st.ordine.indexOf(a.id) - st.ordine.indexOf(b.id));
         })[0];
-        var sq = formaSquadre(t, pres.filter(function (p) { return p !== g; }).map(function (p) { return p.id; }), st.coppie);
         st.assegna = {}; st.assegna[g.id] = "g";
-        sq[0].forEach(function (id) { st.assegna[id] = 0; }); sq[1].forEach(function (id) { st.assegna[id] = 1; });
+        if (st.solo) pres.forEach(function (p) { if (p !== g) st.assegna[p.id] = "p"; });
+        else {
+          var sq = formaSquadre(t, pres.filter(function (p) { return p !== g; }).map(function (p) { return p.id; }), st.coppie);
+          sq[0].forEach(function (id) { st.assegna[id] = 0; }); sq[1].forEach(function (id) { st.assegna[id] = 1; });
+        }
       }
       Object.keys(st.assegna).forEach(function (id) {
         if (!pById(id)) return;
         var s = statPersona(st, id); s.roundGiocati++; st.giocato[id] = 1;
         if (st.assegna[id] === "g") { s.roundGiudice++; st.giudicati[id] = (st.giudicati[id] || 0) + 1; }
       });
+      if (st.solo) return roundSoloH(g);
       st.scen = scenVuoti();
       st.mani = nuoveMani(t, st.mazzi, st.scen);
       st.manoV = [st.manoV[0] + 1, st.manoV[1] + 1];
@@ -972,6 +1464,7 @@
     }
     function nCarte(p) { return Math.min(p.f.n, st.mani ? st.mani[p.sq][p.f.tipo].length : p.f.n); }
     function giocaCarte(id, carte) {
+      if (st.solo) return giocaSoloH(id, carte);
       if (st.fase !== "gioco" || st.passo >= st.passi.length) return;
       var p = st.passi[st.passo];
       if (squadraDi(st.assegna, id) !== p.sq) return;
@@ -983,7 +1476,7 @@
       for (var i = 0; i < carte.length; i++) if (mano.indexOf(carte[i]) < 0 || carte.indexOf(carte[i]) !== i) return;
       ferma();
       var bers = p.f.bers === "se" ? p.sq : altra(p.sq);
-      carte.forEach(function (c) { st.scen[bers].voci.push({ tipo: p.f.tipo, testo: c }); });
+      carte.forEach(function (c) { st.scen[bers].voci.push(voce(p.f.tipo, c, st.firme)); });
       st.giocatori.forEach(function (g) { if (st.assegna[g.id] === p.sq) statPersona(st, g.id)[p.f.tipo === "bonus" ? "carteBonus" : "carteMalus"] += carte.length; });
       st.mani[p.sq][p.f.tipo] = mano.filter(function (c) { return carte.indexOf(c) < 0; });
       riempi(t, st.mani[p.sq][p.f.tipo], st.mazzi[p.f.tipo], inUsoDa(st.mani, st.scen));
@@ -1005,10 +1498,10 @@
       }, 3500);
     }
     // decide il giudice; se il giudice è uscito, decide l'host
-    function puoDecidere(id) { var g = giudice(); return (g && !g.via && id === g.id) || (id === "host" && (!g || g.via)); }
+    function puoDecidere(id) { var g = giudice(); return (g && !g.via && id === g.id) || (id === IO && (!g || g.via)); }
     function avanti(id) {
       if (st.fase !== "arringa" || !puoDecidere(id)) return;
-      avanzaArringa();
+      if (st.solo) avanzaSvela(); else avanzaArringa();
     }
     function avanzaArringa() {
       ferma();
@@ -1027,9 +1520,124 @@
       ferma();
       st.vincitore = k; st.sorte = !!sorte; st.fase = "esito";
       st.giocatori.forEach(function (g) { if (st.assegna[g.id] === k) { st.punti[g.id] = (st.punti[g.id] || 0) + 1; statPersona(st, g.id).roundVinti++; } });
-      bd();
+      aspettaEsito(); bd();
     }
     function prossimo() { if (st.fase === "esito") prossimoRound(); }
+
+    // ----- ⏩ «Avanti» sull'esito del round: si parte subito se lo tocca più di metà di chi gioca ed è presente -----
+    function kAv() { return (st.sessione || "") + "|" + st.round; }
+    function inRound(id) { var p = pById(id); return !!(p && !p.via && st.assegna[id] != null); }
+    function servono() { return Math.floor(st.giocatori.filter(function (p) { return inRound(p.id); }).length / 2) + 1; }
+    function prontiVeri() { return st.pronti.filter(inRound); }
+    function aspettaEsito() { st.pronti = []; attendi(TEMPO_ESITO, prossimo); }   // il conto resta: a zero si va avanti da soli
+    function pronto(id, k) {
+      if (st.fase !== "esito" || k !== kAv() || !inRound(id)) return;   // un tocco vecchio (o di chi guarda) non vale
+      if (st.pronti.indexOf(id) < 0) st.pronti.push(id);
+      if (prontiVeri().length >= servono()) return prossimo();
+      bd();
+    }
+    function controllaPronti() { if (st.fase === "esito" && st.pronti.length && prontiVeri().length >= servono()) prossimo(); }
+
+    // ----- 🃏 la carta bianca: passa dall'host (una a testa per partita, al massimo 60 lettere) -----
+    function bianca(id, testo) {
+      var p = pById(id);
+      if (!p || p.via || !st.regole.bianca || st.bianche[id] || st.fase !== "gioco") return;
+      testo = pulisciScritta(testo); if (!testo) return;
+      var mano, k = -1;
+      if (st.solo) {
+        var R = st.R; if (!R || R.pres.indexOf(id) < 0 || R.fatti[id]) return;
+        mano = R.mani[id][R.passo];
+      } else {
+        if (st.passo >= st.passi.length) return;
+        var pa = st.passi[st.passo]; k = squadraDi(st.assegna, id);
+        if (k !== pa.sq || !st.mani) return;
+        mano = st.mani[k][pa.f.tipo];
+      }
+      if (mano.indexOf(testo) < 0) mano.push(testo);
+      st.firme[testo] = p.nome; st.bianche[id] = 1;
+      if (st.solo) { st.mv[id] = (st.mv[id] || 0) + 1; manoS(id); } else { st.manoV[k]++; manoSquadra(k); }
+      bd();
+    }
+
+    // ----- 🙋 ognuno per sé -----
+    function roundSoloH(g) {
+      var ord = st.ordine.filter(function (id) { return st.assegna[id] === "p" || st.assegna[id] === "g"; });
+      st.R = roundSolo(t, st.mazzi, g.id, presDopo(ord, g.id));
+      st.R.pres.forEach(function (id) { st.mv[id] = (st.mv[id] || 0) + 1; });
+      st.parla = 0; st.vincitore = null; st.sorte = false; st.fase = "gioco"; st.mani = null;
+      attendiSolo();
+      bd();
+      st.R.pres.forEach(manoS);
+      controllaSolo();
+    }
+    function nomeDiId(id) { var p = pById(id); return p ? p.nome : "?"; }
+    // le carte di questo passo: chi non gioca in tempo, le sceglie il caso
+    function attendiSolo(sec) {   // (sec: il tempo che restava, quando la partita riprende)
+      var R = st.R, passo = R.passo, round = st.round;
+      attendi(sec || TEMPO_CARTE, function () {
+        if (st.fase !== "gioco" || st.R !== R || R.passo !== passo || st.round !== round) return;
+        R.pres.forEach(function (id) { if (!R.fatti[id]) giocaSoloH(id, casoSolo(t, R, id), true); });
+        fineFaseSolo();
+      });
+    }
+    function giocaSoloH(id, carte, zitto) {
+      var R = st.R, tipo = R ? R.passo : null;
+      if (!R || st.fase !== "gioco" || !giocaSolo(R, id, carte, st.firme, nomeDiId)) return false;
+      statPersona(st, id)[tipo === "bonus" ? "carteBonus" : "carteMalus"] += carte.length;
+      st.mv[id] = (st.mv[id] || 0) + 1;
+      manoS(id);
+      if (!zitto) { bd(); controllaSolo(); }
+      return true;
+    }
+    // tutti quelli presenti hanno giocato? Si va avanti (chi è uscito: le sue carte le sceglie il caso, dopo un attimo)
+    function controllaSolo() {
+      var R = st.R;
+      if (!st.solo || !R || st.fase !== "gioco" || st.autoTo) return;
+      var manca = R.pres.filter(function (id) { return !R.fatti[id]; });
+      if (!manca.length) return fineFaseSolo();
+      if (manca.some(function (id) { var p = pById(id); return p && !p.via; })) return;
+      var passo = R.passo;
+      st.autoTo = setTimeout(function () {
+        st.autoTo = null;
+        if (st.fase !== "gioco" || st.R !== R || R.passo !== passo) return;
+        R.pres.forEach(function (id) { var p = pById(id); if (!R.fatti[id] && (!p || p.via)) giocaSoloH(id, casoSolo(t, R, id), true); });
+        if (R.pres.every(function (id) { return R.fatti[id]; })) fineFaseSolo(); else { bd(); controllaSolo(); }
+      }, 2500);
+    }
+    function fineFaseSolo() {
+      var R = st.R;
+      ferma();
+      if (R.passo === "bonus") { R.passo = "malus"; R.fatti = {}; attendiSolo(); bd(); controllaSolo(); return; }
+      st.fase = "arringa"; R.mostra = 0; st.timerN++; attendiSvela(); bd();
+    }
+    // lo svelamento: uno scenario alla volta (il giudice tocca «Prossimo»); se nessuno tocca, si va avanti da soli
+    function attendiSvela(sec) {
+      var R = st.R, i = R.mostra;
+      attendi(sec || (st.arringaSec ? st.arringaSec + TEMPO_DOPO_ARRINGA : TEMPO_PRESENTA), function () {
+        if (st.fase === "arringa" && st.R === R && R.mostra === i) avanzaSvela();
+      });
+    }
+    function avanzaSvela() {
+      var R = st.R;
+      ferma();
+      if (R.mostra < R.pres.length - 1) { R.mostra++; st.timerN++; attendiSvela(); }
+      else {   // il verdetto: se nessuno decide in tempo, decide la sorte
+        st.fase = "giudizio";
+        attendi(TEMPO_GIUDIZIO, function () { if (st.fase === "giudizio" && st.R === R) decidiS(R.pres[Math.floor(Math.random() * R.pres.length)], true); });
+      }
+      bd();
+    }
+    function giudicaS(id, chi) {
+      var R = st.R;
+      if (st.fase !== "giudizio" || !R || !puoDecidere(id) || R.pres.indexOf(chi) < 0) return;
+      decidiS(chi, false);
+    }
+    function decidiS(chi, sorte) {
+      ferma();
+      st.R.vincitore = chi; st.vincitore = chi; st.sorte = !!sorte; st.fase = "esito";
+      st.punti[chi] = (st.punti[chi] || 0) + 1; statPersona(st, chi).roundVinti++;
+      aspettaEsito(); bd();
+    }
     function fine() {
       ferma();
       st.classifica = conPosizioni(st.giocatori.filter(function (p) { return st.giocato[p.id]; })
@@ -1046,11 +1654,17 @@
       else st.assegna = {};
       st.fase = "lobby"; st.round = 0; st.totale = 0; st.classifica = null; st.vincitore = null; st.sorte = false;
       st.scen = scenVuoti(); st.mani = null; st.passi = []; st.passo = 0;
+      st.R = null; st.pronti = [];
       bd();
     }
     var cb = {
-      sonoHost: true, myId: "host",
+      sonoHost: true, myId: IO,
       mano: function (k) { return st.mani ? st.mani[k] : null; },
+      manoS: function () { return soloMio(IO); },
+      firme: function () { return st.firme; },
+      omino: function (id) { var p = pById(id); return p ? p.omino : null; },
+      onBianca: function (testo) { bianca(IO, testo); },
+      onPronto: function (k) { pronto(IO, k); },
       onAssegna: function (pid, val) {
         if (st.fase !== "lobby" || !pById(pid)) return;
         if (val === "g") Object.keys(st.assegna).forEach(function (id) { if (st.assegna[id] === "g") delete st.assegna[id]; });   // un giudice solo
@@ -1058,34 +1672,47 @@
         bd();
       },
       onComincia: comincia, onProssimo: prossimo, onNuova: nuova,
-      onGioca: function (carte) { giocaCarte("host", carte); },
-      onAvanti: function () { avanti("host"); },
-      onGiudica: function (k) { giudica("host", k); },
+      onGioca: function (carte) { giocaCarte(IO, carte); },
+      onAvanti: function () { avanti(IO); },
+      onGiudica: function (k) { if (st.solo) giudicaS(IO, k); else giudica(IO, k); },
       onEsci: function (ok) {
         if (ok !== true && st.fase !== "lobby" && st.fase !== "fine") return t.conferma("Chiudere la partita per tutti?", null, "Esci", function () { cb.onEsci(true); });
-        ferma(); chiudiLente(); rete.chiudi(); t.esci();
+        ferma(); clearTimeout(tAttesi); t.ricorda(null); chiudiLente(); rete.chiudi(); t.esci();
       }
     };
-    bd();
+    if (ripresa) riprendi(); else bd();
   }
 
   function ospiteSipero(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteS(t);
     var el = t.el, V = { t: t };
-    var S = { myId: null, vm: null, rete: null, nome: "", msg: null, mano: null, manoSq: -1, manoV: -1, chiesta: 0, riprova: null };
+    var S = { myId: null, vm: null, rete: null, nome: "", msg: null, mano: null, manoSq: -1, manoV: -1, chiesta: 0, riprova: null,
+      firme: {}, solo: null, omini: {} };   // solo: { mano, mie, firme, v } (🙋 la mia mano e le carte che ho già giocato)
     function invia(m) { if (S.rete) S.rete.invia(m); }
+    function richiedi() {
+      if (Date.now() - S.chiesta > 1800) { S.chiesta = Date.now(); invia({ t: "chiediMano" }); }
+      if (!S.riprova) S.riprova = setTimeout(function () { S.riprova = null; disegna(); }, 2500);
+    }
     var cb = {
       sonoHost: false, myId: null,
       // la mia mano (arriva a parte, solo a me); se manca o è vecchia la richiedo
       mano: function (k) {
         if (S.mano && S.manoSq === k && S.vm && S.manoV === S.vm.manoV[k]) return S.mano;
-        if (Date.now() - S.chiesta > 1800) { S.chiesta = Date.now(); invia({ t: "chiediMano" }); }
-        if (!S.riprova) S.riprova = setTimeout(function () { S.riprova = null; disegna(); }, 2500);
+        richiedi();
         return null;
       },
+      manoS: function () {
+        if (S.solo && S.vm && S.vm.mv && S.solo.v === S.vm.mv[S.myId]) return S.solo;
+        richiedi();
+        return null;
+      },
+      firme: function () { return S.firme; },
+      omino: function (id) { return S.omini[id] || null; },
+      onBianca: function (testo) { invia({ t: "bianca", testo: testo }); },
+      onPronto: function (k) { invia({ t: "pronto", k: k }); },
       onAssegna: function () {}, onComincia: function () {}, onNuova: function () {}, onProssimo: function () {},
       onGioca: function (carte) { invia({ t: "gioca", carte: carte }); },
-      onGiudica: function (k) { invia({ t: "giudica", sq: k }); },
+      onGiudica: function (k) { invia(S.vm && S.vm.solo ? { t: "giudica", chi: k } : { t: "giudica", sq: k }); },
       onAvanti: function () { invia({ t: "avanti" }); },
       onEsci: function (ok) {
         if (ok !== true && S.vm && S.vm.fase !== "lobby" && S.vm.fase !== "fine") return t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(true); });
@@ -1118,8 +1745,14 @@
         onMsg: function (m) {
           if (!m || !m.t) return;
           if (m.to && m.to !== S.myId) return;   // era per un altro telefono
-          if (m.t === "vm") { S.vm = m.vm; disegna(); }
-          else if (m.t === "mano") { if (m.per && m.per.indexOf(S.myId) >= 0) { S.mano = m.mano; S.manoSq = m.sq; S.manoV = m.v; disegna(); } }
+          if (m.t === "vm") {
+            S.vm = m.vm;
+            (m.vm.giocatori || []).forEach(function (g) { if (g.omino) S.omini[g.id] = avatarOkS(g.omino); });   // (in saletta: gli avatar per dopo)
+            disegna();
+          }
+          else if (m.t === "mano") { if (m.per && m.per.indexOf(S.myId) >= 0) { S.mano = m.mano; S.manoSq = m.sq; S.manoV = m.v; S.firme = m.firme || {}; disegna(); } }
+          else if (m.t === "manoS") { if (m.per && m.per.indexOf(S.myId) >= 0) { S.solo = { mano: m.mano, mie: m.mie || {}, firme: m.firme || {}, v: m.v }; disegna(); } }
+          else if (m.t === "omini") { Object.keys(m.o || {}).forEach(function (id) { S.omini[id] = avatarOkS(m.o[id]); }); disegna(); }
           else if (m.t === "piena") { if (S.rete) S.rete.chiudi(); erroreS(t, "La stanza è piena: ci sono già 10 giocatori. Chiedi a chi la organizza di aprirne un'altra."); }
         },
         // chiusa apposta da chi organizza (se sparisce lo dice il core): sulla classifica finale la classifica resta
@@ -1157,8 +1790,9 @@
   function disegnaOn(V, vm, cb) {
     if (vm.fase === "lobby") { V.ui = null; V.fineSess = null; return lobbyOn(V, vm, cb); }
     if (vm.fase === "fine") { V.ui = null; return fineOn(V, vm, cb); }
-    if (!V.ui || !document.body.contains(V.ui.s)) V.ui = creaScena(V.t, cb.onEsci);
-    aggiornaOn(V, vm, cb);
+    var solo = !!vm.solo;
+    if (!V.ui || !document.body.contains(V.ui.s) || V.ui.solo !== solo) V.ui = creaScena(V.t, cb.onEsci, solo);
+    if (solo) aggiornaSolo(V, vm, cb); else aggiornaOn(V, vm, cb);
     V.ui.nuova = false;
   }
 
@@ -1170,12 +1804,14 @@
     if (sig !== V.lobbySig) {   // si rifà solo se è cambiato qualcosa (niente lampeggio)
       V.lobbySig = sig;
       var n = V.lobbyNodo; svuota(n);
+      var solo = r.si === "solo";
       var giri = r.squadre === "mano" ? "🔁 Un round, squadre e giudice scelti da chi organizza" :
-        "🔁 " + r.giri + (r.giri === 1 ? " giro" : " giri") + ": ognuno fa il giudice " + (r.giri === 1 ? "una volta" : r.giri + " volte") + ", squadre a sorte a ogni round";
+        "🔁 " + r.giri + (r.giri === 1 ? " giro" : " giri") + ": ognuno fa il giudice " + (r.giri === 1 ? "una volta" : r.giri + " volte") + (solo ? "" : ", squadre a sorte a ogni round");
       n.appendChild(el("div", { class: "sp-info" }, [
-        el("div", { text: "📜 " + (r.vuota ? "Personalizzata senza fasi" : riassuntoSeq(r.seq)) }),
+        el("div", { text: solo ? "🙋 Ognuno per sé: 2 Bonus sul tuo scenario, poi 1 Malus su quello del vicino" : "📜 " + (r.vuota ? "Personalizzata senza fasi" : riassuntoSeq(r.seq)) }),
         el("div", { text: giri }),
-        el("div", { text: "🎤 Arringa " + (r.arringa ? r.arringa + " secondi a squadra" : "libera") })
+        el("div", { text: "🎤 Arringa " + (r.arringa ? r.arringa + " secondi " + (solo ? "a testa" : "a squadra") : "libera") }),
+        r.bianca ? el("div", { text: "🃏 Carta bianca: una a testa, la scrivi tu" }) : null
       ]));
       if (r.squadre === "mano") {
         n.appendChild(el("div", { class: "etichetta", text: "Giudice e squadre" }));
@@ -1204,7 +1840,7 @@
       if (!ok) nota = "Per cominciare servono un giudice (⚖️) e almeno uno per squadra (🟥 🟦).";
     } else ok = pres.length >= MIN;
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN, vuoti: Math.max(0, MIN - pres.length), puoComincia: ok,
-      giocatori: pres.map(function (g) { return { id: g.id, nome: g.nome, omino: g.omino || null, host: g.id === "host", tu: g.id === cb.myId }; }),
+      giocatori: pres.map(function (g) { return { id: g.id, nome: g.nome, omino: g.omino || null, host: g.id === (vm.hostId || "host"), tu: g.id === cb.myId }; }),
       extra: [V.lobbyNodo], nota: cb.sonoHost && pres.length >= MIN && !ok ? nota : null,
       attesa: r.squadre === "mano" ? "Aspetta: chi organizza sta scegliendo il giudice e le squadre. 🤨" : "Aspetta che si cominci: giudice e squadre li decide la sorte. 🤨",
       onComincia: cb.onComincia, onEsci: cb.onEsci });
@@ -1263,17 +1899,20 @@
         else {
           var mio = step.sq === me.sq && !vm.vuota;
           var tipo = mio ? step.tipo : ((vm.prossimi && vm.prossimi[me.sq]) || "bonus"), altro = tipo === "bonus" ? "malus" : "bonus";
-          chiave = "mano|" + mio + "|" + (mio ? step.i + "|" + step.n : "") + "|" + tipo + "|" + mano[tipo].join("§") + "|" + mano[altro].join("§");
+          var firme = cb.firme() || {}, scrive = mio && puoScrivere(vm, cb) && !mano[tipo].some(function (c) { return firme[c]; });
+          chiave = "mano|" + mio + "|" + (mio ? step.i + "|" + step.n : "") + "|" + tipo + "|" + mano[tipo].join("§") + "|" + mano[altro].join("§") + "|" + scrive + "|" + JSON.stringify(firmeDi(mano, firme));
           fai = function () {
             var bOk = null;
-            var m = creaMano(t, { carte: mano[tipo], tipo: tipo, quante: mio ? step.n : 0, altre: { tipo: altro, carte: mano[altro] },
+            var m = creaMano(t, { carte: mano[tipo], tipo: tipo, quante: mio ? step.n : 0, altre: { tipo: altro, carte: mano[altro] }, firme: firme, presel: preselDi(V, mano[tipo]),
               onCambia: function (sel) { if (bOk) bOk.disabled = sel.length !== step.n; } });
             ui.azione.appendChild(m.nodo);
             if (mio) {
+              if (scrive) ui.piede.appendChild(tastoBiancaOn(V, cb, tipo));
               bOk = el("button", { class: "btn btn-primario", text: "Gioca ▶", disabled: "disabled", onclick: function () {
                 var s = m.sel(); if (s.length !== step.n) return;
                 bOk.disabled = true; bOk.textContent = "…"; cb.onGioca(s);
               } });
+              bOk.disabled = m.sel().length !== step.n;
               ui.piede.appendChild(bOk);
               conto(bOk);   // a tempo scaduto le carte le sceglie il caso (lo fa chi organizza)
             } else notaPiede(ui, "Le tue carte per dopo (tocca per leggerle). Ora gioca la " + nomeSq(step.sq) + ".");
@@ -1310,24 +1949,219 @@
       chiave = "esi|" + vm.round + "|" + JSON.stringify(punti.map(function (g) { return [g.id, g.punti]; }));
       fai = function () {
         ui.azione.appendChild(classificaCorta(t, punti.map(function (g) { return { id: g.id, nome: g.id === cb.myId ? "Tu" : g.nome, punti: g.punti }; }), cb.myId));
-        var ultimo = vm.round >= vm.totale;
-        // si va avanti da soli dopo un po' (chi organizza può anche toccare prima)
-        if (cb.sonoHost) {
-          var bp = el("button", { class: "btn btn-primario", text: ultimo ? "Classifica finale 🏆" : "Prossimo round ▶",
-            onclick: function () { chiudiLente(); cb.onProssimo(); } });
-          ui.piede.appendChild(bp);
-          if (t.contoAvanti) t.contoAvanti(bp, TEMPO_ESITO, function () { chiudiLente(); cb.onProssimo(); }, kConto);
-        } else {
-          var nota = ui.t.el("div", { class: "sp-nota", text: ultimo ? "Tra poco la classifica finale." : "Il prossimo round lo fa partire chi organizza." });
-          ui.piede.appendChild(nota);
-          if (t.contoAvanti) t.contoAvanti(nota, TEMPO_ESITO, null, kConto);
-        }
+        piedeEsito(V, vm, cb, kConto);
       };
       var visto = vm.sessione + "|" + vm.round;
-      if (V.esitoVisto !== visto) { V.esitoVisto = visto; verdetto(ui, vm.vincitore, (vm.sorte ? "🎲 " : "") + "Vince la " + nomeSq(vm.vincitore) + "!"); }
+      if (V.esitoVisto !== visto) { V.esitoVisto = visto; verdetto(ui, vm.vincitore, (vm.sorte ? "🎲 " : "") + "Vince la " + nomeSq(vm.vincitore) + "!", me.sq === vm.vincitore); }
     } else { chiave = "?"; fai = function () {}; }
-    if (ui.chiave !== chiave) { ui.chiave = chiave; svuota(ui.azione); svuota(ui.piede); fai(); }
+    if (ui.chiave !== chiave) { ui.chiave = chiave; svuota(ui.azione); svuota(ui.piede); ui.pronti = null; fai(); }
+    if (vm.fase === "esito" && ui.pronti) ui.pronti.agg(vm);   // ⏩ si aggiorna solo il numero
     if (vm.fase !== "gioco") adattaTavolo(ui);
+  }
+
+  // ---------- 🙋 Ognuno per sé online (uguale per host e ospiti) ----------
+  function aggiornaSolo(V, vm, cb) {
+    var ui = V.ui, t = V.t, el = t.el, my = cb.myId;
+    V.vmS = vm;
+    var pres = vm.pres || [], schede = vm.schede || {}, fatti = vm.fatti || [];
+    var io = vm.giocatori.filter(function (g) { return g.id === my; })[0];
+    var me = { giudice: vm.giudiceId === my, pres: pres.indexOf(my) >= 0, guarda: io ? io.guarda : true };
+    me.decide = (me.giudice && !vm.giudiceVia) || (cb.sonoHost && (vm.giudiceVia || !vm.giudiceId));
+    function gioc(id) { return vm.giocatori.filter(function (x) { return x.id === id; })[0] || null; }
+    function nomeV(id) { var x = gioc(id); return x ? x.nome : "?"; }            // il nome vero (anche il mio)
+    function nome(id) { return id === my ? "Tu" : nomeV(id); }
+    function voci(id) { var s = schede[id] || {}; return (s.b || []).concat(s.m ? [s.m] : []); }
+    function scheda(id, titolo, o) {
+      o = o || {};
+      return mostraScheda(ui, { id: id, nome: nomeV(id), omino: cb.omino(id), titolo: titolo, voci: o.voci || voci(id), vince: o.vince, turno: o.turno, anima: o.anima, ritardo: o.ritardo });
+    }
+    var round = vm.totale > 1 ? "Round " + vm.round + " di " + vm.totale : "Round unico";
+    var gioco = vm.fase === "gioco", bonus = gioco && vm.passoS === "bonus", fatto = fatti.indexOf(my) >= 0;
+    var kConto = "sp|" + vm.sessione + "|" + vm.round + "|" + vm.fase + "|" + (gioco ? vm.passoS : vm.mostra);
+    function conto(nodo) { if (vm.resta && t.contoAvanti) t.contoAvanti(nodo, vm.resta, null, kConto); }
+    function notaConto() { if (!vm.resta) return; var n = el("div", { class: "sp-nota" }); ui.piede.appendChild(n); conto(n); }
+    function faccine(dove) { var f = t.faccine ? t.faccine() : null; if (f) { f.classList.add("sp-faccine"); dove.appendChild(f); } }
+
+    // la barra in alto
+    var fase = gioco ? (bonus ? "😇 I Bonus" : "💥 I Malus") : vm.fase === "arringa" ? "🎭 Gli scenari" : "⚖️ Il verdetto";
+    barra(ui, fase, round + (vm.fase === "arringa" ? " · scenario " + (vm.mostra + 1) + " di " + pres.length : ""),
+      "⚖️ " + (me.giudice ? "Tu" : vm.giudiceNome || "—") + (vm.giudiceVia ? " 💤" : ""));
+    largo(ui, !gioco);
+
+    // il palco: chi ha giocato (mentre si scelgono le carte), le linguette (verdetto), lo scenario di uno
+    if (gioco) statoSolo(ui, vm, pres, nome); else ui.stato.hidden = true;
+    if (vm.fase !== "giudizio") { ui.tab.hidden = true; ui.tabSig = null; }
+    var mio = me.pres && gioco ? cb.manoS() : null, chi = pres[vm.mostra];
+    if (gioco) {
+      if (me.pres && !bonus) {   // i Malus: lo scenario del vicino da rovinare (col mio Malus, quando l'ho messo)
+        var vic = vm.bers[my], vv = voci(vic);
+        if (fatto && mio && mio.mie && mio.mie.malus) vv = vv.concat([mio.mie.malus]);
+        scheda(vic, "💥 Lo scenario di " + nomeV(vic), { voci: vv, anima: !ui.nuova });
+      } else if (me.pres && bonus && fatto && mio) scheda(my, "😇 Il tuo scenario (per ora segreto)", { voci: (mio.mie && mio.mie.bonus) || [], anima: !ui.nuova });
+      else nascondiScheda(ui);
+    } else if (vm.fase === "arringa") {
+      var aggiunte = scheda(chi, "🎭 Lo scenario di " + nomeV(chi) + (chi === my ? " (tu)" : ""), { ritardo: 0.45, turno: true });
+      if (aggiunte) suoniScheda(ui, voci(chi).slice(-aggiunte), 0.45);
+      if (V.toccaVisto !== kConto) { V.toccaVisto = kConto; if (chi === my) vibra(30); }   // tocca a me presentare
+    } else if (vm.fase === "giudizio") {
+      if (V.vedeK !== kConto || pres.indexOf(V.vede) < 0) { V.vede = pres[0]; V.vedeK = kConto; }
+      linguette(ui, pres, nome, V.vede, null, function (id) { V.vede = id; aggiornaSolo(V, V.vmS, cb); });
+      scheda(V.vede, "🎭 Lo scenario di " + nomeV(V.vede), { anima: false });
+    } else if (vm.fase === "esito") scheda(vm.vincitore, "🏅 Lo scenario di " + nomeV(vm.vincitore), { vince: true, anima: false });
+
+    // la riga del turno
+    var turno = "";
+    if (gioco) {
+      var mancano = pres.length - fatti.length;
+      if (me.pres && !fatto) turno = bonus ? "😇 Scegli 2 Bonus per il tuo scenario (gli altri non li vedono)" : "💥 Rovina lo scenario di " + nomeV(vm.bers[my]) + ": scegli 1 Malus";
+      else turno = (bonus ? "😇 " : "💥 ") + (mancano ? "Aspettiamo " + (mancano === 1 ? "1 giocatore…" : mancano + " giocatori…") : "Tutti pronti!");
+    } else if (vm.fase === "arringa") turno = chi === my ? "🎤 Tocca a te: convinci il giudice!" : "🎤 Parla " + nomeV(chi) + ": difende il suo scenario!";
+    else if (vm.fase === "giudizio") turno = me.decide ? "⚖️ Sfoglia gli scenari e scegli il migliore da vivere" : (vm.giudiceVia || !vm.giudiceId ? "⚖️ Il giudice è uscito: decide chi organizza…" : "⚖️ Il giudice sta decidendo…");
+    else if (vm.fase === "esito") turno = (vm.sorte ? "🎲 Nessuno ha deciso: la sorte sceglie " : "🏅 Il round va a ") + nomeV(vm.vincitore) + (vm.vincitore === my ? " (tu!)" : "") + ": +1!";
+    testoSe(ui.turno, turno);
+
+    // azione e piede: si rifanno solo quando cambia la situazione (la selezione resta)
+    var chiave, fai;
+    if (gioco) {
+      if (me.pres && !fatto) {
+        if (!mio) { chiave = "carte"; fai = function () { messaggio(ui, "🃏", "Arrivano le tue carte…"); }; }
+        else {
+          var tipo = vm.passoS, mano = mio.mano, n = tipo === "bonus" ? Math.min(2, mano.bonus.length) : Math.min(1, mano.malus.length);
+          var firme = mio.firme || {}, scrive = puoScrivere(vm, cb) && !mano[tipo].some(function (c) { return firme[c]; });
+          chiave = "manoS|" + vm.round + "|" + tipo + "|" + mano[tipo].join("§") + "|" + mano.malus.length + "|" + scrive + "|" + JSON.stringify(firme);
+          fai = function () {
+            var bOk = null;
+            var m = creaMano(t, { carte: mano[tipo], tipo: tipo, quante: n, altre: tipo === "bonus" ? { tipo: "malus", carte: mano.malus } : null, firme: firme, presel: preselDi(V, mano[tipo]),
+              onCambia: function (sel) { if (bOk) bOk.disabled = sel.length !== n; } });
+            ui.azione.appendChild(m.nodo);
+            if (scrive) ui.piede.appendChild(tastoBiancaOn(V, cb, tipo));
+            bOk = el("button", { class: "btn btn-primario", text: "Gioca ▶", onclick: function () {
+              var s = m.sel(); if (s.length !== n) return;
+              bOk.disabled = true; bOk.textContent = "…"; cb.onGioca(s);
+            } });
+            bOk.disabled = m.sel().length !== n;
+            ui.piede.appendChild(bOk);
+            conto(bOk);   // a tempo scaduto le carte le sceglie il caso (lo fa chi organizza)
+            m.adatta();
+          };
+        }
+      } else if (me.pres) {
+        chiave = "fatto|" + vm.round + "|" + vm.passoS;
+        fai = function () {
+          messaggio(ui, "✅", bonus ? "Fatto! I tuoi Bonus restano segreti finché non hanno giocato tutti." : "Fatto! Il tuo Malus si scopre quando " + nomeV(vm.bers[my]) + " presenta.");
+          faccine(ui.azione); notaConto();
+        };
+      } else if (me.giudice) {
+        chiave = "giud|" + vm.passoS;
+        fai = function () { messaggio(ui, "⚖️", "Sei il giudice: aspetta che tutti abbiano giocato. Poi ascolti ogni scenario e scegli il migliore da vivere."); faccine(ui.azione); notaConto(); };
+      } else {
+        chiave = "guarda|" + me.guarda + "|" + vm.passoS;
+        fai = function () { messaggio(ui, "👀", me.guarda ? "Partita in corso: entri dal prossimo round. Intanto guardi!" : "Questo round lo giocano gli altri: tu guardi."); faccine(ui.azione); notaConto(); };
+      }
+    } else if (vm.fase === "arringa") {
+      chiave = "arr|" + vm.mostra + "|" + vm.timer.n + "|" + me.decide;
+      fai = function () {
+        if (vm.timer.sec) mettiTimer(t, ui.azione, vm.timer.sec);
+        faccine(ui.azione);
+        if (me.decide) {
+          var b = el("button", { class: "btn btn-primario", text: vm.mostra < pres.length - 1 ? "Prossimo scenario ▶" : "Al verdetto ⚖️",
+            onclick: function () { b.disabled = true; chiudiLente(); cb.onAvanti(); } });
+          if (!me.giudice) notaPiede(ui, "⚖️ Il giudice è uscito: vai avanti tu.");
+          ui.piede.appendChild(b);
+          conto(b);
+        } else notaPiede(ui, chi === my ? "Quando hai finito, il giudice va avanti." : "Poi tocca agli altri, e alla fine decide il giudice.");
+      };
+    } else if (vm.fase === "giudizio") {
+      chiave = "giu|" + me.decide;
+      fai = function () {
+        ui.labScegli = null;
+        if (!me.decide) { faccine(ui.azione); notaPiede(ui, "Tocca i nomi per rileggere gli scenari."); return; }
+        if (!me.giudice) ui.azione.appendChild(el("div", { class: "sp-avviso", text: "⚖️ Il giudice è uscito: decidi tu" }));
+        ui.labScegli = el("span");
+        var b = el("button", { class: "btn btn-primario", onclick: function () { if (b.disabled) return; b.disabled = true; chiudiLente(); cb.onGiudica(V.vede); } }, [ui.labScegli]);
+        ui.piede.appendChild(b);
+        conto(b);   // se nessuno sceglie in tempo, decide la sorte
+      };
+    } else if (vm.fase === "esito") {
+      var punti = vm.giocatori.filter(function (g) { return g.punti || (vm.assegna[g.id] != null); });
+      chiave = "esi|" + vm.round + "|" + JSON.stringify(punti.map(function (g) { return [g.id, g.punti]; }));
+      fai = function () {
+        ui.azione.appendChild(classificaCorta(t, punti.map(function (g) { return { id: g.id, nome: g.id === my ? "Tu" : g.nome, punti: g.punti }; }), my));
+        piedeEsito(V, vm, cb, kConto);
+      };
+      var visto = vm.sessione + "|" + vm.round;
+      if (V.esitoVisto !== visto) { V.esitoVisto = visto; verdetto(ui, "s", (vm.sorte ? "🎲 " : "") + "Vince " + nomeV(vm.vincitore) + "!", vm.vincitore === my); }
+    } else { chiave = "?"; fai = function () {}; }
+    if (ui.chiave !== chiave) { ui.chiave = chiave; svuota(ui.azione); svuota(ui.piede); ui.pronti = null; fai(); }
+    if (vm.fase === "giudizio" && ui.labScegli) testoSe(ui.labScegli, "⚖️ Scelgo " + nomeV(V.vede));
+    if (vm.fase === "esito" && ui.pronti) ui.pronti.agg(vm);   // ⏩ si aggiorna solo il numero
+    adattaTavolo(ui);
+  }
+  // chi ha già giocato le carte di questo passo (✅) e chi no (⏳): le pastiglie si fanno una volta, poi cambia solo il segno
+  function statoSolo(ui, vm, pres, nome) {
+    var el = ui.t.el, sig = vm.round + "|" + vm.passoS + "|" + pres.join(",");
+    ui.stato.hidden = false;
+    if (ui.statoSig !== sig) {
+      ui.statoSig = sig; svuota(ui.stato); ui.pastiglie = {};
+      pres.forEach(function (id) {
+        var segno = el("b"), tx = el("span", { class: "sp-pn", text: nome(id) });
+        var p = el("span", {}, [segno, tx]);
+        ui.pastiglie[id] = { p: p, segno: segno };
+        ui.stato.appendChild(p);
+      });
+    }
+    var fatti = vm.fatti || [];
+    pres.forEach(function (id) {
+      var x = ui.pastiglie[id]; if (!x) return;
+      var g = vm.giocatori.filter(function (q) { return q.id === id; })[0], ok = fatti.indexOf(id) >= 0;
+      x.p.classList.toggle("ok", ok); x.p.classList.toggle("via", !!(g && g.via));
+      testoSe(x.segno, ok ? "✅" : g && g.via ? "💤" : "⏳");
+    });
+  }
+
+  // ---------- pezzi dell'online comuni ai due modi ----------
+  // 🃏 posso ancora scrivere la mia carta?
+  function puoScrivere(vm, cb) { return !!(vm.regole && vm.regole.bianca) && (vm.bianche || []).indexOf(cb.myId) < 0; }
+  // la carta appena scritta arriva già scelta (una volta sola)
+  function preselDi(V, carte) {
+    if (V.presel && carte.indexOf(V.presel) >= 0) { var p = V.presel; V.presel = null; return [p]; }
+    return null;
+  }
+  function tastoBiancaOn(V, cb, tipo) {
+    var b = V.t.el("button", { class: "btn sp-scrivi-b", text: "✍️ Scrivi tu", onclick: function () {
+      scriviCarta(V.t, { tipo: tipo, chi: null, onOk: function (testo) { V.presel = testo; b.disabled = true; b.textContent = "✍️ …"; cb.onBianca(testo); } });
+    } });
+    return b;
+  }
+  // l'esito del round: il conto per tutti ("Si va avanti tra 20…": il tempo lo tiene chi organizza) e «⏩ Avanti» a chi gioca
+  function piedeEsito(V, vm, cb, kConto) {
+    var ui = V.ui, t = V.t, el = t.el, ultimo = vm.round >= vm.totale;
+    var io = vm.giocatori.filter(function (g) { return g.id === cb.myId; })[0];
+    var gioca = !!(io && !io.via && vm.assegna && vm.assegna[cb.myId] != null);
+    var nota = el("div", { class: "sp-nota sp-conto" });
+    if (gioca) {
+      var k = vm.kAv, testo = ultimo ? "🏆 Classifica" : "⏩ Avanti", fatto = ultimo ? "✅ Classifica" : "✅ Avanti";
+      var tx = el("span", { text: testo }), q = el("span", { class: "quanti" });
+      var b = el("button", { class: "btn btn-primario sp-pronto", type: "button", onclick: function () {
+        if (b.disabled) return;
+        cb.mioPronto = k; agg(cb.ultimoVm || vm); chiudiLente(); cb.onPronto(k);
+      } }, [tx, q]);
+      var agg = function (v) {
+        cb.ultimoVm = v;
+        var l = v.pronti || [], mio = cb.mioPronto === k || l.indexOf(cb.myId) >= 0, n = l.length + (mio && l.indexOf(cb.myId) < 0 ? 1 : 0);
+        testoSe(q, Math.min(n, v.servono || 1) + " su " + (v.servono || 1));
+        testoSe(tx, mio ? fatto : testo);
+        b.disabled = mio;
+      };
+      agg(vm);
+      ui.piede.appendChild(nota);
+      ui.piede.appendChild(b);
+      ui.pronti = { agg: agg };
+    } else {
+      ui.piede.appendChild(nota);
+      notaPiede(ui, ultimo ? "Poi la classifica finale." : "👀 Guardi: si va avanti da soli.");
+    }
+    if (t.contoAvanti) t.contoAvanti(nota, vm.resta || TEMPO_ESITO, null, kConto);
   }
 
   function fineOn(V, vm, cb) {
@@ -1364,4 +2198,8 @@
     V.fineS = s;
     t.mostra(s);
   }
+
+  // per le prove (skill prova-nel-browser): le regole di «Ognuno per sé» e della carta bianca senza grafica
+  window.__sipero = { roundSolo: roundSolo, giocaSolo: giocaSolo, quanteSolo: quanteSolo, presDopo: presDopo, pulisciScritta: pulisciScritta,
+    riassunto: riassuntoImp, voce: voce, firmeDi: firmeDi };
 })();

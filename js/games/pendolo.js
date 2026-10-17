@@ -723,6 +723,22 @@
     var attesa = [];   // chi è entrato a trave piena o a partita iniziata: guarda, ed entra appena si libera un posto
     for (var _s = 0; _s < NSEAT; _s++) posti[_s] = null;   // seat -> id | null(bot)
     var fase = "lobby", ST = null, ref = null, loop = null, ultimoInvio = 0, last = 0, rete = null, gameId = "", viaMsg = null, vintoL = false;
+    // ---- la ripresa (l'host ha ricaricato la pagina o l'app si è chiusa): restano chi lancia, chi sta sulla trave e le
+    // regole. Una partita in tempo reale non si riprende a metà: «🔁 Si riparte da capo» e dopo 5 secondi ricomincia.
+    // Sulla schermata finale si torna lì (senza dare di nuovo XP né trofei)
+    var RIP = t.ripresa && t.ripresa.stato && t.ripresa.stato.pendolo, ricordata = !!RIP, fineH = null, fineMsg = null, ripFino = 0, attesiRip = {};
+    if (RIP) {
+      posti = RIP.posti || posti; lanc = RIP.lanc !== undefined ? RIP.lanc : lanc; nomi = RIP.nomi || nomi; omini = RIP.omini || omini; attesa = RIP.attesa || [];
+      diff = RIP.diff || diff; P = diffP(diff); collis = !!RIP.collis; mirino = !!RIP.mirino;
+      if (RIP.fase === "fine") { fineH = RIP.fineH || null; fineMsg = RIP.fineMsg || null; gameId = RIP.gameId || ""; }
+    }
+    function ricorda() {   // dopo ogni cambiamento di chi gioca (non le mosse: la partita si rifà da capo); in saletta niente
+      if (!t.ricorda) return;
+      if (fase === "lobby") { if (ricordata) { ricordata = false; t.ricorda(null); } return; }
+      var o = { fase: fase === "fine" ? "fine" : "gioco", posti: posti, lanc: lanc, nomi: nomi, omini: omini, attesa: attesa, diff: diff, collis: !!collis, mirino: !!mirino };
+      if (fase === "fine") { o.fineH = fineH; o.fineMsg = fineMsg; o.gameId = gameId; }
+      ricordata = true; t.ricorda({ pendolo: JSON.parse(JSON.stringify(o)) });   // (una copia: il core salva un attimo dopo)
+    }
     // "⚙️ Regole" in saletta: bravura dei bot, collisioni e mirino valgono dalla prossima partita
     t.onRegole = function (im) { im = im || t.impostazioni || {}; diff = im.difficolta || "medio"; P = diffP(diff); collis = !!im.collisioni; mirino = !!im.mirino; };
 
@@ -756,27 +772,17 @@
     rete = SGNet.ospita("pendolo", {
       onCodice: function (c) { codice = c; lobbyAgg(); },
       onConnesso: function () { pronta = true; lobbyAgg(); },
-      onAddio: function (id) {
-        var s = seatDi(id), eraLanc = lanc === id;
-        if (s >= 0) posti[s] = null;
-        if (eraLanc) lanc = null;   // a lanciare va un bot
-        attesa = attesa.filter(function (x) { return x !== id; });
-        delete nomi[id]; delete omini[id];
-        if (fase === "lobby") { riempiPosti(); lobbyAgg(); return; }
-        if (ST && fase === "gioco") {   // a partita in corso il suo personaggio lo prende un bot
-          if (eraLanc) { ST.aiLanc = true; ST.aiTarget = -1; ST.aimHold = 0; ST.aiCd = 0.6; }
-          if (s >= 0 && ST.chars[s]) diventaBot(ST.chars[s]);
-        }
-      },
+      onAddio: function (id) { delete attesiRip[id]; addio(id); },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
+        if (attesiRip[id]) rientrato(id);   // (ripresa) si è rifatto vivo
         if (m.t === "join") {
           nomi[id] = String(m.nome || nomi[id] || "Amico").slice(0, 16); var om = avatarValido(m.omino); if (om) omini[id] = om;
           if (fase === "lobby") {
             if (!dentro(id) && attesa.indexOf(id) < 0) { var p = postoLibero(); if (p >= 0 && siede(id)) posti[p] = id; else attesa.push(id); }
             lobbyAgg();
-          } else if (dentro(id)) { if (fase === "gioco" && viaMsg) rete.invia(viaMsg); }   // chi rientra: gli rimando la partita (nomi, avatar, ruoli)
-          else { if (attesa.indexOf(id) < 0) attesa.push(id); rete.inviaVeloce({ t: "guardi", to: id, fuori: !siede(id) }); }   // arrivato a partita iniziata: guarda
+          } else if (dentro(id)) { if (fase === "gioco" && viaMsg) rete.invia(viaMsg); else if (fase === "ripresa") rete.inviaVeloce(msgRiparte(id)); }   // chi rientra: gli rimando la partita (nomi, avatar, ruoli)
+          else { if (attesa.indexOf(id) < 0) attesa.push(id); rete.inviaVeloce({ t: "guardi", to: id, fuori: !siede(id) }); ricorda(); }   // arrivato a partita iniziata: guarda
         }
         else if (m.t === "vuoiLanciare") {
           if (fase !== "lobby") return;
@@ -796,16 +802,65 @@
         }
       },
       onErrore: function () { senzaRete(t); }
-    });
+    }, { ripresa: !!RIP });   // (ripresa: gli amici non tornano in saletta)
+    // uno che giocava se ne va: in saletta lascia il posto, a partita in corso il suo personaggio lo prende un bot
+    function addio(id) {
+      var s = seatDi(id), eraLanc = lanc === id;
+      if (s >= 0) posti[s] = null;
+      if (eraLanc) lanc = null;   // a lanciare va un bot
+      attesa = attesa.filter(function (x) { return x !== id; });
+      delete nomi[id]; delete omini[id];
+      if (fase === "lobby") { riempiPosti(); lobbyAgg(); return; }
+      if (ST && fase === "gioco") {   // a partita in corso il suo personaggio lo prende un bot
+        if (eraLanc) { ST.aiLanc = true; ST.aiTarget = -1; ST.aimHold = 0; ST.aiCd = 0.6; }
+        if (s >= 0 && ST.chars[s]) diventaBot(ST.chars[s]);
+      }
+      ricorda();
+    }
+    // ---- la ripresa: si riparte da capo dopo 5 secondi; intanto gli amici rientrano (stesso id) ----
+    function msgRiparte(to) { var m = { t: "riparte", fase: "gioco", ms: Math.max(0, ripFino - Date.now()) }; if (to) m.to = to; return m; }
+    function riparti() {
+      fase = "ripresa"; ripFino = Date.now() + 5000;
+      for (var s = 0; s < NSEAT; s++) if (posti[s] && posti[s] !== "host") attesiRip[posti[s]] = 1;
+      if (lanc && lanc !== "host") attesiRip[lanc] = 1;
+      rete.invia(msgRiparte());   // (trattenuto: chi rientra lo vede subito)
+      assicuraStilePendolo();
+      var s0 = t.schermata({ icona: "🎯", titolo: "🔁 Si riparte da capo", sotto: "Palla a Pendolo" });
+      s0._contenuto.appendChild(t.el("p", { style: "text-align:center;font-size:1.05rem;line-height:1.5;margin-top:16px", text: "La partita è ripresa: stessi ruoli, si ricomincia la manche." }));
+      var b = t.el("button", { class: "btn btn-primario", text: "▶ Via! ", onclick: function () { if (fase === "ripresa") inizia(); } });
+      s0._piede.appendChild(b);
+      t.mostra(s0);
+      t.contoAvanti(b, 5, function () { if (fase === "ripresa") inizia(); }, "pd-rip|" + codice);
+      // chi non torna entro 20 secondi è come se fosse uscito (il suo personaggio lo prende un bot)
+      setTimeout(function () { Object.keys(attesiRip).forEach(function (id) { delete attesiRip[id]; if (dentro(id)) addio(id); }); }, 20000);
+    }
+    function rientrato(id) {   // tornato dopo la ripresa: se la manche è già partita riprende il suo personaggio
+      delete attesiRip[id];
+      if (!ST || fase !== "gioco") return;
+      if (lanc === id) { ST.aiLanc = false; ST.aimHold = 0; return; }
+      var s = seatDi(id), c = s >= 0 ? ST.chars[s] : null;
+      if (c && c.alive) { c.human = true; c.ctrl = id; c.mov = 0; }
+    }
+    // la ripresa sulla schermata finale: di nuovo lì (la foto trattenuta torna la fine, per chi rientra)
+    function riprendiFine() {
+      fase = "fine";
+      if (fineMsg) rete.invia(fineMsg);
+      var f = fineH || {};
+      schermataFine(t, { vinto: !!f.vinto, frase: f.frase || "", stat: f.stat || [], online: { host: true }, onRigioca: function () { tornaLobby(); }, onEsci: function () { chiudi(); t.esci(); } });
+      ricorda();
+    }
 
     function inizia() {
       riempiPosti();
       gameId = nuovoIdPartita("online"); fase = "gioco"; vintoL = false; ST = nuovoStato(P, mkChars(posti), lanc === null); ST.collis = !!collis;
+      // (ripresa) chi non è ancora tornato: il suo personaggio lo muove un bot finché non rientra
+      for (var sr = 0; sr < NSEAT; sr++) if (posti[sr] && attesiRip[posti[sr]]) diventaBot(ST.chars[sr]);
+      if (lanc && attesiRip[lanc]) { ST.aiLanc = true; ST.aiTarget = -1; ST.aiCd = 0.9; }
       // i bot del gruppo fisso (per la bravura scelta), mai col nome di chi è in stanza: se nessuno lancia, lancia il primo
       var bots = prendiBot(NSEAT + 1, diff, Object.keys(nomi).map(function (k) { return nomi[k]; })), nb = 0;
       var av = { posti: [], lanc: lanc ? { nome: nomi[lanc], cfg: omini[lanc] || null } : bots[nb++] };
       for (var sb = 0; sb < NSEAT; sb++) av.posti.push(posti[sb] ? { nome: nomi[posti[sb]], cfg: omini[posti[sb]] || null } : bots[nb++]);
-      viaMsg = { t: "via", lanc: lanc, seggi: seggi(), av: av, gameId: gameId, difficolta: diff, mir: mirino ? 1 : 0 };
+      viaMsg = { t: "via", fase: "gioco", lanc: lanc, seggi: seggi(), av: av, gameId: gameId, difficolta: diff, mir: mirino ? 1 : 0 };
       rete.invia(viaMsg);   // resta "trattenuto": chi rientra o arriva tardi lo riceve subito
       var mioRuolo = (lanc === "host") ? "lanciatore" : "trave";
       function mioC() { var s = seatDi("host"); return s >= 0 && ST && ST.fase === "gioco" ? ST.chars[s] : null; }
@@ -817,6 +872,7 @@
         onEsci: function () { chiudi(); t.esci(); }
       }, av, { mirino: mirino });
       last = performance.now(); loop = requestAnimationFrame(giro);
+      ricorda();
     }
     function giro(now) {
       if (fase !== "gioco") return; var dt = Math.min(0.05, (now - last) / 1000); last = now;
@@ -843,8 +899,9 @@
       salvaTrofei({ gameId: gameId, modo: "online", difficolta: diff, nome: nomi.host, ruolo: hostRuolo, vinto: hostVinto,
         abbattuti: hostRuolo === "lanciatore" ? abbattuti : 0, schivate: hostSeat >= 0 ? schivate[hostSeat] : 0,
         avversariUmani: hostRuolo === "lanciatore" ? umTrave : umLanc, durata: durata });
-      rete.invia({ t: "fine", gameId: gameId, difficolta: diff, vintoLanc: vintoLanc ? 1 : 0, surv: survSeat, seggi: seggi(), lanc: lanc,
-        umLanc: umLanc, umTrave: umTrave, durata: durata, lanci: ST.lanci, schivate: schivate, scampati: scampati, resist: resist, abbattuti: abbattuti });
+      fineMsg = { t: "fine", fase: "fine", gameId: gameId, difficolta: diff, vintoLanc: vintoLanc ? 1 : 0, surv: survSeat, seggi: seggi(), lanc: lanc,
+        umLanc: umLanc, umTrave: umTrave, durata: durata, lanci: ST.lanci, schivate: schivate, scampati: scampati, resist: resist, abbattuti: abbattuti };
+      rete.invia(fineMsg);
       if (t.risultato) {   // per il torneo online e gli XP: prima chi ha vinto (i bot non contano)
         var vinti = [], persi = [];
         if (lanc && nomi[lanc]) (vintoLanc ? vinti : persi).push(nomi[lanc]);
@@ -853,15 +910,16 @@
       }
       if (ref) { ref.rimuovi(); ref = null; }
       var hs = hostSeat >= 0 ? ST.chars[hostSeat] : null;
-      schermataFine(t, { vinto: hostVinto, frase: fraseFine(hostRuolo, hostVinto),
-        stat: statFine(hostRuolo, { abbattuti: abbattuti, durata: durata, lanci: ST.lanci, schivate: hs ? hs.schivate : 0, scampati: hs ? hs.scampati : 0, resistito: hostSeat >= 0 ? resist[hostSeat] : durata }),
+      fineH = { vinto: hostVinto, frase: fraseFine(hostRuolo, hostVinto), stat: statFine(hostRuolo, { abbattuti: abbattuti, durata: durata, lanci: ST.lanci, schivate: hs ? hs.schivate : 0, scampati: hs ? hs.scampati : 0, resistito: hostSeat >= 0 ? resist[hostSeat] : durata }) };   // (la ripresa la rifà uguale)
+      schermataFine(t, { vinto: fineH.vinto, frase: fineH.frase, stat: fineH.stat,
         online: { host: true }, onRigioca: function () { tornaLobby(); }, onEsci: function () { chiudi(); t.esci(); } });
+      ricorda();
     }
     function tornaLobby() { fase = "lobby"; ST = null; viaMsg = null; riempiPosti(); lobbyAgg(); }
     t.onRivincita = tornaLobby;   // la Rivincita della Sala
     function chiudi() { if (loop) cancelAnimationFrame(loop); if (ref) ref.rimuovi(); if (rete) rete.chiudi(); }
 
-    function lobbyAgg() { if (fase !== "lobby") return; rete.invia({ t: "lobby", codice: codice, pronta: pronta, lanc: lanc, seggi: seggi(), nomi: nomi, omini: omini, att: attesa, fuori: fuori() }); disegnaLobby(); }
+    function lobbyAgg() { if (fase !== "lobby") return; ricorda(); rete.invia({ t: "lobby", fase: "lobby", codice: codice, pronta: pronta, lanc: lanc, seggi: seggi(), nomi: nomi, omini: omini, att: attesa, fuori: fuori() }); disegnaLobby(); }
     function disegnaLobby() { if (fase !== "lobby") return;
       renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", lanc: lanc, seggi: seggi(), nomi: nomi, omini: omini, att: attesa, fuori: fuori() },
         { onComincia: inizia,
@@ -869,7 +927,9 @@
           onTrave: function () { var lib = postoLibero(); hostVaA(lib >= 0 ? lib : 0); lobbyAgg(); },   // un posto dei bot, se c'è (se no si scambia col primo)
           onHostSeat: function (i) { hostVaA(i); lobbyAgg(); },
           onEsci: function () { chiudi(); t.esci(); } }); }
-    disegnaLobby();
+    if (RIP && RIP.fase === "fine" && fineH) riprendiFine();   // la ripresa: di nuovo la schermata finale
+    else if (RIP) riparti();   // la ripresa a metà manche: si riparte da capo
+    else disegnaLobby();
   }
 
   function ospitePendolo(t, codice) {
@@ -896,6 +956,16 @@
           if (!m || !m.t) return;
           if (m.t === "lobby") { S.lanc = m.lanc; S.seggi = m.seggi; S.guardi = false; S.ioFuori = (m.fuori || []).indexOf(S.myId) >= 0; if (!S.ref) { S.fase = "lobby"; mostraLobby(m); } }
           else if (m.t === "guardi") { if (m.to === S.myId) { S.guardi = true; if (m.fuori) S.ioFuori = true; if (!S.ref && S.msg2 && S.fase !== "fine") S.msg2.textContent = S.ioFuori ? "👀 Questa volta guardi: giocano gli amici scelti." : "La partita è già cominciata: appena finisce entri anche tu! 👀"; } }
+          else if (m.t === "riparte") {   // l'host ha ripreso la partita (aveva ricaricato): stessi ruoli, la manche si rifà da capo
+            fermaGiro(); if (S.ref) { S.ref.rimuovi(); S.ref = null; } S.buf = []; S.fase = "riparte";
+            if (S.ripS && document.body.contains(S.ripS)) return;   // (già sullo schermo: arriva due volte, trattenuto e per me)
+            var sR = t.schermata({ icona: "🎯", titolo: "🔁 Si riparte da capo", sotto: "Palla a Pendolo" }), pR = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:12px" });
+            sR._contenuto.appendChild(el("p", { style: "text-align:center;font-size:1.05rem;line-height:1.5;margin-top:16px", text: "L'host è tornato: stessi ruoli, si ricomincia la manche." }));
+            sR._contenuto.appendChild(pR);
+            sR._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); } }));
+            S.ripS = sR; t.mostra(sR);
+            t.contoAvanti(pR, Math.max(1, Math.round((+m.ms || 0) / 1000)), null, "pd-rip-o");
+          }
           else if (m.t === "via") {
             if (S.ref && m.gameId === S.gameId) return;   // la stessa partita rimandata (qualcuno è rientrato): niente da rifare
             S.gameId = m.gameId; S.lanc = m.lanc; S.seggi = m.seggi; S.av = m.av || null; S.mir = !!m.mir;
@@ -1061,6 +1131,7 @@
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 1,
     etichettaGiocatori: "👥 1–4 giocatori",   // (da solo, o online: chi lancia più 3 posti)
     postiOnline: 4,   // chi lancia più 3 sulla trave: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
+    riprende: true,   // se l'host ricarica la pagina restano ruoli e regole: la manche a metà si rifà da capo (t.ripresa)
     regole: [
       "Sei di spalle: davanti una <b>trave sull'acqua</b> con dei personaggi. La palla appesa oscilla <b>in profondità</b>.",
       "<b>Lanciatore</b>: miri di lato (◀ ▶ o trascini) e premi <b>LANCIA</b>. Il lancio è <b>sempre uguale</b>: il <b>mirino rosso</b> mostra dove arriverà. Mira dove <b>andranno</b>, non dove sono!",

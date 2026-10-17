@@ -9,6 +9,7 @@
   nome: "La Vacanza Perfetta",
   icona: "🏝️",
   sottotitolo: "Costruisci la vacanza dei sogni (o il disastro dell'estate)",
+  scenari: [ { emoji: "📸", testo: "Le foto sui social: quale vacanza fa più invidia?" }, { emoji: "🌧️", testo: "Piove per tutta la settimana: chi si diverte lo stesso?" }, { emoji: "💸", testo: "Al ritorno arriva il conto: quale vacanza valeva la pena?" } ],
   round: [
     {
       nome: "Il Mezzo di Trasporto", icona: "✈️",

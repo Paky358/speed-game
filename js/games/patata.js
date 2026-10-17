@@ -94,6 +94,8 @@
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono con la bomba!", amici: true }],
     giocatoriMax: 10,
     postiOnline: 10,   // posti online
+    riprende: true,    // se l'host ricarica la pagina, la partita riprende: la bomba torna in mano a chi l'aveva, col tempo intero
+    riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     difficolta: 2,
     regole: [
       "Si vota fra <b>3 categorie</b> o <b>🎲 a sorpresa</b> (una a caso, la sceglie la ruota): si gioca la più votata.",
@@ -234,26 +236,29 @@
       var fuori = h.vite <= 0;
       if (fuori) { h.eliminato = true; st.eliminati.push(h.id); }
       st.boom = { id: h.id, nome: h.nome, fuori: fuori, vite: h.vite, miccia: regole.segreta ? Math.round(st.miccia / 1000) : null }; st.fase = "esplosione"; cambia();
-      toBoom = setTimeout(function () {
-        toBoom = null;
-        if (chiuso || st.fase !== "esplosione") return;   // partita lasciata o già finita (es. sono usciti tutti)
-        st.boom = null; var v = vivi();
-        v.forEach(function (p) { if (p.id !== h.id) statP(p.id).roundSopravvissuti++; });
-        if (v.length <= 1) { finisci(false); cambia(); return; }
-        st.round++;
-        // togli gli eliminati dal giro, poi dai la bomba a caso a chi NON è ancora
-        // stato scelto in questo giro (così si completa il giro); se hanno già avuto
-        // tutti, si apre un giro nuovo.
-        st.giro = st.giro.filter(inGara);
-        var cand = v.filter(function (p) { return st.giro.indexOf(p.id) < 0; });
-        if (!cand.length) { st.giro = []; cand = v; }
-        var nh = cand[Math.floor(Math.random() * cand.length)];
-        st.holder = nh.id; st.giro.push(nh.id); statP(nh.id).bombeRicevute++;
-        if (st.giro.length >= v.length) st.giro = [nh.id];
-        st.prev = null; st.ultimo = null; st.soloDare = null;
-        st.cap = capMs(st.passaggi); st.remaining = st.cap; st.remPrima = null; nuovaMiccia();
-        st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_ROUND; st.blocco = false; cambia();
-      }, DURATA_BOOM);
+      toBoom = setTimeout(dopoBoom, DURATA_BOOM);
+    }
+    // finita l'esplosione: la bomba a un altro (o la fine). (Anche dopo la ripresa, se l'host ha ricaricato durante il BOOM)
+    function dopoBoom() {
+      toBoom = null;
+      if (chiuso || st.fase !== "esplosione") return;   // partita lasciata o già finita (es. sono usciti tutti)
+      var hid = st.holder;   // (chi è appena esploso)
+      st.boom = null; var v = vivi();
+      v.forEach(function (p) { if (p.id !== hid) statP(p.id).roundSopravvissuti++; });
+      if (v.length <= 1) { finisci(false); cambia(); return; }
+      st.round++;
+      // togli gli eliminati dal giro, poi dai la bomba a caso a chi NON è ancora
+      // stato scelto in questo giro (così si completa il giro); se hanno già avuto
+      // tutti, si apre un giro nuovo.
+      st.giro = st.giro.filter(inGara);
+      var cand = v.filter(function (p) { return st.giro.indexOf(p.id) < 0; });
+      if (!cand.length) { st.giro = []; cand = v; }
+      var nh = cand[Math.floor(Math.random() * cand.length)];
+      st.holder = nh.id; st.giro.push(nh.id); statP(nh.id).bombeRicevute++;
+      if (st.giro.length >= v.length) st.giro = [nh.id];
+      st.prev = null; st.ultimo = null; st.soloDare = null;
+      st.cap = capMs(st.passaggi); st.remaining = st.cap; st.remPrima = null; nuovaMiccia();
+      st.fase = "gioco"; st.ts = Date.now(); st.attesa = st.ts + ATTESA_ROUND; st.blocco = false; cambia();
     }
 
     return {
@@ -334,6 +339,23 @@
       bruciato: function () { return st.bruciato; },
       chiuso: function () { return chiuso; },
       distruggi: function () { chiuso = true; clearInterval(loop); if (toBoom) { clearTimeout(toBoom); toBoom = null; } },
+      // la ripresa (l'host ha ricaricato la pagina): la partita com'è (un oggetto semplice) e di nuovo dentro il motore
+      esporta: function () { return JSON.parse(JSON.stringify({ st: st, partitaId: partitaId, stat: statGiocatori })); },
+      // la bomba riparte col tempo INTERO in mano a chi l'aveva (durante la ricarica non scoppia), dopo `respiro` ms fermi;
+      // un BOOM a metà si chiude da solo; voto e classifica restano come sono
+      importa: function (x, respiro) {
+        if (!x || !x.st) return;
+        Object.keys(x.st).forEach(function (k) { st[k] = x.st[k]; });
+        if (x.partitaId) partitaId = x.partitaId;
+        if (x.stat) statGiocatori = x.stat;
+        if (toBoom) { clearTimeout(toBoom); toBoom = null; }
+        var ora = Date.now();
+        if (st.fase === "gioco") {
+          if (!holderObj() || !inGara(st.holder)) { var v = vivi(); if (v.length) st.holder = v[0].id; }
+          st.cap = capMs(st.passaggi); st.remaining = st.cap; st.remPrima = null; if (regole.segreta) nuovaMiccia();
+          st.ts = ora; st.attesa = ora + (respiro || 0); st.blocco = false;
+        } else if (st.fase === "esplosione") toBoom = setTimeout(dopoBoom, Math.max(1200, respiro || 0));
+      },
       vm: function () {
         var classifica = null;
         if (st.fase === "fine") {
@@ -533,8 +555,9 @@
   function hostPatata(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteP(t);
     var nomeHost = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Host";
+    var IO = t.mioId || "host";   // chi tiene la partita su questo telefono ("host", o l'amico che ha preso il posto dell'host)
     var H = { fase: "lobby", codice: "…", pronta: false, motore: null, customCats: [], usate: [], regole: regoleDa(t.impostazioni),
-      players: [{ id: "host", nome: nomeHost, colore: COLORI[0], omino: t.mioOmino ? t.mioOmino(nomeHost) : ST.mioAvatar(nomeHost) }],
+      players: [{ id: IO, nome: nomeHost, colore: COLORI[0], omino: t.mioOmino ? t.mioOmino(nomeHost) : ST.mioAvatar(nomeHost) }],
       attesa: [],     // attesa: chi è entrato a partita iniziata (guarda, e gioca dalla prossima)
       fuori: [] };    // fuori: nella Sala, chi non è stato scelto per giocare (guarda soltanto, anche le partite dopo)
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
@@ -542,10 +565,26 @@
     function colora() { H.players.forEach(function (p, i) { p.colore = COLORI[i % COLORI.length]; }); }
     // "⚙️ Regole" nella saletta: l'host cambia tempo, vite e categorie
     t.onRegole = function (im) { H.regole = regoleDa(im); if (H.fase === "lobby") bd(); };
-    var rete = SGNet.ospita("patata", {
+    // la ripresa (l'host ha ricaricato la pagina a metà partita): t.ripresa.stato.patata = quello che si è ricordato in bd()
+    var RIP = t.ripresa && t.ripresa.stato && t.ripresa.stato.patata;
+    var attesi = {};   // (ripresa) gli amici che devono rifarsi vivi: chi non torna in 20 s esce come quando se ne va
+    var detto = null;   // la partita (partitaId) già data al torneo online
+    // ---- la ripresa: stessi giocatori, stesse vite, stessa categoria; la bomba torna in mano a chi l'aveva, col tempo
+    // intero, dopo 5 secondi fermi. Gli amici restano in gara e rientrano da soli (stesso id)
+    if (RIP && RIP.motore) {
+      ["customCats", "usate", "players", "attesa", "fuori"].forEach(function (k) { if (Array.isArray(RIP[k])) H[k] = RIP[k]; });
+      if (RIP.regole) H.regole = RIP.regole;
+      detto = RIP.detto || null;
+      H.fase = "gioco";
+      H.motore = creaMotore(presenti(), function () { bd(); }, H.customCats, H.regole, H.usate);
+      H.motore.importa(RIP.motore, 5000);
+      H.players.concat(H.attesa, H.fuori).forEach(function (p) { if (p.id !== IO && !p.via) attesi[p.id] = 1; });
+    }
+    var cbRete = {
       onCodice: function (c) { H.codice = c; bd(); },
       onConnesso: function () { H.pronta = true; bd(); },
       onAddio: function (id) {
+        delete attesi[id];
         var nf = H.fuori.length; H.fuori = H.fuori.filter(function (a) { return a.id !== id; });
         if (H.fuori.length !== nf) { bd(); return; }
         if (H.fase === "lobby") { H.players = H.players.filter(function (p) { return p.id !== id; }); colora(); bd(); return; }
@@ -555,6 +594,7 @@
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
+        delete attesi[id];   // (si è rifatto vivo)
         if (m.t === "join") {
           var nome = String(m.nome || "Amico").slice(0, 16), omino = ST.avatarValido(m.omino), p = pById(id);
           // nella Sala gioca solo chi è stato scelto: gli altri guardano (col loro id nella foto)
@@ -576,7 +616,8 @@
         else if (m.t === "indietro") H.motore.indietro(id);
       },
       onErrore: function () { senzaReteP(t); }
-    });
+    };
+    var rete = SGNet.ospita("patata", cbRete, H.motore ? { ripresa: true } : null);
     function piena(id) { try { rete.inviaVeloce({ t: "piena", to: id }); } catch (e) {} }
     function vmHost() {
       if (H.fase === "lobby") return { fase: "lobby", codice: H.codice, pronta: H.pronta, regole: testoRegole(H.regole),
@@ -587,16 +628,31 @@
       vm.fuori = H.fuori.map(function (a) { return { id: a.id, nome: a.nome }; });
       return vm;
     }
-    var detto = null;   // la partita (partitaId) già data al torneo online
     function bd() {
       var v = vmHost();
       if (v.fase === "fine" && v.classifica && detto !== v.partitaId && t.risultato) {
         detto = v.partitaId; t.risultato(v.classifica.map(function (p) { return { nome: p.nome, pos: p.pos }; }));
       }
+      ricorda(); vici();
       rete.invia({ t: "vm", vm: v }); disegna();
     }
+    // (host di riserva) chi porta avanti la partita se sparisco: prima chi guarda (non gioca: non ha niente da perdere)
+    var viciK = "";
+    function vici() {
+      var l = H.attesa.concat(H.fuori).map(function (a) { return a.id; }).filter(function (id) { return id !== IO; }), k = l.join(",");
+      if (k !== viciK && t.vici) { viciK = k; t.vici(l.length ? l : null); }
+    }
+    // dopo ogni cambiamento la partita si ricorda (in saletta niente da riprendere)
+    var ricordato = !!H.motore;
+    function ricorda() {
+      if (!t.ricorda) return;
+      if (H.fase === "lobby" || !H.motore) { if (ricordato) { ricordato = false; t.ricorda(null); } return; }
+      ricordato = true;
+      t.ricorda({ patata: { fase: H.fase, customCats: H.customCats, usate: H.usate, regole: H.regole, players: H.players,
+        attesa: H.attesa, fuori: H.fuori, detto: detto, motore: H.motore.esporta() } });
+    }
     var cb = {
-      locale: false, sonoHost: true, myId: "host", chiuso: false,
+      locale: false, sonoHost: true, myId: IO, chiuso: false,
       getRemaining: function () { return H.motore ? H.motore.remaining() : 0; },
       getBruciato: function () { return H.motore ? H.motore.bruciato() : 0; },
       onAggiungiCat: function (txt) { txt = String(txt || "").trim().slice(0, 40); if (H.fase === "lobby" && txt && H.customCats.indexOf(txt) < 0) { H.customCats.push(txt); bd(); } },
@@ -606,24 +662,30 @@
         if (cb._cat && cb._cat.inp.value.trim()) { cb.onAggiungiCat(cb._cat.inp.value); cb._cat.inp.value = ""; }   // la categoria scritta e non aggiunta non si perde
         H.fase = "gioco"; H.motore = creaMotore(presenti(), function () { bd(); }, H.customCats, H.regole, H.usate); bd();
       },
-      onVota: function (idx) { H.motore && H.motore.vota("host", idx); },
+      onVota: function (idx) { H.motore && H.motore.vota(IO, idx); },
       onVia: function () { H.motore && H.motore.via(); },
-      onPassa: function (id) { H.motore && H.motore.passa("host", id); },
-      onIndietro: function () { H.motore && H.motore.indietro("host"); },
+      onPassa: function (id) { H.motore && H.motore.passa(IO, id); },
+      onIndietro: function () { H.motore && H.motore.indietro(IO); },
       // "Nuova partita": tutti tornano nella saletta (entra anche chi è arrivato tardi, esce chi se n'è andato)
       onNuova: function () {
         if (H.motore) H.motore.distruggi();
         H.motore = null; H.fase = "lobby";
         H.players = presenti().concat(H.attesa.map(function (a) { return { id: a.id, nome: a.nome, omino: a.omino }; }));
+        // chi tiene la partita è il primo (in saletta ha la corona); se l'ha presa guardando (host di riserva), si siede
+        if (!H.players.some(function (p) { return p.id === IO; })) { H.fuori = H.fuori.filter(function (a) { return a.id !== IO; }); H.players.push({ id: IO, nome: nomeHost, omino: t.mioOmino ? t.mioOmino(nomeHost) : ST.mioAvatar(nomeHost) }); }
+        H.players.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });
         H.attesa = []; colora(); bd();
       },
       // la Rivincita dei tasti di fine comuni: come "Nuova partita", solo a partita finita (il core fa il 3-2-1)
       onRivincita: function () { if (H.fase === "gioco" && H.motore && H.motore.st.fase === "fine") cb.onNuova(); },
-      onEsci: function () { cb.chiuso = true; stopTimers(); if (H.motore) H.motore.distruggi(); rete.chiudi(); t.esci(); }
+      onEsci: function () { if (t.ricorda) t.ricorda(null); cb.chiuso = true; stopTimers(); if (H.motore) H.motore.distruggi(); rete.chiudi(); t.esci(); }
     };
     function disegna() { if (!cb.chiuso) disegnaPatataVM(t, vmHost(), cb); }
     t.onRivincita = cb.onRivincita;
-    disegna();
+    if (H.motore) {   // (ripresa) la partita com'era, a tutti; chi non si rifà vivo in 20 s esce come quando se ne va
+      bd();
+      setTimeout(function () { if (!cb.chiuso) Object.keys(attesi).forEach(function (id) { cbRete.onAddio(id); }); }, 20000);
+    } else disegna();
   }
 
   function ospitePatata(t, codice) {

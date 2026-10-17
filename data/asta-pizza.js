@@ -9,6 +9,7 @@
   nome: "La Pizza Perfetta",
   icona: "🍕",
   sottotitolo: "Compra gli ingredienti e sforna la pizza migliore",
+  scenari: [ { emoji: "👵", testo: "Arriva la nonna napoletana: quale pizza approva?" }, { emoji: "🏆", testo: "Campionato del mondo della pizza: chi vince la medaglia d'oro?" }, { emoji: "🍷", testo: "Primo appuntamento in pizzeria: quale pizza fa colpo?" } ],
   round: [
     {
       nome: "L'Impasto", icona: "🫓",

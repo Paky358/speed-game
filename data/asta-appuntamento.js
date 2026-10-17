@@ -9,6 +9,7 @@
   nome: "Il Primo Appuntamento",
   icona: "💘",
   sottotitolo: "Organizza l'appuntamento al buio: 5 stelle è matrimonio, 1 stella è un blocco su WhatsApp",
+  scenari: [ { emoji: "💍", testo: "Chi ottiene il secondo appuntamento?" }, { emoji: "😬", testo: "Va tutto storto: chi salva comunque la serata?" }, { emoji: "📱", testo: "Il giorno dopo: chi riceve il messaggio «Quando ci rivediamo?»" } ],
   round: [
     {
       nome: "La Location", icona: "📍",

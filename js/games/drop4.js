@@ -223,6 +223,7 @@
     descrizione: "Quattro in fila a gravità: fai cadere le pedine in colonna e allinea quattro dello stesso colore. Contro il Bot, in due o online.",
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 2,
     postiOnline: 2,   // online si gioca in due: gli altri guardano
+    riprende: true,   // se l'host ricarica la pagina, la partita riprende dalla stessa mossa (t.ripresa)
     // la riga «📜 Si gioca così» della saletta
     riassunto: function (imp) { var p = imp && imp.primo; return "Comincia " + (p === "ospite" ? "chi entra" : p === "caso" ? "chi capita, a sorte" : "chi apre la stanza"); },
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il Bot" },
@@ -810,9 +811,28 @@
       assente: null,      // { voluto } : l'avversario è uscito o ha perso la rete a partita iniziata
       guardano: []        // [{ id, nome, omino }]: chi è entrato a stanza piena
     };
-    var ui = null, uscito = false, partita = "H" + (++ISTANZA);
+    var ui = null, uscito = false, partita = "H" + Date.now().toString(36) + (++ISTANZA);   // (un nome che non si ripete: con la ripresa i trofei restano contati)
     var ch = CH(), filtra = ch ? ch.filtro() : null;   // 💬 le faccine e le frasi (accese o spente dall'host nel ⚙️)
     st.ch = !!ch && ch.attive(imp);
+    // ---- la ripresa: l'host ha ricaricato la pagina (o l'app si è chiusa) a metà partita → si continua dalla stessa mossa.
+    // L'avversario è "via" finché non si rifà vivo (rientra da solo in un attimo); se in 30 s non torna, "⏳ si è
+    // disconnesso… lo aspettiamo" come quando perde la rete. Chi guardava rientra da solo col suo join
+    var CAMPI = ["fase", "n", "primoImp", "board", "turno", "fine", "primo", "serie", "avv", "prossimo"];
+    var RIP = t.ripresa && t.ripresa.stato && t.ripresa.stato.drop4, ricordata = !!RIP, avvVia = false;
+    if (RIP) {
+      CAMPI.forEach(function (k) { if (RIP[k] !== undefined) st[k] = RIP[k]; });
+      if (RIP.partita) partita = RIP.partita;   // (stessa partita: i trofei non si contano due volte)
+      if (st.avv) {
+        avvVia = true;
+        setTimeout(function () { if (!uscito && avvVia && st.avv && st.fase !== "lobby" && !st.assente) { avvVia = false; st.assente = { voluto: false }; bd(); } }, 30000);
+      }
+    }
+    function ricorda() {   // dopo ogni cambiamento (in saletta non c'è niente da riprendere)
+      if (!t.ricorda) return;
+      if (st.fase === "lobby") { if (ricordata) { ricordata = false; t.ricorda(null); } return; }
+      var o = { partita: partita }; CAMPI.forEach(function (k) { o[k] = st[k]; });
+      ricordata = true; t.ricorda({ drop4: o });
+    }
 
     // "⚙️ Regole" nella saletta: chi comincia la prima partita (e le chiacchiere, subito)
     t.onRegole = function (im) { st.primoImp = (im && im.primo) || "host"; var c0 = st.ch; st.ch = !!ch && ch.attive(im); if (st.fase === "lobby" || c0 !== st.ch) bd(); };
@@ -846,6 +866,7 @@
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
+        if (st.avv && id === st.avv.id) avvVia = false;   // (ripresa) l'avversario si è rifatto vivo
         if (st.avv && id === st.avv.id && st.assente && m.t !== "esco") st.assente = null;   // è tornato
         if (m.t === "join") {
           var p = { id: id, nome: String(m.nome || "Avversario").slice(0, 16), omino: avatarOk(m.omino) };
@@ -875,7 +896,7 @@
         bd();
       },
       onErrore: function () { if (!st.pronta) errore(t, "Problema di collegamento. Controlla la connessione e riprova."); }   // dopo, la rete si ricollega da sola
-    });
+    }, { ripresa: !!RIP });   // (ripresa: gli amici restano sul tavolo, non tornano in saletta)
     function vm() {
       return { fase: st.fase, codice: st.codice, pronta: st.pronta, n: st.n, board: st.board, turno: st.turno, fine: st.fine, primo: st.primo, primoImp: st.primoImp,
         nomi: { G: st.nomeG, B: st.avv ? st.avv.nome : "Avversario" }, avversario: !!st.avv, avvId: st.avv ? st.avv.id : null,
@@ -885,6 +906,7 @@
     function bd() {
       if (uscito) return;
       ricordaAvv("drop4", st.codice, st.avv ? st.avv.id : (st.riserva && Date.now() < st.riserva.fino ? st.riserva.id : null));
+      ricorda();
       var v = vm(); rete.invia({ t: "vm", vm: v }); disegna(v);
     }
     function applica(c) {
@@ -912,9 +934,9 @@
     // la rivincita dei tasti di fine comuni: si torna nella saletta con lo stesso avversario (il core fa il 3-2-1), poi comincia l'altro
     function allaSaletta() { if (st.fase !== "fine" || !st.avv || st.assente) return; st.prossimo = altro(st.primo); st.fase = "lobby"; bd(); }
     t.onRivincita = allaSaletta;
-    function chiudi() { uscito = true; rete.chiudi(); t.esci(); }
+    function chiudi() { if (t.ricorda) t.ricorda(null); uscito = true; rete.chiudi(); t.esci(); }   // (uscito apposta: niente da riprendere)
     var cbH = {
-      sonoHost: true, mio: "G", partita: partita,
+      sonoHost: true, mio: "G", partita: partita, persisti: true,
       onChiac: function (c) { if (!st.ch || st.fase === "lobby" || !ch.valido("drop4", c)) return; chiacDrop(ui, "G", c); rete.inviaVeloce({ t: "chiac", k: "G", id: "host", c: c }); },
       onColonna: function (c) { if (st.fase === "gioco" && st.turno === "G") applica(c); },
       onComincia: comincia, onRivincita: rivincita, onSaletta: allaSaletta,

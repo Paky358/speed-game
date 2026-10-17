@@ -9,6 +9,7 @@
   nome: "Il Road Trip",
   icona: "🚗",
   sottotitolo: "Organizza il viaggio in macchina perfetto (o quello da incubo)",
+  scenari: [ { emoji: "🗺️", testo: "Mille chilometri in tre giorni: quale viaggio arriva in fondo?" }, { emoji: "🚗", testo: "La macchina si rompe in mezzo al nulla: chi se la cava?" }, { emoji: "🎶", testo: "Il viaggio da raccontare ai nipoti: quale ha la storia più bella?" } ],
   round: [
     {
       nome: "Il Mezzo", icona: "🚙",

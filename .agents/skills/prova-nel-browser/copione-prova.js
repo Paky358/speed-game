@@ -39,6 +39,16 @@
 // 70-76 (p2-t): il torneino nei giochi a due con 3 o più persone: «Tris in N» (🏆 Torneino già scelto / ⚔️ Una sfida), chi resta
 // in più (🤖 Bot partecipante vero / ⏭️ passa il turno), punti della serata, ricarica e uscita a metà, «🏆 Fate il torneino in N»
 // dalla saletta (anche fuori dalla Sala), il tabellone in 10 senza scorrere (aiuti tn, viaTn, decidiTn, trisTn, finoAllaFineTn, misureTab…).
+// 501-506 (p5-a, Passo 5): la ripresa comune col gioco finto «Contatore» (aiuti contatore, apriContatore, provaRipresa: l'host
+// ricarica o chiude l'app e la partita riprende da dove era; esce apposta; ricarica sulla classifica; senza profilo; gioco che non riprende).
+// 507-514 e "513b" (p5-b): l'host di riserva col Contatore { riserva: true } e 4 telefoni (aiuti apriRiserva, chiTiene, fotoDa,
+// pilloleDi): l'host si spegne e un vice porta avanti la partita, il secondo vice, l'host che torna o riapre e rientra da
+// giocatore, ricarica veloce e rete giù 4 s (nessun subentro), due vice insieme, vice con l'orologio indietro, gioco senza riserva;
+// "514b"/"514c" nella Sala (Contatore { online: true }: l'host della Sala rientra da giocatore; il vice tiene gioco e poi Sala),
+// "514d" la pausa (host uscito un attimo dall'app: il vice aspetta 60 s). Aiuti muore/torna: il telefono spento resta spento.
+// 515-517 (p5-c): la ripresa nella Sala (l'host della Sala ricarica a metà gioco: Sala e gioco con gli stessi codici, la
+// partita conta una volta), nel torneo a eliminazione (chi apre la partita ricarica) e nel duello (chi l'ha aperto ricarica,
+// poi ricarica l'host della Sala: il duello continua). Aiuto mossaTris.
 (function () {
   "use strict";
   var W = window;
@@ -58,7 +68,7 @@
   function pulisci() {
     Object.keys(W.BR.tel).forEach(function (n) { (W.BR.perNome[n] || []).forEach(function (c) { c.morto = true; c.connected = false; }); var f = document.getElementById("tel-" + n); if (f) f.remove(); });
     W.BR.clients = []; W.BR.retained = {}; W.BR.log = []; W.BR.perNome = {}; W.BR.mem = {}; W.BR.tel = {}; W.BR.conti = {}; W.BR.pubblici = {};
-    W.BR.nube = {}; W.BR.amicizie = []; W.BR.storia = []; W.BR.congelati = {};   // (liste del profilo, amicizie, foto passate, telefoni fermi)
+    W.BR.nube = {}; W.BR.amicizie = []; W.BR.storia = []; W.BR.congelati = {}; W.BR.spenti = {};   // (liste del profilo, amicizie, foto passate, telefoni fermi o spenti)
     riprendiSiDaSolo();   // (lo scenario 50 ferma per un attimo il "sì" da solo delle conferme)
     if (W.__cliccaVero) W.clicca = W.__cliccaVero;   // (lo scenario 48 conta i tocchi: se si è fermato a metà, si rimette com'era)
   }
@@ -550,11 +560,11 @@
         var t0 = Date.now(), idG = mioId("Giulia"), idL = mioId("Luca"), pg = "";
         P = await W.ricarica("Paky");
         // in saletta: tutti di nuovo in saletta. A metà partita la Scalinata (riprende: true) riprende la partita da dove era:
-        // tutti e 3 di nuovo al loro posto e Giulia legge "si riprende la partita"
+        // tutti e 3 di nuovo al loro posto e Giulia legge "la partita riprende da dove era" (Passo 5)
         var ok = await W.aspetta(function () {
           var w = W.finestra("Paky"), p = pill(W.finestra("Giulia"));
           if (/tornato/.test(p)) pg = p;
-          if (giro) return (vm(C).fase === "scelta" || vm(C).fase === "rivela") && ids(C).indexOf(idG) >= 0 && ids(C).indexOf(idL) >= 0 && /si riprende la partita/.test(pg);
+          if (giro) return (vm(C).fase === "scelta" || vm(C).fase === "rivela") && ids(C).indexOf(idG) >= 0 && ids(C).indexOf(idL) >= 0 && /riprende da dove era/.test(pg);
           return codiceSaletta(w) === C && vm(C).fase === "lobby" && ids(C).length === 3 && dentro(W.finestra("Giulia")) && dentro(W.finestra("Luca"));
         }, 10000);
         if (!ok) no((giro ? "a metà partita: dopo 10 s la partita non è ripresa con tutti dentro" : "in saletta: dopo 10 s non sono tutti in saletta") + " (fase " + vm(C).fase + ", " + ids(C).join(",") + ", Paky: " + codiceSaletta(W.finestra("Paky")) + ", Giulia legge: " + (pg || pill(W.finestra("Giulia")) || "niente") + ")");
@@ -974,8 +984,10 @@
     //     legge "La stanza non risponde"; quando l'host si riprende entra da solo
     22: { nome: "Host appena sparito: «La stanza non risponde»", fai: async function () {
       var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "Tris");
-      var c = W.viviDi("Paky")[0]; if (!c) no("l'host non ha un collegamento");
-      c.connected = false; c.frozen = true; W.BR.clients = W.BR.clients.filter(function (x) { return x !== c; });   // muto, senza testamento
+      // muto, senza testamento, su TUTTI gli uffici postali (Passo 5: con l'ufficio di riserva l'host parla su tutti e due)
+      var cc = W.viviDi("Paky"); if (!cc.length) no("l'host non ha un collegamento");
+      cc.forEach(function (c) { c.connected = false; c.frozen = true; var u = W.ufficio(c.u); u.clients = u.clients.filter(function (x) { return x !== c; }); });
+      var c = { torna: function () { cc.forEach(function (x) { x.torna(); }); } };
       var t0 = Date.now(), M = await W.apriTel("Marco", { hash: "gioco=tris&stanza=" + C, x: 185 });
       var muta = await W.aspetta(function () { var f = M.document.querySelector(".sg-ferma"); return f && /non risponde/.test(f.innerText); }, 12000, 100);
       if (!muta) no("Marco non legge «non risponde» (" + T(M).slice(0, 60) + ")");
@@ -3121,6 +3133,857 @@
 
   };
 
+  // =========================================================
+  //  PASSO 5 (p5-a): la ripresa comune (t.ricorda / t.ripresa / t.mioId)
+  // =========================================================
+  // Il gioco finto «Contatore» (solo per le prove: nessun file del gioco). Tutti toccano «+1»; l'host ha «🏁 Fine».
+  // Host: { fase: lobby|gioco|ripresa|fine, n, giocatori: [{ id, nome, via, punti }], scade, classifica }, t.ricorda a ogni
+  // foto (null in saletta), ripresa con 3 s di «ripresa» e gli altri "via" finché non rientrano. OPZ: { riprende: false }
+  // (un gioco che non riprende), { riserva: true } (per p5-b), { online: true } (si lancia anche dalla Sala: provaOnline). Si mette nei telefoni con apriTel(nome, { prima: contatore() })
+  // e si apre col percorso di prima: hash "gioco=contatore" → «🔗 Apri la stanza» (aiuto apriContatore).
+  function contatoreGioco(OPZ) {
+    OPZ = OPZ || {};
+    var ID = "contatore";
+    function stile() {
+      if (document.getElementById("ct-stile")) return;
+      var s = document.createElement("style"); s.id = "ct-stile";
+      s.textContent = ".ct-scena{display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px}.ct-n{font-size:4rem;font-weight:900}" +
+        ".ct-chi{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.ct-chip{padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.12);font-weight:800}.ct-chip.via{opacity:.4}";
+      document.head.appendChild(s);
+    }
+    // il disegno, uguale per host e ospiti: saletta (t.lobby), gioco (costruito una volta, poi solo i numeri), classifica
+    function disegnatore(t, cb) {
+      var UI = null, FIN = null;
+      return function (v) {
+        if (v.fase === "lobby") {
+          UI = FIN = null;
+          return t.lobby({ host: cb.host, codice: v.codice, pronta: v.pronta, min: 1, attesa: "Aspetta che l'host cominci!",
+            giocatori: v.giocatori.filter(function (p) { return !p.via; }).map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.mio() }; }),
+            onComincia: cb.comincia, onEsci: cb.esci });
+        }
+        if (v.fase === "fine") {
+          UI = null;
+          var kf = JSON.stringify(v.classifica || []);
+          if (FIN && FIN.k === kf && document.body.contains(FIN.s)) return;
+          var s = t.schermata({ icona: "🏆", titolo: "Classifica" });
+          var ol = t.el("ol", { class: "classifica ct-classifica" });
+          (v.classifica || []).forEach(function (r) { ol.appendChild(t.el("li", {}, [t.el("span", { class: "nome", text: r.nome }), t.el("span", { class: "punti", text: String(r.punti) })])); });
+          s._contenuto.appendChild(ol);
+          if (!t.tastiFine(s._piede, { host: cb.host, nuova: cb.host ? cb.nuova : null, esci: cb.esci }))
+            s._piede.appendChild(t.el("button", { class: "btn btn-fantasma ct-esci", text: "🏠 Esci", onclick: cb.esci }));
+          t.mostra(s); FIN = { k: kf, s: s };
+          return;
+        }
+        FIN = null;
+        if (!UI || !document.body.contains(UI.s)) {
+          stile();
+          var sc = t.schermata({});
+          UI = { s: sc, n: t.el("div", { class: "ct-n", text: "0" }), stato: t.el("p", { class: "ct-stato" }), chi: t.el("div", { class: "ct-chi" }), chip: {} };
+          sc._contenuto.appendChild(t.el("div", { class: "ct-scena" }, [UI.stato, UI.n, UI.chi,
+            t.el("button", { class: "btn btn-primario ct-piu", text: "+1", onclick: cb.piu })]));
+          if (cb.host) sc._piede.appendChild(t.el("button", { class: "btn btn-primario ct-fine", text: "🏁 Fine", onclick: cb.fine }));
+          sc._piede.appendChild(t.el("button", { class: "btn btn-fantasma ct-esci", text: "‹ Esci", onclick: cb.esci }));
+          t.mostra(sc);
+        }
+        var tx = v.fase === "ripresa" ? "🔁 Si riprende…" : "Tocca +1!";
+        if (UI.stato.textContent !== tx) UI.stato.textContent = tx;
+        if (UI.n.textContent !== String(v.n)) UI.n.textContent = String(v.n);
+        v.giocatori.forEach(function (p) {
+          var c = UI.chip[p.id]; if (!c) { c = UI.chip[p.id] = t.el("span", { class: "ct-chip" }); UI.chi.appendChild(c); }
+          var x = (p.id === cb.mio() ? "Tu" : p.nome) + " " + p.punti; if (c.textContent !== x) c.textContent = x;
+          c.classList.toggle("via", !!p.via);
+        });
+      };
+    }
+    function host(t) {
+      var R = t.ripresa, io = t.mioId, nome = t.giocatori[0] || "Host", codice = null, pronta = false, timer = null;
+      var st = { fase: "lobby", n: 0, giocatori: [{ id: io, nome: nome, via: false, punti: 0, omino: t.mioOmino(nome) }], scade: null, riprende: null, classifica: null };
+      if (R && R.stato && R.stato.giocatori) {
+        st = R.stato;
+        // la partita di prima: gli altri sono "via" finché il loro join non li rimette al posto (stesso id)
+        st.giocatori.forEach(function (p) { p.via = p.id !== io; });
+        if (st.fase === "gioco" || st.fase === "ripresa") { st.fase = "ripresa"; st.riprende = Date.now() + 3000; if (st.scade) st.scade = R.ora(st.scade) + 3000; }
+      }
+      function pDi(id) { return st.giocatori.filter(function (p) { return p.id === id; })[0] || null; }
+      var cb = { host: true, mio: function () { return io; },
+        comincia: function () { if (st.fase !== "lobby") return; st.fase = "gioco"; st.scade = Date.now() + 300000; bd(); },
+        piu: function () { piu(io); },
+        fine: function () { fine(); },
+        nuova: function () { st.fase = "lobby"; st.n = 0; st.classifica = null; st.scade = null; st.giocatori = st.giocatori.filter(function (p) { return !p.via; }); st.giocatori.forEach(function (p) { p.punti = 0; }); bd(); },
+        esci: function () { clearInterval(timer); rete.chiudi(); t.esci(); } };
+      var disegna = disegnatore(t, cb);
+      function vm() { return { fase: st.fase, n: st.n, codice: codice, pronta: pronta, ripresa: st.fase === "ripresa", classifica: st.classifica,
+        giocatori: st.giocatori.map(function (p) { return { id: p.id, nome: p.nome, via: !!p.via, punti: p.punti, omino: st.fase === "lobby" ? (p.omino || null) : undefined }; }) }; }
+      function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); t.ricorda(st.fase === "lobby" ? null : st); disegna(v); }
+      function piu(id) { var p = pDi(id); if (st.fase !== "gioco" || !p || p.via) return; p.punti++; st.n++; bd(); }
+      function fine() {
+        if (st.fase !== "gioco" && st.fase !== "ripresa") return;
+        var ord = st.giocatori.slice().sort(function (a, b) { return b.punti - a.punti; });
+        st.classifica = ord.map(function (p) { return { nome: p.nome, punti: p.punti, pos: 1 + ord.filter(function (q) { return q.punti > p.punti; }).length }; });
+        st.fase = "fine";
+        t.risultato(st.classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }));
+        bd();
+      }
+      var rete = SGNet.ospita(ID, {
+        onCodice: function (c) { codice = c; bd(); },
+        onConnesso: function () { pronta = true; bd(); },
+        onErrore: function () {},
+        onAddio: function (id) { var p = pDi(id); if (!p) return; if (st.fase === "lobby") st.giocatori = st.giocatori.filter(function (x) { return x !== p; }); else p.via = true; bd(); },
+        onMsg: function (id, m) {
+          if (!m) return;
+          if (m.t === "join") {
+            var p = pDi(id);
+            if (p) p.via = false;
+            else st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), via: false, punti: 0, omino: m.omino || null });
+            return bd();
+          }
+          if (m.t === "piu") piu(id);
+        }
+      }, { ripresa: !!R });
+      // ripresa sulla classifica: il gioco ridice com'è finita (il core non ridà XP né punti)
+      if (R && st.fase === "fine" && st.classifica) setTimeout(function () { t.risultato(st.classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; })); }, 300);
+      timer = setInterval(function () {
+        if (st.fase === "ripresa" && Date.now() > st.riprende) { st.fase = "gioco"; bd(); }
+        else if (st.fase === "gioco" && st.scade && Date.now() > st.scade) fine();
+      }, 300);
+      bd();
+    }
+    function ospite(t, codice) {
+      var myId = null, nome = t.nomeProfilo() || "Amico";
+      var cb = { host: false, mio: function () { return myId; },
+        piu: function () { if (rete) rete.invia({ t: "piu" }); },
+        esci: function () { if (rete) rete.chiudi(); t.esci(); } };
+      var disegna = disegnatore(t, cb);
+      var s = t.schermata({ icona: "🔢", titolo: "Entro…", sotto: "Stanza " + codice }); t.mostra(s);
+      var rete = SGNet.entra(codice, {
+        onAperto: function (id) { myId = id; rete.invia({ t: "join", nome: nome, omino: t.mioOmino(nome) }); },
+        onMsg: function (m) { if (m && m.t === "vm" && m.vm) disegna(m.vm); },
+        onChiuso: function () { t.esci(); },
+        onErrore: function () {}
+      });
+    }
+    SG.registra({ id: ID, nome: "Contatore", icona: "🔢", descrizione: "Gioco di prova: tutti toccano +1.", giocatoriMin: 1, giocatoriMax: 10,
+      modi: [{ modo: "online", icona: "🔗", nome: "Online (prova)", sotto: "Apro io la stanza" }],
+      riprende: OPZ.riprende !== false, riserva: !!OPZ.riserva, provaOnline: !!OPZ.online,   // (online: si lancia anche dalla Sala)
+      regole: ["Gioco di prova: tutti toccano +1, l'host tocca 🏁 Fine."],
+      avvia: function (t) { if (t.linkParams && t.linkParams.stanza) return ospite(t, t.linkParams.stanza); return host(t); } });
+  }
+  // il Contatore da mettere in un telefono (prima che parta l'app, anche dopo le ricariche): apriTel(n, { prima: contatore() })
+  function contatore(opz, dopo) {
+    var src = "(" + contatoreGioco.toString() + ")(" + JSON.stringify(opz || {}) + ");";
+    return function (w) { w.eval(src); if (dopo) dopo(w); };
+  }
+  // l'host apre il Contatore online col percorso di prima (gioco=contatore → «🔗 Apri la stanza»): il codice
+  async function apriContatore(w) {
+    if (!await W.aspetta(function () { return W.clicca(w, /Apri la stanza/); }, 5000)) no("non trovo «🔗 Apri la stanza» del Contatore («" + T(w).slice(0, 80) + "»)");
+    var C = await W.aspetta(function () { return codiceSaletta(w) || codiceTestata(w); }, 5000);
+    if (!C) no("la stanza del Contatore non ha il codice");
+    return C;
+  }
+  function tocca(w, sel) { var b = w && w.document.querySelector(sel); if (b) b.click(); return !!b; }
+  // quante persone (non bot, non "via") sono nella foto
+  function contaDentro(v) { return ((v && (v.giocatori || v.players || v.posti)) || []).filter(function (p) { return p && !p.via && !p.bot; }).length; }
+  // i messaggi passati sullo "stato" di un codice (BR.storia) che contengono un testo (es. '"__esito"')
+  function contaStoria(C, testo) { return (W.BR.storia || []).filter(function (x) { return x.topic.indexOf("/" + C + "/stato") >= 0 && x.p.indexOf(testo) >= 0; }).length; }
+  // conta le partite date a un telefono (premiaPartita → SGNube.contaPartita): W.__partite[nome]
+  function contaPartite(nome) {
+    return function (w) {
+      W.__partite = W.__partite || {};
+      var c = w.SGNube && w.SGNube.contaPartita;
+      if (c) w.SGNube.contaPartita = function () { W.__partite[nome] = (W.__partite[nome] || 0) + 1; return c.apply(this, arguments); };
+    };
+  }
+  // ---- provaRipresa: l'host ricarica (o chiude l'app) a metà partita e la partita riprende da dove era ----
+  // o = { gioco: "contatore" (id per il link), nomeTessera (percorso di prima: W.apriStanza) o apri: async w => codice,
+  //       amici: ["Giulia", …], prima: fn(w) per tutti i telefoni (es. contatore()), arriva(vm): tutti dentro (di partenza:
+  //       le persone nella foto = amici + 1), comincia: async (C, P) (di partenza «Comincia»), fase: "gioco" o fn(vm) = il
+  //       punto in cui ricaricare, prepara: async (C, P) (le mosse prima della ricarica), come: "ricarica" | "chiudiApp",
+  //       pausa: ms da spento prima di riaprire, controlla(vmPrima, vmDopo): true (o il motivo del NO), attesa: 10000 }
+  // Controlla in 10 s: stesso codice (foto della sessione nuova con _r), fase non "lobby", controlla(...) vero, nessun amico
+  // passato dalla saletta, la pillola «🔁 Paky è tornato: la partita riprende da dove era» sugli amici, «🔁 Partita ripresa!»
+  // sull'host, nessun errore. Restituisce { C, P, w, prima, dopo, dt, pillAmici, pillHost }
+  async function provaRipresa(o) {
+    o = o || {};
+    var amici = o.amici || ["Giulia"], w = {};
+    var P = w.Paky = await W.apriTel("Paky", { x: 0, prima: o.prima || null, hash: o.hash !== undefined ? o.hash : (o.apri ? "gioco=" + o.gioco : null) });
+    var C = o.apri ? await o.apri(P) : await W.apriStanza(P, o.nomeTessera);
+    for (var i = 0; i < amici.length; i++) w[amici[i]] = await W.apriTel(amici[i], { hash: "gioco=" + o.gioco + "&stanza=" + C, x: 185 * (i + 1), prima: o.prima || null });
+    var arriva = o.arriva || function (v) { return contaDentro(v) >= amici.length + 1; };
+    if (!await W.aspetta(function () { return arriva(vm(C)); }, 10000)) no("non sono entrati in " + (amici.length + 1) + " (" + JSON.stringify(vm(C)).slice(0, 120) + ")");
+    if (o.comincia) await o.comincia(C, P); else if (!await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 4000)) no("l'host non ha «Comincia»");
+    var faseOk = typeof o.fase === "function" ? o.fase : function (v) { return o.fase ? v.fase === o.fase : !!v.fase && v.fase !== "lobby"; };
+    if (!await W.aspetta(function () { return faseOk(vm(C)); }, o.attesaFase || 20000)) no("non si arriva al punto della prova (fase " + vm(C).fase + ")");
+    if (o.prepara) await o.prepara(C, P, w);
+    await W.dorme(o.salva || 900);   // (la ripresa si salva al massimo ogni mezzo secondo)
+    var prima = JSON.parse(JSON.stringify(vm(C))), sPrima = (W.statoStanza(C) || {})._s, t0 = Date.now();
+    if (o.pausa) { W.spegni("Paky"); await W.dorme(o.pausa); }
+    P = w.Paky = o.come === "chiudiApp" ? await W.chiudiApp("Paky", o.riapri || {}) : await W.ricarica("Paky", o.riapri || {});
+    var pillAmici = {}, pillHost = "", saletta = {}, perche = "";
+    var ok = await W.aspetta(function () {
+      amici.forEach(function (n) {
+        var f = W.finestra(n); if (!f) return;
+        var p = pill(f); if (/tornato/.test(p)) pillAmici[n] = p;
+        if (f.document.querySelector(".saletta-schermo")) saletta[n] = 1;
+      });
+      var ph = pill(W.finestra("Paky")); if (/ripresa/i.test(ph)) pillHost = ph;
+      var s = W.statoStanza(C) || {}, v = vm(C);
+      if (!s._s || s._s === sPrima) { perche = "nessuna foto nuova dell'host sul codice " + C; return false; }
+      if (!s._r) { perche = "la foto nuova non dice che la partita riprende (_r)"; return false; }
+      if (!v.fase || v.fase === "lobby") { perche = "la partita è tornata in saletta"; return false; }
+      if (!arriva(v)) { perche = "non sono tutti di nuovo dentro (" + contaDentro(v) + ")"; return false; }
+      var c = o.controlla ? o.controlla(prima, v) : true;
+      if (c !== true) { perche = typeof c === "string" ? c : "la partita non è quella di prima"; return false; }
+      if (!amici.every(function (n) { return pillAmici[n]; })) { perche = "non tutti gli amici leggono la pillola"; return false; }
+      return !!pillHost;
+    }, o.attesa || 10000);
+    if (!ok) no("dopo la ricarica dell'host: " + (perche || "l'host non legge «🔁 Partita ripresa!»") + " (fase " + vm(C).fase + ")");
+    var dt = ((Date.now() - t0) / 1000).toFixed(1);
+    var ns = Object.keys(saletta); if (ns.length) no(ns.join(", ") + " è passato dalla saletta");
+    amici.forEach(function (n) { if (!/riprende da dove era/.test(pillAmici[n])) no(n + " legge «" + pillAmici[n] + "» invece di «… la partita riprende da dove era»"); });
+    var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" / "));
+    return { C: C, P: P, w: w, prima: prima, dopo: vm(C), dt: dt, pillAmici: pillAmici, pillHost: pillHost };
+  }
+
+  // 501. Contatore: l'host ricarica a metà partita → stesso codice, stesso numero, gli amici non passano dalla saletta e
+  //      leggono «🔁 Paky è tornato: la partita riprende da dove era»; poi si continua a giocare (Giulia +1)
+  SCENARI[501] = { nome: "Contatore: l'host ricarica a metà, la partita riprende da dove era", fai: async function () {
+    var r = await provaRipresa({ gioco: "contatore", prima: contatore(), apri: async function (P) { return apriContatore(P); },
+      amici: ["Giulia", "Luca"], fase: "gioco",
+      prepara: async function (C, P, w) {
+        tocca(w.Giulia, ".ct-piu"); await W.aspetta(function () { return vm(C).n === 1; }, 3000);
+        tocca(w.Luca, ".ct-piu"); await W.aspetta(function () { return vm(C).n === 2; }, 3000);
+        tocca(P, ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === 3; }, 3000)) no("i +1 non arrivano (n = " + vm(C).n + ")");
+      },
+      controlla: function (a, b) { return b.n === a.n ? true : "il numero era " + a.n + " e ora è " + b.n; } });
+    var C = r.C, G = W.finestra("Giulia");
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 6000)) no("dopo la ripresa non si torna a giocare (fase " + vm(C).fase + ")");
+    tocca(G, ".ct-piu");
+    if (!await W.aspetta(function () { return vm(C).n === 4; }, 4000)) no("dopo la ripresa il +1 di Giulia non arriva (n = " + vm(C).n + ")");
+    var g = (vm(C).giocatori || []).filter(function (p) { return p.nome === "Giulia"; })[0];
+    if (!g || g.punti !== 2) no("Giulia non ha ritrovato i suoi punti (" + JSON.stringify(g) + ")");
+    return "ripresa in " + r.dt + " s con n = " + r.prima.n + " e tutti dentro; gli amici leggono «" + r.pillAmici.Giulia + "», l'host «" + r.pillHost + "»; si continua (n = 4)";
+  } };
+
+  // 502. Contatore: l'host chiude l'app, resta spento 10 s e la riapre → la partita riprende. Poi la ripresa «vecchia di
+  //      21 minuti» (spostata a mano in sg-ripresa): ricaricando si torna in saletta come prima
+  SCENARI[502] = { nome: "Contatore: app chiusa 10 s e riaperta → riprende; ripresa di 21 minuti fa → saletta", fai: async function () {
+    var r = await provaRipresa({ gioco: "contatore", prima: contatore(), apri: async function (P) { return apriContatore(P); },
+      amici: ["Giulia"], fase: "gioco", come: "chiudiApp", pausa: 10000, attesa: 12000,
+      prepara: async function (C, P, w) { tocca(w.Giulia, ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === 1; }, 3000)) no("il +1 non arriva"); },
+      controlla: function (a, b) { return b.n === a.n ? true : "il numero era " + a.n + " e ora è " + b.n; } });
+    var C = r.C;
+    await W.dorme(900);
+    // la ripresa diventa vecchia di 21 minuti: ricaricando la stanza si riapre (stesso codice) ma dalla saletta.
+    // (si invecchia nel telefono nuovo, prima che parta l'app: la pagina che se ne va la risalva da sola, e fa bene)
+    var mem = W.BR.mem.Paky.l, o = JSON.parse(mem["sg-ripresa"] || "null");
+    if (!o || o.codice !== C) no("dopo la ripresa sg-ripresa non c'è (" + mem["sg-ripresa"] + ")");
+    var s0 = (W.statoStanza(C) || {})._s;
+    await W.ricarica("Paky", { prima: contatore(null, function () { var x = JSON.parse(mem["sg-ripresa"] || "null"); if (x) { x.t -= 21 * 60 * 1000; mem["sg-ripresa"] = JSON.stringify(x); } }) });
+    var ok = await W.aspetta(function () { var s = W.statoStanza(C) || {}; return s._s && s._s !== s0 && vm(C).fase === "lobby" && W.finestra("Giulia").document.querySelector(".saletta-schermo") && contaDentro(vm(C)) === 2; }, 10000);
+    if (!ok) no("con la ripresa vecchia non si torna in saletta con tutti (fase " + vm(C).fase + ", _r " + (W.statoStanza(C) || {})._r + ")");
+    if ((W.statoStanza(C) || {})._r) no("con la ripresa vecchia la foto dice ancora _r");
+    return "app chiusa 10 s: ripresa in " + r.dt + " s (n = " + r.prima.n + "); con la ripresa di 21 minuti fa tutti in saletta, stesso codice " + C;
+  } };
+
+  // 503. Contatore: l'host esce apposta (‹ Esci) → sg-ripresa e sg-mia-stanza sparite; ricaricando niente stanza (home)
+  SCENARI[503] = { nome: "Contatore: l'host esce apposta, la ripresa si scorda", fai: async function () {
+    var P = await W.apriTel("Paky", { x: 0, hash: "gioco=contatore", prima: contatore() }), C = await apriContatore(P);
+    var G = await W.apriTel("Giulia", { hash: "gioco=contatore&stanza=" + C, x: 185, prima: contatore() });
+    if (!await W.aspetta(function () { return contaDentro(vm(C)) === 2; }, 8000)) no("Giulia non entra");
+    W.clicca(P, /Comincia/);
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 5000)) no("non comincia");
+    tocca(G, ".ct-piu"); await W.dorme(900);
+    var mem = W.BR.mem.Paky.l;
+    if (!mem["sg-ripresa"]) no("a metà partita sg-ripresa non c'è");
+    tocca(P, ".ct-esci");
+    if (!await W.aspetta(function () { return P.document.querySelector(".home"); }, 4000)) no("uscito, Paky non torna in home");
+    await W.dorme(700);
+    if (mem["sg-ripresa"]) no("uscito apposta, sg-ripresa c'è ancora");
+    if (mem["sg-mia-stanza"]) no("uscito apposta, sg-mia-stanza c'è ancora");
+    P = await W.ricarica("Paky");
+    await W.dorme(1500);
+    if (codiceSaletta(P) || P.document.querySelector(".ct-scena")) no("ricaricando la stanza si riapre");
+    if (!P.document.querySelector(".home")) no("ricaricando Paky non è in home («" + T(P).slice(0, 60) + "»)");
+    return "uscito apposta: niente ripresa né stanza; ricaricando, home";
+  } };
+
+  // 504. Contatore: l'host ricarica sulla classifica → la classifica resta, nessuna partita (XP) data di nuovo né
+  //      "__esito" doppio (il gioco ridice il risultato dopo la ripresa: il core lo riconosce)
+  SCENARI[504] = { nome: "Contatore: l'host ricarica sulla classifica, niente XP né esito doppi", fai: async function () {
+    W.__partite = {};
+    var conta = function (n) { var c = contaPartite(n); return contatore(null, c); };
+    var P = await W.apriTel("Paky", { x: 0, hash: "gioco=contatore", prima: conta("Paky") }), C = await apriContatore(P);
+    var G = await W.apriTel("Giulia", { hash: "gioco=contatore&stanza=" + C, x: 185, prima: conta("Giulia") });
+    if (!await W.aspetta(function () { return contaDentro(vm(C)) === 2; }, 8000)) no("Giulia non entra");
+    W.clicca(P, /Comincia/);
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 5000)) no("non comincia");
+    tocca(G, ".ct-piu"); await W.aspetta(function () { return vm(C).n === 1; }, 3000);
+    tocca(P, ".ct-fine");
+    if (!await W.aspetta(function () { return vm(C).fase === "fine" && W.__partite.Paky === 1 && W.__partite.Giulia === 1; }, 5000))
+      no("a fine partita le partite date non sono 1 e 1 (" + JSON.stringify(W.__partite) + ", fase " + vm(C).fase + ")");
+    var e1 = contaStoria(C, '"__esito"');
+    if (e1 !== 1) no("a fine partita gli __esito sono " + e1);
+    await W.dorme(900);
+    var s0 = (W.statoStanza(C) || {})._s;
+    P = await W.ricarica("Paky");
+    if (!await W.aspetta(function () { var s = W.statoStanza(C) || {}; return s._s && s._s !== s0 && s._r && vm(C).fase === "fine" && P.document.querySelector(".ct-classifica"); }, 10000))
+      no("ricaricando sulla classifica la classifica non torna (fase " + vm(C).fase + ")");
+    await W.dorme(2500);
+    if (W.__partite.Paky !== 1 || W.__partite.Giulia !== 1) no("dopo la ricarica partite date di nuovo: " + JSON.stringify(W.__partite));
+    var e2 = contaStoria(C, '"__esito"'); if (e2 !== 1) no("dopo la ricarica gli __esito sono " + e2);
+    if (W.finestra("Giulia").document.querySelector(".saletta-schermo")) no("Giulia è tornata in saletta");
+    return "classifica ripresa, partite date 1 e 1, un solo __esito";
+  } };
+
+  // 505. Contatore con l'host SENZA profilo (la sessione c'è ma il profilo no, come in 37b): ricarica a metà → la stanza si
+  //      riapre col nome di prima (Paky) e la partita riprende
+  SCENARI[505] = { nome: "Contatore: host senza profilo che ricarica, la partita riprende col suo nome", fai: async function () {
+    var senza = function (w) { w.SGNube.utente = function () { return { uid: "finto-senza" }; }; };
+    var r = await provaRipresa({ gioco: "contatore", prima: contatore(), apri: async function (P) { return apriContatore(P); },
+      amici: ["Giulia"], fase: "gioco",
+      prepara: async function (C, P, w) {
+        tocca(w.Giulia, ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === 1; }, 3000)) no("il +1 non arriva");
+        // da qui il telefono di Paky non ha più il profilo (né quello ricordato)
+        W.BR.mem.Paky.fp = null; delete W.BR.mem.Paky.l["sg-ultimo-profilo"];
+      },
+      riapri: { prima: contatore(null, senza) },
+      controlla: function (a, b) {
+        if (b.n !== a.n) return "il numero era " + a.n + " e ora è " + b.n;
+        var h = (b.giocatori || [])[0]; return h && h.nome === "Paky" ? true : "l'host si chiama «" + (h && h.nome) + "»";
+      } });
+    if (W.finestra("Paky").SGNube.profilo()) no("il telefono di Paky ha ancora il profilo");
+    return "senza profilo: stanza " + r.C + " riaperta e partita ripresa in " + r.dt + " s, host «Paky»";
+  } };
+
+  // 506. Un gioco che NON riprende (Contatore con riprende: false): l'host ricarica a metà → tutti in saletta come prima
+  //      (stesso codice, la foto non dice _r, gli amici rientrano da soli)
+  SCENARI[506] = { nome: "Gioco che non riprende: l'host ricarica a metà, tutti in saletta", fai: async function () {
+    var pr = contatore({ riprende: false });
+    var P = await W.apriTel("Paky", { x: 0, hash: "gioco=contatore", prima: pr }), C = await apriContatore(P);
+    var G = await W.apriTel("Giulia", { hash: "gioco=contatore&stanza=" + C, x: 185, prima: pr });
+    if (!await W.aspetta(function () { return contaDentro(vm(C)) === 2; }, 8000)) no("Giulia non entra");
+    W.clicca(P, /Comincia/);
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 5000)) no("non comincia");
+    tocca(G, ".ct-piu"); await W.dorme(900);
+    if (W.BR.mem.Paky.l["sg-ripresa"]) no("un gioco che non riprende ha salvato sg-ripresa");
+    var s0 = (W.statoStanza(C) || {})._s, pg = "";
+    P = await W.ricarica("Paky");
+    var ok = await W.aspetta(function () {
+      var p = pill(W.finestra("Giulia")); if (/tornato/.test(p)) pg = p;
+      var s = W.statoStanza(C) || {};
+      return s._s && s._s !== s0 && vm(C).fase === "lobby" && contaDentro(vm(C)) === 2 && W.finestra("Giulia").document.querySelector(".saletta-schermo") && dentro(W.finestra("Giulia"));
+    }, 10000);
+    if (!ok) no("dopo la ricarica non sono tutti in saletta (fase " + vm(C).fase + ", dentro " + contaDentro(vm(C)) + ")");
+    if ((W.statoStanza(C) || {})._r) no("la foto dice _r (riprende) in un gioco che non riprende");
+    if (!/saletta/.test(pg)) no("Giulia legge «" + pg + "» invece di «… si riparte dalla saletta»");
+    return "stesso codice " + C + ", tutti in saletta; Giulia legge «" + pg + "»";
+  } };
+
+  // =========================================================
+  //  PASSO 5 (p5-b): l'host di riserva nel core (Contatore con riserva: true, 4 telefoni)
+  // =========================================================
+  // Paky apre il Contatore, gli amici entrano UNO ALLA VOLTA (così i vice sono sicuri: i primi due arrivati), si comincia,
+  // due +1 e un attimo per la copia ai vice. o = { amici, gioco: opzioni del Contatore (di partenza { riserva: true }),
+  // opz: { Giulia: { orologio: -120000 } } (opzioni di apriTel per uno) }. Restituisce { C, w, ids, amici, n0 }
+  async function apriRiserva(o) {
+    o = o || {};
+    var amici = o.amici || ["Giulia", "Luca", "Sara"], pr = contatore(o.gioco || { riserva: true }), w = {}, ids = {};
+    w.Paky = await W.apriTel("Paky", { x: 0, hash: "gioco=contatore", prima: pr });
+    var C = await apriContatore(w.Paky);
+    for (var i = 0; i < amici.length; i++) {
+      var n = amici[i], quanti = i + 2;
+      w[n] = await W.apriTel(n, Object.assign({ hash: "gioco=contatore&stanza=" + C, x: 185 * (i + 1), prima: pr }, (o.opz && o.opz[n]) || {}));
+      if (!await W.aspetta(function () { return contaDentro(vm(C)) >= quanti; }, 8000)) no(n + " non entra");
+      ids[n] = mioId(n);
+    }
+    W.clicca(w.Paky, /Comincia/);
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 5000)) no("non comincia");
+    tocca(w[amici[0]], ".ct-piu");
+    if (!await W.aspetta(function () { return vm(C).n === 1; }, 3000)) no("il +1 non arriva");
+    tocca(w[amici[1] || amici[0]], ".ct-piu");
+    if (!await W.aspetta(function () { return vm(C).n === 2; }, 3000)) no("il secondo +1 non arriva");
+    await W.dorme(1500);   // (la copia ai vice: al massimo una al secondo)
+    return { C: C, w: w, ids: ids, amici: amici, n0: vm(C).n };
+  }
+  // il telefono si spegne davvero (batteria): il broker manda il testamento e anche i collegamenti che il telefono prova ad
+  // aprire dopo (l'altro ufficio postale) restano fermi. torna(nome) = si riaccende (l'app era solo in secondo piano)
+  function muore(nome) { W.congela(nome); W.spegni(nome); }
+  function torna(nome) { W.scongela(nome); W.riaccendi(nome); }
+  // chi tiene la partita adesso (dalla foto trattenuta): { g, h }
+  function chiTiene(C) { var s = W.statoStanza(C) || {}; return { g: s._g, h: s._h }; }
+  // le foto della partita passate dal momento t0 (non i testamenti): [{ da, g, h }]
+  function fotoDa(C, t0) {
+    return (W.BR.storia || []).filter(function (x) { return x.ms >= t0 && x.topic.indexOf("/" + C + "/stato") >= 0 && x.da.indexOf("✝") < 0 && x.p.indexOf('"_h"') >= 0; })
+      .map(function (x) { var m = {}; try { m = JSON.parse(x.p); } catch (e) {} return { da: x.da, g: m._g, h: m._h }; });
+  }
+  // qualcuno legge una pillola (es. 👑) mentre si aspetta ms? "" = nessuno, se no "chi: «pillola»"
+  async function senza(nomi, re, ms) {
+    var visto = "", fine = Date.now() + ms;
+    while (Date.now() < fine) {
+      nomi.forEach(function (n) { var f = W.finestra(n); var p = f ? pill(f) : ""; if (re.test(p)) visto = n + ": «" + p + "»"; });
+      if (visto) return visto;
+      await W.dorme(200);
+    }
+    return "";
+  }
+  // aspetta (al massimo ms) che ognuno legga la pillola giusta: { nome: testo }
+  async function pilloleDi(nomi, re, ms) {
+    var visti = {};
+    await W.aspetta(function () { nomi.forEach(function (n) { var f = W.finestra(n); var p = f ? pill(f) : ""; if (re.test(p)) visti[n] = p; }); return nomi.every(function (n) { return visti[n]; }); }, ms);
+    return visti;
+  }
+  function chiusaDa(nomi) { return nomi.filter(function (n) { var f = W.finestra(n); return f && /La stanza è chiusa/.test(T(f)); }); }
+
+  // 507. L'host si spegne e non torna: entro 8 s Giulia (prima vice) tiene la partita col numero di prima (_g 2), legge
+  //      «👑 Paky è sparito: la partita la porti avanti tu»; Luca e Sara leggono «👑 Ora la partita la tiene Giulia» e
+  //      continuano a giocare; nessuna «stanza chiusa»
+  SCENARI[507] = { nome: "Riserva: l'host si spegne, Giulia porta avanti la partita", fai: async function () {
+    var r = await apriRiserva(), C = r.C, t0 = Date.now();
+    muore("Paky");
+    if (!await W.aspetta(function () { var c = chiTiene(C); return c.g === 2 && c.h === r.ids.Giulia; }, 8000))
+      no("dopo 8 s la partita non la tiene Giulia (" + JSON.stringify(chiTiene(C)) + ")");
+    var dt = ((Date.now() - t0) / 1000).toFixed(1);
+    if (vm(C).n !== r.n0) no("il numero era " + r.n0 + " e ora è " + vm(C).n);
+    var pg = await pilloleDi(["Giulia"], /porti avanti tu/, 2000), pa = await pilloleDi(["Luca", "Sara"], /Ora la partita la tiene Giulia/, 3000);
+    if (!pg.Giulia) no("Giulia non legge «… la porti avanti tu» («" + pill(r.w.Giulia) + "»)");
+    if (!pa.Luca || !pa.Sara) no("Luca e Sara non leggono «Ora la partita la tiene Giulia» (" + JSON.stringify(pa) + ")");
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco" && contaDentro(vm(C)) === 3; }, 8000)) no("non si torna a giocare in tre (fase " + vm(C).fase + ", dentro " + contaDentro(vm(C)) + ")");
+    tocca(r.w.Luca, ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === r.n0 + 1; }, 3000)) no("il +1 di Luca non arriva");
+    tocca(r.w.Sara, ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === r.n0 + 2; }, 3000)) no("il +1 di Sara non arriva");
+    var ch = chiusaDa(r.amici); if (ch.length) no(ch.join(", ") + " legge «La stanza è chiusa»");
+    return "Giulia tiene la partita in " + dt + " s (_g 2, n = " + r.n0 + "); «" + pg.Giulia + "» / «" + pa.Luca + "»; Luca e Sara giocano (n = " + vm(C).n + ")";
+  } };
+
+  // 508. L'host si spegne e anche Giulia (prima vice) sparisce subito: la partita la prende Luca (secondo vice) entro 14 s
+  SCENARI[508] = { nome: "Riserva: spariscono l'host e la prima vice, la prende il secondo", fai: async function () {
+    var r = await apriRiserva(), C = r.C, t0 = Date.now();
+    muore("Paky"); muore("Giulia");
+    if (!await W.aspetta(function () { var c = chiTiene(C); return c.g === 2 && c.h === r.ids.Luca; }, 14000))
+      no("dopo 14 s la partita non la tiene Luca (" + JSON.stringify(chiTiene(C)) + ")");
+    var dt = ((Date.now() - t0) / 1000).toFixed(1);
+    if (vm(C).n !== r.n0) no("il numero era " + r.n0 + " e ora è " + vm(C).n);
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco" && contaDentro(vm(C)) === 2; }, 8000)) no("Luca e Sara non tornano a giocare (fase " + vm(C).fase + ")");
+    tocca(r.w.Sara, ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === r.n0 + 1; }, 3000)) no("il +1 di Sara non arriva");
+    return "Luca tiene la partita in " + dt + " s (_g 2, n = " + r.n0 + "), Sara gioca";
+  } };
+
+  // 509. L'host torna dopo il subentro (l'app era solo in secondo piano: riaccendi): legge «👋 Bentornato! Ora la partita la
+  //      tiene Giulia: rientri come giocatore», rientra al suo posto e non ci sono mai due host (dopo 3 s tutte le foto
+  //      sono di Giulia)
+  SCENARI[509] = { nome: "Riserva: l'host torna dopo il subentro e rientra come giocatore", fai: async function () {
+    var r = await apriRiserva(), C = r.C;
+    muore("Paky");
+    if (!await W.aspetta(function () { var c = chiTiene(C); return c.g === 2 && c.h === r.ids.Giulia; }, 8000)) no("Giulia non prende la partita");
+    await W.dorme(1500);
+    torna("Paky");
+    var pp = await pilloleDi(["Paky"], /Bentornato.*Giulia.*rientri come giocatore/, 6000);
+    if (!pp.Paky) no("Paky non legge «👋 Bentornato! Ora la partita la tiene Giulia…» («" + pill(W.finestra("Paky")) + "»)");
+    if (!await W.aspetta(function () { return (vm(C).giocatori || []).some(function (p) { return p.id === "host" && !p.via; }); }, 8000)) no("Paky non rientra al suo posto");
+    var t1 = Date.now(); await W.dorme(3000);
+    var f = fotoDa(C, t1), altri = f.filter(function (x) { return x.da !== "Giulia" || x.h !== r.ids.Giulia; });
+    if (altri.length) no("dopo il rientro ci sono foto di altri: " + JSON.stringify(altri.slice(0, 3)));
+    var c = chiTiene(C); if (c.g !== 2 || c.h !== r.ids.Giulia) no("la partita non la tiene più Giulia (" + JSON.stringify(c) + ")");
+    tocca(W.finestra("Paky"), ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === r.n0 + 1; }, 4000)) no("il +1 di Paky (da giocatore) non arriva");
+    return "Paky legge «" + pp.Paky + "», gioca da giocatore; " + f.length + " foto in 3 s, tutte di Giulia";
+  } };
+
+  // 510. L'host ricarica la pagina dopo il subentro (chiude e riapre l'app): guarda prima di riaprire, trova la partita di
+  //      Giulia e rientra come giocatore (niente seconda stanza sullo stesso codice)
+  SCENARI[510] = { nome: "Riserva: l'host riapre l'app dopo il subentro e rientra come giocatore", fai: async function () {
+    var r = await apriRiserva(), C = r.C;
+    muore("Paky");
+    if (!await W.aspetta(function () { var c = chiTiene(C); return c.g === 2 && c.h === r.ids.Giulia; }, 8000)) no("Giulia non prende la partita");
+    await W.dorme(1000);
+    var t1 = Date.now();
+    var P = await W.chiudiApp("Paky");
+    var pp = await pilloleDi(["Paky"], /Bentornato.*Giulia.*rientri come giocatore/, 8000);
+    if (!pp.Paky) no("riaprendo Paky non legge «👋 Bentornato…» («" + pill(W.finestra("Paky")) + "», «" + T(W.finestra("Paky")).slice(0, 60) + "»)");
+    if (!await W.aspetta(function () { return (vm(C).giocatori || []).some(function (p) { return p.id === "host" && !p.via; }); }, 8000)) no("Paky non rientra al suo posto");
+    var mie = fotoDa(C, t1).filter(function (x) { return x.da === "Paky"; });
+    if (mie.length) no("riaprendo Paky ha pubblicato " + mie.length + " foto sulla stanza di Giulia");
+    var c = chiTiene(C); if (c.g !== 2 || c.h !== r.ids.Giulia) no("la partita non la tiene più Giulia (" + JSON.stringify(c) + ")");
+    if (W.BR.mem.Paky.l["sg-ripresa"]) no("Paky ha ancora sg-ripresa");
+    return "Paky legge «" + pp.Paky + "», nessuna foto sua sulla stanza, gioca da giocatore";
+  } };
+
+  // 511. L'host ricarica PRIMA dei 6 s: la riprende lui (p5-a), Giulia non subentra (_g resta 1, nessuna pillola 👑)
+  SCENARI[511] = { nome: "Riserva: l'host ricarica subito, nessun subentro", fai: async function () {
+    var r = await apriRiserva(), C = r.C, t0 = Date.now();
+    await W.ricarica("Paky");
+    var visto = await senza(["Paky"].concat(r.amici), /👑/, 10000);
+    if (visto) no("pillola 👑: " + visto);
+    var c = chiTiene(C); if (c.g !== 1 || c.h !== "host") no("dopo la ricarica la partita la tiene " + JSON.stringify(c));
+    var altri = fotoDa(C, t0).filter(function (x) { return x.da !== "Paky"; });
+    if (altri.length) no("foto di altri dopo la ricarica: " + JSON.stringify(altri.slice(0, 3)));
+    if (vm(C).n !== r.n0 || vm(C).fase !== "gioco") no("la partita non è quella di prima (n " + vm(C).n + ", fase " + vm(C).fase + ")");
+    return "ripresa dall'host, _g 1, nessun 👑 in 10 s";
+  } };
+
+  // 512. La rete dell'host salta per 4 s (inciampa): nessun subentro
+  SCENARI[512] = { nome: "Riserva: rete dell'host giù 4 s, nessun subentro", fai: async function () {
+    var r = await apriRiserva(), C = r.C, t0 = Date.now();
+    W.inciampa("Paky", 4000);
+    var visto = await senza(["Paky"].concat(r.amici), /👑/, 11000);
+    if (visto) no("pillola 👑: " + visto);
+    var c = chiTiene(C); if (c.g !== 1 || c.h !== "host") no("la partita la tiene " + JSON.stringify(c));
+    var altri = fotoDa(C, t0).filter(function (x) { return x.da !== "Paky"; });
+    if (altri.length) no("foto di altri: " + JSON.stringify(altri.slice(0, 3)));
+    tocca(r.w.Sara, ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === r.n0 + 1; }, 4000)) no("dopo il buco il +1 di Sara non arriva");
+    return "4 s di rete giù: _g 1, nessun 👑, si gioca";
+  } };
+
+  // 513. I due vice partono insieme (stesso tempo d'attesa): dopo 3 s resta un host solo (a pari _g l'id più piccolo)
+  SCENARI[513] = { nome: "Riserva: due vice insieme, resta un host solo", fai: async function () {
+    var r = await apriRiserva(), C = r.C;
+    W.finestra("Giulia").__sgSubentroMs = 6000; W.finestra("Luca").__sgSubentroMs = 6000;
+    var vince = r.ids.Giulia < r.ids.Luca ? "Giulia" : "Luca", perde = vince === "Giulia" ? "Luca" : "Giulia", t0 = Date.now();
+    muore("Paky");
+    if (!await W.aspetta(function () { return chiTiene(C).g === 2; }, 9000)) no("nessuno prende la partita");
+    await W.dorme(2000);
+    // (la gara c'è stata davvero: tutti e due hanno pubblicato la loro foto con _g 2)
+    var gara = {}; fotoDa(C, t0).forEach(function (x) { if (x.g === 2) gara[x.da] = 1; });
+    if (!gara.Giulia || !gara.Luca) no("non c'è stata la gara: foto con _g 2 solo di " + Object.keys(gara).join(", "));
+    var t1 = Date.now(); await W.dorme(3000);
+    var f = fotoDa(C, t1), da = {}; f.forEach(function (x) { da[x.da + "/" + x.h] = 1; });
+    if (Object.keys(da).length > 1) no("dopo 3 s ci sono due host: " + Object.keys(da).join(", "));
+    var c = chiTiene(C); if (c.g !== 2 || c.h !== r.ids[vince]) no("la partita la tiene " + JSON.stringify(c) + " invece di " + vince);
+    if (!await W.aspetta(function () { return contaDentro(vm(C)) === 3 && vm(C).fase === "gioco"; }, 8000)) no(perde + " e Sara non tornano a giocare");
+    tocca(r.w[perde], ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === r.n0 + 1; }, 4000)) no("il +1 di " + perde + " non arriva");
+    return "partiti insieme: resta " + vince + " (id più piccolo), " + perde + " gioca; " + f.length + " foto in 3 s da un host solo";
+  } };
+
+  // 513b. La prima vice ha l'orologio 2 minuti indietro (la sua sessione è "più piccola"): subentra lo stesso, gli altri la
+  //       seguono (seguiHost) e quando sparisce anche lei il suo testamento fa partire il secondo subentro (_g 3)
+  SCENARI["513b"] = { nome: "Riserva: vice con l'orologio indietro, poi sparisce anche lei", fai: async function () {
+    var r = await apriRiserva({ opz: { Giulia: { orologio: -120000 } } }), C = r.C;
+    muore("Paky");
+    if (!await W.aspetta(function () { var c = chiTiene(C); return c.g === 2 && c.h === r.ids.Giulia; }, 9000)) no("Giulia (orologio indietro) non prende la partita (" + JSON.stringify(chiTiene(C)) + ")");
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco" && contaDentro(vm(C)) === 3; }, 8000)) no("Luca e Sara non tornano a giocare con Giulia");
+    // (la sessione di Giulia è "più piccola" di quella di Paky: Luca e Sara la seguono lo stesso)
+    var sG = (W.statoStanza(C) || {})._s;
+    ["Luca", "Sara"].forEach(function (n) { var st = W.reteDi(n) && W.reteDi(n).stato(); if (!st || st.sessione !== sG) no(n + " non segue la sessione di Giulia (" + (st && st.sessione) + " invece di " + sG + ")"); });
+    tocca(r.w.Luca, ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === r.n0 + 1; }, 4000)) no("il +1 di Luca non arriva a Giulia");
+    await W.dorme(2000);   // (la copia di Giulia ai suoi vice)
+    var t0 = Date.now();
+    muore("Giulia");
+    if (!await W.aspetta(function () { var c = chiTiene(C); return c.g === 3 && (c.h === r.ids.Luca || c.h === r.ids.Sara); }, 14000))
+      no("sparita Giulia, nessuno prende la partita (" + JSON.stringify(chiTiene(C)) + ")");
+    var dt = ((Date.now() - t0) / 1000).toFixed(1), chi = chiTiene(C).h === r.ids.Luca ? "Luca" : "Sara";
+    if (vm(C).n !== r.n0 + 1) no("il numero era " + (r.n0 + 1) + " e ora è " + vm(C).n);
+    return "Giulia (2 minuti indietro) subentra; sparita lei, " + chi + " tiene la partita in " + dt + " s (_g 3, n = " + vm(C).n + ")";
+  } };
+
+  // 514. Un gioco SENZA riserva (Contatore con riprende ma senza riserva): l'host si spegne → nessun subentro, gli amici
+  //      aspettano come oggi (nessuna foto di altri, nessun 👑, niente «stanza chiusa» prima dei 2 minuti)
+  SCENARI[514] = { nome: "Senza riserva: l'host si spegne, nessuno subentra", fai: async function () {
+    var r = await apriRiserva({ gioco: { riserva: false } }), C = r.C, t0 = Date.now();
+    muore("Paky");
+    var visto = await senza(r.amici, /👑/, 14000);
+    if (visto) no("pillola 👑: " + visto);
+    var altri = fotoDa(C, t0); if (altri.length) no("foto nuove dopo lo spegnimento: " + JSON.stringify(altri.slice(0, 3)));
+    var c = chiTiene(C); if (c.g != null) no("la stanza ha _g " + c.g);
+    if (W.statoStanza(C).t !== "__hostgone") no("la stanza non dice «host sparito»");
+    var ch = chiusaDa(r.amici); if (ch.length) no(ch.join(", ") + " legge già «La stanza è chiusa»");
+    if (!r.amici.every(function (n) { return W.finestra(n).document.querySelector(".ct-scena"); })) no("qualcuno non è più sul tavolo");
+    return "nessun subentro in 14 s, la stanza dice «host sparito», gli amici aspettano sul tavolo";
+  } };
+
+  // 514b. Dentro la Sala (5-4): Paky (host della Sala e del Contatore) sparisce per 10 s → Giulia porta avanti il gioco dopo
+  //       6 s; Paky torna prima che la Sala passi a un altro: tiene la Sala, rientra nel gioco da giocatore («👋 Bentornato…»)
+  //       senza chiuderlo agli altri, gioca, e quando Giulia chiude con 🏁 la Classifica della serata di Paky conta la partita
+  SCENARI["514b"] = { nome: "Riserva nella Sala: l'host della Sala torna e rientra nel gioco da giocatore", fai: async function () {
+    var pr = contatore({ riserva: true, online: true }), w = {};
+    w.Paky = await W.apriTel("Paky", { x: 0, salaSempre: true, prima: pr });
+    var S = await apriSalaNuova("Paky");
+    for (var i = 0, am = ["Giulia", "Luca"]; i < am.length; i++) {
+      var quanti = i + 2;
+      w[am[i]] = await W.apriTel(am[i], { hash: "sala=" + S, x: 185 * (i + 1), salaSempre: true, prima: pr });
+      if (!await W.aspetta(function () { return ((vm(S).membri) || []).length === quanti; }, 10000)) no(am[i] + " non entra nella Sala");
+    }
+    var C = await lanciaDallaSala("Paky", S, "Contatore");
+    if (!await W.aspetta(function () { return contaDentro(vm(C)) === 3; }, 10000)) no("nel Contatore della Sala non sono in 3 (" + contaDentro(vm(C)) + ")");
+    var ids = { Giulia: mioId("Giulia"), Luca: mioId("Luca") };
+    W.clicca(w.Paky, /Comincia/);
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 6000)) no("il Contatore non comincia");
+    tocca(w.Giulia, ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === 1; }, 3000)) no("il +1 non arriva");
+    await W.dorme(1500);
+    var n0 = vm(C).n, punti0 = ((W.statoStanza(S) || {}).torneo || {}).n || 0;
+    muore("Paky");
+    if (!await W.aspetta(function () { var c = chiTiene(C); return c.g === 2 && c.h === ids.Giulia; }, 9000)) no("Giulia non prende il gioco (" + JSON.stringify(chiTiene(C)) + ")");
+    await W.dorme(2500);
+    torna("Paky");
+    var pp = await pilloleDi(["Paky"], /Bentornato.*Giulia.*rientri come giocatore/, 6000);
+    if (!pp.Paky) no("Paky non legge «👋 Bentornato…» («" + pill(W.finestra("Paky")) + "»)");
+    if (!await W.aspetta(function () { return (vm(C).giocatori || []).some(function (p) { return p.id === "host" && !p.via; }); }, 8000)) no("Paky non rientra nel gioco");
+    if ((W.statoStanza(S) || {}).gen > 1) no("la Sala è passata a un altro (gen " + (W.statoStanza(S) || {}).gen + ")");
+    if ((W.statoStanza(S) || {}).stanza !== C) no("la Sala non dice più il gioco in corso (" + (W.statoStanza(S) || {}).stanza + ")");
+    if (vm(C).n !== n0) no("il numero era " + n0 + " e ora è " + vm(C).n);
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 6000)) no("non si torna a giocare");
+    tocca(W.finestra("Paky"), ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === n0 + 1; }, 4000)) no("il +1 di Paky da giocatore non arriva");
+    tocca(w.Luca, ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === n0 + 2; }, 4000)) no("il +1 di Luca non arriva");
+    tocca(w.Giulia, ".ct-fine");
+    if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 5000)) no("Giulia non chiude la partita");
+    if (!await W.aspetta(function () { return (((W.statoStanza(S) || {}).torneo || {}).n || 0) === punti0 + 1; }, 5000))
+      no("la Classifica della serata non conta la partita (" + JSON.stringify((W.statoStanza(S) || {}).torneo || null).slice(0, 120) + ")");
+    var ch = chiusaDa(["Paky", "Giulia", "Luca"]); if (ch.length) no(ch.join(", ") + " legge «La stanza è chiusa»");
+    return "Giulia porta avanti il gioco della Sala, Paky torna (Sala sua, gen 1) e gioca da giocatore; la partita conta nella serata";
+  } };
+
+  // 514c. Dentro la Sala, Paky sparisce e non torna: dopo 6 s Giulia porta avanti il gioco, dopo 20 s prende anche la Sala
+  //       (gen 2) SENZA buttare il gioco (haRiserva: il gioco non era più sul telefono che se n'è andato); Luca resta nel
+  //       gioco, e quando Giulia chiude con 🏁 la partita conta nella Classifica della serata di Giulia
+  SCENARI["514c"] = { nome: "Riserva nella Sala: l'host sparisce, Giulia tiene il gioco e poi la Sala", fai: async function () {
+    var pr = contatore({ riserva: true, online: true }), w = {};
+    w.Paky = await W.apriTel("Paky", { x: 0, salaSempre: true, prima: pr });
+    var S = await apriSalaNuova("Paky");
+    for (var i = 0, am = ["Giulia", "Luca"]; i < am.length; i++) {
+      var quanti = i + 2;
+      w[am[i]] = await W.apriTel(am[i], { hash: "sala=" + S, x: 185 * (i + 1), salaSempre: true, prima: pr });
+      if (!await W.aspetta(function () { return ((vm(S).membri) || []).length === quanti; }, 10000)) no(am[i] + " non entra nella Sala");
+    }
+    var C = await lanciaDallaSala("Paky", S, "Contatore");
+    if (!await W.aspetta(function () { return contaDentro(vm(C)) === 3; }, 10000)) no("nel Contatore della Sala non sono in 3");
+    var idG = mioId("Giulia");
+    W.clicca(w.Paky, /Comincia/);
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 6000)) no("il Contatore non comincia");
+    tocca(w.Luca, ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === 1; }, 3000)) no("il +1 non arriva");
+    await W.dorme(1500);
+    muore("Paky");
+    if (!await W.aspetta(function () { var c = chiTiene(C); return c.g === 2 && c.h === idG; }, 9000)) no("Giulia non prende il gioco");
+    if (!await W.aspetta(function () { var s = W.statoStanza(S) || {}; return s.gen === 2; }, 30000)) no("la Sala non passa a Giulia (gen " + (W.statoStanza(S) || {}).gen + ")");
+    var s2 = W.statoStanza(S) || {};
+    if (s2.stanza !== C || s2.gioco !== "contatore") no("la Sala di Giulia ha perso il gioco (stanza " + s2.stanza + ")");
+    if (!w.Giulia.document.querySelector(".ct-scena") || !w.Luca.document.querySelector(".ct-scena")) no("Giulia o Luca non sono più nel gioco");
+    var c2 = chiTiene(C); if (c2.g !== 2 || c2.h !== idG) no("il gioco non lo tiene più Giulia (" + JSON.stringify(c2) + ")");
+    tocca(w.Luca, ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === 2; }, 4000)) no("dopo il cambio della Sala il +1 di Luca non arriva");
+    var p0 = (s2.torneo || {}).n || 0;
+    tocca(w.Giulia, ".ct-fine");
+    if (!await W.aspetta(function () { return (((W.statoStanza(S) || {}).torneo || {}).n || 0) === p0 + 1; }, 6000)) no("la partita non conta nella serata di Giulia");
+    return "Giulia tiene il gioco (6 s) e poi la Sala (gen 2) col gioco dentro; Luca gioca; la partita conta nella serata";
+  } };
+
+  // 514d. La pausa (5-4): Paky esce un attimo dall'app (pagina nascosta: «__rp») e poi il telefono sparisce → i vice aspettano
+  //       60 s invece di 6 (era andato a mandare il link): a 15 s nessun subentro, entro 64 s Giulia porta avanti la partita
+  SCENARI["514d"] = { nome: "Riserva: l'host era uscito un attimo dall'app, il vice aspetta 60 s", fai: async function () {
+    var r = await apriRiserva(), C = r.C, P = r.w.Paky;
+    Object.defineProperty(P.document, "hidden", { configurable: true, get: function () { return true; } });
+    P.document.dispatchEvent(new P.Event("visibilitychange"));
+    await W.dorme(500);
+    var t0 = Date.now();
+    muore("Paky");
+    var visto = await senza(r.amici, /👑/, 15000);
+    if (visto) no("subentro prima dei 60 s: " + visto);
+    if (chiTiene(C).g != null) no("a 15 s la stanza la tiene " + JSON.stringify(chiTiene(C)));
+    if (!await W.aspetta(function () { var c = chiTiene(C); return c.g === 2 && c.h === r.ids.Giulia; }, 50000)) no("dopo 64 s Giulia non prende la partita");
+    var dt = ((Date.now() - t0) / 1000).toFixed(1);
+    if (+dt < 59) no("Giulia ha preso la partita dopo " + dt + " s (meno di 60)");
+    return "host in pausa: nessun subentro a 15 s, Giulia porta avanti la partita dopo " + dt + " s";
+  } };
+
+  // =========================================================
+  //  PASSO 5 (p5-c): la ripresa nella Sala, nel torneo a eliminazione e nel duello
+  // =========================================================
+  // una mossa a Tris di chi è di turno (nomi: chi ha X e chi ha O); true se la mossa è arrivata
+  async function mossaTris(C, x, o) {
+    var v = vm(C), w = W.finestra(v.turno === "X" ? x : o), n0 = (v.board || []).filter(Boolean).length;
+    if (v.fase !== "gioco" || !w) return false;
+    var k = (v.board || []).indexOf(null);
+    var ok = await W.aspetta(function () { var c = w.document.querySelectorAll(".tr-cella")[k]; if (c && !c.disabled) { c.click(); return true; } return false; }, 4000);
+    return ok && !!await W.aspetta(function () { return (vm(C).board || []).filter(Boolean).length > n0; }, 4000);
+  }
+  // chi è passato da una schermata (es. la Sala o la saletta) mentre si aspetta: spia accesa ogni 100 ms. fine() → [nomi]
+  function spiaSchermo(nomi, sel) {
+    var visti = {}, t = setInterval(function () { nomi.forEach(function (n) { var f = W.finestra(n); if (f && f.document.querySelector(sel)) visti[n] = 1; }); }, 100);
+    return { fine: function () { clearInterval(t); return Object.keys(visti); } };
+  }
+  // le foto della Sala S passate da t0 con un'altra sessione che NON dicono il gioco (la Sala riaperta "senza gioco")
+  function salaSenzaGioco(S, t0, sPrima) {
+    return (W.BR.storia || []).filter(function (x) {
+      if (x.ms < t0 || x.topic.indexOf("/" + S + "/stato") < 0 || x.da.indexOf("✝") >= 0) return false;
+      var m = {}; try { m = JSON.parse(x.p); } catch (e) {}
+      return m.t === "sala" && m._s && m._s !== sPrima && !m.gioco;
+    }).length;
+  }
+
+  // 515. Nella Sala con 3 amici, il Contatore lanciato dalla Sala: Paky (host della Sala e del gioco) ricarica a metà → la
+  //      Sala si riapre con lo stesso codice e già col gioco (mai una foto «senza gioco»), il gioco riprende nella stessa
+  //      stanza col numero di prima; gli amici non passano né dalla Sala né dalla saletta e leggono «riprende da dove era».
+  //      Si finisce: la partita conta UNA volta nella Classifica della serata, anche se Paky ricarica sulla classifica.
+  //      «🎮 Cambia gioco» porta tutti nella Sala
+  SCENARI[515] = { nome: "Sala: l'host ricarica a metà gioco, Sala e gioco riprendono con gli stessi codici", fai: async function () {
+    var pr = contatore({ online: true }), w = {}, am = ["Giulia", "Luca", "Sara"];
+    w.Paky = await W.apriTel("Paky", { x: 0, salaSempre: true, prima: pr });
+    var S = await apriSalaNuova("Paky");
+    for (var i = 0; i < am.length; i++) {
+      var quanti = i + 2;
+      w[am[i]] = await W.apriTel(am[i], { hash: "sala=" + S, x: 185 * (i + 1), salaSempre: true, prima: pr });
+      if (!await W.aspetta(function () { return ((vm(S).membri) || []).length === quanti; }, 10000)) no(am[i] + " non entra nella Sala");
+    }
+    var C = await lanciaDallaSala("Paky", S, "Contatore");
+    if (!await W.aspetta(function () { return contaDentro(vm(C)) === 4; }, 10000)) no("nel Contatore della Sala non sono in 4 (" + contaDentro(vm(C)) + ")");
+    W.clicca(w.Paky, /Comincia/);
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 6000)) no("il Contatore non comincia");
+    for (var j = 0; j < am.length; j++) { var nn = j + 1; tocca(w[am[j]], ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === nn; }, 3000)) no("il +1 di " + am[j] + " non arriva"); }
+    await W.dorme(1200);   // (la ripresa si salva al massimo ogni mezzo secondo)
+    var sS0 = (W.statoStanza(S) || {})._s, sC0 = (W.statoStanza(C) || {})._s, n0 = vm(C).n, t0 = Date.now(), p0 = ((vm(S).torneo) || {}).n || 0;
+    var spia = spiaSchermo(am, ".saletta-schermo");
+    w.Paky = await W.ricarica("Paky");
+    var perche = "";
+    var ok = await W.aspetta(function () {
+      var s = W.statoStanza(S) || {}, c = W.statoStanza(C) || {}, v = vm(C);
+      if (!s._s || s._s === sS0) { perche = "la Sala non si è riaperta"; return false; }
+      if (s.stanza !== C || s.gioco !== "contatore") { perche = "la Sala riaperta non dice il gioco (" + s.gioco + " " + s.stanza + ")"; return false; }
+      if (!c._s || c._s === sC0 || !c._r) { perche = "il gioco non si è riaperto con la ripresa (_r)"; return false; }
+      if (!v.fase || v.fase === "lobby") { perche = "il gioco è tornato in saletta"; return false; }
+      if (contaDentro(v) !== 4) { perche = "nel gioco non sono di nuovo in 4 (" + contaDentro(v) + ")"; return false; }
+      return true;
+    }, 12000);
+    if (!ok) no("dopo la ricarica di Paky: " + perche);
+    var dt = ((Date.now() - t0) / 1000).toFixed(1);
+    if (vm(C).n !== n0) no("il numero era " + n0 + " e ora è " + vm(C).n);
+    var pa = await pilloleDi(am, /riprende da dove era/, 5000);
+    var manca = am.filter(function (n) { return !pa[n]; });
+    if (manca.length) no(manca.join(", ") + " non legge «riprende da dove era» («" + pill(W.finestra(manca[0])) + "»)");
+    var ph = await pilloleDi(["Paky"], /Partita ripresa/, 3000); if (!ph.Paky) no("Paky non legge «🔁 Partita ripresa!» («" + pill(W.finestra("Paky")) + "»)");
+    await W.dorme(800);
+    var passati = spia.fine(); if (passati.length) no(passati.join(", ") + " è passato dalla Sala o dalla saletta");
+    var vuote = salaSenzaGioco(S, t0, sS0); if (vuote) no("la Sala riaperta ha mandato " + vuote + " foto senza il gioco");
+    if (/si riparte dalla Sala/.test(am.map(function (n) { return pill(W.finestra(n)); }).join(" "))) no("un amico legge «si riparte dalla Sala»");
+    // si continua a giocare, poi si chiude: la partita conta una volta
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 6000)) no("dopo la ripresa non si torna a giocare");
+    tocca(w.Giulia, ".ct-piu"); if (!await W.aspetta(function () { return vm(C).n === n0 + 1; }, 4000)) no("dopo la ripresa il +1 di Giulia non arriva");
+    tocca(W.finestra("Paky"), ".ct-fine");
+    if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 5000)) no("Paky non chiude la partita");
+    if (!await W.aspetta(function () { return (((vm(S).torneo) || {}).n || 0) === p0 + 1; }, 5000)) no("la partita non conta nella Classifica della serata");
+    // Paky ricarica sulla classifica: la classifica resta, niente punti doppi
+    await W.dorme(1200);
+    var sS1 = (W.statoStanza(S) || {})._s, sC1 = (W.statoStanza(C) || {})._s;
+    w.Paky = await W.ricarica("Paky");
+    if (!await W.aspetta(function () { var s = W.statoStanza(S) || {}, c = W.statoStanza(C) || {}; return s._s && s._s !== sS1 && s.stanza === C && c._s && c._s !== sC1 && vm(C).fase === "fine"; }, 12000))
+      no("ricaricando sulla classifica la Sala e il gioco non tornano sulla classifica (fase " + vm(C).fase + ", Sala " + (W.statoStanza(S) || {}).stanza + ")");
+    await W.dorme(3000);
+    var pn = ((vm(S).torneo) || {}).n || 0; if (pn !== p0 + 1) no("dopo la ricarica sulla classifica la partita conta " + (pn - p0) + " volte");
+    if (!await W.aspetta(function () { return W.clicca(W.finestra("Paky"), /Cambia gioco/, ".fine-tasti button"); }, 6000)) no("Paky non ha «🎮 Cambia gioco» («" + T(W.finestra("Paky")).slice(0, 80) + "»)");
+    if (!await W.aspetta(function () { return !vm(S).gioco && am.every(function (n) { var f = W.finestra(n); return f.document.querySelector(".saletta-schermo") && !f.document.querySelector(".ct-scena"); }); }, 8000))
+      no("«Cambia gioco» non porta tutti nella Sala");
+    var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" / "));
+    return "ripresa in " + dt + " s: Sala " + S + " e gioco " + C + " con gli stessi codici, n = " + n0 + ", nessuno dalla Sala o dalla saletta; «" + pa.Giulia + "»; la partita conta una volta (anche ricaricando sulla classifica); Cambia gioco porta tutti nella Sala";
+  } };
+
+  // 516. Torneo a eliminazione a Tris in 2 (percorso di prima, come la 23): chi apre la partita ricarica dopo 2 mosse → la
+  //      partita riprende nella stessa stanza con le stesse mosse, lo stesso tabellone; si finisce e il campione è giusto.
+  //      Due volte: quando la partita la apre Giulia (amica) e quando la apre Paky (che tiene anche la Sala del torneo: si
+  //      riaprono tutte e due). Chi apre la partita lo decide il sorteggio: si rifà finché non tocca a chi serve
+  // (vuole: "Paky" o "Giulia" = chi deve aprire la partita; null se il sorteggio ha scelto l'altro)
+  async function elimRicarica(vuole) {
+    var P = await W.apriTel("Paky", { x: 0 });
+    var tess = await W.aspetta(function () { return [].find.call(P.document.querySelectorAll(".tessera"), function (t) { return (t.querySelector("h2") || {}).textContent === "Tris"; }); }, 5000);
+    if (!tess) no("non trovo il Tris"); tess.click(); await W.dorme(200);
+    if (!W.clicca(P, /Torneo a eliminazione/)) no("non trovo «Torneo a eliminazione»");
+    var S = await W.aspetta(function () { return codiceSaletta(P); }, 5000); if (!S) no("il torneo non ha il codice");
+    await W.apriTel("Giulia", { hash: "sala=" + S, x: 185 });
+    if (!await W.aspetta(function () { return ((vm(S).membri) || []).length === 2; }, 8000)) no("Giulia non entra nel torneo");
+    if (!W.clicca(P, /Comincia il torneo/)) no("non trovo «Comincia il torneo»");
+    var p0 = await W.aspetta(function () { var e = vm(S).elim; return e && e.turni && e.turni[0] && e.turni[0][0]; }, 5000);
+    if (!p0) no("il torneo non comincia");
+    var C = p0.stanza, chiA = p0.a === "host" ? "Paky" : "Giulia", chiB = chiA === "Paky" ? "Giulia" : "Paky";
+    if (chiA !== vuole) return null;
+    if (!await W.aspetta(function () { return vm(C).avvId; }, 8000)) no("la partita " + C + " non si apre con tutti e due");
+    await W.aspetta(function () { return W.clicca(W.finestra(chiA), /Comincia/); }, 4000);
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 4000)) no("la partita non comincia");
+    var x = chiA, o = chiB, vince = vm(C).turno === "X" ? chiA : chiB;   // (chi apre ha X; muovendo sempre nella prima casella libera vince chi comincia)
+    for (var i = 0; i < 2; i++) if (!await mossaTris(C, chiA, chiB)) no("mossa " + (i + 1) + " non arrivata");
+    await W.dorme(1200);
+    var board0 = JSON.stringify(vm(C).board), turno0 = vm(C).turno, sC0 = (W.statoStanza(C) || {})._s, tab0 = JSON.stringify(vm(S).elim.turni), sS0 = (W.statoStanza(S) || {})._s;
+    var spia = spiaSchermo([chiB], ".saletta-schermo");
+    await W.ricarica(chiA);
+    var perche = "";
+    var ok = await W.aspetta(function () {
+      var c = W.statoStanza(C) || {}, v = vm(C);
+      if (!c._s || c._s === sC0 || !c._r) { perche = "la partita non si è riaperta con la ripresa (_r)"; return false; }
+      if (v.fase !== "gioco") { perche = "la partita è in fase " + v.fase; return false; }
+      if (JSON.stringify(v.board) !== board0) { perche = "le mosse non sono quelle di prima (" + JSON.stringify(v.board) + ")"; return false; }
+      if (!v.avvId) { perche = "l'avversario non è rientrato"; return false; }
+      return true;
+    }, 12000);
+    if (!ok) no("dopo la ricarica di " + chiA + ": " + perche);
+    if (vm(C).turno !== turno0) no("tocca a " + vm(C).turno + " invece di " + turno0);
+    if (JSON.stringify(vm(S).elim.turni) !== tab0) no("il tabellone è cambiato");
+    if (chiA === "Paky" && ((W.statoStanza(S) || {})._s === sS0)) no("la Sala del torneo non si è riaperta");
+    var pb = await pilloleDi([chiB], /riprende da dove era/, 5000); if (!pb[chiB]) no(chiB + " non legge «riprende da dove era» («" + pill(W.finestra(chiB)) + "»)");
+    var passati = spia.fine(); if (passati.length) no(chiB + " è passato dalla saletta");
+    if (!await trisFinoAllaFine(C, x, o)) no("dopo la ripresa la partita non finisce");
+    var camp = await W.aspetta(function () { var e = vm(S).elim; return e && e.finito && e.campione; }, 8000);
+    if (!camp) no("il torneo non ha il campione");
+    var nomeC = (vm(S).elim.nomi || {})[camp];
+    if (nomeC !== vince) no("campione sbagliato: " + nomeC + " (doveva vincere " + vince + ", che ha cominciato)");
+    var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" / "));
+    return "ricarica di " + chiA + " (apre la partita" + (chiA === "Paky" ? " e tiene la Sala del torneo" : "") + ") dopo 2 mosse: stesse mosse, stesso turno, stesso tabellone; " + chiB + " legge «" + pb[chiB] + "»; campione " + nomeC;
+  }
+  SCENARI[516] = { nome: "Torneo a eliminazione: chi apre la partita ricarica, la partita riprende", fai: async function () {
+    var esiti = [];
+    for (var v = 0, chi = ["Giulia", "Paky"]; v < chi.length; v++) {
+      var r = null;
+      for (var k = 0; k < 8 && !r; k++) { pulisci(); r = await elimRicarica(chi[v]); }
+      if (!r) no("in 8 sorteggi la partita non l'ha mai aperta " + chi[v]);
+      esiti.push(r);
+    }
+    return esiti.join(" / ");
+  } };
+
+  // 517. Il duello nella Sala (5-6): Giulia (l'ha aperto) ricarica a metà → il duello riprende nella stessa stanza, Luca
+  //      legge «riprende da dove era», Paky e Marco continuano a guardare. Poi ricarica Paky (host della Sala): la Sala si
+  //      riapre col duello dentro e nessuno viene portato via. Si finisce: l'esito arriva alla Sala una volta
+  SCENARI[517] = { nome: "Duello: chi l'ha aperto ricarica e la partita riprende; poi ricarica l'host della Sala", fai: async function () {
+    var A = await salaConAmici(["Giulia", "Luca", "Marco"]), S = A.S, P = A.w.Paky, L = A.w.Luca, M = A.w.Marco;
+    var r = await toccaGiocoSala(P, "Tris");
+    if (r.dove !== "chi") no("non si apre «Chi gioca?»");
+    toccaChi(P, "Paky"); toccaChi(P, "Luca"); W.clicca(P, /Si gioca/, ".piede button");
+    var D = await W.aspetta(function () { return vm(S).duello; }, 4000); if (!D) no("nella Sala non c'è il duello");
+    var C = D.stanza;
+    if (!await W.aspetta(function () { return vm(C).avvId === D.b; }, 10000)) no("nel duello Luca non è l'avversario");
+    if (!await W.aspetta(function () { return W.clicca(W.finestra("Giulia"), /Comincia/, ".sl-go"); }, 6000)) no("Giulia non ha «Comincia»");
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 6000)) no("il duello non comincia");
+    if (!await W.aspetta(function () { return P.document.querySelectorAll(".tr-cella").length === 9 && M.document.querySelectorAll(".tr-cella").length === 9; }, 6000)) no("Paky e Marco non guardano");
+    var x = "Giulia", o = "Luca";   // (chi apre il duello ha X)
+    for (var i = 0; i < 2; i++) if (!await mossaTris(C, "Giulia", "Luca")) no("mossa " + (i + 1) + " non arrivata");
+    await W.dorme(1200);
+    var board0 = JSON.stringify(vm(C).board), sC0 = (W.statoStanza(C) || {})._s;
+    var errori = [spiaTesto(L, /Collegamento perso|Ops/), spiaTesto(M, /Collegamento perso|Ops/), spiaTesto(P, /Collegamento perso|Ops/)];
+    var spia = spiaSchermo(["Luca", "Marco"], ".saletta-schermo");
+    await W.ricarica("Giulia");
+    var perche = "";
+    var ok = await W.aspetta(function () {
+      var c = W.statoStanza(C) || {}, v = vm(C);
+      if (!c._s || c._s === sC0 || !c._r) { perche = "il duello non si è riaperto con la ripresa (_r)"; return false; }
+      if (v.fase !== "gioco" || JSON.stringify(v.board) !== board0) { perche = "la partita non è quella di prima (fase " + v.fase + ")"; return false; }
+      if (v.avvId !== D.b) { perche = "Luca non è rientrato"; return false; }
+      return true;
+    }, 12000);
+    if (!ok) no("dopo la ricarica di Giulia: " + perche);
+    if (!vm(S).duello || vm(S).duello.stanza !== C) no("la Sala ha perso il duello");
+    var pl = await pilloleDi(["Luca"], /riprende da dove era/, 5000); if (!pl.Luca) no("Luca non legge «riprende da dove era» («" + pill(L) + "»)");
+    if (!P.document.querySelector(".tr-cella") || !M.document.querySelector(".tr-cella")) no("Paky o Marco non guardano più");
+    // ricarica anche Paky (host della Sala): la Sala si riapre col duello dentro, nessuno viene portato via
+    if (!await mossaTris(C, "Giulia", "Luca")) no("dopo la ripresa la mossa non arriva");
+    var sS0 = (W.statoStanza(S) || {})._s, t1 = Date.now();
+    P = await W.ricarica("Paky");
+    if (!await W.aspetta(function () { var s = W.statoStanza(S) || {}; return s._s && s._s !== sS0 && s.duello && s.duello.stanza === C && s.stanza === C; }, 12000))
+      no("la Sala riaperta non tiene il duello (" + JSON.stringify(W.statoStanza(S) || {}).slice(0, 160) + ")");
+    if (salaSenzaGioco(S, t1, sS0)) no("la Sala riaperta ha mandato una foto senza il duello");
+    if (!await W.aspetta(function () { return P.document.querySelector(".sl-duello"); }, 6000)) no("Paky non vede «⚔️ Giulia e Luca giocano a Tris» nella Sala");
+    await W.dorme(1500);
+    if (!W.finestra("Giulia").document.querySelector(".tr-cella") || !L.document.querySelector(".tr-cella") || !M.document.querySelector(".tr-cella")) no("dopo la ricarica di Paky qualcuno non è più nel duello");
+    var passati = spia.fine(); if (passati.length) no(passati.join(", ") + " è passato dalla Sala o dalla saletta");
+    if (!await trisFinoAllaFine(C, x, o)) no("il duello non finisce");
+    if (!await W.aspetta(function () { var t = vm(S).torneo; return t && t.n === 1; }, 6000)) no("l'esito del duello non arriva alla Sala");
+    await W.dorme(1500);
+    if (((vm(S).torneo) || {}).n !== 1) no("l'esito del duello conta " + vm(S).torneo.n + " volte");
+    var e = errori.map(function (f) { return f.stop(); }).filter(Boolean); if (e.length) no("qualcuno legge «" + e[0] + "»");
+    var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" / "));
+    return "Giulia ricarica: duello " + C + " ripreso (stesse mosse, Luca «" + pl.Luca + "», Paky e Marco guardano); Paky ricarica: Sala " + S + " col duello dentro, nessuno portato via; esito una volta";
+  } };
+
   // ---- aiuti per i bot fissi (p2-bot) ----
   // botFinti: da mettere in apriTel(nome, { prima: botFinti }): la scheda pubblica finta (BR.pubblici[nome]) per
   // SGNube.pubblica e SGNube.cercaNome (senza rete, w.__offline, cercaNome non risponde)
@@ -3278,6 +4141,8 @@
       botFinti: botFinti, misuraSchermata: misuraSchermata, misureSchermata: misureSchermata, apriProfilo: apriProfilo,
       tn: tn, partitaTn: partitaTn, nomeTn: nomeTn, etTn: etTn, apriSceltaTn: apriSceltaTn, chipTn: chipTn, opzVisibili: opzVisibili, viaTn: viaTn, decidiTn: decidiTn, trisTn: trisTn,
       finoAllaFineTn: finoAllaFineTn, misuraTab: misuraTab, misureTab: misureTab,
+      contatore: contatore, apriContatore: apriContatore, provaRipresa: provaRipresa, contaDentro: contaDentro, contaStoria: contaStoria, contaPartite: contaPartite, tocca: tocca,
+      apriRiserva: apriRiserva, chiTiene: chiTiene, fotoDa: fotoDa, pilloleDi: pilloleDi, muore: muore, torna: torna,
       pulisci: pulisci, carica: carica },
     // uno scenario nuovo (da un file di prova): COPIONE.aggiungi(201, { nome: "…", fai: async function () { … return "…"; } })
     aggiungi: function (n, s) { SCENARI[n] = s; return n; },

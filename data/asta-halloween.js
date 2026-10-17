@@ -9,6 +9,7 @@
   nome: "La Notte di Halloween",
   icona: "🎃",
   sottotitolo: "Organizza la festa di Halloween più spaventosa (o la più ridicola)",
+  scenari: [ { emoji: "🎃", testo: "Concorso del costume più spaventoso: chi vince?" }, { emoji: "👻", testo: "Notte nella casa infestata: chi resiste fino all'alba?" }, { emoji: "🍬", testo: "Dolcetto o scherzetto: chi torna a casa con più caramelle?" } ],
   round: [
     {
       nome: "Il Travestimento", icona: "🎭",

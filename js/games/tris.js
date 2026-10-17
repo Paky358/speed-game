@@ -195,6 +195,7 @@
     descrizione: "Il filetto classico: allinea tre simboli. Da solo contro il Bot, in due sullo stesso telefono o online. C'è anche il Tris che sparisce!",
     giocatoriMin: 1, giocatoriMax: 6, difficolta: 1,
     postiOnline: 2,   // online si gioca in due: gli altri guardano
+    riprende: true,   // se l'host ricarica la pagina, la partita riprende dalla stessa mossa (t.ripresa)
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il Bot" },
       { modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "In due (o di più: chi vince resta)", amici: true }],
     regole: [
@@ -718,20 +719,38 @@
     var M = { ui: null, fase: null }, chiuso = false, rete = null;
     var ch = CH(), filtra = ch ? ch.filtro() : null;   // 💬 le faccine e le frasi (accese o spente dall'host nel ⚙️)
     st.ch = !!ch && ch.attive(imp);
+    // ---- la ripresa: l'host ha ricaricato la pagina (o l'app si è chiusa) a metà partita → si continua dalla stessa mossa.
+    // L'avversario è "via" finché non si rifà vivo (rientra da solo in un attimo); se in 30 s non torna è come se fosse
+    // uscito (la partita resta a metà e si può riprendere)
+    var CAMPI = ["fase", "p", "primo", "n", "variante", "inizia", "nomiO", "avvId", "ominoO", "punti", "ultimoO", "sospesa", "avviso", "uscito", "uscitoId", "uscitoT"];
+    var RIP = t.ripresa && t.ripresa.stato && t.ripresa.stato.tris, ricordata = !!RIP;
+    if (RIP) {
+      CAMPI.forEach(function (k) { if (RIP[k] !== undefined) st[k] = RIP[k]; });
+      if (st.avvId) { st.avvVia = true; setTimeout(function () { if (!chiuso && st.avvVia && st.avvId) avvUscito(st.avvId); }, 30000); }
+    }
+    function ricorda() {   // dopo ogni cambiamento (in saletta non c'è niente da riprendere)
+      if (!t.ricorda) return;
+      if (st.fase === "lobby") { if (ricordata) { ricordata = false; t.ricorda(null); } return; }
+      var o = {}; CAMPI.forEach(function (k) { o[k] = st[k]; });
+      ricordata = true; t.ricorda({ tris: o });
+    }
+    function avvUscito(id) {
+      if (id !== st.avvId) return;   // (uno che guardava e basta: niente da fare)
+      st.avvVia = false;
+      st.uscito = st.nomiO || ""; st.uscitoId = id; st.uscitoT = Date.now(); st.avvId = null; st.avviso = "😕 " + (st.nomiO || "L'avversario") + " è uscito.";
+      if (st.fase === "gioco") st.sospesa = true;   // la partita a metà resta lì: si può riprendere
+      st.fase = "lobby"; st.nomiO = null; bd();
+    }
     // "⚙️ Regole" nella saletta: valgono dalla prossima partita (le chiacchiere subito)
     t.onRegole = function (im) { st.variante = im.variante || "classico"; st.inizia = im.inizia || "turno"; var c0 = st.ch; st.ch = !!ch && ch.attive(im); if (st.fase === "lobby" || c0 !== st.ch) bd(); };
     var bRicomincia = t.el("button", { class: "btn btn-fantasma", text: "🔄 Ricomincia da capo", onclick: function () { if (st.fase === "lobby" && st.avvId) nuovaGara(); } });
     rete = SGNet.ospita("tris", {
       onCodice: function (c) { st.codice = c; st.riserva = riservaAvv("tris", c); bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
-      onAddio: function (id) {
-        if (id !== st.avvId) return;   // (uno che guardava e basta: niente da fare)
-        st.uscito = st.nomiO || ""; st.uscitoId = id; st.uscitoT = Date.now(); st.avvId = null; st.avviso = "😕 " + (st.nomiO || "L'avversario") + " è uscito.";
-        if (st.fase === "gioco") st.sospesa = true;   // la partita a metà resta lì: si può riprendere
-        st.fase = "lobby"; st.nomiO = null; bd();
-      },
+      onAddio: avvUscito,
       onMsg: function (id, m) {
         if (!m || !m.t) return;
+        if (st.avvVia && id === st.avvId) st.avvVia = false;   // (ripresa) l'avversario si è rifatto vivo
         if (m.t === "join") {
           // la partita a metà resta per un po' a chi è uscito (telefono spento, app chiusa): se torna, riprende lui;
           // chi guardava prende il posto solo dopo 90 secondi
@@ -753,7 +772,7 @@
       },
       // (arriva solo se il primo collegamento non riesce: dopo, la rete si ricollega da sola)
       onErrore: function () { if (!chiuso && !st.pronta) { chiuso = true; errore(t, "Problema di collegamento. Controlla la connessione e riprova."); } }
-    });
+    }, { ripresa: !!RIP });   // (ripresa: gli amici restano sul tavolo, non tornano in saletta)
     function vm() {
       var p = st.p;
       return { fase: st.fase, codice: st.codice, pronta: st.pronta, board: p.board, turno: p.turno, fine: p.fine, ord: p.ord, mosse: p.mosse, variante: p.variante,
@@ -763,6 +782,7 @@
     function bd() {
       if (chiuso) return;
       ricordaAvv("tris", st.codice, st.avvId || (st.riserva && Date.now() < st.riserva.fino ? st.riserva.id : null));
+      ricorda();
       if (rete) rete.invia({ t: "vm", vm: vm() }); disegna();
     }
     function applica(i) {
@@ -790,7 +810,7 @@
       onRivincita: function () { if (st.fase === "fine" && st.avvId) nuovaGara(); },
       // la rivincita dei tasti di fine comuni: si torna nella saletta con lo stesso avversario (il core fa il 3-2-1)
       onSaletta: function () { if (st.fase === "fine" && st.avvId) { st.fase = "lobby"; st.avviso = ""; bd(); } },
-      onEsci: function () { if (chiuso) return; chiuso = true; if (rete) rete.chiudi(); t.esci(); }
+      onEsci: function () { if (chiuso) return; if (t.ricorda) t.ricorda(null); chiuso = true; if (rete) rete.chiudi(); t.esci(); }   // (uscito apposta: niente da riprendere)
     };
     t.onRivincita = cb.onSaletta;
     function disegna() {
