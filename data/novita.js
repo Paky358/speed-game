@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 228,
+    data: "17 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: la partita non si perde 🔁",
+    descrizione: [
+      "Se a chi ha aperto la partita si ricarica la pagina o si chiude l'app, riaprendola la partita riprende da dove era: stessi punti, stessi premi nel carrello, e gli amici leggono «🔁 Paky è tornato: la partita riprende da dove era».",
+      "Se l'offerta, la Ruota o la Vetrina erano a metà, dopo qualche secondo con la classifica («🔁 Si riprende!») si rifanno da capo; se si stava scoprendo il prezzo, si rivede la rivelazione (niente punti doppi).",
+      "Se il telefono di chi ha aperto la partita si spegne del tutto, dopo pochi secondi un amico porta avanti la partita («👑 Ora la partita la tiene Luca») e chi torna rientra a giocare col suo posto e i suoi punti."
+    ]
+  },
+  {
     v: 227,
     data: "17 ottobre 2026",
     titolo: "Le novità, di nuovo in lista 📜",

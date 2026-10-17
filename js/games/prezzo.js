@@ -137,9 +137,10 @@
   function leggiLS(k) { try { var v = JSON.parse(localStorage.getItem(k) || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
   function scriviLS(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   // il cesto della partita: i prodotti delle categorie accese, mai due volte nella partita e (finché ce ne sono) mai quelli
-  // usciti nelle ultime serate su questo telefono (gli ultimi 300)
-  function Cesto(cats) {
-    var usati = {}, visti = {};
+  // usciti nelle ultime serate su questo telefono (gli ultimi 300). usati = { id: 1 } dei prodotti già usciti nella partita:
+  // sta nello stato della partita (H.usati), così dopo una ripresa non tornano gli stessi
+  function Cesto(cats, usati) {
+    usati = usati || {}; var visti = {};
     leggiLS(CH_VISTI).forEach(function (id) { visti[id] = 1; });
     function nuovo(p) { return !visti[p.id]; }
     function pesca(filtro, n) {
@@ -193,15 +194,31 @@
     if (!prodotti().length) return niente(t);
     var imp = leggiImp(t.impostazioni, modo);
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
+    // io che tengo la partita: "host", oppure (host di riserva) l'id da amico di chi ha preso il posto dell'host sparito
+    var IO = (online && t.mioId) || "host";
     var H = { modo: modo, fase: "lobby", sotto: null, k: 0, partita: 0, codice: online ? "…" : "", pronta: !online, imp: imp,
       players: [], guarda: [], arrivi: [], scadenza: 0, piano: [], ip: -1, avanti: [], ultimo: {} };
     if (modo === "telefono") H.players = (t.giocatori || []).map(function (n, i) { return { id: "p" + i, nome: n, omino: null, punti: 0, carrello: [] }; });
     else {
-      H.players = [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0, carrello: [] }];
+      H.players = [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0, carrello: [] }];
       if (modo === "bot") {
         var cast = (window.SG && SG.bot && SG.bot.prendi) ? SG.bot.prendi(imp.nBot, { livello: imp.liv, escludi: [nomeHost] }) : [];
         cast.forEach(function (b, i) { H.players.push({ id: "b" + i, nome: b.nome, omino: b.omino || null, punti: 0, carrello: [], bot: true }); });
       }
+    }
+    // la partita di prima (online: l'host ha ricaricato la pagina o riaperto l'app, oppure, con t.ripresa.daRiserva, l'host
+    // è sparito e la porta avanti questo telefono). Gli amici non si danno per usciti: si aspettano ("attesi") e rientrano
+    // da soli col loro join (stesso id); chi non torna entro 10 secondi esce, come chi se ne va (vedi riprendi)
+    var R0 = online && t.ripresa && t.ripresa.stato, riprendo = !!(R0 && R0.fase && R0.fase !== "lobby" && R0.players), attesi = {}, tAttesi = null;
+    if (riprendo) {
+      H = R0; H.modo = modo; H.pronta = false; H.codice = H.codice || "…";
+      H.guarda = H.guarda || []; H.arrivi = H.arrivi || []; H.avanti = H.avanti || []; H.ultimo = H.ultimo || {}; H.usati = H.usati || {};
+      H.cesto = Cesto(H.imp.cats, H.usati);
+      H.players.forEach(function (p) {
+        p.forse = false;
+        if (p.id === IO) { p.via = false; p.omino = t.mioOmino(p.nome) || p.omino || null; }
+        else if (!p.via) attesi[p.id] = 1;
+      });
     }
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function nome(id) { var p = pById(id); return p ? p.nome : "?"; }
@@ -233,19 +250,13 @@
         onErrore: function () { if (H.pronta) return; ferma(); if (rete) rete.chiudi(); erroreRete(t, "Non riesco ad aprire la stanza.", function () { motore(t, modo); }); },
         onForse: function (id) { var p = pById(id); if (p && !p.forse) { p.forse = true; bd(); } },
         onTornato: function (id) { var p = pById(id); if (p && p.forse) { p.forse = false; bd(); } },
-        onAddio: function (id) {
-          if (H.guarda.indexOf(id) >= 0) { H.guarda.splice(H.guarda.indexOf(id), 1); bd(); return; }
-          if (H.arrivi.some(function (a) { return a.id === id; })) { H.arrivi = H.arrivi.filter(function (a) { return a.id !== id; }); bd(); return; }
-          var p = pById(id); if (!p) return;
-          p.forse = false;
-          if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
-          p.via = true;   // a partita iniziata resta in classifica, ma non gioca più (se torna, riprende)
-          controlla(); bd();
-        },
+        onAddio: addio,
         onMsg: function (id, m) {
           if (!m || !m.t) return;
           if (m.t === "join") {
+            delete attesi[id];   // (dopo una ripresa: è tornato)
             var p0 = pById(id), nomeJ = String(m.nome || "Amico").slice(0, 16);
+            if (p0 && !p0.omino) p0.omino = avatarValido(m.omino);
             // nella Sala gioca solo chi è stato scelto in «Chi gioca?»: gli altri guardano (col loro id nella foto)
             if (!p0 && (H.guarda.indexOf(id) >= 0 || (t.puoSedersi && !t.puoSedersi(id, nomeJ)))) { if (H.guarda.indexOf(id) < 0) H.guarda.push(id); bd(); return; }
             if (!p0 && H.fase === "lobby" && H.players.length < MAX_ON) H.players.push({ id: id, nome: nomeJ, omino: avatarValido(m.omino), punti: 0, carrello: [] });
@@ -259,13 +270,25 @@
           }
           mossa(id, m);
         }
-      });
+      }, { ripresa: riprendo });   // (con la partita ripresa gli amici non tornano in saletta)
       if (!rete) return senzaRete(t);
+      if (riprendo && rete.codice) H.codice = rete.codice;
+    }
+    // chi se ne va (o, dopo una ripresa, non è tornato in tempo)
+    function addio(id) {
+      delete attesi[id];
+      if (H.guarda.indexOf(id) >= 0) { H.guarda.splice(H.guarda.indexOf(id), 1); bd(); return; }
+      if (H.arrivi.some(function (a) { return a.id === id; })) { H.arrivi = H.arrivi.filter(function (a) { return a.id !== id; }); bd(); return; }
+      var p = pById(id); if (!p || (p.via && H.fase !== "lobby")) return;
+      p.forse = false;
+      if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
+      p.via = true;   // a partita iniziata resta in classifica, ma non gioca più (se torna, riprende)
+      controlla(); bd();
     }
 
     // ----- la foto per tutti: MAI il prezzo prima della rivelazione, MAI le offerte segrete -----
     function vm() {
-      var f = H.fase, s = H.sotto, o = { fase: f, sotto: s, k: H.k, partita: H.partita, sessione: H.sessione || "", codice: H.codice, pronta: H.pronta,
+      var f = H.fase, s = H.sotto, o = { fase: f, sotto: s, k: H.k, partita: H.partita, tiene: IO, sessione: H.sessione || "", codice: H.codice, pronta: H.pronta,
         formato: H.imp.formato, durata: H.imp.durata, offerte: H.imp.offerte, sforare: H.imp.sforare, nCat: H.imp.cats.length, anno: annoDati(),
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, punti: p.punti, via: !!p.via, forse: !!p.forse, bot: p.bot ? 1 : 0 }; }),
         guarda: H.guarda.slice(), arrivi: H.arrivi.map(function (a) { return { id: a.id, nome: a.nome }; }),
@@ -288,7 +311,11 @@
         if (s === "gioca" && g && g.pubblico) { try { o.premio.pub = g.pubblico(H.premio.st, apiPremio()); } catch (e) { o.premio.pub = {}; } }
         if (s === "riv") { o.premio.riv = H.premio.riv; o.premio.punti = H.premio.punti; }
       }
-      if (f === "punti") { o.avanti = H.avanti.slice(); o.servono = servono(); o.dopo = H.piano[H.ip + 1] || ""; }
+      if (f === "punti") {
+        o.avanti = H.avanti.slice(); o.servono = servono(); o.dopo = H.piano[H.ip + 1] || "";
+        // (il respiro dopo una ripresa: la classifica, poi si rifà il passo a metà)
+        if (H.respiro) { o.rip = 1; o.dopo = H.respiro.poi === "vetrina" || H.respiro.poi === "ruota" ? H.respiro.poi : ""; }
+      }
       if (f === "ruota" && H.ruota) {
         var mostraSi = s !== "giro1" && s !== "decidi" || modo === "telefono", gr = {};
         Object.keys(H.ruota.g).forEach(function (id) { var x = H.ruota.g[id]; gr[id] = { v1: x.v1, v2: x.v2, b: x.b, cento: !!x.cento, si: mostraSi ? x.si : (x.si == null ? null : "?") }; });
@@ -303,12 +330,32 @@
       if (f === "fine") o.classifica = H.classifica;
       return o;
     }
-    function bd() { var v = vm(); if (rete) rete.invia({ t: "vm", vm: v }); disegnaVM(t, v, cbHost); }
+    function bd() { var v = vm(); if (rete) rete.invia({ t: "vm", vm: v }); ricorda(); disegnaVM(t, v, cbHost); vici(); }
+    // (host di riserva) chi porta avanti la partita se sparisco: prima chi guarda (non gioca: i prezzi e le offerte
+    // segrete che stanno nella copia non gli servono a niente)
+    var viciK = "";
+    function vici() { if (!online || !t.vici) return; var k = H.guarda.join(","); if (k !== viciK) { viciK = k; t.vici(H.guarda.length ? H.guarda.slice() : null); } }
+    // la partita com'è adesso, per riprenderla se ricarico la pagina (o se la porta avanti un amico): tutto H tranne il cesto
+    // (si rifà da H.usati); in saletta niente. Gli avatar ci stanno (al massimo 3.000 caratteri l'uno: sotto i 60 KB anche
+    // in 8); se mai la copia fosse troppo grossa, gli avatar restano solo su questo telefono (soloQui)
+    function ricorda() {
+      if (!online || !t.ricorda) return;
+      if (H.fase === "lobby") return t.ricorda(null);
+      var s = {}; Object.keys(H).forEach(function (k) { if (k !== "cesto") s[k] = H[k]; });
+      var qui = null;
+      try {
+        if (JSON.stringify(s).length > 50000) {
+          qui = { omini: {} };
+          s.players = H.players.map(function (p) { qui.omini[p.id] = p.omino || null; var c = {}; Object.keys(p).forEach(function (k) { if (k !== "omino") c[k] = p[k]; }); return c; });
+        }
+      } catch (e) {}
+      t.ricorda(s, qui);
+    }
     // un messaggio per un telefono solo (inviaVeloce con "to": così non resta in stanza)
     function privato(id, m) {
       var p = pById(id); if (p && p.bot) return;
       m.per = id;
-      if (!online || id === "host") return privatoR(m);
+      if (!online || id === IO) return privatoR(m);
       m.to = id; rete.inviaVeloce(m);
     }
     function rimandaSegreti(id) {
@@ -324,9 +371,9 @@
     function comincia() {
       if (H.fase !== "lobby") return;
       if (online && presenti().length < MIN_ON) return;
-      H.partita++; H.sessione = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      H.partita++; H.sessione = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); H.respiro = null;
       H.players = presenti(); H.players.forEach(function (p) { p.punti = 0; p.carrello = []; });
-      H.cesto = Cesto(H.imp.cats); H.ultimo = {}; H.avanti = []; H.premiUsati = []; H.indizio = null; H.vetUsate = [];
+      H.usati = {}; H.cesto = Cesto(H.imp.cats, H.usati); H.ultimo = {}; H.avanti = []; H.premiUsati = []; H.indizio = null; H.vetUsate = [];
       var nPremi = Object.keys(premi()).filter(function (k) { return premioDi(k); }).length;
       H.piano = piano(H.imp.formato, H.imp.durata, nPremi); H.ip = -1;
       H.iOff = 0; H.nOff = H.piano.filter(function (x) { return x === "offerta" || x === "oggetto"; }).length;
@@ -495,8 +542,12 @@
       Object.keys(punti).forEach(function (id) { punti[id] = Math.max(0, Math.round(+punti[id] || 0)); aggiungiPunti(id, punti[id]); });
       Object.keys(r.carrello || {}).forEach(function (id) { (r.carrello[id] || []).forEach(function (c) { nelCarrello(id, c); }); });
       H.premio.riv = r.riv || {}; H.premio.punti = punti;
-      var dur = 6000; try { dur = Math.max(2500, Math.min(30000, +g.durata(H.premio.riv, apiPremio()) || 6000)); } catch (e) {}
-      vai("premio", "riv", RV.cam + 400 + dur + RV.leggii, prossimo);
+      vai("premio", "riv", durPremioRiv(), prossimo);
+    }
+    function durPremioRiv() {
+      var g = premioDi(H.premio.tipo), dur = 6000;
+      try { dur = Math.max(2500, Math.min(30000, +g.durata(H.premio.riv, apiPremio()) || 6000)); } catch (e) {}
+      return RV.cam + 400 + dur + RV.leggii;
     }
 
     // ---------- LA RUOTA DEL 100 ----------
@@ -534,8 +585,9 @@
       e.cento.forEach(function (id) { H.ruota.g[id].cento = true; });
       // l'indizio per la Vetrina va a chi vince la Ruota (con due Ruote, solo la seconda)
       if (e.vince.length && H.nRuota >= H.ruoteTot) { H.indizio = { id: e.vince[Math.floor(Math.random() * e.vince.length)] }; H.ruota.indizio = H.indizio.id; }
-      vai("ruota", "riv", durRuotaRiv(e), function () { if (e.cento.length) giroBonus(); else prossimo(); });
+      vai("ruota", "riv", durRuotaRiv(e), dopoRivRuota);
     }
+    function dopoRivRuota() { if (H.ruota && H.ruota.esito && H.ruota.esito.cento.length) giroBonus(); else prossimo(); }
     function giroBonus() {
       if (modo === "telefono") return vai("ruota", "bonus", 0);
       vai("ruota", "bonus", T.giro, function () { autoGiri("b"); dopo(2900, rivBonus); });
@@ -651,6 +703,7 @@
       var f = H.fase, s = H.sotto;
       if (f === "lobby" || f === "fine") return;
       if (online && presenti().length < 2) return fine();   // è rimasto uno solo: finisce qui
+      if (H.respiro) return;   // (il respiro dopo una ripresa: decide finisciRespiro)
       var pres = presenti(), pausa = online ? 900 : 380;
       if (f === "offerta" && s === "offri" && pres.every(function (p) { return H.off[p.id] != null || H.passati[p.id]; })) return dopo(pausa, chiudiOfferte);
       if (f === "scegli" && H.scelta && !H.scelta.fatta) { var c = pById(H.scelta.chi); if (!c || c.via) return scegli(H.scelta.chi, H.scelta.opz[0]); }
@@ -675,7 +728,78 @@
       if (H.avanti.length >= servono()) return oltre();
       bd();
     }
-    function oltre() { if (H.fase !== "punti") return; ferma(); H.ultimo = {}; prossimo(); }
+    function oltre() {
+      if (H.fase !== "punti") return;
+      // (il respiro dopo una ripresa dura almeno RESPIRO anche se toccano tutti «Avanti»: intanto gli amici rientrano)
+      if (H.respiro) { var resta = H.respiro.fino - Date.now(); return resta > 50 ? dopo(resta, finisciRespiro) : finisciRespiro(); }
+      ferma(); H.ultimo = {}; prossimo();
+    }
+
+    // ---------- LA RIPRESA (online: l'host ha ricaricato o riaperto l'app, o un amico porta avanti la partita) ----------
+    // Mai punti dati due volte: le rivelazioni (punti già dati) si rivedono con lo stesso esito; i passi a metà (offerte,
+    // scelta del gioco a premi, gioco a premi, Ruota, Vetrina: nessun punto ancora) si rifanno da capo dopo un respiro di
+    // almeno 6 secondi con la classifica; la classifica col tempo che restava (almeno 5 s); il carrello si rivede; sulla
+    // classifica finale si resta lì (t.risultato l'aveva già dato chi teneva la partita)
+    var RESPIRO = 6000;
+    function riprendi() {
+      var f = H.fase, s = H.sotto, R1 = t.ripresa;
+      ferma();
+      tAttesi = setTimeout(function () { Object.keys(attesi).forEach(addio); }, 10000);
+      if (f === "fine") return bd();
+      if (f === "carrello") return vai("carrello", null, durCarrello(presenti().length), fine);
+      if (f === "apertura" || !H.piano || !H.piano.length) return vai("apertura", null, ST.durataApertura(H.players.length), prossimo);
+      if (f === "punti") {
+        if (H.respiro) return respiro(H.respiro.poi);
+        var resta = Math.max(5000, ((R1 && R1.ora ? R1.ora(H.scadenza) : H.scadenza) || 0) - Date.now());
+        H.avanti = [];
+        return vai("punti", null, resta, function () { H.ultimo = {}; prossimo(); });
+      }
+      if (f === "offerta") {
+        if (s === "rivela" && H.esito) return vai("offerta", "rivela", durRivela(H.esito), prossimo);
+        return respiro(H.rifai ? "sopra" : "offerta");
+      }
+      if (f === "scegli") return respiro("scegli");
+      if (f === "premio" && H.premio) {
+        if (s === "riv" && H.premio.riv) return vai("premio", "riv", durPremioRiv(), prossimo);
+        return respiro("premio");
+      }
+      if (f === "ruota" && H.ruota) {
+        if (s === "riv" && H.ruota.esito) return vai("ruota", "riv", durRuotaRiv(H.ruota.esito), dopoRivRuota);
+        if (s === "rivb" && H.ruota.esitoB) return vai("ruota", "rivb", RV.cam + 600 + H.ruota.esitoB.righe.length * 1500 + 1600 + RV.leggii, prossimo);
+        return respiro(s === "bonus" ? "bonus" : "ruota");
+      }
+      if (f === "vetrina" && H.vet) {
+        if (s === "riv" && H.vet.esito) return vai("vetrina", "riv", durVetRiv(H.vet.esito, H.vet.v.pezzi.length), prossimo);
+        return respiro("vetrina");
+      }
+      respiro("prossimo");
+    }
+    // il respiro: la classifica (fase "punti" con vm.rip), poi il passo che era a metà
+    function respiro(poi) {
+      H.respiro = { poi: poi, fino: Date.now() + RESPIRO };
+      H.avanti = []; H.ultimo = {};
+      vai("punti", null, RESPIRO, finisciRespiro);
+    }
+    function finisciRespiro() {
+      if (H.fase !== "punti" || !H.respiro) return;
+      ferma();
+      var poi = H.respiro.poi; H.respiro = null;
+      if (online && presenti().length < 2) return fine();   // non è tornato nessuno: si chiude coi punti che c'erano
+      if (poi === "offerta" && H.prod) { H.rifai = 0; H.limite = null; H.esito = null; return vai("offerta", "prodotto", T.prodotto, apriOfferte); }
+      if (poi === "sopra" && H.prod) return vai("offerta", "sopra", T.sopra, apriOfferte);
+      if (poi === "scegli") { H.iPremio = Math.max(0, (H.iPremio || 1) - 1); H.scelta = null; return nuovoPremio(); }
+      if (poi === "premio" && H.premio) {
+        var i = H.premiUsati.lastIndexOf(H.premio.tipo); if (i >= 0) H.premiUsati.splice(i, 1);
+        return avviaPremio(H.premio.tipo, H.premio.da);
+      }
+      if (poi === "ruota") { H.nRuota = Math.max(0, (H.nRuota || 1) - 1); return nuovaRuota(); }
+      if (poi === "bonus" && H.ruota) { presenti().forEach(function (p) { var x = H.ruota.g[p.id]; if (x && x.cento) x.b = null; }); H.ruota.esitoB = null; return giroBonus(); }
+      if (poi === "vetrina" && H.vet) {
+        H.vet.off = {}; H.vet.esito = null; H.vpassati = {};
+        return vai("vetrina", "mostra", durVetMostra(H.vet.v.pezzi.length), apriVetrina);
+      }
+      prossimo();
+    }
     // sullo stesso telefono: il tempo di chi è di turno è finito (o non c'è): vale quello che c'è
     function passa(id) {
       if (modo !== "telefono") return;
@@ -729,26 +853,30 @@
     // "Nuova partita": stessa stanza, stessi amici, tutti tornano nella saletta (MAI chiudere e riaprire la stanza)
     function nuova() {
       if (H.fase !== "fine") return;
-      ferma(); H.fase = "lobby"; H.sotto = null; H.k++; H.scadenza = 0; H.classifica = null;
-      H.players = presenti(); H.players.forEach(function (p) { p.punti = 0; p.carrello = []; });
+      ferma(); clearTimeout(tAttesi); attesi = {}; H.fase = "lobby"; H.sotto = null; H.k++; H.scadenza = 0; H.classifica = null; H.respiro = null;
+      H.players = presenti();
+      // chi tiene la partita è il primo (in saletta ha la corona); se l'ha presa guardando (host di riserva), si siede
+      if (online && !pById(IO)) { H.guarda = H.guarda.filter(function (x) { return x !== IO; }); H.players.unshift({ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0, carrello: [] }); }
+      H.players.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });
+      H.players.forEach(function (p) { p.punti = 0; p.carrello = []; });
       H.arrivi.forEach(function (a) { if (!pById(a.id) && H.players.length < MAX_ON) H.players.push({ id: a.id, nome: a.nome, omino: a.omino || null, punti: 0, carrello: [] }); });
       H.arrivi = [];
       bd();
     }
     t.onRivincita = function () { if (H.fase === "fine") nuova(); };
 
-    var cbHost = { sonoHost: true, myId: modo === "telefono" ? null : "host", locale: online ? null : modo,
+    var cbHost = { sonoHost: true, myId: modo === "telefono" ? null : IO, locale: online ? null : modo,
       onComincia: comincia, onNuova: nuova,
-      mossa: function (m, id) { mossa(modo === "telefono" ? id : "host", m); },
-      onAvanti: function () { mossa("host", { t: "avanti", k: H.k }); },
+      mossa: function (m, id) { mossa(modo === "telefono" ? id : IO, m); },
+      onAvanti: function () { mossa(IO, { t: "avanti", k: H.k }); },
       onEsci: function (giaChiesto) {
-        function via() { ferma(); if (rete) rete.chiudi(); t.esci(); }
+        function via() { ferma(); clearTimeout(tAttesi); if (online && t.ricorda) t.ricorda(null); if (rete) rete.chiudi(); t.esci(); }
         // (dallo studio la domanda l'ha già fatta lui; dalla saletta il core)
         if (giaChiesto !== true && online && H.fase !== "lobby" && H.fase !== "fine") return t.conferma("Chiudere la partita per tutti?", "Gli amici tornano alla Sala.", "Chiudi", via);
         via();
       } };
     window.__prezzoH = H;   // (per le prove)
-    if (online) bd();
+    if (online) { if (riprendo) riprendi(); else bd(); }
     else comincia();
   }
 
@@ -979,7 +1107,7 @@
       "📺 Come in TV: l'Offerta, i giochi a premi, la Ruota del 100 e la Vetrina finale. Ognuno dal suo telefono, tutti insieme.";
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN_ON,
       vuoti: Math.max(0, MIN_ON - vm.players.length),
-      giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
+      giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: vm.tiene ? p.id === vm.tiene : i === 0, tu: p.id === cb.myId }; }),
       extra: [t.el("p", { class: "modulo-nota", style: "margin:0;font-size:14px;line-height:1.45", text: riga })],
       spettatore: guardo ? "👀 Questa volta guardi" : !cb.sonoHost && !dentro && vm.players.length >= MAX_ON ? "👀 La stanza è piena: guardi la partita" : false,
       attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
@@ -1357,7 +1485,7 @@
       r.style.animationDelay = (i * 0.08) + "s"; box.appendChild(r);
     });
     var dopo = vm.dopo === "vetrina" ? "Poi: 🛍️ la Vetrina finale!" : vm.dopo === "ruota" ? "Poi: 🎡 la Ruota del 100!" : vm.dopo === "carrello" ? "Poi: 🛒 cosa vi portate a casa" : vm.dopo === "oggetto" && vm.iOff + 1 === vm.nOff && vm.formato === "solo" ? "Poi: 🔥 l'ultimo oggetto, vale doppio!" : "";
-    schermo(R, [ el("div", { class: "pz-testa", text: "🏁 Classifica" + (vm.formato === "solo" ? " dopo " + vm.iOff + " oggetti" : "") }), box, dopo ? el("div", { class: "pz-sotto", text: dopo }) : null ]);
+    schermo(R, [ el("div", { class: "pz-testa", text: vm.rip ? "🔁 Si riprende! · Classifica" : "🏁 Classifica" + (vm.formato === "solo" ? " dopo " + vm.iOff + " oggetti" : "") }), box, dopo ? el("div", { class: "pz-sotto", text: dopo }) : null ]);
     barraAvanti(R, k);
   }
   // in basso: «Si va avanti tra 8…» e «⏩ Avanti» (si parte subito se lo tocca più di metà)
@@ -1821,6 +1949,8 @@
     descrizione: "Quanto costa? Come nel programma della TV: l'Offerta col sipario, i giochi a premi, la Ruota del 100 e la Vetrina finale. Oppure solo il prezzo, un oggetto dopo l'altro. Ognuno dal suo telefono, tutti insieme.",
     giocatoriMin: 2, giocatoriMax: 8, difficolta: 2,
     postiOnline: MAX_ON,   // fino a 8 nello studio: nella Sala, se siete di più, l'host sceglie chi gioca
+    riprende: true,   // online: se l'host ricarica o riapre l'app, la partita riprende da dove era (t.ripresa)
+    riserva: true,    // online: se l'host sparisce del tutto, un amico porta avanti la partita (gioco lungo, da 2 a 8, non a due né in tempo reale)
     modi: [
       { modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Da 2 a 8, a turno", amici: true, min: 2 },
       // diretto: si parte subito (due tocchi dalla home) con le regole di partenza di impostazioni(): 📺 Come in TV, Puntata,

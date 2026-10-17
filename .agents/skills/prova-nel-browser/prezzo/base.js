@@ -9,7 +9,8 @@
 // pz5: online nella Sala con 3 telefoni, 📺 ⚡ Veloce a vista: partita intera, il «+1 €» cattivo, Luca ricarica mentre si offre,
 //      Rivincita col 3-2-1.
 // pz6: online nella Sala con 8 telefoni, 🎯 Solo il prezzo ⚡ Veloce: partita intera, uno spegne il telefono più di 20 s e torna.
-// pz7: online in 3: chi arriva tardi entra al prossimo oggetto; l'host ricarica (tutti in saletta, stesso codice).
+// pz7: online in 3: chi arriva tardi entra al prossimo oggetto; l'host ricarica (dal 17 ott la partita RIPRENDE, stesso codice:
+//      nessuno passa dalla saletta, Sara resta in partita coi suoi punti; le prove della ripresa sono in passo5/prezzo.js).
 // pz8: le misure: 360x640 e 412x915 in ogni passo (niente scorre, il maxischermo si vede tutto sopra il pannello).
 // pz9: online nella Sala con 8 telefoni, 📺 Come in TV ⚡ Veloce (8 leggii, Ruota e Vetrina in 8).
 // pz10: «🤖 Contro il Bot» con un secondo gioco a premi finto: chi vince l'Offerta sceglie tra due.
@@ -357,7 +358,7 @@
     } finally { senzaSpia(); }
   } });
 
-  COPIONE.aggiungi("pz7", { nome: "Prezzo online: chi arriva tardi entra al prossimo oggetto; l'host ricarica", fai: async function () {
+  COPIONE.aggiungi("pz7", { nome: "Prezzo online: chi arriva tardi entra al prossimo oggetto; l'host ricarica e la partita riprende", fai: async function () {
     conSpia();
     try {
       var P = await W.apriTel("Paky", { x: 0, prima: function (w) { w.__imp = { formato: "solo", durata: "veloce" }; } });
@@ -373,11 +374,19 @@
       await giocaTutti(["Paky", "Luca"], function () { return (vm(C).players || []).some(function (p) { return p.nome === "Sara"; }); }, { ms: 90000 });
       if (!(vm(C).players || []).some(function (p) { return p.nome === "Sara"; })) no("Sara non entra al prossimo oggetto");
       if (!await W.aspetta(function () { return Sw.document.querySelectorAll(".st-leggio").length === 3; }, 8000)) no("sul telefono di Sara i leggii non sono 3");
-      // l'host ricarica: tutti di nuovo in saletta, stesso codice
+      // l'host ricarica: la partita riprende (stesso codice, niente saletta, Sara ancora in partita coi punti di prima)
+      await W.dorme(900);
+      var punti0 = JSON.stringify((vm(C).players || []).map(function (p) { return [p.nome, p.punti]; })), salette = {};
       await W.ricarica("Paky");
-      if (!await W.aspetta(function () { return vm(C).fase === "lobby"; }, 20000)) no("dopo la ricarica dell'host non si torna in saletta (" + vm(C).fase + ")");
-      if (!await W.aspetta(function () { return /saletta|Aspetta che l'host/i.test(T(W.finestra("Luca"))) || W.finestra("Luca").document.querySelector(".saletta-schermo"); }, 20000)) no("Luca non torna in saletta");
-      return "Sara entra al prossimo oggetto; host ricarica → saletta " + C + errori();
+      var ok = await W.aspetta(function () {
+        ["Luca", "Sara"].forEach(function (n) { if (W.finestra(n).document.querySelector(".saletta-schermo")) salette[n] = 1; });
+        var v = vm(C);
+        return (W.statoStanza(C) || {})._r && v.fase && v.fase !== "lobby" && (v.players || []).filter(function (p) { return !p.via; }).length === 3 &&
+          JSON.stringify(v.players.map(function (p) { return [p.nome, p.punti]; })) === punti0;
+      }, 20000);
+      if (!ok) no("dopo la ricarica dell'host la partita non riprende con tutti e tre e gli stessi punti (fase " + vm(C).fase + ", " + JSON.stringify((vm(C).players || []).map(function (p) { return [p.nome, p.punti, !!p.via]; })) + ")");
+      if (Object.keys(salette).length) no(Object.keys(salette).join(", ") + " è passato dalla saletta");
+      return "Sara entra al prossimo oggetto; host ricarica → la partita riprende (" + vm(C).fase + ") con " + punti0 + errori();
     } finally { senzaSpia(); }
   } });
 

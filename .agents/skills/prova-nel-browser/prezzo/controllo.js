@@ -316,10 +316,12 @@
       var inP = (vm(C).players || []).some(function (p) { return p.nome === "Ada"; });
       note.push(inP ? "Ada è entrata in partita" : "Ada ha guardato (" + JSON.stringify(vm(C).guarda) + ")");
       var cl = vm(C).classifica || [];
-      // l'host ricarica sulla classifica: si torna nella Sala / saletta, stesso codice
+      // l'host ricarica sulla classifica: si torna nella Sala / saletta, stesso codice; dal 17 ott (il gioco riprende) può
+      // anche ritrovare la classifica coi tasti di fine del core
       await W.dorme(6000);
       await W.ricarica("Paky");
-      if (!await W.aspetta(function () { var w = W.finestra("Paky"); return w && !w.document.querySelector(".st-vista") && /Sala|saletta|Quale gioco|Comincia|codice/i.test(T(w)); }, 25000)) no("dopo la ricarica dell'host sulla classifica non si torna nella Sala (" + T(W.finestra("Paky")).slice(0, 120) + ")");
+      if (!await W.aspetta(function () { var w = W.finestra("Paky"); return w && ((!w.document.querySelector(".st-vista") && /Sala|saletta|Quale gioco|Comincia|codice/i.test(T(w))) || (vm(C).fase === "fine" && (A.tastiFineDi(w) || []).some(function (x) { return /Rivincita|Cambia gioco/.test(x); }))); }, 25000)) no("dopo la ricarica dell'host sulla classifica non si torna nella Sala né sulla classifica (" + T(W.finestra("Paky")).slice(0, 120) + ")");
+      note.push(vm(C).fase === "fine" ? "host ricarica sulla classifica: la ritrova coi tasti di fine" : "host ricarica sulla classifica: torna nella Sala");
       return c.riassunto() + " · " + cl.map(function (r) { return r.pos + "° " + r.nome + " " + r.punti; }).join(", ") + " · " + note.join(" ") + errori();
     } finally { senzaSpia(); }
   } });
