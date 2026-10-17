@@ -14,7 +14,7 @@
     { anno: 476, titolo: "Cade l'Impero romano d'Occidente", fatto: "L'ultimo imperatore, Romolo Augustolo, viene deposto: finisce un'epoca." },
     { anno: 1066, titolo: "Battaglia di Hastings", fatto: "Guglielmo il Conquistatore sconfigge gli inglesi e diventa re d'Inghilterra." },
     { anno: 1088, titolo: "Nasce l'Università di Bologna", fatto: "È considerata la più antica università del mondo occidentale ancora attiva." },
-    { anno: 1096, titolo: "Iniziano le lezioni all'Università di Oxford", fatto: "Si insegnava a Oxford già prima che nascesse l'impero azteco." },
+    { anno: 1096, titolo: "Prime notizie di lezioni a Oxford", fatto: "Si insegnava a Oxford già prima che nascesse l'impero azteco." },
     { anno: 1215, titolo: "Viene firmata la Magna Carta", fatto: "In Inghilterra il re accetta per la prima volta dei limiti al proprio potere." },
     { anno: 1271, titolo: "Marco Polo parte per la Cina", fatto: "Il mercante veneziano inizia il viaggio che racconterà ne 'Il Milione'." },
     { anno: 1325, titolo: "Fondazione di Tenochtitlán, capitale azteca", fatto: "Sorge su un'isola in mezzo a un lago, dove oggi c'è Città del Messico." },
