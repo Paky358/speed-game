@@ -172,7 +172,7 @@
     { anno: 2011, titolo: "Esce «Temple Run»", fatto: "Si scappa da scimmie mostruose fuori da un tempio, e la corsa non finisce mai." },
     { anno: 2011, titolo: "Esce il primo «Dark Souls»", fatto: "Famoso perché si muore in continuazione: la scritta 'YOU DIED' è diventata un tormentone." },
     { anno: 2012, titolo: "Esce «Subway Surfers»", fatto: "Il ragazzino che scappa dal controllore sui binari: è uno dei giochi più scaricati di sempre." },
-    { anno: 2013, titolo: "Esce «The Last of Us»", fatto: "Joel ed Ellie attraversano un'America invasa dai funghi: anni dopo diventa una serie TV." },
+    { anno: 2013, titolo: "Esce il videogioco «The Last of Us»", fatto: "Joel ed Ellie attraversano un'America invasa dai funghi: anni dopo diventa una serie TV." },
     { anno: 2014, titolo: "Esce la versione completa di «Assetto Corsa», fatto in Italia", fatto: "Lo ha creato lo studio Kunos all'autodromo di Vallelunga, vicino a Roma: è un simulatore amato anche dai piloti." },
     { anno: 2016, titolo: "Esce «Clash Royale»", fatto: "Partite di tre minuti con le carte dei personaggi di «Clash of Clans»." },
     { anno: 2016, titolo: "Esce «Stardew Valley»", fatto: "L'ha fatto quasi tutto da solo un ragazzo americano: disegni, musica e programma." },
@@ -183,7 +183,7 @@
     { anno: 2021, titolo: "Esce «It Takes Two», da giocare per forza in due", fatto: "Una coppia che sta per separarsi viene trasformata in pupazzi: vince il premio di gioco dell'anno." },
     { anno: 2022, titolo: "Il New York Times compra «Wordle»", fatto: "Il gioco della parola di cinque lettere: l'autore l'aveva inventato per la sua compagna." },
     { anno: 2023, titolo: "Esce «Hogwarts Legacy»", fatto: "Si va a scuola di magia a Hogwarts, un secolo prima di Harry Potter." },
-    { anno: 2024, titolo: "Esce «Palworld», subito chiamato 'Pokémon con le pistole'", fatto: "In pochi giorni lo provano milioni di persone; poi arriva la causa della Nintendo." },
+    { anno: 2024, titolo: "Esce in accesso anticipato «Palworld», subito chiamato 'Pokémon con le pistole'", fatto: "In pochi giorni lo provano milioni di persone; poi arriva la causa della Nintendo." },
     { anno: 2025, titolo: "Esce «Hollow Knight: Silksong»", fatto: "Atteso per più di sei anni: il giorno dell'uscita mandò in tilt i negozi online di videogiochi." }
   ]
 });

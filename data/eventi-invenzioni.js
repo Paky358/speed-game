@@ -192,7 +192,7 @@
     { anno: 1938, titolo: "La Nestlé lancia il caffè solubile Nescafé", fatto: "Nasce in Svizzera per non buttare via il caffè che il Brasile produceva in eccesso." },
     { anno: 1946, titolo: "A Parigi viene presentato il primo bikini", fatto: "Il nome viene da un atollo del Pacifico che in quei giorni era su tutti i giornali." },
     { anno: 1947, titolo: "Viene messo in vendita il primo forno a microonde", fatto: "L'idea venne a un ingegnere a cui si era sciolta una barretta di cioccolato in tasca vicino a un radar. Il primo forno era alto quasi due metri." },
-    { anno: 1950, titolo: "Nasce il Diners Club, la prima carta di credito moderna", fatto: "L'idea venne a un uomo d'affari che al ristorante si era accorto di aver dimenticato il portafoglio." },
+    { anno: 1950, titolo: "Nasce il Diners Club, la prima carta di credito moderna", fatto: "Si racconta che l'idea venne a un uomo d'affari che al ristorante si era accorto di aver dimenticato il portafoglio." },
     { anno: 1955, titolo: "Viene annunciato che il vaccino di Salk contro la polio funziona", fatto: "Salk non lo brevettò: 'Si può brevettare il sole?', rispose a chi glielo chiedeva." },
     { anno: 1958, titolo: "La Lego brevetta il mattoncino coi tubetti sotto", fatto: "È lo stesso incastro di oggi: un mattoncino di allora si attacca ancora a uno nuovo." },
     { anno: 1959, titolo: "Viene presentata la prima bambola Barbie", fatto: "Il suo nome completo è Barbara Millicent Roberts: si chiama come la figlia della sua inventrice, Ruth Handler." },
