@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 229,
+    data: "18 ottobre 2026",
+    titolo: "Stessa Lunghezza d'Onda: la partita non si perde 🔁",
+    descrizione: [
+      "Se a chi ha aperto la partita si ricarica la pagina o si chiude l'app, riaprendola la partita riprende da dove era: stessi punti, stesso turno, stesso sensitivo col suo bersaglio, e gli amici leggono «🔁 Paky è tornato: la partita riprende da dove era».",
+      "Prima qualche secondo col tempo fermo («🔁 Si riprende!»), poi si continua: la parola scelta, la lancetta e le lancette già bloccate restano dov'erano, e il tempo riparte da quello che mancava (mai troppo poco). Se si stava guardando dov'era il bersaglio, la rivelazione si rivede senza dare i punti due volte.",
+      "Se il telefono di chi ha aperto la partita si spegne del tutto, dopo pochi secondi un amico porta avanti la partita («👑 Ora la partita la tiene Luca») e chi torna rientra a giocare col suo posto e la sua squadra."
+    ]
+  },
+  {
     v: 228,
     data: "17 ottobre 2026",
     titolo: "Il Prezzo è Giusto: la partita non si perde 🔁",

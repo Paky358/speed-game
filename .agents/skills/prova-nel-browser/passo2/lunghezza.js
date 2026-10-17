@@ -3,7 +3,7 @@
 // 280: 3 telefoni senza squadre (Cosa ne pensi?): partita intera, chi indovina ricarica, il sensitivo ricarica mentre piazza
 //      (ritrova il bersaglio), il sensitivo spento (tempo fermo, poi torna), Rivincita col 3-2-1, Cambia gioco.
 // 281: 4 telefoni a squadre (Cosa ne pensi?, a 7): lancetta comune contesa da due (uno solo la tiene, l'altro vede
-//      «✋ Giulia»), conferme che si spengono se qualcuno sposta, scommessa, partita intera; l'host ricarica (tutti in saletta).
+//      «✋ Giulia»), conferme che si spengono se qualcuno sposta, scommessa, partita intera; l'host ricarica (la partita riprende).
 // 282: 6 telefoni a squadre, Classico: due scale, indizio con la parola della scala rifiutato, uno spento più di 20 s
 //      (si continua; quando torna rientra al suo posto), il sensitivo che esce (turno saltato).
 // 283: chi arriva a partita cominciata guarda (niente tasti) ed entra alla Rivincita; Misto con «✏️ La scelgo io».
@@ -245,14 +245,16 @@
     await W.dorme(3000);
     var sp = vm(C).sqPunti;
     if (sp[R.sq] < R.pt) no("i punti non tornano");
-    // l'host ricarica: nella Sala tutti tornano nella Sala (lo fa il core), e da lì si rilancia il gioco
+    // l'host ricarica (dal Passo 5 il gioco riprende): stessa stanza, stessa partita, stessi punti, nessuno passa dalla Sala
+    var sp0 = vm(C).sqPunti.join("-"), tu0 = vm(C).turno, s0 = (W.statoStanza(C) || {})._s, inSala = {};
     await W.ricarica("Paky");
-    if (!await W.aspetta(function () { return ((vm(Z.S).membri) || []).length === 4 && /Sei dentro/.test(T(W.finestra("Giulia"))) && !W.finestra("Giulia").document.querySelector(".lu"); }, 20000)) no("dopo la ricarica dell'host non tornano tutti nella Sala");
-    C = await A.lanciaDallaSala("Paky", Z.S, NOME);
-    if (!await W.aspetta(function () { return ids(C, "players").length === 4; }, 12000)) no("dopo la ricarica il gioco non riparte con tutti");
-    await regola(W.finestra("Paky"), /^7 punti$/);
-    // si rigioca fino alla fine (a 7)
-    await comincia(C);
+    if (!await W.aspetta(function () {
+      ["Giulia", "Luca", "Sara"].forEach(function (n) { if (/Sei dentro/.test(T(W.finestra(n))) && !W.finestra(n).document.querySelector(".lu")) inSala[n] = 1; });
+      var s = W.statoStanza(C) || {}, x = vm(C);
+      return s._s && s._s !== s0 && s._r && x.fase === "gioco" && x.players.filter(function (p) { return !p.via; }).length === 4;
+    }, 20000)) no("dopo la ricarica dell'host la partita non riprende con tutti (fase " + vm(C).fase + ")");
+    if (Object.keys(inSala).length) no(Object.keys(inSala).join(", ") + " è tornato nella Sala");
+    if (vm(C).sqPunti.join("-") !== sp0 || vm(C).turno < tu0) no("dopo la ricarica punti o turno cambiati (" + sp0 + " → " + vm(C).sqPunti.join("-") + ", turno " + tu0 + " → " + vm(C).turno + ")");
     // due che indovinano insieme in un turno a 3? qui 2 e 2: si gioca fino alla fine
     if (!await finoAllaFine(C, 300000, { veloce: true })) no("la partita a squadre non finisce");
     var f = vm(C).fine;
@@ -262,7 +264,7 @@
     if (f.vinc >= 0 && win !== 2) no("al primo posto non c'è la squadra vincitrice (" + win + ")");
     if (!await W.aspetta(function () { return A.tastiFineDi(W.finestra("Paky")); }, 5000)) no("mancano i tasti di fine");
     senzaErrori();
-    return "squadre 2 e 2, lancetta di uno solo (gli avversari vedono «✋»), scommessa, host ricaricato → saletta, finale " + f.sqPunti.join("-") + (f.premi.length ? " · premi: " + f.premi.join(" / ") : "");
+    return "squadre 2 e 2, lancetta di uno solo (gli avversari vedono «✋»), scommessa, host ricaricato → la partita riprende, finale " + f.sqPunti.join("-") + (f.premi.length ? " · premi: " + f.premi.join(" / ") : "");
   } });
 
   COPIONE.aggiungi(282, { nome: "Lunghezza d'Onda: 6 telefoni a squadre, Classico, lancetta a più mani, spento 20 s, sensitivo che esce", fai: async function () {
@@ -534,10 +536,11 @@
       }
       if (vm(C).fase !== "fine") no("la partita non finisce (" + vm(C).fase + "/" + vm(C).passo + ")");
       if (!fatti.dita) note.push("mai due che indovinano insieme");
-      // il bersaglio non deve mai passare in chiaro prima della rivelazione (solo nei messaggi «to» al sensitivo)
+      // il bersaglio non deve mai passare in chiaro prima della rivelazione (solo nei messaggi «to» al sensitivo e, dal Passo 5,
+      // nella copia di riserva __ris che il core manda solo ai vice, come in Parola d'ordine e nella Balla)
       var fughe = spia.filter(function (m) {
         if (m.pl.indexOf('"bers"') < 0) return false;
-        try { var o = JSON.parse(m.pl), d = o.data || o; if (d.to) return false; if (d.t === "vm" && d.vm && (d.vm.passo === "rivela" || d.vm.fase !== "gioco")) return false; return true; } catch (e) { return true; }
+        try { var o = JSON.parse(m.pl), d = o.data || o; if (d.to || d.t === "__ris") return false; if (d.t === "vm" && d.vm && (d.vm.passo === "rivela" || d.vm.fase !== "gioco")) return false; return true; } catch (e) { return true; }
       });
       if (fughe.length) no("il bersaglio passa a tutti prima della rivelazione: " + fughe[0].pl.slice(0, 160));
       var segreti = spia.filter(function (m) { return /"t":"segreto"/.test(m.pl); }).length;
