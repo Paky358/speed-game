@@ -82,7 +82,7 @@
         { nome: "Città Chiusa per la Festa del Patrono", emoji: "🔒" },
         { nome: "Parco Giochi Comunale con le Altalene Rotte", emoji: "🛝" },
         { nome: "Visita a un Ufficio delle Tasse", emoji: "🧾" },
-        { nome: "Rifugio in Montagna Raggiungibile Solo col Diluvio", emoji: "🌧️" },
+        { nome: "Rifugio in Montagna Sotto il Diluvio", emoji: "🌧️" },
         { nome: "Spiaggia a Novembre col Vento", emoji: "🌬️" }
       ]
     },
@@ -149,7 +149,7 @@
         { nome: "Prof che Si Addormenta al Museo e Viene Chiuso Dentro", emoji: "🔒" },
         { nome: "Prof che Fa Fare i Compiti la Sera", emoji: "📖" },
         { nome: "Prof che Interroga Durante la Visita", emoji: "🙋" },
-        { nome: "Prof che Dimentica uno Studente all'Autogrill", emoji: "⛽" },
+        { nome: "Prof che Dimentica uno Studente alla Sosta in Autostrada", emoji: "⛽" },
         { nome: "Prof col Fischietto Sempre in Bocca", emoji: "📣" },
         { nome: "Prof che Telefona in Vivavoce col Marito", emoji: "📢" },
         { nome: "Prof che Non Sa Leggere la Cartina e Non Lo Ammette", emoji: "🌀" },

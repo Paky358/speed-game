@@ -9,7 +9,7 @@
   nome: "La Serata Karaoke",
   icona: "🎤",
   sottotitolo: "Sali sul palco e conquista il locale (o fai scappare tutti)",
-  scenari: [ { emoji: "🏆", testo: "Gara di karaoke con la coppa in palio: chi la vince?" }, { emoji: "🔇", testo: "Salta la base a metà canzone: chi continua e si prende l'applauso?" }, { emoji: "📱", testo: "Il video della serata gira in tutti i gruppi: chi ci fa una bella figura?" } ],
+  scenari: [ { emoji: "🏆", testo: "Gara di karaoke con la coppa in palio: chi la vince?" }, { emoji: "🔇", testo: "Salta la base a metà canzone: chi si prende comunque l'applauso?" }, { emoji: "📱", testo: "Il video della serata gira ovunque: chi ci fa bella figura?" } ],
   round: [
     {
       nome: "Il Cantante", icona: "🧑‍🎤",
@@ -19,7 +19,7 @@
         { nome: "Cugino che Imita Perfettamente Tutti i Cantanti", emoji: "🎭" },
         { nome: "Rocker con la Voce Graffiata", emoji: "🎸" },
         { nome: "Cantante che Fa Ballare Tutto il Locale", emoji: "💃" },
-        { nome: "Amico che Sa a Memoria Tutto Sanremo", emoji: "🌺" },
+        { nome: "Amico che Sa a Memoria Tutti i Festival", emoji: "🌺" },
         { nome: "Voce Soul che Fa Venire i Brividi", emoji: "🥶" },
         { nome: "Ex Corista della Parrocchia", emoji: "⛪" },
         { nome: "Cantante di Piano Bar con Trent'Anni di Serate", emoji: "🎹" },
@@ -92,7 +92,7 @@
         { nome: "Il Classico che Sanno Tutti a Memoria", emoji: "🇮🇹" },
         { nome: "Tormentone dell'Estate", emoji: "☀️" },
         { nome: "Ballata Rock da Accendini Accesi", emoji: "🔥" },
-        { nome: "Canzone Vincitrice di Sanremo", emoji: "🌺" },
+        { nome: "Canzone che Ha Vinto il Festival", emoji: "🌺" },
         { nome: "Pezzo Disco degli Anni Settanta", emoji: "🪩" },
         { nome: "Duetto Romantico da Film", emoji: "💞" },
         { nome: "Canzone da Stadio col Coro", emoji: "🏟️" },
@@ -153,7 +153,7 @@
         { nome: "Canzone Uguale a Quella Appena Cantata da un Altro", emoji: "👯" },
         { nome: "Canzone con lo Schermo delle Parole Spento", emoji: "⬛" },
         { nome: "Canzone per Bambini Cantata Seriamente", emoji: "🧸" },
-        { nome: "Inno Nazionale Straniero", emoji: "🏳️" },
+        { nome: "Inno Nazionale Straniero", emoji: "🎺" },
         { nome: "Canzone Scelta a Caso dal Barista", emoji: "🎲" },
         { nome: "Canzone Tutta di Fischi", emoji: "😗" },
         { nome: "Canzone Senza Ritornello", emoji: "🚫" },
@@ -208,7 +208,7 @@
         { nome: "Orecchini Enormi che Fanno Rumore", emoji: "💍" },
         { nome: "Camicia Aperta Fino all'Ombelico", emoji: "🫧" },
         { nome: "Occhialoni Finti con il Naso", emoji: "🥸" },
-        { nome: "Pantaloni a Zampa d'Elefante", emoji: "🐘" },
+        { nome: "Pantaloni a Zampa Anni Settanta", emoji: "🐘" },
         { nome: "Fascia per Capelli da Aerobica", emoji: "🎽" },
         { nome: "Giacca del Papà Troppo Grande", emoji: "🧥" },
         { nome: "Tacchi Troppo Alti per il Palco", emoji: "👠" }
@@ -219,15 +219,15 @@
         { nome: "Costume da Mascotte Gigante", emoji: "🐻" },
         { nome: "Accappatoio e Ciabatte", emoji: "🛁" },
         { nome: "Maglietta Bagnata di Sudore", emoji: "💦" },
-        { nome: "Calzini Bianchi con i Sandali", emoji: "🧦" },
+        { nome: "Calzettoni di Spugna con i Sandali", emoji: "🧦" },
         { nome: "Vestito Strappato sul Retro", emoji: "🩹" },
         { nome: "Costume di Carnevale dell'Anno Scorso", emoji: "🎭" },
         { nome: "Divisa del Lavoro con il Cartellino", emoji: "🪪" },
         { nome: "Parrucca che Cade a Metà Canzone", emoji: "🫣" },
         { nome: "Scarpe Slacciate che Fanno Inciampare", emoji: "👞" },
         { nome: "Tuta da Sci Imbottita in Piena Estate", emoji: "🎿" },
-        { nome: "Grembiule della Cucina", emoji: "🍳" },
-        { nome: "Costume da Banana", emoji: "🍌" },
+        { nome: "Grembiule da Pizzaiolo Infarinato", emoji: "🍳" },
+        { nome: "Costume da Ananas Gigante", emoji: "🍍" },
         { nome: "Cappotto Pesante che Fa Sudare", emoji: "🥵" },
         { nome: "Occhiali da Saldatore", emoji: "🥽" },
         { nome: "Vestito con la Macchia di Sugo", emoji: "🍝" },
@@ -308,7 +308,7 @@
         { nome: "Tavolo che Vota per Mandarti a Casa", emoji: "👎" },
         { nome: "Amico che Riprende Tutto e Lo Mette in Rete", emoji: "📹" },
         { nome: "Locale Pieno di Gente che Parla Solo di Lavoro", emoji: "💼" },
-        { nome: "Pubblico che Applaude Quando Finisci di Cantare per Sollievo", emoji: "😮‍💨" }
+        { nome: "Pubblico che Applaude Sollevato Quando Smetti", emoji: "😮‍💨" }
       ]
     }
   ]
